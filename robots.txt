@@ -1,6 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /CURATOR.html
-Disallow: /experiments/
-
-Sitemap: https://iskvw.pages.dev/sitemap.xml

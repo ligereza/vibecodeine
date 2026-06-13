@@ -1,52 +1,27 @@
-# Sistema
 .DS_Store
 Thumbs.db
-
-# Secretos
 .env
 *.key
 *.pem
 credentials.json
 token.json
-.netrc
-
-# Archivos pesados de diseño
 *.psd
 *.psb
 *.ai
 *.indd
 *.aep
-*.prproj
 *.blend
+*.exr
 *.tif
 *.tiff
-*.raw
-*.heic
-
-# Vídeos pesados
 *.mp4
 *.mov
 *.avi
 *.mkv
-
-# Paquetes comprimidos pesados
 *.zip
 *.rar
 *.7z
-
-# Dependencias/cache
-node_modules/
-.venv/
-__pycache__/
-.cache/
-dist/
-build/
-
-# Carpetas locales no sincronizadas
-_assets_pesados/
-_originales_cliente/
-_entregables_pesados/
-_private/
-
-# Repos externos clonados localmente para inspección
-_external/
+_local/
+_originales/
+_exports_pesados/
+_quarantine_frames/
