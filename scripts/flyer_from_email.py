@@ -2,7 +2,6 @@
 import re
 import sys
 import json
-import subprocess
 from pathlib import Path
 from datetime import datetime
 
@@ -15,20 +14,76 @@ def slugify(text):
     return text or "evento"
 
 def create_project(name):
-    cmd = ["bash", "scripts/new_flyer_evento.sh", name]
-    subprocess.run(cmd, check=True)
-
     date = datetime.now().strftime("%Y-%m-%d")
     safe = slugify(name)
-    return Path(f"projects/flyer_eventos/{date}_{safe}")
+
+    base = Path("projects/flyer_eventos")
+    project = base / f"{date}_{safe}"
+
+    # Si ya existe, agrega sufijo
+    n = 2
+    original = project
+    while project.exists():
+        project = Path(f"{original}-{n:02d}")
+        n += 1
+
+    for folder in ["input", "working", "exports", "refs"]:
+        d = project / folder
+        d.mkdir(parents=True, exist_ok=True)
+        (d / ".gitkeep").touch()
+
+    manifest = {
+        "tool": "flyer_eventos",
+        "name": name,
+        "date": date,
+        "status": "created",
+        "input": {
+            "main_image": "",
+            "event_name": name,
+            "event_date": "",
+            "format": "",
+            "notes": ""
+        },
+        "steps": {
+            "photoshop": "pending",
+            "blender": "pending",
+            "export": "pending"
+        },
+        "outputs": []
+    }
+
+    (project / "manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2),
+        encoding="utf-8"
+    )
+
+    (project / "README.md").write_text(
+        f"""# Flyer evento — {name}
+
+Fecha: {date}
+
+## Objetivo
+
+Crear flyer para evento importado desde correo.
+
+## Estado
+
+- [ ] Revisar link Instagram
+- [ ] Descargar imagen/video
+- [ ] Completar datos del evento
+- [ ] Photoshop
+- [ ] Blender
+- [ ] Export final
+""",
+        encoding="utf-8"
+    )
+
+    return project
 
 def update_manifest(project_dir, url, index, total):
     manifest = project_dir / "manifest.json"
 
-    if manifest.exists():
-        data = json.loads(manifest.read_text(encoding="utf-8"))
-    else:
-        data = {}
+    data = json.loads(manifest.read_text(encoding="utf-8"))
 
     data["status"] = "from_email_pending_download"
 
@@ -40,11 +95,16 @@ def update_manifest(project_dir, url, index, total):
     data["source"]["link_total"] = total
 
     data.setdefault("extracted_info", {})
-    data["extracted_info"].setdefault("event_name", "")
-    data["extracted_info"].setdefault("producer", "")
-    data["extracted_info"].setdefault("venue", "")
-    data["extracted_info"].setdefault("event_date", "")
+    data["extracted_info"]["event_name"] = ""
+    data["extracted_info"]["producer"] = ""
+    data["extracted_info"]["venue"] = ""
+    data["extracted_info"]["event_date"] = ""
     data["extracted_info"]["needs_manual_review"] = True
+
+    data.setdefault("download", {})
+    data["download"]["status"] = "pending"
+    data["download"]["possible_types"] = ["image", "video", "private_or_unavailable"]
+    data["download"]["manual_download_needed"] = False
 
     data.setdefault("notes", [])
     data["notes"].append("Creado desde correo. Falta descargar/analizar flyer.")
@@ -68,7 +128,6 @@ def main():
     text = email_path.read_text(encoding="utf-8", errors="ignore")
     links = IG_RE.findall(text)
 
-    # limpiar tracking final
     links = [link.split("?")[0].rstrip("/") for link in links]
     links = list(dict.fromkeys(links))
 
@@ -81,6 +140,7 @@ def main():
 
     for i, url in enumerate(links, start=1):
         name = f"email_evento_{i:02d}"
+
         print(f"[{i}/{len(links)}] Creando proyecto para: {url}")
 
         project = create_project(name)
