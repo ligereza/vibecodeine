@@ -5,13 +5,31 @@ import json
 from pathlib import Path
 from datetime import datetime
 
-IG_RE = re.compile(r"https?://(?:www\.)?instagram\.com/(?:p|reel|tv)/[A-Za-z0-9_-]+/?[^\s]*")
+IG_RE = re.compile(
+    r"https?://(?:www\.)?instagram\.com/(?P<kind>p|reel|tv)/(?P<code>[A-Za-z0-9_-]+)/*[^\s]*"
+)
+
 
 def slugify(text):
     text = text.lower()
     text = re.sub(r"[^a-z0-9]+", "-", text)
     text = re.sub(r"-+", "-", text).strip("-")
     return text or "evento"
+
+
+def detect_media_guess(kind):
+    if kind == "p":
+        return "image_or_carousel_possible"
+    if kind == "reel":
+        return "video_possible"
+    if kind == "tv":
+        return "video_possible"
+    return "unknown"
+
+
+def normalize_url(kind, code):
+    return f"https://www.instagram.com/{kind}/{code}"
+
 
 def create_project(name):
     date = datetime.now().strftime("%Y-%m-%d")
@@ -20,7 +38,6 @@ def create_project(name):
     base = Path("projects/flyer_eventos")
     project = base / f"{date}_{safe}"
 
-    # Si ya existe, agrega sufijo
     n = 2
     original = project
     while project.exists():
@@ -80,19 +97,32 @@ Crear flyer para evento importado desde correo.
 
     return project
 
-def update_manifest(project_dir, url, index, total):
-    manifest = project_dir / "manifest.json"
 
+def update_manifest(project_dir, item, index, total):
+    manifest = project_dir / "manifest.json"
     data = json.loads(manifest.read_text(encoding="utf-8"))
+
+    kind = item["kind"]
+    code = item["code"]
+    url = item["url"]
+    media_guess = detect_media_guess(kind)
 
     data["status"] = "from_email_pending_download"
 
     data.setdefault("source", {})
     data["source"]["type"] = "email"
-    data["source"]["instagram_url"] = url
     data["source"]["email_imported_at"] = datetime.now().isoformat(timespec="seconds")
     data["source"]["link_index"] = index
     data["source"]["link_total"] = total
+
+    data["instagram"] = {
+        "url": url,
+        "type": kind,
+        "shortcode": code,
+        "media_guess": media_guess,
+        "download_status": "pending",
+        "manual_download_possible": True
+    }
 
     data.setdefault("extracted_info", {})
     data["extracted_info"]["event_name"] = ""
@@ -101,18 +131,51 @@ def update_manifest(project_dir, url, index, total):
     data["extracted_info"]["event_date"] = ""
     data["extracted_info"]["needs_manual_review"] = True
 
-    data.setdefault("download", {})
-    data["download"]["status"] = "pending"
-    data["download"]["possible_types"] = ["image", "video", "private_or_unavailable"]
-    data["download"]["manual_download_needed"] = False
+    data["manual_review"] = {
+        "required": True,
+        "reason": "metadata_pending",
+        "notes": [
+            "Revisar si el post es imagen, carrusel o video.",
+            "Si el perfil es privado, shadowban o requiere login, descargar manualmente.",
+            "Completar nombre evento, productora, lugar y fecha desde el flyer."
+        ]
+    }
 
     data.setdefault("notes", [])
     data["notes"].append("Creado desde correo. Falta descargar/analizar flyer.")
+
+    if kind in ["reel", "tv"]:
+        data["notes"].append("Link parece video. Puede requerir descarga manual o captura de frame.")
 
     manifest.write_text(
         json.dumps(data, ensure_ascii=False, indent=2),
         encoding="utf-8"
     )
+
+
+def extract_instagram_links(text):
+    found = []
+
+    for m in IG_RE.finditer(text):
+        kind = m.group("kind")
+        code = m.group("code")
+        url = normalize_url(kind, code)
+
+        found.append({
+            "kind": kind,
+            "code": code,
+            "url": url
+        })
+
+    unique = []
+    seen = set()
+    for item in found:
+        if item["url"] not in seen:
+            unique.append(item)
+            seen.add(item["url"])
+
+    return unique
+
 
 def main():
     if len(sys.argv) < 2:
@@ -126,31 +189,35 @@ def main():
         sys.exit(1)
 
     text = email_path.read_text(encoding="utf-8", errors="ignore")
-    links = IG_RE.findall(text)
+    items = extract_instagram_links(text)
 
-    links = [link.split("?")[0].rstrip("/") for link in links]
-    links = list(dict.fromkeys(links))
-
-    if not links:
+    if not items:
         print("No encontré links de Instagram.")
         sys.exit(0)
 
-    print(f"Encontré {len(links)} link(s) de Instagram.")
+    print(f"Encontré {len(items)} link(s) de Instagram.")
     print("")
 
-    for i, url in enumerate(links, start=1):
+    for i, item in enumerate(items, start=1):
+        kind = item["kind"]
+        media_guess = detect_media_guess(kind)
         name = f"email_evento_{i:02d}"
 
-        print(f"[{i}/{len(links)}] Creando proyecto para: {url}")
+        print(f"[{i}/{len(items)}] Creando proyecto")
+        print(f"URL: {item['url']}")
+        print(f"Tipo: {kind}")
+        print(f"Media guess: {media_guess}")
 
         project = create_project(name)
-        update_manifest(project, url, i, len(links))
+        update_manifest(project, item, i, len(items))
 
         print(f"OK: {project}")
+        print("")
 
-    print("")
     print("Listo. Revisa con:")
     print("bash scripts/flyer_list.sh")
+    print("bash scripts/flyer_status_latest.sh")
+
 
 if __name__ == "__main__":
     main()
