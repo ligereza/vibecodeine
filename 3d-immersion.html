@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0a09">
+  <title>Malla Reactiva · ISKVW</title>
+  <meta name="description" content="«Malla Reactiva» — pieza interactiva en WebGL de ISKVW. Una superficie que solo existe mientras se la mira.">
+  <link rel="canonical" href="https://iskvw.pages.dev/3d-immersion.html">
+
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Malla Reactiva · ISKVW">
+  <meta property="og:description" content="Pieza interactiva en WebGL. La obra solo existe mientras se la mira.">
+  <meta property="og:image" content="assets/og-cover.svg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="assets/og-cover.svg">
+
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.json">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
+
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body data-page="3d">
+
+  <a href="#main" class="skip-link">Saltar al contenido</a>
+  <div class="grain" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a href="index.html" class="brand">ISKVW<sup>archivo</sup></a>
+    <nav class="header-nav" aria-label="Navegación principal">
+      <a href="index.html">Obra</a>
+      <a href="2d.html">Dibujo</a>
+      <a href="3d-immersion.html" aria-current="page">Reactiva</a>
+      <a href="about.html">Sobre</a>
+    </nav>
+    <button id="nav-toggle" class="nav-toggle" aria-controls="mobile-nav" aria-expanded="false" aria-label="Abrir menú">menú</button>
+  </header>
+  <div id="mobile-nav-backdrop" class="mobile-nav-backdrop" aria-hidden="true"></div>
+  <nav id="mobile-nav" class="mobile-nav" aria-label="Navegación móvil">
+    <a href="index.html">Obra</a>
+    <a href="2d.html">Dibujo</a>
+    <a href="3d-immersion.html" aria-current="page">Reactiva</a>
+    <a href="about.html">Sobre</a>
+    <div class="nav-meta">
+      <a href="mailto:hola@iskvw.com">hola@iskvw.com</a><br>
+      <a href="https://instagram.com/iskvw" target="_blank" rel="noopener">@iskvw</a>
+    </div>
+  </nav>
+
+  <main id="main">
+    <div id="canvas" class="canvas-wrap" aria-hidden="true"></div>
+    <section class="scroller">
+      <div class="scroller-overlay">
+        <h1>Malla Reactiva</h1>
+        <span class="hint">Mové el cursor · hacé scroll</span>
+      </div>
+    </section>
+
+    <section class="three-detail">
+      <div class="section">
+        <div class="sec-head">
+          <span class="sec-num">(03) Pieza</span>
+          <h2 class="sec-title">Una superficie<br><em>que solo existe</em><br>mientras se la mira.</h2>
+        </div>
+
+        <div class="three-grid">
+          <div class="reveal">
+            <h2>Sobre la obra</h2>
+            <p>
+              Una superficie plana es recorrida por un campo de ruido. Cada vértice se desplaza
+              en respuesta al cursor del visitante y a su scroll. Si nadie mira, la pieza
+              vuelve al reposo.
+            </p>
+            <p>
+              No hay archivo final, no hay imagen para guardar. La obra es exclusivamente
+              <em>esta sesión</em>. Cuando cerrás la pestaña, deja de existir.
+            </p>
+          </div>
+          <dl class="specs reveal">
+            <div class="spec"><dt>Año</dt><dd>2026</dd></div>
+            <div class="spec"><dt>Soporte</dt><dd>WebGL · Three.js · Simplex Noise</dd></div>
+            <div class="spec"><dt>Estado</dt><dd>En vivo</dd></div>
+            <div class="spec"><dt>Edición</dt><dd>Única, no archivable</dd></div>
+          </dl>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-meta">
+      <div><strong>Maximiliano</strong><a href="mailto:hola@iskvw.com">hola@iskvw.com</a></div>
+      <div><strong>Instagram</strong><a href="https://instagram.com/iskvw" target="_blank" rel="noopener">@iskvw</a></div>
+      <div><strong>Sitio</strong>v4.0 · 2025 · Buenos Aires</div>
+    </div>
+  </footer>
+
+  <script src="js/app.js" defer></script>
+  <script src="js/3d-scene.js" defer></script>
+</body>
+</html>
