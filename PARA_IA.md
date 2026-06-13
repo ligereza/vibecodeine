@@ -38,6 +38,12 @@ Crear proyectos desde correo con links de Instagram:
 py scripts/flyer_from_email.py "inbox/correo_prueba.txt"
 ```
 
+Forzar duplicado solo si hace falta:
+
+```bash
+py scripts/flyer_from_email.py "inbox/correo_prueba.txt" --force
+```
+
 Listar proyectos:
 
 ```bash
@@ -66,6 +72,12 @@ Generar índice de proyectos flyer:
 
 ```bash
 bash scripts/flyer_index.sh
+```
+
+Reportar duplicados:
+
+```bash
+bash scripts/flyer_duplicates_report.sh
 ```
 
 Abrir último proyecto flyer en Explorer:
@@ -97,18 +109,21 @@ bash scripts/checkpoint.sh "mensaje"
 
 - Crea estructura de proyectos flyer.
 - Mantiene carpetas con `.gitkeep`.
+- Crea carpetas `analysis/` y `ai/` en proyectos nuevos.
 - Copia imagen input demo.
 - Actualiza `manifest.json`.
 - Lista proyectos.
 - Detecta último proyecto.
 - Lee un correo `.txt`.
 - Extrae links de Instagram.
-- Crea un proyecto por cada link.
+- Crea un proyecto por cada link nuevo.
+- Evita duplicados por URL/shortcode salvo uso de `--force`.
 - Detecta tipo de link: `/p/`, `/reel/`, `/tv/`.
 - Marca `media_guess`: imagen/carrusel posible o video posible.
 - Marca esos proyectos como `from_email_pending_download`.
 - Permite aplicar mejoras completas mediante `_airdrop/`.
 - Genera índice JSON en `data/flyer_index.json`.
+- Genera reporte de duplicados en `data/flyer_duplicates_report.json`.
 
 ## Qué NO hace todavía
 
@@ -118,7 +133,7 @@ bash scripts/checkpoint.sh "mensaje"
 - No abre Photoshop.
 - No abre Blender.
 - No borra archivos.
-- No evita duplicados por shortcode todavía.
+- No limpia duplicados automáticamente.
 
 ## Sistema airdrop
 
@@ -145,12 +160,13 @@ bash scripts/checkpoint.sh "aplicar mejoras airdrop"
 
 ## Próximo paso recomendado
 
-Mejorar `flyer_from_email.py` para evitar duplicados por URL/shortcode.
+Crear flujo de descarga/manual review.
 
 Idea:
 
-- Antes de crear un proyecto nuevo, revisar manifests existentes.
-- Si ya existe ese shortcode, mostrar aviso y no duplicar salvo que se use una opción futura tipo `--force`.
+- Si el post es público y simple, preparar descarga futura.
+- Si es reel/video/privado/shadowban, marcar descarga manual.
+- Mantener todo como revisión humana antes de Photoshop/Blender.
 
 ## Reglas
 

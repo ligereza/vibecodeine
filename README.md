@@ -42,6 +42,12 @@ Crear proyectos desde correo con links de Instagram:
 py scripts/flyer_from_email.py "inbox/correo_prueba.txt"
 ```
 
+Forzar duplicado si realmente lo necesitas:
+
+```bash
+py scripts/flyer_from_email.py "inbox/correo_prueba.txt" --force
+```
+
 Listar flyers:
 
 ```bash
@@ -70,6 +76,12 @@ Generar índice de flyers:
 
 ```bash
 bash scripts/flyer_index.sh
+```
+
+Detectar duplicados:
+
+```bash
+bash scripts/flyer_duplicates_report.sh
 ```
 
 Abrir último flyer en Explorer:
@@ -103,6 +115,7 @@ bash scripts/checkpoint.sh "mensaje"
 py scripts/flyer_from_email.py "inbox/correo_prueba.txt"
 bash scripts/flyer_list.sh
 bash scripts/flyer_index.sh
+bash scripts/flyer_duplicates_report.sh
 bash scripts/flyer_status_latest.sh
 bash scripts/checkpoint.sh "mensaje"
 ```

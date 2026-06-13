@@ -9,6 +9,8 @@ IG_RE = re.compile(
     r"https?://(?:www\.)?instagram\.com/(?P<kind>p|reel|tv)/(?P<code>[A-Za-z0-9_-]+)/*[^\s]*"
 )
 
+BASE = Path("projects/flyer_eventos")
+
 
 def slugify(text):
     text = text.lower()
@@ -20,9 +22,7 @@ def slugify(text):
 def detect_media_guess(kind):
     if kind == "p":
         return "image_or_carousel_possible"
-    if kind == "reel":
-        return "video_possible"
-    if kind == "tv":
+    if kind in ["reel", "tv"]:
         return "video_possible"
     return "unknown"
 
@@ -31,12 +31,48 @@ def normalize_url(kind, code):
     return f"https://www.instagram.com/{kind}/{code}"
 
 
+def load_json(path):
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def existing_instagram_keys():
+    """Devuelve shortcodes/urls ya existentes en manifests."""
+    keys = {}
+
+    if not BASE.exists():
+        return keys
+
+    for manifest in BASE.glob("*/manifest.json"):
+        data = load_json(manifest)
+        if not isinstance(data, dict):
+            continue
+
+        project = manifest.parent
+
+        ig = data.get("instagram", {}) if isinstance(data.get("instagram"), dict) else {}
+        src = data.get("source", {}) if isinstance(data.get("source"), dict) else {}
+
+        shortcode = ig.get("shortcode", "")
+        url = ig.get("url", "") or src.get("instagram_url", "")
+
+        if shortcode:
+            keys[f"shortcode:{shortcode}"] = str(project).replace("\\", "/")
+
+        if url:
+            normalized = url.rstrip("/").split("?")[0]
+            keys[f"url:{normalized}"] = str(project).replace("\\", "/")
+
+    return keys
+
+
 def create_project(name):
     date = datetime.now().strftime("%Y-%m-%d")
     safe = slugify(name)
 
-    base = Path("projects/flyer_eventos")
-    project = base / f"{date}_{safe}"
+    project = BASE / f"{date}_{safe}"
 
     n = 2
     original = project
@@ -44,7 +80,7 @@ def create_project(name):
         project = Path(f"{original}-{n:02d}")
         n += 1
 
-    for folder in ["input", "working", "exports", "refs"]:
+    for folder in ["input", "working", "exports", "refs", "analysis", "ai"]:
         d = project / folder
         d.mkdir(parents=True, exist_ok=True)
         (d / ".gitkeep").touch()
@@ -88,6 +124,7 @@ Crear flyer para evento importado desde correo.
 - [ ] Revisar link Instagram
 - [ ] Descargar imagen/video
 - [ ] Completar datos del evento
+- [ ] Análisis
 - [ ] Photoshop
 - [ ] Blender
 - [ ] Export final
@@ -178,11 +215,14 @@ def extract_instagram_links(text):
 
 
 def main():
-    if len(sys.argv) < 2:
-        print('Uso: py scripts/flyer_from_email.py "ruta/correo.txt"')
+    force = "--force" in sys.argv
+    args = [a for a in sys.argv[1:] if a != "--force"]
+
+    if len(args) < 1:
+        print('Uso: py scripts/flyer_from_email.py "ruta/correo.txt" [--force]')
         sys.exit(1)
 
-    email_path = Path(sys.argv[1])
+    email_path = Path(args[0])
 
     if not email_path.exists():
         print(f"ERROR: no existe archivo: {email_path}")
@@ -195,27 +235,58 @@ def main():
         print("No encontré links de Instagram.")
         sys.exit(0)
 
+    existing = existing_instagram_keys()
+
     print(f"Encontré {len(items)} link(s) de Instagram.")
+    print(f"Modo force: {'sí' if force else 'no'}")
     print("")
+
+    created = 0
+    skipped = 0
 
     for i, item in enumerate(items, start=1):
         kind = item["kind"]
+        code = item["code"]
+        url = item["url"]
         media_guess = detect_media_guess(kind)
+
+        key_shortcode = f"shortcode:{code}"
+        key_url = f"url:{url}"
+
+        if not force and (key_shortcode in existing or key_url in existing):
+            found_project = existing.get(key_shortcode) or existing.get(key_url)
+            print(f"[{i}/{len(items)}] DUPLICADO, se omite")
+            print(f"URL: {url}")
+            print(f"Existe en: {found_project}")
+            print("Usa --force si realmente quieres crear otro proyecto.")
+            print("")
+            skipped += 1
+            continue
+
         name = f"email_evento_{i:02d}"
 
         print(f"[{i}/{len(items)}] Creando proyecto")
-        print(f"URL: {item['url']}")
+        print(f"URL: {url}")
         print(f"Tipo: {kind}")
         print(f"Media guess: {media_guess}")
 
         project = create_project(name)
         update_manifest(project, item, i, len(items))
 
+        existing[key_shortcode] = str(project).replace("\\", "/")
+        existing[key_url] = str(project).replace("\\", "/")
+
+        created += 1
         print(f"OK: {project}")
         print("")
 
-    print("Listo. Revisa con:")
+    print("Resumen:")
+    print(f"- Creados: {created}")
+    print(f"- Omitidos por duplicado: {skipped}")
+    print("")
+    print("Revisa con:")
     print("bash scripts/flyer_list.sh")
+    print("bash scripts/flyer_index.sh")
     print("bash scripts/flyer_status_latest.sh")
 
 

@@ -13,12 +13,20 @@ DATE=$(date +%Y-%m-%d)
 
 DIR="projects/flyer_eventos/${DATE}_${SAFE_NAME}"
 
-mkdir -p "$DIR/input" "$DIR/working" "$DIR/exports" "$DIR/refs"
+mkdir -p \
+  "$DIR/input" \
+  "$DIR/working" \
+  "$DIR/exports" \
+  "$DIR/refs" \
+  "$DIR/analysis" \
+  "$DIR/ai"
 
 touch "$DIR/input/.gitkeep"
 touch "$DIR/working/.gitkeep"
 touch "$DIR/exports/.gitkeep"
 touch "$DIR/refs/.gitkeep"
+touch "$DIR/analysis/.gitkeep"
+touch "$DIR/ai/.gitkeep"
 
 cat > "$DIR/manifest.json" <<EOC
 {
@@ -58,21 +66,31 @@ Crear flyer para evento.
 - Formato:
 - Notas:
 
+## Carpetas
+
+- \`input/\`: imagen/video base.
+- \`working/\`: archivos intermedios.
+- \`exports/\`: salidas finales o previews.
+- \`refs/\`: referencias.
+- \`analysis/\`: OCR, colores, metadata, reportes.
+- \`ai/\`: contexto y prompts para IA.
+
 ## Flujo
 
 1. Poner imagen base en \`input/\`.
-2. Procesar en Photoshop.
-3. Exportar JPG a \`working/\`.
-4. Usar en Blender.
-5. Export final en \`exports/\`.
+2. Analizar o completar datos si hace falta.
+3. Procesar en Photoshop.
+4. Exportar JPG a \`working/\`.
+5. Usar en Blender.
+6. Export final en \`exports/\`.
 
 ## Estado
 
 - [ ] Input listo
+- [ ] Análisis
 - [ ] Photoshop
 - [ ] Blender
 - [ ] Export final
 EOC
 
 echo "Proyecto creado en: $DIR"
-
