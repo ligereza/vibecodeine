@@ -22,3 +22,99 @@ La herramienta activa es:
 
 ```txt
 flyer_eventos
+```
+
+## Flujo actual probado
+
+Crear proyecto manual:
+
+```bash
+bash scripts/new_flyer_evento.sh "nombre evento"
+```
+
+Crear proyectos desde correo con links de Instagram:
+
+```bash
+py scripts/flyer_from_email.py "inbox/correo_prueba.txt"
+```
+
+Listar proyectos:
+
+```bash
+bash scripts/flyer_list.sh
+```
+
+Ver último proyecto:
+
+```bash
+bash scripts/flyer_latest.sh
+```
+
+Setear imagen demo en último proyecto:
+
+```bash
+bash scripts/flyer_set_input_latest_demo.sh
+```
+
+Ver estado del último proyecto:
+
+```bash
+bash scripts/flyer_status_latest.sh
+```
+
+Ver estado general:
+
+```bash
+bash scripts/orden_status.sh
+```
+
+Guardar avance:
+
+```bash
+bash scripts/checkpoint.sh "mensaje"
+```
+
+## Qué ya hace
+
+- Crea estructura de proyectos flyer.
+- Mantiene carpetas con `.gitkeep`.
+- Copia imagen input demo.
+- Actualiza `manifest.json`.
+- Lista proyectos.
+- Detecta último proyecto.
+- Lee un correo `.txt`.
+- Extrae links de Instagram.
+- Crea un proyecto por cada link.
+- Marca esos proyectos como `from_email_pending_download`.
+
+## Qué NO hace todavía
+
+- No descarga Instagram automáticamente.
+- No analiza la imagen/video.
+- No extrae texto del flyer.
+- No detecta si es video.
+- No abre Photoshop.
+- No abre Blender.
+- No borra archivos.
+
+## Próximo paso recomendado
+
+Documentar y mejorar `flyer_from_email.py`.
+
+Siguiente mejora lógica:
+
+- detectar si el link es `/p/`, `/reel/` o `/tv/`
+- guardar `instagram_type` en el manifest
+- marcar `/reel/` como posible video
+- mantener `needs_manual_review: true`
+
+## Reglas
+
+- Avanzar paso a paso.
+- No hacer cambios gigantes.
+- No automatizar Photoshop/Blender todavía.
+- No subir archivos pesados.
+- No borrar nada sin confirmación.
+- Usar `py` para scripts Python.
+- Mantener compatibilidad con Git Bash en Windows.
+- Después de cada mejora pequeña, hacer checkpoint.

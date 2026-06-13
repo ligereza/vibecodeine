@@ -30,10 +30,16 @@ flyer_eventos
 
 ## Comandos actuales
 
-Crear proyecto flyer:
+Crear proyecto flyer manual:
 
 ```bash
 bash scripts/new_flyer_evento.sh "nombre evento"
+```
+
+Crear proyectos desde correo con links de Instagram:
+
+```bash
+py scripts/flyer_from_email.py "inbox/correo_prueba.txt"
 ```
 
 Listar flyers:
@@ -48,13 +54,13 @@ Ver último flyer:
 bash scripts/flyer_latest.sh
 ```
 
-Setear input demo:
+Setear input demo en último flyer:
 
 ```bash
 bash scripts/flyer_set_input_latest_demo.sh
 ```
 
-Ver status:
+Ver status del último flyer:
 
 ```bash
 bash scripts/flyer_status_latest.sh
@@ -69,6 +75,15 @@ bash scripts/orden_status.sh
 Guardar avance:
 
 ```bash
+bash scripts/checkpoint.sh "mensaje"
+```
+
+## Flujo actual recomendado
+
+```bash
+py scripts/flyer_from_email.py "inbox/correo_prueba.txt"
+bash scripts/flyer_list.sh
+bash scripts/flyer_status_latest.sh
 bash scripts/checkpoint.sh "mensaje"
 ```
 
