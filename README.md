@@ -1,16 +1,82 @@
-# flujo — sistema limpio de automatización diseño/motion + IA
+# flujo — Dimensiones del Orden
 
-Repositorio mínimo para construir herramientas desde cero, sin arrastrar archivos viejos.
+Repositorio para ordenar proyectos creativos, automatizaciones e IAs.
 
-## Herramientas objetivo
+Funciona como una **zapatilla/alargador organizador**: conecta proyectos, herramientas, contexto y checkpoints en un solo lugar.
 
-1. `flyer_eventos`: asset/foto → Photoshop → Blender → export para jefe.
-2. `slowmo_blender_ae`: Blender → rangos slowmo → After Effects → consolidación segura.
-3. `asistente_pedido`: pedido del jefe → plan de producción.
-4. `canva_data`: CSV/JSON para Canva/Illustrator.
+No reemplaza el trabajo manual. Ayuda a no empezar desde cero.
 
-## Uso
+## Entrada rápida
+
+Si eres una IA o asistente, lee primero:
+
+```txt
+PARA_IA.md
+```
+
+Luego lee:
+
+```txt
+docs/DIMENSIONES_DEL_ORDEN.md
+context/ESTADO.md
+tools/flyer_eventos/SPEC.md
+```
+
+## Herramienta activa
+
+```txt
+flyer_eventos
+```
+
+## Comandos actuales
+
+Crear proyecto flyer:
+
+```bash
+bash scripts/new_flyer_evento.sh "nombre evento"
+```
+
+Listar flyers:
+
+```bash
+bash scripts/flyer_list.sh
+```
+
+Ver último flyer:
+
+```bash
+bash scripts/flyer_latest.sh
+```
+
+Setear input demo:
+
+```bash
+bash scripts/flyer_set_input_latest_demo.sh
+```
+
+Ver status:
+
+```bash
+bash scripts/flyer_status_latest.sh
+```
+
+Ver estado general del orden:
+
+```bash
+bash scripts/orden_status.sh
+```
+
+Guardar avance:
 
 ```bash
 bash scripts/checkpoint.sh "mensaje"
 ```
+
+## Reglas
+
+- Avanzar paso a paso.
+- No subir archivos pesados.
+- No automatizar Photoshop/Blender todavía.
+- No borrar sin confirmación.
+- Usar `py` para Python en Windows.
+- Después de cada mejora, hacer checkpoint.
