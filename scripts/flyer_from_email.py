@@ -1,0 +1,96 @@
+#!/usr/bin/env python3
+import re
+import sys
+import json
+import subprocess
+from pathlib import Path
+from datetime import datetime
+
+IG_RE = re.compile(r"https?://(?:www\.)?instagram\.com/(?:p|reel|tv)/[A-Za-z0-9_-]+/?[^\s]*")
+
+def slugify(text):
+    text = text.lower()
+    text = re.sub(r"[^a-z0-9]+", "-", text)
+    text = re.sub(r"-+", "-", text).strip("-")
+    return text or "evento"
+
+def create_project(name):
+    cmd = ["bash", "scripts/new_flyer_evento.sh", name]
+    subprocess.run(cmd, check=True)
+
+    date = datetime.now().strftime("%Y-%m-%d")
+    safe = slugify(name)
+    return Path(f"projects/flyer_eventos/{date}_{safe}")
+
+def update_manifest(project_dir, url, index, total):
+    manifest = project_dir / "manifest.json"
+
+    if manifest.exists():
+        data = json.loads(manifest.read_text(encoding="utf-8"))
+    else:
+        data = {}
+
+    data["status"] = "from_email_pending_download"
+
+    data.setdefault("source", {})
+    data["source"]["type"] = "email"
+    data["source"]["instagram_url"] = url
+    data["source"]["email_imported_at"] = datetime.now().isoformat(timespec="seconds")
+    data["source"]["link_index"] = index
+    data["source"]["link_total"] = total
+
+    data.setdefault("extracted_info", {})
+    data["extracted_info"].setdefault("event_name", "")
+    data["extracted_info"].setdefault("producer", "")
+    data["extracted_info"].setdefault("venue", "")
+    data["extracted_info"].setdefault("event_date", "")
+    data["extracted_info"]["needs_manual_review"] = True
+
+    data.setdefault("notes", [])
+    data["notes"].append("Creado desde correo. Falta descargar/analizar flyer.")
+
+    manifest.write_text(
+        json.dumps(data, ensure_ascii=False, indent=2),
+        encoding="utf-8"
+    )
+
+def main():
+    if len(sys.argv) < 2:
+        print('Uso: py scripts/flyer_from_email.py "ruta/correo.txt"')
+        sys.exit(1)
+
+    email_path = Path(sys.argv[1])
+
+    if not email_path.exists():
+        print(f"ERROR: no existe archivo: {email_path}")
+        sys.exit(1)
+
+    text = email_path.read_text(encoding="utf-8", errors="ignore")
+    links = IG_RE.findall(text)
+
+    # limpiar tracking final
+    links = [link.split("?")[0].rstrip("/") for link in links]
+    links = list(dict.fromkeys(links))
+
+    if not links:
+        print("No encontré links de Instagram.")
+        sys.exit(0)
+
+    print(f"Encontré {len(links)} link(s) de Instagram.")
+    print("")
+
+    for i, url in enumerate(links, start=1):
+        name = f"email_evento_{i:02d}"
+        print(f"[{i}/{len(links)}] Creando proyecto para: {url}")
+
+        project = create_project(name)
+        update_manifest(project, url, i, len(links))
+
+        print(f"OK: {project}")
+
+    print("")
+    print("Listo. Revisa con:")
+    print("bash scripts/flyer_list.sh")
+
+if __name__ == "__main__":
+    main()
