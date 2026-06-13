@@ -62,6 +62,18 @@ Ver estado del último proyecto:
 bash scripts/flyer_status_latest.sh
 ```
 
+Generar índice de proyectos flyer:
+
+```bash
+bash scripts/flyer_index.sh
+```
+
+Abrir último proyecto flyer en Explorer:
+
+```bash
+bash scripts/flyer_open_latest.sh
+```
+
 Ver estado general:
 
 ```bash
@@ -92,18 +104,21 @@ bash scripts/checkpoint.sh "mensaje"
 - Lee un correo `.txt`.
 - Extrae links de Instagram.
 - Crea un proyecto por cada link.
+- Detecta tipo de link: `/p/`, `/reel/`, `/tv/`.
+- Marca `media_guess`: imagen/carrusel posible o video posible.
 - Marca esos proyectos como `from_email_pending_download`.
 - Permite aplicar mejoras completas mediante `_airdrop/`.
+- Genera índice JSON en `data/flyer_index.json`.
 
 ## Qué NO hace todavía
 
 - No descarga Instagram automáticamente.
 - No analiza la imagen/video.
 - No extrae texto del flyer.
-- No detecta si es video.
 - No abre Photoshop.
 - No abre Blender.
 - No borra archivos.
+- No evita duplicados por shortcode todavía.
 
 ## Sistema airdrop
 
@@ -130,14 +145,12 @@ bash scripts/checkpoint.sh "aplicar mejoras airdrop"
 
 ## Próximo paso recomendado
 
-Mejorar `flyer_from_email.py`.
+Mejorar `flyer_from_email.py` para evitar duplicados por URL/shortcode.
 
-Siguiente mejora lógica:
+Idea:
 
-- detectar si el link es `/p/`, `/reel/` o `/tv/`
-- guardar `instagram_type` en el manifest
-- marcar `/reel/` como posible video
-- mantener `needs_manual_review: true`
+- Antes de crear un proyecto nuevo, revisar manifests existentes.
+- Si ya existe ese shortcode, mostrar aviso y no duplicar salvo que se use una opción futura tipo `--force`.
 
 ## Reglas
 

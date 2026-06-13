@@ -1,0 +1,51 @@
+{
+  "generated_at": "2026-06-13T03:36:52",
+  "count": 5,
+  "projects": [
+    {
+      "project": "projects/flyer_eventos/2026-06-12_evento-prueba",
+      "name": "evento prueba",
+      "status": "input_ready",
+      "instagram_url": "",
+      "instagram_type": "",
+      "media_guess": "",
+      "needs_manual_review": false
+    },
+    {
+      "project": "projects/flyer_eventos/2026-06-13_email-evento-01",
+      "name": "email_evento_01",
+      "status": "from_email_pending_download",
+      "instagram_url": "https://www.instagram.com/p/ABC123test",
+      "instagram_type": "",
+      "media_guess": "",
+      "needs_manual_review": true
+    },
+    {
+      "project": "projects/flyer_eventos/2026-06-13_email-evento-01-02",
+      "name": "email_evento_01",
+      "status": "from_email_pending_download",
+      "instagram_url": "https://www.instagram.com/p/ABC123test",
+      "instagram_type": "p",
+      "media_guess": "image_or_carousel_possible",
+      "needs_manual_review": true
+    },
+    {
+      "project": "projects/flyer_eventos/2026-06-13_email-evento-02",
+      "name": "email_evento_02",
+      "status": "from_email_pending_download",
+      "instagram_url": "https://www.instagram.com/reel/XYZ789test",
+      "instagram_type": "",
+      "media_guess": "",
+      "needs_manual_review": true
+    },
+    {
+      "project": "projects/flyer_eventos/2026-06-13_email-evento-02-02",
+      "name": "email_evento_02",
+      "status": "from_email_pending_download",
+      "instagram_url": "https://www.instagram.com/reel/XYZ789test",
+      "instagram_type": "reel",
+      "media_guess": "video_possible",
+      "needs_manual_review": true
+    }
+  ]
+}

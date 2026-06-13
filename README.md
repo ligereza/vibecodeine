@@ -66,10 +66,29 @@ Ver status del último flyer:
 bash scripts/flyer_status_latest.sh
 ```
 
+Generar índice de flyers:
+
+```bash
+bash scripts/flyer_index.sh
+```
+
+Abrir último flyer en Explorer:
+
+```bash
+bash scripts/flyer_open_latest.sh
+```
+
 Ver estado general del orden:
 
 ```bash
 bash scripts/orden_status.sh
+```
+
+Aplicar mejoras por airdrop:
+
+```bash
+bash scripts/apply_airdrop.sh --dry-run
+bash scripts/apply_airdrop.sh --apply
 ```
 
 Guardar avance:
@@ -83,6 +102,7 @@ bash scripts/checkpoint.sh "mensaje"
 ```bash
 py scripts/flyer_from_email.py "inbox/correo_prueba.txt"
 bash scripts/flyer_list.sh
+bash scripts/flyer_index.sh
 bash scripts/flyer_status_latest.sh
 bash scripts/checkpoint.sh "mensaje"
 ```
