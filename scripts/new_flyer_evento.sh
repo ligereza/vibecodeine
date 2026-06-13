@@ -15,6 +15,11 @@ DIR="projects/flyer_eventos/${DATE}_${SAFE_NAME}"
 
 mkdir -p "$DIR/input" "$DIR/working" "$DIR/exports" "$DIR/refs"
 
+touch "$DIR/input/.gitkeep"
+touch "$DIR/working/.gitkeep"
+touch "$DIR/exports/.gitkeep"
+touch "$DIR/refs/.gitkeep"
+
 cat > "$DIR/manifest.json" <<EOC
 {
   "tool": "flyer_eventos",
