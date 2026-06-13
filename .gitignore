@@ -25,3 +25,6 @@ _local/
 _originales/
 _exports_pesados/
 _quarantine_frames/
+
+# Ejecutables locales
+*.exe
