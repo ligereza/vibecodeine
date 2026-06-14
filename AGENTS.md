@@ -187,3 +187,18 @@ Validar configs y resumir proyectos:
 py scripts/piezas_validate_config.py
 py scripts/piezas_project_summary.py
 ```
+
+## Mantenimiento antes de commit
+
+Antes de proponer commit/push:
+
+```bash
+py scripts/flujo_clean_generated.py
+py scripts/flujo_health.py
+```
+
+Documentación:
+
+```txt
+docs/MANTENIMIENTO_REPO.md
+```
