@@ -69,6 +69,20 @@
         "height": 1080
       },
       "descripcion": "Slide cuadrado para carrusel digital."
+    },
+    {
+      "id": "rider_eventos_a4_horizontal",
+      "tipo": "rider layout operativo evento stand",
+      "template": "tools/piezas_vectoriales/plantillas/rider_eventos_a4_horizontal.config.json",
+      "real_size_cm": {
+        "width": 29.7,
+        "height": 21
+      },
+      "canvas": {
+        "width": 2970,
+        "height": 2100
+      },
+      "descripcion": "Rider técnico A4 horizontal con requerimientos y plano operativo."
     }
   ]
 }

@@ -296,3 +296,43 @@ Quality gates:
 ```txt
 docs/QUALITY_GATES.md
 ```
+
+## Rider eventos / layout operativo
+
+Para riders técnicos o layouts de intervención en eventos:
+
+```txt
+docs/RIDER_EVENTOS.md
+recipes/rider_eventos_layout_operativo.md
+```
+
+Plantilla:
+
+```txt
+tools/piezas_vectoriales/plantillas/rider_eventos_a4_horizontal.config.json
+```
+
+Proyecto base RD:
+
+```txt
+projects/piezas_vectoriales/rider_rd_intervencion_terreno/config.json
+```
+
+## Rider rápido
+
+```bash
+py scripts/flujo.py rider-presets
+py scripts/flujo.py rider-new "rider nombre" "Marca"
+```
+
+Componentes rider:
+
+```txt
+tools/piezas_vectoriales/components/rider/
+```
+
+Checklist:
+
+```txt
+docs/RIDER_CHECKLIST.md
+```

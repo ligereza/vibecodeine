@@ -26,6 +26,8 @@ def usage():
   py scripts/flujo.py components
   py scripts/flujo.py inspect projects/piezas_vectoriales/NOMBRE
   py scripts/flujo.py backlog
+  py scripts/flujo.py rider-presets
+  py scripts/flujo.py rider-new "nombre" [brand]
 ''')
     sys.exit(1)
 
@@ -64,5 +66,9 @@ elif cmd == 'inspect' and len(args) >= 1:
     run([PY, 'scripts/project_inspect.py', args[0]])
 elif cmd == 'backlog':
     run([PY, 'scripts/backlog_list.py'])
+elif cmd == 'rider-presets':
+    run([PY, 'scripts/rider_presets.py'])
+elif cmd == 'rider-new' and len(args) >= 1:
+    run([PY, 'scripts/rider_new.py'] + args)
 else:
     usage()
