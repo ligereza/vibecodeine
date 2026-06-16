@@ -19,14 +19,45 @@ import subprocess
 import sys
 from pathlib import Path
 
-from matplotlib.font_manager import FontProperties
+from matplotlib.font_manager import FontProperties, fontManager
 from matplotlib.path import Path as MplPath
 from matplotlib.textpath import TextPath
 
 ROOT = Path.cwd()
-FONT_REG = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
-FONT_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 FONT_FAMILY = "DejaVu Sans, Arial, Helvetica, sans-serif"
+
+
+def _find_font(weight_hint="regular"):
+    """Busca una fuente sans-serif del sistema. Prefiere fuentes probadas con TextPath."""
+    preferred = [
+        ("DejaVuSans.ttf", "DejaVuSans-Bold.ttf"),
+        ("DejaVu Sans", "DejaVu Sans Bold"),
+        ("LiberationSans-Regular.ttf", "LiberationSans-Bold.ttf"),
+        ("NotoSans-Regular.ttf", "NotoSans-Bold.ttf"),
+        ("Arial.ttf", "Arial Bold.ttf"),
+        ("FreeSans.ttf", "FreeSansBold.ttf"),
+    ]
+
+    for reg_name, bold_name in preferred:
+        target = bold_name if weight_hint == "bold" else reg_name
+        for font in fontManager.ttflist:
+            fname = font.fname
+            if not fname.lower().endswith(".ttf"):
+                continue
+            if target.lower() in fname.lower() or target.lower() in font.name.lower():
+                return fname
+
+    # fallback: primera fuente sans-serif que no parezca display/símbolos
+    for font in fontManager.ttflist:
+        fname = font.fname.lower()
+        if fname.endswith(".ttf") and "sans" in font.name.lower() and "display" not in fname and "math" not in fname:
+            return font.fname
+
+    raise RuntimeError("No se encontró ninguna fuente TTF sans-serif en el sistema.")
+
+
+FONT_REG = _find_font("regular")
+FONT_BOLD = _find_font("bold") if any("bold" in f.name.lower() for f in fontManager.ttflist) else FONT_REG
 
 
 def fp(weight="regular"):
@@ -56,9 +87,10 @@ def wrap_line(text: str, max_width: float, size: float, weight="regular"):
 
 
 def path_d_for_text(text, x, baseline_y, size, fill, weight="regular"):
+    import numpy as np
     tp = TextPath((0, 0), str(text), size=size, prop=fp(weight))
-    verts = tp.vertices
-    codes = tp.codes
+    verts = np.asarray(tp.vertices)
+    codes = np.asarray(tp.codes) if tp.codes is not None else None
     if codes is None:
         return ""
     parts = []

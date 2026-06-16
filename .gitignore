@@ -33,6 +33,13 @@ _quarantine_frames/
 _airdrop/
 _airdrop_backups/
 
+# Imágenes/video de input de proyectos (se mantienen .gitkeep para la estructura)
+projects/flyer_eventos/*/input/*
+projects/flyer_eventos/*/working/*
+projects/flyer_eventos/*/exports/*
+projects/flyer_eventos/*/refs/*
+!projects/flyer_eventos/*/*/.gitkeep
+
 # Outputs generados por piezas vectoriales
 projects/piezas_vectoriales/*/salida_generada/
 projects/piezas_vectoriales/*/02_editables_svg/
@@ -44,3 +51,14 @@ projects/piezas_vectoriales/*/05_exports/
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Metadata de instalación Python
+*.egg-info/
+
+# Imágenes raster comunes
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.webp
+*.bmp

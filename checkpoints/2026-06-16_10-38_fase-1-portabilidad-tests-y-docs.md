@@ -1,3 +1,9 @@
+# Checkpoint — fase 1: portabilidad, tests y docs
+
+Fecha: 2026-06-16_10-38
+
+## Estado
+
 # Estado del proyecto
 
 Última actualización: 2026-06-16
@@ -29,3 +35,11 @@ No importar scripts viejos automáticamente. Usar `reference_old` solo como refe
 - Reducir ruido de checkpoints y `reference_old`.
 - Agregar tests mínimos de smoke.
 - Mejorar portabilidad de scripts entre Windows, macOS y Linux.
+
+## Cambios realizados
+
+- 
+
+## Próximo paso
+
+- 

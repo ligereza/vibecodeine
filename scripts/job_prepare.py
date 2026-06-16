@@ -3,20 +3,24 @@
 from pathlib import Path
 import re, subprocess, sys
 
+from _repo import repo_root
+
+ROOT = repo_root()
+
 if len(sys.argv)<2:
     print('Uso: py scripts/job_prepare.py jobs/NOMBRE')
     sys.exit(1)
-job=Path(sys.argv[1])
+job=Path(sys.argv[1]).resolve()
 if not (job/'pedido_original.txt').exists():
     print('No existe pedido_original.txt en', job); sys.exit(1)
 
 def run(cmd):
     print('$', ' '.join(map(str,cmd)))
-    subprocess.run([sys.executable if c=='PY' else c for c in cmd], check=True)
+    subprocess.run([sys.executable if c=='PY' else c for c in cmd], check=True, cwd=ROOT)
 
-run(['PY','scripts/privacy_check_job.py', str(job)])
-run(['PY','scripts/job_extract_brief.py', str(job)])
-run(['PY','scripts/job_report.py', str(job)])
+run(['PY', str(ROOT/'scripts/privacy_check_job.py'), str(job)])
+run(['PY', str(ROOT/'scripts/job_extract_brief.py'), str(job)])
+run(['PY', str(ROOT/'scripts/job_report.py'), str(job)])
 
 brief=job/'brief.yaml'
 t=brief.read_text(encoding='utf-8')

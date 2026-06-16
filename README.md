@@ -22,6 +22,20 @@ context/ESTADO.md
 tools/flyer_eventos/SPEC.md
 ```
 
+## Instalación
+
+Dependencias:
+
+```bash
+python3 -m pip install -r requirements.txt
+```
+
+En Windows también puedes usar el launcher `py`:
+
+```bash
+py -m pip install -r requirements.txt
+```
+
 ## Herramienta activa
 
 ```txt
@@ -29,6 +43,8 @@ flyer_eventos
 ```
 
 ## Comandos actuales
+
+> **Nota sobre `python3` vs `py`**: la documentación usa `python3` (Linux/macOS/Git Bash). En Windows nativo puedes reemplazar `python3` por `py`.
 
 Crear proyecto flyer manual:
 
@@ -39,13 +55,13 @@ bash scripts/new_flyer_evento.sh "nombre evento"
 Crear proyectos desde correo con links de Instagram:
 
 ```bash
-py scripts/flyer_from_email.py "inbox/correo_prueba.txt"
+python3 scripts/flyer_from_email.py "inbox/correo_prueba.txt"
 ```
 
 Forzar duplicado si realmente lo necesitas:
 
 ```bash
-py scripts/flyer_from_email.py "inbox/correo_prueba.txt" --force
+python3 scripts/flyer_from_email.py "inbox/correo_prueba.txt" --force
 ```
 
 Listar flyers:
@@ -109,18 +125,22 @@ Guardar avance:
 bash scripts/checkpoint.sh "mensaje"
 ```
 
+Comando unificado (salud, limpieza, jobs, etc.):
+
+```bash
+python3 scripts/flujo.py health
+```
+
 ## Flujo actual recomendado
 
 ```bash
-py scripts/flyer_from_email.py "inbox/correo_prueba.txt"
+python3 scripts/flyer_from_email.py "inbox/correo_prueba.txt"
 bash scripts/flyer_list.sh
 bash scripts/flyer_index.sh
 bash scripts/flyer_duplicates_report.sh
 bash scripts/flyer_status_latest.sh
 bash scripts/checkpoint.sh "mensaje"
 ```
-
-
 
 ## Herramienta adicional: piezas vectoriales / archivos de impresión
 
@@ -133,20 +153,20 @@ tools/piezas_vectoriales/SPEC.md
 Generar proyecto genérico desde JSON:
 
 ```bash
-py scripts/piezas_generar.py "projects/piezas_vectoriales/etiquetas_ejemplo/config.json"
+python3 scripts/piezas_generar.py "projects/piezas_vectoriales/etiquetas_ejemplo/config.json"
 ```
 
 Generar proyecto real Suplementos RD:
 
 ```bash
 cd projects/piezas_vectoriales/suplementos_rd
-py scripts/generar_flyers.py
+python3 scripts/generar_flyers.py
 ```
 
 Validar salidas vectoriales:
 
 ```bash
-py scripts/piezas_check_outputs.py
+python3 scripts/piezas_check_outputs.py
 ```
 
 Para pedirle trabajo a otra IA con un correo del jefe, usar:
@@ -161,5 +181,9 @@ briefs/PROMPT_PARA_OTRA_IA_ARCHIVOS_IMPRESION.md
 - No subir archivos pesados.
 - No automatizar Photoshop/Blender todavía.
 - No borrar sin confirmación.
-- Usar `py` para Python en Windows.
+- Usar `python3` en Linux/macOS y `py` en Windows según convenga.
 - Después de cada mejora, hacer checkpoint.
+
+## Sobre este repo
+
+**Dimensiones del Orden** — flujo creativo + IA.

@@ -5,11 +5,13 @@ import json
 from pathlib import Path
 from datetime import datetime
 
+from _repo import repo_root
+
 IG_RE = re.compile(
     r"https?://(?:www\.)?instagram\.com/(?P<kind>p|reel|tv)/(?P<code>[A-Za-z0-9_-]+)/*[^\s]*"
 )
 
-BASE = Path("projects/flyer_eventos")
+BASE = repo_root() / "projects/flyer_eventos"
 
 
 def slugify(text):

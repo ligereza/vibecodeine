@@ -1,0 +1,4 @@
+# Dependencias de flujo
+# Instalar con: python -m pip install -r requirements.txt
+
+matplotlib>=3.7.0
