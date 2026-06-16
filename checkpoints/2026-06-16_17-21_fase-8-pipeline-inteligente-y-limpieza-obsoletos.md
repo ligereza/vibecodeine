@@ -1,3 +1,9 @@
+# Checkpoint — fase 8: pipeline inteligente y limpieza obsoletos
+
+Fecha: 2026-06-16_17-21
+
+## Estado
+
 # Estado del proyecto
 
 Última actualización: 2026-06-16
@@ -75,3 +81,11 @@ No importar scripts viejos automáticamente. Usar `reference_old` solo como refe
 - [x] Mejorar README con pipeline inteligente.
 - [ ] Considerar si mover/eliminar `reference_old`.
 - [ ] Mejorar README con badge de CI.
+
+## Cambios realizados
+
+-
+
+## Próximo paso
+
+-

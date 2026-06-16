@@ -40,6 +40,11 @@ projects/flyer_eventos/*/exports/*
 projects/flyer_eventos/*/refs/*
 !projects/flyer_eventos/*/*/.gitkeep
 
+# Data generada por scripts
+projects/flyer_eventos/*/analysis/*.json
+projects/flyer_eventos/*/ai/*.json
+data/*.json
+
 # Outputs generados por piezas vectoriales
 projects/piezas_vectoriales/*/salida_generada/
 projects/piezas_vectoriales/*/02_editables_svg/

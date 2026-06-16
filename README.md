@@ -46,6 +46,23 @@ flyer_eventos
 
 > **Nota sobre `python3` vs `py`**: la documentación usa `python3` (Linux/macOS/Git Bash). En Windows nativo puedes reemplazar `python3` por `py`.
 
+## Pipeline inteligente (recomendado)
+
+Si recibes un correo con un pedido de diseño/impresión, el pipeline puede crear el job, inferir el tipo de pieza y medidas, y generar SVGs automáticamente:
+
+```bash
+python3 scripts/flujo_pipeline.py "nombre pedido" inbox/correo.txt
+```
+
+Para aplicar inferencias sin preguntar:
+
+```bash
+python3 scripts/flujo_pipeline.py "nombre pedido" inbox/correo.txt --confirm
+```
+
+Palabras clave soportadas: `etiqueta`, `flyer`, `sticker`, `rider`, `carrusel`, `dossier`, `one page`, `presentacion`, `tarjeta`.
+
+
 Crear proyecto flyer manual:
 
 ```bash
