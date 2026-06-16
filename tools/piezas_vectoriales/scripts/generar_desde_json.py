@@ -15,8 +15,8 @@ from __future__ import annotations
 import html
 import json
 import shutil
-import subprocess
 import sys
+import zipfile
 from pathlib import Path
 
 from matplotlib.font_manager import FontProperties, fontManager
@@ -252,7 +252,24 @@ def write_preview(cfg, edit_dir, vec_dir, preview_dir):
 def zip_folder(folder: Path, zip_path: Path):
     if zip_path.exists():
         zip_path.unlink()
-    subprocess.run(["zip", "-qr", str(zip_path), "."], cwd=folder, check=True)
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+        for item in folder.rglob("*"):
+            if item.is_file():
+                zf.write(item, item.relative_to(folder))
+
+
+def zip_files(base_dir: Path, zip_path: Path, relative_paths: list):
+    if zip_path.exists():
+        zip_path.unlink()
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED, allowZip64=True) as zf:
+        for rel in relative_paths:
+            p = base_dir / rel
+            if p.is_file():
+                zf.write(p, rel)
+            elif p.is_dir():
+                for item in p.rglob("*"):
+                    if item.is_file() and item.suffix.lower() != ".zip":
+                        zf.write(item, item.relative_to(base_dir))
 
 
 def main():
@@ -278,7 +295,7 @@ def main():
     write_preview(cfg, edit_dir, vec_dir, preview_dir)
     zip_folder(edit_dir, export_dir / f"{project_slug}_editables_svg.zip")
     zip_folder(vec_dir, export_dir / f"{project_slug}_vectorizados_svg.zip")
-    subprocess.run(["zip", "-qr", str(export_dir / f"{project_slug}_flujo_completo.zip"), "config.json", "salida_generada"], cwd=config_path.parent, check=True)
+    zip_files(config_path.parent, export_dir / f"{project_slug}_flujo_completo.zip", ["config.json", "salida_generada"])
     print(f"OK: generado en {out_root}")
 
 
