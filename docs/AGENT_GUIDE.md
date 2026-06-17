@@ -45,12 +45,11 @@ tools/
 - Mantener checkpoints
 - No hacer limpiezas agresivas sin consultar
 
-## Flujo típico
+## Scripts de mantenimiento
 
-1. `flujo flyer-import`
-2. `flujo analyze`
-3. `flujo export`
-4. (Próximo) `flujo open --ps`
+- `scripts/find_duplicates.py`
+- `scripts/sanitize_sensitive.py`
+- `scripts/cleanup_moderate.sh`
 
 ---
 

@@ -11,6 +11,7 @@ Sistema de automatización para flujos creativos.
 - Análisis de colores + OCR opcional
 - Export ZIP con integración directa para Photoshop e Illustrator (lee palette.json real)
 - Sistema de airdrop
+- Scripts de limpieza y sanitización
 
 ## Flujo principal
 
@@ -40,4 +41,4 @@ src/flujo/                # CLI moderno
 
 ---
 
-**Versión:** v0.15 — Track M (paleta real)
+**Versión:** v0.15 — Track M + Limpieza + Airdrop
