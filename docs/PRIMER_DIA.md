@@ -16,6 +16,19 @@ O simplemente:
 bash scripts/setup.sh
 ```
 
+## Interfaz web (recomendado para empezar)
+
+```bash
+py scripts/app.py
+```
+
+Abre http://localhost:7860 en el navegador. Desde allí podés:
+- Ver el dashboard.
+- Crear jobs desde correos.
+- Crear flyers desde links de Instagram.
+- Generar piezas vectoriales.
+- Ejecutar health check y limpieza.
+
 ## Flujo diario recomendado
 
 ### 1. Al empezar el día

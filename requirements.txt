@@ -4,3 +4,4 @@
 matplotlib>=3.7.0
 pyyaml>=6.0
 yt-dlp>=2024.5.0
+gradio>=6.0

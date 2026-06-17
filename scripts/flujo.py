@@ -31,6 +31,7 @@ COMMANDS = {
     "new-flyer": ([PY, str(ROOT / "scripts" / "flyer_create_project.py")], ["name"]),
     "daily": ([PY, str(ROOT / "scripts" / "flujo_daily.py")], []),
     "pipeline": ([PY, str(ROOT / "scripts" / "flujo_pipeline.py")], ["name", "email_path"]),
+    "app": ([PY, str(ROOT / "scripts" / "app.py")], []),
 }
 
 
