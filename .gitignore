@@ -83,3 +83,9 @@ projects/**/*.mkv
 *.rar
 *.7z
 !docs/**/*.zip
+
+# SQLite
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
