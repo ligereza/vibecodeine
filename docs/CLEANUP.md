@@ -1,29 +1,18 @@
-# Limpieza y Mantenimiento — flujo
+# Limpieza — flujo
 
-## Scripts disponibles
+## Scripts
 
-- `scripts/cleanup_moderate.sh` — Limpieza moderada (mover carpetas a _archive)
-- `scripts/find_duplicates.py` — Detecta archivos duplicados por contenido
-- `scripts/sanitize_sensitive.py` — Reemplaza información sensible por placeholders
+- `scripts/cleanup_legacy_aggressive.sh` — Archiva scripts legacy
+- `scripts/cleanup_moderate.sh` — Limpieza general
+- `scripts/find_duplicates.py` — Detecta duplicados
+- `scripts/sanitize_sensitive.py` — Sanitiza datos sensibles
 
-## Uso recomendado
+## Uso
 
 ```bash
-# 1. Detectar duplicados
-python scripts/find_duplicates.py
-
-# 2. Sanitizar información sensible
-python scripts/sanitize_sensitive.py
-
-# 3. Limpieza moderada
-bash scripts/cleanup_moderate.sh
+bash scripts/cleanup_legacy_aggressive.sh
+py scripts/sanitize_sensitive.py
 ```
-
-## Reglas
-
-- Nunca eliminar sin confirmación
-- Usar `_archive/` para cosas en pausa
-- Ejecutar `sanitize_sensitive.py` antes de compartir el repo
 
 ---
 
