@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
 set -e
 
-# ============================================================
-# FLUJO — Sistema de Airdrop (versión mejorada)
-# ============================================================
-
 MODE="${1:-}"
 AIRDROP_DIR="_airdrop"
 BACKUP_DIR="_airdrop_backups/$(date +%Y-%m-%d_%H-%M-%S)"
@@ -56,7 +52,6 @@ if [ "$MODE" = "--dry-run" ]; then
     exit 0
 fi
 
-# Crear backup
 mkdir -p "$BACKUP_DIR"
 echo "Backup de archivos existentes → $BACKUP_DIR"
 echo ""

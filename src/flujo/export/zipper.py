@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime
 
 def export_flyer(project_dir: Path, output_dir: Path | None = None) -> Path:
-    """Crea un ZIP listo para Photoshop con input + análisis"""
+    """Exporta flyer a ZIP incluyendo scripts de integración directa en working/ y ai/"""
     project_dir = Path(project_dir)
     if not (project_dir / "manifest.json").exists():
         raise FileNotFoundError(f"No es un proyecto flyer válido: {project_dir}")
@@ -25,17 +25,171 @@ def export_flyer(project_dir: Path, output_dir: Path | None = None) -> Path:
                 zipf.write(f, arcname)
 
     with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as z:
-        # input
         add_dir(z, project_dir / "input", "input")
-        # analysis
         add_dir(z, project_dir / "analysis", "analysis")
-        # manifest + readme
+        add_dir(z, project_dir / "working", "working")
+        add_dir(z, project_dir / "ai", "ai")
+
         for name in ["manifest.json", "README.md"]:
             p = project_dir / name
             if p.exists():
                 z.write(p, name)
-        # info txt
-        info = f"FLUJO // export\nProyecto: {project_dir.name}\nFecha: {ts}\n\nContenido:\n- input/  : imágenes originales de Instagram\n- analysis/: palette.json, palette.png, palette.aco, palette.ase, ocr.txt\n- manifest.json\n"
+
+        # Scripts de integración directa
+        working_dir = project_dir / "working"
+        ai_dir = project_dir / "ai"
+        working_dir.mkdir(exist_ok=True)
+        ai_dir.mkdir(exist_ok=True)
+
+        templates = Path(__file__).parent.parent / "templates"
+
+        compose_ps = working_dir / "compose.jsx"
+        if not compose_ps.exists():
+            compose_ps.write_text(_get_compose_jsx(), encoding="utf-8")
+
+        compose_ai = ai_dir / "compose_ai.jsx"
+        if not compose_ai.exists():
+            compose_ai.write_text(_get_compose_ai_jsx(), encoding="utf-8")
+
+        email = _generar_email_draft(project_dir)
+        z.writestr("exports/respuesta_jefe.txt", email)
+
+        info = f"""FLUJO v0.15 — Export con integración directa
+Proyecto: {project_dir.name}
+Fecha: {ts}
+
+Contenido:
+- input/
+- analysis/ (colores + .aco + .ase)
+- working/compose.jsx (Photoshop)
+- ai/compose_ai.jsx (Illustrator)
+- exports/respuesta_jefe.txt
+
+Instrucciones:
+1. Descomprime
+2. Abre working/compose.jsx con Photoshop
+3. Abre ai/compose_ai.jsx con Illustrator
+"""
         z.writestr("LEEME.txt", info)
 
     return zip_path
+
+
+def _get_compose_jsx() -> str:
+    return """// compose.jsx — Flujo v0.15
+#target photoshop
+function main() {
+    var base = Folder.current;
+    var img = new File(base + "/input/input_ig.jpg");
+    if (!img.exists) { alert("Falta input"); return; }
+
+    var doc = app.documents.add(1080, 1920, 72, base.name, NewDocumentMode.RGB);
+
+    var idPlc = charIDToTypeID("Plc ");
+    var d = new ActionDescriptor();
+    d.putPath(charIDToTypeID("null"), img);
+    executeAction(idPlc, d, DialogModes.NO);
+
+    var layer = doc.activeLayer;
+    layer.name = "Imagen IG";
+    var scale = (1920 / layer.bounds[3].value) * 100;
+    layer.resize(scale, scale, AnchorPosition.MIDDLECENTER);
+    executeAction(stringIDToTypeID("newPlacedLayer"), undefined, DialogModes.NO);
+
+    var palette = [[255,0,127],[0,255,200],[25,25,25],[255,255,255],[140,90,220]];
+    var names = ["Principal","Acento","Fondo","Texto","Secundario"];
+
+    for (var i = 0; i < palette.length; i++) {
+        var cLayer = doc.artLayers.add();
+        cLayer.name = "Color " + names[i];
+        var solid = new SolidColor();
+        solid.rgb.red = palette[i][0];
+        solid.rgb.green = palette[i][1];
+        solid.rgb.blue = palette[i][2];
+        var fd = new ActionDescriptor();
+        var rd = new ActionDescriptor();
+        rd.putDouble(charIDToTypeID("Rd  "), palette[i][0]);
+        rd.putDouble(charIDToTypeID("Grn "), palette[i][1]);
+        rd.putDouble(charIDToTypeID("Bl  "), palette[i][2]);
+        var cd = new ActionDescriptor();
+        cd.putObject(charIDToTypeID("Clr "), charIDToTypeID("RGBC"), rd);
+        fd.putObject(charIDToTypeID("Clr "), charIDToTypeID("SolidColor"), cd);
+        executeAction(charIDToTypeID("Fl  "), fd, DialogModes.NO);
+    }
+
+    var txt = doc.artLayers.add();
+    txt.kind = LayerKind.TEXT;
+    txt.name = "Caption";
+    txt.textItem.contents = "Pega el caption aquí...";
+    txt.textItem.size = 28;
+    txt.textItem.font = "Arial-Bold";
+    txt.textItem.color = new SolidColor();
+    txt.textItem.color.rgb.red = 255;
+    txt.textItem.color.rgb.green = 255;
+    txt.textItem.color.rgb.blue = 255;
+    txt.textItem.position = [80, 1700];
+
+    alert("Listo para Photoshop");
+}
+main();
+"""
+
+
+def _get_compose_ai_jsx() -> str:
+    return """// compose_ai.jsx — Flujo v0.15
+#target illustrator
+function main() {
+    var base = Folder.current;
+    var img = new File(base + "/input/input_ig.jpg");
+    if (!img.exists) { alert("Falta input"); return; }
+
+    var doc = app.documents.add(DocumentColorSpace.RGB, 1080, 1920);
+    doc.artboards[0].name = base.name;
+
+    var placed = doc.placedItems.add();
+    placed.file = img;
+    placed.name = "Imagen IG";
+
+    var scale = (1920 / placed.height) * 100;
+    placed.resize(scale, scale);
+    placed.position = [(1080 - placed.width) / 2, 1920 - placed.height];
+
+    var palette = [[255,0,127],[0,255,200],[25,25,25],[255,255,255],[140,90,220]];
+    var names = ["Principal","Acento","Fondo","Texto","Secundario"];
+
+    for (var i = 0; i < palette.length; i++) {
+        var c = new RGBColor();
+        c.red = palette[i][0]; c.green = palette[i][1]; c.blue = palette[i][2];
+        var sw = doc.swatches.add();
+        sw.name = names[i];
+        sw.color = c;
+    }
+
+    alert("Listo para Illustrator");
+}
+main();
+"""
+
+
+def _generar_email_draft(project_dir: Path) -> str:
+    import json
+    try:
+        data = json.loads((project_dir / "manifest.json").read_text(encoding="utf-8"))
+        ig = data.get("instagram", {})
+        return f"""Asunto: Flyer listo — {project_dir.name}
+
+Hola,
+
+Post: @{ig.get('owner','?')} / {ig.get('shortcode','')}
+
+Archivos listos:
+- Imagen original
+- Paleta (.aco + .ase)
+- Scripts directos para Photoshop e Illustrator
+
+¿Ajustes?
+
+Saludos
+"""
+    except:
+        return "Error generando email draft"

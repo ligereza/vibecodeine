@@ -1,111 +1,78 @@
-# AGENT_GUIDE — flujo
+# AGENT_GUIDE — flujo (Actualizado)
 
 > Para IAs que trabajan en este repo. Lee esto primero.
 
-Repo: `flujo` — **arte y automatización**
-Objetivo: Dimensiones del Orden — que los proyectos creativos no empiecen desde cero.
+**Repo:** `flujo` — **arte + automatización + trabajo real**
+**Dueño:** Diseñador y artista visual en ONG "Reduciendo Daño" + proyectos personales.
 
-## Stack
+## Contexto importante del trabajo real
+
+Este repo no es solo una herramienta técnica. Es la **base de trabajo portable** del usuario. Se usa para:
+
+- Flyers y material visual para la ONG "Reduciendo Daño" (eventos)
+- Proyectos personales artísticos (`tapiz` y otros)
+- Piezas vectoriales y etiquetas
+- Flujo de Instagram → análisis → Photoshop/Illustrator
+
+**Reglas sagradas:**
+- **No automatizar** Photoshop, Illustrator ni Blender
+- Solo usar **instaloader** para descargar de Instagram
+- Mantener varias capas de contexto porque el usuario cambia frecuentemente de IA/chat
+- Los checkpoints y el historial son importantes para retomar el trabajo
+
+## Stack actual
 
 - Python 3.10+
 - `py -m pip install -e .`
-- Deps: matplotlib / pyyaml / gradio / instaloader / pydantic / typer / rich
-- **Solo instaloader. No yt-dlp.**
+- CLI principal: `flujo` (Typer)
+- Descarga IG: **solo instaloader**
+- Análisis: colores + OCR opcional
+- Export: ZIP + preparación para diseño
 
-## Comandos (nuevo CLI)
+## Comandos principales (usar estos)
 
-```
+```bash
 flujo health
 flujo flyer-import inbox/correo.txt
-flujo flyer-list
-flujo ig-redownload
-flujo analyze              # colores + OCR
-flujo analyze --all
-flujo index --rebuild      # índice SQLite
-flujo export <proyecto>    # ZIP para Photoshop
-flujo daily
-flujo app
-flujo new-flyer "nombre evento"
+flujo analyze
+flujo index --rebuild
+flujo export <proyecto>
+flujo open <proyecto> --ps     # (próximamente)
+flujo open <proyecto> --ai     # (próximamente)
 ```
 
-Legacy (todavía funciona):
-```
-py scripts/flyer_from_email.py "inbox/correo.txt"
-py scripts/flyer_analyze.py
-bash scripts/flyer_list.sh
-```
-
-## Estructura
+## Estructura principal que importa
 
 ```
-tools/flyer_eventos/     # SPEC de la herramienta activa
-projects/flyer_eventos/YYYY-MM-DD_ig_SHORTCODE/
-  input/
-    input_ig.jpg
-    input_ig_2.jpg ...
-    ig_caption.txt
-  working/ exports/ refs/ analysis/ ai/
-  manifest.json
-src/flujo/
-  models.py      # Manifest pydantic
-  flyer/         # crear proyecto, importar email
-  ig/download.py # instaloader only
-  cli.py         # Typer
+projects/
+  flyer_eventos/          ← Trabajo principal ONG
+  piezas_vectoriales/     ← Segunda línea de trabajo
+  tapiz/                  ← Proyecto personal (mantener)
+
+src/flujo/                ← Paquete CLI moderno (fuente de verdad)
+
+tools/
+  flyer_eventos/SPEC.md
+  piezas_vectoriales/SPEC.md
 ```
 
-## Flujo flyer_eventos
+## Qué NO hacer
 
-1. Correo con links IG → `flujo flyer-import inbox/correo.txt`
-2. Se crea `projects/flyer_eventos/ig_<shortcode>/`
-3. Descarga automática con instaloader
-4. Manifest guarda: owner, date_utc, media_type, file_count, caption
-5. Si falla: `manual_download_possible = true`
-6. Reintentar: `flujo ig-redownload`
-7. Analizar: `flujo analyze` → colores + OCR → `analysis/palette.json`, `palette.aco`, `palette.ase`, `ocr.txt`
-8. Indexar: `flujo index --rebuild`
-9. Exportar: `flujo export <proyecto>` → ZIP listo PS
+- No eliminar `jobs/`, `briefs/` ni `recipes/` sin confirmación (pueden ser ramas en pausa)
+- No tocar `projects/tapiz/`
+- No automatizar herramientas de diseño
+- No romper el sistema de airdrop y checkpoints
+- No hacer limpiezas agresivas sin consultar
 
-Ver: `docs/ANALISIS.md`, `docs/INSTALOADER.md`
+## Flujo típico de trabajo
 
-## Manifest (pydantic)
-
-```python
-from flujo.models import Manifest
-```
-
-Campos clave: `tool`, `name`, `status`, `instagram.url`, `instagram.owner`, `instagram.download_status`, `extracted_info.caption_from_ig`
-
-Siempre usar `flujo.manifest.load_manifest / save_manifest` – preserva campos desconocidos.
-
-## Piezas vectoriales
-
-Segunda herramienta: etiquetas / Illustrator / SVG
-
-```
-tools/piezas_vectoriales/SPEC.md
-flujo render projects/piezas_vectoriales/etiquetas_ejemplo/config.json
-```
-
-## Reglas
-
-- Paso a paso. Sin cambios gigantes.
-- No Photoshop / Blender automático todavía.
-- No borrar sin confirmación.
-- `py` en Windows / `python3` en Linux/macOS
-- Checkpoint después de cada mejora: `bash scripts/checkpoint.sh "mensaje"`
-- Solo instaloader. No volver a yt-dlp.
-- Validar manifests con pydantic, no dicts sueltos.
-- Tests antes de commit: `pytest -q`
-
-## Dónde leer
-
-1. `README.md` – presentación
-2. `docs/AGENT_GUIDE.md` – este archivo
-3. `docs/DIMENSIONES_DEL_ORDEN.md`
-4. `context/ESTADO.md`
-5. `tools/flyer_eventos/SPEC.md`
-
-Tapiz ASCII: `docs/TAPIZ.md`
+1. Correo con links IG → `flujo flyer-import`
+2. Descarga automática
+3. Análisis de colores → `flujo analyze`
+4. Exportar ZIP preparado → `flujo export`
+5. (Próximo) Abrir scripts directos en Photoshop/Illustrator
 
 ---
-flujo — arte + automatización
+
+**Última actualización:** Junio 2026
+Mantener este documento actualizado cuando se hagan cambios importantes.
