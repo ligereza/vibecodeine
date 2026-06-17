@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Descarga posts públicos de Instagram para proyectos flyer.
 
-Primero intenta instaloader. Si falla, intenta yt-dlp. Si ambos fallan,
-marca manual_required sin dejar residuos.
+Usa únicamente instaloader. Sin yt-dlp.
 
 Uso:
   py scripts/ig_download.py <url> <output_dir>
 """
+
 import re
 import sys
 import shutil
@@ -16,7 +16,6 @@ from pathlib import Path
 from _common import repo_root
 
 ROOT = repo_root()
-
 
 def extract_shortcode(url: str) -> str | None:
     patterns = [
@@ -29,7 +28,6 @@ def extract_shortcode(url: str) -> str | None:
         if m:
             return m.group(1)
     return None
-
 
 def download_with_instaloader(url: str, output_dir: Path) -> dict:
     try:
@@ -44,12 +42,13 @@ def download_with_instaloader(url: str, output_dir: Path) -> dict:
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Limpiar archivos anteriores
-    for f in output_dir.glob("input_ig.*"):
+    # Limpiar archivos anteriores de IG
+    for f in output_dir.glob("input_ig*"):
+        f.unlink()
+    for f in output_dir.glob("ig_caption.txt"):
         f.unlink()
 
     tmp = Path(tempfile.mkdtemp(prefix="ig_"))
-
     try:
         L = instaloader.Instaloader(
             download_video_thumbnails=False,
@@ -57,6 +56,7 @@ def download_with_instaloader(url: str, output_dir: Path) -> dict:
             save_metadata=False,
             download_geotags=False,
             filename_pattern="{shortcode}",
+            quiet=True,
         )
         post = instaloader.Post.from_shortcode(L.context, shortcode)
         L.download_post(post, target=str(tmp))
@@ -69,15 +69,31 @@ def download_with_instaloader(url: str, output_dir: Path) -> dict:
 
         copied = []
         media_type = "image"
+
+        # Copiar todas las imágenes (carrusel)
         if images:
-            dst = output_dir / "input_ig.jpg"
-            shutil.copy2(images[0], dst)
-            copied.append(str(dst))
+            for i, img in enumerate(images, 1):
+                if i == 1:
+                    dst = output_dir / "input_ig.jpg"
+                else:
+                    dst = output_dir / f"input_ig_{i}.jpg"
+                shutil.copy2(img, dst)
+                copied.append(str(dst))
+
+            if len(images) > 1:
+                media_type = "carousel"
+
+        # Copiar video si existe
         if videos:
             media_type = "video" if not images else "carousel_or_video"
             dst = output_dir / "input_ig_video.mp4"
             shutil.copy2(videos[0], dst)
             copied.append(str(dst))
+
+        # Guardar caption aparte, útil para revisar
+        caption = post.caption or ""
+        if caption:
+            (output_dir / "ig_caption.txt").write_text(caption, encoding="utf-8")
 
         return {
             "status": "downloaded",
@@ -85,105 +101,42 @@ def download_with_instaloader(url: str, output_dir: Path) -> dict:
             "url": url,
             "media_type": media_type,
             "files": copied,
-            "caption": post.caption or "",
+            "caption": caption,
+            "owner": post.owner_username,
+            "date": post.date_utc.isoformat() if post.date_utc else "",
+            "is_video": post.is_video,
         }
+
     except Exception as e:
-        return {"status": "manual_required", "reason": str(e), "url": url}
+        err = str(e)
+        # Mensajes más claros para casos comunes
+        if "Login required" in err or "login" in err.lower():
+            err = "login_requerido_o_privado"
+        elif "not found" in err.lower() or "does not exist" in err.lower():
+            err = "post_no_encontrado"
+        return {"status": "manual_required", "reason": err, "url": url}
+
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
-
-
-def download_with_ytdlp(url: str, output_dir: Path) -> dict:
-    try:
-        import yt_dlp
-    except ImportError:
-        return {"status": "error", "reason": "yt_dlp_no_instalado", "url": url}
-
-    output_dir = Path(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    # Limpiar archivos anteriores
-    for f in output_dir.glob("input_ig.*"):
-        f.unlink()
-    for f in output_dir.glob("input_ig_video.*"):
-        f.unlink()
-
-    tmp = Path(tempfile.mkdtemp(prefix="ig_"))
-
-    try:
-        ydl_opts = {
-            "outtmpl": str(tmp / "%(id)s.%(ext)s"),
-            "format": "best",
-            "quiet": True,
-            "no_warnings": True,
-            "writethumbnail": False,
-            "writeinfojson": False,
-            "writesubtitles": False,
-            "skip_download": False,
-        }
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-
-        files = sorted(tmp.glob("*"))
-        images = [f for f in files if f.suffix.lower() in (".jpg", ".jpeg", ".png", ".webp")]
-        videos = [f for f in files if f.suffix.lower() in (".mp4", ".mov", ".webm")]
-
-        if not images and not videos:
-            return {"status": "manual_required", "reason": "sin_archivos_descargables", "url": url}
-
-        copied = []
-        media_type = "image"
-        if images:
-            dst = output_dir / "input_ig.jpg"
-            shutil.copy2(images[0], dst)
-            copied.append(str(dst))
-        if videos:
-            media_type = "video" if not images else "carousel_or_video"
-            dst = output_dir / "input_ig_video.mp4"
-            shutil.copy2(videos[0], dst)
-            copied.append(str(dst))
-
-        return {
-            "status": "downloaded",
-            "shortcode": extract_shortcode(url),
-            "url": url,
-            "media_type": media_type,
-            "files": copied,
-            "title": info.get("title", "") if info else "",
-        }
-    except Exception as e:
-        return {"status": "manual_required", "reason": str(e), "url": url}
-    finally:
-        shutil.rmtree(tmp, ignore_errors=True)
-
 
 def download_post(url: str, output_dir: Path) -> dict:
-    """Descarga un post público de Instagram. Intenta instaloader, luego yt-dlp."""
-    # Intento 1: Instaloader
-    result = download_with_instaloader(url, output_dir)
-    if result["status"] == "downloaded":
-        return result
+    """Descarga un post público de Instagram con instaloader.
 
-    # Intento 2: yt-dlp (como fallback)
-    result = download_with_ytdlp(url, output_dir)
-    return result
-
+    API compatible con la versión anterior que tenía fallback yt-dlp.
+    """
+    return download_with_instaloader(url, output_dir)
 
 def main():
     if len(sys.argv) < 3:
         print("Uso: py scripts/ig_download.py <url> <output_dir>")
         sys.exit(1)
-
     url = sys.argv[1]
     output_dir = Path(sys.argv[2])
-
     result = download_post(url, output_dir)
     print(result)
-
     if result["status"] == "downloaded":
         sys.exit(0)
     sys.exit(1)
-
 
 if __name__ == "__main__":
     main()
