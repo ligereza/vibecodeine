@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Descarga posts públicos de Instagram para proyectos flyer.
 
-Primero intenta yt-dlp. Si falla, marca manual_required sin dejar residuos.
+Primero intenta instaloader. Si falla, intenta yt-dlp. Si ambos fallan,
+marca manual_required sin dejar residuos.
 
 Uso:
   py scripts/ig_download.py <url> <output_dir>
@@ -30,6 +31,68 @@ def extract_shortcode(url: str) -> str | None:
     return None
 
 
+def download_with_instaloader(url: str, output_dir: Path) -> dict:
+    try:
+        import instaloader
+    except ImportError:
+        return {"status": "error", "reason": "instaloader_no_instalado", "url": url}
+
+    shortcode = extract_shortcode(url)
+    if not shortcode:
+        return {"status": "error", "reason": "shortcode_no_detectado", "url": url}
+
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Limpiar archivos anteriores
+    for f in output_dir.glob("input_ig.*"):
+        f.unlink()
+
+    tmp = Path(tempfile.mkdtemp(prefix="ig_"))
+
+    try:
+        L = instaloader.Instaloader(
+            download_video_thumbnails=False,
+            download_comments=False,
+            save_metadata=False,
+            download_geotags=False,
+            filename_pattern="{shortcode}",
+        )
+        post = instaloader.Post.from_shortcode(L.context, shortcode)
+        L.download_post(post, target=str(tmp))
+
+        images = sorted(tmp.glob("*.jpg"))
+        videos = sorted(tmp.glob("*.mp4"))
+
+        if not images and not videos:
+            return {"status": "manual_required", "reason": "sin_archivos", "url": url}
+
+        copied = []
+        media_type = "image"
+        if images:
+            dst = output_dir / "input_ig.jpg"
+            shutil.copy2(images[0], dst)
+            copied.append(str(dst))
+        if videos:
+            media_type = "video" if not images else "carousel_or_video"
+            dst = output_dir / "input_ig_video.mp4"
+            shutil.copy2(videos[0], dst)
+            copied.append(str(dst))
+
+        return {
+            "status": "downloaded",
+            "shortcode": shortcode,
+            "url": url,
+            "media_type": media_type,
+            "files": copied,
+            "caption": post.caption or "",
+        }
+    except Exception as e:
+        return {"status": "manual_required", "reason": str(e), "url": url}
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 def download_with_ytdlp(url: str, output_dir: Path) -> dict:
     try:
         import yt_dlp
@@ -46,6 +109,7 @@ def download_with_ytdlp(url: str, output_dir: Path) -> dict:
         f.unlink()
 
     tmp = Path(tempfile.mkdtemp(prefix="ig_"))
+
     try:
         ydl_opts = {
             "outtmpl": str(tmp / "%(id)s.%(ext)s"),
@@ -94,12 +158,15 @@ def download_with_ytdlp(url: str, output_dir: Path) -> dict:
 
 
 def download_post(url: str, output_dir: Path) -> dict:
-    """Descarga un post público de Instagram. Sin instaloader."""
-    shortcode = extract_shortcode(url)
-    if not shortcode:
-        return {"status": "error", "reason": "shortcode_no_detectado", "url": url}
+    """Descarga un post público de Instagram. Intenta instaloader, luego yt-dlp."""
+    # Intento 1: Instaloader
+    result = download_with_instaloader(url, output_dir)
+    if result["status"] == "downloaded":
+        return result
 
-    return download_with_ytdlp(url, output_dir)
+    # Intento 2: yt-dlp (como fallback)
+    result = download_with_ytdlp(url, output_dir)
+    return result
 
 
 def main():

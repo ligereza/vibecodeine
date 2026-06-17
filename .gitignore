@@ -68,9 +68,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Metadata de instalación Python
-*.egg-info/
-projects/tapiz/vibecode.egg-info/
+# Python venv
+.venv/
+venv/
+ENV/
 
 # Imágenes raster comunes
 *.jpg
