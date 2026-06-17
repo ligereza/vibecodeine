@@ -10,7 +10,7 @@ Sistema de automatización para flujos creativos.
 - Descarga Instagram con instaloader
 - Análisis de colores + OCR opcional
 - Export ZIP con integración directa para Photoshop e Illustrator (lee palette.json real)
-- Sistema de airdrop
+- Sistema de airdrop profesional
 - Scripts de limpieza y sanitización
 
 ## Flujo principal
@@ -41,4 +41,4 @@ src/flujo/                # CLI moderno
 
 ---
 
-**Versión:** v0.15 — Track M + Limpieza + Airdrop
+**Versión:** v0.15 — Track M + Airdrop Profesional

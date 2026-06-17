@@ -1,6 +1,6 @@
-// compose_ai.jsx — Flujo v0.15
+// compose_ai.jsx — Flujo v0.15 (Track M Completo)
 // Script para Adobe Illustrator (doble clic)
-// Coloca input_ig.jpg como imagen linked + swatches REALES desde palette.json
+// Coloca input_ig.jpg como imagen linked + swatches REALES
 
 #target illustrator
 
@@ -44,14 +44,8 @@ function main() {
     placed.resize(scale, scale);
     placed.position = [(1080 - placed.width) / 2, 1920 - placed.height];
 
-    var palette = [
-        [255, 0, 127],
-        [0, 255, 200],
-        [25, 25, 25],
-        [255, 255, 255],
-        [140, 90, 220]
-    ];
-    var names = ["Principal", "Acento", "Fondo", "Texto", "Secundario"];
+    var palette = [[255,0,127],[0,255,200],[25,25,25],[255,255,255],[140,90,220]];
+    var names = ["Principal","Acento","Fondo","Texto","Secundario"];
 
     var realPalette = readPaletteJSON(paletteFile);
     if (realPalette) {
@@ -60,10 +54,7 @@ function main() {
 
     for (var i = 0; i < palette.length; i++) {
         var c = new RGBColor();
-        c.red = palette[i][0];
-        c.green = palette[i][1];
-        c.blue = palette[i][2];
-
+        c.red = palette[i][0]; c.green = palette[i][1]; c.blue = palette[i][2];
         var sw = doc.swatches.add();
         sw.name = names[i] || ("Color " + (i+1));
         sw.color = c;

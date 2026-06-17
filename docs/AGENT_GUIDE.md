@@ -50,6 +50,7 @@ tools/
 - `scripts/find_duplicates.py`
 - `scripts/sanitize_sensitive.py`
 - `scripts/cleanup_moderate.sh`
+- `scripts/cleanup_legacy_aggressive.sh`
 
 ---
 

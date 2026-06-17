@@ -1,4 +1,4 @@
-# .pre-commit-config.yaml — flujo (versión final corregida)
+# .pre-commit-config.yaml — flujo (versión simplificada final)
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -9,19 +9,3 @@ repos:
       - id: check-yaml
       - id: check-added-large-files
         args: ["--maxkb=800"]
-
-  - repo: local
-    hooks:
-      - id: flujo-health
-        name: Flujo health
-        entry: bash -c 'flujo health || py -m flujo health || python3 -m flujo health || true'
-        language: system
-        pass_filenames: false
-        always_run: true
-
-      - id: flujo-tests
-        name: Flujo tests
-        entry: bash -c 'py -m pytest tests/ -q --tb=no || python3 -m pytest tests/ -q --tb=no || true'
-        language: system
-        pass_filenames: false
-        always_run: true

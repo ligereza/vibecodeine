@@ -1,4 +1,4 @@
-// compose.jsx — Flujo v0.15
+// compose.jsx — Flujo v0.15 (Track M Completo)
 // Script para Photoshop (doble clic)
 // Coloca input_ig.jpg como Smart Object + paleta REAL desde analysis/palette.json
 
@@ -11,7 +11,6 @@ function readPaletteJSON(file) {
     file.close();
 
     try {
-        // Simple JSON parser for palette.json
         var data = eval("(" + content + ")");
         if (data && data.colors && data.colors.length > 0) {
             var palette = [];
@@ -48,17 +47,9 @@ function main() {
     layer.resize(scale, scale, AnchorPosition.MIDDLECENTER);
     executeAction(stringIDToTypeID("newPlacedLayer"), undefined, DialogModes.NO);
 
-    // Paleta por defecto
-    var palette = [
-        [255, 0, 127],
-        [0, 255, 200],
-        [25, 25, 25],
-        [255, 255, 255],
-        [140, 90, 220]
-    ];
-    var names = ["Principal", "Acento", "Fondo", "Texto", "Secundario"];
+    var palette = [[255,0,127],[0,255,200],[25,25,25],[255,255,255],[140,90,220]];
+    var names = ["Principal","Acento","Fondo","Texto","Secundario"];
 
-    // Intentar cargar paleta real
     var realPalette = readPaletteJSON(paletteFile);
     if (realPalette) {
         palette = realPalette;

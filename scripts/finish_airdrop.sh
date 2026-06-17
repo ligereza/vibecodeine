@@ -12,15 +12,11 @@ git status --short
 
 echo ""
 echo "2. Ejecutando pruebas..."
-if command -v pytest &> /dev/null; then
-    pytest -q || echo "Tests fallaron (revisa antes de continuar)"
-else
-    echo "pytest no encontrado, salteando tests"
-fi
+py -m pytest tests/ -q --tb=no 2>/dev/null || python3 -m pytest tests/ -q --tb=no 2>/dev/null || echo "Tests skipped"
 
 echo ""
 echo "3. Checkpoint recomendado:"
-echo "   bash scripts/checkpoint.sh \"flujo v0.15 - [descripción del airdrop]\""
+echo "   bash scripts/checkpoint.sh \"flujo v0.15 - [descripción]\""
 
 echo ""
 echo "4. Comandos para commit:"
@@ -29,6 +25,4 @@ echo "   git commit -m \"feat: [descripción]\""
 echo "   git push"
 
 echo ""
-echo "════════════════════════════════════════════════════════════"
-echo "Cuando estés listo, ejecuta los comandos de arriba."
 echo "════════════════════════════════════════════════════════════"

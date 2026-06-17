@@ -2,11 +2,14 @@
 
 Mecanismo para recibir cambios de forma ordenada.
 
-## Uso
+## Flujo completo
 
 ```bash
-bash scripts/apply_airdrop.sh --dry-run
+# 1. Aplicar
 bash scripts/apply_airdrop.sh --apply
+
+# 2. Finalizar (opcional pero recomendado)
+bash scripts/finish_airdrop.sh
 ```
 
 ## Estructura
@@ -15,6 +18,7 @@ bash scripts/apply_airdrop.sh --apply
 _airdrop/                 (NO commitear)
 _airdrop_backups/         (NO commitear)
 scripts/apply_airdrop.sh
+scripts/finish_airdrop.sh
 ```
 
 ## Reglas
@@ -25,4 +29,4 @@ scripts/apply_airdrop.sh
 
 ---
 
-**Versión:** Mejorada (junio 2026)
+**Versión:** Junio 2026

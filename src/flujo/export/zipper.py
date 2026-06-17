@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime
 
 def export_flyer(project_dir: Path, output_dir: Path | None = None) -> Path:
-    """Exporta flyer a ZIP incluyendo scripts JSX que leen palette.json real"""
+    """Exporta flyer a ZIP incluyendo scripts JSX robustos"""
     project_dir = Path(project_dir)
     if not (project_dir / "manifest.json").exists():
         raise FileNotFoundError(f"No es un proyecto flyer válido: {project_dir}")
@@ -53,7 +53,7 @@ def export_flyer(project_dir: Path, output_dir: Path | None = None) -> Path:
         email = _generar_email_draft(project_dir)
         z.writestr("exports/respuesta_jefe.txt", email)
 
-        info = f"""FLUJO v0.15 — Export con integración directa (paleta real)
+        info = f"""FLUJO v0.15 — Track M Completo
 Proyecto: {project_dir.name}
 Fecha: {ts}
 
@@ -69,10 +69,7 @@ Contenido:
 
 
 def _get_compose_jsx() -> str:
-    return """// compose.jsx — Flujo v0.15
-// Script para Photoshop (doble clic)
-// Coloca input_ig.jpg como Smart Object + paleta REAL desde analysis/palette.json
-
+    return """// compose.jsx — Flujo v0.15 (Track M Completo)
 #target photoshop
 
 function readPaletteJSON(file) {
@@ -80,7 +77,6 @@ function readPaletteJSON(file) {
     file.open("r");
     var content = file.read();
     file.close();
-
     try {
         var data = eval("(" + content + ")");
         if (data && data.colors && data.colors.length > 0) {
@@ -129,22 +125,19 @@ function main() {
     for (var i = 0; i < palette.length; i++) {
         var colorLayer = doc.artLayers.add();
         colorLayer.name = "Color " + (names[i] || "Color " + (i+1));
-
         var solid = new SolidColor();
         solid.rgb.red = palette[i][0];
         solid.rgb.green = palette[i][1];
         solid.rgb.blue = palette[i][2];
-
-        var fillDesc = new ActionDescriptor();
-        var rgbDesc = new ActionDescriptor();
-        rgbDesc.putDouble(charIDToTypeID("Rd  "), palette[i][0]);
-        rgbDesc.putDouble(charIDToTypeID("Grn "), palette[i][1]);
-        rgbDesc.putDouble(charIDToTypeID("Bl  "), palette[i][2]);
-
-        var colorDesc = new ActionDescriptor();
-        colorDesc.putObject(charIDToTypeID("Clr "), charIDToTypeID("RGBC"), rgbDesc);
-        fillDesc.putObject(charIDToTypeID("Clr "), charIDToTypeID("SolidColor"), colorDesc);
-        executeAction(charIDToTypeID("Fl  "), fillDesc, DialogModes.NO);
+        var fd = new ActionDescriptor();
+        var rd = new ActionDescriptor();
+        rd.putDouble(charIDToTypeID("Rd  "), palette[i][0]);
+        rd.putDouble(charIDToTypeID("Grn "), palette[i][1]);
+        rd.putDouble(charIDToTypeID("Bl  "), palette[i][2]);
+        var cd = new ActionDescriptor();
+        cd.putObject(charIDToTypeID("Clr "), charIDToTypeID("RGBC"), rd);
+        fd.putObject(charIDToTypeID("Clr "), charIDToTypeID("SolidColor"), cd);
+        executeAction(charIDToTypeID("Fl  "), fd, DialogModes.NO);
     }
 
     var txt = doc.artLayers.add();
@@ -166,10 +159,7 @@ main();
 
 
 def _get_compose_ai_jsx() -> str:
-    return """// compose_ai.jsx — Flujo v0.15
-// Script para Adobe Illustrator (doble clic)
-// Coloca input_ig.jpg como imagen linked + swatches REALES desde palette.json
-
+    return """// compose_ai.jsx — Flujo v0.15 (Track M Completo)
 #target illustrator
 
 function readPaletteJSON(file) {
@@ -177,7 +167,6 @@ function readPaletteJSON(file) {
     file.open("r");
     var content = file.read();
     file.close();
-
     try {
         var data = eval("(" + content + ")");
         if (data && data.colors && data.colors.length > 0) {

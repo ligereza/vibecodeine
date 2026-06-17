@@ -1,3 +1,9 @@
+# Checkpoint — flujo v0.15 - Avance significativo (Track M + Airdrop Profesional + Documentación)
+
+Fecha: 2026-06-17_19-48
+
+## Estado
+
 # Estado del proyecto — flujo
 
 **Última actualización:** Junio 2026
@@ -24,3 +30,11 @@ Estabilizar y documentar el flujo completo.
 - No automatizar herramientas de diseño
 - Solo instaloader
 - Mantener contexto y checkpoints
+
+## Cambios realizados
+
+-
+
+## Próximo paso
+
+-
