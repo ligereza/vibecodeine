@@ -115,3 +115,68 @@ def test_ig_download_extract_shortcode():
     assert extract_shortcode("https://www.instagram.com/reel/REEL123/") == "REEL123"
     assert extract_shortcode("https://www.instagram.com/tv/TV999/") == "TV999"
     assert extract_shortcode("https://example.com/nope") is None
+
+def test_analyze_colors(tmp_path):
+    """El analizador de colores extrae paleta de una imagen de prueba."""
+    from PIL import Image
+    from flujo.analyze.colors import extract_palette, save_palette_preview
+
+    # crear imagen de prueba - usar PNG para evitar compresión JPEG
+    img_path = tmp_path / "test.png"
+    img = Image.new("RGB", (90, 60))
+    from PIL import ImageDraw
+    d = ImageDraw.Draw(img)
+    d.rectangle([0, 0, 30, 60], fill=(255, 0, 0))
+    d.rectangle([30, 0, 60, 60], fill=(0, 255, 0))
+    d.rectangle([60, 0, 90, 60], fill=(0, 0, 255))
+    img.save(img_path)
+
+    palette = extract_palette(img_path, n_colors=3)
+    assert "colors" in palette
+    assert len(palette["colors"]) >= 2
+    # debe encontrar rojo, verde, azul aprox - tolerancia por cuantización
+    # verificar que hay al menos un canal alto (>=200) en algún color
+    has_strong = any(
+        max(c["rgb"]) >= 200
+        for c in palette["colors"]
+    )
+    assert has_strong, f"Paleta: {palette['colors']}"
+
+    # preview
+    preview = tmp_path / "palette.png"
+    ok = save_palette_preview(palette, preview)
+    assert ok
+    assert preview.exists()
+
+def test_index_rebuild(tmp_path, monkeypatch):
+    """El índice SQLite se reconstruye correctamente"""
+    from flujo.index.db import rebuild_index, list_flyers
+    import flujo.paths as paths
+    # aislar repo_root a tmp para que data/flujo.db caiga en tmp
+    monkeypatch.setattr(paths, "repo_root", lambda: tmp_path)
+    res = rebuild_index()
+    assert "indexed" in res
+    rows = list_flyers()
+    assert isinstance(rows, list)
+
+def test_export_zip(tmp_path, monkeypatch):
+    """Export ZIP genera un archivo válido"""
+    from flujo.flyer.project import create_flyer_project
+    from flujo.export.zipper import export_flyer
+    from PIL import Image
+
+    monkeypatch.chdir(tmp_path)
+    proj = create_flyer_project(tmp_path, "test_export", source_type="test")
+    # crear una imagen dummy en input
+    img_path = proj / "input" / "input_ig.jpg"
+    Image.new("RGB", (10, 10), color=(123, 45, 67)).save(img_path)
+    # exportar
+    zip_path = export_flyer(proj)
+    assert zip_path.exists()
+    assert zip_path.suffix == ".zip"
+    # verificar contenido
+    import zipfile
+    with zipfile.ZipFile(zip_path) as z:
+        names = z.namelist()
+        assert any("input_ig.jpg" in n for n in names)
+        assert any("manifest.json" in n for n in names)

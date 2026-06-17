@@ -1,123 +1,61 @@
-# AIRDROP v3 — flujo pro
+# AIRDROP v4 — flujo v0.14 — análisis + index + export
 
 Fecha: 2026-06-16
-Versión: 0.12.0
 
-Reconstrucción con libertad total. Arte + automatización.
+## Incluye todo de v0.12 pro + v0.13 análisis + v0.14 index/export + hotfix tests
 
-## Qué cambia (paredes derrumbadas)
+### Análisis automático
+- `flujo analyze` – colores dominantes + OCR opcional
+- `analysis/palette.json`, `palette.png`, `palette.aco`, `palette.ase`
+- `analysis/ocr.txt`, `ocr_hints.json`
+- docs/ANALISIS.md
 
-### Estructura Python pro
-- `pyproject.toml` – instala con `py -m pip install -e .`
-- `src/flujo/` – paquete real, no scripts sueltos
-- Comando CLI: `flujo` (instalado vía `[project.scripts]`)
-- También: `py -m flujo`
+### Index SQLite
+- `flujo index --rebuild`
+- DB: `data/flujo.db`
+- `flujo flyer-list` rápido
 
-### Modelos validados
-- `src/flujo/models.py` – Manifest pydantic
-- `src/flujo/manifest.py` – load/save con merge seguro, preserva campos desconocidos
-- Adiós dicts sueltos
+### Export ZIP
+- `flujo export <proyecto>`
+- ZIP listo para Photoshop: input + analysis + manifest + LEEME.txt
 
-### CLI unificado (Typer + Rich)
+### Tests fix
+- test_analyze_colors usa PNG lossless, assert >=200
+- test_index_rebuild (nuevo)
+- test_export_zip (nuevo)
+- 7 tests, todos pasan
+
+### Archivos clave
 ```
-flujo health
-flujo flyer-import inbox/correo.txt
-flujo flyer-list
-flujo ig-redownload
-flujo daily
-flujo app
-flujo new-flyer "nombre"
-```
-- Colores, tablas, ayuda automática
-
-### Instagram
-- `src/flujo/ig/download.py` – instaloader only, con retry/backoff
-- Detecta rate_limit
-- Guarda carrusel + caption + owner + date
-
-### Flyer import
-- `src/flujo/flyer/import_email.py`
-- Proyectos nombrados `ig_<shortcode>`
-- Manifest con producer_suggested
-
-### Docs
-- `README.md` – limpio, artístico, con link a tapiz
-- `docs/TAPIZ.md` – ASCII carpet completo
-- `docs/AGENT_GUIDE.md` – PARA_IA + AGENTS unificados
-- `PARA_IA.md` / `AGENS.md` – stubs que apuntan a la guía
-
-### Repo hygiene
-- `.gitignore` corregido: ya NO ignora `*.jpg` globalmente
-  Solo ignora media en `projects/**/input/*`
-  Imágenes en `docs/` y raíz están permitidas
-- `requirements.txt` actualizado: + pydantic, typer, rich
-- `start.sh` portable: detecta py/python3, ejecuta `py -m flujo app`
-
-### Compatibilidad
-Scripts legacy en `scripts/` son shims que importan desde `flujo.*`:
-- `scripts/flyer_from_email.py` → `flujo.flyer.import_email`
-- `scripts/ig_download.py` → `flujo.ig.download`
-- `scripts/flujo.py` → `flujo.cli`
-- `scripts/flyer_status.py` → versión mejorada incluida
-- `scripts/ig_redownload.py` → shim a CLI
-
-Los bash wrappers `flyer_list.sh`, `flyer_status_latest.sh`, etc. siguen funcionando.
-
-## Instalar
-
-```bash
-# desde la raíz del repo
-py -m pip uninstall -y yt-dlp  # por si quedó
-py -m pip install -e .
-
-# probar
-flujo health
-flujo flyer-import inbox/correo_prueba.txt
-```
-
-## Archivos incluidos
-
-```
-pyproject.toml
 src/flujo/
-  __init__.py
-  __main__.py
-  paths.py
-  models.py
-  manifest.py
-  cli.py
-  ig/download.py
-  flyer/project.py
-  flyer/import_email.py
-README.md
-docs/TAPIZ.md
-docs/AGENT_GUIDE.md
-PARA_IA.md
-AGENTS.md
-requirements.txt
-.gitignore
-start.sh
-scripts/flyer_from_email.py
-scripts/ig_download.py
-scripts/flujo.py
-scripts/flyer_status.py
-scripts/ig_redownload.py
+  analyze/colors.py, ocr.py, run.py, export.py
+  index/db.py
+  export/zipper.py
+  cli.py  # comandos analyze / index / export
+scripts/flyer_analyze.py
+docs/ANALISIS.md
+tests/test_smoke.py  # actualizado
+.github/workflows/ci.yml  # pip install -e .
+pyproject.toml  # version 0.14.0
 ```
 
-## Migración
+Aplicar:
+```
+bash scripts/apply_airdrop.sh --dry-run
+bash scripts/apply_airdrop.sh --apply
+py -m pip install -e .
+flujo health
+pytest -q
+bash scripts/checkpoint.sh "flujo v0.14 - analisis + index + export"
+```
 
-1. Aplicar airdrop
-2. `py -m pip install -e .`
-3. `flujo health`
-4. `pytest -q`  (tests smoke existentes siguen pasando)
-5. checkpoint
-
-Los manifests antiguos se leen sin problema – pydantic con `extra="allow"`.
-
-## Próximo
-
-- Fase B: OCR + palette auto
-- Fase C: SQLite index
-- Fase D: Gradio con auth
-
-— flujo v0.12 // arte y automatización
+Comandos:
+```
+flujo flyer-import inbox/correo.txt
+flujo ig-redownload
+flujo analyze
+flujo analyze --all
+flujo index --rebuild
+flujo export projects/flyer_eventos/2026-06-16_ig_XXXX
+flujo app
+```

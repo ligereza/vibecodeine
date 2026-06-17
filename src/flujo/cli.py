@@ -126,6 +126,86 @@ def new_flyer(name: str = typer.Argument(..., help="nombre del evento")):
     p = create_flyer_project(None, name, source_type="manual")
     console.print(f"[green]Creado:[/] {p}")
 
+@app.command()
+def analyze(
+    project: Path = typer.Argument(None, help="ruta al proyecto flyer (vacío = último)"),
+    all: bool = typer.Option(False, "--all", help="analizar todos los proyectos"),
+):
+    """Analizar flyer: colores dominantes + OCR opcional"""
+    from .analyze.run import analyze_project, find_latest_flyer
+    from .paths import flyer_base
+
+    targets = []
+    if all:
+        base = flyer_base()
+        targets = sorted([p for p in base.glob("*") if (p / "manifest.json").exists()]) if base.exists() else []
+    elif project:
+        targets = [project]
+    else:
+        latest = find_latest_flyer()
+        if not latest:
+            console.print("[red]No se encontró ningún proyecto flyer[/]")
+            raise typer.Exit(1)
+        targets = [latest]
+
+    ok = 0
+    for proj in targets:
+        console.print(f"→ [cyan]{proj.name}[/]")
+        res = analyze_project(proj)
+        if res.get("status") == "ok":
+            colors = [c["hex"] for c in res.get("palette", {}).get("colors", [])]
+            console.print("  colores: " + " ".join(f"[on {c}]{c}[/]" for c in colors))
+            if res.get("ocr", {}).get("available"):
+                console.print(f"  OCR: {res['ocr'].get('chars',0)} chars")
+            else:
+                console.print("  OCR: [dim]no disponible (pip install pytesseract)[/]")
+            ok += 1
+        else:
+            console.print(f"  [red]FAIL: {res.get('error', res)}[/]")
+    console.print(f"\n[green]Analizados OK: {ok}/{len(targets)}[/]")
+
+@app.command()
+def index(
+    rebuild: bool = typer.Option(False, "--rebuild", help="reconstruir índice desde cero")
+):
+    """Índice SQLite de flyers"""
+    from .index.db import rebuild_index, list_flyers
+    from rich.table import Table
+    if rebuild:
+        res = rebuild_index()
+        console.print(f"[green]Index rebuild OK:[/] {res['indexed']} flyers → {res['db']}")
+    rows = list_flyers(limit=30)
+    if rows:
+        table = Table("shortcode", "owner", "status", "media", "proyecto")
+        for r in rows:
+            table.add_row(
+                r.get("shortcode","") or "-",
+                r.get("owner","") or "-",
+                r.get("status",""),
+                r.get("media_type",""),
+                Path(r["project_path"]).name
+            )
+        console.print(table)
+    else:
+        console.print("Índice vacío. Ejecuta: flujo index --rebuild")
+
+@app.command()
+def export(
+    project: Path = typer.Argument(..., help="ruta al proyecto flyer"),
+    output: Path = typer.Option(None, "--output", "-o", help="carpeta destino")
+):
+    """Exportar proyecto flyer a ZIP listo para Photoshop"""
+    from .export.zipper import export_flyer
+    try:
+        zip_path = export_flyer(project, output)
+        console.print(f"[green]ZIP creado:[/] {zip_path}")
+        # tamaño
+        size_mb = zip_path.stat().st_size / 1024 / 1024
+        console.print(f"Tamaño: {size_mb:.2f} MB")
+    except Exception as e:
+        console.print(f"[red]Error: {e}[/]")
+        raise typer.Exit(1)
+
 def main():
     app()
 

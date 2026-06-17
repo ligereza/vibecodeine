@@ -1,5 +1,4 @@
 name: CI
-
 on:
   push:
     branches: [main]
@@ -10,24 +9,19 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
           python -m pip install -r requirements-dev.txt
-
+          python -m pip install -e .
       - name: Run health check
-        run: python scripts/flujo_health.py
-
+        run: python -m flujo health
       - name: Run smoke tests
         run: python -m pytest tests/ -q

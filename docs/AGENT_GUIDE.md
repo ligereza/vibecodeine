@@ -19,6 +19,10 @@ flujo health
 flujo flyer-import inbox/correo.txt
 flujo flyer-list
 flujo ig-redownload
+flujo analyze              # colores + OCR
+flujo analyze --all
+flujo index --rebuild      # índice SQLite
+flujo export <proyecto>    # ZIP para Photoshop
 flujo daily
 flujo app
 flujo new-flyer "nombre evento"
@@ -27,6 +31,7 @@ flujo new-flyer "nombre evento"
 Legacy (todavía funciona):
 ```
 py scripts/flyer_from_email.py "inbox/correo.txt"
+py scripts/flyer_analyze.py
 bash scripts/flyer_list.sh
 ```
 
@@ -56,6 +61,11 @@ src/flujo/
 4. Manifest guarda: owner, date_utc, media_type, file_count, caption
 5. Si falla: `manual_download_possible = true`
 6. Reintentar: `flujo ig-redownload`
+7. Analizar: `flujo analyze` → colores + OCR → `analysis/palette.json`, `palette.aco`, `palette.ase`, `ocr.txt`
+8. Indexar: `flujo index --rebuild`
+9. Exportar: `flujo export <proyecto>` → ZIP listo PS
+
+Ver: `docs/ANALISIS.md`, `docs/INSTALOADER.md`
 
 ## Manifest (pydantic)
 

@@ -1,7 +1,8 @@
 # Herramienta — flyer_eventos
 
-Estado: flujo base funcional / descarga automática activa
+Estado: flujo base funcional / descarga automática + análisis + export activos
 Prioridad: alta
+Versión: 0.14
 
 ## Objetivo
 
@@ -74,13 +75,38 @@ Crear proyectos desde correo (con descarga automática):
 
 ```
 py scripts/flyer_from_email.py "inbox/correo_prueba.txt"
+# o
+flujo flyer-import inbox/correo_prueba.txt
 ```
 
 Reintentar descargas fallidas:
 
 ```
 py scripts/ig_redownload.py
-py scripts/ig_redownload.py --all
+# o
+flujo ig-redownload
+```
+
+Analizar flyer (colores + OCR):
+
+```
+py scripts/flyer_analyze.py
+# o
+flujo analyze
+flujo analyze --all
+```
+
+Indexar flyers en SQLite:
+
+```
+flujo index --rebuild
+flujo flyer-list
+```
+
+Exportar proyecto a ZIP para Photoshop:
+
+```
+flujo export projects/flyer_eventos/2026-06-16_ig_XXXX
 ```
 
 Listar proyectos:
@@ -149,9 +175,11 @@ py scripts/ig_download.py "https://www.instagram.com/p/XXXX/" ./output
 - [x] Descarga automática con instaloader.
 - [x] Guardar carrusel completo + caption.
 - [x] Reintento de descargas fallidas `ig_redownload.py`.
-- [ ] Extraer colores dominantes.
-- [ ] Extraer texto OCR del flyer.
-- [ ] Preparar salida Photoshop.
+- [x] Extraer colores dominantes → `analysis/palette.json`
+- [x] Extraer texto OCR del flyer → `analysis/ocr.txt` (opcional)
+- [x] Export ZIP listo para Photoshop → `flujo export`
+- [x] Paleta exportable `.aco` / `.ase` para PS / AI
+- [x] Índice SQLite de flyers → `flujo index`
 - [ ] Preparar integración Blender.
 
 ## Descarga Instagram
@@ -161,6 +189,13 @@ py scripts/ig_download.py "https://www.instagram.com/p/XXXX/" ./output
 - Archivos: `input_ig.jpg`, `input_ig_2.jpg`..., `input_ig_video.mp4`, `ig_caption.txt`
 - Manifest guarda: owner, date_utc, media_type, file_count
 - Ver `docs/INSTALOADER.md`
+
+## Análisis automático
+
+- Colores dominantes con Pillow → `analysis/palette.json` + `palette.png`
+- OCR opcional con pytesseract → `analysis/ocr.txt` + `ocr_hints.json`
+- Comando: `flujo analyze` / `py scripts/flyer_analyze.py`
+- Ver `docs/ANALISIS.md`
 
 ## Reglas
 
