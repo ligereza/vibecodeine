@@ -75,6 +75,25 @@ def _get_compose_jsx() -> str:
 
 #target photoshop
 
+function readPaletteJSON(file) {
+    if (!file.exists) return null;
+    file.open("r");
+    var content = file.read();
+    file.close();
+
+    try {
+        var data = eval("(" + content + ")");
+        if (data && data.colors && data.colors.length > 0) {
+            var palette = [];
+            for (var i = 0; i < Math.min(data.colors.length, 5); i++) {
+                palette.push(data.colors[i].rgb);
+            }
+            return palette;
+        }
+    } catch(e) {}
+    return null;
+}
+
 function main() {
     var baseFolder = Folder.current;
     var inputFile = new File(baseFolder + "/input/input_ig.jpg");
@@ -102,37 +121,30 @@ function main() {
     var palette = [[255,0,127],[0,255,200],[25,25,25],[255,255,255],[140,90,220]];
     var names = ["Principal","Acento","Fondo","Texto","Secundario"];
 
-    if (paletteFile.exists) {
-        try {
-            paletteFile.open("r");
-            var content = paletteFile.read();
-            paletteFile.close();
-            var data = eval("(" + content + ")");
-            if (data && data.colors && data.colors.length > 0) {
-                palette = [];
-                for (var i = 0; i < Math.min(data.colors.length, 5); i++) {
-                    palette.push(data.colors[i].rgb);
-                }
-            }
-        } catch(e) {}
+    var realPalette = readPaletteJSON(paletteFile);
+    if (realPalette) {
+        palette = realPalette;
     }
 
     for (var i = 0; i < palette.length; i++) {
         var colorLayer = doc.artLayers.add();
         colorLayer.name = "Color " + (names[i] || "Color " + (i+1));
+
         var solid = new SolidColor();
         solid.rgb.red = palette[i][0];
         solid.rgb.green = palette[i][1];
         solid.rgb.blue = palette[i][2];
-        var fd = new ActionDescriptor();
-        var rd = new ActionDescriptor();
-        rd.putDouble(charIDToTypeID("Rd  "), palette[i][0]);
-        rd.putDouble(charIDToTypeID("Grn "), palette[i][1]);
-        rd.putDouble(charIDToTypeID("Bl  "), palette[i][2]);
-        var cd = new ActionDescriptor();
-        cd.putObject(charIDToTypeID("Clr "), charIDToTypeID("RGBC"), rd);
-        fd.putObject(charIDToTypeID("Clr "), charIDToTypeID("SolidColor"), cd);
-        executeAction(charIDToTypeID("Fl  "), fd, DialogModes.NO);
+
+        var fillDesc = new ActionDescriptor();
+        var rgbDesc = new ActionDescriptor();
+        rgbDesc.putDouble(charIDToTypeID("Rd  "), palette[i][0]);
+        rgbDesc.putDouble(charIDToTypeID("Grn "), palette[i][1]);
+        rgbDesc.putDouble(charIDToTypeID("Bl  "), palette[i][2]);
+
+        var colorDesc = new ActionDescriptor();
+        colorDesc.putObject(charIDToTypeID("Clr "), charIDToTypeID("RGBC"), rgbDesc);
+        fillDesc.putObject(charIDToTypeID("Clr "), charIDToTypeID("SolidColor"), colorDesc);
+        executeAction(charIDToTypeID("Fl  "), fillDesc, DialogModes.NO);
     }
 
     var txt = doc.artLayers.add();
@@ -156,9 +168,28 @@ main();
 def _get_compose_ai_jsx() -> str:
     return """// compose_ai.jsx — Flujo v0.15
 // Script para Adobe Illustrator (doble clic)
-// Coloca input_ig.jpg como imagen linked + swatches REALES
+// Coloca input_ig.jpg como imagen linked + swatches REALES desde palette.json
 
 #target illustrator
+
+function readPaletteJSON(file) {
+    if (!file.exists) return null;
+    file.open("r");
+    var content = file.read();
+    file.close();
+
+    try {
+        var data = eval("(" + content + ")");
+        if (data && data.colors && data.colors.length > 0) {
+            var palette = [];
+            for (var i = 0; i < Math.min(data.colors.length, 5); i++) {
+                palette.push(data.colors[i].rgb);
+            }
+            return palette;
+        }
+    } catch(e) {}
+    return null;
+}
 
 function main() {
     var baseFolder = Folder.current;
@@ -184,19 +215,9 @@ function main() {
     var palette = [[255,0,127],[0,255,200],[25,25,25],[255,255,255],[140,90,220]];
     var names = ["Principal","Acento","Fondo","Texto","Secundario"];
 
-    if (paletteFile.exists) {
-        try {
-            paletteFile.open("r");
-            var content = paletteFile.read();
-            paletteFile.close();
-            var data = eval("(" + content + ")");
-            if (data && data.colors && data.colors.length > 0) {
-                palette = [];
-                for (var i = 0; i < Math.min(data.colors.length, 5); i++) {
-                    palette.push(data.colors[i].rgb);
-                }
-            }
-        } catch(e) {}
+    var realPalette = readPaletteJSON(paletteFile);
+    if (realPalette) {
+        palette = realPalette;
     }
 
     for (var i = 0; i < palette.length; i++) {

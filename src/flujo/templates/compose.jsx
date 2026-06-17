@@ -4,6 +4,26 @@
 
 #target photoshop
 
+function readPaletteJSON(file) {
+    if (!file.exists) return null;
+    file.open("r");
+    var content = file.read();
+    file.close();
+
+    try {
+        // Simple JSON parser for palette.json
+        var data = eval("(" + content + ")");
+        if (data && data.colors && data.colors.length > 0) {
+            var palette = [];
+            for (var i = 0; i < Math.min(data.colors.length, 5); i++) {
+                palette.push(data.colors[i].rgb);
+            }
+            return palette;
+        }
+    } catch(e) {}
+    return null;
+}
+
 function main() {
     var baseFolder = Folder.current;
     var inputFile = new File(baseFolder + "/input/input_ig.jpg");
@@ -28,7 +48,7 @@ function main() {
     layer.resize(scale, scale, AnchorPosition.MIDDLECENTER);
     executeAction(stringIDToTypeID("newPlacedLayer"), undefined, DialogModes.NO);
 
-    // === Cargar paleta real desde analysis/palette.json ===
+    // Paleta por defecto
     var palette = [
         [255, 0, 127],
         [0, 255, 200],
@@ -38,20 +58,10 @@ function main() {
     ];
     var names = ["Principal", "Acento", "Fondo", "Texto", "Secundario"];
 
-    if (paletteFile.exists) {
-        try {
-            paletteFile.open("r");
-            var content = paletteFile.read();
-            paletteFile.close();
-
-            var data = eval("(" + content + ")");
-            if (data && data.colors && data.colors.length > 0) {
-                palette = [];
-                for (var i = 0; i < Math.min(data.colors.length, 5); i++) {
-                    palette.push(data.colors[i].rgb);
-                }
-            }
-        } catch(e) {}
+    // Intentar cargar paleta real
+    var realPalette = readPaletteJSON(paletteFile);
+    if (realPalette) {
+        palette = realPalette;
     }
 
     for (var i = 0; i < palette.length; i++) {

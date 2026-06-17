@@ -1,8 +1,27 @@
 // compose_ai.jsx — Flujo v0.15
 // Script para Adobe Illustrator (doble clic)
-// Coloca input_ig.jpg como imagen linked + swatches REALES
+// Coloca input_ig.jpg como imagen linked + swatches REALES desde palette.json
 
 #target illustrator
+
+function readPaletteJSON(file) {
+    if (!file.exists) return null;
+    file.open("r");
+    var content = file.read();
+    file.close();
+
+    try {
+        var data = eval("(" + content + ")");
+        if (data && data.colors && data.colors.length > 0) {
+            var palette = [];
+            for (var i = 0; i < Math.min(data.colors.length, 5); i++) {
+                palette.push(data.colors[i].rgb);
+            }
+            return palette;
+        }
+    } catch(e) {}
+    return null;
+}
 
 function main() {
     var baseFolder = Folder.current;
@@ -25,7 +44,6 @@ function main() {
     placed.resize(scale, scale);
     placed.position = [(1080 - placed.width) / 2, 1920 - placed.height];
 
-    // === Cargar paleta real ===
     var palette = [
         [255, 0, 127],
         [0, 255, 200],
@@ -35,20 +53,9 @@ function main() {
     ];
     var names = ["Principal", "Acento", "Fondo", "Texto", "Secundario"];
 
-    if (paletteFile.exists) {
-        try {
-            paletteFile.open("r");
-            var content = paletteFile.read();
-            paletteFile.close();
-
-            var data = eval("(" + content + ")");
-            if (data && data.colors && data.colors.length > 0) {
-                palette = [];
-                for (var i = 0; i < Math.min(data.colors.length, 5); i++) {
-                    palette.push(data.colors[i].rgb);
-                }
-            }
-        } catch(e) {}
+    var realPalette = readPaletteJSON(paletteFile);
+    if (realPalette) {
+        palette = realPalette;
     }
 
     for (var i = 0; i < palette.length; i++) {
