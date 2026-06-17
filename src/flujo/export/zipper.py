@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime
 
 def export_flyer(project_dir: Path, output_dir: Path | None = None) -> Path:
-    """Exporta flyer a ZIP incluyendo scripts de integración directa en working/ y ai/"""
+    """Exporta flyer a ZIP incluyendo scripts JSX de integración directa"""
     project_dir = Path(project_dir)
     if not (project_dir / "manifest.json").exists():
         raise FileNotFoundError(f"No es un proyecto flyer válido: {project_dir}")
@@ -35,7 +35,6 @@ def export_flyer(project_dir: Path, output_dir: Path | None = None) -> Path:
             if p.exists():
                 z.write(p, name)
 
-        # Scripts de integración directa
         working_dir = project_dir / "working"
         ai_dir = project_dir / "ai"
         working_dir.mkdir(exist_ok=True)
@@ -60,15 +59,9 @@ Fecha: {ts}
 
 Contenido:
 - input/
-- analysis/ (colores + .aco + .ase)
+- analysis/
 - working/compose.jsx (Photoshop)
 - ai/compose_ai.jsx (Illustrator)
-- exports/respuesta_jefe.txt
-
-Instrucciones:
-1. Descomprime
-2. Abre working/compose.jsx con Photoshop
-3. Abre ai/compose_ai.jsx con Illustrator
 """
         z.writestr("LEEME.txt", info)
 
@@ -84,7 +77,6 @@ function main() {
     if (!img.exists) { alert("Falta input"); return; }
 
     var doc = app.documents.add(1080, 1920, 72, base.name, NewDocumentMode.RGB);
-
     var idPlc = charIDToTypeID("Plc ");
     var d = new ActionDescriptor();
     d.putPath(charIDToTypeID("null"), img);

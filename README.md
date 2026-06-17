@@ -1,15 +1,16 @@
 # flujo — Dimensiones del Orden
 
-**arte + automatización + trabajo real**
+**arte + automatización**
 
-Repo personal de un diseñador y artista visual que trabaja en la ONG "Reduciendo Daño" + proyectos personales.
+Sistema de automatización para flujos creativos.
 
-## Propósito
+## Estado actual (v0.15)
 
-Este repo existe para:
-- Reducir fricción en el flujo de trabajo diario
-- Mantener contexto cuando se cambia de máquina o de IA
-- Servir como base portable de proyectos creativos
+- CLI unificado (`flujo`)
+- Descarga Instagram con instaloader
+- Análisis de colores + OCR opcional
+- Export ZIP con integración directa para Photoshop e Illustrator
+- Sistema de airdrop
 
 ## Flujo principal
 
@@ -17,17 +18,18 @@ Este repo existe para:
 flujo flyer-import inbox/correo.txt
 flujo analyze
 flujo export <proyecto>
+flujo open <proyecto> --ps
 ```
 
-## Estructura importante
+## Estructura
 
 ```
 projects/
-├── flyer_eventos/        # Trabajo principal (ONG)
-├── piezas_vectoriales/   # Segunda línea de trabajo
-└── tapiz/                # Proyecto personal (mantener)
+├── flyer_eventos/
+├── piezas_vectoriales/
+└── tapiz/
 
-src/flujo/                # CLI moderno (fuente de verdad)
+src/flujo/                # CLI moderno
 ```
 
 ## Reglas
@@ -35,14 +37,7 @@ src/flujo/                # CLI moderno (fuente de verdad)
 - No automatizar Photoshop / Illustrator / Blender
 - Solo instaloader para Instagram
 - Mantener checkpoints y contexto
-- Respetar ramas en pausa (`tapiz`, jobs, briefs, etc.)
-
-## Documentación
-
-- `docs/AGENT_GUIDE.md` — Para IAs
-- `context/ESTADO.md` — Estado actual
-- `docs/AIRDROP.md` — Sistema de airdrop
 
 ---
 
-**Versión actual:** camino a v0.15 (Track M)
+**Versión:** v0.15 — Track M iniciado

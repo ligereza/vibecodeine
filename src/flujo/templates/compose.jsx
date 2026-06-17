@@ -1,7 +1,6 @@
 // compose.jsx — Flujo v0.15
 // Script para Photoshop (doble clic)
-// Coloca input_ig.jpg como Smart Object + capas de color
-// Respeta la regla: NO automatizamos Photoshop
+// Coloca input_ig.jpg como Smart Object + paleta de colores
 
 #target photoshop
 
@@ -28,7 +27,6 @@ function main() {
     layer.resize(scale, scale, AnchorPosition.MIDDLECENTER);
     executeAction(stringIDToTypeID("newPlacedLayer"), undefined, DialogModes.NO);
 
-    // Paleta de ejemplo
     var palette = [
         [255, 0, 127],
         [0, 255, 200],
