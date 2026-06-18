@@ -17,6 +17,11 @@
       "additionalProperties": false,
       "properties": {
         "id_externo": { "type": "string" },
+        "area": {
+          "type": "string",
+          "description": "Área de la ONG. eventos => entra por correo; suplementos => por whatsapp.",
+          "enum": ["eventos", "suplementos", "comun"]
+        },
         "solicitante": {
           "type": "object",
           "additionalProperties": false,
@@ -31,7 +36,10 @@
         },
         "tipo_pieza": {
           "type": "string",
-          "enum": ["etiqueta", "flyer", "one_page", "carrusel", "rider", "sticker", "tarjeta", "pendon"]
+          "enum": [
+            "etiqueta", "flyer", "one_page", "carrusel", "rider", "sticker", "tarjeta", "pendon",
+            "cartelera", "post", "historia", "brief", "bandera"
+          ]
         },
         "formato_sugerido": { "type": "string" },
         "medidas": {

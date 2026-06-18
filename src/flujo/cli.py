@@ -755,8 +755,18 @@ def render_formats(
     width: Optional[float] = typer.Option(None, "--width", "-w", help="ancho en cm"),
     height: Optional[float] = typer.Option(None, "--height", "-h", help="alto en cm"),
     tipo: Optional[str] = typer.Option(None, "--tipo", "-t", help="tipo (etiqueta, flyer, rider...)"),
+    area: Optional[str] = typer.Option(None, "--area", "-a", help="filtrar por área (eventos, suplementos)"),
+    medio: Optional[str] = typer.Option(None, "--medio", "-m", help="filtrar por medio (impresion, digital)"),
+    herramienta: Optional[str] = typer.Option(None, "--herramienta", help="filtrar por herramienta (illustrator, photoshop, blender)"),
 ):
-    """Listar o sugerir formatos/plantillas."""
+    """Listar, filtrar o sugerir formatos/plantillas.
+
+    Ejemplos:
+      flujo render formats                      # todos
+      flujo render formats -a suplementos       # solo área suplementos
+      flujo render formats -m impresion         # solo impresión (Illustrator)
+      flujo render formats -w 16.5 -h 6.5 -t etiqueta   # sugerir por medida
+    """
     from .render.formats import list_formats, suggest_format
     if width and height:
         sugs = suggest_format(width, height, tipo or "")
@@ -764,11 +774,17 @@ def render_formats(
         for s in sugs:
             console.print(f"  · {s}")
     else:
-        formats = list_formats()
+        formats = list_formats(area or "", medio or "", herramienta or "")
         if not formats:
-            _warn("No hay INDEX_FORMATOS.json")
+            _warn("No hay formatos que coincidan (o falta INDEX_FORMATOS.json)")
             return
-        _section(f"Formatos disponibles ({len(formats)})")
+        filtros = " ".join(x for x in [
+            f"área={area}" if area else "",
+            f"medio={medio}" if medio else "",
+            f"herramienta={herramienta}" if herramienta else "",
+        ] if x)
+        title = f"Formatos disponibles ({len(formats)})" + (f" — {filtros}" if filtros else "")
+        _section(title)
         for f in formats:
             console.print(f"  · {f}")
 

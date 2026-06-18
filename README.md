@@ -1,6 +1,6 @@
 # flujo — Dimensiones del Orden
 
-**arte + automatización · v0.26.0**
+**arte + automatización · v0.27.0**
 
 Sistema personal de automatización para flujos creativos (diseño gráfico:
 flyers, etiquetas, riders, one-pagers, carruseles). Convierte un **pedido**
@@ -281,23 +281,41 @@ revisa y diseña.
 
 ## 🎨 Catálogo de formatos
 
-Los formatos viven en `tools/piezas_vectoriales/plantillas/INDEX_FORMATOS.json`.
-Cada uno define **medida real (cm)**, **canvas (px)** y una **plantilla
-`config.json`** base. Consúltalos con `flujo render formats`.
+Los formatos viven en `tools/piezas_vectoriales/plantillas/INDEX_FORMATOS.json`
+(schema v2.0). Cada uno define **medida real (cm)**, **canvas (px)**, **área**
+(eventos/suplementos), **medio** (impresión/digital) y **herramienta**
+(Illustrator/Photoshop/Blender). Consúltalos con `flujo render formats`.
 
-| id | tipo | medida real | canvas px | uso |
-|---|---|---|---|---|
-| `etiqueta_horizontal_165x65` | etiqueta | 16.5 × 6.5 cm | 3300 × 1300 | etiqueta de producto horizontal |
-| `etiqueta_horizontal_140x100` | etiqueta | 14 × 10 cm | 2800 × 2000 | etiqueta/flyer horizontal |
-| `flyer_horizontal_minimo` | flyer | 14 × 10 cm | 2800 × 2000 | flyer horizontal mínimo |
-| `one_page_propuesta_a4` | one_page / dossier | 21 × 29.7 cm | 2100 × 2970 | propuesta de servicio A4 |
-| `carrusel_cuadrado_1080` | carrusel IG | 10.8 × 10.8 cm | 1080 × 1080 | slide cuadrado digital |
-| `rider_eventos_a4_horizontal` | rider / layout | 29.7 × 21 cm | 2970 × 2100 | rider técnico de evento |
+> **Catálogo completo y explicado en [`docs/CATALOGO_FORMATOS.md`](docs/CATALOGO_FORMATOS.md).**
+
+**Regla de oro:** Illustrator = impresión real · Photoshop = digital · Blender =
+recursos (frasco) y export de carteleras.
+
+```bash
+flujo render formats                 # todos (12)
+flujo render formats -a eventos      # por área
+flujo render formats -m impresion    # solo lo que va a Illustrator
+flujo render formats --herramienta blender   # carteleras
+```
+
+| área | id | medida | medio · herramienta |
+|---|---|---|---|
+| eventos | `evt_flyer_fisico_10x14` | 10×14 cm | impresión · Illustrator |
+| eventos | `evt_cartelera_individual_1080x1920` | 1080×1920 | digital · Photoshop+Blender |
+| eventos | `evt_cartelera_triple_1080x1920` | 1080×1920 | digital · Photoshop+Blender |
+| eventos | `evt_post_ig_1080x1350` | 1080×1350 | digital · Photoshop |
+| eventos | `evt_brief_productora_pdf_universal` | A4 univ. | impresión · Illustrator |
+| eventos | `evt_historia_flexible_1080x1920` | 1080×1920 | digital · Photoshop |
+| eventos | `rider_eventos_a4_horizontal` | 29.7×21 cm | impresión · Illustrator |
+| suplementos | `sup_etiqueta_165x65` | 16.5×6.5 cm | impresión · Illustrator |
+| suplementos | `sup_etiqueta_140x100` | 14×10 cm | impresión · Illustrator |
+| suplementos | `sup_flyer_informativo_a5` | 14.8×21 cm | impresión · Illustrator |
+| suplementos | `sup_pendon_rectangular` | paramétrico | impresión · Illustrator |
+| suplementos | `sup_bandera_poligonal` | paramétrico | impresión · Illustrator |
 
 > **Sugerencia automática:** `flujo render formats -w 16.5 -h 6.5 -t etiqueta`
 > puntúa por proporción + cercanía de medida + tipo y devuelve el mejor match.
-> Si una medida no coincide con ninguna plantilla, el sistema crea una base
-> proporcional universal usando `canvas` + `real_size_cm`.
+> Los **paramétricos** (pendones/banderas) definen su medida en cada pedido.
 
 **Cómo se compone una pieza** (estructura de `config.json`):
 - `project`: nombre, slug, marca, web, nota.

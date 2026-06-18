@@ -285,6 +285,12 @@ Ejemplos completos y válidos en `schemas/ejemplos/`:
 - `flyer_evento.json`
 - `carrusel_ig.json`
 - `modificacion_etiqueta.json` (pedido de cambio: proporción + resolución)
+- `cartelera_evento.json` (cartelera IG individual; infiere datos del post)
+- `pendon_suplemento.json` (gran formato paramétrico, vía Illustrator)
+
+> El catálogo completo de formatos de la ONG (área, medio, herramienta) está en
+> [`CATALOGO_FORMATOS.md`](CATALOGO_FORMATOS.md). El campo `pedido.area`
+> (`eventos`/`suplementos`) ayuda a enrutar por canal (correo/whatsapp).
 
 ---
 

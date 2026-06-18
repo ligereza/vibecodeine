@@ -1,47 +1,54 @@
-# AIRDROP 2026-06-18 — flujo v0.26.0 — Render rescale + bloque `modificacion`
+# AIRDROP 2026-06-18 — flujo v0.27.0 — Catálogo oficial de formatos (v2.0)
 
-**Tipo:** Feature (comando nuevo + extensión del contrato JSON). Con tests.
+**Tipo:** Feature (datos + metadata + filtros CLI). Con tests. Retrocompatible.
 
 ## TL;DR
-Responde a "¿y si me piden cambiar proporción o pixelado?": nuevo comando
-`flujo render rescale` (DPI o medida cm) y bloque `modificacion` en el intake
-JSON para recibir pedidos de cambio sobre piezas existentes.
+Convierte el mapa real de formatos de la ONG en el catálogo oficial del sistema,
+con **área** (eventos/suplementos), **medio** (impresión/digital) y
+**herramienta** (Illustrator/Photoshop/Blender), más filtros en
+`flujo render formats`.
 
-👉 Contexto completo: **`HANDOFF_2026-06-18_rescale.md`**.
+👉 Contexto completo: **`HANDOFF_2026-06-18_catalogo.md`**.
 
 ## Archivos
 ```
 _airdrop/
-├── HANDOFF_2026-06-18_rescale.md
+├── HANDOFF_2026-06-18_catalogo.md
 ├── README_AIRDROP.md
-├── README.md                          # + comando rescale, v0.26.0
-├── pyproject.toml                     # 0.25.0 → 0.26.0
+├── README.md                                  # tabla por área + v0.27.0
+├── pyproject.toml                             # 0.26.0 → 0.27.0
 ├── src/flujo/
-│   ├── version.py                     # 0.26.0 + changelog
-│   ├── cli.py                         # comando 'render rescale'
-│   └── render/rescale.py              # motor de reescalado (NUEVO)
+│   ├── version.py                             # 0.27.0 + changelog
+│   ├── cli.py                                 # render formats -a/-m/--herramienta
+│   └── render/formats.py                      # metadata v2.0 + filtros
 ├── tests/
-│   └── test_render_rescale.py         # 17 tests (NUEVO)
+│   └── test_formats_catalogo.py              # 13 tests (NUEVO)
+├── tools/piezas_vectoriales/plantillas/
+│   └── INDEX_FORMATOS.json                    # catálogo v2.0 (12 formatos)
 ├── docs/
-│   ├── INTAKE_JSON.md                 # sección 3.7 modificacion + rescale
-│   └── BLENDER_FLYERS.md              # notas del flujo de flyers/Blender (NUEVO)
+│   ├── CATALOGO_FORMATOS.md                   # catálogo explicado (NUEVO)
+│   └── INTAKE_JSON.md                         # + area + ejemplos
 └── schemas/
-    ├── intake.schema.json             # + bloque modificacion
-    └── ejemplos/modificacion_etiqueta.json   # NUEVO
+    ├── intake.schema.json                     # + area + tipos nuevos
+    └── ejemplos/
+        ├── cartelera_evento.json             # NUEVO
+        └── pendon_suplemento.json            # NUEVO
 ```
 
 ## Aplicar
 ```bash
-flujo airdrop apply "v0.26.0 - render rescale + modificacion"
+flujo airdrop apply "v0.27.0 - catalogo oficial de formatos"
 # o manual:
 bash scripts/apply_airdrop.sh --apply
-bash scripts/checkpoint.sh "v0.26.0 - render rescale + modificacion"
+bash scripts/checkpoint.sh "v0.27.0 - catalogo oficial de formatos"
 
 py -m pip install -e .
-flujo version               # 0.26.0
-py -m pytest tests/ -q      # 86 passed, 1 skipped
+flujo version            # 0.27.0
+flujo render formats     # 12 formatos
+py -m pytest tests/ -q   # 99 passed, 1 skipped
 ```
 
 ## Compatibilidad
-- Sin breaking changes. No agrega dependencias en runtime (jsonschema solo si se
-  valida el JSON en código, opcional).
+- Retrocompatible: `formats.py` ignora campos que no usa; los 6 formatos previos
+  siguen funcionando (renombrados con prefijo de área, plantillas intactas).
+- Sin dependencias nuevas en runtime.

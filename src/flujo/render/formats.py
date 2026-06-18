@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional
 
@@ -24,16 +24,36 @@ class FormatInfo:
     canvas_width: int
     canvas_height: int
     descripcion: str = ""
+    # --- metadata v2.0 (opcional, retrocompatible) ---
+    area: str = ""            # eventos | suplementos | comun
+    medio: str = ""           # impresion | digital | mixto
+    herramienta: str = ""     # illustrator | photoshop | blender | svg | pipeline 'a+b'
+    parametrico: bool = False  # medida la define cada pedido (pendones, banderas)
+    origen_info: str = ""     # correo | whatsapp
+    inferir: List[str] = field(default_factory=list)
 
     @property
     def ratio(self) -> float:
         return self.width_cm / max(self.height_cm, 0.01)
 
+    @property
+    def has_template(self) -> bool:
+        return bool(str(self.template)) and str(self.template) not in ("", "None", ".")
+
     def __str__(self) -> str:
-        return (
-            f"{self.id} ({self.tipo}): {self.width_cm:g}x{self.height_cm:g}cm → "
-            f"{self.canvas_width}x{self.canvas_height}px"
-        )
+        extra = []
+        if self.area:
+            extra.append(self.area)
+        if self.medio:
+            extra.append(self.medio)
+        if self.herramienta:
+            extra.append(self.herramienta)
+        if self.parametrico:
+            extra.append("paramétrico")
+        tail = f"  [{' · '.join(extra)}]" if extra else ""
+        size = "paramétrico" if self.parametrico else f"{self.width_cm:g}x{self.height_cm:g}cm → {self.canvas_width}x{self.canvas_height}px"
+        return f"{self.id} ({self.tipo}): {size}{tail}"
+
 
 
 def _find_index() -> Optional[Path]:
@@ -58,24 +78,49 @@ def load_index() -> List[FormatInfo]:
     result: List[FormatInfo] = []
     for f in formatos:
         try:
+            tmpl = f.get("template")
             result.append(FormatInfo(
                 id=f["id"],
                 tipo=f.get("tipo", ""),
-                template=Path(f["template"]),
+                template=Path(tmpl) if tmpl else Path(""),
                 width_cm=float(f["real_size_cm"]["width"]),
                 height_cm=float(f["real_size_cm"]["height"]),
-                canvas_width=int(f["canvas"]["width"]),
-                canvas_height=int(f["canvas"]["height"]),
+                canvas_width=int(f.get("canvas", {}).get("width", 0)),
+                canvas_height=int(f.get("canvas", {}).get("height", 0)),
                 descripcion=f.get("descripcion", ""),
+                area=f.get("area", ""),
+                medio=f.get("medio", ""),
+                herramienta=f.get("herramienta", ""),
+                parametrico=bool(f.get("parametrico", False)),
+                origen_info=f.get("origen_info", ""),
+                inferir=list(f.get("inferir", []) or []),
             ))
         except (KeyError, TypeError, ValueError):
             continue
     return result
 
 
-def list_formats() -> List[FormatInfo]:
-    """Devuelve todos los formatos disponibles."""
-    return load_index()
+def list_formats(
+    area: str = "",
+    medio: str = "",
+    herramienta: str = "",
+) -> List[FormatInfo]:
+    """Devuelve los formatos disponibles, opcionalmente filtrados.
+
+    Filtros (subcadena, case-insensitive): area (eventos/suplementos),
+    medio (impresion/digital), herramienta (illustrator/photoshop/blender).
+    """
+    formats = load_index()
+    if area:
+        a = area.lower()
+        formats = [f for f in formats if a in f.area.lower()]
+    if medio:
+        m = medio.lower()
+        formats = [f for f in formats if m in f.medio.lower()]
+    if herramienta:
+        h = herramienta.lower()
+        formats = [f for f in formats if h in f.herramienta.lower()]
+    return formats
 
 
 def suggest_format(
