@@ -1,14 +1,24 @@
 """Versión y changelog de flujo."""
 
-__version__ = "0.16.0"
+__version__ = "0.20.0"
 VERSION = __version__
-__version_info__ = (0, 16, 0)
+__version_info__ = (0, 20, 0)
 
 def get_version():
     return __version__
 
 def get_changelog():
     return {
+        "0.20.0": {
+            "titulo": "Zero-Friction Airdrop System",
+            "fecha": "2026-06-18",
+            "highlights": [
+                "Sistema de Airdrop automatizado (Apply -> Checkpoint -> Push)",
+                "Eliminación de scripts de Bash manuales para actualizaciones",
+                "Integración de auto-checkpoint en la CLI",
+                "Sistema de Rollback mejorado con backups temporales"
+            ]
+        },
         "0.16.0": {
             "titulo": "CLI Completo + Pipeline Unificado",
             "fecha": "2026-06-17",
