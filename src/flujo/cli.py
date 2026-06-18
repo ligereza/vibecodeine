@@ -100,6 +100,16 @@ def _section(title: str) -> None:
 # ============================================================
 
 @airdrop_app.command("list")
+
+@airdrop_app.command("status")
+def airdrop_status():
+    """Muestra la versión actual del sistema flujo."""
+    from .version import get_version
+    v = get_version()
+    console.print(f"
+[bold cyan]flujo version actual:[/] [bold]{v}[/]
+")
+
 def airdrop_list():
     """Lista versiones de airdrop disponibles."""
     from .airdrop import list_versions
