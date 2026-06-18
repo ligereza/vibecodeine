@@ -507,7 +507,7 @@ def _detect_bleed(text: str) -> Optional[float]:
     m = re.search(r"sangrado\D{0,10}(\d+(?:[\.,]\d+)?)\s*mm", low)
     if m:
         return float(m.group(1).replace(",", "."))
-    return None if "sangrado" not in low else None
+    return None
 
 
 def brief_from_text(text: str, job_id: str = "") -> Brief:

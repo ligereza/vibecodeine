@@ -18,7 +18,7 @@ def test_version():
     v = get_version()
     assert v.startswith("0.")
     cl = get_changelog()
-    assert "0.16.0" in cl
+    assert v in cl
 
 
 def test_analyze_colors():

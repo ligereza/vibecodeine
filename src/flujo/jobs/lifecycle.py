@@ -2,14 +2,10 @@
 
 from __future__ import annotations
 
-import re
-import subprocess
-import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional
 
-from ..paths import repo_root
 from .brief import (
     Brief,
     EstadoJob,
@@ -17,7 +13,6 @@ from .brief import (
     save_brief,
     brief_from_text,
 )
-from .job import JobInfo, job_status
 
 
 @dataclass

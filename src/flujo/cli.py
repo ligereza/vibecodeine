@@ -99,17 +99,15 @@ def _section(title: str) -> None:
 # Airdrop
 # ============================================================
 
-@airdrop_app.command("list")
-
 @airdrop_app.command("status")
 def airdrop_status():
     """Muestra la versión actual del sistema flujo."""
     from .version import get_version
     v = get_version()
-    console.print(f"
-[bold cyan]flujo version actual:[/] [bold]{v}[/]
-")
+    console.print(f"\n[bold cyan]flujo version actual:[/] [bold]{v}[/]\n")
 
+
+@airdrop_app.command("list")
 def airdrop_list():
     """Lista versiones de airdrop disponibles."""
     from .airdrop import list_versions
@@ -198,9 +196,13 @@ def airdrop_finish():
     console.print("  2. Hacer checkpoint: [bold]bash scripts/checkpoint.sh \"vX.YZ - descripción\"[/]")
     console.print("  3. Commit y push.")
 
+
 # ============================================================
 # Salud / info
 # ============================================================
+
+@app.command("health")
+def health():
     """Chequeo general del repo."""
     from .paths import repo_root
     from .intake.email_parser import extract_instagram_links
