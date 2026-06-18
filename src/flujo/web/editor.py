@@ -269,6 +269,88 @@ def analizar_instagram(texto: str) -> str:
 
 
 # ============================================================
+# Descarga de Instagram + extracción de paleta
+# ============================================================
+
+def descargar_instagram(texto: str, slug: str = "") -> Tuple[Dict, str, str]:
+    """Descarga el primer post de IG del texto y extrae su paleta de colores.
+
+    Reusa flujo.ig.download (instaloader) y flujo.analyze.colors. Guarda la imagen
+    y la paleta en projects/flyer_eventos/<slug>/ (o un slug derivado del shortcode).
+
+    Devuelve (resultado_dict, mensaje, ruta_imagen_o_vacio).
+    El resultado_dict incluye 'palette' si se pudo extraer.
+    """
+    from ..intake.email_parser import extract_instagram_links
+    from ..ig.download import download_post, extract_shortcode
+
+    links = extract_instagram_links(texto or "")
+    if not links:
+        return {}, "No hay links de Instagram en el texto.", ""
+
+    url = links[0]
+    shortcode = extract_shortcode(url) or "post"
+    slug = slug or f"ig_{shortcode}"
+    out_dir = repo_root() / "projects" / "flyer_eventos" / slug / "input"
+
+    res = download_post(url, out_dir)
+    status = res.get("status")
+    if status != "downloaded":
+        motivo = res.get("reason", status or "error")
+        ayuda = {
+            "instaloader_no_instalado": "Instala instaloader: pip install instaloader",
+            "login_requerido_o_privado": "El perfil es privado o requiere login.",
+            "post_no_encontrado": "El post no existe o fue borrado.",
+            "rate_limit": "Instagram limitó las peticiones (429). Espera unos minutos.",
+        }.get(motivo, "")
+        return res, f"No se pudo descargar: {motivo}. {ayuda}".strip(), ""
+
+    files = res.get("files", [])
+    img = next((f for f in files if f.lower().endswith(".jpg")), "")
+    msg_lines = [
+        f"✓ Descargado: {res.get('media_type')} ({res.get('file_count')} archivo/s)",
+        f"  cuenta: @{res.get('owner','?')}",
+        f"  fecha: {res.get('date','?')[:10]}",
+    ]
+
+    # extraer paleta de la primera imagen
+    if img:
+        try:
+            from ..analyze.colors import extract_palette
+            from pathlib import Path as _P
+            pal = extract_palette(_P(img), n_colors=6)
+            res["palette"] = pal
+            hexes = [c["hex"] for c in pal.get("colors", [])]
+            msg_lines.append("  paleta: " + " ".join(hexes))
+        except Exception as e:  # noqa: BLE001
+            msg_lines.append(f"  (no se pudo extraer paleta: {e})")
+
+    return res, "\n".join(msg_lines), img
+
+
+def aplicar_paleta(config: Dict, descarga: Dict) -> Tuple[Dict, str]:
+    """Aplica la paleta extraída de IG al config actual (copia).
+
+    Mapea los colores dominantes a nombres de paleta usados por las plantillas
+    (accent, ink, paper, muted, line). Devuelve (config, mensaje).
+    """
+    if not config:
+        return config, "Primero elige un formato en EDITOR."
+    pal = (descarga or {}).get("palette", {})
+    colors = [c["hex"] for c in pal.get("colors", [])]
+    if not colors:
+        return config, "No hay paleta. Primero descarga un post de Instagram."
+
+    cfg = copy.deepcopy(config)
+    paleta = cfg.setdefault("palette", {})
+    # asignación simple por orden de dominancia
+    nombres = ["accent", "ink", "muted", "line", "paper", "white"]
+    for nombre, hexc in zip(nombres, colors):
+        paleta[nombre] = hexc
+    return cfg, "Paleta de Instagram aplicada: " + " ".join(colors[:6])
+
+
+# ============================================================
 # Acuse de recibo (mailto / Gmail prellenado)
 # ============================================================
 
@@ -379,13 +461,30 @@ def build_app():
                     preview = gr.HTML()
 
         with gr.Tab("INSTAGRAM"):
-            gr.Markdown("## Analizar links de Instagram")
-            gr.Markdown("Pega el correo/mensaje con links. Detecta perfil privado, "
-                        "video en carrusel y datos del pedido **antes** de descargar.")
-            ig_in = gr.Textbox(label="Correo / texto con links", lines=8)
-            ig_btn = gr.Button("Analizar", variant="primary")
-            ig_out = gr.Textbox(label="Resultado", lines=12, interactive=False)
+            gr.Markdown("## Instagram: analizar → descargar → paleta")
+            gr.Markdown("Pega el correo/mensaje (o el link directo). Detecta perfil "
+                        "privado/video, descarga el post y extrae su paleta de colores.")
+            ig_in = gr.Textbox(label="Correo / texto / link de Instagram", lines=6)
+            with gr.Row():
+                ig_btn = gr.Button("1. Analizar", variant="secondary")
+                ig_dl = gr.Button("2. Descargar post", variant="primary")
+                ig_apply = gr.Button("3. Aplicar paleta a la pieza", variant="secondary")
+            ig_out = gr.Textbox(label="Resultado", lines=10, interactive=False)
+            ig_state = gr.State({})
+            ig_img = gr.Image(label="Imagen descargada", visible=True, height=260)
             ig_btn.click(analizar_instagram, ig_in, ig_out)
+
+            def on_descargar(texto):
+                res, msg, img = descargar_instagram(texto)
+                return res, msg, (img or None)
+
+            ig_dl.click(on_descargar, ig_in, [ig_state, ig_out, ig_img])
+
+            def on_aplicar_paleta(cfg, descarga):
+                new_cfg, msg = aplicar_paleta(cfg, descarga)
+                from .svg_preview import render_svg as _rs
+                svg = _rs(new_cfg, show_safe_area=True, responsive=True) if new_cfg else ""
+                return new_cfg, _svg_html(svg) if svg else "", msg
 
         with gr.Tab("ACUSE DE RECIBO"):
             gr.Markdown("## Acusar recibo (semiautomático)")
@@ -442,6 +541,9 @@ def build_app():
             return ac["cuerpo"], links
 
         ac_btn.click(on_acuse, [state, ac_solic, ac_folio], [ac_cuerpo, ac_links])
+
+        # aplicar paleta de IG a la pieza del editor (state + preview)
+        ig_apply.click(on_aplicar_paleta, [state, ig_state], [state, preview, ig_out])
 
     return demo
 

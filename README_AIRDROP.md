@@ -1,39 +1,40 @@
-# AIRDROP 2026-06-18 — flujo v0.30.1 — Fixes del editor
+# AIRDROP 2026-06-18 — flujo v0.30.2 — IG: usuario + descarga + paleta
 
-**Tipo:** Fixes (3 bugs reportados). Con tests. Retrocompatible.
+**Tipo:** Fix + features (amplía el 0.30.2 previo no aplicado). Con tests. Retrocompatible.
 
 ## TL;DR
-Arregla lo que el dueño reportó del editor:
-- **Instagram** ahora detecta URLs sin `https://` (antes daba "sin links").
-- **Preview SVG responsive**: ya no se sale de pantalla ni se ve deforme.
-- **Formatos verticales** (flyer físico 10×14) cargan con la orientación correcta.
+- **Fix:** detecta `instagram.com/<usuario>/p/CODE/` (el formato que reportaste).
+- **Nuevo:** la pestaña INSTAGRAM ahora **descarga el post** (instaloader),
+  **extrae la paleta** de colores y permite **aplicarla a la pieza** del editor.
 
-👉 Contexto completo: **`HANDOFF_2026-06-18_fixes_editor.md`**.
+👉 Contexto: **`HANDOFF_2026-06-18_ig_descarga.md`** · Guía: `docs/EDITOR_INSTAGRAM.md`.
 
 ## Archivos
 ```
 _airdrop/
-├── HANDOFF_2026-06-18_fixes_editor.md
+├── HANDOFF_2026-06-18_ig_descarga.md
 ├── README_AIRDROP.md
-├── pyproject.toml                         # 0.30.0 → 0.30.1
+├── pyproject.toml                          # 0.30.1 → 0.30.2
 ├── src/flujo/
-│   ├── version.py                         # 0.30.1 + changelog
-│   ├── intake/email_parser.py             # regex IG robusto
-│   └── web/
-│       ├── svg_preview.py                 # render_svg(responsive=...)
-│       └── editor.py                      # preview responsive + orientación
-└── tests/
-    └── test_web_fixes.py                  # 11 tests (NUEVO)
+│   ├── version.py                          # 0.30.2 + changelog
+│   ├── intake/email_parser.py              # regex IG con <usuario>
+│   └── web/editor.py                       # descarga + paleta + pestaña ampliada
+├── tests/
+│   ├── test_ig_usuario.py                  # 7 tests del regex
+│   └── test_ig_download_palette.py         # 7 tests (descarga mock + paleta)
+└── docs/
+    └── EDITOR_INSTAGRAM.md                  # NUEVO
 ```
 
 ## Aplicar
 ```bash
-flujo airdrop apply "v0.30.1 - fixes editor (IG, preview, orientacion)"
+flujo airdrop apply "v0.30.2 - IG usuario + descarga + paleta"
 py -m pip install -e .
-flujo version            # 0.30.1
-flujo serve              # probar pestaña INSTAGRAM con 'instagram.com/p/XXX/'
-py -m pytest tests/ -q   # 155 passed, 1 skipped
+flujo version            # 0.30.2
+flujo serve              # INSTAGRAM: Analizar → Descargar → Aplicar paleta
+py -m pytest tests/ -q   # 168 passed, 1 skipped
 ```
 
 ## Compatibilidad
-- Retrocompatible. Sin dependencias nuevas.
+- Descarga solo con instaloader (ya era dependencia). Sin libs nuevas.
+- Retrocompatible.

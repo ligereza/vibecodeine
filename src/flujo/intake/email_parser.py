@@ -13,8 +13,12 @@ def extract_instagram_links(text: str) -> List[str]:
     Acepta URLs con o sin esquema (https://, http:// o nada) y con o sin www.
     Devuelve cada link normalizado con 'https://' al frente. Ignora query string.
     """
+    # Soporta: instagram.com/p/CODE/  y  instagram.com/<usuario>/p/CODE/
+    # (con o sin esquema, con o sin www, p/reel/reels/tv)
     pattern = (
-        r'(?:https?://)?(?:www\.)?instagram\.com/(?:p|reel|reels|tv)/[A-Za-z0-9_-]+/?'
+        r'(?:https?://)?(?:www\.)?instagram\.com/'
+        r'(?:[A-Za-z0-9_.]+/)?'
+        r'(?:p|reel|reels|tv)/[A-Za-z0-9_-]+/?'
     )
     out: List[str] = []
     seen = set()
