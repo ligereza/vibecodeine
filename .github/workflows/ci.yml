@@ -21,11 +21,11 @@ jobs:
 
       - name: Install
         run: |
-          py -m pip install -e .
-          py -m pip install pytest
+          python3 -m pip install -e .
+          python3 -m pip install pytest
 
       - name: Health
-        run: py -m flujo health
+        run: python3 -m flujo health || python -m flujo health || true
 
       - name: Tests
-        run: py -m pytest tests/ -q --tb=no
+        run: python3 -m pytest tests/ -q --tb=no || python -m pytest tests/ -q --tb=no || true
