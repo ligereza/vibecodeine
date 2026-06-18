@@ -4,7 +4,6 @@ from pathlib import Path
 from datetime import datetime
 
 def export_flyer(project_dir: Path, output_dir: Path | None = None) -> Path:
-    """Exporta flyer a ZIP incluyendo scripts JSX robustos"""
     project_dir = Path(project_dir)
     if not (project_dir / "manifest.json").exists():
         raise FileNotFoundError(f"No es un proyecto flyer válido: {project_dir}")
@@ -53,15 +52,9 @@ def export_flyer(project_dir: Path, output_dir: Path | None = None) -> Path:
         email = _generar_email_draft(project_dir)
         z.writestr("exports/respuesta_jefe.txt", email)
 
-        info = f"""FLUJO v0.15 — Track M Completo
+        info = f"""FLUJO v0.15 — Intake + Track M
 Proyecto: {project_dir.name}
 Fecha: {ts}
-
-Contenido:
-- input/
-- analysis/ (palette.json + .aco + .ase)
-- working/compose.jsx (Photoshop - lee palette.json)
-- ai/compose_ai.jsx (Illustrator - lee palette.json)
 """
         z.writestr("LEEME.txt", info)
 
@@ -69,7 +62,7 @@ Contenido:
 
 
 def _get_compose_jsx() -> str:
-    return """// compose.jsx — Flujo v0.15 (Track M Completo)
+    return """// compose.jsx — Flujo v0.15
 #target photoshop
 
 function readPaletteJSON(file) {
@@ -159,7 +152,7 @@ main();
 
 
 def _get_compose_ai_jsx() -> str:
-    return """// compose_ai.jsx — Flujo v0.15 (Track M Completo)
+    return """// compose_ai.jsx — Flujo v0.15
 #target illustrator
 
 function readPaletteJSON(file) {
@@ -237,7 +230,7 @@ Post: @{ig.get('owner','?')} / {ig.get('shortcode','')}
 Archivos listos:
 - Imagen original
 - Paleta real (.aco + .ase + JSON)
-- Scripts directos para Photoshop e Illustrator (leen palette.json)
+- Scripts directos para Photoshop e Illustrator
 
 ¿Ajustes?
 

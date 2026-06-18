@@ -1,3 +1,9 @@
+# Checkpoint — flujo v0.15 - Avance completo (Intake + Track M + Airdrop + Limpieza + Calidad)
+
+Fecha: 2026-06-17_20-19
+
+## Estado
+
 # Estado del proyecto — flujo
 
 **Última actualización:** Junio 2026
@@ -20,3 +26,11 @@ Sistema de automatización para flujos creativos con Intake inteligente de corre
 - No automatizar herramientas de diseño
 - Solo instaloader
 - Mantener contexto y checkpoints
+
+## Cambios realizados
+
+-
+
+## Próximo paso
+
+-

@@ -12,53 +12,26 @@ def health():
     root = repo_root()
     console.print(f"[cyan]flujo[/] @ {root}")
 
+@app.command("flyer-import")
+def flyer_import(email: Path = typer.Argument(..., help="ruta a correo.txt")):
+    from .intake.email_parser import parse_email_file
+    result = parse_email_file(email)
+    if 'error' in result:
+        console.print(f"[red]Error: {result['error']}[/]")
+        return
+    console.print(f"[green]Links: {result['link_count']}[/] Tipo: {result['project_type']}")
+    for w in result.get('warnings', []):
+        console.print(f"[yellow]{w}[/]")
+
 @app.command()
-def export(
-    project: Path = typer.Argument(..., help="ruta al proyecto flyer"),
-    output: Path = typer.Option(None, "--output", "-o", help="carpeta destino")
-):
+def export(project: Path = typer.Argument(..., help="ruta al proyecto"), output: Path = typer.Option(None, "--output", "-o")):
     from .export.zipper import export_flyer
     try:
         zip_path = export_flyer(project, output)
-        console.print(f"[green]ZIP creado:[/] {zip_path}")
+        console.print(f"[green]ZIP: {zip_path}[/]")
     except Exception as e:
         console.print(f"[red]Error: {e}[/]")
         raise typer.Exit(1)
-
-@app.command("open")
-def open_cmd(
-    project: Path = typer.Argument(..., help="ruta al proyecto flyer"),
-    ps: bool = typer.Option(False, "--ps"),
-    ai: bool = typer.Option(False, "--ai")
-):
-    import subprocess
-    import platform
-    from pathlib import Path as Pth
-
-    proj = Pth(project)
-    system = platform.system()
-
-    if ps:
-        jsx = proj / "working" / "compose.jsx"
-        if jsx.exists():
-            if system == "Darwin":
-                subprocess.run(["open", str(jsx)])
-            elif system == "Windows":
-                subprocess.run(["start", "", str(jsx)], shell=True)
-            console.print("[green]Abriendo en Photoshop...[/]")
-        else:
-            console.print("[yellow]Ejecuta primero 'flujo export'[/]")
-
-    elif ai:
-        jsx = proj / "ai" / "compose_ai.jsx"
-        if jsx.exists():
-            if system == "Darwin":
-                subprocess.run(["open", str(jsx)])
-            elif system == "Windows":
-                subprocess.run(["start", "", str(jsx)], shell=True)
-            console.print("[green]Abriendo en Illustrator...[/]")
-        else:
-            console.print("[yellow]Ejecuta primero 'flujo export'[/]")
 
 def main():
     app()

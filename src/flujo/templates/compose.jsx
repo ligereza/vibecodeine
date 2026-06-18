@@ -1,7 +1,4 @@
-// compose.jsx — Flujo v0.15 (Track M Completo)
-// Script para Photoshop (doble clic)
-// Coloca input_ig.jpg como Smart Object + paleta REAL desde analysis/palette.json
-
+// compose.jsx — Flujo v0.15
 #target photoshop
 
 function readPaletteJSON(file) {
@@ -9,7 +6,6 @@ function readPaletteJSON(file) {
     file.open("r");
     var content = file.read();
     file.close();
-
     try {
         var data = eval("(" + content + ")");
         if (data && data.colors && data.colors.length > 0) {
@@ -58,37 +54,33 @@ function main() {
     for (var i = 0; i < palette.length; i++) {
         var colorLayer = doc.artLayers.add();
         colorLayer.name = "Color " + (names[i] || "Color " + (i+1));
-
         var solid = new SolidColor();
         solid.rgb.red = palette[i][0];
         solid.rgb.green = palette[i][1];
         solid.rgb.blue = palette[i][2];
-
-        var fillDesc = new ActionDescriptor();
-        var rgbDesc = new ActionDescriptor();
-        rgbDesc.putDouble(charIDToTypeID("Rd  "), palette[i][0]);
-        rgbDesc.putDouble(charIDToTypeID("Grn "), palette[i][1]);
-        rgbDesc.putDouble(charIDToTypeID("Bl  "), palette[i][2]);
-
-        var colorDesc = new ActionDescriptor();
-        colorDesc.putObject(charIDToTypeID("Clr "), charIDToTypeID("RGBC"), rgbDesc);
-        fillDesc.putObject(charIDToTypeID("Clr "), charIDToTypeID("SolidColor"), colorDesc);
-        executeAction(charIDToTypeID("Fl  "), fillDesc, DialogModes.NO);
+        var fd = new ActionDescriptor();
+        var rd = new ActionDescriptor();
+        rd.putDouble(charIDToTypeID("Rd  "), palette[i][0]);
+        rd.putDouble(charIDToTypeID("Grn "), palette[i][1]);
+        rd.putDouble(charIDToTypeID("Bl  "), palette[i][2]);
+        var cd = new ActionDescriptor();
+        cd.putObject(charIDToTypeID("Clr "), charIDToTypeID("RGBC"), rd);
+        fd.putObject(charIDToTypeID("Clr "), charIDToTypeID("SolidColor"), cd);
+        executeAction(charIDToTypeID("Fl  "), fd, DialogModes.NO);
     }
 
-    var textLayer = doc.artLayers.add();
-    textLayer.kind = LayerKind.TEXT;
-    textLayer.name = "Caption IG";
-    textLayer.textItem.contents = "Pega aquí el caption del post...";
-    textLayer.textItem.size = 28;
-    textLayer.textItem.font = "Arial-Bold";
-    textLayer.textItem.color = new SolidColor();
-    textLayer.textItem.color.rgb.red = 255;
-    textLayer.textItem.color.rgb.green = 255;
-    textLayer.textItem.color.rgb.blue = 255;
-    textLayer.textItem.position = [80, 1700];
+    var txt = doc.artLayers.add();
+    txt.kind = LayerKind.TEXT;
+    txt.name = "Caption";
+    txt.textItem.contents = "Pega el caption aquí...";
+    txt.textItem.size = 28;
+    txt.textItem.font = "Arial-Bold";
+    txt.textItem.color = new SolidColor();
+    txt.textItem.color.rgb.red = 255;
+    txt.textItem.color.rgb.green = 255;
+    txt.textItem.color.rgb.blue = 255;
+    txt.textItem.position = [80, 1700];
 
-    alert("Documento listo para Photoshop\n(Paleta cargada desde analysis/palette.json)");
+    alert("Documento listo para Photoshop\\n(Paleta cargada desde analysis/palette.json)");
 }
-
 main();

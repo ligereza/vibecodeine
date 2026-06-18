@@ -1,7 +1,4 @@
-// compose_ai.jsx — Flujo v0.15 (Track M Completo)
-// Script para Adobe Illustrator (doble clic)
-// Coloca input_ig.jpg como imagen linked + swatches REALES
-
+// compose_ai.jsx — Flujo v0.15
 #target illustrator
 
 function readPaletteJSON(file) {
@@ -9,7 +6,6 @@ function readPaletteJSON(file) {
     file.open("r");
     var content = file.read();
     file.close();
-
     try {
         var data = eval("(" + content + ")");
         if (data && data.colors && data.colors.length > 0) {
@@ -60,7 +56,6 @@ function main() {
         sw.color = c;
     }
 
-    alert("Documento listo para Illustrator\n(Swatches cargados desde analysis/palette.json)");
+    alert("Documento listo para Illustrator\\n(Swatches cargados desde analysis/palette.json)");
 }
-
 main();

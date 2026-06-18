@@ -7,11 +7,10 @@ Sistema de automatización para flujos creativos.
 ## Estado actual (v0.15)
 
 - CLI unificado (`flujo`)
-- Descarga Instagram con instaloader
-- Análisis de colores + OCR opcional
-- Export ZIP con integración directa para Photoshop e Illustrator (lee palette.json real)
+- Intake inteligente de correos
+- Track M (integración directa PS/AI)
 - Sistema de airdrop profesional
-- Scripts de limpieza y sanitización
+- Limpieza estructural
 
 ## Flujo principal
 
@@ -22,23 +21,12 @@ flujo export <proyecto>
 flujo open <proyecto> --ps
 ```
 
-## Estructura
-
-```
-projects/
-├── flyer_eventos/
-├── piezas_vectoriales/
-└── tapiz/
-
-src/flujo/                # CLI moderno
-```
-
 ## Reglas
 
 - No automatizar Photoshop / Illustrator / Blender
-- Solo instaloader para Instagram
-- Mantener checkpoints y contexto
+- Solo instaloader
+- Mantener checkpoints
 
 ---
 
-**Versión:** v0.15 — Track M + Airdrop Profesional
+**Versión:** v0.15
