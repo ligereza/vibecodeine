@@ -17,7 +17,6 @@ from _common import repo_root
 ROOT = repo_root()
 PY = sys.executable
 
-
 def run(cmd):
     try:
         result = subprocess.run(
@@ -29,14 +28,12 @@ def run(cmd):
     except Exception as e:
         return f"ERROR: {e}"
 
-
 def nuevo_pedido(nombre, correo):
     if not nombre or not correo:
         return "Faltan nombre o correo."
     path = ROOT / "inbox" / f"pedido_{nombre.replace(' ', '_').lower()}.txt"
     path.write_text(correo, encoding="utf-8")
     return run([PY, "scripts/flujo_pipeline.py", nombre, str(path), "--confirm"])
-
 
 def nuevo_flyer(correo):
     if not correo:
@@ -45,31 +42,26 @@ def nuevo_flyer(correo):
     path.write_text(correo, encoding="utf-8")
     return run([PY, "scripts/flyer_from_email.py", str(path)])
 
-
 def generar_pieza(config_path):
     if not config_path:
         return "Selecciona un config.json."
     return run([PY, "scripts/piezas_generar.py", config_path])
 
-
 def actualizar_dashboard():
     return run([PY, "scripts/flujo_daily.py"])
-
 
 def health_check():
     return run([PY, "scripts/flujo_health.py"])
 
-
 def limpiar():
     return run(["bash", "scripts/limpiar_basura.sh"])
-
 
 def listar_configs():
     configs = sorted((ROOT / "projects" / "piezas_vectoriales").glob("*/config.json"))
     return [str(c) for c in configs]
 
-
-css = """
+# Gradio 6.0 compatible: CSS passed to launch(), not Blocks()
+CSS = """
 :root { --bg: #0a0a0a; --panel: #111111; --border: #222222; --text: #e0e0e0; --muted: #888888; --cyan: #00f0ff; --magenta: #ff00aa; }
 body { background-color: var(--bg) !important; color: var(--text) !important; font-family: 'Inter', system-ui, sans-serif !important; }
 .gradio-container { background-color: var(--bg) !important; color: var(--text) !important; }
@@ -85,9 +77,9 @@ h1, h2, h3 { color: #fff !important; font-weight: 700 !important; letter-spacing
 .block { background-color: var(--panel) !important; border: 1px solid var(--border) !important; border-radius: 8px !important; }
 """
 
-
 def build():
-    with gr.Blocks(css=css, theme=gr.themes.Base()) as demo:
+    with gr.Blocks(theme=gr.themes.Base()) as demo:
+        gr.HTML(f"<style>{CSS}</style>")
         gr.Markdown("# FLUJO // Dimensiones del Orden")
         gr.Markdown("Interfaz local para automatizar pedidos, flyers y piezas vectoriales.")
 
@@ -140,7 +132,11 @@ def build():
 
     return demo
 
-
 if __name__ == "__main__":
     demo = build()
-    demo.launch(server_name="0.0.0.0", share=False, show_error=True)
+    demo.launch(
+        server_name="0.0.0.0",
+        share=False,
+        show_error=True,
+        css=CSS
+    )
