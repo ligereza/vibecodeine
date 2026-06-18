@@ -1,7 +1,6 @@
 """Tests para flujo.dashboard."""
 
 from pathlib import Path
-
 import pytest
 
 from flujo.dashboard import (
@@ -51,6 +50,8 @@ pendientes:
         encoding="utf-8",
     )
 
+    # FIX: patchear ambos módulos donde se importa repo_root
+    monkeypatch.setattr("flujo.dashboard.scoring.repo_root", lambda: tmp_path)
     monkeypatch.setattr("flujo.paths.repo_root", lambda: tmp_path)
     return tmp_path
 
@@ -65,9 +66,7 @@ def test_collect_items_finds_all_types(repo):
 
 def test_collect_items_sorts_by_priority(repo):
     items = collect_items()
-    # alta/media/baja deberían estar ordenados
     priorities = [i.priority for i in items]
-    # los de prioridad alta deben ir antes que los de baja
     priority_order = {Priority.ALTA: 0, Priority.MEDIA: 1, Priority.BAJA: 2}
     indices = [priority_order[p] for p in priorities]
     assert indices == sorted(indices)
@@ -77,7 +76,7 @@ def test_score_job_high_priority_for_pendiente_datos(repo):
     brief = repo / "jobs" / "2026-06-17_test" / "brief.yaml"
     s = score_job(brief)
     assert s is not None
-    assert s.score >= 70  # pendiente_datos es alta
+    assert s.score >= 70
 
 
 def test_score_flyer_pending_download(repo):

@@ -1,0 +1,12 @@
+id: 2026-06-17_test
+estado: listo_para_disenar
+cliente: Acme
+proyecto: Etiqueta Acme
+tipo_pieza: etiqueta
+medidas:
+  ancho_cm: 16.5
+  alto_cm: 6.5
+  orientacion: horizontal
+productos:
+  - Impulso
+pendientes: []

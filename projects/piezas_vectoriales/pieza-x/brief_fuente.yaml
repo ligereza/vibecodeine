@@ -1,0 +1,10 @@
+id: 2026-06-17_test
+estado: listo_para_disenar
+cliente: Acme
+proyecto: Pieza X
+tipo_pieza: otro
+medidas:
+  ancho_cm:
+  alto_cm:
+productos: []
+pendientes: []

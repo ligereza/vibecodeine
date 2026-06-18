@@ -3,7 +3,6 @@
 import shutil
 from datetime import date
 from pathlib import Path
-
 import pytest
 
 from flujo.jobs.job import create_job, list_jobs, find_job, JobInfo
@@ -28,8 +27,8 @@ def repo(tmp_path: Path) -> Path:
 
 
 def test_create_job_creates_structure(tmp_path: Path, monkeypatch):
+    monkeypatch.setattr("flujo.jobs.job.repo_root", lambda: tmp_path)
     monkeypatch.setattr("flujo.paths.repo_root", lambda: tmp_path)
-    # crear jobs dir manualmente
     (tmp_path / "jobs").mkdir()
     job = create_job("etiquetas acme")
     assert job.exists()
@@ -40,6 +39,7 @@ def test_create_job_creates_structure(tmp_path: Path, monkeypatch):
 
 
 def test_create_job_with_source(tmp_path: Path, monkeypatch):
+    monkeypatch.setattr("flujo.jobs.job.repo_root", lambda: tmp_path)
     monkeypatch.setattr("flujo.paths.repo_root", lambda: tmp_path)
     (tmp_path / "jobs").mkdir()
     src = tmp_path / "correo.txt"
@@ -51,6 +51,7 @@ def test_create_job_with_source(tmp_path: Path, monkeypatch):
 
 
 def test_list_jobs_filters_templates(tmp_path: Path, monkeypatch):
+    monkeypatch.setattr("flujo.jobs.job.repo_root", lambda: tmp_path)
     monkeypatch.setattr("flujo.paths.repo_root", lambda: tmp_path)
     (tmp_path / "jobs").mkdir()
     create_job("uno")
@@ -61,6 +62,7 @@ def test_list_jobs_filters_templates(tmp_path: Path, monkeypatch):
 
 
 def test_find_job_by_partial_name(tmp_path: Path, monkeypatch):
+    monkeypatch.setattr("flujo.jobs.job.repo_root", lambda: tmp_path)
     monkeypatch.setattr("flujo.paths.repo_root", lambda: tmp_path)
     (tmp_path / "jobs").mkdir()
     job = create_job("etiquetas-acme-test")
@@ -82,7 +84,7 @@ def test_prepare_job_extracts_brief(tmp_path: Path, monkeypatch):
     assert res.ok
     assert res.privacy_report is not None
     assert res.privacy_report.exists()
-    # brief.yaml debe tener tipo y medida
+
     brief = load_brief(job / "brief.yaml")
     assert brief.tipo_pieza == "etiqueta"
     assert brief.medidas.ancho_cm == 16.5
@@ -101,16 +103,15 @@ def test_activate_job_creates_project(tmp_path: Path, monkeypatch):
     (tmp_path / "projects" / "piezas_vectoriales").mkdir(parents=True)
     (tmp_path / "tools" / "piezas_vectoriales" / "plantillas").mkdir(parents=True)
 
-    # Crear job con brief listo
     src = tmp_path / "correo.txt"
     src.write_text("Etiqueta 16.5x6.5 cm con Impulso.", encoding="utf-8")
     job = create_job("etiquetas-acme", source_path=src)
     prepare_job(job, run_privacy=True)
-
     res = activate_job(job)
     assert res.ok
     assert res.project_path is not None
     assert res.project_path.exists()
     assert (res.project_path / "config.json").exists()
+
     brief = load_brief(job / "brief.yaml")
     assert brief.estado == EstadoJob.EN_DISENO

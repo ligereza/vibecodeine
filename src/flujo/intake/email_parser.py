@@ -59,6 +59,15 @@ def extract_sections(text: str) -> Dict[str, str]:
         match = re.search(pattern, text, re.IGNORECASE)
         if match:
             sections[key] = match.group(1).strip()
+    # FIX: captura medidas inline como 'etiqueta 16.5x6.5 cm'
+    if 'medidas' not in sections:
+        m = re.search(r'(\d+(?:[\.,]\d+)?)\s*[x×]\s*(\d+(?:[\.,]\d+)?)\s*(cm|mm)?', text, re.I)
+        if m:
+            unit = (m.group(3) or 'cm').lower()
+            w = m.group(1).replace(',', '.')
+            h = m.group(2).replace(',', '.')
+            sections['medidas'] = f'{w}x{h} {unit}'
+
     return sections
 
 

@@ -116,7 +116,7 @@ def prepare_job(
                 )
                 privacy_report = job_path / "privacy_report.md"
                 write_report(privacy_report, scan, source_name=str(pedido.name))
-                high_privacy = scan["risk"] == "alto"
+                high_privacy = scan.risk == "alto"
                 result.privacy_report = privacy_report
                 result.steps.append("privacy_check")
         except Exception as e:
