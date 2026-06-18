@@ -1,45 +1,39 @@
-# AIRDROP 2026-06-18 — flujo v0.30.0 — Auto-fit de texto + avisos IG + acuse de recibo
+# AIRDROP 2026-06-18 — flujo v0.30.1 — Fixes del editor
 
-**Tipo:** Features (3). Con tests. Retrocompatible. Mantiene SVG puro (sin `image`).
+**Tipo:** Fixes (3 bugs reportados). Con tests. Retrocompatible.
 
 ## TL;DR
-- **Auto-fit de texto:** el texto encoge para caber en la caja ("misma medida,
-  distinto texto"); respeta campos `locked` (datos exactos) y `min_size`.
-- **Pestaña INSTAGRAM** en el editor: avisos de perfil privado / video / sin links.
-- **Pestaña ACUSE DE RECIBO:** correo prellenado (mailto/Gmail) con folio + resumen.
+Arregla lo que el dueño reportó del editor:
+- **Instagram** ahora detecta URLs sin `https://` (antes daba "sin links").
+- **Preview SVG responsive**: ya no se sale de pantalla ni se ve deforme.
+- **Formatos verticales** (flyer físico 10×14) cargan con la orientación correcta.
 
-👉 Contexto completo: **`HANDOFF_2026-06-18_autofit.md`**.
+👉 Contexto completo: **`HANDOFF_2026-06-18_fixes_editor.md`**.
 
 ## Archivos
 ```
 _airdrop/
-├── HANDOFF_2026-06-18_autofit.md
+├── HANDOFF_2026-06-18_fixes_editor.md
 ├── README_AIRDROP.md
-├── pyproject.toml                         # 0.29.0 → 0.30.0
+├── pyproject.toml                         # 0.30.0 → 0.30.1
 ├── src/flujo/
-│   ├── version.py                         # 0.30.0 + changelog
-│   ├── render/autofit.py                  # NUEVO (motor de auto-fit)
+│   ├── version.py                         # 0.30.1 + changelog
+│   ├── intake/email_parser.py             # regex IG robusto
 │   └── web/
-│       ├── svg_preview.py                 # autofit en preview
-│       └── editor.py                      # pestañas IG + acuse + checkbox autofit
-├── tools/piezas_vectoriales/scripts/
-│   └── generar_desde_json.py             # autofit en el generador oficial
-├── tests/
-│   ├── test_autofit.py                    # 11 tests (NUEVO)
-│   └── test_web_features.py              # 13 tests (NUEVO)
-└── docs/
-    └── AUTOFIT.md                         # NUEVO
+│       ├── svg_preview.py                 # render_svg(responsive=...)
+│       └── editor.py                      # preview responsive + orientación
+└── tests/
+    └── test_web_fixes.py                  # 11 tests (NUEVO)
 ```
 
 ## Aplicar
 ```bash
-flujo airdrop apply "v0.30.0 - autofit + avisos IG + acuse de recibo"
+flujo airdrop apply "v0.30.1 - fixes editor (IG, preview, orientacion)"
 py -m pip install -e .
-flujo version            # 0.30.0
-flujo serve              # 3 pestañas: EDITOR / INSTAGRAM / ACUSE DE RECIBO
-py -m pytest tests/ -q   # 144 passed, 1 skipped
+flujo version            # 0.30.1
+flujo serve              # probar pestaña INSTAGRAM con 'instagram.com/p/XXX/'
+py -m pytest tests/ -q   # 155 passed, 1 skipped
 ```
 
 ## Compatibilidad
-- Retrocompatible: el autofit solo actúa si el elemento tiene `autofit: true`.
-- Sin dependencias nuevas (gradio/matplotlib ya estaban).
+- Retrocompatible. Sin dependencias nuevas.

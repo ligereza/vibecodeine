@@ -48,14 +48,43 @@ def _format_by_id(fmt_id: str) -> Optional[FormatInfo]:
     return None
 
 
+def _orientation(w: float, h: float) -> str:
+    if abs(w - h) < 1e-6:
+        return "cuadrado"
+    return "horizontal" if w > h else "vertical"
+
+
 def _load_template_config(fmt: FormatInfo) -> Dict:
-    """Carga el config.json de plantilla del formato, o genera uno base."""
+    """Carga el config.json de plantilla del formato, o genera uno base.
+
+    Si la plantilla existe pero su orientación NO coincide con la medida real del
+    formato del catálogo (p.ej. flyer físico 10x14 vertical que reusa una
+    plantilla horizontal), se reconcilia el canvas a la medida del catálogo para
+    que el preview salga con la orientación correcta.
+    """
     repo = repo_root()
     if fmt.has_template:
         tpath = fmt.template if fmt.template.is_absolute() else repo / fmt.template
         if tpath.exists():
             try:
-                return json.loads(tpath.read_text(encoding="utf-8"))
+                cfg = json.loads(tpath.read_text(encoding="utf-8"))
+                canvas = cfg.get("canvas", {})
+                tw, th = canvas.get("width", 0), canvas.get("height", 0)
+                want = _orientation(fmt.width_cm, fmt.height_cm)
+                have = _orientation(tw, th) if (tw and th) else want
+                if want != have:
+                    # reconciliar: usar el canvas del catálogo (o derivarlo del DPI)
+                    nw = fmt.canvas_width or int(round(fmt.width_cm / 2.54 * 150))
+                    nh = fmt.canvas_height or int(round(fmt.height_cm / 2.54 * 150))
+                    from ..render.rescale import set_real_size
+                    cfg.setdefault("canvas", {})["width"] = nw
+                    cfg["canvas"]["height"] = nh
+                    cfg["canvas"]["real_size_cm"] = {"width": fmt.width_cm, "height": fmt.height_cm}
+                    cfg["_aviso_orientacion"] = (
+                        f"Plantilla {have} adaptada a {want} ({fmt.width_cm:g}x{fmt.height_cm:g}cm). "
+                        "Revisa la posición de los elementos."
+                    )
+                return cfg
             except Exception:
                 pass
     # Base mínima si no hay plantilla (formatos digitales nuevos / paramétricos)
@@ -125,9 +154,9 @@ def load_format_state(fmt_id: str) -> Tuple[Dict, str, Dict[str, str]]:
     fmt = _format_by_id(fmt_id)
     if not fmt:
         empty = {"canvas": {"width": 800, "height": 600}, "documents": []}
-        return empty, render_svg(empty), {"titulo": "", "subtitulo": "", "cuerpo": ""}
+        return empty, render_svg(empty, responsive=True), {"titulo": "", "subtitulo": "", "cuerpo": ""}
     cfg = _load_template_config(fmt)
-    return cfg, render_svg(cfg, show_safe_area=True), _first_text_fields(cfg)
+    return cfg, render_svg(cfg, show_safe_area=True, responsive=True), _first_text_fields(cfg)
 
 
 def _mark_autofit(config: Dict, enable: bool) -> Dict:
@@ -176,7 +205,7 @@ def update_state(
     cfg = _mark_autofit(cfg, autofit)
     if autofit:
         msgs.append("autofit activo")
-    return cfg, render_svg(cfg, show_safe_area=True), "  ·  ".join(msgs) or "Actualizado."
+    return cfg, render_svg(cfg, show_safe_area=True, responsive=True), "  ·  ".join(msgs) or "Actualizado."
 
 
 def export_files(config: Dict, slug: str = "") -> Tuple[str, str]:
@@ -307,7 +336,11 @@ def build_app():
 
     def _svg_html(svg: str) -> str:
         # Encajar el SVG en un contenedor responsivo
-        return f'<div style="max-width:100%;border:1px solid #333;background:#fff;padding:8px">{svg}</div>'
+        return (
+            '<div style="width:100%;max-width:100%;overflow:auto;'
+            'border:1px solid #333;background:#fff;padding:8px;box-sizing:border-box">'
+            f'{svg}</div>'
+        )
 
     with gr.Blocks(title="flujo · editor") as demo:
         gr.HTML(f"<style>{_CSS}</style>")

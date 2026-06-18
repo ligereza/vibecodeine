@@ -8,8 +8,28 @@ from typing import Dict, List
 
 
 def extract_instagram_links(text: str) -> List[str]:
-    pattern = r'https?://(?:www\.)?instagram\.com/(?:p|reel|tv)/[A-Za-z0-9_-]+/?'
-    return re.findall(pattern, text)
+    """Extrae links de posts/reels/tv de Instagram.
+
+    Acepta URLs con o sin esquema (https://, http:// o nada) y con o sin www.
+    Devuelve cada link normalizado con 'https://' al frente. Ignora query string.
+    """
+    pattern = (
+        r'(?:https?://)?(?:www\.)?instagram\.com/(?:p|reel|reels|tv)/[A-Za-z0-9_-]+/?'
+    )
+    out: List[str] = []
+    seen = set()
+    for m in re.findall(pattern, text, flags=re.IGNORECASE):
+        url = m.strip()
+        # normalizar esquema
+        low = url.lower()
+        if low.startswith("http://"):
+            url = "https://" + url[len("http://"):]
+        elif not low.startswith("https://"):
+            url = "https://" + url
+        if url not in seen:
+            seen.add(url)
+            out.append(url)
+    return out
 
 
 def detect_private_account(text: str) -> bool:

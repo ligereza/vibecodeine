@@ -147,7 +147,8 @@ def _render_text(out: List[str], el: Dict, palette: Dict) -> None:
         cy += line_height
 
 
-def render_svg(config: Dict, doc_index: int = 0, show_safe_area: bool = False) -> str:
+def render_svg(config: Dict, doc_index: int = 0, show_safe_area: bool = False,
+               responsive: bool = False) -> str:
     """Genera el SVG (string) de un documento del config para preview.
 
     doc_index: cuál documento de config["documents"] renderizar.
@@ -158,15 +159,26 @@ def render_svg(config: Dict, doc_index: int = 0, show_safe_area: bool = False) -
     h = canvas.get("height", 1000) or 1000
     palette = config.get("palette", {})
     docs = config.get("documents", [])
+    # En modo responsive el SVG se escala al contenedor (no se sale de pantalla):
+    # width=100%, height=auto y el viewBox hace el trabajo. En modo archivo
+    # (export) se mantienen los px reales.
+    if responsive:
+        dim = 'width="100%" height="auto" preserveAspectRatio="xMidYMid meet" ' \
+              f'style="max-height:80vh;display:block" viewBox="0 0 {w} {h}"'
+    else:
+        dim = f'width="{w}px" height="{h}px" viewBox="0 0 {w} {h}"'
+
     if not docs:
-        return f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}px" height="{h}px" viewBox="0 0 {w} {h}"><rect width="{w}" height="{h}" fill="#eee"/><text x="{w/2}" y="{h/2}" text-anchor="middle" font-size="40" fill="#999">sin documentos</text></svg>'
+        return (f'<svg xmlns="http://www.w3.org/2000/svg" {dim}>'
+                f'<rect width="{w}" height="{h}" fill="#eee"/>'
+                f'<text x="{w/2}" y="{h/2}" text-anchor="middle" font-size="40" fill="#999">'
+                f'sin documentos</text></svg>')
     doc_index = max(0, min(doc_index, len(docs) - 1))
     doc = docs[doc_index]
 
     out: List[str] = [
         f'<svg xmlns="http://www.w3.org/2000/svg" '
-        f'xmlns:xlink="http://www.w3.org/1999/xlink" '
-        f'width="{w}px" height="{h}px" viewBox="0 0 {w} {h}">'
+        f'xmlns:xlink="http://www.w3.org/1999/xlink" {dim}>'
     ]
     bg = doc.get("background", config.get("background", "white"))
     out.append(f'<rect x="0" y="0" width="{w}" height="{h}" fill="{_color(bg, palette)}"/>')
