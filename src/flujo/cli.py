@@ -133,18 +133,30 @@ def airdrop_dry_run(
 def airdrop_apply(
     version: str = typer.Argument(..., help="Versión del airdrop a aplicar"),
 ):
-    """Aplica un airdrop específico al repositorio."""
-    from .airdrop import apply_airdrop
+    """Aplica un airdrop específico, crea backup y realiza auto-checkpoint + push."""
+    from .airdrop import apply_airdrop, run_auto_checkpoint
     try:
         changes = apply_airdrop(version)
         if not changes:
             _warn(f"No hay cambios para aplicar en la versión {version}")
             return
+
         _section(f"Airdrop {version} Aplicado")
         for c in changes:
             console.print(f"  [green]✓[/] {c['rel']}")
-        _ok(f"Airdrop {version} completado exitosamente.")
-        console.print("\nSiguiente paso: [cyan]flujo airdrop finish[/]")
+
+        _ok(f"Archivos aplicados exitosamente.")
+
+        # --- AUTOMATIZACIÓN SUSTANCIAL ---
+        console.print("\n[cyan]Ejecutando auto-checkpoint y push...[/]")
+        if run_auto_checkpoint(version):
+            _ok(f"Checkpoint creado y cambios subidos al servidor.")
+        else:
+            _warn("No se pudo realizar el auto-checkpoint. Por favor, hazlo manualmente.")
+
+        _section("Proceso Completado")
+        console.print(f"[bold green]Airdrop {version} está activo y sincronizado.[/]")
+
     except Exception as e:
         _err(str(e))
 

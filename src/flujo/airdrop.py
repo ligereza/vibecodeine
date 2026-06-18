@@ -1,5 +1,6 @@
 import shutil
 import os
+import subprocess
 from pathlib import Path
 from datetime import datetime
 from typing import List, Tuple, Optional, Dict
@@ -30,7 +31,6 @@ def scan_airdrop(version: str) -> List[Dict]:
         if src.is_dir() or src.name == ".gitkeep":
             continue
 
-        # Calculate relative path to repo root
         rel_path = src.relative_to(airdrop_dir)
         dest = repo_root() / rel_path
 
@@ -53,7 +53,6 @@ def apply_airdrop(version: str, dry_run: bool = False) -> List[Dict]:
     if dry_run:
         return changes
 
-    # Create backup
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     backup_dir = get_backup_base_dir() / f"{timestamp}_{version}"
     backup_dir.mkdir(parents=True, exist_ok=True)
@@ -64,23 +63,39 @@ def apply_airdrop(version: str, dry_run: bool = False) -> List[Dict]:
         dest = change["dest"]
         rel = change["rel"]
 
-        # Backup if exists
         if change["status"] == "REPLACE":
             backup_path = backup_dir / rel
             backup_path.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(dest, backup_path)
 
-        # Copy new file
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, dest)
 
-        # Set executable for scripts
         if dest.suffix == ".sh":
             dest.chmod(dest.stat().st_mode | 0o111)
 
         applied.append(change)
 
     return applied
+
+def run_auto_checkpoint(version: str) -> bool:
+    """Triggers the checkpoint script and pushes changes."""
+    script_path = repo_root() / "scripts" / "checkpoint.sh"
+    if not script_path.exists():
+        return False
+
+    message = f"airdrop v{version} aplicado automáticamente"
+    try:
+        subprocess.run(
+            ["bash", str(script_path), message],
+            cwd=repo_root(),
+            check=True,
+            capture_output=True,
+            text=True
+        )
+        return True
+    except subprocess.CalledProcessError:
+        return False
 
 def rollback_last() -> Optional[Path]:
     """Rolls back to the most recent backup."""
