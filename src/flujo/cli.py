@@ -64,11 +64,13 @@ job_app = typer.Typer(help="Gestión de jobs y briefs.", no_args_is_help=True)
 privacy_app = typer.Typer(help="Privacidad para textos antes de IA externa.", no_args_is_help=True)
 brief_app = typer.Typer(help="Operaciones sobre briefs.", no_args_is_help=True)
 render_app = typer.Typer(help="Render y validación de piezas vectoriales.", no_args_is_help=True)
+airdrop_app = typer.Typer(help="Sistema de actualización profesional (airdrops).", no_args_is_help=True)
 
 app.add_typer(job_app, name="job")
 app.add_typer(privacy_app, name="privacy")
 app.add_typer(brief_app, name="brief")
 app.add_typer(render_app, name="render")
+app.add_typer(airdrop_app, name="airdrop")
 
 
 # ============================================================
@@ -94,11 +96,89 @@ def _section(title: str) -> None:
 
 
 # ============================================================
-# Salud / info
+# Airdrop
 # ============================================================
 
-@app.command()
-def health():
+@airdrop_app.command("list")
+def airdrop_list():
+    """Lista versiones de airdrop disponibles."""
+    from .airdrop import list_versions
+    versions = list_versions()
+    if not versions:
+        _warn("No hay airdrops disponibles en _airdrop/")
+        return
+    _section("Airdrops Disponibles")
+    for v in versions:
+        console.print(f"  · [bold cyan]{v}[/]")
+
+
+@airdrop_app.command("dry-run")
+def airdrop_dry_run(
+    version: str = typer.Argument(..., help="Versión del airdrop a simular"),
+):
+    """Simula la aplicación de un airdrop sin realizar cambios."""
+    from .airdrop import scan_airdrop
+    try:
+        changes = scan_airdrop(version)
+        _section(f"Simulación Airdrop: {version}")
+        for c in changes:
+            color = "green" if c["status"] == "NEW" else "yellow"
+            console.print(f"  [{color}] {c['status']:<8}[/] {c['rel']}")
+        console.print(f"\n[bold]Total: {len(changes)} archivos serían afectados.[/]")
+    except Exception as e:
+        _err(str(e))
+
+
+@airdrop_app.command("apply")
+def airdrop_apply(
+    version: str = typer.Argument(..., help="Versión del airdrop a aplicar"),
+):
+    """Aplica un airdrop específico al repositorio."""
+    from .airdrop import apply_airdrop
+    try:
+        changes = apply_airdrop(version)
+        if not changes:
+            _warn(f"No hay cambios para aplicar en la versión {version}")
+            return
+        _section(f"Airdrop {version} Aplicado")
+        for c in changes:
+            console.print(f"  [green]✓[/] {c['rel']}")
+        _ok(f"Airdrop {version} completado exitosamente.")
+        console.print("\nSiguiente paso: [cyan]flujo airdrop finish[/]")
+    except Exception as e:
+        _err(str(e))
+
+
+@airdrop_app.command("rollback")
+def airdrop_rollback():
+    """Revierte los cambios al último backup de airdrop."""
+    from .airdrop import rollback_last
+    backup = rollback_last()
+    if not backup:
+        _err("No se encontró ningún backup para revertir.")
+    _ok(f"Rollback completado desde: {backup.name}")
+
+
+@airdrop_app.command("finish")
+def airdrop_finish():
+    """Finaliza el proceso de airdrop (estatus y sugerencias)."""
+    _section("Finalización de Airdrop")
+    import subprocess
+    try:
+        # Usar git status --short para mostrar cambios
+        res = subprocess.run(["git", "status", "--short"], capture_output=True, text=True)
+        console.print(res.stdout if res.stdout else "No hay cambios pendientes en git.")
+    except Exception:
+        _warn("No se pudo ejecutar git status.")
+
+    console.print("\n[bold cyan]Pasos recomendados:[/]")
+    console.print("  1. Revisar cambios: [bold]git diff[/]")
+    console.print("  2. Hacer checkpoint: [bold]bash scripts/checkpoint.sh \"vX.YZ - descripción\"[/]")
+    console.print("  3. Commit y push.")
+
+# ============================================================
+# Salud / info
+# ============================================================
     """Chequeo general del repo."""
     from .paths import repo_root
     from .intake.email_parser import extract_instagram_links

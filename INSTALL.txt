@@ -1,0 +1,4 @@
+Para aplicar este airdrop:
+1. Descomprimir el contenido de 'airdrop_v0_19' dentro de la carpeta '_airdrop/v0.19/'
+2. Ejecutar: flujo airdrop apply v0.19
+3. Ejecutar: flujo airdrop finish
