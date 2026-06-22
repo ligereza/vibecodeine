@@ -1,6 +1,6 @@
 # flujo — Dimensiones del Orden
 
-**arte + automatización · v0.33.1**
+**arte + automatización · v0.33.2**
 
 Sistema personal de automatización para flujos creativos (diseño gráfico:
 flyers, etiquetas, riders, one-pagers, carruseles). Convierte un **pedido**

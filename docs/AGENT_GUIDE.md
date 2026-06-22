@@ -1,6 +1,6 @@
 # AGENT_GUIDE — flujo
 
-**Repo:** `flujo` — arte + automatización · v0.33.1
+**Repo:** `flujo` — arte + automatización · v0.33.2
 
 ## Stack
 

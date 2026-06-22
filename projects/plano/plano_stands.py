@@ -17,6 +17,14 @@ import traceback
 from pathlib import Path
 
 
+def _configure_io() -> None:
+    """Asegura UTF-8 en stdout/stderr para evitar errores de encoding en Windows."""
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8")
+
+
 def _add_src_to_path() -> None:
     """Asegura que src/ del repo esté en sys.path para poder importar flujo."""
     try:
@@ -36,6 +44,7 @@ def _add_src_to_path() -> None:
             sys.path.insert(0, p)
 
 
+_configure_io()
 _add_src_to_path()
 
 try:

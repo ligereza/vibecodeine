@@ -45,7 +45,7 @@ def reglas_rider(ev: Dict[str, Any]) -> List[str]:
 
     # 1 mesa base; +1 cada 5 voluntarios
     mesas = 1 + max(0, (voluntarios - 1)) // 5
-    req.append(f"{voluntarios} voluntarios → {mesas} mesa(s) (1 base + 1 por cada 5).")
+    req.append(f"{voluntarios} voluntarios -> {mesas} mesa(s) (1 base + 1 por cada 5).")
 
     if testeo:
         req.append("Incluye testeo: +1 stand contiguo + 1 mesa extra para reactivos (ventilación obligatoria).")
