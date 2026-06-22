@@ -69,6 +69,10 @@ with vibecode.watch(mode="blocks"):
     agent.run(prompt)
 ```
 
+## Nota importante (para diseñadores)
+
+Todas las salidas visuales (incluyendo visualizaciones de tapiz) deben respetar la identidad "flujo" definida en projects/flujo/flujo.json. Si una página o visual se ve amateur, daña la confianza del cliente en el trabajo profesional.
+
 ## Concepto
 
 La idea es que la generación de código no sea solo texto cayendo, sino un **patrón en negativo**: el movimiento de la IA se aprecia en los espacios que deja. A mayor actividad, mayor brillo; al completarse, la pantalla descansa.

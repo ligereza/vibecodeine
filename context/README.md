@@ -32,6 +32,14 @@ Ver también: `LAST_HANDOFF.md`, `../README.md`, `../docs/REPO_MAP.md` y `../doc
 
 ## Flujo recomendado
 
+**Integraciones modernas y futuro:**
+- Usa `projects/flujo/flujo.json` como fuente de tokens para CSS, Figma, etc.
+- Tapiz (VibeCode) debería alinearse con la identidad flujo para que sus visualizaciones se vean pro.
+- Futuro: generar CSS vars desde el json, live previews en hub, integración con herramientas actuales (Cursor rules, Framer, etc.).
+- Delega a agentes especializados: uno para brand enforcement, otro para pipeline, otro para 3D, etc.
+
+## Flujo recomendado
+
 - Al empezar el día → abrir `flujo_hub.html`
 - Para ver trabajos SVG ya hechos → `svg_visualizer.html`
 - Para planos y riders → `plano_demo.html`

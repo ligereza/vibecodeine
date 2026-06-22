@@ -32,6 +32,14 @@ Recibes: repo + "continúa con las mejoras".
 5. Actualiza LAST_HANDOFF al final
 
 ## Reglas (ambos flujos)
+
+**Delegación de agentes (recomendado):**
+- Brand Guardian: asegura que todo use la identidad flujo.
+- Pipeline Agent: jobs, renders, export.
+- Visual Agent: pulido de HTMLs, tapiz, visualizers (debe verse profesional).
+- Future/Integrations: modern tools, tokens, etc.
+
+## Reglas (ambos flujos)
 - Windows: `py -m flujo ...`
 - Español primero
 - Siempre usa flujo
