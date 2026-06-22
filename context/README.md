@@ -2,21 +2,25 @@
 
 Este es el **centro del repo** (pro workspace servido por la app).
 
-**Entrada diaria obligatoria (ÚNICA y recomendada #1):** `flujo app` (o `flujo app --desktop`).
+**Entrada diaria obligatoria (ÚNICA y recomendada #1 — la única):** `flujo app` (o `flujo app --desktop`).
 
-Lanza **la app real**: servidor + APIs reales (brand, parse, jobs, delegate, SSE, tokens...) + sirve los tres HTMLs como UI de la app (hub pro + visualizadores).
+Lanza **la app real**: servidor + APIs reales (brand, parse, jobs, delegate, SSE, tokens, datadrop...) + sirve los tres HTMLs como UI de la app (hub pro + visualizadores).
 - `flujo app` abre/sirve http://... el `context/flujo_hub.html` (workspace central) con datos live.
 - Fallback: abre cualquiera de los .html directos (flujo_hub.html, svg_visualizer.html, plano_demo.html) — funciona 100% estático con mocks.
 - `flujo app --desktop`: ventana nativa pywebview + tray (sin browser chrome).
 
-`flujo app` = única entrada diaria. HTMLs = la UI real de la app.
+**`flujo app` = única entrada diaria. Hub + LAST_HANDOFF.md = fuente de verdad principal.**
+
+**Avances (2026-06-22):** Datadrop MVP listo (incoming bulk scan → manifests ricos con for_future_ai; botones header y sección funcionales post-fix con showTab robusto; lista limpia solo procesados; modal + prepare). Delegación paralela (2+sup + 5 roles). Launchers + hub tabs. Ver context/AVANCES_BLOCK.txt. Dirección: auto-compact + linea v4.1 usando datadrops como ground truth real.
+
+HTMLs = la UI real de la app. Siempre empieza por aquí + lee LAST_HANDOFF.
 
 ## Archivos clave (UI de la app — siempre accede vía `flujo app`)
 
-1. **flujo_hub.html** — El workspace principal pro (intake de pedidos, visual teaser, comandos, delegación multi-agente 5 roles, live, tokens, brand validator). **El centro diario.**
+1. **flujo_hub.html** — El workspace principal pro (intake de pedidos, visual teaser, comandos, **delegación multi-agente 5 roles paralelos**, live, tokens, brand validator, **Datadrop MVP en pestaña Herramientas**). **El centro diario.**
 2. **svg_visualizer.html** — Visualizador embebido real de piezas SVG (grupos exactos de /svg).
 3. **plano_demo.html** — Plano interactivo + rider + costos + export.
-4. **LAST_HANDOFF.md** — Estado actual + tareas (low token para IA y continuidad).
+4. **LAST_HANDOFF.md** — Estado actual + tareas (low token para IA y continuidad). **Fuente junto al hub.**
 
 Los tres HTMLs **son la UI completa de la app** cuando los sirve el backend de `flujo app`.
 
@@ -30,9 +34,10 @@ Ver también: `LAST_HANDOFF.md`, `../README.md`, `../docs/REPO_MAP.md` y `../doc
 
 ## Flujo recomendado (diario — práctico para diseñador)
 
-- **Siempre empieza aquí (obligatorio):** ejecuta `flujo app` (o `flujo app --desktop`).
+- **Siempre empieza aquí (obligatorio — única entrada):** ejecuta `flujo app` (o `flujo app --desktop`).
 - Usa el **hub** (servido) como centro pro: intake (pedidos → brief + match + crear job real), visual teaser, comandos, sección "Delegar a Agentes Especializados" con guía práctica + prompts listos + live /api/delegate (5 roles paralelos).
 - Abre visualizadores embebidos **desde el hub**: `svg_visualizer.html` (SVG por grupos reales), `plano_demo.html` (interactivo).
+- **Datadrop (MVP funcional):** en pestaña "Herramientas" (o link header "Datadrop (en Herramientas)"): click header abre confiablemente (showTab + scrollToSectionRobust con rAF/retry), scan incoming procesa múltiples fotos, lista limpia (solo procesados con manifest, incoming separado), upload + prepare package for linea v4.1.
 - Para agentes IA: ejecuta `flujo app` → lee LAST_HANDOFF.md + AGENT_OPERATING_MANUAL.md (dentro del hub). Delega paralelo vía hub (o CLI).
 - Todo: HTMLs + backend = app real. Fallback directo HTML = ok. **Hub + LAST_HANDOFF = fuente de verdad.**
 
@@ -63,7 +68,9 @@ Lanza servidor HTTP stdlib + APIs reales + sirve los **tres HTMLs como UI de la 
 **Hub (flujo_hub.html cuando app corre):**
 - Detecta "CONECTADO (APIs reales + delegate)" vs fallback estático.
 - Carga datos live (brand, SVG works, jobs).
+- Tabs funcionando (Intake & Jobs / Visuales / Planos / Agentes / Herramientas).
 - Delegación: tarea + 5 roles (Visual Polish / Pipeline & Integration / Brand Guardian / Future/Modern / Packaging & Distribution) + "Copiar prompt" o "Delegar seleccionados (live API)".
+- Datadrop en Herramientas: header click confiable, scan múltiple, lista limpia, package para linea.
 - Todo apunta a usar hub + LAST_HANDOFF.
 
 Paths usan asset_root/workspace para packaged (`flujo package`). Ver src/flujo/web/hub.py + cli.py.
@@ -88,6 +95,13 @@ Todo 100% gratis, Windows-first (`py`), high visual. `flujo app` = entrada diari
 - Delegation system first-class: 5 roles (incl. Packaging & Distribution Agent) centralizados en hub.py. /api/agents-roles + /api/delegate paralelo. Hub UI: tarea + multi + copiar prompts completos + "Delegar seleccionados (live)". CLI `flujo delegate`. Prompts listos alta calidad. Lanza siempre en clones paralelos. Guía "Cómo delegar desde el hub" en el propio HTML.
 - Design Tokens: /api/export-tokens (CSS/JSON/SCSS directo de flujo.json). Botones en hub.
 - Brand enforcement integrado + STRENGTHENED (Brand Enforcement sección prominente + VALIDAR BRAND AHORA grande/actionable + validatePreviewsOnly + forceGuard + auto hints + "BRAND ENFORCED" comentarios duros en todos los HTMLs principales + tapiz default flujo pro). Gatekeeper para confianza del diseñador.
+
+**Avances recientes (datadrop + hub + delegation):**
+- Datadrop MVP completamente funcional en pestaña Herramientas del hub: header "Datadrop (en Herramientas)" click abre confiablemente (previene default, showTab robusto + requestAnimationFrame + retry en scrollToSectionRobust), scan procesa múltiples (unique slugs + counter para bulk incoming), lista limpia (solo date+manifest procesados; pending separado), upload directo, prepare package para linea v4.1 (genera _review_package.txt + for_future_ai + manifests + traits).
+- Delegación en hub operativa para 2+ roles/sup paralelos + live API.
+- Launchers (launch-flujo.bat / .ps1) + `flujo app --desktop` alineados.
+- Linea v4.1 ground truth lista vía datadrops reales.
+- Brand fully enforced desde projects/flujo/flujo.json en todo.
 
 ## Packaging y Distribución Desktop (Windows .exe standalone gratis - PyInstaller)
 
@@ -142,4 +156,7 @@ Visión: un solo `flujo app` = shell diario del diseñador (UI = los tres HTMLs 
 
 **Fuente de verdad:** siempre ejecuta `flujo app` → usa hub como workspace. Para reanudar trabajo: `context/LAST_HANDOFF.md` + hub + AGENT_OPERATING_MANUAL.md.
 
-Ver: context/flujo_hub.html (UI + delegación práctica), src/flujo/web/hub.py (backend/APIs/delegate), cli.py, docs/AGENT_OPERATING_MANUAL.md, projects/flujo/flujo.json, context/LAST_HANDOFF.md.
+## Dirección actual (paralelo + datadrops reales)
+Trabajo paralelo (delegación 2+ roles/sup + clones): auto-compact prep, paths/launchers, brand. Datadrops reales (datadrops/incoming/ + scan + manifests + for_future_ai + _review_package) alimentan linea v4.1 (ground truth para paletas, OCR, traits de entregados reales). Usa `flujo app` + hub para todo (subir/scan/prepare + delegar).
+
+Ver: context/flujo_hub.html (UI + delegación práctica), src/flujo/web/hub.py (backend/APIs/delegate + datadrop), cli.py, docs/AGENT_OPERATING_MANUAL.md, projects/flujo/flujo.json, context/LAST_HANDOFF.md.

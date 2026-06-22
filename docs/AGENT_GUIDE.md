@@ -4,13 +4,16 @@
 
 ## Protocolo (token-efficient, Windows primero)
 
-1. Abre `context/flujo_hub.html` (entrada principal)
-2. `PARA_IA_CONTEXT.md` + `context/LAST_HANDOFF.md` (tareas simples + estado)
-3. `projects/README.md` (satélites + flujo)
+1. **Obligatorio:** ejecuta `flujo app` (o `flujo app --desktop`) — entrada única diaria (lanza app real + sirve hub pro). Fallback: abre `context/flujo_hub.html`.
+2. Lee `context/LAST_HANDOFF.md` (estado + tareas) + `docs/AGENT_OPERATING_MANUAL.md`.
+3. Usa el **hub** (dentro de `flujo app`): intake + visualizadores + sección Datadrop + "Delegar..." (parallel delegation a roles especializados).
+4. `projects/README.md` (satélites + flujo).
 
-Verificación: `py -m flujo health` (usa py en Windows)
+Verificación: `py -m flujo health` (usa py en Windows). Siempre actualiza LAST_HANDOFF al final.
 
-Trabaja en clon limpio. Entrega vía airdrop. Siempre actualiza LAST_HANDOFF con tareas claras + nota "Windows: py".
+**Protocolo para Datadrop (inverse airdrop, feed linea v4.1):** después de trabajo terminado (post privacy), copia fotos reales a `datadrops/incoming/` o usa hub (tab Herramientas > Datadrop): "Subir" / "Escanear incoming" (o `flujo datadrop scan`). Luego `flujo datadrop list` + `prepare` (genera _review_package.txt con manifests + for_future_ai). Linea v4.1 usa estos como ground-truth real examples. Header link en hub abre tab+sección.
+
+Trabaja en clon limpio. Entrega vía airdrop. Nota "Windows: py".
 
 Español prioritario. No asumas Linux paths.
 
@@ -40,16 +43,19 @@ En Linux/macOS puedes usar `python3` o `python` en lugar de `py`.
 ```bash
 flujo version
 flujo health
+flujo daily
+flujo app          # ENTRADA DIARIA OBLIGATORIA ÚNICA (app real + hub pro workspace + APIs)
+flujo serve        # alias (usa --legacy solo para Gradio viejo)
+flujo app --desktop  # ventana nativa (pywebview + tray, launchers en root)
 flujo job new "x" --email inbox/correo.txt
 flujo job prepare jobs/X
-flujo job activate jobs/X
 flujo render run projects/piezas_vectoriales/X/config.json
-flujo render formats
 flujo privacy scan archivo.txt
-flujo daily
-flujo app          # entrada principal (nueva app + hub pro workspace)
-flujo serve        # alias (usa --legacy solo para Gradio viejo)
 flujo plano projects/plano/ejemplos/evento_ejemplo.json
+# Datadrop (inverse airdrop — usa hub datadrop o CLI):
+flujo datadrop scan     # incoming/ bulk → manifests + analysis (for_future_ai)
+flujo datadrop list     # lista procesados limpios
+flujo datadrop prepare  # _review_package.txt + traits para linea v4.1
 ```
 
 Ayuda:
@@ -59,6 +65,7 @@ flujo --help
 flujo job --help
 flujo render --help
 flujo airdrop --help
+flujo datadrop --help
 ```
 
 ## Airdrops
@@ -99,10 +106,12 @@ Reglas del ZIP:
 
 ## Documentación interna clave
 
-- `docs/CLI.md` — referencia de CLI actual.
-- `docs/REPO_MAP.md` — qué está vivo, histórico o generado.
+- `docs/CLI.md` — referencia de CLI actual (incl. `flujo datadrop scan/list/prepare`, `flujo app`).
+- `docs/REPO_MAP.md` — qué está vivo (datadrops/ inverse airdrop, hub, etc.).
 - `docs/SCRIPTS_INVENTORY.md` — estado de scripts.
 - `docs/JOB_PIPELINE.md` — ciclo de vida de jobs.
 - `docs/ESTADOS_JOB.md` — estados y transiciones.
-- `docs/INTAKE_JSON.md` — contrato JSON pendiente de implementación end-to-end.
+- `docs/AGENT_OPERATING_MANUAL.md` — modelo delegación paralela (5 roles) + hub.
 - `docs/AIRDROP_REVIEW.md` — revisión segura de airdrops.
+
+**Avances:** datadrop (inverse airdrop) listo en hub (botones en Herramientas; header abre tab+sección) + CLI. Parallel delegation reciente (2+ agents + supervisor). Prepara auto-compact + linea v4.1 con datadrops reales como examples. Siempre `flujo app` + LAST_HANDOFF + hub.

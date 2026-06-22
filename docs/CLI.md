@@ -44,9 +44,12 @@ render          render run, validate, formats, rescale
 diario          daily
 web             serve, app, package (build .exe desktop)
 airdrop         airdrop list, dry-run, apply, rollback, status, finish
+datadrop        datadrop scan/list/prepare  (inverse airdrop: bulk fotos terminadas → manifests + for_future_ai para linea v4.1)
 plano           plano <evento.json> [--rider] [--costs]
 varios          clean
 ```
+
+**Datadrop (nuevo):** `flujo datadrop scan` (incoming bulk), `list` (solo procesados), `prepare` (paquete review _review_package.txt). Principal UI: hub (`flujo app` → Herramientas → Datadrop; header link abre tab+sección directamente). Bulk fácil: drop fotos a datadrops/incoming/ → scan. Listo para parallel + auto-compact.
 
 ## Ejemplos operativos
 
@@ -91,8 +94,14 @@ flujo daily
 flujo app                   # ENTRADA DIARIA: app + hub pro (recomendado)
 flujo app --desktop         # ventana nativa (pywebview)
 flujo package               # construye .exe standalone (PyInstaller gratis): doble clic abre flujo app --desktop sin consola
-flujo delegate visual-polish "tarea aquí"   # o pipeline | brand | future
+flujo delegate visual-polish "tarea aquí"   # o pipeline | brand | future | packaging
 flujo serve                 # alias (usa --hub por defecto)
+
+# Datadrop (inverse airdrop — hub primero: `flujo app` → Herramientas > Datadrop)
+flujo datadrop scan     # bulk: incoming/ (o drop fotos) → datadrops date/ + manifest (palette/ocr/traits/for_future_ai)
+flujo datadrop list     # solo procesados (limpio, pending separado); usa hub para thumbs + modal
+flujo datadrop prepare  # genera datadrops/_review_package.txt para IA (linea_editorial v4.1 usa como real examples)
+# Protocolo agente: `flujo app` + hub datadrop section + prepare → feed linea. Listo parallel delegation + auto-compact prep.
 
 # Packaging desktop (free, PyInstaller + pywebview)
 # Pre: py -m pip install -e .[web,desktop-extras,build]

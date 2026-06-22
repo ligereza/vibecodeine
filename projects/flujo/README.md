@@ -34,9 +34,11 @@ projects/flujo/
 
 ## Estado actual (2026-06)
 
-- Proyecto recién creado como estructura.
-- Aún no hay contenido real de línea editorial.
-- El objetivo de esta carpeta es servir como **paquete limpio** para alimentar a otra IA y que extraiga/refine la identidad a partir del trabajo existente en el resto del repo (principalmente `piezas_vectoriales/`, `flyer_eventos/` y `plano/`).
+- Integrado en hub: `flujo app` → sección Brand / datadrop (manifests ground-truth) + Brand Validator.
+- `projects/flujo/flujo.json` + `linea_editorial.md` son fuente de verdad para brand (usados por hub, visualizers, tapiz, etc.).
+- Datadrop system produce ground truth manifests (en datadrops/) usables en `projects/flujo/linea_editorial.md` para refinar con ejemplos reales de entregas.
+- Dirección a v4.1: datadrops + root `linea_editorial/v4.1.md` (RD rave) integran con identidad base de `flujo/` vía Brand Guardian + parallel delegation.
+- El objetivo de esta carpeta es servir como **paquete limpio** para alimentar a otra IA y que extraiga/refine la identidad a partir del trabajo existente en el resto del repo (principalmente `piezas_vectoriales/`, `flyer_eventos/` y `plano/`) + datadrops.
 
 ## Instrucciones para la IA que recibirá este repo
 

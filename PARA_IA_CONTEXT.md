@@ -6,10 +6,10 @@
 ## 👉 Empieza por aquí (AHORRO DE TOKENS)
 
 **Si tienes pocos tokens o es una sesión nueva / quieres continuar trabajo:**
-1. Ejecuta `flujo app` (o abre `context/flujo_hub.html` — workspace principal pro)
+1. Ejecuta **`flujo app`** (o `flujo app --desktop`) — **única entrada diaria obligatoria** (lanza servidor real + APIs + sirve hub pro + visualizadores como UI completa).
 2. **`context/LAST_HANDOFF.md`** ← **LA PIEZA MÁS IMPORTANTE PARA CONTINUIDAD**
 3. `docs/AGENT_OPERATING_MANUAL.md` (flujos + modelo delegación a sub-agentes)
-4. `py -m flujo daily` + comandos/prompts que genera el hub
+4. `py -m flujo daily` + usa el hub (tabs + datadrop + delegate)
 
 **Solo si necesitas profundidad después de lo anterior:**
 - `context/flujo_hub.html` (el workspace principal: intake, visualizadores SVG/plano + UI delegación)
@@ -32,19 +32,42 @@ py -m flujo version
 
 En Linux/macOS puedes usar `python3` o `python` en vez de `py`.
 
+**Estado actual (2026-06-22) — Avances clave (usa consistentemente):**
+
+`flujo app` (or --desktop) es la SINGLE daily entry point: lanza real stdlib server + APIs (brand, parse, jobs, delegate, SSE, datadrop) + sirve los 3 HTMLs como full pro UI.
+
+Hub (flujo_hub.html) ahora con tabs (Intake/Jobs, Visuales, Planos, Agentes/Delegate con 5 parallel roles, Herramientas) + fully working Datadrop section (inverse airdrop).
+
+Datadrop MVP complete: drop photos of delivered work to datadrops/incoming/ (easy bulk), Escanear incoming (button or `flujo datadrop scan`) processes ALL reliably to dated/ dirs + rich manifests (palette from analysis/, OCR, visual_traits, for_future_ai teaching notes). Clean list (never shows raw 'incoming'), card UI with thumbs/swatches, modal viewer (structured + close robust: X/Esc/backdrop), prepare _review_package.txt.
+
+Parallel delegation maximized (recently 2+1 supervisor for datadrop buttons fix; 5 roles: Visual Polish, Pipeline, Brand Guardian, Future, Packaging). Hub has copy-prompt + live delegate API.
+
+LAST_HANDOFF.md as low-token source of truth + auto for continuation. Launchers (ps1/bat) from root for desktop.
+
+Brand enforced strictly via projects/flujo/flujo.json.
+
+Recent: datadrop button (header link) fixed to reliably open tab+scroll, robust scan/list/modal, hygiene.
+
+**Hacia dónde vamos:**
+- Auto-compact of chat sessions (using parallel delegation + LAST_HANDOFF to speed work before platform auto kicks in).
+- linea_editorial v4.1 full integration: use real datadrop ground-truth (palettes, densities, OCR texts, traits from delivered pieces) for validation §10/11.
+- Streamlined daily: always `flujo app` → hub as single workspace for intake + datadrop + delegate + jobs.
+- Packaging to standalone .exe (flujo package), more multi-path resilience (UI/CLI/auto/harvest).
+- Hygiene, privacy, local analysis only. More agent specialization.
+
 ## 🛠️ Cambios recientes
 
 - **v0.34.10:** hotfix del runner de airdrops: evita que `scripts/flujo.py` sombree al paquete `src/flujo` cuando se ejecuta `py scripts/run_airdrop_checks.py`.
+- **Datadrop (airdrop inverso) MVP functional:** en hub (`flujo app` → Herramientas/Datadrop) + CLI (`flujo datadrop list|scan|prepare`). Fotos reales terminadas → datadrops/<id>/ + manifests (palette/OCR/traits/for_future_ai) listos para feed IA futura + linea_editorial/v4.1.md §10 validación. Hub delegation paralela + launchers.
 - **v0.34.9:** sincronización de documentación para agentes: este contexto,
   El hub (`context/flujo_hub.html`), visualizadores y LAST_HANDOFF quedan alineados con el estado actual.
-- **v0.34.8:** confiabilidad de airdrop y base universal: rollback con manifest
-  (`REPLACE` se restaura, `NEW` se elimina), `flujo airdrop apply` valida antes
-  de aplicar, alias real `flujo app`, base universal con `json.dumps`, setup más
-  portable y parser YAML fallback con listas escalares.
+- **v0.34.8+:** `flujo app` única entrada + app real (APIs+datadrop+SSE+delegate). Confiabilidad airdrop + compact direction + v4.1.
 - **v0.34.7:** runner de airdrop compatible con Windows/Git Bash, sin invocar
   bash internamente para apply/checkpoint.
 - **v0.34.6:** mapa del repo e higiene estructural.
 - **v0.34.5:** guardrails de airdrop, validador y logs de error.
+
+PARA files cubiertos (root + _airdrop/PARA_IA_CONTEXT.md) con datadrop/hub/compact.
 
 ## 🔑 Cómo entregas tu trabajo
 
@@ -94,3 +117,4 @@ plantilla de formato) → Render → Export ZIP.
 3. Mejorar layouts/planos/estructuras con primitivas declarativas compartidas (formatos + plano).
 4. Decidir canal de recepción automática.
 5. Mantener **siempre actualizado** `context/LAST_HANDOFF.md` al final de cada sesión.
+6. Usar datadrops reales + linea_editorial v4.1 en flujos de validación (ground-truth de entregas).

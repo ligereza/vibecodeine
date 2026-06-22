@@ -1,8 +1,8 @@
 # flujo — Dimensiones del Orden (arte + automatización)
 
-**Punto de entrada diario (OBLIGATORIO y ÚNICO):** `flujo app` (recomendado) o `flujo app --desktop`
+**Punto de entrada diario (OBLIGATORIO y ÚNICO):** `flujo app` (o `flujo app --desktop`) — la SINGLE daily entry point.
 
-Esto lanza **la app real** local: servidor HTTP stdlib + APIs reales (brand, jobs, SVG, parse, delegate, SSE live, tokens) + sirve los HTMLs pro como UI (hub + visualizadores embebidos) + bridge pywebview/desktop.
+Esto lanza **la app real** local: servidor HTTP stdlib + APIs reales (brand, parse, jobs, delegate, SSE, datadrop) + sirve los 3 HTMLs pro como UI completa (hub + visualizadores embebidos) + bridge pywebview/desktop.
 - **UI real = los tres HTMLs:** `context/flujo_hub.html` (hub principal), `context/svg_visualizer.html`, `context/plano_demo.html`. Cuando corres `flujo app` tienes datos live + acciones reales (jobs, delegate paralelo, etc.). Abrir HTML directo = fallback estático perfecto (sin backend).
 - El **hub** (`context/flujo_hub.html` servido por app) es el workspace pro principal (intake + visual + delegación).
 - `flujo app --desktop` abre en ventana nativa premium (pywebview + tray opcional).
@@ -18,17 +18,17 @@ El hub + visualizadores es el **main del flujo**:
 
 **Nota de higiene:** La raíz tiene carpetas históricas movidas a `.archive/` (_archive, checkpoints, reference_old, etc.). No uses esos archivos para trabajo actual. Todo lo vivo está en `context/`, `projects/` y `src/`. Ver `.archive/README.md`.
 
-**Estado actual (2026-06):**
+**Estado actual (2026-06-22) + Avances:**
 - App principal: `flujo app` (o `--desktop`) = entrada única diaria. Sirve backend real (APIs) + los tres HTMLs como UI completa (hub + svg_visualizer + plano_demo).
-- Los HTMLs **son la UI de la app real**: con conexión backend detectada ("CONECTADO (APIs reales + delegate)"), live jobs/SVG/brand/SSE, delegate multi-agente, parse real, create-job etc. Fallback estático cuando abres .html directo.
-- Workspace pro: usa `flujo app` → hub (intake + visual SVG/plano embebidos por grupos), abre `svg_visualizer.html` y `plano_demo.html` desde el hub.
-- Agentes: LAST_HANDOFF + AGENT_OPERATING_MANUAL (delegación paralela a 5 roles especializados incl. Packaging). Siempre `flujo app` primero.
-- Visualizadores reales (embebidos) para SVG y planos.
-- Todo alineado a flujo + export AI/PS/Blender. Fuente de verdad diaria: hub (vía app) + LAST_HANDOFF.
-- Root hygiene ejecutado: histórico movido a `.archive/`.
-- Caches fully cleaned (2026-06-22): 16 __pycache__ dirs + 123 *.pyc + .pytest_cache removed (only generated). Improves `flujo app` startup + hub nav + IA resumption.
-- Delegación agentes completada (2026-06-22, restart + refresh): UI de `flujo app` optimizada (tabs para no todo en página principal; Brand consolidado a 1 solo botón + modal); plano_demo arreglado (recalcular reactivo + lógica real de stands/mesas desde engine); datadrop (airdrop inverso) listo para subir fotos reales de flyers/etiquetas terminados (manifests con for_future_ai para que IA "sepa qué buscar"); linea editorial v4 → v4.1.md con §10 validación datadrops + integración. Supervisor + scheduler cada 3min para evitar pérdida contexto/repetitions. Join datadrop + linea pendiente de uploads reales.
-- Docs consolidadas: `flujo app` + hub como centro. Gradio = legacy.
+- Los HTMLs **son la UI de la app real**: con conexión backend detectada, live + delegate multi-agente.
+- **Avances clave** (ver context/AVANCES_BLOCK.txt para bloque completo):
+  - Datadrop (airdrop inverso) MVP completo: incoming/ bulk + scan robusto → manifests ricos (palette/OCR/for_future_ai) + lista limpia + modal usable + paquete para IA.
+  - Botones Datadrop arreglados (header abre tab + sección confiable).
+  - Delegación paralela maximizada (2+1 supervisor reciente; 5 roles en hub).
+  - Hub tabs, launchers root, brand enforced, LAST_HANDOFF low-token.
+- Dirección: auto-compact sesiones + linea_editorial v4.1 usando datadrops reales como ground-truth (§10/11). Flujo diario vía hub.
+- Caches fully cleaned. Hygiene + .gitignore actualizado (datadrops/incoming + imágenes).
+- Fuente de verdad diaria: hub (vía app) + LAST_HANDOFF. Docs consolidadas.
 
 **Dos flujos de trabajo para agentes:**
 1. Repo + pedido reciente → pega en hub → match o proponer nueva sección/tarea
