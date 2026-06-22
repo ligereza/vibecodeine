@@ -106,6 +106,7 @@ Fortalecer los dos flujos de agentes:
 - Quick limpieza + .gitignore limpio.
 - AVANCES_BLOCK.txt generado y referenciado.
 - LAST_HANDOFF compactado (solo esencial + resumen reciente).
+- GIT-PUSH agent: selective staging (launchers + *.md + .gitignore), hook fixes, pushed b558dae/fe3036e, verified health + no datadrops added. All max parallel agents' work consolidated and pushed.
 
 **Regla:** Siempre `flujo app` primero. Lee este LAST_HANDOFF + hub. Actualiza solo esta sección al final. Mantén <150 líneas.
 
