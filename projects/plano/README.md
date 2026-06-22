@@ -1,7 +1,7 @@
 # plano — generador paramétrico de planos para eventos
 
-> **Proyecto satélite (por desarrollar)** dentro de `flujo`, al estilo de `tapiz`.
-> Estado: **prototipo / diseño**. No integrado aún a la CLI principal.
+> Integrado con aistetic (estilos) y cotizaciones (dual productora/ONG).
+> Estado: mejorado para línea estética + cotizaciones.
 
 ## Idea
 

@@ -35,8 +35,8 @@ Este mapa existe para que humanos y agentes de IA entiendan rápido qué carpeta
 | `projects/flyer_eventos/` | Flujos reales de eventos | Operativo |
 | `projects/plano/` | Generador de planos/riders/costos | Vivo |
 | `projects/tapiz/` | Experimento visual (VibeCode) | Referencia |
-| `projects/aistetic/` | **Línea editorial central** (nuevo) | Nuevo — fuente de verdad estética |
-| `projects/aistetic/ejemplos/` + `json/` | Ejemplos reales + JSONs descriptivos para análisis de IA | Lugar donde se "alimenta" la identidad visual |
+| `projects/aistetic/` | Línea editorial central + ejemplos/json para agentes | Nuevo |
+| `projects/cotizaciones/` | Cotizaciones duales integradas con aistetic (productora vs ONG/empresa) | Nuevo — mejora de planos |
 
 Ver también `docs/FOR_EXTERNAL_AI.md` cuando se alimente el repo completo a una IA.
 

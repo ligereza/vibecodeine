@@ -12,7 +12,8 @@ Cada subdirectorio es un "satélite" con su propia lógica, pero que idealmente 
 | `flyer_eventos/`      | Flujos reales de eventos (ingesta IG/correo → análisis → export) | Operativo (con datos reales) | Operación    | Carpetas fechadas con manifest |
 | `plano/`              | Generador paramétrico de planos de stands + riders + costos | Prototipo maduro | Operativo    | `plano_stands.py` + `engine.py` |
 | `tapiz/`              | VibeCode: visualización en tiempo real de la generación de código por IA | Experimental     | Herramienta IA | `vibecode/` package + HTML visualizers |
-| `aistetic/`           | **Línea editorial / identidad visual central** (paleta, tipografía, motivos, reglas de marca) | Nuevo / por definir | Identidad    | `linea_editorial.md` + `aistetic.json` |
+| `aistetic/`           | **Línea editorial / identidad visual central** (paleta, tipografía, motivos, reglas de marca) | Nuevo | Identidad    | `linea_editorial.md` + `aistetic.json` + ejemplos/json |
+| `cotizaciones/`       | Cotizaciones duales (productora vs ONG/empresa) integradas con aistetic + infografías | Nuevo | Operativo | Reusa plano + catálogo de formatos |
 
 ## Reglas de convivencia
 

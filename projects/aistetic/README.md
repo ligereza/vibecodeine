@@ -57,12 +57,12 @@ Si te están mandando el repositorio `flujo` para que generes la línea editoria
 
 No inventes. Basa todo en lo que realmente aparece en el trabajo existente del repo.
 
-## Próximos pasos
+## Próximos pasos (integración con cotizaciones/planos)
 
-- [ ] Generar primera versión de `linea_editorial.md` + `aistetic.json` (por IA externa)
-- [ ] Hacer que el render de flujo pueda leer `aistetic.json`
-- [ ] Actualizar plantillas de `piezas_vectoriales/` para que hereden de aistetic
-- [ ] Documentar reglas de "cuándo romper la línea editorial"
+- Usar aistetic en cotizaciones (ya iniciado en projects/cotizaciones/engine.py)
+- Mejorar planos para heredar paleta de aistetic (hecho en render_svg)
+- Agregar ejemplos de cotizaciones a aistetic/ejemplos/ para que agentes extraigan
+- Integrar formatos infográficos entre aistetic y cotizaciones/planos
 
 ---
 

@@ -11,6 +11,17 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
+def _load_aistetic_styles() -> Dict[str, Any]:
+    """Carga estilos desde aistetic si existe (integración con línea editorial)."""
+    aistetic_path = Path("projects/aistetic/aistetic.json")
+    if aistetic_path.exists():
+        try:
+            data = json.loads(aistetic_path.read_text(encoding="utf-8"))
+            return data.get("colors", {})
+        except Exception:
+            pass
+    return {}
+
 
 # ============================================================
 # 1. CONSTANTES DE REALIDAD (metros)
@@ -169,35 +180,41 @@ def _esc(s: str) -> str:
 # 4. RENDER SVG (escala metros -> px)
 # ============================================================
 def render_svg(ev: Dict[str, Any], px_por_metro: float = 90.0) -> str:
+    """Render SVG con estilos de aistetic si disponible (integración línea editorial)."""
     cajas, W_m, H_m = solve_layout(ev)
-    margin = 0.8  # m de margen
+    styles = _load_aistetic_styles()
+    ink = styles.get("ink", "#1f2a24")
+    accent = styles.get("accent", "#1f6f4e")
+    paper = styles.get("paper", "#fbf8f1")
+
+    margin = 0.8
     W = (W_m + 2 * margin) * px_por_metro
-    H = (H_m + 2 * margin + 1.2) * px_por_metro  # +espacio para título
+    H = (H_m + 2 * margin + 1.2) * px_por_metro
     s = px_por_metro
     ox, oy = margin * s, (margin + 0.8) * s
 
     out = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W:.0f}" height="{H:.0f}" viewBox="0 0 {W:.0f} {H:.0f}">']
-    out.append(f'<rect width="{W:.0f}" height="{H:.0f}" fill="#fbf8f1"/>')
-    out.append(f'<text x="{ox}" y="{0.5*s}" font-family="Inter,Arial" font-size="{0.32*s}" font-weight="700" fill="#1f6f4e">'
+    out.append(f'<rect width="{W:.0f}" height="{H:.0f}" fill="{paper}"/>')
+    out.append(f'<text x="{ox}" y="{0.5*s}" font-family="Inter,Arial" font-size="{0.32*s}" font-weight="700" fill="{ink}">'
                f'PLANO — {_esc(ev.get("nombre","Evento"))}</text>')
-    out.append(f'<text x="{ox}" y="{0.82*s}" font-family="Inter,Arial" font-size="{0.17*s}" fill="#5a6b62">'
-               f'Escala 1m = {px_por_metro:.0f}px · {len(cajas)} módulo(s) · generado por constantes</text>')
+    out.append(f'<text x="{ox}" y="{0.82*s}" font-family="Inter,Arial" font-size="{0.17*s}" fill="{ink}">'
+               f'Escala 1m = {px_por_metro:.0f}px · {len(cajas)} módulo(s) · aistetic</text>')
 
     for c in cajas:
         cx, cy = ox + c.x * s, oy + c.y * s
-        col = "#1f6f4e" if c.rol == "stand" else "#7b5cff"
+        col = accent if c.rol == "stand" else "#7b5cff"
         out.append(f'<rect x="{cx:.0f}" y="{cy:.0f}" width="{c.w*s:.0f}" height="{c.h*s:.0f}" '
                    f'fill="rgba(31,111,78,0.05)" stroke="{col}" stroke-width="3" rx="6"/>')
         out.append(f'<text x="{cx+6:.0f}" y="{cy+0.3*s:.0f}" font-family="Inter,Arial" font-size="{0.16*s}" '
                    f'font-weight="700" fill="{col}">{_esc(c.nombre)}</text>')
         out.append(f'<text x="{cx+6:.0f}" y="{cy+c.h*s-6:.0f}" font-family="Inter,Arial" font-size="{0.12*s}" '
-                   f'fill="#5a6b62">{c.w:g}×{c.h:g} m</text>')
+                   f'fill="{ink}">{c.w:g}×{c.h:g} m</text>')
         for h in c.hijos:
             hx, hy = cx + h.x * s, cy + h.y * s
             if h.rol == "mesa":
                 out.append(f'<rect x="{hx:.0f}" y="{hy:.0f}" width="{h.w*s:.0f}" height="{h.h*s:.0f}" '
                            f'fill="#d4b78f" stroke="#a8855a" stroke-width="1"/>')
-            else:  # silla
+            else:
                 out.append(f'<rect x="{hx:.0f}" y="{hy:.0f}" width="{h.w*s:.0f}" height="{h.h*s:.0f}" '
                            f'fill="#e63946" rx="2"/>')
     out.append('</svg>')

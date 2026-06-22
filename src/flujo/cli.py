@@ -41,6 +41,8 @@ Comandos disponibles (ejecutar `flujo --help`):
   aistetic
     aistetic list               Lista ejemplos + estado de JSONs descriptivos
     aistetic analyze <ejemplo>  Genera stub JSON descriptivo desde carpeta de ejemplo
+  cotizaciones
+    cotizaciones <evento.json> --para productora|interno  Cotización dual (aistetic + formatos)
 """
 from __future__ import annotations
 
@@ -1099,6 +1101,23 @@ def plano(
             _ok(f"SVG guardado: {output}")
         else:
             console.print(svg)
+
+
+@app.command("cotizaciones")
+def cotizaciones(
+    evento: Path = typer.Argument(..., help="evento.json (reusa el de plano)"),
+    para: str = typer.Option("productora", "--para", help="productora | interno | empresa"),
+):
+    """Genera cotización dual integrada con aistetic.
+
+    --para productora: versión externa branded (infografía para productoras, estilo ONG Reduciendo Daño)
+    --para interno/empresa: desglose detallado interno.
+    """
+    from projects.cotizaciones.engine import generar_cotizacion
+    if not evento.exists():
+        _err(f"No existe: {evento}")
+    texto = generar_cotizacion(evento, audiencia=para)
+    console.print(texto)
 
 
 # ============================================================
