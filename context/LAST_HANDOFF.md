@@ -92,6 +92,7 @@ Fortalecer los dos flujos de agentes:
 - Delegación paralela maximizada: usamos 8-10+ subagentes en paralelo para esta tarea (editores de READMEs por área, advances-prep, limpieza, git-push, verify, coordinator/supervisor, etc.).
 - `flujo app` + launchers root como entrada única. Hub tabs + Brand + LAST_HANDOFF.
 - Limpieza rápida por agente dedicado: pruned ~140+ pyc/__pycache__, incoming vacio, .pytest_cache, stale ig; actualizado .gitignore con reglas selectivas (ignora incoming + imágenes; conserva manifests json y _review_package.txt).
+- Agent-AIRDROP-OTHER + remaining parallel agents completed: _airdrop/README.md + INSTALL.txt + PARA_IA* + README_AIRDROP.md updated with datadrop MVP + hub delegation + flujo app + compact + v4.1 direction. All root/top md now consistent.
 
 **Hacia dónde vamos:**
 - Auto-compact de sesiones (preparado con parallel delegation + LAST_HANDOFF como fuente única de verdad).
