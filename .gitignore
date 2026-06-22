@@ -50,6 +50,10 @@ context/dashboard.html
 tmp_*/
 ig_*/
 
+# Carpetas de descarga de Instagram con ruta de Windows (no commitear)
+C：*/
+*ig_*/
+
 # Piezas vectoriales - salidas generadas
 projects/piezas_vectoriales/*/salida_generada/
 projects/piezas_vectoriales/*/02_editables_svg/

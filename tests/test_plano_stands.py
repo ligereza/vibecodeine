@@ -1,5 +1,6 @@
 """Tests para el motor de planos de stands (projects/plano/plano_stands.py)."""
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -12,18 +13,28 @@ SCRIPT = PLANO_DIR / "plano_stands.py"
 EJEMPLO = PLANO_DIR / "ejemplos" / "evento_ejemplo.json"
 
 
+def _run_script(args: list) -> subprocess.CompletedProcess:
+    """Ejecuta plano_stands.py como subproceso con PYTHONPATH correcto."""
+    env = os.environ.copy()
+    existing = env.get("PYTHONPATH", "")
+    src_path = str(REPO / "src")
+    env["PYTHONPATH"] = src_path + (os.pathsep + existing if existing else "")
+    return subprocess.run(
+        [sys.executable, str(SCRIPT), *args],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+
+
 @pytest.mark.skipif(not SCRIPT.exists(), reason="proyecto plano no está presente")
 class TestPlanoStands:
     def test_ejemplo_json_existe(self):
         assert EJEMPLO.exists(), f"Falta ejemplo: {EJEMPLO}"
 
     def test_genera_svg(self):
-        res = subprocess.run(
-            [sys.executable, str(SCRIPT), str(EJEMPLO)],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
+        res = _run_script([str(EJEMPLO)])
+        assert res.returncode == 0, f"stderr: {res.stderr}"
         svg = res.stdout
         assert svg.startswith("<svg")
         assert "</svg>" in svg
@@ -33,12 +44,8 @@ class TestPlanoStands:
         assert "Contención" in svg
 
     def test_genera_rider(self):
-        res = subprocess.run(
-            [sys.executable, str(SCRIPT), str(EJEMPLO), "--rider"],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
+        res = _run_script([str(EJEMPLO), "--rider"])
+        assert res.returncode == 0, f"stderr: {res.stderr}"
         rider = res.stdout
         assert "RIDER TÉCNICO" in rider
         assert "ALIMENTACIÓN" in rider
@@ -61,12 +68,8 @@ class TestPlanoStands:
             ),
             encoding="utf-8",
         )
-        res = subprocess.run(
-            [sys.executable, str(SCRIPT), str(peq), "--rider"],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
+        res = _run_script([str(peq), "--rider"])
+        assert res.returncode == 0, f"stderr: {res.stderr}"
         rider = res.stdout
         assert "1 mesa(s)" in rider
         assert "colación" not in rider.lower()
@@ -89,11 +92,7 @@ class TestPlanoStands:
             ),
             encoding="utf-8",
         )
-        res = subprocess.run(
-            [sys.executable, str(SCRIPT), str(masivo), "--rider"],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
+        res = _run_script([str(masivo), "--rider"])
+        assert res.returncode == 0, f"stderr: {res.stderr}"
         rider = res.stdout
         assert "ZONA DE CONTENCIÓN" in rider
