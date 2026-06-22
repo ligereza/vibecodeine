@@ -20,11 +20,9 @@ Cada subdirectorio es un "satélite" con su propia lógica, pero que idealmente 
 - Todos los proyectos deben poder **consumir** definiciones de `aistetic/` (colores, tipografías, estilos de texto, framing, etc.).
 - Los proyectos de "producción" (`piezas_vectoriales`, `flyer_eventos`) generan entregables reales.
 - Los proyectos "satélite" (`plano`, `tapiz`, `aistetic`) exploran nuevas capacidades o centralizan conocimiento.
-- Cuando se alimente este repo a una IA externa (para generar línea editorial, nuevos proyectos, etc.), la IA debe empezar por:
-  1. `projects/README.md`
-  2. `projects/aistetic/`
-  3. Los `README.md` de cada satélite
-  4. Ejemplos de `config.json` y `manifest.json` en las piezas activas.
+- **Punto de entrada para todos (incluyendo agentes):** abre `context/flujo_hub.html`
+
+Cuando una IA reciba el repo, debe empezar por el hub + este archivo + `projects/aistetic/`.
 
 ## Cómo agregar un nuevo proyecto satélite
 

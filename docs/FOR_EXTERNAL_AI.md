@@ -4,14 +4,9 @@ Si te mandaron el repo completo de **flujo** para que analices información y ge
 
 ## Orden de lectura recomendado (ahorra tokens)
 
-1. `projects/README.md` — Entiende qué es cada proyecto satélite.
-2. `projects/aistetic/` (especialmente `README.md` y `linea_editorial.md`) — Aquí es donde debe vivir el resultado.
-3. `docs/REPO_MAP.md` — Qué está vivo vs histórico.
-4. `PARA_IA_CONTEXT.md` + `context/LAST_HANDOFF.md` (si existe) — Estado actual del desarrollo.
-5. Ejemplos concretos de estética:
-   - `projects/piezas_vectoriales/*/config.json`
-   - `projects/flyer_eventos/` (manifests + archivos de referencia)
-   - `projects/plano/` (output SVG + reglas)
+1. Abre `context/flujo_hub.html` (hub con todo: reportes, visualizadores, cómo trabajo).
+2. `projects/aistetic/` (con sus ejemplos/ y json/ para extraer estética real).
+3. Revisa ejemplos reales en los proyectos para entender el flujo texto ↔ imagen.
 
 **No leas todo el código fuente ni todos los handoffs antiguos** al principio. Solo si te piden algo técnico específico.
 

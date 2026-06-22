@@ -1,13 +1,14 @@
-# flujo — Dimensiones del Orden
+# # flujo — Dimensiones del Orden
 
-**arte + automatización · v0.34.10**
+**arte + automatización**
 
-Sistema personal de automatización para flujos creativos (diseño gráfico:
-flyers, etiquetas, riders, one-pagers, carruseles). Convierte un **pedido**
-(correo, mensaje o JSON) en un **proyecto renderizable** sin que el dueño
-tenga que estar presente para acusar recibo o iniciar el trabajo.
+Sistema para convertir pedidos (texto/correo/JSON) en proyectos listos (imágenes, planos, cotizaciones).
 
-> La versión se centraliza en `src/flujo/version.py`. Consúltala con `flujo version`.
+**Inicio de jornada recomendado:** abre `context/flujo_hub.html` (reportes, botones, visualizadores y flujo texto↔imagen todo en un solo archivo).
+
+Ver también:
+- `projects/README.md` (los satélites: piezas, plano, cotizaciones, aistetic…)
+- `docs/FOR_EXTERNAL_AI.md` (si recibes el repo como agente)
 
 ---
 
@@ -412,17 +413,13 @@ Opciones técnicas (a decidir; ninguna implementada aún):
 
 ---
 
-## 🧭 Mapa del repo y fuentes vivas
+## Entender el repo rápido
 
-Antes de tocar archivos, revisa `docs/REPO_MAP.md`. Ahí se separa:
+Lee primero:
+- `context/flujo_hub.html` (tu punto de entrada diario)
+- `projects/README.md`
 
-- núcleo vivo (`src/flujo/`, `tests/`, CI, dependencias),
-- operación diaria (`jobs/`, `projects/`, `tools/`),
-- documentación viva,
-- histórico/referencia (`_archive/`, `reference_old/`, checkpoints),
-- archivos generados que no deben entrar en airdrops.
-
-Para scripts, revisa `docs/SCRIPTS_INVENTORY.md`. Para higiene general, `docs/HIGIENE_REPO.md`.
+El resto (código, docs, herramientas) soporta el flujo texto → imagen. Ver `docs/REPO_MAP.md` solo si necesitas profundidad.
 
 ## 🗂️ Estructura del repo
 

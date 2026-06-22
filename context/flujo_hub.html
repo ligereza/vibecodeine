@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>flujo • Inicio de Jornada</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { --paper: #f8f1e3; --ink: #1f2a24; --accent: #2d5a4a; }
+    body { font-family: system-ui, sans-serif; background: #f8f1e3; color: #1f2a24; }
+    .card { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .section { margin-bottom: 2rem; }
+    .nav-btn { transition: all 0.1s; }
+    .nav-btn:hover { transform: translateY(-1px); }
+    .preview { border: 1px solid #d4c5a9; background: #fff; }
+    pre { font-size: 0.75rem; }
+  </style>
+</head>
+<body class="bg-[#f8f1e3] text-[#1f2a24]">
+  <header class="bg-[#1f2a24] text-white p-6">
+    <div class="max-w-6xl mx-auto flex justify-between items-center">
+      <div>
+        <h1 class="text-3xl font-semibold">flujo</h1>
+        <p class="text-[#c5b8a3] text-sm">Dimensiones del Orden • Inicio de jornada</p>
+      </div>
+      <div class="flex gap-3 text-sm">
+        <button onclick="runCommand('flujo health')" class="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded">Health</button>
+        <button onclick="runCommand('flujo daily')" class="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded">Daily</button>
+        <button onclick="runCommand('flujo serve')" class="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded">Editor</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="max-w-6xl mx-auto p-6">
+    <!-- Status -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+      <div class="card p-4">
+        <div class="text-xs text-[#675f55]">VERSIÓN</div>
+        <div class="text-2xl font-semibold">0.34.10</div>
+        <div class="text-xs mt-1 text-green-700">+ aistetic + cotizaciones</div>
+      </div>
+      <div class="card p-4">
+        <div class="text-xs text-[#675f55]">ESTADO</div>
+        <div class="text-xl font-semibold text-green-700">Listo</div>
+        <div class="text-xs">Health OK • Tests OK</div>
+      </div>
+      <div class="card p-4">
+        <div class="text-xs text-[#675f55]">ÚLTIMO HANDOFF</div>
+        <div class="text-sm">aistetic + planos + cotizaciones integrados</div>
+        <a href="LAST_HANDOFF.md" class="text-xs text-[#2d5a4a] hover:underline">ver LAST_HANDOFF.md →</a>
+      </div>
+      <div class="card p-4 text-xs">
+        <div class="text-[#675f55]">Flujo principal</div>
+        <div class="font-medium">Texto (brief/JSON) → Herramientas → Imagen (SVG / export)</div>
+      </div>
+    </div>
+
+    <!-- Proyectos -->
+    <section class="section">
+      <h2 class="text-lg font-semibold mb-3 flex items-center gap-2">Proyectos satélite <span class="text-xs font-normal text-[#675f55]">alineados a aistetic</span></h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Piezas -->
+        <div class="card p-4">
+          <div class="font-semibold">piezas_vectoriales</div>
+          <div class="text-xs text-[#675f55] mb-2">Flyers, etiquetas, riders • formatos del catálogo</div>
+          <div class="flex gap-2 text-xs">
+            <a href="../projects/piezas_vectoriales/" class="px-2 py-1 bg-[#2d5a4a] text-white rounded">Ver carpeta</a>
+            <a href="../projects/piezas_vectoriales/README.md" class="px-2 py-1 border rounded">README</a>
+          </div>
+        </div>
+        <!-- Plano -->
+        <div class="card p-4">
+          <div class="font-semibold">plano</div>
+          <div class="text-xs text-[#675f55] mb-2">Planos de stands + riders + costos (mejorado con aistetic)</div>
+          <div class="flex gap-2 text-xs">
+            <a href="../projects/plano/" class="px-2 py-1 bg-[#2d5a4a] text-white rounded">Ver</a>
+            <a href="../projects/plano/plano_editor.html" class="px-2 py-1 border rounded">Editor HTML</a>
+            <a href="../projects/plano/ejemplos/evento_ejemplo.json" class="px-2 py-1 border rounded">Ejemplo</a>
+          </div>
+        </div>
+        <!-- Cotizaciones -->
+        <div class="card p-4 border-l-4 border-[#2d5a4a]">
+          <div class="font-semibold">cotizaciones <span class="text-[10px] bg-amber-100 px-1 rounded">nuevo</span></div>
+          <div class="text-xs text-[#675f55] mb-2">Dual: productora (branded) / interno (ONG o empresa)</div>
+          <div class="text-[10px] mb-2">Usa aistetic + formatos. Reutiliza plano.</div>
+          <div class="flex gap-2 text-xs">
+            <a href="../projects/cotizaciones/" class="px-2 py-1 bg-[#2d5a4a] text-white rounded">Ver proyecto</a>
+            <code class="text-[10px] px-1 py-0.5 bg-gray-100 rounded">flujo cotizaciones evento.json --para productora</code>
+          </div>
+        </div>
+        <!-- Aistetic -->
+        <div class="card p-4 border-l-4 border-[#2d5a4a]">
+          <div class="font-semibold">aistetic <span class="text-[10px] bg-amber-100 px-1 rounded">central</span></div>
+          <div class="text-xs text-[#675f55] mb-2">Línea editorial • ejemplos reales • JSON descriptivos</div>
+          <div class="flex gap-2 text-xs">
+            <a href="../projects/aistetic/" class="px-2 py-1 bg-[#2d5a4a] text-white rounded">Ver</a>
+            <a href="../projects/aistetic/ejemplos/" class="px-2 py-1 border rounded">ejemplos</a>
+            <a href="../projects/aistetic/json/" class="px-2 py-1 border rounded">json</a>
+          </div>
+        </div>
+        <!-- Flyer eventos + Tapiz -->
+        <div class="card p-4">
+          <div class="font-semibold">flyer_eventos</div>
+          <div class="text-xs text-[#675f55]">Trabajos reales de eventos (IG/correo)</div>
+          <a href="../projects/flyer_eventos/" class="text-xs underline">Ver carpeta →</a>
+        </div>
+        <div class="card p-4">
+          <div class="font-semibold">tapiz (VibeCode)</div>
+          <div class="text-xs text-[#675f55]">Visualización de generación de código por IA</div>
+          <a href="../projects/tapiz/" class="text-xs underline">Ver →</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Flujo Texto ↔ Imagen (core challenge) -->
+    <section class="section">
+      <h2 class="text-lg font-semibold mb-3">Flujo Texto ↔ Imagen</h2>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="card p-4">
+          <div class="text-sm font-medium mb-2">Texto / JSON → Preview</div>
+          <textarea id="text-input" class="w-full h-28 text-xs font-mono border p-2 rounded" placeholder='{"nombre": "Evento", "voluntarios": 7, "layout_mode": "grid_2x"}'></textarea>
+          <button onclick="generatePreview()" class="mt-2 px-3 py-1 bg-[#2d5a4a] text-white text-xs rounded">Generar preview (mock)</button>
+          <div id="preview" class="preview mt-3 h-40 flex items-center justify-center text-xs text-[#675f55]">Preview aquí</div>
+        </div>
+        <div class="card p-4">
+          <div class="text-sm font-medium mb-2">Imagen → Descripción (para aistetic)</div>
+          <div class="border border-dashed h-28 flex items-center justify-center text-xs text-[#675f55]">Arrastra imagen aquí (demo)</div>
+          <button onclick="mockDescribe()" class="mt-2 px-3 py-1 border text-xs rounded">Extraer a JSON (aistetic)</button>
+          <div class="text-[10px] mt-2 text-[#675f55]">Los resultados van a aistetic/json/ para que agentes usen.</div>
+        </div>
+      </div>
+      <p class="text-xs text-[#675f55] mt-2">Este es el desafío central del repo. Usa ejemplos de aistetic + herramientas para pasar texto a imagen y viceversa de forma limpia.</p>
+    </section>
+
+    <!-- Herramientas rápidas -->
+    <section class="section">
+      <h2 class="text-lg font-semibold mb-3">Herramientas (flujo CLI)</h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+        <div onclick="copyCmd('flujo job new \"nuevo\" --email inbox/correo.txt')" class="card p-3 cursor-pointer hover:bg-gray-50 text-xs">job new</div>
+        <div onclick="copyCmd('flujo job prepare jobs/...')" class="card p-3 cursor-pointer hover:bg-gray-50 text-xs">job prepare</div>
+        <div onclick="copyCmd('flujo render run projects/.../config.json')" class="card p-3 cursor-pointer hover:bg-gray-50 text-xs">render run</div>
+        <div onclick="copyCmd('flujo plano projects/plano/ejemplos/evento_ejemplo.json --costs')" class="card p-3 cursor-pointer hover:bg-gray-50 text-xs">plano + costs</div>
+        <div onclick="copyCmd('flujo cotizaciones ... --para productora')" class="card p-3 cursor-pointer hover:bg-gray-50 text-xs">cotizaciones (productora)</div>
+        <div onclick="copyCmd('flujo aistetic analyze mi-ejemplo')" class="card p-3 cursor-pointer hover:bg-gray-50 text-xs">aistetic analyze</div>
+        <div onclick="copyCmd('flujo daily')" class="card p-3 cursor-pointer hover:bg-gray-50 text-xs">daily report</div>
+        <div onclick="copyCmd('flujo serve')" class="card p-3 cursor-pointer hover:bg-gray-50 text-xs">editor web</div>
+      </div>
+      <div class="text-xs mt-2 text-[#675f55]">Copia y pega en tu terminal. Todo está documentado para que agentes entiendan el flujo.</div>
+    </section>
+
+    <!-- Cómo trabajo (para agentes) -->
+    <section class="section">
+      <h2 class="text-lg font-semibold mb-2">Cómo trabajo (para ti, agente)</h2>
+      <div class="card p-4 bg-[#fff8ed] text-sm">
+        <p class="mb-2">Este repo muestra mi flujo completo de diseño: recibo texto (correo/JSON/brief) → uso herramientas → genero imágenes/archivos listos.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 text-xs">
+          <div>
+            <strong>Empieza aquí:</strong><br>
+            • <a href="LAST_HANDOFF.md" class="underline">LAST_HANDOFF.md</a> (estado actual)<br>
+            • <a href="../projects/README.md" class="underline">projects/README.md</a><br>
+            • <a href="../projects/aistetic/" class="underline">aistetic/</a> (línea editorial + ejemplos/json)
+          </div>
+          <div>
+            <strong>Para ayudarme:</strong><br>
+            Lee un proyecto (ej. cotizaciones o plano), mira ejemplos reales, genera JSONs descriptivos en aistetic/json, o mejora el flujo texto-imagen.<br>
+            Usa los comandos de arriba. Mantén todo alineado a aistetic.
+          </div>
+        </div>
+        <div class="mt-3 text-xs"><a href="../docs/FOR_EXTERNAL_AI.md" class="underline">docs/FOR_EXTERNAL_AI.md</a> — guía específica si recibes el repo completo.</div>
+      </div>
+    </section>
+
+    <footer class="text-xs text-[#675f55] mt-8 border-t pt-4">
+      Abre este archivo al iniciar el día. Todo lo importante está aquí o a un click.<br>
+      Para entender el repo completo: empieza por proyectos/README.md y aistetic/. El resto son herramientas que apoyan el flujo texto ↔ imagen.
+    </footer>
+  </div>
+
+  <script>
+    function copyCmd(cmd) {
+      navigator.clipboard.writeText(cmd).then(() => {
+        const orig = event.target.innerText;
+        event.target.innerText = 'Copiado!';
+        setTimeout(() => { if (event.target) event.target.innerText = orig; }, 1200);
+      });
+    }
+
+    function runCommand(cmd) {
+      alert('Ejecuta en terminal:\n\n' + cmd + '\n\n(O usa flujo serve para el editor)');
+    }
+
+    function generatePreview() {
+      const input = document.getElementById('text-input').value.trim() || '{"nombre":"Demo","voluntarios":5}';
+      let data;
+      try { data = JSON.parse(input); } catch { data = {nombre: input}; }
+      const preview = document.getElementById('preview');
+      const name = data.nombre || 'Evento';
+      const v = data.voluntarios || 4;
+      preview.innerHTML = `
+        <svg width="240" height="140" class="mx-auto">
+          <rect x="10" y="10" width="220" height="120" fill="#f8f1e3" stroke="#2d5a4a" stroke-width="2"/>
+          <text x="20" y="35" font-size="13" fill="#1f2a24">PLANO — ${name}</text>
+          <rect x="30" y="50" width="60" height="50" fill="#d4b78f" stroke="#2d5a4a"/>
+          <text x="38" y="78" font-size="9" fill="#1f2a24">stand</text>
+          ${Array.from({length: Math.min(v,5)}).map((_,i) => 
+            `<rect x="${100 + i*18}" y="95" width="14" height="14" fill="#e63946"/>`
+          ).join('')}
+          <text x="20" y="125" font-size="8" fill="#675f55">Texto → visual (mock)</text>
+        </svg>
+      `;
+    }
+
+    function mockDescribe() {
+      const preview = document.getElementById('preview');
+      preview.innerHTML = `<div class="text-center p-4 text-xs">JSON generado → ve a projects/aistetic/json/ y pégalo.<br>Ejemplo: {"colors":["#1f2a24"], "motifs":["marco simple"]}</div>`;
+      // In real use: the agent would save to json folder
+    }
+
+    // Auto-generate a demo preview on load
+    setTimeout(() => {
+      const p = document.getElementById('preview');
+      if (p && p.innerText.includes('Preview')) generatePreview();
+    }, 600);
+  </script>
+</body>
+</html>

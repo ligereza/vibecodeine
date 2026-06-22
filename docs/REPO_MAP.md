@@ -42,19 +42,18 @@ Ver también `docs/FOR_EXTERNAL_AI.md` cuando se alimente el repo completo a una
 
 Nota: `projects/tapiz/vibecode.egg-info/` está trackeado históricamente. No agregar nuevos `.egg-info`.
 
-## Documentación viva
+## Documentación viva + entrada principal
 
-| Ruta | Rol | Prioridad para nueva IA (bajo tokens) |
-|---|---|---|
-| `PARA_IA_CONTEXT.md` | Contexto rápido para agentes | Alta |
-| **`context/LAST_HANDOFF.md`** | **Estado actual + qué sigue (single source of truth para continuidad)** | **MÁXIMA** |
-| `README.md` | Entrada principal | Media |
-| `docs/AGENT_GUIDE.md` | Guía de trabajo para agentes | Media |
-| `docs/REPO_MAP.md` | Qué está vivo, histórico o generado | Media |
-| `docs/CLI.md` / `docs/COMANDOS.md` | Referencia de comandos | Baja |
-| `docs/AIRDROP_REVIEW.md` + `docs/AGENT_AIRDROP_PROTOCOL.md` | Protocolo airdrops | Baja (solo al entregar) |
+**Abre primero:** `context/flujo_hub.html` (hub con reportes, botones, visualizadores y flujo texto-imagen).
 
-**Regla de ahorro de tokens:** Una IA nueva casi nunca necesita leer más de los dos primeros + `flujo daily` + `flujo job next`.
+| Ruta | Rol |
+|---|---|
+| `context/flujo_hub.html` | Entrada diaria recomendada (todo integrado) |
+| `PARA_IA_CONTEXT.md` + `context/LAST_HANDOFF.md` | Para agentes (bajo tokens) |
+| `projects/README.md` | Satélites (piezas, plano, cotizaciones, aistetic...) |
+| `docs/REPO_MAP.md` | Solo si necesitas el mapa completo |
+
+El resto de docs son de soporte. Priorizamos entender el flujo texto ↔ imagen.
 
 ## Histórico / referencia
 
