@@ -1,10 +1,11 @@
 """Versión y changelog de flujo."""
-__version__ = "0.33.3"
+__version__ = "0.34.0"
 VERSION = __version__
-__version_info__ = (0, 33, 3)
+__version_info__ = (0, 34, 0)
 def get_version(): return __version__
 def get_changelog():
     return {
+        "0.34.0": {"titulo": "Limpieza estructural de demos/tests", "fecha": "2026-06-21", "highlights": ["Nuevo script scripts/cleanup_demo_artifacts.sh para eliminar jobs/proyectos de prueba", "Política de repo chico: jobs reales quedan fuera de Git; solo se conserva jobs/_template", "Mantiene ejemplos intencionales y limpia artefactos etiquetas-acme/pieza-x"]},
         "0.33.3": {"titulo": "Hotfix: tests plano_stands.py decodifican UTF-8", "fecha": "2026-06-21", "highlights": ["tests/test_plano_stands.py ahora fuerza encoding utf-8 y PYTHONIOENCODING=utf-8 en el subprocess", "Evita mojibake en Windows cuando el script imprime caracteres Unicode", "Incluye todos los cambios de v0.33.2"]},
         "0.33.2": {"titulo": "Hotfix: encoding UTF-8 en plano_stands.py + flecha ASCII", "fecha": "2026-06-21", "highlights": ["Reemplazada flecha Unicode '→' por '->' en rider de plano para evitar UnicodeEncodeError en Windows cp1252", "plano_stands.py reconfigura stdout/stderr a UTF-8", "Incluye todos los cambios de v0.33.1"]},
         "0.33.1": {"titulo": "Hotfix: plano_stands.py robusto en Windows + tests subprocess", "fecha": "2026-06-21", "highlights": ["plano_stands.py ahora es más robusto al importar flujo.plano (PYTHONPATH + sys.path)", "tests/test_plano_stands.py ahora inyecta PYTHONPATH para el subprocess", "Diagnóstico de errores visible con traceback en stderr"]},

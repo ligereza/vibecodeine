@@ -1,6 +1,6 @@
 # PARA IA
 
-Este repo se llama **flujo** — arte y automatización. v0.33.3.
+Este repo se llama **flujo** — arte y automatización. v0.34.0.
 
 Lee primero: `docs/AGENT_GUIDE.md` y `docs/CLI.md`.
 
