@@ -2032,6 +2032,42 @@ initLiveConnection = function() {
   setTimeout(() => { try { refreshDatadropsList(); } catch(e){} }, 1400);
 };
 
+// Ensure datadrop buttons remain wired (callApiOrFetch + scan/upload/refresh/prepare) even in edge parse/desktop loads.
+// Parallel bindings (onclick inline + addEventListener) for robustness. No duplicate side effects.
+function initDatadropButtons() {
+  try {
+    const map = [
+      ['datadrop-file', null], // input not action
+      [null, 'uploadDatadrop', 'button[onclick*="uploadDatadrop"]'],
+      [null, 'scanDatadropIncoming', 'button[onclick*="scanDatadropIncoming"]'],
+      [null, 'refreshDatadropsList', 'button[onclick*="refreshDatadropsList"]'],
+      [null, 'prepareDatadropPackage', 'button[onclick*="prepareDatadropPackage"]'],
+      [null, 'quickProcessAndFeedLinea', 'button[onclick*="quickProcessAndFeedLinea"]']
+    ];
+    map.forEach(([_, fnName, sel]) => {
+      if (!fnName || !sel) return;
+      document.querySelectorAll(sel).forEach(btn => {
+        if (!btn || btn._datadropWired) return;
+        // Clear inline onclick to avoid double-fire on robust addEventListener wiring (but keep name for debug)
+        btn.onclick = null;
+        btn.addEventListener('click', function(ev) {
+          if (typeof window[fnName] === 'function') {
+            try { window[fnName](btn); } catch(e){}
+          }
+        }, {once: false});
+        btn._datadropWired = true;
+        // restore visual label if needed (no text change)
+      });
+    });
+  } catch(e){ /* wiring never crashes */ }
+}
+
+// Auto call on ready (after main inits)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initDatadropButtons);
+} else {
+  setTimeout(initDatadropButtons, 50);
+}
 </script>
 </body>
 </html>
