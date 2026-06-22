@@ -73,6 +73,7 @@ def test_find_job_by_partial_name(tmp_path: Path, monkeypatch):
 
 def test_prepare_job_extracts_brief(tmp_path: Path, monkeypatch):
     monkeypatch.setattr("flujo.paths.repo_root", lambda: tmp_path)
+    monkeypatch.setattr("flujo.jobs.job.repo_root", lambda: tmp_path)
     (tmp_path / "jobs").mkdir()
     src = tmp_path / "correo.txt"
     src.write_text(
@@ -99,6 +100,8 @@ def test_suggest_next_action():
 
 def test_activate_job_creates_project(tmp_path: Path, monkeypatch):
     monkeypatch.setattr("flujo.paths.repo_root", lambda: tmp_path)
+    monkeypatch.setattr("flujo.jobs.job.repo_root", lambda: tmp_path)
+    monkeypatch.setattr("flujo.render.piezas.repo_root", lambda: tmp_path)
     (tmp_path / "jobs").mkdir()
     (tmp_path / "projects" / "piezas_vectoriales").mkdir(parents=True)
     (tmp_path / "tools" / "piezas_vectoriales" / "plantillas").mkdir(parents=True)

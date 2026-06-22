@@ -54,6 +54,10 @@ ig_*/
 C：*/
 *ig_*/
 
+
+# Proyectos de piezas generados desde jobs (fecha-prefijo)
+projects/piezas_vectoriales/20*/
+
 # Piezas vectoriales - salidas generadas
 projects/piezas_vectoriales/*/salida_generada/
 projects/piezas_vectoriales/*/02_editables_svg/

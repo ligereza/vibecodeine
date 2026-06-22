@@ -67,6 +67,7 @@ def repo_with_index(tmp_path: Path, monkeypatch):
     (tmp_path / "projects" / "piezas_vectoriales").mkdir(parents=True)
 
     monkeypatch.setattr("flujo.paths.repo_root", lambda: tmp_path)
+    monkeypatch.setattr("flujo.render.piezas.repo_root", lambda: tmp_path)
     return tmp_path
 
 
@@ -147,6 +148,7 @@ def test_create_project_universal_base_when_no_match(tmp_path, monkeypatch):
     (tmp_path / "jobs").mkdir()
     (tmp_path / "projects" / "piezas_vectoriales").mkdir(parents=True)
     monkeypatch.setattr("flujo.paths.repo_root", lambda: tmp_path)
+    monkeypatch.setattr("flujo.render.piezas.repo_root", lambda: tmp_path)
 
     job = tmp_path / "jobs" / "2026-06-17_test"
     job.mkdir()
