@@ -9,14 +9,17 @@ Mantener este archivo **corto** (< 120 líneas ideal, < 180 máximo). Actualizar
 
 **Fecha:** 2026-06-22
 **Versión actual:** 0.34.10
-**Última sesión ("sii vamos" full structural):**
-- Root hygiene ejecutado: _archive -> .archive/old-archive, checkpoints -> .archive/checkpoints, reference_old -> .archive/reference_old (git mv).
-- .archive/README.md + actualizaciones en REPO_MAP, HIGIENE, README, LIMPIEZA etc.
-- Docs consolidation: notas de deprecación y redirects en FOR_EXTERNAL_AI, CLEANUP, MANTENIMIENTO, AIRDROP_REVIEW, AGENT_AIRDROP_PROTOCOL, etc.
-- Hygiene script mejorado.
-- Referencias actualizadas para que todo apunte al hub + visualizadores + LAST_HANDOFF como verdad.
-- Push hecho.
-- Deuda restante: reducción agresiva de duplicados en docs/ (puede hacerse en siguiente).
+**Última sesión (toma de iniciativa completa - "todo y motivación"):**
+- Transición completa: de archivos HTML estáticos a APP real integrada.
+  - Servidor dedicado con API real (usa el parser de intake y la marca flujo).
+  - Hub JS ahora llama backend cuando está corriendo como app.
+  - `flujo app` es el comando principal (con soporte --desktop vía pywebview gratis).
+- Recorrido hasta aquí:
+  - De caos histórico + muchos experimentos → hub como único centro pro + visualizadores reales embebidos.
+  - Renombre total aistetic → flujo (coherencia de marca y repo).
+  - Limpieza estructural (.archive/).
+  - Ahora el sistema se siente como una herramienta que un diseñador puede usar y mostrar con confianza.
+- Motivación: Cada iteración ha elevado el nivel de "orden" y profesionalismo. De "abrir el html" a una app lanzable con backend. Esto es exactamente lo que el flujo necesita.
 
 ## Objetivo actual / tarea en curso
 Fortalecer los dos flujos de agentes:

@@ -1,6 +1,8 @@
 # # # flujo — Dimensiones del Orden (arte + automatización)
 
-**Punto de entrada diario (OBLIGATORIO):** abre `context/flujo_hub.html`
+**Punto de entrada diario (OBLIGATORIO):** `flujo app`  (o `flujo serve`)
+
+Esto lanza el workspace completo como aplicación local (servidor + hub pro + visualizadores). Con `--desktop` abre en ventana nativa.
 
 El hub + visualizadores es el **main del flujo**:
 - Intake de pedidos (pega email/pedido → brief ordenado + match de formatos)
