@@ -1,6 +1,6 @@
 # Mapa del repo — flujo
 
-Versión: v0.34.6
+Versión: v0.34.10 (historia consolidada)
 
 Este mapa existe para que humanos y agentes de IA entiendan rápido qué carpetas están vivas, cuáles son históricas y qué NO deben tocar sin permiso.
 
@@ -55,8 +55,10 @@ Nota: `projects/tapiz/vibecode.egg-info/` está trackeado históricamente. No ag
 |---|---|---|
 | `_archive/` | Material archivado de etapas anteriores | No usar como fuente primaria salvo investigación |
 | `reference_old/` | Scripts/GUI legado del proyecto anterior | No modificar salvo migración explícita |
-| `checkpoints/` | Bitácora histórica de avances | No editar commits pasados; agregar nuevos checkpoints |
-| `HANDOFF_*.md` antiguos | Contexto histórico | No corregir salvo casos críticos |
+| `checkpoints/` | Bitácora histórica de avances (detalle de intentos) | No editar; nuevos checkpoints solo si valiosos |
+| `docs/handoffs/` | Notas de agentes (HANDOFF, HOTFIX, AUDITORIA, REVISION) | Ubicación consolidada para higiene de raíz. No agregar ruido de tareas a medias |
+
+**Nota de limpieza (2026-06):** Commits de v0.34.x con tareas parciales/fallidas fueron consolidados en un solo commit ("v0.34 consolidated"). El detalle queda en los archivos de handoffs/ y checkpoints/.
 
 ## Archivos generados/locales que NO deben entrar en airdrops
 

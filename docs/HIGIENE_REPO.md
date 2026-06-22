@@ -1,6 +1,6 @@
 # Higiene del repo
 
-Versión: v0.34.6
+Versión: v0.34.10 (post consolidación de historia)
 
 ## Política
 
@@ -36,5 +36,6 @@ py scripts/run_airdrop_checks.py "mensaje"
 ## Deuda conocida
 
 - `projects/tapiz/vibecode.egg-info/` está trackeado históricamente.
-- Hay muchos checkpoints y handoffs históricos. No limpiar agresivamente sin plan.
-- Hay scripts legacy que conviene inventariar antes de borrar.
+- Historial de commits de v0.34 con tareas parciales/fallidas fue consolidado (ver REPO_MAP).
+- checkpoinsts/ y docs/handoffs/ se mantienen como bitácora (no agregar commits ruidosos de micro-tareas).
+- Se recomienda correr git filter-repo para reducir tamaño del .git (ver docs/LIMPIEZA_HISTORIAL.md).
