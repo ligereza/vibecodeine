@@ -62,7 +62,7 @@ def process_email_to_jobs(
     """Procesa un correo: detecta tipo, crea jobs/briefs, opcionalmente activa proyectos.
 
     Para flyers (IG links): usa `import_from_email` (crea projects/flyer_eventos/<date>_ig_<shortcode>).
-    Para pedidos de diseño: crea jobs/<date>_<slug> y ejecuta job-prepare.
+    Para pedidos de diseño: crea jobs/<date>_<slug> y ejecuta flujo job prepare.
     """
     email_path = Path(email_path)
     result = PipelineResult(email_path=email_path)

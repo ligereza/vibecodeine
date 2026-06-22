@@ -103,3 +103,6 @@ projects/**/*.mkv
 *.db-journal
 *.sqlite
 *.sqlite3
+# Logs locales de validación/airdrops
+_logs/
+airdrop_*_apply_log.txt

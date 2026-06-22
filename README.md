@@ -1,6 +1,6 @@
 # flujo — Dimensiones del Orden
 
-**arte + automatización · v0.34.0**
+**arte + automatización · v0.34.10**
 
 Sistema personal de automatización para flujos creativos (diseño gráfico:
 flyers, etiquetas, riders, one-pagers, carruseles). Convierte un **pedido**
@@ -133,15 +133,31 @@ flujo airdrop apply "mensaje"             # backup → apply → checkpoint → 
 El "airdrop" es el mecanismo central de colaboración. Resuelve: *"una IA no
 tiene push, ¿cómo le hace llegar cambios al repo de forma segura y trazable?"*
 
+### Validación local antes de aplicar
+
+Antes de aplicar cualquier airdrop externo, usar:
+
+```bash
+py scripts/validate_airdrop.py
+py scripts/run_airdrop_checks.py "vX.Y.Z - descripcion"
+
+# Solo si el airdrop toca src/flujo/airdrop.py y ya fue revisado explícitamente:
+py scripts/validate_airdrop.py --allow-airdrop-engine
+py scripts/run_airdrop_checks.py "vX.Y.Z - descripcion" --allow-airdrop-engine
+```
+
+Esto evita ZIPs vacíos, archivos generados, rutas deformadas por Markdown y checkpoints con pruebas fallidas. Desde v0.34.8, `flujo airdrop apply` también valida antes de aplicar (usa `--allow-airdrop-engine` solo si revisaste cambios al motor). Ver `docs/AIRDROP_REVIEW.md` y `docs/AGENT_AIRDROP_PROTOCOL.md`.
+
 ### Cómo funciona el motor (`src/flujo/airdrop.py`)
 1. **Escanea** `_airdrop/` recursivamente (ignora `.gitkeep`, dotfiles).
 2. Para cada archivo, calcula su **destino** = misma ruta relativa en la raíz.
    Marca `NEW` (no existe) o `REPLACE` (ya existe).
-3. Al **aplicar**: hace **backup** de cada `REPLACE` en
-   `_airdrop_backups/<timestamp>/`, copia el archivo a su destino, da permiso
-   de ejecución a los `.sh`.
+3. Al **aplicar**: escribe un manifest en `_airdrop_backups/<timestamp>/`,
+   hace **backup** de cada `REPLACE`, copia cada archivo a su destino y da
+   permiso de ejecución a los `.sh`.
 4. Dispara **auto-checkpoint** (commit + push) si se usó `flujo airdrop apply`.
-5. **Rollback**: `flujo airdrop rollback` restaura el último backup.
+5. **Rollback**: `flujo airdrop rollback` usa el manifest para restaurar
+   archivos `REPLACE` y eliminar archivos `NEW` creados por el airdrop.
 
 > Las rutas se normalizan con `/` (`rel.as_posix()`) para que funcione igual en
 > Windows y Linux/macOS.
@@ -391,6 +407,18 @@ Opciones técnicas (a decidir; ninguna implementada aún):
 7. **Lógica nueva** → como módulo en `src/flujo/` **con tests**.
 
 ---
+
+## 🧭 Mapa del repo y fuentes vivas
+
+Antes de tocar archivos, revisa `docs/REPO_MAP.md`. Ahí se separa:
+
+- núcleo vivo (`src/flujo/`, `tests/`, CI, dependencias),
+- operación diaria (`jobs/`, `projects/`, `tools/`),
+- documentación viva,
+- histórico/referencia (`_archive/`, `reference_old/`, checkpoints),
+- archivos generados que no deben entrar en airdrops.
+
+Para scripts, revisa `docs/SCRIPTS_INVENTORY.md`. Para higiene general, `docs/HIGIENE_REPO.md`.
 
 ## 🗂️ Estructura del repo
 

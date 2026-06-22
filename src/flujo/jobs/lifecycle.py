@@ -34,10 +34,10 @@ class JobResult:
 # ============================================================
 
 _NEXT_ACTION: dict = {
-    EstadoJob.BORRADOR: "Pegar texto del pedido y ejecutar: `flujo job-prepare`",
+    EstadoJob.BORRADOR: "Pegar texto del pedido y ejecutar: `flujo job prepare`",
     EstadoJob.BRIEF_EXTRAIDO: "Revisar brief.yaml y completar datos faltantes",
     EstadoJob.PENDIENTE_DATOS: "Resolver pendientes del brief y revisar privacidad",
-    EstadoJob.LISTO_PARA_DISENAR: "Activar: `flujo job-activate`",
+    EstadoJob.LISTO_PARA_DISENAR: "Activar: `flujo job activate`",
     EstadoJob.EN_DISENO: "Ajustar config.json del proyecto y `flujo render`",
     EstadoJob.GENERADO: "Revisar outputs y preparar entrega",
     EstadoJob.ENTREGADO: "Sin acción automática",
@@ -225,9 +225,9 @@ def _write_job_report(job_path: Path, brief: Brief) -> Path:
 ## Comandos rápidos
 
 ```bash
-flujo job-prepare "{job_path}"
-flujo job-activate "{job_path}"
-flujo render projects/piezas_vectoriales/<proyecto>/config.json
+flujo job prepare "{job_path}"
+flujo job activate "{job_path}"
+flujo render run projects/piezas_vectoriales/<proyecto>/config.json
 ```
 """,
         encoding="utf-8",

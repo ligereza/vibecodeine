@@ -50,3 +50,9 @@ def test_render_formats_no_index(tmp_path: Path, monkeypatch):
     (tmp_path / "tools" / "piezas_vectoriales" / "plantillas").mkdir(parents=True)
     result = runner.invoke(app, ["render", "formats"])
     assert result.exit_code == 0
+
+
+def test_app_alias_help():
+    result = runner.invoke(app, ["app", "--help"])
+    assert result.exit_code == 0
+    assert "interfaz web" in result.output.lower() or "alias" in result.output.lower()

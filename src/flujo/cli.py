@@ -17,11 +17,11 @@ Comandos disponibles (ejecutar `flujo --help`):
     flyer-list                  Listar flyers
   jobs
     job-new                     Crear job desde texto/correo
-    job-prepare                 Pipeline: privacidad → brief → estado
+    job prepare                 Pipeline: privacidad → brief → estado
     job-list                    Listar jobs y estados
     job-status <path>           Estado de un job específico
     job-next                    Próximas acciones sugeridas por job
-    job-activate                brief → proyecto en projects/piezas_vectoriales/
+    job activate                brief → proyecto en projects/piezas_vectoriales/
     job-report <path>           Reporte detallado de un job
   privacy
     privacy-scan <archivo>      Escanear un texto
@@ -100,6 +100,31 @@ def _section(title: str) -> None:
     console.print(Panel(f"[bold cyan]{title}[/]", border_style="cyan"))
 
 
+def _validate_airdrop_or_exit(allow_airdrop_engine: bool = False) -> None:
+    """Ejecuta el validador conservador antes de aplicar un airdrop."""
+    import subprocess
+    from .paths import repo_root
+
+    root = repo_root()
+    script = root / "scripts" / "validate_airdrop.py"
+    if not script.exists():
+        _warn("No existe scripts/validate_airdrop.py; no se pudo validar automáticamente.")
+        return
+    cmd = [sys.executable, str(script)]
+    if allow_airdrop_engine:
+        cmd.append("--allow-airdrop-engine")
+    res = subprocess.run(cmd, cwd=root, text=True, capture_output=True)
+    if res.stdout:
+        console.print(res.stdout.rstrip())
+    if res.stderr:
+        console.print(res.stderr.rstrip())
+    if res.returncode != 0:
+        _err(
+            "Validación de _airdrop/ falló. No se aplicó nada. "
+            "Usa --allow-airdrop-engine solo si revisaste cambios al motor."
+        )
+
+
 # ============================================================
 # Airdrop
 # ============================================================
@@ -148,14 +173,27 @@ def airdrop_apply(
     message: Optional[str] = typer.Argument(
         None, help="Mensaje del checkpoint (ej. 'fix airdrop cli')"
     ),
+    skip_validation: bool = typer.Option(
+        False, "--skip-validation", help="omitir scripts/validate_airdrop.py"
+    ),
+    allow_airdrop_engine: bool = typer.Option(
+        False,
+        "--allow-airdrop-engine",
+        help="permitir cambios al motor src/flujo/airdrop.py tras revisión explícita",
+    ),
 ):
     """Aplica los archivos de _airdrop/, crea backup y dispara checkpoint + push."""
-    from .airdrop import apply_airdrop, run_auto_checkpoint
+    from .airdrop import apply_airdrop, run_auto_checkpoint, scan_airdrop
     try:
-        changes = apply_airdrop()
-        if not changes:
+        pending = scan_airdrop()
+        if not pending:
             _warn("No hay archivos pendientes en _airdrop/")
             return
+
+        if not skip_validation:
+            _validate_airdrop_or_exit(allow_airdrop_engine=allow_airdrop_engine)
+
+        changes = apply_airdrop()
 
         _section("Airdrop Aplicado")
         for c in changes:
@@ -579,7 +617,7 @@ def job_activate(
     _section(f"Job activado: {job.name}")
     if res.project_path:
         _ok(f"Proyecto: {res.project_path}")
-        console.print(f"  Siguiente: [cyan]flujo render {res.project_path / 'config.json'}[/]")
+        console.print(f"  Siguiente: [cyan]flujo render run {res.project_path / 'config.json'}[/]")
 
 
 @job_app.command("report")
@@ -976,7 +1014,7 @@ def serve(
 
 
 # Alias: flujo app → flujo serve
-@app.command()
+@app.command("app")
 def app_alias():
     """Alias de serve (interfaz web)."""
     serve()

@@ -105,3 +105,12 @@ def test_brief_from_text_genera_pendientes_si_faltan_datos():
     b = brief_from_text(text, job_id="test")
     assert len(b.pendientes) > 0
     assert any("medida" in p.lower() for p in b.pendientes)
+
+
+def test_parse_yaml_simple_supports_scalar_lists_without_pyyaml():
+    from flujo.jobs.brief import parse_yaml_simple
+
+    data = parse_yaml_simple('''productos:\n  - Impulso\n  - Creatina\npendientes:\n  - Confirmar medida\nmedidas:\n  ancho_cm: 16.5\n  alto_cm: 6.5\n''')
+    assert data["productos"] == ["Impulso", "Creatina"]
+    assert data["pendientes"] == ["Confirmar medida"]
+    assert data["medidas"]["ancho_cm"] == 16.5

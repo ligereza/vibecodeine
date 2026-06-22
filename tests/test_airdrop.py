@@ -120,3 +120,23 @@ def test_cli_airdrop_status_runs():
     result = runner.invoke(app, ["airdrop", "status"])
     assert result.exit_code == 0, result.output
     assert "version" in result.output.lower()
+
+
+def test_rollback_removes_new_and_restores_replaced(tmp_path, monkeypatch):
+    _patch_root(monkeypatch, tmp_path)
+    (tmp_path / "_airdrop" / "docs" / "nested").mkdir(parents=True)
+    (tmp_path / "_airdrop" / "docs" / "nested" / "nuevo.md").write_text("nuevo")
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "existente.md").write_text("ORIGINAL")
+    (tmp_path / "_airdrop" / "docs" / "existente.md").write_text("ACTUALIZADO")
+
+    airdrop.apply_airdrop()
+    assert (tmp_path / "docs" / "nested" / "nuevo.md").exists()
+    assert (tmp_path / "docs" / "existente.md").read_text() == "ACTUALIZADO"
+
+    backup = airdrop.rollback_last()
+    assert backup is not None
+    assert not (tmp_path / "docs" / "nested" / "nuevo.md").exists()
+    assert not (tmp_path / "docs" / "nested").exists()
+    assert (tmp_path / "docs" / "existente.md").read_text() == "ORIGINAL"
+    assert list((tmp_path / "_airdrop_backups").rglob("_airdrop_manifest.json"))

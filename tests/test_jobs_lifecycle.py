@@ -95,7 +95,7 @@ def test_suggest_next_action():
     from flujo.jobs.brief import Brief, EstadoJob
     b = Brief(estado=EstadoJob.LISTO_PARA_DISENAR)
     action = suggest_next_action(b)
-    assert "activar" in action.lower() or "job-activate" in action
+    assert "activar" in action.lower() or "job activate" in action
 
 
 def test_activate_job_creates_project(tmp_path: Path, monkeypatch):

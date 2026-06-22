@@ -13,6 +13,7 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
-      - run: python3 -m pip install -e . pytest
-      - run: python3 -m flujo health || true
-      - run: python3 -m pytest tests/ -q --tb=no || true
+      - run: python3 -m pip install -e ".[dev]"
+      - run: python3 -m compileall -q src scripts tests
+      - run: python3 -m flujo health
+      - run: python3 -m pytest tests/ -q --tb=short

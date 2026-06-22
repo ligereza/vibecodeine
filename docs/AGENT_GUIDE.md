@@ -1,58 +1,107 @@
 # AGENT_GUIDE — flujo
 
-**Repo:** `flujo` — arte + automatización · v0.34.0
+**Repo:** `flujo` — arte + automatización · v0.34.10
+
+## Protocolo obligatorio para agentes
+
+1. Lee `README.md` completo.
+2. Lee `PARA_IA_CONTEXT.md`.
+3. Lee este archivo.
+4. Lee `docs/CLI.md`.
+5. Revisa `docs/REPO_MAP.md` y `docs/SCRIPTS_INVENTORY.md` antes de tocar archivos.
+6. Trabaja en un clon limpio del repo actual de GitHub, no sobre supuestos.
+7. Prueba antes de entregar.
+8. Entrega cambios solo como airdrop ZIP con carpeta `_airdrop/`.
 
 ## Stack
 
 - Python 3.10+
-- `py -m pip install -e .` (instala en editable)
-- CLI: `flujo` (Typer)
-- Descarga IG: solo instaloader
+- Instalación editable: `py -m pip install -e ".[dev]"`
+- CLI: `flujo` o `py -m flujo`
+- CLI framework: Typer
 - Tests: pytest
+- Descarga Instagram: solo `instaloader`
+
+## Verificación mínima en clon limpio
+
+```bash
+py -m pip install -e ".[dev]"
+py -m compileall -q src scripts tests
+py -m pytest tests/ -q --tb=short
+py -m flujo health
+py -m flujo version
+```
+
+En Linux/macOS puedes usar `python3` o `python` en lugar de `py`.
 
 ## Comandos esenciales
 
 ```bash
-flujo version              # ver versión + changelog
-flujo health               # chequeo general del repo
-flujo job new "x" --email f   # crear job desde correo
-flujo job prepare jobs/X      # pipeline: privacidad → brief → estado
-flujo job activate jobs/X     # brief → proyecto
-flujo render run cfg.json     # renderizar
-flujo render formats          # listar plantillas
-flujo analyze                 # colores + OCR de flyers
-flujo privacy scan file.txt   # escanear PII
-flujo daily                   # dashboard
-flujo serve                   # interfaz web Gradio
-flujo plano <evento.json>     # plano de stands/rider/costos
+flujo version
+flujo health
+flujo job new "x" --email inbox/correo.txt
+flujo job prepare jobs/X
+flujo job activate jobs/X
+flujo render run projects/piezas_vectoriales/X/config.json
+flujo render formats
+flujo privacy scan archivo.txt
+flujo daily
+flujo serve
+flujo app
+flujo plano projects/plano/ejemplos/evento_ejemplo.json
 ```
 
-Ayuda siempre disponible:
+Ayuda:
 
 ```bash
 flujo --help
 flujo job --help
 flujo render --help
+flujo airdrop --help
 ```
 
-## Reglas
+## Airdrops
 
-- No automatizar Photoshop / Illustrator / Blender
-- Solo instaloader (no yt-dlp)
-- Mantener checkpoints (`bash scripts/checkpoint.sh "msg"`)
-- Privacidad primero: `flujo privacy` antes de IA externa
-- Toda la lógica debería estar en `src/flujo/`, no en scripts sueltos
-- Tests para nuevos módulos
+Lee también `docs/AGENT_AIRDROP_PROTOCOL.md` y `docs/AIRDROP_REVIEW.md`.
 
-## Documentación interna
+Validación normal:
 
-- `docs/CLI.md` — referencia completa de la CLI
-- `docs/JOB_PIPELINE.md` — ciclo de vida de jobs
-- `docs/RELEASE_v016.md` — release notes v0.16
-- `docs/ESTADOS_JOB.md` — estados y transiciones
-- `docs/ANALISIS.md` — análisis de colores y OCR
-- `docs/OPERADOR_IA_RAPIDO.md` — cheat sheet para IAs
+```bash
+py scripts/validate_airdrop.py
+py scripts/run_airdrop_checks.py "mensaje"
+```
 
----
+Si tocas `src/flujo/airdrop.py`:
 
-**Última actualización:** Junio 2026
+```bash
+py scripts/validate_airdrop.py --allow-airdrop-engine
+py scripts/run_airdrop_checks.py "mensaje" --allow-airdrop-engine
+```
+
+Reglas del ZIP:
+
+- Contiene carpeta `_airdrop/`.
+- Cada archivo va en su ruta final dentro de `_airdrop/`.
+- Incluye handoff obligatorio.
+- Sin caches, zips internos, builds, `__pycache__`, bases SQLite ni archivos pesados.
+- Bump de versión en `src/flujo/version.py` y `pyproject.toml`.
+- Changelog actualizado en `src/flujo/version.py`.
+
+## Reglas innegociables
+
+- No automatizar Photoshop / Illustrator / Blender.
+- Solo `instaloader`; no `yt-dlp`.
+- Privacidad primero: `flujo privacy` antes de enviar contenido a IA externa.
+- Toda lógica nueva debe vivir en `src/flujo/` y tener tests.
+- No modificar histórico/generados sin justificarlo en handoff.
+- No dejar placeholders ni commits vacíos.
+
+## Documentación interna clave
+
+- `docs/CLI.md` — referencia de CLI actual.
+- `docs/REPO_MAP.md` — qué está vivo, histórico o generado.
+- `docs/SCRIPTS_INVENTORY.md` — estado de scripts.
+- `docs/JOB_PIPELINE.md` — ciclo de vida de jobs.
+- `docs/ESTADOS_JOB.md` — estados y transiciones.
+- `docs/INTAKE_JSON.md` — contrato JSON pendiente de implementación end-to-end.
+- `docs/AIRDROP_REVIEW.md` — revisión segura de airdrops.

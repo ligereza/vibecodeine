@@ -5,6 +5,7 @@ del repo (ej. `_airdrop/src/flujo/cli.py`). Luego `flujo airdrop apply` los
 copia a su destino, crea backup, y dispara checkpoint + push automáticamente.
 """
 
+import json
 import shutil
 import subprocess
 from datetime import datetime
@@ -20,6 +21,50 @@ def get_airdrop_dir() -> Path:
 
 def get_backup_base_dir() -> Path:
     return repo_root() / "_airdrop_backups"
+
+
+_MANIFEST_NAME = "_airdrop_manifest.json"
+_PROTECTED_TOP_LEVEL_DIRS = {
+    "src", "scripts", "tests", "docs", "projects", "jobs", "tools",
+    "schemas", "context", ".github",
+}
+
+
+def _write_manifest(backup_dir: Path, changes: List[Dict]) -> None:
+    """Guarda lo aplicado para que rollback también revierta archivos NEW."""
+    manifest = [
+        {"rel": c["rel"], "status": c["status"]}
+        for c in changes
+    ]
+    (backup_dir / _MANIFEST_NAME).write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+
+
+def _load_manifest(backup_dir: Path) -> List[Dict]:
+    manifest_path = backup_dir / _MANIFEST_NAME
+    if not manifest_path.exists():
+        return []
+    try:
+        data = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return []
+    if not isinstance(data, list):
+        return []
+    return [item for item in data if isinstance(item, dict) and item.get("rel")]
+
+
+def _cleanup_empty_parents(path: Path, repo: Path) -> None:
+    """Elimina carpetas vacías creadas por archivos NEW, sin borrar raíces del repo."""
+    current = path
+    while current != repo and repo in current.parents:
+        if current.parent == repo and current.name in _PROTECTED_TOP_LEVEL_DIRS:
+            break
+        try:
+            current.rmdir()
+        except OSError:
+            break
+        current = current.parent
 
 
 # archivos que se ignoran al escanear _airdrop/
@@ -81,6 +126,7 @@ def apply_airdrop(dry_run: bool = False) -> List[Dict]:
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     backup_dir = get_backup_base_dir() / timestamp
     backup_dir.mkdir(parents=True, exist_ok=True)
+    _write_manifest(backup_dir, changes)
 
     for c in changes:
         src, dest, rel = c["src"], c["dest"], c["rel"]
@@ -170,7 +216,13 @@ def run_auto_checkpoint(message: Optional[str] = None) -> bool:
 
 
 def rollback_last() -> Optional[Path]:
-    """Restaura el último backup desde `_airdrop_backups/`."""
+    """Restaura el último backup desde `_airdrop_backups/`.
+
+    Desde v0.34.8 usa un manifest por backup: los archivos `REPLACE` se
+    restauran y los archivos `NEW` se eliminan. Si el backup es legacy (sin
+    manifest), mantiene el comportamiento anterior: solo restaura reemplazos.
+    """
+    repo = repo_root()
     base = get_backup_base_dir()
     if not base.exists():
         return None
@@ -178,11 +230,40 @@ def rollback_last() -> Optional[Path]:
     if not backups:
         return None
     last = backups[0]
+
+    manifest = _load_manifest(last)
+    if manifest:
+        # Primero restaurar reemplazos desde backup.
+        for item in manifest:
+            if item.get("status") != "REPLACE":
+                continue
+            rel = Path(str(item["rel"]))
+            src = last / rel
+            if not src.exists():
+                continue
+            dest = repo / rel
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dest)
+            if dest.suffix == ".sh":
+                dest.chmod(dest.stat().st_mode | 0o111)
+
+        # Luego remover archivos que fueron NEW.
+        for item in manifest:
+            if item.get("status") != "NEW":
+                continue
+            rel = Path(str(item["rel"]))
+            dest = repo / rel
+            if dest.exists() and dest.is_file():
+                dest.unlink()
+                _cleanup_empty_parents(dest.parent, repo)
+        return last
+
+    # Backups antiguos sin manifest: comportamiento legacy.
     for src in last.rglob("*"):
-        if src.is_dir():
+        if src.is_dir() or src.name == _MANIFEST_NAME:
             continue
         rel = src.relative_to(last)
-        dest = repo_root() / rel
+        dest = repo / rel
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, dest)
         if dest.suffix == ".sh":

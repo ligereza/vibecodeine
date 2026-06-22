@@ -1,10 +1,10 @@
 .PHONY: help install clean test render new-flyer daily dashboard pipeline
 
-PYTHON := python3
+PYTHON ?= python3
 
 help:
 	@echo "Comandos disponibles:"
-	@echo "  make install     Instalar dependencias"
+	@echo "  make install     Instalar dependencias (PYTHON_BIN=py|python3 opcional)"
 	@echo "  make clean       Limpiar basura"
 	@echo "  make test        Ejecutar tests"
 	@echo "  make render      Generar piezas de ejemplo"
@@ -20,6 +20,7 @@ clean:
 	bash scripts/limpiar_basura.sh
 
 test:
+	$(PYTHON) -m pip install -e ".[dev]"
 	$(PYTHON) -m pytest tests/ -q
 
 render:

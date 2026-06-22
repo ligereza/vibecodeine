@@ -74,11 +74,11 @@ def _ensure_template(repo: Path) -> Path:
         encoding="utf-8",
     )
     (tpl / "estado.md").write_text(
-        "# Estado del job\n\nEstado: borrador\n\n## Próxima acción\n\n- Pegar texto del pedido en pedido_original.txt\n- Ejecutar `flujo job-prepare jobs/YYYY-MM-DD_nombre`\n",
+        "# Estado del job\n\nEstado: borrador\n\n## Próxima acción\n\n- Pegar texto del pedido en pedido_original.txt\n- Ejecutar `flujo job prepare jobs/YYYY-MM-DD_nombre`\n",
         encoding="utf-8",
     )
     (tpl / "resultado.md").write_text(
-        "# Resultado\n\nAún no activado. Resultado se completará al ejecutar `flujo job-activate`.\n",
+        "# Resultado\n\nAún no activado. Resultado se completará al ejecutar `flujo job activate`.\n",
         encoding="utf-8",
     )
     (tpl / "brief.yaml").write_text(

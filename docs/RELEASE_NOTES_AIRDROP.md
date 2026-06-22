@@ -15,7 +15,7 @@ Este paquete agrega al repo `flujo`:
 py scripts/flujo.py health
 py scripts/flujo.py clean
 py scripts/flujo.py job-from-text "nombre" inbox/correo.txt
-py scripts/flujo.py job-prepare jobs/NOMBRE
-py scripts/flujo.py job-activate jobs/NOMBRE
+py scripts/flujo.py job prepare jobs/NOMBRE
+py scripts/flujo.py job activate jobs/NOMBRE
 py scripts/flujo.py render projects/piezas_vectoriales/NOMBRE/config.json
 ```

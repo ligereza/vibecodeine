@@ -45,6 +45,13 @@ def _slugify(s: str) -> str:
     return s or "proyecto"
 
 
+def _strip_wrapping_quotes(value: str) -> str:
+    value = value.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
+        return value[1:-1]
+    return value
+
+
 def _to_num(v, default):
     if v is None or v == "":
         return default
@@ -59,7 +66,7 @@ def _brief_value(lines: List[str], key: str) -> str:
     for line in lines:
         m = pat.match(line)
         if m:
-            return m.group(1).strip().strip('"')
+            return _strip_wrapping_quotes(m.group(1))
     return ""
 
 
@@ -75,7 +82,7 @@ def _brief_nested(lines: List[str], section: str, key: str) -> str:
         if inside:
             m = pat.match(line)
             if m:
-                return m.group(1).strip().strip('"')
+                return _strip_wrapping_quotes(m.group(1))
     return ""
 
 
@@ -91,7 +98,7 @@ def _brief_list(lines: List[str], section: str) -> List[str]:
         if inside:
             m = re.match(r"^\s*-\s*(.*)$", line)
             if m:
-                vals.append(m.group(1).strip().strip('"'))
+                vals.append(_strip_wrapping_quotes(m.group(1)))
     return vals
 
 
@@ -263,55 +270,110 @@ def _create_universal_base(
     alto: float,
     tipo: str,
 ) -> None:
+    """Crea una base universal segura cuando no hay plantilla compatible.
+
+    Importante: no construir JSON con f-strings. Los textos vienen de briefs
+    humanos/correos y pueden contener comillas, saltos de línea o caracteres
+    especiales. Mantenerlo como dict + json.dumps evita configs inválidos.
+    """
     w = int(round(ancho * 200))
     h = int(round(alto * 200))
     if w <= 0 or h <= 0:
         w, h = 2800, 2000
         ancho, alto = 14.0, 10.0
-    config = f"""{{
-  "project": {{
-    "name": "{title}",
-    "slug": "{project_slug}",
-    "brand": "{cliente}",
-    "website": "",
-    "source_job": "{job_dir.as_posix()}",
-    "note": "Proyecto base creado desde brief.yaml. Diseño pendiente de ajustar."
-  }},
-  "canvas": {{
-    "width": {w},
-    "height": {h},
-    "real_size_cm": {{ "width": {ancho:g}, "height": {alto:g} }},
-    "safe_margin_px": 120
-  }},
-  "palette": {{
-    "cream": "#F6EFE3",
-    "paper": "#FFF8ED",
-    "white": "#FFFFFF",
-    "ink": "#161513",
-    "muted": "#675F55",
-    "line": "#D9CEC0",
-    "accent": "#173F2F"
-  }},
-  "background": "cream",
-  "global_elements": [
-    {{ "type": "rect", "x": 80, "y": 80, "w": {max(w-160, 100)}, "h": {max(h-160, 100)}, "radius": 60, "fill": "none", "stroke": "line", "stroke_width": 5 }},
-    {{ "type": "text", "content": "{{brand}}", "x": 120, "y": 120, "size": 44, "fill": "ink", "weight": "bold" }}
-  ],
-  "documents": [
-    {{
-      "id": "01_base_{project_slug}",
-      "title": "{title}",
-      "tipo": "{tipo}",
-      "elements": [
-        {{ "type": "text", "content": "{title}", "x": 120, "y": 300, "size": 96, "fill": "ink", "weight": "bold", "max_width": {max(w-240, 500)} }},
-        {{ "type": "panel", "x": 120, "y": 520, "w": {max(w-240, 500)}, "h": {max(h-760, 400)}, "radius": 44, "fill": "white", "stroke": "line", "stroke_width": 3, "opacity": 0.72 }},
-        {{ "type": "paragraph", "content": "Base creada desde brief. Reemplazar por estructura final de diseño.", "x": 190, "y": 610, "size": 44, "fill": "muted", "max_width": {max(w-380, 400)}, "line_height": 60 }}
-      ]
-    }}
-  ]
-}}
-"""
-    (out_dir / "config.json").write_text(config, encoding="utf-8")
+
+    config = {
+        "project": {
+            "name": title,
+            "slug": project_slug,
+            "brand": cliente,
+            "website": "",
+            "source_job": job_dir.as_posix(),
+            "note": "Proyecto base creado desde brief.yaml. Diseño pendiente de ajustar.",
+        },
+        "canvas": {
+            "width": w,
+            "height": h,
+            "real_size_cm": {"width": ancho, "height": alto},
+            "safe_margin_px": 120,
+        },
+        "palette": {
+            "cream": "#F6EFE3",
+            "paper": "#FFF8ED",
+            "white": "#FFFFFF",
+            "ink": "#161513",
+            "muted": "#675F55",
+            "line": "#D9CEC0",
+            "accent": "#173F2F",
+        },
+        "background": "cream",
+        "global_elements": [
+            {
+                "type": "rect",
+                "x": 80,
+                "y": 80,
+                "w": max(w - 160, 100),
+                "h": max(h - 160, 100),
+                "radius": 60,
+                "fill": "none",
+                "stroke": "line",
+                "stroke_width": 5,
+            },
+            {
+                "type": "text",
+                "content": "{brand}",
+                "x": 120,
+                "y": 120,
+                "size": 44,
+                "fill": "ink",
+                "weight": "bold",
+            },
+        ],
+        "documents": [
+            {
+                "id": f"01_base_{project_slug}",
+                "title": title,
+                "tipo": tipo,
+                "elements": [
+                    {
+                        "type": "text",
+                        "content": title,
+                        "x": 120,
+                        "y": 300,
+                        "size": 96,
+                        "fill": "ink",
+                        "weight": "bold",
+                        "max_width": max(w - 240, 500),
+                    },
+                    {
+                        "type": "panel",
+                        "x": 120,
+                        "y": 520,
+                        "w": max(w - 240, 500),
+                        "h": max(h - 760, 400),
+                        "radius": 44,
+                        "fill": "white",
+                        "stroke": "line",
+                        "stroke_width": 3,
+                        "opacity": 0.72,
+                    },
+                    {
+                        "type": "paragraph",
+                        "content": "Base creada desde brief. Reemplazar por estructura final de diseño.",
+                        "x": 190,
+                        "y": 610,
+                        "size": 44,
+                        "fill": "muted",
+                        "max_width": max(w - 380, 400),
+                        "line_height": 60,
+                    },
+                ],
+            }
+        ],
+    }
+    (out_dir / "config.json").write_text(
+        json.dumps(config, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
 
 
 # ============================================================

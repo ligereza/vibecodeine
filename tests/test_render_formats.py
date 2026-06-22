@@ -169,3 +169,35 @@ pendientes: []
     assert project.exists()
     cfg = json.loads((project / "config.json").read_text(encoding="utf-8"))
     assert cfg["project"]["slug"] == "pieza-x"
+
+
+def test_create_project_universal_base_escapes_json_text(tmp_path, monkeypatch):
+    """La base universal no debe romper config.json con comillas del brief."""
+    (tmp_path / "tools" / "piezas_vectoriales" / "plantillas").mkdir(parents=True)
+    (tmp_path / "jobs").mkdir()
+    (tmp_path / "projects" / "piezas_vectoriales").mkdir(parents=True)
+    monkeypatch.setattr("flujo.paths.repo_root", lambda: tmp_path)
+    monkeypatch.setattr("flujo.render.piezas.repo_root", lambda: tmp_path)
+
+    job = tmp_path / "jobs" / "2026-06-21_test"
+    job.mkdir()
+    brief_text = '''id: 2026-06-21_test
+estado: listo_para_disenar
+cliente: Cliente "Premium"
+proyecto: Etiqueta "Premium" Nueva
+tipo_pieza: pieza "especial"
+medidas:
+  ancho_cm: 12.3
+  alto_cm: 4.56
+productos:
+  - Producto
+pendientes: []
+'''
+    (job / "brief.yaml").write_text(brief_text, encoding="utf-8")
+
+    project = create_project_from_brief(job / "brief.yaml")
+    errors = validate_config(project / "config.json")
+    assert errors == []
+    cfg = json.loads((project / "config.json").read_text(encoding="utf-8"))
+    assert cfg["project"]["name"] == 'Etiqueta "Premium" Nueva'
+    assert cfg["project"]["brand"] == 'Cliente "Premium"'

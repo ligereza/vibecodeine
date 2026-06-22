@@ -180,7 +180,7 @@ def parse_yaml_simple(text: str) -> Dict[str, Any]:
     # Pila de (indent, container, is_list)
     stack: List[tuple] = [(-1, root, False)]
 
-    for raw in lines:
+    for line_no, raw in enumerate(lines):
         line = raw.rstrip()
         if not line.strip() or line.lstrip().startswith("#"):
             continue
@@ -220,10 +220,23 @@ def parse_yaml_simple(text: str) -> Dict[str, Any]:
             val = val.strip()
             if isinstance(parent, dict):
                 if val == "":
-                    # crear contenedor; deducir tipo mirando siguientes líneas
+                    # Crear contenedor; si la próxima línea significativa es
+                    # más indentada y empieza con "- ", esta clave contiene
+                    # una lista YAML. Esto mantiene usable el fallback sin
+                    # PyYAML para brief.yaml (productos, pendientes, etc.).
                     container: Any = {}
+                    for nxt in lines[line_no + 1:]:
+                        nxt_line = nxt.rstrip()
+                        if not nxt_line.strip() or nxt_line.lstrip().startswith("#"):
+                            continue
+                        nxt_indent = len(nxt_line) - len(nxt_line.lstrip())
+                        if nxt_indent <= indent:
+                            break
+                        if nxt_line.strip().startswith("- "):
+                            container = []
+                        break
                     parent[key] = container
-                    stack.append((indent, container, False))
+                    stack.append((indent, container, isinstance(container, list)))
                 else:
                     parent[key] = _coerce_scalar(val)
         else:

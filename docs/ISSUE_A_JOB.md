@@ -12,7 +12,7 @@ py scripts/flujo.py job-from-text "nombre issue" inbox/issue.txt
 3. Preparar job:
 
 ```bash
-py scripts/flujo.py job-prepare jobs/YYYY-MM-DD_nombre-issue
+py scripts/flujo.py job prepare jobs/YYYY-MM-DD_nombre-issue
 ```
 
 4. Revisar:

@@ -1,140 +1,150 @@
-# flujo · CLI Reference (v0.16)
+# flujo · CLI Reference (v0.34.10)
 
-La CLI `flujo` es la puerta de entrada única al sistema. Reemplaza la mayoría de
-los scripts sueltos de `scripts/` por comandos tipados y autodocumentados.
+La CLI `flujo` es la entrada principal al sistema. Reemplaza la mayoría de los
+scripts sueltos de `scripts/` por comandos tipados y autodocumentados.
 
 ## Instalación
 
 ```bash
-py -m pip install -e .
+py -m pip install -e ".[dev]"
 ```
+
+En Linux/macOS puedes usar `python3` o `python`.
 
 ## Ayuda general
 
 ```bash
-flujo --help                    # lista todos los grupos
-flujo <grupo> --help            # ayuda de un grupo
-flujo <comando> --help          # opciones de un comando
+flujo --help
+flujo <grupo> --help
+flujo <comando> --help
+py -m flujo --help
 ```
 
-## Grupos de comandos
-
-```txt
-salud       health, version
-intake      flyer-import, ig-redownload, analyze, export
-index       index, flyer-list
-job         new, prepare, list, status, next, activate, report
-privacy     scan, sanitize, check
-brief       extract, to-project, show
-render      run, validate, formats
-diario      daily
-varios      serve, clean, init
-```
-
-## Comandos principales (ejemplos)
+## Verificación del repo
 
 ```bash
-# Importar flyers desde correo con links de Instagram
-flujo flyer-import inbox/correo.txt
-
-# Analizar último flyer
-flujo analyze
-
-# Crear job desde texto/correo
-flujo job new "etiquetas acme" --email inbox/correo.txt
-
-# Pipeline de preparación: privacidad + brief + estado
-flujo job prepare jobs/2026-06-17_etiquetas-acme
-
-# Ver próximos pasos
-flujo job next
-
-# Activar job → crear proyecto
-flujo job activate jobs/2026-06-17_etiquetas-acme
-
-# Renderizar proyecto
-flujo render run projects/piezas_vectoriales/etiquetas-acme/config.json
-
-# Generar dashboard
-flujo daily
-
-# Levantar interfaz web
-flujo serve
+py -m compileall -q src scripts tests
+py -m pytest tests/ -q --tb=short
+py -m flujo health
+py -m flujo version
 ```
 
-## Estado y ciclo de vida
+## Grupos y comandos principales
 
-### Estados de un job
+```txt
+salud/info      health, version, init
+intake/flyers   flyer-import, ig-redownload, analyze, export
+index/db        index, flyer-list
+job             job new, prepare, list, status, next, activate, report
+privacy         privacy scan, sanitize, check
+brief           brief extract, to-project, show
+render          render run, validate, formats, rescale
+diario          daily
+web             serve, app
+airdrop         airdrop list, dry-run, apply, rollback, status, finish
+plano           plano <evento.json> [--rider] [--costs]
+varios          clean
+```
+
+## Ejemplos operativos
+
+```bash
+# Salud / versión
+flujo health
+flujo version
+
+# Crear job desde correo/texto
+flujo job new "etiquetas acme" --email inbox/correo.txt
+flujo job prepare jobs/2026-06-17_etiquetas-acme
+flujo job status jobs/2026-06-17_etiquetas-acme
+flujo job activate jobs/2026-06-17_etiquetas-acme
+
+# Brief
+flujo brief extract jobs/2026-06-17_etiquetas-acme
+flujo brief show jobs/2026-06-17_etiquetas-acme/brief.yaml
+flujo brief to-project jobs/2026-06-17_etiquetas-acme/brief.yaml
+
+# Privacidad
+flujo privacy scan inbox/correo.txt
+flujo privacy sanitize inbox/correo.txt --output inbox/correo_sanitizado.txt
+flujo privacy check jobs/2026-06-17_etiquetas-acme
+
+# Render
+flujo render formats
+flujo render formats -w 16.5 -h 6.5 -t etiqueta
+flujo render validate projects/piezas_vectoriales/mi-proyecto/config.json
+flujo render run projects/piezas_vectoriales/mi-proyecto/config.json
+flujo render rescale projects/piezas_vectoriales/mi-proyecto/config.json --dpi 300
+
+# Flyers / Instagram
+flujo flyer-import inbox/correo.txt
+flujo ig-redownload --all
+flujo analyze --all
+flujo export projects/flyer_eventos/mi-flyer
+flujo index --rebuild
+flujo flyer-list
+
+# Dashboard / web
+flujo daily
+flujo serve
+flujo app
+
+# Plano
+flujo plano projects/plano/ejemplos/evento_ejemplo.json
+flujo plano projects/plano/ejemplos/evento_ejemplo.json --rider
+flujo plano projects/plano/ejemplos/evento_ejemplo.json --costs
+```
+
+## Airdrops
+
+```bash
+flujo airdrop list
+flujo airdrop dry-run
+flujo airdrop apply "mensaje"
+flujo airdrop rollback
+flujo airdrop status
+```
+
+Desde v0.34.8, `flujo airdrop apply` valida `_airdrop/` antes de aplicar. Si el
+airdrop modifica `src/flujo/airdrop.py`, hay que autorizarlo explícitamente:
+
+```bash
+flujo airdrop apply "mensaje" --allow-airdrop-engine
+```
+
+Runner recomendado para aplicar y probar en una pasada:
+
+```bash
+py scripts/run_airdrop_checks.py "mensaje"
+py scripts/run_airdrop_checks.py "mensaje" --allow-airdrop-engine
+```
+
+## Estados de job
 
 ```txt
 borrador
-  ↓ (pegar texto del pedido)
+  ↓
 brief_extraido_pendiente_revision
-  ↓ (revisar/completar brief)
+  ↓
 pendiente_datos  → listo_para_disenar
-                    ↓ (job activate)
+                    ↓
                   en_diseno
-                    ↓ (render)
+                    ↓
                   generado
-                    ↓ (entrega)
+                    ↓
                   entregado
 ```
 
-Transiciones válidas y sugerencias se gestionan automáticamente
-en `flujo.jobs.brief.EstadoJob` y `flujo.jobs.lifecycle.suggest_next_action`.
+Transiciones válidas y sugerencias viven en `flujo.jobs.brief.EstadoJob` y
+`flujo.jobs.lifecycle.suggest_next_action`.
 
-## Flags útiles
-
-| Comando | Flag | Significado |
-|---------|------|-------------|
-| `flyer-import` | `--force` | recrear duplicados |
-| `analyze` | `--all` | analizar todos los proyectos |
-| `analyze` | `--force-ocr` | forzar OCR aunque falle |
-| `index` | `--rebuild` | reconstruir desde cero |
-| `index` | `--duplicates` | mostrar duplicados por shortcode |
-| `job list` | `--examples` | incluir jobs `_examples` |
-| `job list` | `--status X` | filtrar por estado |
-| `job prepare` | `--no-privacy` | saltar paso de privacidad |
-| `job activate` | `--name X` | nombre custom del proyecto |
-| `job activate` | `--template X` | forzar plantilla |
-| `daily` | `--md` / `--html` | rutas custom |
-| `clean` | `--no-cache` | no limpiar `__pycache__` |
-| `clean` | `--generated` | limpiar `salida_generada/` |
-
-## Configuración del repo
-
-La CLI asume estructura estándar:
-
-```txt
-.
-├── jobs/                 # jobs (borrador → entregado)
-├── inbox/                # correos/textos sin procesar
-├── projects/
-│   ├── flyer_eventos/    # proyectos de flyers descargados
-│   └── piezas_vectoriales/  # proyectos piezas_vectoriales
-├── tools/                # herramientas (piezas_vectoriales, etc.)
-└── data/                 # SQLite index (data/flujo.db)
-```
-
-Si necesitas cambiarlas, exporta variables de entorno:
-
-```bash
-export FLYER_BASE=/ruta/custom/flyers
-```
-
-## Tests
-
-```bash
-py -m pytest tests/ -q
-```
-
-## Migración desde scripts/
+## Migración desde scripts
 
 | Antiguo | Nuevo |
 |---------|-------|
 | `py scripts/job_from_text.py` | `flujo job new` |
 | `py scripts/job_prepare.py` | `flujo job prepare` |
-| `py scripts/job_status.py` | `flujo job list` |
+| `py scripts/job_status.py` | `flujo job list` / `flujo job status` |
 | `py scripts/job_activate.py` | `flujo job activate` |
 | `py scripts/brief_to_project.py` | `flujo brief to-project` |
 | `py scripts/project_render.py` | `flujo render run` |
@@ -144,6 +154,4 @@ py -m pytest tests/ -q
 | `py scripts/privacy_sanitize_text.py` | `flujo privacy sanitize` |
 | `py scripts/piezas_formatos.py` | `flujo render formats` |
 | `py scripts/flujo_health.py` | `flujo health` |
-| `py scripts/app.py` | `flujo serve` |
-
-Los scripts siguen funcionando (wrappers) pero se descontinúan gradualmente.
+| `py scripts/app.py` | `flujo serve` / `flujo app` |
