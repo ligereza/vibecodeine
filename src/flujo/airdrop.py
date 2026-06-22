@@ -138,6 +138,18 @@ def apply_airdrop(dry_run: bool = False) -> List[Dict]:
         shutil.copy2(src, dest)
         if dest.suffix == ".sh":
             dest.chmod(dest.stat().st_mode | 0o111)
+
+    # Auto-compile any modified config.json projects!
+    for c in changes:
+        dest, rel = c["dest"], c["rel"]
+        if dest.name == "config.json" and "projects/piezas_vectoriales/" in str(dest).replace("\\", "/"):
+            try:
+                from .render.piezas import render_config
+                print(f"Auto-rendering modified project: {rel}")
+                render_config(dest)
+            except Exception as e:
+                print(f"Warning: Failed to auto-render project {rel}: {e}")
+
     return changes
 
 

@@ -18,4 +18,23 @@ Submódulos principales:
 
 from .version import __version__, __version_info__, get_version, get_changelog
 
+def _load_dotenv():
+    import os
+    from pathlib import Path
+    p = Path(__file__).resolve().parent
+    for _ in range(5):
+        env_path = p / ".env"
+        if env_path.exists():
+            for line in env_path.read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, val = line.split("=", 1)
+                    os.environ[key.strip()] = val.strip().strip("'\"")
+            break
+        if (p / "pyproject.toml").exists() or (p / ".git").exists():
+            break
+        p = p.parent
+
+_load_dotenv()
+
 __all__ = ["__version__", "__version_info__", "get_version", "get_changelog"]
