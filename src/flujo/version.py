@@ -1,10 +1,11 @@
 """Versión y changelog de flujo."""
-__version__ = "0.33.2"
+__version__ = "0.33.3"
 VERSION = __version__
-__version_info__ = (0, 33, 2)
+__version_info__ = (0, 33, 3)
 def get_version(): return __version__
 def get_changelog():
     return {
+        "0.33.3": {"titulo": "Hotfix: tests plano_stands.py decodifican UTF-8", "fecha": "2026-06-21", "highlights": ["tests/test_plano_stands.py ahora fuerza encoding utf-8 y PYTHONIOENCODING=utf-8 en el subprocess", "Evita mojibake en Windows cuando el script imprime caracteres Unicode", "Incluye todos los cambios de v0.33.2"]},
         "0.33.2": {"titulo": "Hotfix: encoding UTF-8 en plano_stands.py + flecha ASCII", "fecha": "2026-06-21", "highlights": ["Reemplazada flecha Unicode '→' por '->' en rider de plano para evitar UnicodeEncodeError en Windows cp1252", "plano_stands.py reconfigura stdout/stderr a UTF-8", "Incluye todos los cambios de v0.33.1"]},
         "0.33.1": {"titulo": "Hotfix: plano_stands.py robusto en Windows + tests subprocess", "fecha": "2026-06-21", "highlights": ["plano_stands.py ahora es más robusto al importar flujo.plano (PYTHONPATH + sys.path)", "tests/test_plano_stands.py ahora inyecta PYTHONPATH para el subprocess", "Diagnóstico de errores visible con traceback en stderr"]},
         "0.33.0": {"titulo": "Plano como módulo propio + costos + editor + fixes", "fecha": "2026-06-18", "highlights": ["Motor de planos migrado a src/flujo/plano/ (engine + costs)", "flujo plano ahora usa el módulo directamente (sin subprocess)", "Nuevo flag --costs en flujo plano para desglose de cotización", "Editor visual autocontenido: projects/plano/plano_editor.html", "projects/plano/plano_stands.py delega en flujo.plano", "Fix patrón de tarjeta en privacy/scan.py con validación Luhn", "Cache de repo_root() con lru_cache para mejorar rendimiento", "Nueva ruta plano_base() en paths.py", "Tests para flujo.plano y flujo plano --costs"]},

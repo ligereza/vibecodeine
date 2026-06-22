@@ -19,10 +19,12 @@ def _run_script(args: list) -> subprocess.CompletedProcess:
     existing = env.get("PYTHONPATH", "")
     src_path = str(REPO / "src")
     env["PYTHONPATH"] = src_path + (os.pathsep + existing if existing else "")
+    env["PYTHONIOENCODING"] = "utf-8"
     return subprocess.run(
         [sys.executable, str(SCRIPT), *args],
         capture_output=True,
         text=True,
+        encoding="utf-8",
         env=env,
     )
 
