@@ -1154,44 +1154,60 @@ def cotizaciones(
 
 @app.command()
 def serve(
-    port: int = typer.Option(7860, "--port", "-p", help="puerto del servidor"),
+    port: int = typer.Option(8765, "--port", "-p", help="puerto del servidor"),
     host: str = typer.Option("127.0.0.1", "--host", help="host (0.0.0.0 para red local)"),
-    legacy: bool = typer.Option(False, "--legacy", help="usar el script antiguo scripts/app.py"),
+    hub: bool = typer.Option(True, "--hub/--legacy", help="usar el nuevo workspace HTML (flujo_hub.html + visualizadores)"),
+    desktop: bool = typer.Option(False, "--desktop", help="abrir en ventana nativa con pywebview (si está instalado)"),
 ):
-    """Iniciar el editor visual local (Gradio).
+    """Iniciar el workspace local.
 
-    Editor propio en src/flujo/web/ (catálogo → editar datos/proporción →
-    preview SVG → exportar). Con --legacy usa el antiguo scripts/app.py.
+    Por defecto lanza el nuevo hub pro (context/flujo_hub.html + visualizadores SVG/Plano)
+    en http://{host}:{port}.
+
+    --legacy (o --no-hub) usa el editor Gradio antiguo.
+    --desktop abre en una ventana de aplicación nativa (requiere `pip install pywebview`).
     """
-    import importlib.util
-    if importlib.util.find_spec("gradio") is None:
-        _err("Falta gradio. Instalar con: pip install gradio")
-
-    if not legacy:
+    if hub:
         try:
-            from .web.editor import launch
-            console.print(f"[cyan]Editor flujo en http://{host}:{port}[/]")
-            launch(server_name=host, server_port=port)
+            from .web.hub import launch
+            console.print(f"[cyan]flujo workspace (hub) en http://{host}:{port}[/]")
+            console.print("[dim]Abre el hub principal, visualizadores y herramientas.[/dim]")
+            launch(host=host, port=port, desktop=desktop)
             return
         except Exception as e:
-            _warn(f"No se pudo iniciar el editor nuevo ({e}). Probando script legacy...")
+            _warn(f"No se pudo iniciar el workspace nuevo ({e}).")
 
-    # fallback: script legacy
-    import subprocess
-    from .paths import repo_root
-    root = repo_root()
-    script = root / "scripts" / "app.py"
-    if not script.exists():
-        _err(f"No existe el editor legacy: {script}")
-    console.print("[cyan]Iniciando Gradio app (legacy)...[/]")
-    subprocess.run([sys.executable, str(script)], cwd=root)
+    # Legacy Gradio path
+    import importlib.util
+    if importlib.util.find_spec("gradio") is None:
+        _err("Falta gradio para el modo legacy. Instalar con: pip install gradio")
+
+    try:
+        from .web.editor import launch
+        console.print(f"[cyan]Editor Gradio legacy en http://{host}:{port}[/]")
+        launch(server_name=host, server_port=port)
+    except Exception as e:
+        _warn(f"Error en editor Gradio: {e}")
+        # fallback al script viejo
+        import subprocess
+        from .paths import repo_root
+        root = repo_root()
+        script = root / "scripts" / "app.py"
+        if script.exists():
+            subprocess.run([sys.executable, str(script)], cwd=root)
+        else:
+            _err("No hay forma de lanzar interfaz web.")
 
 
 # Alias: flujo app → flujo serve
 @app.command("app")
-def app_alias():
-    """Alias de serve (interfaz web)."""
-    serve()
+def app_alias(
+    port: int = typer.Option(8765, "--port", "-p"),
+    host: str = typer.Option("127.0.0.1", "--host"),
+    desktop: bool = typer.Option(False, "--desktop"),
+):
+    """Alias de serve. Lanza el workspace del hub (recomendado)."""
+    serve(port=port, host=host, hub=True, desktop=desktop)
 
 
 # ============================================================

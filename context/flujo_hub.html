@@ -323,10 +323,28 @@ function generatePreview() {
 // ============ PEDIDO PARSER (match real) ============
 function parsePedido() {
   const input = document.getElementById('pedido-input').value || 'necesito flyer 10x14 evento 7 voluntarios';
-  const low = input.toLowerCase();
   const res = document.getElementById('pedido-result');
   res.style.display = 'block';
 
+  // Primero intenta el backend real (cuando se corre como app)
+  fetch('/api/parse-pedido', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({text: input})
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.error) throw new Error(data.error);
+    showParsedResult(data, input);
+  })
+  .catch(() => {
+    // Fallback a parser JS puro (cuando se abre el HTML directamente)
+    showParsedResult(parseLocal(input), input);
+  });
+}
+
+function parseLocal(input) {
+  const low = input.toLowerCase();
   const known = {
     'flyer':   {tipo:'flyer', medidas:'10x14', formato:'evt_flyer_fisico_10x14', tool:'render'},
     'etiqueta':{tipo:'etiqueta', medidas:'16.5x6.5', formato:'sup_etiqueta_165x65', tool:'render'},
@@ -338,34 +356,37 @@ function parsePedido() {
     'ig':      {tipo:'post_ig', medidas:'1080x1350', formato:'evt_post_ig', tool:'render'},
     'suplemento':{tipo:'etiqueta', medidas:'16.5x6.5', formato:'sup_etiqueta_165x65', tool:'render'}
   };
-
   let tipo='desconocido', medidas='', formato='', tool='render', pub='productora';
   for (const k in known) {
     if (low.includes(k)) { const m=known[k]; tipo=m.tipo; medidas=m.medidas; formato=m.formato; tool=m.tool; break; }
   }
   if (low.includes('interno') || low.includes('empresa')) pub = 'interno';
   const vol = (input.match(/\d+/) || ['?'])[0];
+  return {tipo, medidas, formato, tool, pub, vol, notas: input};
+}
 
-  const match = formato ? `MATCH: ${formato}` : 'NO MATCH';
+function showParsedResult(data, original) {
+  const res = document.getElementById('pedido-result');
+  const match = data.formato ? `MATCH: ${data.formato}` : 'NO MATCH';
   let cmd = '';
-  if (tool === 'cotizaciones') cmd = `py -m flujo cotizaciones <json> --para ${pub}`;
-  else if (tool === 'plano') cmd = `py -m flujo plano projects/plano/ejemplos/evento_ejemplo.json --rider --costs`;
+  if (data.tool === 'cotizaciones') cmd = `py -m flujo cotizaciones <json> --para ${data.pub}`;
+  else if (data.tool === 'plano') cmd = `py -m flujo plano projects/plano/ejemplos/evento_ejemplo.json --rider --costs`;
   else cmd = `py -m flujo render run projects/piezas_vectoriales/<proyecto>/config.json --for illustrator`;
 
-  const brief = `tipo_pieza: ${tipo}
-medidas: ${medidas || 'definir'}
-publico: ${pub}
-voluntarios: ${vol}
-formato_sugerido: ${formato || 'NUEVO'}
-notas: ${input}
+  const brief = `tipo_pieza: ${data.tipo}
+medidas: ${data.medidas || 'definir'}
+publico: ${data.pub}
+voluntarios: ${data.vol}
+formato_sugerido: ${data.formato || 'NUEVO'}
+notas: ${original}
 
 # ${match}
-# Acción: ${formato ? 'Usar formato existente + flujo' : 'Proponer NUEVA sección flujo o tarea LAST_HANDOFF'}
+# Acción: ${data.formato ? 'Usar formato existente + flujo' : 'Proponer NUEVA sección flujo o tarea LAST_HANDOFF'}
 # Comando: ${cmd}
-# Estilo: flujo (ink #1f2a24 • accent #2d5a4a • paper #f8f1e3 - usa los valores reales del JSON)`;
+# Estilo: flujo (usa projects/flujo/flujo.json)`;
 
   res.innerHTML = `<pre style="font-size:10px; white-space:pre-wrap; margin:0">${brief}</pre>`;
-  if (!formato) {
+  if (!data.formato) {
     res.innerHTML += `<button onclick="proponerNuevaSeccion()" class="btn btn-sec" style="margin-top:6px;font-size:10px">Proponer nueva sección o tarea</button>`;
   }
 }

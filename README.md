@@ -406,16 +406,12 @@ Pregunta clave del dueño: *"¿la app será Gradio, o se integrará con mi corre
 una API para recibir pedidos aunque esté ausente?"*
 
 ### Hoy (estado real)
-- `flujo serve` levanta el **editor visual** propio (`src/flujo/web/`,
-  http://127.0.0.1:7860). Flujo: elegir formato del catálogo (filtrable por área)
-  → editar datos (título/subtítulo/cuerpo) → ajustar **proporción/DPI** →
-  **preview SVG en vivo** → **exportar SVG + config.json** a
-  `projects/piezas_vectoriales/<slug>/`. Luego `flujo render run` produce el SVG
-  de producción (editable + vectorizado) para Illustrator.
-  - Opciones: `flujo serve --port 7860 --host 0.0.0.0` (red local),
-    `flujo serve --legacy` (usa el antiguo `scripts/app.py`).
-- Es **local y manual**: hay que tenerlo corriendo. No recibe pedidos por sí
-  solo (la recepción automática es el plan de abajo).
+- `flujo serve` / `flujo app` lanza el **workspace principal** (el hub pro en `context/flujo_hub.html` + visualizadores).
+  - Abre directamente el hub (intake + visualizadores + herramientas).
+  - `flujo app --desktop` usa pywebview para ventana tipo app nativa (sin barra de browser).
+  - `flujo serve --legacy` usa el editor Gradio antiguo.
+- Es local. El hub es el punto de entrada diario recomendado.
+- Recepción automática (webhook/email → job) es trabajo futuro.
 
 ### Plan recomendado (para "recibir aunque esté ausente")
 La arquitectura objetivo separa **recepción** de **operación**:
@@ -550,7 +546,7 @@ flujo index [--rebuild | --duplicates]
 
 # Operación diaria
 flujo daily                   # dashboard del día
-flujo serve                   # interfaz web Gradio (local)
+flujo app / flujo serve       # workspace principal (hub + visualizadores)
 flujo clean [--generated]
 
 # Airdrops (colaboración / mejoras)
