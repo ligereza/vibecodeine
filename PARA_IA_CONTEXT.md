@@ -3,16 +3,20 @@
 **Estado del Proyecto:** flujo v0.34.10
 **Fecha de última actualización:** 2026-06-22
 
-## 👉 Empieza por aquí
+## 👉 Empieza por aquí (AHORRO DE TOKENS)
 
-Lee en este orden, sin saltarte pasos:
+**Si tienes pocos tokens o es una sesión nueva / quieres continuar trabajo:**
+1. `PARA_IA_CONTEXT.md` (este archivo)
+2. **`context/LAST_HANDOFF.md`** ← **LA PIEZA MÁS IMPORTANTE PARA CONTINUIDAD**
+3. Corre: `flujo daily && flujo job next && py -m flujo health`
 
-1. `README.md`
-2. `PARA_IA_CONTEXT.md`
-3. `docs/AGENT_GUIDE.md`
-4. `docs/CLI.md`
-5. `docs/REPO_MAP.md`
-6. `docs/SCRIPTS_INVENTORY.md`
+**Solo si necesitas profundidad después de lo anterior:**
+- `README.md` (resumen general)
+- `docs/AGENT_GUIDE.md`
+- `docs/REPO_MAP.md`
+- `docs/CLI.md`
+
+**Nunca leas todos los handoffs/checkpoints antiguos al principio.** El `LAST_HANDOFF.md` + `flujo daily` deben bastar para continuar.
 
 Después clona el repo actual desde GitHub en una carpeta limpia y verifica el
 estado real con:
@@ -83,9 +87,10 @@ py scripts/run_airdrop_checks.py "vX.Y.Z - descripcion" --allow-airdrop-engine
 Pedido (correo / JSON) → Privacy Scan → Brief → Job → Proyecto (`config.json` +
 plantilla de formato) → Render → Export ZIP.
 
-## 🚧 Próximos pasos
+## 🚧 Próximos pasos (actualizado con foco en continuidad de tokens)
 
-1. Implementar `flujo intake json <archivo>` que consuma `schemas/intake.schema.json`.
-2. Decidir canal de recepción automática: poller IMAP, formulario web/API o
-   webhook de mensajería.
-3. Mantener sincronizada la documentación operativa después de cada airdrop.
+1. **Madurar el Low-Token Continuation System** (`context/LAST_HANDOFF.md` + helpers + `flujo handoff`). Esto es la mejora más importante para que otra IA pueda continuar cuando se acaben los tokens.
+2. Implementar `flujo intake json <archivo>` que consuma `schemas/intake.schema.json`.
+3. Mejorar layouts/planos/estructuras con primitivas declarativas compartidas (formatos + plano).
+4. Decidir canal de recepción automática.
+5. Mantener **siempre actualizado** `context/LAST_HANDOFF.md` al final de cada sesión.

@@ -31,23 +31,30 @@ Este mapa existe para que humanos y agentes de IA entiendan rápido qué carpeta
 
 | Ruta | Rol | Estado |
 |---|---|---|
+| `projects/piezas_vectoriales/` | Proyectos y plantillas vectoriales | Vivo |
+| `projects/flyer_eventos/` | Flujos reales de eventos | Operativo |
 | `projects/plano/` | Generador de planos/riders/costos | Vivo |
-| `projects/tapiz/` | Experimento/proyecto satélite visual | Referencia |
+| `projects/tapiz/` | Experimento visual (VibeCode) | Referencia |
+| `projects/aistetic/` | **Línea editorial central** (nuevo) | Nuevo — fuente de verdad estética |
+| `projects/aistetic/ejemplos/` + `json/` | Ejemplos reales + JSONs descriptivos para análisis de IA | Lugar donde se "alimenta" la identidad visual |
+
+Ver también `docs/FOR_EXTERNAL_AI.md` cuando se alimente el repo completo a una IA.
 
 Nota: `projects/tapiz/vibecode.egg-info/` está trackeado históricamente. No agregar nuevos `.egg-info`.
 
 ## Documentación viva
 
-| Ruta | Rol |
-|---|---|
-| `README.md` | Entrada principal |
-| `PARA_IA.md` / `PARA_IA_CONTEXT.md` | Contexto rápido para agentes |
-| `docs/AGENT_GUIDE.md` | Guía de trabajo para agentes |
-| `docs/AIRDROP_REVIEW.md` | Revisión local de airdrops |
-| `docs/AGENT_AIRDROP_PROTOCOL.md` | Protocolo que deben seguir agentes externos |
-| `docs/CLI.md` / `docs/COMANDOS.md` | Referencia de comandos |
-| `docs/CLEANUP.md` | Política de limpieza |
-| `docs/LINEA_EDITORIAL.md` | Pendiente: brújula editorial/visual cuando se integre |
+| Ruta | Rol | Prioridad para nueva IA (bajo tokens) |
+|---|---|---|
+| `PARA_IA_CONTEXT.md` | Contexto rápido para agentes | Alta |
+| **`context/LAST_HANDOFF.md`** | **Estado actual + qué sigue (single source of truth para continuidad)** | **MÁXIMA** |
+| `README.md` | Entrada principal | Media |
+| `docs/AGENT_GUIDE.md` | Guía de trabajo para agentes | Media |
+| `docs/REPO_MAP.md` | Qué está vivo, histórico o generado | Media |
+| `docs/CLI.md` / `docs/COMANDOS.md` | Referencia de comandos | Baja |
+| `docs/AIRDROP_REVIEW.md` + `docs/AGENT_AIRDROP_PROTOCOL.md` | Protocolo airdrops | Baja (solo al entregar) |
+
+**Regla de ahorro de tokens:** Una IA nueva casi nunca necesita leer más de los dos primeros + `flujo daily` + `flujo job next`.
 
 ## Histórico / referencia
 
@@ -69,7 +76,7 @@ Nota: `projects/tapiz/vibecode.egg-info/` está trackeado históricamente. No ag
 - `.pytest_cache/`, `.mypy_cache/`, `.ruff_cache/`
 - `*.egg-info/` nuevos
 - `data/*.db`, `*.sqlite*`
-- `context/DAILY.md`, `context/dashboard.html`
+- `context/DAILY.md`, `context/dashboard.html` (LAST_HANDOFF.md **sí** se versiona: es el estado para continuidad de IAs)
 - `projects/**/salida_generada/`
 - media pesada: `*.mp4`, `*.mov`, `*.psd`, `*.ai`, `*.zip`, etc.
 

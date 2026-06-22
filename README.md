@@ -38,8 +38,12 @@ Este repo lo usan **dos tipos de operador**:
   procesar pedidos, y mantener el sistema. **No tienes acceso de escritura
   directa al repo**: entregas tu trabajo como un **airdrop** (ver más abajo).
 
-Si eres una IA, lee la sección [Cómo trabaja otra IA aquí](#-cómo-trabaja-otra-ia-aquí-lectura-obligatoria)
-de principio a fin antes de tocar nada.
+Si eres una IA y quieres **ahorrar tokens** para continuar trabajo:
+1. Lee `PARA_IA_CONTEXT.md`
+2. Lee **`context/LAST_HANDOFF.md`** (esto es lo más importante)
+3. Ejecuta `flujo handoff`, `flujo daily` y `flujo job next`
+
+Solo si necesitas más detalle, lee la sección completa [Cómo trabaja otra IA aquí](#-cómo-trabaja-otra-ia-aquí-lectura-obligatoria).
 
 ---
 
@@ -445,7 +449,7 @@ tests/            # pytest (69+ tests)
 docs/             # documentación detallada (CLI, formatos, intake JSON, etc.)
 schemas/          # esquema JSON de intake + ejemplos
 jobs/             # trabajos creativos (gitignored, salvo _template)
-projects/         # proyectos generados
+projects/         # proyectos satélite (piezas_vectoriales, flyer_eventos, plano, tapiz, aistetic)
 inbox/            # bandeja de entrada de pedidos
 context/          # reportes diarios / estado
 _airdrop/         # (gitignored) zona de aterrizaje de airdrops

@@ -23,7 +23,7 @@ src/_airdrop/...
 ## Obligatorio
 
 - ZIP con archivos reales dentro de `_airdrop/`.
-- `HANDOFF_*.md` o `HOTFIX_*.md` obligatorio.
+- `HANDOFF_*.md` o `HOTFIX_*.md` + **actualizar siempre `context/LAST_HANDOFF.md`** (esto es crítico para que otra IA pueda continuar con pocos tokens).
 - Rutas planas, sin links Markdown.
 - Comandos finales desde la raíz del repo, sin `cd` ni `unzip`.
 - Probar en clon limpio antes de entregar.

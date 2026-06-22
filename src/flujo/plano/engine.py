@@ -89,24 +89,38 @@ class Caja:
 
 
 def solve_layout(ev: Dict[str, Any]) -> Tuple[List[Caja], float, float]:
-    """Coloca los módulos en una fila horizontal separados por pasillos.
+    """Coloca los módulos según layout_mode.
 
-    Devuelve (cajas, ancho_total_m, alto_total_m).
+    Soporta:
+    - "row" (default, fila horizontal con pasillos) — legacy
+    - "grid_2x" — colocación aproximada en grilla 2 columnas (más compacta)
+
+    El evento puede declarar "layout_mode": "grid_2x".
+    Ver también schemas/layout_primitives.schema.json para evolución declarativa futura.
     """
     mods = modulos_desde_evento(ev)
+    layout_mode = ev.get("layout_mode", "row")
     pasillo = CONSTANTES["pasillo_min"]
+
+    if layout_mode == "grid_2x":
+        return _solve_grid_2x(mods, pasillo)
+
+    # default: fila (row)
+    return _solve_row(mods, pasillo)
+
+
+def _solve_row(mods: List[Dict], pasillo: float) -> Tuple[List[Caja], float, float]:
+    """Implementación original en fila."""
     x = 0.0
     cajas: List[Caja] = []
     max_h = 0.0
     for m in mods:
         toldo = CONSTANTES[m["toldo"]]
         caja = Caja(m["nombre"], x, 0.0, toldo["w"], toldo["h"], rol=m["tipo"])
-        # mesas dentro del stand (alineadas arriba)
         mw, mh = CONSTANTES["mesa"]["w"], CONSTANTES["mesa"]["h"]
         for i in range(m.get("mesas", 0)):
             my = 0.2 + i * (mh + 0.15)
             caja.hijos.append(Caja("mesa", 0.2, my, min(mw, toldo["w"] - 0.4), mh, rol="mesa"))
-        # sillas (fila inferior)
         sa = CONSTANTES["asiento_area"]
         for i in range(m.get("sillas", 0)):
             sx = 0.2 + i * (sa + 0.1)
@@ -118,6 +132,33 @@ def solve_layout(ev: Dict[str, Any]) -> Tuple[List[Caja], float, float]:
         x += toldo["w"] + pasillo
     ancho_total = max(0.0, x - pasillo)
     return cajas, ancho_total, max_h
+
+
+def _solve_grid_2x(mods: List[Dict], pasillo: float) -> Tuple[List[Caja], float, float]:
+    """Layout simple en grilla de 2 columnas (demo de estructura más declarativa)."""
+    col_w = max((CONSTANTES[m["toldo"]]["w"] for m in mods), default=3.0)
+    row_h = max((CONSTANTES[m["toldo"]]["h"] for m in mods), default=3.0)
+    cajas: List[Caja] = []
+    for idx, m in enumerate(mods):
+        col = idx % 2
+        row = idx // 2
+        toldo = CONSTANTES[m["toldo"]]
+        x = col * (col_w + pasillo)
+        y = row * (row_h + pasillo * 0.6)
+        caja = Caja(m["nombre"], x, y, toldo["w"], toldo["h"], rol=m["tipo"])
+        # simplificado: mesas/sillas dentro
+        mw, mh = CONSTANTES["mesa"]["w"], CONSTANTES["mesa"]["h"]
+        for i in range(min(m.get("mesas", 0), 2)):
+            caja.hijos.append(Caja("mesa", 0.2, 0.2 + i * (mh + 0.1), mw, mh, rol="mesa"))
+        sa = CONSTANTES["asiento_area"]
+        for i in range(min(m.get("sillas", 0), 3)):
+            caja.hijos.append(Caja("silla", 0.2 + i * (sa + 0.08), toldo["h"] - sa - 0.15, sa, sa, rol="silla"))
+        cajas.append(caja)
+    cols = 2 if len(mods) > 1 else 1
+    rows = (len(mods) + 1) // 2
+    ancho = cols * col_w + (cols - 1) * pasillo
+    alto = rows * row_h + (rows - 1) * pasillo * 0.6
+    return cajas, ancho, alto
 
 
 def _esc(s: str) -> str:

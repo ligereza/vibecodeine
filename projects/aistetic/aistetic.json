@@ -1,0 +1,43 @@
+{
+  "meta": {
+    "name": "aistetic",
+    "version": "0.1",
+    "description": "Línea editorial central de flujo — Dimensiones del Orden",
+    "last_updated": "2026-06-22",
+    "source": "Extraído del trabajo en projects/ + docs/"
+  },
+  "colors": {
+    "ink": null,
+    "accent": null,
+    "paper": null,
+    "support": null,
+    "alert": null
+  },
+  "typography": {
+    "display": null,
+    "body": null,
+    "mono": null,
+    "scale": {}
+  },
+  "layout": {
+    "safe_margin": {},
+    "grid_system": "implied",
+    "rhythm": "generous negative space"
+  },
+  "motifs": [],
+  "tone": {
+    "voice": "directo, útil, calidez contenida",
+    "forbidden": []
+  },
+  "application_rules": {
+    "piezas_vectoriales": "Heredar paleta y tipografía de aistetic.json",
+    "plano": "Estilo técnico limpio, alto contraste, tipografía mono para datos",
+    "flyers_eventos": "Seguir composición modular + acentos controlados"
+  },
+  "references": {
+    "strong_examples": [
+      "projects/piezas_vectoriales/plantillas_rd/",
+      "projects/plano/"
+    ]
+  }
+}

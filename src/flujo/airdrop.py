@@ -157,8 +157,15 @@ def _write_checkpoint_file(repo: Path, msg: str) -> Path:
     date = datetime.now().strftime("%Y-%m-%d_%H-%M")
     slug = re.sub(r"[^a-z0-9]+", "-", msg.lower()).strip("-") or "avance"
     cp = checkpoints / f"{date}_{slug}.md"
+    # Prefer LAST_HANDOFF for modern low-token AI continuation (ESTADO is legacy)
+    lh_path = repo / "context" / "LAST_HANDOFF.md"
     estado_path = repo / "context" / "ESTADO.md"
-    estado = estado_path.read_text(encoding="utf-8") if estado_path.exists() else "Sin context/ESTADO.md"
+    if lh_path.exists():
+        estado = lh_path.read_text(encoding="utf-8")[:2000] + "\n... (truncado para checkpoint)"
+    elif estado_path.exists():
+        estado = estado_path.read_text(encoding="utf-8")
+    else:
+        estado = "Sin LAST_HANDOFF.md ni ESTADO.md"
     cp.write_text(
         f"# Checkpoint — {msg}\n\nFecha: {date}\n\n## Estado\n\n{estado}\n\n"
         f"## Cambios realizados\n\n-\n\n## Próximo paso\n\n-\n",

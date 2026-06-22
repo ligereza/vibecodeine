@@ -38,6 +38,9 @@ Comandos disponibles (ejecutar `flujo --help`):
     daily                       Generar reporte diario (md + html)
   plano
     plano <evento.json>         Generar plano SVG/rider/costos de stands
+  aistetic
+    aistetic list               Lista ejemplos + estado de JSONs descriptivos
+    aistetic analyze <ejemplo>  Genera stub JSON descriptivo desde carpeta de ejemplo
 """
 from __future__ import annotations
 
@@ -76,6 +79,9 @@ app.add_typer(privacy_app, name="privacy")
 app.add_typer(brief_app, name="brief")
 app.add_typer(render_app, name="render")
 app.add_typer(airdrop_app, name="airdrop")
+
+aistetic_app = typer.Typer(help="Línea editorial aistetic + análisis de ejemplos reales para extraer identidad.", no_args_is_help=True)
+app.add_typer(aistetic_app, name="aistetic")
 
 
 # ============================================================
@@ -208,8 +214,22 @@ def airdrop_apply(
         else:
             _warn("No se pudo realizar el auto-checkpoint. Por favor, hazlo manualmente.")
 
+        # Mejora para continuidad de tokens: recordar/actualizar LAST_HANDOFF
+        if message:
+            try:
+                from pathlib import Path
+                from datetime import datetime
+                lh = Path("context/LAST_HANDOFF.md")
+                if lh.exists():
+                    content = lh.read_text(encoding="utf-8")
+                    append = f"\n\n**Post-airdrop {datetime.now().strftime('%Y-%m-%d %H:%M')}**: {message}\n(Actualiza manualmente las secciones 'Estado' y 'Próximas acciones'.)"
+                    lh.write_text(content.rstrip() + append, encoding="utf-8")
+                    _ok("LAST_HANDOFF.md actualizado automáticamente con el mensaje del airdrop.")
+            except Exception:
+                _warn("No se pudo auto-actualizar LAST_HANDOFF.md (hazlo manualmente con 'flujo handoff create').")
+
         _section("Proceso Completado")
-        console.print("[bold green]Airdrop está activo y sincronizado.[/]")
+        console.print("[bold green]Airdrop está activo y sincronizado.[/]\n[cyan]Recuerda: 'flujo handoff' para que la próxima IA continúe con pocos tokens.[/]")
 
     except Exception as e:
         _err(str(e))
@@ -297,9 +317,116 @@ def version():
             console.print(f"  · {h}")
 
 
+@app.command("handoff")
+def handoff(action: str = typer.Argument("last", help="last | create"), 
+            message: str = typer.Option("", "--message", "-m", help="Resumen corto para create")):
+    """Gestiona el archivo de continuidad de baja token para otras IAs.
+    
+    Ejemplos:
+      flujo handoff last
+      flujo handoff create -m "Añadido soporte grid_2x a planos + LAST_HANDOFF"
+    """
+    from pathlib import Path
+    from datetime import datetime
+
+    p = Path("context/LAST_HANDOFF.md")
+
+    if action == "last" or action == "show":
+        if p.exists():
+            console.print(p.read_text(encoding="utf-8"))
+        else:
+            _warn("context/LAST_HANDOFF.md no existe. Crea uno con 'flujo handoff create'.")
+        return
+
+    if action == "create":
+        if not p.exists():
+            _warn("LAST_HANDOFF.md no existe, créalo primero con la plantilla básica.")
+            return
+        if not message:
+            _warn("Usa -m 'resumen corto de lo hecho y siguiente paso'")
+            return
+        now = datetime.now().strftime("%Y-%m-%d %H:%M")
+        content = p.read_text(encoding="utf-8")
+        # Append a compact update section at the end (keeps file small)
+        update = f"\n\n---\n\n**Actualización {now}**\n\n{message}\n\nActualiza la sección 'Próximas acciones' manualmente si es necesario."
+        p.write_text(content.rstrip() + update, encoding="utf-8")
+        _ok(f"LAST_HANDOFF.md actualizado con: {message}")
+        console.print("\nRecuerda: mantén el archivo corto y enfocado en 'qué sigue' para la próxima IA.")
+        return
+
+    _warn("Acción desconocida. Usa 'last' o 'create -m ...'")
+
+
 def _get_version() -> str:
     from .version import get_version
     return get_version()
+
+
+# ============================================================
+# Aistetic — Línea editorial + análisis de ejemplos
+# ============================================================
+
+@aistetic_app.command("list")
+def aistetic_list():
+    """Lista ejemplos en aistetic/ejemplos/ y estado de sus JSON descriptivos."""
+    from pathlib import Path
+    ejemplos = Path("projects/aistetic/ejemplos")
+    jsons = Path("projects/aistetic/json")
+    if not ejemplos.exists():
+        _warn("No existe projects/aistetic/ejemplos/")
+        return
+    _section("Ejemplos aistetic")
+    for d in sorted([p for p in ejemplos.iterdir() if p.is_dir()]):
+        json_path = jsons / f"{d.name}.json"
+        status = "✅ JSON" if json_path.exists() else "⏳ pendiente"
+        console.print(f"  {d.name}  [{status}]")
+
+
+@aistetic_app.command("analyze")
+def aistetic_analyze(
+    example: str = typer.Argument(..., help="nombre de la subcarpeta en ejemplos/"),
+    force: bool = typer.Option(False, "--force", help="sobrescribir JSON existente"),
+):
+    """Analiza un ejemplo y genera/actualiza su JSON descriptivo en json/.
+
+    Escanea archivos, extrae info básica y crea un stub listo para que el agente complete
+    con análisis estético (colores, layout, motifs, etc.).
+    """
+    from pathlib import Path
+    import json as jsonlib
+    from datetime import datetime
+
+    base = Path("projects/aistetic")
+    ex_dir = base / "ejemplos" / example
+    json_dir = base / "json"
+    json_dir.mkdir(parents=True, exist_ok=True)
+    out = json_dir / f"{example}.json"
+
+    if out.exists() and not force:
+        _err(f"Ya existe {out}. Usa --force para sobrescribir.")
+
+    if not ex_dir.exists():
+        _err(f"No existe el ejemplo: {ex_dir}")
+
+    files = [str(p.relative_to(ex_dir)) for p in ex_dir.rglob("*") if p.is_file()][:20]
+    stub = {
+        "example_id": example,
+        "source_paths": [f"projects/aistetic/ejemplos/{example}"],
+        "aesthetic_summary": "PENDIENTE: completar por agente tras analizar los archivos",
+        "files_found": files,
+        "colors": [],
+        "typography": {},
+        "layout": {},
+        "motifs": [],
+        "composition_rules": "",
+        "tone_visual": "",
+        "tags": [],
+        "generated_at": datetime.now().isoformat(),
+        "notes_for_agent": "Analiza los archivos reales (imágenes, config.json, SVGs, etc.) y llena las secciones. Usa el schema schemas/example_description.schema.json"
+    }
+    out.write_text(jsonlib.dumps(stub, indent=2, ensure_ascii=False), encoding="utf-8")
+    _ok(f"JSON descriptivo generado: {out}")
+    console.print("  Siguiente: edita el JSON o pídele al agente que lo complete con análisis estético.")
 
 
 # ============================================================
