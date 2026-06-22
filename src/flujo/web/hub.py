@@ -27,7 +27,7 @@ import socket
 import subprocess
 import sys
 import webbrowser
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 from threading import Thread
 import time
@@ -238,17 +238,6 @@ class HubRequestHandler(BaseHTTPRequestHandler):
         # else: direct test/debug instantiation ok (attrs set)
 
     def do_GET(self):
-        try:
-            self._handle_get_request()
-        except (ConnectionAbortedError, BrokenPipeError, ConnectionResetError, socket.error):
-            pass
-        except Exception as e:
-            try:
-                self._send_json({"error": str(e)}, status=500)
-            except:
-                pass
-
-    def _handle_get_request(self):
         parsed = urlparse(self.path)
         path = parsed.path
 
@@ -312,12 +301,6 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 self._send_json({"jobs": [], "count": 0, "error": str(e)}, status=200)
             return
-        if path == "/api/list-datadrops":
-            try:
-                self._send_json(self._list_datadrops())
-            except Exception as e:
-                self._send_json({"datadrops": [], "count": 0, "error": str(e)}, status=200)
-            return
         if path == "/api/agents-roles":
             self._send_json(self._get_agents_roles())
             return
@@ -373,17 +356,6 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             self.send_error(404)
 
     def do_POST(self):
-        try:
-            self._handle_post_request()
-        except (ConnectionAbortedError, BrokenPipeError, ConnectionResetError, socket.error):
-            pass
-        except Exception as e:
-            try:
-                self._send_json({"error": str(e)}, status=500)
-            except:
-                pass
-
-    def _handle_post_request(self):
         parsed = urlparse(self.path)
         p = parsed.path
 
@@ -1336,7 +1308,7 @@ def run_server(host: str = "127.0.0.1", port: int = 8765, root: Path | None = No
         if actual_port != port:
             print(f"[flujo] Puerto {port} ocupado → usando {actual_port}")
 
-    server = HTTPServer((host, actual_port), HubRequestHandler)
+    server = ThreadingHTTPServer((host, actual_port), HubRequestHandler)
     print(f"[flujo] Workspace app en http://{host}:{actual_port}")
     print(f"  - Repo root: {r}")
     print("  - Hub:      /flujo_hub.html  (UI Delegar: input tarea + botones copian prompts completos por rol)")
