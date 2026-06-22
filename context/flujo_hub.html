@@ -309,14 +309,18 @@
       <div class="text-xs mt-3">Punto de entrada: este hub + <a href="../docs/AGENT_OPERATING_MANUAL.md" class="underline">AGENT_OPERATING_MANUAL.md</a></div>
     </section>
 
-    <!-- Info cruda para Agentes IA (funcional, sin diseño bonito) -->
+    <!-- Info cruda para Agentes IA (sin presentación bonita, solo datos útiles) -->
     <section class="section">
-      <div style="background:#f1e9d9; border:1px solid #d4c5a9; padding:12px; border-radius:4px; font-size:13px; line-height:1.35; font-family:monospace;">
-        <b>PARA AGENTES (usa esto):</b><br><br>
-        FLUJO 1 (Pedido): Pega en caja "Pedidos" arriba. Parser da match vs formatos. Si calza usa comando + aistetic. Si no: propone en aistetic o agrega tarea en LAST_HANDOFF.<br><br>
-        FLUJO 2 (Mejoras): Lee LAST_HANDOFF + AGENT_OPERATING_MANUAL + este hub. Haz 1 tarea simple. Actualiza LAST_HANDOFF.<br><br>
-        Comandos: py -m flujo [aistetic analyze | cotizaciones | render --for illustrator|blender | plano]<br>
-        Archivos clave: aistetic/aistetic.json , svg/ (piezas reales), INDEX_FORMATOS.json , LAST_HANDOFF.md
+      <div style="background:#141414; border:1px solid #2a2a2a; padding:12px; border-radius:4px; font-size:12px; line-height:1.35; font-family:ui-monospace,monospace; color:#e8e8e8;">
+        <b>PARA AGENTES (usa esto, ignora el diseño):</b><br><br>
+        FLUJO 1 (Pedido): Pega el texto en la caja "Pedidos". El parser hace match vs formatos actuales (ver lista en sección de piezas SVG). Si calza: usa el formato existente + comando + aistetic. Si no: propone nueva sección mínima en aistetic/ o agrega tarea simple en LAST_HANDOFF.md.<br><br>
+        FLUJO 2 (Mejoras): Lee AGENT_OPERATING_MANUAL.md + LAST_HANDOFF.md + este hub. Elige 1-2 tareas atómicas de la lista. Actualiza LAST_HANDOFF al final.<br><br>
+        Comandos clave (Windows: usa py):<br>
+        py -m flujo aistetic analyze &lt;ejemplo&gt;<br>
+        py -m flujo cotizaciones &lt;json&gt; --para productora|interno<br>
+        py -m flujo render run &lt;config&gt; --for illustrator|blender<br>
+        py -m flujo plano &lt;json&gt; --rider --costs<br><br>
+        Archivos clave: projects/aistetic/aistetic.json , svg/ (piezas reales para basar), tools/piezas.../INDEX_FORMATOS.json , context/LAST_HANDOFF.md
       </div>
     </section>
 
