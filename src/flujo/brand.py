@@ -1,12 +1,12 @@
-"""Carga central de la línea editorial aistetic.
+"""Carga central de la identidad visual 'flujo'.
 
 Uso:
-    from flujo.aistetic import load_styles, get_color
+    from flujo.brand import load_styles, get_color
 
     styles = load_styles()
     accent = get_color("accent")
 
-Esto permite que cotizaciones, plano, renders, etc. hereden el mismo estilo sin duplicar.
+Esto permite que todos los proyectos hereden el mismo estilo sin duplicar.
 """
 from __future__ import annotations
 
@@ -16,8 +16,8 @@ from typing import Any, Dict
 
 
 def load_styles() -> Dict[str, Any]:
-    """Devuelve colores + tipografía + tono de aistetic.json."""
-    path = Path("projects/aistetic/aistetic.json")
+    """Devuelve colores + tipografía + tono de flujo.json."""
+    path = Path("projects/flujo/flujo.json")
     if not path.exists():
         return _defaults()
 

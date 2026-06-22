@@ -31,7 +31,7 @@ Herramientas activas: instaloader (solo), análisis de colores + OCR, export a A
 
 Privacidad: `flujo privacy scan/sanitize` antes de IAs externas.
 
-Reglas: Español primero, aistetic siempre, Windows con `py`.
+Reglas: Español primero, flujo siempre, Windows con `py`.
 `README.md`, `context/ESTADO.md`, `docs/RELEASE_v016.md`.
 
 **No uses yt-dlp. No crees venvs pesados. Usa `py`.**

@@ -68,7 +68,7 @@
     <div class="card">
       <div class="pro-label">VERSIÓN</div>
       <div class="status-val">0.34.10</div>
-      <div class="small muted">+ aistetic + cotizaciones + visualizers</div>
+      <div class="small muted">+ flujo + cotizaciones + visualizers</div>
     </div>
     <div class="card">
       <div class="pro-label">ESTADO</div>
@@ -95,7 +95,7 @@
     <a class="btn btn-sec" href="svg_visualizer.html">Visualizador SVG (esta pestaña)</a>
     <a class="btn" href="plano_demo.html" target="_blank">Plano Demo (nueva pestaña)</a>
     <a class="btn btn-sec" href="plano_demo.html">Plano Demo (esta pestaña)</a>
-    <button class="btn btn-sec" onclick="window.open('../projects/aistetic/aistetic.json','_blank')">aistetic.json</button>
+    <button class="btn btn-sec" onclick="window.open('../projects/flujo/flujo.json','_blank')">flujo.json</button>
   </div>
   <div class="small muted" style="margin-top:4px">Usa los botones «← Volver al Hub principal (menú)» dentro de los visualizadores para regresar.</div>
 </div>
@@ -108,7 +108,7 @@
     <textarea id="pedido-input" style="height:68px" placeholder="necesito flyer horizontal 10x14 para evento con 7 voluntarios, testeo incluido..."></textarea>
     <div class="row" style="margin-top:8px; gap:8px">
       <button onclick="parsePedido()" class="btn">Generar brief ordenado + match</button>
-      <button onclick="applyAisteticToBrief()" class="btn btn-sec">Aplicar aistetic</button>
+      <button onclick="applyFlujoToBrief()" class="btn btn-sec">Aplicar flujo</button>
       <button onclick="generatePreview()" class="btn btn-sec">Generar preview visual</button>
     </div>
     <div id="pedido-result" class="agent-raw" style="margin-top:10px; min-height:60px; display:none"></div>
@@ -140,7 +140,7 @@
 
     <div class="card" style="display:flex; align-items:center; justify-content:center; flex-direction:column; text-align:center">
       <div class="small muted">¿Nuevo pedido que no calza?</div>
-      <button onclick="proponerNuevaSeccion()" class="btn" style="margin-top:8px">Proponer nueva sección en aistetic</button>
+      <button onclick="proponerNuevaSeccion()" class="btn" style="margin-top:8px">Proponer nueva sección en flujo</button>
       <div class="small muted" style="margin-top:6px">O agrégalo como tarea en LAST_HANDOFF</div>
     </div>
 
@@ -154,7 +154,7 @@
     <div style="display:flex; gap:16px; align-items:center; flex-wrap:wrap">
       <div>
         <div style="font-weight:600">plano • demo interactivo</div>
-        <div class="small muted">Paramétrico desde constantes reales (mesas, toldos, voluntarios, reglas operativas). Export SVG + rider + costos. Integrado aistetic + blender.</div>
+        <div class="small muted">Paramétrico desde constantes reales (mesas, toldos, voluntarios, reglas operativas). Export SVG + rider + costos. Integrado flujo + blender.</div>
       </div>
       <div>
         <a class="btn" href="plano_demo.html" target="_blank">Abrir Plano Demo</a>
@@ -174,7 +174,7 @@
     <div onclick="copyCmd('py -m flujo render run ... --for blender', this)" class="tool-btn">render --for blender</div>
     <div onclick="copyCmd('py -m flujo cotizaciones <json> --para productora', this)" class="tool-btn">cotizaciones productora</div>
     <div onclick="copyCmd('py -m flujo cotizaciones <json> --para interno', this)" class="tool-btn">cotizaciones interno</div>
-    <div onclick="copyCmd('py -m flujo aistetic analyze mi-ejemplo', this)" class="tool-btn">aistetic analyze</div>
+    <div onclick="copyCmd('py -m flujo brand analyze mi-ejemplo', this)" class="tool-btn">flujo brand analyze</div>
     <div onclick="copyCmd('py -m flujo daily', this)" class="tool-btn">daily</div>
     <div onclick="copyCmd('python -m src.flujo.templates.blender_setup projects/plano/ejemplos/evento_ejemplo.json', this)" class="tool-btn">blender_setup</div>
     <div onclick="window.open('plano_demo.html','_blank')" class="tool-btn">plano demo</div>
@@ -194,7 +194,7 @@
   <div class="grid">
     <div class="card">
       <div style="font-weight:600; margin-bottom:4px">FLUJO 1 — Pedido reciente</div>
-      <div class="small">1. Abre este hub<br>2. Pega correo/pedido en Intake<br>3. Pulsa "Generar brief ordenado + match"<br>4. Si MATCH → usa formato + aistetic + comando<br>5. Si NO MATCH → propone nueva sección o agrega tarea LAST_HANDOFF</div>
+      <div class="small">1. Abre este hub<br>2. Pega correo/pedido en Intake<br>3. Pulsa "Generar brief ordenado + match"<br>4. Si MATCH → usa formato + flujo + comando<br>5. Si NO MATCH → propone nueva sección o agrega tarea LAST_HANDOFF</div>
     </div>
     <div class="card">
       <div style="font-weight:600; margin-bottom:4px">FLUJO 2 — Continúa mejoras</div>
@@ -209,7 +209,7 @@
   <div class="section-title">Datos crudos para agentes (copia directa)</div>
   <div class="agent-raw">
 FLUJOS (resumen):
-• Pedido: Intake → parser match vs svg/ + INDEX_FORMATOS → brief + comando + aistetic
+• Pedido: Intake → parser match vs svg/ + INDEX_FORMATOS → brief + comando + flujo
 • Mejora continua: LAST_HANDOFF + hub + este archivo. Solo tareas simples.
 
 FORMATOS ACTIVOS (chequea svg/ y projects/piezas_vectoriales):
@@ -223,7 +223,7 @@ ARCHIVOS CLAVE (bajo token):
 - context/flujo_hub.html (esta página)
 - docs/AGENT_OPERATING_MANUAL.md
 - context/LAST_HANDOFF.md
-- projects/aistetic/aistetic.json
+- projects/flujo/flujo.json
 - svg/ (piezas base: usa editables primero)
 - tools/.../INDEX_FORMATOS.json (si existe)
 
@@ -231,9 +231,9 @@ COMANDOS (Windows):
 py -m flujo render run projects/.../config.json --for illustrator|photoshop|blender
 py -m flujo cotizaciones &lt;json&gt; --para productora|interno
 py -m flujo plano projects/plano/ejemplos/evento_ejemplo.json --rider --costs
-py -m flujo aistetic analyze
+py -m flujo brand analyze
 
-Si no hay match: proponer nueva sección mínima en aistetic/ o tarea en LAST_HANDOFF.md
+Si no hay match: proponer nueva sección mínima en flujo/ o tarea en LAST_HANDOFF.md
 
 Punto de entrada único: este hub. No leas todo el repo.
   </div>
@@ -241,13 +241,13 @@ Punto de entrada único: este hub. No leas todo el repo.
 
 <!-- AISTETIC PALETA -->
 <div class="section">
-  <div class="section-title">aistetic (paleta central)</div>
+  <div class="section-title">flujo (paleta central)</div>
   <div class="card" style="font-family:monospace; font-size:12px">
     ink: <span style="color:#1f2a24;background:#111;padding:1px 4px">#1f2a24</span>
     accent: <span style="color:#2d5a4a;background:#111;padding:1px 4px">#2d5a4a</span>
     paper: <span style="color:#e8e8e8;background:#1a1a1a;padding:1px 4px">#f8f1e3 (ver JSON real)</span>
     support: #675f55 • alert: #c2410f
-    <br><a href="../projects/aistetic/aistetic.json" class="small" style="color:var(--cyan)">editar aistetic.json →</a>
+    <br><a href="../projects/flujo/flujo.json" class="small" style="color:var(--cyan)">editar flujo.json →</a>
   </div>
 </div>
 
@@ -257,17 +257,17 @@ Punto de entrada único: este hub. No leas todo el repo.
   <div class="grid">
     <div class="card">
       <div style="font-weight:600">Illustrator</div>
-      <div class="small muted">render --for illustrator → abre SVG editable + vectorizado. Swatches desde aistetic.</div>
+      <div class="small muted">render --for illustrator → abre SVG editable + vectorizado. Swatches desde flujo.</div>
       <button onclick="copyCmd('py -m flujo render run projects/piezas_vectoriales/suplementos_rd/config.json --for illustrator', this)" class="btn btn-sec" style="margin-top:8px">Copiar comando</button>
     </div>
     <div class="card">
       <div style="font-weight:600">Photoshop</div>
-      <div class="small muted">export → ZIP working/ + compose.jsx + paleta aistetic.</div>
+      <div class="small muted">export → ZIP working/ + compose.jsx + paleta flujo.</div>
       <button onclick="copyCmd('py -m flujo export projects/flyer_eventos/ultimo --for photoshop', this)" class="btn btn-sec" style="margin-top:8px">Copiar export</button>
     </div>
     <div class="card">
       <div style="font-weight:600">Blender</div>
-      <div class="small muted">plano + blender_setup.py → meshes + materiales aistetic.</div>
+      <div class="small muted">plano + blender_setup.py → meshes + materiales flujo.</div>
       <button onclick="copyCmd('python -m src.flujo.templates.blender_setup projects/plano/ejemplos/evento_ejemplo.json', this)" class="btn btn-sec" style="margin-top:8px">Copiar blender_setup</button>
     </div>
   </div>
@@ -312,7 +312,7 @@ function generatePreview() {
       <rect x="18" y="44" width="72" height="40" rx="2" fill="#1a1a1a" stroke="${accent}"/>
       <text x="26" y="68" fill="${ink}" font-size="9">stand</text>
       ${Array.from({length:Math.min(v,5)}).map((_,i)=>`<rect x="${110+i*18}" y="78" width="14" height="14" fill="#e63946" rx="1"/>`).join('')}
-      <text x="18" y="104" fill="${accent}" font-size="8">aistetic aplicado (dark)</text>
+      <text x="18" y="104" fill="${accent}" font-size="8">flujo aplicado (dark)</text>
     </svg>`;
   const res = document.getElementById('pedido-result');
   res.style.display = 'block';
@@ -360,9 +360,9 @@ formato_sugerido: ${formato || 'NUEVO'}
 notas: ${input}
 
 # ${match}
-# Acción: ${formato ? 'Usar formato existente + aistetic' : 'Proponer NUEVA sección aistetic o tarea LAST_HANDOFF'}
+# Acción: ${formato ? 'Usar formato existente + flujo' : 'Proponer NUEVA sección flujo o tarea LAST_HANDOFF'}
 # Comando: ${cmd}
-# Estilo: aistetic (ink #1f2a24 • accent #2d5a4a • paper #f8f1e3 - usa los valores reales del JSON)`;
+# Estilo: flujo (ink #1f2a24 • accent #2d5a4a • paper #f8f1e3 - usa los valores reales del JSON)`;
 
   res.innerHTML = `<pre style="font-size:10px; white-space:pre-wrap; margin:0">${brief}</pre>`;
   if (!formato) {
@@ -372,20 +372,20 @@ notas: ${input}
 
 function proponerNuevaSeccion() {
   const r = document.getElementById('pedido-result');
-  r.innerHTML += `<div style="margin-top:6px;color:#c2410f;font-size:10px">→ Nueva sección propuesta. Agrega stub en projects/aistetic/ o tarea en LAST_HANDOFF.md</div>`;
+  r.innerHTML += `<div style="margin-top:6px;color:#c2410f;font-size:10px">→ Nueva sección propuesta. Agrega stub en projects/flujo/ o tarea en LAST_HANDOFF.md</div>`;
 }
 
-function applyAisteticToBrief() {
+function applyFlujoToBrief() {
   const r = document.getElementById('pedido-result');
-  if (r) r.innerHTML += `<div style="margin-top:4px;color:#2d5a4a;font-size:10px">→ estilo aistetic aplicado (usa paleta arriba)</div>`;
+  if (r) r.innerHTML += `<div style="margin-top:4px;color:#2d5a4a;font-size:10px">→ estilo flujo aplicado (usa paleta arriba)</div>`;
 }
 
 function usarComoBase(nombre) {
-  const txt = `BASE: ${nombre}\nRuta: svg/... (ver visualizador)\nAcción: copiar editable a nuevo proyecto + actualizar config con aistetic`;
+  const txt = `BASE: ${nombre}\nRuta: svg/... (ver visualizador)\nAcción: copiar editable a nuevo proyecto + actualizar config con flujo`;
   navigator.clipboard.writeText(txt).then(()=>alert('Instrucciones + nombre copiados.\n\n' + txt));
 }
 
-function mockAistetic() { alert('Usa aistetic.json como fuente de verdad de paleta y reglas.'); }
+function mockFlujoBrand() { alert('Usa flujo.json como fuente de verdad de paleta y reglas.'); }
 
 // Auto hint preview
 setTimeout(() => {

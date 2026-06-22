@@ -6,7 +6,7 @@
 
 1. Abre `context/flujo_hub.html` (entrada principal)
 2. `PARA_IA_CONTEXT.md` + `context/LAST_HANDOFF.md` (tareas simples + estado)
-3. `projects/README.md` (satélites + aistetic)
+3. `projects/README.md` (satélites + flujo)
 
 Verificación: `py -m flujo health` (usa py en Windows)
 

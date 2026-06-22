@@ -11,14 +11,14 @@ El resto solo si es necesario.
 
 1. Abre `context/flujo_hub.html` (hub con visualizadores SVG/Plano, intake de pedidos, comandos y sección raw para agentes).
 2. `context/LAST_HANDOFF.md` (estado actual y tareas).
-3. `projects/aistetic/` (con sus ejemplos/ y json/ para extraer estética real).
+3. `projects/flujo/` (con sus ejemplos/ y json/ para extraer estética real).
 4. Revisa ejemplos reales en los proyectos para entender el flujo texto ↔ imagen.
 
 **No leas todo el código fuente ni todos los handoffs antiguos** al principio. Solo si te piden algo técnico específico.
 
 ## Qué extraer típicamente
 
-Cuando te pidan una "línea editorial" o "aistetic":
+Cuando te pidan una "línea editorial" o "flujo":
 
 - **Paleta de colores** (nombres internos usados + usos)
 - **Tipografía y jerarquía**
@@ -36,34 +36,34 @@ La estética actual **no** está centralizada. Está dispersa en:
 - Reglas del generador de planos
 - Estilo visual de las herramientas experimentales (tapiz)
 
-Tu trabajo es **sintetizarla** en `projects/aistetic/`.
+Tu trabajo es **sintetizarla** en `projects/flujo/`.
 
 ## Estructura que se espera que produzcas
 
 Idealmente genera/actualiza:
 
-- `projects/aistetic/linea_editorial.md` (documento humano)
-- `projects/aistetic/aistetic.json` (versión estructurada para código futuro)
+- `projects/flujo/linea_editorial.md` (documento humano)
+- `projects/flujo/flujo.json` (versión estructurada para código futuro)
 - Carpetas `palettes/`, `typography/`, `references/` con contenido real extraído
 
 ## Reglas importantes del repo
 
 - No automatizar Photoshop/Illustrator/Blender (solo preparar archivos).
 - Solo usar instaloader para Instagram.
-- Todo cambio se entrega como airdrop (pero como IA externa probablemente solo generas el contenido de aistetic).
+- Todo cambio se entrega como airdrop (pero como IA externa probablemente solo generas el contenido de flujo).
 - Mantén los archivos generados **útiles y accionables**.
 
 ## Mecanismo de ejemplos + JSON descriptivos (para línea editorial)
 
-Si tu tarea es generar/refinar la línea editorial de **aistetic**:
+Si tu tarea es generar/refinar la línea editorial de **flujo**:
 
-1. Ve a `projects/aistetic/ejemplos/`
+1. Ve a `projects/flujo/ejemplos/`
 2. Analiza los trabajos reales que el dueño haya cargado allí (carpetas con archivos terminados).
-3. Genera JSONs descriptivos en `projects/aistetic/json/`.
+3. Genera JSONs descriptivos en `projects/flujo/json/`.
 4. Usa el schema `schemas/example_description.schema.json` como guía de estructura.
 5. Con la información de los JSONs + lo que veas en piezas y planos, actualiza:
-   - `projects/aistetic/linea_editorial.md`
-   - `projects/aistetic/aistetic.json`
+   - `projects/flujo/linea_editorial.md`
+   - `projects/flujo/flujo.json`
 
 Este es el flujo principal para "ocupar" el repo con información real de estética.
 
@@ -75,23 +75,23 @@ Te mandaron el repo + un correo o mensaje de WhatsApp/Gmail.
 
 1. Abre `context/flujo_hub.html` y pega el texto del pedido en la sección "Pedidos".
 2. Analiza contra las secciones de formato existentes:
-   - Revisa `projects/aistetic/` (línea editorial) + `tools/piezas_vectoriales/plantillas/INDEX_FORMATOS.json`.
+   - Revisa `projects/flujo/` (línea editorial) + `tools/piezas_vectoriales/plantillas/INDEX_FORMATOS.json`.
    - Revisa proyectos activos: `piezas_vectoriales/`, `plano/`, `cotizaciones/`, `flyer_eventos/`.
 3. **Si hay coincidencia**:
    - Genera estructura ordenada (brief).
    - Propón el comando correcto (ej: `flujo render ... --for illustrator`, `flujo cotizaciones ... --para productora`).
    - Genera archivos listos para Adobe Illustrator, Photoshop o Blender.
-   - Usa siempre estilos de aistetic.
+   - Usa siempre estilos de flujo.
 4. **Si NO hay coincidencia**:
-   - Ofrece crear una nueva sección en aistetic (o nuevo proyecto satélite).
+   - Ofrece crear una nueva sección en flujo (o nuevo proyecto satélite).
    - O bien: déjalo como tarea clara de mejora en `LAST_HANDOFF.md` (formato: "Tarea simple: ...").
    - Propón un nombre de formato y estructura mínima.
 
 **Salida esperada (Flujo 1)**:
 - Brief o estructura clara (formato YAML/JSON simple).
 - Comando listo (`flujo render ... --for illustrator`, `flujo cotizaciones ...`, etc.).
-- Archivos generados alineados a aistetic.
-- Decisión clara: "Usa formato existente X" o "Propongo nueva sección en aistetic: [nombre]".
+- Archivos generados alineados a flujo.
+- Decisión clara: "Usa formato existente X" o "Propongo nueva sección en flujo: [nombre]".
 - Nota de herramienta final (Illustrator / Photoshop / Blender).
 
 **Nunca inventes** formatos nuevos sin proponerlos primero.
@@ -124,7 +124,7 @@ Te mandaron el repo + instrucción de continuar mejoras.
 
 - Punto de entrada: siempre `context/flujo_hub.html`.
 - Usa las herramientas del repo (`flujo ...`).
-- Mantén consistencia con aistetic.
+- Mantén consistencia con flujo.
 - Los archivos finales deben ser directamente usables en Illustrator, Photoshop o Blender.
 - Si algo no existe, propón crearlo de forma mínima y accionable.
 - Al final, resume qué hiciste y qué tareas simples quedan para otros agentes.
@@ -140,7 +140,7 @@ Te mandaron el repo + instrucción de continuar mejoras.
 
 Sigue las instrucciones en docs/FOR_EXTERNAL_AI.md (Flujo 1: Pedido Reciente).
 Usa el hub (context/flujo_hub.html) como punto de entrada.
-Revisa si calza en formatos existentes (aistetic + INDEX_FORMATOS).
+Revisa si calza en formatos existentes (flujo + INDEX_FORMATOS).
 Si calza, genera lo necesario. Si no, propone nueva sección o déjalo como tarea clara."
 
 **Opción 2 (Mejoras):**

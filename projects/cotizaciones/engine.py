@@ -1,7 +1,7 @@
-"""Cotizaciones duales integradas con aistetic y planos.
+"""Cotizaciones duales integradas con flujo y planos.
 
 Genera 2 versiones:
-- productora: branded, infográfico (usa aistetic + formatos)
+- productora: branded, infográfico (usa flujo + formatos)
 - interno (ong/empresa): desglose detallado
 """
 from __future__ import annotations
@@ -10,10 +10,10 @@ from pathlib import Path
 from typing import Any, Dict
 
 from src.flujo.plano import load_evento, resumen_costos
-from src.flujo.aistetic import load_styles, get_color  # ← nuevo loader central
+from src.flujo.brand import load_styles, get_color  # ← nuevo loader central de identidad flujo
 
 def generar_cotizacion(evento_path: Path, audiencia: str = "productora", output_dir: Path | None = None) -> dict:
-    """Genera cotización real (archivos) según audiencia, usando aistetic."""
+    """Genera cotización real (archivos) según audiencia, usando flujo."""
     ev = load_evento(evento_path)
     styles = load_styles()
     costos = resumen_costos(ev)
@@ -28,24 +28,24 @@ def generar_cotizacion(evento_path: Path, audiencia: str = "productora", output_
         # Branded infographic style for productoras (diseñador ONG)
         content = f"""COTIZACIÓN — {ev.get('nombre', 'Evento')} | Reduciendo Daño
 
-Estilo: aistetic (ink={ink} accent={accent} paper={paper})
+Estilo: flujo (ink={ink} accent={accent} paper={paper})
 Formato: infografía lista para Illustrator/Photoshop (ver catálogo)
 
 {ev.get('notas', '')}
 
 {costos}
 
-Entrega lista. Usa aistetic para consistencia de marca.
+Entrega lista. Usa flujo para consistencia de marca.
 """
         (output_dir / "cotizacion_productora.txt").write_text(content, encoding="utf-8")
-        # Simple HTML infographic using aistetic
+        # Simple HTML infographic using flujo
         html = f"""<html><body style="background:{paper};color:{ink};font-family:sans-serif">
 <h1 style="color:{accent}">COTIZACIÓN — Reduciendo Daño</h1>
 <pre>{costos}</pre>
-<p>Estilo aistetic aplicado. Abre en navegador o convierte a imagen.</p>
+<p>Estilo flujo aplicado. Abre en navegador o convierte a imagen.</p>
 </body></html>"""
         (output_dir / "cotizacion_productora.html").write_text(html, encoding="utf-8")
-        return {"files": [str(output_dir / "cotizacion_productora.txt"), str(output_dir / "cotizacion_productora.html")], "estilo": "aistetic"}
+        return {"files": [str(output_dir / "cotizacion_productora.txt"), str(output_dir / "cotizacion_productora.html")], "estilo": "flujo"}
 
     else:
         # Detallado interno para ONG/empresa
@@ -55,7 +55,7 @@ Para: ONG / trabajador / empresa
 {costos}
 
 Notas internas: ajustar precios reales.
-Referencia aistetic para tono en comunicaciones.
+Referencia flujo para tono en comunicaciones.
 """
         (output_dir / "cotizacion_interno.txt").write_text(content, encoding="utf-8")
         return {"files": [str(output_dir / "cotizacion_interno.txt")], "estilo": "interno"}

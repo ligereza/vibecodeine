@@ -6,7 +6,7 @@ Uso (en Blender Text Editor o como script):
 
 Crea un stand 3D básico usando:
 - Dimensiones del evento (plano)
-- Colores y estilo de aistetic.json
+- Colores y estilo de flujo.json
 - Materiales simples para carteleras / recursos 3D
 
 Adáptalo a tu flujo: extrude, agrega texturas, etc.
@@ -17,8 +17,8 @@ import json
 from mathutils import Vector
 from pathlib import Path
 
-def load_aistetic():
-    p = Path("projects/aistetic/aistetic.json")
+def load_flujo():
+    p = Path("projects/flujo/flujo.json")
     if p.exists():
         with open(p, encoding="utf-8") as f:
             data = json.load(f)
@@ -43,11 +43,11 @@ def create_material(name, color_hex):
     return mat
 
 def setup_stand(evento_json: str):
-    """Crea base 3D simple desde un json de plano, usando aistetic."""
+    """Crea base 3D simple desde un json de plano, usando flujo."""
     with open(evento_json, encoding="utf-8") as f:
         ev = json.load(f)
 
-    styles = load_aistetic()
+    styles = load_flujo()
     paper_mat = create_material("Aistetic_Paper", styles["paper"])
     accent_mat = create_material("Aistetic_Accent", styles["accent"])
 
@@ -69,7 +69,7 @@ def setup_stand(evento_json: str):
     bpy.ops.object.light_add(type='SUN', location=(4, 4, 8))
 
     print(f"[flujo] Stand 3D creado: {stand.name}")
-    print("[flujo] Materiales de aistetic aplicados.")
+    print("[flujo] Materiales de flujo aplicados.")
     print("[flujo] Adapta a tu modelo de frasco o cartelera 3D.")
 
 if __name__ == "__main__":

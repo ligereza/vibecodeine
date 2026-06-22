@@ -11,12 +11,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-def _load_aistetic_styles() -> Dict[str, Any]:
-    """Carga estilos desde aistetic si existe (integración con línea editorial)."""
-    aistetic_path = Path("projects/aistetic/aistetic.json")
-    if aistetic_path.exists():
+def _load_flujo_styles() -> Dict[str, Any]:
+    """Carga estilos desde flujo si existe (integración con línea editorial)."""
+    flujo_path = Path("projects/flujo/flujo.json")
+    if flujo_path.exists():
         try:
-            data = json.loads(aistetic_path.read_text(encoding="utf-8"))
+            data = json.loads(flujo_path.read_text(encoding="utf-8"))
             return data.get("colors", {})
         except Exception:
             pass
@@ -180,9 +180,9 @@ def _esc(s: str) -> str:
 # 4. RENDER SVG (escala metros -> px)
 # ============================================================
 def render_svg(ev: Dict[str, Any], px_por_metro: float = 90.0) -> str:
-    """Render SVG con estilos de aistetic si disponible (integración línea editorial)."""
+    """Render SVG con estilos de flujo si disponible (integración línea editorial)."""
     cajas, W_m, H_m = solve_layout(ev)
-    styles = _load_aistetic_styles()
+    styles = _load_flujo_styles()
     ink = styles.get("ink", "#1f2a24")
     accent = styles.get("accent", "#1f6f4e")
     paper = styles.get("paper", "#fbf8f1")
@@ -198,7 +198,7 @@ def render_svg(ev: Dict[str, Any], px_por_metro: float = 90.0) -> str:
     out.append(f'<text x="{ox}" y="{0.5*s}" font-family="Inter,Arial" font-size="{0.32*s}" font-weight="700" fill="{ink}">'
                f'PLANO — {_esc(ev.get("nombre","Evento"))}</text>')
     out.append(f'<text x="{ox}" y="{0.82*s}" font-family="Inter,Arial" font-size="{0.17*s}" fill="{ink}">'
-               f'Escala 1m = {px_por_metro:.0f}px · {len(cajas)} módulo(s) · aistetic</text>')
+               f'Escala 1m = {px_por_metro:.0f}px · {len(cajas)} módulo(s) · flujo</text>')
 
     for c in cajas:
         cx, cy = ox + c.x * s, oy + c.y * s

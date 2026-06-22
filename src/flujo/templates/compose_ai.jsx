@@ -47,11 +47,11 @@ function main() {
     if (realPalette) {
         palette = realPalette;
     } else {
-        // Fallback a aistetic (línea editorial central)
-        var aisteticFile = new File(baseFolder + "/../../../projects/aistetic/aistetic.json");
-        if (aisteticFile.exists) {
-            var aisteticData = readPaletteJSON(aisteticFile);  // reuse, aunque no es perfecto
-            if (aisteticData) palette = aisteticData;
+        // Fallback a flujo (línea editorial central)
+        var flujoFile = new File(baseFolder + "/../../../projects/flujo/flujo.json");
+        if (flujoFile.exists) {
+            var flujoData = readPaletteJSON(flujoFile);  // reuse, aunque no es perfecto
+            if (flujoData) palette = flujoData;
         }
     }
 

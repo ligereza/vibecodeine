@@ -35,8 +35,8 @@ Este mapa existe para que humanos y agentes de IA entiendan rápido qué carpeta
 | `projects/flyer_eventos/` | Flujos reales de eventos | Operativo |
 | `projects/plano/` | Generador de planos/riders/costos | Vivo |
 | `projects/tapiz/` | Experimento visual (VibeCode) | Referencia |
-| `projects/aistetic/` | Línea editorial central + ejemplos/json para agentes | Nuevo |
-| `projects/cotizaciones/` | Cotizaciones duales integradas con aistetic (productora vs ONG/empresa) | Nuevo — mejora de planos |
+| `projects/flujo/` | Línea editorial central + ejemplos/json para agentes | Nuevo |
+| `projects/cotizaciones/` | Cotizaciones duales integradas con flujo (productora vs ONG/empresa) | Nuevo — mejora de planos |
 
 Ver también `docs/FOR_EXTERNAL_AI.md` cuando se alimente el repo completo a una IA.
 
@@ -49,7 +49,7 @@ Nota: `projects/tapiz/vibecode.egg-info/` está trackeado históricamente. No ag
 Este es el **workspace principal**:
 - Intake de pedidos + parser de formatos
 - Visualizador SVG completo (embebido, grupos Eventos/Suplementos como en /svg)
-- Plano Demo interactivo (con aistetic)
+- Plano Demo interactivo (con flujo)
 - Sección raw para agentes + links a visualizadores
 
 | Ruta | Rol |
@@ -59,7 +59,7 @@ Este es el **workspace principal**:
 | `context/plano_demo.html` | Demo de planos + riders + costos |
 | `context/LAST_HANDOFF.md` | Estado + tareas para agentes (bajo tokens) |
 | `docs/AGENT_OPERATING_MANUAL.md` | Los dos flujos de trabajo para IA |
-| `projects/README.md` | Satélites alineados a aistetic |
+| `projects/README.md` | Satélites alineados a flujo |
 
 El resto de docs son de soporte o histórico. No los leas primero.
 

@@ -18,7 +18,7 @@ Este es el **centro del repo** para trabajo diario.
 3. **plano_demo.html** — Demo interactivo del motor de planos
    - Controles paramétricos
    - SVG generado en vivo + rider + costos
-   - Integración aistetic + export Blender
+   - Integración flujo + export Blender
 
 4. **LAST_HANDOFF.md** — Estado actual + tareas para agentes (bajo token)
 
@@ -37,4 +37,4 @@ Ver también: `LAST_HANDOFF.md`, `../README.md`, `../docs/REPO_MAP.md` y `../doc
 - Para planos y riders → `plano_demo.html`
 - Para continuar como agente IA → leer primero LAST_HANDOFF + hub
 
-Todo alineado a `projects/aistetic/` y listo para Illustrator / Photoshop / Blender.
+Todo alineado a `projects/flujo/` y listo para Illustrator / Photoshop / Blender.

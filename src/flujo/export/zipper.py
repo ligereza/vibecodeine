@@ -70,7 +70,7 @@ Incluye:
 - SVG editable + vectorizado (listo para Illustrator)
 - JSX para Photoshop e Illustrator
 - blender_setup.py (para Blender 3D)
-- Colores de aistetic.json para consistencia de marca
+- Colores de flujo.json para consistencia de marca
 
 Cómo usar:
 - Illustrator: abre SVG

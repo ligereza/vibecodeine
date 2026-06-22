@@ -50,11 +50,11 @@ function main() {
     if (realPalette) {
         palette = realPalette;
     } else {
-        // Fallback a aistetic
-        var aisteticFile = new File(baseFolder + "/../../../projects/aistetic/aistetic.json");
-        if (aisteticFile.exists) {
-            var aisteticData = readPaletteJSON(aisteticFile);
-            if (aisteticData) palette = aisteticData;
+        // Fallback a flujo
+        var flujoFile = new File(baseFolder + "/../../../projects/flujo/flujo.json");
+        if (flujoFile.exists) {
+            var flujoData = readPaletteJSON(flujoFile);
+            if (flujoData) palette = flujoData;
         }
     }
 

@@ -1,18 +1,18 @@
-# aistetic — Línea editorial central de flujo
+# flujo — Identidad visual central
 
 **Propósito**: Definir y centralizar la identidad visual, tono, reglas de marca y lenguaje estético que debe guiar **todos** los entregables generados con flujo (piezas vectoriales, flyers de eventos, riders, planos, visualizaciones, etc.).
 
-Este es el proyecto "satélite" que actúa como **fuente de verdad** de la estética. Los otros proyectos (piezas_vectoriales, flyer_eventos, plano, tapiz) deben poder referenciarlo.
+Este es el proyecto "satélite" que actúa como **fuente de verdad** de la identidad "flujo". Los otros proyectos deben poder referenciarlo.
 
 ## Estructura recomendada
 
 ```
-projects/aistetic/
+projects/flujo/
 ├── README.md
-├── linea_editorial.md         # Documento principal de la línea editorial
-├── aistetic.json              # Versión machine-readable
-├── ejemplos/                  # <--- Trabajos ya hechos que cargas tú (imágenes, configs, carpetas reales)
-├── json/                      # <--- JSONs descriptivos generados por agentes desde los ejemplos
+├── linea_editorial.md         # Documento principal de la identidad visual
+├── flujo.json                 # Versión machine-readable (tokens)
+├── ejemplos/                  # Trabajos reales de referencia
+├── json/                      # JSONs descriptivos
 ├── palettes/
 ├── typography/
 ├── motifs/
@@ -20,7 +20,7 @@ projects/aistetic/
 └── ...
 ```
 
-**Importante:** 
+**Importante:**
 - Tú cargas trabajos terminados en `ejemplos/`
 - El agente que entre analiza y genera (o usa) los JSON descriptivos en `json/`
 - Si ya existen JSONs dentro de esta estructura, la carpeta `json/` ya existirá.
@@ -44,7 +44,7 @@ Si te están mandando el repositorio `flujo` para que generes la línea editoria
 
 1. Lee primero `projects/README.md` para entender el ecosistema.
 2. Lee `docs/FOR_EXTERNAL_AI.md` (guía específica para este caso de uso).
-3. Enfócate en `projects/aistetic/` (aquí es donde debe vivir el resultado).
+3. Enfócate en `projects/flujo/` (aquí es donde debe vivir el resultado).
 4. Explora patrones estéticos en:
    - `projects/piezas_vectoriales/` (config.json → colores, tipografía, jerarquía, marcos)
    - `projects/flyer_eventos/` (manifiestos + imágenes de referencia)

@@ -1,6 +1,6 @@
 # plano — generador paramétrico de planos para eventos
 
-> Integrado con aistetic (estilos) y cotizaciones (dual productora/ONG).
+> Integrado con flujo (estilos) y cotizaciones (dual productora/ONG).
 > Estado: mejorado para línea estética + cotizaciones.
 
 ## Idea

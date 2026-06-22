@@ -38,11 +38,11 @@ Comandos disponibles (ejecutar `flujo --help`):
     daily                       Generar reporte diario (md + html)
   plano
     plano <evento.json>         Generar plano SVG/rider/costos de stands
-  aistetic
-    aistetic list               Lista ejemplos + estado de JSONs descriptivos
-    aistetic analyze <ejemplo>  Genera stub JSON descriptivo desde carpeta de ejemplo
+  brand
+    brand list               Lista ejemplos + estado de JSONs descriptivos
+    brand analyze <ejemplo>  Genera stub JSON descriptivo desde carpeta de ejemplo
   cotizaciones
-    cotizaciones <evento.json> --para productora|interno  Cotización dual (aistetic + formatos)
+    cotizaciones <evento.json> --para productora|interno  Cotización dual (flujo + formatos)
 """
 from __future__ import annotations
 
@@ -82,8 +82,8 @@ app.add_typer(brief_app, name="brief")
 app.add_typer(render_app, name="render")
 app.add_typer(airdrop_app, name="airdrop")
 
-aistetic_app = typer.Typer(help="Línea editorial aistetic + análisis de ejemplos reales para extraer identidad.", no_args_is_help=True)
-app.add_typer(aistetic_app, name="aistetic")
+brand_app = typer.Typer(help="Identidad visual 'flujo' + análisis de ejemplos reales.", no_args_is_help=True)
+app.add_typer(brand_app, name="brand")
 
 
 # ============================================================
@@ -365,27 +365,27 @@ def _get_version() -> str:
 
 
 # ============================================================
-# Aistetic — Línea editorial + análisis de ejemplos
+# Brand (flujo) — Identidad visual + análisis de ejemplos
 # ============================================================
 
-@aistetic_app.command("list")
-def aistetic_list():
-    """Lista ejemplos en aistetic/ejemplos/ y estado de sus JSON descriptivos."""
+@brand_app.command("list")
+def brand_list():
+    """Lista ejemplos en projects/flujo/ejemplos/ y estado de sus JSON descriptivos."""
     from pathlib import Path
-    ejemplos = Path("projects/aistetic/ejemplos")
-    jsons = Path("projects/aistetic/json")
+    ejemplos = Path("projects/flujo/ejemplos")
+    jsons = Path("projects/flujo/json")
     if not ejemplos.exists():
-        _warn("No existe projects/aistetic/ejemplos/")
+        _warn("No existe projects/flujo/ejemplos/")
         return
-    _section("Ejemplos aistetic")
+    _section("Ejemplos flujo")
     for d in sorted([p for p in ejemplos.iterdir() if p.is_dir()]):
         json_path = jsons / f"{d.name}.json"
         status = "✅ JSON" if json_path.exists() else "⏳ pendiente"
         console.print(f"  {d.name}  [{status}]")
 
 
-@aistetic_app.command("analyze")
-def aistetic_analyze(
+@brand_app.command("analyze")
+def brand_analyze(
     example: str = typer.Argument(..., help="nombre de la subcarpeta en ejemplos/"),
     force: bool = typer.Option(False, "--force", help="sobrescribir JSON existente"),
 ):
@@ -398,7 +398,7 @@ def aistetic_analyze(
     import json as jsonlib
     from datetime import datetime
 
-    base = Path("projects/aistetic")
+    base = Path("projects/flujo")
     ex_dir = base / "ejemplos" / example
     json_dir = base / "json"
     json_dir.mkdir(parents=True, exist_ok=True)
@@ -413,8 +413,8 @@ def aistetic_analyze(
     files = [str(p.relative_to(ex_dir)) for p in ex_dir.rglob("*") if p.is_file()][:20]
     stub = {
         "example_id": example,
-        "source_paths": [f"projects/aistetic/ejemplos/{example}"],
-        "aesthetic_summary": "PENDIENTE: completar por agente tras analizar los archivos",
+        "source_paths": [f"projects/flujo/ejemplos/{example}"],
+        "flujo_summary": "PENDIENTE: completar por agente tras analizar los archivos",
         "files_found": files,
         "colors": [],
         "typography": {},
@@ -916,7 +916,7 @@ def render_run(
         raise typer.Exit(rc)
 
     if for_app:
-        msg = f"Render listo. Archivos preparados para {for_app.upper()} (usa aistetic)."
+        msg = f"Render listo. Archivos preparados para {for_app.upper()} (usa flujo)."
         if for_app.lower() in ("illustrator", "ai"):
             msg += " Abre el SVG editable en AI."
         elif for_app.lower() in ("photoshop", "ps"):
@@ -1135,7 +1135,7 @@ def cotizaciones(
     para: str = typer.Option("productora", "--para", help="productora | interno | empresa"),
     output: Optional[Path] = typer.Option(None, "--output", "-o"),
 ):
-    """Genera cotización dual integrada con aistetic.
+    """Genera cotización dual integrada con flujo.
 
     --para productora: versión externa branded (infografía para productoras)
     --para interno/empresa: desglose detallado interno.
@@ -1145,7 +1145,7 @@ def cotizaciones(
         _err(f"No existe: {evento}")
     res = generar_cotizacion(evento, audiencia=para, output_dir=output)
     console.print(f"Cotización generada: {res['files']}")
-    console.print(f"Estilo: {res.get('estilo', 'aistetic')}")
+    console.print(f"Estilo: {res.get('estilo', 'flujo')}")
 
 
 # ============================================================

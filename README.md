@@ -5,7 +5,7 @@
 El hub + visualizadores es el **main del flujo**:
 - Intake de pedidos (pega email/pedido → brief ordenado + match de formatos)
 - `context/svg_visualizer.html` — visualizador embebido real (no links a índices)
-- `context/plano_demo.html` — plano interactivo con aistetic
+- `context/plano_demo.html` — plano interactivo con flujo
 - Export directo a Illustrator / Photoshop / Blender
 - Separación clara: parte PRO (usuario) + RAW para agentes IA (bajo token)
 
@@ -15,7 +15,7 @@ El hub + visualizadores es el **main del flujo**:
 - Workspace principal: `context/flujo_hub.html` (hub), `svg_visualizer.html`, `plano_demo.html`
 - Agentes: LAST_HANDOFF + AGENT_OPERATING_MANUAL
 - Visualizadores reales para SVG y planos (no links crudos)
-- Todo alineado a aistetic + export AI/PS/Blender
+- Todo alineado a flujo + export AI/PS/Blender
 - Root hygiene ejecutado: histórico movido a `.archive/`
 - Docs consolidadas apuntando al hub como centro.
 
@@ -25,7 +25,7 @@ El hub + visualizadores es el **main del flujo**:
 
 **SVG:** cada pieza tiene visualizador real (embedded) + botones "Usar como base", "Editar editable", "Vectorizado". No uses los índices de carpeta.
 
-**Proyectos** alineados a aistetic (la fuente de verdad de paleta, tono y reglas).
+**Proyectos** alineados a flujo (la fuente de verdad de paleta, tono y reglas).
 
 Ver también: `context/svg_visualizer.html`, `context/plano_demo.html`, `projects/README.md`, `context/LAST_HANDOFF.md`, `docs/AGENT_OPERATING_MANUAL.md`.
 
@@ -246,7 +246,7 @@ El hub reemplaza la dispersión. Todo está organizado por secciones:
 - **Status + nav**: enlaces directos a `svg_visualizer.html` y `plano_demo.html`
 - **Intake pro**: caja para pegar pedido. Genera brief estructurado + match contra formatos reales (svg + catálogos) + comando listo + decisión (MATCH / NUEVO).
 - **SVG Works teaser + visual**: tarjetas por grupos (Eventos/Flyers/Riders vs Suplementos) con previews. Botón principal abre el visualizador completo con `<object>` embebido, botones "Usar como base", "Editar", "Vectorizado" y notas de mejoras por sección.
-- **Plano teaser**: link al plano_demo interactivo (genera SVG paramétrico + rider + costos en vivo, aistetic integrado).
+- **Plano teaser**: link al plano_demo interactivo (genera SVG paramétrico + rider + costos en vivo, flujo integrado).
 - **Herramientas**: grid de comandos (copy-paste directo). Siempre con `py` en Windows.
 - **Separación usuario / agente**:
   - Arriba: workspace pro limpio (tarjetas fmt-card, botones cyan sobre dark).
@@ -494,7 +494,7 @@ tests/            # pytest (69+ tests)
 docs/             # documentación detallada (CLI, formatos, intake JSON, etc.)
 schemas/          # esquema JSON de intake + ejemplos
 jobs/             # trabajos creativos (gitignored, salvo _template)
-projects/         # proyectos satélite (piezas_vectoriales, flyer_eventos, plano, tapiz, aistetic)
+projects/         # proyectos satélite (piezas_vectoriales, flyer_eventos, plano, tapiz, flujo)
 inbox/            # bandeja de entrada de pedidos
 context/          # reportes diarios / estado
 _airdrop/         # (gitignored) zona de aterrizaje de airdrops

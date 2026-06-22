@@ -24,8 +24,8 @@ Esta carpeta es el lugar donde **cargas trabajos ya hechos** (piezas terminadas,
 Tu tarea cuando veas esta carpeta:
 - Lee todos los archivos dentro de cada subcarpeta de ejemplo.
 - Extrae información estética (colores exactos si es posible, tipografía, composición, motivos, densidad, tono visual).
-- Genera un JSON estructurado en `projects/aistetic/json/`.
+- Genera un JSON estructurado en `projects/flujo/json/`.
 - Usa el schema `schemas/example_description.schema.json`.
 - Sigue las instrucciones en `../json/README.md`.
 
-Esta carpeta + la carpeta `json/` es la forma principal de "alimentar" el proyecto aistetic con trabajo real para definir la línea editorial.
+Esta carpeta + la carpeta `json/` es la forma principal de "alimentar" el proyecto flujo con trabajo real para definir la línea editorial.

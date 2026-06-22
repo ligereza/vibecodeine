@@ -10,15 +10,15 @@ Recibes: link del repo + correo o mensaje WhatsApp/Gmail.
 2. Pega el texto completo en la caja "Pedidos"
 3. Pulsa "Generar brief ordenado"
 4. Revisa el "Format match" en la salida.
-5. Si hay match → genera brief + comando + archivos para AI/PS/Blender usando aistetic.
+5. Si hay match → genera brief + comando + archivos para AI/PS/Blender usando flujo.
 6. Si no hay match →
-   - Propón sección nueva mínima en aistetic, **o**
+   - Propón sección nueva mínima en flujo, **o**
    - Agrega tarea clara en LAST_HANDOFF.md
 
 **Salida mínima esperada:**
 - Brief estructurado (copia-pega)
 - 1-2 comandos exactos
-- Nota de herramienta final + aistetic
+- Nota de herramienta final + flujo
 - Decisión: "Usar formato X" o "Nueva sección / tarea de mejora"
 
 ## Flujo 2: Mejoras al Repo
@@ -34,7 +34,7 @@ Recibes: repo + "continúa con las mejoras".
 ## Reglas (ambos flujos)
 - Windows: `py -m flujo ...`
 - Español primero
-- Siempre usa aistetic
+- Siempre usa flujo
 - Archivos finales listos para Illustrator/Photoshop/Blender
 - Mantén respuestas cortas. Hub = verdad
 

@@ -27,7 +27,7 @@ Fortalecer los dos flujos de agentes:
 - **Activo:** Hub (flujo_hub.html) como main + visualizadores dedicados: svg_visualizer.html (SVG embebidos por grupos exactos de carpeta svg/) + plano_demo.html (oscuro + interactivo).
 - **Último (esfuerzo final):** Hub full dark pro (sin partes claras), visualizers reales en vez de links, más HTML conectados, secciones ordenadas, separación usuario/agente, READMEs actualizados.
 - **Salud:** OK.
-- **Clave:** Siempre abre context/flujo_hub.html primero. Para piezas usa el visualizador SVG (no carpetas). Todo aistetic. Windows py.
+- **Clave:** Siempre abre context/flujo_hub.html primero. Para piezas usa el visualizador SVG (no carpetas). Todo flujo. Windows py.
 
 ## Qué NO está hecho / bloqueos / riesgos
 - `flujo intake json` sigue pendiente (schema existe, implementación completa no).
@@ -44,19 +44,19 @@ Fortalecer los dos flujos de agentes:
 
 **Para Flujo Pedido:**
 - Pega un correo real en el hub y genera la estructura + comando correcto.
-- Revisa si el pedido calza en INDEX_FORMATOS o aistetic. Si no, propone nueva sección mínima.
+- Revisa si el pedido calza en INDEX_FORMATOS o flujo. Si no, propone nueva sección mínima.
 
 **Para Flujo Mejoras:**
 - Implementa una pequeña mejora al hub (mejor matching de formatos o preview de export).
 - Actualiza FOR_EXTERNAL_AI.md o este archivo con instrucciones más claras para los dos flujos.
 
 **General:**
-- Agrega 1 ejemplo a aistetic/ejemplos/ + genera su json.
+- Agrega 1 ejemplo a flujo/ejemplos/ + genera su json.
 - Prueba render + export con --for illustrator o blender.
 - Actualiza este LAST_HANDOFF con estado actual + tareas pendientes.
 
 ## Próximas (prioridad para agentes)
-1. Hacer que el hub detecte mejor si un pedido calza en formatos existentes (aistetic + INDEX).
+1. Hacer que el hub detecte mejor si un pedido calza en formatos existentes (flujo + INDEX).
 2. Mejorar el parser del hub para generar output más estructurado (brief.yaml listo).
 3. Agregar soporte claro en hub para "crear nueva sección" cuando no hay match.
 4. Fortalecer integración de export con AI/PS/Blender (ya iniciado con --for).

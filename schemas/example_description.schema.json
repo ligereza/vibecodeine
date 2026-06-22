@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Example Description for aistetic",
-  "description": "JSON descriptivo de un trabajo ya hecho. Lo usa un agente de IA para analizar estética real y alimentar la línea editorial (aistetic).",
+  "title": "Example Description for flujo",
+  "description": "JSON descriptivo de un trabajo ya hecho. Lo usa un agente de IA para analizar estética real y alimentar la línea editorial (flujo).",
   "type": "object",
   "required": ["example_id", "aesthetic_summary"],
   "properties": {
@@ -69,10 +69,10 @@
       "type": "array",
       "items": { "type": "string" }
     },
-    "references_to_aistetic": {
+    "references_to_flujo": {
       "type": "array",
       "items": { "type": "string" },
-      "description": "Qué partes de la línea editorial (aistetic) se ven reflejadas en este ejemplo"
+      "description": "Qué partes de la línea editorial (flujo) se ven reflejadas en este ejemplo"
     },
     "ai_notes": {
       "type": "string",

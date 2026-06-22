@@ -1,7 +1,7 @@
-# Línea Editorial — aistetic (Borrador / Por completar por IA)
+# Línea Editorial — flujo (Borrador / Por completar por IA)
 
-**Versión:** 0.1  
-**Fecha:** 2026-06  
+**Versión:** 0.1
+**Fecha:** 2026-06
 **Propósito:** Definir la identidad visual y de tono que unifica todo el trabajo creativo generado con el sistema flujo.
 
 ---
@@ -10,7 +10,7 @@
 
 (Extraer del trabajo existente en el repo)
 
-**Nombre del sistema:** flujo — Dimensiones del Orden  
+**Nombre del sistema:** flujo — Dimensiones del Orden
 **Tagline aproximado:** arte + automatización
 
 **Personalidad:**
@@ -77,7 +77,7 @@
 - Jerarquía clara mediante tamaño, peso y color (no solo color).
 
 **Márgenes y zonas seguras:**
-- Impresión (Illustrator): 
+- Impresión (Illustrator):
 - Digital (IG, web):
 
 **Patrones recurrentes observados:**
@@ -90,12 +90,12 @@
 ## 5. Motivos y elementos visuales
 
 **Elementos característicos que aparecen repetidamente:**
-- 
-- 
-- 
+-
+-
+-
 
 **Qué evitar:**
-- 
+-
 
 ---
 
@@ -107,10 +107,10 @@
 - Calidez contenida (no excesivamente "inspiracional")
 
 **Palabras / frases que se repiten en el trabajo:**
-- 
+-
 
 **Reglas de copy:**
-- 
+-
 
 ---
 
@@ -139,7 +139,7 @@ Lista de archivos/carpetas que mejor representan la estética deseada:
 ## 9. Excepciones y evolución
 
 - Cuándo está permitido romper las reglas.
-- Cómo se actualiza esta línea editorial (a través de aistetic + feedback de proyectos reales).
+- Cómo se actualiza esta línea editorial (a través de flujo + feedback de proyectos reales).
 
 ---
 
@@ -147,4 +147,4 @@ Lista de archivos/carpetas que mejor representan la estética deseada:
 
 Por favor extrae la información real del repositorio completo (especialmente los proyectos de piezas, flyers y planos) en lugar de inventar. Usa los `config.json`, imágenes de referencia, SVGs generados y documentación existente como fuente primaria.
 
-Al terminar, también genera una versión `aistetic.json` machine-readable.
+Al terminar, también genera una versión `flujo.json` machine-readable.
