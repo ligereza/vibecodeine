@@ -131,9 +131,13 @@
       </div>
       <p class="text-xs text-[#675f55] mt-2">Desafío central: texto (WhatsApp/Gmail) → estructura ordenada (brief/JSON via aistetic) → imagen. Pega pedido abajo para mock.</p>
       <div class="mt-2">
-        <textarea id="pedido-input" class="w-full h-16 text-xs border p-1 rounded" placeholder="Pega aquí mensaje WhatsApp o Gmail: 'necesito flyer evento 10x14 para productora X, 7 voluntarios...'"></textarea>
-        <button onclick="parsePedido()" class="mt-1 px-2 py-0.5 bg-[#2d5a4a] text-white text-xs rounded">Parse a brief (mock) + sugerir aistetic</button>
-        <div id="pedido-result" class="text-[10px] mt-1 text-[#675f55]"></div>
+        <textarea id="pedido-input" class="w-full h-20 text-xs border p-1 rounded" placeholder="Pega aquí mensaje WhatsApp o Gmail: 'necesito flyer evento 10x14 para productora X, 7 voluntarios...'"></textarea>
+        <div class="flex gap-2 mt-1">
+          <button onclick="parsePedido()" class="px-2 py-0.5 bg-[#2d5a4a] text-white text-xs rounded">Generar brief ordenado</button>
+          <button onclick="applyAisteticToBrief()" class="px-2 py-0.5 border text-xs rounded">Aplicar aistetic</button>
+        </div>
+        <div id="pedido-result" class="text-[10px] mt-1 p-1 bg-white border rounded text-[#675f55]"></div>
+        <div class="text-[9px] mt-1">Copia a job o usa en aistetic. Manual intake por ahora.</div>
       </div>
     </section>
 
@@ -226,16 +230,18 @@
       const preview = document.getElementById('preview');
       const name = data.nombre || 'Evento';
       const v = data.voluntarios || 4;
+      // Usa colores de aistetic
+      const ink = '#1f2a24', accent = '#2d5a4a', paper = '#f8f1e3';
       preview.innerHTML = `
         <svg width="240" height="140" class="mx-auto">
-          <rect x="10" y="10" width="220" height="120" fill="#f8f1e3" stroke="#2d5a4a" stroke-width="2"/>
-          <text x="20" y="35" font-size="13" fill="#1f2a24">PLANO — ${name}</text>
-          <rect x="30" y="50" width="60" height="50" fill="#d4b78f" stroke="#2d5a4a"/>
-          <text x="38" y="78" font-size="9" fill="#1f2a24">stand</text>
+          <rect x="10" y="10" width="220" height="120" fill="${paper}" stroke="${accent}" stroke-width="2"/>
+          <text x="20" y="35" font-size="13" fill="${ink}">PLANO — ${name}</text>
+          <rect x="30" y="50" width="60" height="50" fill="#d4b78f" stroke="${accent}"/>
+          <text x="38" y="78" font-size="9" fill="${ink}">stand</text>
           ${Array.from({length: Math.min(v,5)}).map((_,i) => 
             `<rect x="${100 + i*18}" y="95" width="14" height="14" fill="#e63946"/>`
           ).join('')}
-          <text x="20" y="125" font-size="8" fill="#675f55">Texto → visual (mock)</text>
+          <text x="20" y="125" font-size="8" fill="${ink}">Texto → visual (con aistetic)</text>
         </svg>
       `;
     }
@@ -253,16 +259,29 @@
     }, 600);
 
     function parsePedido() {
-      const input = document.getElementById('pedido-input').value || 'flyer 10x14 evento Reduciendo Daño 7 voluntarios';
+      const input = document.getElementById('pedido-input').value || 'necesito flyer evento 10x14 para productora X, 7 voluntarios';
       const result = document.getElementById('pedido-result');
-      const brief = `tipo_pieza: flyer\nmedidas: 10x14 cm\npublico: productora\nvoluntarios: 7\nnotas: ${input}\n\n# Copia a job/brief.yaml o usa en aistetic`;
-      result.innerHTML = `Estructura ordenada (manual intake):<br><pre class="text-[9px] bg-white p-1">${brief}</pre>Envía a agente: "revisa repo, este mensaje: ${input.substring(0,60)}..."`;
+      let tipo = 'flyer'; let medidas = '10x14'; let pub = 'productora';
+      const low = input.toLowerCase();
+      if (low.includes('etiqueta')) { tipo='etiqueta'; medidas='16.5x6.5'; }
+      if (low.includes('plano') || low.includes('stand')) { tipo='plano'; medidas='según evento'; }
+      if (low.includes('cotiz')) tipo = 'cotizacion';
+      if (low.includes('interno') || low.includes('empresa')) pub = 'interno/empresa';
+      const vol = (input.match(/\d+/) || ['?'])[0];
+      const brief = `tipo_pieza: ${tipo}
+medidas: ${medidas} cm
+publico: ${pub}
+voluntarios: ${vol}
+notas: ${input}
+# Estructura generada manualmente. Copia a brief.yaml
+# Comando ejemplo: py -m flujo job new "pedido" --email inbox/temp.txt`;
+      result.innerHTML = `<pre class="text-[9px]">${brief}</pre>`;
     }
 
     function mockAistetic() {
       const pal = document.getElementById('aistetic-palette');
       if (pal) pal.style.display = 'block';
-      alert('Entrada sugerida para aistetic.json agregada. Revisa projects/aistetic/');
+      alert('Usa aistetic para estilo en tus salidas.');
     }
   </script>
 </body>
