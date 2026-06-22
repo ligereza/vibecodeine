@@ -1,14 +1,23 @@
 # # # flujo — Dimensiones del Orden (arte + automatización)
 
-**Uso diario:** abre `context/flujo_hub.html` (reportes, visualizadores, pedidos manuales, aistetic, SVGs ya creados como base, herramientas).
+**Punto de entrada diario (OBLIGATORIO):** abre `context/flujo_hub.html`
 
-**Pedidos (manual):** pega en el hub → estructura ordenada + match de formatos.
+El hub es el **main del flujo**:
+- Intake de pedidos (pega email/pedido → brief ordenado + match de formatos)
+- Visualizador SVG embebido (no links crudos) — agrupa **Eventos/Flyers/Riders** vs **Suplementos** tal como existen en `/svg`
+- Plano Demo interactivo (paramétrico con aistetic + export a Blender)
+- Herramientas CLI + export directo a Illustrator / Photoshop / Blender
+- Separación clara: parte PRO (usuario) + RAW para agentes IA (bajo token)
 
-En el hub verás sección "Piezas vectoriales ya creadas" (de /svg) con links a editables/vectorizados para basar o editar (más común que crear de 0).
+**Dos flujos de trabajo para agentes:**
+1. Repo + pedido reciente → pega en hub → match o proponer nueva sección/tarea
+2. Repo + "continúa con las mejoras" → lee LAST_HANDOFF + AGENT_OPERATING_MANUAL → 1-2 tareas → actualiza handoff
 
-Proyectos alineados a aistetic.
+**SVG:** cada pieza tiene visualizador real (embedded) + botones "Usar como base", "Editar editable", "Vectorizado". No uses los índices de carpeta.
 
-Ver `projects/README.md`, `context/LAST_HANDOFF.md` y `docs/AGENT_OPERATING_MANUAL.md` (para agentes).
+**Proyectos** alineados a aistetic (la fuente de verdad de paleta, tono y reglas).
+
+Ver también: `context/svg_visualizer.html`, `context/plano_demo.html`, `projects/README.md`, `context/LAST_HANDOFF.md`, `docs/AGENT_OPERATING_MANUAL.md`.
 
 Windows: `py -m flujo ...` | Español prioritario.
 
@@ -194,24 +203,50 @@ Solo se commitea el resultado de aplicarlos (los archivos en sus rutas reales).
 
 ```bash
 py -m pip install -e .
+flujo health
+flujo version
 
-flujo health                 # chequeo general del repo
-flujo version                # versión + changelog
+# EL HUB ES EL MAIN DEL FLUJO
+# Abre context/flujo_hub.html  (punto de entrada diario)
+# - Intake de pedidos (pega texto)
+# - Visualizador SVG completo (Eventos + Suplementos embebidos)
+# - Plano Demo
+# - Comandos + raw para agentes
 
-# Procesar un pedido por correo/texto:
+# Intake manual (recomendado ahora):
+# Pega correo/pedido en el hub → brief + match formato + acción recomendada
+
+# Ejemplos CLI
 flujo job new "etiquetas acme" --email inbox/correo.txt
-flujo job prepare jobs/2026-06-17_etiquetas-acme      # privacy → brief → estado
-flujo job activate jobs/2026-06-17_etiquetas-acme     # brief → proyecto
-
-# Renderizar:
-flujo render run projects/piezas_vectoriales/etiquetas-acme/config.json
-
-# Panorama del día:
+flujo job prepare jobs/...
+flujo job activate jobs/...
+flujo render run projects/piezas_vectoriales/<proyecto>/config.json --for illustrator|blender
+flujo cotizaciones <json> --para productora
+flujo plano projects/plano/ejemplos/evento_ejemplo.json --rider --costs
 flujo daily
-
-# Interfaz web local (Gradio):
-flujo serve
 ```
+
+---
+
+## 🖥️ El Hub (context/flujo_hub.html) — centro del flujo
+
+El hub reemplaza la dispersión. Todo está organizado por secciones:
+
+- **Status + nav**: enlaces directos a `svg_visualizer.html` y `plano_demo.html`
+- **Intake pro**: caja para pegar pedido. Genera brief estructurado + match contra formatos reales (svg + catálogos) + comando listo + decisión (MATCH / NUEVO).
+- **SVG Works teaser + visual**: tarjetas por grupos (Eventos/Flyers/Riders vs Suplementos) con previews. Botón principal abre el visualizador completo con `<object>` embebido, botones "Usar como base", "Editar", "Vectorizado" y notas de mejoras por sección.
+- **Plano teaser**: link al plano_demo interactivo (genera SVG paramétrico + rider + costos en vivo, aistetic integrado).
+- **Herramientas**: grid de comandos (copy-paste directo). Siempre con `py` en Windows.
+- **Separación usuario / agente**:
+  - Arriba: workspace pro limpio (tarjetas fmt-card, botones cyan sobre dark).
+  - Abajo: sección RAW para agentes (monospace, datos puros, dos flujos, archivos clave, sin presentación).
+- **Export bridge**: secciones claras para AI / PS / Blender + comandos.
+
+**Visualizadores dedicados (conectados):**
+- `context/svg_visualizer.html` — visualizador completo de todas las piezas de `/svg`. Agrupado exactamente como las carpetas. Cada trabajo tiene preview embebido + acciones.
+- `context/plano_demo.html` — demo mejorado del motor de planos: controles, SVG vivo, rider, costos, simulación Blender.
+
+Nunca más links directos a carpetas que devuelven index feos. Todo tiene visual + acción inmediata.
 
 ---
 

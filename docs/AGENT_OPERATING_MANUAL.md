@@ -11,7 +11,7 @@ Recibes: link del repo + correo o mensaje WhatsApp/Gmail.
 3. Pulsa "Generar brief ordenado"
 4. Revisa el "Format match" en la salida.
 5. Si hay match → genera brief + comando + archivos para AI/PS/Blender usando aistetic.
-6. Si no hay match → 
+6. Si no hay match →
    - Propón sección nueva mínima en aistetic, **o**
    - Agrega tarea clara en LAST_HANDOFF.md
 
@@ -46,7 +46,12 @@ Recibes: repo + "continúa con las mejoras".
 
 Si no calza → nueva sección o tarea.
 
-**Este archivo + hub = única fuente para agentes (bajo consumo de tokens).**
+**Este archivo + hub + visualizadores = única fuente para agentes (bajo consumo de tokens).**
 
 El hub hace el matching básico y te da la decisión lista.
-Usa siempre la salida del hub como base.
+- Abre `context/flujo_hub.html`
+- Pega pedido → genera brief + match
+- Para ver piezas reales: `context/svg_visualizer.html` (embebidos, grupos Eventos/Suplementos, botones Usar como base)
+- Para planos: `context/plano_demo.html`
+
+Usa siempre la salida del hub como base. Nunca abras índices de carpetas svg/.

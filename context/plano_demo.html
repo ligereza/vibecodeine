@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FLUJO • Plano Demo (Stands & Riders)</title>
+<style>
+  :root {
+    --bg: #0a0a0a; --panel: #141414; --panel2: #1a1a1a;
+    --border: #2a2a2a; --text: #e8e8e8; --muted: #888;
+    --cyan: #00f0ff; --accent: #173F2F; --green: #2ecc71;
+  }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; font-size: 14px; margin: 0; }
+  header { background: var(--panel); border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; gap: 12px; align-items: center; }
+  header h1 { font-size: 18px; font-weight: 700; }
+  .badge { background: var(--accent); padding: 2px 8px; border-radius: 3px; font-size: 11px; }
+  .main { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: 340px 1fr; gap: 18px; }
+  @media (max-width: 900px) { .main { grid-template-columns: 1fr; } }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+  .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 8px; border-left: 3px solid var(--cyan); padding-left: 6px; }
+  label { display: block; font-size: 12px; color: var(--muted); margin: 8px 0 3px; }
+  input, select, textarea { width: 100%; background: var(--panel2); border: 1px solid var(--border); color: var(--text); padding: 8px; border-radius: 4px; font-size: 13px; }
+  input:focus { border-color: var(--cyan); outline: none; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .btn { background: linear-gradient(135deg, var(--cyan), #7000ff); color:#000; border: none; padding: 8px 14px; font-weight:700; font-size:12px; border-radius:4px; cursor:pointer; text-transform:uppercase; letter-spacing:.05em; }
+  .btn:hover { opacity: .9; }
+  .btn-sec { background: var(--panel2); color: var(--text); border: 1px solid var(--border); }
+  .preview-box { background: #0d0d0d; border: 1px solid var(--border); border-radius: 6px; min-height: 420px; display:flex; align-items:center; justify-content:center; overflow:auto; }
+  .preview-box svg { max-width: 96%; max-height: 400px; box-shadow: 0 8px 30px rgba(0,0,0,.6); }
+  .tabs { display:flex; gap:4px; margin-bottom:8px; }
+  .tab { padding: 4px 10px; border:1px solid var(--border); background:var(--panel2); border-radius:4px; font-size:12px; cursor:pointer; }
+  .tab.active { background: var(--accent); color:#fff; border-color: var(--accent); }
+  .tab-content { display:none; }
+  .tab-content.active { display:block; }
+  .mono { font-family: ui-monospace, monospace; font-size: 12px; white-space: pre-wrap; background: var(--panel2); padding: 10px; border-radius: 4px; border:1px solid var(--border); max-height: 240px; overflow:auto; }
+  .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  .nav { margin-left:auto; display:flex; gap:8px; }
+  .nav a { color:var(--cyan); text-decoration:none; font-size:12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>plano • demo</h1>
+  <span class="badge">Stands + Riders + Costos</span>
+  <div class="nav">
+    <a href="flujo_hub.html">← Hub</a>
+    <a href="svg_visualizer.html">SVG Visualizer</a>
+    <a href="../projects/plano/">Carpeta plano</a>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- CONTROLS -->
+  <div class="panel">
+    <div class="section-title">Parámetros del evento</div>
+    <label>Nombre del evento<input id="nombre" value="Festival Reduciendo Daño 2026"></label>
+    <div class="row">
+      <label>Duración (h)<input id="duracion" type="number" value="6" step="0.5"></label>
+      <label>Voluntarios<input id="voluntarios" type="number" value="7"></label>
+    </div>
+    <div class="row">
+      <label>Asistentes<input id="asistentes" type="number" value="2500"></label>
+      <label>Escala (px/m)<input id="scale" type="number" value="92"></label>
+    </div>
+    <div style="margin-top:8px">
+      <label style="display:inline-flex; align-items:center; gap:6px; font-size:12px;">
+        <input type="checkbox" id="incluye_testeo" checked> Incluye testeo
+      </label>
+      <label style="display:inline-flex; align-items:center; gap:6px; font-size:12px; margin-left:12px;">
+        <input type="checkbox" id="masivo"> Evento masivo
+      </label>
+    </div>
+    <label>Notas<textarea id="notas" rows="2">Stand de intervención + testeo. Espacio para colación.</textarea></label>
+
+    <div class="actions">
+      <button class="btn" onclick="recalcular()">Recalcular plano</button>
+      <button class="btn btn-sec" onclick="exportSVG()">Export SVG</button>
+      <button class="btn btn-sec" onclick="generarRider()">Generar rider</button>
+      <button class="btn btn-sec" onclick="generarCostos()">Generar costos</button>
+      <button class="btn btn-sec" onclick="simularBlender()">Simular Blender</button>
+    </div>
+
+    <div class="section-title" style="margin-top:16px">Acciones flujo</div>
+    <div class="actions">
+      <button class="btn btn-sec" onclick="copyCmd('py -m flujo plano projects/plano/ejemplos/evento_ejemplo.json --rider --costs')">py plano --rider --costs</button>
+      <button class="btn btn-sec" onclick="copyCmd('python -m src.flujo.templates.blender_setup projects/plano/ejemplos/evento_ejemplo.json')">Blender setup</button>
+      <button class="btn btn-sec" onclick="window.open('../projects/plano/plano_editor.html','_blank')">Editor antiguo</button>
+    </div>
+    <div class="hint" style="font-size:11px;margin-top:10px;color:var(--muted)">Aplica paleta aistetic automáticamente. Listo para export a AI/PS/Blender.</div>
+  </div>
+
+  <!-- PREVIEW + OUTPUTS -->
+  <div>
+    <div class="panel">
+      <div class="tabs">
+        <div class="tab active" onclick="setTab('plano')">Plano (SVG)</div>
+        <div class="tab" onclick="setTab('rider')">Rider</div>
+        <div class="tab" onclick="setTab('costos')">Costos</div>
+      </div>
+
+      <div id="tab-plano" class="tab-content active">
+        <div id="preview" class="preview-box"></div>
+      </div>
+      <div id="tab-rider" class="tab-content">
+        <div id="rider" class="mono"></div>
+      </div>
+      <div id="tab-costos" class="tab-content">
+        <div id="costos" class="mono"></div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:14px">
+      <div class="section-title">Aistetic aplicado (demo)</div>
+      <div style="font-size:12px; display:flex; gap:8px; flex-wrap:wrap;">
+        <span style="background:#1f2a24; padding:2px 6px; border-radius:2px;">ink #1f2a24</span>
+        <span style="background:#2d5a4a; color:#fff; padding:2px 6px; border-radius:2px;">accent #2d5a4a</span>
+        <span style="background:#f8f1e3; color:#111; padding:2px 6px; border-radius:2px;">paper #f8f1e3</span>
+        <span style="background:#173F2F; color:#fff; padding:2px 6px; border-radius:2px;">UI accent</span>
+      </div>
+      <div class="hint">Los planos y riders usan estos colores + tipografía clara. Integrado en cotizaciones dual.</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const A = { ink: '#1f2a24', accent: '#2d5a4a', paper: '#f8f1e3', support: '#675f55' };
+
+function setTab(t) {
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelector(`.tab[onclick*="${t}"]`).classList.add('active');
+  document.getElementById('tab-' + t).classList.add('active');
+}
+
+function recalcular() {
+  const nombre = document.getElementById('nombre').value || 'Evento';
+  const dur = parseFloat(document.getElementById('duracion').value) || 6;
+  const vol = parseInt(document.getElementById('voluntarios').value) || 7;
+  const asistentes = parseInt(document.getElementById('asistentes').value) || 2500;
+  const scale = parseInt(document.getElementById('scale').value) || 92;
+  const testeo = document.getElementById('incluye_testeo').checked;
+  const masivo = document.getElementById('masivo').checked;
+
+  // Simple parametric SVG demo (based on plano_stands logic)
+  const w = 620, h = 420;
+  let html = `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="background:#0d0d0d">`;
+  // fondo
+  html += `<rect x="0" y="0" width="${w}" height="${h}" fill="#0f0f0f"/>`;
+  // stand principal (toldo 3x3 scaled)
+  const standW = Math.min(220, 3*scale);
+  const standH = Math.min(160, 2.5*scale);
+  html += `<rect x="40" y="60" width="${standW}" height="${standH}" rx="4" fill="#111" stroke="${A.accent}" stroke-width="2"/>`;
+  html += `<text x="50" y="82" fill="${A.paper}" font-size="13" font-weight="700">${nombre.substring(0,24)}</text>`;
+  html += `<text x="50" y="102" fill="${A.support}" font-size="10">Stand ${Math.round(standW/scale)}x${Math.round(standH/scale)}m</text>`;
+
+  // mesas
+  let mx = 60;
+  for (let i=0; i<Math.min(vol,6); i++) {
+    html += `<rect x="${mx}" y="${100 + standH - 50}" width="28" height="18" rx="2" fill="#222" stroke="${A.accent}" stroke-width="1"/>`;
+    mx += 36;
+  }
+
+  // sillas
+  for (let i=0; i<Math.min(vol,6); i++) {
+    html += `<rect x="${50 + i*34}" y="${standH + 70}" width="18" height="18" fill="#333" stroke="#444"/>`;
+  }
+
+  // pasillo
+  html += `<rect x="${standW + 70}" y="50" width="18" height="${standH + 40}" fill="none" stroke="#444" stroke-dasharray="4"/>`;
+
+  // zona testeo extra
+  if (testeo) {
+    html += `<rect x="${standW + 110}" y="80" width="110" height="90" rx="3" fill="#0a1210" stroke="${A.accent}" stroke-width="1.5"/>`;
+    html += `<text x="${standW + 120}" y="102" fill="${A.paper}" font-size="10">TESTEO</text>`;
+  }
+  if (masivo || asistentes > 2000) {
+    html += `<rect x="40" y="${standH + 110}" width="${standW}" height="48" rx="3" fill="#151515" stroke="#444"/>`;
+    html += `<text x="50" y="${standH + 138}" fill="${A.support}" font-size="9">ZONA DESCANSO / CONTENCIÓN</text>`;
+  }
+
+  html += `<text x="40" y="${h-14}" fill="${A.support}" font-size="9">Escala ~${scale}px/m • Voluntarios ${vol} • Duración ${dur}h</text>`;
+  html += `</svg>`;
+
+  document.getElementById('preview').innerHTML = html;
+
+  // auto fill rider preview lightly
+  document.getElementById('rider').innerText = buildRider(nombre, dur, vol, asistentes, testeo, masivo);
+}
+
+function buildRider(nombre, dur, vol, asistentes, testeo, masivo) {
+  let r = `RIDER TÉCNICO — ${nombre}\n`;
+  r += `Duración: ${dur}h | Voluntarios: ${vol} | Estimados: ${asistentes}\n\n`;
+  r += `• 1 Stand toldo 3x3m principal\n`;
+  r += `• ${Math.ceil(vol/2)} mesas 2x0.7 + ${vol} sillas\n`;
+  if (testeo) r += `• +1 stand contiguo para testeo (reactivos)\n`;
+  if (dur > 5 || masivo) r += `• Colación + viáticos obligatorios (producción)\n`;
+  if (masivo || asistentes > 2000) r += `• Zona de descanso/contención\n`;
+  r += `• Pasillo circulación mín 1.2m\n\n`;
+  r += `Entregar impreso + digital (PDF + SVG)`;
+  return r;
+}
+
+function generarRider() {
+  setTab('rider');
+  const nombre = document.getElementById('nombre').value;
+  const dur = parseFloat(document.getElementById('duracion').value);
+  const vol = parseInt(document.getElementById('voluntarios').value);
+  const asistentes = parseInt(document.getElementById('asistentes').value);
+  const testeo = document.getElementById('incluye_testeo').checked;
+  const masivo = document.getElementById('masivo').checked;
+  document.getElementById('rider').innerText = buildRider(nombre, dur, vol, asistentes, testeo, masivo);
+}
+
+function generarCostos() {
+  setTab('costos');
+  const vol = parseInt(document.getElementById('voluntarios').value) || 7;
+  const dur = parseFloat(document.getElementById('duracion').value) || 6;
+  const testeo = document.getElementById('incluye_testeo').checked;
+  let c = `COTIZACIÓN INTERNO / PRODUCTORA (dual)\n\n`;
+  c += `Personal voluntarios: ${vol} × 8h × $0 (ONG) / costo productora\n`;
+  c += `Stand + toldo + mesas: ~$180.000\n`;
+  if (testeo) c += `Kit testeo + stand extra: +$95.000\n`;
+  if (dur > 5) c += `Alimentación + colación: +$65.000\n`;
+  c += `Total aprox interno: $320k | productora: ver branded\n\n`;
+  c += `Ver: py -m flujo cotizaciones ... --para interno|productora`;
+  document.getElementById('costos').innerText = c;
+}
+
+function exportSVG() {
+  const svg = document.querySelector('#preview svg');
+  if (!svg) { alert('Primero recalcula'); return; }
+  const blob = new Blob([svg.outerHTML], {type:'image/svg+xml'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'plano_stand_demo.svg'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function simularBlender() {
+  alert('Blender setup:\n\nEjecuta en terminal:\npython -m src.flujo.templates.blender_setup projects/plano/ejemplos/evento_ejemplo.json\n\nEsto crea meshes + materiales con aistetic.');
+}
+
+function copyCmd(cmd) {
+  navigator.clipboard.writeText(cmd).then(() => alert('Copiado: ' + cmd));
+}
+
+function init() {
+  // init demo
+  setTimeout(() => {
+    recalcular();
+    generarRider();
+  }, 120);
+  // keyboard
+  document.addEventListener('keydown', e => { if (e.key === 'Enter') recalcular(); });
+}
+init();
+</script>
+</body>
+</html>

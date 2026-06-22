@@ -7,9 +7,16 @@ Mantener este archivo **corto** (< 120 líneas ideal, < 180 máximo). Actualizar
 
 ---
 
-**Fecha:** 2026-06-22  
-**Versión actual:** 0.34.10  
-**Última sesión:** Mejora completa del flujo. Hub parser ahora hace matching real + "nueva sección o tarea". Cotizaciones genera archivos reales (txt + html con aistetic). Render aplica aistetic por defecto. AGENT_OPERATING_MANUAL.md + hub = única fuente para agentes.
+**Fecha:** 2026-06-22
+**Versión actual:** 0.34.10
+**Última sesión (esfuerzo final):**
+- Hub completamente reescrito en dark theme 100% (vars #0a0a0a #141414 #00f0ff como studio_prototipo, cero partes claras: sin #675f55, #d4c5a9, bg-white, amber, gray-50 etc).
+- Creados visualizadores reales: `context/svg_visualizer.html` (grupos Eventos/Flyers vs Suplementos exactos de /svg, <object> embebidos, botones Usar base / Editar / Copiar + notas de mejoras por sección).
+- Mejorado plano: `context/plano_demo.html` (dark pro, SVG paramétrico vivo, rider, costos, aistetic, botones flujo + blender).
+- Hub = main del flujo: nav a los HTML conectados, secciones ordenadas (no vómito), separación clara Usuario Pro vs Agente RAW.
+- Intake + parser mejorado + previews oscuros con aistetic.
+- README.md raíz y projects/README actualizados fuertemente (hub central, visualizadores, dos flujos, instrucciones exactas).
+- Listo para commit + push.
 
 ## Objetivo actual / tarea en curso
 Fortalecer los dos flujos de agentes:
@@ -17,10 +24,10 @@ Fortalecer los dos flujos de agentes:
 2. Repo completo → continuar mejoras (priorizando integración con AI/PS/Blender y soporte a agentes).
 
 ## Estado del mundo (crítico)
-- **Activo:** Hub diario (flujo_hub.html) como entrada. aistetic con paleta real. cotizaciones dual integrado a planos.
-- **Último:** Intake manual vía hub (pegar email → brief). Airdrop mejorado (Windows + español + TODOs).
-- **Salud:** OK (ver hub).
-- **Clave:** Usa hub para pedidos. Agentes: haz tareas simples del LAST_HANDOFF. Todo alineado a aistetic.
+- **Activo:** Hub (flujo_hub.html) como main + visualizadores dedicados: svg_visualizer.html (SVG embebidos por grupos exactos de carpeta svg/) + plano_demo.html (oscuro + interactivo).
+- **Último (esfuerzo final):** Hub full dark pro (sin partes claras), visualizers reales en vez de links, más HTML conectados, secciones ordenadas, separación usuario/agente, READMEs actualizados.
+- **Salud:** OK.
+- **Clave:** Siempre abre context/flujo_hub.html primero. Para piezas usa el visualizador SVG (no carpetas). Todo aistetic. Windows py.
 
 ## Qué NO está hecho / bloqueos / riesgos
 - `flujo intake json` sigue pendiente (schema existe, implementación completa no).
@@ -29,6 +36,12 @@ Fortalecer los dos flujos de agentes:
 - Recepción automática (IMAP/webhook) no implementada.
 
 ## Tareas simples para agentes (low token - una por vez)
+**Recientes (post esfuerzo final):**
+- Probar visualizador SVG abriendo context/svg_visualizer.html (embed + botones)
+- Probar plano_demo.html y exportar SVG
+- En hub: pegar pedido de prueba y verificar match + preview oscuro
+- Actualizar cualquier doc que falte
+
 **Para Flujo Pedido:**
 - Pega un correo real en el hub y genera la estructura + comando correcto.
 - Revisa si el pedido calza en INDEX_FORMATOS o aistetic. Si no, propone nueva sección mínima.

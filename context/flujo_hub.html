@@ -1,611 +1,350 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>flujo • Inicio de Jornada</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif']
-          }
-        }
-      }
-    }
-  </script>
-  <style>
-    :root {
-      --bg: #0a0a0a; --panel: #141414; --panel2: #1a1a1a;
-      --border: #2a2a2a; --text: #e8e8e8; --muted: #888;
-      --cyan: #00f0ff; --accent: #173F2F; --green: #2ecc71;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { 
-      background: var(--bg); 
-      color: var(--text); 
-      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-      font-size: 14px; 
-      line-height: 1.5;
-    }
-    .app { max-width: 1200px; margin: 0 auto; }
-    header { 
-      background: var(--panel); 
-      border-bottom: 1px solid var(--border); 
-      padding: 10px 20px; 
-      display: flex; 
-      align-items: center; 
-      gap: 16px; 
-    }
-    header h1 { 
-      font-size: 18px; 
-      font-weight: 700; 
-      letter-spacing: -0.02em; 
-    }
-    .badge { 
-      background: var(--accent); 
-      color: #fff; 
-      padding: 3px 10px; 
-      border-radius: 4px; 
-      font-size: 11px; 
-      font-weight: 600; 
-    }
-    .card { 
-      background: var(--panel); 
-      border: 1px solid var(--border); 
-      border-radius: 6px; 
-      padding: 12px; 
-      transition: all .15s; 
-    }
-    .card:hover { 
-      border-color: var(--cyan); 
-    }
-    .section { 
-      margin-bottom: 20px; 
-    }
-    h2 { 
-      font-size: 13px; 
-      font-weight: 700; 
-      text-transform: uppercase; 
-      letter-spacing: 0.08em; 
-      color: var(--muted); 
-      margin-bottom: 10px; 
-      display: flex; 
-      align-items: center; 
-      gap: 6px; 
-    }
-    h2::before { 
-      content: ''; 
-      width: 3px; 
-      height: 14px; 
-      background: var(--cyan); 
-      border-radius: 2px; 
-    }
-    .grid { 
-      display: grid; 
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
-      gap: 10px; 
-    }
-    pre { 
-      font-size: 11px; 
-      line-height: 1.35; 
-      background: var(--panel2); 
-      padding: 8px; 
-      border-radius: 4px; 
-      border: 1px solid var(--border); 
-      white-space: pre-wrap; 
-      max-height: 160px;
-      overflow: auto;
-    }
-    .tool-btn {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 6px 10px;
-      border-radius: 4px;
-      font-size: 12px;
-      cursor: pointer;
-      text-align: center;
-      transition: all .15s;
-    }
-    .tool-btn:hover { 
-      border-color: var(--cyan); 
-      background: rgba(0,240,255,.08); 
-    }
-    .preview { 
-      border: 1px solid var(--border); 
-      background: #0d0d0d; 
-      border-radius: 6px; 
-      min-height: 120px; 
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-      overflow: hidden; 
-    }
-    .preview svg { max-width: 100%; max-height: 100%; box-shadow: 0 4px 20px rgba(0,0,0,.4); }
-    .agent-raw {
-      background: var(--panel2);
-      border: 1px solid var(--border);
-      padding: 10px;
-      border-radius: 4px;
-      font-size: 11px;
-      line-height: 1.3;
-      font-family: ui-monospace, monospace;
-      color: var(--text);
-    }
-    .fmt-card { 
-      background: var(--panel); 
-      border: 1px solid var(--border); 
-      border-radius: 6px; 
-      padding: 8px 10px; 
-      cursor: pointer; 
-      min-width: 120px; 
-      transition: all .15s; 
-      font-size: 11px; 
-    }
-    .fmt-card:hover { 
-      border-color: var(--cyan); 
-    }
-    .btn { 
-      background: linear-gradient(135deg, var(--cyan), #7000ff); 
-      color: #000; 
-      border: none; 
-      border-radius: 4px; 
-      padding: 6px 12px; 
-      font-weight: 700; 
-      font-size: 11px; 
-      cursor: pointer; 
-      text-transform: uppercase; 
-      letter-spacing: 0.05em; 
-    }
-    .btn-sec { 
-      background: var(--panel); 
-      color: var(--text); 
-      border: 1px solid #333; 
-    }
-    .btn-sec:hover { border-color: var(--cyan); }
-    @media (max-width: 640px) {
-      .grid { grid-template-columns: 1fr; }
-      .card { padding: 8px; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FLUJO • Workspace</title>
+<style>
+  :root {
+    --bg: #0a0a0a; --panel: #141414; --panel2: #1a1a1a;
+    --border: #2a2a2a; --text: #e8e8e8; --muted: #888;
+    --cyan: #00f0ff; --accent: #173F2F; --green: #2ecc71; --orange:#c2410f;
+  }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; line-height: 1.5; }
+  .app { max-width: 1280px; margin: 0 auto; padding-bottom: 40px; }
+  header { background: var(--panel); border-bottom: 1px solid var(--border); padding: 10px 20px; display: flex; align-items: center; gap: 14px; }
+  header h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
+  .badge { background: var(--accent); color: #fff; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .spacer { flex: 1; }
+  .nav-link { background: var(--panel2); border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: 4px; font-size: 12px; text-decoration: none; }
+  .nav-link:hover { border-color: var(--cyan); }
+  .section { margin: 22px 20px; }
+  .section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .section-title::before { content: ''; width: 3px; height: 14px; background: var(--cyan); border-radius: 2px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 14px; transition: all .15s; }
+  .card:hover { border-color: var(--cyan); }
+  .fmt-card { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; cursor: pointer; min-width: 132px; transition: all .15s; }
+  .fmt-card:hover { border-color: var(--cyan); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+  .grid-3 { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+  .btn { background: linear-gradient(135deg, var(--cyan), #7000ff); color: #000; border: none; border-radius: 4px; padding: 7px 14px; font-weight: 700; font-size: 12px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em; }
+  .btn:hover { opacity: .92; }
+  .btn-sec { background: var(--panel2); color: var(--text); border: 1px solid #333; }
+  .btn-sec:hover { border-color: var(--cyan); }
+  .tool-btn { background: var(--panel); border: 1px solid var(--border); color: var(--text); padding: 7px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; text-align: center; transition: all .15s; }
+  .tool-btn:hover { border-color: var(--cyan); background: rgba(0,240,255,.06); }
+  .preview { border: 1px solid var(--border); background: #0d0d0d; border-radius: 6px; min-height: 140px; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .preview svg { max-width: 100%; max-height: 100%; box-shadow: 0 4px 20px rgba(0,0,0,.5); }
+  .agent-raw { background: var(--panel2); border: 1px solid var(--border); padding: 12px; border-radius: 4px; font-size: 11px; line-height: 1.35; font-family: ui-monospace, monospace; color: var(--text); }
+  .muted { color: var(--muted); font-size: 12px; }
+  .status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+  .status-val { font-size: 21px; font-weight: 600; }
+  input, textarea, select { width: 100%; background: var(--panel2); border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px; color: var(--text); font-size: 13px; font-family: inherit; }
+  input:focus, textarea:focus { border-color: var(--cyan); outline: none; }
+  .row { display: flex; gap: 8px; }
+  .pro-label { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 3px; }
+  .sep { height: 1px; background: var(--border); margin: 18px 0; }
+  .small { font-size: 11px; }
+  footer { margin: 30px 20px 10px; font-size: 11px; color: var(--muted); border-top: 1px solid var(--border); padding-top: 10px; }
+</style>
 </head>
-<body class="bg-[#0a0a0a] text-[#e8e8e8]">
-  <div class="app">
-  <header>
-    <h1>FLUJO</h1>
-    <span class="badge">Workspace</span>
-    <span class="spacer"></span>
-    <button class="btn-sec" onclick="window.location.href='../docs/AGENT_OPERATING_MANUAL.md'">Manual Agentes</button>
-    <button class="btn-sec" onclick="copyCmd('py -m flujo daily')">Daily</button>
-  </header>
-    <!-- Status -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-      <div class="card p-4">
-        <div class="text-xs text-[#675f55] font-medium tracking-wide">VERSIÓN</div>
-        <div class="text-2xl font-semibold mt-1">0.34.10</div>
-        <div class="text-xs mt-1 text-green-700">+ aistetic + cotizaciones</div>
+<body>
+<div class="app">
+
+<header>
+  <h1>FLUJO</h1>
+  <span class="badge">Workspace</span>
+  <div class="spacer"></div>
+  <a class="nav-link" href="svg_visualizer.html" target="_blank">Visualizador SVG</a>
+  <a class="nav-link" href="plano_demo.html" target="_blank">Plano Demo</a>
+  <a class="nav-link" href="../docs/AGENT_OPERATING_MANUAL.md" target="_blank">Manual Agentes</a>
+  <button class="btn-sec" onclick="copyCmd('py -m flujo daily')">Daily</button>
+</header>
+
+<!-- STATUS -->
+<div class="section">
+  <div class="status-grid">
+    <div class="card">
+      <div class="pro-label">VERSIÓN</div>
+      <div class="status-val">0.34.10</div>
+      <div class="small muted">+ aistetic + cotizaciones + visualizers</div>
+    </div>
+    <div class="card">
+      <div class="pro-label">ESTADO</div>
+      <div class="status-val" style="color:#2ecc71">Listo</div>
+      <div class="small muted">Health OK • Tests OK</div>
+    </div>
+    <div class="card">
+      <div class="pro-label">ÚLTIMO HANDOFF</div>
+      <div class="small">Hub central + visualizadores SVG + plano pro + 2 flujos agentes</div>
+      <a href="LAST_HANDOFF.md" class="small" style="color:var(--cyan)">ver LAST_HANDOFF →</a>
+    </div>
+    <div class="card">
+      <div class="pro-label">Flujo principal</div>
+      <div class="small">Texto (brief/pedido) → Hub/CLI → Herramientas → SVG listo para AI/PS/Blender</div>
+    </div>
+  </div>
+</div>
+
+<!-- NAV CONECTADO -->
+<div class="section" style="margin-top:8px">
+  <div class="section-title">Entradas rápidas del flujo</div>
+  <div class="row" style="gap:10px; flex-wrap:wrap">
+    <a class="btn" href="svg_visualizer.html" target="_blank">Abrir Visualizador SVG completo</a>
+    <a class="btn btn-sec" href="plano_demo.html" target="_blank">Abrir Plano Demo interactivo</a>
+    <button class="btn btn-sec" onclick="window.open('../projects/aistetic/aistetic.json','_blank')">aistetic.json</button>
+    <button class="btn btn-sec" onclick="window.open('../svg/','_blank')">Carpeta svg/</button>
+  </div>
+</div>
+
+<!-- INTAKE PRO (USUARIO) -->
+<div class="section">
+  <div class="section-title">Intake rápido (pegado manual de pedido o email)</div>
+  <div class="card">
+    <div class="pro-label">Pega aquí el pedido / correo / mensaje</div>
+    <textarea id="pedido-input" style="height:68px" placeholder="necesito flyer horizontal 10x14 para evento con 7 voluntarios, testeo incluido..."></textarea>
+    <div class="row" style="margin-top:8px; gap:8px">
+      <button onclick="parsePedido()" class="btn">Generar brief ordenado + match</button>
+      <button onclick="applyAisteticToBrief()" class="btn btn-sec">Aplicar aistetic</button>
+      <button onclick="generatePreview()" class="btn btn-sec">Generar preview visual</button>
+    </div>
+    <div id="pedido-result" class="agent-raw" style="margin-top:10px; min-height:60px; display:none"></div>
+  </div>
+</div>
+
+<!-- SVG TEASER + VISUAL -->
+<div class="section">
+  <div class="section-title">Piezas SVG ya creadas — usa como base (más común que crear de cero)</div>
+  <div class="grid grid-3">
+
+    <div class="card fmt-card" onclick="window.open('svg_visualizer.html','_blank')">
+      <div style="font-weight:600">Eventos / Flyers / Riders</div>
+      <div class="small muted">flyer_horizontal_minimo • prueba-rd • rider intervencion • etiquetas</div>
+      <div class="preview" style="margin:8px 0; height:92px">
+        <svg width="200" height="70" viewBox="0 0 200 70"><rect x="4" y="4" width="192" height="62" rx="3" fill="#f8f1e3" stroke="#2d5a4a" stroke-width="2"/><text x="14" y="28" fill="#1f2a24" font-size="11" font-weight="700">FLYER EVENTO</text><rect x="14" y="36" width="90" height="18" rx="2" fill="#fff" stroke="#173F2F"/><text x="20" y="49" fill="#1f2a24" font-size="9">10x14 • editable</text></svg>
       </div>
-      <div class="card p-4">
-        <div class="text-xs text-[#675f55] font-medium tracking-wide">ESTADO</div>
-        <div class="text-xl font-semibold mt-1 text-green-700">Listo</div>
-        <div class="text-xs mt-1">Health OK • Tests OK</div>
-      </div>
-      <div class="card p-4">
-        <div class="text-xs text-[#675f55] font-medium tracking-wide">ÚLTIMO HANDOFF</div>
-        <div class="text-sm mt-1">aistetic + planos + cotizaciones integrados</div>
-        <a href="LAST_HANDOFF.md" class="text-xs text-[#2d5a4a] hover:underline mt-1 inline-block">ver LAST_HANDOFF.md →</a>
-      </div>
-      <div class="card p-4 text-xs">
-        <div class="text-[#675f55] font-medium tracking-wide">Flujo principal</div>
-        <div class="font-medium mt-1">Texto (brief/JSON) → Herramientas → Imagen (SVG / export)</div>
-      </div>
+      <div class="small" style="color:var(--cyan)">Abrir visualizador completo →</div>
     </div>
 
-    <!-- Proyectos -->
-    <section class="section">
-      <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">Proyectos satélite <span class="text-xs font-normal text-[#675f55]">alineados a aistetic</span></h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <!-- Piezas -->
-        <div class="card p-4">
-          <div class="font-semibold mb-1">piezas_vectoriales</div>
-          <div class="text-xs text-[#675f55] mb-3">Flyers, etiquetas, riders • formatos del catálogo</div>
-          <div class="flex flex-wrap gap-2 text-xs">
-            <a href="../projects/piezas_vectoriales/" class="px-2.5 py-1 bg-[#2d5a4a] text-white rounded hover:bg-[#24463a]">Ver carpeta</a>
-            <a href="../projects/piezas_vectoriales/README.md" class="px-2.5 py-1 border border-[#d4c5a9] rounded hover:bg-gray-50">README</a>
-          </div>
-        </div>
-        <!-- Plano -->
-        <div class="card p-4">
-          <div class="font-semibold mb-1">plano</div>
-          <div class="text-xs text-[#675f55] mb-3">Planos de stands + riders + costos (mejorado con aistetic)</div>
-          <div class="flex flex-wrap gap-2 text-xs">
-            <a href="../projects/plano/" class="px-2.5 py-1 bg-[#2d5a4a] text-white rounded hover:bg-[#24463a]">Ver</a>
-            <a href="../projects/plano/plano_editor.html" class="px-2.5 py-1 border border-[#d4c5a9] rounded hover:bg-gray-50">Editor HTML</a>
-            <a href="../projects/plano/ejemplos/evento_ejemplo.json" class="px-2.5 py-1 border border-[#d4c5a9] rounded hover:bg-gray-50">Ejemplo</a>
-          </div>
-        </div>
-        <!-- Cotizaciones -->
-        <div class="card p-4 border-l-4 border-[#2d5a4a]">
-          <div class="font-semibold mb-1">cotizaciones <span class="text-[10px] bg-amber-100 px-1.5 py-px rounded font-mono">nuevo</span></div>
-          <div class="text-xs text-[#675f55] mb-3">Dual: productora (branded) / interno (ONG o empresa)</div>
-          <div class="flex flex-wrap gap-2 text-xs">
-            <a href="../projects/cotizaciones/" class="px-2.5 py-1 bg-[#2d5a4a] text-white rounded hover:bg-[#24463a]">Ver proyecto</a>
-            <code class="text-[10px] px-1.5 py-1 bg-gray-100 rounded font-mono">flujo cotizaciones ... --para productora</code>
-          </div>
-        </div>
-        <!-- Aistetic -->
-        <div class="card p-4 border-l-4 border-[#2d5a4a]">
-          <div class="font-semibold mb-1">aistetic <span class="text-[10px] bg-amber-100 px-1.5 py-px rounded font-mono">central</span></div>
-          <div class="text-xs text-[#675f55] mb-3">Línea editorial • ejemplos reales • JSON descriptivos</div>
-          <div class="flex flex-wrap gap-2 text-xs">
-            <a href="../projects/aistetic/" class="px-2.5 py-1 bg-[#2d5a4a] text-white rounded hover:bg-[#24463a]">Ver</a>
-            <a href="../projects/aistetic/ejemplos/" class="px-2.5 py-1 border border-[#d4c5a9] rounded hover:bg-gray-50">ejemplos</a>
-            <a href="../projects/aistetic/json/" class="px-2.5 py-1 border border-[#d4c5a9] rounded hover:bg-gray-50">json</a>
-          </div>
-        </div>
-        <!-- Flyer eventos + Tapiz -->
-        <div class="card p-4">
-          <div class="font-semibold mb-1">flyer_eventos</div>
-          <div class="text-xs text-[#675f55] mb-2">Trabajos reales de eventos (IG/correo)</div>
-          <a href="../projects/flyer_eventos/" class="text-xs underline hover:text-[#2d5a4a]">Ver carpeta →</a>
-        </div>
-        <div class="card p-4">
-          <div class="font-semibold mb-1">tapiz (VibeCode)</div>
-          <div class="text-xs text-[#675f55] mb-2">Visualización de generación de código por IA</div>
-          <a href="../projects/tapiz/" class="text-xs underline hover:text-[#2d5a4a]">Ver →</a>
-        </div>
+    <div class="card fmt-card" onclick="window.open('svg_visualizer.html','_blank')">
+      <div style="font-weight:600">Suplementos RD</div>
+      <div class="small muted">Línea completa: impulso, hongos, magnesio, creatina, proteína, pre-fiesta</div>
+      <div class="preview" style="margin:8px 0; height:92px">
+        <svg width="200" height="70" viewBox="0 0 200 70"><rect x="2" y="2" width="196" height="66" rx="2" fill="#0d0d0d" stroke="#2d5a4a"/><circle cx="40" cy="34" r="22" fill="#173F2F" opacity=".3"/><circle cx="100" cy="34" r="18" fill="#315EE8" opacity=".25"/><text x="132" y="30" fill="#e8e8e8" font-size="9">7 productos</text><text x="132" y="44" fill="#888" font-size="8">2800×2000</text></svg>
       </div>
-    </section>
+      <div class="small" style="color:var(--cyan)">Ver todos los editables y vectorizados →</div>
+    </div>
 
-    <!-- Trabajos ya hechos (de svg/) -->
-    <section class="section">
-      <h2 class="text-lg font-semibold mb-2">Trabajos ya hechos — Usa como base o edita</h2>
-      <div class="text-xs text-[#888] mb-3">Editar y basarse en trabajos existentes es más común que crear desde cero. Los SVGs ya tienen el estilo aistetic aplicado.</div>
+    <div class="card" style="display:flex; align-items:center; justify-content:center; flex-direction:column; text-align:center">
+      <div class="small muted">¿Nuevo pedido que no calza?</div>
+      <button onclick="proponerNuevaSeccion()" class="btn" style="margin-top:8px">Proponer nueva sección en aistetic</button>
+      <div class="small muted" style="margin-top:6px">O agrégalo como tarea en LAST_HANDOFF</div>
+    </div>
 
-      <!-- Eventos / Fiesta -->
-      <div class="mb-4">
-        <div class="section-title">Eventos / Fiesta</div>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
-          <!-- flyer_horizontal_minimo -->
-          <div class="card pro-card fmt-card">
-            <div class="font-semibold">flyer_horizontal_minimo</div>
-            <div class="text-xs text-[#888] mb-2">Flyer base simple para eventos</div>
-            <div class="flex flex-wrap gap-1 text-xs">
-              <a href="../svg/flyer_horizontal_minimo/salida_generada/01_editables_svg/01_flyer_base_editable.svg" target="_blank" class="px-2 py-0.5 bg-[var(--cyan)] text-black rounded">Editar SVG</a>
-              <a href="../svg/flyer_horizontal_minimo/salida_generada/02_vectorizados_svg/01_flyer_base_vectorizado.svg" target="_blank" class="px-2 py-0.5 border rounded">Vectorizado</a>
-              <button onclick="usarComoBase('flyer_horizontal_minimo')" class="px-2 py-0.5 border rounded text-xs">Usar como base</button>
-            </div>
-          </div>
-
-          <!-- prueba-rd-intervencion-terreno -->
-          <div class="card pro-card fmt-card">
-            <div class="font-semibold">prueba-rd-intervencion-terreno</div>
-            <div class="text-xs text-[#888] mb-2">Flyer intervención en terreno</div>
-            <div class="flex flex-wrap gap-1 text-xs">
-              <a href="../svg/prueba-rd-intervencion-terreno/salida_generada/01_editables_svg/01_base_prueba-rd-intervencion-terreno_editable.svg" target="_blank" class="px-2 py-0.5 bg-[var(--cyan)] text-black rounded">Editar SVG</a>
-              <a href="../svg/prueba-rd-intervencion-terreno/salida_generada/02_vectorizados_svg/01_base_prueba-rd-intervencion-terreno_vectorizado.svg" target="_blank" class="px-2 py-0.5 border rounded">Vectorizado</a>
-              <button onclick="usarComoBase('prueba-rd-intervencion-terreno')" class="px-2 py-0.5 border rounded text-xs">Usar como base</button>
-            </div>
-          </div>
-
-          <!-- rider_rd_intervencion_terreno -->
-          <div class="card pro-card fmt-card">
-            <div class="font-semibold">rider_rd_intervencion_terreno</div>
-            <div class="text-xs text-[#888] mb-2">Rider técnico para eventos</div>
-            <div class="flex flex-wrap gap-1 text-xs">
-              <a href="../svg/rider_rd_intervencion_terreno/salida_generada/01_editables_svg/01_requerimientos_rider_editable.svg" target="_blank" class="px-2 py-0.5 bg-[var(--cyan)] text-black rounded">Editar SVG</a>
-              <a href="../svg/rider_rd_intervencion_terreno/salida_generada/02_vectorizados_svg/01_requerimientos_rider_vectorizado.svg" target="_blank" class="px-2 py-0.5 border rounded">Vectorizado</a>
-              <button onclick="usarComoBase('rider_rd_intervencion_terreno')" class="px-2 py-0.5 border rounded text-xs">Usar como base</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Suplementos -->
-      <div>
-        <div class="section-title">Suplementos</div>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
-          <!-- etiquetas_ejemplo -->
-          <div class="card pro-card fmt-card">
-            <div class="font-semibold">etiquetas_ejemplo</div>
-            <div class="text-xs text-[#888] mb-2">Línea de etiquetas</div>
-            <div class="flex flex-wrap gap-1 text-xs">
-              <a href="../svg/etiquetas_ejemplo/salida_generada/01_editables_svg/01_etiqueta_impulso_editable.svg" target="_blank" class="px-2 py-0.5 bg-[var(--cyan)] text-black rounded">Editar SVG</a>
-              <a href="../svg/etiquetas_ejemplo/salida_generada/02_vectorizados_svg/01_etiqueta_impulso_vectorizado.svg" target="_blank" class="px-2 py-0.5 border rounded">Vectorizado</a>
-              <button onclick="usarComoBase('etiquetas_ejemplo')" class="px-2 py-0.5 border rounded text-xs">Usar como base</button>
-            </div>
-          </div>
-
-          <!-- suplementos_rd -->
-          <div class="card pro-card fmt-card">
-            <div class="font-semibold">suplementos_rd</div>
-            <div class="text-xs text-[#888] mb-2">Línea completa de suplementos (impulso, hongos, magnesio, creatina, proteína, pre-fiesta)</div>
-            <div class="flex flex-wrap gap-1 text-xs">
-              <a href="../svg/suplementos_rd/02_editables_svg/" target="_blank" class="px-2 py-0.5 bg-[var(--cyan)] text-black rounded">Editables</a>
-              <a href="../svg/suplementos_rd/03_final_vectorizado_svg/" target="_blank" class="px-2 py-0.5 border rounded">Vectorizados</a>
-              <button onclick="usarComoBase('suplementos_rd')" class="px-2 py-0.5 border rounded text-xs">Usar como base</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Flujo Texto ↔ Imagen -->
-    <section class="section">
-      <h2 class="text-lg font-semibold mb-3">Flujo Texto ↔ Imagen</h2>
-      <div class="grid md:grid-cols-2 gap-4">
-        <div class="card p-4">
-          <div class="text-sm font-medium mb-2">Texto / JSON → Preview</div>
-          <textarea id="text-input" class="w-full h-24 text-sm font-mono border p-2.5 rounded-lg" placeholder='{"nombre": "Evento", "voluntarios": 7}'></textarea>
-          <button onclick="generatePreview()" class="mt-2 px-4 py-1.5 bg-[#2d5a4a] text-white text-sm rounded-lg hover:bg-[#24463a]">Generar preview (con aistetic)</button>
-          <div id="preview" class="preview mt-3 min-h-[150px] flex items-center justify-center text-sm text-[#675f55]">Preview aquí</div>
-        </div>
-        <div class="card p-4">
-          <div class="text-sm font-medium mb-2">Imagen / Referencia → aistetic</div>
-          <div class="border border-dashed h-16 flex items-center justify-center text-sm text-[#675f55] rounded-lg">Pega nombre o descripción</div>
-          <button onclick="mockAistetic()" class="mt-2 px-4 py-1.5 border text-sm rounded-lg hover:bg-gray-50">Generar entrada aistetic</button>
-          <div class="text-xs mt-2 text-[#675f55]">Úsalo para poblar aistetic.json o ejemplos.</div>
-        </div>
-      </div>
-
-      <div class="mt-4">
-        <p class="text-sm text-[#675f55] mb-2">Pega pedido (WhatsApp/Gmail) para generar estructura ordenada:</p>
-        <textarea id="pedido-input" class="w-full h-20 text-sm border p-3 rounded-lg" placeholder="necesito flyer evento 10x14 para productora X, 7 voluntarios..."></textarea>
-        <div class="flex gap-2 mt-2">
-          <button onclick="parsePedido()" class="px-4 py-1.5 bg-[#2d5a4a] text-white text-sm rounded-lg hover:bg-[#24463a]">Generar brief ordenado</button>
-          <button onclick="applyAisteticToBrief()" class="px-4 py-1.5 border text-sm rounded-lg hover:bg-gray-50">Aplicar aistetic</button>
-        </div>
-        <div id="pedido-result" class="text-sm mt-2 p-3 bg-white border rounded-lg text-[#675f55]"></div>
-      </div>
-    </section>
-
-    <!-- Herramientas rápidas -->
-    <section class="section">
-      <h2 class="text-lg font-semibold mb-3">Herramientas (flujo CLI)</h2>
-      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 text-sm">
-        <div onclick="copyCmd('flujo job new \"nuevo\" --email inbox/correo.txt')" class="tool-btn card px-3 py-2 cursor-pointer border hover:border-[#2d5a4a]">job new</div>
-        <div onclick="copyCmd('flujo job prepare jobs/...')" class="tool-btn card px-3 py-2 cursor-pointer border hover:border-[#2d5a4a]">job prepare</div>
-        <div onclick="copyCmd('flujo render run projects/.../config.json --for illustrator')" class="tool-btn card px-3 py-2 cursor-pointer border hover:border-[#2d5a4a]">render --for illustrator</div>
-        <div onclick="copyCmd('flujo render run projects/.../config.json --for blender')" class="tool-btn card px-3 py-2 cursor-pointer border hover:border-[#2d5a4a]">render --for blender</div>
-        <div onclick="copyCmd('flujo cotizaciones ... --para productora')" class="tool-btn card px-3 py-2 cursor-pointer border hover:border-[#2d5a4a]">cotizaciones (productora)</div>
-        <div onclick="copyCmd('flujo aistetic analyze mi-ejemplo')" class="tool-btn card px-3 py-2 cursor-pointer border hover:border-[#2d5a4a]">aistetic analyze</div>
-        <div onclick="copyCmd('flujo daily')" class="tool-btn card px-3 py-2 cursor-pointer border hover:border-[#2d5a4a]">daily report</div>
-        <div onclick="copyCmd('flujo serve')" class="tool-btn card px-3 py-2 cursor-pointer border hover:border-[#2d5a4a]">editor web</div>
-        <div onclick="copyCmd('python -m src.flujo.templates.blender_setup projects/plano/ejemplos/evento_ejemplo.json')" class="tool-btn card px-3 py-2 cursor-pointer border hover:border-[#2d5a4a]">Blender 3D</div>
-      </div>
-      <div class="text-xs mt-3 text-[#675f55]">Windows: usa <code>py -m flujo ...</code>. Agentes: ver LAST_HANDOFF para tareas simples.</div>
-    </section>
-
-    <!-- Instrucciones para Agentes -->
-    <section class="section">
-      <h2 class="text-lg font-semibold mb-3">Instrucciones para Agentes (dos flujos)</h2>
-      
-      <div class="grid md:grid-cols-2 gap-4 text-sm">
-        <div class="card p-4 border-l-4 border-blue-600">
-          <div class="font-semibold mb-1">Flujo 1: Pedido Reciente</div>
-          <div class="text-xs">Pega correo en "Pedidos" → revisa match → genera brief + comando.<br>Si no calza: propone nueva sección o tarea.</div>
-        </div>
-        <div class="card p-4 border-l-4 border-green-600">
-          <div class="font-semibold mb-1">Flujo 2: Mejoras al Repo</div>
-          <div class="text-xs">Lee LAST_HANDOFF + este hub → elige 1-2 tareas simples → actualiza al terminar.</div>
-        </div>
-      </div>
-      <div class="text-xs mt-3">Punto de entrada: este hub + <a href="../docs/AGENT_OPERATING_MANUAL.md" class="underline">AGENT_OPERATING_MANUAL.md</a></div>
-    </section>
-
-    <!-- Info cruda para Agentes IA (sin presentación bonita, solo datos útiles) -->
-    <section class="section">
-      <div style="background:#141414; border:1px solid #2a2a2a; padding:12px; border-radius:4px; font-size:12px; line-height:1.35; font-family:ui-monospace,monospace; color:#e8e8e8;">
-        <b>PARA AGENTES (usa esto, ignora el diseño):</b><br><br>
-        FLUJO 1 (Pedido): Pega el texto en la caja "Pedidos". El parser hace match vs formatos actuales (ver lista en sección de piezas SVG). Si calza: usa el formato existente + comando + aistetic. Si no: propone nueva sección mínima en aistetic/ o agrega tarea simple en LAST_HANDOFF.md.<br><br>
-        FLUJO 2 (Mejoras): Lee AGENT_OPERATING_MANUAL.md + LAST_HANDOFF.md + este hub. Elige 1-2 tareas atómicas de la lista. Actualiza LAST_HANDOFF al final.<br><br>
-        Comandos clave (Windows: usa py):<br>
-        py -m flujo aistetic analyze &lt;ejemplo&gt;<br>
-        py -m flujo cotizaciones &lt;json&gt; --para productora|interno<br>
-        py -m flujo render run &lt;config&gt; --for illustrator|blender<br>
-        py -m flujo plano &lt;json&gt; --rider --costs<br><br>
-        Archivos clave: projects/aistetic/aistetic.json , svg/ (piezas reales para basar), tools/piezas.../INDEX_FORMATOS.json , context/LAST_HANDOFF.md
-      </div>
-    </section>
-
-    <!-- Aistetic + Tareas -->
-    <section class="section">
-      <h2 class="text-lg font-semibold mb-3">Aistetic + Tareas para agentes</h2>
-      <div class="grid md:grid-cols-2 gap-4">
-        <div class="card p-4">
-          <div class="text-sm font-medium mb-1">Paleta actual (aistetic.json)</div>
-          <div id="aistetic-palette" class="text-sm">
-            ink: <span class="font-mono">#1f2a24</span> • accent: <span class="font-mono">#2d5a4a</span> • paper: <span class="font-mono">#f8f1e3</span>
-          </div>
-          <a href="../projects/aistetic/aistetic.json" class="text-xs underline mt-1 inline-block">editar aistetic.json</a>
-        </div>
-        <div class="card p-4 text-sm">
-          <div class="font-medium mb-1">Tareas simples (low token):</div>
-          <ul class="list-disc pl-4 text-xs leading-relaxed">
-            <li>Agrega ejemplo a aistetic/ejemplos/ + corre aistetic analyze</li>
-            <li>Prueba cotizaciones --para productora</li>
-            <li>Actualiza LAST_HANDOFF con 1 tarea nueva</li>
-            <li>Pega email en hub y genera brief</li>
-          </ul>
-        </div>
-      </div>
-    </section>
-
-    <!-- Cómo trabajo -->
-    <section class="section">
-      <h2 class="text-lg font-semibold mb-2">Cómo trabajo (para agentes)</h2>
-      <div class="card p-4 bg-[#fff8ed] text-sm">
-        <p class="mb-2">Texto (correo/pedido) → herramientas → imágenes/archivos listos para AI/PS/Blender.</p>
-        <div class="text-xs">
-          <strong>Empieza aquí:</strong> <a href="../docs/AGENT_OPERATING_MANUAL.md" class="underline">AGENT_OPERATING_MANUAL.md</a> + este hub.<br>
-          Lee un proyecto, mira ejemplos, genera con aistetic. Usa comandos de arriba.
-        </div>
-        <div class="mt-2 text-xs">
-          <a href="../docs/FOR_EXTERNAL_AI.md" class="underline">docs/FOR_EXTERNAL_AI.md</a> — guía completa.
-        </div>
-      </div>
-    </section>
-
-    <!-- Export Workflow - Puente a tu flujo real -->
-    <section class="section">
-      <h2 class="text-lg font-semibold mb-3">🚀 Export directo a tu flujo (Illustrator / Photoshop / Blender)</h2>
-      
-      <div class="mb-4 p-3 bg-white rounded border-l-4 border-[#2d5a4a]">
-        <div class="text-sm font-medium mb-1">Flujo recomendado:</div>
-        <div class="text-xs">Pedido (texto) → Hub o CLI → <strong>flujo render</strong> → Export → Abre en AI / PS / Blender</div>
-      </div>
-
-      <div class="grid md:grid-cols-3 gap-4 text-sm">
-        <!-- Illustrator -->
-        <div class="card p-4">
-          <div class="font-semibold text-[#2d5a4a]">Adobe Illustrator (vector / impresión)</div>
-          <ol class="text-xs mt-2 space-y-1 list-decimal pl-4">
-            <li><code>flujo render run projects/.../config.json</code></li>
-            <li>Abre el SVG en AI (editable + vectorizado)</li>
-            <li>Usa swatches desde aistetic.json</li>
-            <li>Opcional: corre <code>ai/compose_ai.jsx</code> desde la carpeta</li>
-          </ol>
-          <div class="text-[10px] mt-2">Ideal para piezas vectoriales, flyers, etiquetas, riders.</div>
-          <button onclick="copyCmd('flujo render run projects/piezas_vectoriales/ejemplo/config.json')" 
-                  class="mt-2 text-xs px-2 py-0.5 border rounded">Copiar comando render</button>
-        </div>
-
-        <!-- Photoshop -->
-        <div class="card p-4">
-          <div class="font-semibold text-[#2d5a4a]">Adobe Photoshop (digital / foto)</div>
-          <ol class="text-xs mt-2 space-y-1 list-decimal pl-4">
-            <li><code>flujo export proyecto/</code> (genera ZIP)</li>
-            <li>Descomprime y abre carpeta working/</li>
-            <li>Corre <code>compose.jsx</code> (File → Scripts → Browse)</li>
-            <li>Coloca fotos + aplica paleta aistetic</li>
-          </ol>
-          <div class="text-[10px] mt-2">Perfecto para carteleras, posts IG, digital.</div>
-          <button onclick="copyCmd('flujo export projects/flyer_eventos/ultimo')" 
-                  class="mt-2 text-xs px-2 py-0.5 border rounded">Copiar comando export</button>
-        </div>
-
-        <!-- Blender -->
-        <div class="card p-4">
-          <div class="font-semibold text-[#2d5a4a]">Blender (3D)</div>
-          <ol class="text-xs mt-2 space-y-1 list-decimal pl-4">
-            <li>Prepara con <code>flujo plano ...</code> o config</li>
-            <li>En Blender: Text Editor → Open → blender_setup.py</li>
-            <li>Ejecuta: <code>setup_stand("ruta/al/json")</code></li>
-            <li>Materiales + dimensiones desde aistetic</li>
-          </ol>
-          <div class="text-[10px] mt-2">Para stands, carteleras 3D, recursos (frascos).</div>
-          <button onclick="copyCmd('python -c \"exec(open(\\\"src/flujo/templates/blender_setup.py\\\").read()); setup_stand(\\\"projects/plano/ejemplos/evento_ejemplo.json\\\")' )" 
-                  class="mt-2 text-xs px-2 py-0.5 border rounded">Copiar script Blender</button>
-        </div>
-      </div>
-
-      <div class="mt-3 text-xs bg-white p-3 rounded border">
-        <strong>Tip:</strong> Después de render/export los archivos ya tienen estilo aistetic. 
-        Usa el hub para pegar el pedido y copiar el comando correcto.
-      </div>
-    </section>
-
-    <footer class="text-xs text-[#675f55] mt-8 border-t pt-4">
-      Abre este archivo al iniciar el día.<br>
-      Punto de entrada recomendado: este hub + <a href="../docs/AGENT_OPERATING_MANUAL.md" class="underline">AGENT_OPERATING_MANUAL.md</a>
-    </footer>
   </div>
+</div>
 
-  <script>
-    function copyCmd(cmd) {
-      navigator.clipboard.writeText(cmd).then(() => {
-        const orig = event.target.innerText;
-        event.target.innerText = 'Copiado!';
-        setTimeout(() => { if (event.target) event.target.innerText = orig; }, 1200);
-      });
-    }
+<!-- PLANO TEASER -->
+<div class="section">
+  <div class="section-title">Planos de stands + riders + costos (plano)</div>
+  <div class="card">
+    <div style="display:flex; gap:16px; align-items:center; flex-wrap:wrap">
+      <div>
+        <div style="font-weight:600">plano • demo interactivo</div>
+        <div class="small muted">Paramétrico desde constantes reales (mesas, toldos, voluntarios, reglas operativas). Export SVG + rider + costos. Integrado aistetic + blender.</div>
+      </div>
+      <div>
+        <a class="btn" href="plano_demo.html" target="_blank">Abrir Plano Demo</a>
+        <button onclick="copyCmd('py -m flujo plano projects/plano/ejemplos/evento_ejemplo.json --rider --costs')" class="btn btn-sec" style="margin-left:6px">Copiar comando CLI</button>
+      </div>
+    </div>
+  </div>
+</div>
 
-    function runCommand(cmd) {
-      alert('Ejecuta en terminal:\n\n' + cmd + '\n\n(O usa flujo serve para el editor)');
-    }
+<!-- HERRAMIENTAS PRO -->
+<div class="section">
+  <div class="section-title">Herramientas (CLI)</div>
+  <div class="grid">
+    <div onclick="copyCmd('py -m flujo job new \"etiquetas acme\" --email inbox/correo.txt')" class="tool-btn">job new</div>
+    <div onclick="copyCmd('py -m flujo job prepare jobs/...')" class="tool-btn">job prepare</div>
+    <div onclick="copyCmd('py -m flujo render run projects/piezas_vectoriales/.../config.json --for illustrator')" class="tool-btn">render --for illustrator</div>
+    <div onclick="copyCmd('py -m flujo render run ... --for blender')" class="tool-btn">render --for blender</div>
+    <div onclick="copyCmd('py -m flujo cotizaciones <json> --para productora')" class="tool-btn">cotizaciones productora</div>
+    <div onclick="copyCmd('py -m flujo cotizaciones <json> --para interno')" class="tool-btn">cotizaciones interno</div>
+    <div onclick="copyCmd('py -m flujo aistetic analyze mi-ejemplo')" class="tool-btn">aistetic analyze</div>
+    <div onclick="copyCmd('py -m flujo daily')" class="tool-btn">daily</div>
+    <div onclick="copyCmd('python -m src.flujo.templates.blender_setup projects/plano/ejemplos/evento_ejemplo.json')" class="tool-btn">blender_setup</div>
+    <div onclick="window.open('plano_demo.html','_blank')" class="tool-btn">plano demo</div>
+  </div>
+  <div class="small muted" style="margin-top:8px">Windows: siempre <code>py -m flujo ...</code>. Resultados listos para Illustrator / Photoshop / Blender.</div>
+</div>
 
-    function generatePreview() {
-      const input = document.getElementById('text-input').value.trim() || '{"nombre":"Demo","voluntarios":5}';
-      let data;
-      try { data = JSON.parse(input); } catch { data = {nombre: input}; }
-      const preview = document.getElementById('preview');
-      const name = data.nombre || 'Evento';
-      const v = data.voluntarios || 4;
-      // Usa colores de aistetic
-      const ink = '#1f2a24', accent = '#2d5a4a', paper = '#f8f1e3';
-      preview.innerHTML = `
-        <svg width="240" height="140" class="mx-auto">
-          <rect x="10" y="10" width="220" height="120" fill="${paper}" stroke="${accent}" stroke-width="2"/>
-          <text x="20" y="35" font-size="13" fill="${ink}">PLANO — ${name}</text>
-          <rect x="30" y="50" width="60" height="50" fill="#d4b78f" stroke="${accent}"/>
-          <text x="38" y="78" font-size="9" fill="${ink}">stand</text>
-          ${Array.from({length: Math.min(v,5)}).map((_,i) => 
-            `<rect x="${100 + i*18}" y="95" width="14" height="14" fill="#e63946"/>`
-          ).join('')}
-          <text x="20" y="125" font-size="8" fill="${ink}">Texto → visual (con aistetic)</text>
-        </svg>
-      `;
-    }
+<!-- SEPARADOR AGENTE -->
+<div class="sep"></div>
+<div class="section">
+  <div style="background:#111; border:1px solid #2a2a2a; padding:4px 10px; display:inline-block; font-size:10px; letter-spacing:.1em; color:#666; border-radius:2px">SECCIÓN AGENTE — RAW / BAJO TOKEN</div>
+</div>
 
-    function mockDescribe() {
-      const preview = document.getElementById('preview');
-      preview.innerHTML = `<div class="text-center p-4 text-xs">JSON generado → ve a projects/aistetic/json/ y pégalo.<br>Ejemplo: {"colors":["#1f2a24"], "motifs":["marco simple"]}</div>`;
-      // In real use: the agent would save to json folder
-    }
+<!-- DOS FLUJOS AGENTES -->
+<div class="section">
+  <div class="section-title">Dos flujos para agentes IA</div>
+  <div class="grid">
+    <div class="card">
+      <div style="font-weight:600; margin-bottom:4px">FLUJO 1 — Pedido reciente</div>
+      <div class="small">1. Abre este hub<br>2. Pega correo/pedido en Intake<br>3. Pulsa "Generar brief ordenado + match"<br>4. Si MATCH → usa formato + aistetic + comando<br>5. Si NO MATCH → propone nueva sección o agrega tarea LAST_HANDOFF</div>
+    </div>
+    <div class="card">
+      <div style="font-weight:600; margin-bottom:4px">FLUJO 2 — Continúa mejoras</div>
+      <div class="small">1. Lee LAST_HANDOFF.md + AGENT_OPERATING_MANUAL.md<br>2. Elige 1-2 tareas atómicas<br>3. Ejecuta (usa hub + CLI)<br>4. Actualiza LAST_HANDOFF al terminar</div>
+      <div style="margin-top:8px"><a href="LAST_HANDOFF.md" class="small" style="color:var(--cyan)">→ LAST_HANDOFF actual</a></div>
+    </div>
+  </div>
+</div>
 
-    // Auto-generate a demo preview on load
-    setTimeout(() => {
-      const p = document.getElementById('preview');
-      if (p && p.innerText.includes('Preview')) generatePreview();
-    }, 600);
+<!-- RAW DATA AGENT -->
+<div class="section">
+  <div class="section-title">Datos crudos para agentes (copia directa)</div>
+  <div class="agent-raw">
+FLUJOS (resumen):
+• Pedido: Intake → parser match vs svg/ + INDEX_FORMATOS → brief + comando + aistetic
+• Mejora continua: LAST_HANDOFF + hub + este archivo. Solo tareas simples.
 
-    function parsePedido() {
-      const input = document.getElementById('pedido-input').value || 'necesito flyer evento 10x14 para productora X, 7 voluntarios';
-      const result = document.getElementById('pedido-result');
-      const low = input.toLowerCase();
+FORMATOS ACTIVOS (chequea svg/ y projects/piezas_vectoriales):
+- flyer 10x14 (evt_flyer_fisico_10x14)
+- etiqueta 16.5x6.5 (sup_etiqueta_165x65)
+- rider A4 / plano stands
+- cotizaciones dual productora | interno
+- cartelera / post IG
 
-      // Improved detection + format matching against current catalog
-      let tipo = 'desconocido', medidas = '', pub = 'productora', tool = 'render', formato = '';
+ARCHIVOS CLAVE (bajo token):
+- context/flujo_hub.html (esta página)
+- docs/AGENT_OPERATING_MANUAL.md
+- context/LAST_HANDOFF.md
+- projects/aistetic/aistetic.json
+- svg/ (piezas base: usa editables primero)
+- tools/.../INDEX_FORMATOS.json (si existe)
 
-      const known = {
-        'flyer': { tipo: 'flyer', medidas: '10x14', formato: 'evt_flyer_fisico_10x14', tool: 'render' },
-        'etiqueta': { tipo: 'etiqueta', medidas: '16.5x6.5', formato: 'sup_etiqueta_165x65', tool: 'render' },
-        'plano': { tipo: 'plano', medidas: 'según evento', formato: 'plano', tool: 'plano' },
-        'stand': { tipo: 'plano', medidas: 'según evento', formato: 'plano', tool: 'plano' },
-        'cotiz': { tipo: 'cotizacion', medidas: '', formato: 'cotizaciones', tool: 'cotizaciones' },
-        'cartelera': { tipo: 'cartelera', medidas: '1080x1920', formato: 'evt_cartelera', tool: 'render' },
-        'ig': { tipo: 'post_ig', medidas: '1080x1350', formato: 'evt_post_ig', tool: 'render' },
-        'rider': { tipo: 'rider', medidas: 'A4', formato: 'rider_eventos_a4', tool: 'plano' }
-      };
+COMANDOS (Windows):
+py -m flujo render run projects/.../config.json --for illustrator|photoshop|blender
+py -m flujo cotizaciones &lt;json&gt; --para productora|interno
+py -m flujo plano projects/plano/ejemplos/evento_ejemplo.json --rider --costs
+py -m flujo aistetic analyze
 
-      for (const key in known) {
-        if (low.includes(key)) {
-          const k = known[key];
-          tipo = k.tipo; medidas = k.medidas; formato = k.formato; tool = k.tool;
-          break;
-        }
-      }
+Si no hay match: proponer nueva sección mínima en aistetic/ o tarea en LAST_HANDOFF.md
 
-      if (low.includes('interno') || low.includes('empresa')) pub = 'interno/empresa';
+Punto de entrada único: este hub. No leas todo el repo.
+  </div>
+</div>
 
-      const vol = (input.match(/\d+/) || ['?'])[0];
+<!-- AISTETIC PALETA -->
+<div class="section">
+  <div class="section-title">aistetic (paleta central)</div>
+  <div class="card" style="font-family:monospace; font-size:12px">
+    ink: <span style="color:#1f2a24;background:#111;padding:1px 4px">#1f2a24</span>
+    accent: <span style="color:#2d5a4a;background:#111;padding:1px 4px">#2d5a4a</span>
+    paper: <span style="color:#111;background:#f8f1e3;padding:1px 4px">#f8f1e3</span>
+    support: #675f55 • alert: #c2410f
+    <br><a href="../projects/aistetic/aistetic.json" class="small" style="color:var(--cyan)">editar aistetic.json →</a>
+  </div>
+</div>
 
-      let match = 'NO MATCH';
-      if (formato) match = `MATCH: ${formato} (usa aistetic + ${tool})`;
+<!-- EXPORT BRIDGE -->
+<div class="section">
+  <div class="section-title">Export a flujo real (Illustrator / Photoshop / Blender)</div>
+  <div class="grid">
+    <div class="card">
+      <div style="font-weight:600">Illustrator</div>
+      <div class="small muted">render --for illustrator → abre SVG editable + vectorizado. Swatches desde aistetic.</div>
+      <button onclick="copyCmd('py -m flujo render run projects/piezas_vectoriales/suplementos_rd/config.json --for illustrator')" class="btn btn-sec" style="margin-top:8px">Copiar comando</button>
+    </div>
+    <div class="card">
+      <div style="font-weight:600">Photoshop</div>
+      <div class="small muted">export → ZIP working/ + compose.jsx + paleta aistetic.</div>
+      <button onclick="copyCmd('py -m flujo export projects/flyer_eventos/ultimo --for photoshop')" class="btn btn-sec" style="margin-top:8px">Copiar export</button>
+    </div>
+    <div class="card">
+      <div style="font-weight:600">Blender</div>
+      <div class="small muted">plano + blender_setup.py → meshes + materiales aistetic.</div>
+      <button onclick="copyCmd('python -m src.flujo.templates.blender_setup projects/plano/ejemplos/evento_ejemplo.json')" class="btn btn-sec" style="margin-top:8px">Copiar blender_setup</button>
+    </div>
+  </div>
+</div>
 
-      let comando = '';
-      if (tool === 'cotizaciones') {
-        comando = `py -m flujo cotizaciones <evento.json> --para ${pub === 'productora' ? 'productora' : 'interno'}`;
-      } else if (tool === 'plano') {
-        comando = `py -m flujo plano projects/plano/ejemplos/evento_ejemplo.json --rider --costs`;
-      } else {
-        comando = `py -m flujo render run projects/piezas_vectoriales/<slug>/config.json --for illustrator`;
-      }
+<footer>
+  Abre este archivo al empezar el día. <b>Hub = fuente de verdad visual + intake + agente.</b><br>
+  Conectados: <a href="svg_visualizer.html" style="color:var(--cyan)">Visualizador SVG</a> • <a href="plano_demo.html" style="color:var(--cyan)">Plano Demo</a> • <a href="../docs/AGENT_OPERATING_MANUAL.md" style="color:var(--cyan)">Manual Agentes</a>
+</footer>
 
-      const brief = `tipo_pieza: ${tipo}
+</div>
+
+<script>
+// ============ UTILS ============
+function copyCmd(cmd) {
+  navigator.clipboard.writeText(cmd).then(() => {
+    const orig = (event && event.target) ? event.target.innerText : '';
+    if (event && event.target) event.target.innerText = 'Copiado!';
+    setTimeout(() => { if (event && event.target) event.target.innerText = orig || 'Copiar'; }, 1400);
+  }).catch(() => alert('Ejecuta en terminal:\n' + cmd));
+}
+
+function generatePreview() {
+  const inp = document.getElementById('pedido-input').value.trim() || '{"nombre":"Demo evento","voluntarios":7}';
+  let data; try { data = JSON.parse(inp); } catch(e){ data = {nombre: inp}; }
+  const p = document.createElement('div');
+  p.className = 'preview';
+  p.style.marginTop = '10px';
+  const n = data.nombre || 'Evento';
+  const v = data.voluntarios || 5;
+  const ink = '#1f2a24', accent = '#2d5a4a', paper = '#f8f1e3';
+  p.innerHTML = `
+    <svg width="240" height="120" viewBox="0 0 240 120">
+      <rect x="8" y="8" width="224" height="104" rx="4" fill="${paper}" stroke="${accent}" stroke-width="2"/>
+      <text x="18" y="32" fill="${ink}" font-size="12" font-weight="700">${n}</text>
+      <rect x="18" y="44" width="72" height="40" rx="2" fill="#fff" stroke="${accent}"/>
+      <text x="26" y="68" fill="${ink}" font-size="9">stand</text>
+      ${Array.from({length:Math.min(v,5)}).map((_,i)=>`<rect x="${110+i*18}" y="78" width="14" height="14" fill="#e63946" rx="1"/>`).join('')}
+      <text x="18" y="104" fill="${accent}" font-size="8">aistetic aplicado</text>
+    </svg>`;
+  const res = document.getElementById('pedido-result');
+  res.style.display = 'block';
+  res.innerHTML = '';
+  res.appendChild(p);
+}
+
+// ============ PEDIDO PARSER (match real) ============
+function parsePedido() {
+  const input = document.getElementById('pedido-input').value || 'necesito flyer 10x14 evento 7 voluntarios';
+  const low = input.toLowerCase();
+  const res = document.getElementById('pedido-result');
+  res.style.display = 'block';
+
+  const known = {
+    'flyer':   {tipo:'flyer', medidas:'10x14', formato:'evt_flyer_fisico_10x14', tool:'render'},
+    'etiqueta':{tipo:'etiqueta', medidas:'16.5x6.5', formato:'sup_etiqueta_165x65', tool:'render'},
+    'plano':   {tipo:'plano', medidas:'según evento', formato:'plano_stand', tool:'plano'},
+    'stand':   {tipo:'plano', medidas:'según evento', formato:'plano_stand', tool:'plano'},
+    'rider':   {tipo:'rider', medidas:'A4', formato:'rider_eventos_a4', tool:'plano'},
+    'cotiz':   {tipo:'cotizacion', medidas:'', formato:'cotizaciones', tool:'cotizaciones'},
+    'cartelera':{tipo:'cartelera', medidas:'1080x1920', formato:'evt_cartelera', tool:'render'},
+    'ig':      {tipo:'post_ig', medidas:'1080x1350', formato:'evt_post_ig', tool:'render'},
+    'suplemento':{tipo:'etiqueta', medidas:'16.5x6.5', formato:'sup_etiqueta_165x65', tool:'render'}
+  };
+
+  let tipo='desconocido', medidas='', formato='', tool='render', pub='productora';
+  for (const k in known) {
+    if (low.includes(k)) { const m=known[k]; tipo=m.tipo; medidas=m.medidas; formato=m.formato; tool=m.tool; break; }
+  }
+  if (low.includes('interno') || low.includes('empresa')) pub = 'interno';
+  const vol = (input.match(/\d+/) || ['?'])[0];
+
+  const match = formato ? `MATCH: ${formato}` : 'NO MATCH';
+  let cmd = '';
+  if (tool === 'cotizaciones') cmd = `py -m flujo cotizaciones <json> --para ${pub}`;
+  else if (tool === 'plano') cmd = `py -m flujo plano projects/plano/ejemplos/evento_ejemplo.json --rider --costs`;
+  else cmd = `py -m flujo render run projects/piezas_vectoriales/<proyecto>/config.json --for illustrator`;
+
+  const brief = `tipo_pieza: ${tipo}
 medidas: ${medidas || 'definir'}
 publico: ${pub}
 voluntarios: ${vol}
@@ -613,40 +352,40 @@ formato_sugerido: ${formato || 'NUEVO'}
 notas: ${input}
 
 # ${match}
-# Acción recomendada: ${formato ? 'Usar formato existente' : 'Crear nueva sección en aistetic o tarea de mejora'}
-# Comando: ${comando}
-# Estilo: aplicar aistetic (ver paleta abajo)
-# Archivos finales: listos para Illustrator/Photoshop/Blender`;
+# Acción: ${formato ? 'Usar formato existente + aistetic' : 'Proponer NUEVA sección aistetic o tarea LAST_HANDOFF'}
+# Comando: ${cmd}
+# Estilo: aistetic (ink #1f2a24 • accent #2d5a4a • paper #f8f1e3)`;
 
-      let html = `<pre class="text-[9px]">${brief}</pre>`;
-      if (!formato) {
-        html += `<br><button onclick="proponerNuevaSeccion()" style="font-size:9px">Proponer nueva sección en aistetic o agregar tarea</button>`;
-      }
-      result.innerHTML = html;
-    }
+  res.innerHTML = `<pre style="font-size:10px; white-space:pre-wrap; margin:0">${brief}</pre>`;
+  if (!formato) {
+    res.innerHTML += `<button onclick="proponerNuevaSeccion()" class="btn btn-sec" style="margin-top:6px;font-size:10px">Proponer nueva sección o tarea</button>`;
+  }
+}
 
-    function proponerNuevaSeccion() {
-      const res = document.getElementById('pedido-result');
-      res.innerHTML += `<br><pre style="color:#c2410f">Nueva sección propuesta en aistetic. Agrega tarea en LAST_HANDOFF o crea stub en projects/aistetic/.</pre>`;
-    }
+function proponerNuevaSeccion() {
+  const r = document.getElementById('pedido-result');
+  r.innerHTML += `<div style="margin-top:6px;color:#c2410f;font-size:10px">→ Nueva sección propuesta. Agrega stub en projects/aistetic/ o tarea en LAST_HANDOFF.md</div>`;
+}
 
-    function applyAisteticToBrief() {
-      const res = document.getElementById('pedido-result');
-      if (res && res.innerHTML) {
-        res.innerHTML = res.innerHTML + 
-          `<br><span style="color:#2d5a4a">→ estilo aistetic aplicado (usa los colores de abajo)</span>`;
-      }
-    }
+function applyAisteticToBrief() {
+  const r = document.getElementById('pedido-result');
+  if (r) r.innerHTML += `<div style="margin-top:4px;color:#2d5a4a;font-size:10px">→ estilo aistetic aplicado (usa paleta arriba)</div>`;
+}
 
-    function mockAistetic() {
-      const pal = document.getElementById('aistetic-palette');
-      if (pal) pal.style.display = 'block';
-      alert('Usa aistetic para estilo en tus salidas.');
-    }
+function usarComoBase(nombre) {
+  const txt = `BASE: ${nombre}\nRuta: svg/... (ver visualizador)\nAcción: copiar editable a nuevo proyecto + actualizar config con aistetic`;
+  navigator.clipboard.writeText(txt).then(()=>alert('Instrucciones + nombre copiados.\n\n' + txt));
+}
 
-    function usarComoBase(nombre) {
-      alert('Para basarte en ' + nombre + ':\n\n1. Copia el SVG editable de la carpeta svg/ a un nuevo proyecto en projects/piezas_vectoriales/.\n2. Ajusta el config.json usando los colores y reglas de projects/aistetic/aistetic.json.\n3. Usa el parser del hub para generar el brief si es un pedido similar.');
-    }
-  </script>
+function mockAistetic() { alert('Usa aistetic.json como fuente de verdad de paleta y reglas.'); }
+
+// Auto hint preview
+setTimeout(() => {
+  const pr = document.getElementById('pedido-result');
+  if (pr && !pr.innerHTML.trim()) {
+    // no auto spam
+  }
+}, 800);
+</script>
 </body>
 </html>

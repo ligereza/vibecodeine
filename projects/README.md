@@ -20,9 +20,14 @@ Cada subdirectorio es un "satélite" con su propia lógica, pero que idealmente 
 - Todos los proyectos deben poder **consumir** definiciones de `aistetic/` (colores, tipografías, estilos de texto, framing, etc.).
 - Los proyectos de "producción" (`piezas_vectoriales`, `flyer_eventos`) generan entregables reales.
 - Los proyectos "satélite" (`plano`, `tapiz`, `aistetic`) exploran nuevas capacidades o centralizan conocimiento.
-- **Punto de entrada para todos (incluyendo agentes):** abre `context/flujo_hub.html`
+- **Punto de entrada OBLIGATORIO para todos (dueño + agentes):** abre `context/flujo_hub.html`
 
-Cuando una IA reciba el repo, debe empezar por el hub + este archivo + `projects/aistetic/`.
+Desde el hub se accede a:
+- Visualizador SVG completo (`context/svg_visualizer.html`) — piezas agrupadas Eventos vs Suplementos, embebidas, con "Usar como base".
+- Plano Demo (`context/plano_demo.html`) — interactivo, aistetic, export.
+- Intake, comandos, RAW para agentes.
+
+Cuando una IA reciba el repo, debe empezar por el hub + este archivo + `projects/aistetic/`. No leas todo. Usa el hub para ver el estado real de trabajos SVG y planos.
 
 ## Cómo agregar un nuevo proyecto satélite
 
@@ -36,11 +41,11 @@ Cuando una IA reciba el repo, debe empezar por el hub + este archivo + `projects
 
 **Export a tus herramientas:**
 Usa `flujo render ... --for illustrator|photoshop|blender` o `flujo export ... --for ...`
-Los archivos salen listos para abrir en AI, PS o Blender (con aistetic aplicado). 
+Los archivos salen listos para abrir en AI, PS o Blender (con aistetic aplicado).
 
-En el hub (context/flujo_hub.html) verás la sección "Piezas vectoriales ya creadas" (carpeta svg/ en root) con links a SVGs editables/vectorizados para basar o editar trabajos (más común que crear de cero).
+En el hub verás teasers de las piezas SVG + botones directos al **Visualizador SVG** (`context/svg_visualizer.html`) con previews embebidos por grupo (Eventos / Suplementos) y acciones "Usar como base".
 
-Ver hub para flujo completo y AGENT_OPERATING_MANUAL.md.
+El hub es el centro. Ver `context/flujo_hub.html`, `context/svg_visualizer.html`, `context/plano_demo.html` y AGENT_OPERATING_MANUAL.md.
 
 ## Para IAs externas que reciban el repo completo
 

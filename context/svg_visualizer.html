@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FLUJO • Visualizador SVG</title>
+<style>
+  :root {
+    --bg: #0a0a0a; --panel: #141414; --panel2: #1a1a1a;
+    --border: #2a2a2a; --text: #e8e8e8; --muted: #888;
+    --cyan: #00f0ff; --accent: #173F2F; --green: #2ecc71; --orange: #c2410f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; font-size: 14px; }
+  header { background: var(--panel); border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; align-items: center; gap: 12px; }
+  header h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
+  .badge { background: var(--accent); color: #fff; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .nav { display: flex; gap: 8px; margin-left: auto; }
+  .nav a, .nav button { background: var(--panel2); color: var(--text); border: 1px solid var(--border); padding: 6px 12px; border-radius: 4px; font-size: 12px; text-decoration: none; cursor: pointer; }
+  .nav a:hover, .nav button:hover { border-color: var(--cyan); }
+  .main { max-width: 1400px; margin: 0 auto; padding: 20px; }
+  .section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 16px 0 10px; display: flex; align-items: center; gap: 6px; }
+  .section-title::before { content: ''; width: 3px; height: 14px; background: var(--cyan); border-radius: 2px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 14px; }
+  .svg-card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; }
+  .svg-card:hover { border-color: var(--cyan); }
+  .svg-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .svg-card .meta { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+  .svg-view { background: #0d0d0d; border: 1px solid var(--border); border-radius: 6px; min-height: 220px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 10px; position: relative; }
+  .svg-view object { width: 100%; height: 100%; max-height: 260px; }
+  .svg-view .fallback { font-size: 11px; color: var(--muted); padding: 10px; text-align: center; }
+  .actions { display: flex; flex-wrap: wrap; gap: 6px; }
+  .btn { background: linear-gradient(135deg, var(--cyan), #7000ff); color: #000; border: none; border-radius: 4px; padding: 6px 12px; font-weight: 700; font-size: 11px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.04em; }
+  .btn:hover { opacity: 0.9; }
+  .btn-sec { background: var(--panel2); color: var(--text); border: 1px solid var(--border); }
+  .btn-sec:hover { border-color: var(--cyan); }
+  .group { margin-bottom: 32px; }
+  .hint { font-size: 11px; color: var(--muted); }
+  .footer { margin-top: 40px; font-size: 11px; color: var(--muted); border-top: 1px solid var(--border); padding-top: 12px; }
+  .mejoras { font-size: 11px; background: var(--panel2); border: 1px solid var(--border); padding: 8px; border-radius: 4px; margin-top: 6px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>FLUJO • Visualizador SVG</h1>
+  <span class="badge">Base Works</span>
+  <div class="nav">
+    <a href="flujo_hub.html">← Volver al Hub</a>
+    <a href="../svg/">Abrir carpeta svg/</a>
+    <button onclick="location.reload()">Recargar</button>
+  </div>
+</header>
+
+<div class="main">
+
+  <p class="hint">Visualizador nativo. Cada pieza muestra el SVG editable/vectorizado embebido. Usa "Usar como base" para copiar ruta y comando listo para nuevo trabajo.</p>
+
+  <!-- EVENTOS / FLYERS / RIDERS / ETIQUETAS -->
+  <div class="group">
+    <div class="section-title">Eventos • Flyers • Riders • Etiquetas</div>
+    <div class="grid">
+
+      <!-- flyer_horizontal_minimo -->
+      <div class="svg-card">
+        <h3>flyer_horizontal_minimo</h3>
+        <div class="meta">flyer base horizontal • editable + vectorizado</div>
+        <div class="svg-view">
+          <object data="../svg/flyer_horizontal_minimo/salida_generada/01_editables_svg/01_flyer_base_editable.svg" type="image/svg+xml" width="100%" height="220">
+            <div class="fallback">No se pudo embeber. <a href="../svg/flyer_horizontal_minimo/salida_generada/01_editables_svg/01_flyer_base_editable.svg" target="_blank">Abrir editable</a></div>
+          </object>
+        </div>
+        <div class="actions">
+          <a class="btn" href="../svg/flyer_horizontal_minimo/salida_generada/01_editables_svg/01_flyer_base_editable.svg" target="_blank">Editar editable</a>
+          <a class="btn-sec btn" href="../svg/flyer_horizontal_minimo/salida_generada/02_vectorizados_svg/01_flyer_base_vectorizado.svg" target="_blank">Vectorizado</a>
+          <button class="btn-sec btn" onclick="usarComoBase('../svg/flyer_horizontal_minimo/salida_generada/01_editables_svg/01_flyer_base_editable.svg', 'flyer_horizontal_minimo')">Usar como base</button>
+          <button class="btn-sec btn" onclick="copyPath('../svg/flyer_horizontal_minimo/salida_generada/01_editables_svg/01_flyer_base_editable.svg')">Copiar ruta</button>
+        </div>
+        <div class="mejoras"><b>Mejoras sugeridas:</b> Agregar variantes vertical, soporte multi-idioma, integración directa con preview canvas del hub.</div>
+      </div>
+
+      <!-- prueba-rd-intervencion-terreno -->
+      <div class="svg-card">
+        <h3>prueba-rd-intervencion-terreno</h3>
+        <div class="meta">Flyer intervención terreno • editable + vector</div>
+        <div class="svg-view">
+          <object data="../svg/prueba-rd-intervencion-terreno/salida_generada/01_editables_svg/01_base_prueba-rd-intervencion-terreno_editable.svg" type="image/svg+xml" width="100%" height="220">
+            <div class="fallback">Abrir manualmente: <a href="../svg/prueba-rd-intervencion-terreno/salida_generada/01_editables_svg/01_base_prueba-rd-intervencion-terreno_editable.svg" target="_blank">link</a></div>
+          </object>
+        </div>
+        <div class="actions">
+          <a class="btn" href="../svg/prueba-rd-intervencion-terreno/salida_generada/01_editables_svg/01_base_prueba-rd-intervencion-terreno_editable.svg" target="_blank">Editar</a>
+          <a class="btn-sec btn" href="../svg/prueba-rd-intervencion-terreno/salida_generada/02_vectorizados_svg/01_base_prueba-rd-intervencion-terreno_vectorizado.svg" target="_blank">Vectorizado</a>
+          <button class="btn-sec btn" onclick="usarComoBase('../svg/prueba-rd-intervencion-terreno/salida_generada/01_editables_svg/01_base_prueba-rd-intervencion-terreno_editable.svg', 'prueba-rd-intervencion-terreno')">Usar como base</button>
+          <button class="btn-sec btn" onclick="copyPath('../svg/prueba-rd-intervencion-terreno/salida_generada/01_editables_svg/01_base_prueba-rd-intervencion-terreno_editable.svg')">Copiar ruta</button>
+        </div>
+        <div class="mejoras"><b>Mejoras:</b> Añadir layout para múltiples eventos simultáneos, export directo a PDF print-ready.</div>
+      </div>
+
+      <!-- rider_rd_intervencion_terreno -->
+      <div class="svg-card">
+        <h3>rider_rd_intervencion_terreno</h3>
+        <div class="meta">Rider técnico operativo • 2 piezas</div>
+        <div class="svg-view">
+          <object data="../svg/rider_rd_intervencion_terreno/salida_generada/01_editables_svg/01_requerimientos_rider_editable.svg" type="image/svg+xml" width="100%" height="200">
+            <div class="fallback">Rider requerimientos</div>
+          </object>
+        </div>
+        <div class="actions">
+          <a class="btn" href="../svg/rider_rd_intervencion_terreno/salida_generada/01_editables_svg/01_requerimientos_rider_editable.svg" target="_blank">Editar requerimientos</a>
+          <a class="btn-sec btn" href="../svg/rider_rd_intervencion_terreno/salida_generada/01_editables_svg/02_layout_operativo_editable.svg" target="_blank">Layout operativo</a>
+          <button class="btn-sec btn" onclick="usarComoBase('../svg/rider_rd_intervencion_terreno/salida_generada/01_editables_svg/01_requerimientos_rider_editable.svg', 'rider')">Usar como base</button>
+        </div>
+        <div class="mejoras"><b>Mejoras:</b> Generar desde plano_stands automáticamente + sync con cotizaciones.</div>
+      </div>
+
+      <!-- etiquetas_ejemplo -->
+      <div class="svg-card">
+        <h3>etiquetas_ejemplo (RD)</h3>
+        <div class="meta">Línea etiquetas • impulso + base blanca</div>
+        <div class="svg-view">
+          <object data="../svg/etiquetas_ejemplo/salida_generada/01_editables_svg/01_etiqueta_impulso_editable.svg" type="image/svg+xml" width="100%" height="200">
+            <div class="fallback">Etiqueta impulso editable</div>
+          </object>
+        </div>
+        <div class="actions">
+          <a class="btn" href="../svg/etiquetas_ejemplo/salida_generada/01_editables_svg/01_etiqueta_impulso_editable.svg" target="_blank">Impulso editable</a>
+          <a class="btn-sec btn" href="../svg/etiquetas_ejemplo/salida_generada/01_editables_svg/02_etiqueta_base_blanca_editable.svg" target="_blank">Base blanca</a>
+          <button class="btn-sec btn" onclick="usarComoBase('../svg/etiquetas_ejemplo/salida_generada/01_editables_svg/01_etiqueta_impulso_editable.svg', 'etiqueta')">Usar como base</button>
+          <a class="btn-sec btn" href="../svg/etiquetas_ejemplo/salida_generada/04_exports/" target="_blank">Exports ZIP</a>
+        </div>
+        <div class="mejoras"><b>Mejoras:</b> Añadir más sabores de suplementos a línea de etiquetas; preview grid 2xN.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SUPLEMENTOS -->
+  <div class="group">
+    <div class="section-title">Suplementos RD (Línea completa)</div>
+    <div class="grid">
+
+      <div class="svg-card">
+        <h3>01_linea_suplementos_rd</h3>
+        <div class="meta">Línea completa 2800x2000 • 7 productos</div>
+        <div class="svg-view">
+          <object data="../svg/suplementos_rd/02_editables_svg/01_linea_suplementos_rd_editable.svg" type="image/svg+xml" width="100%" height="210">
+            <div class="fallback">Linea completa editable</div>
+          </object>
+        </div>
+        <div class="actions">
+          <a class="btn" href="../svg/suplementos_rd/02_editables_svg/01_linea_suplementos_rd_editable.svg" target="_blank">Editar línea</a>
+          <a class="btn-sec btn" href="../svg/suplementos_rd/03_final_vectorizado_svg/01_linea_suplementos_rd_vectorizado.svg" target="_blank">Vectorizado</a>
+          <button class="btn-sec btn" onclick="usarComoBase('../svg/suplementos_rd/02_editables_svg/01_linea_suplementos_rd_editable.svg', 'suplementos_linea')">Usar como base</button>
+        </div>
+        <div class="mejoras"><b>Mejoras:</b> Separar en piezas individuales + grid export; auto-generar desde contenido JSON.</div>
+      </div>
+
+      <div class="svg-card">
+        <h3>02_impulso + 03_hongos</h3>
+        <div class="meta">Productos individuales</div>
+        <div class="svg-view" style="display:flex;gap:4px;">
+          <object data="../svg/suplementos_rd/02_editables_svg/02_impulso_editable.svg" type="image/svg+xml" style="flex:1;height:170px"></object>
+          <object data="../svg/suplementos_rd/02_editables_svg/03_hongos_adaptogenos_editable.svg" type="image/svg+xml" style="flex:1;height:170px"></object>
+        </div>
+        <div class="actions">
+          <a class="btn-sec btn" href="../svg/suplementos_rd/02_editables_svg/02_impulso_editable.svg" target="_blank">Impulso</a>
+          <a class="btn-sec btn" href="../svg/suplementos_rd/02_editables_svg/03_hongos_adaptogenos_editable.svg" target="_blank">Hongos</a>
+          <button class="btn-sec btn" onclick="usarComoBase('../svg/suplementos_rd/02_editables_svg/02_impulso_editable.svg', 'suplemento_impulso')">Usar impulso</button>
+        </div>
+      </div>
+
+      <div class="svg-card">
+        <h3>04_pre_fiesta + 05_magnesio + 06_creatina</h3>
+        <div class="meta">Pre-fiesta • Magnesio • Creatina</div>
+        <div class="svg-view" style="display:flex;gap:4px;flex-wrap:wrap;">
+          <object data="../svg/suplementos_rd/02_editables_svg/04_pre_fiesta_editable.svg" type="image/svg+xml" style="flex:1;min-height:130px"></object>
+          <object data="../svg/suplementos_rd/02_editables_svg/05_magnesio_editable.svg" type="image/svg+xml" style="flex:1;min-height:130px"></object>
+          <object data="../svg/suplementos_rd/02_editables_svg/06_creatina_monohidratada_editable.svg" type="image/svg+xml" style="flex:1;min-height:130px"></object>
+        </div>
+        <div class="actions">
+          <a class="btn-sec btn" href="../svg/suplementos_rd/02_editables_svg/04_pre_fiesta_editable.svg" target="_blank">Pre-fiesta</a>
+          <a class="btn-sec btn" href="../svg/suplementos_rd/02_editables_svg/05_magnesio_editable.svg" target="_blank">Magnesio</a>
+          <a class="btn-sec btn" href="../svg/suplementos_rd/02_editables_svg/06_creatina_monohidratada_editable.svg" target="_blank">Creatina</a>
+          <button class="btn-sec btn" onclick="usarComoBase('../svg/suplementos_rd/02_editables_svg/04_pre_fiesta_editable.svg', 'pre_fiesta')">Usar pre-fiesta</button>
+        </div>
+        <div class="mejoras"><b>Mejoras:</b> Unificar estilo con flyers de eventos para cross-promotion.</div>
+      </div>
+
+      <div class="svg-card">
+        <h3>07_proteina</h3>
+        <div class="meta">Proteína • última pieza de la línea</div>
+        <div class="svg-view">
+          <object data="../svg/suplementos_rd/02_editables_svg/07_proteina_editable.svg" type="image/svg+xml" width="100%" height="180"></object>
+        </div>
+        <div class="actions">
+          <a class="btn" href="../svg/suplementos_rd/02_editables_svg/07_proteina_editable.svg" target="_blank">Editar proteína</a>
+          <a class="btn-sec btn" href="../svg/suplementos_rd/03_final_vectorizado_svg/07_proteina_vectorizado.svg" target="_blank">Vectorizado</a>
+          <button class="btn-sec btn" onclick="usarComoBase('../svg/suplementos_rd/02_editables_svg/07_proteina_editable.svg', 'proteina')">Usar como base</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="footer">
+    Todos los SVGs son editables en Illustrator. Vectorizados listos para producción. <br>
+    <b>Tip agente:</b> Copia la ruta + úsala en config.json de un nuevo proyecto piezas_vectoriales o como referencia para aistetic analyze.
+    <br><a href="flujo_hub.html" style="color:var(--cyan)">Volver al Hub principal</a>
+  </div>
+
+</div>
+
+<script>
+function usarComoBase(path, nombre) {
+  const msg = `USAR COMO BASE:\n\nRuta: ${path}\nNombre: ${nombre}\n\n1. Copia el editable a projects/piezas_vectoriales/<nuevo>/working/\n2. Actualiza config.json con medidas + aistetic\n3. En hub: pega pedido similar y haz match`;
+  navigator.clipboard.writeText(path + '\n' + msg).then(() => {
+    alert('Ruta + instrucciones copiadas al portapapeles.\n\n' + msg);
+  }).catch(() => alert(msg));
+}
+function copyPath(p) {
+  navigator.clipboard.writeText(p).then(() => alert('Ruta copiada: ' + p));
+}
+</script>
+</body>
+</html>
