@@ -30,11 +30,11 @@
     "forbidden": ["corporativo frío", "caos maximalista", "DIY desprolijo"]
   },
   "application_rules": {
-    "cotizaciones_productora": "Branded con aistetic (colores + tipografía). Infografía limpia para productoras. Formato A4/rider del catálogo.",
+    "cotizaciones_productora": "Branded con flujo (colores + tipografía). Infografía limpia para productoras. Formato A4/rider del catálogo.",
     "cotizaciones_interno": "Desglose detallado, menos branding, foco en números para ONG/empresa.",
-    "planos": "Técnico limpio: alto contraste, mono para datos, acentos de aistetic. Integrar en riders.",
+    "planos": "Técnico limpio: alto contraste, mono para datos, acentos de flujo. Integrar en riders.",
     "piezas_vectoriales": "Heredar paleta completa + motifs. Usar en flyers/etiquetas/riders.",
-    "comunicaciones": "Respuestas a WhatsApp/Gmail usan tono aistetic + estructura breve."
+    "comunicaciones": "Respuestas a WhatsApp/Gmail usan tono flujo + estructura breve."
   },
   "references": {
     "strong_examples": [

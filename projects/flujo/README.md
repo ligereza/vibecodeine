@@ -28,9 +28,9 @@ projects/flujo/
 
 ## Cómo se usa (visión)
 
-1. Una IA externa recibe el repo completo (o esta carpeta + algunos ejemplos) y genera/actualiza `linea_editorial.md` + `aistetic.json`.
-2. Los motores de flujo (`render/`, `plano/`, etc.) leen `aistetic.json` o referencias para aplicar consistencia.
-3. Cuando se crea un nuevo proyecto o pieza, se puede pasar `--aistetic aistetic/` o referenciarlo en el `config.json`.
+1. Una IA externa recibe el repo completo (o esta carpeta + algunos ejemplos) y genera/actualiza `linea_editorial.md` + `flujo.json`.
+2. Los motores de flujo (`render/`, `plano/`, etc.) leen `flujo.json` o referencias para aplicar consistencia.
+3. Cuando se crea un nuevo proyecto o pieza, se puede pasar `--flujo flujo/` o referenciarlo en el `config.json`.
 
 ## Estado actual (2026-06)
 
@@ -52,17 +52,17 @@ Si te están mandando el repositorio `flujo` para que generes la línea editoria
    - `projects/tapiz/` (estética visual de "vida del código")
 5. Extrae y produce:
    - `linea_editorial.md`
-   - `aistetic.json`
+   - `flujo.json`
    - Contenido en `palettes/`, `typography/`, `references/`
 
 No inventes. Basa todo en lo que realmente aparece en el trabajo existente del repo.
 
 ## Próximos pasos (integración con cotizaciones/planos)
 
-- Usar aistetic en cotizaciones (ya iniciado en projects/cotizaciones/engine.py)
-- Mejorar planos para heredar paleta de aistetic (hecho en render_svg)
-- Agregar ejemplos de cotizaciones a aistetic/ejemplos/ para que agentes extraigan
-- Integrar formatos infográficos entre aistetic y cotizaciones/planos
+- Usar flujo en cotizaciones (ya iniciado en projects/cotizaciones/engine.py)
+- Mejorar planos para heredar paleta de flujo (hecho en render_svg)
+- Agregar ejemplos de cotizaciones a flujo/ejemplos/ para que agentes extraigan
+- Integrar formatos infográficos entre flujo y cotizaciones/planos
 
 ---
 
