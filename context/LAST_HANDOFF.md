@@ -107,6 +107,7 @@ Fortalecer los dos flujos de agentes:
 - AVANCES_BLOCK.txt generado y referenciado.
 - LAST_HANDOFF compactado (solo esencial + resumen reciente).
 - GIT-PUSH agent: selective staging (launchers + *.md + .gitignore), hook fixes, pushed b558dae/fe3036e, verified health + no datadrops added. All max parallel agents' work consolidated and pushed.
+- Agent-VERIFY (parallel max): independent checks - `flujo health` OK, `flujo datadrop list` (4 clean), `flujo app` launch test (success on port, no hang), grep confirmed new sections in README.md/context/README.md/projects/README.md/linea v4.1 (datadrop MVP, flujo app única, advances, v4.1 §10), smoke tests pass, remote commit confirmed (b558dae at check), clean/functional. Appended here.
 
 **Regla:** Siempre `flujo app` primero. Lee este LAST_HANDOFF + hub. Actualiza solo esta sección al final. Mantén <150 líneas.
 
