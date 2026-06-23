@@ -143,8 +143,10 @@
 <div class="section" style="margin-top:8px">
   <div class="section-title">Entradas rápidas del flujo (menú central)</div>
   <div class="row" style="gap:10px; flex-wrap:wrap">
-    <a class="btn" href="svg_visualizer.html">Visualizador SVG</a>
-    <a class="btn" href="plano_demo.html">Plano Demo</a>
+    <a class="btn" href="svg_visualizer.html" target="_blank">Visualizador SVG (nueva pestaña)</a>
+    <a class="btn btn-sec" href="svg_visualizer.html">Visualizador SVG (esta pestaña)</a>
+    <a class="btn" href="plano_demo.html" target="_blank">Plano Demo (nueva pestaña)</a>
+    <a class="btn btn-sec" href="plano_demo.html">Plano Demo (esta pestaña)</a>
     <button class="btn btn-sec" onclick="window.open('../projects/flujo/flujo.json','_blank')">flujo.json</button>
   </div>
   <div class="small muted" style="margin-top:4px">Usa los botones «← Volver al Hub principal (menú)» dentro de los visualizadores para regresar. Todo desde <b>`flujo app`</b> (hub pro).</div>
@@ -1802,6 +1804,7 @@ async function refreshDatadropsList() {
       listEl.appendChild(card);
     });
   } catch(e) {
+    console.error("[hub refreshDatadropsList]", e);
     listEl.innerHTML = '<span class="small muted">Lista no disponible (sin backend). Revisa workspace/datadrops/ manualmente.</span>';
   }
 }

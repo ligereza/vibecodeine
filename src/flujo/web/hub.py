@@ -27,7 +27,7 @@ import socket
 import subprocess
 import sys
 import webbrowser
-from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
+from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 from threading import Thread
 import time
@@ -1308,7 +1308,7 @@ def run_server(host: str = "127.0.0.1", port: int = 8765, root: Path | None = No
         if actual_port != port:
             print(f"[flujo] Puerto {port} ocupado → usando {actual_port}")
 
-    server = ThreadingHTTPServer((host, actual_port), HubRequestHandler)
+    server = HTTPServer((host, actual_port), HubRequestHandler)
     print(f"[flujo] Workspace app en http://{host}:{actual_port}")
     print(f"  - Repo root: {r}")
     print("  - Hub:      /flujo_hub.html  (UI Delegar: input tarea + botones copian prompts completos por rol)")
