@@ -5,7 +5,7 @@ Do not use accents, enye, emoji, smart quotes, or special arrows here.
 Daily commands for owner on Windows/Git Bash must use `py`, not `python`.
 
 Date: 2026-06-24
-Current version: 0.35.7
+Current version: 0.35.9
 Main daily entry: `py -m flujo app`
 Desktop entry: `py -m flujo app --desktop`
 Verify on Windows: `py -m flujo verify`
@@ -17,14 +17,14 @@ flujo is now focused on a free request/work-status flow without monday.com:
 
 Gmail / WhatsApp / GitHub Issue
   -> ordered request
-  -> flujo job / brief
+  -> flujo job / brief or IG download
   -> design / review / delivery
   -> visual portal for boss/client
 
 Recommended free stack:
-- Gmail labels: `flujo-pedido` and `flujo-procesado`.
+- Gmail labels by area: `flujo-eventos`, `flujo-suplementos`, `flujo-procesado`.
 - Google Apps Script bridge: `tools/gmail_to_github_issues.gs`.
-- GitHub Issues: request and change intake.
+- GitHub Issues: request/change inbox with area labels.
 - GitHub Projects: visual kanban for boss.
 - `py -m flujo portal`: static HTML status portal.
 - `py -m flujo app`: daily hub for operator.
@@ -66,6 +66,20 @@ Recommended free stack:
 - Added explicit rule: owner uses `py`, not `python`.
 - Added Windows encoding notes for future agents.
 - Updated airdrop handoff to avoid accents and python commands.
+
+### v0.35.8 - Gmail routing by area
+- Gmail bridge now supports `GMAIL_ROUTES`.
+- Default area labels: `flujo-eventos`, `flujo-suplementos`, `flujo-procesado`.
+- EVENTOS route: Instagram links, download with flujo/instaloader, then local Photoshop automation. If request asks for brief/plano/svg, create normal flujo job.
+- SUPLEMENTOS route: new request, modification, or quote for flyer/label/pendon/post/stickers/stand/logo.
+- Added `docs/FLUJO_AREAS_EVENTOS_SUPLEMENTOS.md`.
+
+### v0.35.9 - Windows checkout and area issue templates hotfix
+- Renamed three checkpoint files with too-long names that broke GitHub Actions Windows checkout.
+- Removed old generic issue templates: `pedido_diseno.yml` and `pedido_impresion.yml`.
+- Added area-specific templates: `pedido_eventos.yml` and `pedido_suplementos.yml`.
+- Gmail bridge issue titles now use `[EVENTOS]` or `[SUPLEMENTOS]`.
+- Added `scripts/cleanup_v0359_windows_paths.py` for airdrop users to remove old paths if needed.
 
 ## Important Windows/Git Bash rules
 
@@ -161,7 +175,8 @@ Key files:
 - `docs/GMAIL_A_REPO_GRATIS.md`
 - `docs/PORTAL_JEFE_GRATIS.md`
 - `tools/gmail_to_github_issues.gs`
-- `.github/ISSUE_TEMPLATE/pedido_diseno.yml`
+- `.github/ISSUE_TEMPLATE/pedido_eventos.yml`
+- `.github/ISSUE_TEMPLATE/pedido_suplementos.yml`
 - `.github/ISSUE_TEMPLATE/cambio_diseno.yml`
 - `src/flujo/portal.py`
 - `src/flujo/intake/json_parser.py`

@@ -1,8 +1,8 @@
 """Versión y changelog de flujo."""
 
-__version__ = "0.35.7"
+__version__ = "0.35.9"
 VERSION = __version__
-__version_info__ = (0, 35, 7)
+__version_info__ = (0, 35, 9)
 
 
 def get_version():
@@ -11,6 +11,26 @@ def get_version():
 
 def get_changelog():
     return {
+        "0.35.9": {
+            "titulo": "Hotfix Windows checkout y templates por area",
+            "fecha": "2026-06-24",
+            "highlights": [
+                "Renombra checkpoints con nombres demasiado largos que rompian actions/checkout en Windows",
+                "Reemplaza templates genericos por `pedido_eventos.yml` y `pedido_suplementos.yml` con titulos [EVENTOS] y [SUPLEMENTOS]",
+                "Actualiza Gmail bridge para crear issues con titulo `[EVENTOS]` o `[SUPLEMENTOS]`, no `[... Gmail]` ni pedido generico",
+                "Agrega `scripts/cleanup_v0359_windows_paths.py` para borrar paths viejos si se aplica via airdrop",
+            ],
+        },
+        "0.35.8": {
+            "titulo": "Ruteo Gmail por areas eventos y suplementos",
+            "fecha": "2026-06-24",
+            "highlights": [
+                "Gmail bridge ahora soporta rutas por area con `GMAIL_ROUTES`: flujo-eventos y flujo-suplementos",
+                "EVENTOS queda orientado a links Instagram, descarga con flujo/instaloader y automatizacion Photoshop local",
+                "SUPLEMENTOS queda orientado a nuevo pedido, modificacion o cotizacion para flyer/etiqueta/pendon/post/stickers/etc",
+                "Nuevo documento `docs/FLUJO_AREAS_EVENTOS_SUPLEMENTOS.md` aclara etiquetas, labels y pasos operativos",
+            ],
+        },
         "0.35.7": {
             "titulo": "ASCII handoff y guardrails Windows Git Bash",
             "fecha": "2026-06-24",
