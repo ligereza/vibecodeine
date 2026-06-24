@@ -1141,6 +1141,51 @@ def brief_to_project(
     console.print(f"  Siguiente: [cyan]flujo render {project / 'config.json'}[/]")
 
 
+@brief_app.command("paquete-cotizacion")
+def brief_paquete_cotizacion(
+    source: Path = typer.Argument(..., help="ruta a job/ o archivo .txt con el pedido"),
+    output: Optional[Path] = typer.Option(None, "--output", "-o", help="carpeta de salida (default: salida_comercial/)"),
+    cliente: str = typer.Option("", "--cliente", help="cliente/productora (opcional)"),
+    titulo: str = typer.Option("Brief estructura imagen/texto + cotización", "--titulo", help="título del documento"),
+    moneda: str = typer.Option("CLP", "--moneda", help="moneda para cotización"),
+    precio_paquete: str = typer.Option("", "--precio-paquete", help="precio del paquete completo (opcional)"),
+    precio_flyer: str = typer.Option("", "--precio-flyer", help="precio flyer (opcional)"),
+    precio_etiqueta: str = typer.Option("", "--precio-etiqueta", help="precio etiqueta (opcional)"),
+    precio_pendon: str = typer.Option("", "--precio-pendon", help="precio pendón (opcional)"),
+    precio_post_instagram: str = typer.Option("", "--precio-post-instagram", help="precio post Instagram (opcional)"),
+):
+    """Generar brief imagen/texto + cotización base para flyer/etiqueta/pendón/post IG.
+
+    No inventa precios: deja "A definir" salvo que se pasen valores por opciones.
+    Acepta un job (carpeta con pedido_original.txt) o un archivo .txt directo.
+    """
+    from .comercial.multiformato import generate_from_path
+
+    precios = {
+        "paquete": precio_paquete,
+        "flyer": precio_flyer,
+        "etiqueta": precio_etiqueta,
+        "pendon": precio_pendon,
+        "post_instagram": precio_post_instagram,
+    }
+    precios = {k: v for k, v in precios.items() if v}
+    try:
+        written = generate_from_path(
+            source,
+            output=output,
+            titulo=titulo,
+            cliente=cliente,
+            moneda=moneda,
+            precios=precios,
+        )
+    except Exception as e:
+        _err(str(e))
+    _section("Paquete comercial generado")
+    for name, path in written.items():
+        console.print(f"  · [cyan]{name}[/] → {path}")
+    console.print("\nSiguiente: completa precios/datos pendientes y revisa cotizacion_base.md antes de enviar.")
+
+
 @brief_app.command("show")
 def brief_show(
     brief: Path = typer.Argument(..., help="ruta al brief.yaml"),
@@ -1679,7 +1724,7 @@ launch(
         console.print("[bold]Para que se sienta aún más profesional (gratis):[/]")
         console.print("  - Copia el exe (y flujo_workspace si usas) a un lugar fijo (ej. Desktop o C:\\flujo).")
         console.print("  - Usa Inno Setup (https://jrsoftware.org - gratuito) para installer con Start Menu:")
-        console.print("      [Setup]  AppName=flujo  AppVersion=0.35.0 OutputDir=installer")
+        console.print("      [Setup]  AppName=flujo  AppVersion=0.35.2 OutputDir=installer")
         console.print("      [Files]  Source: dist\\flujo-hub.exe ; DestDir: {app}")
         console.print("      [Icons]  Name: {autoprograms}\\flujo ; Filename: {app}\\flujo-hub.exe")
         console.print("      (agrega .ico , asocia .json si quieres para proyectos)")

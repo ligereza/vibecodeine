@@ -1,8 +1,8 @@
 """Versión y changelog de flujo."""
 
-__version__ = "0.35.0"
+__version__ = "0.35.2"
 VERSION = __version__
-__version_info__ = (0, 35, 0)
+__version_info__ = (0, 35, 2)
 
 
 def get_version():
@@ -11,6 +11,26 @@ def get_version():
 
 def get_changelog():
     return {
+        "0.35.2": {
+            "titulo": "Hotfix Python 3.11 para paquete comercial multiformato",
+            "fecha": "2026-06-24",
+            "highlights": [
+                "Corrige f-string incompatible con Python 3.11 en flujo.comercial.multiformato",
+                "Precalcula secciones markdown antes del f-string para mantener compatibilidad Windows",
+                "Desbloquea compileall dentro de run_airdrop_checks.py en Windows/Python 3.11",
+            ],
+        },
+        "0.35.1": {
+            "titulo": "Paquete comercial multiformato + cotización base",
+            "fecha": "2026-06-24",
+            "highlights": [
+                "Nuevo módulo `flujo.comercial.multiformato` para generar brief imagen/texto + cotización base",
+                "Nuevo comando `flujo brief paquete-cotizacion <job_o_txt>` con salida comercial en markdown",
+                "Intake detecta pedidos multiformato con cotización como `paquete_cotizacion`",
+                "Extracción de brief evita colapsar estos pedidos a `etiqueta` y conserva formatos detectados",
+                "Tests cubren parser, brief y generación de documentos para flyer/etiqueta/pendón/post IG",
+            ],
+        },
         "0.35.0": {
             "titulo": "Doctor, init fresh y cierre de airdrops más claro",
             "fecha": "2026-06-23",

@@ -150,3 +150,20 @@ Fortalecer los dos flujos de agentes:
 - Tests smoke agregados para doctor/init fresh.
 
 **Siguiente:** aplicar airdrop v0.35.0 y correr `py scripts/run_airdrop_checks.py "v0.35.0 - doctor init fresh airdrop summary"`. Luego probar `py -m flujo doctor` y `py -m flujo init --fresh`.
+
+---
+
+**Actualización 2026-06-24 — v0.35.1 paquete comercial multiformato**
+- Nuevo `flujo brief paquete-cotizacion <job_o_txt>` genera brief imagen/texto + tabla + cotización base + preguntas para cerrar.
+- Soporta el pendiente real: flyer, etiqueta, pendón y post Instagram junto con cotización.
+- Parser intake detecta `paquete_cotizacion`; extractor de brief ya no lo confunde con solo `etiqueta`.
+- No inventa precios: deja "A definir" salvo que se pasen `--precio-*`.
+
+**Siguiente para avanzar el pendiente:** crear job desde el pedido, correr `py -m flujo brief paquete-cotizacion jobs/<job> --cliente "..."`, revisar `salida_comercial/cotizacion_base.md` y completar precios/datos faltantes.
+
+---
+
+**Actualización 2026-06-24 — v0.35.2 hotfix Python 3.11 multiformato**
+- v0.35.1 falló en Windows/Python 3.11 durante compileall por un f-string con `\n` en expresión (`src/flujo/comercial/multiformato.py`).
+- Fix: precalcular `sections_md`, `formats_bullets` y `source_clean` antes del f-string.
+- Aplicar encima y correr: `py scripts/run_airdrop_checks.py --resume "v0.35.2 - hotfix python311 paquete comercial multiformato"`.

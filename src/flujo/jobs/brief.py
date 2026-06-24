@@ -498,6 +498,12 @@ def _detect_delivery(text: str) -> Dict[str, Any]:
 
 def _detect_type(text: str) -> str:
     low = text.lower()
+    try:
+        from ..comercial.multiformato import is_multiformat_quote_request
+        if is_multiformat_quote_request(text):
+            return "paquete_cotizacion"
+    except Exception:
+        pass
     for key in TIPO_HINTS:
         if key in low:
             return key
@@ -533,6 +539,12 @@ def brief_from_text(text: str, job_id: str = "") -> Brief:
     entrega_dict = _detect_delivery(text)
     tipo = _detect_type(text)
     productos = _detect_products(text)
+    if tipo == "paquete_cotizacion" and not productos:
+        try:
+            from ..comercial.multiformato import detect_requested_formats
+            productos = detect_requested_formats(text)
+        except Exception:
+            productos = ["flyer", "etiqueta", "pendon", "post_instagram", "cotizacion"]
     sangrado = _detect_bleed(text)
 
     pendientes: List[str] = []

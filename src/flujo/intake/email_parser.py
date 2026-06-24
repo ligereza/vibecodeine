@@ -49,6 +49,12 @@ def detect_video_in_carousel(text: str) -> bool:
 def detect_project_type(text: str) -> str:
     """Detecta el tipo de proyecto basado en palabras clave."""
     text_lower = text.lower()
+    try:
+        from ..comercial.multiformato import is_multiformat_quote_request
+        if is_multiformat_quote_request(text):
+            return 'paquete_cotizacion'
+    except Exception:
+        pass
     # order matters: more specific first
     checks = [
         # order matters: operational/satellite tools before generic flyer
@@ -151,6 +157,7 @@ def parse_pedido_text(text: str) -> dict:
 
     # Map to formato/tool known in hub
     tipo_map = {
+        'paquete_cotizacion': {'tipo': 'paquete_cotizacion', 'medidas': 'según formatos', 'formato': 'paquete_comercial_multiformato', 'tool': 'brief paquete-cotizacion'},
         'flyer': {'tipo': 'flyer', 'medidas': sections.get('medidas', '10x14'), 'formato': 'evt_flyer_fisico_10x14', 'tool': 'render'},
         'etiqueta': {'tipo': 'etiqueta', 'medidas': sections.get('medidas', '16.5x6.5'), 'formato': 'sup_etiqueta_165x65', 'tool': 'render'},
         'rider': {'tipo': 'rider', 'medidas': 'A4', 'formato': 'rider_eventos_a4', 'tool': 'plano'},
@@ -174,6 +181,13 @@ def parse_pedido_text(text: str) -> dict:
         'notas': text.strip()[:300],
         'sections': sections,
     }
+    if project_type == 'paquete_cotizacion':
+        try:
+            from ..comercial.multiformato import detect_requested_formats
+            data['formatos_detectados'] = detect_requested_formats(text)
+            data['siguiente_comando'] = 'flujo brief paquete-cotizacion <job_o_txt>'
+        except Exception:
+            pass
     if not formato:
         data['sugerencia'] = 'NO MATCH - proponer en projects/flujo/ o LAST_HANDOFF'
     return data
