@@ -11,17 +11,22 @@
  * Optional Script Properties:
  * - GMAIL_LABEL_DONE: processed label, default: flujo-procesado
  * - MAX_THREADS: max threads per route/run, default: 10
- * - GMAIL_ROUTES: area routing config.
+ * - GMAIL_ROUTES: routing config.
  *
- * GMAIL_ROUTES format:
- * label|area|github_labels;label|area|github_labels
+ * Recommended GMAIL_ROUTES format:
+ * gmailSearchQuery|AREA|github_labels;gmailSearchQuery|AREA|github_labels
  *
- * Default routes:
- * flujo-eventos|EVENTOS|pedido,area/eventos,estado/por-revisar,gmail,instagram,action/descargar-ig
- * flujo-suplementos|SUPLEMENTOS|pedido,area/suplementos,estado/por-revisar,gmail
+ * Recommended default routes:
+ * {subject:eventos subject:evento}|EVENTOS|pedido,area/eventos,estado/por-revisar,gmail,instagram,action/descargar-ig
+ * {subject:suplementos subject:suplemento}|SUPLEMENTOS|pedido,area/suplementos,estado/por-revisar,gmail
  *
- * Legacy fallback:
- * If GMAIL_ROUTES is empty, the script also supports GMAIL_LABEL_IN + GITHUB_LABELS.
+ * This means: no "flujo" word is needed in the email subject.
+ * A subject containing "eventos" routes to EVENTOS.
+ * A subject containing "suplementos" routes to SUPLEMENTOS.
+ *
+ * Legacy support:
+ * - You can still use label routes with: label:flujo-eventos|EVENTOS|...
+ * - Or old GMAIL_LABEL_IN + GITHUB_LABELS for one generic inbox.
  */
 
 function setupFlujoGmailBridge() {
@@ -30,7 +35,9 @@ function setupFlujoGmailBridge() {
   getOrCreateLabel_(doneLabel);
 
   getRoutes_().forEach(function (route) {
-    getOrCreateLabel_(route.gmailLabel);
+    if (route.sourceLabel) {
+      getOrCreateLabel_(route.sourceLabel);
+    }
   });
 
   ScriptApp.getProjectTriggers().forEach(function (trigger) {
@@ -66,10 +73,9 @@ function processFlujoPedidos() {
 }
 
 function processRoute_(route, repo, token, doneLabelName, doneLabel, maxThreads) {
-  const inLabel = getOrCreateLabel_(route.gmailLabel);
-  const query = 'label:"' + route.gmailLabel + '" -label:"' + doneLabelName + '" newer_than:30d';
+  const query = route.gmailQuery + ' -label:"' + doneLabelName + '" newer_than:30d';
   const threads = GmailApp.search(query, 0, maxThreads);
-  Logger.log('Route ' + route.area + ' / ' + route.gmailLabel + ' threads: ' + threads.length);
+  Logger.log('Route ' + route.area + ' / query [' + query + '] threads: ' + threads.length);
 
   threads.forEach(function (thread) {
     const messages = thread.getMessages();
@@ -93,7 +99,10 @@ function processRoute_(route, repo, token, doneLabelName, doneLabel, maxThreads)
     });
 
     thread.addLabel(doneLabel);
-    thread.removeLabel(inLabel);
+    if (route.sourceLabel) {
+      const source = GmailApp.getUserLabelByName(route.sourceLabel);
+      if (source) thread.removeLabel(source);
+    }
     thread.markRead();
     Logger.log('Issue created #' + issue.number + ': ' + issue.html_url);
   });
@@ -113,17 +122,24 @@ function getRoutes_() {
       .split(',')
       .map(function (s) { return s.trim(); })
       .filter(Boolean);
-    return [{ gmailLabel: legacyIn, area: 'GENERAL', githubLabels: legacyLabels }];
+    return [{
+      gmailQuery: 'label:"' + legacyIn + '"',
+      sourceLabel: legacyIn,
+      area: 'GENERAL',
+      githubLabels: legacyLabels
+    }];
   }
 
   return [
     {
-      gmailLabel: 'flujo-eventos',
+      gmailQuery: '{subject:eventos subject:evento}',
+      sourceLabel: '',
       area: 'EVENTOS',
       githubLabels: ['pedido', 'area/eventos', 'estado/por-revisar', 'gmail', 'instagram', 'action/descargar-ig']
     },
     {
-      gmailLabel: 'flujo-suplementos',
+      gmailQuery: '{subject:suplementos subject:suplemento}',
+      sourceLabel: '',
       area: 'SUPLEMENTOS',
       githubLabels: ['pedido', 'area/suplementos', 'estado/por-revisar', 'gmail']
     }
@@ -133,11 +149,23 @@ function getRoutes_() {
 function parseRoute_(chunk) {
   const parts = String(chunk || '').split('|');
   if (parts.length < 3) return null;
-  return {
-    gmailLabel: parts[0].trim(),
+  const queryOrLabel = parts[0].trim();
+  const labels = parts[2].split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+  const route = {
+    gmailQuery: queryOrLabel,
+    sourceLabel: '',
     area: parts[1].trim() || 'GENERAL',
-    githubLabels: parts[2].split(',').map(function (s) { return s.trim(); }).filter(Boolean)
+    githubLabels: labels
   };
+
+  // Backward-compatible shorthand: label:some-label|AREA|labels
+  if (queryOrLabel.indexOf('label:') === 0) {
+    const labelName = queryOrLabel.replace(/^label:/, '').replace(/^"|"$/g, '').trim();
+    route.gmailQuery = 'label:"' + labelName + '"';
+    route.sourceLabel = labelName;
+  }
+
+  return route;
 }
 
 function buildIssueBody_(area, from, date, subject, plain, gmailLink, instagramLinks) {

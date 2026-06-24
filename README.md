@@ -1,94 +1,185 @@
-# flujo · Portal de pedidos + diseño operativo
+# flujo · pedidos, jobs y portal visual
 
-> **Paleta PURPLE:** `#12001f` fondo · `#2b0a3d` panel · `#6d28d9` purple principal · `#a855f7` acento · `#f5e8ff` papel.
+**flujo** ordena pedidos de diseno y los convierte en trabajo trazable: pedido -> job -> brief -> diseno -> revision -> entrega.
 
-**flujo** es un sistema local/gratuito para ordenar pedidos de diseño, convertirlos en jobs trazables y mostrar avance a jefatura sin monday.com.
-
-La idea principal:
+Paleta visual actual: **PURPLE**.
 
 ```txt
 Gmail / WhatsApp / GitHub Issue
-  → pedido ordenado
-  → job en flujo
-  → diseño / revisión / entrega
-  → portal visual para jefatura
+  -> pedido ordenado por area
+  -> job o descarga Instagram
+  -> diseno / revision / entrega
+  -> portal visual para jefatura
 ```
 
 ---
 
-## 1. Resumen corto
+## 1. Lectura obligatoria para agentes
 
-flujo sirve para:
+Si eres una IA o vas a retomar el repo, lee en este orden:
 
-- recibir pedidos de diseño sin perder información;
-- separar **texto** vs **imagen/diseño**;
-- crear `jobs/` con estado, pendientes y próxima acción;
-- generar briefs y cotizaciones base;
-- mostrar avance a un jefe/cliente con un portal visual;
-- trabajar con herramientas gratuitas: Gmail, Google Apps Script, GitHub Issues/Projects y HTML local.
+1. `context/LAST_HANDOFF.md`  
+   Fuente principal de continuidad. Esta en ASCII-only para evitar errores en Windows/Git Bash.
+2. `docs/AGENT_OPERATING_MANUAL.md`  
+   Manual operativo de agentes, delegacion y forma de trabajar.
+3. `docs/FLUJO_AREAS_EVENTOS_SUPLEMENTOS.md`  
+   Explica las dos rutas reales de pedidos: EVENTOS y SUPLEMENTOS.
+4. `docs/GMAIL_A_REPO_GRATIS.md`  
+   Explica como Gmail crea Issues sin monday.com.
 
-No reemplaza el diseño manual. Ordena el flujo alrededor del diseño.
+Reglas para agentes:
+
+```txt
+- El usuario trabaja en Windows + Git Bash.
+- Usar py, no python, en instrucciones para el usuario.
+- Mantener context/LAST_HANDOFF.md en ASCII-only.
+- No guardar tokens, credenciales ni datos sensibles.
+- Entregar cambios como airdrop si no hay acceso directo al repo.
+```
 
 ---
 
 ## 2. Entrada diaria
 
-**Windows / Git Bash:** usar siempre `py`, no `python`.
-
-La entrada principal es:
+En Windows / Git Bash:
 
 ```bash
 py -m flujo app
 ```
 
-Tambien puedes abrir modo escritorio:
+Modo escritorio:
 
 ```bash
 py -m flujo app --desktop
 ```
 
-Desde ahí usas el hub para:
+Verificar estado:
 
-- pegar pedidos;
-- revisar jobs;
-- ver visualizadores SVG/plano;
-- delegar tareas a agentes;
-- consultar comandos.
-
----
-
-## 3. Flujo gratuito reemplazo monday.com
-
-Como monday.com no se usará, el flujo recomendado es:
-
-```txt
-Gmail
-  → etiqueta flujo-pedido
-  → Google Apps Script
-  → GitHub Issue
-  → GitHub Project tipo kanban
-  → flujo portal
+```bash
+py -m flujo verify
 ```
 
-### Componentes
+---
 
-| Necesidad | Solución gratis |
-|---|---|
-| Recibir pedido por correo | Gmail + etiqueta `flujo-pedido` |
-| Convertir correo en tarea visible | Google Apps Script → GitHub Issue |
-| Que jefatura vea avance | GitHub Project + `flujo portal` |
-| Pedir cambios | GitHub Issue Form “Cambio / corrección” |
-| Trabajo real de diseño | `jobs/`, `brief.yaml`, `projects/` |
-| Vista visual local | `context/portal_jefe.html` |
+## 3. Flujo real por areas
 
-Guías:
+### EVENTOS
 
-- [`docs/GMAIL_A_REPO_GRATIS.md`](docs/GMAIL_A_REPO_GRATIS.md)
-- [`docs/PORTAL_JEFE_GRATIS.md`](docs/PORTAL_JEFE_GRATIS.md)
+Entrada esperada:
+
+```txt
+Correo con asunto que contiene "eventos" o "evento"
+```
+
+Uso:
+
+```txt
+EVENTOS -> link Instagram -> descarga con flujo/instaloader -> automatizacion Photoshop local
+```
+
+Tambien puede pedir:
+
+```txt
+brief / plano app / SVG / pieza visual
+```
+
+En esos casos se crea job normal.
+
+### SUPLEMENTOS
+
+Entrada esperada:
+
+```txt
+Correo con asunto que contiene "suplementos" o "suplemento"
+```
+
+Uso:
+
+```txt
+SUPLEMENTOS -> nuevo pedido / modificacion / correccion / cotizacion
+```
+
+Piezas posibles:
+
+```txt
+etiqueta / flyer / pendon / post Instagram / stickers / stand / logo-sello / brief comercial
+```
+
+Documento operativo:
+
+```txt
+docs/FLUJO_AREAS_EVENTOS_SUPLEMENTOS.md
+```
 
 ---
 
-## 4. Portal para jefatura
+## 4. Gmail sin monday.com
+
+No se conecta Gmail directo al repo. Gmail crea **GitHub Issues**.
+
+Configuracion recomendada en Google Apps Script:
+
+```txt
+GITHUB_TOKEN = github_pat_...
+GITHUB_REPO = ligereza/vibecodeine
+GMAIL_LABEL_DONE = flujo-procesado
+MAX_THREADS = 10
+GMAIL_ROUTES = {subject:eventos subject:evento}|EVENTOS|pedido,area/eventos,estado/por-revisar,gmail,instagram,action/descargar-ig;{subject:suplementos subject:suplemento}|SUPLEMENTOS|pedido,area/suplementos,estado/por-revisar,gmail
+```
+
+Con esto no necesitas escribir "flujo" en el asunto.
+
+Ejemplos de asunto:
+
+```txt
+Eventos - flyer viernes
+Suplementos - modificar etiqueta Omega 3
+```
+
+Script:
+
+```txt
+tools/gmail_to_github_issues.gs
+```
+
+Guia:
+
+```txt
+docs/GMAIL_A_REPO_GRATIS.md
+```
+
+---
+
+## 5. GitHub Issues y Projects
+
+Templates activos:
+
+```txt
+.github/ISSUE_TEMPLATE/pedido_eventos.yml       -> [EVENTOS]
+.github/ISSUE_TEMPLATE/pedido_suplementos.yml   -> [SUPLEMENTOS]
+.github/ISSUE_TEMPLATE/cambio_diseno.yml        -> [Cambio]
+.github/ISSUE_TEMPLATE/revision_privacidad.yml  -> [Privacidad]
+```
+
+Labels recomendados:
+
+```txt
+area/eventos
+area/suplementos
+instagram
+action/descargar-ig
+action/crear-job
+action/cotizar
+estado/por-revisar
+estado/pendiente-datos
+estado/en-diseno
+estado/revision
+estado/entregado
+```
+
+---
+
+## 6. Portal para jefatura
 
 Generar portal visual:
 
@@ -102,95 +193,23 @@ Salida:
 context/portal_jefe.html
 ```
 
-Muestra:
-
-- columnas por estado;
-- pedidos abiertos;
-- entregados;
-- pendientes;
-- próxima acción;
-- botones de “Nuevo pedido” y “Pedir cambio”.
-
-La paleta del portal está orientada a **PURPLE** para diferenciar esta etapa del sistema.
+Muestra estados, pendientes y proximas acciones sin usar monday.com.
 
 ---
 
-## 5. Gmail → repo
+## 7. Jobs e intake
 
-No se recomienda que Gmail escriba directo al repo. Mejor crea Issues.
-
-Script incluido:
-
-```txt
-tools/gmail_to_github_issues.gs
-```
-
-Funcionamiento:
-
-```txt
-Correo con label flujo-pedido
-  → Apps Script cada 10 minutos
-  → GitHub Issue con labels pedido/estado/por-revisar/gmail
-  → correo marcado como flujo-procesado
-```
-
-Requiere configurar en Google Apps Script:
-
-```txt
-GITHUB_TOKEN
-GITHUB_REPO = ligereza/vibecodeine
-GMAIL_LABEL_IN = flujo-pedido
-GMAIL_LABEL_DONE = flujo-procesado
-```
-
-Ver guía completa: [`docs/GMAIL_A_REPO_GRATIS.md`](docs/GMAIL_A_REPO_GRATIS.md).
-
----
-
-## 6. Pedidos de suplementos RD
-
-Se agregó el brief operativo de suplementos RD:
-
-```txt
-docs/BRIEF_SUPLEMENTOS_RD.md
-```
-
-Ese brief define cómo trabajar piezas como:
-
-- etiquetas;
-- flyers;
-- pendones;
-- posts de Instagram;
-- stickers;
-- logo/sello de línea de suplementos;
-- stand/eventos.
-
-Regla central para esta área:
-
-```txt
-Separar siempre texto / imagen-diseño / formato / fecha / prioridad / referencias.
-```
-
-Pendientes relevantes del brief:
-
-- etiqueta Omega 3;
-- etiqueta Glicinato de Magnesio;
-- ingredientes de gomitas;
-- tabla nutricional Post Fiesta;
-- pendón con servicios RD;
-- flyers con decisión WhatsApp/QR;
-- logo o sello línea suplementos;
-- paquete mensual Instagram;
-- 5 stickers para eventos.
-
----
-
-## 7. Intake JSON
-
-Para pedidos estructurados:
+Crear job desde correo/texto:
 
 ```bash
-py -m flujo intake json schemas/ejemplos/flyer_evento.json
+py -m flujo job new "nombre pedido" --email inbox/correo.txt
+py -m flujo job prepare jobs/<job>
+```
+
+Intake JSON:
+
+```bash
+py -m flujo intake json inbox/pedido.json
 ```
 
 Genera:
@@ -201,154 +220,97 @@ jobs/<folio>/estado.md
 jobs/<folio>/resultado.md
 ```
 
-Documentación:
+Cotizacion multiformato:
 
-- [`docs/INTAKE_JSON.md`](docs/INTAKE_JSON.md)
+```bash
+py -m flujo brief paquete-cotizacion jobs/<job>
+```
 
 ---
 
-## 8. Comandos principales
+## 8. EVENTOS: descarga Instagram
 
-### Salud y versión
+Para correos de EVENTOS con link Instagram:
+
+```bash
+py -m flujo flyer-import inbox/correo_evento.txt
+```
+
+Regla:
+
+```txt
+Usar instaloader. No usar yt-dlp.
+```
+
+Luego la imagen descargada entra a la automatizacion local de Photoshop/carpetas del usuario.
+
+---
+
+## 9. Comandos utiles
 
 ```bash
 py -m flujo health
 py -m flujo version
 py -m flujo verify
-```
-
-### App diaria
-
-```bash
 py -m flujo app
-py -m flujo app --desktop
-```
-
-### Jobs
-
-```bash
-py -m flujo job new "nombre pedido" --email inbox/correo.txt
-py -m flujo job prepare jobs/<job>
-py -m flujo job list
-py -m flujo job status jobs/<job>
-py -m flujo job activate jobs/<job>
-```
-
-### Intake JSON
-
-```bash
-py -m flujo intake json inbox/pedido.json
-```
-
-### Portal
-
-```bash
 py -m flujo portal --repo-url https://github.com/ligereza/vibecodeine
-```
-
-### Render
-
-```bash
 py -m flujo render formats
-py -m flujo render run projects/piezas_vectoriales/<proyecto>/config.json
-py -m flujo render rescale projects/.../config.json --dpi 300
-```
-
-### Limpieza segura
-
-```bash
 py -m flujo clean
 ```
 
 ---
 
-## 9. Estados de trabajo
+## 10. Airdrops
 
-Estados principales:
-
-```txt
-borrador
-brief_extraido_pendiente_revision
-pendiente_datos
-listo_para_disenar
-en_diseno
-generado
-entregado
-pausado
-cancelado
-```
-
-Para jefatura se simplifican como:
-
-```txt
-Por revisar → Pendiente datos → Listo → En diseño → Revisión → Entregado
-```
-
----
-
-## 10. Protocolo para agentes / airdrops
-
-Regla Windows importante:
-
-```txt
-El usuario trabaja en Windows + Git Bash. En documentacion y handoffs usar py, no python.
-context/LAST_HANDOFF.md debe mantenerse ASCII-only para evitar letras rotas.
-Codigo, nombres de variables y logs pueden ir en ingles si eso evita problemas de encoding.
-```
-
-Si una IA modifica el repo debe entregar un **airdrop**:
-
-```txt
-airdrop.zip
-└── _airdrop/
-    ├── README.md
-    ├── src/flujo/...
-    ├── docs/...
-    ├── tests/...
-    └── HANDOFF_YYYY-MM-DD.md
-```
-
-Validación obligatoria antes de aplicar:
+Aplicar un airdrop:
 
 ```bash
 py scripts/validate_airdrop.py
-py scripts/run_airdrop_checks.py "vX.Y.Z - descripcion"
+py scripts/run_airdrop_checks.py "mensaje"
 ```
+
+Si el airdrop trae un script de limpieza, correrlo despues de aplicar.
 
 Reglas:
 
-- no guardar tokens;
-- no commitear datos sensibles;
-- no usar yt-dlp;
-- no borrar archivos sin listar antes qué se va a eliminar;
-- mantener `context/LAST_HANDOFF.md` actualizado.
-
----
-
-## 11. Estructura viva del repo
-
 ```txt
-src/flujo/        paquete principal
-context/          portal, handoff, reportes
-jobs/             trabajos locales, normalmente no se suben completos
-projects/         proyectos visuales y satélites
-docs/             documentación operativa
-schemas/          intake JSON y ejemplos
-tools/            scripts auxiliares, Apps Script, plantillas
-.github/          Issue Forms y workflows
+- No guardar tokens.
+- No commitear datos sensibles.
+- No borrar sin listar antes.
+- Mantener LAST_HANDOFF actualizado y ASCII-only.
 ```
 
-Histórico y material viejo vive en `.archive/`. No usar como fuente primaria salvo que se pida explícitamente.
+---
+
+## 11. Estructura principal
+
+```txt
+src/flujo/        codigo principal
+context/          handoff, portal, reportes
+jobs/             trabajos locales
+projects/         proyectos visuales
+schemas/          intake JSON
+docs/             manuales operativos
+tools/            scripts auxiliares
+.github/          issue templates y workflows
+```
 
 ---
 
-## 12. Próximas mejoras recomendadas
+## 12. Proxima mejora recomendada
 
-1. `flujo issue import <numero>` para convertir GitHub Issue en job/intake JSON.
-2. Sanitización automática antes de crear Issues desde Gmail.
-3. Portal jefe con filtro por área: suplementos / eventos / comercial.
-4. Formulario específico de suplementos RD basado en `docs/BRIEF_SUPLEMENTOS_RD.md`.
-5. Export instalable/desktop más simple para uso diario.
+Implementar:
+
+```bash
+py -m flujo issue import <numero-o-url>
+```
+
+Objetivo:
+
+```txt
+GitHub Issue [EVENTOS] + instagram -> preparar descarga
+GitHub Issue [SUPLEMENTOS] -> crear job/intake/cotizacion
+```
 
 ---
 

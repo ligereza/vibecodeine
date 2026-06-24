@@ -1,75 +1,64 @@
-# Conectar Gmail con el repo gratis (Gmail → GitHub Issues → flujo)
+# Gmail a GitHub Issues gratis
 
-Objetivo: que un correo entrante cree un pedido visible en GitHub, sin monday.com.
+Objetivo: que un correo cree un Issue visible en GitHub sin usar monday.com.
 
-## Recomendación
+## Decision actual
 
-No conectar Gmail directo a commits del repo. Mejor:
+No es necesario que el asunto diga "flujo".
+
+Usaremos palabras simples en el asunto:
 
 ```txt
-Gmail
-  → etiqueta "flujo-pedido"
-  → Google Apps Script
-  → GitHub Issue
-  → GitHub Project visible para jefatura
-  → flujo app / flujo intake json / flujo portal
+eventos
+suplementos
 ```
 
-Ventajas:
+Ejemplos:
 
-- gratis;
-- tu jefe puede ver estado y comentar en GitHub;
-- no se commitean correos completos ni secretos automáticamente;
-- funciona aunque tu computador esté apagado, porque Apps Script corre en Google.
+```txt
+Eventos - flyer viernes
+Suplementos - modificar etiqueta Omega 3
+```
+
+El puente queda asi:
+
+```txt
+Gmail subject eventos/suplementos
+  -> Google Apps Script
+  -> GitHub Issue [EVENTOS] o [SUPLEMENTOS]
+  -> GitHub Project / flujo app / portal
+```
 
 ---
 
-## Qué archivo usar
-
-Este repo incluye el script listo para copiar:
+## Script usado
 
 ```txt
 tools/gmail_to_github_issues.gs
 ```
 
-Ese script busca correos con etiqueta `flujo-pedido`, crea un GitHub Issue y luego marca el correo como `flujo-procesado`.
-
 ---
 
-## Paso 1 — Crear token de GitHub
+## Paso 1 - Token GitHub
 
-En GitHub:
-
-1. Ir a **Settings → Developer settings → Personal access tokens → Fine-grained tokens**.
-2. Crear token para el repo `ligereza/vibecodeine`.
-3. Permisos mínimos:
-   - **Issues: Read and write**
-   - opcional: **Metadata: Read-only**
-4. Copiar el token.
-
-> No pegues este token en el repo ni en chats. Va solo en Google Apps Script Properties.
-
----
-
-## Paso 2 — Crear etiquetas en Gmail
-
-En Gmail crea estas etiquetas:
+Crear un fine-grained token para:
 
 ```txt
-flujo-pedido
-flujo-procesado
+ligereza/vibecodeine
 ```
 
-Puedes crear un filtro, por ejemplo:
+Permisos:
 
-- si el asunto contiene `[Pedido]`, aplicar etiqueta `flujo-pedido`;
-- o si viene de tu jefe/productora, aplicar etiqueta `flujo-pedido`.
+```txt
+Issues: Read and write
+Metadata: Read-only
+```
 
-Así tú controlas qué correos se convierten en issues.
+No guardar el token en el repo.
 
 ---
 
-## Paso 3 — Crear Google Apps Script
+## Paso 2 - Google Apps Script
 
 1. Ir a <https://script.google.com/>.
 2. Crear proyecto nuevo: `flujo Gmail Bridge`.
@@ -79,45 +68,48 @@ Así tú controlas qué correos se convierten en issues.
 tools/gmail_to_github_issues.gs
 ```
 
-4. Guardar.
-
 ---
 
-## Paso 4 — Configurar Script Properties
+## Paso 3 - Script Properties
 
 En Apps Script:
 
-1. Project Settings → **Script properties**.
-2. Agregar:
+```txt
+Project Settings -> Script properties
+```
+
+Agregar:
 
 ```txt
 GITHUB_TOKEN = github_pat_...
 GITHUB_REPO = ligereza/vibecodeine
-GMAIL_LABEL_IN = flujo-pedido
 GMAIL_LABEL_DONE = flujo-procesado
-GITHUB_LABELS = pedido,estado/por-revisar,gmail
 MAX_THREADS = 10
+GMAIL_ROUTES = {subject:eventos subject:evento}|EVENTOS|pedido,area/eventos,estado/por-revisar,gmail,instagram,action/descargar-ig;{subject:suplementos subject:suplemento}|SUPLEMENTOS|pedido,area/suplementos,estado/por-revisar,gmail
 ```
 
-Mínimas obligatorias:
+La propiedad importante es `GMAIL_ROUTES`.
+
+Significa:
 
 ```txt
-GITHUB_TOKEN
-GITHUB_REPO
+subject eventos/s -> Issue [EVENTOS]
+subject suplementos/s -> Issue [SUPLEMENTOS]
 ```
 
 ---
 
-## Paso 5 — Autorizar y activar trigger
+## Paso 4 - Activar
 
-En Apps Script:
+En Apps Script ejecutar una vez:
 
-1. Seleccionar función `setupFlujoGmailBridge`.
-2. Ejecutar.
-3. Google pedirá permisos para Gmail y llamadas externas.
-4. Aceptar si estás usando tu propia cuenta.
+```txt
+setupFlujoGmailBridge
+```
 
-Eso crea un trigger cada 10 minutos para ejecutar:
+Google pedira permisos para Gmail y llamadas externas.
+
+Eso crea un trigger cada 10 minutos para:
 
 ```txt
 processFlujoPedidos
@@ -125,94 +117,121 @@ processFlujoPedidos
 
 ---
 
-## Paso 6 — Probar
+## Paso 5 - Probar EVENTOS
 
-1. Enviarte un correo de prueba con asunto:
-
-```txt
-[Pedido] Flyer evento prueba
-```
-
-2. Aplicar etiqueta `flujo-pedido`.
-3. Ejecutar manualmente `processFlujoPedidos` o esperar 10 min.
-4. Verificar que se creó un issue en:
+Enviar o buscar un correo con asunto:
 
 ```txt
-https://github.com/ligereza/vibecodeine/issues
+Eventos - flyer prueba
 ```
 
-5. Verificar que el correo quedó con etiqueta `flujo-procesado`.
-
----
-
-## Cómo entra esto a flujo
-
-Por ahora:
-
-1. El issue queda como bandeja visible para jefatura.
-2. Tú copias el contenido al hub:
-
-```bash
-py -m flujo app
-```
-
-3. O lo transformas en JSON y corres:
-
-```bash
-py -m flujo intake json inbox/pedido.json
-```
-
-4. Generas portal:
-
-```bash
-py -m flujo portal --repo-url https://github.com/ligereza/vibecodeine
-```
-
----
-
-## Privacidad importante
-
-Si el repo es público, no mandes correos reales con datos sensibles a GitHub Issues.
-
-Opciones seguras:
-
-- usar repo privado;
-- etiquetar solo correos no sensibles;
-- sanitizar manualmente antes;
-- en el futuro, agregar sanitización automática antes de crear issue.
-
-Por ahora el script limita cuerpo a 12.000 caracteres, pero no elimina PII.
-
----
-
-## Alternativa si no quieres GitHub token en Google
-
-Puedes usar un poller local por IMAP, pero requiere que tu computador esté prendido:
+Texto:
 
 ```txt
-Gmail IMAP → script local → inbox/*.txt/json → flujo job/intake
+https://www.instagram.com/p/XXXXX/
 ```
 
-Para Gmail eso implica:
+Ejecutar manualmente:
 
-- activar IMAP;
-- usar contraseña de aplicación o OAuth;
-- guardar credenciales localmente fuera del repo.
+```txt
+processFlujoPedidos
+```
 
-Recomendación actual: **Apps Script → GitHub Issue**, porque es gratis, simple y corre en la nube de Google.
+Debe crear un issue:
+
+```txt
+[EVENTOS] Eventos - flyer prueba
+```
+
+Labels:
+
+```txt
+pedido
+area/eventos
+estado/por-revisar
+gmail
+instagram
+action/descargar-ig
+```
 
 ---
 
-## Próximo avance técnico sugerido
+## Paso 6 - Probar SUPLEMENTOS
 
-Implementar uno de estos comandos:
+Correo con asunto:
 
-```bash
-py -m flujo issue import <numero>
-py -m flujo gmail poll
+```txt
+Suplementos - modificar etiqueta Omega 3
 ```
 
-Orden recomendado:
+Debe crear:
 
-1. `flujo issue import <numero>`: convierte un GitHub Issue en `intake JSON`/job.
-2. Luego, si hace falta, `flujo gmail poll` local.
+```txt
+[SUPLEMENTOS] Suplementos - modificar etiqueta Omega 3
+```
+
+Labels:
+
+```txt
+pedido
+area/suplementos
+estado/por-revisar
+gmail
+```
+
+---
+
+## Procesado
+
+El script agrega la etiqueta:
+
+```txt
+flujo-procesado
+```
+
+para no procesar el mismo correo de nuevo.
+
+Solo necesitas crear esa etiqueta en Gmail. No necesitas etiquetas `flujo-eventos` ni `flujo-suplementos` si usas asunto.
+
+---
+
+## Si prefieres etiquetas en vez de asunto
+
+Tambien se puede usar labels Gmail. Cambia `GMAIL_ROUTES` a:
+
+```txt
+label:flujo-eventos|EVENTOS|pedido,area/eventos,estado/por-revisar,gmail,instagram,action/descargar-ig;label:flujo-suplementos|SUPLEMENTOS|pedido,area/suplementos,estado/por-revisar,gmail
+```
+
+Pero la recomendacion actual es por asunto:
+
+```txt
+eventos
+suplementos
+```
+
+---
+
+## Privacidad
+
+Si el repo es publico, cuidado con mandar correos completos a Issues.
+
+Opciones:
+
+```txt
+- usar repo privado
+- evitar datos sensibles en correos procesados
+- sanitizar antes en una futura version
+```
+
+---
+
+## Siguiente mejora
+
+Implementar:
+
+```bash
+py -m flujo issue import <numero-o-url>
+```
+
+Para convertir Issues en jobs sin copiar/pegar.

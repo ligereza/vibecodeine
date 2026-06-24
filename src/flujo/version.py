@@ -1,8 +1,8 @@
 """Versión y changelog de flujo."""
 
-__version__ = "0.35.9"
+__version__ = "0.35.10"
 VERSION = __version__
-__version_info__ = (0, 35, 9)
+__version_info__ = (0, 35, 10)
 
 
 def get_version():
@@ -11,6 +11,16 @@ def get_version():
 
 def get_changelog():
     return {
+        "0.35.10": {
+            "titulo": "Gmail por asunto y README orientado a agentes",
+            "fecha": "2026-06-24",
+            "highlights": [
+                "Gmail bridge ya no requiere asuntos con 'flujo': rutea por subject:eventos y subject:suplementos",
+                "`GMAIL_ROUTES` acepta busquedas Gmail completas o rutas legacy `label:...`",
+                "README se simplifica y pone primero el manual para agentes y LAST_HANDOFF",
+                "Docs de Gmail y areas se actualizan para EVENTOS/SUPLEMENTOS por asunto",
+            ],
+        },
         "0.35.9": {
             "titulo": "Hotfix Windows checkout y templates por area",
             "fecha": "2026-06-24",

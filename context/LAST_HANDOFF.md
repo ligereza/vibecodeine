@@ -5,7 +5,7 @@ Do not use accents, enye, emoji, smart quotes, or special arrows here.
 Daily commands for owner on Windows/Git Bash must use `py`, not `python`.
 
 Date: 2026-06-24
-Current version: 0.35.9
+Current version: 0.35.10
 Main daily entry: `py -m flujo app`
 Desktop entry: `py -m flujo app --desktop`
 Verify on Windows: `py -m flujo verify`
@@ -22,7 +22,7 @@ Gmail / WhatsApp / GitHub Issue
   -> visual portal for boss/client
 
 Recommended free stack:
-- Gmail labels by area: `flujo-eventos`, `flujo-suplementos`, `flujo-procesado`.
+- Gmail routing by subject: `eventos` -> EVENTOS, `suplementos` -> SUPLEMENTOS.
 - Google Apps Script bridge: `tools/gmail_to_github_issues.gs`.
 - GitHub Issues: request/change inbox with area labels.
 - GitHub Projects: visual kanban for boss.
@@ -47,7 +47,7 @@ Recommended free stack:
 ### v0.35.5 - Gmail to GitHub Issues
 - Added `tools/gmail_to_github_issues.gs` for Google Apps Script.
 - Added `docs/GMAIL_A_REPO_GRATIS.md`.
-- Flow: Gmail label `flujo-pedido` -> GitHub Issue -> label `flujo-procesado`.
+- Initial flow used Gmail labels; later v0.35.10 changed recommendation to subject routing.
 - Do not store tokens in repo. Use Google Apps Script Properties.
 
 ### v0.35.6 - README clean + PURPLE + suplementos RD
@@ -68,8 +68,8 @@ Recommended free stack:
 - Updated airdrop handoff to avoid accents and python commands.
 
 ### v0.35.8 - Gmail routing by area
-- Gmail bridge now supports `GMAIL_ROUTES`.
-- Default area labels: `flujo-eventos`, `flujo-suplementos`, `flujo-procesado`.
+- Gmail bridge added `GMAIL_ROUTES`.
+- First version used area labels; v0.35.10 changed recommendation to subject routing.
 - EVENTOS route: Instagram links, download with flujo/instaloader, then local Photoshop automation. If request asks for brief/plano/svg, create normal flujo job.
 - SUPLEMENTOS route: new request, modification, or quote for flyer/label/pendon/post/stickers/stand/logo.
 - Added `docs/FLUJO_AREAS_EVENTOS_SUPLEMENTOS.md`.
@@ -80,6 +80,13 @@ Recommended free stack:
 - Added area-specific templates: `pedido_eventos.yml` and `pedido_suplementos.yml`.
 - Gmail bridge issue titles now use `[EVENTOS]` or `[SUPLEMENTOS]`.
 - Added `scripts/cleanup_v0359_windows_paths.py` for airdrop users to remove old paths if needed.
+
+### v0.35.10 - Gmail subject routing and agent-first README
+- Gmail bridge no longer requires the word flujo in subjects.
+- Default routing: `{subject:eventos subject:evento}` -> EVENTOS and `{subject:suplementos subject:suplemento}` -> SUPLEMENTOS.
+- `GMAIL_ROUTES` now accepts full Gmail search queries, plus legacy `label:...` routes.
+- README was simplified and now starts with the required agent manual reading order.
+- Removed explicit supplements brief details from README; it only links to operational docs.
 
 ## Important Windows/Git Bash rules
 
