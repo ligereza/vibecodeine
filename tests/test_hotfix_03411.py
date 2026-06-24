@@ -12,19 +12,27 @@ from flujo.intake.email_parser import parse_pedido_text
 from flujo.web.hub import HubRequestHandler
 
 
-def test_hub_static_resolver_rejects_traversal(tmp_path):
+def test_hub_static_resolver_rejects_traversal_and_non_public_root_files(tmp_path):
     root = tmp_path / "root"
     context = root / "context"
+    svg = root / "svg"
     root.mkdir()
     context.mkdir()
-    (root / "ok.txt").write_text("ok", encoding="utf-8")
+    svg.mkdir()
+    (context / "flujo_hub.html").write_text("hub", encoding="utf-8")
+    (svg / "ok.svg").write_text("<svg></svg>", encoding="utf-8")
+    (root / "pyproject.toml").write_text("secret-ish", encoding="utf-8")
+    (root / "src_secret.py").write_text("secret-ish", encoding="utf-8")
     (tmp_path / "secret.txt").write_text("secret", encoding="utf-8")
 
     handler = HubRequestHandler.__new__(HubRequestHandler)
     handler.root = root
     handler.context_path = context
 
-    assert handler._resolve_static_file("ok.txt") == root / "ok.txt"
+    assert handler._resolve_static_file("flujo_hub.html") == context / "flujo_hub.html"
+    assert handler._resolve_static_file("svg/ok.svg") == svg / "ok.svg"
+    assert handler._resolve_static_file("pyproject.toml") is None
+    assert handler._resolve_static_file("src_secret.py") is None
     assert handler._resolve_static_file("../secret.txt") is None
     assert handler._resolve_static_file("%2e%2e/secret.txt") is None
     assert handler._resolve_static_file("..\\secret.txt") is None

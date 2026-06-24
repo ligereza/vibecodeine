@@ -331,6 +331,61 @@ def health():
         _warn("Index no existe. Ejecutar: flujo index --rebuild")
 
 
+def _run_verify_subprocess(label: str, cmd: list[str], cwd: Path) -> None:
+    import subprocess
+
+    console.print(f"\n[cyan]> {label}[/] {' '.join(cmd)}")
+    proc = subprocess.run(
+        cmd,
+        cwd=str(cwd),
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
+    if proc.returncode != 0:
+        _err(f"verify falló en {label} (código {proc.returncode})")
+
+
+@app.command("verify")
+def verify(
+    run_pytest: bool = typer.Option(True, "--pytest/--no-pytest", help="ejecutar pytest"),
+    hub_smoke: bool = typer.Option(True, "--hub-smoke/--no-hub-smoke", help="probar servidor hub + SSE + seguridad static"),
+):
+    """Verificación integral local/CI: compileall, tests, health, version y hub smoke.
+
+    Es el comando único para responder: "¿el repo está sano después de un
+    airdrop/cambio?". En CI se recomienda correrlo en Linux y Windows.
+    """
+    from .paths import repo_root
+
+    root = repo_root()
+    _section("flujo · verify")
+    console.print(f"[cyan]Repo root:[/] {root}")
+    console.print(f"[cyan]Python:[/] {sys.executable}")
+
+    compile_targets = ["src", "scripts", "tests"]
+    generator = root / "tools" / "piezas_vectoriales" / "scripts" / "generar_desde_json.py"
+    if generator.exists():
+        compile_targets.append(str(generator.relative_to(root)))
+    _run_verify_subprocess(
+        "compileall",
+        [sys.executable, "-m", "compileall", "-q", *compile_targets],
+        root,
+    )
+    if run_pytest:
+        _run_verify_subprocess("pytest", [sys.executable, "-m", "pytest", "tests/", "-q"], root)
+    _run_verify_subprocess("health", [sys.executable, "-m", "flujo", "health"], root)
+    _run_verify_subprocess("version", [sys.executable, "-m", "flujo", "version"], root)
+    if hub_smoke:
+        smoke = root / "scripts" / "hub_smoke.py"
+        if smoke.exists():
+            _run_verify_subprocess("hub smoke", [sys.executable, str(smoke)], root)
+        else:
+            _warn("scripts/hub_smoke.py no existe; se omite hub smoke")
+
+    _ok("verify OK")
+
+
 @app.command()
 def version():
     """Muestra versión y changelog."""
@@ -1554,7 +1609,7 @@ launch(
         console.print("[bold]Para que se sienta aún más profesional (gratis):[/]")
         console.print("  - Copia el exe (y flujo_workspace si usas) a un lugar fijo (ej. Desktop o C:\\flujo).")
         console.print("  - Usa Inno Setup (https://jrsoftware.org - gratuito) para installer con Start Menu:")
-        console.print("      [Setup]  AppName=flujo  AppVersion=0.34.12 OutputDir=installer")
+        console.print("      [Setup]  AppName=flujo  AppVersion=0.34.13 OutputDir=installer")
         console.print("      [Files]  Source: dist\\flujo-hub.exe ; DestDir: {app}")
         console.print("      [Icons]  Name: {autoprograms}\\flujo ; Filename: {app}\\flujo-hub.exe")
         console.print("      (agrega .ico , asocia .json si quieres para proyectos)")

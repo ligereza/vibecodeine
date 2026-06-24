@@ -3,6 +3,7 @@
 
 Uso:
     py scripts/run_airdrop_checks.py "vX.Y.Z - mensaje"
+    py scripts/run_airdrop_checks.py --resume "vX.Y.Z - mensaje"
 
 Diseñado para Windows/Git Bash: no invoca `bash` desde Python. Usa el motor
 Python de `flujo.airdrop` para scan/apply/checkpoint y deja logs UTF-8 en
@@ -155,6 +156,8 @@ def _checkpoint(log, message: str) -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Runner seguro de airdrop con log")
     parser.add_argument("message", help="Mensaje del checkpoint")
+    parser.add_argument("--resume", action="store_true", help="Reanuda después de un apply ya realizado: salta validate/dry-run/apply y corre checks/checkpoint")
+    parser.add_argument("--skip-hub-smoke", action="store_true", help="omite scripts/hub_smoke.py")
     parser.add_argument("--skip-checkpoint", action="store_true", help="Ejecuta checks pero no commitea/pushea")
     parser.add_argument(
         "--allow-airdrop-engine",
@@ -172,22 +175,34 @@ def main(argv: list[str] | None = None) -> int:
         _write(log, f"### PWD {ROOT}")
         _write(log, f"### MESSAGE {args.message}")
         _write(log, "### RUNNER Python-only (sin bash interno)")
+        if args.resume:
+            _write(log, "### RESUME: saltando validate/dry-run/apply; continuando checks/checkpoint")
 
         _ensure_src_first()
-        steps: list[tuple[str, Callable[[], int]]] = [
-            (
-                "validar _airdrop",
-                lambda: _run_step(
-                    log,
-                    "py scripts/validate_airdrop.py"
-                    + (" --allow-airdrop-engine" if args.allow_airdrop_engine else ""),
-                    lambda: _validate_airdrop(log, args.allow_airdrop_engine),
+        steps: list[tuple[str, Callable[[], int]]] = []
+        if not args.resume:
+            steps.extend([
+                (
+                    "validar _airdrop",
+                    lambda: _run_step(
+                        log,
+                        "py scripts/validate_airdrop.py"
+                        + (" --allow-airdrop-engine" if args.allow_airdrop_engine else ""),
+                        lambda: _validate_airdrop(log, args.allow_airdrop_engine),
+                    ),
                 ),
-            ),
-            ("airdrop dry-run", lambda: _run_step(log, "flujo.airdrop.scan_airdrop()", lambda: _airdrop_dry_run(log))),
-            ("airdrop apply", lambda: _run_step(log, "flujo.airdrop.apply_airdrop()", lambda: _airdrop_apply(log))),
+                ("airdrop dry-run", lambda: _run_step(log, "flujo.airdrop.scan_airdrop()", lambda: _airdrop_dry_run(log))),
+                ("airdrop apply", lambda: _run_step(log, "flujo.airdrop.apply_airdrop()", lambda: _airdrop_apply(log))),
+            ])
+
+        compile_targets = ["src", "scripts", "tests"]
+        generator = ROOT / "tools" / "piezas_vectoriales" / "scripts" / "generar_desde_json.py"
+        if generator.exists():
+            compile_targets.append(str(generator.relative_to(ROOT)))
+
+        steps.extend([
             ("pip install", lambda: _run_subprocess(log, [sys.executable, "-m", "pip", "install", "-e", ".[dev]"])),
-            ("compileall", lambda: _run_subprocess(log, [sys.executable, "-m", "compileall", "-q", "src", "scripts", "tests"])),
+            ("compileall", lambda: _run_subprocess(log, [sys.executable, "-m", "compileall", "-q", *compile_targets])),
             ("pytest", lambda: _run_subprocess(log, [sys.executable, "-m", "pytest", "tests/", "-q"])),
             ("health", lambda: _run_subprocess(log, [sys.executable, "-m", "flujo", "health"])),
             ("version", lambda: _run_subprocess(log, [sys.executable, "-m", "flujo", "version"])),
@@ -203,7 +218,10 @@ def main(argv: list[str] | None = None) -> int:
                     ],
                 ),
             ),
-        ]
+        ])
+        smoke = ROOT / "scripts" / "hub_smoke.py"
+        if smoke.exists() and not args.skip_hub_smoke:
+            steps.append(("hub smoke", lambda: _run_subprocess(log, [sys.executable, str(smoke)])))
         if not args.skip_checkpoint:
             steps.append(("checkpoint", lambda: _run_step(log, "flujo.airdrop.run_auto_checkpoint()", lambda: _checkpoint(log, args.message))))
 

@@ -1,8 +1,8 @@
 """Versión y changelog de flujo."""
 
-__version__ = "0.34.12"
+__version__ = "0.34.13"
 VERSION = __version__
-__version_info__ = (0, 34, 12)
+__version_info__ = (0, 34, 13)
 
 
 def get_version():
@@ -11,6 +11,17 @@ def get_version():
 
 def get_changelog():
     return {
+        "0.34.13": {
+            "titulo": "Workflow hardening: verify, hub smoke, Windows CI y resume",
+            "fecha": "2026-06-23",
+            "highlights": [
+                "Nuevo comando `flujo verify` para compileall, pytest, health, version y hub smoke en un solo paso",
+                "Nuevo `scripts/hub_smoke.py` prueba /api/ping, SSE concurrente y bloqueo de archivos internos",
+                "CI ahora corre en Ubuntu y Windows con `python -m flujo verify`",
+                "run_airdrop_checks.py agrega `--resume` para continuar checks/checkpoint tras un apply ya realizado",
+                "Servidor del hub ya no expone archivos internos del repo como pyproject.toml o src/*.py por static serving",
+            ],
+        },
         "0.34.12": {
             "titulo": "Hotfix Windows UTF-8 en CLI",
             "fecha": "2026-06-23",

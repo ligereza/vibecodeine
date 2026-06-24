@@ -42,6 +42,16 @@ src/_airdrop/...
 ```bash
 py scripts/validate_airdrop.py
 py scripts/run_airdrop_checks.py "mensaje"
+
+# Si el airdrop ya aplicó pero falló después (tests/health/checkpoint), reanudar:
+py scripts/run_airdrop_checks.py --resume "mensaje"
+```
+
+Verificación integral opcional/CI:
+
+```bash
+py -m flujo verify
+py scripts/hub_smoke.py
 ```
 
 Incluye en LAST_HANDOFF: tareas simples claras + nota "probado en Windows".

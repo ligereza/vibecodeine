@@ -129,3 +129,14 @@ Fortalecer los dos flujos de agentes:
 - v0.34.11 aplicó y pasó tests en Windows, pero `flujo health` falló en Git Bash/cp1252 al imprimir `⚠` vía Rich.
 - Hotfix: `src/flujo/cli.py` reconfigura stdout/stderr a UTF-8 en Windows antes de crear `Console`.
 - Aplicar encima de v0.34.11 y correr: `py scripts/run_airdrop_checks.py "v0.34.12 - hotfix windows utf8 cli"`.
+
+---
+
+**Actualización 2026-06-23 — v0.34.13 workflow hardening**
+- Agregado `flujo verify` como verificación única: compileall + pytest + health + version + hub smoke.
+- Agregado `scripts/hub_smoke.py`: prueba `/api/ping`, SSE concurrente y bloqueo de traversal/archivos internos.
+- CI ahora corre en Ubuntu + Windows con `python -m flujo verify`.
+- `scripts/run_airdrop_checks.py --resume` permite continuar checks/checkpoint si un airdrop ya aplicó y falló después.
+- Hub static fallback endurecido: ya no expone `pyproject.toml`, `src/*.py`, `.env`, etc.; solo prefijos públicos.
+
+**Siguiente:** aplicar airdrop v0.34.13 y correr `py scripts/run_airdrop_checks.py "v0.34.13 - workflow hardening verify hub smoke windows ci resume"`. Si ya está aplicado y falló después: `py scripts/run_airdrop_checks.py --resume "v0.34.13 - workflow hardening verify hub smoke windows ci resume"`.

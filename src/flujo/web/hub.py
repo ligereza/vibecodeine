@@ -225,6 +225,15 @@ class HubRequestHandler(BaseHTTPRequestHandler):
 
     ROOT: Path = None
     CONTEXT: Path = None
+    # Only these repo-root folders are public static assets. Do not expose src/,
+    # .env, pyproject.toml, data/, etc. Context HTML remains served separately.
+    ROOT_STATIC_PREFIXES = (
+        "svg/",
+        "projects/flujo/",
+        "projects/plano/",
+        "projects/tapiz/",
+        "docs/",
+    )
 
     def __init__(self, *args, **kwargs):
         if HubRequestHandler.ROOT is None:
@@ -264,19 +273,29 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             return None
         return candidate if candidate.is_file() else None
 
+    def _root_static_allowed(self, rel: str) -> bool:
+        """Return True if rel is an intentionally public repo-root asset."""
+        try:
+            decoded = unquote(rel or "").replace("\\", "/").lstrip("/")
+        except Exception:
+            return False
+        parts = [part for part in decoded.split("/") if part and part != "."]
+        if not parts or any(part == ".." for part in parts):
+            return False
+        normalized = "/".join(parts)
+        if normalized in {"favicon.ico", "robots.txt"}:
+            return True
+        normalized_slash = normalized + ("/" if not normalized.endswith("/") else "")
+        return any(normalized == prefix.rstrip("/") or normalized_slash.startswith(prefix) for prefix in self.ROOT_STATIC_PREFIXES)
+
     def _resolve_static_file(self, rel: str) -> Path | None:
-        """Resolve static assets from context first, then asset/repo root."""
-        seen: set[str] = set()
-        for base in (self.context_path, self.root):
-            if not base:
-                continue
-            key = str(Path(base).resolve())
-            if key in seen:
-                continue
-            seen.add(key)
-            candidate = self._resolve_under(Path(base), rel)
+        """Resolve static assets from context, then whitelisted asset/repo roots."""
+        if self.context_path:
+            candidate = self._resolve_under(Path(self.context_path), rel)
             if candidate:
                 return candidate
+        if self.root and self._root_static_allowed(rel):
+            return self._resolve_under(Path(self.root), rel)
         return None
 
     def do_GET(self):
@@ -377,9 +396,9 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             self.send_error(404)
             return
 
-        # Servir archivos estáticos: context/ primero (hub + visualizers HTMLs), fallback a root/ (asset_root)
-        # para assets bundled por `flujo package` (svg/, projects/flujo/ para brand json directo, etc).
-        # Seguridad: no se permite traversal (`../`, encoded `%2e%2e`, ni rutas absolutas).
+        # Servir archivos estáticos: context/ primero; fallback a repo/asset root solo
+        # para prefijos públicos explícitos (svg/, docs/, projects/flujo|plano|tapiz).
+        # Seguridad: no se permite traversal ni acceso a src/.env/data/pyproject, etc.
         rel = path.lstrip("/")
         file_path = self._resolve_static_file(rel)
         if file_path:
