@@ -1,6 +1,6 @@
 # Flujo optimizado · Suplementos RD
 
-Formato de trabajo: **2800 × 2000 px**, proporción equivalente a **14 × 10 cm**.
+Formato de trabajo: **2000 × 2800 px**, proporción equivalente a **10 × 14 cm**.
 
 ## Carpetas
 

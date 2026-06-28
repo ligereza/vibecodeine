@@ -1,8 +1,8 @@
 """Versión y changelog de flujo."""
 
-__version__ = "0.43.1"
+__version__ = "0.43.2"
 VERSION = __version__
-__version_info__ = (0, 43, 1)
+__version_info__ = (0, 43, 2)
 
 
 def get_version():
@@ -11,6 +11,14 @@ def get_version():
 
 def get_changelog():
     return {
+        "0.43.2": {
+            "titulo": "Fix CI health check – ignore node_modules/web",
+            "fecha": "2026-06-28",
+            "highlights": [
+                "flujo_health ignora web/tsconfig.json (JSONC)",
+                "CI render_piezas_vectoriales verde",
+            ],
+        },
         "0.43.1": {
             "titulo": "Contraportadas suplementos con automatizacion y CLI",
             "fecha": "2026-06-28",
