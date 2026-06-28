@@ -5,6 +5,7 @@ from typer.testing import CliRunner
 
 from flujo.cli import app
 from flujo.comercial.multiformato import (
+    build_package_documents,
     detect_requested_formats,
     is_multiformat_quote_request,
     write_multiformat_package,
@@ -67,3 +68,15 @@ def test_cli_brief_paquete_cotizacion_from_text_file(tmp_path: Path):
     assert result.exit_code == 0
     assert (out / "brief_estructura_multiformato.md").exists()
     assert (out / "cotizacion_base.md").exists()
+
+
+def test_build_package_documents_preserves_flexible_sizes_and_proportions():
+    source = "Quiero flyer 20x30 cm, etiqueta 7x5 cm, pendon 1.5x3 m y un post con proporción 4:5."
+    docs = build_package_documents(source, cliente="Cliente Demo")
+    brief = docs["brief_estructura_multiformato.md"]
+    manifest = json.loads(docs["manifest.json"])
+    assert "20x30 cm" in brief
+    assert "1.5x3 m" in brief
+    assert "4:5" in brief
+    assert manifest["flexible_specs"][0]["label"] == "flyer"
+    assert manifest["flexible_specs"][0]["size"] == "20x30 cm"

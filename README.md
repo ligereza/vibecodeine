@@ -26,6 +26,8 @@ Si eres una IA o vas a retomar el repo, lee en este orden:
    Explica las dos rutas reales de pedidos: EVENTOS y SUPLEMENTOS.
 4. `docs/GMAIL_A_REPO_GRATIS.md`  
    Explica como Gmail crea Issues sin monday.com.
+5. `docs/REMOTE_WEB_IA_WORKFLOW.md`  
+   Plantilla práctica para pedir ayuda a una IA web con contexto del repo y flujo de suplementos.
 
 Reglas para agentes:
 
@@ -45,6 +47,12 @@ En Windows / Git Bash:
 
 ```bash
 py -m flujo app
+```
+
+Generar un prompt listo para IA web a partir de un pedido o correo:
+
+```bash
+py -m flujo ai-prompt "Necesito cotizar suplementos" --area suplementos
 ```
 
 Modo escritorio:

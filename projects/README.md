@@ -69,4 +69,32 @@ Si te mandaron este repositorio para extraer información (ej. para crear la lí
 
 ---
 
+## Backlog de refinamiento pendiente
+
+Estas son las ideas y herramientas que aún están en estado incompleto o necesitan pulido para volverse más operativas:
+
+1. **Plano / rider / costos**
+   - Refinar constantes reales de montaje y medidas.
+   - Añadir reglas operativas más completas al JSON.
+   - Preparar un editor visual simple para ajustar plano y rider en vivo.
+
+2. **Cotizaciones duales**
+   - Integrar mejor con el mismo fuente de datos del plano.
+   - Mejorar la salida para productora vs interno con más claridad visual.
+   - Añadir más plantillas y reglas de pricing por alcance.
+
+3. **Tapiz / vibecode spaces**
+   - Consolidar la versión base como librería + CLI.
+   - Elegir los modos más útiles para uso real en el flujo diario.
+   - Definir qué modos son brand-safe y cuáles son exploratorios.
+
+4. **Logo clean lab**
+   - Construir un dataset pequeño de pruebas con resultados buenos/malos.
+   - Registrar aprendeajes y errores de forma más sistemática.
+   - Usar esos ejemplos para refinar el script principal con evidencia.
+
+5. **Herramientas de IA remota / intake**
+   - Seguir mejorando prompts, parsing y generación de briefs desde pedidos sueltos.
+   - Mantener la flexibilidad de medidas, proporciones y formatos sin rigidizar.
+
 **Objetivo a largo plazo**: Que "flujo" se convierta en la fuente de verdad de identidad visual, y que los otros proyectos (incluyendo nuevos) la consuman de forma declarativa. Dirección futura: integración v4.1 + datadrops para cerrar loop de ground-truth → editorial → generación.

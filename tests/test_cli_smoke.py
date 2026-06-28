@@ -56,3 +56,11 @@ def test_app_alias_help():
     result = runner.invoke(app, ["app", "--help"])
     assert result.exit_code == 0
     assert "interfaz web" in result.output.lower() or "alias" in result.output.lower()
+
+
+def test_ai_prompt_command():
+    result = runner.invoke(app, ["ai-prompt", "Necesito cotizar suplementos", "--area", "suplementos"])
+    assert result.exit_code == 0
+    assert "Repo: ligereza/vibecodeine" in result.output
+    assert "Texto a procesar" in result.output
+    assert "suplementos" in result.output.lower()

@@ -84,6 +84,7 @@ from rich.table import Table
 from rich.panel import Panel
 
 
+from .remote_ai import build_remote_ai_prompt, write_remote_ai_prompt
 from .version import get_version as _get_pkg_version
 
 app = typer.Typer(
@@ -117,6 +118,8 @@ app.add_typer(airdrop_app, name="airdrop")
 brand_app = typer.Typer(help="Identidad visual 'flujo' + análisis de ejemplos reales.", no_args_is_help=True)
 app.add_typer(brand_app, name="brand")
 
+suplementos_app = typer.Typer(help="Generación de contraportadas para suplementos RD.", no_args_is_help=True)
+app.add_typer(suplementos_app, name="suplementos")
 
 # ============================================================
 # Helpers
@@ -334,6 +337,20 @@ def health():
     else:
         _warn("Index no existe. Ejecutar: flujo index --rebuild")
 
+
+
+@app.command("ai-prompt")
+def ai_prompt(
+    text: str = typer.Argument("", help="Texto a procesar"),
+    area: str = typer.Option("suplementos", "--area", "-a", help="suplementos | eventos | general"),
+    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Ruta de archivo para guardar el prompt"),
+):
+    """Genera un prompt listo para copiar en una IA web y convertir pedidos en briefs/cotizaciones."""
+    prompt = build_remote_ai_prompt(text, area=area)
+    target = write_remote_ai_prompt(output, prompt)
+    if target is not None:
+        _ok(f"prompt guardado en {target}")
+    typer.echo(prompt)
 
 
 @app.command("doctor")
@@ -666,6 +683,17 @@ def datadrop_scan():
             _warn("No se encontraron fotos nuevas en datadrops/incoming/.")
     else:
         _err(f"Error durante el escaneo: {res.get('error', 'desconocido')}")
+
+
+@datadrop_app.command("ingest")
+def datadrop_ingest(file_path: Path = typer.Argument(..., help="archivo PDF o imagen a importar como referencia real")):
+    """Importar un PDF o imagen como datadrop de referencia real."""
+    from .datadrops import ingest_datadrop_reference
+    if not file_path.exists():
+        _err(f"No existe: {file_path}")
+    out_dir = ingest_datadrop_reference(file_path)
+    _ok(f"Datadrop importado: {out_dir}")
+    console.print("  Revisa manifest.json + analysis/ para usarlo como ground truth visual.")
 
 
 @datadrop_app.command("prepare")
@@ -1361,6 +1389,36 @@ def render_run(
         _ok(f"Render OK: {config.parent}")
 
 
+@render_app.command("illustrator")
+def render_illustrator(
+    input_path: Path = typer.Argument(..., help="archivo o carpeta SVG para preparar"),
+    output_dir: Optional[Path] = typer.Option(None, "--output", "-o", help="carpeta base donde se creará el paquete"),
+    project_name: str = typer.Option("flujo_svg", "--project-name", help="nombre base del paquete"),
+):
+    """Preparar un paquete listo para abrir en Illustrator desde uno o varios SVG."""
+    from .export.illustrator import prepare_svg_for_illustrator
+
+    package_dir = prepare_svg_for_illustrator(input_path, output_dir=output_dir, project_name=project_name)
+    _ok(f"Paquete Illustrator preparado: {package_dir}")
+
+
+@render_app.command("bridge")
+def render_bridge(
+    spec: Path = typer.Argument(..., help="archivo JSON con spec de documento, imagen y texto"),
+    output: Path = typer.Option(Path("flows/illustrator_bridge.jsx"), "--output", "-o", help="ruta del script JSX a generar"),
+):
+    """Generar un script JSX para Illustrator a partir de un JSON de entrada."""
+    import json
+
+    from .export.illustrator_bridge import write_illustrator_bridge
+
+    if not spec.exists():
+        _err(f"No existe: {spec}")
+    payload = json.loads(spec.read_text(encoding="utf-8"))
+    out_path = write_illustrator_bridge(payload, output, base_dir=spec.parent)
+    _ok(f"Bridge Illustrator generado: {out_path}")
+
+
 @render_app.command("validate")
 def render_validate(
     config: Path = typer.Argument(..., help="ruta al config.json"),
@@ -1486,6 +1544,56 @@ def render_default(ctx: typer.Context):
     if ctx.invoked_subcommand is not None:
         return
     _warn("Uso: flujo render run <config.json> | validate | formats")
+
+
+# ============================================================
+# Suplementos RD (Comercial)
+# ============================================================
+
+@suplementos_app.command("list")
+def suplementos_list():
+    """Listar suplementos disponibles."""
+    from .comercial.suplementos_config import list_suplementos
+
+    items = list_suplementos()
+    _section(f"Suplementos RD ({len(items)})")
+    for nombre in items:
+        console.print(f"  · {nombre}")
+    console.print(f"\nUsage: [cyan]py -m flujo suplementos contraportada \"<nombre>\" --output <salida.svg>[/]")
+
+
+@suplementos_app.command("contraportada")
+def suplementos_contraportada(
+    nombre: str = typer.Argument(..., help="Nombre del suplemento (ej. 'Impulso')"),
+    output: Optional[Path] = typer.Option(
+        None, "--output", "-o",
+        help="Ruta de salida del SVG (default: svg/suplementos_rd/04_contraportadas/generadas/[nombre]_final.svg)"
+    ),
+):
+    """Generar contraportada SVG para un suplemento.
+
+    Ejemplo:
+      py -m flujo suplementos contraportada "Impulso" --output salida.svg
+      py -m flujo suplementos contraportada "Creatina"
+    """
+    from .comercial.suplementos_config import get_suplemento
+    from .comercial.contraportada_svg import generar_contraportada
+
+    try:
+        suplemento = get_suplemento(nombre)
+    except KeyError as e:
+        _err(str(e))
+
+    try:
+        svg_path = generar_contraportada(suplemento, output_path=output)
+        _ok(f"Contraportada generada: {svg_path}")
+        console.print(f"  Tamaño: 10×14 cm (1181×1654 px @ 300dpi)")
+        console.print(f"  Nombre: {suplemento.nombre}")
+        console.print(f"  Beneficio: {suplemento.beneficio_1}")
+    except FileNotFoundError as e:
+        _err(f"Plantilla base no encontrada: {e}")
+    except Exception as e:
+        _err(f"No se pudo generar la contraportada: {e}")
 
 
 # ============================================================

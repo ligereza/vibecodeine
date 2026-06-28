@@ -100,7 +100,7 @@ def scan_incoming_datadrops(root_path = None) -> dict:
     incoming = dd / "incoming"
     incoming.mkdir(parents=True, exist_ok=True)
 
-    valid_exts = {".jpg", ".jpeg", ".png", ".webp"}
+    valid_exts = {".jpg", ".jpeg", ".png", ".webp", ".pdf"}
     incoming_files = []
     for f in sorted(incoming.iterdir()):
         if f.is_file() and f.suffix.lower() in valid_exts:
@@ -117,6 +117,10 @@ def scan_incoming_datadrops(root_path = None) -> dict:
         from PIL import Image
     except Exception:
         Image = None
+    try:
+        from ..datadrops import ingest_datadrop_reference
+    except Exception:
+        ingest_datadrop_reference = None
     try:
         from ..analyze.colors import extract_palette
     except Exception:
@@ -145,6 +149,17 @@ def scan_incoming_datadrops(root_path = None) -> dict:
         # Unique directory
         drop_dir = dd / f"{ts}_{i}_{slug_src}"
         drop_dir.mkdir(parents=True, exist_ok=True)
+
+        if img_file.suffix.lower() == ".pdf" and ingest_datadrop_reference:
+            try:
+                ingest_datadrop_reference(img_file, target_dir=drop_dir)
+                img_file.unlink()
+            except Exception:
+                continue
+            processed_count += 1
+            processed_files.append(fname)
+            processed_ids.append(drop_dir.name)
+            continue
 
         dest_path = drop_dir / safe_name
         try:
@@ -456,6 +471,15 @@ class HubRequestHandler(BaseHTTPRequestHandler):
                 self._send_json(result)
             except Exception as e:
                 self._send_json({"error": str(e)}, status=400)
+            return
+
+        if p == "/api/auto-pending-flyers":
+            try:
+                from ..automation import run_pending_flyers
+                result = run_pending_flyers(base_dir=self.root)
+                self._send_json(result)
+            except Exception as e:
+                self._send_json({"ok": False, "error": str(e)}, status=500)
             return
 
         # Datadrop (airdrop inverso): upload finished real photos of delivered work
@@ -1360,6 +1384,15 @@ def run_server(host: str = "127.0.0.1", port: int = 8765, root: Path | None = No
             print(f"[flujo] Puerto {port} ocupado → usando {actual_port}")
 
     server = ThreadingHTTPServer((host, actual_port), HubRequestHandler)
+    try:
+        from ..automation import run_pending_flyers
+        automation_result = run_pending_flyers(root=HubRequestHandler.ROOT or repo_root())
+        if automation_result.get("processed", 0):
+            print(f"[flujo] Automatización iniciada: {automation_result['processed']} job(s) procesados")
+        else:
+            print("[flujo] Automatización iniciada: sin jobs pendientes")
+    except Exception as exc:
+        print(f"[flujo] Automatización no pudo arrancar: {exc}")
     print(f"[flujo] Workspace app en http://{host}:{actual_port}")
     print(f"  - Repo root: {r}")
     print("  - Hub:      /flujo_hub.html  (UI Delegar: input tarea + botones copian prompts completos por rol)")

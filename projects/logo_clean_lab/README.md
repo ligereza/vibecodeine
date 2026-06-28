@@ -71,14 +71,29 @@ Los logos reales deben quedar locales o en repo privado.
 
 ## Proximo paso
 
-Construir un pequeno dataset de pruebas:
+Se incorporo un dataset base y un validador para convertir las pruebas en evidencia ejecutable.
 
 ```txt
-10 resultados buenos
-10 resultados malos
-notas de que letra se deformo
-modo usado
+projects/logo_clean_lab/learning/mini_dataset.jsonl
+projects/logo_clean_lab/scripts/validate_dataset.py
+```
+
+Formato recomendado por caso:
+
+```txt
+sample
+modo usado (A/W/O/R/M)
+palabra o forma
 puntos antes/despues
+nota de resultado
+aprobado / rechazado
+script_version
+```
+
+Validar el dataset desde la raiz del repo:
+
+```bash
+python projects/logo_clean_lab/scripts/validate_dataset.py projects/logo_clean_lab/learning/mini_dataset.jsonl
 ```
 
 Con eso se ajustara `logo_clean_master.jsx` con evidencia, no con suposiciones.

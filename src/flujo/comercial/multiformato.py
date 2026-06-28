@@ -130,6 +130,8 @@ FORMAT_DEFINITIONS: dict[str, FormatDefinition] = {
 }
 
 DEFAULT_FORMAT_ORDER = ["flyer", "etiqueta", "pendon", "post_instagram"]
+SIZE_PATTERN = r"\d+(?:[.,]\d+)?\s*(?:x|×)\s*\d+(?:[.,]\d+)?(?:\s*(?:cm|mm|m|in|px|pt))?"
+RATIO_PATTERN = r"\d+(?:[.,]\d+)?\s*:\s*\d+(?:[.,]\d+)?"
 
 
 def _norm(text: str) -> str:
@@ -157,6 +159,54 @@ def is_multiformat_quote_request(text: str) -> bool:
     has_quote = any(k in low for k in ("cotizacion", "presupuesto", "quote"))
     has_brief = any(k in low for k in ("brief", "estructura", "imagen", "texto"))
     return len(formats) >= 2 and (has_quote or has_brief)
+
+
+def _extract_flexible_specs(text: str) -> list[dict[str, str]]:
+    """Extrae tamaños y proporciones flexibles desde texto libre.
+
+    Mantiene la flexibilidad del pedido: no fuerza un formato fijo, solo registra
+    medidas/proporciones si el usuario las menciona.
+    """
+    specs: list[dict[str, str]] = []
+    normalized = _norm(text)
+
+    for fmt_id in DEFAULT_FORMAT_ORDER:
+        spec = FORMAT_DEFINITIONS[fmt_id]
+        aliases = {_norm(alias) for alias in spec.aliases}
+        if any(re.search(rf"\b{re.escape(alias)}\b", normalized) for alias in aliases):
+            size_match = re.search(
+                rf"\b{re.escape(_norm(spec.nombre))}\b(?:\s+de)?\s*(?P<size>{SIZE_PATTERN})",
+                normalized,
+                re.IGNORECASE,
+            )
+            if size_match:
+                specs.append({"label": fmt_id, "size": size_match.group("size"), "proportion": "", "source": spec.nombre})
+
+    # Fallback simple para etiquetas no catalogadas o nombres cortos.
+    for match in re.finditer(
+        rf"(?P<label>[a-zA-Záéíóúñ]+(?:\s+[a-zA-Záéíóúñ]+)*)\s*(?P<size>{SIZE_PATTERN})",
+        text,
+        re.IGNORECASE,
+    ):
+        label = match.group("label").strip().lower()
+        if not label or label in {"quiero", "necesito", "un", "una", "y", "con"}:
+            continue
+        size_value = match.group("size")
+        if any(existing.get("size") == size_value and existing.get("label") == label for existing in specs):
+            continue
+        if label in {fmt_id for fmt_id in FORMAT_DEFINITIONS}:
+            continue
+        specs.append({"label": label, "size": size_value, "proportion": "", "source": label})
+
+    ratio_match = re.search(rf"proporci(?:on|ón)\s*(?:de)?\s*(?P<ratio>{RATIO_PATTERN})", text, re.IGNORECASE)
+    if ratio_match:
+        ratio_value = ratio_match.group("ratio")
+        if specs:
+            specs[0]["proportion"] = ratio_value
+        else:
+            specs.append({"label": "pieza", "size": "", "proportion": ratio_value, "source": "proporción"})
+
+    return specs
 
 
 def _money(value: str | None) -> str:
@@ -207,6 +257,19 @@ def build_package_documents(
     formats_bullets = _bullet(spec.nombre for spec in specs)
     sections_md = "".join(_format_section(spec) + "\n" for spec in specs)
     source_clean = source_text.strip() or "A definir"
+    flexible_specs = _extract_flexible_specs(source_text)
+    flexible_lines = []
+    for item in flexible_specs:
+        if item.get("size") and item.get("proportion"):
+            flexible_lines.append(f"- {item['label']}: {item['size']} | proporción {item['proportion']}")
+        elif item.get("size"):
+            flexible_lines.append(f"- {item['label']}: {item['size']}")
+        elif item.get("proportion"):
+            flexible_lines.append(f"- Proporción general: {item['proportion']}")
+    if flexible_lines:
+        flexible_block = "\n".join(flexible_lines)
+    else:
+        flexible_block = "- Medidas y proporciones por confirmar."
 
     brief = f"""# {titulo}
 
@@ -229,12 +292,17 @@ Explicar de forma clara cómo se estructura la relación **imagen / texto** para
 ## Principios comunes
 
 - No inventar claims, fechas, precios ni datos legales: todo debe venir aprobado por cliente/productora.
+- Mantener flexibilidad de formatos, tamaños y proporciones: si el pedido viene con medidas o proporciones, registrarlas sin forzar una única opción.
 - Separar contenido visual (imagen, logos, patrones, fotos) de contenido textual (títulos, bajadas, CTA, datos obligatorios).
 - Mantener jerarquía: mensaje principal → soporte → acción.
 - Definir entregables antes de cerrar precio: editable, PDF impresión, PNG/JPG, cantidad de variantes y revisiones.
 - Confirmar si la pieza es digital, impresión o mixta.
 
 {sections_md}
+
+## Medidas y proporciones flexibles
+
+{flexible_block}
 
 ## Pendientes para cerrar
 
@@ -308,6 +376,7 @@ Completar precios y datos pendientes; luego enviar al cliente/productora para ap
             "cliente": cliente,
             "moneda": moneda,
             "formats": [asdict(spec) for spec in specs],
+            "flexible_specs": flexible_specs,
             "prices_provided": precios,
         },
         ensure_ascii=False,
