@@ -468,3 +468,31 @@ GitHub Issue [SUPLEMENTOS] -> crear job/intake/cotizacion
 ## Licencia
 
 MIT
+
+---
+
+## 7. Knowledge base local
+
+Memoria operacional versionable:
+
+```txt
+knowledge/productoras/
+knowledge/venues/
+knowledge/logos/
+knowledge/examples/
+```
+
+Comandos:
+
+```bash
+py -m flujo knowledge list productoras
+py -m flujo knowledge show productora creamfields
+py -m flujo knowledge classify "Creamfields Espacio Riesco rider cartelera"
+```
+
+Docs:
+
+```txt
+docs/KNOWLEDGE_BASE.md
+docs/AGENT_VISUAL_DIRECTOR.md
+```

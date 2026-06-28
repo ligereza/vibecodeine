@@ -1,8 +1,8 @@
 """Versión y changelog de flujo."""
 
-__version__ = "0.41.2"
+__version__ = "0.42.0"
 VERSION = __version__
-__version_info__ = (0, 41, 2)
+__version_info__ = (0, 42, 0)
 
 
 def get_version():
@@ -11,6 +11,16 @@ def get_version():
 
 def get_changelog():
     return {
+        "0.42.0": {
+            "titulo": "Knowledge base skeleton",
+            "fecha": "2026-06-28",
+            "highlights": [
+                "Agrega `knowledge/` con productoras, venues, logos y examples",
+                "Registra Creamfields, The Grid, template Rave Under y Espacio Riesco",
+                "Agrega comandos `py -m flujo knowledge list/show/classify/ingest-example/logo-source`",
+                "Documenta Agent Visual Director para generar JSON desde ejemplos reales",
+            ],
+        },
         "0.41.2": {
             "titulo": "Demo jefe y cotizacion base",
             "fecha": "2026-06-28",

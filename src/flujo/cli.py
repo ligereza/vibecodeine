@@ -121,6 +121,9 @@ app.add_typer(brand_app, name="brand")
 suplementos_app = typer.Typer(help="Generación de contraportadas para suplementos RD.", no_args_is_help=True)
 app.add_typer(suplementos_app, name="suplementos")
 
+knowledge_app = typer.Typer(help="Knowledge base local: productoras, venues, logos y ejemplos.", no_args_is_help=True)
+app.add_typer(knowledge_app, name="knowledge")
+
 # ============================================================
 # Helpers
 # ============================================================
@@ -2141,6 +2144,75 @@ def init(
         else:
             _warn("No existe context/LAST_HANDOFF.md")
         console.print("Siguiente recomendado: [cyan]flujo doctor[/] y luego [cyan]flujo app[/]")
+
+
+
+# ============================================================
+# Knowledge base
+# ============================================================
+
+@knowledge_app.command("list")
+def knowledge_list(entity: str = typer.Argument("productoras", help="productoras | venues | logos | events")):
+    """Lista entidades de la knowledge base."""
+    from .knowledge.store import list_entities
+    items = list_entities(entity)
+    if not items:
+        _warn(f"Sin entidades para {entity}")
+        return
+    for item in items:
+        console.print(item)
+
+
+@knowledge_app.command("show")
+def knowledge_show(
+    entity: str = typer.Argument(..., help="productora | venue | logo | event"),
+    item_id: str = typer.Argument(..., help="ID a mostrar"),
+):
+    """Muestra una entidad YAML como JSON legible."""
+    import json
+    from .knowledge.store import load_entity
+    try:
+        data = load_entity(entity, item_id)
+    except FileNotFoundError as e:
+        _err(f"No existe: {e}")
+    console.print(json.dumps(data, ensure_ascii=False, indent=2))
+
+
+@knowledge_app.command("classify")
+def knowledge_classify(text: str = typer.Argument(..., help="Texto/correo/pedido a clasificar")):
+    """Clasifica un texto usando productoras/venues conocidos."""
+    import json
+    from .knowledge.store import classify_event_text
+    console.print(json.dumps(classify_event_text(text), ensure_ascii=False, indent=2))
+
+
+@knowledge_app.command("ingest-example")
+def knowledge_ingest_example(
+    path: Path = typer.Argument(..., help="Archivo o carpeta de ejemplo real"),
+    type: str = typer.Option("unknown", "--type", help="flyer_evento | cartelera | suplemento | logo | etc."),
+    producer: str = typer.Option("", "--producer", help="producer_id si se conoce"),
+):
+    """Copia un ejemplo real a knowledge/examples y crea manifest para IA."""
+    from .knowledge.store import ingest_example
+    try:
+        manifest = ingest_example(path, example_type=type, producer=producer)
+    except Exception as e:
+        _err(str(e))
+    _ok(f"Example manifest: {manifest}")
+
+
+@knowledge_app.command("logo-source")
+def knowledge_logo_source(
+    producer: str = typer.Argument(..., help="producer_id, ej: creamfields"),
+    source: Path = typer.Argument(..., help="imagen fuente del logo"),
+):
+    """Registra una fuente de logo para logo clean lab."""
+    from .knowledge.store import register_logo_source
+    try:
+        path = register_logo_source(producer, source)
+    except Exception as e:
+        _err(str(e))
+    _ok(f"Logo registrado: {path}")
 
 
 # ============================================================

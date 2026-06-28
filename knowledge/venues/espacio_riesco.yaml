@@ -1,0 +1,14 @@
+id: espacio_riesco
+name: Espacio Riesco
+type: convention_center
+scale_default: mainstream
+capacity_bucket: high
+requirements_defaults:
+  volunteers_min: 8
+  tables_min: 3
+  chairs_min: 8
+  electricity: 2 puntos electricos o circuito dedicado
+  light: iluminacion dedicada para stand, testeo y lectura nocturna
+recommended_preset: mainstream
+notes:
+  - Usar MAINSTREAM por defecto salvo instruccion contraria.

@@ -1,0 +1,26 @@
+id: creamfields
+name: Creamfields
+aliases:
+  - creamfields chile
+  - creamfieldscl
+category: festival
+scale_default: mainstream
+confidence: 0.95
+affinity:
+  rd_presence: confirmed
+  service_mode: informativo
+  testeo: false
+  notes:
+    - Confirmaron asistencia.
+    - Priorizar rider informativo, no full test.
+venues_recurrentes:
+  - espacio_riesco
+formats:
+  default_cartelera: cartelera_digital_photoshop
+  default_flyer: flyer_impreso_10x14_vertical
+logo:
+  status: needs_clean_vector
+  logo_id: creamfields_primary
+sources:
+  - type: human
+    note: Informacion declarada por usuario/jefe.

@@ -1,0 +1,8 @@
+id: thegrid_primary
+producer_id: thegrid
+status: source_needed
+source_quality: unknown
+workflow:
+  suggested_tool: logo_clean_lab
+  next_action: capturar logo desde flyer/post o perfil
+outputs: {}
