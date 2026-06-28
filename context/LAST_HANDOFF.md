@@ -323,6 +323,29 @@ Next agent MUST:
 2. Answer 5 questions before modifying
 3. Understand: RIDER != gallery. Context matters.
 
+## Improved HTML tools - 2026-06-28 v0.36.1
+
+Enhancements to visual tools based on guardrail analysis:
+
+### plano_demo.html (RIDER RD EVENTOS)
+- Expanded rider content: now includes full requerimientos operativos (espacio, infraestructura, coordinación)
+- Rider text follows Propuesta_Reduciendo_Dano.txt structure (Stand Informativo, Testeo, Contención)
+- Better section headers and professional formatting
+- Includes detailed checklist for event producers
+
+### svg_visualizer.html (Visor SUPLEMENTOS)
+- Improved modal layout: side-by-side preview + info panel (responsive)
+- Better SVG display with object-fit contain + smooth animations
+- Enhanced metadata display: tags, categoría, metadatos clarity
+- New functions: downloadMaterial(), copyPath() for better UX
+- Modal title, description, and info areas reorganized for scannability
+
+Both tools now aligned with their purpose:
+- RIDER: operational/commercial document for producers
+- VISUALIZER: professional gallery for designers/products
+
+Status: ✅ Tested locally, responsive, professional presentation
+
 Recommended recovery if a previous run already applied files:
 ```bash
 py scripts/run_airdrop_checks.py --resume "logo clean lab experimental" --skip-push
