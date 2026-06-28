@@ -2159,3 +2159,6 @@ register_addons(app)
 
 from flujo.cli_addons import register_addons
 register_addons(app)
+
+from flujo.cli_addons import register_addons
+register_addons(app)
