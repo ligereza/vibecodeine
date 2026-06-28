@@ -1,7 +1,11 @@
 import json
 from pathlib import Path
 
-from flujo.export.illustrator import prepare_svg_for_illustrator, prepare_supplement_contraportadas_for_illustrator
+from flujo.export.illustrator import (
+    prepare_supplement_contraportadas_for_illustrator,
+    prepare_supplement_job_assets,
+    prepare_svg_for_illustrator,
+)
 
 
 def test_prepare_svg_for_illustrator_creates_package(tmp_path: Path) -> None:
@@ -36,3 +40,14 @@ def test_prepare_supplement_contraportadas_for_illustrator_creates_package(tmp_p
     manifest = json.loads((package_dir / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["type"] == "supplement_contraportadas"
     assert manifest["datadrop_reference"]["id"] == "2026-06-22_154643_1_suplementos3d"
+
+
+def test_prepare_supplement_job_assets_generates_flow_artifacts(tmp_path: Path) -> None:
+    job_dir = tmp_path / "jobs" / "2026-06-28_test"
+    job_dir.mkdir(parents=True)
+
+    result = prepare_supplement_job_assets(job_dir, request_text="Pedido de contraportada para Impulso")
+
+    assert result["created"] is True
+    assert (job_dir / "flows" / "contraportada.svg").exists()
+    assert (job_dir / "flows" / "illustrator_package" / "2026-06-28_test" / "illustrator_artboards.jsx").exists()

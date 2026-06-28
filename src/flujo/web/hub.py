@@ -58,6 +58,10 @@ from ..intake.email_parser import parse_email_content, parse_pedido_text  # real
 from ..intake.pipeline import _infer_type_and_size  # reuse heuristics if needed
 from ..jobs.job import create_job, list_jobs  # real job creation / listing for hub API
 from ..dashboard import collect_items, render_markdown, render_html
+try:
+    from ..export.illustrator import prepare_supplement_job_assets
+except Exception:
+    prepare_supplement_job_assets = None
 
 
 def derive_visual_traits(ptype: str, palette: list, desc: str, hints: dict) -> str:
@@ -968,6 +972,14 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => n
                 pedido_file.write_text(text.strip() or nm, encoding="utf-8")
             except Exception:
                 pass
+            if prepare_supplement_job_assets is not None:
+                try:
+                    if "suplement" in (text or "").lower() or "contraportada" in (text or "").lower():
+                        prep = prepare_supplement_job_assets(job_path, request_text=text)
+                        if prep.get("created"):
+                            pass
+                except Exception:
+                    pass
             # optionally enhance brief.yaml later (for now the template is good)
             return {
                 "created": True,

@@ -143,6 +143,65 @@ def prepare_supplement_contraportadas_for_illustrator(
     return package_dir
 
 
+def prepare_supplement_job_assets(job_dir: str | Path, request_text: str = "") -> dict[str, Any]:
+    """Crear artefactos de contraportada y paquete Illustrator dentro de un job."""
+    job_path = Path(job_dir)
+    job_path.mkdir(parents=True, exist_ok=True)
+
+    flows_dir = job_path / "flows"
+    flows_dir.mkdir(parents=True, exist_ok=True)
+
+    from ..comercial.suplementos_config import get_suplemento
+    from ..comercial.contraportada_svg import generar_contraportada
+    from .illustrator_bridge import write_illustrator_artboards
+
+    selected_names = []
+    if request_text:
+        lowered = request_text.lower()
+        for name in ["Impulso", "Creatina", "Pre Fiesta", "Recovery", "Colágeno Fit", "Omega+ Immune", "Sleep Relax"]:
+            if name.lower() in lowered:
+                selected_names.append(name)
+    if not selected_names:
+        selected_names = ["Impulso"]
+
+    supplement = get_suplemento(selected_names[0])
+    svg_output = flows_dir / "contraportada.svg"
+    generar_contraportada(supplement, output_path=svg_output)
+
+    package_dir = flows_dir / "illustrator_package" / job_path.name
+    package_dir.mkdir(parents=True, exist_ok=True)
+    svg_dir = package_dir / "svg"
+    svg_dir.mkdir(parents=True, exist_ok=True)
+
+    package_svg = svg_dir / svg_output.name
+    package_svg.write_bytes(svg_output.read_bytes())
+
+    spec = {
+        "document": {"name": job_path.name, "width": 2362, "height": 1654, "colorMode": "RGB"},
+        "artboards": [
+            {
+                "name": supplement.nombre,
+                "title": supplement.nombre.upper(),
+                "body": [supplement.descripcion, *supplement.info_nutricional[:2]],
+                "cta": supplement.beneficio_1,
+                "contact": f"{supplement.whatsapp_label} · {supplement.contacto_label}",
+            }
+        ],
+    }
+    write_illustrator_artboards(spec, package_dir / "illustrator_artboards.jsx", base_dir=package_dir)
+    (package_dir / "README.md").write_text(
+        f"# {job_path.name}\n\nPaquete de revisión para la contraportada generada desde el hub.\n",
+        encoding="utf-8",
+    )
+
+    return {
+        "created": True,
+        "svg_path": str(svg_output).replace("\\", "/"),
+        "package_dir": str(package_dir).replace("\\", "/"),
+        "supplement": supplement.nombre,
+    }
+
+
 def _build_illustrator_jsx(svg_files: list[str]) -> str:
     entries = [f'  new File(baseFolder + "/svg/{path.split("/")[-1]}")' for path in svg_files]
     entries_block = ",\n".join(entries)
