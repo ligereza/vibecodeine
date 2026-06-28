@@ -2153,3 +2153,9 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+from flujo.cli_addons import register_addons
+register_addons(app)
+
+from flujo.cli_addons import register_addons
+register_addons(app)
