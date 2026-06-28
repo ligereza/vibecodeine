@@ -1,10 +1,15 @@
-# flujo · pedidos, jobs y portal visual
+# flujo · workspace operativo para pedidos, jobs y entregas
 
-**flujo** ordena pedidos de diseño y los convierte en trabajo trazable: pedido -> job -> brief -> diseño -> revisión -> entrega.
+**flujo** convierte pedidos de diseño en trabajo trazable: pedido -> job -> brief -> diseño -> revisión -> entrega.
 
-Este repositorio funciona como un sistema creativo y operativo para recibir pedidos, delegar trabajo, revisar entregables y mantener una línea de marca coherente.
+Este repositorio funciona como un hub local operativo para recibir pedidos, organizar trabajo, revisar entregables y mantener una línea visual coherente sin depender de herramientas externas pesadas.
 
-Paleta visual actual: **PURPLE**.
+## Puntos de entrada recomendados
+
+- Hub diario: `py -m flujo app`
+- Estado operativo: `py -m flujo health`
+- Continuidad del trabajo: `context/LAST_HANDOFF.md`
+- Historial de handoffs: `docs/handoffs/README.md`
 
 ## Estado operativo actual
 
@@ -29,14 +34,14 @@ Si eres una IA o vas a retomar el repo, lee en este orden:
 
 1. `context/LAST_HANDOFF.md`  
    Fuente principal de continuidad. Esta en ASCII-only para evitar errores en Windows/Git Bash.
-2. `docs/AGENT_OPERATING_MANUAL.md`  
+2. `docs/handoffs/README.md`  
+   Indice del historial operativo y de los handoffs archivados.
+3. `docs/AGENT_OPERATING_MANUAL.md`  
    Manual operativo de agentes, delegacion y forma de trabajar.
-3. `docs/FLUJO_AREAS_EVENTOS_SUPLEMENTOS.md`  
+4. `docs/FLUJO_AREAS_EVENTOS_SUPLEMENTOS.md`  
    Explica las dos rutas reales de pedidos: EVENTOS y SUPLEMENTOS.
-4. `docs/GMAIL_A_REPO_GRATIS.md`  
+5. `docs/GMAIL_A_REPO_GRATIS.md`  
    Explica como Gmail crea Issues sin monday.com.
-5. `docs/REMOTE_WEB_IA_WORKFLOW.md`  
-   Plantilla práctica para pedir ayuda a una IA web con contexto del repo y flujo de suplementos.
 
 Reglas para agentes:
 
@@ -215,7 +220,18 @@ Muestra estados, pendientes y proximas acciones sin usar monday.com.
 
 ---
 
-## 7. Jobs e intake
+## 7. GitHub sync local/remote
+
+Sincronizar el repositorio local con GitHub desde esta máquina:
+
+```bash
+py -m flujo github-sync --status
+py -m flujo github-sync --push -m "actualizar assets de diseño"
+```
+
+Esto muestra la rama actual, el remote configurado y sube los cambios locales cuando se solicita.
+
+## 8. Jobs e intake
 
 Crear job desde correo/texto:
 

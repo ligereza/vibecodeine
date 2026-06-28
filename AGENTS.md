@@ -1,21 +1,21 @@
 # AGENTS.md
 
-**Punto de entrada obligatorio (diario):** `flujo app` (o `flujo app --desktop`) — lanza la app real (servidor stdlib + APIs brand/parse/jobs/delegate/SSE/datadrop) + sirve los 3 HTMLs como UI pro completa (hub + visualizadores embebidos). Fallback: abre `context/flujo_hub.html` directamente.
+**Punto de entrada obligatorio (diario):** `flujo app` (o `flujo app --desktop`) — lanza la app real y sirve el hub como workspace central. Si falta el servidor, el fallback es abrir `context/flujo_hub.html` directamente.
 
-El hub (dentro de la app) es el workspace central: intake de pedidos, visualizadores SVG embebidos por grupos, plano demo interactivo, comandos y sección para delegar a agentes especializados (5 roles paralelos). Hub = pro workspace dentro de `flujo app`.
+El hub es el workspace central: intake de pedidos, visualizadores SVG, plano demo, comandos y delegación a agentes especializados. La fuente de verdad operativa diaria es `context/LAST_HANDOFF.md`.
 
-**Estado actual (2026-06-22)**
+**Estado actual (2026-06-28)**
 
-`flujo app` es la ÚNICA entrada diaria. Hub con tabs (Intake/Jobs, Visuales, Planos, Agentes/Delegate, Herramientas) + Datadrop MVP completo (inverse airdrop: incoming → dated/ + manifests ricos con palette/OCR/traits/for_future_ai). Delegación maximizada 5 roles (incl. Packaging) con copy-prompt + live API. LAST_HANDOFF.md = low-token source of truth. Brand vía projects/flujo/flujo.json. Windows: `py`.
+`flujo app` sigue siendo la entrada diaria principal. El hub agrupa intake, visuales, planos, agentes y herramientas. El historial de handoffs se centraliza en `docs/handoffs/README.md`. Windows: `py`.
 
 **Avances recientes:**
-- Hub tabs + Datadrop fully working (drop bulk a incoming/, Escanear o `flujo datadrop scan`, cards UI limpia, modal robusto, _review_package.txt).
-- Parallel delegation: 5 roles (Visual Polish, Pipeline & Integration, Brand Guardian, Future/Modern, Packaging). Reciente fix nav datadrop button.
+- Hub con tabs y datadrop operativo para intake y revisión de paquetes.
+- Delegación paralela con roles de visual, pipeline, futuro y packaging.
 - Packaging `flujo package` → .exe desktop. Launchers ps1/bat. Higiene + robustez.
 
 **Hacia dónde vamos:**
 - Auto-compact sesiones (parallel + LAST_HANDOFF).
-- linea_editorial v4.1 + datadrop ground-truth para validación §10/11.
+- Centralizar y limpiar handoffs, docs y recursos viejos.
 - Daily: siempre `flujo app` → hub como workspace único.
 - Más packaging standalone, higiene, privacy, especialización agentes.
 

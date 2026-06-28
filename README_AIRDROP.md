@@ -1,6 +1,6 @@
-# Airdrop - README general + logo_clean_lab summary
+# Airdrop - README general + limpieza operativa
 
-Este airdrop vuelve a documentar el flujo normal simple de airdrops y agrega contexto ejecutivo del proyecto `logo_clean_lab`.
+Este airdrop documenta el flujo normal de airdrops y deja claro que la fuente de verdad operativa es el handoff diario y el hub local.
 
 ## Aplicar desde root del repo
 
@@ -21,4 +21,4 @@ Revisar que no haya carpetas locales pesadas coladas:
 git status --short
 ```
 
-Si aparece algo como `logo3d/`, sacarlo o dejarlo ignorado antes del checkpoint automatico.
+Si aparece algo como `logo3d/`, sacarlo o dejarlo ignorado antes del checkpoint automatico. Para historial operativo, revisar `docs/handoffs/README.md` y `context/LAST_HANDOFF.md`.
