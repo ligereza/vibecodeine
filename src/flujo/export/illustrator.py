@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Iterable, Union
+from typing import Any, Iterable, Union
 
 
 SvgInput = Union[str, Path, Iterable[Union[str, Path]]]
@@ -71,6 +71,78 @@ def prepare_svg_for_illustrator(
     return package_dir
 
 
+def prepare_supplement_contraportadas_for_illustrator(
+    supplements: str | Iterable[str],
+    output_dir: str | Path | None = None,
+    project_name: str = "suplementos_rd",
+) -> Path:
+    """Preparar un paquete Illustrator con varias contraportadas de suplementos.
+
+    Genera un SVG por suplemento a partir de la plantilla base, lo guarda en una
+    carpeta `svg/` del paquete y crea un script JSX con mesas de trabajo listas
+    para abrir en Illustrator junto con un README y un manifest.
+    """
+    if isinstance(supplements, str):
+        names = [supplements]
+    else:
+        names = [str(item) for item in supplements]
+
+    if not names:
+        raise ValueError("Se debe indicar al menos un suplemento")
+
+    from ..comercial.suplementos_config import get_suplemento
+    from ..comercial.contraportada_svg import generar_contraportada
+    from .illustrator_bridge import write_illustrator_artboards
+
+    base_output = Path(output_dir) if output_dir else Path("exports") / f"{project_name}_illustrator"
+    package_dir = base_output / project_name
+    package_dir.mkdir(parents=True, exist_ok=True)
+
+    svg_dir = package_dir / "svg"
+    svg_dir.mkdir(parents=True, exist_ok=True)
+
+    generated_files: list[str] = []
+    artboards: list[dict[str, Any]] = []
+    for name in names:
+        suplemento = get_suplemento(name)
+        output_path = svg_dir / f"{_slugify(suplemento.nombre)}_final.svg"
+        generar_contraportada(suplemento, output_path=output_path)
+        generated_files.append(output_path.relative_to(package_dir).as_posix())
+        artboards.append(
+            {
+                "name": suplemento.nombre,
+                "title": suplemento.nombre.upper(),
+                "body": [suplemento.descripcion, *suplemento.info_nutricional[:2]],
+                "cta": suplemento.beneficio_1,
+                "contact": f"{suplemento.whatsapp_label} · {suplemento.contacto_label}",
+            }
+        )
+
+    manifest = {
+        "project": project_name,
+        "type": "supplement_contraportadas",
+        "supplements": [name for name in names],
+        "svg_files": generated_files,
+        "datadrop_reference": _load_datadrop_reference(),
+        "created_with": "flujo.export.illustrator.prepare_supplement_contraportadas_for_illustrator",
+    }
+    (package_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    spec = {
+        "document": {
+            "name": project_name,
+            "width": 2362,
+            "height": 1654,
+            "colorMode": "RGB",
+        },
+        "artboards": artboards,
+    }
+    write_illustrator_artboards(spec, package_dir / "illustrator_artboards.jsx", base_dir=package_dir)
+    (package_dir / "README.md").write_text(_build_supplement_readme(project_name, generated_files, manifest["datadrop_reference"]), encoding="utf-8")
+
+    return package_dir
+
+
 def _build_illustrator_jsx(svg_files: list[str]) -> str:
     entries = [f'  new File(baseFolder + "/svg/{path.split("/")[-1]}")' for path in svg_files]
     entries_block = ",\n".join(entries)
@@ -134,3 +206,67 @@ Paquete preparado para abrir en Illustrator desde SVGs.
 ## Nota
 Este paquete conserva el SVG como vector editable y facilita la revisión en Illustrator.
 """
+
+
+def _build_supplement_readme(project_name: str, svg_files: list[str], datadrop_reference: dict[str, Any]) -> str:
+    svg_list = "\n".join(f"- {path}" for path in svg_files)
+    reference_id = datadrop_reference.get("id", "")
+    reference_note = datadrop_reference.get("for_future_ai", "")
+    return f"""# {project_name}
+
+Paquete preparado para revisar contraportadas de suplementos en Illustrator.
+
+## Archivos
+{svg_list}
+
+- `illustrator_artboards.jsx`: script con mesas de trabajo por suplemento
+- `manifest.json`: metadatos del paquete y referencia de datadrop
+
+## Pasos
+1. Abre `illustrator_artboards.jsx` con Illustrator.
+2. Revisa cada mesa de trabajo y ajusta tipografía, color y márgenes si hace falta.
+3. Exporta a PDF/PNG cuando la revisión esté lista.
+
+## Referencia datadrop
+- ID: {reference_id}
+- Nota: {reference_note[:280]}
+"""
+
+
+def _slugify(value: str) -> str:
+    return value.lower().replace(" ", "_").replace("/", "_").replace("-", "_")
+
+
+def _load_datadrop_reference() -> dict[str, Any]:
+    from ..paths import repo_root
+
+    datadrops_root = repo_root() / "datadrops"
+    if not datadrops_root.exists():
+        return {"id": "", "for_future_ai": "", "image_path": ""}
+
+    candidates = sorted(datadrops_root.glob("*/manifest.json"))
+    for manifest_path in candidates:
+        try:
+            data = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            continue
+        if data.get("type") == "flyer" and "suplementos" in str(data.get("original_filename", "")).lower():
+            return {
+                "id": data.get("id", ""),
+                "image_path": data.get("image_path", ""),
+                "for_future_ai": data.get("for_future_ai", ""),
+            }
+
+    for manifest_path in candidates:
+        try:
+            data = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            continue
+        if data.get("type") == "flyer":
+            return {
+                "id": data.get("id", ""),
+                "image_path": data.get("image_path", ""),
+                "for_future_ai": data.get("for_future_ai", ""),
+            }
+
+    return {"id": "", "for_future_ai": "", "image_path": ""}

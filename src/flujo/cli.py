@@ -1596,6 +1596,24 @@ def suplementos_contraportada(
         _err(f"No se pudo generar la contraportada: {e}")
 
 
+@suplementos_app.command("illustrator")
+def suplementos_illustrator(
+    nombres: Optional[list[str]] = typer.Argument(None, help="Nombres de suplementos a incluir (ej. 'Impulso' 'Creatina')"),
+    output_dir: Optional[Path] = typer.Option(None, "--output", "-o", help="Directorio base del paquete Illustrator"),
+    project_name: str = typer.Option("suplementos_rd", "--project-name", help="Nombre del paquete Illustrator"),
+):
+    """Preparar un paquete Illustrator con varias contraportadas de suplementos."""
+    from .export.illustrator import prepare_supplement_contraportadas_for_illustrator
+
+    selected = nombres or ["Impulso", "Creatina"]
+    package_dir = prepare_supplement_contraportadas_for_illustrator(
+        selected,
+        output_dir=output_dir,
+        project_name=project_name,
+    )
+    _ok(f"Paquete Illustrator de suplementos preparado: {package_dir}")
+
+
 # ============================================================
 # Dashboard / Portal jefe
 # ============================================================

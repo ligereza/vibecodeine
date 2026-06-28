@@ -1,4 +1,4 @@
-from .illustrator import prepare_svg_for_illustrator
+from .illustrator import prepare_supplement_contraportadas_for_illustrator, prepare_svg_for_illustrator
 from .illustrator_bridge import (
     build_illustrator_artboards_payload,
     build_illustrator_payload,
@@ -8,6 +8,7 @@ from .illustrator_bridge import (
 
 __all__ = [
     "prepare_svg_for_illustrator",
+    "prepare_supplement_contraportadas_for_illustrator",
     "build_illustrator_payload",
     "build_illustrator_artboards_payload",
     "write_illustrator_bridge",

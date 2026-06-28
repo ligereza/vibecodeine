@@ -1,6 +1,7 @@
+import json
 from pathlib import Path
 
-from flujo.export.illustrator import prepare_svg_for_illustrator
+from flujo.export.illustrator import prepare_svg_for_illustrator, prepare_supplement_contraportadas_for_illustrator
 
 
 def test_prepare_svg_for_illustrator_creates_package(tmp_path: Path) -> None:
@@ -17,3 +18,21 @@ def test_prepare_svg_for_illustrator_creates_package(tmp_path: Path) -> None:
     assert (package_dir / "import_svg.jsx").exists()
     assert (package_dir / "README.md").exists()
     assert (package_dir / "manifest.json").exists()
+
+
+def test_prepare_supplement_contraportadas_for_illustrator_creates_package(tmp_path: Path) -> None:
+    package_dir = prepare_supplement_contraportadas_for_illustrator(
+        ["Impulso", "Creatina"],
+        output_dir=tmp_path / "out",
+        project_name="suplementos_rd",
+    )
+
+    assert package_dir.exists()
+    assert (package_dir / "svg" / "impulso_final.svg").exists()
+    assert (package_dir / "svg" / "creatina_final.svg").exists()
+    assert (package_dir / "README.md").exists()
+    assert (package_dir / "illustrator_artboards.jsx").exists()
+
+    manifest = json.loads((package_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["type"] == "supplement_contraportadas"
+    assert manifest["datadrop_reference"]["id"] == "2026-06-22_154643_1_suplementos3d"
