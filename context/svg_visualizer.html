@@ -4,328 +4,300 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FLUJO • Material RD</title>
+<link rel="stylesheet" href="shared/flujo.css">
 <style>
-  :root {
-    --bg: #0a0a0a; --panel: #141414; --panel2: #1a1a1a;
-    --border: #2a2a2a; --text: #e8e8e8; --muted: #888;
-    --flujo-ink: #1f2a24; --flujo-accent: #2d5a4a; --flujo-paper: #f8f1e3;
-    --flujo-support: #675f55; --flujo-alert: #c2410f;
-    --accent: #2d5a4a;
-  }
-  * { box-sizing: border-box; }
-  body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; font-size: 14px; margin: 0; }
-  header { background: var(--panel); border-bottom: 1px solid var(--border); padding: 14px 24px; display: flex; gap: 12px; align-items: center; }
-  header h1 { font-size: 18px; font-weight: 700; }
-  .badge { background: var(--flujo-accent); padding: 3px 10px; border-radius: 4px; font-size: 11px; }
-  .nav { margin-left: auto; display: flex; gap: 8px; }
-  .nav a, .nav button { background: var(--panel2); color: var(--text); border: 1px solid var(--border); padding: 6px 12px; border-radius: 4px; font-size: 12px; text-decoration: none; cursor: pointer; }
-  .nav a:hover, .nav button:hover { border-color: var(--accent); }
-  .nav .back { font-weight: 600; background: #1f2a24; border-color: #2d5a4a; }
-  
+  /* Estilos propios de esta página (lo común vive en shared/flujo.css) */
   .main { max-width: 1320px; margin: 0 auto; padding: 24px; }
-  .toolbar { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 14px; display: flex; gap: 12px; align-items: center; margin-bottom: 20px; }
-  .search-box { flex: 1; position: relative; }
-  .search-box input { width: 100%; background: var(--panel2); border: 1px solid var(--border); color: var(--text); padding: 9px 12px; border-radius: 5px; font-size: 13px; }
-  .search-box input:focus { border-color: var(--accent); outline: none; }
+  .toolbar { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 14px; display: flex; gap: 12px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .search-box { flex: 1; min-width: 220px; }
   .filter-btn { background: var(--panel2); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 12px; }
   .filter-btn:hover, .filter-btn.active { border-color: var(--accent); background: rgba(45, 90, 74, .15); }
   .reload-btn { background: linear-gradient(135deg, var(--accent), #1a3f2e); color: #fff; border: none; padding: 8px 16px; font-weight: 700; font-size: 11px; border-radius: 5px; cursor: pointer; text-transform: uppercase; }
   .reload-btn:hover { opacity: .9; }
 
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
-  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px; transition: all .2s; cursor: pointer; }
-  .card:hover { border-color: var(--accent); box-shadow: 0 0 16px rgba(45, 90, 74, .2); }
-  .card-preview { background: var(--dark4); width: 100%; height: 200px; border-radius: 4px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 12px; font-size: 11px; color: var(--muted); border: 1px solid var(--border); position: relative; }
-  .card-preview svg, .card-preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
-  .card-preview.loading::after { content: "⊙"; animation: spin .8s linear infinite; position: absolute; font-size: 18px; }
-  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px; transition: border-color .2s, box-shadow .2s; cursor: pointer; }
+  .card:hover, .card:focus-visible { border-color: var(--accent); box-shadow: 0 0 16px rgba(45, 90, 74, .2); }
+  .card-preview { width: 100%; height: 180px; border-radius: 4px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 12px; border: 1px dashed var(--border); background: linear-gradient(135deg, var(--dark1), var(--dark3)); }
   .card-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
-  .card-meta { font-size: 11px; color: var(--muted); margin-bottom: 10px; }
+  .card-meta { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
   .card-desc { font-size: 12px; color: var(--text); line-height: 1.4; margin-bottom: 10px; }
+  .card-tags { margin-bottom: 10px; }
   .card-actions { display: flex; gap: 6px; flex-wrap: wrap; }
   .btn-sm { background: var(--panel2); border: 1px solid var(--border); color: var(--text); padding: 4px 10px; border-radius: 3px; font-size: 11px; cursor: pointer; }
   .btn-sm:hover { border-color: var(--accent); }
   .btn-accent { background: rgba(45, 90, 74, .4); border-color: var(--accent); }
 
-  .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, .7); z-index: 1000; align-items: center; justify-content: center; }
+  .modal { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, .7); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
   .modal.active { display: flex; }
-  .modal-content { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 24px; max-width: 880px; max-height: 85vh; overflow: auto; position: relative; display: flex; gap: 24px; }
-  .modal-preview-area { flex: 1; display: flex; flex-direction: column; }
-  .modal-preview-area svg, .modal-preview-area img { max-width: 100%; height: auto; max-height: 520px; border: 1px solid var(--border); border-radius: 4px; margin-bottom: 12px; }
+  .modal-content { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 24px; max-width: min(880px, 94vw); max-height: 90vh; overflow: auto; position: relative; display: flex; gap: 24px; }
+  @media (max-width: 1024px) { .modal-content { flex-direction: column; } }
+  .modal-preview-area { flex: 1; min-width: 0; }
   .modal-info-area { flex: 0 0 280px; display: flex; flex-direction: column; gap: 12px; font-size: 12px; }
-  @media (max-width: 1024px) { .modal-content { flex-direction: column; } .modal-info-area { flex: unset; } }
-  .modal-close { position: absolute; top: 16px; right: 16px; background: var(--panel2); border: 1px solid var(--border); width: 32px; height: 32px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: 700; }
+  .modal-close { position: absolute; top: 16px; right: 16px; background: var(--panel2); border: 1px solid var(--border); width: 32px; height: 32px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: 700; color: var(--text); }
   .modal-close:hover { border-color: var(--accent); }
-  .modal-img { max-width: 100%; max-height: 500px; border-radius: 6px; border: 1px solid var(--border); }
-  .modal-title { font-size: 18px; font-weight: 700; margin-top: 14px; }
-  .modal-info { font-size: 12px; color: var(--muted); margin: 8px 0; }
 
-  .section-title { font-size: 14px; font-weight: 700; padding: 16px 24px; margin: 0; border-bottom: 1px solid var(--border); color: var(--accent); }
+  .section-title { font-size: 14px; font-weight: 700; padding: 16px 0 8px; margin: 0; border-bottom: 1px solid var(--border); color: var(--accent); }
   .section-title::before { content: "•"; margin-right: 8px; }
-
-  .empty { text-align: center; padding: 40px 20px; color: var(--muted); }
-  .empty svg { opacity: .3; margin-bottom: 16px; }
-
-  ::-webkit-scrollbar { width: 8px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+  .grid + .section-title { margin-top: 24px; }
 </style>
 </head>
 <body>
 <header>
-  <h1>FLUJO</h1>
+  <div class="brand"><span class="dot"></span><h1>FLUJO</h1></div>
   <span class="badge">Material RD</span>
   <div class="nav">
-    <a class="back" href="flujo_hub.html" style="background:#1f2a24;border-color:#2d5a4a">← Hub</a>
-    <a href="plano_demo.html">Plano Intervención</a>
+    <a href="flujo_hub.html">Hub</a>
+    <a href="plano_demo.html">Plano</a>
+    <a href="svg_visualizer.html">Material</a>
+    <span id="status" class="small muted" style="margin-left:8px">●</span>
   </div>
 </header>
 
 <div class="main">
   <div class="toolbar">
-    <input id="search" type="text" placeholder="Buscar material (flyer, rider, protocolo, etiqueta...)" class="search-box">
-    <input type="hidden" id="filterType" value="">
-    <button class="filter-btn" onclick="setFilter('')">Todo</button>
-    <button class="filter-btn" onclick="setFilter('flyer')">Flyers</button>
-    <button class="filter-btn" onclick="setFilter('rider')">Riders</button>
-    <button class="filter-btn" onclick="setFilter('signage')">Señalización</button>
-    <button class="filter-btn" onclick="setFilter('suplemento')">Suplementos</button>
-    <button class="reload-btn" onclick="reloadData()">Recargar</button>
+    <label class="sr-only" for="search">Buscar material</label>
+    <input id="search" type="search" placeholder="Buscar material (flyer, rider, protocolo, etiqueta...)" class="search-box">
+    <div role="group" aria-label="Filtrar por tipo" style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="filter-btn active" data-filter=""           aria-pressed="true">Todo</button>
+      <button class="filter-btn"        data-filter="flyer"      aria-pressed="false">Flyers</button>
+      <button class="filter-btn"        data-filter="rider"      aria-pressed="false">Riders</button>
+      <button class="filter-btn"        data-filter="signage"    aria-pressed="false">Señalización</button>
+      <button class="filter-btn"        data-filter="suplemento" aria-pressed="false">Suplementos</button>
+    </div>
+    <button class="reload-btn" id="btn-reload">Recargar</button>
   </div>
 
-  <div id="container"></div>
+  <div id="count" class="small muted" style="margin:-8px 0 14px"></div>
+  <div id="container" aria-live="polite"></div>
 </div>
 
-<div id="modal" class="modal">
+<div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
   <div class="modal-content">
-    <div class="modal-close" onclick="closeModal()">×</div>
-    <div id="modal-body"></div>
+    <button class="modal-close" id="modal-close" aria-label="Cerrar">×</button>
+    <div id="modal-body" style="display:contents"></div>
   </div>
 </div>
 
+<script src="shared/flujo.js"></script>
 <script>
-const A = {
-  ink: '#1f2a24', accent: '#2d5a4a', paper: '#f8f1e3', support: '#675f55', alert: '#c2410f',
-  dark0: '#0a0a0a', dark1: '#0d0d0d', dark2: '#111', dark3: '#151515', dark4: '#1f1f1f'
-};
+'use strict';
+var E = Flujo.escapeHTML;
 
-// Datos base (simulado; en producción viendría de backend)
-const materials = [
-  {
-    id: 'flyer-prevencion', category: 'flyer', title: 'Flyer Prevención DGD',
-    desc: 'Educativo sobre drogas de diseño. Usos stand informativo principal.',
-    meta: '210×297mm | A4 • 2021', tags: ['educación', 'DGD', 'prevención']
-  },
-  {
-    id: 'flyer-testeo', category: 'flyer', title: 'Flyer Testeo Químico',
-    desc: 'Info sobre análisis colorimétrico. Distribución en stand testeo.',
-    meta: '210×297mm | A4 • 2022', tags: ['testeo', 'químico', 'safety']
-  },
-  {
-    id: 'flyer-alcohol', category: 'flyer', title: 'Flyer Alcohol & Drogas',
-    desc: 'Combinaciones de riesgo. Educación general eventos.',
-    meta: '210×297mm | A4 • 2022', tags: ['alcohol', 'interacciones']
-  },
-  {
-    id: 'rider-operativo', category: 'rider', title: 'Rider Operativo RD',
-    desc: 'Protocolo setup stand + protocolos de atención. Para productoras eventos.',
-    meta: '6 págs • PDF • 2023', tags: ['operativo', 'protocolo', 'eventos']
-  },
-  {
-    id: 'rider-testeo', category: 'rider', title: 'Rider Testeo Químico',
-    desc: 'Procedimientos testeo, seguridad analista, disposing residuos.',
-    meta: '8 págs • PDF • 2023', tags: ['testeo', 'safety', 'procedures']
-  },
-  {
-    id: 'rider-contension', category: 'rider', title: 'Rider Zona Contención',
-    desc: 'Protocolos atención crisis emocional, primeros auxilios psicológicos.',
-    meta: '5 págs • PDF • 2022', tags: ['contención', 'salud mental', 'crisis']
-  },
-  {
-    id: 'signage-stand', category: 'signage', title: 'Señalización Stand Principal',
-    desc: 'Banner + afiches para área stand informativo. Vinilo + cartulina.',
-    meta: '1.5×2.0m • Diseño 2023', tags: ['visual', 'stand', 'diseño']
-  },
-  {
-    id: 'signage-testeo', category: 'signage', title: 'Señalización Zona Testeo',
-    desc: 'Indicadores para flujo testeo + avisos seguridad. Lamina plastificada.',
-    meta: '0.6×0.6m • Avisos varios', tags: ['testeo', 'flow', 'seguridad']
-  },
-  {
-    id: 'signage-contension', category: 'signage', title: 'Señalización Zona Contención',
-    desc: 'Señal acceso zona contención + protocolo afiche. Tono calmo/seguro.',
-    meta: '0.8×0.5m • Diseño 2023', tags: ['contención', 'acceso', 'protocolo']
-  },
-  {
-    id: 'suplemento-mdma', category: 'suplemento', title: 'Suplemento: MDMA/Éxtasis',
-    desc: 'Info: dosis, efectos, riesgos, combinaciones peligrosas, reducción de daño.',
-    meta: '4 págs • A5 doblado • 2023', tags: ['MDMA', 'éxtasis', 'dosis']
-  },
-  {
-    id: 'suplemento-cocaina', category: 'suplemento', title: 'Suplemento: Cocaína',
-    desc: 'Rutas administración, efectos cardiovasculares, primeros auxilios.',
-    meta: '4 págs • A5 doblado • 2023', tags: ['cocaína', 'cardio', 'riesgos']
-  },
-  {
-    id: 'suplemento-lsd', category: 'suplemento', title: 'Suplemento: LSD/Psicodélicos',
-    desc: 'Experiencia, setting, bad trips, gestión emocional, recomendaciones.',
-    meta: '4 págs • A5 doblado • 2023', tags: ['LSD', 'psicodélicos', 'bad-trip']
-  },
-  {
-    id: 'suplemento-alcohol', category: 'suplemento', title: 'Suplemento: Alcohol',
-    desc: 'Mezclas riesgosas, deshidratación, primeros auxilios básicos.',
-    meta: '4 págs • A5 doblado • 2023', tags: ['alcohol', 'mezclas', 'deshidratación']
-  },
-  {
-    id: 'suplemento-mescalina', category: 'suplemento', title: 'Suplemento: Mescalina/Cactus',
-    desc: 'Cactus activos, preparación, efectos prolongados, setting importante.',
-    meta: '4 págs • A5 doblado • 2023', tags: ['mescalina', 'cactus', 'naturales']
-  }
+/* Datos demo (fallback). En modo real vienen de /api/materials con la misma forma. */
+var DEMO_MATERIALS = [
+  { id:'flyer-prevencion', category:'flyer', title:'Flyer Prevención DGD', desc:'Educativo sobre drogas de diseño. Stand informativo principal.', meta:'210×297mm | A4 • 2021', tags:['educación','DGD','prevención'] },
+  { id:'flyer-testeo', category:'flyer', title:'Flyer Testeo Químico', desc:'Info sobre análisis colorimétrico. Distribución en stand testeo.', meta:'210×297mm | A4 • 2022', tags:['testeo','químico','safety'] },
+  { id:'flyer-alcohol', category:'flyer', title:'Flyer Alcohol & Drogas', desc:'Combinaciones de riesgo. Educación general eventos.', meta:'210×297mm | A4 • 2022', tags:['alcohol','interacciones'] },
+  { id:'rider-operativo', category:'rider', title:'Rider Operativo RD', desc:'Protocolo setup stand + atención. Para productoras de eventos.', meta:'6 págs • PDF • 2023', tags:['operativo','protocolo','eventos'] },
+  { id:'rider-testeo', category:'rider', title:'Rider Testeo Químico', desc:'Procedimientos testeo, seguridad analista, manejo de residuos.', meta:'8 págs • PDF • 2023', tags:['testeo','safety','procedimiento'] },
+  { id:'rider-contension', category:'rider', title:'Rider Zona Contención', desc:'Protocolos atención crisis emocional y primeros auxilios psicológicos.', meta:'5 págs • PDF • 2022', tags:['contención','salud mental','crisis'] },
+  { id:'signage-stand', category:'signage', title:'Señalización Stand Principal', desc:'Banner + afiches para área stand informativo. Vinilo + cartulina.', meta:'1.5×2.0m • 2023', tags:['visual','stand','diseño'] },
+  { id:'signage-testeo', category:'signage', title:'Señalización Zona Testeo', desc:'Indicadores de flujo de testeo + avisos de seguridad.', meta:'0.6×0.6m • avisos', tags:['testeo','flujo','seguridad'] },
+  { id:'signage-descanso', category:'signage', title:'Señalización Zona Descanso', desc:'Señal de acceso a zona de descanso + protocolo. Tono calmo/seguro.', meta:'0.8×0.5m • 2023', tags:['descanso','acceso','protocolo'] },
+  { id:'suplemento-mdma', category:'suplemento', title:'Suplemento: MDMA/Éxtasis', desc:'Dosis, efectos, riesgos, combinaciones peligrosas, reducción de daño.', meta:'4 págs • A5 • 2023', tags:['MDMA','éxtasis','dosis'] },
+  { id:'suplemento-cocaina', category:'suplemento', title:'Suplemento: Cocaína', desc:'Rutas de administración, efectos cardiovasculares, primeros auxilios.', meta:'4 págs • A5 • 2023', tags:['cocaína','cardio','riesgos'] },
+  { id:'suplemento-lsd', category:'suplemento', title:'Suplemento: LSD/Psicodélicos', desc:'Experiencia, setting, bad trips, gestión emocional.', meta:'4 págs • A5 • 2023', tags:['LSD','psicodélicos','bad-trip'] }
 ];
 
-let filteredMaterials = [...materials];
+var state = { items: [], status: 'idle', query: '', filter: '', lastFocus: null };
 
-function createCardHTML(m) {
-  const tagHTML = m.tags.map(t => `<span style="background:rgba(45,90,74,.3);color:#e8e8e8;padding:2px 6px;border-radius:2px;font-size:10px;margin-right:4px">${t}</span>`).join('');
-  
-  return `
-    <div class="card" onclick="openModal('${m.id}')">
-      <div class="card-preview" style="background:linear-gradient(135deg,#0d0d0d,#151515);border:1px dashed #2a2a2a">
-        <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
-          <rect x="8" y="12" width="44" height="36" rx="2" stroke="#2d5a4a" stroke-width="2"/>
-          <text x="30" y="35" font-size="9" fill="#675f55" text-anchor="middle" font-weight="600">${m.category.toUpperCase()}</text>
-        </svg>
-      </div>
-      <div class="card-title">${m.title}</div>
-      <div class="card-meta">${m.meta}</div>
-      <div class="card-desc">${m.desc}</div>
-      <div class="card-actions">
-        <button class="btn-sm btn-accent" onclick="event.stopPropagation()">Detalles</button>
-        <button class="btn-sm" onclick="event.stopPropagation()">Descargar</button>
-      </div>
-    </div>
-  `;
-}
-
-function render() {
-  const q = document.getElementById('search').value.toLowerCase();
-  const filt = document.getElementById('filterType').value;
-
-  filteredMaterials = materials.filter(m => {
-    const matchesQ = !q || m.title.toLowerCase().includes(q) || m.desc.toLowerCase().includes(q) || m.tags.some(t => t.includes(q));
-    const matchesF = !filt || m.category === filt;
-    return matchesQ && matchesF;
-  });
-
-  const container = document.getElementById('container');
-  if (filteredMaterials.length === 0) {
-    container.innerHTML = `<div class="empty">
-      <div>No se encontraron materiales</div>
-      <div style="font-size:11px;margin-top:8px">Intenta otra búsqueda o resetea filtros</div>
-    </div>`;
-    return;
+/* ---------- carga (demo | api) ---------- */
+async function loadMaterials() {
+  setStatus('loading');
+  try {
+    if (Flujo.useDemo()) {
+      state.items = DEMO_MATERIALS;
+    } else {
+      var data = await Flujo.fetchJSON('/api/materials');
+      state.items = (data.items || data).map(normalize);
+    }
+    setStatus(state.items.length ? 'ready' : 'empty');
+  } catch (e) {
+    state.status = 'error'; state.error = e;
+    Flujo.toast('No se pudieron cargar los materiales: ' + e.message, 'error');
   }
-
-  let html = '';
-  const byCat = {};
-  filteredMaterials.forEach(m => {
-    if (!byCat[m.category]) byCat[m.category] = [];
-    byCat[m.category].push(m);
-  });
-
-  const catLabels = { flyer: 'Flyers Educativos', rider: 'Riders Operativos', signage: 'Señalización', suplemento: 'Suplementos' };
-  Object.keys(byCat).sort().forEach(cat => {
-    html += `<h3 class="section-title">${catLabels[cat] || cat}</h3>`;
-    html += `<div class="grid">`;
-    byCat[cat].forEach(m => { html += createCardHTML(m); });
-    html += `</div>`;
-  });
-
-  container.innerHTML = html;
-}
-
-function setFilter(f) {
-  document.getElementById('filterType').value = f;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  if (f) event.target.classList.add('active');
-  else document.querySelectorAll('.filter-btn')[0].classList.add('active');
   render();
 }
 
+function normalize(r) {
+  return {
+    id: String(r.id || ''), category: String(r.category || 'otros'),
+    title: String(r.title || 'Sin título'), desc: String(r.desc || r.description || ''),
+    meta: String(r.meta || ''), tags: Array.isArray(r.tags) ? r.tags.map(String) : []
+  };
+}
+
+function setStatus(s) { state.status = s; }
+
+/* ---------- render principal por estado ---------- */
+function render() {
+  var c = document.getElementById('container');
+  if (state.status === 'loading') { c.innerHTML = '<div class="state"><span class="spinner"></span><div style="margin-top:10px">Cargando materiales…</div></div>'; return; }
+  if (state.status === 'error') { c.innerHTML = '<div class="state error">No se pudieron cargar los materiales.<br><button class="btn-sm" id="retry" style="margin-top:10px">Reintentar</button></div>'; document.getElementById('retry').onclick = loadMaterials; return; }
+
+  var filtered = state.items.filter(function (m) {
+    var q = state.query.toLowerCase();
+    var okQ = !q || m.title.toLowerCase().indexOf(q) >= 0 || m.desc.toLowerCase().indexOf(q) >= 0 || m.tags.some(function (t) { return t.toLowerCase().indexOf(q) >= 0; });
+    var okF = !state.filter || m.category === state.filter;
+    return okQ && okF;
+  });
+
+  if (!filtered.length) {
+    c.innerHTML = '<div class="state">No se encontraron materiales.<div class="small" style="margin-top:8px">Prueba otra búsqueda o cambia el filtro.</div></div>';
+    return;
+  }
+
+  var cnt = document.getElementById('count');
+  if (cnt) cnt.textContent = filtered.length + ' material(es)' +
+    (state.filter ? ' · filtro: ' + state.filter : '') + (state.query ? ' · "' + state.query + '"' : '');
+
+  var byCat = {};
+  filtered.forEach(function (m) { (byCat[m.category] = byCat[m.category] || []).push(m); });
+  var labels = { flyer:'Flyers Educativos', rider:'Riders Operativos', signage:'Señalización', suplemento:'Suplementos', otros:'Otros' };
+
+  var html = '';
+  Object.keys(byCat).sort().forEach(function (cat) {
+    html += '<h3 class="section-title">' + E(labels[cat] || cat) + '</h3><div class="grid">';
+    byCat[cat].forEach(function (m) { html += cardHTML(m); });
+    html += '</div>';
+  });
+  c.innerHTML = html;
+}
+
+/* ---------- card (con tags visibles y TODO escapado) ---------- */
+function cardHTML(m) {
+  var tags = m.tags.map(function (t) { return '<span class="tag">' + E(t) + '</span>'; }).join('');
+  return '' +
+    '<div class="card" tabindex="0" role="button" aria-label="' + E(m.title) + '" data-id="' + E(m.id) + '">' +
+      '<div class="card-preview">' +
+        '<svg width="60" height="60" viewBox="0 0 60 60" fill="none" aria-hidden="true">' +
+        '<rect x="8" y="12" width="44" height="36" rx="2" stroke="var(--accent)" stroke-width="2"/>' +
+        '<text x="30" y="35" font-size="9" fill="var(--muted)" text-anchor="middle" font-weight="600">' + E(m.category.toUpperCase()) + '</text></svg>' +
+      '</div>' +
+      '<div class="card-title">' + E(m.title) + '</div>' +
+      '<div class="card-meta">' + E(m.meta) + '</div>' +
+      '<div class="card-desc">' + E(m.desc) + '</div>' +
+      '<div class="card-tags">' + tags + '</div>' +
+      '<div class="card-actions">' +
+        '<button class="btn-sm btn-accent" data-act="detalle" data-id="' + E(m.id) + '">Detalles</button>' +
+        '<button class="btn-sm" data-act="descargar" data-id="' + E(m.id) + '">Descargar</button>' +
+      '</div>' +
+    '</div>';
+}
+
+/* ---------- filtros (sin event global) ---------- */
+function setFilter(cat, btn) {
+  state.filter = cat;
+  document.querySelectorAll('.filter-btn').forEach(function (b) {
+    var on = b === btn;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  render();
+}
+
+/* ---------- modal accesible ---------- */
+var releaseTrap = null;
 function openModal(id) {
-  const m = materials.find(x => x.id === id);
+  var m = state.items.find(function (x) { return x.id === id; });
   if (!m) return;
-  
-  const tagHTML = m.tags.map(t => `<span style="background:#2d5a4a;color:#fff;padding:3px 8px;border-radius:3px;font-size:10px;margin-right:4px;display:inline-block">${t}</span>`).join('');
-  
-  const previewSVG = `<svg width="100" height="100" viewBox="0 0 100 100" fill="none">
-    <rect x="15" y="20" width="70" height="60" rx="3" stroke="#2d5a4a" stroke-width="2"/>
-    <text x="50" y="55" font-size="12" fill="#675f55" text-anchor="middle" font-weight="700">${m.category.toUpperCase()}</text>
-  </svg>`;
-  
-  const body = `
-    <div class="modal-preview-area">
-      <div style="background:linear-gradient(135deg,#0d0d0d,#151515);border:1px solid #2a2a2a;border-radius:4px;padding:16px;display:flex;align-items:center;justify-content:center;min-height:400px">
-        ${previewSVG}
-      </div>
-      <div style="font-size:11px;color:#888">
-        <span style="background:#2a2a2a;padding:4px 8px;border-radius:2px">Previsualización • Click para pantalla completa</span>
-      </div>
-    </div>
-    <div class="modal-info-area">
-      <div>
-        <div style="font-size:14px;font-weight:700;margin-bottom:8px;color:#e8e8e8">${m.title}</div>
-        <div style="font-size:11px;color:#888;line-height:1.5">${m.desc}</div>
-      </div>
-      <div style="border-top:1px solid #2a2a2a;padding-top:12px">
-        <div style="font-size:10px;color:#888;margin-bottom:4px">CATEGORÍA</div>
-        <div style="background:#2a2a2a;padding:6px;border-radius:2px;font-size:11px;font-weight:600">${m.category}</div>
-      </div>
-      <div>
-        <div style="font-size:10px;color:#888;margin-bottom:4px">METADATOS</div>
-        <div style="background:#2a2a2a;padding:6px;border-radius:2px;font-size:11px">${m.meta}</div>
-      </div>
-      <div>
-        <div style="font-size:10px;color:#888;margin-bottom:4px">TAGS</div>
-        <div style="display:flex;flex-wrap:wrap;gap:4px">${tagHTML || '<em style="color:#666">sin clasificar</em>'}</div>
-      </div>
-      <div style="border-top:1px solid #2a2a2a;padding-top:12px;margin-top:auto">
-        <button class="btn-sm btn-accent" onclick="downloadMaterial('${m.id}')" style="width:100%;margin-bottom:6px">⬇ Descargar</button>
-        <button class="btn-sm" onclick="copyPath('${m.id}')" style="width:100%">📋 Copiar ruta</button>
-      </div>
-    </div>
-  `;
-  
-  document.getElementById('modal-body').innerHTML = body;
-  document.getElementById('modal').classList.add('active');
-}
+  state.lastFocus = document.activeElement;
 
-function downloadMaterial(id) {
-  const m = materials.find(x => x.id === id);
-  if (m) alert(`Descargando: ${m.id}.pdf`);
-}
+  var tags = m.tags.map(function (t) { return '<span class="tag" style="background:var(--accent);color:#fff">' + E(t) + '</span>'; }).join('') || '<em class="muted">sin clasificar</em>';
+  document.getElementById('modal-body').innerHTML =
+    '<div class="modal-preview-area">' +
+      '<div style="background:linear-gradient(135deg,var(--dark1),var(--dark3));border:1px solid var(--border);border-radius:4px;padding:16px;display:flex;align-items:center;justify-content:center;min-height:360px">' +
+        '<svg width="100" height="100" viewBox="0 0 100 100" fill="none" aria-hidden="true"><rect x="15" y="20" width="70" height="60" rx="3" stroke="var(--accent)" stroke-width="2"/><text x="50" y="55" font-size="12" fill="var(--muted)" text-anchor="middle" font-weight="700">' + E(m.category.toUpperCase()) + '</text></svg>' +
+      '</div></div>' +
+    '<div class="modal-info-area">' +
+      '<div><div id="modal-title" style="font-size:16px;font-weight:700;margin-bottom:8px">' + E(m.title) + '</div>' +
+        '<div class="small muted" style="line-height:1.5">' + E(m.desc) + '</div></div>' +
+      '<div style="border-top:1px solid var(--border);padding-top:12px"><div class="small muted" style="margin-bottom:4px">CATEGORÍA</div>' +
+        '<div style="background:var(--panel2);padding:6px;border-radius:2px;font-size:11px;font-weight:600">' + E(m.category) + '</div></div>' +
+      '<div><div class="small muted" style="margin-bottom:4px">METADATOS</div>' +
+        '<div style="background:var(--panel2);padding:6px;border-radius:2px;font-size:11px">' + E(m.meta) + '</div></div>' +
+      '<div><div class="small muted" style="margin-bottom:4px">TAGS</div>' +
+        '<div style="display:flex;flex-wrap:wrap;gap:4px">' + tags + '</div></div>' +
+      '<div style="border-top:1px solid var(--border);padding-top:12px;margin-top:auto">' +
+        '<button class="btn-sm btn-accent" data-act="descargar" data-id="' + E(m.id) + '" style="width:100%;margin-bottom:6px">⬇ Descargar</button>' +
+        '<button class="btn-sm" data-act="copiar" data-id="' + E(m.id) + '" style="width:100%">📋 Copiar ruta</button>' +
+      '</div></div>';
 
-function copyPath(id) {
-  const path = `/svg/rd/${materials.find(x=>x.id===id)?.category}/${id}`;
-  navigator.clipboard.writeText(path).then(() => alert(`Ruta copiada: ${path}`));
+  var modal = document.getElementById('modal');
+  modal.classList.add('active');
+  releaseTrap = Flujo.trapFocus(modal, closeModal);
+  document.getElementById('modal-close').focus();
 }
 
 function closeModal() {
   document.getElementById('modal').classList.remove('active');
+  if (releaseTrap) { releaseTrap(); releaseTrap = null; }
+  if (state.lastFocus && state.lastFocus.focus) state.lastFocus.focus();
 }
 
-function reloadData() {
-  alert('Recargando desde servidor...');
-  // En producción aquí iría fetch a backend
+/* ---------- acciones ---------- */
+function descargar(id) {
+  var m = state.items.find(function (x) { return x.id === id; });
+  if (!m) return;
+  if (Flujo.useDemo()) { Flujo.toast('Demo: descargaría ' + m.id + '.pdf'); return; }
+  var a = document.createElement('a');
+  a.href = '/api/materials/' + encodeURIComponent(m.id) + '/download';
+  a.download = m.id + '.pdf';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+function copiarRuta(id) {
+  var m = state.items.find(function (x) { return x.id === id; });
+  if (!m) return;
+  var path = '/svg/rd/' + m.category + '/' + m.id;
+  if (navigator.clipboard) navigator.clipboard.writeText(path).then(function () { Flujo.toast('Ruta copiada: ' + path); });
+  else Flujo.toast(path);
 }
 
-document.getElementById('search').addEventListener('input', render);
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeModal();
+/* ---------- init: delegación de eventos (sin onclick inline) ---------- */
+document.addEventListener('DOMContentLoaded', function () {
+  document.getElementById('search').addEventListener('input', function (e) { state.query = e.target.value; render(); });
+
+  document.querySelectorAll('.filter-btn').forEach(function (b) {
+    b.addEventListener('click', function () { setFilter(b.dataset.filter, b); });
+  });
+
+  document.getElementById('btn-reload').addEventListener('click', loadMaterials);
+  document.getElementById('modal-close').addEventListener('click', closeModal);
+  document.getElementById('modal').addEventListener('click', function (e) {
+    if (e.target.id === 'modal') closeModal(); // click en backdrop
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
+
+  // delegación: cards y botones de acción
+  document.getElementById('container').addEventListener('click', function (e) {
+    var actBtn = e.target.closest('[data-act]');
+    if (actBtn) {
+      e.stopPropagation();
+      var id = actBtn.dataset.id;
+      if (actBtn.dataset.act === 'detalle') openModal(id);
+      else if (actBtn.dataset.act === 'descargar') descargar(id);
+      else if (actBtn.dataset.act === 'copiar') copiarRuta(id);
+      return;
+    }
+    var card = e.target.closest('.card');
+    if (card) openModal(card.dataset.id);
+  });
+  // teclado en cards (Enter/Espacio)
+  document.getElementById('container').addEventListener('keydown', function (e) {
+    var card = e.target.closest('.card');
+    if (card && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openModal(card.dataset.id); }
+  });
+  // delegación dentro del modal
+  document.getElementById('modal-body').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-act]'); if (!b) return;
+    if (b.dataset.act === 'descargar') descargar(b.dataset.id);
+    else if (b.dataset.act === 'copiar') copiarRuta(b.dataset.id);
+  });
+
+  document.getElementById('status').textContent = Flujo.useDemo() ? '● modo demo' : '● conectado a /api';
+  loadMaterials();
 });
-
-render();
 </script>
 </body>
 </html>
