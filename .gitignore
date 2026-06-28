@@ -138,3 +138,8 @@ logo3d*/
 # Logs locales de validación/airdrops
 _logs/
 airdrop_*_apply_log.txt
+
+# Node / frontend
+node_modules/
+.npm/
+web/dist/

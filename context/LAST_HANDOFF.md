@@ -4,16 +4,100 @@ IMPORTANT: This file is intentionally ASCII-only to avoid mojibake on Windows + 
 Do not use accents, enye, emoji, smart quotes, or special arrows here.
 Daily commands for owner on Windows/Git Bash must use `py`, not `python`.
 
-Date: 2026-06-24
-Current version: 0.35.13
+Date: 2026-06-28
+Current version: 0.40.4
 Main daily entry: `py -m flujo app`
 Desktop entry: `py -m flujo app --desktop`
 Verify on Windows: `py -m flujo verify`
 Airdrop check on Windows: `py scripts/validate_airdrop.py` then `py scripts/run_airdrop_checks.py "message"`
 
-## Current direction
+## Current state
 
-flujo is now focused on a free request/work-status flow without monday.com:
+The repo is healthy after the v0.40 hub airdrop, v0.40.1 dispatcher fix, v0.40.2 Plano/Rider vanilla integration, and v0.40.3 React/Vite web layer for Plano Pro, and v0.40.4 React SVG Visualizer integration.
+
+Real package CLI:
+- `py -m flujo health`
+- `py -m flujo doctor`
+- `py -m flujo verify`
+- `py -m flujo app`
+- `py -m flujo hub serve --open`
+- `py -m flujo hub index <build|stats|find|versions|dupes|cleanup|agent-brief> ...`
+- `py -m flujo hub route <where|cuna|doctor> ...`
+
+Important: `index` and `route` from the v0.40 local hub are namespaced under `hub` so they do not hide the existing Typer CLI commands.
+Do not document them as top-level `py -m flujo index` or `py -m flujo route` unless aliases are intentionally added later.
+
+## Recent completed work
+
+### v0.40.0 - local hub, serve, index and route
+- Added the local hub server and APIs under `src/flujo/serve`.
+- Added route resolver under `src/flujo/route`.
+- Added local index tooling under `src/flujo/index`.
+- Added hub HTML/data improvements in `context/`.
+- Initial airdrop replaced `src/flujo/__main__.py` with a custom dispatcher, which hid existing CLI commands.
+
+### v0.40.1 - dispatcher fix and hub addons
+- Restored `src/flujo/__main__.py` to delegate to `flujo.cli:app`.
+- Added `src/flujo/cli_addons.py`.
+- Registered the new local-hub commands under `py -m flujo hub ...`.
+- Kept existing commands alive: health, doctor, job, eventos, airdrop, app, verify, etc.
+- Archived root handoffs into `docs/handoffs/archive/root/`.
+- Synchronized package version and active handoff to 0.40.1.
+
+### v0.40.2 - Plano/Rider Pro vanilla integration
+- Rebuilt `context/plano_demo.html` into a useful operational tool.
+- Integrated the good ideas from the React PlanoTool proposal without adding Node/React to runtime.
+- Added modes: requirements checklist, editable layout, and rider/cost/json outputs.
+- Added draggable SVG zones, layers, add-zone buttons, property editor, zoom, grid, legend, export SVG, print, copy rider/costs, and JSON export.
+- Keeps backend integration with `POST /api/plano/render`; double click still works in demo mode.
+
+### v0.40.3 - React/Vite web layer for Plano Pro
+- Decision changed: Node is accepted as a local/free UI development layer.
+- Added `web/` with React + Vite + TypeScript + Tailwind.
+- `npm run build:plano` generates a single-file HTML and copies it to `context/plano_demo.html`.
+- Daily use remains `py -m flujo app`; Node is only needed to develop/rebuild the UI.
+- The generated Plano page includes the React PlanoTool proposal and a `Motor Python` button for `/api/plano/render`.
+
+### v0.40.4 - React SVG Visualizer integration
+- Added `web/src/components/SvgVisualizer.tsx`.
+- Added `web/src/data/svgIndex.ts` demo/index data based on the proposed SVG visualizer.
+- `web/src/App.tsx` now has React navigation between Plano and SVG Visualizer.
+- `npm run build:plano` copies the same single-file app to both `context/plano_demo.html` and `context/svg_visualizer.html`; initial view is selected by pathname.
+- This keeps the UI fast to iterate while staying local/free and served by `py -m flujo app`.
+
+## Airdrop model - keep this intact
+
+Airdrop is the safe patch delivery path for agents without direct push.
+
+Expected package:
+- A ZIP containing `_airdrop/` at the top level.
+- Files inside `_airdrop/` mirror their final repo paths.
+- Include a `HANDOFF_*.md` or `HOTFIX_*.md` in the airdrop.
+- Do not include caches, build output, credentials, binaries, or generated local data.
+
+Apply path:
+```bash
+py scripts/validate_airdrop.py
+py scripts/run_airdrop_checks.py "short message"
+```
+
+If the airdrop modifies `src/flujo/airdrop.py`, explicit review is required:
+```bash
+py scripts/validate_airdrop.py --allow-airdrop-engine
+py scripts/run_airdrop_checks.py "short message" --allow-airdrop-engine
+```
+
+Runner behavior:
+- validates `_airdrop/`;
+- performs dry-run using `flujo.airdrop.scan_airdrop()`;
+- applies with backup and manifest;
+- installs editable dev package;
+- runs compileall, pytest, health, version, changelog check and hub smoke when available;
+- only then writes checkpoint/commit/push unless skipped.
+
+## Daily operating direction
+
+flujo is focused on a free local-first request/work-status flow:
 
 Gmail / WhatsApp / GitHub Issue
   -> ordered request
@@ -29,93 +113,13 @@ Recommended free stack:
 - `py -m flujo portal`: static HTML status portal.
 - `py -m flujo app`: daily hub for operator.
 
-## Recent completed work
-
-### v0.35.3 - intake JSON end-to-end
-- Added `py -m flujo intake json <file.json>`.
-- Validates `schemas/intake.schema.json`.
-- Creates `jobs/<folio>/brief.yaml`, `estado.md`, and `resultado.md`.
-- Maps suggested format and dimensions to local catalog when possible.
-- Keeps modification/rescale information and suggested commands.
-
-### v0.35.4 - free boss portal / monday.com replacement
-- Added `py -m flujo portal`.
-- Exports `context/portal_jefe.html`.
-- Added GitHub Issue Forms for design request and change request.
-- Added `docs/PORTAL_JEFE_GRATIS.md`.
-
-### v0.35.5 - Gmail to GitHub Issues
-- Added `tools/gmail_to_github_issues.gs` for Google Apps Script.
-- Added `docs/GMAIL_A_REPO_GRATIS.md`.
-- Initial flow used Gmail labels; later v0.35.10 changed recommendation to subject routing.
-- Do not store tokens in repo. Use Google Apps Script Properties.
-
-### v0.35.6 - README clean + PURPLE + suplementos RD
-- Main README rewritten and simplified.
-- Portal visual palette moved to PURPLE:
-  - bg: #12001f
-  - panel: #2b0a3d
-  - main purple: #6d28d9
-  - accent: #a855f7
-  - paper: #f5e8ff
-- Added `docs/BRIEF_SUPLEMENTOS_RD.md` from user brief.
-- No cleanup deletion was applied yet. Cleanup candidates are listed below.
-
-### v0.35.7 - ASCII handoff / Windows Git Bash encoding guard
-- Rewrote this file as ASCII-only to avoid broken characters on Windows/Git Bash.
-- Added explicit rule: owner uses `py`, not `python`.
-- Added Windows encoding notes for future agents.
-- Updated airdrop handoff to avoid accents and python commands.
-
-### v0.35.8 - Gmail routing by area
-- Gmail bridge added `GMAIL_ROUTES`.
-- First version used area labels; v0.35.10 changed recommendation to subject routing.
-- EVENTOS route: Instagram links, download with flujo/instaloader, then local Photoshop automation. If request asks for brief/plano/svg, create normal flujo job.
-- SUPLEMENTOS route: new request, modification, or quote for flyer/label/pendon/post/stickers/stand/logo.
-- Added `docs/FLUJO_AREAS_EVENTOS_SUPLEMENTOS.md`.
-
-### v0.35.9 - Windows checkout and area issue templates hotfix
-- Renamed three checkpoint files with too-long names that broke GitHub Actions Windows checkout.
-- Removed old generic issue templates: `pedido_diseno.yml` and `pedido_impresion.yml`.
-- Added area-specific templates: `pedido_eventos.yml` and `pedido_suplementos.yml`.
-- Gmail bridge issue titles now use `[EVENTOS]` or `[SUPLEMENTOS]`.
-- Added `scripts/cleanup_v0359_windows_paths.py` for airdrop users to remove old paths if needed.
-
-### v0.35.10 - Gmail subject routing and agent-first README
-- Gmail bridge no longer requires the word flujo in subjects.
-- Default routing used grouped subject queries; v0.35.11 split them for reliability.
-- `GMAIL_ROUTES` accepts full Gmail search queries, plus legacy `label:...` routes.
-- README was simplified and now starts with the required agent manual reading order.
-- Removed explicit supplements brief details from README; it only links to operational docs.
-
-### v0.35.11 - Gmail hourly trigger and robust subject routes
-- Apps Script setup now creates trigger every 1 hour.
-- Added `GMAIL_LOOKBACK`, default `7d`, to avoid processing old email backlogs.
-- Recommended routes are now separate: `subject:eventos`, `subject:evento`, `subject:suplementos`, `subject:suplemento`.
-- This should catch subjects like `Suplementos - etiqueta Omega 3` more reliably than grouped Gmail search queries.
-
-### v0.35.12 - EVENTOS flyer auto command
-- Added `py -m flujo eventos flyer-auto <instagram_url>`.
-- Downloads Instagram with instaloader and updates `C:\\rd\\AUTOMATIZACION\\input_ig.jpg`.
-- Does not open Photoshop by default.
-- To authorize Photoshop droplet: add `--run-droplet`; command asks for confirmation.
-- Expected local files: `Droplet_Flyer.exe`, `historia.psd`, `input_ig.jpg`.
-
-### v0.35.13 - EVENTOS palette and Blender preview
-- Gmail Apps Script trigger changed to every 8 hours.
-- `eventos flyer-auto` now writes `palette_ig.png` and `palette_ig.json`.
-- Added `--render-blender` to render frame 1 of `cartelera.blend` into `preview_cartelera.png`.
-- Added `--open-blender` to open `cartelera.blend` after confirmation.
-- User will connect extracted colors/images inside Blender manually.
-
 ## Important Windows/Git Bash rules
 
 - Use `py -m flujo ...`, not `python -m flujo ...`, in user-facing docs and handoff.
-- Keep code identifiers, CLI option names, file names, and logs English/ASCII when possible.
-- Markdown may be Spanish, but LAST_HANDOFF must stay ASCII-only.
+- Keep this file ASCII-only.
 - Avoid special symbols in terminal output when possible.
-- If CLI prints Unicode, Windows stdout/stderr should be UTF-8 configured before Rich Console.
-- Do not add BOM unless a specific Windows tool requires it.
+- Do not store tokens, credentials or sensitive client data.
+- Privacy scan/sanitize before sending real request data to external AI.
 
 ## Current command examples
 
@@ -139,308 +143,36 @@ Portal:
 py -m flujo portal --repo-url https://github.com/ligereza/vibecodeine
 ```
 
-Gmail bridge setup is documented in:
-```txt
-docs/GMAIL_A_REPO_GRATIS.md
-```
-
-Supplements RD brief is in:
-```txt
-docs/BRIEF_SUPLEMENTOS_RD.md
-```
-
-## Cleanup candidates - not deleted yet
-
-User asked to list before deleting. Do not delete until approved.
-
-1. `projects/tapiz/vibecode.egg-info/`
-   - Looks generated by Python packaging/build.
-   - Recommendation: delete or move to archive.
-
-2. `src/flujo.egg-info/`
-   - Looks generated by editable install.
-   - Recommendation: delete if not intentionally versioned.
-
-3. `checkpoints/` old files
-   - Historical snapshots. Some may be redundant now that LAST_HANDOFF is the source of truth.
-   - Recommendation: archive or keep only latest important ones.
-
-4. Legacy duplicated docs in `docs/`
-   - Many guides overlap with README + LAST_HANDOFF.
-   - Recommendation: review and archive, not blind delete.
-
-5. `context/portal_jefe.html`
-   - Generated by `py -m flujo portal`.
-   - Included for immediate visual preview, but can be regenerated.
-
-6. `.archive/`
-   - Historical material.
-   - Recommendation: do not delete unless owner confirms.
-
-Recommended safe first cleanup: only egg-info folders.
-
-## Next recommended feature
-
-Implement:
+Hub server:
 ```bash
-py -m flujo issue import <number-or-url>
+py -m flujo hub serve --open
 ```
 
-## New operational addition
-
-Added a Creative Director delegation role for multi-agent workflow.
-Use it when you need a premium launch strategy, brand narrative, and final review of specialist outputs.
-Command example:
+Hub route:
 ```bash
-py -m flujo delegate creative-director "Pulir la identidad visual del hub para un lanzamiento premium"
+py -m flujo hub route where --area eventos --pieza flyer
 ```
 
-Goal:
-- Read a GitHub Issue created from Gmail or Issue Form.
-- Convert to intake JSON or job.
-- Avoid copy/paste from GitHub to flujo app.
-- Apply privacy scan/sanitize before writing real request data into repo.
-
-## Next agent handoff - ambitious direction
-
-The current repo is no longer just a design workflow shell. It is becoming a compact operating system for creative production.
-The next agent should look beyond the current hub/job flow and explore a new layer: productization and reuse.
-
-Suggested direction:
-- Turn the current workflow into a reusable creative engine for multiple verticals, not only eventos/suplementos.
-- Create a modular system for templates, formats, and packaging so the same pipeline can serve flyers, labels, social posts, and future print products.
-- Move from "tooling" to "system design": define reusable patterns, metadata, and output contracts that make new formats easy to add.
-- Explore a more strategic area: AI-assisted review, brand compliance, and auto-generation quality gates.
-
-Concrete opportunities:
-- Add a generic format registry so the app can map a request to a template without hardcoding per area.
-- Introduce a lightweight review layer that checks brand, margins, contrast, and export readiness before delivery.
-- Build a bridge from jobs to reusable assets, so one job can produce multiple outputs from the same source brief.
-- Investigate how datadrops can become training and validation material for future auto-generation, not just reference storage.
-
-This is the moment to think bigger: the repo should feel like a creative operating platform, not only a set of scripts.
-The next agent should be bold, but keep the implementation grounded in the existing CLI, jobs, hub, and export architecture.
-
-Recommended first move:
-- Create a generic format/template registry and wire one new format through the same job->export flow.
-- Keep the implementation modular and reusable so future areas can plug in without rewriting the stack.
-
-## Files added/changed in current airdrop line
-
-Key files:
-- `README.md`
-- `context/LAST_HANDOFF.md`
-- `context/portal_jefe.html`
-- `docs/BRIEF_SUPLEMENTOS_RD.md`
-- `docs/GMAIL_A_REPO_GRATIS.md`
-- `docs/PORTAL_JEFE_GRATIS.md`
-- `tools/gmail_to_github_issues.gs`
-- `.github/ISSUE_TEMPLATE/pedido_eventos.yml`
-- `.github/ISSUE_TEMPLATE/pedido_suplementos.yml`
-- `.github/ISSUE_TEMPLATE/cambio_diseno.yml`
-- `src/flujo/portal.py`
-- `src/flujo/intake/json_parser.py`
-- `src/flujo/cli.py`
-- `src/flujo/version.py`
-- `tests/test_intake_json_cli.py`
-- `tests/test_portal_jefe.py`
-
-## End rule
-
-Before ending any future session:
-1. Run `py -m flujo verify` on Windows if possible, otherwise note Linux-only verification.
-2. Update this file in ASCII-only text.
-3. Keep commands using `py` for the owner.
-4. If delivering an airdrop, include a HANDOFF file that is also ASCII-only.
-
-## Added pending airdrop - 2026-06-28 logo_clean_lab
-
-This airdrop adds an unfinished experimental project:
-```txt
-projects/logo_clean_lab/
-```
-
-Purpose:
-- Build a local Illustrator logo cleanup lab.
-- Keep real logos private/local.
-- Track tests and failures before changing rules again.
-
-Main script:
-```txt
-tools/illustrator/scripts/logo_clean_master.jsx
-```
-
-Important lessons:
-- Do not globally align word baseline/cap height automatically.
-- Do not force diagonals to 45 degrees.
-- Do not collapse all handles of a node.
-- For straight segment p1 -> p2, collapse only p1.rightDirection and p2.leftDirection.
-- Preserve neighboring curve handles in B/R/P/D.
-
-Simple next tasks:
-1. Test Illustrator script with mode A then W on one simple word.
-2. Save 3 learning reports with notes.
-3. If B/R/P/D lose curves, tune MIXED rules first.
-
-Verification note:
-- Windows: py scripts/validate_airdrop.py
-- Windows: py scripts/run_airdrop_checks.py "logo clean lab experimental"
-
-## Added pending hotfix - 2026-06-28 airdrop checkpoint timeout
-
-Problem:
-- `run_airdrop_checks.py` could appear stuck at `flujo.airdrop.run_auto_checkpoint()`.
-- Likely cause: `git push` used captured output, no live prompt, and no timeout.
-
-Changes:
-- `src/flujo/airdrop.py` adds timeout/live output to git helper.
-- `git push` now shows output and stops after 180 seconds.
-- `run_auto_checkpoint(message, push=True)` can skip push.
-- `scripts/run_airdrop_checks.py` adds `--skip-push`.
-- Tests cover skip-push and static runner behavior.
-
-## Added new guardrail - 2026-06-28 HERRAMIENTAS_VISUALES.md
-
-Problem:
-- Agents modified plano_demo.html and svg_visualizer.html without understanding their context/purpose.
-- Confused RIDER RD EVENTOS (operational) with visor de diseños SUPLEMENTOS (gallery).
-- No clear documentation on what each tool does, what references they use, what NOT to touch.
-
-Solution:
-- Created `docs/HERRAMIENTAS_VISUALES.md` — explicit guardrail document.
-- Maps each tool to its reference (Propuesta_Reduciendo_Dano.txt vs BRIEF_SUPLEMENTOS_RD.md).
-- Removed all BRAND references (was a tool, not for agent use).
-- Added 5-question checklist: before modifying, must answer these or READ FIRST.
-- Clear tables: what can modify, what NOT to touch.
-
-Structure:
-- `plano_demo.html` = RIDER RD EVENTOS (document, 2 pages: reqs + layout, for producers)
-- `svg_visualizer.html` = Visor SUPLEMENTOS (gallery, search/filter/zoom, for designers)
-- CSS internal only; paleta visual reference, not BRAND dependency
-
-Next agent MUST:
-1. Read docs/HERRAMIENTAS_VISUALES.md FIRST (before touching either HTML)
-2. Answer 5 questions before modifying
-3. Understand: RIDER != gallery. Context matters.
-
-## Improved HTML tools - 2026-06-28 v0.36.1
-
-Enhancements to visual tools based on guardrail analysis:
-
-### plano_demo.html (RIDER RD EVENTOS)
-- Expanded rider content: now includes full requerimientos operativos (espacio, infraestructura, coordinación)
-- Rider text follows Propuesta_Reduciendo_Dano.txt structure (Stand Informativo, Testeo, Contención)
-- Better section headers and professional formatting
-- Includes detailed checklist for event producers
-
-### svg_visualizer.html (Visor SUPLEMENTOS)
-- Improved modal layout: side-by-side preview + info panel (responsive)
-- Better SVG display with object-fit contain + smooth animations
-- Enhanced metadata display: tags, categoría, metadatos clarity
-- New functions: downloadMaterial(), copyPath() for better UX
-- Modal title, description, and info areas reorganized for scannability
-
-Both tools now aligned with their purpose:
-- RIDER: operational/commercial document for producers
-- VISUALIZER: professional gallery for designers/products
-
-Status: ✅ Tested locally, responsive, professional presentation
-
-## Agent communication guardrails - 2026-06-28 v0.36.2
-
-Created two new guardrail documents to prevent future agent confusion:
-
-### docs/AGENT_GUARDRAILS_VISUAL_TOOLS.md
-- 5-question rule (mandatory before modifying HTML)
-- Quick reference table (tool purpose / reference / no-touch)
-- Red flags checklist (STOP conditions)
-- Pre-commit quality checklist (navigation, responsive, console clean)
-- Key URLs that should never change
-
-### PARA_IA.md (rewritten)
-- Bullet-based, enfático en guardrails
-- Obligatory reading order (5 steps)
-- Non-negotiable rules table
-- Visual tools warning + links to guardrails
-- Quick reference for common mistakes
-
-Both documents aim to prevent:
-- Modifying tools without understanding context
-- Ignoring HERRAMIENTAS_VISUALES.md
-- Committing untested HTML changes
-- Confusing RIDER (document) with VISUALIZER (gallery)
-
-Status: ✅ Ready for next agent
-
-## Architecture fix - 2026-06-28 v0.36.3 plano_demo.html refactor
-
-`plano_demo.html` now correctly structured as **UI for flujo.plano motor**:
-
-### What changed
-- Renamed button: "Recalcular" → "⚙ Generar (flujo.plano)"
-- Added form fields referencing projects/plano/: `layout_mode`, `masivo` checkbox, ubicación select
-- JavaScript refactored: 
-  - `generarDesdeMotor()` function (async, ready for POST /api/plano)
-  - Fallback demo functions (local rendering when backend not ready)
-  - STATE management for current_event JSON
-  - `descargarJSON()` export function
-
-### Backend hook (ready but commented)
-```javascript
-// TODO: When flujo.plano API ready:
-// POST /api/plano/render with { evento: {...} }
-// Backend returns { svg, rider_text, costos_text, ...}
-```
-
-### Reference
-Parametric motor lives in: `projects/plano/plano_stands.py` + `flujo.plano` module
-- Constantes: mesas, toldos, sillas (real measurements)
-- Reglas: operativas (>5h → alimentación, testeo → +stand, etc)
-- Layout solver: grid_2x o row modes
-- Render: SVG + rider + costos (from flujo.plano)
-
-### Status
-✅ HTML structure correct (parametric form)
-✅ Demo fallback working (local SVG generation)
-⏳ Backend connection ready (POST hook commented, docs point to projects/plano/)
-⏳ Next dev: implement /api/plano endpoint calling flujo.plano.render_svg()
-
-This prevents agents from hardcoding SVG again. Plano is now properly UI.
-
-Recommended recovery if a previous run already applied files:
+Hub index:
 ```bash
-py scripts/run_airdrop_checks.py --resume "logo clean lab experimental" --skip-push
+py -m flujo hub index agent-brief "etiqueta creatina"
 ```
 
-Then push manually when auth is ready:
-```bash
-git push
-```
+## Cleanup policy
 
-## Added pending airdrop - 2026-06-28 readme logo clean summary
+Safe to remove locally but do not include in airdrops:
+- `__pycache__/`
+- `.pytest_cache/`
+- `src/flujo.egg-info/`
+- `_airdrop/`
+- `_airdrop_backups/`
+- `_logs/`
 
-Purpose:
-- Return documentation to the normal simple airdrop flow.
-- Clarify that the previous checkpoint issue was likely caused by a local heavy folder (`logo3d/`) accidentally inside the repo.
-- Add summary and goal for `projects/logo_clean_lab/`.
-- Update README with practical airdrop notes.
+Historical material should be archived, not deleted blindly.
 
-Normal airdrop commands:
-```bash
-py scripts/validate_airdrop.py
-py scripts/run_airdrop_checks.py "mensaje"
-```
+## Next recommended changes
 
-Only use `--allow-airdrop-engine` if an airdrop changes `src/flujo/airdrop.py`.
-
-Before running auto-checkpoint:
-```bash
-git status --short
-```
-
-If local heavy folders appear, remove or ignore them first.
-
-Simple next tasks:
-1. Apply this airdrop with the two normal commands.
-2. Test `logo_clean_master.jsx` in Illustrator with mode A then W.
-3. Register good/bad results in the learning JSONL.
+1. Decide whether to add top-level aliases for `route` and hub `index`, or keep them under `hub` only.
+2. Update older docs that still mention pre-v0.40 paths or command shapes.
+3. Consider splitting the very large `src/flujo/cli.py` into submodules later.
+4. Build/rebuild the local index on the owner's Windows machine if needed.

@@ -1,42 +1,65 @@
-# Integrar los subcomandos al dispatcher de flujo
+# Integrar los subcomandos del hub local en la CLI de flujo
 
-Este airdrop trae un `src/flujo/__main__.py` que enruta:
-`serve · index · route · doctor · version`.
+Estado actual: el repo ya tiene una CLI Typer completa en `src/flujo/cli.py` y `src/flujo/__main__.py` debe delegar siempre a esa CLI.
 
-## Caso A — tu repo NO tiene __main__ propio
-No haces nada: el `__main__.py` del airdrop ya te da `py -m flujo <cmd>`.
+Los comandos nuevos del hub local se registran bajo el namespace `hub` para no ocultar comandos existentes:
 
-## Caso B — tu repo YA tiene dispatcher (app/health/portal...)
-NO sobreescribas tu `__main__.py`. En su lugar, registra los nuevos subcomandos
-delegando a cada modulo. Patron generico:
+```bash
+py -m flujo hub serve --open
+py -m flujo hub index agent-brief "etiqueta creatina"
+py -m flujo hub route where --area eventos --pieza flyer
+```
+
+## Regla importante
+
+No reemplaces `src/flujo/__main__.py` por un dispatcher propio. Debe quedar asi:
 
 ```python
-# dentro de tu dispatcher, donde resuelves el subcomando:
-def _route(cmd, rest):
-    if cmd == "serve":
-        from flujo.serve import server;   return server.main(rest)
-    if cmd == "index":
-        from flujo.index import indexer;   return indexer.main(rest)
-    if cmd == "route":
-        from flujo.route import resolver;  return resolver.main(rest)
-    if cmd == "doctor":
-        from flujo.__main__ import _doctor; return _doctor()
-    # ... tus comandos existentes (app, health, portal) ...
+from .cli import app
+
+if __name__ == "__main__":
+    app()
 ```
 
-Si usas argparse con subparsers, agrega uno por comando con
-`add_argument("rest", nargs=argparse.REMAINDER)` y delega `module.main(args.rest)`.
+## Integracion en Typer
+
+La integracion viva esta en `src/flujo/cli_addons.py`:
+
+```python
+from flujo.cli_addons import register_addons
+register_addons(app)
+```
+
+Eso agrega:
+
+```txt
+py -m flujo hub serve
+py -m flujo hub index
+py -m flujo hub route
+```
 
 ## Verificacion
-```
+
+```bash
+py -m flujo health
 py -m flujo doctor
-py -m flujo serve --open
+py -m flujo hub serve --help
+py -m flujo hub route where --area eventos --pieza flyer
+py -m flujo hub index agent-brief "etiqueta creatina"
 ```
 
-## Reglas del repo
-- Windows + py (no python).
-- ASCII-only en handoffs.
-- No tokens, no datos sensibles.
-- Aplicar via airdrop:
-    py scripts/validate_airdrop.py
-    py scripts/run_airdrop_checks.py "feat: flujo serve + hub + index + route"
+## Airdrop
+
+Aplicar via airdrop seguro:
+
+```bash
+py scripts/validate_airdrop.py
+py scripts/run_airdrop_checks.py "fix: integrar hub addons"
+```
+
+Reglas del repo:
+
+- Windows + `py`.
+- `context/LAST_HANDOFF.md` ASCII-only.
+- No tokens ni datos sensibles.
+- No caches, builds ni binarios pesados en airdrops.

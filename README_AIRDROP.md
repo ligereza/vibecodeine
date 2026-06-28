@@ -11,8 +11,8 @@ vanilla + stdlib (sin frameworks, sin dependencias, sin build).
 | Pieza | Qué hace | Comando |
 |---|---|---|
 | 🖥️ **serve** *(NUEVO)* | Servidor local que sirve el hub y expone `/api` (saca a los HTML del modo demo) | `py -m flujo serve --open` |
-| 🧭 **route** | Resuelve dónde está / dónde va cada pieza en `C:\rd` (no mueve nada) | `py -m flujo route where --area eventos --pieza flyer` |
-| 🔍 **index** | Indexa `C:\rd` para agentes: busca, versiones, duplicados, limpieza | `py -m flujo index agent-brief "..."` |
+| 🧭 **route** | Resuelve dónde está / dónde va cada pieza en `C:\rd` (no mueve nada) | `py -m flujo hub route where --area eventos --pieza flyer` |
+| 🔍 **index** | Indexa `C:\rd` para agentes: busca, versiones, duplicados, limpieza | `py -m flujo hub index agent-brief "..."` |
 | 🩺 **doctor** *(NUEVO)* | Chequeo de entorno (hub + rutas + python) | `py -m flujo doctor` |
 | 🎨 **hub** | 3 HTML corregidos y unificados (hub + plano + material) con estilo compartido | abrir `context/flujo_hub.html` |
 

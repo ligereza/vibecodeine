@@ -6,10 +6,10 @@ El hub es el workspace central: intake de pedidos, visualizadores SVG, plano dem
 
 **Estado actual (2026-06-28)**
 
-`flujo app` sigue siendo la entrada diaria principal. El hub agrupa intake, visuales, planos, agentes y herramientas. El historial de handoffs se centraliza en `docs/handoffs/README.md`. Windows: `py`.
+`flujo app` sigue siendo la entrada diaria principal. Version operativa actual: v0.40.1. El hub agrupa intake, visuales, planos, agentes y herramientas. El historial de handoffs se centraliza en `docs/handoffs/README.md`. Windows: `py`.
 
 **Avances recientes:**
-- Hub con tabs y datadrop operativo para intake y revisión de paquetes.
+- Hub con tabs, datadrop operativo y addons `py -m flujo hub ...` para serve/index/route.
 - Delegación paralela con roles de visual, pipeline, futuro y packaging.
 - Packaging `flujo package` → .exe desktop. Launchers ps1/bat. Higiene + robustez.
 

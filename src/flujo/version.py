@@ -1,8 +1,8 @@
 """Versión y changelog de flujo."""
 
-__version__ = "0.35.13"
+__version__ = "0.40.4"
 VERSION = __version__
-__version_info__ = (0, 35, 13)
+__version_info__ = (0, 40, 4)
 
 
 def get_version():
@@ -11,6 +11,46 @@ def get_version():
 
 def get_changelog():
     return {
+        "0.40.4": {
+            "titulo": "React SVG Visualizer integrado",
+            "fecha": "2026-06-28",
+            "highlights": [
+                "Integra `SvgVisualizer.tsx` y `svgIndex.ts` en la capa `web/`",
+                "El build single-file ahora actualiza `context/plano_demo.html` y `context/svg_visualizer.html`",
+                "Agrega navegación React Plano/SVG manteniendo uso diario con `py -m flujo app`",
+                "Mantiene Node como capa local/gratis de desarrollo UI y Python como backend operativo",
+            ],
+        },
+        "0.40.3": {
+            "titulo": "Frontend React/Vite para Plano Pro",
+            "fecha": "2026-06-28",
+            "highlights": [
+                "Agrega `web/` como capa Node/React local y gratis para avanzar mas rapido en UI",
+                "Compila con Vite single-file y copia el resultado a `context/plano_demo.html`",
+                "Integra PlanoTool React con canvas editable, checklist, capas, export SVG e impresion",
+                "Agrega boton Motor Python para usar `/api/plano/render` cuando se abre via `py -m flujo app`",
+            ],
+        },
+        "0.40.2": {
+            "titulo": "Plano/Rider Pro integrado al hub vanilla",
+            "fecha": "2026-06-28",
+            "highlights": [
+                "Reemplaza `context/plano_demo.html` por una herramienta util de plano, rider y costos sin React ni build",
+                "Integra ideas del prototipo PlanoTool: requerimientos, checklist, capas, zonas arrastrables, grilla, zoom y leyenda",
+                "Mantiene conexion real a `POST /api/plano/render` y fallback demo local para doble clic",
+                "Agrega export SVG, JSON, copiar rider/costos e impresion desde la UI",
+            ],
+        },
+        "0.40.1": {
+            "titulo": "Fix dispatcher y addons hub",
+            "fecha": "2026-06-28",
+            "highlights": [
+                "Restaura `py -m flujo` para delegar en la CLI Typer principal sin ocultar comandos vivos",
+                "Registra `serve`, `index` y `route` bajo el namespace seguro `py -m flujo hub ...`",
+                "Corrige continuidad operacional: version, handoff activo y documentacion de comandos hub",
+                "Mantiene airdrop Python-only con validacion, backup, checks y checkpoint",
+            ],
+        },
         "0.35.13": {
             "titulo": "EVENTOS palette y preview Blender",
             "fecha": "2026-06-24",
