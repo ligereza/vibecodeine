@@ -1,13 +1,14 @@
 {
   "name": "flujo-web",
   "private": true,
-  "version": "0.40.4",
+  "version": "0.40.5",
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",
     "typecheck": "tsc --noEmit",
-    "build:plano": "vite build && node scripts/copy-plano.mjs"
+    "build:plano": "npm run build:context",
+    "build:context": "vite build && node scripts/copy-context.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "5.1.1",

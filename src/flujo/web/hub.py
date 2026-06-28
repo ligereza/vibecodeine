@@ -363,7 +363,7 @@ class HubRequestHandler(BaseHTTPRequestHandler):
                 "note": "real backend active — use from `flujo app`"
             })
             return
-        if path == "/api/list-svg-works":
+        if path in ("/api/list-svg-works", "/api/svg-index"):
             try:
                 data = self._list_svg_works()
                 self._send_json(data)

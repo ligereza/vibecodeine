@@ -26,7 +26,7 @@ Build and copy the single-file HTML into the Python-served context:
 ```bash
 cd web
 npm ci
-npm run build:plano
+npm run build:context
 ```
 
 Outputs:
@@ -46,3 +46,11 @@ Rules:
 - Do not commit `node_modules/` or `web/dist/`.
 - Keep generated HTML offline-friendly.
 - Backend integration should use local APIs served by `py -m flujo app`, for example `/api/plano/render`.
+
+Compatibility alias:
+
+```bash
+npm run build:plano
+```
+
+`build:plano` calls `build:context` for older handoffs.

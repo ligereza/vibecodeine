@@ -120,6 +120,34 @@ def api_index_brief():
             "msg": "Genera el indice con: py -m flujo index build --hash"}
 
 
+def api_list_svg_works():
+    """Escanea svg/ y devuelve grupos consumibles por el visualizador React."""
+    svg_root = os.path.join(REPO, "svg")
+    if not os.path.isdir(svg_root):
+        return {"groups": {}, "count": 0, "root": "svg", "error": "no svg dir"}
+    groups = {}
+    total = 0
+    for group_name in sorted(os.listdir(svg_root)):
+        group_dir = os.path.join(svg_root, group_name)
+        if not os.path.isdir(group_dir):
+            continue
+        found = []
+        for base, _dirs, files in os.walk(group_dir):
+            for name in files:
+                if not name.lower().endswith(".svg"):
+                    continue
+                full = os.path.join(base, name)
+                rel = os.path.relpath(full, REPO).replace("\\", "/")
+                low = rel.lower()
+                kind = "editable" if "editab" in low else ("vectorizado" if "vector" in low else "other")
+                found.append({"name": name, "path": rel, "kind": kind, "group": group_name})
+                total += 1
+        if found:
+            found.sort(key=lambda item: (0 if item["kind"] == "editable" else 1 if item["kind"] == "vectorizado" else 2, item["name"]))
+            groups[group_name] = found[:8]
+    return {"groups": groups, "count": total, "root": "svg", "connected": True}
+
+
 def api_plano_render(evento):
     """Misma forma que el demo del HTML: {layout, rider, costos}."""
     ev = evento or {}
@@ -212,6 +240,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(api_health_stats())
         if path == "/api/materials":
             return self._json(api_materials())
+        if path in ("/api/list-svg-works", "/api/svg-index"):
+            return self._json(api_list_svg_works())
         if path == "/api/index/brief":
             return self._json(api_index_brief())
         if path.startswith("/api/materials/") and path.endswith("/download"):
@@ -219,6 +249,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._json({"ok": True, "msg": "stub descarga", "id": mid})
         if path.startswith("/context/"):
             return self._serve_file(path[len("/context/"):])
+        if path.startswith("/svg/"):
+            return self._serve_repo_file(path.lstrip("/"))
         if path.startswith("/api/"):
             return self._json({"error": "endpoint no encontrado"}, 404)
         self._send(404, "404", "text/plain; charset=utf-8")
@@ -237,6 +269,19 @@ class Handler(BaseHTTPRequestHandler):
             except Exception as e:
                 return self._json({"error": str(e)}, 500)
         return self._json({"error": "endpoint no encontrado"}, 404)
+
+    def _serve_repo_file(self, rel):
+        rel = rel.replace("\\", "/").lstrip("/")
+        full = os.path.normpath(os.path.join(REPO, rel))
+        allowed = os.path.join(REPO, "svg")
+        if not full.startswith(allowed):
+            return self._send(403, "403", "text/plain")
+        if not os.path.isfile(full):
+            return self._send(404, "404 - " + rel, "text/plain; charset=utf-8")
+        ext = os.path.splitext(full)[1].lower()
+        ctype = MIME.get(ext, "application/octet-stream")
+        with open(full, "rb") as f:
+            self._send(200, f.read(), ctype)
 
     def _serve_file(self, rel):
         rel = rel.replace("\\", "/").lstrip("/")

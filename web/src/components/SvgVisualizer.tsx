@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   Search, Filter, X, ZoomIn, ZoomOut, Maximize2, Download,
   ChevronLeft, ChevronRight, Eye, Tag, Ruler, Palette,
@@ -32,6 +32,89 @@ const STATUS_ICONS: Record<string, React.ReactNode> = {
   'borrador': <FileEdit className="w-3 h-3" />,
 };
 
+
+type ApiSvgItem = { name: string; path: string; kind?: string; group?: string };
+type ApiSvgResponse = { groups?: Record<string, ApiSvgItem[]>; count?: number; error?: string };
+
+function safeInlineSvg(text: string): string | undefined {
+  const trimmed = text.trim();
+  if (!trimmed.startsWith('<svg')) return undefined;
+  if (/<script\b/i.test(trimmed) || /on\w+\s*=/i.test(trimmed)) return undefined;
+  return trimmed;
+}
+
+function inferType(text: string): PieceType {
+  const low = text.toLowerCase();
+  if (low.includes('etiqueta')) return 'etiqueta';
+  if (low.includes('flyer')) return 'flyer';
+  if (low.includes('pendon') || low.includes('pendón')) return 'pendon';
+  if (low.includes('post') || low.includes('ig')) return 'post-ig';
+  if (low.includes('sticker')) return 'sticker';
+  if (low.includes('logo')) return 'logo';
+  if (low.includes('rider')) return 'rider';
+  if (low.includes('cartelera')) return 'cartelera';
+  if (low.includes('stand') || low.includes('plano')) return 'stand';
+  return 'flyer';
+}
+
+function inferArea(text: string): PieceArea {
+  const low = text.toLowerCase();
+  if (low.includes('suplement')) return 'suplementos';
+  if (low.includes('evento') || low.includes('rider') || low.includes('cartelera')) return 'eventos';
+  return 'comun';
+}
+
+function inferMedio(type: PieceType): PieceMedio {
+  return type === 'post-ig' || type === 'cartelera' ? 'digital' : 'impresion';
+}
+
+function realSizeFor(type: PieceType): string {
+  const map: Record<PieceType, string> = {
+    etiqueta: 'segun config', flyer: 'segun config', pendon: 'segun config',
+    'post-ig': 'digital', sticker: 'segun config', logo: 'variable',
+    rider: 'A4 / operativo', cartelera: 'digital', stand: 'plano'
+  };
+  return map[type];
+}
+
+async function loadSvgPiecesFromApi(): Promise<SvgPiece[]> {
+  const response = await fetch('/api/list-svg-works');
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const data = await response.json() as ApiSvgResponse;
+  if (data.error) throw new Error(data.error);
+  const items = Object.entries(data.groups || {}).flatMap(([group, entries]) =>
+    entries.map(item => ({ ...item, group: item.group || group }))
+  );
+  const pieces = await Promise.all(items.map(async (item, index): Promise<SvgPiece> => {
+    const text = `${item.group || ''} ${item.name} ${item.path}`;
+    const type = inferType(text);
+    let svgContent: string | undefined;
+    try {
+      const svgResponse = await fetch('/' + item.path);
+      if (svgResponse.ok) svgContent = safeInlineSvg(await svgResponse.text());
+    } catch {
+      svgContent = undefined;
+    }
+    return {
+      id: item.path.replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_|_$/g, '') || `svg_${index}`,
+      name: item.name.replace(/\.svg$/i, ''),
+      type,
+      area: inferArea(text),
+      medio: inferMedio(type),
+      herramienta: item.kind === 'vectorizado' ? 'SVG vectorizado' : item.kind === 'editable' ? 'SVG editable' : 'SVG',
+      product: item.group,
+      realSizeCm: realSizeFor(type),
+      canvasPx: 'SVG',
+      colors: ['#2d5a4a', '#f8f1e3', '#675f55'],
+      lastModified: 'repo local',
+      status: item.kind === 'vectorizado' ? 'aprobado' : item.kind === 'editable' ? 'en-revision' : 'borrador',
+      svgContent,
+      notes: item.path,
+    };
+  }));
+  return pieces.length ? pieces : MOCK_SVG_INDEX;
+}
+
 export default function SvgVisualizer() {
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState<PieceType | 'all'>('all');
@@ -41,10 +124,33 @@ export default function SvgVisualizer() {
   const [selectedPiece, setSelectedPiece] = useState<SvgPiece | null>(null);
   const [modalZoom, setModalZoom] = useState(1);
   const [showFilters, setShowFilters] = useState(true);
+  const [pieces, setPieces] = useState<SvgPiece[]>(MOCK_SVG_INDEX);
+  const [sourceStatus, setSourceStatus] = useState('Demo local');
+
+  useEffect(() => {
+    let alive = true;
+    if (window.location.protocol === 'file:') {
+      setSourceStatus('Demo local (abre con py -m flujo app para datos reales)');
+      return;
+    }
+    setSourceStatus('Cargando SVG reales desde /api/list-svg-works...');
+    loadSvgPiecesFromApi()
+      .then(realPieces => {
+        if (!alive) return;
+        setPieces(realPieces);
+        setSourceStatus(realPieces === MOCK_SVG_INDEX ? 'Demo local' : `Repo real: ${realPieces.length} SVG`);
+      })
+      .catch(error => {
+        if (!alive) return;
+        setPieces(MOCK_SVG_INDEX);
+        setSourceStatus(`Fallback demo: ${error instanceof Error ? error.message : String(error)}`);
+      });
+    return () => { alive = false; };
+  }, []);
 
   // ─── Filtered pieces ───
   const filteredPieces = useMemo(() => {
-    return MOCK_SVG_INDEX.filter(p => {
+    return pieces.filter(p => {
       const matchSearch = search === '' ||
         p.name.toLowerCase().includes(search.toLowerCase()) ||
         p.product?.toLowerCase().includes(search.toLowerCase()) ||
@@ -54,15 +160,15 @@ export default function SvgVisualizer() {
       const matchMedio = filterMedio === 'all' || p.medio === filterMedio;
       return matchSearch && matchType && matchArea && matchMedio;
     });
-  }, [search, filterType, filterArea, filterMedio]);
+  }, [pieces, search, filterType, filterArea, filterMedio]);
 
   // ─── Stats ───
   const stats = useMemo(() => ({
-    total: MOCK_SVG_INDEX.length,
-    aprobado: MOCK_SVG_INDEX.filter(p => p.status === 'aprobado').length,
-    revision: MOCK_SVG_INDEX.filter(p => p.status === 'en-revision').length,
-    borrador: MOCK_SVG_INDEX.filter(p => p.status === 'borrador').length,
-  }), []);
+    total: pieces.length,
+    aprobado: pieces.filter(p => p.status === 'aprobado').length,
+    revision: pieces.filter(p => p.status === 'en-revision').length,
+    borrador: pieces.filter(p => p.status === 'borrador').length,
+  }), [pieces]);
 
   // ─── Navigate ───
   const currentIndex = selectedPiece ? filteredPieces.findIndex(p => p.id === selectedPiece.id) : -1;
@@ -94,6 +200,7 @@ export default function SvgVisualizer() {
           <p className="text-zinc-400 text-sm mt-1">
             Galería de piezas vectoriales — etiquetas, flyers, pendones, stickers, logos
           </p>
+          <p className="text-[11px] font-mono text-zinc-600 mt-1">{sourceStatus}</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 text-[10px] font-mono text-zinc-600">

@@ -1,8 +1,8 @@
 """Versión y changelog de flujo."""
 
-__version__ = "0.40.4"
+__version__ = "0.40.5"
 VERSION = __version__
-__version_info__ = (0, 40, 4)
+__version_info__ = (0, 40, 5)
 
 
 def get_version():
@@ -11,6 +11,16 @@ def get_version():
 
 def get_changelog():
     return {
+        "0.40.5": {
+            "titulo": "SVG Visualizer conectado a SVG reales",
+            "fecha": "2026-06-28",
+            "highlights": [
+                "`SvgVisualizer` carga `/api/list-svg-works` y usa los SVG reales del repo con fallback demo",
+                "Agrega alias `/api/svg-index` y soporte de endpoint en `flujo hub serve`",
+                "Renombra el build web principal a `npm run build:context` manteniendo `build:plano` como alias",
+                "Sirve `/svg/...` desde el servidor stdlib y agrega checks Node al CI",
+            ],
+        },
         "0.40.4": {
             "titulo": "React SVG Visualizer integrado",
             "fecha": "2026-06-28",

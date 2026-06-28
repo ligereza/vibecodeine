@@ -5,7 +5,7 @@ Do not use accents, enye, emoji, smart quotes, or special arrows here.
 Daily commands for owner on Windows/Git Bash must use `py`, not `python`.
 
 Date: 2026-06-28
-Current version: 0.40.4
+Current version: 0.40.5
 Main daily entry: `py -m flujo app`
 Desktop entry: `py -m flujo app --desktop`
 Verify on Windows: `py -m flujo verify`
@@ -13,7 +13,7 @@ Airdrop check on Windows: `py scripts/validate_airdrop.py` then `py scripts/run_
 
 ## Current state
 
-The repo is healthy after the v0.40 hub airdrop, v0.40.1 dispatcher fix, v0.40.2 Plano/Rider vanilla integration, and v0.40.3 React/Vite web layer for Plano Pro, and v0.40.4 React SVG Visualizer integration.
+The repo is healthy after the v0.40 hub airdrop, v0.40.1 dispatcher fix, v0.40.2 Plano/Rider vanilla integration, and v0.40.3 React/Vite web layer for Plano Pro, and v0.40.4 React SVG Visualizer integration, and v0.40.5 real SVG API integration.
 
 Real package CLI:
 - `py -m flujo health`
@@ -64,6 +64,14 @@ Do not document them as top-level `py -m flujo index` or `py -m flujo route` unl
 - `web/src/App.tsx` now has React navigation between Plano and SVG Visualizer.
 - `npm run build:plano` copies the same single-file app to both `context/plano_demo.html` and `context/svg_visualizer.html`; initial view is selected by pathname.
 - This keeps the UI fast to iterate while staying local/free and served by `py -m flujo app`.
+
+### v0.40.5 - real SVG API integration
+- `SvgVisualizer` now tries `/api/list-svg-works` and fetches real SVG files from `/svg/...`.
+- If the backend is unavailable, it falls back to `MOCK_SVG_INDEX`.
+- Added `/api/svg-index` as an alias in the main web hub.
+- Added `/api/list-svg-works`, `/api/svg-index`, and `/svg/...` static serving to `src/flujo/serve/server.py`.
+- Renamed the main web build command to `npm run build:context`; `npm run build:plano` remains as compatibility alias.
+- CI now installs Node 20, runs `npm ci`, `npm run typecheck`, and `npm run build:context` before `py -m flujo verify`.
 
 ## Airdrop model - keep this intact
 
