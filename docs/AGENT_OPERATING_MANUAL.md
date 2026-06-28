@@ -58,7 +58,7 @@ Principal integra airdrops en orden + actualiza LAST_HANDOFF central.
 
 **Coordinación estricta (cumple siempre):**
 - Visual Polish revisa **todos** outputs visuales al final.
-- Brand Guardian valida **antes** de cualquier toque a `projects/flujo/flujo.json`, linea_editorial.md o paletas.
+-  valida **antes** de cualquier toque a `projects/flujo/flujo.json`, linea_editorial.md o paletas.
 - Packaging & Distribution **coordina** con Pipeline en paths, assets, launchers, bundling.
 - Future/Modern **nunca** toca core (cli, jobs, hub.py, render, paths) sin aprobación explícita Pipeline + Brand en su handoff.
 - Respeta: privacy, airdrop, `py` Windows, tests + compileall.
@@ -85,7 +85,7 @@ El hub genera prompts que **siempre incluyen** `flujo app` + LAST_HANDOFF + mode
 
 - **Visual Polish Agent**: Enforce 'flujo' brand en **todos** outputs (HTMLs/SVGs/previews/tapiz/docs). Paleta exacta projects/flujo/flujo.json. Dark pro, spacing generoso. Revisa salidas de otros. Prioridad: credibilidad premium diseñador.
 - **Pipeline & Integration Agent**: Dueño solidez `flujo app`. CLI, jobs, intake, render, airdrop, hub backend (SSE/delegate/tokens), tests, pyproject. Pruebas obligatorias.
-- **Brand Guardian**: Custodio identidad. Fuente verdad: projects/flujo/flujo.json + linea_editorial.md. Valida todo. Edita solo brand.
+- ****: Custodio identidad. Fuente verdad: projects/flujo/flujo.json + linea_editorial.md. Valida todo. Edita solo brand.
 - **Future/Modern Agent**: Explora integraciones nuevas (webhooks, tokens, intake auto, SSE extendido...). **Nunca toca producción sin revisión**. Entrega prototipo + riesgos + nota coordinación.
 - **Packaging & Distribution Agent**: `flujo package` (PyInstaller gratis), desktop launcher forzado, paths frozen (asset_root vs workspace), bundling context/svg/projects/flujo + templates, icono, tray, onefile/onedir, hints Inno Setup. Coordina con Pipeline + Brand. Windows-first, cero deps.
 
@@ -117,9 +117,9 @@ Punto de entrada OBLIGATORIO: ejecuta `flujo app`. Lee context/LAST_HANDOFF.md +
 Usa py en Windows. Prueba siempre: compileall, pytest -q, comandos manuales afectados. Trabaja en clon. Entrega vía airdrop actualizando handoff, version.py si aplica y docs. Coordina con Brand si tocas UI/brand files.
 ```
 
-**Brand Guardian (copia esto entero):**
+** (copia esto entero):**
 ```
-Tu rol: Brand Guardian.
+Tu rol: .
 
 Sigue docs/AGENT_OPERATING_MANUAL.md (dos flujos + modelo de delegación multi-agente) y las reglas.
 

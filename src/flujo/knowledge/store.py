@@ -220,3 +220,58 @@ def register_logo_source(producer_id: str, source_path: str | Path) -> Path:
         "outputs": {},
     }
     return save_entity("logos", producer_id, data)
+
+
+def prepare_logo_lab(producer_id: str, source_path: str | Path) -> Path:
+    src = Path(source_path)
+    if not src.exists():
+        raise FileNotFoundError(str(src))
+    
+    pid = slugify(producer_id)
+    logo_dir = repo_root() / "assets" / "logos" / pid
+    source_dir = logo_dir / "source"
+    work_dir = logo_dir / "work"
+    final_dir = logo_dir / "final"
+    
+    for d in [source_dir, work_dir, final_dir]:
+        d.mkdir(parents=True, exist_ok=True)
+    
+    dest = source_dir / src.name
+    shutil.copy2(src, dest)
+    
+    manifest_data = {
+        "id": f"logo_{pid}",
+        "producer_id": pid,
+        "status": "dirty",
+        "files": {
+            "source": str(dest.relative_to(repo_root())).replace("\\", "/"),
+            "work": str((work_dir).relative_to(repo_root())).replace("\\", "/"),
+            "final": str((final_dir).relative_to(repo_root())).replace("\\", "/"),
+        },
+        "properties": {
+            "transparent": None,
+            "vector": False,
+            "primary_color": "unknown"
+        },
+        "history": [
+            {
+                "date": datetime.now().isoformat(timespec="seconds"),
+                "action": "ingested",
+                "note": f"Original source from {src.name}"
+            }
+        ]
+    }
+    
+    manifest_path = logo_dir / "manifest.yaml"
+    import yaml
+    manifest_path.write_text(yaml.safe_dump(manifest_data, allow_unicode=True, sort_keys=False), encoding="utf-8")
+    
+    try:
+        prod_data = load_entity("productora", pid)
+        if "logo_id" not in prod_data:
+            prod_data["logo_id"] = manifest_data["id"]
+            save_entity("productora", pid, prod_data)
+    except Exception:
+        pass
+
+    return manifest_path.relative_to(repo_root())

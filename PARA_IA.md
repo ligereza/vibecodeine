@@ -13,10 +13,10 @@ Sirve servidor real + APIs + Hub HTML como UI. Si falla, abre `context/flujo_hub
 1. ✅ **Este archivo** (PARA_IA.md)
 2. ✅ `context/LAST_HANDOFF.md` (estado actual, qué pasó)
 3. ✅ `docs/AGENT_OPERATING_MANUAL.md` (flujos, delegación)
-4. ✅ `docs/HERRAMIENTAS_VISUALES.md` (si tocas HTML visual tools)
-5. ✅ `docs/AGENT_GUARDRAILS_VISUAL_TOOLS.md` (la lista NO hacerlo)
+4. ✅ `` (si tocas HTML visual tools)
+5. ✅ `` (la lista NO hacerlo)
 
-**Si vas a modificar herramientas HTML directamente:** Además lee `docs/AGENT_GUARDRAILS_VISUAL_TOOLS.md` PRIMERO.
+**Si vas a modificar herramientas HTML directamente:** Además lee `` PRIMERO.
 
 ## COSAS QUE NO SON NEGOCIABLES
 
@@ -28,7 +28,7 @@ Sirve servidor real + APIs + Hub HTML como UI. Si falla, abre `context/flujo_hub
 | **Privacidad antes de IAs externas** | `py -m flujo privacy scan` |
 | **Valida airdrop antes de aplicar** | `py scripts/validate_airdrop.py` |
 | **No hagas push sin especificar qué cambió** | HANDOFF o commit detallado |
-| **Las herramientas visuales NO son juguetes** | Leen de docs específicos (ver HERRAMIENTAS_VISUALES.md) |
+
 
 ## ÁREAS DE TRABAJO
 
@@ -58,7 +58,7 @@ py -m flujo privacy scan     # Antes de mandar a IAs
 - `context/svg_visualizer.html` = Visor SUPLEMENTOS (galería diseños)
   - Lee: `BRIEF_SUPLEMENTOS_RD.md` + `CATALOGO_FORMATOS.md`
 
-**LEE `docs/AGENT_GUARDRAILS_VISUAL_TOOLS.md` (5-question rule).**
+**LEE `` (5-question rule).**
 
 ## ENTREGAS
 
@@ -77,8 +77,8 @@ Validación:
 
 ## ERRORES FRECUENTES = NO LOS REPITAS
 
-❌ Modificar `plano_demo.html` o `svg_visualizer.html` sin entender propósito  
-❌ Cambiar colores/referencia sin doc  
+  
+  
 ❌ Hacer push sin pasar pruebas navegador  
 ❌ Ignorar HANDOFF/LAST_HANDOFF  
 ❌ Usar `python` en lugar de `py` (Windows)  

@@ -42,8 +42,6 @@ Comandos disponibles (ejecutar `flujo --help`):
     package                     Empaqueta .exe standalone gratis (PyInstaller) → flujo-hub.exe onefile noconsole con icono premium (rounded+F), lanza directo pywebview desktop hub, assets (context/svg/brand + jobs/_template + src/flujo/templates) bundled, workspace next-to-exe, visualizers fully working. (equiv `flujo app --desktop`)
   plano
     plano <evento.json>         Generar plano SVG/rider/costos de stands
-  brand
-    brand list               Lista ejemplos + estado de JSONs descriptivos
     brand analyze <ejemplo>  Genera stub JSON descriptivo desde carpeta de ejemplo
   datadrop (inverse airdrop)
     datadrop list            Lista datadrops subidos (fotos reales terminadas)
@@ -99,6 +97,9 @@ console = Console()
 # Sub-apps
 # ============================================================
 
+
+
+
 job_app = typer.Typer(help="Gestión de jobs y briefs.", no_args_is_help=True)
 privacy_app = typer.Typer(help="Privacidad para textos antes de IA externa.", no_args_is_help=True)
 brief_app = typer.Typer(help="Operaciones sobre briefs.", no_args_is_help=True)
@@ -106,6 +107,8 @@ intake_app = typer.Typer(help="Intake estructurado de pedidos (JSON 1.0).", no_a
 eventos_app = typer.Typer(help="Automatizaciones del area EVENTOS.", no_args_is_help=True)
 render_app = typer.Typer(help="Render y validación de piezas vectoriales.", no_args_is_help=True)
 airdrop_app = typer.Typer(help="Sistema de actualización profesional (airdrops).", no_args_is_help=True)
+datadrop_app = typer.Typer(help="Gestión de datadrops (fotos reales terminadas).", no_args_is_help=True)
+brand_app = typer.Typer(help="[LEGACY] Use knowledge/logos instead.", no_args_is_help=True)
 
 app.add_typer(job_app, name="job")
 app.add_typer(privacy_app, name="privacy")
@@ -114,8 +117,7 @@ app.add_typer(intake_app, name="intake")
 app.add_typer(eventos_app, name="eventos")
 app.add_typer(render_app, name="render")
 app.add_typer(airdrop_app, name="airdrop")
-
-brand_app = typer.Typer(help="Identidad visual 'flujo' + análisis de ejemplos reales.", no_args_is_help=True)
+app.add_typer(datadrop_app, name="datadrop")
 app.add_typer(brand_app, name="brand")
 
 suplementos_app = typer.Typer(help="Generación de contraportadas para suplementos RD.", no_args_is_help=True)
@@ -123,6 +125,9 @@ app.add_typer(suplementos_app, name="suplementos")
 
 knowledge_app = typer.Typer(help="Knowledge base local: productoras, venues, logos y ejemplos.", no_args_is_help=True)
 app.add_typer(knowledge_app, name="knowledge")
+
+
+
 
 # ============================================================
 # Helpers
@@ -641,79 +646,6 @@ def _get_version() -> str:
 # ============================================================
 # Brand (flujo) — Identidad visual + análisis de ejemplos
 # ============================================================
-
-@brand_app.command("list")
-def brand_list():
-    """Lista ejemplos en projects/flujo/ejemplos/ y estado de sus JSON descriptivos."""
-    from pathlib import Path
-    from .paths import repo_root
-    root = repo_root()
-    ejemplos = root / "projects" / "flujo" / "ejemplos"
-    jsons = root / "projects" / "flujo" / "json"
-    if not ejemplos.exists():
-        _warn("No existe projects/flujo/ejemplos/")
-        return
-    _section("Ejemplos flujo")
-    for d in sorted([p for p in ejemplos.iterdir() if p.is_dir()]):
-        json_path = jsons / f"{d.name}.json"
-        status = "✅ JSON" if json_path.exists() else "⏳ pendiente"
-        console.print(f"  {d.name}  [{status}]")
-
-
-@brand_app.command("analyze")
-def brand_analyze(
-    example: str = typer.Argument(..., help="nombre de la subcarpeta en ejemplos/"),
-    force: bool = typer.Option(False, "--force", help="sobrescribir JSON existente"),
-):
-    """Analiza un ejemplo y genera/actualiza su JSON descriptivo en json/.
-
-    Escanea archivos, extrae info básica y crea un stub listo para que el agente complete
-    con análisis estético (colores, layout, motifs, etc.).
-    """
-    from pathlib import Path
-    import json as jsonlib
-    from datetime import datetime
-
-    from .paths import repo_root
-    base = repo_root() / "projects" / "flujo"
-    ex_dir = base / "ejemplos" / example
-    json_dir = base / "json"
-    json_dir.mkdir(parents=True, exist_ok=True)
-    out = json_dir / f"{example}.json"
-
-    if out.exists() and not force:
-        _err(f"Ya existe {out}. Usa --force para sobrescribir.")
-
-    if not ex_dir.exists():
-        _err(f"No existe el ejemplo: {ex_dir}")
-
-    files = [str(p.relative_to(ex_dir)) for p in ex_dir.rglob("*") if p.is_file()][:20]
-    stub = {
-        "example_id": example,
-        "source_paths": [f"projects/flujo/ejemplos/{example}"],
-        "flujo_summary": "PENDIENTE: completar por agente tras analizar los archivos",
-        "files_found": files,
-        "colors": [],
-        "typography": {},
-        "layout": {},
-        "motifs": [],
-        "composition_rules": "",
-        "tone_visual": "",
-        "tags": [],
-        "generated_at": datetime.now().isoformat(),
-        "notes_for_agent": "Analiza los archivos reales (imágenes, config.json, SVGs, etc.) y llena las secciones. Usa el schema schemas/example_description.schema.json"
-    }
-    out.write_text(jsonlib.dumps(stub, indent=2, ensure_ascii=False), encoding="utf-8")
-    _ok(f"JSON descriptivo generado: {out}")
-    console.print("  Siguiente: edita el JSON o pídele al agente que lo complete con análisis estético.")
-
-
-# ============================================================
-# Datadrop (airdrop inverso) — UI principal en hub (`flujo app`). CLI mínimo.
-# ============================================================
-
-datadrop_app = typer.Typer(help="Datadrop: airdrop inverso para fotos de trabajos terminados (aprendizaje de estilos).", no_args_is_help=True)
-app.add_typer(datadrop_app, name="datadrop")
 
 @datadrop_app.command("list")
 def datadrop_list():
@@ -2218,6 +2150,40 @@ def knowledge_logo_source(
 # ============================================================
 # Main
 # ============================================================
+
+
+@knowledge_app.command("logo-lab")
+def knowledge_logo_lab(
+    producer: str = typer.Argument(..., help="producer_id, ej: creamfields"),
+    source: Path = typer.Argument(..., help="imagen fuente del logo"),
+):
+    """Bridge para Logo Clean Lab: prepara estructura de carpetas y manifest."""
+    from .knowledge.store import prepare_logo_lab
+    try:
+        manifest_path = prepare_logo_lab(producer, source)
+    except Exception as e:
+        _err(str(e))
+    _ok(f"Logo Lab preparado: {manifest_path}")
+
+
+
+@brand_app.callback()
+def brand_legacy():
+    """El branding rígido fue retirado. Usa knowledge/logos y logo clean lab."""
+    console.print("[yellow]⚠ Brand legacy retirado. Migrado a knowledge/logos.[/]")
+
+@knowledge_app.command("logo-lab")
+def knowledge_logo_lab(
+    producer: str = typer.Argument(..., help="producer_id, ej: creamfields"),
+    source: Path = typer.Argument(..., help="imagen fuente del logo"),
+):
+    """Bridge para Logo Clean Lab: prepara estructura de carpetas y manifest."""
+    from .knowledge.store import prepare_logo_lab
+    try:
+        manifest_path = prepare_logo_lab(producer, source)
+    except Exception as e:
+        _err(str(e))
+    _ok(f"Logo Lab preparado: {manifest_path}")
 
 def main():
     app()
