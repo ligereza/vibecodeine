@@ -372,6 +372,41 @@ Both documents aim to prevent:
 
 Status: ✅ Ready for next agent
 
+## Architecture fix - 2026-06-28 v0.36.3 plano_demo.html refactor
+
+`plano_demo.html` now correctly structured as **UI for flujo.plano motor**:
+
+### What changed
+- Renamed button: "Recalcular" → "⚙ Generar (flujo.plano)"
+- Added form fields referencing projects/plano/: `layout_mode`, `masivo` checkbox, ubicación select
+- JavaScript refactored: 
+  - `generarDesdeMotor()` function (async, ready for POST /api/plano)
+  - Fallback demo functions (local rendering when backend not ready)
+  - STATE management for current_event JSON
+  - `descargarJSON()` export function
+
+### Backend hook (ready but commented)
+```javascript
+// TODO: When flujo.plano API ready:
+// POST /api/plano/render with { evento: {...} }
+// Backend returns { svg, rider_text, costos_text, ...}
+```
+
+### Reference
+Parametric motor lives in: `projects/plano/plano_stands.py` + `flujo.plano` module
+- Constantes: mesas, toldos, sillas (real measurements)
+- Reglas: operativas (>5h → alimentación, testeo → +stand, etc)
+- Layout solver: grid_2x o row modes
+- Render: SVG + rider + costos (from flujo.plano)
+
+### Status
+✅ HTML structure correct (parametric form)
+✅ Demo fallback working (local SVG generation)
+⏳ Backend connection ready (POST hook commented, docs point to projects/plano/)
+⏳ Next dev: implement /api/plano endpoint calling flujo.plano.render_svg()
+
+This prevents agents from hardcoding SVG again. Plano is now properly UI.
+
 Recommended recovery if a previous run already applied files:
 ```bash
 py scripts/run_airdrop_checks.py --resume "logo clean lab experimental" --skip-push

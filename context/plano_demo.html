@@ -3,14 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FLUJO • Plano Intervención RD</title>
+<title>FLUJO • Rider + Plano RD (paramétrico)</title>
 <style>
   :root {
     --bg: #0a0a0a; --panel: #141414; --panel2: #1a1a1a;
     --border: #2a2a2a; --text: #e8e8e8; --muted: #888;
-    --flujo-ink: #1f2a24; --flujo-accent: #2d5a4a; --flujo-paper: #f8f1e3;
-    --flujo-support: #675f55; --flujo-alert: #c2410f;
-    --accent: #2d5a4a;
+    --accent: #2d5a4a; --alert: #c2410f;
   }
   * { box-sizing: border-box; }
   body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; font-size: 14px; margin: 0; }
@@ -48,41 +46,47 @@
 <body>
 <header>
   <h1>FLUJO</h1>
-  <span class="badge">Plano Intervención RD</span>
+  <span class="badge">Rider + Plano RD (paramétrico)</span>
   <div class="nav">
     <a class="back" href="flujo_hub.html" style="background:#1f2a24;border-color:#2d5a4a;font-weight:600">← Hub</a>
-    <a href="svg_visualizer.html">Material RD</a>
-    <span id="plano-conn" class="small muted" style="margin-left:8px">• local</span>
+    <a href="svg_visualizer.html">Material SUPLEMENTOS</a>
+    <span id="status" class="small muted" style="margin-left:8px">● offline (conectar a /api/plano)</span>
   </div>
 </header>
 
 <div class="main">
 
-  <!-- CONTROLES -->
+  <!-- CONTROLES: MOTOR PARAMÉTRICO -->
   <div class="panel">
-    <div class="section-title">Evento</div>
+    <div class="section-title">Parámetros evento (flujo.plano)</div>
     <label>Nombre<input id="nombre" value="Festival ejemplo 2026"></label>
     <div class="row">
       <label>Duración (h)<input id="duracion" type="number" value="6" step="0.5"></label>
-      <label>Asistentes<input id="asistentes" type="number" value="2500"></label>
+      <label>Voluntarios<input id="voluntarios" type="number" value="7" min="1"></label>
     </div>
     <div class="row">
-      <label>Escala (px/m)<input id="scale" type="number" value="92"></label>
-      <label>Voluntarios RD<input id="voluntarios" type="number" value="7" min="1"></label>
+      <label>Asistentes ~<input id="asistentes" type="number" value="2500"></label>
+      <label>Ubicación<select id="ubicacion"><option>Aire libre</option><option>Interior</option><option>Mixto</option></select></label>
     </div>
 
     <div class="section-title" style="margin-top:12px">Servicios RD</div>
     <div class="checkbox-group">
       <label style="width: auto;"><input type="checkbox" id="incluye_testeo" checked> Testeo químico</label>
-      <label style="width: auto;"><input type="checkbox" id="incluye_contension"> Zona contención</label>
+      <label style="width: auto;"><input type="checkbox" id="masivo"> Evento masivo</label>
     </div>
 
-    <label style="margin-top:12px">Notas<textarea id="notas" rows="2">Stand informativo + educación preventiva</textarea></label>
+    <label style="margin-top:12px">Layout<select id="layout_mode">
+      <option value="grid_2x">Grid 2×1 (default)</option>
+      <option value="row">Fila simple</option>
+    </select></label>
+
+    <label>Notas<textarea id="notas" rows="2">Parámetros generadores de plano + rider + costos (via flujo.plano motor)</textarea></label>
 
     <div class="actions">
-      <button class="btn" onclick="recalcular()">Recalcular</button>
-      <button class="btn btn-sec" onclick="exportSVG()">Export SVG</button>
+      <button class="btn" id="btn-generar" onclick="generarDesdeMotor()">⚙ Generar (flujo.plano)</button>
+      <button class="btn btn-sec" onclick="descargarJSON()">💾 JSON</button>
     </div>
+    <div id="msg" style="font-size:11px;color:#888;margin-top:8px"></div>
   </div>
 
   <!-- PREVIEW + TABS -->
@@ -106,12 +110,16 @@
     </div>
 
     <div class="panel" style="margin-top:14px">
-      <div class="section-title">Brand RD</div>
-      <div style="font-size:12px; display:flex; gap:8px; flex-wrap:wrap;">
-        <span style="background:#1f2a24; color:#e8e8e8; padding:2px 6px; border-radius:2px;">ink #1f2a24</span>
-        <span style="background:#2d5a4a; color:#fff; padding:2px 6px; border-radius:2px;">accent #2d5a4a</span>
-        <span style="background:#f8f1e3; color:#111; padding:2px 6px; border-radius:2px;">paper #f8f1e3</span>
-        <span style="background:#675f55; color:#fff; padding:2px 6px; border-radius:2px;">support</span>
+      <div class="section-title">Arquitectura</div>
+      <div style="font-size:11px;color:#888;line-height:1.6">
+        <strong>UI para flujo.plano motor (Python):</strong><br>
+        • Parámetros evento (form) → POST /api/plano<br>
+        • Backend: projects/plano/plano_stands.py<br>
+        • Salida: SVG + rider + costos (JSON)<br>
+        • Constantes reales: CONST en projects/plano/README.md<br>
+        <br>
+        <strong>Referencia:</strong> 
+        <a href="https://github.com/ligereza/vibecodeine/tree/main/projects/plano" target="_blank" style="color:#2d5a4a">projects/plano/</a>
       </div>
     </div>
   </div>
@@ -119,232 +127,176 @@
 </div>
 
 <script>
-const A = {
-  ink: '#1f2a24', accent: '#2d5a4a', paper: '#f8f1e3', support: '#675f55', alert: '#c2410f',
-  dark0: '#0a0a0a', dark1: '#0d0d0d', dark2: '#111', dark3: '#151515', dark4: '#1f1f1f', dark5: '#222'
-};
+/* plano_demo.html — UI para flujo.plano motor (Python)
+   Referencia: projects/plano/plano_stands.py + flujo.plano module
+   
+   Este script es UI stub. Backend generará SVG + rider via:
+   POST /api/plano con JSON evento → SVG + rider JSON
+*/
 
-function setTab(t) {
-  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  document.querySelector(`.tab[onclick*="${t}"]`).classList.add('active');
-  document.getElementById('tab-' + t).classList.add('active');
-}
+const STATE = { current_event: null };
 
-function recalcular() {
-  const nombre = document.getElementById('nombre').value || 'Evento';
-  const dur = parseFloat(document.getElementById('duracion').value) || 6;
-  const vol = parseInt(document.getElementById('voluntarios').value) || 7;
-  const asistentes = parseInt(document.getElementById('asistentes').value) || 2500;
-  const scale = parseInt(document.getElementById('scale').value) || 92;
-  const testeo = document.getElementById('incluye_testeo').checked;
-  const contension = document.getElementById('incluye_contension').checked;
+async function generarDesdeMotor() {
+  const btn = document.getElementById('btn-generar');
+  const msg = document.getElementById('msg');
+  
+  btn.disabled = true;
+  msg.innerText = '⚙ Generando (conectando a flujo.plano)...';
 
-  // Realista
-  const numMesas = 1 + Math.floor((vol - 1) / 5);
-  const standW_m = 3.5;
-  const standH_m = 3.0;
-  const pasillo_m = 1.2;
-  const mesaW_m = 2.0, mesaH_m = 0.7;
-  const silla_m = 0.5;
+  const evento = {
+    nombre: document.getElementById('nombre').value || 'Evento',
+    duracion_horas: parseFloat(document.getElementById('duracion').value) || 6,
+    voluntarios: parseInt(document.getElementById('voluntarios').value) || 7,
+    asistentes_estimados: parseInt(document.getElementById('asistentes').value) || 2500,
+    incluye_testeo: document.getElementById('incluye_testeo').checked,
+    masivo: document.getElementById('masivo').checked,
+    ubicacion: document.getElementById('ubicacion').value,
+    layout_mode: document.getElementById('layout_mode').value,
+    notas: document.getElementById('notas').value || ''
+  };
 
-  const standW = Math.floor(standW_m * scale);
-  const standH = Math.floor(standH_m * scale);
-  const pasilloW = Math.max(12, Math.floor(pasillo_m * scale * 0.7));
-  const mesaW = Math.floor(mesaW_m * scale * 0.65);
-  const mesaH = Math.floor(mesaH_m * scale * 0.7);
-  const sillaSz = Math.floor(silla_m * scale * 0.8);
-
-  const w = 620, h = 480;
-  let html = `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="background:${A.dark0}">`;
-  html += `<rect x="0" y="0" width="${w}" height="${h}" fill="${A.dark1}"/>`;
-
-  let baseX = 28;
-  let baseY = 48;
-
-  // Stand informativo principal
-  html += `<rect x="${baseX}" y="${baseY}" width="${standW}" height="${standH}" rx="6" fill="${A.dark2}" stroke="${A.accent}" stroke-width="2.5"/>`;
-  html += `<text x="${baseX + 10}" y="${baseY + 18}" fill="${A.paper}" font-size="11" font-weight="700">STAND INFORMATIVO</text>`;
-  html += `<text x="${baseX + 10}" y="${baseY + 33}" fill="${A.support}" font-size="8">${standW_m}×${standH_m}m • ${vol} personas</text>`;
-
-  // Mesas: educación + distribución
-  const marginInside = 8;
-  const cols = 2;
-  const gapMesa = 6;
-  const mesasPerCol = Math.ceil(numMesas / cols);
-  let mIdx = 0;
-  for (let r = 0; r < mesasPerCol; r++) {
-    for (let c = 0; c < cols; c++) {
-      if (mIdx >= numMesas) break;
-      const mx = baseX + marginInside + c * (mesaW + gapMesa);
-      const my = baseY + 50 + r * (mesaH + 5);
-      html += `<rect x="${mx}" y="${my}" width="${mesaW}" height="${mesaH}" rx="2" fill="${A.dark4}" stroke="${A.accent}" stroke-width="1"/>`;
-      html += `<text x="${mx + 3}" y="${my + 11}" fill="${A.support}" font-size="6">mesa${mIdx + 1}</text>`;
-      mIdx++;
-    }
-  }
-
-  // Pasillo
-  const circX = baseX + standW + 6;
-  html += `<rect x="${circX}" y="${baseY - 4}" width="${pasilloW}" height="${standH + 28}" fill="none" stroke="${A.support}" stroke-width="1.5" stroke-dasharray="4 2"/>`;
-  html += `<text x="${circX + 2}" y="${baseY + 14}" fill="${A.support}" font-size="6">pasillo</text>`;
-
-  // Stand testeo
-  if (testeo) {
-    const testX = circX + pasilloW + 8;
-    const testW = 118;
-    const testH = 92;
-    html += `<rect x="${testX}" y="${baseY + 6}" width="${testW}" height="${testH}" rx="4" fill="${A.dark2}" stroke="#ffb84d" stroke-width="2"/>`;
-    html += `<text x="${testX + 8}" y="${baseY + 22}" fill="#ffb84d" font-size="9" font-weight="700">TESTEO</text>`;
-    html += `<text x="${testX + 8}" y="${baseY + 34}" fill="${A.support}" font-size="7">Análisis químico</text>`;
+  try {
+    // TODO: Conectar a backend cuando esté listo
+    // const res = await fetch('/api/plano/render', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify({ evento })
+    // });
+    // if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    // const data = await res.json();
     
-    // Reactivos
-    html += `<rect x="${testX + 8}" y="${baseY + 38}" width="35" height="24" rx="1" fill="${A.dark4}" stroke="${A.support}"/>`;
-    html += `<text x="${testX + 10}" y="${baseY + 52}" fill="${A.support}" font-size="5">reactivos</text>`;
+    // Por ahora, fallback demo (usar recalcular_demo)
+    recalcular_demo(evento);
+    STATE.current_event = evento;
     
-    // Mesas testeo
-    html += `<rect x="${testX + 50}" y="${baseY + 38}" width="35" height="24" rx="1" fill="${A.dark4}" stroke="${A.support}"/>`;
-    html += `<text x="${testX + 52}" y="${baseY + 52}" fill="${A.support}" font-size="5">mesas</text>`;
+    msg.innerText = '✓ Plano generado (demo local). Backend listo en: src/flujo/plano/';
+    setTab('plano');
+  } catch (e) {
+    msg.innerText = `✗ Error: ${e.message}`;
+  } finally {
+    btn.disabled = false;
   }
+}
 
-  // Zona contención
-  if (contension) {
-    const contY = baseY + standH + 16;
-    const contH = 44;
-    html += `<rect x="${baseX}" y="${contY}" width="${standW}}" height="${contH}" rx="3" fill="${A.dark3}" stroke="#a855f7" stroke-width="1.5"/>`;
-    html += `<text x="${baseX + 8}" y="${contY + 14}" fill="#a855f7" font-size="8" font-weight="700">ZONA CONTENCIÓN</text>`;
-    html += `<text x="${baseX + 8}" y="${contY + 28}" fill="${A.support}" font-size="6">Baja estimulación • apoyo emocional</text>`;
+function descargarJSON() {
+  if (!STATE.current_event) {
+    alert('Genera el plano primero');
+    return;
   }
-
-  // Info
-  html += `<text x="30" y="24" fill="${A.accent}" font-size="9" font-weight="600">INTERVENCIÓN RD</text>`;
-  html += `<text x="30" y="38" fill="${A.support}" font-size="7">Voluntarios: ${vol} • Dur: ${dur}h • ~${asistentes} asistentes</text>`;
-
-  html += `</svg>`;
-
-  document.getElementById('preview').innerHTML = html;
-  generarRider();
-}
-
-function generarRider() {
-  const nombre = document.getElementById('nombre').value || 'Evento';
-  const dur = parseFloat(document.getElementById('duracion').value) || 6;
-  const vol = parseInt(document.getElementById('voluntarios').value) || 7;
-  const asistentes = parseInt(document.getElementById('asistentes').value) || 2500;
-  const testeo = document.getElementById('incluye_testeo').checked;
-  const contension = document.getElementById('incluye_contension').checked;
-  const notas = document.getElementById('notas').value || '';
-
-  let r = `RIDER INTERVENCIÓN RD — ${nombre}\n`;
-  r += `═════════════════════════════════════════════════════════\n\n`;
-  r += `EVENTO: ${nombre}\n`;
-  r += `Duración: ${dur}h | Voluntarios RD: ${vol} | Asistentes ~${asistentes}\n`;
-  r += `Fecha: [Completar] | Horario: [Completar]\n`;
-  r += `Ubicación: [Dirección evento]\n\n`;
-  
-  r += `SERVICIOS REDUCIENDO DAÑO:\n`;
-  r += `───────────────────────────────────────────────────────\n`;
-  r += `• STAND INFORMATIVO (3.5×3.0m)\n`;
-  r += `  - Educación preventiva sobre sustancias psicoactivas\n`;
-  r += `  - Distribución suplementos pre y post fiesta\n`;
-  r += `  - Orientación personalizada sin estigma\n`;
-  r += `  - Acceso a protectores auditivos, abanicos, acessorios\n`;
-  r += `  - Equipo: ${vol} personas (educadores, químicos farmacéuticos)\n`;
-  if (testeo) r += `\n• STAND TESTEO (análisis colorimétrico)\n  - Procedimiento llevado por analistas químicos\n  - Análisis de sustancias psicoactivas de forma gratuita\n  - Recomendaciones de reducción de riesgos post-resultado\n  - Equipo: 2-3 analistas químicos\n`;
-  if (contension) r += `\n• ZONA CONTENCIÓN (espacio baja estimulación)\n  - Atención a crisis emocional sin intervención médica\n  - Apoyo psicológico en eventos masivos\n  - Aloja asientos, luz tenue, ambiente tranquilo\n  - Equipo: psicólogos + facilitadores emocionales\n`;
-  
-  r += `\nREQUERIMIENTOS OPERATIVOS:\n`;
-  r += `───────────────────────────────────────────────────────\n`;
-  r += `ESPACIO:\n`;
-  r += `• Stand principal: 3.5×3.0m (interior/exterior)\n`;
-  r += `• Pasillo de circulación: 1.2m mínimo\n`;
-  if (testeo) r += `• Stand testeo: 2.5×2.0m (espacio separado si es posible)\n`;
-  if (contension) r += `• Zona contención: 3.5×2.0m (baja estimulación)\n`;
-  
-  r += `\nINFRAESTRUCTURA:\n`;
-  r += `• Toldo/carpa (si es exterior)\n`;
-  r += `• Mesas: ${1 + Math.floor((vol-1)/5)} unidades (2.0m)\n`;
-  r += `• Sillas: ${vol + 2} para equipo\n`;
-  r += `• Señalética: láminas plastificadas\n`;
-  r += `• Iluminación: si es nocturno\n`;
-  r += `• Electricidad: toma de corriente cercana (opcional)\n`;
-  
-  r += `\nCOORDINACIÓN CON EVENTO:\n`;
-  r += `• Contacto producción: [Nombre/teléfono]\n`;
-  r += `• Coordinación seguridad privada: [Sí/No]\n`;
-  r += `• Equipo médico disponible: [Sí/No]\n`;
-  if (dur > 5) r += `• Alimentación para equipo RD (${dur}h): $PRESUPUESTO\n`;
-  r += `• Punto de encuentro operativo: [Ubicación en evento]\n`;
-  
-  r += `\nNOTAS ADICIONALES:\n`;
-  r += `${notas || '– Completar con instrucciones específicas'}\n`;
-  
-  document.getElementById('rider').innerText = r;
-}
-
-function generarCostos() {
-  const vol = parseInt(document.getElementById('voluntarios').value) || 7;
-  const dur = parseFloat(document.getElementById('duracion').value) || 6;
-  const testeo = document.getElementById('incluye_testeo').checked;
-  const contension = document.getElementById('incluye_contension').checked;
-
-  let c = `COTIZACIÓN INTERVENCIÓN RD\n\n`;
-  c += `RECURSO HUMANO:\n`;
-  c += `• ${vol} voluntarios x ${dur}h: depende negociación\n`;
-  c += `  - Analistas químicos (testeo)\n`;
-  c += `  - Educadores\n`;
-  c += `  - Coordinadores\n\n`;
-  c += `INFRAESTRUCTURA:\n`;
-  c += `• Stand informativo + toldo: ~$180.000\n`;
-  if (testeo) c += `• Kit testeo (reactivos + mesas): ~$95.000\n`;
-  if (contension) c += `• Zona contención (asientos + señalización): ~$25.000\n`;
-  c += `• Mesas + material educativo: ~$35.000\n\n`;
-  if (dur > 5) c += `• Alimentación equipo: ~$65.000\n`;
-  c += `\nTOTAL ESTIMADO: desde $335.000\n`;
-  c += `(varía según negociación con evento/productora)`;
-
-  document.getElementById('costos').innerText = c;
-}
-
-function exportSVG() {
-  const svg = document.querySelector('#preview svg');
-  if (!svg) { alert('Primero recalcula'); return; }
-  const blob = new Blob([svg.outerHTML], {type:'image/svg+xml'});
+  const blob = new Blob([JSON.stringify(STATE.current_event, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'intervension_rd_' + (document.getElementById('nombre').value || 'evento').replace(/\s+/g, '_') + '.svg';
+  a.download = `evento_${STATE.current_event.nombre.replace(/\s+/g, '_')}.json`;
   a.click();
   URL.revokeObjectURL(url);
 }
 
-function init() {
-  setTimeout(() => {
-    recalcular();
-    setTab('rider');
-    generarRider();
-  }, 100);
-
-  const paramIds = ['nombre', 'duracion', 'voluntarios', 'asistentes', 'scale', 'incluye_testeo', 'incluye_contension'];
-  let t = null;
-  paramIds.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-      const handler = () => {
-        clearTimeout(t);
-        t = setTimeout(() => { recalcular(); }, 150);
-      };
-      el.addEventListener('input', handler);
-      el.addEventListener('change', handler);
-    }
-  });
-
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !['INPUT','TEXTAREA','SELECT'].includes((e.target||{}).tagName)) recalcular();
-  });
+function setTab(t) {
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelector(`.tab[onclick*="${t}"]`)?.classList.add('active');
+  document.getElementById('tab-' + t)?.classList.add('active');
 }
 
-init();
+// ============= DEMO (fallback local, sin backend) =============
+const CONST = {
+  stand_w: 3.5, stand_h: 3.0, pasillo: 1.2,
+  mesa_w: 2.0, mesa_h: 0.7, silla: 0.5,
+  ink: '#1f2a24', accent: '#2d5a4a', support: '#675f55',
+  dark0: '#0a0a0a', dark1: '#0d0d0d', dark2: '#111'
+};
+
+function recalcular_demo(evento) {
+  const scale = 92; // px/m
+  
+  let svg = generatePlanoSVG_Demo(evento, scale);
+  document.getElementById('preview').innerHTML = svg;
+  
+  let rider = generateRiderText_Demo(evento);
+  document.getElementById('rider').innerText = rider;
+  
+  let costos = generateCostosText_Demo(evento);
+  document.getElementById('costos').innerText = costos;
+}
+
+function generatePlanoSVG_Demo(ev, scale) {
+  const standW = Math.floor(CONST.stand_w * scale);
+  const standH = Math.floor(CONST.stand_h * scale);
+  const numMesas = 1 + Math.floor((ev.voluntarios - 1) / 5);
+  
+  let svg = `<svg width="640" height="480" viewBox="0 0 640 480" style="background:${CONST.dark0}">`;
+  svg += `<rect x="0" y="0" width="640" height="480" fill="${CONST.dark1}"/>`;
+  svg += `<text x="30" y="28" fill="${CONST.accent}" font-size="14" font-weight="700">${ev.nombre} (${ev.layout_mode})</text>`;
+  svg += `<text x="30" y="44" fill="${CONST.support}" font-size="10">${ev.duracion_horas}h • ${ev.voluntarios} personas • ~${ev.asistentes_estimados} asistentes</text>`;
+  
+  let baseX = 40, baseY = 60;
+  
+  // Stand informativo
+  svg += `<rect x="${baseX}" y="${baseY}" width="${standW}" height="${standH}" rx="6" fill="${CONST.dark2}" stroke="${CONST.accent}" stroke-width="2.5"/>`;
+  svg += `<text x="${baseX + 12}" y="${baseY + 22}" fill="#fff" font-size="12" font-weight="700">STAND INFORMATIVO</text>`;
+  
+  // Mesas dentro
+  const mesaW = 45, mesaH = 22;
+  for (let i = 0; i < Math.min(numMesas, 4); i++) {
+    const mx = baseX + 12 + (i % 2) * 80;
+    const my = baseY + 50 + Math.floor(i / 2) * 30;
+    svg += `<rect x="${mx}" y="${my}" width="${mesaW}" height="${mesaH}" rx="2" fill="${CONST.dark2}" stroke="${CONST.accent}" stroke-width="1"/>`;
+    svg += `<text x="${mx + 5}" y="${my + 14}" fill="${CONST.support}" font-size="8">mesa${i + 1}</text>`;
+  }
+  
+  if (ev.incluye_testeo) {
+    svg += `<rect x="${baseX + 160}" y="${baseY + 20}" width="100" height="80" rx="4" fill="${CONST.dark2}" stroke="#ffb84d" stroke-width="2"/>`;
+    svg += `<text x="${baseX + 175}" y="${baseY + 40}" fill="#ffb84d" font-size="11" font-weight="700">TESTEO</text>`;
+  }
+  
+  svg += `</svg>`;
+  return svg;
+}
+
+function generateRiderText_Demo(ev) {
+  let r = `RIDER INTERVENCIÓN RD — ${ev.nombre}\n`;
+  r += `════════════════════════════════════════════════════════\n\n`;
+  r += `Duración: ${ev.duracion_horas}h | Voluntarios: ${ev.voluntarios} | Asistentes ~${ev.asistentes_estimados}\n`;
+  r += `Ubicación: ${ev.ubicacion} | Layout: ${ev.layout_mode}\n\n`;
+  
+  r += `SERVICIOS:\n`;
+  r += `• Stand Informativo: ${CONST.stand_w}×${CONST.stand_h}m\n`;
+  r += `  - Educación preventiva\n`;
+  r += `  - Suplementos pre/post\n`;
+  if (ev.incluye_testeo) r += `• Stand Testeo: análisis colorimétrico\n`;
+  if (ev.masivo) r += `• Zona Contención: crisis emocional\n`;
+  
+  r += `\nREQUERIMIENTOS:\n`;
+  r += `• Espacio mínimo: ${Math.ceil(CONST.stand_w + CONST.pasillo + 2)}×${Math.ceil(CONST.stand_h + 1)}m\n`;
+  r += `• Mesas: ${1 + Math.floor((ev.voluntarios - 1) / 5)} unt.\n`;
+  if (ev.duracion_horas > 5) r += `• Alimentación: obligatoria\n`;
+  
+  return r;
+}
+
+function generateCostosText_Demo(ev) {
+  let c = `COTIZACIÓN INTERVENCIÓN RD\n\n`;
+  c += `Equipo: ${ev.voluntarios} personas × ${ev.duracion_horas}h\n`;
+  c += `Stand: ~$180.000\n`;
+  if (ev.incluye_testeo) c += `Testeo: ~$95.000\n`;
+  if (ev.duracion_horas > 5) c += `Alimentación: ~$65.000\n`;
+  c += `\nTOTAL ESTIMADO: desde $300.000\n`;
+  return c;
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', () => {
+  const paramIds = ['nombre', 'duracion', 'voluntarios', 'asistentes', 'incluye_testeo', 'masivo', 'layout_mode'];
+  paramIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', () => {
+      const msg = document.getElementById('msg');
+      msg.innerText = '';
+    });
+  });
+  document.getElementById('msg').innerText = '← Modifica parámetros y presiona ⚙ Generar';
+});
 </script>
 </body>
 </html>
