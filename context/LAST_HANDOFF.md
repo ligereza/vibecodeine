@@ -5,7 +5,7 @@ Do not use accents, enye, emoji, smart quotes, or special arrows here.
 Daily commands for owner on Windows/Git Bash must use `py`, not `python`.
 
 Date: 2026-06-28
-Current version: 0.41.1
+Current version: 0.41.2
 Main daily entry: `py -m flujo app`
 Desktop entry: `py -m flujo app --desktop`
 Verify on Windows: `py -m flujo verify`
@@ -13,7 +13,7 @@ Airdrop check on Windows: `py scripts/validate_airdrop.py` then `py scripts/run_
 
 ## Current state
 
-The repo is healthy after the v0.40 hub airdrop, v0.40.1 dispatcher fix, v0.40.2 Plano/Rider vanilla integration, and v0.40.3 React/Vite web layer for Plano Pro, and v0.40.4 React SVG Visualizer integration, and v0.40.5 real SVG API integration, and v0.41.0 unified React hub, and v0.41.1 EVENTOS presets/intake metadata.
+The repo is healthy after the v0.40 hub airdrop, v0.40.1 dispatcher fix, v0.40.2 Plano/Rider vanilla integration, and v0.40.3 React/Vite web layer for Plano Pro, and v0.40.4 React SVG Visualizer integration, and v0.40.5 real SVG API integration, and v0.41.0 unified React hub, and v0.41.1 EVENTOS presets/intake metadata, and v0.41.2 demo/cotizacion/continuity plan.
 
 Real package CLI:
 - `py -m flujo health`
@@ -88,6 +88,14 @@ Do not document them as top-level `py -m flujo index` or `py -m flujo route` unl
 - `/api/plano/render` applies presets and returns preset metadata.
 - Event/rider/cartelera/Instagram parsing now suggests `event_preset`.
 - `create-job-draft` can store parsed metadata in `intake.json` and `resultado.md`.
+
+### v0.41.2 - demo jefe, cotizacion and continuity plan
+- Added `src/flujo/cotizaciones_base.py`.
+- Added `/api/cotizacion/render` in both hub backends.
+- Added React `QuotePanel` and Cotizacion navigation.
+- Added `context/ACTIVE_PLAN.md` and `context/SESSION_STATE.json` as anti-interruption handoff.
+- Added `docs/DEMO_JEFE_2026-06-29.md`.
+- Added `docs/ROADMAP_AI_MEMORY.md` for productoras, venues, logos, examples ingestion and internet enrichment.
 
 ## Airdrop model - keep this intact
 

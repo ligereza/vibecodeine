@@ -1,13 +1,14 @@
 import type React from 'react';
-import { Activity, Boxes, ClipboardList, FileText, Home, Map, Shapes, TerminalSquare } from 'lucide-react';
+import { Activity, Boxes, Calculator, ClipboardList, FileText, Home, Map, Shapes, TerminalSquare } from 'lucide-react';
 import { cn } from '../utils/cn';
 
-export type AppView = 'hub' | 'jobs' | 'intake' | 'commands' | 'plano' | 'visualizer';
+export type AppView = 'hub' | 'jobs' | 'intake' | 'quote' | 'commands' | 'plano' | 'visualizer';
 
 const nav = [
   { id: 'hub' as const, label: 'Hub', icon: Home, hint: 'dashboard' },
   { id: 'jobs' as const, label: 'Jobs', icon: Boxes, hint: 'trabajo' },
   { id: 'intake' as const, label: 'Intake', icon: ClipboardList, hint: 'pedido' },
+  { id: 'quote' as const, label: 'Cotización', icon: Calculator, hint: 'costos' },
   { id: 'commands' as const, label: 'Comandos', icon: TerminalSquare, hint: 'CLI' },
   { id: 'plano' as const, label: 'Plano', icon: Map, hint: 'rider' },
   { id: 'visualizer' as const, label: 'SVG', icon: Shapes, hint: 'material' },
@@ -18,6 +19,7 @@ export function titleForView(view: AppView): string {
     hub: 'Hub operativo',
     jobs: 'Jobs reales',
     intake: 'Intake de pedidos',
+    quote: 'Cotización base',
     commands: 'Comandos rápidos',
     plano: 'Plano / Rider RD',
     visualizer: 'Visualizador SVG',

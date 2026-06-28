@@ -29,6 +29,7 @@ import argparse
 import webbrowser
 
 from flujo.eventos.presets import apply_event_preset, infer_event_preset, list_event_presets
+from flujo.cotizaciones_base import generar_cotizacion_base
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse
 
@@ -339,6 +340,11 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/plano/render":
             try:
                 return self._json(api_plano_render(payload.get("evento", payload)))
+            except Exception as e:
+                return self._json({"error": str(e)}, 500)
+        if path == "/api/cotizacion/render":
+            try:
+                return self._json(generar_cotizacion_base(payload.get("evento", payload), incluir_cartelera=payload.get("incluir_cartelera", True), incluir_flyer_impreso=payload.get("incluir_flyer_impreso", False)))
             except Exception as e:
                 return self._json({"error": str(e)}, 500)
         if path in ("/api/parse-pedido", "/api/parse-real-pedido"):

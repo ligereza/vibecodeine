@@ -59,6 +59,7 @@ from ..jobs.job import create_job, list_jobs  # real job creation / listing for 
 from ..dashboard import collect_items, render_markdown, render_html
 from ..eventos.presets import infer_event_preset, list_event_presets
 from ..serve.server import api_plano_render as render_plano_api
+from ..cotizaciones_base import generar_cotizacion_base
 try:
     from ..export.illustrator import prepare_supplement_job_assets
 except Exception:
@@ -437,6 +438,17 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             try:
                 data = json.loads(body or "{}")
                 result = render_plano_api(data.get("evento", data))
+                self._send_json(result)
+            except Exception as e:
+                self._send_json({"error": str(e)}, status=400)
+            return
+
+        if p == "/api/cotizacion/render":
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length).decode("utf-8")
+            try:
+                data = json.loads(body or "{}")
+                result = generar_cotizacion_base(data.get("evento", data), incluir_cartelera=data.get("incluir_cartelera", True), incluir_flyer_impreso=data.get("incluir_flyer_impreso", False))
                 self._send_json(result)
             except Exception as e:
                 self._send_json({"error": str(e)}, status=400)

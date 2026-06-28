@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, Boxes, CheckCircle2, ClipboardList, Map, Shapes, Signal, TerminalSquare } from 'lucide-react';
+import { ArrowRight, Boxes, Calculator, CheckCircle2, ClipboardList, Map, Shapes, Signal, TerminalSquare } from 'lucide-react';
 import { flujoApi, type JobsResponse, type Ping } from '../api/flujoApi';
 import type { AppView } from './AppShell';
 
@@ -76,6 +76,7 @@ export default function HubDashboard({ onNavigate }: { onNavigate: (view: AppVie
               { view: 'jobs' as const, icon: Boxes, title: 'Ver jobs', desc: 'Estado real de la carpeta jobs/' },
               { view: 'plano' as const, icon: Map, title: 'Plano/Rider', desc: 'Preparar layout, rider y SVG' },
               { view: 'visualizer' as const, icon: Shapes, title: 'Material SVG', desc: 'Revisar piezas reales del repo' },
+              { view: 'quote' as const, icon: Calculator, title: 'Cotización', desc: 'Base editable para productora/jefatura' },
               { view: 'commands' as const, icon: TerminalSquare, title: 'Comandos', desc: 'Copiar checks y build' },
             ].map(item => {
               const Icon = item.icon;

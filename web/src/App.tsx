@@ -5,6 +5,7 @@ import HubDashboard from './components/HubDashboard';
 import IntakePanel from './components/IntakePanel';
 import JobsPanel from './components/JobsPanel';
 import PlanoTool from './components/PlanoTool';
+import QuotePanel from './components/QuotePanel';
 import SvgVisualizer from './components/SvgVisualizer';
 
 function initialView(): AppView {
@@ -23,6 +24,7 @@ export default function App() {
       {view === 'hub' && <HubDashboard onNavigate={setView} />}
       {view === 'jobs' && <JobsPanel />}
       {view === 'intake' && <IntakePanel />}
+      {view === 'quote' && <QuotePanel />}
       {view === 'commands' && <CommandPanel />}
       {view === 'plano' && <PlanoTool />}
       {view === 'visualizer' && <SvgVisualizer />}

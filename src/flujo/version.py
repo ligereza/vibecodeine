@@ -1,8 +1,8 @@
 """Versión y changelog de flujo."""
 
-__version__ = "0.41.1"
+__version__ = "0.41.2"
 VERSION = __version__
-__version_info__ = (0, 41, 1)
+__version_info__ = (0, 41, 2)
 
 
 def get_version():
@@ -11,6 +11,16 @@ def get_version():
 
 def get_changelog():
     return {
+        "0.41.2": {
+            "titulo": "Demo jefe y cotizacion base",
+            "fecha": "2026-06-28",
+            "highlights": [
+                "Agrega vista React de Cotizacion con preset UNDER/BASE/MAINSTREAM",
+                "Agrega `/api/cotizacion/render` para cotizacion referencial local",
+                "Agrega ACTIVE_PLAN, SESSION_STATE y demo jefe para continuidad anti-interrupcion",
+                "Documenta roadmap AI Memory para productoras, venues, logos, ejemplos reales e internet enrichment",
+            ],
+        },
         "0.41.1": {
             "titulo": "Presets EVENTOS e intake con metadata",
             "fecha": "2026-06-28",
