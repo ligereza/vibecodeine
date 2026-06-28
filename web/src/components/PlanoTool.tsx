@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import { 
-  Download, LayersOff, 
+  Download, Layers, 
   ChevronRight, Printer, Settings, Trash2, Copy, Zap, RefreshCw, Box, Droplet, ShieldAlert
 } from "lucide-react";
 import { cn } from "../utils/cn";
@@ -333,7 +333,7 @@ export default function PlanoTool() {
                         e.stopPropagation();
                      }} className="cursor-grab active:cursor-grabbing">
                         <rect width="180" height={180} fill="white" fillOpacity="0.95" stroke="#161513" strokeWidth="1.5" rx="16" />
-                        <text x="15" y="28" fontSize="10" fontWeight="black" fill="#161513" fontFamily="monospace" tracking="0.1em">LEYENDA TÉCNICA</text>
+                        <text x="15" y="28" fontSize="10" fontWeight="black" fill="#161513" fontFamily="monospace" style={{ letterSpacing: "0.1em" }}>LEYENDA TÉCNICA</text>
                         {['testeo','contencion','power','heating','extinguisher'].map((k,i) => (
                           <g key={k} transform={`translate(15, ${50+i*24})`}>
                              {['power','heating','extinguisher'].includes(k) ? (

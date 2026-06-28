@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def check_jsons():
     for p in ROOT.rglob("*.json"):
-        if any(part in p.parts for part in [".git", "salida_generada", "02_editables_svg", "03_final_vectorizado_svg", "04_preview", "05_exports"]):
+        if any(part in p.parts for part in [".git", "node_modules", "web", "salida_generada", "02_editables_svg", "03_final_vectorizado_svg", "04_preview", "05_exports"]):
             continue
         try:
             json.loads(p.read_text(encoding="utf-8"))

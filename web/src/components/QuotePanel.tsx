@@ -16,7 +16,6 @@ export default function QuotePanel() {
   const [preset, setPreset] = useState<Preset>('base');
   const [eventName, setEventName] = useState('Evento RD');
   const [manualItems, setManualItems] = useState<ManualItem[]>([]);
-  const [setBusy] = useState(false);
 
   // Configuración de precios (Persistente)
   const [prices, setProposalPrices] = useState({
