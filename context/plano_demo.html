@@ -233,20 +233,51 @@ function generarRider() {
   const asistentes = parseInt(document.getElementById('asistentes').value) || 2500;
   const testeo = document.getElementById('incluye_testeo').checked;
   const contension = document.getElementById('incluye_contension').checked;
+  const notas = document.getElementById('notas').value || '';
 
   let r = `RIDER INTERVENCIÓN RD — ${nombre}\n`;
-  r += `Duración: ${dur}h | Voluntarios: ${vol} | Asistentes ~${asistentes}\n\n`;
-  r += `SERVICIOS:\n`;
-  r += `• Stand Informativo: 3.5x3.0m\n`;
-  r += `  - Educación preventiva\n`;
-  r += `  - Distribución suplementos pre/post\n`;
-  r += `  - Orientación personalizada\n`;
-  if (testeo) r += `• Stand Testeo: análisis colorimétrico de sustancias\n`;
-  if (contension) r += `• Zona Contención: espacio baja estimulación + apoyo emocional\n`;
-  r += `\nOPERATIVO:\n`;
-  r += `• Pasillo circulación 1.2m\n`;
-  if (dur > 5) r += `• Colación para equipo (${dur}h)\n`;
-  r += `• Coordinación con producción/seguridad\n`;
+  r += `═════════════════════════════════════════════════════════\n\n`;
+  r += `EVENTO: ${nombre}\n`;
+  r += `Duración: ${dur}h | Voluntarios RD: ${vol} | Asistentes ~${asistentes}\n`;
+  r += `Fecha: [Completar] | Horario: [Completar]\n`;
+  r += `Ubicación: [Dirección evento]\n\n`;
+  
+  r += `SERVICIOS REDUCIENDO DAÑO:\n`;
+  r += `───────────────────────────────────────────────────────\n`;
+  r += `• STAND INFORMATIVO (3.5×3.0m)\n`;
+  r += `  - Educación preventiva sobre sustancias psicoactivas\n`;
+  r += `  - Distribución suplementos pre y post fiesta\n`;
+  r += `  - Orientación personalizada sin estigma\n`;
+  r += `  - Acceso a protectores auditivos, abanicos, acessorios\n`;
+  r += `  - Equipo: ${vol} personas (educadores, químicos farmacéuticos)\n`;
+  if (testeo) r += `\n• STAND TESTEO (análisis colorimétrico)\n  - Procedimiento llevado por analistas químicos\n  - Análisis de sustancias psicoactivas de forma gratuita\n  - Recomendaciones de reducción de riesgos post-resultado\n  - Equipo: 2-3 analistas químicos\n`;
+  if (contension) r += `\n• ZONA CONTENCIÓN (espacio baja estimulación)\n  - Atención a crisis emocional sin intervención médica\n  - Apoyo psicológico en eventos masivos\n  - Aloja asientos, luz tenue, ambiente tranquilo\n  - Equipo: psicólogos + facilitadores emocionales\n`;
+  
+  r += `\nREQUERIMIENTOS OPERATIVOS:\n`;
+  r += `───────────────────────────────────────────────────────\n`;
+  r += `ESPACIO:\n`;
+  r += `• Stand principal: 3.5×3.0m (interior/exterior)\n`;
+  r += `• Pasillo de circulación: 1.2m mínimo\n`;
+  if (testeo) r += `• Stand testeo: 2.5×2.0m (espacio separado si es posible)\n`;
+  if (contension) r += `• Zona contención: 3.5×2.0m (baja estimulación)\n`;
+  
+  r += `\nINFRAESTRUCTURA:\n`;
+  r += `• Toldo/carpa (si es exterior)\n`;
+  r += `• Mesas: ${1 + Math.floor((vol-1)/5)} unidades (2.0m)\n`;
+  r += `• Sillas: ${vol + 2} para equipo\n`;
+  r += `• Señalética: láminas plastificadas\n`;
+  r += `• Iluminación: si es nocturno\n`;
+  r += `• Electricidad: toma de corriente cercana (opcional)\n`;
+  
+  r += `\nCOORDINACIÓN CON EVENTO:\n`;
+  r += `• Contacto producción: [Nombre/teléfono]\n`;
+  r += `• Coordinación seguridad privada: [Sí/No]\n`;
+  r += `• Equipo médico disponible: [Sí/No]\n`;
+  if (dur > 5) r += `• Alimentación para equipo RD (${dur}h): $PRESUPUESTO\n`;
+  r += `• Punto de encuentro operativo: [Ubicación en evento]\n`;
+  
+  r += `\nNOTAS ADICIONALES:\n`;
+  r += `${notas || '– Completar con instrucciones específicas'}\n`;
   
   document.getElementById('rider').innerText = r;
 }
