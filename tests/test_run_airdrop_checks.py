@@ -52,3 +52,9 @@ def test_runner_carga_flujo_airdrop_aunque_scripts_este_en_path(monkeypatch):
     finally:
         sys.path[:] = original
         sys.modules.pop("run_airdrop_checks_under_test", None)
+
+
+def test_runner_expone_skip_push():
+    source = Path("scripts/run_airdrop_checks.py").read_text(encoding="utf-8")
+    assert "--skip-push" in source
+    assert "push=not args.skip_push" in source

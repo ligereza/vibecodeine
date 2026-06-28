@@ -1,38 +1,34 @@
-# AIRDROP 2026-06-18 — flujo v0.31.0 — Proyecto satélite `plano`
+# Airdrop - logo_clean_lab + hotfix checkpoint timeout
 
-**Tipo:** Proyecto nuevo "por desarrollar" (estilo `tapiz`). No toca el core.
+Este airdrop incluye dos cosas:
 
-## TL;DR
-Agrega `projects/plano/`: un generador paramétrico de planos de stands para
-eventos por **constantes de realidad** (sin AutoCAD), con rider derivado por
-reglas. Incluye el generador radial de teatro original como referencia.
+1. Proyecto experimental sin terminar `projects/logo_clean_lab/` con script Illustrator `logo_clean_master.jsx`.
+2. Hotfix para que `run_airdrop_checks.py` no quede pegado indefinidamente en auto-checkpoint/push.
 
-👉 Contexto: **`HANDOFF_2026-06-18_plano.md`** · Concepto: `projects/plano/README.md`.
+## Aplicar desde root del repo
 
-## Archivos
-```
-_airdrop/
-├── HANDOFF_2026-06-18_plano.md
-├── README_AIRDROP.md
-├── pyproject.toml                          # 0.30.2 → 0.31.0
-├── src/flujo/version.py                     # 0.31.0 + changelog
-└── projects/plano/
-    ├── README.md
-    ├── feedback.md
-    ├── plano_stands.py                      # motor headless (prototipo)
-    ├── referencia_plano_teatro.py           # generador radial original (referencia)
-    └── ejemplos/evento_ejemplo.json
-```
-
-## Aplicar
 ```bash
-flujo airdrop apply "v0.31.0 - proyecto plano (por desarrollar)"
-py -m pip install -e .
-flujo version            # 0.31.0
-cd projects/plano && python plano_stands.py ejemplos/evento_ejemplo.json --rider
-py -m pytest tests/ -q
+py scripts/validate_airdrop.py
+py scripts/run_airdrop_checks.py "logo clean lab experimental"
 ```
 
-## Compatibilidad
-- No modifica nada del core. `plano_stands.py` es headless (stdlib).
-- `referencia_plano_teatro.py` requiere customtkinter (solo si lo ejecutás; es referencia).
+## Si ya aplicaste parte del airdrop anterior y se pego en checkpoint
+
+Usa resume y evita push automatico:
+
+```bash
+py scripts/run_airdrop_checks.py --resume "logo clean lab experimental" --skip-push
+```
+
+Luego haces el push manual para ver prompts reales:
+
+```bash
+git push
+```
+
+## Que cambia el hotfix
+
+- Muestra salida en vivo de `git push`.
+- Agrega timeout al push y comandos git.
+- Agrega `--skip-push` para dejar commit local sin empujar.
+- Si falla push, no queda pegado: deja instruccion para empujar manualmente.

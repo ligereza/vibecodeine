@@ -110,3 +110,26 @@ def test_checkpoint_reintenta_si_hook_modifica(tmp_path, monkeypatch):
 def test_checkpoint_sin_repo_git(tmp_path, monkeypatch):
     monkeypatch.setattr(airdrop, "repo_root", lambda: tmp_path)
     assert airdrop.run_auto_checkpoint("x") is False
+
+
+def test_checkpoint_puede_omitir_push(tmp_path, monkeypatch):
+    bare, work = _init_repo(tmp_path)
+    monkeypatch.setattr(airdrop, "repo_root", lambda: work)
+
+    (work / "local_only.txt").write_text("contenido", encoding="utf-8")
+    ok = airdrop.run_auto_checkpoint("solo commit local", push=False)
+    assert ok is True
+
+    local = subprocess.run(["git", "-C", str(work), "rev-parse", "HEAD"],
+                           capture_output=True, text=True).stdout.strip()
+    remoto = subprocess.run(["git", "-C", str(bare), "rev-parse", "refs/heads/main"],
+                            capture_output=True, text=True).stdout.strip()
+    assert local != remoto, "push=False no debe actualizar el remoto"
+
+
+def test_git_helper_tiene_timeout_y_modo_live():
+    import inspect
+    src = inspect.getsource(airdrop._git)
+    assert "timeout" in src
+    assert "live" in src
+    assert "capture_output=True" in src

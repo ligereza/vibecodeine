@@ -219,3 +219,59 @@ Before ending any future session:
 2. Update this file in ASCII-only text.
 3. Keep commands using `py` for the owner.
 4. If delivering an airdrop, include a HANDOFF file that is also ASCII-only.
+
+## Added pending airdrop - 2026-06-28 logo_clean_lab
+
+This airdrop adds an unfinished experimental project:
+```txt
+projects/logo_clean_lab/
+```
+
+Purpose:
+- Build a local Illustrator logo cleanup lab.
+- Keep real logos private/local.
+- Track tests and failures before changing rules again.
+
+Main script:
+```txt
+tools/illustrator/scripts/logo_clean_master.jsx
+```
+
+Important lessons:
+- Do not globally align word baseline/cap height automatically.
+- Do not force diagonals to 45 degrees.
+- Do not collapse all handles of a node.
+- For straight segment p1 -> p2, collapse only p1.rightDirection and p2.leftDirection.
+- Preserve neighboring curve handles in B/R/P/D.
+
+Simple next tasks:
+1. Test Illustrator script with mode A then W on one simple word.
+2. Save 3 learning reports with notes.
+3. If B/R/P/D lose curves, tune MIXED rules first.
+
+Verification note:
+- Windows: py scripts/validate_airdrop.py
+- Windows: py scripts/run_airdrop_checks.py "logo clean lab experimental"
+
+## Added pending hotfix - 2026-06-28 airdrop checkpoint timeout
+
+Problem:
+- `run_airdrop_checks.py` could appear stuck at `flujo.airdrop.run_auto_checkpoint()`.
+- Likely cause: `git push` used captured output, no live prompt, and no timeout.
+
+Changes:
+- `src/flujo/airdrop.py` adds timeout/live output to git helper.
+- `git push` now shows output and stops after 180 seconds.
+- `run_auto_checkpoint(message, push=True)` can skip push.
+- `scripts/run_airdrop_checks.py` adds `--skip-push`.
+- Tests cover skip-push and static runner behavior.
+
+Recommended recovery if a previous run already applied files:
+```bash
+py scripts/run_airdrop_checks.py --resume "logo clean lab experimental" --skip-push
+```
+
+Then push manually when auth is ready:
+```bash
+git push
+```

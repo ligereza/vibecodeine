@@ -143,11 +143,13 @@ def _airdrop_apply(log) -> None:
         _write(log, f"  OK {change['rel']}")
 
 
-def _checkpoint(log, message: str) -> None:
+def _checkpoint(log, message: str, push: bool = True) -> None:
     _ensure_src_first()
     from flujo.airdrop import run_auto_checkpoint
 
-    ok = run_auto_checkpoint(message)
+    if not push:
+        _write(log, "Checkpoint: se hara commit local, sin push (--skip-push)")
+    ok = run_auto_checkpoint(message, push=push)
     if not ok:
         raise RuntimeError("run_auto_checkpoint devolvió False")
     _write(log, "Checkpoint + push OK")
@@ -192,6 +194,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--resume", action="store_true", help="Reanuda después de un apply ya realizado: salta validate/dry-run/apply y corre checks/checkpoint")
     parser.add_argument("--skip-hub-smoke", action="store_true", help="omite scripts/hub_smoke.py")
     parser.add_argument("--skip-checkpoint", action="store_true", help="Ejecuta checks pero no commitea/pushea")
+    parser.add_argument("--skip-push", action="store_true", help="Hace checkpoint local pero no ejecuta git push")
     parser.add_argument(
         "--allow-airdrop-engine",
         action="store_true",
@@ -256,7 +259,7 @@ def main(argv: list[str] | None = None) -> int:
         if smoke.exists() and not args.skip_hub_smoke:
             steps.append(("hub smoke", lambda: _run_subprocess(log, [sys.executable, str(smoke)])))
         if not args.skip_checkpoint:
-            steps.append(("checkpoint", lambda: _run_step(log, "flujo.airdrop.run_auto_checkpoint()", lambda: _checkpoint(log, args.message))))
+            steps.append(("checkpoint", lambda: _run_step(log, "flujo.airdrop.run_auto_checkpoint()", lambda: _checkpoint(log, args.message, push=not args.skip_push))))
 
         for _name, step in steps:
             rc = step()

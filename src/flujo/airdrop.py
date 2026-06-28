@@ -6,6 +6,7 @@ copia a su destino, crea backup, y dispara checkpoint + push automáticamente.
 """
 
 import json
+import os
 import shutil
 import subprocess
 from datetime import datetime
@@ -153,10 +154,38 @@ def apply_airdrop(dry_run: bool = False) -> List[Dict]:
     return changes
 
 
-def _git(args: List[str], cwd: Path) -> "subprocess.CompletedProcess":
-    """Ejecuta git directamente (sin shell). Funciona en Windows/Linux/macOS."""
+def _git(
+    args: List[str],
+    cwd: Path,
+    timeout: int = 60,
+    live: bool = False,
+) -> "subprocess.CompletedProcess":
+    """Ejecuta git directamente, con timeout para evitar cuelgues.
+
+    Si live=True deja stdout/stderr conectados al terminal. Esto es importante
+    para `git push`: en Windows puede abrir Git Credential Manager o pedir
+    autenticacion, y con capture_output=True parecia que el runner estaba
+    pegado sin explicar nada.
+    """
+    cmd = ["git", *args]
+    env = os.environ.copy()
+    env.setdefault("GIT_TERMINAL_PROMPT", "1")
+
+    if live:
+        return subprocess.run(
+            cmd,
+            cwd=str(cwd),
+            text=True,
+            timeout=timeout,
+            env=env,
+        )
     return subprocess.run(
-        ["git", *args], cwd=str(cwd), capture_output=True, text=True
+        cmd,
+        cwd=str(cwd),
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        env=env,
     )
 
 
@@ -186,7 +215,7 @@ def _write_checkpoint_file(repo: Path, msg: str) -> Path:
     return cp
 
 
-def run_auto_checkpoint(message: Optional[str] = None) -> bool:
+def run_auto_checkpoint(message: Optional[str] = None, push: bool = True) -> bool:
     """Crea checkpoint + commit + push usando git directamente (Python puro).
 
     No depende de `bash` ni de `scripts/checkpoint.sh`, por lo que funciona en
@@ -205,30 +234,46 @@ def run_auto_checkpoint(message: Optional[str] = None) -> bool:
 
         # commit robusto frente a pre-commit hooks (hasta 3 intentos)
         committed = False
-        for _ in range(3):
-            _git(["add", "-A"], repo)
-            staged = _git(["diff", "--cached", "--quiet"], repo)
+        for attempt in range(1, 4):
+            print(f"Auto-checkpoint: git add -A (intento {attempt}/3)")
+            _git(["add", "-A"], repo, timeout=120)
+            staged = _git(["diff", "--cached", "--quiet"], repo, timeout=60)
             if staged.returncode == 0:
                 print("No hay cambios para commitear.")
                 committed = True
                 break
-            res = _git(["commit", "-m", f"checkpoint: {msg}"], repo)
+            print(f"Auto-checkpoint: git commit (intento {attempt}/3)")
+            res = _git(["commit", "-m", f"checkpoint: {msg}"], repo, timeout=180)
             if res.returncode == 0:
                 committed = True
                 break
+            if res.stdout:
+                print(res.stdout)
+            if res.stderr:
+                print(res.stderr)
             # un hook pudo modificar archivos: re-agregar y reintentar
         if not committed:
             print("No se pudo commitear tras 3 intentos (revisar hooks / git status).")
             return False
 
-        # push a la rama actual
-        if _git(["remote", "get-url", "origin"], repo).returncode == 0:
-            branch = _git(["rev-parse", "--abbrev-ref", "HEAD"], repo).stdout.strip() or "main"
-            push = _git(["push", "-u", "origin", branch], repo)
+        if not push:
+            print("Auto-checkpoint: commit local OK; push omitido por configuracion.")
+            return True
+
+        # push a la rama actual. Con salida en vivo y timeout para no quedar pegado.
+        if _git(["remote", "get-url", "origin"], repo, timeout=20).returncode == 0:
+            branch = _git(["rev-parse", "--abbrev-ref", "HEAD"], repo, timeout=20).stdout.strip() or "main"
+            print(f"Auto-checkpoint: git push -u origin {branch}")
+            print("Si GitHub pide login, completa la ventana/prompt. Timeout: 180s.")
+            push = _git(["push", "-u", "origin", branch], repo, timeout=180, live=True)
             if push.returncode != 0:
-                print(push.stderr or push.stdout)
+                print("git push fallo. El commit local puede haber quedado creado; ejecuta `git push` manual cuando autentiques.")
                 return False
         return True
+    except subprocess.TimeoutExpired as e:
+        print(f"Timeout en git {' '.join(e.cmd if isinstance(e.cmd, list) else [str(e.cmd)])}.")
+        print("El auto-checkpoint se detuvo para evitar quedarse pegado. Revisa `git status` y prueba `git push` manual.")
+        return False
     except Exception as e:  # noqa: BLE001
         print(f"Error en auto-checkpoint: {e}")
         return False
