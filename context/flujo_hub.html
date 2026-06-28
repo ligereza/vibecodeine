@@ -94,6 +94,19 @@
   .close-btn { background: var(--panel2); border: 1px solid var(--border); color: var(--text); padding: 4px 10px; border-radius: 3px; cursor: pointer; font-size: 11px; }
   .close-btn:hover { border-color: var(--accent); }
   footer { margin: 36px 24px 12px; font-size: 11px; color: var(--muted); border-top: 1px solid var(--border); padding-top: 14px; }
+  /* Workspace Setup styles */
+  .fmt-preset { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; cursor: pointer; transition: all .15s; text-align: center; min-width: 100px; }
+  .fmt-preset:hover { border-color: var(--accent); background: rgba(45,90,74,.08); }
+  .fmt-preset.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .fmt-info { font-size: 10px; margin-top: 2px; }
+  .asset-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+  .asset-card { background: rgba(45,90,74,.08); border: 1px solid rgba(45,90,74,.24); border-radius: 6px; padding: 12px; cursor: pointer; transition: all .15s; }
+  .asset-card:hover { border-color: var(--accent); background: rgba(45,90,74,.16); }
+  .asset-icon { font-size: 20px; margin-bottom: 4px; }
+  .quick-action-btn { background: var(--panel); border: 1px solid var(--border); padding: 8px 12px; border-radius: 5px; font-size: 11px; cursor: pointer; text-align: left; transition: all .15s; }
+  .quick-action-btn:hover { border-color: var(--accent); background: rgba(45,90,74,.08); }
+  .quick-action-label { font-weight: 600; color: var(--text); }
+  .quick-action-note { font-size: 9px; color: var(--muted); margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -154,6 +167,105 @@
     <button class="btn btn-sec" onclick="window.open('../projects/flujo/flujo.json','_blank')">flujo.json</button>
   </div>
   <div class="small muted" style="margin-top:4px">El índice organiza el trabajo por áreas; dentro de cada una, el contenido propio se mantiene en su bloque correspondiente.</div>
+</div>
+
+<!-- WORKSPACE SETUP: Create design workspaces by format (Illustrator/Blender ready) -->
+<div class="section" id="workspace-setup-section">
+  <div class="card hero-card" style="margin-bottom:12px;">
+    <div class="kicker">Workspace Setup</div>
+    <div style="font-size:14px; font-weight:700; margin-bottom:4px;">Crea mesas de trabajo listas para Illustrator o Blender</div>
+    <div class="small muted">Elige formato por medidas, obtén canvas pixel-perfect, y accede a todo lo que necesitas sin salir del hub.</div>
+  </div>
+
+  <div class="card">
+    <div class="pro-label">Formatos frecuentes — click para crear workspace</div>
+    <div class="row" style="gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+      <div class="fmt-preset" onclick="createWorkspaceFromFormat('sup_etiqueta_165x65')">
+        <div style="font-weight:600">Etiqueta</div>
+        <div class="fmt-info">16.5×6.5cm</div>
+      </div>
+      <div class="fmt-preset" onclick="createWorkspaceFromFormat('sup_etiqueta_140x100')">
+        <div style="font-weight:600">Etiqueta 2</div>
+        <div class="fmt-info">14×10cm</div>
+      </div>
+      <div class="fmt-preset" onclick="createWorkspaceFromFormat('evt_flyer_fisico_10x14')">
+        <div style="font-weight:600">Flyer</div>
+        <div class="fmt-info">10×14cm</div>
+      </div>
+      <div class="fmt-preset" onclick="createWorkspaceFromFormat('evt_post_ig_1080x1350')">
+        <div style="font-weight:600">Post IG</div>
+        <div class="fmt-info">1080×1350px</div>
+      </div>
+      <div class="fmt-preset" onclick="createWorkspaceFromFormat('evt_cartelera_individual_1080x1920')">
+        <div style="font-weight:600">Story IG</div>
+        <div class="fmt-info">1080×1920px</div>
+      </div>
+      <button class="btn btn-sec" onclick="showWorkspaceFormats()" style="font-size:11px">+ Ver todos los formatos</button>
+    </div>
+    <div id="workspace-result" class="small muted" style="margin-top:8px; min-height:18px;"></div>
+  </div>
+
+  <div class="card" style="margin-top:14px;">
+    <div class="pro-label">Activos listos para usar</div>
+    <div class="asset-grid">
+      <div class="asset-card" onclick="window.open('../projects/piezas_vectoriales','_blank')">
+        <div class="asset-icon">📦</div>
+        <div style="font-weight:600; font-size:12px;">Piezas Base</div>
+        <div class="small muted" style="margin-top:2px;">SVG + plantillas</div>
+      </div>
+      <div class="asset-card" onclick="window.open('../projects/flujo/flujo.json','_blank')">
+        <div class="asset-icon">🎨</div>
+        <div style="font-weight:600; font-size:12px;">Brand Colors</div>
+        <div class="small muted" style="margin-top:2px;">flujo.json</div>
+      </div>
+      <div class="asset-card" onclick="runSafeCommand('py scripts/piezas_formatos.py', document.getElementById('workspace-result'))">
+        <div class="asset-icon">📐</div>
+        <div style="font-weight:600; font-size:12px;">Formatos</div>
+        <div class="small muted" style="margin-top:2px;">Listar disponibles</div>
+      </div>
+      <div class="asset-card" onclick="window.open('../tools/illustrator','_blank')">
+        <div class="asset-icon">🖊️</div>
+        <div style="font-weight:600; font-size:12px;">Illustrator Tools</div>
+        <div class="small muted" style="margin-top:2px;">Scripts + configs</div>
+      </div>
+      <div class="asset-card" onclick="window.open('../tools/slowmo_blender_ae','_blank')">
+        <div class="asset-icon">🎬</div>
+        <div style="font-weight:600; font-size:12px;">Blender Tools</div>
+        <div class="small muted" style="margin-top:2px;">3D integration</div>
+      </div>
+      <div class="asset-card" onclick="showTab('herramientas')">
+        <div class="asset-icon">⚙️</div>
+        <div style="font-weight:600; font-size:12px;">Quick Scripts</div>
+        <div class="small muted" style="margin-top:2px;">Render, export, etc</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px;">
+    <div class="pro-label">Acciones rápidas ordenadas por frecuencia</div>
+    <div style="display:grid; gap:8px;">
+      <button class="quick-action-btn" onclick="copyCmd('py scripts/piezas_generar.py projects/piezas_vectoriales/suplementos_rd/config.json', this)">
+        <div class="quick-action-label">🔄 Regenerar piezas (Suplementos)</div>
+        <div class="quick-action-note">Procesa cambios en config.json → SVG + exports</div>
+      </button>
+      <button class="quick-action-btn" onclick="copyCmd('py -m flujo render run projects/piezas_vectoriales/suplementos_rd/config.json --for illustrator', this)">
+        <div class="quick-action-label">📤 Render para Illustrator</div>
+        <div class="quick-action-note">Exporta SVG editables listos para la app</div>
+      </button>
+      <button class="quick-action-btn" onclick="copyCmd('py -m flujo render run projects/piezas_vectoriales/suplementos_rd/config.json --for blender', this)">
+        <div class="quick-action-label">🎨 Render para Blender</div>
+        <div class="quick-action-note">Prepara assets 3D y referencias</div>
+      </button>
+      <button class="quick-action-btn" onclick="copyCmd('py scripts/piezas_formatos.py 16.5 6.5 etiqueta', this)">
+        <div class="quick-action-label">🔍 Sugerir formato</div>
+        <div class="quick-action-note">Busca formatos por medidas (ej: 16.5x6.5cm)</div>
+      </button>
+      <button class="quick-action-btn" onclick="copyCmd('py -m flujo job new --from-template suplementos_rd', this)">
+        <div class="quick-action-label">+ Nuevo job (RD)</div>
+        <div class="quick-action-note">Crear trabajo nuevo con preset de línea RD</div>
+      </button>
+    </div>
+  </div>
 </div>
 
 <!-- TAB NAV + PANELS (UI/UX opt: reorganize to not cram all; prioritize daily flow intake→job→visuals→delegate; uses brand vars only) -->
@@ -1839,6 +1951,23 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initDatadropButtons);
 } else {
   setTimeout(initDatadropButtons, 50);
+}
+
+// Workspace Setup: Functions for format-based workspace creation
+function createWorkspaceFromFormat(formatId) {
+  const resEl = document.getElementById('workspace-result');
+  if (!resEl) return;
+  const cmd = 'py scripts/piezas_generar.py --format ' + formatId;
+  copyCmd(cmd);
+  resEl.innerHTML = '<span style="color:#2d5a4a">✓ Copiar y pega en terminal para crear workspace de ' + formatId + '</span>';
+}
+
+function showWorkspaceFormats() {
+  const resEl = document.getElementById('workspace-result');
+  if (!resEl) return;
+  const cmd = 'py scripts/piezas_formatos.py';
+  copyCmd(cmd);
+  resEl.innerHTML = '<span style="color:#2d5a4a">✓ Comando copiado. Revisa el output de terminal para ver todos los formatos disponibles.</span>';
 }
 </script>
 </body>

@@ -1266,11 +1266,8 @@ class _HubDesktopApi:
         return {"connected": True, "via": "pywebview", "backend": "real", "note": "flujo app --desktop"}
 
     def export_tokens(self):
-        try:
-            h = self._ensure_handler()
-            return h._export_design_tokens()
-        except Exception as e:
-            return {"error": str(e)}
+        """Legacy method: design tokens no longer exposed; use projects/flujo/flujo.json directly."""
+        return {"note": "Design tokens removed; use projects/flujo/flujo.json for brand config.", "deprecated": True}
 
     # Datadrop (inverse airdrop) bridge for desktop pywebview
     def list_datadrops(self):
