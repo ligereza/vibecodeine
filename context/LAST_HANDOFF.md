@@ -5,7 +5,7 @@ Do not use accents, enye, emoji, smart quotes, or special arrows here.
 Daily commands for owner on Windows/Git Bash must use `py`, not `python`.
 
 Date: 2026-06-28
-Current version: 0.42.0
+Current version: 0.42.1
 Main daily entry: `py -m flujo app`
 Desktop entry: `py -m flujo app --desktop`
 Verify on Windows: `py -m flujo verify`
@@ -13,7 +13,7 @@ Airdrop check on Windows: `py scripts/validate_airdrop.py` then `py scripts/run_
 
 ## Current state
 
-The repo is healthy after the v0.40 hub airdrop, v0.40.1 dispatcher fix, v0.40.2 Plano/Rider vanilla integration, and v0.40.3 React/Vite web layer for Plano Pro, and v0.40.4 React SVG Visualizer integration, and v0.40.5 real SVG API integration, and v0.41.0 unified React hub, and v0.41.1 EVENTOS presets/intake metadata, and v0.41.2 demo/cotizacion/continuity plan, and v0.42.0 knowledge base skeleton.
+The repo is healthy after the v0.40 hub airdrop, v0.40.1 dispatcher fix, v0.40.2 Plano/Rider vanilla integration, and v0.40.3 React/Vite web layer for Plano Pro, and v0.40.4 React SVG Visualizer integration, and v0.40.5 real SVG API integration, and v0.41.0 unified React hub, and v0.41.1 EVENTOS presets/intake metadata, and v0.41.2 demo/cotizacion/continuity plan, and v0.42.0 knowledge base skeleton, and v0.42.1 example ingest templates.
 
 Real package CLI:
 - `py -m flujo health`
@@ -103,6 +103,12 @@ Do not document them as top-level `py -m flujo index` or `py -m flujo route` unl
 - Added `src/flujo/knowledge/store.py`.
 - Added `py -m flujo knowledge list/show/classify/ingest-example/logo-source`.
 - Added `docs/KNOWLEDGE_BASE.md` and `docs/AGENT_VISUAL_DIRECTOR.md`.
+
+### v0.42.1 - example ingest templates
+- Added `knowledge/templates/*.for_ai.json`.
+- `knowledge ingest-example` now writes `manifest.json`, `for_ai.json`, and `README.md`.
+- Templates cover `cartelera_digital`, `flyer_evento_10x14`, `suplemento_flyer`, `logo_source`, and generic examples.
+- This creates a simple workflow: ingest files, give `for_ai.json` to a vision IA, save returned `analysis.json`.
 
 ## Airdrop model - keep this intact
 

@@ -39,3 +39,7 @@ py -m flujo knowledge ingest-example path --type cartelera --producer thegrid
 ```
 
 Luego abrir `knowledge/examples/<id>/manifest.json` y completar/enriquecer el JSON con observaciones visuales.
+
+## Output file
+
+Return the completed analysis as `analysis.json` in the example folder.

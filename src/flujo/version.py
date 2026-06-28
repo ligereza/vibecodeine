@@ -1,8 +1,8 @@
 """Versión y changelog de flujo."""
 
-__version__ = "0.42.0"
+__version__ = "0.42.1"
 VERSION = __version__
-__version_info__ = (0, 42, 0)
+__version_info__ = (0, 42, 1)
 
 
 def get_version():
@@ -11,6 +11,16 @@ def get_version():
 
 def get_changelog():
     return {
+        "0.42.1": {
+            "titulo": "Example ingest templates",
+            "fecha": "2026-06-28",
+            "highlights": [
+                "Agrega templates `knowledge/templates/*.for_ai.json` para analisis visual por IA",
+                "Knowledge ingest ahora crea `manifest.json`, `for_ai.json` y `README.md`",
+                "Soporta templates para cartelera digital, flyer 10x14, suplemento flyer y logo source",
+                "Ordena el flujo para que una IA con vision devuelva `analysis.json` reutilizable",
+            ],
+        },
         "0.42.0": {
             "titulo": "Knowledge base skeleton",
             "fecha": "2026-06-28",

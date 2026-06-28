@@ -101,6 +101,56 @@ def classify_event_text(text: str) -> dict[str, Any]:
     }
 
 
+
+def template_for(example_type: str) -> dict[str, Any]:
+    tdir = knowledge_root() / "templates"
+    candidates = [
+        tdir / f"{slugify(example_type)}.for_ai.json",
+        tdir / "generic.for_ai.json",
+    ]
+    for path in candidates:
+        if path.exists():
+            return json.loads(path.read_text(encoding="utf-8"))
+    return {"type": example_type, "task": "Completa analisis visual.", "expected_output": {}}
+
+
+def _producer_context(producer: str) -> dict[str, Any] | None:
+    if not producer:
+        return None
+    try:
+        return load_entity("productoras", producer)
+    except Exception:
+        return {"id": slugify(producer), "status": "unknown"}
+
+
+def _write_example_readme(out_dir: Path, manifest: dict[str, Any]) -> None:
+    text = f"""# Example {manifest['id']}
+
+Tipo: `{manifest['type']}`
+Productora: `{manifest.get('producer_id') or 'unknown'}`
+
+## Flujo
+
+1. Abre los archivos de este ejemplo.
+2. Entrega `for_ai.json` a una IA con vision.
+3. Pide que complete `analysis.json` usando SOLO datos observables.
+4. Si aparece logo, registra fuente con:
+
+```bash
+py -m flujo knowledge logo-source <producer_id> <archivo_logo>
+```
+
+## Prompt sugerido
+
+```txt
+Actua como Agent Visual Director de flujo.
+Lee for_ai.json, mira las imagenes/SVGs adjuntos y devuelve analysis.json completo.
+No inventes datos: usa unknown y confidence cuando falte informacion.
+Respeta reglas RD: flyer impreso 10x14 vertical Illustrator/SVG; cartelera digital Photoshop/Blender.
+```
+"""
+    (out_dir / "README.md").write_text(text, encoding="utf-8")
+
 def ingest_example(path: str | Path, example_type: str = "unknown", producer: str = "") -> Path:
     src = Path(path)
     if not src.exists():
@@ -114,23 +164,40 @@ def ingest_example(path: str | Path, example_type: str = "unknown", producer: st
         shutil.copy2(src, dest)
         files.append(dest.name)
     else:
-        for f in src.iterdir():
+        for f in sorted(src.iterdir()):
             if f.is_file():
                 dest = out_dir / f.name
                 shutil.copy2(f, dest)
                 files.append(dest.name)
+    template = template_for(example_type)
+    producer_ctx = _producer_context(producer)
     manifest = {
         "id": slug,
         "type": example_type,
-        "producer_id": producer or None,
+        "producer_id": slugify(producer) if producer else None,
         "created_at": datetime.now().isoformat(timespec="seconds"),
         "files": files,
-        "for_ai": {
-            "task": "Analiza layout, estilo, logos, formato, campos editables y senales de escala.",
-            "important_fields": ["layout", "style", "producer", "venue", "format", "editable_fields", "signals", "logo_candidates"],
-        },
+        "status": "needs_analysis",
+        "template": template.get("type", "generic"),
+        "next_files": ["for_ai.json", "analysis.json"],
+    }
+    for_ai = {
+        "example_id": slug,
+        "input_files": files,
+        "producer_context": producer_ctx,
+        "instructions": template.get("task"),
+        "expected_output": template.get("expected_output", {}),
+        "return_file": "analysis.json",
+        "rules": [
+            "No inventar datos: usar unknown/null y confidence.",
+            "Flyer impreso/promocional RD = vertical 10x14 cm, Illustrator/SVG.",
+            "Cartelera digital = Photoshop/Blender y formatos digitales.",
+            "Registrar logo_candidates si aparecen logos de productora o venue.",
+        ],
     }
     (out_dir / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+    (out_dir / "for_ai.json").write_text(json.dumps(for_ai, ensure_ascii=False, indent=2), encoding="utf-8")
+    _write_example_readme(out_dir, manifest)
     return out_dir / "manifest.json"
 
 
