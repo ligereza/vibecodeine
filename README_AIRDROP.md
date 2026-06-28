@@ -1,34 +1,24 @@
-# Airdrop - logo_clean_lab + hotfix checkpoint timeout
+# Airdrop - README general + logo_clean_lab summary
 
-Este airdrop incluye dos cosas:
-
-1. Proyecto experimental sin terminar `projects/logo_clean_lab/` con script Illustrator `logo_clean_master.jsx`.
-2. Hotfix para que `run_airdrop_checks.py` no quede pegado indefinidamente en auto-checkpoint/push.
+Este airdrop vuelve a documentar el flujo normal simple de airdrops y agrega contexto ejecutivo del proyecto `logo_clean_lab`.
 
 ## Aplicar desde root del repo
 
 ```bash
 py scripts/validate_airdrop.py
-py scripts/run_airdrop_checks.py "logo clean lab experimental"
+py scripts/run_airdrop_checks.py "actualiza readme y logo clean lab summary"
 ```
 
-## Si ya aplicaste parte del airdrop anterior y se pego en checkpoint
+## Nota
 
-Usa resume y evita push automatico:
+No modifica el motor de airdrop. No requiere `--allow-airdrop-engine`.
+
+## Antes de aplicar
+
+Revisar que no haya carpetas locales pesadas coladas:
 
 ```bash
-py scripts/run_airdrop_checks.py --resume "logo clean lab experimental" --skip-push
+git status --short
 ```
 
-Luego haces el push manual para ver prompts reales:
-
-```bash
-git push
-```
-
-## Que cambia el hotfix
-
-- Muestra salida en vivo de `git push`.
-- Agrega timeout al push y comandos git.
-- Agrega `--skip-push` para dejar commit local sin empujar.
-- Si falla push, no queda pegado: deja instruccion para empujar manualmente.
+Si aparece algo como `logo3d/`, sacarlo o dejarlo ignorado antes del checkpoint automatico.

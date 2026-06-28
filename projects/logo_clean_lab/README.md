@@ -82,3 +82,27 @@ puntos antes/despues
 ```
 
 Con eso se ajustara `logo_clean_master.jsx` con evidencia, no con suposiciones.
+
+## Goal
+
+Construir un flujo simple y repetible para limpiar logos ya dibujados en Illustrator:
+
+- alinear nodos que se proyectan como paralelos verticales u horizontales;
+- corregir perimetros que deben quedar a 90 grados;
+- eliminar puntos extra innecesarios;
+- preservar curvas en letras redondas o mixtas;
+- usar la palabra ingresada como pista para distinguir letras rectas, redondas, angulares o mixtas.
+
+## Summary
+
+El logo se asume visualmente correcto antes de correr el script. No se busca reconstruir letras ni detectar fuentes complejas. El objetivo es micro-limpieza vectorial: ordenar puntos cercanos, enderezar segmentos casi ortogonales y reducir ruido sin deformar la identidad del logo.
+
+Aprendizajes actuales:
+
+- No alinear automaticamente toda la palabra por baseline/cap height global.
+- No forzar diagonales a 45 grados.
+- No cerrar todos los handles de un nodo.
+- En un segmento recto `p1 -> p2`, cerrar solo `p1.rightDirection` y `p2.leftDirection`.
+- En B/R/P/D preservar handles vecinos de curva.
+- Registrar pruebas buenas y malas antes de seguir ajustando reglas.
+

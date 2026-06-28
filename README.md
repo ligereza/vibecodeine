@@ -321,12 +321,35 @@ py -m flujo clean
 
 ## 10. Airdrops
 
-Aplicar un airdrop:
+Flujo normal recomendado:
 
 ```bash
 py scripts/validate_airdrop.py
 py scripts/run_airdrop_checks.py "mensaje"
 ```
+
+Ese es el camino principal. No uses flags extra salvo que el validador o el handoff lo pidan explicitamente.
+
+Si un apply ya se hizo y fallo despues en checks/checkpoint:
+
+```bash
+py scripts/run_airdrop_checks.py --resume "mensaje"
+```
+
+Si un airdrop modifica el motor de airdrop, recien ahi validar con:
+
+```bash
+py scripts/validate_airdrop.py --allow-airdrop-engine
+py scripts/run_airdrop_checks.py "mensaje" --allow-airdrop-engine
+```
+
+Regla practica antes de correr el runner:
+
+```bash
+git status --short
+```
+
+Si aparecen carpetas pesadas o de otro proyecto, como `logo3d/`, sacarlas del repo o agregarlas al ignore antes de ejecutar el checkpoint automatico.
 
 Si el airdrop trae un script de limpieza, correrlo despues de aplicar.
 
@@ -337,6 +360,28 @@ Reglas:
 - No commitear datos sensibles.
 - No borrar sin listar antes.
 - Mantener LAST_HANDOFF actualizado y ASCII-only.
+- No dejar carpetas pesadas locales dentro del repo antes de un airdrop.
+```
+
+### Proyecto activo: logo_clean_lab
+
+Proyecto experimental para limpieza de logos en Illustrator:
+
+```txt
+projects/logo_clean_lab/
+tools/illustrator/scripts/logo_clean_master.jsx
+```
+
+Goal corto:
+
+```txt
+Probar y mejorar un script que alinee nodos horizontales/verticales, reduzca puntos extra y preserve curvas en letras mixtas como B/R/P/D.
+```
+
+Summary corto:
+
+```txt
+El logo ya existe y visualmente esta correcto; el script solo corrige imperfecciones pequenas. El aprendizaje se registra con reportes y resultados para ajustar reglas con evidencia.
 ```
 
 ---

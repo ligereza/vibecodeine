@@ -114,6 +114,16 @@ projects/**/*.mkv
 !*.gif
 !*.webp
 
+
+# Proyectos locales pesados / 3D accidentales
+logo3d/
+logo3d*/
+*.fbx
+*.obj
+*.glb
+*.gltf
+*.stl
+
 # Zips locales
 *.zip
 *.rar

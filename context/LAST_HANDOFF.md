@@ -275,3 +275,31 @@ Then push manually when auth is ready:
 ```bash
 git push
 ```
+
+## Added pending airdrop - 2026-06-28 readme logo clean summary
+
+Purpose:
+- Return documentation to the normal simple airdrop flow.
+- Clarify that the previous checkpoint issue was likely caused by a local heavy folder (`logo3d/`) accidentally inside the repo.
+- Add summary and goal for `projects/logo_clean_lab/`.
+- Update README with practical airdrop notes.
+
+Normal airdrop commands:
+```bash
+py scripts/validate_airdrop.py
+py scripts/run_airdrop_checks.py "mensaje"
+```
+
+Only use `--allow-airdrop-engine` if an airdrop changes `src/flujo/airdrop.py`.
+
+Before running auto-checkpoint:
+```bash
+git status --short
+```
+
+If local heavy folders appear, remove or ignore them first.
+
+Simple next tasks:
+1. Apply this airdrop with the two normal commands.
+2. Test `logo_clean_master.jsx` in Illustrator with mode A then W.
+3. Register good/bad results in the learning JSONL.
