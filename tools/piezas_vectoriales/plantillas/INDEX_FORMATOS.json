@@ -17,7 +17,7 @@
       "area": "eventos",
       "medio": "impresion",
       "herramienta": "svg+illustrator",
-      "template": "tools/piezas_vectoriales/plantillas/flyer_horizontal_minimo.config.json",
+      "template": "tools/piezas_vectoriales/plantillas/flyer_vertical_minimo.config.json",
       "real_size_cm": { "width": 10, "height": 14 },
       "canvas": { "width": 2000, "height": 2800 },
       "descripcion": "Flyer físico vertical 10x14 cm para eventos (impresión). Pasa por Illustrator.",
@@ -102,15 +102,15 @@
       "origen_info": "whatsapp"
     },
     {
-      "id": "sup_etiqueta_140x100",
-      "tipo": "etiqueta suplemento",
+      "id": "sup_etiqueta_100x140",
+      "tipo": "etiqueta suplemento vertical",
       "area": "suplementos",
       "medio": "impresion",
       "herramienta": "svg+illustrator",
-      "template": "tools/piezas_vectoriales/plantillas/etiqueta_horizontal_2800x2000.config.json",
-      "real_size_cm": { "width": 14, "height": 10 },
-      "canvas": { "width": 2800, "height": 2000 },
-      "descripcion": "Etiqueta/flyer horizontal 14x10 cm.",
+      "template": "tools/piezas_vectoriales/plantillas/etiqueta_vertical_2000x2800.config.json",
+      "real_size_cm": { "width": 10, "height": 14 },
+      "canvas": { "width": 2000, "height": 2800 },
+      "descripcion": "Etiqueta/flyer vertical 10x14 cm.",
       "origen_info": "whatsapp"
     },
     {

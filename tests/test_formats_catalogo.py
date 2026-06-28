@@ -31,7 +31,7 @@ def test_formatos_clave_existen():
         "evt_post_ig_1080x1350",
         "evt_brief_productora_pdf_universal",
         "sup_etiqueta_165x65",
-        "sup_etiqueta_140x100",
+        "sup_etiqueta_100x140",
         "sup_flyer_informativo_a5",
         "sup_pendon_rectangular",
         "sup_bandera_poligonal",

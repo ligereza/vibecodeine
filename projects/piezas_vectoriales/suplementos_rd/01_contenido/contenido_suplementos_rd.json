@@ -4,8 +4,8 @@
     "brand": "Reduciendo Daño",
     "website": "@ REDUCIENDODANO.CL",
     "footer": "VISITA NUESTRA WEB Y SÍGUENOS EN NUESTRAS REDES SOCIALES",
-    "canvas_px": { "width": 2800, "height": 2000 },
-    "real_size_cm": { "width": 14, "height": 10 },
+    "canvas_px": { "width": 2000, "height": 2800 },
+    "real_size_cm": { "width": 10, "height": 14 },
     "notes": "Texto maestro aprobado para generar flyers horizontales 2800x2000 px. Post Fiesta solo está incluido en el resumen general; falta ficha individual."
   },
   "palette": {

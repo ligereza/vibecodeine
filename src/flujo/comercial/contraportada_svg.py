@@ -50,6 +50,7 @@ def _replace_text_in_svg(root: ET.Element, old_text: str, new_text: str) -> int:
 def generar_contraportada(
     suplemento: Suplemento,
     output_path: Optional[Path] = None,
+    brief: Optional[str] = None,
 ) -> Path:
     """Generar SVG de contraportada para un suplemento.
 
@@ -61,6 +62,7 @@ def generar_contraportada(
     Args:
         suplemento: Objeto Suplemento con datos
         output_path: Ruta de salida (default: svg/suplementos_rd/04_contraportadas/[nombre]_final.svg)
+        brief: Texto breve personalizado para el beneficio o campaña
 
     Returns:
         Path del archivo generado
@@ -76,16 +78,27 @@ def generar_contraportada(
     root = tree.getroot()
 
     # Reemplazar placeholders
-    _replace_text_in_svg(root, "NOMBRE DEL SUPLEMENTO", suplemento.nombre)
+    nombre_upper = suplemento.nombre.upper()
+    palabras = nombre_upper.split()
+    if len(palabras) == 1:
+        _replace_text_in_svg(root, "NOMBRE DEL", palabras[0])
+        _replace_text_in_svg(root, "SUPLEMENTO", "")
+    elif len(palabras) == 2:
+        _replace_text_in_svg(root, "NOMBRE DEL", palabras[0])
+        _replace_text_in_svg(root, "SUPLEMENTO", palabras[1])
+    else:
+        _replace_text_in_svg(root, "NOMBRE DEL", " ".join(palabras[:-1]))
+        _replace_text_in_svg(root, "SUPLEMENTO", palabras[-1])
+
     _replace_text_in_svg(root, "DESCRIPCIÓN", suplemento.descripcion)
 
     # Reemplazar beneficios (líneas 1-2)
-    _replace_text_in_svg(root, "Beneficio principal o idea de campaña para la pieza.", suplemento.beneficio_1)
+    beneficio_1 = brief if brief else suplemento.beneficio_1
+    _replace_text_in_svg(root, "Beneficio principal o idea de campaña para la pieza.", beneficio_1)
     if suplemento.beneficio_2:
         _replace_text_in_svg(root, "Texto breve y claro para acompañar el producto.", suplemento.beneficio_2)
 
     # Reemplazar info nutricional
-    info_text = "\n".join(suplemento.info_nutricional[:3])
     _replace_text_in_svg(root, "• Ingredientes o perfil principal del suplemento.", suplemento.info_nutricional[0] if suplemento.info_nutricional else "")
     if len(suplemento.info_nutricional) > 1:
         _replace_text_in_svg(root, "• Indicaciones de uso y contexto de consumo.", suplemento.info_nutricional[1])

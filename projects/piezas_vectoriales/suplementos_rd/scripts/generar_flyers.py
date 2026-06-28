@@ -11,7 +11,7 @@ Salidas:
   04_preview/preview_flyers.html
   05_exports/*.zip
 
-Formato: 2800 x 2000 px, equivalente proporcional a 14 x 10 cm.
+Formato: 2000 x 2800 px, equivalente proporcional a 10 x 14 cm (Vertical).
 """
 from __future__ import annotations
 
@@ -25,6 +25,9 @@ from matplotlib.font_manager import FontProperties
 from matplotlib.path import Path as MplPath
 from matplotlib.textpath import TextPath
 
+from functools import lru_cache
+
+
 ROOT = Path(__file__).resolve().parents[1]
 DATA_PATH = ROOT / "01_contenido" / "contenido_suplementos_rd.json"
 EDIT_DIR = ROOT / "02_editables_svg"
@@ -32,7 +35,7 @@ VEC_DIR = ROOT / "03_final_vectorizado_svg"
 PREVIEW_DIR = ROOT / "04_preview"
 EXPORT_DIR = ROOT / "05_exports"
 
-W, H = 2800, 2000
+W, H = 2000, 2800
 FONT_REG = "arial.ttf"
 FONT_BOLD = "arialbd.ttf"
 FONT_FAMILY = "DejaVu Sans, Arial, Helvetica, sans-serif"
@@ -50,15 +53,27 @@ def ensure_dirs():
         d.mkdir(parents=True, exist_ok=True)
 
 
+@lru_cache(maxsize=10)
 def fp(weight="regular"):
-    return FontProperties(family="Arial", weight="bold" if weight=="bold" else "normal")
+    return FontProperties(family="DejaVu Sans", weight="bold" if weight=="bold" else "normal")
 
 
 def text_width(s: str, size: float, weight="regular") -> float:
     if not s:
-        return 0
-    tp = TextPath((0, 0), s, size=size, prop=fp(weight))
-    return max(0, tp.get_extents().width)
+        return 0.0
+    w = 0.0
+    for char in s:
+        if char.isupper():
+            w += 0.85 * size if char in 'WM' else 0.72 * size
+        elif char.islower():
+            w += 0.77 * size if char in 'wm' else 0.33 * size if char in 'ijl' else 0.57 * size
+        elif char.isdigit():
+            w += 0.55 * size
+        elif char in ' .,;:!?':
+            w += 0.35 * size
+        else:
+            w += 0.55 * size
+    return w
 
 
 def wrap_line(text: str, max_width: float, size: float, weight="regular"):
@@ -129,6 +144,7 @@ def add_edit_text(svg, text, x, y, size=40, fill="#161513", weight="regular", ma
 # -----------------------------
 # Vectorized text helpers
 # -----------------------------
+@lru_cache(maxsize=10000)
 def path_d_for_text(text, x, baseline_y, size, fill, weight="regular"):
     tp = TextPath((0, 0), text, size=size, prop=fp(weight))
     verts = tp.vertices
@@ -194,15 +210,15 @@ def panel(x, y, w, h, colors, dark=False):
 def add_background(svg, colors, accent):
     svg.append('<g id="fondo_editable">')
     svg.append(rect(0, 0, W, H, colors["cream"]))
-    svg.append(circle(390, 240, 380, accent, opacity=".16"))
-    svg.append(circle(2480, 120, 330, colors["blue"], opacity=".08"))
-    svg.append(circle(2730, 1880, 410, "none", opacity=".14", stroke=colors["green"], sw=90))
-    svg.append(circle(-40, 1660, 230, accent, opacity=".10"))
+    svg.append(circle(300, 300, 380, accent, opacity=".16"))
+    svg.append(circle(1700, 200, 330, colors["blue"], opacity=".08"))
+    svg.append(circle(1900, 2650, 410, "none", opacity=".14", stroke=colors["green"], sw=90))
+    svg.append(circle(-40, 2400, 230, accent, opacity=".10"))
     svg.append('</g>')
     svg.append('<g id="marco_y_decoracion_editable">')
-    svg.append(rect(70, 70, 2660, 1860, "none", rx=70, stroke="#CFC2B2", sw=4, opacity=".7"))
-    svg.append(f'<rect x="2380" y="210" width="210" height="92" rx="46" fill="{accent}" stroke="{colors["ink"]}" stroke-width="6" transform="rotate(-14 2485 256)" opacity=".92"/>')
-    svg.append(f'<rect x="2215" y="315" width="158" height="76" rx="38" fill="{colors["yellow"]}" stroke="{colors["ink"]}" stroke-width="5" transform="rotate(18 2294 353)" opacity=".86"/>')
+    svg.append(rect(70, 70, 1860, 2660, "none", rx=70, stroke="#CFC2B2", sw=4, opacity=".7"))
+    svg.append(f'<rect x="1600" y="210" width="210" height="92" rx="46" fill="{accent}" stroke="{colors["ink"]}" stroke-width="6" transform="rotate(-14 1705 256)" opacity=".92"/>')
+    svg.append(f'<rect x="1435" y="315" width="158" height="76" rx="38" fill="{colors["yellow"]}" stroke="{colors["ink"]}" stroke-width="5" transform="rotate(18 1514 353)" opacity=".86"/>')
     svg.append('</g>')
 
 
@@ -225,8 +241,8 @@ def add_title(svg, flyer, colors, accent, mode):
     label = "LÍNEA" if flyer["type"] == "general" else "PRODUCTO"
     add_text(svg, label, 120, 260, size=27, fill=accent, weight="bold")
     ty = 305
-    title_size = 108 if len(flyer["title"]) < 23 else 95
-    for title_line in wrap_line(flyer["title"], 1450, title_size, "bold"):
+    title_size = 85 if len(flyer["title"]) < 23 else 75
+    for title_line in wrap_line(flyer["title"], 1760, title_size, "bold"):
         add_text(svg, title_line, 120, ty, size=title_size, fill=colors["ink"], weight="bold")
         ty += title_size * 1.05
     if flyer.get("subtitle"):
@@ -237,15 +253,15 @@ def add_title(svg, flyer, colors, accent, mode):
 def add_footer(svg, project, colors, mode):
     add_text = add_edit_text if mode == "editable" else add_vec_text
     svg.append('<g id="footer">')
-    svg.append(line(120, 1840, 2680, 1840, colors["line"], sw=5))
-    add_text(svg, project["website"], 120, 1870, size=46, fill=colors["green"], weight="bold")
-    add_text(svg, project["footer"], 1760, 1876, size=22, fill=colors["muted"], weight="bold", max_width=880, line_height=28)
+    svg.append(line(120, 2640, 1880, 2640, colors["line"], sw=5))
+    add_text(svg, project["website"], 120, 2670, size=46, fill=colors["green"], weight="bold")
+    add_text(svg, project["footer"], 1060, 2676, size=22, fill=colors["muted"], weight="bold", max_width=820, line_height=28)
     svg.append('</g>')
 
 
 def make_base(flyer, project, colors, mode):
     accent = colors[flyer["accent"]]
-    svg = svg_open(f"{flyer['id']} / {mode} / 2800x2000 px")
+    svg = svg_open(f"{flyer['id']} / {mode} / 2000x2800 px")
     add_background(svg, colors, accent)
     add_header(svg, flyer, project, colors, accent, mode)
     add_title(svg, flyer, colors, accent, mode)
@@ -262,19 +278,19 @@ def render_general(flyer, project, colors, out_dir, mode):
     add_text = add_edit_text if mode == "editable" else add_vec_text
     svg, accent = make_base(flyer, project, colors, mode)
     svg.append('<g id="cajas_editables">')
-    svg.append(panel(120, 650, 800, 520, colors, dark=True))
-    svg.append(panel(970, 560, 1710, 1180, colors, dark=False))
+    svg.append(panel(120, 600, 1760, 500, colors, dark=True))
+    svg.append(panel(120, 1160, 1760, 1360, colors, dark=False))
     svg.append('</g>')
     svg.append('<g id="contenido_texto">')
-    add_text(svg, "Descripción", 175, 705, size=35, fill=colors["yellow"], weight="bold")
-    y = 779
+    add_text(svg, "Descripción", 175, 645, size=35, fill=colors["yellow"], weight="bold")
+    y = 719
     for para in flyer["description"]:
-        y = add_text(svg, para, 175, y, size=37, fill=colors["white"], weight="regular", max_width=690, line_height=52)
+        y = add_text(svg, para, 175, y, size=37, fill=colors["white"], weight="regular", max_width=1650, line_height=52)
         y += 42
-    add_text(svg, flyer["section_title"], 1030, 620, size=38, fill=accent, weight="bold")
-    y = 700
+    add_text(svg, flyer["section_title"], 175, 1210, size=38, fill=accent, weight="bold")
+    y = 1280
     for item in flyer["items"]:
-        y = add_text(svg, item, 1030, y, size=30, fill=colors["ink"], weight="regular", max_width=1530, line_height=40, bullet=True, indent=34)
+        y = add_text(svg, item, 175, y, size=30, fill=colors["ink"], weight="regular", max_width=1650, line_height=42, bullet=True, indent=34)
         y += 17
     svg.append('</g>')
     suffix = "editable" if mode == "editable" else "vectorizado"
@@ -285,23 +301,23 @@ def render_product(flyer, project, colors, out_dir, mode):
     add_text = add_edit_text if mode == "editable" else add_vec_text
     svg, accent = make_base(flyer, project, colors, mode)
     svg.append('<g id="cajas_editables">')
-    svg.append(panel(120, 660, 1240, 1000, colors, dark=False))
-    svg.append(panel(1440, 660, 1240, 1000, colors, dark=False))
+    svg.append(panel(120, 660, 1760, 880, colors, dark=False))
+    svg.append(panel(120, 1600, 1760, 920, colors, dark=False))
     svg.append('</g>')
     svg.append('<g id="contenido_texto">')
-    add_text(svg, flyer.get("description_title", "Descripción"), 185, 730, size=38, fill=accent, weight="bold")
+    add_text(svg, flyer.get("description_title", "Descripción"), 185, 715, size=38, fill=accent, weight="bold")
     desc_size = 32 if flyer["id"] == "06_creatina_monohidratada" else 37
-    y = 810
+    y = 785
     for para in flyer["description"]:
-        y = add_text(svg, para, 185, y, size=desc_size, fill=colors["ink"], weight="regular", max_width=1110, line_height=desc_size * 1.38)
+        y = add_text(svg, para, 185, y, size=desc_size, fill=colors["ink"], weight="regular", max_width=1630, line_height=desc_size * 1.38)
         y += 32
-    add_text(svg, flyer["section_title"], 1505, 730, size=38, fill=accent, weight="bold")
+    add_text(svg, flyer["section_title"], 185, 1655, size=38, fill=accent, weight="bold")
     item_size = 33 if len(flyer["items"]) <= 3 else 30
     if flyer["id"] == "06_creatina_monohidratada":
         item_size = 30
-    y = 815
+    y = 1725
     for item in flyer["items"]:
-        y = add_text(svg, item, 1505, y, size=item_size, fill=colors["ink"], weight="regular", max_width=1080, line_height=item_size * 1.35, bullet=True, indent=42)
+        y = add_text(svg, item, 185, y, size=item_size, fill=colors["ink"], weight="regular", max_width=1630, line_height=item_size * 1.35, bullet=True, indent=42)
         y += 35
     svg.append('</g>')
     suffix = "editable" if mode == "editable" else "vectorizado"
@@ -312,23 +328,23 @@ def render_protein(flyer, project, colors, out_dir, mode):
     add_text = add_edit_text if mode == "editable" else add_vec_text
     svg, accent = make_base(flyer, project, colors, mode)
     svg.append('<g id="cajas_editables">')
-    svg.append(panel(120, 660, 2560, 300, colors, dark=False))
-    svg.append(panel(120, 1010, 1240, 690, colors, dark=False))
-    svg.append(panel(1440, 1010, 1240, 690, colors, dark=False))
-    svg.append(rect(120, 1740, 2560, 82, colors["green"], rx=34, opacity=".96"))
+    svg.append(panel(120, 660, 1760, 480, colors, dark=False))
+    svg.append(panel(120, 1200, 1760, 580, colors, dark=False))
+    svg.append(panel(120, 1840, 1760, 580, colors, dark=False))
+    svg.append(rect(120, 2480, 1760, 100, colors["green"], rx=34, opacity=".96"))
     svg.append('</g>')
     svg.append('<g id="contenido_texto">')
     add_text(svg, flyer.get("description_title", "Descripción"), 185, 710, size=34, fill=accent, weight="bold")
     y = 770
     for para in flyer["description"]:
-        y = add_text(svg, para, 185, y, size=31, fill=colors["ink"], weight="regular", max_width=2380, line_height=41)
+        y = add_text(svg, para, 185, y, size=31, fill=colors["ink"], weight="regular", max_width=1630, line_height=41)
         y += 20
-    add_text(svg, flyer["versions"][0]["title"], 185, 1070, size=34, fill=accent, weight="bold")
-    add_text(svg, flyer["versions"][0]["body"], 185, 1140, size=29, fill=colors["ink"], weight="regular", max_width=1110, line_height=39)
-    add_text(svg, flyer["versions"][1]["title"], 1505, 1070, size=34, fill=accent, weight="bold")
-    add_text(svg, flyer["versions"][1]["body"], 1505, 1140, size=29, fill=colors["ink"], weight="regular", max_width=1110, line_height=39)
-    add_text(svg, flyer["usage_title"], 170, 1756, size=28, fill=colors["yellow"], weight="bold")
-    add_text(svg, flyer["usage"], 490, 1756, size=24, fill=colors["white"], weight="regular", max_width=2060, line_height=29)
+    add_text(svg, flyer["versions"][0]["title"], 185, 1250, size=34, fill=accent, weight="bold")
+    add_text(svg, flyer["versions"][0]["body"], 185, 1310, size=29, fill=colors["ink"], weight="regular", max_width=1630, line_height=39)
+    add_text(svg, flyer["versions"][1]["title"], 185, 1890, size=34, fill=accent, weight="bold")
+    add_text(svg, flyer["versions"][1]["body"], 185, 1950, size=29, fill=colors["ink"], weight="regular", max_width=1630, line_height=39)
+    add_text(svg, flyer["usage_title"], 170, 2515, size=28, fill=colors["yellow"], weight="bold")
+    add_text(svg, flyer["usage"], 490, 2515, size=24, fill=colors["white"], weight="regular", max_width=1350, line_height=29)
     svg.append('</g>')
     suffix = "editable" if mode == "editable" else "vectorizado"
     finish(svg, project, colors, out_dir / f"{flyer['id']}_{suffix}.svg", mode)
@@ -374,14 +390,14 @@ def write_preview(data):
   main {{ max-width:1280px; margin:28px auto; padding:0 18px; display:grid; grid-template-columns:repeat(auto-fit,minmax(420px,1fr)); gap:28px; }}
   .card {{ background:#fff8ed; border-radius:18px; padding:16px; box-shadow:0 18px 50px rgba(0,0,0,.18); }}
   .card h2 {{ margin:0 0 12px; font-size:20px; }}
-  iframe {{ width:100%; aspect-ratio:1.4/1; border:1px solid #d9cec0; border-radius:12px; background:white; }}
+  iframe {{ width:100%; aspect-ratio:1/1.4; border:1px solid #d9cec0; border-radius:12px; background:white; }}
   .links {{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }}
   a {{ background:#161513; color:white; text-decoration:none; padding:10px 13px; border-radius:999px; font-weight:700; font-size:14px; }}
 </style>
 </head>
 <body>
 <header>
-  <h1>Preview Flyers Suplementos RD · 2800×2000 px</h1>
+  <h1>Preview Flyers Suplementos RD · 2000×2800 px</h1>
   <p>Vista editable. Los archivos finales vectorizados están enlazados en cada tarjeta.</p>
 </header>
 <main>
@@ -395,7 +411,7 @@ def write_preview(data):
 def write_readme(data):
     readme = f"""# Flujo optimizado · Suplementos RD
 
-Formato de trabajo: **2800 × 2000 px**, proporción equivalente a **14 × 10 cm**.
+Formato de trabajo: **2000 × 2800 px**, proporción equivalente a **10 × 14 cm**.
 
 ## Carpetas
 
@@ -438,10 +454,10 @@ def zip_dir(src: Path, zip_name: str):
 
 
 def make_exports():
-    zip_dir(EDIT_DIR, "suplementos_rd_editables_svg_2800x2000.zip")
-    zip_dir(VEC_DIR, "suplementos_rd_vectorizados_svg_2800x2000.zip")
+    zip_dir(EDIT_DIR, "suplementos_rd_editables_svg_2000x2800.zip")
+    zip_dir(VEC_DIR, "suplementos_rd_vectorizados_svg_2000x2800.zip")
     # ZIP completo ordenado
-    full = EXPORT_DIR / "suplementos_rd_flujo_completo_2800x2000.zip"
+    full = EXPORT_DIR / "suplementos_rd_flujo_completo_2000x2800.zip"
     if full.exists():
         full.unlink()
     subprocess.run([

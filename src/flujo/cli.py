@@ -1572,12 +1572,17 @@ def suplementos_contraportada(
         None, "--output", "-o",
         help="Ruta de salida del SVG (default: svg/suplementos_rd/04_contraportadas/generadas/[nombre]_final.svg)"
     ),
+    brief: Optional[str] = typer.Option(
+        None, "--brief", "-b",
+        help="Brief o texto de beneficio personalizado para sobreescribir la pieza"
+    ),
 ):
     """Generar contraportada SVG para un suplemento.
 
     Ejemplo:
       py -m flujo suplementos contraportada "Impulso" --output salida.svg
       py -m flujo suplementos contraportada "Creatina"
+      py -m flujo suplementos contraportada "Impulso" --brief "Energía ultra limpia"
     """
     from .comercial.suplementos_config import get_suplemento
     from .comercial.contraportada_svg import generar_contraportada
@@ -1586,13 +1591,14 @@ def suplementos_contraportada(
         suplemento = get_suplemento(nombre)
     except KeyError as e:
         _err(str(e))
+        return
 
     try:
-        svg_path = generar_contraportada(suplemento, output_path=output)
+        svg_path = generar_contraportada(suplemento, output_path=output, brief=brief)
         _ok(f"Contraportada generada: {svg_path}")
         console.print(f"  Tamaño: 10×14 cm (1181×1654 px @ 300dpi)")
         console.print(f"  Nombre: {suplemento.nombre}")
-        console.print(f"  Beneficio: {suplemento.beneficio_1}")
+        console.print(f"  Beneficio: {brief if brief else suplemento.beneficio_1}")
     except FileNotFoundError as e:
         _err(f"Plantilla base no encontrada: {e}")
     except Exception as e:

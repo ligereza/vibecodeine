@@ -56,7 +56,7 @@ Las carteleras usan la foto descargada de IG. El sistema debe inferir:
 | id | medida | px | medio · herramienta | notas |
 |---|---|---|---|---|
 | `sup_etiqueta_165x65` | 16.5×6.5 cm | 3300×1300 | impresión · SVG+Illustrator | etiqueta (ref. RELIEVE/COMROESS) |
-| `sup_etiqueta_140x100` | 14×10 cm | 2800×2000 | impresión · SVG+Illustrator | etiqueta/flyer |
+| `sup_etiqueta_100x140` | 10×14 cm vert. | 2000×2800 | impresión · SVG+Illustrator | etiqueta/flyer vertical |
 | `sup_flyer_informativo_a5` | 14.8×21 cm | 1748×2480 | impresión · SVG+Illustrator | flyer por suplemento/proteína |
 | `sup_pendon_rectangular` | **paramétrico** (def. 80×200 cm) | — | impresión · **Illustrator** | gran formato; medida en metros por pedido |
 | `sup_bandera_poligonal` | **paramétrico** (def. 60×180 cm) | — | impresión · **Illustrator** | bandera/stand, forma poligonal |

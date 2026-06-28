@@ -7,8 +7,10 @@ y colores de acento. Usado por:
 - Hub (futuro: integración datadrop)
 """
 
+import json
 from dataclasses import dataclass
 from typing import Dict
+from ..paths import repo_root
 
 
 @dataclass
@@ -158,12 +160,53 @@ def get_suplemento(nombre: str) -> Suplemento:
     for key, supl in SUPLEMENTOS.items():
         if key.lower() == nombre.lower():
             return supl
+
+    # Fallback to loading from the spec JSON if available
+    try:
+        spec_path = repo_root() / "svg" / "suplementos_rd" / "04_contraportadas" / "suplementos_rd_illustrator_spec.json"
+        if spec_path.exists():
+            with open(spec_path, encoding="utf-8") as f:
+                spec_data = json.load(f)
+            for board in spec_data.get("artboards", []):
+                board_name = board.get("name", "")
+                title = board.get("title", "")
+                if board_name.lower() == nombre.lower() or title.lower() == nombre.lower():
+                    body = board.get("body", [])
+                    desc = body[0] if len(body) > 0 else "Suplemento Reduciendo Daño"
+                    benefit2 = body[1] if len(body) > 1 else ""
+                    return Suplemento(
+                        nombre=board_name,
+                        descripcion=desc,
+                        beneficio_1=board.get("cta", "Beneficio por definir"),
+                        beneficio_2=benefit2,
+                        info_nutricional=[f"• {line}" for line in body] if body else ["• Perfil de suplemento nutritivo"],
+                        whatsapp_label="Consulta disponibilidad",
+                        contacto_label=board.get("contact", "WhatsApp RD / QR"),
+                        qr_text=board.get("contact", "WhatsApp RD / QR"),
+                        color_acento="#F5C54D",
+                        tags=["comercial"]
+                    )
+    except Exception:
+        pass
+
     raise KeyError(f"Suplemento '{nombre}' no encontrado. Disponibles: {list(SUPLEMENTOS.keys())}")
 
 
 def list_suplementos() -> list[str]:
     """Listar nombres de suplementos disponibles."""
-    return list(SUPLEMENTOS.keys())
+    names = list(SUPLEMENTOS.keys())
+    try:
+        spec_path = repo_root() / "svg" / "suplementos_rd" / "04_contraportadas" / "suplementos_rd_illustrator_spec.json"
+        if spec_path.exists():
+            with open(spec_path, encoding="utf-8") as f:
+                spec_data = json.load(f)
+            for board in spec_data.get("artboards", []):
+                board_name = board.get("name", "")
+                if board_name and board_name not in names:
+                    names.append(board_name)
+    except Exception:
+        pass
+    return names
 
 
 if __name__ == "__main__":

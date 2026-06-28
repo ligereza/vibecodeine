@@ -936,8 +936,17 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => n
                 pass
             if prepare_supplement_job_assets is not None:
                 try:
-                    if "suplement" in (text or "").lower() or "contraportada" in (text or "").lower():
-                        prep = prepare_supplement_job_assets(job_path, request_text=text)
+                    is_suplemento = "suplement" in (text or "").lower() or "contraportada" in (text or "").lower()
+                    if parsed and parsed.get("area") == "suplementos":
+                        is_suplemento = True
+                    
+                    if is_suplemento:
+                        # Extract customized brief if present in parsed or text
+                        custom_brief = None
+                        if parsed:
+                            custom_brief = parsed.get("sections", {}).get("texto") or parsed.get("sections", {}).get("beneficio")
+                        
+                        prep = prepare_supplement_job_assets(job_path, request_text=text, brief=custom_brief)
                         if prep.get("created"):
                             pass
                 except Exception:

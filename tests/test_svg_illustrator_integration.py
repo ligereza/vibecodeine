@@ -56,3 +56,24 @@ def test_prepare_supplement_job_assets_generates_flow_artifacts(tmp_path: Path) 
     assert (job_dir / "flows" / "contraportada.svg").exists()
     assert (job_dir / "flows" / "illustrator_package" / "2026-06-28_test" / "illustrator_artboards.jsx").exists()
     assert result["document_size"] == [1800, 1200]
+
+
+def test_prepare_supplement_job_assets_dynamic_fallback_and_brief(tmp_path: Path) -> None:
+    job_dir = tmp_path / "jobs" / "2026-06-28_test_fallback"
+    job_dir.mkdir(parents=True)
+
+    result = prepare_supplement_job_assets(
+        job_dir,
+        request_text="Pedido de contraportada para Post Fiesta. Brief: Energía ultra recargada para la noche",
+    )
+
+    assert result["created"] is True
+    assert result["supplement"] == "Post Fiesta"
+    
+    # Read generated SVG and verify custom brief and name
+    svg_path = Path(result["svg_path"])
+    assert svg_path.exists()
+    svg_content = svg_path.read_text(encoding="utf-8")
+    assert "POST" in svg_content
+    assert "FIESTA" in svg_content
+    assert "Energía ultra recargada" in svg_content

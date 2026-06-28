@@ -147,30 +147,40 @@ def prepare_supplement_job_assets(
     job_dir: str | Path,
     request_text: str = "",
     document_size: tuple[int, int] | None = None,
+    brief: Optional[str] = None,
 ) -> dict[str, Any]:
     """Crear artefactos flexibles para flyer/suplemento dentro de un job."""
+    import re
+    from typing import Optional
     job_path = Path(job_dir)
     job_path.mkdir(parents=True, exist_ok=True)
 
     flows_dir = job_path / "flows"
     flows_dir.mkdir(parents=True, exist_ok=True)
 
-    from ..comercial.suplementos_config import get_suplemento
+    from ..comercial.suplementos_config import get_suplemento, list_suplementos
     from ..comercial.contraportada_svg import generar_contraportada
     from .illustrator_bridge import write_illustrator_artboards
 
+    # Dynamically find which supplement is requested
     selected_names = []
     if request_text:
         lowered = request_text.lower()
-        for name in ["Impulso", "Creatina", "Pre Fiesta", "Recovery", "Colágeno Fit", "Omega+ Immune", "Sleep Relax"]:
+        for name in list_suplementos():
             if name.lower() in lowered:
                 selected_names.append(name)
     if not selected_names:
         selected_names = ["Impulso"]
 
+    # Extract brief/benefit text from request_text if not explicitly provided
+    if not brief and request_text:
+        match = re.search(r'(?:brief|beneficio|texto|bajada)\s*:\s*([^\n]+)', request_text, re.IGNORECASE)
+        if match:
+            brief = match.group(1).strip()
+
     supplement = get_suplemento(selected_names[0])
     svg_output = flows_dir / "contraportada.svg"
-    generar_contraportada(supplement, output_path=svg_output)
+    generar_contraportada(supplement, output_path=svg_output, brief=brief)
 
     package_dir = flows_dir / "illustrator_package" / job_path.name
     package_dir.mkdir(parents=True, exist_ok=True)
