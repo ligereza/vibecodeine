@@ -299,6 +299,37 @@ export default function PlanoTool() {
     window.addEventListener('mouseup', up);
   }, [elements]);
 
+  const onTouchStart = useCallback((e: React.TouchEvent, id: string) => {
+    e.stopPropagation();
+    const touch = e.touches[0];
+    const svg = svgRef.current;
+    if (!svg) return;
+    selectElementAndBringToFront(id);
+
+    const pt = svg.createSVGPoint();
+    pt.x = touch.clientX; pt.y = touch.clientY;
+    const start = pt.matrixTransform(svg.getScreenCTM()!.inverse());
+    const el = elements.find(x => x.id === id)!;
+    const startX = el.x; const startY = el.y;
+
+    const move = (te: TouchEvent) => {
+      if (te.touches.length === 0) return;
+      const t = te.touches[0];
+      const mpt = svg.createSVGPoint();
+      mpt.x = t.clientX; mpt.y = t.clientY;
+      const mp = mpt.matrixTransform(svg.getScreenCTM()!.inverse());
+      setElements(prev => prev.map(x =>
+        x.id === id ? { ...x, x: Math.round((startX + (mp.x - start.x)) / 20) * 20, y: Math.round((startY + (mp.y - start.y)) / 20) * 20 } : x
+      ));
+    };
+    const end = () => {
+      window.removeEventListener('touchmove', move);
+      window.removeEventListener('touchend', end);
+    };
+    window.addEventListener('touchmove', move, { passive: false });
+    window.addEventListener('touchend', end);
+  }, [elements]);
+
   // ─── Render Symbol (Procedural SVG without Emojis) ───
   const renderSymbol = (el: Element, isPrint = false) => {
     const isSelected = el.id === selectedId;
@@ -318,6 +349,7 @@ export default function PlanoTool() {
         key={el.id}
         transform={`translate(${el.x},${el.y})`}
         onMouseDown={(e) => onMouseDown(e, el.id)}
+        onTouchStart={(e) => onTouchStart(e, el.id)}
         className="cursor-move"
         opacity={el.visible ? 1 : 0.2}
       >
@@ -385,6 +417,32 @@ export default function PlanoTool() {
     };
     window.addEventListener('mousemove', move);
     window.addEventListener('mouseup', up);
+    e.stopPropagation();
+  };
+
+  const onLegendTouchStart = (e: React.TouchEvent) => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const touch = e.touches[0];
+    const pt = svg.createSVGPoint();
+    pt.x = touch.clientX; pt.y = touch.clientY;
+    const start = pt.matrixTransform(svg.getScreenCTM()!.inverse());
+    const lx = legendPos.x; const ly = legendPos.y;
+
+    const move = (te: TouchEvent) => {
+      if (te.touches.length === 0) return;
+      const t = te.touches[0];
+      const mpt = svg.createSVGPoint();
+      mpt.x = t.clientX; mpt.y = t.clientY;
+      const mp = mpt.matrixTransform(svg.getScreenCTM()!.inverse());
+      setLegendPos({ x: lx + (mp.x - start.x), y: ly + (mp.y - start.y) });
+    };
+    const end = () => {
+      window.removeEventListener('touchmove', move);
+      window.removeEventListener('touchend', end);
+    };
+    window.addEventListener('touchmove', move, { passive: false });
+    window.addEventListener('touchend', end);
     e.stopPropagation();
   };
 
@@ -1008,6 +1066,7 @@ export default function PlanoTool() {
                           key={el.id}
                           transform={`translate(${el.x},${el.y})`}
                           onMouseDown={(e) => { e.stopPropagation(); onMouseDown(e, el.id); }}
+                          onTouchStart={(e) => { e.stopPropagation(); onTouchStart(e, el.id); }}
                           onClick={(e) => { e.stopPropagation(); selectElementAndBringToFront(el.id); }}
                           className="cursor-move"
                         >
@@ -1038,6 +1097,7 @@ export default function PlanoTool() {
                       <g
                         transform={`translate(${legendPos.x},${legendPos.y})`}
                         onMouseDown={onLegendMouseDown}
+                        onTouchStart={onLegendTouchStart}
                         className="cursor-grab"
                       >
                         <rect width={600} height={700} rx={30} fill="#18181bcc" stroke="#3f3f46" strokeWidth={5} />

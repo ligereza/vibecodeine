@@ -2,14 +2,14 @@
 <metadata>07_proteina / editable / 2000x2800 px</metadata>
 <g id="fondo_editable">
 <rect x="0" y="0" width="2000" height="2800" rx="0" fill="#F6EFE3"/>
-<circle cx="300" cy="300" r="380" fill="#D95436" opacity=".16"/>
+<circle cx="300" cy="300" r="380" fill="#173F2F" opacity=".16"/>
 <circle cx="1700" cy="200" r="330" fill="#315EE8" opacity=".08"/>
 <circle cx="1900" cy="2650" r="410" fill="none" stroke="#173F2F" stroke-width="90" opacity=".14"/>
-<circle cx="-40" cy="2400" r="230" fill="#D95436" opacity=".10"/>
+<circle cx="-40" cy="2400" r="230" fill="#173F2F" opacity=".10"/>
 </g>
 <g id="marco_y_decoracion_editable">
 <rect x="70" y="70" width="1860" height="2660" rx="70" fill="none" stroke="#CFC2B2" stroke-width="4" opacity=".7"/>
-<rect x="1600" y="210" width="210" height="92" rx="46" fill="#D95436" stroke="#161513" stroke-width="6" transform="rotate(-14 1705 256)" opacity=".92"/>
+<rect x="1600" y="210" width="210" height="92" rx="46" fill="#173F2F" stroke="#161513" stroke-width="6" transform="rotate(-14 1705 256)" opacity=".92"/>
 <rect x="1435" y="315" width="158" height="76" rx="38" fill="#F5C54D" stroke="#161513" stroke-width="5" transform="rotate(18 1514 353)" opacity=".86"/>
 </g>
 <g id="header_marca">
@@ -17,12 +17,12 @@
 <text class="txt" x="136" y="153" fill="#FFFFFF" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="34" font-weight="700">RD</text>
 <text class="txt" x="215" y="161" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="700">Reduciendo Daño</text>
 <rect x="1520" y="116" width="360" height="60" rx="30" fill="#FFFFFF" stroke="#D9CEC0" stroke-width="2" opacity=".7"/>
-<text class="txt" x="1555" y="148" fill="#D95436" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="24" font-weight="700">PROTEÍNA EN POLVO</text>
+<text class="txt" x="1555" y="148" fill="#173F2F" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="24" font-weight="700">PROTEÍNA EN POLVO</text>
 </g>
 <g id="titulo">
-<text class="txt" x="120" y="287" fill="#D95436" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="27" font-weight="700">PRODUCTO</text>
+<text class="txt" x="120" y="287" fill="#173F2F" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="27" font-weight="700">PRODUCTO</text>
 <text class="txt" x="120" y="390" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="85" font-weight="700">Proteína</text>
-<text class="txt" x="120" y="564" fill="#D95436" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="54" font-weight="700">Whey Protein e Iso Protein</text>
+<text class="txt" x="120" y="564" fill="#173F2F" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="54" font-weight="700">Whey Protein e Iso Protein</text>
 </g>
 <g id="cajas_editables">
 <rect x="120" y="660" width="1760" height="480" rx="44" fill="#FFFFFF" stroke="#D9CEC0" stroke-width="3" opacity=".64"/>
@@ -31,17 +31,17 @@
 <rect x="120" y="2480" width="1760" height="100" rx="34" fill="#173F2F" opacity=".96"/>
 </g>
 <g id="contenido_texto">
-<text class="txt" x="185" y="744" fill="#D95436" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="34" font-weight="700">Descripción</text>
+<text class="txt" x="185" y="744" fill="#173F2F" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="34" font-weight="700">Descripción</text>
 <text class="txt" x="185" y="801" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="31" font-weight="400">Suplemento alimenticio en polvo de proteína de suero de leche (whey), diseñado para apoyar la</text>
 <text class="txt" x="185" y="842" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="31" font-weight="400">recuperación muscular y complementar el aporte proteico diario.</text>
 <text class="txt" x="185" y="903" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="31" font-weight="400">Disponible en dos versiones con distintos perfiles de procesamiento, para adaptarse a diferentes</text>
 <text class="txt" x="185" y="944" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="31" font-weight="400">objetivos y tolerancias digestivas.</text>
-<text class="txt" x="185" y="1284" fill="#D95436" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="34" font-weight="700">Whey Protein (concentrado)</text>
+<text class="txt" x="185" y="1284" fill="#173F2F" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="34" font-weight="700">Whey Protein (concentrado)</text>
 <text class="txt" x="185" y="1339" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="29" font-weight="400">Proteína concentrada de suero de leche con un perfil nutricional completo. Aporta proteínas, vitaminas y</text>
 <text class="txt" x="185" y="1378" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="29" font-weight="400">minerales en cada porción, con mayor contenido de grasas y carbohidratos respecto al aislado. Opción</text>
 <text class="txt" x="185" y="1417" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="29" font-weight="400">versátil para quienes buscan apoyar su rutina de entrenamiento o aumentar su ingesta proteica diaria sin</text>
 <text class="txt" x="185" y="1456" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="29" font-weight="400">requerimientos dietéticos específicos.</text>
-<text class="txt" x="185" y="1924" fill="#D95436" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="34" font-weight="700">Iso Protein (aislado)</text>
+<text class="txt" x="185" y="1924" fill="#173F2F" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="34" font-weight="700">Iso Protein (aislado)</text>
 <text class="txt" x="185" y="1979" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="29" font-weight="400">Proteína aislada de suero de leche con mayor porcentaje de proteína por porción y mínimo contenido de</text>
 <text class="txt" x="185" y="2018" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="29" font-weight="400">grasas y lactosa. Proceso de filtración adicional que resulta en una fórmula más depurada, orientada a</text>
 <text class="txt" x="185" y="2057" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="29" font-weight="400">quienes buscan optimizar el aporte proteico o tienen sensibilidad a la lactosa.</text>

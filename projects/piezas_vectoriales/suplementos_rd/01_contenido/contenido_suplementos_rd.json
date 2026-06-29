@@ -57,7 +57,7 @@
       "type": "product",
       "title": "IMPULSO",
       "tag": "Foco sostenido",
-      "accent": "blue",
+      "accent": "yellow",
       "description_title": "Descripción",
       "description": [
         "Suplemento alimenticio en gomitas con Cafeína y L-teanina, la combinación más respaldada para lograr foco sostenido sin el nerviosismo que genera la cafeína por sí sola.",
@@ -95,7 +95,7 @@
       "type": "product",
       "title": "PRE FIESTA",
       "tag": "Antes de la exigencia",
-      "accent": "orange",
+      "accent": "purple",
       "description_title": "Descripción",
       "description": [
         "Pre Fiesta es un suplemento en gomitas formulado para preparar tu cuerpo antes de que llegue la exigencia física, mental y/o social.",
@@ -116,7 +116,7 @@
       "title": "Magnesio",
       "subtitle": "Citrato y Bisglicinato",
       "tag": "Mineral esencial",
-      "accent": "green2",
+      "accent": "blue",
       "description_title": "Descripción",
       "description": [
         "Suplemento alimenticio en gomitas a base de magnesio.",
@@ -133,7 +133,7 @@
       "type": "product",
       "title": "Creatina Monohidratada",
       "tag": "Polvo y gomitas",
-      "accent": "brown",
+      "accent": "red",
       "description_title": "Descripción",
       "description": [
         "Suplemento alimenticio de creatina monohidratada, la molécula más estudiada en suplementación nutricional. Involucrada en la producción de energía celular en tejidos de alta demanda como el músculo esquelético y el sistema nervioso.",
@@ -151,7 +151,7 @@
       "title": "Proteína",
       "subtitle": "Whey Protein e Iso Protein",
       "tag": "Proteína en polvo",
-      "accent": "red",
+      "accent": "green",
       "description_title": "Descripción",
       "description": [
         "Suplemento alimenticio en polvo de proteína de suero de leche (whey), diseñado para apoyar la recuperación muscular y complementar el aporte proteico diario.",
@@ -176,7 +176,7 @@
       "type": "product",
       "title": "POST FIESTA",
       "tag": "Recuperación post",
-      "accent": "yellow",
+      "accent": "orange",
       "description_title": "Descripción",
       "description": [
         "Suplemento alimenticio diseñado para complementar la alimentación en contextos de alta exigencia fisiológica, donde el organismo puede requerir apoyo en su equilibrio y funcionamiento normal.",

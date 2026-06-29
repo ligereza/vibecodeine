@@ -2,14 +2,14 @@
 <metadata>04_pre_fiesta / editable / 2000x2800 px</metadata>
 <g id="fondo_editable">
 <rect x="0" y="0" width="2000" height="2800" rx="0" fill="#F6EFE3"/>
-<circle cx="300" cy="300" r="380" fill="#EF7B2D" opacity=".16"/>
+<circle cx="300" cy="300" r="380" fill="#7650D8" opacity=".16"/>
 <circle cx="1700" cy="200" r="330" fill="#315EE8" opacity=".08"/>
 <circle cx="1900" cy="2650" r="410" fill="none" stroke="#173F2F" stroke-width="90" opacity=".14"/>
-<circle cx="-40" cy="2400" r="230" fill="#EF7B2D" opacity=".10"/>
+<circle cx="-40" cy="2400" r="230" fill="#7650D8" opacity=".10"/>
 </g>
 <g id="marco_y_decoracion_editable">
 <rect x="70" y="70" width="1860" height="2660" rx="70" fill="none" stroke="#CFC2B2" stroke-width="4" opacity=".7"/>
-<rect x="1600" y="210" width="210" height="92" rx="46" fill="#EF7B2D" stroke="#161513" stroke-width="6" transform="rotate(-14 1705 256)" opacity=".92"/>
+<rect x="1600" y="210" width="210" height="92" rx="46" fill="#7650D8" stroke="#161513" stroke-width="6" transform="rotate(-14 1705 256)" opacity=".92"/>
 <rect x="1435" y="315" width="158" height="76" rx="38" fill="#F5C54D" stroke="#161513" stroke-width="5" transform="rotate(18 1514 353)" opacity=".86"/>
 </g>
 <g id="header_marca">
@@ -17,10 +17,10 @@
 <text class="txt" x="136" y="153" fill="#FFFFFF" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="34" font-weight="700">RD</text>
 <text class="txt" x="215" y="161" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="700">Reduciendo Daño</text>
 <rect x="1473.7600000000002" y="116" width="406.2399999999999" height="60" rx="30" fill="#FFFFFF" stroke="#D9CEC0" stroke-width="2" opacity=".7"/>
-<text class="txt" x="1508.7600000000002" y="148" fill="#EF7B2D" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="24" font-weight="700">ANTES DE LA EXIGENCIA</text>
+<text class="txt" x="1508.7600000000002" y="148" fill="#7650D8" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="24" font-weight="700">ANTES DE LA EXIGENCIA</text>
 </g>
 <g id="titulo">
-<text class="txt" x="120" y="287" fill="#EF7B2D" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="27" font-weight="700">PRODUCTO</text>
+<text class="txt" x="120" y="287" fill="#7650D8" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="27" font-weight="700">PRODUCTO</text>
 <text class="txt" x="120" y="390" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="85" font-weight="700">PRE FIESTA</text>
 </g>
 <g id="cajas_editables">
@@ -28,14 +28,14 @@
 <rect x="120" y="1600" width="1760" height="920" rx="44" fill="#FFFFFF" stroke="#D9CEC0" stroke-width="3" opacity=".64"/>
 </g>
 <g id="contenido_texto">
-<text class="txt" x="185" y="753" fill="#EF7B2D" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="38" font-weight="700">Descripción</text>
+<text class="txt" x="185" y="753" fill="#7650D8" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="38" font-weight="700">Descripción</text>
 <text class="txt" x="185" y="822" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="37" font-weight="400">Pre Fiesta es un suplemento en gomitas formulado para preparar tu cuerpo antes de</text>
 <text class="txt" x="185" y="873.06" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="37" font-weight="400">que llegue la exigencia física, mental y/o social.</text>
 <text class="txt" x="185" y="956.1199999999999" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="37" font-weight="400">Con vitaminas C y complejo B, taurina, L-teanina y extracto de rhodiola — activos que</text>
 <text class="txt" x="185" y="1007.1799999999998" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="37" font-weight="400">apoyan el metabolismo energético, la función neuromuscular, la claridad mental y la</text>
 <text class="txt" x="185" y="1058.2399999999998" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="37" font-weight="400">respuesta al estrés.</text>
 <text class="txt" x="185" y="1141.2999999999997" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="37" font-weight="400">Porque cuidarse antes también cuenta.</text>
-<text class="txt" x="185" y="1693" fill="#EF7B2D" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="38" font-weight="700">Nutrientes</text>
+<text class="txt" x="185" y="1693" fill="#7650D8" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="38" font-weight="700">Nutrientes</text>
 <text x="185" y="1755" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="700">•</text>
 <text class="txt" x="227" y="1755" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="400">Vitamina C y complejo B (B1, B6, B12): contribuyen al metabolismo energético normal y al</text>
 <text class="txt" x="227" y="1795.5" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="400">funcionamiento del sistema nervioso.</text>
