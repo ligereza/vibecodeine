@@ -1,4 +1,4 @@
-# HANDOFF v0.46.0 - Post Fiesta Flyer & Elements Resizing & PDF Print Fixes
+# HANDOFF v0.46.0 - Post Fiesta Flyer, elements resizing & PDF Print Fixes
 
 ## Key Changes
 - **Post Fiesta Flyer added:** Incorporated the individual product card for 'Post Fiesta' into the master dataset `contenido_suplementos_rd.json` based on the attached reference document.
