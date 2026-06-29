@@ -5,7 +5,7 @@ Do not use accents, enye, emoji, smart quotes, or special arrows here.
 Daily commands for owner on Windows/Git Bash must use `py`, not `python`.
 
 Date: 2026-06-28
-Current version: 0.45.0
+Current version: 0.46.0
 Main daily entry: `py -m flujo app`
 Desktop entry: `py -m flujo app --desktop`
 Verify on Windows: `py -m flujo verify`
@@ -13,7 +13,7 @@ Airdrop check on Windows: `py scripts/validate_airdrop.py` then `py scripts/run_
 
 ## Current state
 
-The repo is healthy after the v0.40 hub airdrop, v0.41.0 unified React hub, v0.42.1 example ingest templates, and the new v0.44.0 release that integrates Claude's dark layout with restored and repaired 17-item Rider Checklist with procedural Lucide icons (no emojis), persistent checkbox printing, layer reordering (bring to front on select), and checklist Markdown exports.
+The repo is healthy after the v0.40 hub airdrop, v0.41.0 unified React hub, v0.42.1 example ingest templates, and the new v0.46.0 release that integrates Post Fiesta individual content and renders 8 full high-contrast, master-compiled flyers.
 
 Real package CLI:
 - `py -m flujo health`
@@ -26,12 +26,20 @@ Real package CLI:
 
 ## Recent completed work
 
-### v0.45.0 - Resizing, Direct Label, Print Button and RD Logo
+### v0.46.0 - Post Fiesta Flyer & 8-Flyer Master Generation Run
+- Created the individual product details for 'Post Fiesta' in the master content dataset `contenido_suplementos_rd.json`.
+- Executed the flyer generator script `projects/piezas_vectoriales/suplementos_rd/scripts/generar_flyers.py` to produce and synchronize the 8 master-designed flyers inside both `projects/` and `svg/` directories.
+- Bumpped version of the system to 0.46.0 and packaged everything into the final `airdrop_v0.46.0.zip` deliverable.
+
+### v0.45.0 - Resizing, Legend & Details, PDF Fixes & SVG Synchronization
 - Added width and height numeric input fields to the Property Editor in PlanoTool.tsx, allowing the operator to modify element sizes (w, h in px) directly in design mode.
 - Renamed property label to 'Nombre / Texto Interno' to make it clear that editing the name dynamically modifies the internal text rendered in the SVG canvas.
 - Integrated the official high-resolution Logo of Reduciendo Dano Chile (RD) inside the printable PDF headers of both PlanoTool.tsx and QuotePanel.tsx.
 - Added a gorgeous 'Imprimir / PDF' action button next to export buttons in QuotePanel.tsx to trigger native high-fidelity visual PDF generations from browser.
-- Executed the flyer creation script projects/piezas_vectoriales/suplementos_rd/scripts/generar_flyers.py to generate the 7 editable and vectorised SVG supplement flyers and update their previews.
+- Fixed the printable visual clipping of PlanoTool.tsx by lowering the SVG boundaries to a safe, margin-aware 1800 px height and moving place data to safety.
+- Rendered a beautiful, high-contrast, black-and-white Technical Legend directly inside the printed/PDF SVG canvas in PlanoTool.tsx.
+- Added Section 4 (Detalle y Resumen de Elementos del Stand) as a clean high-contrast printable summary list/table below the stand schema in PlanoTool.tsx.
+- Executed the flyer creation script projects/piezas_vectoriales/suplementos_rd/scripts/generar_flyers.py to generate the 7 editable and vectorised SVG supplement flyers, updating both projects/ and svg/ folders.
 - Bumpped version of the system to 0.45.0 and packaged everything into the final airdrop_v0.45.0.zip deliverable.
 
 ### v0.44.0 - Rider requirements restore 17 items + icons + layer ordering + export

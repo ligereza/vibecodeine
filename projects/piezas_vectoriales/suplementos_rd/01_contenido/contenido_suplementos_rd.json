@@ -4,8 +4,14 @@
     "brand": "Reduciendo Daño",
     "website": "@ REDUCIENDODANO.CL",
     "footer": "VISITA NUESTRA WEB Y SÍGUENOS EN NUESTRAS REDES SOCIALES",
-    "canvas_px": { "width": 2000, "height": 2800 },
-    "real_size_cm": { "width": 10, "height": 14 },
+    "canvas_px": {
+      "width": 2000,
+      "height": 2800
+    },
+    "real_size_cm": {
+      "width": 10,
+      "height": 14
+    },
     "notes": "Texto maestro aprobado para generar flyers horizontales 2800x2000 px. Post Fiesta solo está incluido en el resumen general; falta ficha individual."
   },
   "palette": {
@@ -164,6 +170,27 @@
       ],
       "usage_title": "Modo de uso",
       "usage": "Mezclar 1 scoop (33 g) en 200 cc de agua o leche. Ingerir inmediatamente. Puede consumirse antes o después del entrenamiento, o en cualquier momento del día como complemento proteico."
+    },
+    {
+      "id": "08_post_fiesta",
+      "type": "product",
+      "title": "POST FIESTA",
+      "tag": "Recuperación post",
+      "accent": "yellow",
+      "description_title": "Descripción",
+      "description": [
+        "Suplemento alimenticio diseñado para complementar la alimentación en contextos de alta exigencia fisiológica, donde el organismo puede requerir apoyo en su equilibrio y funcionamiento normal.",
+        "Una alternativa práctica dentro de un enfoque de autocuidado, orientado a acompañar al organismo en momentos de mayor demanda."
+      ],
+      "section_title": "Nutrientes",
+      "items": [
+        "Electrolitos (sodio, potasio, magnesio y calcio): reponen minerales esenciales.",
+        "Vitamina C: apoya la función inmune y tiene efecto antioxidante.",
+        "Vitaminas del complejo B (B1, B6, B12): contribuyen al metabolismo energético.",
+        "N-acetilcisteína (NAC): precursor del glutatión para la detoxificación.",
+        "Cardo mariano (silimarina): tradicionalmente asociado a la salud hepática.",
+        "Coenzima Q10: antioxidante clave en la producción de energía celular."
+      ]
     }
   ]
 }

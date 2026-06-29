@@ -1,8 +1,8 @@
 """Versión y changelog de flujo."""
 
-__version__ = "0.45.0"
+__version__ = "0.46.0"
 VERSION = __version__
-__version_info__ = (0, 45, 0)
+__version_info__ = (0, 46, 0)
 
 
 def get_version():
@@ -11,6 +11,15 @@ def get_version():
 
 def get_changelog():
     return {
+        "0.46.0": {
+            "titulo": "Post Fiesta Flyer creation + complete 8-flyer master generation run",
+            "fecha": "2026-06-28",
+            "highlights": [
+                "Agrega la ficha de contenido individual y la generacion de Post Fiesta en el JSON maestro",
+                "Soporta la creacion del 8vo flyer de suplementos con renderizado automatico editable y vectorizado",
+                "Bumpea la version del sistema a 0.46.0 y empaqueta el entregable unificado en airdrop_v0.46.0.zip",
+            ],
+        },
         "0.45.0": {
             "titulo": "Plano element resizing + direct label editing + automated flyer generator run",
             "fecha": "2026-06-28",

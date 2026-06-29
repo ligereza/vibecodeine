@@ -635,12 +635,12 @@ export default function PlanoTool() {
 
         <div className="break-before-page" style={{ height: '20px' }} />
 
-        <section className="h-full flex flex-col">
+        <section className="break-inside-avoid flex flex-col">
           <h2 className="text-lg font-black uppercase tracking-tight mb-2">3. Esquema de Distribución del Stand</h2>
           <div className="border border-black p-4 bg-zinc-50 relative flex justify-center items-center">
-            <svg viewBox="0 0 2970 2100" className="w-full max-w-[650px] aspect-[1.414/1]">
+            <svg viewBox="0 0 2970 2100" className="w-full max-w-[95%] h-auto mx-auto aspect-[1.414/1]">
               <rect width="100%" height="100%" fill="#fafafa" stroke="#ccc" />
-              <rect x={50} y={50} width={2870} height={2000} fill="none" stroke="#666" strokeWidth={5} strokeDasharray="30 20" rx={20} />
+              <rect x={50} y={50} width={2870} height={1800} fill="none" stroke="#666" strokeWidth={5} strokeDasharray="30 20" rx={20} />
               {elements.filter(e => e.visible).map(el => (
                 el.type === 'symbol' ? (
                   renderSymbol(el, true)
@@ -651,11 +651,62 @@ export default function PlanoTool() {
                   </g>
                 )
               ))}
-              <g transform="translate(100, 1950)">
-                <text fontSize={42} fontWeight="bold" fill="#000">{`${eventName.toUpperCase()} · ${eventVenue.toUpperCase()} · ${eventDate}`}</text>
+              
+              {/* High-contrast Technical Legend inside the printable SVG */}
+              <g transform="translate(2250, 950)">
+                <rect width={550} height={750} rx={20} fill="#f4f4f5" stroke="#000" strokeWidth={4} />
+                <text x={275} y={80} textAnchor="middle" fontSize={36} fill="#000" fontWeight="black" fontFamily="monospace" style={{ letterSpacing: '0.05em' }}>
+                  LEYENDA TÉCNICA
+                </text>
+                {[
+                  { k: 'testeo', fill: '#2d5a4a', label: 'Stand de Testeo' },
+                  { k: 'contencion', fill: '#7c3aed', label: 'Zona Contención' },
+                  { k: 'power', fill: '#f59e0b', label: 'Punto Eléctrico' },
+                  { k: 'extinguisher', fill: '#dc2626', label: 'Extintor / Emerg.' },
+                  { k: 'water', fill: '#2563eb', label: 'Agua / Hidratación' }
+                ].map((item, i) => (
+                  <g key={item.k} transform={`translate(40, ${150 + i * 115})`}>
+                    {['power', 'extinguisher', 'water'].includes(item.k) ? (
+                      <rect width={60} height={60} rx={12} fill={item.fill} fillOpacity={0.8} stroke="#000" strokeWidth={2} />
+                    ) : (
+                      <circle cx={30} cy={30} r={30} fill={item.fill} fillOpacity={0.8} stroke="#000" strokeWidth={2} />
+                    )}
+                    <text x={100} y={40} fontSize={32} fill="#000" fontWeight="bold" fontFamily="sans-serif">
+                      {item.label.toUpperCase()}
+                    </text>
+                  </g>
+                ))}
+              </g>
+
+              <g transform="translate(100, 1930)">
+                <text fontSize={38} fontWeight="bold" fill="#000">{`${eventName.toUpperCase()} · ${eventVenue.toUpperCase()} · ${eventDate}`}</text>
               </g>
             </svg>
           </div>
+        </section>
+
+        <section className="mt-8 break-inside-avoid">
+          <h2 className="text-lg font-black uppercase tracking-tight mb-4 border-b-2 border-black pb-1">4. Detalle y Resumen de Elementos del Stand</h2>
+          <table className="w-full border-collapse border border-zinc-400 text-xs">
+            <thead>
+              <tr className="bg-zinc-100">
+                <th className="border border-zinc-400 p-2 text-left">Elemento</th>
+                <th className="border border-zinc-400 p-2 text-left">Tipo de Zona</th>
+                <th className="border border-zinc-400 p-2 text-center">Dimensiones (px)</th>
+                <th className="border border-zinc-400 p-2 text-center">Coordenadas de Montaje (X, Y)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {elements.filter(el => el.visible).map(el => (
+                <tr key={el.id} className="hover:bg-zinc-50">
+                  <td className="border border-zinc-400 p-2 font-bold">{el.label.toUpperCase()}</td>
+                  <td className="border border-zinc-400 p-2">{el.type === 'symbol' ? `SÍMBOLO TÉCNICO (${el.symbolKey?.toUpperCase()})` : 'ÁREA DE MONTAJE'}</td>
+                  <td className="border border-zinc-400 p-2 text-center font-mono">{el.w} × {el.h} px</td>
+                  <td className="border border-zinc-400 p-2 text-center font-mono">X: {el.x}, Y: {el.y}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </section>
       </div>
 
@@ -664,7 +715,7 @@ export default function PlanoTool() {
         <div>
           <h3 className="text-2xl font-bold flex items-center gap-2">
             Rider RD · Herramienta de Plano
-            <span className="text-xs bg-emerald-500/20 text-emerald-400 font-black px-2 py-0.5 rounded-full uppercase tracking-wider">v0.45.0</span>
+            <span className="text-xs bg-emerald-500/20 text-emerald-400 font-black px-2 py-0.5 rounded-full uppercase tracking-wider">v0.46.0</span>
           </h3>
           <p className="text-zinc-400 text-sm mt-1">
             Documento operativo para intervención en terreno — Reduciendo Daño Chile
