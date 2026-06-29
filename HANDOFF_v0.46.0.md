@@ -1,6 +1,7 @@
-# HANDOFF v0.46.0 - Post Fiesta Flyer, elements resizing & PDF Print Fixes
+# HANDOFF v0.46.0 - Post Fiesta Flyer, elements resizing, PDF Print Fixes & Live SVG Visualizer
 
 ## Key Changes
+- **Live SVG API Visualizer (Fixed Mock-discard Bug):** Resolved a critical bug where `SvgVisualizer.tsx` fetched `/api/list-svg-works` but discarded the response, rendering static placeholders instead. It now dynamically maps the actual disk-loaded files, fetches real SVG data from the server, cleans up filenames into beautiful product labels, and displays the **actual live 8 SVG designs** from the repository with full zoom, download, and listing support.
 - **Post Fiesta Flyer added:** Incorporated the individual product card for 'Post Fiesta' into the master dataset `contenido_suplementos_rd.json` based on the attached reference document.
 - **8-Flyer Master Generation Run:** Executed the master python script `projects/piezas_vectoriales/suplementos_rd/scripts/generar_flyers.py` to automatically produce all 8 editable and vectorized SVG flyers (including Post Fiesta) and sync them inside `svg/suplementos_rd/` and `projects/` folders.
 - **Elements Resizing:** Added numeric input fields for Ancho (Width) and Alto (Height) in the Property Editor of the SVG map layout (PlanoTool.tsx), allowing users to scale and resize any element or technical symbol directly on-the-fly.

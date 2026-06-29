@@ -26,9 +26,10 @@ Real package CLI:
 
 ## Recent completed work
 
-### v0.46.0 - Post Fiesta Flyer & 8-Flyer Master Generation Run
+### v0.46.0 - Post Fiesta Flyer, Live Visualizer & 8-Flyer Master Generation Run
 - Created the individual product details for 'Post Fiesta' in the master content dataset `contenido_suplementos_rd.json`.
 - Executed the flyer generator script `projects/piezas_vectoriales/suplementos_rd/scripts/generar_flyers.py` to produce and synchronize the 8 master-designed flyers inside both `projects/` and `svg/` directories.
+- Refactored `SvgVisualizer.tsx` load handler to dynamically parse the API payload of `/api/list-svg-works` and download real SVG code rather than throwing it away and falling back to hardcoded placeholders, enabling the actual live 8 SVG designs to render on the web app.
 - Bumpped version of the system to 0.46.0 and packaged everything into the final `airdrop_v0.46.0.zip` deliverable.
 
 ### v0.45.0 - Resizing, Legend & Details, PDF Fixes & SVG Synchronization

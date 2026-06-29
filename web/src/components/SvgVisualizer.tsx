@@ -1,129 +1,201 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
-  Search, Filter, X, ZoomIn, ZoomOut, Maximize2, Download,
-  ChevronLeft, ChevronRight, Eye, Tag, Ruler, Palette,
-  Clock, CheckCircle2, AlertCircle, FileEdit, Info,
-  Grid3X3, List, SlidersHorizontal
+  Shapes, Search, X, ChevronLeft, ChevronRight,
+  ZoomIn, ZoomOut, Download, LayoutGrid, List, CheckCircle2, Clock, FileEdit,
 } from 'lucide-react';
 import { cn } from '../utils/cn';
-import { MOCK_SVG_INDEX, SvgPiece, PieceType, PieceArea, PieceMedio } from '../data/svgIndex';
 
-// ─── Filter config ───
-const TYPE_OPTIONS: { value: PieceType | 'all'; label: string; emoji: string }[] = [
-  { value: 'all', label: 'Todos', emoji: '📂' },
-  { value: 'etiqueta', label: 'Etiquetas', emoji: '🏷️' },
-  { value: 'flyer', label: 'Flyers', emoji: '📄' },
-  { value: 'pendon', label: 'Pendones', emoji: '🪧' },
-  { value: 'post-ig', label: 'Posts IG', emoji: '📱' },
-  { value: 'sticker', label: 'Stickers', emoji: '🎯' },
-  { value: 'logo', label: 'Logos', emoji: '✦' },
-  { value: 'cartelera', label: 'Carteleras', emoji: '🎪' },
+// ── Types ─────────────────────────────────────────────────────────────
+interface SvgPiece {
+  id: string;
+  name: string;
+  type: string;
+  area: 'suplementos' | 'eventos' | 'general';
+  medio: 'impresion' | 'digital';
+  herramienta: string;
+  product?: string;
+  realSizeCm: string;
+  canvasPx: string;
+  colors: string[];
+  lastModified: string;
+  status: 'aprobado' | 'en-revision' | 'borrador';
+  svgContent?: string;
+  notes?: string;
+  svgUrl?: string;
+}
+
+// ── Mock data ─────────────────────────────────────────────────────────
+const MOCK_SVG_INDEX: SvgPiece[] = [
+  {
+    id: 'omega3_etiqueta',
+    name: 'Etiqueta Omega 3',
+    type: 'etiqueta',
+    area: 'suplementos',
+    medio: 'impresion',
+    herramienta: 'SVG vectorizado',
+    product: 'Omega 3 EPA/DHA',
+    realSizeCm: '16.5 × 6.5 cm',
+    canvasPx: 'SVG',
+    colors: ['#2d5a4a', '#f8f1e3', '#675f55'],
+    lastModified: 'repo local',
+    status: 'aprobado',
+    svgContent: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 130"><rect width="330" height="130" rx="8" fill="#2d5a4a"/><rect x="10" y="10" width="310" height="110" rx="6" fill="none" stroke="#f8f1e3" stroke-width="1" stroke-dasharray="4 2" opacity="0.4"/><text x="165" y="42" text-anchor="middle" font-size="22" font-weight="bold" fill="#f8f1e3" font-family="serif">OMEGA 3</text><text x="165" y="62" text-anchor="middle" font-size="9" fill="#a8c5b8" font-family="sans-serif" letter-spacing="3">EPA · DHA · SUPLEMENTO</text><line x1="40" y1="72" x2="290" y2="72" stroke="#f8f1e3" stroke-width="0.5" opacity="0.3"/><text x="165" y="90" text-anchor="middle" font-size="8" fill="#a8c5b8" font-family="sans-serif">1000 mg · 60 cápsulas blandas</text><text x="165" y="108" text-anchor="middle" font-size="7" fill="#6a9a8a" font-family="sans-serif">Mantener en lugar fresco y seco</text></svg>`,
+  },
+  {
+    id: 'vitamina_c_etiqueta',
+    name: 'Etiqueta Vitamina C',
+    type: 'etiqueta',
+    area: 'suplementos',
+    medio: 'impresion',
+    herramienta: 'SVG editable',
+    product: 'Vitamina C 1000mg',
+    realSizeCm: '16.5 × 6.5 cm',
+    canvasPx: 'SVG',
+    colors: ['#f59e0b', '#fff7ed', '#92400e'],
+    lastModified: 'repo local',
+    status: 'en-revision',
+    svgContent: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 130"><rect width="330" height="130" rx="8" fill="#f59e0b"/><rect x="10" y="10" width="310" height="110" rx="6" fill="#fef3c7" opacity="0.15"/><text x="165" y="42" text-anchor="middle" font-size="22" font-weight="bold" fill="#fff7ed" font-family="serif">VITAMINA C</text><text x="165" y="62" text-anchor="middle" font-size="9" fill="#fde68a" font-family="sans-serif" letter-spacing="3">1000 MG · ASCÓRBICO</text><line x1="40" y1="72" x2="290" y2="72" stroke="#fff7ed" stroke-width="0.5" opacity="0.4"/><text x="165" y="90" text-anchor="middle" font-size="8" fill="#fde68a" font-family="sans-serif">60 comprimidos efervescentes</text><text x="165" y="108" text-anchor="middle" font-size="7" fill="#d97706" font-family="sans-serif">Sabor naranja natural</text></svg>`,
+  },
+  {
+    id: 'flyer_evento_rd',
+    name: 'Flyer Evento NGO RD',
+    type: 'flyer',
+    area: 'eventos',
+    medio: 'impresion',
+    herramienta: 'SVG vectorizado',
+    product: 'Evento Reduciendo Daño',
+    realSizeCm: '10 × 14 cm',
+    canvasPx: 'SVG',
+    colors: ['#18181b', '#10b981', '#6366f1'],
+    lastModified: 'repo local',
+    status: 'aprobado',
+    svgContent: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 280"><rect width="200" height="280" fill="#18181b"/><rect x="0" y="0" width="200" height="4" fill="#10b981"/><rect x="0" y="276" width="200" height="4" fill="#10b981"/><text x="100" y="60" text-anchor="middle" font-size="11" fill="#10b981" font-family="sans-serif" letter-spacing="4">NGO REDUCIENDO DAÑO</text><text x="100" y="110" text-anchor="middle" font-size="28" font-weight="bold" fill="white" font-family="serif">SAFER</text><text x="100" y="138" text-anchor="middle" font-size="28" font-weight="bold" fill="#10b981" font-family="serif">SPACES</text><text x="100" y="165" text-anchor="middle" font-size="8" fill="#71717a" font-family="sans-serif" letter-spacing="2">INTERVENCIÓN EN TERRENO</text><line x1="30" y1="180" x2="170" y2="180" stroke="#3f3f46" stroke-width="0.5"/><text x="100" y="210" text-anchor="middle" font-size="9" fill="#a1a1aa" font-family="sans-serif">Testeo · Contención · Información</text><text x="100" y="250" text-anchor="middle" font-size="8" fill="#52525b" font-family="sans-serif">ngo-rd.cl · @ngo_rd</text></svg>`,
+  },
+  {
+    id: 'post_ig_omega3',
+    name: 'Post IG Omega 3',
+    type: 'post-ig',
+    area: 'suplementos',
+    medio: 'digital',
+    herramienta: 'SVG editable',
+    product: 'Omega 3 EPA/DHA',
+    realSizeCm: '1080 × 1080 px',
+    canvasPx: 'SVG',
+    colors: ['#2d5a4a', '#f8f1e3', '#10b981'],
+    lastModified: 'repo local',
+    status: 'borrador',
+    svgContent: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" fill="#2d5a4a"/><circle cx="100" cy="85" r="50" fill="#10b981" opacity="0.15"/><circle cx="100" cy="85" r="40" fill="none" stroke="#10b981" stroke-width="1" opacity="0.4"/><text x="100" y="78" text-anchor="middle" font-size="14" font-weight="bold" fill="#f8f1e3" font-family="serif">OMEGA 3</text><text x="100" y="96" text-anchor="middle" font-size="8" fill="#a8c5b8" font-family="sans-serif">EPA · DHA</text><text x="100" y="155" text-anchor="middle" font-size="9" fill="#f8f1e3" font-family="sans-serif">Tu salud, nuestra misión.</text><text x="100" y="175" text-anchor="middle" font-size="7" fill="#6a9a8a" font-family="sans-serif">@suplementos_rd</text></svg>`,
+  },
+  {
+    id: 'pendon_suplementos',
+    name: 'Pendón Suplementos',
+    type: 'pendon',
+    area: 'suplementos',
+    medio: 'impresion',
+    herramienta: 'SVG vectorizado',
+    product: 'Línea Suplementos',
+    realSizeCm: '80 × 180 cm',
+    canvasPx: 'SVG',
+    colors: ['#1e3a5f', '#f0f4f8', '#3b82f6'],
+    lastModified: 'repo local',
+    status: 'aprobado',
+    svgContent: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 360"><rect width="160" height="360" rx="4" fill="#1e3a5f"/><rect x="0" y="0" width="160" height="60" fill="#3b82f6" opacity="0.3"/><text x="80" y="28" text-anchor="middle" font-size="10" font-weight="bold" fill="white" font-family="sans-serif">SUPLEMENTOS</text><text x="80" y="48" text-anchor="middle" font-size="7" fill="#93c5fd" font-family="sans-serif" letter-spacing="2">LÍNEA COMPLETA</text><text x="80" y="120" text-anchor="middle" font-size="13" font-weight="bold" fill="white" font-family="serif">Omega 3</text><text x="80" y="155" text-anchor="middle" font-size="13" font-weight="bold" fill="white" font-family="serif">Vitamina C</text><text x="80" y="190" text-anchor="middle" font-size="13" font-weight="bold" fill="white" font-family="serif">Magnesio</text><text x="80" y="225" text-anchor="middle" font-size="13" font-weight="bold" fill="white" font-family="serif">Zinc</text><line x1="20" y1="250" x2="140" y2="250" stroke="#3b82f6" stroke-width="0.5"/><text x="80" y="290" text-anchor="middle" font-size="8" fill="#93c5fd" font-family="sans-serif">Calidad certificada</text><text x="80" y="340" text-anchor="middle" font-size="7" fill="#475569" font-family="sans-serif">suplementos-rd.cl</text></svg>`,
+  },
+  {
+    id: 'logo_rd',
+    name: 'Logo NGO RD',
+    type: 'logo',
+    area: 'general',
+    medio: 'digital',
+    herramienta: 'SVG vectorizado',
+    product: 'Identidad NGO RD',
+    realSizeCm: 'variable',
+    canvasPx: 'SVG',
+    colors: ['#18181b', '#10b981', 'white'],
+    lastModified: 'repo local',
+    status: 'aprobado',
+    svgContent: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" fill="#18181b"/><circle cx="100" cy="90" r="55" fill="none" stroke="#10b981" stroke-width="2"/><circle cx="100" cy="90" r="45" fill="none" stroke="#10b981" stroke-width="0.5" opacity="0.3"/><text x="100" y="83" text-anchor="middle" font-size="18" font-weight="bold" fill="white" font-family="sans-serif">NGO</text><text x="100" y="103" text-anchor="middle" font-size="11" fill="#10b981" font-family="sans-serif" letter-spacing="1">REDUCIENDO</text><text x="100" y="118" text-anchor="middle" font-size="11" fill="#10b981" font-family="sans-serif" letter-spacing="1">DAÑO</text><text x="100" y="170" text-anchor="middle" font-size="7" fill="#52525b" font-family="sans-serif" letter-spacing="2">HARM REDUCTION</text></svg>`,
+  },
 ];
 
-const STATUS_COLORS: Record<string, string> = {
-  'aprobado': 'text-green-400 bg-green-500/10 border-green-500/20',
-  'en-revision': 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20',
-  'borrador': 'text-zinc-400 bg-zinc-500/10 border-zinc-500/20',
+const TYPE_OPTIONS = ['all', 'etiqueta', 'flyer', 'pendon', 'post-ig', 'logo', 'rider', 'cartelera', 'sticker'];
+
+const STATUS_CONFIG = {
+  aprobado: { icon: <CheckCircle2 className="h-3 w-3" />, color: 'border-emerald-500/30 bg-emerald-950/40 text-emerald-400' },
+  'en-revision': { icon: <Clock className="h-3 w-3" />, color: 'border-blue-500/30 bg-blue-950/40 text-blue-400' },
+  borrador: { icon: <FileEdit className="h-3 w-3" />, color: 'border-zinc-600 bg-zinc-800/40 text-zinc-400' },
 };
 
-const STATUS_ICONS: Record<string, React.ReactNode> = {
-  'aprobado': <CheckCircle2 className="w-3 h-3" />,
-  'en-revision': <AlertCircle className="w-3 h-3" />,
-  'borrador': <FileEdit className="w-3 h-3" />,
-};
+// ── API loader ────────────────────────────────────────────────────────
+async function loadFromApi(): Promise<SvgPiece[]> {
+  const res = await fetch('/api/list-svg-works');
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  if (!data || !data.groups) {
+    return MOCK_SVG_INDEX;
+  }
 
+  const list: SvgPiece[] = [];
+  
+  for (const [groupName, items] of Object.entries(data.groups)) {
+    const arr = items as any[];
+    for (const item of arr) {
+      const isEditable = item.kind === 'editable' || item.name.toLowerCase().includes('editable');
+      const isVector = item.kind === 'vectorizado' || item.name.toLowerCase().includes('vectorizado');
+      const area = groupName.toLowerCase().includes('suplementos') ? 'suplementos' : 'eventos';
+      const type = item.name.toLowerCase().includes('etiqueta') ? 'etiqueta' : 'flyer';
+      const tool = isEditable ? 'SVG editable' : 'SVG vectorizado';
+      
+      let svgContent = '';
+      try {
+        const svgRes = await fetch('/' + item.path);
+        if (svgRes.ok) {
+          svgContent = await svgRes.text();
+        }
+      } catch (e) {
+        console.error("Error fetching content for " + item.path, e);
+      }
 
-type ApiSvgItem = { name: string; path: string; kind?: string; group?: string };
-type ApiSvgResponse = { groups?: Record<string, ApiSvgItem[]>; count?: number; error?: string };
+      // Format name nicely
+      const cleanProduct = item.name
+        .replace('_editable', '')
+        .replace('_vectorizado', '')
+        .replace('.svg', '')
+        .replace(/^[0-9]+_/, '')
+        .replace(/_/g, ' ')
+        .toUpperCase();
 
-function safeInlineSvg(text: string): string | undefined {
-  const trimmed = text.trim();
-  if (!trimmed.startsWith('<svg')) return undefined;
-  if (/<script\b/i.test(trimmed) || /on\w+\s*=/i.test(trimmed)) return undefined;
-  return trimmed;
-}
-
-function inferType(text: string): PieceType {
-  const low = text.toLowerCase();
-  if (low.includes('etiqueta')) return 'etiqueta';
-  if (low.includes('flyer')) return 'flyer';
-  if (low.includes('pendon') || low.includes('pendón')) return 'pendon';
-  if (low.includes('post') || low.includes('ig')) return 'post-ig';
-  if (low.includes('sticker')) return 'sticker';
-  if (low.includes('logo')) return 'logo';
-  if (low.includes('rider')) return 'rider';
-  if (low.includes('cartelera')) return 'cartelera';
-  if (low.includes('stand') || low.includes('plano')) return 'stand';
-  return 'flyer';
-}
-
-function inferArea(text: string): PieceArea {
-  const low = text.toLowerCase();
-  if (low.includes('suplement')) return 'suplementos';
-  if (low.includes('evento') || low.includes('rider') || low.includes('cartelera')) return 'eventos';
-  return 'comun';
-}
-
-function inferMedio(type: PieceType): PieceMedio {
-  return type === 'post-ig' || type === 'cartelera' ? 'digital' : 'impresion';
-}
-
-function realSizeFor(type: PieceType): string {
-  const map: Record<PieceType, string> = {
-    etiqueta: 'segun config', flyer: 'segun config', pendon: 'segun config',
-    'post-ig': 'digital', sticker: 'segun config', logo: 'variable',
-    rider: 'A4 / operativo', cartelera: 'digital', stand: 'plano'
-  };
-  return map[type];
-}
-
-async function loadSvgPiecesFromApi(): Promise<SvgPiece[]> {
-  const response = await fetch('/api/list-svg-works');
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  const data = await response.json() as ApiSvgResponse;
-  if (data.error) throw new Error(data.error);
-  const items = Object.entries(data.groups || {}).flatMap(([group, entries]) =>
-    entries.map(item => ({ ...item, group: item.group || group }))
-  );
-  const pieces = await Promise.all(items.map(async (item, index): Promise<SvgPiece> => {
-    const text = `${item.group || ''} ${item.name} ${item.path}`;
-    const type = inferType(text);
-    let svgContent: string | undefined;
-    try {
-      const svgResponse = await fetch('/' + item.path);
-      if (svgResponse.ok) svgContent = safeInlineSvg(await svgResponse.text());
-    } catch {
-      svgContent = undefined;
+      list.push({
+        id: item.name.replace(/\.[^/.]+$/, ""),
+        name: isEditable ? `${cleanProduct} (Editable)` : `${cleanProduct} (Vectorizado)`,
+        type: type,
+        area: area as any,
+        medio: 'impresion',
+        herramienta: tool,
+        product: cleanProduct,
+        realSizeCm: '10 × 14 cm',
+        canvasPx: '2000 × 2800 px',
+        colors: area === 'suplementos' ? ['#173F2F', '#F6EFE3', '#161513'] : ['#09090b', '#3f3f46'],
+        lastModified: 'repositorio local',
+        status: isVector ? 'aprobado' : 'en-revision',
+        svgContent: svgContent || `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#161513"/><text x="50" y="55" text-anchor="middle" fill="#fff" font-size="5" font-family="sans-serif">${item.name}</text></svg>`,
+        svgUrl: '/' + item.path,
+      });
     }
-    return {
-      id: item.path.replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_|_$/g, '') || `svg_${index}`,
-      name: item.name.replace(/\.svg$/i, ''),
-      type,
-      area: inferArea(text),
-      medio: inferMedio(type),
-      herramienta: item.kind === 'vectorizado' ? 'SVG vectorizado' : item.kind === 'editable' ? 'SVG editable' : 'SVG',
-      product: item.group,
-      realSizeCm: realSizeFor(type),
-      canvasPx: 'SVG',
-      colors: ['#2d5a4a', '#f8f1e3', '#675f55'],
-      lastModified: 'repo local',
-      status: item.kind === 'vectorizado' ? 'aprobado' : item.kind === 'editable' ? 'en-revision' : 'borrador',
-      svgContent,
-      notes: item.path,
-    };
-  }));
-  return pieces.length ? pieces : MOCK_SVG_INDEX;
+  }
+
+  return list.length > 0 ? list : MOCK_SVG_INDEX;
 }
 
+// ── Main component ────────────────────────────────────────────────────
 export default function SvgVisualizer() {
   const [search, setSearch] = useState('');
-  const [filterType, setFilterType] = useState<PieceType | 'all'>('all');
-  const [filterArea, setFilterArea] = useState<PieceArea | 'all'>('all');
-  const [filterMedio, setFilterMedio] = useState<PieceMedio | 'all'>('all');
+  const [filterType, setFilterType] = useState('all');
+  const [filterArea, setFilterArea] = useState<'all' | 'suplementos' | 'eventos' | 'general'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'aprobado' | 'en-revision' | 'borrador'>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedPiece, setSelectedPiece] = useState<SvgPiece | null>(null);
   const [modalZoom, setModalZoom] = useState(1);
-  const [showFilters, setShowFilters] = useState(true);
   const [pieces, setPieces] = useState<SvgPiece[]>(MOCK_SVG_INDEX);
   const [sourceStatus, setSourceStatus] = useState('Demo local');
 
@@ -133,36 +205,23 @@ export default function SvgVisualizer() {
       setSourceStatus('Demo local (abre con py -m flujo app para datos reales)');
       return;
     }
-    setSourceStatus('Cargando SVG reales desde /api/list-svg-works...');
-    loadSvgPiecesFromApi()
-      .then(realPieces => {
-        if (!alive) return;
-        setPieces(realPieces);
-        setSourceStatus(realPieces === MOCK_SVG_INDEX ? 'Demo local' : `Repo real: ${realPieces.length} SVG`);
-      })
-      .catch(error => {
-        if (!alive) return;
-        setPieces(MOCK_SVG_INDEX);
-        setSourceStatus(`Fallback demo: ${error instanceof Error ? error.message : String(error)}`);
-      });
+    setSourceStatus('Cargando SVG reales...');
+    loadFromApi()
+      .then(data => alive && (setPieces(data), setSourceStatus(`${data.length} piezas`)))
+      .catch(() => alive && setSourceStatus('Fallback demo activo'));
     return () => { alive = false; };
   }, []);
 
-  // ─── Filtered pieces ───
-  const filteredPieces = useMemo(() => {
-    return pieces.filter(p => {
-      const matchSearch = search === '' ||
-        p.name.toLowerCase().includes(search.toLowerCase()) ||
-        p.product?.toLowerCase().includes(search.toLowerCase()) ||
-        p.type.toLowerCase().includes(search.toLowerCase());
-      const matchType = filterType === 'all' || p.type === filterType;
-      const matchArea = filterArea === 'all' || p.area === filterArea;
-      const matchMedio = filterMedio === 'all' || p.medio === filterMedio;
-      return matchSearch && matchType && matchArea && matchMedio;
-    });
-  }, [pieces, search, filterType, filterArea, filterMedio]);
+  const filtered = useMemo(() => pieces.filter(p => {
+    const q = search.toLowerCase();
+    return (
+      (!q || p.name.toLowerCase().includes(q) || p.product?.toLowerCase().includes(q) || p.type.includes(q)) &&
+      (filterType === 'all' || p.type === filterType) &&
+      (filterArea === 'all' || p.area === filterArea) &&
+      (filterStatus === 'all' || p.status === filterStatus)
+    );
+  }), [pieces, search, filterType, filterArea, filterStatus]);
 
-  // ─── Stats ───
   const stats = useMemo(() => ({
     total: pieces.length,
     aprobado: pieces.filter(p => p.status === 'aprobado').length,
@@ -170,445 +229,385 @@ export default function SvgVisualizer() {
     borrador: pieces.filter(p => p.status === 'borrador').length,
   }), [pieces]);
 
-  // ─── Navigate ───
-  const currentIndex = selectedPiece ? filteredPieces.findIndex(p => p.id === selectedPiece.id) : -1;
-  const goNext = () => {
-    if (currentIndex < filteredPieces.length - 1) setSelectedPiece(filteredPieces[currentIndex + 1]);
-  };
-  const goPrev = () => {
-    if (currentIndex > 0) setSelectedPiece(filteredPieces[currentIndex - 1]);
-  };
+  const currentIndex = selectedPiece ? filtered.findIndex(p => p.id === selectedPiece.id) : -1;
 
-  // ─── Download SVG ───
   const downloadSVG = (piece: SvgPiece) => {
     if (!piece.svgContent) return;
-    const blob = new Blob([piece.svgContent], { type: 'image/svg+xml;charset=utf-8' });
+    const blob = new Blob([piece.svgContent], { type: 'image/svg+xml' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = `${piece.id}.svg`;
-    a.click();
+    a.href = url; a.download = `${piece.id}.svg`; a.click();
     URL.revokeObjectURL(url);
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h3 className="text-2xl font-bold">Visor de Diseños</h3>
-          <p className="text-zinc-400 text-sm mt-1">
+          <h1 className="flex items-center gap-2 text-2xl font-black">
+            <Shapes className="h-6 w-6" /> Visor de Diseños
+          </h1>
+          <p className="mt-1 text-sm text-zinc-500">
             Galería de piezas vectoriales — etiquetas, flyers, pendones, stickers, logos
           </p>
-          <p className="text-[11px] font-mono text-zinc-600 mt-1">{sourceStatus}</p>
+          <p className="text-[10px] text-zinc-600 mt-0.5">{sourceStatus}</p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 text-[10px] font-mono text-zinc-600">
-            <span className="text-green-500">{stats.aprobado} aprobados</span>
-            <span>·</span>
-            <span className="text-yellow-500">{stats.revision} en revisión</span>
-            <span>·</span>
-            <span className="text-zinc-500">{stats.borrador} borradores</span>
-          </div>
+        <div className="flex items-center gap-2 text-xs text-zinc-500">
+          <span className="text-emerald-400 font-bold">{stats.aprobado}</span> aprobados ·
+          <span className="text-blue-400 font-bold">{stats.revision}</span> revisión ·
+          <span className="text-zinc-400 font-bold">{stats.borrador}</span> borradores
         </div>
       </div>
 
-      {/* Search + filters bar */}
-      <div className="flex items-center gap-3">
+      {/* Search + view toggle */}
+      <div className="flex gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-600" />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Buscar por nombre, producto o tipo..."
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-600 transition-all placeholder:text-zinc-600"
+            className="w-full rounded-xl border border-zinc-800 bg-zinc-950 pl-10 pr-4 py-2.5 text-sm outline-none focus:border-zinc-600 transition-colors"
           />
           {search && (
-            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-300">
-              <X className="w-4 h-4" />
+            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300">
+              <X className="h-3.5 w-3.5" />
             </button>
           )}
         </div>
         <button
-          onClick={() => setShowFilters(!showFilters)}
-          className={cn(
-            "flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors border",
-            showFilters
-              ? "bg-zinc-800 border-zinc-700 text-white"
-              : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white"
-          )}
+          onClick={() => setViewMode(v => v === 'grid' ? 'list' : 'grid')}
+          className="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
         >
-          <SlidersHorizontal className="w-4 h-4" />
-          Filtros
+          {viewMode === 'grid' ? <List className="h-4 w-4" /> : <LayoutGrid className="h-4 w-4" />}
         </button>
-        <div className="flex items-center border border-zinc-800 rounded-lg overflow-hidden">
-          <button
-            onClick={() => setViewMode('grid')}
-            className={cn("p-2.5 transition-colors", viewMode === 'grid' ? "bg-zinc-800 text-white" : "text-zinc-600 hover:text-zinc-300")}
-          >
-            <Grid3X3 className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setViewMode('list')}
-            className={cn("p-2.5 transition-colors", viewMode === 'list' ? "bg-zinc-800 text-white" : "text-zinc-600 hover:text-zinc-300")}
-          >
-            <List className="w-4 h-4" />
-          </button>
-        </div>
       </div>
 
       {/* Filter chips */}
-      {showFilters && (
-        <div className="flex flex-wrap items-center gap-4 p-4 bg-zinc-900/50 border border-zinc-800 rounded-xl">
-          {/* Type filter */}
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">Tipo:</span>
-            <div className="flex flex-wrap gap-1">
-              {TYPE_OPTIONS.map(opt => (
-                <button
-                  key={opt.value}
-                  onClick={() => setFilterType(opt.value)}
-                  className={cn(
-                    "px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors",
-                    filterType === opt.value
-                      ? "bg-white text-black"
-                      : "bg-zinc-800/50 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
-                  )}
-                >
-                  <span className="mr-1">{opt.emoji}</span>
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="w-px h-6 bg-zinc-800" />
-          {/* Area filter */}
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">Área:</span>
-            {(['all', 'suplementos', 'eventos'] as const).map(a => (
-              <button
-                key={a}
-                onClick={() => setFilterArea(a)}
-                className={cn(
-                  "px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors capitalize",
-                  filterArea === a
-                    ? "bg-white text-black"
-                    : "bg-zinc-800/50 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
-                )}
-              >
-                {a === 'all' ? 'Todas' : a}
-              </button>
-            ))}
-          </div>
-          <div className="w-px h-6 bg-zinc-800" />
-          {/* Medio filter */}
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">Medio:</span>
-            {(['all', 'impresion', 'digital'] as const).map(m => (
-              <button
-                key={m}
-                onClick={() => setFilterMedio(m)}
-                className={cn(
-                  "px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors capitalize",
-                  filterMedio === m
-                    ? "bg-white text-black"
-                    : "bg-zinc-800/50 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
-                )}
-              >
-                {m === 'all' ? 'Todos' : m === 'impresion' ? 'Impresión' : 'Digital'}
-              </button>
-            ))}
-          </div>
+      <div className="flex flex-wrap gap-4">
+        {/* Type */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-600">Tipo:</span>
+          {TYPE_OPTIONS.map(t => (
+            <button
+              key={t}
+              onClick={() => setFilterType(t)}
+              className={cn(
+                'rounded-full px-2.5 py-0.5 text-[10px] font-bold transition-colors border',
+                filterType === t
+                  ? 'border-zinc-500 bg-zinc-800 text-zinc-200'
+                  : 'border-zinc-800 text-zinc-500 hover:border-zinc-600 hover:text-zinc-300'
+              )}
+            >
+              {t === 'all' ? 'Todos' : t}
+            </button>
+          ))}
         </div>
-      )}
+
+        {/* Area */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-600">Área:</span>
+          {(['all', 'suplementos', 'eventos', 'general'] as const).map(a => (
+            <button
+              key={a}
+              onClick={() => setFilterArea(a)}
+              className={cn(
+                'rounded-full px-2.5 py-0.5 text-[10px] font-bold transition-colors border',
+                filterArea === a
+                  ? 'border-emerald-600 bg-emerald-950/50 text-emerald-300'
+                  : 'border-zinc-800 text-zinc-500 hover:border-zinc-600'
+              )}
+            >
+              {a === 'all' ? 'Todas' : a}
+            </button>
+          ))}
+        </div>
+
+        {/* Status */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-600">Estado:</span>
+          {(['all', 'aprobado', 'en-revision', 'borrador'] as const).map(s => (
+            <button
+              key={s}
+              onClick={() => setFilterStatus(s)}
+              className={cn(
+                'rounded-full px-2.5 py-0.5 text-[10px] font-bold transition-colors border',
+                filterStatus === s
+                  ? 'border-zinc-500 bg-zinc-800 text-zinc-200'
+                  : 'border-zinc-800 text-zinc-500 hover:border-zinc-600'
+              )}
+            >
+              {s === 'all' ? 'Todos' : s}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Results count */}
-      <div className="text-xs text-zinc-500">
-        {filteredPieces.length} {filteredPieces.length === 1 ? 'pieza' : 'piezas'} encontradas
-        {(filterType !== 'all' || filterArea !== 'all' || filterMedio !== 'all' || search) && (
+      <div className="flex items-center justify-between text-xs text-zinc-500">
+        <span>{filtered.length} {filtered.length === 1 ? 'pieza' : 'piezas'} encontradas</span>
+        {(filterType !== 'all' || filterArea !== 'all' || filterStatus !== 'all' || search) && (
           <button
-            onClick={() => { setFilterType('all'); setFilterArea('all'); setFilterMedio('all'); setSearch(''); }}
-            className="ml-2 text-zinc-400 hover:text-white underline"
+            onClick={() => { setSearch(''); setFilterType('all'); setFilterArea('all'); setFilterStatus('all'); }}
+            className="text-zinc-500 hover:text-zinc-200 transition-colors"
           >
             Limpiar filtros
           </button>
         )}
       </div>
 
-      {/* ═══ GRID VIEW ═══ */}
+      {/* Grid view */}
       {viewMode === 'grid' && (
-        <div className="grid grid-cols-4 gap-4">
-          {filteredPieces.map(piece => (
-            <div
-              key={piece.id}
-              onClick={() => { setSelectedPiece(piece); setModalZoom(1); }}
-              className="group bg-zinc-900/50 border border-zinc-800 rounded-xl overflow-hidden hover:border-zinc-600 transition-all cursor-pointer"
-            >
-              {/* Preview */}
-              <div className="aspect-square bg-zinc-950 relative flex items-center justify-center p-4 overflow-hidden">
-                {piece.svgContent ? (
-                  <div
-                    className="w-full h-full flex items-center justify-center [&>svg]:max-w-full [&>svg]:max-h-full [&>svg]:w-auto [&>svg]:h-auto opacity-90 group-hover:opacity-100 transition-opacity"
-                    dangerouslySetInnerHTML={{ __html: piece.svgContent }}
-                  />
-                ) : (
-                  <div className="text-zinc-700 text-4xl">📄</div>
-                )}
-                {/* Status badge */}
-                <div className="absolute top-2 left-2">
-                  <div className={cn("flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase border", STATUS_COLORS[piece.status])}>
-                    {STATUS_ICONS[piece.status]}
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filtered.map(piece => {
+            const status = STATUS_CONFIG[piece.status];
+            return (
+              <div
+                key={piece.id}
+                onClick={() => { setSelectedPiece(piece); setModalZoom(1); }}
+                className="group bg-zinc-900/50 border border-zinc-800 rounded-xl overflow-hidden hover:border-zinc-600 transition-all cursor-pointer"
+              >
+                {/* Preview */}
+                <div className="relative bg-zinc-950 flex items-center justify-center p-4" style={{ minHeight: 140 }}>
+                  {piece.svgContent ? (
+                    <div
+                      className="w-full h-full flex items-center justify-center"
+                      dangerouslySetInnerHTML={{ __html: piece.svgContent }}
+                    />
+                  ) : (
+                    <span className="text-4xl">📄</span>
+                  )}
+                  {/* Status badge */}
+                  <span className={cn('absolute top-2 right-2 flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[9px] font-bold', status.color)}>
+                    {status.icon}
                     {piece.status}
-                  </div>
+                  </span>
                 </div>
-                {/* Quick actions overlay */}
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                  <button className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
-                    <Eye className="w-4 h-4 text-white" />
-                  </button>
-                  <button
-                    onClick={e => { e.stopPropagation(); downloadSVG(piece); }}
-                    className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
-                  >
-                    <Download className="w-4 h-4 text-white" />
-                  </button>
+                {/* Info */}
+                <div className="px-3 py-2 space-y-1">
+                  <p className="text-xs font-bold truncate">{piece.name}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-zinc-500">{piece.type}</span>
+                    <div className="flex gap-1">
+                      {piece.colors.slice(0, 3).map((c, i) => (
+                        <span key={i} className="h-3 w-3 rounded-full border border-zinc-700" style={{ backgroundColor: c }} />
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-zinc-600">{piece.realSizeCm}</p>
                 </div>
               </div>
-              {/* Info */}
-              <div className="p-3">
-                <h4 className="text-xs font-bold truncate mb-1">{piece.name}</h4>
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] text-zinc-500 uppercase tracking-wider">{piece.type}</span>
-                  <div className="flex gap-1">
-                    {piece.colors.slice(0, 3).map((c, i) => (
-                      <div key={i} className="w-2.5 h-2.5 rounded-full border border-zinc-700" style={{ background: c }} />
-                    ))}
-                  </div>
-                </div>
-                <p className="text-[10px] text-zinc-600 mt-1.5 font-mono">{piece.realSizeCm}</p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      {/* ═══ LIST VIEW ═══ */}
+      {/* List view */}
       {viewMode === 'list' && (
-        <div className="bg-zinc-900/30 border border-zinc-800 rounded-xl overflow-hidden">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-zinc-800 bg-zinc-900/50">
-                <th className="px-4 py-3 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Preview</th>
-                <th className="px-4 py-3 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Nombre</th>
-                <th className="px-4 py-3 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Tipo</th>
-                <th className="px-4 py-3 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Área</th>
-                <th className="px-4 py-3 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Medida</th>
-                <th className="px-4 py-3 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Herramienta</th>
-                <th className="px-4 py-3 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Estado</th>
-                <th className="px-4 py-3 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Modificado</th>
-                <th className="px-4 py-3 text-[10px] font-bold text-zinc-500 uppercase tracking-wider text-right">Acción</th>
+        <div className="rounded-2xl border border-zinc-800 overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-zinc-950/80">
+              <tr>
+                {['Preview', 'Nombre', 'Tipo', 'Área', 'Medida', 'Estado', ''].map(h => (
+                  <th key={h} className="px-3 py-2.5 text-left text-[9px] font-bold uppercase tracking-widest text-zinc-600">
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-800/50">
-              {filteredPieces.map(piece => (
-                <tr
-                  key={piece.id}
-                  onClick={() => { setSelectedPiece(piece); setModalZoom(1); }}
-                  className="hover:bg-zinc-800/20 transition-colors cursor-pointer"
-                >
-                  <td className="px-4 py-2">
-                    <div className="w-10 h-10 bg-zinc-950 rounded overflow-hidden flex items-center justify-center p-1">
-                      {piece.svgContent ? (
-                        <div className="w-full h-full [&>svg]:max-w-full [&>svg]:max-h-full [&>svg]:w-auto [&>svg]:h-auto" dangerouslySetInnerHTML={{ __html: piece.svgContent }} />
-                      ) : (
-                        <span className="text-zinc-700 text-xs">📄</span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-4 py-2">
-                    <span className="text-xs font-medium">{piece.name}</span>
-                    {piece.product && <p className="text-[10px] text-zinc-600">{piece.product}</p>}
-                  </td>
-                  <td className="px-4 py-2 text-[10px] text-zinc-400 uppercase">{piece.type}</td>
-                  <td className="px-4 py-2 text-[10px] text-zinc-400 capitalize">{piece.area}</td>
-                  <td className="px-4 py-2 text-[10px] text-zinc-500 font-mono">{piece.realSizeCm}</td>
-                  <td className="px-4 py-2 text-[10px] text-zinc-500">{piece.herramienta}</td>
-                  <td className="px-4 py-2">
-                    <span className={cn("inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase border", STATUS_COLORS[piece.status])}>
-                      {STATUS_ICONS[piece.status]}
-                      {piece.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2 text-[10px] text-zinc-600 font-mono">{piece.lastModified}</td>
-                  <td className="px-4 py-2 text-right">
-                    <button
-                      onClick={e => { e.stopPropagation(); downloadSVG(piece); }}
-                      className="text-[10px] font-bold text-white uppercase hover:underline"
-                    >
-                      SVG ↓
-                    </button>
-                  </td>
-                </tr>
-              ))}
+            <tbody className="divide-y divide-zinc-800/60">
+              {filtered.map(piece => {
+                const status = STATUS_CONFIG[piece.status];
+                return (
+                  <tr
+                    key={piece.id}
+                    onClick={() => { setSelectedPiece(piece); setModalZoom(1); }}
+                    className="hover:bg-zinc-800/20 transition-colors cursor-pointer"
+                  >
+                    <td className="px-3 py-2">
+                      <div className="h-10 w-14 rounded border border-zinc-800 bg-zinc-950 overflow-hidden flex items-center justify-center">
+                        {piece.svgContent ? (
+                          <div className="scale-50 origin-center" dangerouslySetInnerHTML={{ __html: piece.svgContent }} />
+                        ) : <span className="text-lg">📄</span>}
+                      </div>
+                    </td>
+                    <td className="px-3 py-2">
+                      <p className="font-medium">{piece.name}</p>
+                      {piece.product && <p className="text-[10px] text-zinc-500">{piece.product}</p>}
+                    </td>
+                    <td className="px-3 py-2 text-xs text-zinc-400">{piece.type}</td>
+                    <td className="px-3 py-2 text-xs text-zinc-400">{piece.area}</td>
+                    <td className="px-3 py-2 text-xs text-zinc-400">{piece.realSizeCm}</td>
+                    <td className="px-3 py-2">
+                      <span className={cn('flex w-fit items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold', status.color)}>
+                        {status.icon}
+                        {piece.status}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2">
+                      <button
+                        onClick={e => { e.stopPropagation(); downloadSVG(piece); }}
+                        className="text-zinc-600 hover:text-zinc-200 transition-colors"
+                        title="Descargar SVG"
+                      >
+                        <Download className="h-4 w-4" />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       )}
 
-      {/* ═══ DETAIL MODAL ═══ */}
+      {!filtered.length && (
+        <div className="rounded-2xl border border-dashed border-zinc-800 p-10 text-center text-zinc-500">
+          No hay piezas que coincidan.
+        </div>
+      )}
+
+      {/* Detail Modal */}
       {selectedPiece && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm" onClick={() => setSelectedPiece(null)}>
-          <div className="bg-[#0a0a0c] border border-zinc-800 rounded-2xl w-[90vw] max-w-5xl max-h-[90vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+          onClick={() => setSelectedPiece(null)}
+        >
+          <div
+            className="relative w-full max-w-4xl rounded-2xl border border-zinc-700 bg-zinc-900 shadow-2xl overflow-hidden"
+            onClick={e => e.stopPropagation()}
+          >
             {/* Modal header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
-              <div className="flex items-center gap-4">
-                <div>
-                  <h3 className="text-base font-bold">{selectedPiece.name}</h3>
-                  <p className="text-xs text-zinc-500">{selectedPiece.product} · {selectedPiece.type} · {selectedPiece.area}</p>
-                </div>
-                <span className={cn("flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase border", STATUS_COLORS[selectedPiece.status])}>
-                  {STATUS_ICONS[selectedPiece.status]}
-                  {selectedPiece.status}
-                </span>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800">
+              <div>
+                <p className="font-bold">{selectedPiece.name}</p>
+                <p className="text-xs text-zinc-500">
+                  {selectedPiece.product} · {selectedPiece.type} · {selectedPiece.area}
+                </p>
               </div>
               <div className="flex items-center gap-2">
-                <button onClick={() => setModalZoom(z => Math.max(z - 0.25, 0.25))} className="p-2 bg-zinc-900 border border-zinc-800 rounded-md hover:bg-zinc-800 transition-colors">
-                  <ZoomOut className="w-4 h-4 text-zinc-400" />
+                <span className={cn('flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold', STATUS_CONFIG[selectedPiece.status].color)}>
+                  {STATUS_CONFIG[selectedPiece.status].icon}
+                  {selectedPiece.status}
+                </span>
+                <button
+                  onClick={() => setModalZoom(z => Math.max(0.25, z - 0.25))}
+                  className="rounded-lg border border-zinc-700 p-1.5 text-zinc-400 hover:text-zinc-200 transition-colors"
+                >
+                  <ZoomOut className="h-4 w-4" />
                 </button>
-                <span className="text-xs font-mono text-zinc-500 w-12 text-center">{Math.round(modalZoom * 100)}%</span>
-                <button onClick={() => setModalZoom(z => Math.min(z + 0.25, 4))} className="p-2 bg-zinc-900 border border-zinc-800 rounded-md hover:bg-zinc-800 transition-colors">
-                  <ZoomIn className="w-4 h-4 text-zinc-400" />
+                <span className="text-xs text-zinc-500 w-10 text-center">{Math.round(modalZoom * 100)}%</span>
+                <button
+                  onClick={() => setModalZoom(z => Math.min(4, z + 0.25))}
+                  className="rounded-lg border border-zinc-700 p-1.5 text-zinc-400 hover:text-zinc-200 transition-colors"
+                >
+                  <ZoomIn className="h-4 w-4" />
                 </button>
-                <button onClick={() => setModalZoom(1)} className="p-2 bg-zinc-900 border border-zinc-800 rounded-md hover:bg-zinc-800 transition-colors">
-                  <Maximize2 className="w-4 h-4 text-zinc-400" />
-                </button>
-                <div className="w-px h-6 bg-zinc-800 mx-1" />
-                <button onClick={() => downloadSVG(selectedPiece)} className="flex items-center gap-1.5 px-3 py-2 bg-white text-black rounded-md text-xs font-bold hover:bg-zinc-200 transition-colors">
-                  <Download className="w-3.5 h-3.5" />
-                  Descargar SVG
-                </button>
-                <button onClick={() => setSelectedPiece(null)} className="p-2 bg-zinc-900 border border-zinc-800 rounded-md hover:bg-zinc-800 transition-colors">
-                  <X className="w-4 h-4 text-zinc-400" />
+                <button
+                  onClick={() => setSelectedPiece(null)}
+                  className="rounded-lg border border-zinc-700 p-1.5 text-zinc-400 hover:text-red-400 transition-colors"
+                >
+                  <X className="h-4 w-4" />
                 </button>
               </div>
             </div>
 
             {/* Modal body */}
-            <div className="flex flex-1 overflow-hidden">
-              {/* SVG preview area */}
-              <div className="flex-1 relative overflow-auto bg-zinc-950 flex items-center justify-center" style={{ background: 'repeating-conic-gradient(#18181b 0% 25%, #111113 0% 50%) 50% / 20px 20px' }}>
+            <div className="grid md:grid-cols-[1fr_260px]">
+              {/* SVG preview */}
+              <div className="relative bg-zinc-950 flex items-center justify-center overflow-hidden" style={{ minHeight: 320 }}>
                 {/* Nav arrows */}
                 {currentIndex > 0 && (
                   <button
-                    onClick={goPrev}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/60 border border-zinc-700 rounded-full hover:bg-zinc-800 transition-colors"
+                    onClick={() => setSelectedPiece(filtered[currentIndex - 1])}
+                    className="absolute left-3 rounded-full border border-zinc-700 bg-zinc-900/80 p-2 text-zinc-300 hover:text-white transition-colors"
                   >
-                    <ChevronLeft className="w-5 h-5" />
+                    <ChevronLeft className="h-5 w-5" />
                   </button>
                 )}
-                {currentIndex < filteredPieces.length - 1 && (
+                {currentIndex < filtered.length - 1 && (
                   <button
-                    onClick={goNext}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/60 border border-zinc-700 rounded-full hover:bg-zinc-800 transition-colors"
+                    onClick={() => setSelectedPiece(filtered[currentIndex + 1])}
+                    className="absolute right-3 rounded-full border border-zinc-700 bg-zinc-900/80 p-2 text-zinc-300 hover:text-white transition-colors"
                   >
-                    <ChevronRight className="w-5 h-5" />
+                    <ChevronRight className="h-5 w-5" />
                   </button>
                 )}
-                {/* SVG content */}
+
                 {selectedPiece.svgContent && (
                   <div
-                    className="p-12 transition-transform duration-200 [&>svg]:max-w-full [&>svg]:max-h-full"
-                    style={{ transform: `scale(${modalZoom})`, transformOrigin: 'center center' }}
+                    style={{ transform: `scale(${modalZoom})`, transformOrigin: 'center', transition: 'transform 0.2s' }}
+                    className="p-6 max-w-xs w-full"
                     dangerouslySetInnerHTML={{ __html: selectedPiece.svgContent }}
                   />
                 )}
-                {/* Position indicator */}
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1 bg-black/60 rounded-full text-[10px] font-mono text-zinc-500">
-                  {currentIndex + 1} / {filteredPieces.length}
-                </div>
+
+                <span className="absolute bottom-2 right-3 text-[10px] text-zinc-700">
+                  {currentIndex + 1} / {filtered.length}
+                </span>
               </div>
 
-              {/* Right panel: metadata */}
-              <div className="w-72 border-l border-zinc-800 p-5 overflow-y-auto space-y-5">
-                <MetaSection icon={<Tag className="w-3.5 h-3.5" />} label="Tipo">
-                  <span className="text-xs capitalize">{selectedPiece.type}</span>
-                </MetaSection>
+              {/* Metadata panel */}
+              <div className="border-l border-zinc-800 p-4 space-y-3 overflow-y-auto" style={{ maxHeight: 480 }}>
+                {[
+                  { label: 'Tipo', value: selectedPiece.type },
+                  { label: 'Área', value: `${selectedPiece.area} · ${selectedPiece.medio}` },
+                  { label: 'Medida real', value: selectedPiece.realSizeCm },
+                  { label: 'Herramienta', value: selectedPiece.herramienta },
+                  { label: 'Producto', value: selectedPiece.product },
+                  { label: 'Modificado', value: selectedPiece.lastModified },
+                ].map(({ label, value }) => value ? (
+                  <div key={label}>
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-600 mb-0.5">{label}</p>
+                    <p className="text-xs text-zinc-300">{value}</p>
+                  </div>
+                ) : null)}
 
-                <MetaSection icon={<Filter className="w-3.5 h-3.5" />} label="Área">
-                  <span className="text-xs capitalize">{selectedPiece.area}</span>
-                  <span className="text-[10px] text-zinc-600 ml-1">· {selectedPiece.medio === 'impresion' ? 'Impresión' : 'Digital'}</span>
-                </MetaSection>
-
-                <MetaSection icon={<Ruler className="w-3.5 h-3.5" />} label="Medida real">
-                  <span className="text-xs font-mono">{selectedPiece.realSizeCm}</span>
-                </MetaSection>
-
-                <MetaSection icon={<Grid3X3 className="w-3.5 h-3.5" />} label="Canvas (px)">
-                  <span className="text-xs font-mono">{selectedPiece.canvasPx}</span>
-                </MetaSection>
-
-                <MetaSection icon={<Info className="w-3.5 h-3.5" />} label="Herramienta">
-                  <span className="text-xs">{selectedPiece.herramienta}</span>
-                </MetaSection>
-
-                <MetaSection icon={<Palette className="w-3.5 h-3.5" />} label="Colores">
-                  <div className="flex gap-1.5 mt-1">
+                {/* Colors */}
+                <div>
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-600 mb-1">Colores</p>
+                  <div className="flex gap-2 flex-wrap">
                     {selectedPiece.colors.map((c, i) => (
-                      <div key={i} className="group/color relative">
-                        <div className="w-6 h-6 rounded-md border border-zinc-700 cursor-pointer hover:scale-110 transition-transform" style={{ background: c }} />
-                        <div className="absolute -top-6 left-1/2 -translate-x-1/2 hidden group-hover/color:block px-1.5 py-0.5 bg-black border border-zinc-700 rounded text-[9px] font-mono whitespace-nowrap">
-                          {c}
-                        </div>
+                      <div key={i} className="flex items-center gap-1.5">
+                        <span className="h-5 w-5 rounded border border-zinc-700 shrink-0" style={{ backgroundColor: c }} />
+                        <span className="text-[10px] text-zinc-400 font-mono">{c}</span>
                       </div>
                     ))}
                   </div>
-                </MetaSection>
-
-                {selectedPiece.product && (
-                  <MetaSection icon={<Tag className="w-3.5 h-3.5" />} label="Producto">
-                    <span className="text-xs">{selectedPiece.product}</span>
-                  </MetaSection>
-                )}
-
-                <MetaSection icon={<Clock className="w-3.5 h-3.5" />} label="Última modificación">
-                  <span className="text-xs font-mono">{selectedPiece.lastModified}</span>
-                </MetaSection>
+                </div>
 
                 {selectedPiece.notes && (
-                  <div className="p-3 bg-zinc-900/50 border border-zinc-800 rounded-lg">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 block mb-1.5">Notas</span>
-                    <p className="text-[11px] text-zinc-400 leading-relaxed">{selectedPiece.notes}</p>
+                  <div>
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-600 mb-0.5">Notas</p>
+                    <p className="text-[10px] text-zinc-500 break-all">{selectedPiece.notes}</p>
                   </div>
                 )}
 
                 {/* CLI hint */}
-                <div className="p-3 bg-zinc-950 border border-zinc-800 rounded-lg">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 block mb-2">Comando CLI</span>
-                  <code className="text-[10px] font-mono text-zinc-500 leading-relaxed block">
+                <div>
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-600 mb-1">Comando CLI</p>
+                  <code className="block rounded-lg bg-black/40 p-2 text-[9px] text-zinc-500 leading-4">
                     py -m flujo render run<br />
-                    &nbsp;&nbsp;projects/piezas_vectoriales/<br />
-                    &nbsp;&nbsp;{selectedPiece.id}/config.json
+                    projects/piezas_vectoriales/<br />
+                    {selectedPiece.id}/config.json
                   </code>
                 </div>
+
+                {/* Download */}
+                {selectedPiece.svgContent && (
+                  <button
+                    onClick={() => downloadSVG(selectedPiece)}
+                    className="w-full flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs font-bold text-zinc-300 hover:bg-zinc-700 transition-colors"
+                  >
+                    <Download className="h-3.5 w-3.5" /> Descargar SVG
+                  </button>
+                )}
               </div>
             </div>
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-// ─── Sub-components ───
-
-function MetaSection({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <div className="flex items-center gap-1.5 mb-1">
-        <span className="text-zinc-600">{icon}</span>
-        <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">{label}</span>
-      </div>
-      <div className="text-zinc-300 pl-5">{children}</div>
     </div>
   );
 }
