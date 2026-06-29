@@ -282,15 +282,15 @@ def render_general(flyer, project, colors, out_dir, mode):
     svg.append(panel(120, 1160, 1760, 1360, colors, dark=False))
     svg.append('</g>')
     svg.append('<g id="contenido_texto">')
-    add_text(svg, "Descripción", 175, 645, size=35, fill=colors["yellow"], weight="bold")
+    add_text(svg, "Descripción", 175, 645, size=48, fill=colors["yellow"], weight="bold")
     y = 719
     for para in flyer["description"]:
-        y = add_text(svg, para, 175, y, size=37, fill=colors["white"], weight="regular", max_width=1650, line_height=52)
+        y = add_text(svg, para, 175, y, size=52, fill=colors["white"], weight="regular", max_width=1650, line_height=70)
         y += 42
-    add_text(svg, flyer["section_title"], 175, 1210, size=38, fill=accent, weight="bold")
+    add_text(svg, flyer["section_title"], 175, 1210, size=48, fill=accent, weight="bold")
     y = 1280
     for item in flyer["items"]:
-        y = add_text(svg, item, 175, y, size=30, fill=colors["ink"], weight="regular", max_width=1650, line_height=42, bullet=True, indent=34)
+        y = add_text(svg, item, 175, y, size=44, fill=colors["ink"], weight="regular", max_width=1650, line_height=58, bullet=True, indent=48)
         y += 17
     svg.append('</g>')
     suffix = "editable" if mode == "editable" else "vectorizado"
@@ -305,19 +305,19 @@ def render_product(flyer, project, colors, out_dir, mode):
     svg.append(panel(120, 1600, 1760, 920, colors, dark=False))
     svg.append('</g>')
     svg.append('<g id="contenido_texto">')
-    add_text(svg, flyer.get("description_title", "Descripción"), 185, 715, size=38, fill=accent, weight="bold")
-    desc_size = 32 if flyer["id"] == "06_creatina_monohidratada" else 37
+    add_text(svg, flyer.get("description_title", "Descripción"), 185, 715, size=48, fill=accent, weight="bold")
+    desc_size = 46 if flyer["id"] == "06_creatina_monohidratada" else 50
     y = 785
     for para in flyer["description"]:
-        y = add_text(svg, para, 185, y, size=desc_size, fill=colors["ink"], weight="regular", max_width=1630, line_height=desc_size * 1.38)
+        y = add_text(svg, para, 185, y, size=desc_size, fill=colors["ink"], weight="regular", max_width=1630, line_height=desc_size * 1.4)
         y += 32
-    add_text(svg, flyer["section_title"], 185, 1655, size=38, fill=accent, weight="bold")
-    item_size = 33 if len(flyer["items"]) <= 3 else 30
+    add_text(svg, flyer["section_title"], 185, 1655, size=48, fill=accent, weight="bold")
+    item_size = 46 if len(flyer["items"]) <= 3 else 42
     if flyer["id"] == "06_creatina_monohidratada":
-        item_size = 30
+        item_size = 40
     y = 1725
     for item in flyer["items"]:
-        y = add_text(svg, item, 185, y, size=item_size, fill=colors["ink"], weight="regular", max_width=1630, line_height=item_size * 1.35, bullet=True, indent=42)
+        y = add_text(svg, item, 185, y, size=item_size, fill=colors["ink"], weight="regular", max_width=1630, line_height=item_size * 1.4, bullet=True, indent=50)
         y += 35
     svg.append('</g>')
     suffix = "editable" if mode == "editable" else "vectorizado"
@@ -334,17 +334,17 @@ def render_protein(flyer, project, colors, out_dir, mode):
     svg.append(rect(120, 2480, 1760, 100, colors["green"], rx=34, opacity=".96"))
     svg.append('</g>')
     svg.append('<g id="contenido_texto">')
-    add_text(svg, flyer.get("description_title", "Descripción"), 185, 710, size=34, fill=accent, weight="bold")
+    add_text(svg, flyer.get("description_title", "Descripción"), 185, 710, size=45, fill=accent, weight="bold")
     y = 770
     for para in flyer["description"]:
-        y = add_text(svg, para, 185, y, size=31, fill=colors["ink"], weight="regular", max_width=1630, line_height=41)
+        y = add_text(svg, para, 185, y, size=42, fill=colors["ink"], weight="regular", max_width=1630, line_height=56)
         y += 20
-    add_text(svg, flyer["versions"][0]["title"], 185, 1250, size=34, fill=accent, weight="bold")
-    add_text(svg, flyer["versions"][0]["body"], 185, 1310, size=29, fill=colors["ink"], weight="regular", max_width=1630, line_height=39)
-    add_text(svg, flyer["versions"][1]["title"], 185, 1890, size=34, fill=accent, weight="bold")
-    add_text(svg, flyer["versions"][1]["body"], 185, 1950, size=29, fill=colors["ink"], weight="regular", max_width=1630, line_height=39)
-    add_text(svg, flyer["usage_title"], 170, 2515, size=28, fill=colors["yellow"], weight="bold")
-    add_text(svg, flyer["usage"], 490, 2515, size=24, fill=colors["white"], weight="regular", max_width=1350, line_height=29)
+    add_text(svg, flyer["versions"][0]["title"], 185, 1250, size=45, fill=accent, weight="bold")
+    add_text(svg, flyer["versions"][0]["body"], 185, 1310, size=38, fill=colors["ink"], weight="regular", max_width=1630, line_height=50)
+    add_text(svg, flyer["versions"][1]["title"], 185, 1890, size=45, fill=accent, weight="bold")
+    add_text(svg, flyer["versions"][1]["body"], 185, 1950, size=38, fill=colors["ink"], weight="regular", max_width=1630, line_height=50)
+    add_text(svg, flyer["usage_title"], 170, 2515, size=36, fill=colors["yellow"], weight="bold")
+    add_text(svg, flyer["usage"], 490, 2515, size=32, fill=colors["white"], weight="regular", max_width=1350, line_height=38)
     svg.append('</g>')
     suffix = "editable" if mode == "editable" else "vectorizado"
     finish(svg, project, colors, out_dir / f"{flyer['id']}_{suffix}.svg", mode)

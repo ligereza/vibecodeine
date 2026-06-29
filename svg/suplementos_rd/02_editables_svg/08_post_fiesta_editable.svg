@@ -28,25 +28,30 @@
 <rect x="120" y="1600" width="1760" height="920" rx="44" fill="#FFFFFF" stroke="#D9CEC0" stroke-width="3" opacity=".64"/>
 </g>
 <g id="contenido_texto">
-<text class="txt" x="185" y="753" fill="#EF7B2D" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="38" font-weight="700">Descripción</text>
-<text class="txt" x="185" y="822" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="37" font-weight="400">Suplemento alimenticio diseñado para complementar la alimentación en contextos de</text>
-<text class="txt" x="185" y="873.06" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="37" font-weight="400">alta exigencia fisiológica, donde el organismo puede requerir apoyo en su equilibrio y</text>
-<text class="txt" x="185" y="924.1199999999999" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="37" font-weight="400">funcionamiento normal.</text>
-<text class="txt" x="185" y="1007.1799999999998" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="37" font-weight="400">Una alternativa práctica dentro de un enfoque de autocuidado, orientado a acompañar</text>
-<text class="txt" x="185" y="1058.2399999999998" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="37" font-weight="400">al organismo en momentos de mayor demanda.</text>
-<text class="txt" x="185" y="1693" fill="#EF7B2D" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="38" font-weight="700">Nutrientes</text>
-<text x="185" y="1755" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="700">•</text>
-<text class="txt" x="227" y="1755" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="400">Electrolitos (sodio, potasio, magnesio y calcio): reponen minerales esenciales.</text>
-<text x="185" y="1830.5" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="700">•</text>
-<text class="txt" x="227" y="1830.5" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="400">Vitamina C: apoya la función inmune y tiene efecto antioxidante.</text>
-<text x="185" y="1906.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="700">•</text>
-<text class="txt" x="227" y="1906.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="400">Vitaminas del complejo B (B1, B6, B12): contribuyen al metabolismo energético.</text>
-<text x="185" y="1981.5" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="700">•</text>
-<text class="txt" x="227" y="1981.5" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="400">N-acetilcisteína (NAC): precursor del glutatión para la detoxificación.</text>
-<text x="185" y="2057.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="700">•</text>
-<text class="txt" x="227" y="2057.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="400">Cardo mariano (silimarina): tradicionalmente asociado a la salud hepática.</text>
-<text x="185" y="2132.5" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="700">•</text>
-<text class="txt" x="227" y="2132.5" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="400">Coenzima Q10: antioxidante clave en la producción de energía celular.</text>
+<text class="txt" x="185" y="763" fill="#EF7B2D" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="48" font-weight="700">Descripción</text>
+<text class="txt" x="185" y="835" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="50" font-weight="400">Suplemento alimenticio diseñado para complementar la</text>
+<text class="txt" x="185" y="905.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="50" font-weight="400">alimentación en contextos de alta exigencia fisiológica, donde</text>
+<text class="txt" x="185" y="975.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="50" font-weight="400">el organismo puede requerir apoyo en su equilibrio y</text>
+<text class="txt" x="185" y="1045.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="50" font-weight="400">funcionamiento normal.</text>
+<text class="txt" x="185" y="1147.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="50" font-weight="400">Una alternativa práctica dentro de un enfoque de autocuidado,</text>
+<text class="txt" x="185" y="1217.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="50" font-weight="400">orientado a acompañar al organismo en momentos de mayor</text>
+<text class="txt" x="185" y="1287.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="50" font-weight="400">demanda.</text>
+<text class="txt" x="185" y="1703" fill="#EF7B2D" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="48" font-weight="700">Nutrientes</text>
+<text x="185" y="1767" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="700">•</text>
+<text class="txt" x="235" y="1767" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="400">Electrolitos (sodio, potasio, magnesio y calcio): reponen minerales</text>
+<text class="txt" x="235" y="1825.8" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="400">esenciales.</text>
+<text x="185" y="1919.6" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="700">•</text>
+<text class="txt" x="235" y="1919.6" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="400">Vitamina C: apoya la función inmune y tiene efecto antioxidante.</text>
+<text x="185" y="2013.3999999999999" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="700">•</text>
+<text class="txt" x="235" y="2013.3999999999999" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="400">Vitaminas del complejo B (B1, B6, B12): contribuyen al metabolismo</text>
+<text class="txt" x="235" y="2072.2" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="400">energético.</text>
+<text x="185" y="2166.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="700">•</text>
+<text class="txt" x="235" y="2166.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="400">N-acetilcisteína (NAC): precursor del glutatión para la detoxificación.</text>
+<text x="185" y="2259.8" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="700">•</text>
+<text class="txt" x="235" y="2259.8" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="400">Cardo mariano (silimarina): tradicionalmente asociado a la salud</text>
+<text class="txt" x="235" y="2318.6000000000004" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="400">hepática.</text>
+<text x="185" y="2412.4000000000005" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="700">•</text>
+<text class="txt" x="235" y="2412.4000000000005" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="400">Coenzima Q10: antioxidante clave en la producción de energía celular.</text>
 </g>
 <g id="footer">
 <line x1="120" y1="2640" x2="1880" y2="2640" stroke="#D9CEC0" stroke-width="5"/>

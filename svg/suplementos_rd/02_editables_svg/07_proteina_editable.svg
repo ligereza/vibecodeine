@@ -31,23 +31,27 @@
 <rect x="120" y="2480" width="1760" height="100" rx="34" fill="#173F2F" opacity=".96"/>
 </g>
 <g id="contenido_texto">
-<text class="txt" x="185" y="744" fill="#173F2F" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="34" font-weight="700">Descripción</text>
-<text class="txt" x="185" y="801" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="31" font-weight="400">Suplemento alimenticio en polvo de proteína de suero de leche (whey), diseñado para apoyar la</text>
-<text class="txt" x="185" y="842" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="31" font-weight="400">recuperación muscular y complementar el aporte proteico diario.</text>
-<text class="txt" x="185" y="903" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="31" font-weight="400">Disponible en dos versiones con distintos perfiles de procesamiento, para adaptarse a diferentes</text>
-<text class="txt" x="185" y="944" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="31" font-weight="400">objetivos y tolerancias digestivas.</text>
-<text class="txt" x="185" y="1284" fill="#173F2F" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="34" font-weight="700">Whey Protein (concentrado)</text>
-<text class="txt" x="185" y="1339" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="29" font-weight="400">Proteína concentrada de suero de leche con un perfil nutricional completo. Aporta proteínas, vitaminas y</text>
-<text class="txt" x="185" y="1378" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="29" font-weight="400">minerales en cada porción, con mayor contenido de grasas y carbohidratos respecto al aislado. Opción</text>
-<text class="txt" x="185" y="1417" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="29" font-weight="400">versátil para quienes buscan apoyar su rutina de entrenamiento o aumentar su ingesta proteica diaria sin</text>
-<text class="txt" x="185" y="1456" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="29" font-weight="400">requerimientos dietéticos específicos.</text>
-<text class="txt" x="185" y="1924" fill="#173F2F" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="34" font-weight="700">Iso Protein (aislado)</text>
-<text class="txt" x="185" y="1979" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="29" font-weight="400">Proteína aislada de suero de leche con mayor porcentaje de proteína por porción y mínimo contenido de</text>
-<text class="txt" x="185" y="2018" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="29" font-weight="400">grasas y lactosa. Proceso de filtración adicional que resulta en una fórmula más depurada, orientada a</text>
-<text class="txt" x="185" y="2057" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="29" font-weight="400">quienes buscan optimizar el aporte proteico o tienen sensibilidad a la lactosa.</text>
-<text class="txt" x="170" y="2543" fill="#F5C54D" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="28" font-weight="700">Modo de uso</text>
-<text class="txt" x="490" y="2539" fill="#FFFFFF" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="24" font-weight="400">Mezclar 1 scoop (33 g) en 200 cc de agua o leche. Ingerir inmediatamente. Puede consumirse antes o después</text>
-<text class="txt" x="490" y="2568" fill="#FFFFFF" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="24" font-weight="400">del entrenamiento, o en cualquier momento del día como complemento proteico.</text>
+<text class="txt" x="185" y="755" fill="#173F2F" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="45" font-weight="700">Descripción</text>
+<text class="txt" x="185" y="812" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="400">Suplemento alimenticio en polvo de proteína de suero de leche (whey),</text>
+<text class="txt" x="185" y="868" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="400">diseñado para apoyar la recuperación muscular y complementar el aporte</text>
+<text class="txt" x="185" y="924" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="400">proteico diario.</text>
+<text class="txt" x="185" y="1000" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="400">Disponible en dos versiones con distintos perfiles de procesamiento, para</text>
+<text class="txt" x="185" y="1056" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="400">adaptarse a diferentes objetivos y tolerancias digestivas.</text>
+<text class="txt" x="185" y="1295" fill="#173F2F" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="45" font-weight="700">Whey Protein (concentrado)</text>
+<text class="txt" x="185" y="1348" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="38" font-weight="400">Proteína concentrada de suero de leche con un perfil nutricional completo. Aporta</text>
+<text class="txt" x="185" y="1398" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="38" font-weight="400">proteínas, vitaminas y minerales en cada porción, con mayor contenido de grasas y</text>
+<text class="txt" x="185" y="1448" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="38" font-weight="400">carbohidratos respecto al aislado. Opción versátil para quienes buscan apoyar su</text>
+<text class="txt" x="185" y="1498" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="38" font-weight="400">rutina de entrenamiento o aumentar su ingesta proteica diaria sin requerimientos</text>
+<text class="txt" x="185" y="1548" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="38" font-weight="400">dietéticos específicos.</text>
+<text class="txt" x="185" y="1935" fill="#173F2F" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="45" font-weight="700">Iso Protein (aislado)</text>
+<text class="txt" x="185" y="1988" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="38" font-weight="400">Proteína aislada de suero de leche con mayor porcentaje de proteína por porción y</text>
+<text class="txt" x="185" y="2038" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="38" font-weight="400">mínimo contenido de grasas y lactosa. Proceso de filtración adicional que resulta</text>
+<text class="txt" x="185" y="2088" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="38" font-weight="400">en una fórmula más depurada, orientada a quienes buscan optimizar el aporte</text>
+<text class="txt" x="185" y="2138" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="38" font-weight="400">proteico o tienen sensibilidad a la lactosa.</text>
+<text class="txt" x="170" y="2551" fill="#F5C54D" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="36" font-weight="700">Modo de uso</text>
+<text class="txt" x="490" y="2547" fill="#FFFFFF" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="32" font-weight="400">Mezclar 1 scoop (33 g) en 200 cc de agua o leche. Ingerir inmediatamente. Puede</text>
+<text class="txt" x="490" y="2585" fill="#FFFFFF" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="32" font-weight="400">consumirse antes o después del entrenamiento, o en cualquier momento del día</text>
+<text class="txt" x="490" y="2623" fill="#FFFFFF" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="32" font-weight="400">como complemento proteico.</text>
 </g>
 <g id="footer">
 <line x1="120" y1="2640" x2="1880" y2="2640" stroke="#D9CEC0" stroke-width="5"/>

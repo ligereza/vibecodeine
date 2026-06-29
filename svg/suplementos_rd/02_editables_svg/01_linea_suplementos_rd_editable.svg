@@ -28,33 +28,40 @@
 <rect x="120" y="1160" width="1760" height="1360" rx="44" fill="#FFFFFF" stroke="#D9CEC0" stroke-width="3" opacity=".64"/>
 </g>
 <g id="contenido_texto">
-<text class="txt" x="175" y="680" fill="#F5C54D" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="35" font-weight="700">Descripción</text>
-<text class="txt" x="175" y="756" fill="#FFFFFF" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="37" font-weight="400">Suplementos alimenticios desarrollados por Reduciendo Daño para acompañar al</text>
-<text class="txt" x="175" y="808" fill="#FFFFFF" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="37" font-weight="400">organismo desde una perspectiva de reducción de daños.</text>
-<text class="txt" x="175" y="902" fill="#FFFFFF" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="37" font-weight="400">Cada producto tiene un perfil diferenciado de nutrientes, pensado para contextos</text>
-<text class="txt" x="175" y="954" fill="#FFFFFF" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="37" font-weight="400">concretos de la vida cotidiana.</text>
-<text class="txt" x="175" y="1248" fill="#173F2F" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="38" font-weight="700">Productos</text>
-<text x="175" y="1310" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="700">•</text>
-<text class="txt" x="209" y="1310" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="400">Pre Fiesta: Apoya el metabolismo energético y la respuesta al estrés antes de situaciones de alta</text>
-<text class="txt" x="209" y="1352" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="400">demanda. Vitaminas, Taurina, L-teanina y Rhodiola.</text>
-<text x="175" y="1411" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="700">•</text>
-<text class="txt" x="209" y="1411" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="400">Post Fiesta: Complementa la recuperación nutricional tras contextos de alta exigencia fisiológica.</text>
-<text class="txt" x="209" y="1453" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="400">Electrolitos, vitaminas, NAC, cardo mariano y CoQ10.</text>
-<text x="175" y="1512" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="700">•</text>
-<text class="txt" x="209" y="1512" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="400">Impulso: Contribuye al estado de alerta y la concentración en actividades que requieren foco sostenido,</text>
-<text class="txt" x="209" y="1554" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="400">sin el nerviosismo que genera la cafeína por sí sola. Cafeína, L-teanina y vitamina B12.</text>
-<text x="175" y="1613" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="700">•</text>
-<text class="txt" x="209" y="1613" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="400">Hongos Adaptógenos: Acompaña procesos de regulación y bienestar en rutinas exigentes. Cordyceps,</text>
-<text class="txt" x="209" y="1655" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="400">melena de león, reishi, L-teanina y vitamina B12.</text>
-<text x="175" y="1714" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="700">•</text>
-<text class="txt" x="209" y="1714" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="400">Citrato y Bisglicinato de Magnesio: Complementa la ingesta diaria de magnesio, mineral esencial para el</text>
-<text class="txt" x="209" y="1756" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="400">sistema nervioso, la función muscular y el metabolismo energético.</text>
-<text x="175" y="1815" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="700">•</text>
-<text class="txt" x="209" y="1815" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="400">Creatina: La molécula más estudiada en suplementación nutricional, involucrada en la producción de</text>
-<text class="txt" x="209" y="1857" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="400">energía celular. Disponible en polvo (1 kg) y en gomitas.</text>
-<text x="175" y="1916" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="700">•</text>
-<text class="txt" x="209" y="1916" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="400">Proteína: Suplemento en polvo de proteína de suero de leche para apoyar la recuperación muscular y el</text>
-<text class="txt" x="209" y="1958" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="400">aporte proteico diario.</text>
+<text class="txt" x="175" y="693" fill="#F5C54D" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="48" font-weight="700">Descripción</text>
+<text class="txt" x="175" y="771" fill="#FFFFFF" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="52" font-weight="400">Suplementos alimenticios desarrollados por Reduciendo Daño</text>
+<text class="txt" x="175" y="841" fill="#FFFFFF" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="52" font-weight="400">para acompañar al organismo desde una perspectiva de</text>
+<text class="txt" x="175" y="911" fill="#FFFFFF" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="52" font-weight="400">reducción de daños.</text>
+<text class="txt" x="175" y="1023" fill="#FFFFFF" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="52" font-weight="400">Cada producto tiene un perfil diferenciado de nutrientes,</text>
+<text class="txt" x="175" y="1093" fill="#FFFFFF" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="52" font-weight="400">pensado para contextos concretos de la vida cotidiana.</text>
+<text class="txt" x="175" y="1258" fill="#173F2F" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="48" font-weight="700">Productos</text>
+<text x="175" y="1324" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="44" font-weight="700">•</text>
+<text class="txt" x="223" y="1324" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="44" font-weight="400">Pre Fiesta: Apoya el metabolismo energético y la respuesta al estrés</text>
+<text class="txt" x="223" y="1382" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="44" font-weight="400">antes de situaciones de alta demanda. Vitaminas, Taurina, L-teanina y</text>
+<text class="txt" x="223" y="1440" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="44" font-weight="400">Rhodiola.</text>
+<text x="175" y="1515" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="44" font-weight="700">•</text>
+<text class="txt" x="223" y="1515" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="44" font-weight="400">Post Fiesta: Complementa la recuperación nutricional tras contextos</text>
+<text class="txt" x="223" y="1573" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="44" font-weight="400">de alta exigencia fisiológica. Electrolitos, vitaminas, NAC, cardo</text>
+<text class="txt" x="223" y="1631" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="44" font-weight="400">mariano y CoQ10.</text>
+<text x="175" y="1706" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="44" font-weight="700">•</text>
+<text class="txt" x="223" y="1706" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="44" font-weight="400">Impulso: Contribuye al estado de alerta y la concentración en</text>
+<text class="txt" x="223" y="1764" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="44" font-weight="400">actividades que requieren foco sostenido, sin el nerviosismo que</text>
+<text class="txt" x="223" y="1822" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="44" font-weight="400">genera la cafeína por sí sola. Cafeína, L-teanina y vitamina B12.</text>
+<text x="175" y="1897" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="44" font-weight="700">•</text>
+<text class="txt" x="223" y="1897" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="44" font-weight="400">Hongos Adaptógenos: Acompaña procesos de regulación y bienestar en</text>
+<text class="txt" x="223" y="1955" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="44" font-weight="400">rutinas exigentes. Cordyceps, melena de león, reishi, L-teanina y</text>
+<text class="txt" x="223" y="2013" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="44" font-weight="400">vitamina B12.</text>
+<text x="175" y="2088" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="44" font-weight="700">•</text>
+<text class="txt" x="223" y="2088" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="44" font-weight="400">Citrato y Bisglicinato de Magnesio: Complementa la ingesta diaria de</text>
+<text class="txt" x="223" y="2146" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="44" font-weight="400">magnesio, mineral esencial para el sistema nervioso, la función</text>
+<text class="txt" x="223" y="2204" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="44" font-weight="400">muscular y el metabolismo energético.</text>
+<text x="175" y="2279" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="44" font-weight="700">•</text>
+<text class="txt" x="223" y="2279" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="44" font-weight="400">Creatina: La molécula más estudiada en suplementación nutricional,</text>
+<text class="txt" x="223" y="2337" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="44" font-weight="400">involucrada en la producción de energía celular. Disponible en polvo (1</text>
+<text class="txt" x="223" y="2395" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="44" font-weight="400">kg) y en gomitas.</text>
+<text x="175" y="2470" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="44" font-weight="700">•</text>
+<text class="txt" x="223" y="2470" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="44" font-weight="400">Proteína: Suplemento en polvo de proteína de suero de leche para</text>
+<text class="txt" x="223" y="2528" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="44" font-weight="400">apoyar la recuperación muscular y el aporte proteico diario.</text>
 </g>
 <g id="footer">
 <line x1="120" y1="2640" x2="1880" y2="2640" stroke="#D9CEC0" stroke-width="5"/>

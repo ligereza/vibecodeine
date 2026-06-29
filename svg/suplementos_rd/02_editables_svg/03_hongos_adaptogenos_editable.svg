@@ -28,22 +28,26 @@
 <rect x="120" y="1600" width="1760" height="920" rx="44" fill="#FFFFFF" stroke="#D9CEC0" stroke-width="3" opacity=".64"/>
 </g>
 <g id="contenido_texto">
-<text class="txt" x="185" y="753" fill="#7650D8" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="38" font-weight="700">Descripción</text>
-<text class="txt" x="185" y="822" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="37" font-weight="400">Suplemento alimenticio en gomitas con tres hongos funcionales — Cordyceps, Melena</text>
-<text class="txt" x="185" y="873.06" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="37" font-weight="400">de León y Reishi — más L-teanina y vitamina B12.</text>
-<text class="txt" x="185" y="956.1199999999999" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="37" font-weight="400">Fórmula diseñada para acompañar procesos de regulación y adaptación al estrés,</text>
-<text class="txt" x="185" y="1007.1799999999998" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="37" font-weight="400">desde un enfoque natural y funcional, para quienes buscan apoyo en rutinas exigentes.</text>
-<text class="txt" x="185" y="1693" fill="#7650D8" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="38" font-weight="700">Nutrientes</text>
-<text x="185" y="1755" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="700">•</text>
-<text class="txt" x="227" y="1755" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="400">Cordyceps: hongo tradicionalmente asociado a energía y vitalidad.</text>
-<text x="185" y="1830.5" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="700">•</text>
-<text class="txt" x="227" y="1830.5" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="400">Melena de León (Hericium erinaceus): relacionado con funciones cognitivas y salud neuronal.</text>
-<text x="185" y="1906.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="700">•</text>
-<text class="txt" x="227" y="1906.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="400">Reishi: utilizado tradicionalmente en contextos de adaptación al estrés.</text>
-<text x="185" y="1981.5" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="700">•</text>
-<text class="txt" x="227" y="1981.5" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="400">L-teanina: aminoácido asociado a estados de relajación sin sedación.</text>
-<text x="185" y="2057.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="700">•</text>
-<text class="txt" x="227" y="2057.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="400">Vitamina B12: contribuye al funcionamiento normal del sistema nervioso y al metabolismo energético.</text>
+<text class="txt" x="185" y="763" fill="#7650D8" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="48" font-weight="700">Descripción</text>
+<text class="txt" x="185" y="835" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="50" font-weight="400">Suplemento alimenticio en gomitas con tres hongos funcionales</text>
+<text class="txt" x="185" y="905.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="50" font-weight="400">— Cordyceps, Melena de León y Reishi — más L-teanina y</text>
+<text class="txt" x="185" y="975.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="50" font-weight="400">vitamina B12.</text>
+<text class="txt" x="185" y="1077.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="50" font-weight="400">Fórmula diseñada para acompañar procesos de regulación y</text>
+<text class="txt" x="185" y="1147.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="50" font-weight="400">adaptación al estrés, desde un enfoque natural y funcional,</text>
+<text class="txt" x="185" y="1217.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="50" font-weight="400">para quienes buscan apoyo en rutinas exigentes.</text>
+<text class="txt" x="185" y="1703" fill="#7650D8" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="48" font-weight="700">Nutrientes</text>
+<text x="185" y="1767" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="700">•</text>
+<text class="txt" x="235" y="1767" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="400">Cordyceps: hongo tradicionalmente asociado a energía y vitalidad.</text>
+<text x="185" y="1860.8" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="700">•</text>
+<text class="txt" x="235" y="1860.8" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="400">Melena de León (Hericium erinaceus): relacionado con funciones</text>
+<text class="txt" x="235" y="1919.6" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="400">cognitivas y salud neuronal.</text>
+<text x="185" y="2013.3999999999999" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="700">•</text>
+<text class="txt" x="235" y="2013.3999999999999" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="400">Reishi: utilizado tradicionalmente en contextos de adaptación al estrés.</text>
+<text x="185" y="2107.2" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="700">•</text>
+<text class="txt" x="235" y="2107.2" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="400">L-teanina: aminoácido asociado a estados de relajación sin sedación.</text>
+<text x="185" y="2201.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="700">•</text>
+<text class="txt" x="235" y="2201.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="400">Vitamina B12: contribuye al funcionamiento normal del sistema nervioso y</text>
+<text class="txt" x="235" y="2259.8" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="400">al metabolismo energético.</text>
 </g>
 <g id="footer">
 <line x1="120" y1="2640" x2="1880" y2="2640" stroke="#D9CEC0" stroke-width="5"/>

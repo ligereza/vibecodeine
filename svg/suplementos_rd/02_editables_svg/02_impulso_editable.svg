@@ -28,21 +28,23 @@
 <rect x="120" y="1600" width="1760" height="920" rx="44" fill="#FFFFFF" stroke="#D9CEC0" stroke-width="3" opacity=".64"/>
 </g>
 <g id="contenido_texto">
-<text class="txt" x="185" y="753" fill="#F5C54D" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="38" font-weight="700">Descripción</text>
-<text class="txt" x="185" y="822" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="37" font-weight="400">Suplemento alimenticio en gomitas con Cafeína y L-teanina, la combinación más</text>
-<text class="txt" x="185" y="873.06" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="37" font-weight="400">respaldada para lograr foco sostenido sin el nerviosismo que genera la cafeína por sí</text>
-<text class="txt" x="185" y="924.1199999999999" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="37" font-weight="400">sola.</text>
-<text class="txt" x="185" y="1007.1799999999998" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="37" font-weight="400">Producto diseñado específicamente para momentos de alta demanda cognitiva, que</text>
-<text class="txt" x="185" y="1058.2399999999998" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="37" font-weight="400">busca ser una alternativa comprobada para afrontar el estudio, trabajo o jornadas</text>
-<text class="txt" x="185" y="1109.2999999999997" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="37" font-weight="400">prolongadas.</text>
-<text class="txt" x="185" y="1693" fill="#F5C54D" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="38" font-weight="700">Nutrientes</text>
-<text x="185" y="1758" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="33" font-weight="700">•</text>
-<text class="txt" x="227" y="1758" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="33" font-weight="400">Cafeína anhidra: contribuye al estado de alerta y a la concentración.</text>
-<text x="185" y="1837.55" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="33" font-weight="700">•</text>
-<text class="txt" x="227" y="1837.55" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="33" font-weight="400">L-teanina: aminoácido asociado a estados de relajación sin sedación.</text>
-<text x="185" y="1917.1" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="33" font-weight="700">•</text>
-<text class="txt" x="227" y="1917.1" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="33" font-weight="400">Vitamina B12: contribuye al funcionamiento normal del sistema nervioso y al metabolismo</text>
-<text class="txt" x="227" y="1961.6499999999999" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="33" font-weight="400">energético.</text>
+<text class="txt" x="185" y="763" fill="#F5C54D" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="48" font-weight="700">Descripción</text>
+<text class="txt" x="185" y="835" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="50" font-weight="400">Suplemento alimenticio en gomitas con Cafeína y L-teanina, la</text>
+<text class="txt" x="185" y="905.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="50" font-weight="400">combinación más respaldada para lograr foco sostenido sin el</text>
+<text class="txt" x="185" y="975.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="50" font-weight="400">nerviosismo que genera la cafeína por sí sola.</text>
+<text class="txt" x="185" y="1077.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="50" font-weight="400">Producto diseñado específicamente para momentos de alta</text>
+<text class="txt" x="185" y="1147.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="50" font-weight="400">demanda cognitiva, que busca ser una alternativa comprobada</text>
+<text class="txt" x="185" y="1217.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="50" font-weight="400">para afrontar el estudio, trabajo o jornadas prolongadas.</text>
+<text class="txt" x="185" y="1703" fill="#F5C54D" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="48" font-weight="700">Nutrientes</text>
+<text x="185" y="1771" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="46" font-weight="700">•</text>
+<text class="txt" x="235" y="1771" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="46" font-weight="400">Cafeína anhidra: contribuye al estado de alerta y a la</text>
+<text class="txt" x="235" y="1835.4" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="46" font-weight="400">concentración.</text>
+<text x="185" y="1934.8000000000002" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="46" font-weight="700">•</text>
+<text class="txt" x="235" y="1934.8000000000002" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="46" font-weight="400">L-teanina: aminoácido asociado a estados de relajación sin</text>
+<text class="txt" x="235" y="1999.2000000000003" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="46" font-weight="400">sedación.</text>
+<text x="185" y="2098.6000000000004" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="46" font-weight="700">•</text>
+<text class="txt" x="235" y="2098.6000000000004" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="46" font-weight="400">Vitamina B12: contribuye al funcionamiento normal del sistema</text>
+<text class="txt" x="235" y="2163.0000000000005" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="46" font-weight="400">nervioso y al metabolismo energético.</text>
 </g>
 <g id="footer">
 <line x1="120" y1="2640" x2="1880" y2="2640" stroke="#D9CEC0" stroke-width="5"/>

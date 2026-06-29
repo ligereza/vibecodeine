@@ -29,17 +29,20 @@
 <rect x="120" y="1600" width="1760" height="920" rx="44" fill="#FFFFFF" stroke="#D9CEC0" stroke-width="3" opacity=".64"/>
 </g>
 <g id="contenido_texto">
-<text class="txt" x="185" y="753" fill="#315EE8" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="38" font-weight="700">Descripción</text>
-<text class="txt" x="185" y="822" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="37" font-weight="400">Suplemento alimenticio en gomitas a base de magnesio.</text>
-<text class="txt" x="185" y="905.06" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="37" font-weight="400">El magnesio es un mineral esencial que participa en más de 300 procesos fisiológicos,</text>
-<text class="txt" x="185" y="956.1199999999999" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="37" font-weight="400">incluyendo la función muscular, el sistema nervioso y el metabolismo energético.</text>
-<text class="txt" x="185" y="1693" fill="#315EE8" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="38" font-weight="700">Formatos disponibles</text>
-<text x="185" y="1758" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="33" font-weight="700">•</text>
-<text class="txt" x="227" y="1758" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="33" font-weight="400">Citrato de magnesio: contribuye al funcionamiento normal del sistema nervioso y la función</text>
-<text class="txt" x="227" y="1802.55" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="33" font-weight="400">muscular. Favorece el sueño y puede apoyar el tránsito intestinal.</text>
-<text x="185" y="1882.1" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="33" font-weight="700">•</text>
-<text class="txt" x="227" y="1882.1" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="33" font-weight="400">Bisglicinato de magnesio: contribuye al funcionamiento normal del sistema nervioso y la</text>
-<text class="txt" x="227" y="1926.6499999999999" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="33" font-weight="400">función muscular. Favorece el sueño y tiene alta tolerancia digestiva.</text>
+<text class="txt" x="185" y="763" fill="#315EE8" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="48" font-weight="700">Descripción</text>
+<text class="txt" x="185" y="835" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="50" font-weight="400">Suplemento alimenticio en gomitas a base de magnesio.</text>
+<text class="txt" x="185" y="937.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="50" font-weight="400">El magnesio es un mineral esencial que participa en más de 300</text>
+<text class="txt" x="185" y="1007.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="50" font-weight="400">procesos fisiológicos, incluyendo la función muscular, el</text>
+<text class="txt" x="185" y="1077.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="50" font-weight="400">sistema nervioso y el metabolismo energético.</text>
+<text class="txt" x="185" y="1703" fill="#315EE8" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="48" font-weight="700">Formatos disponibles</text>
+<text x="185" y="1771" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="46" font-weight="700">•</text>
+<text class="txt" x="235" y="1771" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="46" font-weight="400">Citrato de magnesio: contribuye al funcionamiento normal del</text>
+<text class="txt" x="235" y="1835.4" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="46" font-weight="400">sistema nervioso y la función muscular. Favorece el sueño y puede</text>
+<text class="txt" x="235" y="1899.8000000000002" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="46" font-weight="400">apoyar el tránsito intestinal.</text>
+<text x="185" y="1999.2000000000003" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="46" font-weight="700">•</text>
+<text class="txt" x="235" y="1999.2000000000003" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="46" font-weight="400">Bisglicinato de magnesio: contribuye al funcionamiento normal del</text>
+<text class="txt" x="235" y="2063.6000000000004" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="46" font-weight="400">sistema nervioso y la función muscular. Favorece el sueño y tiene</text>
+<text class="txt" x="235" y="2128.0000000000005" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="46" font-weight="400">alta tolerancia digestiva.</text>
 </g>
 <g id="footer">
 <line x1="120" y1="2640" x2="1880" y2="2640" stroke="#D9CEC0" stroke-width="5"/>

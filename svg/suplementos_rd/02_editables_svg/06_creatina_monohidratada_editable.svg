@@ -28,19 +28,21 @@
 <rect x="120" y="1600" width="1760" height="920" rx="44" fill="#FFFFFF" stroke="#D9CEC0" stroke-width="3" opacity=".64"/>
 </g>
 <g id="contenido_texto">
-<text class="txt" x="185" y="753" fill="#D95436" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="38" font-weight="700">Descripción</text>
-<text class="txt" x="185" y="817" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="32" font-weight="400">Suplemento alimenticio de creatina monohidratada, la molécula más estudiada en suplementación</text>
-<text class="txt" x="185" y="861.16" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="32" font-weight="400">nutricional. Involucrada en la producción de energía celular en tejidos de alta demanda como el</text>
-<text class="txt" x="185" y="905.3199999999999" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="32" font-weight="400">músculo esquelético y el sistema nervioso.</text>
-<text class="txt" x="185" y="981.4799999999999" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="32" font-weight="400">Disponible en dos formatos para adaptarse a cualquier rutina: polvo para quien prefiere dosificar</text>
-<text class="txt" x="185" y="1025.6399999999999" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="32" font-weight="400">con precisión, y gomitas para quien busca practicidad sin preparación.</text>
-<text class="txt" x="185" y="1693" fill="#D95436" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="38" font-weight="700">Formatos disponibles</text>
-<text x="185" y="1755" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="700">•</text>
-<text class="txt" x="227" y="1755" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="400">En polvo — 1 kg: 5 g por porción (1 scoop). Permite ajustar la dosificación según necesidad. Para su</text>
-<text class="txt" x="227" y="1795.5" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="400">consumo, mezclar en agua u otro líquido.</text>
-<text x="185" y="1871.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="700">•</text>
-<text class="txt" x="227" y="1871.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="400">En gomitas — 60 gomitas: 5 g por porción (2 gomitas). Formato práctico, sin preparación, fácil de</text>
-<text class="txt" x="227" y="1911.5" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="30" font-weight="400">incorporar a la rutina diaria.</text>
+<text class="txt" x="185" y="763" fill="#D95436" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="48" font-weight="700">Descripción</text>
+<text class="txt" x="185" y="831" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="46" font-weight="400">Suplemento alimenticio de creatina monohidratada, la molécula más</text>
+<text class="txt" x="185" y="895.4" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="46" font-weight="400">estudiada en suplementación nutricional. Involucrada en la</text>
+<text class="txt" x="185" y="959.8" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="46" font-weight="400">producción de energía celular en tejidos de alta demanda como el</text>
+<text class="txt" x="185" y="1024.1999999999998" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="46" font-weight="400">músculo esquelético y el sistema nervioso.</text>
+<text class="txt" x="185" y="1120.6" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="46" font-weight="400">Disponible en dos formatos para adaptarse a cualquier rutina: polvo</text>
+<text class="txt" x="185" y="1185.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="46" font-weight="400">para quien prefiere dosificar con precisión, y gomitas para quien</text>
+<text class="txt" x="185" y="1249.4" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="46" font-weight="400">busca practicidad sin preparación.</text>
+<text class="txt" x="185" y="1703" fill="#D95436" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="48" font-weight="700">Formatos disponibles</text>
+<text x="185" y="1765" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="40" font-weight="700">•</text>
+<text class="txt" x="235" y="1765" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="40" font-weight="400">En polvo — 1 kg: 5 g por porción (1 scoop). Permite ajustar la dosificación</text>
+<text class="txt" x="235" y="1821.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="40" font-weight="400">según necesidad. Para su consumo, mezclar en agua u otro líquido.</text>
+<text x="185" y="1912.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="40" font-weight="700">•</text>
+<text class="txt" x="235" y="1912.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="40" font-weight="400">En gomitas — 60 gomitas: 5 g por porción (2 gomitas). Formato práctico, sin</text>
+<text class="txt" x="235" y="1968.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="40" font-weight="400">preparación, fácil de incorporar a la rutina diaria.</text>
 </g>
 <g id="footer">
 <line x1="120" y1="2640" x2="1880" y2="2640" stroke="#D9CEC0" stroke-width="5"/>
