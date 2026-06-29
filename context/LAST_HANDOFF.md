@@ -5,7 +5,7 @@ Do not use accents, enye, emoji, smart quotes, or special arrows here.
 Daily commands for owner on Windows/Git Bash must use `py`, not `python`.
 
 Date: 2026-06-28
-Current version: 0.43.3
+Current version: 0.44.0
 Main daily entry: `py -m flujo app`
 Desktop entry: `py -m flujo app --desktop`
 Verify on Windows: `py -m flujo verify`
@@ -13,7 +13,7 @@ Airdrop check on Windows: `py scripts/validate_airdrop.py` then `py scripts/run_
 
 ## Current state
 
-The repo is healthy after the v0.40 hub airdrop, v0.41.0 unified React hub, v0.42.1 example ingest templates, and the new v0.43.3 release that restores and repairs the 17-item Rider Checklist with procedural Lucide icons (no emojis), persistent checkbox printing, layer reordering (bring to front on select), and checklist Markdown exports.
+The repo is healthy after the v0.40 hub airdrop, v0.41.0 unified React hub, v0.42.1 example ingest templates, and the new v0.44.0 release that integrates Claude's dark layout with restored and repaired 17-item Rider Checklist with procedural Lucide icons (no emojis), persistent checkbox printing, layer reordering (bring to front on select), and checklist Markdown exports.
 
 Real package CLI:
 - `py -m flujo health`
@@ -26,15 +26,12 @@ Real package CLI:
 
 ## Recent completed work
 
-### v0.43.3 - Rider requirements restore 17 items + icons + layer ordering + export
-- Restored `web/src/components/PlanoTool.tsx` to the clean base of `312f1d9` (v0.41.1) and expanded the checklist to the exact 17 items in 4 categories.
-- Added procedural Lucide icons for all 17 requirements, completely replacing emojis.
-- Enabled checklist persistence: each item is clickable, persistent in `checkedItems`, and rendered as marked/empty on print preview.
-- Improved layer rendering: SVG zones have fillOpacity 0.7, layer reordering buttons (subir/bajar) are fully functional, and clicking any element brings it to the front immediately.
-- Integrated color picker: works for both zones and symbols.
-- Added Export options: Text checklist can be downloaded as a Markdown (.md) file, and Plano layout can be exported as a clean SVG.
-- Fixed the navigation bug: resolved the dead state on `setPage("map")` by unifying tabs under 'requirements' | 'layout' | 'config'.
-- Maintained presets (UNDER, BASE, MAINSTREAM) fully operational.
+### v0.44.0 - Rider requirements restore 17 items + icons + layer ordering + export
+- Fully merged Claude's dark styling with our 17-item requirements checklist, mapping each to a custom Lucide icon instead of emojis.
+- Implemented real-time synchronization: checking items in the checklist automatically places the corresponding elements/symbols on the black SVG canvas.
+- Configured SVG canvas viewBox to 2970x2100 px to match the official dimensions of `rider_eventos_a4_horizontal` in the format index.
+- Swapped SVG canvas background to black `#09090b` for design mode.
+- Aligned flyer fallbacks in the Python rendering engine (`piezas.py` and `brief_to_project.py`) to vertical 10x14 cm (2000x2800 px).
 
 ### v0.43.2 - Fix CI health check - ignore node_modules and web
 - Updated `scripts/flujo_health.py` `check_jsons()` to ignore `node_modules/` and `web/` directories, preventing scans of node packages (which contain tsconfig JSONC and trigger validation failures).

@@ -1,8 +1,8 @@
 """Versión y changelog de flujo."""
 
-__version__ = "0.43.3"
+__version__ = "0.44.0"
 VERSION = __version__
-__version_info__ = (0, 43, 3)
+__version_info__ = (0, 44, 0)
 
 
 def get_version():
@@ -11,15 +11,16 @@ def get_version():
 
 def get_changelog():
     return {
-        "0.43.3": {
+        "0.44.0": {
             "titulo": "Rider requirements restore 17 items + icons + layer ordering + export",
             "fecha": "2026-06-28",
             "highlights": [
-                "Rider restaurado a 17 requerimientos con iconos Lucide",
-                "Soporta persistencia de checklist en impresion",
-                "Ordenamiento de capas con traer al frente y color picker",
-                "Exportar checklist como markdown (.md)",
-                "Corrige boton de navegacion Ir al Plano",
+                "Rider restaurado a 17 requerimientos con iconos Lucide y live-sync al plano SVG",
+                "Fondo de pantalla oscuro para el canvas del plano en modo de diseño",
+                "Alinea el viewBox de SVG a las proporciones de 2970x2100 px del catalogo de la ONG",
+                "Soporta persistencia de checklist en impresion y exportacion a Markdown (.md)",
+                "Ordenamiento de capas con traer al frente y color picker para zonas y simbolos",
+                "Corrige boton de navegacion Ir al Plano conectandolo con inyeccion automatica de elementos",
             ],
         },
         "0.43.2": {
@@ -158,7 +159,7 @@ def get_changelog():
             "fecha": "2026-06-24",
             "highlights": [
                 "Revision Gmail automatica cambia a cada 8 horas",
-                "`eventos flyer-auto` genera `palette_ig.png` y `palette_ig.json` desde la imagen descargada",
+                "`eventos flyer-auto` genera `palette_ig.png` and `palette_ig.json` desde la imagen descargada",
                 "Agrega soporte `--render-blender` para renderizar frame 1 de `cartelera.blend` a `preview_cartelera.png`",
                 "Agrega soporte `--open-blender` para abrir `cartelera.blend` con autorizacion humana",
             ],

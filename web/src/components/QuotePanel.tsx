@@ -79,26 +79,28 @@ export default function QuotePanel() {
     setItems(preset.items.map((it, i) => ({ ...it, id: String(Date.now() + i) })));
   };
 
-  const exportTxt = () => {
+  const exportMarkdown = () => {
     const lines = [
-      `COTIZACIÓN — ${eventName || 'Sin nombre'}`,
-      `Cliente: ${clientName || 'Sin especificar'}`,
-      `Fecha: ${new Date().toLocaleDateString('es-CL')}`,
-      '',
-      ...items.map(it => `  ${it.label}  x${it.qty}  ${formatCLP(it.price)}  → ${formatCLP(it.qty * it.price)}`),
-      '',
-      `Subtotal: ${formatCLP(subtotal)}`,
-      discount > 0 ? `Descuento (${discount}%): -${formatCLP(discountAmount)}` : '',
-      `TOTAL: ${formatCLP(total)}`,
-      '',
-      notes ? `Notas: ${notes}` : '',
+      `# COTIZACIÓN — ${eventName || 'Sin nombre'}\n`,
+      `**Cliente:** ${clientName || 'Sin especificar'}  `,
+      `**Fecha:** ${new Date().toLocaleDateString('es-CL')}  `,
+      `\n## DETALLE DE SERVICIOS\n`,
+      `| Categoría | Servicio / Item | Qty | Precio Unitario | Total |`,
+      `| :--- | :--- | :---: | :---: | :---: |`,
+      ...items.map(it => `| ${it.category} | ${it.label} | ${it.qty} | ${formatCLP(it.price)} | ${formatCLP(it.qty * it.price)} |`),
+      `\n--------------------------------------------------\n`,
+      `**Subtotal:** ${formatCLP(subtotal)}  `,
+      discount > 0 ? `**Descuento (${discount}%):** -${formatCLP(discountAmount)}  ` : '',
+      `**TOTAL ESTIMADO:** ${formatCLP(total)}  `,
+      `\n*Sujeto a confirmación técnica de ONG Reduciendo Daño.*`,
+      notes ? `\n### NOTAS ADICIONALES\n${notes}` : '',
     ].filter(l => l !== undefined);
 
-    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+    const blob = new Blob([lines.join('\n')], { type: 'text/markdown;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `cotizacion_${(eventName || 'flujo').toLowerCase().replace(/\s+/g, '_')}.txt`;
+    a.download = `cotizacion_${(eventName || 'flujo').toLowerCase().replace(/\s+/g, '_')}.md`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -129,10 +131,10 @@ export default function QuotePanel() {
             <RotateCcw className="h-3.5 w-3.5" /> Reset
           </button>
           <button
-            onClick={exportTxt}
+            onClick={exportMarkdown}
             className="flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs font-bold text-zinc-300 hover:bg-zinc-800 transition-colors"
           >
-            <Download className="h-3.5 w-3.5" /> Exportar TXT
+            <Download className="h-3.5 w-3.5" /> Exportar (.md)
           </button>
         </div>
       </div>
