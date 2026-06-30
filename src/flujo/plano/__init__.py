@@ -7,6 +7,8 @@ from .engine import (
     solve_layout,
     render_svg,
     render_rider,
+    validate_evento,
+    render_validation_report,
     load_evento,
 )
 from .costs import calcular_costos, resumen_costos
@@ -19,6 +21,8 @@ __all__ = [
     "solve_layout",
     "render_svg",
     "render_rider",
+    "validate_evento",
+    "render_validation_report",
     "load_evento",
     "calcular_costos",
     "resumen_costos",

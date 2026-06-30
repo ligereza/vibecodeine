@@ -237,7 +237,142 @@ def render_rider(ev: Dict[str, Any]) -> str:
 
 
 # ============================================================
-# 6. Carga de evento
+# 6. QA operativo (rider/plano)
+# ============================================================
+def validate_evento(ev: Dict[str, Any]) -> Dict[str, Any]:
+    """Valida un evento antes de imprimir/exportar rider y plano.
+
+    Devuelve un reporte simple y serializable:
+    {
+      "ok": bool,
+      "errors": [str],
+      "warnings": [str],
+      "summary": {...},
+    }
+
+    La validacion es deliberadamente conservadora: no bloquea decisiones humanas,
+    pero detecta datos faltantes o inconsistencias que suelen romper la operacion.
+    """
+    errors: List[str] = []
+    warnings: List[str] = []
+
+    nombre = str(ev.get("nombre", "")).strip()
+    if not nombre:
+        errors.append("Falta nombre del evento.")
+
+    duracion = _as_float(ev.get("duracion_horas"), "duracion_horas", errors)
+    voluntarios = _as_int(ev.get("voluntarios"), "voluntarios", errors)
+    asistentes = _as_int(ev.get("asistentes_estimados", 0), "asistentes_estimados", errors)
+
+    if duracion is not None:
+        if duracion <= 0:
+            errors.append("duracion_horas debe ser mayor que 0.")
+        elif duracion > 12:
+            warnings.append("Jornada muy larga: revisar turnos, alimentacion y relevo de voluntarios.")
+
+    if voluntarios is not None:
+        if voluntarios <= 0:
+            errors.append("voluntarios debe ser mayor que 0.")
+        elif voluntarios < 2:
+            warnings.append("Dotacion minima: revisar si 1 voluntario es suficiente para operar el stand.")
+
+    if asistentes is not None:
+        if asistentes < 0:
+            errors.append("asistentes_estimados no puede ser negativo.")
+        elif asistentes >= 2000 and not ev.get("masivo", False):
+            warnings.append("asistentes_estimados >= 2000: se tratara como evento masivo aunque masivo=false.")
+
+    layout_mode = ev.get("layout_mode", "row")
+    if layout_mode not in {"row", "grid_2x"}:
+        errors.append("layout_mode debe ser 'row' o 'grid_2x'.")
+
+    if bool(ev.get("incluye_testeo", False)) and (voluntarios or 0) < 3:
+        warnings.append("Incluye testeo con menos de 3 voluntarios: revisar dotacion para reactivos y contencion.")
+
+    try:
+        cajas, ancho_m, alto_m = solve_layout(ev)
+    except Exception as exc:  # pragma: no cover - defensive path
+        errors.append(f"No se pudo resolver el layout: {exc}")
+        cajas, ancho_m, alto_m = [], 0.0, 0.0
+
+    mesas = sum(1 for caja in cajas for hijo in caja.hijos if hijo.rol == "mesa")
+    sillas = sum(1 for caja in cajas for hijo in caja.hijos if hijo.rol == "silla")
+    stands = sum(1 for caja in cajas if caja.rol == "stand")
+    zonas = sum(1 for caja in cajas if caja.rol == "zona")
+
+    if cajas and ancho_m <= 0:
+        errors.append("El layout calculado tiene ancho invalido.")
+    if cajas and alto_m <= 0:
+        errors.append("El layout calculado tiene alto invalido.")
+    if bool(ev.get("incluye_testeo", False)) and stands < 2:
+        errors.append("incluye_testeo requiere stand informativo + stand testeo.")
+    if (asistentes or 0) >= 2000 and zonas < 1:
+        errors.append("Evento masivo requiere zona de contencion/descanso.")
+    if (voluntarios or 0) > 0 and mesas < 1:
+        errors.append("El layout debe incluir al menos una mesa operativa.")
+
+    return {
+        "ok": not errors,
+        "errors": errors,
+        "warnings": warnings,
+        "summary": {
+            "nombre": nombre or "Evento",
+            "layout_mode": layout_mode,
+            "modulos": len(cajas),
+            "stands": stands,
+            "zonas": zonas,
+            "mesas": mesas,
+            "sillas": sillas,
+            "ancho_m": round(ancho_m, 2),
+            "alto_m": round(alto_m, 2),
+            "requerimientos": len(reglas_rider(ev)),
+        },
+    }
+
+
+def render_validation_report(ev: Dict[str, Any]) -> str:
+    """Renderiza validate_evento como texto legible para CLI/airdrop."""
+    report = validate_evento(ev)
+    summary = report["summary"]
+    lines = [
+        f"VALIDACION RIDER/PLANO - {summary['nombre']}",
+        "=" * 46,
+        f"Estado: {'OK' if report['ok'] else 'ERROR'}",
+        f"Layout: {summary['layout_mode']} | modulos: {summary['modulos']} | tamano: {summary['ancho_m']} x {summary['alto_m']} m",
+        f"Stands: {summary['stands']} | zonas: {summary['zonas']} | mesas: {summary['mesas']} | sillas: {summary['sillas']}",
+        "",
+    ]
+    if report["errors"]:
+        lines.append("Errores:")
+        lines.extend(f"  - {item}" for item in report["errors"])
+        lines.append("")
+    if report["warnings"]:
+        lines.append("Advertencias:")
+        lines.extend(f"  - {item}" for item in report["warnings"])
+        lines.append("")
+    if not report["errors"] and not report["warnings"]:
+        lines.append("Sin hallazgos. Listo para rider/plano.")
+    return "\n".join(lines).rstrip()
+
+
+def _as_int(value: Any, field: str, errors: List[str]) -> int | None:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        errors.append(f"{field} debe ser un numero entero.")
+        return None
+
+
+def _as_float(value: Any, field: str, errors: List[str]) -> float | None:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        errors.append(f"{field} debe ser numerico.")
+        return None
+
+
+# ============================================================
+# 7. Carga de evento
 # ============================================================
 def load_evento(path: Path) -> Dict[str, Any]:
     """Carga un evento desde un archivo JSON."""

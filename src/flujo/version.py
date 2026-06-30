@@ -1,8 +1,8 @@
 """Versión y changelog de flujo."""
 
-__version__ = "0.46.0"
+__version__ = "0.47.0"
 VERSION = __version__
-__version_info__ = (0, 46, 0)
+__version_info__ = (0, 47, 0)
 
 
 def get_version():
@@ -11,6 +11,16 @@ def get_version():
 
 def get_changelog():
     return {
+        "0.47.0": {
+            "titulo": "QA operativo para rider/plano y SVGs de suplementos",
+            "fecha": "2026-06-29",
+            "highlights": [
+                "Agrega validacion CLI para eventos antes de imprimir/exportar rider y plano",
+                "Completa simbolos tecnicos del Plano/Rider y sincroniza los 17 items del checklist al mapa",
+                "Agrega validador tecnico de SVGs de suplementos y contraportadas para detectar placeholders y tamano incorrecto",
+                "Documenta comandos Windows-first y mantiene entrega por airdrop",
+            ],
+        },
         "0.46.0": {
             "titulo": "Post Fiesta Flyer creation + complete 8-flyer master generation run",
             "fecha": "2026-06-28",

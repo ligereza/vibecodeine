@@ -10,11 +10,12 @@ import { cn } from '../utils/cn';
 
 // ── Types ────────────────────────────────────────────────────────────
 type Preset = 'UNDER' | 'BASE' | 'MAINSTREAM';
+type TechnicalSymbolKey = string;
 
 interface Element {
   id: string;
   type: 'rect' | 'symbol';
-  symbolType?: 'power' | 'heating' | 'rack' | 'extinguisher' | 'water';
+  symbolType?: TechnicalSymbolKey;
   x: number;
   y: number;
   w: number;
@@ -50,7 +51,20 @@ const ZONE_COLORS: Record<string, string> = {
   heating: '#ef4444',
   rack: '#4b5563',
   extinguisher: '#dc2626',
-  water: '#2563eb'
+  water: '#2563eb',
+  scan: '#06b6d4',
+  terrain: '#84cc16',
+  circulation: '#9ca3af',
+  sensory: '#8b5cf6',
+  tent: '#2d5a4a',
+  table: '#10b981',
+  chairs: '#ca8a04',
+  trash: '#71717a',
+  light: '#fde047',
+  contact: '#0ea5e9',
+  security: '#f97316',
+  medical: '#dc2626',
+  food: '#a16207'
 };
 
 const ZONE_LABELS: Record<string, string> = {
@@ -64,7 +78,83 @@ const ZONE_LABELS: Record<string, string> = {
   heating: 'Calefacción',
   rack: 'Rack Almacén',
   extinguisher: 'Extintor',
-  water: 'Punto de Agua'
+  water: 'Punto de Agua',
+  scan: 'Medidas Recinto',
+  terrain: 'Terreno Estable',
+  circulation: 'Circulación Pública',
+  sensory: 'Baja Estimulación',
+  tent: 'Toldo / Carpa',
+  table: 'Mesas',
+  chairs: 'Sillas',
+  trash: 'Basureros / Señalética',
+  light: 'Iluminación',
+  contact: 'Contacto Producción',
+  security: 'Seguridad',
+  medical: 'Equipo Médico',
+  food: 'Alimentación Equipo'
+};
+
+
+type SymbolSpec = { key: TechnicalSymbolKey; label: string; color: string; icon: string; x: number; y: number; w: number; h: number };
+
+const SYMBOL_CATALOG: SymbolSpec[] = [
+  { key: 'scan', label: 'Medidas', color: ZONE_COLORS.scan, icon: 'Scan', x: 180, y: 260, w: 150, h: 150 },
+  { key: 'terrain', label: 'Terreno', color: ZONE_COLORS.terrain, icon: 'Map', x: 380, y: 260, w: 150, h: 150 },
+  { key: 'circulation', label: 'Circulación', color: ZONE_COLORS.circulation, icon: 'Users', x: 580, y: 260, w: 170, h: 150 },
+  { key: 'sensory', label: 'Baja Estim.', color: ZONE_COLORS.sensory, icon: 'Moon', x: 780, y: 260, w: 170, h: 150 },
+  { key: 'tent', label: 'Toldo 3x3', color: ZONE_COLORS.tent, icon: 'Home', x: 250, y: 350, w: 190, h: 170 },
+  { key: 'table', label: 'Mesas', color: ZONE_COLORS.table, icon: 'Table', x: 500, y: 700, w: 180, h: 140 },
+  { key: 'chairs', label: 'Sillas', color: ZONE_COLORS.chairs, icon: 'Armchair', x: 760, y: 700, w: 180, h: 140 },
+  { key: 'rack', label: 'Rack', color: ZONE_COLORS.rack, icon: 'Box', x: 150, y: 1350, w: 160, h: 160 },
+  { key: 'trash', label: 'Basureros', color: ZONE_COLORS.trash, icon: 'Trash2', x: 360, y: 1350, w: 160, h: 160 },
+  { key: 'power', label: 'Electricidad', color: ZONE_COLORS.power, icon: 'Zap', x: 1800, y: 700, w: 160, h: 160 },
+  { key: 'light', label: 'Iluminación', color: ZONE_COLORS.light, icon: 'Lightbulb', x: 2000, y: 700, w: 160, h: 160 },
+  { key: 'water', label: 'Agua', color: ZONE_COLORS.water, icon: 'Droplet', x: 1800, y: 1300, w: 160, h: 160 },
+  { key: 'heating', label: 'Calefacción', color: ZONE_COLORS.heating, icon: 'Thermometer', x: 1800, y: 1000, w: 160, h: 160 },
+  { key: 'contact', label: 'Producción', color: ZONE_COLORS.contact, icon: 'User', x: 2200, y: 700, w: 160, h: 160 },
+  { key: 'security', label: 'Seguridad', color: ZONE_COLORS.security, icon: 'ShieldAlert', x: 2200, y: 900, w: 160, h: 160 },
+  { key: 'medical', label: 'Equipo Médico', color: ZONE_COLORS.medical, icon: 'HeartPulse', x: 2200, y: 1100, w: 160, h: 160 },
+  { key: 'food', label: 'Alimentación', color: ZONE_COLORS.food, icon: 'Utensils', x: 2200, y: 1300, w: 160, h: 160 },
+  { key: 'testeo', label: 'Testeo', color: ZONE_COLORS.testeo, icon: 'AlertTriangle', x: 1000, y: 550, w: 200, h: 200 },
+  { key: 'contencion', label: 'Contención', color: ZONE_COLORS.contencion, icon: 'Heart', x: 1900, y: 550, w: 200, h: 200 },
+];
+
+const SYMBOL_BY_KEY = Object.fromEntries(SYMBOL_CATALOG.map(s => [s.key, s])) as Record<string, SymbolSpec>;
+
+const REQUIREMENT_SYMBOL_MAP: Record<string, TechnicalSymbolKey> = {
+  'Medidas disponibles del recinto (int/ext)': 'scan',
+  'Tipo de terreno (nivelado, estable)': 'terrain',
+  'Circulación pública segura': 'circulation',
+  'Zona con menor estimulación sensorial para descanso': 'sensory',
+  'Toldo/carpa (mínimo 3×3m)': 'tent',
+  'Mesas (2-3 según modalidad)': 'table',
+  'Sillas (4-6 por stand)': 'chairs',
+  'Rack o caja de almacenamiento': 'rack',
+  'Basureros, señalética': 'trash',
+  'Punto eléctrico disponible': 'power',
+  'Iluminación adecuada': 'light',
+  'Agua/hidratación si aplica': 'water',
+  'Calefacción si exterior nocturno': 'heating',
+  'Contacto directo con producción': 'contact',
+  'Coordinación con seguridad privada': 'security',
+  'Acceso a equipo médico del evento': 'medical',
+  'Alimentación si jornada > 5 horas': 'food',
+};
+
+const makeSymbolElement = (key: TechnicalSymbolKey, idPrefix = 'symbol'): Element => {
+  const spec = SYMBOL_BY_KEY[key] || SYMBOL_BY_KEY.power;
+  return {
+    id: `${idPrefix}-${spec.key}`,
+    type: 'symbol',
+    symbolKey: spec.key,
+    x: spec.x,
+    y: spec.y,
+    w: spec.w,
+    h: spec.h,
+    label: spec.label,
+    color: spec.color,
+    visible: true,
+  };
 };
 
 // ── Checklist Data (17 requirements in 4 categories) ───
@@ -236,19 +326,14 @@ export default function PlanoTool() {
     setSelectedId(id);
   };
 
-  const addSymbol = (st: 'power' | 'heating' | 'rack' | 'extinguisher' | 'water') => {
-    const id = `symbol-${Date.now()}`;
+  const addSymbol = (st: TechnicalSymbolKey) => {
+    const spec = SYMBOL_BY_KEY[st] || SYMBOL_BY_KEY.power;
+    const id = `symbol-${st}-${Date.now()}`;
     const newEl: Element = {
+      ...makeSymbolElement(st, `symbol-${Date.now()}`),
       id,
-      type: 'symbol',
-      symbolKey: st,
-      x: 1000 + Math.random() * 500,
-      y: 1000 + Math.random() * 500,
-      w: 160,
-      h: 160,
-      label: ZONE_LABELS[st] || st,
-      color: ZONE_COLORS[st] || '#555',
-      visible: true
+      x: spec.x + Math.round(Math.random() * 240),
+      y: spec.y + Math.round(Math.random() * 180),
     };
     setElements(prev => [...prev, newEl]);
     setSelectedId(id);
@@ -331,63 +416,73 @@ export default function PlanoTool() {
   }, [elements]);
 
   // ─── Render Symbol (Procedural SVG without Emojis) ───
+  const renderSymbolGlyph = (key: string, fill: string) => {
+    switch (key) {
+      case 'scan':
+        return <><rect x="28" y="36" width="104" height="84" rx="8" fill="none" stroke={fill} strokeWidth="9" strokeDasharray="12 8"/><path d="M42 58 H118 M42 82 H92 M42 106 H108" stroke={fill} strokeWidth="7" strokeLinecap="round"/></>;
+      case 'terrain':
+        return <><path d="M22 112 C48 76 70 86 92 54 C110 30 126 42 140 70" fill="none" stroke={fill} strokeWidth="10" strokeLinecap="round"/><path d="M24 122 H138" stroke={fill} strokeWidth="8" strokeLinecap="round"/></>;
+      case 'circulation':
+        return <><path d="M34 80 H124" stroke={fill} strokeWidth="10" strokeLinecap="round"/><path d="M104 58 L128 80 L104 102" fill="none" stroke={fill} strokeWidth="10" strokeLinecap="round" strokeLinejoin="round"/><circle cx="48" cy="48" r="14" fill={fill}/><circle cx="78" cy="122" r="14" fill={fill}/></>;
+      case 'sensory':
+        return <><path d="M104 30 C68 38 50 66 58 96 C66 126 96 140 128 124 C82 120 66 76 104 30 Z" fill={fill}/><circle cx="42" cy="46" r="5" fill={fill}/><circle cx="132" cy="62" r="5" fill={fill}/></>;
+      case 'tent':
+        return <><path d="M22 122 L80 34 L138 122 Z" fill="none" stroke={fill} strokeWidth="10" strokeLinejoin="round"/><path d="M80 34 V122 M48 122 L80 78 L112 122" stroke={fill} strokeWidth="8" fill="none" strokeLinecap="round"/></>;
+      case 'table':
+        return <><rect x="28" y="54" width="104" height="42" rx="6" fill="none" stroke={fill} strokeWidth="10"/><path d="M46 96 V130 M114 96 V130" stroke={fill} strokeWidth="9" strokeLinecap="round"/></>;
+      case 'chairs':
+        return <><path d="M44 48 V112 H88 M88 112 V134" fill="none" stroke={fill} strokeWidth="10" strokeLinecap="round"/><path d="M94 48 V112 H128 M128 112 V134" fill="none" stroke={fill} strokeWidth="10" strokeLinecap="round"/></>;
+      case 'rack':
+        return <><rect x="24" y="24" width="112" height="112" rx="8" fill="none" stroke={fill} strokeWidth="9"/><path d="M24 62 H136 M24 98 H136 M62 24 V136 M98 24 V136" stroke={fill} strokeWidth="6" opacity="0.45"/></>;
+      case 'trash':
+        return <><path d="M50 52 H110 L102 134 H58 Z" fill="none" stroke={fill} strokeWidth="9" strokeLinejoin="round"/><path d="M42 52 H118 M64 38 H96 M70 72 V116 M90 72 V116" stroke={fill} strokeWidth="8" strokeLinecap="round"/></>;
+      case 'power':
+        return <><circle cx="80" cy="80" r="55" fill="none" stroke={fill} strokeWidth="9"/><path d="M88 28 L52 88 H82 L72 132 L112 70 H82 Z" fill={fill}/></>;
+      case 'light':
+        return <><circle cx="80" cy="66" r="34" fill="none" stroke={fill} strokeWidth="9"/><path d="M62 100 H98 M66 120 H94 M72 136 H88" stroke={fill} strokeWidth="8" strokeLinecap="round"/><path d="M80 14 V28 M34 34 L44 44 M126 34 L116 44" stroke={fill} strokeWidth="7" strokeLinecap="round"/></>;
+      case 'water':
+        return <><path d="M80 24 C116 70 126 92 110 118 C94 144 58 144 48 116 C38 88 58 66 80 24 Z" fill="none" stroke={fill} strokeWidth="10"/><path d="M62 106 C68 122 88 128 102 112" stroke={fill} strokeWidth="7" strokeLinecap="round"/></>;
+      case 'heating':
+        return <><rect x="42" y="30" width="76" height="104" rx="12" fill="none" stroke={fill} strokeWidth="9"/><path d="M62 54 V110 M80 54 V110 M98 54 V110" stroke={fill} strokeWidth="8" strokeLinecap="round"/></>;
+      case 'contact':
+        return <><circle cx="80" cy="52" r="24" fill="none" stroke={fill} strokeWidth="9"/><path d="M38 132 C44 98 116 98 122 132" fill="none" stroke={fill} strokeWidth="10" strokeLinecap="round"/></>;
+      case 'security':
+        return <><path d="M80 22 L124 40 V76 C124 104 106 126 80 140 C54 126 36 104 36 76 V40 Z" fill="none" stroke={fill} strokeWidth="9" strokeLinejoin="round"/><path d="M62 80 L76 94 L102 62" fill="none" stroke={fill} strokeWidth="9" strokeLinecap="round" strokeLinejoin="round"/></>;
+      case 'medical':
+        return <><path d="M80 136 C34 96 28 66 48 46 C62 32 78 42 80 54 C82 42 100 32 114 46 C134 66 126 98 80 136 Z" fill="none" stroke={fill} strokeWidth="9"/><path d="M80 58 V106 M56 82 H104" stroke={fill} strokeWidth="9" strokeLinecap="round"/></>;
+      case 'food':
+        return <><path d="M54 28 V76 M70 28 V76 M62 76 V134" stroke={fill} strokeWidth="9" strokeLinecap="round"/><path d="M104 28 C124 48 122 82 104 94 V134" fill="none" stroke={fill} strokeWidth="9" strokeLinecap="round"/></>;
+      case 'extinguisher':
+        return <><rect x="60" y="50" width="42" height="88" rx="9" fill="none" stroke={fill} strokeWidth="9"/><path d="M70 50 V34 H94 V50 M94 62 H120 M120 62 L134 52" stroke={fill} fill="none" strokeWidth="8" strokeLinecap="round"/><path d="M70 82 H92" stroke={fill} strokeWidth="7" strokeLinecap="round"/></>;
+      case 'testeo':
+        return <><circle cx="80" cy="80" r="58" fill={fill} fillOpacity="0.16" stroke={fill} strokeWidth="9"/><path d="M60 42 H100 M80 42 V82 L112 126 H48 L80 82" fill="none" stroke={fill} strokeWidth="9" strokeLinejoin="round"/></>;
+      case 'contencion':
+        return <><circle cx="80" cy="80" r="58" fill={fill} fillOpacity="0.16" stroke={fill} strokeWidth="9"/><path d="M80 120 C44 88 44 62 62 52 C74 46 80 56 80 64 C80 56 90 46 102 52 C120 62 116 90 80 120 Z" fill={fill}/></>;
+      default:
+        return <><circle cx="80" cy="80" r="54" fill="none" stroke={fill} strokeWidth="9"/><text x="80" y="92" textAnchor="middle" fontSize="42" fill={fill} fontWeight="black">?</text></>;
+    }
+  };
+
   const renderSymbol = (el: Element, isPrint = false) => {
     const isSelected = el.id === selectedId;
-    const zoneColors: Record<string, string> = {
-      testeo: '#2d5a4a',
-      contencion: '#7c3aed',
-      power: '#f59e0b',
-      heating: '#ef4444',
-      rack: '#4b5563',
-      extinguisher: '#dc2626',
-      water: '#2563eb'
-    };
-    const fill = isPrint ? '#000000' : (el.symbolKey ? (zoneColors[el.symbolKey] || el.color) : el.color);
+    const spec = el.symbolKey ? SYMBOL_BY_KEY[el.symbolKey] : undefined;
+    const fill = isPrint ? '#000000' : (spec?.color || el.color);
 
     return (
       <g
         key={el.id}
         transform={`translate(${el.x},${el.y})`}
-        onMouseDown={(e) => onMouseDown(e, el.id)}
-        onTouchStart={(e) => onTouchStart(e, el.id)}
+        onMouseDown={(e) => { e.stopPropagation(); onMouseDown(e, el.id); }}
+        onTouchStart={(e) => { e.stopPropagation(); onTouchStart(e, el.id); }}
+        onClick={(e) => { e.stopPropagation(); selectElementAndBringToFront(el.id); }}
         className="cursor-move"
         opacity={el.visible ? 1 : 0.2}
       >
         <rect width={el.w} height={el.h} fill="transparent" stroke={isSelected ? '#fff' : 'none'} strokeWidth={5} />
-        {el.symbolKey === 'power' && (
-          <g stroke={fill} strokeWidth="10" fill="none">
-            <circle cx={el.w / 2} cy={el.h / 2} r="50" />
-            <path d="M80 40 L60 85 H95 L80 120" stroke={fill} strokeWidth="12" />
-          </g>
-        )}
-        {el.symbolKey === 'heating' && (
-          <g stroke={fill} strokeWidth="10" fill="none">
-             <rect x="32" y="40" width="96" height="80" rx="8" />
-             <path d="M56 56 V104 M80 56 V104 M104 56 V104" />
-          </g>
-        )}
-        {el.symbolKey === 'rack' && (
-           <g stroke={fill} strokeWidth="10" fill="none">
-              <rect x="20" y="20" width="120" height="120" rx="8" />
-              <path d="M20 60 H140 M20 100 H140 M60 20 V140 M100 20 V140" strokeOpacity="0.3" />
-           </g>
-        )}
-        {el.symbolKey === 'extinguisher' && (
-           <g fill={fill}>
-              <rect x="60" y="48" width="40" height="100" rx="8" />
-              <path d="M68 48 V32 H92 V48 M92 60 H112" stroke={fill} fill="none" strokeWidth="8" />
-           </g>
-        )}
-        {el.symbolKey === 'water' && (
-           <g stroke={fill} strokeWidth="10" fill="none">
-              <circle cx={el.w / 2} cy={el.h / 2} r="50" />
-              <path d="M80 60 Q100 100 80 120 Q60 100 80 60" fill={fill} />
-           </g>
-        )}
-        {['testeo', 'contencion'].includes(el.symbolKey || '') && (
-          <circle cx={el.w / 2} cy={el.h / 2} r={el.w / 2} fill={fill} fillOpacity={0.7} stroke={fill} strokeWidth={5} />
-        )}
-        <text x={el.w / 2} y={el.h + 30} textAnchor="middle" fontSize="32" fill={fill} fontWeight="bold" fontFamily="monospace">
+        <svg x={0} y={0} width={el.w} height={el.h} viewBox="0 0 160 160" overflow="visible">
+          {renderSymbolGlyph(el.symbolKey || 'unknown', fill)}
+        </svg>
+        <text x={el.w / 2} y={el.h + 30} textAnchor="middle" fontSize="30" fill={fill} fontWeight="bold" fontFamily="monospace">
           {el.label.toUpperCase()}
         </text>
         {isSelected && (
@@ -448,97 +543,34 @@ export default function PlanoTool() {
 
   const printRider = () => window.print();
 
-  const toggleCheck = (item: string) => {
-    const isChecking = !checkedItems.includes(item);
-    
-    // Update checkedItems
-    setCheckedItems(prev =>
-      isChecking ? [...prev, item] : prev.filter(x => x !== item)
-    );
-    
-    // Live sync requirements selection to SVG canvas
-    setElements(els => {
-      let updated = [...els];
-      if (isChecking) {
-        if (item === "Toldo/carpa (mínimo 3×3m)" && !updated.some(e => e.id === 'toldo')) {
-          updated.push({ id: 'toldo', type: 'rect', x: 250, y: 350, w: 1000, h: 660, label: 'Toldo / Carpa 3x3', color: '#2d5a4a', visible: true });
-        }
-        if (item === "Mesas (2-3 según modalidad)" && !updated.some(e => e.id === 'mesa')) {
-          updated.push({ id: 'mesa', type: 'rect', x: 500, y: 700, w: 400, h: 200, label: 'Mesa', color: '#10b981', visible: true });
-        }
-        if (item === "Sillas (4-6 por stand)" && !updated.some(e => e.id === 'sillas')) {
-          updated.push({ id: 'sillas', type: 'rect', x: 1000, y: 700, w: 250, h: 200, label: 'Sillas', color: '#ca8a04', visible: true });
-        }
-        if (item === "Punto eléctrico disponible" && !updated.some(e => e.id === 'power')) {
-          updated.push({ id: 'power', type: 'symbol', symbolKey: 'power', x: 1800, y: 700, w: 160, h: 160, label: 'Poder', color: '#f59e0b', visible: true });
-        }
-        if (item === "Calefacción si exterior nocturno" && !updated.some(e => e.id === 'heating')) {
-          updated.push({ id: 'heating', type: 'symbol', symbolKey: 'heating', x: 1800, y: 1000, w: 160, h: 160, label: 'Calefacción', color: '#ef4444', visible: true });
-        }
-        if (item === "Agua/hidratación si aplica" && !updated.some(e => e.id === 'water')) {
-          updated.push({ id: 'water', type: 'symbol', symbolKey: 'water', x: 1800, y: 1300, w: 160, h: 160, label: 'Agua', color: '#2563eb', visible: true });
-        }
-        if (item === "Acceso a equipo médico del evento" && !updated.some(e => e.id === 'medical')) {
-          updated.push({ id: 'medical', type: 'symbol', symbolKey: 'extinguisher', x: 2200, y: 1000, w: 160, h: 160, label: 'Emergencia', color: '#dc2626', visible: true });
-        }
-        if (item === "Zona con menor estimulación sensorial para descanso" && !updated.some(e => e.id === 'zona-descanso')) {
-          updated.push({ id: 'zona-descanso', type: 'symbol', symbolKey: 'contencion', x: 1500, y: 400, w: 200, h: 200, label: 'Zona Descanso', color: '#059669', visible: true });
-        }
-      } else {
-        if (item === "Toldo/carpa (mínimo 3×3m)") updated = updated.filter(e => e.id !== 'toldo');
-        if (item === "Mesas (2-3 según modalidad)") updated = updated.filter(e => e.id !== 'mesa');
-        if (item === "Sillas (4-6 por stand)") updated = updated.filter(e => e.id !== 'sillas');
-        if (item === "Punto eléctrico disponible") updated = updated.filter(e => e.id !== 'power');
-        if (item === "Calefacción si exterior nocturno") updated = updated.filter(e => e.id !== 'heating');
-        if (item === "Agua/hidratación si aplica") updated = updated.filter(e => e.id !== 'water');
-        if (item === "Acceso a equipo médico del evento") updated = updated.filter(e => e.id !== 'medical');
-        if (item === "Zona con menor estimulación sensorial para descanso") updated = updated.filter(e => e.id !== 'zona-descanso');
-      }
-      return updated;
+  const syncElementsFromChecked = (items: string[], baseElements = elements) => {
+    const wanted = items.map(item => REQUIREMENT_SYMBOL_MAP[item]).filter(Boolean);
+    let next = baseElements.filter(el => !(el.id || '').startsWith('req-'));
+    wanted.forEach(key => {
+      const hasExisting = next.some(el => el.symbolKey === key);
+      if (!hasExisting) next.push(makeSymbolElement(key, 'req'));
     });
+    return next;
+  };
+
+  const toggleCheck = (item: string) => {
+    const nextChecked = checkedItems.includes(item)
+      ? checkedItems.filter(x => x !== item)
+      : [...checkedItems, item];
+    setCheckedItems(nextChecked);
+    setElements(prev => syncElementsFromChecked(nextChecked, prev));
   };
 
   const handleGoToPlano = () => {
-    setElements(prev => {
-      const next = [...prev];
-      const hasItem = (text: string) => checkedItems.includes(text);
-      
-      if (hasItem("Toldo/carpa (mínimo 3×3m)") && !next.some(e => e.id === 'toldo')) {
-        next.push({ id: 'toldo', type: 'rect', x: 250, y: 350, w: 1000, h: 660, label: 'Toldo / Carpa 3x3', color: '#2d5a4a', visible: true });
-      }
-      if (hasItem("Mesas (2-3 según modalidad)") && !next.some(e => e.id === 'mesa')) {
-        next.push({ id: 'mesa', type: 'rect', x: 500, y: 700, w: 400, h: 200, label: 'Mesa', color: '#10b981', visible: true });
-      }
-      if (hasItem("Sillas (4-6 por stand)") && !next.some(e => e.id === 'sillas')) {
-        next.push({ id: 'sillas', type: 'rect', x: 1000, y: 700, w: 250, h: 200, label: 'Sillas', color: '#ca8a04', visible: true });
-      }
-      if (hasItem("Rack o caja de almacenamiento") && !next.some(e => e.id === 'rack')) {
-        next.push({ id: 'rack', type: 'symbol', symbolKey: 'rack', x: 150, y: 1350, w: 160, h: 160, label: 'Rack Almacén', color: '#4b5563', visible: true });
-      }
-      if (hasItem("Basureros, señalética") && !next.some(e => e.id === 'basureros')) {
-        next.push({ id: 'basureros', type: 'rect', x: 300, y: 1400, w: 300, h: 200, label: 'Basureros', color: '#9ca3af', visible: true });
-      }
-      if (hasItem("Punto eléctrico disponible") && !next.some(e => e.id === 'power')) {
-        next.push({ id: 'power', type: 'symbol', symbolKey: 'power', x: 1800, y: 700, w: 160, h: 160, label: 'Poder', color: '#f59e0b', visible: true });
-      }
-      if (hasItem("Calefacción si exterior nocturno") && !next.some(e => e.id === 'heating')) {
-        next.push({ id: 'heating', type: 'symbol', symbolKey: 'heating', x: 1800, y: 1000, w: 160, h: 160, label: 'Calefacción', color: '#ef4444', visible: true });
-      }
-      if (hasItem("Agua/hidratación si aplica") && !next.some(e => e.id === 'water')) {
-        next.push({ id: 'water', type: 'symbol', symbolKey: 'water', x: 1800, y: 1300, w: 160, h: 160, label: 'Agua', color: '#2563eb', visible: true });
-      }
-      if (hasItem("Acceso a equipo médico del evento") && !next.some(e => e.id === 'medical')) {
-        next.push({ id: 'medical', type: 'symbol', symbolKey: 'extinguisher', x: 2200, y: 1000, w: 160, h: 160, label: 'Emergencia', color: '#dc2626', visible: true });
-      }
-      
-      return next;
-    });
+    setElements(prev => syncElementsFromChecked(checkedItems, prev));
     setPage('map');
   };
 
   const checkAll = () => {
     const all = CHECKLIST_SECTIONS.flatMap(s => s.items).map(i => i.text);
-    setCheckedItems(prev => prev.length === all.length ? [] : all);
+    const nextChecked = checkedItems.length === all.length ? [] : all;
+    setCheckedItems(nextChecked);
+    setElements(prev => syncElementsFromChecked(nextChecked, prev));
   };
 
   // ─── Export Checklist as Markdown ───
@@ -631,6 +663,7 @@ export default function PlanoTool() {
 
   const totalChecks = CHECKLIST_SECTIONS.flatMap(s => s.items).length;
   const completedChecks = checkedItems.length;
+  const visibleLegendSymbols = SYMBOL_CATALOG.filter(spec => elements.some(el => el.visible && el.symbolKey === spec.key));
 
   const NAV_TABS: { key: Page; label: string }[] = [
     { key: 'req', label: '☑ Checklist' },
@@ -711,29 +744,25 @@ export default function PlanoTool() {
               ))}
               
               {/* High-contrast Technical Legend inside the printable SVG */}
-              <g transform="translate(2250, 950)">
-                <rect width={550} height={750} rx={20} fill="#f4f4f5" stroke="#000" strokeWidth={4} />
-                <text x={275} y={80} textAnchor="middle" fontSize={36} fill="#000" fontWeight="black" fontFamily="monospace" style={{ letterSpacing: '0.05em' }}>
+              <g transform="translate(1890, 900)">
+                <rect width={930} height={Math.max(230, 135 + Math.ceil(visibleLegendSymbols.length / 2) * 80)} rx={20} fill="#f4f4f5" stroke="#000" strokeWidth={4} />
+                <text x={465} y={72} textAnchor="middle" fontSize={34} fill="#000" fontWeight="black" fontFamily="monospace" style={{ letterSpacing: '0.05em' }}>
                   LEYENDA TÉCNICA
                 </text>
-                {[
-                  { k: 'testeo', fill: '#2d5a4a', label: 'Stand de Testeo' },
-                  { k: 'contencion', fill: '#7c3aed', label: 'Zona Contención' },
-                  { k: 'power', fill: '#f59e0b', label: 'Punto Eléctrico' },
-                  { k: 'extinguisher', fill: '#dc2626', label: 'Extintor / Emerg.' },
-                  { k: 'water', fill: '#2563eb', label: 'Agua / Hidratación' }
-                ].map((item, i) => (
-                  <g key={item.k} transform={`translate(40, ${150 + i * 115})`}>
-                    {['power', 'extinguisher', 'water'].includes(item.k) ? (
-                      <rect width={60} height={60} rx={12} fill={item.fill} fillOpacity={0.8} stroke="#000" strokeWidth={2} />
-                    ) : (
-                      <circle cx={30} cy={30} r={30} fill={item.fill} fillOpacity={0.8} stroke="#000" strokeWidth={2} />
-                    )}
-                    <text x={100} y={40} fontSize={32} fill="#000" fontWeight="bold" fontFamily="sans-serif">
-                      {item.label.toUpperCase()}
-                    </text>
-                  </g>
-                ))}
+                {visibleLegendSymbols.map((spec, i) => {
+                  const col = i % 2;
+                  const row = Math.floor(i / 2);
+                  return (
+                    <g key={spec.key} transform={`translate(${40 + col * 445}, ${120 + row * 80})`}>
+                      <svg x={0} y={0} width={54} height={54} viewBox="0 0 160 160">
+                        {renderSymbolGlyph(spec.key, '#000000')}
+                      </svg>
+                      <text x={72} y={36} fontSize={24} fill="#000" fontWeight="bold" fontFamily="sans-serif">
+                        {spec.label.toUpperCase()}
+                      </text>
+                    </g>
+                  );
+                })}
               </g>
 
               <g transform="translate(100, 1930)">
@@ -1100,21 +1129,18 @@ export default function PlanoTool() {
                         onTouchStart={onLegendTouchStart}
                         className="cursor-grab"
                       >
-                        <rect width={600} height={700} rx={30} fill="#18181bcc" stroke="#3f3f46" strokeWidth={5} />
-                        <text x={300} y={80} textAnchor="middle" fontSize={42} fill="#a1a1aa" fontWeight="black" fontFamily="monospace" style={{ letterSpacing: '0.1em' }}>
+                        <rect width={680} height={Math.max(190, 120 + visibleLegendSymbols.length * 74)} rx={30} fill="#18181bcc" stroke="#3f3f46" strokeWidth={5} />
+                        <text x={340} y={70} textAnchor="middle" fontSize={38} fill="#a1a1aa" fontWeight="black" fontFamily="monospace" style={{ letterSpacing: '0.08em' }}>
                           LEYENDA TÉCNICA
                         </text>
-                        {['testeo', 'contencion', 'power', 'extinguisher'].map((k, i) => {
-                          const colors: Record<string, string> = { testeo: '#2d5a4a', contencion: '#7c3aed', power: '#f59e0b', extinguisher: '#dc2626' };
-                          const fill = colors[k] || '#6366f1';
+                        {visibleLegendSymbols.map((spec, i) => {
+                          const fill = spec.color;
                           return (
-                            <g key={k} transform={`translate(50,${150 + i * 110})`}>
-                              {['power', 'extinguisher'].includes(k) ? (
-                                <rect width={60} height={60} rx={12} fill={fill} fillOpacity={0.6} stroke={fill} strokeWidth={4} />
-                              ) : (
-                                <circle cx={30} cy={30} r={30} fill={fill} fillOpacity={0.6} stroke={fill} strokeWidth={4} />
-                              )}
-                              <text x={100} y={40} fontSize={36} fill="#a1a1aa" fontWeight="bold" fontFamily="sans-serif">{ZONE_LABELS[k].toUpperCase()}</text>
+                            <g key={spec.key} transform={`translate(45,${115 + i * 74})`}>
+                              <svg x={0} y={0} width={54} height={54} viewBox="0 0 160 160">
+                                {renderSymbolGlyph(spec.key, fill)}
+                              </svg>
+                              <text x={82} y={38} fontSize={28} fill="#a1a1aa" fontWeight="bold" fontFamily="sans-serif">{spec.label.toUpperCase()}</text>
                             </g>
                           );
                         })}
@@ -1155,19 +1181,16 @@ export default function PlanoTool() {
               {/* Add Symbols */}
               <div className="p-4 bg-zinc-900/50 border border-zinc-800 rounded-xl">
                 <h4 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-3">Símbolos Técnicos</h4>
-                <div className="grid grid-cols-3 gap-2">
-                  {(['power','heating','rack','extinguisher','water'] as const).map(s => (
+                <div className="grid grid-cols-4 gap-2 max-h-80 overflow-y-auto pr-1">
+                  {SYMBOL_CATALOG.map(spec => (
                     <button
-                      key={s}
-                      onClick={() => addSymbol(s)}
-                      className="flex flex-col items-center p-3 bg-zinc-800/30 border border-zinc-800 rounded-xl hover:bg-zinc-800 group transition-all"
+                      key={spec.key}
+                      onClick={() => addSymbol(spec.key)}
+                      title={spec.label}
+                      className="flex flex-col items-center p-2 bg-zinc-800/30 border border-zinc-800 rounded-xl hover:bg-zinc-800 group transition-all"
                     >
-                      {s === 'power' && <Zap className="w-4 h-4 text-yellow-500" />}
-                      {s === 'heating' && <RotateCcw className="w-4 h-4 text-red-500" />}
-                      {s === 'rack' && <Box className="w-4 h-4 text-zinc-400" />}
-                      {s === 'extinguisher' && <ShieldAlert className="w-4 h-4 text-red-600" />}
-                      {s === 'water' && <Droplet className="w-4 h-4 text-blue-500" />}
-                      <span className="mt-2 text-[7px] uppercase font-black opacity-40 group-hover:opacity-100">{s}</span>
+                      {renderRequirementIcon(spec.icon, "w-4 h-4 text-zinc-300")}
+                      <span className="mt-1.5 text-[7px] uppercase font-black opacity-50 group-hover:opacity-100 truncate max-w-[58px]">{spec.label}</span>
                     </button>
                   ))}
                 </div>

@@ -1605,6 +1605,25 @@ def suplementos_contraportada(
         _err(f"No se pudo generar la contraportada: {e}")
 
 
+@suplementos_app.command("validate")
+def suplementos_validate(
+    paths: list[Path] = typer.Argument(..., help="SVG(s) de suplementos o contraportadas a validar"),
+    contraportada: bool = typer.Option(True, "--contraportada/--generic", help="esperar tamano de contraportada 10x14 cm (1181x1654 px)"),
+):
+    """Validar SVGs de suplementos antes de revisar/exportar en Illustrator."""
+    from .comercial.svg_validator import (
+        EXPECTED_CONTRAPORTADA_SIZE,
+        render_svg_validation_report,
+        validate_svg_files,
+    )
+
+    expected = EXPECTED_CONTRAPORTADA_SIZE if contraportada else None
+    report = validate_svg_files(paths, expected_size=expected)
+    console.print(render_svg_validation_report(report))
+    if not report["ok"]:
+        raise typer.Exit(1)
+
+
 @suplementos_app.command("illustrator")
 def suplementos_illustrator(
     nombres: Optional[list[str]] = typer.Argument(None, help="Nombres de suplementos a incluir (ej. 'Impulso' 'Creatina')"),
@@ -1686,6 +1705,7 @@ def plano(
     costs: bool = typer.Option(False, "--costs", help="imprimir desglose de costos"),
     output: Optional[Path] = typer.Option(None, "--output", "-o", help="archivo SVG de salida (solo sin --rider)"),
     px_por_metro: float = typer.Option(90.0, "--scale", help="escala px por metro"),
+    validate: bool = typer.Option(False, "--validate", help="validar evento antes de renderizar"),
 ):
     """Generar plano SVG, rider o costos de stands desde un JSON de evento.
 
@@ -1695,13 +1715,21 @@ def plano(
       flujo plano projects/plano/ejemplos/evento_ejemplo.json --costs
       flujo plano <evento.json> -o plano.svg
     """
-    from .plano import load_evento, render_svg, render_rider, resumen_costos
+    from .plano import load_evento, render_svg, render_rider, resumen_costos, render_validation_report, validate_evento
     if not evento.exists():
         _err(f"No existe: {evento}")
     try:
         ev = load_evento(evento)
     except Exception as e:
         _err(f"No se pudo leer el evento: {e}")
+
+    if validate:
+        report = validate_evento(ev)
+        console.print(render_validation_report(ev))
+        if not report["ok"]:
+            raise typer.Exit(1)
+        if not (costs or rider or output):
+            return
 
     if costs:
         console.print(resumen_costos(ev))

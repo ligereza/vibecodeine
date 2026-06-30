@@ -5,7 +5,7 @@ Do not use accents, enye, emoji, smart quotes, or special arrows here.
 Daily commands for owner on Windows/Git Bash must use `py`, not `python`.
 
 Date: 2026-06-28
-Current version: 0.46.0
+Current version: 0.47.0
 Main daily entry: `py -m flujo app`
 Desktop entry: `py -m flujo app --desktop`
 Verify on Windows: `py -m flujo verify`
@@ -25,6 +25,16 @@ Real package CLI:
 - `py -m flujo hub route ...`
 
 ## Recent completed work
+
+### v0.47.0 - QA operativo para Eventos y Suplementos
+
+- Added `py -m flujo plano <evento.json> --validate` to preflight rider/plano inputs before print/export.
+- Expanded Plano/Rider technical symbol catalog to cover all 17 checklist requirements plus testeo/contencion, with procedural no-emoji SVG glyphs.
+- Fixed checklist-to-map sync: checking, unchecking, "Marcar todo" and "Ir al Plano" now add/remove the mapped symbols consistently.
+- Made screen and print/PDF technical legends dynamic, based on currently visible symbols instead of hardcoded 4-5 items.
+- Rebuilt `context/flujo_hub.html`, `context/plano_demo.html` and `context/svg_visualizer.html` from React.
+- Added `py -m flujo suplementos validate <svg...>` to detect invalid SVG/XML, wrong contraportada size and unreplaced placeholders.
+- Added docs in `docs/QA_EVENTOS_SUPLEMENTOS.md` and tests for both validators.
 
 ### v0.46.0 - Post Fiesta Flyer, Live Visualizer & 8-Flyer Master Generation Run
 - Created the individual product details for 'Post Fiesta' in the master content dataset `contenido_suplementos_rd.json`.
@@ -168,6 +178,6 @@ Historical material should be archived, not deleted blindly.
 
 ## Next recommended changes
 
-1. Create a validation tool or command for contraportadas (such as `py -m flujo suplementos validate`) to ensure compliance with the technical margin and contrast specs of Section H of the style guide.
+1. Extend `py -m flujo suplementos validate` with deeper visual/prepress checks (safe margins, contrast sampling and bleed) beyond the current mechanical SVG preflight.
 2. Extend `prepare_supplement_job_assets` to support generating multipage PDFs from the command line or hub directly.
 3. Split the very large `src/flujo/cli.py` into submodules (`cli_jobs.py`, `cli_suplementos.py`, etc.) for cleaner maintenance.
