@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field, asdict
 from enum import Enum
+from functools import lru_cache
 from pathlib import Path
 from typing import List, Optional
 
@@ -96,6 +97,35 @@ def _read_brief_simple(text: str) -> dict:
     return data
 
 
+@lru_cache(maxsize=256)
+def _parse_brief_cached(brief_path_str: str) -> Optional[dict]:
+    """Parse and cache brief files for faster repeated access.
+    
+    Uses PyYAML if available (faster), falls back to simple parser.
+    Cache invalidation happens naturally via maxsize limit.
+    """
+    try:
+        import yaml
+        path = Path(brief_path_str)
+        if not path.exists():
+            return None
+        return yaml.safe_load(path.read_text(encoding="utf-8"))
+    except ImportError:
+        # Fallback to simple parser if yaml not installed
+        path = Path(brief_path_str)
+        if not path.exists():
+            return None
+        text = path.read_text(encoding="utf-8")
+        return _read_brief_simple(text)
+    except Exception:
+        # On any error, try simple parser as last resort
+        path = Path(brief_path_str)
+        if not path.exists():
+            return None
+        text = path.read_text(encoding="utf-8")
+        return _read_brief_simple(text)
+
+
 def _coerce(v: str):
     if v == "":
         return ""
@@ -117,10 +147,15 @@ def _coerce(v: str):
 def score_job(brief_path: Path) -> Optional[ItemScore]:
     if not brief_path.exists():
         return None
-    text = brief_path.read_text(encoding="utf-8", errors="ignore")
-    data = _try_yaml(text) or _read_brief_simple(text)
+    
+    # Use cached parser for better performance
+    data = _parse_brief_cached(str(brief_path))
     if not isinstance(data, dict):
-        return None
+        # Fallback to old method if cache returns None
+        text = brief_path.read_text(encoding="utf-8", errors="ignore")
+        data = _try_yaml(text) or _read_brief_simple(text)
+        if not isinstance(data, dict):
+            return None
 
     estado = str(data.get("estado", "borrador") or "borrador")
     pendientes = data.get("pendientes", []) or []
