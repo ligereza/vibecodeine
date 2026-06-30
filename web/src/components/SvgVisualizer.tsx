@@ -614,6 +614,33 @@ function GalleryView({ onConfigure }: { onConfigure: (piece: SvgPiece) => void }
 
 // ═══════════════════════════════════════════════
 // EDITOR VIEW (config.json)
+
+// SVG -> Config converter (best effort)
+function attr(el: Element, name: string, fallback = ''): string { return el.getAttribute(name) || fallback; }
+function numAttr(el: Element, name: string, fallback = 0): number { const value = Number(attr(el, name, '')); return Number.isFinite(value) ? value : fallback; }
+function paintAttr(el: Element, name: 'fill' | 'stroke', fallback = 'none'): string {
+  const direct = attr(el, name, '');
+  if (direct) return direct;
+  const style = attr(el, 'style', '');
+  const match = style.match(new RegExp(`${name}\\s*:\\s*([^;]+)`));
+  return match ? match[1].trim() : fallback;
+}
+function opacityAttr(el: Element): number | undefined { const value = attr(el, 'opacity', ''); if (!value) return undefined; const n = Number(value); return Number.isFinite(n) ? n : undefined; }
+function parseSvgToConfigElements(svgContent: string): { elements: ConfigElement[]; dims: { width: number; height: number } } {
+  const parsed = new DOMParser().parseFromString(svgContent, 'image/svg+xml');
+  const root = parsed.querySelector('svg');
+  const dims = svgDims(svgContent) || { width: Number(root?.getAttribute('width')?.replace('px', '')) || 2000, height: Number(root?.getAttribute('height')?.replace('px', '')) || 2800 };
+  const elements: ConfigElement[] = [];
+  root?.querySelectorAll('rect').forEach((node, index) => { const w = numAttr(node, 'width', 0), h = numAttr(node, 'height', 0); if (w <= 0 || h <= 0) return; elements.push({ type: 'rect', x: numAttr(node, 'x', 0), y: numAttr(node, 'y', 0), w, h, radius: numAttr(node, 'rx', 0), fill: paintAttr(node, 'fill', 'none'), stroke: paintAttr(node, 'stroke', 'none'), stroke_width: numAttr(node, 'stroke-width', 0), opacity: opacityAttr(node), _id: `svg_rect_${index}` } as RectElement); });
+  root?.querySelectorAll('circle').forEach((node, index) => { const r = numAttr(node, 'r', 0); if (r <= 0) return; elements.push({ type: 'circle', cx: numAttr(node, 'cx', 0), cy: numAttr(node, 'cy', 0), r, fill: paintAttr(node, 'fill', 'none'), stroke: paintAttr(node, 'stroke', 'none'), stroke_width: numAttr(node, 'stroke-width', 0), opacity: opacityAttr(node), _id: `svg_circle_${index}` } as CircleElement); });
+  root?.querySelectorAll('line').forEach((node, index) => { elements.push({ type: 'line', x1: numAttr(node, 'x1', 0), y1: numAttr(node, 'y1', 0), x2: numAttr(node, 'x2', 0), y2: numAttr(node, 'y2', 0), stroke: paintAttr(node, 'stroke', '#111111'), stroke_width: numAttr(node, 'stroke-width', 1), opacity: opacityAttr(node), _id: `svg_line_${index}` } as LineElement); });
+  root?.querySelectorAll('text').forEach((node, index) => { const content = (node.textContent || '').trim(); if (!content) return; elements.push({ type: 'text', content, x: numAttr(node, 'x', 0), y: numAttr(node, 'y', 0), size: numAttr(node, 'font-size', 40), fill: paintAttr(node, 'fill', '#111111'), weight: attr(node, 'font-weight', '').includes('700') || attr(node, 'font-weight', '').includes('bold') ? 'bold' : 'normal', opacity: opacityAttr(node), _id: `svg_text_${index}` } as TextElement); });
+  return { elements, dims };
+}
+function svgFallbackImage(svgContent: string, dims: { width: number; height: number }): SvgImageElement {
+  return { type: 'svg_image', x: 0, y: 0, w: Math.max(800, Math.round(dims.width)), h: Math.max(600, Math.round(dims.height)), content: svgContent } as SvgImageElement;
+}
+
 // ═══════════════════════════════════════════════
 
 function EditorView({ pieceToLoad }: { pieceToLoad: SvgPiece | null }) {
@@ -674,20 +701,25 @@ const loadSvgPiece = useCallback(async (piece: SvgPiece) => {
       setEditorLoading(false);
       return;
     }
-    const dims = svgDims(svgContent) || { width: 2000, height: 2800 };
+    const parsedSvg = parseSvgToConfigElements(svgContent);
+    const dims = parsedSvg.dims;
+    const editableElements = parsedSvg.elements.length >= 3
+      ? parsedSvg.elements
+      : [svgFallbackImage(svgContent, dims)];
     const cfg: PieceConfig = {
       project: { name: piece.name, slug: piece.id.replace(/[^a-z0-9]+/gi, '_').toLowerCase(), brand: piece.product || piece.area, website: 'REDUCIENDODANO.CL' },
       canvas: { width: Math.max(800, Math.round(dims.width)), height: Math.max(600, Math.round(dims.height)), real_size_cm: { width: 0, height: 0 }, safe_margin_px: 40 },
-      palette: { paper: '#ffffff', ink: '#111111', line: '#d4d4d8', accent: '#10b981' },
+      palette: { paper: '#ffffff', ink: '#111111', line: '#d4d4d8', accent: '#10b981', white: '#ffffff', black: '#111111' },
       background: 'paper',
       global_elements: [],
       documents: [{
         id: '01_svg_importado',
-        title: piece.name,
-        elements: [{ type: 'svg_image', x: 0, y: 0, w: Math.max(800, Math.round(dims.width)), h: Math.max(600, Math.round(dims.height)), content: svgContent } as SvgImageElement],
+        title: `${piece.name} · ${editableElements.length} editable(s)`,
+        elements: editableElements,
       }],
     };
     loadCfg(cfg);
+    setEditorError(parsedSvg.elements.length >= 3 ? `SVG convertido a ${parsedSvg.elements.length} elementos editables.` : 'SVG complejo: se cargo como imagen SVG editable (fallback).');
     setZoom(dims.width > 1800 ? 0.35 : 0.65);
     setEditorLoading(false);
     } catch (e) {
