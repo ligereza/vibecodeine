@@ -639,7 +639,7 @@ function EditorView({ pieceToLoad }: { pieceToLoad: SvgPiece | null }) {
 
   const loadSvgPiece = useCallback((piece: SvgPiece) => {
     if (!piece.svgContent) return;
-    const dims = svgDims(piece.svgContent) || { width: 1600, height: 1000 };
+    const dims = svgDims(piece.svgContent) || { width: 2000, height: 2800 };
     const cfg: PieceConfig = {
       project: { name: piece.name, slug: piece.id.replace(/[^a-z0-9]+/gi, '_').toLowerCase(), brand: piece.product || piece.area, website: 'REDUCIENDODANO.CL' },
       canvas: { width: Math.max(800, Math.round(dims.width)), height: Math.max(600, Math.round(dims.height)), real_size_cm: { width: 0, height: 0 }, safe_margin_px: 40 },
