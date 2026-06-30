@@ -93,9 +93,18 @@ function renderCfgEl(el: ConfigElement, pal: PaletteType, isSel: boolean, onSele
         <line x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2} stroke={ss||rc(e.stroke)} strokeWidth={sw||e.stroke_width||1} />
       </g>;
     }
-    case 'svg_image':
-      // svg_image se renderiza fuera del SVG en el contenedor HTML
-      return null;
+    case 'svg_image': {
+      const e = el as SvgImageElement;
+      const href = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(e.content)}`;
+      return (
+        <g key={e._id} onClick={ev => { ev.stopPropagation(); onSelect(); }} className="cursor-pointer">
+          <image href={href} x={e.x} y={e.y} width={e.w} height={e.h}
+            preserveAspectRatio="xMidYMid meet" opacity={e.opacity ?? 1} />
+          {isSel && <rect x={e.x-4} y={e.y-4} width={e.w+8} height={e.h+8}
+            fill="none" stroke="#3b82f6" strokeWidth={3} strokeDasharray="10 6" />}
+        </g>
+      );
+    }
     case 'text': {
       const e = el as TextElement;
       return <g key={e._id} onClick={ev=>{ev.stopPropagation();onSelect();}} className="cursor-pointer">
@@ -922,11 +931,9 @@ const loadSvgPiece = useCallback(async (piece: SvgPiece) => {
               {showGrid && <g opacity={.12}>{Array.from({length:Math.ceil(config.canvas.width/100)+1},(_,i)=><line key={`v${i}`} x1={i*100} y1={0} x2={i*100} y2={config.canvas.height} stroke="#999" strokeWidth={1}/>)}
                 {Array.from({length:Math.ceil(config.canvas.height/100)+1},(_,i)=><line key={`h${i}`} x1={0} y1={i*100} x2={config.canvas.width} y2={i*100} stroke="#999" strokeWidth={1}/>)}</g>}
               <rect x={config.canvas.safe_margin_px} y={config.canvas.safe_margin_px} width={config.canvas.width-config.canvas.safe_margin_px*2} height={config.canvas.height-config.canvas.safe_margin_px*2} fill="none" stroke="#ccc" strokeWidth={1} strokeDasharray="12 8" opacity={.25}/>
-              {allEls.filter(e=>['rect','panel','circle','line'].includes(e.type)).map(e=><g key={e._id} onMouseDown={ev=>onMD(ev,e._id!)} className="cursor-move">{renderCfgEl(e,pal,multi.includes(e._id!),()=>{})}</g>)}
+              {allEls.filter(e=>['svg_image','rect','panel','circle','line'].includes(e.type)).map(e=><g key={e._id} onMouseDown={ev=>onMD(ev,e._id!)} className="cursor-move">{renderCfgEl(e,pal,multi.includes(e._id!),()=>{})}</g>)}
               {allEls.filter(e=>['text','paragraph','list'].includes(e.type)).map(e=><g key={e._id} onMouseDown={ev=>onMD(ev,e._id!)} className="cursor-move">{renderCfgEl(e,pal,multi.includes(e._id!),()=>{})}</g>)}
             </svg>
-            {/* SVG importado como HTML absoluto */}
-            {(()=>{const svgEl=allEls.find(e=>e.type==='svg_image');if(!svgEl)return null;const e=svgEl as SvgImageElement;const href=`data:image/svg+xml;charset=utf-8,${encodeURIComponent(e.content)}`;return <img src={href} style={{position:'absolute',left:e.x*zoom,top:e.y*zoom,width:e.w*zoom,height:e.h*zoom}}/>;})()}
           </div>
         </div>
 
@@ -1047,6 +1054,17 @@ function PropEditor({el,pal,updEl}:{el:ConfigElement;pal:PaletteType;updEl:(id:s
   if (el.type==='line') { const e=el as LineElement; return <>
     <div className="grid grid-cols-2 gap-1.5"><F l="X1"><input type="number" value={e.x1} onChange={v=>updEl(e._id!,{x1:+v.target.value} as any)} className={inp}/></F><F l="Y1"><input type="number" value={e.y1} onChange={v=>updEl(e._id!,{y1:+v.target.value} as any)} className={inp}/></F><F l="X2"><input type="number" value={e.x2} onChange={v=>updEl(e._id!,{x2:+v.target.value} as any)} className={inp}/></F><F l="Y2"><input type="number" value={e.y2} onChange={v=>updEl(e._id!,{y2:+v.target.value} as any)} className={inp}/></F></div>
     <F l="Stroke"><div className="flex items-center gap-1.5"><select value={e.stroke||''} onChange={v=>updEl(e._id!,{stroke:v.target.value} as any)} className={sel+' flex-1'}>{palKeys.map(k=><option key={k} value={k}>{k}</option>)}</select><input type="number" value={e.stroke_width||1} onChange={v=>updEl(e._id!,{stroke_width:+v.target.value} as any)} className={inp+' !w-14'}/></div></F>
+  </>;}
+
+  if (el.type==='svg_image') { const e=el as SvgImageElement; return <>
+    <div className="grid grid-cols-2 gap-1.5">
+      <F l="X"><input type="number" value={e.x} onChange={v=>updEl(e._id!,{x:+v.target.value} as any)} className={inp}/></F>
+      <F l="Y"><input type="number" value={e.y} onChange={v=>updEl(e._id!,{y:+v.target.value} as any)} className={inp}/></F>
+      <F l="Ancho"><input type="number" value={e.w} onChange={v=>updEl(e._id!,{w:+v.target.value} as any)} className={inp}/></F>
+      <F l="Alto"><input type="number" value={e.h} onChange={v=>updEl(e._id!,{h:+v.target.value} as any)} className={inp}/></F>
+    </div>
+    <F l="Opacidad"><div className="flex items-center gap-1.5"><input type="range" min={0} max={1} step={.05} value={e.opacity??1} onChange={v=>updEl(e._id!,{opacity:+v.target.value} as any)} className="flex-1"/><span className="text-[9px] text-zinc-500 w-8">{Math.round((e.opacity??1)*100)}%</span></div></F>
+    <div className="rounded border border-zinc-800 bg-black/30 p-2 text-[10px] text-zinc-500">SVG base importado. Se exporta dentro del config.json y ahora se puede seleccionar, mover, redimensionar y alinear.</div>
   </>;}
 
   return null;

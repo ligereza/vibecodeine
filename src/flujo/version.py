@@ -1,8 +1,8 @@
 """Versión y changelog de flujo."""
 
-__version__ = "0.48.1"
+__version__ = "0.48.2"
 VERSION = __version__
-__version_info__ = (0, 48, 1)
+__version_info__ = (0, 48, 2)
 
 
 def get_version():
@@ -11,6 +11,16 @@ def get_version():
 
 def get_changelog():
     return {
+        "0.48.2": {
+            "titulo": "Hotfix SVG Studio svg_image editable",
+            "fecha": "2026-06-30",
+            "highlights": [
+                "SVG Studio renderiza `svg_image` dentro del SVG editor en vez de overlay HTML fantasma",
+                "Los SVG importados desde Galeria/Config Editor ahora se pueden seleccionar, mover, redimensionar y alinear",
+                "PropEditor agrega controles X/Y/ancho/alto/opacidad para `svg_image`",
+                "Alinea el limite del servidor stdlib de SVGs por grupo con el hub principal",
+            ],
+        },
         "0.48.1": {
             "titulo": "Operational agent workspace baseline",
             "fecha": "2026-06-30",
