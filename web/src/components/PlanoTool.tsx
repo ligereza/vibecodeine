@@ -635,7 +635,152 @@ export default function PlanoTool() {
     e.stopPropagation();
   };
 
-  const printRider = () => window.print();
+  const escapeHtml = (value: string) => value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+
+  const symbolPrintMarkup = (el: Element) => {
+    const key = escapeHtml(el.symbolKey || 'symbol');
+    const label = escapeHtml(el.label.toUpperCase());
+    const cx = el.x + el.w / 2;
+    const cy = el.y + el.h / 2;
+    const r = Math.max(34, Math.min(el.w, el.h) * 0.32);
+    return `
+      <g>
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="#fff" stroke="#000" stroke-width="8"/>
+        <text x="${cx}" y="${cy + 12}" text-anchor="middle" font-size="34" font-family="Arial, sans-serif" font-weight="900" fill="#000">${key.slice(0, 3).toUpperCase()}</text>
+        <text x="${cx}" y="${el.y + el.h + 34}" text-anchor="middle" font-size="28" font-family="Arial, sans-serif" font-weight="700" fill="#000">${label}</text>
+      </g>`;
+  };
+
+  const buildPrintableMapSvg = () => {
+    const visible = elements.filter(el => el.visible);
+    const mapContent = visible.map(el => {
+      const label = escapeHtml(el.label.toUpperCase());
+      if (el.type === 'symbol') return symbolPrintMarkup(el);
+      return `
+        <g>
+          <rect x="${el.x}" y="${el.y}" width="${el.w}" height="${el.h}" rx="16" fill="none" stroke="#000" stroke-width="6"/>
+          <text x="${el.x + el.w / 2}" y="${el.y + el.h / 2}" text-anchor="middle" dominant-baseline="middle" font-size="42" font-family="Arial, sans-serif" font-weight="900" fill="#000">${label}</text>
+        </g>`;
+    }).join('\n');
+
+    const legendRows = visibleLegendSymbols.map((el, i) => {
+      const col = i % 4;
+      const row = Math.floor(i / 4);
+      const x = 150 + col * 680;
+      const y = 1960 + row * 64;
+      return `
+        <g>
+          <circle cx="${x}" cy="${y}" r="20" fill="#fff" stroke="#000" stroke-width="5"/>
+          <text x="${x + 36}" y="${y + 8}" font-size="24" font-family="Arial, sans-serif" font-weight="800" fill="#000">${escapeHtml(el.label.toUpperCase()).slice(0, 28)}</text>
+        </g>`;
+    }).join('\n');
+
+    return `
+      <svg viewBox="0 0 2970 2400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+        <rect width="2970" height="2400" fill="#fafafa"/>
+        <rect x="50" y="50" width="2870" height="1800" fill="none" stroke="#555" stroke-width="5" stroke-dasharray="30 20" rx="20"/>
+        ${mapContent}
+        <g>
+          <rect x="100" y="1885" width="2770" height="390" rx="18" fill="#f4f4f5" stroke="#000" stroke-width="4"/>
+          <text x="1485" y="1938" text-anchor="middle" font-size="32" font-family="Arial, sans-serif" font-weight="900" fill="#000">LEYENDA TÉCNICA</text>
+          ${legendRows}
+        </g>
+        <text x="100" y="2340" font-size="34" font-family="Arial, sans-serif" font-weight="900" fill="#000">${escapeHtml(`${eventName.toUpperCase()} · ${eventVenue.toUpperCase()} · ${eventDate}`)}</text>
+      </svg>`;
+  };
+
+  const printRider = () => {
+    const checklistHtml = CHECKLIST_SECTIONS.map(section => `
+      <section class="box">
+        <h3>${escapeHtml(section.title)}</h3>
+        <ul>
+          ${section.items.map(item => `<li><span class="check">${checkedItems.includes(item.text) ? 'X' : ''}</span>${escapeHtml(item.text)}</li>`).join('')}
+        </ul>
+      </section>`).join('');
+
+    const detailRows = elements.filter(el => el.visible).map(el => `
+      <tr>
+        <td>${escapeHtml(el.label.toUpperCase())}</td>
+        <td>${el.type === 'symbol' ? `SÍMBOLO TÉCNICO (${escapeHtml(el.symbolKey || '')})` : 'ÁREA DE MONTAJE'}</td>
+        <td>${el.w} × ${el.h} px</td>
+        <td>X: ${el.x}, Y: ${el.y}</td>
+      </tr>`).join('');
+
+    const html = `<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Rider Plano PDF</title>
+<style>
+  @page { size: A4 landscape; margin: 8mm; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; background: #fff; color: #000; font-family: Arial, Helvetica, sans-serif; font-size: 11px; }
+  .page { width: 281mm; min-height: 194mm; page-break-after: always; break-after: page; overflow: hidden; }
+  .page:last-child { page-break-after: auto; break-after: auto; }
+  header { border-bottom: 4px solid #000; padding-bottom: 10px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: end; }
+  h1 { font-size: 28px; margin: 0; font-weight: 900; font-style: italic; letter-spacing: -1px; }
+  h2 { font-size: 17px; margin: 0 0 8px; font-weight: 900; text-transform: uppercase; }
+  h3 { font-size: 10px; margin: 0 0 6px; font-weight: 900; text-transform: uppercase; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+  p { margin: 0 0 7px; line-height: 1.35; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .box { border: 1px solid #ccc; padding: 8px; border-radius: 6px; break-inside: avoid; }
+  ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
+  li { display: flex; gap: 6px; align-items: center; }
+  .check { width: 13px; height: 13px; border: 1px solid #000; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 900; flex: 0 0 auto; }
+  .map-page { display: flex; flex-direction: column; }
+  .map-frame { flex: 1 1 auto; min-height: 0; border: 1px solid #000; padding: 2mm; display: flex; align-items: center; justify-content: center; background: #fafafa; }
+  .map-frame svg { width: 100%; height: 178mm; max-height: 178mm; display: block; }
+  table { width: 100%; border-collapse: collapse; font-size: 10px; }
+  th, td { border: 1px solid #999; padding: 6px; text-align: left; }
+  th { background: #eee; font-weight: 900; }
+</style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <div><h1>RIDER TÉCNICO RD</h1><p>Documentación de Intervención en Terreno — ONG Reduciendo Daño</p></div>
+      <div><strong>ORGANIZACIÓN RD</strong><br/>Servicio de Testeo y Reducción de Daño v2026</div>
+    </header>
+    <h2>1. Antecedentes</h2>
+    <p><strong>Quiénes Somos:</strong> ${escapeHtml(orgTexts.who)}</p>
+    <p><strong>Objetivo del Servicio:</strong> ${escapeHtml(orgTexts.goal)}</p>
+    <p><strong>Evento:</strong> ${escapeHtml(eventName)} · <strong>Ubicación:</strong> ${escapeHtml(eventVenue)} · <strong>Fecha:</strong> ${escapeHtml(eventDate)}</p>
+    <h2 style="margin-top:12px">2. Requerimientos Operativos</h2>
+    <div class="grid">${checklistHtml}</div>
+  </main>
+  <main class="page map-page">
+    <h2>3. Esquema de Distribución del Stand</h2>
+    <div class="map-frame">${buildPrintableMapSvg()}</div>
+  </main>
+  <main class="page">
+    <h2>4. Detalle y Resumen de Elementos del Stand</h2>
+    <table><thead><tr><th>Elemento</th><th>Tipo</th><th>Dimensiones</th><th>Coordenadas</th></tr></thead><tbody>${detailRows}</tbody></table>
+  </main>
+<script>
+  window.onload = () => { window.focus(); setTimeout(() => window.print(), 250); };
+</script>
+</body>
+</html>`;
+
+    const win = window.open('', '_blank', 'noopener,noreferrer,width=1200,height=800');
+    if (!win) {
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `rider_pdf_${eventName.replace(/\s+/g, '_').toLowerCase()}.html`;
+      a.click();
+      URL.revokeObjectURL(url);
+      return;
+    }
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+  };
 
   const syncElementsFromChecked = (items: string[], baseElements = elements) => {
     const wanted = items.map(item => REQUIREMENT_SYMBOL_MAP[item]).filter(Boolean);
@@ -928,7 +1073,7 @@ export default function PlanoTool() {
         <div>
           <h3 className="text-2xl font-bold flex items-center gap-2">
             Rider RD · Herramienta de Plano
-            <span className="text-xs bg-emerald-500/20 text-emerald-400 font-black px-2 py-0.5 rounded-full uppercase tracking-wider">v0.47.10</span>
+            <span className="text-xs bg-emerald-500/20 text-emerald-400 font-black px-2 py-0.5 rounded-full uppercase tracking-wider">v0.47.11</span>
           </h3>
           <p className="text-zinc-400 text-sm mt-1">
             Documento operativo para intervención en terreno — Reduciendo Daño Chile

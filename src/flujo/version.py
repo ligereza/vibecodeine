@@ -1,8 +1,8 @@
 """Versión y changelog de flujo."""
 
-__version__ = "0.47.10"
+__version__ = "0.47.11"
 VERSION = __version__
-__version_info__ = (0, 47, 10)
+__version_info__ = (0, 47, 11)
 
 
 def get_version():
@@ -11,6 +11,16 @@ def get_version():
 
 def get_changelog():
     return {
+        "0.47.11": {
+            "titulo": "Hotfix PDF Plano/Rider en ventana imprimible aislada",
+            "fecha": "2026-06-30",
+            "highlights": [
+                "Reemplaza la impresion React/Tailwind del rider por un HTML imprimible aislado",
+                "El boton Imprimir Rider abre una ventana PDF limpia con 3 paginas: checklist, mapa y detalle",
+                "El plano se renderiza como SVG autonomo dentro de la hoja de mapa para evitar que desaparezca",
+                "Mantiene fixes de SVG Studio: cargar SVGs reales, Actualizar repo y Carpeta local",
+            ],
+        },
         "0.47.10": {
             "titulo": "Fix SVG previews reales y PDF multipagina Plano/Rider",
             "fecha": "2026-06-30",
