@@ -93,14 +93,9 @@ function renderCfgEl(el: ConfigElement, pal: PaletteType, isSel: boolean, onSele
         <line x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2} stroke={ss||rc(e.stroke)} strokeWidth={sw||e.stroke_width||1} />
       </g>;
     }
-    case 'svg_image': {
-      const e = el as SvgImageElement;
-      const href = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(e.content)}`;
-      return <g key={e._id} onClick={ev=>{ev.stopPropagation();onSelect();}} className="cursor-pointer">
-        <image href={href} x={e.x} y={e.y} width={e.w} height={e.h} preserveAspectRatio="xMidYMid meet" />
-        {isSel && <rect x={e.x-4} y={e.y-4} width={e.w+8} height={e.h+8} fill="none" stroke="#3b82f6" strokeWidth={2} strokeDasharray="8 4"/>}
-      </g>;
-    }
+    case 'svg_image':
+      // svg_image se renderiza fuera del SVG en el contenedor HTML
+      return null;
     case 'text': {
       const e = el as TextElement;
       return <g key={e._id} onClick={ev=>{ev.stopPropagation();onSelect();}} className="cursor-pointer">
@@ -919,7 +914,7 @@ const loadSvgPiece = useCallback(async (piece: SvgPiece) => {
               <button key={t} onClick={()=>addEl(t as any)} title={t} className="rounded p-1 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"><I className="h-3 w-3"/></button>)}
           </div>
           {/* Canvas SVG */}
-          <div className="overflow-auto" style={{maxHeight:'560px'}} onMouseMove={onMM} onMouseUp={onMU} onMouseLeave={onMU}>
+          <div className="overflow-auto" style={{maxHeight:'560px',position:'relative'}} onMouseMove={onMM} onMouseUp={onMU} onMouseLeave={onMU}>
             <svg viewBox={`0 0 ${config.canvas.width} ${config.canvas.height}`}
               style={{width:config.canvas.width*zoom,height:config.canvas.height*zoom,minWidth:config.canvas.width*zoom,minHeight:config.canvas.height*zoom}}
               onClick={()=>{setSelectedId(null);setMulti([]);}}>
@@ -927,9 +922,11 @@ const loadSvgPiece = useCallback(async (piece: SvgPiece) => {
               {showGrid && <g opacity={.12}>{Array.from({length:Math.ceil(config.canvas.width/100)+1},(_,i)=><line key={`v${i}`} x1={i*100} y1={0} x2={i*100} y2={config.canvas.height} stroke="#999" strokeWidth={1}/>)}
                 {Array.from({length:Math.ceil(config.canvas.height/100)+1},(_,i)=><line key={`h${i}`} x1={0} y1={i*100} x2={config.canvas.width} y2={i*100} stroke="#999" strokeWidth={1}/>)}</g>}
               <rect x={config.canvas.safe_margin_px} y={config.canvas.safe_margin_px} width={config.canvas.width-config.canvas.safe_margin_px*2} height={config.canvas.height-config.canvas.safe_margin_px*2} fill="none" stroke="#ccc" strokeWidth={1} strokeDasharray="12 8" opacity={.25}/>
-              {allEls.filter(e=>['rect','panel','circle','line','svg_image'].includes(e.type)).map(e=><g key={e._id} onMouseDown={ev=>onMD(ev,e._id!)} className="cursor-move">{renderCfgEl(e,pal,multi.includes(e._id!),()=>{})}</g>)}
+              {allEls.filter(e=>['rect','panel','circle','line'].includes(e.type)).map(e=><g key={e._id} onMouseDown={ev=>onMD(ev,e._id!)} className="cursor-move">{renderCfgEl(e,pal,multi.includes(e._id!),()=>{})}</g>)}
               {allEls.filter(e=>['text','paragraph','list'].includes(e.type)).map(e=><g key={e._id} onMouseDown={ev=>onMD(ev,e._id!)} className="cursor-move">{renderCfgEl(e,pal,multi.includes(e._id!),()=>{})}</g>)}
             </svg>
+            {/* SVG importado como HTML absoluto */}
+            {(()=>{const svgEl=allEls.find(e=>e.type==='svg_image');if(!svgEl)return null;const e=svgEl as SvgImageElement;const href=`data:image/svg+xml;charset=utf-8,${encodeURIComponent(e.content)}`;return <img src={href} style={{position:'absolute',left:e.x*zoom,top:e.y*zoom,width:e.w*zoom,height:e.h*zoom}}/>;})()}
           </div>
         </div>
 
