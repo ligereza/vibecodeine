@@ -151,11 +151,11 @@ type TopTab = 'gallery' | 'editor';
 
 export default function SvgVisualizer() {
   const [topTab, setTopTab] = useState<TopTab>('gallery');
+  const [pieceForEditor, setPieceForEditor] = useState<SvgPiece | null>(null);
 
-  useEffect(() => {
-    const handler = () => setTopTab('editor');
-    window.addEventListener('svgstudio-configure-piece', handler);
-    return () => window.removeEventListener('svgstudio-configure-piece', handler);
+  const configurePiece = useCallback((piece: SvgPiece) => {
+    setPieceForEditor(piece);
+    setTopTab('editor');
   }, []);
 
   return (
@@ -184,8 +184,8 @@ export default function SvgVisualizer() {
         </div>
       </div>
 
-      {topTab === 'gallery' && <GalleryView />}
-      {topTab === 'editor' && <EditorView />}
+      {topTab === 'gallery' && <GalleryView onConfigure={configurePiece} />}
+      {topTab === 'editor' && <EditorView pieceToLoad={pieceForEditor} />}
     </div>
   );
 }
@@ -194,7 +194,7 @@ export default function SvgVisualizer() {
 // GALLERY VIEW
 // ═══════════════════════════════════════════════
 
-function GalleryView() {
+function GalleryView({ onConfigure }: { onConfigure: (piece: SvgPiece) => void }) {
   const [pieces, setPieces] = useState<SvgPiece[]>(MOCK_SVG_INDEX);
   const [sourceStatus, setSourceStatus] = useState('Demo local');
   const [search, setSearch] = useState('');
@@ -295,7 +295,7 @@ function GalleryView() {
   const copySvg = (s: string) => { navigator.clipboard?.writeText(s); setCodeCopied(true); setTimeout(()=>setCodeCopied(false),1500); };
   const configurePiece = (piece: SvgPiece) => {
     if (!piece.svgContent) return;
-    window.dispatchEvent(new CustomEvent('svgstudio-configure-piece', { detail: piece }));
+    onConfigure(piece);
     setSelectedPiece(null);
   };
   const goTo = (d: -1|1) => { const n=currentIdx+d; if (n>=0&&n<filtered.length){setSelectedPiece(filtered[n]);setModalZoom(1);} };
@@ -612,7 +612,7 @@ function GalleryView() {
 // EDITOR VIEW (config.json)
 // ═══════════════════════════════════════════════
 
-function EditorView() {
+function EditorView({ pieceToLoad }: { pieceToLoad: SvgPiece | null }) {
   const [config, setConfig] = useState<PieceConfig|null>(null);
   const [activeDocIndex, setActiveDocIndex] = useState(0);
   const [selectedId, setSelectedId] = useState<string|null>(null);
@@ -625,7 +625,10 @@ function EditorView() {
   const [multi, setMulti] = useState<string[]>([]);
   const [showPal, setShowPal] = useState(false);
   const [dragging, setDragging] = useState<{id:string;sx:number;sy:number;ox:number;oy:number}|null>(null);
+  const [repoPieces, setRepoPieces] = useState<SvgPiece[]>([]);
+  const [repoStatus, setRepoStatus] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
+  const svgFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { loadCfg(DEMO_CONFIGS['Etiqueta RD — IMPULSO']); }, []);
 
@@ -653,14 +656,44 @@ function EditorView() {
     setZoom(dims.width > 1800 ? 0.35 : 0.65);
   }, []);
 
-  useEffect(() => {
-    const handler = (event: Event) => {
-      const piece = (event as CustomEvent<SvgPiece>).detail;
-      if (piece) loadSvgPiece(piece);
-    };
-    window.addEventListener('svgstudio-configure-piece', handler);
-    return () => window.removeEventListener('svgstudio-configure-piece', handler);
+
+
+  const refreshEditorSvgs = useCallback(async () => {
+    setRepoStatus('Actualizando SVGs…');
+    try {
+      const list = typeof window !== 'undefined' && window.location.protocol === 'file:' ? MOCK_SVG_INDEX : await loadFromApi();
+      setRepoPieces(list.filter(piece => Boolean(piece.svgContent)));
+      setRepoStatus(`${list.filter(piece => Boolean(piece.svgContent)).length} SVGs configurables`);
+    } catch (error) {
+      setRepoPieces(MOCK_SVG_INDEX);
+      setRepoStatus(`Demo (${error instanceof Error ? error.message : 'sin API'})`);
+    }
+  }, []);
+
+  const loadLocalSvgForEditor = useCallback(async (files: FileList | null) => {
+    const file = Array.from(files || []).find(item => item.name.toLowerCase().endsWith('.svg'));
+    if (!file) return;
+    const svgContent = await file.text();
+    const dims = svgDims(svgContent);
+    loadSvgPiece({
+      id: `local_${file.name.replace(/[^a-z0-9]+/gi, '_').toLowerCase()}`,
+      name: file.name,
+      type: 'etiqueta',
+      area: 'comun',
+      medio: 'impresion',
+      herramienta: 'archivo local',
+      realSizeCm: 'local',
+      canvasPx: dims ? `${dims.width}×${dims.height}` : 'SVG',
+      colors: extractColors(svgContent),
+      lastModified: new Date(file.lastModified || Date.now()).toISOString().slice(0, 10),
+      status: 'borrador',
+      svgContent,
+      notes: file.name,
+    });
   }, [loadSvgPiece]);
+
+  useEffect(() => { refreshEditorSvgs(); }, [refreshEditorSvgs]);
+  useEffect(() => { if (pieceToLoad?.svgContent) loadSvgPiece(pieceToLoad); }, [pieceToLoad, loadSvgPiece]);
 
   const doc = config?.documents[activeDocIndex];
   const allEls = useMemo(()=>{
@@ -784,6 +817,16 @@ function EditorView() {
             {Object.keys(DEMO_CONFIGS).map(n=><button key={n} onClick={()=>loadCfg(DEMO_CONFIGS[n])} className="w-full px-3 py-1.5 text-left text-[11px] text-zinc-400 hover:bg-zinc-800 hover:text-white">{n}</button>)}
           </div>
         </div>
+        <div className="relative group">
+          <button className="flex items-center gap-1 rounded-md border border-emerald-800/50 bg-emerald-950/25 px-2.5 py-1.5 text-[11px] text-emerald-300 hover:bg-emerald-900/40">
+            <Shapes className="h-3 w-3"/> SVGs repo <ChevronDown className="h-3 w-3"/></button>
+          <div className="invisible group-hover:visible absolute left-0 top-full z-20 mt-1 max-h-72 w-72 overflow-y-auto rounded-md border border-zinc-800 bg-zinc-900 py-0.5 shadow-xl">
+            <button onClick={refreshEditorSvgs} className="w-full px-3 py-1.5 text-left text-[11px] font-bold text-emerald-300 hover:bg-zinc-800">Actualizar lista · {repoStatus || 'repo'}</button>
+            {repoPieces.map(piece=><button key={piece.id} onClick={()=>loadSvgPiece(piece)} className="w-full px-3 py-1.5 text-left text-[11px] text-zinc-400 hover:bg-zinc-800 hover:text-white">{piece.name}</button>)}
+          </div>
+        </div>
+        <button onClick={()=>svgFileRef.current?.click()} className="flex items-center gap-1 rounded-md border border-zinc-800 bg-zinc-900/50 px-2.5 py-1.5 text-[11px] text-zinc-400 hover:text-zinc-200"><FileCode className="h-3 w-3"/>SVG local</button>
+        <input ref={svgFileRef} type="file" accept=".svg,image/svg+xml" className="hidden" onChange={e=>loadLocalSvgForEditor(e.target.files)}/>
         <button onClick={()=>setShowJsonInput(!showJsonInput)} className="flex items-center gap-1 rounded-md border border-zinc-800 bg-zinc-900/50 px-2.5 py-1.5 text-[11px] text-zinc-400 hover:text-zinc-200"><Upload className="h-3 w-3"/>JSON</button>
         <button onClick={()=>fileRef.current?.click()} className="flex items-center gap-1 rounded-md border border-zinc-800 bg-zinc-900/50 px-2.5 py-1.5 text-[11px] text-zinc-400 hover:text-zinc-200"><Upload className="h-3 w-3"/>Archivo</button>
         <input ref={fileRef} type="file" accept=".json" className="hidden" onChange={e=>{const f=e.target.files?.[0];if(f){const r=new FileReader();r.onload=()=>{try{loadCfg(JSON.parse(r.result as string));}catch{}};r.readAsText(f);}}}/>

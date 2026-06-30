@@ -641,17 +641,46 @@ export default function PlanoTool() {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 
+  const symbolIconMarkup = (key: string, color: string, cx: number, cy: number, scale: number) => {
+    const sw = Math.max(5, 7 * scale);
+    const c = color;
+    const x = (n: number) => cx + (n - 80) * scale;
+    const y = (n: number) => cy + (n - 80) * scale;
+    switch (key) {
+      case 'power':
+        return `<path d="M ${x(88)} ${y(28)} L ${x(52)} ${y(88)} H ${x(82)} L ${x(72)} ${y(132)} L ${x(112)} ${y(70)} H ${x(82)} Z" fill="${c}"/>`;
+      case 'water':
+        return `<path d="M ${x(80)} ${y(24)} C ${x(116)} ${y(70)} ${x(126)} ${y(92)} ${x(110)} ${y(118)} C ${x(94)} ${y(144)} ${x(58)} ${y(144)} ${x(48)} ${y(116)} C ${x(38)} ${y(88)} ${x(58)} ${y(66)} ${x(80)} ${y(24)} Z" fill="none" stroke="${c}" stroke-width="${sw}"/>`;
+      case 'table':
+        return `<rect x="${x(28)}" y="${y(54)}" width="${104*scale}" height="${42*scale}" rx="${6*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><path d="M ${x(46)} ${y(96)} V ${y(130)} M ${x(114)} ${y(96)} V ${y(130)}" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/>`;
+      case 'chairs':
+        return `<path d="M ${x(44)} ${y(48)} V ${y(112)} H ${x(88)} M ${x(88)} ${y(112)} V ${y(134)} M ${x(94)} ${y(48)} V ${y(112)} H ${x(128)} M ${x(128)} ${y(112)} V ${y(134)}" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/>`;
+      case 'tent':
+        return `<path d="M ${x(22)} ${y(122)} L ${x(80)} ${y(34)} L ${x(138)} ${y(122)} Z M ${x(80)} ${y(34)} V ${y(122)}" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linejoin="round"/>`;
+      case 'security':
+        return `<path d="M ${x(80)} ${y(22)} L ${x(124)} ${y(40)} V ${y(76)} C ${x(124)} ${y(104)} ${x(106)} ${y(126)} ${x(80)} ${y(140)} C ${x(54)} ${y(126)} ${x(36)} ${y(104)} ${x(36)} ${y(76)} V ${y(40)} Z" fill="none" stroke="${c}" stroke-width="${sw}"/><path d="M ${x(62)} ${y(80)} L ${x(76)} ${y(94)} L ${x(102)} ${y(62)}" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/>`;
+      case 'medical':
+        return `<path d="M ${x(80)} ${y(58)} V ${y(106)} M ${x(56)} ${y(82)} H ${x(104)}" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/><path d="M ${x(80)} ${y(136)} C ${x(34)} ${y(96)} ${x(28)} ${y(66)} ${x(48)} ${y(46)} C ${x(62)} ${y(32)} ${x(78)} ${y(42)} ${x(80)} ${y(54)} C ${x(82)} ${y(42)} ${x(100)} ${y(32)} ${x(114)} ${y(46)} C ${x(134)} ${y(66)} ${x(126)} ${y(98)} ${x(80)} ${y(136)} Z" fill="none" stroke="${c}" stroke-width="${sw}"/>`;
+      case 'extinguisher':
+        return `<rect x="${x(60)}" y="${y(50)}" width="${42*scale}" height="${88*scale}" rx="${9*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><path d="M ${x(70)} ${y(50)} V ${y(34)} H ${x(94)} V ${y(50)} M ${x(94)} ${y(62)} H ${x(120)} L ${x(134)} ${y(52)}" stroke="${c}" fill="none" stroke-width="${sw}" stroke-linecap="round"/>`;
+      case 'testeo':
+        return `<circle cx="${cx}" cy="${cy}" r="${58*scale}" fill="${c}" fill-opacity="0.12" stroke="${c}" stroke-width="${sw}"/><path d="M ${x(60)} ${y(42)} H ${x(100)} M ${x(80)} ${y(42)} V ${y(82)} L ${x(112)} ${y(126)} H ${x(48)} L ${x(80)} ${y(82)}" fill="none" stroke="${c}" stroke-width="${sw}"/>`;
+      case 'contencion':
+        return `<circle cx="${cx}" cy="${cy}" r="${58*scale}" fill="${c}" fill-opacity="0.12" stroke="${c}" stroke-width="${sw}"/><path d="M ${x(80)} ${y(120)} C ${x(44)} ${y(88)} ${x(44)} ${y(62)} ${x(62)} ${y(52)} C ${x(74)} ${y(46)} ${x(80)} ${y(56)} ${x(80)} ${y(64)} C ${x(80)} ${y(56)} ${x(90)} ${y(46)} ${x(102)} ${y(52)} C ${x(120)} ${y(62)} ${x(116)} ${y(90)} ${x(80)} ${y(120)} Z" fill="${c}"/>`;
+      default:
+        return `<circle cx="${cx}" cy="${cy}" r="${48*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><text x="${cx}" y="${cy + 11*scale}" text-anchor="middle" font-size="${36*scale}" font-family="Arial" font-weight="900" fill="${c}">${escapeHtml(key.slice(0, 2).toUpperCase())}</text>`;
+    }
+  };
+
   const symbolPrintMarkup = (el: Element) => {
-    const key = escapeHtml(el.symbolKey || 'symbol');
     const label = escapeHtml(el.label.toUpperCase());
     const color = escapeHtml(el.color || '#111111');
     const cx = el.x + el.w / 2;
     const cy = el.y + el.h / 2;
-    const r = Math.max(34, Math.min(el.w, el.h) * 0.32);
+    const scale = Math.max(0.7, Math.min(el.w, el.h) / 170);
     return `
       <g>
-        <circle cx="${cx}" cy="${cy}" r="${r}" fill="${color}" fill-opacity="0.18" stroke="${color}" stroke-width="10"/>
-        <text x="${cx}" y="${cy + 12}" text-anchor="middle" font-size="34" font-family="Arial, sans-serif" font-weight="900" fill="${color}">${key.slice(0, 3).toUpperCase()}</text>
+        ${symbolIconMarkup(el.symbolKey || 'symbol', color, cx, cy, scale)}
         <text x="${cx}" y="${el.y + el.h + 34}" text-anchor="middle" font-size="28" font-family="Arial, sans-serif" font-weight="700" fill="${color}">${label}</text>
       </g>`;
   };
@@ -663,34 +692,36 @@ export default function PlanoTool() {
       if (el.type === 'symbol') return symbolPrintMarkup(el);
       return `
         <g>
-          <rect x="${el.x}" y="${el.y}" width="${el.w}" height="${el.h}" rx="16" fill="${escapeHtml(el.color)}" fill-opacity="0.38" stroke="${escapeHtml(el.color)}" stroke-width="8"/>
+          <rect x="${el.x}" y="${el.y}" width="${el.w}" height="${el.h}" rx="16" fill="${escapeHtml(el.color)}" fill-opacity="0.48" stroke="${escapeHtml(el.color)}" stroke-width="8"/>
           <text x="${el.x + el.w / 2}" y="${el.y + el.h / 2}" text-anchor="middle" dominant-baseline="middle" font-size="42" font-family="Arial, sans-serif" font-weight="900" fill="#111">${label}</text>
         </g>`;
     }).join('\n');
 
+    const legendHeight = Math.min(760, Math.max(190, 120 + Math.ceil(visibleLegendSymbols.length / 2) * 68));
     const legendRows = visibleLegendSymbols.map((el, i) => {
-      const col = i % 4;
-      const row = Math.floor(i / 4);
-      const x = 150 + col * 680;
-      const y = 1960 + row * 64;
+      const col = i % 2;
+      const row = Math.floor(i / 2);
+      const x = legendPos.x + 44 + col * 360;
+      const y = legendPos.y + 138 + row * 68;
+      const color = escapeHtml(el.color || '#111111');
       return `
         <g>
-          <circle cx="${x}" cy="${y}" r="20" fill="#fff" stroke="#000" stroke-width="5"/>
-          <text x="${x + 36}" y="${y + 8}" font-size="24" font-family="Arial, sans-serif" font-weight="800" fill="#000">${escapeHtml(el.label.toUpperCase()).slice(0, 28)}</text>
+          ${symbolIconMarkup(el.symbolKey || 'symbol', color, x + 20, y - 14, 0.32)}
+          <text x="${x + 58}" y="${y}" font-size="22" font-family="Arial, sans-serif" font-weight="800" fill="#333">${escapeHtml(el.label.toUpperCase()).slice(0, 18)}</text>
         </g>`;
     }).join('\n');
 
     return `
-      <svg viewBox="0 0 2970 2400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
-        <rect width="2970" height="2400" fill="#fafafa"/>
+      <svg viewBox="0 0 2970 2100" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+        <rect width="2970" height="2100" fill="#fafafa"/>
         <rect x="50" y="50" width="2870" height="1800" fill="none" stroke="#555" stroke-width="5" stroke-dasharray="30 20" rx="20"/>
         ${mapContent}
-        <g>
-          <rect x="100" y="1885" width="2770" height="390" rx="18" fill="#f4f4f5" stroke="#000" stroke-width="4"/>
-          <text x="1485" y="1938" text-anchor="middle" font-size="32" font-family="Arial, sans-serif" font-weight="900" fill="#000">LEYENDA TÉCNICA</text>
+        <g transform="translate(0,0)">
+          <rect x="${legendPos.x}" y="${legendPos.y}" width="760" height="${legendHeight}" rx="30" fill="#f4f4f5" fill-opacity="0.96" stroke="#222" stroke-width="5"/>
+          <text x="${legendPos.x + 380}" y="${legendPos.y + 70}" text-anchor="middle" font-size="36" font-family="Arial, sans-serif" font-weight="900" fill="#333">LEYENDA TÉCNICA</text>
           ${legendRows}
         </g>
-        <text x="100" y="2340" font-size="34" font-family="Arial, sans-serif" font-weight="900" fill="#000">${escapeHtml(`${eventName.toUpperCase()} · ${eventVenue.toUpperCase()} · ${eventDate}`)}</text>
+        <text x="100" y="2010" font-size="34" font-family="Arial, sans-serif" font-weight="900" fill="#222">${escapeHtml(`${eventName.toUpperCase()} · ${eventVenue.toUpperCase()} · ${eventDate}`)}</text>
       </svg>`;
   };
 
@@ -717,10 +748,10 @@ export default function PlanoTool() {
 <meta charset="utf-8" />
 <title>Rider Plano PDF</title>
 <style>
-  @page { size: A4 landscape; margin: 8mm; }
+  @page { size: A4; margin: 10mm; }
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body { margin: 0; background: #fff; color: #000; font-family: Arial, Helvetica, sans-serif; font-size: 11px; }
-  .page { width: 281mm; min-height: 194mm; page-break-after: always; break-after: page; overflow: hidden; }
+  .page { width: 190mm; min-height: 270mm; page-break-after: always; break-after: page; overflow: hidden; }
   .page:last-child { page-break-after: auto; break-after: auto; }
   header { border-bottom: 4px solid #000; padding-bottom: 10px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: end; }
   h1 { font-size: 28px; margin: 0; font-weight: 900; font-style: italic; letter-spacing: -1px; }
@@ -734,7 +765,7 @@ export default function PlanoTool() {
   .check { width: 13px; height: 13px; border: 1px solid #000; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 900; flex: 0 0 auto; }
   .map-page { display: flex; flex-direction: column; }
   .map-frame { flex: 1 1 auto; min-height: 0; border: 1px solid #000; padding: 2mm; display: flex; align-items: center; justify-content: center; background: #fafafa; }
-  .map-frame svg { width: 100%; height: 178mm; max-height: 178mm; display: block; }
+  .map-frame svg { width: 100%; height: auto; max-height: 235mm; display: block; }
   table { width: 100%; border-collapse: collapse; font-size: 10px; }
   th, td { border: 1px solid #999; padding: 6px; text-align: left; }
   th { background: #eee; font-weight: 900; }
@@ -761,9 +792,6 @@ export default function PlanoTool() {
     <h2>4. Detalle y Resumen de Elementos del Stand</h2>
     <table><thead><tr><th>Elemento</th><th>Tipo</th><th>Dimensiones</th><th>Coordenadas</th></tr></thead><tbody>${detailRows}</tbody></table>
   </main>
-<script>
-  window.onload = () => { window.focus(); setTimeout(() => window.print(), 250); };
-</script>
 </body>
 </html>`;
 
@@ -1079,7 +1107,7 @@ export default function PlanoTool() {
         <div>
           <h3 className="text-2xl font-bold flex items-center gap-2">
             Rider RD · Herramienta de Plano
-            <span className="text-xs bg-emerald-500/20 text-emerald-400 font-black px-2 py-0.5 rounded-full uppercase tracking-wider">v0.47.12</span>
+            <span className="text-xs bg-emerald-500/20 text-emerald-400 font-black px-2 py-0.5 rounded-full uppercase tracking-wider">v0.47.13</span>
           </h3>
           <p className="text-zinc-400 text-sm mt-1">
             Documento operativo para intervención en terreno — Reduciendo Daño Chile

@@ -1,8 +1,8 @@
 """Versión y changelog de flujo."""
 
-__version__ = "0.47.12"
+__version__ = "0.47.13"
 VERSION = __version__
-__version_info__ = (0, 47, 12)
+__version_info__ = (0, 47, 13)
 
 
 def get_version():
@@ -11,6 +11,17 @@ def get_version():
 
 def get_changelog():
     return {
+        "0.47.13": {
+            "titulo": "Rider PDF alineado al editor y SVG Studio configurable real",
+            "fecha": "2026-06-30",
+            "highlights": [
+                "El PDF del rider vuelve a respetar colores, iconos tecnicos y posicion de la leyenda del editor",
+                "Evita doble disparo de impresion y mantiene impresion directa por iframe",
+                "Formato PDF vuelve a A4 natural, no forzado horizontal extremo",
+                "Config Editor lista SVGs reales del repo y permite cargar SVG local",
+                "El boton Configurar este SVG ahora pasa el SVG abierto al editor sin quedarse en demos",
+            ],
+        },
         "0.47.12": {
             "titulo": "PDF directo con color y puente Galeria→Config SVG",
             "fecha": "2026-06-30",
