@@ -43,7 +43,7 @@ export default function ResolumePanel() {
           <Radio className="h-6 w-6" /> Resolume / Chataigne
         </h1>
         <p className="mt-1 text-sm text-zinc-500">
-          Automatizacion de shows con SMPTE/OSC. Genera XML pre-flight para Resolume Arena + Chataigne.
+          Automatizacion de shows con SMPTE/OSC. Genera XML pre-flight, CSV OSC y .noisette experimental para Resolume Arena + Chataigne.
         </p>
       </div>
 
@@ -132,7 +132,7 @@ export default function ResolumePanel() {
             </div>
 
             <div className="text-xs text-zinc-500 space-y-1">
-              <p><strong className="text-zinc-400">Salida esperada:</strong> jobs/&#123;job_id&#125;/deliverables/show_automation.xml</p>
+              <p><strong className="text-zinc-400">Salidas:</strong> show_automation.xml + show_automation.experimental.noisette + osc_cues.csv</p>
               <p><strong className="text-zinc-400">Acciones OSC:</strong> /composition/layers/&#123;layer&#125;/clips/&#123;clip&#125;/connect</p>
               <p><strong className="text-zinc-400">Spec:</strong> tools/resolume_chataigne_automator/SPEC.md</p>
             </div>
@@ -154,7 +154,7 @@ export default function ResolumePanel() {
               <li>&#8226; Entrada SMPTE HH:MM:SS:FF</li>
               <li>&#8226; Salida OSC a {host}:{port}</li>
               <li>&#8226; Acciones /composition/layers/&#123;layer&#125;/clips/&#123;clip&#125;/connect</li>
-              <li>&#8226; Soporte futuro para .noisette nativo de Chataigne</li>
+              <li>&#8226; .noisette experimental; para compatibilidad total usar template exportado desde tu Chataigne</li>
             </ul>
           </div>
 
