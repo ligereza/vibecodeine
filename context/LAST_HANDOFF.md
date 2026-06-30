@@ -181,3 +181,31 @@ Historical material should be archived, not deleted blindly.
 1. Extend `py -m flujo suplementos validate` with deeper visual/prepress checks (safe margins, contrast sampling and bleed) beyond the current mechanical SVG preflight.
 2. Extend `prepare_supplement_job_assets` to support generating multipage PDFs from the command line or hub directly.
 3. Split the very large `src/flujo/cli.py` into submodules (`cli_jobs.py`, `cli_suplementos.py`, etc.) for cleaner maintenance.
+
+---
+
+**Update 2026-06-30 - Agente 3 arquitectura dual y Resolume base**
+
+- Rewrote README.md and AGENTS.md with clean sections 1 to 12.
+- Added Mandamiento Cero rules: no incomplete patches, no silent try/except pass, no placeholders in final delivery, mandatory compile/build report.
+- Officialized dual web workspace direction:
+  - Modo RD: SUPLEMENTOS, cotizaciones, 10x14 templates, automatic SVG back covers, printed stand/testeo plans.
+  - Modo Studio: EVENTOS, SvgVisualizer, Instagram flyers, Resolume/Chataigne automation.
+- Documented Gmail subject routing:
+  - subject:eventos/evento -> [EVENTOS]
+  - subject:suplementos/suplemento -> [SUPLEMENTOS]
+- Added Resolume/Chataigne base spec at tools/resolume_chataigne_automator/SPEC.md.
+- Added src/flujo/resolume package with automator preflight XML generation.
+- Added CLI command: py -m flujo resolume automatizar jobs/<job_id>
+- Created delegation project folders:
+  - projects/agente1_flyers_web/
+  - projects/agente2_resolume_chataigne/
+- Verification run in sandbox:
+  - compileall for src/flujo/resolume and src/flujo/cli.py: OK
+  - demo CLI generation for Resolume XML: OK
+  - XML parse with xml.etree.ElementTree: OK
+
+Next recommended steps:
+1. Agente 1: implement visual workspace split in web/src/components/AppShell.tsx and verify with npm run build:context.
+2. Agente 2: expand Resolume parser/generator tests and package airdrop_resolume_automator.zip after py -m compileall src/flujo/resolume.
+3. If applying these Agente 3 changes to another clone, use the generated airdrop package and run py scripts/validate_airdrop.py then py scripts/run_airdrop_checks.py "agente3 resolume base y docs duales".

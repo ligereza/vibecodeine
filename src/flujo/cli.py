@@ -105,6 +105,7 @@ privacy_app = typer.Typer(help="Privacidad para textos antes de IA externa.", no
 brief_app = typer.Typer(help="Operaciones sobre briefs.", no_args_is_help=True)
 intake_app = typer.Typer(help="Intake estructurado de pedidos (JSON 1.0).", no_args_is_help=True)
 eventos_app = typer.Typer(help="Automatizaciones del area EVENTOS.", no_args_is_help=True)
+resolume_app = typer.Typer(help="Automatizacion de shows Resolume/Chataigne por SMPTE/OSC.", no_args_is_help=True)
 render_app = typer.Typer(help="Render y validación de piezas vectoriales.", no_args_is_help=True)
 airdrop_app = typer.Typer(help="Sistema de actualización profesional (airdrops).", no_args_is_help=True)
 datadrop_app = typer.Typer(help="Gestión de datadrops (fotos reales terminadas).", no_args_is_help=True)
@@ -115,6 +116,7 @@ app.add_typer(privacy_app, name="privacy")
 app.add_typer(brief_app, name="brief")
 app.add_typer(intake_app, name="intake")
 app.add_typer(eventos_app, name="eventos")
+app.add_typer(resolume_app, name="resolume")
 app.add_typer(render_app, name="render")
 app.add_typer(airdrop_app, name="airdrop")
 app.add_typer(datadrop_app, name="datadrop")
@@ -1209,6 +1211,41 @@ def eventos_flyer_auto(
         console.print(f"  py -m flujo eventos flyer-auto \"{url}\" --run-droplet")
         console.print(f"  py -m flujo eventos flyer-auto \"{url}\" --render-blender")
         console.print(f"  py -m flujo eventos flyer-auto \"{url}\" --render-blender --open-blender")
+
+
+# ============================================================
+# Resolume / Chataigne
+# ============================================================
+
+@resolume_app.command("automatizar")
+def resolume_automatizar(
+    job: Path = typer.Argument(..., help="ruta al job EVENTOS con intake.json o brief.md"),
+    fps: int = typer.Option(30, "--fps", help="frames por segundo para validar SMPTE"),
+    host: str = typer.Option("127.0.0.1", "--host", help="host OSC de Resolume Arena"),
+    port: int = typer.Option(7000, "--port", help="puerto OSC de Resolume Arena"),
+    output: Optional[Path] = typer.Option(None, "--output", "-o", help="XML de salida"),
+):
+    """Generar XML pre-flight Chataigne/OSC para Resolume desde un setlist SMPTE.
+
+    Lee `intake.json` o `brief.md` dentro del job, extrae cues `HH:MM:SS:FF`
+    y escribe `deliverables/show_automation.xml` con acciones OSC a Resolume.
+    """
+    from .resolume.automator import generate_show_automation, parse_smpte_setlist
+
+    if not job.exists():
+        _err(f"No existe: {job}")
+    try:
+        cues = parse_smpte_setlist(job, fps=fps)
+        out_path = generate_show_automation(job, fps=fps, host=host, port=port, output=output)
+    except Exception as e:
+        _err(str(e))
+    _section("Resolume / Chataigne automation")
+    _ok(f"XML generado: {out_path}")
+    console.print(f"  cues:       [bold]{len(cues)}[/]")
+    console.print(f"  fps:        [cyan]{fps}[/]")
+    console.print(f"  OSC target: [cyan]{host}:{port}[/]")
+    for cue in cues:
+        console.print(f"  · {cue.smpte}  {cue.title}  -> {cue.osc_address()}")
 
 
 # ============================================================

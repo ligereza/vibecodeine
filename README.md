@@ -1,56 +1,64 @@
 # flujo · workspace operativo para pedidos, jobs y entregas
 
-**flujo** convierte pedidos de diseño en trabajo trazable: pedido -> job -> brief -> diseño -> revisión -> entrega.
+**flujo** convierte pedidos de diseño, eventos y suplementos en trabajo trazable: pedido -> job -> brief -> diseño/automatización -> revisión -> entrega.
 
-Este repositorio funciona como un hub local operativo para recibir pedidos, organizar trabajo, revisar entregables y mantener una línea visual coherente sin depender de herramientas externas pesadas.
+El repositorio funciona como hub local para recibir pedidos, organizar jobs, revisar entregables, mantener coherencia visual y automatizar tareas de EVENTOS y SUPLEMENTOS sin depender de plataformas pesadas.
 
-## Puntos de entrada recomendados
+## Índice operativo
 
-- Hub diario: `py -m flujo app`
-- Estado operativo: `py -m flujo health`
-- Continuidad del trabajo: `context/LAST_HANDOFF.md`
-- Historial de handoffs: `docs/handoffs/README.md`
-
-## Estado operativo actual
-
-- Hub React en `flujo app` con dashboard, jobs, intake, plano/rider y visualizador SVG.
-- Frontend en `web/` con React/Vite; build local con `npm run build:context`.
-- EVENTOS usa presets operativos UNDER / BASE / MAINSTREAM para rider/plano.
-- Workflow listo para eventos, suplementos, briefs, jobs y entregas visuales.
-
-```txt
-Gmail / WhatsApp / GitHub Issue
-  -> pedido ordenado por area
-  -> job o descarga Instagram
-  -> diseno / revision / entrega
-  -> portal visual para jefatura
-```
+1. [Lectura obligatoria y Mandamiento Cero](#1-lectura-obligatoria-y-mandamiento-cero)
+2. [Entrada diaria](#2-entrada-diaria)
+3. [Modo Dual: RD vs Studio](#3-modo-dual-rd-vs-studio)
+4. [Ruteo entrante Gmail / Apps Script](#4-ruteo-entrante-gmail--apps-script)
+5. [GitHub Issues y Projects](#5-github-issues-y-projects)
+6. [Jobs, intake y cotizaciones](#6-jobs-intake-y-cotizaciones)
+7. [Modo RD: suplementos, cotizaciones y plano](#7-modo-rd-suplementos-cotizaciones-y-plano)
+8. [Modo Studio: eventos, Instagram y Resolume](#8-modo-studio-eventos-instagram-y-resolume)
+9. [Portal para jefatura](#9-portal-para-jefatura)
+10. [Verificación, airdrops y sync](#10-verificación-airdrops-y-sync)
+11. [Estructura principal](#11-estructura-principal)
+12. [Próximas mejoras recomendadas](#12-próximas-mejoras-recomendadas)
 
 ---
 
-## 1. Lectura obligatoria para agentes
+## 1. Lectura obligatoria y Mandamiento Cero
 
 Si eres una IA o vas a retomar el repo, lee en este orden:
 
-1. `context/LAST_HANDOFF.md`  
-   Fuente principal de continuidad. Esta en ASCII-only para evitar errores en Windows/Git Bash.
-2. `docs/handoffs/README.md`  
-   Indice del historial operativo y de los handoffs archivados.
-3. `docs/AGENT_OPERATING_MANUAL.md`  
-   Manual operativo de agentes, delegacion y forma de trabajar.
-4. `docs/FLUJO_AREAS_EVENTOS_SUPLEMENTOS.md`  
-   Explica las dos rutas reales de pedidos: EVENTOS y SUPLEMENTOS.
-5. `docs/GMAIL_A_REPO_GRATIS.md`  
-   Explica como Gmail crea Issues sin monday.com.
+1. `context/LAST_HANDOFF.md` — fuente principal de continuidad.
+2. `docs/handoffs/README.md` — índice del historial operativo.
+3. `AGENTS.md` — contrato de trabajo para agentes.
+4. `docs/AGENT_OPERATING_MANUAL.md` — manual de operación y delegación.
+5. `docs/FLUJO_AREAS_EVENTOS_SUPLEMENTOS.md` — rutas EVENTOS y SUPLEMENTOS.
+6. `docs/GMAIL_A_REPO_GRATIS.md` — puente Gmail -> GitHub Issues.
 
-Reglas para agentes:
+### Mandamiento Cero de Autorevisión
+
+- Tolerancia cero a código mediocre, parches incompletos, placeholders o silencios peligrosos.
+- Prohibido ocultar errores con bloques mudos tipo `try/except: pass`.
+- Prohibido dejar marcadores de trabajo incompleto como `TODO`, `completar luego`, `...` o `NotImplementedError` en entregas finales.
+- Todo cambio Python debe verificarse al menos con:
+
+```bash
+py -m compileall src/flujo
+```
+
+- Todo cambio web debe verificarse en `web/` con:
+
+```bash
+npm run build:context
+```
+
+- Toda entrega de agente debe cerrar con un apartado llamado **Reporte Formal de Verificación y Tolerancia Cero a Errores** o el título específico pedido en su prompt.
+
+Reglas permanentes:
 
 ```txt
 - El usuario trabaja en Windows + Git Bash.
-- Usar py, no python, en instrucciones para el usuario.
+- En instrucciones para el usuario usar py, no python.
 - Mantener context/LAST_HANDOFF.md en ASCII-only.
 - No guardar tokens, credenciales ni datos sensibles.
-- Entregar cambios como airdrop si no hay acceso directo al repo.
+- Entregar como airdrop si no hay acceso directo al repo.
 ```
 
 ---
@@ -61,12 +69,6 @@ En Windows / Git Bash:
 
 ```bash
 py -m flujo app
-```
-
-Generar un prompt listo para IA web a partir de un pedido o correo:
-
-```bash
-py -m flujo ai-prompt "Necesito cotizar suplementos" --area suplementos
 ```
 
 Modo escritorio:
@@ -81,79 +83,61 @@ Verificar estado:
 py -m flujo verify
 ```
 
----
+Generar un prompt listo para IA web a partir de un pedido o correo:
 
-## 3. Flujo real por areas
-
-### EVENTOS
-
-Entrada esperada:
-
-```txt
-Correo con asunto que contiene "eventos" o "evento"
-```
-
-Uso:
-
-```txt
-EVENTOS -> link Instagram -> datos desde flyer/post -> preset rider/plano -> descarga con flujo/instaloader -> cartelera/flyer
-```
-
-Tambien puede pedir:
-
-```txt
-brief / plano app / SVG / pieza visual
-```
-
-En esos casos se crea job normal.
-
-Presets operativos para rider/plano:
-
-```txt
-UNDER       -> 2 voluntarios, 1 mesa, 2 sillas, electricidad/luz basica
-BASE        -> 4 voluntarios, 2 mesas, 4 sillas, stand + testeo
-MAINSTREAM  -> 8 voluntarios, 3 mesas, 8 sillas, alto flujo tipo Espacio Riesco
-```
-
-Documento:
-
-```txt
-docs/EVENTOS_PRESETS_RIDER.md
-```
-
-### SUPLEMENTOS
-
-Entrada esperada:
-
-```txt
-Correo con asunto que contiene "suplementos" o "suplemento"
-```
-
-Uso:
-
-```txt
-SUPLEMENTOS -> nuevo pedido / modificacion / correccion / cotizacion
-```
-
-Piezas posibles:
-
-```txt
-etiqueta / flyer / pendon / post Instagram / stickers / stand / logo-sello / brief comercial
-```
-
-Documento operativo:
-
-```txt
-docs/FLUJO_AREAS_EVENTOS_SUPLEMENTOS.md
+```bash
+py -m flujo ai-prompt "Necesito cotizar suplementos" --area suplementos
 ```
 
 ---
 
-## 4. Gmail sin monday.com
+## 3. Modo Dual: RD vs Studio
 
-No se conecta Gmail directo al repo. Gmail crea **GitHub Issues**.
+`flujo` mantiene un único backend local y una única app servida por `py -m flujo app`, pero la interfaz visual debe separar dos espacios de trabajo.
 
-Configuracion recomendada en Google Apps Script:
+### Modo RD (ONG Reduciendo Daño)
+
+Aísla trabajo institucional de RD:
+
+```txt
+SUPLEMENTOS
+cotizaciones base
+plantillas 10x14 cm
+contraportadas SVG automáticas
+plano impreso de teatro/stands/testeo
+rider y costos de stands
+```
+
+### Modo Studio / Personal (VJ & Club)
+
+Aísla trabajo personal/artístico:
+
+```txt
+EVENTOS
+visor SvgVisualizer
+flyers/carteleras desde Instagram
+shows Resolume Arena
+automatización Chataigne por SMPTE/OSC
+```
+
+Justificación: un solo backend local ahorra recursos, pero la interfaz evita mezclar presupuestos ONG con setlists, VJ loops y automatizaciones personales.
+
+---
+
+## 4. Ruteo entrante Gmail / Apps Script
+
+Gmail no se conecta directo al repo. El puente recomendado es Google Apps Script creando GitHub Issues.
+
+Rutas oficiales por asunto:
+
+```txt
+subject:eventos     -> Issue [EVENTOS]     -> labels: area/eventos, estado/por-revisar, gmail
+subject:evento      -> Issue [EVENTOS]     -> labels: area/eventos, estado/por-revisar, gmail
+subject:suplementos -> Issue [SUPLEMENTOS] -> labels: area/suplementos, estado/por-revisar, gmail
+subject:suplemento  -> Issue [SUPLEMENTOS] -> labels: area/suplementos, estado/por-revisar, gmail
+```
+
+Configuración base recomendada:
 
 ```txt
 GITHUB_TOKEN = github_pat_...
@@ -164,22 +148,13 @@ GMAIL_LOOKBACK = 7d
 GMAIL_ROUTES = subject:eventos|EVENTOS|pedido,area/eventos,estado/por-revisar,gmail,instagram,action/descargar-ig;subject:evento|EVENTOS|pedido,area/eventos,estado/por-revisar,gmail,instagram,action/descargar-ig;subject:suplementos|SUPLEMENTOS|pedido,area/suplementos,estado/por-revisar,gmail;subject:suplemento|SUPLEMENTOS|pedido,area/suplementos,estado/por-revisar,gmail
 ```
 
-Con esto no necesitas escribir "flujo" en el asunto.
-
-Ejemplos de asunto:
-
-```txt
-Eventos - flyer viernes
-Suplementos - modificar etiqueta Omega 3
-```
-
 Script:
 
 ```txt
 tools/gmail_to_github_issues.gs
 ```
 
-Guia:
+Guía:
 
 ```txt
 docs/GMAIL_A_REPO_GRATIS.md
@@ -207,6 +182,8 @@ instagram
 action/descargar-ig
 action/crear-job
 action/cotizar
+action/resolume
+action/chataigne
 estado/por-revisar
 estado/pendiente-datos
 estado/en-diseno
@@ -216,36 +193,7 @@ estado/entregado
 
 ---
 
-## 6. Portal para jefatura
-
-Generar portal visual:
-
-```bash
-py -m flujo portal --repo-url https://github.com/ligereza/vibecodeine
-```
-
-Salida:
-
-```txt
-context/portal_jefe.html
-```
-
-Muestra estados, pendientes y proximas acciones sin usar monday.com.
-
----
-
-## 7. GitHub sync local/remote
-
-Sincronizar el repositorio local con GitHub desde esta máquina:
-
-```bash
-py -m flujo github-sync --status
-py -m flujo github-sync --push -m "actualizar assets de diseño"
-```
-
-Esto muestra la rama actual, el remote configurado y sube los cambios locales cuando se solicita.
-
-## 8. Jobs e intake
+## 6. Jobs, intake y cotizaciones
 
 Crear job desde correo/texto:
 
@@ -254,7 +202,7 @@ py -m flujo job new "nombre pedido" --email inbox/correo.txt
 py -m flujo job prepare jobs/<job>
 ```
 
-Intake JSON:
+Procesar intake JSON:
 
 ```bash
 py -m flujo intake json inbox/pedido.json
@@ -268,7 +216,7 @@ jobs/<folio>/estado.md
 jobs/<folio>/resultado.md
 ```
 
-Cotizacion multiformato:
+Cotización multiformato:
 
 ```bash
 py -m flujo brief paquete-cotizacion jobs/<job>
@@ -276,70 +224,67 @@ py -m flujo brief paquete-cotizacion jobs/<job>
 
 ---
 
-## 8. EVENTOS: descarga Instagram + Photoshop local
+## 7. Modo RD: suplementos, cotizaciones y plano
 
-Para EVENTOS con link Instagram ahora hay un comando directo para tu PC:
+### Suplementos RD
+
+Listar suplementos:
+
+```bash
+py -m flujo suplementos list
+```
+
+Generar contraportada SVG 10x14 cm:
+
+```bash
+py -m flujo suplementos contraportada "Impulso" --output salida.svg
+```
+
+Validar SVGs antes de revisar/exportar:
+
+```bash
+py -m flujo suplementos validate svg/suplementos_rd/04_contraportadas/generadas/*.svg
+```
+
+### Plano / rider / stands
+
+Generar plano SVG:
+
+```bash
+py -m flujo plano projects/plano/ejemplos/evento_ejemplo.json --output plano.svg
+```
+
+Validar plano antes de imprimir/exportar:
+
+```bash
+py -m flujo plano projects/plano/ejemplos/evento_ejemplo.json --validate
+```
+
+Rider y costos:
+
+```bash
+py -m flujo plano projects/plano/ejemplos/evento_ejemplo.json --rider
+py -m flujo plano projects/plano/ejemplos/evento_ejemplo.json --costs
+```
+
+---
+
+## 8. Modo Studio: eventos, Instagram y Resolume
+
+### Descarga Instagram + Photoshop/Blender local
+
+Para EVENTOS con link Instagram:
 
 ```bash
 py -m flujo eventos flyer-auto "https://www.instagram.com/p/XXXX/"
 ```
 
-Hace esto:
-
-```txt
-descarga Instagram con instaloader
-copia la primera imagen a C:\rd\AUTOMATIZACION\input_ig.jpg
-genera C:\rd\AUTOMATIZACION\palette_ig.png
-genera C:\rd\AUTOMATIZACION\palette_ig.json
-NO abre Photoshop ni Blender por defecto
-```
-
-Cuando quieras autorizar el droplet:
+Por defecto descarga con `instaloader`, genera paleta y no abre apps externas. Para autorizar pasos locales:
 
 ```bash
 py -m flujo eventos flyer-auto "https://www.instagram.com/p/XXXX/" --run-droplet
-```
-
-Para renderizar una vista previa de Blender:
-
-```bash
 py -m flujo eventos flyer-auto "https://www.instagram.com/p/XXXX/" --render-blender
-```
-
-Eso usa:
-
-```txt
-C:\rd\AUTOMATIZACION\cartelera.blend
-```
-
-y genera:
-
-```txt
-C:\rd\AUTOMATIZACION\preview_cartelera.png
-```
-
-Si quieres renderizar y abrir Blender:
-
-```bash
 py -m flujo eventos flyer-auto "https://www.instagram.com/p/XXXX/" --render-blender --open-blender
-```
-
-El comando pregunta antes de abrir apps externas:
-
-```txt
-Droplet_Flyer.exe + historia.psd
-cartelera.blend
-```
-
-Rutas esperadas en Windows:
-
-```txt
-C:\rd\AUTOMATIZACION\Droplet_Flyer.exe
-C:\rd\AUTOMATIZACION\historia.psd
-C:\rd\AUTOMATIZACION\cartelera.blend
-C:\rd\AUTOMATIZACION\input_ig.jpg
-C:\rd\AUTOMATIZACION\palette_ig.png
-C:\rd\AUTOMATIZACION\preview_cartelera.png
 ```
 
 Regla:
@@ -348,57 +293,101 @@ Regla:
 Usar instaloader. No usar yt-dlp.
 ```
 
-Tu automatizacion Photoshop queda local y bajo autorizacion humana.
+### Resolume + Chataigne por SMPTE/OSC
 
----
-
-## 9. Comandos utiles
+Los shows sincronizados por SMPTE entran por la ruta de EVENTOS y se transforman en jobs locales. El comando oficial nuevo es:
 
 ```bash
-py -m flujo health
-py -m flujo version
-py -m flujo verify
-py -m flujo app
-py -m flujo portal --repo-url https://github.com/ligereza/vibecodeine
-py -m flujo render formats
-py -m flujo clean
+py -m flujo resolume automatizar jobs/<job_id>
+```
+
+Opciones:
+
+```bash
+py -m flujo resolume automatizar jobs/<job_id> --fps 25
+py -m flujo resolume automatizar jobs/<job_id> --host 127.0.0.1 --port 7000
+```
+
+Salida esperada:
+
+```txt
+jobs/<job_id>/deliverables/show_automation.xml
+```
+
+El XML pre-flight configura:
+
+```txt
+entrada SMPTE HH:MM:SS:FF
+salida OSC a 127.0.0.1:7000
+acciones /composition/layers/{layer}/clips/{clip}/connect
+```
+
+Especificación:
+
+```txt
+tools/resolume_chataigne_automator/SPEC.md
 ```
 
 ---
 
-## 10. Airdrops
+## 9. Portal para jefatura
 
-Flujo normal recomendado:
+Generar portal visual:
+
+```bash
+py -m flujo portal --repo-url https://github.com/ligereza/vibecodeine
+```
+
+Salida:
+
+```txt
+context/portal_jefe.html
+```
+
+Muestra estados, pendientes y próximas acciones sin monday.com.
+
+---
+
+## 10. Verificación, airdrops y sync
+
+Verificación integral:
+
+```bash
+py -m flujo verify
+```
+
+Validación mínima Python antes de entregar:
+
+```bash
+py -m compileall src/flujo
+```
+
+Build web antes de entregar cambios React/TypeScript:
+
+```bash
+cd web
+npm run build:context
+```
+
+Flujo normal de airdrop:
 
 ```bash
 py scripts/validate_airdrop.py
 py scripts/run_airdrop_checks.py "mensaje"
 ```
 
-Ese es el camino principal. No uses flags extra salvo que el validador o el handoff lo pidan explicitamente.
-
-Si un apply ya se hizo y fallo despues en checks/checkpoint:
+Si un apply ya se hizo y falló después en checks/checkpoint:
 
 ```bash
 py scripts/run_airdrop_checks.py --resume "mensaje"
 ```
 
-Si un airdrop modifica el motor de airdrop, recien ahi validar con:
+Sincronizar el repositorio local con GitHub desde la máquina del usuario:
 
 ```bash
-py scripts/validate_airdrop.py --allow-airdrop-engine
-py scripts/run_airdrop_checks.py "mensaje" --allow-airdrop-engine
+py -m flujo github-sync --status
+py -m flujo github-sync --push -m "actualizar flujo"
 ```
-
-Regla practica antes de correr el runner:
-
-```bash
-git status --short
-```
-
-Si aparecen carpetas pesadas o de otro proyecto, como `logo3d/`, sacarlas del repo o agregarlas al ignore antes de ejecutar el checkpoint automatico.
-
-Si el airdrop trae un script de limpieza, correrlo despues de aplicar.
 
 Reglas:
 
@@ -407,28 +396,7 @@ Reglas:
 - No commitear datos sensibles.
 - No borrar sin listar antes.
 - Mantener LAST_HANDOFF actualizado y ASCII-only.
-- No dejar carpetas pesadas locales dentro del repo antes de un airdrop.
-```
-
-### Proyecto activo: logo_clean_lab
-
-Proyecto experimental para limpieza de logos en Illustrator:
-
-```txt
-projects/logo_clean_lab/
-tools/illustrator/scripts/logo_clean_master.jsx
-```
-
-Goal corto:
-
-```txt
-Probar y mejorar un script que alinee nodos horizontales/verticales, reduzca puntos extra y preserve curvas en letras mixtas como B/R/P/D.
-```
-
-Summary corto:
-
-```txt
-El logo ya existe y visualmente esta correcto; el script solo corrige imperfecciones pequenas. El aprendizaje se registra con reportes y resultados para ajustar reglas con evidencia.
+- No incluir caches, builds ni carpetas pesadas en airdrops.
 ```
 
 ---
@@ -436,63 +404,30 @@ El logo ya existe y visualmente esta correcto; el script solo corrige imperfecci
 ## 11. Estructura principal
 
 ```txt
-src/flujo/        codigo principal
-context/          handoff, portal, reportes
+src/flujo/        código principal
+web/              React/Vite para hub y visualizadores
+context/          handoff, portal, reportes y HTML compilados
 jobs/             trabajos locales
-projects/         proyectos visuales
-schemas/          intake JSON
+projects/         proyectos visuales y prompts delegados
+tools/            scripts auxiliares y especificaciones
 docs/             manuales operativos
-tools/            scripts auxiliares
+schemas/          intake JSON
 .github/          issue templates y workflows
+knowledge/        memoria operacional versionable
 ```
 
 ---
 
-## 12. Proxima mejora recomendada
+## 12. Próximas mejoras recomendadas
 
-Implementar:
-
-```bash
-py -m flujo issue import <numero-o-url>
-```
-
-Objetivo:
-
-```txt
-GitHub Issue [EVENTOS] + instagram -> preparar descarga
-GitHub Issue [SUPLEMENTOS] -> crear job/intake/cotizacion
-```
+1. Completar la separación visual en `web/src/components/AppShell.tsx` entre Modo RD y Modo Studio.
+2. Expandir `src/flujo/resolume/automator.py` hacia `.noisette` nativo cuando se valide el formato local de Chataigne.
+3. Implementar tests completos para parsing SMPTE y XML Resolume/Chataigne.
+4. Profundizar `py -m flujo suplementos validate` con preflight visual de márgenes, contraste y sangrado.
+5. Dividir `src/flujo/cli.py` en submódulos para mantenimiento más limpio.
 
 ---
 
 ## Licencia
 
 MIT
-
----
-
-## 7. Knowledge base local
-
-Memoria operacional versionable:
-
-```txt
-knowledge/productoras/
-knowledge/venues/
-knowledge/logos/
-knowledge/examples/
-```
-
-Comandos:
-
-```bash
-py -m flujo knowledge list productoras
-py -m flujo knowledge show productora creamfields
-py -m flujo knowledge classify "Creamfields Espacio Riesco rider cartelera"
-```
-
-Docs:
-
-```txt
-docs/KNOWLEDGE_BASE.md
-docs/AGENT_VISUAL_DIRECTOR.md
-```
