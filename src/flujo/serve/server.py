@@ -206,7 +206,7 @@ def api_list_svg_works():
                 total += 1
         if found:
             found.sort(key=lambda item: (0 if item["kind"] == "editable" else 1 if item["kind"] == "vectorizado" else 2, item["name"]))
-            groups[group_name] = found[:8]
+            groups[group_name] = found[:50]
     return {"groups": groups, "count": total, "root": "svg", "connected": True}
 
 
