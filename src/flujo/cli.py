@@ -1240,10 +1240,19 @@ def resolume_automatizar(
     except Exception as e:
         _err(str(e))
     _section("Resolume / Chataigne automation")
-    _ok(f"XML generado: {out_path}")
+    _ok(f"XML pre-flight generado: {out_path}")
+    sidecars = [
+        out_path.parent / "osc_cues.csv",
+        out_path.parent / f"{out_path.stem}.experimental.noisette",
+        out_path.parent / "README_CHATAIGNE.md",
+    ]
+    for sidecar in sidecars:
+        if sidecar.exists():
+            _ok(f"Sidecar: {sidecar}")
     console.print(f"  cues:       [bold]{len(cues)}[/]")
     console.print(f"  fps:        [cyan]{fps}[/]")
     console.print(f"  OSC target: [cyan]{host}:{port}[/]")
+    console.print("  nota:       [yellow].noisette experimental; para compatibilidad total usa template exportado desde tu Chataigne[/]")
     for cue in cues:
         console.print(f"  · {cue.smpte}  {cue.title}  -> {cue.osc_address()}")
 

@@ -305,6 +305,237 @@ def write_xml(root: ET.Element, output_path: Path) -> Path:
     return output_path
 
 
+
+def smpte_to_seconds(value: str, fps: int = 30) -> float:
+    """Convert HH:MM:SS:FF to seconds using the same validation as parser."""
+    h, m, s, f = parse_smpte_time(value, fps=fps)
+    return round(float(h * 3600 + m * 60 + s) + (f / fps), 4)
+
+
+def write_osc_csv(cues: list[ShowCue], output_path: Path, fps: int = 30) -> Path:
+    """Write a simple cue/OSC CSV for manual audit and fallback workflows."""
+    import csv
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("w", newline="", encoding="utf-8") as fh:
+        writer = csv.writer(fh)
+        writer.writerow(["smpte", "seconds", "title", "layer", "clip", "osc_address", "value"])
+        for cue in cues:
+            writer.writerow([
+                cue.smpte,
+                smpte_to_seconds(cue.smpte, fps=fps),
+                cue.title,
+                cue.layer,
+                cue.clip,
+                cue.osc_address(),
+                1,
+            ])
+    return output_path
+
+
+def _param(value: object, address: str, **extra: object) -> dict[str, object]:
+    data: dict[str, object] = {"value": value, "controlAddress": address}
+    data.update(extra)
+    return data
+
+
+def build_chataigne_noisette_experimental(
+    cues: list[ShowCue],
+    fps: int = 30,
+    host: str = "127.0.0.1",
+    port: int = 7000,
+) -> dict[str, object]:
+    """Build an experimental Chataigne .noisette JSON.
+
+    Chataigne's native .noisette schema depends on the app version and installed
+    modules. This structure is intentionally more complete than the early script
+    attempts, but it remains experimental until tested against a template saved
+    from the user's own Chataigne installation.
+    """
+    modules = [
+        {
+            "niceName": "OSC",
+            "type": "OSC",
+            "scripts": {"viewOffset": [0, 0], "viewZoom": 1.0},
+            "params": {
+                "parameters": [_param(False, "/logIncoming"), _param(True, "/logOutgoing")],
+                "containers": {
+                    "oscInput": {
+                        "parameters": [
+                            _param(False, "/enabled"),
+                            _param(12000, "/localPort", hexMode=False),
+                        ]
+                    },
+                    "oscOutputs": {
+                        "items": [
+                            {
+                                "niceName": "Resolume Arena",
+                                "type": "BaseItem",
+                                "parameters": [
+                                    _param(True, "/local"),
+                                    _param(host, "/remoteHost"),
+                                    _param(port, "/remotePort", hexMode=False),
+                                ],
+                            }
+                        ]
+                    },
+                },
+            },
+            "templates": {"viewOffset": [0, 0], "viewZoom": 1.0},
+            "values": {"viewOffset": [0, 0], "viewZoom": 1.0},
+        },
+        {
+            "niceName": "Sound Card",
+            "type": "Sound Card",
+            "params": {
+                "containers": {
+                    "ltc": {
+                        "parameters": [
+                            _param(True, "/enabled"),
+                            _param(float(fps), "/frameRate"),
+                        ]
+                    }
+                }
+            },
+            "values": {"viewOffset": [0, 0], "viewZoom": 1.0},
+        },
+    ]
+
+    processors: list[dict[str, object]] = []
+    for index, cue in enumerate(cues, start=1):
+        processors.append(
+            {
+                "niceName": f"Cue_{index:03d}_{cue.title[:24]}",
+                "editorIsCollapsed": True,
+                "type": "Action",
+                "parameters": [_param(True, "/once")],
+                "conditions": {
+                    "items": [
+                        {
+                            "niceName": "From Input Value",
+                            "type": "From Input Value",
+                            "parameters": [
+                                _param(True, "/enabled"),
+                                _param("/modules/Sound Card/values/ltc/ltcTime", "/inputValue"),
+                                _param(False, "/toggleMode"),
+                                _param(False, "/alwaysTrigger"),
+                            ],
+                            "comparator": {
+                                "parameters": [
+                                    _param("==", "/comparisonFunction"),
+                                    _param(smpte_to_seconds(cue.smpte, fps=fps), "/reference"),
+                                    _param(0.05, "/epsilon"),
+                                ],
+                                "hideInEditor": True,
+                            },
+                        }
+                    ],
+                    "viewOffset": [0, 0],
+                    "viewZoom": 1.0,
+                },
+                "consequences": {
+                    "parameters": [_param(False, "/cancelDelaysOnTrigger")],
+                    "items": [
+                        {
+                            "niceName": "Send OSC",
+                            "type": "Consequence",
+                            "commandModule": "OSC",
+                            "commandPath": "",
+                            "commandType": "Custom Message",
+                            "command": {
+                                "parameters": [_param(cue.osc_address(), "/address")],
+                                "paramLinks": {},
+                                "argManager": {
+                                    "items": [
+                                        {
+                                            "niceName": "value",
+                                            "type": "Integer",
+                                            "parameters": [_param(1, "/value", hexMode=False)],
+                                        }
+                                    ],
+                                    "viewOffset": [0, 0],
+                                    "viewZoom": 1.0,
+                                },
+                            },
+                        }
+                    ],
+                    "viewOffset": [0, 0],
+                    "viewZoom": 1.0,
+                },
+                "consequencesOff": {
+                    "parameters": [_param(False, "/cancelDelaysOnTrigger")],
+                    "viewOffset": [0, 0],
+                    "viewZoom": 1.0,
+                },
+            }
+        )
+
+    return {
+        "metaData": {"version": "1.9.17", "versionNumber": 67854},
+        "projectSettings": {
+            "containers": {
+                "dashboardSettings": {"parameters": [_param("", "/showDashboardOnStartup", enabled=False)]},
+                "customDefinitions": {},
+            }
+        },
+        "dashboardManager": {"viewOffset": [0, 0], "viewZoom": 1.0},
+        "parrots": {"viewOffset": [0, 0], "viewZoom": 1.0},
+        "layout": {"mainLayout": {"type": 1, "width": 1200, "height": 780, "direction": 2}, "windows": None},
+        "modules": {"items": modules},
+        "stateMachine": {
+            "currentState": "State 1",
+            "states": {
+                "items": [
+                    {
+                        "niceName": "State 1",
+                        "type": "State",
+                        "parameters": [_param(True, "/active"), _param(False, "/miniMode")],
+                        "processors": {"items": processors},
+                    }
+                ],
+                "viewOffset": [0, 0],
+                "viewZoom": 1.0,
+            },
+            "transitions": {"hideInEditor": True, "viewOffset": [0, 0], "viewZoom": 1.0},
+            "comments": {"hideInEditor": True, "viewOffset": [0, 0], "viewZoom": 1.0},
+        },
+        "customVariables": {},
+        "sequences": {},
+        "routers": {},
+        "moduleRouter": {"viewOffset": [0, 0], "viewZoom": 1.0},
+    }
+
+
+def write_noisette_experimental(data: dict[str, object], output_path: Path) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    json.loads(output_path.read_text(encoding="utf-8"))
+    return output_path
+
+
+def write_chataigne_readme(output_dir: Path, base_name: str) -> Path:
+    readme = output_dir / "README_CHATAIGNE.md"
+    readme.write_text(
+        f"""# Chataigne / Resolume output
+
+Archivos generados para `{base_name}`:
+
+- `{base_name}.xml`: pre-flight estable y validable.
+- `{base_name}.experimental.noisette`: intento de sesion nativa Chataigne. Si no abre, usar una plantilla real de tu Chataigne.
+- `osc_cues.csv`: referencia de timecodes y mensajes OSC.
+
+## Si el .noisette no abre
+
+1. Abre Chataigne.
+2. Crea un proyecto vacio con OSC output y tu entrada LTC/SMPTE.
+3. Guarda `template.noisette`.
+4. Entrega esa plantilla para crear un patcher compatible con tu version exacta.
+
+El XML y CSV siguen siendo utiles para verificar el mapeo.
+""",
+        encoding="utf-8",
+    )
+    return readme
+
 def generate_show_automation(
     job_path: str | Path,
     fps: int = 30,
@@ -312,9 +543,24 @@ def generate_show_automation(
     port: int = 7000,
     output: str | Path | None = None,
 ) -> Path:
-    """Generate ``show_automation.xml`` for one EVENTOS job."""
+    """Generate Resolume/Chataigne automation sidecars for one EVENTOS job.
+
+    Returns the stable XML path for backwards compatibility, and also writes:
+    - ``osc_cues.csv``
+    - ``<base>.experimental.noisette``
+    - ``README_CHATAIGNE.md``
+    """
     job = Path(job_path)
     cues = parse_smpte_setlist(job, fps=fps)
     root = build_chataigne_xml(cues, fps=fps, host=host, port=port)
     target = Path(output) if output else job / "deliverables" / "show_automation.xml"
-    return write_xml(root, target)
+    if target.suffix.lower() != ".xml":
+        target = target.with_suffix(".xml")
+    xml_path = write_xml(root, target)
+    out_dir = xml_path.parent
+    base = xml_path.stem
+    write_osc_csv(cues, out_dir / "osc_cues.csv", fps=fps)
+    noisette = build_chataigne_noisette_experimental(cues, fps=fps, host=host, port=port)
+    write_noisette_experimental(noisette, out_dir / f"{base}.experimental.noisette")
+    write_chataigne_readme(out_dir, base)
+    return xml_path

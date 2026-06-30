@@ -112,6 +112,11 @@ def test_generate_show_automation_writes_parseable_xml_with_expected_osc_default
     assert "/composition/layers/1/clips/1/connect" in xml_text
     assert "/composition/layers/1/clips/2/connect" in xml_text
     assert 'value="1"' in xml_text
+    assert (output.parent / "osc_cues.csv").exists()
+    noisette = output.parent / "show_automation.experimental.noisette"
+    assert noisette.exists()
+    assert json.loads(noisette.read_text(encoding="utf-8"))["metaData"]
+    assert (output.parent / "README_CHATAIGNE.md").exists()
 
 
 def test_parse_smpte_setlist_raises_clear_error_when_no_sources_exist(tmp_path: Path) -> None:

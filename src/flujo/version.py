@@ -1,8 +1,8 @@
 """Versión y changelog de flujo."""
 
-__version__ = "0.48.2"
+__version__ = "0.48.3"
 VERSION = __version__
-__version_info__ = (0, 48, 2)
+__version_info__ = (0, 48, 3)
 
 
 def get_version():
@@ -11,6 +11,16 @@ def get_version():
 
 def get_changelog():
     return {
+        "0.48.3": {
+            "titulo": "Resolume Chataigne sidecars y SVG Studio editable",
+            "fecha": "2026-06-30",
+            "highlights": [
+                "Resolume automatizar ahora genera XML pre-flight, CSV OSC, README y .noisette experimental",
+                "El CLI advierte que .noisette es experimental y recomienda template real de Chataigne para compatibilidad total",
+                "SVG Studio convierte SVGs reales con rect/circle/line/text a elementos editables del Config Editor",
+                "Mantiene fallback svg_image para SVGs vectorizados/path-heavy",
+            ],
+        },
         "0.48.2": {
             "titulo": "Hotfix SVG Studio svg_image editable",
             "fecha": "2026-06-30",
