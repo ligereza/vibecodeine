@@ -1,0 +1,29 @@
+{
+  "date": "2026-06-28",
+  "version": "0.42.1",
+  "goal": "Demo jefe: brief/rider/plano, cotizacion base, suplementos visualizados",
+  "done": [
+    "React hub unificado",
+    "PlanoTool React",
+    "SVG Visualizer con SVG reales",
+    "Presets EVENTOS UNDER/BASE/MAINSTREAM",
+    "Cotizacion base skeleton",
+    "Knowledge base skeleton",
+    "Examples ingest templates"
+  ],
+  "doing": [
+    "Preparar demo jefe",
+    "Consolidar handoff y plan anti-interrupcion"
+  ],
+  "next": [
+    "Logo clean lab bridge",
+    "Internet enrichment assistant",
+    "Format audit",
+    "Examples analysis UI"
+  ],
+  "resume_commands": [
+    "cd web && npm run typecheck && npm run build:context",
+    "py -m flujo verify",
+    "py -m flujo app"
+  ]
+}

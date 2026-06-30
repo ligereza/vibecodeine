@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2000px" height="2800px" viewBox="0 0 2000 2800">
+<metadata>03_hongos_adaptogenos / editable / 2000x2800 px</metadata>
+<g id="fondo_editable">
+<rect x="0" y="0" width="2000" height="2800" rx="0" fill="#F6EFE3"/>
+<circle cx="300" cy="300" r="380" fill="#7650D8" opacity=".16"/>
+<circle cx="1700" cy="200" r="330" fill="#315EE8" opacity=".08"/>
+<circle cx="1900" cy="2650" r="410" fill="none" stroke="#173F2F" stroke-width="90" opacity=".14"/>
+<circle cx="-40" cy="2400" r="230" fill="#7650D8" opacity=".10"/>
+</g>
+<g id="marco_y_decoracion_editable">
+<rect x="70" y="70" width="1860" height="2660" rx="70" fill="none" stroke="#CFC2B2" stroke-width="4" opacity=".7"/>
+<rect x="1600" y="210" width="210" height="92" rx="46" fill="#7650D8" stroke="#161513" stroke-width="6" transform="rotate(-14 1705 256)" opacity=".92"/>
+<rect x="1435" y="315" width="158" height="76" rx="38" fill="#F5C54D" stroke="#161513" stroke-width="5" transform="rotate(18 1514 353)" opacity=".86"/>
+</g>
+<g id="header_marca">
+<rect x="120" y="105" width="74" height="74" rx="24" fill="#173F2F"/>
+<text class="txt" x="136" y="153" fill="#FFFFFF" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="34" font-weight="700">RD</text>
+<text class="txt" x="215" y="161" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="700">Reduciendo Daño</text>
+<rect x="1520" y="116" width="360" height="60" rx="30" fill="#FFFFFF" stroke="#D9CEC0" stroke-width="2" opacity=".7"/>
+<text class="txt" x="1555" y="148" fill="#7650D8" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="24" font-weight="700">ADAPTÓGENOS</text>
+</g>
+<g id="titulo">
+<text class="txt" x="120" y="287" fill="#7650D8" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="27" font-weight="700">PRODUCTO</text>
+<text class="txt" x="120" y="390" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="85" font-weight="700">Hongos Adaptógenos</text>
+</g>
+<g id="cajas_editables">
+<rect x="120" y="660" width="1760" height="880" rx="44" fill="#FFFFFF" stroke="#D9CEC0" stroke-width="3" opacity=".64"/>
+<rect x="120" y="1600" width="1760" height="920" rx="44" fill="#FFFFFF" stroke="#D9CEC0" stroke-width="3" opacity=".64"/>
+</g>
+<g id="contenido_texto">
+<text class="txt" x="185" y="763" fill="#7650D8" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="48" font-weight="700">Descripción</text>
+<text class="txt" x="185" y="835" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="50" font-weight="400">Suplemento alimenticio en gomitas con tres hongos funcionales</text>
+<text class="txt" x="185" y="905.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="50" font-weight="400">— Cordyceps, Melena de León y Reishi — más L-teanina y</text>
+<text class="txt" x="185" y="975.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="50" font-weight="400">vitamina B12.</text>
+<text class="txt" x="185" y="1077.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="50" font-weight="400">Fórmula diseñada para acompañar procesos de regulación y</text>
+<text class="txt" x="185" y="1147.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="50" font-weight="400">adaptación al estrés, desde un enfoque natural y funcional,</text>
+<text class="txt" x="185" y="1217.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="50" font-weight="400">para quienes buscan apoyo en rutinas exigentes.</text>
+<text class="txt" x="185" y="1703" fill="#7650D8" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="48" font-weight="700">Nutrientes</text>
+<text x="185" y="1767" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="700">•</text>
+<text class="txt" x="235" y="1767" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="400">Cordyceps: hongo tradicionalmente asociado a energía y vitalidad.</text>
+<text x="185" y="1860.8" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="700">•</text>
+<text class="txt" x="235" y="1860.8" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="400">Melena de León (Hericium erinaceus): relacionado con funciones</text>
+<text class="txt" x="235" y="1919.6" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="400">cognitivas y salud neuronal.</text>
+<text x="185" y="2013.3999999999999" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="700">•</text>
+<text class="txt" x="235" y="2013.3999999999999" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="400">Reishi: utilizado tradicionalmente en contextos de adaptación al estrés.</text>
+<text x="185" y="2107.2" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="700">•</text>
+<text class="txt" x="235" y="2107.2" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="400">L-teanina: aminoácido asociado a estados de relajación sin sedación.</text>
+<text x="185" y="2201.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="700">•</text>
+<text class="txt" x="235" y="2201.0" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="400">Vitamina B12: contribuye al funcionamiento normal del sistema nervioso y</text>
+<text class="txt" x="235" y="2259.8" fill="#161513" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="42" font-weight="400">al metabolismo energético.</text>
+</g>
+<g id="footer">
+<line x1="120" y1="2640" x2="1880" y2="2640" stroke="#D9CEC0" stroke-width="5"/>
+<text class="txt" x="120" y="2716" fill="#173F2F" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="46" font-weight="700">@ REDUCIENDODANO.CL</text>
+<text class="txt" x="1060" y="2698" fill="#675F55" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="22" font-weight="700">VISITA NUESTRA WEB Y SÍGUENOS EN NUESTRAS REDES</text>
+<text class="txt" x="1060" y="2726" fill="#675F55" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="22" font-weight="700">SOCIALES</text>
+</g>
+</svg>
