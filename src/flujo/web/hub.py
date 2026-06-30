@@ -810,7 +810,7 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => n
                 })
                 total += 1
             if items:
-                groups[gname] = items[:8]  # limit per group for response size
+                groups[gname] = items[:50]  # limit per group for response size
         return {
             "groups": groups,
             "count": total,

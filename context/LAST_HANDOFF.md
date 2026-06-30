@@ -304,3 +304,23 @@ Update 2026-06-30 - Version alignment v0.48.1
 - Current tag: v0.48.1.
 - Verification expected: py -m flujo verify.
 
+
+---
+
+Update 2026-06-30 - SVG Studio fixes + removed incorrect SVGs
+
+- Fixed SVG Studio issues found during audit:
+  1. hub.py: Increased SVG list limit per group from 8 to 50 (groups[gname] = items[:50])
+  2. svgIndex.ts: Replaced MOCK_SVG_INDEX demo data with 16 real SVG entries (2000x2800 flyers)
+  3. SvgVisualizer.tsx: Changed dimension fallback from 1600x1000 to 2000x2800 (real flyer format)
+- Removed incorrect SVGs with wrong dimensions:
+  - svg/etiquetas_ejemplo/salida_generada/ (were 2800x2000, should be 3300x1300)
+  - svg/suplementos_rd/04_contraportadas/01_contraportada_base_10x14cm.svg (was 1181x1654, should be 2000x2800)
+- Rebuilt context/flujo_hub.html, context/plano_demo.html, context/svg_visualizer.html
+
+Version: 0.48.2
+
+Next recommended changes:
+1. Regenerate correct contraportada SVG at 2000x2800 px
+2. Regenerate correct etiquetas SVG at 3300x1300 px (horizontal format)
+3. Run full SVG validation: py -m flujo suplementos validate svg/suplementos_rd/02_editables_svg/*.svg
