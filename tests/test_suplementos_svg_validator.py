@@ -17,7 +17,7 @@ def test_validate_svg_file_ok(tmp_path: Path):
     report = validate_svg_file(svg, expected_size=EXPECTED_CONTRAPORTADA_SIZE)
     assert report["ok"] is True
     assert report["summary"]["width"] == 2000
-    assert report["summary"]["height"] == 1654
+    assert report["summary"]["height"] == 2800
 
 
 def test_validate_svg_file_detecta_placeholder_y_tamano(tmp_path: Path):
@@ -35,7 +35,7 @@ def test_validate_svg_file_detecta_placeholder_y_tamano(tmp_path: Path):
 
 
 def test_render_svg_validation_report():
-    report = {"ok": True, "errors": [], "warnings": [], "summary": {"path": "x.svg", "width": 1181, "height": 1654}}
+    report = {"ok": True, "errors": [], "warnings": [], "summary": {"path": "x.svg", "width": 2000, "height": 2800}}
     text = render_svg_validation_report(report)
     assert "VALIDACION SVG SUPLEMENTOS RD" in text
     assert "Estado: OK" in text
