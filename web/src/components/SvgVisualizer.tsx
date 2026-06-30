@@ -195,15 +195,53 @@ function GalleryView() {
   const [showCustom, setShowCustom] = useState(false);
   const [customSvg, setCustomSvg] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
+  const folderRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    let alive = true;
-    if (typeof window !== 'undefined' && window.location.protocol === 'file:') { setSourceStatus('Demo local'); return; }
-    setSourceStatus('Cargando...');
-    loadFromApi().then(d => alive && (setPieces(d), setSourceStatus(`${d.length} piezas`)))
-      .catch(() => alive && setSourceStatus('Fallback demo'));
-    return () => { alive = false; };
+  const refreshRepoSvgs = useCallback(async () => {
+    if (typeof window !== 'undefined' && window.location.protocol === 'file:') {
+      setPieces(MOCK_SVG_INDEX);
+      setSourceStatus('Demo local: abre con py -m flujo app para escanear svg/');
+      return;
+    }
+    setSourceStatus('Actualizando svg/…');
+    try {
+      const d = await loadFromApi();
+      setPieces(d.length ? d : MOCK_SVG_INDEX);
+      setSourceStatus(d.length ? `${d.length} SVGs desde repo` : 'Fallback demo');
+    } catch (error) {
+      setPieces(MOCK_SVG_INDEX);
+      setSourceStatus(`Fallback demo (${error instanceof Error ? error.message : 'sin API'})`);
+    }
   }, []);
+
+  const loadLocalSvgFiles = useCallback(async (files: FileList | null) => {
+    const list = Array.from(files || []).filter(file => file.name.toLowerCase().endsWith('.svg'));
+    if (!list.length) return;
+    const loaded = await Promise.all(list.map(async (file) => {
+      const svgContent = await file.text();
+      const dims = svgDims(svgContent);
+      const relativePath = (file as File & { webkitRelativePath?: string }).webkitRelativePath || file.name;
+      return {
+        id: `local_${relativePath.replace(/[^a-z0-9]+/gi, '_').toLowerCase()}`,
+        name: file.name,
+        type: relativePath.toLowerCase().includes('pendon') ? 'pendon' : relativePath.toLowerCase().includes('sticker') ? 'sticker' : relativePath.toLowerCase().includes('logo') ? 'logo' : relativePath.toLowerCase().includes('post') ? 'post-ig' : relativePath.toLowerCase().includes('flyer') ? 'flyer' : 'etiqueta',
+        area: relativePath.toLowerCase().includes('evento') ? 'eventos' : relativePath.toLowerCase().includes('supl') ? 'suplementos' : 'comun',
+        medio: 'impresion',
+        herramienta: 'carpeta local',
+        realSizeCm: 'local',
+        canvasPx: dims ? `${dims.width}×${dims.height}` : 'SVG',
+        colors: extractColors(svgContent),
+        lastModified: new Date(file.lastModified || Date.now()).toISOString().slice(0, 10),
+        status: 'borrador',
+        svgContent,
+        notes: relativePath,
+      } as SvgPiece;
+    }));
+    setPieces(loaded);
+    setSourceStatus(`${loaded.length} SVGs desde carpeta local`);
+  }, []);
+
+  useEffect(() => { refreshRepoSvgs(); }, [refreshRepoSvgs]);
 
   const filtered = useMemo(() => pieces.filter(p => {
     const q = search.toLowerCase();
@@ -284,6 +322,13 @@ function GalleryView() {
             <button onClick={()=>setViewMode('grid')} className={`rounded px-2 py-1.5 ${viewMode==='grid'?'bg-zinc-700 text-white':'text-zinc-500 hover:text-zinc-300'}`}><Grid3x3 className="h-4 w-4"/></button>
             <button onClick={()=>setViewMode('list')} className={`rounded px-2 py-1.5 ${viewMode==='list'?'bg-zinc-700 text-white':'text-zinc-500 hover:text-zinc-300'}`}><List className="h-4 w-4"/></button>
           </div>
+          <button onClick={refreshRepoSvgs} className="flex items-center gap-1.5 rounded-lg border border-emerald-800/60 bg-emerald-950/25 px-3 py-2 text-xs font-medium text-emerald-300 hover:bg-emerald-900/40">
+            <RotateCcw className="h-3.5 w-3.5"/> Actualizar repo
+          </button>
+          <button onClick={()=>folderRef.current?.click()} className="flex items-center gap-1.5 rounded-lg border border-zinc-800 px-3 py-2 text-xs font-medium text-zinc-400 hover:text-zinc-200">
+            <FileCode className="h-3.5 w-3.5"/> Carpeta local
+          </button>
+          <input ref={folderRef} type="file" accept=".svg,image/svg+xml" multiple className="hidden" onChange={e=>loadLocalSvgFiles(e.target.files)} {...({ webkitdirectory: 'true', directory: 'true' } as any)} />
           <button onClick={()=>setShowCustom(!showCustom)} className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium ${showCustom?'border-violet-600 bg-violet-950/50 text-violet-300':'border-zinc-800 text-zinc-400 hover:text-zinc-200'}`}>
             <Upload className="h-3.5 w-3.5"/> Pegar SVG
           </button>
@@ -346,6 +391,8 @@ function GalleryView() {
                   {piece.svgContent ? (
                     <div className="absolute inset-3 flex items-center justify-center svg-contain"
                       dangerouslySetInnerHTML={{__html:piece.svgContent}}/>
+                  ) : piece.svgUrl ? (
+                    <img src={piece.svgUrl} alt={piece.name} className="absolute inset-3 h-[calc(100%-1.5rem)] w-[calc(100%-1.5rem)] object-contain" />
                   ) : <div className="absolute inset-0 flex items-center justify-center text-2xl text-zinc-700">📄</div>}
                   {/* status */}
                   <span className={`absolute right-1.5 top-1.5 flex items-center gap-1 rounded-full border px-1.5 py-px text-[9px] font-bold backdrop-blur-sm ${st.bg} ${st.color}`}>
@@ -455,8 +502,8 @@ function GalleryView() {
                     {currentIdx>0 && <button onClick={()=>goTo(-1)} className="absolute left-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/50 p-1.5 text-zinc-300 backdrop-blur-sm hover:bg-black/70"><ChevronLeft className="h-4 w-4"/></button>}
                     {currentIdx>=0 && currentIdx<filtered.length-1 && <button onClick={()=>goTo(1)} className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/50 p-1.5 text-zinc-300 backdrop-blur-sm hover:bg-black/70"><ChevronRight className="h-4 w-4"/></button>}
                     <div className={`flex items-center justify-center overflow-auto p-6 ${bgCls}`} style={{minHeight:'440px'}}>
-                      {selectedPiece.svgContent && <div className="svg-modal-preview transition-transform" style={{transform:`scale(${modalZoom})`,transformOrigin:'center'}}
-                        dangerouslySetInnerHTML={{__html:selectedPiece.svgContent}}/>}
+                      {selectedPiece.svgContent ? <div className="svg-modal-preview transition-transform" style={{transform:`scale(${modalZoom})`,transformOrigin:'center'}}
+                        dangerouslySetInnerHTML={{__html:selectedPiece.svgContent}}/> : selectedPiece.svgUrl ? <img src={selectedPiece.svgUrl} alt={selectedPiece.name} className="max-h-[420px] max-w-full object-contain" style={{transform:`scale(${modalZoom})`,transformOrigin:'center'}}/> : null}
                     </div>
                     {currentIdx>=0 && <div className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-2.5 py-0.5 text-[9px] font-bold text-zinc-400 backdrop-blur-sm">{currentIdx+1}/{filtered.length}</div>}
                   </div>

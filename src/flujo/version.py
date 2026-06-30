@@ -1,8 +1,8 @@
 """Versión y changelog de flujo."""
 
-__version__ = "0.47.9"
+__version__ = "0.47.10"
 VERSION = __version__
-__version_info__ = (0, 47, 9)
+__version_info__ = (0, 47, 10)
 
 
 def get_version():
@@ -11,6 +11,17 @@ def get_version():
 
 def get_changelog():
     return {
+        "0.47.10": {
+            "titulo": "Fix SVG previews reales y PDF multipagina Plano/Rider",
+            "fecha": "2026-06-30",
+            "highlights": [
+                "SVG Studio ahora carga el contenido real de /svg desde la API y evita tarjetas con icono generico",
+                "Agrega botones Actualizar repo y Carpeta local para refrescar o seleccionar SVGs manualmente",
+                "Plano/Rider fuerza PDF multipagina A4 horizontal y separa portada/checklist, mapa y detalle",
+                "El mapa imprimible escala dentro de la pagina para evitar recortes",
+                "Se mantiene Plano/Rider estable y el Config Editor de SVG Studio",
+            ],
+        },
         "0.47.9": {
             "titulo": "SVG Studio y Hub web revisado sobre Plano/Rider estable",
             "fecha": "2026-06-30",

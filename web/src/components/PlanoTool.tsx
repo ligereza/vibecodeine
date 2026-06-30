@@ -799,7 +799,8 @@ export default function PlanoTool() {
   return (
     <div className="space-y-6">
       {/* Printable Area (Styled strictly for high contrast and paper output) */}
-      <div className="hidden print:block p-8 text-black bg-white font-sans text-xs">
+      <div data-print-rider className="rider-print-root hidden print:block text-black bg-white font-sans text-xs">
+        <section className="rider-print-page rider-info-page">
         <header className="border-b-4 border-black pb-4 mb-8 flex justify-between items-end">
           <div className="flex items-center gap-4">
             <img src="https://reduciendodano.cl/wp-content/uploads/2021/05/gn-1024x790.png" alt="Logo RD" className="h-16 w-auto object-contain" />
@@ -849,12 +850,12 @@ export default function PlanoTool() {
           </div>
         </section>
 
-        <div className="break-before-page" style={{ height: '20px' }} />
+        </section>
 
-        <section className="break-inside-avoid flex flex-col">
+        <section className="rider-print-page rider-map-page">
           <h2 className="text-lg font-black uppercase tracking-tight mb-2">3. Esquema de Distribución del Stand</h2>
-          <div className="border border-black p-4 bg-zinc-50 relative flex justify-center items-center">
-            <svg viewBox="0 0 2970 2400" className="w-full max-w-[95%] h-auto mx-auto">
+          <div className="rider-print-map-frame border border-black p-4 bg-zinc-50 relative flex justify-center items-center">
+            <svg viewBox="0 0 2970 2400" className="rider-print-map-svg w-full max-w-[95%] h-auto mx-auto">
               <rect width="100%" height="100%" fill="#fafafa" stroke="#ccc" />
               <rect x={50} y={50} width={2870} height={1800} fill="none" stroke="#666" strokeWidth={5} strokeDasharray="30 20" rx={20} />
               {elements.filter(e => e.visible).map(el => (
@@ -897,7 +898,7 @@ export default function PlanoTool() {
           </div>
         </section>
 
-        <section className="mt-8 break-inside-avoid">
+        <section className="rider-print-page rider-detail-page">
           <h2 className="text-lg font-black uppercase tracking-tight mb-4 border-b-2 border-black pb-1">4. Detalle y Resumen de Elementos del Stand</h2>
           <table className="w-full border-collapse border border-zinc-400 text-xs">
             <thead>
@@ -927,7 +928,7 @@ export default function PlanoTool() {
         <div>
           <h3 className="text-2xl font-bold flex items-center gap-2">
             Rider RD · Herramienta de Plano
-            <span className="text-xs bg-emerald-500/20 text-emerald-400 font-black px-2 py-0.5 rounded-full uppercase tracking-wider">v0.47.9</span>
+            <span className="text-xs bg-emerald-500/20 text-emerald-400 font-black px-2 py-0.5 rounded-full uppercase tracking-wider">v0.47.10</span>
           </h3>
           <p className="text-zinc-400 text-sm mt-1">
             Documento operativo para intervención en terreno — Reduciendo Daño Chile
