@@ -1,8 +1,8 @@
 """Versión y changelog de flujo."""
 
-__version__ = "0.48.3"
+__version__ = "0.48.4"
 VERSION = __version__
-__version_info__ = (0, 48, 3)
+__version_info__ = (0, 48, 4)
 
 
 def get_version():
@@ -11,6 +11,16 @@ def get_version():
 
 def get_changelog():
     return {
+        "0.48.4": {
+            "titulo": "Chataigne experimental layout visible",
+            "fecha": "2026-06-30",
+            "highlights": [
+                "El .noisette experimental ahora incluye un layout explicito con Modules, Inspector y State Machine visibles",
+                "Agrega paneles Logger, Sequences y Custom Variables para evitar que Chataigne abra en blanco",
+                "README_CHATAIGNE indica usar View Default Layout / State Machine si la UI no enfoca las acciones",
+                "Mantiene XML y CSV como salidas estables para auditar el mapeo OSC",
+            ],
+        },
         "0.48.3": {
             "titulo": "Resolume Chataigne sidecars y SVG Studio editable",
             "fecha": "2026-06-30",

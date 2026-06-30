@@ -479,7 +479,39 @@ def build_chataigne_noisette_experimental(
         },
         "dashboardManager": {"viewOffset": [0, 0], "viewZoom": 1.0},
         "parrots": {"viewOffset": [0, 0], "viewZoom": 1.0},
-        "layout": {"mainLayout": {"type": 1, "width": 1200, "height": 780, "direction": 2}, "windows": None},
+        "layout": {
+            "mainLayout": {
+                "type": 1,
+                "width": 1400,
+                "height": 900,
+                "direction": 2,
+                "shifters": [
+                    {
+                        "type": 1,
+                        "width": 1400,
+                        "height": 580,
+                        "direction": 1,
+                        "shifters": [
+                            {"type": 0, "width": 310, "height": 580, "currentContent": "Modules", "tabs": [{"name": "Modules"}]},
+                            {"type": 0, "width": 360, "height": 580, "currentContent": "Inspector", "tabs": [{"name": "Inspector"}]},
+                            {"type": 0, "width": 730, "height": 580, "currentContent": "State Machine", "tabs": [{"name": "State Machine"}, {"name": "Dashboard"}, {"name": "Module Router"}]},
+                        ],
+                    },
+                    {
+                        "type": 1,
+                        "width": 1400,
+                        "height": 320,
+                        "direction": 1,
+                        "shifters": [
+                            {"type": 0, "width": 250, "height": 320, "currentContent": "Sequences", "tabs": [{"name": "Sequences"}]},
+                            {"type": 0, "width": 750, "height": 320, "currentContent": "Logger", "tabs": [{"name": "Logger"}, {"name": "Warnings"}, {"name": "Help"}]},
+                            {"type": 0, "width": 400, "height": 320, "currentContent": "Custom Variables", "tabs": [{"name": "Custom Variables"}]},
+                        ],
+                    },
+                ],
+            },
+            "windows": None,
+        },
         "modules": {"items": modules},
         "stateMachine": {
             "currentState": "State 1",
@@ -529,6 +561,8 @@ Archivos generados para `{base_name}`:
 2. Crea un proyecto vacio con OSC output y tu entrada LTC/SMPTE.
 3. Guarda `template.noisette`.
 4. Entrega esa plantilla para crear un patcher compatible con tu version exacta.
+
+Si abre pero no ves acciones, usa View > Default Layout o revisa la pestana State Machine. Esta version intenta abrir con State Machine visible por defecto.
 
 El XML y CSV siguen siendo utiles para verificar el mapeo.
 """,
