@@ -1,0 +1,8 @@
+id: creamfields_primary
+producer_id: creamfields
+status: needs_vectorization
+source_quality: unknown
+workflow:
+  suggested_tool: logo_clean_lab
+  next_action: registrar fuente de imagen y vectorizar
+outputs: {}
