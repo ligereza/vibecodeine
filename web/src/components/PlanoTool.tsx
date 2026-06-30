@@ -121,6 +121,9 @@ const SYMBOL_CATALOG: SymbolSpec[] = [
 
 const SYMBOL_BY_KEY = Object.fromEntries(SYMBOL_CATALOG.map(s => [s.key, s])) as Record<string, SymbolSpec>;
 
+const PLANO_FRAME = { x: 50, y: 50, w: 2870, h: 1800 };
+const GRID = 20;
+
 const REQUIREMENT_SYMBOL_MAP: Record<string, TechnicalSymbolKey> = {
   'Medidas disponibles del recinto (int/ext)': 'scan',
   'Tipo de terreno (nivelado, estable)': 'terrain',
@@ -353,6 +356,65 @@ export default function PlanoTool() {
     [next[i], next[target]] = [next[target], next[i]];
     setElements(next);
   };
+
+  const alignSelected = (mode: 'left' | 'centerX' | 'right' | 'top' | 'centerY' | 'bottom') => {
+    if (!selectedId) return;
+    const frame = PLANO_FRAME;
+    setElements(prev => prev.map(el => {
+      if (el.id !== selectedId) return el;
+      if (mode === 'left') return { ...el, x: frame.x };
+      if (mode === 'centerX') return { ...el, x: Math.round(frame.x + (frame.w - el.w) / 2) };
+      if (mode === 'right') return { ...el, x: frame.x + frame.w - el.w };
+      if (mode === 'top') return { ...el, y: frame.y };
+      if (mode === 'centerY') return { ...el, y: Math.round(frame.y + (frame.h - el.h) / 2) };
+      if (mode === 'bottom') return { ...el, y: frame.y + frame.h - el.h };
+      return el;
+    }));
+  };
+
+  const snap = (value: number) => Math.round(value / GRID) * GRID;
+
+  const autoArrangePlano = () => {
+    const frame = PLANO_FRAME;
+    const rectArea = { x: frame.x + 120, y: frame.y + 220, w: 1800, h: frame.h - 360 };
+    const symbolArea = { x: frame.x + 2020, y: frame.y + 220, w: 740, h: frame.h - 360 };
+    const rectGap = 80;
+    const symbolGapX = 260;
+    const symbolGapY = 210;
+    let rectX = rectArea.x;
+    let rectY = rectArea.y;
+    let rowH = 0;
+    let symbolIndex = 0;
+
+    setElements(prev => prev.map(el => {
+      if (!el.visible) return el;
+      if (el.id === 'entrada') {
+        return { ...el, x: snap(frame.x + (frame.w - el.w) / 2), y: frame.y + 70 };
+      }
+      if (el.type === 'symbol') {
+        const col = symbolIndex % 2;
+        const row = Math.floor(symbolIndex / 2);
+        symbolIndex += 1;
+        return {
+          ...el,
+          x: snap(symbolArea.x + col * symbolGapX),
+          y: snap(symbolArea.y + row * symbolGapY),
+        };
+      }
+      if (rectX + el.w > rectArea.x + rectArea.w) {
+        rectX = rectArea.x;
+        rectY += rowH + rectGap;
+        rowH = 0;
+      }
+      const next = { ...el, x: snap(rectX), y: snap(Math.min(rectY, rectArea.y + rectArea.h - el.h)) };
+      rectX += el.w + rectGap;
+      rowH = Math.max(rowH, el.h);
+      return next;
+    }));
+    setLegendPos({ x: 2060, y: 120 });
+  };
+
+  const resetLegendPosition = () => setLegendPos({ x: 2060, y: 120 });
 
   const onMouseDown = useCallback((e: React.MouseEvent, id: string) => {
     e.preventDefault();
@@ -747,21 +809,21 @@ export default function PlanoTool() {
               ))}
               
               {/* High-contrast Technical Legend inside the printable SVG */}
-              <g transform="translate(1890, 900)">
-                <rect width={930} height={Math.max(230, 135 + Math.ceil(visibleLegendSymbols.length / 2) * 80)} rx={20} fill="#f4f4f5" stroke="#000" strokeWidth={4} />
-                <text x={465} y={72} textAnchor="middle" fontSize={34} fill="#000" fontWeight="black" fontFamily="monospace" style={{ letterSpacing: '0.05em' }}>
+              <g transform="translate(1580, 900)">
+                <rect width={1240} height={Math.min(760, Math.max(220, 128 + Math.ceil(visibleLegendSymbols.length / 3) * 72))} rx={20} fill="#f4f4f5" stroke="#000" strokeWidth={4} />
+                <text x={620} y={66} textAnchor="middle" fontSize={32} fill="#000" fontWeight="black" fontFamily="monospace" style={{ letterSpacing: '0.05em' }}>
                   LEYENDA TÉCNICA
                 </text>
                 {visibleLegendSymbols.map((el, i) => {
-                  const col = i % 2;
-                  const row = Math.floor(i / 2);
+                  const col = i % 3;
+                  const row = Math.floor(i / 3);
                   return (
-                    <g key={`print-legend-${el.id}`} transform={`translate(${40 + col * 445}, ${120 + row * 80})`}>
-                      <svg x={0} y={0} width={54} height={54} viewBox="0 0 160 160">
+                    <g key={`print-legend-${el.id}`} transform={`translate(${36 + col * 400}, ${108 + row * 72})`}>
+                      <svg x={0} y={0} width={48} height={48} viewBox="0 0 160 160">
                         {renderSymbolGlyph(el.symbolKey || 'unknown', '#000000')}
                       </svg>
-                      <text x={72} y={36} fontSize={24} fill="#000" fontWeight="bold" fontFamily="sans-serif">
-                        {el.label.toUpperCase()}
+                      <text x={64} y={32} fontSize={20} fill="#000" fontWeight="bold" fontFamily="sans-serif">
+                        {el.label.toUpperCase().slice(0, 24)}
                       </text>
                     </g>
                   );
@@ -1056,6 +1118,8 @@ export default function PlanoTool() {
                 <div className="w-px h-5 bg-zinc-800 mx-1" />
                 <button onClick={() => setShowGrid(!showGrid)} className={cn("p-2 border rounded-lg transition-colors text-xs font-bold", showGrid ? "bg-zinc-800 border-zinc-700 text-white" : "bg-zinc-900 border-zinc-800 text-zinc-500")}>Grilla</button>
                 <button onClick={() => setShowLegend(!showLegend)} className={cn("p-2 border rounded-lg transition-colors text-xs font-bold", showLegend ? "bg-zinc-800 border-zinc-700 text-white" : "bg-zinc-900 border-zinc-800 text-zinc-500")}>Leyenda</button>
+                <button onClick={autoArrangePlano} className="p-2 border border-emerald-700/60 bg-emerald-950/40 rounded-lg transition-colors text-xs font-bold text-emerald-300 hover:bg-emerald-900/50">Auto ordenar</button>
+                <button onClick={resetLegendPosition} className="p-2 border border-zinc-800 bg-zinc-900 rounded-lg transition-colors text-xs font-bold text-zinc-500 hover:text-zinc-300">Reset leyenda</button>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-mono text-zinc-600 mr-2">{Math.round(zoom * 100)}%</span>
@@ -1132,18 +1196,20 @@ export default function PlanoTool() {
                         onTouchStart={onLegendTouchStart}
                         className="cursor-grab"
                       >
-                        <rect width={680} height={Math.max(190, 120 + visibleLegendSymbols.length * 74)} rx={30} fill="#18181bcc" stroke="#3f3f46" strokeWidth={5} />
-                        <text x={340} y={70} textAnchor="middle" fontSize={38} fill="#a1a1aa" fontWeight="black" fontFamily="monospace" style={{ letterSpacing: '0.08em' }}>
+                        <rect width={760} height={Math.min(760, Math.max(190, 120 + Math.ceil(visibleLegendSymbols.length / 2) * 68))} rx={30} fill="#18181bcc" stroke="#3f3f46" strokeWidth={5} />
+                        <text x={380} y={70} textAnchor="middle" fontSize={36} fill="#a1a1aa" fontWeight="black" fontFamily="monospace" style={{ letterSpacing: '0.08em' }}>
                           LEYENDA TÉCNICA
                         </text>
                         {visibleLegendSymbols.map((el, i) => {
                           const fill = el.color;
+                          const col = i % 2;
+                          const row = Math.floor(i / 2);
                           return (
-                            <g key={`legend-${el.id}`} transform={`translate(45,${115 + i * 74})`}>
-                              <svg x={0} y={0} width={54} height={54} viewBox="0 0 160 160">
+                            <g key={`legend-${el.id}`} transform={`translate(${36 + col * 365},${112 + row * 68})`}>
+                              <svg x={0} y={0} width={50} height={50} viewBox="0 0 160 160">
                                 {renderSymbolGlyph(el.symbolKey || 'unknown', fill)}
                               </svg>
-                              <text x={82} y={38} fontSize={28} fill="#a1a1aa" fontWeight="bold" fontFamily="sans-serif">{el.label.toUpperCase()}</text>
+                              <text x={72} y={34} fontSize={22} fill="#a1a1aa" fontWeight="bold" fontFamily="sans-serif">{el.label.toUpperCase().slice(0, 18)}</text>
                             </g>
                           );
                         })}
@@ -1257,6 +1323,20 @@ export default function PlanoTool() {
                           />
                         ))}
                       </div>
+                    </div>
+
+                    {/* Alignment buttons */}
+                    <div className="space-y-2 border-t border-zinc-800/80 pt-3">
+                      <label className="text-[10px] text-zinc-500 block">Alinear al marco / ordenar</label>
+                      <div className="grid grid-cols-3 gap-2">
+                        <button onClick={() => alignSelected('left')} className="py-1.5 bg-zinc-800 border border-zinc-700 rounded text-[9px] font-black uppercase hover:bg-zinc-700">Izq</button>
+                        <button onClick={() => alignSelected('centerX')} className="py-1.5 bg-zinc-800 border border-zinc-700 rounded text-[9px] font-black uppercase hover:bg-zinc-700">Centro</button>
+                        <button onClick={() => alignSelected('right')} className="py-1.5 bg-zinc-800 border border-zinc-700 rounded text-[9px] font-black uppercase hover:bg-zinc-700">Der</button>
+                        <button onClick={() => alignSelected('top')} className="py-1.5 bg-zinc-800 border border-zinc-700 rounded text-[9px] font-black uppercase hover:bg-zinc-700">Arriba</button>
+                        <button onClick={() => alignSelected('centerY')} className="py-1.5 bg-zinc-800 border border-zinc-700 rounded text-[9px] font-black uppercase hover:bg-zinc-700">Medio</button>
+                        <button onClick={() => alignSelected('bottom')} className="py-1.5 bg-zinc-800 border border-zinc-700 rounded text-[9px] font-black uppercase hover:bg-zinc-700">Abajo</button>
+                      </div>
+                      <button onClick={autoArrangePlano} className="w-full py-1.5 bg-emerald-950/50 border border-emerald-800 rounded text-[9px] font-black uppercase text-emerald-300 hover:bg-emerald-900/50">Auto ordenar plano</button>
                     </div>
 
                     {/* Layer Reordering buttons */}
