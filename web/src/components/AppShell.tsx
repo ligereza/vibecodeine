@@ -1,100 +1,120 @@
-import type React from 'react';
-import { Activity, Boxes, Calculator, ClipboardList, FileText, Home, Map, Shapes, TerminalSquare } from 'lucide-react';
-import { cn } from '../utils/cn';
+import { type ReactNode, useState } from 'react';
+import {
+  LayoutDashboard, Boxes, ClipboardList, Calculator,
+  TerminalSquare, Map, Shapes, Menu, X, ChevronRight,
+} from 'lucide-react';
 
 export type AppView = 'hub' | 'jobs' | 'intake' | 'quote' | 'commands' | 'plano' | 'visualizer';
 
-const nav = [
-  { id: 'hub' as const, label: 'Hub', icon: Home, hint: 'dashboard' },
-  { id: 'jobs' as const, label: 'Jobs', icon: Boxes, hint: 'trabajo' },
-  { id: 'intake' as const, label: 'Intake', icon: ClipboardList, hint: 'pedido' },
-  { id: 'quote' as const, label: 'Cotización', icon: Calculator, hint: 'costos' },
-  { id: 'commands' as const, label: 'Comandos', icon: TerminalSquare, hint: 'CLI' },
-  { id: 'plano' as const, label: 'Plano', icon: Map, hint: 'rider' },
-  { id: 'visualizer' as const, label: 'SVG', icon: Shapes, hint: 'material' },
+const NAV_ITEMS: { view: AppView; icon: typeof LayoutDashboard; label: string; desc: string }[] = [
+  { view: 'hub', icon: LayoutDashboard, label: 'Dashboard', desc: 'Vista general' },
+  { view: 'visualizer', icon: Shapes, label: 'SVG Studio', desc: 'Galería + Config Editor' },
+  { view: 'jobs', icon: Boxes, label: 'Jobs', desc: 'Estado de trabajos' },
+  { view: 'intake', icon: ClipboardList, label: 'Intake', desc: 'Parsear pedidos' },
+  { view: 'plano', icon: Map, label: 'Plano/Rider', desc: 'Layout de evento' },
+  { view: 'quote', icon: Calculator, label: 'Cotización', desc: 'Presupuesto' },
+  { view: 'commands', icon: TerminalSquare, label: 'Comandos', desc: 'CLI reference' },
 ];
 
-export function titleForView(view: AppView): string {
-  const map: Record<AppView, string> = {
-    hub: 'Hub operativo',
-    jobs: 'Jobs reales',
-    intake: 'Intake de pedidos',
-    quote: 'Cotización base',
-    commands: 'Comandos rápidos',
-    plano: 'Plano / Rider RD',
-    visualizer: 'Visualizador SVG',
-  };
-  return map[view];
+interface Props {
+  view: AppView;
+  onViewChange: (v: AppView) => void;
+  children: ReactNode;
 }
 
-export default function AppShell({
-  view,
-  onViewChange,
-  children,
-}: {
-  view: AppView;
-  onViewChange: (view: AppView) => void;
-  children: React.ReactNode;
-}) {
+export default function AppShell({ view, onViewChange, children }: Props) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
-    <div className="min-h-screen bg-[#09090b] text-zinc-100 font-sans">
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-zinc-800 bg-[#09090b] lg:flex lg:flex-col">
-        <div className="flex items-center gap-3 border-b border-zinc-800 p-5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-xl font-black italic text-black">F</div>
-          <div>
-            <div className="text-base font-bold tracking-tight">flujo</div>
-            <div className="text-[10px] uppercase tracking-[0.22em] text-zinc-500">workspace local</div>
+    <div className="flex h-screen w-screen overflow-hidden bg-zinc-950 text-zinc-100">
+      {/* Sidebar overlay on mobile */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`
+          fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-zinc-800/70 bg-zinc-950
+          transition-transform duration-300 lg:static lg:translate-x-0
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}
+      >
+        {/* Brand */}
+        <div className="flex h-16 items-center gap-3 border-b border-zinc-800/70 px-5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600">
+            <span className="text-sm font-black text-white">f</span>
           </div>
+          <div>
+            <h1 className="text-sm font-bold tracking-tight">flujo</h1>
+            <p className="text-[10px] text-zinc-500">hub operativo</p>
+          </div>
+          <button onClick={() => setSidebarOpen(false)} className="ml-auto rounded-lg p-1 text-zinc-500 hover:text-zinc-300 lg:hidden">
+            <X className="h-5 w-5" />
+          </button>
         </div>
-        <nav className="flex-1 space-y-1 p-3">
-          {nav.map(item => {
+
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto px-3 py-4">
+          <div className="mb-2 px-2 text-[10px] font-bold uppercase tracking-widest text-zinc-600">Herramientas</div>
+          {NAV_ITEMS.map(item => {
             const Icon = item.icon;
-            const active = view === item.id;
+            const active = view === item.view;
             return (
               <button
-                key={item.id}
-                onClick={() => onViewChange(item.id)}
-                className={cn(
-                  'group flex w-full items-center justify-between rounded-xl px-3 py-3 text-left transition-colors',
-                  active ? 'bg-white text-black' : 'text-zinc-500 hover:bg-zinc-900 hover:text-zinc-100'
-                )}
+                key={item.view}
+                onClick={() => { onViewChange(item.view); setSidebarOpen(false); }}
+                className={`
+                  group mb-0.5 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all
+                  ${active
+                    ? 'bg-zinc-800/80 text-white shadow-sm'
+                    : 'text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-200'}
+                `}
               >
-                <span className="flex items-center gap-3">
-                  <Icon className="h-4 w-4" />
-                  <span className="text-sm font-semibold">{item.label}</span>
-                </span>
-                <span className={cn('text-[9px] uppercase tracking-widest', active ? 'text-black/50' : 'text-zinc-700 group-hover:text-zinc-500')}>{item.hint}</span>
+                <Icon className={`h-4 w-4 shrink-0 ${active ? 'text-emerald-400' : 'text-zinc-500 group-hover:text-zinc-400'}`} />
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium">{item.label}</div>
+                  <div className="truncate text-[10px] text-zinc-600">{item.desc}</div>
+                </div>
+                {active && <ChevronRight className="h-3 w-3 text-zinc-600" />}
               </button>
             );
           })}
         </nav>
-        <div className="border-t border-zinc-800 p-4 text-[10px] font-mono uppercase tracking-widest text-zinc-600">
-          <div className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,.8)]" /> local-first</div>
-          <div className="mt-1">v0.41.0</div>
+
+        {/* Footer */}
+        <div className="border-t border-zinc-800/70 px-5 py-3">
+          <div className="text-[10px] text-zinc-600">
+            v0.47.9 · gratis/local
+          </div>
+          <div className="text-[10px] text-zinc-700">
+            py -m flujo app
+          </div>
         </div>
       </aside>
 
-      <header className="sticky top-0 z-30 border-b border-zinc-800 bg-[#09090b]/90 backdrop-blur-xl lg:ml-64">
-        <div className="flex min-h-14 flex-wrap items-center justify-between gap-3 px-5 py-2 lg:px-7">
-          <div>
-            <div className="flex items-center gap-2 text-sm font-bold"><Activity className="h-4 w-4 text-emerald-400" /> {titleForView(view)}</div>
-            <div className="text-[11px] text-zinc-500">Python backend + React UI · gratis/local</div>
-          </div>
-          <nav className="flex max-w-full gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-950/70 p-1 lg:hidden">
-            {nav.map(item => {
-              const Icon = item.icon;
-              return <button key={item.id} onClick={() => onViewChange(item.id)} className={cn('rounded-lg px-3 py-2 text-xs', view === item.id ? 'bg-white text-black' : 'text-zinc-500')}><Icon className="h-4 w-4" /></button>;
-            })}
-          </nav>
-          <div className="hidden items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-zinc-600 sm:flex">
-            <FileText className="h-3.5 w-3.5" /> context single-file
-          </div>
-        </div>
-      </header>
+      {/* Main content */}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Mobile header */}
+        <header className="flex h-14 items-center gap-3 border-b border-zinc-800/70 px-4 lg:hidden">
+          <button onClick={() => setSidebarOpen(true)} className="rounded-lg p-1.5 text-zinc-400 hover:text-zinc-200">
+            <Menu className="h-5 w-5" />
+          </button>
+          <span className="text-sm font-bold">
+            {NAV_ITEMS.find(i => i.view === view)?.label || 'flujo'}
+          </span>
+        </header>
 
-      <main className="p-5 lg:ml-64 lg:p-7">
-        {children}
-      </main>
+        {/* Scrollable content */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="mx-auto w-full max-w-[1600px] p-4 md:p-6 lg:p-8">
+            {children}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

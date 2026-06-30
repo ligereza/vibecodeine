@@ -1,17 +1,17 @@
 import { useState } from 'react';
 import AppShell, { type AppView } from './components/AppShell';
-import CommandPanel from './components/CommandPanel';
 import HubDashboard from './components/HubDashboard';
-import IntakePanel from './components/IntakePanel';
 import JobsPanel from './components/JobsPanel';
-import PlanoTool from './components/PlanoTool';
+import IntakePanel from './components/IntakePanel';
 import QuotePanel from './components/QuotePanel';
+import CommandPanel from './components/CommandPanel';
+import PlanoTool from './components/PlanoTool';
 import SvgVisualizer from './components/SvgVisualizer';
 
 function initialView(): AppView {
   if (typeof window === 'undefined') return 'hub';
   const path = window.location.pathname.toLowerCase();
-  if (path.includes('svg')) return 'visualizer';
+  if (path.includes('svg') || path.includes('visual') || path.includes('config') || path.includes('editor')) return 'visualizer';
   if (path.includes('plano')) return 'plano';
   return 'hub';
 }

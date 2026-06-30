@@ -1,8 +1,8 @@
 """Versión y changelog de flujo."""
 
-__version__ = "0.47.8"
+__version__ = "0.47.9"
 VERSION = __version__
-__version_info__ = (0, 47, 8)
+__version_info__ = (0, 47, 9)
 
 
 def get_version():
@@ -11,6 +11,17 @@ def get_version():
 
 def get_changelog():
     return {
+        "0.47.9": {
+            "titulo": "SVG Studio y Hub web revisado sobre Plano/Rider estable",
+            "fecha": "2026-06-30",
+            "highlights": [
+                "Integra las mejores mejoras web del airdrop externo sin reemplazar el Plano/Rider estable",
+                "Convierte el visualizador SVG en SVG Studio con galeria, inspector, preview, descarga y export PNG",
+                "Agrega Config Editor visual para config.json con drag, seleccion multiple, alineado, distribucion e import/export",
+                "Mejora dashboard, sidebar, jobs, intake y comandos manteniendo fallback demo/local",
+                "Mantiene build single-file para context/flujo_hub.html, plano_demo.html y svg_visualizer.html",
+            ],
+        },
         "0.47.8": {
             "titulo": "Plano/Rider integrado: capas estables, mezcla aditiva y knowledge operativo",
             "fecha": "2026-06-30",

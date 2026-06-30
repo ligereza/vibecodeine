@@ -1,10 +1,3 @@
-export type ApiState<T> = {
-  data: T | null;
-  loading: boolean;
-  error: string | null;
-  source: 'api' | 'demo';
-};
-
 export type Ping = {
   status?: string;
   version?: string;
@@ -12,13 +5,6 @@ export type Ping = {
   connected?: boolean;
   mode?: string;
   note?: string;
-};
-
-export type DashboardSummary = {
-  total_items?: number;
-  total_svg?: number;
-  total_jobs?: number;
-  [key: string]: unknown;
 };
 
 export type JobItem = {
@@ -73,21 +59,25 @@ export const demoJobs: JobsResponse = {
   jobs: [
     { name: 'demo_eventos_flyer', estado: 'por-revisar', tipo_pieza: 'flyer', proyecto: 'EVENTOS', pendientes: ['link Instagram', 'confirmar fecha'] },
     { name: 'demo_suplementos_etiqueta', estado: 'en-diseno', tipo_pieza: 'etiqueta', proyecto: 'SUPLEMENTOS', pendientes: ['tabla nutricional'] },
+    { name: 'demo_sticker_pack', estado: 'entregado', tipo_pieza: 'sticker', proyecto: 'SUPLEMENTOS', pendientes: [] },
+    { name: 'demo_pendon_evento', estado: 'revision', tipo_pieza: 'pendon', proyecto: 'EVENTOS', pendientes: ['ajustar medidas', 'confirmar logo'] },
   ],
-  count: 2,
+  count: 4,
   source: 'demo',
 };
 
 export const flujoApi = {
   isFileMode,
+
   async ping(): Promise<Ping> {
     if (isFileMode()) return { status: 'demo', version: 'offline', connected: false, mode: 'file' };
-    return request<Ping>('/api/ping');
+    try {
+      return await request<Ping>('/api/ping');
+    } catch {
+      return { status: 'demo', version: '0.47.9', connected: false, note: 'Backend no disponible' };
+    }
   },
-  async dashboardSummary(): Promise<DashboardSummary> {
-    if (isFileMode()) return { total_items: 0, total_jobs: demoJobs.count };
-    return request<DashboardSummary>('/api/dashboard-summary');
-  },
+
   async jobs(): Promise<JobsResponse> {
     if (isFileMode()) return demoJobs;
     try {
@@ -96,6 +86,7 @@ export const flujoApi = {
       return { ...demoJobs, error: error instanceof Error ? error.message : String(error) };
     }
   },
+
   async parsePedido(text: string): Promise<ParsePedidoResponse> {
     if (isFileMode()) {
       const low = text.toLowerCase();
@@ -115,6 +106,7 @@ export const flujoApi = {
       body: JSON.stringify({ text }),
     });
   },
+
   async createJobDraft(text: string, name = '', parsed?: ParsePedidoResponse | null): Promise<CreateJobResponse> {
     if (isFileMode()) return { created: false, error: 'Demo local: abre con py -m flujo app para crear jobs reales' };
     return request<CreateJobResponse>('/api/create-job-draft', {

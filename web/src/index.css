@@ -1,12 +1,6 @@
 @import "tailwindcss";
 
-@layer base {
-  body {
-    background-color: #09090b;
-    color: #f4f4f5;
-  }
-}
-
+/* Custom scrollbar styling */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -17,14 +11,43 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #27272a;
-  border-radius: 10px;
+  background: #333;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3f3f46;
+  background: #555;
 }
 
-.font-mono {
-  font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* SVG containment for gallery cards and list thumbnails */
+.svg-contain {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.svg-contain > svg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* SVG in modal preview — large, centered, bounded */
+.svg-modal-preview > svg {
+  max-width: 100%;
+  max-height: 400px;
+  width: auto;
+  height: auto;
+  display: block;
+}
+
+/* Animation for pulse dot */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }

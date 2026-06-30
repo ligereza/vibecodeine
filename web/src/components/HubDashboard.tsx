@@ -1,113 +1,163 @@
-import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, Boxes, Calculator, CheckCircle2, ClipboardList, Map, Shapes, Signal, TerminalSquare } from 'lucide-react';
-import { flujoApi, type JobsResponse, type Ping } from '../api/flujoApi';
+import {
+  LayoutDashboard, Boxes, ClipboardList, Calculator,
+  TerminalSquare, Map, Shapes, Zap, Activity,
+  CheckCircle2, Clock, AlertCircle, ArrowRight,
+} from 'lucide-react';
 import type { AppView } from './AppShell';
+import { flujoApi, type Ping, type JobsResponse } from '../api/flujoApi';
 
-function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  return <div className={`rounded-2xl border border-zinc-800 bg-zinc-900/45 p-5 ${className}`}>{children}</div>;
+interface Props {
+  onNavigate: (v: AppView) => void;
 }
 
-function Stat({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
-  return (
-    <Card>
-      <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">{label}</div>
-      <div className="mt-2 text-3xl font-black tracking-tight">{value}</div>
-      {sub && <div className="mt-1 text-xs text-zinc-500">{sub}</div>}
-    </Card>
-  );
-}
-
-export default function HubDashboard({ onNavigate }: { onNavigate: (view: AppView) => void }) {
+export default function HubDashboard({ onNavigate }: Props) {
   const [ping, setPing] = useState<Ping | null>(null);
   const [jobs, setJobs] = useState<JobsResponse | null>(null);
-  const [svgCount, setSvgCount] = useState<number | null>(null);
 
   useEffect(() => {
     let alive = true;
-    flujoApi.ping().then(data => alive && setPing(data)).catch(error => alive && setPing({ status: 'error', note: String(error), connected: false }));
-    flujoApi.jobs().then(data => alive && setJobs(data));
-    if (window.location.protocol !== 'file:') {
-      fetch('/api/list-svg-works')
-        .then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
-        .then(data => alive && setSvgCount(Number(data.count || 0)))
-        .catch(() => alive && setSvgCount(null));
-    }
+    flujoApi.ping().then(d => alive && setPing(d));
+    flujoApi.jobs().then(d => alive && setJobs(d));
     return () => { alive = false; };
   }, []);
 
   const openJobs = jobs?.jobs.filter(j => !String(j.estado || '').toLowerCase().includes('entregado')).length ?? 0;
   const recent = useMemo(() => (jobs?.jobs || []).slice(0, 5), [jobs]);
 
+  const actions = [
+    { view: 'visualizer' as const, icon: Shapes, title: 'SVG Studio', desc: 'Galería de piezas + Config Editor visual con texto, alineado y distribución', color: 'from-violet-500 to-purple-600', badge: '✨ mejorado' },
+    { view: 'intake' as const, icon: ClipboardList, title: 'Pegar Pedido', desc: 'Parsear correo/texto y crear job draft', color: 'from-blue-500 to-cyan-600' },
+    { view: 'jobs' as const, icon: Boxes, title: 'Ver Jobs', desc: 'Estado real de la carpeta jobs/', color: 'from-yellow-500 to-amber-600' },
+    { view: 'plano' as const, icon: Map, title: 'Plano / Rider', desc: 'Preparar layout, rider y SVG de evento', color: 'from-emerald-500 to-teal-600' },
+    { view: 'quote' as const, icon: Calculator, title: 'Cotización', desc: 'Base editable para productora/jefatura', color: 'from-pink-500 to-rose-600' },
+    { view: 'commands' as const, icon: TerminalSquare, title: 'Comandos', desc: 'Copiar checks y build', color: 'from-zinc-400 to-zinc-600' },
+  ];
+
+  const statusColor = (s?: string) => {
+    const v = String(s || '').toLowerCase();
+    if (v.includes('entregado')) return 'text-emerald-400 bg-emerald-500/10';
+    if (v.includes('revision') || v.includes('revis')) return 'text-blue-400 bg-blue-500/10';
+    if (v.includes('diseno') || v.includes('dise')) return 'text-purple-400 bg-purple-500/10';
+    if (v.includes('pendiente')) return 'text-yellow-400 bg-yellow-500/10';
+    return 'text-zinc-400 bg-zinc-800';
+  };
+
   return (
-    <div className="space-y-6">
-      <section className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-900 via-black to-emerald-950/30 p-7">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-900/60 bg-emerald-950/30 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-300">
-              <Signal className="h-3 w-3" /> {ping?.connected === false ? 'modo demo' : 'backend local'}
+    <div className="space-y-8">
+      {/* Hero header */}
+      <div className="relative overflow-hidden rounded-2xl border border-zinc-800/70 bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-800 p-6 md:p-8">
+        <div className="absolute right-0 top-0 h-64 w-64 bg-gradient-to-bl from-emerald-500/5 to-transparent" />
+        <div className="relative">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/20">
+              <Zap className="h-5 w-5 text-white" />
             </div>
-            <h1 className="text-3xl font-black tracking-tight">Workspace operativo flujo</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">Entrada diaria para convertir pedidos en jobs trazables, revisar SVGs reales, preparar planos/riders y mantener continuidad entre agentes.</p>
+            <div>
+              <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider
+                ${ping?.connected !== false ? 'border-emerald-800 bg-emerald-950/50 text-emerald-400' : 'border-zinc-700 bg-zinc-800/50 text-zinc-400'}`}>
+                <span className={`h-1.5 w-1.5 rounded-full ${ping?.connected !== false ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-500'}`} />
+                {ping?.connected !== false ? 'backend local' : 'modo demo'}
+              </span>
+            </div>
           </div>
-          <div className="text-left text-xs text-zinc-500 lg:text-right">
-            <div className="font-mono">version: {ping?.version || '0.41.0'}</div>
-            <div className="mt-1 max-w-xl truncate font-mono">{ping?.root || ping?.note || 'abre con py -m flujo app para conectar APIs'}</div>
-          </div>
+          <h1 className="text-2xl font-black tracking-tight md:text-3xl">Workspace operativo flujo</h1>
+          <p className="mt-2 max-w-xl text-sm text-zinc-400 leading-relaxed">
+            Entrada diaria para convertir pedidos en jobs trazables, revisar SVGs reales, preparar planos/riders y mantener continuidad entre agentes.
+          </p>
         </div>
-      </section>
 
-      <section className="grid gap-4 md:grid-cols-4">
-        <Stat label="Jobs" value={jobs?.count ?? '—'} sub={`${openJobs} abiertos`} />
-        <Stat label="SVG reales" value={svgCount ?? '—'} sub="desde /svg" />
-        <Stat label="Backend" value={ping?.connected === false ? 'demo' : 'ok'} sub={ping?.mode || 'http/local'} />
-        <Stat label="Siguiente" value="v0.41" sub="hub unificado" />
-      </section>
-
-      <section className="grid gap-5 xl:grid-cols-[1.2fr_.8fr]">
-        <Card>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-bold">Acciones rápidas</h2>
-            <span className="text-[10px] uppercase tracking-widest text-zinc-600">operación diaria</span>
-          </div>
-          <div className="grid gap-3 md:grid-cols-2">
-            {[
-              { view: 'intake' as const, icon: ClipboardList, title: 'Pegar pedido', desc: 'Parsear con backend y crear job draft' },
-              { view: 'jobs' as const, icon: Boxes, title: 'Ver jobs', desc: 'Estado real de la carpeta jobs/' },
-              { view: 'plano' as const, icon: Map, title: 'Plano/Rider', desc: 'Preparar layout, rider y SVG' },
-              { view: 'visualizer' as const, icon: Shapes, title: 'Material SVG', desc: 'Revisar piezas reales del repo' },
-              { view: 'quote' as const, icon: Calculator, title: 'Cotización', desc: 'Base editable para productora/jefatura' },
-              { view: 'commands' as const, icon: TerminalSquare, title: 'Comandos', desc: 'Copiar checks y build' },
-            ].map(item => {
-              const Icon = item.icon;
-              return (
-                <button key={item.title} onClick={() => onNavigate(item.view)} className="group rounded-xl border border-zinc-800 bg-black/30 p-4 text-left transition hover:border-zinc-600 hover:bg-zinc-900">
-                  <div className="flex items-center justify-between">
-                    <Icon className="h-5 w-5 text-zinc-400" />
-                    <ArrowRight className="h-4 w-4 text-zinc-700 transition group-hover:translate-x-1 group-hover:text-zinc-300" />
-                  </div>
-                  <div className="mt-3 font-bold">{item.title}</div>
-                  <div className="mt-1 text-xs text-zinc-500">{item.desc}</div>
-                </button>
-              );
-            })}
-          </div>
-        </Card>
-
-        <Card>
-          <div className="mb-4 flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-400" /><h2 className="text-lg font-bold">Jobs recientes</h2></div>
-          <div className="space-y-2">
-            {recent.length ? recent.map(job => (
-              <div key={job.path || job.name} className="rounded-xl border border-zinc-800 bg-black/25 p-3">
-                <div className="truncate text-sm font-semibold">{job.name}</div>
-                <div className="mt-1 flex flex-wrap gap-2 text-[10px] uppercase tracking-widest text-zinc-500">
-                  <span>{job.estado || 'sin estado'}</span><span>{job.tipo_pieza || 'pieza'}</span>
+        {/* Stats row */}
+        <div className="relative mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+          {[
+            { label: 'Jobs abiertos', value: openJobs, icon: Activity, color: 'text-amber-400' },
+            { label: 'Total jobs', value: jobs?.count ?? 0, icon: Boxes, color: 'text-blue-400' },
+            { label: 'Versión', value: ping?.version || '0.47.9', icon: LayoutDashboard, color: 'text-emerald-400' },
+            { label: 'Estado', value: ping?.connected !== false ? 'Conectado' : 'Demo', icon: ping?.connected !== false ? CheckCircle2 : AlertCircle, color: ping?.connected !== false ? 'text-emerald-400' : 'text-zinc-400' },
+          ].map(stat => {
+            const Icon = stat.icon;
+            return (
+              <div key={stat.label} className="rounded-xl border border-zinc-800/60 bg-black/30 p-3">
+                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                  <Icon className={`h-3.5 w-3.5 ${stat.color}`} />
+                  {stat.label}
                 </div>
+                <div className="mt-1 text-lg font-bold">{stat.value}</div>
               </div>
-            )) : <div className="rounded-xl border border-dashed border-zinc-800 p-5 text-sm text-zinc-500">Sin jobs reales todavía. Usa Intake para crear uno.</div>}
-          </div>
-        </Card>
-      </section>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Quick actions grid */}
+      <div>
+        <div className="mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-bold">Acciones rápidas</h2>
+          <span className="text-xs text-zinc-500">operación diaria</span>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {actions.map(item => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.view}
+                onClick={() => onNavigate(item.view)}
+                className="group relative overflow-hidden rounded-xl border border-zinc-800/60 bg-zinc-900/50 p-5 text-left transition-all hover:border-zinc-700 hover:bg-zinc-800/50 hover:shadow-lg"
+              >
+                <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 transition-opacity group-hover:opacity-[0.03]`} />
+                <div className="relative">
+                  <div className="flex items-start justify-between">
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${item.color} shadow-lg`}>
+                      <Icon className="h-5 w-5 text-white" />
+                    </div>
+                    {'badge' in item && item.badge && (
+                      <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-[10px] font-bold text-violet-300">
+                        {item.badge}
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="mt-3 text-sm font-bold">{item.title}</h3>
+                  <p className="mt-1 text-xs text-zinc-500">{item.desc}</p>
+                  <div className="mt-3 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-zinc-600 group-hover:text-zinc-400">
+                    Abrir <ArrowRight className="h-3 w-3" />
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Recent jobs */}
+      <div>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold">Jobs recientes</h2>
+          <button onClick={() => onNavigate('jobs')} className="text-xs text-zinc-500 hover:text-zinc-300 flex items-center gap-1">
+            Ver todos <ArrowRight className="h-3 w-3" />
+          </button>
+        </div>
+        <div className="space-y-2">
+          {recent.length ? recent.map(job => (
+            <div key={job.path || job.name} className="flex items-center gap-4 rounded-xl border border-zinc-800/50 bg-zinc-900/30 p-3 transition-colors hover:bg-zinc-800/30">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-800">
+                <Boxes className="h-4 w-4 text-zinc-500" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-medium truncate">{job.name}</div>
+                <div className="text-[10px] text-zinc-600 truncate">{job.tipo_pieza || 'pieza'} · {job.proyecto || '—'}</div>
+              </div>
+              <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${statusColor(job.estado)}`}>
+                {job.estado || 'sin estado'}
+              </span>
+              <Clock className="h-3.5 w-3.5 text-zinc-700" />
+            </div>
+          )) : (
+            <div className="rounded-xl border border-dashed border-zinc-800 p-8 text-center text-sm text-zinc-600">
+              Sin jobs reales todavía. Usa <strong>Intake</strong> para crear uno.
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

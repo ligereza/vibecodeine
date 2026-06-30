@@ -304,3 +304,41 @@ export const MOCK_SVG_INDEX: SvgPiece[] = [
     notes: 'Foto IG enmarcada en Blender + droplet PS. Infiere productora/fecha/venue.',
   },
 ];
+
+
+export async function loadFromApi(): Promise<SvgPiece[]> {
+  const resp = await fetch('/api/list-svg-works');
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  const data = await resp.json();
+  if (Array.isArray(data?.pieces)) return data.pieces;
+  if (Array.isArray(data?.works)) return data.works;
+  if (data?.groups && typeof data.groups === 'object') {
+    const list: SvgPiece[] = [];
+    for (const [groupName, items] of Object.entries(data.groups)) {
+      for (const item of (items as any[])) {
+        const name = String(item.name || item.id || 'pieza');
+        const lower = name.toLowerCase();
+        list.push({
+          id: String(item.id || item.slug || name.replace(/\s+/g, '_').toLowerCase()),
+          name,
+          type: lower.includes('pendon') ? 'pendon' : lower.includes('sticker') ? 'sticker' : lower.includes('logo') ? 'logo' : lower.includes('cartelera') ? 'cartelera' : lower.includes('post') ? 'post-ig' : lower.includes('flyer') ? 'flyer' : 'etiqueta',
+          area: String(groupName).toLowerCase().includes('evento') ? 'eventos' : String(groupName).toLowerCase().includes('supl') ? 'suplementos' : 'comun',
+          medio: lower.includes('ig') || lower.includes('digital') ? 'digital' : 'impresion',
+          herramienta: String(item.kind || item.herramienta || 'repo'),
+          product: item.product,
+          realSizeCm: String(item.realSizeCm || item.real_size_cm || '—'),
+          canvasPx: String(item.canvasPx || item.canvas_px || 'SVG'),
+          colors: Array.isArray(item.colors) ? item.colors : [],
+          lastModified: String(item.lastModified || item.modified || 'repo'),
+          status: 'borrador',
+          svgContent: item.svgContent || item.svg || undefined,
+          notes: item.notes,
+        } as SvgPiece);
+      }
+    }
+    return list;
+  }
+  return [];
+}
+
+export const TYPE_OPTIONS: PieceType[] = ['etiqueta', 'flyer', 'pendon', 'post-ig', 'sticker', 'logo', 'rider', 'cartelera', 'stand'];
