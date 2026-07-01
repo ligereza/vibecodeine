@@ -156,6 +156,30 @@
     },
 
     {
+      "id": "com_carrusel_ig_1080x1080",
+      "tipo": "carrusel instagram digital multi-slide",
+      "area": "comun",
+      "medio": "digital",
+      "herramienta": "svg",
+      "template": "tools/piezas_vectoriales/plantillas/carrusel_cuadrado_1080.config.json",
+      "real_size_cm": { "width": 10.8, "height": 10.8 },
+      "canvas": { "width": 1080, "height": 1080 },
+      "descripcion": "Carrusel de Instagram cuadrado, multi-slide (cada slide es un documento de la plantilla). Usado por flujo_pipeline.py para tipo_pieza 'carrusel'.",
+      "origen_info": "correo"
+    },
+    {
+      "id": "sup_etiqueta_horizontal_generica_14x10",
+      "tipo": "etiqueta suplemento horizontal generica",
+      "area": "suplementos",
+      "medio": "impresion",
+      "herramienta": "svg+illustrator",
+      "template": "tools/piezas_vectoriales/plantillas/etiqueta_horizontal_2800x2000.config.json",
+      "real_size_cm": { "width": 14, "height": 10 },
+      "canvas": { "width": 2800, "height": 2000 },
+      "descripcion": "Etiqueta horizontal genérica de ejemplo/base para nuevos proyectos (ver tools/piezas_vectoriales/SPEC.md).",
+      "origen_info": "whatsapp"
+    },
+    {
       "id": "rider_eventos_a4_horizontal",
       "tipo": "rider layout operativo evento stand",
       "area": "eventos",

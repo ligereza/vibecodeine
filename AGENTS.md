@@ -55,6 +55,14 @@ Antes de cambiar:
 5. Actualizar `context/LAST_HANDOFF.md` en ASCII-only.
 6. Entregar por airdrop si no tienes push directo.
 
+## Continuidad entre sesiones (obligatorio)
+
+Una auditoria detecto perdida de contexto entre sesiones: `context/SESSION_STATE.json` quedo 6 versiones desfasado (v0.42.1 vs v0.48.5 real) y `context/AVANCES_BLOCK.txt` seguia hablando de "datadrop" cuando el foco real ya era Resolume/Chataigne. Reglas firmes para no repetirlo:
+
+1. Al cerrar CADA sesion, actualiza `context/LAST_HANDOFF.md` y `context/SESSION_STATE.json` con la version/fecha real (deben coincidir con `pyproject.toml` y `src/flujo/version.py`) y el estado real `done/doing/next/blockers`. No dejes version o fecha vieja "porque no hubo release" -- si trabajaste, el estado cambio.
+2. Antes de "resolver" algo que ya se intento antes, revisa el changelog en `src/flujo/version.py` (`get_changelog()`) o los docs relacionados para ver que ya se probo y fallo, en vez de partir de cero cada sesion.
+3. No reescribas `src/flujo/resolume/automator.py` (`build_chataigne_noisette_experimental`) adivinando el schema `.noisette` otra vez. Ya se reescribio 4 veces seguidas (v0.48.2 a v0.48.5), cada vez especulando sobre la estructura interna, y sigue marcado `experimental` porque nunca se valido contra un archivo real. Antes de tocarlo de nuevo: pide al usuario un `.noisette` real exportado desde su Chataigne 1.10.3 y guardalo como fixture en `tests/` -- no vuelvas a adivinar.
+
 ## Airdrop obligatorio para agentes sin push
 
 El ZIP debe contener una carpeta `_airdrop/` en la raiz del ZIP.

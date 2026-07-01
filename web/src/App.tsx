@@ -9,6 +9,7 @@ import PlanoTool from './components/PlanoTool';
 import SvgVisualizer from './components/SvgVisualizer';
 import EventsPanel from './components/EventsPanel';
 import ResolumePanel from './components/ResolumePanel';
+import MappingTool from './components/MappingTool';
 
 function initialView(): AppView {
   if (typeof window === 'undefined') return 'hub';
@@ -16,6 +17,7 @@ function initialView(): AppView {
   if (path.includes('svg') || path.includes('visual') || path.includes('config') || path.includes('editor')) return 'visualizer';
   if (path.includes('plano')) return 'plano';
   if (path.includes('resolume') || path.includes('chataigne')) return 'resolume';
+  if (path.includes('mapping') || path.includes('rigging')) return 'mapping';
   if (path.includes('event')) return 'events';
   return 'hub';
 }
@@ -34,6 +36,7 @@ export default function App() {
       {view === 'visualizer' && <SvgVisualizer />}
       {view === 'events' && <EventsPanel />}
       {view === 'resolume' && <ResolumePanel />}
+      {view === 'mapping' && <MappingTool />}
     </AppShell>
   );
 }
