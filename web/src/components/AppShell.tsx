@@ -2,7 +2,7 @@ import { type ReactNode, useState } from 'react';
 import {
   LayoutDashboard, Boxes, ClipboardList, Calculator,
   TerminalSquare, Map, Shapes, Menu, X, ChevronRight,
-  Heart, Music, Camera, Cpu, Radio,
+  Heart, Music, Camera, Cpu, Radio, Lightbulb,
 } from 'lucide-react';
 
 export type AppView =
@@ -14,7 +14,8 @@ export type AppView =
   | 'plano'
   | 'visualizer'
   | 'events'
-  | 'resolume';
+  | 'resolume'
+  | 'mapping';
 
 export type WorkspaceMode = 'rd' | 'studio';
 
@@ -40,6 +41,7 @@ const STUDIO_NAV: NavItem[] = [
   { view: 'events', icon: Camera, label: 'Eventos / IG', desc: 'Flyers Instagram' },
   { view: 'visualizer', icon: Shapes, label: 'SVG Studio', desc: 'Galeria eventos' },
   { view: 'resolume', icon: Radio, label: 'Resolume / Chataigne', desc: 'SMPTE/OSC auto' },
+  { view: 'mapping', icon: Lightbulb, label: 'Mapping LED', desc: 'Rigging / pixel mapping' },
 ];
 
 interface Props {
@@ -176,7 +178,7 @@ export default function AppShell({ view, onViewChange, children }: Props) {
             </span>
           </div>
           <div className="text-[10px] text-zinc-600 mt-1">
-            v0.47.13 | gratis/local
+            v0.48.5 | gratis/local
           </div>
           <div className="text-[10px] text-zinc-700">
             py -m flujo app

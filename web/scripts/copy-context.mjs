@@ -19,3 +19,13 @@ for (const dest of targets) {
   copyFileSync(src, dest);
   console.log(`copied ${src} -> ${dest}`);
 }
+
+const mappingSrc = resolve(root, 'web', 'dist', 'mapping.html');
+const mappingDest = resolve(root, 'context', 'mapping.html');
+if (!existsSync(mappingSrc)) {
+  console.error(`Missing build output: ${mappingSrc}`);
+  process.exit(1);
+}
+mkdirSync(dirname(mappingDest), { recursive: true });
+copyFileSync(mappingSrc, mappingDest);
+console.log(`copied ${mappingSrc} -> ${mappingDest}`);

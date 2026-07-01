@@ -1,16 +1,15 @@
-﻿**Últimos avances + hacia dónde vamos**
+**Últimos avances + hacia dónde vamos**
 
-**Avances:**
-- Datadrop listo: incoming/ bulk drop (fotos terminadas), scan procesa todo, manifests ricos con palette/ocr/for_future_ai/visual_traits, lista limpia (solo procesados, pending separado), modal usable, prepare package (_review_package.txt + ground truth).
-- Botones datadrop arreglados: header "Datadrop (en Herramientas)" abre tab + scroll vía robust showTab/rAF (requestAnimationFrame + retry + guards).
-- Delegación paralela maximizada: 2 agentes + 1 supervisor para datadrop fix; 5 roles en hub (Visual Polish, Pipeline & Integration, Brand Guardian, Future/Modern, Packaging & Distribution).
-- `flujo app` como única entrada diaria obligatoria + launchers root (launch-flujo.bat/ps1; py -m flujo app --desktop).
-- Hub tabs (Intake/Jobs, Visuales, Planos, Agentes, Herramientas) + brand enforcado (projects/flujo/flujo.json) + LAST_HANDOFF low token.
-- Higiene reciente: limpieza caches/pyc (16 dirs + 123 *.pyc + .pytest_cache), paths conservadora, docs reforzados, commits.
+**Avances (v0.48.5, 2026-07-01):**
+- Resolume/Chataigne automator (`py -m flujo resolume automatizar`) genera XML pre-flight, CSV OSC, README y un .noisette experimental. Sigue marcado experimental: reescrito 4 veces (v0.48.2 a v0.48.5) especulando el schema, nunca validado contra un archivo real de Chataigne.
+- SVG Studio con SVGs reales del repo, Config Editor visual (drag, alineado, distribución, import/export).
+- Plano/Rider Pro estable: export PDF multipágina, checklist sincronizado al mapa, capas y colores persistentes.
+- Hub React unificado (web/) compila single-file a context/flujo_hub.html, plano_demo.html y svg_visualizer.html.
+- Mapping LED (Event Rigging Master Console) agregado como tool de Modo Studio vía iframe (cambios locales, sin commit).
+- INDEX_FORMATOS.json reconciliado: formatos usados en código (carrusel, etiqueta horizontal genérica) que faltaban en el índice ahora están registrados.
 
 **Hacia dónde:**
-- Auto-compact de sesiones (usa parallel delegation + LAST_HANDOFF como fuente única).
-- linea_editorial/v4.1.md con ground truth de datadrops reales (§10 Validación con Datadrops).
+- Conseguir un .noisette real exportado de Chataigne 1.10.3 del usuario y guardarlo como fixture en tests/ antes de tocar el automator de nuevo (no volver a adivinar el schema).
+- Mantener context/LAST_HANDOFF.md y context/SESSION_STATE.json al día en CADA sesión (versión real + done/doing/next/blockers) para no perder continuidad entre sesiones.
+- Decidir si/cuando commitear y pushear los cambios de Mapping LED.
 - Full packaging (`flujo package` → .exe standalone desktop).
-- Daily via hub (flujo app).
-- Más paths robustos (frozen/asset_root vs workspace para packaged + dev).

@@ -31,7 +31,7 @@ export default function ResolumePanel() {
 
   const fullCmd = [
     baseCmd,
-    fps !== '25' ? `--fps ${fps}` : '',
+    `--fps ${fps}`,
     host !== '127.0.0.1' ? `--host ${host}` : '',
     port !== '7000' ? `--port ${port}` : '',
   ].filter(Boolean).join(' ');
