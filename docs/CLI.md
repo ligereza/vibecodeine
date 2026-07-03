@@ -1,11 +1,13 @@
-# flujo · CLI Reference (v0.35.3)
+# flujo · CLI Reference (v0.48.5)
 
-**Entrada diaria principal:** `flujo app` (o `flujo app --desktop`) — lanza servidor + hub pro workspace.
+**Entrada diaria del usuario:** `flujo app` (o `flujo app --desktop`) — lanza servidor + hub pro workspace.
+**Entrada obligatoria para agentes de IA:** `AGENTS.md` (raiz), no este doc — ver `docs/REPO_MAP.md`.
 
-La CLI `flujo` es la entrada principal al sistema. Reemplaza la mayoría de los
-scripts sueltos de `scripts/` por comandos tipados y autodocumentados. `flujo app` activa el hub como workspace central + APIs reales.
+La CLI `flujo` (Typer, `src/flujo/cli.py`) es la entrada principal al sistema. La mayoria de los scripts sueltos historicos de `scripts/` fueron archivados en `_archive/legacy_*/` por estar superados por comandos `flujo ...` (ver `docs/HIGIENE_REPO.md`).
 
-## Instalación
+Este documento es la unica referencia de comandos que hace falta leer; `docs/COMANDOS.md` y `docs/COMANDO_UNIFICADO.md` quedan como redirects historicos. `docs/INTEGRACION_CLI.md` es un doc aparte (arquitectura interna de como se registra el namespace `flujo hub ...`), no un duplicado de este.
+
+## Instalacion
 
 ```bash
 py -m pip install -e ".[dev]"
@@ -22,41 +24,50 @@ flujo <comando> --help
 py -m flujo --help
 ```
 
-## Verificación del repo
+## Verificacion del repo
 
 ```bash
 py -m compileall -q src scripts tests
 py -m pytest tests/ -q --tb=short
 py -m flujo health
+py -m flujo verify
+py -m flujo doctor
 py -m flujo version
 ```
 
-## Grupos y comandos principales
+## Grupos y comandos (fuente: `src/flujo/cli.py`, verificado v0.48.5)
 
 ```txt
-salud/info      health, version, init
+salud/info      health, version, doctor, verify, ai-prompt, github-sync, handoff, delegate
 intake/flyers   intake json, flyer-import, ig-redownload, analyze, export
 index/db        index, flyer-list
 job             job new, prepare, list, status, next, activate, report
 privacy         privacy scan, sanitize, check
-brief           brief extract, to-project, show
-render          render run, validate, formats, rescale
-diario/portal   daily, portal
-web             serve, app, package (build .exe desktop)
+brief           brief extract, to-project, paquete-cotizacion, show
+render          render run, illustrator, bridge, validate, formats, rescale
+suplementos     suplementos list, contraportada, validate, illustrator
+eventos         eventos flyer-auto
+resolume        resolume automatizar
 airdrop         airdrop list, dry-run, apply, rollback, status, finish
-datadrop        datadrop scan/list/prepare  (inverse airdrop: bulk fotos terminadas → manifests + for_future_ai para linea v4.1)
-plano           plano <evento.json> [--rider] [--costs]
-varios          clean
+datadrop        datadrop scan, list, ingest, prepare
+knowledge       knowledge list, show, classify, ingest-example, logo-source, logo-lab
+hub (addon)     hub serve, index, route  (registrado via cli_addons.py, ver INTEGRACION_CLI.md)
+brand           [LEGACY] usar knowledge/logos en su lugar
+diario/portal   daily, portal, cotizaciones
+web             app, serve, package (build .exe desktop)
+varios          plano, clean, init
 ```
 
-**Datadrop (nuevo):** `flujo datadrop scan` (incoming bulk), `list` (solo procesados), `prepare` (paquete review _review_package.txt). Principal UI: hub (`flujo app` → Herramientas → Datadrop; header link abre tab+sección directamente). Bulk fácil: drop fotos a datadrops/incoming/ → scan. Listo para parallel + auto-compact.
+**Datadrop:** `flujo datadrop scan` (incoming bulk), `list` (solo procesados), `ingest <archivo>`, `prepare` (paquete review `_review_package.txt`). UI principal: hub (`flujo app` -> Herramientas -> Datadrop).
 
 ## Ejemplos operativos
 
 ```bash
-# Salud / versión
+# Salud / version / diagnostico
 flujo health
 flujo version
+flujo doctor
+flujo verify
 
 # Intake JSON estructurado (valida + crea job/brief/acuse)
 flujo intake json schemas/ejemplos/flyer_evento.json
@@ -66,11 +77,15 @@ flujo job new "etiquetas acme" --email inbox/correo.txt
 flujo job prepare jobs/2026-06-17_etiquetas-acme
 flujo job status jobs/2026-06-17_etiquetas-acme
 flujo job activate jobs/2026-06-17_etiquetas-acme
+flujo job list
+flujo job next
+flujo job report jobs/2026-06-17_etiquetas-acme
 
 # Brief
 flujo brief extract jobs/2026-06-17_etiquetas-acme
 flujo brief show jobs/2026-06-17_etiquetas-acme/brief.yaml
 flujo brief to-project jobs/2026-06-17_etiquetas-acme/brief.yaml
+flujo brief paquete-cotizacion jobs/<job>
 
 # Privacidad
 flujo privacy scan inbox/correo.txt
@@ -83,8 +98,16 @@ flujo render formats -w 16.5 -h 6.5 -t etiqueta
 flujo render validate projects/piezas_vectoriales/mi-proyecto/config.json
 flujo render run projects/piezas_vectoriales/mi-proyecto/config.json
 flujo render rescale projects/piezas_vectoriales/mi-proyecto/config.json --dpi 300
+flujo render illustrator projects/piezas_vectoriales/mi-proyecto/config.json
+flujo render bridge projects/piezas_vectoriales/mi-proyecto/config.json
 
-# Flyers / Instagram
+# Suplementos RD
+flujo suplementos list
+flujo suplementos contraportada <nombre> --brief "beneficios..."
+flujo suplementos validate svg/suplementos_rd/04_contraportadas/generadas/*.svg
+flujo suplementos illustrator <nombre>
+
+# Flyers / Instagram (usar instaloader, no yt-dlp)
 flujo flyer-import inbox/correo.txt
 flujo ig-redownload --all
 flujo analyze --all
@@ -92,32 +115,34 @@ flujo export projects/flyer_eventos/mi-flyer
 flujo index --rebuild
 flujo flyer-list
 
-# Dashboard / portal / web + delegación
+# Eventos / Resolume
+flujo eventos flyer-auto "https://www.instagram.com/p/XXXX/"
+flujo resolume automatizar jobs/<job_id>
+
+# Knowledge base
+flujo knowledge list productoras
+flujo knowledge show <id>
+flujo knowledge classify "texto del correo"
+
+# Dashboard / portal / cotizaciones / web + delegacion
 flujo daily
 flujo portal --repo-url https://github.com/ligereza/vibecodeine  # HTML visual para jefatura
+flujo cotizaciones projects/plano/ejemplos/evento_ejemplo.json --para productora
 flujo app                   # ENTRADA DIARIA: app + hub pro (recomendado)
 flujo app --desktop         # ventana nativa (pywebview)
-flujo package               # construye .exe standalone (PyInstaller gratis): doble clic abre flujo app --desktop sin consola
-flujo delegate visual-polish "tarea aquí"   # o pipeline | brand | future | packaging
-flujo serve                 # alias (usa --hub por defecto)
-
-# Datadrop (inverse airdrop — hub primero: `flujo app` → Herramientas > Datadrop)
-flujo datadrop scan     # bulk: incoming/ (o drop fotos) → datadrops date/ + manifest (palette/ocr/traits/for_future_ai)
-flujo datadrop list     # solo procesados (limpio, pending separado); usa hub para thumbs + modal
-flujo datadrop prepare  # genera datadrops/_review_package.txt para IA (linea_editorial v4.1 usa como real examples)
-# Protocolo agente: `flujo app` + hub datadrop section + prepare → feed linea. Listo parallel delegation + auto-compact prep.
-
-# Packaging desktop (free, PyInstaller + pywebview)
-# Pre: py -m pip install -e .[web,desktop-extras,build]
-# Luego: flujo package   → dist/flujo-hub.exe  (onefile noconsole)
-# Doble clic: lanza directo "flujo • Workspace" nativo con icono, tray, assets bundled (context/svg/brand), jobs en flujo_workspace/ sibling.
-# Actualiza rebuild tras cambios en HTMLs/paths.
-# (Mantiene flujo app --desktop intacto en source; exe = standalone pro daily)
+flujo package               # construye .exe standalone (PyInstaller gratis)
+flujo delegate visual-polish "tarea aqui"   # o pipeline | brand | future | packaging
+flujo serve                 # alias de app
 
 # Plano
 flujo plano projects/plano/ejemplos/evento_ejemplo.json
 flujo plano projects/plano/ejemplos/evento_ejemplo.json --rider
 flujo plano projects/plano/ejemplos/evento_ejemplo.json --costs
+
+# Hub addons (namespace separado, ver docs/INTEGRACION_CLI.md)
+py -m flujo hub serve --open
+py -m flujo hub index agent-brief "etiqueta creatina"
+py -m flujo hub route where --area eventos --pieza flyer
 ```
 
 ## Airdrops
@@ -130,53 +155,53 @@ flujo airdrop rollback
 flujo airdrop status
 ```
 
-Desde v0.34.8, `flujo airdrop apply` valida `_airdrop/` antes de aplicar. Si el
-airdrop modifica `src/flujo/airdrop.py`, hay que autorizarlo explícitamente:
+`flujo airdrop apply` valida `_airdrop/` antes de aplicar. Si el airdrop modifica `src/flujo/airdrop.py`, hay que autorizarlo explicitamente:
 
 ```bash
 flujo airdrop apply "mensaje" --allow-airdrop-engine
 ```
 
-Runner recomendado para aplicar y probar en una pasada:
+Runner recomendado para aplicar y probar en una pasada (ver `docs/AGENT_AIRDROP_PROTOCOL.md`):
 
 ```bash
 py scripts/run_airdrop_checks.py "mensaje"
 py scripts/run_airdrop_checks.py "mensaje" --allow-airdrop-engine
+py scripts/run_airdrop_checks.py --resume "mensaje"
 ```
 
 ## Estados de job
 
 ```txt
 borrador
-  ↓
+  |
 brief_extraido_pendiente_revision
-  ↓
-pendiente_datos  → listo_para_disenar
-                    ↓
+  |
+pendiente_datos  -> listo_para_disenar
+                    |
                   en_diseno
-                    ↓
+                    |
                   generado
-                    ↓
+                    |
                   entregado
 ```
 
-Transiciones válidas y sugerencias viven en `flujo.jobs.brief.EstadoJob` y
-`flujo.jobs.lifecycle.suggest_next_action`.
+Transiciones validas y sugerencias viven en `flujo.jobs.brief.EstadoJob` y `flujo.jobs.lifecycle.suggest_next_action`.
 
-## Migración desde scripts
+## Migracion desde scripts legacy (archivados)
 
-| Antiguo | Nuevo |
+Estos scripts fueron archivados en `_archive/legacy_20260703_1413/` (2026-07-03) por estar superados por la CLI Typer:
+
+| Antiguo (archivado) | Nuevo |
 |---------|-------|
 | `py scripts/job_from_text.py` | `flujo job new` |
 | `py scripts/job_prepare.py` | `flujo job prepare` |
 | `py scripts/job_status.py` | `flujo job list` / `flujo job status` |
 | `py scripts/job_activate.py` | `flujo job activate` |
-| `py scripts/brief_to_project.py` | `flujo brief to-project` |
 | `py scripts/project_render.py` | `flujo render run` |
-| `py scripts/flujo_daily.py` | `flujo daily` |
 | `py scripts/privacy_check_job.py` | `flujo privacy check` |
 | `py scripts/privacy_scan_text.py` | `flujo privacy scan` |
 | `py scripts/privacy_sanitize_text.py` | `flujo privacy sanitize` |
 | `py scripts/piezas_formatos.py` | `flujo render formats` |
-| `py scripts/flujo_health.py` | `flujo health` |
-| `py scripts/app.py` | `flujo serve` / `flujo app` (legacy Gradio: `flujo serve --legacy`) |
+| `py scripts/rider_new.py` | `flujo plano ... --rider` |
+
+Nota: `scripts/piezas_generar.py`, `scripts/piezas_check_outputs.py` y `scripts/flyer_create_project.py` NO fueron archivados — siguen vivos en `.github/workflows/render_piezas_vectoriales.yml` y `make new-flyer` respectivamente. `scripts/flujo.py` (wrapper legacy pre-Typer, ver `docs/COMANDO_UNIFICADO.md`) tampoco fue archivado pero no tiene uso real en CI/Makefile; preferir siempre `flujo ...`.

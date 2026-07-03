@@ -80,16 +80,34 @@ py scripts/validate_airdrop.py --allow-airdrop-engine
 py scripts/run_airdrop_checks.py "mensaje corto" --allow-airdrop-engine
 ```
 
-## Que hace el runner
+## Que valida `scripts/validate_airdrop.py`
 
-El runner debe:
+- `_airdrop/` existe y contiene archivos reales, no solo carpetas vacias.
+- No hay archivos de 0 bytes.
+- Incluye un `HANDOFF_*.md` o `HOTFIX_*.md`.
+- No incluye caches, `.egg-info`, bases de datos, medios pesados, ZIPs ni outputs generados.
+- No incluye `_delete.txt`.
+- No toca `src/flujo/airdrop.py` salvo autorizacion explicita con `--allow-airdrop-engine`.
+- Detecta rutas deformadas por Markdown/autolink como `[archivo.py](http...)`.
 
-1. Validar `_airdrop/`.
-2. Simular cambios.
-3. Aplicar con backup/manifest.
-4. Instalar el paquete en modo dev.
-5. Ejecutar compileall, pytest, health, version y smoke cuando exista.
-6. Crear checkpoint/commit/push si todo pasa.
+## Que hace el runner (`scripts/run_airdrop_checks.py`, orden real verificado v0.48.5)
+
+1. `validate_airdrop` (motor Python `flujo.airdrop`, no bash).
+2. `airdrop dry-run` (`flujo.airdrop.scan_airdrop()`).
+3. `airdrop apply` (`flujo.airdrop.apply_airdrop()`), con backup/manifest.
+4. `pip install -e ".[dev]"`.
+5. `compileall -q src scripts tests`.
+6. `pytest tests/ -q`.
+7. `flujo health`.
+8. `flujo version` + chequeo `get_version() in get_changelog()`.
+9. `scripts/hub_smoke.py` (salvo `--skip-hub-smoke`).
+10. `flujo.airdrop.run_auto_checkpoint()`: git add -A, commit, push (salvo `--skip-checkpoint` / `--skip-push`).
+
+Si un paso falla, se detiene y escribe un log en `_logs/airdrop_error_*.txt`; no se hace checkpoint si compileall, pytest, health, version o el chequeo de changelog fallan.
+
+Flags utiles: `--resume` (salta validate/dry-run/apply, corre checks+checkpoint tras un apply manual previo), `--skip-hub-smoke`, `--skip-checkpoint`, `--skip-push`.
+
+Nota Windows/Git Bash: el runner es Python puro; no invoca `bash` internamente para apply/checkpoint (a diferencia de versiones muy antiguas de este doc que mencionaban `apply_airdrop.sh`/`checkpoint.sh`).
 
 ## Regla de fallo
 
