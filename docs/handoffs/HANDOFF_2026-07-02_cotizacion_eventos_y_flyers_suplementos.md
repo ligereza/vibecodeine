@@ -88,6 +88,14 @@ py .claude/skills/entregas-rd/generadores/gen_cotizacion_dark_html.py
   2026-07-01 (mencionaban Mapping LED como "sin commit", pero ya estaba
   commiteado en 9970575 desde antes). Se corrigieron en este cierre.
 
+## Cierre 2026-07-03
+
+- El usuario confirmo que el se encarga de los datos de contacto de la
+  cotizacion (ya no es pendiente del agente).
+- El usuario decidio explicitamente NO generar version crema de los flyers
+  09/10 ni del plano: dark/neon queda como version final y unica de estas
+  piezas. No volver a proponer la version crema para estos archivos.
+
 ## Reporte Formal de Verificacion y Tolerancia Cero a Errores
 
 - py -m compileall src/flujo: no aplica (no se toco codigo Python del paquete)
