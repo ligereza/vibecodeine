@@ -16,5 +16,5 @@ v4.1 (seccion 0.1) marcaba PENDIENTE, con dos salvedades:
 2. Cuando exista el RD_logo_A_rave.svg oficial (o el .ai de RD), reemplazar
    este PNG por un export limpio a 2048px.
 
-Uso actual: sello/header en las piezas dark-neon (flyers de suplementos,
-plano y cotizacion de eventos).
+Uso actual: sello/header en las piezas dark-neon (flyers 11/12 de
+suplementos, plano dark y cotizacion dark de eventos).

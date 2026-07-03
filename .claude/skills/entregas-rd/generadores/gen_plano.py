@@ -7,11 +7,11 @@ Preset MAINSTREAM extendido (servicio completo, 15 voluntarios).
 import html
 
 ZONE_COLORS = {
-    "testeo": "#2ECC71", "contencion": "#8B4DFF", "informativo": "#0369a1",
+    "testeo": "#2d5a4a", "contencion": "#7c3aed", "informativo": "#0369a1",
     "descanso": "#059669", "coordinacion": "#ca8a04", "power": "#f59e0b",
-    "rack": "#9aa5b1", "water": "#2563eb", "sensory": "#8b5cf6",
-    "tent": "#2ECC71", "table": "#10b981", "chairs": "#ca8a04",
-    "trash": "#a1a1aa", "light": "#fde047", "contact": "#0ea5e9",
+    "rack": "#4b5563", "water": "#2563eb", "sensory": "#8b5cf6",
+    "tent": "#2d5a4a", "table": "#10b981", "chairs": "#ca8a04",
+    "trash": "#71717a", "light": "#fde047", "contact": "#0ea5e9",
     "security": "#f97316", "medical": "#dc2626", "food": "#a16207",
 }
 
@@ -77,12 +77,12 @@ LEGEND_POS = (2060, 120)
 
 parts = []
 parts.append('<svg viewBox="0 0 2970 2100" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">')
-parts.append('<rect width="2970" height="2100" fill="#0A0A0A"/>')
-parts.append('<rect x="50" y="50" width="2870" height="1800" fill="none" stroke="#C800C8" stroke-width="5" stroke-dasharray="30 20" opacity=".8" rx="20"/>')
+parts.append('<rect width="2970" height="2100" fill="#fafafa"/>')
+parts.append('<rect x="50" y="50" width="2870" height="1800" fill="none" stroke="#555" stroke-width="5" stroke-dasharray="30 20" rx="20"/>')
 
 for label, x0, y0, w, h, color in RECTS:
     parts.append(f'<g><rect x="{x0}" y="{y0}" width="{w}" height="{h}" rx="16" fill="{color}" fill-opacity="0.48" stroke="{color}" stroke-width="8"/>'
-                 f'<text x="{x0 + w/2}" y="{y0 + h/2}" text-anchor="middle" dominant-baseline="middle" font-size="42" font-family="Arial, sans-serif" font-weight="900" fill="#F2F2F2">{esc(label.upper())}</text></g>')
+                 f'<text x="{x0 + w/2}" y="{y0 + h/2}" text-anchor="middle" dominant-baseline="middle" font-size="42" font-family="Arial, sans-serif" font-weight="900" fill="#111">{esc(label.upper())}</text></g>')
 
 for key, label, x0, y0, w, h in SYMBOLS:
     color = ZONE_COLORS[key]
@@ -99,27 +99,21 @@ for key, label, *_ in SYMBOLS:
         legend.append((key, label))
 lx, ly = LEGEND_POS
 legend_h = min(760, max(190, 120 + -(-len(legend) // 2) * 68))
-parts.append(f'<g><rect x="{lx}" y="{ly}" width="760" height="{legend_h}" rx="30" fill="#161318" fill-opacity="0.97" stroke="#C800C8" stroke-width="5"/>'
-             f'<text x="{lx + 380}" y="{ly + 70}" text-anchor="middle" font-size="36" font-family="Arial, sans-serif" font-weight="900" fill="#FFD21F">LEYENDA TÉCNICA</text>')
+parts.append(f'<g><rect x="{lx}" y="{ly}" width="760" height="{legend_h}" rx="30" fill="#f4f4f5" fill-opacity="0.96" stroke="#222" stroke-width="5"/>'
+             f'<text x="{lx + 380}" y="{ly + 70}" text-anchor="middle" font-size="36" font-family="Arial, sans-serif" font-weight="900" fill="#333">LEYENDA TÉCNICA</text>')
 for i, (key, label) in enumerate(legend):
     col, row = i % 2, i // 2
     x0 = lx + 44 + col * 360
     y0 = ly + 138 + row * 68
     color = ZONE_COLORS[key]
     parts.append(f'<g>{icon(key, color, x0 + 20, y0 - 14, 0.32)}'
-                 f'<text x="{x0 + 58}" y="{y0}" font-size="22" font-family="Arial, sans-serif" font-weight="800" fill="#F2F2F2">{esc(label.upper()[:18])}</text></g>')
+                 f'<text x="{x0 + 58}" y="{y0}" font-size="22" font-family="Arial, sans-serif" font-weight="800" fill="#333">{esc(label.upper()[:18])}</text></g>')
 parts.append('</g>')
 
-parts.append('<text x="100" y="2010" font-size="34" font-family="Arial, sans-serif" font-weight="900" fill="#FFD21F">SERVICIO COMPLETO RD · EVENTO MASIVO (GENÉRICO) · LUGAR Y FECHA POR DEFINIR</text>')
+parts.append('<text x="100" y="2010" font-size="34" font-family="Arial, sans-serif" font-weight="900" fill="#222">SERVICIO COMPLETO RD · EVENTO MASIVO (GENÉRICO) · LUGAR Y FECHA POR DEFINIR</text>')
 parts.append('</svg>')
 
-
-import base64 as _b64
-_logo = _b64.b64encode(open("assets/logo/RD_logo_A_transparente.png", "rb").read()).decode()
-parts.insert(-1, f'<image x="2690" y="1900" width="200" height="158" xlink:href="data:image/png;base64,{_logo}"/>')
-parts[0] = parts[0].replace('xmlns="http://www.w3.org/2000/svg"', 'xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"')
-
-out = "datadrops/cotizacion_general_eventos/plano_servicio_completo_generico_dark.svg"
+out = "datadrops/cotizacion_general_eventos/plano_servicio_completo_generico.svg"
 with open(out, "w", encoding="utf-8") as f:
     f.write("\n".join(parts) + "\n")
 print("OK", out, f"({len(legend)} simbolos en leyenda)")

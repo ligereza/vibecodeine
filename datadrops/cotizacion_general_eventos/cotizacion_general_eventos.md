@@ -97,7 +97,9 @@ servicio completo es cerrado por día de evento.
 
 - Espacio para dos stands contiguos de 3×3 m (informativo + testeo) y una zona
   de contención/descanso de ~3×3 m en sector de baja estimulación sensorial.
-  Se adjunta plano operativo referencial.
+  Se adjunta plano operativo referencial con simbologia tecnica
+  (plano_servicio_completo_generico.svg) y rider con checklist de 17
+  requerimientos (rider_servicio_completo_generico.txt).
 - 3 mesas y sillas para el equipo (coordinable si las llevamos nosotros).
 - Punto eléctrico estable e iluminación para la mesa de testeo (lectura
   nocturna). El módulo de testeo requiere ventilación.

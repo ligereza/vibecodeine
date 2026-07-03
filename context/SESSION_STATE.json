@@ -1,37 +1,37 @@
 {
   "date": "2026-07-03",
   "version": "0.48.5",
-  "goal": "Limpieza extrema de raiz del repo (HANDOFF/checkpoints sueltos archivados) y cierre de pendientes de la sesion de eventos/suplementos",
+  "goal": "Resolume/Chataigne automation validated against a real .noisette + web hub tools kept current",
   "done": [
-    "Limpieza de raiz 2026-07-03: 14 HANDOFF_*.md sueltos movidos a docs/handoffs/ (2 recientes) y docs/handoffs/archive/root/ (12 legacy); 56 checkpoints/*.md movidos a .archive/checkpoints/ (checkpoints/ queda vacio con .gitkeep, listo para scripts/checkpoint.sh); cache local (.pytest_cache, __pycache__) purgada",
-    "Decision cerrada: version CREMA de flyers 09/10 y plano de suplementos NO se hara -- dark/neon es definitivo por instruccion explicita del usuario",
-    "CRT phosphor / Rutt-Etra converter tool (tools/crt_phosphor/) committed by user directly to main (343d08c)",
-    "Identidad del asistente: nombre 'Vibo' definido en CLAUDE.md (raiz) y AGENTS.md",
-    "Cotizacion general eventos (agencia marketing), dark/neon: datadrops/cotizacion_general_eventos/ con md, html+PDF membretado, plano con simbologia PlanoTool, rider checklist 17 items. Tarifas jefe: 250k/300k(6vol)/500k(15vol) con desglose",
-    "Flyers suplementos dark/neon: reversos QR 09_post_fiesta_dark y 10_linea_dark en 02_editables_svg (contenido maestro verbatim, QR a reduciendodano.cl, validate OK); reemplazan BACK.SUPLEMENTOS fallido -- dark/neon es la version FINAL, decision explicita del usuario 2026-07-03: no generar version crema para estas piezas",
-    "Logo RD real (Version A) recuperado sin IA: assets/logo/RD_logo_A_transparente.png (chroma-key desde rave_edit_rd_real_v5.png)",
-    "Skill .claude/skills/entregas-rd/ creada: SKILL.md + generadores (gen_plano_dark, gen_dark_backs, gen_cotizacion_dark_html) + plantilla cotizacion",
+    "Vectorizados (curvas DejaVu via fontTools): 12 archivos (dark 06_dark_vectorizado_svg + crema 09/10) y galeria preview_flyers_dark.html",
+    "Linea dark completa: 8 frentes en svg/suplementos_rd/05_dark_neon/ (gen_dark_fronts.py, cajas dinamicas centradas, validate 8/8 OK)",
+    "Variantes dark/neon (paleta rave v4.1) de flyers (11/12), cotizacion y plano + logo RD real extraido a assets/logo/RD_logo_A_transparente.png",
+    "Cotizacion general eventos (agencia marketing): datadrops/cotizacion_general_eventos/ con md, html membretado, plano con simbologia PlanoTool y rider checklist 17 items. Tarifas jefe: 250k/300k(6vol)/500k(15vol) con desglose",
+    "Flyers suplementos: reversos QR 09_post_fiesta y 10_linea en 02_editables_svg (crema, contenido maestro, QR a reduciendodano.cl, validate 10/10 OK); reemplazan BACK.SUPLEMENTOS fallido",
+    "Identidad del asistente: nombre 'Vibo' definido en CLAUDE.md (raiz, nuevo) y AGENTS.md (docs-only)",
     "Resolume/Chataigne automator: XML pre-flight, CSV OSC, README, experimental .noisette (unverified)",
     "SVG Studio con SVGs reales, Config Editor visual",
     "Plano/Rider Pro estable con export PDF multipagina",
     "Cotizacion base, Jobs, Intake, Commands en hub React",
-    "Mapping LED (Event Rigging Master Console) -- ya estaba commiteado en 9970575, corregido el registro previo que decia 'sin commit'",
     "INDEX_FORMATOS.json reconciliado con formatos usados en codigo (carrusel, etiqueta horizontal generica)"
   ],
-  "doing": [],
+  "doing": [
+    "Mapping LED (Event Rigging Master Console) agregado como tool de Studio via iframe: web/src/components/MappingTool.tsx + web/public/mapping.html (cambios locales, sin commit ni push)",
+    "Definir si/cuando commitear los cambios de Mapping LED"
+  ],
   "next": [
     "Pedir al usuario un .noisette real exportado de Chataigne 1.10.3 y guardarlo en tests/fixtures/ antes de tocar build_chataigne_noisette_experimental de nuevo",
-    "QA de usuario en Illustrator local sobre logo/flyers/plano antes de distribucion amplia",
-    "El usuario confirmo que el se encarga de los datos de contacto directo (correo/telefono) de la cotizacion; no es tarea del agente",
+    "Actualizar context/LAST_HANDOFF.md y context/SESSION_STATE.json al cerrar cada sesion (version real + done/doing/next/blockers)",
     "Revisar version.py changelog antes de reintentar algo ya probado"
   ],
   "blockers": [
-    "build_chataigne_noisette_experimental: reescrito 4 veces (v0.48.2 a v0.48.5) especulando el schema .noisette, nunca validado contra un archivo real. No reescribir de nuevo sin fixture real."
+    "build_chataigne_noisette_experimental: reescrito 4 veces (v0.48.2 a v0.48.5) especulando el schema .noisette, nunca validado contra un archivo real. No reescribir de nuevo sin fixture real.",
+    "Sesion remota con acceso GitHub solo lectura (push 403); entregas duplicadas en airdrop ZIP",
+    "Material nuevo del chat de diseno no llego al repo ni a Adobe CC; falta que el usuario indique donde esta"
   ],
   "resume_commands": [
     "cd web && npm run typecheck && npm run build:context",
     "py -m flujo verify",
-    "py -m flujo app",
-    "py -m flujo suplementos validate svg/suplementos_rd/02_editables_svg/*.svg"
+    "py -m flujo app"
   ]
 }

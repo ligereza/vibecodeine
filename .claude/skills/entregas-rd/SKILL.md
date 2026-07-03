@@ -5,10 +5,8 @@ description: Playbook probado para producir entregables comerciales/visuales de 
 
 # Entregas RD — playbook operativo
 
-Skill destilada de la sesion 2026-07-02 (identidad "Vibo", primero en un
-contenedor cloud sin push, despues terminada en la maquina local del usuario
-con Windows + Git Bash). Codifica lo que funciono para que sesiones futuras
-no reinventen el flujo.
+Skill destilada de la sesion 2026-07-02 (chat "Vibo"). Codifica lo que funciono
+para que sesiones futuras no reinventen el flujo.
 
 ## Cuando invocar
 
@@ -25,42 +23,25 @@ no reinventen el flujo.
    completo evento masivo $500.000 (15 vol).
 2. **Contenido de suplementos** viene VERBATIM de
    `projects/piezas_vectoriales/suplementos_rd/01_contenido/contenido_suplementos_rd.json`.
-   Cargarlo con `json.load` y tomar los campos tal cual (title, description,
-   items) — no reescribir el texto de memoria. NO usar los datos DEMO de
-   `src/flujo/comercial/suplementos_config.py` (tienen telefonos falsos +1 809).
+   NO usar los datos DEMO de `src/flujo/comercial/suplementos_config.py`
+   (tienen telefonos falsos +1 809).
 3. **Texto institucional** viene de `datadrops/Propuesta_Reduciendo_Dano.txt`.
 4. **Logo RD** NUNCA se regenera con IA (regla dura §0 de v4.1). Usar el
    asset real: `assets/logo/RD_logo_A_transparente.png` (216x171, extraido
    por chroma key desde `datadrops/2026-06-22_154643_0_raveeditrdrealv5/rave_edit_rd_real_v5.png`).
-   Si no existe, recrearlo con el mismo metodo (ver receta E).
-5. **Dos paletas del repo, decidir cual segun el uso real de la pieza**:
-   - Sistema CREMA (v4.1 §6.H) — regla dura para IMPRESION de suplementos:
-     fondo `#F6EFE3`, verde `#173F2F`, amarillo `#F5C54D`, tinta `#161513`.
-   - Sistema RAVE/dark (v4.1 §0) — para DIGITAL/nocturno (WhatsApp, IG,
-     cotizaciones): negro `#0A0A0A`, magenta `#C800C8`, amarillo neon
-     `#FFD21F`, blanco ceramico `#F2F2F2`.
-   Si el usuario pide "todo dark" para una pieza que va a IMPRENTA, avisale
-   una vez que el flyer viejo que fallo (`datadrops/flyers/BACK.SUPLEMENTOS.pdf`)
-   era justamente negro/neon vacio — es el anti-patron documentado en v4.1.
-   Si insiste, procede en dark y dejalo explicito en el commit/handoff como
-   decision del usuario, sin insistir mas ("no seas porfiado, estilo dark").
+5. **Paletas coexisten pero NO se mezclan**:
+   - Sistema CREMA (v4.1 §6.H) — para IMPRESION de suplementos: fondo `#F6EFE3`,
+     verde `#173F2F`, amarillo `#F5C54D`, tinta `#161513`.
+   - Sistema RAVE (v4.1 §0) — para DIGITAL/nocturno: negro `#0A0A0A`, magenta
+     `#C800C8`, amarillo neon `#FFD21F`, blanco ceramico `#F2F2F2`.
 6. **Canvas obligatorio flyer suplementos**: 2000x2800 px (10x14 cm @300dpi).
    Cambiarlo rompe el validador.
-7. **QR** siempre con tarjeta blanca de zona quieta >= 4 modulos (48px de
-   padding sobre el modulo). Apunta a `https://reduciendodano.cl`.
+7. **QR** siempre con tarjeta blanca de zona quieta >= 4 modulos.
+   Apunta a `https://reduciendodano.cl`.
 8. **Handoff obligatorio al cierre**: actualizar `context/LAST_HANDOFF.md`
    (ASCII-only) y `context/SESSION_STATE.json` con fecha/version reales.
-9. **QA visual real = Illustrator local del usuario**, no un renderizador
-   headless. Para el paquete final de piezas graficas usar
-   `py -m flujo suplementos illustrator <nombres...>` y que el usuario lo
-   revise en su Illustrator antes de imprimir. Los renders PNG que generes
-   tu mismo (ver receta F) son solo para tu propia verificacion rapida
-   durante la sesion, no reemplazan el QA en Illustrator.
-10. **Push**: si trabajas en un contenedor cloud sin acceso de escritura al
-    repo (403 en git push), entrega por airdrop (`_airdrop/` en la raiz del
-    ZIP) + reporte de verificacion. Si trabajas en la maquina local del
-    usuario con Git Bash, commitea y pushea de verdad — no hay razon para
-    airdrop ahi.
+9. **Push bloqueado en web** — entregar por airdrop (`_airdrop/` en la raiz
+   del ZIP) + reporte de verificacion.
 
 ## Recetas
 
@@ -68,60 +49,48 @@ no reinventen el flujo.
 
 Uso: cuando la piden agencias o para prospectar productoras. Estructura del
 documento entregado en `datadrops/cotizacion_general_eventos/`:
-`cotizacion_general_eventos.md` + `.html` (imprimible a PDF) + `_RD_dark.pdf`
-+ plano SVG + rider TXT. La plantilla vive en
-`plantillas/cotizacion_general.template.md`.
+`cotizacion_general_eventos.md` + `.html` (imprimible a PDF) + plano SVG +
+rider TXT. La plantilla vive en `plantillas/cotizacion_general.template.md`.
 
 Pasos:
-1. Crear job `jobs/YYYY-MM-DD_slug/` (carpeta local, gitignored salvo
-   `_template`) con `pedido_original.txt`, `brief.yaml`,
-   `evento_masivo_generico.json` (o el JSON del evento real), `estado.md`,
-   `resultado.md`.
+1. Crear job `jobs/YYYY-MM-DD_slug/` con `pedido_original.txt` y `brief.yaml`.
 2. Redactar el markdown desde la plantilla, sustituyendo tarifas.
-3. Generar el HTML membretado con la paleta que corresponda (ver regla 5).
-   Ver `generadores/gen_cotizacion_dark_html.py` como referencia de
-   estructura (header con logo real embebido en base64, tablas, plano
-   inline, footer).
+3. Generar el HTML membretado con la paleta crema (default) o rave (dark).
 4. Adjuntar plano (receta C) y rider con checklist de 17 items.
 5. Copiar los archivos finales a `datadrops/cotizacion_general_eventos/`
-   (jobs/ es local por convencion; datadrops/ persiste y se commitea).
-6. Generar el PDF final (ver receta F para el metodo en Windows).
+   (jobs/ es local por convencion; datadrops/ persiste).
 
 ### Receta B — reversos de suplementos con QR
 
-Usa `generadores/gen_dark_backs.py` como base (adaptar paleta si se pide
-crema). El script:
-- carga el contenido VERBATIM desde el JSON maestro (regla dura 2),
-- respeta la estructura `<g id>` canonica (fondo/marco/header/titulo/cajas/
+Usa `generadores/gen_backs.py` (crema) y `generadores/gen_dark_backs.py`
+(dark). Ambos:
+- respetan la estructura `<g id>` canonica (fondo/marco/header/titulo/cajas/
   contenido/bloque_qr/footer),
-- valida que el texto no desborde las cajas (assert antes de escribir),
-- genera QR vectorial via `qrcode` (ERROR_CORRECT_M, zona quieta 4 modulos),
-- pasa `py -m flujo suplementos validate` sin hallazgos.
+- validan que el texto no desborde las cajas (assert antes de escribir),
+- generan QR vectorial via `qrcode` (ERROR_CORRECT_M, zona quieta 4 modulos),
+- pasan `py -m flujo suplementos validate` sin hallazgos.
 
-Ajustables: `box1/box2` (posicion y altura de las cajas), `desc_wrap` /
-`item_wrap` (ancho de linea), `desc_lead`/`item_lead` (interlineado). Si el
-assert de desborde falla, subir el `_wrap` o bajar el `_lead`/`_gap`.
+Ajustables: `title`, `desc_paras`, `items`, `accent`, `box1/box2` (posicion y
+altura de las cajas), `desc_wrap` / `item_wrap` (ancho de linea). Si el
+assert de desborde falla, subir el `_wrap` o bajar el `_lead`.
 
-Numeracion de archivos: seguir el correlativo de
-`svg/suplementos_rd/02_editables_svg/` (01-08 = frentes crema canonicos).
-Los reversos van despues del ultimo numero usado, sin reservar rangos para
-crema vs dark si solo se produce una paleta en la sesion.
+Reglas visuales que YA aplican los generadores:
+- Zona blanca del QR: 48 px de padding (~4 modulos).
+- Cuerpo minimo 24 px; headings 48 px; titulo 76-85 px.
+- Margen seguro 120 px lateral, 74 px inferior sobre el footer.
 
 Comando de verificacion post-generacion (obligatorio):
 
 ```bash
-py -m flujo suplementos validate svg/suplementos_rd/02_editables_svg/*.svg
+PYTHONPATH=src python3 -m flujo suplementos validate svg/suplementos_rd/02_editables_svg/*.svg
 ```
-
-(usar `py`, no `python`, en Windows — ver AGENTS.md)
 
 ### Receta C — plano operativo (simbologia PlanoTool)
 
-Usa `generadores/gen_plano_dark.py` como base (adaptar paleta si se pide
-crema). Replica el SVG imprimible del componente
-`web/src/components/PlanoTool.tsx` (canvas 2970x2100, simbologia tecnica
-idempotente al tool, leyenda tecnica 2 columnas, sello RD con el logo real
-embebido en base64).
+Usa `generadores/gen_plano.py` (crema) o `generadores/gen_plano_dark.py`
+(rave, con sello RD abajo a la derecha). Ambos replican el SVG imprimible
+del componente `web/src/components/PlanoTool.tsx` (canvas 2970x2100,
+simbologia tecnica idempotente al tool, leyenda tecnica 2 columnas).
 
 Modificar la lista `SYMBOLS` para agregar/quitar simbolos: cada tupla es
 `(key, label, x, y, w, h)`. Los `key` validos estan en la constante
@@ -130,69 +99,47 @@ Modificar la lista `SYMBOLS` para agregar/quitar simbolos: cada tupla es
 No usar `py -m flujo plano <json> -o` — genera un plano viejo con motor
 distinto sin la simbologia. La receta correcta es siempre el generador.
 
+### Receta E — frentes dark de la linea completa (8 productos)
+
+Usa `generadores/gen_dark_fronts.py`. Lee el JSON maestro completo y genera
+los 8 frentes en `svg/suplementos_rd/05_dark_neon/NN_<slug>_dark.svg`
+(2000x2800, sistema rave, logo real embebido). Mejoras sobre los reversos:
+
+- Cajas de altura DINAMICA con tope de crecimiento 1.5x: el contenido se mide
+  primero y las cajas se reparten el alto disponible; el sobrante se centra
+  como aire simetrico (productos cortos no quedan inflados).
+- Texto centrado verticalmente dentro de cada caja.
+- Ajuste de linea por presupuesto de pixeles (`wrap_px`), no por conteo fijo.
+- Kicker canonico "PRODUCTO"/"LINEA" (OJO: no usar la palabra S-U-P-L-E-M-E-N-T-O
+  sola en mayusculas en ningun texto — es placeholder del validador y falla).
+- Soporta los 3 modelos de contenido del JSON: desc+items, desc+versions+usage
+  (Proteina) y general (linea completa).
+- `PER_ID_ACCENT` permite forzar acento por producto (Pre Fiesta usa magenta
+  RD para no chocar con el violeta de Hongos).
+
+### Receta F — vectorizar (texto a curvas) sin Illustrator
+
+Usa `generadores/gen_vectorizar.py IN.svg OUT.svg [...]`. Convierte cada
+<text> a <path> con las curvas reales de DejaVu Sans/Bold via fontTools
+(mismo resultado que los archivos de 03_final_vectorizado_svg). Respeta
+x/y, tamano, peso, fill y text-anchor. Convenciones de salida:
+- frentes crema -> 03_final_vectorizado_svg/NN_slug_vectorizado.svg
+- piezas dark   -> 06_dark_vectorizado_svg/NN_slug_dark_vectorizado.svg
+Las galerias 04_preview/preview_flyers.html (crema) y
+preview_flyers_dark.html (dark) enlazan editable + vectorizado por pieza.
+
 ### Receta D — variantes dark
 
 Toda pieza dark:
 - fondo `#0A0A0A`, panel `#161318`,
 - borde neon magenta `#C800C8` (dos capas: ancho + fino, opacidades .16 y .55
   simulan glow SIN filtros SVG — Illustrator los rechaza),
-- headings en amarillo `#FFD21F` (con `text-shadow` en HTML, con doble
-  texto desplazado 4px en SVG para simular glow sin filtros),
-- sello RD (logo real, embebido base64, `assets/logo/RD_logo_A_transparente.png`),
+- headings en amarillo `#FFD21F` con `text-shadow` en HTML,
+- sello RD (logo real, embebido base64),
 - QR mantiene fondo blanco (jamas neon: rompe el escaneo).
 
-### Receta E — recuperar el logo real (si `assets/logo/` no existe)
-
-```python
-from PIL import Image
-import colorsys
-
-img = Image.open("datadrops/2026-06-22_154643_0_raveeditrdrealv5/rave_edit_rd_real_v5.png").convert("RGB")
-W, H = img.size
-crop = img.crop((int(W*0.385), int(H*0.065), int(W*0.635), int(H*0.245)))
-# mascara alpha por HSV: transparenta el fondo claro/desaturado del mockup,
-# deja opaco el logo (magenta/amarillo saturado)
-out = Image.new("RGBA", crop.size)
-px, po = crop.load(), out.load()
-for y in range(crop.size[1]):
-    for x in range(crop.size[0]):
-        r, g, b = px[x, y]
-        h, s, v = colorsys.rgb_to_hsv(r/255, g/255, b/255)
-        if s < 0.18 and v > 0.55:
-            a = 0
-        elif s < 0.30 and v > 0.55:
-            a = int(255 * (s - 0.18) / 0.12)
-        else:
-            a = 255
-        po[x, y] = (r, g, b, a)
-out.crop(out.getbbox()).save("assets/logo/RD_logo_A_transparente.png")
-```
-
-NUNCA regenerar el logo con un modelo de IA — solo recorte + chroma-key
-determinista sobre el asset real ya existente en el repo.
-
-### Receta F — verificacion visual en Windows (sin cairosvg)
-
-`cairosvg` falla en Windows por defecto (`OSError: no library called
-"cairo-2"` — falta la libreria nativa de Cairo, `pip install cairosvg` no
-la trae). En vez de instalar el runtime de GTK3, usa el Edge que ya viene
-con Windows en modo headless:
-
-```bash
-"/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe" \
-  --headless=new --disable-gpu --no-sandbox \
-  --screenshot="$(pwd)/ruta/salida.png" \
-  --window-size=2000,2800 --hide-scrollbars \
-  "file:///$(pwd)/ruta/archivo.svg"
-```
-
-Importante: `--window-size` debe ser >= al tamano real del canvas del SVG/
-HTML (o el screenshot recorta al viewport en vez de mostrar todo). Para
-PDF de un HTML, mismo binario con `--print-to-pdf=salida.pdf
---no-pdf-header-footer` en vez de `--screenshot`.
-
-Esto es SOLO para tu propia verificacion rapida durante la sesion — el QA
-real de las piezas graficas pasa por Illustrator (regla dura 9).
+Los generadores dark reciben la misma tabla `CONTENT` que los crema. Cambiar
+solo la paleta, la estructura sobrevive.
 
 ## Diagnostico rapido si algo falla
 
@@ -202,22 +149,17 @@ real de las piezas graficas pasa por Illustrator (regla dura 9).
 | `validate` falla por placeholders | quedaron `NOMBRE DEL SUPLEMENTO` etc. | reemplazar todos |
 | Texto desborda caja | `_wrap` muy corto o `_lead` alto | ajustar en `CONTENT` |
 | QR no escanea | zona blanca < 4 modulos, o modulos sobre neon | usar `qr_svg()` tal cual |
-| `cairosvg` falla en Windows | falta libreria nativa Cairo | usar Edge headless (receta F) |
-| Screenshot recortado | `--window-size` menor al canvas | igualar tamano de ventana al viewBox |
-| Push da 403 en sesion cloud | acceso de solo lectura | entregar por airdrop |
-| Push funciona pero en repo local no | confundiste sesion cloud con local | verificar `pwd` / ruta antes de asumir |
-| Commit "Unverified" | falta autor `noreply@anthropic.com` | ya esta configurado en runtimes cloud; en local usa el git config del usuario |
+| Push da 403 | sesion web solo lectura | entregar por airdrop |
+| Commit "Unverified" | falta autor `noreply@anthropic.com` | ya esta configurado en el runtime |
 
 ## Entregables minimos por sesion
 
 1. Archivos finales en sus rutas del repo.
-2. Renders PNG de verificacion propia (Edge headless en Windows, ver receta F).
-3. PDF de la cotizacion si aplica (Edge headless `--print-to-pdf`).
+2. Renders PNG de verificacion (usar cairosvg + Chromium headless).
+3. PDF de la cotizacion (Chromium `--print-to-pdf`).
 4. Handoff `HANDOFF_YYYY-MM-DD_<tema>.md` en raiz.
 5. `context/LAST_HANDOFF.md` + `context/SESSION_STATE.json` actualizados.
-6. Si estas en sesion cloud sin push: airdrop ZIP validado
-   (`py scripts/validate_airdrop.py`). Si estas en maquina local: commit +
-   push real, sin airdrop.
+6. Airdrop ZIP validado (`py scripts/validate_airdrop.py`).
 7. Reporte formal de verificacion (formato en AGENTS.md).
 
 ## Referencias fijas del repo
@@ -229,4 +171,3 @@ real de las piezas graficas pasa por Illustrator (regla dura 9).
 - `web/src/components/PlanoTool.tsx` — simbologia tecnica canonica.
 - `src/flujo/eventos/presets.py` — presets UNDER/BASE/MAINSTREAM.
 - `datadrops/Propuesta_Reduciendo_Dano.txt` — texto institucional.
-- `assets/logo/README.md` — procedencia del logo real extraido.
