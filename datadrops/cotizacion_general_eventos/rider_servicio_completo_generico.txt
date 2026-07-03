@@ -1,0 +1,42 @@
+RIDER TECNICO RD - Servicio completo, evento masivo (generico)
+===============================================================
+Documentacion de Intervencion en Terreno - ONG Reduciendo Dano
+Evento: por definir | Lugar: por definir | Fecha: por definir
+Equipo: 15 voluntarios/as | Jornada tipo: 8 h | Incluye testeo y contencion
+
+Requerimientos operativos (checklist Plano/Rider Pro, 17 items):
+
+ESPACIO
+  [ ] Medidas disponibles del recinto (int/ext)
+  [ ] Tipo de terreno (nivelado, estable)
+  [ ] Circulacion publica segura
+  [ ] Zona con menor estimulacion sensorial para descanso
+
+INFRAESTRUCTURA
+  [ ] Toldo/carpa (minimo 3x3 m)
+  [ ] Mesas (2-3 segun modalidad)
+  [ ] Sillas (4-6 por stand)
+  [ ] Rack o caja de almacenamiento
+  [ ] Basureros, senaletica
+
+SERVICIOS
+  [ ] Punto electrico disponible
+  [ ] Iluminacion adecuada
+  [ ] Agua/hidratacion si aplica
+  [ ] Calefaccion si exterior nocturno
+
+COORDINACION
+  [ ] Contacto directo con produccion
+  [ ] Coordinacion con seguridad privada
+  [ ] Acceso a equipo medico del evento
+  [ ] Alimentacion si jornada > 5 horas
+
+Notas derivadas del escenario (motor flujo plano):
+  - Jornada > 5 h: alimentacion obligatoria para el equipo (produccion o costo extra).
+  - 15 voluntarios -> 3 mesas (1 base + 1 por cada 5).
+  - Incluye testeo: +1 stand contiguo + 1 mesa extra para reactivos (ventilacion obligatoria).
+  - Evento masivo: zona de contencion/descanso de baja estimulacion sensorial.
+  - Coordinacion previa con produccion, seguridad y equipo medico. Acceso para carga/descarga.
+
+Plano: ver plano_servicio_completo_generico.svg (simbologia y leyenda tecnica
+del Plano/Rider Pro del hub web).
