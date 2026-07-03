@@ -3,6 +3,7 @@
   "version": "0.48.5",
   "goal": "Resolume/Chataigne automation validated against a real .noisette + web hub tools kept current",
   "done": [
+    "Automatizacion: workflow validar-piezas.yml (molde CI) + docs/AUTOMATIZACION_FLUJO.md (roadmap 4 fases para trabajo sin PC)",
     "Vectorizados (curvas DejaVu via fontTools): 12 archivos (dark 06_dark_vectorizado_svg + crema 09/10) y galeria preview_flyers_dark.html",
     "Linea dark completa: 8 frentes en svg/suplementos_rd/05_dark_neon/ (gen_dark_fronts.py, cajas dinamicas centradas, validate 8/8 OK)",
     "Variantes dark/neon (paleta rave v4.1) de flyers (11/12), cotizacion y plano + logo RD real extraido a assets/logo/RD_logo_A_transparente.png",
@@ -20,6 +21,7 @@
     "Definir si/cuando commitear los cambios de Mapping LED"
   ],
   "next": [
+    "Fase 2 automatizacion: activar acceso escritura en claude.ai/code + instalar Claude GitHub App (/install-github-app) + secret ANTHROPIC_API_KEY",
     "Pedir al usuario un .noisette real exportado de Chataigne 1.10.3 y guardarlo en tests/fixtures/ antes de tocar build_chataigne_noisette_experimental de nuevo",
     "Actualizar context/LAST_HANDOFF.md y context/SESSION_STATE.json al cerrar cada sesion (version real + done/doing/next/blockers)",
     "Revisar version.py changelog antes de reintentar algo ya probado"

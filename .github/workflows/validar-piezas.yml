@@ -1,0 +1,43 @@
+name: Validar piezas (el molde)
+# Revision sin revision: ninguna pieza grafica invalida puede entrar a main.
+# El validador corre solo, en cada push/PR que toque SVGs. Si el molde dice
+# OK, no hay nada que auditar despues.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'svg/**'
+      - 'src/flujo/comercial/**'
+      - 'projects/piezas_vectoriales/suplementos_rd/**'
+  pull_request:
+    paths:
+      - 'svg/**'
+      - 'src/flujo/comercial/**'
+      - 'projects/piezas_vectoriales/suplementos_rd/**'
+  workflow_dispatch: {}
+
+jobs:
+  validar:
+    name: validate SVG suplementos
+    runs-on: ubuntu-latest
+    env:
+      PYTHONIOENCODING: utf-8
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - run: python -m pip install -e ".[dev]"
+      - name: Validar editables crema (02)
+        run: python -m flujo suplementos validate svg/suplementos_rd/02_editables_svg/*.svg
+      - name: Validar frentes dark (05)
+        run: python -m flujo suplementos validate svg/suplementos_rd/05_dark_neon/*.svg
+      - name: Validar vectorizados (03 y 06)
+        run: |
+          python -m flujo suplementos validate svg/suplementos_rd/03_final_vectorizado_svg/*.svg
+          python -m flujo suplementos validate svg/suplementos_rd/06_dark_vectorizado_svg/*.svg
+      - name: Resumen
+        if: success()
+        run: echo "MOLDE OK - todas las piezas pasan el validador; nada que auditar."
