@@ -3,6 +3,10 @@
   "version": "0.48.5",
   "goal": "Resolume/Chataigne automation validated against a real .noisette + web hub tools kept current",
   "done": [
+    "La Gota v2: fisica de superficie + tinta con campo de flujo + color evolutivo + audio + modo instalacion + lienzo de la noche (PNG descargable)",
+    "Idea original: SEMAFORO RD (testeo en vivo en pantallas via Resolume) - proposals/IDEA_SEMAFORO_RD_TESTEO_VIVO.md con piloto minimo",
+    "Vitrina: publicar-catalogo.yml (GitHub Pages auto-deploy del catalogo) + proposals/VISION_FABRICA_AUTONOMA.md",
+    "Workflow claude.yml: @claude en issues -> Vibo trabaja en runner de GitHub y abre PR validado (activacion pendiente: app + API key)",
     "Automatizacion: workflow validar-piezas.yml (molde CI) + docs/AUTOMATIZACION_FLUJO.md (roadmap 4 fases para trabajo sin PC)",
     "Vectorizados (curvas DejaVu via fontTools): 12 archivos (dark 06_dark_vectorizado_svg + crema 09/10) y galeria preview_flyers_dark.html",
     "Linea dark completa: 8 frentes en svg/suplementos_rd/05_dark_neon/ (gen_dark_fronts.py, cajas dinamicas centradas, validate 8/8 OK)",
