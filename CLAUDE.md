@@ -22,4 +22,3 @@ Antes de cualquier tarea, sigue el orden de lectura definido en `AGENTS.md`:
 - `context/LAST_HANDOFF.md` y este archivo: ASCII-only.
 - Nunca guardar tokens, cookies, claves ni datos privados.
 - Al cerrar sesion: actualizar `context/LAST_HANDOFF.md` y `context/SESSION_STATE.json` con fecha/version reales (deben coincidir con `pyproject.toml` y `src/flujo/version.py`).
-- Illustrator local del usuario es la herramienta real de QA visual/impresion (regla de oro): generar piezas nuevas con `py -m flujo suplementos illustrator <nombres...>` para que el usuario las revise en su Illustrator antes de dar por buena una pieza grafica. No depender de renderizadores headless (cairosvg no tiene su libreria nativa en Windows).

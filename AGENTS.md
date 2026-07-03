@@ -30,10 +30,6 @@ Comandos para usuario: py, no python
 LAST_HANDOFF.md: ASCII-only
 Credenciales: nunca guardar tokens, cookies, claves, datos privados ni archivos reales sensibles
 Repo remoto: https://github.com/ligereza/vibecodeine/
-QA visual real: el usuario tiene Illustrator local. Para piezas graficas nuevas
-(suplementos, flyers), generar el paquete con "py -m flujo suplementos illustrator
-<nombres...>" y dejar que el usuario lo revise ahi antes de dar por buena una pieza.
-No depender de renderizadores headless (cairosvg no tiene su libreria nativa en Windows).
 ```
 
 ## Regla central
