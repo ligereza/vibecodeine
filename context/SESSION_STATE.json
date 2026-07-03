@@ -1,8 +1,10 @@
 {
   "date": "2026-07-03",
   "version": "0.48.5",
-  "goal": "Resolume/Chataigne automation validated against a real .noisette + web hub tools kept current",
+  "goal": "Adobe automation toolkit (Illustrator/Photoshop/After Effects + CEP panel) delivered; git push pending. Prior focus: Resolume/Chataigne + RD suplementos/eventos.",
   "done": [
+    "Higiene de repo (2026-07-03, Vibo): docs/REPO_MAP.md corregido (v0.34.10 -> v0.48.5, ya no contradice AGENTS.md sobre el punto de entrada); AGENT_GUIDE.md y AGENT_OPERATING_MANUAL.md marcados OBSOLETO; docs/HIGIENE_REPO.md version bump; 2 HANDOFF_2026-07-02_*.md duplicados eliminados de raiz (ya vivian completos en docs/handoffs/); 34 scripts legacy huerfanos archivados a _archive/legacy_20260703_1413/ via cleanup_legacy_aggressive.sh (corregido: ya NO incluye piezas_generar.py/piezas_check_outputs.py/flyer_create_project.py, que siguen vivos en CI/Makefile). compileall + pytest verificados en verde.",
+    "Adobe toolkit (2026-07-03, Vibo) bajo tools/: 6 scripts .jsx + panel CEP (addon) para AI/PS/AE. AI: titles_to_photos (bloque de texto -> PNG/JPG por linea), logo_revector_extrude (JPEG -> trazado + extrusion 3D vectorial -> SVG/EPS/PDF+PNG), logo_revector_batch (carpeta entera). PS: layers_to_photos (capa -> PNG transparente). AE: titles_to_comps (una comp por titulo) y auto_titles_mixer_ae (comp por titulo con ecualizador Audio Spectrum + titulo que late al volumen via Convert Audio to Keyframes; match names/indices para ES o EN). Panel tools/adobe_panel/ (CEP + CSInterface minimo + main.js dispatcher + build_zxp.ps1). Docs tools/ADOBE_TOOLKIT.md y tools/adobe_panel/README.md. No toca src/flujo. Auto-checkpoint commiteo a main (257157a); falta git push.",
     "La Gota v2: fisica de superficie + tinta con campo de flujo + color evolutivo + audio + modo instalacion + lienzo de la noche (PNG descargable)",
     "Idea original: SEMAFORO RD (testeo en vivo en pantallas via Resolume) - proposals/IDEA_SEMAFORO_RD_TESTEO_VIVO.md con piloto minimo",
     "Vitrina: publicar-catalogo.yml (GitHub Pages auto-deploy del catalogo) + proposals/VISION_FABRICA_AUTONOMA.md",
@@ -13,30 +15,27 @@
     "Variantes dark/neon (paleta rave v4.1) de flyers (11/12), cotizacion y plano + logo RD real extraido a assets/logo/RD_logo_A_transparente.png",
     "Cotizacion general eventos (agencia marketing): datadrops/cotizacion_general_eventos/ con md, html membretado, plano con simbologia PlanoTool y rider checklist 17 items. Tarifas jefe: 250k/300k(6vol)/500k(15vol) con desglose",
     "Flyers suplementos: reversos QR 09_post_fiesta y 10_linea en 02_editables_svg (crema, contenido maestro, QR a reduciendodano.cl, validate 10/10 OK); reemplazan BACK.SUPLEMENTOS fallido",
-    "Identidad del asistente: nombre 'Vibo' definido en CLAUDE.md (raiz, nuevo) y AGENTS.md (docs-only)",
-    "Resolume/Chataigne automator: XML pre-flight, CSV OSC, README, experimental .noisette (unverified)",
-    "SVG Studio con SVGs reales, Config Editor visual",
-    "Plano/Rider Pro estable con export PDF multipagina",
-    "Cotizacion base, Jobs, Intake, Commands en hub React",
-    "INDEX_FORMATOS.json reconciliado con formatos usados en codigo (carrusel, etiqueta horizontal generica)"
+    "Identidad del asistente: nombre 'Vibo' definido en CLAUDE.md (raiz) y AGENTS.md (docs-only)",
+    "Resolume/Chataigne automator: XML pre-flight, CSV OSC, README, experimental .noisette (unverified)"
   ],
   "doing": [
-    "Mapping LED (Event Rigging Master Console) agregado como tool de Studio via iframe: web/src/components/MappingTool.tsx + web/public/mapping.html (cambios locales, sin commit ni push)",
-    "Definir si/cuando commitear los cambios de Mapping LED"
+    "Adobe toolkit commiteado localmente por auto-checkpoint (arbol limpio); falta git push a origin (ligereza/vibecodeine)",
+    "Verificar los .jsx en Illustrator/Photoshop/After Effects del usuario (regla de oro)"
   ],
   "next": [
-    "Fase 2 automatizacion: activar acceso escritura en claude.ai/code + instalar Claude GitHub App (/install-github-app) + secret ANTHROPIC_API_KEY",
+    "git push del toolkit Adobe a origin (el usuario dijo 'lo subo')",
+    "Verificar los scripts Adobe en las apps del usuario (batch trace con 2-3 JPEG reales; nombre del comando Convert Audio to Keyframes en el AE del usuario; .zxp opcional via build_zxp.ps1 + ZXPSignCmd)",
     "Pedir al usuario un .noisette real exportado de Chataigne 1.10.3 y guardarlo en tests/fixtures/ antes de tocar build_chataigne_noisette_experimental de nuevo",
-    "Actualizar context/LAST_HANDOFF.md y context/SESSION_STATE.json al cerrar cada sesion (version real + done/doing/next/blockers)",
-    "Revisar version.py changelog antes de reintentar algo ya probado"
+    "Actualizar context/LAST_HANDOFF.md y context/SESSION_STATE.json al cerrar cada sesion (version real + done/doing/next/blockers)"
   ],
   "blockers": [
     "build_chataigne_noisette_experimental: reescrito 4 veces (v0.48.2 a v0.48.5) especulando el schema .noisette, nunca validado contra un archivo real. No reescribir de nuevo sin fixture real.",
-    "Sesion remota con acceso GitHub solo lectura (push 403); entregas duplicadas en airdrop ZIP",
+    "Push GitHub: esta sesion local (usuario LIGEREZA, dueno de origin) SI puede pushear; sesiones remotas cloud previas eran read-only (403) y se entregaban por airdrop ZIP",
     "Material nuevo del chat de diseno no llego al repo ni a Adobe CC; falta que el usuario indique donde esta"
   ],
   "resume_commands": [
-    "cd web && npm run typecheck && npm run build:context",
+    "git push origin main",
+    "ver tools/ADOBE_TOOLKIT.md para los scripts .jsx de Adobe (File > Scripts)",
     "py -m flujo verify",
     "py -m flujo app"
   ]

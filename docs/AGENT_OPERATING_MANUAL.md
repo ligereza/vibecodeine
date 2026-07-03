@@ -1,5 +1,7 @@
 # AGENT OPERATING MANUAL — flujo (token-efficient)
 
+> **OBSOLETO (v0.34-era, sin actualizar).** La entrada obligatoria real para agentes de IA es `AGENTS.md` (raíz), no este archivo. Se mantiene como referencia histórica.
+
 **Leer esto primero. Solo esto + el hub (vía `flujo app`).**
 
 **Punto de entrada diario OBLIGATORIO (ÚNICO):** ejecuta `flujo app` (o `flujo app --desktop`).

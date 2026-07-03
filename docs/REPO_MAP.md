@@ -1,8 +1,10 @@
 # Mapa del repo — flujo
 
-Versión: v0.34.10 (historia consolidada)
+Versión: v0.48.5
 
 Este mapa existe para que humanos y agentes de IA entiendan rápido qué carpetas están vivas, cuáles son históricas y qué NO deben tocar sin permiso.
+
+**Punto de entrada real hoy: `AGENTS.md` (raíz).** Orden obligatorio de lectura: `AGENTS.md` -> `context/LAST_HANDOFF.md` -> `docs/AGENT_AIRDROP_PROTOCOL.md` -> este archivo -> archivo especifico de la tarea. `AGENT_GUIDE.md` y `AGENT_OPERATING_MANUAL.md` son documentos de una era anterior (v0.34) y estan desactualizados frente a `AGENTS.md`; no los uses como entrada.
 
 ## Núcleo vivo
 
@@ -45,7 +47,7 @@ Nota: `projects/tapiz/vibecode.egg-info/` está trackeado históricamente. No ag
 
 ## Documentación viva + entrada principal
 
-**Abre primero (siempre):** ejecuta `flujo app` (o `flujo app --desktop`; o abre `context/flujo_hub.html` como fallback).
+**Para agentes de IA:** la entrada obligatoria es `AGENTS.md` (ver orden de lectura arriba). Para el trabajo diario del usuario humano, el punto de entrada operativo sigue siendo `flujo app` (o `flujo app --desktop`; o abrir `context/flujo_hub.html` como fallback).
 
 El hub es el **workspace principal pro** (HTMLs servidos por backend cuando usas la app):
 - Intake + match real
@@ -57,16 +59,16 @@ El hub es el **workspace principal pro** (HTMLs servidos por backend cuando usas
 
 | Ruta | Rol |
 |---|---|
-| `flujo app` (o context/flujo_hub.html) | Entrada diaria obligatoria + hub pro workspace (UI + delegación + datadrop) |
+| `AGENTS.md` | Entrada obligatoria para agentes de IA (contrato operativo) |
+| `flujo app` (o context/flujo_hub.html) | Entrada diaria del usuario humano + hub pro workspace (UI + delegación + datadrop) |
 | `context/svg_visualizer.html` | Visualizador real de piezas SVG (embebido, grupos exactos) |
 | `context/plano_demo.html` | Demo de planos + riders + costos |
 | `context/LAST_HANDOFF.md` | Estado + tareas (bajo tokens) |
-| `docs/AGENT_OPERATING_MANUAL.md` | Dos flujos + modelo delegación multi-agente (5 roles) |
 | `projects/README.md` | Satélites alineados a flujo |
 
-El resto de docs son de soporte o histórico. No los leas primero.
+El resto de docs son de soporte o histórico, incluyendo `AGENT_GUIDE.md` y `AGENT_OPERATING_MANUAL.md` (ambos v0.34, no reflejan el `AGENTS.md` actual). No los leas primero.
 
-**Contexto para agentes:** Hub + LAST_HANDOFF + AGENT_OPERATING_MANUAL = única fuente necesaria. Dirección: prep auto-compact parallel work; linea v4.1 con datadrops reales.
+**Contexto para agentes:** `AGENTS.md` + `LAST_HANDOFF.md` + este mapa = fuente necesaria. El hub (`flujo app`) es la herramienta operativa del usuario, no lectura obligatoria del agente.
 
 ## Histórico / referencia
 

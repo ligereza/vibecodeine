@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 # cleanup_legacy_aggressive.sh — Archiva scripts legacy duplicados
+#
+# NO incluir aqui piezas_generar.py, piezas_check_outputs.py (usados por
+# .github/workflows/render_piezas_vectoriales.yml) ni flyer_create_project.py
+# (usado por `make new-flyer`) — siguen vivos en automatizacion real.
 
 set -e
 
@@ -8,7 +12,6 @@ mkdir -p "$ARCHIVE"
 
 LEGACY_SCRIPTS=(
   flyer_analyze.py
-  flyer_create_project.py
   flyer_from_email.py
   flyer_index.py
   flyer_index.sh
@@ -30,10 +33,8 @@ LEGACY_SCRIPTS=(
   job_status.py
   job_validate.py
   piezas_add_component.py
-  piezas_check_outputs.py
   piezas_components.py
   piezas_formatos.py
-  piezas_generar.py
   piezas_project_summary.py
   piezas_validate_config.py
   privacy_check_job.py
