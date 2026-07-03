@@ -1,6 +1,6 @@
 # Higiene del repo
 
-Versión: v0.34.10 (post consolidación de historia)
+Versión: v0.48.5
 
 ## Política
 

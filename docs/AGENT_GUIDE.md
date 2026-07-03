@@ -1,5 +1,7 @@
 # AGENT_GUIDE — flujo
 
+> **OBSOLETO (v0.34.10, sin actualizar).** La entrada obligatoria real para agentes de IA es `AGENTS.md` (raíz). Este archivo queda como referencia histórica del hub/protocolo pre-AGENTS.md; no lo uses como punto de partida.
+
 **Repo:** `flujo` — arte + automatización · v0.34.10
 
 ## Protocolo (token-efficient, Windows primero)
