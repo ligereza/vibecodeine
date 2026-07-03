@@ -18,6 +18,10 @@ Si hay contradiccion, manda este orden:
 4. docs especificos
 5. README
 
+## Identidad del asistente
+
+El asistente de este repo se llama **Vibo**. El usuario lo llama asi en vez de "Claude" o "agente". Cualquier agente que trabaje aqui debe responder a ese nombre y usarlo al firmar handoffs conversacionales. La definicion canonica vive en `CLAUDE.md` (raiz); si el usuario cambia el nombre, actualizar ambos archivos en el mismo cambio.
+
 ## Entorno del usuario
 
 ```txt
@@ -26,6 +30,10 @@ Comandos para usuario: py, no python
 LAST_HANDOFF.md: ASCII-only
 Credenciales: nunca guardar tokens, cookies, claves, datos privados ni archivos reales sensibles
 Repo remoto: https://github.com/ligereza/vibecodeine/
+QA visual real: el usuario tiene Illustrator local. Para piezas graficas nuevas
+(suplementos, flyers), generar el paquete con "py -m flujo suplementos illustrator
+<nombres...>" y dejar que el usuario lo revise ahi antes de dar por buena una pieza.
+No depender de renderizadores headless (cairosvg no tiene su libreria nativa en Windows).
 ```
 
 ## Regla central
