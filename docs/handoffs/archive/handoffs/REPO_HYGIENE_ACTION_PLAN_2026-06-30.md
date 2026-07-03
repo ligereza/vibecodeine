@@ -1,5 +1,7 @@
 # Repo Hygiene Action Plan - 2026-06-30
 
+> **COMPLETADO (verificado 2026-07-03).** Los 3 archivos de raiz listados abajo ya no existen, no hay `HANDOFF_v*.md` sueltos, y los tags v0.48.0-v0.48.3 ya existen. Archivado por antiguedad. Vigente hoy: `docs/HIGIENE_REPO.md`.
+
 This plan responds to the external repo review without disrupting active agent work.
 
 ## Confirmed issues
