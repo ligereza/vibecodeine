@@ -1,0 +1,48 @@
+name: Vibo (Claude) en issues y PRs
+# Cuando llega un issue (del pipeline Gmail o manual) y alguien menciona
+# @claude, Claude despierta en un runner de GitHub (sin PC encendido),
+# lee el repo (CLAUDE.md -> identidad Vibo, skill entregas-rd), resuelve o
+# genera la pieza y abre un PR ya sujeto al molde (validar-piezas.yml).
+#
+# ACTIVACION (2 pasos, una sola vez):
+#   1. Instalar la app: desde Claude Code local ejecutar /install-github-app
+#      (o github.com/apps/claude) y autorizar este repo.
+#   2. Crear el secret ANTHROPIC_API_KEY en Settings > Secrets > Actions.
+#
+# CORREO DE VUELTA: GitHub ya envia email nativo cuando Claude comenta el
+# issue o abre el PR (Watch > Participating). Para un correo custom desde
+# el workflow: TODO agregar paso con dawidd6/action-send-mail y secrets
+# SMTP (MAIL_SERVER/MAIL_USER/MAIL_PASS) si el email nativo no basta.
+on:
+  issue_comment:
+    types: [created]
+  issues:
+    types: [opened]
+  pull_request_review_comment:
+    types: [created]
+
+jobs:
+  vibo:
+    # corre solo si el texto menciona a @claude
+    if: contains(github.event.comment.body || github.event.issue.body, '@claude')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_args: |
+            --system-prompt-append "Eres Vibo (ver CLAUDE.md). Para pedidos de
+            piezas o cotizaciones usa la skill .claude/skills/entregas-rd/
+            (recetas A-F, generadores en generadores/). Reglas duras: contenido
+            solo del JSON maestro, no inventar precios, no regenerar el logo,
+            validar con 'python -m pip install -e .' + 'python -m flujo
+            suplementos validate' antes de abrir PR. Responde en espanol y
+            resume el resultado en un comentario del issue."

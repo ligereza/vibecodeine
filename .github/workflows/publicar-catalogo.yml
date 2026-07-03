@@ -1,0 +1,73 @@
+name: Publicar catalogo (la vitrina)
+# Cada merge a main publica el catalogo publico de RD en GitHub Pages:
+# galerias de flyers (crema y dark) + cotizacion general, con los SVG
+# servidos directo. Activar una vez: Settings > Pages > Source: GitHub Actions.
+# SOLO se publica material de marketing (svg/ + cotizacion html + logo).
+on:
+  push:
+    branches: [main]
+    paths: ['svg/**', 'datadrops/cotizacion_general_eventos/**', 'assets/logo/**', 'tools/gota_rd/**']
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Armar sitio
+        run: |
+          mkdir -p _site/cotizacion
+          cp -r svg _site/svg
+          cp assets/logo/RD_logo_A_transparente.png _site/logo.png
+          cp datadrops/cotizacion_general_eventos/cotizacion_general_eventos.html _site/cotizacion/
+          cp datadrops/cotizacion_general_eventos/cotizacion_general_eventos_dark.html _site/cotizacion/
+          mkdir -p _site/gota && cp tools/gota_rd/index.html _site/gota/index.html
+          cat > _site/index.html <<'HTML'
+          <!doctype html><html lang="es"><head><meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>Reduciendo Daño · Catálogo</title><style>
+          body{margin:0;background:#0A0A0A;color:#F2F2F2;font-family:Arial,sans-serif;
+          display:flex;flex-direction:column;align-items:center;padding:48px 20px;}
+          img.logo{width:150px;filter:drop-shadow(0 0 18px rgba(177,0,184,.6));}
+          h1{font-style:italic;letter-spacing:-.02em;margin:18px 0 4px;}
+          p{color:#A79FA8;margin:0 0 34px;}
+          nav{display:grid;gap:14px;width:min(520px,100%);}
+          a{display:block;text-align:center;padding:16px;border-radius:14px;
+          text-decoration:none;font-weight:700;color:#fff;background:#161318;
+          border:2px solid #C800C8;box-shadow:0 0 22px -8px rgba(200,0,200,.6);}
+          a.y{border-color:#FFD21F;color:#FFD21F;}
+          footer{margin-top:40px;color:#FFD21F;font-weight:700;font-style:italic;}
+          </style></head><body>
+          <img class="logo" src="logo.png" alt="RD">
+          <h1>Reduciendo Daño</h1><p>Catálogo de piezas y servicios · reduciendodano.cl</p>
+          <nav>
+          <a href="svg/suplementos_rd/04_preview/preview_flyers_dark.html">Flyers DARK / NEON</a>
+          <a href="svg/suplementos_rd/04_preview/preview_flyers.html">Flyers institucionales (crema)</a>
+          <a href="gota/">LA GOTA · simula tu testeo</a>
+          <a class="y" href="cotizacion/cotizacion_general_eventos.html">Cotización de servicios para eventos</a>
+          <a class="y" href="cotizacion/cotizacion_general_eventos_dark.html">Cotización · versión dark</a>
+          </nav>
+          <footer>Si vas a hacerlo, reduce daños.</footer>
+          </body></html>
+          HTML
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
