@@ -116,6 +116,27 @@ def estado_agente(agente: str = "flujo") -> dict:
     return {"agente": dest, "estado": "termino", "codigo": proc.returncode, "resultado": cola}
 
 
+def detener_agente(agente: str = "flujo") -> dict:
+    """Detiene un agente que CODE lanzo (mata SU proceso y sus hijos). Solo puede
+    parar lo que CODE mismo arranco, no procesos externos."""
+    dest = _norm(agente)
+    if not dest:
+        return {"error": f"proyecto desconocido: {agente}", "validos": list(_cargar_proyectos().keys())}
+    proc = _procs.get(dest)
+    if proc is None or proc.poll() is not None:
+        return {"agente": dest, "detenido": False, "mensaje": f"{dest} no tiene un proceso activo"}
+    try:
+        if os.name == "nt":
+            # /T mata el arbol (el claude headless puede tener hijos)
+            subprocess.run(["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+                           capture_output=True, timeout=10)
+        else:
+            proc.terminate()
+    except Exception as e:  # noqa: BLE001
+        return {"agente": dest, "detenido": False, "error": str(e)}
+    return {"agente": dest, "detenido": True}
+
+
 def leer_respuesta(agente: str = "flujo") -> dict:
     """Devuelve la respuesta/salida final de un proyecto para leerla en voz alta."""
     dest = _norm(agente)
@@ -137,6 +158,7 @@ FUNCIONES = {
     "listar_proyectos": listar_proyectos,
     "encargar_a_claude": encargar_a_claude,
     "estado_agente": estado_agente,
+    "detener_agente": detener_agente,
     "leer_respuesta": leer_respuesta,
 }
 
@@ -161,6 +183,14 @@ DECLARACIONES = [
     {
         "name": "estado_agente",
         "description": "Consulta como va un proyecto: si trabaja o termino, y su avance.",
+        "parameters": {
+            "type": "object",
+            "properties": {"agente": {"type": "string", "description": "nombre del proyecto."}},
+        },
+    },
+    {
+        "name": "detener_agente",
+        "description": "Detiene un agente que CODE lanzo (mata su proceso). Solo sirve para lo que CODE mismo arranco, no procesos externos. Usar cuando el usuario diga 'para el agente X', 'detene Unreal', 'cancela eso'.",
         "parameters": {
             "type": "object",
             "properties": {"agente": {"type": "string", "description": "nombre del proyecto."}},
