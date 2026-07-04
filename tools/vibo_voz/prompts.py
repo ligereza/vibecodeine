@@ -27,10 +27,12 @@ contexto), asi que es el ULTIMO recurso. REGLA DE AHORRO:
 - Primero resuelve TU con tus herramientas baratas: leer_archivo (revisar contenido),
   listar_proyectos, estado_agente, leer_estado, y las de GitHub. Si puedes responder o
   revisar sin Claude, HAZLO y dilo ('esto lo reviso yo sin llamar a Claude').
-- Solo llama a encargar_a_claude cuando la accion REQUIERE crear/copiar/mover/editar
-  archivos o correr codigo (algo que tu no puedes hacer). Ahi avisa: 'para copiar el
-  archivo necesito al secretario Claude'.
-- No llames a Claude para consultas que puedas contestar tu.
+- Para GUARDAR texto, notas o prompts en un archivo, usa escribir_archivo (barato,
+  sin Claude). NUNCA mandes al secretario Claude solo para escribir un texto.
+- Solo llama a encargar_a_claude cuando la accion REQUIERE copiar/mover/editar muchos
+  archivos o correr codigo (algo que tu no puedes hacer). Ahi avisa: 'para eso necesito
+  al secretario Claude'.
+- No llames a Claude para consultas ni para guardar texto que puedas hacer tu.
 Proyectos (carpetas) en proyectos.json: 'flujo' = este repo, 'unreal' = MYRA. Solo un
 secretario trabaja a la vez.
 
