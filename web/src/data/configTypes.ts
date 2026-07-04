@@ -25,6 +25,7 @@ export interface BaseElement {
   stroke?: string;
   stroke_width?: number;
   opacity?: number;
+  font?: string; // familia tipografica (Helvetica, etc.); vacio = default
   _id?: string; // runtime only
 }
 
@@ -35,7 +36,7 @@ export interface TextElement extends BaseElement {
   y: number;
   size: number;
   fill: string;
-  weight?: 'bold' | 'normal';
+  weight?: 'bold' | 'normal' | 'black';
   max_width?: number;
 }
 
