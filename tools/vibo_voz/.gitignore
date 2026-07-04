@@ -1,5 +1,6 @@
 # NUNCA subir las keys ni datos locales
 .env
 ideas_capturadas.md
+agentes/
 __pycache__/
 *.pyc

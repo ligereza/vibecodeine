@@ -33,7 +33,11 @@ except Exception:  # noqa: BLE001
     ConnectionClosed = ()  # type: ignore[assignment]
 
 import github_tools as gh
+import claude_bridge as cb
 import prompts
+
+# Registro combinado de funciones ejecutables (GitHub + puente a Claude).
+_FUNCIONES = {**gh.FUNCIONES, **cb.FUNCIONES}
 
 SEND_SR = 16000
 RECV_SR = 24000
@@ -100,11 +104,11 @@ def _config(mode: str):
     if mode == "redu":
         system = prompts.prompt_redu()
         voice = VOICE_REDU
-        decls = gh.DECLARACIONES + _SWITCH_DECLS["redu"]
+        decls = gh.DECLARACIONES + cb.DECLARACIONES + _SWITCH_DECLS["redu"]
     else:
         system = prompts.prompt_publico()
         voice = VOICE_VIBO
-        decls = _SWITCH_DECLS["publico"]
+        decls = cb.DECLARACIONES + _SWITCH_DECLS["publico"]
     return types.LiveConnectConfig(
         response_modalities=["AUDIO"],
         system_instruction=system,
@@ -168,7 +172,7 @@ async def _handle_tool_call(session, tool_call, switch: dict):
             switch["to"] = "publico"
             resultado = {"ok": True}
         else:
-            fn = gh.FUNCIONES.get(name)
+            fn = _FUNCIONES.get(name)
             try:
                 resultado = fn(**args) if fn else {"error": f"funcion desconocida: {name}"}
             except Exception as e:  # noqa: BLE001

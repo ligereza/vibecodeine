@@ -16,6 +16,22 @@ directo, sin reconocedores locales flojos) y te responde con voz natural.
 
 Los tres system prompts viven en `prompts.py`.
 
+## Puente a Claude Code (agentes locales)
+
+CODE tambien es una central de ordenes: puede mandar tareas a **dos sesiones de
+Claude Code** que corren en segundo plano, BAJO DEMANDA (en reposo no gasta tokens,
+solo cuando das una orden):
+
+- **agente 'flujo'** -> Claude en este repo (`C:\IA\flujo`).
+- **agente 'unreal'** -> Claude en el proyecto de Unreal Engine / MYRA
+  (`VIBO_UNREAL_DIR`, por defecto `C:\ARICA\MYRA`).
+
+Por voz: "dile a Unreal que ...", "que el de aca liste los archivos", "como va el
+agente unreal?". Cada agente escribe su salida en `agentes/agente_<nombre>.log`
+(ignorado por git). Corren con `claude -p ... --permission-mode acceptEdits`
+(editan sin preguntar; cambia a `plan` en el `.env` si prefieres revisar antes).
+Requiere el CLI de Claude Code instalado y logueado.
+
 ## Que puedes decirle
 
 Modo publico (VIBO): cualquier cosa personal o general.
