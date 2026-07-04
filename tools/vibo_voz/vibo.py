@@ -27,6 +27,11 @@ except Exception:  # noqa: BLE001
 from google import genai
 from google.genai import types
 
+try:
+    from websockets.exceptions import ConnectionClosed
+except Exception:  # noqa: BLE001
+    ConnectionClosed = ()  # type: ignore[assignment]
+
 import github_tools as gh
 import prompts
 
@@ -34,7 +39,7 @@ SEND_SR = 16000
 RECV_SR = 24000
 BLOCK = 1600
 
-MODEL = os.environ.get("VIBO_LIVE_MODEL", "gemini-live-2.5-flash-preview")
+MODEL = os.environ.get("VIBO_LIVE_MODEL", "gemini-2.5-flash-native-audio-latest")
 VOICE_VIBO = os.environ.get("VIBO_VOICE", "Kore")
 VOICE_REDU = os.environ.get("REDU_VOICE", "Charon")
 PTT_KEY_NAME = os.environ.get("VIBO_PTT_KEY", "f8").lower()
@@ -125,27 +130,30 @@ async def _send_audio(session, events: VoiceEvents):
         loop.call_soon_threadsafe(q.put_nowait, bytes(indata))
 
     was_talking = False
-    with sd.RawInputStream(samplerate=SEND_SR, blocksize=BLOCK, dtype="int16",
-                           channels=1, callback=cb):
-        while True:
-            talking = events.talking.is_set()
-            if talking and not was_talking:
-                await session.send_realtime_input(activity_start=types.ActivityStart())
-                print("\n[escuchando...]", flush=True)
-            if not talking and was_talking:
-                await session.send_realtime_input(activity_end=types.ActivityEnd())
-                print("[procesando...]", flush=True)
-                while not q.empty():
-                    q.get_nowait()
-            was_talking = talking
-            try:
-                chunk = await asyncio.wait_for(q.get(), timeout=0.05)
-            except asyncio.TimeoutError:
-                continue
-            if talking:
-                await session.send_realtime_input(
-                    audio=types.Blob(data=chunk, mime_type=f"audio/pcm;rate={SEND_SR}")
-                )
+    try:
+        with sd.RawInputStream(samplerate=SEND_SR, blocksize=BLOCK, dtype="int16",
+                               channels=1, callback=cb):
+            while True:
+                talking = events.talking.is_set()
+                if talking and not was_talking:
+                    await session.send_realtime_input(activity_start=types.ActivityStart())
+                    print("\n[escuchando...]", flush=True)
+                if not talking and was_talking:
+                    await session.send_realtime_input(activity_end=types.ActivityEnd())
+                    print("[procesando...]", flush=True)
+                    while not q.empty():
+                        q.get_nowait()
+                was_talking = talking
+                try:
+                    chunk = await asyncio.wait_for(q.get(), timeout=0.05)
+                except asyncio.TimeoutError:
+                    continue
+                if talking:
+                    await session.send_realtime_input(
+                        audio=types.Blob(data=chunk, mime_type=f"audio/pcm;rate={SEND_SR}")
+                    )
+    except ConnectionClosed:
+        return  # la sesion se cerro (cambio de persona): salir en silencio
 
 
 async def _handle_tool_call(session, tool_call, switch: dict):
@@ -172,19 +180,30 @@ async def _handle_tool_call(session, tool_call, switch: dict):
 async def _receive(session, etiqueta: str, switch: dict):
     stream = sd.RawOutputStream(samplerate=RECV_SR, dtype="int16", channels=1)
     stream.start()
+    hablando = False  # controla si ya imprimimos la etiqueta de este turno
     try:
-        async for response in session.receive():
-            if response.data:
-                stream.write(response.data)
-            if response.tool_call:
-                await _handle_tool_call(session, response.tool_call, switch)
-                if switch["to"]:
-                    return  # cambio de persona: cerrar esta sesion
-            sc = response.server_content
-            if sc and sc.output_transcription and sc.output_transcription.text:
-                print(f"{etiqueta}> {sc.output_transcription.text}", end="", flush=True)
-            if sc and sc.input_transcription and sc.input_transcription.text:
-                print(f"\nTu> {sc.input_transcription.text}", flush=True)
+        # receive() entrega los mensajes de UN turno y termina; seguimos pidiendo
+        # turnos en la MISMA sesion hasta que haya un cambio de persona.
+        while not switch["to"]:
+            async for response in session.receive():
+                if response.tool_call:
+                    await _handle_tool_call(session, response.tool_call, switch)
+                    if switch["to"]:
+                        return  # cambio de persona: cerrar esta sesion
+                sc = response.server_content
+                if sc and sc.model_turn:
+                    # audio nativo: sacar solo las partes de audio (evita el warning)
+                    for part in sc.model_turn.parts or []:
+                        if part.inline_data and part.inline_data.data:
+                            stream.write(part.inline_data.data)
+                if sc and sc.input_transcription and sc.input_transcription.text:
+                    print(f"\nTu> {sc.input_transcription.text}", flush=True)
+                    hablando = False
+                if sc and sc.output_transcription and sc.output_transcription.text:
+                    if not hablando:
+                        print(f"{etiqueta}> ", end="", flush=True)
+                        hablando = True
+                    print(sc.output_transcription.text, end="", flush=True)
     finally:
         stream.stop()
         stream.close()
@@ -204,6 +223,8 @@ async def _run_mode(client, mode: str, events: VoiceEvents) -> str | None:
         )
         for t in pending:
             t.cancel()
+        # recoger resultados/errores de las tareas canceladas (evita warnings)
+        await asyncio.gather(*pending, return_exceptions=True)
     if events.quit.is_set():
         return None
     return switch["to"] or "publico"
