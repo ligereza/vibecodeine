@@ -1,7 +1,24 @@
 Date: 2026-07-04
 Version: 0.48.5 (pyproject.toml / src/flujo/version.py, matching)
 
+PROTOCOLO DE SEGURIDAD OBLIGATORIO ANTES DE CERRAR SESION (ver tools/vibo_voz/SEGURIDAD.md):
+1. Cerrar la voz (ESC), no dejar escuchando.
+2. py tools/vibo_voz/limpiar.py (matar agentes colgados).
+3. VIBO_AGENTS_ENABLED vacio en el .env si no se seguira usando.
+4. git status limpio; nada sensible trackeado (.env/estado/agentes/proyectos.json).
+5. Actualizar LAST_HANDOFF.md y SESSION_STATE.json (fecha/version reales).
+6. Si el equipo es compartido: cerrar Gmail/Google y la terminal.
+Sin estos 6 pasos la sesion NO esta cerrada.
+
 Done:
+- SEGURIDAD ASISTENTE DE VOZ (2026-07-04): cerrado el vector de riesgo (que alguien o un
+  descuido gaste el Claude de pago via la voz, o que el microfono capte sin saberlo).
+  (1) Agentes Claude de PAGO APAGADOS por defecto: encargar_a_claude no lanza nada salvo
+  VIBO_AGENTS_ENABLED=1 en el .env. (2) Tope de gasto VIBO_MAX_AGENTES=15 + freno anti-bucle
+  5/60s + un secretario a la vez. (3) Microfono se abre SOLO mientras se aprieta F8 (en reposo
+  cerrado, no captura). (4) Auto-apagado por inactividad VIBO_IDLE_MIN=5. (5) leer/escribir_archivo
+  acotados al repo/proyectos y bloquean .env/llaves/secrets. (6) limpieza automatica de agentes
+  colgados al arrancar. Doc completo + protocolo obligatorio en tools/vibo_voz/SEGURIDAD.md.
 - ASISTENTE DE VOZ 3 PERSONAS (2026-07-04): tools/vibo_voz/ - asistente de voz local
   con Gemini Live (audio en tiempo real + voz natural, sin reconocedores locales).
   Tres system prompts diferenciados en prompts.py: CODE (nucleo privado, joven, maxima

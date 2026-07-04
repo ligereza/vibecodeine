@@ -1,8 +1,18 @@
 {
   "date": "2026-07-04",
   "version": "0.48.5",
-  "goal": "Asistente de voz local de 3 personas (CODE/VIBO/REDU) con Gemini Live, enganchado a la CLI como 'flujo voz' (extra opcional). Prior: Adobe toolkit (ya pusheado), Resolume/Chataigne, RD suplementos/eventos.",
+  "goal": "Asistente de voz local (CODE/VIBO/REDU) con Gemini Live + secretario Claude, con seguridad cerrada. Gemini opera/prepara contexto y supervisa; Claude solo ejecuta lo caro. Prior: Adobe toolkit, Resolume/Chataigne, RD.",
+  "protocolo_cierre_obligatorio": [
+    "1. Cerrar la voz (ESC), no dejar escuchando.",
+    "2. py tools/vibo_voz/limpiar.py (matar agentes colgados).",
+    "3. VIBO_AGENTS_ENABLED vacio en .env si no se seguira usando.",
+    "4. git status limpio; nada sensible trackeado.",
+    "5. Actualizar LAST_HANDOFF.md y SESSION_STATE.json.",
+    "6. Equipo compartido: cerrar Gmail/Google y la terminal. Ver tools/vibo_voz/SEGURIDAD.md"
+  ],
   "done": [
+    "SEGURIDAD voz (2026-07-04): agentes Claude de PAGO apagados por defecto (VIBO_AGENTS_ENABLED), tope de gasto (VIBO_MAX_AGENTES=15) + anti-bucle 5/60s + un secretario a la vez, microfono solo con F8 (cerrado en reposo), auto-apagado por inactividad (VIBO_IDLE_MIN=5), leer/escribir_archivo acotados y bloquean credenciales, limpieza automatica al arrancar. Protocolo obligatorio de cierre en tools/vibo_voz/SEGURIDAD.md.",
+    "Gemini como operador/antesala: encargar_a_claude acepta 'contexto' ya reducido para que Claude no re-explore el repo (ahorro grande). Gemini tambien es capataz (supervisar_procesos) y hace lo barato (leer/escribir_archivo, existe) sin llamar a Claude.",
     "Asistente de voz 3 personas (2026-07-04, tools/vibo_voz/): Gemini Live (audio+voz natural). prompts.py con 3 system prompts: CODE (nucleo privado, abierto a variables, sin acceso al trabajo), VIBO (cara publica/pseudonimo, voz por defecto personal/general), REDU (trabajo ONG confidencial, sesion aparte, GitHub SOLO LECTURA). Runtime 2 sesiones Live con handoff auto (abrir_redu/volver_a_publico); la separacion ES la confidencialidad. PTT global F8. Keys solo en .env gitignored. Enganchado como 'flujo voz' (ingreso de dato por voz), extra [voz] OPCIONAL, lazy, NO dependencia. Starter: falta probar micro/audio en el PC y confirmar VIBO_LIVE_MODEL real. NO se renombro VIBO->CODE en el repo (VIBO se queda como cara publica).",
     "Higiene de repo ronda 2 (2026-07-03, Vibo): docs/handoffs/ reorganizado (40 archivos sueltos + current/ -> archive/handoffs/, solo quedan los 3 de esta semana + README); grupo docs CLI consolidado (CLI.md reescrito contra cli.py real v0.48.5, COMANDOS.md/COMANDO_UNIFICADO.md -> redirect); grupo docs airdrop consolidado (detalle fusionado en AGENT_AIRDROP_PROTOCOL.md, AIRDROP.md/AIRDROP_REVIEW.md -> redirect, RELEASE_NOTES_AIRDROP.md archivado); grupo docs higiene consolidado (HIGIENE_REPO.md unico, CLEANUP.md/MANTENIMIENTO_REPO.md -> redirect, REPO_HYGIENE_ACTION_PLAN_2026-06-30.md verificado completo y archivado). NO tocado a proposito: duplicacion en gen_plano.py/gen_backs.py (generadores SVG comerciales RD, riesgo de regresion visual, necesita verificacion propia con diff de outputs). compileall+pytest+health verde.",
     "Higiene de repo ronda 1 (2026-07-03, Vibo): docs/REPO_MAP.md corregido (v0.34.10 -> v0.48.5, ya no contradice AGENTS.md sobre el punto de entrada); AGENT_GUIDE.md y AGENT_OPERATING_MANUAL.md marcados OBSOLETO; docs/HIGIENE_REPO.md version bump; 2 HANDOFF_2026-07-02_*.md duplicados eliminados de raiz (ya vivian completos en docs/handoffs/); 34 scripts legacy huerfanos archivados a _archive/legacy_20260703_1413/ via cleanup_legacy_aggressive.sh (corregido: ya NO incluye piezas_generar.py/piezas_check_outputs.py/flyer_create_project.py, que siguen vivos en CI/Makefile). compileall + pytest verificados en verde.",
