@@ -15,7 +15,9 @@ Antes de explorar el repo a mano (caro), usa estas dos vias:
   en vez de explorar.
 - **Derivar lectura a Gemini (gratis):** `py tools/vibo_voz/pedir_a_gemini.py "consulta" ruta...`
   hace que Gemini (barato) lea/resuma esas rutas y devuelva un resumen corto, para que
-  Claude no gaste leyendo volumen.
+  Claude no gaste leyendo volumen. PRIVACIDAD: envia el contenido de esas rutas a Google
+  (tier free puede entrenar); usa rutas concretas, evita areas sensibles. Redacta secretos
+  detectados y no envia el repo entero, pero no derives datos privados.
 
 ### Que puede derivar Claude a Gemini (rutas "gordas", lectura pesada)
 | Ruta | Por que derivarla |

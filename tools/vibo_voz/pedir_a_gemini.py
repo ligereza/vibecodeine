@@ -15,6 +15,7 @@ Requiere GEMINI_API_KEY en tools/vibo_voz/.env. Modelo: GEMINI_TEXT_MODEL
 from __future__ import annotations
 
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -29,20 +30,42 @@ from google import genai
 _REPO = Path(__file__).resolve().parents[2]
 _MODEL = os.environ.get("GEMINI_TEXT_MODEL", "gemini-2.5-flash")
 _MAX_CHARS = 180_000          # tope de material que le pasamos a Gemini
+_MAX_FILES = 200              # tope de archivos (no mandar el repo entero a la nube)
 _SENSIBLES = ("id_rsa", ".pem", ".key", ".p12", "credential", "secret", "token", ".env")
+
+# Redaccion de secretos POR CONTENIDO (no solo por nombre): antes de enviar a Google.
+_SECRET_RE = re.compile(
+    r"(AIza[0-9A-Za-z_\-]{20,}"
+    r"|gh[posur]_[0-9A-Za-z]{20,}"
+    r"|github_pat_[0-9A-Za-z_]{20,}"
+    r"|-----BEGIN[^-]*PRIVATE KEY-----"
+    r"|(?:api[_-]?key|secret|token|password|authorization)\s*[:=]\s*['\"]?[^\s'\"]{6,})",
+    re.IGNORECASE,
+)
+
+
+def _scrub(texto: str) -> str:
+    return _SECRET_RE.sub("[REDACTADO]", texto)
 
 
 def _reunir(rutas: list[str]) -> str:
     partes = []
     total = 0
+    n_files = 0
     for r in rutas:
         p = (Path(r) if Path(r).is_absolute() else _REPO / r).resolve()
-        if _REPO not in p.parents and p != _REPO:
+        if p == _REPO:
+            sys.exit("Por seguridad no envio el repo ENTERO a la nube. Da rutas concretas.")
+        if _REPO not in p.parents:
             continue  # solo dentro del repo
         archivos = [p] if p.is_file() else sorted(p.rglob("*")) if p.is_dir() else []
         for a in archivos:
             if not a.is_file():
                 continue
+            if n_files >= _MAX_FILES:
+                partes.append(f"\n[...corte: mas de {_MAX_FILES} archivos, acota la ruta...]")
+                return "".join(partes)
+            n_files += 1
             low = a.name.lower()
             if any(s in low for s in _SENSIBLES) or a.suffix.lower() in {".png", ".jpg", ".zip", ".pdf"}:
                 continue
@@ -64,9 +87,11 @@ def main():
         sys.exit('Uso: py pedir_a_gemini.py "consulta" ruta1 [ruta2 ...]')
     consulta = sys.argv[1]
     rutas = sys.argv[2:]
-    material = _reunir(rutas)
+    material = _scrub(_reunir(rutas))   # redacta secretos por contenido antes de enviar
     if not material.strip():
         sys.exit("No encontre contenido de texto en esas rutas (dentro del repo).")
+    print("[aviso] el contenido de esas rutas se envia a Gemini (Google). Evita areas "
+          "sensibles; los secretos detectados se redactan.", file=sys.stderr)
 
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
