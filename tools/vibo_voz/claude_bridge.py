@@ -301,6 +301,31 @@ def leer_archivo(ruta: str, lineas: int = 120) -> dict:
     return {"archivo": str(p), "total_lineas": len(txt), "contenido": "\n".join(txt[:n])}
 
 
+def escribir_archivo(ruta: str, texto: str, modo: str = "agregar") -> dict:
+    """Crea o agrega texto a un archivo SIN llamar a Claude (barato, para guardar
+    notas/prompts/textos). modo: 'agregar' (default) o 'nuevo'. Restringido al
+    repo/proyectos y bloquea credenciales; en 'nuevo' no pisa archivos existentes."""
+    p = (Path(ruta) if Path(ruta).is_absolute() else _REPO / ruta).resolve()
+    permitidas = [_REPO.resolve()] + [d.resolve() for d in _cargar_proyectos().values()]
+    if not any(p == base or base in p.parents for base in permitidas):
+        return {"error": "por seguridad solo escribo dentro del repo o de los proyectos configurados."}
+    low = p.name.lower()
+    if low == ".env" or any(s in low for s in _SENSIBLES):
+        return {"error": "por seguridad no escribo sobre archivos de credenciales."}
+    try:
+        p.parent.mkdir(parents=True, exist_ok=True)
+        if modo == "nuevo":
+            if p.exists() and p.stat().st_size > 0:
+                return {"error": f"{p.name} ya existe; usa modo 'agregar' para no pisarlo."}
+            p.write_text(texto, encoding="utf-8")
+        else:
+            with open(p, "a", encoding="utf-8") as fh:
+                fh.write(texto if texto.endswith("\n") else texto + "\n")
+    except Exception as e:  # noqa: BLE001
+        return {"error": str(e)}
+    return {"escrito": True, "archivo": str(p), "modo": modo}
+
+
 def leer_estado(lineas: int = 15) -> dict:
     """Lee la bitacora ESTADO: que empezaron o terminaron los agentes y sesiones.
     Usar cuando el usuario pregunte 'que ha pasado', 'novedades', 'que hicieron'."""
@@ -327,6 +352,7 @@ FUNCIONES = {
     "leer_respuesta": leer_respuesta,
     "leer_estado": leer_estado,
     "leer_archivo": leer_archivo,
+    "escribir_archivo": escribir_archivo,
     "limpiar_procesos": limpiar_procesos,
 }
 
@@ -390,6 +416,19 @@ DECLARACIONES = [
                 "lineas": {"type": "integer", "description": "cuantas lineas leer (por defecto 120)."},
             },
             "required": ["ruta"],
+        },
+    },
+    {
+        "name": "escribir_archivo",
+        "description": "Guarda/agrega texto en un archivo SIN llamar a Claude (barato). Usalo para guardar notas, prompts o textos que dicte el usuario. NO uses el secretario Claude solo para escribir texto.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "ruta": {"type": "string", "description": "ruta del archivo (relativa al repo o absoluta)."},
+                "texto": {"type": "string", "description": "el contenido a guardar."},
+                "modo": {"type": "string", "description": "'agregar' (default) o 'nuevo'."},
+            },
+            "required": ["ruta", "texto"],
         },
     },
     {
