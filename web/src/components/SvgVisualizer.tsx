@@ -108,8 +108,8 @@ function renderCfgEl(el: ConfigElement, pal: PaletteType, isSel: boolean, onSele
     case 'text': {
       const e = el as TextElement;
       return <g key={e._id} onClick={ev=>{ev.stopPropagation();onSelect();}} className="cursor-pointer">
-        <text x={e.x} y={e.y} fontSize={e.size} fontWeight={e.weight||'normal'}
-          fill={rc(e.fill)} fontFamily="Inter, system-ui, sans-serif">{e.content}</text>
+        <text x={e.x} y={e.y} fontSize={e.size} fontWeight={e.weight==='black'?900:(e.weight||'normal')}
+          fill={rc(e.fill)} fontFamily={e.font||"Inter, system-ui, sans-serif"}>{e.content}</text>
         {isSel && (()=>{const b=getElementBounds(e);return<rect x={b.x-4} y={b.y-4} width={b.w+8} height={b.h+8}
           fill="none" stroke="#3b82f6" strokeWidth={2} strokeDasharray="6 3"/>;})()}
       </g>;
@@ -128,7 +128,7 @@ function renderCfgEl(el: ConfigElement, pal: PaletteType, isSel: boolean, onSele
       }
       return <g key={e._id} onClick={ev=>{ev.stopPropagation();onSelect();}} className="cursor-pointer">
         {wrapped.map((l,i)=><text key={i} x={e.x} y={e.y+i*e.line_height}
-          fontSize={e.size} fill={rc(e.fill)} fontFamily="Inter, system-ui, sans-serif">{l}</text>)}
+          fontSize={e.size} fill={rc(e.fill)} fontFamily={e.font||"Inter, system-ui, sans-serif"}>{l}</text>)}
         {isSel && <rect x={e.x-4} y={e.y-e.size-4} width={e.max_width+8}
           height={wrapped.length*e.line_height+8} fill="none" stroke="#3b82f6" strokeWidth={2} strokeDasharray="6 3"/>}
       </g>;
@@ -137,8 +137,8 @@ function renderCfgEl(el: ConfigElement, pal: PaletteType, isSel: boolean, onSele
       const e = el as ListElement;
       return <g key={e._id} onClick={ev=>{ev.stopPropagation();onSelect();}} className="cursor-pointer">
         {e.items.map((item,i)=><g key={i}>
-          <text x={e.x} y={e.y+i*(e.line_height+e.gap)} fontSize={e.size} fill={rc(e.fill)} fontFamily="Inter, system-ui, sans-serif">•</text>
-          <text x={e.x+e.indent} y={e.y+i*(e.line_height+e.gap)} fontSize={e.size} fill={rc(e.fill)} fontFamily="Inter, system-ui, sans-serif">{item}</text>
+          <text x={e.x} y={e.y+i*(e.line_height+e.gap)} fontSize={e.size} fill={rc(e.fill)} fontFamily={e.font||"Inter, system-ui, sans-serif"}>•</text>
+          <text x={e.x+e.indent} y={e.y+i*(e.line_height+e.gap)} fontSize={e.size} fill={rc(e.fill)} fontFamily={e.font||"Inter, system-ui, sans-serif"}>{item}</text>
         </g>)}
         {isSel && <rect x={e.x-4} y={e.y-e.size-4} width={e.max_width+8}
           height={e.items.length*(e.line_height+e.gap)+8} fill="none" stroke="#3b82f6" strokeWidth={2} strokeDasharray="6 3"/>}
@@ -821,6 +821,23 @@ const loadSvgPiece = useCallback(async (piece: SvgPiece) => {
     if(mode==='center-v'){const mn=Math.min(...bs.map(b=>b.y)),mx=Math.max(...bs.map(b=>b.y+b.h)),c=(mn+mx)/2;bs.forEach(b=>{moveEl(els.find(e=>e._id===b.id)!,0,c-(b.y+b.h/2));});}
   },[getMultiEls]);
 
+  // Alinear al canvas/margen (funciona con 1+ elementos seleccionados)
+  const alignCanvas = useCallback((mode:'cl'|'cc'|'cr'|'ct'|'cm'|'cb')=>{
+    if(!config) return;
+    const els=getMultiEls(); if(!els.length) return;
+    const W=config.canvas.width, H=config.canvas.height, m=config.canvas.safe_margin_px||0;
+    els.forEach(e=>{const b=getElementBounds(e);
+      if(mode==='cl')moveEl(e,m-b.x,0);
+      if(mode==='cr')moveEl(e,(W-m)-(b.x+b.w),0);
+      if(mode==='cc')moveEl(e,(W/2)-(b.x+b.w/2),0);
+      if(mode==='ct')moveEl(e,0,m-b.y);
+      if(mode==='cb')moveEl(e,0,(H-m)-(b.y+b.h));
+      if(mode==='cm')moveEl(e,0,(H/2)-(b.y+b.h/2));
+    });
+  },[config,getMultiEls]);
+
+  const setMargin = useCallback((v:number)=>{setConfig(p=>p?{...p,canvas:{...p.canvas,safe_margin_px:Math.max(0,Math.round(v))}}:p);},[]);
+
   const distrib = useCallback((axis:'h'|'v')=>{
     const els=getMultiEls(); if(els.length<3) return;
     const items=els.map(e=>({id:e._id!,...getElementBounds(e)}));
@@ -954,6 +971,15 @@ const loadSvgPiece = useCallback(async (piece: SvgPiece) => {
             {([['text',Type],['paragraph',AlignLeft],['list',List],['rect',Square],['panel',Layers],['circle',Circle],['line',Minus]] as const).map(([t,I])=>
               <button key={t} onClick={()=>addEl(t as any)} title={t} className="rounded p-1 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"><I className="h-3 w-3"/></button>)}
           </div>
+          {/* Alinear al margen/canvas (1+ elementos) + margen editable */}
+          <div className="flex flex-wrap items-center gap-0.5 border-b border-zinc-800/50 px-2 py-1">
+            <span className="text-[8px] font-bold uppercase tracking-widest text-zinc-600 mr-0.5">Al margen:</span>
+            {([['cl',AlignStartVertical],['cc',AlignCenterVertical],['cr',AlignEndVertical],['ct',AlignStartHorizontal],['cm',AlignCenterHorizontal],['cb',AlignEndHorizontal]] as const).map(([m,I])=>
+              <button key={m} onClick={()=>alignCanvas(m as any)} disabled={!selectedId&&multi.length<1} title={`al margen ${m}`} className="rounded p-1 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300 disabled:opacity-30"><I className="h-3 w-3"/></button>)}
+            <span className="mx-0.5 text-zinc-800">|</span>
+            <span className="text-[8px] font-bold uppercase tracking-widest text-zinc-600 mr-0.5">Margen:</span>
+            <input type="number" value={config.canvas.safe_margin_px} onChange={e=>setMargin(+e.target.value)} className="w-16 rounded border border-zinc-700 bg-zinc-800 px-1.5 py-0.5 text-[10px] text-zinc-200"/>
+          </div>
           {/* Canvas SVG */}
           <div className="overflow-auto" style={{maxHeight:'560px',position:'relative'}} onMouseMove={onMM} onMouseUp={onMU} onMouseLeave={onMU}>
             <svg viewBox={`0 0 ${config.canvas.width} ${config.canvas.height}`}
@@ -1030,8 +1056,9 @@ function PropEditor({el,pal,updEl}:{el:ConfigElement;pal:PaletteType;updEl:(id:s
     <F l="Contenido"><input value={e.content} onChange={v=>updEl(e._id!,{content:v.target.value} as any)} className={inp}/></F>
     <div className="grid grid-cols-2 gap-1.5">
       <F l="Tamaño"><input type="number" value={e.size} onChange={v=>updEl(e._id!,{size:+v.target.value} as any)} className={inp}/></F>
-      <F l="Peso"><select value={e.weight||'normal'} onChange={v=>updEl(e._id!,{weight:v.target.value} as any)} className={sel}><option value="normal">Normal</option><option value="bold">Bold</option></select></F>
+      <F l="Peso"><select value={e.weight||'normal'} onChange={v=>updEl(e._id!,{weight:v.target.value} as any)} className={sel}><option value="normal">Normal</option><option value="bold">Bold</option><option value="black">Black</option></select></F>
     </div>
+    <F l="Fuente"><select value={e.font||''} onChange={v=>updEl(e._id!,{font:v.target.value||undefined} as any)} className={sel}><option value="">Inter (default)</option><option value="'Helvetica Neue', Helvetica, Arial, sans-serif">Helvetica</option><option value="Arial, Helvetica, sans-serif">Arial</option><option value="'Courier New', monospace">Courier</option></select></F>
     <div className="grid grid-cols-2 gap-1.5"><F l="X"><input type="number" value={e.x} onChange={v=>updEl(e._id!,{x:+v.target.value} as any)} className={inp}/></F><F l="Y"><input type="number" value={e.y} onChange={v=>updEl(e._id!,{y:+v.target.value} as any)} className={inp}/></F></div>
     <F l="Color"><div className="flex items-center gap-1.5"><span className="h-4 w-4 rounded border border-zinc-700" style={{backgroundColor:resolveColor(e.fill,pal)}}/><select value={e.fill} onChange={v=>updEl(e._id!,{fill:v.target.value} as any)} className={sel}>{palKeys.map(k=><option key={k} value={k}>{k}</option>)}</select></div></F>
   </>;}
@@ -1043,6 +1070,7 @@ function PropEditor({el,pal,updEl}:{el:ConfigElement;pal:PaletteType;updEl:(id:s
       <F l="Interlin"><input type="number" value={e.line_height} onChange={v=>updEl(e._id!,{line_height:+v.target.value} as any)} className={inp}/></F>
       <F l="Ancho"><input type="number" value={e.max_width} onChange={v=>updEl(e._id!,{max_width:+v.target.value} as any)} className={inp}/></F>
     </div>
+    <F l="Fuente"><select value={e.font||''} onChange={v=>updEl(e._id!,{font:v.target.value||undefined} as any)} className={sel}><option value="">Inter (default)</option><option value="'Helvetica Neue', Helvetica, Arial, sans-serif">Helvetica</option><option value="Arial, Helvetica, sans-serif">Arial</option><option value="'Courier New', monospace">Courier</option></select></F>
     <div className="grid grid-cols-2 gap-1.5"><F l="X"><input type="number" value={e.x} onChange={v=>updEl(e._id!,{x:+v.target.value} as any)} className={inp}/></F><F l="Y"><input type="number" value={e.y} onChange={v=>updEl(e._id!,{y:+v.target.value} as any)} className={inp}/></F></div>
     <F l="Color"><div className="flex items-center gap-1.5"><span className="h-4 w-4 rounded border border-zinc-700" style={{backgroundColor:resolveColor(e.fill,pal)}}/><select value={e.fill} onChange={v=>updEl(e._id!,{fill:v.target.value} as any)} className={sel}>{palKeys.map(k=><option key={k} value={k}>{k}</option>)}</select></div></F>
   </>;}
@@ -1066,6 +1094,7 @@ function PropEditor({el,pal,updEl}:{el:ConfigElement;pal:PaletteType;updEl:(id:s
       <F l="Y"><input type="number" value={e.y} onChange={v=>updEl(e._id!,{y:+v.target.value} as any)} className={inp}/></F>
       <F l="Gap"><input type="number" value={e.gap} onChange={v=>updEl(e._id!,{gap:+v.target.value} as any)} className={inp}/></F>
     </div>
+    <F l="Fuente"><select value={e.font||''} onChange={v=>updEl(e._id!,{font:v.target.value||undefined} as any)} className={sel}><option value="">Inter (default)</option><option value="'Helvetica Neue', Helvetica, Arial, sans-serif">Helvetica</option><option value="Arial, Helvetica, sans-serif">Arial</option><option value="'Courier New', monospace">Courier</option></select></F>
     <F l="Color"><div className="flex items-center gap-1.5"><span className="h-4 w-4 rounded border border-zinc-700" style={{backgroundColor:resolveColor(e.fill,pal)}}/><select value={e.fill} onChange={v=>updEl(e._id!,{fill:v.target.value} as any)} className={sel}>{palKeys.map(k=><option key={k} value={k}>{k}</option>)}</select></div></F>
   </>;}
 
