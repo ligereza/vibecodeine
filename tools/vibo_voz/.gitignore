@@ -2,5 +2,6 @@
 .env
 ideas_capturadas.md
 agentes/
+proyectos.json
 __pycache__/
 *.pyc
