@@ -16,10 +16,19 @@ import os
 import shutil
 import subprocess
 import threading
+import time
 from pathlib import Path
 
 CLAUDE_CMD = os.environ.get("CLAUDE_CMD", "claude")
 CLAUDE_PERM = os.environ.get("CLAUDE_PERMISSION_MODE", "acceptEdits")
+# Ahorro: modelo mas barato para el secretario (ej. haiku) y reutilizar contexto.
+CLAUDE_MODEL = os.environ.get("CLAUDE_MODEL", "").strip()          # vacio = default de la cuenta
+CLAUDE_CONTINUE = os.environ.get("CLAUDE_CONTINUE", "").strip() in ("1", "true", "si", "yes")
+
+# Anti-bucle: no mas de N ordenes por ventana de segundos, y un solo secretario a la vez.
+_MAX_ORDENES = 5
+_VENTANA_SEG = 60
+_lanzamientos: list[float] = []
 
 _HERE = Path(__file__).resolve().parent
 _REPO = _HERE.parents[1]                                    # C:\IA\flujo
@@ -46,13 +55,15 @@ _ALIAS = {
 
 _procs: dict[str, subprocess.Popen] = {}
 
-# Se antepone a cada orden: los agentes son de un tiro (headless) y no pueden
-# recibir respuesta, asi que no deben quedarse preguntando.
+# Se antepone a cada orden. Ahorro + anti-bucle + no preguntar.
 _PREAMBULO = (
-    "Estas corriendo de forma NO interactiva (headless): NO puedes hacer preguntas "
-    "de vuelta porque nadie las va a leer. Si algo es ambiguo, elige la interpretacion "
-    "mas razonable y NO destructiva, EJECUTALA, y al final reporta en 2-3 lineas que "
-    "hiciste y que asumiste. Nunca dejes la tarea sin hacer solo para preguntar.\n\n"
+    "Eres el 'secretario': un Claude headless que ejecuta UNA orden y termina. Reglas:\n"
+    "- NO puedes preguntar de vuelta (nadie te lee). Si algo es ambiguo, elige lo mas "
+    "razonable y NO destructivo, hazlo, y reporta en 2-3 lineas que hiciste y que asumiste.\n"
+    "- AHORRO: si la tarea es simple (crear/copiar/listar archivos), NO hagas el onboarding "
+    "completo del repo (no leas handoffs, airdrop, repo_map). Lee solo lo minimo indispensable.\n"
+    "- ANTI-BUCLE: haz la tarea UNA sola vez y termina. No lances otros procesos, no invoques "
+    "otros agentes, no te repitas.\n\n"
     "Tarea: "
 )
 
@@ -101,6 +112,10 @@ def _resolver_claude() -> str | None:
 
 def _comando(exe: str, instruccion: str) -> list[str]:
     base = [exe, "-p", instruccion, "--permission-mode", CLAUDE_PERM]
+    if CLAUDE_MODEL:            # modelo barato para ahorrar
+        base += ["--model", CLAUDE_MODEL]
+    if CLAUDE_CONTINUE:        # reutiliza contexto de la sesion anterior
+        base += ["--continue"]
     # .cmd/.bat en Windows: CreateProcess no los corre directo -> envolver en cmd /c
     if os.name == "nt" and exe.lower().endswith((".cmd", ".bat")):
         return ["cmd", "/c", *base]
@@ -130,10 +145,16 @@ def encargar_a_claude(instruccion: str, agente: str = "flujo") -> dict:
     carpeta = _cargar_proyectos()[dest]
     if not carpeta.exists():
         return {"error": f"no existe la carpeta de {dest}: {carpeta}"}
-    prev = _procs.get(dest)
-    if prev and prev.poll() is None:
-        return {"ocupado": True, "agente": dest,
-                "mensaje": f"{dest} sigue trabajando; espera a que termine"}
+    # Un solo secretario a la vez (revisa TODOS los procesos, no solo este destino).
+    for nombre, p in _procs.items():
+        if p.poll() is None:
+            return {"ocupado": True, "agente": nombre,
+                    "mensaje": f"el secretario esta ocupado con {nombre}; espera a que termine"}
+    # Anti-bucle: no mas de _MAX_ORDENES en _VENTANA_SEG segundos.
+    ahora = time.time()
+    _lanzamientos[:] = [t for t in _lanzamientos if ahora - t < _VENTANA_SEG]
+    if len(_lanzamientos) >= _MAX_ORDENES:
+        return {"error": "muchas ordenes seguidas (freno anti-bucle); espera un momento antes de otra."}
     exe = _resolver_claude()
     if not exe:
         return {"error": "no encuentro el CLI de Claude. Pon la ruta completa en "
@@ -150,6 +171,7 @@ def encargar_a_claude(instruccion: str, agente: str = "flujo") -> dict:
     except Exception as e:  # noqa: BLE001
         return {"error": str(e)}
     _procs[dest] = proc
+    _lanzamientos.append(ahora)
     marcar_estado(dest, "empezo", instruccion)
 
     def _vigilar_fin(nombre: str, p: subprocess.Popen):
@@ -204,6 +226,22 @@ def leer_respuesta(agente: str = "flujo") -> dict:
     return {"agente": dest, "respuesta": texto or "(todavia no hay respuesta)"}
 
 
+def leer_archivo(ruta: str, lineas: int = 120) -> dict:
+    """Lee un archivo de texto del repo (o ruta absoluta) SIN llamar a Claude.
+    Sirve para que Gemini revise contenido directo y barato, sin gastar un agente."""
+    p = Path(ruta)
+    if not p.is_absolute():
+        p = _REPO / ruta
+    if not p.exists() or not p.is_file():
+        return {"error": f"no existe el archivo: {p}"}
+    try:
+        txt = p.read_text(encoding="utf-8", errors="replace").splitlines()
+    except Exception as e:  # noqa: BLE001
+        return {"error": str(e)}
+    n = max(1, min(int(lineas), 300))
+    return {"archivo": str(p), "total_lineas": len(txt), "contenido": "\n".join(txt[:n])}
+
+
 def leer_estado(lineas: int = 15) -> dict:
     """Lee la bitacora ESTADO: que empezaron o terminaron los agentes y sesiones.
     Usar cuando el usuario pregunte 'que ha pasado', 'novedades', 'que hicieron'."""
@@ -229,6 +267,7 @@ FUNCIONES = {
     "detener_agente": detener_agente,
     "leer_respuesta": leer_respuesta,
     "leer_estado": leer_estado,
+    "leer_archivo": leer_archivo,
 }
 
 DECLARACIONES = [
@@ -279,6 +318,18 @@ DECLARACIONES = [
         "parameters": {
             "type": "object",
             "properties": {"lineas": {"type": "integer", "description": "cuantas lineas recientes (por defecto 15)."}},
+        },
+    },
+    {
+        "name": "leer_archivo",
+        "description": "Lee un archivo de texto del repo SIN llamar a Claude (barato). Usalo para REVISAR contenido tu mismo antes de decidir si de verdad necesitas al secretario Claude.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "ruta": {"type": "string", "description": "ruta del archivo (relativa al repo o absoluta)."},
+                "lineas": {"type": "integer", "description": "cuantas lineas leer (por defecto 120)."},
+            },
+            "required": ["ruta"],
         },
     },
 ]
