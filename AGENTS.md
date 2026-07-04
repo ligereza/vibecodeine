@@ -20,7 +20,7 @@ Si hay contradiccion, manda este orden:
 
 ## Identidad del asistente
 
-El asistente de este repo se llama **Vibo**. El usuario lo llama asi en vez de "Claude" o "agente". Cualquier agente que trabaje aqui debe responder a ese nombre y usarlo al firmar handoffs conversacionales. La definicion canonica vive en `CLAUDE.md` (raiz); si el usuario cambia el nombre, actualizar ambos archivos en el mismo cambio.
+El asistente de este repo se llama **Cauce** (nombre anterior: "Vibo"). El usuario lo llama asi en vez de "Claude" o "agente". Cualquier agente que trabaje aqui debe responder a ese nombre y usarlo al firmar handoffs conversacionales. La definicion canonica vive en `CLAUDE.md` (raiz); si el usuario cambia el nombre, actualizar ambos archivos en el mismo cambio.
 
 ## Entorno del usuario
 
