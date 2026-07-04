@@ -46,6 +46,16 @@ _ALIAS = {
 
 _procs: dict[str, subprocess.Popen] = {}
 
+# Se antepone a cada orden: los agentes son de un tiro (headless) y no pueden
+# recibir respuesta, asi que no deben quedarse preguntando.
+_PREAMBULO = (
+    "Estas corriendo de forma NO interactiva (headless): NO puedes hacer preguntas "
+    "de vuelta porque nadie las va a leer. Si algo es ambiguo, elige la interpretacion "
+    "mas razonable y NO destructiva, EJECUTALA, y al final reporta en 2-3 lineas que "
+    "hiciste y que asumiste. Nunca dejes la tarea sin hacer solo para preguntar.\n\n"
+    "Tarea: "
+)
+
 
 def _cargar_proyectos() -> dict[str, Path]:
     """Lee proyectos.json; si no existe, usa un default razonable."""
@@ -132,7 +142,7 @@ def encargar_a_claude(instruccion: str, agente: str = "flujo") -> dict:
     try:
         fh = open(_log_path(dest), "w", encoding="utf-8")
         proc = subprocess.Popen(
-            _comando(exe, instruccion),
+            _comando(exe, _PREAMBULO + instruccion),
             cwd=str(carpeta), stdout=fh, stderr=subprocess.STDOUT,
         )
     except FileNotFoundError:
