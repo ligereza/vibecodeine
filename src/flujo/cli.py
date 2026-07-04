@@ -555,6 +555,53 @@ def verify(
     _ok("verify OK")
 
 
+@app.command("voz")
+def voz():
+    """Ingreso de dato por voz: lanza el asistente local (CODE/VIBO/REDU).
+
+    Herramienta OPCIONAL (no es dependencia de flujo). Requiere el extra `voz`:
+        py -m pip install -e ".[voz]"
+    y un archivo tools/vibo_voz/.env con las keys (ver .env.example).
+
+    Sirve sobre todo para capturar ideas/pedidos hablando: VIBO da la cara para
+    lo personal/general y, al detectar tema de la ONG, salta REDU (confidencial).
+    """
+    from .paths import repo_root
+
+    root = repo_root()
+    script = root / "tools" / "vibo_voz" / "vibo.py"
+    if not script.exists():
+        _warn(f"No se encontró la herramienta de voz en {script}")
+        raise typer.Exit(1)
+
+    import importlib.util
+
+    requeridos = {
+        "google.genai": "google-genai",
+        "sounddevice": "sounddevice",
+        "pynput": "pynput",
+        "requests": "requests",
+        "dotenv": "python-dotenv",
+    }
+    faltan = [pip for mod, pip in requeridos.items() if importlib.util.find_spec(mod) is None]
+    if faltan:
+        _section("flujo · voz")
+        _warn("Faltan dependencias del extra opcional de voz: " + ", ".join(faltan))
+        console.print('Instálalo completo con:  py -m pip install -e ".[voz]"', markup=False)
+        console.print("Luego copia tools/vibo_voz/.env.example a .env y pon tus keys.")
+        raise typer.Exit(1)
+
+    env_file = script.parent / ".env"
+    if not env_file.exists():
+        _warn("Falta tools/vibo_voz/.env (copia .env.example y rellena las keys).")
+
+    _section("flujo · voz")
+    console.print("[cyan]Lanzando asistente de voz (F8 para hablar, ESC para salir)...[/]")
+    import subprocess
+
+    raise typer.Exit(subprocess.call([sys.executable, str(script)], cwd=str(script.parent)))
+
+
 @app.command()
 def version():
     """Muestra versión y changelog."""

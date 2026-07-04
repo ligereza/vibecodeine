@@ -1,7 +1,24 @@
-Date: 2026-07-03
+Date: 2026-07-04
 Version: 0.48.5 (pyproject.toml / src/flujo/version.py, matching)
 
 Done:
+- ASISTENTE DE VOZ 3 PERSONAS (2026-07-04): tools/vibo_voz/ - asistente de voz local
+  con Gemini Live (audio en tiempo real + voz natural, sin reconocedores locales).
+  Tres system prompts diferenciados en prompts.py: CODE (nucleo privado, joven, maxima
+  apertura a variables, minima responsabilidad, no toca el trabajo), VIBO (cara publica
+  / pseudonimo, la voz por defecto para lo personal/general), REDU (modo trabajo ONG
+  confidencial, sesion aparte, GitHub SOLO LECTURA). Runtime: 2 sesiones Live (publico
+  CODE/VIBO <-> redu) con handoff automatico via tools abrir_redu / volver_a_publico;
+  la separacion de sesiones ES la confidencialidad. Push-to-talk global F8 (no estorba
+  al escribir). Keys (GEMINI_API_KEY + token GitHub read-only) solo en tools/vibo_voz/.env
+  (gitignored, nunca en codigo). github_tools.py: pedidos_abiertos/existe/cambios_recientes/
+  guardar_idea (solo REDU). Enganchado a la CLI como 'flujo voz' (ingreso de dato por voz),
+  OPCIONAL: extra [voz] en pyproject, lazy import, NO es dependencia de flujo (avisa si
+  faltan libs o .env). Es un starter: falta probar en el PC (micro/audio) y confirmar el id
+  de modelo Live real de la cuenta (VIBO_LIVE_MODEL en .env). NOTA: NO se renombro VIBO->CODE
+  en el repo; VIBO se queda como cara publica (decision del usuario).
+- CORRECCION continuidad: el "git push pending" del Adobe toolkit ya estaba resuelto
+  (main == origin/main, 0/0). Nota vieja.
 - ADOBE TOOLKIT (2026-07-03, Vibo): new tools/ automation set for Illustrator/Photoshop/After Effects + a CEP panel (addon) covering all three. Illustrator: titles_to_photos (text block -> per-line PNG/JPG), logo_revector_extrude (JPEG -> image trace + vector 3D extrude -> SVG/EPS/PDF + PNG), logo_revector_batch (whole-folder). Photoshop: layers_to_photos (per-layer PNG, transparent). After Effects: titles_to_comps (one comp per title) and auto_titles_mixer_ae (one comp per title with Audio Spectrum equalizer + title pulsing to volume via Convert Audio to Keyframes; match names/indices so it works in ES or EN AE). Panel: tools/adobe_panel/ (CEP manifest + minimal CSInterface + main.js dispatcher; buttons per host; build_zxp.ps1 to sign a .zxp). Docs: tools/ADOBE_TOOLKIT.md + tools/adobe_panel/README.md. Pure .jsx/panel, no src/flujo change. Auto-checkpoint already committed to main (commit 257157a); git push pending. See docs/handoffs/HANDOFF_2026-07-03_adobe_toolkit.md.
 - EVENTOS: general quotation package for marketing agency (no venue/date) in datadrops/cotizacion_general_eventos/ (md + branded printable html + plano with PlanoTool symbology/legend 2970x2100 + rider 17-item checklist). Rates set by boss (CLP/day): informativo 250k; informativo+testeo 300k (6 vol); full service massive event 500k (15 vol) with exact breakdown. See docs/handoffs/HANDOFF_2026-07-02_cotizacion_eventos_y_flyers_suplementos.md.
 - SUPLEMENTOS: 2 new QR backs in svg/suplementos_rd/02_editables_svg/ (09_post_fiesta_back_qr, 10_linea_suplementos_back_qr), cream system, content verbatim from approved master JSON, QR decodes to https://reduciendodano.cl, validator 10/10 OK. These replace the failed datadrops/flyers/BACK.SUPLEMENTOS.pdf (black/neon, empty).
