@@ -21,6 +21,12 @@ from pathlib import Path
 
 CLAUDE_CMD = os.environ.get("CLAUDE_CMD", "claude")
 CLAUDE_PERM = os.environ.get("CLAUDE_PERMISSION_MODE", "acceptEdits")
+# SEGURIDAD: lanzar a Claude (de PAGO) esta APAGADO por defecto. Aunque dejen a VIBO
+# escuchando, no puede gastar tu Claude hasta que TU lo habilites explicitamente.
+AGENTS_ENABLED = os.environ.get("VIBO_AGENTS_ENABLED", "").strip().lower() in ("1", "true", "si", "yes")
+# Tope duro de gasto: maximo de agentes por corrida de la app.
+_MAX_TOTAL_SESION = int(os.environ.get("VIBO_MAX_AGENTES", "15"))
+_contador = {"total": 0}
 # Ahorro: modelo mas barato para el secretario (ej. haiku) y reutilizar contexto.
 CLAUDE_MODEL = os.environ.get("CLAUDE_MODEL", "").strip()          # vacio = default de la cuenta
 CLAUDE_CONTINUE = os.environ.get("CLAUDE_CONTINUE", "").strip() in ("1", "true", "si", "yes")
@@ -229,6 +235,14 @@ def encargar_a_claude(instruccion: str, agente: str = "flujo", contexto: str = "
     segundo plano. 'agente' es un nombre de proyectos.json (flujo, unreal, ...).
     'contexto' es info ya preparada por el operador (Gemini) para que Claude NO
     tenga que re-explorar el repo (ahorro grande). Solo corre cuando lo pides."""
+    # SEGURIDAD: agentes de pago apagados por defecto.
+    if not AGENTS_ENABLED:
+        return {"error": "los agentes Claude (de PAGO) estan DESHABILITADOS por seguridad. "
+                         "Solo se habilitan con VIBO_AGENTS_ENABLED=1 en el .env, si TU lo decides."}
+    # SEGURIDAD: tope de gasto por corrida.
+    if _contador["total"] >= _MAX_TOTAL_SESION:
+        return {"error": f"limite de {_MAX_TOTAL_SESION} agentes por sesion alcanzado (freno de gasto). "
+                         "Reinicia la app si de verdad necesitas mas."}
     dest = _norm(agente)
     if not dest:
         validos = list(_cargar_proyectos().keys())
@@ -263,6 +277,7 @@ def encargar_a_claude(instruccion: str, agente: str = "flujo", contexto: str = "
         return {"error": str(e)}
     _procs[dest] = proc
     _lanzamientos.append(ahora)
+    _contador["total"] += 1
     try:
         _pid_path(dest).write_text(str(proc.pid), encoding="utf-8")
     except Exception:  # noqa: BLE001

@@ -52,6 +52,8 @@ MODEL = os.environ.get("VIBO_LIVE_MODEL", "gemini-2.5-flash-native-audio-latest"
 VOICE_VIBO = os.environ.get("VIBO_VOICE", "Kore")
 VOICE_REDU = os.environ.get("REDU_VOICE", "Charon")
 PTT_KEY_NAME = os.environ.get("VIBO_PTT_KEY", "f8").lower()
+# Seguridad: auto-apagado si no hay actividad por N minutos (0 = desactivado).
+IDLE_MIN = float(os.environ.get("VIBO_IDLE_MIN", "5"))
 
 
 def _ptt_key():
@@ -68,6 +70,7 @@ class VoiceEvents:
         self.loop = loop
         self.talking = asyncio.Event()
         self.quit = asyncio.Event()
+        self.last_activity = loop.time()  # para el auto-apagado por inactividad
         self._key = _ptt_key()
         self._down = False
 
@@ -77,6 +80,7 @@ class VoiceEvents:
     def _on_press(self, key):
         if key == self._key and not self._down:
             self._down = True
+            self.last_activity = self.loop.time()
             self.loop.call_soon_threadsafe(self.talking.set)
         if key == keyboard.Key.esc:
             self.loop.call_soon_threadsafe(self.quit.set)
@@ -132,35 +136,34 @@ def _config(mode: str):
 
 
 async def _send_audio(session, events: VoiceEvents):
-    q: asyncio.Queue[bytes] = asyncio.Queue()
+    """El microfono SOLO se abre mientras mantienes F8; en reposo esta cerrado y no
+    captura nada. Es una medida de seguridad/privacidad, no solo de ahorro."""
     loop = asyncio.get_running_loop()
-
-    def cb(indata, frames, time_info, status):
-        loop.call_soon_threadsafe(q.put_nowait, bytes(indata))
-
-    was_talking = False
     try:
-        with sd.RawInputStream(samplerate=SEND_SR, blocksize=BLOCK, dtype="int16",
-                               channels=1, callback=cb):
-            while True:
-                talking = events.talking.is_set()
-                if talking and not was_talking:
-                    await session.send_realtime_input(activity_start=types.ActivityStart())
-                    print("\n[escuchando...]", flush=True)
-                if not talking and was_talking:
-                    await session.send_realtime_input(activity_end=types.ActivityEnd())
-                    print("[procesando...]", flush=True)
-                    while not q.empty():
-                        q.get_nowait()
-                was_talking = talking
-                try:
-                    chunk = await asyncio.wait_for(q.get(), timeout=0.05)
-                except asyncio.TimeoutError:
-                    continue
-                if talking:
+        while True:
+            # MIC CERRADO: esperamos a que aprietes la tecla. Nada se captura aqui.
+            await events.talking.wait()
+            await session.send_realtime_input(activity_start=types.ActivityStart())
+            print("\n[escuchando...]", flush=True)
+            q: asyncio.Queue[bytes] = asyncio.Queue()
+
+            def cb(indata, frames, time_info, status):
+                loop.call_soon_threadsafe(q.put_nowait, bytes(indata))
+
+            # El microfono se ABRE aqui y se CIERRA al salir del 'with' (soltar F8).
+            with sd.RawInputStream(samplerate=SEND_SR, blocksize=BLOCK, dtype="int16",
+                                   channels=1, callback=cb):
+                while events.talking.is_set():
+                    try:
+                        chunk = await asyncio.wait_for(q.get(), timeout=0.05)
+                    except asyncio.TimeoutError:
+                        continue
                     await session.send_realtime_input(
                         audio=types.Blob(data=chunk, mime_type=f"audio/pcm;rate={SEND_SR}")
                     )
+            # Soltaste F8: microfono CERRADO otra vez.
+            await session.send_realtime_input(activity_end=types.ActivityEnd())
+            print("[procesando...]", flush=True)
     except ConnectionClosed:
         return  # la sesion se cerro (cambio de persona): salir en silencio
 
@@ -251,6 +254,19 @@ async def _run_mode(client, mode: str, events: VoiceEvents) -> str | None:
     return switch["to"] or mode
 
 
+async def _watchdog(events: VoiceEvents):
+    """Apaga la app por seguridad si la dejaste abierta sin usar."""
+    if IDLE_MIN <= 0:
+        return
+    loop = asyncio.get_running_loop()
+    while not events.quit.is_set():
+        await asyncio.sleep(15)
+        if loop.time() - events.last_activity > IDLE_MIN * 60:
+            print(f"\n[auto-apagado] {IDLE_MIN:g} min sin actividad. Cierro por seguridad.", flush=True)
+            events.quit.set()
+            return
+
+
 async def main():
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
@@ -267,11 +283,15 @@ async def main():
     events.start()
 
     tecla = "ESPACIO" if PTT_KEY_NAME == "space" else PTT_KEY_NAME.upper()
+    agentes = "HABILITADOS" if cb.AGENTS_ENABLED else "apagados (seguro)"
     print("=" * 60)
     print(f"  Asistente de voz listo. Manten [{tecla}] para hablar. ESC = salir.")
     print("  Cara publica: VIBO (personal/general). Trabajo ONG -> REDU (confidencial).")
+    print(f"  Seguridad: microfono solo con [{tecla}] | agentes de pago: {agentes} | "
+          f"auto-apagado: {IDLE_MIN:g} min sin uso.")
     print("=" * 60)
 
+    asyncio.create_task(_watchdog(events))
     mode = "publico"
     while mode is not None:
         mode = await _run_mode(client, mode, events)
