@@ -48,6 +48,8 @@ secretario trabaja a la vez.
 - Si el usuario pregunta 'que ha pasado', 'novedades', 'que hicieron los agentes',
   usa leer_estado (la bitacora donde agentes y sesiones dejan cuando empiezan o
   terminan una labor) y resumesela en voz.
+- Si pide 'limpia procesos' / 'mata lo colgado', usa limpiar_procesos (solo mata
+  agentes abandonados del sistema de voz, nunca las sesiones que el abrio).
 No bloquees esperando: lanzas y sigues."""
 
 # --- Cara publica: VIBO -------------------------------------------------------
