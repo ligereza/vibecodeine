@@ -10,9 +10,11 @@ proyectos.example.json.
 """
 from __future__ import annotations
 
+import datetime as _dt
 import json
 import os
 import subprocess
+import threading
 from pathlib import Path
 
 CLAUDE_CMD = os.environ.get("CLAUDE_CMD", "claude")
@@ -21,6 +23,18 @@ CLAUDE_PERM = os.environ.get("CLAUDE_PERMISSION_MODE", "acceptEdits")
 _HERE = Path(__file__).resolve().parent
 _REPO = _HERE.parents[1]                                    # C:\IA\flujo
 _LOGDIR = _HERE / "agentes"
+# ESTADO compartido: bitacora que dejan agentes y sesiones (empezo/termino una
+# labor). Lo escriben procesos/hooks gratis; CODE solo lo LEE cuando preguntas.
+_ESTADO = _HERE / "estado" / "ESTADO.md"
+
+
+def marcar_estado(proyecto: str, evento: str, detalle: str = "") -> None:
+    """Deja una linea en la bitacora ESTADO (empezo / termino / lo que sea)."""
+    _ESTADO.parent.mkdir(parents=True, exist_ok=True)
+    sello = _dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    corto = (detalle or "").strip().splitlines()[0][:120] if detalle else ""
+    with open(_ESTADO, "a", encoding="utf-8") as fh:
+        fh.write(f"- [{sello}] {proyecto}: {evento}" + (f" - {corto}" if corto else "") + "\n")
 
 # Alias de voz -> nombre canonico del proyecto (para hablar natural).
 _ALIAS = {
@@ -99,6 +113,13 @@ def encargar_a_claude(instruccion: str, agente: str = "flujo") -> dict:
     except Exception as e:  # noqa: BLE001
         return {"error": str(e)}
     _procs[dest] = proc
+    marcar_estado(dest, "empezo", instruccion)
+
+    def _vigilar_fin(nombre: str, p: subprocess.Popen):
+        p.wait()
+        marcar_estado(nombre, "termino", _leer_log(nombre, 5))
+
+    threading.Thread(target=_vigilar_fin, args=(dest, proc), daemon=True).start()
     return {"lanzado": True, "agente": dest, "carpeta": str(carpeta), "instruccion": instruccion.strip()}
 
 
@@ -146,6 +167,16 @@ def leer_respuesta(agente: str = "flujo") -> dict:
     return {"agente": dest, "respuesta": texto or "(todavia no hay respuesta)"}
 
 
+def leer_estado(lineas: int = 15) -> dict:
+    """Lee la bitacora ESTADO: que empezaron o terminaron los agentes y sesiones.
+    Usar cuando el usuario pregunte 'que ha pasado', 'novedades', 'que hicieron'."""
+    if not _ESTADO.exists():
+        return {"estado": "(sin novedades todavia)"}
+    todas = _ESTADO.read_text(encoding="utf-8", errors="replace").splitlines()
+    n = max(1, min(int(lineas), 50))
+    return {"estado": "\n".join(todas[-n:])}
+
+
 def _leer_log(nombre: str, n: int) -> str:
     log = _log_path(nombre)
     if not log.exists():
@@ -160,6 +191,7 @@ FUNCIONES = {
     "estado_agente": estado_agente,
     "detener_agente": detener_agente,
     "leer_respuesta": leer_respuesta,
+    "leer_estado": leer_estado,
 }
 
 DECLARACIONES = [
@@ -202,6 +234,14 @@ DECLARACIONES = [
         "parameters": {
             "type": "object",
             "properties": {"agente": {"type": "string", "description": "nombre del proyecto."}},
+        },
+    },
+    {
+        "name": "leer_estado",
+        "description": "Lee la bitacora ESTADO (que empezaron o terminaron los agentes y sesiones). Usar cuando el usuario pregunte 'que ha pasado', 'novedades', 'que hicieron'.",
+        "parameters": {
+            "type": "object",
+            "properties": {"lineas": {"type": "integer", "description": "cuantas lineas recientes (por defecto 15)."}},
         },
     },
 ]

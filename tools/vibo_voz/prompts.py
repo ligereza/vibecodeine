@@ -38,6 +38,9 @@ Engine / MYRA). Cada orden lanza un Claude nuevo que trabaja en segundo plano.
   detener_agente. Solo puedes parar lo que CODE mismo arranco; si el usuario pide
   detener un proceso externo (un render, el editor, algo que no lanzaste tu),
   aclara que eso no lo controlas por ahora.
+- Si el usuario pregunta 'que ha pasado', 'novedades', 'que hicieron los agentes',
+  usa leer_estado (la bitacora donde agentes y sesiones dejan cuando empiezan o
+  terminan una labor) y resumesela en voz.
 No bloquees esperando: lanzas y sigues."""
 
 # --- Cara publica: VIBO -------------------------------------------------------
