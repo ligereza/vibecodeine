@@ -24,7 +24,7 @@ import os
 import textwrap
 
 ROOT = os.getcwd()
-FONT = "DejaVu Sans, Arial, Helvetica, sans-serif"
+FONT = "Arial, Helvetica, sans-serif"
 
 # --- Paleta rave v4.1 -----------------------------------------------------
 NEGRO = "#0A0A0A"
@@ -67,6 +67,13 @@ TAG_UP = {  # tag corto en mayusculas para el pill superior derecho
 LOGO_PATH = os.path.join(ROOT, "assets/logo/RD_logo_A_transparente.png")
 LOGO_B64 = base64.b64encode(open(LOGO_PATH, "rb").read()).decode()
 LOGO_W, LOGO_H = 216, 171
+
+def inline_logo_svg(variant, x, y, w):
+    """Logo RD vectorial inline (crisp a cualquier zoom). variant: 'negro'|'blanco'|'color'."""
+    raw = open(os.path.join(ROOT, f"assets/logo/RD_logo_vector_{variant}.svg"), encoding="utf-8").read()
+    inner = raw[raw.index("<svg"):]
+    h = round(w * 817.61 / 1060, 1)
+    return inner.replace("<svg ", f'<svg x="{x}" y="{y}" width="{w}" height="{h}" ', 1)
 
 # --- Layout ---------------------------------------------------------------
 CARD_X, CARD_W = 120, 1760
@@ -250,7 +257,7 @@ def build(flyer):
     lw = 176
     lh = round(lw * LOGO_H / LOGO_W)
     S.append('<g id="header_marca">')
-    S.append(f'<image x="112" y="86" width="{lw}" height="{lh}" xlink:href="data:image/png;base64,{LOGO_B64}"/>')
+    S.append(inline_logo_svg("blanco", 112, 86, lw))
     S.append(txt(310, 172, "Reduciendo Daño", 42, BLANCO, 700))
     S.append(f'<rect x="{tag_x}" y="116" width="{tag_w}" height="60" rx="30" fill="{PANEL}" stroke="{acc}" stroke-width="3"/>')
     S.append(txt(tag_x + tag_w / 2, 154, tag, 24, PILL_TEXT.get(acc, acc), 700, anchor="middle"))
@@ -261,12 +268,13 @@ def build(flyer):
     tsize = 92 if tlen <= 9 else (80 if tlen <= 15 else 62)
     ty = 452
     kicker = "LÍNEA" if flyer.get("type") == "general" else "PRODUCTO"
+    CX = 1000  # centro del canvas 2000
     S.append('<g id="titulo">')
-    S.append(txt(TEXT_X, 348, kicker, 27, AMARILLO, 700))
-    S.append(txt(TEXT_X + 4, ty + 5, title, tsize, acc, 700, cls=""))   # eco
-    S.append(txt(TEXT_X, ty, title, tsize, BLANCO, 700))
+    S.append(txt(CX, 348, kicker, 27, AMARILLO, 700, anchor="middle"))
+    S.append(txt(CX + 4, ty + 5, title, tsize, acc, 700, anchor="middle", cls=""))   # eco
+    S.append(txt(CX, ty, title, tsize, BLANCO, 700, anchor="middle"))
     if subtitle:
-        S.append(txt(TEXT_X, ty + 62, subtitle, 40, MUTED, 400))
+        S.append(txt(CX, ty + 62, subtitle, 40, MUTED, 400, anchor="middle"))
     S.append('</g>')
 
     # cajas dinamicas con texto centrado verticalmente
@@ -307,7 +315,7 @@ def build(flyer):
 
 
 def main():
-    data = json.load(open("projects/piezas_vectoriales/suplementos_rd/01_contenido/contenido_suplementos_rd.json"))
+    data = json.load(open("projects/piezas_vectoriales/suplementos_rd/01_contenido/contenido_suplementos_rd.json", encoding="utf-8"))
     os.makedirs("svg/suplementos_rd/05_dark_neon", exist_ok=True)
     for flyer in data["flyers"]:
         out = build(flyer)

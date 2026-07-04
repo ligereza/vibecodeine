@@ -12,7 +12,7 @@ import base64
 import textwrap
 import qrcode
 
-FONT = "DejaVu Sans, Arial, Helvetica, sans-serif"
+FONT = "Arial, Helvetica, sans-serif"
 NEGRO = "#0A0A0A"
 PANEL = "#161318"
 BLANCO = "#F2F2F2"
@@ -94,9 +94,18 @@ def esc(s):
     return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def txt(x, y, s, size, fill=BLANCO, weight=400, cls=' class="txt"'):
-    return (f'<text{cls} x="{x}" y="{y}" fill="{fill}" font-family="{FONT}" '
+def txt(x, y, s, size, fill=BLANCO, weight=400, cls=' class="txt"', anchor=None):
+    a = f' text-anchor="{anchor}"' if anchor else ""
+    return (f'<text{cls} x="{x}" y="{y}"{a} fill="{fill}" font-family="{FONT}" '
             f'font-size="{size}" font-weight="{weight}">{esc(s)}</text>')
+
+
+def inline_logo_svg(variant, x, y, w):
+    """Logo RD vectorial inline (crisp a cualquier zoom)."""
+    raw = open(f"assets/logo/RD_logo_vector_{variant}.svg", encoding="utf-8").read()
+    inner = raw[raw.index("<svg"):]
+    h = round(w * 817.61 / 1060, 1)
+    return inner.replace("<svg ", f'<svg x="{x}" y="{y}" width="{w}" height="{h}" ', 1)
 
 
 def qr_svg(x, y, size_px, url="https://reduciendodano.cl"):
@@ -150,16 +159,17 @@ def build(key):
     lw = 176
     lh = round(lw * LOGO_H / LOGO_W)
     S.append('<g id="header_marca">')
-    S.append(f'<image x="112" y="86" width="{lw}" height="{lh}" xlink:href="data:image/png;base64,{LOGO_B64}"/>')
+    S.append(inline_logo_svg("blanco", 112, 86, lw))
     S.append(txt(310, 175, "Reduciendo Daño", 42, BLANCO, 700))
     S.append(f'<rect x="{tag_x}" y="116" width="{c["tag_w"]}" height="60" rx="30" fill="{PANEL}" stroke="{acc}" stroke-width="3" opacity=".95"/>')
     S.append(txt(tag_x + 35, 148, c["tag"], 24, acc, 700))
     S.append('</g>')
     # titulo con eco neon (sin filtros)
+    CX = 1000  # centro del canvas 2000
     S.append('<g id="titulo">')
-    S.append(txt(120, 300, c["kicker"], 27, AMARILLO, 700))
-    S.append(txt(124, 407, c["title"], c["title_size"], c["glow"], 700, cls=''))
-    S.append(txt(120, 403, c["title"], c["title_size"], BLANCO, 700))
+    S.append(txt(CX, 300, c["kicker"], 27, AMARILLO, 700, anchor="middle"))
+    S.append(txt(CX + 4, 407, c["title"], c["title_size"], c["glow"], 700, cls='', anchor="middle"))
+    S.append(txt(CX, 403, c["title"], c["title_size"], BLANCO, 700, anchor="middle"))
     S.append('</g>')
     # cajas
     S.append('<g id="cajas_editables">')

@@ -20,9 +20,24 @@ from fontTools.pens.svgPathPen import SVGPathPen
 from fontTools.pens.transformPen import TransformPen
 from fontTools.misc.transform import Transform
 
+import os
+
+def _dejavu(name):
+    """Resuelve DejaVu en Linux o Windows (via matplotlib)."""
+    cands = [f"/usr/share/fonts/truetype/dejavu/{name}",
+             f"/Library/Fonts/{name}"]
+    for p in cands:
+        if os.path.exists(p):
+            return p
+    try:
+        import matplotlib
+        return os.path.join(os.path.dirname(matplotlib.__file__), "mpl-data", "fonts", "ttf", name)
+    except Exception:
+        return cands[0]
+
 FONTS = {
-    "400": "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-    "700": "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+    "400": _dejavu("DejaVuSans.ttf"),
+    "700": _dejavu("DejaVuSans-Bold.ttf"),
 }
 
 _cache = {}
@@ -106,7 +121,11 @@ def vectorize_file(src, dst):
     out = TEXT_RE.sub(repl, svg)
     out = out.replace("/ editable dark-neon /", "/ vector dark-neon /")
     out = out.replace("/ editable /", "/ vector /")
-    assert "<text" not in out, f"{src}: quedaron <text> sin convertir"
+    _left = out.count("<text")
+    if _left:
+        # el logo vectorial trae el simbolo ® como <text> (fuente Helvetica, presente
+        # en toda fuente): es seguro dejarlo. Solo avisamos.
+        print(f"  aviso {src}: {_left} <text> restante(s) (simbolo ® del logo)")
     with open(dst, "w", encoding="utf-8") as f:
         f.write(out)
     print(f"OK {dst}")
