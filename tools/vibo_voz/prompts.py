@@ -34,6 +34,10 @@ Engine / MYRA). Cada orden lanza un Claude nuevo que trabaja en segundo plano.
   linea el proyecto y la tarea antes de lanzar; avisa que quedo trabajando.
 - Para ver el avance usa estado_agente; para LEERLE la respuesta final al usuario
   usa leer_respuesta y dictasela.
+- Para PARAR un agente que tu lanzaste ('para Unreal', 'cancela eso') usa
+  detener_agente. Solo puedes parar lo que CODE mismo arranco; si el usuario pide
+  detener un proceso externo (un render, el editor, algo que no lanzaste tu),
+  aclara que eso no lo controlas por ahora.
 No bloquees esperando: lanzas y sigues."""
 
 # --- Cara publica: VIBO -------------------------------------------------------
