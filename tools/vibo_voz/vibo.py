@@ -32,6 +32,11 @@ try:
 except Exception:  # noqa: BLE001
     ConnectionClosed = ()  # type: ignore[assignment]
 
+try:
+    from google.genai.errors import APIError
+except Exception:  # noqa: BLE001
+    APIError = ()  # type: ignore[assignment]
+
 import github_tools as gh
 import claude_bridge as cb
 import prompts
@@ -218,20 +223,32 @@ async def _run_mode(client, mode: str, events: VoiceEvents) -> str | None:
     si el usuario salio con ESC."""
     switch: dict = {"to": None}
     etiqueta = "REDU" if mode == "redu" else "VIBO"
-    async with client.aio.live.connect(model=MODEL, config=_config(mode)) as session:
-        send_t = asyncio.create_task(_send_audio(session, events))
-        recv_t = asyncio.create_task(_receive(session, etiqueta, switch))
-        quit_t = asyncio.create_task(events.quit.wait())
-        done, pending = await asyncio.wait(
-            [send_t, recv_t, quit_t], return_when=asyncio.FIRST_COMPLETED
-        )
-        for t in pending:
-            t.cancel()
-        # recoger resultados/errores de las tareas canceladas (evita warnings)
-        await asyncio.gather(*pending, return_exceptions=True)
+    try:
+        async with client.aio.live.connect(model=MODEL, config=_config(mode)) as session:
+            send_t = asyncio.create_task(_send_audio(session, events))
+            recv_t = asyncio.create_task(_receive(session, etiqueta, switch))
+            quit_t = asyncio.create_task(events.quit.wait())
+            done, pending = await asyncio.wait(
+                [send_t, recv_t, quit_t], return_when=asyncio.FIRST_COMPLETED
+            )
+            for t in pending:
+                t.cancel()
+            # recoger resultados/errores de las tareas canceladas (evita warnings)
+            await asyncio.gather(*pending, return_exceptions=True)
+            # si una tarea termino con error (p.ej. 1007 del modelo), reconectar
+            for t in done:
+                if not t.cancelled() and t.exception() is not None:
+                    exc = t.exception()
+                    if not isinstance(exc, asyncio.CancelledError):
+                        print(f"\n[aviso] la sesion {etiqueta} tuvo un hipo ({type(exc).__name__}); "
+                              f"reconectando, sigue hablando.", flush=True)
+                        return mode  # reconectar EL MISMO modo, no rebotar a publico
+    except (APIError, ConnectionClosed) as e:  # noqa: BLE001
+        print(f"\n[aviso] reconectando {etiqueta}... ({type(e).__name__})", flush=True)
+        return mode
     if events.quit.is_set():
         return None
-    return switch["to"] or "publico"
+    return switch["to"] or mode
 
 
 async def main():
