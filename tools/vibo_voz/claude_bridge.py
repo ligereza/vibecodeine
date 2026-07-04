@@ -60,12 +60,21 @@ _PREAMBULO = (
     "Eres el 'secretario': un Claude headless que ejecuta UNA orden y termina. Reglas:\n"
     "- NO puedes preguntar de vuelta (nadie te lee). Si algo es ambiguo, elige lo mas "
     "razonable y NO destructivo, hazlo, y reporta en 2-3 lineas que hiciste y que asumiste.\n"
-    "- AHORRO: si la tarea es simple (crear/copiar/listar archivos), NO hagas el onboarding "
-    "completo del repo (no leas handoffs, airdrop, repo_map). Lee solo lo minimo indispensable.\n"
+    "- AHORRO: si un operador te da CONTEXTO ya preparado, CONFIA en el y NO re-explores el "
+    "repo. Si la tarea es simple, no hagas el onboarding completo (no leas handoffs, airdrop, "
+    "repo_map). Lee solo lo minimo indispensable.\n"
     "- ANTI-BUCLE: haz la tarea UNA sola vez y termina. No lances otros procesos, no invoques "
-    "otros agentes, no te repitas.\n\n"
-    "Tarea: "
+    "otros agentes, no te repitas."
 )
+
+
+def _armar_prompt(instruccion: str, contexto: str) -> str:
+    partes = [_PREAMBULO]
+    if contexto and contexto.strip():
+        partes.append("CONTEXTO ya preparado por el operador (usalo, NO re-explores el repo "
+                      "salvo que falte algo critico):\n" + contexto.strip())
+    partes.append("Tarea: " + instruccion.strip())
+    return "\n\n".join(partes)
 
 
 def _cargar_proyectos() -> dict[str, Path]:
@@ -215,10 +224,11 @@ def listar_proyectos() -> dict:
     return {"proyectos": salida}
 
 
-def encargar_a_claude(instruccion: str, agente: str = "flujo") -> dict:
+def encargar_a_claude(instruccion: str, agente: str = "flujo", contexto: str = "") -> dict:
     """Lanza a Claude (CLI headless) una tarea en la carpeta del proyecto, en
     segundo plano. 'agente' es un nombre de proyectos.json (flujo, unreal, ...).
-    Solo corre cuando lo pides: en reposo no gasta tokens."""
+    'contexto' es info ya preparada por el operador (Gemini) para que Claude NO
+    tenga que re-explorar el repo (ahorro grande). Solo corre cuando lo pides."""
     dest = _norm(agente)
     if not dest:
         validos = list(_cargar_proyectos().keys())
@@ -244,7 +254,7 @@ def encargar_a_claude(instruccion: str, agente: str = "flujo") -> dict:
     try:
         fh = open(_log_path(dest), "w", encoding="utf-8")
         proc = subprocess.Popen(
-            _comando(exe, _PREAMBULO + instruccion),
+            _comando(exe, _armar_prompt(instruccion, contexto)),
             cwd=str(carpeta), stdout=fh, stderr=subprocess.STDOUT,
         )
     except FileNotFoundError:
@@ -403,12 +413,13 @@ DECLARACIONES = [
     },
     {
         "name": "encargar_a_claude",
-        "description": "Lanza una tarea a una sesion de Claude Code local que trabaja en segundo plano, en la carpeta del proyecto. 'agente' es un nombre de proyecto (flujo, unreal, o el que sea de proyectos.json). Solo corre cuando lo pides.",
+        "description": "Lanza una tarea a una sesion de Claude Code local (secretario) que trabaja en segundo plano, en la carpeta del proyecto. Antes de llamar, actua como OPERADOR: junta el contexto necesario con tus herramientas (leer_archivo, existe...), reducelo a lo esencial, y pasalo en 'contexto' para que Claude NO re-explore el repo (gran ahorro).",
         "parameters": {
             "type": "object",
             "properties": {
                 "instruccion": {"type": "string", "description": "La tarea completa para Claude."},
                 "agente": {"type": "string", "description": "nombre del proyecto: flujo | unreal | ..."},
+                "contexto": {"type": "string", "description": "Contexto YA reducido (rutas, snippets, datos) para que Claude no re-explore. Mientras mas preciso, mas barato."},
             },
             "required": ["instruccion"],
         },
