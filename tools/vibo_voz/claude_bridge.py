@@ -96,6 +96,49 @@ def _log_path(nombre: str) -> Path:
     return _LOGDIR / f"agente_{nombre}.log"
 
 
+def _pid_path(nombre: str) -> Path:
+    return _LOGDIR / f"agente_{nombre}.pid"
+
+
+def _es_proceso_agente(pid: int) -> bool:
+    """Confirma que el PID sigue vivo y es un proceso de Claude/node (evita matar
+    otra cosa si el PID se reciclo)."""
+    try:
+        out = subprocess.run(["tasklist", "/FI", f"PID eq {pid}", "/NH"],
+                             capture_output=True, text=True, timeout=10).stdout.lower()
+    except Exception:  # noqa: BLE001
+        return False
+    return "claude.exe" in out or "node.exe" in out or "cmd.exe" in out
+
+
+def limpiar_procesos() -> dict:
+    """Artefacto de limpieza: mata SOLO los agentes que el sistema de voz lanzo y
+    quedaron abandonados (via sus archivos .pid). NUNCA toca tus sesiones abiertas."""
+    _LOGDIR.mkdir(exist_ok=True)
+    matados, ya_muertos = [], []
+    for pf in _LOGDIR.glob("agente_*.pid"):
+        try:
+            pid = int(pf.read_text(encoding="utf-8").strip())
+        except Exception:  # noqa: BLE001
+            pf.unlink(missing_ok=True)
+            continue
+        if _es_proceso_agente(pid):
+            try:
+                subprocess.run(["taskkill", "/F", "/T", "/PID", str(pid)],
+                               capture_output=True, timeout=10)
+                matados.append(pid)
+            except Exception:  # noqa: BLE001
+                pass
+        else:
+            ya_muertos.append(pid)
+        pf.unlink(missing_ok=True)
+    # limpiar referencias en memoria de procesos ya terminados
+    for n in list(_procs):
+        if _procs[n].poll() is not None:
+            del _procs[n]
+    return {"matados": matados, "ya_estaban_muertos": ya_muertos, "total_matados": len(matados)}
+
+
 def _resolver_claude() -> str | None:
     """Ubica el CLI de Claude. En Windows suele ser claude.cmd (npm global), que
     no se puede ejecutar directo: hay que resolver la ruta y correrlo con cmd /c."""
@@ -172,10 +215,15 @@ def encargar_a_claude(instruccion: str, agente: str = "flujo") -> dict:
         return {"error": str(e)}
     _procs[dest] = proc
     _lanzamientos.append(ahora)
+    try:
+        _pid_path(dest).write_text(str(proc.pid), encoding="utf-8")
+    except Exception:  # noqa: BLE001
+        pass
     marcar_estado(dest, "empezo", instruccion)
 
     def _vigilar_fin(nombre: str, p: subprocess.Popen):
         p.wait()
+        _pid_path(nombre).unlink(missing_ok=True)  # ya termino: quitar su .pid
         marcar_estado(nombre, "termino", _leer_log(nombre, 5))
 
     threading.Thread(target=_vigilar_fin, args=(dest, proc), daemon=True).start()
@@ -226,12 +274,23 @@ def leer_respuesta(agente: str = "flujo") -> dict:
     return {"agente": dest, "respuesta": texto or "(todavia no hay respuesta)"}
 
 
+_SENSIBLES = ("id_rsa", "id_ed25519", ".pem", ".key", ".p12", ".pfx",
+              "credential", "secret", "token", ".env")
+
+
 def leer_archivo(ruta: str, lineas: int = 120) -> dict:
-    """Lee un archivo de texto del repo (o ruta absoluta) SIN llamar a Claude.
-    Sirve para que Gemini revise contenido directo y barato, sin gastar un agente."""
-    p = Path(ruta)
-    if not p.is_absolute():
-        p = _REPO / ruta
+    """Lee un archivo de texto del repo o de un proyecto configurado, SIN llamar a
+    Claude. Por seguridad: solo dentro de esas carpetas y nunca archivos de
+    credenciales (asi Gemini no puede leer .env, llaves, etc. a la nube)."""
+    p = (Path(ruta) if Path(ruta).is_absolute() else _REPO / ruta).resolve()
+    # 1) solo dentro del repo o de los proyectos configurados
+    permitidas = [_REPO.resolve()] + [d.resolve() for d in _cargar_proyectos().values()]
+    if not any(p == base or base in p.parents for base in permitidas):
+        return {"error": "por seguridad solo leo archivos dentro del repo o de los proyectos configurados."}
+    # 2) nunca archivos de credenciales
+    low = p.name.lower()
+    if low == ".env" or any(s in low for s in _SENSIBLES):
+        return {"error": "por seguridad no leo archivos de credenciales (.env, llaves, secrets)."}
     if not p.exists() or not p.is_file():
         return {"error": f"no existe el archivo: {p}"}
     try:
@@ -268,6 +327,7 @@ FUNCIONES = {
     "leer_respuesta": leer_respuesta,
     "leer_estado": leer_estado,
     "leer_archivo": leer_archivo,
+    "limpiar_procesos": limpiar_procesos,
 }
 
 DECLARACIONES = [
@@ -331,5 +391,10 @@ DECLARACIONES = [
             },
             "required": ["ruta"],
         },
+    },
+    {
+        "name": "limpiar_procesos",
+        "description": "Limpia (mata) los agentes que el sistema de voz lanzo y quedaron abandonados. Seguro: NO toca las sesiones de Claude que el usuario abrio. Usar cuando pida 'limpia procesos', 'mata lo colgado', 'limpieza'.",
+        "parameters": {"type": "object", "properties": {}},
     },
 ]
