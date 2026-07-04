@@ -19,6 +19,12 @@ Done:
   cerrado, no captura). (4) Auto-apagado por inactividad VIBO_IDLE_MIN=5. (5) leer/escribir_archivo
   acotados al repo/proyectos y bloquean .env/llaves/secrets. (6) limpieza automatica de agentes
   colgados al arrancar. Doc completo + protocolo obligatorio en tools/vibo_voz/SEGURIDAD.md.
+- SEGURIDAD GITHUB (2026-07-04): .github/workflows/claude.yml BLINDADO (seguia siendo un vector:
+  cualquiera con @claude podia disparar Claude de pago con write). Ahora: gate por autor
+  OWNER/MEMBER/COLLABORATOR, ignora bots (anti-bucle/re-disparo), permisos minimos (sin id-token),
+  concurrency por issue/PR, y trata el issue como pedido (no instrucciones), prohibido revelar
+  secretos. Sigue INACTIVO (sin secret ANTHROPIC_API_KEY ni app). Otros workflows (ci, validar-piezas,
+  publicar-catalogo, render) revisados: limpios (sin pull_request_target, sin secretos, sin inyeccion).
 - ASISTENTE DE VOZ 3 PERSONAS (2026-07-04): tools/vibo_voz/ - asistente de voz local
   con Gemini Live (audio en tiempo real + voz natural, sin reconocedores locales).
   Tres system prompts diferenciados en prompts.py: CODE (nucleo privado, joven, maxima
