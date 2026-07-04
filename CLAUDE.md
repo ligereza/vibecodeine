@@ -22,3 +22,9 @@ Antes de cualquier tarea, sigue el orden de lectura definido en `AGENTS.md`:
 - `context/LAST_HANDOFF.md` y este archivo: ASCII-only.
 - Nunca guardar tokens, cookies, claves ni datos privados.
 - Al cerrar sesion: actualizar `context/LAST_HANDOFF.md` y `context/SESSION_STATE.json` con fecha/version reales (deben coincidir con `pyproject.toml` y `src/flujo/version.py`).
+
+## Ahorro de contexto (antes de explorar el repo)
+
+- Mapa mecanico gratis (0 tokens): `py tools/vibo_voz/contexto_repo.py`.
+- Derivar lectura pesada a Gemini (barato): `py tools/vibo_voz/pedir_a_gemini.py "consulta" ruta...`.
+- Que derivar y que leer tu directo: ver seccion "Ahorro de contexto" en `docs/REPO_MAP.md`.
