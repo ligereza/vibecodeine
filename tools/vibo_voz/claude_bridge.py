@@ -13,6 +13,7 @@ from __future__ import annotations
 import datetime as _dt
 import json
 import os
+import shutil
 import subprocess
 import threading
 from pathlib import Path
@@ -74,6 +75,28 @@ def _log_path(nombre: str) -> Path:
     return _LOGDIR / f"agente_{nombre}.log"
 
 
+def _resolver_claude() -> str | None:
+    """Ubica el CLI de Claude. En Windows suele ser claude.cmd (npm global), que
+    no se puede ejecutar directo: hay que resolver la ruta y correrlo con cmd /c."""
+    c = CLAUDE_CMD
+    if os.path.sep in c or os.path.isabs(c):
+        return c if Path(c).exists() else None
+    hallado = shutil.which(c)  # respeta PATHEXT: encuentra claude.cmd / .exe
+    if hallado:
+        return hallado
+    # fallback conocido: instalacion npm global
+    npm = Path(os.environ.get("APPDATA", "")) / "npm" / "claude.cmd"
+    return str(npm) if npm.exists() else None
+
+
+def _comando(exe: str, instruccion: str) -> list[str]:
+    base = [exe, "-p", instruccion, "--permission-mode", CLAUDE_PERM]
+    # .cmd/.bat en Windows: CreateProcess no los corre directo -> envolver en cmd /c
+    if os.name == "nt" and exe.lower().endswith((".cmd", ".bat")):
+        return ["cmd", "/c", *base]
+    return base
+
+
 def listar_proyectos() -> dict:
     """Dice a que proyectos puede mandar CODE y quien esta trabajando ahora."""
     proyectos = _cargar_proyectos()
@@ -101,15 +124,19 @@ def encargar_a_claude(instruccion: str, agente: str = "flujo") -> dict:
     if prev and prev.poll() is None:
         return {"ocupado": True, "agente": dest,
                 "mensaje": f"{dest} sigue trabajando; espera a que termine"}
+    exe = _resolver_claude()
+    if not exe:
+        return {"error": "no encuentro el CLI de Claude. Pon la ruta completa en "
+                         "CLAUDE_CMD del .env (ej: C:\\Users\\<tu>\\AppData\\Roaming\\npm\\claude.cmd)."}
     _LOGDIR.mkdir(exist_ok=True)
     try:
         fh = open(_log_path(dest), "w", encoding="utf-8")
         proc = subprocess.Popen(
-            [CLAUDE_CMD, "-p", instruccion, "--permission-mode", CLAUDE_PERM],
+            _comando(exe, instruccion),
             cwd=str(carpeta), stdout=fh, stderr=subprocess.STDOUT,
         )
     except FileNotFoundError:
-        return {"error": f"no se encontro el CLI '{CLAUDE_CMD}'. Instala/loguea Claude Code o ajusta CLAUDE_CMD."}
+        return {"error": f"no se pudo ejecutar '{exe}'. Ajusta CLAUDE_CMD en el .env."}
     except Exception as e:  # noqa: BLE001
         return {"error": str(e)}
     _procs[dest] = proc
