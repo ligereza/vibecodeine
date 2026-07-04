@@ -111,6 +111,44 @@ def _es_proceso_agente(pid: int) -> bool:
     return "claude.exe" in out or "node.exe" in out or "cmd.exe" in out
 
 
+def supervisar_procesos() -> dict:
+    """Capataz: da la foto de TODOS los procesos claude de la maquina, distingue
+    sesiones (y sus ayudantes) de los agentes que lanzo la voz, y avisa si hay
+    agentes colgados. Es solo lectura; para limpiar usa limpiar_procesos."""
+    try:
+        out = subprocess.run(
+            ["powershell", "-NoProfile", "-Command",
+             "Get-CimInstance Win32_Process -Filter \"Name='claude.exe'\" | "
+             "Select-Object ProcessId,ParentProcessId,@{n='MB';e={[int]($_.WorkingSetSize/1MB)}} | "
+             "ConvertTo-Json -Compress"],
+            capture_output=True, text=True, timeout=20).stdout.strip()
+    except Exception as e:  # noqa: BLE001
+        return {"error": str(e)}
+    if not out:
+        return {"total": 0, "resumen": "No hay procesos de Claude corriendo."}
+    try:
+        data = json.loads(out)
+    except Exception:  # noqa: BLE001
+        return {"error": "no pude leer la lista de procesos"}
+    if isinstance(data, dict):
+        data = [data]
+    pids = {int(d["ProcessId"]) for d in data}
+    agentes_pids = set()
+    for pf in _LOGDIR.glob("agente_*.pid"):
+        try:
+            agentes_pids.add(int(pf.read_text(encoding="utf-8").strip()))
+        except Exception:  # noqa: BLE001
+            pass
+    raices = [d for d in data if int(d["ParentProcessId"]) not in pids]
+    agentes_vivos = [int(d["ProcessId"]) for d in data if int(d["ProcessId"]) in agentes_pids]
+    total = len(data)
+    resumen = (f"{total} procesos claude: ~{len(raices)} sesion(es) con sus ayudantes, "
+               + (f"{len(agentes_vivos)} agente(s) de voz activo(s)." if agentes_vivos
+                  else "ningun agente de voz colgado."))
+    return {"total": total, "sesiones_aprox": len(raices),
+            "agentes_voz_activos": agentes_vivos, "resumen": resumen}
+
+
 def limpiar_procesos() -> dict:
     """Artefacto de limpieza: mata SOLO los agentes que el sistema de voz lanzo y
     quedaron abandonados (via sus archivos .pid). NUNCA toca tus sesiones abiertas."""
@@ -353,6 +391,7 @@ FUNCIONES = {
     "leer_estado": leer_estado,
     "leer_archivo": leer_archivo,
     "escribir_archivo": escribir_archivo,
+    "supervisar_procesos": supervisar_procesos,
     "limpiar_procesos": limpiar_procesos,
 }
 
@@ -430,6 +469,11 @@ DECLARACIONES = [
             },
             "required": ["ruta", "texto"],
         },
+    },
+    {
+        "name": "supervisar_procesos",
+        "description": "Da la foto de todos los procesos de Claude: cuantas sesiones, cuantos agentes de voz, si hay colgados. Solo lectura. Usar cuando pregunte 'que hay corriendo', 'cuantos claude tengo', 'como esta la maquina'.",
+        "parameters": {"type": "object", "properties": {}},
     },
     {
         "name": "limpiar_procesos",
