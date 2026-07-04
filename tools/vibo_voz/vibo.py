@@ -257,6 +257,12 @@ async def main():
         sys.exit("Falta GEMINI_API_KEY. Copia .env.example a .env y rellena las keys.")
 
     client = genai.Client(api_key=api_key)
+
+    # Auto-limpieza gratis (sin LLM): reapea agentes colgados de una corrida previa.
+    _limpieza = cb.limpiar_procesos()
+    if _limpieza.get("total_matados"):
+        print(f"[limpieza] {_limpieza['total_matados']} agente(s) colgado(s) del inicio anterior, eliminados.")
+
     events = VoiceEvents(asyncio.get_running_loop())
     events.start()
 
