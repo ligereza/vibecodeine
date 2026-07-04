@@ -6,6 +6,33 @@ Este mapa existe para que humanos y agentes de IA entiendan rápido qué carpeta
 
 **Punto de entrada real hoy: `AGENTS.md` (raíz).** Orden obligatorio de lectura: `AGENTS.md` -> `context/LAST_HANDOFF.md` -> `docs/AGENT_AIRDROP_PROTOCOL.md` -> este archivo -> archivo especifico de la tarea. `AGENT_GUIDE.md` y `AGENT_OPERATING_MANUAL.md` son documentos de una era anterior (v0.34) y estan desactualizados frente a `AGENTS.md`; no los uses como entrada.
 
+## Ahorro de contexto: leer barato y derivar a Gemini
+
+Antes de explorar el repo a mano (caro), usa estas dos vias:
+
+- **Mapa mecanico (0 tokens):** `py tools/vibo_voz/contexto_repo.py` imprime arbol +
+  archivos clave + zonas a no tocar. Sin ningun modelo. Pasalo como contexto o leelo
+  en vez de explorar.
+- **Derivar lectura a Gemini (gratis):** `py tools/vibo_voz/pedir_a_gemini.py "consulta" ruta...`
+  hace que Gemini (barato) lea/resuma esas rutas y devuelva un resumen corto, para que
+  Claude no gaste leyendo volumen.
+
+### Que puede derivar Claude a Gemini (rutas "gordas", lectura pesada)
+| Ruta | Por que derivarla |
+|---|---|
+| `datadrops/`, `jobs/`, `projects/` | Salida generada, muchos archivos; resumir, no leer entero |
+| `svg/suplementos_rd/` | Muchos SVG/piezas; pedir resumen de que hay |
+| `docs/handoffs/archive/` | Historico voluminoso |
+| `.claude/skills/*/` | Resumir que hace una skill antes de abrirla entera |
+
+### Que NO conviene derivar (leelo tu, Claude, directo)
+Poco volumen y critico para decidir: `CLAUDE.md`, `AGENTS.md`, `docs/REPO_MAP.md`,
+`context/LAST_HANDOFF.md`, `pyproject.toml`, `src/flujo/cli.py`, `SKILL.md` puntual.
+
+### Zonas generadas / NO tocar a mano
+`jobs/20*`, `projects/piezas_vectoriales/20*`, `datadrops/` (salida), `_airdrop*`,
+`checkpoints/`, `_logs/`. Leer solo si el pipeline lo exige.
+
 ## Núcleo vivo
 
 | Ruta | Rol | Estado |
