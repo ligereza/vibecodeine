@@ -21,6 +21,12 @@ build/
 credentials.json
 token.json
 
+# Aider (config real con claves + historial de chat); el .example SI se versiona
+.aider.conf.yml
+.aider.chat.history.md
+.aider.input.history
+.aider.tags.cache.v*/
+
 # OS
 .DS_Store
 Thumbs.db

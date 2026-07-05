@@ -1,54 +1,33 @@
 {
-  "date": "2026-07-04",
   "version": "0.48.5",
-  "goal": "Asistente de voz local (CODE/VIBO/REDU) con Gemini Live + secretario Claude, con seguridad cerrada. Gemini opera/prepara contexto y supervisa; Claude solo ejecuta lo caro. Prior: Adobe toolkit, Resolume/Chataigne, RD.",
-  "protocolo_cierre_obligatorio": [
-    "1. Cerrar la voz (ESC), no dejar escuchando.",
-    "2. py tools/vibo_voz/limpiar.py (matar agentes colgados).",
-    "3. VIBO_AGENTS_ENABLED vacio en .env si no se seguira usando.",
-    "4. git status limpio; nada sensible trackeado.",
-    "5. Actualizar LAST_HANDOFF.md y SESSION_STATE.json.",
-    "6. Equipo compartido: cerrar Gmail/Google y la terminal. Ver tools/vibo_voz/SEGURIDAD.md"
-  ],
+  "date": "2026-07-04",
+  "assistant_name": "Cauce",
+  "current_focus": "AI Operating Layer v1: repo listo para trabajo multi-agente API-only y bajo consumo de contexto (Claude arquitecto/revisor; Qwen/NIM/OpenRouter via Aider como editores baratos)",
   "done": [
-    "SEGURIDAD voz (2026-07-04): agentes Claude de PAGO apagados por defecto (VIBO_AGENTS_ENABLED), tope de gasto (VIBO_MAX_AGENTES=15) + anti-bucle 5/60s + un secretario a la vez, microfono solo con F8 (cerrado en reposo), auto-apagado por inactividad (VIBO_IDLE_MIN=5), leer/escribir_archivo acotados y bloquean credenciales, limpieza automatica al arrancar. Protocolo obligatorio de cierre en tools/vibo_voz/SEGURIDAD.md.",
-    "Gemini como operador/antesala: encargar_a_claude acepta 'contexto' ya reducido para que Claude no re-explore el repo (ahorro grande). Gemini tambien es capataz (supervisar_procesos) y hace lo barato (leer/escribir_archivo, existe) sin llamar a Claude.",
-    "Asistente de voz 3 personas (2026-07-04, tools/vibo_voz/): Gemini Live (audio+voz natural). prompts.py con 3 system prompts: CODE (nucleo privado, abierto a variables, sin acceso al trabajo), VIBO (cara publica/pseudonimo, voz por defecto personal/general), REDU (trabajo ONG confidencial, sesion aparte, GitHub SOLO LECTURA). Runtime 2 sesiones Live con handoff auto (abrir_redu/volver_a_publico); la separacion ES la confidencialidad. PTT global F8. Keys solo en .env gitignored. Enganchado como 'flujo voz' (ingreso de dato por voz), extra [voz] OPCIONAL, lazy, NO dependencia. Starter: falta probar micro/audio en el PC y confirmar VIBO_LIVE_MODEL real. NO se renombro VIBO->CODE en el repo (VIBO se queda como cara publica).",
-    "Higiene de repo ronda 2 (2026-07-03, Vibo): docs/handoffs/ reorganizado (40 archivos sueltos + current/ -> archive/handoffs/, solo quedan los 3 de esta semana + README); grupo docs CLI consolidado (CLI.md reescrito contra cli.py real v0.48.5, COMANDOS.md/COMANDO_UNIFICADO.md -> redirect); grupo docs airdrop consolidado (detalle fusionado en AGENT_AIRDROP_PROTOCOL.md, AIRDROP.md/AIRDROP_REVIEW.md -> redirect, RELEASE_NOTES_AIRDROP.md archivado); grupo docs higiene consolidado (HIGIENE_REPO.md unico, CLEANUP.md/MANTENIMIENTO_REPO.md -> redirect, REPO_HYGIENE_ACTION_PLAN_2026-06-30.md verificado completo y archivado). NO tocado a proposito: duplicacion en gen_plano.py/gen_backs.py (generadores SVG comerciales RD, riesgo de regresion visual, necesita verificacion propia con diff de outputs). compileall+pytest+health verde.",
-    "Higiene de repo ronda 1 (2026-07-03, Vibo): docs/REPO_MAP.md corregido (v0.34.10 -> v0.48.5, ya no contradice AGENTS.md sobre el punto de entrada); AGENT_GUIDE.md y AGENT_OPERATING_MANUAL.md marcados OBSOLETO; docs/HIGIENE_REPO.md version bump; 2 HANDOFF_2026-07-02_*.md duplicados eliminados de raiz (ya vivian completos en docs/handoffs/); 34 scripts legacy huerfanos archivados a _archive/legacy_20260703_1413/ via cleanup_legacy_aggressive.sh (corregido: ya NO incluye piezas_generar.py/piezas_check_outputs.py/flyer_create_project.py, que siguen vivos en CI/Makefile). compileall + pytest verificados en verde.",
-    "Adobe toolkit (2026-07-03, Vibo) bajo tools/: 6 scripts .jsx + panel CEP (addon) para AI/PS/AE. AI: titles_to_photos (bloque de texto -> PNG/JPG por linea), logo_revector_extrude (JPEG -> trazado + extrusion 3D vectorial -> SVG/EPS/PDF+PNG), logo_revector_batch (carpeta entera). PS: layers_to_photos (capa -> PNG transparente). AE: titles_to_comps (una comp por titulo) y auto_titles_mixer_ae (comp por titulo con ecualizador Audio Spectrum + titulo que late al volumen via Convert Audio to Keyframes; match names/indices para ES o EN). Panel tools/adobe_panel/ (CEP + CSInterface minimo + main.js dispatcher + build_zxp.ps1). Docs tools/ADOBE_TOOLKIT.md y tools/adobe_panel/README.md. No toca src/flujo. Auto-checkpoint commiteo a main (257157a); falta git push.",
-    "La Gota v2: fisica de superficie + tinta con campo de flujo + color evolutivo + audio + modo instalacion + lienzo de la noche (PNG descargable)",
-    "Idea original: SEMAFORO RD (testeo en vivo en pantallas via Resolume) - proposals/IDEA_SEMAFORO_RD_TESTEO_VIVO.md con piloto minimo",
-    "Vitrina: publicar-catalogo.yml (GitHub Pages auto-deploy del catalogo) + proposals/VISION_FABRICA_AUTONOMA.md",
-    "Workflow claude.yml: @claude en issues -> Vibo trabaja en runner de GitHub y abre PR validado (activacion pendiente: app + API key)",
-    "Automatizacion: workflow validar-piezas.yml (molde CI) + docs/AUTOMATIZACION_FLUJO.md (roadmap 4 fases para trabajo sin PC)",
-    "Vectorizados (curvas DejaVu via fontTools): 12 archivos (dark 06_dark_vectorizado_svg + crema 09/10) y galeria preview_flyers_dark.html",
-    "Linea dark completa: 8 frentes en svg/suplementos_rd/05_dark_neon/ (gen_dark_fronts.py, cajas dinamicas centradas, validate 8/8 OK)",
-    "Variantes dark/neon (paleta rave v4.1) de flyers (11/12), cotizacion y plano + logo RD real extraido a assets/logo/RD_logo_A_transparente.png",
-    "Cotizacion general eventos (agencia marketing): datadrops/cotizacion_general_eventos/ con md, html membretado, plano con simbologia PlanoTool y rider checklist 17 items. Tarifas jefe: 250k/300k(6vol)/500k(15vol) con desglose",
-    "Flyers suplementos: reversos QR 09_post_fiesta y 10_linea en 02_editables_svg (crema, contenido maestro, QR a reduciendodano.cl, validate 10/10 OK); reemplazan BACK.SUPLEMENTOS fallido",
-    "Identidad del asistente: nombre 'Vibo' definido en CLAUDE.md (raiz) y AGENTS.md (docs-only)",
-    "Resolume/Chataigne automator: XML pre-flight, CSV OSC, README, experimental .noisette (unverified)"
+    "AI Operating Layer v1: docs/AI_OPERATING_LAYER.md, docs/AI_PROVIDER_ROUTING.md, docs/AIDER_API_SETUP.md, docs/TASK_PROMPTS.md, .aider.conf.example.yml, .env.example; contexto_repo.py con subcomandos map/task; LAST_HANDOFF y SESSION_STATE al dia; identidad unificada a Cauce.",
+    "Piezas SVG editables en Illustrator (rama feat/piezas-svg-editables-illustrator, en origin): fuente Arial, logo RD vectorial inline, titulo centrado, parrafos/items como bloque (tspan). Flyers dark + brief packs eventos (svg/eventos_rd). Skill taller-svg-rd. Controles fuente/Black/alinear-margen en el hub.",
+    "Prior: asistente de voz CODE/VIBO/REDU (tools/vibo_voz, seguridad cerrada), Adobe toolkit (tools/), higiene de repo 2 rondas, linea dark suplementos + vectorizados, cotizacion general eventos, workflows CI/vitrina. Detalle en docs/handoffs/ y version.py."
   ],
   "doing": [
-    "Adobe toolkit commiteado localmente por auto-checkpoint (arbol limpio); falta git push a origin (ligereza/vibecodeine)",
-    "Verificar los .jsx en Illustrator/Photoshop/After Effects del usuario (regla de oro)"
+    "AI Operating Layer v1 recien creado; falta que el usuario pruebe Aider real con los perfiles."
   ],
   "next": [
-    "git push del toolkit Adobe a origin (el usuario dijo 'lo subo')",
-    "Verificar los scripts Adobe en las apps del usuario (batch trace con 2-3 JPEG reales; nombre del comando Convert Audio to Keyframes en el AE del usuario; .zxp opcional via build_zxp.ps1 + ZXPSignCmd)",
-    "Pedir al usuario un .noisette real exportado de Chataigne 1.10.3 y guardarlo en tests/fixtures/ antes de tocar build_chataigne_noisette_experimental de nuevo",
-    "Actualizar context/LAST_HANDOFF.md y context/SESSION_STATE.json al cerrar cada sesion (version real + done/doing/next/blockers)"
+    "Mergear rama feat/piezas-svg-editables-illustrator a main via PR (guardrail bloqueo push directo).",
+    "Copiar .aider.conf.example.yml -> .aider.conf.yml y .env.example -> .env; probar perfiles Claude+Qwen / NIM / OpenRouter.",
+    "Verificar Adobe .jsx en las apps del usuario.",
+    "Logo RD color vectorial (lo prepara el usuario) -> variante dark 'color'."
   ],
   "blockers": [
-    "build_chataigne_noisette_experimental: reescrito 4 veces (v0.48.2 a v0.48.5) especulando el schema .noisette, nunca validado contra un archivo real. No reescribir de nuevo sin fixture real.",
-    "Push GitHub: esta sesion local (usuario LIGEREZA, dueno de origin) SI puede pushear; sesiones remotas cloud previas eran read-only (403) y se entregaban por airdrop ZIP",
-    "Material nuevo del chat de diseno no llego al repo ni a Adobe CC; falta que el usuario indique donde esta"
+    "Cuota Claude casi agotada: reservar Claude para arquitectura/revision, hacer lo barato con Qwen/NIM/OpenRouter.",
+    "build_chataigne_noisette_experimental sin .noisette real para validar; no adivinar el schema, pedir el archivo.",
+    "Push a main bloqueado por guardrail (requiere PR o autorizacion explicita)."
   ],
-  "resume_commands": [
-    "git push origin main",
-    "ver tools/ADOBE_TOOLKIT.md para los scripts .jsx de Adobe (File > Scripts)",
-    "py -m flujo verify",
-    "py -m flujo app"
-  ]
+  "ai_stack": {
+    "architect_reviewer": "Claude Code / Opus 4.8 (ANTHROPIC_API_KEY)",
+    "orchestrator": "Aider (API) - .aider.conf.yml",
+    "cheap_editor": "Qwen API (DASHSCOPE_API_KEY / QWEN_API_KEY)",
+    "alt_provider": "NVIDIA NIM (NVIDIA_API_KEY) - Qwen/DeepSeek/Nemotron baratos",
+    "router_fallback": "OpenRouter (OPENROUTER_API_KEY)",
+    "external_support": "Copilot / LMArena (apoyo externo, NO fuente de verdad del repo)"
+  }
 }
