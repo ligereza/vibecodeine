@@ -4,7 +4,7 @@
   </a>
 </p>
 
-<details>
+<!--
 
 
 # flujo - operational agent workspace
@@ -285,4 +285,4 @@ Reporte Formal de Verificacion y Tolerancia Cero a Errores
 ## License
 
 MIT
-</details>
+-->
