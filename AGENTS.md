@@ -10,6 +10,8 @@ Este archivo es la entrada obligatoria para cualquier agente. El objetivo no es 
 4. `docs/REPO_MAP.md`
 5. Archivo especifico de la tarea
 
+Trabajo multi-agente / API-only (Aider, Qwen, NVIDIA NIM, OpenRouter) y ahorro de contexto: ver `docs/AI_OPERATING_LAYER.md` + `docs/AI_PROVIDER_ROUTING.md` (setup: `docs/AIDER_API_SETUP.md`, prompts: `docs/TASK_PROMPTS.md`).
+
 Si hay contradiccion, manda este orden:
 
 1. Instruccion directa del usuario

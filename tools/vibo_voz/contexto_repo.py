@@ -69,7 +69,7 @@ def _clave():
         print("  (ninguno)")
 
 
-def main():
+def _map():
     print(f"# CONTEXTO DEL REPO: {_REPO}\n# (digest mecanico, 0 tokens)\n")
     _arbol()
     _clave()
@@ -79,6 +79,58 @@ def main():
     print("\n== COMO USAR ESTE MAPA ==")
     print("  Pasaselo a un agente como 'contexto' o leelo en vez de explorar.")
     print("  Para el detalle de un archivo puntual: leelo directo (barato).")
+
+
+# tarea -> rutas recomendadas (fuentes de verdad a leer + rutas gordas a derivar)
+_TASK_ROUTES = [
+    (("web", "hub", "react", "vite", "visualizer", "studio", "svg studio"),
+     ["web/src/components/", "web/src/App.tsx", "context/flujo_hub.html (generado)"]),
+    (("cli", "comando", "command", "typer"),
+     ["src/flujo/cli.py", "docs/CLI.md"]),
+    (("flyer", "suplemento", "dark", "vectoriz", "logo", "pieza", "brief", "packs", "svg"),
+     [".claude/skills/entregas-rd/", ".claude/skills/taller-svg-rd/SKILL.md",
+      "assets/logo/", "svg/suplementos_rd/ (derivar: muchos SVG)"]),
+    (("voz", "gemini", "agente", "handoff", "contexto"),
+     ["tools/vibo_voz/", "docs/AI_PROVIDER_ROUTING.md", "docs/AI_OPERATING_LAYER.md"]),
+    (("resolume", "chataigne", "noisette"),
+     ["src/flujo/resolume/automator.py",
+      "BLOQUEADOR: sin .noisette real; no adivinar el schema (ver LAST_HANDOFF)"]),
+    (("airdrop", "entrega", "release"),
+     ["docs/AGENT_AIRDROP_PROTOCOL.md", "scripts/validate_airdrop.py"]),
+    (("test", "pytest"),
+     ["tests/", "docs/AI_OPERATING_LAYER.md"]),
+]
+
+
+def _task(keywords: str):
+    kw = keywords.lower()
+    print(f"# CONTEXTO PARA LA TAREA: {keywords}\n")
+    print("== LEER PRIMERO (fuente de verdad, barato) ==")
+    for r in ("AGENTS.md", "context/LAST_HANDOFF.md",
+              "docs/AI_PROVIDER_ROUTING.md", "docs/REPO_MAP.md"):
+        print(f"  {r}")
+    hits = [routes for keys, routes in _TASK_ROUTES if any(k in kw for k in keys)]
+    print("\n== RUTAS RELEVANTES A LA TAREA ==")
+    if hits:
+        for routes in hits:
+            for r in routes:
+                print(f"  {r}")
+    else:
+        print("  (sin match; corre 'map' y elige a mano)")
+    print("\n== COMO USARLO (bajo consumo) ==")
+    print("  1. Lee tu las fuentes de verdad de arriba (poco volumen, critico).")
+    print("  2. Rutas gordas -> derivar a un modelo barato (Qwen/NIM) o pedir_a_gemini.py.")
+    print("  3. Da a Aider SOLO los archivos de la tarea. Ver docs/AIDER_API_SETUP.md.")
+
+
+def main():
+    import sys
+    args = sys.argv[1:]
+    cmd = args[0] if args else "map"
+    if cmd == "task":
+        _task(" ".join(args[1:]) or "(sin keywords)")
+    else:  # 'map' o sin args (retrocompatible)
+        _map()
 
 
 if __name__ == "__main__":
