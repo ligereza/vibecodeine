@@ -56,6 +56,19 @@ function findByName(name){
   return hits;
 }
 
+// target por NOMBRE (o.target) o por CONTENIDO actual (o.find = subcadena).
+// 'find' sirve cuando muchos frames comparten capa/nombre (ej. plantilla "CAMBIOS").
+function findTargets(o){
+  if (o.find != null){
+    var d=app.activeDocument, hits=[], q=String(o.find).replace(/[\r\n]+/g,"\n");
+    for (var i=0;i<d.textFrames.length;i++){
+      if (String(d.textFrames[i].contents).replace(/[\r\n]+/g,"\n").indexOf(q) >= 0) hits.push(d.textFrames[i]);
+    }
+    return hits;
+  }
+  return findByName(o.target);
+}
+
 function doApply(){
   var f=new File(IO.fsName+"/ops.json");
   if(!f.exists){ alert("No existe:\n"+f.fsName); return; }
@@ -76,7 +89,7 @@ function doApply(){
       } catch(e){}
       continue;
     }
-    var tfs=findByName(o.target);
+    var tfs=findTargets(o);
     if(!tfs.length){ miss++; continue; }
     for (var j=0;j<tfs.length;j++){
       var t=tfs[j], ca=t.textRange.characterAttributes;
