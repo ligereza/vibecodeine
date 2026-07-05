@@ -62,3 +62,37 @@ R = Round, tratar seleccion como curva/redonda
 ## Estado
 
 Proyecto experimental. No es herramienta final.
+
+---
+
+# Puente JSON agente <-> Adobe (Illustrator / Photoshop / After Effects)
+
+Cierra la comunicacion agente-sin-contexto <-> app de Adobe SIN pasar el archivo nativo
+ni el SVG completo: la app exporta su estado a JSON, el agente devuelve un JSON de ops.
+
+## Loop
+```
+App --(export)--> ~/Desktop/ai_illustrator/state.json --> agente lee (texto/pos/estilo)
+agente --> ~/Desktop/ai_illustrator/ops.json --(apply)--> App aplica
+```
+
+## Scripts
+| Archivo | App | Ops |
+|---|---|---|
+| `ai_illustrator_bridge.jsx` | Illustrator | setText, setSize, setFill, setFont, move, addText |
+| `ai_photoshop_bridge.jsx` | Photoshop | setText, setSize, setFill |
+| `ai_ae_bridge.jsx` | After Effects | setText, setSize |
+| `ai_export_svg_png.jsx` | Illustrator | exporta el doc activo a SVG + PNG (para el LLM) |
+
+Contrato de `ops.json`: ver `ai_illustrator_ops.example.json`.
+
+## Uso
+1. App: Archivo > Secuencias de comandos > Otra secuencia... > el `.jsx` con `MODE="export"`.
+2. Pasa `state.json` al agente; devuelve `ops.json`.
+3. `MODE="apply"`, corre de nuevo -> la app aplica.
+
+## Notas
+- Targetea por NOMBRE de capa/frame -> nombra las capas (no "Layer 1").
+- Parsea JSON con `eval` (ExtendScript no trae `JSON.parse`); solo archivos locales tuyos.
+- No probados en las apps reales: validada la logica, no el import. Si un op falla, sigue con
+  los demas y reporta cuantos targets no encontro.
