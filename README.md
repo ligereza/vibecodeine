@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/ligereza/vibecodeine/">
-    <img src="arte-ascii-readme.svg" alt="Vaso Mágico animado" width="600">
+    <img src="arte-ascii-readme.svg" alt="Vaso Mágico animado" width="756">
   </a>
 </p>
 
