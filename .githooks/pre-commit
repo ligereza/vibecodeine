@@ -1,0 +1,25 @@
+#!/bin/sh
+# Pre-commit RD: bloquea SVG con problemas antes de commitear.
+# Habilitar una vez:  git config core.hooksPath .githooks
+# Saltar en un commit puntual:  git commit --no-verify
+
+staged=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.svg$' | grep -vE '_airdrop|03_final_vectorizado')
+[ -z "$staged" ] && exit 0
+
+fail=0
+for f in $staged; do
+  [ -f "$f" ] || continue
+  if grep -q "DejaVu" "$f" 2>/dev/null; then
+    echo "BLOQUEADO  $f : usa fuente DejaVu (Illustrator no la tiene). Cambia a Arial."
+    fail=1
+  fi
+  if grep -q "data:image/png;base64" "$f" 2>/dev/null && echo "$f" | grep -qv vectorizado; then
+    echo "AVISO      $f : imagen raster embebida (logo?). Preferir vector inline."
+  fi
+done
+
+if [ "$fail" = 1 ]; then
+  echo "Corrige (o 'git commit --no-verify' para saltar el chequeo)."
+  exit 1
+fi
+exit 0
