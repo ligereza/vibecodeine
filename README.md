@@ -1,5 +1,11 @@
 # flujo - operational agent workspace
 
+<p align="center">
+  <a href="https://github.com/ligereza/vibecodeine/">
+    <img src="arte-ascii-readme.svg" alt="Vaso Mágico animado" width="600">
+  </a>
+</p>
+
 `flujo` is a local-first workspace for requests, jobs, briefs, design operations, RD/suplementos work, Studio/eventos work, web hub, and agent-delivered patches.
 
 This repository is optimized for agent continuity. The goal is operational clarity: read the handoff, make a minimal complete change, verify, and deliver through `_airdrop/` if there is no push access.
