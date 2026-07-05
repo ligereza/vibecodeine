@@ -5,7 +5,7 @@
 </p>
 
 <details>
-<summary>👁️ <b>Ver manual operativo (Para Agentes y Humanos curiosos)</b></summary>
+
 
 # flujo - operational agent workspace
 
