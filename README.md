@@ -1,10 +1,13 @@
-# flujo - operational agent workspace
-
 <p align="center">
   <a href="https://github.com/ligereza/vibecodeine/">
     <img src="arte-ascii-readme.svg" alt="Vaso Mágico animado" width="600">
   </a>
 </p>
+
+<details>
+<summary>👁️ <b>Ver manual operativo (Para Agentes y Humanos curiosos)</b></summary>
+
+# flujo - operational agent workspace
 
 `flujo` is a local-first workspace for requests, jobs, briefs, design operations, RD/suplementos work, Studio/eventos work, web hub, and agent-delivered patches.
 
