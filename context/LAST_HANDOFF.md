@@ -24,12 +24,17 @@ por COM (win32com DoJavaScript) sin compartir pantalla.
   centrado, parrafos como bloque (tspan). Flyers dark + brief packs eventos (svg/eventos_rd).
 
 == PENDIENTE ==
-- [HECHO 2026-07-06] Alineacion de las 8 contraportadas. Bug de raiz: gen_contraportadas.py
+- [HECHO 2026-07-06] Alineacion/tipografia de las 8 contraportadas. Bug de raiz: gen_contraportadas.py
   STRIP borraba "Capa_28" (que envuelve cajas_editables8 = las 3 cajas del diseno) y "Layer_18"
   (el logo/marca (R)), creyendo que eran texto viejo. La plantilla CAMBIOS no tiene texto viejo
-  (solo el (R) del logo). Ahora STRIP=[] (conserva cajas+logo) y el texto se calibra dentro de
-  las cajas reales (Descripcion 618..1418, Nutrientes 1478..2178) con auto-ajuste de escala para
-  contenido denso (ej. 01_linea, 7 productos). Verificado renderizando a PNG (Chromium).
+  (solo el (R) del logo). Ahora STRIP=[] (conserva cajas+logo). Layout nuevo (a pedido del usuario):
+  sin kicker "PRODUCTO"/"LINEA"; titulo alineado a la IZQUIERDA dentro del ovalo de cabecera
+  (x 168..700, y~356), auto-ajustado a 1-2 lineas al mayor tamano legible que quepa; bloques
+  Descripcion y Nutrientes ("Productos" en 01_linea) alineados a la izquierda, ocupando su caja
+  (Descripcion 618..1418, Nutrientes 1478..2178), centrados verticalmente y con el cuerpo de la
+  Descripcion JUSTIFICADO a lo ancho (via textLength/lengthAdjust). El cuerpo elige la mayor fuente
+  legible (46..22px) que quepa en la caja, bajando solo si el contenido es denso (ej. 01_linea con
+  7 productos). Logo intacto (el usuario lo dio por bueno). Verificado renderizando las 8 a PNG (Chromium).
 - Logo color vectorial (assets/logo/RD_logo_vector_color.svg, lo prepara el usuario) -> cambiar la
   variante dark de 'blanco' a 'color' en los generadores.
 - Probar Aider real con los perfiles (.aider.conf: Claude+Qwen / NIM / OpenRouter).  [pospuesto]
