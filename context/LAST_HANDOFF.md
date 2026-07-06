@@ -1,44 +1,42 @@
-Date: 2026-07-04
+Date: 2026-07-05
 Version: 0.48.5 (matches pyproject.toml / src/flujo/version.py)
 Assistant: Cauce (formerly Vibo)
+Repo: origin/main = 237114b (todo mergeado; sin ramas abiertas)
 
 == ESTADO ACTUAL ==
-Foco: AI Operating Layer v1 -- dejar el repo listo para trabajo multi-agente API-only
-y bajo consumo de contexto. Claude Opus 4.8 como arquitecto/revisor final; Qwen / NVIDIA
-NIM / OpenRouter (via Aider) como editores baratos. Repo estable; sin cambios en
-src/flujo ni web/ en esta pasada (solo docs + config + tools/contexto_repo.py).
+Todo el trabajo de la sesion esta en main. Foco reciente: contraportadas de suplementos con
+la plantilla nueva (capa CAMBIOS del .ai) via generador de repo, y el puente agente<->Illustrator
+por COM (win32com DoJavaScript) sin compartir pantalla.
 
 == LISTO ==
-- AI Operating Layer v1: docs/AI_OPERATING_LAYER.md, docs/AI_PROVIDER_ROUTING.md,
-  docs/AIDER_API_SETUP.md, docs/TASK_PROMPTS.md, .aider.conf.example.yml, .env.example.
-  tools/vibo_voz/contexto_repo.py con subcomandos (map / task). Handoff + SESSION_STATE al dia.
-- Piezas SVG editables en Illustrator (rama feat/piezas-svg-editables-illustrator, pusheada
-  a origin): fuente Arial (Illustrator no tiene DejaVu), logo RD vectorial inline (crisp,
-  sin raster roto), titulo centrado, parrafos/items como bloque (tspan). Flyers dark (8+2) +
-  brief packs eventos (svg/eventos_rd). Skill nueva taller-svg-rd. Controles de fuente/peso
-  Black/alinear-margen en el hub web.
-- Prior (detalle en docs/handoffs/ y src/flujo/version.py get_changelog): asistente de voz
-  CODE/VIBO/REDU (tools/vibo_voz, seguridad cerrada), Adobe toolkit (tools/), higiene de repo
-  2 rondas, linea dark suplementos + vectorizados, cotizacion general eventos, workflows CI/vitrina.
+- Contraportadas dark de los 8 suplementos: gen_contraportadas.py rellena la plantilla
+  svg/suplementos_rd/_plantilla/contraportada_cambios.svg (exportada de la capa CAMBIOS) con el
+  contenido del JSON maestro; salida svg/suplementos_rd/09_contraportadas_dark/*.svg. Reproducible
+  via repo (no toca el .ai del usuario).
+- Puente agente<->Illustrator (tools/illustrator/ai_illustrator_bridge.jsx): export doc->state.json,
+  apply ops.json (setText/setSize/setFill/setFont/move/addText; target por nombre o 'find' por
+  contenido). PROBADO end-to-end en Illustrator real via COM (no destructivo).
+- AI Operating Layer v1: docs/AI_OPERATING_LAYER, AI_PROVIDER_ROUTING, AIDER_API_SETUP, TASK_PROMPTS;
+  .aider.conf.example.yml, .env.example; contexto_repo.py task; skill taller-svg-rd.
+- Toolbox: tools/context_pack, token_budget, handoff, verify_all; tools/svg/{svg_lint,svg_to_pdf,
+  recolor_svg,pack_delivery}; .githooks/pre-commit; bridges PS/AE (sin probar en app).
+- Piezas SVG editables en Illustrator: fuente Arial (no DejaVu), logo RD vectorial inline, titulo
+  centrado, parrafos como bloque (tspan). Flyers dark + brief packs eventos (svg/eventos_rd).
 
 == PENDIENTE ==
-- Mergear rama feat/piezas-svg-editables-illustrator a main (por PR):
-  https://github.com/ligereza/vibecodeine/pull/new/feat/piezas-svg-editables-illustrator
-  El guardrail bloqueo el push directo a main; main sigue en 1a7e551.
-- Probar Aider real con los perfiles de .aider.conf.example.yml (Claude+Qwen / NIM / OpenRouter).
-- Verificar Adobe .jsx en las apps del usuario (Illustrator/PS/AE).
-- Logo RD color vectorial (lo prepara el usuario) -> cambiar variante dark de 'blanco' a 'color'.
+- Afinar alineacion de las 8 contraportadas vs la plantilla real (posiciones de texto calibradas).
+- Logo color vectorial (assets/logo/RD_logo_vector_color.svg, lo prepara el usuario) -> cambiar la
+  variante dark de 'blanco' a 'color' en los generadores.
+- Probar Aider real con los perfiles (.aider.conf: Claude+Qwen / NIM / OpenRouter).  [pospuesto]
+- Bridges Photoshop/After Effects sin probar en las apps reales.  [pospuesto]
 
 == BLOQUEADORES ==
-- Cuota: Claude API / plan del usuario casi agotados. Reservar Claude para arquitectura y
-  revision final; hacer lo barato con Qwen/NIM/OpenRouter (ver docs/AI_PROVIDER_ROUTING.md).
-- build_chataigne_noisette_experimental: sin .noisette real para validar. No adivinar el
-  schema de nuevo; pedir el archivo exportado de Chataigne 1.10.3 y guardarlo en tests/.
-- Push a main bloqueado por guardrail (requiere PR o autorizacion explicita del usuario).
+- Cuota Claude casi agotada: reservar Claude para arquitectura/review; lo barato a Qwen/NIM/OpenRouter.
+- build_chataigne_noisette_experimental: falta el .noisette real para validar el schema.
+- Push directo a main a veces bloqueado por guardrail: usar PR o reintentar tras fetch. Si GitHub
+  falla, entregar airdrop.zip.
 
 == PROXIMO PASO RECOMENDADO ==
-1. Mergear la rama a main via PR (link arriba).
-2. Configurar Aider: copiar .aider.conf.example.yml -> .aider.conf.yml y .env.example -> .env
-   (claves reales por env var, nunca en el repo).
-3. Delegar con docs/TASK_PROMPTS.md: Qwen mastica contexto -> Claude valida el plan ->
-   Aider implementa -> Claude revisa el diff -> cerrar handoff.
+Cuando haya logo color vectorial: apuntar la variante dark a 'color' y regenerar. Para editar la
+plantilla CAMBIOS: bridge por COM (find contenido -> content nuevo) o re-exportar y correr
+gen_contraportadas.py.
