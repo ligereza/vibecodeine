@@ -27,6 +27,9 @@ PID_ACCENT={"04_pre_fiesta":"#C800C8"}
 KICK_Y, TITLE_Y = 300, 403
 DESC_TITLE_Y, ITEMS_TITLE_Y = 603, 1205
 DESC_WRAP, ITEM_WRAP = 60, 72
+# Altura de linea y separacion entre parrafos/items (px), calibradas a los font-size.
+DESC_LH, PARA_GAP = 54, 26      # descripcion: font 44
+ITEM_LH, ITEM_GAP = 44, 20      # nutrientes:  font 34
 
 esc = lambda s: str(s).replace("&","&amp;").replace("<","&lt;").replace(">","&gt;")
 
@@ -55,17 +58,43 @@ def content_group(fl):
     G.append(T(1000, KICK_Y, "LÍNEA" if gen else "PRODUCTO", 27, AMARILLO, 700, "middle"))
     G.append(T(1004, TITLE_Y, title, ts, acc, 700, "middle"))
     G.append(T(1000, TITLE_Y, title, ts, BLANCO, 700, "middle"))
-    # Descripcion = UN bloque; UN tspan por parrafo (parrafo completo, sin cortar lineas)
+    # Descripcion = UN bloque <text> editable; cada parrafo se ENVUELVE a DESC_WRAP
+    # (una tspan por linea visible) para que no se salga del margen. Los parrafos van
+    # separados por un dy extra. Sigue siendo un solo objeto de texto en Illustrator.
     y = DESC_TITLE_Y; G.append(T(185, y, "Descripción", 48, AMARILLO, 700)); y += 72
-    dts = [f'<tspan x="185" dy="{0 if i==0 else 90}">{esc(p)}</tspan>' for i, p in enumerate(fl.get("description", []))]
+    dts = []; first = True
+    for p in fl.get("description", []):
+        for k, ln in enumerate(textwrap.wrap(str(p), DESC_WRAP) or [""]):
+            dy = 0 if first else (DESC_LH + PARA_GAP if k == 0 else DESC_LH)
+            dts.append(f'<tspan x="185" dy="{dy}">{esc(ln)}</tspan>'); first = False
     G.append(f'<text x="185" y="{y}" fill="{BLANCO}" font-family="{FONT}" font-size="44" font-weight="400">{"".join(dts)}</text>')
     # Nutrientes = UN bloque; UN tspan por item (proteina usa versions/usage si no hay items)
-    items = list(fl.get("items", []))
+    items = list(fl.get("items") or [])
     if not items:
-        for e in (fl.get("versions") or []) + (fl.get("usage") or []):
-            items.append((e.get("title","")+": "+e.get("desc", e.get("text",""))).strip(": ") if isinstance(e, dict) else str(e))
+        # Proteina (y afines) no traen 'items': arman los nutrientes desde 'versions'
+        # (lista de {title, body}) y 'usage' (str o lista). Normalizar ambos a texto.
+        for e in (fl.get("versions") or []):
+            if isinstance(e, dict):
+                body = e.get("body") or e.get("desc") or e.get("text") or ""
+                items.append((e.get("title", "") + ": " + body).strip(": "))
+            else:
+                items.append(str(e))
+        usage = fl.get("usage")
+        if usage:
+            items += [u if isinstance(u, str) else str(u) for u in (usage if isinstance(usage, list) else [usage])]
+    # Nutrientes = UN bloque <text>; cada item se ENVUELVE a ITEM_WRAP. La 1a linea
+    # lleva el bullet de color; las lineas de continuacion sangran (x=232) para alinear
+    # bajo el texto, no bajo el bullet.
     y = ITEMS_TITLE_Y; G.append(T(185, y, fl.get("section_title") or "Nutrientes", 48, AMARILLO, 700)); y += 60
-    its = [f'<tspan x="185" dy="{0 if i==0 else 60}"><tspan fill="{acc}" font-weight="700">•</tspan>  {esc(it)}</tspan>' for i, it in enumerate(items)]
+    its = []; first = True
+    for it in items:
+        for k, ln in enumerate(textwrap.wrap(str(it), ITEM_WRAP) or [""]):
+            dy = 0 if first else (ITEM_LH + ITEM_GAP if k == 0 else ITEM_LH)
+            if k == 0:
+                its.append(f'<tspan x="185" dy="{dy}"><tspan fill="{acc}" font-weight="700">•</tspan>  {esc(ln)}</tspan>')
+            else:
+                its.append(f'<tspan x="232" dy="{dy}">{esc(ln)}</tspan>')
+            first = False
     G.append(f'<text x="185" y="{y}" fill="{BLANCO}" font-family="{FONT}" font-size="34" font-weight="400">{"".join(its)}</text>')
     G.append('</g>')
     return "\n".join(G)

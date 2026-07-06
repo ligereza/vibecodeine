@@ -88,7 +88,8 @@ def text_to_path(s, x, y, size, weight, anchor):
     return pen.getCommands()
 
 
-TEXT_RE = re.compile(r'<text([^>]*)>([^<]*)</text>')
+# <text>...</text> con hijos permitidos (.*? no-greedy: text no anida text).
+BLOCK_RE = re.compile(r'<text\b([^>]*)>(.*?)</text>', re.S)
 ATTR_RE = re.compile(r'([\w:-]+)="([^"]*)"')
 UNESC = {"&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": '"', "&#39;": "'"}
 
@@ -99,26 +100,106 @@ def unescape(s):
     return s
 
 
+def _num(v, default=0.0):
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return default
+
+
+def _path(s, x, y, size, weight, fill, anchor=""):
+    """text_to_path envuelto: devuelve el <path> (o '' si el texto es vacio)."""
+    s = s.replace("\n", " ")
+    if not s.strip():
+        return ""
+    d = text_to_path(s, x, y, size, weight, anchor)
+    return f'<path d="{d}" fill="{fill}"/>' if d else ""
+
+
+def _tokenize(s):
+    """Tokeniza el contenido de un <text>/<tspan> en nodos de PRIMER nivel, en orden:
+    ('text', str) o ('tspan', attrs_str, body_str). Respeta anidamiento (regex no
+    puede: el </tspan> mas cercano cierra el hijo, no el padre)."""
+    toks = []; i = 0; n = len(s)
+    while i < n:
+        j = s.find("<tspan", i)
+        if j < 0:
+            toks.append(("text", s[i:])); break
+        if j > i:
+            toks.append(("text", s[i:j]))
+        gt = s.find(">", j)
+        attrs = s[j + 6:gt]
+        depth = 1; k = gt + 1; close = n
+        while k < n:
+            no = s.find("<tspan", k); nc = s.find("</tspan>", k)
+            if nc < 0:
+                break
+            if no != -1 and no < nc:
+                depth += 1; k = no + 6
+            else:
+                depth -= 1; k = nc + 8
+                if depth == 0:
+                    close = nc; break
+        toks.append(("tspan", attrs, s[gt + 1:close]))
+        i = close + 8
+    return toks
+
+
+def _vectorize_tspan_block(base, inner):
+    """Un <text> con hijos <tspan> (bloque envuelto: descripcion/nutrientes).
+    Cada tspan de primer nivel es una LINEA (x reinicia el margen, dy avanza la y).
+    Dentro de una linea puede haber tspans anidados (p.ej. el bullet de color) mas
+    texto suelto: se colocan en secuencia avanzando un cursor horizontal."""
+    bx = _num(base.get("x", "0")); by = _num(base.get("y", "0"))
+    bsize = _num(base.get("font-size", "16")); bweight = base.get("font-weight", "400")
+    bfill = base.get("fill", "#000")
+    cx, cy = bx, by
+    out = []
+    for tok in _tokenize(inner):
+        if tok[0] != "tspan":
+            continue  # texto suelto de primer nivel (whitespace de indentacion): ignorar
+        la = dict(ATTR_RE.findall(tok[1]))
+        if "x" in la:
+            cx = _num(la["x"])
+        cy += _num(la.get("dy", "0"))
+        lfill = la.get("fill", bfill)
+        lweight = la.get("font-weight", bweight)
+        lsize = _num(la.get("font-size", bsize)) if la.get("font-size") else bsize
+        cursor = cx
+        for seg in _tokenize(tok[2]):  # inline: texto suelto y tspans anidados (bullet)
+            if seg[0] == "text":
+                txt = unescape(seg[1])
+                if txt.strip() or txt == "  ":  # conservar separacion tras el bullet
+                    out.append(_path(txt, cursor, cy, lsize, lweight, lfill))
+                    cursor += text_width(txt.replace("\n", " "), lsize, lweight)
+            else:
+                na = dict(ATTR_RE.findall(seg[1]))
+                ntext = unescape(seg[2])
+                nfill = na.get("fill", lfill)
+                nweight = na.get("font-weight", lweight)
+                nsize = _num(na.get("font-size", lsize)) if na.get("font-size") else lsize
+                out.append(_path(ntext, cursor, cy, nsize, nweight, nfill))
+                cursor += text_width(ntext.replace("\n", " "), nsize, nweight)
+    return "".join(p for p in out if p)
+
+
 def vectorize_file(src, dst):
     svg = open(src, encoding="utf-8").read()
 
     def repl(m):
         attrs = dict(ATTR_RE.findall(m.group(1)))
-        content = unescape(m.group(2))
-        if not content.strip():
-            return ""
-        d = text_to_path(
-            content,
-            attrs.get("x", "0"), attrs.get("y", "0"),
-            float(attrs.get("font-size", "16")),
-            attrs.get("font-weight", "400"),
-            attrs.get("text-anchor", ""),
-        )
-        if not d:
-            return ""
-        return f'<path d="{d}" fill="{attrs.get("fill", "#000")}"/>'
+        inner = m.group(2)
+        # El logo trae ® como <text class=... transform=...> sin font-size: dejarlo.
+        if "font-size" not in attrs:
+            return m.group(0)
+        if "<tspan" in inner:
+            return _vectorize_tspan_block(attrs, inner)
+        content = unescape(inner)
+        return _path(content, attrs.get("x", "0"), attrs.get("y", "0"),
+                     _num(attrs.get("font-size", "16")), attrs.get("font-weight", "400"),
+                     attrs.get("fill", "#000"), attrs.get("text-anchor", ""))
 
-    out = TEXT_RE.sub(repl, svg)
+    out = BLOCK_RE.sub(repl, svg)
     out = out.replace("/ editable dark-neon /", "/ vector dark-neon /")
     out = out.replace("/ editable /", "/ vector /")
     _left = out.count("<text")
