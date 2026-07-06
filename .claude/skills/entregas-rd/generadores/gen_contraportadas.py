@@ -57,16 +57,17 @@ def content_group(fl):
     G.append(T(1000, TITLE_Y, title, ts, BLANCO, 700, "middle"))
     y = DESC_TITLE_Y; G.append(T(185, y, "Descripción", 48, AMARILLO, 700)); y += 72
     for p in fl.get("description", []):
-        for ln in textwrap.wrap(p, DESC_WRAP): G.append(T(185, y, ln, 44, BLANCO)); y += 60
-        y += 26
+        lines = textwrap.wrap(p, DESC_WRAP) or [""]
+        ts = "".join(f'<tspan x="185" dy="{0 if i==0 else 60}">{esc(ln)}</tspan>' for i, ln in enumerate(lines))
+        G.append(f'<text x="185" y="{y}" fill="{BLANCO}" font-family="{FONT}" font-size="44" font-weight="400">{ts}</text>')
+        y += 60 * len(lines) + 26   # un <text> por parrafo (bloque editable, no lineas sueltas)
     y = ITEMS_TITLE_Y; G.append(T(185, y, fl.get("section_title") or "Nutrientes", 48, AMARILLO, 700)); y += 60
     for it in fl.get("items", []):
-        first = True
-        for ln in textwrap.wrap(it, ITEM_WRAP):
-            if first: G.append(T(185, y, "•", 34, acc, 700)); G.append(T(235, y, ln, 34, BLANCO)); first = False
-            else: G.append(T(235, y, ln, 34, BLANCO))
-            y += 46
-        y += 16
+        lines = textwrap.wrap(it, ITEM_WRAP) or [""]
+        G.append(T(185, y, "•", 34, acc, 700))
+        ts = "".join(f'<tspan x="235" dy="{0 if i==0 else 46}">{esc(ln)}</tspan>' for i, ln in enumerate(lines))
+        G.append(f'<text x="235" y="{y}" fill="{BLANCO}" font-family="{FONT}" font-size="34" font-weight="400">{ts}</text>')
+        y += 46 * len(lines) + 16   # un <text> por item (bloque editable)
     G.append('</g>')
     return "\n".join(G)
 
