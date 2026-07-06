@@ -15,7 +15,8 @@ Ejecutar desde la raiz del repo.
 import json, textwrap, os, pathlib
 
 TEMPLATE = "svg/suplementos_rd/_plantilla/contraportada_cambios.svg"
-JSON_SRC = "projects/piezas_vectoriales/suplementos_rd/01_contenido/contenido_suplementos_rd.json"
+# MASTER editable: edita el texto por parrafo aqui y vuelve a correr este script.
+JSON_SRC = "svg/suplementos_rd/_master_contraportadas.json"
 OUTDIR   = "svg/suplementos_rd/09_contraportadas_dark"
 STRIP    = ["Capa_28", "Layer_18"]   # grupos con el contenido viejo (texto outlined) a reemplazar
 
@@ -26,7 +27,7 @@ PID_ACCENT={"04_pre_fiesta":"#C800C8"}
 # posiciones de texto calibradas al diseño CAMBIOS (canvas 2000x2800)
 KICK_Y, TITLE_Y = 300, 403
 DESC_TITLE_Y, ITEMS_TITLE_Y = 603, 1205
-DESC_WRAP, ITEM_WRAP = 60, 72
+DESC_WRAP, ITEM_WRAP = 60, 72   # ancho de justificacion (chars); el master lo puede sobrescribir
 # Altura de linea y separacion entre parrafos/items (px), calibradas a los font-size.
 DESC_LH, PARA_GAP = 54, 26      # descripcion: font 44
 ITEM_LH, ITEM_GAP = 44, 20      # nutrientes:  font 34
@@ -100,9 +101,15 @@ def content_group(fl):
     return "\n".join(G)
 
 def main():
+    global DESC_WRAP, ITEM_WRAP
     tpl = pathlib.Path(TEMPLATE).read_text(encoding="utf-8", errors="replace")
     for gid in STRIP: tpl = rm_group(tpl, gid)
-    flyers = json.load(open(JSON_SRC, encoding="utf-8"))["flyers"]
+    data = json.load(open(JSON_SRC, encoding="utf-8"))
+    # El master puede fijar el ancho de justificacion (re-wrap) desde el JSON.
+    wrap = data.get("wrap") or {}
+    DESC_WRAP = int(wrap.get("desc_chars", DESC_WRAP))
+    ITEM_WRAP = int(wrap.get("item_chars", ITEM_WRAP))
+    flyers = data["flyers"]
     os.makedirs(OUTDIR, exist_ok=True)
     for fl in flyers:
         out = tpl.replace("</svg>", content_group(fl) + "\n</svg>")
