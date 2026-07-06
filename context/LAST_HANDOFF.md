@@ -1,4 +1,4 @@
-Date: 2026-07-05
+Date: 2026-07-06
 Version: 0.48.5 (matches pyproject.toml / src/flujo/version.py)
 Assistant: Cauce (formerly Vibo)
 Repo: origin/main = 237114b (todo mergeado; sin ramas abiertas)
@@ -24,7 +24,12 @@ por COM (win32com DoJavaScript) sin compartir pantalla.
   centrado, parrafos como bloque (tspan). Flyers dark + brief packs eventos (svg/eventos_rd).
 
 == PENDIENTE ==
-- Afinar alineacion de las 8 contraportadas vs la plantilla real (posiciones de texto calibradas).
+- [HECHO 2026-07-06] Alineacion de las 8 contraportadas. Bug de raiz: gen_contraportadas.py
+  STRIP borraba "Capa_28" (que envuelve cajas_editables8 = las 3 cajas del diseno) y "Layer_18"
+  (el logo/marca (R)), creyendo que eran texto viejo. La plantilla CAMBIOS no tiene texto viejo
+  (solo el (R) del logo). Ahora STRIP=[] (conserva cajas+logo) y el texto se calibra dentro de
+  las cajas reales (Descripcion 618..1418, Nutrientes 1478..2178) con auto-ajuste de escala para
+  contenido denso (ej. 01_linea, 7 productos). Verificado renderizando a PNG (Chromium).
 - Logo color vectorial (assets/logo/RD_logo_vector_color.svg, lo prepara el usuario) -> cambiar la
   variante dark de 'blanco' a 'color' en los generadores.
 - Probar Aider real con los perfiles (.aider.conf: Claude+Qwen / NIM / OpenRouter).  [pospuesto]

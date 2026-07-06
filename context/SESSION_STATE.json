@@ -1,10 +1,11 @@
 {
   "version": "0.48.5",
-  "date": "2026-07-05",
+  "date": "2026-07-06",
   "assistant_name": "Cauce",
   "repo_main": "237114b",
   "current_focus": "Contraportadas de suplementos con la plantilla nueva (capa CAMBIOS) via generador de repo + puente agente<->Illustrator por COM. Todo mergeado a main.",
   "done": [
+    "Alineacion de las 8 contraportadas corregida (2026-07-06): gen_contraportadas.py borraba por error las cajas del diseno (Capa_28 -> cajas_editables8) y el logo (Layer_18). Ahora STRIP=[] conserva cajas+logo y el texto se calibra dentro de las cajas reales con auto-ajuste; verificado con render PNG.",
     "Contraportadas dark de los 8 suplementos: gen_contraportadas.py rellena la plantilla svg/suplementos_rd/_plantilla/contraportada_cambios.svg con el JSON maestro; salida svg/suplementos_rd/09_contraportadas_dark/*.svg. Reproducible via repo.",
     "Puente agente<->Illustrator (ai_illustrator_bridge.jsx) probado end-to-end via win32com DoJavaScript, sin pantalla: export doc->state.json, apply ops.json (setText/find/addText...).",
     "AI Operating Layer v1 (docs + .aider.conf.example + .env.example + contexto_repo task + skill taller-svg-rd).",
@@ -15,7 +16,6 @@
     "Cierre de sesion; todo en main (237114b), working tree limpio, ramas borradas."
   ],
   "next": [
-    "Afinar alineacion de las 8 contraportadas vs la plantilla real.",
     "Logo color vectorial (assets/logo/RD_logo_vector_color.svg) -> variante dark 'color' en generadores.",
     "Probar Aider real con los perfiles (pospuesto).",
     "Probar bridges Photoshop/After Effects en las apps reales (pospuesto)."
