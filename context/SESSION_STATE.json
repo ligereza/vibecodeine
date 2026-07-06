@@ -1,33 +1,36 @@
 {
   "version": "0.48.5",
-  "date": "2026-07-04",
+  "date": "2026-07-05",
   "assistant_name": "Cauce",
-  "current_focus": "AI Operating Layer v1: repo listo para trabajo multi-agente API-only y bajo consumo de contexto (Claude arquitecto/revisor; Qwen/NIM/OpenRouter via Aider como editores baratos)",
+  "repo_main": "237114b",
+  "current_focus": "Contraportadas de suplementos con la plantilla nueva (capa CAMBIOS) via generador de repo + puente agente<->Illustrator por COM. Todo mergeado a main.",
   "done": [
-    "AI Operating Layer v1: docs/AI_OPERATING_LAYER.md, docs/AI_PROVIDER_ROUTING.md, docs/AIDER_API_SETUP.md, docs/TASK_PROMPTS.md, .aider.conf.example.yml, .env.example; contexto_repo.py con subcomandos map/task; LAST_HANDOFF y SESSION_STATE al dia; identidad unificada a Cauce.",
-    "Piezas SVG editables en Illustrator (rama feat/piezas-svg-editables-illustrator, en origin): fuente Arial, logo RD vectorial inline, titulo centrado, parrafos/items como bloque (tspan). Flyers dark + brief packs eventos (svg/eventos_rd). Skill taller-svg-rd. Controles fuente/Black/alinear-margen en el hub.",
-    "Prior: asistente de voz CODE/VIBO/REDU (tools/vibo_voz, seguridad cerrada), Adobe toolkit (tools/), higiene de repo 2 rondas, linea dark suplementos + vectorizados, cotizacion general eventos, workflows CI/vitrina. Detalle en docs/handoffs/ y version.py."
+    "Contraportadas dark de los 8 suplementos: gen_contraportadas.py rellena la plantilla svg/suplementos_rd/_plantilla/contraportada_cambios.svg con el JSON maestro; salida svg/suplementos_rd/09_contraportadas_dark/*.svg. Reproducible via repo.",
+    "Puente agente<->Illustrator (ai_illustrator_bridge.jsx) probado end-to-end via win32com DoJavaScript, sin pantalla: export doc->state.json, apply ops.json (setText/find/addText...).",
+    "AI Operating Layer v1 (docs + .aider.conf.example + .env.example + contexto_repo task + skill taller-svg-rd).",
+    "Toolbox tools/ + tools/svg/ (context_pack, token_budget, handoff, verify_all, svg_lint, svg_to_pdf, recolor_svg, pack_delivery) + .githooks/pre-commit.",
+    "Piezas SVG editables en Illustrator: Arial, logo vectorial inline, titulo centrado, parrafos como bloque (tspan). Flyers dark + brief packs eventos."
   ],
   "doing": [
-    "AI Operating Layer v1 recien creado; falta que el usuario pruebe Aider real con los perfiles."
+    "Cierre de sesion; todo en main (237114b), working tree limpio, ramas borradas."
   ],
   "next": [
-    "Mergear rama feat/piezas-svg-editables-illustrator a main via PR (guardrail bloqueo push directo).",
-    "Copiar .aider.conf.example.yml -> .aider.conf.yml y .env.example -> .env; probar perfiles Claude+Qwen / NIM / OpenRouter.",
-    "Verificar Adobe .jsx en las apps del usuario.",
-    "Logo RD color vectorial (lo prepara el usuario) -> variante dark 'color'."
+    "Afinar alineacion de las 8 contraportadas vs la plantilla real.",
+    "Logo color vectorial (assets/logo/RD_logo_vector_color.svg) -> variante dark 'color' en generadores.",
+    "Probar Aider real con los perfiles (pospuesto).",
+    "Probar bridges Photoshop/After Effects en las apps reales (pospuesto)."
   ],
   "blockers": [
-    "Cuota Claude casi agotada: reservar Claude para arquitectura/revision, hacer lo barato con Qwen/NIM/OpenRouter.",
-    "build_chataigne_noisette_experimental sin .noisette real para validar; no adivinar el schema, pedir el archivo.",
-    "Push a main bloqueado por guardrail (requiere PR o autorizacion explicita)."
+    "Cuota Claude casi agotada: reservar Claude para arquitectura/review; lo barato a Qwen/NIM/OpenRouter.",
+    "build_chataigne_noisette_experimental: falta el .noisette real.",
+    "Push directo a main a veces bloqueado por guardrail: PR o reintento tras fetch; si GitHub falla, airdrop.zip."
   ],
   "ai_stack": {
     "architect_reviewer": "Claude Code / Opus 4.8 (ANTHROPIC_API_KEY)",
     "orchestrator": "Aider (API) - .aider.conf.yml",
-    "cheap_editor": "Qwen API (DASHSCOPE_API_KEY / QWEN_API_KEY)",
-    "alt_provider": "NVIDIA NIM (NVIDIA_API_KEY) - Qwen/DeepSeek/Nemotron baratos",
+    "cheap_editor": "Qwen API (DASHSCOPE_API_KEY)",
+    "alt_provider": "NVIDIA NIM (NVIDIA_API_KEY)",
     "router_fallback": "OpenRouter (OPENROUTER_API_KEY)",
-    "external_support": "Copilot / LMArena (apoyo externo, NO fuente de verdad del repo)"
+    "external_support": "Copilot / LMArena (no fuente de verdad)"
   }
 }
