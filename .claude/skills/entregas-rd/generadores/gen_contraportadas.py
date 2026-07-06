@@ -55,19 +55,26 @@ def content_group(fl):
     G.append(T(1000, KICK_Y, "LÍNEA" if gen else "PRODUCTO", 27, AMARILLO, 700, "middle"))
     G.append(T(1004, TITLE_Y, title, ts, acc, 700, "middle"))
     G.append(T(1000, TITLE_Y, title, ts, BLANCO, 700, "middle"))
+    # Descripcion = UN solo bloque editable (todos los parrafos)
     y = DESC_TITLE_Y; G.append(T(185, y, "Descripción", 48, AMARILLO, 700)); y += 72
+    dts = []; first = True
     for p in fl.get("description", []):
-        lines = textwrap.wrap(p, DESC_WRAP) or [""]
-        ts = "".join(f'<tspan x="185" dy="{0 if i==0 else 60}">{esc(ln)}</tspan>' for i, ln in enumerate(lines))
-        G.append(f'<text x="185" y="{y}" fill="{BLANCO}" font-family="{FONT}" font-size="44" font-weight="400">{ts}</text>')
-        y += 60 * len(lines) + 26   # un <text> por parrafo (bloque editable, no lineas sueltas)
+        for i, ln in enumerate(textwrap.wrap(p, DESC_WRAP) or [""]):
+            dy = 0 if first else (86 if i == 0 else 60)   # 60 lead + 26 gap entre parrafos
+            dts.append(f'<tspan x="185" dy="{dy}">{esc(ln)}</tspan>'); first = False
+    G.append(f'<text x="185" y="{y}" fill="{BLANCO}" font-family="{FONT}" font-size="44" font-weight="400">{"".join(dts)}</text>')
+    # Nutrientes = UN solo bloque editable (todos los items)
     y = ITEMS_TITLE_Y; G.append(T(185, y, fl.get("section_title") or "Nutrientes", 48, AMARILLO, 700)); y += 60
+    its = []; first = True
     for it in fl.get("items", []):
-        lines = textwrap.wrap(it, ITEM_WRAP) or [""]
-        G.append(T(185, y, "•", 34, acc, 700))
-        ts = "".join(f'<tspan x="235" dy="{0 if i==0 else 46}">{esc(ln)}</tspan>' for i, ln in enumerate(lines))
-        G.append(f'<text x="235" y="{y}" fill="{BLANCO}" font-family="{FONT}" font-size="34" font-weight="400">{ts}</text>')
-        y += 46 * len(lines) + 16   # un <text> por item (bloque editable)
+        for i, ln in enumerate(textwrap.wrap(it, ITEM_WRAP) or [""]):
+            if i == 0:
+                dy = 0 if first else 62   # 46 lead + 16 gap entre items
+                its.append(f'<tspan x="185" dy="{dy}"><tspan fill="{acc}" font-weight="700">•</tspan>  {esc(ln)}</tspan>')
+            else:
+                its.append(f'<tspan x="235" dy="46">{esc(ln)}</tspan>')
+            first = False
+    G.append(f'<text x="185" y="{y}" fill="{BLANCO}" font-family="{FONT}" font-size="34" font-weight="400">{"".join(its)}</text>')
     G.append('</g>')
     return "\n".join(G)
 
