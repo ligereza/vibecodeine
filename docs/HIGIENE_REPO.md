@@ -59,4 +59,4 @@ Ver `docs/AGENT_AIRDROP_PROTOCOL.md` para el detalle completo (que valida, que h
 
 **Actual (2026-06):** `context/flujo_hub.html` + `svg_visualizer.html` + `plano_demo.html` + `LAST_HANDOFF.md` son la fuente de verdad diaria.
 
-Histórico (checkpoints, _archive, reference_old) movido a `.archive/`. Mantener el root limpio. Ver `.archive/README.md` y `docs/REPO_MAP.md`.
+Histórico (checkpoints, _archive, reference_old) movido a `.archive/`. Mantener el root limpio. Ver `.archive/README.md` y `CLAUDE.md` (mapa del repo).

@@ -160,12 +160,12 @@ solo la paleta, la estructura sobrevive.
 4. Handoff `HANDOFF_YYYY-MM-DD_<tema>.md` en raiz.
 5. `context/LAST_HANDOFF.md` + `context/SESSION_STATE.json` actualizados.
 6. Airdrop ZIP validado (`py scripts/validate_airdrop.py`).
-7. Reporte formal de verificacion (formato en AGENTS.md).
+7. Reporte formal de verificacion (formato en CLAUDE.md).
 
 ## Referencias fijas del repo
 
 - `linea_editorial/v4.1.md` — LA fuente de verdad visual (§0 rave, §6.H crema).
-- `AGENTS.md` — contrato operativo (verificacion, airdrop, continuidad).
+- `CLAUDE.md` — contrato operativo (verificacion, airdrop, continuidad).
 - `docs/CONTRAPORTADAS_SUPLEMENTOS_RD.md` + `_OPERATIVO.md` — pre-prensa.
 - `docs/BRIEF_SUPLEMENTOS_RD.md` — intake por tipo de pieza.
 - `web/src/components/PlanoTool.tsx` — simbologia tecnica canonica.
