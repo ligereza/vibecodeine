@@ -1,18 +1,19 @@
 {
   "version": "0.48.5",
-  "date": "2026-07-05",
+  "date": "2026-07-08",
   "assistant_name": "Cauce",
-  "repo_main": "237114b",
-  "current_focus": "Contraportadas de suplementos con la plantilla nueva (capa CAMBIOS) via generador de repo + puente agente<->Illustrator por COM. Todo mergeado a main.",
+  "repo_main": "c7500da",
+  "current_focus": "Restructure_optima paso 2 (colapsar docs, un solo hot path). Docs obsoletos archivados; falta fusionar AGENTS.md + AI_OPERATING_LAYER + AI_PROVIDER_ROUTING + REPO_MAP en CLAUDE.md unico.",
   "done": [
     "Contraportadas dark de los 8 suplementos: gen_contraportadas.py rellena la plantilla svg/suplementos_rd/_plantilla/contraportada_cambios.svg con el JSON maestro; salida svg/suplementos_rd/09_contraportadas_dark/*.svg. Reproducible via repo.",
     "Puente agente<->Illustrator (ai_illustrator_bridge.jsx) probado end-to-end via win32com DoJavaScript, sin pantalla: export doc->state.json, apply ops.json (setText/find/addText...).",
     "AI Operating Layer v1 (docs + .aider.conf.example + .env.example + contexto_repo task + skill taller-svg-rd).",
     "Toolbox tools/ + tools/svg/ (context_pack, token_budget, handoff, verify_all, svg_lint, svg_to_pdf, recolor_svg, pack_delivery) + .githooks/pre-commit.",
-    "Piezas SVG editables en Illustrator: Arial, logo vectorial inline, titulo centrado, parrafos como bloque (tspan). Flyers dark + brief packs eventos."
+    "Piezas SVG editables en Illustrator: Arial, logo vectorial inline, titulo centrado, parrafos como bloque (tspan). Flyers dark + brief packs eventos.",
+    "2026-07-08: docs obsoletos archivados en _archive/legacy_20260708_0450/ (.agent.md, AGENT_GUIDE, AGENT_OPERATING_MANUAL, DEMO_JEFE_2026-06-29, FASE5_CALIDAD, RELEASE_v016) + seccion Mision agregada a CLAUDE.md (commit c7500da)."
   ],
   "doing": [
-    "Cierre de sesion; todo en main (237114b), working tree limpio, ramas borradas."
+    "Cierre de sesion; todo en main (c7500da), working tree limpio."
   ],
   "next": [
     "Afinar alineacion de las 8 contraportadas vs la plantilla real.",
