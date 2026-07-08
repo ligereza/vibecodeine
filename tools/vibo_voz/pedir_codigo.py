@@ -37,6 +37,12 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+# Windows: stdout/stderr cp1252 revienta con unicode del codigo (flechas,
+# emojis en comentarios); forzar UTF-8 siempre
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+
 try:
     from dotenv import load_dotenv
     load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
