@@ -7,11 +7,25 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
+from .engine import mesas_requeridas
+
+# Precios unitarios referenciales (CLP). Se pueden pisar por evento con
+# ev["precios"] = {"hora_persona": ..., "mesa": ...} sin tocar codigo.
+PRECIOS_REF = {
+    "hora_persona": 8_000,
+    "alimentacion": 6_000,
+    "colacion": 3_500,
+    "stand": 35_000,
+    "mesa": 4_000,
+    "testeo": 45_000,
+    "contencion": 25_000,
+}
+
 
 def calcular_costos(ev: Dict[str, Any]) -> Dict[str, Any]:
     """Devuelve un desglose de costos a partir de los parámetros del evento.
 
-    Valores son referenciales; el dueño debe ajustar los precios unitarios.
+    Valores son referenciales; el dueño puede ajustarlos via ev["precios"].
     """
     horas = float(ev.get("duracion_horas", 0))
     voluntarios = int(ev.get("voluntarios", 0))
@@ -19,39 +33,30 @@ def calcular_costos(ev: Dict[str, Any]) -> Dict[str, Any]:
     testeo = bool(ev.get("incluye_testeo", False))
     masivo = asistentes >= 2000 or bool(ev.get("masivo", False))
 
-    # Precios unitarios referenciales (CLP)
-    precio_hora_persona = 8_000
-    precio_alimentacion = 6_000
-    precio_colacion = 3_500
-    precio_stand = 35_000
-    precio_mesa = 4_000
-    precio_testeo = 45_000
-    precio_contencion = 25_000
+    precios = {**PRECIOS_REF, **(ev.get("precios") or {})}
 
-    personal = voluntarios * horas * precio_hora_persona
+    personal = voluntarios * horas * precios["hora_persona"]
     alimentacion = 0.0
     if horas > 5:
-        alimentacion = voluntarios * precio_alimentacion
+        alimentacion = voluntarios * precios["alimentacion"]
     elif horas > 4:
-        alimentacion = voluntarios * precio_colacion
+        alimentacion = voluntarios * precios["colacion"]
 
-    mesas = 1 + max(0, (voluntarios - 1)) // 5
-    if testeo:
-        mesas += 1
-    mobiliario = mesas * precio_mesa
+    mesas = mesas_requeridas(voluntarios, incluye_testeo=testeo)
+    mobiliario = mesas * precios["mesa"]
 
     stands = 1
     if testeo:
         stands += 1
     if masivo:
         stands += 1
-    infraestructura = stands * precio_stand
+    infraestructura = stands * precios["stand"]
 
     extras = 0.0
     if testeo:
-        extras += precio_testeo
+        extras += precios["testeo"]
     if masivo:
-        extras += precio_contencion
+        extras += precios["contencion"]
 
     total = personal + alimentacion + mobiliario + infraestructura + extras
 
