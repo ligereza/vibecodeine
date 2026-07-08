@@ -211,44 +211,93 @@ def _esc(s: str) -> str:
 # ============================================================
 # 4. RENDER SVG (escala metros -> px)
 # ============================================================
+# Zonas del layout logico de produccion: cada icono operativo cae en su grupo
+_ZONAS_ICONOS = [
+    ("SERVICIOS", ["tent", "table", "testeo"]),
+    ("INFRAESTRUCTURA", ["power", "light", "water", "food", "heating"]),
+    ("SEGURIDAD", ["extinguisher", "medical", "security"]),
+    ("COORDINACION", ["contact", "contencion", "sensory", "trash"]),
+]
+
+# Paleta dark RD (coincide con el canvas del editor web, PlanoTool.tsx)
+_BG = "#09090b"
+_PANEL = "rgba(255,255,255,0.035)"
+_LIGHT = "#e8eef0"
+_MUTED = "#8b968f"
+_STAND = "#10b981"
+_ZONA = "#a78bfa"
+
+
 def render_svg(ev: Dict[str, Any], px_por_metro: float = 90.0) -> str:
-    """Render SVG con estilos de flujo si disponible (integración línea editorial)."""
+    """Plano SVG en estilo dark RD: modulos + iconos operativos por zona logica.
+
+    Los iconos (luces, extintor, agua, medico, testeo, contencion...) se derivan
+    del evento via iconos.simbolos_de_evento y se agrupan como en un montaje real.
+    Las sillas no se dibujan (confunden el plano; su conteo va en el rider).
+    """
+    from . import iconos
+
     cajas, W_m, H_m = solve_layout(ev)
-    styles = _load_flujo_styles()
-    ink = styles.get("ink", "#1f2a24")
-    accent = styles.get("accent", "#1f6f4e")
-    paper = styles.get("paper", "#fbf8f1")
+    s = px_por_metro
+    activos = set(iconos.simbolos_de_evento(ev))
+    grupos = [(t, [k for k in ks if k in activos]) for t, ks in _ZONAS_ICONOS]
+    grupos = [(t, ks) for t, ks in grupos if ks]
 
     margin = 0.8
-    W = (W_m + 2 * margin) * px_por_metro
-    H = (H_m + 2 * margin + 1.2) * px_por_metro
-    s = px_por_metro
-    ox, oy = margin * s, (margin + 0.8) * s
+    paso_icono = 1.7          # separacion horizontal entre iconos (m)
+    alto_grupo = 2.1          # titulo + fila de iconos (m)
+    max_iconos = max((len(ks) for _, ks in grupos), default=1)
+    ancho_iconos = max_iconos * paso_icono
+    W_m_total = max(W_m, ancho_iconos)
+    H_iconos = len(grupos) * alto_grupo
+
+    W = (W_m_total + 2 * margin) * s
+    H = (H_m + 1.4 + H_iconos + 2 * margin) * s
+    ox, oy = margin * s, (margin + 0.9) * s
 
     out = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W:.0f}" height="{H:.0f}" viewBox="0 0 {W:.0f} {H:.0f}">']
-    out.append(f'<rect width="{W:.0f}" height="{H:.0f}" fill="{paper}"/>')
-    out.append(f'<text x="{ox}" y="{0.5*s}" font-family="Inter,Arial" font-size="{0.32*s}" font-weight="700" fill="{ink}">'
-               f'PLANO — {_esc(ev.get("nombre","Evento"))}</text>')
-    out.append(f'<text x="{ox}" y="{0.82*s}" font-family="Inter,Arial" font-size="{0.17*s}" fill="{ink}">'
-               f'Escala 1m = {px_por_metro:.0f}px · {len(cajas)} módulo(s) · flujo</text>')
+    out.append(f'<rect width="{W:.0f}" height="{H:.0f}" fill="{_BG}"/>')
+    out.append(f'<text x="{ox:.0f}" y="{0.55*s:.0f}" font-family="Inter,Arial" font-size="{0.34*s:.0f}" '
+               f'font-weight="800" fill="{_LIGHT}">PLANO — {_esc(ev.get("nombre","Evento"))}</text>')
+    out.append(f'<text x="{ox:.0f}" y="{0.9*s:.0f}" font-family="Inter,Arial" font-size="{0.16*s:.0f}" '
+               f'fill="{_MUTED}">Escala 1m = {px_por_metro:.0f}px · {len(cajas)} modulo(s) · reduccion de danos</text>')
 
+    # --- modulos (stands / zonas) ---
     for c in cajas:
         cx, cy = ox + c.x * s, oy + c.y * s
-        col = accent if c.rol == "stand" else "#7b5cff"
+        col = _STAND if c.rol == "stand" else _ZONA
         out.append(f'<rect x="{cx:.0f}" y="{cy:.0f}" width="{c.w*s:.0f}" height="{c.h*s:.0f}" '
-                   f'fill="rgba(31,111,78,0.05)" stroke="{col}" stroke-width="3" rx="6"/>')
-        out.append(f'<text x="{cx+6:.0f}" y="{cy+0.3*s:.0f}" font-family="Inter,Arial" font-size="{0.16*s}" '
-                   f'font-weight="700" fill="{col}">{_esc(c.nombre)}</text>')
-        out.append(f'<text x="{cx+6:.0f}" y="{cy+c.h*s-6:.0f}" font-family="Inter,Arial" font-size="{0.12*s}" '
-                   f'fill="{ink}">{c.w:g}×{c.h:g} m</text>')
+                   f'fill="{_PANEL}" stroke="{col}" stroke-width="3" rx="8"/>')
         for h in c.hijos:
+            if h.rol != "mesa":
+                continue  # sillas fuera a proposito
             hx, hy = cx + h.x * s, cy + h.y * s
-            if h.rol == "mesa":
-                out.append(f'<rect x="{hx:.0f}" y="{hy:.0f}" width="{h.w*s:.0f}" height="{h.h*s:.0f}" '
-                           f'fill="#d4b78f" stroke="#a8855a" stroke-width="1"/>')
-            else:
-                out.append(f'<rect x="{hx:.0f}" y="{hy:.0f}" width="{h.w*s:.0f}" height="{h.h*s:.0f}" '
-                           f'fill="#e63946" rx="2"/>')
+            out.append(f'<rect x="{hx:.0f}" y="{hy:.0f}" width="{h.w*s:.0f}" height="{h.h*s:.0f}" '
+                       f'fill="rgba(212,183,143,0.18)" stroke="#c9a96a" stroke-width="1.5" rx="2"/>')
+        out.append(f'<text x="{cx+8:.0f}" y="{cy+0.32*s:.0f}" font-family="Inter,Arial" font-size="{0.17*s:.0f}" '
+                   f'font-weight="700" fill="{col}" style="paint-order:stroke" stroke="{_BG}" '
+                   f'stroke-width="{0.05*s:.0f}">{_esc(c.nombre)}</text>')
+        out.append(f'<text x="{cx+8:.0f}" y="{cy+c.h*s-8:.0f}" font-family="Inter,Arial" '
+                   f'font-size="{0.12*s:.0f}" fill="{_MUTED}">{c.w:g}×{c.h:g} m</text>')
+
+    # --- iconos operativos por zona logica ---
+    y_base = oy + (H_m + 0.8) * s
+    for titulo, keys in grupos:
+        out.append(f'<line x1="{ox:.0f}" y1="{y_base:.0f}" x2="{ox + W_m_total*s:.0f}" y2="{y_base:.0f}" '
+                   f'stroke="rgba(255,255,255,0.08)" stroke-width="1"/>')
+        out.append(f'<text x="{ox:.0f}" y="{y_base+0.32*s:.0f}" font-family="Inter,Arial" '
+                   f'font-size="{0.15*s:.0f}" font-weight="700" fill="{_MUTED}" letter-spacing="1">{titulo}</text>')
+        cy_icon = y_base + 1.15 * s
+        for i, key in enumerate(keys):
+            cx_icon = ox + (i + 0.5) * paso_icono * s
+            col = iconos.COLORES.get(key, _LIGHT)
+            escala = s / 150.0
+            out.append(iconos.icono(key, cx_icon, cy_icon, escala, col))
+            out.append(f'<text x="{cx_icon:.0f}" y="{cy_icon+0.72*s:.0f}" text-anchor="middle" '
+                       f'font-family="Inter,Arial" font-size="{0.12*s:.0f}" fill="{_LIGHT}">'
+                       f'{_esc(iconos.ETIQUETAS.get(key, key))}</text>')
+        y_base += alto_grupo * s
+
     out.append('</svg>')
     return "\n".join(out)
 

@@ -4,7 +4,7 @@ import {
   Scan, Users, Moon, Home, Table, Armchair, Box, Zap,
   Lightbulb, Droplet, Thermometer, User, ShieldAlert, HeartPulse, Utensils,
   ChevronRight, ChevronLeft, Settings, Copy, Layers, Grid3X3, FileText,
-  Heart, AlertTriangle, Coffee, RefreshCw
+  Heart, AlertTriangle, Coffee, RefreshCw, Flame
 } from 'lucide-react';
 import { cn } from '../utils/cn';
 
@@ -117,6 +117,7 @@ const SYMBOL_CATALOG: SymbolSpec[] = [
   { key: 'food', label: 'Alimentación', color: ZONE_COLORS.food, icon: 'Utensils', x: 2200, y: 1300, w: 160, h: 160 },
   { key: 'testeo', label: 'Testeo', color: ZONE_COLORS.testeo, icon: 'AlertTriangle', x: 1000, y: 550, w: 200, h: 200 },
   { key: 'contencion', label: 'Contención', color: ZONE_COLORS.contencion, icon: 'Heart', x: 1900, y: 550, w: 200, h: 200 },
+  { key: 'extinguisher', label: 'Extintor', color: ZONE_COLORS.extinguisher, icon: 'Flame', x: 2400, y: 900, w: 160, h: 160 },
 ];
 
 const SYMBOL_BY_KEY = Object.fromEntries(SYMBOL_CATALOG.map(s => [s.key, s])) as Record<string, SymbolSpec>;
@@ -141,6 +142,7 @@ const REQUIREMENT_SYMBOL_MAP: Record<string, TechnicalSymbolKey> = {
   'Contacto directo con producción': 'contact',
   'Coordinación con seguridad privada': 'security',
   'Acceso a equipo médico del evento': 'medical',
+  'Extintor operativo en el stand': 'extinguisher',
   'Alimentación si jornada > 5 horas': 'food',
 };
 
@@ -160,7 +162,7 @@ const makeSymbolElement = (key: TechnicalSymbolKey, idPrefix = 'symbol'): Elemen
   };
 };
 
-// ── Checklist Data (17 requirements in 4 categories) ───
+// ── Checklist Data (18 requirements in 4 categories) ───
 const CHECKLIST_SECTIONS = [
   {
     title: 'Espacio',
@@ -200,7 +202,8 @@ const CHECKLIST_SECTIONS = [
       { text: 'Contacto directo con producción', icon: 'User' },
       { text: 'Coordinación con seguridad privada', icon: 'ShieldAlert' },
       { text: 'Acceso a equipo médico del evento', icon: 'HeartPulse' },
-      { text: 'Alimentación si jornada > 5 horas', icon: 'Utensils' }
+      { text: 'Alimentación si jornada > 5 horas', icon: 'Utensils' },
+      { text: 'Extintor operativo en el stand', icon: 'Flame' }
     ]
   }
 ];
@@ -225,6 +228,7 @@ const renderRequirementIcon = (iconName: string, className = "w-4 h-4 text-zinc-
     case 'ShieldAlert': return <ShieldAlert className={className} />;
     case 'HeartPulse': return <HeartPulse className={className} />;
     case 'Utensils': return <Utensils className={className} />;
+    case 'Flame': return <Flame className={className} />;
     default: return <Grid3X3 className={className} />;
   }
 };

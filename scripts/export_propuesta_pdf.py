@@ -63,8 +63,9 @@ def _clp(n: float) -> str:
     return "$" + format(int(n), ",d").replace(",", ".")
 
 
-def _fila(k: str, v: str) -> str:
-    return f'<tr><th>{escape(k)}</th><td>{escape(v)}</td></tr>'
+def _fila(k: str, v: str, num: bool = False) -> str:
+    cls = ' class="num"' if num else ""
+    return f'<tr><th>{escape(k)}</th><td{cls}>{escape(v)}</td></tr>'
 
 
 def _html_tier(tier: str, brief: dict[str, str]) -> str:
@@ -91,11 +92,11 @@ def _html_tier(tier: str, brief: dict[str, str]) -> str:
     ])
     rider_rows = "".join(f"<li>{escape(r)}</li>" for r in reqs)
     costos_rows = "".join([
-        _fila("Personal", _clp(costos["personal"])),
-        _fila("Alimentacion / colacion", _clp(costos["alimentacion"])),
-        _fila(f"Mobiliario ({costos['detalle']['mesas']} mesas)", _clp(costos["mobiliario"])),
-        _fila(f"Infraestructura ({costos['detalle']['stands']} stands)", _clp(costos["infraestructura"])),
-        _fila("Extras (testeo / contencion)", _clp(costos["extras"])),
+        _fila("Personal", _clp(costos["personal"]), num=True),
+        _fila("Alimentacion / colacion", _clp(costos["alimentacion"]), num=True),
+        _fila(f"Mobiliario ({costos['detalle']['mesas']} mesas)", _clp(costos["mobiliario"]), num=True),
+        _fila(f"Infraestructura ({costos['detalle']['stands']} stands)", _clp(costos["infraestructura"]), num=True),
+        _fila("Extras (testeo / contencion)", _clp(costos["extras"]), num=True),
     ])
     val_html = ""
     if val["warnings"]:
