@@ -28,20 +28,19 @@ handoff:
     - "nota: estos cambios (archivado + seccion Mision) ya estaban hechos sin commitear al abrir esta sesion, de origen incierto (no de una conversacion registrada); se confirmo con el usuario y se commitearon como cierre"
     - "instalado caveman (JuliusBrussee/caveman) en .claude/skills/: 7 skills de compresion de tokens. Limpieza de duplicados (el instalador escribio 4 copias por falso-positivo en carpetas agent/ y data/ propias de flujo); solo queda .claude/skills/caveman* (copias reales, no symlinks). caveman-compress (sobrescribe .md via LLM) marcado High Risk por Snyk del instalador -- revisado el codigo: tiene denylist de nombres sensibles + backup fuera de repo + verificacion antes de sobrescribir; riesgo real bajo pero no usarlo sobre CLAUDE.md/LAST_HANDOFF.md sin revisar el diff (puede limar matices de las reglas)."
     - "restructure_optima paso 2 completo: AGENTS.md + docs/AI_OPERATING_LAYER.md + docs/AI_PROVIDER_ROUTING.md + docs/REPO_MAP.md fusionados en CLAUDE.md unico. AGENTS.md queda stub. Los 3 docs archivados en _archive/legacy_20260708_0450/. Referencias actualizadas en README.md, context/README.md, projects/README.md, docs/{CLI,TASK_PROMPTS,HIGIENE_REPO,AIDER_API_SETUP,AIRDROP,agents/PARA_IA_CONTEXT}.md, .claude/agents/.agent.md, .claude/skills/entregas-rd/SKILL.md, tools/vibo_voz/README.md."
+    - "revision de GitHub: .github/workflows/claude.yml ya existia y esta activo (nadie lo tenia que crear). 5 PRs cerradas (10,11 mergeadas; 7,8,9 cerradas sin merge, ramas abandonadas con diffs masivos vs main, superadas). 6 issues abiertas (pedidos de producto suplementos/eventos), ninguna menciona @claude. Se encontro la rama claude/status-pending-items-51t92w (2 commits de contraportadas, trabajo del usuario en sesion aparte, sin PR) y se mergeo a main --no-ff con conflictos reales resueltos: gen_contraportadas.py + los 8 SVG de 09_contraportadas_dark/ tomados de la rama (--theirs, es el trabajo bueno); LAST_HANDOFF.md + SESSION_STATE.json tomados de esta sesion (--ours) y fusionados a mano."
 
   next:
     arrancar_flujo_github_actions:   # norte: que el repo funcione sin computador
-      claude_hace:
-        - crear .github/workflows/claude.yml (anthropics/claude-code-action@v1; claude_args --model sonnet --max-turns 8)
-        - "OJO: el runner de CI es Linux -> usar 'python', no 'py', en los pasos de verificacion del workflow"
-      usuario_hace:                  # manual, Claude no puede
-        - instalar GitHub App github.com/apps/claude en el repo
-        - "agregar secret ANTHROPIC_API_KEY ($5 API para arrancar; migrar a OAuth Pro/Max luego)"
-        - "branch protection en main: require PR + require CI + require 1 review (correa de Qwen)"
+      claude_hizo:
+        - "[HECHO] .github/workflows/claude.yml ya existe y esta activo (creado 2026-07-04, anthropics/claude-code-action@v1). Dispara con @claude en issues/comentarios/PR review comments de OWNER/MEMBER/COLLABORATOR."
+      usuario_hace:                  # manual, Claude no puede confirmar desde aqui
+        - "confirmar que la GitHub App esta instalada y el secret ANTHROPIC_API_KEY existe (el workflow lo asume; no verificado desde este agente)"
+        - "branch protection en main: require PR + require CI + require 1 review (correa de Qwen) -- pendiente de confirmar"
       test: abrir un issue con "@claude ..." y verificar que abre un PR
     pendientes_previos:
-      - afinar alineacion de las 8 contraportadas contra la plantilla real (posiciones calibradas)
-      - "integrar logo color vectorial (assets/logo/RD_logo_vector_color.svg): variante dark 'blanco' -> 'color' en los generadores"
+      - "[HECHO 2026-07-08] alineacion de las 8 contraportadas: el usuario lo trabajo en sesion aparte (rama claude/status-pending-items-51t92w, commits 28f903d + c347fb4 -- titulo a la izquierda en el ovalo sin kicker, texto calibrado a las cajas reales). Mergeado a main con --no-ff. Fuente ahora svg/suplementos_rd/_master_contraportadas.json (antes leia projects/piezas_vectoriales/.../contenido_suplementos_rd.json)."
+      - "[DESCARTADO 2026-07-08] logo color vectorial: el usuario confirmo que es innecesario, no se hace."
       - probar bridges Photoshop/After Effects en apps reales [pospuesto]
       - "Aider descartado: es local; el norte es Actions"
 
@@ -70,7 +69,7 @@ handoff:
 
   on_close:
     - actualizar context/LAST_HANDOFF.md + context/SESSION_STATE.json (version/fecha reales, ASCII-only)
-    - reporte formal de verificacion (formato en AGENTS.md)
+    - reporte formal de verificacion (formato en CLAUDE.md)
 
   critique_acida:   # vision critica sin filtro (pedida por el usuario)
     diagnostico:
