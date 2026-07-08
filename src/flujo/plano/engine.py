@@ -219,17 +219,27 @@ _ZONAS_ICONOS = [
     ("COORDINACION", ["contact", "contencion", "sensory", "trash"]),
 ]
 
-# Paleta dark RD (coincide con el canvas del editor web, PlanoTool.tsx)
-_BG = "#09090b"
-_PANEL = "rgba(255,255,255,0.035)"
-_LIGHT = "#e8eef0"
-_MUTED = "#8b968f"
-_STAND = "#10b981"
-_ZONA = "#a78bfa"
+# Paletas RD reales (linea_editorial/v4.1.md): Negro #0A0A0A, Blanco ceramico
+# #F2F2F2, Magenta #C800C8 (acento rave), Amarillo #FFD21F (alerta/titular).
+TEMAS = {
+    "dark": {
+        "bg": "#0a0a0a", "panel": "rgba(255,255,255,0.04)", "light": "#f2f2f2",
+        "muted": "#8a8a80", "stand": "#c800c8", "zona": "#ffd21f",
+        "linea": "rgba(255,255,255,0.09)",
+    },
+    "white": {
+        "bg": "#ffffff", "panel": "#f6f4f6", "light": "#141414",
+        "muted": "#6b6b62", "stand": "#b100b8", "zona": "#b8860b",
+        "linea": "rgba(0,0,0,0.12)",
+    },
+}
+# Iconos demasiado pales para fondo blanco: reemplazo por tono legible
+_ICONO_WHITE_FIX = {"light": "#b59500", "water": "#1d4ed8", "food": "#7c4a06",
+                    "sensory": "#6d4bd8"}
 
 
-def render_svg(ev: Dict[str, Any], px_por_metro: float = 90.0) -> str:
-    """Plano SVG en estilo dark RD: modulos + iconos operativos por zona logica.
+def render_svg(ev: Dict[str, Any], px_por_metro: float = 90.0, tema: str = "dark") -> str:
+    """Plano SVG en estilo RD (dark o white): modulos + iconos por zona logica.
 
     Los iconos (luces, extintor, agua, medico, testeo, contencion...) se derivan
     del evento via iconos.simbolos_de_evento y se agrupan como en un montaje real.
@@ -237,6 +247,9 @@ def render_svg(ev: Dict[str, Any], px_por_metro: float = 90.0) -> str:
     """
     from . import iconos
 
+    pal = TEMAS.get(tema, TEMAS["dark"])
+    _BG, _PANEL, _LIGHT = pal["bg"], pal["panel"], pal["light"]
+    _MUTED, _STAND, _ZONA = pal["muted"], pal["stand"], pal["zona"]
     cajas, W_m, H_m = solve_layout(ev)
     s = px_por_metro
     activos = set(iconos.simbolos_de_evento(ev))
@@ -284,13 +297,15 @@ def render_svg(ev: Dict[str, Any], px_por_metro: float = 90.0) -> str:
     y_base = oy + (H_m + 0.8) * s
     for titulo, keys in grupos:
         out.append(f'<line x1="{ox:.0f}" y1="{y_base:.0f}" x2="{ox + W_m_total*s:.0f}" y2="{y_base:.0f}" '
-                   f'stroke="rgba(255,255,255,0.08)" stroke-width="1"/>')
+                   f'stroke="{pal["linea"]}" stroke-width="1"/>')
         out.append(f'<text x="{ox:.0f}" y="{y_base+0.32*s:.0f}" font-family="Inter,Arial" '
                    f'font-size="{0.15*s:.0f}" font-weight="700" fill="{_MUTED}" letter-spacing="1">{titulo}</text>')
         cy_icon = y_base + 1.15 * s
         for i, key in enumerate(keys):
             cx_icon = ox + (i + 0.5) * paso_icono * s
             col = iconos.COLORES.get(key, _LIGHT)
+            if tema == "white":
+                col = _ICONO_WHITE_FIX.get(key, col)
             escala = s / 150.0
             out.append(iconos.icono(key, cx_icon, cy_icon, escala, col))
             out.append(f'<text x="{cx_icon:.0f}" y="{cy_icon+0.72*s:.0f}" text-anchor="middle" '
