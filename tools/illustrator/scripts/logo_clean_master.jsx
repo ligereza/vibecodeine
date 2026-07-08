@@ -21,7 +21,10 @@
     O = ORTHO: seleccion tratada como letras/formas rectas.
     R = ROUND: seleccion tratada como letras/formas redondas/curvas.
 
-  No crea backup. Usa Ctrl+Z si no te gusta.
+  Backup automatico:
+    Antes de cualquier modo destructivo (W/M/O/R), crea copia del documento activo
+    con sufijo "_backup_<timestamp>" en la misma carpeta del documento original.
+    El modo A (audit) NO crea backup porque solo lee.
 
   Learning system:
     Al final puedes guardar un reporte .txt con parametros/resultados para ir aprendiendo
@@ -49,6 +52,49 @@
   if (mode !== "A" && mode !== "W" && mode !== "M" && mode !== "O" && mode !== "R") {
     alert("Modo invalido. Usa A, W, M, O o R.");
     return;
+  }
+
+  // ==========================================================================
+  // BACKUP AUTOMATICO antes de modos destructivos (W/M/O/R)
+  // ==========================================================================
+  function crearBackup() {
+    if (mode === "A") return true; // Audit no modifica, no necesita backup
+    
+    try {
+      var doc = app.activeDocument;
+      var now = new Date();
+      var timestamp = now.getFullYear() +
+                      String(now.getMonth()+1).padStart(2,"0") +
+                      String(now.getDate()).padStart(2,"0") + "_" +
+                      String(now.getHours()).padStart(2,"0") +
+                      String(now.getMinutes()).padStart(2,"0") +
+                      String(now.getSeconds()).padStart(2,"0");
+      
+      var backupName = doc.name.replace(/\\.ai$/i, "") + "_backup_" + timestamp + ".ai";
+      var backupPath = doc.path.fsName + "/" + backupName;
+      
+      // Guardar copia del documento actual
+      var saveOpts = new IllustratorSaveOptions();
+      saveOpts.compatibility = CompatibilityVersion.ILLUSTRATORCS6;
+      saveOpts.pdfCompatible = true;
+      
+      var backupFile = new File(backupPath);
+      doc.saveAs(backupFile, saveOpts);
+      
+      return true;
+    } catch(e) {
+      alert("Error creando backup: " + e + "\\n\\nEl script continuara pero NO habra backup automatico.");
+      return false; // Continuar sin backup
+    }
+  }
+  
+  // Crear backup antes de continuar con modos destructivos
+  if (mode !== "A") {
+    var backupOk = crearBackup();
+    if (!backupOk) {
+      var continuar = confirm("No se pudo crear el backup. ¿Continuar de todas formas?");
+      if (!continuar) return;
+    }
   }
 
   var word = "";
@@ -388,7 +434,7 @@
     "Modo: "+mode+"\n"+
     "Candidatos: "+cands.length+"\n"+
     "ORTHO: "+counts.ORTHO+", ROUND: "+counts.ROUND+", ANGLED: "+counts.ANGLED+", MIXED: "+counts.MIXED+"\n\n"+
-    "No se creara backup. Usa Ctrl+Z si no te gusta.\n\nContinuar?";
+    "Backup automatico creado antes de iniciar.\n\nContinuar?";
   if(mode==="W" && word.length>0 && !wordMatches) confirmMsg += "\n\nAviso: letras ingresadas ("+word.length+") no calzan con candidatos ("+cands.length+"). Se uso clasificacion geometrica.";
   if(!confirm(confirmMsg)) return;
 
