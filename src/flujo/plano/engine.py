@@ -29,6 +29,16 @@ def _load_flujo_styles() -> Dict[str, Any]:
 # ============================================================
 # 1. CONSTANTES DE REALIDAD (metros)
 # ============================================================
+# Umbral unico para clasificar un evento como masivo (fuente de verdad; antes
+# el literal 2000 estaba repetido en 5 lugares entre engine.py y costs.py)
+UMBRAL_MASIVO = 2000
+
+
+def es_masivo(ev: Dict[str, Any]) -> bool:
+    """True si el evento es masivo (bandera explicita o asistentes >= umbral)."""
+    return bool(ev.get("masivo", False)) or int(ev.get("asistentes_estimados", 0) or 0) >= UMBRAL_MASIVO
+
+
 CONSTANTES = {
     "mesa":        {"w": 2.0, "h": 0.7},     # mesa rectangular estándar
     "silla":       {"w": 0.5, "h": 0.5},     # asiento
@@ -61,7 +71,7 @@ def reglas_rider(ev: Dict[str, Any]) -> List[str]:
     voluntarios = int(ev.get("voluntarios", 0))
     asistentes = int(ev.get("asistentes_estimados", 0))
     testeo = bool(ev.get("incluye_testeo", False))
-    masivo = asistentes >= 2000 or bool(ev.get("masivo", False))
+    masivo = es_masivo(ev)
 
     if horas > 5:
         req.append("Jornada > 5 h: ALIMENTACIÓN obligatoria para el equipo (producción o costo extra).")
@@ -85,7 +95,7 @@ def modulos_desde_evento(ev: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Decide qué módulos (stands/zonas) incluir según el evento."""
     voluntarios = int(ev.get("voluntarios", 0))
     testeo = bool(ev.get("incluye_testeo", False))
-    masivo = ev.get("masivo") or int(ev.get("asistentes_estimados", 0)) >= 2000
+    masivo = es_masivo(ev)
 
     mods = [{"tipo": "stand", "nombre": "Stand Informativo", "toldo": "toldo_3x3",
              "mesas": 1, "sillas": min(voluntarios, 4)}]
@@ -300,8 +310,8 @@ def validate_evento(ev: Dict[str, Any]) -> Dict[str, Any]:
     if asistentes is not None:
         if asistentes < 0:
             errors.append("asistentes_estimados no puede ser negativo.")
-        elif asistentes >= 2000 and not ev.get("masivo", False):
-            warnings.append("asistentes_estimados >= 2000: se tratara como evento masivo aunque masivo=false.")
+        elif asistentes >= UMBRAL_MASIVO and not ev.get("masivo", False):
+            warnings.append(f"asistentes_estimados >= {UMBRAL_MASIVO}: se tratara como evento masivo aunque masivo=false.")
 
     layout_mode = ev.get("layout_mode", "row")
     if layout_mode not in {"row", "grid_2x"}:
@@ -327,7 +337,7 @@ def validate_evento(ev: Dict[str, Any]) -> Dict[str, Any]:
         errors.append("El layout calculado tiene alto invalido.")
     if bool(ev.get("incluye_testeo", False)) and stands < 2:
         errors.append("incluye_testeo requiere stand informativo + stand testeo.")
-    if (asistentes or 0) >= 2000 and zonas < 1:
+    if (asistentes or 0) >= UMBRAL_MASIVO and zonas < 1:
         errors.append("Evento masivo requiere zona de contencion/descanso.")
     if (voluntarios or 0) > 0 and mesas < 1:
         errors.append("El layout debe incluir al menos una mesa operativa.")
