@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
-from .engine import mesas_requeridas
+from .engine import es_masivo, mesas_requeridas
 
 # Precios unitarios referenciales (CLP). Se pueden pisar por evento con
 # ev["precios"] = {"hora_persona": ..., "mesa": ...} sin tocar codigo.
@@ -29,9 +29,8 @@ def calcular_costos(ev: Dict[str, Any]) -> Dict[str, Any]:
     """
     horas = float(ev.get("duracion_horas", 0))
     voluntarios = int(ev.get("voluntarios", 0))
-    asistentes = int(ev.get("asistentes_estimados", 0))
     testeo = bool(ev.get("incluye_testeo", False))
-    masivo = asistentes >= 2000 or bool(ev.get("masivo", False))
+    masivo = es_masivo(ev)
 
     precios = {**PRECIOS_REF, **(ev.get("precios") or {})}
 

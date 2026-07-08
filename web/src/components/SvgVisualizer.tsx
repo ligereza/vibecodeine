@@ -791,17 +791,34 @@ const loadSvgPiece = useCallback(async (piece: SvgPiece) => {
   },[]);
 
   function moveEl(el:ConfigElement,dx:number,dy:number) {
+    const canvasW=config?.canvas.width??Infinity, canvasH=config?.canvas.height??Infinity;
+    const clampPt=(v:number,max:number)=>Math.min(Math.max(v,0),max);
     switch(el.type){
       case 'text':case 'paragraph':case 'list':
-        updEl(el._id!,{x:Math.round((el as TextElement).x+dx),y:Math.round((el as TextElement).y+dy)} as Partial<TextElement>);break;
-      case 'rect':case 'panel':
-        updEl(el._id!,{x:Math.round((el as RectElement).x+dx),y:Math.round((el as RectElement).y+dy)} as Partial<RectElement>);break;
-      case 'svg_image':
-        updEl(el._id!,{x:Math.round((el as SvgImageElement).x+dx),y:Math.round((el as SvgImageElement).y+dy)} as Partial<SvgImageElement>);break;
+        updEl(el._id!,{
+          x:Math.round(clampPt((el as TextElement).x+dx,canvasW)),
+          y:Math.round(clampPt((el as TextElement).y+dy,canvasH)),
+        } as Partial<TextElement>);break;
+      case 'rect':case 'panel':{const e=el as RectElement;
+        updEl(el._id!,{
+          x:Math.round(clampPt(e.x+dx,canvasW-e.w)),
+          y:Math.round(clampPt(e.y+dy,canvasH-e.h)),
+        } as Partial<RectElement>);break;}
+      case 'svg_image':{const e=el as SvgImageElement;
+        updEl(el._id!,{
+          x:Math.round(clampPt(e.x+dx,canvasW-e.w)),
+          y:Math.round(clampPt(e.y+dy,canvasH-e.h)),
+        } as Partial<SvgImageElement>);break;}
       case 'circle':
-        updEl(el._id!,{cx:Math.round((el as CircleElement).cx+dx),cy:Math.round((el as CircleElement).cy+dy)} as Partial<CircleElement>);break;
+        updEl(el._id!,{
+          cx:Math.round(clampPt((el as CircleElement).cx+dx,canvasW)),
+          cy:Math.round(clampPt((el as CircleElement).cy+dy,canvasH)),
+        } as Partial<CircleElement>);break;
       case 'line':{const e=el as LineElement;
-        updEl(el._id!,{x1:Math.round(e.x1+dx),y1:Math.round(e.y1+dy),x2:Math.round(e.x2+dx),y2:Math.round(e.y2+dy)} as Partial<LineElement>);break;}
+        updEl(el._id!,{
+          x1:Math.round(clampPt(e.x1+dx,canvasW)),y1:Math.round(clampPt(e.y1+dy,canvasH)),
+          x2:Math.round(clampPt(e.x2+dx,canvasW)),y2:Math.round(clampPt(e.y2+dy,canvasH)),
+        } as Partial<LineElement>);break;}
     }
   }
 
