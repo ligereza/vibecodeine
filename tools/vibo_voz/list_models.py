@@ -36,4 +36,4 @@ for m in client.models.list():
 if not encontrados:
     print("  (ninguno) - revisa que tu key sea de AI Studio y tenga acceso a Live.")
 else:
-    print(f"\nCopia uno de estos (sin el prefijo 'models/') a VIBO_LIVE_MODEL en .env.")
+    print("\nCopia uno de estos (sin el prefijo 'models/') a VIBO_LIVE_MODEL en .env.")

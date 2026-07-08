@@ -1,0 +1,3 @@
+Idea original: Revisar un repo y hacer una auditoría.
+
+Prompt optimizado: Actúa como un experto en seguridad y calidad de código. Revisa el repositorio adjunto buscando vulnerabilidades críticas, errores lógicos y oportunidades de refactorización. Entrega un informe detallado con hallazgos y sugerencias de mejora.

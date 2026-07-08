@@ -1,0 +1,23 @@
+{
+  "skill_name": "spanish-input-optimizer",
+  "evals": [
+    {
+      "id": 1,
+      "name": "technical-task-with-redundancy",
+      "prompt": "Mira, tengo este problema que lleva días sin resolver. Estoy intentando crear un script en Python para leer un archivo CSV, y bueno, después procesarlo. Lo que quiero hacer es, en realidad, extraer ciertas columnas específicas — columnas A y C — y luego guardar el resultado en un archivo nuevo. ¿Cómo debería hacerlo exactamente? Necesito que sea reproducible.",
+      "expected_output": "A working Python script that reads a CSV, extracts columns A and C, and saves to a new file. Should be compressed to ~40% of original prompt tokens but with complete solution quality."
+    },
+    {
+      "id": 2,
+      "name": "data-analysis-mixed-code",
+      "prompt": "Tengo un dataframe de pandas que se llama 'ventas' y bueno, lo que quiero es, digamos, calcular el promedio de ventas por región. El dataframe tiene columnas: ['region', 'mes', 'ventas']. La verdad es que necesito agrupar por región y sacar el promedio. Después, necesito guardar el resultado en un CSV llamado 'promedio_ventas.csv'. ¿Cómo lo hago?",
+      "expected_output": "A pandas solution with groupby and mean aggregation. Code should be exact. Response in Spanish. Input should compress to ~30-35% of original tokens."
+    },
+    {
+      "id": 3,
+      "name": "conceptual-question-with-context",
+      "prompt": "Tengo una duda conceptual sobre este tema. Mira, estoy aprendiendo sobre cómo funcionan los tokens en los modelos de lenguaje, ¿verdad? Y bueno, la cosa es que no termino de entender bien por qué el español gasta más tokens que el inglés. Es decir, ¿cuál es la razón exacta? Además, ¿hay alguna estrategia que pueda usar para minimizar tokens cuando trabajo en español? Me gustaría entender esto a fondo porque estoy trabajando en un proyecto que usa Spanish prompts de forma constante.",
+      "expected_output": "Explanation of why Spanish uses more tokens (word length, inflections, accents) and strategies to minimize (compression, English processing, caching). Full response in Spanish. Compression should be ~25-30%."
+    }
+  ]
+}
