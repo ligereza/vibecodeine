@@ -1,12 +1,42 @@
 /* Vibo Adobe Panel - dispatcher CEP */
 
 // ==========================================================================
-// EDITA ESTA RUTA si mueves el repo. Apunta a la carpeta tools/ del repo flujo.
-// Es la fuente unica: el panel solo ejecuta los .jsx que viven aqui.
-var REPO_TOOLS = "C:/IA/flujo/tools";
+// RUTA DINAMICA: leer de config.json, env var, o fallback relativo
 // ==========================================================================
-
 var cs = new CSInterface();
+
+function getRepoToolsPath() {
+  // 1) Intentar variable de entorno ADOBE_PANEL_REPO_ROOT (si CEP la expone)
+  try {
+    if (cs && cs.getEnvironmentVariable) {
+      var envPath = cs.getEnvironmentVariable("ADOBE_PANEL_REPO_ROOT");
+      if (envPath && envPath.length > 0) return envPath;
+    }
+  } catch(e) {}
+  
+  // 2) Leer desde config.json
+  try {
+    var configFolder = new Folder(cs.getSystemPath("userSystem") + "/Adobe/CEP/preferences/vibo_adobe_panel");
+    if (!configFolder.exists) configFolder.create();
+    var configFile = new File(configFolder.fsName + "/config.json");
+    if (configFile.exists) {
+      configFile.encoding = "UTF-8";
+      configFile.open("r");
+      var content = configFile.read();
+      configFile.close();
+      var cfg = JSON.parse(content);
+      if (cfg.repo_tools_path && cfg.repo_tools_path.length > 0) {
+        return cfg.repo_tools_path;
+      }
+    }
+  } catch(e) {}
+  
+  // 3) Fallback: ruta relativa desde la ubicacion del panel
+  var currentDir = new Folder($.fileName).parent;
+  return currentDir.fsName.replace(/\\/g, "/");
+}
+
+var REPO_TOOLS = getRepoToolsPath();
 var appId = cs.getApplicationID();
 
 var TOOLS = {
