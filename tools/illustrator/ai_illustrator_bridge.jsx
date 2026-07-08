@@ -16,6 +16,49 @@
 
 var MODE = "export";   // "export" | "apply"
 
+// ==========================================================================
+// LECTURA DE MODO DESDE ARCHIVO DE CONFIGURACION O DIALOGO
+// ==========================================================================
+function getModeFromConfig() {
+  var ioFolder = new Folder(Folder.desktop + "/ai_illustrator");
+  if (!ioFolder.exists) ioFolder.create();
+  
+  // Intentar leer config.json primero
+  var configFile = new File(ioFolder.fsName + "/config.json");
+  if (configFile.exists) {
+    try {
+      configFile.encoding = "UTF-8";
+      configFile.open("r");
+      var content = configFile.read();
+      configFile.close();
+      var cfg = (typeof JSON !== 'undefined' && JSON.parse) ? JSON.parse(content) : eval('(' + content + ')');
+      if (cfg.mode && (cfg.mode === "export" || cfg.mode === "apply")) {
+        return cfg.mode;
+      }
+    } catch(e) {}
+  }
+  
+  // Si no hay config o mode invalido, preguntar al usuario
+  var modePrompt = prompt(
+    "Selecciona modo de operacion:\\n\\n" +
+    "  export = Exportar estado del documento a state.json\\n\\n" +
+    "  apply  = Aplicar cambios desde ops.json\\n\\n" +
+    "Deja vacio para usar 'export' por defecto.",
+    "export"
+  );
+  
+  if (modePrompt === null) return "export"; // Cancel = default
+  modePrompt = String(modePrompt).toLowerCase().trim();
+  if (modePrompt === "export" || modePrompt === "apply") return modePrompt;
+  if (modePrompt === "") return "export";
+  
+  // Entrada invalida, fallback a export
+  alert("Modo no reconocido, usando 'export' por defecto.");
+  return "export";
+}
+
+var MODE = getModeFromConfig();
+
 var IO = new Folder(Folder.desktop + "/ai_illustrator");
 if (!IO.exists) IO.create();
 
@@ -72,7 +115,7 @@ function findTargets(o){
 function doApply(){
   var f=new File(IO.fsName+"/ops.json");
   if(!f.exists){ alert("No existe:\n"+f.fsName); return; }
-  var data; try { data = eval("("+readFile(f)+")"); } catch(e){ alert("ops.json invalido: "+e); return; }
+  var data; try { data = (typeof JSON !== 'undefined' && JSON.parse) ? JSON.parse(readFile(f)) : eval('(' + readFile(f) + ')'); } catch(e){ alert("ops.json invalido: "+e); return; }
   var ops = data.ops || [], done=0, miss=0;
   for (var i=0;i<ops.length;i++){
     var o=ops[i];
