@@ -16,11 +16,13 @@ def _load_flujo_styles() -> Dict[str, Any]:
     from ..paths import asset_root
     flujo_path = asset_root() / "projects" / "flujo" / "flujo.json"
     if flujo_path.exists():
+        # estilos opcionales: si el JSON esta roto se sigue con defaults,
+        # pero solo se toleran fallas de lectura/parseo, no cualquier cosa
         try:
             data = json.loads(flujo_path.read_text(encoding="utf-8"))
             return data.get("colors", {})
-        except Exception:
-            pass
+        except (json.JSONDecodeError, OSError, UnicodeDecodeError):
+            return {}
     return {}
 
 
@@ -41,6 +43,17 @@ CONSTANTES = {
 # ============================================================
 # 2. REGLAS (constantes operativas) -> requerimientos del rider
 # ============================================================
+def mesas_requeridas(voluntarios: int, incluye_testeo: bool = False) -> int:
+    """Regla unica de mesas: 1 base + 1 por cada 5 voluntarios (+1 si hay testeo).
+
+    Fuente unica para rider (sin testeo, lo lista aparte) y costos (con testeo).
+    """
+    mesas = 1 + max(0, (voluntarios - 1)) // 5
+    if incluye_testeo:
+        mesas += 1
+    return mesas
+
+
 def reglas_rider(ev: Dict[str, Any]) -> List[str]:
     """Deriva requerimientos del rider según los parámetros del evento."""
     req: List[str] = []
@@ -55,8 +68,7 @@ def reglas_rider(ev: Dict[str, Any]) -> List[str]:
     elif horas > 4:
         req.append("Jornada > 4 h: agregar colación / viático para el equipo.")
 
-    # 1 mesa base; +1 cada 5 voluntarios
-    mesas = 1 + max(0, (voluntarios - 1)) // 5
+    mesas = mesas_requeridas(voluntarios)
     req.append(f"{voluntarios} voluntarios -> {mesas} mesa(s) (1 base + 1 por cada 5).")
 
     if testeo:
@@ -132,6 +144,8 @@ def _solve_row(mods: List[Dict], pasillo: float) -> Tuple[List[Caja], float, flo
         mw, mh = CONSTANTES["mesa"]["w"], CONSTANTES["mesa"]["h"]
         for i in range(m.get("mesas", 0)):
             my = 0.2 + i * (mh + 0.15)
+            if my + mh > toldo["h"]:
+                break
             caja.hijos.append(Caja("mesa", 0.2, my, min(mw, toldo["w"] - 0.4), mh, rol="mesa"))
         sa = CONSTANTES["asiento_area"]
         for i in range(m.get("sillas", 0)):
@@ -158,13 +172,20 @@ def _solve_grid_2x(mods: List[Dict], pasillo: float) -> Tuple[List[Caja], float,
         x = col * (col_w + pasillo)
         y = row * (row_h + pasillo * 0.6)
         caja = Caja(m["nombre"], x, y, toldo["w"], toldo["h"], rol=m["tipo"])
-        # simplificado: mesas/sillas dentro
+        # colocar las cantidades REALES del modulo; el unico limite es que
+        # quepan dentro del toldo (misma regla que _solve_row)
         mw, mh = CONSTANTES["mesa"]["w"], CONSTANTES["mesa"]["h"]
-        for i in range(min(m.get("mesas", 0), 2)):
-            caja.hijos.append(Caja("mesa", 0.2, 0.2 + i * (mh + 0.1), mw, mh, rol="mesa"))
+        for i in range(m.get("mesas", 0)):
+            my = 0.2 + i * (mh + 0.1)
+            if my + mh > toldo["h"]:
+                break
+            caja.hijos.append(Caja("mesa", 0.2, my, min(mw, toldo["w"] - 0.4), mh, rol="mesa"))
         sa = CONSTANTES["asiento_area"]
-        for i in range(min(m.get("sillas", 0), 3)):
-            caja.hijos.append(Caja("silla", 0.2 + i * (sa + 0.08), toldo["h"] - sa - 0.15, sa, sa, rol="silla"))
+        for i in range(m.get("sillas", 0)):
+            sx = 0.2 + i * (sa + 0.08)
+            if sx + sa > toldo["w"]:
+                break
+            caja.hijos.append(Caja("silla", sx, toldo["h"] - sa - 0.15, sa, sa, rol="silla"))
         cajas.append(caja)
     cols = 2 if len(mods) > 1 else 1
     rows = (len(mods) + 1) // 2
