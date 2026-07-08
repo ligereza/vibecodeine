@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { 
   Map, Download, Plus, Trash2, Eye, EyeOff, Printer, RotateCcw,
   Scan, Users, Moon, Home, Table, Armchair, Box, Zap,
@@ -260,12 +260,21 @@ function buildElements(preset: Preset): Element[] {
 // ── Main component ───────────────────────────────────────────────────
 type Page = 'req' | 'map' | 'config';
 
+const PLANO_CHECKED_ITEMS_KEY = 'plano_checked_items';
+
 export default function PlanoTool() {
   const [preset, setPreset] = useState<Preset>('BASE');
   const [page, setPage] = useState<Page>('map');
   const [elements, setElements] = useState<Element[]>(() => buildElements('BASE'));
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [checkedItems, setCheckedItems] = useState<string[]>([]);
+  const [checkedItems, setCheckedItems] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem(PLANO_CHECKED_ITEMS_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
   const [legendPos, setLegendPos] = useState({ x: 2200, y: 150 });
   const [zoom, setZoom] = useState(1);
   const [showGrid, setShowGrid] = useState(true);
@@ -276,18 +285,31 @@ export default function PlanoTool() {
   const [backendStatus, setBackendStatus] = useState('');
 
   const [orgTexts, setOrgTexts] = useState({
-    who: 'Reduciendo Daño es una ONG chilena dedicada a la reduccion de riesgos y danos asociados al consumo de sustancias en contextos de ocio y alta exigencia.',
-    goal: 'Proveer un espacio de analisis quimico gratuito, orientacion objetiva, hidratacion y contencion psicologica para cuidar a los asistentes.'
+    who: 'Fundada en 2018, Reduciendo Daño es una ONG líder en implementación y formulación de políticas e insumos de reducción de daños en Chile, siendo pionera en la fabricación, distribución de implementos, reactivos y servicios de análisis de sustancias psicoactivas en el país. La Organización desarrolla proyectos de intervención en terreno orientados a fiestas, espacios de ocio y eventos donde existe consumo de sustancias psicoactivas. Nuestro objetivo es acercar herramientas de prevención, reducción de riesgos y educación preventiva, promoviendo decisiones informadas, el autocuidado y espacios más seguros.',
+    goal: 'El proyecto busca informar, orientar y acompañar a personas que consuman o planeen consumir sustancias, mediante estrategias enfocadas en la seguridad, el cuidado informado y la prevención durante eventos y actividades recreativas.'
   });
 
   const svgRef = useRef<SVGSVGElement>(null);
   const selectedElement = elements.find(e => e.id === selectedId);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(PLANO_CHECKED_ITEMS_KEY, JSON.stringify(checkedItems));
+    } catch {
+      // localStorage no disponible (modo privado, cuota, etc.) — no bloquear la UI
+    }
+  }, [checkedItems]);
 
   const applyPreset = (p: Preset) => {
     setPreset(p);
     setElements(buildElements(p));
     setSelectedId(null);
     setCheckedItems([]);
+    try {
+      localStorage.removeItem(PLANO_CHECKED_ITEMS_KEY);
+    } catch {
+      // localStorage no disponible — ignorar
+    }
   };
 
   const selectElementAndBringToFront = (id: string) => {
@@ -697,12 +719,17 @@ export default function PlanoTool() {
         </g>`;
     }).join('\n');
 
+    const printCanvasWidth = 2970;
+    const printCanvasHeight = 2100;
+    const legendWidth = 760;
     const legendHeight = Math.min(760, Math.max(190, 120 + Math.ceil(visibleLegendSymbols.length / 2) * 68));
+    const legendX = Math.min(Math.max(legendPos.x, 0), Math.max(0, printCanvasWidth - legendWidth));
+    const legendY = Math.min(Math.max(legendPos.y, 0), Math.max(0, printCanvasHeight - legendHeight));
     const legendRows = visibleLegendSymbols.map((el, i) => {
       const col = i % 2;
       const row = Math.floor(i / 2);
-      const x = legendPos.x + 44 + col * 360;
-      const y = legendPos.y + 138 + row * 68;
+      const x = legendX + 44 + col * 360;
+      const y = legendY + 138 + row * 68;
       const color = escapeHtml(el.color || '#111111');
       return `
         <g>
@@ -712,13 +739,13 @@ export default function PlanoTool() {
     }).join('\n');
 
     return `
-      <svg viewBox="0 0 2970 2100" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
-        <rect width="2970" height="2100" fill="#fafafa"/>
+      <svg viewBox="0 0 ${printCanvasWidth} ${printCanvasHeight}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+        <rect width="${printCanvasWidth}" height="${printCanvasHeight}" fill="#fafafa"/>
         <rect x="50" y="50" width="2870" height="1800" fill="none" stroke="#555" stroke-width="5" stroke-dasharray="30 20" rx="20"/>
         ${mapContent}
         <g transform="translate(0,0)">
-          <rect x="${legendPos.x}" y="${legendPos.y}" width="760" height="${legendHeight}" rx="30" fill="#f4f4f5" fill-opacity="0.96" stroke="#222" stroke-width="5"/>
-          <text x="${legendPos.x + 380}" y="${legendPos.y + 70}" text-anchor="middle" font-size="36" font-family="Arial, sans-serif" font-weight="900" fill="#333">LEYENDA TÉCNICA</text>
+          <rect x="${legendX}" y="${legendY}" width="${legendWidth}" height="${legendHeight}" rx="30" fill="#f4f4f5" fill-opacity="0.96" stroke="#222" stroke-width="5"/>
+          <text x="${legendX + 380}" y="${legendY + 70}" text-anchor="middle" font-size="36" font-family="Arial, sans-serif" font-weight="900" fill="#333">LEYENDA TÉCNICA</text>
           ${legendRows}
         </g>
         <text x="100" y="2010" font-size="34" font-family="Arial, sans-serif" font-weight="900" fill="#222">${escapeHtml(`${eventName.toUpperCase()} · ${eventVenue.toUpperCase()} · ${eventDate}`)}</text>
@@ -839,7 +866,7 @@ export default function PlanoTool() {
   const syncChecklistFromElements = (nextElements: Element[]) => {
     const visibleRequirementKeys = new Set(
       nextElements
-        .filter(el => el.visible && el.type === 'symbol' && el.symbolKey)
+        .filter(el => el.visible && el.symbolKey && (el.type === 'symbol' || (el.id || '').startsWith('req-')))
         .map(el => el.symbolKey as string)
     );
     const mapEntries = Object.entries(REQUIREMENT_SYMBOL_MAP);
