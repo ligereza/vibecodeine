@@ -2,36 +2,38 @@
   "version": "0.48.5",
   "date": "2026-07-08",
   "assistant_name": "Cauce",
-  "repo_main": "c7500da",
-  "current_focus": "Restructure_optima paso 2 (colapsar docs, un solo hot path). Docs obsoletos archivados; falta fusionar AGENTS.md + AI_OPERATING_LAYER + AI_PROVIDER_ROUTING + REPO_MAP en CLAUDE.md unico.",
+  "repo_main": "6190469",
+  "current_focus": "Rama fix/unfinished-tools-4 pusheada (3 commits): 4 tools terminadas + canal pedir_codigo.py + pipeline flyer convergido en flyer-auto. Falta: merge del PR y activar claude.yml (GitHub App + secret).",
   "done": [
-    "Contraportadas dark de los 8 suplementos: gen_contraportadas.py rellena la plantilla svg/suplementos_rd/_plantilla/contraportada_cambios.svg con el JSON maestro; salida svg/suplementos_rd/09_contraportadas_dark/*.svg. Reproducible via repo.",
-    "Puente agente<->Illustrator (ai_illustrator_bridge.jsx) probado end-to-end via win32com DoJavaScript, sin pantalla: export doc->state.json, apply ops.json (setText/find/addText...).",
-    "AI Operating Layer v1 (docs + .aider.conf.example + .env.example + contexto_repo task + skill taller-svg-rd).",
-    "Toolbox tools/ + tools/svg/ (context_pack, token_budget, handoff, verify_all, svg_lint, svg_to_pdf, recolor_svg, pack_delivery) + .githooks/pre-commit.",
-    "Piezas SVG editables en Illustrator: Arial, logo vectorial inline, titulo centrado, parrafos como bloque (tspan). Flyers dark + brief packs eventos.",
-    "2026-07-08: docs obsoletos archivados en _archive/legacy_20260708_0450/ (.agent.md, AGENT_GUIDE, AGENT_OPERATING_MANUAL, DEMO_JEFE_2026-06-29, FASE5_CALIDAD, RELEASE_v016) + seccion Mision agregada a CLAUDE.md (commit c7500da)."
+    "2026-07-08 (sesion tools): 4 herramientas inconclusas terminadas (gota_rd ENDPOINT real, adobe_panel ruta dinamica, ai_illustrator_bridge MODE config, logo_clean_master backup automatico). Origen Qwen web, revision Gemini, cherry-pick limpio.",
+    "tools/vibo_voz/pedir_codigo.py: canal de ESCRITURA directo a API (contraparte de pedir_a_gemini.py). Gemini primario probado end-to-end; nvidia y github como proveedores manuales (--proveedor). Scope-lock, scrub de secretos, backups .bak.",
+    "Pipeline flyer convergido: src/flujo/eventos/flyer_auto.py ahora espera activa al flyer_final.jpg del Droplet (300s) y renderiza con textura sobre RD.blend via src/flujo/eventos/blender_render.py (bpy headless); fallback cartelera.blend. Se elimino tools/flyer_eventos/local/ (duplicaba flyer_auto).",
+    "Rama Qwen flujo(zh)-3088f borrada del remoto: tenia scope creep peligroso (borraba 10 skills activas, reescribia vibo.py). Los 4 fixes utiles ya estaban cherry-pickeados.",
+    "C:/rd/AUTOMATIZACION (fuera del repo): actualizar.py arreglado (syntax error preexistente lineas 57-63) + blender_render.py agregado; queda como legacy de referencia."
   ],
   "doing": [
-    "Cierre de sesion; todo en main (c7500da), working tree limpio."
+    "Rama fix/unfinished-tools-4 pusheada; PR pendiente de abrir/mergear: https://github.com/ligereza/vibecodeine/pull/new/fix/unfinished-tools-4"
   ],
   "next": [
+    "Mergear PR fix/unfinished-tools-4 a main.",
+    "Activar claude.yml (INACTIVO): instalar GitHub App claude-code-action, agregar secret ANTHROPIC_API_KEY, branch protection en main.",
+    "gota_rd backend (diferido): decidir donde vive la data de reactivos antes de servir endpoint real.",
+    "tools/asistente_pedido y tools/canva_data: SPECs de una linea, pedir alcance al usuario antes de codear.",
+    "Test end-to-end del leg Droplet+Blender en la maquina de render (repo compila; falta correr con Photoshop/Blender reales).",
     "Afinar alineacion de las 8 contraportadas vs la plantilla real.",
-    "Logo color vectorial (assets/logo/RD_logo_vector_color.svg) -> variante dark 'color' en generadores.",
-    "Probar Aider real con los perfiles (pospuesto).",
     "Probar bridges Photoshop/After Effects en las apps reales (pospuesto)."
   ],
   "blockers": [
-    "Cuota Claude casi agotada: reservar Claude para arquitectura/review; lo barato a Qwen/NIM/OpenRouter.",
+    "Cuota Claude finita: escritura mecanica va por pedir_codigo.py (Gemini), lectura por pedir_a_gemini.py.",
     "build_chataigne_noisette_experimental: falta el .noisette real.",
-    "Push directo a main a veces bloqueado por guardrail: PR o reintento tras fetch; si GitHub falla, airdrop.zip."
+    "claude.yml inactivo hasta GitHub App + secret (ver next)."
   ],
   "ai_stack": {
-    "architect_reviewer": "Claude Code / Opus 4.8 (ANTHROPIC_API_KEY)",
-    "orchestrator": "Aider (API) - .aider.conf.yml",
-    "cheap_editor": "Qwen API (DASHSCOPE_API_KEY)",
-    "alt_provider": "NVIDIA NIM (NVIDIA_API_KEY)",
-    "router_fallback": "OpenRouter (OPENROUTER_API_KEY)",
-    "external_support": "Copilot / LMArena (no fuente de verdad)"
+    "architect_reviewer": "Claude Code (director; solo arquitectura/critico)",
+    "reader": "Gemini API via tools/vibo_voz/pedir_a_gemini.py (lectura/resumen barato)",
+    "writer": "Gemini API via tools/vibo_voz/pedir_codigo.py (escritura mecanica, primario)",
+    "writer_fallback_manual": "NVIDIA NIM (--proveedor nvidia; free tier saturado, solo off-peak) y GitHub Models deepseek-v3 (--proveedor github; 8k in/4k out, solo tareas chicas)",
+    "descartados": "Aider (bugs Windows + free tier roulette, desinstalado 2026-07-08), OpenRouter (429 constante), logo color vectorial (descartado en handoff previo)",
+    "external_support": "Qwen web / LMArena (manual, no fuente de verdad)"
   }
 }
