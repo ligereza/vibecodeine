@@ -14,8 +14,11 @@ Uso:
 Proveedor por defecto: SOLO gemini (probado fiable). NVIDIA NIM queda como opcion
 manual via --proveedor nvidia (2026-07-08: free tier saturado, 503 "workers busy"
 y cortes en payloads grandes; no confiar para trabajo desatendido):
-    gemini  GEMINI_API_KEY   modelo GEMINI_CODE_MODEL (default gemini-2.5-flash)
-    nvidia  NVIDIA_API_KEY   modelo NVIDIA_CODE_MODEL (default deepseek-ai/deepseek-v4-flash)
+    gemini  GEMINI_API_KEY        modelo GEMINI_CODE_MODEL (default gemini-2.5-flash)
+    nvidia  NVIDIA_API_KEY        modelo NVIDIA_CODE_MODEL (default deepseek-ai/deepseek-v4-flash)
+    github  GITHUB_MODELS_TOKEN   modelo GITHUB_CODE_MODEL (default deepseek/deepseek-v3-0324)
+            OJO: free tier limita 8k tokens de entrada / 4k de salida por request
+            -> solo tareas chicas (archivos <200 lineas); verificado 2026-07-08
 
 El modelo debe responder SOLO bloques con este formato exacto (lo parseamos):
     === FILE: ruta/relativa/al/repo ===
@@ -194,7 +197,31 @@ def _llamar_nvidia(prompt: str) -> str:
     raise ultimo_error
 
 
-_PROVEEDORES = {"gemini": _llamar_gemini, "nvidia": _llamar_nvidia}
+def _llamar_github(prompt: str) -> str:
+    token = os.environ.get("GITHUB_MODELS_TOKEN")
+    if not token:
+        raise RuntimeError("Falta GITHUB_MODELS_TOKEN")
+    modelo = os.environ.get("GITHUB_CODE_MODEL", "deepseek/deepseek-v3-0324")
+    # free tier: 8k in / 4k out por request -> abortar temprano si no entra
+    if len(prompt) > 28_000:  # ~8k tokens aprox
+        raise RuntimeError("prompt excede el limite de 8k tokens de GitHub Models; usa gemini")
+    cuerpo = json.dumps({
+        "model": modelo,
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.1,
+        "max_tokens": 4096,
+    }).encode("utf-8")
+    req = urllib.request.Request(
+        "https://models.github.ai/inference/chat/completions",
+        data=cuerpo,
+        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=120) as r:
+        data = json.loads(r.read().decode("utf-8"))
+    return data["choices"][0]["message"]["content"] or ""
+
+
+_PROVEEDORES = {"gemini": _llamar_gemini, "nvidia": _llamar_nvidia, "github": _llamar_github}
 
 
 def _aplicar(respuesta: str, permitidos: list[Path]) -> int:
@@ -223,7 +250,7 @@ def main():
         proveedor_forzado = args[i + 1]
         del args[i:i + 2]
     if len(args) < 2:
-        sys.exit('Uso: py pedir_codigo.py [--aplicar] [--proveedor gemini|nvidia] "tarea" ruta1 [ruta2 ...]')
+        sys.exit('Uso: py pedir_codigo.py [--aplicar] [--proveedor gemini|nvidia|github] "tarea" ruta1 [ruta2 ...]')
 
     tarea, rutas = args[0], args[1:]
     material, archivos = _reunir(rutas)

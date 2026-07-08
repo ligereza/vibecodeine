@@ -64,6 +64,7 @@ projects/flyer_eventos/YYYY-MM-DD_ig_SHORTCODE/
 ```
 
 ## Scripts actuales
+Nota: Los scripts referenciados scripts/flyer_*.sh, scripts/new_flyer_evento.sh, scripts/ig_download.py, scripts/flyer_from_email.py, scripts/ig_redownload.py, scripts/flyer_analyze.py YA NO EXISTEN como fuente; la funcionalidad vive en subcomandos del CLI flujo (flyer-import, ig-redownload, analyze, index, export, eventos flyer-auto). Los comandos bash legacy quedan como referencia histórica.
 
 Crear proyecto manual:
 
@@ -180,7 +181,7 @@ py scripts/ig_download.py "https://www.instagram.com/p/XXXX/" ./output
 - [x] Export ZIP listo para Photoshop → `flujo export`
 - [x] Paleta exportable `.aco` / `.ase` para PS / AI
 - [x] Índice SQLite de flyers → `flujo index`
-- [ ] Preparar integración Blender.
+- [x] Preparar integracion Blender. (hecho: flujo eventos flyer-auto --render-blender usa RD.blend + src/flujo/eventos/blender_render.py, espera activa al output del Droplet)
 
 ## Descarga Instagram
 

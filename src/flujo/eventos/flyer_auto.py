@@ -132,6 +132,29 @@ def _open_blender(blender_exe: str, blender_file: Path) -> None:
     subprocess.Popen([blender_exe, str(blender_file)], shell=False)
 
 
+def _wait_for_file_update(path: Path, after_time: float, timeout_s: float = 300.0, poll_s: float = 2.0) -> bool:
+    """Espera activa a que `path` exista con mtime posterior a `after_time`."""
+    deadline = time.time() + timeout_s
+    while time.time() < deadline:
+        try:
+            if path.exists() and path.stat().st_mtime >= after_time:
+                return True
+        except OSError:
+            pass  # el Droplet puede estar escribiendo el archivo justo ahora
+        time.sleep(poll_s)
+    return False
+
+
+def _render_blender_texture(blender_exe: str, texture: Path, output: Path, template: Path | None) -> None:
+    """Render headless via blender_render.py: textura -> material 'Texture' -> still."""
+    script = Path(__file__).with_name("blender_render.py")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    cmd = [blender_exe, "--background", "--python", str(script), "--", str(texture), str(output)]
+    if template is not None:
+        cmd.append(str(template))
+    subprocess.run(cmd, check=True)
+
+
 def _render_blender_frame(blender_exe: str, blender_file: Path, output_path: Path) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     # Blender -o wants a path prefix; -f 1 appends frame number + extension.
@@ -169,15 +192,20 @@ def run_eventos_flyer_auto(
     Expected local files in base_dir:
     - Droplet_Flyer.exe
     - historia.psd
-    - cartelera.blend
+    - RD.blend (plantilla textura; si falta, fallback a cartelera.blend frame 1)
+    - flyer_final.jpg (lo produce el Droplet; se espera activamente hasta 300s)
     - input_ig.jpg will be replaced/created
     - palette_ig.png and palette_ig.json will be written
+    - render_output.png (salida del render con RD.blend)
     """
     base = (base_dir or default_base_dir()).resolve()
     droplet = base / "Droplet_Flyer.exe"
     psd = base / "historia.psd"
     blender_file = base / "cartelera.blend"
     blender_render = base / "preview_cartelera.png"
+    rd_blend = base / "RD.blend"
+    flyer_final = base / "flyer_final.jpg"  # output real del Droplet de Photoshop
+    render_out = base / "render_output.png"
     input_img = base / "input_ig.jpg"
     palette_png = base / "palette_ig.png"
     palette_json = base / "palette_ig.json"
@@ -199,21 +227,40 @@ def run_eventos_flyer_auto(
         time.sleep(max(0.0, sleep_seconds))
 
         started_droplet = False
+        droplet_launch_time = 0.0
         if run_droplet:
             if not droplet.exists():
                 raise FileNotFoundError(f"Missing droplet: {droplet}")
             if not psd.exists():
                 raise FileNotFoundError(f"Missing PSD: {psd}")
+            droplet_launch_time = time.time()
             _start_droplet(droplet, psd)
             started_droplet = True
 
         started_blender = False
         rendered_blender = False
-        if open_blender or render_blender:
-            if not blender_file.exists():
-                raise FileNotFoundError(f"Missing Blender file: {blender_file}")
+        if open_blender and not blender_file.exists():
+            raise FileNotFoundError(f"Missing Blender file: {blender_file}")
         if render_blender:
-            _render_blender_frame(blender_exe, blender_file, blender_render)
+            if started_droplet:
+                # espera activa al output del Droplet (antes: sleep ciego)
+                if not _wait_for_file_update(flyer_final, droplet_launch_time):
+                    raise TimeoutError(
+                        f"El Droplet no produjo {flyer_final} en 300s; "
+                        "revisa Photoshop antes de renderizar."
+                    )
+            if rd_blend.exists():
+                # render con textura sobre la plantilla RD.blend
+                texture = flyer_final if flyer_final.exists() else input_img
+                _render_blender_texture(blender_exe, texture, render_out, rd_blend)
+                blender_render = render_out
+            else:
+                # fallback legado: frame 1 de cartelera.blend
+                if not blender_file.exists():
+                    raise FileNotFoundError(
+                        f"Missing Blender file: ni {rd_blend} ni {blender_file}"
+                    )
+                _render_blender_frame(blender_exe, blender_file, blender_render)
             rendered_blender = True
         if open_blender:
             _open_blender(blender_exe, blender_file)
