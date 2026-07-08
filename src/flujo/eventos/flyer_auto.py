@@ -86,6 +86,43 @@ def _download_instagram(shortcode: str, temp_dir: Path) -> Path:
     return _first_downloaded_image(temp_dir)
 
 
+_MIRROR_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+              "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
+
+
+def _download_via_mirror(shortcode: str, temp_dir: Path) -> Path:
+    """Fallback sin login: mirror publico (IG bloquea instaloader anonimo desde 2026).
+
+    Mejor esfuerzo sobre un servicio de terceros: si el mirror cambia su HTML o
+    muere, volver a instaloader con sesion logueada (instaloader --login).
+    """
+    import html as html_mod
+    import urllib.request
+
+    def _fetch(url: str, referer: str | None = None) -> bytes:
+        headers = {"User-Agent": _MIRROR_UA}
+        if referer:
+            headers["Referer"] = referer
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return r.read()
+
+    page = _fetch(f"https://imginn.com/p/{shortcode}/").decode("utf-8", "replace")
+    urls = re.findall(
+        r'(?:data-src|src)="(https://[^"]+(?:imginn|scontent|cdninstagram)[^"]+)"', page)
+    urls = [html_mod.unescape(u) for u in urls
+            if "rsrc.php" not in u and (".jpg" in u or ".webp" in u)]
+    # t51.82787-15 = media del post; t51.2885-19 = avatar del perfil
+    post_media = [u for u in urls if "t51.82787" in u]
+    candidatos = post_media or [u for u in urls if "t51.2885-19" not in u]
+    if not candidatos:
+        raise FileNotFoundError("El mirror no devolvio imagen del post.")
+    data = _fetch(candidatos[0], referer="https://imginn.com/")
+    out = temp_dir / f"mirror_{shortcode}.jpg"
+    out.write_bytes(data)
+    return out
+
+
 def _extract_palette(image_path: Path, palette_png: Path, palette_json: Path, colors_count: int = 6) -> list[str]:
     """Extract dominant colors and write a swatch PNG + JSON list."""
     from PIL import Image, ImageDraw
@@ -218,7 +255,11 @@ def run_eventos_flyer_auto(
             shutil.rmtree(temp_dir, ignore_errors=True)
         temp_dir.mkdir(parents=True, exist_ok=True)
 
-        downloaded = _download_instagram(shortcode, temp_dir)
+        try:
+            downloaded = _download_instagram(shortcode, temp_dir)
+        except Exception:
+            # IG bloquea instaloader anonimo; intentar mirror publico
+            downloaded = _download_via_mirror(shortcode, temp_dir)
 
         if input_img.exists():
             input_img.unlink()
