@@ -158,11 +158,56 @@ def _extract_palette(image_path: Path, palette_png: Path, palette_json: Path, co
     return hex_colors
 
 
+def _photoshop_running() -> bool:
+    if os.name != "nt":
+        return False
+    try:
+        out = subprocess.run(["tasklist", "/FI", "IMAGENAME eq Photoshop.exe"],
+                             capture_output=True, text=True, timeout=15).stdout
+        return "Photoshop.exe" in out
+    except Exception:
+        return False
+
+
 def _start_droplet(droplet_path: Path, psd_path: Path) -> None:
-    if os.name == "nt":
-        subprocess.Popen(["cmd", "/c", "start", "", str(droplet_path), str(psd_path)], shell=False)
-    else:
+    if os.name != "nt":
         raise RuntimeError("Droplet launch is only supported on Windows.")
+    if _photoshop_running():
+        # varias instancias de Photoshop compiten y el droplet nunca entrega
+        # (comprobado 2026-07-08: 5 instancias colgadas); mejor fallar claro
+        raise RuntimeError(
+            "Photoshop ya esta abierto: cierra las instancias antes de lanzar "
+            "el droplet (multiples instancias se traban entre si)."
+        )
+    subprocess.Popen(["cmd", "/c", "start", "", str(droplet_path), str(psd_path)], shell=False)
+
+
+def _write_predominant_color(image_path: Path, out_png: Path) -> str:
+    """Color predominante-pero-claro del flyer -> PNG solido que RD.blend linkea."""
+    from PIL import Image
+
+    img = Image.open(image_path).convert("RGB")
+    thumb = img.copy()
+    thumb.thumbnail((240, 240))
+    pal = thumb.convert("P", palette=Image.Palette.ADAPTIVE, colors=6)
+    palette = pal.getpalette() or []
+    counts = sorted(pal.getcolors(240 * 240) or [], reverse=True)[:6]
+    colores = []
+    for cnt, idx in counts:
+        r, g, b = palette[idx * 3:idx * 3 + 3]
+        lum = 0.299 * r + 0.587 * g + 0.114 * b
+        colores.append((cnt, lum, (r, g, b)))
+    if not colores:
+        colores = [(1, 0.0, (0, 0, 0))]
+    # el mas luminoso entre los que tienen peso real (>15% del dominante)
+    colores.sort(key=lambda c: (-c[1], -c[0]))
+    candidato = next((c for c in colores if c[0] > counts[0][0] * 0.15), colores[0])
+    r, g, b = candidato[2]
+    # aclarar 25% hacia blanco
+    r, g, b = (int(r + (255 - r) * 0.25), int(g + (255 - g) * 0.25), int(b + (255 - b) * 0.25))
+    out_png.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGB", (512, 512), (r, g, b)).save(out_png)
+    return f"#{r:02x}{g:02x}{b:02x}"
 
 
 def _open_blender(blender_exe: str, blender_file: Path) -> None:
@@ -182,14 +227,6 @@ def _wait_for_file_update(path: Path, after_time: float, timeout_s: float = 300.
     return False
 
 
-def _render_blender_texture(blender_exe: str, texture: Path, output: Path, template: Path | None) -> None:
-    """Render headless via blender_render.py: textura -> material 'Texture' -> still."""
-    script = Path(__file__).with_name("blender_render.py")
-    output.parent.mkdir(parents=True, exist_ok=True)
-    cmd = [blender_exe, "--background", "--python", str(script), "--", str(texture), str(output)]
-    if template is not None:
-        cmd.append(str(template))
-    subprocess.run(cmd, check=True)
 
 
 def _render_blender_frame(blender_exe: str, blender_file: Path, output_path: Path) -> Path:
@@ -265,6 +302,8 @@ def run_eventos_flyer_auto(
             input_img.unlink()
         shutil.copy(downloaded, input_img)
         _extract_palette(input_img, palette_png, palette_json)
+        # RD.blend linkea RESULTADOS/color_predominante.png como material
+        _write_predominant_color(input_img, base / "RESULTADOS" / "color_predominante.png")
         time.sleep(max(0.0, sleep_seconds))
 
         started_droplet = False
@@ -291,9 +330,9 @@ def run_eventos_flyer_auto(
                         "revisa Photoshop antes de renderizar."
                     )
             if rd_blend.exists():
-                # render con textura sobre la plantilla RD.blend
-                texture = flyer_final if flyer_final.exists() else input_img
-                _render_blender_texture(blender_exe, texture, render_out, rd_blend)
+                # RD.blend ya linkea flyer_final.jpg y color_predominante.png
+                # desde disco: render directo del frame (validado 2026-07-08)
+                _render_blender_frame(blender_exe, rd_blend, render_out)
                 blender_render = render_out
             else:
                 # fallback legado: frame 1 de cartelera.blend
