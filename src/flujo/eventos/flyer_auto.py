@@ -108,13 +108,18 @@ def _download_via_mirror(shortcode: str, temp_dir: Path) -> Path:
             return r.read()
 
     page = _fetch(f"https://imginn.com/p/{shortcode}/").decode("utf-8", "replace")
-    urls = re.findall(
+    # 1) preferir imagenes DENTRO del contenedor del post (swiper-slide);
+    #    fuera de el aparecen avatares (t51.82787-19 en posts collab) y thumbs
+    slides = re.findall(
+        r'<div class="swiper-slide[^>]*>.*?(?:data-src|src)="(https://[^"]+)"', page, re.DOTALL)
+    urls = slides or re.findall(
         r'(?:data-src|src)="(https://[^"]+(?:imginn|scontent|cdninstagram)[^"]+)"', page)
     urls = [html_mod.unescape(u) for u in urls
-            if "rsrc.php" not in u and (".jpg" in u or ".webp" in u)]
-    # t51.82787-15 = media del post; t51.2885-19 = avatar del perfil
-    post_media = [u for u in urls if "t51.82787" in u]
-    candidatos = post_media or [u for u in urls if "t51.2885-19" not in u]
+            if "rsrc.php" not in u and "lazy.jpg" not in u and (".jpg" in u or ".webp" in u)]
+    # t51.82787-15 = media del post; -19 y t51.2885-19 = avatares (tambien en collab)
+    post_media = [u for u in urls if "t51.82787-15" in u]
+    candidatos = post_media or [u for u in urls
+                                if "t51.2885-19" not in u and "t51.82787-19" not in u]
     if not candidatos:
         raise FileNotFoundError("El mirror no devolvio imagen del post.")
     data = _fetch(candidatos[0], referer="https://imginn.com/")
