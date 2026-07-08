@@ -25,7 +25,7 @@
 (function () {
   // ------------------------------------------------------------------ CONFIG
   var JSON_PATH = "C:/IA/flujo/svg/suplementos_rd/_master_contraportadas.json";
-  var FLYER_ID  = "01_linea_suplementos_rd";   // id del master; "ALL" = intenta todos por artboard
+  var FLYER_ID  = "02_impulso";   // id del master; "ALL" = intenta todos por artboard
 
   var CANVAS_W = 2000, CANVAS_H = 2800;
   var SCALE  = 1;    // px del canvas -> unidades del documento (1 si el doc esta en px)

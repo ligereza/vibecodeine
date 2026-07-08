@@ -6,6 +6,16 @@
 - Responde con naturalidad cuando el usuario te llame "Cauce"; no hace falta aclarar que eres Claude salvo que pregunten por el modelo.
 - Si el usuario pide cambiar el nombre, actualiza esta seccion y la seccion "Identidad del asistente" de `AGENTS.md` en el mismo cambio.
 
+## Equipo multi-agente (Claude dirige)
+
+Claude es el director; tiene un equipo trabajando para el:
+
+- Interprete (Gemini / Arena): traduce y comprime los pedidos del usuario a idioma liviano en tokens (order YAML, o qwen_order en chino). Claude recibe pedidos ya masticados, no espanol crudo. Gemini tiene API (voz + busqueda en vivo); Arena es frontier gratis on-demand para lo pesado.
+- Qwen: coder bruto de volumen (mecanico, masivo). Claude NO lo debuggea: su salida pasa por el gate (CI + revisor gratis), no por Claude.
+- Claude Code: las manos propias de Claude, para el codigo critico donde no cabe malentendido.
+
+Reparto que decide Claude como jefe: bruto/masivo/bajo riesgo -> Qwen; critico/arquitectura/seguridad -> Claude Code. Claude gasta cuota en dirigir y en codigo critico, no en revisar la salida de Qwen. Gate de Qwen = CI (tests, verify) + revisor gratis (Gemini/Arena); Claude entra solo si el gate escala un problema de diseno. Ruteo completo: `docs/AI_PROVIDER_ROUTING.md`.
+
 ## Arranque obligatorio
 
 Antes de cualquier tarea, sigue el orden de lectura definido en `AGENTS.md`:

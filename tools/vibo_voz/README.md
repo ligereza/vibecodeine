@@ -12,10 +12,14 @@ revisar archivos, y delegar tareas de archivos/codigo a un "secretario" Claude C
 - **REDU** - modo trabajo confidencial de la ONG (Reduciendo Dano), sesion aparte,
   con GitHub de solo lectura. Se activa solo cuando detecta tema de trabajo.
 
-## El secretario Claude (bridge, bajo demanda, 0 tokens en reposo)
+## El secretario ejecutor (bridge, bajo demanda, 0 tokens en reposo)
 
-Gemini resuelve solo lo que puede con herramientas baratas; **solo llama a Claude
-(caro) cuando hay que crear/copiar/mover/editar archivos o correr codigo.**
+Gemini (interprete/voz) resuelve solo lo que puede con herramientas baratas; el
+ejecutor solo entra para crear/copiar/mover/editar archivos o correr codigo. Reparto
+del equipo (canonico en `docs/AI_PROVIDER_ROUTING.md`): el **volumen** lo hace el coder
+bruto barato (Qwen, o el modelo cheap de `CLAUDE_MODEL`) y su salida pasa por el gate
+(CI + revisor gratis); **Claude caro** queda para lo critico y la arquitectura, no para
+el volumen ni para debuggear a Qwen.
 
 Herramientas de Gemini:
 - `leer_archivo` - revisa contenido del repo SIN llamar a Claude (barato, restringido
@@ -31,7 +35,8 @@ Proyectos (carpetas) en `proyectos.json` (local, ignorado): `flujo` = este repo,
 
 ## Ahorro y anti-bucles
 
-- **Escalamiento**: Gemini hace lo que puede; Claude es el ultimo recurso.
+- **Escalamiento**: Gemini hace lo que puede; el coder bruto barato hace el volumen;
+  Claude (caro) es el ultimo recurso, solo para lo critico/arquitectura.
 - **Anti-bucle**: un solo secretario a la vez + freno de 5 ordenes / 60s.
 - **Preambulo**: el secretario hace la tarea UNA vez, no pregunta al vacio, y en
   tareas simples no hace el onboarding completo del repo.
