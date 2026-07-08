@@ -1,7 +1,7 @@
 # flujo · CLI Reference (v0.48.5)
 
 **Entrada diaria del usuario:** `flujo app` (o `flujo app --desktop`) — lanza servidor + hub pro workspace.
-**Entrada obligatoria para agentes de IA:** `AGENTS.md` (raiz), no este doc — ver `docs/REPO_MAP.md`.
+**Entrada obligatoria para agentes de IA:** `CLAUDE.md` (raiz), no este doc.
 
 La CLI `flujo` (Typer, `src/flujo/cli.py`) es la entrada principal al sistema. La mayoria de los scripts sueltos historicos de `scripts/` fueron archivados en `_archive/legacy_*/` por estar superados por comandos `flujo ...` (ver `docs/HIGIENE_REPO.md`).
 

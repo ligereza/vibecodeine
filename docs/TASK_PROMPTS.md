@@ -19,7 +19,7 @@ Sin relleno. Si algo no esta en las rutas, di "no visible".
 ## 2. Claude: validar el plan
 
 ```
-Eres arquitecto/revisor del repo 'flujo'. Lee AGENTS.md + context/LAST_HANDOFF.md si hace falta.
+Eres arquitecto/revisor del repo 'flujo'. Lee CLAUDE.md + context/LAST_HANDOFF.md si hace falta.
 Aqui va un plan propuesto por un modelo barato para: <tarea>.
 Plan:
 <plan>

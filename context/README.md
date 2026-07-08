@@ -30,7 +30,7 @@ Los tres HTMLs **son la UI completa de la app** cuando los sirve el backend de `
 - Caches limpiados completamente (2026-06-22): 16 __pycache__ + 123 *.pyc + .pytest_cache (solo generados, ver LAST_HANDOFF para rutas exactas).
   **Siempre empieza por `flujo app` → usa el hub (`flujo_hub.html`) + LAST_HANDOFF.md** para el uso diario de la app y reanudación.
 
-Ver también: `LAST_HANDOFF.md`, `../README.md`, `../docs/REPO_MAP.md` y `../docs/HIGIENE_REPO.md`.
+Ver también: `LAST_HANDOFF.md`, `../README.md`, `../CLAUDE.md` (mapa del repo) y `../docs/HIGIENE_REPO.md`.
 
 ## Flujo recomendado (diario — práctico para diseñador)
 

@@ -18,18 +18,17 @@ This repository is optimized for agent continuity. The goal is operational clari
 Read in this order:
 
 ```txt
-1. AGENTS.md
+1. CLAUDE.md
 2. context/LAST_HANDOFF.md
 3. docs/AGENT_AIRDROP_PROTOCOL.md
-4. docs/REPO_MAP.md
-5. The files related to the task
+4. The files related to the task
 ```
 
 If there is a conflict, this order wins:
 
 ```txt
 1. Direct user instruction
-2. AGENTS.md
+2. CLAUDE.md
 3. context/LAST_HANDOFF.md
 4. Specific docs
 5. README.md

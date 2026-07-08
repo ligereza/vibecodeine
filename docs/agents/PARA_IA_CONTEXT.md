@@ -14,7 +14,7 @@
 **Solo si necesitas profundidad después de lo anterior:**
 - `context/flujo_hub.html` (el workspace principal: intake, visualizadores SVG/plano + UI delegación)
 - `context/svg_visualizer.html` y `context/plano_demo.html`
-- `README.md` + `docs/REPO_MAP.md`
+- `README.md` + `CLAUDE.md` (mapa del repo)
 - `docs/AGENT_OPERATING_MANUAL.md` (roles especializados + prompts listos)
 
 **Nunca leas todos los handoffs/checkpoints antiguos al principio.** El `LAST_HANDOFF.md` + `flujo daily` deben bastar para continuar.

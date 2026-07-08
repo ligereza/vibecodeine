@@ -54,7 +54,7 @@ aider --model openrouter/qwen/qwen-2.5-coder-32b-instruct src/flujo/algo.py
 - Da a Aider **solo los archivos de la tarea** (menos contexto = mas barato y preciso).
   Primero `py tools/vibo_voz/contexto_repo.py task "<keywords>"` para saber cuales.
 - Deja que **Claude (architect) valide el plan** antes de que el editor barato aplique.
-- **Revisa el diff** antes de commitear (Claude para lo critico). Ver docs/AI_PROVIDER_ROUTING.md.
+- **Revisa el diff** antes de commitear (Claude para lo critico). Ver CLAUDE.md (bloque "Equipo multi-agente").
 - Verifica siempre: `py -m compileall src/flujo && py -m pytest tests/ -q && py -m flujo verify`.
   Si tocaste web: `cd web && npm run build:context && cd ..`.
 - Cierra la sesion actualizando `context/LAST_HANDOFF.md` + `context/SESSION_STATE.json`.

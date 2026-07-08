@@ -42,7 +42,7 @@ Cuando una IA reciba el repo, debe empezar por `flujo app` + hub + este archivo 
    - `README.md` (idea + arquitectura + estado)
    - Estructura clara (ejemplos/, src/ o engine/, assets/)
 3. Actualizar este `README.md`
-4. Actualizar `docs/REPO_MAP.md`
+4. Actualizar seccion "Mapa del repo" en `CLAUDE.md`
 5. (Ideal) Crear referencia en `flujo/` si afecta identidad visual.
 
 **Export a tus herramientas:**

@@ -19,13 +19,15 @@ handoff:
       - no debuggees a Qwen; el gate es CI + revisor gratis (Gemini/Arena)
       - recibes pedidos ya comprimidos por el interprete, en YAML liviano
       - gastas cuota en dirigir + codigo critico, no en volumen
-    canonical: [docs/AI_PROVIDER_ROUTING.md, "CLAUDE.md (bloque 'Equipo multi-agente')"]
+    canonical: ["CLAUDE.md (bloque 'Equipo multi-agente')"]
 
   done_this_session:
     - "cambio de modelo de sesion a Sonnet 5 (guardado como default)"
     - "commit c7500da: archivar docs obsoletos (paso 2 de restructure_optima) - .agent.md y docs/{AGENT_GUIDE,AGENT_OPERATING_MANUAL,DEMO_JEFE_2026-06-29,FASE5_CALIDAD,RELEASE_v016}.md movidos a _archive/legacy_20260708_0450/ (git mv, historial preservado; se archivan, no se borran, por regla de AGENTS.md)"
     - "CLAUDE.md: nueva seccion 'Mision (por que existe esta etapa)' explicando el norte ANTES/DESPUES de Claude en el repo"
     - "nota: estos cambios (archivado + seccion Mision) ya estaban hechos sin commitear al abrir esta sesion, de origen incierto (no de una conversacion registrada); se confirmo con el usuario y se commitearon como cierre"
+    - "instalado caveman (JuliusBrussee/caveman) en .claude/skills/: 7 skills de compresion de tokens. Limpieza de duplicados (el instalador escribio 4 copias por falso-positivo en carpetas agent/ y data/ propias de flujo); solo queda .claude/skills/caveman* (copias reales, no symlinks). caveman-compress (sobrescribe .md via LLM) marcado High Risk por Snyk del instalador -- revisado el codigo: tiene denylist de nombres sensibles + backup fuera de repo + verificacion antes de sobrescribir; riesgo real bajo pero no usarlo sobre CLAUDE.md/LAST_HANDOFF.md sin revisar el diff (puede limar matices de las reglas)."
+    - "restructure_optima paso 2 completo: AGENTS.md + docs/AI_OPERATING_LAYER.md + docs/AI_PROVIDER_ROUTING.md + docs/REPO_MAP.md fusionados en CLAUDE.md unico. AGENTS.md queda stub. Los 3 docs archivados en _archive/legacy_20260708_0450/. Referencias actualizadas en README.md, context/README.md, projects/README.md, docs/{CLI,TASK_PROMPTS,HIGIENE_REPO,AIDER_API_SETUP,AIRDROP,agents/PARA_IA_CONTEXT}.md, .claude/agents/.agent.md, .claude/skills/entregas-rd/SKILL.md, tools/vibo_voz/README.md."
 
   next:
     arrancar_flujo_github_actions:   # norte: que el repo funcione sin computador
@@ -84,7 +86,7 @@ handoff:
     principio: "GitHub es el unico sustrato; todo lo demas se resta. El sistema optimo es mas chico, no mas grande."
     pasos:
       - "1. Matar el airdrop: Issue=tarea, PR=entrega, CI=verify, branch protection=gate. Borrar _airdrop, _airdrop_backups, validate_airdrop.py, run_airdrop_checks.py y sus docs. Cero ceremonia zip."
-      - "2. Una sola entrada, no 70: colapsar AGENTS+CLAUDE+AI_OPERATING_LAYER+AI_PROVIDER_ROUTING+REPO_MAP+OPERATING_MANUAL+GUIDE en UN CLAUDE.md apretado que lee el Action. Archivar el resto fuera del hot path. Arrancar leyendo <1 archivo mata la perdida de contexto: hay menos que perder. [EN PROGRESO 2026-07-08: .agent.md + AGENT_GUIDE/AGENT_OPERATING_MANUAL/DEMO_JEFE/FASE5_CALIDAD/RELEASE_v016 ya archivados en _archive/legacy_20260708_0450/. Falta: colapsar AGENTS.md + AI_OPERATING_LAYER + AI_PROVIDER_ROUTING + REPO_MAP en el CLAUDE.md unico.]"
+      - "2. [HECHO 2026-07-08] Una sola entrada: AGENTS.md + AI_OPERATING_LAYER + AI_PROVIDER_ROUTING + REPO_MAP fusionados en CLAUDE.md (secciones: Identidad, Mision, Equipo multi-agente, Entorno, Regla central, Como trabajar, Continuidad, Verificacion, Airdrop, Limpieza, Mapa del repo, Areas operativas, Entrega final). AGENTS.md quedo como stub de 4 lineas (compat con tools que buscan ese nombre por convencion). AI_OPERATING_LAYER/AI_PROVIDER_ROUTING/REPO_MAP archivados en _archive/legacy_20260708_0450/. Referencias cruzadas actualizadas en ~15 docs activos. Restan ~55 docs/ sin tocar (fuera de alcance de este paso; son referencia especifica de areas, no entrada)."
       - "3. El equipo, solo lo que tiene API: Gemini (interprete/voz/busqueda), Qwen (bulk), Claude (Actions: director+critico). Arena = consulta humana opcional, NO pilar automatizado. La voz (vibo_voz) es un front aparte; no enredarla con el pipeline de codigo."
       - "4. Dejar de optimizar tokens a mano: retirar spanish-optimizer y las capas de compress/escalate/offload en prosa. Claude-en-Actions + CLAUDE.md corto + CI es el 90% del ahorro con el 10% de la maquinaria. Conservar solo contexto_repo (0 tokens, util de verdad)."
       - "5. Congelar el borde del producto y terminarlo: contraportadas, logo color, packs de eventos = PRs por el pipe nuevo. .noisette: dejar de tocar automator.py (el repo ya lo dice 4 veces) -> conseguir el archivo real o BORRAR la funcion experimental. Decidir, no thrashear."
