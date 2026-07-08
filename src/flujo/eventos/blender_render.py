@@ -1,8 +1,14 @@
-import sys
-import bpy
+"""Script bpy para render headless: carga una imagen como textura y renderiza.
+
+NO se importa desde flujo; Blender lo ejecuta:
+    blender --background --python blender_render.py -- <textura> <salida> [template.blend]
+"""
 import os
+import sys
+
 
 def main():
+    import bpy  # solo existe dentro de Blender; mantener el modulo importable fuera
     try:
         # Obtener argumentos después de '--'
         if '--' in sys.argv:
