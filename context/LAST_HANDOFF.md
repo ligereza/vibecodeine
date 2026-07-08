@@ -21,7 +21,16 @@ handoff:
       - gastas cuota en dirigir + codigo critico, no en volumen
     canonical: ["CLAUDE.md (bloque 'Equipo multi-agente')"]
 
-  done_this_session:
+  done_this_session:   # sesion 2026-07-08 (tools inconclusas + canal escritura)
+    - "rama fix/unfinished-tools-4 pusheada (3 commits: eca7a28, cfe2654, fce7da6); PR pendiente: https://github.com/ligereza/vibecodeine/pull/new/fix/unfinished-tools-4"
+    - "4 herramientas inconclusas terminadas: gota_rd (ENDPOINT configurable + fetch real), adobe_panel (REPO_TOOLS dinamico + config.json), ai_illustrator_bridge (MODE via config/dialogo, JSON.parse ES3-safe), logo_clean_master (backup automatico pre-destructivo). Codigo de Qwen web cherry-pickeado; revision via Gemini API."
+    - "leccion Qwen: su rama tenia 81 archivos (borraba 10 skills activas, reescribia vibo.py). Solo se tomaron los 4 archivos de la tarea; la rama remota se borro. Regla nueva: scope-check del diff (git diff --stat vs lista permitida) ANTES de revisar contenido."
+    - "tools/vibo_voz/pedir_codigo.py NUEVO: canal de escritura directo a API. Gemini primario (probado end-to-end en tareas reales); --proveedor nvidia (NIM saturado free tier, solo off-peak) y --proveedor github (GitHub Models deepseek-v3-0324, 8k in/4k out, solo tareas chicas). Scope-lock a archivos pasados, scrub de secretos, backup .bak."
+    - "Aider + OpenRouter DESCARTADOS definitivo: aider desinstalado (bugs Windows: UnicodeEncodeError cp1252, browser spam en crash) y OpenRouter free tier 429 constante. pedir_codigo.py los reemplaza con menos piezas."
+    - "pipeline flyer convergido: src/flujo/eventos/flyer_auto.py ahora espera activa al flyer_final.jpg del Droplet (mtime, 300s) y renderiza textura sobre RD.blend via src/flujo/eventos/blender_render.py (bpy headless, NUEVO); fallback cartelera.blend. tools/flyer_eventos/local/ eliminado (duplicaba flyer_auto). SPEC.md: checkbox Blender cerrado."
+    - "fuera del repo: C:/rd/AUTOMATIZACION/actualizar.py arreglado (syntax error preexistente) + blender_render.py; queda como legacy de referencia, la version canonica es flujo eventos flyer-auto."
+
+  done_sesion_anterior:
     - "cambio de modelo de sesion a Sonnet 5 (guardado como default)"
     - "commit c7500da: archivar docs obsoletos (paso 2 de restructure_optima) - .agent.md y docs/{AGENT_GUIDE,AGENT_OPERATING_MANUAL,DEMO_JEFE_2026-06-29,FASE5_CALIDAD,RELEASE_v016}.md movidos a _archive/legacy_20260708_0450/ (git mv, historial preservado; se archivan, no se borran, por regla de AGENTS.md)"
     - "CLAUDE.md: nueva seccion 'Mision (por que existe esta etapa)' explicando el norte ANTES/DESPUES de Claude en el repo"
@@ -42,7 +51,11 @@ handoff:
       - "[HECHO 2026-07-08] alineacion de las 8 contraportadas: el usuario lo trabajo en sesion aparte (rama claude/status-pending-items-51t92w, commits 28f903d + c347fb4 -- titulo a la izquierda en el ovalo sin kicker, texto calibrado a las cajas reales). Mergeado a main con --no-ff. Fuente ahora svg/suplementos_rd/_master_contraportadas.json (antes leia projects/piezas_vectoriales/.../contenido_suplementos_rd.json)."
       - "[DESCARTADO 2026-07-08] logo color vectorial: el usuario confirmo que es innecesario, no se hace."
       - probar bridges Photoshop/After Effects en apps reales [pospuesto]
-      - "Aider descartado: es local; el norte es Actions"
+      - "[DESCARTADO 2026-07-08] Aider: desinstalado (bugs Windows + free tier roulette); reemplazo pedir_codigo.py"
+      - "mergear PR fix/unfinished-tools-4 a main"
+      - "gota_rd backend [diferido]: decidir donde vive la data de reactivos antes de servir endpoint"
+      - "tools/asistente_pedido y tools/canva_data: SPECs de una linea, pedir alcance antes de codear"
+      - "test end-to-end Droplet+Blender en la maquina de render (repo compila, falta correr real)"
 
   blockers:
     - "cuota Claude: se resuelve sacando a Claude del chat -> Actions (ese es el flujo a arrancar)"
