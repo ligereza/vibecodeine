@@ -1,12 +1,13 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { 
   Map, Download, Plus, Trash2, Eye, EyeOff, Printer, RotateCcw,
   Scan, Users, Moon, Home, Table, Armchair, Box, Zap,
   Lightbulb, Droplet, Thermometer, User, ShieldAlert, HeartPulse, Utensils,
   ChevronRight, ChevronLeft, Settings, Copy, Layers, Grid3X3, FileText,
-  Heart, AlertTriangle, Coffee, RefreshCw
+  Heart, AlertTriangle, Coffee, RefreshCw, Flame
 } from 'lucide-react';
 import { cn } from '../utils/cn';
+import { RD_PALETTE, RD_LOGO, calcCostos, formatCLP, ALL_PRESETS, type ExportTheme } from '../rdBrand';
 
 // ── Types ────────────────────────────────────────────────────────────
 type Preset = 'UNDER' | 'BASE' | 'MAINSTREAM';
@@ -117,6 +118,7 @@ const SYMBOL_CATALOG: SymbolSpec[] = [
   { key: 'food', label: 'Alimentación', color: ZONE_COLORS.food, icon: 'Utensils', x: 2200, y: 1300, w: 160, h: 160 },
   { key: 'testeo', label: 'Testeo', color: ZONE_COLORS.testeo, icon: 'AlertTriangle', x: 1000, y: 550, w: 200, h: 200 },
   { key: 'contencion', label: 'Contención', color: ZONE_COLORS.contencion, icon: 'Heart', x: 1900, y: 550, w: 200, h: 200 },
+  { key: 'extinguisher', label: 'Extintor', color: ZONE_COLORS.extinguisher, icon: 'Flame', x: 2400, y: 900, w: 160, h: 160 },
 ];
 
 const SYMBOL_BY_KEY = Object.fromEntries(SYMBOL_CATALOG.map(s => [s.key, s])) as Record<string, SymbolSpec>;
@@ -141,6 +143,7 @@ const REQUIREMENT_SYMBOL_MAP: Record<string, TechnicalSymbolKey> = {
   'Contacto directo con producción': 'contact',
   'Coordinación con seguridad privada': 'security',
   'Acceso a equipo médico del evento': 'medical',
+  'Extintor operativo en el stand': 'extinguisher',
   'Alimentación si jornada > 5 horas': 'food',
 };
 
@@ -160,7 +163,7 @@ const makeSymbolElement = (key: TechnicalSymbolKey, idPrefix = 'symbol'): Elemen
   };
 };
 
-// ── Checklist Data (17 requirements in 4 categories) ───
+// ── Checklist Data (18 requirements in 4 categories) ───
 const CHECKLIST_SECTIONS = [
   {
     title: 'Espacio',
@@ -200,7 +203,8 @@ const CHECKLIST_SECTIONS = [
       { text: 'Contacto directo con producción', icon: 'User' },
       { text: 'Coordinación con seguridad privada', icon: 'ShieldAlert' },
       { text: 'Acceso a equipo médico del evento', icon: 'HeartPulse' },
-      { text: 'Alimentación si jornada > 5 horas', icon: 'Utensils' }
+      { text: 'Alimentación si jornada > 5 horas', icon: 'Utensils' },
+      { text: 'Extintor operativo en el stand', icon: 'Flame' }
     ]
   }
 ];
@@ -225,6 +229,7 @@ const renderRequirementIcon = (iconName: string, className = "w-4 h-4 text-zinc-
     case 'ShieldAlert': return <ShieldAlert className={className} />;
     case 'HeartPulse': return <HeartPulse className={className} />;
     case 'Utensils': return <Utensils className={className} />;
+    case 'Flame': return <Flame className={className} />;
     default: return <Grid3X3 className={className} />;
   }
 };
@@ -260,12 +265,22 @@ function buildElements(preset: Preset): Element[] {
 // ── Main component ───────────────────────────────────────────────────
 type Page = 'req' | 'map' | 'config';
 
+const PLANO_CHECKED_ITEMS_KEY = 'plano_checked_items';
+
 export default function PlanoTool() {
   const [preset, setPreset] = useState<Preset>('BASE');
+  const [exportTheme, setExportTheme] = useState<ExportTheme>('dark');
   const [page, setPage] = useState<Page>('map');
   const [elements, setElements] = useState<Element[]>(() => buildElements('BASE'));
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [checkedItems, setCheckedItems] = useState<string[]>([]);
+  const [checkedItems, setCheckedItems] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem(PLANO_CHECKED_ITEMS_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
   const [legendPos, setLegendPos] = useState({ x: 2200, y: 150 });
   const [zoom, setZoom] = useState(1);
   const [showGrid, setShowGrid] = useState(true);
@@ -276,18 +291,31 @@ export default function PlanoTool() {
   const [backendStatus, setBackendStatus] = useState('');
 
   const [orgTexts, setOrgTexts] = useState({
-    who: 'Reduciendo Daño es una ONG chilena dedicada a la reduccion de riesgos y danos asociados al consumo de sustancias en contextos de ocio y alta exigencia.',
-    goal: 'Proveer un espacio de analisis quimico gratuito, orientacion objetiva, hidratacion y contencion psicologica para cuidar a los asistentes.'
+    who: 'Fundada en 2018, Reduciendo Daño es una ONG líder en implementación y formulación de políticas e insumos de reducción de daños en Chile, siendo pionera en la fabricación, distribución de implementos, reactivos y servicios de análisis de sustancias psicoactivas en el país. La Organización desarrolla proyectos de intervención en terreno orientados a fiestas, espacios de ocio y eventos donde existe consumo de sustancias psicoactivas. Nuestro objetivo es acercar herramientas de prevención, reducción de riesgos y educación preventiva, promoviendo decisiones informadas, el autocuidado y espacios más seguros.',
+    goal: 'El proyecto busca informar, orientar y acompañar a personas que consuman o planeen consumir sustancias, mediante estrategias enfocadas en la seguridad, el cuidado informado y la prevención durante eventos y actividades recreativas.'
   });
 
   const svgRef = useRef<SVGSVGElement>(null);
   const selectedElement = elements.find(e => e.id === selectedId);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(PLANO_CHECKED_ITEMS_KEY, JSON.stringify(checkedItems));
+    } catch {
+      // localStorage no disponible (modo privado, cuota, etc.) — no bloquear la UI
+    }
+  }, [checkedItems]);
 
   const applyPreset = (p: Preset) => {
     setPreset(p);
     setElements(buildElements(p));
     setSelectedId(null);
     setCheckedItems([]);
+    try {
+      localStorage.removeItem(PLANO_CHECKED_ITEMS_KEY);
+    } catch {
+      // localStorage no disponible — ignorar
+    }
   };
 
   const selectElementAndBringToFront = (id: string) => {
@@ -686,6 +714,7 @@ export default function PlanoTool() {
   };
 
   const buildPrintableMapSvg = () => {
+    const pal = RD_PALETTE[exportTheme];
     const visible = elements.filter(el => el.visible);
     const mapContent = visible.map(el => {
       const label = escapeHtml(el.label.toUpperCase());
@@ -693,39 +722,45 @@ export default function PlanoTool() {
       return `
         <g>
           <rect x="${el.x}" y="${el.y}" width="${el.w}" height="${el.h}" rx="16" fill="${escapeHtml(el.color)}" fill-opacity="0.48" stroke="${escapeHtml(el.color)}" stroke-width="8"/>
-          <text x="${el.x + el.w / 2}" y="${el.y + el.h / 2}" text-anchor="middle" dominant-baseline="middle" font-size="42" font-family="Arial, sans-serif" font-weight="900" fill="#111">${label}</text>
+          <text x="${el.x + el.w / 2}" y="${el.y + el.h / 2}" text-anchor="middle" dominant-baseline="middle" font-size="42" font-family="Arial, sans-serif" font-weight="900" fill="${pal.text}">${label}</text>
         </g>`;
     }).join('\n');
 
+    const printCanvasWidth = 2970;
+    const printCanvasHeight = 2100;
+    const legendWidth = 760;
     const legendHeight = Math.min(760, Math.max(190, 120 + Math.ceil(visibleLegendSymbols.length / 2) * 68));
+    const legendX = Math.min(Math.max(legendPos.x, 0), Math.max(0, printCanvasWidth - legendWidth));
+    const legendY = Math.min(Math.max(legendPos.y, 0), Math.max(0, printCanvasHeight - legendHeight));
     const legendRows = visibleLegendSymbols.map((el, i) => {
       const col = i % 2;
       const row = Math.floor(i / 2);
-      const x = legendPos.x + 44 + col * 360;
-      const y = legendPos.y + 138 + row * 68;
+      const x = legendX + 44 + col * 360;
+      const y = legendY + 138 + row * 68;
       const color = escapeHtml(el.color || '#111111');
       return `
         <g>
           ${symbolIconMarkup(el.symbolKey || 'symbol', color, x + 20, y - 14, 0.32)}
-          <text x="${x + 58}" y="${y}" font-size="22" font-family="Arial, sans-serif" font-weight="800" fill="#333">${escapeHtml(el.label.toUpperCase()).slice(0, 18)}</text>
+          <text x="${x + 58}" y="${y}" font-size="22" font-family="Arial, sans-serif" font-weight="800" fill="${pal.text}">${escapeHtml(el.label.toUpperCase()).slice(0, 18)}</text>
         </g>`;
     }).join('\n');
 
     return `
-      <svg viewBox="0 0 2970 2100" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
-        <rect width="2970" height="2100" fill="#fafafa"/>
-        <rect x="50" y="50" width="2870" height="1800" fill="none" stroke="#555" stroke-width="5" stroke-dasharray="30 20" rx="20"/>
+      <svg viewBox="0 0 ${printCanvasWidth} ${printCanvasHeight}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+        <rect width="${printCanvasWidth}" height="${printCanvasHeight}" fill="${pal.mapBg}"/>
+        <rect x="50" y="50" width="2870" height="1800" fill="none" stroke="${pal.muted}" stroke-width="5" stroke-dasharray="30 20" rx="20"/>
         ${mapContent}
         <g transform="translate(0,0)">
-          <rect x="${legendPos.x}" y="${legendPos.y}" width="760" height="${legendHeight}" rx="30" fill="#f4f4f5" fill-opacity="0.96" stroke="#222" stroke-width="5"/>
-          <text x="${legendPos.x + 380}" y="${legendPos.y + 70}" text-anchor="middle" font-size="36" font-family="Arial, sans-serif" font-weight="900" fill="#333">LEYENDA TÉCNICA</text>
+          <rect x="${legendX}" y="${legendY}" width="${legendWidth}" height="${legendHeight}" rx="30" fill="${pal.panel}" fill-opacity="0.96" stroke="${pal.borde}" stroke-width="5"/>
+          <text x="${legendX + 380}" y="${legendY + 70}" text-anchor="middle" font-size="36" font-family="Arial, sans-serif" font-weight="900" fill="${pal.accent}">LEYENDA TÉCNICA</text>
           ${legendRows}
         </g>
-        <text x="100" y="2010" font-size="34" font-family="Arial, sans-serif" font-weight="900" fill="#222">${escapeHtml(`${eventName.toUpperCase()} · ${eventVenue.toUpperCase()} · ${eventDate}`)}</text>
+        <text x="100" y="2010" font-size="34" font-family="Arial, sans-serif" font-weight="900" fill="${pal.text}">${escapeHtml(`${eventName.toUpperCase()} · ${eventVenue.toUpperCase()} · ${eventDate}`)}</text>
       </svg>`;
   };
 
   const printRider = () => {
+    const pal = RD_PALETTE[exportTheme];
     const checklistHtml = CHECKLIST_SECTIONS.map(section => `
       <section class="box">
         <h3>${escapeHtml(section.title)}</h3>
@@ -742,6 +777,27 @@ export default function PlanoTool() {
         <td>X: ${el.x}, Y: ${el.y}</td>
       </tr>`).join('');
 
+    // Cotizacion comparativa de los 3 presets (misma formula que costs.py);
+    // se resalta el preset activo.
+    const costsByPreset = ALL_PRESETS.map(p => ({ id: p, c: calcCostos(p) }));
+    const cur = (p: string) => (p === preset ? ' cur' : '');
+    const cotHead = ALL_PRESETS.map(p => `<th class="num${cur(p)}">${p}</th>`).join('');
+    const cotRow = (label: string, get: (c: ReturnType<typeof calcCostos>) => number, bold = false) =>
+      `<tr class="${bold ? 'tot' : ''}"><td>${label}</td>${costsByPreset.map(x => `<td class="num${cur(x.id)}">${formatCLP(get(x.c))}</td>`).join('')}</tr>`;
+    const cotizacionHtml = `
+      <table class="cot">
+        <thead><tr><th>Concepto</th>${cotHead}</tr></thead>
+        <tbody>
+          ${cotRow('Personal (voluntarios x horas)', c => c.personal)}
+          ${cotRow('Alimentación / colación', c => c.alimentacion)}
+          ${cotRow('Mobiliario (mesas)', c => c.mobiliario)}
+          ${cotRow('Infraestructura (stands)', c => c.infraestructura)}
+          ${cotRow('Extras (testeo / contención)', c => c.extras)}
+          ${cotRow('TOTAL REFERENCIAL', c => c.total, true)}
+        </tbody>
+      </table>
+      <p class="note">Valores referenciales en CLP; ajustables por evento. Preset activo: <strong>${preset}</strong>.</p>`;
+
     const html = `<!doctype html>
 <html>
 <head>
@@ -750,32 +806,39 @@ export default function PlanoTool() {
 <style>
   @page { size: A4; margin: 10mm; }
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  body { margin: 0; background: #fff; color: #000; font-family: Arial, Helvetica, sans-serif; font-size: 11px; }
+  body { margin: 0; background: ${pal.bg}; color: ${pal.text}; font-family: Arial, Helvetica, sans-serif; font-size: 11px; }
   .page { width: 190mm; min-height: 270mm; page-break-after: always; break-after: page; overflow: hidden; }
   .page:last-child { page-break-after: auto; break-after: auto; }
-  header { border-bottom: 4px solid #000; padding-bottom: 10px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: end; }
-  h1 { font-size: 28px; margin: 0; font-weight: 900; font-style: italic; letter-spacing: -1px; }
-  h2 { font-size: 17px; margin: 0 0 8px; font-weight: 900; text-transform: uppercase; }
-  h3 { font-size: 10px; margin: 0 0 6px; font-weight: 900; text-transform: uppercase; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+  header { border-bottom: 4px solid ${pal.accent}; padding-bottom: 10px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: end; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .logo svg { height: 46px; width: auto; display: block; }
+  h1 { font-size: 26px; margin: 0; font-weight: 900; font-style: italic; letter-spacing: -1px; }
+  h2 { font-size: 17px; margin: 0 0 8px; font-weight: 900; text-transform: uppercase; color: ${pal.accent}; }
+  h3 { font-size: 10px; margin: 0 0 6px; font-weight: 900; text-transform: uppercase; border-bottom: 1px solid ${pal.borde}; padding-bottom: 4px; }
   p { margin: 0 0 7px; line-height: 1.35; }
+  .muted { color: ${pal.muted}; }
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .box { border: 1px solid #ccc; padding: 8px; border-radius: 6px; break-inside: avoid; }
+  .box { border: 1px solid ${pal.borde}; padding: 8px; border-radius: 6px; break-inside: avoid; }
   ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
   li { display: flex; gap: 6px; align-items: center; }
-  .check { width: 13px; height: 13px; border: 1px solid #000; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 900; flex: 0 0 auto; }
+  .check { width: 13px; height: 13px; border: 1px solid ${pal.accent}; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 900; flex: 0 0 auto; color: ${pal.accent}; }
   .map-page { display: flex; flex-direction: column; }
-  .map-frame { flex: 1 1 auto; min-height: 0; border: 1px solid #000; padding: 2mm; display: flex; align-items: center; justify-content: center; background: #fafafa; }
+  .map-frame { flex: 1 1 auto; min-height: 0; border: 1px solid ${pal.borde}; padding: 2mm; display: flex; align-items: center; justify-content: center; background: ${pal.mapBg}; }
   .map-frame svg { width: 100%; height: auto; max-height: 235mm; display: block; }
   table { width: 100%; border-collapse: collapse; font-size: 10px; }
-  th, td { border: 1px solid #999; padding: 6px; text-align: left; }
-  th { background: #eee; font-weight: 900; }
+  th, td { border: 1px solid ${pal.borde}; padding: 6px; text-align: left; }
+  th { background: ${pal.th}; font-weight: 900; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .cot td.cur, .cot th.cur { background: ${pal.th}; color: ${pal.accent}; font-weight: 900; }
+  .cot tr.tot td { font-weight: 900; color: ${pal.total}; font-size: 11px; }
+  .note { font-size: 9px; color: ${pal.muted}; margin-top: 6px; }
 </style>
 </head>
 <body>
   <main class="page">
     <header>
-      <div><h1>RIDER TÉCNICO RD</h1><p>Documentación de Intervención en Terreno — ONG Reduciendo Daño</p></div>
-      <div><strong>ORGANIZACIÓN RD</strong><br/>Servicio de Testeo y Reducción de Daño v2026</div>
+      <div class="brand"><span class="logo">${RD_LOGO[exportTheme]}</span><div><h1>RIDER TÉCNICO RD</h1><p class="muted">Documentación de Intervención en Terreno — ONG Reduciendo Daño</p></div></div>
+      <div><strong>ORGANIZACIÓN RD</strong><br/><span class="muted">Servicio de Testeo y Reducción de Daño v2026</span></div>
     </header>
     <h2>1. Antecedentes</h2>
     <p><strong>Quiénes Somos:</strong> ${escapeHtml(orgTexts.who)}</p>
@@ -791,6 +854,8 @@ export default function PlanoTool() {
   <main class="page">
     <h2>4. Detalle y Resumen de Elementos del Stand</h2>
     <table><thead><tr><th>Elemento</th><th>Tipo</th><th>Dimensiones</th><th>Coordenadas</th></tr></thead><tbody>${detailRows}</tbody></table>
+    <h2 style="margin-top:16px">5. Cotización Referencial (3 presets)</h2>
+    ${cotizacionHtml}
   </main>
 </body>
 </html>`;
@@ -839,7 +904,7 @@ export default function PlanoTool() {
   const syncChecklistFromElements = (nextElements: Element[]) => {
     const visibleRequirementKeys = new Set(
       nextElements
-        .filter(el => el.visible && el.type === 'symbol' && el.symbolKey)
+        .filter(el => el.visible && el.symbolKey && (el.type === 'symbol' || (el.id || '').startsWith('req-')))
         .map(el => el.symbolKey as string)
     );
     const mapEntries = Object.entries(REQUIREMENT_SYMBOL_MAP);
@@ -1150,6 +1215,13 @@ export default function PlanoTool() {
           >
             <RefreshCw className="h-4 w-4" />
             Motor Python
+          </button>
+          <button
+            onClick={() => setExportTheme(t => t === 'dark' ? 'white' : 'dark')}
+            title="Tema del PDF exportado (RD dark / white)"
+            className="flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs font-bold text-zinc-300 hover:bg-zinc-800 transition-colors"
+          >
+            <Moon className="h-4 w-4" /> Tema: {exportTheme === 'dark' ? 'Dark' : 'White'}
           </button>
           <button
             onClick={printRider}

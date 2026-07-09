@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Calculator, Plus, Trash2, Download, RotateCcw, Printer } from 'lucide-react';
 import { cn } from '../utils/cn';
 
@@ -53,12 +53,55 @@ function formatCLP(n: number) {
   return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(n);
 }
 
+const QUOTE_STORAGE_KEY = 'quote_panel_state';
+
+interface StoredQuoteState {
+  items: LineItem[];
+  clientName: string;
+  eventName: string;
+  notes: string;
+  discount: number;
+}
+
+function loadStoredState(): StoredQuoteState {
+  const fallback: StoredQuoteState = {
+    items: DEFAULT_ITEMS,
+    clientName: '',
+    eventName: '',
+    notes: '',
+    discount: 0,
+  };
+  try {
+    const raw = localStorage.getItem(QUOTE_STORAGE_KEY);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw);
+    return {
+      items: Array.isArray(parsed.items) ? parsed.items : fallback.items,
+      clientName: typeof parsed.clientName === 'string' ? parsed.clientName : fallback.clientName,
+      eventName: typeof parsed.eventName === 'string' ? parsed.eventName : fallback.eventName,
+      notes: typeof parsed.notes === 'string' ? parsed.notes : fallback.notes,
+      discount: typeof parsed.discount === 'number' ? parsed.discount : fallback.discount,
+    };
+  } catch {
+    return fallback;
+  }
+}
+
 export default function QuotePanel() {
-  const [items, setItems] = useState<LineItem[]>(DEFAULT_ITEMS);
-  const [clientName, setClientName] = useState('');
-  const [eventName, setEventName] = useState('');
-  const [notes, setNotes] = useState('');
-  const [discount, setDiscount] = useState(0);
+  const [storedInit] = useState(loadStoredState);
+  const [items, setItems] = useState<LineItem[]>(storedInit.items);
+  const [clientName, setClientName] = useState(storedInit.clientName);
+  const [eventName, setEventName] = useState(storedInit.eventName);
+  const [notes, setNotes] = useState(storedInit.notes);
+  const [discount, setDiscount] = useState(storedInit.discount);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(QUOTE_STORAGE_KEY, JSON.stringify({ items, clientName, eventName, notes, discount }));
+    } catch {
+      // localStorage unavailable (private mode, quota, etc.) - persistence is best-effort
+    }
+  }, [items, clientName, eventName, notes, discount]);
 
   const subtotal = useMemo(() => items.reduce((acc, it) => acc + it.qty * it.price, 0), [items]);
   const discountAmount = Math.round(subtotal * (discount / 100));
@@ -192,7 +235,14 @@ export default function QuotePanel() {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => { setItems(DEFAULT_ITEMS); setDiscount(0); }}
+            onClick={() => {
+              setItems(DEFAULT_ITEMS);
+              setDiscount(0);
+              setClientName('');
+              setEventName('');
+              setNotes('');
+              try { localStorage.removeItem(QUOTE_STORAGE_KEY); } catch { /* best-effort */ }
+            }}
             className="flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs font-bold text-zinc-400 hover:text-zinc-200 transition-colors"
           >
             <RotateCcw className="h-3.5 w-3.5" /> Reset

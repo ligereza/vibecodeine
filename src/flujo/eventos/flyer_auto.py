@@ -86,6 +86,48 @@ def _download_instagram(shortcode: str, temp_dir: Path) -> Path:
     return _first_downloaded_image(temp_dir)
 
 
+_MIRROR_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+              "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
+
+
+def _download_via_mirror(shortcode: str, temp_dir: Path) -> Path:
+    """Fallback sin login: mirror publico (IG bloquea instaloader anonimo desde 2026).
+
+    Mejor esfuerzo sobre un servicio de terceros: si el mirror cambia su HTML o
+    muere, volver a instaloader con sesion logueada (instaloader --login).
+    """
+    import html as html_mod
+    import urllib.request
+
+    def _fetch(url: str, referer: str | None = None) -> bytes:
+        headers = {"User-Agent": _MIRROR_UA}
+        if referer:
+            headers["Referer"] = referer
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return r.read()
+
+    page = _fetch(f"https://imginn.com/p/{shortcode}/").decode("utf-8", "replace")
+    # 1) preferir imagenes DENTRO del contenedor del post (swiper-slide);
+    #    fuera de el aparecen avatares (t51.82787-19 en posts collab) y thumbs
+    slides = re.findall(
+        r'<div class="swiper-slide[^>]*>.*?(?:data-src|src)="(https://[^"]+)"', page, re.DOTALL)
+    urls = slides or re.findall(
+        r'(?:data-src|src)="(https://[^"]+(?:imginn|scontent|cdninstagram)[^"]+)"', page)
+    urls = [html_mod.unescape(u) for u in urls
+            if "rsrc.php" not in u and "lazy.jpg" not in u and (".jpg" in u or ".webp" in u)]
+    # t51.82787-15 = media del post; -19 y t51.2885-19 = avatares (tambien en collab)
+    post_media = [u for u in urls if "t51.82787-15" in u]
+    candidatos = post_media or [u for u in urls
+                                if "t51.2885-19" not in u and "t51.82787-19" not in u]
+    if not candidatos:
+        raise FileNotFoundError("El mirror no devolvio imagen del post.")
+    data = _fetch(candidatos[0], referer="https://imginn.com/")
+    out = temp_dir / f"mirror_{shortcode}.jpg"
+    out.write_bytes(data)
+    return out
+
+
 def _extract_palette(image_path: Path, palette_png: Path, palette_json: Path, colors_count: int = 6) -> list[str]:
     """Extract dominant colors and write a swatch PNG + JSON list."""
     from PIL import Image, ImageDraw
@@ -121,11 +163,56 @@ def _extract_palette(image_path: Path, palette_png: Path, palette_json: Path, co
     return hex_colors
 
 
+def _photoshop_running() -> bool:
+    if os.name != "nt":
+        return False
+    try:
+        out = subprocess.run(["tasklist", "/FI", "IMAGENAME eq Photoshop.exe"],
+                             capture_output=True, text=True, timeout=15).stdout
+        return "Photoshop.exe" in out
+    except Exception:
+        return False
+
+
 def _start_droplet(droplet_path: Path, psd_path: Path) -> None:
-    if os.name == "nt":
-        subprocess.Popen(["cmd", "/c", "start", "", str(droplet_path), str(psd_path)], shell=False)
-    else:
+    if os.name != "nt":
         raise RuntimeError("Droplet launch is only supported on Windows.")
+    if _photoshop_running():
+        # varias instancias de Photoshop compiten y el droplet nunca entrega
+        # (comprobado 2026-07-08: 5 instancias colgadas); mejor fallar claro
+        raise RuntimeError(
+            "Photoshop ya esta abierto: cierra las instancias antes de lanzar "
+            "el droplet (multiples instancias se traban entre si)."
+        )
+    subprocess.Popen(["cmd", "/c", "start", "", str(droplet_path), str(psd_path)], shell=False)
+
+
+def _write_predominant_color(image_path: Path, out_png: Path) -> str:
+    """Color predominante-pero-claro del flyer -> PNG solido que RD.blend linkea."""
+    from PIL import Image
+
+    img = Image.open(image_path).convert("RGB")
+    thumb = img.copy()
+    thumb.thumbnail((240, 240))
+    pal = thumb.convert("P", palette=Image.Palette.ADAPTIVE, colors=6)
+    palette = pal.getpalette() or []
+    counts = sorted(pal.getcolors(240 * 240) or [], reverse=True)[:6]
+    colores = []
+    for cnt, idx in counts:
+        r, g, b = palette[idx * 3:idx * 3 + 3]
+        lum = 0.299 * r + 0.587 * g + 0.114 * b
+        colores.append((cnt, lum, (r, g, b)))
+    if not colores:
+        colores = [(1, 0.0, (0, 0, 0))]
+    # el mas luminoso entre los que tienen peso real (>15% del dominante)
+    colores.sort(key=lambda c: (-c[1], -c[0]))
+    candidato = next((c for c in colores if c[0] > counts[0][0] * 0.15), colores[0])
+    r, g, b = candidato[2]
+    # aclarar 25% hacia blanco
+    r, g, b = (int(r + (255 - r) * 0.25), int(g + (255 - g) * 0.25), int(b + (255 - b) * 0.25))
+    out_png.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGB", (512, 512), (r, g, b)).save(out_png)
+    return f"#{r:02x}{g:02x}{b:02x}"
 
 
 def _open_blender(blender_exe: str, blender_file: Path) -> None:
@@ -145,14 +232,6 @@ def _wait_for_file_update(path: Path, after_time: float, timeout_s: float = 300.
     return False
 
 
-def _render_blender_texture(blender_exe: str, texture: Path, output: Path, template: Path | None) -> None:
-    """Render headless via blender_render.py: textura -> material 'Texture' -> still."""
-    script = Path(__file__).with_name("blender_render.py")
-    output.parent.mkdir(parents=True, exist_ok=True)
-    cmd = [blender_exe, "--background", "--python", str(script), "--", str(texture), str(output)]
-    if template is not None:
-        cmd.append(str(template))
-    subprocess.run(cmd, check=True)
 
 
 def _render_blender_frame(blender_exe: str, blender_file: Path, output_path: Path) -> Path:
@@ -218,12 +297,18 @@ def run_eventos_flyer_auto(
             shutil.rmtree(temp_dir, ignore_errors=True)
         temp_dir.mkdir(parents=True, exist_ok=True)
 
-        downloaded = _download_instagram(shortcode, temp_dir)
+        try:
+            downloaded = _download_instagram(shortcode, temp_dir)
+        except Exception:
+            # IG bloquea instaloader anonimo; intentar mirror publico
+            downloaded = _download_via_mirror(shortcode, temp_dir)
 
         if input_img.exists():
             input_img.unlink()
         shutil.copy(downloaded, input_img)
         _extract_palette(input_img, palette_png, palette_json)
+        # RD.blend linkea RESULTADOS/color_predominante.png como material
+        _write_predominant_color(input_img, base / "RESULTADOS" / "color_predominante.png")
         time.sleep(max(0.0, sleep_seconds))
 
         started_droplet = False
@@ -250,9 +335,9 @@ def run_eventos_flyer_auto(
                         "revisa Photoshop antes de renderizar."
                     )
             if rd_blend.exists():
-                # render con textura sobre la plantilla RD.blend
-                texture = flyer_final if flyer_final.exists() else input_img
-                _render_blender_texture(blender_exe, texture, render_out, rd_blend)
+                # RD.blend ya linkea flyer_final.jpg y color_predominante.png
+                # desde disco: render directo del frame (validado 2026-07-08)
+                _render_blender_frame(blender_exe, rd_blend, render_out)
                 blender_render = render_out
             else:
                 # fallback legado: frame 1 de cartelera.blend
