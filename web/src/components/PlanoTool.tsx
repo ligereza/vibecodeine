@@ -7,7 +7,7 @@ import {
   Heart, AlertTriangle, Coffee, RefreshCw, Flame
 } from 'lucide-react';
 import { cn } from '../utils/cn';
-import { RD_PALETTE, RD_LOGO, calcCostos, formatCLP, porVoluntario, proporcionMonto, ALL_PACKS, PACKS, type ExportTheme, type PackId } from '../rdBrand';
+import { RD_PALETTE, RD_LOGO, calcCostos, formatCLP, proporcionMonto, ALL_PACKS, PACKS, type ExportTheme, type PackId } from '../rdBrand';
 
 // ── Types ────────────────────────────────────────────────────────────
 type TechnicalSymbolKey = string;
@@ -113,6 +113,19 @@ const SYMBOL_BY_KEY = Object.fromEntries(SYMBOL_CATALOG.map(s => [s.key, s])) as
 const PLANO_FRAME = { x: 50, y: 50, w: 2870, h: 1950 };
 const GRID = 20;
 
+// Altura real de la caja de leyenda segun cantidad de simbolos. Sin cap: con 19+
+// simbolos (COMPLETO + marcar todos) el cap de 900 dejaba filas dibujadas fuera del panel.
+// Filas de 100 px (iconos 80 + font 32): la simbologia debe leerse en el A4 impreso.
+const legendHeightFor = (n: number) => Math.max(260, 170 + Math.ceil(n / 2) * 100);
+
+// ZONE_COLORS esta calibrada para fondo oscuro; sobre papel blanco los tonos claros
+// desaparecen. Overrides solo para el print con tema white.
+const PRINT_WHITE_COLOR_FIX: Record<string, string> = {
+  '#fde047': '#a16207', // light: amarillo palido -> ambar oscuro
+  '#84cc16': '#4d7c0f', // terrain: lima -> verde oliva
+  '#9ca3af': '#52525b', // circulacion: gris claro -> gris oscuro
+};
+
 const REQUIREMENT_SYMBOL_MAP: Record<string, TechnicalSymbolKey> = {
   'Medidas disponibles del recinto (int/ext)': 'scan',
   'Tipo de terreno (nivelado, estable)': 'terrain',
@@ -147,6 +160,8 @@ const makeSymbolElement = (key: TechnicalSymbolKey, idPrefix = 'symbol'): Elemen
     label: spec.label,
     color: spec.color,
     visible: true,
+    // Sin category el simbolo queda fuera de la leyenda agrupada (filtra por el.category).
+    category: SYMBOL_CATEGORY[spec.key] || 'Zonas de Atención',
   };
 };
 
@@ -208,7 +223,6 @@ const SYMBOL_CATEGORY: Record<TechnicalSymbolKey, string> = {};
 Object.entries(REQUIREMENT_SYMBOL_MAP).forEach(([itemText, symbolKey]) => {
   SYMBOL_CATEGORY[symbolKey] = ITEM_TEXT_TO_CATEGORY[itemText] || 'Zonas de Atención';
 });
-const CATEGORY_ORDER = ['Servicios', 'Infraestructura', 'Coordinación', 'Espacio', 'Zonas de Atención'];
 
 // Helper to render Lucide icons dynamically for requirements
 const renderRequirementIcon = (iconName: string, className = "w-4 h-4 text-zinc-400") => {
@@ -237,90 +251,95 @@ const renderRequirementIcon = (iconName: string, className = "w-4 h-4 text-zinc-
 
 const withMedida = (label: string, m: string) => `${label} (${m})`;
 
-const placedSymbol = (key: TechnicalSymbolKey, id: string, x: number, y: number): Element => {
+// Font que quepa en el ancho del rect: con el plano a escala real un modulo de
+// 3 m mide 600 px y el font fijo de 42 desbordaba los labels largos.
+// ~0.62 em de ancho promedio por caracter en Arial bold uppercase.
+const rectLabelFont = (label: string, w: number) =>
+  Math.max(24, Math.min(42, Math.round((w - 80) / (0.62 * Math.max(label.length, 1)))));
+
+const placedSymbol = (key: TechnicalSymbolKey, id: string, x: number, y: number, label?: string): Element => {
   const spec = SYMBOL_BY_KEY[key] || SYMBOL_BY_KEY.power;
   const category = SYMBOL_CATEGORY[key] || 'Zonas de Atención';
-  return { id, type: 'symbol', symbolKey: spec.key, x, y, w: spec.w, h: spec.h, label: spec.label, color: spec.color, visible: true, category };
+  return { id, type: 'symbol', symbolKey: spec.key, x, y, w: spec.w, h: spec.h, label: label || spec.label, color: spec.color, visible: true, category };
 };
 
-// Iconos agrupados por categoria (misma taxonomia del checklist), empaquetados
-// en filas por ancho disponible (flow-wrap) en vez de 1 fila fija por categoria:
-// evita colisionar con "Coordinacion Operativa" y usa el alto del frame mejor.
-const ICON_ORIGIN = { x: 90, y: 930 };
-const ICON_GAP_X = 200;
-const ICON_ROW_HEIGHT = 330;
-const ICON_CATEGORY_GAP_X = 260;
-const ICON_AVAILABLE_WIDTH = 2700;
-
-function layoutIconGroups(specs: { id: string; key: TechnicalSymbolKey }[]): Element[] {
-  const groups: Record<string, { id: string; key: TechnicalSymbolKey }[]> = {};
-  specs.forEach(spec => {
-    const cat = SYMBOL_CATEGORY[spec.key] || 'Zonas de Atención';
-    (groups[cat] = groups[cat] || []).push(spec);
-  });
-  const activeCats = CATEGORY_ORDER.filter(cat => groups[cat] && groups[cat].length);
-  const out: Element[] = [];
-  let curX = ICON_ORIGIN.x;
-  let curRow = 0;
-  activeCats.forEach(cat => {
-    const items = groups[cat];
-    const width = items.length * ICON_GAP_X;
-    if (curX !== ICON_ORIGIN.x && curX + width > ICON_ORIGIN.x + ICON_AVAILABLE_WIDTH) {
-      curRow += 1;
-      curX = ICON_ORIGIN.x;
-    }
-    const y = ICON_ORIGIN.y + curRow * ICON_ROW_HEIGHT;
-    items.forEach((spec, i) => out.push(placedSymbol(spec.key, spec.id, curX + i * ICON_GAP_X, y)));
-    curX += width + ICON_CATEGORY_GAP_X;
-  });
-  return out;
-}
-
 // ── Default elements builder in 2970x2100 px format, por pack ───────
+// Plano tipo "compound" a proporcion real: 1 m = 200 px. El pack se dibuja como
+// UN recinto contiguo (modulos 3x3 m lado a lado) con frente publico abajo y
+// acceso de servicio atras, mesas a escala DENTRO de los stands, y solo los
+// iconos FISICOS puestos en su lugar de uso (electricidad, agua, extintor...).
+// Los requerimientos de coordinacion (medico, seguridad, produccion) NO van en
+// el plano: viven en el checklist de la pagina 1, y al marcarlos ahi se agrega
+// su simbolo req-* al mapa si el usuario lo quiere ubicar.
+const M = 200; // px por metro
 function buildElements(packId: PackId): Element[] {
-  // Pack INFO es "testeo o informativo a eleccion" (1 stand, sin comprometerse a cual);
-  // TESTEO/COMPLETO incluyen ambos servicios, ahi el stand 1 si es especificamente informativo.
-  const stand1Label = packId === 'INFO' ? 'Stand Testeo o Informativo' : 'Stand Informativo';
+  const modules = packId === 'COMPLETO' ? 3 : packId === 'TESTEO' ? 2 : 1;
+  const X0 = packId === 'COMPLETO' ? 140 : packId === 'TESTEO' ? 500 : 700;
+  const W = modules * 3 * M;        // frente del compound (3 m por modulo)
+  const TOP = 700;                  // borde trasero de los stands
+  const H = 3 * M;                  // fondo de los stands (3 m)
+  const frontM = (modules * 3).toFixed(1);
+
+  // Pack INFO es "testeo o informativo a eleccion" (1 stand, sin comprometerse a
+  // cual; el detalle vive en las inclusiones del pack); TESTEO/COMPLETO incluyen
+  // ambos servicios, ahi el stand 1 si es especificamente informativo.
+  const stand1Label = packId === 'INFO' ? 'Stand Testeo/Info' : 'Stand Informativo';
+
   const base: Element[] = [
-    { id: 'entrada', type: 'rect', x: 1235, y: 70, w: 500, h: 110, label: 'ENTRADA', color: '#6366f1', visible: true },
-    { id: 'stand1', type: 'rect', x: 90, y: 230, w: 560, h: 400, label: withMedida(stand1Label, '3x3 m'), color: '#0369a1', visible: true },
-    { id: 'mesa1', type: 'rect', x: 90, y: 660, w: 560, h: 220, label: 'Mesa 1', color: '#10b981', visible: true },
+    { id: 'acceso', type: 'rect', x: X0, y: packId === 'COMPLETO' ? 240 : 560, w: W, h: 100, label: packId === 'INFO' ? 'Acceso servicio' : 'Acceso servicio / carga', color: '#9ca3af', visible: true },
+    { id: 'stand1', type: 'rect', x: X0, y: TOP, w: 3 * M, h: H, label: withMedida(stand1Label, '3×3 m'), color: '#0369a1', visible: true },
+    { id: 'mesa1', type: 'rect', x: X0 + (packId === 'INFO' ? 60 : 120), y: TOP + 420, w: 360, h: 120, label: withMedida('Mesa', '1.8×0.6 m'), color: '#10b981', visible: true },
+    { id: 'publico', type: 'rect', x: X0, y: 1400, w: W, h: 110, label: `Frente público — ${frontM} m`, color: '#6366f1', visible: true },
   ];
 
-  const iconSpecs: { id: string; key: TechnicalSymbolKey }[] = [
-    { id: 'power', key: 'power' }, { id: 'light', key: 'light' }, { id: 'water', key: 'water' },
-    { id: 'extinguisher', key: 'extinguisher' }, { id: 'medical', key: 'medical' },
-    { id: 'security', key: 'security' }, { id: 'trash', key: 'trash' }, { id: 'contact', key: 'contact' },
+  // Iconos con tamano fisico acotado (los labels ya no van en el mapa: decodifica
+  // la leyenda, como en un plano tecnico real).
+  const sized = (el: Element, s: number): Element => ({ ...el, w: s, h: s });
+
+  // Reglas de equipamiento (definidas por el usuario): electricidad en CADA stand,
+  // iluminacion en CADA mesa, extintor SOLO en el pack COMPLETO (evento masivo),
+  // calefaccion en la zona de descanso.
+  const icons: Element[] = [
+    sized(placedSymbol('power', 'power1', X0 + 20, TOP + 130), 140),
+    sized(placedSymbol('light', 'light1', X0 + (packId === 'INFO' ? 300 : 360), TOP + 280), 120),
+    placedSymbol('trash', 'trash', X0 + W + 40, TOP + 380),
   ];
 
   if (packId === 'TESTEO' || packId === 'COMPLETO') {
+    const S2 = X0 + 3 * M;
     base.push(
-      { id: 'stand2', type: 'rect', x: 730, y: 230, w: 560, h: 400, label: withMedida('Stand Testeo', '3x3 m'), color: '#2d5a4a', visible: true },
-      { id: 'mesa2', type: 'rect', x: 730, y: 660, w: 560, h: 220, label: 'Mesa 2', color: '#10b981', visible: true },
+      { id: 'stand2', type: 'rect', x: S2, y: TOP, w: 3 * M, h: H, label: withMedida('Stand Testeo', '3×3 m'), color: '#2d5a4a', visible: true },
+      { id: 'mesa2', type: 'rect', x: S2 + (packId === 'COMPLETO' ? 160 : 120), y: TOP + 420, w: 360, h: 120, label: withMedida('Mesa', '1.8×0.6 m'), color: '#10b981', visible: true },
     );
-    iconSpecs.push({ id: 'testeo', key: 'testeo' });
+    icons.push(
+      sized(placedSymbol('power', 'power2', S2 + 20, TOP + 130), 140),
+      placedSymbol('testeo', 'testeo', S2 + 180, TOP + 170),
+      sized(placedSymbol('light', 'light2', S2 + 400, TOP + 280), 120),
+    );
+  }
+
+  if (packId === 'TESTEO') {
+    icons.push(sized(placedSymbol('water', 'water', X0 + 3 * M + 430, TOP + 130), 140));
   }
 
   if (packId === 'COMPLETO') {
-    // Coordinacion va apilada bajo la Mesa 3 (misma columna), no como 4a columna:
-    // una 4a columna a x=2010 invadiria la zona de la leyenda (default x=2060).
+    const Z = X0 + 6 * M;
     base.push(
-      { id: 'descanso', type: 'rect', x: 1370, y: 230, w: 560, h: 400, label: withMedida('Zona Descanso', '~9 m²'), color: '#059669', visible: true },
-      { id: 'mesa3', type: 'rect', x: 1370, y: 660, w: 560, h: 220, label: 'Mesa 3', color: '#10b981', visible: true },
-      { id: 'coordinacion', type: 'rect', x: 1205, y: 1620, w: 560, h: 300, label: 'Coordinación Operativa', color: '#ca8a04', visible: true },
+      // Back of house detras de los stands: coordinacion + almacenamiento.
+      { id: 'coordinacion', type: 'rect', x: X0, y: 380, w: 900, h: 240, label: 'Coordinación Operativa (BOH)', color: '#ca8a04', visible: true },
+      { id: 'descanso', type: 'rect', x: Z, y: TOP, w: 3 * M, h: H, label: withMedida('Zona Descanso', '3×3 m'), color: '#059669', visible: true },
     );
-    iconSpecs.push(
-      { id: 'testeo2', key: 'testeo' },
-      { id: 'contencion', key: 'contencion' },
-      { id: 'contencion2', key: 'contencion' },
-      { id: 'food', key: 'food' },
-      { id: 'sensory', key: 'sensory' },
+    icons.push(
+      sized(placedSymbol('extinguisher', 'extinguisher', X0 + 3 * M + 20, TOP + 410), 120),
+      sized(placedSymbol('rack', 'rack', X0 + 920, 420), 140),
+      sized(placedSymbol('water', 'water', Z + 20, TOP + 130), 140),
+      sized(placedSymbol('sensory', 'sensory', Z + 200, TOP + 130), 140),
+      sized(placedSymbol('heating', 'heating', Z + 380, TOP + 130), 140),
+      placedSymbol('contencion', 'contencion', Z + 200, TOP + 320),
     );
   }
 
-  base.push(...layoutIconGroups(iconSpecs));
-
-  return base;
+  return [...base, ...icons];
 }
 
 // ── Main component ───────────────────────────────────────────────────
@@ -457,7 +476,8 @@ export default function PlanoTool() {
   };
 
   const layerPriority = (el: Element) => {
-    if (el.id === 'entrada') return 40;
+    // Bandas de flujo (frente publico / acceso servicio) siempre arriba.
+    if (el.id === 'entrada' || el.id === 'publico' || el.id === 'acceso') return 40;
     if (el.type === 'symbol') return 30;
     if (el.type === 'rect') return 10;
     return 20;
@@ -557,7 +577,7 @@ export default function PlanoTool() {
       mpt.x = me.clientX; mpt.y = me.clientY;
       const mp = mpt.matrixTransform(svg.getScreenCTM()!.inverse());
       setElements(prev => prev.map(x =>
-        x.id === id ? { ...x, x: Math.round((startX + (mp.x - start.x)) / 20) * 20, y: Math.round((startY + (mp.y - start.y)) / 20) * 20 } : x
+        x.id === id ? { ...x, x: Math.round((startX + (mp.x - start.x)) / GRID) * GRID, y: Math.round((startY + (mp.y - start.y)) / GRID) * GRID } : x
       ));
     };
     const up = () => {
@@ -588,7 +608,7 @@ export default function PlanoTool() {
       mpt.x = t.clientX; mpt.y = t.clientY;
       const mp = mpt.matrixTransform(svg.getScreenCTM()!.inverse());
       setElements(prev => prev.map(x =>
-        x.id === id ? { ...x, x: Math.round((startX + (mp.x - start.x)) / 20) * 20, y: Math.round((startY + (mp.y - start.y)) / 20) * 20 } : x
+        x.id === id ? { ...x, x: Math.round((startX + (mp.x - start.x)) / GRID) * GRID, y: Math.round((startY + (mp.y - start.y)) / GRID) * GRID } : x
       ));
     };
     const end = () => {
@@ -665,9 +685,12 @@ export default function PlanoTool() {
         <svg x={0} y={0} width={el.w} height={el.h} viewBox="0 0 160 160" overflow="visible">
           {renderSymbolGlyph(el.symbolKey || 'unknown', fill)}
         </svg>
-        <text x={el.w / 2} y={el.h + 30} textAnchor="middle" fontSize="30" fill={fill} fontWeight="bold" fontFamily="monospace">
-          {el.label.toUpperCase()}
-        </text>
+        {/* Sin caption junto al icono: la leyenda decodifica; al seleccionar se ve el nombre */}
+        {isSelected && (
+          <text x={el.w / 2} y={el.h + 34} textAnchor="middle" fontSize="30" fill={fill} fontWeight="bold" fontFamily="monospace">
+            {el.label.toUpperCase()}
+          </text>
+        )}
         {isSelected && (
           <rect x={-10} y={-10} width={el.w + 20} height={el.h + 20} rx={12} fill="none" stroke="#10b981" strokeWidth={10} strokeDasharray="20 10" />
         )}
@@ -678,7 +701,7 @@ export default function PlanoTool() {
   const clampLegendPos = (x: number, y: number) => {
     const frame = PLANO_FRAME;
     const legendWidth = 900;
-    const legendHeight = Math.min(900, Math.max(220, 160 + Math.ceil(visibleLegendSymbols.length / 2) * 84));
+    const legendHeight = legendHeightFor(visibleLegendSymbols.length);
     return {
       x: Math.min(Math.max(x, frame.x), frame.x + frame.w - legendWidth),
       y: Math.min(Math.max(y, frame.y), frame.y + frame.h - legendHeight),
@@ -771,16 +794,19 @@ export default function PlanoTool() {
     }
   };
 
+  const printColor = (c: string) =>
+    exportTheme === 'white' ? (PRINT_WHITE_COLOR_FIX[c] || c) : c;
+
+  // Sin label junto al icono: en un plano tecnico el simbolo se decodifica en la
+  // leyenda, no con captions flotantes que ensucian el layout.
   const symbolPrintMarkup = (el: Element) => {
-    const label = escapeHtml(el.label.toUpperCase());
-    const color = escapeHtml(el.color || '#111111');
+    const color = escapeHtml(printColor(el.color || '#111111'));
     const cx = el.x + el.w / 2;
     const cy = el.y + el.h / 2;
-    const scale = Math.max(0.7, Math.min(el.w, el.h) / 170);
+    const scale = Math.max(0.55, Math.min(el.w, el.h) / 170);
     return `
       <g>
         ${symbolIconMarkup(el.symbolKey || 'symbol', color, cx, cy, scale)}
-        <text x="${cx}" y="${el.y + el.h + 34}" text-anchor="middle" font-size="28" font-family="Arial, sans-serif" font-weight="700" fill="${color}">${label}</text>
       </g>`;
   };
 
@@ -790,29 +816,37 @@ export default function PlanoTool() {
     const mapContent = visible.map(el => {
       const label = escapeHtml(el.label.toUpperCase());
       if (el.type === 'symbol') return symbolPrintMarkup(el);
+      const rectColor = escapeHtml(printColor(el.color));
+      // Cajas grandes (stands/zonas) llevan el nombre arriba, como en un plano
+      // real: deja el interior libre para mobiliario e iconos.
+      const labelY = el.h >= 300 ? el.y + 70 : el.y + el.h / 2;
       return `
         <g>
-          <rect x="${el.x}" y="${el.y}" width="${el.w}" height="${el.h}" rx="16" fill="${escapeHtml(el.color)}" fill-opacity="0.48" stroke="${escapeHtml(el.color)}" stroke-width="8"/>
-          <text x="${el.x + el.w / 2}" y="${el.y + el.h / 2}" text-anchor="middle" dominant-baseline="middle" font-size="42" font-family="Arial, sans-serif" font-weight="900" fill="${pal.text}">${label}</text>
+          <rect x="${el.x}" y="${el.y}" width="${el.w}" height="${el.h}" rx="16" fill="${rectColor}" fill-opacity="0.48" stroke="${rectColor}" stroke-width="8"/>
+          <text x="${el.x + el.w / 2}" y="${labelY}" text-anchor="middle" dominant-baseline="middle" font-size="${rectLabelFont(el.label, el.w)}" font-family="Arial, sans-serif" font-weight="900" fill="${pal.text}">${label}</text>
         </g>`;
     }).join('\n');
 
     const printCanvasWidth = 2970;
     const printCanvasHeight = 2100;
     const legendWidth = 900;
-    const legendHeight = Math.min(900, Math.max(220, 160 + Math.ceil(visibleLegendSymbols.length / 2) * 84));
-    const legendX = Math.min(Math.max(legendPos.x, 0), Math.max(0, printCanvasWidth - legendWidth));
-    const legendY = Math.min(Math.max(legendPos.y, 0), Math.max(0, printCanvasHeight - legendHeight));
+    const legendHeight = legendHeightFor(visibleLegendSymbols.length);
+    // Mismo clamp que el drag en pantalla (PLANO_FRAME); antes el print clampaba al
+    // canvas completo y la leyenda podia quedar fuera del marco del plano.
+    const { x: legendX, y: legendY } = clampLegendPos(legendPos.x, legendPos.y);
     const legendRows = visibleLegendSymbols.map((el, i) => {
       const col = i % 2;
       const row = Math.floor(i / 2);
       const x = legendX + 48 + col * 410;
-      const y = legendY + 160 + row * 84;
-      const color = escapeHtml(el.color || '#111111');
+      const y = legendY + 160 + row * 100;
+      const color = escapeHtml(printColor(el.color || '#111111'));
+      // La leyenda describe TIPOS de simbolo: usa el nombre canonico del catalogo
+      // (los elementos pueden venir numerados, ej "Testeo 1").
+      const legendLabel = SYMBOL_BY_KEY[el.symbolKey || '']?.label || el.label;
       return `
         <g>
-          ${symbolIconMarkup(el.symbolKey || 'symbol', color, x + 22, y - 16, 0.36)}
-          <text x="${x + 64}" y="${y}" font-size="26" font-family="Arial, sans-serif" font-weight="800" fill="${pal.text}">${escapeHtml(el.label.toUpperCase()).slice(0, 18)}</text>
+          ${symbolIconMarkup(el.symbolKey || 'symbol', color, x + 40, y + 40, 0.5)}
+          <text x="${x + 104}" y="${y + 52}" font-size="32" font-family="Arial, sans-serif" font-weight="800" fill="${pal.text}">${escapeHtml(legendLabel.toUpperCase().slice(0, 16))}</text>
         </g>`;
     }).join('\n');
 
@@ -821,13 +855,13 @@ export default function PlanoTool() {
         <rect width="${printCanvasWidth}" height="${printCanvasHeight}" fill="${pal.mapBg}"/>
         <rect x="${PLANO_FRAME.x}" y="${PLANO_FRAME.y}" width="${PLANO_FRAME.w}" height="${PLANO_FRAME.h}" fill="none" stroke="${pal.muted}" stroke-width="5" stroke-dasharray="30 20" rx="20"/>
         ${mapContent}
-        ${iconCategoryHeaders.map(h => `<text x="${h.x}" y="${h.y - 22}" font-size="30" font-family="Arial, sans-serif" font-weight="900" fill="${pal.accent}" style="letter-spacing:0.06em">${escapeHtml(h.category.toUpperCase())}</text>`).join('\n')}
         <g transform="translate(0,0)">
           <rect x="${legendX}" y="${legendY}" width="${legendWidth}" height="${legendHeight}" rx="30" fill="${pal.panel}" fill-opacity="0.96" stroke="${pal.borde}" stroke-width="5"/>
-          <text x="${legendX + 450}" y="${legendY + 80}" text-anchor="middle" font-size="40" font-family="Arial, sans-serif" font-weight="900" fill="${pal.accent}">LEYENDA TÉCNICA</text>
+          <text x="${legendX + 450}" y="${legendY + 90}" text-anchor="middle" font-size="46" font-family="Arial, sans-serif" font-weight="900" fill="${pal.accent}">SIMBOLOGÍA</text>
           ${legendRows}
         </g>
-        <text x="100" y="2060" font-size="34" font-family="Arial, sans-serif" font-weight="900" fill="${pal.text}">${escapeHtml(`${eventName.toUpperCase()} · ${eventVenue.toUpperCase()} · ${eventDate}`)}</text>
+        <text x="100" y="2075" font-size="34" font-family="Arial, sans-serif" font-weight="900" fill="${pal.text}">${escapeHtml(`${eventName.toUpperCase()} · ${eventVenue.toUpperCase()} · ${eventDate}`)}</text>
+        <text x="2870" y="2075" text-anchor="end" font-size="24" font-family="Arial, sans-serif" fill="${pal.muted}">Reduciendo Daño Chile · Rider Operativo</text>
       </svg>`;
   };
 
@@ -855,8 +889,7 @@ export default function PlanoTool() {
       <table class="cot">
         <tbody>
           <tr class="tot"><td>Precio del pack</td><td class="num">${formatCLP(pack.precio)} / día</td></tr>
-          <tr><td>Voluntarios</td><td class="num">${pack.voluntarios}</td></tr>
-          <tr><td>$ por voluntario</td><td class="num">${formatCLP(porVoluntario(pack))}</td></tr>
+          <tr><td>Equipo en terreno</td><td class="num">${pack.voluntarios} voluntarios/as</td></tr>
           <tr><td>Superficie / stands</td><td class="num">${pack.m2} m² · ${pack.stands} stand(s)</td></tr>
         </tbody>
       </table>
@@ -874,8 +907,8 @@ export default function PlanoTool() {
   @page { size: A4; margin: 0; }
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body { margin: 0; background: ${pal.bg}; color: ${pal.text}; font-family: Arial, Helvetica, sans-serif; font-size: 13px; }
-  .page { width: 210mm; min-height: 297mm; padding: 18mm; page-break-after: always; break-after: page; overflow: hidden; background: ${pal.bg}; display: flex; flex-direction: column; gap: 14px; }
-  .page-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 14px; }
+  .page { width: 210mm; min-height: 297mm; padding: 13mm 18mm; page-break-after: always; break-after: page; overflow: hidden; background: ${pal.bg}; display: flex; flex-direction: column; gap: 12px; }
+  .page-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 12px; }
   .page:last-child { page-break-after: auto; break-after: auto; }
   header { border-bottom: 4px solid ${pal.accent}; padding-bottom: 12px; display: flex; justify-content: space-between; align-items: end; }
   .brand { display: flex; align-items: center; gap: 12px; }
@@ -888,7 +921,7 @@ export default function PlanoTool() {
   .muted { color: ${pal.muted}; }
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   .box { border: 1px solid ${pal.borde}; padding: 16px; border-radius: 8px; break-inside: avoid; }
-  ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 9px; }
+  ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
   li { display: flex; gap: 9px; align-items: center; }
   .check { width: 17px; height: 17px; border: 1px solid ${pal.accent}; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; flex: 0 0 auto; color: ${pal.accent}; }
   .map-frame { border: 1px solid ${pal.borde}; padding: 6mm; display: flex; justify-content: center; background: ${pal.mapBg}; }
@@ -900,6 +933,18 @@ export default function PlanoTool() {
   .cot td.cur, .cot th.cur { background: ${pal.th}; color: ${pal.accent}; font-weight: 900; }
   .cot tr.tot td { font-weight: 900; color: ${pal.total}; font-size: 13px; }
   .note { font-size: 11px; color: ${pal.muted}; margin-top: 6px; }
+  /* Los textos de antecedentes son editables por el usuario; sin tope, un texto largo
+     empuja el checklist fuera del A4 y overflow:hidden lo recorta en silencio. */
+  .clamp { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 6; overflow: hidden; }
+  /* Datos operativos del evento: lo primero que busca produccion en un rider. */
+  .info-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .info-cell { border: 1px solid ${pal.borde}; border-left: 4px solid ${pal.accent}; border-radius: 6px; padding: 10px 12px; }
+  .info-cell span { display: block; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.14em; color: ${pal.muted}; margin-bottom: 4px; }
+  .info-cell strong { font-size: 14px; }
+  .contacts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .contacts .box { padding: 10px 14px; }
+  .fill { display: flex; gap: 8px; align-items: baseline; margin-top: 7px; font-size: 12px; color: ${pal.muted}; }
+  .fill i { flex: 1 1 auto; border-bottom: 1px solid ${pal.muted}; min-height: 14px; }
 </style>
 </head>
 <body>
@@ -909,15 +954,33 @@ export default function PlanoTool() {
       <div><strong>ORGANIZACIÓN RD</strong><br/><span class="muted">Servicio de Testeo y Reducción de Daño v2026</span></div>
     </header>
     <div class="page-body">
+      <div class="info-strip">
+        <div class="info-cell"><span>Evento</span><strong>${escapeHtml(eventName || '—')}</strong></div>
+        <div class="info-cell"><span>Ubicación</span><strong>${escapeHtml(eventVenue || '—')}</strong></div>
+        <div class="info-cell"><span>Fecha</span><strong>${escapeHtml(eventDate || '—')}</strong></div>
+        <div class="info-cell"><span>Pack contratado</span><strong>${escapeHtml(pack.label)}</strong></div>
+      </div>
       <section>
         <h2>1. Antecedentes</h2>
-        <p><strong>Quiénes Somos:</strong> ${escapeHtml(orgTexts.who)}</p>
-        <p><strong>Objetivo del Servicio:</strong> ${escapeHtml(orgTexts.goal)}</p>
-        <p><strong>Evento:</strong> ${escapeHtml(eventName)} · <strong>Ubicación:</strong> ${escapeHtml(eventVenue)} · <strong>Fecha:</strong> ${escapeHtml(eventDate)}</p>
+        <p class="clamp"><strong>Quiénes Somos:</strong> ${escapeHtml(orgTexts.who)}</p>
+        <p class="clamp"><strong>Objetivo del Servicio:</strong> ${escapeHtml(orgTexts.goal)}</p>
       </section>
       <section>
         <h2>2. Requerimientos Operativos</h2>
+        <p class="note" style="margin-bottom:10px">Los ítems marcados con <strong>X</strong> son requeridos a producción para este evento; los demás no aplican o los cubre RD.</p>
         <div class="grid">${checklistHtml}</div>
+      </section>
+      <section class="contacts">
+        <div class="box">
+          <h3>Coordinación RD (día del evento)</h3>
+          <div class="fill">Nombre <i></i></div>
+          <div class="fill">Teléfono <i></i></div>
+        </div>
+        <div class="box">
+          <h3>Contacto Producción</h3>
+          <div class="fill">Nombre <i></i></div>
+          <div class="fill">Teléfono <i></i></div>
+        </div>
       </section>
     </div>
   </main>
@@ -926,12 +989,13 @@ export default function PlanoTool() {
     <div class="page-body">
       <h2>3. Esquema de Distribución del Stand</h2>
       <div class="map-frame">${buildPrintableMapSvg()}</div>
+      <p class="note">Distribución a proporción real (1 m = 200 px de lienzo en los presets); medidas indicadas en cada elemento. Frente público abajo, acceso de servicio atrás. Superficie del pack: ${pack.m2} m² (${pack.stands} stand(s)). Ubicación sugerida en el recinto: cerca del punto médico/bienestar, fuera de la presión sonora del escenario principal, con acceso a ruta de servicio.</p>
     </div>
   </main>
   <main class="page">
     <div class="page-header-mini"><span class="logo">${RD_LOGO[exportTheme]}</span><h1 style="font-size:22px">RIDER TÉCNICO RD</h1></div>
     <div class="page-body">
-      <h2>4. Cotización — ${escapeHtml(calcCostos(preset).label)}</h2>
+      <h2>4. Cotización — ${escapeHtml(pack.label)}</h2>
       ${cotizacionHtml}
     </div>
   </main>
@@ -1045,8 +1109,9 @@ export default function PlanoTool() {
 
   // ─── Export SVG ───
   const exportSVG = () => {
-    if (!svgRef.current) return;
-    const svgData = new XMLSerializer().serializeToString(svgRef.current);
+    // Mismo SVG tematizado del PDF; antes serializaba el DOM de pantalla (siempre
+    // dark, con cursores y colores de UI) ignorando el tema dark/white elegido.
+    const svgData = buildPrintableMapSvg().trim();
     const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1083,15 +1148,18 @@ export default function PlanoTool() {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
       const zones = Array.isArray(data?.layout?.zones) ? data.layout.zones : [];
+      // || pisaba coordenadas 0 legitimas (0 es falsy): 0 -> 300. Solo caer al
+      // default cuando el valor no es numerico; ancho/alto 0 tampoco sirven.
+      const numOr = (v: unknown, fallback: number) => (Number.isFinite(Number(v)) ? Number(v) * 4 : fallback);
       const mapped: Element[] = zones.map((zone: any, index: number) => {
         const zoneType = zone.type === 'stand' ? 'informativo' : zone.type === 'descanso' ? 'descanso' : zone.type === 'testeo' ? 'testeo' : zone.type === 'mesa' ? 'informativo' : 'circulacion';
         return {
           id: `api-${index}-${zoneType}`,
           type: 'rect',
-          x: Number(zone.x) * 4 || 300,
-          y: Number(zone.y) * 4 || 300,
-          w: Number(zone.w) * 4 || 560,
-          h: Number(zone.h) * 4 || 300,
+          x: numOr(zone.x, 300),
+          y: numOr(zone.y, 300),
+          w: numOr(zone.w, 560) || 560,
+          h: numOr(zone.h, 300) || 300,
           label: String(zone.label || ZONE_LABELS[zoneType] || zoneType),
           color: ZONE_COLORS[zoneType] || '#555',
           visible: true,
@@ -1115,18 +1183,6 @@ export default function PlanoTool() {
       if (!acc.some(item => item.symbolKey === el.symbolKey)) acc.push(el);
       return acc;
     }, []);
-
-  const iconCategoryHeaders = (() => {
-    const groups: Record<string, Element[]> = {};
-    elements.filter(el => el.visible && el.type === 'symbol' && el.category).forEach(el => {
-      (groups[el.category as string] = groups[el.category as string] || []).push(el);
-    });
-    return Object.entries(groups).map(([category, els]) => ({
-      category,
-      x: Math.min(...els.map(e => e.x)),
-      y: Math.min(...els.map(e => e.y)),
-    }));
-  })();
 
   const NAV_TABS: { key: Page; label: string }[] = [
     { key: 'req', label: '☑ Checklist' },
@@ -1459,11 +1515,12 @@ export default function PlanoTool() {
                             stroke={el.id === selectedId ? '#ffffff' : el.color}
                             strokeWidth={el.id === selectedId ? 10 : 5}
                           />
-                          <text x={el.w / 2} y={el.h / 2} textAnchor="middle" dominantBaseline="central" fontSize={42} fill="white" fontWeight="bold">
+                          <text x={el.w / 2} y={el.h >= 300 ? 70 : el.h / 2} textAnchor="middle" dominantBaseline="central" fontSize={rectLabelFont(el.label, el.w)} fill="white" fontWeight="bold">
                             {el.label.toUpperCase()}
                           </text>
-                          <text x={el.w / 2} y={el.h / 2 + 50} textAnchor="middle" dominantBaseline="central" fontSize={24} fill="#ffffff80" fontWeight="bold" fontFamily="monospace">
-                            {el.w}×{el.h}
+                          {/* Medidas en metros (1 m = 200 px), no en px: el operador piensa en metros */}
+                          <text x={el.w / 2} y={el.h >= 300 ? 120 : el.h / 2 + 44} textAnchor="middle" dominantBaseline="central" fontSize={24} fill="#ffffff80" fontWeight="bold" fontFamily="monospace">
+                            {(el.w / 200).toFixed(1)}×{(el.h / 200).toFixed(1)} m
                           </text>
                           {el.id === selectedId && (
                             <rect x={-5} y={-10} width={el.w + 10} height={el.h + 20} rx={16} fill="none" stroke="#10b981" strokeWidth={5} strokeDasharray="15 10" />
@@ -1471,13 +1528,6 @@ export default function PlanoTool() {
                         </g>
                       );
                     })}
-
-                    {/* Encabezados de categoria sobre cada fila de iconos */}
-                    {iconCategoryHeaders.map(h => (
-                      <text key={`cat-${h.category}`} x={h.x} y={h.y - 22} fontSize={30} fill="#e879f9" fontWeight="900" fontFamily="monospace" style={{ letterSpacing: '0.06em' }}>
-                        {h.category.toUpperCase()}
-                      </text>
-                    ))}
 
                     {/* Draggable Legend */}
                     {showLegend && (
@@ -1487,20 +1537,20 @@ export default function PlanoTool() {
                         onTouchStart={onLegendTouchStart}
                         className="cursor-grab"
                       >
-                        <rect width={900} height={Math.min(900, Math.max(220, 160 + Math.ceil(visibleLegendSymbols.length / 2) * 84))} rx={30} fill="#18181bcc" stroke="#3f3f46" strokeWidth={5} />
-                        <text x={450} y={80} textAnchor="middle" fontSize={40} fill="#a1a1aa" fontWeight="black" fontFamily="monospace" style={{ letterSpacing: '0.08em' }}>
-                          LEYENDA TÉCNICA
+                        <rect width={900} height={legendHeightFor(visibleLegendSymbols.length)} rx={30} fill="#18181bcc" stroke="#3f3f46" strokeWidth={5} />
+                        <text x={450} y={90} textAnchor="middle" fontSize={46} fill="#a1a1aa" fontWeight="black" fontFamily="monospace" style={{ letterSpacing: '0.08em' }}>
+                          SIMBOLOGÍA
                         </text>
                         {visibleLegendSymbols.map((el, i) => {
                           const fill = el.color;
                           const col = i % 2;
                           const row = Math.floor(i / 2);
                           return (
-                            <g key={`legend-${el.id}`} transform={`translate(${48 + col * 410},${160 + row * 84})`}>
-                              <svg x={0} y={0} width={58} height={58} viewBox="0 0 160 160">
+                            <g key={`legend-${el.id}`} transform={`translate(${48 + col * 410},${160 + row * 100})`}>
+                              <svg x={0} y={0} width={80} height={80} viewBox="0 0 160 160">
                                 {renderSymbolGlyph(el.symbolKey || 'unknown', fill)}
                               </svg>
-                              <text x={82} y={40} fontSize={26} fill="#a1a1aa" fontWeight="bold" fontFamily="sans-serif">{el.label.toUpperCase().slice(0, 18)}</text>
+                              <text x={104} y={52} fontSize={32} fill="#d4d4d8" fontWeight="bold" fontFamily="sans-serif">{(SYMBOL_BY_KEY[el.symbolKey || '']?.label || el.label).toUpperCase().slice(0, 16)}</text>
                             </g>
                           );
                         })}

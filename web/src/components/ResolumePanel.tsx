@@ -1,23 +1,6 @@
 import { useState } from 'react';
-import { Radio, Check, Copy, Cpu, Zap } from 'lucide-react';
-
-function CommandCopy({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
-  const copy = async () => {
-    await navigator.clipboard?.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1300);
-  };
-  return (
-    <button
-      onClick={copy}
-      className="group flex w-full items-center justify-between gap-3 rounded-lg border border-zinc-800/60 bg-black/30 px-4 py-3 text-left font-mono text-xs text-zinc-300 transition hover:border-zinc-600 hover:bg-zinc-900"
-    >
-      <span className="truncate">{text}</span>
-      {copied ? <Check className="h-4 w-4 shrink-0 text-emerald-400" /> : <Copy className="h-4 w-4 shrink-0 text-zinc-600 group-hover:text-zinc-300" />}
-    </button>
-  );
-}
+import { Radio, Cpu, Zap } from 'lucide-react';
+import CommandCopy from './CommandCopy';
 
 export default function ResolumePanel() {
   const [jobId, setJobId] = useState('');
@@ -31,9 +14,9 @@ export default function ResolumePanel() {
 
   const fullCmd = [
     baseCmd,
-    `--fps ${fps}`,
-    host !== '127.0.0.1' ? `--host ${host}` : '',
-    port !== '7000' ? `--port ${port}` : '',
+    fps ? `--fps ${fps}` : '',
+    host.trim() && host.trim() !== '127.0.0.1' ? `--host ${host.trim()}` : '',
+    port && port !== '7000' ? `--port ${port}` : '',
   ].filter(Boolean).join(' ');
 
   return (
@@ -69,7 +52,8 @@ export default function ResolumePanel() {
                 <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-zinc-600">FPS</label>
                 <input
                   value={fps}
-                  onChange={e => setFps(e.target.value)}
+                  onChange={e => setFps(e.target.value.replace(/[^0-9]/g, ''))}
+                  inputMode="numeric"
                   placeholder="25"
                   className="w-full rounded-lg border border-zinc-800 bg-black/40 px-3 py-2 text-sm outline-none focus:border-zinc-600"
                 />
@@ -87,7 +71,8 @@ export default function ResolumePanel() {
                 <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-zinc-600">Puerto OSC</label>
                 <input
                   value={port}
-                  onChange={e => setPort(e.target.value)}
+                  onChange={e => setPort(e.target.value.replace(/[^0-9]/g, ''))}
+                  inputMode="numeric"
                   placeholder="7000"
                   className="w-full rounded-lg border border-zinc-800 bg-black/40 px-3 py-2 text-sm outline-none focus:border-zinc-600"
                 />

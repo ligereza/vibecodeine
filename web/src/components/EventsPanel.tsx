@@ -1,36 +1,16 @@
 import { useState } from 'react';
-import { Camera, Check, Copy, ExternalLink, Loader2 } from 'lucide-react';
-
-function CommandCopy({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
-  const copy = async () => {
-    await navigator.clipboard?.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1300);
-  };
-  return (
-    <button
-      onClick={copy}
-      className="group flex w-full items-center justify-between gap-3 rounded-lg border border-zinc-800/60 bg-black/30 px-4 py-3 text-left font-mono text-xs text-zinc-300 transition hover:border-zinc-600 hover:bg-zinc-900"
-    >
-      <span className="truncate">{text}</span>
-      {copied ? <Check className="h-4 w-4 shrink-0 text-emerald-400" /> : <Copy className="h-4 w-4 shrink-0 text-zinc-600 group-hover:text-zinc-300" />}
-    </button>
-  );
-}
+import { Camera, ExternalLink } from 'lucide-react';
+import CommandCopy from './CommandCopy';
 
 export default function EventsPanel() {
   const [igUrl, setIgUrl] = useState('');
-  const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState<string | null>(null);
 
+  // Armado local de comando (no ejecuta nada en backend): instantaneo, sin
+  // spinner fake que simule una llamada que no existe.
   const generateCommand = () => {
     if (!igUrl.trim()) return;
-    setGenerating(true);
-    setTimeout(() => {
-      setResult(`py -m flujo eventos flyer-auto "${igUrl.trim()}"`);
-      setGenerating(false);
-    }, 300);
+    setResult(`py -m flujo eventos flyer-auto "${igUrl.trim()}"`);
   };
 
   return (
@@ -64,10 +44,10 @@ export default function EventsPanel() {
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={generateCommand}
-                disabled={!igUrl.trim() || generating}
+                disabled={!igUrl.trim()}
                 className="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-bold text-black hover:bg-zinc-200 disabled:opacity-60"
               >
-                {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <ExternalLink className="h-4 w-4" />}
+                <ExternalLink className="h-4 w-4" />
                 Generar comando
               </button>
             </div>
