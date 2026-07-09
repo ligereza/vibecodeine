@@ -7,10 +7,9 @@ import {
   Heart, AlertTriangle, Coffee, RefreshCw, Flame
 } from 'lucide-react';
 import { cn } from '../utils/cn';
-import { RD_PALETTE, RD_LOGO, calcCostos, formatCLP, ALL_PRESETS, type ExportTheme } from '../rdBrand';
+import { RD_PALETTE, RD_LOGO, calcCostos, formatCLP, ALL_PACKS, PACKS, type ExportTheme, type PackId } from '../rdBrand';
 
 // ── Types ────────────────────────────────────────────────────────────
-type Preset = 'UNDER' | 'BASE' | 'MAINSTREAM';
 type TechnicalSymbolKey = string;
 
 interface Element {
@@ -27,19 +26,6 @@ interface Element {
   symbolKey?: string;
   locked?: boolean;
 }
-
-// ── Presets ──────────────────────────────────────────────────────────
-export const PRESET_CONFIGS: Record<Preset, { desc: string }> = {
-  UNDER: {
-    desc: '2 voluntarios, 1 mesa, 2 sillas, electricidad/luz básica'
-  },
-  BASE: {
-    desc: '4 voluntarios, 2 mesas, 4 sillas, stand + testeo'
-  },
-  MAINSTREAM: {
-    desc: '8 voluntarios, 3 mesas, 8 sillas, alto flujo tipo Espacio Riesco'
-  }
-};
 
 const ZONE_COLORS: Record<string, string> = {
   testeo: '#2d5a4a',
@@ -123,7 +109,7 @@ const SYMBOL_CATALOG: SymbolSpec[] = [
 
 const SYMBOL_BY_KEY = Object.fromEntries(SYMBOL_CATALOG.map(s => [s.key, s])) as Record<string, SymbolSpec>;
 
-const PLANO_FRAME = { x: 50, y: 50, w: 2870, h: 1800 };
+const PLANO_FRAME = { x: 50, y: 50, w: 2870, h: 1950 };
 const GRID = 20;
 
 const REQUIREMENT_SYMBOL_MAP: Record<string, TechnicalSymbolKey> = {
@@ -234,29 +220,64 @@ const renderRequirementIcon = (iconName: string, className = "w-4 h-4 text-zinc-
   }
 };
 
-// ── Default elements builder in 2970x2100 px format ─────────────────
-function buildElements(preset: Preset): Element[] {
+const withMedida = (label: string, m: string) => `${label} (${m})`;
+
+const placedSymbol = (key: TechnicalSymbolKey, id: string, x: number, y: number): Element => {
+  const spec = SYMBOL_BY_KEY[key] || SYMBOL_BY_KEY.power;
+  return { id, type: 'symbol', symbolKey: spec.key, x, y, w: spec.w, h: spec.h, label: spec.label, color: spec.color, visible: true };
+};
+
+// Grid de iconos utilitarios: filas y >= 950, no se solapa con stands/mesas (bottom mesas = 880).
+const ICON_ORIGIN = { x: 90, y: 950 };
+const ICON_COLS = 8;
+const ICON_GAP_X = 200;
+const ICON_GAP_Y = 210;
+const iconPos = (index: number) => ({
+  x: ICON_ORIGIN.x + (index % ICON_COLS) * ICON_GAP_X,
+  y: ICON_ORIGIN.y + Math.floor(index / ICON_COLS) * ICON_GAP_Y,
+});
+
+// ── Default elements builder in 2970x2100 px format, por pack ───────
+function buildElements(packId: PackId): Element[] {
   const base: Element[] = [
-    { id: 'entrada', type: 'rect', x: 1250, y: 100, w: 500, h: 120, label: 'ENTRADA', color: '#6366f1', visible: true },
-    { id: 'mesa1', type: 'rect', x: 300, y: 500, w: 600, h: 250, label: 'Mesa 1', color: '#10b981', visible: true },
-    { id: 'testeo', type: 'symbol', x: 1000, y: 550, w: 200, h: 200, label: 'Testeo', color: '#f59e0b', visible: true, symbolKey: 'testeo' },
-    { id: 'contencion', type: 'symbol', x: 1900, y: 550, w: 200, h: 200, label: 'Contención', color: '#3b82f6', visible: true, symbolKey: 'contencion' },
+    { id: 'entrada', type: 'rect', x: 1235, y: 70, w: 500, h: 110, label: 'ENTRADA', color: '#6366f1', visible: true },
+    { id: 'stand1', type: 'rect', x: 90, y: 230, w: 560, h: 400, label: withMedida('Stand Informativo', '3x3 m'), color: '#0369a1', visible: true },
+    { id: 'mesa1', type: 'rect', x: 90, y: 660, w: 560, h: 220, label: 'Mesa 1', color: '#10b981', visible: true },
   ];
 
-  if (preset === 'BASE' || preset === 'MAINSTREAM') {
+  const iconKeys = ['power', 'light', 'water', 'extinguisher', 'medical', 'security', 'trash', 'contact'];
+  iconKeys.forEach((key, i) => {
+    const p = iconPos(i);
+    base.push(placedSymbol(key, key, p.x, p.y));
+  });
+
+  if (packId === 'TESTEO' || packId === 'COMPLETO') {
     base.push(
-      { id: 'mesa2', type: 'rect', x: 1000, y: 800, w: 600, h: 250, label: 'Mesa 2', color: '#10b981', visible: true },
-      { id: 'stand1', type: 'rect', x: 300, y: 900, w: 400, h: 300, label: 'Stand', color: '#8b5cf6', visible: true },
+      { id: 'stand2', type: 'rect', x: 730, y: 230, w: 560, h: 400, label: withMedida('Stand Testeo', '3x3 m'), color: '#2d5a4a', visible: true },
+      { id: 'mesa2', type: 'rect', x: 730, y: 660, w: 560, h: 220, label: 'Mesa 2', color: '#10b981', visible: true },
+      placedSymbol('testeo', 'testeo', iconPos(iconKeys.length).x, iconPos(iconKeys.length).y),
     );
   }
 
-  if (preset === 'MAINSTREAM') {
+  if (packId === 'COMPLETO') {
+    // Coordinacion va apilada bajo la Mesa 3 (misma columna), no como 4a columna:
+    // una 4a columna a x=2010 invadiria la zona de la leyenda (default x=2060).
     base.push(
-      { id: 'mesa3', type: 'rect', x: 1700, y: 800, w: 600, h: 250, label: 'Mesa 3', color: '#10b981', visible: true },
-      { id: 'stand2', type: 'rect', x: 800, y: 900, w: 400, h: 300, label: 'Stand 2', color: '#8b5cf6', visible: true },
-      { id: 'testeo2', type: 'symbol', x: 1400, y: 1100, w: 200, h: 200, label: 'Testeo 2', color: '#f59e0b', visible: true, symbolKey: 'testeo' },
-      { id: 'contencion2', type: 'symbol', x: 1800, y: 1100, w: 200, h: 200, label: 'Contención 2', color: '#3b82f6', visible: true, symbolKey: 'contencion' },
+      { id: 'descanso', type: 'rect', x: 1370, y: 230, w: 560, h: 400, label: withMedida('Zona Descanso', '~9 m²'), color: '#059669', visible: true },
+      { id: 'mesa3', type: 'rect', x: 1370, y: 660, w: 560, h: 220, label: 'Mesa 3', color: '#10b981', visible: true },
+      { id: 'coordinacion', type: 'rect', x: 1370, y: 1420, w: 560, h: 300, label: 'Coordinación Operativa', color: '#ca8a04', visible: true },
     );
+    const completoIcons: [string, TechnicalSymbolKey][] = [
+      ['testeo2', 'testeo'],
+      ['contencion', 'contencion'],
+      ['contencion2', 'contencion'],
+      ['food', 'food'],
+      ['sensory', 'sensory'],
+    ];
+    completoIcons.forEach(([id, key], i) => {
+      const p = iconPos(iconKeys.length + 1 + i);
+      base.push(placedSymbol(key, id, p.x, p.y));
+    });
   }
 
   return base;
@@ -268,10 +289,10 @@ type Page = 'req' | 'map' | 'config';
 const PLANO_CHECKED_ITEMS_KEY = 'plano_checked_items';
 
 export default function PlanoTool() {
-  const [preset, setPreset] = useState<Preset>('BASE');
+  const [preset, setPreset] = useState<PackId>('TESTEO');
   const [exportTheme, setExportTheme] = useState<ExportTheme>('dark');
   const [page, setPage] = useState<Page>('map');
-  const [elements, setElements] = useState<Element[]>(() => buildElements('BASE'));
+  const [elements, setElements] = useState<Element[]>(() => buildElements('TESTEO'));
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [checkedItems, setCheckedItems] = useState<string[]>(() => {
     try {
@@ -281,7 +302,7 @@ export default function PlanoTool() {
       return [];
     }
   });
-  const [legendPos, setLegendPos] = useState({ x: 2200, y: 150 });
+  const [legendPos, setLegendPos] = useState({ x: 2060, y: 120 });
   const [zoom, setZoom] = useState(1);
   const [showGrid, setShowGrid] = useState(true);
   const [showLegend, setShowLegend] = useState(true);
@@ -306,7 +327,7 @@ export default function PlanoTool() {
     }
   }, [checkedItems]);
 
-  const applyPreset = (p: Preset) => {
+  const applyPreset = (p: PackId) => {
     setPreset(p);
     setElements(buildElements(p));
     setSelectedId(null);
@@ -614,6 +635,16 @@ export default function PlanoTool() {
     );
   };
 
+  const clampLegendPos = (x: number, y: number) => {
+    const frame = PLANO_FRAME;
+    const legendWidth = 760;
+    const legendHeight = Math.min(760, Math.max(190, 120 + Math.ceil(visibleLegendSymbols.length / 2) * 68));
+    return {
+      x: Math.min(Math.max(x, frame.x), frame.x + frame.w - legendWidth),
+      y: Math.min(Math.max(y, frame.y), frame.y + frame.h - legendHeight),
+    };
+  };
+
   const onLegendMouseDown = (e: React.MouseEvent) => {
     const svg = svgRef.current;
     if (!svg) return;
@@ -626,7 +657,7 @@ export default function PlanoTool() {
       const mpt = svg.createSVGPoint();
       mpt.x = me.clientX; mpt.y = me.clientY;
       const mp = mpt.matrixTransform(svg.getScreenCTM()!.inverse());
-      setLegendPos({ x: lx + (mp.x - start.x), y: ly + (mp.y - start.y) });
+      setLegendPos(clampLegendPos(lx + (mp.x - start.x), ly + (mp.y - start.y)));
     };
     const up = () => {
       window.removeEventListener('mousemove', move);
@@ -652,7 +683,7 @@ export default function PlanoTool() {
       const mpt = svg.createSVGPoint();
       mpt.x = t.clientX; mpt.y = t.clientY;
       const mp = mpt.matrixTransform(svg.getScreenCTM()!.inverse());
-      setLegendPos({ x: lx + (mp.x - start.x), y: ly + (mp.y - start.y) });
+      setLegendPos(clampLegendPos(lx + (mp.x - start.x), ly + (mp.y - start.y)));
     };
     const end = () => {
       window.removeEventListener('touchmove', move);
@@ -748,14 +779,14 @@ export default function PlanoTool() {
     return `
       <svg viewBox="0 0 ${printCanvasWidth} ${printCanvasHeight}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
         <rect width="${printCanvasWidth}" height="${printCanvasHeight}" fill="${pal.mapBg}"/>
-        <rect x="50" y="50" width="2870" height="1800" fill="none" stroke="${pal.muted}" stroke-width="5" stroke-dasharray="30 20" rx="20"/>
+        <rect x="${PLANO_FRAME.x}" y="${PLANO_FRAME.y}" width="${PLANO_FRAME.w}" height="${PLANO_FRAME.h}" fill="none" stroke="${pal.muted}" stroke-width="5" stroke-dasharray="30 20" rx="20"/>
         ${mapContent}
         <g transform="translate(0,0)">
           <rect x="${legendX}" y="${legendY}" width="${legendWidth}" height="${legendHeight}" rx="30" fill="${pal.panel}" fill-opacity="0.96" stroke="${pal.borde}" stroke-width="5"/>
           <text x="${legendX + 380}" y="${legendY + 70}" text-anchor="middle" font-size="36" font-family="Arial, sans-serif" font-weight="900" fill="${pal.accent}">LEYENDA TÉCNICA</text>
           ${legendRows}
         </g>
-        <text x="100" y="2010" font-size="34" font-family="Arial, sans-serif" font-weight="900" fill="${pal.text}">${escapeHtml(`${eventName.toUpperCase()} · ${eventVenue.toUpperCase()} · ${eventDate}`)}</text>
+        <text x="100" y="2060" font-size="34" font-family="Arial, sans-serif" font-weight="900" fill="${pal.text}">${escapeHtml(`${eventName.toUpperCase()} · ${eventVenue.toUpperCase()} · ${eventDate}`)}</text>
       </svg>`;
   };
 
@@ -777,26 +808,29 @@ export default function PlanoTool() {
         <td>X: ${el.x}, Y: ${el.y}</td>
       </tr>`).join('');
 
-    // Cotizacion comparativa de los 3 presets (misma formula que costs.py);
-    // se resalta el preset activo.
-    const costsByPreset = ALL_PRESETS.map(p => ({ id: p, c: calcCostos(p) }));
-    const cur = (p: string) => (p === preset ? ' cur' : '');
-    const cotHead = ALL_PRESETS.map(p => `<th class="num${cur(p)}">${p}</th>`).join('');
-    const cotRow = (label: string, get: (c: ReturnType<typeof calcCostos>) => number, bold = false) =>
-      `<tr class="${bold ? 'tot' : ''}"><td>${label}</td>${costsByPreset.map(x => `<td class="num${cur(x.id)}">${formatCLP(get(x.c))}</td>`).join('')}</tr>`;
+    // Cotizacion del pack seleccionado unicamente (precio plano, sin fan-out de presets).
+    const pack = calcCostos(preset);
+    const inclusionesHtml = `<ul>${pack.inclusiones.map(i => `<li>${escapeHtml(i)}</li>`).join('')}</ul>`;
+    const proporcionesHtml = pack.proporciones ? `
+      <table class="cot">
+        <thead><tr><th>Distribución del pack</th><th class="num">%</th><th class="num">Monto</th></tr></thead>
+        <tbody>
+          ${pack.proporciones.map(p => `<tr><td>${escapeHtml(p.label)}</td><td class="num">${p.pct}%</td><td class="num">${formatCLP(p.monto)}</td></tr>`).join('')}
+        </tbody>
+      </table>` : '';
     const cotizacionHtml = `
       <table class="cot">
-        <thead><tr><th>Concepto</th>${cotHead}</tr></thead>
         <tbody>
-          ${cotRow('Personal (voluntarios x horas)', c => c.personal)}
-          ${cotRow('Alimentación / colación', c => c.alimentacion)}
-          ${cotRow('Mobiliario (mesas)', c => c.mobiliario)}
-          ${cotRow('Infraestructura (stands)', c => c.infraestructura)}
-          ${cotRow('Extras (testeo / contención)', c => c.extras)}
-          ${cotRow('TOTAL REFERENCIAL', c => c.total, true)}
+          <tr class="tot"><td>Precio del pack</td><td class="num">${formatCLP(pack.precio)} / día</td></tr>
+          <tr><td>Voluntarios</td><td class="num">${pack.voluntarios}</td></tr>
+          <tr><td>$ por voluntario</td><td class="num">${formatCLP(pack.porVoluntario)}</td></tr>
+          <tr><td>Superficie / stands</td><td class="num">${pack.m2} m² · ${pack.stands} stand(s)</td></tr>
         </tbody>
       </table>
-      <p class="note">Valores referenciales en CLP; ajustables por evento. Preset activo: <strong>${preset}</strong>.</p>`;
+      <h3 style="margin-top:8px">Inclusiones</h3>
+      ${inclusionesHtml}
+      ${proporcionesHtml}
+      <p class="note">Valores referenciales en CLP; ajustables por evento. Pack: <strong>${escapeHtml(pack.label)}</strong>.</p>`;
 
     const html = `<!doctype html>
 <html>
@@ -854,7 +888,7 @@ export default function PlanoTool() {
   <main class="page">
     <h2>4. Detalle y Resumen de Elementos del Stand</h2>
     <table><thead><tr><th>Elemento</th><th>Tipo</th><th>Dimensiones</th><th>Coordenadas</th></tr></thead><tbody>${detailRows}</tbody></table>
-    <h2 style="margin-top:16px">5. Cotización Referencial (3 presets)</h2>
+    <h2 style="margin-top:16px">5. Cotización — ${escapeHtml(calcCostos(preset).label)}</h2>
     ${cotizacionHtml}
   </main>
 </body>
@@ -943,7 +977,7 @@ export default function PlanoTool() {
     md += `**Evento:** ${eventName}\n`;
     md += `**Fecha:** ${eventDate}\n`;
     md += `**Lugar:** ${eventVenue}\n`;
-    md += `**Preset Comercial:** ${preset.toUpperCase()}\n\n`;
+    md += `**Pack Comercial:** ${PACKS[preset].label} (${formatCLP(PACKS[preset].precio)})\n\n`;
     md += `## 1. Antecedentes de la Organización\n\n`;
     md += `**Quiénes somos:** ${orgTexts.who}\n\n`;
     md += `**Objetivo del servicio:** ${orgTexts.goal}\n\n`;
@@ -978,10 +1012,14 @@ export default function PlanoTool() {
     URL.revokeObjectURL(url);
   };
 
-  const loadFromBackend = async (presetId: Preset = preset) => {
+  // Deuda: el motor Python (src/flujo/plano/*) solo conoce under/base/mainstream.
+  // Se mapea aqui el pack elegido solo para la llamada demo; no cambia el modelo de PACKS.
+  const PACK_TO_BACKEND_PRESET: Record<PackId, string> = { INFO: 'under', TESTEO: 'base', COMPLETO: 'mainstream' };
+
+  const loadFromBackend = async (presetId: PackId = preset) => {
     if (window.location.protocol === 'file:') {
       applyPreset(presetId);
-      setBackendStatus(`Modo demo con preset ${presetId}. Abre via py -m flujo app para usar APIs.`);
+      setBackendStatus(`Modo demo con pack ${presetId}. Abre via py -m flujo app para usar APIs.`);
       return;
     }
     setBackendStatus('Consultando motor Python...');
@@ -993,7 +1031,7 @@ export default function PlanoTool() {
           evento: {
             nombre: eventName || 'Evento',
             fecha: eventDate,
-            preset: presetId.toLowerCase(),
+            preset: PACK_TO_BACKEND_PRESET[presetId],
             ubicacion: eventVenue || 'Por definir'
           },
         }),
@@ -1019,7 +1057,7 @@ export default function PlanoTool() {
         setElements(mapped);
         setSelectedId(mapped[0].id);
       }
-      setBackendStatus(`Motor Python OK con preset ${presetId}: ${mapped.length} elementos cargados.`);
+      setBackendStatus(`Motor Python OK con pack ${presetId}: ${mapped.length} elementos cargados.`);
     } catch (error) {
       setBackendStatus(`No se pudo usar /api/plano/render: ${error instanceof Error ? error.message : String(error)}`);
     }
@@ -1042,137 +1080,12 @@ export default function PlanoTool() {
 
   return (
     <div className="space-y-6">
-      {/* Printable Area (Styled strictly for high contrast and paper output) */}
-      <div data-print-rider className="rider-print-root hidden print:block text-black bg-white font-sans text-xs">
-        <section className="rider-print-page rider-info-page">
-        <header className="border-b-4 border-black pb-4 mb-8 flex justify-between items-end">
-          <div className="flex items-center gap-4">
-            <img src="https://reduciendodano.cl/wp-content/uploads/2021/05/gn-1024x790.png" alt="Logo RD" className="h-16 w-auto object-contain" />
-            <div>
-              <h1 className="text-3xl font-black italic tracking-tighter uppercase">RIDER TÉCNICO RD</h1>
-              <p className="text-[9px] uppercase tracking-[0.2em] font-bold mt-1">Documentación de Intervención en Terreno — ONG Reduciendo Daño</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="text-base font-bold">ORGANIZACIÓN RD</p>
-            <p className="text-[9px] opacity-60">Servicio de Testeo y Reducción de Daño v2026</p>
-          </div>
-        </header>
-
-        <section className="mb-6">
-          <h2 className="text-lg font-black uppercase tracking-tight mb-2">1. Antecedentes</h2>
-          <div className="grid grid-cols-1 gap-3 leading-relaxed">
-            <p><strong>Quiénes Somos:</strong> {orgTexts.who}</p>
-            <p><strong>Objetivo del Servicio:</strong> {orgTexts.goal}</p>
-            <p><strong>Evento:</strong> {eventName} · <strong>Ubicación:</strong> {eventVenue} · <strong>Fecha:</strong> {eventDate}</p>
-          </div>
-        </section>
-
-        <section className="mb-6">
-          <h2 className="text-lg font-black uppercase tracking-tight mb-2">2. Requerimientos Operativos</h2>
-          <div className="grid grid-cols-2 gap-4">
-            {CHECKLIST_SECTIONS.map(section => (
-              <div key={section.title} className="border border-zinc-300 p-3 rounded">
-                <h3 className="font-bold text-[10px] uppercase mb-2 border-b border-zinc-200 pb-1 flex items-center gap-1">
-                  {section.title}
-                </h3>
-                <ul className="space-y-1">
-                  {section.items.map(item => {
-                    const isChecked = checkedItems.includes(item.text);
-                    return (
-                      <li key={item.text} className="flex items-center gap-2">
-                        <div className="w-3.5 h-3.5 border border-black flex items-center justify-center font-bold font-mono text-[9px]">
-                          {isChecked ? 'X' : ' '}
-                        </div>
-                        <span className={cn(isChecked ? "line-through opacity-50" : "")}>{item.text}</span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        </section>
-
-        <section className="rider-print-page rider-map-page">
-          <h2 className="text-lg font-black uppercase tracking-tight mb-2">3. Esquema de Distribución del Stand</h2>
-          <div className="rider-print-map-frame border border-black p-4 bg-zinc-50 relative flex justify-center items-center">
-            <svg viewBox="0 0 2970 2400" className="rider-print-map-svg w-full max-w-[95%] h-auto mx-auto">
-              <rect width="100%" height="100%" fill="#fafafa" stroke="#ccc" />
-              <rect x={50} y={50} width={2870} height={1800} fill="none" stroke="#666" strokeWidth={5} strokeDasharray="30 20" rx={20} />
-              {elements.filter(e => e.visible).map(el => (
-                el.type === 'symbol' ? (
-                  renderSymbol(el, true)
-                ) : (
-                  <g key={el.id}>
-                    <rect x={el.x} y={el.y} width={el.w} height={el.h} fill="none" stroke="#000" strokeWidth={5} rx={16} />
-                    <text x={el.x + el.w/2} y={el.y + el.h/2} textAnchor="middle" dominantBaseline="central" fontSize={42} fontWeight="bold">{el.label.toUpperCase()}</text>
-                  </g>
-                )
-              ))}
-              
-              {/* High-contrast Technical Legend inside the printable SVG */}
-              <g transform="translate(100, 1870)">
-                <rect width={2770} height={Math.min(420, Math.max(160, 106 + Math.ceil(visibleLegendSymbols.length / 4) * 54))} rx={18} fill="#f4f4f5" stroke="#000" strokeWidth={4} />
-                <text x={1385} y={52} textAnchor="middle" fontSize={30} fill="#000" fontWeight="black" fontFamily="monospace" style={{ letterSpacing: '0.05em' }}>
-                  LEYENDA TÉCNICA
-                </text>
-                {visibleLegendSymbols.map((el, i) => {
-                  const col = i % 4;
-                  const row = Math.floor(i / 4);
-                  return (
-                    <g key={`print-legend-${el.id}`} transform={`translate(${36 + col * 680}, ${84 + row * 54})`}>
-                      <svg x={0} y={0} width={38} height={38} viewBox="0 0 160 160">
-                        {renderSymbolGlyph(el.symbolKey || 'unknown', '#000000')}
-                      </svg>
-                      <text x={52} y={27} fontSize={18} fill="#000" fontWeight="bold" fontFamily="sans-serif">
-                        {el.label.toUpperCase().slice(0, 26)}
-                      </text>
-                    </g>
-                  );
-                })}
-              </g>
-
-              <g transform="translate(100, 2340)">
-                <text fontSize={34} fontWeight="bold" fill="#000">{`${eventName.toUpperCase()} · ${eventVenue.toUpperCase()} · ${eventDate}`}</text>
-              </g>
-            </svg>
-          </div>
-        </section>
-
-        <section className="rider-print-page rider-detail-page">
-          <h2 className="text-lg font-black uppercase tracking-tight mb-4 border-b-2 border-black pb-1">4. Detalle y Resumen de Elementos del Stand</h2>
-          <table className="w-full border-collapse border border-zinc-400 text-xs">
-            <thead>
-              <tr className="bg-zinc-100">
-                <th className="border border-zinc-400 p-2 text-left">Elemento</th>
-                <th className="border border-zinc-400 p-2 text-left">Tipo de Zona</th>
-                <th className="border border-zinc-400 p-2 text-center">Dimensiones (px)</th>
-                <th className="border border-zinc-400 p-2 text-center">Coordenadas de Montaje (X, Y)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {elements.filter(el => el.visible).map(el => (
-                <tr key={el.id} className="hover:bg-zinc-50">
-                  <td className="border border-zinc-400 p-2 font-bold">{el.label.toUpperCase()}</td>
-                  <td className="border border-zinc-400 p-2">{el.type === 'symbol' ? `SÍMBOLO TÉCNICO (${el.symbolKey?.toUpperCase()})` : 'ÁREA DE MONTAJE'}</td>
-                  <td className="border border-zinc-400 p-2 text-center font-mono">{el.w} × {el.h} px</td>
-                  <td className="border border-zinc-400 p-2 text-center font-mono">X: {el.x}, Y: {el.y}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-      </div>
-
       {/* Screen View (Interactive App Tool) */}
       <div className="flex items-center justify-between print:hidden">
         <div>
           <h3 className="text-2xl font-bold flex items-center gap-2">
             Rider RD · Herramienta de Plano
-            <span className="text-xs bg-emerald-500/20 text-emerald-400 font-black px-2 py-0.5 rounded-full uppercase tracking-wider">v0.48.5</span>
+            <span className="text-xs bg-emerald-500/20 text-emerald-400 font-black px-2 py-0.5 rounded-full uppercase tracking-wider">v0.49.0</span>
           </h3>
           <p className="text-zinc-400 text-sm mt-1">
             Documento operativo para intervención en terreno — Reduciendo Daño Chile
@@ -1237,21 +1150,22 @@ export default function PlanoTool() {
         </div>
       )}
 
-      {/* Preset selector */}
+      {/* Pack selector */}
       <div className="flex gap-2 flex-wrap bg-zinc-900/20 border border-zinc-800/80 p-3 rounded-xl items-center print:hidden">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mr-2">Presets de Carga:</span>
-        {(['UNDER', 'BASE', 'MAINSTREAM'] as Preset[]).map(p => (
+        <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mr-2">Packs de Servicio:</span>
+        {ALL_PACKS.map(p => (
           <button
             key={p}
             onClick={() => applyPreset(p)}
             className={cn(
-              'rounded-lg border px-4 py-2 text-xs font-bold uppercase tracking-widest transition-colors',
+              'rounded-lg border px-4 py-2 text-xs font-bold uppercase tracking-widest transition-colors text-left',
               preset === p
                 ? 'border-emerald-500 bg-emerald-950/60 text-emerald-300'
                 : 'border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200'
             )}
           >
-            {p}
+            <span className="block">{PACKS[p].label}</span>
+            <span className="block text-[9px] font-normal normal-case tracking-normal opacity-70">{formatCLP(PACKS[p].precio)} · {PACKS[p].desc}</span>
           </button>
         ))}
         <button
@@ -1463,7 +1377,7 @@ export default function PlanoTool() {
                     )}
 
                     {/* Boundary frame */}
-                    <rect x="50" y="50" width="2870" height="1800" fill="none" stroke="#3f3f46" strokeWidth={5} strokeDasharray="30 20" rx={20} />
+                    <rect x={PLANO_FRAME.x} y={PLANO_FRAME.y} width={PLANO_FRAME.w} height={PLANO_FRAME.h} fill="none" stroke="#3f3f46" strokeWidth={5} strokeDasharray="30 20" rx={20} />
 
                     {/* Elements */}
                     {elements.filter(el => el.visible).map(el => {
@@ -1531,7 +1445,7 @@ export default function PlanoTool() {
                     )}
 
                     {/* Title block */}
-                    <g transform="translate(100, 1950)">
+                    <g transform="translate(100, 2020)">
                       <text fill="#888" fontSize={36} fontWeight={900} fontFamily="Inter, sans-serif">{eventName.toUpperCase()}</text>
                       <text x={0} y={50} fill="#555" fontSize={28} fontFamily="Inter, sans-serif">{`${eventVenue.toUpperCase()} · ${eventDate}`}</text>
                       <text x={2770} y={0} textAnchor="end" fill="#aaa" fontSize={24} fontFamily="monospace">Reduciendo Daño Chile · Rider Operativo</text>
