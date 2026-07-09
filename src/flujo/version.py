@@ -16,8 +16,9 @@ def get_changelog():
             "fecha": "2026-07-09",
             "highlights": [
                 "Reemplaza los presets UNDER/BASE/MAINSTREAM (costos calculados) por 3 PACKS de "
-                "precio plano: Informativo 100.000, Info+Testeo 250.000, Servicio Completo 500.000 "
-                "(6/6/15 voluntarios, m2/stands/inclusiones/proporciones por pack)",
+                "precio plano: Testeo o Informativo (2 vol) 100.000, Testeo y Informativo (6 vol) "
+                "300.000, Servicio Completo (15 vol) 500.000 (m2/stands/inclusiones/proporciones "
+                "por pack)",
                 "buildElements() dibuja por pack sin solapes; corrige el bug de margen inferior del "
                 "plano (PLANO_FRAME) y el default/clamp de la leyenda tecnica arrastrable",
                 "Elimina el bloque JSX de impresion duplicado (viewBox 2970x2400, logo remoto); "
