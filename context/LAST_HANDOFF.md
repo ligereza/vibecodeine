@@ -21,6 +21,12 @@ handoff:
       - gastas cuota en dirigir + codigo critico, no en volumen
     canonical: ["CLAUDE.md (bloque 'Equipo multi-agente')"]
 
+  done_sesion_git:     # sesion 2026-07-09 desktop (housekeeping git post-web)
+    - "Auditoria delegada (regla del runway): Gemini leyo el reporte de ramas; subagente Sonnet corrio verificacion completa. Resultado: compileall OK, pytest OK (170 pass 1 skip), flujo verify OK, sin bugs criticos, sin archivos faltantes, version 0.49.0 coherente en pyproject/version.py/SESSION_STATE."
+    - "Limpieza de ramas autorizada por el usuario: borradas remotas ya mergeadas (fix/unfinished-tools-4, claude/tools-section-improvements-2rhxhc, claude/refine-local-plan-adgdga) y locales obsoletas (agents/agente-continuacion-y-optimizacion @d83baba 153 checkpoints era v0.35, backup/pre-squash-20260630 @787e26d, backup-qwen-2026-06-30 @7145319). Queda SOLO main local + origin/main."
+    - "main: fast-forward a origin/main + commit 4f009d0 'chore: add plano/rider reference assets' (PLANO.png, REFERENCIA_VALORES.pdf, RIDER-01.svg, plano rider.pdf; 1.6 MB total) PUSHEADO a origin/main."
+    - "Leccion operativa: una orden 'delete extra branches' enviada por el usuario directo a un subagente en background ejecuto borrado destructivo sin pasar por el hilo director; se crearon refs rescue/* temporales hasta confirmar intencion y luego se borraron. Regla: ordenes destructivas de git van al hilo principal, no a subagentes."
+
   done_this_session:   # sesion 2026-07-09 (seccion tools del hub: bugs + prioridad editables)
     - "PLANO 6a tanda (comunicacion tecnica, con criterio de production manager delegado por el usuario): (1) los iconos del mapa YA NO llevan caption al lado -- en un plano tecnico el simbolo se decodifica en la leyenda; en pantalla el nombre aparece solo al seleccionar. (2) Cajas grandes (h>=300) llevan el nombre ARRIBA (como sala en plano real), interior libre para mobiliario/iconos. (3) Leyenda renombrada SIMBOLOGIA (termino estandar de plano), mas grande: filas 100px, iconos 80px, font 32, titulo 46 -- legible en el A4 impreso; legendHeightFor actualizado. (4) Hint de medidas en pantalla pasa de px a METROS (1m=200px). (5) Reglas de equipamiento del usuario: electricidad en CADA stand (power1/power2), iluminacion en CADA mesa (light1/light2, 120px junto a la mesa), extintor SOLO en pack COMPLETO, calefaccion (heating) en zona descanso; agua en stand de testeo (TESTEO) o zona descanso (COMPLETO). Iconos con helper sized() para tamanos fisicos acotados (120/140px)."
     - "Nota: light/trash/rack/sensory/heating renderizan como circulo codificado (LI/TR/RA/SE/HE) via fallback de glifos; decision consciente: marcador codificado + simbologia es practica valida de plano y evita 5 glifos SVG nuevos en 2 renderers. Si se quiere glifo dedicado, agregarlo en renderSymbolGlyph (pantalla) y symbolIconMarkup (print)."
@@ -90,8 +96,7 @@ handoff:
       - "[DESCARTADO 2026-07-08] logo color vectorial: el usuario confirmo que es innecesario, no se hace."
       - probar bridges Photoshop/After Effects en apps reales [pospuesto]
       - "[DESCARTADO 2026-07-08] Aider: desinstalado (bugs Windows + free tier roulette); reemplazo pedir_codigo.py"
-      - "[HECHO 2026-07-09] fix/unfinished-tools-4 (9 commits, incluye @96efa2e) mergeado a la rama claude/refine-local-plan-adgdga junto con el modelo de PACKS; llega a main cuando se mergee el PR de esta rama. La rama fix/unfinished-tools-4 remota queda obsoleta, se puede borrar despues del merge."
-      - "abrir PR de claude/refine-local-plan-adgdga a main (packs RD + fix/unfinished-tools-4 recuperado)."
+      - "[HECHO 2026-07-09] fix/unfinished-tools-4 mergeado via claude/refine-local-plan-adgdga; todo llego a main (PR #17 mergeado). Ramas remotas obsoletas borradas en la sesion de housekeeping git."
       - "deuda: src/flujo/plano/{engine,costs}.py y scripts/export_propuesta_pdf.py siguen en el modelo under/base/mainstream; no se alinearon al modelo de PACKS 100k/300k/500k (fuera de alcance, solo se pidio la app)."
       - "gota_rd backend [diferido]: decidir donde vive la data de reactivos antes de servir endpoint"
       - "tools/asistente_pedido y tools/canva_data: SPECs de una linea, pedir alcance antes de codear"

@@ -2,41 +2,26 @@
   "version": "0.49.0",
   "date": "2026-07-09",
   "assistant_name": "Cauce",
-  "repo_main": "4dd7bdf",
-  "current_focus": "Rama claude/tools-section-improvements-2rhxhc: seccion de herramientas del hub mejorada (bugs + prioridad de funciones editables), verde y pusheada. Tambien pendiente de sesion anterior: PR de claude/refine-local-plan-adgdga (packs RD) a main.",
+  "repo_main": "4f009d0",
+  "current_focus": "Repo consolidado post-web: todo el trabajo de tools/packs mergeado a main (PR #17), ramas limpiadas (solo main), assets de referencia plano/rider commiteados y pusheados. Proximo foco: activar el flujo GitHub Actions (@claude) y la deuda de plano/{engine,costs}.py.",
   "done": [
-    "2026-07-09 (sesion tools, 6a tanda - comunicacion tecnica del plano): iconos sin caption (decodifica la SIMBOLOGIA, mas grande: filas 100px/iconos 80/font 32), nombres de cajas grandes arriba, medidas en metros en pantalla, equipamiento por regla del usuario (power en cada stand, luz en cada mesa, extintor solo COMPLETO, calefaccion en descanso); 6 PDFs (3 packs x 2 temas) exportados y revisados, 3 paginas A4 exactas.",
-    "2026-07-09 (sesion tools, 5a tanda - presets del plano tipo compound): buildElements a proporcion real 1m=200px, modulos 3x3 contiguos por pack, mesas a escala dentro de stands, bandas frente publico/acceso servicio, solo iconos fisicos en su lugar (coordinacion queda en el checklist), BOH en COMPLETO; layoutIconGroups/iconCategoryHeaders eliminados; rectLabelFont adaptativo compartido print+pantalla; export check con 3 PDFs headless revisados (3 paginas A4 exactas cada uno).",
-    "2026-07-09 (sesion tools, 4a tanda - rider PDF rework production manager): eliminado $ por voluntario (voluntarios no remunerados; contradecia la tabla de proporciones), porVoluntario() borrado de rdBrand; pagina 1 con strip Evento/Ubicacion/Fecha/Pack + nota de semantica del checklist + contactos para llenar a mano; iconos del mapa con gap 260 (sin colision de labels), Testeo/Contencion numerados, leyenda con nombres canonicos; nota no-a-escala; padding 13mm para que pagina 1 vuelva a caber en A4 (verificado 1123px exacto headless). PDF de ejemplo entregado al usuario.",
-    "2026-07-09 (sesion tools, 2a tanda): review del PDF Plano/Rider (solo codigo) + 5 fixes en PlanoTool.tsx: leyenda sin cap de altura (filas ya no se salen del panel con 19+ simbolos), truncado antes de escapeHtml en leyenda impresa, PRINT_WHITE_COLOR_FIX para light/terrain/circulacion ilegibles en papel blanco, clamp de leyenda del print unificado con el drag (PLANO_FRAME), line-clamp:6 en textos de Antecedentes (antes se recortaban en silencio). Deuda del review cerrada en 3a tanda: exportSVG tematizado (usa buildPrintableMapSvg), iconCategoryHeaders anclado al elemento mas alto del grupo, footer print con credito, SvgVisualizer copia via copyText compartido (sin falsos 'copiado' en file://).",
-    "2026-07-09 (sesion tools): nav del sidebar (AppShell) agrupado Edicion/Consulta con editables primero y badge edit; tarjetas del dashboard reordenadas editables-primero.",
-    "2026-07-09 (sesion tools): CommandCopy compartido (antes triplicado) con fallback de clipboard y estado de fallo visible; EventsPanel sin spinner fake; ResolumePanel valida FPS/puerto numericos; MappingTool iframe con ruta relativa (file:// fallback); QuotePanel logo RD inline en print (antes URL remota); PlanoTool: category en makeSymbolElement (leyenda agrupada), loadFromBackend no pisa coordenada 0, snap usa GRID; SvgVisualizer revoca blob URL en onerror; JobsPanel catch en load.",
-    "2026-07-09 (sesion tools): verificado con typecheck + build:context + smoke Chromium headless (nav agrupado, comando eventos instantaneo, FPS filtra letras, 0 errores consola).",
-    "2026-07-09 (sesion packs RD): merge de origin/fix/unfinished-tools-4 a claude/refine-local-plan-adgdga (0 conflictos reales) -- trae rdBrand.ts, tema dark/white + logo RD, cotizacion, scripts/export_propuesta_pdf.py, src/flujo/plano/{costs,engine,iconos}.py que habian quedado sin mergear a main.",
-    "web/src/rdBrand.ts: PACKS reemplaza el modelo de costos calculados. Pack1 Testeo-o-Informativo 100.000/2vol/9m2, Pack2 Testeo-y-Informativo 300.000/6vol/18m2, Pack3 Completo 500.000/15vol/27m2 (+ proporciones 60/14/10/9/7). Valores corregidos 2 veces en la sesion tras confirmar la fuente real con el usuario (no datadrops/cotizacion_general_eventos, que es una oferta distinta). $/voluntario y montos del desglose de Pack3 ya NO se guardan como numero aparte: se calculan (precio/voluntarios, precio*pct/100) via porVoluntario()/proporcionMonto() para que no puedan desincronizarse del precio. RD_PALETTE y RD_LOGO (dark=negro.svg texto blanco, white=blanco.svg texto negro) sin tocar.",
-    "PlanoTool.tsx geometria: buildElements(packId) sin solapes (Coordinacion Operativa de COMPLETO apilada bajo Mesa 3, no 4a columna que invadia la leyenda). PLANO_FRAME.h 1800->1950. Clamp de leyenda arrastrable en pantalla (antes solo en print). Bloque JSX de print duplicado (viewBox 2970x2400, logo remoto) eliminado -- printRider()/buildPrintableMapSvg queda como unica fuente del PDF.",
-    "PlanoTool.tsx impresion: @page margin paso a 0 + padding en .page con background del tema (el margen impreso quedaba blanco fijo sin importar el tema). Seccion '4. Detalle y Resumen' (coordenadas/px de canvas interno, sin valor para el cliente) eliminada; cotizacion pasa a ser la seccion 4. Header fijo arriba + resto del contenido centrado en el espacio restante (.page-body) en las 3 paginas. Titulos, logo (84px, en las 3 paginas) y leyenda tecnica mas grandes. Iconos del plano agrupados por categoria (Servicios/Infraestructura/Coordinacion/Espacio/Zonas de Atencion, mismas 4 categorias del checklist) en vez de una tira plana sin organizar.",
-    "Rider seccion de cotizacion: un solo pack (antes tabla comparativa de 3 presets).",
-    "Verificado con Chromium headless (playwright) en cada ronda de cambios: 3 packs sin overlap, tema dark/white intercambia logo correcto, 6 PDFs (3 packs x 2 temas) generados y entregados al usuario en cada iteracion.",
-    "Version 0.48.5 -> 0.49.0 en pyproject.toml, src/flujo/version.py (+ changelog), web/package.json; badges sincronizados.",
-    "4 commits en la rama: 90a59b8 (modelo PACKS inicial), 773c9c1 (margen impreso + quitar tabla detalle), 3500f08 (margen a color de tema + iconos agrupados + tipografia mas grande), 66c0fe1 (precios reales + valores derivados). Todo pusheado a origin/claude/refine-local-plan-adgdga."
+    "2026-07-09 (sesion desktop, housekeeping git): auditoria delegada -- Gemini leyo reporte de ramas, subagente Sonnet verifico repo completo: compileall OK, pytest OK (170 pass 1 skip), flujo verify OK, sin bugs criticos, sin archivos faltantes, version coherente.",
+    "2026-07-09 (sesion desktop): limpieza de ramas autorizada por el usuario -- borradas remotas mergeadas (fix/unfinished-tools-4, claude/tools-section-improvements-2rhxhc, claude/refine-local-plan-adgdga) y locales obsoletas (agents/agente-continuacion-y-optimizacion @d83baba, backup/pre-squash-20260630 @787e26d, backup-qwen-2026-06-30 @7145319). Queda solo main.",
+    "2026-07-09 (sesion desktop): main fast-forward + commit 4f009d0 (PLANO.png, REFERENCIA_VALORES.pdf, RIDER-01.svg, plano rider.pdf) pusheado a origin/main.",
+    "2026-07-09 (sesiones web previas): seccion tools del hub (6 tandas: bugs, editables-primero, plano compound a escala real 1m=200px, rider PDF production manager, simbologia) + modelo PACKS RD (100k/300k/500k) -- detalle completo en context/LAST_HANDOFF.md; todo mergeado a main via PR #17."
   ],
-  "doing": [
-    "Falta abrir PR de claude/refine-local-plan-adgdga a main (packs RD + fix/unfinished-tools-4 recuperado). No se abrio porque el usuario no lo pidio explicitamente."
-  ],
+  "doing": [],
   "next": [
-    "Abrir y mergear PR de claude/refine-local-plan-adgdga a main.",
-    "Borrar la rama fix/unfinished-tools-4 remota una vez mergeado (su contenido ya viaja en esta rama).",
-    "Deuda: src/flujo/plano/{engine,costs}.py y scripts/export_propuesta_pdf.py siguen en el modelo under/base/mainstream, no en PACKS 100k/300k/500k (fuera de alcance -- solo se pidio la app).",
-    "Activar claude.yml (INACTIVO): instalar GitHub App claude-code-action, agregar secret ANTHROPIC_API_KEY, branch protection en main.",
+    "Activar flujo GitHub Actions: confirmar GitHub App instalada + secret ANTHROPIC_API_KEY + branch protection en main; test con issue '@claude ...'.",
+    "Deuda: src/flujo/plano/{engine,costs}.py y scripts/export_propuesta_pdf.py siguen en modelo under/base/mainstream, no en PACKS 100k/300k/500k.",
     "gota_rd backend (diferido): decidir donde vive la data de reactivos antes de servir endpoint real.",
     "tools/asistente_pedido y tools/canva_data: SPECs de una linea, pedir alcance al usuario antes de codear.",
-    "Test end-to-end del leg Droplet+Blender en la maquina de render (repo compila; falta correr con Photoshop/Blender reales)."
+    "Test end-to-end del leg Droplet+Blender en la maquina de render."
   ],
   "blockers": [
     "Cuota Claude finita: escritura mecanica va por pedir_codigo.py (Gemini), lectura por pedir_a_gemini.py.",
-    "build_chataigne_noisette_experimental: falta el .noisette real.",
-    "claude.yml inactivo hasta GitHub App + secret (ver next)."
+    "build_chataigne_noisette_experimental: falta el .noisette real (no re-adivinar, fallo 4 veces).",
+    "claude.yml existe y esta activo en el repo; falta confirmar GitHub App + secret desde la web de GitHub."
   ],
   "ai_stack": {
     "architect_reviewer": "Claude Code (director; solo arquitectura/critico)",
