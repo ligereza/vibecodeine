@@ -75,12 +75,12 @@ TEMAS_DOC = {
     "dark": {
         "bg": "#0a0a0a", "text": "#f2f2f2", "muted": "#8a8a80", "accent": "#c800c8",
         "panel": "#141414", "borde": "#2a2a2a", "th": "#181818", "total": "#ffd21f",
-        "logo": "RD_logo_vector_negro.svg",   # fills blancos -> fondo negro
+        "logo": "RD_logo_vector_blanco.svg",  # gota blanca -> fondo oscuro
     },
     "white": {
         "bg": "#ffffff", "text": "#141414", "muted": "#6b6b62", "accent": "#b100b8",
         "panel": "#f6f4f6", "borde": "#d8d5d8", "th": "#f0edf0", "total": "#b100b8",
-        "logo": "RD_logo_vector_blanco.svg",  # fills negros -> fondo blanco
+        "logo": "RD_logo_vector_negro.svg",   # gota negra -> fondo blanco
     },
 }
 
