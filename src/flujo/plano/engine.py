@@ -16,17 +16,29 @@ def _load_flujo_styles() -> Dict[str, Any]:
     from ..paths import asset_root
     flujo_path = asset_root() / "projects" / "flujo" / "flujo.json"
     if flujo_path.exists():
+        # estilos opcionales: si el JSON esta roto se sigue con defaults,
+        # pero solo se toleran fallas de lectura/parseo, no cualquier cosa
         try:
             data = json.loads(flujo_path.read_text(encoding="utf-8"))
             return data.get("colors", {})
-        except Exception:
-            pass
+        except (json.JSONDecodeError, OSError, UnicodeDecodeError):
+            return {}
     return {}
 
 
 # ============================================================
 # 1. CONSTANTES DE REALIDAD (metros)
 # ============================================================
+# Umbral unico para clasificar un evento como masivo (fuente de verdad; antes
+# el literal 2000 estaba repetido en 5 lugares entre engine.py y costs.py)
+UMBRAL_MASIVO = 2000
+
+
+def es_masivo(ev: Dict[str, Any]) -> bool:
+    """True si el evento es masivo (bandera explicita o asistentes >= umbral)."""
+    return bool(ev.get("masivo", False)) or int(ev.get("asistentes_estimados", 0) or 0) >= UMBRAL_MASIVO
+
+
 CONSTANTES = {
     "mesa":        {"w": 2.0, "h": 0.7},     # mesa rectangular estándar
     "silla":       {"w": 0.5, "h": 0.5},     # asiento
@@ -41,6 +53,17 @@ CONSTANTES = {
 # ============================================================
 # 2. REGLAS (constantes operativas) -> requerimientos del rider
 # ============================================================
+def mesas_requeridas(voluntarios: int, incluye_testeo: bool = False) -> int:
+    """Regla unica de mesas: 1 base + 1 por cada 5 voluntarios (+1 si hay testeo).
+
+    Fuente unica para rider (sin testeo, lo lista aparte) y costos (con testeo).
+    """
+    mesas = 1 + max(0, (voluntarios - 1)) // 5
+    if incluye_testeo:
+        mesas += 1
+    return mesas
+
+
 def reglas_rider(ev: Dict[str, Any]) -> List[str]:
     """Deriva requerimientos del rider según los parámetros del evento."""
     req: List[str] = []
@@ -48,15 +71,14 @@ def reglas_rider(ev: Dict[str, Any]) -> List[str]:
     voluntarios = int(ev.get("voluntarios", 0))
     asistentes = int(ev.get("asistentes_estimados", 0))
     testeo = bool(ev.get("incluye_testeo", False))
-    masivo = asistentes >= 2000 or bool(ev.get("masivo", False))
+    masivo = es_masivo(ev)
 
     if horas > 5:
         req.append("Jornada > 5 h: ALIMENTACIÓN obligatoria para el equipo (producción o costo extra).")
     elif horas > 4:
         req.append("Jornada > 4 h: agregar colación / viático para el equipo.")
 
-    # 1 mesa base; +1 cada 5 voluntarios
-    mesas = 1 + max(0, (voluntarios - 1)) // 5
+    mesas = mesas_requeridas(voluntarios)
     req.append(f"{voluntarios} voluntarios -> {mesas} mesa(s) (1 base + 1 por cada 5).")
 
     if testeo:
@@ -73,7 +95,7 @@ def modulos_desde_evento(ev: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Decide qué módulos (stands/zonas) incluir según el evento."""
     voluntarios = int(ev.get("voluntarios", 0))
     testeo = bool(ev.get("incluye_testeo", False))
-    masivo = ev.get("masivo") or int(ev.get("asistentes_estimados", 0)) >= 2000
+    masivo = es_masivo(ev)
 
     mods = [{"tipo": "stand", "nombre": "Stand Informativo", "toldo": "toldo_3x3",
              "mesas": 1, "sillas": min(voluntarios, 4)}]
@@ -132,6 +154,8 @@ def _solve_row(mods: List[Dict], pasillo: float) -> Tuple[List[Caja], float, flo
         mw, mh = CONSTANTES["mesa"]["w"], CONSTANTES["mesa"]["h"]
         for i in range(m.get("mesas", 0)):
             my = 0.2 + i * (mh + 0.15)
+            if my + mh > toldo["h"]:
+                break
             caja.hijos.append(Caja("mesa", 0.2, my, min(mw, toldo["w"] - 0.4), mh, rol="mesa"))
         sa = CONSTANTES["asiento_area"]
         for i in range(m.get("sillas", 0)):
@@ -158,13 +182,20 @@ def _solve_grid_2x(mods: List[Dict], pasillo: float) -> Tuple[List[Caja], float,
         x = col * (col_w + pasillo)
         y = row * (row_h + pasillo * 0.6)
         caja = Caja(m["nombre"], x, y, toldo["w"], toldo["h"], rol=m["tipo"])
-        # simplificado: mesas/sillas dentro
+        # colocar las cantidades REALES del modulo; el unico limite es que
+        # quepan dentro del toldo (misma regla que _solve_row)
         mw, mh = CONSTANTES["mesa"]["w"], CONSTANTES["mesa"]["h"]
-        for i in range(min(m.get("mesas", 0), 2)):
-            caja.hijos.append(Caja("mesa", 0.2, 0.2 + i * (mh + 0.1), mw, mh, rol="mesa"))
+        for i in range(m.get("mesas", 0)):
+            my = 0.2 + i * (mh + 0.1)
+            if my + mh > toldo["h"]:
+                break
+            caja.hijos.append(Caja("mesa", 0.2, my, min(mw, toldo["w"] - 0.4), mh, rol="mesa"))
         sa = CONSTANTES["asiento_area"]
-        for i in range(min(m.get("sillas", 0), 3)):
-            caja.hijos.append(Caja("silla", 0.2 + i * (sa + 0.08), toldo["h"] - sa - 0.15, sa, sa, rol="silla"))
+        for i in range(m.get("sillas", 0)):
+            sx = 0.2 + i * (sa + 0.08)
+            if sx + sa > toldo["w"]:
+                break
+            caja.hijos.append(Caja("silla", sx, toldo["h"] - sa - 0.15, sa, sa, rol="silla"))
         cajas.append(caja)
     cols = 2 if len(mods) > 1 else 1
     rows = (len(mods) + 1) // 2
@@ -180,44 +211,108 @@ def _esc(s: str) -> str:
 # ============================================================
 # 4. RENDER SVG (escala metros -> px)
 # ============================================================
-def render_svg(ev: Dict[str, Any], px_por_metro: float = 90.0) -> str:
-    """Render SVG con estilos de flujo si disponible (integración línea editorial)."""
+# Zonas del layout logico de produccion: cada icono operativo cae en su grupo
+_ZONAS_ICONOS = [
+    ("SERVICIOS", ["tent", "table", "testeo"]),
+    ("INFRAESTRUCTURA", ["power", "light", "water", "food", "heating"]),
+    ("SEGURIDAD", ["extinguisher", "medical", "security"]),
+    ("COORDINACION", ["contact", "contencion", "sensory", "trash"]),
+]
+
+# Paletas RD reales (linea_editorial/v4.1.md): Negro #0A0A0A, Blanco ceramico
+# #F2F2F2, Magenta #C800C8 (acento rave), Amarillo #FFD21F (alerta/titular).
+TEMAS = {
+    "dark": {
+        "bg": "#0a0a0a", "panel": "rgba(255,255,255,0.04)", "light": "#f2f2f2",
+        "muted": "#8a8a80", "stand": "#c800c8", "zona": "#ffd21f",
+        "linea": "rgba(255,255,255,0.09)",
+    },
+    "white": {
+        "bg": "#ffffff", "panel": "#f6f4f6", "light": "#141414",
+        "muted": "#6b6b62", "stand": "#b100b8", "zona": "#b8860b",
+        "linea": "rgba(0,0,0,0.12)",
+    },
+}
+# Iconos demasiado pales para fondo blanco: reemplazo por tono legible
+_ICONO_WHITE_FIX = {"light": "#b59500", "water": "#1d4ed8", "food": "#7c4a06",
+                    "sensory": "#6d4bd8"}
+
+
+def render_svg(ev: Dict[str, Any], px_por_metro: float = 90.0, tema: str = "dark") -> str:
+    """Plano SVG en estilo RD (dark o white): modulos + iconos por zona logica.
+
+    Los iconos (luces, extintor, agua, medico, testeo, contencion...) se derivan
+    del evento via iconos.simbolos_de_evento y se agrupan como en un montaje real.
+    Las sillas no se dibujan (confunden el plano; su conteo va en el rider).
+    """
+    from . import iconos
+
+    pal = TEMAS.get(tema, TEMAS["dark"])
+    _BG, _PANEL, _LIGHT = pal["bg"], pal["panel"], pal["light"]
+    _MUTED, _STAND, _ZONA = pal["muted"], pal["stand"], pal["zona"]
     cajas, W_m, H_m = solve_layout(ev)
-    styles = _load_flujo_styles()
-    ink = styles.get("ink", "#1f2a24")
-    accent = styles.get("accent", "#1f6f4e")
-    paper = styles.get("paper", "#fbf8f1")
+    s = px_por_metro
+    activos = set(iconos.simbolos_de_evento(ev))
+    grupos = [(t, [k for k in ks if k in activos]) for t, ks in _ZONAS_ICONOS]
+    grupos = [(t, ks) for t, ks in grupos if ks]
 
     margin = 0.8
-    W = (W_m + 2 * margin) * px_por_metro
-    H = (H_m + 2 * margin + 1.2) * px_por_metro
-    s = px_por_metro
-    ox, oy = margin * s, (margin + 0.8) * s
+    paso_icono = 1.7          # separacion horizontal entre iconos (m)
+    alto_grupo = 2.1          # titulo + fila de iconos (m)
+    max_iconos = max((len(ks) for _, ks in grupos), default=1)
+    ancho_iconos = max_iconos * paso_icono
+    W_m_total = max(W_m, ancho_iconos)
+    H_iconos = len(grupos) * alto_grupo
+
+    W = (W_m_total + 2 * margin) * s
+    H = (H_m + 1.4 + H_iconos + 2 * margin) * s
+    ox, oy = margin * s, (margin + 0.9) * s
 
     out = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W:.0f}" height="{H:.0f}" viewBox="0 0 {W:.0f} {H:.0f}">']
-    out.append(f'<rect width="{W:.0f}" height="{H:.0f}" fill="{paper}"/>')
-    out.append(f'<text x="{ox}" y="{0.5*s}" font-family="Inter,Arial" font-size="{0.32*s}" font-weight="700" fill="{ink}">'
-               f'PLANO — {_esc(ev.get("nombre","Evento"))}</text>')
-    out.append(f'<text x="{ox}" y="{0.82*s}" font-family="Inter,Arial" font-size="{0.17*s}" fill="{ink}">'
-               f'Escala 1m = {px_por_metro:.0f}px · {len(cajas)} módulo(s) · flujo</text>')
+    out.append(f'<rect width="{W:.0f}" height="{H:.0f}" fill="{_BG}"/>')
+    out.append(f'<text x="{ox:.0f}" y="{0.55*s:.0f}" font-family="Inter,Arial" font-size="{0.34*s:.0f}" '
+               f'font-weight="800" fill="{_LIGHT}">PLANO — {_esc(ev.get("nombre","Evento"))}</text>')
+    out.append(f'<text x="{ox:.0f}" y="{0.9*s:.0f}" font-family="Inter,Arial" font-size="{0.16*s:.0f}" '
+               f'fill="{_MUTED}">Escala 1m = {px_por_metro:.0f}px · {len(cajas)} modulo(s) · reduccion de danos</text>')
 
+    # --- modulos (stands / zonas) ---
     for c in cajas:
         cx, cy = ox + c.x * s, oy + c.y * s
-        col = accent if c.rol == "stand" else "#7b5cff"
+        col = _STAND if c.rol == "stand" else _ZONA
         out.append(f'<rect x="{cx:.0f}" y="{cy:.0f}" width="{c.w*s:.0f}" height="{c.h*s:.0f}" '
-                   f'fill="rgba(31,111,78,0.05)" stroke="{col}" stroke-width="3" rx="6"/>')
-        out.append(f'<text x="{cx+6:.0f}" y="{cy+0.3*s:.0f}" font-family="Inter,Arial" font-size="{0.16*s}" '
-                   f'font-weight="700" fill="{col}">{_esc(c.nombre)}</text>')
-        out.append(f'<text x="{cx+6:.0f}" y="{cy+c.h*s-6:.0f}" font-family="Inter,Arial" font-size="{0.12*s}" '
-                   f'fill="{ink}">{c.w:g}×{c.h:g} m</text>')
+                   f'fill="{_PANEL}" stroke="{col}" stroke-width="3" rx="8"/>')
         for h in c.hijos:
+            if h.rol != "mesa":
+                continue  # sillas fuera a proposito
             hx, hy = cx + h.x * s, cy + h.y * s
-            if h.rol == "mesa":
-                out.append(f'<rect x="{hx:.0f}" y="{hy:.0f}" width="{h.w*s:.0f}" height="{h.h*s:.0f}" '
-                           f'fill="#d4b78f" stroke="#a8855a" stroke-width="1"/>')
-            else:
-                out.append(f'<rect x="{hx:.0f}" y="{hy:.0f}" width="{h.w*s:.0f}" height="{h.h*s:.0f}" '
-                           f'fill="#e63946" rx="2"/>')
+            out.append(f'<rect x="{hx:.0f}" y="{hy:.0f}" width="{h.w*s:.0f}" height="{h.h*s:.0f}" '
+                       f'fill="rgba(212,183,143,0.18)" stroke="#c9a96a" stroke-width="1.5" rx="2"/>')
+        out.append(f'<text x="{cx+8:.0f}" y="{cy+0.32*s:.0f}" font-family="Inter,Arial" font-size="{0.17*s:.0f}" '
+                   f'font-weight="700" fill="{col}" style="paint-order:stroke" stroke="{_BG}" '
+                   f'stroke-width="{0.05*s:.0f}">{_esc(c.nombre)}</text>')
+        out.append(f'<text x="{cx+8:.0f}" y="{cy+c.h*s-8:.0f}" font-family="Inter,Arial" '
+                   f'font-size="{0.12*s:.0f}" fill="{_MUTED}">{c.w:g}×{c.h:g} m</text>')
+
+    # --- iconos operativos por zona logica ---
+    y_base = oy + (H_m + 0.8) * s
+    for titulo, keys in grupos:
+        out.append(f'<line x1="{ox:.0f}" y1="{y_base:.0f}" x2="{ox + W_m_total*s:.0f}" y2="{y_base:.0f}" '
+                   f'stroke="{pal["linea"]}" stroke-width="1"/>')
+        out.append(f'<text x="{ox:.0f}" y="{y_base+0.32*s:.0f}" font-family="Inter,Arial" '
+                   f'font-size="{0.15*s:.0f}" font-weight="700" fill="{_MUTED}" letter-spacing="1">{titulo}</text>')
+        cy_icon = y_base + 1.15 * s
+        for i, key in enumerate(keys):
+            cx_icon = ox + (i + 0.5) * paso_icono * s
+            col = iconos.COLORES.get(key, _LIGHT)
+            if tema == "white":
+                col = _ICONO_WHITE_FIX.get(key, col)
+            escala = s / 150.0
+            out.append(iconos.icono(key, cx_icon, cy_icon, escala, col))
+            out.append(f'<text x="{cx_icon:.0f}" y="{cy_icon+0.72*s:.0f}" text-anchor="middle" '
+                       f'font-family="Inter,Arial" font-size="{0.12*s:.0f}" fill="{_LIGHT}">'
+                       f'{_esc(iconos.ETIQUETAS.get(key, key))}</text>')
+        y_base += alto_grupo * s
+
     out.append('</svg>')
     return "\n".join(out)
 
@@ -279,8 +374,8 @@ def validate_evento(ev: Dict[str, Any]) -> Dict[str, Any]:
     if asistentes is not None:
         if asistentes < 0:
             errors.append("asistentes_estimados no puede ser negativo.")
-        elif asistentes >= 2000 and not ev.get("masivo", False):
-            warnings.append("asistentes_estimados >= 2000: se tratara como evento masivo aunque masivo=false.")
+        elif asistentes >= UMBRAL_MASIVO and not ev.get("masivo", False):
+            warnings.append(f"asistentes_estimados >= {UMBRAL_MASIVO}: se tratara como evento masivo aunque masivo=false.")
 
     layout_mode = ev.get("layout_mode", "row")
     if layout_mode not in {"row", "grid_2x"}:
@@ -306,7 +401,7 @@ def validate_evento(ev: Dict[str, Any]) -> Dict[str, Any]:
         errors.append("El layout calculado tiene alto invalido.")
     if bool(ev.get("incluye_testeo", False)) and stands < 2:
         errors.append("incluye_testeo requiere stand informativo + stand testeo.")
-    if (asistentes or 0) >= 2000 and zonas < 1:
+    if (asistentes or 0) >= UMBRAL_MASIVO and zonas < 1:
         errors.append("Evento masivo requiere zona de contencion/descanso.")
     if (voluntarios or 0) > 0 and mesas < 1:
         errors.append("El layout debe incluir al menos una mesa operativa.")

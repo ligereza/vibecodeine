@@ -17,6 +17,13 @@ import asyncio
 import os
 import sys
 import threading
+
+# Windows: cp1252 revienta al imprimir transcripciones de Gemini con emojis o
+# acentos fuera del codepage; forzar UTF-8 para no cortar la sesion de voz
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+
 import optimizer_gen as og
 
 import sounddevice as sd
