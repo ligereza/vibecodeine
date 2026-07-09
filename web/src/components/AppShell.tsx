@@ -24,24 +24,28 @@ interface NavItem {
   icon: typeof LayoutDashboard;
   label: string;
   desc: string;
+  // true = permite editar/crear contenido dentro de la app (editor, formulario
+  // con salida real); false = consulta o generador de comandos copy/paste.
+  edit: boolean;
 }
 
+// Editables primero: son las herramientas que producen trabajo dentro de la app.
 const RD_NAV: NavItem[] = [
-  { view: 'hub', icon: LayoutDashboard, label: 'Dashboard', desc: 'Vista general RD' },
-  { view: 'intake', icon: ClipboardList, label: 'Intake', desc: 'Parsear pedidos' },
-  { view: 'jobs', icon: Boxes, label: 'Jobs / Suplementos', desc: 'Estado de trabajos' },
-  { view: 'quote', icon: Calculator, label: 'Cotizacion', desc: 'Presupuesto RD' },
-  { view: 'plano', icon: Map, label: 'Plano / Rider', desc: 'Layout de evento' },
-  { view: 'visualizer', icon: Shapes, label: 'SVG Studio', desc: 'Galeria suplementos RD' },
+  { view: 'hub', icon: LayoutDashboard, label: 'Dashboard', desc: 'Vista general RD', edit: false },
+  { view: 'plano', icon: Map, label: 'Plano / Rider', desc: 'Editor de layout de evento', edit: true },
+  { view: 'visualizer', icon: Shapes, label: 'SVG Studio', desc: 'Galeria + editor visual', edit: true },
+  { view: 'quote', icon: Calculator, label: 'Cotizacion', desc: 'Presupuesto editable', edit: true },
+  { view: 'intake', icon: ClipboardList, label: 'Intake', desc: 'Parsear pedidos y crear jobs', edit: true },
+  { view: 'jobs', icon: Boxes, label: 'Jobs / Suplementos', desc: 'Estado de trabajos', edit: false },
 ];
 
 const STUDIO_NAV: NavItem[] = [
-  { view: 'hub', icon: LayoutDashboard, label: 'Dashboard', desc: 'Vista general Studio' },
-  { view: 'commands', icon: TerminalSquare, label: 'Comandos', desc: 'CLI reference' },
-  { view: 'events', icon: Camera, label: 'Eventos / IG', desc: 'Flyers Instagram' },
-  { view: 'visualizer', icon: Shapes, label: 'SVG Studio', desc: 'Galeria eventos' },
-  { view: 'resolume', icon: Radio, label: 'Resolume / Chataigne', desc: 'SMPTE/OSC auto' },
-  { view: 'mapping', icon: Lightbulb, label: 'Mapping LED', desc: 'Rigging / pixel mapping' },
+  { view: 'hub', icon: LayoutDashboard, label: 'Dashboard', desc: 'Vista general Studio', edit: false },
+  { view: 'visualizer', icon: Shapes, label: 'SVG Studio', desc: 'Galeria + editor visual', edit: true },
+  { view: 'mapping', icon: Lightbulb, label: 'Mapping LED', desc: 'Rigging / pixel mapping', edit: true },
+  { view: 'events', icon: Camera, label: 'Eventos / IG', desc: 'Comando flyer-auto', edit: false },
+  { view: 'resolume', icon: Radio, label: 'Resolume / Chataigne', desc: 'Comando SMPTE/OSC', edit: false },
+  { view: 'commands', icon: TerminalSquare, label: 'Comandos', desc: 'CLI reference', edit: false },
 ];
 
 interface Props {
@@ -135,35 +139,49 @@ export default function AppShell({ view, onViewChange, children }: Props) {
           </div>
         </div>
 
-        {/* Nav */}
+        {/* Nav: editables primero, consulta despues */}
         <nav className="flex-1 overflow-y-auto px-3 py-4">
-          <div className="mb-2 px-2 text-[10px] font-bold uppercase tracking-widest text-zinc-600">
-            {mode === 'rd' ? 'Herramientas RD' : 'Herramientas Studio'}
-          </div>
-          {navItems.map(item => {
-            const Icon = item.icon;
-            const active = view === item.view;
-            const accentColor = mode === 'rd' ? 'text-emerald-400' : 'text-violet-400';
-            return (
-              <button
-                key={item.view}
-                onClick={() => { onViewChange(item.view); setSidebarOpen(false); }}
-                className={`
-                  group mb-0.5 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all
-                  ${active
-                    ? 'bg-zinc-800/80 text-white shadow-sm'
-                    : 'text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-200'}
-                `}
-              >
-                <Icon className={`h-4 w-4 shrink-0 ${active ? accentColor : 'text-zinc-500 group-hover:text-zinc-400'}`} />
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-medium">{item.label}</div>
-                  <div className="truncate text-[10px] text-zinc-600">{item.desc}</div>
-                </div>
-                {active && <ChevronRight className="h-3 w-3 text-zinc-600" />}
-              </button>
-            );
-          })}
+          {[
+            { title: mode === 'rd' ? 'Edicion RD' : 'Edicion Studio', items: navItems.filter(i => i.view === 'hub' || i.edit) },
+            { title: 'Consulta / referencia', items: navItems.filter(i => i.view !== 'hub' && !i.edit) },
+          ].map(section => section.items.length > 0 && (
+            <div key={section.title} className="mb-4">
+              <div className="mb-2 px-2 text-[10px] font-bold uppercase tracking-widest text-zinc-600">
+                {section.title}
+              </div>
+              {section.items.map(item => {
+                const Icon = item.icon;
+                const active = view === item.view;
+                const accentColor = mode === 'rd' ? 'text-emerald-400' : 'text-violet-400';
+                return (
+                  <button
+                    key={item.view}
+                    onClick={() => { onViewChange(item.view); setSidebarOpen(false); }}
+                    className={`
+                      group mb-0.5 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all
+                      ${active
+                        ? 'bg-zinc-800/80 text-white shadow-sm'
+                        : 'text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-200'}
+                    `}
+                  >
+                    <Icon className={`h-4 w-4 shrink-0 ${active ? accentColor : 'text-zinc-500 group-hover:text-zinc-400'}`} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 text-sm font-medium">
+                        {item.label}
+                        {item.edit && (
+                          <span className={`rounded px-1 py-px text-[8px] font-bold uppercase tracking-wider ${
+                            mode === 'rd' ? 'bg-emerald-900/60 text-emerald-400' : 'bg-violet-900/60 text-violet-400'
+                          }`}>edit</span>
+                        )}
+                      </div>
+                      <div className="truncate text-[10px] text-zinc-600">{item.desc}</div>
+                    </div>
+                    {active && <ChevronRight className="h-3 w-3 text-zinc-600" />}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
         {/* Footer */}

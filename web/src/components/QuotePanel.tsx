@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Calculator, Plus, Trash2, Download, RotateCcw, Printer } from 'lucide-react';
 import { cn } from '../utils/cn';
+import { RD_LOGO } from '../rdBrand';
 
 interface LineItem {
   id: string;
@@ -162,7 +163,12 @@ export default function QuotePanel() {
       <div className="hidden print:block text-black bg-white p-8 font-sans text-xs">
         <header className="border-b-4 border-black pb-4 mb-8 flex justify-between items-end">
           <div className="flex items-center gap-4">
-            <img src="https://reduciendodano.cl/wp-content/uploads/2021/05/gn-1024x790.png" alt="Logo RD" className="h-16 w-auto object-contain" />
+            {/* Logo RD vectorial inline (rdBrand): imprime sin depender de internet;
+                variante white = texto negro para fondo claro de papel. */}
+            <div
+              className="h-16 w-20 shrink-0 [&>svg]:h-full [&>svg]:w-full"
+              dangerouslySetInnerHTML={{ __html: RD_LOGO.white }}
+            />
             <div>
               <h1 className="text-3xl font-black italic tracking-tighter uppercase">COTIZACIÓN DE SERVICIOS</h1>
               <p className="text-[9px] uppercase tracking-[0.2em] font-bold mt-1">ONG Reduciendo Daño</p>

@@ -47,7 +47,7 @@ export default function JobsPanel() {
 
   const load = () => {
     setLoading(true);
-    flujoApi.jobs().then(setJobs).finally(() => setLoading(false));
+    flujoApi.jobs().then(setJobs).catch(() => setJobs(null)).finally(() => setLoading(false));
   };
   useEffect(load, []);
 

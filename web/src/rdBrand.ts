@@ -188,10 +188,8 @@ export function calcCostos(packId: PackId): Pack {
 
 export const ALL_PACKS: PackId[] = ['INFO', 'TESTEO', 'COMPLETO'];
 
-// $ por voluntario: proporcion (precio / voluntarios), no un numero aparte.
-export function porVoluntario(pack: Pack): number {
-  return Math.round(pack.precio / pack.voluntarios);
-}
+// NO existe "$ por voluntario": los voluntarios no son remunerados; ese numero
+// contradecia la tabla de proporciones y no aporta al rider ni a la cotizacion.
 
 // Monto de un item del desglose: proporcion (% del precio total del pack).
 export function proporcionMonto(pack: Pack, prop: PackProportion): number {

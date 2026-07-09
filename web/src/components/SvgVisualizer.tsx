@@ -11,6 +11,7 @@ import {
   AlignStartHorizontal, AlignEndHorizontal, AlignCenterHorizontal,
   AlignLeft,
 } from 'lucide-react';
+import { copyText } from './CommandCopy';
 import {
   MOCK_SVG_INDEX, loadFromApi, TYPE_OPTIONS,
   type SvgPiece, type PieceType, type PieceArea,
@@ -294,9 +295,10 @@ function GalleryView({ onConfigure }: { onConfigure: (piece: SvgPiece) => void }
     const u=URL.createObjectURL(new Blob([p.svgContent],{type:'image/svg+xml;charset=utf-8'}));
     img.onload=()=>{ctx.drawImage(img,0,0,w,h);URL.revokeObjectURL(u);
       const a=document.createElement('a');a.href=c.toDataURL('image/png');a.download=`${p.id}.png`;a.click();};
+    img.onerror=()=>URL.revokeObjectURL(u); // sin esto el blob URL queda filtrado si el SVG no carga
     img.src=u;
   },[]);
-  const copySvg = (s: string) => { navigator.clipboard?.writeText(s); setCodeCopied(true); setTimeout(()=>setCodeCopied(false),1500); };
+  const copySvg = async (s: string) => { if (await copyText(s)) { setCodeCopied(true); setTimeout(()=>setCodeCopied(false),1500); } };
   const configurePiece = (piece: SvgPiece) => {
     if (!piece.svgContent) return;
     onConfigure(piece);
@@ -574,7 +576,7 @@ function GalleryView({ onConfigure }: { onConfigure: (piece: SvgPiece) => void }
                   <div className="p-5 space-y-5">
                     <div><h3 className="flex items-center gap-2 text-xs font-bold mb-3"><Palette className="h-3.5 w-3.5 text-violet-400"/>Paleta extraída</h3>
                       <div className="grid grid-cols-4 gap-2 md:grid-cols-6">{extractColors(selectedPiece.svgContent!).map((c,i)=>(
-                        <button key={i} onClick={()=>navigator.clipboard?.writeText(c)} className="group flex flex-col items-center gap-1.5 rounded-lg border border-zinc-800/50 bg-zinc-900/30 p-2 hover:border-zinc-700">
+                        <button key={i} onClick={()=>copyText(c)} className="group flex flex-col items-center gap-1.5 rounded-lg border border-zinc-800/50 bg-zinc-900/30 p-2 hover:border-zinc-700">
                           <div className="h-10 w-10 rounded-lg border border-zinc-700 group-hover:scale-110 transition-transform" style={{backgroundColor:c}}/>
                           <span className="font-mono text-[9px] text-zinc-500 group-hover:text-zinc-300">{c}</span></button>
                       ))}</div></div>
@@ -891,7 +893,7 @@ const loadSvgPiece = useCallback(async (piece: SvgPiece) => {
     return JSON.stringify(c,null,2);
   },[config]);
 
-  const copyJ = ()=>{navigator.clipboard?.writeText(expJson());setCopied(true);setTimeout(()=>setCopied(false),1500);};
+  const copyJ = async ()=>{if(await copyText(expJson())){setCopied(true);setTimeout(()=>setCopied(false),1500);}};
   const dlJ = ()=>{const j=expJson();const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([j],{type:'application/json'}));a.download=`${config?.project.slug||'config'}.json`;a.click();};
 
   const addEl = (type:ConfigElement['type'])=>{
@@ -1019,7 +1021,7 @@ const loadSvgPiece = useCallback(async (piece: SvgPiece) => {
             <button onClick={()=>setShowPal(p=>!p)} className="flex items-center gap-1.5 w-full text-left text-[9px] font-bold uppercase tracking-widest text-zinc-600">
               <Palette className="h-3 w-3 text-amber-400"/>Paleta<ChevronDown className={`h-2.5 w-2.5 ml-auto transition-transform ${showPal?'rotate-180':''}`}/></button>
             {showPal && <div className="mt-2 grid grid-cols-5 gap-1">{Object.entries(pal).map(([n,h])=>
-              <button key={n} onClick={()=>navigator.clipboard?.writeText(n)} className="group flex flex-col items-center gap-0.5 rounded p-0.5 hover:bg-zinc-800" title={`${n}: ${h}`}>
+              <button key={n} onClick={()=>copyText(n)} className="group flex flex-col items-center gap-0.5 rounded p-0.5 hover:bg-zinc-800" title={`${n}: ${h}`}>
                 <span className="h-5 w-5 rounded border border-zinc-700" style={{backgroundColor:h}}/><span className="text-[7px] text-zinc-600 truncate max-w-full">{n}</span></button>
             )}</div>}
           </div>
