@@ -115,7 +115,8 @@ const GRID = 20;
 
 // Altura real de la caja de leyenda segun cantidad de simbolos. Sin cap: con 19+
 // simbolos (COMPLETO + marcar todos) el cap de 900 dejaba filas dibujadas fuera del panel.
-const legendHeightFor = (n: number) => Math.max(220, 160 + Math.ceil(n / 2) * 84);
+// Filas de 100 px (iconos 80 + font 32): la simbologia debe leerse en el A4 impreso.
+const legendHeightFor = (n: number) => Math.max(260, 170 + Math.ceil(n / 2) * 100);
 
 // ZONE_COLORS esta calibrada para fondo oscuro; sobre papel blanco los tonos claros
 // desaparecen. Overrides solo para el print con tema white.
@@ -291,49 +292,50 @@ function buildElements(packId: PackId): Element[] {
     { id: 'publico', type: 'rect', x: X0, y: 1400, w: W, h: 110, label: `Frente público — ${frontM} m`, color: '#6366f1', visible: true },
   ];
 
-  // Iconos fisicos del stand 1: punto electrico e iluminacion al fondo.
+  // Iconos con tamano fisico acotado (los labels ya no van en el mapa: decodifica
+  // la leyenda, como en un plano tecnico real).
+  const sized = (el: Element, s: number): Element => ({ ...el, w: s, h: s });
+
+  // Reglas de equipamiento (definidas por el usuario): electricidad en CADA stand,
+  // iluminacion en CADA mesa, extintor SOLO en el pack COMPLETO (evento masivo),
+  // calefaccion en la zona de descanso.
   const icons: Element[] = [
-    placedSymbol('power', 'power', X0 + 40, TOP + 20),
-    placedSymbol('light', 'light', X0 + 260, TOP + 20),
+    sized(placedSymbol('power', 'power1', X0 + 20, TOP + 130), 140),
+    sized(placedSymbol('light', 'light1', X0 + (packId === 'INFO' ? 300 : 360), TOP + 280), 120),
+    placedSymbol('trash', 'trash', X0 + W + 40, TOP + 380),
   ];
 
-  if (packId === 'INFO') {
-    icons.push(
-      placedSymbol('extinguisher', 'extinguisher', X0 + 440, TOP + 380),
-      placedSymbol('trash', 'trash', X0 + W + 40, TOP + 380),
-    );
-  }
-
   if (packId === 'TESTEO' || packId === 'COMPLETO') {
+    const S2 = X0 + 3 * M;
     base.push(
-      { id: 'stand2', type: 'rect', x: X0 + 3 * M, y: TOP, w: 3 * M, h: H, label: withMedida('Stand Testeo', '3×3 m'), color: '#2d5a4a', visible: true },
-      { id: 'mesa2', type: 'rect', x: X0 + 3 * M + 200, y: TOP + 420, w: 360, h: 120, label: withMedida('Mesa', '1.8×0.6 m'), color: '#10b981', visible: true },
+      { id: 'stand2', type: 'rect', x: S2, y: TOP, w: 3 * M, h: H, label: withMedida('Stand Testeo', '3×3 m'), color: '#2d5a4a', visible: true },
+      { id: 'mesa2', type: 'rect', x: S2 + (packId === 'COMPLETO' ? 160 : 120), y: TOP + 420, w: 360, h: 120, label: withMedida('Mesa', '1.8×0.6 m'), color: '#10b981', visible: true },
     );
     icons.push(
-      placedSymbol('testeo', 'testeo', X0 + 3 * M + 180, TOP + 60),
-      placedSymbol('extinguisher', 'extinguisher', X0 + 3 * M + 20, TOP + 380),
+      sized(placedSymbol('power', 'power2', S2 + 20, TOP + 130), 140),
+      placedSymbol('testeo', 'testeo', S2 + 180, TOP + 170),
+      sized(placedSymbol('light', 'light2', S2 + 400, TOP + 280), 120),
     );
   }
 
   if (packId === 'TESTEO') {
-    icons.push(
-      placedSymbol('water', 'water', X0 + 3 * M + 420, TOP + 20),
-      placedSymbol('trash', 'trash', X0 + W + 40, TOP + 380),
-    );
+    icons.push(sized(placedSymbol('water', 'water', X0 + 3 * M + 430, TOP + 130), 140));
   }
 
   if (packId === 'COMPLETO') {
+    const Z = X0 + 6 * M;
     base.push(
       // Back of house detras de los stands: coordinacion + almacenamiento.
       { id: 'coordinacion', type: 'rect', x: X0, y: 380, w: 900, h: 240, label: 'Coordinación Operativa (BOH)', color: '#ca8a04', visible: true },
-      { id: 'descanso', type: 'rect', x: X0 + 6 * M, y: TOP, w: 3 * M, h: H, label: withMedida('Zona Descanso', '3×3 m'), color: '#059669', visible: true },
+      { id: 'descanso', type: 'rect', x: Z, y: TOP, w: 3 * M, h: H, label: withMedida('Zona Descanso', '3×3 m'), color: '#059669', visible: true },
     );
     icons.push(
-      placedSymbol('rack', 'rack', X0 + 920, 420),
-      placedSymbol('water', 'water', X0 + 6 * M + 20, TOP + 20),
-      placedSymbol('sensory', 'sensory', X0 + 6 * M + 220, TOP + 20),
-      placedSymbol('contencion', 'contencion', X0 + 6 * M + 400, TOP + 20),
-      placedSymbol('trash', 'trash', X0 + W + 40, TOP + 380),
+      sized(placedSymbol('extinguisher', 'extinguisher', X0 + 3 * M + 20, TOP + 410), 120),
+      sized(placedSymbol('rack', 'rack', X0 + 920, 420), 140),
+      sized(placedSymbol('water', 'water', Z + 20, TOP + 130), 140),
+      sized(placedSymbol('sensory', 'sensory', Z + 200, TOP + 130), 140),
+      sized(placedSymbol('heating', 'heating', Z + 380, TOP + 130), 140),
+      placedSymbol('contencion', 'contencion', Z + 200, TOP + 320),
     );
   }
 
@@ -683,9 +685,12 @@ export default function PlanoTool() {
         <svg x={0} y={0} width={el.w} height={el.h} viewBox="0 0 160 160" overflow="visible">
           {renderSymbolGlyph(el.symbolKey || 'unknown', fill)}
         </svg>
-        <text x={el.w / 2} y={el.h + 30} textAnchor="middle" fontSize="30" fill={fill} fontWeight="bold" fontFamily="monospace">
-          {el.label.toUpperCase()}
-        </text>
+        {/* Sin caption junto al icono: la leyenda decodifica; al seleccionar se ve el nombre */}
+        {isSelected && (
+          <text x={el.w / 2} y={el.h + 34} textAnchor="middle" fontSize="30" fill={fill} fontWeight="bold" fontFamily="monospace">
+            {el.label.toUpperCase()}
+          </text>
+        )}
         {isSelected && (
           <rect x={-10} y={-10} width={el.w + 20} height={el.h + 20} rx={12} fill="none" stroke="#10b981" strokeWidth={10} strokeDasharray="20 10" />
         )}
@@ -792,16 +797,16 @@ export default function PlanoTool() {
   const printColor = (c: string) =>
     exportTheme === 'white' ? (PRINT_WHITE_COLOR_FIX[c] || c) : c;
 
+  // Sin label junto al icono: en un plano tecnico el simbolo se decodifica en la
+  // leyenda, no con captions flotantes que ensucian el layout.
   const symbolPrintMarkup = (el: Element) => {
-    const label = escapeHtml(el.label.toUpperCase());
     const color = escapeHtml(printColor(el.color || '#111111'));
     const cx = el.x + el.w / 2;
     const cy = el.y + el.h / 2;
-    const scale = Math.max(0.7, Math.min(el.w, el.h) / 170);
+    const scale = Math.max(0.55, Math.min(el.w, el.h) / 170);
     return `
       <g>
         ${symbolIconMarkup(el.symbolKey || 'symbol', color, cx, cy, scale)}
-        <text x="${cx}" y="${el.y + el.h + 30}" text-anchor="middle" font-size="28" font-family="Arial, sans-serif" font-weight="700" fill="${color}">${label}</text>
       </g>`;
   };
 
@@ -812,10 +817,13 @@ export default function PlanoTool() {
       const label = escapeHtml(el.label.toUpperCase());
       if (el.type === 'symbol') return symbolPrintMarkup(el);
       const rectColor = escapeHtml(printColor(el.color));
+      // Cajas grandes (stands/zonas) llevan el nombre arriba, como en un plano
+      // real: deja el interior libre para mobiliario e iconos.
+      const labelY = el.h >= 300 ? el.y + 70 : el.y + el.h / 2;
       return `
         <g>
           <rect x="${el.x}" y="${el.y}" width="${el.w}" height="${el.h}" rx="16" fill="${rectColor}" fill-opacity="0.48" stroke="${rectColor}" stroke-width="8"/>
-          <text x="${el.x + el.w / 2}" y="${el.y + el.h / 2}" text-anchor="middle" dominant-baseline="middle" font-size="${rectLabelFont(el.label, el.w)}" font-family="Arial, sans-serif" font-weight="900" fill="${pal.text}">${label}</text>
+          <text x="${el.x + el.w / 2}" y="${labelY}" text-anchor="middle" dominant-baseline="middle" font-size="${rectLabelFont(el.label, el.w)}" font-family="Arial, sans-serif" font-weight="900" fill="${pal.text}">${label}</text>
         </g>`;
     }).join('\n');
 
@@ -830,15 +838,15 @@ export default function PlanoTool() {
       const col = i % 2;
       const row = Math.floor(i / 2);
       const x = legendX + 48 + col * 410;
-      const y = legendY + 160 + row * 84;
+      const y = legendY + 160 + row * 100;
       const color = escapeHtml(printColor(el.color || '#111111'));
       // La leyenda describe TIPOS de simbolo: usa el nombre canonico del catalogo
       // (los elementos pueden venir numerados, ej "Testeo 1").
       const legendLabel = SYMBOL_BY_KEY[el.symbolKey || '']?.label || el.label;
       return `
         <g>
-          ${symbolIconMarkup(el.symbolKey || 'symbol', color, x + 22, y - 16, 0.36)}
-          <text x="${x + 64}" y="${y}" font-size="26" font-family="Arial, sans-serif" font-weight="800" fill="${pal.text}">${escapeHtml(legendLabel.toUpperCase().slice(0, 18))}</text>
+          ${symbolIconMarkup(el.symbolKey || 'symbol', color, x + 40, y + 40, 0.5)}
+          <text x="${x + 104}" y="${y + 52}" font-size="32" font-family="Arial, sans-serif" font-weight="800" fill="${pal.text}">${escapeHtml(legendLabel.toUpperCase().slice(0, 16))}</text>
         </g>`;
     }).join('\n');
 
@@ -849,7 +857,7 @@ export default function PlanoTool() {
         ${mapContent}
         <g transform="translate(0,0)">
           <rect x="${legendX}" y="${legendY}" width="${legendWidth}" height="${legendHeight}" rx="30" fill="${pal.panel}" fill-opacity="0.96" stroke="${pal.borde}" stroke-width="5"/>
-          <text x="${legendX + 450}" y="${legendY + 80}" text-anchor="middle" font-size="40" font-family="Arial, sans-serif" font-weight="900" fill="${pal.accent}">LEYENDA TÉCNICA</text>
+          <text x="${legendX + 450}" y="${legendY + 90}" text-anchor="middle" font-size="46" font-family="Arial, sans-serif" font-weight="900" fill="${pal.accent}">SIMBOLOGÍA</text>
           ${legendRows}
         </g>
         <text x="100" y="2075" font-size="34" font-family="Arial, sans-serif" font-weight="900" fill="${pal.text}">${escapeHtml(`${eventName.toUpperCase()} · ${eventVenue.toUpperCase()} · ${eventDate}`)}</text>
@@ -1507,11 +1515,12 @@ export default function PlanoTool() {
                             stroke={el.id === selectedId ? '#ffffff' : el.color}
                             strokeWidth={el.id === selectedId ? 10 : 5}
                           />
-                          <text x={el.w / 2} y={el.h / 2} textAnchor="middle" dominantBaseline="central" fontSize={rectLabelFont(el.label, el.w)} fill="white" fontWeight="bold">
+                          <text x={el.w / 2} y={el.h >= 300 ? 70 : el.h / 2} textAnchor="middle" dominantBaseline="central" fontSize={rectLabelFont(el.label, el.w)} fill="white" fontWeight="bold">
                             {el.label.toUpperCase()}
                           </text>
-                          <text x={el.w / 2} y={el.h / 2 + 50} textAnchor="middle" dominantBaseline="central" fontSize={24} fill="#ffffff80" fontWeight="bold" fontFamily="monospace">
-                            {el.w}×{el.h}
+                          {/* Medidas en metros (1 m = 200 px), no en px: el operador piensa en metros */}
+                          <text x={el.w / 2} y={el.h >= 300 ? 120 : el.h / 2 + 44} textAnchor="middle" dominantBaseline="central" fontSize={24} fill="#ffffff80" fontWeight="bold" fontFamily="monospace">
+                            {(el.w / 200).toFixed(1)}×{(el.h / 200).toFixed(1)} m
                           </text>
                           {el.id === selectedId && (
                             <rect x={-5} y={-10} width={el.w + 10} height={el.h + 20} rx={16} fill="none" stroke="#10b981" strokeWidth={5} strokeDasharray="15 10" />
@@ -1529,19 +1538,19 @@ export default function PlanoTool() {
                         className="cursor-grab"
                       >
                         <rect width={900} height={legendHeightFor(visibleLegendSymbols.length)} rx={30} fill="#18181bcc" stroke="#3f3f46" strokeWidth={5} />
-                        <text x={450} y={80} textAnchor="middle" fontSize={40} fill="#a1a1aa" fontWeight="black" fontFamily="monospace" style={{ letterSpacing: '0.08em' }}>
-                          LEYENDA TÉCNICA
+                        <text x={450} y={90} textAnchor="middle" fontSize={46} fill="#a1a1aa" fontWeight="black" fontFamily="monospace" style={{ letterSpacing: '0.08em' }}>
+                          SIMBOLOGÍA
                         </text>
                         {visibleLegendSymbols.map((el, i) => {
                           const fill = el.color;
                           const col = i % 2;
                           const row = Math.floor(i / 2);
                           return (
-                            <g key={`legend-${el.id}`} transform={`translate(${48 + col * 410},${160 + row * 84})`}>
-                              <svg x={0} y={0} width={58} height={58} viewBox="0 0 160 160">
+                            <g key={`legend-${el.id}`} transform={`translate(${48 + col * 410},${160 + row * 100})`}>
+                              <svg x={0} y={0} width={80} height={80} viewBox="0 0 160 160">
                                 {renderSymbolGlyph(el.symbolKey || 'unknown', fill)}
                               </svg>
-                              <text x={82} y={40} fontSize={26} fill="#a1a1aa" fontWeight="bold" fontFamily="sans-serif">{(SYMBOL_BY_KEY[el.symbolKey || '']?.label || el.label).toUpperCase().slice(0, 18)}</text>
+                              <text x={104} y={52} fontSize={32} fill="#d4d4d8" fontWeight="bold" fontFamily="sans-serif">{(SYMBOL_BY_KEY[el.symbolKey || '']?.label || el.label).toUpperCase().slice(0, 16)}</text>
                             </g>
                           );
                         })}
