@@ -2,8 +2,8 @@
 # Lo continua Claude (director) para cerrar pendientes y arrancar el flujo.
 
 handoff:
-  date: 2026-07-08
-  version: 0.48.5            # debe coincidir con pyproject.toml / src/flujo/version.py
+  date: 2026-07-09
+  version: 0.49.0            # debe coincidir con pyproject.toml / src/flujo/version.py
   assistant: Cauce
   repo: https://github.com/ligereza/vibecodeine
   to: Claude (director)
@@ -21,7 +21,18 @@ handoff:
       - gastas cuota en dirigir + codigo critico, no en volumen
     canonical: ["CLAUDE.md (bloque 'Equipo multi-agente')"]
 
-  done_this_session:   # sesion 2026-07-08 (tools inconclusas + canal escritura)
+  done_this_session:   # sesion 2026-07-09 (PlanoTool: modelo de PACKS RD)
+    - "rama claude/refine-local-plan-adgdga: se mergeo origin/fix/unfinished-tools-4 (9 commits que quedaron sueltos DESPUES del merge de PR #13 a main -- @96efa2e; nadie los habia mergeado). Trajo lo real: web/src/rdBrand.ts (paleta/logo RD dark-white), PlanoTool con tema+logo+cotizacion, scripts/export_propuesta_pdf.py, src/flujo/plano/{costs,engine,iconos}.py. Merge limpio, 0 conflictos reales."
+    - "web/src/rdBrand.ts: PRESET_PARAMS/PRECIOS/calcCostos (costos calculados) -> PACKS (precio plano): Pack1 Testeo-o-Informativo 100.000/2vol, Pack2 Testeo-y-Informativo 300.000/6vol, Pack3 Completo 500.000/15vol. Cada pack trae m2/stands/inclusiones; COMPLETO ademas trae proporciones 60/14/10/9/7 (solo %, sin monto guardado). RD_PALETTE y RD_LOGO sin tocar (ya estaban bien)."
+    - "Correccion de precios (2 vueltas): el primer valor puesto (INFO 100k/6vol, TESTEO 250k/6vol) salio de una instruccion de handoff anterior mal leida. Se investigo datadrops/cotizacion_general_eventos/ (250k/300k/500k) pero el usuario confirmo que es una oferta DISTINTA (cotizacion generica de agencia), no la fuente de los PACKS. Los valores reales los dio el usuario directo en el chat: 100k/2vol (testeo O informativo, a eleccion), 300k/6vol (testeo Y informativo, ambos), 500k/15vol (completo, sin cambio)."
+    - "web/src/rdBrand.ts: porVoluntario y proporciones[].monto dejaron de guardarse como numero aparte (podian desincronizarse del precio, como paso en esta sesion). Ahora son funciones puras porVoluntario(pack)=precio/voluntarios y proporcionMonto(pack,prop)=precio*pct/100; PACKS solo guarda precio (unico valor absoluto editable) y pct (proporcion)."
+    - "PlanoTool.tsx: buildElements(packId) redibuja por pack sin solapes (bug real: la 4a columna de COMPLETO invadia la leyenda tecnica default -- Coordinacion Operativa paso a apilarse bajo Mesa 3 en vez de 4a columna). PLANO_FRAME.h 1800->1950 (corrige margen inferior muerto). legendPos default + clamp de arrastre en pantalla (antes solo el print tenia clamp)."
+    - "Elimina bloque JSX de impresion duplicado (viewBox 2970x2400, logo remoto <img>, sin tema) que no usaba el boton Imprimir Rider; printRider()/buildPrintableMapSvg quedan como unica fuente del PDF."
+    - "Rider seccion de Cotizacion: de tabla comparativa de 3 presets a SOLO el pack elegido (precio/voluntarios/m2-stands/inclusiones, + tabla de proporciones si es COMPLETO). Paso de ser la seccion 5 a la seccion 4 al eliminar 'Detalle y Resumen' (ver abajo)."
+    - "Ronda de pulido de impresion (feedback iterativo del usuario sobre los PDFs): (1) margen del PDF -- @page margin quedaba fuera del area pintable, mostrando papel blanco alrededor sin importar el tema; se paso a @page{margin:0} + padding en .page con background del tema (el margen impreso ahora es del color del tema). (2) seccion 'Detalle y Resumen de Elementos' (coordenadas X/Y y px de canvas interno, sin valor para el cliente) ELIMINADA por pedido explicito. (3) composicion: header fijo arriba + resto del contenido centrado en el espacio restante (.page-body) en las 3 paginas, en vez de todo apilado arriba con hueco muerto abajo. (4) titulos/logo(84px)/leyenda tecnica mas grandes; logo en las 3 paginas (antes solo pagina 1). (5) iconos del plano reorganizados por categoria (Servicios/Infraestructura/Coordinacion/Espacio/Zonas de Atencion -- mismas 4 categorias del checklist) en vez de una tira plana sin agrupar; fix real de bug encontrado en el camino: la leyenda tecnica mas ancha colisionaba con los stands y con Coordinacion Operativa, se reposicionaron ambos."
+    - "Verificado en Chromium headless (playwright, /opt/pw-browsers): los 3 packs renderizan sin overlap, tema dark/white intercambia el logo RD correcto (negro.svg=texto blanco para fondo oscuro, blanco.svg=texto negro para fondo claro), PDF impreso con logo+cotizacion+margenes correctos. Screenshots en session scratchpad."
+    - "Version 0.48.5 -> 0.49.0 (pyproject.toml, src/flujo/version.py + changelog, web/package.json); badges de version sincronizados en PlanoTool/AppShell/HubDashboard/flujoApi fallback."
+    - "Deuda anotada (no se toco, fuera de alcance pedido por el usuario): src/flujo/plano/{engine,costs}.py y scripts/export_propuesta_pdf.py siguen en el modelo de presets under/base/mainstream; loadFromBackend() mapea INFO/TESTEO/COMPLETO -> under/base/mainstream solo para esa llamada demo."
     - "rama fix/unfinished-tools-4 pusheada (3 commits: eca7a28, cfe2654, fce7da6); PR pendiente: https://github.com/ligereza/vibecodeine/pull/new/fix/unfinished-tools-4"
     - "4 herramientas inconclusas terminadas: gota_rd (ENDPOINT configurable + fetch real), adobe_panel (REPO_TOOLS dinamico + config.json), ai_illustrator_bridge (MODE via config/dialogo, JSON.parse ES3-safe), logo_clean_master (backup automatico pre-destructivo). Codigo de Qwen web cherry-pickeado; revision via Gemini API."
     - "leccion Qwen: su rama tenia 81 archivos (borraba 10 skills activas, reescribia vibo.py). Solo se tomaron los 4 archivos de la tarea; la rama remota se borro. Regla nueva: scope-check del diff (git diff --stat vs lista permitida) ANTES de revisar contenido."
@@ -52,7 +63,9 @@ handoff:
       - "[DESCARTADO 2026-07-08] logo color vectorial: el usuario confirmo que es innecesario, no se hace."
       - probar bridges Photoshop/After Effects en apps reales [pospuesto]
       - "[DESCARTADO 2026-07-08] Aider: desinstalado (bugs Windows + free tier roulette); reemplazo pedir_codigo.py"
-      - "mergear PR fix/unfinished-tools-4 a main"
+      - "[HECHO 2026-07-09] fix/unfinished-tools-4 (9 commits, incluye @96efa2e) mergeado a la rama claude/refine-local-plan-adgdga junto con el modelo de PACKS; llega a main cuando se mergee el PR de esta rama. La rama fix/unfinished-tools-4 remota queda obsoleta, se puede borrar despues del merge."
+      - "abrir PR de claude/refine-local-plan-adgdga a main (packs RD + fix/unfinished-tools-4 recuperado)."
+      - "deuda: src/flujo/plano/{engine,costs}.py y scripts/export_propuesta_pdf.py siguen en el modelo under/base/mainstream; no se alinearon al modelo de PACKS 100k/300k/500k (fuera de alcance, solo se pidio la app)."
       - "gota_rd backend [diferido]: decidir donde vive la data de reactivos antes de servir endpoint"
       - "tools/asistente_pedido y tools/canva_data: SPECs de una linea, pedir alcance antes de codear"
       - "test end-to-end Droplet+Blender en la maquina de render (repo compila, falta correr real)"
