@@ -104,7 +104,12 @@ export const RD_LOGO: Record<ExportTheme, string> = {
 
 // ── Packs de servicio RD: precio plano CLP/dia, voluntarios fijos ───────
 // (reemplaza el modelo de costos calculados; fuente: valores comerciales RD)
-export interface PackProportion { label: string; pct: number; monto: number }
+//
+// `precio` es el UNICO valor absoluto editable por pack. Todo lo demas que
+// depende de el ($/voluntario, montos del desglose de COMPLETO) se calcula
+// como proporcion (division / porcentaje) en vez de guardarse como numero
+// aparte -- asi no puede quedar desincronizado si el precio cambia.
+export interface PackProportion { label: string; pct: number }
 
 export interface Pack {
   id: PackId;
@@ -115,7 +120,6 @@ export interface Pack {
   voluntarios: number;
   m2: number;
   stands: number;
-  porVoluntario: number;
   inclusiones: string[];
   proporciones?: PackProportion[];
 }
@@ -123,16 +127,15 @@ export interface Pack {
 export const PACKS: Record<PackId, Pack> = {
   INFO: {
     id: 'INFO',
-    nombre: 'Informativo o Testeo (1 stand)',
-    label: 'Pack 1 · Informativo',
-    desc: '6 voluntarios · 1 stand 3×3 (9 m²)',
+    nombre: 'Testeo o Informativo (a elección)',
+    label: 'Pack 1 · Testeo o Informativo',
+    desc: '2 voluntarios · 1 stand 3×3 (9 m²)',
     precio: 100000,
-    voluntarios: 6,
+    voluntarios: 2,
     m2: 9,
     stands: 1,
-    porVoluntario: 16700,
     inclusiones: [
-      'Stand informativo o de testeo atendido',
+      'Un stand, un servicio a elección: testeo o informativo',
       'Material educativo e insumos preventivos',
       'Protectores auditivos, abanicos, suplementos',
       'Tests de un solo uso',
@@ -140,16 +143,15 @@ export const PACKS: Record<PackId, Pack> = {
   },
   TESTEO: {
     id: 'TESTEO',
-    nombre: 'Informativo + Testeo',
-    label: 'Pack 2 · Info + Testeo (más elegido)',
+    nombre: 'Testeo y Informativo (ambos)',
+    label: 'Pack 2 · Testeo y Informativo',
     desc: '6 voluntarios · 2 stands 3×3 (18 m²)',
-    precio: 250000,
+    precio: 300000,
     voluntarios: 6,
     m2: 18,
     stands: 2,
-    porVoluntario: 41700,
     inclusiones: [
-      'Todo lo del Pack Informativo',
+      'Stand informativo y stand de testeo, ambos atendidos',
       'Módulo de testeo de sustancias',
       'Análisis colorimétrico gratuito',
       'Reactivos incluidos',
@@ -164,7 +166,6 @@ export const PACKS: Record<PackId, Pack> = {
     voluntarios: 15,
     m2: 27,
     stands: 2,
-    porVoluntario: 33300,
     inclusiones: [
       'Informativo + testeo',
       'Intervención y contención psicológica',
@@ -172,11 +173,11 @@ export const PACKS: Record<PackId, Pack> = {
       'Coordinación operativa en terreno',
     ],
     proporciones: [
-      { label: 'Equipo en terreno', pct: 60, monto: 300000 },
-      { label: 'Módulo de testeo', pct: 14, monto: 70000 },
-      { label: 'Stand informativo', pct: 10, monto: 50000 },
-      { label: 'Intervención y contención', pct: 9, monto: 45000 },
-      { label: 'Coordinación operativa', pct: 7, monto: 35000 },
+      { label: 'Equipo en terreno', pct: 60 },
+      { label: 'Módulo de testeo', pct: 14 },
+      { label: 'Stand informativo', pct: 10 },
+      { label: 'Intervención y contención', pct: 9 },
+      { label: 'Coordinación operativa', pct: 7 },
     ],
   },
 };
@@ -186,6 +187,16 @@ export function calcCostos(packId: PackId): Pack {
 }
 
 export const ALL_PACKS: PackId[] = ['INFO', 'TESTEO', 'COMPLETO'];
+
+// $ por voluntario: proporcion (precio / voluntarios), no un numero aparte.
+export function porVoluntario(pack: Pack): number {
+  return Math.round(pack.precio / pack.voluntarios);
+}
+
+// Monto de un item del desglose: proporcion (% del precio total del pack).
+export function proporcionMonto(pack: Pack, prop: PackProportion): number {
+  return Math.round((pack.precio * prop.pct) / 100);
+}
 
 export function formatCLP(n: number): string {
   return '$' + Math.round(n).toLocaleString('es-CL');

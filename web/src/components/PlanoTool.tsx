@@ -7,7 +7,7 @@ import {
   Heart, AlertTriangle, Coffee, RefreshCw, Flame
 } from 'lucide-react';
 import { cn } from '../utils/cn';
-import { RD_PALETTE, RD_LOGO, calcCostos, formatCLP, ALL_PACKS, PACKS, type ExportTheme, type PackId } from '../rdBrand';
+import { RD_PALETTE, RD_LOGO, calcCostos, formatCLP, porVoluntario, proporcionMonto, ALL_PACKS, PACKS, type ExportTheme, type PackId } from '../rdBrand';
 
 // ── Types ────────────────────────────────────────────────────────────
 type TechnicalSymbolKey = string;
@@ -278,9 +278,12 @@ function layoutIconGroups(specs: { id: string; key: TechnicalSymbolKey }[]): Ele
 
 // ── Default elements builder in 2970x2100 px format, por pack ───────
 function buildElements(packId: PackId): Element[] {
+  // Pack INFO es "testeo o informativo a eleccion" (1 stand, sin comprometerse a cual);
+  // TESTEO/COMPLETO incluyen ambos servicios, ahi el stand 1 si es especificamente informativo.
+  const stand1Label = packId === 'INFO' ? 'Stand Testeo o Informativo' : 'Stand Informativo';
   const base: Element[] = [
     { id: 'entrada', type: 'rect', x: 1235, y: 70, w: 500, h: 110, label: 'ENTRADA', color: '#6366f1', visible: true },
-    { id: 'stand1', type: 'rect', x: 90, y: 230, w: 560, h: 400, label: withMedida('Stand Informativo', '3x3 m'), color: '#0369a1', visible: true },
+    { id: 'stand1', type: 'rect', x: 90, y: 230, w: 560, h: 400, label: withMedida(stand1Label, '3x3 m'), color: '#0369a1', visible: true },
     { id: 'mesa1', type: 'rect', x: 90, y: 660, w: 560, h: 220, label: 'Mesa 1', color: '#10b981', visible: true },
   ];
 
@@ -845,7 +848,7 @@ export default function PlanoTool() {
       <table class="cot">
         <thead><tr><th>Distribución del pack</th><th class="num">%</th><th class="num">Monto</th></tr></thead>
         <tbody>
-          ${pack.proporciones.map(p => `<tr><td>${escapeHtml(p.label)}</td><td class="num">${p.pct}%</td><td class="num">${formatCLP(p.monto)}</td></tr>`).join('')}
+          ${pack.proporciones.map(p => `<tr><td>${escapeHtml(p.label)}</td><td class="num">${p.pct}%</td><td class="num">${formatCLP(proporcionMonto(pack, p))}</td></tr>`).join('')}
         </tbody>
       </table>` : '';
     const cotizacionHtml = `
@@ -853,7 +856,7 @@ export default function PlanoTool() {
         <tbody>
           <tr class="tot"><td>Precio del pack</td><td class="num">${formatCLP(pack.precio)} / día</td></tr>
           <tr><td>Voluntarios</td><td class="num">${pack.voluntarios}</td></tr>
-          <tr><td>$ por voluntario</td><td class="num">${formatCLP(pack.porVoluntario)}</td></tr>
+          <tr><td>$ por voluntario</td><td class="num">${formatCLP(porVoluntario(pack))}</td></tr>
           <tr><td>Superficie / stands</td><td class="num">${pack.m2} m² · ${pack.stands} stand(s)</td></tr>
         </tbody>
       </table>
