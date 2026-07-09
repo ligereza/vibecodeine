@@ -847,6 +847,7 @@ export default function PlanoTool() {
           ${legendRows}
         </g>
         <text x="100" y="2075" font-size="34" font-family="Arial, sans-serif" font-weight="900" fill="${pal.text}">${escapeHtml(`${eventName.toUpperCase()} · ${eventVenue.toUpperCase()} · ${eventDate}`)}</text>
+        <text x="2870" y="2075" text-anchor="end" font-size="24" font-family="Arial, sans-serif" fill="${pal.muted}">Reduciendo Daño Chile · Rider Operativo</text>
       </svg>`;
   };
 
@@ -1067,8 +1068,9 @@ export default function PlanoTool() {
 
   // ─── Export SVG ───
   const exportSVG = () => {
-    if (!svgRef.current) return;
-    const svgData = new XMLSerializer().serializeToString(svgRef.current);
+    // Mismo SVG tematizado del PDF; antes serializaba el DOM de pantalla (siempre
+    // dark, con cursores y colores de UI) ignorando el tema dark/white elegido.
+    const svgData = buildPrintableMapSvg().trim();
     const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1146,11 +1148,12 @@ export default function PlanoTool() {
     elements.filter(el => el.visible && el.type === 'symbol' && el.category).forEach(el => {
       (groups[el.category as string] = groups[el.category as string] || []).push(el);
     });
-    return Object.entries(groups).map(([category, els]) => ({
-      category,
-      x: Math.min(...els.map(e => e.x)),
-      y: Math.min(...els.map(e => e.y)),
-    }));
+    // Anclar al elemento mas alto del grupo: mezclar el min x de un elemento con el
+    // min y de otro ponia el header flotando donde no hay ningun icono del grupo.
+    return Object.entries(groups).map(([category, els]) => {
+      const top = els.reduce((a, b) => (b.y < a.y || (b.y === a.y && b.x < a.x) ? b : a));
+      return { category, x: top.x, y: top.y };
+    });
   })();
 
   const NAV_TABS: { key: Page; label: string }[] = [

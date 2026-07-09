@@ -4,7 +4,7 @@ import { Check, Copy, X } from 'lucide-react';
 // Boton "copiar comando" compartido por CommandPanel / EventsPanel / ResolumePanel.
 // navigator.clipboard solo existe en contextos seguros (https/localhost); en file://
 // o http de red local cae al fallback de textarea+execCommand.
-async function copyText(text: string): Promise<boolean> {
+export async function copyText(text: string): Promise<boolean> {
   try {
     if (navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(text);
