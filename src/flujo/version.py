@@ -1,8 +1,8 @@
 """Versión y changelog de flujo."""
 
-__version__ = "0.48.5"
+__version__ = "0.49.0"
 VERSION = __version__
-__version_info__ = (0, 48, 5)
+__version_info__ = (0, 49, 0)
 
 
 def get_version():
@@ -11,6 +11,24 @@ def get_version():
 
 def get_changelog():
     return {
+        "0.49.0": {
+            "titulo": "PlanoTool: modelo de PACKS RD (100/250/500)",
+            "fecha": "2026-07-09",
+            "highlights": [
+                "Reemplaza los presets UNDER/BASE/MAINSTREAM (costos calculados) por 3 PACKS de "
+                "precio plano: Informativo 100.000, Info+Testeo 250.000, Servicio Completo 500.000 "
+                "(6/6/15 voluntarios, m2/stands/inclusiones/proporciones por pack)",
+                "buildElements() dibuja por pack sin solapes; corrige el bug de margen inferior del "
+                "plano (PLANO_FRAME) y el default/clamp de la leyenda tecnica arrastrable",
+                "Elimina el bloque JSX de impresion duplicado (viewBox 2970x2400, logo remoto); "
+                "printRider()/buildPrintableMapSvg queda como unica fuente del PDF",
+                "Cotizacion del Rider (seccion 5) muestra solo el pack seleccionado -- precio, "
+                "voluntarios, m2/stands, inclusiones y proporciones si es el pack Completo -- "
+                "en vez de la tabla comparativa de 3 presets",
+                "web/src/rdBrand.ts: PACKS/calcCostos/formatCLP reemplazan el modelo de costos "
+                "calculados; RD_PALETTE y RD_LOGO (dark/white) se mantienen sin cambios",
+            ],
+        },
         "0.48.5": {
             "titulo": "Chataigne template schema real",
             "fecha": "2026-06-30",
