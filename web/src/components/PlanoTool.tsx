@@ -7,7 +7,7 @@ import {
   Heart, AlertTriangle, Coffee, RefreshCw, Flame
 } from 'lucide-react';
 import { cn } from '../utils/cn';
-import { RD_PALETTE, RD_LOGO, calcCostos, formatCLP, porVoluntario, proporcionMonto, ALL_PACKS, PACKS, type ExportTheme, type PackId } from '../rdBrand';
+import { RD_PALETTE, RD_LOGO, calcCostos, formatCLP, proporcionMonto, ALL_PACKS, PACKS, type ExportTheme, type PackId } from '../rdBrand';
 
 // ── Types ────────────────────────────────────────────────────────────
 type TechnicalSymbolKey = string;
@@ -251,23 +251,27 @@ const renderRequirementIcon = (iconName: string, className = "w-4 h-4 text-zinc-
 
 const withMedida = (label: string, m: string) => `${label} (${m})`;
 
-const placedSymbol = (key: TechnicalSymbolKey, id: string, x: number, y: number): Element => {
+const placedSymbol = (key: TechnicalSymbolKey, id: string, x: number, y: number, label?: string): Element => {
   const spec = SYMBOL_BY_KEY[key] || SYMBOL_BY_KEY.power;
   const category = SYMBOL_CATEGORY[key] || 'Zonas de Atención';
-  return { id, type: 'symbol', symbolKey: spec.key, x, y, w: spec.w, h: spec.h, label: spec.label, color: spec.color, visible: true, category };
+  return { id, type: 'symbol', symbolKey: spec.key, x, y, w: spec.w, h: spec.h, label: label || spec.label, color: spec.color, visible: true, category };
 };
 
 // Iconos agrupados por categoria (misma taxonomia del checklist), empaquetados
 // en filas por ancho disponible (flow-wrap) en vez de 1 fila fija por categoria:
 // evita colisionar con "Coordinacion Operativa" y usa el alto del frame mejor.
-const ICON_ORIGIN = { x: 90, y: 930 };
-const ICON_GAP_X = 200;
+// GAP_X 260: con 200 los labels centrados (font 28, hasta ~13 chars como
+// "EQUIPO MEDICO") se pisaban entre iconos vecinos en el print.
+const ICON_ORIGIN = { x: 90, y: 960 };
+const ICON_GAP_X = 260;
 const ICON_ROW_HEIGHT = 330;
-const ICON_CATEGORY_GAP_X = 260;
+const ICON_CATEGORY_GAP_X = 300;
 const ICON_AVAILABLE_WIDTH = 2700;
 
-function layoutIconGroups(specs: { id: string; key: TechnicalSymbolKey }[]): Element[] {
-  const groups: Record<string, { id: string; key: TechnicalSymbolKey }[]> = {};
+interface IconSpec { id: string; key: TechnicalSymbolKey; label?: string }
+
+function layoutIconGroups(specs: IconSpec[]): Element[] {
+  const groups: Record<string, IconSpec[]> = {};
   specs.forEach(spec => {
     const cat = SYMBOL_CATEGORY[spec.key] || 'Zonas de Atención';
     (groups[cat] = groups[cat] || []).push(spec);
@@ -284,7 +288,7 @@ function layoutIconGroups(specs: { id: string; key: TechnicalSymbolKey }[]): Ele
       curX = ICON_ORIGIN.x;
     }
     const y = ICON_ORIGIN.y + curRow * ICON_ROW_HEIGHT;
-    items.forEach((spec, i) => out.push(placedSymbol(spec.key, spec.id, curX + i * ICON_GAP_X, y)));
+    items.forEach((spec, i) => out.push(placedSymbol(spec.key, spec.id, curX + i * ICON_GAP_X, y, spec.label)));
     curX += width + ICON_CATEGORY_GAP_X;
   });
   return out;
@@ -301,7 +305,7 @@ function buildElements(packId: PackId): Element[] {
     { id: 'mesa1', type: 'rect', x: 90, y: 660, w: 560, h: 220, label: 'Mesa 1', color: '#10b981', visible: true },
   ];
 
-  const iconSpecs: { id: string; key: TechnicalSymbolKey }[] = [
+  const iconSpecs: IconSpec[] = [
     { id: 'power', key: 'power' }, { id: 'light', key: 'light' }, { id: 'water', key: 'water' },
     { id: 'extinguisher', key: 'extinguisher' }, { id: 'medical', key: 'medical' },
     { id: 'security', key: 'security' }, { id: 'trash', key: 'trash' }, { id: 'contact', key: 'contact' },
@@ -312,7 +316,9 @@ function buildElements(packId: PackId): Element[] {
       { id: 'stand2', type: 'rect', x: 730, y: 230, w: 560, h: 400, label: withMedida('Stand Testeo', '3x3 m'), color: '#2d5a4a', visible: true },
       { id: 'mesa2', type: 'rect', x: 730, y: 660, w: 560, h: 220, label: 'Mesa 2', color: '#10b981', visible: true },
     );
-    iconSpecs.push({ id: 'testeo', key: 'testeo' });
+    // En COMPLETO hay 2 puntos de testeo: se numeran para que el plano no muestre
+    // dos iconos con el mismo nombre pegados.
+    iconSpecs.push({ id: 'testeo', key: 'testeo', label: packId === 'COMPLETO' ? 'Testeo 1' : undefined });
   }
 
   if (packId === 'COMPLETO') {
@@ -324,9 +330,9 @@ function buildElements(packId: PackId): Element[] {
       { id: 'coordinacion', type: 'rect', x: 1205, y: 1620, w: 560, h: 300, label: 'Coordinación Operativa', color: '#ca8a04', visible: true },
     );
     iconSpecs.push(
-      { id: 'testeo2', key: 'testeo' },
-      { id: 'contencion', key: 'contencion' },
-      { id: 'contencion2', key: 'contencion' },
+      { id: 'testeo2', key: 'testeo', label: 'Testeo 2' },
+      { id: 'contencion', key: 'contencion', label: 'Contención 1' },
+      { id: 'contencion2', key: 'contencion', label: 'Contención 2' },
       { id: 'food', key: 'food' },
       { id: 'sensory', key: 'sensory' },
     );
@@ -828,10 +834,13 @@ export default function PlanoTool() {
       const x = legendX + 48 + col * 410;
       const y = legendY + 160 + row * 84;
       const color = escapeHtml(printColor(el.color || '#111111'));
+      // La leyenda describe TIPOS de simbolo: usa el nombre canonico del catalogo
+      // (los elementos pueden venir numerados, ej "Testeo 1").
+      const legendLabel = SYMBOL_BY_KEY[el.symbolKey || '']?.label || el.label;
       return `
         <g>
           ${symbolIconMarkup(el.symbolKey || 'symbol', color, x + 22, y - 16, 0.36)}
-          <text x="${x + 64}" y="${y}" font-size="26" font-family="Arial, sans-serif" font-weight="800" fill="${pal.text}">${escapeHtml(el.label.toUpperCase().slice(0, 18))}</text>
+          <text x="${x + 64}" y="${y}" font-size="26" font-family="Arial, sans-serif" font-weight="800" fill="${pal.text}">${escapeHtml(legendLabel.toUpperCase().slice(0, 18))}</text>
         </g>`;
     }).join('\n');
 
@@ -875,8 +884,7 @@ export default function PlanoTool() {
       <table class="cot">
         <tbody>
           <tr class="tot"><td>Precio del pack</td><td class="num">${formatCLP(pack.precio)} / día</td></tr>
-          <tr><td>Voluntarios</td><td class="num">${pack.voluntarios}</td></tr>
-          <tr><td>$ por voluntario</td><td class="num">${formatCLP(porVoluntario(pack))}</td></tr>
+          <tr><td>Equipo en terreno</td><td class="num">${pack.voluntarios} voluntarios/as</td></tr>
           <tr><td>Superficie / stands</td><td class="num">${pack.m2} m² · ${pack.stands} stand(s)</td></tr>
         </tbody>
       </table>
@@ -894,8 +902,8 @@ export default function PlanoTool() {
   @page { size: A4; margin: 0; }
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body { margin: 0; background: ${pal.bg}; color: ${pal.text}; font-family: Arial, Helvetica, sans-serif; font-size: 13px; }
-  .page { width: 210mm; min-height: 297mm; padding: 18mm; page-break-after: always; break-after: page; overflow: hidden; background: ${pal.bg}; display: flex; flex-direction: column; gap: 14px; }
-  .page-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 14px; }
+  .page { width: 210mm; min-height: 297mm; padding: 13mm 18mm; page-break-after: always; break-after: page; overflow: hidden; background: ${pal.bg}; display: flex; flex-direction: column; gap: 12px; }
+  .page-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 12px; }
   .page:last-child { page-break-after: auto; break-after: auto; }
   header { border-bottom: 4px solid ${pal.accent}; padding-bottom: 12px; display: flex; justify-content: space-between; align-items: end; }
   .brand { display: flex; align-items: center; gap: 12px; }
@@ -908,7 +916,7 @@ export default function PlanoTool() {
   .muted { color: ${pal.muted}; }
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   .box { border: 1px solid ${pal.borde}; padding: 16px; border-radius: 8px; break-inside: avoid; }
-  ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 9px; }
+  ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
   li { display: flex; gap: 9px; align-items: center; }
   .check { width: 17px; height: 17px; border: 1px solid ${pal.accent}; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; flex: 0 0 auto; color: ${pal.accent}; }
   .map-frame { border: 1px solid ${pal.borde}; padding: 6mm; display: flex; justify-content: center; background: ${pal.mapBg}; }
@@ -923,6 +931,15 @@ export default function PlanoTool() {
   /* Los textos de antecedentes son editables por el usuario; sin tope, un texto largo
      empuja el checklist fuera del A4 y overflow:hidden lo recorta en silencio. */
   .clamp { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 6; overflow: hidden; }
+  /* Datos operativos del evento: lo primero que busca produccion en un rider. */
+  .info-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .info-cell { border: 1px solid ${pal.borde}; border-left: 4px solid ${pal.accent}; border-radius: 6px; padding: 10px 12px; }
+  .info-cell span { display: block; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.14em; color: ${pal.muted}; margin-bottom: 4px; }
+  .info-cell strong { font-size: 14px; }
+  .contacts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .contacts .box { padding: 10px 14px; }
+  .fill { display: flex; gap: 8px; align-items: baseline; margin-top: 7px; font-size: 12px; color: ${pal.muted}; }
+  .fill i { flex: 1 1 auto; border-bottom: 1px solid ${pal.muted}; min-height: 14px; }
 </style>
 </head>
 <body>
@@ -932,15 +949,33 @@ export default function PlanoTool() {
       <div><strong>ORGANIZACIÓN RD</strong><br/><span class="muted">Servicio de Testeo y Reducción de Daño v2026</span></div>
     </header>
     <div class="page-body">
+      <div class="info-strip">
+        <div class="info-cell"><span>Evento</span><strong>${escapeHtml(eventName || '—')}</strong></div>
+        <div class="info-cell"><span>Ubicación</span><strong>${escapeHtml(eventVenue || '—')}</strong></div>
+        <div class="info-cell"><span>Fecha</span><strong>${escapeHtml(eventDate || '—')}</strong></div>
+        <div class="info-cell"><span>Pack contratado</span><strong>${escapeHtml(pack.label)}</strong></div>
+      </div>
       <section>
         <h2>1. Antecedentes</h2>
         <p class="clamp"><strong>Quiénes Somos:</strong> ${escapeHtml(orgTexts.who)}</p>
         <p class="clamp"><strong>Objetivo del Servicio:</strong> ${escapeHtml(orgTexts.goal)}</p>
-        <p><strong>Evento:</strong> ${escapeHtml(eventName)} · <strong>Ubicación:</strong> ${escapeHtml(eventVenue)} · <strong>Fecha:</strong> ${escapeHtml(eventDate)}</p>
       </section>
       <section>
         <h2>2. Requerimientos Operativos</h2>
+        <p class="note" style="margin-bottom:10px">Los ítems marcados con <strong>X</strong> son requeridos a producción para este evento; los demás no aplican o los cubre RD.</p>
         <div class="grid">${checklistHtml}</div>
+      </section>
+      <section class="contacts">
+        <div class="box">
+          <h3>Coordinación RD (día del evento)</h3>
+          <div class="fill">Nombre <i></i></div>
+          <div class="fill">Teléfono <i></i></div>
+        </div>
+        <div class="box">
+          <h3>Contacto Producción</h3>
+          <div class="fill">Nombre <i></i></div>
+          <div class="fill">Teléfono <i></i></div>
+        </div>
       </section>
     </div>
   </main>
@@ -949,6 +984,7 @@ export default function PlanoTool() {
     <div class="page-body">
       <h2>3. Esquema de Distribución del Stand</h2>
       <div class="map-frame">${buildPrintableMapSvg()}</div>
+      <p class="note">Esquema referencial de distribución — no a escala. Medidas de stands y zonas indicadas en cada elemento; superficie total del pack: ${pack.m2} m² (${pack.stands} stand(s)).</p>
     </div>
   </main>
   <main class="page">
@@ -1528,7 +1564,7 @@ export default function PlanoTool() {
                               <svg x={0} y={0} width={58} height={58} viewBox="0 0 160 160">
                                 {renderSymbolGlyph(el.symbolKey || 'unknown', fill)}
                               </svg>
-                              <text x={82} y={40} fontSize={26} fill="#a1a1aa" fontWeight="bold" fontFamily="sans-serif">{el.label.toUpperCase().slice(0, 18)}</text>
+                              <text x={82} y={40} fontSize={26} fill="#a1a1aa" fontWeight="bold" fontFamily="sans-serif">{(SYMBOL_BY_KEY[el.symbolKey || '']?.label || el.label).toUpperCase().slice(0, 18)}</text>
                             </g>
                           );
                         })}
