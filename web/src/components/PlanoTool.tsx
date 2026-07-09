@@ -113,6 +113,18 @@ const SYMBOL_BY_KEY = Object.fromEntries(SYMBOL_CATALOG.map(s => [s.key, s])) as
 const PLANO_FRAME = { x: 50, y: 50, w: 2870, h: 1950 };
 const GRID = 20;
 
+// Altura real de la caja de leyenda segun cantidad de simbolos. Sin cap: con 19+
+// simbolos (COMPLETO + marcar todos) el cap de 900 dejaba filas dibujadas fuera del panel.
+const legendHeightFor = (n: number) => Math.max(220, 160 + Math.ceil(n / 2) * 84);
+
+// ZONE_COLORS esta calibrada para fondo oscuro; sobre papel blanco los tonos claros
+// desaparecen. Overrides solo para el print con tema white.
+const PRINT_WHITE_COLOR_FIX: Record<string, string> = {
+  '#fde047': '#a16207', // light: amarillo palido -> ambar oscuro
+  '#84cc16': '#4d7c0f', // terrain: lima -> verde oliva
+  '#9ca3af': '#52525b', // circulacion: gris claro -> gris oscuro
+};
+
 const REQUIREMENT_SYMBOL_MAP: Record<string, TechnicalSymbolKey> = {
   'Medidas disponibles del recinto (int/ext)': 'scan',
   'Tipo de terreno (nivelado, estable)': 'terrain',
@@ -680,7 +692,7 @@ export default function PlanoTool() {
   const clampLegendPos = (x: number, y: number) => {
     const frame = PLANO_FRAME;
     const legendWidth = 900;
-    const legendHeight = Math.min(900, Math.max(220, 160 + Math.ceil(visibleLegendSymbols.length / 2) * 84));
+    const legendHeight = legendHeightFor(visibleLegendSymbols.length);
     return {
       x: Math.min(Math.max(x, frame.x), frame.x + frame.w - legendWidth),
       y: Math.min(Math.max(y, frame.y), frame.y + frame.h - legendHeight),
@@ -773,16 +785,19 @@ export default function PlanoTool() {
     }
   };
 
+  const printColor = (c: string) =>
+    exportTheme === 'white' ? (PRINT_WHITE_COLOR_FIX[c] || c) : c;
+
   const symbolPrintMarkup = (el: Element) => {
     const label = escapeHtml(el.label.toUpperCase());
-    const color = escapeHtml(el.color || '#111111');
+    const color = escapeHtml(printColor(el.color || '#111111'));
     const cx = el.x + el.w / 2;
     const cy = el.y + el.h / 2;
     const scale = Math.max(0.7, Math.min(el.w, el.h) / 170);
     return `
       <g>
         ${symbolIconMarkup(el.symbolKey || 'symbol', color, cx, cy, scale)}
-        <text x="${cx}" y="${el.y + el.h + 34}" text-anchor="middle" font-size="28" font-family="Arial, sans-serif" font-weight="700" fill="${color}">${label}</text>
+        <text x="${cx}" y="${el.y + el.h + 30}" text-anchor="middle" font-size="28" font-family="Arial, sans-serif" font-weight="700" fill="${color}">${label}</text>
       </g>`;
   };
 
@@ -792,9 +807,10 @@ export default function PlanoTool() {
     const mapContent = visible.map(el => {
       const label = escapeHtml(el.label.toUpperCase());
       if (el.type === 'symbol') return symbolPrintMarkup(el);
+      const rectColor = escapeHtml(printColor(el.color));
       return `
         <g>
-          <rect x="${el.x}" y="${el.y}" width="${el.w}" height="${el.h}" rx="16" fill="${escapeHtml(el.color)}" fill-opacity="0.48" stroke="${escapeHtml(el.color)}" stroke-width="8"/>
+          <rect x="${el.x}" y="${el.y}" width="${el.w}" height="${el.h}" rx="16" fill="${rectColor}" fill-opacity="0.48" stroke="${rectColor}" stroke-width="8"/>
           <text x="${el.x + el.w / 2}" y="${el.y + el.h / 2}" text-anchor="middle" dominant-baseline="middle" font-size="42" font-family="Arial, sans-serif" font-weight="900" fill="${pal.text}">${label}</text>
         </g>`;
     }).join('\n');
@@ -802,19 +818,20 @@ export default function PlanoTool() {
     const printCanvasWidth = 2970;
     const printCanvasHeight = 2100;
     const legendWidth = 900;
-    const legendHeight = Math.min(900, Math.max(220, 160 + Math.ceil(visibleLegendSymbols.length / 2) * 84));
-    const legendX = Math.min(Math.max(legendPos.x, 0), Math.max(0, printCanvasWidth - legendWidth));
-    const legendY = Math.min(Math.max(legendPos.y, 0), Math.max(0, printCanvasHeight - legendHeight));
+    const legendHeight = legendHeightFor(visibleLegendSymbols.length);
+    // Mismo clamp que el drag en pantalla (PLANO_FRAME); antes el print clampaba al
+    // canvas completo y la leyenda podia quedar fuera del marco del plano.
+    const { x: legendX, y: legendY } = clampLegendPos(legendPos.x, legendPos.y);
     const legendRows = visibleLegendSymbols.map((el, i) => {
       const col = i % 2;
       const row = Math.floor(i / 2);
       const x = legendX + 48 + col * 410;
       const y = legendY + 160 + row * 84;
-      const color = escapeHtml(el.color || '#111111');
+      const color = escapeHtml(printColor(el.color || '#111111'));
       return `
         <g>
           ${symbolIconMarkup(el.symbolKey || 'symbol', color, x + 22, y - 16, 0.36)}
-          <text x="${x + 64}" y="${y}" font-size="26" font-family="Arial, sans-serif" font-weight="800" fill="${pal.text}">${escapeHtml(el.label.toUpperCase()).slice(0, 18)}</text>
+          <text x="${x + 64}" y="${y}" font-size="26" font-family="Arial, sans-serif" font-weight="800" fill="${pal.text}">${escapeHtml(el.label.toUpperCase().slice(0, 18))}</text>
         </g>`;
     }).join('\n');
 
@@ -829,7 +846,7 @@ export default function PlanoTool() {
           <text x="${legendX + 450}" y="${legendY + 80}" text-anchor="middle" font-size="40" font-family="Arial, sans-serif" font-weight="900" fill="${pal.accent}">LEYENDA TÉCNICA</text>
           ${legendRows}
         </g>
-        <text x="100" y="2060" font-size="34" font-family="Arial, sans-serif" font-weight="900" fill="${pal.text}">${escapeHtml(`${eventName.toUpperCase()} · ${eventVenue.toUpperCase()} · ${eventDate}`)}</text>
+        <text x="100" y="2075" font-size="34" font-family="Arial, sans-serif" font-weight="900" fill="${pal.text}">${escapeHtml(`${eventName.toUpperCase()} · ${eventVenue.toUpperCase()} · ${eventDate}`)}</text>
       </svg>`;
   };
 
@@ -902,6 +919,9 @@ export default function PlanoTool() {
   .cot td.cur, .cot th.cur { background: ${pal.th}; color: ${pal.accent}; font-weight: 900; }
   .cot tr.tot td { font-weight: 900; color: ${pal.total}; font-size: 13px; }
   .note { font-size: 11px; color: ${pal.muted}; margin-top: 6px; }
+  /* Los textos de antecedentes son editables por el usuario; sin tope, un texto largo
+     empuja el checklist fuera del A4 y overflow:hidden lo recorta en silencio. */
+  .clamp { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 6; overflow: hidden; }
 </style>
 </head>
 <body>
@@ -913,8 +933,8 @@ export default function PlanoTool() {
     <div class="page-body">
       <section>
         <h2>1. Antecedentes</h2>
-        <p><strong>Quiénes Somos:</strong> ${escapeHtml(orgTexts.who)}</p>
-        <p><strong>Objetivo del Servicio:</strong> ${escapeHtml(orgTexts.goal)}</p>
+        <p class="clamp"><strong>Quiénes Somos:</strong> ${escapeHtml(orgTexts.who)}</p>
+        <p class="clamp"><strong>Objetivo del Servicio:</strong> ${escapeHtml(orgTexts.goal)}</p>
         <p><strong>Evento:</strong> ${escapeHtml(eventName)} · <strong>Ubicación:</strong> ${escapeHtml(eventVenue)} · <strong>Fecha:</strong> ${escapeHtml(eventDate)}</p>
       </section>
       <section>
@@ -933,7 +953,7 @@ export default function PlanoTool() {
   <main class="page">
     <div class="page-header-mini"><span class="logo">${RD_LOGO[exportTheme]}</span><h1 style="font-size:22px">RIDER TÉCNICO RD</h1></div>
     <div class="page-body">
-      <h2>4. Cotización — ${escapeHtml(calcCostos(preset).label)}</h2>
+      <h2>4. Cotización — ${escapeHtml(pack.label)}</h2>
       ${cotizacionHtml}
     </div>
   </main>
@@ -1492,7 +1512,7 @@ export default function PlanoTool() {
                         onTouchStart={onLegendTouchStart}
                         className="cursor-grab"
                       >
-                        <rect width={900} height={Math.min(900, Math.max(220, 160 + Math.ceil(visibleLegendSymbols.length / 2) * 84))} rx={30} fill="#18181bcc" stroke="#3f3f46" strokeWidth={5} />
+                        <rect width={900} height={legendHeightFor(visibleLegendSymbols.length)} rx={30} fill="#18181bcc" stroke="#3f3f46" strokeWidth={5} />
                         <text x={450} y={80} textAnchor="middle" fontSize={40} fill="#a1a1aa" fontWeight="black" fontFamily="monospace" style={{ letterSpacing: '0.08em' }}>
                           LEYENDA TÉCNICA
                         </text>
