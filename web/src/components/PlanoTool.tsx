@@ -25,6 +25,7 @@ interface Element {
   visible: boolean;
   symbolKey?: string;
   locked?: boolean;
+  category?: string;
 }
 
 const ZONE_COLORS: Record<string, string> = {
@@ -195,6 +196,20 @@ const CHECKLIST_SECTIONS = [
   }
 ];
 
+// Categoria de cada simbolo tecnico, derivada de las mismas 4 categorias del
+// checklist (Espacio/Infraestructura/Servicios/Coordinacion) via REQUIREMENT_SYMBOL_MAP.
+// Los simbolos sin item de checklist asociado (zonas de servicio: testeo, contencion)
+// caen en 'Zonas de Atención'.
+const ITEM_TEXT_TO_CATEGORY: Record<string, string> = {};
+CHECKLIST_SECTIONS.forEach(section => {
+  section.items.forEach(item => { ITEM_TEXT_TO_CATEGORY[item.text] = section.title; });
+});
+const SYMBOL_CATEGORY: Record<TechnicalSymbolKey, string> = {};
+Object.entries(REQUIREMENT_SYMBOL_MAP).forEach(([itemText, symbolKey]) => {
+  SYMBOL_CATEGORY[symbolKey] = ITEM_TEXT_TO_CATEGORY[itemText] || 'Zonas de Atención';
+});
+const CATEGORY_ORDER = ['Servicios', 'Infraestructura', 'Coordinación', 'Espacio', 'Zonas de Atención'];
+
 // Helper to render Lucide icons dynamically for requirements
 const renderRequirementIcon = (iconName: string, className = "w-4 h-4 text-zinc-400") => {
   switch (iconName) {
@@ -224,18 +239,42 @@ const withMedida = (label: string, m: string) => `${label} (${m})`;
 
 const placedSymbol = (key: TechnicalSymbolKey, id: string, x: number, y: number): Element => {
   const spec = SYMBOL_BY_KEY[key] || SYMBOL_BY_KEY.power;
-  return { id, type: 'symbol', symbolKey: spec.key, x, y, w: spec.w, h: spec.h, label: spec.label, color: spec.color, visible: true };
+  const category = SYMBOL_CATEGORY[key] || 'Zonas de Atención';
+  return { id, type: 'symbol', symbolKey: spec.key, x, y, w: spec.w, h: spec.h, label: spec.label, color: spec.color, visible: true, category };
 };
 
-// Grid de iconos utilitarios: filas y >= 950, no se solapa con stands/mesas (bottom mesas = 880).
-const ICON_ORIGIN = { x: 90, y: 950 };
-const ICON_COLS = 8;
+// Iconos agrupados por categoria (misma taxonomia del checklist), empaquetados
+// en filas por ancho disponible (flow-wrap) en vez de 1 fila fija por categoria:
+// evita colisionar con "Coordinacion Operativa" y usa el alto del frame mejor.
+const ICON_ORIGIN = { x: 90, y: 930 };
 const ICON_GAP_X = 200;
-const ICON_GAP_Y = 210;
-const iconPos = (index: number) => ({
-  x: ICON_ORIGIN.x + (index % ICON_COLS) * ICON_GAP_X,
-  y: ICON_ORIGIN.y + Math.floor(index / ICON_COLS) * ICON_GAP_Y,
-});
+const ICON_ROW_HEIGHT = 330;
+const ICON_CATEGORY_GAP_X = 260;
+const ICON_AVAILABLE_WIDTH = 2700;
+
+function layoutIconGroups(specs: { id: string; key: TechnicalSymbolKey }[]): Element[] {
+  const groups: Record<string, { id: string; key: TechnicalSymbolKey }[]> = {};
+  specs.forEach(spec => {
+    const cat = SYMBOL_CATEGORY[spec.key] || 'Zonas de Atención';
+    (groups[cat] = groups[cat] || []).push(spec);
+  });
+  const activeCats = CATEGORY_ORDER.filter(cat => groups[cat] && groups[cat].length);
+  const out: Element[] = [];
+  let curX = ICON_ORIGIN.x;
+  let curRow = 0;
+  activeCats.forEach(cat => {
+    const items = groups[cat];
+    const width = items.length * ICON_GAP_X;
+    if (curX !== ICON_ORIGIN.x && curX + width > ICON_ORIGIN.x + ICON_AVAILABLE_WIDTH) {
+      curRow += 1;
+      curX = ICON_ORIGIN.x;
+    }
+    const y = ICON_ORIGIN.y + curRow * ICON_ROW_HEIGHT;
+    items.forEach((spec, i) => out.push(placedSymbol(spec.key, spec.id, curX + i * ICON_GAP_X, y)));
+    curX += width + ICON_CATEGORY_GAP_X;
+  });
+  return out;
+}
 
 // ── Default elements builder in 2970x2100 px format, por pack ───────
 function buildElements(packId: PackId): Element[] {
@@ -245,18 +284,18 @@ function buildElements(packId: PackId): Element[] {
     { id: 'mesa1', type: 'rect', x: 90, y: 660, w: 560, h: 220, label: 'Mesa 1', color: '#10b981', visible: true },
   ];
 
-  const iconKeys = ['power', 'light', 'water', 'extinguisher', 'medical', 'security', 'trash', 'contact'];
-  iconKeys.forEach((key, i) => {
-    const p = iconPos(i);
-    base.push(placedSymbol(key, key, p.x, p.y));
-  });
+  const iconSpecs: { id: string; key: TechnicalSymbolKey }[] = [
+    { id: 'power', key: 'power' }, { id: 'light', key: 'light' }, { id: 'water', key: 'water' },
+    { id: 'extinguisher', key: 'extinguisher' }, { id: 'medical', key: 'medical' },
+    { id: 'security', key: 'security' }, { id: 'trash', key: 'trash' }, { id: 'contact', key: 'contact' },
+  ];
 
   if (packId === 'TESTEO' || packId === 'COMPLETO') {
     base.push(
       { id: 'stand2', type: 'rect', x: 730, y: 230, w: 560, h: 400, label: withMedida('Stand Testeo', '3x3 m'), color: '#2d5a4a', visible: true },
       { id: 'mesa2', type: 'rect', x: 730, y: 660, w: 560, h: 220, label: 'Mesa 2', color: '#10b981', visible: true },
-      placedSymbol('testeo', 'testeo', iconPos(iconKeys.length).x, iconPos(iconKeys.length).y),
     );
+    iconSpecs.push({ id: 'testeo', key: 'testeo' });
   }
 
   if (packId === 'COMPLETO') {
@@ -265,20 +304,18 @@ function buildElements(packId: PackId): Element[] {
     base.push(
       { id: 'descanso', type: 'rect', x: 1370, y: 230, w: 560, h: 400, label: withMedida('Zona Descanso', '~9 m²'), color: '#059669', visible: true },
       { id: 'mesa3', type: 'rect', x: 1370, y: 660, w: 560, h: 220, label: 'Mesa 3', color: '#10b981', visible: true },
-      { id: 'coordinacion', type: 'rect', x: 1370, y: 1420, w: 560, h: 300, label: 'Coordinación Operativa', color: '#ca8a04', visible: true },
+      { id: 'coordinacion', type: 'rect', x: 1205, y: 1620, w: 560, h: 300, label: 'Coordinación Operativa', color: '#ca8a04', visible: true },
     );
-    const completoIcons: [string, TechnicalSymbolKey][] = [
-      ['testeo2', 'testeo'],
-      ['contencion', 'contencion'],
-      ['contencion2', 'contencion'],
-      ['food', 'food'],
-      ['sensory', 'sensory'],
-    ];
-    completoIcons.forEach(([id, key], i) => {
-      const p = iconPos(iconKeys.length + 1 + i);
-      base.push(placedSymbol(key, id, p.x, p.y));
-    });
+    iconSpecs.push(
+      { id: 'testeo2', key: 'testeo' },
+      { id: 'contencion', key: 'contencion' },
+      { id: 'contencion2', key: 'contencion' },
+      { id: 'food', key: 'food' },
+      { id: 'sensory', key: 'sensory' },
+    );
   }
+
+  base.push(...layoutIconGroups(iconSpecs));
 
   return base;
 }
@@ -302,7 +339,7 @@ export default function PlanoTool() {
       return [];
     }
   });
-  const [legendPos, setLegendPos] = useState({ x: 2060, y: 120 });
+  const [legendPos, setLegendPos] = useState({ x: 1990, y: 120 });
   const [zoom, setZoom] = useState(1);
   const [showGrid, setShowGrid] = useState(true);
   const [showLegend, setShowLegend] = useState(true);
@@ -495,10 +532,10 @@ export default function PlanoTool() {
       if (a.x !== b.x) return a.x - b.x;
       return a.id.localeCompare(b.id);
     }));
-    setLegendPos({ x: 2060, y: 120 });
+    setLegendPos({ x: 1990, y: 120 });
   };
 
-  const resetLegendPosition = () => setLegendPos({ x: 2060, y: 120 });
+  const resetLegendPosition = () => setLegendPos({ x: 1990, y: 120 });
 
   const onMouseDown = useCallback((e: React.MouseEvent, id: string) => {
     e.preventDefault();
@@ -637,8 +674,8 @@ export default function PlanoTool() {
 
   const clampLegendPos = (x: number, y: number) => {
     const frame = PLANO_FRAME;
-    const legendWidth = 760;
-    const legendHeight = Math.min(760, Math.max(190, 120 + Math.ceil(visibleLegendSymbols.length / 2) * 68));
+    const legendWidth = 900;
+    const legendHeight = Math.min(900, Math.max(220, 160 + Math.ceil(visibleLegendSymbols.length / 2) * 84));
     return {
       x: Math.min(Math.max(x, frame.x), frame.x + frame.w - legendWidth),
       y: Math.min(Math.max(y, frame.y), frame.y + frame.h - legendHeight),
@@ -759,20 +796,20 @@ export default function PlanoTool() {
 
     const printCanvasWidth = 2970;
     const printCanvasHeight = 2100;
-    const legendWidth = 760;
-    const legendHeight = Math.min(760, Math.max(190, 120 + Math.ceil(visibleLegendSymbols.length / 2) * 68));
+    const legendWidth = 900;
+    const legendHeight = Math.min(900, Math.max(220, 160 + Math.ceil(visibleLegendSymbols.length / 2) * 84));
     const legendX = Math.min(Math.max(legendPos.x, 0), Math.max(0, printCanvasWidth - legendWidth));
     const legendY = Math.min(Math.max(legendPos.y, 0), Math.max(0, printCanvasHeight - legendHeight));
     const legendRows = visibleLegendSymbols.map((el, i) => {
       const col = i % 2;
       const row = Math.floor(i / 2);
-      const x = legendX + 44 + col * 360;
-      const y = legendY + 138 + row * 68;
+      const x = legendX + 48 + col * 410;
+      const y = legendY + 160 + row * 84;
       const color = escapeHtml(el.color || '#111111');
       return `
         <g>
-          ${symbolIconMarkup(el.symbolKey || 'symbol', color, x + 20, y - 14, 0.32)}
-          <text x="${x + 58}" y="${y}" font-size="22" font-family="Arial, sans-serif" font-weight="800" fill="${pal.text}">${escapeHtml(el.label.toUpperCase()).slice(0, 18)}</text>
+          ${symbolIconMarkup(el.symbolKey || 'symbol', color, x + 22, y - 16, 0.36)}
+          <text x="${x + 64}" y="${y}" font-size="26" font-family="Arial, sans-serif" font-weight="800" fill="${pal.text}">${escapeHtml(el.label.toUpperCase()).slice(0, 18)}</text>
         </g>`;
     }).join('\n');
 
@@ -781,9 +818,10 @@ export default function PlanoTool() {
         <rect width="${printCanvasWidth}" height="${printCanvasHeight}" fill="${pal.mapBg}"/>
         <rect x="${PLANO_FRAME.x}" y="${PLANO_FRAME.y}" width="${PLANO_FRAME.w}" height="${PLANO_FRAME.h}" fill="none" stroke="${pal.muted}" stroke-width="5" stroke-dasharray="30 20" rx="20"/>
         ${mapContent}
+        ${iconCategoryHeaders.map(h => `<text x="${h.x}" y="${h.y - 22}" font-size="30" font-family="Arial, sans-serif" font-weight="900" fill="${pal.accent}" style="letter-spacing:0.06em">${escapeHtml(h.category.toUpperCase())}</text>`).join('\n')}
         <g transform="translate(0,0)">
           <rect x="${legendX}" y="${legendY}" width="${legendWidth}" height="${legendHeight}" rx="30" fill="${pal.panel}" fill-opacity="0.96" stroke="${pal.borde}" stroke-width="5"/>
-          <text x="${legendX + 380}" y="${legendY + 70}" text-anchor="middle" font-size="36" font-family="Arial, sans-serif" font-weight="900" fill="${pal.accent}">LEYENDA TÉCNICA</text>
+          <text x="${legendX + 450}" y="${legendY + 80}" text-anchor="middle" font-size="40" font-family="Arial, sans-serif" font-weight="900" fill="${pal.accent}">LEYENDA TÉCNICA</text>
           ${legendRows}
         </g>
         <text x="100" y="2060" font-size="34" font-family="Arial, sans-serif" font-weight="900" fill="${pal.text}">${escapeHtml(`${eventName.toUpperCase()} · ${eventVenue.toUpperCase()} · ${eventDate}`)}</text>
@@ -799,25 +837,6 @@ export default function PlanoTool() {
           ${section.items.map(item => `<li><span class="check">${checkedItems.includes(item.text) ? 'X' : ''}</span>${escapeHtml(item.text)}</li>`).join('')}
         </ul>
       </section>`).join('');
-
-    // Resumen agrupado por elemento (sin coordenadas/px internos de canvas: no le sirven al cliente).
-    const detailGroupOrder: string[] = [];
-    const detailGroups: Record<string, { tipo: string; count: number }> = {};
-    elements.filter(el => el.visible).forEach(el => {
-      const label = el.label.toUpperCase();
-      const tipo = el.type === 'symbol' ? 'Símbolo técnico' : 'Área de montaje';
-      if (detailGroups[label]) detailGroups[label].count += 1;
-      else { detailGroups[label] = { tipo, count: 1 }; detailGroupOrder.push(label); }
-    });
-    const detailRows = detailGroupOrder.map(label => {
-      const { tipo, count } = detailGroups[label];
-      return `
-      <tr>
-        <td>${escapeHtml(label)}</td>
-        <td>${escapeHtml(tipo)}</td>
-        <td class="num">${count}</td>
-      </tr>`;
-    }).join('');
 
     // Cotizacion del pack seleccionado unicamente (precio plano, sin fan-out de presets).
     const pack = calcCostos(preset);
@@ -849,34 +868,35 @@ export default function PlanoTool() {
 <meta charset="utf-8" />
 <title>Rider Plano PDF</title>
 <style>
-  @page { size: A4; margin: 10mm; }
+  @page { size: A4; margin: 0; }
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  body { margin: 0; background: ${pal.bg}; color: ${pal.text}; font-family: Arial, Helvetica, sans-serif; font-size: 11px; }
-  .page { width: 190mm; min-height: 270mm; page-break-after: always; break-after: page; overflow: hidden; }
+  body { margin: 0; background: ${pal.bg}; color: ${pal.text}; font-family: Arial, Helvetica, sans-serif; font-size: 13px; }
+  .page { width: 210mm; min-height: 297mm; padding: 18mm; page-break-after: always; break-after: page; overflow: hidden; background: ${pal.bg}; display: flex; flex-direction: column; gap: 14px; }
+  .page-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 14px; }
   .page:last-child { page-break-after: auto; break-after: auto; }
-  header { border-bottom: 4px solid ${pal.accent}; padding-bottom: 10px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: end; }
+  header { border-bottom: 4px solid ${pal.accent}; padding-bottom: 12px; display: flex; justify-content: space-between; align-items: end; }
   .brand { display: flex; align-items: center; gap: 12px; }
-  .logo svg { height: 46px; width: auto; display: block; }
-  h1 { font-size: 26px; margin: 0; font-weight: 900; font-style: italic; letter-spacing: -1px; }
-  h2 { font-size: 17px; margin: 0 0 8px; font-weight: 900; text-transform: uppercase; color: ${pal.accent}; }
-  h3 { font-size: 10px; margin: 0 0 6px; font-weight: 900; text-transform: uppercase; border-bottom: 1px solid ${pal.borde}; padding-bottom: 4px; }
-  p { margin: 0 0 7px; line-height: 1.35; }
+  .logo svg { height: 84px; width: auto; display: block; }
+  .page-header-mini { border-bottom: 4px solid ${pal.accent}; padding-bottom: 12px; display: flex; align-items: center; gap: 12px; }
+  h1 { font-size: 34px; margin: 0; font-weight: 900; font-style: italic; letter-spacing: -1px; white-space: nowrap; }
+  h2 { font-size: 24px; margin: 0 0 10px; font-weight: 900; text-transform: uppercase; color: ${pal.accent}; }
+  h3 { font-size: 13px; margin: 0 0 6px; font-weight: 900; text-transform: uppercase; border-bottom: 1px solid ${pal.borde}; padding-bottom: 4px; }
+  p { margin: 0 0 12px; line-height: 1.65; }
   .muted { color: ${pal.muted}; }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .box { border: 1px solid ${pal.borde}; padding: 8px; border-radius: 6px; break-inside: avoid; }
-  ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
-  li { display: flex; gap: 6px; align-items: center; }
-  .check { width: 13px; height: 13px; border: 1px solid ${pal.accent}; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 900; flex: 0 0 auto; color: ${pal.accent}; }
-  .map-page { display: flex; flex-direction: column; }
-  .map-frame { border: 1px solid ${pal.borde}; padding: 2mm; display: flex; justify-content: center; background: ${pal.mapBg}; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .box { border: 1px solid ${pal.borde}; padding: 16px; border-radius: 8px; break-inside: avoid; }
+  ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 9px; }
+  li { display: flex; gap: 9px; align-items: center; }
+  .check { width: 17px; height: 17px; border: 1px solid ${pal.accent}; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; flex: 0 0 auto; color: ${pal.accent}; }
+  .map-frame { border: 1px solid ${pal.borde}; padding: 6mm; display: flex; justify-content: center; background: ${pal.mapBg}; }
   .map-frame svg { width: 100%; height: auto; display: block; }
-  table { width: 100%; border-collapse: collapse; font-size: 10px; }
-  th, td { border: 1px solid ${pal.borde}; padding: 6px; text-align: left; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { border: 1px solid ${pal.borde}; padding: 12px; text-align: left; }
   th { background: ${pal.th}; font-weight: 900; }
   td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
   .cot td.cur, .cot th.cur { background: ${pal.th}; color: ${pal.accent}; font-weight: 900; }
-  .cot tr.tot td { font-weight: 900; color: ${pal.total}; font-size: 11px; }
-  .note { font-size: 9px; color: ${pal.muted}; margin-top: 6px; }
+  .cot tr.tot td { font-weight: 900; color: ${pal.total}; font-size: 13px; }
+  .note { font-size: 11px; color: ${pal.muted}; margin-top: 6px; }
 </style>
 </head>
 <body>
@@ -885,22 +905,32 @@ export default function PlanoTool() {
       <div class="brand"><span class="logo">${RD_LOGO[exportTheme]}</span><div><h1>RIDER TÉCNICO RD</h1><p class="muted">Documentación de Intervención en Terreno — ONG Reduciendo Daño</p></div></div>
       <div><strong>ORGANIZACIÓN RD</strong><br/><span class="muted">Servicio de Testeo y Reducción de Daño v2026</span></div>
     </header>
-    <h2>1. Antecedentes</h2>
-    <p><strong>Quiénes Somos:</strong> ${escapeHtml(orgTexts.who)}</p>
-    <p><strong>Objetivo del Servicio:</strong> ${escapeHtml(orgTexts.goal)}</p>
-    <p><strong>Evento:</strong> ${escapeHtml(eventName)} · <strong>Ubicación:</strong> ${escapeHtml(eventVenue)} · <strong>Fecha:</strong> ${escapeHtml(eventDate)}</p>
-    <h2 style="margin-top:12px">2. Requerimientos Operativos</h2>
-    <div class="grid">${checklistHtml}</div>
-  </main>
-  <main class="page map-page">
-    <h2>3. Esquema de Distribución del Stand</h2>
-    <div class="map-frame">${buildPrintableMapSvg()}</div>
+    <div class="page-body">
+      <section>
+        <h2>1. Antecedentes</h2>
+        <p><strong>Quiénes Somos:</strong> ${escapeHtml(orgTexts.who)}</p>
+        <p><strong>Objetivo del Servicio:</strong> ${escapeHtml(orgTexts.goal)}</p>
+        <p><strong>Evento:</strong> ${escapeHtml(eventName)} · <strong>Ubicación:</strong> ${escapeHtml(eventVenue)} · <strong>Fecha:</strong> ${escapeHtml(eventDate)}</p>
+      </section>
+      <section>
+        <h2>2. Requerimientos Operativos</h2>
+        <div class="grid">${checklistHtml}</div>
+      </section>
+    </div>
   </main>
   <main class="page">
-    <h2>4. Detalle y Resumen de Elementos del Stand</h2>
-    <table><thead><tr><th>Elemento</th><th>Tipo</th><th class="num">Cantidad</th></tr></thead><tbody>${detailRows}</tbody></table>
-    <h2 style="margin-top:16px">5. Cotización — ${escapeHtml(calcCostos(preset).label)}</h2>
-    ${cotizacionHtml}
+    <div class="page-header-mini"><span class="logo">${RD_LOGO[exportTheme]}</span><h1 style="font-size:22px">RIDER TÉCNICO RD</h1></div>
+    <div class="page-body">
+      <h2>3. Esquema de Distribución del Stand</h2>
+      <div class="map-frame">${buildPrintableMapSvg()}</div>
+    </div>
+  </main>
+  <main class="page">
+    <div class="page-header-mini"><span class="logo">${RD_LOGO[exportTheme]}</span><h1 style="font-size:22px">RIDER TÉCNICO RD</h1></div>
+    <div class="page-body">
+      <h2>4. Cotización — ${escapeHtml(calcCostos(preset).label)}</h2>
+      ${cotizacionHtml}
+    </div>
   </main>
 </body>
 </html>`;
@@ -1082,6 +1112,18 @@ export default function PlanoTool() {
       if (!acc.some(item => item.symbolKey === el.symbolKey)) acc.push(el);
       return acc;
     }, []);
+
+  const iconCategoryHeaders = (() => {
+    const groups: Record<string, Element[]> = {};
+    elements.filter(el => el.visible && el.type === 'symbol' && el.category).forEach(el => {
+      (groups[el.category as string] = groups[el.category as string] || []).push(el);
+    });
+    return Object.entries(groups).map(([category, els]) => ({
+      category,
+      x: Math.min(...els.map(e => e.x)),
+      y: Math.min(...els.map(e => e.y)),
+    }));
+  })();
 
   const NAV_TABS: { key: Page; label: string }[] = [
     { key: 'req', label: '☑ Checklist' },
@@ -1427,6 +1469,13 @@ export default function PlanoTool() {
                       );
                     })}
 
+                    {/* Encabezados de categoria sobre cada fila de iconos */}
+                    {iconCategoryHeaders.map(h => (
+                      <text key={`cat-${h.category}`} x={h.x} y={h.y - 22} fontSize={30} fill="#e879f9" fontWeight="900" fontFamily="monospace" style={{ letterSpacing: '0.06em' }}>
+                        {h.category.toUpperCase()}
+                      </text>
+                    ))}
+
                     {/* Draggable Legend */}
                     {showLegend && (
                       <g
@@ -1435,8 +1484,8 @@ export default function PlanoTool() {
                         onTouchStart={onLegendTouchStart}
                         className="cursor-grab"
                       >
-                        <rect width={760} height={Math.min(760, Math.max(190, 120 + Math.ceil(visibleLegendSymbols.length / 2) * 68))} rx={30} fill="#18181bcc" stroke="#3f3f46" strokeWidth={5} />
-                        <text x={380} y={70} textAnchor="middle" fontSize={36} fill="#a1a1aa" fontWeight="black" fontFamily="monospace" style={{ letterSpacing: '0.08em' }}>
+                        <rect width={900} height={Math.min(900, Math.max(220, 160 + Math.ceil(visibleLegendSymbols.length / 2) * 84))} rx={30} fill="#18181bcc" stroke="#3f3f46" strokeWidth={5} />
+                        <text x={450} y={80} textAnchor="middle" fontSize={40} fill="#a1a1aa" fontWeight="black" fontFamily="monospace" style={{ letterSpacing: '0.08em' }}>
                           LEYENDA TÉCNICA
                         </text>
                         {visibleLegendSymbols.map((el, i) => {
@@ -1444,11 +1493,11 @@ export default function PlanoTool() {
                           const col = i % 2;
                           const row = Math.floor(i / 2);
                           return (
-                            <g key={`legend-${el.id}`} transform={`translate(${36 + col * 365},${112 + row * 68})`}>
-                              <svg x={0} y={0} width={50} height={50} viewBox="0 0 160 160">
+                            <g key={`legend-${el.id}`} transform={`translate(${48 + col * 410},${160 + row * 84})`}>
+                              <svg x={0} y={0} width={58} height={58} viewBox="0 0 160 160">
                                 {renderSymbolGlyph(el.symbolKey || 'unknown', fill)}
                               </svg>
-                              <text x={72} y={34} fontSize={22} fill="#a1a1aa" fontWeight="bold" fontFamily="sans-serif">{el.label.toUpperCase().slice(0, 18)}</text>
+                              <text x={82} y={40} fontSize={26} fill="#a1a1aa" fontWeight="bold" fontFamily="sans-serif">{el.label.toUpperCase().slice(0, 18)}</text>
                             </g>
                           );
                         })}
