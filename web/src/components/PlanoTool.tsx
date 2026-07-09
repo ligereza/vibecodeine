@@ -222,7 +222,6 @@ const SYMBOL_CATEGORY: Record<TechnicalSymbolKey, string> = {};
 Object.entries(REQUIREMENT_SYMBOL_MAP).forEach(([itemText, symbolKey]) => {
   SYMBOL_CATEGORY[symbolKey] = ITEM_TEXT_TO_CATEGORY[itemText] || 'Zonas de Atención';
 });
-const CATEGORY_ORDER = ['Servicios', 'Infraestructura', 'Coordinación', 'Espacio', 'Zonas de Atención'];
 
 // Helper to render Lucide icons dynamically for requirements
 const renderRequirementIcon = (iconName: string, className = "w-4 h-4 text-zinc-400") => {
@@ -251,96 +250,94 @@ const renderRequirementIcon = (iconName: string, className = "w-4 h-4 text-zinc-
 
 const withMedida = (label: string, m: string) => `${label} (${m})`;
 
+// Font que quepa en el ancho del rect: con el plano a escala real un modulo de
+// 3 m mide 600 px y el font fijo de 42 desbordaba los labels largos.
+// ~0.62 em de ancho promedio por caracter en Arial bold uppercase.
+const rectLabelFont = (label: string, w: number) =>
+  Math.max(24, Math.min(42, Math.round((w - 80) / (0.62 * Math.max(label.length, 1)))));
+
 const placedSymbol = (key: TechnicalSymbolKey, id: string, x: number, y: number, label?: string): Element => {
   const spec = SYMBOL_BY_KEY[key] || SYMBOL_BY_KEY.power;
   const category = SYMBOL_CATEGORY[key] || 'Zonas de Atención';
   return { id, type: 'symbol', symbolKey: spec.key, x, y, w: spec.w, h: spec.h, label: label || spec.label, color: spec.color, visible: true, category };
 };
 
-// Iconos agrupados por categoria (misma taxonomia del checklist), empaquetados
-// en filas por ancho disponible (flow-wrap) en vez de 1 fila fija por categoria:
-// evita colisionar con "Coordinacion Operativa" y usa el alto del frame mejor.
-// GAP_X 260: con 200 los labels centrados (font 28, hasta ~13 chars como
-// "EQUIPO MEDICO") se pisaban entre iconos vecinos en el print.
-const ICON_ORIGIN = { x: 90, y: 960 };
-const ICON_GAP_X = 260;
-const ICON_ROW_HEIGHT = 330;
-const ICON_CATEGORY_GAP_X = 300;
-const ICON_AVAILABLE_WIDTH = 2700;
-
-interface IconSpec { id: string; key: TechnicalSymbolKey; label?: string }
-
-function layoutIconGroups(specs: IconSpec[]): Element[] {
-  const groups: Record<string, IconSpec[]> = {};
-  specs.forEach(spec => {
-    const cat = SYMBOL_CATEGORY[spec.key] || 'Zonas de Atención';
-    (groups[cat] = groups[cat] || []).push(spec);
-  });
-  const activeCats = CATEGORY_ORDER.filter(cat => groups[cat] && groups[cat].length);
-  const out: Element[] = [];
-  let curX = ICON_ORIGIN.x;
-  let curRow = 0;
-  activeCats.forEach(cat => {
-    const items = groups[cat];
-    const width = items.length * ICON_GAP_X;
-    if (curX !== ICON_ORIGIN.x && curX + width > ICON_ORIGIN.x + ICON_AVAILABLE_WIDTH) {
-      curRow += 1;
-      curX = ICON_ORIGIN.x;
-    }
-    const y = ICON_ORIGIN.y + curRow * ICON_ROW_HEIGHT;
-    items.forEach((spec, i) => out.push(placedSymbol(spec.key, spec.id, curX + i * ICON_GAP_X, y, spec.label)));
-    curX += width + ICON_CATEGORY_GAP_X;
-  });
-  return out;
-}
-
 // ── Default elements builder in 2970x2100 px format, por pack ───────
+// Plano tipo "compound" a proporcion real: 1 m = 200 px. El pack se dibuja como
+// UN recinto contiguo (modulos 3x3 m lado a lado) con frente publico abajo y
+// acceso de servicio atras, mesas a escala DENTRO de los stands, y solo los
+// iconos FISICOS puestos en su lugar de uso (electricidad, agua, extintor...).
+// Los requerimientos de coordinacion (medico, seguridad, produccion) NO van en
+// el plano: viven en el checklist de la pagina 1, y al marcarlos ahi se agrega
+// su simbolo req-* al mapa si el usuario lo quiere ubicar.
+const M = 200; // px por metro
 function buildElements(packId: PackId): Element[] {
-  // Pack INFO es "testeo o informativo a eleccion" (1 stand, sin comprometerse a cual);
-  // TESTEO/COMPLETO incluyen ambos servicios, ahi el stand 1 si es especificamente informativo.
-  const stand1Label = packId === 'INFO' ? 'Stand Testeo o Informativo' : 'Stand Informativo';
+  const modules = packId === 'COMPLETO' ? 3 : packId === 'TESTEO' ? 2 : 1;
+  const X0 = packId === 'COMPLETO' ? 140 : packId === 'TESTEO' ? 500 : 700;
+  const W = modules * 3 * M;        // frente del compound (3 m por modulo)
+  const TOP = 700;                  // borde trasero de los stands
+  const H = 3 * M;                  // fondo de los stands (3 m)
+  const frontM = (modules * 3).toFixed(1);
+
+  // Pack INFO es "testeo o informativo a eleccion" (1 stand, sin comprometerse a
+  // cual; el detalle vive en las inclusiones del pack); TESTEO/COMPLETO incluyen
+  // ambos servicios, ahi el stand 1 si es especificamente informativo.
+  const stand1Label = packId === 'INFO' ? 'Stand Testeo/Info' : 'Stand Informativo';
+
   const base: Element[] = [
-    { id: 'entrada', type: 'rect', x: 1235, y: 70, w: 500, h: 110, label: 'ENTRADA', color: '#6366f1', visible: true },
-    { id: 'stand1', type: 'rect', x: 90, y: 230, w: 560, h: 400, label: withMedida(stand1Label, '3x3 m'), color: '#0369a1', visible: true },
-    { id: 'mesa1', type: 'rect', x: 90, y: 660, w: 560, h: 220, label: 'Mesa 1', color: '#10b981', visible: true },
+    { id: 'acceso', type: 'rect', x: X0, y: packId === 'COMPLETO' ? 240 : 560, w: W, h: 100, label: packId === 'INFO' ? 'Acceso servicio' : 'Acceso servicio / carga', color: '#9ca3af', visible: true },
+    { id: 'stand1', type: 'rect', x: X0, y: TOP, w: 3 * M, h: H, label: withMedida(stand1Label, '3×3 m'), color: '#0369a1', visible: true },
+    { id: 'mesa1', type: 'rect', x: X0 + (packId === 'INFO' ? 60 : 120), y: TOP + 420, w: 360, h: 120, label: withMedida('Mesa', '1.8×0.6 m'), color: '#10b981', visible: true },
+    { id: 'publico', type: 'rect', x: X0, y: 1400, w: W, h: 110, label: `Frente público — ${frontM} m`, color: '#6366f1', visible: true },
   ];
 
-  const iconSpecs: IconSpec[] = [
-    { id: 'power', key: 'power' }, { id: 'light', key: 'light' }, { id: 'water', key: 'water' },
-    { id: 'extinguisher', key: 'extinguisher' }, { id: 'medical', key: 'medical' },
-    { id: 'security', key: 'security' }, { id: 'trash', key: 'trash' }, { id: 'contact', key: 'contact' },
+  // Iconos fisicos del stand 1: punto electrico e iluminacion al fondo.
+  const icons: Element[] = [
+    placedSymbol('power', 'power', X0 + 40, TOP + 20),
+    placedSymbol('light', 'light', X0 + 260, TOP + 20),
   ];
+
+  if (packId === 'INFO') {
+    icons.push(
+      placedSymbol('extinguisher', 'extinguisher', X0 + 440, TOP + 380),
+      placedSymbol('trash', 'trash', X0 + W + 40, TOP + 380),
+    );
+  }
 
   if (packId === 'TESTEO' || packId === 'COMPLETO') {
     base.push(
-      { id: 'stand2', type: 'rect', x: 730, y: 230, w: 560, h: 400, label: withMedida('Stand Testeo', '3x3 m'), color: '#2d5a4a', visible: true },
-      { id: 'mesa2', type: 'rect', x: 730, y: 660, w: 560, h: 220, label: 'Mesa 2', color: '#10b981', visible: true },
+      { id: 'stand2', type: 'rect', x: X0 + 3 * M, y: TOP, w: 3 * M, h: H, label: withMedida('Stand Testeo', '3×3 m'), color: '#2d5a4a', visible: true },
+      { id: 'mesa2', type: 'rect', x: X0 + 3 * M + 200, y: TOP + 420, w: 360, h: 120, label: withMedida('Mesa', '1.8×0.6 m'), color: '#10b981', visible: true },
     );
-    // En COMPLETO hay 2 puntos de testeo: se numeran para que el plano no muestre
-    // dos iconos con el mismo nombre pegados.
-    iconSpecs.push({ id: 'testeo', key: 'testeo', label: packId === 'COMPLETO' ? 'Testeo 1' : undefined });
+    icons.push(
+      placedSymbol('testeo', 'testeo', X0 + 3 * M + 180, TOP + 60),
+      placedSymbol('extinguisher', 'extinguisher', X0 + 3 * M + 20, TOP + 380),
+    );
+  }
+
+  if (packId === 'TESTEO') {
+    icons.push(
+      placedSymbol('water', 'water', X0 + 3 * M + 420, TOP + 20),
+      placedSymbol('trash', 'trash', X0 + W + 40, TOP + 380),
+    );
   }
 
   if (packId === 'COMPLETO') {
-    // Coordinacion va apilada bajo la Mesa 3 (misma columna), no como 4a columna:
-    // una 4a columna a x=2010 invadiria la zona de la leyenda (default x=2060).
     base.push(
-      { id: 'descanso', type: 'rect', x: 1370, y: 230, w: 560, h: 400, label: withMedida('Zona Descanso', '~9 m²'), color: '#059669', visible: true },
-      { id: 'mesa3', type: 'rect', x: 1370, y: 660, w: 560, h: 220, label: 'Mesa 3', color: '#10b981', visible: true },
-      { id: 'coordinacion', type: 'rect', x: 1205, y: 1620, w: 560, h: 300, label: 'Coordinación Operativa', color: '#ca8a04', visible: true },
+      // Back of house detras de los stands: coordinacion + almacenamiento.
+      { id: 'coordinacion', type: 'rect', x: X0, y: 380, w: 900, h: 240, label: 'Coordinación Operativa (BOH)', color: '#ca8a04', visible: true },
+      { id: 'descanso', type: 'rect', x: X0 + 6 * M, y: TOP, w: 3 * M, h: H, label: withMedida('Zona Descanso', '3×3 m'), color: '#059669', visible: true },
     );
-    iconSpecs.push(
-      { id: 'testeo2', key: 'testeo', label: 'Testeo 2' },
-      { id: 'contencion', key: 'contencion', label: 'Contención 1' },
-      { id: 'contencion2', key: 'contencion', label: 'Contención 2' },
-      { id: 'food', key: 'food' },
-      { id: 'sensory', key: 'sensory' },
+    icons.push(
+      placedSymbol('rack', 'rack', X0 + 920, 420),
+      placedSymbol('water', 'water', X0 + 6 * M + 20, TOP + 20),
+      placedSymbol('sensory', 'sensory', X0 + 6 * M + 220, TOP + 20),
+      placedSymbol('contencion', 'contencion', X0 + 6 * M + 400, TOP + 20),
+      placedSymbol('trash', 'trash', X0 + W + 40, TOP + 380),
     );
   }
 
-  base.push(...layoutIconGroups(iconSpecs));
-
-  return base;
+  return [...base, ...icons];
 }
 
 // ── Main component ───────────────────────────────────────────────────
@@ -477,7 +474,8 @@ export default function PlanoTool() {
   };
 
   const layerPriority = (el: Element) => {
-    if (el.id === 'entrada') return 40;
+    // Bandas de flujo (frente publico / acceso servicio) siempre arriba.
+    if (el.id === 'entrada' || el.id === 'publico' || el.id === 'acceso') return 40;
     if (el.type === 'symbol') return 30;
     if (el.type === 'rect') return 10;
     return 20;
@@ -817,7 +815,7 @@ export default function PlanoTool() {
       return `
         <g>
           <rect x="${el.x}" y="${el.y}" width="${el.w}" height="${el.h}" rx="16" fill="${rectColor}" fill-opacity="0.48" stroke="${rectColor}" stroke-width="8"/>
-          <text x="${el.x + el.w / 2}" y="${el.y + el.h / 2}" text-anchor="middle" dominant-baseline="middle" font-size="42" font-family="Arial, sans-serif" font-weight="900" fill="${pal.text}">${label}</text>
+          <text x="${el.x + el.w / 2}" y="${el.y + el.h / 2}" text-anchor="middle" dominant-baseline="middle" font-size="${rectLabelFont(el.label, el.w)}" font-family="Arial, sans-serif" font-weight="900" fill="${pal.text}">${label}</text>
         </g>`;
     }).join('\n');
 
@@ -849,7 +847,6 @@ export default function PlanoTool() {
         <rect width="${printCanvasWidth}" height="${printCanvasHeight}" fill="${pal.mapBg}"/>
         <rect x="${PLANO_FRAME.x}" y="${PLANO_FRAME.y}" width="${PLANO_FRAME.w}" height="${PLANO_FRAME.h}" fill="none" stroke="${pal.muted}" stroke-width="5" stroke-dasharray="30 20" rx="20"/>
         ${mapContent}
-        ${iconCategoryHeaders.map(h => `<text x="${h.x}" y="${h.y - 22}" font-size="30" font-family="Arial, sans-serif" font-weight="900" fill="${pal.accent}" style="letter-spacing:0.06em">${escapeHtml(h.category.toUpperCase())}</text>`).join('\n')}
         <g transform="translate(0,0)">
           <rect x="${legendX}" y="${legendY}" width="${legendWidth}" height="${legendHeight}" rx="30" fill="${pal.panel}" fill-opacity="0.96" stroke="${pal.borde}" stroke-width="5"/>
           <text x="${legendX + 450}" y="${legendY + 80}" text-anchor="middle" font-size="40" font-family="Arial, sans-serif" font-weight="900" fill="${pal.accent}">LEYENDA TÉCNICA</text>
@@ -984,7 +981,7 @@ export default function PlanoTool() {
     <div class="page-body">
       <h2>3. Esquema de Distribución del Stand</h2>
       <div class="map-frame">${buildPrintableMapSvg()}</div>
-      <p class="note">Esquema referencial de distribución — no a escala. Medidas de stands y zonas indicadas en cada elemento; superficie total del pack: ${pack.m2} m² (${pack.stands} stand(s)).</p>
+      <p class="note">Distribución a proporción real (1 m = 200 px de lienzo en los presets); medidas indicadas en cada elemento. Frente público abajo, acceso de servicio atrás. Superficie del pack: ${pack.m2} m² (${pack.stands} stand(s)). Ubicación sugerida en el recinto: cerca del punto médico/bienestar, fuera de la presión sonora del escenario principal, con acceso a ruta de servicio.</p>
     </div>
   </main>
   <main class="page">
@@ -1178,19 +1175,6 @@ export default function PlanoTool() {
       if (!acc.some(item => item.symbolKey === el.symbolKey)) acc.push(el);
       return acc;
     }, []);
-
-  const iconCategoryHeaders = (() => {
-    const groups: Record<string, Element[]> = {};
-    elements.filter(el => el.visible && el.type === 'symbol' && el.category).forEach(el => {
-      (groups[el.category as string] = groups[el.category as string] || []).push(el);
-    });
-    // Anclar al elemento mas alto del grupo: mezclar el min x de un elemento con el
-    // min y de otro ponia el header flotando donde no hay ningun icono del grupo.
-    return Object.entries(groups).map(([category, els]) => {
-      const top = els.reduce((a, b) => (b.y < a.y || (b.y === a.y && b.x < a.x) ? b : a));
-      return { category, x: top.x, y: top.y };
-    });
-  })();
 
   const NAV_TABS: { key: Page; label: string }[] = [
     { key: 'req', label: '☑ Checklist' },
@@ -1523,7 +1507,7 @@ export default function PlanoTool() {
                             stroke={el.id === selectedId ? '#ffffff' : el.color}
                             strokeWidth={el.id === selectedId ? 10 : 5}
                           />
-                          <text x={el.w / 2} y={el.h / 2} textAnchor="middle" dominantBaseline="central" fontSize={42} fill="white" fontWeight="bold">
+                          <text x={el.w / 2} y={el.h / 2} textAnchor="middle" dominantBaseline="central" fontSize={rectLabelFont(el.label, el.w)} fill="white" fontWeight="bold">
                             {el.label.toUpperCase()}
                           </text>
                           <text x={el.w / 2} y={el.h / 2 + 50} textAnchor="middle" dominantBaseline="central" fontSize={24} fill="#ffffff80" fontWeight="bold" fontFamily="monospace">
@@ -1535,13 +1519,6 @@ export default function PlanoTool() {
                         </g>
                       );
                     })}
-
-                    {/* Encabezados de categoria sobre cada fila de iconos */}
-                    {iconCategoryHeaders.map(h => (
-                      <text key={`cat-${h.category}`} x={h.x} y={h.y - 22} fontSize={30} fill="#e879f9" fontWeight="900" fontFamily="monospace" style={{ letterSpacing: '0.06em' }}>
-                        {h.category.toUpperCase()}
-                      </text>
-                    ))}
 
                     {/* Draggable Legend */}
                     {showLegend && (
