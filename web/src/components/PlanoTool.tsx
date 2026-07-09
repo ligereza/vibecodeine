@@ -800,13 +800,24 @@ export default function PlanoTool() {
         </ul>
       </section>`).join('');
 
-    const detailRows = elements.filter(el => el.visible).map(el => `
+    // Resumen agrupado por elemento (sin coordenadas/px internos de canvas: no le sirven al cliente).
+    const detailGroupOrder: string[] = [];
+    const detailGroups: Record<string, { tipo: string; count: number }> = {};
+    elements.filter(el => el.visible).forEach(el => {
+      const label = el.label.toUpperCase();
+      const tipo = el.type === 'symbol' ? 'Símbolo técnico' : 'Área de montaje';
+      if (detailGroups[label]) detailGroups[label].count += 1;
+      else { detailGroups[label] = { tipo, count: 1 }; detailGroupOrder.push(label); }
+    });
+    const detailRows = detailGroupOrder.map(label => {
+      const { tipo, count } = detailGroups[label];
+      return `
       <tr>
-        <td>${escapeHtml(el.label.toUpperCase())}</td>
-        <td>${el.type === 'symbol' ? `SÍMBOLO TÉCNICO (${escapeHtml(el.symbolKey || '')})` : 'ÁREA DE MONTAJE'}</td>
-        <td>${el.w} × ${el.h} px</td>
-        <td>X: ${el.x}, Y: ${el.y}</td>
-      </tr>`).join('');
+        <td>${escapeHtml(label)}</td>
+        <td>${escapeHtml(tipo)}</td>
+        <td class="num">${count}</td>
+      </tr>`;
+    }).join('');
 
     // Cotizacion del pack seleccionado unicamente (precio plano, sin fan-out de presets).
     const pack = calcCostos(preset);
@@ -857,8 +868,8 @@ export default function PlanoTool() {
   li { display: flex; gap: 6px; align-items: center; }
   .check { width: 13px; height: 13px; border: 1px solid ${pal.accent}; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 900; flex: 0 0 auto; color: ${pal.accent}; }
   .map-page { display: flex; flex-direction: column; }
-  .map-frame { flex: 1 1 auto; min-height: 0; border: 1px solid ${pal.borde}; padding: 2mm; display: flex; align-items: center; justify-content: center; background: ${pal.mapBg}; }
-  .map-frame svg { width: 100%; height: auto; max-height: 235mm; display: block; }
+  .map-frame { border: 1px solid ${pal.borde}; padding: 2mm; display: flex; justify-content: center; background: ${pal.mapBg}; }
+  .map-frame svg { width: 100%; height: auto; display: block; }
   table { width: 100%; border-collapse: collapse; font-size: 10px; }
   th, td { border: 1px solid ${pal.borde}; padding: 6px; text-align: left; }
   th { background: ${pal.th}; font-weight: 900; }
@@ -887,7 +898,7 @@ export default function PlanoTool() {
   </main>
   <main class="page">
     <h2>4. Detalle y Resumen de Elementos del Stand</h2>
-    <table><thead><tr><th>Elemento</th><th>Tipo</th><th>Dimensiones</th><th>Coordenadas</th></tr></thead><tbody>${detailRows}</tbody></table>
+    <table><thead><tr><th>Elemento</th><th>Tipo</th><th class="num">Cantidad</th></tr></thead><tbody>${detailRows}</tbody></table>
     <h2 style="margin-top:16px">5. Cotización — ${escapeHtml(calcCostos(preset).label)}</h2>
     ${cotizacionHtml}
   </main>
