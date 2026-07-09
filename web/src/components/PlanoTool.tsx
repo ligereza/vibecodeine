@@ -147,6 +147,8 @@ const makeSymbolElement = (key: TechnicalSymbolKey, idPrefix = 'symbol'): Elemen
     label: spec.label,
     color: spec.color,
     visible: true,
+    // Sin category el simbolo queda fuera de la leyenda agrupada (filtra por el.category).
+    category: SYMBOL_CATEGORY[spec.key] || 'Zonas de Atención',
   };
 };
 
@@ -557,7 +559,7 @@ export default function PlanoTool() {
       mpt.x = me.clientX; mpt.y = me.clientY;
       const mp = mpt.matrixTransform(svg.getScreenCTM()!.inverse());
       setElements(prev => prev.map(x =>
-        x.id === id ? { ...x, x: Math.round((startX + (mp.x - start.x)) / 20) * 20, y: Math.round((startY + (mp.y - start.y)) / 20) * 20 } : x
+        x.id === id ? { ...x, x: Math.round((startX + (mp.x - start.x)) / GRID) * GRID, y: Math.round((startY + (mp.y - start.y)) / GRID) * GRID } : x
       ));
     };
     const up = () => {
@@ -588,7 +590,7 @@ export default function PlanoTool() {
       mpt.x = t.clientX; mpt.y = t.clientY;
       const mp = mpt.matrixTransform(svg.getScreenCTM()!.inverse());
       setElements(prev => prev.map(x =>
-        x.id === id ? { ...x, x: Math.round((startX + (mp.x - start.x)) / 20) * 20, y: Math.round((startY + (mp.y - start.y)) / 20) * 20 } : x
+        x.id === id ? { ...x, x: Math.round((startX + (mp.x - start.x)) / GRID) * GRID, y: Math.round((startY + (mp.y - start.y)) / GRID) * GRID } : x
       ));
     };
     const end = () => {
@@ -1083,15 +1085,18 @@ export default function PlanoTool() {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
       const zones = Array.isArray(data?.layout?.zones) ? data.layout.zones : [];
+      // || pisaba coordenadas 0 legitimas (0 es falsy): 0 -> 300. Solo caer al
+      // default cuando el valor no es numerico; ancho/alto 0 tampoco sirven.
+      const numOr = (v: unknown, fallback: number) => (Number.isFinite(Number(v)) ? Number(v) * 4 : fallback);
       const mapped: Element[] = zones.map((zone: any, index: number) => {
         const zoneType = zone.type === 'stand' ? 'informativo' : zone.type === 'descanso' ? 'descanso' : zone.type === 'testeo' ? 'testeo' : zone.type === 'mesa' ? 'informativo' : 'circulacion';
         return {
           id: `api-${index}-${zoneType}`,
           type: 'rect',
-          x: Number(zone.x) * 4 || 300,
-          y: Number(zone.y) * 4 || 300,
-          w: Number(zone.w) * 4 || 560,
-          h: Number(zone.h) * 4 || 300,
+          x: numOr(zone.x, 300),
+          y: numOr(zone.y, 300),
+          w: numOr(zone.w, 560) || 560,
+          h: numOr(zone.h, 300) || 300,
           label: String(zone.label || ZONE_LABELS[zoneType] || zoneType),
           color: ZONE_COLORS[zoneType] || '#555',
           visible: true,

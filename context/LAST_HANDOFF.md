@@ -21,7 +21,22 @@ handoff:
       - gastas cuota en dirigir + codigo critico, no en volumen
     canonical: ["CLAUDE.md (bloque 'Equipo multi-agente')"]
 
-  done_this_session:   # sesion 2026-07-09 (PlanoTool: modelo de PACKS RD)
+  done_this_session:   # sesion 2026-07-09 (seccion tools del hub: bugs + prioridad editables)
+    - "rama claude/tools-section-improvements-2rhxhc: mejora de la seccion de herramientas del hub web. Pedido: fix bugs + priorizar las funciones editables dentro de la app."
+    - "AppShell.tsx: nav del sidebar agrupado en 'Edicion' (herramientas que producen trabajo EN la app, con badge edit) y 'Consulta / referencia'. Orden RD: Plano/Rider, SVG Studio, Cotizacion, Intake (editables) -> Jobs (lectura). Orden Studio: SVG Studio, Mapping LED (editables) -> Eventos/IG, Resolume, Comandos (generadores de comando copy/paste, no ejecutan nada)."
+    - "HubDashboard.tsx: tarjetas de acciones rapidas reordenadas editables-primero con badge 'editable'; descripciones de Eventos/Resolume sinceradas ('arma el comando', no ejecuta pipeline)."
+    - "CommandCopy.tsx NUEVO compartido: el boton copiar estaba DUPLICADO identico en CommandPanel/EventsPanel/ResolumePanel y con bug real: mostraba 'copiado' aunque navigator.clipboard fallara (file:// o http de red local no tienen clipboard API). Ahora fallback a textarea+execCommand y estado failed visible (X roja)."
+    - "EventsPanel.tsx: eliminado setTimeout(300ms) que FINGIA una llamada al backend con spinner; el comando se arma al instante (es concatenacion local, no fetch)."
+    - "ResolumePanel.tsx: FPS y Puerto OSC solo aceptan digitos (antes texto libre -> comandos invalidos tipo --fps abc); fullCmd omite flags vacios."
+    - "MappingTool.tsx: iframe /mapping.html (ruta absoluta) -> mapping.html relativa; la absoluta rompia el fallback file:// de context/flujo_hub.html."
+    - "QuotePanel.tsx: logo de la cotizacion imprimible era <img> remota a reduciendodano.cl (sin internet el PDF salia sin logo); ahora RD_LOGO.white inline de rdBrand.ts."
+    - "PlanoTool.tsx 3 fixes: (1) makeSymbolElement no asignaba category -> los simbolos agregados via checklist o boton + no aparecian en la leyenda agrupada (filtra por el.category); (2) loadFromBackend usaba ||300 que pisaba coordenada 0 legitima -> numOr con Number.isFinite; (3) snap de arrastre usaba literal 20 en vez de la constante GRID (2 sitios)."
+    - "SvgVisualizer.tsx: exportPng revoca el blob URL tambien en onerror (antes quedaba filtrado si el SVG no cargaba)."
+    - "JobsPanel.tsx: load() con .catch (antes promesa rechazada sin manejar si flujoApi lanzara)."
+    - "Verificado: npm run typecheck OK, npm run build:context OK, smoke test Chromium headless (playwright-core + /opt/pw-browsers/chromium) sobre context/flujo_hub.html: nav agrupado correcto en RD y Studio, comando de eventos instantaneo, input FPS filtra letras (ab30x -> 30), 0 errores de consola. Screenshots en scratchpad de la sesion."
+    - "Metodo (regla del runway): lectura pesada de los paneles delegada a Gemini API (REST directo, el SDK google-genai esta roto en el contenedor por cryptography) + subagente Sonnet para clasificar paneles chicos; Claude solo verifico los hallazgos en el codigo real antes de editar (2 de los bugs reportados por Gemini eran especulativos y se descartaron)."
+
+  done_sesion_packs:   # sesion 2026-07-09 (PlanoTool: modelo de PACKS RD)
     - "rama claude/refine-local-plan-adgdga: se mergeo origin/fix/unfinished-tools-4 (9 commits que quedaron sueltos DESPUES del merge de PR #13 a main -- @96efa2e; nadie los habia mergeado). Trajo lo real: web/src/rdBrand.ts (paleta/logo RD dark-white), PlanoTool con tema+logo+cotizacion, scripts/export_propuesta_pdf.py, src/flujo/plano/{costs,engine,iconos}.py. Merge limpio, 0 conflictos reales."
     - "web/src/rdBrand.ts: PRESET_PARAMS/PRECIOS/calcCostos (costos calculados) -> PACKS (precio plano): Pack1 Testeo-o-Informativo 100.000/2vol, Pack2 Testeo-y-Informativo 300.000/6vol, Pack3 Completo 500.000/15vol. Cada pack trae m2/stands/inclusiones; COMPLETO ademas trae proporciones 60/14/10/9/7 (solo %, sin monto guardado). RD_PALETTE y RD_LOGO sin tocar (ya estaban bien)."
     - "Correccion de precios (2 vueltas): el primer valor puesto (INFO 100k/6vol, TESTEO 250k/6vol) salio de una instruccion de handoff anterior mal leida. Se investigo datadrops/cotizacion_general_eventos/ (250k/300k/500k) pero el usuario confirmo que es una oferta DISTINTA (cotizacion generica de agencia), no la fuente de los PACKS. Los valores reales los dio el usuario directo en el chat: 100k/2vol (testeo O informativo, a eleccion), 300k/6vol (testeo Y informativo, ambos), 500k/15vol (completo, sin cambio)."
