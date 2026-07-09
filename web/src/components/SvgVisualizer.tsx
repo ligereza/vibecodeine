@@ -294,6 +294,7 @@ function GalleryView({ onConfigure }: { onConfigure: (piece: SvgPiece) => void }
     const u=URL.createObjectURL(new Blob([p.svgContent],{type:'image/svg+xml;charset=utf-8'}));
     img.onload=()=>{ctx.drawImage(img,0,0,w,h);URL.revokeObjectURL(u);
       const a=document.createElement('a');a.href=c.toDataURL('image/png');a.download=`${p.id}.png`;a.click();};
+    img.onerror=()=>URL.revokeObjectURL(u); // sin esto el blob URL queda filtrado si el SVG no carga
     img.src=u;
   },[]);
   const copySvg = (s: string) => { navigator.clipboard?.writeText(s); setCodeCopied(true); setTimeout(()=>setCodeCopied(false),1500); };

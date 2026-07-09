@@ -25,15 +25,17 @@ export default function HubDashboard({ onNavigate }: Props) {
   const openJobs = jobs?.jobs.filter(j => !String(j.estado || '').toLowerCase().includes('entregado')).length ?? 0;
   const recent = useMemo(() => (jobs?.jobs || []).slice(0, 5), [jobs]);
 
+  // Editables primero (producen trabajo dentro de la app); consulta y
+  // generadores de comandos copy/paste al final.
   const actions = [
-    { view: 'visualizer' as const, icon: Shapes, title: 'SVG Studio', desc: 'Galería de piezas + Config Editor visual con texto, alineado y distribución', color: 'from-violet-500 to-purple-600', badge: '✨ mejorado' },
-    { view: 'intake' as const, icon: ClipboardList, title: 'Pegar Pedido', desc: 'Parsear correo/texto y crear job draft', color: 'from-blue-500 to-cyan-600' },
+    { view: 'plano' as const, icon: Map, title: 'Plano / Rider', desc: 'Editor visual de layout, rider y cotización de evento', color: 'from-emerald-500 to-teal-600', badge: 'editable' },
+    { view: 'visualizer' as const, icon: Shapes, title: 'SVG Studio', desc: 'Galería de piezas + Config Editor visual con texto, alineado y distribución', color: 'from-violet-500 to-purple-600', badge: 'editable' },
+    { view: 'quote' as const, icon: Calculator, title: 'Cotización', desc: 'Presupuesto editable con export MD/PDF', color: 'from-pink-500 to-rose-600', badge: 'editable' },
+    { view: 'intake' as const, icon: ClipboardList, title: 'Pegar Pedido', desc: 'Parsear correo/texto y crear job draft', color: 'from-blue-500 to-cyan-600', badge: 'editable' },
     { view: 'jobs' as const, icon: Boxes, title: 'Ver Jobs', desc: 'Estado real de la carpeta jobs/', color: 'from-yellow-500 to-amber-600' },
-    { view: 'plano' as const, icon: Map, title: 'Plano / Rider', desc: 'Preparar layout, rider y SVG de evento', color: 'from-emerald-500 to-teal-600' },
-    { view: 'quote' as const, icon: Calculator, title: 'Cotización', desc: 'Base editable para productora/jefatura', color: 'from-pink-500 to-rose-600' },
+    { view: 'events' as const, icon: Camera, title: 'Eventos / IG', desc: 'Arma el comando flyer-auto para el pipeline local', color: 'from-fuchsia-500 to-violet-600', badge: 'Studio' },
+    { view: 'resolume' as const, icon: Radio, title: 'Resolume / Chataigne', desc: 'Arma el comando SMPTE/OSC pre-flight para shows', color: 'from-indigo-500 to-blue-600', badge: 'SMPTE' },
     { view: 'commands' as const, icon: TerminalSquare, title: 'Comandos', desc: 'Copiar checks y build', color: 'from-zinc-400 to-zinc-600' },
-    { view: 'events' as const, icon: Camera, title: 'Eventos / IG', desc: 'Descarga Instagram y pipeline flyer-auto para Studio', color: 'from-fuchsia-500 to-violet-600', badge: 'Studio' },
-    { view: 'resolume' as const, icon: Radio, title: 'Resolume / Chataigne', desc: 'Generar XML pre-flight SMPTE/OSC para shows', color: 'from-indigo-500 to-blue-600', badge: 'SMPTE' },
   ];
 
   const statusColor = (s?: string) => {
