@@ -17,29 +17,29 @@ const TRACKS: Track[] = [
     icon: Layers,
     nombre: 'tapiz',
     estado: 'instrumento vivo',
-    brief: 'Patron visual tipo viaje: cultura del tejido, hogar calido, digestion.',
-    detalle: 'Telar en projects/tapiz/vibecode (terminal vivo + spaces/void). Salidas: piezas SVG animadas, ambiente de terminal, patrones imprimibles/proyectables.',
+    brief: 'Origen del diseno de alfombras, vinculo con la psicodelia, y que es hoy esa cultura oriental.',
+    detalle: 'Telar en projects/tapiz/vibecode (terminal + export SVG). Dossier: dossiers/tapiz.md. Salidas: piezas SVG animadas, ambiente de terminal, patrones imprimibles.',
   },
   {
     icon: Type,
     nombre: 'tilde',
     estado: 'medidor listo',
-    brief: 'Que le pasa al espanol cuando una maquina lo comprime: n con tilde, acentos, apertura.',
-    detalle: 'Medidor en desktop/tilde_meter.py (supervivencia de marcas, palabras degradadas). Falta juntar corpus real antes de cualquier pieza.',
+    brief: 'El espanol como material: ambiguedad, la literatura como representacion, la perdida en la traduccion.',
+    detalle: 'Medidor en desktop/tilde_meter.py (supervivencia de marcas). Dossier: dossiers/tilde.md. Falta juntar corpus real antes de la pieza.',
   },
   {
     icon: Eye,
     nombre: 'psicosis',
     estado: 'por empezar',
-    brief: 'Lectura empatica vs paranoide del mismo mensaje. Ejercicio introspectivo.',
-    detalle: 'Tres ejes: conyugal, literario (indice de realidad de un autor muerto), plaga (mapa colectivo de proyecciones). Nunca perfila personas reales.',
+    brief: 'Como se estudia una conducta (angulo detective/historico) y que pasa si el registro esta mal.',
+    detalle: 'Dossier: dossiers/psicosis.md. La herramienta (input situacion -> dos lecturas + duda del registro) viene despues del dossier. Nunca perfila personas reales.',
   },
   {
     icon: FlaskConical,
     nombre: 'precursor',
     estado: 'por empezar',
-    brief: 'Lo organico vs lo sintetico: geometria molecular real, mecanismo real, morfologia real.',
-    detalle: 'Capa descriptiva/estetica solamente: el realismo como sustrato del surrealismo. Requiere el dossier de conocimiento (knowledge/) primero.',
+    brief: 'La cultura del diseno de drogas: concepto "designer drugs", cultura de semillas/fenotipos, patentes como artefacto visual.',
+    detalle: 'Dossier: dossiers/precursor.md. Solo capa cultural/historica/legal/estetica; nada de sintesis, precursores ni metodo de cultivo.',
   },
 ];
 
@@ -55,8 +55,9 @@ export default function CulturaPanel() {
       <div>
         <h2 className="text-sm font-bold text-zinc-200">Cultura</h2>
         <p className="text-[10px] text-zinc-600">
-          Ala de arte-investigacion. Metodo: instrumento &rarr; material &rarr; pieza.
-          Lo real como sustrato, la percepcion como material.
+          Base cultural de las apps y representaciones. Metodo: dossier &rarr;
+          instrumento &rarr; material &rarr; pieza. Investigacion en
+          <span className="text-amber-400/80"> projects/cultura/dossiers/</span>.
         </p>
       </div>
 
