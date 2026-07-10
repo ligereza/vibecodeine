@@ -104,3 +104,36 @@ def test_life_proxy_restaura_stdout():
 def test_api_publica():
     for name in ("init", "deinit", "watch", "life", "pulse", "render_spaces"):
         assert hasattr(vibecode, name)
+
+
+def test_svg_export_xml_valido_y_paleta_flujo(tmp_path):
+    import xml.etree.ElementTree as ET
+    from vibecode.svg_export import FLUJO_HEX, export_svg
+
+    out = tmp_path / "pieza.svg"
+    export_svg("def f(x):\n    return x\n     y", str(out), mode="void")
+    svg = out.read_text(encoding="utf-8")
+    ET.fromstring(svg)  # XML valido
+    assert FLUJO_HEX["ink"] in svg       # fondo
+    assert FLUJO_HEX["support"] in svg   # bloques de 1 y 4 espacios (idx len%5)
+    assert FLUJO_HEX["accent"] in svg    # bloque de 5 espacios (idx 0)
+    assert "<animate" not in svg         # sin -a no hay animacion
+
+
+def test_svg_export_animado_y_sin_ghost(tmp_path):
+    from vibecode.svg_export import GHOST_COLOR, export_svg
+
+    out = tmp_path / "pieza.svg"
+    export_svg("a b\n  c", str(out), animate=True, ghost=False)
+    svg = out.read_text(encoding="utf-8")
+    assert "<animate" in svg and 'dur="90s"' in svg
+    assert GHOST_COLOR not in svg  # sin ghost el texto no lleva gris fantasma
+
+
+def test_svg_export_escapa_html(tmp_path):
+    from vibecode.svg_export import export_svg
+
+    out = tmp_path / "pieza.svg"
+    export_svg("if a < b: c = '<&>'", str(out))
+    svg = out.read_text(encoding="utf-8")
+    assert "&lt;" in svg and "&amp;" in svg

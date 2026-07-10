@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   LayoutDashboard, Boxes, ClipboardList, Calculator,
   TerminalSquare, Map, Shapes, Zap, Activity,
-  CheckCircle2, Clock, AlertCircle, ArrowRight, Camera, Radio,
+  CheckCircle2, Clock, AlertCircle, ArrowRight, Camera, Radio, Layers,
 } from 'lucide-react';
 import type { AppView } from './AppShell';
 import { flujoApi, type Ping, type JobsResponse } from '../api/flujoApi';
@@ -36,6 +36,7 @@ export default function HubDashboard({ onNavigate }: Props) {
     { view: 'events' as const, icon: Camera, title: 'Eventos / IG', desc: 'Arma el comando flyer-auto para el pipeline local', color: 'from-fuchsia-500 to-violet-600', badge: 'Studio' },
     { view: 'resolume' as const, icon: Radio, title: 'Resolume / Chataigne', desc: 'Arma el comando SMPTE/OSC pre-flight para shows', color: 'from-indigo-500 to-blue-600', badge: 'SMPTE' },
     { view: 'commands' as const, icon: TerminalSquare, title: 'Comandos', desc: 'Copiar checks y build', color: 'from-zinc-400 to-zinc-600' },
+    { view: 'cultura' as const, icon: Layers, title: 'Cultura', desc: 'Arte-investigacion: tapiz, tilde, psicosis, precursor', color: 'from-amber-500 to-orange-700', badge: 'Cultura' },
   ];
 
   const statusColor = (s?: string) => {
