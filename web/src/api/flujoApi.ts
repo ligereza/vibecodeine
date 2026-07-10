@@ -74,7 +74,7 @@ export const flujoApi = {
     try {
       return await request<Ping>('/api/ping');
     } catch {
-      return { status: 'demo', version: '0.50.0', connected: false, note: 'Backend no disponible' };
+      return { status: 'demo', version: '0.51.0', connected: false, note: 'Backend no disponible' };
     }
   },
 

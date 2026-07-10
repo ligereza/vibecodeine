@@ -226,7 +226,7 @@ export default function AppShell({ view, onViewChange, children }: Props) {
             </span>
           </div>
           <div className="text-[10px] text-zinc-600 mt-1">
-            v0.50.0 | gratis/local
+            v0.51.0 | gratis/local
           </div>
           <div className="text-[10px] text-zinc-700">
             py -m flujo app

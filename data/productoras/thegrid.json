@@ -1,0 +1,7 @@
+{
+  "name": "The Grid",
+  "aliases": ["GRID", "thegrid.club", "The Grid Club"],
+  "instagram": "thegrid.club",
+  "confirmed": "2026-07-10 flyer real KI/KI (extraccion Gemini devolvio 'GRID'; confirmado por humano en sesion)",
+  "notes": "Primera entrada del store. El match es igualdad exacta case-insensitive contra name+aliases: mantener aqui la forma LITERAL que extrae Gemini del flyer (GRID), no solo el nombre formal."
+}
