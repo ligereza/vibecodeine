@@ -156,3 +156,7 @@ web/dist/
 
 # CSV personales de Azure (archivo del usuario, no del repo)
 sub-*-resource-providers-*.csv
+
+# worktrees de agentes (nunca al repo)
+.claude/worktrees/
+out/
