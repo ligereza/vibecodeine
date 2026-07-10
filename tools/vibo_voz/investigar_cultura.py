@@ -22,23 +22,39 @@ import re
 import sys
 from pathlib import Path
 
-try:
-    from dotenv import load_dotenv
-    load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
-    load_dotenv(os.path.join(os.path.dirname(__file__), ".env.local"))
-except Exception:  # noqa: BLE001
-    pass
+def _load_env(fname: str) -> None:
+    """Carga un .env a os.environ sin depender de python-dotenv (no siempre esta
+    instalado, y pip puede estar bloqueado por la politica de red). No pisa
+    variables ya presentes en el entorno."""
+    path = os.path.join(os.path.dirname(__file__), fname)
+    try:
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, _, val = line.partition("=")
+                key, val = key.strip(), val.strip().strip('"').strip("'")
+                os.environ.setdefault(key, val)
+    except FileNotFoundError:
+        pass
+
+
+for _f in (".env", ".env.local"):
+    _load_env(_f)
 
 import requests
 
 _REPO = Path(__file__).resolve().parents[2]
 _DOSSIERS = _REPO / "projects" / "cultura" / "dossiers"
-_MODELS = ["gemini-3.5-flash", "gemini-flash-latest", "gemini-3.1-flash-lite"]
+# Modelos verificados contra ListModels de esta key (2026-07-10): soportan
+# generateContent + google_search grounding. gemini-3.x no existe para esta key.
+_MODELS = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-2.0-flash"]
 
 # Bloque de prompt: primer fenced code block del dossier.
 _PROMPT_RE = re.compile(r"```(?:\w+)?\n(.*?)\n```", re.DOTALL)
-# Marcador donde va la respuesta.
-_FINDINGS_RE = re.compile(r"(## Findings\n)(.*?)(\n## |\Z)", re.DOTALL)
+# Marcador donde va la respuesta (tolera texto extra en la linea del header).
+_FINDINGS_RE = re.compile(r"(## Findings[^\n]*\n)(.*?)(\n## |\Z)", re.DOTALL)
 
 
 def _keys() -> list[str]:
