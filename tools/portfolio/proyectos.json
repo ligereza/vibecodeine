@@ -1,0 +1,87 @@
+{
+  "_comentario": "Fuente curada del portfolio publico (ligereza/portfolio-auto). Editar ESTE archivo es administrar el sitio: el workflow portfolio.yml lo publica junto al basurero. Solo contenido apto para publico; los limites duros de cada proyecto viajan con su descripcion.",
+  "titulo": "ligereza / flujo",
+  "proyectos": [
+    {
+      "id": "tapiz",
+      "nombre": "Tapiz",
+      "linea": "cultura",
+      "estado": "activo",
+      "descripcion": "Instrumento de patrones ASCII/SVG con paleta propia; animacion con significado de digestion. Exporta piezas SVG (SMIL) desde codigo.",
+      "ruta": "projects/tapiz/",
+      "tags": ["ascii", "svg", "generativo-visual"]
+    },
+    {
+      "id": "tilde",
+      "nombre": "Tilde",
+      "linea": "cultura",
+      "estado": "v0",
+      "descripcion": "Medidor de supervivencia de marcas del espanol (enie, tildes, apertura de pregunta) cuando el texto pasa por compresion. La tilde como resistencia cultural.",
+      "ruta": "desktop/tilde_meter.py",
+      "tags": ["lengua", "medicion", "compresion"]
+    },
+    {
+      "id": "psicosis",
+      "nombre": "Psicosis",
+      "linea": "cultura",
+      "estado": "investigacion",
+      "descripcion": "Dossier sobre como se estudia la conducta y la lectura de indicios (Ginzburg, panico moral, cartografia colectiva). Capa descriptiva y cultural; jamas perfila personas reales.",
+      "ruta": "projects/cultura/dossiers/psicosis.md",
+      "tags": ["investigacion", "lectura-de-indicios"]
+    },
+    {
+      "id": "ecosystem-engine",
+      "nombre": "Ecosystem Engine",
+      "linea": "cultura",
+      "estado": "activo",
+      "descripcion": "Motor de diagnostico-a-frontend (Python stdlib puro) que modela el ecosistema Tapiz (activo) / Psicosis (meta) / Fungi (basurero): mide presion de tokens, simula guardrails con mitigacion por contexto artistico y detecta race conditions, y lo compila en un system_status.json que el sitio consume como variables CSS, filtros, keyframes y payloads. El motor conceptual detras de este portfolio.",
+      "ruta": "tools/ecosystem_engine/",
+      "tags": ["python", "generativo-visual", "pipeline"]
+    },
+    {
+      "id": "precursor",
+      "nombre": "Precursor",
+      "linea": "cultura",
+      "estado": "investigacion",
+      "descripcion": "Dossier sobre gramaticas de nombre y estructura (Markush, branding de cepas) desde cultura, ley y estetica. Nada operativo: solo la forma de los nombres.",
+      "ruta": "projects/cultura/dossiers/precursor.md",
+      "tags": ["investigacion", "naming"]
+    },
+    {
+      "id": "plano-rider-rd",
+      "nombre": "Plano / Rider RD",
+      "linea": "reduccion-de-dano",
+      "estado": "activo",
+      "descripcion": "Editor de planos operativos a escala real (1 m = 200 px) y rider PDF para stands de Reduciendo Dano en eventos; packs INFO/TESTEO/COMPLETO.",
+      "ruta": "web/src/components/PlanoTool.tsx",
+      "tags": ["svg", "produccion", "eventos"]
+    },
+    {
+      "id": "flyer-eventos",
+      "nombre": "Flyer automatico",
+      "linea": "studio",
+      "estado": "activo",
+      "descripcion": "Pipeline flyer de evento sin Photoshop: descarga de IG, paleta por PIL, composicion por nodos dentro de Blender y render GPU.",
+      "ruta": "src/flujo/eventos/",
+      "tags": ["blender", "automatizacion", "vj"]
+    },
+    {
+      "id": "autocanva",
+      "nombre": "AutoCanva",
+      "linea": "studio",
+      "estado": "archivo",
+      "descripcion": "Pipeline Python que convierte datos de producto (XML/JSON) en flyers listos para imprimir (PNG 2000x3000 + SVG editable en Illustrator) para la linea real de 6 suplementos RD; nacio para eliminar el diseno manual repetitivo en Canva. Precursor del pipeline actual de eventos.",
+      "url": "https://github.com/ligereza/autocanva",
+      "tags": ["python", "svg", "automatizacion", "flyers"]
+    },
+    {
+      "id": "vibecodeine",
+      "nombre": "vibecodeine (flujo)",
+      "linea": "madre",
+      "estado": "activo",
+      "descripcion": "El repo madre: CLI, hub web, equipo multi-agente y todos los proyectos de arriba. Actua como interfaz de administracion de este portfolio.",
+      "url": "https://github.com/ligereza/vibecodeine",
+      "tags": ["cli", "hub", "multi-agente"]
+    }
+  ]
+}
