@@ -33,9 +33,15 @@ class GeminiClient:
                 break
             self.fallback_api_keys.append(k)
             i += 1
-        # Cadena de fallback de modelos para asegurar resiliencia ante saturación
-        # (gemini-1.5-* fueron retirados; verificado contra ListModels real 2026-07-09)
-        self.models_to_try = ["gemini-3.5-flash", "gemini-flash-latest", "gemini-3.1-flash-lite"]
+        # Cadena de fallback de modelos para asegurar resiliencia ante saturación.
+        # OJO: los modelos disponibles VARIAN POR KEY (ListModels 2026-07-09 dio
+        # gemini-3.x para una key; ListModels 2026-07-10 con otra key solo dio
+        # gemini-2.5/2.0). La cadena incluye ambas familias: lo que no exista para
+        # la key responde 4xx y se salta solo.
+        self.models_to_try = [
+            "gemini-3.5-flash", "gemini-flash-latest", "gemini-3.1-flash-lite",
+            "gemini-2.5-flash", "gemini-2.0-flash",
+        ]
         # Historial de la conversacion libre (chat_message). process_text/expand_caveman
         # NO usan esto -- son one-shot por diseno.
         self.chat_history: List[Dict[str, Any]] = []

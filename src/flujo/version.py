@@ -1,8 +1,8 @@
 """Versión y changelog de flujo."""
 
-__version__ = "0.49.0"
+__version__ = "0.50.0"
 VERSION = __version__
-__version_info__ = (0, 49, 0)
+__version_info__ = (0, 50, 0)
 
 
 def get_version():
@@ -11,6 +11,37 @@ def get_version():
 
 def get_changelog():
     return {
+        "0.50.0": {
+            "titulo": "Departamento Cultura + instrumento tapiz + medidor tilde",
+            "fecha": "2026-07-10",
+            "highlights": [
+                "CULTURA: tercer workspace del hub (boton ambar junto a RD/Studio, "
+                "CulturaPanel con las 4 lineas de arte-investigacion) y base cultural en "
+                "projects/cultura/ (RAINSTORM del artista verbatim + dossiers "
+                "tapiz/tilde/psicosis/precursor investigados via Gemini API con busqueda)",
+                "tapiz reconciliado: vibecode/ansi.py primitivas compartidas (antes "
+                "duplicadas 3x), spaces/void dentro del paquete, wrappers compat, y "
+                "exportador SVG (--svg) con paleta flujo HEX real + SMIL opcional; "
+                "16 tests nuevos",
+                "tilde v0: desktop/tilde_meter.py standalone (supervivencia de marcas "
+                "n~/acentos/apertura al comprimir ideas, palabras degradadas ano->ano, "
+                "corpus JSONL gitignored); NO cableado a la GUI por decision del usuario",
+                "tools/vibo_voz/investigar_cultura.py: runner Gemini+google_search que "
+                "escribe findings en los dossiers; extrae groundingMetadata (URLs "
+                "verificables) o marca ADVERTENCIA si el modelo no trajo grounding "
+                "(las fuentes en texto pueden ser inventadas)",
+                "Seguridad: config.json del desktop anclado al dir del script; "
+                "permissions contents:read en ci/validar-piezas/render_piezas; scrub "
+                "de pedir_a_gemini.py alineado (nvapi-, sk-or-v1-); denylist de "
+                "local_tools.py ampliada (credentials.json/token.json/.aider.conf.yml/"
+                "tilde_log.jsonl)",
+                "desktop/gemini_client.py: cadena de modelos ampliada con gemini-2.5/2.0 "
+                "(los modelos disponibles VARIAN POR KEY; gemini-3.x no existe para "
+                "todas las keys -- verificado con ListModels real 2026-07-10)",
+                "REGLA FIRME registrada: el README del repo es una creacion terminada "
+                "del artista (double cup ASCII); no se le agrega nada",
+            ],
+        },
         "0.49.0": {
             "titulo": "PlanoTool: modelo de PACKS RD (100/250/500)",
             "fecha": "2026-07-09",

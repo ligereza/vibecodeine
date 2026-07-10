@@ -94,10 +94,26 @@ def _ask_gemini(prompt: str) -> str:
             if r.status_code == 200:
                 data = r.json()
                 try:
-                    parts = data["candidates"][0]["content"]["parts"]
+                    cand = data["candidates"][0]
+                    parts = cand["content"]["parts"]
                     text = "".join(p.get("text", "") for p in parts).strip()
                     if text:
-                        print(f"[ok] {model} con key {_mask(key)}", file=sys.stderr)
+                        # Fuentes REALES del grounding (URLs verificables), no los
+                        # titulos que el modelo escribe en el texto (pueden ser
+                        # inventados). Leccion de la corrida 2026-07-10.
+                        chunks = cand.get("groundingMetadata", {}).get("groundingChunks", [])
+                        urls = []
+                        for c in chunks:
+                            web = c.get("web", {})
+                            if web.get("uri"):
+                                urls.append(f"- {web.get('title', 'fuente')}: {web['uri']}")
+                        if urls:
+                            seen = list(dict.fromkeys(urls))
+                            text += "\n\n**Fuentes verificables (grounding real):**\n" + "\n".join(seen)
+                        else:
+                            text += ("\n\n_ADVERTENCIA: la respuesta no trajo groundingMetadata; "
+                                     "las fuentes citadas en el texto NO estan verificadas._")
+                        print(f"[ok] {model} con key {_mask(key)} ({len(urls)} fuentes grounding)", file=sys.stderr)
                         return text
                 except (KeyError, IndexError):
                     last_err = f"{model}/{_mask(key)}: respuesta sin texto"

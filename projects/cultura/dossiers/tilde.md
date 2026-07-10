@@ -1,6 +1,6 @@
 # Dossier: tilde — Spanish ambiguity, literature as representation, translation loss
 
-Status: RESEARCH PENDING (Gemini web). Instrument already exists:
+Status: INVESTIGADO (Gemini API 2026-07-10, fuentes sin verificar); falta curar.
 `desktop/tilde_meter.py` (measures mark survival when ideas are compressed).
 
 ## Research questions (from the rainstorm)
