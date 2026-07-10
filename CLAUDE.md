@@ -199,6 +199,7 @@ Nucleo vivo:
 | `.github/workflows/ci.yml` | CI real: install, compileall, health, pytest |
 | `pyproject.toml` | Metadata, dependencias y version (la version manda) |
 | `.claude/skills/*/SKILL.md` | Playbooks de agente |
+| `desktop/` | App de escritorio flotante Python/Tkinter: enrutador Gemini->Claude (ver Areas operativas) |
 
 Operacion diaria: `jobs/_template/`, `datadrops/` (bulk fotos -> manifests, usa
 `flujo datadrop scan/list/prepare`), `projects/piezas_vectoriales/`, `projects/flyer_eventos/`,
@@ -238,6 +239,29 @@ py -m flujo eventos flyer-auto "https://www.instagram.com/p/XXXX/"
 py -m flujo resolume automatizar jobs/<job_id>
 ```
 Para Instagram usar `instaloader`. No usar `yt-dlp`.
+
+**Gemini-to-Claude desktop (app flotante compacta):** `desktop/` (Python/Tkinter puro, no
+toca `src/flujo/` ni `web/src/`). Ventana chica always-on-top (overlay tipo widget, no un
+panel de control) con 3 modos ciclados por un solo boton: **Idea** (error/duda/idea cruda
+-> explicacion + prompt comprimido para Claude + enrutador `EJECUTAR_DIRECTO` /
+`ENRUTAR_CLAUDE` / `SOLICITAR_ACLARACION`), **Explicar** (respuesta caveman de Claude ->
+espanol natural completo, sin perder contenido tecnico) y **Chat** (conversacion libre
+multi-turno con Gemini, con toggles opcionales de busqueda web y herramientas locales
+READ-ONLY sobre el repo via `local_tools.py` -- nunca ejecuta codigo, nunca escribe, nunca
+llama a Claude/Anthropic). Fallback multi-key x multi-modelo en `gemini_client.py`
+(`GEMINI_API_KEY`, `GEMINI_API_KEY_2`, ... x `gemini-3.5-flash` -> `gemini-flash-latest` ->
+`gemini-3.1-flash-lite`) para aguantar el limite bajo de requests/dia del free tier.
+Objetivo explicito: ahorrar cuota Claude filtrando lo que Gemini puede resolver solo, antes
+de gastar tokens del director.
+```bash
+cd desktop
+pip install -r requirements.txt
+python main.py          # ventana flotante compacta, Ctrl+Enter para enviar
+```
+La API key primaria se lee de env (`GEMINI_API_KEY`) o del boton "API Key" de la UI, que la
+persiste en `desktop/config.json` (gitignored -- NUNCA commitear ese archivo, guarda la
+clave en texto plano). Keys de fallback adicionales SOLO via `.env.local`/`.env`
+(`GEMINI_API_KEY_2`, `_3`, ...) -- no tienen campo en la UI todavia.
 
 ## Entrega final obligatoria
 
