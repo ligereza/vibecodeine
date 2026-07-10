@@ -1217,7 +1217,7 @@ export default function PlanoTool() {
         <div>
           <h3 className="text-2xl font-bold flex items-center gap-2">
             Rider RD · Herramienta de Plano
-            <span className="text-xs bg-emerald-500/20 text-emerald-400 font-black px-2 py-0.5 rounded-full uppercase tracking-wider">v0.49.0</span>
+            <span className="text-xs bg-emerald-500/20 text-emerald-400 font-black px-2 py-0.5 rounded-full uppercase tracking-wider">v0.50.0</span>
           </h3>
           <p className="text-zinc-400 text-sm mt-1">
             Documento operativo para intervención en terreno — Reduciendo Daño Chile

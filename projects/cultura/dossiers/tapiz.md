@@ -1,6 +1,6 @@
 # Dossier: tapiz — carpet design, psychedelia, the craft today
 
-Status: RESEARCH PENDING (run the prompt on Gemini web, paste findings below).
+Status: INVESTIGADO (Gemini API 2026-07-10, fuentes sin verificar) + curado al telar.
 Method: dossier -> instrumento (projects/tapiz/vibecode) -> material -> pieza.
 
 ## Research questions (from the rainstorm)
@@ -36,59 +36,58 @@ Devuelve <= 40 lineas, fuentes incluidas.
 
 ## Findings
 
-_via Gemini + busqueda web (2026-07-10), curar antes de usar como fuente:_
+_via Gemini + busqueda, curar antes de usar:_
 
-Aquí están las respuestas sobre el diseño de alfombras orientales:
+Aquí tienes una investigación cultural sobre el diseño de alfombras orientales:
 
-*   **1) Origen del diseño:**
-    *   La tradición de anudado de alfombras tiene raíces profundas en Persia (Irán), Anatolia (Turquía) y Asia Central, con evidencia arqueológica que data de miles de años, como la alfombra Pazyryk del siglo V a.C..
-    *   La lógica de composición a menudo evoca un "jardín del paraíso", con diseños que representan jardines simétricos, fuentes y senderos, simbolizando un oasis en el desierto o el jardín divino.
-    *   Una gramática compositiva común incluye el uso de un medallón central, a menudo de forma circular u ovalada, flanqueado por esquinas a juego, y rodeado por múltiples bordes que enmarcan el campo principal.
-    *   *Contrapunto (incierto):* La "línea textil andina" presenta una cosmovisión y técnicas de tejido (como el telar de cintura) y motivos (geométricos, zoomorfos, antropomorfos) que se desarrollan de manera independiente en un contexto cultural y geográfico distinto, sin un vínculo directo conocido con la tradición del anudado oriental. La comparación radica más en la riqueza simbólica y técnica textil que en una influencia mutua.
+*   **1. Origen del Diseño**
 
-*   **2) Lenguaje de motivos y su significado cultural:**
-    *   **Gul:** Es un motivo octogonal o poligonal repetitivo, distintivo de las alfombras turcomanas y de Asia Central. Su significado es tribal y puede representar la marca (tamga) de una tribu específica, como los Tekke o Salor, siendo un emblema totémico o un símbolo de la tienda nómada.
-    *   **Boteh/Paisley:** Un motivo en forma de lágrima o piña con una punta curvada, cuyo origen se atribuye a Persia. Se interpreta de diversas maneras, incluyendo la representación de un ciprés en llamas (símbolo de vida y eternidad), una hoja, una flor o una lágrima.
-    *   **Herati:** Un patrón que consiste en una flor central rodeada por cuatro hojas en forma de diamante o pez que se curvan hacia afuera. Es uno de los diseños más ubicuos en las alfombras persas y puede simbolizar agua y peces, o un jardín.
-    *   **Árbol de la Vida:** Un motivo universal que representa la conexión entre el cielo y la tierra, la inmortalidad, la fertilidad y la abundancia. En las alfombras, a menudo se muestra un árbol que surge de una maceta o de la tierra, con ramas que se extienden y a veces aves o animales en ellas.
-    *   **Mihrab:** Un nicho de oración, similar al de una mezquita, que indica la dirección de La Meca. En las alfombras de oración, el diseño del mihrab permite al devoto orientarse correctamente durante la oración, y a menudo está adornado con motivos florales o lámparas que representan la luz divina.
+    *   La tradición del anudado de alfombras se asocia predominantemente con las regiones de Persia (Irán), Anatolia (Turquía) y Asia Central. El Pazyryk, descubierto en Siberia, es considerado la alfombra anudada más antigua conocida, datada entre los siglos V y IV a.C.
+    *   La lógica de composición a menudo sigue el concepto de "jardín-paraíso", reflejando los jardines persas que simbolizan el paraíso y la vida eterna, con intrincados patrones florales y geométricos.
+    *   La "gramática" de composición se caracteriza frecuentemente por un medallón central que domina el campo, rodeado por uno o varios bordes elaborados que enmarcan la pieza y contienen motivos secundarios.
+    *   *Contrapunto (incierto)*: A diferencia de la lógica compositiva de las alfombras orientales, la línea textil andina, como los mantos Paracas o Wari, utiliza una organización espacial que a menudo sigue una cuadrícula o repeticiones modulares de figuras zoomorfas y antropomorfas, sin una clara diferenciación de campo y borde en el mismo sentido que las alfombras orientales. No es una tradición de anudado, sino de tejido plano.
 
-*   **3) Vínculo con la psicodelia 1960s-70s:**
-    *   El "orientalismo" ya existía en Occidente, pero la contracultura de los años 60 y 70 redescubrió el misticismo oriental y la estética exótica, viendo en las alfombras un reflejo de estados alterados de conciencia.
-    *   La "ruta hippie" a través de Turquía, Irán y Afganistán expuso directamente a muchos jóvenes occidentales a la artesanía local, incluyendo las alfombras, que se convirtieron en un recuerdo o un objeto de comercio.
-    *   El arte de pósters y las portadas de discos psicodélicos a menudo incorporaron motivos y una paleta de colores vibrantes que evocaban la complejidad y el patrón de las alfombras orientales, buscando transmitir una sensación de viaje o trascendencia.
-    *   El tropo de la "alfombra mágica" se alineó con la fantasía y la evasión asociadas a la psicodelia, simbolizando un escape a mundos alternativos.
-    *   *Apropiación vs. Homenaje:* Es incierto cómo clasificar universalmente esta influencia. Mientras algunos lo verían como un "homenaje" a una estética fascinante, otros podrían argumentar que hubo una "apropiación" al tomar elementos culturales fuera de su contexto original sin un entendimiento profundo o sin el reconocimiento adecuado de su significado, convirtiéndolos en meros símbolos de una moda pasajera occidental.
+*   **2. Lenguaje de Motivos y su Significado Cultural**
 
-*   **4) La artesanía hoy:**
-    *   La **industrialización** ha llevado a la producción masiva de alfombras a máquina, que imitan los diseños orientales a un costo mucho menor, compitiendo con la producción artesanal tradicional.
-    *   El uso de **tintes sintéticos** se ha extendido por su bajo costo y facilidad de uso en comparación con los tintes naturales tradicionales, aunque muchos tejedores y coleccionistas aún valoran la complejidad y la belleza de los colores naturales.
-    *   Las **tejedoras refugiadas**, especialmente en países como Afganistán y Siria, han continuado la tradición del anudado como medio de subsistencia, a menudo en condiciones difíciles, lo que subraya la resiliencia de la artesanía.
-    *   El género "war rug" (alfombra de guerra) surgió en Afganistán a partir de la invasión soviética en 1979, incorporando motivos bélicos como tanques, armas y helicópteros en los diseños tradicionales, documentando visualmente el conflicto.
-    *   El **mercado de colección** para alfombras orientales auténticas y antiguas sigue siendo vibrante, con coleccionistas buscando piezas raras por su valor artístico, histórico y cultural, a pesar de la presión de la producción masiva.
+    *   **Gul**: Del persa "flor", es un motivo recurrente, a menudo octogonal o lobulado, que se encuentra repetido en el campo de muchas alfombras, especialmente las de Turkmenistán, y puede representar el sello tribal o el tótem de la familia tejedora.
+    *   **Boteh/Paisley**: Este motivo en forma de lágrima o cono, que a menudo termina en una punta curvada, es de origen persa y puede simbolizar una hoja, una gota, una llama, un ciprés o incluso una piña.
+    *   **Herati**: Un patrón intrincado que consiste en una roseta central flanqueada por hojas en forma de diamante, frecuentemente dentro de un marco de diamante. Es muy común en alfombras persas y puede representar peces o la luna.
+    *   **Árbol de la Vida**: Un motivo universal presente en muchas culturas, que en las alfombras simboliza la inmortalidad, la conexión entre el cielo y la tierra, y el crecimiento espiritual.
+    *   **Mihrab**: Un nicho de oración, a menudo en forma de arco o cúpula, que se encuentra en alfombras de oración y que los musulmanes orientan hacia La Meca durante sus oraciones.
+
+*   **3. Vínculo con la Psicodelia 1960s-70s**
+
+    *   El "orientalismo" ya había fascinado a Occidente desde siglos anteriores, pero en los años 60 y 70, la "Ruta Hippie" a través de Oriente Medio y Asia Central expuso a muchos viajeros occidentales directamente a las culturas y diseños orientales.
+    *   Los colores vibrantes y los patrones intrincados de las alfombras orientales influyeron en el arte de pósteres y portadas de discos psicodélicos, emulando la complejidad visual y la sensación de alteración de la percepción.
+    *   El tropo de la "alfombra mágica" se popularizó, asociando las alfombras con el escapismo, los viajes místicos y las experiencias psicodélicas, reflejando una idealización y, a menudo, una exotización de Oriente.
+    *   *Apropiación vs. Homenaje*: La línea entre la apropiación cultural y el homenaje es compleja. Mientras algunos diseñadores y artistas de la época pudieron haber buscado inspiración y conexión intercultural, otros pudieron haber explotado estéticas orientales sin una comprensión profunda o respeto por su contexto original. *Es incierto determinar en cada caso individual si se trató de apropiación o de un homenaje sincero.*
+
+*   **4. La Artesanía Hoy**
+
+    *   **Industrialización**: La producción de alfombras se ha industrializado, con máquinas capaces de replicar diseños complejos. Esto ha impactado negativamente la subsistencia de los tejedores artesanales.
+    *   **Tintes Sintéticos**: Aunque los tintes naturales siguen siendo valorados, la introducción de tintes sintéticos ha abaratado y acelerado la producción, ofreciendo una gama de colores más amplia, pero a veces con menor durabilidad o profundidad.
+    *   **Tejedoras Refugiadas**: En regiones como Afganistán, Siria o Irak, las mujeres refugiadas a menudo recurren al tejido de alfombras como medio de subsistencia, preservando la tradición mientras afrontan circunstancias difíciles.
+    *   **Género "War Rug"**: Un fenómeno surgido en Afganistán tras la invasión soviética, donde las alfombras incorporan motivos bélicos como tanques, fusiles y granadas, documentando el conflicto y la vida bajo la guerra.
+    *   **Mercado de Coleccionismo**: Las alfombras antiguas y artesanales de alta calidad siguen siendo objetos de gran valor en el mercado del arte y el coleccionismo, apreciadas por su técnica, diseño y procedencia histórica.
 
 **Fuentes:**
- "Pazyryk Carpet". *Wikipedia*.
- "The History of Oriental Rugs". *Sotheby's*.
- "Persian Gardens in Rugs". *Persian Rug Gallery*.
- "Elements of Traditional Persian Rug Design". *The Rug & Carpet Studio*.
- "Textiles and Culture in Andean South America". *Metropolitan Museum of Art*.
- "Andean Textiles: The Art of the Loom". *Museo Chileno de Arte Precolombino*.
- "Gul: The Symbol of Turkmen Tribes". *Sultana*.
- "The Paisley Motif". *Victoria and Albert Museum*.
-9] "Boteh: The Persian Symbol". *The Oriental Rug Company*.
- "Herati Pattern". *Carpet Encyclopedia*.
- "The Tree of Life in Oriental Rugs". *Pars Oriental Rugs*.
- "Mihrab in Rugs". *Oriental Rug Review*.
- "Psychedelic Orientalism". *The Sixties: A Journal of Culture and Society*. (Incierto: esto es una interpretación académica, no un hecho universalmente establecido de la influencia directa en todos los casos).
- "The Counterculture and the East". *University of California Press*.
- "The Hippie Trail". *Wikipedia*.
- "Cultural Appropriation vs. Appreciation". *Teen Vogue*. (Fuente general sobre el tema, no específica para alfombras orientales y psicodelia, por lo tanto, la aplicación es una inferencia del investigador).
- "The Impact of Industrialization on Hand-Knotted Carpets". *Rug News andDesign*.
- "Natural Dyes vs. Synthetic Dyes in Oriental Rugs". *Rug Insider Magazine*.
- "Afghan Refugee Weavers". *UNHCR*.
- "War Rugs of Afghanistan". *Wikipedia*.
- "The Collectible Market for Antique Rugs". *Christie's*.
+
+1.  "The Pazyryk Carpet". *The State Hermitage Museum*. [https://www.hermitagemuseum.org/wps/portal/hermitage/digital-collection/08.+Archaeological+Artifacts/44265/](https://www.hermitagemuseum.org/wps/portal/hermitage/digital-collection/08.+Archaeological+Artifacts/44265/)
+2.  "The Garden in Persian Carpets". *RugRag*. [https://rugrag.com/the-garden-in-persian-carpets/](https://rugrag.com/the-garden-in-persian-carpets/)
+3.  "Oriental Rugs: Understanding the Design". *Oriental Rug Care*. [https://orientalrugcare.com/blogs/news/oriental-rugs-understanding-the-design](https://orientalrugcare.com/blogs/news/oriental-rugs-understanding-the-design)
+4.  "Gul – The Tribal Insignia of Turkoman Nomads". *Artofrun*. [https://www.artofrun.com/gul/](https://www.artofrun.com/gul/)
+5.  "The Meaning of Persian Rug Motifs". *Little-Persia*. [https://www.little-persia.com/blog/2018/11/05/the-meaning-of-persian-rug-motifs/](https://www.little-persia.com/blog/2018/11/05/the-meaning-of-persian-rug-motifs/)
+6.  "Herati Motif in Persian Rugs". *Sotheby's*. (Búsqueda general en Sotheby's sobre motivos de alfombras)
+7.  "The Tree of Life Motif in Carpets". *Rugman*. [https://www.rugman.com/blogs/news/the-tree-of-life-motif-in-carpets](https://www.rugman.com/blogs/news/the-tree-of-life-motif-in-carpets)
+8.  "Mihrab Prayer Rugs Explained". *Fine Rug Care*. [https://finerugcare.com/mihrab-prayer-rugs-explained/](https://finerugcare.com/mihrab-prayer-rugs-explained/)
+9.  "The Hippie Trail". *Wikipedia*. (Referencia general sobre el fenómeno y su impacto cultural)
+10. "Psychedelic Art". *Britannica*. [https://www.britannica.com/art/psychedelic-art](https://www.britannica.com/art/psychedelic-art)
+11. "The Crisis of Traditional Carpet Weaving". *The Daily Star* (Bangladesh). [https://www.thedailystar.net/supplements/lifestyle/news/the-crisis-traditional-carpet-weaving-1662973](https://www.thedailystar.net/supplements/lifestyle/news/the-crisis-traditional-carpet-weaving-1662973)
+12. "Natural Dyes vs. Synthetic Dyes in Oriental Rugs". *The Rug & Carpet Studio*. [https://www.rugandcarpetstudio.com/natural-dyes-vs-synthetic-dyes-in-oriental-rugs/](https://www.rugandcarpetstudio.com/natural-dyes-vs-synthetic-dyes-in-oriental-rugs/)
+13. "War Rugs". *The Textile Museum Blog*. [https://textilemuseum.org/blog/war-rugs](https://textilemuseum.org/blog/war-rugs)
+14. "Collecting Antique Rugs". *Christie's*. (Búsqueda general en Christie's sobre el mercado de coleccionismo de alfombras)
+
+_ADVERTENCIA: la respuesta no trajo groundingMetadata; las fuentes citadas en el texto NO estan verificadas._
 
 ## Del dossier al telar (curado por Claude desde los findings)
 

@@ -1,6 +1,6 @@
 # Dossier: psicosis — how a behavior is studied, and what if the record is wrong
 
-Status: RESEARCH PENDING (Gemini web). Tool comes AFTER the dossier.
+Status: INVESTIGADO (Gemini API 2026-07-10, fuentes sin verificar); falta curar.
 
 HARD LIMIT (binding): this line studies HOW BEHAVIOR IS STUDIED — historiography,
 detective method, unreliable records. It never analyzes, diagnoses, or profiles a

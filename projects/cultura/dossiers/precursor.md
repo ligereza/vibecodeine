@@ -1,6 +1,6 @@
 # Dossier: precursor — the CULTURE of drug design (descriptive layer only)
 
-Status: RESEARCH PENDING (Gemini web).
+Status: INVESTIGADO (Gemini API 2026-07-10, fuentes sin verificar); falta curar.
 
 HARD LIMIT (binding, non-negotiable): this dossier covers CULTURE, HISTORY, LAW,
 ECONOMICS and AESTHETICS only — the "designer drugs" concept, seed-bank and strain
