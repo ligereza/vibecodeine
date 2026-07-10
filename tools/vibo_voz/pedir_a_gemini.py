@@ -27,7 +27,10 @@ try:
 except Exception:  # noqa: BLE001
     pass
 
-from google import genai
+try:
+    from google import genai
+except ImportError:  # sin google-genai instalado (ej: CI); _scrub sigue importable
+    genai = None
 
 _REPO = Path(__file__).resolve().parents[2]
 # Cadena de fallback (misma que desktop/gemini_client.py); GEMINI_TEXT_MODEL va primero.
@@ -89,6 +92,8 @@ def _reunir(rutas: list[str]) -> str:
 
 
 def main():
+    if genai is None:
+        sys.exit("Falta el paquete google-genai (pip install google-genai).")
     if len(sys.argv) < 3:
         sys.exit('Uso: py pedir_a_gemini.py "consulta" ruta1 [ruta2 ...]')
     consulta = sys.argv[1]
