@@ -28,7 +28,7 @@ import sys
 import argparse
 import webbrowser
 
-from flujo.eventos.presets import apply_event_preset, infer_event_preset, list_event_presets
+from flujo.eventos.presets import infer_event_preset, list_event_presets
 from flujo.cotizaciones_base import generar_cotizacion_base
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse
@@ -213,24 +213,26 @@ def api_list_svg_works():
 def api_plano_render(evento):
     """Misma forma que el demo del HTML: {layout, rider, costos}.
 
-    Fuente unica: flujo.plano (engine + costs). Antes este endpoint
+    Fuente unica: flujo.plano (engine + costs), armado a partir del pack RD
+    contratado (INFO/TESTEO/COMPLETO, flujo.plano.packs) en vez del viejo
+    preset de tamano de evento (under/base/mainstream). Antes este endpoint
     reimplementaba mesas/costos con valores propios que ya estaban
     desincronizados del motor (tercera copia de la regla de mesas).
     """
     from ..plano.costs import calcular_costos
     from ..plano.engine import mesas_requeridas, reglas_rider, solve_layout, validate_evento
+    from ..plano.packs import ev_desde_pack, normalize_pack_id
 
-    ev = apply_event_preset(evento or {})
-    nombre = str(ev.get("nombre", "Evento"))
-    dur = float(ev.get("duracion_horas", 6) or 6)
-    vol = int(ev.get("voluntarios", 7) or 7)
-    asis = int(ev.get("asistentes_estimados", 0) or 0)
-    testeo = bool(ev.get("incluye_testeo", True))
-    layout_mode = str(ev.get("layout_mode", "grid_2x"))
-    # normalizar para el motor (defaults del endpoint ya aplicados)
-    ev_motor = {**ev, "nombre": nombre, "duracion_horas": dur, "voluntarios": vol,
-                "asistentes_estimados": asis, "incluye_testeo": testeo,
-                "layout_mode": layout_mode}
+    evento = evento or {}
+    pack_id = normalize_pack_id(evento.get("pack") or evento.get("preset"))
+    nombre = str(evento.get("nombre", "Evento"))
+    dur = float(evento.get("duracion_horas", 0) or 0)
+    asis = int(evento.get("asistentes_estimados", 0) or 0)
+    layout_mode = str(evento.get("layout_mode", "grid_2x"))
+    ev_motor = ev_desde_pack(pack_id, nombre=nombre, duracion_horas=dur,
+                              asistentes_estimados=asis, layout_mode=layout_mode)
+    vol = ev_motor["voluntarios"]
+    testeo = ev_motor["incluye_testeo"]
 
     scale = 92
     baseX, baseY = 40, 60
@@ -261,38 +263,31 @@ def api_plano_render(evento):
     layout = {"w": 640, "h": 480,
               "title": "%s (%s)" % (nombre, layout_mode),
               "sub": "%gh . %d personas . ~%d asistentes" % (dur, vol, asis),
-              "preset": ev.get("preset"),
-              "preset_label": ev.get("preset_label"),
+              "pack": ev_motor.get("pack"),
+              "pack_label": ev_motor.get("pack_label"),
               "zones": zones}
 
     mesas = mesas_requeridas(vol, incluye_testeo=testeo)
     rider = "RIDER INTERVENCION RD - %s\n" % nombre
     rider += "=" * 56 + "\n\n"
-    rider += "Preset: %s\n" % ev.get("preset_label", "Evento BASE")
+    rider += "Pack: %s\n" % ev_motor.get("pack_label", "")
     rider += "Duracion: %gh | Voluntarios: %d | Asistentes ~%d\n\n" % (dur, vol, asis)
     rider += "REQUERIMIENTOS (reglas del motor):\n"
     for req in reglas_rider(ev_motor):
         rider += "- %s\n" % req
-    rider += "\nMesas: %d unt.\n" % int(ev.get("preset_operativo", {}).get("mesas", mesas))
-    rider += "Sillas: %d unt.\n" % int(ev.get("preset_operativo", {}).get("sillas", max(2, vol)))
-    rider += "Electricidad: %s\n" % ev.get("preset_operativo", {}).get("electricidad", "1 punto electrico")
-    rider += "Luz: %s\n" % ev.get("preset_operativo", {}).get("luz", "luz de apoyo")
+    rider += "\nMesas: %d unt.\n" % mesas
 
-    c = calcular_costos(ev_motor)  # respeta ev["precios"] si viene
+    c = calcular_costos(ev_motor)
     total = int(c["total"])
     costos = "COTIZACION INTERVENCION RD\n\n"
-    costos += "Personal (%d x %gh): $%s\n" % (vol, dur, format(int(c["personal"]), ",d").replace(",", "."))
-    if c["alimentacion"]:
-        costos += "Alimentacion/colacion: $%s\n" % format(int(c["alimentacion"]), ",d").replace(",", ".")
-    costos += "Mobiliario (%d mesas): $%s\n" % (c["detalle"]["mesas"], format(int(c["mobiliario"]), ",d").replace(",", "."))
-    costos += "Infraestructura (%d stands): $%s\n" % (c["detalle"]["stands"], format(int(c["infraestructura"]), ",d").replace(",", "."))
-    if c["extras"]:
-        costos += "Extras (testeo/contencion): $%s\n" % format(int(c["extras"]), ",d").replace(",", ".")
-    costos += "\nTOTAL ESTIMADO: desde $%s\n" % format(total, ",d").replace(",", ".")
+    costos += "%s: $%s\n" % (c["pack_label"], format(int(c["precio"]), ",d").replace(",", "."))
+    for item in c["desglose"]:
+        costos += "%s (%s%%): $%s\n" % (item["label"], item["pct"], format(int(item["monto"]), ",d").replace(",", "."))
+    costos += "\nTOTAL: $%s\n" % format(total, ",d").replace(",", ".")
 
     validacion = validate_evento(ev_motor)
     return {"layout": layout, "rider": rider, "costos": costos, "total": total,
-            "preset": ev.get("preset"), "preset_operativo": ev.get("preset_operativo"),
+            "pack": ev_motor.get("pack"), "pack_label": ev_motor.get("pack_label"),
             "validacion": {"ok": validacion["ok"], "errors": validacion["errors"],
                            "warnings": validacion["warnings"]}}
 
