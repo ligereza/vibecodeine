@@ -3,6 +3,9 @@
     <img src="arte-ascii-readme.svg" alt="CODE.IN" width="936">
   </a>
 </p>
+<p align="center">
+  <img src="projects/tapiz/tapiz_readme.svg" alt="tapiz" width="936">
+</p>
 
 <!--
 
