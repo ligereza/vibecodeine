@@ -300,6 +300,11 @@ def main():
         action="store_true",
         help="Ocultar el texto real y mostrar solo los espacios",
     )
+    parser.add_argument(
+        "--svg",
+        metavar="RUTA",
+        help="Exportar pieza SVG (paleta flujo real) en vez de render de terminal; con -a agrega animacion SMIL",
+    )
 
     args = parser.parse_args()
 
@@ -317,6 +322,20 @@ def main():
             content = SAMPLE_CODE
     else:
         content = SAMPLE_CODE
+
+    if args.svg:
+        from .svg_export import export_svg
+        out_path = export_svg(
+            content,
+            args.svg,
+            mode=args.mode,
+            fill_char=args.fill,
+            ghost=not args.no_ghost,
+            animate=args.animate,
+            title=args.file or "tapiz",
+        )
+        print(f"pieza SVG escrita: {out_path}", file=sys.stderr)
+        return
 
     render_spaces(
         content,
