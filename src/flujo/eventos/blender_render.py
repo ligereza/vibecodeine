@@ -6,6 +6,9 @@ NO se importa desde flujo; Blender lo ejecuta:
 import os
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from blender_gpu import force_gpu  # noqa: E402 -- modulo hermano, sin depender del paquete flujo
+
 
 def main():
     import bpy  # solo existe dentro de Blender; mantener el modulo importable fuera
@@ -79,6 +82,9 @@ def main():
 
         # Establecer la ruta de salida del renderizado
         bpy.context.scene.render.filepath = output_render_path
+
+        gpu_report = force_gpu()
+        print(f"GPU: {gpu_report}")
 
         # Renderizar imagen fija
         bpy.ops.render.render(write_still=True)
