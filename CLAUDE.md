@@ -233,6 +233,15 @@ py -m flujo suplementos validate svg/suplementos_rd/04_contraportadas/generadas/
 py -m flujo brief paquete-cotizacion jobs/<job>
 ```
 
+**Cultura (arte-investigacion):** tapiz, tilde, psicosis, precursor. Tercer workspace
+del hub web (boton ambar junto a RD/Studio, panel CulturaPanel.tsx). Instrumento tapiz:
+`projects/tapiz/` (`py projects/tapiz/vibecode_spaces.py archivo.py -m void --svg pieza.svg`
+exporta pieza SVG con paleta flujo real). Medidor tilde: `desktop/tilde_meter.py`
+(standalone, sin cablear a la GUI por decision del usuario). Direccion de arte:
+`projects/tapiz/DIRECTION.md`. Limites: capa descriptiva/cultural si; nada generativo
+de sintesis; psicosis nunca perfila personas reales. El README del repo es una creacion
+terminada del artista: NO agregarle nada.
+
 **Studio / Eventos:**
 ```bash
 py -m flujo eventos flyer-auto "https://www.instagram.com/p/XXXX/"

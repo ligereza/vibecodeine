@@ -26,6 +26,7 @@ Uso como decorador:
 """
 
 from .life import init, deinit, watch, life, pulse
+from .spaces import render_spaces
 
-__all__ = ["init", "deinit", "watch", "life", "pulse"]
-__version__ = "0.1.0"
+__all__ = ["init", "deinit", "watch", "life", "pulse", "render_spaces"]
+__version__ = "0.2.0"
