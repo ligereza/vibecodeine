@@ -21,6 +21,14 @@ handoff:
       - gastas cuota en dirigir + codigo critico, no en volumen
     canonical: ["CLAUDE.md (bloque 'Equipo multi-agente')"]
 
+  done_sesion_portfolio:   # sesion 2026-07-10 noche (portfolio publico + basurero, post-checkpoint)
+    - "PEDIDO del usuario: portfolio/sitio personal automatizado centralizando proyectos (tapiz, psicosis, etc.) + sistema de archivos borrados (basurero/fungi), con ESTE repo como interfaz de administracion, hosteado gratis en GitHub Pages."
+    - "REVIEW de repos publicos (2 agentes Sonnet + revision directa): portfolio-auto = sitio ISKVW DIGITAL ARCHIVE ya construido (vanilla JS, data/works.json, CURATOR.html pensado para n8n nunca cableado, 5 obras placeholder, mojibake en works.json) SIN Pages habilitado; autocanva = pipeline flyers RD XML->PNG/SVG funcional con deuda declarada; ShadowArt-Revisited = fork ajeno, EXCLUIDO del portfolio por orden del usuario ('not mine')."
+    - "HOSTING respondido: portfolio-auto es publico -> Pages gratis (ligereza.github.io/portfolio-auto); vibecodeine privado+Free NO puede Pages pero no lo necesita (admin via Actions). Habilitar Pages = accion del usuario (el clasificador de permisos bloqueo hacerlo desde aca, correcto: superficie publica)."
+    - "NUEVO tools/portfolio/: proyectos.json (fuente curada, editarla = administrar el sitio) + generar_portfolio.py (flujo-projects.json con version real + basurero.json minado de git log --diff-filter=D con denylist de sensibles/ruido, 193 archivos digeridos en la primera corrida real). 7 tests nuevos (tests/test_portfolio_gen.py), tolerantes a checkout shallow de CI."
+    - ".github/workflows/portfolio.yml NUEVO: workflow_dispatch + cron lunes + push a tools/portfolio/**; genera JSONs, artifact siempre (dry-run), y publica a portfolio-auto SOLO si existe el secret PORTFOLIO_TOKEN (fine-grained PAT contents:write solo sobre portfolio-auto). Editar proyectos.json desde el iPhone + push = actualizar el sitio."
+    - ".gitignore: + .claude/worktrees/ y out/ (hallazgo del verificador post-merge)."
+
   done_sesion_checkpoint_051:   # sesion 2026-07-10 noche (teleport -> checkpoint limpio v0.51.0)
     - "TELEPORT verificado: sesion web claude.ai/code traida al CLI local con claude --teleport (skill .claude/skills/teleport-sesion-web/ nueva documenta el procedimiento; varios Claude web niegan que exista, es FALSO)."
     - "gh CLI 2.96.0 instalado (winget) y autenticado reutilizando el token del Git Credential Manager (scope repo, keyring, nada en texto plano). Las proximas sesiones pueden abrir/mergear PRs directo."
