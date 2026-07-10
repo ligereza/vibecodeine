@@ -96,3 +96,5 @@ Boundary is DESCRIPTIVE vs GENERATIVE. Allowed as art grounding: real molecular 
    Accept: `flujo knowledge list` shows dossiers; schema validated in tests; zero prohibited content (checklist from section 4 in the PR description); tilde SPEC names its first render target (SVG via existing toolchain).
 
 NOT doing (explicit): no new orchestration framework, no 7 new agent definition files, no airdrop extensions - handoff's critique_acida stands: scaffolding already outweighs product. Every step above ships product or hardens the gate.
+
+USER DECISION 2026-07-10 (overrides restructure_optima step 1 "matar el airdrop"): the airdrop workflow STAYS AS IS. It is the delivery channel for web agents with no GitHub access (Qwen web, LMArena). Do not remove, do not extend.
