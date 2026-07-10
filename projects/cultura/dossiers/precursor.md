@@ -1,6 +1,6 @@
 # Dossier: precursor — the CULTURE of drug design (descriptive layer only)
 
-Status: INVESTIGADO (Gemini API 2026-07-10, fuentes sin verificar); falta curar.
+Status: INVESTIGADO (Gemini API 2026-07-10) + spot-check de fuentes 2026-07-10 (WebSearch) + curado a instrumentos.
 
 HARD LIMIT (binding, non-negotiable): this dossier covers CULTURE, HISTORY, LAW,
 ECONOMICS and AESTHETICS only — the "designer drugs" concept, seed-bank and strain
@@ -58,5 +58,91 @@ Aquí tienes la información solicitada sobre la cultura, ley y economía de las
     *   Aunque el propósito principal de los dibujos en las patentes farmacéuticas es funcional (ilustrar la estructura química o el proceso), la presentación visual de estas estructuras puede ser considerada un género estético particular, combinando precisión técnica con una forma de representación gráfica abstracta.
     *   El "diseño visual" en las patentes de fármacos se centra en la claridad y la precisión para representar la invención de manera inequívoca, más que en la estética convencional. Sin embargo, la diagramación de moléculas complejas o configuraciones espaciales adquiere un estilo propio dentro de la documentación legal.
 
-## Del dossier a la pieza (Claude fills)
-<!-- e.g. a visual archive of patent drawings vs strain packaging: form vs function -->
+_ADVERTENCIA original: la respuesta de Gemini no trajo groundingMetadata; a diferencia
+de tapiz.md, este dossier ademas NO devolvio una lista de "Fuentes:" con titulo+URL por
+afirmacion (el prompt lo pedia pero el texto llego sin citas inline). Sin URLs concretas
+que verificar una por una, el spot-check se hizo sobre las 3 AFIRMACIONES FACTICAS
+verificables del texto, via WebSearch directo (no via los links de Gemini, porque no
+existian)._
+
+## Verificacion de fuentes (spot-check 2026-07-10, WebSearch)
+
+1. **"Designer drugs" (anos 80) + Federal Analog Act 1986, juego del gato y el raton**
+   -> **[VERIFICADA]**. Confirmado por Wikipedia ("Federal Analogue Act"), Britannica
+   ("Controlled Substance Analogue Enforcement Act") y Erowid Analog Law Vault: la ley es
+   parte de la Public Law 99-570 (27 oct 1986), originalmente llamada "Designer Drug
+   Enforcement Act"; el termino "designer drug" fue popularizado por medios/legisladores
+   en los 80s. El "gato y raton" (modificar la estructura para esquivar la ley) es
+   descripcion estandar de la ley, no invencion de Gemini.
+   Fuentes reales encontradas: [Federal Analogue Act — Wikipedia](https://en.wikipedia.org/wiki/Federal_Analogue_Act),
+   [Controlled Substance Analogue Enforcement Act — Britannica](https://www.britannica.com/topic/Controlled-Substance-Analogue-Enforcement-Act),
+   [Erowid Analog Law Vault](https://www.erowid.org/psychoactives/law/analog/analog_info1.shtml).
+
+2. **Patentes de farmacos: 20 anos desde presentacion, reivindicaciones, estructuras
+   Markush** -> **[VERIFICADA, con matiz]**. Confirmado por Wikipedia ("Chemical patent",
+   "Markush structure") y fuentes de IP (DrugPatentWatch, LexOrbis, ACS "What Every
+   Chemist Should Know About Patents"): el termino de 20 anos desde la fecha de
+   presentacion aplica a solicitudes desde el 8-jun-1995 (antes eran 17 anos desde el
+   otorgamiento -- detalle que el dossier omite pero no distorsiona la afirmacion
+   general). Las Markush structures son reales (caso Markush 1925) y son exactamente lo
+   descrito: una estructura generica con sustituyentes variables para cubrir una clase de
+   compuestos en una sola reivindicacion.
+   Fuentes reales encontradas: [Markush structure — Wikipedia](https://en.wikipedia.org/wiki/Markush_structure),
+   [Chemical patent — Wikipedia](https://en.wikipedia.org/wiki/Chemical_patent).
+
+3. **Cultura de marca botanica: bancos de semillas, nombres de cepas, "fenotipo" como
+   marketing, mitos de linaje** -> **[VERIFICADA]**. Confirmado por Leafly ("How Does a
+   Cannabis Strain Get Its Name?"), Utah Canna ("Does the Name Matter? The Marketing of
+   Cannabis Strains") y cobertura sobre un estudio 2021 en Nature Plants: los nombres
+   ("OG Kush", "Blue Dream", "Girl Scout Cookies"/GSC) estan mayormente desacoplados del
+   perfil quimico real -- un "Blue Dream" de Denver puede no compartir casi nada con uno
+   de Portland. Confirma la lectura del dossier: el fenotipo/linaje es sobre todo relato
+   de marketing, no garantia genetica. Ninguna fuente consultada explica metodo de
+   cultivo/mejora -- el spot-check se mantuvo del lado cultural, igual que el dossier.
+   Fuentes reales encontradas: [How Does a Cannabis Strain Get Its Name? — Leafly](https://www.leafly.com/news/strains-products/cannabis-strain-names),
+   [Does the Name Matter? — Utah Canna](https://utahcanna.org/does-the-name-matter-the-marketing-of-cannabis-strains/).
+
+Resultado del spot-check: las 3 afirmaciones factuales centrales del dossier resisten
+verificacion independiente (no son alucinacion de Gemini), aunque el dossier original no
+traia URLs citables -- las fuentes de arriba son el respaldo real, agregado por Claude,
+no las que Gemini menciono (porque no menciono ninguna).
+
+## Del dossier a la pieza (curado por Claude desde los findings)
+
+El dossier deja DOS gramaticas formales, ambas del lado seguro del limite duro:
+
+- **Diagrama de patente (Markush)**: un nucleo fijo + sustituyentes variables en
+  posiciones definidas -- formalmente es un motivo con "slots" intercambiables, igual
+  que el `gul`/`herati` de tapiz.md tiene una celda que se repite con variacion. Mapea a
+  un modo `markush` para un instrumento tipo `projects/tapiz/vibecode`: un nucleo (hub)
+  con N puntos de anclaje y un pool de "sustituyentes" graficos (formas, no formulas) que
+  se combinan por posicion -- la MISMA logica combinatoria del dibujo de patente, pero
+  vaciada de contenido quimico real (nunca se referencia una estructura real). Es
+  puramente el genero estetico del "diagrama tecnico con huecos", no una formula.
+- **Naming/branding de cepas**: "OG Kush", "Blue Dream x Haze", mitos de linaje y
+  packaging -- es lenguaje de marca (nombre + herencia narrativa + etiqueta), el mismo
+  tipo de material que ya trabaja `taller-svg-rd` para RD (paleta por fondo, capas
+  nombradas, tipografia de etiqueta). Mapea a un ejercicio de naming/packaging generativo
+  (texto + tipografia + color) que documenta la RETORICA de la mitologia de linaje como
+  fenomeno de marketing -- nunca una receta de cruce real, solo la forma del nombre y el
+  empaque.
+- **Ley "gato y raton" (Federal Analog Act)**: material de linea de tiempo/infografia
+  editorial (historia legal, fechas, texto de ley) -- candidato a una pieza documental en
+  `projects/cultura`, en el mismo registro que el genero "war rug" de tapiz.md (la ley
+  como narrativa, no como instrumento operativo).
+
+Pregunta madre (RAINSTORM): "la cultura del diseno de drogas" queda resuelta como dos
+gramaticas de forma, no de sustancia -- (a) el dibujo de patente es un genero estetico
+funcional (nucleo + sustituyentes intercambiables, como un motivo textil con slots) y
+(b) el naming de cepas es lenguaje de marca desconectado de la quimica real (linaje como
+mito, no como formula). Ambas son material legitimo de diseno (patron combinatorio,
+tipografia/empaque) sin que ninguna pieza derivada del repo llegue a describir sintesis,
+precursores, rendimiento ni metodo de cultivo -- si una iteracion futura del instrumento
+tienta a poner una estructura quimica real o un protocolo de cruce, se descarta ahi mismo,
+no se disenan "versiones seguras" de eso.
+
+Proxima iteracion (no en esta sesion): prototipo `modo markush` en
+`projects/tapiz/vibecode/spaces.py` (nucleo + sustituyentes graficos abstractos) y un
+mock de etiqueta/naming en el estilo `taller-svg-rd` para el mito de linaje -- ambos
+trabajo mecanico, candidatos a Qwen/Gemini por el gate, con este dossier como unico
+contexto necesario (no releer el resto del repo).
