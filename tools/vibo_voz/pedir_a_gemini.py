@@ -38,6 +38,8 @@ _SECRET_RE = re.compile(
     r"(AIza[0-9A-Za-z_\-]{20,}"
     r"|gh[posur]_[0-9A-Za-z]{20,}"
     r"|github_pat_[0-9A-Za-z_]{20,}"
+    r"|nvapi-[0-9A-Za-z_\-]{20,}"
+    r"|sk-or-v1-[0-9a-f]{20,}"
     r"|-----BEGIN[^-]*PRIVATE KEY-----"
     r"|(?:api[_-]?key|secret|token|password|authorization)\s*[:=]\s*['\"]?[^\s'\"]{6,})",
     re.IGNORECASE,

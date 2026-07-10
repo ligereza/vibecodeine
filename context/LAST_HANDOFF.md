@@ -2,7 +2,7 @@
 # Lo continua Claude (director) para cerrar pendientes y arrancar el flujo.
 
 handoff:
-  date: 2026-07-09
+  date: 2026-07-10
   version: 0.49.0            # debe coincidir con pyproject.toml / src/flujo/version.py
   assistant: Cauce
   repo: https://github.com/ligereza/vibecodeine
@@ -20,6 +20,12 @@ handoff:
       - recibes pedidos ya comprimidos por el interprete, en YAML liviano
       - gastas cuota en dirigir + codigo critico, no en volumen
     canonical: ["CLAUDE.md (bloque 'Equipo multi-agente')"]
+
+  done_sesion_director:   # sesion 2026-07-10 (Fase 0 inventario director + backlog unificado)
+    - "docs/DIRECTOR_PLAN.md NUEVO (rama claude/fable-director-orchestrator-uy4dw5): documento unico del director -- backlog unificado (Tapiz STARTED en projects/tapiz/vibecode, dos implementaciones a reconciliar segun feedback.md; tilde/psicosis/Precursor TO-START greenfield confirmado por busqueda repo-wide; commit_ai.py NO existe como codigo, solo skills de prompt), mapa de arquitectura actual (intake triple: flujo intake + vibo_voz + desktop; gap: ninguno escribe en tools/vibo_voz/proyectos/ que el skill /go espera), postura de seguridad completa, hard limits descriptivo-vs-generativo, y roadmap de 3 pasos con fechas y criterios de aceptacion. Inventario hecho con 3 sub-agentes Explore en paralelo (src/flujo, tools/projects, seguridad) -- Claude solo consolido."
+    - "3 fixes de seguridad aplicados (hallazgos del auditor, todos chicos y verificados): (1) desktop/gui.py config_file era relativo al CWD -- lanzada desde la raiz del repo, la API key en texto plano caia fuera de desktop/.gitignore; ahora anclado al dir del script. (2) ci.yml + validar-piezas.yml + render_piezas_vectoriales.yml sin bloque permissions ejecutando codigo de PRs -- agregado contents: read (ninguno pushea, upload-artifact no necesita write). (3) pedir_a_gemini.py: regex de scrub desalineada con pedir_codigo.py (faltaban nvapi- y sk-or-v1-) -- alineada."
+    - "Auditoria de seguridad: CERO credenciales reales en archivos trackeados (barrido por entropia limpio). Gaps abiertos aceptados/diferidos documentados en docs/DIRECTOR_PLAN.md seccion 3 (M1 claude.yml write-on-comment mitigado, L3 denylist de local_tools.py sin credentials.json/token.json, branch protection sin confirmar desde archivos)."
+    - "Decision de director (alineada con critique_acida): NO se crearon 7 archivos de agentes nuevos ni mas orquestacion -- los sub-agentes pedidos mapean casi todos a assets existentes; solo automation-agent (commit_ai) y realism-dossier son construccion nueva, y van por el roadmap."
 
   done_sesion_proxy:   # sesion 2026-07-09 (Gemini-to-Claude: intento web descartado, app desktop real)
     - "Primer intento: gemini-to-claude-proxy/ (app web Node/Express+Vite, scaffold de AI Studio). Instalada, bug de dotenv corregido, verificada end-to-end con llamadas reales a Gemini API. El USUARIO la borro despues: no queria UI web, queria una ventana flotante nativa (correccion: 'gemini penso que queria web ui pero quiero una floating app'). Carpeta eliminada del disco, sin rastro en git (nunca se habia commiteado)."
