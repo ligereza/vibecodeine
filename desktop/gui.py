@@ -48,7 +48,9 @@ class AppGUI:
         self.root.minsize(300, 300)
 
         self.queue = queue.Queue()
-        self.config_file = "config.json"
+        # Anclado al dir del script: si la app se lanza con CWD=raiz del repo,
+        # config.json (API key en texto plano) caeria fuera de desktop/.gitignore.
+        self.config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
         self.api_key = self.load_config()
         self.client = GeminiClient(self.api_key)
 
