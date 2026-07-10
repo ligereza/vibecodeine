@@ -771,6 +771,26 @@ export default function PlanoTool() {
     switch (key) {
       case 'power':
         return `<path d="M ${x(88)} ${y(28)} L ${x(52)} ${y(88)} H ${x(82)} L ${x(72)} ${y(132)} L ${x(112)} ${y(70)} H ${x(82)} Z" fill="${c}"/>`;
+      case 'scan':
+        return `<rect x="${x(28)}" y="${y(36)}" width="${104*scale}" height="${84*scale}" rx="${8*scale}" fill="none" stroke="${c}" stroke-width="${sw}" stroke-dasharray="${12*scale} ${8*scale}"/><path d="M ${x(42)} ${y(58)} H ${x(118)} M ${x(42)} ${y(82)} H ${x(92)} M ${x(42)} ${y(106)} H ${x(108)}" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/>`;
+      case 'terrain':
+        return `<path d="M ${x(22)} ${y(112)} C ${x(48)} ${y(76)} ${x(70)} ${y(86)} ${x(92)} ${y(54)} C ${x(110)} ${y(30)} ${x(126)} ${y(42)} ${x(140)} ${y(70)}" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/><path d="M ${x(24)} ${y(122)} H ${x(138)}" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/>`;
+      case 'circulation':
+        return `<path d="M ${x(34)} ${y(80)} H ${x(124)}" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/><path d="M ${x(104)} ${y(58)} L ${x(128)} ${y(80)} L ${x(104)} ${y(102)}" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round"/><circle cx="${x(48)}" cy="${y(48)}" r="${14*scale}" fill="${c}"/><circle cx="${x(78)}" cy="${y(122)}" r="${14*scale}" fill="${c}"/>`;
+      case 'sensory':
+        return `<path d="M ${x(104)} ${y(30)} C ${x(68)} ${y(38)} ${x(50)} ${y(66)} ${x(58)} ${y(96)} C ${x(66)} ${y(126)} ${x(96)} ${y(140)} ${x(128)} ${y(124)} C ${x(82)} ${y(120)} ${x(66)} ${y(76)} ${x(104)} ${y(30)} Z" fill="${c}"/><circle cx="${x(42)}" cy="${y(46)}" r="${5*scale}" fill="${c}"/><circle cx="${x(132)}" cy="${y(62)}" r="${5*scale}" fill="${c}"/>`;
+      case 'rack':
+        return `<rect x="${x(24)}" y="${y(24)}" width="${112*scale}" height="${112*scale}" rx="${8*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><path d="M ${x(24)} ${y(62)} H ${x(136)} M ${x(24)} ${y(98)} H ${x(136)} M ${x(62)} ${y(24)} V ${y(136)} M ${x(98)} ${y(24)} V ${y(136)}" stroke="${c}" stroke-width="${sw}" opacity="0.45"/>`;
+      case 'trash':
+        return `<path d="M ${x(50)} ${y(52)} H ${x(110)} L ${x(102)} ${y(134)} H ${x(58)} Z" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linejoin="round"/><path d="M ${x(42)} ${y(52)} H ${x(118)} M ${x(64)} ${y(38)} H ${x(96)} M ${x(70)} ${y(72)} V ${y(116)} M ${x(90)} ${y(72)} V ${y(116)}" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/>`;
+      case 'light':
+        return `<circle cx="${x(80)}" cy="${y(66)}" r="${34*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><path d="M ${x(62)} ${y(100)} H ${x(98)} M ${x(66)} ${y(120)} H ${x(94)} M ${x(72)} ${y(136)} H ${x(88)}" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/><path d="M ${x(80)} ${y(14)} V ${y(28)} M ${x(34)} ${y(34)} L ${x(44)} ${y(44)} M ${x(126)} ${y(34)} L ${x(116)} ${y(44)}" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/>`;
+      case 'heating':
+        return `<rect x="${x(42)}" y="${y(30)}" width="${76*scale}" height="${104*scale}" rx="${12*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><path d="M ${x(62)} ${y(54)} V ${y(110)} M ${x(80)} ${y(54)} V ${y(110)} M ${x(98)} ${y(54)} V ${y(110)}" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/>`;
+      case 'contact':
+        return `<circle cx="${x(80)}" cy="${y(52)}" r="${24*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><path d="M ${x(38)} ${y(132)} C ${x(44)} ${y(98)} ${x(116)} ${y(98)} ${x(122)} ${y(132)}" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/>`;
+      case 'food':
+        return `<path d="M ${x(54)} ${y(28)} V ${y(76)} M ${x(70)} ${y(28)} V ${y(76)} M ${x(62)} ${y(76)} V ${y(134)}" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/><path d="M ${x(104)} ${y(28)} C ${x(124)} ${y(48)} ${x(122)} ${y(82)} ${x(104)} ${y(94)} V ${y(134)}" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/>`;
       case 'water':
         return `<path d="M ${x(80)} ${y(24)} C ${x(116)} ${y(70)} ${x(126)} ${y(92)} ${x(110)} ${y(118)} C ${x(94)} ${y(144)} ${x(58)} ${y(144)} ${x(48)} ${y(116)} C ${x(38)} ${y(88)} ${x(58)} ${y(66)} ${x(80)} ${y(24)} Z" fill="none" stroke="${c}" stroke-width="${sw}"/>`;
       case 'table':
