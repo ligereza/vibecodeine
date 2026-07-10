@@ -21,6 +21,60 @@ handoff:
       - gastas cuota en dirigir + codigo critico, no en volumen
     canonical: ["CLAUDE.md (bloque 'Equipo multi-agente')"]
 
+  done_sesion_plano_packs_alignment:   # sesion 2026-07-10 (deuda registrada: alinear Python a PACKS)
+    - "Cerrada la deuda anotada en done_sesion_packs (mas abajo): src/flujo/plano/costs.py,
+      scripts/export_propuesta_pdf.py y src/flujo/serve/server.py (api_plano_render) ya NO
+      usan el viejo modelo de presets por tamano de evento (under/base/mainstream,
+      src/flujo/eventos/presets.py). Ahora usan el modelo de PACKS RD (INFO/TESTEO/COMPLETO)
+      que ya era la fuente de verdad en web/src/rdBrand.ts."
+    - "NUEVO src/flujo/plano/packs.py: espejo Python 1:1 de PACKS (rdBrand.ts) -- mismos ids,
+      precio (100k/300k/500k), voluntarios (2/6/15), m2, stands, inclusiones, y las
+      proporciones 60/14/10/9/7 de Pack COMPLETO. precio es el UNICO valor absoluto; el
+      monto de cada proporcion se deriva SIEMPRE como precio*pct/100 (proporcion_monto),
+      nunca se guarda aparte -- misma regla anti-desincronizacion que proporcionMonto() en
+      rdBrand.ts. ev_desde_pack(pack_id, **overrides) arma el evento generico que ya
+      consumia engine.py (voluntarios/incluye_testeo/masivo derivados del pack; nombre/
+      duracion_horas/asistentes_estimados/layout_mode son del evento concreto, no del pack)."
+    - "src/flujo/plano/engine.py NO se toco: ya era generico (acepta cualquier evento dict
+      con voluntarios/incluye_testeo/masivo/duracion_horas), sin ninguna referencia a
+      under/base/mainstream. Ese diseno generico es correcto -- lo unico que faltaba era
+      un fabricante de evento basado en PACKS (packs.ev_desde_pack), no un cambio al motor."
+    - "src/flujo/plano/costs.py reescrito: calcular_costos(ev) ya NO calcula por formula
+      hora/voluntario (PRECIOS_REF eliminado); ahora lee ev['pack'] (o ev['preset'] legacy)
+      y devuelve precio plano del pack + desglose de proporciones (solo COMPLETO). Sin pack
+      explicito cae a DEFAULT_PACK='TESTEO' (mismo default que el estado inicial del
+      PlanoTool). resumen_costos(ev) reescrito acorde."
+    - "scripts/export_propuesta_pdf.py: TIERS under/base/mainstream -> PACK_IDS
+      INFO/TESTEO/COMPLETO; _html_tier() -> _html_pack(), usa ev_desde_pack() en vez de
+      apply_event_preset(); tabla de cotizacion del PDF ahora es precio del pack + desglose
+      de proporciones en vez de personal/mobiliario/infraestructura/extras. Probado
+      generando el HTML de los 3 packs (sin renderizar PDF real, Edge no disponible en este
+      contenedor)."
+    - "src/flujo/serve/server.py api_plano_render(): acepta evento['pack'] directo (o
+      evento['preset'] como alias legacy via normalize_pack_id, para no romper llamadas
+      viejas); ya no usa apply_event_preset/eventos.presets para este endpoint. Se
+      eliminaron del rider/costos los campos que solo existian en el preset viejo
+      (sillas/electricidad/luz -- packs.py no los modela). infer_event_preset/
+      list_event_presets/apply_event_preset en otros usos de server.py (chat, endpoint
+      /api/event-presets, cotizaciones_base.py) NO se tocaron -- es un concepto distinto
+      (tamano de evento) que sigue vigente para esas otras herramientas."
+    - "web/src/components/PlanoTool.tsx: loadFromBackend() ya NO mapea PackId ->
+      under/base/mainstream (PACK_TO_BACKEND_PRESET eliminado); manda pack: presetId
+      directo al backend. Cambio contenido: npm run typecheck OK, npm run build:context OK."
+    - "Tests: tests/test_plano_module.py actualizado (test_costos_* con pack en vez de
+      formula hora/voluntario); tests/test_plano_packs.py NUEVO (9 tests: precios/
+      voluntarios de los 3 packs, proporciones suman 100, proporcion_monto puramente
+      derivado, alias legacy under/base/mainstream, ev_desde_pack deriva flags operativos
+      correctos por pack)."
+    - "Callers de calcular_costos/resumen_costos revisados antes de cambiar el shape
+      (projects/cotizaciones/engine.py, scripts/export_propuesta_pdf.py, src/flujo/cli.py
+      flujo plano --costs, src/flujo/serve/server.py): todos siguen funcionando con el
+      default DEFAULT_PACK cuando el evento no trae pack explicito (ningun KeyError)."
+    - "Verificado: py -m compileall src/flujo scripts OK, py -m pytest tests/ -q OK (196
+      pass, 1 skip), py -m flujo verify OK (incluye hub smoke real), cd web && npm run
+      typecheck && npm run build:context OK (context/*.html regenerados, no editados a
+      mano)."
+
   done_sesion_director:   # sesion 2026-07-10 (Fase 0 inventario director + backlog unificado)
     - "docs/DIRECTOR_PLAN.md NUEVO (rama claude/fable-director-orchestrator-uy4dw5): documento unico del director -- backlog unificado (Tapiz STARTED en projects/tapiz/vibecode, dos implementaciones a reconciliar segun feedback.md; tilde/psicosis/Precursor TO-START greenfield confirmado por busqueda repo-wide; commit_ai.py NO existe como codigo, solo skills de prompt), mapa de arquitectura actual (intake triple: flujo intake + vibo_voz + desktop; gap: ninguno escribe en tools/vibo_voz/proyectos/ que el skill /go espera), postura de seguridad completa, hard limits descriptivo-vs-generativo, y roadmap de 3 pasos con fechas y criterios de aceptacion. Inventario hecho con 3 sub-agentes Explore en paralelo (src/flujo, tools/projects, seguridad) -- Claude solo consolido."
     - "3 fixes de seguridad aplicados (hallazgos del auditor, todos chicos y verificados): (1) desktop/gui.py config_file era relativo al CWD -- lanzada desde la raiz del repo, la API key en texto plano caia fuera de desktop/.gitignore; ahora anclado al dir del script. (2) ci.yml + validar-piezas.yml + render_piezas_vectoriales.yml sin bloque permissions ejecutando codigo de PRs -- agregado contents: read (ninguno pushea, upload-artifact no necesita write). (3) pedir_a_gemini.py: regex de scrub desalineada con pedir_codigo.py (faltaban nvapi- y sk-or-v1-) -- alineada."
@@ -134,7 +188,7 @@ handoff:
       - probar bridges Photoshop/After Effects en apps reales [pospuesto]
       - "[DESCARTADO 2026-07-08] Aider: desinstalado (bugs Windows + free tier roulette); reemplazo pedir_codigo.py"
       - "[HECHO 2026-07-09] fix/unfinished-tools-4 mergeado via claude/refine-local-plan-adgdga; todo llego a main (PR #17 mergeado). Ramas remotas obsoletas borradas en la sesion de housekeeping git."
-      - "deuda: src/flujo/plano/{engine,costs}.py y scripts/export_propuesta_pdf.py siguen en el modelo under/base/mainstream; no se alinearon al modelo de PACKS 100k/300k/500k (fuera de alcance, solo se pidio la app)."
+      - "[HECHO 2026-07-10] deuda cerrada: src/flujo/plano/costs.py y scripts/export_propuesta_pdf.py alineados al modelo de PACKS 100k/300k/500k (ver done_sesion_plano_packs_alignment arriba). engine.py no necesito cambios: ya era generico."
       - "gota_rd backend [diferido]: decidir donde vive la data de reactivos antes de servir endpoint"
       - "tools/asistente_pedido y tools/canva_data: SPECs de una linea, pedir alcance antes de codear"
       - "test end-to-end Droplet+Blender en la maquina de render (repo compila, falta correr real)"

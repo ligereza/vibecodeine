@@ -1141,10 +1141,6 @@ export default function PlanoTool() {
     URL.revokeObjectURL(url);
   };
 
-  // Deuda: el motor Python (src/flujo/plano/*) solo conoce under/base/mainstream.
-  // Se mapea aqui el pack elegido solo para la llamada demo; no cambia el modelo de PACKS.
-  const PACK_TO_BACKEND_PRESET: Record<PackId, string> = { INFO: 'under', TESTEO: 'base', COMPLETO: 'mainstream' };
-
   const loadFromBackend = async (presetId: PackId = preset) => {
     if (window.location.protocol === 'file:') {
       applyPreset(presetId);
@@ -1160,7 +1156,7 @@ export default function PlanoTool() {
           evento: {
             nombre: eventName || 'Evento',
             fecha: eventDate,
-            preset: PACK_TO_BACKEND_PRESET[presetId],
+            pack: presetId,
             ubicacion: eventVenue || 'Por definir'
           },
         }),
