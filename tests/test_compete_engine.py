@@ -121,3 +121,23 @@ class TestPipelineOutput:
         path = ce.execute_pipeline(output_dir=out)
         assert Path(path).exists()
         assert Path(path).parent == out.resolve()
+
+    def test_stress_pipeline_triggers_every_degraded_state(self, tmp_path, capsys):
+        import json
+        path = ce.execute_pipeline(output_dir=tmp_path / "dist", stress=True)
+        matrix = json.loads(Path(path).read_text(encoding="utf-8"))
+
+        mesh = matrix["luminous_mesh_densities"]
+        assert mesh["status"] == "OVERLOADED"
+        assert mesh["global_pressure"] > 0.8
+
+        mask = matrix["chromatic_frequency_masks"]
+        assert mask["mask_intensity"] == "CRITICAL"
+        assert "hue-rotate" in mask["css_filter_string"]
+
+        chrono = matrix["chronological_collision_buffers"]
+        assert chrono["status"] == "TEMPORAL_DEGRADED"
+        assert chrono["collision_count"] >= 5  # violation + accumulation + races
+
+        payloads = matrix["encoded_asset_payloads"]
+        assert payloads["total_payloads"] > 10  # colony accumulation visible as spores

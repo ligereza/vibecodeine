@@ -282,10 +282,52 @@ def build_mock_ecosystem():
     state.decaying_assets[a3.asset_id] = a3
     return state
 
-def execute_pipeline(output_dir=None):
-    print("SYSTEM PROJECTION PIPELINE\n")
+def build_stress_ecosystem():
+    """Hostile ecosystem: pushes every diagnostic past its ugly threshold so the
+    renderer's degraded states (OVERLOADED mesh, CRITICAL mask, violent
+    temporal tears, spore accumulation) are actually visible."""
+    state = EcosystemState()
+    now = time.time()
 
-    ecosystem = build_mock_ecosystem()
+    # Token bomb: dense glyph wall, ~33k estimated tokens -> pressure 1.0.
+    glyph_wall = ("█▓░▒" * 7500) + "\n╔══════╗\n║OVRLD ║\n╚══════╝\n"
+    bomb = ArtAsset("ART-100", "Saturacion", glyph_wall,
+                    MetadataLayer("Context annihilation", ["ascii", "overload", "active_render"], True),
+                    EntityState.DECAYING, now - 5)
+
+    # Guardrail bomb: non-artistic context (0% mitigation), lexicon-saturated
+    # moderation-fixture text -> risk score pinned at 100 -> CRITICAL mask.
+    mod_fixture = "rot decay slime trash basurero gore psicosis " * 3
+    flagged = ArtAsset("ART-101", "Censura", mod_fixture,
+                       MetadataLayer("Moderation stress fixture", ["fixture"], False),
+                       EntityState.ACTIVE, now - 30)
+
+    # State violation: same asset registered active AND decaying.
+    both = ArtAsset("ART-102", "Paradoja", "estado doble",
+                    MetadataLayer("State violation", ["paradox", "active_render"], True),
+                    EntityState.DECAYING, now - 2)
+
+    state.active_assets[flagged.asset_id] = flagged
+    state.active_assets[both.asset_id] = both
+    state.decaying_assets[both.asset_id] = both
+    state.decaying_assets[bomb.asset_id] = bomb
+
+    # Accumulation: >10 decaying, none purged, several racing the renderer.
+    for i in range(10):
+        tags = ["fungi", "colony"]
+        if i < 3:
+            tags.append("active_render")  # Decay-Render race within grace period
+        spore = ArtAsset(f"ART-2{i:02d}", f"Colonia-{i:02d}",
+                         f"[esporas lote {i:02d}] " + "hyphae " * 12,
+                         MetadataLayer("Colony sprawl", tags, True),
+                         EntityState.DECAYING, now - (5 if i < 3 else 900))
+        state.decaying_assets[spore.asset_id] = spore
+    return state
+
+def execute_pipeline(output_dir=None, stress=False):
+    print("SYSTEM PROJECTION PIPELINE" + (" [STRESS]" if stress else "") + "\n")
+
+    ecosystem = build_stress_ecosystem() if stress else build_mock_ecosystem()
     print(f"Active: {len(ecosystem.active_assets)}, Decaying: {len(ecosystem.decaying_assets)}\n")
     
     token_analyzer = TokenVolumetricAnalyzer()
@@ -315,9 +357,15 @@ def main(argv=None):
         prog="compete_engine",
         description="Tapiz/Psicosis/Fungi artistic diagnostics pipeline.",
     )
-    parser.add_argument(
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument(
         "--demo", action="store_true",
         help="run the pipeline against the built-in mock ecosystem",
+    )
+    mode.add_argument(
+        "--stress", action="store_true",
+        help="run against a hostile ecosystem that triggers every degraded "
+             "state (OVERLOADED, CRITICAL, temporal tears, accumulation)",
     )
     parser.add_argument(
         "--out", metavar="DIR", default=None,
@@ -326,12 +374,12 @@ def main(argv=None):
     )
     args = parser.parse_args(argv)
 
-    if not args.demo:
-        parser.error("no input mode selected; use --demo to run the mock ecosystem")
+    if not (args.demo or args.stress):
+        parser.error("no input mode selected; use --demo or --stress")
 
     _harden_console()
     try:
-        execute_pipeline(output_dir=args.out)
+        execute_pipeline(output_dir=args.out, stress=args.stress)
     except Exception as e:
         print(f"ERROR: {e}", file=sys.stderr)
         return 1
