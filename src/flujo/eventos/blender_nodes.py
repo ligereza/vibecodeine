@@ -107,21 +107,41 @@ def _color_predominante_bpy(color_png_path):
         bpy.data.images.remove(img)
 
 
-def _buscar_material_flyer():
-    """Material cuyo nodo de imagen usa flyer_final -- sin adivinar nombres."""
+def _buscar_materiales_flyer():
+    """TODOS los materiales cuyo nodo de imagen usa flyer_final.
+
+    RD.blend real tiene DOS (Material.002 y Material.008, ambos en
+    Tablet.002); reconstruir solo el primero deja la pantalla en negro
+    (visto en el primer render real 2026-07-10). Sin adivinar nombres.
+    """
     import bpy
 
+    encontrados = []
     for mat in bpy.data.materials:
         if not mat.use_nodes:
             continue
         for node in mat.node_tree.nodes:
             if node.type == "TEX_IMAGE" and node.image and \
                     "flyer_final" in node.image.name.lower():
-                return mat, node
-    raise SystemExit(
-        "No encontre un material con textura flyer_final en el .blend; "
-        "el rebuild de nodos espera el RD.blend real (no adivinar)."
-    )
+                encontrados.append((mat, node))
+    if not encontrados:
+        raise SystemExit(
+            "No encontre un material con textura flyer_final en el .blend; "
+            "el rebuild de nodos espera el RD.blend real (no adivinar)."
+        )
+    return encontrados
+
+
+def _socket(node, nombre, tipo, salida=False):
+    """Socket por nombre Y tipo. ShaderNodeMix (Blender 4.x) duplica los
+    nombres A/B/Result en variantes Float/Vector/Color: inputs['A'] devuelve
+    la Float oculta y el link de color queda sin conectar (render negro,
+    visto en el primer render real 2026-07-10)."""
+    coleccion = node.outputs if salida else node.inputs
+    for s in coleccion:
+        if s.name == nombre and s.type == tipo:
+            return s
+    raise SystemExit(f"Socket {nombre}({tipo}) no existe en {node.bl_idname}")
 
 
 def build_flyer_nodes(mat, nodo_original, frame_path, input_path, hue_objetivo):
@@ -135,8 +155,9 @@ def build_flyer_nodes(mat, nodo_original, frame_path, input_path, hue_objetivo):
     tree = mat.node_tree
     nodes, links = tree.nodes, tree.links
 
-    frame_img = bpy.data.images.load(frame_path)
-    input_img = bpy.data.images.load(input_path)
+    # check_existing: al reconstruir varios materiales, una sola copia en RAM
+    frame_img = bpy.data.images.load(frame_path, check_existing=True)
+    input_img = bpy.data.images.load(input_path, check_existing=True)
 
     tex_coord = nodes.new("ShaderNodeTexCoord")
     mapping = nodes.new("ShaderNodeMapping")
@@ -174,16 +195,21 @@ def build_flyer_nodes(mat, nodo_original, frame_path, input_path, hue_objetivo):
     links.new(sep.outputs["Green"], comb.inputs["Green"])  # S
     links.new(sep.outputs["Blue"], comb.inputs["Blue"])    # V
     # marco (recoloreado) SOBRE el contenido, segun el alpha del marco
-    links.new(tex_frame.outputs["Alpha"], mezcla.inputs["Factor"])
-    links.new(tex_input.outputs["Color"], mezcla.inputs["A"])
-    links.new(comb.outputs["Color"], mezcla.inputs["B"])
+    links.new(tex_frame.outputs["Alpha"], _socket(mezcla, "Factor", "VALUE"))
+    links.new(tex_input.outputs["Color"], _socket(mezcla, "A", "RGBA"))
+    links.new(comb.outputs["Color"], _socket(mezcla, "B", "RGBA"))
+    resultado = _socket(mezcla, "Result", "RGBA", salida=True)
 
+    # == y no 'is': bpy recrea el wrapper Python en cada acceso, asi que
+    # 'is' compara wrappers distintos del mismo nodo y nunca matchea (3er
+    # error de la validacion real 2026-07-10: el link viejo sobrevivia,
+    # el nodo quedaba muteado y la pantalla renderizaba negra).
     destinos = [(l.to_node, l.to_socket) for l in tree.links
-                if l.from_node is nodo_original and l.from_socket.name == "Color"]
-    for l in [l for l in tree.links if l.from_node is nodo_original]:
+                if l.from_node == nodo_original and l.from_socket.name == "Color"]
+    for l in [l for l in tree.links if l.from_node == nodo_original]:
         tree.links.remove(l)
     for to_node, to_socket in destinos:
-        links.new(mezcla.outputs["Result"], to_socket)
+        links.new(resultado, to_socket)
     nodo_original.mute = True
     return mezcla
 
@@ -204,10 +230,10 @@ def main():
     hue = hue_de_rgb(rgb)
     print(f"Color predominante RGB={rgb} hue={hue:.4f}")
 
-    mat, nodo = _buscar_material_flyer()
-    build_flyer_nodes(mat, nodo, os.path.abspath(args["frame"]),
-                      os.path.abspath(args["input"]), hue)
-    print(f"Material '{mat.name}' recompuesto por nodos (sin Photoshop).")
+    for mat, nodo in _buscar_materiales_flyer():
+        build_flyer_nodes(mat, nodo, os.path.abspath(args["frame"]),
+                          os.path.abspath(args["input"]), hue)
+        print(f"Material '{mat.name}' recompuesto por nodos (sin Photoshop).")
 
     print(f"GPU: {force_gpu()}")
     if args["salida"]:
