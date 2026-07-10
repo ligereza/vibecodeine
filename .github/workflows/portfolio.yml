@@ -1,0 +1,64 @@
+# Publica los datos del portfolio a ligereza/portfolio-auto (GitHub Pages).
+# Este repo actua como interfaz de administracion del sitio: editar
+# tools/portfolio/proyectos.json + push (o correr este workflow a mano desde
+# el iPhone) actualiza el sitio publico.
+#
+# Requiere el secret PORTFOLIO_TOKEN: fine-grained PAT con permiso
+# Contents: Read and write SOLO sobre ligereza/portfolio-auto.
+# Sin el secret, el workflow genera los JSON y los sube como artifact (dry-run).
+name: portfolio
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1"   # lunes 06:00 UTC
+  push:
+    branches: [main]
+    paths:
+      - "tools/portfolio/**"
+
+permissions:
+  contents: read
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # el basurero necesita la historia completa
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Generar JSON del portfolio
+        run: python tools/portfolio/generar_portfolio.py --out out
+
+      - name: Artifact (siempre, sirve de dry-run)
+        uses: actions/upload-artifact@v4
+        with:
+          name: portfolio-data
+          path: out/*.json
+
+      - name: Publicar a portfolio-auto
+        env:
+          PORTFOLIO_TOKEN: ${{ secrets.PORTFOLIO_TOKEN }}
+        run: |
+          if [ -z "$PORTFOLIO_TOKEN" ]; then
+            echo "PORTFOLIO_TOKEN no configurado: dry-run, no se publica."
+            exit 0
+          fi
+          git clone --depth 1 "https://x-access-token:${PORTFOLIO_TOKEN}@github.com/ligereza/portfolio-auto.git" sitio
+          mkdir -p sitio/data
+          cp out/flujo-projects.json out/basurero.json sitio/data/
+          cd sitio
+          git config user.name "flujo-portfolio-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/
+          if git diff --cached --quiet; then
+            echo "Sin cambios en los datos: nada que publicar."
+          else
+            git commit -m "data: actualizar portfolio desde vibecodeine (automatico)"
+            git push
+          fi
