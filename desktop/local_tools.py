@@ -13,7 +13,11 @@ import os
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 # Nunca leer estos, aunque esten dentro de PROJECT_ROOT
-_BLOCKED_NAMES = {"config.json", ".env", ".env.local"}
+_BLOCKED_NAMES = {
+    "config.json", ".env", ".env.local",
+    # gap detectado en auditoria 2026-07-10 (L3): estos tambien guardan secretos
+    "credentials.json", "token.json", ".aider.conf.yml", "tilde_log.jsonl",
+}
 _BLOCKED_EXTS = {".key", ".pem", ".db", ".sqlite", ".sqlite3"}
 _BLOCKED_DIR_PARTS = {".git", "node_modules", "__pycache__"}
 

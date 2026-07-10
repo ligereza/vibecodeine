@@ -2,6 +2,8 @@ name: Validar piezas (el molde)
 # Revision sin revision: ninguna pieza grafica invalida puede entrar a main.
 # El validador corre solo, en cada push/PR que toque SVGs. Si el molde dice
 # OK, no hay nada que auditar despues.
+permissions:
+  contents: read
 on:
   push:
     branches: [main]

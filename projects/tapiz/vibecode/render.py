@@ -5,30 +5,9 @@ Convierte el texto en un patrón en negativo: el texto es gris tenue o invisible
 y los espacios se iluminan proporcionalmente a la potencia de generación.
 """
 
-import re
-from typing import List, Tuple
+from typing import List
 
-
-RESET = "\033[0m"
-
-
-def ansi_fg(n: int) -> str:
-    return f"\033[38;5;{n}m"
-
-
-def ansi_bg(n: int) -> str:
-    return f"\033[48;5;{n}m"
-
-
-def tokenize(text: str) -> List[Tuple[str, str]]:
-    """Divide el texto en tokens ('space' o 'word') conservando espacios."""
-    parts = re.split(r"(\s+)", text)
-    tokens = []
-    for part in parts:
-        if not part:
-            continue
-        tokens.append(("space" if part.isspace() else "word", part))
-    return tokens
+from .ansi import BLOCKS, RESET, bg256 as ansi_bg, fg256 as ansi_fg, tokenize
 
 
 def style_text(text: str, power: float, mode: str = "negative") -> str:
@@ -53,7 +32,6 @@ def style_text(text: str, power: float, mode: str = "negative") -> str:
 
     fg = ansi_fg(fg_shade)
     bg = ansi_bg(bg_shade)
-    blocks = [" ", "▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"]
 
     for kind, part in tokens:
         if kind == "space":
@@ -66,8 +44,8 @@ def style_text(text: str, power: float, mode: str = "negative") -> str:
                     out.append(bg + part + RESET)
             else:  # blocks
                 length = len(part)
-                idx = min(length, len(blocks) - 1)
-                block = blocks[idx] * length
+                idx = min(length, len(BLOCKS) - 1)
+                block = BLOCKS[idx] * length
                 out.append(fg + bg + block + RESET)
         else:
             # Palabras en gris, apenas visibles. En descanso total, prácticamente invisibles.

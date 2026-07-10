@@ -59,6 +59,21 @@ for chunk in llm_stream(prompt):
 vibecode.deinit()
 ```
 
+## Arquitectura (reconciliada 2026-07-10)
+
+Una sola implementacion, tres capas dentro del paquete `vibecode/`:
+
+- `vibecode.life` — proxy vivo de stdout (modo Colorama): `init()`, `watch()`, `@life`, `pulse()`.
+- `vibecode.spaces` — render estatico/animado de los espacios de un texto (`render_spaces`, CLI `python -m vibecode.spaces`).
+- `vibecode.void` — streamer con ventana deslizante y typewriter (CLI `python -m vibecode.void`).
+- `vibecode.ansi` — primitivas compartidas (colores 256, grises, `tokenize`, bloques). Unica fuente; antes estaban duplicadas 3 veces.
+
+`vibecode_spaces.py` y `vibecode_void.py` en la raiz del proyecto son wrappers de
+compatibilidad: la CLI documentada (`python projects/tapiz/vibecode_void.py archivo.py`)
+sigue funcionando igual.
+
+Tests: `tests/test_tapiz_vibecode.py` (corre con la suite normal del repo).
+
 ## Modos
 
 - `negative` (default): los espacios se iluminan con fondo gris/blanco; el texto es gris tenue.
