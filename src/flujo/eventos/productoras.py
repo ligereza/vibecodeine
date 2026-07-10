@@ -14,7 +14,10 @@ import re
 from pathlib import Path
 from typing import Any
 
-_MODELS = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-2.0-flash"]
+# gemini-3.1-flash-lite al final: el 2026-07-10 fue el UNICO que respondio
+# bajo quota agotada (los demas 429/503); barato y suficiente para extraer.
+_MODELS = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-2.0-flash",
+           "gemini-3.1-flash-lite"]
 
 _EXTRACT_SCHEMA = {
     "type": "OBJECT",
@@ -40,11 +43,36 @@ _PROMPT = (
 )
 
 
+def _env_fallback() -> dict[str, str]:
+    """Carga GEMINI_API_KEY* de .env raiz o tools/vibo_voz/.env a mano
+    (python-dotenv puede no estar instalado; leccion 2026-07-10)."""
+    repo = Path(__file__).resolve().parents[3]
+    valores: dict[str, str] = {}
+    for env_file in (repo / ".env", repo / "tools" / "vibo_voz" / ".env"):
+        if not env_file.is_file():
+            continue
+        try:
+            lineas = env_file.read_text(encoding="utf-8").splitlines()
+        except OSError:
+            continue
+        for linea in lineas:
+            linea = linea.strip()
+            if linea.startswith("GEMINI_API_KEY") and "=" in linea:
+                nombre, valor = linea.split("=", 1)
+                valor = valor.strip().strip('"').strip("'")
+                if valor:
+                    valores.setdefault(nombre.strip(), valor)
+    return valores
+
+
 def _keys() -> list[str]:
-    keys = [os.getenv("GEMINI_API_KEY", "")]
+    entorno = dict(os.environ)
+    if not entorno.get("GEMINI_API_KEY"):
+        entorno = {**_env_fallback(), **entorno}
+    keys = [entorno.get("GEMINI_API_KEY", "")]
     i = 2
     while True:
-        k = os.getenv(f"GEMINI_API_KEY_{i}", "")
+        k = entorno.get(f"GEMINI_API_KEY_{i}", "")
         if not k:
             break
         keys.append(k)
@@ -119,13 +147,21 @@ def load_all(data_dir: Path) -> dict[str, dict]:
 
 
 def match(extracted: dict, known: dict[str, dict]) -> str | None:
-    """Case-insensitive match on name or any alias. None if no match."""
-    name = (extracted.get("productora_name") or "").strip().lower()
-    if not name:
+    """Case-insensitive EXACT match on name or any alias. None if no match.
+
+    Ademas de productora_name se revisa other_text_visible: Gemini no
+    siempre comete el nombre como productora_name (corrida real
+    2026-07-10: una vez devolvio 'GRID', otra null con 'GRID' en el texto
+    visible). Igualdad exacta contra aliases curados = sin over-match.
+    """
+    visibles = [(extracted.get("productora_name") or "")]
+    visibles += [t for t in extracted.get("other_text_visible") or [] if isinstance(t, str)]
+    normalizados = {v.strip().lower() for v in visibles if v and v.strip()}
+    if not normalizados:
         return None
     for slug, entry in known.items():
         candidates = [entry.get("name", "")] + entry.get("aliases", [])
-        if any(name == c.strip().lower() for c in candidates if c):
+        if any(c.strip().lower() in normalizados for c in candidates if c):
             return slug
     return None
 

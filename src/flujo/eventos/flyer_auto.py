@@ -39,6 +39,7 @@ class EventFlyerResult:
     droplet_started: bool = False
     blender_started: bool = False
     blender_rendered: bool = False
+    productora: dict | None = None  # resultado de productoras.identify()
     error: str = ""
 
 
@@ -235,6 +236,38 @@ def _wait_for_file_update(path: Path, after_time: float, timeout_s: float = 300.
 
 
 _BLENDER_GPU_SCRIPT = Path(__file__).resolve().parent / "blender_gpu.py"
+_BLENDER_NODES_SCRIPT = Path(__file__).resolve().parent / "blender_nodes.py"
+
+
+def _render_blender_compuesto(
+    blender_exe: str,
+    blender_file: Path,
+    frame_png: Path,
+    input_img: Path,
+    color_png: Path,
+    output_path: Path,
+) -> Path:
+    """Render SIN Photoshop: blender_nodes.py recompone el material en memoria
+    (FRAME2 + input + recolor por color predominante) y renderiza."""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    cmd = [
+        blender_exe,
+        "-b",
+        str(blender_file),
+        "--python",
+        str(_BLENDER_NODES_SCRIPT),
+        "--",
+        "--frame",
+        str(frame_png),
+        "--input",
+        str(input_img),
+        "--color-png",
+        str(color_png),
+        "--salida",
+        str(output_path),
+    ]
+    subprocess.run(cmd, check=True)
+    return output_path
 
 
 def _render_blender_frame(blender_exe: str, blender_file: Path, output_path: Path) -> Path:
@@ -274,13 +307,14 @@ def run_eventos_flyer_auto(
     keep_temp: bool = False,
     sleep_seconds: float = 2.0,
 ) -> EventFlyerResult:
-    """Download Instagram flyer and optionally launch Photoshop/Blender steps.
+    """Download Instagram flyer and optionally launch Blender (y legado Photoshop).
 
     Expected local files in base_dir:
-    - Droplet_Flyer.exe
-    - historia.psd
     - RD.blend (plantilla textura; si falta, fallback a cartelera.blend frame 1)
-    - flyer_final.jpg (lo produce el Droplet; se espera activamente hasta 300s)
+    - FRAME2.png: si existe junto a RD.blend, el render compone por NODOS
+      (blender_nodes.py: FRAME2 + input + recolor) y NO usa Photoshop.
+    - Droplet_Flyer.exe + historia.psd + flyer_final.jpg: solo camino legado
+      (sin FRAME2.png), con espera activa de hasta 300s al Droplet.
     - input_ig.jpg will be replaced/created
     - palette_ig.png and palette_ig.json will be written
     - render_output.png (salida del render con RD.blend)
@@ -317,6 +351,17 @@ def run_eventos_flyer_auto(
         _extract_palette(input_img, palette_png, palette_json)
         # RD.blend linkea RESULTADOS/color_predominante.png como material
         _write_predominant_color(input_img, base / "RESULTADOS" / "color_predominante.png")
+
+        # identificacion de productora (wire-in opcion B, confirmado por el
+        # usuario): 1 llamada Gemini vision para lo semantico. NUNCA fatal:
+        # si Gemini esta caido/sin quota, el render sigue igual.
+        productora_res: dict | None = None
+        try:
+            from .productoras import identify as _identificar_productora
+            data_dir = Path(__file__).resolve().parents[3] / "data" / "productoras"
+            productora_res = _identificar_productora(input_img, data_dir)
+        except Exception as exc:  # noqa: BLE001 -- aviso, no bloqueo
+            print(f"[aviso] identificacion de productora omitida: {exc}")
         time.sleep(max(0.0, sleep_seconds))
 
         started_droplet = False
@@ -334,17 +379,26 @@ def run_eventos_flyer_auto(
         rendered_blender = False
         if open_blender and not blender_file.exists():
             raise FileNotFoundError(f"Missing Blender file: {blender_file}")
+        frame2 = base / "FRAME2.png"
         if render_blender:
-            if started_droplet:
-                # espera activa al output del Droplet (antes: sleep ciego)
-                if not _wait_for_file_update(flyer_final, droplet_launch_time):
-                    raise TimeoutError(
-                        f"El Droplet no produjo {flyer_final} en 300s; "
-                        "revisa Photoshop antes de renderizar."
-                    )
-            if rd_blend.exists():
-                # RD.blend ya linkea flyer_final.jpg y color_predominante.png
-                # desde disco: render directo del frame (validado 2026-07-08)
+            if rd_blend.exists() and frame2.exists():
+                # camino SIN Photoshop (2026-07-10): blender_nodes.py compone
+                # FRAME2 + input + recolor en nodos; flyer_final.jpg y el
+                # Droplet dejan de ser necesarios.
+                _render_blender_compuesto(
+                    blender_exe, rd_blend, frame2, input_img,
+                    base / "RESULTADOS" / "color_predominante.png", render_out,
+                )
+                blender_render = render_out
+            elif rd_blend.exists():
+                if started_droplet:
+                    # legado con Droplet: espera activa a flyer_final.jpg
+                    if not _wait_for_file_update(flyer_final, droplet_launch_time):
+                        raise TimeoutError(
+                            f"El Droplet no produjo {flyer_final} en 300s; "
+                            "revisa Photoshop antes de renderizar."
+                        )
+                # RD.blend linkea flyer_final.jpg desde disco (validado 2026-07-08)
                 _render_blender_frame(blender_exe, rd_blend, render_out)
                 blender_render = render_out
             else:
@@ -353,6 +407,12 @@ def run_eventos_flyer_auto(
                     raise FileNotFoundError(
                         f"Missing Blender file: ni {rd_blend} ni {blender_file}"
                     )
+                if started_droplet:
+                    if not _wait_for_file_update(flyer_final, droplet_launch_time):
+                        raise TimeoutError(
+                            f"El Droplet no produjo {flyer_final} en 300s; "
+                            "revisa Photoshop antes de renderizar."
+                        )
                 _render_blender_frame(blender_exe, blender_file, blender_render)
             rendered_blender = True
         if open_blender:
@@ -377,6 +437,7 @@ def run_eventos_flyer_auto(
             droplet_started=started_droplet,
             blender_started=started_blender,
             blender_rendered=rendered_blender,
+            productora=productora_res,
         )
     except Exception as exc:
         if not keep_temp:
