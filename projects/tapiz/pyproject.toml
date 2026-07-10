@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vibecode"
-version = "0.1.0"
+version = "0.2.0"
 description = "Librería de acompañamiento visual para la generación de código."
 readme = "README.md"
 license = { text = "MIT" }
