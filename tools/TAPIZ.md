@@ -1,0 +1,75 @@
+# TAPIZ - ecosistema Tapiz / Psicosis / Fungi
+
+Pieza artistica: telemetria de ingenieria renderizada como ecosistema vivo.
+Tres entidades: **Tapiz** (el espacio geometrico donde todo se proyecta),
+**Psicosis** (entropia, el sistema bajo presion pierde coherencia) y
+**Fungi** (descomposicion: los assets decaen y sus cuerpos quedan enterrados
+en el documento, codificados, hasta que alguien los exhuma con un click).
+
+## Piezas
+
+| Archivo | Rol |
+|---|---|
+| `tools/compete_engine.py` | Pipeline: analiza assets (presion de tokens, riesgo guardrail, conflictos de estado) y compila `tools/dist/system_status.json` |
+| `tools/system_map.py` | Contrato (`API_CONTRACT_SCHEMA`) + validador estructural del JSON + directivas de render |
+| `tools/tapiz_renderer.html` | Frontend: consume el JSON y lo vuelve visual (mesh, mascara, tears, esporas, sigil) |
+| `tools/tapiz_telemetry.py` | (modo live) construye el ecosistema desde el estado REAL del repo |
+| `tests/test_compete_engine.py` | Tests del engine y sus modos |
+
+## Uso
+
+```bash
+py tools/compete_engine.py --demo      # ecosistema mock, estado calmo
+py tools/compete_engine.py --stress    # ecosistema hostil: todos los umbrales feos
+py tools/compete_engine.py --live      # autorretrato: telemetria real del repo
+py tools/compete_engine.py --demo --out DIR   # salida a otro directorio
+
+py tools/system_map.py validate tools/dist/system_status.json   # PASS/FAIL por seccion
+py tools/system_map.py show                                     # directivas de render
+
+py -m pytest tests/test_compete_engine.py -q
+
+# ver el arte:
+py -m http.server 8137        # desde la raiz del repo
+# http://localhost:8137/tools/tapiz_renderer.html
+# (file:// tambien sirve: aparece un file-picker, apuntarlo al JSON)
+```
+
+`tools/dist/` es salida generada: esta en gitignore, no se commitea.
+
+## Mapa concepto -> visual
+
+| Diagnostico (ingenieria) | Metafora | Render |
+|---|---|---|
+| Presion de tokens (densidad ASCII penalizada) | Grilla bioluminiscente que se apaga bajo carga | CSS vars -> opacidad/densidad del mesh canvas |
+| Riesgo guardrail (lexicon, mitigacion artistica 70%) | Velo cromatico que censura el contenido | `filter` CSS sobre el wrapper (blur/saturate/hue-rotate) |
+| Race conditions / violaciones de estado | Desgarros temporales en el espacio | keyframes `temporal_tear` inyectados, mas violentos con mas colisiones |
+| Assets en descomposicion | Esporas: cuerpos enterrados en el documento | Circulos clickeables; decode Base64+Shift42 en overlay |
+| Huella de la compilacion | Sigil (sello ritual) | SHA-256 en el footer; el poll re-renderiza solo si cambia |
+
+## Contrato
+
+El JSON tiene 5 secciones (`meta`, `luminous_mesh_densities`,
+`chromatic_frequency_masks`, `chronological_collision_buffers`,
+`encoded_asset_payloads`). Esquema completo y tipos en
+`tools/system_map.py::API_CONTRACT_SCHEMA`. Cualquier renderer alternativo
+(Resolume/VJ, Three.js) debe validar contra eso, no adivinar.
+
+Protocolo de payloads: contenido UTF-8 -> base64 -> shift +42 por byte ->
+base64 -> chunks de 256 chars. El JS de referencia para decodificar esta en
+`system_map.py::CHUNK_DECODING_PROTOCOL_JS` (corregido 2026-07-10: la version
+original tenia un btoa/atob espurio que devolvia base64 en vez de contenido).
+
+## Privacidad (modo live)
+
+El JSON live puede terminar publicado (artifact web). Regla dura: el contenido
+de assets solo lleva nombres de archivo, tamanos, conteos, fechas y hashes
+cortos de git. Nunca: `.env*`, keys/secrets/tokens, `*.local.md`, contenido de
+`datadrops/` (nombres y tamanos OK). La lista de exclusion vive en
+`tools/tapiz_telemetry.py` y tiene test propio.
+
+## Puentes pendientes
+
+- Renderer Resolume/VJ sobre el mismo contrato (nucleo noisette/timecode).
+- Tapiz real como escena Three.js en el hub, junto al SVG Studio.
+- Poll del modo live como daemon (cron) para autorretrato continuo.
