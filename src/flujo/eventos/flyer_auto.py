@@ -234,6 +234,9 @@ def _wait_for_file_update(path: Path, after_time: float, timeout_s: float = 300.
 
 
 
+_BLENDER_GPU_SCRIPT = Path(__file__).resolve().parent / "blender_gpu.py"
+
+
 def _render_blender_frame(blender_exe: str, blender_file: Path, output_path: Path) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     # Blender -o wants a path prefix; -f 1 appends frame number + extension.
@@ -242,6 +245,11 @@ def _render_blender_frame(blender_exe: str, blender_file: Path, output_path: Pat
         blender_exe,
         "-b",
         str(blender_file),
+        # --python corre ANTES del render: fuerza GPU (OptiX/CUDA) en memoria,
+        # no toca ni guarda el .blend (blender_gpu.py, agregado 2026-07-10;
+        # sin esto Cycles renderiza en CPU por default).
+        "--python",
+        str(_BLENDER_GPU_SCRIPT),
         "-o",
         str(prefix),
         "-f",
