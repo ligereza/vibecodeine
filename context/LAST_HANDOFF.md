@@ -3,7 +3,7 @@
 
 handoff:
   date: 2026-07-10
-  version: 0.50.0            # debe coincidir con pyproject.toml / src/flujo/version.py
+  version: 0.51.0            # debe coincidir con pyproject.toml / src/flujo/version.py
   assistant: Cauce
   repo: https://github.com/ligereza/vibecodeine
   to: Claude (director)
@@ -20,6 +20,16 @@ handoff:
       - recibes pedidos ya comprimidos por el interprete, en YAML liviano
       - gastas cuota en dirigir + codigo critico, no en volumen
     canonical: ["CLAUDE.md (bloque 'Equipo multi-agente')"]
+
+  done_sesion_checkpoint_051:   # sesion 2026-07-10 noche (teleport -> checkpoint limpio v0.51.0)
+    - "TELEPORT verificado: sesion web claude.ai/code traida al CLI local con claude --teleport (skill .claude/skills/teleport-sesion-web/ nueva documenta el procedimiento; varios Claude web niegan que exista, es FALSO)."
+    - "gh CLI 2.96.0 instalado (winget) y autenticado reutilizando el token del Git Credential Manager (scope repo, keyring, nada en texto plano). Las proximas sesiones pueden abrir/mergear PRs directo."
+    - "CHECKPOINT CONSOLIDADO (pedido 'clean checkpoint, no extra branches, no unnecesary commits'): las 4 ramas vivas (claude/fable-director-orchestrator-uy4dw5 = PR #21, claude/blender-node-compositing = PR #19, claude/plano-packs-alignment = PR #20, claude/skill-verificar-info) mergeadas en un solo arbol, verificacion completa en verde, mergeado a main via PR #21, ramas borradas. Queda solo main."
+    - "AUDIT DE PENDIENTES (ultracode, 5 agentes Sonnet en paralelo contra el repo real): 2 de los 3 pendientes top ya estaban resueltos en ramas sin mergear (productoras wire-in en #19, deuda PACKS en #20) -- el hallazgo clave fue consolidar, no re-implementar. Restante accionable: curar dossiers (hecho abajo). Bloqueados con insumo externo: smoke con flyer real (falta imagen fixture en tests/), compositing Pillow (OBSOLETO: blender_nodes.py lo resolvio por nodos), .noisette real, branch protection (plan Free + repo privado: se activa al reabrir publico ~2026-07-24)."
+    - "DOSSIERS CURADOS (3 agentes Sonnet + WebSearch real): tilde/psicosis/precursor con seccion 'del dossier a la pieza/herramienta' al patron de tapiz.md + spot-check de fuentes: 15 claims verificados contra la web, 14 VERIFICADA 1 PARCIAL 0 inventadas (las advertencias 'fuentes sin verificar' actualizadas con el resultado real). Limites duros preservados verbatim y reforzados (psicosis: lecturas comparadas, jamas perfil de persona real; precursor: solo cultura/ley/estetica)."
+    - "Version 0.50.0 -> 0.51.0 (pyproject, version.py + changelog consolidado, package.json, badges AppShell/HubDashboard/PlanoTool/flujoApi, context/*.html regenerados via build:context)."
+    - ".gitignore: + sub-*-resource-providers-*.csv (CSV personal de Azure del usuario en la raiz; se queda en disco, nunca al repo)."
+    - "Worktrees limpiados al cerrar: ultracode-p0 (lock stale de pid muerto 6400) y el temporal del checkpoint."
 
   done_sesion_blender:   # sesion 2026-07-10 tarde (NO PHOTOSHOP: composicion por nodos, rama claude/blender-node-compositing)
     - "DROPLET DE PHOTOSHOP ELIMINADO del pipeline: src/flujo/eventos/blender_nodes.py NUEVO compone el flyer POR NODOS dentro de RD.blend (FRAME2.png + input + recolor por hue del color predominante). Validado end-to-end con URL real de IG (thegrid.club DaiuIYuvanV): descarga -> paleta -> update de nodos -> render OptiX 1080x1920. Confirmacion visual del usuario ('perfect')."
