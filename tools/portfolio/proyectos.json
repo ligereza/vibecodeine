@@ -30,6 +30,15 @@
       "tags": ["investigacion", "lectura-de-indicios"]
     },
     {
+      "id": "ecosystem-engine",
+      "nombre": "Ecosystem Engine",
+      "linea": "cultura",
+      "estado": "activo",
+      "descripcion": "Motor de diagnostico-a-frontend (Python stdlib puro) que modela el ecosistema Tapiz (activo) / Psicosis (meta) / Fungi (basurero): mide presion de tokens, simula guardrails con mitigacion por contexto artistico y detecta race conditions, y lo compila en un system_status.json que el sitio consume como variables CSS, filtros, keyframes y payloads. El motor conceptual detras de este portfolio.",
+      "ruta": "tools/ecosystem_engine/",
+      "tags": ["python", "generativo-visual", "pipeline"]
+    },
+    {
       "id": "precursor",
       "nombre": "Precursor",
       "linea": "cultura",
