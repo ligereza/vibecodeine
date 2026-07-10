@@ -1,94 +1,62 @@
-"""Cálculo de costos operativos derivado de las reglas del evento.
+"""Costeo de eventos RD segun el modelo de PACKS (precio plano por servicio).
 
-El objetivo es dar un desglose rápido que aumente con cada cambio de reglas,
-para usarlo como base de cotización.
+Fuente de verdad: web/src/rdBrand.ts (PACKS) via .packs (espejo Python). Ya
+no hay formula por hora/voluntario ($8.000/hora, etc.): el precio de cada
+pack es el UNICO valor absoluto, y el desglose (solo Pack COMPLETO) se
+deriva como proporcion del precio, nunca como numero guardado aparte.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any, Dict
 
-from .engine import es_masivo, mesas_requeridas
-
-# Precios unitarios referenciales (CLP). Se pueden pisar por evento con
-# ev["precios"] = {"hora_persona": ..., "mesa": ...} sin tocar codigo.
-PRECIOS_REF = {
-    "hora_persona": 8_000,
-    "alimentacion": 6_000,
-    "colacion": 3_500,
-    "stand": 35_000,
-    "mesa": 4_000,
-    "testeo": 45_000,
-    "contencion": 25_000,
-}
+from .packs import desglose_pack, get_pack, normalize_pack_id
 
 
 def calcular_costos(ev: Dict[str, Any]) -> Dict[str, Any]:
-    """Devuelve un desglose de costos a partir de los parámetros del evento.
+    """Devuelve el costeo del pack RD contratado por el evento.
 
-    Valores son referenciales; el dueño puede ajustarlos via ev["precios"].
+    `ev["pack"]` (o `ev["preset"]` legacy) selecciona el pack; sin ese dato
+    se usa el pack por defecto (packs.DEFAULT_PACK).
     """
-    horas = float(ev.get("duracion_horas", 0))
-    voluntarios = int(ev.get("voluntarios", 0))
-    testeo = bool(ev.get("incluye_testeo", False))
-    masivo = es_masivo(ev)
-
-    precios = {**PRECIOS_REF, **(ev.get("precios") or {})}
-
-    personal = voluntarios * horas * precios["hora_persona"]
-    alimentacion = 0.0
-    if horas > 5:
-        alimentacion = voluntarios * precios["alimentacion"]
-    elif horas > 4:
-        alimentacion = voluntarios * precios["colacion"]
-
-    mesas = mesas_requeridas(voluntarios, incluye_testeo=testeo)
-    mobiliario = mesas * precios["mesa"]
-
-    stands = 1
-    if testeo:
-        stands += 1
-    if masivo:
-        stands += 1
-    infraestructura = stands * precios["stand"]
-
-    extras = 0.0
-    if testeo:
-        extras += precios["testeo"]
-    if masivo:
-        extras += precios["contencion"]
-
-    total = personal + alimentacion + mobiliario + infraestructura + extras
+    pack_id = normalize_pack_id(ev.get("pack") or ev.get("preset"))
+    pack = get_pack(pack_id)
+    desglose = desglose_pack(pack_id)
 
     return {
-        "personal": personal,
-        "alimentacion": alimentacion,
-        "mobiliario": mobiliario,
-        "infraestructura": infraestructura,
-        "extras": extras,
-        "total": total,
+        "pack": pack["id"],
+        "pack_label": pack["label"],
+        "precio": pack["precio"],
+        "voluntarios": pack["voluntarios"],
+        "m2": pack["m2"],
+        "stands": pack["stands"],
+        "inclusiones": pack["inclusiones"],
+        "desglose": desglose,
+        "total": pack["precio"],
         "detalle": {
-            "voluntarios": voluntarios,
-            "horas": horas,
-            "mesas": mesas,
-            "stands": stands,
-            "testeo": testeo,
-            "masivo": masivo,
+            "pack": pack["id"],
+            "voluntarios": pack["voluntarios"],
+            "stands": pack["stands"],
         },
     }
 
 
 def resumen_costos(ev: Dict[str, Any]) -> str:
-    """Genera un texto legible del desglose de costos."""
+    """Genera un texto legible del pack contratado y su desglose."""
     c = calcular_costos(ev)
-    d = c["detalle"]
-    lines = [f"COTIZACIÓN REFERENCIAL — {ev.get('nombre','Evento')}", "=" * 40, ""]
-    lines.append(f"Personal ({d['voluntarios']} voluntarios × {d['horas']} h):       ${c['personal']:,.0f}")
-    lines.append(f"Alimentación / colación:                       ${c['alimentacion']:,.0f}")
-    lines.append(f"Mobiliario ({d['mesas']} mesas):                         ${c['mobiliario']:,.0f}")
-    lines.append(f"Infraestructura ({d['stands']} stands):                    ${c['infraestructura']:,.0f}")
-    lines.append(f"Extras (testeo + contención):                  ${c['extras']:,.0f}")
+    lines = [f"COTIZACIÓN — {ev.get('nombre','Evento')}", "=" * 40, ""]
+    lines.append(f"{c['pack_label']}:                         ${c['precio']:,.0f}")
+    lines.append(f"Voluntarios: {c['voluntarios']} · Stands: {c['stands']} · {c['m2']} m²")
     lines.append("")
-    lines.append(f"TOTAL REFERENCIAL:                             ${c['total']:,.0f}")
+    if c["desglose"]:
+        lines.append("Desglose (proporcion del precio):")
+        for item in c["desglose"]:
+            lines.append(f"  {item['label']} ({item['pct']}%):                ${item['monto']:,.0f}")
+        lines.append("")
+    lines.append("Inclusiones:")
+    for inc in c["inclusiones"]:
+        lines.append(f"  • {inc}")
     lines.append("")
-    lines.append("Nota: valores referenciales. Ajustar precios unitarios con el dueño.")
+    lines.append(f"TOTAL: ${c['total']:,.0f}")
+    lines.append("")
+    lines.append("Nota: precio plano por pack de servicio RD (no por hora/voluntario).")
     return "\n".join(lines)
