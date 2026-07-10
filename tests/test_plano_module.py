@@ -87,29 +87,37 @@ def test_render_rider_pequeno(evento_pequeno):
     assert "contención" not in rider.lower()
 
 
-def test_costos_masivo(evento_masivo):
-    c = calcular_costos(evento_masivo)
-    assert c["personal"] > 0
-    assert c["alimentacion"] > 0
-    assert c["extras"] > 0
-    assert c["total"] > 0
-    assert c["detalle"]["mesas"] == 3  # 2 base + 1 testeo
-    assert c["detalle"]["stands"] == 3
+def test_costos_pack_completo():
+    c = calcular_costos({"pack": "COMPLETO"})
+    assert c["pack"] == "COMPLETO"
+    assert c["precio"] == 500_000
+    assert c["total"] == 500_000
+    assert len(c["desglose"]) == 5
+    assert sum(item["pct"] for item in c["desglose"]) == 100
+    assert sum(item["monto"] for item in c["desglose"]) == c["precio"]
 
 
-def test_costos_pequeno(evento_pequeno):
-    c = calcular_costos(evento_pequeno)
-    assert c["alimentacion"] == 0
-    assert c["extras"] == 0
-    assert c["detalle"]["mesas"] == 1
-    assert c["detalle"]["stands"] == 1
+def test_costos_pack_info_sin_desglose():
+    c = calcular_costos({"pack": "INFO"})
+    assert c["pack"] == "INFO"
+    assert c["precio"] == 100_000
+    assert c["voluntarios"] == 2
+    assert c["desglose"] == []
+
+
+def test_costos_pack_default_sin_dato():
+    c = calcular_costos({})
+    assert c["pack"] == "TESTEO"
+    assert c["precio"] == 300_000
 
 
 def test_resumen_costos(evento_masivo):
-    texto = resumen_costos(evento_masivo)
-    assert "COTIZACIÓN REFERENCIAL" in texto
-    assert "TOTAL REFERENCIAL" in texto
+    ev = {**evento_masivo, "pack": "COMPLETO"}
+    texto = resumen_costos(ev)
+    assert "COTIZACIÓN" in texto
+    assert "TOTAL" in texto
     assert "$" in texto
+    assert "Equipo en terreno" in texto
 
 
 def test_load_evento(tmp_path):

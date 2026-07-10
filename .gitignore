@@ -1,3 +1,6 @@
+# Notas personales/privadas (cuentas, planes financieros) -- nunca al repo
+context/*.local.md
+
 # Python
 __pycache__/
 *.py[cod]
@@ -150,3 +153,6 @@ airdrop_*_apply_log.txt
 node_modules/
 .npm/
 web/dist/
+
+# CSV personales de Azure (archivo del usuario, no del repo)
+sub-*-resource-providers-*.csv

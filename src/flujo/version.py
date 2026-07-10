@@ -1,8 +1,8 @@
 """Versión y changelog de flujo."""
 
-__version__ = "0.50.0"
+__version__ = "0.51.0"
 VERSION = __version__
-__version_info__ = (0, 50, 0)
+__version_info__ = (0, 51, 0)
 
 
 def get_version():
@@ -11,6 +11,38 @@ def get_version():
 
 def get_changelog():
     return {
+        "0.51.0": {
+            "titulo": "Checkpoint consolidado: flyer sin Photoshop + PACKS en Python + dossiers curados",
+            "fecha": "2026-07-10",
+            "highlights": [
+                "CONSOLIDACION: las ramas claude/blender-node-compositing (composicion "
+                "del flyer POR NODOS en RD.blend, sin Droplet de Photoshop; productoras "
+                "wire-in a flyer-auto; commit_ai) y claude/plano-packs-alignment "
+                "(src/flujo/plano/packs.py espejo de rdBrand.ts, costs.py a precio "
+                "plano de pack, export_propuesta_pdf y api_plano_render en "
+                "INFO/TESTEO/COMPLETO) mergeadas en un solo checkpoint; PRs #19/#20/#21 "
+                "cerrados, ramas borradas, queda solo main",
+                "eventos: blender_nodes.py compone FRAME2.png + flyer de productora con "
+                "fit-width + fade a negro + recolor por hue, idempotente sobre el grafo "
+                "guardado en RD.blend; flyer_auto.py usa nodos si hay RD.blend+FRAME2.png "
+                "(el camino Droplet queda de fallback); GPU OptiX forzado en memoria",
+                "productoras.py: identify() wired en flyer-auto (no fatal), PIL motor de "
+                "color y Gemini solo semantica, primera entrada curada "
+                "data/productoras/thegrid.json",
+                "plano: la deuda under/base/mainstream cerrada -- packs.py unica fuente "
+                "Python de PACKS RD (100k/300k/500k), proporciones siempre derivadas "
+                "precio*pct/100; 9 tests nuevos; PlanoTool.tsx manda pack directo al "
+                "backend (PACK_TO_BACKEND_PRESET eliminado)",
+                "cultura: dossiers tilde/psicosis/precursor curados (seccion 'del "
+                "dossier a la pieza/herramienta' al patron de tapiz.md) con spot-check "
+                "web real de las fuentes citadas (Gemini no trajo grounding; cada fuente "
+                "marcada VERIFICADA / NO ENCONTRADA / PARCIAL)",
+                "ops: gh CLI instalado y autenticado en la maquina del usuario; skills "
+                "nuevas teleport-sesion-web y verificar-antes-de-negar; "
+                "tools/vibo_voz/commit_ai.py genera mensajes de commit/PR via Gemini "
+                "(nunca commitea solo)",
+            ],
+        },
         "0.50.0": {
             "titulo": "Departamento Cultura + instrumento tapiz + medidor tilde",
             "fecha": "2026-07-10",

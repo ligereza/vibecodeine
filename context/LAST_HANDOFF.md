@@ -3,7 +3,7 @@
 
 handoff:
   date: 2026-07-10
-  version: 0.50.0            # debe coincidir con pyproject.toml / src/flujo/version.py
+  version: 0.51.0            # debe coincidir con pyproject.toml / src/flujo/version.py
   assistant: Cauce
   repo: https://github.com/ligereza/vibecodeine
   to: Claude (director)
@@ -20,6 +20,83 @@ handoff:
       - recibes pedidos ya comprimidos por el interprete, en YAML liviano
       - gastas cuota en dirigir + codigo critico, no en volumen
     canonical: ["CLAUDE.md (bloque 'Equipo multi-agente')"]
+
+  done_sesion_checkpoint_051:   # sesion 2026-07-10 noche (teleport -> checkpoint limpio v0.51.0)
+    - "TELEPORT verificado: sesion web claude.ai/code traida al CLI local con claude --teleport (skill .claude/skills/teleport-sesion-web/ nueva documenta el procedimiento; varios Claude web niegan que exista, es FALSO)."
+    - "gh CLI 2.96.0 instalado (winget) y autenticado reutilizando el token del Git Credential Manager (scope repo, keyring, nada en texto plano). Las proximas sesiones pueden abrir/mergear PRs directo."
+    - "CHECKPOINT CONSOLIDADO (pedido 'clean checkpoint, no extra branches, no unnecesary commits'): las 4 ramas vivas (claude/fable-director-orchestrator-uy4dw5 = PR #21, claude/blender-node-compositing = PR #19, claude/plano-packs-alignment = PR #20, claude/skill-verificar-info) mergeadas en un solo arbol, verificacion completa en verde, mergeado a main via PR #21, ramas borradas. Queda solo main."
+    - "AUDIT DE PENDIENTES (ultracode, 5 agentes Sonnet en paralelo contra el repo real): 2 de los 3 pendientes top ya estaban resueltos en ramas sin mergear (productoras wire-in en #19, deuda PACKS en #20) -- el hallazgo clave fue consolidar, no re-implementar. Restante accionable: curar dossiers (hecho abajo). Bloqueados con insumo externo: smoke con flyer real (falta imagen fixture en tests/), compositing Pillow (OBSOLETO: blender_nodes.py lo resolvio por nodos), .noisette real, branch protection (plan Free + repo privado: se activa al reabrir publico ~2026-07-24)."
+    - "DOSSIERS CURADOS (3 agentes Sonnet + WebSearch real): tilde/psicosis/precursor con seccion 'del dossier a la pieza/herramienta' al patron de tapiz.md + spot-check de fuentes: 15 claims verificados contra la web, 14 VERIFICADA 1 PARCIAL 0 inventadas (las advertencias 'fuentes sin verificar' actualizadas con el resultado real). Limites duros preservados verbatim y reforzados (psicosis: lecturas comparadas, jamas perfil de persona real; precursor: solo cultura/ley/estetica)."
+    - "Version 0.50.0 -> 0.51.0 (pyproject, version.py + changelog consolidado, package.json, badges AppShell/HubDashboard/PlanoTool/flujoApi, context/*.html regenerados via build:context)."
+    - ".gitignore: + sub-*-resource-providers-*.csv (CSV personal de Azure del usuario en la raiz; se queda en disco, nunca al repo)."
+    - "Worktrees limpiados al cerrar: ultracode-p0 (lock stale de pid muerto 6400) y el temporal del checkpoint."
+
+  done_sesion_blender:   # sesion 2026-07-10 tarde (NO PHOTOSHOP: composicion por nodos, rama claude/blender-node-compositing)
+    - "DROPLET DE PHOTOSHOP ELIMINADO del pipeline: src/flujo/eventos/blender_nodes.py NUEVO compone el flyer POR NODOS dentro de RD.blend (FRAME2.png + input + recolor por hue del color predominante). Validado end-to-end con URL real de IG (thegrid.club DaiuIYuvanV): descarga -> paleta -> update de nodos -> render OptiX 1080x1920. Confirmacion visual del usuario ('perfect')."
+    - "Modelo de composicion (decidido por el usuario en vivo): contenido ajusta al ANCHO de la ventana SIEMPRE (flyers de cualquier tamano); alto sobrante con FADE a negro (mascara math nodes, FADE=0.10); sin doble textura; emision de materiales NO se toca (ajuste manual del artista). Ventana del marco MEDIDA con PIL del FRAME2.png real: UV x 0.655486-0.944635 y 0.568441-0.961814 (bbox px 6488,378-9350,4272)."
+    - "3 errores reales cazados en la validacion en vivo (no repetir): (1) ShaderNodeMix 4.x duplica nombres A/B/Result en Float/Vector/Color -- elegir socket por nombre Y tipo; (2) RD.blend tiene DOS materiales con flyer_final.jpg (Material.002 emision pantalla + Material.008 cadena colgante), reconstruir solo el primero = pantalla negra; (3) 'is' entre nodos bpy NUNCA matchea (wrappers recreados) -- usar '=='."
+    - "PUENTE BLENDER nuevo (tools/blender/bridge_blender.py, patron del puente MYRA de Unreal): 1 linea pegada en la consola de Blender, timer vigila C:/rd/AUTOMATIZACION/bridge/, Claude deja request.py+request.id y recibe response.txt+heartbeat. Todo el debug/validacion fue en vivo con el usuario mirando el viewport. Nota: v1 congelo Blender; v2 (try/except total en tick + first_interval + install.txt) estable."
+    - "RD.blend AHORA CONTIENE el grafo guardado (crash al guardar, usuario recupero autosave y guardo). blender_nodes.py es IDEMPOTENTE por eso: si encuentra nodos etiquetados (CONTENIDO/MARCO/HUE EVENTO/FADE CONTENIDO/MARCO SOBRE CONTENIDO) solo actualiza imagen/mapping/hue; si no, construye. El datablock color_predominante.png del vidrio ('Decorative Glass 05') se repunta al MISMO png del evento."
+    - "flyer_auto.py: si existen RD.blend + FRAME2.png renderiza por nodos SIN droplet ni espera de 300s; camino legado intacto como fallback. pedir_a_gemini.py FIX: multi-key + fallback de modelos (gemini-2.5-flash hardcodeado murio 404; verificado en vivo)."
+    - "Rama claude/blender-node-compositing (base = director 0f9f847) pusheada; PR de 1 click: https://github.com/ligereza/vibecodeine/compare/claude/fable-director-orchestrator-uy4dw5...claude/blender-node-compositing . gh CLI NO instalado en esta maquina."
+    - "Preferencia del usuario registrada (memoria): respuestas en INGLES comprimido; lecturas pesadas + web research via Gemini (2 keys .env) antes de gastar Claude. Quota Gemini del dia agotada para search (429); lectura simple salia por flash-lite."
+    - "PRODUCTORAS: smoke test REAL PASO (ultracode 4 agentes, flyer thegrid KI/KI; era la primera accion pendiente). Verdicto imagen: Gemini NO reemplaza a PIL en colores (dominante errado d=288, paleta cuantizada) -- PIL motor de color, Gemini SOLO semantica (1 llamada/flyer). Wire-in a flyer_auto hecho (opcion B, no fatal), data/productoras/thegrid.json primera entrada curada (alias literal GRID), match() ahora tambien revisa other_text_visible (Gemini devuelve productora_name=null a veces -- 2 corridas reales distintas), _keys() con fallback .env leido a mano. Verificado vivo: matched=True slug=thegrid."
+    - "COMMIT_AI construido (roadmap paso 2): tools/vibo_voz/commit_ai.py genera Conventional Commit / descripcion PR desde diff staged via Gemini (scrub importado de pedir_a_gemini, multi-key, fallback modelos, NUNCA commitea solo). 5 tests offline. Dogfood real: genero su propio mensaje de commit en vivo. El hook pre-commit del repo BLOQUEO la key falsa del test de scrub (el hook funciona!); fix: key concatenada en el fixture, sin --no-verify."
+    - "Pendientes NO arrancados (necesitan input): gota_rd backend (decidir donde vive la data), tools/asistente_pedido y canva_data (SPEC de 1 linea, falta alcance), realism-dossier + tilde spec (roadmap paso 3, correr en la ventana Gemini de manana con quota fresca)."
+  done_sesion_plano_packs_alignment:   # sesion 2026-07-10 (deuda registrada: alinear Python a PACKS)
+    - "Cerrada la deuda anotada en done_sesion_packs (mas abajo): src/flujo/plano/costs.py,
+      scripts/export_propuesta_pdf.py y src/flujo/serve/server.py (api_plano_render) ya NO
+      usan el viejo modelo de presets por tamano de evento (under/base/mainstream,
+      src/flujo/eventos/presets.py). Ahora usan el modelo de PACKS RD (INFO/TESTEO/COMPLETO)
+      que ya era la fuente de verdad en web/src/rdBrand.ts."
+    - "NUEVO src/flujo/plano/packs.py: espejo Python 1:1 de PACKS (rdBrand.ts) -- mismos ids,
+      precio (100k/300k/500k), voluntarios (2/6/15), m2, stands, inclusiones, y las
+      proporciones 60/14/10/9/7 de Pack COMPLETO. precio es el UNICO valor absoluto; el
+      monto de cada proporcion se deriva SIEMPRE como precio*pct/100 (proporcion_monto),
+      nunca se guarda aparte -- misma regla anti-desincronizacion que proporcionMonto() en
+      rdBrand.ts. ev_desde_pack(pack_id, **overrides) arma el evento generico que ya
+      consumia engine.py (voluntarios/incluye_testeo/masivo derivados del pack; nombre/
+      duracion_horas/asistentes_estimados/layout_mode son del evento concreto, no del pack)."
+    - "src/flujo/plano/engine.py NO se toco: ya era generico (acepta cualquier evento dict
+      con voluntarios/incluye_testeo/masivo/duracion_horas), sin ninguna referencia a
+      under/base/mainstream. Ese diseno generico es correcto -- lo unico que faltaba era
+      un fabricante de evento basado en PACKS (packs.ev_desde_pack), no un cambio al motor."
+    - "src/flujo/plano/costs.py reescrito: calcular_costos(ev) ya NO calcula por formula
+      hora/voluntario (PRECIOS_REF eliminado); ahora lee ev['pack'] (o ev['preset'] legacy)
+      y devuelve precio plano del pack + desglose de proporciones (solo COMPLETO). Sin pack
+      explicito cae a DEFAULT_PACK='TESTEO' (mismo default que el estado inicial del
+      PlanoTool). resumen_costos(ev) reescrito acorde."
+    - "scripts/export_propuesta_pdf.py: TIERS under/base/mainstream -> PACK_IDS
+      INFO/TESTEO/COMPLETO; _html_tier() -> _html_pack(), usa ev_desde_pack() en vez de
+      apply_event_preset(); tabla de cotizacion del PDF ahora es precio del pack + desglose
+      de proporciones en vez de personal/mobiliario/infraestructura/extras. Probado
+      generando el HTML de los 3 packs (sin renderizar PDF real, Edge no disponible en este
+      contenedor)."
+    - "src/flujo/serve/server.py api_plano_render(): acepta evento['pack'] directo (o
+      evento['preset'] como alias legacy via normalize_pack_id, para no romper llamadas
+      viejas); ya no usa apply_event_preset/eventos.presets para este endpoint. Se
+      eliminaron del rider/costos los campos que solo existian en el preset viejo
+      (sillas/electricidad/luz -- packs.py no los modela). infer_event_preset/
+      list_event_presets/apply_event_preset en otros usos de server.py (chat, endpoint
+      /api/event-presets, cotizaciones_base.py) NO se tocaron -- es un concepto distinto
+      (tamano de evento) que sigue vigente para esas otras herramientas."
+    - "web/src/components/PlanoTool.tsx: loadFromBackend() ya NO mapea PackId ->
+      under/base/mainstream (PACK_TO_BACKEND_PRESET eliminado); manda pack: presetId
+      directo al backend. Cambio contenido: npm run typecheck OK, npm run build:context OK."
+    - "Tests: tests/test_plano_module.py actualizado (test_costos_* con pack en vez de
+      formula hora/voluntario); tests/test_plano_packs.py NUEVO (9 tests: precios/
+      voluntarios de los 3 packs, proporciones suman 100, proporcion_monto puramente
+      derivado, alias legacy under/base/mainstream, ev_desde_pack deriva flags operativos
+      correctos por pack)."
+    - "Callers de calcular_costos/resumen_costos revisados antes de cambiar el shape
+      (projects/cotizaciones/engine.py, scripts/export_propuesta_pdf.py, src/flujo/cli.py
+      flujo plano --costs, src/flujo/serve/server.py): todos siguen funcionando con el
+      default DEFAULT_PACK cuando el evento no trae pack explicito (ningun KeyError)."
+    - "Verificado: py -m compileall src/flujo scripts OK, py -m pytest tests/ -q OK (196
+      pass, 1 skip), py -m flujo verify OK (incluye hub smoke real), cd web && npm run
+      typecheck && npm run build:context OK (context/*.html regenerados, no editados a
+      mano)."
+
 
   done_sesion_director:   # sesion 2026-07-10 (Fase 0 inventario director + backlog unificado)
     - "docs/DIRECTOR_PLAN.md NUEVO (rama claude/fable-director-orchestrator-uy4dw5): documento unico del director -- backlog unificado (Tapiz STARTED en projects/tapiz/vibecode, dos implementaciones a reconciliar segun feedback.md; tilde/psicosis/Precursor TO-START greenfield confirmado por busqueda repo-wide; commit_ai.py NO existe como codigo, solo skills de prompt), mapa de arquitectura actual (intake triple: flujo intake + vibo_voz + desktop; gap: ninguno escribe en tools/vibo_voz/proyectos/ que el skill /go espera), postura de seguridad completa, hard limits descriptivo-vs-generativo, y roadmap de 3 pasos con fechas y criterios de aceptacion. Inventario hecho con 3 sub-agentes Explore en paralelo (src/flujo, tools/projects, seguridad) -- Claude solo consolido."
@@ -39,6 +116,13 @@ handoff:
     - "AZURE (decision de director, usuario tiene cuenta estudiante + Foundry): SOLO usar Foundry como proveedor de modelos via endpoint OpenAI-compatible (--proveedor azure en pedir_codigo.py, ~20 lineas, pendiente de endpoint+key del usuario). NO adoptar Foundry Agent Service / orquestacion multi-agente: seria repetir el error del airdrop (infra que pesa mas que el producto). gpt-4.1-mini como bulk writer primario cuando este; NIM baja a tercer fallback. Reglas de gasto Azure dadas al usuario: nada que facture por hora/mes (AI Search ~USD 75/mes dormido, fine-tuning hosting, PTU, compute); solo pago por token; budget alerts en USD 10/50."
     - "REVISION DE SEGURIDAD pedida por el usuario (bots drenan keys de repos publicos): repo ES PUBLICO (200 anonimo). Barrido de HEAD + HISTORIAL COMPLETO (git log --all -p, todas las ramas): CERO patrones de key real; la key pegada hoy NO esta en git (solo .env gitignored + historial del chat). Hook pre-commit ahora BLOQUEA diffs staged con formato de key real (probado con key falsa: bloqueado; hook ejecutable; activar en cada clon con git config core.hooksPath .githooks)."
     - "PLAN POST-CLAUDE-MAX (usuario, 2026-07-10): en ~2 semanas termina Claude Max -> stack gratis (Gemini API + GitHub Models + Azure USD 100). REPO PASA A PRIVADO AHORA (lo hace el usuario desde su PC; el repo nacio publico por requisito de arena.ai) y REABRE publico en ~2 semanas con la checklist de reapertura (ver SESSION_STATE next). Investigado: GitHub Student Pack da +USD 100 Azure y USD 200 DigitalOcean con correo PUC/UMCE (Copilot Student pauso inscripciones abril 2026); Google AI Pro gratis para estudiantes Chile expiro dic 2025 -- no hay API gratis nueva, el free tier de Gemini sigue siendo la base."
+    - "AZURE, detalle privado: context/AZURE_STUDENT_PLAN.local.md (gitignored, no sincroniza a otros lugares) tiene el detalle completo -- tiers F0 siempre-gratis (Translator/Speech/Vision/DocIntel con numeros reales), VM gratis 750h/mes (decidido NO crearla, ver Blender abajo), y las 2 promos de estudiante ya chequeadas. Leerlo antes de retomar el tema, no re-investigar."
+    - "BLENDER + GPU (sesion desktop, C:\\IA\\flujo): blender_gpu.py nuevo (force_gpu(), no destructivo, fuerza OptiX/CUDA en memoria via --python antes de renderizar, nunca toca el .blend guardado) wired en flyer_auto.py::_render_blender_frame() y en blender_render.py. RTX 4070 Laptop detectada. tools/blender/inspect_blend.py nuevo: inspector headless de materiales/nodos/UV de un .blend, MISMO PRINCIPIO que el hard-stop de .noisette (no adivinar schema, leer el archivo real)."
+    - "DROPLET DE PHOTOSHOP, reconocimiento real (no mas adivinar): corrido inspect_blend.py contra RD.blend real -> Cycles, 1080x1920, flyer_final.jpg es 11925x11926px pero usado por UN SOLO mesh (Tablet.002/material Material.008) con UV~0-1 -- descarta cualquier logica de 'region de atlas' en Blender. Vistas directas (Read tool, imagen real) de FRAME2.png (borde verde, ventana blanca vacia) vs flyer_final.jpg (mismo borde recoloreado cian + contenido YA diseñado, tipografia y efectos incluidos) confirmaron con el usuario: input_ig.jpg lo entregan las PRODUCTORAS ya como flyer terminado -- el Droplet remanente solo hace fade-mask compositing (no escalar/distorsionar) + recolor del frame segun color extraido. NO hace falta psd-tools ni leer historia.psd. Falta construir el compositing en Pillow (no empezado)."
+    - "PRODUCTORAS.PY nuevo (src/flujo/eventos/productoras.py): Gemini vision (responseSchema JSON) extrae productora/logo/venue de un flyer; matching contra data/productoras/*.json (creado, vacio); NUNCA auto-crea, needs_confirmation=True si no matchea. Decision confirmada con el usuario: wire-in a flyer_auto.py (opcion B, no solo log manual). SIN TEST EXITOSO: el primer intento (nebula.png) murio en 429 (quota per-minuto agotada por el volumen de llamadas Gemini de hoy), y despues el usuario reordeno las keys de .env el mismo -- no se reintento. PRIMERA ACCION de la proxima sesion: correr el smoke test antes de wire-in real."
+    - "INCIDENTE 2.txt + rotacion de keys (cronologia): usuario peg0 2 keys nuevas (prefijo AQ., formato atipico pero YA CONFIRMADO real via ListModels -- no volver a dudar del prefijo) en un archivo 2.txt suelto en la raiz (nunca gitignored ni trackeado). Verificadas con curl ANTES de usarlas (no se asumio validez). Se detecto que la key AIzaSy... vieja (la que quedo expuesta en chat hace varias sesiones) seguia siendo la PRIMARY pese a que el usuario dijo haberla rotado -- verificado con curl: HTTP 400 = confirmado que la rotacion SI funciono, solo faltaba wire-in de la reemplazante, no era una falla de rotacion. 2.txt borrado tras extraer valores. Despues el usuario agrego una 3ra key personal y reordeno .env EL MISMO (edicion directa) -- verificacion posterior via ListModels (sin generateContent, para no gastar quota): 2 keys vivas con catalogo 2.x+3.x completo, 1 con HTTP 401 (probable proyecto GCP borrado en su 'limpieza'; el usuario dijo que la revisaria el mismo en otra sesion, no re-investigar). Root .env y tools/vibo_voz/.env reordenados: vivas primero."
+    - "INCIDENTE CPU: un find recursivo sobre TODO el filesystem (buscando RD.blend/blender.exe) quedo corriendo en background y disparo el CPU del usuario. TaskStop no basto (Git Bash habia desacoplado el proceso OS) -- matado por PID directo (kill -9). Verificado con Get-Process que no quedaba nada mas corriendo. LECCION: nunca mas find recursivo sobre / completo; usar rutas acotadas."
+    - "LIMPIEZA de cierre: rd_inspect_full.log y gpu_smoke.log (debug output) borrados, nunca trackeados. tools_inspect_rd_blend.py (raiz) movido a tools/blender/inspect_blend.py (home permanente, herramienta real reutilizable). CSV de Azure resource providers (sub-3ff58c1c...) es archivo personal del usuario, no tocado. .gitignore: + context/*.local.md (notas privadas, nunca al repo)."
 
   done_sesion_proxy:   # sesion 2026-07-09 (Gemini-to-Claude: intento web descartado, app desktop real)
     - "Primer intento: gemini-to-claude-proxy/ (app web Node/Express+Vite, scaffold de AI Studio). Instalada, bug de dotenv corregido, verificada end-to-end con llamadas reales a Gemini API. El USUARIO la borro despues: no queria UI web, queria una ventana flotante nativa (correccion: 'gemini penso que queria web ui pero quiero una floating app'). Carpeta eliminada del disco, sin rastro en git (nunca se habia commiteado)."
@@ -134,7 +218,7 @@ handoff:
       - probar bridges Photoshop/After Effects en apps reales [pospuesto]
       - "[DESCARTADO 2026-07-08] Aider: desinstalado (bugs Windows + free tier roulette); reemplazo pedir_codigo.py"
       - "[HECHO 2026-07-09] fix/unfinished-tools-4 mergeado via claude/refine-local-plan-adgdga; todo llego a main (PR #17 mergeado). Ramas remotas obsoletas borradas en la sesion de housekeeping git."
-      - "deuda: src/flujo/plano/{engine,costs}.py y scripts/export_propuesta_pdf.py siguen en el modelo under/base/mainstream; no se alinearon al modelo de PACKS 100k/300k/500k (fuera de alcance, solo se pidio la app)."
+      - "[HECHO 2026-07-10] deuda cerrada: src/flujo/plano/costs.py y scripts/export_propuesta_pdf.py alineados al modelo de PACKS 100k/300k/500k (ver done_sesion_plano_packs_alignment arriba). engine.py no necesito cambios: ya era generico."
       - "gota_rd backend [diferido]: decidir donde vive la data de reactivos antes de servir endpoint"
       - "tools/asistente_pedido y tools/canva_data: SPECs de una linea, pedir alcance antes de codear"
       - "test end-to-end Droplet+Blender en la maquina de render (repo compila, falta correr real)"

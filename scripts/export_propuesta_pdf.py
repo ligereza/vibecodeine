@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Exporta una propuesta RD en PDF por tier de evento (under/base/mainstream).
+"""Exporta una propuesta RD en PDF por pack de servicio (INFO/TESTEO/COMPLETO).
 
 Cada PDF junta: brief institucional (texto exacto de la propuesta) + datos del
 evento + plano SVG del stand + rider (necesidades logicas) + cotizacion, con
 tablas alineadas. Vectorial via Edge headless (mismo motor que tools/svg/svg_to_pdf.py).
 
 Uso:
-    py scripts/export_propuesta_pdf.py                 # 3 tiers x 2 temas = 6 PDFs
-    py scripts/export_propuesta_pdf.py under base       # subconjunto de tiers
-    py scripts/export_propuesta_pdf.py dark             # solo un tema
-    py scripts/export_propuesta_pdf.py --out C:/ruta    # carpeta de salida
+    py scripts/export_propuesta_pdf.py                    # 3 packs x 2 temas = 6 PDFs
+    py scripts/export_propuesta_pdf.py INFO TESTEO         # subconjunto de packs
+    py scripts/export_propuesta_pdf.py dark                # solo un tema
+    py scripts/export_propuesta_pdf.py --out C:/ruta       # carpeta de salida
 """
 from __future__ import annotations
 
@@ -22,9 +22,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from flujo.eventos.presets import apply_event_preset  # noqa: E402
 from flujo.plano.costs import calcular_costos  # noqa: E402
 from flujo.plano.engine import reglas_rider, render_svg, validate_evento  # noqa: E402
+from flujo.plano.packs import ALL_PACKS, ev_desde_pack  # noqa: E402
 
 _REPO = Path(__file__).resolve().parents[1]
 _BRIEF_TXT = _REPO / "datadrops" / "Propuesta_Reduciendo_Dano.txt"
@@ -33,7 +33,7 @@ _EDGE_CANDS = [
     r"C:/Program Files/Microsoft/Edge/Application/msedge.exe",
 ]
 
-TIERS = ["under", "base", "mainstream"]
+PACK_IDS = ALL_PACKS
 
 
 def _edge() -> str:
@@ -114,13 +114,10 @@ def _masthead(tema: dict, nombre: str) -> str:
 </div>"""
 
 
-def _html_tier(tier: str, brief: dict[str, str], tema_id: str = "dark") -> str:
-    ev = apply_event_preset({"preset": tier})
-    ev.setdefault("layout_mode", "grid_2x")
-    nombre = str(ev.get("preset_label", tier.upper()))
-    dur = float(ev.get("duracion_horas", 0) or 0)
+def _html_pack(pack_id: str, brief: dict[str, str], tema_id: str = "dark") -> str:
+    ev = ev_desde_pack(pack_id, layout_mode="grid_2x")
+    nombre = str(ev.get("pack_label", pack_id))
     vol = int(ev.get("voluntarios", 0) or 0)
-    asis = int(ev.get("asistentes_estimados", 0) or 0)
     testeo = bool(ev.get("incluye_testeo", False))
 
     t = TEMAS_DOC.get(tema_id, TEMAS_DOC["dark"])
@@ -130,21 +127,21 @@ def _html_tier(tier: str, brief: dict[str, str], tema_id: str = "dark") -> str:
     val = validate_evento(ev)
 
     datos = "".join([
-        _fila("Preset", nombre),
-        _fila("Duracion", f"{dur:g} h"),
+        _fila("Pack", nombre),
+        _fila("Precio", _clp(costos["precio"])),
         _fila("Voluntarios", str(vol)),
-        _fila("Asistentes estimados", f"~{asis}"),
+        _fila("Superficie", f"{costos['m2']} m² · {costos['stands']} stand(s)"),
         _fila("Incluye testeo", "Si" if testeo else "No"),
         _fila("Layout", str(ev.get("layout_mode"))),
     ])
     rider_rows = "".join(f"<li>{escape(r)}</li>" for r in reqs)
-    costos_rows = "".join([
-        _fila("Personal", _clp(costos["personal"]), num=True),
-        _fila("Alimentacion / colacion", _clp(costos["alimentacion"]), num=True),
-        _fila(f"Mobiliario ({costos['detalle']['mesas']} mesas)", _clp(costos["mobiliario"]), num=True),
-        _fila(f"Infraestructura ({costos['detalle']['stands']} stands)", _clp(costos["infraestructura"]), num=True),
-        _fila("Extras (testeo / contencion)", _clp(costos["extras"]), num=True),
-    ])
+    if costos["desglose"]:
+        costos_rows = "".join(
+            _fila(f"{item['label']} ({item['pct']}%)", _clp(item["monto"]), num=True)
+            for item in costos["desglose"]
+        )
+    else:
+        costos_rows = _fila(nombre, _clp(costos["precio"]), num=True)
     val_html = ""
     if val["warnings"]:
         val_html = "<p class='warn'>Advertencias: " + "; ".join(escape(w) for w in val["warnings"]) + "</p>"
@@ -193,10 +190,10 @@ td.num {{ text-align:right; font-variant-numeric:tabular-nums; }}
 <h2>5. Rider &mdash; Necesidades Operativas</h2>
 <ul class="reqs">{rider_rows}</ul>
 
-<h2>6. Cotizacion Referencial</h2>
+<h2>6. Cotizacion</h2>
 <table>{costos_rows}</table>
-<p class="total">TOTAL REFERENCIAL: {_clp(costos['total'])}</p>
-<p class="warn">Valores referenciales; ajustables por evento (ev["precios"]).</p>
+<p class="total">TOTAL: {_clp(costos['total'])}</p>
+<p class="warn">Precio plano por pack de servicio RD (no por hora/voluntario).</p>
 
 <p class="foot">Generado por flujo.plano (motor unico). Fines preventivos, educativos y de reduccion de riesgos. Reduciendo Dano Chile.</p>
 </body></html>"""
@@ -222,7 +219,7 @@ def main() -> None:
         i = args.index("--out")
         out_dir = Path(args[i + 1])
         del args[i:i + 2]
-    tiers = [a for a in args if a in TIERS] or TIERS
+    packs = [a.upper() for a in args if a.upper() in PACK_IDS] or PACK_IDS
     out_dir.mkdir(parents=True, exist_ok=True)
 
     brief = _brief_secciones()
@@ -231,11 +228,11 @@ def main() -> None:
 
     temas = [a for a in args if a in TEMAS_DOC] or list(TEMAS_DOC)
     ok = 0
-    total = len(tiers) * len(temas)
+    total = len(packs) * len(temas)
     for tema in temas:
-        for tier in tiers:
-            out_pdf = out_dir / f"propuesta_{tier}_{tema}.pdf"
-            if _render_pdf(_html_tier(tier, brief, tema), out_pdf):
+        for pack_id in packs:
+            out_pdf = out_dir / f"propuesta_{pack_id.lower()}_{tema}.pdf"
+            if _render_pdf(_html_pack(pack_id, brief, tema), out_pdf):
                 print(f"OK  {out_pdf}")
                 ok += 1
             else:
