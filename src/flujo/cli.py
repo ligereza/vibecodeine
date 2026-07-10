@@ -1253,6 +1253,14 @@ def eventos_flyer_auto(
     console.print(f"  droplet started: [bold]{'yes' if res.droplet_started else 'no'}[/]")
     console.print(f"  blender opened:  [bold]{'yes' if res.blender_started else 'no'}[/]")
     console.print(f"  blender render:  [bold]{'yes' if res.blender_rendered else 'no'}[/]")
+    if res.productora:
+        if res.productora.get("matched"):
+            nombre = res.productora.get("productora", {}).get("name", res.productora.get("slug"))
+            console.print(f"  productora:      [green]{nombre}[/] (match en data/productoras)")
+        else:
+            extraida = (res.productora.get("extracted") or {}).get("productora_name")
+            console.print(f"  productora:      [yellow]{extraida or 'desconocida'}[/] "
+                          "(sin match; confirmar antes de crear entrada)")
     if not (res.droplet_started or res.blender_started or res.blender_rendered):
         console.print("\nNext examples:")
         console.print(f"  py -m flujo eventos flyer-auto \"{url}\" --run-droplet")

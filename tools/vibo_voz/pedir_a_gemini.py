@@ -9,8 +9,10 @@ Uso:
     py pedir_a_gemini.py "que quiero saber" ruta1 [ruta2 ...]
     py pedir_a_gemini.py "resume el area de suplementos" svg/suplementos_rd
 
-Requiere GEMINI_API_KEY en tools/vibo_voz/.env. Modelo: GEMINI_TEXT_MODEL
-(default gemini-2.5-flash, barato).
+Requiere GEMINI_API_KEY en tools/vibo_voz/.env (keys extra opcionales:
+GEMINI_API_KEY_2, _3, ...). Modelos: GEMINI_TEXT_MODEL (si esta seteado) y
+despues la cadena de fallback (los modelos disponibles VARIAN POR KEY; no
+asumir uno fijo -- leccion 2026-07-10, gemini-2.5-flash murio para keys nuevas).
 """
 from __future__ import annotations
 
@@ -28,7 +30,9 @@ except Exception:  # noqa: BLE001
 from google import genai
 
 _REPO = Path(__file__).resolve().parents[2]
-_MODEL = os.environ.get("GEMINI_TEXT_MODEL", "gemini-2.5-flash")
+# Cadena de fallback (misma que desktop/gemini_client.py); GEMINI_TEXT_MODEL va primero.
+_MODELOS_FALLBACK = ["gemini-flash-latest", "gemini-2.0-flash", "gemini-3.1-flash-lite"]
+_MODELOS = ([os.environ["GEMINI_TEXT_MODEL"]] if os.environ.get("GEMINI_TEXT_MODEL") else []) + _MODELOS_FALLBACK
 _MAX_CHARS = 180_000          # tope de material que le pasamos a Gemini
 _MAX_FILES = 200              # tope de archivos (no mandar el repo entero a la nube)
 _SENSIBLES = ("id_rsa", ".pem", ".key", ".p12", "credential", "secret", "token", ".env")
@@ -95,10 +99,11 @@ def main():
     print("[aviso] el contenido de esas rutas se envia a Gemini (Google). Evita areas "
           "sensibles; los secretos detectados se redactan.", file=sys.stderr)
 
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
+    # Multi-key: GEMINI_API_KEY + GEMINI_API_KEY_2, _3, ... (mismo esquema que desktop/).
+    keys = [k for k in [os.environ.get("GEMINI_API_KEY")]
+            + [os.environ.get(f"GEMINI_API_KEY_{i}") for i in range(2, 10)] if k]
+    if not keys:
         sys.exit("Falta GEMINI_API_KEY en el .env.")
-    client = genai.Client(api_key=api_key)
 
     prompt = (
         "Eres un operador que prepara contexto para otro agente. Lee el material y "
@@ -106,8 +111,18 @@ def main():
         "datos concretos). No inventes; si algo no esta, dilo.\n\n"
         f"CONSULTA: {consulta}\n\nMATERIAL:\n{material}"
     )
-    resp = client.models.generate_content(model=_MODEL, contents=prompt)
-    print(resp.text)
+    for i, api_key in enumerate(keys, start=1):
+        client = genai.Client(api_key=api_key)
+        for modelo in _MODELOS:
+            try:
+                resp = client.models.generate_content(model=modelo, contents=prompt)
+            except Exception as exc:  # noqa: BLE001 -- 404 modelo muerto, 429 quota, etc.
+                print(f"[fallback] key{i} ({api_key[:6]}...) x {modelo}: "
+                      f"{type(exc).__name__}", file=sys.stderr)
+                continue
+            print(resp.text)
+            return
+    sys.exit("Todas las keys x modelos fallaron (quota agotada o modelos no disponibles).")
 
 
 if __name__ == "__main__":
