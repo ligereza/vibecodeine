@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import shutil
@@ -20,6 +21,8 @@ ENTITY_DIRS = {
     "logos": "logos",
     "event": "events",
     "events": "events",
+    "dossier": "dossiers",
+    "dossiers": "dossiers",
 }
 
 
@@ -50,7 +53,11 @@ def load_entity(entity: str, item_id: str) -> dict[str, Any]:
     if not p.exists():
         raise FileNotFoundError(str(p))
     data = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
-    data["_path"] = str(p.relative_to(repo_root())).replace("\\", "/")
+    try:
+        data["_path"] = str(p.relative_to(repo_root())).replace("\\", "/")
+    except ValueError:
+        # Store fuera del repo (tests con root temporal): ruta absoluta
+        data["_path"] = str(p).replace("\\", "/")
     return data
 
 
@@ -60,6 +67,88 @@ def save_entity(entity: str, item_id: str, data: dict[str, Any]) -> Path:
     p = d / f"{slugify(item_id)}.yaml"
     p.write_text(yaml.safe_dump(data, allow_unicode=True, sort_keys=False), encoding="utf-8")
     return p
+
+
+def dossier_source_dir() -> Path:
+    """Carpeta curada de dossiers culturales (fuente de verdad, versionada)."""
+    return repo_root() / "projects" / "cultura" / "dossiers"
+
+
+def _dossier_status(lines: list[str]) -> str:
+    """Extrae el parrafo 'Status:' de un dossier (puede ocupar varias lineas)."""
+    for i, line in enumerate(lines):
+        if line.startswith("Status:"):
+            parts = [line[len("Status:"):].strip()]
+            for nxt in lines[i + 1:]:
+                if not nxt.strip():
+                    break
+                parts.append(nxt.strip())
+            return " ".join(p for p in parts if p)
+    return "unknown"
+
+
+def build_dossier_index(path: str | Path) -> dict[str, Any]:
+    """Construye el registro-indice de un dossier .md.
+
+    Solo metadata + referencia por ruta: el cuerpo del dossier NO se copia al
+    store (el .md curado en projects/cultura/dossiers es la fuente de verdad;
+    el indice es el mapa, no el territorio).
+    """
+    p = Path(path)
+    if not p.exists():
+        raise FileNotFoundError(str(p))
+    text = p.read_text(encoding="utf-8")
+    lines = text.splitlines()
+    title = next((l[2:].strip() for l in lines if l.startswith("# ")), p.stem)
+    subject = title
+    if ":" in title and title.lower().startswith("dossier"):
+        subject = title.split(":", 1)[1].strip()
+    try:
+        source_path = p.resolve().relative_to(repo_root().resolve()).as_posix()
+    except ValueError:
+        source_path = str(p)
+    return {
+        "id": slugify(p.stem),
+        "kind": "dossier",
+        "project": slugify(p.stem),
+        "title": title,
+        "subject": subject,
+        "status": _dossier_status(lines),
+        "sections": [l[3:].strip() for l in lines if l.startswith("## ")],
+        "hard_limit": "HARD LIMIT" in text,
+        "source_path": source_path,
+        "content_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+    }
+
+
+def ingest_dossiers(source_dir: str | Path | None = None) -> list[Path]:
+    """Indexa los dossiers curados en knowledge/dossiers/. Idempotente.
+
+    Re-ejecutable: si el .md fuente no cambio (hash igual), el YAML existente
+    queda intacto (conserva ingested_at y bytes). Si cambio, se reindexa con
+    fecha nueva. Nunca copia el contenido del dossier, solo metadata + ruta.
+    """
+    src = Path(source_dir) if source_dir else dossier_source_dir()
+    if not src.is_dir():
+        raise FileNotFoundError(str(src))
+    written: list[Path] = []
+    for md in sorted(src.glob("*.md")):
+        data = build_dossier_index(md)
+        existing: dict[str, Any] | None
+        try:
+            existing = load_entity("dossiers", data["id"])
+            existing.pop("_path", None)
+        except FileNotFoundError:
+            existing = None
+        prev_ts = None
+        if existing and existing.get("content_sha256") == data["content_sha256"]:
+            prev_ts = existing.get("ingested_at")
+        data["ingested_at"] = prev_ts or datetime.now().isoformat(timespec="seconds")
+        if existing == data:
+            written.append(entity_dir("dossiers") / f"{data['id']}.yaml")
+            continue
+        written.append(save_entity("dossiers", data["id"], data))
+    return written
 
 
 def classify_event_text(text: str) -> dict[str, Any]:
