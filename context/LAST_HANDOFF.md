@@ -2,7 +2,7 @@
 # Lo continua Claude (director) para cerrar pendientes y arrancar el flujo.
 
 handoff:
-  date: 2026-07-10
+  date: 2026-07-11
   version: 0.51.0            # debe coincidir con pyproject.toml / src/flujo/version.py
   assistant: Cauce
   repo: https://github.com/ligereza/vibecodeine
@@ -21,11 +21,20 @@ handoff:
       - gastas cuota en dirigir + codigo critico, no en volumen
     canonical: ["CLAUDE.md (bloque 'Equipo multi-agente')"]
 
-  proxima_sesion_arranca_aqui:   # handoff comprimido (2026-07-11 cierre)
+  proxima_sesion_arranca_aqui:   # handoff comprimido (2026-07-11 cierre web)
     rol: "Director de Arte -- asumir INSTANTANEO leyendo .claude/skills/director-de-arte/SKILL.md (marco de ingenieria estetica: tapiz=mutacion algoritmica, tilde=esteganografia de datos, psicosis=entropia de registro, precursor=mutacion combinatoria de nombre, basurero/fungi=entropia de archivos; repo=interfaz biocibernetica que digiere y excreta piezas)"
-    vivo: "REPO PUBLICO (decision del usuario 2026-07-11, para agentes Arena web). 3 PRs draft apilados esperando merge EN ORDEN: #27 (--live telemetry) -> #28 (CLAUDE.md equipo: Gemini PARKED, Sonnet subagentes) -> #29 (expansion tapiz completa, rama feat/tapiz-expansion). Sitio ligereza.github.io/portfolio-auto vivo. 5 artifacts web publicados (demo calm/stress/live, 3D, telar, cauce, sala 3D zootropo)."
+    vivo: "REPO PUBLICO (decision del usuario 2026-07-11, para agentes Arena web). 4 PRs draft apilados esperando merge EN ORDEN: #27 (--live telemetry) -> #28 (CLAUDE.md equipo: Gemini PARKED, Sonnet subagentes) -> #29 (expansion tapiz completa) -> #30 (sala 3D v2, TERMINADO en rama claude/resume-work-87gk7t: ala este + 5 piezas + hangArt por normal + mejoras de espacio, 345 tests verdes). Sitio ligereza.github.io/portfolio-auto vivo."
     limites_innegociables: "README terminado (no tocar); psicosis jamas perfila personas reales; precursor sin nada operativo; .noisette sin re-adivinar (pedir archivo real); airdrop queda como esta; corpus tilde jamas al repo ni texto crudo al SVG"
-    siguiente_natural: "USUARIO urgente (repo YA publico): branch protection en main + secret ANTHROPIC_API_KEY; merge PRs 27->28->29; pegar bloque gh issue close #1-#6 y #14. Claude despues: obras reales en works.json del sitio (5 placeholders Unsplash); corpus tilde real para sobrevivencia-01; pase estetico WO-3 Arena."
+    siguiente_natural: "USUARIO urgente (repo YA publico): branch protection en main + secret ANTHROPIC_API_KEY; merge PRs 27->28->29->#30 (o autorizar a Claude a mergearlos). Republicar artifact sala 3D af6411d3 desde tools/dist/sala3d.html (node tools/sala3d/build.js; el publish quedo bloqueado por un clasificador de la sesion web 2026-07-11, no por el contenido -- verificado sin secretos, los matches password/secrets son el denylist tejido como arte). Despues: obras reales en works.json del sitio (5 placeholders Unsplash); corpus tilde real para sobrevivencia-01; pase estetico WO-3 Arena."
+
+  done_sesion_sala3d_v2:   # sesion 2026-07-11 web (continuacion PR #30; rama claude/resume-work-87gk7t sobre feat/sala3d-v2)
+    - "CONTEXTO: el PC del usuario se apago a mitad de sala 3D v2 y el teleport a web no salio; esta sesion web retomo desde el plan del PR #30. Rama claude/resume-work-87gk7t = feat/sala3d-v2 + f524e75."
+    - "ALA ESTE construida (f524e75): 5 template tags nuevos (art-field2/border2/mihrab2/medallion2/cauce2), ala perpendicular desde la rotonda (muros z=ROT_Z+-550, x 900..4200, muro final x=4200), 5 piezas colgadas en las coordenadas del plan, citas reutilizadas del mapa CITA (cero copy inventado), hangArt generalizado por normal (nx,nz) con rotulos compatibles, waypoints insertados despues del indice 6 (check current===6 intacto), cullFar ahora culla en x Y z."
+    - "Mejoras de espacio (todas respetando REDUCED): reflejo radial additive bajo cada pieza, ~300 particulas de polvo THREE.Points, sway de runners sin*0.006, pulso del anillo ambar en estrobo, rail de progreso en HUD."
+    - "FIX build.js necesario: cauce_sala3d.svg teje build.js y contiene __ART_*__ literales como texto de la obra; el reemplazo de tokens ahora es de UNA pasada (el contenido inyectado no se re-escanea) + verificacion de tokens consumidos. Build OK: 1805040 bytes, 10 svgs inline, 0 placeholders reales sin llenar."
+    - "VERIFICACION: py -m pytest tests/ -q = 345 passed 1 skipped (la suite crecio con el stack apilado); compileall OK; flujo verify OK (hub smoke 0.51.0); web typecheck + build:context OK."
+    - "DUPLICADO PR #25 confirmado por analisis independiente: tools/ecosystem_engine/ era el draft (sin tests, contrato data_veins incompatible con el renderer); PR #29 ya lo habia borrado y portado los extras -- el analisis valido la decision, no hubo que tocar nada."
+    - "ARTIFACT sala 3D: republish a af6411d3 BLOQUEADO por el clasificador de permisos de la sesion (cita contenido previo de la conversacion, no el archivo); el HTML construido esta verificado limpio (matches de password/secrets = denylist de telemetria tejido como arte en cauce_sala3d.svg). Republicar desde otra sesion o el usuario desde tools/dist/sala3d.html."
 
   done_sesion_tapiz_expansion:   # sesion 2026-07-11 (expansion ecosistema + cultura, rama feat/tapiz-expansion = PR #29)
     - "ISSUE #14 [EVENTOS] procesado end-to-end con render Blender REAL (C:/rd/AUTOMATIZACION/render_output.png, aprobado por el usuario); triage de issues de prueba #1-#6 (el usuario cierra #1/#2 a mano; bloque gh issue close listo para pegar). Diagnostico aparte: crash de Blender 5.1 del usuario = falla GPU nvlddmkm evento 153 + historial TDR 0x116; rescate en Desktop/RESCATE_sesion_blender_2314.blend; recomendado DDU + reinstalar driver."
