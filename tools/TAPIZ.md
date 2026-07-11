@@ -79,9 +79,12 @@ cortos de git. Nunca: `.env*`, keys/secrets/tokens, `*.local.md`, contenido de
   fetch de `dist/system_status.json`; falta solo embeberla en el hub web).
 - Autorretrato continuo: `py tools/tapiz_live_loop.py --interval 300`.
 
-## Puentes pendientes
+## Puentes construidos (2026-07-11, segunda tanda)
 
-- Embed de tapiz_three.html como panel del hub web (workspace Cultura).
-- Modos telar del instrumento vibecode (field/border/medallion/mihrab) ya
-  existen en `projects/tapiz/vibecode/loom.py` -- generar piezas curadas
-  para el portfolio con ellos.
+- Embed de tapiz_three.html en el hub web (workspace Cultura, seccion
+  "Ecosistema 3D": iframe lazy + comandos + fallback http.server).
+- Piezas curadas del telar y cauce en `projects/tapiz/piezas_curadas/`
+  (5 SVG generados con el instrumento real; entrada propia en
+  `tools/portfolio/proyectos.json`).
+- Primera pieza tilde: `py projects/tilde/sobrevivencia.py corpus.jsonl`
+  (render target sobrevivencia-01 segun `projects/tilde/SPEC.md`).
