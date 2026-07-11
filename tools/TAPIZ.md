@@ -14,6 +14,9 @@ en el documento, codificados, hasta que alguien los exhuma con un click).
 | `tools/system_map.py` | Contrato (`API_CONTRACT_SCHEMA`) + validador estructural del JSON + directivas de render |
 | `tools/tapiz_renderer.html` | Frontend: consume el JSON y lo vuelve visual (mesh, mascara, tears, esporas, sigil) |
 | `tools/tapiz_telemetry.py` | (modo live) construye el ecosistema desde el estado REAL del repo |
+| `tools/tapiz_three.html` | Frontend 3D (Three.js r160 via CDN): mismo contrato, grilla instanciada, fog por mascara, esporas raycasteables |
+| `tools/tapiz_live_loop.py` | Daemon del autorretrato: corre --live en loop (`--interval`, `--once`), nunca muere por un tick malo |
+| `tools/TAPIZ_RESOLUME_SPEC.md` | Spec de mapping OSC para Resolume Arena 7 (campo -> direccion -> rango -> curva), para operador VJ |
 | `tests/test_compete_engine.py` | Tests del engine y sus modos |
 
 ## Uso
@@ -68,8 +71,20 @@ cortos de git. Nunca: `.env*`, keys/secrets/tokens, `*.local.md`, contenido de
 `datadrops/` (nombres y tamanos OK). La lista de exclusion vive en
 `tools/tapiz_telemetry.py` y tiene test propio.
 
-## Puentes pendientes
+## Puentes construidos (2026-07-11)
 
-- Renderer Resolume/VJ sobre el mismo contrato (nucleo noisette/timecode).
-- Tapiz real como escena Three.js en el hub, junto al SVG Studio.
-- Poll del modo live como daemon (cron) para autorretrato continuo.
+- Renderer Resolume/VJ: spec OSC completa en `tools/TAPIZ_RESOLUME_SPEC.md`
+  (implementacion en Resolume = trabajo de operador, la spec basta).
+- Escena Three.js: `tools/tapiz_three.html` (mismo contrato, file-picker +
+  fetch de `dist/system_status.json`; falta solo embeberla en el hub web).
+- Autorretrato continuo: `py tools/tapiz_live_loop.py --interval 300`.
+
+## Puentes construidos (2026-07-11, segunda tanda)
+
+- Embed de tapiz_three.html en el hub web (workspace Cultura, seccion
+  "Ecosistema 3D": iframe lazy + comandos + fallback http.server).
+- Piezas curadas del telar y cauce en `projects/tapiz/piezas_curadas/`
+  (5 SVG generados con el instrumento real; entrada propia en
+  `tools/portfolio/proyectos.json`).
+- Primera pieza tilde: `py projects/tilde/sobrevivencia.py corpus.jsonl`
+  (render target sobrevivencia-01 segun `projects/tilde/SPEC.md`).
