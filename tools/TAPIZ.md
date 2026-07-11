@@ -14,6 +14,9 @@ en el documento, codificados, hasta que alguien los exhuma con un click).
 | `tools/system_map.py` | Contrato (`API_CONTRACT_SCHEMA`) + validador estructural del JSON + directivas de render |
 | `tools/tapiz_renderer.html` | Frontend: consume el JSON y lo vuelve visual (mesh, mascara, tears, esporas, sigil) |
 | `tools/tapiz_telemetry.py` | (modo live) construye el ecosistema desde el estado REAL del repo |
+| `tools/tapiz_three.html` | Frontend 3D (Three.js r160 via CDN): mismo contrato, grilla instanciada, fog por mascara, esporas raycasteables |
+| `tools/tapiz_live_loop.py` | Daemon del autorretrato: corre --live en loop (`--interval`, `--once`), nunca muere por un tick malo |
+| `tools/TAPIZ_RESOLUME_SPEC.md` | Spec de mapping OSC para Resolume Arena 7 (campo -> direccion -> rango -> curva), para operador VJ |
 | `tests/test_compete_engine.py` | Tests del engine y sus modos |
 
 ## Uso
@@ -68,8 +71,17 @@ cortos de git. Nunca: `.env*`, keys/secrets/tokens, `*.local.md`, contenido de
 `datadrops/` (nombres y tamanos OK). La lista de exclusion vive en
 `tools/tapiz_telemetry.py` y tiene test propio.
 
+## Puentes construidos (2026-07-11)
+
+- Renderer Resolume/VJ: spec OSC completa en `tools/TAPIZ_RESOLUME_SPEC.md`
+  (implementacion en Resolume = trabajo de operador, la spec basta).
+- Escena Three.js: `tools/tapiz_three.html` (mismo contrato, file-picker +
+  fetch de `dist/system_status.json`; falta solo embeberla en el hub web).
+- Autorretrato continuo: `py tools/tapiz_live_loop.py --interval 300`.
+
 ## Puentes pendientes
 
-- Renderer Resolume/VJ sobre el mismo contrato (nucleo noisette/timecode).
-- Tapiz real como escena Three.js en el hub, junto al SVG Studio.
-- Poll del modo live como daemon (cron) para autorretrato continuo.
+- Embed de tapiz_three.html como panel del hub web (workspace Cultura).
+- Modos telar del instrumento vibecode (field/border/medallion/mihrab) ya
+  existen en `projects/tapiz/vibecode/loom.py` -- generar piezas curadas
+  para el portfolio con ellos.

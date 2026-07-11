@@ -71,6 +71,27 @@ class EcosystemState:
     decaying_assets: Dict[str, ArtAsset] = field(default_factory=dict)
     event_log: List[Dict[str, Any]] = field(default_factory=list)
 
+    def transition_to_fungi(self, asset_id: str) -> bool:
+        """Atomically move an asset from Tapiz (active) into Fungi (decaying).
+
+        Strips the 'active_render' tag before the move (the state-lock the
+        ConcurrencyLogicAnalyzer prescribes against Decay-Render races),
+        marks the asset DECAYING and logs the event. Returns False if the
+        asset is not in the active set."""
+        if asset_id not in self.active_assets:
+            return False
+        asset = self.active_assets.pop(asset_id)
+        asset.metadata.tags = [t for t in asset.metadata.tags if t != "active_render"]
+        asset.state = EntityState.DECAYING
+        asset.last_modified = time.time()
+        self.decaying_assets[asset_id] = asset
+        self.event_log.append({
+            "time": asset.last_modified,
+            "event": "decay_initiated",
+            "asset": asset_id,
+        })
+        return True
+
 class TokenVolumetricAnalyzer:
     def __init__(self, context_limit=CONTEXT_WINDOW_LIMIT):
         self.context_limit = context_limit
@@ -92,9 +113,9 @@ class TokenVolumetricAnalyzer:
 
 class GuardrailSimulationAnalyzer:
     LEXICON = {
-        "violence": ["kill", "blood", "gore", "psycho", "psicosis", "murder"],
-        "decay_gross": ["trash", "basurero", "rot", "fungi", "decay", "slime"],
-        "self_harm": ["cut", "die", "suicide", "pain"]
+        "violence": ["kill", "blood", "gore", "psycho", "psicosis", "murder", "weapon"],
+        "decay_gross": ["trash", "basurero", "rot", "fungi", "decay", "slime", "waste", "corpse"],
+        "self_harm": ["cut", "die", "suicide", "pain", "suffer"]
     }
     MITIGATION = 0.70
     WEIGHT = 15
@@ -221,8 +242,18 @@ class MetamorphicBridge:
         disp = min(15, 3 + total*2)
         skew = min(8, 1 + total)
         
-        kf = f"@keyframes temporal_tear {{\n  0% {{ transform: translate(0,0) skew(0deg); }}\n  8% {{ transform: translate(-{disp}px,{disp//2}px) skew(-{skew}deg); }}\n  16% {{ transform: translate({disp}px,-{disp//2}px) skew({skew}deg); }}\n  100% {{ transform: translate(0,0) skew(0deg); }}\n}}"
-        anim = f"animation: temporal_tear {dur}s infinite;"
+        # Keyframe name 'temporal_tear' is public (TAPIZ.md, tapiz_renderer.html).
+        kf = (
+            f"@keyframes temporal_tear {{\n"
+            f"  0% {{ transform: translate(0,0) skew(0deg); filter: hue-rotate(0deg); opacity: 1; }}\n"
+            f"  8% {{ transform: translate(-{disp}px,{disp//2}px) skew(-{skew}deg); filter: hue-rotate(90deg); opacity: 0.85; }}\n"
+            f"  16% {{ transform: translate({disp}px,-{disp//2}px) skew({skew}deg); filter: hue-rotate(180deg); opacity: 0.9; }}\n"
+            f"  24% {{ transform: translate(-{disp//2}px,{disp}px) skew(-{skew//2}deg); filter: hue-rotate(270deg); opacity: 0.8; }}\n"
+            f"  32% {{ transform: translate(0,0) skew(0deg); filter: hue-rotate(360deg); opacity: 1; }}\n"
+            f"  100% {{ transform: translate(0,0) skew(0deg); filter: hue-rotate(0deg); opacity: 1; }}\n"
+            f"}}"
+        )
+        anim = f"animation: temporal_tear {dur}s infinite cubic-bezier(0.25, 0.46, 0.45, 0.94);"
         
         return {"chronological_collision_buffers": {"collision_count": total, "css_keyframes_payload": kf, "animation_class": anim, "status": "TEMPORAL_DEGRADED", "affected_assets": [r["asset_id"] for r in races]}}
     
