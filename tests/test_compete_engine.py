@@ -141,3 +141,134 @@ class TestPipelineOutput:
 
         payloads = matrix["encoded_asset_payloads"]
         assert payloads["total_payloads"] > 10  # colony accumulation visible as spores
+
+
+class TestLiveTelemetry:
+    """LIVE mode: the repo paints a self-portrait from real state."""
+
+    def test_build_outside_git_repo_does_not_crash(self, tmp_path):
+        import tapiz_telemetry as tt
+        state = tt.build_live_ecosystem(tmp_path)
+        assert isinstance(state, ce.EcosystemState)
+        # graceful degradation: at worst the fallback void asset exists
+        assert state.active_assets or state.decaying_assets
+
+    def test_build_on_real_repo_has_assets_and_vitals(self):
+        import tapiz_telemetry as tt
+        state = tt.build_live_ecosystem()
+        assert state.active_assets
+        assert any(e.get("event") == "repo_vitals" for e in state.event_log)
+
+    def test_exclude_patterns_match_canaries(self):
+        import tapiz_telemetry as tt
+        blocked = [
+            ".env", ".env.local", "gemini_api_key.txt", "secrets.json",
+            "hf_token.txt", "notas.local.md", "credentials.yaml",
+            "tilde_log.jsonl", "passwords.txt", "azure_export.csv",
+            "id_rsa.pem", "id_rsa", "id_ed25519.pub", "cert.p12",
+            "putty.ppk", "data.db", "cache.sqlite3", ".npmrc", ".netrc",
+            "cookies.txt", "mi_clave_gemini.txt", "contrasena.txt",
+            "credencial_banco.txt", "config.json",
+        ]
+        for name in blocked:
+            assert tt._is_excluded(name), "should be excluded: %s" % name
+        allowed = ["compete_engine.py", "FLYERS8.ai", "idea.md", "flujo_hub.html"]
+        for name in allowed:
+            assert not tt._is_excluded(name), "should be allowed: %s" % name
+
+    def test_path_excluded_checks_every_component_and_git_quoting(self):
+        import tapiz_telemetry as tt
+        # directory components must not smuggle excluded names through
+        assert tt._path_excluded("secrets/config.json")
+        assert tt._path_excluded("desktop\\config.json")
+        assert tt._path_excluded("a/b/.env")
+        assert tt._path_excluded('"clave-priv.pem"')  # git C-quoted form
+        assert not tt._path_excluded("tools/tapiz_telemetry.py")
+        assert not tt._path_excluded('"cafe con acento.md"')
+
+    def test_generated_content_never_leaks_excluded_names(self, tmp_path):
+        import tapiz_telemetry as tt
+        # canary repo: excluded files planted exactly where scanners look
+        (tmp_path / "datadrops").mkdir()
+        (tmp_path / "datadrops" / ".env").write_text("SECRET=1")
+        (tmp_path / "datadrops" / "api_key.txt").write_text("k")
+        (tmp_path / "datadrops" / "drop_notes.txt").write_text("ok")
+        archive = tmp_path / "docs" / "handoffs" / "archive"
+        archive.mkdir(parents=True)
+        (archive / "credentials_backup.md").write_text("x")
+        (archive / "handoff_01.md").write_text("x")
+
+        state = tt.build_live_ecosystem(tmp_path)
+        assets = list(state.active_assets.values()) + list(state.decaying_assets.values())
+        blob = " ".join(a.asset_id + " " + a.name + " " + a.content
+                        for a in assets).lower()
+        for needle in (".env", "api_key", "credentials_backup", "secret="):
+            assert needle not in blob, "leaked: %s" % needle
+        # sanity: allowed names DO surface, so exclusion is not vacuous
+        assert "drop_notes" in blob or "handoff_01" in blob
+
+    def test_real_repo_content_has_no_private_markers(self):
+        import tapiz_telemetry as tt
+        state = tt.build_live_ecosystem()
+        assets = list(state.active_assets.values()) + list(state.decaying_assets.values())
+        blob = " ".join(a.content.lower() for a in assets)
+        for needle in (".env", "secret", "api_key", "apikey", "password",
+                       "credential", ".local.md", "tilde_log", ".pem"):
+            assert needle not in blob, "private marker in live content: %s" % needle
+
+    def test_pipeline_live_end_to_end_validates(self, tmp_path, capsys):
+        import json
+        import system_map
+        path = ce.execute_pipeline(output_dir=tmp_path / "dist", mode="live")
+        matrix = json.loads(Path(path).read_text(encoding="utf-8"))
+        results = system_map.validate(matrix)
+        assert all(not errs for errs in results.values()), results
+        # mesh must react to real magnitude (compiled bundles / session logs)
+        assert matrix["luminous_mesh_densities"]["global_pressure"] >= 0.0
+
+    def test_cli_live_flag(self, tmp_path, capsys):
+        assert ce.main(["--live", "--out", str(tmp_path / "dist")]) == 0
+        assert (tmp_path / "dist" / "system_status.json").exists()
+
+    def test_live_mutually_exclusive_with_demo(self, capsys):
+        import pytest
+        with pytest.raises(SystemExit):
+            ce.main(["--live", "--demo"])
+
+    def test_contradictory_stress_and_mode_kwargs_raise(self):
+        import pytest
+        with pytest.raises(ValueError):
+            ce.execute_pipeline(stress=True, mode="demo")
+
+    def test_session_stats_slug_handles_worktree_dots(self, monkeypatch, tmp_path):
+        import tapiz_telemetry as tt
+        # fake sessions root with the slug a worktree path must resolve to
+        proj = tmp_path / "C--IA-flujo--claude-worktrees-tapiz-ecosystem"
+        proj.mkdir()
+        (proj / "s1.jsonl").write_text("x" * 10)
+        monkeypatch.setattr(tt, "SESSIONS_ROOT", tmp_path)
+        count, total, newest = tt._session_stats(
+            Path(r"C:\IA\flujo\.claude\worktrees\tapiz-ecosystem"))
+        assert count == 1 and total == 10 and newest > 0
+
+    def test_cli_subprocess_live_keeps_enum_identity(self, tmp_path):
+        # Regression: run as a real script (__main__), telemetry must share
+        # the engine's EntityState classes or decaying payloads vanish.
+        import json
+        import subprocess
+        engine = Path(__file__).resolve().parents[1] / "tools" / "compete_engine.py"
+        out = tmp_path / "dist"
+        proc = subprocess.run(
+            [sys.executable, str(engine), "--live", "--out", str(out)],
+            capture_output=True, text=True, timeout=60,
+        )
+        assert proc.returncode == 0, proc.stderr
+        matrix = json.loads((out / "system_status.json").read_text(encoding="utf-8"))
+        # the live repo always has decaying mass (fat zones, spores, psicosis)
+        assert matrix["encoded_asset_payloads"]["total_payloads"] > 0
+
+    def test_demo_behavior_unchanged(self, tmp_path, capsys):
+        # stress=/mode= keyword back-compat: both spellings, same result shape
+        p1 = ce.execute_pipeline(output_dir=tmp_path / "a", stress=False)
+        p2 = ce.execute_pipeline(output_dir=tmp_path / "b", mode="demo")
+        assert Path(p1).exists() and Path(p2).exists()
