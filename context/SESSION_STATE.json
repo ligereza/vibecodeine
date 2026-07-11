@@ -5,6 +5,7 @@
   "repo_main": "merge de PR #21 (checkpoint v0.51.0, consolidacion de las 4 ramas)",
   "current_focus": "DIRECTOR DE ARTE: marco de ingenieria estetica empaquetado en .claude/skills/director-de-arte/SKILL.md (tapiz=mutacion algoritmica, tilde=esteganografia, psicosis=entropia de registro, precursor=mutacion de nombre, basurero/fungi=entropia de archivos; repo=interfaz biocibernetica). Sitio VIVO ligereza.github.io/portfolio-auto con workflow automatico funcionando. Proxima sesion: leer la skill y LAST_HANDOFF.proxima_sesion_arranca_aqui.",
   "done": [
+    "2026-07-10 (sesion tapiz): ecosistema Tapiz/Psicosis/Fungi -- base mergeada como PR #26 (squash 5d58ff2: engine --demo/--stress, system_map, renderer 2D, TAPIZ.md, plan Arena); este PR agrega modo --live (tapiz_telemetry.py, autorretrato con telemetria real, privacidad endurecida tras verificacion adversarial: slug worktree, exclusion por componente de path, git quotePath) + 26 tests. Artifact calm/stress/live publicado. Directiva: Gemini OUT hasta nueva API, mecanico -> subagentes Sonnet.",
     "2026-07-10 (cierre): portfolio DESPLEGADO y verificado en vivo (Pages ON, PRs #23 vibecodeine y #3 portfolio-auto mergeados por el usuario, secret PORTFOLIO_TOKEN creado, workflow corrido con exito real); skill director-de-arte nueva empaqueta el marco estetico en terminologia de sistemas abstractos para asuncion instantanea del rol.",
     "2026-07-10 (sesion portfolio, post-checkpoint): review de repos publicos (portfolio-auto = sitio ISKVW ya construido sin Pages, autocanva = pipeline flyers, ShadowArt excluido por orden del usuario); tools/portfolio/ nuevo (proyectos.json curado + generar_portfolio.py: basurero.json minado de git con denylist, 193 archivos digeridos) + workflow portfolio.yml (publica a portfolio-auto con secret PORTFOLIO_TOKEN); 7 tests nuevos. Habilitar Pages y crear el secret = acciones del usuario.",
     "2026-07-10 (sesion checkpoint v0.51.0, teleport -> CLI): audit ultracode de pendientes (5 Sonnet paralelos) encontro que productoras wire-in y deuda PACKS ya estaban resueltos en ramas sin mergear; consolidadas las 4 ramas en un checkpoint unico via PR #21, verificacion completa verde (compileall, pytest con 21 tests nuevos de las ramas, flujo verify hub smoke 0.51.0, typecheck, build:context), version 0.51.0, dossiers tilde/psicosis/precursor curados por 3 agentes con WebSearch (14 VERIFICADA / 1 PARCIAL / 0 inventadas, limites duros intactos), gh CLI 2.96.0 instalado y autenticado (token del credential manager, keyring), skill teleport-sesion-web nueva, .gitignore para el CSV personal de Azure, worktree stale removido.",
@@ -26,6 +27,10 @@
   ],
   "doing": [],
   "next": [
+    "PR chico chore/gemini-parked: tabla 'Equipo multi-agente' de CLAUDE.md (Gemini PARKED, fila Sonnet subagentes).",
+    "USUARIO: rotar la GEMINI_API_KEY pegada en el chat 2026-07-10 (sigue pendiente).",
+    "Puentes tapiz (tools/TAPIZ.md): renderer Three.js (WO-1 Arena), spec OSC Resolume (WO-2), poll live como daemon.",
+    "GitHub issue #14 [EVENTOS] sin procesar + triage issues de prueba #1-#6 (necesita OK de alcance del usuario).",
     "Smoke test de productoras.py: el codigo ya corrio matched=True en vivo (sesion blender-node), pero falta un flyer fixture EN EL REPO (tests/fixtures/) para poder re-correrlo sin depender de descargas; pedir al usuario un .jpg/.png real de flyer.",
     "Branch protection en main: BLOQUEADO mientras el repo sea privado con plan Free (GitHub no lo permite); se activa al reabrir publico ~2026-07-24 con la checklist de reapertura.",
     "El usuario revisa la key GEMINI_API_KEY_3 con HTTP 401 en .env (posible proyecto GCP borrado en su limpieza) -- dijo que lo haria el mismo en otra sesion, no re-investigar salvo que pida.",
@@ -44,11 +49,11 @@
     "claude.yml existe y esta activo en el repo; falta confirmar GitHub App + secret desde la web de GitHub."
   ],
   "ai_stack": {
-    "architect_reviewer": "Claude Code (director; solo arquitectura/critico)",
-    "reader": "Gemini API via tools/vibo_voz/pedir_a_gemini.py (lectura/resumen barato)",
-    "writer": "Gemini API via tools/vibo_voz/pedir_codigo.py (escritura mecanica, primario)",
+    "architect_reviewer": "Claude Code (director; arquitectura/critico/codigo que no admite malentendido)",
+    "mechanical_internal": "subagentes Sonnet (Agent/Workflow model sonnet): lecturas pesadas, busquedas de volumen, ediciones acotadas -- reemplaza a Gemini como mano de obra barata",
+    "parked": "Gemini API PARKED por directiva del usuario 2026-07-10 (429 en ambas keys, sin API util; tools/vibo_voz y skills relevo-web/orquestacion-gemini-claude quedan sin usar hasta nueva API)",
     "writer_fallback_manual": "NVIDIA NIM (--proveedor nvidia; free tier saturado, solo off-peak) y GitHub Models deepseek-v3 (--proveedor github; 8k in/4k out, solo tareas chicas)",
     "descartados": "Aider (bugs Windows + free tier roulette, desinstalado 2026-07-08), OpenRouter (429 constante), logo color vectorial (descartado en handoff previo)",
-    "external_support": "Qwen web / LMArena (manual, no fuente de verdad)"
+    "external_support": "Qwen web / LMArena via airdrop autocontenido (manual, no fuente de verdad; docs/airdrop/ARENA_TAPIZ_PLAN.md como plantilla)"
   }
 }
