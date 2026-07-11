@@ -23,6 +23,12 @@ import time
 from typing import List
 
 from .ansi import CLEAR_SCREEN, HIDE_CURSOR, RESET, SHOW_CURSOR, fg256, tokenize
+from .cauce import CAUCE_CITATION, CAUCE_MODE, render_ansi_cauce
+from .loom import LOOM_MODES, MOTIF_CITATIONS, block_segments, canvas_size
+
+# Color apagado para los vacios compositivos de los modos loom (centro del
+# modo border): casi el fondo, umbral de percepcion.
+LOOM_VOID_COLOR = fg256(236)
 
 # Paletas de 256 colores (ANSI 256).
 # STRICT BRAND: default MUST be "flujo" (from projects/flujo/flujo.json) for ALL pro outputs.
@@ -60,32 +66,59 @@ def render_static(
       - void:   espacios coloreados, texto en gris tenue.
       - length: el color del espacio depende de la longitud del bloque.
       - blocks: cada bloque de espacios es un bloque sólido.
+
+    Modos loom (composicion historica de alfombra, ver loom.py y el dossier
+    projects/cultura/dossiers/tapiz.md):
+      - field:     malla repetitiva all-over (gul sembrado en el campo).
+      - border:    marcos concentricos alrededor de un vacio central.
+      - medallion: medallon central que irradia en anillos.
+      - mihrab:    arco direccional asimetrico apuntando hacia arriba.
+
+    Modo cauce (patron reconocido, no impuesto, ver cauce.py):
+      - cauce: la recurrencia de tokens elige el color (mismo token = mismo
+        hilo), los rios de espacios se dibujan tenues y las marcas fuera de
+        [a-zA-Z0-9_ ] brillan (puente tilde).
     """
+    if mode == CAUCE_MODE:
+        return render_ansi_cauce(text)
     palette = PALETTES.get(palette_name, PALETTES["flujo"])  # BRAND ENFORCED default flujo (no neon)
     lines = text.splitlines()
     out_lines: List[str] = []
+    is_loom = mode in LOOM_MODES
+    n_cols, n_rows = canvas_size(lines)
 
-    for line in lines:
+    for y, line in enumerate(lines):
         rendered = []
         tokens = tokenize(line)
+        x = 0
 
         for kind, part in tokens:
+            length = len(part)
             if kind == "space":
-                length = len(part)
-                if mode == "length":
-                    idx = min(length, len(palette)) - 1
-                    color = palette[idx]
-                elif mode == "blocks":
-                    color = palette[length % len(palette)]
-                else:  # void
-                    color = palette[length % len(palette)]
-                rendered.append(f"{color}{fill_char * length}{RESET}")
+                if is_loom:
+                    # La posicion en el canvas decide el color (composicion
+                    # de telar); un bloque puede cruzar varios anillos/marcos.
+                    for seg_len, idx in block_segments(
+                        mode, x, y, length, n_cols, n_rows, len(palette)
+                    ):
+                        color = LOOM_VOID_COLOR if idx is None else palette[idx]
+                        rendered.append(f"{color}{fill_char * seg_len}{RESET}")
+                else:
+                    if mode == "length":
+                        idx = min(length, len(palette)) - 1
+                        color = palette[idx]
+                    elif mode == "blocks":
+                        color = palette[length % len(palette)]
+                    else:  # void
+                        color = palette[length % len(palette)]
+                    rendered.append(f"{color}{fill_char * length}{RESET}")
             else:
                 if ghost:
                     # Texto fantasma: se ve, pero no roba atención
                     rendered.append(f"\033[90m{part}{RESET}")
                 else:
                     rendered.append(part)
+            x += length
         out_lines.append("".join(rendered))
 
     return "\n".join(out_lines)
@@ -191,7 +224,9 @@ def render_spaces(
 
     Args:
         text: código o texto a visualizar.
-        mode: void, length, blocks, flow, scan, drift, pulse, rain.
+        mode: void, length, blocks, flow, scan, drift, pulse, rain,
+            field, border, medallion, mihrab (loom, siempre estaticos),
+            cauce (estatico en terminal, animable en export SVG).
         palette: nombre de paleta del diccionario PALETTES.
         animate: si True, reproduce una animación en terminal.
         cycles: cantidad de frames de animación.
@@ -201,10 +236,18 @@ def render_spaces(
         file: archivo de salida (default sys.stdout).
     """
     out = file or sys.stdout
-    static_modes = {"void", "length", "blocks"}
+    # En terminal, cauce es estatico como los loom; su animacion vive en
+    # el export SVG (--svg -a).
+    static_modes = {"void", "length", "blocks", CAUCE_MODE} | set(LOOM_MODES)
 
     if not animate or mode in static_modes:
         out.write(header(mode, palette, False))
+        if mode in LOOM_MODES:
+            # Regla curatorial del dossier: la pieza cita el significado
+            # real del motivo que usa.
+            out.write(f"\033[90m{MOTIF_CITATIONS[mode]}{RESET}\n\n")
+        elif mode == CAUCE_MODE:
+            out.write(f"\033[90m{CAUCE_CITATION}{RESET}\n\n")
         out.write(render_static(text, mode=mode, palette_name=palette, fill_char=fill_char, ghost=ghost))
         out.write(footer())
         out.flush()
@@ -271,9 +314,15 @@ def main():
     parser.add_argument(
         "-m",
         "--mode",
-        choices=["void", "length", "blocks", "flow", "scan", "drift", "pulse", "rain"],
+        choices=["void", "length", "blocks", "flow", "scan", "drift", "pulse", "rain"]
+        + list(LOOM_MODES)
+        + [CAUCE_MODE],
         default="flow",
-        help="Modo visual",
+        help=(
+            "Modo visual (loom: field/border/medallion/mihrab, composicion "
+            "de alfombra; cauce: patron reconocido de la recurrencia, "
+            "animable en SVG con -a)"
+        ),
     )
     parser.add_argument(
         "-p",

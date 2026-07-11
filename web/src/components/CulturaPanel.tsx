@@ -1,4 +1,5 @@
-import { Layers, Type, Eye, FlaskConical, TerminalSquare } from 'lucide-react';
+import { useState } from 'react';
+import { Layers, Type, Eye, FlaskConical, TerminalSquare, Orbit } from 'lucide-react';
 
 // Cultura: ala de arte-investigacion del repo. Panel de consulta (sin API):
 // presenta el metodo y el estado real de las cuatro lineas. Las herramientas
@@ -49,6 +50,49 @@ const ESTADO_STYLE: Record<Track['estado'], string> = {
   'por empezar': 'bg-zinc-800/80 text-zinc-500',
 };
 
+function EcosistemaTresD() {
+  const [cargada, setCargada] = useState(false);
+
+  return (
+    <div className="rounded-2xl border border-zinc-800/60 bg-zinc-900/40 p-5">
+      <div className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-zinc-500">
+        <Orbit className="h-3.5 w-3.5 text-amber-500" />
+        Ecosistema 3D (autorretrato del repo)
+      </div>
+      <p className="mb-3 text-[10px] leading-relaxed text-zinc-600">
+        Vista Three.js del organismo tapiz: lee la telemetria real de
+        <span className="text-amber-400/80"> tools/dist/system_status.json</span> y
+        la levanta como escena navegable. La escena carga Three.js desde CDN,
+        asi que necesita internet; el hub sigue funcionando offline si no la abres.
+      </p>
+      {cargada ? (
+        <iframe
+          src="../tools/tapiz_three.html"
+          title="Ecosistema 3D tapiz"
+          className="h-[420px] w-full rounded-lg border border-amber-900/30 bg-zinc-950"
+        />
+      ) : (
+        <button
+          type="button"
+          onClick={() => setCargada(true)}
+          className="w-full rounded-lg border border-amber-900/40 bg-amber-950/20 px-4 py-6 text-[11px] font-bold uppercase tracking-widest text-amber-300 transition-colors hover:bg-amber-950/40"
+        >
+          cargar escena 3D (requiere internet)
+        </button>
+      )}
+      <pre className="mt-3 overflow-x-auto rounded-lg bg-zinc-950/80 p-3 text-[11px] leading-relaxed text-zinc-400">{`# generar telemetria real del repo
+py tools/compete_engine.py --live
+
+# autorretrato continuo (refresca cada 5 min)
+py tools/tapiz_live_loop.py --interval 300
+
+# si el navegador bloquea iframes file://, servir el repo:
+py -m http.server 8137
+# y abrir http://localhost:8137/tools/tapiz_three.html`}</pre>
+    </div>
+  );
+}
+
 export default function CulturaPanel() {
   return (
     <div className="flex flex-col gap-6">
@@ -96,6 +140,8 @@ py projects/tapiz/vibecode_void.py archivo.py -g
 # exportar pieza SVG (paleta flujo real)
 py projects/tapiz/vibecode_spaces.py archivo.py -m void --svg pieza.svg`}</pre>
       </div>
+
+      <EcosistemaTresD />
 
       <div className="rounded-2xl border border-amber-900/30 bg-amber-950/10 p-4 text-[10px] leading-relaxed text-zinc-500">
         Limites del departamento: capa descriptiva y cultural si (estructura real,
