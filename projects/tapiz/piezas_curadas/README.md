@@ -17,6 +17,11 @@ esta gitignorada (salida efimera del instrumento); lo curado se versiona aqui.
 | `medallion_loom.svg` | medallion | `projects/tapiz/vibecode/loom.py` | El telar tejiendose a si mismo: su codigo ocupa el centro como medallon. |
 | `mihrab_spaces.svg` | mihrab | `projects/tapiz/vibecode/spaces.py` | El render principal orientado hacia un nicho: el codigo que dibuja apunta a donde mira. |
 | `cauce_cauce.svg` | cauce (animada, SMIL) | `projects/tapiz/vibecode/cauce.py` | El cauce leyendo su propia recurrencia: mismo token, mismo color, patron reconocido y no impuesto. |
+| `field_telemetry.svg` | field (gul) | `tools/tapiz_telemetry.py` | La telemetria del tapiz tejida como campo: el sensor vuelto motivo repetido. |
+| `border_dossier_tapiz.svg` | border (boteh) | `projects/cultura/dossiers/tapiz.md` | El dossier que enmarca al proyecto tejido como cenefa: la investigacion es el borde de la obra. |
+| `mihrab_tilde_meter.svg` | mihrab | `desktop/tilde_meter.py` | El medidor de sobrevivencia de la tilde orientado hacia su nicho: el instrumento reza por las marcas. |
+| `medallion_entrada.svg` | medallion | `projects/tapiz/vibecode_spaces.py` | La puerta de entrada del instrumento como medallon minimo: casi vacio, porque la entrada solo delega. |
+| `cauce_sala3d.svg` | cauce (animada, SMIL) | `tools/sala3d/build.js` | La galeria tejiendose a si misma: el build de la sala 3D leido por el cauce. |
 
 ## Regeneracion exacta
 
@@ -28,7 +33,16 @@ py projects/tapiz/vibecode_spaces.py scripts/validate_airdrop.py -m border --svg
 py projects/tapiz/vibecode_spaces.py projects/tapiz/vibecode/loom.py -m medallion --svg projects/tapiz/piezas_curadas/medallion_loom.svg
 py projects/tapiz/vibecode_spaces.py projects/tapiz/vibecode/spaces.py -m mihrab --svg projects/tapiz/piezas_curadas/mihrab_spaces.svg
 py projects/tapiz/vibecode_spaces.py projects/tapiz/vibecode/cauce.py -m cauce -a --svg projects/tapiz/piezas_curadas/cauce_cauce.svg
+py projects/tapiz/vibecode_spaces.py tools/tapiz_telemetry.py -m field --svg projects/tapiz/piezas_curadas/field_telemetry.svg
+py projects/tapiz/vibecode_spaces.py projects/cultura/dossiers/tapiz.md -m border --svg projects/tapiz/piezas_curadas/border_dossier_tapiz.svg
+py projects/tapiz/vibecode_spaces.py desktop/tilde_meter.py -m mihrab --svg projects/tapiz/piezas_curadas/mihrab_tilde_meter.svg
+py projects/tapiz/vibecode_spaces.py projects/tapiz/vibecode_spaces.py -m medallion --svg projects/tapiz/piezas_curadas/medallion_entrada.svg
+py projects/tapiz/vibecode_spaces.py tools/sala3d/build.js -m cauce -a --svg projects/tapiz/piezas_curadas/cauce_sala3d.svg
 ```
+
+Regla de peso: cada SVG curado bajo ~300KB (una pieza de 918KB fue
+rechazada por pesada). `src/flujo/cli.py` en modo medallion dio 800KB+:
+descartado; fuentes chicas tejen mejor.
 
 Las piezas son deterministas respecto de su fuente: si el archivo tejido
 cambia, la pieza cambia. La serie fija el estado 2026-07-11.
