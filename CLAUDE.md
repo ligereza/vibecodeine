@@ -43,7 +43,8 @@ barato que haga bien la tarea.**
 | Proveedor | Rol | Cuando usarlo | Notas |
 |---|---|---|---|
 | **Claude Code / Opus** | Director + codigo critico + arquitectura | Decide el enfoque, hace el codigo que no admite malentendido, emite ordenes para los demas | Techo. Recibe pedidos ya comprimidos por el interprete. NO revisa cada diff de Qwen |
-| **Gemini API** | Interprete + voz + busqueda en vivo + lector pesado | Traduce/organiza el pedido del usuario (voz o texto en espanol) a un order liviano en tokens; grounding de busqueda en tiempo real; resume rutas gordas (`tools/vibo_voz/pedir_a_gemini.py`) | Tiene API -> automatable. Free tier con limites; ojo con datos privados |
+| **Subagentes Sonnet** | Mano de obra mecanica interna | Lecturas pesadas, busquedas de volumen, resumenes de rutas gordas, ediciones acotadas (Agent/Workflow con model sonnet, lo maneja el propio Claude Code) | Mas barato que el hilo director; sin dependencia externa |
+| **Gemini API (PARKED)** | (fuera del stack desde 2026-07-10) | NO usar: ambas keys en 429, sin API util. tools/vibo_voz y skills relevo-web / orquestacion-gemini-claude quedan en el repo SIN USO hasta que el usuario anuncie una API nueva | Revivir solo por orden del usuario |
 | **Arena (LMArena)** | Frontier gratis on-demand | Arquitectura dura cuando quieres un cerebro frontier sin gastar Claude | Sin API -> manual, airdrop chico. No es fuente de verdad automatica |
 | **Qwen API/web** (DashScope) | Coder bruto de volumen | Ediciones acotadas, tests, boilerplate, mascar contexto | Su salida pasa por el GATE (CI + revisor gratis), nunca por Claude directo |
 | **NVIDIA NIM / OpenRouter** | Alternativa / fallback barato | Cuando Qwen no rinde o para probar otro modelo; endpoint OpenAI-compatible | Igual que Qwen |
@@ -52,7 +53,7 @@ Reparto que decide Claude como jefe: bruto/masivo/bajo riesgo -> Qwen; critico/a
 
 **Gate de Qwen** (reemplaza "Claude revisa el diff"): Claude NO gasta cuota debuggeando a Qwen.
 1. **CI (obligatorio, branch protection):** `py -m pytest`, compile, `flujo verify`.
-2. **Revisor gratis:** Gemini o Arena miran lo que CI no ve (diseno, alcance, creep).
+2. **Revisor gratis:** Arena (o un subagente Sonnet) mira lo que CI no ve (diseno, alcance, creep).
 3. **Claude entra SOLO si el gate escala** un problema de arquitectura, no como paso fijo.
 
 **Escalar a Claude** cuando la tarea: es decision de arquitectura/enfoque; toca seguridad,
@@ -64,7 +65,7 @@ API, formato de entrega); ya se intento antes y fallo (ver `src/flujo/version.py
 tests, docstrings, boilerplate, mascar/resumir contexto, traducir un order de Claude a
 ediciones concretas.
 
-Flujo tipo: usuario habla en espanol -> Gemini comprime a order liviano -> Claude decide
+Flujo tipo: usuario pide (espanol o ingles) -> Claude decide
 (delega a Qwen o lo hace el mismo) -> Qwen en rama -> PR -> CI + revisor gratis -> Claude
 solo si el gate levanta un problema de diseno -> cerrar sesion (ver mas abajo).
 
