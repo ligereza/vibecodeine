@@ -26,6 +26,11 @@ const ARTS = {
   __ART_MEDALLION__: 'projects/tapiz/piezas_curadas/medallion_loom.svg',
   __ART_MIHRAB__: 'projects/tapiz/piezas_curadas/mihrab_spaces.svg',
   __ART_CAUCE__: 'projects/tapiz/piezas_curadas/cauce_cauce.svg',
+  __ART_FIELD2__: 'projects/tapiz/piezas_curadas/field_telemetry.svg',
+  __ART_BORDER2__: 'projects/tapiz/piezas_curadas/border_dossier_tapiz.svg',
+  __ART_MIHRAB2__: 'projects/tapiz/piezas_curadas/mihrab_tilde_meter.svg',
+  __ART_MEDALLION2__: 'projects/tapiz/piezas_curadas/medallion_entrada.svg',
+  __ART_CAUCE2__: 'projects/tapiz/piezas_curadas/cauce_sala3d.svg',
 };
 
 function fetchCached(url, name) {
