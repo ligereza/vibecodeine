@@ -12,6 +12,7 @@ import html
 from typing import List, Optional
 
 from .ansi import tokenize
+from .loom import LOOM_MODES, MOTIF_CITATIONS, block_segments, canvas_size
 
 # Paleta flujo real (hex de projects/flujo/flujo.json). El orden replica la
 # intencion de la paleta ANSI "flujo" de spaces.py: tinta -> acento -> soporte
@@ -31,6 +32,7 @@ SPACE_COLORS: List[str] = [
     FLUJO_HEX["support"],
 ]
 GHOST_COLOR = "#4a554e"   # texto fantasma: gris verdoso tenue sobre ink
+LOOM_VOID_HEX = "#28332c"  # vacio compositivo loom: apenas sobre el ink, umbral
 
 CHAR_W = 9.6   # ancho de celda para font-size 16 monospace
 LINE_H = 20
@@ -57,26 +59,43 @@ def render_svg(
     Renderiza el texto como pieza SVG: espacios coloreados con la paleta flujo,
     texto en gris fantasma (o ausente con ghost=False). Con animate=True cada
     fila respira en cascada (SMIL, lento, estetica de umbral).
+
+    Modos loom (field/border/medallion/mihrab): el color depende de la
+    posicion de la celda en el canvas (composicion de alfombra, ver loom.py);
+    la pieza incrusta un <desc> con la cita curatorial del motivo.
     """
     lines = text.splitlines() or [""]
-    n_cols = max((len(ln) for ln in lines), default=1)
+    is_loom = mode in LOOM_MODES
+    n_cols, n_rows = canvas_size(lines)
     width = int(n_cols * CHAR_W + 48)
     height = int(len(lines) * LINE_H + 48)
 
     rows: List[str] = []
     for y, line in enumerate(lines):
         spans: List[str] = []
+        x = 0
         for kind, part in tokenize(line):
             if kind == "space":
-                color = _space_color(len(part), mode)
-                spans.append(
-                    f'<tspan fill="{color}">{html.escape(fill_char * len(part))}</tspan>'
-                )
+                if is_loom:
+                    for seg_len, idx in block_segments(
+                        mode, x, y, len(part), n_cols, n_rows, len(SPACE_COLORS)
+                    ):
+                        color = LOOM_VOID_HEX if idx is None else SPACE_COLORS[idx]
+                        spans.append(
+                            f'<tspan fill="{color}">'
+                            f"{html.escape(fill_char * seg_len)}</tspan>"
+                        )
+                else:
+                    color = _space_color(len(part), mode)
+                    spans.append(
+                        f'<tspan fill="{color}">{html.escape(fill_char * len(part))}</tspan>'
+                    )
             elif ghost:
                 spans.append(f'<tspan fill="{GHOST_COLOR}">{html.escape(part)}</tspan>')
             else:
                 # sin ghost: la palabra ocupa su lugar pero no se ve (espacio en negativo)
                 spans.append(f'<tspan fill="{background}">{html.escape(part)}</tspan>')
+            x += len(part)
         anim = ""
         if animate:
             # cascada de digestion: cada fila respira desfasada, ciclo largo
@@ -91,10 +110,16 @@ def render_svg(
         )
 
     body = "\n  ".join(rows)
+    desc = ""
+    if is_loom:
+        # Regla curatorial (projects/cultura/dossiers/tapiz.md): toda pieza
+        # que usa un motivo cita su significado real. El <desc> es la ficha.
+        desc = f"  <desc>{html.escape(MOTIF_CITATIONS[mode])}</desc>\n"
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
         f'viewBox="0 0 {width} {height}" role="img">\n'
         f"  <title>{html.escape(title)}</title>\n"
+        f"{desc}"
         f'  <rect width="{width}" height="{height}" fill="{background}"/>\n'
         f'  <g font-family="monospace" font-size="16">\n  {body}\n  </g>\n'
         f"</svg>\n"

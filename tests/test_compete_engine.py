@@ -65,6 +65,39 @@ class TestTokenVolumetricAnalyzer:
         assert heavy["estimated_tokens"] > light["estimated_tokens"]
 
 
+class TestEcosystemStateTransition:
+    def test_transition_to_fungi_moves_and_strips_render_tag(self):
+        state = ce.EcosystemState()
+        asset = make_asset("mass", tags=["active_render", "tapiz"],
+                           state=ce.EntityState.ACTIVE)
+        state.active_assets[asset.asset_id] = asset
+
+        assert state.transition_to_fungi(asset.asset_id) is True
+        assert asset.asset_id not in state.active_assets
+        moved = state.decaying_assets[asset.asset_id]
+        assert moved.state == ce.EntityState.DECAYING
+        assert "active_render" not in moved.metadata.tags
+        assert "tapiz" in moved.metadata.tags
+        assert any(e["event"] == "decay_initiated" and e["asset"] == asset.asset_id
+                   for e in state.event_log)
+
+    def test_transition_to_fungi_missing_asset_returns_false(self):
+        state = ce.EcosystemState()
+        assert state.transition_to_fungi("NOPE") is False
+        assert state.event_log == []
+
+    def test_transitioned_asset_never_races_the_renderer(self):
+        # The state-lock (tag strip) means a proper transition cannot be
+        # flagged as a Decay-Render race by the concurrency analyzer.
+        state = ce.EcosystemState()
+        asset = make_asset("mass", tags=["active_render"],
+                           state=ce.EntityState.ACTIVE)
+        state.active_assets[asset.asset_id] = asset
+        state.transition_to_fungi(asset.asset_id)
+        result = ce.ConcurrencyLogicAnalyzer().analyze_ecosystem(state)
+        assert result["race_conditions"] == []
+
+
 class TestGuardrailSimulationAnalyzer:
     def test_artistic_mitigation_lowers_score(self):
         analyzer = ce.GuardrailSimulationAnalyzer()
@@ -81,6 +114,15 @@ class TestGuardrailSimulationAnalyzer:
         result = analyzer.analyze_asset(make_asset("geometric mesh of light"))
         assert result["triggered_categories"] == []
         assert result["risk_level"] == ce.RiskLevel.SAFE.value
+
+    def test_extended_lexicon_keywords_trigger(self):
+        # keywords ported from the ecosystem_engine draft
+        analyzer = ce.GuardrailSimulationAnalyzer()
+        result = analyzer.analyze_asset(
+            make_asset("a weapon over corpse waste, they suffer"))
+        assert "violence" in result["triggered_categories"]
+        assert "decay_gross" in result["triggered_categories"]
+        assert "self_harm" in result["triggered_categories"]
 
 
 class TestConcurrencyLogicAnalyzer:
@@ -138,6 +180,12 @@ class TestPipelineOutput:
         chrono = matrix["chronological_collision_buffers"]
         assert chrono["status"] == "TEMPORAL_DEGRADED"
         assert chrono["collision_count"] >= 5  # violation + accumulation + races
+        # public keyframe name stays stable for TAPIZ.md / tapiz_renderer.html
+        assert "@keyframes temporal_tear {" in chrono["css_keyframes_payload"]
+        # richer glitch grammar ported from the ecosystem_engine draft
+        assert "hue-rotate" in chrono["css_keyframes_payload"]
+        assert "opacity" in chrono["css_keyframes_payload"]
+        assert "cubic-bezier" in chrono["animation_class"]
 
         payloads = matrix["encoded_asset_payloads"]
         assert payloads["total_payloads"] > 10  # colony accumulation visible as spores

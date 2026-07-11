@@ -137,3 +137,176 @@ def test_svg_export_escapa_html(tmp_path):
     export_svg("if a < b: c = '<&>'", str(out))
     svg = out.read_text(encoding="utf-8")
     assert "&lt;" in svg and "&amp;" in svg
+
+
+# ---------------------------------------------------------------------------
+# Modos loom: field / border / medallion / mihrab
+# ---------------------------------------------------------------------------
+from vibecode.loom import (  # noqa: E402
+    LOOM_MODES,
+    MOTIF_CITATIONS,
+    block_segments,
+    canvas_size,
+    loom_color_index,
+)
+
+# Canvas sintetico: 24 filas x 40 columnas, con espacio interior grande para
+# que aparezcan marcos, vacio central, anillos y arco.
+LOOM_SAMPLE = "\n".join("x" + " " * 38 + "x" for _ in range(24))
+
+
+def test_loom_modes_registrados_con_cita():
+    assert LOOM_MODES == ("field", "border", "medallion", "mihrab")
+    for mode in LOOM_MODES:
+        cita = MOTIF_CITATIONS[mode]
+        assert cita and "\n" not in cita  # una linea
+        assert "dossier tapiz" in cita    # cita al dossier curado
+
+
+def test_loom_render_static_valido_por_modo():
+    for mode in LOOM_MODES:
+        out = render_static(LOOM_SAMPLE, mode=mode, palette_name="flujo")
+        plain = _strip_ansi(out)
+        assert "·" in plain  # espacios digeridos a fill char
+        # El contenido plano se conserva (mismas celdas, solo cambia el color)
+        assert plain == LOOM_SAMPLE.replace(" ", "·")
+
+
+def test_loom_modos_difieren_estructuralmente_en_ansi():
+    outs = {m: render_static(LOOM_SAMPLE, mode=m) for m in LOOM_MODES}
+    vals = list(outs.values())
+    for i in range(len(vals)):
+        for j in range(i + 1, len(vals)):
+            assert vals[i] != vals[j]
+
+
+def test_loom_border_marcos_y_vacio_central():
+    # Borde exterior: primer marco (indice 0); centro: vacio (None)
+    assert loom_color_index("border", 0, 0, 40, 24, 5) == 0
+    assert loom_color_index("border", 20, 12, 40, 24, 5) is None
+    # Los marcos avanzan de color con la profundidad
+    assert loom_color_index("border", 2, 12, 40, 24, 5) == 1
+
+
+def test_loom_medallion_radial_y_simetrico():
+    # Centro del canvas: indice 0 (nucleo del medallon)
+    assert loom_color_index("medallion", 20, 12, 41, 25, 5) == 0
+    # Esquina: anillo exterior, indice mayor que el centro
+    corner = loom_color_index("medallion", 0, 0, 41, 25, 5)
+    assert corner is not None and corner > 0
+    # Simetria vertical: fila de arriba == fila de abajo
+    assert loom_color_index("medallion", 7, 0, 41, 25, 5) == loom_color_index(
+        "medallion", 7, 24, 41, 25, 5
+    )
+
+
+def test_loom_mihrab_asimetrico_apunta_arriba():
+    # Apice: arriba al centro, indice 0
+    assert loom_color_index("mihrab", 20, 0, 41, 25, 5) == 0
+    # Sin simetria vertical: el arco abre hacia abajo
+    top = loom_color_index("mihrab", 20, 0, 41, 25, 5)
+    bottom = loom_color_index("mihrab", 20, 24, 41, 25, 5)
+    assert top != bottom
+
+
+def test_loom_field_malla_repetitiva():
+    # La malla se repite: misma celda de la malla -> mismo color
+    a = loom_color_index("field", 0, 0, 40, 24, 5)
+    b = loom_color_index("field", 0 + 4 * 5, 0, 40, 24, 5)  # 5 celdas a la derecha
+    assert a == b
+    # Y varia dentro de la malla
+    assert loom_color_index("field", 0, 0, 40, 24, 5) != loom_color_index(
+        "field", 4, 0, 40, 24, 5
+    )
+
+
+def test_loom_block_segments_conserva_longitud():
+    for mode in LOOM_MODES:
+        segs = block_segments(mode, 3, 5, 17, 40, 24, 5)
+        assert sum(n for n, _ in segs) == 17
+        assert all(n > 0 for n, _ in segs)
+
+
+def test_loom_modo_desconocido_lanza_error():
+    import pytest
+
+    with pytest.raises(ValueError):
+        loom_color_index("garden", 0, 0, 10, 10, 5)
+
+
+def test_canvas_size_minimos():
+    assert canvas_size([]) == (1, 1)
+    assert canvas_size(["", "abc"]) == (3, 2)
+
+
+def test_loom_render_spaces_terminal_incluye_cita():
+    for mode in LOOM_MODES:
+        buf = io.StringIO()
+        render_spaces(LOOM_SAMPLE, mode=mode, animate=False, file=buf)
+        plain = _strip_ansi(buf.getvalue())
+        assert MOTIF_CITATIONS[mode] in plain
+
+
+def test_loom_animate_cae_a_estatico():
+    # Los modos loom son composiciones estaticas: -a no debe entrar al bucle
+    # de animacion (sin CLEAR_SCREEN, sin frames).
+    from vibecode.ansi import CLEAR_SCREEN
+
+    buf = io.StringIO()
+    render_spaces(LOOM_SAMPLE, mode="border", animate=True, file=buf)
+    out = buf.getvalue()
+    assert CLEAR_SCREEN not in out
+    assert MOTIF_CITATIONS["border"] in _strip_ansi(out)
+
+
+def test_loom_svg_valido_con_desc_curatorial(tmp_path):
+    import xml.etree.ElementTree as ET
+    from vibecode.svg_export import export_svg
+
+    for mode in LOOM_MODES:
+        out = tmp_path / f"pieza_{mode}.svg"
+        export_svg(LOOM_SAMPLE, str(out), mode=mode)
+        svg = out.read_text(encoding="utf-8")
+        root = ET.fromstring(svg)  # XML valido
+        desc = root.find("{http://www.w3.org/2000/svg}desc")
+        assert desc is not None, f"modo {mode} sin <desc>"
+        assert desc.text == MOTIF_CITATIONS[mode]
+
+
+def test_loom_svg_modos_difieren_estructuralmente(tmp_path):
+    from vibecode.svg_export import render_svg
+
+    svgs = {m: render_svg(LOOM_SAMPLE, mode=m) for m in LOOM_MODES}
+    vals = list(svgs.values())
+    for i in range(len(vals)):
+        for j in range(i + 1, len(vals)):
+            assert vals[i] != vals[j]
+
+
+def test_loom_svg_border_usa_vacio_central(tmp_path):
+    from vibecode.svg_export import LOOM_VOID_HEX, render_svg
+
+    svg_border = render_svg(LOOM_SAMPLE, mode="border")
+    assert LOOM_VOID_HEX in svg_border      # el centro queda apagado
+    svg_field = render_svg(LOOM_SAMPLE, mode="field")
+    assert LOOM_VOID_HEX not in svg_field   # la malla no tiene vacio
+
+
+def test_loom_svg_sin_desc_en_modos_clasicos(tmp_path):
+    import xml.etree.ElementTree as ET
+    from vibecode.svg_export import render_svg
+
+    root = ET.fromstring(render_svg(LOOM_SAMPLE, mode="void"))
+    assert root.find("{http://www.w3.org/2000/svg}desc") is None
+
+
+def test_loom_cli_acepta_modos():
+    # El registry del CLI (-m) debe ofrecer los 4 modos loom
+    import vibecode.spaces as spaces_mod
+
+    src_choices = ["void", "length", "blocks", "flow", "scan", "drift", "pulse", "rain"]
+    assert set(LOOM_MODES).isdisjoint(src_choices)
+    for mode in LOOM_MODES:
+        out = render_static("a  b", mode=mode)  # no lanza
+        assert out
+    assert hasattr(spaces_mod, "LOOM_VOID_COLOR")

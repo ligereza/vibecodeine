@@ -31,11 +31,11 @@
     },
     {
       "id": "ecosystem-engine",
-      "nombre": "Ecosystem Engine",
+      "nombre": "Tapiz Ecosystem Engine",
       "linea": "cultura",
       "estado": "activo",
-      "descripcion": "Motor de diagnostico-a-frontend (Python stdlib puro) que modela el ecosistema Tapiz (activo) / Psicosis (meta) / Fungi (basurero): mide presion de tokens, simula guardrails con mitigacion por contexto artistico y detecta race conditions, y lo compila en un system_status.json que el sitio consume como variables CSS, filtros, keyframes y payloads. El motor conceptual detras de este portfolio.",
-      "ruta": "tools/ecosystem_engine/",
+      "descripcion": "Motor de diagnostico-a-frontend (Python stdlib puro) del ecosistema Tapiz (activo) / Psicosis (meta) / Fungi (basurero): mide presion de tokens, simula guardrails con mitigacion por contexto artistico y detecta race conditions; compila todo en un system_status.json validable contra el contrato de system_map.py y renderizable en tapiz_renderer.html. Modos --demo, --stress y --live (autorretrato del repo real). Manual de operacion en tools/TAPIZ.md.",
+      "ruta": "tools/compete_engine.py",
       "tags": ["python", "generativo-visual", "pipeline"]
     },
     {
