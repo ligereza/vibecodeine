@@ -324,10 +324,28 @@ def build_stress_ecosystem():
         state.decaying_assets[spore.asset_id] = spore
     return state
 
-def execute_pipeline(output_dir=None, stress=False):
-    print("SYSTEM PROJECTION PIPELINE" + (" [STRESS]" if stress else "") + "\n")
+def execute_pipeline(output_dir=None, stress=False, mode=None):
+    if mode is None:
+        mode = "stress" if stress else "demo"
+    elif stress and mode != "stress":
+        raise ValueError(f"contradictory arguments: stress=True with mode={mode!r}")
+    if mode not in ("demo", "stress", "live"):
+        raise ValueError(f"unknown pipeline mode: {mode!r}")
+    label = {"demo": "", "stress": " [STRESS]", "live": " [LIVE]"}[mode]
+    print("SYSTEM PROJECTION PIPELINE" + label + "\n")
 
-    ecosystem = build_stress_ecosystem() if stress else build_mock_ecosystem()
+    if mode == "live":
+        # Late import: --demo/--stress stay byte-compatible and independent.
+        try:
+            from tapiz_telemetry import build_live_ecosystem
+        except ImportError:
+            sys.path.insert(0, str(Path(__file__).resolve().parent))
+            from tapiz_telemetry import build_live_ecosystem
+        ecosystem = build_live_ecosystem()
+    elif mode == "stress":
+        ecosystem = build_stress_ecosystem()
+    else:
+        ecosystem = build_mock_ecosystem()
     print(f"Active: {len(ecosystem.active_assets)}, Decaying: {len(ecosystem.decaying_assets)}\n")
     
     token_analyzer = TokenVolumetricAnalyzer()
@@ -367,6 +385,11 @@ def main(argv=None):
         help="run against a hostile ecosystem that triggers every degraded "
              "state (OVERLOADED, CRITICAL, temporal tears, accumulation)",
     )
+    mode.add_argument(
+        "--live", action="store_true",
+        help="run against LIVE repo telemetry (real sizes, git state, "
+             "session-log weight); a self-portrait of the repo",
+    )
     parser.add_argument(
         "--out", metavar="DIR", default=None,
         help="output directory for system_status.json "
@@ -374,16 +397,22 @@ def main(argv=None):
     )
     args = parser.parse_args(argv)
 
-    if not (args.demo or args.stress):
-        parser.error("no input mode selected; use --demo or --stress")
+    if not (args.demo or args.stress or args.live):
+        parser.error("no input mode selected; use --demo, --stress or --live")
+
+    run_mode = "live" if args.live else "stress" if args.stress else "demo"
 
     _harden_console()
     try:
-        execute_pipeline(output_dir=args.out, stress=args.stress)
+        execute_pipeline(output_dir=args.out, mode=run_mode)
     except Exception as e:
         print(f"ERROR: {e}", file=sys.stderr)
         return 1
     return 0
 
 if __name__ == "__main__":
+    # Alias this __main__ module as 'compete_engine' so helpers that
+    # 'import compete_engine' (e.g. tapiz_telemetry) share the SAME enum
+    # classes; otherwise EntityState identity checks silently fail.
+    sys.modules.setdefault("compete_engine", sys.modules[__name__])
     sys.exit(main())
