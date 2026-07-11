@@ -23,6 +23,7 @@ import time
 from typing import List
 
 from .ansi import CLEAR_SCREEN, HIDE_CURSOR, RESET, SHOW_CURSOR, fg256, tokenize
+from .cauce import CAUCE_CITATION, CAUCE_MODE, render_ansi_cauce
 from .loom import LOOM_MODES, MOTIF_CITATIONS, block_segments, canvas_size
 
 # Color apagado para los vacios compositivos de los modos loom (centro del
@@ -72,7 +73,14 @@ def render_static(
       - border:    marcos concentricos alrededor de un vacio central.
       - medallion: medallon central que irradia en anillos.
       - mihrab:    arco direccional asimetrico apuntando hacia arriba.
+
+    Modo cauce (patron reconocido, no impuesto, ver cauce.py):
+      - cauce: la recurrencia de tokens elige el color (mismo token = mismo
+        hilo), los rios de espacios se dibujan tenues y las marcas fuera de
+        [a-zA-Z0-9_ ] brillan (puente tilde).
     """
+    if mode == CAUCE_MODE:
+        return render_ansi_cauce(text)
     palette = PALETTES.get(palette_name, PALETTES["flujo"])  # BRAND ENFORCED default flujo (no neon)
     lines = text.splitlines()
     out_lines: List[str] = []
@@ -217,7 +225,8 @@ def render_spaces(
     Args:
         text: código o texto a visualizar.
         mode: void, length, blocks, flow, scan, drift, pulse, rain,
-            field, border, medallion, mihrab (loom, siempre estaticos).
+            field, border, medallion, mihrab (loom, siempre estaticos),
+            cauce (estatico en terminal, animable en export SVG).
         palette: nombre de paleta del diccionario PALETTES.
         animate: si True, reproduce una animación en terminal.
         cycles: cantidad de frames de animación.
@@ -227,7 +236,9 @@ def render_spaces(
         file: archivo de salida (default sys.stdout).
     """
     out = file or sys.stdout
-    static_modes = {"void", "length", "blocks"} | set(LOOM_MODES)
+    # En terminal, cauce es estatico como los loom; su animacion vive en
+    # el export SVG (--svg -a).
+    static_modes = {"void", "length", "blocks", CAUCE_MODE} | set(LOOM_MODES)
 
     if not animate or mode in static_modes:
         out.write(header(mode, palette, False))
@@ -235,6 +246,8 @@ def render_spaces(
             # Regla curatorial del dossier: la pieza cita el significado
             # real del motivo que usa.
             out.write(f"\033[90m{MOTIF_CITATIONS[mode]}{RESET}\n\n")
+        elif mode == CAUCE_MODE:
+            out.write(f"\033[90m{CAUCE_CITATION}{RESET}\n\n")
         out.write(render_static(text, mode=mode, palette_name=palette, fill_char=fill_char, ghost=ghost))
         out.write(footer())
         out.flush()
@@ -302,9 +315,14 @@ def main():
         "-m",
         "--mode",
         choices=["void", "length", "blocks", "flow", "scan", "drift", "pulse", "rain"]
-        + list(LOOM_MODES),
+        + list(LOOM_MODES)
+        + [CAUCE_MODE],
         default="flow",
-        help="Modo visual (loom: field/border/medallion/mihrab, composicion de alfombra)",
+        help=(
+            "Modo visual (loom: field/border/medallion/mihrab, composicion "
+            "de alfombra; cauce: patron reconocido de la recurrencia, "
+            "animable en SVG con -a)"
+        ),
     )
     parser.add_argument(
         "-p",

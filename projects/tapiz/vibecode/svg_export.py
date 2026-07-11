@@ -12,6 +12,7 @@ import html
 from typing import List, Optional
 
 from .ansi import tokenize
+from .cauce import CAUCE_MODE, render_svg_cauce
 from .loom import LOOM_MODES, MOTIF_CITATIONS, block_segments, canvas_size
 
 # Paleta flujo real (hex de projects/flujo/flujo.json). El orden replica la
@@ -63,7 +64,20 @@ def render_svg(
     Modos loom (field/border/medallion/mihrab): el color depende de la
     posicion de la celda en el canvas (composicion de alfombra, ver loom.py);
     la pieza incrusta un <desc> con la cita curatorial del motivo.
+
+    Modo cauce: el patron se deriva de la recurrencia de los tokens y los
+    rios de espacios (ver cauce.py); con animate=True la pieza lleva SMIL
+    (formacion, digestion, respiracion; las marcas nunca decaen).
     """
+    if mode == CAUCE_MODE:
+        return render_svg_cauce(
+            text,
+            animate=animate,
+            title=title,
+            background=background,
+            char_w=CHAR_W,
+            line_h=LINE_H,
+        )
     lines = text.splitlines() or [""]
     is_loom = mode in LOOM_MODES
     n_cols, n_rows = canvas_size(lines)
