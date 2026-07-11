@@ -83,12 +83,19 @@ async function main() {
     if (!svg.startsWith('<svg')) throw new Error(rel + ' no parece SVG');
     repl[tok] = svg;
   }
-  for (const [tok, val] of Object.entries(repl)) {
-    if (!html.includes(tok)) throw new Error('token ausente en template: ' + tok);
-    html = html.split(tok).join(val);
+  // Reemplazo en UNA pasada sobre el template: el contenido inyectado nunca se
+  // re-escanea. Necesario porque cauce_sala3d.svg teje build.js y por lo tanto
+  // contiene __ART_*__ como texto legitimo de la obra (igual que __THREE__
+  // dentro de three.min.js). El callback ademas evita los patrones $ de replace.
+  const seen = new Set();
+  html = html.replace(/__(?:THREE|CSS3D|CALM_JSON|ART_[A-Z0-9]+)__/g, tok => {
+    if (!(tok in repl)) throw new Error('token desconocido en template: ' + tok);
+    seen.add(tok);
+    return repl[tok];
+  });
+  for (const tok of Object.keys(repl)) {
+    if (!seen.has(tok)) throw new Error('token ausente en template: ' + tok);
   }
-  // __THREE__ vive legitimamente dentro de three.min.js (window.__THREE__)
-  if (/__ART_|__CSS3D__|__CALM_JSON__/.test(html)) throw new Error('quedaron tokens sin reemplazar');
 
   fs.mkdirSync(OUT_DIR, { recursive: true });
   fs.writeFileSync(OUT, html);
