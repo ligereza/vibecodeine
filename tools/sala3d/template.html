@@ -64,6 +64,15 @@
   #sala-titulo { font-size: 21px; letter-spacing: 3px; text-transform: uppercase; color: var(--bone); min-width: 300px; text-align: center; }
   #sala-titulo small { display: block; font-size: 15px; color: var(--dim); letter-spacing: 1px; text-transform: none; margin-top: 5px; }
 
+  /* rail de progreso del recorrido */
+  #rail {
+    position: fixed; left: 50%; bottom: 12px; transform: translateX(-50%);
+    width: min(460px, 64vw); height: 3px; border-radius: 2px;
+    background: rgba(138,106,47,.35); pointer-events: none;
+  }
+  #rail-fill { height: 100%; width: 0%; background: var(--amber); border-radius: 2px; transition: width .5s ease; }
+  @media (prefers-reduced-motion: reduce) { #rail-fill { transition: none; } }
+
   /* controles del zootropo: solo visibles en la rotonda */
   #rotunda-ctl {
     position: fixed; left: 50%; bottom: 110px; transform: translateX(-50%);
@@ -119,6 +128,7 @@
     <div id="sala-titulo">entrada<small>&nbsp;</small></div>
     <button class="btn" id="b-next" aria-label="sala siguiente">adelante ›</button>
   </div>
+  <div id="rail" aria-hidden="true"><div id="rail-fill"></div></div>
 </div>
 
 <div id="intro">
@@ -143,6 +153,11 @@
 <template id="art-medallion">__ART_MEDALLION__</template>
 <template id="art-mihrab">__ART_MIHRAB__</template>
 <template id="art-cauce">__ART_CAUCE__</template>
+<template id="art-field2">__ART_FIELD2__</template>
+<template id="art-border2">__ART_BORDER2__</template>
+<template id="art-mihrab2">__ART_MIHRAB2__</template>
+<template id="art-medallion2">__ART_MEDALLION2__</template>
+<template id="art-cauce2">__ART_CAUCE2__</template>
 <script type="application/json" id="calm-data">__CALM_JSON__</script>
 
 <script>__THREE__</script>
@@ -215,8 +230,11 @@
   }
 
   // ---------- montaje de una pieza CSS3D sobre muro ----------
-  var artworks = []; // {obj, el, z}
-  function hangArt(tplId, wallX, z, worldH, title, meta, cita) {
+  // (x, z) = punto del muro; (nx, nz) = normal del muro hacia adentro de la sala.
+  // side (opcional, +-1) elige de que lado de la pieza cuelga el rotulo.
+  var artworks = []; // {obj, el, x, z}
+  function hangArt(tplId, x, z, nx, nz, worldH, title, meta, cita, side) {
+    side = side || 1;
     var tpl = document.getElementById(tplId);
     var svg = tpl.content.firstElementChild.cloneNode(true);
     var vb = svg.getAttribute('viewBox').split(' ');
@@ -229,29 +247,37 @@
     div.appendChild(svg);
     var obj = new CSS3DObject(div);
     var cy = 30 + worldH / 2;
-    var inward = wallX < 0 ? 1 : -1;
-    obj.position.set(wallX + inward * 8, cy, z);
-    obj.rotation.y = inward * Math.PI / 2;
+    var ry = Math.atan2(nx, nz);           // la pieza mira hacia la normal
+    var tx = -nz * side, tz = nx * side;   // tangente del muro (lado del rotulo)
+    obj.position.set(x + nx * 8, cy, z + nz * 8);
+    obj.rotation.y = ry;
     obj.scale.setScalar(scale);
     scene.add(obj);
     // halo + marco WebGL detras
     var halo = plane(worldW * 2.6, worldH * 1.25, new THREE.MeshBasicMaterial({
       map: haloTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
-    halo.position.set(wallX + inward * 4, cy, z); halo.rotation.y = inward * Math.PI / 2;
+    halo.position.set(x + nx * 4, cy, z + nz * 4); halo.rotation.y = ry;
     scene.add(halo);
     var fr = frameLines(worldW, worldH, 0x8a6a2f);
-    fr.position.set(wallX + inward * 6, cy, z); fr.rotation.y = inward * Math.PI / 2;
+    fr.position.set(x + nx * 6, cy, z + nz * 6); fr.rotation.y = ry;
     scene.add(fr);
+    // reflejo tenue de la pieza sobre el piso
+    var refl = plane(worldW * 1.5, worldH * 0.9, new THREE.MeshBasicMaterial({
+      map: haloTex, transparent: true, opacity: 0.2,
+      blending: THREE.AdditiveBlending, depthWrite: false }));
+    refl.rotation.x = -Math.PI / 2; refl.rotation.z = ry;
+    refl.position.set(x + nx * worldH * 0.45, 2.5, z + nz * worldH * 0.45);
+    scene.add(refl);
     // rotulo de sala al lado
     var panel = makePanel(
       '<h2>' + title + '</h2><p class="meta">' + meta + '</p><p class="cita">' + cita + '</p>');
     var pobj = new CSS3DObject(panel);
-    pobj.position.set(wallX + inward * 8, 230, z + worldW / 2 + 240);
-    pobj.rotation.y = inward * Math.PI / 2;
+    pobj.position.set(x + nx * 8 + tx * (worldW / 2 + 240), 230, z + nz * 8 + tz * (worldW / 2 + 240));
+    pobj.rotation.y = ry;
     pobj.scale.setScalar(0.55);
     scene.add(pobj);
-    artworks.push({ obj: obj, el: div, panel: panel, pobj: pobj, z: z });
-    return { div: div, z: z, wallX: wallX };
+    artworks.push({ obj: obj, el: div, panel: panel, pobj: pobj, x: x, z: z, sway: true });
+    return { div: div, x: x, z: z };
   }
   function makePanel(innerHTML, cls) {
     var d = document.createElement('div');
@@ -264,7 +290,7 @@
     var o = new CSS3DObject(el);
     o.position.set(x, y, z); o.rotation.y = ry || 0; o.scale.setScalar(scale || 0.55);
     scene.add(o);
-    artworks.push({ obj: o, el: el, z: z });
+    artworks.push({ obj: o, el: el, x: x, z: z });
     return el;
   }
 
@@ -285,15 +311,15 @@
     cauce: 'cauce: los rios entre espacios; la recurrencia se reconoce, no se impone; las marcas sobreviven la digestion (puente tilde)'
   };
   var H_ART = 480;
-  hangArt('art-field', -HALL_W/2, -800, H_ART, 'Campo <i>(gul)</i>',
+  hangArt('art-field', -HALL_W/2, -800, 1, 0, H_ART, 'Campo <i>(gul)</i>',
     '<b>instrumento</b> vibecode &middot; modo field<br><b>fuente tejida</b> tools/compete_engine.py', CITA.field);
-  hangArt('art-border', HALL_W/2, -1500, H_ART, 'Borde <i>(boteh)</i>',
-    '<b>instrumento</b> vibecode &middot; modo border<br><b>fuente tejida</b> scripts/validate_airdrop.py', CITA.border);
-  hangArt('art-medallion', -HALL_W/2, -2200, H_ART, 'Medallon',
+  hangArt('art-border', HALL_W/2, -1500, -1, 0, H_ART, 'Borde <i>(boteh)</i>',
+    '<b>instrumento</b> vibecode &middot; modo border<br><b>fuente tejida</b> scripts/validate_airdrop.py', CITA.border, -1);
+  hangArt('art-medallion', -HALL_W/2, -2200, 1, 0, H_ART, 'Medallon',
     '<b>instrumento</b> vibecode &middot; modo medallion<br><b>fuente tejida</b> projects/tapiz/vibecode/loom.py', CITA.medallion);
-  hangArt('art-mihrab', HALL_W/2, -2900, H_ART, 'Mihrab',
-    '<b>instrumento</b> vibecode &middot; modo mihrab<br><b>fuente tejida</b> projects/tapiz/vibecode/spaces.py', CITA.mihrab);
-  hangArt('art-cauce', -HALL_W/2, -3700, H_ART, 'Cauce I &mdash; autotejido',
+  hangArt('art-mihrab', HALL_W/2, -2900, -1, 0, H_ART, 'Mihrab',
+    '<b>instrumento</b> vibecode &middot; modo mihrab<br><b>fuente tejida</b> projects/tapiz/vibecode/spaces.py', CITA.mihrab, -1);
+  hangArt('art-cauce', -HALL_W/2, -3700, 1, 0, H_ART, 'Cauce I &mdash; autotejido',
     '<b>instrumento</b> vibecode &middot; modo cauce<br><b>fuente tejida</b> projects/tapiz/vibecode/cauce.py (el instrumento se teje a si mismo)<br>' +
     '<b>reconocimiento</b> mismo token, mismo color; las marcas nunca decaen', CITA.cauce);
 
@@ -417,6 +443,33 @@
     '<p class="cita">' + CITA.cauce + '</p>',
     'center', 0, 300, ROT_Z + DRUM_R + 260, 0, 0.6);
 
+  // ---------- ala este: segunda ala perpendicular desde la rotonda ----------
+  var EAST_END = 4200, EAST_HALF = 550;
+  var EAST_N = ROT_Z - EAST_HALF, EAST_S = ROT_Z + EAST_HALF; // muros z = ROT_Z +- 550
+  function wallSegX(z, x0, x1, ry) {
+    var m = plane(Math.abs(x1 - x0), HALL_H, matWall);
+    m.position.set((x0 + x1) / 2, HALL_H / 2, z);
+    m.rotation.y = ry;
+    scene.add(m);
+  }
+  wallSegX(EAST_N, 900, EAST_END, 0);        // muro norte, mira +z
+  wallSegX(EAST_S, 900, EAST_END, Math.PI);  // muro sur, mira -z
+  var eastEndWall = plane(EAST_HALF * 2, HALL_H, matWall);
+  eastEndWall.position.set(EAST_END, HALL_H / 2, ROT_Z);
+  eastEndWall.rotation.y = -Math.PI / 2;
+  scene.add(eastEndWall);
+
+  hangArt('art-field2', 1500, EAST_N, 0, 1, H_ART, 'Campo II <i>(gul)</i>',
+    '<b>instrumento</b> vibecode &middot; modo field<br><b>fuente tejida</b> tools/tapiz_telemetry.py (la telemetria vuelta alfombra)', CITA.field);
+  hangArt('art-border2', 2150, EAST_S, 0, -1, H_ART, 'Borde II <i>(boteh)</i>',
+    '<b>instrumento</b> vibecode &middot; modo border<br><b>fuente tejida</b> projects/cultura/dossiers/tapiz.md (la investigacion es el borde de la obra)', CITA.border, -1);
+  hangArt('art-mihrab2', 2800, EAST_N, 0, 1, H_ART, 'Mihrab II',
+    '<b>instrumento</b> vibecode &middot; modo mihrab<br><b>fuente tejida</b> desktop/tilde_meter.py (el instrumento reza por las marcas)', CITA.mihrab);
+  hangArt('art-cauce2', 3450, EAST_S, 0, -1, H_ART, 'Cauce III &mdash; la galeria tejiendose',
+    '<b>instrumento</b> vibecode &middot; modo cauce<br><b>fuente tejida</b> tools/sala3d/build.js (el build de esta sala leido por el cauce)', CITA.cauce, -1);
+  hangArt('art-medallion2', EAST_END, ROT_Z, -1, 0, H_ART, 'Medallon II &mdash; entrada',
+    '<b>instrumento</b> vibecode &middot; modo medallion<br><b>fuente tejida</b> projects/tapiz/vibecode_spaces.py (casi vacio: la entrada solo delega)', CITA.medallion);
+
   // ---------- sala ecosistema ----------
   var ECO_Z = -5950;
   var meshVars = CALM.luminous_mesh_densities.css_variables || {};
@@ -479,6 +532,27 @@
     '<p class="metodo">sala flujo &middot; 2026 &middot; piezas tejidas por projects/tapiz/vibecode y tools/compete_engine.py &middot; sin capturas: SMIL vivo</p>',
     'center', 0, 60, END_Z + 16, 0, 0.5);
 
+  // ---------- polvo en suspension (estatico si REDUCED) ----------
+  var DUST_N = 300;
+  var dustPos = new Float32Array(DUST_N * 3);
+  for (var dn = 0; dn < DUST_N; dn++) {
+    if (dn % 2) { // pasillo principal
+      dustPos[dn * 3] = (Math.random() - 0.5) * HALL_W;
+      dustPos[dn * 3 + 2] = 400 + Math.random() * (END_Z - 400);
+    } else {      // ala este
+      dustPos[dn * 3] = 900 + Math.random() * (EAST_END - 900);
+      dustPos[dn * 3 + 2] = ROT_Z + (Math.random() - 0.5) * EAST_HALF * 2;
+    }
+    dustPos[dn * 3 + 1] = 20 + Math.random() * (HALL_H - 60);
+  }
+  var dustGeo = new THREE.BufferGeometry();
+  dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+  var dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({
+    color: 0xb7ffd9, size: 7, map: sporeTex, transparent: true, opacity: 0.3,
+    blending: THREE.AdditiveBlending, depthWrite: false }));
+  scene.add(dust);
+  var dustAttr = dustGeo.getAttribute('position');
+
   // ---------- recorrido ----------
   function wp(px, py, pz, lx, ly, lz, titulo, sub) {
     return { p: new THREE.Vector3(px, py, pz), l: new THREE.Vector3(lx, ly, lz), t: titulo, s: sub || '' };
@@ -492,6 +566,11 @@
     wp(-140, 200, -2480, W2, 270, -2900, 'sala telar · mihrab', 'el nicho orientado'),
     wp(140, 200, -3280, -W2, 270, -3700, 'sala cauce I', 'el motor tejido — reconocimiento de tokens'),
     wp(0, 190, ROT_Z, 0, 240, ROT_Z - 400, 'rotonda cauce II', 'zootropo — el poema es un bucle'),
+    wp(1080, 200, ROT_Z + 140, 1500, 270, EAST_N, 'ala este · campo II', 'gul — la telemetria vuelta alfombra'),
+    wp(1730, 200, ROT_Z - 140, 2150, 270, EAST_S, 'ala este · borde II', 'boteh — la investigacion es el borde'),
+    wp(2380, 200, ROT_Z + 140, 2800, 270, EAST_N, 'ala este · mihrab II', 'el medidor reza por las marcas'),
+    wp(3030, 200, ROT_Z - 140, 3450, 270, EAST_S, 'ala este · cauce III', 'la galeria tejiendose a si misma'),
+    wp(3580, 200, ROT_Z, EAST_END, 270, ROT_Z, 'ala este · medallon II', 'la entrada que solo delega'),
     wp(0, 210, -5480, 0, 150, ECO_Z, 'sala ecosistema', 'esporas: click para exhumar'),
     wp(60, 200, TIL_Z + 460, W2, 270, TIL_Z, 'alcoba tilde', 'sobrevivencia-01 — caja de luz vacia'),
     wp(0, 200, END_Z + 620, 0, 260, END_Z, 'por empezar', 'psicosis · precursor — marcos vacios')
@@ -512,14 +591,16 @@
     var wpt = WAYPOINTS[current];
     document.getElementById('sala-titulo').innerHTML = wpt.t + '<small>' + wpt.s + '</small>';
     document.getElementById('rotunda-ctl').className = current === 6 ? 'show' : '';
+    document.getElementById('rail-fill').style.width =
+      (current / (WAYPOINTS.length - 1) * 100).toFixed(1) + '%';
     var dots = document.getElementById('dots').children;
     for (var i = 0; i < dots.length; i++) dots[i].className = i === current ? 'on' : '';
   }
   function cullFar() {
-    // los SVG SMIL lejanos se apagan para no pagar su animacion
-    var z = WAYPOINTS[current].p.z;
+    // los SVG SMIL lejanos se apagan para no pagar su animacion (distancia en x Y z)
+    var p = WAYPOINTS[current].p;
     artworks.forEach(function (a) {
-      var off = Math.abs(a.z - z) > 1900;
+      var off = Math.abs(a.z - p.z) > 1900 || Math.abs((a.x || 0) - p.x) > 1900;
       a.el.style.display = off ? 'none' : '';
       if (a.panel) a.panel.style.display = off ? 'none' : '';
     });
@@ -561,7 +642,8 @@
     a.el.addEventListener('click', function () {
       var best = 0, bd = 1e9;
       WAYPOINTS.forEach(function (w, i) {
-        var d = Math.abs(w.l.z - a.z); if (d < bd) { bd = d; best = i; }
+        var d = Math.abs(w.l.z - a.z) + Math.abs(w.l.x - (a.x || 0));
+        if (d < bd) { bd = d; best = i; }
       });
       goTo(best);
     });
@@ -648,6 +730,21 @@
     spores.forEach(function (sp) {
       sp.position.y = sp.userData.baseY + Math.sin(now / 1400 + sp.userData.ph) * 26;
     });
+    if (!REDUCED) {
+      // pulso del anillo ambar en modo estrobo
+      ring.material.opacity = strobe ? 0.34 + 0.2 * Math.sin(now / 110) : 0.28;
+      // sway sutil de los runners colgados
+      artworks.forEach(function (a) {
+        if (a.sway) a.obj.rotation.z = Math.sin(now / 2600 + a.z * 0.002 + a.x * 0.002) * 0.006;
+      });
+      // deriva lenta del polvo
+      for (var di = 0; di < DUST_N; di++) {
+        var dy = dustAttr.getY(di) - dt * 7;
+        if (dy < 12) dy = HALL_H - 30;
+        dustAttr.setY(di, dy);
+      }
+      dustAttr.needsUpdate = true;
+    }
     renderer.render(scene, camera);
     cssRenderer.render(scene, camera);
   }
