@@ -18,13 +18,24 @@ estructural (como en el telar real) y no un gradiente accidental.
 
 from __future__ import annotations
 
+import importlib
 import math
-from typing import List, Optional, Tuple
+import pkgutil
+from typing import Callable, Dict, List, Optional, Tuple
 
-LOOM_MODES: Tuple[str, ...] = ("field", "border", "medallion", "mihrab")
+# Modos nativos del telar (logica hardcodeada en loom_color_index). Los plugins
+# de motifs/ se suman a LOOM_MODES al final del modulo; estos cuatro son la base
+# canonica de la gramatica (field/border/medallion/mihrab del dossier).
+LOOM_BUILTIN_MODES: Tuple[str, ...] = ("field", "border", "medallion", "mihrab")
+
+# Registro de motivos-plugin cargados desde motifs/: nombre -> funcion
+# color_index(x, y, n_cols, n_rows, n_colors) -> Optional[int]. Lo llena
+# _load_loom_plugins() al importar el modulo (ver final del archivo).
+_PLUGIN_INDEX: Dict[str, Callable[[int, int, int, int, int], Optional[int]]] = {}
 
 # Citas curadas del dossier (projects/cultura/dossiers/tapiz.md, "Lenguaje de
 # motivos"). Una linea por modo, ASCII-only, con el significado real del motivo.
+# Los plugins agregan su CITATION aqui al cargarse.
 MOTIF_CITATIONS = {
     "field": (
         "field / gul: motivo octogonal repetido en el campo de la alfombra; "
@@ -69,6 +80,12 @@ def loom_color_index(
 
     n_cols = max(n_cols, 1)
     n_rows = max(n_rows, 1)
+
+    # Motivos-plugin (motifs/<nombre>.py): delegan a su propio color_index.
+    # Se resuelven antes que los modos nativos porque no comparten su logica.
+    plugin = _PLUGIN_INDEX.get(mode)
+    if plugin is not None:
+        return plugin(x, y, n_cols, n_rows, n_colors)
 
     if mode == "field":
         # Malla repetitiva all-over: celdas de 4x2 en diagonal, como guls
@@ -142,3 +159,64 @@ def canvas_size(lines: List[str]) -> Tuple[int, int]:
     n_rows = max(len(lines), 1)
     n_cols = max((len(line) for line in lines), default=1)
     return max(n_cols, 1), n_rows
+
+
+def _valid_index(value: object, n_colors: int) -> bool:
+    """True si value es None (vacio) o un indice de paleta valido."""
+    if value is None:
+        return True
+    return isinstance(value, int) and 0 <= value < n_colors
+
+
+def _load_loom_plugins() -> Tuple[str, ...]:
+    """
+    Carga los motivos-plugin de projects/tapiz/vibecode/motifs/.
+
+    Cada plugin es un modulo que expone NAME (str), CITATION (str con la cita
+    curatorial del dossier) y color_index(x, y, n_cols, n_rows, n_colors) que
+    devuelve un indice de paleta o None, con el mismo contrato que
+    loom_color_index. El loader valida el contrato con un smoke-test barato y
+    registra los que pasan en _PLUGIN_INDEX y MOTIF_CITATIONS. Un plugin roto se
+    ignora (no rompe el import), respetando la regla de cero-parches-a-medias.
+
+    Devuelve la tupla ordenada de nombres cargados (para extender LOOM_MODES).
+    """
+    try:
+        from . import motifs as _motifs_pkg
+    except Exception:
+        return ()
+
+    loaded: List[str] = []
+    for info in sorted(pkgutil.iter_modules(_motifs_pkg.__path__), key=lambda m: m.name):
+        if info.name.startswith("_"):
+            continue
+        try:
+            mod = importlib.import_module(f"{_motifs_pkg.__name__}.{info.name}")
+            name = getattr(mod, "NAME")
+            citation = getattr(mod, "CITATION")
+            fn = getattr(mod, "color_index")
+            if not isinstance(name, str) or not isinstance(citation, str):
+                continue
+            if not callable(fn):
+                continue
+            if name in LOOM_BUILTIN_MODES or name in _PLUGIN_INDEX:
+                continue  # no pisar un modo nativo ni un plugin ya cargado
+            if "dossier tapiz" not in citation:
+                continue  # regla curatorial: todo motivo cita su significado
+            # Smoke-test: el color_index debe devolver algo valido en un canvas
+            # minimo y en uno normal, sin reventar.
+            probe = [(1, 1, 8, 8, 5), (0, 0, 1, 1, 1), (3, 5, 40, 24, 7)]
+            if not all(_valid_index(fn(*p), p[-1]) for p in probe):
+                continue
+        except Exception:
+            continue
+        _PLUGIN_INDEX[name] = fn
+        MOTIF_CITATIONS[name] = citation
+        loaded.append(name)
+    return tuple(loaded)
+
+
+# Modos disponibles = nativos + plugins de motifs/. Se calcula al importar, asi
+# la CLI (spaces.py) y el exportador SVG los recogen automaticamente porque leen
+# list(LOOM_MODES) / `mode in LOOM_MODES` de forma dinamica.
+LOOM_MODES: Tuple[str, ...] = LOOM_BUILTIN_MODES + _load_loom_plugins()
