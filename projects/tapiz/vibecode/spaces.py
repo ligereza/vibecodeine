@@ -25,6 +25,14 @@ from typing import List
 from .ansi import CLEAR_SCREEN, HIDE_CURSOR, RESET, SHOW_CURSOR, fg256, tokenize
 from .cauce import CAUCE_CITATION, CAUCE_MODE, render_ansi_cauce
 from .loom import LOOM_MODES, MOTIF_CITATIONS, block_segments, canvas_size
+from .void_shapes import (
+    VOID_SHAPE_CITATIONS,
+    VOID_SHAPE_MODES,
+    espaciado_frame,
+    generate_roots,
+    raices_frame_segments,
+    zigzag_vertical_frame_segments,
+)
 
 # Color apagado para los vacios compositivos de los modos loom (centro del
 # modo border): casi el fondo, umbral de percepcion.
@@ -141,11 +149,26 @@ def render_frame(
       - drift: colores de los bloques de espacios cambian lentamente.
       - pulse: bloques largos de espacios "pulsan" con intensidad.
       - rain:  líneas de color caen de arriba a abajo.
+
+    Morfologías del vacío animado (dirección del artista, 2026-07-12, ver
+    void_shapes.py y DIRECTION.md): el vacío es protagonista, el texto queda
+    fantasma.
+      - espaciado:       el hueco entre caracteres respira (abre/cierra).
+      - zigzag_vertical: hilos en zigzag verticales tejen el vacío hacia
+        abajo; el color fluye por el hilo fijo (adapta motifs/zigzag.py,
+        que es diagonal, a una orientación vertical).
+      - raices:          formas rectangulares (raíz de circuito, ángulo
+        recto) crecen y se ramifican hacia abajo por el vacío.
     """
     palette = PALETTES.get(palette_name, PALETTES["flujo"])  # BRAND ENFORCED default flujo (no neon)
     lines = text.splitlines()
     out_lines: List[str] = []
     n_colors = len(palette)
+    n_cols, n_rows = canvas_size(lines)
+    # raices se ancla en los rios reales de espacio del texto (ver
+    # void_shapes.generate_roots); se calcula una vez por llamada, no por
+    # caracter -- el resultado queda cacheado por texto exacto ademas.
+    root_cells, root_total = generate_roots(text) if mode == "raices" else ({}, 1)
 
     for y, line in enumerate(lines):
         rendered = []
@@ -155,34 +178,47 @@ def render_frame(
         for kind, part in tokens:
             length = len(part)
             if kind == "space":
-                if mode == "flow":
-                    idx = int((math.sin((x + y * 2 + t * 3) * 0.15) + 1) * 0.5 * n_colors) % n_colors
-                    color = palette[idx]
-                elif mode == "scan":
-                    scan_pos = (t * 2) % 80
-                    dist = abs((x + length // 2) - scan_pos)
-                    if dist < 6:
-                        idx = dist % n_colors
-                        color = palette[idx]
-                    else:
-                        color = "\033[90m"
-                elif mode == "drift":
-                    idx = (x + y + t) % n_colors
-                    color = palette[idx]
-                elif mode == "pulse":
-                    idx = min(length, n_colors) - 1
-                    pulse = abs(math.sin(t * 0.2 + length))
-                    color = palette[idx] if pulse > 0.3 else "\033[90m"
-                elif mode == "rain":
-                    drop = (y + t) % (len(lines) + 5)
-                    if abs(drop - y) < 3:
-                        idx = (y + t) % n_colors
-                        color = palette[idx]
-                    else:
-                        color = "\033[90m"
+                if mode == "espaciado":
+                    width, intensity = espaciado_frame(x, y, t, length)
+                    idx = min(int(intensity * n_colors), n_colors - 1)
+                    rendered.append(f"{palette[idx]}{fill_char * width}{RESET}")
+                elif mode == "zigzag_vertical":
+                    for seg_len, idx in zigzag_vertical_frame_segments(x, y, length, t, n_cols, n_colors):
+                        color = palette[idx] if idx is not None else "\033[90m"
+                        rendered.append(f"{color}{fill_char * seg_len}{RESET}")
+                elif mode == "raices":
+                    for seg_len, idx in raices_frame_segments(x, y, length, t, root_cells, root_total, n_colors):
+                        color = palette[idx] if idx is not None else "\033[90m"
+                        rendered.append(f"{color}{fill_char * seg_len}{RESET}")
                 else:
-                    color = palette[length % n_colors]
-                rendered.append(f"{color}{fill_char * length}{RESET}")
+                    if mode == "flow":
+                        idx = int((math.sin((x + y * 2 + t * 3) * 0.15) + 1) * 0.5 * n_colors) % n_colors
+                        color = palette[idx]
+                    elif mode == "scan":
+                        scan_pos = (t * 2) % 80
+                        dist = abs((x + length // 2) - scan_pos)
+                        if dist < 6:
+                            idx = dist % n_colors
+                            color = palette[idx]
+                        else:
+                            color = "\033[90m"
+                    elif mode == "drift":
+                        idx = (x + y + t) % n_colors
+                        color = palette[idx]
+                    elif mode == "pulse":
+                        idx = min(length, n_colors) - 1
+                        pulse = abs(math.sin(t * 0.2 + length))
+                        color = palette[idx] if pulse > 0.3 else "\033[90m"
+                    elif mode == "rain":
+                        drop = (y + t) % (len(lines) + 5)
+                        if abs(drop - y) < 3:
+                            idx = (y + t) % n_colors
+                            color = palette[idx]
+                        else:
+                            color = "\033[90m"
+                    else:
+                        color = palette[length % n_colors]
+                    rendered.append(f"{color}{fill_char * length}{RESET}")
             else:
                 rendered.append(f"\033[90m{part}{RESET}" if ghost else part)
             x += length
@@ -225,8 +261,10 @@ def render_spaces(
     Args:
         text: código o texto a visualizar.
         mode: void, length, blocks, flow, scan, drift, pulse, rain,
-            field, border, medallion, mihrab (loom, siempre estaticos),
-            cauce (estatico en terminal, animable en export SVG).
+            espaciado, zigzag_vertical, raices (morfologias del vacio
+            animado, ver void_shapes.py), field, border, medallion, mihrab
+            (loom, siempre estaticos), cauce (estatico en terminal, animable
+            en export SVG).
         palette: nombre de paleta del diccionario PALETTES.
         animate: si True, reproduce una animación en terminal.
         cycles: cantidad de frames de animación.
@@ -248,6 +286,8 @@ def render_spaces(
             out.write(f"\033[90m{MOTIF_CITATIONS[mode]}{RESET}\n\n")
         elif mode == CAUCE_MODE:
             out.write(f"\033[90m{CAUCE_CITATION}{RESET}\n\n")
+        elif mode in VOID_SHAPE_MODES:
+            out.write(f"\033[90m{VOID_SHAPE_CITATIONS[mode]}{RESET}\n\n")
         out.write(render_static(text, mode=mode, palette_name=palette, fill_char=fill_char, ghost=ghost))
         out.write(footer())
         out.flush()
@@ -261,6 +301,8 @@ def render_spaces(
         for t in range(cycles):
             out.write(CLEAR_SCREEN)
             out.write(header(mode, palette, True))
+            if mode in VOID_SHAPE_MODES:
+                out.write(f"\033[90m{VOID_SHAPE_CITATIONS[mode]}{RESET}\n\n")
             out.write(
                 render_frame(
                     text,
@@ -315,13 +357,16 @@ def main():
         "-m",
         "--mode",
         choices=["void", "length", "blocks", "flow", "scan", "drift", "pulse", "rain"]
+        + list(VOID_SHAPE_MODES)
         + list(LOOM_MODES)
         + [CAUCE_MODE],
         default="flow",
         help=(
             "Modo visual (loom: field/border/medallion/mihrab, composicion "
             "de alfombra; cauce: patron reconocido de la recurrencia, "
-            "animable en SVG con -a)"
+            "animable en SVG con -a; espaciado/zigzag_vertical/raices: "
+            "morfologias del vacio animado -- ver void_shapes.py, animan "
+            "en terminal con -a y en SVG con --svg -a)"
         ),
     )
     parser.add_argument(

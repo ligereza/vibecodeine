@@ -14,6 +14,7 @@ from typing import List, Optional
 from .ansi import tokenize
 from .cauce import CAUCE_MODE, render_svg_cauce
 from .loom import LOOM_MODES, MOTIF_CITATIONS, block_segments, canvas_size
+from .void_shapes import VOID_SHAPE_MODES, render_svg_void_shapes
 
 # Paleta flujo real (hex de projects/flujo/flujo.json). El orden replica la
 # intencion de la paleta ANSI "flujo" de spaces.py: tinta -> acento -> soporte
@@ -68,6 +69,11 @@ def render_svg(
     Modo cauce: el patron se deriva de la recurrencia de los tokens y los
     rios de espacios (ver cauce.py); con animate=True la pieza lleva SMIL
     (formacion, digestion, respiracion; las marcas nunca decaen).
+
+    Morfologias del vacio animado (espaciado, zigzag_vertical, raices; ver
+    void_shapes.py, direccion del artista 2026-07-12): con animate=True la
+    pieza lleva SMIL (respiracion de huecos, hilo de color, crecimiento de
+    raiz); sin animate, un frame estatico representativo.
     """
     if mode == CAUCE_MODE:
         return render_svg_cauce(
@@ -77,6 +83,17 @@ def render_svg(
             background=background,
             char_w=CHAR_W,
             line_h=LINE_H,
+        )
+    if mode in VOID_SHAPE_MODES:
+        return render_svg_void_shapes(
+            text,
+            mode,
+            animate=animate,
+            title=title,
+            background=background,
+            char_w=CHAR_W,
+            line_h=LINE_H,
+            fill_char=fill_char,
         )
     lines = text.splitlines() or [""]
     is_loom = mode in LOOM_MODES

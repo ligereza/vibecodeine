@@ -42,7 +42,6 @@ Comandos disponibles (ejecutar `flujo --help`):
     package                     Empaqueta .exe standalone gratis (PyInstaller) → flujo-hub.exe onefile noconsole con icono premium (rounded+F), lanza directo pywebview desktop hub, assets (context/svg/brand + jobs/_template + src/flujo/templates) bundled, workspace next-to-exe, visualizers fully working. (equiv `flujo app --desktop`)
   plano
     plano <evento.json>         Generar plano SVG/rider/costos de stands
-    brand analyze <ejemplo>  Genera stub JSON descriptivo desde carpeta de ejemplo
   datadrop (inverse airdrop)
     datadrop list            Lista datadrops subidos (fotos reales terminadas)
     datadrop prepare         Escribe _review_package.txt con for_future_ai + traits (para IA futura/linea)
