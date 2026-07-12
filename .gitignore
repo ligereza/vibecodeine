@@ -163,3 +163,7 @@ out/
 
 # cache local del build de la galeria 3D (three.js pinneado descargado)
 tools/sala3d/.cache/
+
+# backups locales (no versionar)
+backup_before_merge_*/
+backup_manifiestos_*/
