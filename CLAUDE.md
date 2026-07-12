@@ -296,3 +296,13 @@ Reporte Formal de Verificacion y Tolerancia Cero a Errores
 
 Si hay contradiccion entre fuentes, manda este orden: instruccion directa del usuario ->
 este `CLAUDE.md` -> `context/LAST_HANDOFF.md` -> docs especificos -> `README.md`.
+
+## Puente Omega
+
+Este repo tiene una capa conceptual heredada del corpus Omega de Desktop/idea_generativa.
+
+- `puente/OMEGA_MAP.md`: mapa conceptual Omega <-> flujo.
+- `puente/SEMILLAS.md`: registro de semillas fechadas (simbolo de suma) -- todo proyecto
+  nuevo arranca de aca.
+- `PLAN_ANUAL_2026-2027.md`: plan de crecimiento con Omega11 por trimestre.
+- skill `motor-omega`: protocolo para piezas nuevas.

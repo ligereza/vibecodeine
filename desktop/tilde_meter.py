@@ -1,4 +1,9 @@
 """
+NOTA Ω (12-jul-2026): este meter mide tokens. La Tilde del sistema Ω NO es
+ahorro de tokens -- es el residuo intraducible (Quine/Lotman). Este modulo
+usa el nombre en dialecto degradado; ver puente/TILDE_NOTA.md. Registrado
+como ⊕₃.
+
 tilde_meter -- mide que le pasa al espanol cuando se comprime.
 
 Pieza de datos del proyecto artistico "tilde" (projects/tilde/): cada vez que
