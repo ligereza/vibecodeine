@@ -140,9 +140,10 @@ def test_svg_export_escapa_html(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# Modos loom: field / border / medallion / mihrab
+# Modos loom: field / border / medallion / mihrab (nativos) + motifs/ (plugins)
 # ---------------------------------------------------------------------------
 from vibecode.loom import (  # noqa: E402
+    LOOM_BUILTIN_MODES,
     LOOM_MODES,
     MOTIF_CITATIONS,
     block_segments,
@@ -156,11 +157,24 @@ LOOM_SAMPLE = "\n".join("x" + " " * 38 + "x" for _ in range(24))
 
 
 def test_loom_modes_registrados_con_cita():
-    assert LOOM_MODES == ("field", "border", "medallion", "mihrab")
+    # Los 4 nativos encabezan la tupla; los plugins de motifs/ se suman detras.
+    assert LOOM_BUILTIN_MODES == ("field", "border", "medallion", "mihrab")
+    assert LOOM_MODES[:4] == LOOM_BUILTIN_MODES
+    assert len(LOOM_MODES) == len(set(LOOM_MODES))  # sin nombres repetidos
     for mode in LOOM_MODES:
         cita = MOTIF_CITATIONS[mode]
         assert cita and "\n" not in cita  # una linea
         assert "dossier tapiz" in cita    # cita al dossier curado
+
+
+def test_loom_plugins_cargados_y_distintos_del_field():
+    # El loader de motifs/ registra motivos extra (fold del telar en loom).
+    extra = LOOM_MODES[4:]
+    assert extra, "no se cargo ningun motivo-plugin de motifs/"
+    field = render_static(LOOM_SAMPLE, mode="field")
+    for mode in extra:
+        # Cada plugin es un modo real, no un alias del campo base.
+        assert render_static(LOOM_SAMPLE, mode=mode) != field
 
 
 def test_loom_render_static_valido_por_modo():
@@ -301,7 +315,7 @@ def test_loom_svg_sin_desc_en_modos_clasicos(tmp_path):
 
 
 def test_loom_cli_acepta_modos():
-    # El registry del CLI (-m) debe ofrecer los 4 modos loom
+    # El registry del CLI (-m) debe ofrecer todos los modos loom (nativos+plugins)
     import vibecode.spaces as spaces_mod
 
     src_choices = ["void", "length", "blocks", "flow", "scan", "drift", "pulse", "rain"]
