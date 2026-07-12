@@ -1,6 +1,6 @@
 # Higiene del repo
 
-Versión: v0.48.5
+Versión: v0.51.0
 
 ## Política
 
@@ -53,7 +53,7 @@ Ver `docs/AGENT_AIRDROP_PROTOCOL.md` para el detalle completo (que valida, que h
 ## Deuda conocida
 
 - `projects/tapiz/vibecode.egg-info/` está trackeado históricamente.
-- Historial de commits de v0.34 con tareas parciales/fallidas fue consolidado (ver REPO_MAP).
+- Historial de commits de v0.34 con tareas parciales/fallidas fue consolidado (ver CLAUDE.md, seccion "Mapa del repo"; el viejo REPO_MAP.md fue archivado).
 - checkpoints/ y docs/handoffs/ se mantienen como bitácora (no agregar commits ruidosos de micro-tareas).
 - Se recomienda correr git filter-repo para reducir tamaño del .git (ver docs/LIMPIEZA_HISTORIAL.md).
 

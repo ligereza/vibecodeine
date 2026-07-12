@@ -9,7 +9,7 @@ Este directorio centraliza la historia operacional del repo.
 ## Contenido vigente
 
 - [context/LAST_HANDOFF.md](../../context/LAST_HANDOFF.md): estado diario y proximo paso operativo (unica fuente que un agente deberia leer para continuidad).
-- Nivel raiz de esta carpeta: **solo** los `HANDOFF_*.md`/`HOTFIX_*.md` de la sesion o semana en curso (referencia puntual, no indice). Hoy (2026-07-03): `HANDOFF_2026-07-02_cotizacion_eventos_y_flyers_suplementos.md`, `HANDOFF_2026-07-02_nombre_asistente_vibo.md`, `HANDOFF_2026-07-03_adobe_toolkit.md`.
+- Nivel raiz de esta carpeta: **solo** los `HANDOFF_*.md`/`HOTFIX_*.md` de la sesion o semana en curso (referencia puntual, no indice). Al 2026-07-12 no hay ninguno vigente: los de la semana anterior se archivaron en `archive/handoffs/`. El estado corto vive en `context/LAST_HANDOFF.md`.
 - [docs/handoffs/archive](archive): snapshots, hotfixes y handoffs antiguos (2026-06-16 a 2026-06-30, 84 archivos).
   - [docs/handoffs/archive/root](archive/root): handoffs que antes estaban en la raiz del repo.
   - [docs/handoffs/archive/handoffs](archive/handoffs): handoffs que antes estaban sueltos aqui (nivel raiz de esta carpeta) o en el antiguo subdirectorio `current/` (retirado 2026-07-03, no tenia regla documentada y quedo obsoleto).
