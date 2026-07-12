@@ -1,7 +1,7 @@
 # Automatización flujo — revisión sin revisión
 
 Objetivo pedido por el jefe (2026-07-03): automatizar el trabajo del área y
-tener al asistente (Vibo) trabajando **sin necesidad de tener el PC
+tener al asistente (Cauce) trabajando **sin necesidad de tener el PC
 encendido**, con calidad garantizada sin auditorías que expongan errores.
 
 ## La analogía: el molde del orfebre
@@ -47,7 +47,7 @@ teléfono ya pasó el molde y el horno; apruebas arte terminado, no borradores.
 valida TODAS las piezas (crema, dark, vectorizados). Pieza inválida = PR
 rojo = no entra. Cero auditorías posteriores.
 
-### Fase 2 — Vibo en la nube (requiere 2 activaciones tuyas)
+### Fase 2 — Cauce en la nube (requiere 2 activaciones tuyas)
 
 Con esto el asistente trabaja con tu PC apagado:
 
