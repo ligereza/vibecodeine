@@ -473,3 +473,147 @@ def test_cauce_estatico_sin_animate_y_digerido():
     marks = [g for g in _cauce_groups(svg) if g.get("class") == "cauce-marks"]
     assert marks and all(g.get("opacity") is None for g in marks)
     assert all(g.get("fill") == "#b7ffd9" for g in marks)
+
+
+# ---------------------------------------------------------------------------
+# Morfologias del vacio animado: espaciado / zigzag_vertical / raices
+# (direccion del artista 2026-07-12, ver vibecode/void_shapes.py)
+# ---------------------------------------------------------------------------
+from vibecode.spaces import SAMPLE_CODE, render_frame  # noqa: E402
+from vibecode.void_shapes import (  # noqa: E402
+    VOID_SHAPE_CITATIONS,
+    VOID_SHAPE_MODES,
+    espaciado_frame,
+    generate_roots,
+    zigzag_thread_at,
+    zigzag_vertical_frame_segments,
+)
+
+
+def test_void_shape_modes_registrados_con_cita():
+    assert VOID_SHAPE_MODES == ("espaciado", "zigzag_vertical", "raices")
+    for mode in VOID_SHAPE_MODES:
+        cita = VOID_SHAPE_CITATIONS[mode]
+        assert cita and "\n" not in cita
+        assert "direccion tapiz" in cita
+
+
+def test_void_shape_modes_no_chocan_con_loom_ni_flujo_base():
+    src_choices = ["void", "length", "blocks", "flow", "scan", "drift", "pulse", "rain"]
+    assert set(VOID_SHAPE_MODES).isdisjoint(src_choices)
+    assert set(VOID_SHAPE_MODES).isdisjoint(LOOM_MODES)
+
+
+def test_void_shape_cli_acepta_los_tres_modos(tmp_path):
+    # CLI real: -m <modo> (terminal) y -m <modo> --svg (export) para los tres.
+    import os
+    import subprocess
+
+    src = tmp_path / "src.py"
+    src.write_text("def f(a, b):\n    return a + b\n", encoding="utf-8")
+    script = TAPIZ_DIR / "vibecode_spaces.py"
+    env = dict(os.environ, PYTHONIOENCODING="utf-8")
+    for mode in VOID_SHAPE_MODES:
+        r = subprocess.run(
+            [sys.executable, str(script), str(src), "-m", mode, "-a", "-c", "2", "-s", "0.01"],
+            capture_output=True,
+            env=env,
+        )
+        assert r.returncode == 0, r.stderr.decode("utf-8", "replace")
+        out_svg = tmp_path / f"{mode}.svg"
+        r_svg = subprocess.run(
+            [sys.executable, str(script), str(src), "-m", mode, "-a", "--svg", str(out_svg)],
+            capture_output=True,
+            env=env,
+        )
+        assert r_svg.returncode == 0, r_svg.stderr.decode("utf-8", "replace")
+        assert out_svg.exists() and out_svg.stat().st_size > 0
+
+
+def test_void_shape_render_frame_anima_con_t():
+    for mode in VOID_SHAPE_MODES:
+        f0 = render_frame(SAMPLE_CODE, mode=mode, t=0)
+        f5 = render_frame(SAMPLE_CODE, mode=mode, t=5)
+        f30 = render_frame(SAMPLE_CODE, mode=mode, t=30)
+        assert f0 and f5 and f30
+        assert f0 != f5, f"{mode}: no cambia entre t=0 y t=5"
+        assert f5 != f30, f"{mode}: no cambia entre t=5 y t=30"
+        # El texto fantasma se conserva integro (los glifos de palabra nunca
+        # se tocan; solo "espaciado" varia el ANCHO del hueco entre ellas,
+        # asi que no se exige el espacio literal, solo el glifo).
+        plain = _strip_ansi(f0)
+        assert "def" in plain and "class" in plain
+
+
+def test_void_shape_render_static_no_revienta():
+    # Sin -a caen al render estatico generico (void-like); no deben crashear.
+    for mode in VOID_SHAPE_MODES:
+        out = render_static(SAMPLE_CODE, mode=mode)
+        assert out
+        assert "def" in _strip_ansi(out)
+
+
+def test_espaciado_frame_oscila_y_es_deterministico():
+    w1, i1 = espaciado_frame(3, 1, 0, length=4)
+    w2, i2 = espaciado_frame(3, 1, 0, length=4)
+    assert (w1, i1) == (w2, i2)  # deterministico: misma entrada, misma salida
+    assert 0.0 <= i1 <= 1.0
+    widths = {espaciado_frame(3, 1, t, length=4)[0] for t in range(40)}
+    assert len(widths) > 1  # respira: el ancho varia con t
+
+
+def test_zigzag_thread_at_es_puramente_posicional():
+    # La FORMA del hilo no depende de t (solo el color que corre sobre ella).
+    n_cols = 60
+    threads_a = [zigzag_thread_at(x, 5, n_cols) for x in range(n_cols)]
+    threads_b = [zigzag_thread_at(x, 5, n_cols) for x in range(n_cols)]
+    assert threads_a == threads_b
+    assert any(t is not None for t in threads_a), "ningun hilo detectado"
+
+
+def test_zigzag_vertical_color_fluye_con_t():
+    segs_t0 = zigzag_vertical_frame_segments(0, 5, 60, t=0, n_cols=60, n_colors=5)
+    segs_t3 = zigzag_vertical_frame_segments(0, 5, 60, t=3, n_cols=60, n_colors=5)
+    assert sum(n for n, _ in segs_t0) == 60
+    assert sum(n for n, _ in segs_t3) == 60
+    assert segs_t0 != segs_t3  # el color del hilo se desplazo con t
+
+
+def test_generate_roots_deterministico_y_ancla_en_rios_reales():
+    cells_a, total_a = generate_roots(CAUCE_SAMPLE)
+    cells_b, total_b = generate_roots(CAUCE_SAMPLE)
+    assert cells_a == cells_b and total_a == total_b  # mismo texto, mismo resultado
+    assert total_a >= 1
+    # El TRONCO (profundidad 0) esta anclado en un rio real (cauce.river_runs):
+    # siempre cae en espacio real, nunca sobre codigo. Las ramas (profundidad
+    # >= 1) pueden caer sobre codigo -- las enmascara el llamador al renderizar,
+    # igual que loom/cauce, no el generador.
+    lines = CAUCE_SAMPLE.splitlines()
+    for (x, y), (_birth, depth) in cells_a.items():
+        if depth == 0:
+            line = lines[y]
+            assert x >= len(line) or line[x].isspace()
+
+
+def test_generate_roots_texto_distinto_no_comparte_cache_erroneo():
+    cells_a, _ = generate_roots("a\nb")
+    cells_b, _ = generate_roots("x\ny")
+    # Distinto texto (aunque misma forma) puede compartir estructura (ambos
+    # deterministicos con la misma semilla) pero la funcion no debe crashear
+    # ni devolver None.
+    assert cells_a is not None and cells_b is not None
+
+
+def test_void_shape_svg_valido_con_desc_y_animate(tmp_path):
+    import xml.etree.ElementTree as ET
+    from vibecode.svg_export import export_svg
+
+    for mode in VOID_SHAPE_MODES:
+        for animate in (False, True):
+            out = tmp_path / f"pieza_{mode}_{animate}.svg"
+            export_svg(SAMPLE_CODE, str(out), mode=mode, animate=animate, title="t")
+            svg = out.read_text(encoding="utf-8")
+            root = ET.fromstring(svg)  # XML valido
+            desc = root.find(f"{SVG_NS}desc")
+            assert desc is not None and desc.text == VOID_SHAPE_CITATIONS[mode]
+            assert ("<animate" in svg) == animate

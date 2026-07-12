@@ -12,7 +12,6 @@ Endpoints:
   GET  /context/...              -> sirve los HTML/CSS/JS del hub
   GET  /api/health/stats         -> tarjetas de estado del hub (lee jobs/ si existe)
   GET  /api/materials            -> material RD (lee context/data/materials.json o demo)
-  GET  /api/materials/<id>/download -> stub de descarga
   POST /api/plano/render         -> {evento} -> {layout, rider, costos}
 
 Uso:
@@ -335,9 +334,6 @@ class Handler(BaseHTTPRequestHandler):
             return self._json({"total_jobs": api_list_jobs().get("count", 0), "total_svg": api_list_svg_works().get("count", 0), "connected": True})
         if path == "/api/index/brief":
             return self._json(api_index_brief())
-        if path.startswith("/api/materials/") and path.endswith("/download"):
-            mid = path[len("/api/materials/"):-len("/download")]
-            return self._json({"ok": True, "msg": "stub descarga", "id": mid})
         if path.startswith("/context/"):
             return self._serve_file(path[len("/context/"):])
         if path.startswith("/svg/"):
