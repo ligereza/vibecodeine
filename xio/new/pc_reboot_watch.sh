@@ -43,6 +43,11 @@ trap 'rm -f "$PIDFILE"' EXIT
 
 sh_usb(){ MSYS_NO_PATHCONV=1 "$ADB" -s "$SERIAL" shell "$@" 2>/dev/null; }
 log(){ echo "[$(date '+%F %T')] $*" >> "$LOG"; }
+wake_dismiss(){  # wake + dismiss the non-secure (swipe) keyguard so input taps land
+  sh_usb "input keyevent 224" >/dev/null 2>&1; sleep 1
+  sh_usb "wm dismiss-keyguard" >/dev/null 2>&1
+  sh_usb "input swipe 540 1900 540 600 200" >/dev/null 2>&1; sleep 1
+}
 
 TOPIC=""
 load_topic(){ TOPIC="$(sh_usb 'cat /sdcard/xio_termux/ntfy_topic.txt 2>/dev/null' | tr -d ' \r\n')"; }
@@ -66,7 +71,7 @@ reenable_hotspot(){  # HyperOS does NOT restore the hotspot on boot and no non-r
   local i
   for i in 1 2; do
     hotspot_up && return 0
-    sh_usb "input keyevent 224" >/dev/null 2>&1                       # wake
+    wake_dismiss
     sh_usb "am start -a android.settings.TETHER_SETTINGS" >/dev/null 2>&1
     sleep 3
     sh_usb "uiautomator dump /sdcard/uidump.xml" >/dev/null 2>&1
@@ -84,8 +89,8 @@ reenable_hotspot(){  # HyperOS does NOT restore the hotspot on boot and no non-r
   return 1
 }
 
-start_server_dance(){  # drive Termux (works when the screen is unlocked)
-  sh_usb "input keyevent 224" >/dev/null 2>&1
+start_server_dance(){  # drive Termux (no PIN); Termux:Boot is the headless backup
+  wake_dismiss
   sh_usb "am start -n com.termux/com.termux.app.TermuxActivity" >/dev/null 2>&1
   sleep 2
   sh_usb "input text sh" >/dev/null 2>&1
@@ -132,7 +137,7 @@ recover(){
 log "watcher started (serial $SERIAL, interval ${INTERVAL}s)"
 load_topic
 notify "watcher xio iniciado en el PC (vigila reboots por USB)."
-down_count=0
+down_count=0; hs_down=0
 while true; do
   if usb_up; then
     up="$(uptime_s)"; case "$up" in ''|*[!0-9]*) up=999999 ;; esac
@@ -146,9 +151,24 @@ while true; do
       # (2 polls ~30s) so a transient blip doesn't trigger a needless recovery.
       if [ "$up" -lt "$BOOT_FRESH" ] || [ "$down_count" -ge 2 ]; then
         recover
-        down_count=0
+        down_count=0; hs_down=0
         sleep 45            # backoff: let the stack settle before re-checking
         continue
+      fi
+    fi
+    # Keep the hotspot alive (the user's ONLY internet). If it's down for 2 polls,
+    # re-enable it by screen-tap. This also RETRIES a boot-time reenable that ran too
+    # early (SystemUI not ready), independent of the server. The phone is an appliance
+    # the user does not hand-use, so driving its screen is fine.
+    if hotspot_up; then
+      [ "$hs_down" -gt 0 ] && log "hotspot back up"
+      hs_down=0
+    else
+      hs_down=$((hs_down + 1))
+      if [ "$hs_down" -ge 2 ]; then
+        log "hotspot down (sustained) -> re-enabling"
+        reenable_hotspot && log "hotspot re-enabled" || log "hotspot re-enable failed"
+        hs_down=0
       fi
     fi
   fi
