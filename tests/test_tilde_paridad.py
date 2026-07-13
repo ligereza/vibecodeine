@@ -14,6 +14,7 @@ CULTURA_DIR = Path(__file__).resolve().parents[1] / "projects" / "cultura"
 sys.path.insert(0, str(CULTURA_DIR))
 
 from tilde_paridad import (  # noqa: E402
+    analizar_texto,
     auditar,
     corpus_desde_archivo,
     detectar_inversiones,
@@ -21,11 +22,16 @@ from tilde_paridad import (  # noqa: E402
 )
 
 # "ano" con virgulilla: pierde 1 marca (la n con ~), pero es FILOSO (ano/ano,
-# inversion de sentido; su costo curado contiene la flecha '->').
+# inversion de sentido; su costo curado lleva la flecha '->' mas glosa entre
+# parentesis).
 _ANIO = "año"
 # "Vamos? Ya!" con aperturas: pierde 2 marcas (inv. question + inv. exclamation),
 # pero NINGUNA es filosa (las aperturas marcan posicion, su costo no lleva '->').
 _APERTURAS = "¿Vamos? ¡Ya!"
+# "pinguino" con dieresis: su unica marca es la u con dieresis. Su costo curado
+# lleva '->' (pinguino/pinguino) pero NO glosa entre parentesis: es perdida
+# fonetica, la MISMA palabra, no inversion de sentido. NO debe contar como filoso.
+_DIERESIS = "pingüino"
 
 
 def test_inversion_detectada():
@@ -70,6 +76,18 @@ def test_no_colapsa_a_un_puntaje():
     salida = render(*auditar([_ANIO, _APERTURAS]))
     assert "por caso" in salida
     assert "token" not in salida.lower()
+
+
+def test_dieresis_no_es_filoso():
+    # La u con dieresis tiene costo curado (entra al banco) pero su perdida es
+    # fonetica -- la misma palabra, sin glosa entre parentesis -- asi que NO es
+    # filosa. El fix de _es_filoso exige '->' MAS '(' para no confundirla con una
+    # inversion de sentido.
+    caso = analizar_texto(_DIERESIS)
+    assert caso is not None            # tiene marca: no queda fuera del banco
+    assert caso.curados                # la dieresis SI tiene costo curado
+    assert caso.filosos == []          # pero su costo no es de inversion de sentido
+    assert caso.tiene_filoso is False
 
 
 def test_corpus_desde_archivo(tmp_path):

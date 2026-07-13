@@ -52,6 +52,7 @@ from __future__ import annotations
 
 import os
 import sys
+import unicodedata
 from pathlib import Path
 from typing import Optional
 
@@ -133,6 +134,11 @@ app.add_typer(knowledge_app, name="knowledge")
 # ============================================================
 # Helpers
 # ============================================================
+
+def _ascii(s: str) -> str:
+    """Transliterate a string to ASCII-only (drops accents/non-ASCII marks)."""
+    return unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode("ascii")
+
 
 def _err(msg: str) -> None:
     console.print(f"[red]Error:[/] {msg}")
@@ -645,8 +651,8 @@ def handoff(action: str = typer.Argument("last", help="last | create"),
         now = datetime.now().strftime("%Y-%m-%d %H:%M")
         content = p.read_text(encoding="utf-8")
         # Append a compact update section at the end (keeps file small)
-        update = f"\n\n---\n\n**Actualización {now}**\n\n{message}\n\nActualiza la sección 'Próximas acciones' manualmente si es necesario."
-        p.write_text(content.rstrip() + update, encoding="utf-8")
+        update = f"\n\n---\n\n**Actualizacion {now}**\n\n{message}\n\nActualiza la seccion 'Proximas acciones' manualmente si es necesario."
+        p.write_text(content.rstrip() + _ascii(update), encoding="utf-8")
         _ok(f"LAST_HANDOFF.md actualizado con: {message}")
         console.print("Recuerda: agrega tareas simples claras + nota Windows (py) / Linux. Español primero.")
         return
@@ -2306,18 +2312,6 @@ def brand_legacy():
     """El branding rígido fue retirado. Usa knowledge/logos y logo clean lab."""
     console.print("[yellow]⚠ Brand legacy retirado. Migrado a knowledge/logos.[/]")
 
-@knowledge_app.command("logo-lab")
-def knowledge_logo_lab(
-    producer: str = typer.Argument(..., help="producer_id, ej: creamfields"),
-    source: Path = typer.Argument(..., help="imagen fuente del logo"),
-):
-    """Bridge para Logo Clean Lab: prepara estructura de carpetas y manifest."""
-    from .knowledge.store import prepare_logo_lab
-    try:
-        manifest_path = prepare_logo_lab(producer, source)
-    except Exception as e:
-        _err(str(e))
-    _ok(f"Logo Lab preparado: {manifest_path}")
 
 def main():
     app()

@@ -12,6 +12,11 @@ from pathlib import Path
 from typing import Optional
 from xml.etree import ElementTree as ET
 
+# Registrar el namespace SVG por defecto para que tree.write no emita prefijos
+# ns0: en los <text>/<rect>/... generados (Illustrator y el validador esperan el
+# namespace por defecto, igual que la plantilla ASCII base).
+ET.register_namespace("", "http://www.w3.org/2000/svg")
+
 from .suplementos_config import Suplemento
 
 
@@ -44,6 +49,25 @@ def _replace_text_in_svg(root: ET.Element, old_text: str, new_text: str) -> int:
             text_elem.text = text_elem.text.replace(old_text, new_text)
             count += 1
 
+    return count
+
+
+def _replace_required(root: ET.Element, old_text: str, new_text: str, campo: str) -> int:
+    """Reemplazar un placeholder OBLIGATORIO y fallar si no aparece.
+
+    Protege contra el bug de plantilla desincronizada: si el texto de busqueda
+    no coincide con ningun <text> de la plantilla base, _replace_text_in_svg
+    devuelve 0 y la pieza saldria con el placeholder crudo. Para un campo
+    obligatorio eso es un error duro, no algo que se resuelve en QA visual.
+    """
+    count = _replace_text_in_svg(root, old_text, new_text)
+    if count == 0:
+        raise ValueError(
+            f"Campo obligatorio '{campo}' no reemplazado: el texto de busqueda "
+            f"'{old_text}' no coincide con ningun placeholder de la plantilla "
+            "01_contraportada_base_10x14cm.svg. Sincronizar contraportada_svg.py "
+            "con el texto real de la plantilla."
+        )
     return count
 
 
@@ -90,24 +114,37 @@ def generar_contraportada(
         _replace_text_in_svg(root, "NOMBRE DEL", " ".join(palabras[:-1]))
         _replace_text_in_svg(root, "SUPLEMENTO", palabras[-1])
 
-    _replace_text_in_svg(root, "DESCRIPCIÓN", suplemento.descripcion)
+    # Los textos de busqueda deben coincidir EXACTO con la plantilla ASCII
+    # (svg/suplementos_rd/04_contraportadas/01_contraportada_base_10x14cm.svg):
+    # sin tildes/enies y sin vinetas.
+    _replace_required(root, "DESCRIPCION", suplemento.descripcion, "descripcion")
 
-    # Reemplazar beneficios (líneas 1-2)
+    # Reemplazar beneficios (lineas 1-2)
     beneficio_1 = brief if brief else suplemento.beneficio_1
-    _replace_text_in_svg(root, "Beneficio principal o idea de campaña para la pieza.", beneficio_1)
+    _replace_required(
+        root,
+        "Beneficio principal o idea de campana para la pieza.",
+        beneficio_1,
+        "beneficio_1",
+    )
     if suplemento.beneficio_2:
-        _replace_text_in_svg(root, "Texto breve y claro para acompañar el producto.", suplemento.beneficio_2)
+        _replace_text_in_svg(root, "Texto breve y claro para acompanar el producto.", suplemento.beneficio_2)
 
     # Reemplazar info nutricional
-    _replace_text_in_svg(root, "• Ingredientes o perfil principal del suplemento.", suplemento.info_nutricional[0] if suplemento.info_nutricional else "")
+    _replace_required(
+        root,
+        "Ingredientes o perfil principal del suplemento.",
+        suplemento.info_nutricional[0] if suplemento.info_nutricional else "",
+        "info_nutricional[0]",
+    )
     if len(suplemento.info_nutricional) > 1:
-        _replace_text_in_svg(root, "• Indicaciones de uso y contexto de consumo.", suplemento.info_nutricional[1])
+        _replace_text_in_svg(root, "Indicaciones de uso del producto.", suplemento.info_nutricional[1])
     if len(suplemento.info_nutricional) > 2:
-        _replace_text_in_svg(root, "• Recomendación de seguimiento y responsabilidad.", suplemento.info_nutricional[2])
+        _replace_text_in_svg(root, "Recomendacion de seguimiento del producto.", suplemento.info_nutricional[2])
 
-    # Reemplazar contactos
-    _replace_text_in_svg(root, "texto o QR", suplemento.qr_text[:20] if suplemento.qr_text else "")
-    _replace_text_in_svg(root, "espacio editable", suplemento.contacto_label)
+    # El QR es fijo en la plantilla (horneado en el .ai/base, no cambia por
+    # suplemento); no se inyecta desde qr_text. Plantilla real de produccion:
+    # Escritorio/ai_illustrator (modelo ops.json/state.json sobre el .ai).
 
     # Determinar ruta de salida
     if output_path is None:

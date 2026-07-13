@@ -76,4 +76,7 @@ def test_prepare_supplement_job_assets_dynamic_fallback_and_brief(tmp_path: Path
     svg_content = svg_path.read_text(encoding="utf-8")
     assert "POST" in svg_content
     assert "FIESTA" in svg_content
-    assert "Beneficio" in svg_content
+    # El beneficio real inyectado (el brief) debe aparecer en la pieza...
+    assert "Energia ultra recargada para la noche" in svg_content
+    # ...y el placeholder crudo de la plantilla NO debe sobrevivir.
+    assert "campana para la pieza" not in svg_content
