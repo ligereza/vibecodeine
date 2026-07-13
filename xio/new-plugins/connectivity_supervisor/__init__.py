@@ -426,7 +426,10 @@ class ConnectivitySupervisorPlugin(PluginBase):
     def _check_watchdogs(self):
         """Native pgrep of the on-device self-heal loops. The server runs under the
         Termux uid (same as the loops), so a native pgrep SEES them -- rish/_shell
-        (shell uid 2000) would NOT. Cached for /status; never on the hot path."""
+        (shell uid 2000) would NOT. Cached for /status; never on the hot path.
+        Also emits an event on any transition (down / revived / restarted) so a live
+        show has an audit trail of every self-heal in the /router feed + iPhone."""
+        prev = self._watchdogs
         out = {}
         for key, pat in self._WATCHDOGS.items():
             try:
@@ -435,6 +438,16 @@ class ConnectivitySupervisorPlugin(PluginBase):
                 out[key] = int(first) if first.isdigit() else 0
             except Exception:
                 out[key] = 0
+        # transitions (skip first run when prev is empty -> just baseline, no alarm)
+        if prev:
+            for k in out:
+                old, new = prev.get(k, 0), out[k]
+                if old and not new:
+                    self._emit_sys("watchdog_down", f"Watchdog {k} CAIDO (era pid {old})")
+                elif not old and new:
+                    self._emit_sys("watchdog_up", f"Watchdog {k} revivido (pid {new})")
+                elif old and new and old != new:
+                    self._emit_sys("watchdog_restart", f"Watchdog {k} reiniciado ({old} -> {new})")
         self._watchdogs = out
 
     def _emit_sys(self, event, detail):
