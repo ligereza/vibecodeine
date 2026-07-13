@@ -71,6 +71,26 @@ on-device vivo (26 plugins, :5000). Watchdog de Shizuku HECHO Y PROBADO.
    es POST) + performance_tweaker/status (era N x, ya batcheado). content_explorer NO
    se probo (lee SMS/contactos). Script del audit: probe por whitelist de sufijos
    seguros, clasifica OK/EMPTY/BINDER/SLOW. NO probar endpoints de accion en vivo.
+   VERIFICACION DE EMPTY (2026-07-13): 6 de 7 son legitimos (listas in-memory que
+   arrancan vacias: exclusions/history/alerts/stats-daily/query-log/guardian-alerts).
+   El 7mo, network_controller/uids, era BUG silencioso: `dumpsys package` + regex que
+   exigia Package[..] y uid= en la MISMA linea (dumpsys los separa) -> {}. Arreglado
+   (commit bab7ddd) con `pm list packages -U` (1 linea `package:x uid:N`) -> 393 pkgs.
+
+## ESTADO FINAL xio (2026-07-13) -- trabajo mayor COMPLETO
+
+El controlador on-device quedo maduro y auto-sostenible sin PC:
+- Self-healing 2 capas: shizuku_watchdog (revive Shizuku) + server_supervisor (revive
+  Flask), ambos setsid+doze-whitelist+wakelock, arrancados por run_server.sh, probados.
+- Fix sistemico rish `| cat`: destrabo TODOS los comandos cmd-based (pm/appops/settings/
+  cmd/wm) que fallaban con Binder error en el backend rish.
+- Hot-paths N x _shell batcheados: thermal, privacy_auditor, debloat, miui_tweaker,
+  performance_tweaker (timeouts -> segundos).
+- Audit de salud: 43 endpoints de lectura OK con datos, 6 EMPTY legitimos, 0 bugs.
+- flujo CLI core corre on-device (--help/version); pydantic/jsonschema bloqueados (Rust).
+Limite unico pendiente: REBOOT del telefono (adbd vuelve a USB, pierde tcpip 5555 ->
+el loopback del watchdog muere). El usuario no reinicia; cubrirlo = Termux:Boot +
+re-enable wireless adb. Todo pusheado a claude/vola-cultura-portfolio-20260712.
 
 ## Hecho (esta sesion, 2026-07-12 -- VOLA + portfolio)
 
