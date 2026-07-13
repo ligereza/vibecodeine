@@ -12,8 +12,8 @@
 # asi que el `pkill python server.py` de run_server.sh no lo toca.
 export PATH=/data/data/com.termux/files/usr/bin:$PATH
 LOG=/sdcard/xio_termux/server_supervisor.log
-INTERVAL=30
-FAILS_TO_RESTART=3
+INTERVAL=15
+FAILS_TO_RESTART=3      # 3 x 15s = ~45s de caida real antes de relanzar (anti-flap)
 ts() { date '+%Y-%m-%d %H:%M:%S'; }
 alive() {
   python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/api/plugins', timeout=5).read(1)" >/dev/null 2>&1
