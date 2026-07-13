@@ -99,7 +99,19 @@ en la PC. FASE 1 y FASE 2 COMPLETAS 2026-07-12.
   /lib/arm64/libshizuku.so. Todo el sistema de eventos (drop/join/infra) VALIDADO en
   vivo (la caida de Shizuku disparo drops reales + la recuperacion los joins e infra).
   Commit dc1f087 (base xio) + commit de bateria. xio/ ya versionado (.gitignore
-  excluye platform-tools + APKs); no pusheado (decidir).
+  excluye platform-tools + APKs).
+- FASE 2c (seguridad, mismo dia): integrado Plugin Guardian (carpeta que dejo el
+  usuario en xio/seguridad/) como plugin 24 en xio/new-plugins/plugin_guardian/:
+  auditoria de comandos, blocklist de comandos peligrosos, enforcement de permisos
+  por plugin (manifest), review-mode, audit-log JSONL persistente. plugins/base.py
+  reemplazado por version superset (PluginContext gana safe_shell()/set_security_hook
+  /set_audit_logger/check_permission; aditivo, los plugins existentes usan _shell
+  legacy y NO se ven afectados). Verificado on-device: 24 plugins cargan, "Security
+  active", /api/plugins/plugin_guardian/status OK, sin regresiones.
+- PUSHEADO a origin (rama claude/vola-cultura-portfolio-20260712): commits dc1f087,
+  5b93571, daa5992. Se puede seguir desde nube/iPhone contra esa rama.
+- Estado al cerrar: server on-device corriendo (24 plugins), hotspot INTACTO
+  (nunca tocado), Shizuku detached vivo, wireless-adb activo. Pantalla bloqueada.
 - HALLAZGO iOS: Apple usa MACs aleatorias por-red (bit locally-administered) ->
   iPhone/iPad reaparecen como unknown-XXXX al reconectar. Para tracking estable,
   desactivar "Direccion Wi-Fi privada" de ESTE hotspot en cada dispositivo Apple. No
