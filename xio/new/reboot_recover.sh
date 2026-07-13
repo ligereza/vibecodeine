@@ -20,6 +20,8 @@ command -v termux-wake-lock >/dev/null 2>&1 && termux-wake-lock
 # if the hotspot did not come back. Topic lives only on the device (weak secret).
 TOPIC=$(cat /sdcard/xio_termux/ntfy_topic.txt 2>/dev/null | tr -d ' \r\n')
 ping5g() { [ -n "$TOPIC" ] && curl -s -m 12 -H 'Title: xio lisa' -d "$1" "https://ntfy.sh/$TOPIC" >/dev/null 2>&1; }
+# Estado del hotspot leido directo (uid Termux puede leer las direcciones de wlan1).
+hs_state() { [ "$(ip -o addr show wlan1 2>/dev/null | grep -c 'inet ')" != "0" ] && echo UP || echo DOWN; }
 ping5g "Xiaomi booteo (Termux:Boot). Recuperando server..."
 
 # Kill any stale local adb server so mdns/connect start clean.
@@ -51,6 +53,9 @@ done
 if [ -z "$T" ]; then
   say "NO adb transport after retries (no loopback 5555, no wireless-debug mDNS)."
   say "Needs: enable Wireless debugging (persist) OR a PC on USB. Aborting."
+  # Alerta ACCIONABLE al iPhone: sin host no hay recuperacion no-root; que el usuario
+  # sepa el estado del hotspot y si tiene que tocarlo a mano (ver HOTSPOT_SHOW_RUNBOOK).
+  ping5g "Reboot SIN host: server NO recuperable sin PC/accesibilidad. Hotspot: $(hs_state). Si DOWN, toca el hotspot en el telefono."
   exit 1
 fi
 say "transport up: $T"
@@ -77,4 +82,7 @@ fi
 # Start the server stack (run_server.sh also starts watchdog + supervisor + wakelock).
 sh /sdcard/xio_termux/run_server.sh >> "$LOG" 2>&1
 say "run_server.sh launched -- recovery done."
-ping5g "Termux:Boot recovery: server relanzado en el telefono."
+# run_server.sh arranco hotspot_watch; dale un momento para revivir el hotspot y
+# reporta el estado real al iPhone (no un generico ciego).
+sleep 40
+ping5g "Termux:Boot recovery: server relanzado. Hotspot: $(hs_state) (self-heal activo)."

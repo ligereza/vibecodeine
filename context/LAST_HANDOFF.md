@@ -156,6 +156,46 @@ on-device vivo (26 plugins, :5000). Watchdog de Shizuku HECHO Y PROBADO.
     (no la notificacion) es el fix real. Persistencia del watcher: xio-reboot-watch.vbs
     en shell:startup (lo instala el usuario; auto-mode bloquea la accion de autorun).
 
+## SIN-WINDOWS del hotspot + runbook de show (2026-07-13, sesion autonoma)
+
+Objetivo de esta tanda: quitar la dependencia del PC para el hotspot (Capa 1 del show)
+y dejar el escenario "Xiaomi solo en escenario, usuario en el FOH" operable. Usuario dio
+autonomia total y se alejo del PC; hitos avisados al iPhone por ntfy (5G del propio tel).
+
+- Verificado por dumpsys wifi: el Xiaomi SIRVE de router al equipo entero, no solo al PC.
+  MaximumSupportedClientNumber=32; SIN aislamiento de clientes en la config softap (los
+  equipos se ven entre si -> malla, phone->PC directo OSC/Art-Net funciona);
+  AutoShutdownEnabled=false (el hotspot NO se cae por inactividad). Falta prueba empirica
+  de aislamiento (2 phones ping) que solo se hace en el venue.
+- NUEVO self-heal on-device del hotspot SIN PC: xio/new/hotspot_watch.sh + hs_start.sh
+  (launcher idempotente, calcado de shizuku_watchdog/wd_start). Loop 30s via loopback
+  adb (uid shell); si wlan1 pierde IPv4 por 2 ciclos y Shizuku+tcpip estan vivos, corre
+  el input-dance (TETHER_SETTINGS + uiautomator + input tap 540 583) para reencender.
+  DOBLE compuerta de seguridad: solo entra si wlan1 sin inet Y el checkbox esta 'false'
+  -> nunca apaga un hotspot sano. Guard de transporte: si no hay loopback (post-reboot)
+  hace skip, no adivina "down". Cableado en run_server.sh (arranca en cada boot).
+  DESPLEGADO y ACTIVO ahora: hotspot_watch pid 15585, liveness confirmada (hs_start
+  re-run dice "already running"). Cubre el caso "hotspot cae con el telefono ENCENDIDO"
+  sin Windows (estado que persiste durante un show si NO hay reboot).
+- reboot_recover.sh ENDURECIDO: en el caso reboot-sin-host (donde abortaba en silencio)
+  ahora manda ntfy ACCIONABLE al iPhone con el estado real del hotspot ("Reboot SIN host:
+  ... Hotspot: DOWN. Si DOWN, toca el hotspot"). Y el ping final reporta hs_state real
+  tras dar ~40s al self-heal. Helper hs_state() lee wlan1 directo (uid Termux).
+- RUNBOOK del show: xio/HOTSPOT_SHOW_RUNBOOK.md -- arquitectura 3 capas, pre-show con PC,
+  que se auto-cura y que no, energia como defensa primaria contra el reboot, y el unico
+  hueco con sus 2 caminos.
+- HUECO HONESTO (parte del usuario): reboot fisico SIN host no se auto-cura no-root; el
+  hotspot necesita un AccessibilityService on-device (unico mecanismo que sobrevive reboot,
+  arranca solo, toca pantalla, sin Shizuku). NO pude compilarlo autonomo: este PC no tiene
+  toolchain Android (sin Java/SDK) -- limite de capacidad, no etico. Y NO bajo un MacroDroid
+  PRO pirata (linea legal/etica). Caminos dejados en el runbook: A) macro MacroDroid FREE
+  (boot -> tap toggle); B) AccessibilityService propio (buildable por dev/agente libre,
+  se activa headless con `settings put secure enabled_accessibility_services` -- shell lo
+  tiene, persiste reboot). Defensa primaria que vuelve el hueco irrelevante: power bank /
+  fuente PD en escenario = sin reboot = sin problema.
+- Notificacion: para que el iPhone reciba el ntfy con el hotspot caido, el iPhone necesita
+  internet propio (datos celulares), no el hotspot del Xiaomi.
+
 ## ESTADO FINAL xio (2026-07-13) -- trabajo mayor COMPLETO
 
 El controlador on-device quedo maduro y auto-sostenible sin PC:
