@@ -93,6 +93,7 @@ DANGEROUS_ENDPOINTS = {
     "network_controller": {"block", "block-wifi", "block-data"},
     "prop_editor":        {"set", "reset"},         # unrestricted setprop -> sys.usb.config (kills ADB) / net.dns*
     "connectivity_supervisor": {"reassert-hotspot"},  # best-effort softAP restart touches the only internet
+    "charge_control":     {"charge", "powerbank", "dock"},  # flip USB power role -> stop/redirect charge on the only-internet phone
 }
 
 
