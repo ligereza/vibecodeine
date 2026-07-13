@@ -60,10 +60,17 @@ on-device vivo (26 plugins, :5000). Watchdog de Shizuku HECHO Y PROBADO.
    falla). Rompia ~10 plugins on-device en silencio. Fix: `(cmd) 2>/dev/null | cat >
    out` (comando -> pipe, cat -> archivo). Sin regresiones (thermal/connectivity/
    screenshot binario OK). Efecto: privacy_auditor/audit paso de roto a 36 apps reales
-   (commit c507e9f: + batch appops N->1 + match case-insensitive). debloat_manager
-   validado+batcheado (139386d): /scan pasaba de timeout a 8.7s (3 pm list una vez
-   vs 3 por paquete). PENDIENTE re-testear/batchear otros cmd-based (app_freezer,
-   wifi_intelligence read, app_standby) -- mismo patron: N _shell/loop -> 1 batch.
+   (commit c507e9f: + batch appops N->1 + match case-insensitive). Batcheados
+   ademas: debloat/scan (139386d, timeout->8.7s), miui_tweaker settings+ads+telemetry
+   (8650389), performance_tweaker/status (979b630, timeout->6.4s). Patron: N _shell
+   en loop -> 1 shell call que echo "clave|$(cmd)" por item y parsea.
+7. AUDIT DE SALUD (2026-07-13) -- 52 endpoints de LECTURA seguros probados on-device:
+   42 OK con datos, 7 EMPTY legitimos (history/alerts/logs sin data aun), 0 BINDER
+   ERRORS (el |cat destrabo todo: miui/privacy/debloat/usb/wifi/network/hyperos andan).
+   3 "ERR/SLOW": 2 falsos positivos (debloat/status pide ?package=; hyperos/device-level
+   es POST) + performance_tweaker/status (era N x, ya batcheado). content_explorer NO
+   se probo (lee SMS/contactos). Script del audit: probe por whitelist de sufijos
+   seguros, clasifica OK/EMPTY/BINDER/SLOW. NO probar endpoints de accion en vivo.
 
 ## Hecho (esta sesion, 2026-07-12 -- VOLA + portfolio)
 
