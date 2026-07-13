@@ -140,11 +140,21 @@ on-device vivo (26 plugins, :5000). Watchdog de Shizuku HECHO Y PROBADO.
     leer el checkbox "Portable hotspot" (primer android:id/checkbox) + `input tap 540 583`
     si esta en false. VALIDADO aislado (off -> auto-reencendido -> up). Tambien lockfile
     .pc_watch.pid (habia 7 watchers duplicados). AHORA el reboot recupera TODO sin tocar
-    nada: Shizuku + tcpip + hotspot + server. Watcher corriendo (1 instancia). PENDIENTE:
-    un 2do reboot que valide el hotspot-reenable DENTRO del flujo real de recover().
-    Scripts: xio/new/{pc_reboot_watch.sh, setup_runcommand.sh, xio-reboot-watch.vbs,
-    reboot_recover.sh}. ntfy topico solo en device; usuario suscrito (pero el ntfy solo
-    sirve si el hotspot ya volvio -> por eso el reenable automatico es el fix real).
+    nada: Shizuku + tcpip + hotspot + server. 2DO REBOOT PROBADO OK (2026-07-13, hands-off
+    total, usuario NO intervino): recovery en ~45s -- Shizuku 14:48:46, tcpip 14:48:53,
+    hotspot auto-reenable (toggle false->tap->true) 14:49:04-22, server UP t=45s; el
+    internet del usuario volvio SOLO. Endurecido antes del test: wake+`wm dismiss-keyguard`
+    +swipe antes de cada input (post-boot hay lock de deslizar sin PIN), y monitor
+    continuo del hotspot en el loop (reintenta si un reenable temprano fallo). Pulido
+    (commit 7b817eb): tras el tap, espera la IP de wlan1 (~24s) antes de reintentar
+    (evita re-abrir Settings 2 veces). Nota: watcher + Termux:Boot AMBOS corren
+    run_server.sh -> `pkill` puede causar un DOWN transitorio de segundos al boot, pero
+    el server_supervisor lo revive; verificado UP y estable (0 procs duplicados).
+    Watcher corriendo (1 instancia, lockfile). Scripts: xio/new/{pc_reboot_watch.sh,
+    setup_runcommand.sh, xio-reboot-watch.vbs, reboot_recover.sh}. ntfy topico solo en
+    device; el ntfy solo sirve si el hotspot ya volvio -> por eso el reenable automatico
+    (no la notificacion) es el fix real. Persistencia del watcher: xio-reboot-watch.vbs
+    en shell:startup (lo instala el usuario; auto-mode bloquea la accion de autorun).
 
 ## ESTADO FINAL xio (2026-07-13) -- trabajo mayor COMPLETO
 
