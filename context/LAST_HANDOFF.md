@@ -87,6 +87,19 @@ en la PC. FASE 1 y FASE 2 COMPLETAS 2026-07-12.
   CONFIRMADOS reparados por el fix _rish: /api/screen devuelve PNG 1080x2400 completo.
   NUANCE iOS: la MAC random es ESTABLE por-sesion -> sirve para un show sin tocar
   ajustes Apple (solo rota en el ciclo diario/OS).
+- FASE 2b (hardening, mismo dia): salud de bateria en el poll+dashboard (dumpsys
+  battery -> level/temp/status, tira "Battery 98% 33C charging", alertas overheat
+  >=45C y low <=20%); short-link /router -> /ui; registro PERSISTE (escribe a
+  /sdcard/xio_termux/connsup, fuera del arbol que run_server.sh borra). Wireless ADB
+  habilitado (adb tcpip 5555 + adb connect 192.168.127.125:5555; cable opcional).
+  LECCION CRITICA: `adb tcpip` reinicia adbd y MATA el shizuku_server si se lanzo
+  como `adb shell <lib>` (hijo de adbd) -> rish devuelve "Server is not running",
+  server ciego. Arranca DETACHED: `adb shell "setsid <lib> </dev/null >/dev/null 2>&1 &"`
+  (PPID 1, sobrevive reinicios de adbd). lib = pm path moe.shizuku.privileged.api +
+  /lib/arm64/libshizuku.so. Todo el sistema de eventos (drop/join/infra) VALIDADO en
+  vivo (la caida de Shizuku disparo drops reales + la recuperacion los joins e infra).
+  Commit dc1f087 (base xio) + commit de bateria. xio/ ya versionado (.gitignore
+  excluye platform-tools + APKs); no pusheado (decidir).
 - HALLAZGO iOS: Apple usa MACs aleatorias por-red (bit locally-administered) ->
   iPhone/iPad reaparecen como unknown-XXXX al reconectar. Para tracking estable,
   desactivar "Direccion Wi-Fi privada" de ESTE hotspot en cada dispositivo Apple. No
