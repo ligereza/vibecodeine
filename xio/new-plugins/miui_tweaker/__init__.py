@@ -99,13 +99,39 @@ class MIUITweakerPlugin(PluginBase):
             self.logger.error(f"Error setting {scope}/{key}={value}: {e}")
             return False
 
+    def _disabled_out(self):
+        """Lista cruda de paquetes deshabilitados (1 pm call). Reusar para
+        clasificar N apps en Python en vez de 1 pm call POR app."""
+        return self.controller._shell("pm", "list", "packages", "-d")
+
+    def _app_status_from(self, package, disabled_out):
+        """enabled = no esta en la lista de deshabilitados (semantica original)."""
+        return package not in disabled_out
+
     def _app_status(self, package):
-        """Verificar si una app está habilitada."""
+        """Verificar si una app está habilitada (single = 1 pm call)."""
         try:
-            out = self.controller._shell("pm", "list", "packages", "-d")  # disabled
-            return package not in out
+            return self._app_status_from(package, self._disabled_out())
         except Exception:
             return None
+
+    def _get_all_settings(self):
+        """Lee TODOS los SETTINGS en 1 shell call (era 1 `settings get` por key)."""
+        items = list(self.SETTINGS.items())
+        cmd = "; ".join(
+            'echo "%s|$(settings get %s %s 2>/dev/null)"' % (name, c["scope"], c["key"])
+            for name, c in items
+        )
+        result = {}
+        try:
+            out = self.controller._shell(cmd)
+            for line in out.splitlines():
+                if "|" in line:
+                    k, _, v = line.partition("|")
+                    result[k.strip()] = v.strip()
+        except Exception as e:
+            self.logger.error(f"batched settings get error: {e}")
+        return result
 
     def _disable_app(self, package):
         """Deshabilitar una app (user 0)."""
@@ -130,11 +156,11 @@ class MIUITweakerPlugin(PluginBase):
     def _api_get_settings(self):
         """GET /api/plugins/miui_tweaker/settings"""
         from flask import jsonify
+        values = self._get_all_settings()  # 1 shell call en vez de N settings get
         current = {}
         for name, config in self.SETTINGS.items():
-            value = self._get_setting(config["scope"], config["key"])
             current[name] = {
-                "value": value,
+                "value": values.get(name),
                 "description": config["description"],
                 "options": config["values"]
             }
@@ -156,10 +182,11 @@ class MIUITweakerPlugin(PluginBase):
     def _api_ads_status(self):
         """GET /api/plugins/miui_tweaker/ads/status"""
         from flask import jsonify
+        disabled_out = self._disabled_out()  # 1 pm call para todas las AD_APPS
         status = {}
         for app in self.AD_APPS:
             status[app] = {
-                "enabled": self._app_status(app),
+                "enabled": self._app_status_from(app, disabled_out),
                 "name": app.split(".")[-1]
             }
         # Settings de ads
@@ -198,10 +225,11 @@ class MIUITweakerPlugin(PluginBase):
     def _api_telemetry_status(self):
         """GET /api/plugins/miui_tweaker/telemetry/status"""
         from flask import jsonify
+        disabled_out = self._disabled_out()  # 1 pm call para todas las TELEMETRY_APPS
         status = {}
         for app in self.TELEMETRY_APPS:
             status[app] = {
-                "enabled": self._app_status(app),
+                "enabled": self._app_status_from(app, disabled_out),
                 "name": app.split(".")[-1]
             }
         return jsonify(status)
