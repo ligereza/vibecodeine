@@ -60,8 +60,10 @@ on-device vivo (26 plugins, :5000). Watchdog de Shizuku HECHO Y PROBADO.
    falla). Rompia ~10 plugins on-device en silencio. Fix: `(cmd) 2>/dev/null | cat >
    out` (comando -> pipe, cat -> archivo). Sin regresiones (thermal/connectivity/
    screenshot binario OK). Efecto: privacy_auditor/audit paso de roto a 36 apps reales
-   (commit c507e9f: + batch appops N->1 + match case-insensitive). Plugins cmd-based
-   que estaban rotos ahora deberian andar; vale re-testear debloat/app_freezer/etc.
+   (commit c507e9f: + batch appops N->1 + match case-insensitive). debloat_manager
+   validado+batcheado (139386d): /scan pasaba de timeout a 8.7s (3 pm list una vez
+   vs 3 por paquete). PENDIENTE re-testear/batchear otros cmd-based (app_freezer,
+   wifi_intelligence read, app_standby) -- mismo patron: N _shell/loop -> 1 batch.
 
 ## Hecho (esta sesion, 2026-07-12 -- VOLA + portfolio)
 
