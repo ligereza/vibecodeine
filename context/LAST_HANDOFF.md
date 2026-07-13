@@ -111,6 +111,28 @@ on-device vivo (26 plugins, :5000). Watchdog de Shizuku HECHO Y PROBADO.
    real a un PC). NO se hizo reboot de prueba: reiniciar ahora perderia el 5555 sin
    forma de restaurarlo (no hay USB de datos) -> se difiere a cuando haya red de
    respaldo. Scripts: xio/new/{reboot_recover.sh, 00-xio-boot.sh, setup_boot.sh}.
+10. RECUPERACION DE REBOOT AUTONOMA -- ARMADA Y CORRIENDO (2026-07-13, commit bff8a8f).
+    Correccion clave a (9): el puerto USB-A del PC SI enumera adb (serial 8299e66f); el
+    Thunderbolt era charge-only para DATOS (por eso Windows solo veia Bluetooth). Con
+    USB-A hay canal de recuperacion que sobrevive el reboot. Muros confirmados:
+    wireless-debug exige wifi-CLIENTE (router) -> descartado por diseno (el tel ES el
+    internet, sin router); RUN_COMMAND intent bloqueado (com.android.shell no puede
+    recibir com.termux.permission.RUN_COMMAND); persist.adb.tcp.port SELinux. CLAVE 5G:
+    el rmnet del Xiaomi es independiente del hotspot, asi el TELEFONO avisa por 5G aunque
+    el hotspot este caido -- el watcher del PC corre `curl ntfy.sh` EN el telefono por
+    USB. pc_reboot_watch.sh (PC git-bash, CORRIENDO ahora pid+; autostart opcional
+    xio-reboot-watch.vbs que instala el usuario en shell:startup): vigila el device USB;
+    en boot-fresco/server-down re-arma Shizuku + tcpip 5555 + arranca server (input-dance,
+    Termux:Boot headless de respaldo) + reporta hotspot + push ntfy por 5G. allow-external
+    -apps activado en Termux (setup_runcommand.sh). Topico solo en el device
+    (/sdcard/xio_termux/ntfy_topic.txt), NUNCA en git; el usuario se suscribe en la app
+    ntfy del iPhone. ntfy+5G+USB probados OK. Idea Claude-on-device por API: descartada
+    (no rompe el muro Shizuku-al-boot y quema runway; el repo va a agentes gratis).
+    PENDIENTE de prueba: un reboot REAL (valida Termux:Boot firing [necesita MIUI
+    Autostart, no concedible por adb], server-start con pantalla bloqueada, y si HyperOS
+    auto-reenciende el hotspot). Con el notificador 5G ese reboot ya es seguro: el tel
+    dice que hacer aunque pierdas el hotspot. Scripts: xio/new/{pc_reboot_watch.sh,
+    setup_runcommand.sh, xio-reboot-watch.vbs, reboot_recover.sh}.
 
 ## ESTADO FINAL xio (2026-07-13) -- trabajo mayor COMPLETO
 
