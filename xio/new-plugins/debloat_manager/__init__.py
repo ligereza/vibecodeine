@@ -96,26 +96,30 @@ class DebloatManagerPlugin(PluginBase):
         self.register_route("/scan", self._api_scan, methods=["GET"])
         self.logger.info("Debloat Manager loaded")
 
+    def _pm_lists(self):
+        """Trae las 3 listas pm (disabled/enabled/all) UNA vez. Usarlas para
+        clasificar N paquetes en Python evita 3 llamadas pm POR paquete."""
+        return (
+            self.controller._shell("pm", "list", "packages", "-d"),
+            self.controller._shell("pm", "list", "packages", "-e"),
+            self.controller._shell("pm", "list", "packages"),
+        )
+
+    def _status_from_lists(self, package, disabled_out, enabled_out, all_out):
+        """Estado de un paquete contra las 3 listas ya traidas (semantica
+        substring original preservada)."""
+        is_installed = package in all_out
+        return {
+            "installed": is_installed,
+            "enabled": (package in enabled_out) if is_installed else False,
+            "disabled": (package in disabled_out) if is_installed else False,
+        }
+
     def _get_app_status(self, package):
-        """Check if app is enabled for current user."""
+        """Check if app is enabled for current user (single paquete = 3 pm calls)."""
         try:
-            # List disabled packages
-            disabled_out = self.controller._shell("pm", "list", "packages", "-d")
-            is_disabled = package in disabled_out
-            
-            # List enabled packages
-            enabled_out = self.controller._shell("pm", "list", "packages", "-e")
-            is_enabled = package in enabled_out
-            
-            # Check if installed at all
-            all_out = self.controller._shell("pm", "list", "packages")
-            is_installed = package in all_out
-            
-            return {
-                "installed": is_installed,
-                "enabled": is_enabled if is_installed else False,
-                "disabled": is_disabled if is_installed else False
-            }
+            disabled_out, enabled_out, all_out = self._pm_lists()
+            return self._status_from_lists(package, disabled_out, enabled_out, all_out)
         except Exception as e:
             self.logger.error(f"Error checking status for {package}: {e}")
             return {"installed": False, "enabled": False, "disabled": False}
@@ -316,11 +320,17 @@ class DebloatManagerPlugin(PluginBase):
         Scan device for catalog apps and return their status.
         """
         from flask import jsonify
-        
+
+        # 3 pm calls una vez para TODO el catalogo (antes: 3 por paquete = ~90,
+        # timeout). Clasificacion en Python contra las listas cacheadas.
+        try:
+            disabled_out, enabled_out, all_out = self._pm_lists()
+        except Exception:
+            disabled_out = enabled_out = all_out = ""
         all_apps = []
         for category, apps in self.APPS_CATALOG.items():
             for package, info in apps.items():
-                status = self._get_app_status(package)
+                status = self._status_from_lists(package, disabled_out, enabled_out, all_out)
                 all_apps.append({
                     "package": package,
                     "name": info.get("name", package.split(".")[-1]),
