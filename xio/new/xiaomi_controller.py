@@ -6,6 +6,7 @@ Works over USB or WiFi (adb tcpip / adb connect).
 import subprocess
 import json
 import os
+import shlex
 import tempfile
 import threading
 import types
@@ -305,7 +306,7 @@ class XiaomiController:
     def list_dir(self, remote_path: str = "/sdcard/") -> list[dict]:
         """List directory contents on device."""
         # Use ls -la for detailed info
-        out = self._shell("ls", "-la", remote_path)
+        out = self._shell("ls", "-la", shlex.quote(remote_path))
         entries = []
         for line in out.splitlines():
             parts = line.split()
@@ -373,13 +374,13 @@ class XiaomiController:
         return self._exec_out("cat", remote_path)
 
     def delete_file(self, remote_path: str) -> str:
-        return self._shell("rm", "-rf", remote_path)
+        return self._shell("rm", "-rf", shlex.quote(remote_path))
 
     def mkdir(self, remote_path: str) -> str:
-        return self._shell("mkdir", "-p", remote_path)
+        return self._shell("mkdir", "-p", shlex.quote(remote_path))
 
     def rename(self, old_path: str, new_path: str) -> str:
-        return self._shell("mv", old_path, new_path)
+        return self._shell("mv", shlex.quote(old_path), shlex.quote(new_path))
 
     # ── battery / status ─────────────────────────────────────────────
     def battery_status(self) -> dict:

@@ -103,7 +103,8 @@ def _request_confirmed() -> bool:
     if request.headers.get("X-Confirm-Dangerous") == "1":
         return True
     body = request.get_json(silent=True) if request.is_json else None
-    return bool(body and body.get("confirm"))
+    val = body.get("confirm") if isinstance(body, dict) else None
+    return str(val).lower() in ("1", "true", "yes")
 
 
 @app.before_request

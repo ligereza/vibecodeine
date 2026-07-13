@@ -173,8 +173,13 @@ class HyperOSUnlockerPlugin(PluginBase):
     def _api_set_device_level(self):
         from flask import request, jsonify
         data = request.get_json(force=True)
-        cpu = str(data.get("cpu", "3"))
-        gpu = str(data.get("gpu", "3"))
+        try:
+            cpu = int(data.get("cpu", 3))
+            gpu = int(data.get("gpu", 3))
+        except (TypeError, ValueError):
+            return jsonify({"error": "cpu and gpu must be integers"}), 400
+        if not (0 <= cpu <= 6 and 0 <= gpu <= 6):
+            return jsonify({"error": "cpu and gpu must be in range 0..6"}), 400
         try:
             self.controller._shell("settings", "put", "system", "deviceLevelList", f"v:1,c:{cpu},g:{gpu}")
             return jsonify({"ok": True, "cpu": cpu, "gpu": gpu})

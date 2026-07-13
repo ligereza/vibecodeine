@@ -29,6 +29,7 @@ import json
 import os
 import re
 import subprocess
+import threading
 from datetime import datetime
 
 _MAC_RE = re.compile(r'([0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5})')
@@ -125,6 +126,9 @@ class ConnectivitySupervisorPlugin(PluginBase):
 
     def __init__(self, context):
         super().__init__(context)
+        # Guards self._devices against the poll thread inserting new MACs while a
+        # Flask handler iterates the dict ('dictionary changed size during iteration').
+        self._lock = threading.Lock()
         self._devices = {}   # mac -> device record
         self._events = []    # ring buffer of events
         self._net_state = {"hotspot_up": None, "internet": None}  # infra change tracking
@@ -211,8 +215,10 @@ class ConnectivitySupervisorPlugin(PluginBase):
 
     def _save_state(self):
         try:
+            with self._lock:
+                devices_snapshot = dict(self._devices)
             with open(self._pfile("devices.json"), "w") as f:
-                json.dump(self._devices, f, indent=2)
+                json.dump(devices_snapshot, f, indent=2)
             with open(self._pfile("events.json"), "w") as f:
                 json.dump(self._events[-500:], f, indent=2)
         except Exception as e:
@@ -323,18 +329,21 @@ class ConnectivitySupervisorPlugin(PluginBase):
                 if dev is None:
                     kind = info.get("mac_type", self._mac_kind(mac))
                     label = "privacy" if kind == "random" else "device"
-                    dev = self._devices[mac] = {
-                        "mac": mac,
-                        "name": f"{label}-{mac.replace(':', '')[-4:]}",
-                        "type": "unknown",
-                        "mac_type": kind,
-                        "first_seen": now,
-                        "last_seen_wifi": None,
-                        "last_seen_bt": None,
-                        "ip": "",
-                        "present": False,
-                        "bt_present": False,
-                    }
+                    # Only the dict-size-changing insertion is locked; the rest of
+                    # the poll (shell diffs) stays outside the lock so it can't stall.
+                    with self._lock:
+                        dev = self._devices[mac] = {
+                            "mac": mac,
+                            "name": f"{label}-{mac.replace(':', '')[-4:]}",
+                            "type": "unknown",
+                            "mac_type": kind,
+                            "first_seen": now,
+                            "last_seen_wifi": None,
+                            "last_seen_bt": None,
+                            "ip": "",
+                            "present": False,
+                            "bt_present": False,
+                        }
                 dev["last_seen_wifi"] = now
                 dev.setdefault("mac_type", info.get("mac_type", self._mac_kind(mac)))
                 if info.get("ip"):
@@ -486,7 +495,10 @@ class ConnectivitySupervisorPlugin(PluginBase):
     # ── API handlers ─────────────────────────────────────────────────
     def _api_status(self):
         from flask import jsonify
-        present = [d for d in self._devices.values() if d.get("present")]
+        with self._lock:
+            devs = list(self._devices.values())
+            tracked = len(self._devices)
+        present = [d for d in devs if d.get("present")]
         return jsonify({
             "hotspot_iface": self._cfg("ap_iface"),
             "hotspot_up": self._infra["hotspot_up"],       # cached from last poll -- no rish, no lock
@@ -495,7 +507,7 @@ class ConnectivitySupervisorPlugin(PluginBase):
             "watchdogs": self._watchdogs,
             "clients_present": len(present),
             "present": [{"name": d["name"], "type": d["type"], "mac": d["mac"], "mac_type": d.get("mac_type", ""), "ip": d.get("ip", ""), "bt_present": d.get("bt_present", False)} for d in present],
-            "tracked_total": len(self._devices),
+            "tracked_total": tracked,
             "poll_interval": int(self._cfg("poll_interval")),
         })
 
@@ -512,7 +524,9 @@ class ConnectivitySupervisorPlugin(PluginBase):
 
     def _api_watch(self):
         from flask import jsonify
-        return jsonify(list(self._devices.values()))
+        with self._lock:
+            devs = list(self._devices.values())
+        return jsonify(devs)
 
     def _api_events(self):
         from flask import request, jsonify
@@ -539,7 +553,8 @@ class ConnectivitySupervisorPlugin(PluginBase):
         }
         dev["name"] = data.get("name", dev.get("name", mac))
         dev["type"] = data.get("type", dev.get("type", "device"))
-        self._devices[mac] = dev
+        with self._lock:
+            self._devices[mac] = dev
         self._save_state()
         return jsonify({"ok": True, "device": dev})
 

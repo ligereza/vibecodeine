@@ -80,12 +80,15 @@ def _es_filoso(costo: str) -> bool:
     """
     Deriva la clase 'filoso' LEYENDO la tabla curada existente, sin agregar juicio.
     Las entradas de inversion de sentido (par minimo real: ano/ano, papa/papa,
-    el/el, si/si, hablo/hablo, aun/aun) describen una palabra que se vuelve OTRA y
-    su string de costo contiene la flecha '->'. Las entradas pragmaticas/foneticas
-    de apertura (que marcan posicion, no vuelven una palabra otra) no la contienen.
-    Reflexivo a proposito: el criterio es de la misma tabla; ver caveat del modulo.
+    el/el, si/si, hablo/hablo, aun/aun) describen una palabra que se vuelve OTRA:
+    su string de costo lleva la flecha '->' MAS una glosa entre parentesis (el
+    sentido de cada lado). La perdida fonetica de la dieresis (pinguino/pinguino,
+    la u deja de sonar) lleva '->' pero NO glosa entre parentesis: es la MISMA
+    palabra, no una inversion, y por eso NO es filosa. Las aperturas pragmaticas
+    no llevan ninguna de las dos. Reflexivo a proposito: el criterio es de la
+    misma tabla; ver caveat del modulo.
     """
-    return "->" in costo
+    return "->" in costo and "(" in costo
 
 
 @dataclass

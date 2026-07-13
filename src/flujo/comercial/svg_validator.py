@@ -13,10 +13,13 @@ _PLACEHOLDERS = [
     "DESCRIPCION",
     "DESCRIPCIÓN",
     "Beneficio principal o idea de campaña",
+    "idea de campana",
     "Texto breve y claro para acompañar",
+    "para acompanar",
     "Ingredientes o perfil principal",
     "Indicaciones de uso",
     "Recomendación de seguimiento",
+    "Recomendacion de seguimiento",
     "texto o QR",
     "espacio editable",
 ]

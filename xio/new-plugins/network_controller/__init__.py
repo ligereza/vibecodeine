@@ -73,17 +73,24 @@ class NetworkControllerPlugin(PluginBase):
 
     def _block_app_network(self, package, network_type="all"):
         """Bloquea acceso a red de una app usando cmd netpolicy."""
+        uid = self._get_uid(package)
+        if not uid:
+            # sin uid numerico el comando netpolicy no bloquea nada; no fingir exito
+            return False
         try:
             if network_type in ("all", "mobile"):
-                self.controller._shell("cmd", "netpolicy", "set-app-uid-rule", package, "1")
+                self.controller._shell("cmd", "netpolicy", "set-app-uid-rule", uid, "1")
             return True
         except Exception as e:
             self.logger.error(f"Error blocking {package}: {e}")
             return False
 
     def _unblock_app_network(self, package):
+        uid = self._get_uid(package)
+        if not uid:
+            return False
         try:
-            self.controller._shell("cmd", "netpolicy", "set-app-uid-rule", package, "0")
+            self.controller._shell("cmd", "netpolicy", "set-app-uid-rule", uid, "0")
             return True
         except:
             return False
@@ -162,8 +169,11 @@ class NetworkControllerPlugin(PluginBase):
         from flask import request, jsonify
         data = request.get_json(force=True)
         pkg = data.get("package", "")
+        uid = self._get_uid(pkg)
+        if not uid:
+            return jsonify({"ok": False, "error": "uid not found"}), 404
         try:
-            self.controller._shell("cmd", "netpolicy", "set-uid-policy", pkg, "1")
+            self.controller._shell("cmd", "netpolicy", "set-uid-policy", uid, "1")
             if pkg not in self._wifi_blocked:
                 self._wifi_blocked.append(pkg)
                 self._save_state()
@@ -175,8 +185,11 @@ class NetworkControllerPlugin(PluginBase):
         from flask import request, jsonify
         data = request.get_json(force=True)
         pkg = data.get("package", "")
+        uid = self._get_uid(pkg)
+        if not uid:
+            return jsonify({"ok": False, "error": "uid not found"}), 404
         try:
-            self.controller._shell("cmd", "netpolicy", "set-uid-policy", pkg, "2")
+            self.controller._shell("cmd", "netpolicy", "set-uid-policy", uid, "2")
             if pkg not in self._data_blocked:
                 self._data_blocked.append(pkg)
                 self._save_state()
