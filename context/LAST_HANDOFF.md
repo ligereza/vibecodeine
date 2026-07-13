@@ -31,11 +31,15 @@ on-device vivo (26 plugins, :5000). Watchdog de Shizuku HECHO Y PROBADO.
    192.168.127.125:5555`; `lib=dirname(pm path moe.shizuku.privileged.api)+
    /lib/arm64/libshizuku.so`; `adb -s ... shell "setsid $lib </dev/null
    >/dev/null 2>&1 &"`.
-3. FLUJO ON-DEVICE (fase D, PENDIENTE) -- prioridad menor. Gran parte de flujo es
-   Windows/desktop (Blender/Resolume/Tkinter): NO on-device. Meta realista = core
-   Python + CLI. Deps ligeras OK; RIESGO pydantic (core Rust, wheel Android?).
-   Probar `pip install typer rich pyyaml jsonschema requests pydantic` y
-   `python -m flujo --help`. (No arrancado aun; el watchdog se priorizo.)
+3. FLUJO ON-DEVICE (fase D) -- HECHO PARCIAL Y VALIDADO (2026-07-13). El CLI core
+   corre EN el telefono (Termux/py3.14): `flujo --help` y `flujo version` ejecutan
+   completos (banner v0.51.0 + changelog). Script reproducible: xio/new/flujo_ondevice.sh
+   (instala deps puras typer/rich/requests/pyyaml, copia flujo_src -> $HOME/flujo,
+   corre `PYTHONPATH=$HOME python -m flujo <cmd>`). LIMITE: comandos que tocan
+   models.py (pydantic) o intake/json_parser.py (jsonschema) NO andan -- pydantic-core
+   y rpds-py necesitan Rust/maturin, sin wheel para Termux/bionic; habilitar =
+   `pkg install rust` + build (pesado, no hecho). Desktop (resolume/blender/instaloader)
+   N/A en Android. cli.py NO importa models/intake al top, por eso --help/version andan.
 
 ## Hecho (esta sesion, 2026-07-12 -- VOLA + portfolio)
 
