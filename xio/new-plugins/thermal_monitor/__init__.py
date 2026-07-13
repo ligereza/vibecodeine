@@ -22,6 +22,7 @@ class ThermalMonitorPlugin(PluginBase):
         self._history = []
         self._alerts = []
         self._max_history = 2880
+        self._throttle_cache = None  # poblado por _read_thermal_zones (mismo batch)
 
     def on_load(self):
         self._load_history()
@@ -49,15 +50,33 @@ class ThermalMonitorPlugin(PluginBase):
     def _read_thermal_zones(self):
         zones = {}
         try:
-            out = self.controller._shell("ls", "/sys/class/thermal/")
-            for zone in out.split():
-                if zone.startswith("thermal_zone"):
-                    num = zone.replace("thermal_zone", "")
-                    temp_raw = self.controller._shell("cat", f"/sys/class/thermal/{zone}/temp")
-                    ztype = self.controller._shell("cat", f"/sys/class/thermal/{zone}/type")
-                    if temp_raw and temp_raw.lstrip('-').isdigit():
-                        temp_c = int(temp_raw) / 1000.0
-                        zones[ztype or f"zone{num}"] = round(temp_c, 1)
+            # ONE batched on-device shell call for every zone's path|type|temp
+            # (+ throttle_state), en vez de ls + 2 cats por zona (~179 rish calls
+            # seriados -> 1). Cada rish call se serializa en _shell_lock + hace el
+            # file-redirect, asi que colapsarlas baja el poll de ~11s a ~4s. El
+            # throttle viaja en el mismo batch y se cachea para _check_throttling
+            # (siempre llamado justo despues). Semantica de claves preservada:
+            # type si existe, si no zone{num}.
+            cmd = ('for z in /sys/class/thermal/thermal_zone*; do '
+                   'echo "Z|$z|$(cat $z/type 2>/dev/null)|$(cat $z/temp 2>/dev/null)"; done; '
+                   'echo "T|$(cat /sys/class/thermal/thermal_zone0/throttle_state 2>/dev/null)"')
+            out = self.controller._shell(cmd)
+            self._throttle_cache = None
+            for line in out.splitlines():
+                if line.startswith("T|"):
+                    tv = line[2:].strip()
+                    self._throttle_cache = int(tv) if tv.isdigit() else None
+                    continue
+                if not line.startswith("Z|"):
+                    continue
+                parts = line[2:].split("|")
+                if len(parts) < 3:
+                    continue
+                zpath, ztype, temp_raw = parts[0], parts[1].strip(), parts[2].strip()
+                num = zpath.rsplit("thermal_zone", 1)[-1]
+                if temp_raw and temp_raw.lstrip('-').isdigit():
+                    temp_c = int(temp_raw) / 1000.0
+                    zones[ztype or f"zone{num}"] = round(temp_c, 1)
         except Exception as e:
             self.logger.error(f"Error reading thermal zones: {e}")
         try:
@@ -69,11 +88,9 @@ class ThermalMonitorPlugin(PluginBase):
         return zones
 
     def _check_throttling(self):
-        try:
-            out = self.controller._shell("cat", "/sys/class/thermal/thermal_zone0/throttle_state")
-            return int(out.strip()) if out and out.strip().isdigit() else 0
-        except:
-            return None
+        # Servido desde el cache poblado por _read_thermal_zones (mismo batch),
+        # que siempre se llama justo antes -> 0 rish calls extra.
+        return self._throttle_cache
 
     def _poll_temperatures(self):
         try:
@@ -110,12 +127,16 @@ class ThermalMonitorPlugin(PluginBase):
     def _api_zones(self):
         from flask import jsonify
         try:
-            out = self.controller._shell("ls", "/sys/class/thermal/")
+            # 1 batched shell call (was ls + 1 cat/type per zone).
+            cmd = ('for z in /sys/class/thermal/thermal_zone*; do '
+                   'echo "$(basename $z)|$(cat $z/type 2>/dev/null)"; done')
+            out = self.controller._shell(cmd)
             zones = []
-            for z in out.split():
-                if z.startswith("thermal_zone"):
-                    zt = self.controller._shell("cat", f"/sys/class/thermal/{z}/type")
-                    zones.append({"name": z, "type": zt})
+            for line in out.splitlines():
+                name, _, zt = line.partition("|")
+                name = name.strip()
+                if name.startswith("thermal_zone"):
+                    zones.append({"name": name, "type": zt.strip()})
             return jsonify(zones)
         except Exception as e:
             return jsonify({"error": str(e)})
