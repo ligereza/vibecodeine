@@ -40,6 +40,11 @@ on-device vivo (26 plugins, :5000). Watchdog de Shizuku HECHO Y PROBADO.
    y rpds-py necesitan Rust/maturin, sin wheel para Termux/bionic; habilitar =
    `pkg install rust` + build (pesado, no hecho). Desktop (resolume/blender/instaloader)
    N/A en Android. cli.py NO importa models/intake al top, por eso --help/version andan.
+4. PERF thermal_monitor -- HECHO (2026-07-13, commit 7e29da9). El poll hacia ~179
+   rish calls seriadas (ls + 2 cats x 89 zonas) = ~11s; ahora 1 `for` batch on-device
+   devuelve path|type|temp+throttle de todas -> poll 2 calls, /temperatures ~3s warm.
+   Verificado on-device (87 zonas, battery 35C). Baja contencion del _shell_lock.
+   Patron reusable para otros plugins que hacen cats por-item (ej battery_care).
 
 ## Hecho (esta sesion, 2026-07-12 -- VOLA + portfolio)
 
