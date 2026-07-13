@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+# xio PC-side reboot recovery watcher + 5G notifier.
+#
+# Runs on the Windows PC (git-bash), INDEPENDENT of any Claude session, and recovers
+# the on-device server after a phone REBOOT -- the one failure the on-device watchdogs
+# cannot self-heal (Shizuku needs an adb transport on boot, and a reboot drops the
+# wifi-adb the user reaches everything through).
+#
+# Why the PC + USB: the USB transport (serial below) survives a reboot regardless of
+# the hotspot, so the PC can always reach the phone. Why the notifications go via the
+# PHONE's 5G (adb shell curl ntfy.sh): the PC's own internet comes from the hotspot,
+# so if the hotspot is down the PC can't notify -- but the phone's 5G (rmnet) is
+# independent, so the phone tells the user its state even when the hotspot is dead.
+#
+# Recovery (each step guarded/idempotent):
+#   1. re-arm Shizuku (setsid libshizuku.so) if not running.
+#   2. restore tcpip 5555 so the on-device watchdogs + wifi reachability come back.
+#   3. start the server stack via the Termux input-dance (screen is unlocked when the
+#      user is present; Termux:Boot is the headless backup once tcpip is up).
+#   4. report hotspot state -- NEVER touched if up; if down, tell the user to tap it.
+# All state changes are pushed to ntfy.sh/<topic> over the phone's 5G.
+#
+# The ntfy topic is read from the phone (/sdcard/xio_termux/ntfy_topic.txt) so it is
+# NEVER hardcoded/committed (a topic is a weak shared secret). Subscribe on your
+# iPhone with the ntfy app to that topic.
+set -u
+
+ADB="/c/IA/flujo/xio/actual/platform-tools/adb.exe"
+SERIAL="8299e66f"                       # USB serial (stable across reboots)
+WIFI="192.168.127.125:5555"
+LIB="/data/app/~~yX8VZY_1lHCIcZ-fg1no1w==/moe.shizuku.privileged.api-OrtcmTP5ZTXHLD7tYjZJBA==/lib/arm64/libshizuku.so"
+LOG="/c/IA/flujo/xio/new/pc_reboot_watch.log"
+INTERVAL=15
+BOOT_FRESH=240                          # uptime < this (s) => treat as a fresh boot
+
+sh_usb(){ MSYS_NO_PATHCONV=1 "$ADB" -s "$SERIAL" shell "$@" 2>/dev/null; }
+log(){ echo "[$(date '+%F %T')] $*" >> "$LOG"; }
+
+TOPIC=""
+load_topic(){ TOPIC="$(sh_usb 'cat /sdcard/xio_termux/ntfy_topic.txt 2>/dev/null' | tr -d ' \r\n')"; }
+notify(){  # send via the PHONE's 5G so it works even when the hotspot is down
+  [ -n "$TOPIC" ] || load_topic
+  [ -n "$TOPIC" ] && sh_usb "curl -s -m 12 -H 'Title: xio lisa' -d \"$1\" https://ntfy.sh/$TOPIC" >/dev/null 2>&1
+  log "NOTIFY: $1"
+}
+
+usb_up(){ [ "$(sh_usb 'echo ok')" = "ok" ]; }
+uptime_s(){ sh_usb 'cut -d. -f1 /proc/uptime' | tr -d ' \r\n'; }
+server_up(){ [ "$(sh_usb 'curl -s -m 5 http://127.0.0.1:5000/api/plugins >/dev/null 2>&1 && echo up')" = "up" ]; }
+shizuku_up(){ [ "$(sh_usb 'ps -A 2>/dev/null | grep shizuku_server | grep -v grep | wc -l' | tr -d ' \r\n')" != "0" ]; }
+hotspot_up(){ [ "$(sh_usb 'ip -o addr show wlan1 2>/dev/null | grep -c "inet "' | tr -d ' \r\n')" != "0" ]; }
+
+start_server_dance(){  # drive Termux (works when the screen is unlocked)
+  sh_usb "input keyevent 224" >/dev/null 2>&1
+  sh_usb "am start -n com.termux/com.termux.app.TermuxActivity" >/dev/null 2>&1
+  sleep 2
+  sh_usb "input text sh" >/dev/null 2>&1
+  sh_usb "input keyevent 62" >/dev/null 2>&1
+  sh_usb "input text /sdcard/xio_termux/run_server.sh" >/dev/null 2>&1
+  sh_usb "input keyevent 66" >/dev/null 2>&1
+}
+
+recover(){
+  local up; up="$(uptime_s)"
+  notify "Reboot/caida detectada (uptime ${up}s). Recuperando por USB..."
+  log "RECOVERY start (uptime=${up}s)"
+  # 1) Shizuku
+  if ! shizuku_up; then
+    sh_usb "setsid $LIB </dev/null >/dev/null 2>&1 &" >/dev/null 2>&1
+    log "Shizuku re-armed"; sleep 4
+  fi
+  # 2) restore wifi-adb (on-device watchdogs + LAN reachability)
+  MSYS_NO_PATHCONV=1 "$ADB" -s "$SERIAL" tcpip 5555 >/dev/null 2>&1
+  sleep 3
+  "$ADB" connect "$WIFI" >/dev/null 2>&1
+  log "tcpip 5555 restored"
+  # 3) start the server (Termux) -- input-dance (unlocked) + Termux:Boot backup
+  start_server_dance
+  # 4) wait for the server, then report + check the hotspot
+  local ok=0 i
+  for i in $(seq 1 16); do sleep 5; if server_up; then ok=1; break; fi; done
+  if [ "$ok" = "1" ]; then
+    if hotspot_up; then
+      notify "OK: server UP y hotspot UP. Todo recuperado."
+    else
+      notify "server UP pero HOTSPOT CAIDO -> toca el toggle del hotspot para recuperar tu internet."
+    fi
+    log "server UP (hotspot_up=$(hotspot_up && echo 1 || echo 0))"
+  else
+    notify "ATENCION: server sigue DOWN tras recuperar Shizuku+tcpip. Revisa el telefono (pantalla/Termux)."
+    log "server STILL DOWN after recovery"
+  fi
+}
+
+log "watcher started (serial $SERIAL, interval ${INTERVAL}s)"
+load_topic
+notify "watcher xio iniciado en el PC (vigila reboots por USB)."
+down_count=0
+while true; do
+  if usb_up; then
+    up="$(uptime_s)"; case "$up" in ''|*[!0-9]*) up=999999 ;; esac
+    if server_up; then
+      [ "$down_count" -gt 0 ] && log "server healthy again"
+      down_count=0
+    else
+      down_count=$((down_count + 1))
+      [ "$down_count" = "1" ] && log "server DOWN detected (uptime=${up}s)"
+      # Fresh boot -> recover immediately; otherwise wait for a sustained outage
+      # (2 polls ~30s) so a transient blip doesn't trigger a needless recovery.
+      if [ "$up" -lt "$BOOT_FRESH" ] || [ "$down_count" -ge 2 ]; then
+        recover
+        down_count=0
+        sleep 45            # backoff: let the stack settle before re-checking
+        continue
+      fi
+    fi
+  fi
+  sleep "$INTERVAL"
+done
