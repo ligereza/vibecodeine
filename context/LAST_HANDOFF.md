@@ -47,6 +47,57 @@ github" para flujo; queda en disco, decidir despues si se versiona):
 - doublecup.png en la raiz: screenshot de referencia del README real (vaso legible).
   Untracked; borrable, no versionar si estorba.
 
+## XIO -- Xiaomi controller on-device (track aparte, xio/ UNTRACKED, no commiteado)
+
+Objetivo: correr el server Flask xio/new EN el telefono (Termux + Shizuku/rish), no
+en la PC. FASE 1 y FASE 2 COMPLETAS 2026-07-12.
+
+- FASE 1 DONE: server on-device (XIO_BACKEND=rish), 23 plugins; PC-apagada y
+  pantalla-apagada NO lo matan (termux-wake-lock puesto); solo un REBOOT del telefono
+  (Shizuku no-root no auto-arranca, se re-arma por USB). Flask instalado tras
+  `pkg upgrade -y` (arreglo RAIZ del ssl/libexpat faltante -- py3.14 sobre base vieja).
+  Alcanzable en http://192.168.127.125:5000 (hotspot wlan1; internet = rmnet datos) y
+  por USB via `adb forward tcp:5055 tcp:5000`. Launcher: xio/new/run_server.sh (pkillea
+  el viejo, copia fresco de /sdcard/xio_termux, relanza).
+- FIX CRITICO xiaomi_controller.py `_rish`: rish TRUNCA salidas grandes (ip addr,
+  dumpsys, screenshots) de forma intermitente aun en llamadas secuenciales (pipe
+  app_process->Shizuku sin drenar). Ahora `_rish` redirige la salida a un archivo en
+  /sdcard y lo lee del filesystem LOCAL (Termux lee /sdcard), evitando el pipe;
+  serializado con lock (Flask es threaded). 6/6 consistente tras el fix. Afecta a
+  TODO el backend rish, no solo un plugin.
+- FASE 2 DONE: plugin xio/new-plugins/connectivity_supervisor (active-router),
+  verificado en vivo con screenshots del navegador on-device. Poll read-only ~20s de
+  clientes del hotspot via ip neigh SOLO (cmd wifi list-tethered-clients da
+  SecurityException para uid 2000; leases dnsmasq walled -> sin hostnames non-root,
+  MAC es el unico ID). Registro por MAC con eventos join/drop/rejoin persistidos.
+  Inteligencia MAC: marca bit locally-administered (0x02) como "random" (privacy iOS/
+  Android) vs "hardware", auto-nombra privacy-XXXX / device-XXXX. Alertas de
+  infraestructura: eventos+notificacion cuando hotspot o internet cambian de estado
+  (hotspot_down/up, internet_down/up; el primer poll solo fija baseline). BT
+  informativo y on-demand (default bt_watch=False, desacoplado del poll para que la
+  deteccion de caidas sea rapida). DASHBOARD en vivo GET /ui (consola movil
+  self-contained, chips + dispositivos presentes + feed de eventos, refresh 3s):
+  http://192.168.127.125:5000/api/plugins/connectivity_supervisor/ui. Rutas GET
+  /ui /status /clients /watch /events /bt, POST /label /config, POST
+  /reassert-hotspot (GUARDED, 423 sin confirm). No quarantined (poll read-only).
+  ARQUITECTURA: /status NO toca rish (servia ip addr inline -> con el poll de 3s del
+  dashboard se apilaban las llamadas en el _shell_lock, latencia 23s); ahora el poll
+  cachea hotspot/internet en self._infra y /status sirve estado en memoria -> 0.01s.
+  Regla: endpoint en timer sirve cache, solo el poll de fondo toca rish. Screenshots
+  CONFIRMADOS reparados por el fix _rish: /api/screen devuelve PNG 1080x2400 completo.
+  NUANCE iOS: la MAC random es ESTABLE por-sesion -> sirve para un show sin tocar
+  ajustes Apple (solo rota en el ciclo diario/OS).
+- HALLAZGO iOS: Apple usa MACs aleatorias por-red (bit locally-administered) ->
+  iPhone/iPad reaparecen como unknown-XXXX al reconectar. Para tracking estable,
+  desactivar "Direccion Wi-Fi privada" de ESTE hotspot en cada dispositivo Apple. No
+  se puede FORZAR reconexion WiFi/BT de Apple: el supervisor DETECTA y AVISA, no
+  puppetea (muro iOS).
+- Verificacion: compileall xio/new + xio/new-plugins OK; endpoints probados en vivo
+  sobre USB. PENDIENTE: Termux:Boot autostart (APK no instalada; Shizuku igual
+  necesita re-arme manual tras reboot); label-by-hostname para sobrevivir rotacion de
+  MAC; commitear xio/ requiere .gitignore para platform-tools/adb.exe (binario
+  pesado). Memoria: project_xio_xiaomi_controller.md.
+
 ## Doing / Next
 
 - RESUELTO (portfolio "no puedo abrirlos" = salia una IMAGEN donde deberia estar
