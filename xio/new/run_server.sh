@@ -26,3 +26,6 @@ command -v termux-wake-lock >/dev/null 2>&1 && termux-wake-lock
 # Levanta el watchdog de Shizuku si no esta corriendo (idempotente).
 sh /sdcard/xio_termux/wd_start.sh
 echo "watchdog: $(cat /sdcard/xio_termux/wd_start.log 2>/dev/null)"
+# Levanta el supervisor del server si no esta corriendo (idempotente).
+sh /sdcard/xio_termux/sup_start.sh
+echo "supervisor: $(cat /sdcard/xio_termux/sup_start.log 2>/dev/null)"
