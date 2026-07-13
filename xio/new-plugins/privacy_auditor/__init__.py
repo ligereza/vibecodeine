@@ -46,6 +46,7 @@ class PrivacyAuditorPlugin(PluginBase):
     def __init__(self, context):
         super().__init__(context)
         self._last_scan = None
+        self._last_total = 0
         self._alerts = []
 
     def on_load(self):
@@ -68,16 +69,19 @@ class PrivacyAuditorPlugin(PluginBase):
             self.logger.error(f"appops error: {e}")
             return ""
 
-    def _get_package_perms(self, package):
-        """Get permission status via appops for a package."""
-        out = self._run_appops("get", package)
+    def _parse_perms(self, out):
+        """Parse the `appops get <pkg>` output text into {op: {mode, raw}}.
+
+        Match case-insensitive: appops emite los ops en MAYUSCULAS (CAMERA: ...)
+        pero SENSITIVE_OPS estan en minusculas -> el `op in line` original nunca
+        matcheaba y la deteccion daba vacio. Corregido de paso con el batch.
+        """
         perms = {}
-        current_op = None
         for line in out.splitlines():
             line = line.strip()
+            low = line.lower()
             for op in self.SENSITIVE_OPS:
-                if op in line:
-                    current_op = op
+                if op.lower() in low:
                     mode = "unknown"
                     if "allow" in line.lower():
                         mode = "allow"
@@ -88,6 +92,45 @@ class PrivacyAuditorPlugin(PluginBase):
                     perms[op] = {"mode": mode, "raw": line}
                     break
         return perms
+
+    def _get_package_perms(self, package):
+        """Get permission status via appops for a single package."""
+        return self._parse_perms(self._run_appops("get", package))
+
+    def _get_all_perms(self, limit=100):
+        """appops get for every user package in ONE on-device shell call.
+
+        Antes cada endpoint/scan hacia `appops get <pkg>` por paquete = hasta
+        limit llamadas rish seriadas (cada una toma el _shell_lock compartido);
+        el background scan corria 50 cada 5 min y degradaba TODO el server. Ahora
+        un solo `for p in <pkgs>; do echo ===PKG:$p; appops get $p; done` trae
+        todo de una y se parsea por bloques. Devuelve {pkg: perms}; guarda el
+        total de paquetes en self._last_total.
+        """
+        packages = self._get_installed_packages()
+        self._last_total = len(packages)
+        packages = packages[:limit]
+        if not packages:
+            return {}
+        cmd = ('for p in %s; do echo "===PKG:$p"; appops get $p 2>/dev/null; done'
+               % " ".join(packages))
+        try:
+            out = self.controller._shell(cmd, timeout=60)
+        except Exception as e:
+            self.logger.error(f"batched appops error: {e}")
+            return {}
+        result = {}
+        cur, buf = None, []
+        for line in out.splitlines():
+            if line.startswith("===PKG:"):
+                if cur is not None:
+                    result[cur] = self._parse_perms("\n".join(buf))
+                cur, buf = line[len("===PKG:"):].strip(), []
+            else:
+                buf.append(line)
+        if cur is not None:
+            result[cur] = self._parse_perms("\n".join(buf))
+        return result
 
     def _set_op(self, package, op, mode):
         """Set appops permission."""
@@ -110,10 +153,9 @@ class PrivacyAuditorPlugin(PluginBase):
     def _background_scan(self):
         """Background scan to detect permission usage changes."""
         try:
-            packages = self._get_installed_packages()
+            all_perms = self._get_all_perms(limit=50)  # 1 batch en vez de ~50 rish calls
             suspicious = []
-            for pkg in packages[:50]:  # Limitar para no demorar
-                perms = self._get_package_perms(pkg)
+            for pkg, perms in all_perms.items():
                 for op, info in perms.items():
                     if op in ["camera", "record_audio", "fine_location"] and info["mode"] == "allow":
                         # App con permisos sensibles - checkear si está en background
@@ -144,10 +186,9 @@ class PrivacyAuditorPlugin(PluginBase):
         Full audit of all user-installed apps.
         """
         from flask import jsonify
-        packages = self._get_installed_packages()
+        all_perms = self._get_all_perms(limit=100)  # 1 batch en vez de ~100 rish calls
         results = []
-        for pkg in packages[:100]:  # Limit for performance
-            perms = self._get_package_perms(pkg)
+        for pkg, perms in all_perms.items():
             has_sensitive = any(op in perms for op in ["camera", "record_audio", "fine_location", "read_sms"])
             results.append({
                 "package": pkg,
@@ -159,7 +200,7 @@ class PrivacyAuditorPlugin(PluginBase):
         results.sort(key=lambda x: -x["sensitive_count"])
         return jsonify({
             "apps": results,
-            "total": len(packages),
+            "total": self._last_total,
             "audited": len(results),
             "last_scan": self._last_scan
         })
@@ -226,11 +267,10 @@ class PrivacyAuditorPlugin(PluginBase):
     def _api_report(self):
         """GET /api/plugins/privacy_auditor/report - risk summary"""
         from flask import jsonify
-        packages = self._get_installed_packages()
+        all_perms = self._get_all_perms(limit=100)  # 1 batch en vez de ~100 rish calls
         high_risk = []
         medium_risk = []
-        for pkg in packages[:100]:
-            perms = self._get_package_perms(pkg)
+        for pkg, perms in all_perms.items():
             sensitive = [op for op in perms if op in ["camera", "record_audio", "fine_location", "read_sms", "send_sms"]]
             if len(sensitive) >= 3:
                 high_risk.append({"package": pkg, "count": len(sensitive), "perms": sensitive})
@@ -239,7 +279,7 @@ class PrivacyAuditorPlugin(PluginBase):
         return jsonify({
             "high_risk": high_risk[:20],
             "medium_risk": medium_risk[:20],
-            "total_scanned": len(packages),
+            "total_scanned": self._last_total,
             "last_scan": self._last_scan
         })
 
