@@ -1,6 +1,6 @@
 # LAST HANDOFF -- estado para el proximo agente
 
-Version: 0.51.0 | Fecha: 2026-07-12 | Identidad: Cauce | Suite: verde (cuando se
+Version: 0.51.0 | Fecha: 2026-07-13 | Identidad: Cauce | Suite: verde (cuando se
 construyo; NO re-corrida al cerrar) | flujo verify: no re-corrido esta sesion
 
 El plan largo vive en context/PLAN_SIGUIENTE_AGENTE.md. Este es el estado corto.
@@ -76,6 +76,22 @@ on-device vivo (26 plugins, :5000). Watchdog de Shizuku HECHO Y PROBADO.
    El 7mo, network_controller/uids, era BUG silencioso: `dumpsys package` + regex que
    exigia Package[..] y uid= en la MISMA linea (dumpsys los separa) -> {}. Arreglado
    (commit bab7ddd) con `pm list packages -U` (1 linea `package:x uid:N`) -> 393 pkgs.
+8. CHARGE CONTROL sin root -- HECHO Y PROBADO (2026-07-13, commit a26ad79). EL
+   DESCUBRIMIENTO GRANDE: `dumpsys usb set-port-roles port0 <sink|source>
+   <device|host>` controla el FLUJO REAL de energia como shell-uid via rish, SIN
+   root. `sink device`=carga; `source host`=OTG, no carga. Corrige la memoria vieja
+   ("charge-cap imposible sin root" -- esa solo probo `dumpsys battery set`, que era
+   cosmetico). Plugin nuevo charge_control (25 plugins ahora): cap 80 + floor 77
+   (histeresis), hard_floor 20 (NUNCA morir: fuerza carga e ignora todo por debajo),
+   charge on/off, powerbank (OTG source), dock (sink+host para hub PD). Seguridad 2
+   capas: guard del server (423 sin confirm, endpoints charge/powerbank/dock) +
+   rechazo en plugin si nivel<=hard_floor; limiter default OFF. PROBADO end-to-end a
+   traves del server: OFF-> dfp/source charging false; ON-> ufp/sink charging true
+   (ventana ~10s, telefono quedo cargando 61%). Meta-leccion (ver
+   xio/PLAN_SERVICIOS_SIN_ROOT.md): "imposible sin root" casi siempre = ruta /sys
+   cerrada por SELinux, pero la MISMA capability suele estar en un SERVICIO
+   privilegiado (dumpsys/cmd/service call) alcanzable via Shizuku. Atacar por el
+   servicio, no por el sysfs.
 
 ## ESTADO FINAL xio (2026-07-13) -- trabajo mayor COMPLETO
 
@@ -88,6 +104,9 @@ El controlador on-device quedo maduro y auto-sostenible sin PC:
   performance_tweaker (timeouts -> segundos).
 - Audit de salud: 43 endpoints de lectura OK con datos, 6 EMPTY legitimos, 0 bugs.
 - flujo CLI core corre on-device (--help/version); pydantic/jsonschema bloqueados (Rust).
+- CHARGE CONTROL sin root (objetivo original de xio): charge-limiter 80% + charge
+  on/off + powerbank + dock, via set-port-roles. Probado. Plan de "imposibles" en
+  xio/PLAN_SERVICIOS_SIN_ROOT.md (atacar por servicios, no por /sys).
 Limite unico pendiente: REBOOT del telefono (adbd vuelve a USB, pierde tcpip 5555 ->
 el loopback del watchdog muere). El usuario no reinicia; cubrirlo = Termux:Boot +
 re-enable wireless adb. Todo pusheado a claude/vola-cultura-portfolio-20260712.
