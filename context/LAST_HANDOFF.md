@@ -25,8 +25,12 @@ VERDE. Todo pusheado a claude/vola-cultura-portfolio-20260712.
   REDUCIENDODANO.CL). El QR es ESTATICO ahi (no cambia por pieza) -> quitada la
   linea muerta que intentaba inyectarlo. Si se quiere sincronizar el generador del
   repo con produccion: leer ai_illustrator, exigir fixture, NO adivinar layout.
-- xio (5 fixes de seguridad/robustez, EN EL REPO; el server LIVE corre la version
-  desplegada -> REDEPLOY PENDIENTE para que apliquen en el telefono):
+- xio (5 fixes de seguridad/robustez; REDEPLOY HECHO Y VERIFICADO 2026-07-13: push
+  de los 5 archivos a /sdcard/xio_termux/{new,new-plugins} + run_server.sh via
+  input-dance; server reinicio pid 12713->3309, las 5 firmas de fix confirmadas en
+  el codigo corriendo, el log muestra joins reales de equipos al hotspot con 200 -no
+  mas 500-. adb del PC en xio/actual/platform-tools/adb.exe; el telefono esta por
+  USB serial 8299e66f -- wifi-adb 5555 estaba caido, NO el link):
   connectivity_supervisor threading.Lock (arregla race 'dict changed size' ->
   HTTP 500 cuando un equipo entra al hotspot mid-show); server.py
   _request_confirmed allow-list estricta ({confirm:false} ya no pasa la guardia de
