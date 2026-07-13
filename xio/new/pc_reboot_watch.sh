@@ -68,23 +68,24 @@ reenable_hotspot(){  # HyperOS does NOT restore the hotspot on boot and no non-r
   # The phone has NO PIN, so drive the toggle by screen: open the tether settings and
   # tap the "Portable hotspot" row (first list checkbox) only if it is currently OFF.
   hotspot_up && return 0
-  local i
-  for i in 1 2; do
+  local i j checked
+  for i in 1 2 3; do
     hotspot_up && return 0
     wake_dismiss
     sh_usb "am start -a android.settings.TETHER_SETTINGS" >/dev/null 2>&1
     sleep 3
     sh_usb "uiautomator dump /sdcard/uidump.xml" >/dev/null 2>&1
     # first android:id/checkbox in the dump = the Portable hotspot toggle
-    local checked
     checked="$(sh_usb 'cat /sdcard/uidump.xml' | tr '>' '\n' | grep 'android:id/checkbox' | head -1 | grep -o 'checked="[a-z]*"')"
     log "hotspot toggle state: ${checked:-unknown} (try $i)"
     case "$checked" in
-      *false*) sh_usb "input tap 540 583" >/dev/null 2>&1; log "tapped hotspot toggle"; sleep 5 ;;
-      *) sleep 3 ;;   # unknown/true: re-check next loop
+      *false*) sh_usb "input tap 540 583" >/dev/null 2>&1; log "tapped hotspot toggle" ;;
     esac
     sh_usb "input keyevent 3" >/dev/null 2>&1                         # HOME
-    hotspot_up && return 0
+    # wlan1 takes ~15-20s to raise its IPv4 after the toggle flips on. Poll for it
+    # (up to ~24s) BEFORE retrying, so a successful tap does not trigger a pointless
+    # 2nd settings visit.
+    for j in 1 2 3 4 5 6 7 8; do sleep 3; hotspot_up && return 0; done
   done
   return 1
 }
