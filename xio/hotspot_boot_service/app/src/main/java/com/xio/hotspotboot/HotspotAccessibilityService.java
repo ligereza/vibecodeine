@@ -26,8 +26,10 @@ public class HotspotAccessibilityService extends AccessibilityService {
 
     private static final String TAG = "xioHotspotBoot";
 
-    // Espera a que el sistema asiente tras el boot antes de abrir Settings.
-    private static final long BOOT_SETTLE_MS = 18000L;
+    // Espera a que el sistema asiente tras el boot antes de abrir Settings. Corto: el
+    // flujo es event-driven (onAccessibilityEvent reintenta cuando aparece la ventana),
+    // asi que un boot lento no lo rompe; solo acelera el reenable.
+    private static final long BOOT_SETTLE_MS = 8000L;
 
     // Textos posibles del switch/fila del hotspot (agregar variantes segun idioma/ROM).
     private static final String[] TOGGLE_HINTS = {

@@ -24,9 +24,9 @@
 # que shizuku_watchdog.sh / server_supervisor.sh.
 export PATH=/data/data/com.termux/files/usr/bin:$PATH
 LOG=/sdcard/xio_termux/hotspot_watch.log
-INTERVAL=30
+INTERVAL=15
 TARGET=127.0.0.1:5555
-DOWN_TO_ACT=2            # ciclos caidos seguidos antes de actuar (anti-flap)
+DOWN_TO_ACT=2            # ciclos caidos seguidos antes de actuar (anti-flap) -> ~30s a actuar
 ts() { date '+%Y-%m-%d %H:%M:%S'; }
 ash() { adb -s "$TARGET" shell "$@" 2>/dev/null; }
 transport_up() { [ "$(ash 'echo ok' | tr -d ' \r\n')" = "ok" ]; }
