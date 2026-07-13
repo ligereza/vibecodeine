@@ -46,6 +46,7 @@ h1{font-size:19px;font-weight:700}
 .chip .k{font-size:11px;color:#8a92a6;text-transform:uppercase;letter-spacing:.04em}
 .chip .v{font-size:17px;font-weight:700;margin-top:3px}
 .ok{color:#4ade80}.bad{color:#f87171}
+.batt{font-size:13px;color:#9aa0b0;margin:8px 2px 0}.batt .hot{color:#f87171;font-weight:700}
 .sec{font-size:12px;color:#8a92a6;text-transform:uppercase;letter-spacing:.05em;margin:16px 0 8px}
 .dev{display:flex;align-items:center;gap:10px;background:#141821;border:1px solid #232838;border-radius:10px;padding:10px 12px;margin-bottom:8px}
 .dev .nm{font-weight:600}.dev .meta{font-size:12px;color:#8a92a6}
@@ -62,6 +63,7 @@ h1{font-size:19px;font-weight:700}
 <div class=chip><div class=k>Internet</div><div class="v" id=net>--</div></div>
 <div class=chip><div class=k>Clients</div><div class="v" id=cl>--</div></div>
 </div>
+<div class=batt id=batt></div>
 <div class=sec>Present devices</div><div id=devs></div>
 <div class=sec>Recent events</div><div id=evs></div>
 <script>
@@ -74,6 +76,11 @@ function tick(){
   set('hs',s.hotspot_up?'<span class=ok>UP</span>':'<span class=bad>DOWN</span>');
   set('net',(s.internet&&s.internet.iface)?'<span class=ok>'+esc(s.internet.iface)+'</span>':'<span class=bad>none</span>');
   document.getElementById('cl').textContent=s.clients_present;
+  var b=s.health||{};var p=[];
+  if(b.level!=null)p.push(b.level+'%');
+  if(b.temp_c!=null)p.push('<span class="'+(b.temp_c>=45?'hot':'')+'">'+b.temp_c+'&deg;C</span>');
+  if(b.charging)p.push('charging');else if(b.status)p.push(esc(b.status));
+  set('batt',p.length?('Battery &middot; '+p.join(' &middot; ')):'');
   set('devs',(s.present&&s.present.length)?s.present.map(function(p){return '<div class=dev><div><div class=nm>'+esc(p.name)+'</div><div class=meta>'+esc(p.ip||'')+' &middot; '+esc(p.mac)+'</div></div><span class="badge b-'+esc(p.mac_type||'unknown')+'">'+esc(p.mac_type||'?')+'</span></div>'}).join(''):'<div class=empty>no clients on the hotspot</div>');
   return fetch('events?limit=25',{cache:'no-store'});
  }).then(function(r){return r.json()}).then(function(ev){
@@ -106,7 +113,10 @@ class ConnectivitySupervisorPlugin(PluginBase):
         "triggers_enabled": False,  # gate for shell-command triggers (OFF by default)
         "on_drop_cmd": "",        # shell run on drop  (only if triggers_enabled)
         "on_join_cmd": "",        # shell run on join  (only if triggers_enabled)
+        "batt_hot_c": 45,         # alert when battery temp reaches this (deg C)
+        "batt_low_pct": 20,       # alert when battery drops to this and not charging
     }
+    _BATT_STATUS = {"2": "charging", "3": "discharging", "4": "not charging", "5": "full", "1": "unknown"}
 
     def __init__(self, context):
         super().__init__(context)
@@ -114,6 +124,7 @@ class ConnectivitySupervisorPlugin(PluginBase):
         self._events = []    # ring buffer of events
         self._net_state = {"hotspot_up": None, "internet": None}  # infra change tracking
         self._infra = {"hotspot_up": False, "internet": {"iface": "", "addr": ""}}  # cached for /status (poll refreshes)
+        self._health = {}  # cached battery health (level/temp_c/status/charging) from the poll
 
     # ── lifecycle ────────────────────────────────────────────────────
     def on_load(self):
@@ -352,6 +363,9 @@ class ConnectivitySupervisorPlugin(PluginBase):
             # cache for /status so the hot path never touches rish (no pileup)
             self._infra = {"hotspot_up": hs_up, "internet": {"iface": inet, "addr": netmap.get(inet, "")}}
 
+            # battery health (cheap single dumpsys) + overheat/low alerts
+            self._check_battery(self._read_battery())
+
             self._save_state()
         except Exception as e:
             self.logger.error(f"connsup poll error: {e}")
@@ -367,6 +381,37 @@ class ConnectivitySupervisorPlugin(PluginBase):
             self._emit_sys("internet_up" if inet_iface else "internet_down",
                            f"Internet restored via {inet_iface}" if inet_iface else "INTERNET DOWN -- no mobile-data IPv4")
         self._net_state = {"hotspot_up": hs_up, "internet": inet_iface}
+
+    def _read_battery(self):
+        """Cheap single `dumpsys battery` read -> {level, temp_c, status, charging}."""
+        h = {"level": None, "temp_c": None, "status": "", "charging": False}
+        for line in self._sh("dumpsys battery 2>/dev/null").splitlines():
+            s = line.strip()
+            if s.startswith("level:"):
+                try: h["level"] = int(s.split(":", 1)[1])
+                except Exception: pass
+            elif s.startswith("temperature:"):
+                try: h["temp_c"] = round(int(s.split(":", 1)[1]) / 10.0, 1)
+                except Exception: pass
+            elif s.startswith("status:"):
+                h["status"] = self._BATT_STATUS.get(s.split(":", 1)[1].strip(), s.split(":", 1)[1].strip())
+            elif s.endswith("powered: true"):
+                h["charging"] = True
+        return h
+
+    def _check_battery(self, h):
+        """Alert once when the phone crosses into overheating / low-battery."""
+        hot_th = self._cfg("batt_hot_c")
+        low_th = self._cfg("batt_low_pct")
+        t, lvl = h.get("temp_c"), h.get("level")
+        now_hot = bool(t is not None and t >= hot_th)
+        now_low = bool(lvl is not None and lvl <= low_th and not h.get("charging"))
+        if now_hot and not self._health.get("hot"):
+            self._emit_sys("battery_hot", f"Battery {t}C -- overheating (>= {hot_th}C)")
+        if now_low and not self._health.get("low"):
+            self._emit_sys("battery_low", f"Battery {lvl}% -- low (<= {low_th}%), not charging")
+        h["hot"], h["low"] = now_hot, now_low
+        self._health = h
 
     def _emit_sys(self, event, detail):
         """Log a network (non-device) event."""
@@ -409,6 +454,7 @@ class ConnectivitySupervisorPlugin(PluginBase):
             "hotspot_iface": self._cfg("ap_iface"),
             "hotspot_up": self._infra["hotspot_up"],       # cached from last poll -- no rish, no lock
             "internet": self._infra["internet"],
+            "health": {k: self._health.get(k) for k in ("level", "temp_c", "status", "charging")},
             "clients_present": len(present),
             "present": [{"name": d["name"], "type": d["type"], "mac": d["mac"], "mac_type": d.get("mac_type", ""), "ip": d.get("ip", ""), "bt_present": d.get("bt_present", False)} for d in present],
             "tracked_total": len(self._devices),
