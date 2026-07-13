@@ -16,6 +16,12 @@ say() { echo "[$(date '+%H:%M:%S')] $*" >> "$LOG"; }
 say "=== reboot_recover start ==="
 command -v termux-wake-lock >/dev/null 2>&1 && termux-wake-lock
 
+# Early 5G ping (independent of the hotspot) so the user learns of the reboot even
+# if the hotspot did not come back. Topic lives only on the device (weak secret).
+TOPIC=$(cat /sdcard/xio_termux/ntfy_topic.txt 2>/dev/null | tr -d ' \r\n')
+ping5g() { [ -n "$TOPIC" ] && curl -s -m 12 -H 'Title: xio lisa' -d "$1" "https://ntfy.sh/$TOPIC" >/dev/null 2>&1; }
+ping5g "Xiaomi booteo (Termux:Boot). Recuperando server..."
+
 # Kill any stale local adb server so mdns/connect start clean.
 $ADB kill-server >/dev/null 2>&1
 sleep 2
@@ -71,3 +77,4 @@ fi
 # Start the server stack (run_server.sh also starts watchdog + supervisor + wakelock).
 sh /sdcard/xio_termux/run_server.sh >> "$LOG" 2>&1
 say "run_server.sh launched -- recovery done."
+ping5g "Termux:Boot recovery: server relanzado en el telefono."

@@ -78,6 +78,10 @@ datadrops/*/*.webp
 tmp_*/
 ig_*/
 
+# xio runtime (logs + on-device secrets -- nunca al repo)
+xio/**/*.log
+xio/**/ntfy_topic.txt
+
 # Higiene de repo (no commitear ruído histórico)
 # Ver docs/HIGIENE_REPO.md y context/README.md
 # _airdrop_backups/, checkpoints/, _archive/ y reference_old/ son legacy y deben mantenerse mínimos en root.
