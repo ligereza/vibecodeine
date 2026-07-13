@@ -45,6 +45,15 @@ on-device vivo (26 plugins, :5000). Watchdog de Shizuku HECHO Y PROBADO.
    devuelve path|type|temp+throttle de todas -> poll 2 calls, /temperatures ~3s warm.
    Verificado on-device (87 zonas, battery 35C). Baja contencion del _shell_lock.
    Patron reusable para otros plugins que hacen cats por-item (ej battery_care).
+5. SERVER SUPERVISOR -- HECHO (2026-07-13, commit d234525). Segunda capa de auto-heal
+   junto al shizuku_watchdog: si server.py muere nada lo revivia. server_supervisor.sh
+   (Termux, setsid, loop 30s) health-check a /api/plugins con el python de Termux; tras
+   3 fallos seguidos (~90s, anti-flap) relanza run_server.sh. sup_start.sh idempotente;
+   run_server.sh lo arranca junto al watchdog. VALIDADO: pkill server.py -> FAIL 1/3..3/3
+   -> relaunch -> http:200; watchdog+supervisor idempotentes (sin duplicar).
+   AHORA el on-device se auto-recupera de: Shizuku muerto Y server muerto, sin PC.
+   Mismo limite reboot (adbd->USB) para el watchdog. Los keepalive corren bajo uid
+   u0_a313 (ps de adb-shell uid2000 NO los ve; confirmar por sus .log o pgrep en Termux).
 
 ## Hecho (esta sesion, 2026-07-12 -- VOLA + portfolio)
 
