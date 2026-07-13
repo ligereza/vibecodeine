@@ -54,6 +54,14 @@ on-device vivo (26 plugins, :5000). Watchdog de Shizuku HECHO Y PROBADO.
    AHORA el on-device se auto-recupera de: Shizuku muerto Y server muerto, sin PC.
    Mismo limite reboot (adbd->USB) para el watchdog. Los keepalive corren bajo uid
    u0_a313 (ps de adb-shell uid2000 NO los ve; confirmar por sus .log o pgrep en Termux).
+6. FIX SISTEMICO rish `| cat` -- HECHO (2026-07-13, commit 862f202). El file-redirect
+   de _rish rompia TODO comando cmd-based (pm/appops/cmd/wm) con Binder "Failed
+   transaction 2147483646" (pasan fd de stdout por Binder; escribir a archivo regular
+   falla). Rompia ~10 plugins on-device en silencio. Fix: `(cmd) 2>/dev/null | cat >
+   out` (comando -> pipe, cat -> archivo). Sin regresiones (thermal/connectivity/
+   screenshot binario OK). Efecto: privacy_auditor/audit paso de roto a 36 apps reales
+   (commit c507e9f: + batch appops N->1 + match case-insensitive). Plugins cmd-based
+   que estaban rotos ahora deberian andar; vale re-testear debloat/app_freezer/etc.
 
 ## Hecho (esta sesion, 2026-07-12 -- VOLA + portfolio)
 
