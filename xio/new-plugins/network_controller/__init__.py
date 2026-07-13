@@ -194,15 +194,21 @@ class NetworkControllerPlugin(PluginBase):
         return jsonify(self._get_active_connections())
 
     def _api_app_uids(self):
-        from flask import request, jsonify
+        from flask import jsonify
         try:
-            out = self.controller._shell("dumpsys", "package")
+            # `pm list packages -U` da una linea por paquete: "package:<name> uid:<uid>".
+            # (El parse viejo hacia `dumpsys package` y exigia Package[..] y uid= en la
+            #  MISMA linea, pero dumpsys los pone en lineas distintas -> matcheaba 0 y
+            #  devolvia {} silenciosamente.)
+            out = self.controller._shell("pm", "list", "packages", "-U")
             uids = {}
             for line in out.splitlines():
-                if "Package" in line and "uid=" in line:
-                    m = re.search(r'Package\s+\[([\w.]+)\].*uid=(\d+)', line)
-                    if m:
-                        uids[m.group(1)] = m.group(2)
+                line = line.strip()
+                if line.startswith("package:") and "uid:" in line:
+                    pkg = line.split("package:", 1)[1].split(" ", 1)[0].strip()
+                    uid = line.split("uid:", 1)[1].strip()
+                    if pkg and uid:
+                        uids[pkg] = uid
             return jsonify(uids)
         except Exception as e:
             return jsonify({"error": str(e)}), 500
