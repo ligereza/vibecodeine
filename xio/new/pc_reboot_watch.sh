@@ -33,6 +33,14 @@ LOG="/c/IA/flujo/xio/new/pc_reboot_watch.log"
 INTERVAL=15
 BOOT_FRESH=240                          # uptime < this (s) => treat as a fresh boot
 
+# single-instance lock: duplicate watchers => duplicate recovery + duplicate ntfy
+PIDFILE="/c/IA/flujo/xio/new/.pc_watch.pid"
+if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE" 2>/dev/null)" 2>/dev/null; then
+  echo "watcher already running (pid $(cat "$PIDFILE"))"; exit 0
+fi
+echo $$ > "$PIDFILE"
+trap 'rm -f "$PIDFILE"' EXIT
+
 sh_usb(){ MSYS_NO_PATHCONV=1 "$ADB" -s "$SERIAL" shell "$@" 2>/dev/null; }
 log(){ echo "[$(date '+%F %T')] $*" >> "$LOG"; }
 
@@ -50,6 +58,32 @@ server_up(){ [ "$(sh_usb 'curl -s -m 5 http://127.0.0.1:5000/api/plugins >/dev/n
 shizuku_up(){ [ "$(sh_usb 'ps -A 2>/dev/null | grep shizuku_server | grep -v grep | wc -l' | tr -d ' \r\n')" != "0" ]; }
 hotspot_up(){ [ "$(sh_usb 'ip -o addr show wlan1 2>/dev/null | grep -c "inet "' | tr -d ' \r\n')" != "0" ]; }
 
+reenable_hotspot(){  # HyperOS does NOT restore the hotspot on boot and no non-root
+  # command re-enables the user's tether (cmd wifi start-softap does NOT tether).
+  # The phone has NO PIN, so drive the toggle by screen: open the tether settings and
+  # tap the "Portable hotspot" row (first list checkbox) only if it is currently OFF.
+  hotspot_up && return 0
+  local i
+  for i in 1 2; do
+    hotspot_up && return 0
+    sh_usb "input keyevent 224" >/dev/null 2>&1                       # wake
+    sh_usb "am start -a android.settings.TETHER_SETTINGS" >/dev/null 2>&1
+    sleep 3
+    sh_usb "uiautomator dump /sdcard/uidump.xml" >/dev/null 2>&1
+    # first android:id/checkbox in the dump = the Portable hotspot toggle
+    local checked
+    checked="$(sh_usb 'cat /sdcard/uidump.xml' | tr '>' '\n' | grep 'android:id/checkbox' | head -1 | grep -o 'checked="[a-z]*"')"
+    log "hotspot toggle state: ${checked:-unknown} (try $i)"
+    case "$checked" in
+      *false*) sh_usb "input tap 540 583" >/dev/null 2>&1; log "tapped hotspot toggle"; sleep 5 ;;
+      *) sleep 3 ;;   # unknown/true: re-check next loop
+    esac
+    sh_usb "input keyevent 3" >/dev/null 2>&1                         # HOME
+    hotspot_up && return 0
+  done
+  return 1
+}
+
 start_server_dance(){  # drive Termux (works when the screen is unlocked)
   sh_usb "input keyevent 224" >/dev/null 2>&1
   sh_usb "am start -n com.termux/com.termux.app.TermuxActivity" >/dev/null 2>&1
@@ -61,9 +95,9 @@ start_server_dance(){  # drive Termux (works when the screen is unlocked)
 }
 
 recover(){
-  local up; up="$(uptime_s)"
-  notify "Reboot/caida detectada (uptime ${up}s). Recuperando por USB..."
+  local up ok=0 i hs; up="$(uptime_s)"
   log "RECOVERY start (uptime=${up}s)"
+  notify "Reboot detectado (uptime ${up}s). Recuperando por USB..."
   # 1) Shizuku
   if ! shizuku_up; then
     sh_usb "setsid $LIB </dev/null >/dev/null 2>&1 &" >/dev/null 2>&1
@@ -74,22 +108,25 @@ recover(){
   sleep 3
   "$ADB" connect "$WIFI" >/dev/null 2>&1
   log "tcpip 5555 restored"
-  # 3) start the server (Termux) -- input-dance (unlocked) + Termux:Boot backup
-  start_server_dance
-  # 4) wait for the server, then report + check the hotspot
-  local ok=0 i
-  for i in $(seq 1 16); do sleep 5; if server_up; then ok=1; break; fi; done
-  if [ "$ok" = "1" ]; then
-    if hotspot_up; then
-      notify "OK: server UP y hotspot UP. Todo recuperado."
-    else
-      notify "server UP pero HOTSPOT CAIDO -> toca el toggle del hotspot para recuperar tu internet."
-    fi
-    log "server UP (hotspot_up=$(hotspot_up && echo 1 || echo 0))"
-  else
-    notify "ATENCION: server sigue DOWN tras recuperar Shizuku+tcpip. Revisa el telefono (pantalla/Termux)."
-    log "server STILL DOWN after recovery"
+  # 3) HOTSPOT FIRST -- it is the user's ONLY internet, and an ntfy only reaches their
+  #    iPhone AFTER the hotspot is back (the iPhone needs it). So re-enabling the
+  #    hotspot IS the fix; notifying to "go tap it" can never arrive. HyperOS doesn't
+  #    restore it on boot -> screen-tap the toggle (no PIN).
+  if ! hotspot_up; then
+    log "hotspot down -> auto re-enabling by screen-tap"
+    reenable_hotspot && log "hotspot re-enabled" || log "hotspot re-enable FAILED"
   fi
+  # 4) start the server (Termux) -- input-dance (no PIN) + Termux:Boot headless backup
+  start_server_dance
+  for i in $(seq 1 16); do sleep 5; if server_up; then ok=1; break; fi; done
+  # 5) final report -- now reaches the iPhone if the hotspot came back
+  hs=$(hotspot_up && echo UP || echo DOWN)
+  if [ "$ok" = "1" ]; then
+    notify "Reboot recuperado: server UP + hotspot ${hs} (automatico)."
+  else
+    notify "Reboot: hotspot ${hs} pero server DOWN. Revisa el telefono."
+  fi
+  log "recovery done (server=$([ "$ok" = "1" ] && echo UP || echo DOWN) hotspot=${hs})"
 }
 
 log "watcher started (serial $SERIAL, interval ${INTERVAL}s)"
