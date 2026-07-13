@@ -128,11 +128,23 @@ on-device vivo (26 plugins, :5000). Watchdog de Shizuku HECHO Y PROBADO.
     (/sdcard/xio_termux/ntfy_topic.txt), NUNCA en git; el usuario se suscribe en la app
     ntfy del iPhone. ntfy+5G+USB probados OK. Idea Claude-on-device por API: descartada
     (no rompe el muro Shizuku-al-boot y quema runway; el repo va a agentes gratis).
-    PENDIENTE de prueba: un reboot REAL (valida Termux:Boot firing [necesita MIUI
-    Autostart, no concedible por adb], server-start con pantalla bloqueada, y si HyperOS
-    auto-reenciende el hotspot). Con el notificador 5G ese reboot ya es seguro: el tel
-    dice que hacer aunque pierdas el hotspot. Scripts: xio/new/{pc_reboot_watch.sh,
-    setup_runcommand.sh, xio-reboot-watch.vbs, reboot_recover.sh}.
+    REBOOT REAL PROBADO (2026-07-13): uptime reseteo 90740->14s. El server se recupero
+    100% AUTONOMO -- watcher re-armo Shizuku + tcpip por USB, Termux:Boot DISPARO (el
+    Autostart que activo el usuario funciono) y uso el 5555 del watcher para lanzar
+    server+watchdog+supervisor; server UP en ~90s. UN fallo: el hotspot NO auto-reencendio
+    (HyperOS no lo restaura al boot; ningun comando no-root reactiva el tether del usuario
+    -- `cmd wifi start-softap` dice explicito que NO tethera). Y el ntfy "toca el toggle"
+    NO puede llegar: el iPhone del usuario necesita el hotspot para recibirlo (circular).
+    FIX (commit 93a270d): recover() reenciende el hotspot PRIMERO por PANTALLA (el tel no
+    tiene PIN) -- `am start -a android.settings.TETHER_SETTINGS` + `uiautomator dump` para
+    leer el checkbox "Portable hotspot" (primer android:id/checkbox) + `input tap 540 583`
+    si esta en false. VALIDADO aislado (off -> auto-reencendido -> up). Tambien lockfile
+    .pc_watch.pid (habia 7 watchers duplicados). AHORA el reboot recupera TODO sin tocar
+    nada: Shizuku + tcpip + hotspot + server. Watcher corriendo (1 instancia). PENDIENTE:
+    un 2do reboot que valide el hotspot-reenable DENTRO del flujo real de recover().
+    Scripts: xio/new/{pc_reboot_watch.sh, setup_runcommand.sh, xio-reboot-watch.vbs,
+    reboot_recover.sh}. ntfy topico solo en device; usuario suscrito (pero el ntfy solo
+    sirve si el hotspot ya volvio -> por eso el reenable automatico es el fix real).
 
 ## ESTADO FINAL xio (2026-07-13) -- trabajo mayor COMPLETO
 
