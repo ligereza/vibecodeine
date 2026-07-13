@@ -56,8 +56,17 @@ class XiaomiController:
         CompletedProcess interface the callers rely on. Plugins that need stderr
         merge it inside their own command string (e.g. `... 2>&1`); the wrapper
         keeps stdout-only semantics (stderr dropped) to match the adb backend.
+
+        `| cat` (2026-07-13): los comandos `cmd`-based (pm, appops, cmd, wm...)
+        pasan su fd de stdout por Binder; redirigir ese fd a un archivo REGULAR
+        (`> /sdcard/...`) rompe la transaccion con "cmd: Failure calling service
+        ... Failed transaction (2147483646)". Interponer `| cat` hace que el
+        comando escriba a un PIPE (fd que el Binder si acepta) y `cat` escribe al
+        archivo -> desbloquea pm/appops/cmd/wm sin perder el fix de truncacion
+        (seguimos leyendo del archivo). Transparente y binary-safe para los que ya
+        andaban (cat/ls/dumpsys/ip/screencap). Empiricamente validado on-device.
         """
-        wrapped = f"({cmdstr}) > {self._rish_out} 2>/dev/null"
+        wrapped = f"({cmdstr}) 2>/dev/null | cat > {self._rish_out}"
         with self._shell_lock:
             proc = subprocess.run(
                 ["sh", self.rish, "-c", wrapped],
