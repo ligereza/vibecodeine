@@ -93,9 +93,12 @@ propio -- datos celulares --, no el hotspot del Xiaomi.)
    modo PRO pagado, NO uses un APK PRO pirata -- pasa al Camino B.
 
 **Camino B -- AccessibilityService propio (robusto, para un dev / agente libre despues):**
-- Un APK minimo: un `AccessibilityService` + un `BroadcastReceiver` de `BOOT_COMPLETED`
-  que, al bootear, abre `TETHER_SETTINGS` y toca el toggle (misma logica que
-  `hotspot_watch.sh`, pero como servicio del sistema que no necesita Shizuku).
+- SOURCE YA ESCRITO en `xio/hotspot_boot_service/` (Java, Gradle minimo): un
+  `AccessibilityService` + `BroadcastReceiver` de `BOOT_COMPLETED` que, al bootear, abre
+  `TETHER_SETTINGS` y toca el toggle SOLO si esta OFF (misma doble-compuerta que
+  `hotspot_watch.sh`, pero como servicio del sistema que no necesita Shizuku). Ver su
+  README para build + install + activar. NO buildeado/probado (este PC no tiene toolchain
+  Android): hay que compilarlo y ajustar la coordenada de fallback on-device.
 - Se instala con `adb install` (silencioso, uid shell) y se ACTIVA headless via:
   `settings put secure enabled_accessibility_services <pkg>/<Service>` +
   `settings put secure accessibility_enabled 1` (WRITE_SECURE_SETTINGS lo tiene shell;
