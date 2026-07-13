@@ -6,6 +6,37 @@ construyo; NO re-corrida al cerrar) | flujo verify: no re-corrido esta sesion
 El plan largo vive en context/PLAN_SIGUIENTE_AGENTE.md. Este es el estado corto.
 Historico viejo en git y docs/handoffs/archive/.
 
+## EN CURSO (2026-07-13, xio auto-heal Shizuku) -- checkpoint
+
+Control: SOLO wifi-adb `adb connect 192.168.127.125:5555` (sin USB). Server
+on-device vivo (26 plugins, :5000). Watchdog de Shizuku HECHO Y PROBADO.
+
+1. WATCHDOG Shizuku -- HECHO (2026-07-13). Automatiza la caida que pediste.
+   Shizuku era SPOF: al morir, rish falla y el server queda ciego en silencio.
+   Solucion sin PC/root: Termux corre su propio adb (`pkg android-tools`), conecta
+   por LOOPBACK `adb connect 127.0.0.1:5555` (adb-key autorizada una vez por el
+   usuario), y `shizuku_watchdog.sh` (setsid, loop 20s) re-arma shizuku_server con
+   `setsid <lib>` cuando cae. Endurecido vs doze: `dumpsys deviceidle whitelist
+   +com.termux +moe.shizuku.privileged.api` + `termux-wake-lock`. run_server.sh
+   ahora levanta el watchdog + wakelock solo. Scripts en xio/new/:
+   shizuku_watchdog.sh, wd_start.sh, setup_watchdog.sh, run_server.sh.
+   VALIDADO: kill shizuku_server -> GONE 16s -> revivido en t+20s (log RE-ARMED x2).
+   Tip aprendido: comandos a Termux por wifi-adb necesitan `MSYS_NO_PATHCONV=1` +
+   wake (kv 224) + `am start` Termux + `input text`/`input keyevent 62` (space).
+   El tap de autorizacion adb tambien es scriptable via input tap (esta vez lo
+   autorizo el usuario a mano).
+   LIMITE: tras REBOOT adbd vuelve a USB (pierde tcpip 5555) -> loopback muere;
+   el usuario no reinicia. Cubrir reboot = Termux:Boot + re-enable wireless adb.
+2. RECUPERACION MANUAL (si el watchdog no estuviera): `adb connect
+   192.168.127.125:5555`; `lib=dirname(pm path moe.shizuku.privileged.api)+
+   /lib/arm64/libshizuku.so`; `adb -s ... shell "setsid $lib </dev/null
+   >/dev/null 2>&1 &"`.
+3. FLUJO ON-DEVICE (fase D, PENDIENTE) -- prioridad menor. Gran parte de flujo es
+   Windows/desktop (Blender/Resolume/Tkinter): NO on-device. Meta realista = core
+   Python + CLI. Deps ligeras OK; RIESGO pydantic (core Rust, wheel Android?).
+   Probar `pip install typer rich pyyaml jsonschema requests pydantic` y
+   `python -m flujo --help`. (No arrancado aun; el watchdog se priorizo.)
+
 ## Hecho (esta sesion, 2026-07-12 -- VOLA + portfolio)
 
 PORTFOLIO-AUTO (repo aparte ligereza/portfolio-auto, LIVE, ya pusheado a su main
