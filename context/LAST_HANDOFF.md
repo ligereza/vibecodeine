@@ -92,6 +92,25 @@ on-device vivo (26 plugins, :5000). Watchdog de Shizuku HECHO Y PROBADO.
    cerrada por SELinux, pero la MISMA capability suele estar en un SERVICIO
    privilegiado (dumpsys/cmd/service call) alcanzable via Shizuku. Atacar por el
    servicio, no por el sysfs.
+9. PERSISTENCIA TRAS REBOOT -- PARCIAL (2026-07-13). Termux:Boot INSTALADO (el base
+   Termux v0.118.0 es de F-DROID -> instalar el Termux:Boot de F-Droid, versionCode
+   1000; el de GitHub v0.8.1 falla INSTALL_FAILED_SHARED_USER_INCOMPATIBLE por firma
+   distinta). Instalado por `adb install` (= shell uid, sin root); abierto 1 vez con
+   monkey para registrar el receiver. Boot launcher en ~/.termux/boot/00-xio-boot.sh
+   (ext4, exec) que llama xio/new/reboot_recover.sh (en /sdcard, iterable por push):
+   trata loopback 5555 -> wireless-debug por mDNS, normaliza a tcpip 5555, re-arma
+   Shizuku, corre run_server.sh. MURO NO-ROOT (probado, no adivinado): el adb de
+   Termux solo alcanza adbd por TCP; al boot adbd = USB-only, no hay listener TCP
+   salvo wireless-debug; `settings put global adb_wifi_enabled 1` por shell NO pega
+   (readback 0, Android lo protege); tcpip no persiste; persist.adb.tcp.port bloqueado
+   por SELinux. ADEMAS no hay enlace USB de DATOS al PC: Windows solo ve el telefono
+   por Bluetooth (audio), el Thunderbolt es charge-only -> NO hay adb-USB de respaldo.
+   CONCLUSION: la auto-recuperacion de reboot no-root NO es posible en este setup sin
+   accion del usuario. El boot script auto-recupera EN CUANTO exista un transporte adb
+   (usuario enciende "Depuracion inalambrica" a mano + pairing, o un cable USB de datos
+   real a un PC). NO se hizo reboot de prueba: reiniciar ahora perderia el 5555 sin
+   forma de restaurarlo (no hay USB de datos) -> se difiere a cuando haya red de
+   respaldo. Scripts: xio/new/{reboot_recover.sh, 00-xio-boot.sh, setup_boot.sh}.
 
 ## ESTADO FINAL xio (2026-07-13) -- trabajo mayor COMPLETO
 
