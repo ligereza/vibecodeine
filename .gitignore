@@ -81,6 +81,7 @@ ig_*/
 # xio runtime (logs + on-device secrets -- nunca al repo)
 xio/**/*.log
 xio/**/ntfy_topic.txt
+xio/**/.pc_watch.pid
 
 # Higiene de repo (no commitear ruído histórico)
 # Ver docs/HIGIENE_REPO.md y context/README.md
