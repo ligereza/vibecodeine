@@ -1,10 +1,54 @@
 # LAST HANDOFF -- estado para el proximo agente
 
-Version: 0.51.0 | Fecha: 2026-07-13 | Identidad: Cauce | Suite: verde (cuando se
-construyo; NO re-corrida al cerrar) | flujo verify: no re-corrido esta sesion
+Version: 0.51.0 | Fecha: 2026-07-13 | Identidad: Cauce | Suite: VERDE re-corrida
+2026-07-13 (392 passed, 1 skipped) | flujo verify: OK 2026-07-13 | compileall
+src+xio: OK
 
 El plan largo vive en context/PLAN_SIGUIENTE_AGENTE.md. Este es el estado corto.
 Historico viejo en git y docs/handoffs/archive/.
+
+## HARDENING POR AUDITORIA (2026-07-13, sesion autonoma) -- commit 4835491
+
+Auditoria ultracode (26 agentes, 6 zonas) -> 19 hallazgos verificados; aplicados
+en workflow paralelo (8 unidades de archivos disjuntos) + verificacion central
+VERDE. Todo pusheado a claude/vola-cultura-portfolio-20260712.
+
+- RD-SVG (bug real, silent-failure): contraportada_svg.py tenia strings de
+  busqueda con tildes/enies/vinetas que NO matcheaban la plantilla ASCII
+  01_contraportada_base_10x14cm.svg -> descripcion/beneficios/nutrition salian con
+  placeholder CRUDO y el CLI reportaba exito igual. Corregidos los 7 strings +
+  guard _replace_required (ValueError si un campo OBLIGATORIO da 0 reemplazos) +
+  register_namespace (quita prefijos ns0:) + variantes ASCII en svg_validator.
+  PROBADO end-to-end (pieza real: 0 placeholders, ns0 ausente, validator ok).
+  IMPORTANTE: la plantilla REAL de produccion NO es la del repo -- es
+  Escritorio/ai_illustrator (modelo ops.json/state.json sobre .ai, sitio
+  REDUCIENDODANO.CL). El QR es ESTATICO ahi (no cambia por pieza) -> quitada la
+  linea muerta que intentaba inyectarlo. Si se quiere sincronizar el generador del
+  repo con produccion: leer ai_illustrator, exigir fixture, NO adivinar layout.
+- xio (5 fixes de seguridad/robustez, EN EL REPO; el server LIVE corre la version
+  desplegada -> REDEPLOY PENDIENTE para que apliquen en el telefono):
+  connectivity_supervisor threading.Lock (arregla race 'dict changed size' ->
+  HTTP 500 cuando un equipo entra al hotspot mid-show); server.py
+  _request_confirmed allow-list estricta ({confirm:false} ya no pasa la guardia de
+  acciones peligrosas); hyperos_unlocker int-coerce + rango 0..6 (arregla injection
+  cpu/gpu); network_controller resuelve UID real (block-wifi/data ya no da falso
+  ok:true); xiaomi_controller shlex.quote (delete/mkdir/rename/list ya no borran
+  el archivo equivocado con espacios).
+- cultura: tilde_paridad _es_filoso ahora exige flecha '->' MAS glosa entre
+  parentesis (la dieresis, perdida fonetica sin inversion de sentido, ya no cuenta
+  como filosa). core: cli.py comando logo-lab duplicado borrado + handoff create
+  translitera a ASCII lo que appendea a este archivo.
+- ESTADO reconciliado: SESSION_STATE.json estaba desincronizado vs realidad/git
+  (fecha, xio UNTRACKED, VOLA sin commitear, PR#41 abierto, repo privado) -- todo
+  corregido contra ground-truth de git/gh (xio 142 files tracked, VOLA en 44a728d,
+  PR#41 MERGED, repo PUBLIC).
+- PORTFOLIO REAL: VERIFICADO ya hecho -- works.json de portfolio-auto tiene 8
+  obras curadas reales, 0 placeholders Unsplash, 0 assets faltantes. Clon del repo
+  real en C:\IA\portfolio-auto-real. Resto: pulido cosmetico menor (interactivos
+  en grilla 2d), bajo valor.
+- BLOQUEADO por factores externos (no por falta de trabajo): redeploy xio (telefono
+  no alcanzable desde el PC, sin adb en red); cultura nueva (las 4 piezas esperan
+  regularizador HUMANO, no mas codigo).
 
 ## EN CURSO (2026-07-13, xio auto-heal Shizuku) -- checkpoint
 

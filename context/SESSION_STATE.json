@@ -35,7 +35,7 @@
   "next": [
     "USUARIO URGENTE (repo publico): branch protection en main + secret ANTHROPIC_API_KEY siguen SIN configurar (verificado 2026-07-13 via gh api/gh secret list; branches/main/protection -> 404). Nota: #32/#33-#36/#41 YA resueltos (mergeados/cerrados), no repetir.",
     "HECHO 2026-07-12: af6411d3 (sala 3D) auto-hosteado como sala-3d.html en portfolio-auto, mas e414adac (tapiz) como tapiz.html; wiring arreglado (openLB+obra.js redirigen works interactivos a su pagina, commit e4e43a5). Ya no hace falta republicar como artifact. Limpieza menor: sala-3d/tapiz tienen mediaType image y se cuelan en la grilla 2d.",
-    "Obras reales en works.json del sitio portfolio-auto (5 placeholders Unsplash); las piezas curadas de projects/tapiz/piezas_curadas/ son candidatas.",
+    "VERIFICADO 2026-07-13: works.json de portfolio-auto YA tiene 8 obras curadas reales (VOLA, Campo/Motor, Cenefa, Malla Reactiva, sala-3d, TAPIZ, Cauce, Medallon) -- 0 placeholders Unsplash, 0 assets faltantes. El viejo pendiente 'Portfolio real' esta CERRADO. Clon del repo real en C:\\IA\\portfolio-auto-real para futuras ediciones. Unico resto: pulido cosmetico (sala-3d/tapiz con mediaType image se cuelan en la grilla 2d aunque el click abre la pagina viva) -- necesita cirugia JS del sitio, bajo valor.",
     "Corpus tilde real (usar desktop/tilde_meter.py) para render sobrevivencia-01 con datos de verdad; la pieza y sus tests ya existen.",
     "Hygiene: borrar backup_before_merge_20260710/ si sigue presente; decidir .claude/commands/ tracked-vs-ignored.",
     "Smoke test de productoras.py: falta un flyer fixture EN EL REPO (tests/fixtures/); pedir al usuario un .jpg/.png real de flyer.",
