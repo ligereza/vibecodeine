@@ -145,6 +145,7 @@ class PluginContext:
     - logger: shared logger
     - data_dir: global data directory for all plugins
     - scheduler: simple background task scheduler
+    - security_hook: intercepta y valida comandos (si plugin_guardian está activo)
     """
 
     def __init__(self, controller, logger, data_dir: Path):
@@ -153,6 +154,8 @@ class PluginContext:
         self.data_dir = data_dir
         self._plugins_dir = data_dir.parent / "plugins"
         self._scheduler_tasks = {}
+        self._security_hook = None  # Se inicializa cuando plugin_guardian carga
+        self._audit_logger = None
 
     def plugin_dir(self, plugin_id: str) -> Path:
         return self._plugins_dir / plugin_id
@@ -186,3 +189,53 @@ class PluginContext:
     def cancel_all(self):
         for name in list(self._scheduler_tasks.keys()):
             self.cancel_schedule(name)
+
+    # ── Security Methods ─────────────────────────────────────────────
+    def set_security_hook(self, hook):
+        """Registrar el security hook (llamado por plugin_guardian al cargar)."""
+        self._security_hook = hook
+        self.logger.info("Security hook registered")
+
+    def set_audit_logger(self, logger):
+        """Registrar el audit logger (llamado por plugin_guardian al cargar)."""
+        self._audit_logger = logger
+        self.logger.info("Audit logger registered")
+
+    def safe_shell(self, plugin_id: str, *args, timeout=30):
+        """
+        Ejecutar comando ADB con validación de seguridad.
+        Si plugin_guardian está activo, intercepta y valida el comando.
+        Si no, ejecuta directamente (modo legacy).
+        """
+        command = ' '.join(str(a) for a in args)
+        
+        # Si hay security hook, validar
+        if self._security_hook:
+            allowed, reason, _ = self._security_hook.validate_command(plugin_id, command)
+            if not allowed:
+                self.logger.warning(f"[SECURITY] Plugin {plugin_id} blocked: {reason}")
+                if self._audit_logger:
+                    self._audit_logger.log_command(plugin_id, command, False, reason)
+                raise PermissionError(f"Comando bloqueado por seguridad: {reason}")
+        
+        # Auditoría
+        if self._audit_logger:
+            self._audit_logger.log_command(plugin_id, command, True)
+        
+        # Ejecutar comando
+        return self.controller._shell(*args, timeout=timeout)
+
+    def check_permission(self, plugin_id: str, permission: str) -> bool:
+        """Verificar si un plugin tiene un permiso específico."""
+        if self._security_hook:
+            return self._security_hook.guardian.check_permission(plugin_id, permission)
+        return True  # Sin security hook, todo permitido (legacy mode)
+
+    def log_plugin_event(self, plugin_id: str, event_type: str, message: str):
+        """Loggear un evento de plugin."""
+        if self._audit_logger:
+            self._audit_logger.log({
+                'type': event_type,
+                'plugin_id': plugin_id,
+                'message': message
+            })
