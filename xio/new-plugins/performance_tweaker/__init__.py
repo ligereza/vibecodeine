@@ -243,11 +243,33 @@ class PerformanceTweakerPlugin(PluginBase):
             results[name] = {"ok": ok, "value": value}
         return jsonify({"ok": True, "preset": preset, "results": results})
 
+    def _get_all_tweaks(self):
+        """Lee TODOS los tweaks en 1 shell call (era 1 getprop/settings por tweak)."""
+        parts = []
+        for name, info in self.TWEAKS.items():
+            if name == "fixed_perf_mode":
+                continue  # _get_tweak devuelve None para este
+            if info.get("type") == "setprop":
+                parts.append('echo "%s|$(getprop %s 2>/dev/null)"' % (name, info["key"]))
+            else:
+                parts.append('echo "%s|$(settings get %s %s 2>/dev/null)"'
+                             % (name, info["scope"], info["key"]))
+        result = {}
+        try:
+            out = self.controller._shell("; ".join(parts))
+            for line in out.splitlines():
+                if "|" in line:
+                    k, _, v = line.partition("|")
+                    result[k.strip()] = v.strip()
+        except Exception as e:
+            self.logger.error(f"batched tweaks read error: {e}")
+        return result
+
     def _api_status(self):
         from flask import jsonify
-        status = {}
-        for name in self.TWEAKS:
-            status[name] = self._get_tweak(name)
+        vals = self._get_all_tweaks()
+        status = {name: (None if name == "fixed_perf_mode" else vals.get(name))
+                  for name in self.TWEAKS}
         return jsonify(status)
 
     def _api_trim_cache(self):
