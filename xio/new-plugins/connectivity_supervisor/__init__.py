@@ -28,6 +28,7 @@ from plugins.base import PluginBase
 import json
 import os
 import re
+import subprocess
 from datetime import datetime
 
 _MAC_RE = re.compile(r'([0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5})')
@@ -64,6 +65,7 @@ h1{font-size:19px;font-weight:700}
 <div class=chip><div class=k>Clients</div><div class="v" id=cl>--</div></div>
 </div>
 <div class=batt id=batt></div>
+<div class=batt id=wd></div>
 <div class=sec>Present devices</div><div id=devs></div>
 <div class=sec>Recent events</div><div id=evs></div>
 <script>
@@ -81,6 +83,9 @@ function tick(){
   if(b.temp_c!=null)p.push('<span class="'+(b.temp_c>=45?'hot':'')+'">'+b.temp_c+'&deg;C</span>');
   if(b.charging)p.push('charging');else if(b.status)p.push(esc(b.status));
   set('batt',p.length?('Battery &middot; '+p.join(' &middot; ')):'');
+  var w=s.watchdogs||{};var wn={shizuku:'Shizuku',server:'Server',hotspot:'Hotspot'};var wp=[];
+  for(var wk in wn){var wu=w[wk]>0;wp.push('<span class="'+(wu?'ok':'bad')+'">'+wn[wk]+(wu?' UP':' DOWN')+'</span>')}
+  set('wd',wp.length?('Watchdogs &middot; '+wp.join(' &middot; ')):'');
   set('devs',(s.present&&s.present.length)?s.present.map(function(p){return '<div class=dev><div><div class=nm>'+esc(p.name)+'</div><div class=meta>'+esc(p.ip||'')+' &middot; '+esc(p.mac)+'</div></div><span class="badge b-'+esc(p.mac_type||'unknown')+'">'+esc(p.mac_type||'?')+'</span></div>'}).join(''):'<div class=empty>no clients on the hotspot</div>');
   return fetch('events?limit=25',{cache:'no-store'});
  }).then(function(r){return r.json()}).then(function(ev){
@@ -125,6 +130,7 @@ class ConnectivitySupervisorPlugin(PluginBase):
         self._net_state = {"hotspot_up": None, "internet": None}  # infra change tracking
         self._infra = {"hotspot_up": False, "internet": {"iface": "", "addr": ""}}  # cached for /status (poll refreshes)
         self._health = {}  # cached battery health (level/temp_c/status/charging) from the poll
+        self._watchdogs = {}  # cached self-heal loop liveness (native pgrep) from the poll
 
     # ── lifecycle ────────────────────────────────────────────────────
     def on_load(self):
@@ -365,6 +371,8 @@ class ConnectivitySupervisorPlugin(PluginBase):
 
             # battery health (cheap single dumpsys) + overheat/low alerts
             self._check_battery(self._read_battery())
+            # self-heal loop liveness (native pgrep -- see _check_watchdogs)
+            self._check_watchdogs()
 
             self._save_state()
         except Exception as e:
@@ -413,6 +421,22 @@ class ConnectivitySupervisorPlugin(PluginBase):
         h["hot"], h["low"] = now_hot, now_low
         self._health = h
 
+    _WATCHDOGS = {"shizuku": "shizuku_watchdog.sh", "server": "server_supervisor.sh", "hotspot": "hotspot_watch.sh"}
+
+    def _check_watchdogs(self):
+        """Native pgrep of the on-device self-heal loops. The server runs under the
+        Termux uid (same as the loops), so a native pgrep SEES them -- rish/_shell
+        (shell uid 2000) would NOT. Cached for /status; never on the hot path."""
+        out = {}
+        for key, pat in self._WATCHDOGS.items():
+            try:
+                r = subprocess.run(["pgrep", "-f", pat], capture_output=True, text=True, timeout=5)
+                first = (r.stdout or "").strip().split("\n")[0].strip()
+                out[key] = int(first) if first.isdigit() else 0
+            except Exception:
+                out[key] = 0
+        self._watchdogs = out
+
     def _emit_sys(self, event, detail):
         """Log a network (non-device) event."""
         ev = {"ts": self._now(), "mac": "", "name": "network", "event": event, "detail": detail}
@@ -455,6 +479,7 @@ class ConnectivitySupervisorPlugin(PluginBase):
             "hotspot_up": self._infra["hotspot_up"],       # cached from last poll -- no rish, no lock
             "internet": self._infra["internet"],
             "health": {k: self._health.get(k) for k in ("level", "temp_c", "status", "charging")},
+            "watchdogs": self._watchdogs,
             "clients_present": len(present),
             "present": [{"name": d["name"], "type": d["type"], "mac": d["mac"], "mac_type": d.get("mac_type", ""), "ip": d.get("ip", ""), "bt_present": d.get("bt_present", False)} for d in present],
             "tracked_total": len(self._devices),
