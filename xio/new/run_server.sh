@@ -29,3 +29,7 @@ echo "watchdog: $(cat /sdcard/xio_termux/wd_start.log 2>/dev/null)"
 # Levanta el supervisor del server si no esta corriendo (idempotente).
 sh /sdcard/xio_termux/sup_start.sh
 echo "supervisor: $(cat /sdcard/xio_termux/sup_start.log 2>/dev/null)"
+# Levanta el auto-heal del hotspot si no esta corriendo (idempotente). Cubre el
+# caso "hotspot cae con el telefono encendido" SIN PC (Shizuku+tcpip vivos).
+sh /sdcard/xio_termux/hs_start.sh
+echo "hotspot_watch: $(cat /sdcard/xio_termux/hs_start.log 2>/dev/null)"
