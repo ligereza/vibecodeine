@@ -111,6 +111,62 @@ def test_sequence_wraps_at_255():
     print("OK sequence wraps 255 -> 1")
 
 
+def send_fabric_events(events, artnet_addr, seq_state):
+    """Mirror of the plugin's _emit_fabric: DMX -> the fabric output target,
+    OSC -> the route-local host/port carried in the event itself."""
+    out = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        for ev in events:
+            if ev[0] == "osc":                       # (osc, host, port, addr, args)
+                _, host, port, addr, args = ev
+                out.sendto(P.build_osc_message(addr, args), (host, port))
+            elif ev[0] == "dmx":                     # (dmx, universe, levels)
+                u = ev[1]
+                seq_state[u] = seq_state.get(u, 0) % 255 + 1
+                out.sendto(P.build_artnet_dmx(u, ev[2], sequence=seq_state[u]),
+                           artnet_addr)
+    finally:
+        out.close()
+
+
+def test_fabric_over_the_wire():
+    """One `master` signal fans out to a DMX node AND an OSC fader in a single
+    set() -- the routing-bus contract the plugin's _emit_fabric depends on."""
+    from fabric import Fabric
+
+    node, node_port = make_listener()      # virtual Art-Net node
+    oscsrv, osc_port = make_listener()     # dummy OSC fader endpoint
+    artnet_addr = ("127.0.0.1", node_port)
+
+    f = Fabric()
+    f.load({"signals": ["master"], "routes": [
+        {"signal": "master", "sink": "dmx", "universe": 0, "channel": 1},
+        {"signal": "master", "sink": "dmx", "universe": 0, "channel": 3, "max": 200},
+        {"signal": "master", "sink": "osc", "host": "127.0.0.1", "port": osc_port,
+         "address": "/master", "kind": "float"}]})
+    seq_state = {}
+
+    # one set() -> the OSC fader AND the fanned-out DMX frame both leave the wire
+    send_fabric_events(f.set("master", 0.5), artnet_addr, seq_state)
+
+    osc_pkt = oscsrv.recv(2048)
+    assert osc_pkt.startswith(P._osc_string("/master") + P._osc_string(",f")), osc_pkt
+    (val,) = struct.unpack(">f", osc_pkt[-4:])
+    assert abs(val - 0.5) < 1e-6, val
+
+    seq, uni, dmx = parse_artnet(node.recv(2048))
+    # ch1 = round(0.5*255)=128 (0x80); ch3 = 0.5*200=100 (0x64); ch2 untouched
+    assert (seq, uni) == (1, 0) and dmx[:3] == b"\x80\x00\x64", (seq, uni, dmx[:3])
+
+    # keep-alive re-emits the standing DMX frame (Art-Net timeout guard), same levels
+    send_fabric_events(f.keepalive(100.0), artnet_addr, seq_state)
+    seq2, _, dmx2 = parse_artnet(node.recv(2048))
+    assert seq2 == 2 and dmx2[:3] == b"\x80\x00\x64", (seq2, dmx2[:3])
+
+    node.close(); oscsrv.close()
+    print("OK fabric over the wire (one signal -> DMX node + OSC fader + keep-alive)")
+
+
 if __name__ == "__main__":
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     for fn in fns:

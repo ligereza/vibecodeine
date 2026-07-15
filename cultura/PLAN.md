@@ -92,14 +92,40 @@ Abrir Blender 4.5 LTS -> Scripting -> abrir BLENDER.geonodes_450.py -> Alt+P
 - Verificado headless en Blender 4.5.4: reset por segmento OK, NORMAL converge a b=u,
   MULTIPLY colapsa a 0.15*u^14, twin gaze permanece plano.
 
-## 3. xio: cue engine + panel + WoL (v1.1 de showcontrol)
+## 3. xio: cue engine + panel + WoL + fabric (v1.2 de showcontrol)
 
-Punto de crecimiento implementado del grafo (`orq`): cue list con fades temporizados,
-panel de control en navegador y Wake-on-LAN con verificacion de servicio.
-Codigo: `xio/new-plugins/showcontrol/cueengine.py` + `panel.py` (+ wiring `__init__.py`).
-Tests off-device (25 en total): `test_cueengine.py` (12, incluye 3 regresiones de la
-auditoria adversarial), `test_protocols.py` (11, incluye WoL) y `test_integration.py`
-(2, nodo Art-Net virtual + servidor OSC dummy por UDP real).
+Puntos de crecimiento implementados del grafo (`orq` + `fabric`): cue list con fades
+temporizados, panel de control en navegador, Wake-on-LAN con verificacion de servicio,
+y el signal fabric (una senal 0..1 abanica a muchos canales DMX / faders OSC).
+Codigo: `xio/new-plugins/showcontrol/cueengine.py` + `panel.py` + `fabric.py`
+(+ wiring `__init__.py`).
+Tests off-device (32 en total): `test_cueengine.py` (12, incluye 3 regresiones de la
+auditoria adversarial), `test_protocols.py` (11, incluye WoL), `test_fabric.py` (6) y
+`test_integration.py` (3: nodo Art-Net virtual + servidor OSC dummy por UDP real, mas
+fabric end-to-end).
+
+### Signal fabric (nodo `fabric` del grafo)
+
+Ruteo hub-and-spoke O(N+M): N senales logicas, M rutas, sin malla N*M. Una senal en
+[0,1] mapea por ruta a `min + (max-min) * v**curve` y abanica a canales DMX (cualquier
+universo) o faders OSC (host/port por ruta). `set(master, 0.5)` actualiza todo lo atado
+a `master` de una y emite el set minimo de paquetes. Hilo keep-alive 30 Hz mientras hay
+rutas activas (re-emite el frame DMX estable cada 1s: guarda contra timeout de nodos
+Art-Net). Se apaga solo cuando no hay rutas (disciplina de bateria).
+
+```bash
+# cargar el fabric: DMX necesita 'output' {protocol,host}; OSC lleva host/port por ruta
+curl -X POST http://<phone>:5000/api/plugins/showcontrol/fabric -H "Content-Type: application/json" -d '{
+  "output": {"protocol": "artnet", "host": "192.168.x.x"},
+  "signals": ["master", "hue"],
+  "routes": [
+    {"signal": "master", "sink": "dmx", "universe": 0, "channel": 1},
+    {"signal": "master", "sink": "dmx", "universe": 0, "channel": 5, "max": 200, "curve": 2.2},
+    {"signal": "hue", "sink": "osc", "host": "192.168.x.y", "port": 9000, "address": "/hue", "kind": "float"}
+  ]}'
+curl -X POST http://<phone>:5000/api/plugins/showcontrol/fabric/set -d '{"signal": "master", "value": 0.5}'
+curl http://<phone>:5000/api/plugins/showcontrol/fabric/state
+```
 Panel: abrir `http://<phone>:5000/api/plugins/showcontrol/panel` desde tablet/navegador
 (GO grande, STOP, RELEASE, lista de cues con tap-to-jump, carga de JSON, WoL).
 WoL: `POST /api/plugins/showcontrol/wol {"mac": "AA:BB:..", "verify_host": ip,
@@ -130,12 +156,13 @@ durante show; keep-alive 1 Hz para nodos Art-Net/sACN). Deploy al telefono: manu
 por USB segun runbook xio (el codigo queda en repo; deploy decision del usuario).
 
 Gap-audit del grafo -> codigo: lazo=charge_control OK; muros=arquitectura no-root OK;
-orq/osc+dmx=protocols.py OK; orq/cue-engine=IMPLEMENTADO (este cambio);
-fabric (formato canonico de senales) = SIGUIENTE candidato; sonda/splat = investigacion.
+orq/osc+dmx=protocols.py OK; orq/cue-engine=IMPLEMENTADO; fabric (formato canonico de
+senales)=IMPLEMENTADO (este cambio); sonda/splat = investigacion (siguiente candidato).
 
 ## Pendiente / siguiente
 
 - Probar el loop n8n end-to-end en MAK con topic wachuma real.
-- Deploy del cue engine al Xiaomi (USB) + curl de humo desde la LAN.
-- fabric: formato canonico hub-and-spoke para unificar payloads OSC/ArtNet/sACN.
+- Deploy de showcontrol v1.2 (cue engine + fabric) al Xiaomi (USB) + curl de humo LAN.
+- Siguiente nodo del grafo: `sonda` (probe/telemetria de red) o `splat` (visor Gaussian
+  splat) -- investigacion. fabric ya esta hub-and-spoke unificando OSC/ArtNet/sACN.
 - Render real de los 450 frames (EEVEE Next) cuando el usuario quiera la pieza.

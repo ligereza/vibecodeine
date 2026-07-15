@@ -25,6 +25,7 @@ import time
 from plugins.base import PluginBase
 
 from .cueengine import CueEngine, CueError
+from .fabric import Fabric, FabricError
 from .panel import PANEL_HTML
 from .protocols import (
     ARTNET_PORT,
@@ -45,7 +46,7 @@ class ShowControlPlugin(PluginBase):
 
     plugin_id = "showcontrol"
     name = "Show Control"
-    version = "1.1.0"
+    version = "1.2.0"
     description = "Send OSC, Art-Net and sACN/E1.31 DMX from the phone over the LAN"
     author = "Cauce"
     icon = "network"
@@ -72,6 +73,14 @@ class ShowControlPlugin(PluginBase):
         self.register_route("/cue/state", self._api_cue_state, methods=["GET"])
         self.register_route("/panel", self._api_panel, methods=["GET"])
         self.register_route("/wol", self._api_wol, methods=["POST"])
+        self._fabric = Fabric()
+        self._fabric_output = None
+        self._fabric_stop = threading.Event()
+        self._fabric_thread = None
+        self._fabric_thread_lock = threading.Lock()
+        self.register_route("/fabric", self._api_fabric, methods=["GET", "POST"])
+        self.register_route("/fabric/set", self._api_fabric_set, methods=["POST"])
+        self.register_route("/fabric/state", self._api_fabric_state, methods=["GET"])
         # Re-arm a persisted show (list only -- never auto-runs anything).
         saved = self.get_config("cuelist")
         if saved:
@@ -84,6 +93,7 @@ class ShowControlPlugin(PluginBase):
 
     def on_unload(self):
         self._cue_stop.set()
+        self._fabric_stop.set()
 
     # ── sender ────────────────────────────────────────────────────────────
     def _send_udp(self, packet, host, port, multicast=False):
@@ -324,6 +334,92 @@ class ShowControlPlugin(PluginBase):
         from flask import jsonify
         return jsonify({"ok": True, "state": self._engine.status(),
                         "output": self._cue_output, "sent": self._sent})
+
+    # ── signal fabric (the `fabric` node) ─────────────────────────────────
+    def _emit_fabric(self, events):
+        out = self._fabric_output
+        for ev in events:
+            try:
+                if ev[0] == "osc":                       # route-local host/port
+                    _, host, port, address, args = ev
+                    self._send_udp(build_osc_message(address, args), host, port)
+                    self._sent["osc"] += 1
+                elif ev[0] == "dmx":
+                    if not out:
+                        continue
+                    universe, levels = ev[1], ev[2]
+                    seq = self._next_seq(universe)
+                    if out["protocol"] == "artnet":
+                        self._send_udp(build_artnet_dmx(universe, levels, sequence=seq),
+                                       out["host"], out["port"])
+                        self._sent["artnet"] += 1
+                    else:
+                        tgt = out["host"] or sacn_multicast_ip(universe)
+                        self._send_udp(build_sacn_dmx(universe, levels, sequence=seq),
+                                       tgt, out["port"], multicast=(out["host"] is None))
+                        self._sent["sacn"] += 1
+            except (ValueError, OSError) as e:
+                self._last_error = "fabric emit: %s" % e
+
+    def _fabric_loop(self):
+        while not self._fabric_stop.is_set():
+            now = time.monotonic()
+            try:
+                self._emit_fabric(self._fabric.keepalive(now))
+            except Exception as e:
+                self._last_error = "fabric tick: %s" % e
+            if not self._fabric.active:
+                with self._fabric_thread_lock:
+                    if not self._fabric.active:
+                        self._fabric_thread = None
+                        return
+            self._fabric_stop.wait(1.0 / TICK_HZ)
+        with self._fabric_thread_lock:
+            self._fabric_thread = None
+
+    def _ensure_fabric_thread(self):
+        with self._fabric_thread_lock:
+            if self._fabric_thread is not None and self._fabric_thread.is_alive():
+                return
+            self._fabric_stop.clear()
+            t = threading.Thread(target=self._fabric_loop, daemon=True,
+                                 name="showcontrol-fabric")
+            self._fabric_thread = t
+            t.start()
+
+    def _api_fabric(self):
+        from flask import request, jsonify
+        if request.method == "GET":
+            return jsonify({"ok": True, "output": self._fabric_output,
+                            "state": self._fabric.status()})
+        d = request.get_json(force=True, silent=True) or {}
+        try:
+            output = self._valid_output(d.get("output") or {}) if d.get("output") else None
+            info = self._fabric.load(d)
+        except (FabricError, ValueError) as e:
+            return jsonify({"ok": False, "error": str(e)}), 400
+        # DMX routes need an output target; OSC-only fabrics don't
+        if info["universes"] and output is None:
+            return jsonify({"ok": False, "error": "DMX routes need an 'output' {protocol,host}"}), 400
+        self._fabric_output = output
+        self._ensure_fabric_thread()
+        return jsonify({"ok": True, "loaded": info, "output": output})
+
+    def _api_fabric_set(self):
+        from flask import request, jsonify
+        d = request.get_json(force=True, silent=True) or {}
+        name, value = d.get("signal"), d.get("value")
+        try:
+            self._emit_fabric(self._fabric.set(name, value))
+        except FabricError as e:
+            return jsonify({"ok": False, "error": str(e)}), 400
+        self._ensure_fabric_thread()
+        return jsonify({"ok": True, "signal": name, "value": self._fabric.signals.get(name)})
+
+    def _api_fabric_state(self):
+        from flask import jsonify
+        return jsonify({"ok": True, "state": self._fabric.status(),
+                        "output": self._fabric_output, "sent": self._sent})
 
     # ── panel + wake-on-lan (xiotech M2) ──────────────────────────────────
     def _api_panel(self):
