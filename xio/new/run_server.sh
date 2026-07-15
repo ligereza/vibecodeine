@@ -16,6 +16,9 @@ cd "$HOME/xioserver" || exit 1
 export XIO_BACKEND=rish
 export RISH_PATH="$HOME/rish"
 export PLUGINS_DIR="$HOME/xioplugins"
+# Untrusted hosts that must never drive xio (e.g. the local-LLM box that could pull a
+# poisoned model). Comma-separated source IPs. MAK/dell-11m = 192.168.198.85 (hotspot).
+export XIO_DENY_IPS="192.168.198.85"
 
 nohup python server.py > /sdcard/xio_termux/server.log 2>&1 &
 echo "launched pid $! (log: /sdcard/xio_termux/server.log)"

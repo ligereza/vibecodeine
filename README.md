@@ -9,9 +9,11 @@
 
 # VIBECODEINE - Operational Agent Workspace - MAIN APP: FLUJO 
 
-`VIBECODEINE` is a local-first workspace for requests, jobs, briefs, design operations, RD/suplementos work, Studio/eventos work, web hub, and agent-delivered patches.
+`VIBECODEINE` is a local-first workspace for requests, jobs, briefs, design operations, RD/suplementos work, Studio/eventos work, Cultura (art-research), the on-device Xiaomi controller (`xio`), the web hub, and agent-delivered patches.
 Para vivir y ser libre
 This repository is optimized for agent continuity. The goal is operational clarity: read the handoff, make a minimal complete change, verify, and deliver through `_airdrop/` if there is no push access.
+
+The repo assistant is named `Cauce` (the channel the flow runs through). The mission is to spend the strong model now to build a base that free/cheap agents can maintain later, off-PC and without a Claude account -- success is measured by how little the repo needs the strong model once it is gone.
 
 ## Mandatory agent entry
 
@@ -103,6 +105,31 @@ Rule:
 ```txt
 Use instaloader for Instagram. Do not use yt-dlp.
 ```
+
+### Cultura (art-research)
+
+Descriptive/cultural layer: tapiz, tilde, psicosis, precursor. Third workspace of the web hub.
+Hard limits: descriptive/cultural only, nothing generative-synthetic, psicosis never profiles real people.
+The `README.md` art (`arte-ascii-readme.svg`, the animated codeine cup) is a finished artist piece: never alter the SVG.
+
+```bash
+py projects/tapiz/vibecode_spaces.py archivo.py -m void --svg pieza.svg
+```
+
+### xio (on-device Xiaomi controller)
+
+`xio/` is a Flask controller + plugin engine that runs ON the phone (Termux + Shizuku/rish, non-root, HyperOS)
+so it survives PC-off and screen-off. It turns the phone into the team's router + a show node: connectivity
+supervisor, non-root charge limiter (USB port-role), two-layer self-heal (Shizuku + server), autonomous
+reboot/hotspot recovery, and `showcontrol` (OSC + Art-Net + sACN sender for VJ/lighting). Send-only, pure stdlib.
+
+```bash
+cd xio/new && py server.py          # off-device dev run -> http://0.0.0.0:5000
+# on-device deploy: push to /sdcard/xio_termux, then run_server.sh (see xio/new/README.md)
+```
+
+Security note: the server binds `0.0.0.0`, so every plugin (including `showcontrol` send routes) is reachable
+by any hotspot client. Fine on a trusted crew LAN; gate with a token before exposing to untrusted devices.
 
 ### Web hub
 
