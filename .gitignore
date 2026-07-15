@@ -83,6 +83,9 @@ xio/**/*.log
 xio/**/ntfy_topic.txt
 xio/**/.pc_watch.pid
 
+# cultura: credenciales locales (Tavily API key) -- nunca al repo
+cultura/.dev
+
 # Higiene de repo (no commitear ruído histórico)
 # Ver docs/HIGIENE_REPO.md y context/README.md
 # _airdrop_backups/, checkpoints/, _archive/ y reference_old/ son legacy y deben mantenerse mínimos en root.
