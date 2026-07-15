@@ -44,8 +44,9 @@ def test_parse_smpte_setlist_from_intake_json_with_two_cues(tmp_path: Path) -> N
     }
     (job / "intake.json").write_text(json.dumps(payload), encoding="utf-8")
 
-    cues = parse_smpte_setlist(job)
+    cues, eff_fps = parse_smpte_setlist(job)
 
+    assert eff_fps == 30
     assert len(cues) == 2
     assert cues[0].title == "Intro"
     assert cues[0].smpte == "00:00:00:00"
@@ -70,8 +71,9 @@ def test_parse_smpte_setlist_from_brief_md_with_two_cues_and_defaults(tmp_path: 
         encoding="utf-8",
     )
 
-    cues = parse_smpte_setlist(job, fps=30)
+    cues, eff_fps = parse_smpte_setlist(job, fps=30)
 
+    assert eff_fps == 30
     assert len(cues) == 2
     assert cues[0].title == "Intro apertura"
     assert cues[0].layer == 1
@@ -125,3 +127,25 @@ def test_parse_smpte_setlist_raises_clear_error_when_no_sources_exist(tmp_path: 
 
     with pytest.raises(FileNotFoundError, match="intake.json ni brief.md"):
         parse_smpte_setlist(job)
+
+
+def test_intake_fps_propagates_downstream_without_crash(tmp_path: Path) -> None:
+    """Regression: intake fps=50 with frame 45 must not crash and must drive fps."""
+    job = tmp_path / "job_fps50"
+    job.mkdir()
+    (job / "intake.json").write_text(
+        json.dumps({"fps": 50, "setlist": [{"start": "00:00:10:45", "title": "X"}]}),
+        encoding="utf-8",
+    )
+
+    cues, eff_fps = parse_smpte_setlist(job, fps=30)
+    assert eff_fps == 50
+    assert len(cues) == 1
+
+    output = generate_show_automation(job, fps=30)  # CLI default 30, intake overrides
+    root = ET.parse(output).getroot()
+    assert root.find("./modules/timecode").attrib["fps"] == "50"
+
+    csv_text = (output.parent / "osc_cues.csv").read_text(encoding="utf-8")
+    # 10 s + 45/50 frames = 10.9 s (would have been rejected/wrong at fps=30)
+    assert "10.9" in csv_text

@@ -3,6 +3,7 @@ import sys
 import shutil
 import imaplib
 import email
+import email.utils
 import zipfile
 import subprocess
 from pathlib import Path
@@ -32,7 +33,7 @@ def check_and_apply_email_airdrops() -> dict:
     host = os.getenv("FLUJO_IMAP_HOST")
     user = os.getenv("FLUJO_IMAP_USER")
     password = os.getenv("FLUJO_IMAP_PASSWORD")
-    sender_whitelist = os.getenv("FLUJO_IMAP_ALLOWED_SENDERS", "").lower().split(",")
+    allowed = {s.strip().lower() for s in os.getenv("FLUJO_IMAP_ALLOWED_SENDERS", "").split(",") if s.strip()}
     
     if not (host and user and password):
         return {"ok": False, "error": "Faltan variables de entorno IMAP (FLUJO_IMAP_HOST, FLUJO_IMAP_USER, FLUJO_IMAP_PASSWORD)."}
@@ -63,14 +64,13 @@ def check_and_apply_email_airdrops() -> dict:
             raw_email = data[0][1]
             msg = email.message_from_bytes(raw_email)
             
-            # Verificar remitente
-            from_header = str(msg.get("From", "")).lower()
-            authorized = False
-            for sender in sender_whitelist:
-                if sender.strip() and sender.strip() in from_header:
-                    authorized = True
-                    break
-                    
+            # Verificar remitente: comparar la direccion exacta parseada,
+            # nunca por substring (un dominio lookalike o el display-name
+            # burlarian el whitelist).
+            from_addr = email.utils.parseaddr(str(msg.get("From", "")))[1].lower()
+            authorized = bool(from_addr) and from_addr in allowed
+
+
             if not authorized:
                 # Marcar como leído para no procesarlo de nuevo, o ignorar
                 mail.store(e_id, "+FLAGS", "\\Seen")

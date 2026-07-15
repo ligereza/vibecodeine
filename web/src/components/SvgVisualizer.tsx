@@ -619,7 +619,7 @@ function GalleryView({ onConfigure }: { onConfigure: (piece: SvgPiece) => void }
 
 // SVG -> Config converter (best effort)
 function attr(el: Element, name: string, fallback = ''): string { return el.getAttribute(name) || fallback; }
-function numAttr(el: Element, name: string, fallback = 0): number { const value = Number(attr(el, name, '')); return Number.isFinite(value) ? value : fallback; }
+function numAttr(el: Element, name: string, fallback = 0): number { const raw = attr(el, name, ''); if (raw === '') return fallback; const value = Number(raw); return Number.isFinite(value) ? value : fallback; }
 function paintAttr(el: Element, name: 'fill' | 'stroke', fallback = 'none'): string {
   const direct = attr(el, name, '');
   if (direct) return direct;

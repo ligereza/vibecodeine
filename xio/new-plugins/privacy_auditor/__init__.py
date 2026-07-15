@@ -4,8 +4,13 @@ Usa appops para permisos granulares y dumpsys para detectar acceso a sensores.
 """
 
 from plugins.base import PluginBase
-import time, json
+import time, json, re
 from datetime import datetime
+
+# Android package names: letters, digits, dot, underscore only. Blocks shell
+# metacharacters (;, |, spaces, $, backticks) that would inject into the
+# on-device `appops` shell call.
+_PKG_RE = re.compile(r"[A-Za-z0-9._]+")
 
 
 class PrivacyAuditorPlugin(PluginBase):
@@ -208,6 +213,8 @@ class PrivacyAuditorPlugin(PluginBase):
     def _api_audit_package(self, package):
         """GET /api/plugins/privacy_auditor/audit/<package>"""
         from flask import jsonify
+        if not _PKG_RE.fullmatch(package or ""):
+            return jsonify({"error": "invalid package"}), 400
         perms = self._get_package_perms(package)
         return jsonify({
             "package": package,
@@ -223,6 +230,8 @@ class PrivacyAuditorPlugin(PluginBase):
         permission = data.get("permission", "")
         if not package or not permission:
             return jsonify({"error": "package and permission required"}), 400
+        if not _PKG_RE.fullmatch(package) or permission not in self.SENSITIVE_OPS:
+            return jsonify({"error": "invalid package or permission"}), 400
         success = self._set_op(package, permission, "ignore")
         self._alerts.append({
             "type": "permission_revoked",
@@ -239,6 +248,8 @@ class PrivacyAuditorPlugin(PluginBase):
         permission = data.get("permission", "")
         if not package or not permission:
             return jsonify({"error": "package and permission required"}), 400
+        if not _PKG_RE.fullmatch(package) or permission not in self.SENSITIVE_OPS:
+            return jsonify({"error": "invalid package or permission"}), 400
         success = self._set_op(package, permission, "allow")
         return jsonify({"ok": success, "package": package, "permission": permission, "mode": "allow"})
 
@@ -250,6 +261,8 @@ class PrivacyAuditorPlugin(PluginBase):
         permission = data.get("permission", "")
         if not package or not permission:
             return jsonify({"error": "package and permission required"}), 400
+        if not _PKG_RE.fullmatch(package) or permission not in self.SENSITIVE_OPS:
+            return jsonify({"error": "invalid package or permission"}), 400
         success = self._set_op(package, permission, "default")
         return jsonify({"ok": success, "package": package, "permission": permission, "mode": "default"})
 
