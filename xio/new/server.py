@@ -97,6 +97,27 @@ DANGEROUS_ENDPOINTS = {
 }
 
 
+# Source denylist: hosts that must NEVER reach this controller, not even for reads.
+# Set XIO_DENY_IPS to a comma-separated list of source IPs (e.g. an untrusted local
+# LLM box on the hotspot that could pull a poisoned model/script and then scan the
+# LAN). Enforced HERE on the phone -- a compromise of the denied host cannot lift it,
+# unlike a firewall rule on that host. DNS/internet are separate phone services
+# (dnsmasq/rmnet), so a denied host keeps connectivity; it just cannot drive xio.
+_DENY_IPS = frozenset(
+    ip.strip() for ip in os.environ.get("XIO_DENY_IPS", "").split(",") if ip.strip()
+)
+
+
+@app.before_request
+def _deny_blocked_sources():
+    """Hard-reject requests from denylisted source IPs before any handler runs."""
+    if _DENY_IPS and request.remote_addr in _DENY_IPS:
+        return jsonify({
+            "error": "forbidden",
+            "reason": "This source is denied by the xio controller.",
+        }), 403
+
+
 def _request_confirmed() -> bool:
     if request.args.get("confirm") in ("1", "true", "yes"):
         return True

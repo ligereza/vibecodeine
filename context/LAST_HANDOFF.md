@@ -1,11 +1,40 @@
 # LAST HANDOFF -- estado para el proximo agente
 
-Version: 0.51.0 | Fecha: 2026-07-13 | Identidad: Cauce | Suite: VERDE re-corrida
-2026-07-13 (392 passed, 1 skipped) | flujo verify: OK 2026-07-13 | compileall
-src+xio: OK
+Version: 0.51.0 | Fecha: 2026-07-15 | Identidad: Cauce | Suite completa: VERDE
+2026-07-13 (392 passed, 1 skipped). Sesion 2026-07-15: checkpoint SIN re-correr la
+suite (pedido del usuario); verificado lo tocado (compileall server.py OK + en vivo
+en el telefono 200/403).
 
 El plan largo vive en context/PLAN_SIGUIENTE_AGENTE.md. Este es el estado corto.
 Historico viejo en git y docs/handoffs/archive/.
+
+## SESION 2026-07-15 (autonoma) -- xio showcontrol + aislar MAK del xio
+
+- showcontrol (commit 8719929): plugin xio OSC + Art-Net + sACN, SEND-only, pure
+  stdlib (socket+struct, sin pip, sin shell -> cero inyeccion). Rutas POST /osc
+  /artnet /sacn + GET /status, todo validado (IPv4, puerto, rangos DMX/universo);
+  9/9 tests de bytes off-device. DESPLEGADO EN VIVO (input-dance): 26 plugins,
+  /status 200, host malo 403, OSC real /composition/tempo [120.0] -> 28 bytes. Uso
+  en xio/new-plugins/showcontrol/. SEGURIDAD: el server bindea 0.0.0.0, asi que
+  estos endpoints (como todo plugin) los alcanza cualquier cliente del hotspot; ok
+  en LAN de crew, si hay publico en el hotspot agregar token antes de confiar.
+- AISLAR MAK (caja Linux del LLM local, dell-11m 192.168.198.85) DEL xio: MAK esta
+  en el hotspot directo, con el Xiaomi (192.168.198.7) de gateway + DNS; confirmado
+  que alcanzaba el xio (HTTP 200). Riesgo real: un modelo/script infectado en MAK
+  pegandole a endpoints peligrosos (charge/hotspot/red = el unico internet). FIX
+  enforzado EN EL TELEFONO (no en MAK, para que malware-root en MAK no lo levante):
+  server.py before_request _deny_blocked_sources -> 403 a los IP de XIO_DENY_IPS
+  (env en run_server.sh = 192.168.198.85). DNS/internet de MAK intactos (dnsmasq/
+  rmnet son servicios aparte, no el Flask). VERIFICADO: MAK->xio 403 x4; localhost
+  ->xio 200; MAK internet 200 + DNS OK. CAVEAT: es por IP; si el subnet del hotspot
+  cambia (reboot: 127->69->198) el IP de MAK cambia y la regla queda vieja -> re-
+  setear XIO_DENY_IPS. Capas extra opcionales pendientes: regla nft EN MAK (necesita
+  el sudo del usuario, no guardado) y/o mover MAK detras del PC Windows por ethernet
+  (ICS) para sacarlo del LAN del hotspot (lo mas robusto, mas invasivo).
+- README.md: texto (bloque comentado, oculto en la vista de GitHub) actualizado --
+  identidad Cauce + area xio (controller on-device + showcontrol) + area Cultura. El
+  SVG animado arte-ascii-readme.svg (el vaso) NO se toca; el texto del README si es
+  editable (aclaracion del usuario).
 
 ## HARDENING POR AUDITORIA (2026-07-13, sesion autonoma) -- commit 4835491
 
