@@ -3,6 +3,8 @@ MIUI/HyperOS Tweaker – Plugin específico para Xiaomi
 Controla configuraciones propietarias de MIUI/HyperOS vía ADB sin root.
 """
 
+import re
+
 from plugins.base import PluginBase
 
 
@@ -105,8 +107,18 @@ class MIUITweakerPlugin(PluginBase):
         return self.controller._shell("pm", "list", "packages", "-d")
 
     def _app_status_from(self, package, disabled_out):
-        """enabled = no esta en la lista de deshabilitados (semantica original)."""
-        return package not in disabled_out
+        """enabled = no esta en la lista de deshabilitados (semantica original).
+
+        Parseo exacto: `pm list packages -d` emite una linea `package:<name>`
+        por app. Comparar con `in` sobre el texto crudo reporta mal (un paquete
+        cuyo nombre es prefijo de otro, p.ej. com.miui.analytics vs
+        com.miui.analytics.overlay). Se construye el set exacto de nombres.
+        """
+        disabled = {
+            line.replace("package:", "").strip()
+            for line in disabled_out.splitlines()
+        }
+        return package not in disabled
 
     def _app_status(self, package):
         """Verificar si una app está habilitada (single = 1 pm call)."""
@@ -174,6 +186,11 @@ class MIUITweakerPlugin(PluginBase):
         for setting_name, value in data.items():
             if setting_name in self.SETTINGS:
                 config = self.SETTINGS[setting_name]
+                # value debe ser una clave conocida (fast/normal/...) o uno de los
+                # literales permitidos (0.5/1.0/...). Cualquier otra cosa entraria
+                # cruda a `settings put` via _shell -> inyeccion de comandos.
+                if value not in config["values"] and value not in config["values"].values():
+                    return jsonify({"error": f"invalid value for {setting_name}"}), 400
                 actual_value = config["values"].get(value, value)
                 success = self._set_setting(config["scope"], config["key"], actual_value)
                 results[setting_name] = success
@@ -277,7 +294,13 @@ class MIUITweakerPlugin(PluginBase):
         
         if not package:
             return jsonify({"error": "No package specified"}), 400
-        
+
+        # El package entra crudo a am/dumpsys via _shell (sh -c "..."); un valor
+        # como "a; id > /sdcard/pwned ;" inyectaria comandos. Solo se aceptan
+        # nombres de paquete Android validos (letras, digitos, punto, guion bajo).
+        if not re.fullmatch(r"[A-Za-z0-9._]+", package):
+            return jsonify({"error": "invalid package"}), 400
+
         # Activar modo juego para la app específica
         try:
             # Game space / Game Turbo settings

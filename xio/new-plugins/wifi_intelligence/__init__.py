@@ -3,7 +3,7 @@ WiFi Intelligence – Gestion inteligente de WiFi.
 """
 
 from plugins.base import PluginBase
-import json, re
+import json, re, shlex
 from datetime import datetime
 
 
@@ -181,16 +181,18 @@ class WiFiIntelligencePlugin(PluginBase):
         from flask import request, jsonify
         data = request.get_json(force=True)
         ssid = data.get("ssid", "")
-        if ssid:
-            self.controller._shell("cmd", "wifi", "connect-network", ssid)
+        if not isinstance(ssid, str) or not ssid or len(ssid.encode("utf-8")) > 32:
+            return jsonify({"ok": False, "error": "invalid ssid"}), 400
+        self.controller._shell("cmd", "wifi", "connect-network", shlex.quote(ssid))
         return jsonify({"ok": True})
 
     def _api_forget(self):
         from flask import request, jsonify
         data = request.get_json(force=True)
         ssid = data.get("ssid", "")
-        if ssid:
-            self.controller._shell("cmd", "wifi", "forget-network", ssid)
+        if not isinstance(ssid, str) or not ssid or len(ssid.encode("utf-8")) > 32:
+            return jsonify({"ok": False, "error": "invalid ssid"}), 400
+        self.controller._shell("cmd", "wifi", "forget-network", shlex.quote(ssid))
         return jsonify({"ok": True})
 
 

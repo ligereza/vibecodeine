@@ -198,8 +198,16 @@ def _parse_brief_md(path: Path, fps: int) -> list[ShowCue]:
     return cues
 
 
-def parse_smpte_setlist(job_path: str | Path, fps: int = 30) -> list[ShowCue]:
-    """Read ``intake.json`` or ``brief.md`` from a job and return normalized cues."""
+def parse_smpte_setlist(job_path: str | Path, fps: int = 30) -> tuple[list[ShowCue], int]:
+    """Read ``intake.json`` or ``brief.md`` and return ``(cues, effective_fps)``.
+
+    When cues come from ``intake.json`` the effective fps is the one declared there
+    (falling back to ``fps`` when absent/invalid); when they come from ``brief.md``
+    the caller-provided ``fps`` is returned unchanged. Callers MUST use the returned
+    fps for every downstream step so timecodes stay consistent with the show's real
+    frame rate (an intake declaring e.g. ``fps=50`` otherwise crashes or mis-times
+    when the default 30 is reused downstream).
+    """
     job = Path(job_path)
     if not job.exists() or not job.is_dir():
         raise FileNotFoundError(f"Job no encontrado: {job}")
@@ -213,7 +221,7 @@ def parse_smpte_setlist(job_path: str | Path, fps: int = 30) -> list[ShowCue]:
     if intake.exists():
         cues, effective_fps = _parse_intake_json(intake, fps=fps)
         if cues:
-            return cues
+            return cues, effective_fps
         intake_error = ValueError(
             f"No se encontraron cues SMPTE validos en intake.json (fps efectivo: {effective_fps})"
         )
@@ -221,7 +229,7 @@ def parse_smpte_setlist(job_path: str | Path, fps: int = 30) -> list[ShowCue]:
     if brief.exists():
         cues = _parse_brief_md(brief, fps=fps)
         if cues:
-            return cues
+            return cues, fps
 
     if not intake.exists() and not brief.exists():
         raise FileNotFoundError(f"El job {job} no contiene intake.json ni brief.md")
@@ -632,16 +640,16 @@ def generate_show_automation(
     - ``README_CHATAIGNE.md``
     """
     job = Path(job_path)
-    cues = parse_smpte_setlist(job, fps=fps)
-    root = build_chataigne_xml(cues, fps=fps, host=host, port=port)
+    cues, eff_fps = parse_smpte_setlist(job, fps=fps)
+    root = build_chataigne_xml(cues, fps=eff_fps, host=host, port=port)
     target = Path(output) if output else job / "deliverables" / "show_automation.xml"
     if target.suffix.lower() != ".xml":
         target = target.with_suffix(".xml")
     xml_path = write_xml(root, target)
     out_dir = xml_path.parent
     base = xml_path.stem
-    write_osc_csv(cues, out_dir / "osc_cues.csv", fps=fps)
-    noisette = build_chataigne_noisette_experimental(cues, fps=fps, host=host, port=port)
+    write_osc_csv(cues, out_dir / "osc_cues.csv", fps=eff_fps)
+    noisette = build_chataigne_noisette_experimental(cues, fps=eff_fps, host=host, port=port)
     write_noisette_experimental(noisette, out_dir / f"{base}.experimental.noisette")
     write_chataigne_readme(out_dir, base)
     return xml_path

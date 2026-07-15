@@ -222,6 +222,9 @@ class PerformanceTweakerPlugin(PluginBase):
         value = data.get("value", "")
         if name not in self.TWEAKS:
             return jsonify({"error": "Unknown tweak"}), 400
+        allowed = set(str(x) for x in self.TWEAKS[name]["values"].values())
+        if str(value) not in allowed:
+            return jsonify({"error": "invalid value"}), 400
         ok, msg = self._set_tweak(name, value)
         return jsonify({"ok": ok, "message": msg})
 

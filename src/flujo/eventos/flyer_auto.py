@@ -274,6 +274,9 @@ def _render_blender_frame(blender_exe: str, blender_file: Path, output_path: Pat
     output_path.parent.mkdir(parents=True, exist_ok=True)
     # Blender -o wants a path prefix; -f 1 appends frame number + extension.
     prefix = output_path.with_suffix("")
+    # remove stale frames so a prior run cannot masquerade as this render
+    for stale in prefix.parent.glob(prefix.name + "0001.*"):
+        stale.unlink()
     cmd = [
         blender_exe,
         "-b",
@@ -289,11 +292,17 @@ def _render_blender_frame(blender_exe: str, blender_file: Path, output_path: Pat
         "1",
     ]
     subprocess.run(cmd, check=True)
-    expected = prefix.with_name(prefix.name + "0001.png")
-    if expected.exists():
-        if output_path.exists():
-            output_path.unlink()
-        expected.rename(output_path)
+    # Blender appends frame number + extension per the .blend's file_format
+    # (not always PNG); pick up whatever it actually wrote.
+    produced = sorted(prefix.parent.glob(prefix.name + "0001.*"))
+    if not produced:
+        raise FileNotFoundError(
+            f"Blender no produjo {prefix.name}0001.*; revisa el formato de salida del .blend."
+        )
+    frame_file = produced[0]
+    if output_path.exists():
+        output_path.unlink()
+    frame_file.rename(output_path)
     return output_path
 
 
@@ -398,6 +407,16 @@ def run_eventos_flyer_auto(
                             f"El Droplet no produjo {flyer_final} en 300s; "
                             "revisa Photoshop antes de renderizar."
                         )
+                elif not (flyer_final.exists()
+                          and flyer_final.stat().st_mtime >= input_img.stat().st_mtime):
+                    # sin Droplet, RD.blend linkea flyer_final.jpg de disco: exige
+                    # uno fresco para ESTE evento (mtime >= input recien bajado a
+                    # las 350), no un sobrante de un evento anterior.
+                    raise FileNotFoundError(
+                        f"RD.blend legado necesita un {flyer_final} fresco para este evento; "
+                        "corre el Droplet (run_droplet=True) o provee FRAME2.png para el "
+                        "camino sin Photoshop."
+                    )
                 # RD.blend linkea flyer_final.jpg desde disco (validado 2026-07-08)
                 _render_blender_frame(blender_exe, rd_blend, render_out)
                 blender_render = render_out

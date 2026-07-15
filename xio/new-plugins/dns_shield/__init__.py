@@ -5,6 +5,8 @@ Private DNS, bloqueo de tracking, log de consultas, listas de bloqueo.
 
 from plugins.base import PluginBase
 import json
+import re
+import shlex
 from datetime import datetime
 
 
@@ -110,7 +112,7 @@ class DNSShieldPlugin(PluginBase):
         try:
             self.controller._shell("settings", "put", "global", "private_dns_mode", mode)
             if hostname:
-                self.controller._shell("settings", "put", "global", "private_dns_specifier", hostname)
+                self.controller._shell("settings", "put", "global", "private_dns_specifier", shlex.quote(hostname))
             return True
         except Exception as e:
             self.logger.error(f"Error setting DNS: {e}")
@@ -148,6 +150,8 @@ class DNSShieldPlugin(PluginBase):
             hostname = self.DNS_PROVIDERS[provider]["hostname"]
         if not hostname and provider != "custom":
             return jsonify({"error": "hostname required"}), 400
+        if hostname and (not isinstance(hostname, str) or not re.fullmatch(r"[A-Za-z0-9._{}-]+", hostname)):
+            return jsonify({"error": "invalid hostname"}), 400
         ok = self._set_dns("hostname", hostname)
         if ok:
             self._active_provider = provider
@@ -205,6 +209,8 @@ class DNSShieldPlugin(PluginBase):
         from flask import request, jsonify
         data = request.get_json(force=True)
         domain = data.get("domain", "one.one.one.one")
+        if not isinstance(domain, str) or not re.fullmatch(r"[A-Za-z0-9._-]{1,253}", domain):
+            return jsonify({"error": "invalid domain"}), 400
         try:
             result = self.controller._shell("nslookup", domain)
             return jsonify({"ok": True, "domain": domain, "result": result[:500]})

@@ -370,7 +370,8 @@ class Handler(BaseHTTPRequestHandler):
         rel = rel.replace("\\", "/").lstrip("/")
         full = os.path.normpath(os.path.join(REPO, rel))
         allowed = os.path.join(REPO, "svg")
-        if not full.startswith(allowed):
+        # Boundary con separador: 'svg' no debe autorizar hermanos como 'svg_export/'.
+        if full != allowed and not full.startswith(allowed + os.sep):
             return self._send(403, "403", "text/plain")
         if not os.path.isfile(full):
             return self._send(404, "404 - " + rel, "text/plain; charset=utf-8")
@@ -381,9 +382,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def _serve_file(self, rel):
         rel = rel.replace("\\", "/").lstrip("/")
-        # anti path-traversal
+        # anti path-traversal: boundary con separador para no autorizar hermanos
+        # como 'context_old/' cuyo nombre solo comparte el prefijo 'context'.
         full = os.path.normpath(os.path.join(CONTEXT_DIR, rel))
-        if not full.startswith(CONTEXT_DIR):
+        if full != CONTEXT_DIR and not full.startswith(CONTEXT_DIR + os.sep):
             return self._send(403, "403", "text/plain")
         if not os.path.isfile(full):
             return self._send(404, "404 - " + rel, "text/plain; charset=utf-8")

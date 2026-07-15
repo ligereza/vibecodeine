@@ -133,8 +133,11 @@ export function getElementBounds(el: ConfigElement): { x: number; y: number; w: 
   switch (el.type) {
     case 'text':
       return { x: el.x, y: el.y - el.size, w: el.max_width || el.size * el.content.length * 0.55, h: el.size * 1.2 };
-    case 'paragraph':
-      return { x: el.x, y: el.y - el.size, w: el.max_width, h: el.line_height * Math.ceil(el.content.length / (el.max_width / (el.size * 0.5))) };
+    case 'paragraph': {
+      const charsPerLine = el.max_width > 0 ? el.max_width / (el.size * 0.5) : el.content.length || 1;
+      const lines = Math.max(1, Math.ceil(el.content.length / charsPerLine));
+      return { x: el.x, y: el.y - el.size, w: el.max_width, h: el.line_height * lines };
+    }
     case 'list': {
       const lines = el.items.length;
       return { x: el.x, y: el.y - el.size, w: el.max_width, h: lines * (el.line_height + el.gap) };

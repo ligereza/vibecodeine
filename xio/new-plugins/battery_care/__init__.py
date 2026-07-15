@@ -123,7 +123,16 @@ class BatteryCarePlugin(PluginBase):
                 self._poll_battery()
             except Exception as e:
                 self.logger.error(f"Battery poll error: {e}")
-            interval = self._config.get("poll_interval_seconds", 30)
+            # Coerce to a sane numeric interval: a non-numeric config value
+            # (e.g. the string "30") would otherwise make int(interval * 10)
+            # explode into a huge/invalid number and hang or kill the loop
+            # while /status still reports monitoring active.
+            try:
+                interval = float(self._config.get("poll_interval_seconds", 30))
+            except (TypeError, ValueError):
+                interval = 30
+            if interval < 1:
+                interval = 30
             # Interruptible sleep
             for _ in range(int(interval * 10)):
                 if not self._running:

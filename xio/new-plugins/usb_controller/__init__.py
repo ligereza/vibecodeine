@@ -88,7 +88,9 @@ class USBControllerPlugin(PluginBase):
         from flask import request, jsonify
         data = request.get_json(force=True)
         func = data.get("function", "mtp")
-        actual_func = self.USB_FUNCTIONS.get(func, func)
+        actual_func = self.USB_FUNCTIONS.get(func)
+        if actual_func is None:
+            return jsonify({"ok": False, "error": "unknown function"}), 400
         ok = self._set_function(actual_func)
         self._usb_log.append({"action": "set_function", "function": actual_func, "ok": ok})
         self._usb_log = self._usb_log[-100:]
@@ -129,7 +131,9 @@ class USBControllerPlugin(PluginBase):
         """Simular estado de carga via USB."""
         from flask import request, jsonify
         data = request.get_json(force=True)
-        state = data.get("state", "unplug")  # plug, unplug
+        state = data.get("state", "unplug")  # unplug, reset
+        if state not in ("unplug", "reset"):
+            return jsonify({"error": "invalid state"}), 400
         try:
             self.controller._shell("dumpsys", "battery", state)
             return jsonify({"ok": True, "state": state})

@@ -275,7 +275,7 @@ def airdrop_apply(
                 if lh.exists():
                     content = lh.read_text(encoding="utf-8")
                     append = f"\n\n**Post-airdrop {datetime.now().strftime('%Y-%m-%d %H:%M')}**: {message}\n(Actualiza manualmente las secciones 'Estado' y 'Próximas acciones'.)"
-                    lh.write_text(content.rstrip() + append, encoding="utf-8")
+                    lh.write_text(content.rstrip() + _ascii(append), encoding="utf-8")
                     _ok("LAST_HANDOFF.md actualizado automáticamente con el mensaje del airdrop.")
             except Exception:
                 _warn("No se pudo auto-actualizar LAST_HANDOFF.md (hazlo manualmente con 'flujo handoff create').")
@@ -1295,7 +1295,7 @@ def resolume_automatizar(
     if not job.exists():
         _err(f"No existe: {job}")
     try:
-        cues = parse_smpte_setlist(job, fps=fps)
+        cues, eff_fps = parse_smpte_setlist(job, fps=fps)
         out_path = generate_show_automation(job, fps=fps, host=host, port=port, output=output)
     except Exception as e:
         _err(str(e))
@@ -1310,7 +1310,7 @@ def resolume_automatizar(
         if sidecar.exists():
             _ok(f"Sidecar: {sidecar}")
     console.print(f"  cues:       [bold]{len(cues)}[/]")
-    console.print(f"  fps:        [cyan]{fps}[/]")
+    console.print(f"  fps:        [cyan]{eff_fps}[/]")
     console.print(f"  OSC target: [cyan]{host}:{port}[/]")
     console.print("  nota:       [yellow].noisette experimental; para compatibilidad total usa template exportado desde tu Chataigne[/]")
     for cue in cues:
@@ -1959,7 +1959,7 @@ def app_alias(
 @app.command("package")
 def package(
     onefile: bool = typer.Option(True, "--onefile/--onedir", help="single .exe (recomendado) o carpeta"),
-    console: bool = typer.Option(False, "--console/--noconsole", help="mostrar consola (debug) o ventana limpia"),
+    show_console: bool = typer.Option(False, "--console/--noconsole", help="mostrar consola (debug) o ventana limpia"),
     output: str = typer.Option("dist", "--output", "-o", help="carpeta de salida"),
 ):
     """Empaqueta el hub pro como aplicación de escritorio real .exe (Windows).
@@ -2079,7 +2079,7 @@ launch(
         "--clean",
         "--noconfirm",
         f"--{ 'onefile' if onefile else 'onedir' }",
-        f"--{ 'console' if console else 'windowed' }",
+        f"--{ 'console' if show_console else 'windowed' }",
         f"--name={spec_name}",
         f"--distpath={output}",
         "--paths", str(root / "src"),  # help PyInstaller find the src layout
@@ -2098,7 +2098,7 @@ launch(
         args.append(icon_arg)
 
     console.print(f"[cyan]Construyendo .exe profesional con PyInstaller (100% gratis)...[/]")
-    console.print(f"[dim]Opciones: onefile={onefile} noconsole={not console} output={output}[/]")
+    console.print(f"[dim]Opciones: onefile={onefile} noconsole={not show_console} output={output}[/]")
     console.print(f"[dim]Comando equiv (aprox): pyinstaller {' '.join(args)}[/]")
 
     try:
