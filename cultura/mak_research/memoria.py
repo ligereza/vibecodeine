@@ -197,6 +197,56 @@ def buscar(tema, k=5):
              "score": round(s, 3), "chunk": e["chunk"]} for s, e in rank]
 
 
+def _vectores_por_producto():
+    """Agrupa el index por archivo y promedia los vectores de sus chunks
+    -> un vector por producto. Devuelve (vecs{path:vec}, meta{path:(dir,titulo,nchunks)})."""
+    from collections import defaultdict
+    grupos, meta = defaultdict(list), {}
+    for e in _cargar_index():
+        grupos[e["path"]].append(e.get("vec") or [])
+        meta[e["path"]] = (e["dir"], e["titulo"], meta.get(e["path"], (0, 0, 0))[2] + 1)
+    vecs = {}
+    for path, lista in grupos.items():
+        lista = [v for v in lista if v]
+        if not lista:
+            continue
+        dim = len(lista[0])
+        n = len(lista)
+        vecs[path] = [sum(v[i] for v in lista) / n for i in range(dim)]
+    return vecs, meta
+
+
+def grafo_semantico(umbral=0.5, tope_por_nodo=4):
+    """Grafo de CONEXIONES SEMANTICAS entre productos del departamento:
+    nodo = producto, arista = similitud coseno entre sus embeddings (top-k
+    por nodo por encima del umbral). El peso de la arista = que tan
+    relacionados estan dos hallazgos. Es el mapa de lo que el depto sabe."""
+    vecs, meta = _vectores_por_producto()
+    paths = list(vecs)
+    nodes = []
+    for p in paths:
+        d, t, nch = meta[p]
+        nodes.append({"id": os.path.basename(p), "dir": d, "titulo": t,
+                      "chunks": nch})
+    edges, vistas = [], set()
+    for i, a in enumerate(paths):
+        sims = sorted(
+            ((_cos(vecs[a], vecs[b]), j) for j, b in enumerate(paths) if j != i),
+            reverse=True)
+        for s, j in sims[:tope_por_nodo]:
+            if s < umbral:
+                break
+            key = tuple(sorted((i, j)))
+            if key in vistas:
+                continue
+            vistas.add(key)
+            edges.append({"a": os.path.basename(paths[i]),
+                          "b": os.path.basename(paths[j]), "w": round(s, 3)})
+    return {"nodes": nodes, "edges": edges,
+            "meta": {"n_nodos": len(nodes), "n_aristas": len(edges),
+                     "umbral": umbral}}
+
+
 def contexto(tema, k=5, max_chars=2500):
     """Bloque Markdown con los hallazgos previos relevantes, para INYECTAR
     en otro modo (grafo --memoria). '' si la memoria esta vacia."""

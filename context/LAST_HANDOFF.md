@@ -8,6 +8,38 @@ verificado en vivo en MAK (5 modos corridos contra APIs reales + pantallazos).
 El plan largo vive en context/PLAN_SIGUIENTE_AGENTE.md. Este es el estado corto.
 Historico viejo en git y docs/handoffs/archive/.
 
+## SESION 2026-07-16 (d) -- MICELIO: el archivo hecho organismo + modos desde el mapa
+Feedback duro del usuario ("no veo las conexiones semanticas, botones a
+iconos, Files feo, nodos cuestan, replantea todo") -> rework visual completo
+de interfaz.py, enfoque cultura/artistico (paleta abisal #0b0a09 + fungico
+#9db67c, director-de-arte):
+
+- MICELIO (vista 2, toggle Flujo/Micelio): mapa semantico VIVO del archivo.
+  Canvas 2D con fisica force-directed propia (sin librerias): nodo = pieza
+  (respira, halo, tamano por fragmentos), filamento = afinidad coseno real
+  entre productos (memoria.grafo_semantico + /api/memoria/grafo), ondulan,
+  esporas viajan por aristas fuertes, anillo de nacimiento en piezas nuevas.
+  Slider de afinidad, leyenda por tipo clickeable, zoom/pan/drag, tooltip.
+- MODOS DESDE EL MICELIO (pedido explicito): click en pieza -> tarjeta de
+  acciones: Abrir / Investigar (corre el modo activo del topbar con la pieza
+  como semilla, memoria=1 si grafo) / PUENTE (dos piezas -> investiga la
+  relacion entre ambas). La pieza nueva se auto-indexa (reindex tras cada
+  job) y NACE en el mapa (refresh 25s): crece y se remodela solo.
+- UI: toolbar de ICONOS svg con tooltips; puertos 16px con drag-to-connect
+  estilo n8n (entradas se encienden verdes al conectar) ademas de dos-clicks;
+  Files rehecho como "Archivo del departamento" (cards titulo/fecha/chip de
+  tipo + buscador, DIR_CHIP singulares correctos).
+- Verificado: py_compile local+MAK, node --check (60.9k chars JS), API grafo
+  33 nodos/99 aristas, server VIVO (PID 131439 http 200), pantallazos de
+  Flujo+Files. LECCION OPERATIVA: NO usar xdotool para "verificar visual" --
+  el usuario comparte el MISMO mouse fisico entre Windows y MAK (Barrier);
+  mover el cursor via xdotool le pelea el mouse en vivo. Verificacion visual
+  = pedirsela al usuario.
+- Alerta de higiene: en el worktree aparecio arte-ascii-readme.svg BORRADO
+  (working tree, no commiteado) + arte-ascii-readme.svg.html untracked --
+  NO fue este agente, NO se commitea; el usuario decide si restaurar
+  (git checkout -- arte-ascii-readme.svg).
+
 ## SESION 2026-07-16 (c) -- MAK research: MEMORIA del departamento (RAG local)
 El usuario pidio "enhance the department". Se agrego la pieza mas de fondo
 que faltaba para que sea un DEPARTAMENTO y no una carpeta de informes: una

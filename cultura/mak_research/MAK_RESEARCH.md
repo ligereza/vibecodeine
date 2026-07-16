@@ -90,6 +90,27 @@ Perilla en la UI (corto/medio/largo) -> escala tokens por llamada con
 techo duro (`research_lib.escala_tok`, tope 4000) para no pasar el
 timeout del worker (1800s) ni los limites free-tier. CLI: `--densidad`.
 
+## Micelio (mapa semantico vivo, vista 2 de la web)
+
+Toggle **Flujo / Micelio** en el topbar. El micelio es el archivo del
+departamento hecho organismo (paleta cultura: abisal #0b0a09 + fungico
+#9db67c): cada pieza de research es un nodo que respira, cada filamento es
+afinidad semantica real entre embeddings (API `/api/memoria/grafo`,
+`memoria.grafo_semantico`: coseno entre productos, top-k por nodo).
+Fisica force-directed propia (canvas 2D, sin librerias): repulsion +
+resortes por afinidad + gravedad; filamentos ondulan, esporas viajan por
+las aristas fuertes, las piezas nuevas nacen con anillo. Slider de
+afinidad, leyenda por tipo (click apaga/enciende), zoom/pan/arrastre,
+tooltip, fit.
+
+**Los modos operan DESDE el micelio:** click en una pieza abre su tarjeta
+de acciones -- Abrir (la pieza en el modal), **Investigar** (corre el modo
+activo del topbar con esa pieza como semilla, "profundizar: ..."), y
+**Puente** (eliges DOS piezas y el departamento investiga la relacion
+entre ambas). El resultado se indexa solo (auto-reindex tras cada job) y
+nace como nodo nuevo: el micelio crece y se remodela con cada research
+(refresh 25s mientras esta visible).
+
 ## Interfaces (pagina)
 
 1. **Web (LAN):** http://192.168.50.2:8890 -- canvas visual con nodos
@@ -109,20 +130,20 @@ timeout del worker (1800s) ni los limites free-tier. CLI: `--densidad`.
    grafo es invalido. `memoria.py index` (re)construye la memoria;
    `memoria.py "tema"` consulta; `memoria.py buscar "tema"` solo recupera.
 
-## Tools menu del canvas (UI)
+## Tools menu del canvas (UI, iconos con tooltip)
 
-- **Zoom:** botones -/+, 1:1, y rueda del mouse sobre el cursor.
-- **Vista:** Encajar (fit-to-view por transform, no mueve nodos),
-  Centrar; paneo arrastrando el fondo vacio.
-- **Nodos:** `+ In` (trigger extra), `+ Out` (output extra), `+ Nota`,
-  Organizar (auto-layout por prioridad), Reset. Los nodos nota son
-  anotaciones del flujo, persisten en workflow.json, no se ejecutan.
-- **Grafo:** `Validar` corre el chequeo de flujo extremo y muestra los
-  problemas en el modal.
-- **Memoria:** `Reindexar` reconstruye el index de embeddings en background;
-  al lado, contador de fragmentos indexados.
-- **Conexiones:** dos clicks entre puertos para crear una arista, click
-  sobre la arista para borrarla (ver seccion "Grafo real").
+- **Zoom:** -/+, 1:1, encajar, centrar; rueda del mouse sobre el cursor;
+  paneo arrastrando el fondo vacio.
+- **Nodos:** entrada extra, salida extra, nota, organizar, reset (iconos).
+  Los nodos nota son anotaciones, persisten en workflow.json, no se ejecutan.
+- **Grafo:** check = validar flujo extremo (modal con los problemas).
+- **Memoria:** icono base-de-datos = reindexar (background); al lado el
+  contador de fragmentos.
+- **Conexiones:** ARRASTRA desde el puerto de salida y suelta sobre una
+  entrada (se encienden en verde); tambien funciona en dos clicks. Click
+  sobre una arista la borra; Esc cancela.
+- **Files:** pestana "Archivo del departamento" unificada -- cards con
+  titulo/fecha/chip de tipo + buscador; click abre la pieza en el modal.
 
 ## Operacion
 

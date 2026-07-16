@@ -49,6 +49,15 @@ MODO_DIR = {"research": "informes", "panel": "paneles",
             "memoria": "memoria"}
 # modos que NO requieren tema (correlacionan el archivo entero)
 MODO_SIN_TEMA = {"corpus"}
+# paleta cultura (abisal + fungico + tierras) por tipo de producto
+DIR_COLOR = {"informes": "#9db67c", "paneles": "#d4a259",
+             "cadenas": "#7ba6a3", "refutaciones": "#c46d5e",
+             "correlaciones": "#b48ead", "grafos": "#93a8c7",
+             "memoria": "#e0c58f"}
+FECHA_RE = re.compile(r"(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})-(.+)\.md$")
+DIR_CHIP = {"informes": "informe", "paneles": "panel", "cadenas": "cadena",
+            "refutaciones": "refutacion", "correlaciones": "correlacion",
+            "grafos": "grafo", "memoria": "memoria"}
 JOBS_FILE = os.path.expanduser("~/research/jobs.jsonl")
 ENV_FILE = os.environ.get("RESEARCH_ENV", os.path.expanduser("~/n8n-local/research.env"))
 WORKFLOW_FILE = os.path.expanduser("~/research/workflow.json")
@@ -252,19 +261,16 @@ def _lanzar(modo, tema, n, densidad="medio", memoria=False):
                 f.write(json.dumps(job) + "\n")
         except OSError:
             pass
+        # el archivo crece -> la memoria/micelio se remodela solo (incremental)
+        try:
+            _reindexar_async()
+        except Exception:  # noqa: BLE001 - el reindex es best-effort
+            pass
 
     threading.Thread(target=correr, daemon=True).start()
 
 
 # ── utilidades ──
-
-def _listar(d):
-    try:
-        files = sorted(os.listdir(DIRS[d]), reverse=True)
-    except OSError:
-        files = []
-    return [f for f in files if f.endswith(".md")][:15]
-
 
 def _config_actual():
     load_env(ENV_FILE)
@@ -562,6 +568,180 @@ body{
 @keyframes dash-flow{to{stroke-dashoffset:-20}}
 .conn-animated{stroke-dasharray:8 4;animation:dash-flow .6s linear infinite}
 
+/* ── view toggle (Flujo / Mapa) ── */
+.view-toggle{
+  display:flex;background:#0d1117;border:1px solid #30363d;border-radius:9px;
+  padding:3px;gap:2px;
+}
+.view-toggle button{
+  display:flex;align-items:center;gap:6px;padding:5px 12px;border:none;
+  background:none;color:#8b949e;border-radius:7px;cursor:pointer;
+  font-size:.82rem;font-weight:600;font-family:inherit;transition:all .15s;
+}
+.view-toggle button svg{width:15px;height:15px}
+.view-toggle button:hover{color:#e6edf3}
+.view-toggle button.active{background:#1f6feb;color:#fff}
+
+/* ── semantic map view ── */
+#map-view{
+  position:absolute;inset:0;display:none;background:
+    radial-gradient(circle at 30% 20%,#12161f 0,#0a0c10 55%,#08090c 100%);
+  overflow:hidden;
+}
+#map-view.show{display:block}
+#map-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab}
+#map-canvas.grabbing{cursor:grabbing}
+#map-canvas.hot{cursor:pointer}
+.map-legend{
+  position:absolute;top:16px;left:16px;background:#0d1117cc;border:1px solid #30363d;
+  border-radius:12px;padding:12px 14px;backdrop-filter:blur(8px);z-index:6;
+  max-width:220px;
+}
+.map-legend h4{font-size:.7rem;text-transform:uppercase;letter-spacing:.6px;color:#8b949e;margin-bottom:9px}
+.map-legend .lg-row{display:flex;align-items:center;gap:8px;font-size:.78rem;color:#c9d1d9;margin:4px 0;cursor:pointer;opacity:.9}
+.map-legend .lg-row:hover{opacity:1}
+.map-legend .lg-row.off{opacity:.35}
+.map-legend .lg-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;box-shadow:0 0 8px currentColor}
+.map-controls{
+  position:absolute;bottom:16px;left:16px;display:flex;flex-direction:column;gap:8px;z-index:6;
+}
+.map-controls .tool-group{align-items:center}
+.map-controls .mc-slider{display:flex;align-items:center;gap:8px;color:#8b949e;font-size:.74rem}
+.map-controls input[type=range]{width:120px;accent-color:#a371f7;height:4px}
+.map-hint{
+  position:absolute;top:16px;right:16px;background:#0d1117cc;border:1px solid #30363d;
+  border-radius:10px;padding:8px 12px;font-size:.74rem;color:#8b949e;z-index:6;
+  backdrop-filter:blur(8px);max-width:230px;line-height:1.5;
+}
+.map-tooltip{
+  position:absolute;pointer-events:none;z-index:8;background:#161b22ee;
+  border:1px solid #444c56;border-radius:9px;padding:8px 11px;max-width:280px;
+  font-size:.78rem;color:#e6edf3;box-shadow:0 6px 20px rgba(0,0,0,.5);
+  transform:translate(-50%,-115%);display:none;line-height:1.4;
+}
+.map-tooltip.show{display:block}
+.map-tooltip .mt-dir{font-size:.68rem;color:#8b949e;text-transform:uppercase;letter-spacing:.5px}
+.map-empty{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:10px;color:#6e7681;text-align:center;padding:30px;
+}
+
+/* ── view toggle (Flujo / Micelio) ── */
+.main-wrap{position:relative}
+.view-toggle{
+  display:flex;background:#0d1117;border:1px solid #30363d;border-radius:9px;
+  padding:3px;gap:2px;
+}
+.view-toggle button{
+  display:flex;align-items:center;gap:6px;padding:5px 12px;border:none;
+  background:none;color:#8b949e;border-radius:7px;cursor:pointer;
+  font-size:.82rem;font-weight:600;font-family:inherit;transition:all .15s;
+}
+.view-toggle button svg{width:15px;height:15px}
+.view-toggle button:hover{color:#e6edf3}
+.view-toggle button.active{background:#9db67c;color:#0b0a09}
+
+/* ── micelio semantico (archivo vivo, paleta cultura: abisal + fungico) ── */
+#map-view{
+  position:absolute;inset:0;display:none;background:
+    radial-gradient(ellipse at 32% 24%,#15130e 0,#0b0a09 58%,#070706 100%);
+  overflow:hidden;z-index:30;
+}
+#map-view.show{display:block}
+#map-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab}
+#map-canvas.grabbing{cursor:grabbing}
+#map-canvas.hot{cursor:pointer}
+.map-legend{
+  position:absolute;top:16px;left:16px;background:#0b0a09d9;border:1px solid #2a2820;
+  border-radius:12px;padding:12px 14px;backdrop-filter:blur(8px);z-index:6;
+  max-width:230px;font-family:ui-monospace,SFMono-Regular,monospace;
+}
+.map-legend h4{font-size:.68rem;text-transform:uppercase;letter-spacing:.8px;color:#9db67c;margin-bottom:9px}
+.map-legend .lg-row{display:flex;align-items:center;gap:8px;font-size:.75rem;color:#c9c5b9;margin:4px 0;cursor:pointer;opacity:.9;transition:opacity .15s}
+.map-legend .lg-row:hover{opacity:1}
+.map-legend .lg-row.off{opacity:.28;text-decoration:line-through}
+.map-legend .lg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;box-shadow:0 0 9px currentColor}
+.map-counts{margin-top:9px;font-size:.68rem;color:#6e6a5e;line-height:1.6}
+.map-controls{
+  position:absolute;bottom:16px;left:16px;display:flex;flex-direction:column;gap:8px;z-index:6;
+}
+.map-controls .tool-group{align-items:center;background:#0b0a09d9;border-color:#2a2820}
+.map-controls .mc-slider{display:flex;align-items:center;gap:8px;color:#8a8577;font-size:.72rem;padding:0 6px;font-family:ui-monospace,monospace}
+.map-controls input[type=range]{width:120px;accent-color:#9db67c;height:4px}
+.map-hint{
+  position:absolute;top:16px;right:16px;background:#0b0a09d9;border:1px solid #2a2820;
+  border-radius:10px;padding:9px 12px;font-size:.72rem;color:#8a8577;z-index:6;
+  backdrop-filter:blur(8px);max-width:235px;line-height:1.55;
+  font-family:ui-monospace,monospace;
+}
+.map-hint b{color:#9db67c;font-weight:600}
+.map-tooltip{
+  position:absolute;pointer-events:none;z-index:8;background:#12100cf0;
+  border:1px solid #3d3a2e;border-radius:9px;padding:8px 11px;max-width:290px;
+  font-size:.78rem;color:#e2ddd0;box-shadow:0 8px 26px rgba(0,0,0,.6);
+  transform:translate(-50%,-118%);display:none;line-height:1.45;
+  font-family:ui-monospace,monospace;
+}
+.map-tooltip.show{display:block}
+.map-tooltip .mt-dir{font-size:.66rem;color:#9db67c;text-transform:uppercase;letter-spacing:.6px;margin-top:3px}
+.map-empty{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:10px;color:#6e6a5e;text-align:center;padding:30px;
+  font-family:ui-monospace,monospace;z-index:5;
+}
+/* tarjeta de acciones sobre una pieza del micelio: investigar desde el mapa */
+.map-action{
+  position:absolute;z-index:9;background:#12100cf2;border:1px solid #3d3a2e;
+  border-radius:11px;padding:10px 12px;min-width:210px;max-width:280px;
+  box-shadow:0 10px 32px rgba(0,0,0,.65);font-family:ui-monospace,monospace;
+  display:none;
+}
+.map-action.show{display:block}
+.map-action .ma-title{font-size:.78rem;color:#f4f1e6;line-height:1.35;margin-bottom:2px}
+.map-action .ma-meta{font-size:.66rem;color:#9db67c;text-transform:uppercase;letter-spacing:.5px;margin-bottom:9px}
+.map-action .ma-btns{display:flex;flex-wrap:wrap;gap:6px}
+.map-action button{
+  padding:5px 10px;border-radius:7px;border:1px solid #3d3a2e;background:#1a1712;
+  color:#c9c5b9;cursor:pointer;font-size:.72rem;font-family:inherit;
+  transition:all .15s;
+}
+.map-action button:hover{border-color:#9db67c;color:#e8f0d8}
+.map-action button.ma-go{background:#9db67c;color:#0b0a09;border-color:#9db67c;font-weight:700}
+.map-action button.ma-go:hover{background:#b1c893}
+
+/* ── puertos mas grandes + estado conectando ── */
+.port{width:16px;height:16px;border-width:2px;transition:transform .12s,background .15s,box-shadow .15s}
+.port-out{right:-9px}
+.port-in{left:-9px}
+.port:hover{transform:translateY(-50%) scale(1.4);background:#9db67c;box-shadow:0 0 10px #9db67c99}
+body.connecting .port-in{background:#9db67c;box-shadow:0 0 12px #9db67caa;animation:pulse 1.1s infinite}
+body.connecting .node{cursor:crosshair}
+
+/* ── iconos del toolbar ── */
+.canvas-controls button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.view-toggle button svg{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+
+/* ── archivo (Files) como cards ── */
+.file-search{
+  width:100%;padding:8px 11px;border-radius:8px;border:1px solid #30363d;
+  background:#0d1117;color:#e6edf3;font-size:.8rem;font-family:inherit;
+}
+.file-search:focus{outline:none;border-color:#9db67c}
+.file-card{
+  display:flex;align-items:center;gap:10px;padding:9px 10px;margin:6px 0;
+  background:#0d1117;border:1px solid #21262d;border-radius:10px;cursor:pointer;
+  transition:border-color .15s,transform .12s;
+}
+.file-card:hover{border-color:#9db67c66;transform:translateX(2px)}
+.fc-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;box-shadow:0 0 7px currentColor}
+.fc-body{overflow:hidden;flex:1}
+.fc-title{font-size:.8rem;color:#e6edf3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fc-meta{font-size:.68rem;color:#6e7681;font-family:ui-monospace,monospace;margin-top:2px}
+.fc-chip{
+  font-size:.62rem;padding:2px 7px;border-radius:99px;flex-shrink:0;
+  text-transform:uppercase;letter-spacing:.4px;font-weight:600;
+}
+
 /* ── responsive ── */
 @media(max-width:900px){
   .panel{width:100%;position:absolute;bottom:50px;right:0;top:auto;
@@ -781,28 +961,25 @@ function renderNodes() {
         if (e.target.classList.contains('node-toggle') || e.target.classList.contains('port')) return;
         selectNode(nodeId);
       });
-      // ── conexiones manuales por los puertos (dos clicks) ──
-      // click en salida = arma; click en entrada de otro nodo = cierra.
+      // ── conexiones por puertos: ARRASTRA desde la salida y suelta en
+      // una entrada (estilo n8n); tambien funciona en dos clicks. Las
+      // entradas validas se encienden en verde mientras conectas. ──
       var pOut = nodeEl.querySelector('.port-out');
-      if (pOut) pOut.addEventListener('click', function(e) {
-        e.stopPropagation();
-        if (connectFrom === nodeId) { connectFrom = null; drawConnections(); return; }
+      if (pOut) pOut.addEventListener('mousedown', function(e) {
+        e.stopPropagation(); e.preventDefault();
         connectFrom = nodeId;
+        document.body.classList.add('connecting');
         mousePos.x = workflow.nodes[nodeId].x + 210;
         mousePos.y = workflow.nodes[nodeId].y + 40;
         drawConnections();
-        showToast('Origen ' + nodeId + ': click en la entrada de otro nodo (Esc cancela)', 'info');
+        showToast('Suelta (o click) sobre una entrada verde -- Esc cancela', 'info');
       });
       var pIn = nodeEl.querySelector('.port-in');
+      if (pIn) pIn.addEventListener('mousedown', function(e) { e.stopPropagation(); });
       if (pIn) pIn.addEventListener('click', function(e) {
         e.stopPropagation();
-        if (!connectFrom) { showToast('Primero click en una salida (puerto derecho)', 'info'); return; }
-        addConnection(connectFrom, nodeId);
-        connectFrom = null;
+        if (connectFrom) finishConnection(nodeId);
       });
-      // que agarrar un puerto no arrastre el nodo ni panee el fondo
-      if (pOut) pOut.addEventListener('mousedown', function(e) { e.stopPropagation(); });
-      if (pIn) pIn.addEventListener('mousedown', function(e) { e.stopPropagation(); });
     })(id, el);
   }
 
@@ -888,6 +1065,13 @@ function addConnection(from, to) {
   debouncedSave();
   drawConnections();
   showToast('Conectado: ' + from + ' -> ' + to, 'success');
+}
+
+function finishConnection(toId) {
+  addConnection(connectFrom, toId);
+  connectFrom = null;
+  document.body.classList.remove('connecting');
+  drawConnections();
 }
 
 function removeConnection(idx) {
@@ -1150,7 +1334,12 @@ document.getElementById('canvas-wrap').addEventListener('mousedown', function(e)
   if (e.target.id !== 'canvas-wrap' && e.target.id !== 'canvas-world'
       && e.target.id !== 'canvas-svg') return;
   // click en vacio cancela una conexion a medio trazar
-  if (connectFrom) { connectFrom = null; drawConnections(); return; }
+  if (connectFrom) {
+    connectFrom = null;
+    document.body.classList.remove('connecting');
+    drawConnections();
+    return;
+  }
   panning = {mx: e.clientX, my: e.clientY, vx: view.x, vy: view.y};
   this.classList.add('panning');
 });
@@ -1162,7 +1351,7 @@ document.getElementById('canvas-wrap').addEventListener('wheel', function(e) {
              view.k + (e.deltaY < 0 ? 0.1 : -0.1));
 }, {passive: false});
 
-document.addEventListener('mouseup', function() {
+document.addEventListener('mouseup', function(e) {
   if (dragging) {
     var el = document.getElementById('node-' + dragging);
     if (el) el.style.zIndex = '10';
@@ -1174,6 +1363,14 @@ document.addEventListener('mouseup', function() {
     panning = null;
     var w = document.getElementById('canvas-wrap');
     if (w) w.classList.remove('panning');
+  }
+  // drag-to-connect: soltar sobre un puerto de entrada cierra la conexion
+  if (connectFrom) {
+    var target = document.elementFromPoint(e.clientX, e.clientY);
+    if (target && target.classList && target.classList.contains('port-in')) {
+      finishConnection(target.dataset.id);
+    }
+    // si suelta en otro lado, queda armado (modo dos-clicks); Esc cancela
   }
 });
 
@@ -1566,10 +1763,16 @@ function reindexarMemoria() {
 
 // ── keyboard shortcuts ──
 document.addEventListener('keydown', function(e) {
-  // Escape: cancela conexion a medio trazar; si no, deselecciona
+  // Escape: cancela conexion/puente a medio trazar; si no, deselecciona
   if (e.key === 'Escape') {
-    if (connectFrom) { connectFrom = null; drawConnections(); }
-    else selectNode(null);
+    if (MAPA.bridge || MAPA.sel) {
+      MAPA.bridge = null;
+      mapCloseActions();
+    } else if (connectFrom) {
+      connectFrom = null;
+      document.body.classList.remove('connecting');
+      drawConnections();
+    } else selectNode(null);
   }
   // Delete: apaga el nodo seleccionado (o lo borra si es nota/extra)
   if (e.key === 'Delete' && selectedNode && selectedNode !== 'trigger' && selectedNode !== 'output') {
@@ -1600,6 +1803,451 @@ function chequearGrafo(bloquea) {
   return errs.length === 0;
 }
 
+// ── filtro del archivo (Files) ──
+function filtrarArchivo(q) {
+  q = (q || '').toLowerCase().trim();
+  document.querySelectorAll('#archivo-list .file-card').forEach(function(li) {
+    li.style.display = (!q || (li.dataset.q || '').indexOf(q) >= 0) ? '' : 'none';
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  MICELIO -- mapa semantico del archivo (canvas 2D, fisica propia).
+//  Nodo = pieza de research. Filamento = afinidad entre embeddings.
+//  El organismo crece y se remodela con cada research nuevo.
+// ══════════════════════════════════════════════════════════════════════
+var DIR_COLORS = {informes:'#9db67c',paneles:'#d4a259',cadenas:'#7ba6a3',
+                 refutaciones:'#c46d5e',correlaciones:'#b48ead',
+                 grafos:'#93a8c7',memoria:'#e0c58f'};
+var MAPA = {
+  nodes: [], edges: [], byId: {}, loaded: false, running: false,
+  view: {x: 0, y: 0, k: 1}, umbral: 0.55, dirOff: {},
+  hover: null, dragN: null, panM: null, downAt: null,
+  sel: null, bridge: null,
+  alpha: 0, t: 0, raf: 0,
+};
+
+function setView(v) {
+  var mv = document.getElementById('map-view');
+  document.getElementById('vt-flujo').classList.toggle('active', v === 'flujo');
+  document.getElementById('vt-mapa').classList.toggle('active', v === 'mapa');
+  if (v === 'mapa') {
+    mv.classList.add('show');
+    mapResize();
+    if (!MAPA.loaded) mapRefresh(true);
+    else MAPA.alpha = Math.max(MAPA.alpha, 0.3);
+    if (!MAPA.running) { MAPA.running = true; MAPA.raf = requestAnimationFrame(mapLoop); }
+  } else {
+    mv.classList.remove('show');
+    MAPA.running = false;
+    cancelAnimationFrame(MAPA.raf);
+  }
+}
+
+function mapResize() {
+  var c = document.getElementById('map-canvas');
+  if (!c) return;
+  var dpr = window.devicePixelRatio || 1;
+  c.width = c.clientWidth * dpr;
+  c.height = c.clientHeight * dpr;
+}
+
+function mapSetUmbral(v) {
+  MAPA.umbral = v / 100;
+  var el = document.getElementById('map-umbral-val');
+  if (el) el.textContent = MAPA.umbral.toFixed(2);
+  MAPA.alpha = 1;
+  mapLegend();
+}
+
+function mapRefresh(fit) {
+  fetch('/api/memoria/grafo?umbral=0.35')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      mapMerge(d.nodes || [], d.edges || []);
+      MAPA.loaded = true;
+      mapLegend();
+      var emp = document.getElementById('map-empty');
+      if (emp) emp.style.display = MAPA.nodes.length ? 'none' : 'flex';
+      if (fit) setTimeout(mapFit, 900);
+    })
+    .catch(function() { showToast('No se pudo cargar el micelio', 'error'); });
+}
+
+// merge: los nodos existentes conservan su posicion; los nuevos NACEN
+// cerca del centro con animacion de anillo (el organismo crece).
+function mapMerge(nodes, edges) {
+  var c = document.getElementById('map-canvas');
+  var W = (c && c.clientWidth) || 900, H = (c && c.clientHeight) || 600;
+  var prev = MAPA.byId, by = {}, out = [];
+  nodes.forEach(function(n, i) {
+    var old = prev[n.id];
+    var ang = (i / Math.max(1, nodes.length)) * Math.PI * 2;
+    var nd = old || {
+      id: n.id,
+      x: W / 2 + Math.cos(ang) * (110 + Math.random() * 100),
+      y: H / 2 + Math.sin(ang) * (110 + Math.random() * 100),
+      vx: 0, vy: 0,
+      birth: MAPA.loaded ? MAPA.t : -99,
+      phase: Math.random() * Math.PI * 2,
+    };
+    nd.dir = n.dir; nd.titulo = n.titulo; nd.chunks = n.chunks || 1;
+    nd.r = 5 + Math.min(13, Math.sqrt(nd.chunks) * 2.1);
+    by[n.id] = nd; out.push(nd);
+  });
+  MAPA.nodes = out; MAPA.byId = by;
+  MAPA.edges = (edges || []).filter(function(e) { return by[e.a] && by[e.b]; });
+  out.forEach(function(n) { n.deg = 0; });
+  MAPA.edges.forEach(function(e) { by[e.a].deg++; by[e.b].deg++; });
+  MAPA.alpha = 1;
+}
+
+function mapLegend() {
+  var rows = document.getElementById('legend-rows');
+  if (!rows) return;
+  var dirs = {};
+  MAPA.nodes.forEach(function(n) { dirs[n.dir] = (dirs[n.dir] || 0) + 1; });
+  rows.innerHTML = Object.keys(dirs).sort().map(function(d) {
+    var col = DIR_COLORS[d] || '#8b949e';
+    return '<div class="lg-row' + (MAPA.dirOff[d] ? ' off' : '') + '" onclick="mapToggleDir(\'' + d + '\')">' +
+      '<span class="lg-dot" style="background:' + col + ';color:' + col + '"></span>' +
+      d + ' <span style="color:#6e6a5e">(' + dirs[d] + ')</span></div>';
+  }).join('');
+  var vis = mapVisibleEdges().length;
+  var cts = document.getElementById('map-counts');
+  if (cts) cts.textContent = MAPA.nodes.length + ' piezas / ' + vis + ' filamentos / afinidad >= ' + MAPA.umbral.toFixed(2);
+}
+
+function mapToggleDir(d) {
+  MAPA.dirOff[d] = !MAPA.dirOff[d];
+  MAPA.alpha = 0.6;
+  mapLegend();
+}
+
+function mapVisibleEdges() {
+  return MAPA.edges.filter(function(e) {
+    var a = MAPA.byId[e.a], b = MAPA.byId[e.b];
+    return e.w >= MAPA.umbral && a && b && !MAPA.dirOff[a.dir] && !MAPA.dirOff[b.dir];
+  });
+}
+function mapVisibleNodes() {
+  return MAPA.nodes.filter(function(n) { return !MAPA.dirOff[n.dir]; });
+}
+
+function mapFit() {
+  var ns = mapVisibleNodes();
+  if (!ns.length) return;
+  var c = document.getElementById('map-canvas');
+  var W = c.clientWidth, H = c.clientHeight;
+  var x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  ns.forEach(function(n) {
+    x0 = Math.min(x0, n.x); y0 = Math.min(y0, n.y);
+    x1 = Math.max(x1, n.x); y1 = Math.max(y1, n.y);
+  });
+  var bw = Math.max(120, x1 - x0), bh = Math.max(120, y1 - y0);
+  var k = Math.min(2.4, Math.max(0.3, Math.min((W - 140) / bw, (H - 140) / bh)));
+  MAPA.view.k = k;
+  MAPA.view.x = (W - bw * k) / 2 - x0 * k;
+  MAPA.view.y = (H - bh * k) / 2 - y0 * k;
+}
+
+// ── fisica: repulsion + resortes por afinidad + gravedad suave ──
+function mapPhysics() {
+  var ns = mapVisibleNodes(), es = mapVisibleEdges();
+  if (!ns.length) return;
+  var a = Math.max(MAPA.alpha, 0.025);   // nunca congelado: organismo vivo
+  var c = document.getElementById('map-canvas');
+  var cx = c.clientWidth / 2, cy = c.clientHeight / 2;
+  var i, j, n, m, dx, dy, d2, d, f;
+  for (i = 0; i < ns.length; i++) {
+    n = ns[i];
+    for (j = i + 1; j < ns.length; j++) {
+      m = ns[j];
+      dx = n.x - m.x; dy = n.y - m.y;
+      d2 = dx * dx + dy * dy + 40;
+      f = Math.min(3.2, 2300 / d2) * a;
+      d = Math.sqrt(d2);
+      n.vx += (dx / d) * f; n.vy += (dy / d) * f;
+      m.vx -= (dx / d) * f; m.vy -= (dy / d) * f;
+    }
+    // gravedad al centro
+    n.vx += (cx - n.x) * 0.0011 * a;
+    n.vy += (cy - n.y) * 0.0011 * a;
+  }
+  es.forEach(function(e) {
+    var p = MAPA.byId[e.a], q = MAPA.byId[e.b];
+    var ddx = q.x - p.x, ddy = q.y - p.y;
+    var dist = Math.sqrt(ddx * ddx + ddy * ddy) + 0.01;
+    var rest = 65 + (1 - e.w) * 240;      // mas afines = mas cerca
+    var ff = (dist - rest) * 0.0045 * e.w * a;
+    p.vx += (ddx / dist) * ff; p.vy += (ddy / dist) * ff;
+    q.vx -= (ddx / dist) * ff; q.vy -= (ddy / dist) * ff;
+  });
+  ns.forEach(function(nn) {
+    if (nn === MAPA.dragN) { nn.vx = 0; nn.vy = 0; return; }
+    nn.vx *= 0.86; nn.vy *= 0.86;
+    var sp = Math.sqrt(nn.vx * nn.vx + nn.vy * nn.vy);
+    if (sp > 4.5) { nn.vx = nn.vx / sp * 4.5; nn.vy = nn.vy / sp * 4.5; }
+    nn.x += nn.vx; nn.y += nn.vy;
+  });
+  MAPA.alpha *= 0.994;
+}
+
+function hexA(hex, a) {
+  var r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16),
+      b = parseInt(hex.slice(5, 7), 16);
+  return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+}
+
+// ── render: filamentos ondulantes, esporas viajeras, nodos que respiran ──
+function mapDraw() {
+  var c = document.getElementById('map-canvas');
+  var ctx = c.getContext('2d');
+  var dpr = window.devicePixelRatio || 1;
+  var v = MAPA.view, t = MAPA.t;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, c.width, c.height);
+  ctx.setTransform(dpr * v.k, 0, 0, dpr * v.k, dpr * v.x, dpr * v.y);
+
+  var es = mapVisibleEdges();
+  var um = MAPA.umbral;
+  es.forEach(function(e, ei) {
+    var p = MAPA.byId[e.a], q = MAPA.byId[e.b];
+    var col = DIR_COLORS[p.dir] || '#9db67c';
+    var mx = (p.x + q.x) / 2, my = (p.y + q.y) / 2;
+    var ddx = q.x - p.x, ddy = q.y - p.y;
+    var len = Math.sqrt(ddx * ddx + ddy * ddy) + 0.01;
+    // ondulacion perpendicular: filamento vivo, cada arista con su fase
+    var wave = Math.sin(t * 1.15 + ei * 1.7) * Math.min(15, len * 0.06);
+    var cxp = mx - (ddy / len) * wave, cyp = my + (ddx / len) * wave;
+    var rel = (e.w - um) / Math.max(0.05, 1 - um);
+    ctx.strokeStyle = hexA(col, 0.14 + rel * 0.42);
+    ctx.lineWidth = (0.7 + rel * 2.4) / v.k;
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+    ctx.quadraticCurveTo(cxp, cyp, q.x, q.y);
+    ctx.stroke();
+    // espora viajera en los filamentos fuertes
+    if (e.w >= 0.72) {
+      var u = (t * 0.11 + ei * 0.37) % 1;
+      var iu = 1 - u;
+      var sx = iu * iu * p.x + 2 * iu * u * cxp + u * u * q.x;
+      var sy = iu * iu * p.y + 2 * iu * u * cyp + u * u * q.y;
+      ctx.fillStyle = hexA(col, 0.85);
+      ctx.beginPath();
+      ctx.arc(sx, sy, 1.7 / v.k + 0.6, 0, 6.284);
+      ctx.fill();
+    }
+  });
+
+  mapVisibleNodes().forEach(function(n) {
+    var col = DIR_COLORS[n.dir] || '#8b949e';
+    var breath = 1 + 0.05 * Math.sin(t * 1.9 + n.phase);
+    var r = n.r * breath;
+    // halo
+    var g = ctx.createRadialGradient(n.x, n.y, r * 0.4, n.x, n.y, r * 3.2);
+    g.addColorStop(0, hexA(col, 0.34));
+    g.addColorStop(1, hexA(col, 0));
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(n.x, n.y, r * 3.2, 0, 6.284); ctx.fill();
+    // cuerpo
+    ctx.fillStyle = col;
+    ctx.beginPath(); ctx.arc(n.x, n.y, r, 0, 6.284); ctx.fill();
+    // nucleo claro
+    ctx.fillStyle = hexA('#f4f1e6', 0.75);
+    ctx.beginPath(); ctx.arc(n.x - r * 0.25, n.y - r * 0.3, r * 0.32, 0, 6.284); ctx.fill();
+    // anillo de nacimiento (pieza nueva del archivo)
+    var age = t - n.birth;
+    if (age >= 0 && age < 3.2) {
+      ctx.strokeStyle = hexA(col, Math.max(0, 0.8 - age / 3.2));
+      ctx.lineWidth = 1.6 / v.k;
+      ctx.beginPath(); ctx.arc(n.x, n.y, r + age * 24, 0, 6.284); ctx.stroke();
+    }
+    // seleccion / puente armado: anillo girando
+    if (MAPA.sel === n.id || MAPA.bridge === n.id) {
+      ctx.strokeStyle = MAPA.bridge === n.id ? '#e0c58f' : '#f4f1e6';
+      ctx.lineWidth = 1.4 / v.k;
+      ctx.setLineDash([5 / v.k, 4 / v.k]);
+      ctx.lineDashOffset = -t * 14;
+      ctx.beginPath(); ctx.arc(n.x, n.y, r + 7 / v.k, 0, 6.284); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    // etiqueta: hover, hubs, o zoom cercano
+    if (MAPA.hover === n || v.k >= 1.15 || n.deg >= 5) {
+      ctx.font = (10 / v.k) + 'px ui-monospace, monospace';
+      ctx.fillStyle = MAPA.hover === n ? '#f4f1e6' : hexA('#c9c5b9', 0.75);
+      ctx.textAlign = 'center';
+      var lbl = (n.titulo || n.id).slice(0, 30);
+      ctx.fillText(lbl, n.x, n.y + r + 13 / v.k);
+    }
+  });
+}
+
+function mapLoop() {
+  if (!MAPA.running) return;
+  MAPA.t += 0.016;
+  mapPhysics();
+  mapDraw();
+  MAPA.raf = requestAnimationFrame(mapLoop);
+}
+
+// ── investigar DESDE el micelio: los modos de arriba operan sobre el mapa ──
+// click en pieza -> tarjeta de acciones (abrir / investigar con el modo
+// activo / puente entre dos piezas). El resultado nace como nodo nuevo.
+function limpiarTema(titulo) {
+  var t = String(titulo || '');
+  t = t.replace(/^(Research|Grafo|Panel|Cadena|Refutacion|Refutación|Memoria|Correlacion|Correlación|Informe|Corpus)\s*:\s*/i, '');
+  t = t.replace(/^Investigacion cultural DESCRIPTIVA[^:]*:\s*/i, '');
+  return t.trim().slice(0, 220);
+}
+
+function mapNodeClick(n, e) {
+  // puente armado: esta es la segunda pieza -> investigar la relacion
+  if (MAPA.bridge && MAPA.bridge !== n.id) {
+    var a = MAPA.byId[MAPA.bridge];
+    var tema = 'la relacion entre "' + limpiarTema(a.titulo) + '" y "' +
+               limpiarTema(n.titulo) + '"';
+    MAPA.bridge = null;
+    mapCloseActions();
+    mapRunDesde(tema, 'puente');
+    return;
+  }
+  MAPA.sel = n.id;
+  var card = document.getElementById('map-action');
+  var modo = workflow.mode || 'single';
+  card.innerHTML =
+    '<div class="ma-title">' + esc(limpiarTema(n.titulo) || n.id) + '</div>' +
+    '<div class="ma-meta">' + esc(n.dir) + ' &middot; ' + n.chunks + ' frag &middot; ' + n.deg + ' filamentos</div>' +
+    '<div class="ma-btns">' +
+      '<button onclick="verArchivo(\'' + esc(n.dir) + '\',\'' + encodeURIComponent(n.id) + '\')">&#128214; Abrir</button>' +
+      '<button class="ma-go" onclick="mapInvestigar(\'' + encodeURIComponent(n.id) + '\')">&#9654; Investigar (' + esc(modo) + ')</button>' +
+      '<button onclick="mapPuente(\'' + encodeURIComponent(n.id) + '\')">&#128279; Puente</button>' +
+      '<button onclick="mapCloseActions()">&#10005;</button>' +
+    '</div>';
+  var mv = document.getElementById('map-view').getBoundingClientRect();
+  card.style.left = Math.min(mv.width - 300, Math.max(8, e.clientX - mv.left + 14)) + 'px';
+  card.style.top = Math.min(mv.height - 150, Math.max(8, e.clientY - mv.top + 10)) + 'px';
+  card.classList.add('show');
+}
+
+function mapCloseActions() {
+  MAPA.sel = null;
+  var card = document.getElementById('map-action');
+  if (card) card.classList.remove('show');
+}
+
+// corre el modo activo del topbar usando la pieza como semilla
+function mapInvestigar(idEnc) {
+  var n = MAPA.byId[decodeURIComponent(idEnc)];
+  if (!n) return;
+  mapCloseActions();
+  mapRunDesde('profundizar: ' + limpiarTema(n.titulo), 'desde ' + n.dir);
+}
+
+function mapPuente(idEnc) {
+  MAPA.bridge = decodeURIComponent(idEnc);
+  mapCloseActions();
+  showToast('Puente armado: elige la SEGUNDA pieza (Esc cancela)', 'info');
+}
+
+function mapRunDesde(tema, origen) {
+  var modo = MODE_TO_BACKEND[workflow.mode] || 'research';
+  var dens = (document.getElementById('run-densidad') || {value: 'medio'}).value;
+  var body = 'tema=' + encodeURIComponent(tema) + '&modo=' + modo +
+             '&densidad=' + dens;
+  if (modo === 'grafo') body += '&memoria=1';   // el grafo hereda la memoria
+  if (modo === 'grafo' && !chequearGrafo(true)) return;
+  fetch('/run', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: body,
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    if (d.ok) {
+      showToast('Investigando (' + modo + ', ' + origen + ')... la pieza nueva nacera en el micelio', 'success');
+      refreshJobs();
+    } else showToast('Error: ' + (d.error || '?'), 'error');
+  })
+  .catch(function() { showToast('Error de conexion', 'error'); });
+}
+
+// ── interacciones del micelio ──
+function mapWorld(e) {
+  var c = document.getElementById('map-canvas');
+  var r = c.getBoundingClientRect();
+  return {x: (e.clientX - r.left - MAPA.view.x) / MAPA.view.k,
+          y: (e.clientY - r.top - MAPA.view.y) / MAPA.view.k};
+}
+function mapHit(w) {
+  var best = null, bd = 1e9;
+  mapVisibleNodes().forEach(function(n) {
+    var dx = n.x - w.x, dy = n.y - w.y, d = Math.sqrt(dx * dx + dy * dy);
+    if (d < n.r + 7 && d < bd) { best = n; bd = d; }
+  });
+  return best;
+}
+
+function mapBind() {
+  var c = document.getElementById('map-canvas');
+  if (!c) return;
+  var tip = document.getElementById('map-tooltip');
+  c.addEventListener('mousedown', function(e) {
+    var w = mapWorld(e), n = mapHit(w);
+    MAPA.downAt = {x: e.clientX, y: e.clientY, n: n};
+    if (n) { MAPA.dragN = n; MAPA.alpha = Math.max(MAPA.alpha, 0.4); }
+    else { MAPA.panM = {mx: e.clientX, my: e.clientY, vx: MAPA.view.x, vy: MAPA.view.y}; c.classList.add('grabbing'); }
+  });
+  c.addEventListener('mousemove', function(e) {
+    if (MAPA.dragN) {
+      var w = mapWorld(e);
+      MAPA.dragN.x = w.x; MAPA.dragN.y = w.y;
+      MAPA.alpha = Math.max(MAPA.alpha, 0.35);
+      return;
+    }
+    if (MAPA.panM) {
+      MAPA.view.x = MAPA.panM.vx + (e.clientX - MAPA.panM.mx);
+      MAPA.view.y = MAPA.panM.vy + (e.clientY - MAPA.panM.my);
+      return;
+    }
+    var n = mapHit(mapWorld(e));
+    MAPA.hover = n;
+    c.classList.toggle('hot', !!n);
+    if (n && tip) {
+      tip.innerHTML = '<div>' + esc(n.titulo || n.id) + '</div>' +
+        '<div class="mt-dir">' + esc(n.dir) + ' &middot; ' + n.chunks +
+        ' frag &middot; ' + n.deg + ' filamentos</div>';
+      tip.style.left = e.clientX + 'px';
+      tip.style.top = e.clientY + 'px';
+      tip.classList.add('show');
+    } else if (tip) tip.classList.remove('show');
+  });
+  document.addEventListener('mouseup', function(e) {
+    if (MAPA.downAt && MAPA.downAt.n) {
+      var moved = Math.abs(e.clientX - MAPA.downAt.x) + Math.abs(e.clientY - MAPA.downAt.y);
+      if (moved < 6) mapNodeClick(MAPA.downAt.n, e);
+    } else if (MAPA.downAt && !MAPA.downAt.n) {
+      mapCloseActions();
+    }
+    MAPA.dragN = null; MAPA.panM = null; MAPA.downAt = null;
+    c.classList.remove('grabbing');
+  });
+  c.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    var r = c.getBoundingClientRect();
+    var px = e.clientX - r.left, py = e.clientY - r.top;
+    var nk = Math.max(0.25, Math.min(3, MAPA.view.k * (e.deltaY < 0 ? 1.12 : 0.89)));
+    var wx = (px - MAPA.view.x) / MAPA.view.k, wy = (py - MAPA.view.y) / MAPA.view.k;
+    MAPA.view.k = nk;
+    MAPA.view.x = px - wx * nk;
+    MAPA.view.y = py - wy * nk;
+  }, {passive: false});
+  c.addEventListener('mouseleave', function() {
+    if (tip) tip.classList.remove('show');
+    MAPA.hover = null;
+  });
+}
+
 // ── init ──
 document.addEventListener('DOMContentLoaded', function() {
   renderNodes();
@@ -1608,7 +2256,10 @@ document.addEventListener('DOMContentLoaded', function() {
   setInterval(refreshJobs, 4000);
   refreshMemStats();
   setInterval(refreshMemStats, 15000);
-  window.addEventListener('resize', function() { drawConnections(); });
+  window.addEventListener('resize', function() { drawConnections(); mapResize(); });
+  mapBind();
+  // el micelio crece solo: si esta visible, refresca cada 25s
+  setInterval(function() { if (MAPA.running) mapRefresh(false); }, 25000);
   // fit to view on first load
   setTimeout(fitToView, 100);
 });
@@ -1636,6 +2287,14 @@ HTML = """<!doctype html>
       MAK Research
     </div>
     <span class="topbar-pill"><span class="status-dot idle" id="status-dot"></span>workflow engine</span>
+    <div class="view-toggle">
+      <button id="vt-flujo" class="active" onclick="setView('flujo')" title="Canvas de ejecucion">
+        <svg viewBox="0 0 16 16"><rect x="1" y="5" width="4" height="6" rx="1"/><rect x="11" y="5" width="4" height="6" rx="1"/><path d="M5 8h6"/></svg>
+        Flujo</button>
+      <button id="vt-mapa" onclick="setView('mapa')" title="Micelio semantico: el archivo vivo del departamento">
+        <svg viewBox="0 0 16 16"><circle cx="4" cy="4" r="1.7"/><circle cx="12" cy="5" r="1.7"/><circle cx="7" cy="12" r="1.7"/><path d="M5.4 5 6.4 10.6M5.6 4.4 10.3 4.9M11.2 6.4 8 10.7"/></svg>
+        Micelio</button>
+    </div>
   </div>
   <div class="topbar-center">
     <button class="mode-btn MODE_SINGLE_CSS" data-mode="single" onclick="setMode('single')">&#9889; Single</button>
@@ -1659,33 +2318,35 @@ HTML = """<!doctype html>
     </div>
     <div class="canvas-controls">
       <div class="tool-group">
-        <span class="tool-label">Zoom</span>
-        <button onclick="zoomBy(-0.15)" title="Alejar">&#8722;</button>
+        <button onclick="zoomBy(-0.15)" title="Alejar">
+          <svg viewBox="0 0 16 16"><path d="M3 8h10"/></svg></button>
         <span class="zoom-level" id="zoom-level">100%</span>
-        <button onclick="zoomBy(0.15)" title="Acercar">&#43;</button>
+        <button onclick="zoomBy(0.15)" title="Acercar">
+          <svg viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></svg></button>
         <button onclick="zoomReset()" title="Zoom 100%">1:1</button>
+        <button onclick="fitToView()" title="Encajar todo">
+          <svg viewBox="0 0 16 16"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg></button>
+        <button onclick="centerView()" title="Centrar vista">
+          <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.6"/><path d="M8 1v3M8 12v3M1 8h3M12 8h3"/></svg></button>
       </div>
       <div class="tool-group">
-        <span class="tool-label">Vista</span>
-        <button onclick="fitToView()" title="Encajar todo">&#8982; Encajar</button>
-        <button onclick="centerView()" title="Centrar">&#10021; Centrar</button>
+        <button onclick="addNode('trigger')" title="Agregar entrada (multiples permitidas)">
+          <svg viewBox="0 0 16 16"><path d="M10 2h4v12h-4M2 8h8M7 5l3 3-3 3"/></svg></button>
+        <button onclick="addNode('output')" title="Agregar salida (multiples permitidas)">
+          <svg viewBox="0 0 16 16"><path d="M6 2H2v12h4M6 8h8M11 5l3 3-3 3"/></svg></button>
+        <button onclick="addNode('nota')" title="Agregar nota">
+          <svg viewBox="0 0 16 16"><path d="M3 2h7l3 3v9H3zM10 2v3h3"/></svg></button>
+        <button onclick="organizar()" title="Auto-organizar nodos">
+          <svg viewBox="0 0 16 16"><circle cx="3.5" cy="3.5" r="1.4"/><circle cx="8" cy="3.5" r="1.4"/><circle cx="12.5" cy="3.5" r="1.4"/><circle cx="3.5" cy="8" r="1.4"/><circle cx="8" cy="8" r="1.4"/><circle cx="12.5" cy="8" r="1.4"/><circle cx="3.5" cy="12.5" r="1.4"/><circle cx="8" cy="12.5" r="1.4"/><circle cx="12.5" cy="12.5" r="1.4"/></svg></button>
+        <button onclick="resetLayout()" title="Resetear layout">
+          <svg viewBox="0 0 16 16"><path d="M2.5 8a5.5 5.5 0 1 1 1.6 3.9M2.5 13.5v-3h3"/></svg></button>
       </div>
       <div class="tool-group">
-        <span class="tool-label">Nodos</span>
-        <button onclick="addNode('trigger')" title="Agregar entrada (multiples entradas permitidas)">&#43; In</button>
-        <button onclick="addNode('output')" title="Agregar salida (multiples salidas permitidas)">&#43; Out</button>
-        <button onclick="addNode('nota')" title="Agregar nota">&#43; Nota</button>
-        <button onclick="organizar()" title="Auto-organizar">&#9783; Organizar</button>
-        <button onclick="resetLayout()" title="Resetear layout">&#8634; Reset</button>
-      </div>
-      <div class="tool-group">
-        <span class="tool-label">Grafo</span>
-        <button onclick="if(chequearGrafo(false))showToast('Grafo valido','success')" title="Validar flujo (ciclos, huerfanos, fan-out)">&#10003; Validar</button>
-      </div>
-      <div class="tool-group">
-        <span class="tool-label">Memoria</span>
-        <button onclick="reindexarMemoria()" title="Reindexar el archivo del departamento (embeddings locales)">&#8635; Reindexar</button>
-        <span class="zoom-level" id="mem-count" title="Fragmentos indexados">-- frag</span>
+        <button onclick="if(chequearGrafo(false))showToast('Grafo valido','success')" title="Validar flujo (ciclos, huerfanos, fan-out)">
+          <svg viewBox="0 0 16 16"><path d="M2.5 8.5l3.5 3.5 7-8"/></svg></button>
+        <button onclick="reindexarMemoria()" title="Reindexar memoria del departamento (embeddings locales)">
+          <svg viewBox="0 0 16 16"><path d="M8 2c3 0 5.5 1 5.5 2.5S11 7 8 7 2.5 6 2.5 4.5 5 2 8 2z"/><path d="M2.5 4.5v7C2.5 13 5 14 8 14s5.5-1 5.5-2.5v-7"/><path d="M2.5 8C2.5 9.5 5 10.5 8 10.5S13.5 9.5 13.5 8"/></svg></button>
+        <span class="zoom-level" id="mem-count" title="Fragmentos indexados en la memoria">--</span>
       </div>
     </div>
   </div>
@@ -1763,22 +2424,56 @@ HTML = """<!doctype html>
     </div>
 
     <div class="tab-content" id="tab-files">
-      <div class="panel-header">&#128193; Informes recientes</div>
-      <div class="panel-section">
-        <ul class="file-list">INFORMES_PLACEHOLDER</ul>
+      <div class="panel-header">&#128451; Archivo del departamento</div>
+      <div class="panel-section" style="border-bottom:none;padding-bottom:4px">
+        <input class="file-search" id="file-search" placeholder="Buscar en el archivo..."
+               oninput="filtrarArchivo(this.value)">
       </div>
-      <div class="panel-header">&#128193; Paneles recientes</div>
-      <div class="panel-section">
-        <ul class="file-list">PANELES_PLACEHOLDER</ul>
+      <div class="panel-section" style="border-bottom:none;padding-top:6px">
+        <ul class="file-list" id="archivo-list">ARCHIVO_PLACEHOLDER</ul>
       </div>
-      <div class="panel-header">&#128193; Cadenas recientes</div>
-      <div class="panel-section">
-        <ul class="file-list">CADENAS_PLACEHOLDER</ul>
+    </div>
+  </div>
+
+  <!-- ── MICELIO: mapa semantico del archivo (canvas 2D, fisica propia) ── -->
+  <div id="map-view">
+    <canvas id="map-canvas"></canvas>
+    <div class="map-legend">
+      <h4>&#129744; Micelio del archivo</h4>
+      <div id="legend-rows"></div>
+      <div class="map-counts" id="map-counts"></div>
+    </div>
+    <div class="map-hint">
+      <b>nodo</b> = pieza de research &middot; <b>filamento</b> = afinidad
+      semantica (embeddings locales) &middot; <b>click en una pieza</b> =
+      abrirla o INVESTIGAR desde ella con el modo activo de arriba; con
+      <b>Puente</b> eliges dos piezas y el departamento investiga la
+      relacion entre ambas. El micelio <b>crece y se remodela</b> con cada
+      research.
+    </div>
+    <div class="map-controls">
+      <div class="tool-group">
+        <span class="tool-label">Afinidad</span>
+        <div class="mc-slider">
+          <input type="range" id="map-umbral" min="35" max="90" value="55"
+                 oninput="mapSetUmbral(this.value)">
+          <span id="map-umbral-val">0.55</span>
+        </div>
       </div>
-      <div class="panel-header">&#128193; Refutaciones recientes</div>
-      <div class="panel-section">
-        <ul class="file-list">REFUTACIONES_PLACEHOLDER</ul>
+      <div class="tool-group">
+        <button onclick="mapRefresh(true)" title="Refrescar el micelio">
+          <svg viewBox="0 0 16 16"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v3h-3"/></svg>
+        </button>
+        <button onclick="mapFit()" title="Encajar">
+          <svg viewBox="0 0 16 16"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg>
+        </button>
       </div>
+    </div>
+    <div class="map-tooltip" id="map-tooltip"></div>
+    <div class="map-action" id="map-action"></div>
+    <div class="map-empty" id="map-empty" style="display:none">
+      <div style="font-size:2rem">&#129744;</div>
+      <div>El archivo esta vacio.<br>Corre un research y el micelio nace.</div>
     </div>
   </div>
 </div>
@@ -1959,6 +2654,17 @@ class H(BaseHTTPRequestHandler):
         if u.path == "/api/memoria/stats":
             return self._json_response(_memoria_stats())
 
+        # API: grafo semantico (nodos=productos, aristas=similitud embeddings)
+        if u.path == "/api/memoria/grafo":
+            try:
+                import memoria
+                q = urllib.parse.parse_qs(u.query)
+                umbral = float((q.get("umbral") or ["0.5"])[0])
+                return self._json_response(memoria.grafo_semantico(umbral=umbral))
+            except Exception as e:  # noqa: BLE001 - viz es best-effort
+                return self._json_response({"nodes": [], "edges": [],
+                                            "error": str(e)[:200]}, 200)
+
         # status
         if u.path == "/status":
             try:
@@ -2031,17 +2737,38 @@ class H(BaseHTTPRequestHandler):
             if not jobs_html:
                 jobs_html = '<li class="job-item" style="color:#8b949e">Sin jobs</li>'
 
-        # file lists
-        listas = {}
+        # archivo unificado: todos los productos como cards, nuevo primero
+        todos = []
         for d in DIRS:
-            items = ""
-            for f in _listar(d):
-                items += (
-                    '<li class="file-item"><a href="#" '
-                    'onclick="verArchivo(\'%s\',\'%s\');return false;">%s</a></li>'
-                    % (d, urllib.parse.quote(f), html.escape(f))
-                )
-            listas[d] = items or '<li class="file-item" style="color:#8b949e">(vacío)</li>'
+            try:
+                nombres = os.listdir(DIRS[d])
+            except OSError:
+                continue
+            todos += [(f, d) for f in nombres if f.endswith(".md")]
+        todos.sort(reverse=True)  # el nombre arranca con el stamp -> cronologico
+        cards = ""
+        for f, d in todos[:80]:
+            m = FECHA_RE.match(f)
+            if m:
+                fecha = "%s-%s-%s %s:%s" % m.groups()[:5]
+                titulo = m.group(7).replace("-", " ")
+            else:
+                fecha, titulo = "", f[:-3]
+            c = DIR_COLOR.get(d, "#8b949e")
+            cards += (
+                '<li class="file-card" data-q="%s %s" '
+                'onclick="verArchivo(\'%s\',\'%s\')">'
+                '<span class="fc-dot" style="background:%s;color:%s"></span>'
+                '<div class="fc-body"><div class="fc-title">%s</div>'
+                '<div class="fc-meta">%s</div></div>'
+                '<span class="fc-chip" style="background:%s22;color:%s">%s</span>'
+                '</li>'
+                % (html.escape(titulo.lower()), d, d, urllib.parse.quote(f),
+                   c, c, html.escape(titulo), fecha, c, c, DIR_CHIP.get(d, d))
+            )
+        archivo_html = cards or (
+            '<li class="file-item" style="color:#8b949e">(archivo vacio -- '
+            'corre un research)</li>')
 
         # build page with safe replacements
         page = HTML
@@ -2054,10 +2781,7 @@ class H(BaseHTTPRequestHandler):
         page = page.replace("___WF_DATA___", wf_json)
         page = page.replace("___ENV_DATA___", env_json)
         page = page.replace("JOBS_PLACEHOLDER", jobs_html)
-        page = page.replace("INFORMES_PLACEHOLDER", listas["informes"])
-        page = page.replace("PANELES_PLACEHOLDER", listas["paneles"])
-        page = page.replace("CADENAS_PLACEHOLDER", listas["cadenas"])
-        page = page.replace("REFUTACIONES_PLACEHOLDER", listas["refutaciones"])
+        page = page.replace("ARCHIVO_PLACEHOLDER", archivo_html)
 
         # mode buttons: initial active CSS class (space already in HTML template)
         page = page.replace(
