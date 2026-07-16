@@ -69,6 +69,7 @@ class ShowControlPlugin(PluginBase):
         self._engine = CueEngine()
         self._cue_output = None
         self._seq = {}                      # {universe: last sequence 1..255}
+        self._seq_lock = threading.Lock()   # cue + fabric + Flask threads all sequence
         self._cue_stop = threading.Event()
         self._cue_thread = None
         self._cue_thread_lock = threading.Lock()
@@ -314,11 +315,12 @@ class ShowControlPlugin(PluginBase):
 
     # ── cue engine: emitter + tick thread ─────────────────────────────────
     def _next_seq(self, universe):
-        s = self._seq.get(universe, 0) + 1
-        if s > 255:
-            s = 1
-        self._seq[universe] = s
-        return s
+        with self._seq_lock:
+            s = self._seq.get(universe, 0) + 1
+            if s > 255:
+                s = 1
+            self._seq[universe] = s
+            return s
 
     def _emit_events(self, events):
         out = self._cue_output
