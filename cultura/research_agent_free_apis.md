@@ -1,5 +1,10 @@
 # Research Agent n8n -- APIs gratis (multi-proveedor)
 
+> CAMINO CERRADO COMO FALLIDO (2026-07-15, orden del usuario). El deploy en
+> n8n 2.30.5 por CLI no registra el webhook (draft/publish + fila stale).
+> NO reintentar n8n. El code del Code node SI esta probado y sirve como base
+> de un runner standalone (sin n8n). Ver context/LAST_HANDOFF.md.
+
 Workflow: `cultura/research_agent_free_apis.json`. Reemplaza a
 `research_agent_mistral_nemo.json` (v1, NO importable: usaba el nodo
 `n8n-nodes-base.llm` que no existe en n8n, y `this.helpers` dentro de

@@ -8,7 +8,27 @@ en el telefono 200/403).
 El plan largo vive en context/PLAN_SIGUIENTE_AGENTE.md. Este es el estado corto.
 Historico viejo en git y docs/handoffs/archive/.
 
-## SESION 2026-07-15 (tarde) -- n8n MAK con APIs gratis
+## SESION 2026-07-15 (tarde) -- n8n MAK: CERRADO COMO FALLIDO (orden usuario)
+
+VEREDICTO: NO volver a gastar en el camino n8n para research. El codigo del
+agente FUNCIONA (probado fuera de n8n); lo que fallo es la operacion de n8n
+2.30.5 por CLI: (1) versionado draft/publish nuevo -- import crea draft, la
+version publicada queda vieja; (2) fila stale de webhook del v1 roto bloquea
+el path /research y el CLI no puede limpiarla (borrar workflow = denegado,
+razonable); (3) CLI con server corriendo enreda el estado SQLite. Se intento:
+import+id, activate, publish, cambio de path, secuencia offline -- 5 rondas,
+sin webhook registrado. SALIDA VIABLE NO USADA (decision usuario): 1 click en
+la UI (Publish/Activate) o runner standalone sin n8n. Si el research cultural
+revive: portar el harness probado como script directo en MAK, SIN n8n.
+
+Estado que quedo en MAK (inofensivo, no revertido para no gastar):
+~/n8n-local/research.env (600, keys), ~/research/research.sh (apunta a
+/webhook/research-cultural, muerto), workflow makCulturaResearch importado
+inactivo-efectivo, v1 wachumaMAK desactivado (nunca funciono: nodo
+n8n-nodes-base.llm inexistente), backup ~/research/backup_wachuma_v1.json,
+docker-compose.yml restaurado (backup .bak-20260715). Contenedor SIN keys.
+
+## Contexto tecnico de esa sesion (APIs si sirven, reutilizables)
 
 - APIs del usuario probadas con llamadas reales (keys en cultura/.dev,
   gitignored): Tavily OK; Groq OK (llama-3.3-70b-versatile, qwen3-32b,
