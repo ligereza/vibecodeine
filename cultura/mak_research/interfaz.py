@@ -2,9 +2,13 @@
 """interfaz.py -- interfaz web LAN del research MAK (puerto 8890).
 
 Interfaz tipo n8n con canvas visual, nodos arrastrables, conexiones SVG
-y 4 modelos intercambiables/editables (Groq, Cerebras, Azure, Ollama).
+editables (dos clicks entre puertos) y 4 modelos intercambiables/editables
+(Groq, Cerebras, Azure, Ollama). Soporta multiples triggers/outputs.
 
-Modos de flujo: single (uno activo), pipeline (encadenado), discussion (paralelo).
+Modos: single, pipeline (encadenado), discussion (comite: todos convergen
+al output), adversarial (proponente->refutadores->juez) y grafo (custom:
+las conexiones dibujadas dirigen la ejecucion real via grafo.py). Los
+primeros cuatro regeneran su topologia como preset; grafo la respeta.
 
     python3 interfaz.py   # http://192.168.50.2:8890
 
@@ -35,11 +39,12 @@ DIRS = {
     "cadenas": os.path.expanduser("~/research/cadenas"),
     "refutaciones": os.path.expanduser("~/research/refutaciones"),
     "correlaciones": os.path.expanduser("~/research/correlaciones"),
+    "grafos": os.path.expanduser("~/research/grafos"),
 }
 # modo (backend script) -> carpeta de salida; single reusa el motor de research
 MODO_DIR = {"research": "informes", "panel": "paneles",
             "cadena": "cadenas", "refutar": "refutaciones",
-            "corpus": "correlaciones"}
+            "corpus": "correlaciones", "grafo": "grafos"}
 # modos que NO requieren tema (correlacionan el archivo entero)
 MODO_SIN_TEMA = {"corpus"}
 JOBS_FILE = os.path.expanduser("~/research/jobs.jsonl")
@@ -64,9 +69,10 @@ NOMBRE_OK = re.compile(r"^[A-Za-z0-9._-]+\.(md|json)$")
 # ── workflow persistence ──
 
 DEFAULT_WORKFLOW = {
-    "mode": "pipeline",  # single | pipeline | discussion
+    # single | pipeline | discussion | adversarial | grafo (custom)
+    "mode": "pipeline",
     "nodes": {
-        "trigger": {"x": 80, "y": 200, "active": True},
+        "trigger": {"x": 80, "y": 200, "active": True, "tipo": "trigger"},
         "groq": {
             "x": 340, "y": 80, "active": True,
             "model": "", "temperature": 0.7, "max_tokens": 4096,
@@ -87,8 +93,17 @@ DEFAULT_WORKFLOW = {
             "model": "", "temperature": 0.7, "max_tokens": 4096,
             "system_prompt": "", "priority": 4,
         },
-        "output": {"x": 700, "y": 200, "active": True},
+        "output": {"x": 700, "y": 200, "active": True, "tipo": "output"},
     },
+    # Conexiones dirigidas [{from, to}]. En modo 'grafo' DIRIGEN la
+    # ejecucion real (grafo.py, orden topologico). En los otros modos son
+    # el dibujo del canvas (el preset del modo las regenera).
+    "connections": [
+        {"from": "trigger", "to": "groq"},
+        {"from": "groq", "to": "cerebras"},
+        {"from": "cerebras", "to": "azure"},
+        {"from": "azure", "to": "output"},
+    ],
 }
 
 
@@ -104,11 +119,19 @@ def _load_workflow():
         if "mode" in wf:
             merged["mode"] = wf["mode"]
         if "nodes" in wf:
+            merged["nodes"] = {}
             for k, v in wf["nodes"].items():
-                if k in merged["nodes"]:
-                    merged["nodes"][k].update(v)
+                base = DEFAULT_WORKFLOW["nodes"].get(k)
+                if base:
+                    node = json.loads(json.dumps(base))
+                    node.update(v)
+                    merged["nodes"][k] = node
                 else:
                     merged["nodes"][k] = v
+        # connections: si el archivo las trae (aunque sea []), mandan ellas;
+        # la lista vacia es un estado valido (grafo sin aristas aun)
+        if isinstance(wf.get("connections"), list):
+            merged["connections"] = wf["connections"]
         return merged
     except (OSError, json.JSONDecodeError, TypeError):
         return _deep_copy_default()
@@ -526,15 +549,35 @@ let saveTimer = null;
 
 const COLORS = {
   trigger: '#8957e5', groq: '#f0883e', cerebras: '#3fb950',
-  azure: '#58a6ff', ollama: '#d29922', output: '#f778ba',
+  azure: '#58a6ff', ollama: '#d29922', output: '#f778ba', nota: '#6e7681',
 };
 const ICONS = {
-  trigger: '&#9654;', groq: 'G', cerebras: 'C', azure: 'A', ollama: 'O', output: '&#9678;',
+  trigger: '&#9654;', groq: 'G', cerebras: 'C', azure: 'A', ollama: 'O',
+  output: '&#9678;', nota: '&#128221;',
 };
 const LABELS = {
   trigger: 'Trigger', groq: 'Groq', cerebras: 'Cerebras',
   azure: 'Azure', ollama: 'Ollama', output: 'Output',
 };
+const PROVIDERS = ['groq', 'cerebras', 'azure', 'ollama'];
+
+// tipo real de un nodo (compat con datos viejos sin campo tipo)
+function ntipo(id) {
+  var nd = workflow.nodes[id] || {};
+  if (nd.tipo) return nd.tipo;
+  if (PROVIDERS.indexOf(id) >= 0) return 'modelo';
+  if (id.indexOf('trigger') === 0) return 'trigger';
+  if (id.indexOf('output') === 0) return 'output';
+  if (id.indexOf('nota') === 0) return 'nota';
+  return 'modelo';
+}
+function isModelo(id) { return ntipo(id) === 'modelo'; }
+
+// estado de conexion manual: click en port-out arma, click en port-in cierra
+var connectFrom = null;   // id del nodo origen mientras se traza una arista
+var mousePos = {x: 0, y: 0};   // en coords de mundo (para la linea preview)
+
+if (!Array.isArray(workflow.connections)) workflow.connections = [];
 
 // ── safe escaping for HTML + template literals ──
 function esc(s) {
@@ -548,32 +591,60 @@ function esc(s) {
     .replace(/\$/g, '&#36;');
 }
 
-// ── nodos nota (agregables): anotaciones/instrucciones del flujo ──
-function nodeColor(id, nd) {
-  if (nd && nd.tipo === 'nota') return '#6e7681';
-  return COLORS[id] || '#8b949e';
+// ── color / label / icono por tipo (soporta multi trigger/output/nota) ──
+function nodeColor(id) {
+  var t = ntipo(id);
+  if (t === 'modelo') return COLORS[id] || '#8b949e';
+  return COLORS[t] || '#8b949e';
 }
-function nodeLabel(id, nd) {
-  if (nd && nd.tipo === 'nota') return nd.titulo || 'Nota';
-  return LABELS[id] || id;
+function nodeLabel(id) {
+  var nd = workflow.nodes[id] || {};
+  var t = ntipo(id);
+  if (t === 'nota') return nd.titulo || 'Nota';
+  if (t === 'modelo') return LABELS[id] || id;
+  // trigger/output: numerar los extra (trigger, trigger2, ...)
+  var base = LABELS[t] || t;
+  var suf = id.replace(t, '');
+  return suf ? base + ' ' + suf : base;
 }
-function addNode() {
-  var n = 1;
-  while (workflow.nodes['nota' + n]) n++;
-  var id = 'nota' + n;
-  workflow.nodes[id] = {
-    x: 120 + (n * 30) % 300, y: 340, active: true, tipo: 'nota',
-    titulo: 'Nota ' + n, texto: '',
-  };
+function nodeIcon(id) {
+  var t = ntipo(id);
+  if (t === 'modelo') return ICONS[id] || '?';
+  return ICONS[t] || '?';
+}
+function nextId(prefix) {
+  if (!workflow.nodes[prefix]) return prefix;   // primero sin sufijo
+  var n = 2;
+  while (workflow.nodes[prefix + n]) n++;
+  return prefix + n;
+}
+// Agrega un nodo del tipo pedido. modelo NO se agrega (solo hay 4 fijos).
+function addNode(tipo) {
+  tipo = tipo || 'nota';
+  var id = nextId(tipo);
+  var base = {x: 140 + (Object.keys(workflow.nodes).length * 26) % 320,
+              y: 360, active: true, tipo: tipo};
+  if (tipo === 'nota') { base.titulo = 'Nota'; base.texto = ''; }
+  workflow.nodes[id] = base;
   debouncedSave();
   renderNodes();
   drawConnections();
   selectNode(id);
-  showToast('Nodo nota agregado', 'success');
+  showToast('Nodo ' + tipo + ' agregado', 'success');
 }
+// Borra un nodo agregado (trigger/output extra o nota) y sus conexiones.
+// Los nodos base (trigger, output, los 4 modelos) NO se borran, se apagan.
 function deleteNode(id) {
-  if (!workflow.nodes[id] || workflow.nodes[id].tipo !== 'nota') return;
+  var t = ntipo(id);
+  var esBase = (id === 'trigger' || id === 'output' || isModelo(id));
+  if (!workflow.nodes[id] || esBase) {
+    showToast('Ese nodo no se borra (apagalo con el toggle)', 'info');
+    return;
+  }
   delete workflow.nodes[id];
+  workflow.connections = workflow.connections.filter(function(c) {
+    return c.from !== id && c.to !== id;
+  });
   selectedNode = null;
   debouncedSave();
   renderNodes();
@@ -599,56 +670,62 @@ function renderNodes() {
     el.style.left = nd.x + 'px';
     el.style.top = nd.y + 'px';
 
-    var color = nodeColor(id, nd);
-    var label = nodeLabel(id, nd);
+    var t = ntipo(id);
+    var color = nodeColor(id);
+    var label = nodeLabel(id);
     var subtitle;
-    if (nd.tipo === 'nota') {
+    if (t === 'nota') {
       subtitle = esc((nd.texto || '(nota vacía)').slice(0, 40));
+    } else if (t === 'trigger') {
+      subtitle = 'Entrada de tema';
+    } else if (t === 'output') {
+      subtitle = 'Recopila resultados';
     } else if (nd.model) {
       subtitle = esc(nd.model);
-    } else if (id === 'trigger') {
-      subtitle = 'Entrada de tema';
-    } else if (id === 'output') {
-      subtitle = 'Resultados';
     } else {
       subtitle = 'No configurado';
     }
 
-    var badgeText, badgeColor;
+    // badge: los nodos modelo muestran su orden en el flujo; trigger/output
+    // muestran su rol; nota nada
+    var badgeText = '', badgeColor = '#238636';
     if (nd.active === false) {
-      badgeText = 'OFF';
-      badgeColor = '#30363d';
-    } else if (workflow.mode === 'single') {
-      badgeText = 'Single';
+      badgeText = 'OFF'; badgeColor = '#30363d';
+    } else if (t === 'modelo') {
+      badgeText = workflow.mode === 'pipeline' ? 'Pipe #' + nd.priority
+                : (workflow.mode === 'single' ? 'Single' : 'Modelo');
       badgeColor = '#1f6feb';
-    } else {
-      badgeText = workflow.mode === 'pipeline' ? 'Pipe #' + nd.priority : 'Active';
-      badgeColor = '#238636';
+    } else if (t === 'trigger') {
+      badgeText = 'IN'; badgeColor = '#8957e5';
+    } else if (t === 'output') {
+      badgeText = 'OUT'; badgeColor = '#bc4b91';
     }
 
     var toggleClass = 'node-toggle' + (nd.active !== false ? ' on' : '');
     var priorityHtml = '';
-    if (workflow.mode !== 'single' && id !== 'trigger' && id !== 'output') {
+    if (t === 'modelo' && workflow.mode !== 'single') {
       priorityHtml = '<div class="node-priority">' + esc(nd.priority) + '</div>';
     }
-    var tempStr = (nd.temperature !== undefined) ? ' &middot; T:' + nd.temperature : '';
+    var tempStr = (t === 'modelo' && nd.temperature !== undefined)
+                  ? ' &middot; T:' + nd.temperature : '';
 
     el.innerHTML =
       '<button class="' + toggleClass + '" data-id="' + esc(id) + '" title="Activar/Desactivar"></button>' +
       priorityHtml +
       '<div class="node-header">' +
-        '<div class="node-icon" style="background:' + color + '">' + (ICONS[id] || '?') + '</div>' +
+        '<div class="node-icon" style="background:' + color + '">' + nodeIcon(id) + '</div>' +
         '<div style="overflow:hidden">' +
           '<div class="node-title">' + esc(label) + '</div>' +
           '<div class="node-subtitle">' + subtitle + '</div>' +
         '</div>' +
       '</div>' +
       '<div class="node-body">' +
-        '<span class="node-badge" style="background:' + badgeColor + ';color:#fff">' + badgeText + '</span>' +
+        (badgeText ? '<span class="node-badge" style="background:' + badgeColor + ';color:#fff">' + badgeText + '</span>' : '') +
         tempStr +
       '</div>' +
-      '<div class="port port-in" data-port="in" data-id="' + esc(id) + '"></div>' +
-      '<div class="port port-out" data-port="out" data-id="' + esc(id) + '"></div>';
+      // trigger no tiene entrada; output no tiene salida
+      (t === 'trigger' ? '' : '<div class="port port-in" data-port="in" data-id="' + esc(id) + '"></div>') +
+      (t === 'output' ? '' : '<div class="port port-out" data-port="out" data-id="' + esc(id) + '"></div>');
 
     wrap.appendChild(el);
 
@@ -666,9 +743,31 @@ function renderNodes() {
         e.preventDefault();
       });
       nodeEl.addEventListener('click', function(e) {
-        if (e.target.classList.contains('node-toggle')) return;
+        if (e.target.classList.contains('node-toggle') || e.target.classList.contains('port')) return;
         selectNode(nodeId);
       });
+      // ── conexiones manuales por los puertos (dos clicks) ──
+      // click en salida = arma; click en entrada de otro nodo = cierra.
+      var pOut = nodeEl.querySelector('.port-out');
+      if (pOut) pOut.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (connectFrom === nodeId) { connectFrom = null; drawConnections(); return; }
+        connectFrom = nodeId;
+        mousePos.x = workflow.nodes[nodeId].x + 210;
+        mousePos.y = workflow.nodes[nodeId].y + 40;
+        drawConnections();
+        showToast('Origen ' + nodeId + ': click en la entrada de otro nodo (Esc cancela)', 'info');
+      });
+      var pIn = nodeEl.querySelector('.port-in');
+      if (pIn) pIn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (!connectFrom) { showToast('Primero click en una salida (puerto derecho)', 'info'); return; }
+        addConnection(connectFrom, nodeId);
+        connectFrom = null;
+      });
+      // que agarrar un puerto no arrastre el nodo ni panee el fondo
+      if (pOut) pOut.addEventListener('mousedown', function(e) { e.stopPropagation(); });
+      if (pIn) pIn.addEventListener('mousedown', function(e) { e.stopPropagation(); });
     })(id, el);
   }
 
@@ -711,46 +810,61 @@ function drawConnections() {
   defs.appendChild(filter);
   svg.appendChild(defs);
 
-  var activeModels = Object.keys(workflow.nodes)
-    .filter(function(id) {
-      var nd = workflow.nodes[id];
-      return nd.active !== false && id !== 'trigger' && id !== 'output'
-             && nd.tipo !== 'nota';
-    })
-    .sort(function(a, b) {
-      return (workflow.nodes[a].priority || 0) - (workflow.nodes[b].priority || 0);
-    });
+  // Render de la lista real de conexiones. En modo grafo estas DIRIGEN
+  // la ejecucion; en los otros son el dibujo (el preset del modo las fija).
+  // Una arista con algun extremo inactivo se dibuja tenue (no corre).
+  var conns = workflow.connections || [];
+  for (var i = 0; i < conns.length; i++) {
+    var c = conns[i];
+    var fromEl = document.getElementById('node-' + c.from);
+    var toEl = document.getElementById('node-' + c.to);
+    if (!fromEl || !toEl) continue;
+    var nf = workflow.nodes[c.from], nt2 = workflow.nodes[c.to];
+    var apagada = (nf && nf.active === false) || (nt2 && nt2.active === false);
+    drawPath(svg, ns, fromEl, toEl, nodeColor(c.from), !apagada, i, apagada);
+  }
 
-  var triggerEl = document.getElementById('node-trigger');
-  var outputEl = document.getElementById('node-output');
-  if (!triggerEl) return;
-
-  if (workflow.mode === 'single') {
-    if (activeModels.length > 0) {
-      var mid = activeModels[0];
-      drawPath(svg, ns, triggerEl, document.getElementById('node-' + mid), COLORS[mid], true);
-      drawPath(svg, ns, document.getElementById('node-' + mid), outputEl, COLORS[mid], true);
-    }
-  } else if (workflow.mode === 'pipeline') {
-    var prev = 'trigger';
-    for (var i = 0; i < activeModels.length; i++) {
-      var m = activeModels[i];
-      drawPath(svg, ns, document.getElementById('node-' + prev), document.getElementById('node-' + m), COLORS[m], true);
-      prev = m;
-    }
-    if (activeModels.length > 0) {
-      drawPath(svg, ns, document.getElementById('node-' + activeModels[activeModels.length - 1]), outputEl, COLORS[activeModels[activeModels.length - 1]], true);
-    }
-  } else if (workflow.mode === 'discussion') {
-    for (var j = 0; j < activeModels.length; j++) {
-      var m2 = activeModels[j];
-      drawPath(svg, ns, triggerEl, document.getElementById('node-' + m2), COLORS[m2], true);
-      drawPath(svg, ns, document.getElementById('node-' + m2), outputEl, COLORS[m2], true);
+  // linea preview mientras se traza una conexion nueva
+  if (connectFrom) {
+    var fEl = document.getElementById('node-' + connectFrom);
+    if (fEl) {
+      var px = fEl.offsetLeft + fEl.offsetWidth;
+      var py = fEl.offsetTop + fEl.offsetHeight / 2;
+      var pv = document.createElementNS(ns, 'path');
+      pv.setAttribute('d', 'M' + px + ',' + py + ' L' + mousePos.x + ',' + mousePos.y);
+      pv.setAttribute('stroke', '#58a6ff');
+      pv.setAttribute('stroke-width', '2');
+      pv.setAttribute('stroke-dasharray', '5 4');
+      pv.setAttribute('fill', 'none');
+      svg.appendChild(pv);
     }
   }
 }
 
-function drawPath(svg, ns, fromEl, toEl, color, animated) {
+// alta de conexion validada: sin auto-lazo, sin duplicado, sin salir de
+// output ni entrar a trigger (esos no tienen ese puerto)
+function addConnection(from, to) {
+  if (!from || !to || from === to) { showToast('Conexion invalida', 'error'); return; }
+  if (ntipo(to) === 'trigger') { showToast('Un trigger no recibe entrada', 'error'); return; }
+  if (ntipo(from) === 'output') { showToast('Un output no tiene salida', 'error'); return; }
+  var dup = workflow.connections.some(function(c) { return c.from === from && c.to === to; });
+  if (dup) { showToast('Esa conexion ya existe', 'info'); return; }
+  workflow.connections.push({from: from, to: to});
+  debouncedSave();
+  drawConnections();
+  showToast('Conectado: ' + from + ' -> ' + to, 'success');
+}
+
+function removeConnection(idx) {
+  if (idx < 0 || idx >= workflow.connections.length) return;
+  var c = workflow.connections[idx];
+  workflow.connections.splice(idx, 1);
+  debouncedSave();
+  drawConnections();
+  showToast('Conexion quitada: ' + c.from + ' -> ' + c.to, 'info');
+}
+
+function drawPath(svg, ns, fromEl, toEl, color, animated, connIdx, apagada) {
   if (!fromEl || !toEl) return;
   var x1 = fromEl.offsetLeft + fromEl.offsetWidth;
   var y1 = fromEl.offsetTop + fromEl.offsetHeight / 2;
@@ -766,7 +880,7 @@ function drawPath(svg, ns, fromEl, toEl, color, animated) {
   pathBg.setAttribute('fill', 'none');
   pathBg.setAttribute('stroke', color);
   pathBg.setAttribute('stroke-width', '5');
-  pathBg.setAttribute('opacity', '0.1');
+  pathBg.setAttribute('opacity', apagada ? '0.04' : '0.1');
   pathBg.setAttribute('filter', 'url(#glow)');
   svg.appendChild(pathBg);
 
@@ -777,6 +891,7 @@ function drawPath(svg, ns, fromEl, toEl, color, animated) {
   path.setAttribute('stroke', color);
   path.setAttribute('stroke-width', '2');
   path.setAttribute('stroke-linecap', 'round');
+  path.setAttribute('opacity', apagada ? '0.3' : '1');
   if (animated) path.setAttribute('class', 'conn-animated');
   svg.appendChild(path);
 
@@ -784,7 +899,27 @@ function drawPath(svg, ns, fromEl, toEl, color, animated) {
   var arrow = document.createElementNS(ns, 'polygon');
   arrow.setAttribute('points', (x2 - 2) + ',' + (y2 - 5) + ' ' + (x2 + 7) + ',' + y2 + ' ' + (x2 - 2) + ',' + (y2 + 5));
   arrow.setAttribute('fill', color);
+  arrow.setAttribute('opacity', apagada ? '0.3' : '1');
   svg.appendChild(arrow);
+
+  // hit area clickable para borrar la conexion (solo si tiene indice)
+  if (connIdx !== undefined && connIdx !== null && connIdx >= 0) {
+    var hit = document.createElementNS(ns, 'path');
+    hit.setAttribute('d', d);
+    hit.setAttribute('fill', 'none');
+    hit.setAttribute('stroke', 'transparent');
+    hit.setAttribute('stroke-width', '14');
+    hit.style.pointerEvents = 'stroke';
+    hit.style.cursor = 'pointer';
+    hit.addEventListener('click', function(e) {
+      e.stopPropagation();
+      removeConnection(connIdx);
+    });
+    var tt = document.createElementNS(ns, 'title');
+    tt.textContent = 'Click para quitar esta conexion';
+    hit.appendChild(tt);
+    svg.appendChild(hit);
+  }
 }
 
 // ── node selection + panel ──
@@ -804,8 +939,11 @@ function renderPanel() {
   }
   var id = selectedNode;
   var nd = workflow.nodes[id];
+  var t = ntipo(id);
+  // los nodos extra (trigger2/output2/nota) se pueden borrar; los base no
+  var esExtra = (id !== 'trigger' && id !== 'output' && !isModelo(id));
 
-  if (nd.tipo === 'nota') {
+  if (t === 'nota') {
     panelBody.innerHTML =
       '<div class="panel-section">' +
         '<h3>Nodo nota</h3>' +
@@ -821,19 +959,22 @@ function renderPanel() {
     return;
   }
 
-  if (id === 'trigger' || id === 'output') {
+  if (t === 'trigger' || t === 'output') {
     panelBody.innerHTML =
       '<div class="panel-section">' +
-        '<h3>Nodo: ' + esc(LABELS[id]) + '</h3>' +
+        '<h3>Nodo: ' + esc(nodeLabel(id)) + '</h3>' +
         '<p style="color:#8b949e;font-size:.82rem">' +
-          (id === 'trigger'
-            ? 'Define el tema, modo y profundidad de la investigación.'
-            : 'Aquí se recopilan los resultados de todos los modelos activos.') +
+          (t === 'trigger'
+            ? 'Entrada del tema. Puedes tener varias entradas; cada modelo conectado recibe el tema.'
+            : 'Recopila los resultados de sus predecesores. Puedes tener varias salidas.') +
         '</p>' +
         '<div style="margin-top:12px">' +
           '<span style="font-size:.75rem;color:#8b949e">Posición</span>' +
           '<div style="font-size:.82rem;margin-top:4px">x: ' + nd.x + ' &middot; y: ' + nd.y + '</div>' +
         '</div>' +
+        (esExtra
+          ? '<div style="margin-top:14px"><button class="btn btn-secondary" onclick="deleteNode(\'' + esc(id) + '\')">&#128465; Eliminar</button></div>'
+          : '<p style="color:#6e7681;font-size:.75rem;margin-top:12px">Nodo base: se apaga con el toggle, no se borra.</p>') +
       '</div>';
     return;
   }
@@ -959,6 +1100,13 @@ document.addEventListener('mousemove', function(e) {
     view.x = panning.vx + (e.clientX - panning.mx);
     view.y = panning.vy + (e.clientY - panning.my);
     applyView();
+  } else if (connectFrom) {
+    // posicion del mouse en coords de mundo para la linea preview
+    var wrap = document.getElementById('canvas-wrap');
+    var r = wrap.getBoundingClientRect();
+    mousePos.x = (e.clientX - r.left - view.x) / view.k;
+    mousePos.y = (e.clientY - r.top - view.y) / view.k;
+    drawConnections();
   }
 });
 
@@ -966,6 +1114,8 @@ document.addEventListener('mousemove', function(e) {
 document.getElementById('canvas-wrap').addEventListener('mousedown', function(e) {
   if (e.target.id !== 'canvas-wrap' && e.target.id !== 'canvas-world'
       && e.target.id !== 'canvas-svg') return;
+  // click en vacio cancela una conexion a medio trazar
+  if (connectFrom) { connectFrom = null; drawConnections(); return; }
   panning = {mx: e.clientX, my: e.clientY, vx: view.x, vy: view.y};
   this.classList.add('panning');
 });
@@ -1015,10 +1165,67 @@ function save() {
 }
 
 // ── mode switching ──
-// canvas mode -> script backend real (single=research, pipeline=cadena
-// encadenada, discussion=panel paralelo, adversarial=refutar)
+// canvas mode -> script backend real. grafo = ejecutor real (grafo.py):
+// las conexiones dibujadas DIRIGEN el orden (no hay preset que las pise).
 var MODE_TO_BACKEND = {single: 'research', pipeline: 'cadena',
-                      discussion: 'panel', adversarial: 'refutar'};
+                      discussion: 'panel', adversarial: 'refutar',
+                      grafo: 'grafo'};
+
+// ids de nodos activos por tipo, modelos ordenados por prioridad
+function activosPorTipo() {
+  var trigs = [], outs = [], modelos = [];
+  Object.keys(workflow.nodes).forEach(function(id) {
+    var nd = workflow.nodes[id];
+    if (nd.active === false) return;
+    var t = ntipo(id);
+    if (t === 'trigger') trigs.push(id);
+    else if (t === 'output') outs.push(id);
+    else if (t === 'modelo') modelos.push(id);
+  });
+  modelos.sort(function(a, b) {
+    return (workflow.nodes[a].priority || 0) - (workflow.nodes[b].priority || 0);
+  });
+  return {trigs: trigs, outs: outs, modelos: modelos};
+}
+
+// Genera las conexiones de un preset. Soporta multiples trigger/output.
+// discussion = comite (todos convergen al output = correlacion).
+// adversarial = proponente -> refutadores -> juez.
+function presetConnections(mode) {
+  var a = activosPorTipo();
+  var C = [], i;
+  function link(f, t) { C.push({from: f, to: t}); }
+  if (!a.modelos.length || !a.trigs.length || !a.outs.length) return C;
+  var M = a.modelos;
+  if (mode === 'single') {
+    a.trigs.forEach(function(tr) { link(tr, M[0]); });
+    a.outs.forEach(function(o) { link(M[0], o); });
+  } else if (mode === 'pipeline') {
+    a.trigs.forEach(function(tr) { link(tr, M[0]); });
+    for (i = 0; i < M.length - 1; i++) link(M[i], M[i + 1]);
+    a.outs.forEach(function(o) { link(M[M.length - 1], o); });
+  } else if (mode === 'discussion') {
+    // comite: cada trigger alimenta a todos, todos convergen al output
+    M.forEach(function(m) {
+      a.trigs.forEach(function(tr) { link(tr, m); });
+      a.outs.forEach(function(o) { link(m, o); });
+    });
+  } else if (mode === 'adversarial') {
+    var prop = M[0], juez = M[M.length - 1];
+    var refs = M.slice(1, M.length - 1);
+    a.trigs.forEach(function(tr) { link(tr, prop); });
+    if (M.length === 1) {           // 1 modelo: propone y juzga
+      a.outs.forEach(function(o) { link(prop, o); });
+    } else if (refs.length === 0) { // 2 modelos: proponente -> juez
+      link(prop, juez);
+      a.outs.forEach(function(o) { link(juez, o); });
+    } else {
+      refs.forEach(function(r) { link(prop, r); link(r, juez); });
+      a.outs.forEach(function(o) { link(juez, o); });
+    }
+  }
+  return C;
+}
 
 function setMode(mode) {
   workflow.mode = mode;
@@ -1027,10 +1234,66 @@ function setMode(mode) {
   });
   var sel = document.getElementById('run-modo');
   if (sel && MODE_TO_BACKEND[mode]) sel.value = MODE_TO_BACKEND[mode];
+  // grafo = custom: respeta las conexiones dibujadas a mano.
+  // el resto regenera su topologia (asi el dibujo SIEMPRE matchea el modo).
+  if (mode !== 'grafo') workflow.connections = presetConnections(mode);
   debouncedSave();
   renderNodes();
   drawConnections();
-  showToast('Modo: ' + mode, 'info');
+  var msg = mode === 'grafo'
+    ? 'Modo grafo: las conexiones que dibujes dirigen la ejecucion'
+    : 'Modo: ' + mode;
+  showToast(msg, 'info');
+}
+
+// ── validacion de flujo extremo (espejo de grafo.py, pre-check en la UI) ──
+var MAXNODOS = 12, MAXFAN = 6;
+function validarGrafo() {
+  var a = activosPorTipo();
+  var errs = [];
+  if (!a.trigs.length) errs.push('Falta un nodo de entrada (trigger) activo.');
+  if (!a.outs.length) errs.push('Falta un nodo de salida (output) activo.');
+  if (!a.modelos.length) errs.push('No hay ningun modelo activo.');
+  if (a.modelos.length > MAXNODOS) errs.push('Demasiados modelos (' + a.modelos.length + ' > ' + MAXNODOS + ').');
+
+  var activos = {};
+  a.trigs.concat(a.outs, a.modelos).forEach(function(id) { activos[id] = true; });
+  var edges = (workflow.connections || []).filter(function(c) {
+    return activos[c.from] && activos[c.to];
+  });
+  // fan-out / fan-in
+  var fout = {}, fin = {}, adj = {}, indeg = {}, nodes = {};
+  edges.forEach(function(c) {
+    fout[c.from] = (fout[c.from] || 0) + 1;
+    fin[c.to] = (fin[c.to] || 0) + 1;
+    (adj[c.from] = adj[c.from] || []).push(c.to);
+    indeg[c.to] = (indeg[c.to] || 0) + 1;
+    nodes[c.from] = nodes[c.to] = true;
+  });
+  Object.keys(fout).forEach(function(k) { if (fout[k] > MAXFAN) errs.push("Nodo '" + k + "' con fan-out extremo (" + fout[k] + ')'); });
+  Object.keys(fin).forEach(function(k) { if (fin[k] > MAXFAN) errs.push("Nodo '" + k + "' con fan-in extremo (" + fin[k] + ')'); });
+  // ciclo (Kahn)
+  var idg = {}; Object.keys(nodes).forEach(function(k) { idg[k] = indeg[k] || 0; });
+  var cola = Object.keys(nodes).filter(function(k) { return !idg[k]; });
+  var visto = 0;
+  while (cola.length) {
+    var n = cola.pop(); visto++;
+    (adj[n] || []).forEach(function(m) { if (--idg[m] === 0) cola.push(m); });
+  }
+  if (visto < Object.keys(nodes).length) errs.push('El grafo tiene un ciclo (quita alguna conexion).');
+  // alcanzabilidad trigger -> output + huerfanos
+  if (a.trigs.length && a.outs.length && !errs.length) {
+    var seen = {}, stack = a.trigs.slice();
+    a.trigs.forEach(function(t) { seen[t] = true; });
+    while (stack.length) {
+      var x = stack.pop();
+      (adj[x] || []).forEach(function(m) { if (!seen[m]) { seen[m] = true; stack.push(m); } });
+    }
+    if (!a.outs.some(function(o) { return seen[o]; })) errs.push('Ningun output es alcanzable desde un trigger.');
+    var huer = a.modelos.filter(function(m) { return !seen[m]; });
+    if (huer.length) errs.push('Modelos sin conexion desde la entrada: ' + huer.join(', ') + '.');
+  }
+  return errs;
 }
 
 // ── canvas controls ──
@@ -1216,7 +1479,8 @@ function refreshJobs() {
         var link = '';
         if (j.path) {
           var MODO_DIR_JS = {research: 'informes', panel: 'paneles',
-                            cadena: 'cadenas', refutar: 'refutaciones'};
+                            cadena: 'cadenas', refutar: 'refutaciones',
+                            corpus: 'correlaciones', grafo: 'grafos'};
           var dir = MODO_DIR_JS[j.modo] || 'informes';
           link = '<a href="#" onclick="verArchivo(\'' + dir + '\',\'' +
             encodeURIComponent(j.path) + '\');return false;" style="color:#58a6ff;font-size:.75rem">ver</a>';
@@ -1237,11 +1501,12 @@ function refreshJobs() {
 
 // ── keyboard shortcuts ──
 document.addEventListener('keydown', function(e) {
-  // Escape: deselect
+  // Escape: cancela conexion a medio trazar; si no, deselecciona
   if (e.key === 'Escape') {
-    selectNode(null);
+    if (connectFrom) { connectFrom = null; drawConnections(); }
+    else selectNode(null);
   }
-  // Delete: toggle active on selected node
+  // Delete: apaga el nodo seleccionado (o lo borra si es nota/extra)
   if (e.key === 'Delete' && selectedNode && selectedNode !== 'trigger' && selectedNode !== 'output') {
     var nd = workflow.nodes[selectedNode];
     if (nd) {
@@ -1253,6 +1518,22 @@ document.addEventListener('keydown', function(e) {
     }
   }
 });
+
+// ── validar el grafo antes de correr (feedback instantaneo) ──
+// Muestra los problemas en el modal; devuelve true si esta sano.
+function chequearGrafo(bloquea) {
+  var errs = validarGrafo();
+  if (errs.length) {
+    var html = '<h3>Flujo con problemas</h3><ul>' +
+      errs.map(function(e) { return '<li>' + esc(e) + '</li>'; }).join('') + '</ul>' +
+      '<p style="color:#8b949e;margin-top:8px">' +
+      (bloquea ? 'Corrige el grafo antes de correr en modo grafo.'
+               : 'Aviso: el modo actual usa su propio script, pero el dibujo tiene estos problemas.') +
+      '</p>';
+    abrirModal('Validacion del grafo', html, false);
+  }
+  return errs.length === 0;
+}
 
 // ── init ──
 document.addEventListener('DOMContentLoaded', function() {
@@ -1294,6 +1575,7 @@ HTML = """<!doctype html>
     <button class="mode-btn MODE_PIPELINE_CSS" data-mode="pipeline" onclick="setMode('pipeline')">&#128279; Pipeline</button>
     <button class="mode-btn MODE_DISCUSSION_CSS" data-mode="discussion" onclick="setMode('discussion')">&#128172; Discussion</button>
     <button class="mode-btn MODE_ADVERSARIAL_CSS" data-mode="adversarial" onclick="setMode('adversarial')">&#9877; Adversarial</button>
+    <button class="mode-btn MODE_GRAFO_CSS" data-mode="grafo" onclick="setMode('grafo')" title="Las conexiones que dibujes dirigen la ejecucion">&#128376; Grafo</button>
   </div>
   <div class="topbar-right">
     <span class="topbar-pill">LAN</span>
@@ -1323,9 +1605,15 @@ HTML = """<!doctype html>
       </div>
       <div class="tool-group">
         <span class="tool-label">Nodos</span>
-        <button onclick="addNode()" title="Agregar nodo nota">&#43; Nodo</button>
+        <button onclick="addNode('trigger')" title="Agregar entrada (multiples entradas permitidas)">&#43; In</button>
+        <button onclick="addNode('output')" title="Agregar salida (multiples salidas permitidas)">&#43; Out</button>
+        <button onclick="addNode('nota')" title="Agregar nota">&#43; Nota</button>
         <button onclick="organizar()" title="Auto-organizar">&#9783; Organizar</button>
         <button onclick="resetLayout()" title="Resetear layout">&#8634; Reset</button>
+      </div>
+      <div class="tool-group">
+        <span class="tool-label">Grafo</span>
+        <button onclick="if(chequearGrafo(false))showToast('Grafo valido','success')" title="Validar flujo (ciclos, huerfanos, fan-out)">&#10003; Validar</button>
       </div>
     </div>
   </div>
@@ -1363,6 +1651,7 @@ HTML = """<!doctype html>
               <option value="cadena">Pipeline (cadena encadenada)</option>
               <option value="panel">Discussion (panel paralelo)</option>
               <option value="refutar">Adversarial (proponer/refutar)</option>
+              <option value="grafo">Grafo (conexiones dirigen la ejecucion)</option>
               <option value="corpus">Corpus (correlacionar archivo, sin tema)</option>
             </select>
           </div>
@@ -1426,6 +1715,7 @@ HTML = """<!doctype html>
     <option value="cadena">cadena</option>
     <option value="panel">panel</option>
     <option value="refutar">refutar</option>
+    <option value="grafo">grafo</option>
   </select>
   <button class="btn btn-accent" onclick="quickRun()">&#9654; Run</button>
   <button class="btn btn-secondary" onclick="location.reload()">&#8635;</button>
@@ -1462,26 +1752,45 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ── quick run ──
+// Persiste el workflow YA (sin debounce). Se usa antes de correr en modo
+// grafo: grafo.py lee workflow.json del disco, tiene que estar fresco.
+function saveNow() {
+  if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+  return fetch('/api/workflow', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(workflow),
+  }).then(function(r) { return r.json(); });
+}
+// dispara /run; si es grafo, guarda primero y valida
+function dispararRun(modo, body, onOk) {
+  function go() {
+    fetch('/run', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: body,
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.ok) { onOk(); }
+      else { showToast('Error: ' + (data.error || 'desconocido'), 'error'); }
+    })
+    .catch(function() { showToast('Error de conexión', 'error'); });
+  }
+  if (modo === 'grafo') {
+    if (!chequearGrafo(true)) return;
+    saveNow().then(go).catch(go);
+  } else { go(); }
+}
+
 function quickRun() {
   var tema = document.getElementById('quick-tema').value.trim();
   var modo = document.getElementById('quick-modo').value;
   if (!tema) return;
-  fetch('/run', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-    body: 'tema=' + encodeURIComponent(tema) + '&modo=' + modo,
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
-    if (data.ok) {
-      document.getElementById('quick-tema').value = '';
-      showToast('Job encolado: ' + tema, 'success');
-      refreshJobs();
-    } else {
-      showToast('Error: ' + (data.error || 'desconocido'), 'error');
-    }
-  })
-  .catch(function() { showToast('Error de conexión', 'error'); });
+  dispararRun(modo, 'tema=' + encodeURIComponent(tema) + '&modo=' + modo, function() {
+    document.getElementById('quick-tema').value = '';
+    showToast('Job encolado: ' + tema, 'success');
+    refreshJobs();
+  });
 }
 
 // ── run workflow (tab) ──
@@ -1493,23 +1802,12 @@ function runWorkflow() {
   if (!tema) return false;
   var body = 'tema=' + encodeURIComponent(tema) + '&modo=' + modo + '&densidad=' + densidad;
   if (n) body += '&n=' + n;
-  fetch('/run', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-    body: body,
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
-    if (data.ok) {
-      showToast('Workflow ejecutándose...', 'success');
-      document.getElementById('run-tema').value = '';
-      refreshJobs();
-      switchTab('history');
-    } else {
-      showToast('Error: ' + (data.error || 'desconocido'), 'error');
-    }
-  })
-  .catch(function() { showToast('Error de conexión', 'error'); });
+  dispararRun(modo, body, function() {
+    showToast('Workflow ejecutándose...', 'success');
+    document.getElementById('run-tema').value = '';
+    refreshJobs();
+    switchTab('history');
+  });
   return false;
 }
 </script>
@@ -1690,6 +1988,9 @@ class H(BaseHTTPRequestHandler):
         )
         page = page.replace(
             "MODE_ADVERSARIAL_CSS", "active" if wf["mode"] == "adversarial" else ""
+        )
+        page = page.replace(
+            "MODE_GRAFO_CSS", "active" if wf["mode"] == "grafo" else ""
         )
 
         self._html(page)

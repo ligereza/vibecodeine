@@ -8,6 +8,40 @@ verificado en vivo en MAK (5 modos corridos contra APIs reales + pantallazos).
 El plan largo vive en context/PLAN_SIGUIENTE_AGENTE.md. Este es el estado corto.
 Historico viejo en git y docs/handoffs/archive/.
 
+## SESION 2026-07-16 (b) -- MAK research: GRAFO REAL dirige la ejecucion
+Rama worktree-mak-research-cultural. El usuario pidio arreglar huecos del
+canvas: faltaban opciones de conexion en los nodos, la Discussion "no era
+comite ni circulo", el Adversarial "no se dibujaba", y queria multiples
+entradas/salidas anticipando flujos extremos. Eleccion de arquitectura del
+usuario (AskUserQuestion): "Grafo real dirige la ejecucion".
+
+Hecho y VERIFICADO EN VIVO:
+- grafo.py NUEVO: ejecutor de grafo real. Lee ~/research/workflow.json
+  (nodes + connections), valida (validar_grafo: ciclos/huerfanos/sin-camino
+  trigger->output/fan-out>6/>12 modelos), y ejecuta en orden topologico --
+  cada nodo-modelo recibe la salida concatenada de sus predecesores, los
+  trigger inyectan el tema, los output recopilan, cierra con correlacion.
+  Soporta multiples triggers/outputs (set-based). Salida en grafos/.
+- interfaz.py: el array `connections` ahora DIRIGE el dibujo (se acabaron las
+  topologias hardcodeadas por modo). Eso arregla los bugs reales: Discussion
+  = COMITE (trigger->todos los modelos->output, convergen); Adversarial SE
+  DIBUJA (proponente->refutadores->juez). Conexiones editables por los
+  puertos (2 clicks salida->entrada; click en arista = borrar; Esc cancela).
+  Multiples In/Out (+In/+Out; los nodos base se apagan, no se borran; los
+  extra y las notas si). Nuevo modo "Grafo" (custom: respeta las aristas
+  dibujadas, corre grafo.py). Los otros 4 modos regeneran su topologia como
+  PRESET (presetConnections) y siguen corriendo su script especializado.
+  validarGrafo (espejo JS) + boton Validar; en modo grafo el run se bloquea
+  si el grafo es invalido (chequearGrafo + saveNow antes de correr).
+- worker.py: SCRIPTS["grafo"]="grafo.py"; interfaz DIRS/MODO_DIR grafos/.
+- Verificacion: py_compile (local+MAK) OK, node --check del JS OK, validador
+  unit-tested (5 flujos extremos), 4 presets evaluados en node (correctos),
+  click real en Discussion regenero el comite (workflow.json 8 conns +
+  pantallazo), y un job grafo REAL corrio end-to-end en MAK (4 modelos en
+  orden topologico + correlacion 5750 chars, meta.errors=[]). Server VIVO
+  reiniciado en MAK (PID nuevo, http 200). Sigue pendiente del usuario abrir
+  ufw 8890 para verlo desde Windows.
+
 ## SESION 2026-07-16 -- MAK research: canvas visual + 5 modos + correlacion
 Rama worktree-mak-research-cultural (continua la de la noche anterior).
 La interfaz web crecio de un formulario a un CANVAS VISUAL tipo n8n

@@ -6,19 +6,41 @@ Estructura conceptual: **pagina (server) + acciones (modelos) + productos
 (archivos) + correlacion semantica sobre los productos**. Recibe cualquier
 tema X por 3 interfaces y devuelve informe Markdown.
 
-## Los 5 modos (acciones)
+## Los 6 modos (acciones)
 
 | Modo UI | Script | Que hace | Salida |
 |---|---|---|---|
 | **Single** | research.py | Loop iterativo SEARCH->FETCH->ANALYZE->DECIDE->informe | informes/ |
 | **Pipeline** | cadena.py | Encadenado: la salida de cada modelo alimenta al siguiente + correlacion | cadenas/ |
-| **Discussion** | panel.py | 4 modelos en paralelo (4 angulos), replicas cruzadas, sintesis + correlacion | paneles/ |
-| **Adversarial** | refutar.py | Un modelo propone tesis, el resto refuta, un juez veredicta | refutaciones/ |
+| **Discussion** | panel.py | Comite: todos los modelos convergen (paralelo + correlacion) | paneles/ |
+| **Adversarial** | refutar.py | Proponente -> refutadores -> juez que veredicta | refutaciones/ |
+| **Grafo** | grafo.py | Ejecutor real: las conexiones dibujadas DIRIGEN el orden (topologico) | grafos/ |
 | **Corpus** | correlacionar_archivos.py | Correlaciona TODO el archivo acumulado (sin tema): clusteres, hilos, huecos | correlaciones/ |
 
 Cadena LLM con fallback (research_lib.py): groq -> cerebras -> azure ->
 ollama local. Cada modo respeta un orden; cadena/refutar usan el orden de
 los nodos del canvas (prioridad).
+
+**Single/Pipeline/Discussion/Adversarial** corren su script especializado y
+regeneran su topologia como PRESET (el dibujo siempre matchea el modo).
+**Grafo** es el ejecutor real (`grafo.py`): NO usa preset, ejecuta las
+conexiones que dibujaste a mano en orden topologico -- cada nodo-modelo
+recibe como contexto la salida concatenada de sus predecesores, los trigger
+inyectan el tema, los output recopilan, y cierra con correlacion. Soporta
+multiples triggers y outputs.
+
+### Grafo real (conexiones dirigen la ejecucion)
+
+- Conexiones editables por los puertos del canvas: click en el puerto de
+  SALIDA (derecha) de un nodo, luego click en el puerto de ENTRADA
+  (izquierda) de otro. Click sobre una arista la borra. Esc cancela.
+- Multiples entradas/salidas: botones `+ In` / `+ Out` del tools menu. Los
+  nodos base (trigger, output, los 4 modelos) se apagan con el toggle, no se
+  borran; los extra (trigger2/output2/nota) si se borran.
+- Validador anti-flujo-extremo (`grafo.py` `validar_grafo` + espejo JS
+  `validarGrafo`, boton `Validar`): bloquea ciclos, modelos huerfanos, sin
+  camino trigger->output, y fan-out/in > 6 o > 12 modelos. En modo grafo el
+  run se bloquea si el grafo es invalido; en los otros modos solo avisa.
 
 | Rol | Proveedor | Modelo |
 |---|---|---|
@@ -60,17 +82,22 @@ timeout del worker (1800s) ni los limites free-tier. CLI: `--densidad`.
 2. **ntfy (iPhone, sin PC):** publicar a `$NTFY_TOPIC_IN`. Formatos:
    `tema` (research), `panel: tema`, `research: tema`. Respuestas por
    `$NTFY_TOPIC_OUT`.
-3. **CLI:** `python3 ~/research/{research,panel,cadena,refutar}.py "tema"`
-   o `correlacionar_archivos.py`.
+3. **CLI:** `python3 ~/research/{research,panel,cadena,refutar,grafo}.py "tema"`
+   o `correlacionar_archivos.py`. `grafo.py` lee `~/research/workflow.json`
+   (nodos + connections); valida y refusa si el grafo es invalido.
 
 ## Tools menu del canvas (UI)
 
 - **Zoom:** botones -/+, 1:1, y rueda del mouse sobre el cursor.
 - **Vista:** Encajar (fit-to-view por transform, no mueve nodos),
   Centrar; paneo arrastrando el fondo vacio.
-- **Nodos:** + Nodo (agrega nodo nota), Organizar (auto-layout por
-  prioridad), Reset. Los nodos nota son anotaciones del flujo, persisten
-  en workflow.json, no afectan la ejecucion.
+- **Nodos:** `+ In` (trigger extra), `+ Out` (output extra), `+ Nota`,
+  Organizar (auto-layout por prioridad), Reset. Los nodos nota son
+  anotaciones del flujo, persisten en workflow.json, no se ejecutan.
+- **Grafo:** `Validar` corre el chequeo de flujo extremo y muestra los
+  problemas en el modal.
+- **Conexiones:** dos clicks entre puertos para crear una arista, click
+  sobre la arista para borrarla (ver seccion "Grafo real").
 
 ## Operacion
 
@@ -116,9 +143,10 @@ timeout del worker (1800s) ni los limites free-tier. CLI: `--densidad`.
 
 1. Open WebUI (:8080): agregar connections Groq/Cerebras/Azure -- necesita
    login admin del usuario, solo config UI.
-2. Conectar la config por-nodo del canvas (temperature/system_prompt) a
-   la ejecucion real (hoy el canvas define orden/activo, no prompts).
-3. Nodos nota -> inyectar su texto como instruccion extra al flujo.
+2. Config por-nodo en los modos preset: grafo.py ya usa system_prompt del
+   nodo; falta que cadena/panel/refutar lean temperature/system_prompt del
+   canvas (hoy solo respetan orden/activo).
+3. Nodos nota -> inyectar su texto como instruccion extra al flujo grafo.
 4. Rotacion/paginado de informes (crecen sin limite).
 5. LiteLLM proxy (gateway :4000) SOLO si crecen los consumidores.
 

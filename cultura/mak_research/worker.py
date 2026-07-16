@@ -37,10 +37,11 @@ def _clear_status():
 # modo -> script real. single=research (loop), pipeline=cadena
 # (encadenado, la salida de uno alimenta al siguiente), discussion=panel
 # (4 modelos en paralelo, sin encadenar), adversarial=refutar (proponer
-# una tesis y que el resto la refute).
+# una tesis y que el resto la refute), grafo=grafo (ejecutor real: las
+# conexiones del canvas dirigen el orden, orden topologico).
 SCRIPTS = {"research": "research.py", "panel": "panel.py",
            "cadena": "cadena.py", "refutar": "refutar.py",
-           "corpus": "correlacionar_archivos.py"}
+           "corpus": "correlacionar_archivos.py", "grafo": "grafo.py"}
 N_FLAG = {"research": "--iteraciones", "panel": "--replicas"}
 # corpus no toma tema posicional (correlaciona el archivo entero)
 SIN_TEMA = {"corpus"}
