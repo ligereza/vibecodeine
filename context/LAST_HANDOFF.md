@@ -8,6 +8,29 @@ en el telefono 200/403).
 El plan largo vive en context/PLAN_SIGUIENTE_AGENTE.md. Este es el estado corto.
 Historico viejo en git y docs/handoffs/archive/.
 
+## SESION 2026-07-15 (tarde) -- n8n MAK con APIs gratis
+
+- APIs del usuario probadas con llamadas reales (keys en cultura/.dev,
+  gitignored): Tavily OK; Groq OK (llama-3.3-70b-versatile, qwen3-32b,
+  gpt-oss-120b); Cerebras OK (gpt-oss-120b, zai-glm-4.7 -- catalogo free
+  ROTA, llama3.1-8b ya no existe); Azure Foundry OK con deployment
+  gpt-5-mini en https://ligereza.services.ai.azure.com (el "chatgpt mini";
+  razonador: sin temperature, max_completion_tokens); Azure classic
+  risearch.openai.azure.com auth OK pero 0 deployments = inutilizable.
+- Workflow n8n NUEVO cultura/research_agent_free_apis.json (+ doc .md):
+  reemplaza research_agent_mistral_nemo.json v1, que NO era importable
+  (nodo n8n-nodes-base.llm inexistente + this.helpers dentro de function
+  declarations = crash + nodo Prep huerfano). v2: 4 nodos (Webhook,
+  Set, Code loop+informe, Respond), cadena LLM fallback
+  groq->cerebras->azure->ollama(MAK), dedupe de URLs entre iteraciones,
+  meta con llmCalls/errors/fuentes. Keys por $env o body, NUNCA en el JSON.
+- VERIFICADO: json.tool OK, node --check OK, harness que simula el sandbox
+  n8n corrio el code real: 1 iter, 4 findings, informe coherente, 17s;
+  fallback probado rompiendo Groq (4x401 -> Cerebras absorbio todo).
+- MAK: ssh mak@192.168.50.2 (key ~/.ssh/flujo_ollama) OK; n8n vivo :5678;
+  ollama :11434 solo local (bien). PENDIENTE: setear env vars del
+  contenedor n8n (ver doc) + importar el workflow + curl de prueba.
+
 ## SESION 2026-07-15 (autonoma) -- xio showcontrol + aislar MAK del xio
 
 - showcontrol (commit 8719929): plugin xio OSC + Art-Net + sACN, SEND-only, pure
