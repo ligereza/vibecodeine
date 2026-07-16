@@ -16,8 +16,8 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-from research_lib import (LLM, load_env, marco, ntfy_publish, slug, stamp,
-                          tavily_search)
+from research_lib import (LLM, correlacionar, escala_tok, load_env, marco,
+                          ntfy_publish, slug, stamp, tavily_search)
 
 OUT_DIR = os.path.expanduser("~/research/paneles")
 
@@ -61,12 +61,13 @@ def _contexto(res):
     return "\n".join(lines) or "(sin resultados de busqueda)"
 
 
-def debatir(tema, replicas=2):
+def debatir(tema, replicas=2, densidad="medio"):
     t0 = time.time()
     llm = LLM()
     habla = {}  # angulo -> lista de (proveedor_real, texto)
 
     # 1. Busquedas en paralelo, un angulo cada una (4 creditos Tavily).
+    print("STATUS: Buscando contextos en paralelo (4 angulos)...", flush=True)
     with ThreadPoolExecutor(max_workers=4) as ex:
         busq = list(ex.map(
             lambda p: tavily_search(p["query"].format(tema=tema),
@@ -86,11 +87,12 @@ def debatir(tema, replicas=2):
             "palabras): tesis clara, 3-4 argumentos con fuente, y una "
             "pregunta abierta para los otros panelistas."
             % (tema, p["angulo"], contextos[p["angulo"]]),
-            900, order=orden)
+            escala_tok(900, densidad), order=orden)
         return p["angulo"], real, texto
 
     # 2. Posiciones iniciales en paralelo (ollama local va lento; los
     #    otros 3 son API remota, el pool los solapa).
+    print("STATUS: Redactando posiciones iniciales...", flush=True)
     with ThreadPoolExecutor(max_workers=4) as ex:
         for angulo, real, texto in ex.map(posicion, PANEL):
             habla[angulo] = [(real, texto)]
@@ -98,6 +100,7 @@ def debatir(tema, replicas=2):
     # 3. Rondas de replica: cada panelista lee la ultima intervencion de
     #    los otros tres y replica.
     for ronda in range(1, replicas + 1):
+        print(f"STATUS: Ronda de replica {ronda}/{replicas}...", flush=True)
         def replica(p, _ronda=ronda):
             otros = "\n\n".join(
                 "[%s dijo]:\n%s" % (a, habla[a][-1][1][:1800])
@@ -112,7 +115,7 @@ def debatir(tema, replicas=2):
                 "discrepas y que matiz aporta tu angulo %s."
                 % (tema, _ronda, habla[p["angulo"]][-1][1][:1500], otros,
                    p["angulo"]),
-                600, order=orden)
+                escala_tok(600, densidad), order=orden)
             return p["angulo"], real, texto
 
         with ThreadPoolExecutor(max_workers=4) as ex:
@@ -120,6 +123,7 @@ def debatir(tema, replicas=2):
                 habla[angulo].append((real, texto))
 
     # 4. Sintesis final: gpt-5-mini primero en la cadena.
+    print("STATUS: Sintetizando panel...", flush=True)
     transcripcion = "\n\n".join(
         "### Angulo %s (%s)\n\n%s" % (
             a, ", ".join(r for r, _ in habla[a]),
@@ -135,11 +139,19 @@ def debatir(tema, replicas=2):
         "ABIERTAS, 6. FUENTES CITADAS.\n\nTRANSCRIPCION:\n%s\n\nFUENTES "
         "DE BUSQUEDA:\n%s"
         % (tema, transcripcion[:24000], "\n".join(fuentes)),
-        2200, order=["azure", "groq", "cerebras", "ollama"])
+        escala_tok(2200, densidad), order=["azure", "groq", "cerebras", "ollama"])
+
+    # 5. Correlacion semantica: el modelo capaz ordena/relaciona lo que
+    #    dijo cada modelo (hilo comun, convergencias, tensiones, vacios).
+    print("STATUS: Correlacionando (departamento research)...", flush=True)
+    piezas = [{"modelo": "%s/%s" % (a, r), "texto": t}
+              for a in habla for r, t in habla[a]]
+    correlacion, _ = correlacionar(llm, tema, piezas, densidad)
 
     return {
         "tema": tema,
         "sintesis": sintesis,
+        "correlacion": correlacion,
         "transcripcion": {a: [{"modelo": r, "texto": t} for r, t in habla[a]]
                           for a in habla},
         "meta": {
@@ -171,8 +183,11 @@ def main():
     with open(base + ".json", "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=1)
     with open(base + ".md", "w", encoding="utf-8") as f:
-        f.write("# Panel: %s\n\n%s\n\n---\n\n## Transcripcion\n\n" %
-                (args.tema, result["sintesis"]))
+        f.write("# Panel: %s\n\n%s\n\n" % (args.tema, result["sintesis"]))
+        if result.get("correlacion"):
+            f.write("---\n\n## Correlacion semantica (departamento research)\n\n%s\n\n"
+                    % result["correlacion"])
+        f.write("---\n\n## Transcripcion\n\n")
         for a, turnos in result["transcripcion"].items():
             f.write("### %s\n\n" % a)
             for i, t in enumerate(turnos):

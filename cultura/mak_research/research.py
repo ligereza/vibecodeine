@@ -16,14 +16,14 @@ import os
 import sys
 import time
 
-from research_lib import (LLM, fetch_url, load_env, marco, ntfy_publish,
-                         slug, stamp, tavily_search)
+from research_lib import (LLM, escala_tok, fetch_url, load_env, marco,
+                         ntfy_publish, slug, stamp, tavily_search)
 
 OUT_DIR = os.path.expanduser("~/research/informes")
 
 
 def investigar(topic, iteraciones=3, depth="basic",
-               providers="groq,cerebras,azure,ollama"):
+               providers="groq,cerebras,azure,ollama", densidad="medio"):
     t0 = time.time()
     llm = LLM(providers)
     iteraciones = min(max(iteraciones, 1), 10)
@@ -33,6 +33,7 @@ def investigar(topic, iteraciones=3, depth="basic",
     current = topic
 
     for i in range(iteraciones):
+        print(f"STATUS: Buscando iteracion {i + 1}/{iteraciones}: {current[:50]}...", flush=True)
         query_history.append(current)
         search = tavily_search(current, depth, errors=llm.errors)
 
@@ -42,7 +43,8 @@ def investigar(topic, iteraciones=3, depth="basic",
 
         fresh = [r for r in (search.get("results") or [])
                  if r.get("url") and r["url"] not in seen_urls][:3]
-        for r in fresh:
+        for idx, r in enumerate(fresh):
+            print(f"STATUS: Analizando fuente {idx + 1}/{len(fresh)} (iteracion {i + 1})", flush=True)
             seen_urls.add(r["url"])
             raw = fetch_url(r["url"])
             content = raw if len(raw) > 200 else (r.get("content") or raw)
@@ -55,7 +57,7 @@ def investigar(topic, iteraciones=3, depth="basic",
                 'Devuelve JSON: {"key_facts":["..."],"relevance":'
                 '"alta|media|baja","summary":"2-3 frases","new_angles":["..."]}'
                 % (topic, r.get("title", ""), r["url"], content),
-                900,
+                escala_tok(900, densidad),
             )
             try:
                 parsed = json.loads(
@@ -80,7 +82,7 @@ def investigar(topic, iteraciones=3, depth="basic",
             % (topic, i + 1, iteraciones,
                json.dumps(findings[-5:], ensure_ascii=False)[:6000],
                " | ".join(query_history)),
-            300,
+            escala_tok(300, densidad),
         )
         if decision.strip().upper().startswith("FINALIZAR"):
             break
@@ -94,6 +96,7 @@ def investigar(topic, iteraciones=3, depth="basic",
         current = nxt[:300]
 
     sources = list(dict.fromkeys(f["url"] for f in findings if f.get("url")))
+    print("STATUS: Generando informe final...", flush=True)
     try:
         report, _ = llm.call(
             "Eres un investigador senior. Redactas informes claros en "
@@ -104,7 +107,7 @@ def investigar(topic, iteraciones=3, depth="basic",
             'TEMA: "%s"\n\nHALLAZGOS:\n%s\n\nFUENTES:\n%s'
             % (topic, json.dumps(findings, ensure_ascii=False, indent=1)[:14000],
                "\n".join(sources)),
-            2000,
+            escala_tok(2000, densidad),
         )
     except RuntimeError as e:
         report = ("[Informe no generado: %s] Revisar meta.errors y findings "
@@ -133,6 +136,8 @@ def main():
     ap.add_argument("--iteraciones", type=int, default=2)  # frugal: mas es opt-in
     ap.add_argument("--depth", choices=("basic", "advanced"), default="basic")
     ap.add_argument("--providers", default="groq,cerebras,azure,ollama")
+    ap.add_argument("--densidad", choices=("corto", "medio", "largo"), default="medio",
+                    help="escala tokens por llamada; techo duro anti-timeout")
     ap.add_argument("--sin-marco", action="store_true",
                     help="sin el marco cultural descriptivo")
     ap.add_argument("--ntfy", action="store_true",
@@ -142,7 +147,8 @@ def main():
 
     load_env()
     topic = marco(args.tema, activo=not args.sin_marco)
-    result = investigar(topic, args.iteraciones, args.depth, args.providers)
+    result = investigar(topic, args.iteraciones, args.depth, args.providers,
+                        args.densidad)
 
     os.makedirs(args.out, exist_ok=True)
     base = os.path.join(args.out, "%s-%s" % (stamp(), slug(args.tema)))

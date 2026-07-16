@@ -1,12 +1,34 @@
 # LAST HANDOFF -- estado para el proximo agente
 
-Version: 0.51.0 | Fecha: 2026-07-15 | Identidad: Cauce | Suite completa: VERDE
-2026-07-13 (392 passed, 1 skipped). Sesion 2026-07-15: checkpoint SIN re-correr la
-suite (pedido del usuario); verificado lo tocado (compileall server.py OK + en vivo
-en el telefono 200/403).
+Version: 0.51.0 | Fecha: 2026-07-16 | Identidad: Cauce | Suite completa: VERDE
+2026-07-13 (392 passed, 1 skipped). Sesion 2026-07-16: checkpoint SIN re-correr la
+suite del repo (el trabajo es cultura/mak_research/, no toca src/flujo);
+verificado en vivo en MAK (5 modos corridos contra APIs reales + pantallazos).
 
 El plan largo vive en context/PLAN_SIGUIENTE_AGENTE.md. Este es el estado corto.
 Historico viejo en git y docs/handoffs/archive/.
+
+## SESION 2026-07-16 -- MAK research: canvas visual + 5 modos + correlacion
+Rama worktree-mak-research-cultural (continua la de la noche anterior).
+La interfaz web crecio de un formulario a un CANVAS VISUAL tipo n8n
+(interfaz.py, ~1500 lineas): 5 modos reales cableados end-to-end y
+verificados en vivo en MAK -- Single (research.py), Pipeline (cadena.py
+NUEVO, encadenado), Discussion (panel.py), Adversarial (refutar.py NUEVO,
+proponer/refutar/juzgar), Corpus (correlacionar_archivos.py NUEVO,
+correlaciona TODO el archivo). Correlacion semantica ("departamento"):
+el modelo capaz (azure gpt-5-mini) ordena/relaciona lo que dicen los
+modelos, por-job (panel/cadena) y sobre-el-corpus (modo Corpus).
+Agregados: perilla de densidad (corto/medio/largo, escala tokens con
+techo duro anti-timeout), auto-repair (boton en jobs fallidos -> el
+modelo capaz diagnostica), nodos nota agregables al canvas, tools menu
+(zoom rueda+botones, pan arrastrando fondo, Encajar/Centrar/Organizar),
+modal para ver resultados DENTRO de la app, log de error explicito por
+job, token auth opcional, historial jobs.jsonl. Fix importante:
+Cache-Control no-cache en interfaz.py (Firefox cacheaba HTML viejo por
+origen). Todo desplegado y VIVO en MAK ~/research/. PENDIENTE del usuario:
+ufw bloquea 8890 desde la LAN (correr `sudo ufw allow from
+192.168.50.0/24 to any port 8890 proto tcp` para ver desde Windows). El
+usuario avisa si pilla bugs. Detalle completo: cultura/mak_research/MAK_RESEARCH.md.
 
 ## SESION 2026-07-15 (noche) -- MAK research cultural VIVO (sin n8n)
 Rama worktree-mak-research-cultural. n8n CERRADO como fallido (orden usuario,

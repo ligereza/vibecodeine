@@ -29,6 +29,64 @@ DEFAULTS = {
     "OLLAMA_MODEL": "aya-expanse:8b",
 }
 
+# Densidad del trabajo: escala max_tok por llamada. Tope duro para no
+# pasar el timeout del worker (1800s) ni los limites de free-tier.
+DENSIDAD_TOK = {"corto": 0.6, "medio": 1.0, "largo": 1.8}
+TOPE_TOK = 4000
+
+
+def escala_tok(base, densidad="medio"):
+    return min(int(base * DENSIDAD_TOK.get(densidad, 1.0)), TOPE_TOK)
+
+
+# Modelo "capaz": el mas fuerte razonando/correlacionando. gpt-5-mini
+# (azure) por defecto; se usa para correlacion semantica y auto-reparacion.
+MODELO_CAPAZ = "azure"
+
+
+def correlacionar(llm, tema, piezas, densidad="medio"):
+    """Departamento de research: un modelo capaz LEE las intervenciones de
+    todos los modelos y produce un ordenamiento semantico + correlacion
+    tematica (que ideas se refuerzan, cuales chocan, que hilo comun emerge).
+    `piezas` = lista de {modelo, texto}. Devuelve (texto_correlacion, real).
+    No inventa: solo ordena y relaciona lo que los modelos ya dijeron."""
+    cuerpo = "\n\n".join(
+        "[%s]: %s" % (p.get("modelo", "?"), (p.get("texto") or "")[:2000])
+        for p in piezas if p.get("texto"))
+    if not cuerpo.strip():
+        return "", None
+    orden = [MODELO_CAPAZ] + [x for x in llm.order if x != MODELO_CAPAZ]
+    return llm.call(
+        "Eres el coordinador de un departamento de investigacion cultural. "
+        "NO aportas contenido nuevo: tu trabajo es CORRELACIONAR lo que ya "
+        "dijeron los investigadores. Espanol correcto con tildes, Markdown.",
+        'TEMA: "%s"\n\nINTERVENCIONES DE LOS INVESTIGADORES:\n%s\n\n'
+        "Produce una CORRELACION con: 1. HILO COMUN (que idea central "
+        "comparten), 2. CONVERGENCIAS (donde se refuerzan, cita por "
+        "modelo), 3. TENSIONES (donde se contradicen o compiten), "
+        "4. VACIOS (que angulo nadie cubrio), 5. MAPA ORDENADO (los "
+        "hallazgos jerarquizados de mas a menos solido segun la evidencia "
+        "citada)." % (tema, cuerpo),
+        escala_tok(1200, densidad), order=orden)
+
+
+def diagnosticar_error(llm, contexto, error, densidad="medio"):
+    """Auto-reparacion: el modelo capaz LEE el error real de un job fallido
+    y devuelve diagnostico + causa probable + fix concreto. Devuelve
+    (texto, real). Capa de sugerencia: no ejecuta nada por si mismo."""
+    orden = [MODELO_CAPAZ] + [x for x in llm.order if x != MODELO_CAPAZ]
+    return llm.call(
+        "Eres un ingeniero senior depurando un sistema de research "
+        "multi-modelo en Python (research.py/panel.py/cadena.py/refutar.py "
+        "sobre APIs Groq/Cerebras/Azure/Ollama + Tavily). Respondes conciso "
+        "y accionable, en espanol, formato Markdown.",
+        "CONTEXTO DEL JOB:\n%s\n\nERROR / SALIDA REAL:\n%s\n\n"
+        "Diagnostica: 1. QUE FALLO (una linea), 2. CAUSA PROBABLE, "
+        "3. FIX CONCRETO (comando o cambio exacto), 4. COMO EVITARLO. "
+        "Si el error es un limite/rate de API o timeout, dilo claro."
+        % (contexto[:1500], (error or "(sin detalle)")[:2500]),
+        escala_tok(900, densidad), order=orden)
+
 # Marco editorial cultura (flujo): capa descriptiva si, nada operativo,
 # jamas perfilar personas reales. Viaja con toda pieza derivada.
 MARCO_CULTURA = (
