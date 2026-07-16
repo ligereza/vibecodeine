@@ -26,9 +26,25 @@ Rama claude/cultura-xio-mistral-20260715, PR #45 (draft). Todo pusheado.
   headless. cultura/.dev (key Tavily) gitignored, jamas en git.
 - Gate del repo verde: compileall src/flujo OK, pytest verde (1 skip),
   flujo verify OK.
-- PENDIENTE: merge PR #45; deploy showcontrol v1.8 al Xiaomi (USB runbook) +
-  humo LAN; splat/rllm del grafo piden GPU/camara (investigacion, no software
-  puro del server).
+- DESPLEGADO EN VIVO al Xiaomi (192.168.198.7:5000, adb USB 8299e66f): v1.8.0
+  con 27 rutas. Push al staging /sdcard/xio_termux/new-plugins/ (los reinicios
+  futuros conservan v1.8) + relanzo via input-dance. Humo real sobre la LAN:
+  /obs /auth /timeline /panel 200; ciclo completo PC->OSC /xio/go :9001 ->
+  cue disparado -> 17 frames Art-Net reales (loopback, sin rig) -> release.
+  REGLA DURA: nunca hot-reload de un plugin cuyas RUTAS cambiaron (Flask no
+  desregistra rutas; las viejas quedan apuntando a la instancia vieja SIN
+  token) -- siempre reinicio completo con run_server.sh.
+- Fix descubierto en el deploy: last_error era pegajoso -> /obs quedaba en
+  health=error para siempre tras un error transitorio. Ahora envejece (60s,
+  property con timestamp, expone last_error_age_s). Verificado cronometrado
+  en el telefono (error t+3s -> ok a los 62.5s).
+- Token de show: SIN setear (modo crew abierto). Activar = POST /auth/set
+  {"generate":true} (mejor desde la tablet del usuario, el token se devuelve
+  UNA vez). OJO: run_server.sh borra el data dir -> el token se pierde en cada
+  redeploy, re-setearlo.
+- n8n CERRADO por decision del usuario (no reintentar; la via para el research
+  wachuma es un runner standalone). splat/rllm del grafo piden GPU/camara.
+- PENDIENTE: merge PR #45.
 
 ## SESION 2026-07-15 (autonoma) -- xio showcontrol + aislar MAK del xio
 

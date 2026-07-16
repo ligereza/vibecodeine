@@ -64,16 +64,13 @@ curl -X POST http://<IP-MAK>:5678/webhook/research \
 Devuelve informe Markdown generado por el LLM local. Detalle completo en
 `research_agent_documentacion.md`.
 
-**PENDIENTE (knob de n8n, lo revisa el usuario):** todo el loop corre dentro de UN
-solo nodo Code de forma sincrona; el task-runner de Code de n8n tiene timeout por
-defecto de **300 s** (`N8N_RUNNERS_TASK_TIMEOUT`). Con aya en CPU, 2 iteraciones se
-pasan de 300s -> el webhook devuelve HTTP 200 con cuerpo vacio y el log dice
-"Task execution timed out after 300 seconds". VERIFICADO que aya busca en Tavily y
-analiza (CPU 350%, 2 conexiones :443) -- solo falta que termine dentro del tope.
-Arreglos: (a) subir el timeout en el env del contenedor n8n
-`N8N_RUNNERS_TASK_TIMEOUT=1200` y reiniciar; (b) bajar `max_iterations` a 1 y
-analizar 1 URL/iteracion; (c) refactor mayor: sacar el loop del Code node a nodos
-n8n nativos (HTTP Request + IF + Loop). Recomendado: (a).
+**CERRADO 2026-07-15 (decision del usuario): NO reintentar n8n.** El bloqueador
+final fue el timeout de 300 s del task-runner de Code (`N8N_RUNNERS_TASK_TIMEOUT`);
+quedo VERIFICADO que aya busca en Tavily y analiza (CPU 350%, 2 conexiones :443),
+pero la via elegida es un **runner standalone** (el mismo loop SEARCH/FETCH/ANALYZE
+en un script Python directo contra Ollama + Tavily, sin n8n en el medio). Las
+lecciones de arriba (helpers como metodo, timeouts, key por env) aplican igual al
+runner. Construirlo cuando el usuario lo pida; este JSON queda como referencia.
 
 ## 2. Blender: trilogia fusionada en Geometry Nodes
 
