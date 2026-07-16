@@ -28,6 +28,7 @@ from .automap import plan as automap_plan, solve as automap_solve
 from .cueengine import CueEngine, CueError
 from .discovery import discover as artnet_discover
 from .fabric import Fabric, FabricError
+from .obs import Telemetry, health as obs_health
 from .panel import PANEL_HTML
 from .protocols import (
     ARTNET_PORT,
@@ -48,7 +49,7 @@ class ShowControlPlugin(PluginBase):
 
     plugin_id = "showcontrol"
     name = "Show Control"
-    version = "1.4.0"
+    version = "1.5.0"
     description = "Send OSC, Art-Net and sACN/E1.31 DMX from the phone over the LAN"
     author = "Cauce"
     icon = "network"
@@ -58,6 +59,8 @@ class ShowControlPlugin(PluginBase):
     def on_load(self):
         self._sent = {"osc": 0, "artnet": 0, "sacn": 0}
         self._last_error = None
+        self._loaded_at = time.monotonic()
+        self._telemetry = Telemetry()
         self._engine = CueEngine()
         self._cue_output = None
         self._seq = {}                      # {universe: last sequence 1..255}
@@ -86,6 +89,7 @@ class ShowControlPlugin(PluginBase):
         self.register_route("/discover", self._api_discover, methods=["GET", "POST"])
         self.register_route("/automap/plan", self._api_automap_plan, methods=["POST"])
         self.register_route("/automap/solve", self._api_automap_solve, methods=["POST"])
+        self.register_route("/obs", self._api_obs, methods=["GET"])
         # Re-arm a persisted show (list only -- never auto-runs anything).
         saved = self.get_config("cuelist")
         if saved:
@@ -471,6 +475,32 @@ class ShowControlPlugin(PluginBase):
         except (ValueError, TypeError) as e:
             return jsonify({"ok": False, "error": str(e)}), 400
         return jsonify({"ok": True, "response": out["response"], "residual": out["residual"]})
+
+    # ── obs: unified telemetry ────────────────────────────────────────────
+    def _api_obs(self):
+        """Live telemetry: uptime, send rates, thread liveness, standing state."""
+        from flask import jsonify
+        now = time.monotonic()
+        cue_alive = self._cue_thread is not None and self._cue_thread.is_alive()
+        fab_alive = self._fabric_thread is not None and self._fabric_thread.is_alive()
+        cue_state = self._engine.status()
+        fab_state = self._fabric.status()
+        # a tick thread is *expected* alive only while its engine is active
+        threads = {"cue": (bool(cue_state.get("active")), cue_alive),
+                   "fabric": (bool(fab_state.get("active")), fab_alive)}
+        return jsonify({
+            "ok": True,
+            "health": obs_health(threads, self._last_error),
+            "uptime_s": round(now - self._loaded_at, 1),
+            "sent": self._sent,
+            "rates_per_s": {k: round(v, 2)
+                            for k, v in self._telemetry.rates(self._sent, now).items()},
+            "threads": {k: {"expected": exp, "alive": alive}
+                        for k, (exp, alive) in threads.items()},
+            "cue": cue_state,
+            "fabric": fab_state,
+            "last_error": self._last_error,
+        })
 
     # ── panel + wake-on-lan (xiotech M2) ──────────────────────────────────
     def _api_panel(self):

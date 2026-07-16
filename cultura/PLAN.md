@@ -92,19 +92,20 @@ Abrir Blender 4.5 LTS -> Scripting -> abrir BLENDER.geonodes_450.py -> Alt+P
 - Verificado headless en Blender 4.5.4: reset por segmento OK, NORMAL converge a b=u,
   MULTIPLY colapsa a 0.15*u^14, twin gaze permanece plano.
 
-## 3. xio: cue engine + panel + WoL + fabric + sonda + automap (v1.4 de showcontrol)
+## 3. xio: cue + panel + WoL + fabric + sonda + automap + obs (v1.5 de showcontrol)
 
-Puntos de crecimiento implementados del grafo (`orq` + `fabric` + `sonda`/`p_inv`): cue
-list con fades temporizados, panel de control en navegador, Wake-on-LAN con verificacion
-de servicio, signal fabric (una senal 0..1 abanica a muchos canales DMX / faders OSC),
-descubrimiento de nodos Art-Net (ArtPoll/ArtPollReply) y automapeo optico de DMX por
-matriz de transporte (single / Hadamard multiplexado).
+Puntos de crecimiento implementados del grafo (`orq` + `fabric` + `sonda`/`p_inv` +
+`obs`): cue list con fades temporizados, panel de control en navegador, Wake-on-LAN con
+verificacion de servicio, signal fabric (una senal 0..1 abanica a muchos canales DMX /
+faders OSC), descubrimiento de nodos Art-Net (ArtPoll/ArtPollReply), automapeo optico de
+DMX por matriz de transporte (single / Hadamard multiplexado) y telemetria en vivo
+(`/obs`: rates, salud de hilos, estado).
 Codigo: `xio/new-plugins/showcontrol/cueengine.py` + `panel.py` + `fabric.py` +
-`discovery.py` + `automap.py` (+ wiring `__init__.py`).
-Tests off-device (45 en total): `test_cueengine.py` (12, incluye 3 regresiones de la
+`discovery.py` + `automap.py` + `obs.py` (+ wiring `__init__.py`).
+Tests off-device (51 en total): `test_cueengine.py` (12, incluye 3 regresiones de la
 auditoria adversarial), `test_protocols.py` (11, incluye WoL), `test_fabric.py` (6),
-`test_discovery.py` (5), `test_automap.py` (8) y `test_integration.py` (3: nodo Art-Net
-virtual + servidor OSC dummy por UDP real, mas fabric end-to-end).
+`test_discovery.py` (5), `test_automap.py` (8), `test_obs.py` (6) y `test_integration.py`
+(3: nodo Art-Net virtual + servidor OSC dummy por UDP real, mas fabric end-to-end).
 
 ### Signal fabric (nodo `fabric` del grafo)
 
@@ -196,15 +197,16 @@ por USB segun runbook xio (el codigo queda en repo; deploy decision del usuario)
 Gap-audit del grafo -> codigo: lazo=charge_control OK; muros=arquitectura no-root OK;
 orq/osc+dmx=protocols.py OK; orq/cue-engine=IMPLEMENTADO; fabric (formato canonico de
 senales)=IMPLEMENTADO; sonda/descubrimiento Art-Net=IMPLEMENTADO;
-sonda/p_inv=automapeo optico de DMX (matriz de transporte)=IMPLEMENTADO (este cambio);
+sonda/p_inv=automapeo optico de DMX (matriz de transporte)=IMPLEMENTADO;
+obs (telemetria en vivo)=IMPLEMENTADO (este cambio);
 splat/rllm = investigacion (necesitan GPU/camara: fuera del alcance software puro).
 
 ## Pendiente / siguiente
 
 - Probar el loop n8n end-to-end en MAK con topic wachuma real.
-- Deploy de showcontrol v1.4 (cue + fabric + sonda + automap) al Xiaomi (USB) + humo LAN.
+- Deploy de showcontrol v1.5 (cue+fabric+sonda+automap+obs) al Xiaomi (USB) + humo LAN.
 - Cerrar el lazo `sonda`: glue de camara (el operador dispara la captura por step del
   plan y alimenta /automap/solve). La camara es hardware del usuario; la mate ya esta.
-- `obs` (observabilidad): endpoint/panel de telemetria unificada (rates, hilos, ultimo
-  error) -- siguiente nodo software puro candidato.
+- Nodos restantes del grafo (`splat`/`rllm`) piden GPU/camara: fuera del software puro
+  de este server; quedan como investigacion. showcontrol cubre orq+fabric+sonda+obs.
 - Render real de los 450 frames (EEVEE Next) cuando el usuario quiera la pieza.

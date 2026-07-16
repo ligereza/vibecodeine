@@ -75,6 +75,11 @@ PANEL_HTML = """<!DOCTYPE html>
 </details>
 
 <details>
+  <summary>telemetria</summary>
+  <div id="obs" class="meta">&mdash;</div>
+</details>
+
+<details>
   <summary>descubrir nodos art-net</summary>
   <div class="mini"><button id="scan">SCAN LAN</button></div>
   <div id="nodes"></div>
@@ -134,6 +139,19 @@ async function refresh(){
 async function poll(){
   try{ renderState((await api("/cue/state")).state); }catch(e){}
 }
+async function pollObs(){
+  try{
+    const o = await api("/obs");
+    const r = o.rates_per_s || {};
+    const th = Object.entries(o.threads || {})
+      .filter(([,v]) => v.expected).map(([k]) => k).join(",") || "idle";
+    $("obs").textContent =
+      o.health + " · up " + o.uptime_s + "s · " +
+      "a" + (o.sent.artnet||0) + "/s" + (r.artnet ? "(" + r.artnet + ")" : "") + " " +
+      "s" + (o.sent.sacn||0) + " o" + (o.sent.osc||0) +
+      " · thr " + th + (o.last_error ? " · ERR " + o.last_error : "");
+  }catch(e){}
+}
 
 $("go").onclick = () => api("/cue/go", {}).catch(err);
 $("stop").onclick = () => api("/cue/stop", {}).catch(err);
@@ -169,6 +187,7 @@ $("scan").onclick = () => {
 
 refresh();
 setInterval(poll, 1000);
+setInterval(pollObs, 2000);
 </script>
 </body>
 </html>
