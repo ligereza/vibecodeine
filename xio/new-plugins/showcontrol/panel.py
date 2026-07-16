@@ -75,6 +75,12 @@ PANEL_HTML = """<!DOCTYPE html>
 </details>
 
 <details>
+  <summary>descubrir nodos art-net</summary>
+  <div class="mini"><button id="scan">SCAN LAN</button></div>
+  <div id="nodes"></div>
+</details>
+
+<details>
   <summary>wake-on-lan</summary>
   <div class="mini">
     <input id="mac" placeholder="AA:BB:CC:DD:EE:FF">
@@ -138,6 +144,28 @@ $("load").onclick = () => {
   api("/cues", body).then(refresh).catch(err);
 };
 $("wol").onclick = () => api("/wol", {mac: $("mac").value}).catch(err);
+
+function clean(s){ return String(s == null ? "" : s).replace(/[<>&]/g, ""); }
+function renderNodes(nodes){
+  if(!nodes.length){ $("nodes").innerHTML = '<div class="meta">sin nodos</div>'; return; }
+  $("nodes").innerHTML = nodes.map(n =>
+    '<div class="cue" data-ip="' + clean(n.ip) + '"><span class="lbl">' +
+    (clean(n.short_name) || clean(n.ip)) + '</span><span class="meta">' + clean(n.ip) +
+    (n.ports ? ' · ' + n.ports + 'p' : '') + (n.mac ? ' · ' + clean(n.mac) : '') +
+    '</span></div>').join("");
+  // tap a node -> drop its IP into the show-JSON output host
+  document.querySelectorAll("#nodes .cue").forEach(el => el.onclick = () => {
+    let body; try{ body = JSON.parse($("json").value || "{}"); }catch(e){ body = {}; }
+    body.output = Object.assign({protocol:"artnet"}, body.output, {host: el.dataset.ip});
+    $("json").value = JSON.stringify(body);
+    err("output.host = " + el.dataset.ip);
+  });
+}
+$("scan").onclick = () => {
+  $("scan").disabled = true; $("nodes").innerHTML = '<div class="meta">escaneando...</div>';
+  api("/discover", {timeout: 3}).then(d => { renderNodes(d.nodes || []); err(""); })
+    .catch(err).finally(() => { $("scan").disabled = false; });
+};
 
 refresh();
 setInterval(poll, 1000);

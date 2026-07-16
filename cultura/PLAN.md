@@ -92,17 +92,18 @@ Abrir Blender 4.5 LTS -> Scripting -> abrir BLENDER.geonodes_450.py -> Alt+P
 - Verificado headless en Blender 4.5.4: reset por segmento OK, NORMAL converge a b=u,
   MULTIPLY colapsa a 0.15*u^14, twin gaze permanece plano.
 
-## 3. xio: cue engine + panel + WoL + fabric (v1.2 de showcontrol)
+## 3. xio: cue engine + panel + WoL + fabric + sonda (v1.3 de showcontrol)
 
-Puntos de crecimiento implementados del grafo (`orq` + `fabric`): cue list con fades
-temporizados, panel de control en navegador, Wake-on-LAN con verificacion de servicio,
-y el signal fabric (una senal 0..1 abanica a muchos canales DMX / faders OSC).
-Codigo: `xio/new-plugins/showcontrol/cueengine.py` + `panel.py` + `fabric.py`
-(+ wiring `__init__.py`).
-Tests off-device (32 en total): `test_cueengine.py` (12, incluye 3 regresiones de la
-auditoria adversarial), `test_protocols.py` (11, incluye WoL), `test_fabric.py` (6) y
-`test_integration.py` (3: nodo Art-Net virtual + servidor OSC dummy por UDP real, mas
-fabric end-to-end).
+Puntos de crecimiento implementados del grafo (`orq` + `fabric` + `sonda`): cue list con
+fades temporizados, panel de control en navegador, Wake-on-LAN con verificacion de
+servicio, signal fabric (una senal 0..1 abanica a muchos canales DMX / faders OSC) y
+descubrimiento de nodos Art-Net (ArtPoll/ArtPollReply).
+Codigo: `xio/new-plugins/showcontrol/cueengine.py` + `panel.py` + `fabric.py` +
+`discovery.py` (+ wiring `__init__.py`).
+Tests off-device (37 en total): `test_cueengine.py` (12, incluye 3 regresiones de la
+auditoria adversarial), `test_protocols.py` (11, incluye WoL), `test_fabric.py` (6),
+`test_discovery.py` (5) y `test_integration.py` (3: nodo Art-Net virtual + servidor OSC
+dummy por UDP real, mas fabric end-to-end).
 
 ### Signal fabric (nodo `fabric` del grafo)
 
@@ -125,6 +126,20 @@ curl -X POST http://<phone>:5000/api/plugins/showcontrol/fabric -H "Content-Type
   ]}'
 curl -X POST http://<phone>:5000/api/plugins/showcontrol/fabric/set -d '{"signal": "master", "value": 0.5}'
 curl http://<phone>:5000/api/plugins/showcontrol/fabric/state
+```
+
+### Descubrimiento Art-Net (nodo `sonda` del grafo)
+
+Antes de disparar DMX a ciegas, ver que fixtures estan vivos en la LAN. Difunde un
+ArtPoll (OpCode 0x2000) a UDP 6454 y colecta los ArtPollReply (0x2100): IP, nombres,
+MAC, OEM y mapa de puertos. El builder y el parser son puros (unit-tested contra bytes
+a mano); solo `discover()` toca la red (un envio SO_BROADCAST + recv acotado por
+timeout, sin shell). En el panel: boton "SCAN LAN" -> lista de nodos; tap en un nodo
+mete su IP en `output.host` del JSON del show.
+
+```bash
+curl -X POST http://<phone>:5000/api/plugins/showcontrol/discover -d '{"timeout": 3}'
+# -> {"ok": true, "count": N, "nodes": [{"ip": "...", "short_name": "...", "mac": "...", "ports": 1, ...}]}
 ```
 Panel: abrir `http://<phone>:5000/api/plugins/showcontrol/panel` desde tablet/navegador
 (GO grande, STOP, RELEASE, lista de cues con tap-to-jump, carga de JSON, WoL).
@@ -157,12 +172,13 @@ por USB segun runbook xio (el codigo queda en repo; deploy decision del usuario)
 
 Gap-audit del grafo -> codigo: lazo=charge_control OK; muros=arquitectura no-root OK;
 orq/osc+dmx=protocols.py OK; orq/cue-engine=IMPLEMENTADO; fabric (formato canonico de
-senales)=IMPLEMENTADO (este cambio); sonda/splat = investigacion (siguiente candidato).
+senales)=IMPLEMENTADO; sonda (descubrimiento Art-Net)=IMPLEMENTADO (este cambio);
+splat = investigacion (siguiente candidato).
 
 ## Pendiente / siguiente
 
 - Probar el loop n8n end-to-end en MAK con topic wachuma real.
-- Deploy de showcontrol v1.2 (cue engine + fabric) al Xiaomi (USB) + curl de humo LAN.
-- Siguiente nodo del grafo: `sonda` (probe/telemetria de red) o `splat` (visor Gaussian
-  splat) -- investigacion. fabric ya esta hub-and-spoke unificando OSC/ArtNet/sACN.
+- Deploy de showcontrol v1.3 (cue engine + fabric + sonda) al Xiaomi (USB) + curl de humo LAN.
+- Siguiente nodo del grafo: `splat` (visor Gaussian splat) o `obs` (observabilidad/panel de
+  telemetria) -- investigacion. sonda ya descubre nodos Art-Net por ArtPoll.
 - Render real de los 450 frames (EEVEE Next) cuando el usuario quiera la pieza.

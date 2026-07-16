@@ -25,6 +25,7 @@ import time
 from plugins.base import PluginBase
 
 from .cueengine import CueEngine, CueError
+from .discovery import discover as artnet_discover
 from .fabric import Fabric, FabricError
 from .panel import PANEL_HTML
 from .protocols import (
@@ -46,7 +47,7 @@ class ShowControlPlugin(PluginBase):
 
     plugin_id = "showcontrol"
     name = "Show Control"
-    version = "1.2.0"
+    version = "1.3.0"
     description = "Send OSC, Art-Net and sACN/E1.31 DMX from the phone over the LAN"
     author = "Cauce"
     icon = "network"
@@ -81,6 +82,7 @@ class ShowControlPlugin(PluginBase):
         self.register_route("/fabric", self._api_fabric, methods=["GET", "POST"])
         self.register_route("/fabric/set", self._api_fabric_set, methods=["POST"])
         self.register_route("/fabric/state", self._api_fabric_state, methods=["GET"])
+        self.register_route("/discover", self._api_discover, methods=["GET", "POST"])
         # Re-arm a persisted show (list only -- never auto-runs anything).
         saved = self.get_config("cuelist")
         if saved:
@@ -420,6 +422,26 @@ class ShowControlPlugin(PluginBase):
         from flask import jsonify
         return jsonify({"ok": True, "state": self._fabric.status(),
                         "output": self._fabric_output, "sent": self._sent})
+
+    # ── sonda: Art-Net node discovery ─────────────────────────────────────
+    def _api_discover(self):
+        """Broadcast an ArtPoll and list the Art-Net nodes that answer."""
+        from flask import request, jsonify
+        d = (request.get_json(force=True, silent=True) or {}) if request.method == "POST" else {}
+        timeout = d.get("timeout", request.args.get("timeout", 2.0))
+        try:
+            timeout = float(timeout)
+        except (TypeError, ValueError):
+            return jsonify({"ok": False, "error": "timeout must be a number"}), 400
+        bcast = d.get("broadcast", "255.255.255.255")
+        if not valid_host(bcast):
+            return jsonify({"ok": False, "error": "broadcast must be IPv4"}), 400
+        try:
+            nodes = artnet_discover(timeout=timeout, broadcast_host=bcast)
+        except OSError as e:
+            self._last_error = "discover: %s" % e
+            return jsonify({"ok": False, "error": str(e)}), 500
+        return jsonify({"ok": True, "count": len(nodes), "nodes": nodes})
 
     # ── panel + wake-on-lan (xiotech M2) ──────────────────────────────────
     def _api_panel(self):
