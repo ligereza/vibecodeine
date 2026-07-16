@@ -24,6 +24,7 @@ import time
 
 from plugins.base import PluginBase
 
+from .automap import plan as automap_plan, solve as automap_solve
 from .cueengine import CueEngine, CueError
 from .discovery import discover as artnet_discover
 from .fabric import Fabric, FabricError
@@ -47,7 +48,7 @@ class ShowControlPlugin(PluginBase):
 
     plugin_id = "showcontrol"
     name = "Show Control"
-    version = "1.3.0"
+    version = "1.4.0"
     description = "Send OSC, Art-Net and sACN/E1.31 DMX from the phone over the LAN"
     author = "Cauce"
     icon = "network"
@@ -83,6 +84,8 @@ class ShowControlPlugin(PluginBase):
         self.register_route("/fabric/set", self._api_fabric_set, methods=["POST"])
         self.register_route("/fabric/state", self._api_fabric_state, methods=["GET"])
         self.register_route("/discover", self._api_discover, methods=["GET", "POST"])
+        self.register_route("/automap/plan", self._api_automap_plan, methods=["POST"])
+        self.register_route("/automap/solve", self._api_automap_solve, methods=["POST"])
         # Re-arm a persisted show (list only -- never auto-runs anything).
         saved = self.get_config("cuelist")
         if saved:
@@ -442,6 +445,32 @@ class ShowControlPlugin(PluginBase):
             self._last_error = "discover: %s" % e
             return jsonify({"ok": False, "error": str(e)}), 500
         return jsonify({"ok": True, "count": len(nodes), "nodes": nodes})
+
+    # ── sonda/p_inv: optical DMX auto-mapping (transport matrix) ───────────
+    def _api_automap_plan(self):
+        """Return the actuation sweep. Emit each step's frame (as /artnet
+        channels), measure the scene, feed the readings back to /automap/solve."""
+        from flask import request, jsonify
+        d = request.get_json(force=True, silent=True) or {}
+        try:
+            p = automap_plan(d.get("channels"), level=d.get("level", 255),
+                             mode=d.get("mode", "single"))
+        except (ValueError, TypeError) as e:
+            return jsonify({"ok": False, "error": str(e)}), 400
+        return jsonify({"ok": True, "plan": p, "steps": len(p["steps"]),
+                        "note": "POST each step.emit to /artnet as 'channels'; "
+                                "collect one measurement per step in order"})
+
+    def _api_automap_solve(self):
+        """Turn measurements (aligned to plan.steps) into per-channel response."""
+        from flask import request, jsonify
+        d = request.get_json(force=True, silent=True) or {}
+        try:
+            out = automap_solve(d.get("channels"), d.get("measurements") or [],
+                                level=d.get("level", 255), mode=d.get("mode", "single"))
+        except (ValueError, TypeError) as e:
+            return jsonify({"ok": False, "error": str(e)}), 400
+        return jsonify({"ok": True, "response": out["response"], "residual": out["residual"]})
 
     # ── panel + wake-on-lan (xiotech M2) ──────────────────────────────────
     def _api_panel(self):

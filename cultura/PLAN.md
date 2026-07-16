@@ -92,18 +92,19 @@ Abrir Blender 4.5 LTS -> Scripting -> abrir BLENDER.geonodes_450.py -> Alt+P
 - Verificado headless en Blender 4.5.4: reset por segmento OK, NORMAL converge a b=u,
   MULTIPLY colapsa a 0.15*u^14, twin gaze permanece plano.
 
-## 3. xio: cue engine + panel + WoL + fabric + sonda (v1.3 de showcontrol)
+## 3. xio: cue engine + panel + WoL + fabric + sonda + automap (v1.4 de showcontrol)
 
-Puntos de crecimiento implementados del grafo (`orq` + `fabric` + `sonda`): cue list con
-fades temporizados, panel de control en navegador, Wake-on-LAN con verificacion de
-servicio, signal fabric (una senal 0..1 abanica a muchos canales DMX / faders OSC) y
-descubrimiento de nodos Art-Net (ArtPoll/ArtPollReply).
+Puntos de crecimiento implementados del grafo (`orq` + `fabric` + `sonda`/`p_inv`): cue
+list con fades temporizados, panel de control en navegador, Wake-on-LAN con verificacion
+de servicio, signal fabric (una senal 0..1 abanica a muchos canales DMX / faders OSC),
+descubrimiento de nodos Art-Net (ArtPoll/ArtPollReply) y automapeo optico de DMX por
+matriz de transporte (single / Hadamard multiplexado).
 Codigo: `xio/new-plugins/showcontrol/cueengine.py` + `panel.py` + `fabric.py` +
-`discovery.py` (+ wiring `__init__.py`).
-Tests off-device (37 en total): `test_cueengine.py` (12, incluye 3 regresiones de la
+`discovery.py` + `automap.py` (+ wiring `__init__.py`).
+Tests off-device (45 en total): `test_cueengine.py` (12, incluye 3 regresiones de la
 auditoria adversarial), `test_protocols.py` (11, incluye WoL), `test_fabric.py` (6),
-`test_discovery.py` (5) y `test_integration.py` (3: nodo Art-Net virtual + servidor OSC
-dummy por UDP real, mas fabric end-to-end).
+`test_discovery.py` (5), `test_automap.py` (8) y `test_integration.py` (3: nodo Art-Net
+virtual + servidor OSC dummy por UDP real, mas fabric end-to-end).
 
 ### Signal fabric (nodo `fabric` del grafo)
 
@@ -141,6 +142,28 @@ mete su IP en `output.host` del JSON del show.
 curl -X POST http://<phone>:5000/api/plugins/showcontrol/discover -d '{"timeout": 3}'
 # -> {"ok": true, "count": N, "nodes": [{"ip": "...", "short_name": "...", "mac": "...", "ports": 1, ...}]}
 ```
+
+### Automapeo optico de DMX (nodo `sonda`/`p_inv` del grafo)
+
+El transporte de luz es lineal en el nivel DMX: `luz_medida = T . dmx`. Actuando una
+BASE de canales y midiendo la respuesta, se recupera T columna a columna -- y T ES el
+patch: que canal enciende que fixture, aprendido opticamente, sin direccionar a mano
+(Sen et al. 2005, dual photography). Dos modos: `single` (un canal por vez, n frames) y
+`hadamard` (grupos codificados, Schechner et al. 2007 multiplexed illumination): cada
+fila de codigo +-1 se emite como dos frames (canales +1, luego -1) y se resta -- el
+diferencial cancela la luz ambiente y da ventaja de SNR (~2/n de la varianza de single).
+Matematica pura stdlib (sin numpy, sin camara: la camara es hardware del operador; la
+secuencia y el estimador son nuestros). 8 tests: test_automap.py.
+
+```bash
+# 1) pedir el barrido; emitir cada step.emit a /artnet como 'channels', medir en orden
+curl -X POST http://<phone>:5000/api/plugins/showcontrol/automap/plan \
+  -d '{"channels": [1,2,3,4,5], "level": 255, "mode": "hadamard"}'
+# 2) resolver: measurements alineadas a plan.steps -> respuesta por canal + residual
+curl -X POST http://<phone>:5000/api/plugins/showcontrol/automap/solve \
+  -d '{"channels": [1,2,3,4,5], "mode": "hadamard", "level": 255, "measurements": [...]}'
+# -> {"ok": true, "response": {"1": 0.5, ...}, "residual": ~0}
+```
 Panel: abrir `http://<phone>:5000/api/plugins/showcontrol/panel` desde tablet/navegador
 (GO grande, STOP, RELEASE, lista de cues con tap-to-jump, carga de JSON, WoL).
 WoL: `POST /api/plugins/showcontrol/wol {"mac": "AA:BB:..", "verify_host": ip,
@@ -172,13 +195,16 @@ por USB segun runbook xio (el codigo queda en repo; deploy decision del usuario)
 
 Gap-audit del grafo -> codigo: lazo=charge_control OK; muros=arquitectura no-root OK;
 orq/osc+dmx=protocols.py OK; orq/cue-engine=IMPLEMENTADO; fabric (formato canonico de
-senales)=IMPLEMENTADO; sonda (descubrimiento Art-Net)=IMPLEMENTADO (este cambio);
-splat = investigacion (siguiente candidato).
+senales)=IMPLEMENTADO; sonda/descubrimiento Art-Net=IMPLEMENTADO;
+sonda/p_inv=automapeo optico de DMX (matriz de transporte)=IMPLEMENTADO (este cambio);
+splat/rllm = investigacion (necesitan GPU/camara: fuera del alcance software puro).
 
 ## Pendiente / siguiente
 
 - Probar el loop n8n end-to-end en MAK con topic wachuma real.
-- Deploy de showcontrol v1.3 (cue engine + fabric + sonda) al Xiaomi (USB) + curl de humo LAN.
-- Siguiente nodo del grafo: `splat` (visor Gaussian splat) o `obs` (observabilidad/panel de
-  telemetria) -- investigacion. sonda ya descubre nodos Art-Net por ArtPoll.
+- Deploy de showcontrol v1.4 (cue + fabric + sonda + automap) al Xiaomi (USB) + humo LAN.
+- Cerrar el lazo `sonda`: glue de camara (el operador dispara la captura por step del
+  plan y alimenta /automap/solve). La camara es hardware del usuario; la mate ya esta.
+- `obs` (observabilidad): endpoint/panel de telemetria unificada (rates, hilos, ultimo
+  error) -- siguiente nodo software puro candidato.
 - Render real de los 450 frames (EEVEE Next) cuando el usuario quiera la pieza.
