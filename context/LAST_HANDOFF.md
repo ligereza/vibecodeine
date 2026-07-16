@@ -8,6 +8,26 @@ en el telefono 200/403).
 El plan largo vive en context/PLAN_SIGUIENTE_AGENTE.md. Este es el estado corto.
 Historico viejo en git y docs/handoffs/archive/.
 
+## SESION 2026-07-15 (noche) -- MAK research cultural VIVO (sin n8n)
+Rama worktree-mak-research-cultural. n8n CERRADO como fallido (orden usuario,
+no reintentar). Sistema standalone desplegado y VERIFICADO en MAK
+(192.168.50.2, ~/research/): research.py (loop Tavily->fetch->analyze->decide
+->informe, fallback groq->cerebras->azure->ollama), panel.py (debate 4
+angulos historico/estetico/legal/tecnico, 1 modelo por API, sintesis
+gpt-5-mini), 3 interfaces para tema X: web LAN :8890 (interfaz.py), ntfy
+iPhone (cola.py, topics NTFY_TOPIC_IN/OUT en research.env), CLI research.sh.
+Un job a la vez (worker.py flock). Cron @reboot. gemma3:4b bajado (cabe en
+4GB VRAM, OLLAMA_MODEL default; aya-expanse:8b de repuesto). Tests vivos:
+research 2x OK, panel OK (4 proveedores hablaron), round-trip ntfy OK.
+Trampas resueltas: Cloudflare 403/1010 por UA de urllib (UA custom en lib);
+razonadores necesitan margen +2048 tokens; defaults frugales (2 iter/1
+replica) por orden del usuario. Copia del codigo: cultura/mak_research/
+(manual + backlog para agentes VS Code/Antigravity en MAK_RESEARCH.md).
+Keys: cultura/.dev y ~/n8n-local/research.env, JAMAS en git. OJO: crontab
+de mak pudo perder entradas previas (probablemente vacio) al instalarse
+@reboot; revisar si algo falta. "wachuma" era un TEMA, no el sistema: el
+sistema es generico, recibe cualquier tema.
+
 ## SESION 2026-07-15 (autonoma tarde) -- showcontrol v1.1->v1.8 + cultura wachuma
 Rama claude/cultura-xio-mistral-20260715, PR #45 MERGEADO a main.
 
