@@ -30,6 +30,7 @@ from .discovery import discover as artnet_discover
 from .fabric import Fabric, FabricError
 from .obs import Telemetry, health as obs_health
 from .panel import PANEL_HTML
+from .timeline import Timeline, TimelineError
 from .protocols import (
     ARTNET_PORT,
     SACN_PORT,
@@ -50,7 +51,7 @@ class ShowControlPlugin(PluginBase):
 
     plugin_id = "showcontrol"
     name = "Show Control"
-    version = "1.5.0"
+    version = "1.6.0"
     description = "Send OSC, Art-Net and sACN/E1.31 DMX from the phone over the LAN"
     author = "Cauce"
     icon = "network"
@@ -68,6 +69,7 @@ class ShowControlPlugin(PluginBase):
         self._cue_stop = threading.Event()
         self._cue_thread = None
         self._cue_thread_lock = threading.Lock()
+        self._timeline = Timeline()
         self.register_route("/status", self._api_status, methods=["GET"])
         self.register_route("/osc", self._api_osc, methods=["POST"])
         self.register_route("/artnet", self._api_artnet, methods=["POST"])
@@ -77,6 +79,11 @@ class ShowControlPlugin(PluginBase):
         self.register_route("/cue/stop", self._api_cue_stop, methods=["POST"])
         self.register_route("/cue/release", self._api_cue_release, methods=["POST"])
         self.register_route("/cue/state", self._api_cue_state, methods=["GET"])
+        self.register_route("/timeline", self._api_timeline, methods=["GET", "POST"])
+        self.register_route("/timeline/play", self._api_timeline_play, methods=["POST"])
+        self.register_route("/timeline/pause", self._api_timeline_pause, methods=["POST"])
+        self.register_route("/timeline/locate", self._api_timeline_locate, methods=["POST"])
+        self.register_route("/timeline/state", self._api_timeline_state, methods=["GET"])
         self.register_route("/panel", self._api_panel, methods=["GET"])
         self.register_route("/wol", self._api_wol, methods=["POST"])
         self._fabric = Fabric()
@@ -267,14 +274,20 @@ class ShowControlPlugin(PluginBase):
         while not self._cue_stop.is_set():
             now = time.monotonic()
             try:
+                # timeline drives the show: fire any cues that just came due
+                for cue in self._timeline.due(now):
+                    self._engine.go(now, index=cue)
+            except Exception as e:                       # bad index etc. -- log, don't die
+                self._last_error = "timeline: %s" % e
+            try:
                 self._emit_events(self._engine.tick(now))
             except Exception as e:                       # never kill the thread
                 self._last_error = "cue tick: %s" % e
-            if not self._engine.active:
-                # show over -> save battery; recheck under the lock so a GO
-                # racing this exit can't be left without a tick thread
+            if not self._engine.active and not self._timeline.playing:
+                # show over AND timeline stopped -> save battery; recheck under
+                # the lock so a GO/play racing this exit can't orphan the thread
                 with self._cue_thread_lock:
-                    if not self._engine.active:
+                    if not self._engine.active and not self._timeline.playing:
                         self._cue_thread = None
                         return
             self._cue_stop.wait(1.0 / TICK_HZ)
@@ -344,6 +357,44 @@ class ShowControlPlugin(PluginBase):
         from flask import jsonify
         return jsonify({"ok": True, "state": self._engine.status(),
                         "output": self._cue_output, "sent": self._sent})
+
+    # ── timecode timeline (orq capstone: the show plays itself) ───────────
+    def _api_timeline(self):
+        from flask import request, jsonify
+        if request.method == "GET":
+            return jsonify({"ok": True, "state": self._timeline.status(time.monotonic())})
+        d = request.get_json(force=True, silent=True) or {}
+        try:
+            info = self._timeline.load(d.get("events"))
+        except TimelineError as e:
+            return jsonify({"ok": False, "error": str(e)}), 400
+        return jsonify({"ok": True, "loaded": info})
+
+    def _api_timeline_play(self):
+        from flask import jsonify
+        try:
+            st = self._timeline.play(time.monotonic())
+        except TimelineError as e:
+            return jsonify({"ok": False, "error": str(e)}), 400
+        self._ensure_cue_thread()               # the cue loop advances the timeline
+        return jsonify({"ok": True, "state": st})
+
+    def _api_timeline_pause(self):
+        from flask import jsonify
+        return jsonify({"ok": True, "state": self._timeline.pause(time.monotonic())})
+
+    def _api_timeline_locate(self):
+        from flask import request, jsonify
+        d = request.get_json(force=True, silent=True) or {}
+        try:
+            st = self._timeline.locate(d.get("t", 0), now=time.monotonic())
+        except TimelineError as e:
+            return jsonify({"ok": False, "error": str(e)}), 400
+        return jsonify({"ok": True, "state": st})
+
+    def _api_timeline_state(self):
+        from flask import jsonify
+        return jsonify({"ok": True, "state": self._timeline.status(time.monotonic())})
 
     # ── signal fabric (the `fabric` node) ─────────────────────────────────
     def _emit_fabric(self, events):

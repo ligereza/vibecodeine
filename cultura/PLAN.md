@@ -92,20 +92,39 @@ Abrir Blender 4.5 LTS -> Scripting -> abrir BLENDER.geonodes_450.py -> Alt+P
 - Verificado headless en Blender 4.5.4: reset por segmento OK, NORMAL converge a b=u,
   MULTIPLY colapsa a 0.15*u^14, twin gaze permanece plano.
 
-## 3. xio: cue + panel + WoL + fabric + sonda + automap + obs (v1.5 de showcontrol)
+## 3. xio: cue + timeline + fabric + sonda + automap + obs (v1.6 de showcontrol)
 
 Puntos de crecimiento implementados del grafo (`orq` + `fabric` + `sonda`/`p_inv` +
-`obs`): cue list con fades temporizados, panel de control en navegador, Wake-on-LAN con
+`obs`): cue list con fades temporizados, timeline de timecode (el show dispara cues
+contra un reloj: play/pause/locate), panel de control en navegador, Wake-on-LAN con
 verificacion de servicio, signal fabric (una senal 0..1 abanica a muchos canales DMX /
 faders OSC), descubrimiento de nodos Art-Net (ArtPoll/ArtPollReply), automapeo optico de
 DMX por matriz de transporte (single / Hadamard multiplexado) y telemetria en vivo
 (`/obs`: rates, salud de hilos, estado).
-Codigo: `xio/new-plugins/showcontrol/cueengine.py` + `panel.py` + `fabric.py` +
-`discovery.py` + `automap.py` + `obs.py` (+ wiring `__init__.py`).
-Tests off-device (51 en total): `test_cueengine.py` (12, incluye 3 regresiones de la
+Codigo: `xio/new-plugins/showcontrol/cueengine.py` + `timeline.py` + `panel.py` +
+`fabric.py` + `discovery.py` + `automap.py` + `obs.py` (+ wiring `__init__.py`).
+Tests off-device (59 en total): `test_cueengine.py` (12, incluye 3 regresiones de la
 auditoria adversarial), `test_protocols.py` (11, incluye WoL), `test_fabric.py` (6),
-`test_discovery.py` (5), `test_automap.py` (8), `test_obs.py` (6) y `test_integration.py`
-(3: nodo Art-Net virtual + servidor OSC dummy por UDP real, mas fabric end-to-end).
+`test_discovery.py` (5), `test_automap.py` (8), `test_obs.py` (6), `test_timeline.py` (7)
+y `test_integration.py` (4: nodo Art-Net virtual + servidor OSC dummy por UDP real, mas
+fabric y timeline end-to-end).
+
+### Timeline de timecode (capstone del nodo `orq`)
+
+El cue engine ya auto-avanza (follow); la timeline dispara cues en POSICIONES absolutas
+de un reloj de transporte: en 0:05 GO cue 2, en 0:20 GO cue 5 -- el show se toca solo.
+Scheduler puro (sin reloj propio: el caller inyecta `now`), edge-triggered (un cue no
+se re-dispara), `locate(t)` marca lo anterior como pasado. El cue loop (30 Hz) avanza la
+timeline y llama `engine.go()` por cada evento vencido.
+
+```bash
+curl -X POST http://<phone>:5000/api/plugins/showcontrol/timeline \
+  -d '{"events": [{"at": 0, "cue": 0}, {"at": 5, "cue": 1}, {"at": 20, "cue": 2}]}'
+curl -X POST http://<phone>:5000/api/plugins/showcontrol/timeline/play
+curl -X POST http://<phone>:5000/api/plugins/showcontrol/timeline/pause
+curl -X POST http://<phone>:5000/api/plugins/showcontrol/timeline/locate -d '{"t": 11}'
+curl http://<phone>:5000/api/plugins/showcontrol/timeline/state
+```
 
 ### Signal fabric (nodo `fabric` del grafo)
 

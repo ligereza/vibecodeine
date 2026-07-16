@@ -129,6 +129,40 @@ def send_fabric_events(events, artnet_addr, seq_state):
         out.close()
 
 
+def test_timeline_drives_cues_over_the_wire():
+    """The orq capstone: a timeline fires cues on a clock, cues hit the Art-Net
+    node -- the show plays itself. Mirrors _cue_loop (due -> go -> tick -> emit)
+    with an injected clock so it's deterministic."""
+    from timeline import Timeline
+
+    node, node_port = make_listener()
+    artnet_addr = ("127.0.0.1", node_port)
+    e = CueEngine()
+    e.load([
+        {"label": "open", "fade": 0.0, "levels": {"0": {"1": 200}}},
+        {"label": "peak", "fade": 0.0, "levels": {"0": {"2": 255}}},
+    ])
+    tl = Timeline()
+    tl.load([{"at": 0.0, "cue": 0}, {"at": 5.0, "cue": 1}])
+    seq_state = {}
+
+    def loop_step(now):                        # exactly what _cue_loop does per tick
+        for cue in tl.due(now):
+            e.go(now, index=cue)
+        send_events(e.tick(now), artnet_addr, None, seq_state)
+
+    tl.play(now=0.0)
+    loop_step(0.0)                             # t=0 -> cue 0 fires
+    _, _, dmx = parse_artnet(node.recv(2048))
+    assert dmx[:2] == b"\xc8\x00", dmx[:2]     # cue0: ch1=200 (0xc8)
+    loop_step(6.0)                             # crossed 5s -> cue 1 fires
+    _, _, dmx = parse_artnet(node.recv(2048))
+    assert dmx[:2] == b"\x00\xff", dmx[:2]     # cue1: ch1->0 (tracking off), ch2=255
+
+    node.close()
+    print("OK timeline drives cues over the wire (show plays itself)")
+
+
 def test_fabric_over_the_wire():
     """One `master` signal fans out to a DMX node AND an OSC fader in a single
     set() -- the routing-bus contract the plugin's _emit_fabric depends on."""

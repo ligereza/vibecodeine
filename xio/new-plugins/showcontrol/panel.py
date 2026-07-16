@@ -69,6 +69,15 @@ PANEL_HTML = """<!DOCTYPE html>
 <div id="cuelist"></div>
 
 <details>
+  <summary>timeline (el show se dispara solo)</summary>
+  <div class="row"><button id="tlplay">PLAY</button><button id="tlpause">PAUSE</button>
+    <button id="tlreset">|&lt;</button></div>
+  <div id="tlstate" class="meta">&mdash;</div>
+  <textarea id="tljson" placeholder='{"events":[{"at":0,"cue":0},{"at":5,"cue":1},{"at":20,"cue":2}]}'></textarea>
+  <div class="mini"><button id="tlload">cargar timeline</button></div>
+</details>
+
+<details>
   <summary>cargar cue list (JSON)</summary>
   <textarea id="json" placeholder='{"output":{"protocol":"artnet","host":"192.168.1.50"},"cues":[{"label":"open","fade":3,"levels":{"0":{"1":255}}}]}'></textarea>
   <div class="mini"><button id="load">cargar</button></div>
@@ -163,6 +172,24 @@ $("load").onclick = () => {
 };
 $("wol").onclick = () => api("/wol", {mac: $("mac").value}).catch(err);
 
+function fmt(s){ s = Math.max(0, s|0); return (s/60|0) + ":" + String(s%60).padStart(2,"0"); }
+async function pollTl(){
+  try{
+    const st = (await api("/timeline/state")).state;
+    $("tlstate").textContent = (st.playing ? "▶ " : "▮▮ ") +
+      fmt(st.position) + " / " + fmt(st.duration) +
+      " · " + st.fired + "/" + st.events + " cues";
+  }catch(e){}
+}
+$("tlload").onclick = () => {
+  let body;
+  try{ body = JSON.parse($("tljson").value); }catch(e){ return err("JSON invalido: " + e.message); }
+  api("/timeline", body).then(pollTl).catch(err);
+};
+$("tlplay").onclick = () => api("/timeline/play", {}).then(pollTl).catch(err);
+$("tlpause").onclick = () => api("/timeline/pause", {}).then(pollTl).catch(err);
+$("tlreset").onclick = () => api("/timeline/locate", {t: 0}).then(pollTl).catch(err);
+
 function clean(s){ return String(s == null ? "" : s).replace(/[<>&]/g, ""); }
 function renderNodes(nodes){
   if(!nodes.length){ $("nodes").innerHTML = '<div class="meta">sin nodos</div>'; return; }
@@ -188,6 +215,7 @@ $("scan").onclick = () => {
 refresh();
 setInterval(poll, 1000);
 setInterval(pollObs, 2000);
+setInterval(pollTl, 1000);
 </script>
 </body>
 </html>
