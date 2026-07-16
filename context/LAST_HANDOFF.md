@@ -8,6 +8,39 @@ en el telefono 200/403).
 El plan largo vive en context/PLAN_SIGUIENTE_AGENTE.md. Este es el estado corto.
 Historico viejo en git y docs/handoffs/archive/.
 
+## SESION 2026-07-15 (noche) -- MAPA GENERATIVO: curador de ideas a medias
+
+Pedido real del usuario: curador generativo que conecte las ideas a medias via
+matematica y semantica, SIN borrar nada. Ejecutado por subagente Sonnet 5 con rol
+director-de-arte + protocolo motor-omega (skills leidas primero). Rama
+worktree-cultura-mapa-generativo, PR draft contra main.
+
+- NUEVO projects/cultura/MAPA_GENERATIVO.md (595 lineas, autocontenido): grafo de
+  digestion sobre 19 nodos (toda idea a medias del repo: omega-map, bifurcacion-
+  registro, legado-fable, dossiers psicosis/precursor, tilde-residuo, triada
+  fila-cero/tilde-paridad/mecanismo-residuo/marca-sin-precio, vola-vaso-vacio,
+  trilogia-blender con blend-math-lab, xio-concept con xiotech, identidad-reactivos,
+  tilde-meter, plan-anual, portfolio-placeholder, continuidad-sesiones,
+  investigacion-mak) x 9 ejes semanticos. w(i,j)=ejes compartidos, arista si w>=2
+  -> 52 aristas (suma de grados 104 verificada a mano), 3 componentes conexas.
+  Huerfanos con PUENTE MINIMO propuesto (conexion, nunca borrado); regla de
+  compost: un nodo abandonado cambia de estado con fecha, jamas se elimina.
+  Omega11 declarada en el doc ANTES del mapa: pierde si un agente barato, leyendo
+  SOLO el mapa, no localiza cada idea a medias y nombra sus conexiones -- NO
+  evaluada aun (correr el test con otro modelo es el siguiente paso natural).
+- ZONA MAK RESPETADA (otro agente trabajando en el Linux durante esta sesion):
+  research_agent_* y .dev NO leidos ni tocados; entran como nodo unico
+  "investigacion-mak" catalogado solo por nombre, fila en cero por diseno.
+- puente/SEMILLAS.md: append-only del registro motor-omega paso (e) + fila (+)6
+  nueva (filiacion identidad/reactivos.json <-> MANIFIESTO idea #10, precipitadas
+  juntas el 12-jul pero nunca documentada la relacion). ATENCION: la regla viva
+  "NO tocar puente/SEMILLAS.md" (abajo) choca con el paso (e) del motor, que exige
+  fechar ahi cada precipitacion; el append va en COMMIT SEPARADO dentro del PR
+  para dropearlo facil si el usuario prefiere la regla literal. Cero lineas
+  existentes reescritas.
+- Verificacion: compileall OK, pytest verde (1 skip), flujo verify OK (0.51.0).
+  Cambio docs-only (2 archivos .md).
+
 ## SESION 2026-07-15 (autonoma tarde) -- showcontrol v1.1->v1.8 + cultura wachuma
 Rama claude/cultura-xio-mistral-20260715, PR #45 MERGEADO a main.
 
