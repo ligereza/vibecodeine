@@ -21,6 +21,21 @@ sin webhook registrado. SALIDA VIABLE NO USADA (decision usuario): 1 click en
 la UI (Publish/Activate) o runner standalone sin n8n. Si el research cultural
 revive: portar el harness probado como script directo en MAK, SIN n8n.
 
+PENDIENTE (idea "wachuma", continuar luego, SIN n8n): sacarle jugo a MAK con
+las 4 APIs vivas (Tavily, Groq llama-3.3-70b, Cerebras gpt-oss-120b, Azure
+gpt-5-mini) + ollama local (aya-expanse:8b). Plan elegido:
+1. Open WebUI (ya corre en MAK): conectar las 4 como connections
+   OpenAI-compatible -> chat multi-modelo lado a lado + Tavily web. Config, 0 code.
+2. panel.py (~150 lineas, patron del harness YA PROBADO en la rama): 4
+   busquedas Tavily paralelas (angulos historico/estetico/legal/tecnico),
+   4 panelistas = 4 modelos, 2 rondas de replica, sintesis por gpt-5-mini
+   -> ~/research/paneles/*.md; disparo por ntfy desde iPhone.
+3. runner research.py standalone (portar harness) + cola ntfy + cron.
+4. Despues si crece: LiteLLM proxy como gateway unico en mak:4000.
+Keys listas: cultura/.dev (PC; .dev.limpio esperando swap del usuario) y
+~/n8n-local/research.env en MAK (600). Harness probado: rama
+claude/n8n-free-apis-20260715 (PR #46 cerrada, referencia).
+
 Estado que quedo en MAK (inofensivo, no revertido para no gastar):
 ~/n8n-local/research.env (600, keys), ~/research/research.sh (apunta a
 /webhook/research-cultural, muerto), workflow makCulturaResearch importado
