@@ -41,7 +41,8 @@ from .protocols import (
     valid_host,
 )
 
-TICK_HZ = 30.0
+TICK_HZ = 30.0            # cue engine: smooth fades need a fast tick
+FABRIC_KEEPALIVE_HZ = 2.0  # fabric has no fades: only re-emit DMX inside the 1s Art-Net timeout
 
 
 class ShowControlPlugin(PluginBase):
@@ -382,7 +383,7 @@ class ShowControlPlugin(PluginBase):
                     if not self._fabric.active:
                         self._fabric_thread = None
                         return
-            self._fabric_stop.wait(1.0 / TICK_HZ)
+            self._fabric_stop.wait(1.0 / FABRIC_KEEPALIVE_HZ)
         with self._fabric_thread_lock:
             self._fabric_thread = None
 
@@ -402,14 +403,20 @@ class ShowControlPlugin(PluginBase):
             return jsonify({"ok": True, "output": self._fabric_output,
                             "state": self._fabric.status()})
         d = request.get_json(force=True, silent=True) or {}
+        # Validate BEFORE load() so a bad request never leaves a half-loaded fabric.
         try:
             output = self._valid_output(d.get("output") or {}) if d.get("output") else None
+        except ValueError as e:
+            return jsonify({"ok": False, "error": str(e)}), 400
+        routes = d.get("routes")
+        needs_output = isinstance(routes, list) and any(
+            isinstance(r, dict) and r.get("sink") == "dmx" for r in routes)
+        if needs_output and output is None:
+            return jsonify({"ok": False, "error": "DMX routes need an 'output' {protocol,host}"}), 400
+        try:
             info = self._fabric.load(d)
         except (FabricError, ValueError) as e:
             return jsonify({"ok": False, "error": str(e)}), 400
-        # DMX routes need an output target; OSC-only fabrics don't
-        if info["universes"] and output is None:
-            return jsonify({"ok": False, "error": "DMX routes need an 'output' {protocol,host}"}), 400
         self._fabric_output = output
         self._ensure_fabric_thread()
         return jsonify({"ok": True, "loaded": info, "output": output})

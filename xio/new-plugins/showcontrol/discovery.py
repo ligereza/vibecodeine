@@ -79,12 +79,18 @@ def parse_poll_reply(pkt: bytes) -> dict:
 
 
 def discover(timeout: float = 2.0, bind_host: str = "0.0.0.0",
-             broadcast_host: str = "255.255.255.255", port: int = ARTNET_PORT):
+             broadcast_host: str = "255.255.255.255", port: int = ARTNET_PORT,
+             bind_port: int = ARTNET_PORT):
     """Broadcast one ArtPoll and collect ArtPollReply nodes until `timeout`.
 
     Returns a list of node dicts (deduped by IP, first reply wins), sorted by IP.
     Pure-Python UDP; no shell. Caller controls timeout so it can stay snappy on a
-    phone. `bind_host`/`broadcast_host` let a caller scope to one interface.
+    phone. `bind_host`/`broadcast_host` scope to one interface.
+
+    We bind the Art-Net port (6454) because a spec-compliant node BROADCASTS its
+    ArtPollReply to 6454 -- an ephemeral bind would miss those. SO_REUSEADDR lets
+    this coexist; if the port is taken we fall back to an ephemeral bind (still
+    catches nodes that unicast their reply to the sender). Tests pass bind_port=0.
     """
     timeout = max(0.1, min(float(timeout), 10.0))
     deadline = time.monotonic() + timeout
@@ -96,7 +102,10 @@ def discover(timeout: float = 2.0, bind_host: str = "0.0.0.0",
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         except OSError:
             pass
-        sock.bind((bind_host, 0))            # ephemeral local port; nodes reply to it
+        try:
+            sock.bind((bind_host, bind_port))
+        except OSError:
+            sock.bind((bind_host, 0))        # port busy -> ephemeral (unicast replies only)
         sock.sendto(build_artpoll(), (broadcast_host, port))
         while len(seen) < MAX_NODES:
             remaining = deadline - time.monotonic()

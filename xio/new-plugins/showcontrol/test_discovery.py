@@ -104,7 +104,9 @@ def test_discover_over_the_wire():
 
     t = threading.Thread(target=serve, daemon=True)
     t.start()
-    nodes = D.discover(timeout=2.0, broadcast_host="127.0.0.1", port=node_port)
+    # bind_port=0: ephemeral local port so the node's unicast reply reaches us
+    # (real hardware broadcasts to 6454; discover() binds 6454 by default for that)
+    nodes = D.discover(timeout=2.0, broadcast_host="127.0.0.1", port=node_port, bind_port=0)
     t.join(1.0)
     node.close()
 
