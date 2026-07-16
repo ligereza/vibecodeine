@@ -8,6 +8,28 @@ en el telefono 200/403).
 El plan largo vive en context/PLAN_SIGUIENTE_AGENTE.md. Este es el estado corto.
 Historico viejo en git y docs/handoffs/archive/.
 
+## SESION 2026-07-15 (autonoma tarde) -- showcontrol v1.1->v1.8 + cultura wachuma
+Rama claude/cultura-xio-mistral-20260715, PR #45 (draft). Todo pusheado.
+
+- showcontrol recorrio el grafo de cultura/xio-concept.html entero (nodos
+  software-puros): v1.1 orq cue engine + panel + WoL; v1.2 fabric (senal 0..1 ->
+  N sinks DMX/OSC); v1.3 sonda descubrimiento Art-Net (bindear 6454: los nodos
+  DIFUNDEN el reply); v1.4 automap optico (matriz de transporte, Hadamard cancela
+  ambiente); v1.5 obs telemetria /obs; v1.6 timeline timecode (el show se dispara
+  solo); v1.7 muros token de show (TOFU /auth/set, constant-time, cierra el caveat
+  0.0.0.0); v1.8 osc-in (el telefono RECIBE cues /xio/*, listener opt-in +
+  allowlist). Hardening: RLock Timeline, lock _next_seq, fabric 2Hz, validar
+  antes de mutar. 69/69 tests off-device; manual completo en
+  xio/new-plugins/showcontrol/README.md (operable sin Claude).
+- cultura/: workflow n8n remado a aya-expanse:8b, desplegado en MAK; queda el
+  knob N8N_RUNNERS_TASK_TIMEOUT (usuario). Blender geonodes 450f verificado
+  headless. cultura/.dev (key Tavily) gitignored, jamas en git.
+- Gate del repo verde: compileall src/flujo OK, pytest verde (1 skip),
+  flujo verify OK.
+- PENDIENTE: merge PR #45; deploy showcontrol v1.8 al Xiaomi (USB runbook) +
+  humo LAN; splat/rllm del grafo piden GPU/camara (investigacion, no software
+  puro del server).
+
 ## SESION 2026-07-15 (autonoma) -- xio showcontrol + aislar MAK del xio
 
 - showcontrol (commit 8719929): plugin xio OSC + Art-Net + sACN, SEND-only, pure
