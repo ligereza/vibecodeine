@@ -102,6 +102,15 @@ PANEL_HTML = """<!DOCTYPE html>
   </div>
 </details>
 
+<details>
+  <summary>token de show (muros)</summary>
+  <div class="mini">
+    <input id="tok" placeholder="token (vacio = abierto)" type="password">
+    <button id="toksave">usar</button>
+  </div>
+  <div id="tokstate" class="meta">&mdash;</div>
+</details>
+
 <div id="err"></div>
 
 <script>
@@ -109,9 +118,12 @@ const B = "/api/plugins/showcontrol";
 const $ = id => document.getElementById(id);
 let cues = [];
 
+function token(){ try{ return localStorage.getItem("show_token") || ""; }catch(e){ return ""; } }
 async function api(path, body){
-  const r = await fetch(B + path, body === undefined ? {} :
-    {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)});
+  const h = {"Content-Type":"application/json"};
+  if(token()) h["X-Show-Token"] = token();
+  const r = await fetch(B + path, body === undefined ? {headers: h} :
+    {method:"POST", headers: h, body: JSON.stringify(body)});
   const d = await r.json().catch(() => ({}));
   if(!r.ok || d.ok === false) throw new Error(d.error || ("HTTP " + r.status));
   return d;
@@ -172,6 +184,21 @@ $("load").onclick = () => {
 };
 $("wol").onclick = () => api("/wol", {mac: $("mac").value}).catch(err);
 
+async function pollAuth(){
+  try{
+    const a = await api("/auth");
+    $("tokstate").textContent = a.protected
+      ? (token() ? "protegido · token guardado en este navegador" : "protegido · FALTA token aqui")
+      : "abierto (sin token)";
+  }catch(e){}
+}
+$("toksave").onclick = () => {
+  try{ localStorage.setItem("show_token", $("tok").value.trim()); }catch(e){}
+  $("tok").value = "";
+  pollAuth();
+  err("");
+};
+
 function fmt(s){ s = Math.max(0, s|0); return (s/60|0) + ":" + String(s%60).padStart(2,"0"); }
 async function pollTl(){
   try{
@@ -213,6 +240,7 @@ $("scan").onclick = () => {
 };
 
 refresh();
+pollAuth();
 setInterval(poll, 1000);
 setInterval(pollObs, 2000);
 setInterval(pollTl, 1000);

@@ -18,12 +18,14 @@ The 30 Hz tick thread only runs while a show is live (battery discipline) and
 stops itself once RELEASE lands at black.
 """
 
+import functools
 import socket
 import threading
 import time
 
 from plugins.base import PluginBase
 
+from .auth import check_token, new_token, valid_token_format
 from .automap import plan as automap_plan, solve as automap_solve
 from .cueengine import CueEngine, CueError
 from .discovery import discover as artnet_discover
@@ -51,7 +53,7 @@ class ShowControlPlugin(PluginBase):
 
     plugin_id = "showcontrol"
     name = "Show Control"
-    version = "1.6.0"
+    version = "1.7.0"
     description = "Send OSC, Art-Net and sACN/E1.31 DMX from the phone over the LAN"
     author = "Cauce"
     icon = "network"
@@ -70,34 +72,40 @@ class ShowControlPlugin(PluginBase):
         self._cue_thread = None
         self._cue_thread_lock = threading.Lock()
         self._timeline = Timeline()
+        # muros: optional show token -- once set, every mutating POST needs it
+        self._token = self.get_config("show_token") or None
+        g = self._guard
         self.register_route("/status", self._api_status, methods=["GET"])
-        self.register_route("/osc", self._api_osc, methods=["POST"])
-        self.register_route("/artnet", self._api_artnet, methods=["POST"])
-        self.register_route("/sacn", self._api_sacn, methods=["POST"])
-        self.register_route("/cues", self._api_cues, methods=["GET", "POST"])
-        self.register_route("/cue/go", self._api_cue_go, methods=["POST"])
-        self.register_route("/cue/stop", self._api_cue_stop, methods=["POST"])
-        self.register_route("/cue/release", self._api_cue_release, methods=["POST"])
+        self.register_route("/osc", g(self._api_osc), methods=["POST"])
+        self.register_route("/artnet", g(self._api_artnet), methods=["POST"])
+        self.register_route("/sacn", g(self._api_sacn), methods=["POST"])
+        self.register_route("/cues", g(self._api_cues), methods=["GET", "POST"])
+        self.register_route("/cue/go", g(self._api_cue_go), methods=["POST"])
+        self.register_route("/cue/stop", g(self._api_cue_stop), methods=["POST"])
+        self.register_route("/cue/release", g(self._api_cue_release), methods=["POST"])
         self.register_route("/cue/state", self._api_cue_state, methods=["GET"])
-        self.register_route("/timeline", self._api_timeline, methods=["GET", "POST"])
-        self.register_route("/timeline/play", self._api_timeline_play, methods=["POST"])
-        self.register_route("/timeline/pause", self._api_timeline_pause, methods=["POST"])
-        self.register_route("/timeline/locate", self._api_timeline_locate, methods=["POST"])
+        self.register_route("/timeline", g(self._api_timeline), methods=["GET", "POST"])
+        self.register_route("/timeline/play", g(self._api_timeline_play), methods=["POST"])
+        self.register_route("/timeline/pause", g(self._api_timeline_pause), methods=["POST"])
+        self.register_route("/timeline/locate", g(self._api_timeline_locate), methods=["POST"])
         self.register_route("/timeline/state", self._api_timeline_state, methods=["GET"])
         self.register_route("/panel", self._api_panel, methods=["GET"])
-        self.register_route("/wol", self._api_wol, methods=["POST"])
+        self.register_route("/wol", g(self._api_wol), methods=["POST"])
         self._fabric = Fabric()
         self._fabric_output = None
         self._fabric_stop = threading.Event()
         self._fabric_thread = None
         self._fabric_thread_lock = threading.Lock()
-        self.register_route("/fabric", self._api_fabric, methods=["GET", "POST"])
-        self.register_route("/fabric/set", self._api_fabric_set, methods=["POST"])
+        self.register_route("/fabric", g(self._api_fabric), methods=["GET", "POST"])
+        self.register_route("/fabric/set", g(self._api_fabric_set), methods=["POST"])
         self.register_route("/fabric/state", self._api_fabric_state, methods=["GET"])
-        self.register_route("/discover", self._api_discover, methods=["GET", "POST"])
-        self.register_route("/automap/plan", self._api_automap_plan, methods=["POST"])
-        self.register_route("/automap/solve", self._api_automap_solve, methods=["POST"])
+        self.register_route("/discover", g(self._api_discover), methods=["GET", "POST"])
+        self.register_route("/automap/plan", g(self._api_automap_plan), methods=["POST"])
+        self.register_route("/automap/solve", g(self._api_automap_solve), methods=["POST"])
         self.register_route("/obs", self._api_obs, methods=["GET"])
+        # /auth/set is NOT wrapped: it does its own TOFU current-token check
+        self.register_route("/auth", self._api_auth, methods=["GET"])
+        self.register_route("/auth/set", self._api_auth_set, methods=["POST"])
         # Re-arm a persisted show (list only -- never auto-runs anything).
         saved = self.get_config("cuelist")
         if saved:
@@ -111,6 +119,62 @@ class ShowControlPlugin(PluginBase):
     def on_unload(self):
         self._cue_stop.set()
         self._fabric_stop.set()
+
+    # ── muros: show token gate ────────────────────────────────────────────
+    def _presented_token(self, request):
+        """Token from header (preferred), JSON body, or query param."""
+        t = request.headers.get("X-Show-Token")
+        if t is not None:
+            return t
+        d = request.get_json(force=True, silent=True) or {}
+        if isinstance(d, dict) and "token" in d:
+            return d.get("token")
+        return request.args.get("token")
+
+    def _guard(self, handler):
+        """Require the show token on mutating (POST) requests when one is set.
+        GETs pass through -- read-only state stays open for panels/telemetry."""
+        @functools.wraps(handler)
+        def wrapper(*a, **kw):
+            from flask import request, jsonify
+            if request.method == "POST" and self._token:
+                if not check_token(self._token, self._presented_token(request)):
+                    return jsonify({"ok": False,
+                                    "error": "show token required (X-Show-Token header)"}), 401
+            return handler(*a, **kw)
+        return wrapper
+
+    def _api_auth(self):
+        from flask import jsonify
+        return jsonify({"ok": True, "protected": bool(self._token)})
+
+    def _api_auth_set(self):
+        """TOFU: free while no token exists; afterwards, rotating or clearing
+        requires the current token ('current' field or X-Show-Token header)."""
+        from flask import request, jsonify
+        d = request.get_json(force=True, silent=True) or {}
+        if self._token:
+            current = request.headers.get("X-Show-Token", d.get("current"))
+            if not check_token(self._token, current):
+                return jsonify({"ok": False, "error": "current token required"}), 401
+        if d.get("generate"):
+            token = new_token()
+        else:
+            token = d.get("token")
+            if token in ("", None):                     # explicit clear -> open mode
+                self._token = None
+                self.set_config("show_token", "")
+                return jsonify({"ok": True, "protected": False})
+            if not valid_token_format(token):
+                return jsonify({"ok": False,
+                                "error": "token must be 8..128 printable ASCII chars, no spaces"}), 400
+        self._token = token
+        self.set_config("show_token", token)
+        # the generated token is returned ONCE, here -- it is never readable again
+        out = {"ok": True, "protected": True}
+        if d.get("generate"):
+            out["token"] = token
+        return jsonify(out)
 
     # ── sender ────────────────────────────────────────────────────────────
     def _send_udp(self, packet, host, port, multicast=False):

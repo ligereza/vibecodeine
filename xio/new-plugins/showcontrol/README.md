@@ -110,6 +110,21 @@ GET  /panel                                  # the browser control panel (open o
 POST /wol  {"mac":"AA:BB:CC:DD:EE:FF","verify_host":"1.2.3.4","verify_port":22,"timeout":30}
 ```
 
+### Show token (`muros` -- lock the rig on a shared LAN)
+```bash
+GET  /auth                                   # {"protected": true|false}
+POST /auth/set {"generate":true}             # TOFU: free while no token exists; returns the token ONCE
+POST /auth/set {"token":"my-show-secret1"}   # or set your own (8..128 printable ASCII)
+POST /auth/set {"token":"new1","current":"old1"}   # rotate (or X-Show-Token header for current)
+POST /auth/set {"token":""}  -H "X-Show-Token: old1"  # clear -> open mode
+```
+Once a token is set, **every mutating POST** (senders, cues, timeline, fabric,
+discover, automap, WoL) requires it -- `X-Show-Token` header, or `token` in the
+JSON body / query string. Read-only GETs (state, `/obs`, `/panel`) stay open.
+Comparison is constant-time; the token persists in the plugin's on-device
+config (never in the repo). The panel stores it in browser localStorage
+("token de show" section).
+
 ## Panel
 
 Open `http://<phone>:5000/api/plugins/showcontrol/panel` on any tablet/browser on
@@ -124,12 +139,13 @@ The code lives in the repo; deploy is manual over USB per the xio runbook (copy
 `xio/new-plugins/showcontrol/` into the on-device plugins dir and restart the
 server, or use `run_server.sh`). No pip install needed (pure stdlib).
 
-## Security caveat (read before a live show)
+## Security (read before a live show)
 
 The xio server binds `0.0.0.0:5000` with open CORS, so **any device on the
-hotspot can hit these endpoints** -- a curious guest could POST `/artnet` and
-disrupt a live rig. These send routes are **not** yet behind the server's
-`DANGEROUS_ENDPOINTS` guard or a token. Fine on a **trusted crew-only LAN**; if
-audience devices share the hotspot, add a shared-secret token or bind-scope
-before relying on it live. (Physical DMX512 via a USB dongle is out of scope
-non-root -- drive a network Art-Net/sACN node instead.)
+hotspot can reach these endpoints**. Default is **open** (trusted crew-only
+LAN). If audience devices share the hotspot, **set a show token before the
+show** (see "Show token" above): one `POST /auth/set {"generate":true}`, paste
+the returned token into the panel's "token de show" box on your control tablet,
+and every mutating endpoint is locked to holders of the token. Rotating or
+clearing later requires the current token (TOFU). (Physical DMX512 via a USB
+dongle is out of scope non-root -- drive a network Art-Net/sACN node instead.)

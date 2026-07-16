@@ -92,7 +92,17 @@ Abrir Blender 4.5 LTS -> Scripting -> abrir BLENDER.geonodes_450.py -> Alt+P
 - Verificado headless en Blender 4.5.4: reset por segmento OK, NORMAL converge a b=u,
   MULTIPLY colapsa a 0.15*u^14, twin gaze permanece plano.
 
-## 3. xio: cue + timeline + fabric + sonda + automap + obs (v1.6 de showcontrol)
+## 3. xio: cue + timeline + fabric + sonda + automap + obs + muros (v1.7 de showcontrol)
+
+v1.7 agrega el TOKEN DE SHOW (nodo `muros`): opcional, apagado por defecto; una vez
+seteado (`POST /auth/set {"generate":true}`, TOFU: libre solo mientras no hay token,
+rotar/limpiar exige el token actual), TODO POST mutante (senders, cues, timeline,
+fabric, discover, automap, WoL) exige `X-Show-Token`; los GET de solo-lectura quedan
+abiertos. Comparacion constant-time (hmac.compare_digest); el token persiste en el
+config on-device del plugin (jamas en el repo); el panel lo guarda en localStorage
+(seccion "token de show"). Cierra el caveat de seguridad del bind 0.0.0.0 para LANs
+compartidas con publico. Codigo: `auth.py` + wrapper `_guard` en `__init__.py`.
+Tests: `test_auth.py` (4) -> 63 en total.
 
 Puntos de crecimiento implementados del grafo (`orq` + `fabric` + `sonda`/`p_inv` +
 `obs`): cue list con fades temporizados, timeline de timecode (el show dispara cues
