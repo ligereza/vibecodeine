@@ -41,18 +41,20 @@ def _clear_status():
 # conexiones del canvas dirigen el orden, orden topologico).
 SCRIPTS = {"research": "research.py", "panel": "panel.py",
            "cadena": "cadena.py", "refutar": "refutar.py",
-           "corpus": "correlacionar_archivos.py", "grafo": "grafo.py"}
+           "corpus": "correlacionar_archivos.py", "grafo": "grafo.py",
+           "memoria": "memoria.py"}
 N_FLAG = {"research": "--iteraciones", "panel": "--replicas"}
 # corpus no toma tema posicional (correlaciona el archivo entero)
 SIN_TEMA = {"corpus"}
 
 
 def run_tema(modo, tema, n=None, ntfy=True, sin_marco=False, densidad=None,
-            orden=None, timeout=1800):
-    """modo: research/panel/cadena/refutar. n = iteraciones o replicas
-    (solo research/panel). orden = CSV de proveedores (cadena/refutar
-    respetan el orden de nodos definido en el canvas). Devuelve
-    {ok, path, tail}. Bloquea hasta tomar el lock."""
+            orden=None, memoria=False, timeout=1800):
+    """modo: research/panel/cadena/refutar/grafo/memoria. n = iteraciones o
+    replicas (solo research/panel). orden = CSV de proveedores (cadena/refutar
+    respetan el orden de nodos del canvas). memoria=True inyecta los hallazgos
+    previos del departamento (solo grafo). Devuelve {ok, path, tail}. Bloquea
+    hasta tomar el lock."""
     script = SCRIPTS.get(modo, "research.py")
     cmd = [sys.executable, os.path.join(BASE, script)]
     if modo not in SIN_TEMA:
@@ -63,6 +65,8 @@ def run_tema(modo, tema, n=None, ntfy=True, sin_marco=False, densidad=None,
         cmd += ["--densidad", densidad]
     if orden and modo in ("cadena", "refutar"):
         cmd += ["--orden", orden]
+    if memoria and modo == "grafo":
+        cmd.append("--memoria")
     if ntfy:
         cmd.append("--ntfy")
     if sin_marco and modo not in SIN_TEMA:

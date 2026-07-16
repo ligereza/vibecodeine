@@ -8,6 +8,34 @@ verificado en vivo en MAK (5 modos corridos contra APIs reales + pantallazos).
 El plan largo vive en context/PLAN_SIGUIENTE_AGENTE.md. Este es el estado corto.
 Historico viejo en git y docs/handoffs/archive/.
 
+## SESION 2026-07-16 (c) -- MAK research: MEMORIA del departamento (RAG local)
+El usuario pidio "enhance the department". Se agrego la pieza mas de fondo
+que faltaba para que sea un DEPARTAMENTO y no una carpeta de informes: una
+MEMORIA consultable.
+
+- memoria.py NUEVO: indexa TODOS los productos (.md) con embeddings LOCALES
+  y gratis (ollama nomic-embed-text, 768-dim; se pulled en MAK) a
+  ~/research/memoria/index.jsonl. Incremental por mtime. Cosine top-k en
+  python (instantaneo sobre ~500 chunks). 3 usos: `index`, `buscar "tema"`,
+  y consultar (default) = 7mo MODO Memoria: recupera lo previo relevante y
+  el modelo capaz sintetiza QUE SABEMOS / consenso / contradicciones /
+  VACIOS / que investigar proximo. Escala mejor que Corpus (solo el
+  subconjunto relevante, no todo el archivo).
+- Inyeccion --memoria en modo Grafo (checkbox "Consultar memoria" en Run):
+  cada trigger recibe, junto al tema, los hallazgos previos relevantes
+  (memoria.contexto). El grafo construye sobre lo ya sabido.
+- UI: boton Reindexar (tools menu, background via /api/memoria/index) +
+  contador de fragmentos (/api/memoria/stats, poll 15s). run-modo dropdown
+  con Memoria. worker.py SCRIPTS["memoria"], DIRS/MODO_DIR memoria/.
+- Verificado: py_compile + node --check OK; index construido en MAK (33
+  archivos -> 473 chunks); embeddings 768-dim OK. Borrado el sitecustomize.py
+  huerfano que reaparecio (trampa conocida).
+- PENDIENTE (no del codigo): confirmar EN VIVO el modo Memoria (consultar +
+  sintesis) y grafo --memoria. Se corto por throttle de fail2ban en MAK tras
+  muchas conexiones SSH seguidas; interfaz.py lo revive el watchdog (cron
+  */5) o relanzar con `setsid python3 interfaz.py >log 2>&1 </dev/null &`
+  (un nohup dentro de un SSH con loop largo muere con SIGTERM al cerrar).
+
 ## SESION 2026-07-16 (b) -- MAK research: GRAFO REAL dirige la ejecucion
 Rama worktree-mak-research-cultural. El usuario pidio arreglar huecos del
 canvas: faltaban opciones de conexion en los nodos, la Discussion "no era

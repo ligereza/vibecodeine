@@ -149,7 +149,7 @@ def orden_topologico(modelos, edges):
     return orden
 
 
-def ejecutar_grafo(tema, nodes, conns, densidad="medio"):
+def ejecutar_grafo(tema, nodes, conns, densidad="medio", memoria_ctx=""):
     t0 = time.time()
     llm = LLM()
     activos = {k for k, nd in nodes.items()
@@ -173,13 +173,19 @@ def ejecutar_grafo(tema, nodes, conns, densidad="medio"):
         nd = nodes[m]
         # contexto = salida de predecesores; si predecesor es trigger, el tema
         ctx_parts = []
+        lee_tema = False
         for p in preds.get(m, []):
             if p in triggers or p == "trigger":
                 ctx_parts.append('TEMA: "%s"' % tema)
+                lee_tema = True
             elif p in salidas:
                 ctx_parts.append("[%s dijo]: %s" % (p, salidas[p]))
         if not ctx_parts:  # sin predecesor: arranca del tema
             ctx_parts.append('TEMA: "%s"' % tema)
+            lee_tema = True
+        # inyecta la memoria del departamento donde entra el tema
+        if lee_tema and memoria_ctx:
+            ctx_parts.append(memoria_ctx)
         contexto = "\n\n".join(ctx_parts)
 
         system = nd.get("system_prompt") or (
@@ -229,6 +235,8 @@ def main():
     ap.add_argument("--densidad", choices=("corto", "medio", "largo"), default="medio")
     ap.add_argument("--sin-marco", action="store_true")
     ap.add_argument("--ntfy", action="store_true")
+    ap.add_argument("--memoria", action="store_true",
+                    help="inyecta hallazgos previos del departamento (RAG local)")
     ap.add_argument("--out", default=OUT_DIR)
     args = ap.parse_args()
 
@@ -252,7 +260,16 @@ def main():
         return 2
 
     tema = marco(args.tema, activo=not args.sin_marco)
-    result = ejecutar_grafo(tema, nodes, conns, args.densidad)
+    memoria_ctx = ""
+    if args.memoria:
+        try:
+            from memoria import contexto as _mem_ctx
+            memoria_ctx = _mem_ctx(args.tema)
+            if memoria_ctx:
+                print("STATUS: Memoria del departamento inyectada.", flush=True)
+        except Exception as e:  # noqa: BLE001 - memoria es opcional
+            print("STATUS: memoria no disponible (%s)" % e, flush=True)
+    result = ejecutar_grafo(tema, nodes, conns, args.densidad, memoria_ctx)
 
     os.makedirs(args.out, exist_ok=True)
     base = os.path.join(args.out, "%s-%s" % (stamp(), slug(args.tema)))

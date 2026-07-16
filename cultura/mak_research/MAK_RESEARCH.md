@@ -6,7 +6,7 @@ Estructura conceptual: **pagina (server) + acciones (modelos) + productos
 (archivos) + correlacion semantica sobre los productos**. Recibe cualquier
 tema X por 3 interfaces y devuelve informe Markdown.
 
-## Los 6 modos (acciones)
+## Los 7 modos (acciones)
 
 | Modo UI | Script | Que hace | Salida |
 |---|---|---|---|
@@ -15,6 +15,7 @@ tema X por 3 interfaces y devuelve informe Markdown.
 | **Discussion** | panel.py | Comite: todos los modelos convergen (paralelo + correlacion) | paneles/ |
 | **Adversarial** | refutar.py | Proponente -> refutadores -> juez que veredicta | refutaciones/ |
 | **Grafo** | grafo.py | Ejecutor real: las conexiones dibujadas DIRIGEN el orden (topologico) | grafos/ |
+| **Memoria** | memoria.py | Recupera lo que el depto YA sabe del tema (RAG local) + vacios | memoria/ |
 | **Corpus** | correlacionar_archivos.py | Correlaciona TODO el archivo acumulado (sin tema): clusteres, hilos, huecos | correlaciones/ |
 
 Cadena LLM con fallback (research_lib.py): groq -> cerebras -> azure ->
@@ -63,6 +64,26 @@ Search: Tavily (1000 creditos/mes; basic=1, advanced=2).
 - **Sobre el archivo:** modo Corpus (correlacionar_archivos.py) lee los
   productos .json acumulados y arma un mapa del corpus completo.
 
+## Memoria del departamento (RAG local -- lo que ya sabe)
+
+`memoria.py` convierte el archivo de productos en una MEMORIA consultable:
+el departamento deja de arrancar de cero y se apoya en lo que ya produjo.
+
+- **Index:** embeddings LOCALES y gratis con ollama `nomic-embed-text`
+  (768-dim, se baja con `ollama pull nomic-embed-text`). Indexa los `.md`
+  de informes/paneles/cadenas/refutaciones/correlaciones/grafos a
+  `~/research/memoria/index.jsonl`. Incremental (salta lo ya indexado por
+  mtime; re-embeddeba lo que cambio). `python3 memoria.py index [--rebuild]`.
+  En la UI: boton `Reindexar` (tools menu, background) + contador de frag.
+- **Modo Memoria:** `python3 memoria.py "tema"` recupera los fragmentos
+  previos mas relevantes (cosine top-k) y el modelo capaz sintetiza QUE
+  SABEMOS YA / consenso / contradicciones / VACIOS / que investigar proximo.
+  Escala mejor que Corpus: solo mira el subconjunto relevante, no todo.
+- **Inyeccion:** el checkbox "Consultar memoria del depto" en el form de Run
+  agrega `--memoria` al modo **Grafo**: cada trigger recibe, junto al tema,
+  los hallazgos previos relevantes (`memoria.contexto(tema)`), asi el grafo
+  construye sobre lo ya sabido. CLI: `grafo.py "tema" --memoria`.
+
 ## Densidad del trabajo
 
 Perilla en la UI (corto/medio/largo) -> escala tokens por llamada con
@@ -82,9 +103,11 @@ timeout del worker (1800s) ni los limites free-tier. CLI: `--densidad`.
 2. **ntfy (iPhone, sin PC):** publicar a `$NTFY_TOPIC_IN`. Formatos:
    `tema` (research), `panel: tema`, `research: tema`. Respuestas por
    `$NTFY_TOPIC_OUT`.
-3. **CLI:** `python3 ~/research/{research,panel,cadena,refutar,grafo}.py "tema"`
-   o `correlacionar_archivos.py`. `grafo.py` lee `~/research/workflow.json`
-   (nodos + connections); valida y refusa si el grafo es invalido.
+3. **CLI:** `python3 ~/research/{research,panel,cadena,refutar,grafo,memoria}.py
+   "tema"` o `correlacionar_archivos.py`. `grafo.py` lee
+   `~/research/workflow.json` (nodos + connections); valida y refusa si el
+   grafo es invalido. `memoria.py index` (re)construye la memoria;
+   `memoria.py "tema"` consulta; `memoria.py buscar "tema"` solo recupera.
 
 ## Tools menu del canvas (UI)
 
@@ -96,6 +119,8 @@ timeout del worker (1800s) ni los limites free-tier. CLI: `--densidad`.
   anotaciones del flujo, persisten en workflow.json, no se ejecutan.
 - **Grafo:** `Validar` corre el chequeo de flujo extremo y muestra los
   problemas en el modal.
+- **Memoria:** `Reindexar` reconstruye el index de embeddings en background;
+  al lado, contador de fragmentos indexados.
 - **Conexiones:** dos clicks entre puertos para crear una arista, click
   sobre la arista para borrarla (ver seccion "Grafo real").
 
@@ -137,7 +162,15 @@ timeout del worker (1800s) ni los limites free-tier. CLI: `--densidad`.
 - ntfy header Title debe ser ASCII (research_lib lo pliega).
 - **Corpus/sitecustomize.py:** hubo un `sitecustomize.py` huerfano en
   ~/research (nombre magico de Python, se auto-importa). Si reaparece,
-  borrarlo -- no es parte del sistema.
+  borrarlo -- no es parte del sistema. (Reaparecio y se borro 2026-07-16.)
+- **Memoria necesita el embed model:** `memoria.py` usa ollama
+  `nomic-embed-text`; si da 404 "model not found", correr una vez
+  `ollama pull nomic-embed-text` (768-dim, ~274MB). Env opcional
+  `OLLAMA_EMBED_MODEL` para cambiarlo.
+- **Reiniciar interfaz.py por SSH:** lanzar con `setsid python3
+  interfaz.py >log 2>&1 </dev/null &` o dejar que lo levante el watchdog
+  (cron */5). Un `nohup ... &` dentro de un comando SSH que sigue vivo
+  (p.ej. un loop de polling largo) muere con SIGTERM al cerrarse la sesion.
 
 ## Backlog (NO romper lo que corre)
 
@@ -147,6 +180,13 @@ timeout del worker (1800s) ni los limites free-tier. CLI: `--densidad`.
    nodo; falta que cadena/panel/refutar lean temperature/system_prompt del
    canvas (hoy solo respetan orden/activo).
 3. Nodos nota -> inyectar su texto como instruccion extra al flujo grafo.
+4. Loop vacios->seguimiento: la correlacion/memoria ya listan "VACIOS";
+   falta un boton que encole research de seguimiento por cada vacio
+   (cierra el ciclo del departamento). Grounding: cablear Tavily/fetch a
+   los modos que hoy son solo razonamiento (pipeline/discussion/grafo).
+5. Memoria: reindex incremental ya corre en cada job Memoria; escalar a
+   indice vectorial real (faiss/sqlite-vss) SOLO si el corpus crece mucho
+   (hoy cosine en python sobre ~500 chunks es instantaneo).
 4. Rotacion/paginado de informes (crecen sin limite).
 5. LiteLLM proxy (gateway :4000) SOLO si crecen los consumidores.
 

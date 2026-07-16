@@ -40,11 +40,13 @@ DIRS = {
     "refutaciones": os.path.expanduser("~/research/refutaciones"),
     "correlaciones": os.path.expanduser("~/research/correlaciones"),
     "grafos": os.path.expanduser("~/research/grafos"),
+    "memoria": os.path.expanduser("~/research/memoria"),
 }
 # modo (backend script) -> carpeta de salida; single reusa el motor de research
 MODO_DIR = {"research": "informes", "panel": "paneles",
             "cadena": "cadenas", "refutar": "refutaciones",
-            "corpus": "correlaciones", "grafo": "grafos"}
+            "corpus": "correlaciones", "grafo": "grafos",
+            "memoria": "memoria"}
 # modos que NO requieren tema (correlacionan el archivo entero)
 MODO_SIN_TEMA = {"corpus"}
 JOBS_FILE = os.path.expanduser("~/research/jobs.jsonl")
@@ -175,6 +177,38 @@ def _diagnosticar(tema, error):
     return texto
 
 
+def _memoria_stats():
+    """Cuenta chunks indexados en la memoria del departamento."""
+    try:
+        with open(os.path.expanduser("~/research/memoria/index.jsonl"),
+                  encoding="utf-8") as f:
+            chunks = sum(1 for line in f if line.strip())
+    except OSError:
+        chunks = 0
+    return {"chunks": chunks}
+
+
+_REINDEX_LOCK = threading.Lock()
+
+
+def _reindexar_async(rebuild=False):
+    """Reindexa en background (no bloquea la request). Un reindex a la vez."""
+    if not _REINDEX_LOCK.acquire(blocking=False):
+        return False
+
+    def correr():
+        try:
+            import memoria
+            memoria.indexar(rebuild=rebuild)
+        except Exception as e:  # noqa: BLE001 - reindex es best-effort
+            print("[interfaz] reindex error: %s" % e, file=sys.stderr)
+        finally:
+            _REINDEX_LOCK.release()
+
+    threading.Thread(target=correr, daemon=True).start()
+    return True
+
+
 def _orden_canvas():
     """CSV de proveedores segun la prioridad definida en el canvas.
     Usado por modo=cadena/refutar para que 'ordenar los nodos' en la UI
@@ -187,7 +221,7 @@ def _orden_canvas():
     return ",".join(provs) if provs else None
 
 
-def _lanzar(modo, tema, n, densidad="medio"):
+def _lanzar(modo, tema, n, densidad="medio", memoria=False):
     job = {
         "tema": tema, "modo": modo, "estado": "en cola",
         "path": "", "error": "", "t": time.strftime("%H:%M:%S"),
@@ -200,7 +234,8 @@ def _lanzar(modo, tema, n, densidad="medio"):
         job["estado"] = "corriendo"
         try:
             orden = _orden_canvas() if modo in ("cadena", "refutar") else None
-            r = run_tema(modo, tema, n=n, ntfy=True, densidad=densidad, orden=orden)
+            r = run_tema(modo, tema, n=n, ntfy=True, densidad=densidad,
+                        orden=orden, memoria=memoria)
             job["estado"] = "listo" if r.get("ok") else "FALLO"
             job["path"] = os.path.basename(r["path"]) if r.get("path") else ""
             if not r.get("ok"):
@@ -1480,7 +1515,8 @@ function refreshJobs() {
         if (j.path) {
           var MODO_DIR_JS = {research: 'informes', panel: 'paneles',
                             cadena: 'cadenas', refutar: 'refutaciones',
-                            corpus: 'correlaciones', grafo: 'grafos'};
+                            corpus: 'correlaciones', grafo: 'grafos',
+                            memoria: 'memoria'};
           var dir = MODO_DIR_JS[j.modo] || 'informes';
           link = '<a href="#" onclick="verArchivo(\'' + dir + '\',\'' +
             encodeURIComponent(j.path) + '\');return false;" style="color:#58a6ff;font-size:.75rem">ver</a>';
@@ -1497,6 +1533,35 @@ function refreshJobs() {
       }).join('');
     })
     .catch(function() {});
+}
+
+// ── memoria del departamento (RAG local) ──
+function refreshMemStats() {
+  fetch('/api/memoria/stats')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var el = document.getElementById('mem-count');
+      if (el) el.textContent = (d.chunks || 0) + ' frag';
+    })
+    .catch(function() {});
+}
+function reindexarMemoria() {
+  showToast('Reindexando memoria...', 'info');
+  fetch('/api/memoria/index', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: '',
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    showToast(d.started ? 'Indexando en background...' : 'Ya hay un reindex corriendo', 'info');
+    var n = 0;
+    var iv = setInterval(function() {
+      refreshMemStats();
+      if (++n >= 12) clearInterval(iv);
+    }, 2500);
+  })
+  .catch(function() { showToast('Error al reindexar', 'error'); });
 }
 
 // ── keyboard shortcuts ──
@@ -1541,6 +1606,8 @@ document.addEventListener('DOMContentLoaded', function() {
   drawConnections();
   selectNode(null);
   setInterval(refreshJobs, 4000);
+  refreshMemStats();
+  setInterval(refreshMemStats, 15000);
   window.addEventListener('resize', function() { drawConnections(); });
   // fit to view on first load
   setTimeout(fitToView, 100);
@@ -1615,6 +1682,11 @@ HTML = """<!doctype html>
         <span class="tool-label">Grafo</span>
         <button onclick="if(chequearGrafo(false))showToast('Grafo valido','success')" title="Validar flujo (ciclos, huerfanos, fan-out)">&#10003; Validar</button>
       </div>
+      <div class="tool-group">
+        <span class="tool-label">Memoria</span>
+        <button onclick="reindexarMemoria()" title="Reindexar el archivo del departamento (embeddings locales)">&#8635; Reindexar</button>
+        <span class="zoom-level" id="mem-count" title="Fragmentos indexados">-- frag</span>
+      </div>
     </div>
   </div>
 
@@ -1652,8 +1724,13 @@ HTML = """<!doctype html>
               <option value="panel">Discussion (panel paralelo)</option>
               <option value="refutar">Adversarial (proponer/refutar)</option>
               <option value="grafo">Grafo (conexiones dirigen la ejecucion)</option>
+              <option value="memoria">Memoria (que sabe el depto de X + vacios)</option>
               <option value="corpus">Corpus (correlacionar archivo, sin tema)</option>
             </select>
+          </div>
+          <div class="field" style="display:flex;align-items:center;gap:8px">
+            <input type="checkbox" id="run-memoria" style="width:auto">
+            <label for="run-memoria" style="margin:0">Consultar memoria del depto (inyecta hallazgos previos; modo Grafo)</label>
           </div>
           <div class="field">
             <label>Profundidad (n)</label>
@@ -1802,6 +1879,8 @@ function runWorkflow() {
   if (!tema) return false;
   var body = 'tema=' + encodeURIComponent(tema) + '&modo=' + modo + '&densidad=' + densidad;
   if (n) body += '&n=' + n;
+  var memEl = document.getElementById('run-memoria');
+  if (memEl && memEl.checked) body += '&memoria=1';
   dispararRun(modo, body, function() {
     showToast('Workflow ejecutándose...', 'success');
     document.getElementById('run-tema').value = '';
@@ -1875,6 +1954,10 @@ class H(BaseHTTPRequestHandler):
             with JOBS_LOCK:
                 jobs = list(reversed(JOBS[-15:]))
             return self._json_response(jobs)
+
+        # API: memoria stats (chunks indexados)
+        if u.path == "/api/memoria/stats":
+            return self._json_response(_memoria_stats())
 
         # status
         if u.path == "/status":
@@ -2032,6 +2115,7 @@ class H(BaseHTTPRequestHandler):
             densidad = (q.get("densidad") or ["medio"])[0]
             if densidad not in ("corto", "medio", "largo"):
                 densidad = "medio"
+            memoria = (q.get("memoria") or ["0"])[0] in ("1", "true", "on")
             try:
                 n = int((q.get("n") or [""])[0])
                 n = max(0, min(n, 10))
@@ -2040,9 +2124,17 @@ class H(BaseHTTPRequestHandler):
             if not tema and modo in MODO_SIN_TEMA:
                 tema = "corpus"  # placeholder: corpus ignora el tema
             if tema:
-                _lanzar(modo, tema, n, densidad)
+                _lanzar(modo, tema, n, densidad, memoria)
                 return self._json_response({"ok": True})
             return self._json_response({"ok": False, "error": "tema vacío"}, 400)
+
+        # memoria: reindexar el archivo (background). rebuild=1 re-embeddeba todo
+        if self.path == "/api/memoria/index":
+            largo = min(int(self.headers.get("Content-Length") or 0), 200)
+            q = urllib.parse.parse_qs(self.rfile.read(largo).decode())
+            rebuild = (q.get("rebuild") or ["0"])[0] in ("1", "true", "on")
+            started = _reindexar_async(rebuild=rebuild)
+            return self._json_response({"ok": True, "started": started})
 
         # auto-repair: el modelo capaz diagnostica un job fallido
         if self.path == "/api/repair":
