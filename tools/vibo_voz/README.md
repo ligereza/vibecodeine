@@ -1,5 +1,9 @@
 # Asistente de voz (CODE / VIBO / REDU) + secretario Claude
 
+> **PARKED (desde 2026-07-10):** la API de Gemini esta sin acceso util (429 en ambas
+> keys); este asistente queda SIN USO hasta que el usuario anuncie una API nueva. El
+> manual de abajo se conserva igual para cuando se reactive.
+
 Asistente de voz local. Le hablas por microfono (Gemini Live escucha y entiende
 directo) y te responde con voz natural. Puede consultar tu GitHub (solo lectura),
 revisar archivos, y delegar tareas de archivos/codigo a un "secretario" Claude Code.
@@ -16,10 +20,11 @@ revisar archivos, y delegar tareas de archivos/codigo a un "secretario" Claude C
 
 Gemini (interprete/voz) resuelve solo lo que puede con herramientas baratas; el
 ejecutor solo entra para crear/copiar/mover/editar archivos o correr codigo. Reparto
-del equipo (canonico en `docs/AI_PROVIDER_ROUTING.md`): el **volumen** lo hace el coder
-bruto barato (Qwen, o el modelo cheap de `CLAUDE_MODEL`) y su salida pasa por el gate
-(CI + revisor gratis); **Claude caro** queda para lo critico y la arquitectura, no para
-el volumen ni para debuggear a Qwen.
+del equipo (canonico en `CLAUDE.md`, seccion "Equipo multi-agente" -- el viejo
+`docs/AI_PROVIDER_ROUTING.md` quedo archivado en `_archive/`): el **volumen** lo hace
+el coder bruto barato (Qwen, o el modelo cheap de `CLAUDE_MODEL`) y su salida pasa por
+el gate (CI + revisor gratis); **Claude caro** queda para lo critico y la arquitectura,
+no para el volumen ni para debuggear a Qwen.
 
 Herramientas de Gemini:
 - `leer_archivo` - revisa contenido del repo SIN llamar a Claude (barato, restringido

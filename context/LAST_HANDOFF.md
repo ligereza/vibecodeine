@@ -40,6 +40,23 @@ worktree-cultura-mapa-generativo, PR draft contra main.
   existentes reescritas.
 - Verificacion: compileall OK, pytest verde (1 skip), flujo verify OK (0.51.0).
   Cambio docs-only (2 archivos .md).
+- LIMPIEZA SIMBOLICA DE REGLAS (orden usuario, misma sesion): nada se borra, lo
+  absurdo se composta con fecha y motivo. (1) "NO tocar SEMILLAS" -> APPEND-ONLY
+  via motor-omega paso (e) (contradecia el protocolo). (2) CLAUDE.md ya no
+  recomienda pedir_a_gemini.py para lectura pesada (Gemini PARKED; ahora Sonnet)
+  ni menciona Aider como via (desinstalado 2026-07-08). (3) Seccion desktop de
+  CLAUDE.md marcada PARKED (manual conservado). (4) Regla del README precisada:
+  obra terminada = arte-ascii-readme.svg; el bloque de texto SI es editable.
+  (5) Blocker zombie "falta 2do modelo util" -> DESBLOQUEADO (free APIs
+  2026-07-15). (6) SESSION_STATE blocker de Gemini actualizado a Sonnet/Qwen.
+- BARRIDO READMEs (subagente Sonnet, whitelist 14): 3 ACTUALIZADOS -- desktop/
+  y tools/vibo_voz/ con nota PARKED fechada arriba (manuales intactos) +
+  vibo_voz puntero muerto AI_PROVIDER_ROUTING.md -> CLAUDE.md; projects/cultura/
+  con puntero a MAPA_GENERATIVO.md + tilde_residuo.py hecho + triada esperando
+  regularizador. 11 VIGENTES verificados contra filesystem (incl. xio y
+  showcontrol: los 10 test_*.py listados existen). cultura/README.md resulto
+  nota Blender geonodes, no-MAK, vigente. README raiz NO tocado (analisis
+  aparte de la obra doublecup, pedido del usuario).
 
 ## SESION 2026-07-15 (autonoma tarde) -- showcontrol v1.1->v1.8 + cultura wachuma
 Rama claude/cultura-xio-mistral-20260715, PR #45 MERGEADO a main.
@@ -571,13 +588,20 @@ en la PC. FASE 1 y FASE 2 COMPLETAS 2026-07-12.
 - Cada Omega11 de projects/cultura/ espera regularizador humano (lector no-autor +
   plazo) antes de exponerse/registrarse.
 - build_chataigne_noisette_experimental: falta .noisette real (NO re-adivinar).
-- #2 duelo de modelos: Gemini PARKED, falta un 2do modelo util.
+- #2 duelo de modelos: DESBLOQUEADO 2026-07-15 (free APIs verificadas: Groq,
+  Cerebras, Azure gpt-5-mini dan el 2do modelo); falta CORRER el duelo, ya no
+  falta el modelo.
 
 ## Reglas vivas (no negociar)
 - NO activar Claude via API en Actions (decision usuario 2026-07-12).
 - El airdrop QUEDA COMO ESTA. puente/ es teorico (puente/README.md): no ejecutar,
-  no limpiar, no reinterpretar lo fechado. NO tocar puente/SEMILLAS.md.
-- README.md del repo y arte-ascii-readme.svg: obra terminada, no agregar/reemplazar.
+  no limpiar, no reinterpretar lo fechado. puente/SEMILLAS.md es APPEND-ONLY via
+  motor-omega paso (e): fechar precipitaciones y semillas nuevas SI; reescribir o
+  reinterpretar filas existentes JAMAS. (Regla vieja "NO tocar SEMILLAS" retirada
+  2026-07-15 por orden del usuario: contradecia el protocolo del motor.)
+- arte-ascii-readme.svg (el double cup) es la obra terminada: no tocar/reemplazar.
+  El bloque de TEXTO comentado de README.md si es editable (aclaracion usuario
+  2026-07-15). La regla vieja mezclaba ambos.
 - context/AVANCES_BLOCK.txt NO es doc muerto (input de tools/tapiz_telemetry.py).
 - Cultura: descriptivo, nada generativo-de-sintesis; psicosis jamas perfila
   personas reales; precursor solo cultura/ley/estetica; NADA operativo de sustancias

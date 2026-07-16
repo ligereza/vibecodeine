@@ -1,5 +1,9 @@
 # Gemini -> Claude: overlay flotante compacto
 
+> **PARKED (desde 2026-07-10):** la API de Gemini esta sin acceso util (429 en ambas
+> keys); esta app queda SIN USO hasta que el usuario anuncie una API nueva. El manual
+> de abajo se conserva igual para cuando se reactive.
+
 Ventana chica (Python + Tkinter), always-on-top, para usar al lado de Claude mientras
 trabajas. Un boton de modo cicla entre 3 funciones; la salida siempre va a UNA sola caja
 compacta -- sin paneles grandes, solo lo importante.

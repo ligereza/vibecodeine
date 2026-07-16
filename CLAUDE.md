@@ -112,10 +112,12 @@ Antes de cambiar:
   arbol + archivos clave + zonas a no tocar.
 - **Contexto para una tarea:** `py tools/vibo_voz/contexto_repo.py task "<keywords>"`
   imprime las rutas recomendadas + como derivarlas.
-- **Derivar lectura pesada a un modelo barato:** Qwen/NIM resume rutas gordas, o
-  `py tools/vibo_voz/pedir_a_gemini.py "consulta" ruta...`. PRIVACIDAD: envia contenido a
-  Google (free tier puede entrenar); usa rutas concretas, evita areas sensibles.
-- Da a Aider/Qwen **solo los archivos de la tarea**, no el repo.
+- **Derivar lectura pesada a un modelo barato:** subagentes Sonnet (Agent/Workflow con
+  model sonnet) o Qwen/NIM resumen rutas gordas. (`pedir_a_gemini.py` PARKED con Gemini
+  desde 2026-07-10, no usar hasta API nueva; si revive: PRIVACIDAD, envia contenido a
+  Google y el free tier puede entrenar.)
+- Da a Qwen **solo los archivos de la tarea**, no el repo. (Aider desinstalado
+  2026-07-08, no reinstalar sin orden del usuario.)
 - Rutas gordas para derivar: `datadrops/`, `jobs/`, `projects/`, `svg/suplementos_rd/`,
   `docs/handoffs/archive/`, `.claude/skills/*/`.
 - Poco volumen y critico, leelo tu directo: `CLAUDE.md`, `context/LAST_HANDOFF.md`,
@@ -240,8 +242,10 @@ del hub web (boton ambar junto a RD/Studio, panel CulturaPanel.tsx). Instrumento
 exporta pieza SVG con paleta flujo real). Medidor tilde: `desktop/tilde_meter.py`
 (standalone, sin cablear a la GUI por decision del usuario). Direccion de arte:
 `projects/tapiz/DIRECTION.md`. Limites: capa descriptiva/cultural si; nada generativo
-de sintesis; psicosis nunca perfila personas reales. El README del repo es una creacion
-terminada del artista: NO agregarle nada.
+de sintesis; psicosis nunca perfila personas reales. La OBRA terminada del artista es el
+SVG del README (`arte-ascii-readme.svg`, el double cup): NO tocarlo ni reemplazarlo. El
+bloque de TEXTO comentado de `README.md` si es editable (aclaracion del usuario,
+2026-07-15). Mapa curatorial de ideas a medias: `projects/cultura/MAPA_GENERATIVO.md`.
 
 **Studio / Eventos:**
 ```bash
@@ -250,7 +254,8 @@ py -m flujo resolume automatizar jobs/<job_id>
 ```
 Para Instagram usar `instaloader`. No usar `yt-dlp`.
 
-**Gemini-to-Claude desktop (app flotante compacta):** `desktop/` (Python/Tkinter puro, no
+**Gemini-to-Claude desktop (app flotante compacta) -- PARKED con Gemini desde 2026-07-10,
+manual conservado para cuando el usuario anuncie API nueva:** `desktop/` (Python/Tkinter puro, no
 toca `src/flujo/` ni `web/src/`). Ventana chica always-on-top (overlay tipo widget, no un
 panel de control) con 3 modos ciclados por un solo boton: **Idea** (error/duda/idea cruda
 -> explicacion + prompt comprimido para Claude + enrutador `EJECUTAR_DIRECTO` /
