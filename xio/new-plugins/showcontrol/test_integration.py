@@ -163,6 +163,30 @@ def test_timeline_drives_cues_over_the_wire():
     print("OK timeline drives cues over the wire (show plays itself)")
 
 
+def test_oscin_drives_engine_over_the_wire():
+    """orq bidirectional: a real OSC datagram (same builder QLab-style senders
+    use) arrives over UDP, runs the closed action table, and fires GO on the
+    engine -- whose next tick emits the look as DMX."""
+    from oscin import map_action, parse_packet
+
+    rx, rx_port = make_listener()          # the "phone" listener socket
+    tx = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    e = CueEngine()
+    e.load([{"label": "open", "fade": 0.0, "levels": {"0": {"1": 255}}}])
+
+    tx.sendto(P.build_osc_message("/xio/go", []), ("127.0.0.1", rx_port))
+    data, _ = rx.recvfrom(8192)
+    (act,) = [map_action(a, ar) for a, ar in parse_packet(data)]
+    assert act == ("go", None), act
+    e.go(5.0, index=act[1])
+    assert e.active
+    frame = [ev for ev in e.tick(5.0) if ev[0] == "dmx"][0]
+    assert frame[2][0] == 255, frame       # the look landed: ch1=255
+
+    tx.close(); rx.close()
+    print("OK OSC-in datagram -> action table -> engine GO -> DMX frame")
+
+
 def test_fabric_over_the_wire():
     """One `master` signal fans out to a DMX node AND an OSC fader in a single
     set() -- the routing-bus contract the plugin's _emit_fabric depends on."""

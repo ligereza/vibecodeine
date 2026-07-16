@@ -92,7 +92,16 @@ Abrir Blender 4.5 LTS -> Scripting -> abrir BLENDER.geonodes_450.py -> Alt+P
 - Verificado headless en Blender 4.5.4: reset por segmento OK, NORMAL converge a b=u,
   MULTIPLY colapsa a 0.15*u^14, twin gaze permanece plano.
 
-## 3. xio: cue + timeline + fabric + sonda + automap + obs + muros (v1.7 de showcontrol)
+## 3. xio: cue + timeline + fabric + sonda + automap + obs + muros + osc-in (v1.8)
+
+v1.8 agrega OSC-IN (orq bidireccional): el telefono RECIBE cues. Listener UDP opt-in
+(`POST /oscin {"port":9001,"allow":[ips]}`, apagado por defecto, start/stop detras del
+token), tabla de direcciones CERRADA `/xio/*` (go/stop/release, timeline play/pause/
+locate, `/xio/signal/<n>` 0..1 -> fabric) -- tabla fija, no lenguaje de mapeo = sin
+superficie de inyeccion. Parser OSC 1.0 puro (`oscin.py`) probado por round-trip contra
+el builder de `protocols.py` (los dos caminos se validan mutuamente). QLab/Ableton/
+TouchOSC apuntan a `<phone>:9001`. Panel: seccion "osc-in". Tests: `test_oscin.py` (5)
++ 1 integracion -> 69 en total.
 
 v1.7 agrega el TOKEN DE SHOW (nodo `muros`): opcional, apagado por defecto; una vez
 seteado (`POST /auth/set {"generate":true}`, TOFU: libre solo mientras no hay token,

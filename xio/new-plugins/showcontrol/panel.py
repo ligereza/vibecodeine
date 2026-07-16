@@ -103,6 +103,16 @@ PANEL_HTML = """<!DOCTYPE html>
 </details>
 
 <details>
+  <summary>osc-in (recibir cues)</summary>
+  <div class="mini">
+    <input id="oscport" placeholder="9001" inputmode="numeric">
+    <button id="oscstart">ESCUCHAR</button>
+    <button id="oscstop">PARAR</button>
+  </div>
+  <div id="oscstate" class="meta">&mdash;</div>
+</details>
+
+<details>
   <summary>token de show (muros)</summary>
   <div class="mini">
     <input id="tok" placeholder="token (vacio = abierto)" type="password">
@@ -184,6 +194,22 @@ $("load").onclick = () => {
 };
 $("wol").onclick = () => api("/wol", {mac: $("mac").value}).catch(err);
 
+async function pollOscin(){
+  try{
+    const st = (await api("/oscin")).state;
+    $("oscstate").textContent = st.listening
+      ? "escuchando :" + st.port + " · rx " + st.stats.received +
+        " · ok " + st.stats.acted + " · ign " + st.stats.ignored +
+        (st.stats.last_address ? " · " + st.stats.last_address : "")
+      : "apagado";
+  }catch(e){}
+}
+$("oscstart").onclick = () => {
+  const p = parseInt($("oscport").value, 10);
+  api("/oscin", p ? {port: p} : {}).then(pollOscin).catch(err);
+};
+$("oscstop").onclick = () => api("/oscin/stop", {}).then(pollOscin).catch(err);
+
 async function pollAuth(){
   try{
     const a = await api("/auth");
@@ -241,9 +267,11 @@ $("scan").onclick = () => {
 
 refresh();
 pollAuth();
+pollOscin();
 setInterval(poll, 1000);
 setInterval(pollObs, 2000);
 setInterval(pollTl, 1000);
+setInterval(pollOscin, 2000);
 </script>
 </body>
 </html>

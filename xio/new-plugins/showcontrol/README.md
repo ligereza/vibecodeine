@@ -8,13 +8,13 @@ nodes; **auto-maps** DMX fixtures optically; and exposes **live telemetry**.
 
 Everything is **pure stdlib** (`socket` + `struct`) -- no pip, no shell, so there
 is **zero command-injection surface**. Every capability is unit-tested off-device
-(59 tests). This README is the operating manual; you do not need Claude to run it.
+(69 tests). This README is the operating manual; you do not need Claude to run it.
 
 ## Run the tests (off-device, any machine)
 
 ```bash
 cd xio/new-plugins/showcontrol
-for t in protocols cueengine fabric discovery automap obs timeline integration; do
+for t in protocols cueengine fabric discovery automap obs timeline auth oscin integration; do
   py test_$t.py
 done
 # each prints "ALL N PASSED"
@@ -31,6 +31,8 @@ done
 | `discovery.py` | `sonda` | ArtPoll/ArtPollReply -- find live Art-Net nodes on the LAN |
 | `automap.py` | `sonda`/`p_inv` | optical DMX patch via light-transport matrix (dual photography) |
 | `obs.py` | `obs` | pull-based telemetry: send rates, thread health, state |
+| `oscin.py` | `orq` (input) | OSC parser + closed /xio/* action table -- the phone receives cues |
+| `auth.py` | `muros` | optional show token: TOFU set/rotate, constant-time check |
 | `panel.py` | -- | self-contained browser control panel (`/panel`), zero external assets |
 | `__init__.py` | -- | the plugin: HTTP routes + tick threads wiring it all together |
 
@@ -109,6 +111,30 @@ GET  /obs                                    # health, uptime, send rates, threa
 GET  /panel                                  # the browser control panel (open on a tablet)
 POST /wol  {"mac":"AA:BB:CC:DD:EE:FF","verify_host":"1.2.3.4","verify_port":22,"timeout":30}
 ```
+
+### OSC input (`orq` bidirectional -- the phone receives cues)
+```bash
+POST /oscin        {"port":9001}                       # start listening (opt-in, off by default)
+POST /oscin        {"port":9001,"allow":["192.168.127.20"]}   # scope to source IPs
+POST /oscin/stop
+GET  /oscin                                            # listening?, port, rx/acted/ignored stats
+```
+Point QLab / Ableton / TouchOSC at `<phone>:9001` and send to the **closed
+address table** (nothing else is mapped -- a fixed table is not an injection
+surface, a mapping language would be):
+
+| Address | Args | Action |
+|---|---|---|
+| `/xio/go` | `[index]` optional | GO (next cue, or jump to index) |
+| `/xio/stop` | | freeze |
+| `/xio/release` | `[fade]` optional | fade to black |
+| `/xio/timeline/play` / `pause` | | transport |
+| `/xio/timeline/locate` | `[seconds]` | jump the playhead |
+| `/xio/signal/<name>` | `[0..1]` | set a fabric signal (fader) |
+
+OSC itself is unauthenticated, so the listener is **opt-in**, its start/stop
+endpoints are behind the show token, and `allow` scopes datagrams to known
+source IPs. Unknown addresses are counted and ignored.
 
 ### Show token (`muros` -- lock the rig on a shared LAN)
 ```bash

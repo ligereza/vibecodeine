@@ -31,6 +31,7 @@ from .cueengine import CueEngine, CueError
 from .discovery import discover as artnet_discover
 from .fabric import Fabric, FabricError
 from .obs import Telemetry, health as obs_health
+from .oscin import OscParseError, map_action, parse_packet
 from .panel import PANEL_HTML
 from .timeline import Timeline, TimelineError
 from .protocols import (
@@ -53,7 +54,7 @@ class ShowControlPlugin(PluginBase):
 
     plugin_id = "showcontrol"
     name = "Show Control"
-    version = "1.7.0"
+    version = "1.8.0"
     description = "Send OSC, Art-Net and sACN/E1.31 DMX from the phone over the LAN"
     author = "Cauce"
     icon = "network"
@@ -106,6 +107,18 @@ class ShowControlPlugin(PluginBase):
         # /auth/set is NOT wrapped: it does its own TOFU current-token check
         self.register_route("/auth", self._api_auth, methods=["GET"])
         self.register_route("/auth/set", self._api_auth_set, methods=["POST"])
+        # oscin: opt-in OSC listener (orq bidirectional); start/stop behind the token
+        self._oscin_sock = None
+        self._oscin_thread = None
+        self._oscin_stop = threading.Event()
+        self._oscin_lock = threading.Lock()
+        self._oscin_allow = None            # optional source-IP allowlist
+        self._oscin_port = None
+        self._oscin_wanted = False
+        self._oscin_stats = {"received": 0, "acted": 0, "ignored": 0, "denied": 0,
+                             "last_address": None}
+        self.register_route("/oscin", g(self._api_oscin), methods=["GET", "POST"])
+        self.register_route("/oscin/stop", g(self._api_oscin_stop), methods=["POST"])
         # Re-arm a persisted show (list only -- never auto-runs anything).
         saved = self.get_config("cuelist")
         if saved:
@@ -119,6 +132,7 @@ class ShowControlPlugin(PluginBase):
     def on_unload(self):
         self._cue_stop.set()
         self._fabric_stop.set()
+        self._oscin_shutdown()
 
     # ── muros: show token gate ────────────────────────────────────────────
     def _presented_token(self, request):
@@ -608,8 +622,10 @@ class ShowControlPlugin(PluginBase):
         cue_state = self._engine.status()
         fab_state = self._fabric.status()
         # a tick thread is *expected* alive only while its engine is active
+        oscin_alive = self._oscin_thread is not None and self._oscin_thread.is_alive()
         threads = {"cue": (bool(cue_state.get("active")), cue_alive),
-                   "fabric": (bool(fab_state.get("active")), fab_alive)}
+                   "fabric": (bool(fab_state.get("active")), fab_alive),
+                   "oscin": (self._oscin_wanted, oscin_alive)}
         return jsonify({
             "ok": True,
             "health": obs_health(threads, self._last_error),
@@ -623,6 +639,126 @@ class ShowControlPlugin(PluginBase):
             "fabric": fab_state,
             "last_error": self._last_error,
         })
+
+    # ── oscin: opt-in OSC listener (orq bidirectional) ─────────────────────
+    def _exec_osc_action(self, act):
+        now = time.monotonic()
+        kind = act[0]
+        if kind == "go":
+            self._engine.go(now, index=act[1])
+            self._ensure_cue_thread()
+        elif kind == "stop":
+            self._engine.stop(now)
+        elif kind == "release":
+            self._engine.release(now, fade=act[1])
+            self._ensure_cue_thread()
+        elif kind == "tl_play":
+            self._timeline.play(now)
+            self._ensure_cue_thread()
+        elif kind == "tl_pause":
+            self._timeline.pause(now)
+        elif kind == "tl_locate":
+            self._timeline.locate(act[1], now=now)
+        elif kind == "signal":
+            self._emit_fabric(self._fabric.set(act[1], act[2]))
+            self._ensure_fabric_thread()
+
+    def _oscin_loop(self, sock):
+        while not self._oscin_stop.is_set():
+            try:
+                data, addr = sock.recvfrom(8192)
+            except socket.timeout:
+                continue
+            except OSError:
+                break                                # socket closed by stop
+            if self._oscin_allow and addr[0] not in self._oscin_allow:
+                self._oscin_stats["denied"] += 1
+                continue
+            self._oscin_stats["received"] += 1
+            try:
+                msgs = parse_packet(data)
+            except (OscParseError, UnicodeDecodeError):
+                self._oscin_stats["ignored"] += 1
+                continue
+            for address, args in msgs:
+                self._oscin_stats["last_address"] = address
+                act = map_action(address, args)
+                if act is None:
+                    self._oscin_stats["ignored"] += 1
+                    continue
+                try:
+                    self._exec_osc_action(act)
+                    self._oscin_stats["acted"] += 1
+                except (CueError, FabricError, TimelineError, ValueError, OSError) as e:
+                    self._oscin_stats["ignored"] += 1
+                    self._last_error = "oscin: %s" % e
+        try:
+            sock.close()
+        except OSError:
+            pass
+
+    def _oscin_shutdown(self):
+        with self._oscin_lock:
+            self._oscin_wanted = False
+            self._oscin_stop.set()
+            s, self._oscin_sock = self._oscin_sock, None
+            if s:
+                try:
+                    s.close()
+                except OSError:
+                    pass
+            self._oscin_thread = None
+            self._oscin_port = None
+
+    def _oscin_state(self):
+        alive = self._oscin_thread is not None and self._oscin_thread.is_alive()
+        return {"listening": alive,
+                "port": self._oscin_port if alive else None,
+                "allow": sorted(self._oscin_allow) if self._oscin_allow else None,
+                "stats": dict(self._oscin_stats)}
+
+    def _api_oscin(self):
+        """GET: listener state. POST {port?, allow?: [ips]}: start listening.
+        The fixed action table lives in oscin.map_action (/xio/* only)."""
+        from flask import request, jsonify
+        if request.method == "GET":
+            return jsonify({"ok": True, "state": self._oscin_state()})
+        d = request.get_json(force=True, silent=True) or {}
+        port = d.get("port", 9001)
+        if not isinstance(port, int) or not (1024 <= port <= 65535):
+            return jsonify({"ok": False, "error": "port must be 1024..65535"}), 400
+        allow = d.get("allow")
+        if allow is not None:
+            if (not isinstance(allow, list) or not allow
+                    or not all(valid_host(h) for h in allow)):
+                return jsonify({"ok": False, "error": "allow must be a non-empty list of IPv4 sources"}), 400
+        with self._oscin_lock:
+            if self._oscin_thread is not None and self._oscin_thread.is_alive():
+                return jsonify({"ok": False, "error": "listener already running (POST /oscin/stop first)"}), 409
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                sock.bind(("0.0.0.0", port))
+            except OSError as e:
+                return jsonify({"ok": False, "error": "bind failed: %s" % e}), 400
+            sock.settimeout(1.0)
+            self._oscin_stop.clear()
+            self._oscin_allow = set(allow) if allow else None
+            self._oscin_port = port
+            self._oscin_wanted = True
+            self._oscin_stats = {"received": 0, "acted": 0, "ignored": 0, "denied": 0,
+                                 "last_address": None}
+            t = threading.Thread(target=self._oscin_loop, args=(sock,), daemon=True,
+                                 name="showcontrol-oscin")
+            self._oscin_sock = sock
+            self._oscin_thread = t
+            t.start()
+        return jsonify({"ok": True, "state": self._oscin_state()})
+
+    def _api_oscin_stop(self):
+        from flask import jsonify
+        self._oscin_shutdown()
+        return jsonify({"ok": True, "state": self._oscin_state()})
 
     # ── panel + wake-on-lan (xiotech M2) ──────────────────────────────────
     def _api_panel(self):
