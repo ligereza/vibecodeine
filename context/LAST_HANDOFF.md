@@ -8,6 +8,43 @@ en el telefono 200/403).
 El plan largo vive en context/PLAN_SIGUIENTE_AGENTE.md. Este es el estado corto.
 Historico viejo en git y docs/handoffs/archive/.
 
+## SESION 2026-07-15 (autonoma tarde) -- showcontrol v1.1->v1.8 + cultura wachuma
+Rama claude/cultura-xio-mistral-20260715, PR #45 MERGEADO a main.
+
+- showcontrol recorrio el grafo de cultura/xio-concept.html entero (nodos
+  software-puros): v1.1 orq cue engine + panel + WoL; v1.2 fabric (senal 0..1 ->
+  N sinks DMX/OSC); v1.3 sonda descubrimiento Art-Net (bindear 6454: los nodos
+  DIFUNDEN el reply); v1.4 automap optico (matriz de transporte, Hadamard cancela
+  ambiente); v1.5 obs telemetria /obs; v1.6 timeline timecode (el show se dispara
+  solo); v1.7 muros token de show (TOFU /auth/set, constant-time, cierra el caveat
+  0.0.0.0); v1.8 osc-in (el telefono RECIBE cues /xio/*, listener opt-in +
+  allowlist). Hardening: RLock Timeline, lock _next_seq, fabric 2Hz, validar
+  antes de mutar. 69/69 tests off-device; manual completo en
+  xio/new-plugins/showcontrol/README.md (operable sin Claude).
+- cultura/: workflow n8n remado a aya-expanse:8b, desplegado en MAK; queda el
+  knob N8N_RUNNERS_TASK_TIMEOUT (usuario). Blender geonodes 450f verificado
+  headless. cultura/.dev (key Tavily) gitignored, jamas en git.
+- Gate del repo verde: compileall src/flujo OK, pytest verde (1 skip),
+  flujo verify OK.
+- DESPLEGADO EN VIVO al Xiaomi (192.168.198.7:5000, adb USB 8299e66f): v1.8.0
+  con 27 rutas. Push al staging /sdcard/xio_termux/new-plugins/ (los reinicios
+  futuros conservan v1.8) + relanzo via input-dance. Humo real sobre la LAN:
+  /obs /auth /timeline /panel 200; ciclo completo PC->OSC /xio/go :9001 ->
+  cue disparado -> 17 frames Art-Net reales (loopback, sin rig) -> release.
+  REGLA DURA: nunca hot-reload de un plugin cuyas RUTAS cambiaron (Flask no
+  desregistra rutas; las viejas quedan apuntando a la instancia vieja SIN
+  token) -- siempre reinicio completo con run_server.sh.
+- Fix descubierto en el deploy: last_error era pegajoso -> /obs quedaba en
+  health=error para siempre tras un error transitorio. Ahora envejece (60s,
+  property con timestamp, expone last_error_age_s). Verificado cronometrado
+  en el telefono (error t+3s -> ok a los 62.5s).
+- Token de show: SIN setear (modo crew abierto). Activar = POST /auth/set
+  {"generate":true} (mejor desde la tablet del usuario, el token se devuelve
+  UNA vez). OJO: run_server.sh borra el data dir -> el token se pierde en cada
+  redeploy, re-setearlo.
+- n8n CERRADO por decision del usuario (no reintentar; la via para el research
+  wachuma es un runner standalone). splat/rllm del grafo piden GPU/camara.
+
 ## SESION 2026-07-15 (tarde) -- n8n MAK: CERRADO COMO FALLIDO (orden usuario)
 
 VEREDICTO: NO volver a gastar en el camino n8n para research. El codigo del
@@ -63,8 +100,7 @@ docker-compose.yml restaurado (backup .bak-20260715). Contenedor SIN keys.
   n8n corrio el code real: 1 iter, 4 findings, informe coherente, 17s;
   fallback probado rompiendo Groq (4x401 -> Cerebras absorbio todo).
 - MAK: ssh mak@192.168.50.2 (key ~/.ssh/flujo_ollama) OK; n8n vivo :5678;
-  ollama :11434 solo local (bien). PENDIENTE: setear env vars del
-  contenedor n8n (ver doc) + importar el workflow + curl de prueba.
+  ollama :11434 solo local (bien).
 
 ## SESION 2026-07-15 (autonoma) -- xio showcontrol + aislar MAK del xio
 

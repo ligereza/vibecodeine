@@ -88,6 +88,28 @@ def test_sacn_multicast_ip():
     print("OK sacn multicast ip")
 
 
+def test_wol_magic_packet():
+    pkt = P.build_magic_packet("AA:BB:CC:DD:EE:FF")
+    assert len(pkt) == 102, len(pkt)                  # 6 + 16*6
+    assert pkt[:6] == b"\xff" * 6
+    assert pkt[6:12] == bytes.fromhex("aabbccddeeff")
+    assert pkt[96:102] == bytes.fromhex("aabbccddeeff")
+    # same MAC, other notations
+    assert P.build_magic_packet("aa-bb-cc-dd-ee-ff") == pkt
+    assert P.build_magic_packet("aabbccddeeff") == pkt
+    print("OK wol magic packet")
+
+
+def test_wol_rejects_bad_mac():
+    for bad in ("zz:bb:cc:dd:ee:ff", "aabbcc", "", 42, "aa:bb:cc:dd:ee:ff:00"):
+        try:
+            P.build_magic_packet(bad)
+            raise AssertionError("should have rejected %r" % (bad,))
+        except ValueError:
+            pass
+    print("OK wol rejects bad mac")
+
+
 def test_dmx_validation():
     for bad in ([256], [-1], list(range(513)), "x", {"0": 1}, {"513": 1}):
         try:

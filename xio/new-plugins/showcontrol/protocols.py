@@ -119,6 +119,23 @@ def build_sacn_dmx(universe, data, source_name="xio", priority=100, sequence=0, 
     return root
 
 
+# ── Wake-on-LAN (AMD Magic Packet) ──────────────────────────────────────────
+def parse_mac(mac) -> bytes:
+    """Accept AA:BB:CC:DD:EE:FF / AA-BB-.. / bare 12-hex; return 6 raw bytes."""
+    if not isinstance(mac, str):
+        raise ValueError("MAC must be a string")
+    hexstr = mac.replace(":", "").replace("-", "").strip().lower()
+    if len(hexstr) != 12 or any(c not in "0123456789abcdef" for c in hexstr):
+        raise ValueError("invalid MAC address: %r" % mac)
+    return bytes.fromhex(hexstr)
+
+
+def build_magic_packet(mac) -> bytes:
+    """WoL magic packet: 6 x 0xFF + 16 repetitions of the MAC."""
+    raw = parse_mac(mac)
+    return b"\xff" * 6 + raw * 16
+
+
 # ── shared helpers ──────────────────────────────────────────────────────────
 def normalize_dmx(data) -> bytes:
     """Accept a list of 0..255 ints (<=512) or a {channel: value} dict (1-indexed)."""
