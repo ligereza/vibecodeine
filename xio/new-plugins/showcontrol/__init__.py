@@ -135,6 +135,26 @@ class ShowControlPlugin(PluginBase):
         self._fabric_stop.set()
         self._oscin_shutdown()
 
+    # last_error is a property so every existing assignment site also stamps a
+    # timestamp -- /obs then ages errors out of the health grade instead of
+    # reporting "error" forever after one transient hiccup during a show.
+    ERROR_FRESH_S = 60.0
+
+    @property
+    def _last_error(self):
+        return self.__last_error
+
+    @_last_error.setter
+    def _last_error(self, value):
+        self.__last_error = value
+        self.__last_error_t = time.monotonic()
+
+    def _last_error_age(self):
+        """Seconds since the last error was recorded, or None if there is none."""
+        if self.__last_error is None:
+            return None
+        return time.monotonic() - self.__last_error_t
+
     # ── muros: show token gate ────────────────────────────────────────────
     def _presented_token(self, request):
         """Token from header (preferred), JSON body, or query param."""
@@ -628,9 +648,12 @@ class ShowControlPlugin(PluginBase):
         threads = {"cue": (bool(cue_state.get("active")), cue_alive),
                    "fabric": (bool(fab_state.get("active")), fab_alive),
                    "oscin": (self._oscin_wanted, oscin_alive)}
+        # only a FRESH error degrades health; stale ones stay visible with their age
+        age = self._last_error_age()
+        fresh_error = self._last_error if (age is not None and age < self.ERROR_FRESH_S) else None
         return jsonify({
             "ok": True,
-            "health": obs_health(threads, self._last_error),
+            "health": obs_health(threads, fresh_error),
             "uptime_s": round(now - self._loaded_at, 1),
             "sent": self._sent,
             "rates_per_s": {k: round(v, 2)
@@ -640,6 +663,7 @@ class ShowControlPlugin(PluginBase):
             "cue": cue_state,
             "fabric": fab_state,
             "last_error": self._last_error,
+            "last_error_age_s": round(age, 1) if age is not None else None,
         })
 
     # ── oscin: opt-in OSC listener (orq bidirectional) ─────────────────────
