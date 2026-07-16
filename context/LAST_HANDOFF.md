@@ -57,6 +57,26 @@ worktree-cultura-mapa-generativo, PR draft contra main.
   showcontrol: los 10 test_*.py listados existen). cultura/README.md resulto
   nota Blender geonodes, no-MAK, vigente. README raiz NO tocado (analisis
   aparte de la obra doublecup, pedido del usuario).
+- CURATORIA DOUBLE CUP + MAQUETA v2 3D (tercera tanda, pedido del usuario;
+  cerrada por su orden "deja tu aprendizaje como readme"). Anatomia canonica
+  dictada por el artista: el texto COMPONE (bloque cuadrado), la animacion
+  TALLA (el vaso emerge del coloreado). Diagnostico v1: intacta de archivo
+  (1 solo commit), pero solo existe sobre fondo oscuro (vidrio claro en ambas
+  paletas) -> (+)7 en SEMILLAS. Entregado en projects/cultura/doublecup/:
+  telar_vaso.py (instrumento compositor/formador, smoke-run OK: 72 filas,
+  621 runs, retejio CLAUDE.md), doublecup_v2_3d.svg (maqueta parallax 3
+  capas + reflejo purpura + sheen + canvas propio; stack elegido por el
+  usuario), README.md (receta paso a paso de la animacion + aprendizaje
+  headless completo). APRENDIZAJE CLAVE: headless=new reporta
+  prefers-reduced-motion=reduce (mata las animaciones en screenshots);
+  congelar frames requiere animation-fill-mode both; los transform animados
+  (compositor) NO cruzan a la captura ni con --virtual-time-budget ni con
+  --run-all-compositor-stages-before-draw (falso negativo de captura);
+  transform-box fill-box obligatorio para rotar en SVG; sombra negra
+  invisible sobre canvas oscuro -> reflejo. PENDIENTE HUMANO (1 accion):
+  abrir doublecup_v2_3d.svg en navegador real y ver si hay parallax; si
+  Chromium no anima 3D en SVG, fallback disenado = parallax 2D translateX
+  diferencial. Omega11 en el README de la pieza. Original NO tocado.
 
 ## SESION 2026-07-15 (autonoma tarde) -- showcontrol v1.1->v1.8 + cultura wachuma
 Rama claude/cultura-xio-mistral-20260715, PR #45 MERGEADO a main.
