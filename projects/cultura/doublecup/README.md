@@ -24,6 +24,11 @@ Con esa máscara + cualquier texto se regenera la obra. Eso hace `telar_vaso.py`
 
 ## Archivos
 
+- `SVG_SPEC.md` — **espejo exacto de `doublecup_v2_3d.svg`**: árbol del
+  documento, tabla completa de animaciones con sus números, perillas de ajuste,
+  fallback 2D drop-in y cómo re-tejer material nuevo. Para continuar el trabajo
+  sobre el SVG, entrar por ahí.
+
 - `telar_vaso.py` — instrumento en 2 etapas (compositor / formador). Extrae la
   máscara de forma de v1 y teje cualquier texto nuevo sobre ella. Verificado:
   72 filas, 621 runs; re-tejió CLAUDE.md (16.195 chars) sin error.
