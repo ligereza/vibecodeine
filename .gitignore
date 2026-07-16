@@ -83,7 +83,7 @@ xio/**/*.log
 xio/**/ntfy_topic.txt
 xio/**/.pc_watch.pid
 
-# cultura: credenciales locales (Tavily API key) -- nunca al repo
+# cultura: credenciales locales (Tavily/Groq/Cerebras/Azure keys) -- nunca al repo
 cultura/.dev
 
 # Higiene de repo (no commitear ruído histórico)

@@ -9,7 +9,7 @@ El plan largo vive en context/PLAN_SIGUIENTE_AGENTE.md. Este es el estado corto.
 Historico viejo en git y docs/handoffs/archive/.
 
 ## SESION 2026-07-15 (autonoma tarde) -- showcontrol v1.1->v1.8 + cultura wachuma
-Rama claude/cultura-xio-mistral-20260715, PR #45 (draft). Todo pusheado.
+Rama claude/cultura-xio-mistral-20260715, PR #45 MERGEADO a main.
 
 - showcontrol recorrio el grafo de cultura/xio-concept.html entero (nodos
   software-puros): v1.1 orq cue engine + panel + WoL; v1.2 fabric (senal 0..1 ->
@@ -44,7 +44,63 @@ Rama claude/cultura-xio-mistral-20260715, PR #45 (draft). Todo pusheado.
   redeploy, re-setearlo.
 - n8n CERRADO por decision del usuario (no reintentar; la via para el research
   wachuma es un runner standalone). splat/rllm del grafo piden GPU/camara.
-- PENDIENTE: merge PR #45.
+
+## SESION 2026-07-15 (tarde) -- n8n MAK: CERRADO COMO FALLIDO (orden usuario)
+
+VEREDICTO: NO volver a gastar en el camino n8n para research. El codigo del
+agente FUNCIONA (probado fuera de n8n); lo que fallo es la operacion de n8n
+2.30.5 por CLI: (1) versionado draft/publish nuevo -- import crea draft, la
+version publicada queda vieja; (2) fila stale de webhook del v1 roto bloquea
+el path /research y el CLI no puede limpiarla (borrar workflow = denegado,
+razonable); (3) CLI con server corriendo enreda el estado SQLite. Se intento:
+import+id, activate, publish, cambio de path, secuencia offline -- 5 rondas,
+sin webhook registrado. SALIDA VIABLE NO USADA (decision usuario): 1 click en
+la UI (Publish/Activate) o runner standalone sin n8n. Si el research cultural
+revive: portar el harness probado como script directo en MAK, SIN n8n.
+
+PENDIENTE (idea "wachuma", continuar luego, SIN n8n): sacarle jugo a MAK con
+las 4 APIs vivas (Tavily, Groq llama-3.3-70b, Cerebras gpt-oss-120b, Azure
+gpt-5-mini) + ollama local (aya-expanse:8b). Plan elegido:
+1. Open WebUI (ya corre en MAK): conectar las 4 como connections
+   OpenAI-compatible -> chat multi-modelo lado a lado + Tavily web. Config, 0 code.
+2. panel.py (~150 lineas, patron del harness YA PROBADO en la rama): 4
+   busquedas Tavily paralelas (angulos historico/estetico/legal/tecnico),
+   4 panelistas = 4 modelos, 2 rondas de replica, sintesis por gpt-5-mini
+   -> ~/research/paneles/*.md; disparo por ntfy desde iPhone.
+3. runner research.py standalone (portar harness) + cola ntfy + cron.
+4. Despues si crece: LiteLLM proxy como gateway unico en mak:4000.
+Keys listas: cultura/.dev (PC; .dev.limpio esperando swap del usuario) y
+~/n8n-local/research.env en MAK (600). Harness probado: rama
+claude/n8n-free-apis-20260715 (PR #46 cerrada, referencia).
+
+Estado que quedo en MAK (inofensivo, no revertido para no gastar):
+~/n8n-local/research.env (600, keys), ~/research/research.sh (apunta a
+/webhook/research-cultural, muerto), workflow makCulturaResearch importado
+inactivo-efectivo, v1 wachumaMAK desactivado (nunca funciono: nodo
+n8n-nodes-base.llm inexistente), backup ~/research/backup_wachuma_v1.json,
+docker-compose.yml restaurado (backup .bak-20260715). Contenedor SIN keys.
+
+## Contexto tecnico de esa sesion (APIs si sirven, reutilizables)
+
+- APIs del usuario probadas con llamadas reales (keys en cultura/.dev,
+  gitignored): Tavily OK; Groq OK (llama-3.3-70b-versatile, qwen3-32b,
+  gpt-oss-120b); Cerebras OK (gpt-oss-120b, zai-glm-4.7 -- catalogo free
+  ROTA, llama3.1-8b ya no existe); Azure Foundry OK con deployment
+  gpt-5-mini en https://ligereza.services.ai.azure.com (el "chatgpt mini";
+  razonador: sin temperature, max_completion_tokens); Azure classic
+  risearch.openai.azure.com auth OK pero 0 deployments = inutilizable.
+- Workflow n8n NUEVO cultura/research_agent_free_apis.json (+ doc .md):
+  reemplaza research_agent_mistral_nemo.json v1, que NO era importable
+  (nodo n8n-nodes-base.llm inexistente + this.helpers dentro de function
+  declarations = crash + nodo Prep huerfano). v2: 4 nodos (Webhook,
+  Set, Code loop+informe, Respond), cadena LLM fallback
+  groq->cerebras->azure->ollama(MAK), dedupe de URLs entre iteraciones,
+  meta con llmCalls/errors/fuentes. Keys por $env o body, NUNCA en el JSON.
+- VERIFICADO: json.tool OK, node --check OK, harness que simula el sandbox
+  n8n corrio el code real: 1 iter, 4 findings, informe coherente, 17s;
+  fallback probado rompiendo Groq (4x401 -> Cerebras absorbio todo).
+- MAK: ssh mak@192.168.50.2 (key ~/.ssh/flujo_ollama) OK; n8n vivo :5678;
+  ollama :11434 solo local (bien).
 
 ## SESION 2026-07-15 (autonoma) -- xio showcontrol + aislar MAK del xio
 
