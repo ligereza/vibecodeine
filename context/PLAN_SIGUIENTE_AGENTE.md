@@ -1,79 +1,82 @@
-# PLAN DETALLADO -- siguiente agente (desde Cauce, 2026-07-12)
+# PENDIENTES + FUERTE/DEBIL -- checkpoint limpieza (Cauce, 2026-07-16)
 
-Estado del repo: v0.51.0, suite verde, `flujo verify` OK. Este es el "proximo
-paso" ejecutable. Orden = prioridad. Cada item dice si necesita Claude
-(arquitectura/criterio) o lo puede hacer un agente gratis/Sonnet (mecanico),
-segun la mision: dejar el repo operable SIN PC y SIN Claude.
+Estado del repo: v0.52.0, suite VERDE 2026-07-16 (compileall OK, 394 tests
+pytest verde con 1 skip, flujo verify OK). main con PRs #45 y #47 mergeados;
+ABIERTOS #48 (MAK grafo+canvas) y #49 (MAPA_GENERATIVO), esperan review del
+usuario. Rama de trabajo: claude/vola-cultura-portfolio-20260712.
 
 ## Reglas que NO se negocian (leer antes de tocar nada)
 - NO activar Claude via API en GitHub Actions (decision del usuario, 2026-07-12).
-- `puente/` es TEORICO (ver `puente/README.md`). No se ejecuta, no se limpia, no
-  se reinterpreta lo fechado.
+- `puente/` es TEORICO (ver `puente/README.md`). No se ejecuta, no se limpia.
 - `README.md` del repo es obra terminada del artista: no se le agrega nada.
 - Limites cultura: descriptivo si; nada generativo de sintesis; psicosis no
   perfila personas reales; precursor solo cultura/ley/estetica.
 - `.noisette`: NUNCA re-adivinar el schema (fallo 4 veces). Pedir archivo real.
-- Nunca commitear secretos (`.env`, `config.json`, `*.key`, credenciales).
-- `CLAUDE.md` y `context/LAST_HANDOFF.md`: ASCII-only.
+- Nunca commitear secretos (`.env`, `config.json`, `*.key`, `cultura/.dev*`).
+- `CLAUDE.md` y `context/*.md`: ASCII-only.
 
-## Hecho esta sesion (para no rehacerlo)
-- Fold telar -> loom: sistema de motivos-plugin, 20 motivos de alfombra
-  (`projects/tapiz/vibecode/loom.py` + `motifs/`). PRs #39, #40 merged. `telar.py`
-  eliminado (era duplicado).
-- Pieza Tilde honesta desde semilla (+)3 via motor-omega:
-  `projects/cultura/tilde_residuo.py` + `TILDE_RESIDUO.md` + tests. Residuo nuevo
-  (+)5 registrado en `puente/SEMILLAS.md`. PR #41 (pendiente de merge por usuario).
-- Confirmado: portfolio auto LIVE (https://ligereza.github.io/portfolio-auto/),
-  sin Claude API, `PORTFOLIO_TOKEN` seteado, ultima corrida OK. No requiere trabajo.
-- Limpieza general del repo (handoffs viejos/confusos, junk, drift de docs).
-- `puente/` marcado como teorico (`puente/README.md` nuevo).
+## FUERTE (verificado 2026-07-16)
+- Suite y CI: 394 tests verdes, compileall OK, flujo verify OK; CI real en
+  `.github/workflows/ci.yml`.
+- xio on-device: server Termux+Shizuku VIVO en el telefono (23+ plugins),
+  showcontrol OSC/Art-Net/sACN desplegado, charge-control no-root, self-heal
+  de hotspot; MAK aislado del xio via 403.
+- MAK (caja Linux): organismo de research funcionando (4 APIs gratis + LLM
+  local); su codigo llega a main via PRs #48/#49.
+- Portfolio publico LIVE (ligereza.github.io/portfolio-auto), 8 obras reales,
+  sin Claude API, workflow con PORTFOLIO_TOKEN corriendo solo.
+- RD entregables: pipeline contraportadas/flyers/cotizaciones validado
+  end-to-end + hardening de auditoria (39 hallazgos aplicados 2026-07-13/15).
+- Higiene: 0 __pycache__/.pytest_cache, 0 ramas muertas, unico worktree = MAK
+  (PR #48), ~190M de basura/duplicados removidos en este checkpoint.
 
-## Prioridad 1 -- cerrar lo abierto (mecanico; agente gratis/Sonnet)
-1. Mergear PR #41 (Tilde) cuando el usuario apruebe. CI verde requerido.
-2. Limpieza git que quedo para el hilo principal (destructivo NO se delega):
-   - worktrees leftover: `worktree-portfolio-admin`, `worktree-tapiz-ecosystem`,
-     `worktree-agent-*`. Remover con `git worktree remove` si no tienen cambios.
-   - ramas stale ya mergeadas: `claude/portfolio-admin`,
-     `claude/director-arte-handoff`, `feat/sala3d-v2`, `feat/tapiz-*`,
-     `chore/gemini-parked`. Verificar con `git branch --merged main` antes de borrar.
+## DEBIL (con evidencia)
+- Sellos "verificado v0.48.5" en docs/CLI.md, docs/AGENT_AIRDROP_PROTOCOL.md,
+  docs/SCRIPTS_INVENTORY.md: 3-17 versiones menores atras. NO subir el numero
+  a mano; re-verificar comando por comando contra la version actual (v0.52.0).
+- Branch protection en main: AUSENTE (gh api 404, verificado 2026-07-13).
+  Accion del usuario en la web de GitHub (require CI verde).
+- resolume automator (`src/flujo/resolume/automator.py`): sigue experimental,
+  sin fixture .noisette real.
+- Gemini PARKED sin reemplazo cableado: desktop/ y tools/vibo_voz quedan
+  documentados pero sin uso; el intake /go (vibo_voz/proyectos/) nunca se uso.
+- projects/tilde: SPEC sin codigo de render (el medidor tilde_meter.py si
+  funciona).
+- xio reboot gap: xio/hotspot_boot_service (AccessibilityService) necesita
+  build/install/grant DEL USUARIO en el telefono; sin eso un reboot mata el
+  server hasta intervencion manual.
+- Peso del repo: svg/suplementos_rd trackea ~51M de SVG que se regeneran;
+  .git ya pesa 36M y crece con cada regeneracion. Vigilar antes de agregar
+  mas binarios/vectoriales pesados a git.
+- SEGURIDAD local: cultura/.dev.limpio tiene keys vivas duplicadas en disco
+  (ya cubierto por .gitignore cultura/.dev*, no puede commitearse). Borrarlo.
 
-## Prioridad 2 -- deuda tecnica concreta (Claude, o Sonnet con plan + revisor)
-3. `server.py` `/download`: si hay un endpoint sin implementar, completarlo o
-   quitarlo. No dejar stub que miente.
-4. `flujo brand analyze`: el help del CLI describe algo que no hace; alinear help
-   con el comportamiento real o implementar la funcion.
-5. Branch protection en `main` (publico): configurar desde la web de GitHub
-   (require CI verde). No necesita Claude ni API.
-
-## Prioridad 3 -- piezas nuevas del MANIFIESTO (motor-omega OBLIGATORIO)
-Cada pieza arranca SOLO desde semilla viva (`puente/SEMILLAS.md`) con Omega11
-declarada ANTES de producir. Estado de las 11 del `puente/MANIFIESTO.md`:
-- HECHAS: #1 (git -> Resolume: `tools/vj_set/git_performance.py`), #10 (paleta
-  reactivos: `projects/cultura/paleta_reactivos.py`).
-- BUENAS CANDIDATAS ahora (semilla clara + self-contained, sin API/hardware):
-  - #4 Esteganografia: embeber el changelog en el canal ilegible de los SVG que
-    se entregan. Codigo puro. Semilla (+)3 (canal ilegible = residuo). Claude o
-    Sonnet+revisor.
-  - #8 Cartografia de filtros: mapear QUE bloquea cada modelo como su Tilde.
-    DESCRIPTIVO (registra el borde, NO cruza el bloqueo, NO extrae contenido
-    vedado). Semilla (+)3. Claude (criterio de seguridad).
-  - #6 Cron nocturno con borrado: genera una variante por noche; una vez por
-    semana se borra una sin mirar. Self-contained (cron + regla). NO usa Claude
-    API (agente gratis/local). Semilla: la regla de freno del motor.
-- BLOQUEADAS / no ahora:
-  - #2 duelo de modelos: Gemini PARKED -> falta un 2do modelo util. Esperar.
-  - #3 cuatro estaciones (multi-agente): potente pero caro. Correr SOLO con orden
-    explicita del usuario (ultracode/workflow).
-  - #5 wifi-galeria: requiere hardware ESP32. Cuando haya evento.
-  - #7 test de bifurcacion: el usuario pidio NO trabajar mas sobre ese registro.
-  - #11 entrenar modelo con flyers: requiere infra de training. Fuera de alcance.
-  - (+)2 (OBRA_02): bloqueada esperando lector humano. No generar desde ahi.
-
-## Como arrancar una pieza puente (recordatorio motor-omega)
-(a) nombrar semilla viva de SEMILLAS.md -> (b) precipitar (cruzar con material
-existente) -> (c) sobre-narrar (mantener >1 lectura defendible) -> (d) escribir
-Omega11 ("pierde si ___", evaluable por otro) ANTES de producir -> (e) registrar
-resultado fechado en SEMILLAS.md; los fracasos no se reinterpretan.
+## PENDIENTES priorizados
+P1 (mecanico, ya):
+1. Usuario: revisar y mergear PR #48 y #49 (CI verde requerido).
+2. Usuario: borrar el duplicado de credenciales: `rm cultura/.dev.limpio`
+3. Usuario: mover leftovers de cultura/ (copias ya guardadas en historia git;
+   el clasificador de permisos bloqueo esta movida a los agentes):
+   `cd cultura && mv BLENDER.trilogy_450frames.py blend-math-lab.html research_agent_documentacion.md research_agent_free_apis.json research_agent_free_apis.md research_agent_mistral_nemo.json trilogia.3d.blender.html xio-concept.html /c/IA/_flujo_local/cultura_leftovers/`
+   (cultura/xiotech.md SE QUEDA: contenido unico, ya commiteado en este
+   checkpoint).
+P2 (deuda tecnica con criterio):
+4. Branch protection en main (web GitHub; no necesita API ni Claude).
+5. Re-verificar sellos de docs/CLI.md + AGENT_AIRDROP_PROTOCOL.md +
+   SCRIPTS_INVENTORY.md contra el codigo actual (v0.52.0) y recien ahi actualizar.
+6. Corpus tilde real (desktop/tilde_meter.py) para el render sobrevivencia-01.
+7. Fixture de flyer real en tests/fixtures/ para smoke de productoras.py
+   (pedir un .jpg/.png al usuario).
+P3 (piezas nuevas del MANIFIESTO; motor-omega OBLIGATORIO, semilla + Omega11):
+8. Candidatas self-contained: #4 esteganografia (changelog en canal ilegible
+   de los SVG), #8 cartografia de filtros (descriptivo, no cruza bloqueos),
+   #6 cron nocturno con borrado semanal. Bloqueadas: #2 (falta 2do modelo),
+   #5 (hardware ESP32), #7 (orden del usuario: no tocar), #11 (infra training).
+9. gota_rd backend: decidir donde vive la data de reactivos antes de servir
+   endpoint real.
+10. SPEC-only stubs (tools/asistente_pedido, tools/canva_data,
+    tools/privacidad_datos, tools/slowmo_blender_ae): pedir alcance al usuario
+    o archivarlos en el proximo checkpoint.
 
 ## Verificacion (siempre, antes de cerrar)
 ```
@@ -85,30 +88,7 @@ cd web && npm run typecheck && npm run build:context && cd ..
 ```
 
 ## Entrada rapida para el que llega
-1. `context/LAST_HANDOFF.md` (estado corto).
-2. Este plan.
+1. `context/LAST_HANDOFF.md` (estado corto de la ultima sesion).
+2. Este plan (pendientes + fuerte/debil).
 3. Contexto de una tarea: `py tools/vibo_voz/contexto_repo.py task "<keywords>"`.
 4. `puente/README.md` aclara que puente es teorico (no confundir con codigo).
-
-## Deuda de docs (reportada por la limpieza 2026-07-12, no urgente)
-La limpieza de esta sesion resolvio lo seguro (Vibo -> Cauce, punteros muertos,
-3 handoffs viejos archivados, 3 docs de entrada obsoletos convertidos en stubs a
-CLAUDE.md, junk y ramas/worktrees stale). Quedo pendiente lo que necesita criterio:
-- Sellos "verificado v0.48.5" en docs/CLI.md, docs/AGENT_AIRDROP_PROTOCOL.md y
-  docs/SCRIPTS_INVENTORY.md: NO subir el numero a mano (seria afirmar una
-  verificacion falsa, el peor patron del repo). Re-verificar de verdad contra el
-  codigo actual y recien ahi actualizar el sello.
-- CONTRIBUTING.md menciona `scripts/checkpoint.sh` (superseado por
-  validate_airdrop.py + run_airdrop_checks.py) y no nombra CLAUDE.md. Rewrite.
-- docs/DIRECTOR_PLAN.md (v0.49.0, 2026-07-10) describe a Gemini como routing
-  activo; anotarlo como historico o refrescar (Gemini PARKED desde 2026-07-10).
-- CLAUDE.md, subseccion "Gemini-to-Claude desktop": presenta la app como Gemini
-  vivo sin el caveat de PARKED que ya esta en la tabla del equipo. Agregar una
-  linea (ASCII) aclarando que hereda el limite de Gemini PARKED.
-- .claude/commands/*.md quedaron staged pero son boilerplate generico externo
-  (push-all.md hace `git add .` + push directo, contra el modelo del repo).
-  Decidir keep / gitignore / borrar (no los commiteo en esta sesion).
-- Menciones "Vibo" fuera de docs/ (tools/ADOBE_TOOLKIT.md, tools/adobe_panel/,
-  proposals/*.md): actualizar a Cauce cuando se toquen esos archivos.
-- Ramas locales sin mergear (chore/gemini-parked, worktree-tapiz-ecosystem) y
-  ramas remotas ya mergeadas: revisar y limpiar (git, hilo principal).

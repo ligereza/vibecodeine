@@ -1,8 +1,8 @@
 """Versión y changelog de flujo."""
 
-__version__ = "0.51.0"
+__version__ = "0.52.0"
 VERSION = __version__
-__version_info__ = (0, 51, 0)
+__version_info__ = (0, 52, 0)
 
 
 def get_version():
@@ -11,6 +11,30 @@ def get_version():
 
 def get_changelog():
     return {
+        "0.52.0": {
+            "titulo": "Checkpoint limpieza total: reglas obsoletas + basura + estado fuerte/debil",
+            "fecha": "2026-07-16",
+            "highlights": [
+                "limpieza: ~190M fuera (caches, _logs, egg-info, duplicado md5 76M en "
+                "jobs/contraportadas); CSV Azure, doublecup.png y APKs xio preservados "
+                "fuera del repo en C:/IA/_flujo_local",
+                "git: ramas pr45 / worktree-magical-sparking-kite / "
+                "claude/cultura-xio-mistral-20260715 borradas (diff 0 vs main) + "
+                "worktree cultura-xio; quedan main, rama de trabajo y worktree MAK (PR #48)",
+                "archivo via git mv a _archive/legacy_20260716_2000 (motivos en su "
+                "README): xio/advplugins, briefs agente1/2, proposal mejoras 2026-06, "
+                ".claude/commands push-all.md y README.md; NO archivados por dependencia "
+                "viva: projects/flyer_eventos (src/flujo) y xio/actual (platform-tools)",
+                "reglas: CLAUDE.md poda Gemini (pedir_a_gemini PARKED, caveat desktop, "
+                "cultura=MAK); CONTRIBUTING.md rewrite (checkpoint.sh muerto fuera); "
+                "DIRECTOR_PLAN.md marcado HISTORICO; PLAN_SIGUIENTE_AGENTE.md reescrito "
+                "con FUERTE/DEBIL verificado + pendientes P1/P2/P3; SESSION_STATE.json "
+                "comprimido",
+                "seguridad: .gitignore cultura/.dev* -- cultura/.dev.limpio tenia keys "
+                "vivas (Tavily/Groq/Cerebras/Azure) y era commiteable via git add -A",
+                "verificacion: compileall OK, 394 tests verdes + 1 skip, flujo verify OK",
+            ],
+        },
         "0.51.0": {
             "titulo": "Checkpoint consolidado: flyer sin Photoshop + PACKS en Python + dossiers curados",
             "fecha": "2026-07-10",

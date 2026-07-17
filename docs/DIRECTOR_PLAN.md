@@ -1,6 +1,12 @@
 # DIRECTOR PLAN - unified backlog, architecture, security, roadmap
 Date: 2026-07-10 | v0.49.0 | Author: Claude (director) | Phase 0 inventory: 3 parallel sub-agents (src/flujo, tools/projects, security audit). Nothing below is speculation; all states verified against the tree.
 
+> NOTA (2026-07-16, checkpoint limpieza): DOC HISTORICO. Los 3 pasos del roadmap
+> original se completaron el mismo 2026-07-10 (ver changelog v0.50.0/v0.51.0 en
+> src/flujo/version.py). Donde el texto dice "Gemini" leer "subagentes Sonnet /
+> Qwen / NIM": Gemini API esta PARKED desde 2026-07-10 (CLAUDE.md, tabla Equipo
+> multi-agente). El backlog vivo esta en context/PLAN_SIGUIENTE_AGENTE.md.
+
 ## 1. Unified backlog (inventory-first; nothing rebuilt)
 
 | Item | Column | Status | What exists | Next move |
