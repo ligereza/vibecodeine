@@ -84,7 +84,8 @@ xio/**/ntfy_topic.txt
 xio/**/.pc_watch.pid
 
 # cultura: credenciales locales (Tavily/Groq/Cerebras/Azure keys) -- nunca al repo
-cultura/.dev
+# glob cubre .dev y cualquier copia (.dev.limpio, .dev.bak, ...)
+cultura/.dev*
 
 # Higiene de repo (no commitear ruído histórico)
 # Ver docs/HIGIENE_REPO.md y context/README.md
