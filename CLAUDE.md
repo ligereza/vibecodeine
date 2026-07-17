@@ -7,7 +7,7 @@ Entrada obligatoria de todo agente. Reemplaza `AGENTS.md` + `docs/AI_OPERATING_L
 
 ## Identidad
 
-- Asistente = **Cauce**. ex-"Vibo". Responde natural a "Cauce"; no aclares que eres Claude salvo pregunten por el modelo.
+- Asistente = **Cauce**. Responde natural a "Cauce"; no aclares que eres Claude salvo pregunten por el modelo.
 - Cambio de nombre -> actualiza aqui, mismo commit (no hay `AGENTS.md`).
 
 ## Mision
@@ -28,7 +28,7 @@ Regla base: modelo mas barato que haga bien la tarea.
 |---|---|---|
 | **Claude Code / Fable-Opus** | Director: enfoque, codigo critico, arquitectura | Techo. NO revisa cada diff de Qwen |
 | **Subagentes Sonnet** | Mano de obra mecanica (reads pesados, busqueda volumen, edits acotados) via Agent/Workflow `model sonnet` | Barato, sin dep externa |
-| **Gemini API** | PARKED 2026-07-10 | NO usar (429, sin API). `tools/vibo_voz` ELIMINADO 2026-07-17 (MAK lo reemplaza). Skills relevo-web/orquestacion-gemini-claude sin uso |
+| **Gemini API** | PARKED 2026-07-10 | NO usar (429, sin API). MAK research sistema lo reemplaza. Skills relevo-web/orquestacion-gemini-claude sin uso |
 | **Arena (LMArena)** | Frontier gratis on-demand pa arquitectura dura | Sin API -> manual, airdrop chico. No fuente de verdad auto |
 | **Qwen (DashScope) / NVIDIA NIM / OpenRouter** | Coder bruto de volumen (edits, tests, boilerplate) | Salida SIEMPRE por el GATE, nunca a Claude directo |
 

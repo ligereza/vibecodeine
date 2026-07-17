@@ -46,8 +46,7 @@ Plan largo y doctrina: context/MASTER_PLAN.md.
   estable en modo -headless -f <ruta absoluta> (30s sin crash, cierre
   limpio). Nota honesta: falta solo inspeccion visual humana del State
   Machine con las 12 acciones (1 min del usuario cuando quiera).
-- Gemini PARKED sin reemplazo cableado: desktop/ y tools/vibo_voz quedan
-  documentados pero sin uso; el intake /go (vibo_voz/proyectos/) nunca se uso.
+- Gemini PARKED sin reemplazo cableado: desktop/ queda documentado pero sin uso.
 - [CORREGIDO 2026-07-16, PR #51] projects/tilde: el render YA existia
   (sobrevivencia.py cumplia el SPEC; status stale). Tests nuevos contra el
   instrumento real. Sigue pendiente el corpus real (P2.6).
@@ -98,5 +97,5 @@ cd web && npm run typecheck && npm run build:context && cd ..
 ## Entrada rapida para el que llega
 1. `context/LAST_HANDOFF.md` (estado corto de la ultima sesion).
 2. Este plan (pendientes + fuerte/debil).
-3. Contexto de una tarea: `py tools/vibo_voz/contexto_repo.py task "<keywords>"`.
+3. Contexto de una tarea: `py tools/contexto_repo.py task "<keywords>"`.
 4. `puente/README.md` aclara que puente es teorico (no confundir con codigo).
