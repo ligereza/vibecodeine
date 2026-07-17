@@ -112,9 +112,9 @@ Antes de cambiar:
   arbol + archivos clave + zonas a no tocar.
 - **Contexto para una tarea:** `py tools/vibo_voz/contexto_repo.py task "<keywords>"`
   imprime las rutas recomendadas + como derivarlas.
-- **Derivar lectura pesada a un modelo barato:** Qwen/NIM resume rutas gordas, o
-  `py tools/vibo_voz/pedir_a_gemini.py "consulta" ruta...`. PRIVACIDAD: envia contenido a
-  Google (free tier puede entrenar); usa rutas concretas, evita areas sensibles.
+- **Derivar lectura pesada a un modelo barato:** subagentes Sonnet (Agent/Workflow con
+  model sonnet) o Qwen/NIM resumen rutas gordas. `pedir_a_gemini.py` esta PARKED junto
+  con Gemini (ver tabla Equipo multi-agente) -- no usar hasta nueva API.
 - Da a Aider/Qwen **solo los archivos de la tarea**, no el repo.
 - Rutas gordas para derivar: `datadrops/`, `jobs/`, `projects/`, `svg/suplementos_rd/`,
   `docs/handoffs/archive/`, `.claude/skills/*/`.
@@ -239,7 +239,8 @@ del hub web (boton ambar junto a RD/Studio, panel CulturaPanel.tsx). Instrumento
 `projects/tapiz/` (`py projects/tapiz/vibecode_spaces.py archivo.py -m void --svg pieza.svg`
 exporta pieza SVG con paleta flujo real). Medidor tilde: `desktop/tilde_meter.py`
 (standalone, sin cablear a la GUI por decision del usuario). Direccion de arte:
-`projects/tapiz/DIRECTION.md`. Limites: capa descriptiva/cultural si; nada generativo
+`projects/tapiz/DIRECTION.md`. Investigacion MAK (dept research en la caja Linux):
+`cultura/` -- llega a main via PRs #48/#49, no editar hasta que merjeen. Limites: capa descriptiva/cultural si; nada generativo
 de sintesis; psicosis nunca perfila personas reales. El README del repo es una creacion
 terminada del artista: NO agregarle nada.
 
@@ -251,7 +252,9 @@ py -m flujo resolume automatizar jobs/<job_id>
 Para Instagram usar `instaloader`. No usar `yt-dlp`.
 
 **Gemini-to-Claude desktop (app flotante compacta):** `desktop/` (Python/Tkinter puro, no
-toca `src/flujo/` ni `web/src/`). Ventana chica always-on-top (overlay tipo widget, no un
+toca `src/flujo/` ni `web/src/`). CAVEAT: hereda Gemini PARKED (tabla Equipo multi-agente,
+2026-07-10) -- la app no responde hasta que el usuario anuncie una API nueva; el codigo
+queda documentado y listo. Ventana chica always-on-top (overlay tipo widget, no un
 panel de control) con 3 modos ciclados por un solo boton: **Idea** (error/duda/idea cruda
 -> explicacion + prompt comprimido para Claude + enrutador `EJECUTAR_DIRECTO` /
 `ENRUTAR_CLAUDE` / `SOLICITAR_ACLARACION`), **Explicar** (respuesta caveman de Claude ->

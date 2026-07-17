@@ -83,6 +83,10 @@ xio/**/*.log
 xio/**/ntfy_topic.txt
 xio/**/.pc_watch.pid
 
+# cultura: credenciales locales (Tavily/Groq/Cerebras/Azure keys) -- nunca al repo
+# glob cubre .dev y cualquier copia (.dev.limpio, .dev.bak, ...)
+cultura/.dev*
+
 # Higiene de repo (no commitear ruído histórico)
 # Ver docs/HIGIENE_REPO.md y context/README.md
 # _airdrop_backups/, checkpoints/, _archive/ y reference_old/ son legacy y deben mantenerse mínimos en root.
