@@ -31,7 +31,7 @@ MEM_DIR = os.path.join(RESEARCH, "memoria")
 INDEX_FILE = os.path.join(MEM_DIR, "index.jsonl")
 # carpetas de productos a indexar (los .md legibles)
 FUENTES = ("informes", "paneles", "cadenas", "refutaciones",
-           "correlaciones", "grafos")
+           "correlaciones", "grafos", "codex")
 EMBED_MODEL = os.environ.get("OLLAMA_EMBED_MODEL", "nomic-embed-text")
 OLLAMA = os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
 

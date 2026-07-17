@@ -11,6 +11,7 @@ la variable de entorno RESEARCH_ENV. NUNCA hardcodear keys aca.
 import json
 import os
 import re
+import socket
 import time
 import unicodedata
 import urllib.error
@@ -26,7 +27,12 @@ DEFAULTS = {
     "AZURE_ENDPOINT": "https://ligereza.services.ai.azure.com",
     "AZURE_DEPLOYMENT": "gpt-5-mini",
     "OLLAMA_BASE_URL": "http://127.0.0.1:11434",
-    "OLLAMA_MODEL": "aya-expanse:8b",
+    "OLLAMA_MODEL": "gemma3:4b",
+    # WIN: notebook Windows con RTX 4070 (8GB VRAM), alcanzable SOLO por el
+    # cable ethernet directo (192.168.50.x). Motor local mas fuerte que el
+    # de MAK; se prueba antes que el gemma3:4b local como ultimo recurso.
+    "WIN_BASE_URL": "http://192.168.50.1:11434",
+    "WIN_MODEL": "llama3.1:8b",
 }
 
 # Densidad del trabajo: escala max_tok por llamada. Tope duro para no
@@ -42,6 +48,46 @@ def escala_tok(base, densidad="medio"):
 # Modelo "capaz": el mas fuerte razonando/correlacionando. gpt-5-mini
 # (azure) por defecto; se usa para correlacion semantica y auto-reparacion.
 MODELO_CAPAZ = "azure"
+
+# Deteccion de internet: rapida y cacheada. Sin red, los departamentos siguen
+# con ollama local en vez de esperar el timeout de cada nube. Al volver la red
+# (ttl 60s) la nube vuelve a ir primera -> la tarea "vuelve al resto".
+_RED = {"t": 0.0, "ok": True}
+
+
+def red_ok(ttl=60):
+    now = time.time()
+    if now - _RED["t"] < ttl:
+        return _RED["ok"]
+    ok = False
+    for host, port in (("1.1.1.1", 443), ("8.8.8.8", 53)):
+        try:
+            s = socket.create_connection((host, port), timeout=2.5)
+            s.close()
+            ok = True
+            break
+        except OSError:
+            continue
+    _RED["t"] = now
+    _RED["ok"] = ok
+    return ok
+
+
+# Slots de modelo por ROL (throughput-first). El grueso a los rapidos; el capaz
+# (azure) solo donde razonar importa (sintesis, juez, plan, diagnostico); las
+# tareas cortas ('barato': resumen, status, clasificacion) van local primero
+# para ahorrar cupo. red_ok() ya mete ollama al frente si no hay internet.
+_SLOTS = {
+    "razonar": "azure,cerebras,groq,ollama",
+    "bulk": "cerebras,groq,azure,ollama",
+    "barato": "ollama,cerebras,groq",
+}
+
+
+def orden_rol(rol):
+    """Lista de proveedores para un ROL, o None (usa el default de LLM)."""
+    s = _SLOTS.get(rol)
+    return [p.strip() for p in s.split(",")] if s else None
 
 
 def correlacionar(llm, tema, piezas, densidad="medio"):
@@ -124,7 +170,8 @@ def _http_json(url, body=None, headers=None, timeout=60, method=None):
     hdrs.update(headers or {})
     req = urllib.request.Request(url, data=data, headers=hdrs, method=method)
     with urllib.request.urlopen(req, timeout=timeout) as r:
-        return json.loads(r.read().decode("utf-8", "replace"))
+        # tope de lectura: una respuesta gigante no debe agotar la RAM
+        return json.loads(r.read(20_000_000).decode("utf-8", "replace"))
 
 
 def _err_str(e):
@@ -149,12 +196,12 @@ class LLM:
     Code node probado 2026-07-15: cerebras/azure son razonadores, llevan
     margen extra de max_completion_tokens; azure NO acepta temperature)."""
 
-    def __init__(self, order="groq,cerebras,azure,ollama"):
+    def __init__(self, order="groq,cerebras,azure,win,ollama"):
         load_env()
         self.stats = {}
         self.errors = []
         self.order = [p.strip() for p in order.split(",")
-                      if p.strip() in ("groq", "cerebras", "azure", "ollama")]
+                      if p.strip() in ("groq", "cerebras", "azure", "win", "ollama")]
 
     # -- proveedores ----------------------------------------------------
     def _groq(self, system, user, max_tok):
@@ -191,30 +238,53 @@ class LLM:
         )
         return r["choices"][0]["message"]["content"].strip()
 
-    def _ollama(self, system, user, max_tok):
-        base = os.environ["OLLAMA_BASE_URL"].rstrip("/")
+    def _ollama_like(self, base_url, model, system, user, max_tok):
+        base = base_url.rstrip("/")
         prompt = (system + "\n\n" + user) if system else user
         r = _http_json(
             base + "/api/generate",
-            {"model": os.environ["OLLAMA_MODEL"], "prompt": prompt,
+            {"model": model, "prompt": prompt,
              "stream": False,
              "options": {"temperature": 0.3, "num_predict": max_tok}},
             timeout=300,
         )
+        # no tragar el error: si ollama devuelve {"error": ...} propagarlo
+        # para que call() lo registre en self.errors (antes se perdia como "")
+        if isinstance(r, dict) and r.get("error"):
+            raise RuntimeError("ollama: " + str(r["error"])[:160])
         return (r.get("response") or "").strip()
+
+    def _ollama(self, system, user, max_tok):
+        return self._ollama_like(os.environ["OLLAMA_BASE_URL"],
+                                 os.environ["OLLAMA_MODEL"], system, user, max_tok)
+
+    def _win(self, system, user, max_tok):
+        """WIN: la RTX 4070 del notebook, alcanzable solo por el cable directo.
+        Mismo protocolo que ollama local; timeout corto en la conexion (si WIN
+        esta apagada/dormida, cae rapido al fallback siguiente)."""
+        return self._ollama_like(os.environ["WIN_BASE_URL"],
+                                 os.environ["WIN_MODEL"], system, user, max_tok)
 
     def _has_key(self, name):
         need = {"groq": "GROQ_API_KEY", "cerebras": "CEREBRAS_API_KEY",
-                "azure": "AZURE_API_KEY", "ollama": "OLLAMA_BASE_URL"}
+                "azure": "AZURE_API_KEY", "win": "WIN_BASE_URL",
+                "ollama": "OLLAMA_BASE_URL"}
         return bool(os.environ.get(need[name]))
 
     def call(self, system, user, max_tok=1024, order=None):
         """Devuelve (texto, proveedor). Recorre la cadena hasta respuesta
         no vacia; acumula errores no fatales en self.errors."""
         fns = {"groq": self._groq, "cerebras": self._cerebras,
-               "azure": self._azure, "ollama": self._ollama}
+               "azure": self._azure, "win": self._win, "ollama": self._ollama}
+        orden = list(order or self.order)
+        # sin internet: win/ollama primero (LAN directa, no depende de internet;
+        # no esperar los timeouts de la nube). WIN (RTX 4070) antes que el
+        # gemma3 local de MAK -- mas fuerte, mismo cable.
+        if not red_ok():
+            frente = [p for p in ("win", "ollama") if p in orden]
+            orden = frente + [x for x in orden if x not in frente]
         last = None
-        for name in (order or self.order):
+        for name in orden:
             if name not in fns or not self._has_key(name):
                 continue
             try:
@@ -272,6 +342,26 @@ def slug(text, n=40):
 
 def stamp():
     return time.strftime("%Y%m%d-%H%M%S")
+
+
+def mint_job_id():
+    return "%s-%s" % (stamp(), os.urandom(2).hex())
+
+
+def emitir_evento(depto, job_id, tipo, **campos):
+    """Evento estructurado a ~/<depto>/eventos.jsonl (append-only). Best-effort:
+    nunca lanza -- perder un evento no debe tumbar un job. Contrato en
+    ~/plataforma/diseno/eventos_y_backlog.md."""
+    if not job_id:
+        return
+    ruta = os.path.join(os.path.expanduser("~"), depto, "eventos.jsonl")
+    ev = {"tipo": tipo, "job_id": job_id, "ts": int(time.time())}
+    ev.update(campos)
+    try:
+        with open(ruta, "a", encoding="utf-8") as f:
+            f.write(json.dumps(ev, ensure_ascii=False) + "\n")
+    except OSError:
+        pass
 
 
 def ntfy_publish(topic, message, title="", priority="default", errors=None):

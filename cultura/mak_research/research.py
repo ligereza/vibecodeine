@@ -67,6 +67,7 @@ def investigar(topic, iteraciones=3, depth="basic",
             findings.append({"type": "web_analysis", "iteration": i + 1,
                              "query": current, "title": r.get("title"),
                              "url": r["url"], "analysis": parsed})
+            print(f"HALLAZGO: {r.get('title') or r['url']}", flush=True)
 
         if i == iteraciones - 1:
             break  # ultima vuelta: no gastar la llamada DECIDIR
@@ -112,6 +113,9 @@ def investigar(topic, iteraciones=3, depth="basic",
     except RuntimeError as e:
         report = ("[Informe no generado: %s] Revisar meta.errors y findings "
                   "crudos." % e)
+    _primer_parrafo = next((ln.strip() for ln in report.splitlines()
+                           if ln.strip() and not ln.strip().startswith("#")), "")
+    print("HALLAZGO: " + _primer_parrafo[:140], flush=True)
 
     return {
         "topic": topic,

@@ -13,6 +13,9 @@ import threading
 import time
 
 BASE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, BASE)
+from research_lib import emitir_evento, mint_job_id  # noqa: E402
+
 LOCK = os.path.expanduser("~/research/.jobs.lock")
 STATUS_FILE = os.path.expanduser("~/research/.current_status.json")
 
@@ -49,12 +52,14 @@ SIN_TEMA = {"corpus"}
 
 
 def run_tema(modo, tema, n=None, ntfy=True, sin_marco=False, densidad=None,
-            orden=None, memoria=False, timeout=1800):
+            orden=None, memoria=False, timeout=1800, job_id=None):
     """modo: research/panel/cadena/refutar/grafo/memoria. n = iteraciones o
     replicas (solo research/panel). orden = CSV de proveedores (cadena/refutar
     respetan el orden de nodos del canvas). memoria=True inyecta los hallazgos
-    previos del departamento (solo grafo). Devuelve {ok, path, tail}. Bloquea
-    hasta tomar el lock."""
+    previos del departamento (solo grafo). job_id: para el log de eventos
+    (~/research/eventos.jsonl); si no llega, se acuna uno (uso standalone).
+    Devuelve {ok, path, tail}. Bloquea hasta tomar el lock."""
+    job_id = job_id or mint_job_id()
     script = SCRIPTS.get(modo, "research.py")
     cmd = [sys.executable, os.path.join(BASE, script)]
     if modo not in SIN_TEMA:
@@ -88,7 +93,13 @@ def run_tema(modo, tema, n=None, ntfy=True, sin_marco=False, densidad=None,
                 for line in p.stdout:
                     out_lines.append(line)
                     if line.startswith("STATUS: "):
-                        _set_status(line[len("STATUS: "):].strip(), p.pid)
+                        detalle = line[len("STATUS: "):].strip()
+                        _set_status(detalle, p.pid)
+                        emitir_evento("research", job_id, "node_start",
+                                     fase=modo, detalle=detalle[:140])
+                    elif line.startswith("HALLAZGO: "):
+                        emitir_evento("research", job_id, "llm_result",
+                                     fase=modo, resumen=line[len("HALLAZGO: "):].strip()[:140])
                     elif line.startswith("INFORME: "):
                         path = line[len("INFORME: "):].strip()
 
@@ -107,10 +118,20 @@ def run_tema(modo, tema, n=None, ntfy=True, sin_marco=False, densidad=None,
 
             p.wait()
             if timed_out:
+                emitir_evento("research", job_id, "error",
+                             tipo_error="timeout", contexto="timeout %ds" % timeout)
+                emitir_evento("research", job_id, "node_end", estado="FALLO")
                 return {"ok": False, "path": "", "tail": "timeout %ds" % timeout}
         finally:
             _clear_status()
 
     out = "".join(out_lines)
-    return {"ok": p.returncode == 0 and bool(path), "path": path,
-            "tail": out[-800:]}
+    ok = p.returncode == 0 and bool(path)
+    if ok:
+        emitir_evento("research", job_id, "node_end", estado="listo",
+                      ruta_completa=path)
+    else:
+        emitir_evento("research", job_id, "error", tipo_error="fallo_proceso",
+                      contexto=out[-300:].strip())
+        emitir_evento("research", job_id, "node_end", estado="FALLO")
+    return {"ok": ok, "path": path, "tail": out[-800:]}

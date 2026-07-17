@@ -28,7 +28,7 @@ import time
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from research_lib import load_env
+from research_lib import load_env, mint_job_id
 from worker import run_tema
 
 # ── configuración ──
@@ -230,10 +230,23 @@ def _orden_canvas():
     return ",".join(provs) if provs else None
 
 
+def _guardia_contenido(tema):
+    """Clasifica la peticion via plataforma/filtro_entrada. Devuelve el dict
+    del veredicto o None si el filtro no esta (fail-open: no bloquear research
+    legitimo por falta del modulo)."""
+    try:
+        sys.path.insert(0, "/home/mak/plataforma")
+        import filtro_entrada
+        return filtro_entrada.clasificar(tema)
+    except Exception:  # noqa: BLE001 - sin guardia = sigue (fail-open)
+        return None
+
+
 def _lanzar(modo, tema, n, densidad="medio", memoria=False):
     job = {
         "tema": tema, "modo": modo, "estado": "en cola",
         "path": "", "error": "", "t": time.strftime("%H:%M:%S"),
+        "job_id": mint_job_id(),
     }
     with JOBS_LOCK:
         JOBS.append(job)
@@ -241,10 +254,25 @@ def _lanzar(modo, tema, n, densidad="medio", memoria=False):
     def correr():
         t0 = time.time()
         job["estado"] = "corriendo"
+        # guardia de contenido: no corre lo que pida PRODUCIR dano o SALTAR
+        # filtros; el research DESCRIPTIVO de temas sensibles SI pasa
+        if modo not in MODO_SIN_TEMA:
+            g = _guardia_contenido(tema)
+            if g and g.get("veredicto") != "DESCRIPTIVO":
+                job["estado"] = "BLOQUEADO"
+                job["error"] = "guardia de contenido: %s -- %s" % (
+                    g["veredicto"], g["razon"])
+                job["ms"] = int((time.time() - t0) * 1000)
+                try:
+                    with open(JOBS_FILE, "a", encoding="utf-8") as f:
+                        f.write(json.dumps(job) + "\n")
+                except OSError:
+                    pass
+                return
         try:
             orden = _orden_canvas() if modo in ("cadena", "refutar") else None
             r = run_tema(modo, tema, n=n, ntfy=True, densidad=densidad,
-                        orden=orden, memoria=memoria)
+                        orden=orden, memoria=memoria, job_id=job["job_id"])
             job["estado"] = "listo" if r.get("ok") else "FALLO"
             job["path"] = os.path.basename(r["path"]) if r.get("path") else ""
             if not r.get("ok"):
@@ -2304,6 +2332,7 @@ HTML = """<!doctype html>
     <button class="mode-btn MODE_GRAFO_CSS" data-mode="grafo" onclick="setMode('grafo')" title="Las conexiones que dibujes dirigen la ejecucion">&#128376; Grafo</button>
   </div>
   <div class="topbar-right">
+    <a class="topbar-pill" href="#" onclick="window.open('http://'+location.hostname+':8900/cuotas');return false" style="color:#d4a259;text-decoration:none" title="Cuotas de los modelos">&#128202; cuotas</a>
     <span class="topbar-pill">LAN</span>
     <span class="topbar-pill" id="clock-pill"></span>
   </div>

@@ -1,10 +1,11 @@
 # LAST HANDOFF -- estado para el proximo agente
 
-Version: 0.52.0 | Fecha: 2026-07-17 | Identidad: Cauce | cierre de sesion MAK
-en curso (ver seccion "MAK -- cierre 2026-07-17" al final de este archivo para
-el estado REAL, no adelantado, al momento del commit). Suite del repo NO
-tocada por esta sesion (todo el trabajo vive en MAK 192.168.50.2, fuera de
-src/flujo).
+Version: 0.52.0 | Fecha: 2026-07-17 | Identidad: Cauce | cierre de sesion MAK.
+Merge con main completado (20 commits ajenos reconciliados), codigo de MAK
+copiado a cultura/mak_research + mak_codex + mak_plataforma + mak_lenguaje,
+suite verde (compileall src/flujo OK, pytest 100% sin fallos, flujo verify OK
+v0.52.0 hub smoke OK). Detalle real (que quedo completo y que NO) en la
+seccion "MAK -- cierre 2026-07-17" mas abajo.
 
 ## SI ERES UN SUCESOR DE FABLE (bloqueo -> Opus): leer esto PRIMERO
 El modelo principal puede quedar bloqueado por el clasificador de ENTRADA
@@ -19,6 +20,106 @@ revivir-subagentes escenario C):
    ofrecer reformulacion; nunca rechazo seco (re-quema el modelo).
 3. Trabajo normal del repo (Resolume/VJ, RD reduccion de danos, xio, codigo)
    = zona verde, no auto-censurar por flags ambiguos.
+
+## MAK -- cierre 2026-07-17 (sesion Sonnet/Opus, rama worktree-mak-research-cultural)
+
+El organismo MAK (research + codex + plataforma + lenguaje) corre EN VIVO en
+Debian 192.168.50.2, fuera de src/flujo. Esta sesion cierra el trabajo iniciado
+en PRs anteriores (#48/#49 mencionados en handoffs previos): otro agente habia
+LOCKEADO cultura/mak_research/ esperando que este trabajo terminara y se
+pusheara (ver nota en la seccion "PENDIENTES de esta sesion" mas abajo) --
+ese lock se libera con este merge.
+
+### Que se hizo esta sesion (ademas del trabajo previo ya documentado abajo)
+- **WIN integrado como proveedor LLM**: notebook Windows (RTX 4070 Laptop 8GB)
+  suma como proveedor "win" en research_lib.LLM y codex_lib.CoderLLM, ANTES
+  del ollama local de MAK en la cadena de fallback (nube -> WIN -> MAK-local).
+  Ollama en WIN bindeado a la IP del cable directo (192.168.50.1:11434), NO a
+  0.0.0.0 -- goteo de seguridad real cerrado (WIN es notebook que viaja a
+  redes publicas). Probado end-to-end desde ambos deptos.
+- **Fallback offline probado de verdad**: red_ok() (socket a 1.1.1.1/8.8.8.8)
+  reordena la cadena sin internet; forzado offline en vivo, cayo a ollama
+  correctamente.
+- **Throttling movil resuelto**: hotspot del Xiaomi (WIN conectado a el)
+  caia a 0.75 Mbps. Root descartado (telefono sin root, ver xio/RUNBOOK.md).
+  Fix real: `adb shell settings put global tether_dun_required 0` (capa de
+  servicio, no kernel -- mismo patron que resolvio charge_control antes) +
+  reboot del telefono con `xio/new/pc_reboot_watch.sh` corriendo por USB
+  ANTES de reiniciar (evita el "hueco" de reboot sin host). Resultado: 0.75 ->
+  12.2 Mbps.
+- **hub.py reconstruido sobre DOM+SVG real** (antes: canvas-2D con
+  hit-testing a mano, causaba clicks poco confiables). Verificado con
+  Playwright REAL (chromium instalado ad-hoc, no MCP) contra el hub vivo en
+  MAK: 5 nodos de departamento clickeables, panel de research/codex EMBEBE
+  el editor real via iframe (:8890 y :8891 con token, NO un formulario
+  propio -- correccion de un error real de esta sesion, se habia reconstruido
+  una version mas pobre en vez de reusar el editor de nodos/puertos/SVG que
+  research/interfaz.py ya tenia). Fisica del micelio con damping mas fuerte
+  (0.55 + tope de velocidad) para que un click real (mouse, no la espera de
+  estabilidad de Playwright) aterrice bien sin dejar de moverse.
+- **Emisor de eventos con contenido semantico real**: `eventos.jsonl` por
+  depto (research_lib.emitir_evento + mint_job_id), interceptado
+  centralmente en worker.py/worker_codex.py (linea "STATUS: " -> node_start,
+  "HALLAZGO: " -> llm_result con contenido real, no contador de paso).
+  Contenido real agregado en research.py (fuente encontrada + extracto del
+  informe), generar.py (plan + resultado), debug.py (diagnostico). Panel "en
+  vivo" en el hub lee `/api/eventos?depto=X`.
+- **Coder que se repara**: nuevo mood `debug` en codex (planner diagnostica +
+  coder reescribe) -- NUNCA sobrescribe el modulo vivo, guarda PROPUESTA en
+  ~/codex/revisiones/ para revision humana.
+- **Trabajo autonomo real**: `trabajo.py` (cron */30, reemplaza el latido.py
+  viejo) cicla multiplicar/definir/limpiar/desarrollar via roles.py.
+  LIMITACION HONESTA (documentada, no resuelta): las listas semilla son FIJAS
+  (roles.py SEMILLAS/MODULOS + backlog_codex.txt) -- al agotarse, repite en
+  vez de crecer. La correccion real (leer la seccion "LAGUNAS DE INFORMACION"
+  que cada informe ya escribe y usarla como semilla del proximo ciclo) esta
+  DISENADA (ver cultura/mak_plataforma/diseno/eventos_y_backlog.md) pero NO
+  implementada.
+- **Doctrina viva**: cultura/mak_plataforma/doctrina/doctrina_tools_espejo.md
+  (herramientas dual-use, jailbreak vs enmascaramiento de intencion, el
+  filtro juzga la aplicacion no la capacidad) informa filtro_entrada.py.
+
+### NO completado (honesto, no maquillado)
+- **Pausa-en-error / reanudacion**: research.py `investigar()` fue reescrito
+  para soportar `checkpoint=`/`job_id=`/`accion=`/`nuevo_input=` (pausa real
+  en vez de reventar y esperar el timeout de todo el job), PERO nada invoca
+  todavia esa ruta: falta `--resume` en `main()`, falta que worker.py
+  reconozca la linea "PASADO: " del subproceso, falta el endpoint
+  `/api/reanudar` en interfaz.py + hub.py, y los botones
+  reintentar/editar/saltar/abortar en el panel del hub. Diseno completo en
+  cultura/mak_plataforma/diseno/eventos_y_backlog.md.
+- El emisor de eventos con contenido real (HALLAZGO:) solo esta en
+  research.py + generar.py + debug.py. cadena.py/refutar.py/panel.py/
+  grafo.py/memoria.py/revisar.py/testear.py solo tienen node_start/node_end
+  genericos (heredados gratis via worker.py/worker_codex.py) sin contenido
+  semantico propio todavia.
+- Regla de firewall de Windows para ollama sigue en "Any remote address"
+  (el New-NetFirewallRule con RemoteAddress fallo por falta de admin/UAC). El
+  bind a la IP de interfaz (192.168.50.1) ya cierra el riesgo real (no hay
+  socket escuchando en otras redes); la regla de firewall es hardening
+  adicional, no urgente.
+
+### Limpieza de handoffs viejos (pedido explicito del usuario al cerrar)
+- `checkpoints/2026-07-03_*.md` (3 archivos) archivados a
+  `_archive/legacy_20260717_1900/checkpoints_2026-07-03/` -- salidas viejas
+  de un mecanismo de solo-escritura (src/flujo/airdrop.py), no rompe nada.
+- `context/ACTIVE_PLAN.md` (plan de demo del 2026-06-29, hace 3 semanas)
+  archivado a `_archive/legacy_20260717_1900/`.
+- `context/PLAN_OPUS_SALA3D.md` eliminado (`git rm`, no archivado): el propio
+  archivo instruia "Borrar este archivo al cerrar"; su trabajo (PR #30) ya
+  esta mergeado desde 2026-07-11.
+- `_tmp_mak_plataforma/` (untracked, intento abandonado de 2026-07-16 con
+  copias stale de GENESIS.md/guardia.py/salud.py) borrado; reemplazado por
+  cultura/mak_plataforma/ con contenido fresco de hoy.
+- NO se toco `.archive/`, `_archive/legacy_2026*` (las demas), ni
+  `docs/handoffs/archive/` -- son las ubicaciones de archivo OFICIALES segun
+  CLAUDE.md, no material suelto.
+
+### Verificacion de cierre
+compileall src/flujo: OK. compileall cultura/mak_research+mak_codex+
+mak_plataforma+mak_lenguaje: OK (sin errores de sintaxis). pytest tests/: 100%
+verde, sin fallos ni nuevos skips. flujo verify: OK (v0.52.0, hub smoke OK).
+No se toco web/ esta sesion.
 
 ## Estado 2026-07-17 (sesion Fable, autonoma)
 Mergeado a main hoy: PRs #50-#69 (checkpoint, MASTER_PLAN v2 anti-muralla,
