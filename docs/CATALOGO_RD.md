@@ -12,21 +12,21 @@ Version flujo: 0.52.0
 
 | Pack | Nombre | Precio | Voluntarios | Stands | m2 | Desglose por proporciones |
 |---|---|---|---|---|---|---|
-| INFO | Testeo o Informativo (a elección) | $100,000 | 2 | 1 | 9 | no (precio plano) |
+| INFO | Informativo | $250,000 | 6 | 1 | 9 | no (precio plano) |
 | TESTEO | Testeo y Informativo (ambos) | $300,000 | 6 | 2 | 18 | no (precio plano) |
 | COMPLETO | Servicio Completo (masivo) | $500,000 | 15 | 2 | 27 | si |
 
-### Pack 1 · Testeo o Informativo -- Testeo o Informativo (a elección)
+### Pack 1 · Informativo -- Informativo
 
-2 voluntarios · 1 stand 3×3 (9 m²)
+6 voluntarios · 1 stand 3×3 (9 m²)
 
-Precio: $100,000 (valor absoluto, unico editable en packs.py)
+Precio: $250,000 (valor absoluto, unico editable en packs.py)
 
 Incluye:
-- Un stand, un servicio a elección: testeo o informativo
-- Material educativo e insumos preventivos
+- Stand informativo atendido
+- Material educativo + insumos preventivos
 - Protectores auditivos, abanicos, suplementos
-- Tests de un solo uso
+- Tests de un solo uso (opcional)
 
 Sin desglose por proporciones: precio plano, ver inclusiones arriba.
 
