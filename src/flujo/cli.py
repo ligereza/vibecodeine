@@ -125,6 +125,81 @@ app.add_typer(brand_app, name="brand")
 suplementos_app = typer.Typer(help="Generación de contraportadas para suplementos RD.", no_args_is_help=True)
 app.add_typer(suplementos_app, name="suplementos")
 
+rd_app = typer.Typer(help="Base de datos RD: reactivos, packs, suplementos, productoras, eventos.", no_args_is_help=True)
+app.add_typer(rd_app, name="rd-db")
+
+
+@rd_app.command("build")
+def rd_build():
+    """(Re)construye data/rd.db desde las fuentes canonicas (reactivos, packs,
+    suplementos, productoras, eventos)."""
+    from .rd import build_rd_db
+
+    path = build_rd_db()
+    _ok(f"RD DB construida: {path}")
+
+
+@rd_app.command("reactivo")
+def rd_reactivo(
+    familia: str = typer.Option("", "--familia", "-f", help="Filtra por familia de sustancia (ej. MDMA)"),
+    reactivo: str = typer.Option("", "--reactivo", "-r", help="Filtra por reactivo (ej. Marquis)"),
+):
+    """Consulta la colorimetria presuntiva. El test es PRESUNTIVO: indica familia
+    posible, no identifica ni mide pureza."""
+    from .rd import disclaimer, reactivos_por_familia, reactivos_por_reactivo
+
+    if familia:
+        filas = reactivos_por_familia(familia)
+    elif reactivo:
+        filas = reactivos_por_reactivo(reactivo)
+    else:
+        _warn("Usa --familia MDMA o --reactivo Marquis")
+        raise typer.Exit(1)
+    _section("flujo · rd · reactivos")
+    for f in filas:
+        console.print(f"  {f['reactivo']:<12} {f['familia']:<20} {f['reaccion']:<24} {f['hex']}")
+    console.print(f"\n[dim]{disclaimer()}[/]")
+
+
+@rd_app.command("packs")
+def rd_packs():
+    """Lista los packs de servicio con precio e inclusiones."""
+    from .rd import packs as _packs
+
+    _section("flujo · rd · packs")
+    for p in _packs():
+        console.print(f"  [bold]{p['id']}[/] {p['nombre']} -- ${p['precio']:,} CLP ({p['voluntarios']} vol)")
+        for inc in p["inclusiones"]:
+            console.print(f"      - {inc}")
+
+
+@rd_app.command("eventos")
+def rd_eventos():
+    """Lista los eventos registrados con su pack sugerido."""
+    from .rd import eventos as _eventos
+
+    _section("flujo · rd · eventos")
+    for e in _eventos():
+        pack = e["pack_sugerido"] or "(sin match)"
+        console.print(f"  {e['nombre']}  |  {e['voluntarios']} vol -> {pack}  |  {e['fuente']}")
+
+
+@rd_app.command("lookup")
+def rd_lookup(familia: str = typer.Argument(..., help="Familia de sustancia, ej. MDMA")):
+    """Consulta de operador en terreno: reactivos que marcan la familia + packs
+    que incluyen testeo + disclaimer, en una sola vista (JOIN reactivos+packs)."""
+    from .rd import lookup_familia
+
+    res = lookup_familia(familia)
+    _section(f"flujo · rd · lookup · {familia}")
+    if not res["reactivos"]:
+        _warn(f"Sin reacciones registradas para '{familia}'")
+    for f in res["reactivos"]:
+        console.print(f"  {f['reactivo']:<12} {f['familia']:<20} {f['reaccion']:<24} {f['hex']}")
+    packs_txt = ", ".join(f"{p['id']} (${p['precio']:,})" for p in res["packs_con_testeo"]) or "(ninguno)"
+    console.print(f"\n  Testeo incluido en packs: {packs_txt}")
+    console.print(f"\n[dim]{res['disclaimer']}[/]")
+
 knowledge_app = typer.Typer(help="Knowledge base local: productoras, venues, logos y ejemplos.", no_args_is_help=True)
 app.add_typer(knowledge_app, name="knowledge")
 
@@ -558,53 +633,6 @@ def verify(
             _warn("scripts/hub_smoke.py no existe; se omite hub smoke")
 
     _ok("verify OK")
-
-
-@app.command("voz")
-def voz():
-    """Ingreso de dato por voz: lanza el asistente local (CODE/VIBO/REDU).
-
-    Herramienta OPCIONAL (no es dependencia de flujo). Requiere el extra `voz`:
-        py -m pip install -e ".[voz]"
-    y un archivo tools/vibo_voz/.env con las keys (ver .env.example).
-
-    Sirve sobre todo para capturar ideas/pedidos hablando: VIBO da la cara para
-    lo personal/general y, al detectar tema de la ONG, salta REDU (confidencial).
-    """
-    from .paths import repo_root
-
-    root = repo_root()
-    script = root / "tools" / "vibo_voz" / "vibo.py"
-    if not script.exists():
-        _warn(f"No se encontró la herramienta de voz en {script}")
-        raise typer.Exit(1)
-
-    import importlib.util
-
-    requeridos = {
-        "google.genai": "google-genai",
-        "sounddevice": "sounddevice",
-        "pynput": "pynput",
-        "requests": "requests",
-        "dotenv": "python-dotenv",
-    }
-    faltan = [pip for mod, pip in requeridos.items() if importlib.util.find_spec(mod) is None]
-    if faltan:
-        _section("flujo · voz")
-        _warn("Faltan dependencias del extra opcional de voz: " + ", ".join(faltan))
-        console.print('Instálalo completo con:  py -m pip install -e ".[voz]"', markup=False)
-        console.print("Luego copia tools/vibo_voz/.env.example a .env y pon tus keys.")
-        raise typer.Exit(1)
-
-    env_file = script.parent / ".env"
-    if not env_file.exists():
-        _warn("Falta tools/vibo_voz/.env (copia .env.example y rellena las keys).")
-
-    _section("flujo · voz")
-    console.print("[cyan]Lanzando asistente de voz (F8 para hablar, ESC para salir)...[/]")
-    import subprocess
-
-    raise typer.Exit(subprocess.call([sys.executable, str(script)], cwd=str(script.parent)))
 
 
 @app.command()

@@ -1,7 +1,0 @@
-# Vibo Voz - asistente de voz local (Gemini Live) conectado a GitHub (solo lectura)
-google-genai>=0.8.0     # SDK oficial Gemini: Live API (audio en tiempo real + voz + tools)
-sounddevice>=0.4.6      # capturar microfono y reproducir la voz de Vibo
-numpy>=1.24             # buffers de audio PCM
-pynput>=1.7.6           # tecla para hablar (push-to-talk), sin permisos de admin
-requests>=2.31          # API REST de GitHub (solo lectura)
-python-dotenv>=1.0      # cargar las keys desde un .env local (nunca se sube)

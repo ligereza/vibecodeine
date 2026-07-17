@@ -47,7 +47,7 @@ barato que haga bien la tarea.**
 |---|---|---|---|
 | **Claude Code / Opus** | Director + codigo critico + arquitectura | Decide el enfoque, hace el codigo que no admite malentendido, emite ordenes para los demas | Techo. Recibe pedidos ya comprimidos por el interprete. NO revisa cada diff de Qwen |
 | **Subagentes Sonnet** | Mano de obra mecanica interna | Lecturas pesadas, busquedas de volumen, resumenes de rutas gordas, ediciones acotadas (Agent/Workflow con model sonnet, lo maneja el propio Claude Code) | Mas barato que el hilo director; sin dependencia externa |
-| **Gemini API (PARKED)** | (fuera del stack desde 2026-07-10) | NO usar: ambas keys en 429, sin API util. tools/vibo_voz y skills relevo-web / orquestacion-gemini-claude quedan en el repo SIN USO hasta que el usuario anuncie una API nueva | Revivir solo por orden del usuario |
+| **Gemini API (PARKED)** | (fuera del stack desde 2026-07-10) | NO usar: ambas keys en 429, sin API util. El asistente de voz tools/vibo_voz FUE ELIMINADO (2026-07-17): las APIs corriendo en la caja Linux (MAK) reemplazan su funcion de routing. Skills relevo-web / orquestacion-gemini-claude quedan sin uso | Revivir solo por orden del usuario |
 | **Arena (LMArena)** | Frontier gratis on-demand | Arquitectura dura cuando quieres un cerebro frontier sin gastar Claude | Sin API -> manual, airdrop chico. No es fuente de verdad automatica |
 | **Qwen API/web** (DashScope) | Coder bruto de volumen | Ediciones acotadas, tests, boilerplate, mascar contexto | Su salida pasa por el GATE (CI + revisor gratis), nunca por Claude directo |
 | **NVIDIA NIM / OpenRouter** | Alternativa / fallback barato | Cuando Qwen no rinde o para probar otro modelo; endpoint OpenAI-compatible | Igual que Qwen |
@@ -111,13 +111,12 @@ Antes de cambiar:
 
 ### Ahorro de contexto (no leer el repo entero)
 
-- **Mapa mecanico (0 tokens):** `py tools/vibo_voz/contexto_repo.py` (o `map`) imprime
+- **Mapa mecanico (0 tokens):** `py tools/contexto_repo.py` (o `map`) imprime
   arbol + archivos clave + zonas a no tocar.
-- **Contexto para una tarea:** `py tools/vibo_voz/contexto_repo.py task "<keywords>"`
+- **Contexto para una tarea:** `py tools/contexto_repo.py task "<keywords>"`
   imprime las rutas recomendadas + como derivarlas.
 - **Derivar lectura pesada a un modelo barato:** subagentes Sonnet (Agent/Workflow con
-  model sonnet) o Qwen/NIM resumen rutas gordas. `pedir_a_gemini.py` esta PARKED junto
-  con Gemini (ver tabla Equipo multi-agente) -- no usar hasta nueva API.
+  model sonnet) o Qwen/NIM resumen rutas gordas.
 - Da a Aider/Qwen **solo los archivos de la tarea**, no el repo.
 - Rutas gordas para derivar: `datadrops/`, `jobs/`, `projects/`, `svg/suplementos_rd/`,
   `docs/handoffs/archive/`, `.claude/skills/*/`.
