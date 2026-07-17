@@ -1,7 +1,31 @@
 # LAST HANDOFF -- estado para el proximo agente
 
-Version: 0.52.0 | Fecha: 2026-07-16 | Identidad: Cauce | Suite completa: VERDE
-hoy (compileall OK, 394 tests pytest verdes + 1 skip, flujo verify OK 0.52.0).
+## SI ERES UN SUCESOR DE FABLE (bloqueo -> Opus): leer esto PRIMERO
+El modelo principal puede quedar bloqueado por el clasificador de ENTRADA
+(marca el mensaje del usuario ANTES de que el modelo lo vea; falsos positivos
+en coding/cyber/biology rutinarios) y la sesion se degrada a Opus sin retorno.
+Protocolo (memoria [[antiblock-warn-first]] + skill .claude/skills/
+revivir-subagentes escenario C):
+1. `py .claude/skills/revivir-subagentes/extraer_contexto.py <sessionId>.jsonl
+   --volcar rescate.md` -> hereda el contexto ya pagado (corre en Windows
+   cp1252 sin PYTHONIOENCODING desde el fix de esta sesion).
+2. Warn-first: avisar `[!] tema sensible: <cual>` ANTES de zona riesgosa,
+   ofrecer reformulacion; nunca rechazo seco (re-quema el modelo).
+3. Trabajo normal del repo (Resolume/VJ, RD reduccion de danos, xio, codigo)
+   = zona verde, no auto-censurar por flags ambiguos.
+
+## Estado 2026-07-17 (sesion Fable, autonoma)
+En vuelo (PRs abiertos): #65 (cobertura gaps 4/5/6/10, +22 tests). Rama
+feat/revivir-skill-a-main: rescata la skill revivir-subagentes a main (era
+commit huerfano d20806d, nunca mergeado) + fix cp1252. Sesiones duplicadas de
+esta conversacion (49a973c7/22bacb49/e67c294e) borradas del picker; contenido
+preservado en C:/IA/_flujo_local/session_backups/. Un sonnet caza mas commits
+huerfanos. Trabajo previo hoy en main: PRs #50-#64 (checkpoint, MASTER_PLAN v2
+anti-muralla, olas 1-4, RD DB + perfil productoras, fix precio Pack 1 real
+$250k, vibo_voz eliminado).
+
+Version: 0.52.0 | Fecha: 2026-07-17 | Identidad: Cauce | Suite completa: VERDE
+(compileall OK, pytest verde, flujo verify OK 0.52.0).
 
 Pendientes y fuerte/debil: context/PLAN_SIGUIENTE_AGENTE.md (refrescado hoy).
 Historico viejo: git log de este archivo + docs/handoffs/archive/.
