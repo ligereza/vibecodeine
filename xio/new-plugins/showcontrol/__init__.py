@@ -19,6 +19,8 @@ stops itself once RELEASE lands at black.
 """
 
 import functools
+import hmac
+import os
 import socket
 import threading
 import time
@@ -49,6 +51,33 @@ TICK_HZ = 30.0            # cue engine: smooth fades need a fast tick
 FABRIC_KEEPALIVE_HZ = 2.0  # fabric has no fades: only re-emit DMX inside the 1s Art-Net timeout
 
 
+# ── xio: env-based token gate (whole-server, public-hotspot shows) ─────────
+# The xio server binds 0.0.0.0 on the show hotspot: ANY client joined to it
+# can hit every showcontrol route, GET included. This is separate from the
+# muros `_guard`/`_token` wall below (a config-persisted secret, POST-only,
+# rotated via /auth/set): this one is a single operator-set env var that --
+# when present -- locks EVERY route behind one shared header, reads included
+# (/status, /obs, /panel...). Off by default so nothing changes for existing
+# trusted-crew setups. Read at REQUEST time (not import time) so an operator
+# can `export XIO_SHOWCONTROL_TOKEN=...` and only restart the server, and so
+# tests can monkeypatch os.environ without reimporting this module.
+def _xio_token_required(handler):
+    """Wrap a Flask view: if XIO_SHOWCONTROL_TOKEN is set (non-empty), the
+    request must carry a matching X-Xio-Token header, compared in constant
+    time (hmac.compare_digest). Unset env -> pass-through, unchanged from
+    before this gate existed."""
+    @functools.wraps(handler)
+    def wrapper(*args, **kwargs):
+        expected = os.environ.get("XIO_SHOWCONTROL_TOKEN", "")
+        if expected:
+            from flask import request, jsonify
+            presented = request.headers.get("X-Xio-Token", "")
+            if not hmac.compare_digest(expected.encode("utf-8"), presented.encode("utf-8")):
+                return jsonify({"error": "token requerido o invalido"}), 401
+        return handler(*args, **kwargs)
+    return wrapper
+
+
 class ShowControlPlugin(PluginBase):
     """OSC / Art-Net / sACN sender exposed over the xio HTTP API."""
 
@@ -60,6 +89,15 @@ class ShowControlPlugin(PluginBase):
     icon = "network"
     category = "network"
     permissions = ["network"]
+
+    def register_route(self, rule, view_func, methods=None, **options):
+        """Every showcontrol route (GET and POST alike) passes through the
+        optional XIO_SHOWCONTROL_TOKEN gate before reaching PluginBase's
+        registration -- applied once here so on_load's ~25 register_route()
+        calls don't each need wrapping by hand, and so xio/new/server.py and
+        every other plugin stay untouched."""
+        return super().register_route(rule, _xio_token_required(view_func),
+                                       methods=methods, **options)
 
     def on_load(self):
         self._sent = {"osc": 0, "artnet": 0, "sacn": 0}

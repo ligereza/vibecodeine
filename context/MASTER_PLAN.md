@@ -54,9 +54,11 @@ self-heal hotspot, MAK aislado 403. Gap honesto: reboot mata el server
 (AccessibilityService sin instalar).
 - T-B1 [USUARIO]: build/install/grant de xio/hotspot_boot_service en el
   telefono. Cierra el unico gap de autonomia.
-- T-B2 [sonnet]: endurecer showcontrol con token opcional (header X-Xio-Token
-  leido de env) para hotspot con publico; tests de 401/200. NO tocar el resto
-  del server.
+- T-B2 [HECHA 2026-07-16, ola 3]: gate opcional XIO_SHOWCONTROL_TOKEN sobre
+  las ~25 rutas del plugin (override de register_route, hmac.compare_digest,
+  env por-request; sin token = comportamiento identico). 6 tests + 62
+  preexistentes verdes. PENDIENTE OPERATIVO: el telefono corre la copia
+  desplegada -- redeploy del plugin (RUNBOOK seccion 7) para que aplique.
 - T-B3 [HECHA 2026-07-16, ola 2]: xio/RUNBOOK.md nuevo (8 secciones, cada
   comando verificado contra los scripts reales) + puntero en los 10 .md
   originales. Contradicciones flageadas sin resolver en silencio:
@@ -79,8 +81,13 @@ Estado: pipeline contraportadas/flyers/cotizaciones validado end-to-end;
 plantilla real de produccion vive en Desktop/ai_illustrator (fuera del repo).
 - T-D1 [sonnet]: smoke real de productoras.py con fixture de flyer en
   tests/fixtures/ (USUARIO aporta el .jpg). Sin Gemini: solo la parte PIL.
-- T-D2 [qwen]: catalogo de precios/packs 2026-H2 regenerado desde
-  projects/cotizaciones/engine.py con 1 comando; doc de uso para no-Claude.
+- T-D2 [HECHA 2026-07-16, ola 3]: scripts/generar_catalogo_rd.py genera
+  docs/CATALOGO_RD.md deterministico desde packs.py/costs.py/engine.py (cero
+  precios hardcodeados, 10 tests). HALLAZGO CRITICO del sonnet: `flujo
+  cotizaciones` estaba ROTO (flujo.brand vaciado en una migracion dejo
+  ImportError en engine.py; piezas.py lo tragaba con try/except pass).
+  Director restauro brand.py como loader real de projects/flujo/flujo.json
+  y arreglo el import de piezas.py; verificado en vivo ambas audiencias.
 - T-D3 [H2]: 1 entrega comercial completa corrida SOLO por agentes gratis
   siguiendo skills entregas-rd/taller-svg-rd (Claude solo audita el resultado).
 
