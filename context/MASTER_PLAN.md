@@ -234,7 +234,7 @@ tras el barrido de 5 analistas de hoy:
    minutos (exportar un .noisette). MEJORA: T-A1 marcada bloqueante numero 1
    del plan entero; nada de F-A se intenta sin ella (regla anti-reintento ya
    existia, ahora tiene tarea dueno).
-3. HERRAMIENTAS ZOMBI. [PROGRESO 2026-07-17] vibo_voz ELIMINADO (las APIs de
+3. HERRAMIENTAS ZOMBI. [PROGRESO 2026-07-17] MAK research reemplaza lo que
    MAK reemplazan su routing; contexto_repo.py rescatado a tools/); gota_rd
    estaba RESUELTO hace tiempo (aviso del usuario). Quedan: desktop/ (parked
    con Gemini), compete_engine/tapiz_live_loop sin wiring declarado. Cada
@@ -290,7 +290,7 @@ destraban H2).
 - Director: T-A1/T-A2 (PR #55) fixture .noisette real + builder validado + carga
   real en Chataigne (GUI + headless); T-F4 (PR #57) airdrop-gate sin-PC;
   T-E4 (PR #59) pieza MANIFIESTO #8 cartografia de filtros. MANIFIESTO 5/11.
-- Limpieza 2026-07-17 (PR pendiente): vibo_voz ELIMINADO (APIs MAK lo
+- Limpieza 2026-07-17 (done): MAK research reemplaza APIs gratis (Tavily,
   reemplazan; contexto_repo.py rescatado a tools/); gota_rd ya estaba resuelto.
 
 ## 8. OLA 4 (auto-recargada 2026-07-17, doctrina v2 en accion)
