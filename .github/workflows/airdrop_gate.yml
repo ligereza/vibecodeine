@@ -1,0 +1,88 @@
+# Disparador sin-PC (T-F4 MASTER_PLAN): un release con tag airdrop-* y un ZIP
+# adjunto corre el gate completo (validate + apply + suite) y, si queda verde,
+# abre un PR con los cambios aplicados. El release lo puede crear el Xiaomi
+# via Termux (xio/new/airdrop_push.sh) o cualquier navegador (fallback).
+# SIN Claude API (regla del repo). El ZIP debe traer _airdrop/ en la raiz.
+name: airdrop-gate
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: airdrop-gate
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    if: startsWith(github.event.release.tag_name, 'airdrop-')
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ github.event.release.tag_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar flujo
+        run: python -m pip install -e .
+
+      - name: Descargar ZIP del release
+        run: |
+          mkdir -p /tmp/drop
+          gh release download "$TAG" --pattern "*.zip" --dir /tmp/drop
+          ls /tmp/drop/*.zip
+
+      - name: Guardas de seguridad del ZIP
+        run: |
+          Z=$(ls /tmp/drop/*.zip | head -1)
+          echo "zip=$Z"
+          LIST=$(zipinfo -1 "$Z")
+          echo "$LIST" | head -50
+          # rutas absolutas o traversal
+          if echo "$LIST" | grep -E '^/|\.\.' ; then
+            echo "::error::ZIP con rutas absolutas o traversal"; exit 1; fi
+          # el gate jamas acepta tocar workflows ni el motor de airdrop por este canal
+          if echo "$LIST" | grep -E '_airdrop/\.github/|_airdrop/src/flujo/airdrop\.py'; then
+            echo "::error::ZIP intenta tocar .github/ o airdrop.py -- canal sin-PC no lo permite"; exit 1; fi
+          # debe traer _airdrop/ en la raiz
+          if ! echo "$LIST" | grep -q '^_airdrop/'; then
+            echo "::error::el ZIP no trae _airdrop/ en la raiz (ver docs/AGENT_AIRDROP_PROTOCOL.md)"; exit 1; fi
+
+      - name: Extraer _airdrop/
+        run: |
+          Z=$(ls /tmp/drop/*.zip | head -1)
+          unzip -o "$Z" "_airdrop/*" -d .
+          find _airdrop -type f | head -30
+
+      - name: Gate completo (validate + apply + suite, commit local sin push)
+        run: |
+          git config user.name "airdrop-gate"
+          git config user.email "airdrop-gate@users.noreply.github.com"
+          python scripts/run_airdrop_checks.py --skip-push "airdrop gate: $TAG"
+
+      - name: Abrir PR con los cambios aplicados
+        run: |
+          BR="airdrop/$TAG"
+          git push origin "HEAD:refs/heads/$BR"
+          gh pr create --base main --head "$BR" \
+            --title "airdrop gate: $TAG (verde, aplicado por Actions)" \
+            --body "ZIP del release [$TAG](${{ github.event.release.html_url }}) validado y aplicado por el gate sin-PC (validate_airdrop + run_airdrop_checks + suite completa en este run). Revisar el diff y mergear desde el telefono. Log completo en el run de Actions." \
+            || echo "PR ya existia o sin cambios"
+          echo "## airdrop-gate: VERDE" >> "$GITHUB_STEP_SUMMARY"
+          echo "PR: rama $BR contra main" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Resumen en rojo
+        if: failure()
+        run: |
+          echo "## airdrop-gate: FALLO" >> "$GITHUB_STEP_SUMMARY"
+          echo "Revisar el paso rojo arriba; el ZIP NO se aplico a main." >> "$GITHUB_STEP_SUMMARY"
