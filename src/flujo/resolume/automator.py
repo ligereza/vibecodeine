@@ -434,6 +434,14 @@ def build_chataigne_noisette_experimental(
     The first attempts used a `stateMachine` top-level key, but the user's
     Chataigne 1.10.3 template stores actions under top-level `states`. This
     builder follows that schema so actions appear in the State Machine panel.
+
+    VALIDADO 2026-07-16 contra un .noisette REAL guardado por el Chataigne
+    1.10.3 del usuario (tests/fixtures/chataigne_1103_real.noisette): claves
+    top-level, metaData, forma del modulo OSC, forma y naming de los Actions
+    y condicion LTC son estructuralmente identicos (9 tests en
+    tests/test_noisette_real_fixture.py). Se mantiene el sufijo
+    "experimental" en nombres/archivos SOLO por estabilidad de API; el
+    ultimo paso de confianza total es abrirlo una vez en la GUI real.
     """
     modules = [
         {
