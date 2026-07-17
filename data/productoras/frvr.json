@@ -1,0 +1,20 @@
+{
+  "name": "FRVR",
+  "aliases": [
+    "FRVR"
+  ],
+  "instagram": "",
+  "tipos_fecha": [],
+  "logos": [],
+  "venues": [
+    {
+      "nombre": "Paralelo 89",
+      "preferido": true,
+      "estado": "inferido",
+      "notas": "Del nombre de archivo FRVR.PARALELO89.png; confirmar como sede reiterada."
+    }
+  ],
+  "confirmed": "",
+  "fuente_datos": "C:/RD nombres de archivo (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano",
+  "notes": "Marca de fiesta; venue Paralelo 89 inferido del filename. Fuente: C:/RD ENTREGA."
+}

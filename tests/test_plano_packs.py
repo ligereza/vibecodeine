@@ -11,8 +11,8 @@ from flujo.plano.packs import (
 
 
 def test_packs_precios_y_voluntarios():
-    assert PACKS["INFO"]["precio"] == 100_000
-    assert PACKS["INFO"]["voluntarios"] == 2
+    assert PACKS["INFO"]["precio"] == 250_000
+    assert PACKS["INFO"]["voluntarios"] == 6
     assert PACKS["TESTEO"]["precio"] == 300_000
     assert PACKS["TESTEO"]["voluntarios"] == 6
     assert PACKS["COMPLETO"]["precio"] == 500_000
@@ -54,12 +54,12 @@ def test_normalize_pack_id_alias_legacy():
 def test_get_pack_no_muta_registro():
     pack = get_pack("INFO")
     pack["precio"] = 1
-    assert PACKS["INFO"]["precio"] == 100_000
+    assert PACKS["INFO"]["precio"] == 250_000
 
 
 def test_ev_desde_pack_deriva_flags_operativos():
     ev_info = ev_desde_pack("INFO")
-    assert ev_info["voluntarios"] == 2
+    assert ev_info["voluntarios"] == 6
     assert ev_info["incluye_testeo"] is False
     assert ev_info["masivo"] is False
 
