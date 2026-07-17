@@ -19,6 +19,11 @@ canonicos y se puede reconstruir cuando quieras sin desincronizarse.
 `eventos.pack_sugerido` es una pista DERIVADA (match del numero de voluntarios
 contra los packs), por eso vive en la DB y no en la fuente.
 
+Nota: la tabla `eventos` incluye jsons de `jobs/` que son gitignored (jobs
+reales locales). En un checkout limpio/CI solo aparece el ejemplo TRACKED de
+`projects/plano/ejemplos/`, asi que el contenido de esa tabla depende de la
+maquina -- es una DB de operador, no un dato versionado.
+
 ## Uso
 
 CLI:

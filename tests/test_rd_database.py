@@ -38,7 +38,9 @@ def test_build_crea_las_6_tablas_con_datos(rd_db: Path):
     assert n["inclusiones"] >= 12
     assert n["suplementos"] >= 8
     assert n["productoras"] >= 1       # The Grid
-    assert n["eventos"] >= 2
+    # >=1: eventos incluye fuentes en jobs/ que son gitignored (no estan en un
+    # checkout limpio/CI); el piso garantizado es el ejemplo TRACKED de plano.
+    assert n["eventos"] >= 1
     assert n["meta"] == 1              # disclaimer
 
 
@@ -80,13 +82,23 @@ def test_precios_derivan_de_packs_py_no_hardcode(rd_db: Path):
         assert p["voluntarios"] == PACKS[p["id"]]["voluntarios"]
 
 
-def test_evento_sugiere_pack_por_voluntarios(rd_db: Path):
+def test_pack_por_voluntarios_mapea_o_none():
+    """Logica evento->pack, unitaria (sin depender de eventos gitignored):
+    coincide por numero de voluntarios; None si ninguno matchea, sin crash."""
+    assert db._pack_por_voluntarios(2) == "INFO"
+    assert db._pack_por_voluntarios(6) == "TESTEO"
+    assert db._pack_por_voluntarios(15) == "COMPLETO"
+    assert db._pack_por_voluntarios(7) is None
+    assert db._pack_por_voluntarios(None) is None
+
+
+def test_evento_tracked_trae_pack_sugerido(rd_db: Path):
+    """El ejemplo TRACKED (projects/plano/ejemplos, 7 vol) siempre esta y su
+    pack_sugerido queda None (7 no matchea INFO/TESTEO/COMPLETO)."""
     evs = db.eventos(rd_db)
-    masivo = [e for e in evs if e["voluntarios"] == 15]
-    assert masivo and masivo[0]["pack_sugerido"] == "COMPLETO"
-    # un evento con voluntarios que no matchea ningun pack -> None, no crash
-    sin_match = [e for e in evs if e["voluntarios"] == 7]
-    assert sin_match and sin_match[0]["pack_sugerido"] is None
+    assert evs, "debe haber al menos el evento ejemplo tracked"
+    ej = [e for e in evs if e["voluntarios"] == 7]
+    assert ej and ej[0]["pack_sugerido"] is None
 
 
 def test_productora_trae_aliases_deserializados(rd_db: Path):
