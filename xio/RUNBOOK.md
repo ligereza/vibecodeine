@@ -330,6 +330,23 @@ version` only -- pydantic/jsonschema commands need Rust toolchain, not set up).
 Source: `xio/new/README.md`, `xio/new/run_server.sh`, `xio/new/setup_watchdog.sh`,
 `xio/new/setup_boot.sh`, `xio/new/setup_runcommand.sh`, `xio/new/flujo_ondevice.sh`.
 
+## 7b. Airdrop al repo SIN PC (desde este telefono)
+
+El Xiaomi puede entregar un ZIP de airdrop al repo y disparar el gate de
+GitHub Actions (validate + suite + PR automatico). Setup una vez en Termux:
+```bash
+pkg install gh
+# token fine-grained SOLO repo vibecodeine SOLO contents:write:
+printf '%s' "TU_TOKEN" > ~/.airdrop_token && chmod 600 ~/.airdrop_token
+```
+Disparo:
+```bash
+bash airdrop_push.sh /sdcard/Download/entrega.zip "mensaje corto"
+```
+Verde = PR `airdrop/<tag>` lista para mergear desde el navegador del telefono.
+Detalle del canal: docs/AGENT_AIRDROP_PROTOCOL.md, seccion "Canal sin PC".
+Source: xio/new/airdrop_push.sh + .github/workflows/airdrop_gate.yml
+
 ## 8. Source docs
 
 | Doc | Depth on |

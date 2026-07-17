@@ -138,9 +138,14 @@ sellos de docs viejos; 5 SPEC-stubs sin decidir.
   (asistente_pedido, canva_data, privacidad_datos, resolume_chataigne_automator
   doc-stub, slowmo_blender_ae) reciben fecha limite 2026-08-01; sin alcance
   del usuario para esa fecha -> _archive.
-- T-F4 [sonnet, H2]: disparador sin-PC: workflow GitHub que corre
-  validate_airdrop + suite sobre un ZIP subido como release asset desde el
-  iPhone; documentado en CLAUDE.md.
+- T-F4 [HECHA 2026-07-16 en codigo; ESTRENO pendiente]: disparador sin-PC
+  via XIO (correccion del usuario: el Xiaomi con Termux es mejor gatillo que
+  el iPhone, que queda de fallback web). Motor: .github/workflows/
+  airdrop_gate.yml (release airdrop-* + ZIP -> guardas -> run_airdrop_checks
+  --skip-push -> PR airdrop/<tag>). Gatillo: xio/new/airdrop_push.sh
+  (Termux + gh, token fine-grained en $HOME, nunca /sdcard). Docs en
+  AGENT_AIRDROP_PROTOCOL.md y RUNBOOK 7b. Estreno = primer release real
+  (requiere el token en el telefono, setup del usuario).
 
 ### F-G WEB HUB
 Estado: hub 3 workspaces (RD/Studio/Cultura) generado a context/*.html.
