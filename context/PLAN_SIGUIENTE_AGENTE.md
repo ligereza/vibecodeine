@@ -1,9 +1,11 @@
 # PENDIENTES + FUERTE/DEBIL -- checkpoint limpieza (Cauce, 2026-07-16)
 
-Estado del repo: v0.52.0, suite VERDE 2026-07-16 (compileall OK, 394 tests
-pytest verde con 1 skip, flujo verify OK). main con PRs #45 y #47 mergeados;
-ABIERTOS #48 (MAK grafo+canvas) y #49 (MAPA_GENERATIVO), esperan review del
-usuario. Rama de trabajo: claude/vola-cultura-portfolio-20260712.
+Estado del repo: v0.52.0, suite VERDE 2026-07-16 (450+ tests, compileall OK,
+flujo verify OK). main con PRs #45-#47 y #50-#55 mergeados (checkpoint +
+MASTER_PLAN + olas 1-3 + noisette real). ABIERTOS #48 (MAK grafo+canvas) y
+#49 (MAPA_GENERATIVO), esperan review del usuario -- OTRO Claude trabaja en
+MAK: no tocar cultura/, el worktree mak-research-cultural ni esos PRs.
+Plan largo y doctrina: context/MASTER_PLAN.md.
 
 ## Reglas que NO se negocian (leer antes de tocar nada)
 - NO activar Claude via API en GitHub Actions (decision del usuario, 2026-07-12).
@@ -11,7 +13,9 @@ usuario. Rama de trabajo: claude/vola-cultura-portfolio-20260712.
 - `README.md` del repo es obra terminada del artista: no se le agrega nada.
 - Limites cultura: descriptivo si; nada generativo de sintesis; psicosis no
   perfila personas reales; precursor solo cultura/ley/estetica.
-- `.noisette`: NUNCA re-adivinar el schema (fallo 4 veces). Pedir archivo real.
+- `.noisette`: NUNCA especular sobre el schema. La fuente de verdad es la
+  fixture real (tests/fixtures/chataigne_1103_real*.noisette) y su suite
+  tests/test_noisette_real_fixture.py debe quedar verde en todo cambio.
 - Nunca commitear secretos (`.env`, `config.json`, `*.key`, `cultura/.dev*`).
 - `CLAUDE.md` y `context/*.md`: ASCII-only.
 
@@ -31,17 +35,22 @@ usuario. Rama de trabajo: claude/vola-cultura-portfolio-20260712.
   (PR #48), ~190M de basura/duplicados removidos en este checkpoint.
 
 ## DEBIL (con evidencia)
-- Sellos "verificado v0.48.5" en docs/CLI.md, docs/AGENT_AIRDROP_PROTOCOL.md,
-  docs/SCRIPTS_INVENTORY.md: 3-17 versiones menores atras. NO subir el numero
-  a mano; re-verificar comando por comando contra la version actual (v0.52.0).
+- [RESUELTO 2026-07-16, PR #51] Sellos de docs: CLI.md, AIRDROP_PROTOCOL.md y
+  SCRIPTS_INVENTORY.md re-verificados comando por comando contra v0.52.0.
 - Branch protection en main: AUSENTE (gh api 404, verificado 2026-07-13).
   Accion del usuario en la web de GitHub (require CI verde).
-- resolume automator (`src/flujo/resolume/automator.py`): sigue experimental,
-  sin fixture .noisette real.
+- [RESUELTO 2026-07-16, PR #55 + validacion en vivo] resolume automator:
+  fixture real en tests/fixtures/, 9 tests estructurales verdes, y el
+  .noisette generado desde jobs/test_resolume CARGA en el Chataigne 1.10.3
+  real (titulo de ventana con la sesion, registrado en recentFiles) y corre
+  estable en modo -headless -f <ruta absoluta> (30s sin crash, cierre
+  limpio). Nota honesta: falta solo inspeccion visual humana del State
+  Machine con las 12 acciones (1 min del usuario cuando quiera).
 - Gemini PARKED sin reemplazo cableado: desktop/ y tools/vibo_voz quedan
   documentados pero sin uso; el intake /go (vibo_voz/proyectos/) nunca se uso.
-- projects/tilde: SPEC sin codigo de render (el medidor tilde_meter.py si
-  funciona).
+- [CORREGIDO 2026-07-16, PR #51] projects/tilde: el render YA existia
+  (sobrevivencia.py cumplia el SPEC; status stale). Tests nuevos contra el
+  instrumento real. Sigue pendiente el corpus real (P2.6).
 - xio reboot gap: xio/hotspot_boot_service (AccessibilityService) necesita
   build/install/grant DEL USUARIO en el telefono; sin eso un reboot mata el
   server hasta intervencion manual.
@@ -62,16 +71,15 @@ P1 (mecanico, ya):
    checkpoint).
 P2 (deuda tecnica con criterio):
 4. Branch protection en main (web GitHub; no necesita API ni Claude).
-5. Re-verificar sellos de docs/CLI.md + AGENT_AIRDROP_PROTOCOL.md +
-   SCRIPTS_INVENTORY.md contra el codigo actual (v0.52.0) y recien ahi actualizar.
+5. [HECHO 2026-07-16, PR #51] Sellos de docs re-verificados contra v0.52.0.
 6. Corpus tilde real (desktop/tilde_meter.py) para el render sobrevivencia-01.
 7. Fixture de flyer real en tests/fixtures/ para smoke de productoras.py
    (pedir un .jpg/.png al usuario).
 P3 (piezas nuevas del MANIFIESTO; motor-omega OBLIGATORIO, semilla + Omega11):
-8. Candidatas self-contained: #4 esteganografia (changelog en canal ilegible
-   de los SVG), #8 cartografia de filtros (descriptivo, no cruza bloqueos),
-   #6 cron nocturno con borrado semanal. Bloqueadas: #2 (falta 2do modelo),
-   #5 (hardware ESP32), #7 (orden del usuario: no tocar), #11 (infra training).
+8. [#4 y #6 HECHAS 2026-07-16, PR #51: steg_changelog.py y cron_nocturno/]
+   Queda #8 cartografia de filtros (descriptivo, no cruza bloqueos; SOLO
+   director). Bloqueadas: #2 (falta 2do modelo), #5 (hardware ESP32),
+   #7 (orden del usuario: no tocar), #11 (infra training). MANIFIESTO 4/11.
 9. gota_rd backend: decidir donde vive la data de reactivos antes de servir
    endpoint real.
 10. SPEC-only stubs (tools/asistente_pedido, tools/canva_data,
