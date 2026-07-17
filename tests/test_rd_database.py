@@ -143,3 +143,73 @@ def test_connect_autoconstruye_si_no_existe(tmp_path: Path):
     finally:
         conn.close()
     assert p.exists()
+
+
+# --- Perfil de productora: logos + venues + tipos de fecha (vocab controlado) ---
+
+def test_vocab_normaliza_tipos_y_fallback():
+    from flujo.rd.vocab import normalize_tipo, normalize_tipos, TIPOS_FECHA
+
+    assert normalize_tipo("rave") == "RAVE"
+    assert normalize_tipo("after party") == "AFTER"
+    assert normalize_tipo("underground") == "UNDERGROUND"
+    assert normalize_tipo("cosa-inexistente") == "OTRO"   # nunca se pierde
+    # dedup + orden canonico deterministico
+    got = normalize_tipos(["rave", "festival", "rave", "after"])
+    assert got == [t for t in TIPOS_FECHA if t in {"FESTIVAL", "RAVE", "AFTER"}]
+
+
+def test_venues_canonicos_desde_yaml(rd_db: Path):
+    vs = {v["nombre"]: v for v in db.venues(rd_db)}
+    assert "Espacio Riesco" in vs
+    er = vs["Espacio Riesco"]
+    assert er["preset_reco"] == "mainstream"
+    assert er["voluntarios_min"] == 8
+    assert isinstance(er["requisitos"], dict)   # requirements_defaults deserializado
+
+
+def test_perfil_productora_trae_tipos_logos_venues(rd_db: Path):
+    p = db.productora("creamfields", rd_db)
+    assert p is not None
+    assert set(p["tipos_fecha"]) >= {"FESTIVAL", "HEADLINERS", "RAVE"}
+    assert p["logos"] and p["logos"][0]["knowledge"].endswith("creamfields.yaml")
+    assert p["venue_preferido"] == "Espacio Riesco"
+    # el venue matchea el canonico -> venue_id resuelto
+    ven = p["venues"][0]
+    assert ven["venue_id"] == "espacio_riesco"
+
+
+def test_productora_inexistente_es_none(rd_db: Path):
+    assert db.productora("no-existe", rd_db) is None
+
+
+def test_productoras_por_tipo(rd_db: Path):
+    assert "creamfields" in db.productoras_por_tipo("FESTIVAL", rd_db)
+    assert set(db.productoras_por_tipo("rave", rd_db)) >= {"creamfields", "thegrid"}
+    assert db.productoras_por_tipo("PRIVADO", rd_db) == []   # nadie, sin crash
+
+
+def test_venue_preferido_via_fixture_sintetica(tmp_path: Path):
+    """La maquinaria venue-preferido + enlace canonico, con una productora
+    sintetica (no contamina el store real): 2 venues, el segundo preferido y
+    enlazado al venue canonico Espacio Riesco."""
+    import json as _json
+
+    pdir = tmp_path / "prods"
+    pdir.mkdir()
+    (pdir / "acme.json").write_text(_json.dumps({
+        "name": "Acme Fiestas",
+        "tipos_fecha": ["club", "after"],
+        "venues": [
+            {"nombre": "Galpon X", "preferido": False, "estado": "confirmado"},
+            {"nombre": "Espacio Riesco", "venue_id": "espacio_riesco", "preferido": True, "estado": "confirmado"},
+        ],
+    }, ensure_ascii=False), encoding="utf-8")
+
+    p = tmp_path / "syn.db"
+    db.build_rd_db(p, productoras_dir=pdir)   # venues_dir default -> canonicos reales
+    prof = db.productora("acme", p)
+    assert prof["venue_preferido"] == "Espacio Riesco"
+    assert set(prof["tipos_fecha"]) == {"CLUB", "AFTER"}
+    pref = [v for v in prof["venues"] if v["preferido"]][0]
+    assert pref["venue_id"] == "espacio_riesco"   # enlazado al canonico
