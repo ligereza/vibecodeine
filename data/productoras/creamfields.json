@@ -1,0 +1,20 @@
+{
+  "name": "Creamfields",
+  "aliases": ["CREAMFIELDS", "creamfields.cl", "Creamfields Chile"],
+  "instagram": "creamfieldscl",
+  "tipos_fecha": ["FESTIVAL", "HEADLINERS", "RAVE", "OPEN_AIR"],
+  "logos": [
+    {"id": "creamfields_primary", "knowledge": "knowledge/logos/creamfields.yaml", "estado": "source_needed"}
+  ],
+  "venues": [
+    {
+      "nombre": "Espacio Riesco",
+      "venue_id": "espacio_riesco",
+      "preferido": true,
+      "estado": "ejemplo",
+      "notas": "Referencia de ESCALA mainstream (recinto grande), NO sede confirmada por fecha. Marcado estado=ejemplo: confirmar la sede real de cada edicion antes de usar como dato."
+    }
+  ],
+  "confirmed": "",
+  "notes": "Marca de festival EDM masivo. tipos_fecha son definicionales (festival de cabezas de cartel). El logo canonico existe en knowledge/logos/creamfields.yaml (source_needed). El venue es un ejemplo de escala, no una sede confirmada."
+}
