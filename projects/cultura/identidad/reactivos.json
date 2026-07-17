@@ -1,5 +1,6 @@
 {
   "disclaimer": "Colores de referencia estetica de cartas de reactivos publicas. El test de reactivo es PRESUNTIVO: indica la posible presencia de una familia de sustancias, no la identifica con certeza ni mide pureza. Un color no vuelve segura una sustancia. Esta paleta es diseno, no un kit de analisis.",
+  "fuente": "Cartas publicas de harm-reduction, verificado contra DanceSafe (dancesafe.org/testing-kit-instructions, actualizaciones 2023). PRESUNTIVO: reaccion valida solo los primeros ~40s (excepto Ehrlich/Morris). El color es referencia, no diagnostico.",
   "reacciones": [
     {
       "reactivo": "Marquis",
@@ -30,6 +31,12 @@
       "familia": "DXM",
       "reaccion": "gris a negro",
       "hex": "#3a3a3a"
+    },
+    {
+      "reactivo": "Marquis",
+      "familia": "cocaina",
+      "reaccion": "rosa a durazno (actualizacion DanceSafe 2023)",
+      "hex": "#e0a48c"
     },
     {
       "reactivo": "Marquis",
@@ -88,8 +95,8 @@
     {
       "reactivo": "Simon",
       "familia": "MDA (amina 1a)",
-      "reaccion": "sin cambio",
-      "hex": "#efe9dd"
+      "reaccion": "gris a verde oscuro (actualizacion DanceSafe 2023; Simon distingue MDMA azul de MDA)",
+      "hex": "#3a4a3a"
     },
     {
       "reactivo": "Froehde",
@@ -126,6 +133,12 @@
       "familia": "cocaina",
       "reaccion": "amarillo",
       "hex": "#d4b81a"
+    },
+    {
+      "reactivo": "Liebermann",
+      "familia": "cocaina cortada (levamisol / lidocaina)",
+      "reaccion": "rojo oxido (DanceSafe: alerta de corte comun)",
+      "hex": "#a0442a"
     }
   ],
   "marca": [
