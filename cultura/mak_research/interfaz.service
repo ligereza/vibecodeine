@@ -1,0 +1,20 @@
+[Unit]
+Description=MAK Research - Web Interface (canvas visual)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/mak/research
+ExecStart=/usr/bin/python3 /home/mak/research/interfaz.py
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mak-interfaz
+
+# Environment
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=-/home/mak/n8n-local/research.env
+
+[Install]
+WantedBy=default.target
