@@ -71,16 +71,15 @@ P1 (mecanico, ya):
    checkpoint).
 P2 (deuda tecnica con criterio):
 4. Branch protection en main (web GitHub; no necesita API ni Claude).
-5. Re-verificar sellos de docs/CLI.md + AGENT_AIRDROP_PROTOCOL.md +
-   SCRIPTS_INVENTORY) contra v0.52.0.
+5. [HECHO 2026-07-16, PR #51] Sellos de docs re-verificados contra v0.52.0.
 6. Corpus tilde real (desktop/tilde_meter.py) para el render sobrevivencia-01.
 7. Fixture de flyer real en tests/fixtures/ para smoke de productoras.py
    (pedir un .jpg/.png al usuario).
 P3 (piezas nuevas del MANIFIESTO; motor-omega OBLIGATORIO, semilla + Omega11):
-8. Candidatas self-contained: #4 esteganografia (changelog en canal ilegible
-   de los SVG), #8 cartografia de filtros (descriptivo, no cruza bloqueos),
-   #6 cron nocturno con borrado semanal. Bloqueadas: #2 (falta 2do modelo),
-   #5 (hardware ESP32), #7 (orden del usuario: no tocar), #11 (infra training).
+8. [#4 y #6 HECHAS 2026-07-16, PR #51: steg_changelog.py y cron_nocturno/]
+   Queda #8 cartografia de filtros (descriptivo, no cruza bloqueos; SOLO
+   director). Bloqueadas: #2 (falta 2do modelo), #5 (hardware ESP32),
+   #7 (orden del usuario: no tocar), #11 (infra training). MANIFIESTO 4/11.
 9. gota_rd backend: decidir donde vive la data de reactivos antes de servir
    endpoint real.
 10. SPEC-only stubs (tools/asistente_pedido, tools/canva_data,
