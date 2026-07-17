@@ -1,6 +1,9 @@
 # LAST HANDOFF -- estado para el proximo agente
 
-Version: 0.52.0 | Fecha: 2026-07-17 | Identidad: Cauce | cierre de sesion MAK.
+Version: 0.52.0 | Fecha: 2026-07-17 22:30 | Identidad: Cauce | sesion autonoma: limpieza mecanica.
+Commit 156e8b4: PR #48 stale refs corregidas (PR #48 MERGED 2026-07-17, docs actualizadas),
+9 archivos leftover de cultura/ movidos fuera del repo a C:/IA/_flujo_local/, docs/DIRECTOR_PLAN.md
+archivado (stale v0.49.0). Suite verde (pytest 394+1skip, flujo verify OK v0.52.0).
 Merge con main completado (20 commits ajenos reconciliados), codigo de MAK
 copiado a cultura/mak_research + mak_codex + mak_plataforma + mak_lenguaje,
 suite verde (compileall src/flujo OK, pytest 100% sin fallos, flujo verify OK
