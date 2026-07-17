@@ -188,12 +188,20 @@ tras el barrido de 5 analistas de hoy:
    pipeline RD, portfolio-auto, suite de tests, protocolo airdrop. La
    tentacion de "refactorizar lo sano" queda prohibida por esta linea.
 
-## 6. OLA 1 (desplegada 2026-07-16)
+## 6. OLA 1 (desplegada y CERRADA 2026-07-16)
 
-- S1 = T-F2 (docs re-verificados) [sonnet]
-- S2 = T-E1 (esteganografia #4) [sonnet]
-- S3 = T-E2 (tilde render) [sonnet]
-- S4 = T-E3 (cron nocturno #6) [sonnet]
-Disjuntas entre si; el director verifica, commitea y abre PR de la ola.
+- S1 = T-F2 [HECHA 2026-07-16] docs CLI/SCRIPTS_INVENTORY/AIRDROP re-verificados
+  de verdad (CLI: +creative-director, +voz; INVENTORY estaba en v0.34.6 con ~20
+  scripts muertos como activos y ~24 sin documentar; AIRDROP 0 errores).
+- S2 = T-E1 [HECHA 2026-07-16] tools/svg/steg_changelog.py, carrier <metadata>
+  no-renderizable, Omega11 (a) y (b) verificadas por test; 6 tests. Limite
+  honesto: no probado contra roundtrip de Illustrator ni minifiers.
+- S3 = T-E2 [HECHA 2026-07-16] hallazgo: el render YA existia (sobrevivencia.py
+  cumplia el SPEC; el status del SPEC estaba stale). Se agregaron 5 tests contra
+  el instrumento real y se corrigio el SPEC. Leccion: revisar status de otros
+  SPEC.md antes de asignar "build" (drift plan-vs-realidad otra vez).
+- S4 = T-E3 [HECHA 2026-07-16] tools/cron_nocturno/ (variante loom por noche,
+  borrado ciego semanal por sha256(semana ISO), lapidas.log versionable,
+  README con schtasks/cron); 12 tests.
 T-A1/T-B1/T-C1/T-F1 quedan en manos del usuario (son las 4 llaves que
 destraban H2).

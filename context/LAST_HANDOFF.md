@@ -46,6 +46,16 @@ inventario de ideas, higiene git, salud) y ejecucion central. Resultado:
   comando exacto en PLAN_SIGUIENTE_AGENTE.md P1.3. cultura/xiotech.md se
   queda y se commitea (contenido unico, 0 commits previos).
 
+## OLA 1 MASTER_PLAN (2026-07-16, tras el checkpoint)
+
+context/MASTER_PLAN.md nuevo (doctrina + 7 frentes + reflexion critica). Ola 1
+ejecutada por 4 sonnets y auditada por el director (detalle y lecciones en
+MASTER_PLAN seccion 6): T-F2 docs re-verificados (INVENTORY estaba en v0.34.6),
+T-E1 esteganografia SVG (pieza MANIFIESTO #4), T-E2 tilde render (ya existia;
+tests nuevos + SPEC corregido), T-E3 cron nocturno (pieza #6, borrado ciego).
+Las 4 llaves que destraban H2 son del USUARIO: .noisette real, branch
+protection, PRs #48/#49, AccessibilityService xio.
+
 ## Estado PRs (2026-07-16)
 - ABIERTOS esperando review del usuario: #48 (MAK grafo real + canvas + 6
   modos) y #49 (MAPA_GENERATIVO curador de 19 ideas).
