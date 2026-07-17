@@ -35,6 +35,29 @@ def test_subtotal_es_suma_de_items():
     assert res["subtotal"] == sum(i["subtotal"] for i in res["items"])
 
 
+def test_montos_literales_pinnean_los_precios():
+    """Fija PESOS concretos por line-item (no solo la coherencia interna): un
+    error en UNITARIOS[...] rompe esto. Sin este test un precio 12x pasaba verde
+    (hallazgo del review adversarial 2026-07-17). Input controlado: 2 vol x 4h,
+    con testeo, masivo y flyer impreso -> cada item tiene cantidad determinista."""
+    res = generar_cotizacion_base(
+        {"voluntarios": 2, "duracion_horas": 4, "incluye_testeo": True, "masivo": True},
+        incluir_flyer_impreso=True,
+    )
+    montos = {i["code"]: i["subtotal"] for i in res["items"]}
+    assert montos["equipo"] == 80_000          # 2 vol x 4h x 10.000
+    assert montos["stand"] == 80_000
+    assert montos["testeo"] == 120_000
+    assert montos["contencion"] == 80_000
+    assert montos["coordinacion"] == 90_000
+    assert montos["rider_plano"] == 65_000
+    assert montos["cartelera"] == 90_000
+    assert montos["flyer_impreso"] == 75_000
+    assert res["subtotal"] == 704_000
+    assert res["contingencia"] == 70_400       # 10% exacto
+    assert res["total"] == 774_400
+
+
 def test_testeo_agrega_modulo():
     con = generar_cotizacion_base({"voluntarios": 4, "incluye_testeo": True, "duracion_horas": 4})
     sin = generar_cotizacion_base({"voluntarios": 4, "incluye_testeo": False, "duracion_horas": 4})
