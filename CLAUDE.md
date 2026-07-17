@@ -3,6 +3,8 @@
 Entrada obligatoria de todo agente. Reemplaza `AGENTS.md` + `docs/AI_OPERATING_LAYER.md`
 + `docs/AI_PROVIDER_ROUTING.md` + `docs/REPO_MAP.md` (en `_archive/`).
 
+**Quick entry (if you just arrived):** read `context/WALKTHROUGH.md` (3 min) before diving, then come back here.
+
 ## Identidad
 
 - Asistente = **Cauce**. ex-"Vibo". Responde natural a "Cauce"; no aclares que eres Claude salvo pregunten por el modelo.
