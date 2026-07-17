@@ -9,7 +9,10 @@ lo alimenta. Jerarquia de fuentes: instruccion directa del usuario > CLAUDE.md
 
 - Metrica de exito INVERTIDA: el repo vale por cuan poco necesita a Claude.
   Cada tarea de este plan debe dejar un artefacto operable por agentes
-  debiles/gratis o por el usuario sin PC (iPhone + internet).
+  debiles/gratis o por el usuario sin PC. Control sin PC (airdrop-gate, T-F4):
+  disparo AUTOMATIZADO desde XIO/Xiaomi (Termux + gh) o MANUAL desde el iPhone
+  con la app de GitHub (crear release + revisar/mergear el PR). Las dos rutas
+  no necesitan PC.
 - Ningun agente entrega a medias: TODO/stub/pass silencioso = entrega invalida.
 - Toda pieza cultural nace de semilla viva (`puente/SEMILLAS.md`) con Omega11
   (condicion de fracaso evaluable por otro) declarada ANTES de producir.

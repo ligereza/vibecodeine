@@ -29,7 +29,10 @@ resuelven, no lo toques con Claude.
   Schema y sincronia precisos. No adivinar el .noisette: exigir el archivo real como fixture
   (ver "Continuidad entre sesiones" abajo; ya fallo 4 veces adivinando).
 - Andamiaje que hereda la mano de obra gratis: gate (CI + branch protection), una entrada
-  canonica, y el control sin PC (issues/PR desde el iPhone, disparadores para lo desatendido).
+  canonica, y el control sin PC via airdrop-gate (release airdrop-* -> Actions valida ->
+  PR). Dos formas de disparar, las dos sin PC: el Xiaomi/XIO (Termux + gh, AUTOMATIZADO,
+  airdrop_push.sh) o el iPhone con la app de GitHub (MANUAL: crear el release + revisar y
+  mergear el PR). Ver docs/AGENT_AIRDROP_PROTOCOL.md "Canal sin PC" y xio/RUNBOOK.md 7b.
 - No malgastar Claude en lo mecanico (cotizaciones, boilerplate): eso es de los gratis.
 
 Los docs, el airdrop y los handoffs NO son adorno: son el manual de operacion para la mano
