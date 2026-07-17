@@ -154,3 +154,52 @@ def test_doomed_choice_different_weeks_can_differ():
     filenames = [f"variante_{i:03d}.svg" for i in range(12)]
     indices = {nocturno._choose_doomed_index(filenames, week) for week in range(1, 53)}
     assert len(indices) > 1  # el hash no debe colapsar todas las semanas al mismo indice
+
+
+def test_purge_same_week_second_invocation_is_noop(tmp_path):
+    """BLOCKER de review 2026-07-16: sin guarda de semana ISO, un trigger
+    duplicado (cron doble, corrida manual el mismo domingo) borraba una
+    variante extra por invocacion. La guarda lee lapidas.log: si esta semana
+    ISO ya tiene lapida, purge es no-op."""
+    out_dir = tmp_path / "salidas"
+    lapidas = tmp_path / "lapidas.log"
+    for d in (13, 14, 15, 16):
+        nocturno.generate(out_dir=out_dir, day=date(2026, 7, d))
+    assert len(list(out_dir.glob("variante_*.svg"))) == 4
+
+    today = date(2026, 7, 19)  # domingo, semana ISO 2026-W29
+    first = nocturno.purge(out_dir=out_dir, lapidas_path=lapidas, today=today, weekday=6)
+    assert first is not None
+
+    # Segunda, tercera y cuarta invocacion el MISMO domingo: no-op total.
+    for _ in range(3):
+        again = nocturno.purge(out_dir=out_dir, lapidas_path=lapidas, today=today, weekday=6)
+        assert again is None
+
+    assert len(list(out_dir.glob("variante_*.svg"))) == 3  # solo UNA borrada
+    lines = [l for l in lapidas.read_text(encoding="ascii").splitlines() if l.strip()]
+    assert len(lines) == 1  # solo UNA lapida
+
+
+def test_purge_same_iso_week_other_day_is_noop(tmp_path):
+    """Corrida manual un miercoles (weekday override) seguida del domingo
+    automatico de la MISMA semana ISO: la segunda no borra nada."""
+    out_dir = tmp_path / "salidas"
+    lapidas = tmp_path / "lapidas.log"
+    for d in (13, 14, 15):
+        nocturno.generate(out_dir=out_dir, day=date(2026, 7, d))
+
+    miercoles = date(2026, 7, 15)  # semana ISO 2026-W29
+    domingo = date(2026, 7, 19)    # misma semana ISO (lun-dom)
+    first = nocturno.purge(out_dir=out_dir, lapidas_path=lapidas, today=miercoles, weekday=2)
+    assert first is not None
+
+    second = nocturno.purge(out_dir=out_dir, lapidas_path=lapidas, today=domingo, weekday=6)
+    assert second is None
+    assert len(list(out_dir.glob("variante_*.svg"))) == 2
+
+    # La semana ISO siguiente si vuelve a purgar.
+    otro_domingo = date(2026, 7, 26)
+    third = nocturno.purge(out_dir=out_dir, lapidas_path=lapidas, today=otro_domingo, weekday=6)
+    assert third is not None
+    assert len(list(out_dir.glob("variante_*.svg"))) == 1

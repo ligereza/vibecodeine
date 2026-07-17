@@ -174,6 +174,35 @@ def _week_number(day: date) -> int:
     return day.isocalendar()[1]
 
 
+def _iso_week_key(day: date) -> str:
+    """Clave unica de semana ISO (anio + semana), ej. '2026-W29'."""
+    iso = day.isocalendar()
+    return f"{iso[0]}-W{iso[1]:02d}"
+
+
+def _already_purged_this_week(lapidas_path: Path, today: date) -> bool:
+    """True si lapidas.log ya registra un borrado en la misma semana ISO que
+    `today`. Es la guarda que hace real el 'UNA vez por semana': sin esto, un
+    trigger duplicado de Task Scheduler/cron o una corrida manual el mismo
+    domingo borraria mas de una variante en silencio."""
+    if not lapidas_path.exists():
+        return False
+    week_key = _iso_week_key(today)
+    try:
+        for line in lapidas_path.read_text(encoding="ascii").splitlines():
+            fecha = line.split(" ", 1)[0].strip()
+            if not fecha:
+                continue
+            try:
+                if _iso_week_key(date.fromisoformat(fecha)) == week_key:
+                    return True
+            except ValueError:
+                continue  # linea ajena/corrupta: no bloquea, solo se ignora
+    except OSError:
+        return False
+    return False
+
+
 def _choose_doomed_index(filenames: Sequence[str], week_number: int) -> int:
     """
     Indice del archivo condenado dentro de `filenames` (deben venir YA
@@ -207,7 +236,9 @@ def purge(
     min_variants: int = _MIN_VARIANTS_FOR_PURGE,
 ) -> Optional[Path]:
     """
-    Borrado ciego semanal. No-op si HOY no es `weekday` o si hay menos de
+    Borrado ciego semanal. No-op si HOY no es `weekday`, si lapidas.log ya
+    registra un borrado en esta misma semana ISO (guarda anti-doble-trigger:
+    cron duplicado o corrida manual el mismo domingo), o si hay menos de
     `min_variants` variantes en `out_dir`. Si corre: elige UNA variante por
     hash de la semana ISO (ver _choose_doomed_index), la borra con
     os.remove() -- permanente, sin papelera, sin backup, sin confirm -- y
@@ -217,6 +248,10 @@ def purge(
     today = today or date.today()
     if today.weekday() != weekday:
         return None
+
+    lapidas_path = Path(lapidas_path) if lapidas_path is not None else _resolve_lapidas_path()
+    if _already_purged_this_week(lapidas_path, today):
+        return None  # ya hubo lapida esta semana ISO: UNA por semana es UNA
 
     out_dir = Path(out_dir) if out_dir is not None else _resolve_out_dir()
     variants = _list_variants(out_dir)
@@ -228,7 +263,6 @@ def purge(
 
     os.remove(doomed)  # permanente: Omega11 -- sin papelera, sin backup
 
-    lapidas_path = Path(lapidas_path) if lapidas_path is not None else _resolve_lapidas_path()
     lapidas_path.parent.mkdir(parents=True, exist_ok=True)
     with open(lapidas_path, "a", encoding="ascii", newline="\n") as f:
         f.write(f"{today.isoformat()} {doomed.name}\n")

@@ -194,7 +194,7 @@ tras el barrido de 5 analistas de hoy:
   de verdad (CLI: +creative-director, +voz; INVENTORY estaba en v0.34.6 con ~20
   scripts muertos como activos y ~24 sin documentar; AIRDROP 0 errores).
 - S2 = T-E1 [HECHA 2026-07-16] tools/svg/steg_changelog.py, carrier <metadata>
-  no-renderizable, Omega11 (a) y (b) verificadas por test; 6 tests. Limite
+  no-renderizable, Omega11 (a) y (b) verificadas por test; 7 tests. Limite
   honesto: no probado contra roundtrip de Illustrator ni minifiers.
 - S3 = T-E2 [HECHA 2026-07-16] hallazgo: el render YA existia (sobrevivencia.py
   cumplia el SPEC; el status del SPEC estaba stale). Se agregaron 5 tests contra
@@ -202,6 +202,14 @@ tras el barrido de 5 analistas de hoy:
   SPEC.md antes de asignar "build" (drift plan-vs-realidad otra vez).
 - S4 = T-E3 [HECHA 2026-07-16] tools/cron_nocturno/ (variante loom por noche,
   borrado ciego semanal por sha256(semana ISO), lapidas.log versionable,
-  README con schtasks/cron); 12 tests.
+  README con schtasks/cron); 13 tests.
+- REVIEW ADVERSARIAL (sonnet, 2026-07-16): veredicto MERGE_WITH_FIXES.
+  BLOCKER real encontrado y corregido: purge() sin guarda de semana -- un
+  trigger duplicado borraba una variante extra por invocacion; fix = guarda
+  de semana ISO leida de lapidas.log (el registro ya versionado) + 2 tests
+  de regresion. MINOR corregido: embed() ahora barre marcadores duplicados
+  (tampering) antes de insertar + 1 test. Leccion: la Omega11 "una por
+  semana" era una afirmacion, no una propiedad -- el review adversarial es
+  parte del gate, no adorno.
 T-A1/T-B1/T-C1/T-F1 quedan en manos del usuario (son las 4 llaves que
 destraban H2).

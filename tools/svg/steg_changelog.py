@@ -120,14 +120,14 @@ def embed(svg_path: str | Path, out_path: str | Path, payload: dict[str, Any] | 
     data = payload if payload is not None else _build_payload()
     block = f'<metadata id="{MARKER_ID}"><![CDATA[{_encode_payload(data)}]]></metadata>'
 
-    if _BLOCK_RE.search(src):
-        out = _BLOCK_RE.sub(block, src, count=1)
-    else:
-        m = _SVG_OPEN_RE.search(src)
-        if not m:
-            raise ValueError(f"{svg_path}: no se encontro un tag <svg ...> de apertura")
-        insert_at = m.end()
-        out = src[:insert_at] + block + src[insert_at:]
+    # Barre TODOS los marcadores propios previos (incluso duplicados por
+    # tampering/merge) y luego inserta uno solo en la posicion canonica.
+    src = _BLOCK_RE.sub("", src)
+    m = _SVG_OPEN_RE.search(src)
+    if not m:
+        raise ValueError(f"{svg_path}: no se encontro un tag <svg ...> de apertura")
+    insert_at = m.end()
+    out = src[:insert_at] + block + src[insert_at:]
 
     Path(out_path).write_text(out, encoding="utf-8")
     return data

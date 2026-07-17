@@ -149,3 +149,26 @@ def test_embed_cli_roundtrip(tmp_path: Path) -> None:
     )
     assert r_extract.returncode == 0, r_extract.stderr
     assert get_version() in r_extract.stdout
+
+
+def test_embed_cleans_duplicate_tampered_markers(tmp_path: Path) -> None:
+    """MINOR de review 2026-07-16: un archivo con DOS marcadores propios
+    (tampering/merge manual) debe salir de embed() con exactamente UNO."""
+    src = tmp_path / "tampered.svg"
+    embedded = tmp_path / "step1.svg"
+    _write_fixture(tmp_path)
+    steg_changelog.embed(tmp_path / "fixture.svg", embedded)
+
+    text = embedded.read_text(encoding="utf-8")
+    m = steg_changelog._BLOCK_RE.search(text)
+    assert m is not None
+    # Duplica el bloque a mano al final del <svg> (tampering simulado).
+    tampered = text.replace("</svg>", m.group(0) + "</svg>")
+    src.write_text(tampered, encoding="utf-8")
+    assert len(steg_changelog._BLOCK_RE.findall(tampered)) == 2
+
+    out = tmp_path / "clean.svg"
+    steg_changelog.embed(src, out)
+    final = out.read_text(encoding="utf-8")
+    assert len(steg_changelog._BLOCK_RE.findall(final)) == 1
+    assert steg_changelog.extract(out) is not None
