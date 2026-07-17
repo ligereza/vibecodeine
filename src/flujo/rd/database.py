@@ -34,6 +34,8 @@ _SUPLEMENTOS_JSON = (
     / "01_contenido" / "contenido_suplementos_rd.json"
 )
 _PRODUCTORAS_DIR = _REPO / "data" / "productoras"
+_VENUES_DIR = _REPO / "knowledge" / "venues"     # *.yaml canonicos
+_LOGOS_DIR = _REPO / "knowledge" / "logos"       # *.yaml canonicos
 # Directorios donde viven jsons con forma de evento (voluntarios/asistentes/...)
 _EVENTOS_GLOBS = (
     (_REPO / "jobs", "**/evento*.json"),
@@ -91,6 +93,42 @@ CREATE TABLE productoras (
     confirmado TEXT,                -- nota de confirmacion humana
     notas     TEXT
 );
+CREATE TABLE venues (
+    id            TEXT PRIMARY KEY,   -- id canonico (espacio_riesco)
+    nombre        TEXT NOT NULL,
+    tipo          TEXT,               -- convention_center, club, ...
+    escala        TEXT,               -- scale_default (mainstream/base/under)
+    capacidad     TEXT,               -- capacity_bucket
+    preset_reco   TEXT,               -- recommended_preset
+    voluntarios_min INTEGER,
+    requisitos    TEXT,               -- JSON: requirements_defaults
+    notas         TEXT                -- JSON: notes[]
+);
+CREATE TABLE productora_tipos (
+    id             INTEGER PRIMARY KEY,
+    productora_slug TEXT NOT NULL REFERENCES productoras(slug),
+    tipo           TEXT NOT NULL       -- vocab.TIPOS_FECHA
+);
+CREATE INDEX idx_prodtipos_slug ON productora_tipos(productora_slug);
+CREATE INDEX idx_prodtipos_tipo ON productora_tipos(tipo);
+CREATE TABLE productora_venues (
+    id             INTEGER PRIMARY KEY,
+    productora_slug TEXT NOT NULL REFERENCES productoras(slug),
+    venue_nombre   TEXT NOT NULL,      -- nombre libre; venue_id si matchea uno canonico
+    venue_id       TEXT REFERENCES venues(id),
+    preferido      INTEGER NOT NULL,   -- 0/1: el reiterado/preferido
+    estado         TEXT,               -- confirmado | inferido | ejemplo
+    notas          TEXT
+);
+CREATE INDEX idx_prodvenues_slug ON productora_venues(productora_slug);
+CREATE TABLE productora_logos (
+    id             INTEGER PRIMARY KEY,
+    productora_slug TEXT NOT NULL REFERENCES productoras(slug),
+    logo_id        TEXT,               -- id del logo (thegrid_primary)
+    knowledge      TEXT,               -- ruta al yaml de knowledge/logos
+    estado         TEXT                -- status (source_needed, listo, ...)
+);
+CREATE INDEX idx_prodlogos_slug ON productora_logos(productora_slug);
 CREATE TABLE eventos (
     id                   INTEGER PRIMARY KEY,
     nombre               TEXT NOT NULL,
@@ -105,6 +143,20 @@ CREATE TABLE eventos (
     notas                TEXT
 );
 """
+
+
+def _load_yaml(path: Path) -> dict[str, Any] | None:
+    """Lee un yaml canonico si PyYAML esta disponible. Sin yaml, devuelve None
+    (la tabla venues queda vacia; el resto de la DB no se afecta)."""
+    try:
+        import yaml  # type: ignore
+    except ImportError:
+        return None
+    try:
+        data = yaml.safe_load(path.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else None
+    except (OSError, ValueError):
+        return None
 
 
 def _astext(value: Any) -> str | None:
@@ -162,10 +214,22 @@ def _iter_evento_sources() -> list[tuple[str, dict[str, Any]]]:
     return encontrados
 
 
-def build_rd_db(db_path: str | Path | None = None) -> Path:
+def build_rd_db(
+    db_path: str | Path | None = None,
+    *,
+    productoras_dir: str | Path | None = None,
+    venues_dir: str | Path | None = None,
+) -> Path:
     """(Re)construye la DB RD desde las fuentes canonicas. Idempotente:
-    borra el archivo previo y lo reescribe entero. Devuelve la ruta."""
+    borra el archivo previo y lo reescribe entero. Devuelve la ruta.
+
+    productoras_dir/venues_dir permiten apuntar a directorios de prueba (los
+    tests cargan una productora sintetica con venue preferido sin tocar el
+    store real). Por defecto usan los canonicos del repo.
+    """
     path = Path(db_path) if db_path is not None else DEFAULT_DB_PATH
+    prod_dir = Path(productoras_dir) if productoras_dir is not None else _PRODUCTORAS_DIR
+    ven_dir = Path(venues_dir) if venues_dir is not None else _VENUES_DIR
     path.parent.mkdir(parents=True, exist_ok=True)
     if path.exists():
         path.unlink()
@@ -219,25 +283,86 @@ def build_rd_db(db_path: str | Path | None = None) -> Path:
                 ),
             )
 
-        # productoras conocidas (store de promotoras)
-        if _PRODUCTORAS_DIR.exists():
-            for pf in sorted(_PRODUCTORAS_DIR.glob("*.json")):
+        # venues canonicos (knowledge/venues/*.yaml)
+        venue_ids: set[str] = set()
+        if ven_dir.exists():
+            for vf in sorted(ven_dir.glob("*.yaml")):
+                v = _load_yaml(vf)
+                if not v:
+                    continue
+                vid = str(v.get("id", vf.stem))
+                venue_ids.add(vid)
+                rs = v.get("recommended_service", {}) or {}
+                conn.execute(
+                    "INSERT OR REPLACE INTO venues(id, nombre, tipo, escala, capacidad, "
+                    "preset_reco, voluntarios_min, requisitos, notas) VALUES (?,?,?,?,?,?,?,?,?)",
+                    (
+                        vid,
+                        str(v.get("name", vf.stem)),
+                        v.get("type"),
+                        v.get("scale_default"),
+                        v.get("capacity_bucket"),
+                        v.get("recommended_preset") or rs.get("default_preset"),
+                        rs.get("volunteers_min") or (v.get("requirements_defaults", {}) or {}).get("volunteers_min"),
+                        json.dumps(v.get("requirements_defaults", {}), ensure_ascii=False),
+                        json.dumps(v.get("notes", []), ensure_ascii=False),
+                    ),
+                )
+
+        # productoras conocidas (store) + tablas hijas: tipos, venues, logos
+        tipo_id = vnk_id = logo_id = 0
+        if prod_dir.exists():
+            for pf in sorted(prod_dir.glob("*.json")):
                 try:
                     d = json.loads(pf.read_text(encoding="utf-8"))
                 except (OSError, ValueError):
                     continue
+                slug = pf.stem
                 conn.execute(
                     "INSERT OR REPLACE INTO productoras(slug, nombre, instagram, aliases, confirmado, notas) "
                     "VALUES (?,?,?,?,?,?)",
                     (
-                        pf.stem,
-                        str(d.get("name", pf.stem)),
+                        slug,
+                        str(d.get("name", slug)),
                         d.get("instagram"),
                         json.dumps(d.get("aliases", []), ensure_ascii=False),
                         d.get("confirmed"),
                         d.get("notes"),
                     ),
                 )
+                # tipos de fecha (vocabulario controlado)
+                from .vocab import normalize_tipos
+
+                for tipo in normalize_tipos(d.get("tipos_fecha")):
+                    tipo_id += 1
+                    conn.execute(
+                        "INSERT INTO productora_tipos(id, productora_slug, tipo) VALUES (?,?,?)",
+                        (tipo_id, slug, tipo),
+                    )
+                # venues (anotados; preferido = el reiterado); venue_id si matchea uno canonico
+                for v in d.get("venues", []) or []:
+                    vnk_id += 1
+                    vid = v.get("venue_id")
+                    conn.execute(
+                        "INSERT INTO productora_venues(id, productora_slug, venue_nombre, venue_id, "
+                        "preferido, estado, notas) VALUES (?,?,?,?,?,?,?)",
+                        (
+                            vnk_id, slug,
+                            str(v.get("nombre", vid or "")),
+                            vid if vid in venue_ids else None,
+                            1 if v.get("preferido") else 0,
+                            v.get("estado", "confirmado"),
+                            v.get("notas"),
+                        ),
+                    )
+                # logos (enlace a knowledge/logos)
+                for lg in d.get("logos", []) or []:
+                    logo_id += 1
+                    conn.execute(
+                        "INSERT INTO productora_logos(id, productora_slug, logo_id, knowledge, estado) "
+                        "VALUES (?,?,?,?,?)",
+                        (logo_id, slug, lg.get("id"), lg.get("knowledge"), lg.get("estado")),
+                    )
 
         # eventos (jsons con forma de evento) + pack sugerido por voluntarios
         for i, (rel, d) in enumerate(_iter_evento_sources(), start=1):
@@ -356,6 +481,68 @@ def eventos(db_path: str | Path | None = None) -> list[dict[str, Any]]:
     conn = connect(db_path)
     try:
         return [dict(r) for r in conn.execute("SELECT * FROM eventos ORDER BY id").fetchall()]
+    finally:
+        conn.close()
+
+
+def venues(db_path: str | Path | None = None) -> list[dict[str, Any]]:
+    """Venues canonicos (requisitos y notas deserializados)."""
+    conn = connect(db_path)
+    try:
+        out: list[dict[str, Any]] = []
+        for v in conn.execute("SELECT * FROM venues ORDER BY nombre").fetchall():
+            d = dict(v)
+            d["requisitos"] = json.loads(d["requisitos"]) if d.get("requisitos") else {}
+            d["notas"] = json.loads(d["notas"]) if d.get("notas") else []
+            out.append(d)
+        return out
+    finally:
+        conn.close()
+
+
+def productora(slug: str, db_path: str | Path | None = None) -> dict[str, Any] | None:
+    """Perfil completo de una productora: datos base + tipos de fecha + venues
+    (con el preferido marcado) + logos. None si no existe."""
+    conn = connect(db_path)
+    try:
+        row = conn.execute("SELECT * FROM productoras WHERE slug = ?", (slug,)).fetchone()
+        if row is None:
+            return None
+        d = dict(row)
+        d["aliases"] = json.loads(d["aliases"]) if d.get("aliases") else []
+        d["tipos_fecha"] = [
+            r["tipo"] for r in conn.execute(
+                "SELECT tipo FROM productora_tipos WHERE productora_slug = ?", (slug,)
+            ).fetchall()
+        ]
+        d["venues"] = [
+            dict(r) for r in conn.execute(
+                "SELECT venue_nombre, venue_id, preferido, estado, notas FROM productora_venues "
+                "WHERE productora_slug = ? ORDER BY preferido DESC, venue_nombre", (slug,)
+            ).fetchall()
+        ]
+        d["venue_preferido"] = next((v["venue_nombre"] for v in d["venues"] if v["preferido"]), None)
+        d["logos"] = [
+            dict(r) for r in conn.execute(
+                "SELECT logo_id, knowledge, estado FROM productora_logos WHERE productora_slug = ?", (slug,)
+            ).fetchall()
+        ]
+        return d
+    finally:
+        conn.close()
+
+
+def productoras_por_tipo(tipo: str, db_path: str | Path | None = None) -> list[str]:
+    """Slugs de productoras que hacen fechas de un tipo dado (vocab canonico)."""
+    from .vocab import normalize_tipo
+
+    conn = connect(db_path)
+    try:
+        rows = conn.execute(
+            "SELECT DISTINCT productora_slug FROM productora_tipos WHERE tipo = ? ORDER BY productora_slug",
+            (normalize_tipo(tipo),),
+        ).fetchall()
+        return [r["productora_slug"] for r in rows]
     finally:
         conn.close()
 

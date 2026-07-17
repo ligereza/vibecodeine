@@ -184,6 +184,57 @@ def rd_eventos():
         console.print(f"  {e['nombre']}  |  {e['voluntarios']} vol -> {pack}  |  {e['fuente']}")
 
 
+@rd_app.command("productora")
+def rd_productora(slug: str = typer.Argument(..., help="Slug de la productora, ej. thegrid")):
+    """Perfil completo: instagram, aliases, tipos de fecha, venues (preferido
+    marcado) y logos."""
+    from .rd import productora as _productora
+
+    p = _productora(slug)
+    if p is None:
+        _warn(f"No hay productora '{slug}' (ver data/productoras/)")
+        raise typer.Exit(1)
+    _section(f"flujo · rd · productora · {p['nombre']}")
+    console.print(f"  Instagram: {p.get('instagram') or '-'}")
+    console.print(f"  Aliases: {', '.join(p['aliases']) or '-'}")
+    console.print(f"  Tipos de fecha: {', '.join(p['tipos_fecha']) or '-'}")
+    if p["venues"]:
+        console.print("  Venues:")
+        for v in p["venues"]:
+            estrella = "* " if v["preferido"] else "  "
+            canon = " (canonico)" if v["venue_id"] else ""
+            console.print(f"    {estrella}{v['venue_nombre']}{canon} [{v['estado']}]", markup=False)
+    else:
+        console.print("  Venues: (sin confirmar)")
+    for lg in p["logos"]:
+        console.print(f"  Logo: {lg['logo_id']} ({lg['estado']}) -> {lg['knowledge']}")
+
+
+@rd_app.command("venues")
+def rd_venues():
+    """Venues canonicos con preset recomendado y voluntarios minimos."""
+    from .rd import venues as _venues
+
+    _section("flujo · rd · venues")
+    for v in _venues():
+        vmin = v.get("voluntarios_min") or "?"
+        console.print(f"  {v['nombre']:<24} {v.get('tipo') or '-':<20} preset={v.get('preset_reco') or '-'}  vol_min={vmin}")
+
+
+@rd_app.command("por-tipo")
+def rd_por_tipo(tipo: str = typer.Argument(..., help="Tipo de fecha, ej. RAVE, FESTIVAL, AFTER")):
+    """Que productoras hacen fechas de un tipo dado."""
+    from .rd import productoras_por_tipo
+
+    slugs = productoras_por_tipo(tipo)
+    _section(f"flujo · rd · por-tipo · {tipo.upper()}")
+    if not slugs:
+        _warn(f"Ninguna productora registrada con tipo '{tipo}'")
+        return
+    for s in slugs:
+        console.print(f"  {s}")
+
+
 @rd_app.command("lookup")
 def rd_lookup(familia: str = typer.Argument(..., help="Familia de sustancia, ej. MDMA")):
     """Consulta de operador en terreno: reactivos que marcan la familia + packs

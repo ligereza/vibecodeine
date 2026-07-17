@@ -2,6 +2,11 @@
   "name": "The Grid",
   "aliases": ["GRID", "thegrid.club", "The Grid Club"],
   "instagram": "thegrid.club",
+  "tipos_fecha": ["HEADLINERS", "RAVE"],
+  "logos": [
+    {"id": "thegrid_primary", "knowledge": "knowledge/logos/thegrid.yaml", "estado": "source_needed"}
+  ],
+  "venues": [],
   "confirmed": "2026-07-10 flyer real KI/KI (extraccion Gemini devolvio 'GRID'; confirmado por humano en sesion)",
-  "notes": "Primera entrada del store. El match es igualdad exacta case-insensitive contra name+aliases: mantener aqui la forma LITERAL que extrae Gemini del flyer (GRID), no solo el nombre formal."
+  "notes": "Primera entrada del store. El match es igualdad exacta case-insensitive contra name+aliases: mantener aqui la forma LITERAL que extrae Gemini del flyer (GRID), no solo el nombre formal. tipos_fecha HEADLINERS/RAVE inferidos del booking KI/KI (cabeza de cartel electronica); confirmar con mas fechas. venues sin confirmar todavia."
 }

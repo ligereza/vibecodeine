@@ -17,10 +17,13 @@ from .database import (
     eventos,
     lookup_familia,
     packs,
+    productora,
     productoras,
+    productoras_por_tipo,
     reactivos_por_familia,
     reactivos_por_reactivo,
     suplementos,
+    venues,
 )
 
 __all__ = [
@@ -31,8 +34,11 @@ __all__ = [
     "eventos",
     "lookup_familia",
     "packs",
+    "productora",
     "productoras",
+    "productoras_por_tipo",
     "reactivos_por_familia",
     "reactivos_por_reactivo",
     "suplementos",
+    "venues",
 ]
