@@ -180,3 +180,4 @@ tools/sala3d/.cache/
 backup_before_merge_*/
 backup_manifiestos_*/
 *.original.md
+xio/new-plugins/hub/hub.html
