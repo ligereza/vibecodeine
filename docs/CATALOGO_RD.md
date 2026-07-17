@@ -1,0 +1,138 @@
+# Catalogo RD -- Packs y Cotizaciones
+
+Version flujo: 0.52.0
+
+## Fuente de verdad
+
+- Fuente canonica de precios: `web/src/rdBrand.ts` (TypeScript, hub web).
+- Fuente unica en Python: `src/flujo/plano/packs.py` (espejo declarado del TypeScript; `costs.py` y `engine.py` consumen SOLO este modulo, nunca un precio propio).
+- `precio` es el unico valor absoluto editable por pack; cualquier monto de desglose se recalcula siempre como `precio*pct/100` (nunca se guarda aparte).
+
+## Packs
+
+| Pack | Nombre | Precio | Voluntarios | Stands | m2 | Desglose por proporciones |
+|---|---|---|---|---|---|---|
+| INFO | Testeo o Informativo (a elección) | $100,000 | 2 | 1 | 9 | no (precio plano) |
+| TESTEO | Testeo y Informativo (ambos) | $300,000 | 6 | 2 | 18 | no (precio plano) |
+| COMPLETO | Servicio Completo (masivo) | $500,000 | 15 | 2 | 27 | si |
+
+### Pack 1 · Testeo o Informativo -- Testeo o Informativo (a elección)
+
+2 voluntarios · 1 stand 3×3 (9 m²)
+
+Precio: $100,000 (valor absoluto, unico editable en packs.py)
+
+Incluye:
+- Un stand, un servicio a elección: testeo o informativo
+- Material educativo e insumos preventivos
+- Protectores auditivos, abanicos, suplementos
+- Tests de un solo uso
+
+Sin desglose por proporciones: precio plano, ver inclusiones arriba.
+
+### Pack 2 · Testeo y Informativo -- Testeo y Informativo (ambos)
+
+6 voluntarios · 2 stands 3×3 (18 m²)
+
+Precio: $300,000 (valor absoluto, unico editable en packs.py)
+
+Incluye:
+- Stand informativo y stand de testeo, ambos atendidos
+- Módulo de testeo de sustancias
+- Análisis colorimétrico gratuito
+- Reactivos incluidos
+
+Sin desglose por proporciones: precio plano, ver inclusiones arriba.
+
+### Pack 3 · Servicio Completo -- Servicio Completo (masivo)
+
+15 voluntarios · 2 stands + zona (~27 m²)
+
+Precio: $500,000 (valor absoluto, unico editable en packs.py)
+
+Incluye:
+- Informativo + testeo
+- Intervención y contención psicológica
+- Zona de descanso baja estimulación
+- Coordinación operativa en terreno
+
+Desglose (proporcion del precio, derivado siempre como precio*pct/100):
+
+| Item | % | Monto |
+|---|---|---|
+| Equipo en terreno | 60% | $300,000 |
+| Módulo de testeo | 14% | $70,000 |
+| Stand informativo | 10% | $50,000 |
+| Intervención y contención | 9% | $45,000 |
+| Coordinación operativa | 7% | $35,000 |
+
+Suma del desglose: $500,000 (debe igualar el precio del pack).
+
+## Cotizaciones (dual-audiencia)
+
+El comando `py -m flujo cotizaciones <evento.json> --para productora|interno` genera 2 versiones desde el mismo costeo (`flujo.plano.costs.resumen_costos`, derivado del pack del evento):
+
+- `productora`: version externa branded/infografica (para productoras).
+- `interno` (tambien acepta `empresa`): desglose detallado interno, para ONG/empresa/trabajador.
+
+Nota sobre el motor real: engine.py funciono: los ejemplos abajo son la salida real de generar_cotizacion().
+
+### Ejemplo -- audiencia productora
+
+```
+COTIZACIÓN — Festival Ejemplo 2026 | Reduciendo Daño
+
+Estilo: flujo (ink=#1f2a24 accent=#2d5a4a paper=#f8f1e3)
+Formato: infografía lista para Illustrator/Photoshop (ver catálogo)
+
+Demo de layout_mode grid_2x + reglas de rider. Cambia a 'row' para el layout clásico en fila.
+
+COTIZACIÓN — Festival Ejemplo 2026
+========================================
+
+Pack 2 · Testeo y Informativo:                         $300,000
+Voluntarios: 6 · Stands: 2 · 18 m²
+
+Inclusiones:
+  • Stand informativo y stand de testeo, ambos atendidos
+  • Módulo de testeo de sustancias
+  • Análisis colorimétrico gratuito
+  • Reactivos incluidos
+
+TOTAL: $300,000
+
+Nota: precio plano por pack de servicio RD (no por hora/voluntario).
+
+Entrega lista. Usa flujo para consistencia de marca.
+```
+
+### Ejemplo -- audiencia interno (ONG/empresa)
+
+```
+COTIZACIÓN INTERNA — Festival Ejemplo 2026
+Para: ONG / trabajador / empresa
+
+COTIZACIÓN — Festival Ejemplo 2026
+========================================
+
+Pack 2 · Testeo y Informativo:                         $300,000
+Voluntarios: 6 · Stands: 2 · 18 m²
+
+Inclusiones:
+  • Stand informativo y stand de testeo, ambos atendidos
+  • Módulo de testeo de sustancias
+  • Análisis colorimétrico gratuito
+  • Reactivos incluidos
+
+TOTAL: $300,000
+
+Nota: precio plano por pack de servicio RD (no por hora/voluntario).
+
+Notas internas: ajustar precios reales.
+Referencia flujo para tono en comunicaciones.
+```
+
+## Regenerar
+
+Este archivo es generado por `scripts/generar_catalogo_rd.py` -- NO editar a mano, regenerar con: `py scripts/generar_catalogo_rd.py`
+
