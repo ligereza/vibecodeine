@@ -139,8 +139,10 @@ dispara:
 - Desde el Xiaomi (xio, Termux): `bash xio/new/airdrop_push.sh entrega.zip "mensaje"`
   (requiere `pkg install gh` + token fine-grained solo-este-repo en
   `$HOME/.airdrop_token`, chmod 600; NUNCA en /sdcard ni en el env del server).
-- Desde cualquier navegador (fallback): crear un Release con tag `airdrop-...`
-  y adjuntar el ZIP.
+- Desde el iPhone con la app de GitHub (fallback manual, sin PC): crear un
+  Release con tag `airdrop-...` y adjuntar el ZIP; la misma app sirve luego
+  para revisar el diff y mergear el PR que abre el gate. Cualquier navegador
+  tambien vale.
 
 El workflow: descarga el ZIP del release, aplica guardas (sin rutas absolutas
 ni traversal; rechaza ZIPs que toquen `.github/` o `src/flujo/airdrop.py` --
