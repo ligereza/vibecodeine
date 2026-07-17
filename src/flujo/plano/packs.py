@@ -6,6 +6,13 @@ dejen de depender del viejo modelo de presets por tamano de evento
 (under/base/mainstream, src/flujo/eventos/presets.py) al armar plano/rider/
 costos comerciales de RD.
 
+RECONCILIADO 2026-07-17 con la tarifa real del area (C:/RD/packs_servicios_rd
+.json, "jefe area eventos 2026-07-02"): el Pack 1 estaba stale como "Testeo o
+Informativo (a eleccion)" 2 voluntarios $100.000; el real es "Informativo"
+6 voluntarios $250.000. Packs 2 y 3 ya coincidian. rdBrand.ts actualizado en
+paralelo. Nota: INFO y TESTEO comparten 6 voluntarios, asi que el conteo de
+voluntarios ya no distingue Pack 1 de Pack 2 (lo hace incluye_testeo).
+
 `precio` es el UNICO valor absoluto editable por pack. El monto de cada
 proporcion del desglose (solo Pack COMPLETO) se deriva SIEMPRE como
 precio*pct/100 en vez de guardarse como numero aparte, para que no quede
@@ -22,18 +29,18 @@ PackId = str  # "INFO" | "TESTEO" | "COMPLETO"
 PACKS: Dict[str, Dict[str, Any]] = {
     "INFO": {
         "id": "INFO",
-        "nombre": "Testeo o Informativo (a elección)",
-        "label": "Pack 1 · Testeo o Informativo",
-        "desc": "2 voluntarios · 1 stand 3×3 (9 m²)",
-        "precio": 100_000,
-        "voluntarios": 2,
+        "nombre": "Informativo",
+        "label": "Pack 1 · Informativo",
+        "desc": "6 voluntarios · 1 stand 3×3 (9 m²)",
+        "precio": 250_000,
+        "voluntarios": 6,
         "m2": 9,
         "stands": 1,
         "inclusiones": [
-            "Un stand, un servicio a elección: testeo o informativo",
-            "Material educativo e insumos preventivos",
+            "Stand informativo atendido",
+            "Material educativo + insumos preventivos",
             "Protectores auditivos, abanicos, suplementos",
-            "Tests de un solo uso",
+            "Tests de un solo uso (opcional)",
         ],
     },
     "TESTEO": {

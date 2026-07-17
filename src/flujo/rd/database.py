@@ -179,14 +179,15 @@ def _load_packs() -> dict[str, dict[str, Any]]:
 
 def _pack_por_voluntarios(voluntarios: int | None) -> str | None:
     """Sugiere el pack cuyo numero de voluntarios coincide con el del evento.
-    Es una pista derivada, no un dato del evento (por eso vive en la DB, no en
-    la fuente): INFO=2, TESTEO=6, COMPLETO=15."""
+    Pista derivada, no un dato del evento. Tras reconciliar precios con la
+    fuente real (jefe area eventos 2026-07-02), INFO y TESTEO comparten 6
+    voluntarios: para 6 el conteo NO distingue (lo hace incluye_testeo), asi
+    que si mas de un pack matchea se devuelve None (ambiguo) en vez de adivinar.
+    COMPLETO=15 sigue siendo unico."""
     if voluntarios is None:
         return None
-    for pid, p in _load_packs().items():
-        if int(p["voluntarios"]) == int(voluntarios):
-            return pid
-    return None
+    matches = [pid for pid, p in _load_packs().items() if int(p["voluntarios"]) == int(voluntarios)]
+    return matches[0] if len(matches) == 1 else None
 
 
 def _iter_evento_sources() -> list[tuple[str, dict[str, Any]]]:

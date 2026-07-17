@@ -67,8 +67,8 @@ def test_reactivos_por_reactivo(rd_db: Path):
 
 def test_pack_precio_e_inclusiones(rd_db: Path):
     ps = {p["id"]: p for p in db.packs(rd_db)}
+    assert ps["INFO"]["precio"] == 250_000       # reconciliado con fuente real 2026-07-02
     assert ps["TESTEO"]["precio"] == 300_000
-    assert ps["INFO"]["precio"] == 100_000
     assert ps["COMPLETO"]["precio"] == 500_000
     assert len(ps["COMPLETO"]["inclusiones"]) >= 1
 
@@ -83,11 +83,12 @@ def test_precios_derivan_de_packs_py_no_hardcode(rd_db: Path):
 
 
 def test_pack_por_voluntarios_mapea_o_none():
-    """Logica evento->pack, unitaria (sin depender de eventos gitignored):
-    coincide por numero de voluntarios; None si ninguno matchea, sin crash."""
-    assert db._pack_por_voluntarios(2) == "INFO"
-    assert db._pack_por_voluntarios(6) == "TESTEO"
+    """Logica evento->pack, unitaria (sin depender de eventos gitignored).
+    Tras reconciliar precios (2026-07-02), INFO y TESTEO comparten 6 vol: el
+    conteo no distingue -> None (ambiguo). COMPLETO=15 sigue unico."""
     assert db._pack_por_voluntarios(15) == "COMPLETO"
+    assert db._pack_por_voluntarios(6) is None    # ambiguo INFO/TESTEO
+    assert db._pack_por_voluntarios(2) is None    # ningun pack tiene 2 ya
     assert db._pack_por_voluntarios(7) is None
     assert db._pack_por_voluntarios(None) is None
 

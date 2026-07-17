@@ -100,8 +100,8 @@ def test_costos_pack_completo():
 def test_costos_pack_info_sin_desglose():
     c = calcular_costos({"pack": "INFO"})
     assert c["pack"] == "INFO"
-    assert c["precio"] == 100_000
-    assert c["voluntarios"] == 2
+    assert c["precio"] == 250_000
+    assert c["voluntarios"] == 6
     assert c["desglose"] == []
 
 
