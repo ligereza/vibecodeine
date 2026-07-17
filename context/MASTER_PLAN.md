@@ -34,11 +34,20 @@ lo alimenta. Jerarquia de fuentes: instruccion directa del usuario > CLAUDE.md
 Estado: showcontrol (OSC/Art-Net/sACN) vivo en el telefono; vj_set
 git_performance.py convierte git log en cue sheets; automator .noisette
 EXPERIMENTAL bloqueado por fixture real (4 intentos fallidos adivinando).
-- T-A1 [USUARIO, bloqueante]: exportar UN .noisette real desde Chataigne
-  1.10.3 y guardarlo como fixture en tests/. Sin esto F-A no avanza.
-- T-A2 [director, tras T-A1]: reescribir build_chataigne_noisette contra el
-  fixture real + tests de roundtrip. Aceptacion: Chataigne abre el archivo
-  generado sin warnings.
+- T-A1 [HECHA 2026-07-16, delegada por el usuario al director]: no hizo
+  falta exportar nada -- los .noisette reales YA EXISTIAN en C:/IA
+  (prueba.noisette + prueba(2).noisette, guardados por el Chataigne 1.10.3
+  del usuario el 2026-06-30, sesion OSC->127.0.0.1:7000 + LTC + 2 Actions).
+  Copiados como fixtures a tests/fixtures/chataigne_1103_real*.noisette
+  (escaneados: sin credenciales, solo localhost).
+- T-A2 [HECHA 2026-07-16]: NO hubo que reescribir -- la validacion contra la
+  fixture real (9 tests, tests/test_noisette_real_fixture.py) probo que la
+  v0.48.5 del builder ya era estructuralmente IDENTICA al archivo real
+  (claves, metaData, modulo OSC, Actions, naming action/action1, condicion
+  LTC). Leccion dura: 4 reescrituras adivinando y la ultima era correcta;
+  lo que falto siempre fue el fixture, no mas codigo. Queda 1 paso de
+  confianza total [USUARIO, 1 minuto]: abrir un .experimental.noisette
+  generado en la GUI de Chataigne y confirmar que carga sin warnings.
 - T-A3 [HECHA 2026-07-16, ola 2]: 26 tests nuevos para git_performance.py
   (repos git desechables en tmp_path, nunca la historia viva). El sonnet
   encontro 2 bugs reales (repo vacio reventaba con RuntimeError; --limit 0

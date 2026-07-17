@@ -134,12 +134,13 @@ cuando el foco real ya habia cambiado. Reglas firmes para no repetirlo:
 2. Antes de "resolver" algo que ya se intento antes, revisa el changelog en
    `src/flujo/version.py` (`get_changelog()`) o los docs relacionados para ver que ya se
    probo y fallo, en vez de partir de cero cada sesion.
-3. No reescribas `src/flujo/resolume/automator.py`
-   (`build_chataigne_noisette_experimental`) adivinando el schema `.noisette` otra vez. Ya
-   se reescribio 4 veces seguidas (v0.48.2 a v0.48.5), cada vez especulando sobre la
-   estructura interna, y sigue marcado `experimental` porque nunca se valido contra un
-   archivo real. Antes de tocarlo de nuevo: pide al usuario un `.noisette` real exportado
-   desde su Chataigne 1.10.3 y guardalo como fixture en `tests/` -- no vuelvas a adivinar.
+3. `src/flujo/resolume/automator.py` (`build_chataigne_noisette_experimental`): el
+   schema `.noisette` YA ESTA VALIDADO contra archivos reales del Chataigne 1.10.3 del
+   usuario (fixtures en `tests/fixtures/chataigne_1103_real*.noisette`, suite
+   `tests/test_noisette_real_fixture.py`, 2026-07-16). Historia: se reescribio 4 veces
+   adivinando (v0.48.2-v0.48.5) hasta que aparecio el archivo real -- la v0.48.5
+   resulto correcta. Regla vigente: cualquier cambio al builder debe mantener esa
+   suite verde; NUNCA especular sobre el schema, la fixture es la fuente de verdad.
 
 ## Verificacion minima (obligatoria)
 
