@@ -230,10 +230,31 @@ the path `run_server.sh` actually deploys (`PLUGINS_DIR=$HOME/xioplugins` <-
 or a separate install bundle. Not deleted per this task's rules -- flagging for
 the user to decide which copy is canonical.
 
+**Layer D -- showcontrol XIO_SHOWCONTROL_TOKEN (public-hotspot shows):** the
+showcontrol plugin (OSC/Art-Net/sACN sender, see
+`xio/new-plugins/showcontrol/README.md`) sends real DMX/OSC to a live rig, so
+when the hotspot is shared with an audience it needs its own lock. Optional,
+off by default (open, same as today) -- set it to require a header on EVERY
+showcontrol route, GET included:
+```bash
+export XIO_SHOWCONTROL_TOKEN="your-show-secret"   # set in run_server.sh before launch
+curl -H "X-Xio-Token: your-show-secret" http://<phone>:5000/api/plugins/showcontrol/status
+```
+Without the header (or with a wrong one) every showcontrol route returns
+`401 {"error":"token requerido o invalido"}`. Comparison is constant-time
+(`hmac.compare_digest`). This is separate from the plugin's own `muros` show
+token (POST-only, config-persisted, rotated via `/auth/set` -- see that
+README's "Show token" section): XIO_SHOWCONTROL_TOKEN is an env var read
+fresh on every request, so exporting it and restarting the server is enough,
+no API call needed, and it also locks down read-only GETs like `/status` and
+`/obs` that the muros token leaves open.
+
 Source: `xio/new/server.py` (`_DENY_IPS`, `DANGEROUS_ENDPOINTS`,
 `_request_confirmed`, `UNSAFE_PLUGINS`), `xio/new/run_server.sh` (XIO_DENY_IPS
 setting), `xio/PLAN_SERVICIOS_SIN_ROOT.md` (MAK context),
-`xio/new-plugins/plugin_guardian/README.md`, `xio/seguridad/INSTALL_SECURITY.md`.
+`xio/new-plugins/plugin_guardian/README.md`, `xio/seguridad/INSTALL_SECURITY.md`,
+`xio/new-plugins/showcontrol/__init__.py` (`_xio_token_required`,
+`XIO_SHOWCONTROL_TOKEN`).
 
 ## 6. Charge control
 
