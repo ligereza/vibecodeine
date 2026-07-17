@@ -15,14 +15,50 @@ revivir-subagentes escenario C):
    = zona verde, no auto-censurar por flags ambiguos.
 
 ## Estado 2026-07-17 (sesion Fable, autonoma)
-En vuelo (PRs abiertos): #65 (cobertura gaps 4/5/6/10, +22 tests). Rama
-feat/revivir-skill-a-main: rescata la skill revivir-subagentes a main (era
-commit huerfano d20806d, nunca mergeado) + fix cp1252. Sesiones duplicadas de
-esta conversacion (49a973c7/22bacb49/e67c294e) borradas del picker; contenido
-preservado en C:/IA/_flujo_local/session_backups/. Un sonnet caza mas commits
-huerfanos. Trabajo previo hoy en main: PRs #50-#64 (checkpoint, MASTER_PLAN v2
-anti-muralla, olas 1-4, RD DB + perfil productoras, fix precio Pack 1 real
-$250k, vibo_voz eliminado).
+Mergeado a main hoy: PRs #50-#69 (checkpoint, MASTER_PLAN v2 anti-muralla,
+olas 1-4, RD DB + perfil productoras + lookup, fix precio Pack 1 real $250k,
+vibo_voz eliminado, cobertura 10/10 gaps + fix bug scoring fallback, skill
+revivir-subagentes rescatada + fix cp1252, CLAUDE.md denso senal-pura, hook
+bash-guard PreToolUse). Branch protection en main ACTIVA (require CI ubuntu+
+windows, strict). Sesiones duplicadas del picker limpiadas (2 fantasmas
+matados por PID + 3 jsonl borrados; contenido en C:/IA/_flujo_local/
+session_backups/).
+
+Optimizacion de gasto aplicada (settings, aplica a sesiones NUEVAS): main model
+default = Haiku, effort medium, advisor sonnet, plugins 64->15, hook SessionStart
+caveman + hook PreToolUse bash-guard. Doctrina de escalada (triggers decidibles)
+codificada en CLAUDE.md seccion "Regulacion de gasto".
+
+### PENDIENTES de esta sesion (lista que NO alcanzo a cerrarse sola)
+COMMITEADO en esta tanda (working tree -> main): tapiz cableado al CLI
+(`flujo tapiz demo/stress/live`), venues OpenKlub/Paralelo89 + link frvr,
+reactivos.json enriquecido (23 reacciones, cocaina en Marquis/Liebermann,
+Simon/MDA update, fuente DanceSafe), plugin xio `hub` (sirve flujo_hub.html
+desde el telefono, T-G2), cleanup cultura (.dev.limpio + 8 leftovers movidos
+a _flujo_local), 5 SPEC-stubs archivados.
+
+NECESITA AL USUARIO (tabla, dar y ejecutar):
+- A1 noisette: abrir jobs/test_resolume/deliverables/show_automation.experimental
+  .noisette en Chataigne, confirmar 12 acciones en State Machine (ojo humano).
+- A5 airdrop Termux: PAT fine-grained (repo vibecodeine, contents:write) en el
+  telefono ~/.airdrop_token; luego disparar test de airdrop_push.sh.
+- A4/A8 telefono xio: AccessibilityService install + redeploy plugin showcontrol
+  (y el nuevo plugin hub) via RUNBOOK 7.
+- C12 ensayo Resolume end-to-end en evento real (fecha).
+- C16 entrega comercial completa por agentes gratis (job real).
+- D18 confirmar/dar data real de las 13 productoras (instagram/venue/tipo).
+- D20 specs de venues OpenKlub/Paralelo89 (aforo, preset).
+- E21 piezas MANIFIESTO bloqueadas: #2 (2do modelo util?), #5 (ESP32), #7 (orden
+  usuario: no tocar), #11 (infra training).
+
+DECISION DEL USUARIO:
+- PRs #48/#49 (MAK grafo + MAPA_GENERATIVO): CI verde pero de hace dias, ramas
+  ~19 PRs atras de main y el agente MAK sigue trabajandolas. Recomendacion:
+  esperar a que MAK pushee su final antes de mergear (evitar clobber).
+
+LOCKEADO por el agente MAK (concurrencia, no entrar a cultura/mak_research):
+- C2 gap seguridad xio_puente GET-only; C3 pipeline dossier MAK->markdown;
+  G1 panel Cultura muestra grafo MAK. Se destraban cuando MAK termine.
 
 Version: 0.52.0 | Fecha: 2026-07-17 | Identidad: Cauce | Suite completa: VERDE
 (compileall OK, pytest verde, flujo verify OK 0.52.0).

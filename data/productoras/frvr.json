@@ -9,6 +9,7 @@
   "venues": [
     {
       "nombre": "Paralelo 89",
+      "venue_id": "paralelo_89",
       "preferido": true,
       "estado": "inferido",
       "notas": "Del nombre de archivo FRVR.PARALELO89.png; confirmar como sede reiterada."

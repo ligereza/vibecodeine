@@ -251,6 +251,30 @@ def rd_lookup(familia: str = typer.Argument(..., help="Familia de sustancia, ej.
     console.print(f"\n  Testeo incluido en packs: {packs_txt}")
     console.print(f"\n[dim]{res['disclaimer']}[/]")
 
+
+@app.command("tapiz")
+def tapiz(modo: str = typer.Argument("demo", help="demo | stress | live")):
+    """Ecosistema Tapiz<->Psicosis<->Fungi: pipeline generativo (tools/compete_engine.py).
+
+    Cablea el cluster (compete_engine + tapiz_live_loop + telemetry + system_map)
+    al CLI para que sea reachable/usable, no codigo suelto. Exporta a tools/dist/.
+    """
+    from .paths import repo_root
+
+    flag = {"demo": "--demo", "stress": "--stress", "live": "--live"}.get(modo)
+    if not flag:
+        _warn("modo invalido: usa demo | stress | live")
+        raise typer.Exit(1)
+    script = repo_root() / "tools" / "compete_engine.py"
+    if not script.exists():
+        _warn(f"no existe {script}")
+        raise typer.Exit(1)
+    import subprocess
+
+    _section(f"flujo - tapiz {modo}")
+    raise typer.Exit(subprocess.call([sys.executable, str(script), flag]))
+
+
 knowledge_app = typer.Typer(help="Knowledge base local: productoras, venues, logos y ejemplos.", no_args_is_help=True)
 app.add_typer(knowledge_app, name="knowledge")
 
