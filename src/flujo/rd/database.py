@@ -368,3 +368,41 @@ def disclaimer(db_path: str | Path | None = None) -> str:
         return row["valor"] if row else ""
     finally:
         conn.close()
+
+
+def lookup_familia(familia: str, db_path: str | Path | None = None) -> dict[str, Any]:
+    """Consulta de operador en terreno: para una familia de sustancia devuelve el
+    panel de reactivos que la marcan + que packs incluyen servicio de testeo +
+    el disclaimer presuntivo. Es el JOIN que justifica la DB sobre JSON planos:
+    cruza reactivos (colorimetria) con packs (servicio) en una sola llamada.
+
+    'Incluye testeo' se detecta en las inclusiones del pack (palabra 'testeo'),
+    derivado del texto canonico -- no un flag aparte que pueda desincronizarse.
+    """
+    conn = connect(db_path)
+    try:
+        reacts = [
+            dict(r) for r in conn.execute(
+                "SELECT reactivo, familia, reaccion, hex FROM reactivos "
+                "WHERE lower(familia) LIKE ? ORDER BY reactivo",
+                (f"%{familia.lower()}%",),
+            ).fetchall()
+        ]
+        packs_testeo = [
+            dict(p) for p in conn.execute(
+                "SELECT DISTINCT p.id, p.nombre, p.precio FROM packs p "
+                "JOIN inclusiones i ON i.pack_id = p.id "
+                "WHERE lower(i.texto) LIKE '%testeo%' ORDER BY p.orden"
+            ).fetchall()
+        ]
+        disc_row = conn.execute(
+            "SELECT valor FROM meta WHERE clave = 'reactivos_disclaimer'"
+        ).fetchone()
+        return {
+            "familia": familia,
+            "reactivos": reacts,
+            "packs_con_testeo": packs_testeo,
+            "disclaimer": disc_row["valor"] if disc_row else "",
+        }
+    finally:
+        conn.close()

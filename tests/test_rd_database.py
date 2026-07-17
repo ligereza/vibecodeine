@@ -102,6 +102,26 @@ def test_disclaimer_presuntivo_presente(rd_db: Path):
     assert "PRESUNTIVO" in d.upper()
 
 
+def test_lookup_familia_cruza_reactivos_y_packs(rd_db: Path):
+    """El JOIN que justifica la DB: familia -> panel reactivos + packs con
+    testeo + disclaimer, en una llamada."""
+    res = db.lookup_familia("MDMA", rd_db)
+    assert res["familia"] == "MDMA"
+    assert len(res["reactivos"]) >= 3
+    assert any(r["reactivo"] == "Marquis" for r in res["reactivos"])
+    # 'testeo' se detecta en las inclusiones canonicas; TESTEO y COMPLETO al menos
+    ids = {p["id"] for p in res["packs_con_testeo"]}
+    assert {"TESTEO", "COMPLETO"} <= ids
+    assert "PRESUNTIVO" in res["disclaimer"].upper()
+
+
+def test_lookup_familia_desconocida_no_revienta(rd_db: Path):
+    res = db.lookup_familia("sustancia-inexistente", rd_db)
+    assert res["reactivos"] == []
+    # los packs con testeo no dependen de la familia -> siguen apareciendo
+    assert res["packs_con_testeo"]
+
+
 def test_connect_autoconstruye_si_no_existe(tmp_path: Path):
     p = tmp_path / "nueva.db"
     assert not p.exists()

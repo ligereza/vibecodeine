@@ -28,7 +28,11 @@ py -m flujo rd-db reactivo --familia MDMA
 py -m flujo rd-db reactivo --reactivo Marquis
 py -m flujo rd-db packs
 py -m flujo rd-db eventos
+py -m flujo rd-db lookup MDMA         # operador en terreno: reactivos + packs con testeo
 ```
+
+`lookup` es el JOIN que justifica la DB sobre JSON planos: cruza la colorimetria
+(reactivos) con el servicio (packs que incluyen testeo) en una sola vista.
 
 Python:
 ```python

@@ -183,6 +183,23 @@ def rd_eventos():
         pack = e["pack_sugerido"] or "(sin match)"
         console.print(f"  {e['nombre']}  |  {e['voluntarios']} vol -> {pack}  |  {e['fuente']}")
 
+
+@rd_app.command("lookup")
+def rd_lookup(familia: str = typer.Argument(..., help="Familia de sustancia, ej. MDMA")):
+    """Consulta de operador en terreno: reactivos que marcan la familia + packs
+    que incluyen testeo + disclaimer, en una sola vista (JOIN reactivos+packs)."""
+    from .rd import lookup_familia
+
+    res = lookup_familia(familia)
+    _section(f"flujo · rd · lookup · {familia}")
+    if not res["reactivos"]:
+        _warn(f"Sin reacciones registradas para '{familia}'")
+    for f in res["reactivos"]:
+        console.print(f"  {f['reactivo']:<12} {f['familia']:<20} {f['reaccion']:<24} {f['hex']}")
+    packs_txt = ", ".join(f"{p['id']} (${p['precio']:,})" for p in res["packs_con_testeo"]) or "(ninguno)"
+    console.print(f"\n  Testeo incluido en packs: {packs_txt}")
+    console.print(f"\n[dim]{res['disclaimer']}[/]")
+
 knowledge_app = typer.Typer(help="Knowledge base local: productoras, venues, logos y ejemplos.", no_args_is_help=True)
 app.add_typer(knowledge_app, name="knowledge")
 
