@@ -80,12 +80,19 @@ def _read_brief_simple(text: str) -> dict:
             if indent == 0:
                 current_section = None
                 current_list = None
+                _LIST_KEYS = ("productos", "pendientes", "posibles_formatos")
                 if val == "":
-                    current_section = key
-                    data[key] = {}
+                    if key in _LIST_KEYS:
+                        # lista YAML multi-linea (key:\n  - item): NO es seccion-dict.
+                        # Sin esto los '- item' se caian (current_list quedaba None).
+                        current_list = key
+                        data[key] = []
+                    else:
+                        current_section = key
+                        data[key] = {}
                 else:
                     data[key] = _coerce(val)
-                    if key in ("productos", "pendientes", "posibles_formatos"):
+                    if key in _LIST_KEYS:
                         current_list = key
             else:
                 if current_section:
