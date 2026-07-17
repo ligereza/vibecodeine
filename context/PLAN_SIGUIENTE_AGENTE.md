@@ -1,6 +1,6 @@
 # PENDIENTES + FUERTE/DEBIL -- checkpoint limpieza (Cauce, 2026-07-16)
 
-Estado del repo: v0.51.0, suite VERDE 2026-07-16 (compileall OK, 394 tests
+Estado del repo: v0.52.0, suite VERDE 2026-07-16 (compileall OK, 394 tests
 pytest verde con 1 skip, flujo verify OK). main con PRs #45 y #47 mergeados;
 ABIERTOS #48 (MAK grafo+canvas) y #49 (MAPA_GENERATIVO), esperan review del
 usuario. Rama de trabajo: claude/vola-cultura-portfolio-20260712.
@@ -33,7 +33,7 @@ usuario. Rama de trabajo: claude/vola-cultura-portfolio-20260712.
 ## DEBIL (con evidencia)
 - Sellos "verificado v0.48.5" en docs/CLI.md, docs/AGENT_AIRDROP_PROTOCOL.md,
   docs/SCRIPTS_INVENTORY.md: 3-17 versiones menores atras. NO subir el numero
-  a mano; re-verificar comando por comando contra v0.51.0.
+  a mano; re-verificar comando por comando contra la version actual (v0.52.0).
 - Branch protection en main: AUSENTE (gh api 404, verificado 2026-07-13).
   Accion del usuario en la web de GitHub (require CI verde).
 - resolume automator (`src/flujo/resolume/automator.py`): sigue experimental,
@@ -63,7 +63,7 @@ P1 (mecanico, ya):
 P2 (deuda tecnica con criterio):
 4. Branch protection en main (web GitHub; no necesita API ni Claude).
 5. Re-verificar sellos de docs/CLI.md + AGENT_AIRDROP_PROTOCOL.md +
-   SCRIPTS_INVENTORY.md contra el codigo v0.51.0 y recien ahi actualizar.
+   SCRIPTS_INVENTORY.md contra el codigo actual (v0.52.0) y recien ahi actualizar.
 6. Corpus tilde real (desktop/tilde_meter.py) para el render sobrevivencia-01.
 7. Fixture de flyer real en tests/fixtures/ para smoke de productoras.py
    (pedir un .jpg/.png al usuario).

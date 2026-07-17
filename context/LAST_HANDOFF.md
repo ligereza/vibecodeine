@@ -1,7 +1,7 @@
 # LAST HANDOFF -- estado para el proximo agente
 
-Version: 0.51.0 | Fecha: 2026-07-16 | Identidad: Cauce | Suite completa: VERDE
-hoy (compileall OK, 394 tests pytest verdes + 1 skip, flujo verify OK 0.51.0).
+Version: 0.52.0 | Fecha: 2026-07-16 | Identidad: Cauce | Suite completa: VERDE
+hoy (compileall OK, 394 tests pytest verdes + 1 skip, flujo verify OK 0.52.0).
 
 Pendientes y fuerte/debil: context/PLAN_SIGUIENTE_AGENTE.md (refrescado hoy).
 Historico viejo: git log de este archivo + docs/handoffs/archive/.
@@ -56,7 +56,7 @@ inventario de ideas, higiene git, salud) y ejecucion central. Resultado:
 - py -m compileall src/flujo: OK
 - py -m pytest tests/ -q: OK (394 verdes, 1 skip)
 - cd web && npm run build:context: no aplica (web no tocada)
-- py -m flujo verify: OK (hub smoke 0.51.0)
+- py -m flujo verify: OK (hub smoke 0.52.0)
 - Observaciones: basura y duplicados fuera; docs de reglas alineados con la
   realidad (Gemini PARKED, planes viejos marcados historicos); gap de
   credenciales cerrado en .gitignore; quedan 3 acciones manuales del usuario

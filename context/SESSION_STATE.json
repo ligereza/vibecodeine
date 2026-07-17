@@ -1,8 +1,8 @@
 {
-  "version": "0.51.0",
+  "version": "0.52.0",
   "date": "2026-07-16",
   "assistant_name": "Cauce",
-  "repo_main": "main en 0.51.0 con PRs #45 y #47 MERGEADOS (2026-07-16). ABIERTOS: #48 (MAK grafo+canvas, rama worktree-mak-research-cultural, worktree local dirty NO tocar) y #49 (MAPA_GENERATIVO, rama remota worktree-cultura-mapa-generativo). Branch protection en main sigue AUSENTE (gh api 404, verificado 2026-07-13). Verificar HEAD real con git log origin/main -1 antes de afirmar.",
+  "repo_main": "main en 0.52.0 (PR #50 checkpoint limpieza; antes PRs #45 y #47 mergeados 2026-07-16). ABIERTOS: #48 (MAK grafo+canvas, rama worktree-mak-research-cultural, worktree local dirty NO tocar) y #49 (MAPA_GENERATIVO, rama remota worktree-cultura-mapa-generativo). Branch protection en main sigue AUSENTE (gh api 404, verificado 2026-07-13). Verificar HEAD real con git log origin/main -1 antes de afirmar.",
   "current_focus": "Checkpoint limpieza total 2026-07-16 ejecutado (ver LAST_HANDOFF.md): basura/duplicados fuera (~190M), git podado (solo main + rama actual + worktree MAK), reglas obsoletas podadas (CLAUDE.md, CONTRIBUTING.md, DIRECTOR_PLAN.md historico), PLAN_SIGUIENTE_AGENTE.md reescrito con pendientes reales + fuerte/debil, gap de credenciales cultura/.dev* cerrado en .gitignore. Proximo: usuario revisa PRs #48/#49 y ejecuta P1.2/P1.3 del plan.",
   "done": [
     "2026-07-16: checkpoint limpieza total ultracode (5 sonnet barrido + Fable ejecuta). Detalle completo en context/LAST_HANDOFF.md de esta fecha; historico anterior en git log de estos archivos y docs/handoffs/archive/.",
@@ -15,7 +15,7 @@
   "next": [
     "USUARIO P1: revisar/mergear PRs #48 y #49; rm cultura/.dev.limpio (keys duplicadas); mover 8 leftovers de cultura/ (comando exacto en PLAN_SIGUIENTE_AGENTE.md P1.3).",
     "USUARIO: branch protection en main (web GitHub, require CI verde) -- ausente desde que el repo es publico.",
-    "Re-verificar sellos v0.48.5 de docs/CLI.md, AGENT_AIRDROP_PROTOCOL.md, SCRIPTS_INVENTORY.md contra v0.51.0 (no subir numero sin re-verificar).",
+    "Re-verificar sellos v0.48.5 de docs/CLI.md, AGENT_AIRDROP_PROTOCOL.md, SCRIPTS_INVENTORY.md contra la version actual (no subir numero sin re-verificar).",
     "Corpus tilde real (desktop/tilde_meter.py) para render sobrevivencia-01; fixture flyer real para smoke productoras.py.",
     "Piezas MANIFIESTO candidatas (#4 esteganografia, #8 cartografia filtros, #6 cron nocturno) via motor-omega; resto bloqueadas (ver PLAN).",
     "xio reboot gap: build/install/grant de xio/hotspot_boot_service (AccessibilityService) = parte del usuario en el telefono."
