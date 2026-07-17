@@ -123,9 +123,11 @@ Estado: tapiz/loom maduro (20 motivos); tilde SPEC sin render; MANIFIESTO
   sin Claude API; doc de instalacion (Task Scheduler Windows + cron Termux).
   Omega11 DECLARADA: pierde si el borrado es reversible o si requiere
   decision humana.
-- T-E4 [director] pieza MANIFIESTO #8 -- CARTOGRAFIA DE FILTROS: solo
-  director (criterio de seguridad): registra el borde de que bloquea cada
-  modelo SIN cruzarlo. No delegable a sonnet.
+- T-E4 [HECHA 2026-07-16, director] pieza MANIFIESTO #8 CARTOGRAFIA DE
+  FILTROS: projects/cultura/cartografia_filtros/ mapea el borde donde un
+  agente con full-auth igual choca el clasificador; sembrada con 6 bloqueos
+  reales y fechados de ESTA sesion (siluetas neutras, sin payload; guarda en
+  codigo + grep). Ω11 no se cumplio. 8 tests. MANIFIESTO 5/11.
 - BLOQUEADAS (no tocar): #2 (falta 2do modelo), #5 (hardware), #7 (orden del
   usuario), #11 (infra), (+)2 OBRA_02 (espera lector humano).
 
