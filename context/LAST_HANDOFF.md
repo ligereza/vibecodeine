@@ -1,10 +1,26 @@
 # LAST HANDOFF -- estado para el proximo agente
 
-Version: 0.52.0 | Fecha: 2026-07-16 | Identidad: Cauce | Suite completa: VERDE
-hoy (compileall OK, 394 tests pytest verdes + 1 skip, flujo verify OK 0.52.0).
+Version: 0.52.0 | Fecha: 2026-07-17 | Identidad: Cauce | Suite completa: VERDE
+hoy (compileall OK, pytest verde + 1 skip, flujo verify OK 0.52.0).
 
-Pendientes y fuerte/debil: context/PLAN_SIGUIENTE_AGENTE.md (refrescado hoy).
+Pendientes y fuerte/debil: context/PLAN_SIGUIENTE_AGENTE.md.
 Historico viejo: git log de este archivo + docs/handoffs/archive/.
+
+## SESION 2026-07-17 -- skill revivir-subagentes
+
+Nueva skill .claude/skills/revivir-subagentes/ (SKILL.md + extraer_contexto.py):
+protocolo para recuperar subagentes muertos/detenidos y sucesores de un modelo
+bloqueado (Fable -> Opus sin retorno). Origen: memorias revive-subagents +
+subagent-orchestration-pattern (incidente RGB 2026-07-16). Contenido: diagnostico
+por sintoma (API error = SendMessage resume; stoppedByUser = irrecuperable ->
+extraer y relanzar), script extractor probado contra transcripciones reales
+(busqueda por keyword en meta.json, briefing comprimido, --volcar rescate
+completo, contabilidad de output_tokens invertidos). Hallazgo verificado
+2026-07-17: bloques thinking persisten SOLO como firma (contenido vacio, no
+rescatable); el producto visible (analisis/planes/archivos) si se rescata --
+por eso la skill exige check-ins que materialicen el pensamiento temprano.
+Ademas: protocolo anti-block warn-first acordado con el usuario (avisar antes
+de entrar a tema sensible, nunca rechazo seco que queme el modelo).
 
 ## SESION 2026-07-16 -- CHECKPOINT LIMPIEZA TOTAL (ultracode: 5 sonnet + Fable)
 

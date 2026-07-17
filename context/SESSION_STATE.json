@@ -1,10 +1,11 @@
 {
   "version": "0.52.0",
-  "date": "2026-07-16",
+  "date": "2026-07-17",
   "assistant_name": "Cauce",
   "repo_main": "main en 0.52.0 (PR #50 checkpoint limpieza; antes PRs #45 y #47 mergeados 2026-07-16). ABIERTOS: #48 (MAK grafo+canvas, rama worktree-mak-research-cultural, worktree local dirty NO tocar) y #49 (MAPA_GENERATIVO, rama remota worktree-cultura-mapa-generativo). Branch protection en main sigue AUSENTE (gh api 404, verificado 2026-07-13). Verificar HEAD real con git log origin/main -1 antes de afirmar.",
   "current_focus": "Checkpoint limpieza total 2026-07-16 ejecutado (ver LAST_HANDOFF.md): basura/duplicados fuera (~190M), git podado (solo main + rama actual + worktree MAK), reglas obsoletas podadas (CLAUDE.md, CONTRIBUTING.md, DIRECTOR_PLAN.md historico), PLAN_SIGUIENTE_AGENTE.md reescrito con pendientes reales + fuerte/debil, gap de credenciales cultura/.dev* cerrado en .gitignore. Proximo: usuario revisa PRs #48/#49 y ejecuta P1.2/P1.3 del plan.",
   "done": [
+    "2026-07-17: skill revivir-subagentes nueva (.claude/skills/revivir-subagentes/): protocolo + script extraer_contexto.py para recuperar subagentes stoppedByUser / caidos por API error / sucesores de modelo bloqueado; probado contra transcripciones reales; hallazgo: thinking persiste solo como firma, producto visible si se rescata (--volcar).",
     "2026-07-16 (misma sesion, post-checkpoint): MASTER_PLAN.md nuevo + olas 1-3 ejecutadas y MERGEADAS (PRs #51/#52/#53): piezas MANIFIESTO #4 y #6 (4/11), docs re-verificados, 26+16 tests nuevos, RUNBOOK xio, token showcontrol (redeploy pendiente), catalogo RD regenerable, y FIX de flujo cotizaciones que estaba roto (brand.py restaurado). Review adversarial sonnet atrapo 1 BLOCKER + el sonnet de T-D2 atrapo el CLI roto -- el gate multi-agente funciona.",
     "2026-07-16: checkpoint limpieza total ultracode (5 sonnet barrido + Fable ejecuta). Detalle completo en context/LAST_HANDOFF.md de esta fecha; historico anterior en git log de estos archivos y docs/handoffs/archive/.",
     "2026-07-15: showcontrol plugin xio (OSC+Art-Net+sACN, commit 8719929) desplegado en vivo; MAK (Linux 192.168.198.85) aislado del xio server via 403 XIO_DENY_IPS enforzado en el telefono.",
@@ -23,7 +24,6 @@
   ],
   "blockers": [
     "Gemini API PARKED desde 2026-07-10 (sin API util): desktop/ y tools/vibo_voz documentados pero sin uso hasta que el usuario anuncie key/API nueva.",
-    "build_chataigne_noisette_experimental: falta el .noisette real (no re-adivinar, fallo 4 veces).",
     "Clasificador de permisos bloquea a agentes operaciones de borrado/movida dentro de cultura/ (ahi viven las keys): esas quedan como acciones manuales del usuario."
   ],
   "ai_stack": {
