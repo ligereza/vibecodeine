@@ -39,9 +39,11 @@ EXPERIMENTAL bloqueado por fixture real (4 intentos fallidos adivinando).
 - T-A2 [director, tras T-A1]: reescribir build_chataigne_noisette contra el
   fixture real + tests de roundtrip. Aceptacion: Chataigne abre el archivo
   generado sin warnings.
-- T-A3 [sonnet]: tests para tools/vj_set/git_performance.py (hoy 0 tests):
-  cue_sheet.json y osc_score.json validados contra schema; fixture de git log
-  sintetico. Aceptacion: suite verde, cobertura de las 3 salidas.
+- T-A3 [HECHA 2026-07-16, ola 2]: 26 tests nuevos para git_performance.py
+  (repos git desechables en tmp_path, nunca la historia viva). El sonnet
+  encontro 2 bugs reales (repo vacio reventaba con RuntimeError; --limit 0
+  ignorado por truthiness); el director los arreglo y los tests ahora fijan
+  el comportamiento correcto.
 - T-A4 [director+usuario, H2]: ensayo end-to-end en evento: telefono manda
   OSC a Resolume real via showcontrol; runbook en xio/ (patron
   HOTSPOT_SHOW_RUNBOOK).
@@ -55,8 +57,12 @@ self-heal hotspot, MAK aislado 403. Gap honesto: reboot mata el server
 - T-B2 [sonnet]: endurecer showcontrol con token opcional (header X-Xio-Token
   leido de env) para hotspot con publico; tests de 401/200. NO tocar el resto
   del server.
-- T-B3 [qwen/sonnet]: consolidar runbooks xio/*.md en uno solo indexado
-  (show, reboot, hotspot, seguridad) -- hoy estan repartidos en 4+ archivos.
+- T-B3 [HECHA 2026-07-16, ola 2]: xio/RUNBOOK.md nuevo (8 secciones, cada
+  comando verificado contra los scripts reales) + puntero en los 10 .md
+  originales. Contradicciones flageadas sin resolver en silencio:
+  plugin_guardian duplicado byte-identico (new-plugins/ vs seguridad/),
+  xio/new/plugins/ stale vs new-plugins/ real, y el subnet ".69" del
+  historial de hotspot no aparece documentado en ninguna fuente.
 
 ### F-C MAK (organismo research en la caja Linux)
 Estado: research 7 modos + codex + plataforma vivos en MAK; PRs #48/#49

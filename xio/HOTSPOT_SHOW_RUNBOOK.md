@@ -1,3 +1,5 @@
+> Indice operativo: ver xio/RUNBOOK.md
+
 # Runbook del show: Xiaomi como router/hub del equipo, sin PC
 
 Manual operativo para presentarte con el Xiaomi solo en escenario y vos en el FOH.

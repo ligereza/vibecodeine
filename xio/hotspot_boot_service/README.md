@@ -1,3 +1,5 @@
+> Indice operativo: ver xio/RUNBOOK.md
+
 # hotspot_boot_service -- cierra el hueco del reboot SIN host (no-root)
 
 AccessibilityService minimo que, al bootear el telefono, reenciende el hotspot solo.

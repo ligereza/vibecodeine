@@ -1,3 +1,5 @@
+> Indice operativo: ver xio/RUNBOOK.md
+
 # Plugin Template
 
 This is a starting template for creating new plugins.

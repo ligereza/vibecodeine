@@ -1,3 +1,5 @@
+> Indice operativo: ver xio/RUNBOOK.md
+
 # showcontrol -- the phone as a network show-control node
 
 Turns the on-device xio server (Termux + Shizuku) into a **VJ / lighting / show

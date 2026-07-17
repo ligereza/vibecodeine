@@ -88,12 +88,17 @@ def read_commits(limit: int | None, all_refs: bool) -> list[dict]:
     cmd = ["git", "log", f"--pretty=format:{fmt}"]
     if all_refs:
         cmd.append("--all")
-    if limit:
+    if limit is not None:
         cmd.append(f"-n{limit}")
     out = subprocess.run(
         cmd, cwd=str(_REPO_ROOT), capture_output=True, text=True, encoding="utf-8"
     )
     if out.returncode != 0:
+        # Repo sin commits: git log sale 128 con "does not have any commits".
+        # Devolvemos [] para que main() pueda reportar "sin commits" limpio
+        # en vez de reventar con RuntimeError.
+        if "does not have any commits" in out.stderr:
+            return []
         raise RuntimeError(f"git log fallo: {out.stderr.strip()}")
     commits = []
     for line in out.stdout.splitlines():

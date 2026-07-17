@@ -1,3 +1,5 @@
+> Indice operativo: ver xio/RUNBOOK.md
+
 # Xiaomi ADB Web Controller + Plugin System
 
 Dashboard web para controlar remotamente un Xiaomi Android vía ADB, con un **sistema de plugins modular** que permite extender funcionalidades sin modificar el core.

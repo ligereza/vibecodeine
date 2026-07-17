@@ -1,3 +1,5 @@
+> Indice operativo: ver xio/RUNBOOK.md
+
 # xio -- Plan post-descubrimiento: palancas de SERVICIO (sin root)
 
 Fecha: 2026-07-13. Rama: claude/vola-cultura-portfolio-20260712.

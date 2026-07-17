@@ -1,3 +1,5 @@
+> Indice operativo: ver xio/RUNBOOK.md
+
 # Instalación - Plugin Guardian Security System
 
 ## Quick Start
