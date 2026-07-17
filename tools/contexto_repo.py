@@ -14,7 +14,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-_REPO = Path(__file__).resolve().parents[2]
+_REPO = Path(__file__).resolve().parents[1]
 _SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv", ".mypy_cache",
               ".pytest_cache", "dist", "build", "agentes", "estado", "buzon",
               "checkpoints"}

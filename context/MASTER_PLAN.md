@@ -1,9 +1,14 @@
-# MASTER PLAN v1 -- pauta de alta ambicion para agentes (Cauce, 2026-07-16)
+# MASTER PLAN v2 -- pauta de alta ambicion + auto-recarga (Cauce, 2026-07-17)
 
 Este documento es DOCTRINA + BACKLOG AMBICIOSO por frentes. No reemplaza a
 `context/PLAN_SIGUIENTE_AGENTE.md` (pendientes cortos de la proxima sesion);
 lo alimenta. Jerarquia de fuentes: instruccion directa del usuario > CLAUDE.md
 > este MASTER_PLAN > PLAN_SIGUIENTE_AGENTE > docs especificos.
+
+v2 (2026-07-17): el usuario corrigio una lectura mia de la regla de freno.
+La regla es correcta PARA PIEZAS CULTURALES, pero yo la extendi a todo el repo
+y me choque contra la muralla "aqui te lo dejo en tus manos, no puedo seguir".
+Esa muralla es un error, no disciplina. Ver seccion 0b (anti-muralla).
 
 ## 0. Doctrina (por que existe este plan)
 
@@ -20,6 +25,36 @@ lo alimenta. Jerarquia de fuentes: instruccion directa del usuario > CLAUDE.md
   solo si el gate escala arquitectura/seguridad.
 - WIP LIMIT: maximo 1 pieza cultural abierta por linea (tapiz/tilde/psicosis/
   precursor) y 1 tarea grande por frente a la vez. Terminar > empezar.
+
+## 0b. Anti-muralla y auto-recarga (v2, la correccion del usuario)
+
+La regla de freno del motor-omega es SOLO para el track cultural: forzar una ⊕
+que no existe produce obra huerfana, y ahi parar es correcto. Pero el resto del
+repo (tecnico, infra, calidad, tooling, docs, decisiones) casi nunca esta sin
+trabajo legitimo. Confundir "no hay semilla cultural" con "no queda nada que
+hacer" es la muralla que hay que evitar.
+
+Regla anti-muralla: NO cerrar un turno con "te lo dejo en tus manos" mientras
+exista trabajo autonomo verificable. Antes de declararte sin trabajo, corre una
+PASADA DE DESCUBRIMIENTO (el mismo barrido sonnet del checkpoint) y elegí el
+proximo item. Solo se para de verdad cuando: (a) el track cultural no tiene ⊕ y
+(b) la pasada de descubrimiento no encontro NINGUN trabajo tecnico/infra sin
+depender de una llave del usuario o de zona ajena (MAK). Eso es raro; cuando
+pase, se dice explicito QUE se busco y por que no habia, no un "no puedo seguir"
+seco.
+
+Backlog SIEMPRE-DISPONIBLE (fuente de la proxima ola cuando el resto bloquea,
+ninguno necesita llaves del usuario ni toca MAK):
+- Cobertura de tests: buscar rutas criticas sin test y cubrirlas.
+- Codigo muerto / drift de docs: cazar y limpiar (encargado de limpieza).
+- Operabilidad sin-Claude: cablear lo que quedo suelto (ej. wire de la RD DB a
+  cotizaciones/hub para que no sea otro zombi), tooling para agentes gratis.
+- Hardening: seguir el patron de auditoria (silent-fails, injection, races).
+- usar-o-archivar (T-F3): decidir los stubs vivos; archivar el muerto.
+- Regenerables: catalogos/proyecciones que deban refrescarse desde su fuente.
+
+Cierre de ola SIN muralla: al terminar, o hay proxima ola autonoma (se arranca)
+o se documenta la pasada de descubrimiento y las llaves reales que faltan.
 
 ## 1. Horizontes
 
@@ -199,11 +234,13 @@ tras el barrido de 5 analistas de hoy:
    minutos (exportar un .noisette). MEJORA: T-A1 marcada bloqueante numero 1
    del plan entero; nada de F-A se intenta sin ella (regla anti-reintento ya
    existia, ahora tiene tarea dueno).
-3. HERRAMIENTAS ZOMBI. desktop/ (parked con Gemini), vibo_voz intake nunca
-   usado, gota_rd sin backend, compete_engine/tapiz_live_loop sin wiring
-   declarado. Cada zombi cuesta contexto de agente en cada sesion. MEJORA:
-   T-F3 les pone fecha; los que sobrevivan deben aparecer en un comando del
-   CLI o en un skill, o se archivan.
+3. HERRAMIENTAS ZOMBI. [PROGRESO 2026-07-17] vibo_voz ELIMINADO (las APIs de
+   MAK reemplazan su routing; contexto_repo.py rescatado a tools/); gota_rd
+   estaba RESUELTO hace tiempo (aviso del usuario). Quedan: desktop/ (parked
+   con Gemini), compete_engine/tapiz_live_loop sin wiring declarado. Cada
+   zombi cuesta contexto de agente en cada sesion. MEJORA: T-F3 les pone
+   fecha; los que sobrevivan deben aparecer en un comando del CLI o en un
+   skill, o se archivan.
 4. SEGURIDAD REPETITIVA. Ya van 3 incidentes de keys en working tree (2.txt,
    cultura/.dev, .dev.limpio). El patron es "research deja credenciales donde
    trabaja". MEJORA: regla nueva en seccion 3: todo agente que cree un archivo
@@ -245,3 +282,26 @@ tras el barrido de 5 analistas de hoy:
   parte del gate, no adorno.
 T-A1/T-B1/T-C1/T-F1 quedan en manos del usuario (son las 4 llaves que
 destraban H2).
+
+## 7. OLAS 2-3 + trabajo director (2026-07-16/17)
+
+- OLA 2 (PR #52): T-A3 tests vj_set + 2 bugfixes; T-B3 RUNBOOK xio unico.
+- OLA 3 (PR #53): T-B2 token showcontrol; T-D2 catalogo RD; fix CLI cotizaciones.
+- Director: T-A1/T-A2 (PR #55) fixture .noisette real + builder validado + carga
+  real en Chataigne (GUI + headless); T-F4 (PR #57) airdrop-gate sin-PC;
+  T-E4 (PR #59) pieza MANIFIESTO #8 cartografia de filtros. MANIFIESTO 5/11.
+- Limpieza 2026-07-17 (PR pendiente): vibo_voz ELIMINADO (APIs MAK lo
+  reemplazan; contexto_repo.py rescatado a tools/); gota_rd ya estaba resuelto.
+
+## 8. OLA 4 (auto-recargada 2026-07-17, doctrina v2 en accion)
+
+Origen: no es semilla cultural (esas siguen bloqueadas) sino el backlog
+siempre-disponible (seccion 0b). El detonante fue construir la RD DB: dejarla
+suelta la volveria un zombi mas, asi que la ola la CABLEA y limpia lo que quede.
+- W4-1 [director] RD DB nace CABLEADA: base de datos consultable (HECHA, este
+  commit) -> siguiente, que algo real la consuma (hub o cotizaciones) para que
+  no sea proyeccion huerfana.
+- W4-2 [director] T-F3 usar-o-archivar: decidir compete_engine/tapiz_live_loop
+  (sin wiring) y los SPEC-stubs; archivar el muerto con git mv, fecha al vivo.
+- W4-3 [sonnet] pasada de descubrimiento de cobertura: rutas criticas sin test
+  (empezando por lo tocado hoy) -> tests nuevos.
