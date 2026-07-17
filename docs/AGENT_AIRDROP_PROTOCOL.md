@@ -90,7 +90,7 @@ py scripts/run_airdrop_checks.py "mensaje corto" --allow-airdrop-engine
 - No toca `src/flujo/airdrop.py` salvo autorizacion explicita con `--allow-airdrop-engine`.
 - Detecta rutas deformadas por Markdown/autolink como `[archivo.py](http...)`.
 
-## Que hace el runner (`scripts/run_airdrop_checks.py`, orden real verificado v0.48.5)
+## Que hace el runner (`scripts/run_airdrop_checks.py`, orden real verificado v0.52.0 (2026-07-16))
 
 1. `validate_airdrop` (motor Python `flujo.airdrop`, no bash).
 2. `airdrop dry-run` (`flujo.airdrop.scan_airdrop()`).
