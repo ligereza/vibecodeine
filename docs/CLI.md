@@ -1,4 +1,4 @@
-# flujo · CLI Reference (v0.48.5)
+# flujo · CLI Reference (v0.52.0)
 
 **Entrada diaria del usuario:** `flujo app` (o `flujo app --desktop`) — lanza servidor + hub pro workspace.
 **Entrada obligatoria para agentes de IA:** `CLAUDE.md` (raiz), no este doc.
@@ -35,7 +35,7 @@ py -m flujo doctor
 py -m flujo version
 ```
 
-## Grupos y comandos (fuente: `src/flujo/cli.py`, verificado v0.48.5)
+## Grupos y comandos (fuente: `src/flujo/cli.py`, verificado v0.52.0 (2026-07-16))
 
 ```txt
 salud/info      health, version, doctor, verify, ai-prompt, github-sync, handoff, delegate
@@ -56,6 +56,7 @@ brand           [LEGACY] usar knowledge/logos en su lugar
 diario/portal   daily, portal, cotizaciones
 web             app, serve, package (build .exe desktop)
 varios          plano, clean, init
+voz             voz (opcional, requiere extra .[voz]; asistente CODE/VIBO/REDU)
 ```
 
 **Datadrop:** `flujo datadrop scan` (incoming bulk), `list` (solo procesados), `ingest <archivo>`, `prepare` (paquete review `_review_package.txt`). UI principal: hub (`flujo app` -> Herramientas -> Datadrop).
@@ -131,8 +132,9 @@ flujo cotizaciones projects/plano/ejemplos/evento_ejemplo.json --para productora
 flujo app                   # ENTRADA DIARIA: app + hub pro (recomendado)
 flujo app --desktop         # ventana nativa (pywebview)
 flujo package               # construye .exe standalone (PyInstaller gratis)
-flujo delegate visual-polish "tarea aqui"   # o pipeline | brand | future | packaging
+flujo delegate visual-polish "tarea aqui"   # o creative-director | pipeline | brand | future | packaging
 flujo serve                 # alias de app
+flujo voz                   # asistente de voz local (opcional, requiere extra .[voz])
 
 # Plano
 flujo plano projects/plano/ejemplos/evento_ejemplo.json
