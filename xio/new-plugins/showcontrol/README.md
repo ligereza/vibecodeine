@@ -1,3 +1,5 @@
+> Indice operativo: ver xio/RUNBOOK.md
+
 # showcontrol -- the phone as a network show-control node
 
 Turns the on-device xio server (Termux + Shizuku) into a **VJ / lighting / show
@@ -175,3 +177,17 @@ the returned token into the panel's "token de show" box on your control tablet,
 and every mutating endpoint is locked to holders of the token. Rotating or
 clearing later requires the current token (TOFU). (Physical DMX512 via a USB
 dongle is out of scope non-root -- drive a network Art-Net/sACN node instead.)
+
+### Whole-server lock: XIO_SHOWCONTROL_TOKEN (public hotspot, GETs included)
+
+For shows where the hotspot is shared with the public, set an env var instead
+(or in addition): `export XIO_SHOWCONTROL_TOKEN="your-show-secret"` in
+`run_server.sh`'s env before launching the server. Every showcontrol route --
+GET included, e.g. `/status`, `/obs`, `/panel`, not just the mutating POSTs
+the show token above covers -- then requires a matching header:
+```bash
+curl -H "X-Xio-Token: your-show-secret" http://<phone>:5000/api/plugins/showcontrol/status
+```
+Missing or wrong header -> `401 {"error":"token requerido o invalido"}`.
+Compared with `hmac.compare_digest` (constant-time). Unset (default) -> no
+change from today, fully open. See `xio/RUNBOOK.md` section 5, Layer D.

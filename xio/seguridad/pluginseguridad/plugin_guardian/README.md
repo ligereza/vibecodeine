@@ -1,3 +1,5 @@
+> Indice operativo: ver xio/RUNBOOK.md
+
 # Plugin Guardian - Sistema de Seguridad y Auditoría
 
 ## 🛡️ Overview

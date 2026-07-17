@@ -90,7 +90,7 @@ py scripts/run_airdrop_checks.py "mensaje corto" --allow-airdrop-engine
 - No toca `src/flujo/airdrop.py` salvo autorizacion explicita con `--allow-airdrop-engine`.
 - Detecta rutas deformadas por Markdown/autolink como `[archivo.py](http...)`.
 
-## Que hace el runner (`scripts/run_airdrop_checks.py`, orden real verificado v0.48.5)
+## Que hace el runner (`scripts/run_airdrop_checks.py`, orden real verificado v0.52.0 (2026-07-16))
 
 1. `validate_airdrop` (motor Python `flujo.airdrop`, no bash).
 2. `airdrop dry-run` (`flujo.airdrop.scan_airdrop()`).
@@ -129,3 +129,24 @@ rm -rf .pytest_cache
 git status --short
 git log --oneline -5
 ```
+
+## Canal sin PC: airdrop-gate (verificado en codigo 2026-07-16, estreno pendiente)
+
+El mismo ZIP del protocolo se puede entregar SIN PC. El gate corre entero en
+GitHub Actions (.github/workflows/airdrop_gate.yml); el que entrega solo
+dispara:
+
+- Desde el Xiaomi (xio, Termux): `bash xio/new/airdrop_push.sh entrega.zip "mensaje"`
+  (requiere `pkg install gh` + token fine-grained solo-este-repo en
+  `$HOME/.airdrop_token`, chmod 600; NUNCA en /sdcard ni en el env del server).
+- Desde el iPhone con la app de GitHub (fallback manual, sin PC): crear un
+  Release con tag `airdrop-...` y adjuntar el ZIP; la misma app sirve luego
+  para revisar el diff y mergear el PR que abre el gate. Cualquier navegador
+  tambien vale.
+
+El workflow: descarga el ZIP del release, aplica guardas (sin rutas absolutas
+ni traversal; rechaza ZIPs que toquen `.github/` o `src/flujo/airdrop.py` --
+ese cambio requiere PC y revision explicita), extrae `_airdrop/`, corre
+`run_airdrop_checks.py --skip-push` (validate + apply + suite completa) y si
+queda verde abre un PR `airdrop/<tag>` listo para mergear desde el telefono.
+Rojo = nada se aplico a main; el log queda en el run de Actions.

@@ -127,18 +127,18 @@ export interface Pack {
 export const PACKS: Record<PackId, Pack> = {
   INFO: {
     id: 'INFO',
-    nombre: 'Testeo o Informativo (a elección)',
-    label: 'Pack 1 · Testeo o Informativo',
-    desc: '2 voluntarios · 1 stand 3×3 (9 m²)',
-    precio: 100000,
-    voluntarios: 2,
+    nombre: 'Informativo',
+    label: 'Pack 1 · Informativo',
+    desc: '6 voluntarios · 1 stand 3×3 (9 m²)',
+    precio: 250000,
+    voluntarios: 6,
     m2: 9,
     stands: 1,
     inclusiones: [
-      'Un stand, un servicio a elección: testeo o informativo',
-      'Material educativo e insumos preventivos',
+      'Stand informativo atendido',
+      'Material educativo + insumos preventivos',
       'Protectores auditivos, abanicos, suplementos',
-      'Tests de un solo uso',
+      'Tests de un solo uso (opcional)',
     ],
   },
   TESTEO: {

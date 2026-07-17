@@ -125,6 +125,156 @@ app.add_typer(brand_app, name="brand")
 suplementos_app = typer.Typer(help="Generación de contraportadas para suplementos RD.", no_args_is_help=True)
 app.add_typer(suplementos_app, name="suplementos")
 
+rd_app = typer.Typer(help="Base de datos RD: reactivos, packs, suplementos, productoras, eventos.", no_args_is_help=True)
+app.add_typer(rd_app, name="rd-db")
+
+
+@rd_app.command("build")
+def rd_build():
+    """(Re)construye data/rd.db desde las fuentes canonicas (reactivos, packs,
+    suplementos, productoras, eventos)."""
+    from .rd import build_rd_db
+
+    path = build_rd_db()
+    _ok(f"RD DB construida: {path}")
+
+
+@rd_app.command("reactivo")
+def rd_reactivo(
+    familia: str = typer.Option("", "--familia", "-f", help="Filtra por familia de sustancia (ej. MDMA)"),
+    reactivo: str = typer.Option("", "--reactivo", "-r", help="Filtra por reactivo (ej. Marquis)"),
+):
+    """Consulta la colorimetria presuntiva. El test es PRESUNTIVO: indica familia
+    posible, no identifica ni mide pureza."""
+    from .rd import disclaimer, reactivos_por_familia, reactivos_por_reactivo
+
+    if familia:
+        filas = reactivos_por_familia(familia)
+    elif reactivo:
+        filas = reactivos_por_reactivo(reactivo)
+    else:
+        _warn("Usa --familia MDMA o --reactivo Marquis")
+        raise typer.Exit(1)
+    _section("flujo · rd · reactivos")
+    for f in filas:
+        console.print(f"  {f['reactivo']:<12} {f['familia']:<20} {f['reaccion']:<24} {f['hex']}")
+    console.print(f"\n[dim]{disclaimer()}[/]")
+
+
+@rd_app.command("packs")
+def rd_packs():
+    """Lista los packs de servicio con precio e inclusiones."""
+    from .rd import packs as _packs
+
+    _section("flujo · rd · packs")
+    for p in _packs():
+        console.print(f"  [bold]{p['id']}[/] {p['nombre']} -- ${p['precio']:,} CLP ({p['voluntarios']} vol)")
+        for inc in p["inclusiones"]:
+            console.print(f"      - {inc}")
+
+
+@rd_app.command("eventos")
+def rd_eventos():
+    """Lista los eventos registrados con su pack sugerido."""
+    from .rd import eventos as _eventos
+
+    _section("flujo · rd · eventos")
+    for e in _eventos():
+        pack = e["pack_sugerido"] or "(sin match)"
+        console.print(f"  {e['nombre']}  |  {e['voluntarios']} vol -> {pack}  |  {e['fuente']}")
+
+
+@rd_app.command("productora")
+def rd_productora(slug: str = typer.Argument(..., help="Slug de la productora, ej. thegrid")):
+    """Perfil completo: instagram, aliases, tipos de fecha, venues (preferido
+    marcado) y logos."""
+    from .rd import productora as _productora
+
+    p = _productora(slug)
+    if p is None:
+        _warn(f"No hay productora '{slug}' (ver data/productoras/)")
+        raise typer.Exit(1)
+    _section(f"flujo · rd · productora · {p['nombre']}")
+    console.print(f"  Instagram: {p.get('instagram') or '-'}")
+    console.print(f"  Aliases: {', '.join(p['aliases']) or '-'}")
+    console.print(f"  Tipos de fecha: {', '.join(p['tipos_fecha']) or '-'}")
+    if p["venues"]:
+        console.print("  Venues:")
+        for v in p["venues"]:
+            estrella = "* " if v["preferido"] else "  "
+            canon = " (canonico)" if v["venue_id"] else ""
+            console.print(f"    {estrella}{v['venue_nombre']}{canon} [{v['estado']}]", markup=False)
+    else:
+        console.print("  Venues: (sin confirmar)")
+    for lg in p["logos"]:
+        console.print(f"  Logo: {lg['logo_id']} ({lg['estado']}) -> {lg['knowledge']}")
+
+
+@rd_app.command("venues")
+def rd_venues():
+    """Venues canonicos con preset recomendado y voluntarios minimos."""
+    from .rd import venues as _venues
+
+    _section("flujo · rd · venues")
+    for v in _venues():
+        vmin = v.get("voluntarios_min") or "?"
+        console.print(f"  {v['nombre']:<24} {v.get('tipo') or '-':<20} preset={v.get('preset_reco') or '-'}  vol_min={vmin}")
+
+
+@rd_app.command("por-tipo")
+def rd_por_tipo(tipo: str = typer.Argument(..., help="Tipo de fecha, ej. RAVE, FESTIVAL, AFTER")):
+    """Que productoras hacen fechas de un tipo dado."""
+    from .rd import productoras_por_tipo
+
+    slugs = productoras_por_tipo(tipo)
+    _section(f"flujo · rd · por-tipo · {tipo.upper()}")
+    if not slugs:
+        _warn(f"Ninguna productora registrada con tipo '{tipo}'")
+        return
+    for s in slugs:
+        console.print(f"  {s}")
+
+
+@rd_app.command("lookup")
+def rd_lookup(familia: str = typer.Argument(..., help="Familia de sustancia, ej. MDMA")):
+    """Consulta de operador en terreno: reactivos que marcan la familia + packs
+    que incluyen testeo + disclaimer, en una sola vista (JOIN reactivos+packs)."""
+    from .rd import lookup_familia
+
+    res = lookup_familia(familia)
+    _section(f"flujo · rd · lookup · {familia}")
+    if not res["reactivos"]:
+        _warn(f"Sin reacciones registradas para '{familia}'")
+    for f in res["reactivos"]:
+        console.print(f"  {f['reactivo']:<12} {f['familia']:<20} {f['reaccion']:<24} {f['hex']}")
+    packs_txt = ", ".join(f"{p['id']} (${p['precio']:,})" for p in res["packs_con_testeo"]) or "(ninguno)"
+    console.print(f"\n  Testeo incluido en packs: {packs_txt}")
+    console.print(f"\n[dim]{res['disclaimer']}[/]")
+
+
+@app.command("tapiz")
+def tapiz(modo: str = typer.Argument("demo", help="demo | stress | live")):
+    """Ecosistema Tapiz<->Psicosis<->Fungi: pipeline generativo (tools/compete_engine.py).
+
+    Cablea el cluster (compete_engine + tapiz_live_loop + telemetry + system_map)
+    al CLI para que sea reachable/usable, no codigo suelto. Exporta a tools/dist/.
+    """
+    from .paths import repo_root
+
+    flag = {"demo": "--demo", "stress": "--stress", "live": "--live"}.get(modo)
+    if not flag:
+        _warn("modo invalido: usa demo | stress | live")
+        raise typer.Exit(1)
+    script = repo_root() / "tools" / "compete_engine.py"
+    if not script.exists():
+        _warn(f"no existe {script}")
+        raise typer.Exit(1)
+    import subprocess
+
+    _section(f"flujo - tapiz {modo}")
+    raise typer.Exit(subprocess.call([sys.executable, str(script), flag]))
+
+
 knowledge_app = typer.Typer(help="Knowledge base local: productoras, venues, logos y ejemplos.", no_args_is_help=True)
 app.add_typer(knowledge_app, name="knowledge")
 
@@ -558,53 +708,6 @@ def verify(
             _warn("scripts/hub_smoke.py no existe; se omite hub smoke")
 
     _ok("verify OK")
-
-
-@app.command("voz")
-def voz():
-    """Ingreso de dato por voz: lanza el asistente local (CODE/VIBO/REDU).
-
-    Herramienta OPCIONAL (no es dependencia de flujo). Requiere el extra `voz`:
-        py -m pip install -e ".[voz]"
-    y un archivo tools/vibo_voz/.env con las keys (ver .env.example).
-
-    Sirve sobre todo para capturar ideas/pedidos hablando: VIBO da la cara para
-    lo personal/general y, al detectar tema de la ONG, salta REDU (confidencial).
-    """
-    from .paths import repo_root
-
-    root = repo_root()
-    script = root / "tools" / "vibo_voz" / "vibo.py"
-    if not script.exists():
-        _warn(f"No se encontró la herramienta de voz en {script}")
-        raise typer.Exit(1)
-
-    import importlib.util
-
-    requeridos = {
-        "google.genai": "google-genai",
-        "sounddevice": "sounddevice",
-        "pynput": "pynput",
-        "requests": "requests",
-        "dotenv": "python-dotenv",
-    }
-    faltan = [pip for mod, pip in requeridos.items() if importlib.util.find_spec(mod) is None]
-    if faltan:
-        _section("flujo · voz")
-        _warn("Faltan dependencias del extra opcional de voz: " + ", ".join(faltan))
-        console.print('Instálalo completo con:  py -m pip install -e ".[voz]"', markup=False)
-        console.print("Luego copia tools/vibo_voz/.env.example a .env y pon tus keys.")
-        raise typer.Exit(1)
-
-    env_file = script.parent / ".env"
-    if not env_file.exists():
-        _warn("Falta tools/vibo_voz/.env (copia .env.example y rellena las keys).")
-
-    _section("flujo · voz")
-    console.print("[cyan]Lanzando asistente de voz (F8 para hablar, ESC para salir)...[/]")
-    import subprocess
-
-    raise typer.Exit(subprocess.call([sys.executable, str(script)], cwd=str(script.parent)))
 
 
 @app.command()

@@ -84,7 +84,11 @@ xio/**/ntfy_topic.txt
 xio/**/.pc_watch.pid
 
 # cultura: credenciales locales (Tavily/Groq/Cerebras/Azure keys) -- nunca al repo
-cultura/.dev
+# glob cubre .dev y cualquier copia (.dev.limpio, .dev.bak, ...)
+cultura/.dev*
+
+# pieza MANIFIESTO #6 cron nocturno: variantes generadas (lapidas.log SI se versiona)
+tools/cron_nocturno/salidas/
 
 # Higiene de repo (no commitear ruído histórico)
 # Ver docs/HIGIENE_REPO.md y context/README.md
@@ -175,3 +179,5 @@ tools/sala3d/.cache/
 # backups locales (no versionar)
 backup_before_merge_*/
 backup_manifiestos_*/
+*.original.md
+xio/new-plugins/hub/hub.html

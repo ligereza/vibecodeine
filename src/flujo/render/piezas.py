@@ -397,7 +397,7 @@ def render_config(config_path: Path, repo: Optional[Path] = None) -> int:
 
     # Integración fuerte con flujo (colores + tono por defecto)
     try:
-        from ..flujo import load_styles, get_color
+        from ..brand import load_styles, get_color
         styles = load_styles()
         if styles and "palette" not in str(config_path):
             print(f"  → flujo aplicado automáticamente (ink={get_color('ink')}, accent={get_color('accent')})")
