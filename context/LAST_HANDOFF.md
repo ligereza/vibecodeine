@@ -46,21 +46,32 @@ inventario de ideas, higiene git, salud) y ejecucion central. Resultado:
   comando exacto en PLAN_SIGUIENTE_AGENTE.md P1.3. cultura/xiotech.md se
   queda y se commitea (contenido unico, 0 commits previos).
 
-## OLA 1 MASTER_PLAN (2026-07-16, tras el checkpoint)
+## OLAS MASTER_PLAN 1-3 (2026-07-16, tras el checkpoint; detalle y lecciones
+## en context/MASTER_PLAN.md secciones 2 y 6)
 
-context/MASTER_PLAN.md nuevo (doctrina + 7 frentes + reflexion critica). Ola 1
-ejecutada por 4 sonnets y auditada por el director (detalle y lecciones en
-MASTER_PLAN seccion 6): T-F2 docs re-verificados (INVENTORY estaba en v0.34.6),
-T-E1 esteganografia SVG (pieza MANIFIESTO #4), T-E2 tilde render (ya existia;
-tests nuevos + SPEC corregido), T-E3 cron nocturno (pieza #6, borrado ciego).
-Las 4 llaves que destraban H2 son del USUARIO: .noisette real, branch
-protection, PRs #48/#49, AccessibilityService xio.
+context/MASTER_PLAN.md nuevo (doctrina + 7 frentes + reflexion critica).
+Tres olas ejecutadas por sonnets y auditadas/corregidas por el director:
+- OLA 1 (PR #51): T-F2 docs re-verificados (INVENTORY estaba en v0.34.6);
+  T-E1 esteganografia SVG (pieza MANIFIESTO #4); T-E2 tilde render (ya
+  existia, SPEC stale; tests nuevos); T-E3 cron nocturno (pieza #6). Review
+  adversarial encontro BLOCKER real (purge sin guarda semanal) -- corregido
+  con guarda de semana ISO + tests antes de mergear.
+- OLA 2 (PR #52): T-A3 26 tests vj_set/git_performance + 2 bugs arreglados
+  (repo vacio RuntimeError; --limit 0 por truthiness); T-B3 xio/RUNBOOK.md
+  unico verificado contra scripts reales.
+- OLA 3 (PR #53): T-B2 gate opcional XIO_SHOWCONTROL_TOKEN (redeploy al
+  telefono PENDIENTE); T-D2 catalogo RD regenerable (docs/CATALOGO_RD.md);
+  FIX CRITICO: flujo cotizaciones estaba ROTO (brand.py vaciado dejo
+  ImportError en engine.py, piezas.py lo silenciaba) -- brand.py restaurado
+  como loader de projects/flujo/flujo.json, verificado en vivo.
+MANIFIESTO: 4/11 piezas. Las 4 llaves que destraban H2 son del USUARIO:
+.noisette real, branch protection, PRs #48/#49, AccessibilityService xio.
 
 ## Estado PRs (2026-07-16)
 - ABIERTOS esperando review del usuario: #48 (MAK grafo real + canvas + 6
   modos) y #49 (MAPA_GENERATIVO curador de 19 ideas).
-- Mergeados hoy temprano: #45 (wachuma rig + showcontrol v1.8) y #47 (MAK 4
-  APIs verificadas).
+- Mergeados hoy: #45, #47 (previos), #50 (checkpoint limpieza + v0.52.0),
+  #51 (MASTER_PLAN + ola 1), #52 (ola 2), #53 (ola 3).
 
 ## Reporte Formal de Verificacion y Tolerancia Cero a Errores
 - py -m compileall src/flujo: OK
