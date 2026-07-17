@@ -87,6 +87,9 @@ xio/**/.pc_watch.pid
 # glob cubre .dev y cualquier copia (.dev.limpio, .dev.bak, ...)
 cultura/.dev*
 
+# pieza MANIFIESTO #6 cron nocturno: variantes generadas (lapidas.log SI se versiona)
+tools/cron_nocturno/salidas/
+
 # Higiene de repo (no commitear ruído histórico)
 # Ver docs/HIGIENE_REPO.md y context/README.md
 # _airdrop_backups/, checkpoints/, _archive/ y reference_old/ son legacy y deben mantenerse mínimos en root.
