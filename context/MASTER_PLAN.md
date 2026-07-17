@@ -114,9 +114,9 @@ self-heal hotspot, MAK aislado 403. Gap honesto: reboot mata el server
   historial de hotspot no aparece documentado en ninguna fuente.
 
 ### F-C MAK (organismo research en la caja Linux)
-Estado: research 7 modos + codex + plataforma vivos en MAK; PRs #48/#49
-traen el codigo a main. Aislado del xio (403).
-- T-C1 [USUARIO]: mergear PR #48 y #49 (CI verde ya).
+Estado: research 7 modos + codex + plataforma vivos en MAK; PR #48 MERGEADO
+2026-07-17 (commit 6a2b147), codigo en main. PR #49 abierto (DRAFT). Aislado del xio (403).
+- T-C1 [USUARIO]: mergear PR #49 (CI verde ya).
 - T-C2 [director, tras merge]: revisar el gap de seguridad del puente
   xio_puente GET-only (que MAK jamas pueda escribir al xio) con test.
 - T-C3 [sonnet, H2]: pipeline dossier: MAK research -> markdown con fuentes

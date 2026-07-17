@@ -62,8 +62,8 @@ Plan largo y doctrina: context/MASTER_PLAN.md.
 
 ## PENDIENTES priorizados
 P1 (mecanico, ya):
-1. Usuario: revisar y mergear PR #48 y #49 (CI verde requerido).
-2. Usuario: borrar el duplicado de credenciales: `rm cultura/.dev.limpio`
+1. Usuario: revisar y mergear PR #49 (CI verde requerido). [PR #48 MERGEADO 2026-07-17]
+2. [HECHO 2026-07-17] cultura/.dev.limpio removido en checkpoint anterior
 3. Usuario: mover leftovers de cultura/ (copias ya guardadas en historia git;
    el clasificador de permisos bloqueo esta movida a los agentes):
    `cd cultura && mv BLENDER.trilogy_450frames.py blend-math-lab.html research_agent_documentacion.md research_agent_free_apis.json research_agent_free_apis.md research_agent_mistral_nemo.json trilogia.3d.blender.html xio-concept.html /c/IA/_flujo_local/cultura_leftovers/`
