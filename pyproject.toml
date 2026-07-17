@@ -34,16 +34,6 @@ desktop-extras = [
 build = [
     "pyinstaller>=6.0",  # free packaging to .exe; 'flujo package'. Not runtime dep.
 ]
-voz = [
-    # Asistente de voz local 'flujo voz' (tools/vibo_voz -> CODE/VIBO/REDU),
-    # usado sobre todo como ingreso de dato por voz. OPCIONAL: NO es dependencia
-    # de flujo, solo se instala si quieres la herramienta de voz.
-    "google-genai>=0.8.0",
-    "sounddevice>=0.4.6",
-    "pynput>=1.7.6",
-    "requests>=2.31",
-    "python-dotenv>=1.0",
-]
 
 [project.scripts]
 flujo = "flujo.cli:app"

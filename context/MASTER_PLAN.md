@@ -199,11 +199,13 @@ tras el barrido de 5 analistas de hoy:
    minutos (exportar un .noisette). MEJORA: T-A1 marcada bloqueante numero 1
    del plan entero; nada de F-A se intenta sin ella (regla anti-reintento ya
    existia, ahora tiene tarea dueno).
-3. HERRAMIENTAS ZOMBI. desktop/ (parked con Gemini), vibo_voz intake nunca
-   usado, gota_rd sin backend, compete_engine/tapiz_live_loop sin wiring
-   declarado. Cada zombi cuesta contexto de agente en cada sesion. MEJORA:
-   T-F3 les pone fecha; los que sobrevivan deben aparecer en un comando del
-   CLI o en un skill, o se archivan.
+3. HERRAMIENTAS ZOMBI. [PROGRESO 2026-07-17] vibo_voz ELIMINADO (las APIs de
+   MAK reemplazan su routing; contexto_repo.py rescatado a tools/); gota_rd
+   estaba RESUELTO hace tiempo (aviso del usuario). Quedan: desktop/ (parked
+   con Gemini), compete_engine/tapiz_live_loop sin wiring declarado. Cada
+   zombi cuesta contexto de agente en cada sesion. MEJORA: T-F3 les pone
+   fecha; los que sobrevivan deben aparecer en un comando del CLI o en un
+   skill, o se archivan.
 4. SEGURIDAD REPETITIVA. Ya van 3 incidentes de keys en working tree (2.txt,
    cultura/.dev, .dev.limpio). El patron es "research deja credenciales donde
    trabaja". MEJORA: regla nueva en seccion 3: todo agente que cree un archivo

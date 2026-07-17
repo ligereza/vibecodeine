@@ -44,11 +44,11 @@ _PROMPT = (
 
 
 def _env_fallback() -> dict[str, str]:
-    """Carga GEMINI_API_KEY* de .env raiz o tools/vibo_voz/.env a mano
-    (python-dotenv puede no estar instalado; leccion 2026-07-10)."""
+    """Carga GEMINI_API_KEY* del .env raiz a mano (python-dotenv puede no estar
+    instalado; leccion 2026-07-10)."""
     repo = Path(__file__).resolve().parents[3]
     valores: dict[str, str] = {}
-    for env_file in (repo / ".env", repo / "tools" / "vibo_voz" / ".env"):
+    for env_file in (repo / ".env",):
         if not env_file.is_file():
             continue
         try:

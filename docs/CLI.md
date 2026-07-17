@@ -56,7 +56,6 @@ brand           [LEGACY] usar knowledge/logos en su lugar
 diario/portal   daily, portal, cotizaciones
 web             app, serve, package (build .exe desktop)
 varios          plano, clean, init
-voz             voz (opcional, requiere extra .[voz]; asistente CODE/VIBO/REDU)
 ```
 
 **Datadrop:** `flujo datadrop scan` (incoming bulk), `list` (solo procesados), `ingest <archivo>`, `prepare` (paquete review `_review_package.txt`). UI principal: hub (`flujo app` -> Herramientas -> Datadrop).
@@ -134,7 +133,6 @@ flujo app --desktop         # ventana nativa (pywebview)
 flujo package               # construye .exe standalone (PyInstaller gratis)
 flujo delegate visual-polish "tarea aqui"   # o creative-director | pipeline | brand | future | packaging
 flujo serve                 # alias de app
-flujo voz                   # asistente de voz local (opcional, requiere extra .[voz])
 
 # Plano
 flujo plano projects/plano/ejemplos/evento_ejemplo.json
