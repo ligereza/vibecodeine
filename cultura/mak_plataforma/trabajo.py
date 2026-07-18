@@ -28,14 +28,20 @@ try:
 except Exception:  # noqa: BLE001 - si falla, asumimos online
     def red_ok():
         return True
+try:
+    import backlog  # noqa: E402
+except Exception:
+    backlog = None
 
 STATE = os.path.join(HOME, "plataforma/.trabajo_state.json")
 LOG = os.path.join(HOME, "plataforma/logs/trabajo.log")
 BACKLOG = os.path.join(HOME, "plataforma/backlog_codex.txt")
 SEMILLAS_F = os.path.join(HOME, "plataforma/semillas_latido.txt")
-CODEX_TOKEN_FILE = os.path.join(HOME, "codex/.token")
 RESEARCH = "http://127.0.0.1:8890/run"
 CODEX = "http://127.0.0.1:8891/run"
+BACKLOG_GEN = os.path.join(HOME, "plataforma/backlog.jsonl")
+INFORMES_DIRS = [os.path.join(HOME, "research", d) for d in ("informes", "cadenas", "paneles", "refutaciones", "grafos", "memoria")]
+# nota: dirs que no existen son saltados por cosechar
 
 
 def log(m):
@@ -69,15 +75,6 @@ def _save(s):
         pass
 
 
-def _codex_token():
-    try:
-        with open(CODEX_TOKEN_FILE, encoding="utf-8") as f:
-            m = re.search(r'CODEX_TOKEN\s*=\s*["\']?([^"\'\s]+)', f.read())
-            return m.group(1) if m else ""
-    except OSError:
-        return ""
-
-
 def _lineas(path, fallback):
     try:
         with open(path, encoding="utf-8") as f:
@@ -104,6 +101,10 @@ def _tarea(verbo, st):
     fuente = v["fuente"]
     sems = _lineas(SEMILLAS_F, roles.SEMILLAS)
     if fuente == "concepto":
+        if backlog is not None:
+            entrada = backlog.pop_pendiente(BACKLOG_GEN)
+            if entrada:
+                return ("research", {"modo": v["modo"], "tema": entrada["pregunta"], "densidad": "corto"})
         i = st.get("sem_idx", 0) % len(sems)
         st["sem_idx"] = i + 1
         return ("research", {"modo": v["modo"], "tema": sems[i], "densidad": "corto"})
@@ -134,6 +135,13 @@ def main():
     st = _state()
     if st.get("date") != hoy:
         st = {"date": hoy, "count": 0, "last": 0, "verbo_idx": 0}
+    if backlog is not None:
+        try:
+            n = backlog.cosechar(INFORMES_DIRS, BACKLOG_GEN)
+            if n:
+                log("%s cosecha: +%d preguntas al backlog generativo" % (ts, n))
+        except Exception:
+            pass
     if load1() > roles.LOAD_MAX:
         log("%s skip: load %.2f > %s" % (ts, load1(), roles.LOAD_MAX))
         return
@@ -164,17 +172,17 @@ def main():
     depto, payload = tarea
     url = RESEARCH
     if depto == "codex":
-        tok = _codex_token()
-        if not tok:
-            log("%s skip: codex sin token" % ts)
-            _save(st)
-            return
-        url = CODEX + "?t=" + urllib.parse.quote(tok)
+        url = CODEX
     try:
         resp = _post(url, payload)
         st["count"] = st.get("count", 0) + 1
         st["last"] = now
         _save(st)
+        if backlog is not None and st["count"] % 8 == 0:
+            try:
+                backlog.curar(BACKLOG_GEN)
+            except Exception:
+                pass
         etiqueta = payload.get("tema") or payload.get("pedido") or ""
         log("%s [%s] %s #%d/%d (%s) -> %s"
             % (ts, "on" if online else "OFF", verbo, st["count"], roles.MAX_DIA,

@@ -35,18 +35,46 @@ COMMANDS = {
 }
 
 
+def get_available_commands():
+    """Return only commands whose script files exist."""
+    available = {}
+    for cmd, (base_cmd, args) in COMMANDS.items():
+        # Extract script file path from base_cmd
+        script_file = None
+        for part in base_cmd:
+            if part.endswith('.py') or part.endswith('.sh'):
+                script_file = part
+                break
+
+        if script_file and Path(script_file).exists():
+            available[cmd] = (base_cmd, args)
+
+    return available
+
+
 def usage():
+    available = get_available_commands()
     print("Uso: py scripts/flujo.py <comando> [args...]")
     print("")
     print("Comandos disponibles:")
-    for cmd, (_, args) in COMMANDS.items():
+    for cmd in sorted(available.keys()):
+        _, args = available[cmd]
         arg_str = " ".join(f"<{a}>" for a in args)
         print(f"  {cmd:<18} {arg_str}")
     print("")
     print("Ejemplos:")
     print("  py scripts/flujo.py health")
     print("  py scripts/flujo.py new-flyer \"fiesta techno\"")
-    print("  py scripts/flujo.py job-from-text \"pedido rd\" inbox/correo.txt")
+
+
+def print_error_missing_command(cmd):
+    """Print error for a retired/missing command to stderr."""
+    available = get_available_commands()
+    sys.stderr.write(f"ERROR: comando '{cmd}' fue retirado\n")
+    sys.stderr.write("Sugerencia: ejecuta 'py -m flujo --help'\n")
+    sys.stderr.write("Comandos disponibles:\n")
+    for acmd in sorted(available.keys()):
+        sys.stderr.write(f"  {acmd}\n")
 
 
 def main():
@@ -58,11 +86,22 @@ def main():
     args = sys.argv[2:]
 
     if cmd not in COMMANDS:
-        print(f"ERROR: comando desconocido: {cmd}")
-        usage()
-        sys.exit(1)
+        print_error_missing_command(cmd)
+        sys.exit(2)
 
     base_cmd, expected = COMMANDS[cmd]
+
+    # Check if the script file exists
+    script_file = None
+    for part in base_cmd:
+        if part.endswith('.py') or part.endswith('.sh'):
+            script_file = part
+            break
+
+    if script_file and not Path(script_file).exists():
+        print_error_missing_command(cmd)
+        sys.exit(2)
+
     if len(args) < len(expected):
         print(f"ERROR: el comando '{cmd}' requiere {len(expected)} argumentos: {expected}")
         usage()

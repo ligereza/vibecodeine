@@ -88,6 +88,7 @@ def debatir(tema, replicas=2, densidad="medio"):
             "pregunta abierta para los otros panelistas."
             % (tema, p["angulo"], contextos[p["angulo"]]),
             escala_tok(900, densidad), order=orden)
+        print("HALLAZGO: " + p["angulo"] + " -- " + texto[:120].replace("\n", " "), flush=True)
         return p["angulo"], real, texto
 
     # 2. Posiciones iniciales en paralelo (ollama local va lento; los
@@ -116,6 +117,7 @@ def debatir(tema, replicas=2, densidad="medio"):
                 % (tema, _ronda, habla[p["angulo"]][-1][1][:1500], otros,
                    p["angulo"]),
                 escala_tok(600, densidad), order=orden)
+            print("HALLAZGO: replica/" + p["angulo"] + " -- " + texto[:120].replace("\n", " "), flush=True)
             return p["angulo"], real, texto
 
         with ThreadPoolExecutor(max_workers=4) as ex:
@@ -140,6 +142,7 @@ def debatir(tema, replicas=2, densidad="medio"):
         "DE BUSQUEDA:\n%s"
         % (tema, transcripcion[:24000], "\n".join(fuentes)),
         escala_tok(2200, densidad), order=["azure", "groq", "cerebras", "ollama"])
+    print("HALLAZGO: sintesis -- " + sintesis[:140].replace("\n", " "), flush=True)
 
     # 5. Correlacion semantica: el modelo capaz ordena/relaciona lo que
     #    dijo cada modelo (hilo comun, convergencias, tensiones, vacios).

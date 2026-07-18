@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """interfaz_codex.py -- web del departamento CODEX (puerto 8891).
 
-TOKEN OBLIGATORIO: el server NO arranca sin env CODEX_TOKEN (el codex
-puede ejecutar codigo en sandbox; la puerta va con llave). El watchdog lo
-exporta desde ~/codex/.token. Acceso: http://IP:8891/?t=TOKEN
+SIN AUTH: el codex corre abierto. Vive solo en xio Face A -- la LAN privada
+de casa (MAK Linux + Windows, unidos por wifi y cable ethernet directo) --
+y nunca sale a los shows (Face B = solo el telefono). No hay red publica que
+lo alcance, asi que no hay token ni puerta. Ver xio/FACES.md.
 """
 import html
 import json
@@ -23,7 +24,6 @@ from worker_codex import run_pedido  # noqa: E402
 from research_lib import mint_job_id  # noqa: E402
 
 PORT = int(os.environ.get("CODEX_PORT", "8891"))
-TOKEN = os.environ.get("CODEX_TOKEN", "")
 DIRS = {"piezas": os.path.join(BASE, "piezas"),
         "revisiones": os.path.join(BASE, "revisiones")}
 JOBS_FILE = os.path.join(BASE, "jobs.jsonl")
@@ -269,15 +269,6 @@ def _piezas():
 class H(BaseHTTPRequestHandler):
     server_version = "MAK-Codex/1.0"
 
-    def _auth(self):
-        qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
-        t = (qs.get("t") or [""])[0]
-        if t == TOKEN or self.headers.get("X-Token") == TOKEN:
-            return True
-        self._send('{"error":"token requerido (?t=...)"}', 401,
-                   "application/json")
-        return False
-
     def _send(self, body, code=200, ctype="text/html; charset=utf-8"):
         data = body.encode("utf-8")
         self.send_response(code)
@@ -288,8 +279,6 @@ class H(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     def do_GET(self):
-        if not self._auth():
-            return
         u = urllib.parse.urlparse(self.path)
         if u.path == "/api/jobs":
             with JOBS_LOCK:
@@ -320,8 +309,6 @@ class H(BaseHTTPRequestHandler):
         return self._send(PAGINA)
 
     def do_POST(self):
-        if not self._auth():
-            return
         if urllib.parse.urlparse(self.path).path == "/run":
             largo = min(int(self.headers.get("Content-Length") or 0), 12000)
             q = urllib.parse.parse_qs(self.rfile.read(largo).decode())
@@ -349,11 +336,6 @@ class Servidor(ThreadingHTTPServer):
 
 
 def main():
-    if not TOKEN:
-        print("[codex] FALTA CODEX_TOKEN en el entorno; no arranco "
-              "(la puerta va con llave). Genera uno en ~/codex/.token.",
-              file=sys.stderr)
-        return 1
     for d in DIRS.values():
         os.makedirs(d, exist_ok=True)
     _cargar_jobs()
@@ -364,7 +346,7 @@ def main():
 
     signal.signal(signal.SIGTERM, apagar)
     signal.signal(signal.SIGINT, apagar)
-    print("[codex] en http://0.0.0.0:%d (token requerido)" % PORT, flush=True)
+    print("[codex] en http://0.0.0.0:%d (abierto, sin token)" % PORT, flush=True)
     server.serve_forever()
     return 0
 
