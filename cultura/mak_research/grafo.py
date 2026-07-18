@@ -36,6 +36,26 @@ MAX_FANOUT = 6       # aristas saliendo de un mismo nodo
 MAX_FANIN = 6        # aristas entrando a un mismo nodo
 
 
+def _nodo_con_fallback(llm, m, system, contexto, max_tok):
+    """Espejo de cadena.py:_paso_con_fallback para nodos de grafo. Primero
+    intenta SOLO el proveedor asignado al nodo (order=[m]); si ese unico
+    proveedor falla (RuntimeError), reintenta con el resto de llm.order
+    (excluyendo m). A diferencia de cadena.py -- donde el "resto" son los
+    proveedores que vienen DESPUES en el orden posicional de la cadena --
+    un nodo de grafo no tiene cadena posicional propia (el grafo define
+    dependencias, no una secuencia de proveedores), asi que el resto es
+    el orden global completo de llm.order menos m. El primer intento
+    fallido queda registrado en llm.errors (call() lo acumula), asi el
+    fallo de un proveedor deja de ser invisible por-nodo."""
+    try:
+        return llm.call(system, contexto, max_tok, order=[m])
+    except RuntimeError:
+        resto = [x for x in llm.order if x != m]
+        if not resto:
+            raise
+        return llm.call(system, contexto, max_tok, order=resto)
+
+
 def _tipo(nd):
     t = nd.get("tipo")
     if t:
@@ -194,12 +214,11 @@ def ejecutar_grafo(tema, nodes, conns, densidad="medio", memoria_ctx=""):
             "sintesis quimica ni cultivo, jamas perfilar personas reales." % m)
         print("STATUS: Nodo %d/%d (%s)..." % (i + 1, len(orden), m), flush=True)
         try:
-            texto, real = llm.call(
-                system,
+            texto, real = _nodo_con_fallback(
+                llm, m, system,
                 contexto + "\n\nAporta tu analisis (250-350 palabras), "
                 "construyendo sobre el contexto previo sin repetirlo.",
-                escala_tok(700, densidad),
-                order=[m] + [x for x in llm.order if x != m])
+                escala_tok(700, densidad))
         except RuntimeError as e:
             texto, real = "[nodo %s fallo: %s]" % (m, e), None
         salidas[m] = texto
