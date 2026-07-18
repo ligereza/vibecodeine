@@ -1,29 +1,52 @@
 # LAST HANDOFF -- estado para el proximo agente
 
-Version: 0.52.0 | Fecha: 2026-07-18T00:30 | Identidad: Cauce | sesion autonoma: director+haiku (entender sin leer / mejorar sin escribir).
+Version: 0.52.0 | Fecha: 2026-07-18 | Cauce | sesion: GODSPEED (director+haiku). Handoff Claude->Claude, denso, ledger real.
 
-## Sesion 2026-07-18 (autonoma, PR #71 -- director + subagentes haiku)
-Doctrina "dios teorico haiku": el director no lee ni escribe, solo piensa/delega/verifica.
-Lectores haiku con schema forzado + campo de honestidad; verificacion mecanica (grep/build)
-de cada claim; deteccion de contradicciones en las costuras.
-- flujo: dispatcher scripts/flujo.py da error claro pa 13 comandos retirados (antes fallo
-  silencioso) + tests; 21 tests smoke pa flujo.serve (sin cobertura antes). 2 bugs
-  ALUCINADOS por lectores REFUTADOS por grep (mapping.html "roto" = lo provee web/public/;
-  3/5 gaps de cobertura falsos).
-- MAK codex: AUTH OPCIONAL (Face A LAN privada). interfaz_codex.py + watchdog corren codex
-  ABIERTO sin CODEX_TOKEN (patron de research :8890). Reversible (reponer ~/codex/.token).
-  Flip en vivo = operador, ver cultura/mak_codex/DEPLOY_OPEN.md (el guardrail bloquea a
-  Claude de SSH/token contra MAK). tools/mak/delegar.py = bridge LAN (salud/research/codex).
-- MAK research: cultura/mak_research/retencion.py rota informes (crecian sin limite). +17 tests.
+## Sesion 2026-07-18 -- PR #71 draft (rama worktree-god-haiku-fixes)
+
+### HECHO Y VERIFICADO
+- flujo: scripts/flujo.py dispatcher -> error+exit2 pa 13 comandos retirados (antes fallo
+  silencioso) + test_flujo_dispatcher.py. +21 tests smoke flujo.serve (0 cobertura antes).
+  Suite worktree verde (644 passed 1 skip tras borrar tests de token; era 648).
+  2 bugs ALUCINADOS por lectores haiku REFUTADOS mecanicamente (mapping.html "roto" = lo
+  provee web/public/, probado con el build; 3/5 gaps de cobertura falsos, matados en la costura).
+- MAK auth: BORRADO TOTAL de token/auth en codex+research (NO "opcional" -- eliminado del codigo):
+  interfaz_codex.py (sin _auth/TOKEN), research/interfaz.py (sin _check_auth), hub.py+trabajo.py
+  (sin _codex_token, sin proxy ?t=, sin /api/codex_token), watchdog_mak.sh (arranca abierto),
+  patch_interfaz.py BORRADO (era el script que inyectaba el auth de research). delegar.py sin token.
+- DESPLEGADO EN VIVO al box 192.168.50.2: copiados interfaz_codex.py + watchdog_mak.sh
+  (codex_lib.py NO -- no cambio, copiarlo regresa el vivo); removido ~/codex/.token; codex
+  reiniciado. VERIFICADO: curl :8891/api/jobs -> 200 SIN token; job real resumir_jobs.py corrio
+  -> listo. research :8890 ya era auth-opcional -> abierto igual. Confirme vivo==mirror byte-
+  identico salvo borrado de token ANTES de copiar (0 divergencia). Detalle: DEPLOY_OPEN.md.
+- MAK research: cultura/mak_research/retencion.py rota informes sin limite. +17 tests.
 - MAK codex fiabilidad: cultura/mak_codex/fallback_util.py agrega TODOS los coders fallidos
-  (no solo el ultimo). +24 tests. FALLBACK_FINDINGS.md = integracion pendiente en CoderLLM.
-- xio: FACES.md define Face A (casa: Linux MAK + Windows) vs Face B (show: SOLO telefono, el
-  Linux no sale). Corrige la confusion 32-clientes-sin-AP = NO es exposicion de codex.
-- Suite: 648 passed, 1 skipped. Rama worktree-god-haiku-fixes, PR #71 draft (10 commits).
-- PENDIENTE humano: (a) deployar codex-abierto en el box vivo (DEPLOY_OPEN.md, 1 comando `!`);
-  (b) correr job codex real post-deploy; (c) integrar fallback_util en codex_lib.py:110 (needs box).
+  (no solo el ultimo). +24 tests + FALLBACK_FINDINGS.md.
+- xio: FACES.md (Face A casa Linux+Windows, wifi + cable ethernet directo / Face B show SOLO
+  telefono, el Linux no sale). Codex nunca en la red del show -> la confusion 32-clientes-sin-AP
+  NO es exposicion de codex.
+- skill .claude/skills/godspeed/SKILL.md: doctrina director+haiku + fallas reales de esta sesion.
 
-## Sesion 2026-07-17T22:30-23:00 (autonoma, cierre)
+### NO HECHO (real, sin maquillar)
+- Pausa-en-error (#1 del backlog MAK): NO existe en NINGUN lado. Verificado exhaustivo: 3 stores
+  (WEB/LOCAL/MAK), todas las worktrees (incl. mak-research-cultural en .claude y en _flujo_local),
+  el stash, keyword ES + EN (research/resume/pause), por directorio, y por fecha. investigar()
+  sigue PLANO (topic,iteraciones,depth,providers,densidad), 7819 bytes identico en los 3.
+  Solo existe el DISEÑO (cultura/mak_plataforma/diseno/eventos_y_backlog.md) + el emisor vivo
+  (research_lib.emitir_evento/mint_job_id; worker.py intercepta STATUS:->node_start,
+  HALLAZGO:->llm_result). El handoff previo lo marco honestamente "NO COMPLETADO"; su linea
+  "investigar() fue reescrito" NO coincide con el codigo pero NO fue mentira (trabajo perdido/
+  optimista). PROXIMO: CONSTRUIR desde el diseño sobre el emisor -- NO re-buscar, no esta.
+- fallback_util.py NO integrado en codex_lib.py CoderLLM.call (additive listo, necesita el box).
+- retencion.py y fallback_util NO desplegados al box (solo en repo/PR).
+- Emisor semantico (HALLAZGO:) solo en research.py/generar.py/debug.py; falta en
+  cadena/refutar/panel/grafo/memoria/revisar/testear.py (mecanico, delegable por archivo).
+- Firewall Windows ollama sigue "Any remote address" (bind a 192.168.50.1 ya cierra el riesgo real).
+
+### TOPOLOGIA (memoria: project_tres_repos_topologia -- NO asumir que uno refleja a otro)
+WEB = repo publico, solo commits finales. LOCAL = C:/IA/flujo (Windows), toda la info.
+LINUX/MAK = 192.168.50.2 station research+codex, codigo SUELTO en ~/research ~/codex ~/plataforma
+(NO es clone del repo). Una worktree off origin/main = sabor WEB; puede faltarle trabajo de LOCAL/MAK.
 
 ## Sesion 2026-07-17T22:30-23:00 (autonoma, cierre)
 - Cleanup: PR #48 stale refs (updated MASTER_PLAN.md, PLAN_SIGUIENTE_AGENTE.md), 9 cultura/ leftovers moved out, docs/DIRECTOR_PLAN.md archived, branch/file trash cleaned

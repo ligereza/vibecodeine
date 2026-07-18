@@ -1,62 +1,40 @@
-# Desplegar codex ABIERTO (sin token) en MAK
+# Codex ABIERTO en MAK -- YA DESPLEGADO (2026-07-18)
 
-Contexto: `interfaz_codex.py`, `codex_lib.py` y `watchdog_mak.sh` (este repo,
-cultura/) han sido limpiados completamente de token: NO hay claves en el codigo,
-NO hay archivos .token/.token.disabled, NO hay variables CODEX_TOKEN en el
-entorno. Codex corre 100% abierto en xio Face A (LAN privada casa: Linux MAK +
-Windows; el Linux nunca sale a los shows -> ver `xio/FACES.md`). Desplegar el
-codigo limpio al box.
+ESTADO: **HECHO Y VERIFICADO.** No hay que correr nada de nuevo salvo que se
+vuelva a caer o se toque la topologia.
 
-El agente Claude NO puede hacer esto (el guardrail bloquea SSH que toque la
-configuracion remota). Corre TU una de estas, con el prefijo `!` en la
-consola de Claude Code o en cualquier terminal.
+## Que se hizo (2026-07-18)
+- Se borro TODO el token/auth del codigo (codex + research). Detalle en PR #71.
+- Se desplegaron al box vivo `192.168.50.2` SOLO los 2 archivos que cambiaron:
+  - `~/codex/interfaz_codex.py`  (sin `_auth`, sin `TOKEN`)
+  - `~/plataforma/watchdog_mak.sh`  (arranca codex sin token)
+  - `codex_lib.py` NO se toco -> NO se copio (copiarlo regresaria el vivo).
+- Se removio `~/codex/.token` del box.
+- Se reinicio codex. Verificado: `curl http://192.168.50.2:8891/api/jobs` -> **200**
+  sin token; log dice `(abierto, sin token)`; un job real (`resumir_jobs.py`)
+  corrio y quedo `listo`.
 
-## Opcion A -- el box tiene este repo clonado
+Antes del deploy confirme que el `interfaz_codex.py` y el `watchdog_mak.sh`
+vivos eran byte-identicos al mirror del repo salvo el borrado de token -> deploy
+sin perdida (0 divergencia).
 
-    ! ssh mak@192.168.50.2 "cd ~/<repo>/cultura && \
-      cp mak_codex/interfaz_codex.py ~/codex/interfaz_codex.py && \
-      cp mak_codex/codex_lib.py ~/codex/codex_lib.py && \
-      cp mak_plataforma/watchdog_mak.sh ~/plataforma/watchdog_mak.sh && \
-      rm -f ~/codex/.token ~/codex/.token.disabled; \
-      pkill -f codex/interfaz_codex.py; sleep 1; \
-      setsid python3 ~/codex/interfaz_codex.py >>~/plataforma/logs/codex.log 2>&1 </dev/null & \
-      sleep 1; echo 'codex reiniciado ABIERTO (sin token)'"
+## Re-desplegar (solo si hace falta otra vez)
+Desde Git Bash de Windows. NO copiar codex_lib.py. Sin placeholder `<repo>`:
 
-## Opcion B -- copiar desde el Windows (no hace falta repo en el box)
+    scp /c/IA/flujo/.claude/worktrees/god-haiku-fixes/cultura/mak_codex/interfaz_codex.py mak@192.168.50.2:~/codex/interfaz_codex.py
+    scp /c/IA/flujo/.claude/worktrees/god-haiku-fixes/cultura/mak_plataforma/watchdog_mak.sh mak@192.168.50.2:~/plataforma/watchdog_mak.sh
+    ssh mak@192.168.50.2 "rm -f ~/codex/.token; pkill -f codex/interfaz_codex.py; sleep 1; setsid python3 ~/codex/interfaz_codex.py >>~/plataforma/logs/codex.log 2>&1 </dev/null & sleep 1; echo OK-abierto"
 
-    ! W=C:/IA/flujo/.claude/worktrees/god-haiku-fixes; \
-      scp "$W/cultura/mak_codex/interfaz_codex.py" mak@192.168.50.2:~/codex/ && \
-      scp "$W/cultura/mak_codex/codex_lib.py" mak@192.168.50.2:~/codex/ && \
-      scp "$W/cultura/mak_plataforma/watchdog_mak.sh" mak@192.168.50.2:~/plataforma/watchdog_mak.sh && \
-      ssh mak@192.168.50.2 "rm -f ~/codex/.token ~/codex/.token.disabled; \
-        pkill -f codex/interfaz_codex.py; sleep 1; \
-        setsid python3 ~/codex/interfaz_codex.py >>~/plataforma/logs/codex.log 2>&1 </dev/null & \
-        sleep 1; echo 'codex reiniciado ABIERTO (sin token)'"
+Verificar (200): `curl -s -o /dev/null -w "%{http_code}\n" http://192.168.50.2:8891/api/jobs`
 
-## Verificar (deberia dar 200 sin token)
+El agente Claude NO puede correr esto (el guardrail bloquea SSH que toca auth
+remota). Lo corre el operador con `!` o en cualquier terminal.
 
-    ! curl -s -o /dev/null -w "%{http_code}\n" http://192.168.50.2:8891/api/jobs
-
-## Usar despues del deploy
-
-Codex corre abierto en http://192.168.50.2:8891. Delegar jobs desde Windows:
-
+## Usar
     py tools/mak/delegar.py codex --pedido "<lo que sea>" --modo generar
-    # abierto -> sin token requerido
+    # abierto: sin token
 
-## Revertir (si la topologia cambia y necesitas seguridad)
-
-Si algun dia la LAN Face A se expande a nodos publicos, recuperar el token gate
-desde una version anterior del repo:
-
-    ! ssh mak@192.168.50.2 "cd ~/<repo> && git checkout HEAD~N -- cultura/mak_codex/interfaz_codex.py"
-    # (donde HEAD~N es una version anterior con token)
-
-O implementar auth minima en interfaz_codex.py (ej. CORS restrictivo, IP whitelist).
-
-## Regla de seguridad
-
-Codex es abierto por arquitectura: confía en que la LAN privada Face A
-no recibe trafico externo. La guardia de contenido (sandbox + static filter)
-sigue siendo la unica defensa. Si esa confianza cambia, volver a poner el
-token o restringir el endpoint a localhost.
+## Revertir (si Face A deja de ser privada)
+`git checkout <commit-con-token> -- cultura/mak_codex/interfaz_codex.py` y
+re-desplegar, o implementar auth minima (IP whitelist / bind a localhost).
+research (:8890) ya era auth-opcional (solo si `INTERFAZ_TOKEN`), esta abierto igual.
