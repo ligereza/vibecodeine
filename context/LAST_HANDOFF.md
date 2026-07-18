@@ -1,13 +1,39 @@
 # LAST HANDOFF -- estado para el proximo agente
 
-Version: 0.55.0 | Fecha: 2026-07-18T07:10 | Identidad: Cauce | sesion: GODSPEED-4 (director) -- PR #72 MERGEADO a main, PR #73 rebaseado sobre 0.55.0.
+Version: 0.55.0 | Fecha: 2026-07-18T07:55 | Identidad: Cauce | sesion: GODSPEED-4 completa -- PRs #72-#77 mergeados + autoportfolio catalogo vivo LIVE.
 
-## Sesion 2026-07-18T07:00 (GODSPEED-4, director): merge #72 + resolucion conflicto #73
-- PR #72 (pausa-en-error, bump 0.55.0) MERGEADO a main con CI matrix verde (ubuntu+windows).
-- Esta rama (#73) mergeo origin/main; conflictos solo en LAST_HANDOFF/SESSION_STATE,
-  resueltos conservando AMBAS narrativas (regla godspeed). Codigo sin conflicto.
-- Worktree god-mak-ola2 seguia lockeado por sesion viva (pid 35300) -- se resolvio en
-  worktree detached aparte, sin tocar la del otro agente.
+## Sesion 2026-07-18T07:00-07:55 (GODSPEED-4, director Fable + 4 haikus + 2 sonnets) -- CIERRE
+
+MERGEADO A MAIN (CI matrix verde en cada uno, en orden): #72 (pausa-en-error, 0.55.0),
+#73 (rechazo /run + HALLAZGO + works.json CI, rebaseado resolviendo handoffs), #74
+(test_smoke sin skip: imagen PIL en el test), #75 (pieza #10 paleta madre: 5 tests
+determinismo/trazabilidad + Omega11 registrada en SEMILLAS, retroactiva y honesta),
+#76 (fix critico: el paso de PR #73 iba a PISAR el works.json CURADO de la galeria
+publica el lunes -- schema clash EN/ES verificado contra el sitio vivo; el catalogo
+generado ahora se publica como flujo-works.json), #77 (paleta_reactivos.py sincronizada
+con dato DanceSafe verificado PR #70: 23 reacciones + fuente, Test 5 exige igualdad
+byte-identica; residuo de pieza #10 CERRADO).
+
+AUTOPORTFOLIO VIVO (pedido del usuario, lane director+haikus): workflow disparado a mano
+tras #76, flujo-works.json (8 obras) publicado a portfolio-auto; PR #4 de portfolio-auto
+mergeado (seccion "Catalogo vivo" en proyectos.html, tolerante a 404, escapado, no toca
+galeria curada); verificado LIVE con curl (seccion presente + data 200). Refresh semanal
+automatico lunes 06:00 UTC.
+
+MANIFIESTO: pieza #10 ya estaba construida desde PR #38 (los lectores decian "libre" --
+refutado con git log); conteo real >= 6/11. PLAN_UPSCALE 0.53->0.55 CONSUMIDO: Opciones
+A, B (via ratchet de #10) y C completas.
+
+LECCION NUEVA (agregada a skill godspeed): NUNCA borrar la rama head antes de confirmar
+state==MERGED -- un gh pr merge fallido (branch behind) + cleanup en cadena cerro PR #77;
+recuperado desde el sha local (git branch <name> <sha> + push + gh pr reopen).
+
+PENDIENTES USUARIO (sin cambio): noisette ojo humano, PAT Termux, AccessibilityService,
+data 13 productoras, autostart ollama Windows, specs venues.
+
+Detalle del merge #72/#73: conflictos solo en LAST_HANDOFF/SESSION_STATE, resueltos
+conservando AMBAS narrativas (regla godspeed). Worktree god-mak-ola2 estaba lockeado
+por sesion viva (pid 35300) -- se resolvio en worktree detached aparte, sin tocarla.
 
 ## Sesion 2026-07-18T02:00-03:05 (GODSPEED-3, director Fable, ola 2 -- esta rama, PR #73)
 
@@ -173,11 +199,11 @@ Ruta 0.55: context/PLAN_UPSCALE.md -- Opcion A (MAK pausa-en-error) DESBLOQUEADA
   (WEB/LOCAL/MAK), todas las worktrees (incl. mak-research-cultural en .claude y en _flujo_local),
   el stash, keyword ES + EN (research/resume/pause), por directorio, y por fecha. investigar()
   sigue PLANO (topic,iteraciones,depth,providers,densidad), 7819 bytes identico en los 3.
-  Solo existe el DISEÑO (cultura/mak_plataforma/diseno/eventos_y_backlog.md) + el emisor vivo
+  Solo existe el DISENO (cultura/mak_plataforma/diseno/eventos_y_backlog.md) + el emisor vivo
   (research_lib.emitir_evento/mint_job_id; worker.py intercepta STATUS:->node_start,
   HALLAZGO:->llm_result). El handoff previo lo marco honestamente "NO COMPLETADO"; su linea
   "investigar() fue reescrito" NO coincide con el codigo pero NO fue mentira (trabajo perdido/
-  optimista). PROXIMO: CONSTRUIR desde el diseño sobre el emisor -- NO re-buscar, no esta.
+  optimista). PROXIMO: CONSTRUIR desde el diseno sobre el emisor -- NO re-buscar, no esta.
 - [HECHO 2026-07-17 sesion godspeed-2] fallback_util INTEGRADO en codex_lib.py CoderLLM.call
   (import defensivo try/except; al agotar la cadena el RuntimeError agrega TODOS los intentos
   via aggregate_failures; exito byte-identico; +3 tests integracion = 27 en test_mak_fallback).
