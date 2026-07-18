@@ -7,6 +7,8 @@ original doc/script for depth (do not delete those, they stay as the deep-dive).
 
 Written 2026-07-16 by consolidating xio/**/*.md + the real scripts under xio/new/.
 
+**ESSENTIAL FIRST READ: [xio/FACES.md](FACES.md) — two-network architecture (studio LAN vs. show hotspot). Codex and MAK never run on the show. Read this to avoid misunderstanding the security model.**
+
 ## Index
 
 1. [Variables](#1-variables) -- IPs/ports, verify per show

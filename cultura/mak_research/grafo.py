@@ -203,6 +203,7 @@ def ejecutar_grafo(tema, nodes, conns, densidad="medio", memoria_ctx=""):
         except RuntimeError as e:
             texto, real = "[nodo %s fallo: %s]" % (m, e), None
         salidas[m] = texto
+        print("HALLAZGO: nodo " + m + " -- " + texto[:100].replace("\n", " "), flush=True)
         detalle.append({"nodo": m, "proveedor_real": real,
                         "predecesores": preds.get(m, []), "texto": texto})
 
@@ -212,6 +213,7 @@ def ejecutar_grafo(tema, nodes, conns, densidad="medio", memoria_ctx=""):
               for d in detalle]
     print("STATUS: Correlacionando salida...", flush=True)
     correlacion, _ = correlacionar(llm, tema, piezas, densidad)
+    print("HALLAZGO: correlacion -- " + (correlacion or "")[:120].replace("\n", " "), flush=True)
 
     return {
         "tema": tema,

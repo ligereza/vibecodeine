@@ -34,6 +34,11 @@ desde la cara" era el pedido explícito. Es un intercambio consciente, no un
 descuido. Si la LAN se abriera a más equipos, se revierte: el hub pediría el
 token, o solo aceptaría `/api/ejecutar` desde localhost.
 
+> **Nota 2026-07-18:** La puerta de token ha sido removida. Codex ahora corre
+> completamente abierto en la LAN privada Face A sin autenticación, dado que no
+> hay exposición a red pública (MAK + Windows solo, conectados por cable ethernet).
+> La reflexión de arriba documenta el razonamiento que lo llevó a ese punto.
+
 ---
 
 *El blindaje honesto admite dónde no llega y por qué. Una puerta que puede

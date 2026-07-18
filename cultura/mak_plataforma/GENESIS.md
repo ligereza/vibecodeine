@@ -18,7 +18,7 @@ del repo**. Aquí no hay commits: hay órganos que corren y piezas que nacen.
 | Órgano | Puerto | Qué hace |
 |---|---|---|
 | **research** | :8890 | Investigación cultural multi-modelo: 7 modos (single, pipeline, discussion, adversarial, grafo, memoria, corpus) + micelio semántico del archivo |
-| **codex** | :8891 | FULL CODER: genera, revisa y testea código con la cadena de modelos; sandbox con límites de recursos y filtro estático; token obligatorio |
+| **codex** | :8891 | FULL CODER: genera, revisa y testea código con la cadena de modelos; sandbox con límites de recursos y filtro estático; abierto en LAN privada (sin token) |
 | **lenguaje** | (cli/cron) | El idioma como señal: mide tildes/eñes/aperturas de cada pieza, corrige con el modelo capaz, construye el léxico vivo del corpus |
 | **plataforma** | :8900 | El esqueleto que aloja a los demás: hub, salud, guardia de recursos, descargas seguras, respaldos, watchdog |
 | **xio_puente** | (daemon) | Ojo de solo-lectura sobre el teléfono Xiaomi (router del internet): telemetría, historia, alertas ntfy |
@@ -38,7 +38,7 @@ del repo**. Aquí no hay commits: hay órganos que corren y piezas que nacen.
 1. **Sin sudo.** Todo el organismo vive en espacio de usuario.
 2. **El teléfono es sagrado.** El internet de MAK entra por el hotspot del
    Xiaomi (gateway wifi). Hacia él solo peticiones GET de lectura; jamás un
-   endpoint que mute red, hotspot o carga.
+   endpoint que mute red, hotspot o carga. (See `xio/FACES.md` for the two-network architecture: this rule applies to FACE A only.)
 3. **Guardia de recursos.** Ningún trabajo pesado arranca si load > 6,
    memoria < 2 GB o disco < 5 GB (`plataforma/guardia.py`).
 4. **Descargas con allowlist.** Solo https hacia dominios conocidos, con
@@ -61,7 +61,7 @@ python3 ~/plataforma/salud.py
 http://192.168.50.2:8890        # canvas + micelio
 
 # codex
-http://192.168.50.2:8891/?t=TOKEN   # token en ~/codex/.token
+http://192.168.50.2:8891        # abierto, sin token (LAN privada Face A)
 python3 ~/codex/generar.py "un parser de csv a json" --densidad corto
 
 # lenguaje

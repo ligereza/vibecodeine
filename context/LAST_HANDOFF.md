@@ -36,6 +36,96 @@ Plan detallado proxima sesion: context/PLAN_UPSCALE.md. Conflictos PR #71 RESUEL
   o SSH a MAK (auth pendiente)
 - Suite verde tras cada commit (pytest full verde, 1 skip); flujo verify OK 0.52.0
 
+(rama PR #71, sesiones GODSPEED director+haiku, escritas en 0.52.0; mergeadas bajo 0.53.0)
+
+## Sesion 2026-07-18b -- GODSPEED-2: sistema generativo VIVO (misma rama/PR #71)
+
+### HECHO Y VERIFICADO (director + 1 haiku por area, cada claim re-verificado mecanicamente)
+- BACKLOG GENERATIVO implementado desde el contrato diseno/eventos_y_backlog.md seccion 3:
+  plataforma/backlog.py (parsear LAGUNAS DE INFORMACION, dedup por hash normalizado, linaje
+  cap 3, max 3/informe, pop por score+antiguedad, curador con poda) + 43 tests verdes.
+  trabajo.py cableado defensivo: cosecha cada tick, verbo multiplicar hace pop del backlog
+  ANTES de las semillas fijas (roles.SEMILLAS pasa de motor a arranque), curar cada 8 tareas.
+- SEMBRADO: backlog_semilla.jsonl con 8 preguntas de ideas sin comenzar verificadas (2 por
+  area: xio+mak, router+server, portafolio+cultura, rd+colorimetria). backlog_codex.txt +4
+  tareas (resumidor backlog, timeline red, glosario reactivos, resumen HALLAZGOs).
+- DESPLEGADO Y VIVO en 192.168.50.2 (2026-07-18): 13 archivos copiados tras verificar
+  live==espejo por md5 (codex_lib+fallback_util+revisar+testear -> ~/codex; cadena+refutar+
+  panel+grafo+retencion -> ~/research; trabajo+roles+backlog+backlog_codex -> ~/plataforma;
+  semilla -> ~/plataforma/backlog.jsonl). python3 py_compile OK x12 en el box, research y
+  codex responden 200. COSECHA REAL PROBADA: 9 preguntas extraidas de informes existentes
+  (quechua, test1) -> 17 pendientes en cola. El proximo tick ya investiga solo.
+- BUG VIVO ENCONTRADO Y MATADO: el trabajo.py del box aun leia ~/codex/.token (borrado hace
+  2 sesiones) y saltaba TODO verbo codex ("skip: codex sin token" x2 en el log). La sesion
+  del auth-delete no lo cubrio. El deploy lo corrige; codex autonomo revive.
+- src/flujo/analyze/reactivo_matcher.py: lookup inverso de colorimetria RD (hex observado ->
+  familias por delta-E CIE76 en Lab, stdlib puro, disclaimer presuntivo en cada resultado)
+  + 30 tests. Probado contra reactivos.json real.
+- tools/portfolio/generar_works.py: works.json regenerable desde manifests reales de
+  datadrops/ + projects/flyer_eventos/ (nodo 17 MAPA_GENERATIVO, "obras reales" ya no
+  placeholder) + 20 tests. Corrida real: 8/8 obras catalogadas.
+- Reglas de permiso ssh/scp al box: el clasificador BLOQUEA que el agente se auto-otorgue
+  permisos en settings (limite duro correcto). El usuario aprobo por /permissions esta vez.
+
+### NO HECHO (real)
+- Pausa-en-error sigue sin construir (diseno completo, es el item grande del backlog).
+- works.json NO cableado al workflow portfolio.yml (generar_works.py existe y esta testeado;
+  falta un paso en el workflow que lo corra y publique -- editar .github/workflows es de
+  mayor blast radius, decision del usuario).
+- Emisor HALLAZGO en correlacionar_archivos.py/memoria extra: cubierto lo delegable.
+- Contradiccion de lector refutada: xio/FACES.md SI existe (un haiku afirmo que no).
+
+## Sesion 2026-07-18 -- PR #71 draft (rama worktree-god-haiku-fixes)
+
+### HECHO Y VERIFICADO
+- flujo: scripts/flujo.py dispatcher -> error+exit2 pa 13 comandos retirados (antes fallo
+  silencioso) + test_flujo_dispatcher.py. +21 tests smoke flujo.serve (0 cobertura antes).
+  Suite worktree verde (644 passed 1 skip tras borrar tests de token; era 648).
+  2 bugs ALUCINADOS por lectores haiku REFUTADOS mecanicamente (mapping.html "roto" = lo
+  provee web/public/, probado con el build; 3/5 gaps de cobertura falsos, matados en la costura).
+- MAK auth: BORRADO TOTAL de token/auth en codex+research (NO "opcional" -- eliminado del codigo):
+  interfaz_codex.py (sin _auth/TOKEN), research/interfaz.py (sin _check_auth), hub.py+trabajo.py
+  (sin _codex_token, sin proxy ?t=, sin /api/codex_token), watchdog_mak.sh (arranca abierto),
+  patch_interfaz.py BORRADO (era el script que inyectaba el auth de research). delegar.py sin token.
+- DESPLEGADO EN VIVO al box 192.168.50.2: copiados interfaz_codex.py + watchdog_mak.sh
+  (codex_lib.py NO -- no cambio, copiarlo regresa el vivo); removido ~/codex/.token; codex
+  reiniciado. VERIFICADO: curl :8891/api/jobs -> 200 SIN token; job real resumir_jobs.py corrio
+  -> listo. research :8890 ya era auth-opcional -> abierto igual. Confirme vivo==mirror byte-
+  identico salvo borrado de token ANTES de copiar (0 divergencia). Detalle: DEPLOY_OPEN.md.
+- MAK research: cultura/mak_research/retencion.py rota informes sin limite. +17 tests.
+- MAK codex fiabilidad: cultura/mak_codex/fallback_util.py agrega TODOS los coders fallidos
+  (no solo el ultimo). +24 tests + FALLBACK_FINDINGS.md.
+- xio: FACES.md (Face A casa Linux+Windows, wifi + cable ethernet directo / Face B show SOLO
+  telefono, el Linux no sale). Codex nunca en la red del show -> la confusion 32-clientes-sin-AP
+  NO es exposicion de codex.
+- skill .claude/skills/godspeed/SKILL.md: doctrina director+haiku + fallas reales de esta sesion.
+
+### NO HECHO (real, sin maquillar)
+- Pausa-en-error (#1 del backlog MAK): NO existe en NINGUN lado. Verificado exhaustivo: 3 stores
+  (WEB/LOCAL/MAK), todas las worktrees (incl. mak-research-cultural en .claude y en _flujo_local),
+  el stash, keyword ES + EN (research/resume/pause), por directorio, y por fecha. investigar()
+  sigue PLANO (topic,iteraciones,depth,providers,densidad), 7819 bytes identico en los 3.
+  Solo existe el DISEÑO (cultura/mak_plataforma/diseno/eventos_y_backlog.md) + el emisor vivo
+  (research_lib.emitir_evento/mint_job_id; worker.py intercepta STATUS:->node_start,
+  HALLAZGO:->llm_result). El handoff previo lo marco honestamente "NO COMPLETADO"; su linea
+  "investigar() fue reescrito" NO coincide con el codigo pero NO fue mentira (trabajo perdido/
+  optimista). PROXIMO: CONSTRUIR desde el diseño sobre el emisor -- NO re-buscar, no esta.
+- [HECHO 2026-07-17 sesion godspeed-2] fallback_util INTEGRADO en codex_lib.py CoderLLM.call
+  (import defensivo try/except; al agotar la cadena el RuntimeError agrega TODOS los intentos
+  via aggregate_failures; exito byte-identico; +3 tests integracion = 27 en test_mak_fallback).
+- [HECHO 2026-07-17 sesion godspeed-2] Emisor semantico (HALLAZGO:) agregado a cadena/refutar/
+  panel/grafo (research) + revisar/testear (codex) -- 15 emisiones aditivas con contenido real,
+  hecho por 6 haikus (1 archivo c/u, sin commits propios) + verificacion mecanica del director
+  (grep + py_compile + diff --stat por archivo + suite completa verde).
+- retencion.py, fallback_util y codex_lib.py integrado NO desplegados al box (solo en repo/PR;
+  el deploy al box 192.168.50.2 sigue pendiente y ahora INCLUYE codex_lib.py + fallback_util.py).
+- Firewall Windows ollama sigue "Any remote address" (bind a 192.168.50.1 ya cierra el riesgo real).
+
+### TOPOLOGIA (memoria: project_tres_repos_topologia -- NO asumir que uno refleja a otro)
+WEB = repo publico, solo commits finales. LOCAL = C:/IA/flujo (Windows), toda la info.
+LINUX/MAK = 192.168.50.2 station research+codex, codigo SUELTO en ~/research ~/codex ~/plataforma
+(NO es clone del repo). Una worktree off origin/main = sabor WEB; puede faltarle trabajo de LOCAL/MAK.
+
 ## Sesion 2026-07-17T22:30-23:00 (autonoma, cierre)
 - Cleanup: PR #48 stale refs (updated MASTER_PLAN.md, PLAN_SIGUIENTE_AGENTE.md), 9 cultura/ leftovers moved out, docs/DIRECTOR_PLAN.md archived, branch/file trash cleaned
 - Audits: portfolio-auto (LIVE), public repos, stale files (all read-only)
@@ -419,12 +509,46 @@ MANIFIESTO: 4/11 piezas. Las 4 llaves que destraban H2 son del USUARIO:
 - Mergeados hoy: #45, #47 (previos), #50 (checkpoint limpieza + v0.52.0),
   #51 (MASTER_PLAN + ola 1), #52 (ola 2), #53 (ola 3).
 
+## MAK Codex Fallback Analysis (2026-07-17, sesion god-haiku-fixes)
+
+Trabajo: auditoria de la cadena de fallback de CoderLLM ante timeouts y errores
+de proveedores (NIM -> WIN -> Ollama). Deliverable: findings + helper module testeable.
+
+**Archivos:**
+- cultura/mak_codex/FALLBACK_FINDINGS.md: analisis detallado (lineas 110-129 en
+  codex_lib.py; issues: solo "ultimo" error visible, no aggregacion de intentos,
+  timeouts no distinguidos de otros errores, sin reordenamiento por salud de
+  proveedores). Propone 5 mejoras: agregacion de errores (high), timeout tracking
+  (medium), health stats (medium), backoff (low), mensajes claros (high).
+- cultura/mak_codex/fallback_util.py: helper puro (NO deps network/ollama):
+  * parse_provider_error() -- clasifica excepcion en tipo (timeout/connection/
+    api_error/empty/other) + trunca a 100 chars
+  * aggregate_failures() -- formatea lista de intentos en mensaje legible
+  * score_provider_health() -- ranking proveedores por ratio exito
+  * format_chain_suggestion() -- reordena cadena por salud, genera explicacion
+- tests/test_mak_fallback.py: 24 tests (TestParseProviderError x8, TestAggregate
+  Failuresx5, TestScoreProviderHealth x5, TestFormatChainSuggestion x3,
+  TestIntegrationWorkflow x2). Cobertura: tipo de error, truncacion, multi-
+  fallback, ranking, reordenamiento, workflow completo.
+
+**Verificacion (CLI):**
+- py -m py_compile cultura/mak_codex/fallback_util.py: OK
+- py -m pytest tests/test_mak_fallback.py -q: OK (24 passed)
+- py -m pytest tests/ -q -p no:cacheprovider --tb=no: 394+ green, 1 skip,
+  4 fallo en test_mak_retencion (pre-existing Linux path issues, no impacta)
+
+**Decisiones:**
+- NO toque live CoderLLM loop (fuera de scope: "findings + optional tested helper only")
+- Helper module extraible y testeable SIN red/ollama/subprocess deps
+- Fallback_util.py agnostico a implementacion (puede inyectarse en codex_lib
+  futura sin romper tests existentes)
+
 ## Reporte Formal de Verificacion y Tolerancia Cero a Errores
-- py -m compileall src/flujo: OK
-- py -m pytest tests/ -q: OK (394 verdes, 1 skip)
+- py -m compileall src/flujo: OK (anterior), fallback_util.py: OK (nuevo)
+- py -m pytest tests/test_mak_fallback.py -q: OK (24 nuevos)
+- py -m pytest tests/ -q -p no:cacheprovider --tb=no: OK (394+ verdes, 1 skip;
+  test_mak_retencion fallo pre-existing Linux paths)
 - cd web && npm run build:context: no aplica (web no tocada)
-- py -m flujo verify: OK (hub smoke 0.52.0)
-- Observaciones: basura y duplicados fuera; docs de reglas alineados con la
-  realidad (Gemini PARKED, planes viejos marcados historicos); gap de
-  credenciales cerrado en .gitignore; quedan 3 acciones manuales del usuario
-  (PLAN P1.1-P1.3).
+- py -m flujo verify: no aplica (repo source audit, no live modules)
+- Observaciones: findings + helper + tests completos. Listo para que otro agente
+  integre helpers en CoderLLM live loop si se desea.

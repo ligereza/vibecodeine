@@ -24,6 +24,14 @@ sys.path.insert(0, "/home/mak/research")
 from research_lib import (LLM, MODELO_CAPAZ, _http_json, escala_tok,  # noqa: E402
                           load_env, red_ok, slug, stamp)
 
+# fallback_util vive junto a este archivo (deploy plano en ~/codex). Si falta
+# en la caja viva, fallback_util queda en None y el mensaje de error de
+# CoderLLM.call vuelve al comportamiento viejo (solo el ultimo error).
+try:
+    import fallback_util  # noqa: E402
+except ImportError:
+    fallback_util = None
+
 BASE = "/home/mak/codex"
 PIEZAS = os.path.join(BASE, "piezas")
 REVISIONES = os.path.join(BASE, "revisiones")
@@ -42,6 +50,10 @@ CODER_CHAIN = [
     ("win", WIN_CODE_MODEL),
     ("ollama", "deepseek-coder:6.7b"),
 ]
+
+# Timeouts por proveedor (segundos), espejo de los valores hardcodeados en
+# _nim (120) y _ollama_chat (300). Solo informativo para el reporte de fallos.
+_PROV_TIMEOUT = {"nim": 120, "win": 300, "ollama": 300}
 
 PROMPT_CODER = (
     "Eres un ingeniero de software senior del departamento Codex de MAK. "
@@ -116,6 +128,7 @@ class CoderLLM:
             cadena = frente + [c for c in cadena if c not in frente]
         fns = {"nim": self._nim, "win": self._win, "ollama": self._ollama}
         last = None
+        intentos = []  # todos los intentos fallidos, no solo el ultimo
         for prov, model in cadena:
             try:
                 text = fns[prov](system, user, max_tok, model)
@@ -123,9 +136,17 @@ class CoderLLM:
                     self.stats[model] = self.stats.get(model, 0) + 1
                     return text, model
                 last = model + " devolvio vacio"
+                if fallback_util is not None:
+                    intentos.append(fallback_util.parse_provider_error(
+                        "devolvio vacio", prov, model))
             except Exception as e:  # noqa: BLE001 - fallback multi-coder
                 last = model + ": " + str(e)[:140]
                 self.errors.append(last)
+                if fallback_util is not None:
+                    intentos.append(fallback_util.parse_provider_error(
+                        e, prov, model, timeout_sec=_PROV_TIMEOUT.get(prov)))
+        if fallback_util is not None and intentos:
+            raise RuntimeError(fallback_util.aggregate_failures(intentos))
         raise RuntimeError("Todos los coders fallaron. Ultimo: %s" % last)
 
 

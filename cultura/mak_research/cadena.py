@@ -54,6 +54,7 @@ def encadenar(tema, orden, densidad="medio"):
                   % (tema, texto or "(nada aun, eres el primero)", rol))
         out, real = llm.call(rol, prompt, escala_tok(500, densidad),
                              order=[proveedor])
+        print("HALLAZGO: paso %d -- %s" % (i + 1, out[:120].replace("\n", " ")), flush=True)
         detalle.append({"paso": i + 1, "proveedor_pedido": proveedor,
                         "proveedor_real": real, "texto": out})
         texto += "\n\n[%s]: %s" % (proveedor, out)
@@ -63,6 +64,7 @@ def encadenar(tema, orden, densidad="medio"):
     piezas = [{"modelo": "%s (paso %d)" % (d["proveedor_real"], d["paso"]),
                "texto": d["texto"]} for d in detalle]
     correlacion, _ = correlacionar(llm, tema, piezas, densidad)
+    print("HALLAZGO: sintesis -- %s" % (correlacion[:120].replace("\n", " ")), flush=True)
 
     return {
         "tema": tema,

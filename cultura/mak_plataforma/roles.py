@@ -41,7 +41,9 @@ MODULOS = [
     "/home/mak/lenguaje/hook_barrido.py",
 ]
 
-# semillas de conceptos (multiplicar/definir) si no hay archivo de semillas.
+# SEMILLAS ya no es el motor sino la semilla de ARRANQUE; el motor es
+# ~/plataforma/backlog.jsonl (cosechado de las LAGUNAS DE INFORMACION de cada
+# informe por backlog.py; ver diseno/eventos_y_backlog.md).
 SEMILLAS = [
     "genealogia cultural de la tilde y los signos diacriticos del castellano",
     "el paradigma indiciario de Ginzburg como lente para leer registros culturales",

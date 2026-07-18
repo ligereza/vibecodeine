@@ -46,20 +46,21 @@ python server.py
 ├── xiaomi_controller.py       # Wrapper ADB (tap, swipe, screenshot, etc.)
 ├── static/
 │   └── index.html             # Dashboard SPA (una sola página)
-├── plugins/                   # ← Sistema de plugins
+├── plugins/                   # Base + _template + legacy (NO es la fuente de plugins activos)
 │   ├── __init__.py            # PluginRegistry: auto-descubrimiento
 │   ├── base.py                # PluginBase + PluginContext
-│   ├── battery_care/          # Plugin incluido (cuidado de batería)
-│   │   ├── __init__.py        # Clase del plugin (exporta plugin_class)
-│   │   ├── manifest.json      # Metadata
-│   │   └── config.json        # Configuración (auto-generada)
-│   └── example_tool/          # Plugin ejemplo (template para integración)
-│       ├── __init__.py
-│       └── manifest.json
+│   ├── _template/             # Template para nuevos plugins
+│   └── [legacy plugins]/      # Plugins retirados
+├── ../new-plugins/            # ← LIVE: Conjunto de 30 plugins en deploy
+│   ├── plugin_guardian/
+│   ├── battery_care/
+│   └── [28 mas plugins]
 └── data/                      # Datos persistentes (macros, historial, etc.)
     ├── macros.json
     └── <plugin_id>/           # Datos por plugin
 ```
+
+**Plugin Resolution (server.py):** env `PLUGINS_DIR` -> `../new-plugins/` (default) -> fallback `plugins/`
 
 ## Sistema de Plugins
 

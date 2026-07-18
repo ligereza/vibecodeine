@@ -69,6 +69,7 @@ def refutar(tema, orden, densidad="medio"):
         "(200-250 palabras): afirmacion concreta + 3 argumentos con fuente."
         % (tema, contexto),
         escala_tok(700, densidad), order=[proponente])
+    print("HALLAZGO: propuesta -- " + tesis.replace("\n", " ")[:140], flush=True)
 
     def refutacion(prov):
         out, real = llm.call(
@@ -78,6 +79,7 @@ def refutar(tema, orden, densidad="medio"):
             "si es honesto."
             % (tema, tesis),
             escala_tok(500, densidad), order=[prov])
+        print("HALLAZGO: refutacion -- " + out.replace("\n", " ")[:140], flush=True)
         return prov, real, out
 
     print("STATUS: %d refutadores en paralelo..." % len(refutadores), flush=True)
@@ -94,6 +96,7 @@ def refutar(tema, orden, densidad="medio"):
         "CONSIDERADAS, 3. VEREDICTO (sostiene/parcial/refutada), 4. RAZONES."
         % (tema, tesis, texto_refutaciones),
         escala_tok(900, densidad), order=[jueza])
+    print("HALLAZGO: veredicto -- " + veredicto.replace("\n", " ")[:140], flush=True)
 
     return {
         "tema": tema,
