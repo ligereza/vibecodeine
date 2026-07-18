@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """hub.py -- LA CARA del organismo MAK (puerto 8900).
 
-No es un tablero de analisis: es un canvas vivo de NODOS y CIRCUITOS que UNE
-los departamentos. El nucleo MAK al centro; research y codex como nodos
-ejecutables cableados al nucleo; las piezas de ambos forman el micelio (cada
-una gravita a su departamento). Desde la cara se ANALIZA (ver la data) y se
-EJECUTA (lanzar tareas). El hub proxea la ejecucion: el navegador solo habla
-con :8900. research y codex corren abiertos (LAN privada Face A, sin token).
+Marco fino alrededor del editor real de cada departamento, embebido a
+pantalla completa via iframe. Topbar con tabs [research] [codex] que
+cambian el iframe visible; franja inferior colapsable con actividad
+reciente de ambos deptos y salud de proveedores. El hub proxea la
+ejecucion real de research/codex: el navegador solo habla con :8900 para
+el marco, pero el iframe habla directo con :8890/:8891 (LAN privada
+Face A, sin token).
 
 Rutas: / (cara) · /api/organismo · /api/micelio · /api/ejecutar (POST) ·
 /pieza · /api/salud · /api/actividad · /cuotas · /doctrina · /reflexiones ·
@@ -52,383 +53,150 @@ try:
 except Exception:  # noqa: BLE001
     _MAXDIA = 24
 
-# ── LA CARA (canvas de nodos y circuitos) ──
+# ── LA CARA (marco fino alrededor del editor real embebido a pantalla completa) ──
 PAGINA = r"""<!doctype html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>MAK — la cara del organismo</title><style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%;overflow:hidden}
-body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,monospace}
-#circuitos{position:fixed;inset:0;z-index:1;pointer-events:none}
-#nodos{position:fixed;inset:0;z-index:2;pointer-events:none}
-.nodo{position:absolute;transform:translate(-50%,-50%);border-radius:50%;
- display:flex;align-items:center;justify-content:center;pointer-events:auto;
- background:#0d0b09;border:1.8px solid #5a564a;transition:transform .15s,border-color .15s}
-.nodo-core{width:64px;height:64px;font-size:28px;border-color:#9db67c}
-.nodo-dep{width:52px;height:52px;font-size:22px;cursor:pointer}
-.nodo-dep:hover{transform:translate(-50%,-50%) scale(1.14)}
-.nodo-dep .lbl{position:absolute;top:-21px;left:50%;transform:translateX(-50%);
- font-size:.72rem;font-weight:600;white-space:nowrap;opacity:0;transition:opacity .15s;pointer-events:none}
-.nodo-dep:hover .lbl{opacity:1}
-.nodo-dep .go{position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);
- font-size:.62rem;color:#d4a259;white-space:nowrap;pointer-events:none}
-.nodo-dep.activo{animation:pulso 1.4s ease-in-out infinite}
-@keyframes pulso{0%,100%{box-shadow:0 0 0 0 rgba(212,162,89,.55)}50%{box-shadow:0 0 0 10px rgba(212,162,89,0)}}
-.nodo-mic{border:none;cursor:pointer;background:#9db67c}
-.nodo-mic .lbl{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);
- font-size:.68rem;color:#e8e3d6;white-space:nowrap;opacity:0;pointer-events:none;margin-bottom:3px}
-.nodo-mic:hover{z-index:3}
-.nodo-mic:hover .lbl{opacity:1}
-.linea-core{stroke:rgba(90,86,74,.32);stroke-width:1.1;transition:stroke .3s,stroke-width .3s}
-.linea-core.activo{stroke:rgba(212,162,89,.75);stroke-width:2.2}
-.linea-mic{stroke:rgba(157,182,124,.12)}
-.hud{position:fixed;z-index:5;pointer-events:none}
-#top{top:16px;left:20px;pointer-events:auto}
-#top h1{color:#9db67c;font-size:1.02rem;letter-spacing:1px;font-weight:600}
-#top .lk{margin-top:5px;font-size:.72rem;color:#5c584d;line-height:1.8}
-#top .lk a{color:#8a8577;text-decoration:none;margin-right:11px}
-#top .lk a:hover{color:#d4a259}
-#salud{top:16px;right:20px;text-align:right;font-size:.7rem;color:#6e6a5e;line-height:1.65}
-#salud b{color:#c2beb2;font-weight:600}
-#guardia{bottom:14px;left:20px;font-size:.72rem;color:#6e6a5e}
-#guardia b{color:#c46d5e}#guardia i{color:#9db67c;font-style:normal}
-#hint{bottom:14px;right:20px;font-size:.68rem;color:#4d4a40;text-align:right}
-/* panel de ejecucion */
-#panel{position:fixed;z-index:9;top:0;right:0;height:100%;width:360px;max-width:88vw;
- background:#0d0b09f2;border-left:1px solid #2a2820;padding:22px 22px 26px;
- transform:translateX(100%);transition:transform .22s ease;overflow-y:auto;
- backdrop-filter:blur(3px)}
-#panel.open{transform:translateX(0)}
-#panel.wide{width:min(94vw,960px)}
-#panel .embed{width:100%;height:56vh;border:1px solid #2a2820;border-radius:8px;background:#0a0908;margin-top:6px}
-#panel .x{position:absolute;top:12px;right:16px;color:#6e6a5e;cursor:pointer;font-size:1.1rem}
-#panel .x:hover{color:#d98c7e}
-#panel h2{font-size:.95rem;letter-spacing:.5px;margin-bottom:2px}
-#panel .cap{font-size:.68rem;color:#6e6a5e;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px}
-#panel label{display:block;font-size:.66rem;text-transform:uppercase;letter-spacing:.7px;
- color:#8a8577;margin:14px 0 5px}
-#panel select,#panel textarea{width:100%;background:#15130e;border:1px solid #2f2c22;
- color:#d3cfc2;border-radius:8px;padding:9px 11px;font-family:inherit;font-size:.82rem}
-#panel textarea{min-height:90px;resize:vertical;line-height:1.5}
-#panel .row{display:flex;gap:9px}#panel .row>*{flex:1}
-#panel button.go{margin-top:16px;width:100%;background:#1a2418;border:1px solid #39432c;
- color:#9db67c;padding:11px;border-radius:8px;font-family:inherit;font-size:.84rem;
- cursor:pointer;letter-spacing:.5px}
-#panel button.go:hover{background:#22301f;color:#b6cf92}
-#panel button.go:disabled{opacity:.5;cursor:wait}
-#panel .jobs{margin-top:22px;border-top:1px solid #211f18;padding-top:14px}
-#panel .jobs h3{font-size:.62rem;text-transform:uppercase;letter-spacing:1px;color:#6e6a5e;margin-bottom:9px}
-#panel .jb{font-size:.74rem;padding:6px 0;border-bottom:1px solid #17150f;display:flex;gap:7px;align-items:baseline}
-#panel .jb .d{width:7px;height:7px;border-radius:50%;flex:none;margin-top:4px}
-#panel .jb .t{color:#c3bfb2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
-#panel .jb small{color:#5f5b50}
-#panel .vivo{max-height:220px;overflow-y:auto;background:#0a0908;border:1px solid #211f18;
- border-radius:8px;padding:8px 10px;font-size:.74rem;line-height:1.6}
-#panel .vl{padding:2px 0;color:#8a8577;border-bottom:1px solid #14120d}
-#panel .vl:last-child{border-bottom:none}
-#panel .vl.ev-real{color:#d3cfc2}
-#panel .vl.ev-error{color:#d98c7e}
-#panel .vl.ev-paso{color:#5f5b50;font-style:italic}
-#panel .vl.ev-nojob{opacity:.55;border-left:2px solid #6d5e8a;padding-left:6px}
-#panel .salud-prov{font-size:.74rem}
-#panel .sp-fila{display:flex;align-items:center;gap:8px;padding:4px 0}
-#panel .sp-nom{width:88px;flex:none;color:#c3bfb2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#panel .sp-nom i{color:#d98c7e;font-style:normal;font-size:.68rem}
-#panel .sp-barra{flex:1;height:6px;border-radius:3px;background:#17150f;overflow:hidden}
-#panel .sp-fill{display:block;height:100%;border-radius:3px}
-#panel .sp-n{width:26px;flex:none;text-align:right;color:#5f5b50;font-size:.68rem}
-#panel .sp-vacio{color:#5f5b50;font-size:.74rem}
-#toast{position:fixed;z-index:12;bottom:26px;left:50%;transform:translateX(-50%) translateY(30px);
- background:#12100c;border:1px solid #2f2c22;color:#d3cfc2;padding:10px 18px;border-radius:9px;
- font-size:.8rem;opacity:0;transition:.25s;pointer-events:none}
-#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-/* visor de pieza */
-#modal{position:fixed;z-index:14;inset:0;background:#05040399;display:none;padding:5vh 4vw}
-#modal.open{display:block}
-#modal .box{max-width:820px;margin:0 auto;background:#0d0b09;border:1px solid #2a2820;
- border-radius:12px;height:90vh;overflow-y:auto;padding:26px 30px}
-#modal .box pre{white-space:pre-wrap;line-height:1.55;font-size:.82rem;color:#c3bfb2}
-#modal .cerrar{color:#6e6a5e;cursor:pointer;float:right}#modal .cerrar:hover{color:#d98c7e}
+body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,monospace;
+ display:flex;flex-direction:column;height:100vh}
+#topbar{flex:none;height:48px;display:flex;align-items:center;justify-content:space-between;
+ padding:0 16px;background:#0d0b09;border-bottom:1px solid #211f18;gap:14px}
+#topbar .izq{display:flex;align-items:center;gap:16px;min-width:0}
+#topbar h1{color:#9db67c;font-size:.92rem;letter-spacing:1px;font-weight:600;white-space:nowrap}
+#tabs{display:flex;gap:4px}
+#tabs button{background:transparent;border:1px solid #2a2820;color:#8a8577;font-family:inherit;
+ font-size:.76rem;padding:6px 13px;border-radius:6px;cursor:pointer;letter-spacing:.3px}
+#tabs button:hover{color:#c3bfb2;border-color:#3a372c}
+#tabs button.on{background:#1a2418;border-color:#39432c;color:#9db67c}
+#topbar .der{display:flex;align-items:center;gap:12px;font-size:.72rem;white-space:nowrap}
+#topbar .lk a{color:#8a8577;text-decoration:none;margin-right:11px}
+#topbar .lk a:hover{color:#d4a259}
+#topbar #guardia{color:#6e6a5e}
+#topbar #guardia b{color:#c46d5e}#topbar #guardia i{color:#9db67c;font-style:normal}
+#centro{flex:1;min-height:0;position:relative;background:#0a0908}
+#centro iframe{position:absolute;inset:0;width:100%;height:100%;border:none;display:none}
+#centro iframe.on{display:block}
+#franja{flex:none;height:170px;display:flex;border-top:1px solid #211f18;background:#0d0b09;
+ transition:height .18s ease,padding .18s ease;overflow:hidden}
+#franja.colapsada{height:0;border-top-color:transparent}
+#franja .col{flex:1;min-width:0;padding:10px 16px;overflow-y:auto;border-right:1px solid #17150f}
+#franja .col:last-child{border-right:none}
+#franja h3{font-size:.62rem;text-transform:uppercase;letter-spacing:1px;color:#6e6a5e;margin-bottom:8px}
+#franja .jb{font-size:.74rem;padding:5px 0;border-bottom:1px solid #17150f;display:flex;gap:7px;align-items:baseline}
+#franja .jb .d{width:7px;height:7px;border-radius:50%;flex:none;margin-top:4px}
+#franja .jb .dep{color:#6e6a5e;font-size:.64rem;flex:none}
+#franja .jb .t{color:#c3bfb2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+#franja .jb small{color:#5f5b50}
+#franja .sp-fila{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.74rem}
+#franja .sp-nom{width:88px;flex:none;color:#c3bfb2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#franja .sp-nom i{color:#d98c7e;font-style:normal;font-size:.68rem}
+#franja .sp-barra{flex:1;height:6px;border-radius:3px;background:#17150f;overflow:hidden}
+#franja .sp-fill{display:block;height:100%;border-radius:3px}
+#franja .sp-n{width:26px;flex:none;text-align:right;color:#5f5b50;font-size:.68rem}
+#franja .vacio{color:#5f5b50;font-size:.74rem}
+#toggle{flex:none;background:#0d0b09;border:none;border-top:1px solid #211f18;color:#6e6a5e;
+ cursor:pointer;font-family:inherit;font-size:.68rem;padding:4px;letter-spacing:.5px}
+#toggle:hover{color:#c3bfb2}
 </style></head><body>
-<svg id="circuitos"></svg>
-<div id="nodos"></div>
-<div class="hud" id="top">
- <h1>&#129744; MAK &mdash; la cara del organismo</h1>
- <div class="lk"><a href="/doctrina" title="doctrina">📜 doctrina</a><a href="/reflexiones" title="reflexiones">💭 reflexiones</a>
- <a href="/cuotas" title="cuotas">📊 cuotas</a><a href="/relevo" title="relevo">🪑 relevo</a><a href="/genesis" title="génesis">✴️ génesis</a></div>
+<div id="topbar">
+ <div class="izq">
+  <h1>&#129744; MAK</h1>
+  <div id="tabs">
+   <button data-dep="research" class="on">🔬 research</button>
+   <button data-dep="codex">💻 codex</button>
+  </div>
+ </div>
+ <div class="der">
+  <span class="lk"><a href="/doctrina">📜 doctrina</a><a href="/reflexiones">💭 reflexiones</a><a href="/cuotas">📊 cuotas</a><a href="/relevo">🪑 relevo</a><a href="/genesis">✴️ génesis</a></span>
+  <span id="guardia">guardia · <b>0</b> bloqueados · <i>0</i> pasaron</span>
+ </div>
 </div>
-<div class="hud" id="salud">cuerpo…</div>
-<div class="hud" id="guardia"></div>
-<div class="hud" id="hint">click o teclas <b style="color:#8a8577">r c l p x</b> &rarr; departamento (editor real embebido) · click en pieza &rarr; abrir</div>
-<div id="panel">
- <span class="x" onclick="cerrarPanel()">&times;</span>
- <h2 id="p-nom">·</h2><div class="cap" id="p-cap">departamento</div>
- <div id="p-run"></div>
- <div class="jobs" id="p-jobs"></div>
+<div id="centro">
+ <iframe id="ifr-research" class="on"></iframe>
+ <iframe id="ifr-codex"></iframe>
 </div>
-<div id="toast"></div>
-<div id="modal" onclick="if(event.target===this)cerrarModal()">
- <div class="box"><span class="cerrar" onclick="cerrarModal()">cerrar &times;</span>
- <pre id="modal-txt">…</pre></div>
+<button id="toggle" onclick="toggleFranja()">▾ actividad / salud</button>
+<div id="franja">
+ <div class="col">
+  <h3>actividad reciente (research + codex)</h3>
+  <div id="f-actividad">cargando…</div>
+ </div>
+ <div class="col">
+  <h3>salud proveedores</h3>
+  <div id="f-salud">cargando…</div>
+ </div>
 </div>
 <script>
-var DEPTOS=[
- {key:'research',label:'research',icon:'🔬',color:'#9db67c',port:8890,run:true},
- {key:'codex',label:'codex',icon:'💻',color:'#7ba6a3',port:8891,run:true},
- {key:'lenguaje',label:'lenguaje',icon:'🔤',color:'#c98f6a',run:false},
- {key:'plataforma',label:'plataforma',icon:'⚙️',color:'#8a8577',run:false},
- {key:'xio',label:'xio',icon:'📱',color:'#7f9bb3',run:false}
-];
-var DIR2DEP={informes:'research',paneles:'research',cadenas:'research',refutaciones:'research',
- correlaciones:'research',grafos:'research',memoria:'research',piezas:'codex',revisiones:'codex'};
-
-var W=0,H=0,core={x:0,y:0},nodes=[],byId={},mic=[],edges=[];
-var ORG=null, running={};
-var svgNS='http://www.w3.org/2000/svg';
-var svg=document.getElementById('circuitos'), nodosEl=document.getElementById('nodos');
-var domCore=null, lineasCore={}, gMic=null;
-
-function resize(){W=window.innerWidth;H=window.innerHeight;
- svg.setAttribute('viewBox','0 0 '+W+' '+H);svg.setAttribute('width',W);svg.setAttribute('height',H);}
-window.addEventListener('resize',function(){resize();layout();});
-
-function layout(){
- core.x=W/2; core.y=H/2;
- var R=Math.min(W,H)*0.30, n=DEPTOS.length;
- nodes.forEach(function(nd,i){
-   var a=-Math.PI/2 + i*2*Math.PI/n;
-   nd.tx=core.x+R*Math.cos(a); nd.ty=core.y+R*Math.sin(a);
-   if(nd.x==null){nd.x=nd.tx;nd.y=nd.ty;}
- });
- var depByKey={}; nodes.forEach(function(nd){depByKey[nd.d.key]=nd;});
- window._depByKey=depByKey;
-}
-
-// ── elementos reales del DOM/SVG (creados UNA vez; nunca redibujados a mano) ──
-function crearEstatico(){
- domCore=document.createElement('div');
- domCore.className='nodo nodo-core'; domCore.textContent='🍄';
- nodosEl.appendChild(domCore);
- nodes=DEPTOS.map(function(d){
-   var l=document.createElementNS(svgNS,'line'); l.setAttribute('class','linea-core');
-   svg.appendChild(l);
-   var el=document.createElement('div');
-   el.className='nodo nodo-dep'; el.style.borderColor=d.color;
-   el.innerHTML='<span>'+d.icon+'</span>'+
-     '<span class="lbl" style="color:'+d.color+'">'+esc(d.label)+'</span>'+
-     (d.run?'<span class="go">▷ editor</span>':'');
-   el.onclick=(function(dep){return function(){abrirDepto(dep);};})(d);
-   nodosEl.appendChild(el);
-   return {d:d, el:el, linea:l, x:null,y:null,vx:0,vy:0};
- });
- gMic=document.createElementNS(svgNS,'g'); svg.appendChild(gMic);
-}
-
-function setMic(g){
- var depByKey=window._depByKey||{};
- var prev={}; mic.forEach(function(m){prev[m.id]=m;});
- mic.forEach(function(m){if(m.el&&m.el.parentNode)m.el.parentNode.removeChild(m.el);});
- while(gMic.firstChild)gMic.removeChild(gMic.firstChild);
- byId={};
- mic=(g.nodes||[]).slice(0,70).map(function(nn){
-   var dep=DIR2DEP[nn.dir]||'research';
-   var anc=depByKey[dep]||{x:core.x,y:core.y};
-   var p=prev[nn.id];
-   var r=3+Math.min(nn.chunks||1,22)*0.42;
-   var d=DEPTOS.find(function(x){return x.key===dep;})||DEPTOS[0];
-   var el=document.createElement('div');
-   el.className='nodo nodo-mic';
-   el.style.width=el.style.height=(r*2)+'px';
-   el.style.background=d.color;
-   el.innerHTML='<span class="lbl">'+esc((nn.titulo||nn.id||'').slice(0,42))+'</span>';
-   var m={id:nn.id,dir:nn.dir,dep:dep,titulo:nn.titulo||nn.id,chunks:nn.chunks||1,r:r,el:el,
-     x:p?p.x:anc.x+(Math.random()*80-40), y:p?p.y:anc.y+(Math.random()*80-40), vx:0,vy:0};
-   el.onclick=(function(mm){return function(){abrirPieza(mm);};})(m);
-   nodosEl.appendChild(el);
-   byId[m.id]=m; return m;
- });
- edges=(g.edges||[]).filter(function(e){return byId[e.a]&&byId[e.b];}).map(function(e){
-   var l=document.createElementNS(svgNS,'line'); l.setAttribute('class','linea-mic'); gMic.appendChild(l);
-   return {a:e.a,b:e.b,w:e.w,el:l};
- });
-}
-
-function step(){
- var depByKey=window._depByKey||{};
- for(var i=0;i<mic.length;i++){var m=mic[i];
-   for(var j=i+1;j<mic.length;j++){var o=mic[j];
-     var dx=m.x-o.x,dy=m.y-o.y,d2=dx*dx+dy*dy+0.01;
-     if(d2<9000){var f=140/d2;m.vx+=dx*f;m.vy+=dy*f;o.vx-=dx*f;o.vy-=dy*f;}}
-   var anc=depByKey[m.dep]||core;
-   m.vx+=(anc.x-m.x)*0.006; m.vy+=(anc.y-m.y)*0.006;
- }
- edges.forEach(function(e){var a=byId[e.a],b=byId[e.b];
-   var dx=b.x-a.x,dy=b.y-a.y,dist=Math.sqrt(dx*dx+dy*dy)||1,tgt=46+(1-e.w)*90;
-   var f=(dist-tgt)*0.008/dist;a.vx+=dx*f;a.vy+=dy*f;b.vx-=dx*f;b.vy-=dy*f;});
- // damping fuerte + tope de velocidad: sigue vivo (nunca frena del todo) pero
- // se asienta cerca de un equilibrio -- sin esto los puntos tiemblan sin
- // parar y un click real puede fallar (probado: Playwright reporta el
- // elemento "not stable" con el damping viejo de 0.86).
- mic.forEach(function(m){
-   m.vx*=0.55; m.vy*=0.55;
-   var sp=Math.hypot(m.vx,m.vy), max=0.6;
-   if(sp>max){m.vx=m.vx/sp*max; m.vy=m.vy/sp*max;}
-   m.x+=m.vx; m.y+=m.vy;
- });
- nodes.forEach(function(nd){nd.vx+=(nd.tx-nd.x)*0.02;nd.vy+=(nd.ty-nd.y)*0.02;
-   nd.vx*=0.8;nd.vy*=0.8;nd.x+=nd.vx;nd.y+=nd.vy;});
-}
-
-function pintar(){
- if(domCore){domCore.style.left=core.x+'px';domCore.style.top=core.y+'px';
-   domCore.style.borderColor=window.OFFLINE?'#d4a259':'#9db67c';}
- nodes.forEach(function(nd){
-   nd.el.style.left=nd.x+'px'; nd.el.style.top=nd.y+'px';
-   var act=!!running[nd.d.key];
-   nd.el.classList.toggle('activo',act);
-   nd.linea.setAttribute('x1',core.x); nd.linea.setAttribute('y1',core.y);
-   nd.linea.setAttribute('x2',nd.x); nd.linea.setAttribute('y2',nd.y);
-   nd.linea.classList.toggle('activo',act);
- });
- mic.forEach(function(m){m.el.style.left=m.x+'px'; m.el.style.top=m.y+'px';});
- edges.forEach(function(e){var a=byId[e.a],b=byId[e.b];
-   e.el.setAttribute('x1',a.x); e.el.setAttribute('y1',a.y);
-   e.el.setAttribute('x2',b.x); e.el.setAttribute('y2',b.y);
-   e.el.setAttribute('stroke-width',0.5+e.w*1.3);
- });
-}
-function loop(){step();pintar();requestAnimationFrame(loop);}
-
-// ── panel: para research/codex embebe el editor REAL (iframe); nada de formulario propio ──
-var panelDep=null;
-function abrirDepto(d){panelDep=d;
- document.getElementById('panel').classList.toggle('wide',!!d.run);
- document.getElementById('p-nom').textContent=(d.icon||'')+' '+d.label;
- document.getElementById('p-nom').style.color=d.color;
- document.getElementById('p-cap').textContent=d.run?'editor real, embebido':'solo lectura';
- var run=document.getElementById('p-run');
- if(d.run){
-   run.innerHTML='<iframe class="embed" id="p-iframe"></iframe>';
-   var ifr=document.getElementById('p-iframe');
-   if(d.key==='research'){ifr.src='http://'+location.hostname+':8890/';}
-   else if(d.key==='codex'){ifr.src='http://'+location.hostname+':8891/';}
- }else{
-   run.innerHTML='<p style="color:#6e6a5e;font-size:.8rem;line-height:1.6;margin-top:8px">'+
-     'Este nodo no tiene interfaz web propia todavía. Su actividad se refleja en el micelio y la salud.</p>';
- }
- pintarJobs(d.key);
- document.getElementById('panel').classList.add('open');
-}
-function cerrarPanel(){document.getElementById('panel').classList.remove('open','wide');panelDep=null;
- vivoDep=null;clearTimeout(vivoTimer);saludDep=null;clearTimeout(saludTimer);}
-function pintarJobs(key){var box=document.getElementById('p-jobs');
- var evs=((ORG&&ORG.actividad&&ORG.actividad.eventos)||[]).filter(function(e){return e.depto===key;}).slice(0,8);
- var col={listo:'#9db67c',corriendo:'#d4a259','en cola':'#d4a259',BLOQUEADO:'#c46d5e',FALLO:'#8a5c52',PAUSADO:'#e0a458',abortado:'#8a8578'};
- var h='';
- if(evs.length)h='<h3>actividad reciente</h3>'+evs.map(function(e){
-   return '<div class="jb"><span class="d" style="background:'+(col[e.estado]||'#6e6a5e')+'"></span>'+
-     '<span class="t">'+esc(e.texto)+'</span><small>'+esc(e.t)+'</small></div>';}).join('');
- if(key==='research')h+='<h3 style="margin-top:16px">salud proveedores</h3><div id="p-salud" class="salud-prov">cargando…</div>';
- h+='<h3 style="margin-top:16px">en vivo (contenido real)</h3><div id="p-vivo" class="vivo"></div>';
- box.innerHTML=h;
- cargarVivo(key);
- if(key==='research')cargarSalud(key); else{saludDep=null;clearTimeout(saludTimer);}
-}
-var saludTimer=null, saludDep=null;
-function cargarSalud(depto){
- saludDep=depto;
- fetch('/api/salud').then(function(r){return r.json();}).then(function(d){
-   if(saludDep!==depto)return;
-   var el=document.getElementById('p-salud'); if(!el)return;
-   var provs=d.proveedores||[];
-   if(!provs.length){el.innerHTML='<div class="sp-vacio">sin datos de salud aun</div>';}
-   else{
-     el.innerHTML=provs.map(function(p){
-       var pct=Math.round((p.score||0)*100);
-       var col=p.degradado?'#d98c7e':'#9db67c';
-       return '<div class="sp-fila">'+
-         '<span class="sp-nom">'+esc(p.nombre)+(p.degradado?' <i>degradado</i>':'')+'</span>'+
-         '<span class="sp-barra"><span class="sp-fill" style="width:'+pct+'%;background:'+col+'"></span></span>'+
-         '<span class="sp-n">'+(p.intentos||0)+'</span></div>';
-     }).join('');
-   }
- }).catch(function(){});
- clearTimeout(saludTimer);
- saludTimer=setTimeout(function(){if(saludDep===depto)cargarSalud(depto);},15000);
-}
-var vivoTimer=null, vivoDep=null;
-function cargarVivo(depto){
- vivoDep=depto;
- fetch('/api/eventos?depto='+depto).then(function(r){return r.json();}).then(function(d){
-   if(vivoDep!==depto)return;
-   var el=document.getElementById('p-vivo'); if(!el)return;
-   var evs=(d.eventos||[]).slice(-14);
-   el.innerHTML=evs.map(function(e){
-     var cls=e.tipo==='error'?'ev-error':(e.tipo==='llm_result'?'ev-real':'ev-paso');
-     if(e.sin_job)cls+=' ev-nojob';
-     var txt=e.resumen||e.detalle||e.contexto||e.estado||'';
-     if(e.sin_job)txt+=' [sin job]';
-     return '<div class="vl '+cls+'">'+esc(txt)+'</div>';
-   }).join('') || '<div class="vl ev-paso">sin eventos aun</div>';
-   el.scrollTop=el.scrollHeight;
- }).catch(function(){});
- clearTimeout(vivoTimer);
- vivoTimer=setTimeout(function(){if(vivoDep===depto)cargarVivo(depto);},2000);
-}
-function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');
- clearTimeout(window._tt);window._tt=setTimeout(function(){t.classList.remove('show');},2600);}
-
-// ── visor de pieza ──
-function abrirPieza(m){var mo=document.getElementById('modal');
- document.getElementById('modal-txt').textContent='cargando…';mo.classList.add('open');
- fetch('/pieza?dir='+encodeURIComponent(m.dir)+'&id='+encodeURIComponent(m.id))
-  .then(function(r){return r.text();}).then(function(t){document.getElementById('modal-txt').textContent=t;})
-  .catch(function(){document.getElementById('modal-txt').textContent='(no se pudo abrir)';});
-}
-function cerrarModal(){document.getElementById('modal').classList.remove('open');}
-document.addEventListener('keydown',function(e){
- if(e.key==='Escape'){cerrarModal();cerrarPanel();return;}
- var tag=(e.target.tagName||'').toLowerCase();
- if(tag==='textarea'||tag==='select'||tag==='input'||tag==='iframe')return;
- var map={r:'research',c:'codex',l:'lenguaje',p:'plataforma',x:'xio'};
- var k=map[(e.key||'').toLowerCase()];
- if(k){var dd=DEPTOS.find(function(z){return z.key===k;});if(dd)abrirDepto(dd);}
-});
-
-// ── datos ──
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
-function cargar(){
- fetch('/api/organismo').then(function(r){return r.json();}).then(function(d){
-   ORG=d; running={};
-   ((d.actividad&&d.actividad.eventos)||[]).forEach(function(e){
-     if(e.estado==='corriendo'||e.estado==='en cola')running[e.depto]=true;});
-   var s=d.salud||{},sv=s.servicios||{};
-   var net=d.internet||{}, tr=d.trabajo||{};
-   window.OFFLINE = net.up===false;
-   var netstr = net.up===false
-     ? '<span style="color:#d98c7e">○ internet caído'+(net.caido_hace_s?(' '+Math.floor(net.caido_hace_s/60)+'min · en local'):'')+'</span>'
-     : '<span style="color:#8a8577">● internet</span>';
-   document.getElementById('salud').innerHTML=
-     'load <b>'+((s.load||[])[0]||'?')+'</b> · mem <b>'+(s.mem_disponible_mb||0)+'</b>MB · '+
-     'disco <b>'+(s.disco_libre_gb||0)+'</b>GB<br>'+
-     Object.keys(sv).map(function(k){return (sv[k]&&sv[k].vivo?'●':'○')+' '+k;}).join('  ')+'<br>'+
-     netstr+' · <span style="color:#8a8577">autónomo '+(tr.hoy||0)+'/'+(tr.max||24)+' hoy</span>';
-   var g=(d.actividad&&d.actividad.guardia)||{};
-   document.getElementById('guardia').innerHTML='guardia · <b>'+(g.bloqueados||0)+'</b> bloqueados · <i>'+(g.pasaron||0)+'</i> pasaron';
-   if(panelDep)pintarJobs(panelDep.key);
+
+// ── tabs de departamento: cambian el iframe visible, cargan lazy ──
+var depActual='research';
+var IFR_SRC={research:'http://'+location.hostname+':8890/', codex:'http://'+location.hostname+':8891/'};
+function activarDep(dep){
+ depActual=dep;
+ document.querySelectorAll('#tabs button').forEach(function(b){
+   b.classList.toggle('on', b.getAttribute('data-dep')===dep);
+ });
+ document.querySelectorAll('#centro iframe').forEach(function(f){
+   f.classList.toggle('on', f.id==='ifr-'+dep);
+ });
+ var ifr=document.getElementById('ifr-'+dep);
+ if(ifr && !ifr.src){ifr.src=IFR_SRC[dep];}
+}
+document.querySelectorAll('#tabs button').forEach(function(b){
+ b.onclick=function(){activarDep(b.getAttribute('data-dep'));};
+});
+activarDep('research');
+
+// ── franja inferior: colapsable ──
+function toggleFranja(){
+ var f=document.getElementById('franja'), t=document.getElementById('toggle');
+ var colapsar=!f.classList.contains('colapsada');
+ f.classList.toggle('colapsada', colapsar);
+ t.textContent=(colapsar?'▸':'▾')+' actividad / salud';
+}
+
+// ── actividad (ambos deptos) ──
+var COL_ESTADO={listo:'#9db67c',corriendo:'#d4a259','en cola':'#d4a259',BLOQUEADO:'#c46d5e',
+ FALLO:'#8a5c52',PAUSADO:'#e0a458',abortado:'#8a8578'};
+function cargarActividad(){
+ fetch('/api/actividad').then(function(r){return r.json();}).then(function(d){
+   var evs=(d.eventos||[]).slice(0,14);
+   var g=d.guardia||{};
+   document.getElementById('guardia').innerHTML=
+     'guardia · <b>'+(g.bloqueados||0)+'</b> bloqueados · <i>'+(g.pasaron||0)+'</i> pasaron';
+   var el=document.getElementById('f-actividad');
+   if(!evs.length){el.innerHTML='<div class="vacio">sin actividad aun</div>';return;}
+   el.innerHTML=evs.map(function(e){
+     return '<div class="jb"><span class="d" style="background:'+(COL_ESTADO[e.estado]||'#6e6a5e')+'"></span>'+
+       '<span class="dep">['+esc(e.depto)+']</span>'+
+       '<span class="t">'+esc(e.texto)+'</span><small>'+esc(e.t)+'</small></div>';
+   }).join('');
  }).catch(function(){});
 }
-function cargarMic(){fetch('/api/micelio').then(function(r){return r.json();}).then(function(g){
-   if(g&&g.nodes)setMic(g);}).catch(function(){});}
 
-resize(); crearEstatico(); layout();
-cargar();cargarMic();
-setInterval(cargar,5000);setInterval(cargarMic,20000);
-requestAnimationFrame(loop);
-// deep-link de diagnostico: /?abrir=research abre el panel sin click
-(function(){var a=new URLSearchParams(location.search).get('abrir');
- if(a){var dd=DEPTOS.find(function(x){return x.key===a;});
-   if(dd)setTimeout(function(){abrirDepto(dd);},500);}})();
+// ── salud proveedores ──
+function cargarSalud(){
+ fetch('/api/salud').then(function(r){return r.json();}).then(function(d){
+   var el=document.getElementById('f-salud');
+   var provs=d.proveedores||[];
+   if(!provs.length){el.innerHTML='<div class="vacio">sin datos de salud aun</div>';return;}
+   el.innerHTML=provs.map(function(p){
+     var pct=Math.round((p.score||0)*100);
+     var col=p.degradado?'#d98c7e':'#9db67c';
+     return '<div class="sp-fila">'+
+       '<span class="sp-nom">'+esc(p.nombre)+(p.degradado?' <i>degradado</i>':'')+'</span>'+
+       '<span class="sp-barra"><span class="sp-fill" style="width:'+pct+'%;background:'+col+'"></span></span>'+
+       '<span class="sp-n">'+(p.intentos||0)+'</span></div>';
+   }).join('');
+ }).catch(function(){});
+}
+
+cargarActividad(); cargarSalud();
+setInterval(cargarActividad, 15000);
+setInterval(cargarSalud, 15000);
 </script></body></html>"""
 
 
