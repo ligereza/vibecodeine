@@ -1,10 +1,11 @@
 {
   "version": "0.55.0",
-  "date": "2026-07-18T07:10:00Z",
+  "date": "2026-07-18T07:55:00Z",
   "assistant_name": "Cauce",
-  "repo_main": "main en 0.55.0 (PR #72 pausa-en-error MERGEADO 2026-07-18). Branch protection en main ACTIVA (require CI ubuntu+windows, strict).",
-  "current_focus": "GODSPEED-4: PR #72 mergeado a main; PR #73 (rechazo /run+HALLAZGO+works.json) rebaseado sobre 0.55.0, espera CI + review usuario.",
+  "repo_main": "main en 0.55.0, PRs #72-#77 MERGEADOS 2026-07-18 (CI matrix verde c/u). Branch protection en main ACTIVA (require CI ubuntu+windows, strict).",
+  "current_focus": "GODSPEED-4 CERRADA: pausa-en-error vivo, autoportfolio catalogo vivo LIVE (flujo-works.json + seccion en proyectos.html, refresh semanal), pieza #10 ratcheteada (tests + Omega11 + sync DanceSafe). PLAN_UPSCALE consumido.",
   "done": [
+    "2026-07-18T07:00-07:55 (GODSPEED-4, director+haikus+sonnets): merge en orden #72/#73 (conflictos handoff resueltos conservando ambas narrativas)/#74 (test_smoke sin skip)/#75 (pieza #10: 5 tests + Omega11 en SEMILLAS)/#76 (FIX CRITICO: works.json curado de la galeria publica iba a ser pisado por el paso CI de #73 -- schema clash verificado contra el sitio vivo; generado ahora = flujo-works.json)/#77 (paleta_reactivos sync DanceSafe 23 reacciones, igualdad byte-identica en tests). Autoportfolio: workflow disparado, 8 obras publicadas, portfolio-auto PR #4 mergeado (seccion Catalogo vivo), verificado LIVE con curl. Leccion: nunca borrar rama head antes de state==MERGED (PR #77 cerrado por accidente, recuperado del sha).",
     "2026-07-18T02:00-02:45 (GODSPEED-3): pausa-en-error end-to-end (pausa.py, research.py --resume, worker MAK_JOB_ID+human_gate, interfaz PAUSADO+/api/reanudar+botones, hub colores/contadores; 44 tests) desplegado y verificado VIVO en el box (ciclo pausa/saltar/resume/informe placeholder); servicios reiniciados (aterrizo tambien el auth-delete de PR #71 nunca desplegado); workship Win<->MAK probado: llama3.1:8b en VRAM RTX 4070 + deepseek-coder-v2:16b responden a research_lib/codex_lib order='win' desde el box. PR #72 draft.",
     "2026-07-18T01:00-01:45 (autonomo, loop 3min): plugin_guardian duplicado archivado (canonico en xio/new-plugins); refs stale a checkpoint.sh purgadas (cli.py, PRIMER_DIA, SCRIPTS_INVENTORY, finish_airdrop.sh); INSTALL.txt v0.20 + 5 one-shot cleanup scripts archivados a _archive/legacy_20260718_0110/; fix real de aislamiento de tests (test_run_airdrop_checks popeaba sys.modules['flujo'] sin restaurar); 28 tests nuevos ig/analyze (sonnet, auditados); Makefile help PYTHON vs PYTHON_BIN; falso positivo 'missing mapping.html' cerrado. Commits 8a28651..1a63c53 pushed. Suite verde en cada paso.",
     "2026-07-17T22:30 (autonomo, limpieza mecanica): PR #48 stale refs corregidas en MASTER_PLAN.md + PLAN_SIGUIENTE_AGENTE.md (PR #48 MERGED 2026-07-17, kept only PR #49 pending), 9 cultura/ leftovers moved to C:/IA/_flujo_local/, docs/DIRECTOR_PLAN.md archived (stale v0.49.0). Suite verde (pytest 394+1skip, flujo verify OK). Commit 156e8b4 pushed.",
@@ -18,16 +19,15 @@
     "NOTA: el detalle largo de sesiones anteriores se movio de aqui a la historia git de este archivo (checkpoint 2026-07-16); el changelog de codigo vive en src/flujo/version.py get_changelog()."
   ],
   "doing": [
-    "PR #73 rebaseado sobre 0.55.0: espera CI + review usuario"
+    "nada activo -- sesion cerrada limpia, 0 PRs abiertos en vibecodeine"
   ],
   "next": [
-    "usuario: review/merge PR #73 (works.json en portfolio.yml toca workflow CI, revisar ese paso)",
     "usuario: autostart ollama serve Windows (no sobrevive reboot)",
-    "sin gate: Opcion B pieza MANIFIESTO via motor-omega",
-    "sin gate: test_smoke skip permanente (fixture o borrar)"
+    "usuario: llaves de siempre (noisette ojo humano, PAT Termux, AccessibilityService, data 13 productoras, specs venues)",
+    "sin gate: siguiente plan (PLAN_UPSCALE consumido; candidatas MANIFIESTO libres #1 repo-se-performa, #3 cuatro-agentes, #9 corpus-olvidadizos)",
+    "sin gate: imagenes de obras en catalogo vivo (hoy solo texto+paleta; requiere resolver rutas de imagen cross-repo)"
   ],
   "blockers": [
-    "review humano PR #73",
     "ollama Windows no sobrevive reboot (arrancado a mano)"
   ],
   "ai_stack": {
