@@ -17,9 +17,21 @@ Version: 0.52.0 | Fecha: 2026-07-18T01:05 | Identidad: Cauce | sesion autonoma: 
 - 0cd8909: fix test order-dependence real -- test_run_airdrop_checks popeaba
   sys.modules["flujo"] sin restaurar; snapshot+restore + import explicito
   flujo.paths en 5 test files
-- En curso: subagente sonnet escribiendo tests para serve/ig/analyze (gaps del
-  audit de zonas)
-- Suite verde tras cada commit; flujo verify OK 0.52.0
+- 1a63c53 + ca11233: 41 tests nuevos (sonnet, auditados): ig/download (17,
+  instaloader mockeado), analyze colors/run (11, PIL en memoria + OCR mock),
+  analyze/export (13, round-trip binario ACO/ASE). serve/ omitido a proposito:
+  PR #71 abierto ya trae test_serve_api.py (21 tests) -- no duplicar.
+- 4da2936 + a584dc5 + 224558e: SESSION_STATE.json y PLAN_SIGUIENTE_AGENTE.md
+  al dia (PR 48 MERGED / 49 CLOSED / 71 OPEN, branch protection ACTIVA,
+  vibo_voz y .dev.limpio ya no existen, sellos docs refrescados)
+- c8a6cd9: Makefile help corregido (PYTHON vs PYTHON_BIN; python3 no existe
+  en Git Bash Windows)
+- OJO PR #71: contiene el mismo archive de plugin_guardian que main (8a28651)
+  + su propio LAST_HANDOFF -> conflictos chicos esperables al mergear
+- Backlog autonomo AGOTADO al cierre: lo restante necesita usuario (noisette
+  ojo humano, PAT Termux, AccessibilityService, data productoras, review #71)
+  o SSH a MAK (auth pendiente)
+- Suite verde tras cada commit (pytest full verde, 1 skip); flujo verify OK 0.52.0
 
 ## Sesion 2026-07-17T22:30-23:00 (autonoma, cierre)
 - Cleanup: PR #48 stale refs (updated MASTER_PLAN.md, PLAN_SIGUIENTE_AGENTE.md), 9 cultura/ leftovers moved out, docs/DIRECTOR_PLAN.md archived, branch/file trash cleaned
