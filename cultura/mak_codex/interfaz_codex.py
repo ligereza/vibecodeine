@@ -5,6 +5,11 @@ SIN AUTH: el codex corre abierto. Vive solo en xio Face A -- la LAN privada
 de casa (MAK Linux + Windows, unidos por wifi y cable ethernet directo) --
 y nunca sale a los shows (Face B = solo el telefono). No hay red publica que
 lo alcance, asi que no hay token ni puerta. Ver xio/FACES.md.
+
+Vista: canvas de nodos (topologia FIJA del pipeline, no un editor libre)
+con tab "clasico" al formulario original. Look heredado de mak_research
+interfaz.py (nodos con puertos, curvas bezier) pero repintado con la
+paleta abisal propia de codex.
 """
 import html
 import json
@@ -30,6 +35,12 @@ JOBS_FILE = os.path.join(BASE, "jobs.jsonl")
 NOMBRE_OK = re.compile(r"^[A-Za-z0-9._-]+\.(md|py)$")
 FECHA_RE = re.compile(r"^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})-(.+)\.(md|py)$")
 
+# Claves validas de coder (espejo de codex_lib._CODER_CHAIN_MAP, sin
+# importar codex_lib aca para no acoplar el server web al motor). El orden
+# que llega en el CSV importa: define la cadena de fallback real.
+CADENA_CLAVES = ("nim-pro", "nim-flash", "win", "ollama")
+CADENA_DEFAULT = "nim-pro,nim-flash,win,ollama"
+
 JOBS = []
 JOBS_LOCK = threading.Lock()
 
@@ -40,7 +51,12 @@ PAGINA = """<!doctype html><html lang="es"><head><meta charset="utf-8">
 body{background:radial-gradient(ellipse at 30% 20%,#15130e 0,#0b0a09 60%);
  color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,monospace;min-height:100vh;padding:30px}
 h1{color:#9db67c;font-size:1.3rem}
-.sub{color:#6e6a5e;font-size:.78rem;margin:4px 0 22px}
+.sub{color:#6e6a5e;font-size:.78rem;margin:4px 0 18px}
+.tabs{display:flex;gap:6px;margin-bottom:16px}
+.tabs button{background:#12100c;border:1px solid #2a2820;color:#8b8676;border-radius:8px 8px 0 0;
+ padding:7px 16px;font-family:inherit;font-size:.78rem;cursor:pointer}
+.tabs button.on{background:#161307;color:#9db67c;border-color:#9db67c66}
+.tab{display:none}.tab.on{display:block}
 .cols{display:grid;grid-template-columns:minmax(320px,430px) 1fr;gap:18px;max-width:1200px}
 .card{background:#12100cd9;border:1px solid #2a2820;border-radius:13px;padding:16px 18px;margin-bottom:14px}
 .card h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.8px;color:#9db67c;margin-bottom:10px}
@@ -75,23 +91,130 @@ button:hover{background:#b1c893}
 #toast{position:fixed;bottom:22px;right:22px;background:#9db67c;color:#0b0a09;padding:11px 18px;
  border-radius:9px;font-weight:700;font-size:.8rem;opacity:0;transition:opacity .3s;pointer-events:none}
 #toast.show{opacity:1}
+/* -- canvas de nodos (topologia fija) -- */
+.canvas-wrap{position:relative;background:#0b0a09;background-image:radial-gradient(circle,#1c1a14 1px,transparent 1px);
+ background-size:22px 22px;border:1px solid #2a2820;border-radius:13px;overflow:auto;margin-bottom:16px;
+ max-width:1200px}
+#pipe-svg{position:absolute;top:0;left:0;pointer-events:none;z-index:1}
+.pipe-world{position:relative;min-height:300px}
+.nodo{position:absolute;z-index:5;width:190px;background:#161307;border:2px solid #2a2820;border-radius:12px;
+ cursor:pointer;user-select:none;box-shadow:0 4px 14px rgba(0,0,0,.45);transition:border-color .15s,box-shadow .15s}
+.nodo:hover{border-color:#9db67c}
+.nodo.activo{border-color:#9db67c;box-shadow:0 0 0 3px #9db67c33}
+.nodo-h{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid #2a2820}
+.nodo-ic{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;
+ font-size:.8rem;background:#9db67c;color:#0b0a09;flex-shrink:0;font-weight:700}
+.nodo-t{font-weight:700;font-size:.82rem;color:#e2ddd0}
+.nodo-s{font-size:.66rem;color:#8b8676;margin-top:1px}
+.nodo-b{padding:8px 12px 10px;font-size:.72rem;color:#8b8676}
+.puerto{position:absolute;width:11px;height:11px;border-radius:50%;background:#2a2820;border:2px solid #0b0a09;z-index:6}
+.puerto-in{left:-6px;top:50%;transform:translateY(-50%)}
+.puerto-out{right:-6px;top:50%;transform:translateY(-50%)}
+.nodo.activo .puerto{background:#9db67c}
+.cadena-sub{display:flex;flex-direction:column;gap:4px;margin-top:2px}
+.sub-item{display:flex;align-items:center;gap:6px;font-size:.68rem;padding:3px 7px;border-radius:6px;
+ background:#0b0a09;border:1px solid #1c1a14;color:#6e6a5e}
+.sub-item.primero{color:#9db67c;border-color:#9db67c55;font-weight:700}
+.sub-item .flecha{color:#4a4738;font-size:.62rem}
+.reordenar{margin-top:8px;display:flex;flex-direction:column;gap:5px}
+.reordenar .fila{display:flex;align-items:center;gap:6px;background:#0b0a09;border:1px solid #1c1a14;
+ border-radius:6px;padding:4px 8px;font-size:.72rem}
+.reordenar .fila.primero{border-color:#9db67c55;color:#9db67c}
+.reordenar .fila button{background:#2a2820;color:#c9c5b9;padding:2px 7px;font-size:.68rem;font-weight:700;
+ border-radius:5px;flex-shrink:0}
+.reordenar .fila button:hover{background:#9db67c;color:#0b0a09}
+.reordenar .fila span{flex:1}
 </style></head><body>
 <h1>&#9881; MAK Codex</h1>
 <div class="sub">full coder · sandbox con límites · lo que toca red/procesos queda para revisión humana · <a href="/salud-link" onclick="verSalud();return false" style="color:#9db67c">salud</a> · <a href="#" onclick="window.open('http://'+location.hostname+':8900/cuotas');return false" style="color:#d4a259">cuotas</a></div>
+<div class="tabs">
+<button id="tab-b-canvas" class="on" onclick="tab('canvas')">&#9776; canvas</button>
+<button id="tab-b-clasico" onclick="tab('clasico')">formulario clasico</button>
+</div>
+
+<div class="tab on" id="tab-canvas">
+<div class="canvas-wrap"><div class="pipe-world" style="width:1180px;height:300px">
+<svg id="pipe-svg" width="1180" height="300">
+  <defs><marker id="fl" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L6,3 L0,6 Z" fill="#9db67c"/></marker></defs>
+  <path d="M210,60 C250,60 250,60 290,60" stroke="#9db67c" stroke-width="2" fill="none" marker-end="url(#fl)"/>
+  <path d="M480,60 C520,60 520,60 560,60" stroke="#9db67c" stroke-width="2" fill="none" marker-end="url(#fl)"/>
+  <path d="M750,90 C800,90 800,60 850,60" stroke="#9db67c" stroke-width="2" fill="none" marker-end="url(#fl)"/>
+  <path d="M1040,60 C1070,60 1070,60 1100,60" stroke="#9db67c" stroke-width="2" fill="none" marker-end="url(#fl)"/>
+</svg>
+<div class="nodo activo" id="nodo-pedido" style="left:20px;top:20px" onclick="focoPedido()">
+  <div class="nodo-h"><div class="nodo-ic">P</div><div><div class="nodo-t">Pedido</div>
+  <div class="nodo-s">trigger</div></div></div>
+  <div class="nodo-b" id="nodo-pedido-resumen">click -&gt; foco al textarea</div>
+  <span class="puerto puerto-out"></span>
+</div>
+<div class="nodo activo" id="nodo-plan" style="left:290px;top:20px">
+  <div class="nodo-h"><div class="nodo-ic">A</div><div><div class="nodo-t">Plan</div>
+  <div class="nodo-s">azure · spec/tests</div></div></div>
+  <div class="nodo-b">modelo capaz del research (gpt-5-mini)</div>
+  <span class="puerto puerto-in"></span><span class="puerto puerto-out"></span>
+</div>
+<div class="nodo activo" id="nodo-coder" style="left:560px;top:20px;width:210px" onclick="toggleCoder()">
+  <div class="nodo-h"><div class="nodo-ic">C</div><div><div class="nodo-t">Coder</div>
+  <div class="nodo-s">cadena de fallback</div></div></div>
+  <div class="nodo-b"><div class="cadena-sub" id="cadena-vista"></div>
+    <div style="margin-top:6px;color:#6e6a5e;font-size:.64rem">click -&gt; reordenar</div>
+    <div class="reordenar" id="cadena-editor" style="display:none"></div>
+  </div>
+  <span class="puerto puerto-in"></span><span class="puerto puerto-out"></span>
+</div>
+<div class="nodo activo" id="nodo-mood" style="left:850px;top:20px" onclick="toggleMood()">
+  <div class="nodo-h"><div class="nodo-ic">M</div><div><div class="nodo-t">Mood</div>
+  <div class="nodo-s" id="nodo-mood-s">generar</div></div></div>
+  <div class="nodo-b">
+    <select id="modo-canvas" onchange="syncModo()" style="margin-bottom:5px">
+      <option value="generar">Generar (plan -&gt; código -&gt; sandbox)</option>
+      <option value="revisar">Revisar (3 lentes adversariales)</option>
+      <option value="testear">Testear (unittest en sandbox)</option>
+    </select>
+    <select id="densidad-canvas" onchange="syncDensidad()">
+      <option value="corto">corto</option><option value="medio" selected>medio</option>
+      <option value="largo">largo</option>
+    </select>
+  </div>
+  <span class="puerto puerto-in"></span><span class="puerto puerto-out"></span>
+</div>
+<div class="nodo activo" id="nodo-output" style="left:1100px;top:20px">
+  <div class="nodo-h"><div class="nodo-ic">O</div><div><div class="nodo-t">Output</div>
+  <div class="nodo-s">generados / revisiones</div></div></div>
+  <div class="nodo-b">~/codex/piezas ó revisiones/</div>
+  <span class="puerto puerto-in"></span>
+</div>
+<div style="position:absolute;left:20px;top:180px;width:1140px">
+  <textarea id="pedido" placeholder="generar: describe el programa&#10;revisar/testear: ruta absoluta a un .py bajo /home/mak"></textarea>
+  <button onclick="ejecutar()">&#9654; Ejecutar</button>
+</div>
+</div></div>
 <div class="cols"><div>
-<div class="card"><h2>nuevo trabajo</h2>
-<textarea id="pedido" placeholder="generar: describe el programa&#10;revisar/testear: ruta absoluta a un .py bajo /home/mak"></textarea>
-<select id="modo"><option value="generar">Generar (plan → código → sandbox)</option>
-<option value="revisar">Revisar (3 lentes adversariales)</option>
-<option value="testear">Testear (unittest en sandbox)</option></select>
-<select id="densidad"><option value="corto">corto</option><option value="medio" selected>medio</option>
-<option value="largo">largo</option></select>
-<button onclick="ejecutar()">&#9654; Ejecutar</button></div>
 <div class="card"><h2>trabajos</h2><div id="jobs">…</div></div>
 </div><div>
 <div class="card"><h2>archivo del codex</h2><input id="filtro" placeholder="filtrar…" oninput="pinta()">
 <div id="piezas">…</div></div>
 </div></div>
+</div>
+
+<div class="tab" id="tab-clasico">
+<div class="cols"><div>
+<div class="card"><h2>nuevo trabajo</h2>
+<textarea id="pedido-clasico" placeholder="generar: describe el programa&#10;revisar/testear: ruta absoluta a un .py bajo /home/mak"></textarea>
+<select id="modo"><option value="generar">Generar (plan -&gt; código -&gt; sandbox)</option>
+<option value="revisar">Revisar (3 lentes adversariales)</option>
+<option value="testear">Testear (unittest en sandbox)</option></select>
+<select id="densidad"><option value="corto">corto</option><option value="medio" selected>medio</option>
+<option value="largo">largo</option></select>
+<button onclick="ejecutarClasico()">&#9654; Ejecutar</button></div>
+<div class="card"><h2>trabajos</h2><div id="jobs-clasico">…</div></div>
+</div><div>
+<div class="card"><h2>archivo del codex</h2><input id="filtro-clasico" placeholder="filtrar…" oninput="pintaClasico()">
+<div id="piezas-clasico">…</div></div>
+</div></div>
+</div>
+
 <div class="overlay" id="ov" onclick="if(event.target===this)cerrar()">
 <div class="caja"><div class="caja-head"><span id="ov-t"></span>
 <button onclick="cerrar()" style="background:#2a2820;color:#c9c5b9">&#10005;</button></div>
@@ -104,6 +227,12 @@ function q(u){return u+(u.indexOf('?')>=0?'&':'?')+'t='+encodeURIComponent(T);}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');
  setTimeout(function(){t.classList.remove('show');},2600);}
+function tab(n){
+  ['canvas','clasico'].forEach(function(x){
+    document.getElementById('tab-'+x).classList.toggle('on',x===n);
+    document.getElementById('tab-b-'+x).classList.toggle('on',x===n);
+  });
+}
 var PIEZAS=[];
 function pinta(){
   var f=(document.getElementById('filtro').value||'').toLowerCase();
@@ -114,18 +243,24 @@ function pinta(){
       '<div><div>'+esc(p.titulo)+'</div><div class="fecha">'+esc(p.fecha)+'</div></div>'+
       '<span class="tipo">'+esc(p.tipo)+'</span></div>';
   }).join('')||'<div style="color:#6e6a5e;font-size:.78rem">(vacío — genera la primera pieza)</div>';
+  var f2=document.getElementById('filtro-clasico');
+  if(f2){document.getElementById('piezas-clasico').innerHTML=document.getElementById('piezas').innerHTML;}
 }
+function pintaClasico(){pinta();}
 function cargar(){
   fetch(q('/api/piezas')).then(function(r){return r.json();}).then(function(d){PIEZAS=d;pinta();});
   fetch(q('/api/jobs')).then(function(r){return r.json();}).then(function(d){
-    document.getElementById('jobs').innerHTML=d.length?d.map(function(j){
-      var cl='d-'+(j.estado||'').toLowerCase().replace(/\\s+/g,'-');
+    var html=d.length?d.map(function(j){
+      var cl='d-'+(j.estado||'').toLowerCase().replace(/\s+/g,'-');
       var link=j.path?' <a href="#" style="color:#9db67c" onclick="ver(\\'auto\\',\\''+
         encodeURIComponent(j.path)+'\\');return false">ver</a>':'';
       return '<div class="job"><span class="dot '+cl+'"></span><span style="flex:1;overflow:hidden;'+
         'text-overflow:ellipsis;white-space:nowrap">'+esc(j.pedido)+'</span>'+
         '<span style="color:#6e6a5e">'+esc(j.t)+' · '+esc(j.estado)+'</span>'+link+'</div>';
     }).join(''):'<div style="color:#6e6a5e;font-size:.78rem">sin trabajos</div>';
+    document.getElementById('jobs').innerHTML=html;
+    var j2=document.getElementById('jobs-clasico');
+    if(j2)j2.innerHTML=html;
   });
 }
 function mdMin(src){
@@ -134,9 +269,9 @@ function mdMin(src){
     if(l.indexOf('```')===0){ if(enFence){out.push('<pre>'+esc(buf.join('\\n'))+'</pre>');buf=[];}
       enFence=!enFence; return;}
     if(enFence){buf.push(l);return;}
-    var m=l.match(/^(#{1,3})\\s+(.*)/);
+    var m=l.match(/^(#{1,3})\s+(.*)/);
     if(m){out.push('<h'+m[1].length+'>'+esc(m[2])+'</h'+m[1].length+'>');return;}
-    out.push('<p>'+esc(l).replace(/\\*\\*(.+?)\\*\\*/g,'<b>$1</b>')+'</p>');
+    out.push('<p>'+esc(l).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')+'</p>');
   });
   if(buf.length)out.push('<pre>'+esc(buf.join('\\n'))+'</pre>');
   return out.join('');
@@ -157,14 +292,69 @@ function verSalud(){
   .catch(function(){toast('hub :8900 no responde');});
 }
 function cerrar(){document.getElementById('ov').classList.remove('show');}
+
+// -- nodo Pedido: click enfoca el textarea del canvas --
+function focoPedido(){document.getElementById('pedido').focus();}
+
+// -- nodo Mood: sincroniza los selects visibles del canvas con el estado --
+function syncModo(){
+  var v=document.getElementById('modo-canvas').value;
+  document.getElementById('nodo-mood-s').textContent=v;
+  var c=document.getElementById('modo');
+  if(c)c.value=v;
+}
+function syncDensidad(){
+  var v=document.getElementById('densidad-canvas').value;
+  var c=document.getElementById('densidad');
+  if(c)c.value=v;
+}
+function toggleMood(){} // el propio nodo ya expone los selects en su cuerpo
+
+// -- nodo Coder: cadena de fallback visible + reordenable --
+var CADENA=['nim-pro','nim-flash','win','ollama'];
+var CADENA_ETQ={'nim-pro':'nim deepseek-pro','nim-flash':'nim deepseek-flash','win':'win rtx4070','ollama':'ollama local'};
+function pintaCadena(){
+  document.getElementById('cadena-vista').innerHTML=CADENA.map(function(c,i){
+    return '<div class="sub-item'+(i===0?' primero':'')+'">'+(i===0?'&#9654; ':'<span class="flecha">&#8627;</span> ')+esc(CADENA_ETQ[c]||c)+'</div>';
+  }).join('');
+}
+function pintaEditor(){
+  document.getElementById('cadena-editor').innerHTML=CADENA.map(function(c,i){
+    return '<div class="fila'+(i===0?' primero':'')+'">'+
+      '<button onclick="event.stopPropagation();subirCadena('+i+')" '+(i===0?'disabled':'')+'>&#9650;</button>'+
+      '<button onclick="event.stopPropagation();bajarCadena('+i+')" '+(i===CADENA.length-1?'disabled':'')+'>&#9660;</button>'+
+      '<span>'+esc(CADENA_ETQ[c]||c)+'</span></div>';
+  }).join('');
+}
+function subirCadena(i){if(i<=0)return;var t=CADENA[i-1];CADENA[i-1]=CADENA[i];CADENA[i]=t;pintaCadena();pintaEditor();}
+function bajarCadena(i){if(i>=CADENA.length-1)return;var t=CADENA[i+1];CADENA[i+1]=CADENA[i];CADENA[i]=t;pintaCadena();pintaEditor();}
+function toggleCoder(){
+  var e=document.getElementById('cadena-editor');
+  e.style.display=e.style.display==='none'?'flex':'none';
+  pintaEditor();
+}
+pintaCadena();
+
 function ejecutar(){
   var pedido=document.getElementById('pedido').value.trim();
+  if(!pedido)return;
+  var body='pedido='+encodeURIComponent(pedido)+'&modo='+document.getElementById('modo-canvas').value+
+    '&densidad='+document.getElementById('densidad-canvas').value+
+    '&cadena='+encodeURIComponent(CADENA.join(','));
+  fetch(q('/run'),{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body})
+  .then(function(r){return r.json();}).then(function(d){
+    if(d.ok){document.getElementById('pedido').value='';toast('trabajo encolado');cargar();}
+    else toast('error: '+(d.error||'?'));
+  }).catch(function(){toast('sin conexión');});
+}
+function ejecutarClasico(){
+  var pedido=document.getElementById('pedido-clasico').value.trim();
   if(!pedido)return;
   var body='pedido='+encodeURIComponent(pedido)+'&modo='+document.getElementById('modo').value+
     '&densidad='+document.getElementById('densidad').value;
   fetch(q('/run'),{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body})
   .then(function(r){return r.json();}).then(function(d){
-    if(d.ok){document.getElementById('pedido').value='';toast('trabajo encolado');cargar();}
+    if(d.ok){document.getElementById('pedido-clasico').value='';toast('trabajo encolado');cargar();}
     else toast('error: '+(d.error||'?'));
   }).catch(function(){toast('sin conexión');});
 }
@@ -199,7 +389,25 @@ def _guardia_codex(pedido):
         return None
 
 
-def _lanzar(modo, pedido, densidad):
+def _validar_cadena(csv_value):
+    """CSV de claves de coder (subset/reorden de CADENA_CLAVES) -> CSV
+    validado. Claves invalidas se descartan preservando el orden pedido;
+    CSV vacio, ausente, o sin ninguna clave valida -> CADENA_DEFAULT (nunca
+    una cadena vacia que deje sin coder)."""
+    claves = [c.strip() for c in (csv_value or "").split(",") if c.strip()]
+    claves = [c for c in claves if c in CADENA_CLAVES]
+    limpio = []
+    vistos = set()
+    for c in claves:
+        if c not in vistos:
+            vistos.add(c)
+            limpio.append(c)
+    if not limpio:
+        return CADENA_DEFAULT
+    return ",".join(limpio)
+
+
+def _lanzar(modo, pedido, densidad, cadena=CADENA_DEFAULT):
     job = {"pedido": pedido, "modo": modo, "estado": "en cola", "path": "",
            "error": "", "t": time.strftime("%H:%M:%S"), "job_id": mint_job_id()}
     with JOBS_LOCK:
@@ -225,7 +433,7 @@ def _lanzar(modo, pedido, densidad):
                 return
         try:
             r = run_pedido(modo, pedido, densidad=densidad, ntfy=True,
-                          job_id=job["job_id"])
+                          job_id=job["job_id"], cadena=cadena)
             job["estado"] = "listo" if r["ok"] else "FALLO"
             job["path"] = os.path.basename(r["path"]) if r["path"] else ""
             if not r["ok"]:
@@ -315,6 +523,7 @@ class H(BaseHTTPRequestHandler):
             pedido = (q.get("pedido") or [""])[0].strip()[:2000]
             modo = (q.get("modo") or ["generar"])[0]
             densidad = (q.get("densidad") or ["medio"])[0]
+            cadena = _validar_cadena((q.get("cadena") or [""])[0])
             if modo not in ("generar", "revisar", "testear", "debug"):
                 modo = "generar"
             if densidad not in ("corto", "medio", "largo"):
@@ -322,7 +531,7 @@ class H(BaseHTTPRequestHandler):
             if not pedido:
                 return self._send('{"ok":false,"error":"pedido vacio"}', 400,
                                   "application/json")
-            _lanzar(modo, pedido, densidad)
+            _lanzar(modo, pedido, densidad, cadena=cadena)
             return self._send('{"ok":true}', 200, "application/json")
         return self._send("no", 404, "text/plain")
 
