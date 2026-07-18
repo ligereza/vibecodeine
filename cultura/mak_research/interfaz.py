@@ -2625,17 +2625,6 @@ function runWorkflow() {
 class H(BaseHTTPRequestHandler):
     server_version = "MAK-Research/2.0"
 
-    def _check_auth(self):
-        token = os.environ.get("INTERFAZ_TOKEN")
-        if not token:
-            return True
-        q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
-        t = (q.get("t") or [""])[0]
-        if t == token or self.headers.get("X-Token") == token:
-            return True
-        self._html("No autorizado", 401)
-        return False
-
     def _html(self, body, code=200):
         data = body.encode("utf-8")
         self.send_response(code)
@@ -2657,8 +2646,6 @@ class H(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     def do_GET(self):
-        if not self._check_auth():
-            return
         u = urllib.parse.urlparse(self.path)
 
         # favicon: return 204 No Content
@@ -2832,9 +2819,6 @@ class H(BaseHTTPRequestHandler):
         self._html(page)
 
     def do_POST(self):
-        if not self._check_auth():
-            return
-
         # API: save workflow
         if self.path == "/api/workflow":
             largo = min(int(self.headers.get("Content-Length") or 0), 50000)

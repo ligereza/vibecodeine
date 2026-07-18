@@ -13,19 +13,11 @@ if ! vivo "plataforma/hub.py"; then
 fi
 
 if ! vivo "codex/interfaz_codex.py"; then
-  # Face A (LAN privada del duenno): codex arranca siempre. Si existe
-  # ~/codex/.token se exporta y queda bloqueado; si no, corre ABIERTO.
-  if [ -f "$HOME/codex/.token" ]; then
-    # shellcheck disable=SC1091
-    . "$HOME/codex/.token"
-    export CODEX_TOKEN
-    modo="bloqueado"
-  else
-    unset CODEX_TOKEN
-    modo="abierto"
-  fi
+  # Face A (LAN privada del duenno, wifi + cable directo MAK<->Win): codex
+  # corre ABIERTO, sin token. No hay red publica que lo alcance.
+  unset CODEX_TOKEN
   setsid python3 "$HOME/codex/interfaz_codex.py" >>"$LOGDIR/codex.log" 2>&1 </dev/null &
-  echo "$(date '+%F %T') revivi codex ($modo)" >>"$LOGDIR/watchdog.log"
+  echo "$(date '+%F %T') revivi codex (abierto)" >>"$LOGDIR/watchdog.log"
 fi
 
 if ! vivo "xio_puente/monitor.py"; then

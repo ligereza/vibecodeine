@@ -6,7 +6,7 @@ los departamentos. El nucleo MAK al centro; research y codex como nodos
 ejecutables cableados al nucleo; las piezas de ambos forman el micelio (cada
 una gravita a su departamento). Desde la cara se ANALIZA (ver la data) y se
 EJECUTA (lanzar tareas). El hub proxea la ejecucion: el navegador solo habla
-con :8900; el token de codex vive del lado servidor.
+con :8900. research y codex corren abiertos (LAN privada Face A, sin token).
 
 Rutas: / (cara) · /api/organismo · /api/micelio · /api/ejecutar (POST) ·
 /pieza · /api/salud · /api/actividad · /cuotas · /doctrina · /reflexiones ·
@@ -37,7 +37,6 @@ DOCTRINA_DIR = os.path.join(HOME, "plataforma/doctrina")
 REFLEXIONES_DIR = os.path.join(HOME, "plataforma/reflexiones")
 RESEARCH_JOBS = os.path.join(HOME, "research/jobs.jsonl")
 CODEX_JOBS = os.path.join(HOME, "codex/jobs.jsonl")
-CODEX_TOKEN_FILE = os.path.join(HOME, "codex/.token")
 RELEVO = os.path.join(HOME, "RELEVO_MAK.md")
 RESEARCH_URL = "http://127.0.0.1:8890"
 CODEX_URL = "http://127.0.0.1:8891"
@@ -290,7 +289,7 @@ function pintar(){
 function loop(){step();pintar();requestAnimationFrame(loop);}
 
 // ── panel: para research/codex embebe el editor REAL (iframe); nada de formulario propio ──
-var panelDep=null, _codexTok=null;
+var panelDep=null;
 function abrirDepto(d){panelDep=d;
  document.getElementById('panel').classList.toggle('wide',!!d.run);
  document.getElementById('p-nom').textContent=(d.icon||'')+' '+d.label;
@@ -301,12 +300,7 @@ function abrirDepto(d){panelDep=d;
    run.innerHTML='<iframe class="embed" id="p-iframe"></iframe>';
    var ifr=document.getElementById('p-iframe');
    if(d.key==='research'){ifr.src='http://'+location.hostname+':8890/';}
-   else if(d.key==='codex'){
-     if(_codexTok){ifr.src='http://'+location.hostname+':8891/?t='+_codexTok;}
-     else fetch('/api/codex_token').then(function(r){return r.json();}).then(function(j){
-       _codexTok=j.t||''; ifr.src='http://'+location.hostname+':8891/?t='+_codexTok;
-     }).catch(function(){});
-   }
+   else if(d.key==='codex'){ifr.src='http://'+location.hostname+':8891/';}
  }else{
    run.innerHTML='<p style="color:#6e6a5e;font-size:.8rem;line-height:1.6;margin-top:8px">'+
      'Este nodo no tiene interfaz web propia todavía. Su actividad se refleja en el micelio y la salud.</p>';
@@ -474,15 +468,6 @@ def _xio():
         return None
 
 
-def _codex_token():
-    try:
-        with open(CODEX_TOKEN_FILE, encoding="utf-8") as f:
-            m = re.search(r'CODEX_TOKEN\s*=\s*["\']?([^"\'\s]+)', f.read())
-            return m.group(1) if m else ""
-    except OSError:
-        return ""
-
-
 def _http_json(url, timeout=2.0):
     try:
         with urllib.request.urlopen(url, timeout=timeout) as r:
@@ -524,8 +509,7 @@ def _norm(j, depto):
 
 
 def _jobs_depto(port, jsonl, depto):
-    live = _http_json("http://127.0.0.1:%d/api/jobs%s" % (
-        port, ("?t=" + urllib.parse.quote(_codex_token())) if depto == "codex" else ""))
+    live = _http_json("http://127.0.0.1:%d/api/jobs" % port)
     fuente = list(live) if isinstance(live, list) else []
     fuente += _tail_jsonl(jsonl)
     vistos, evs = set(), []
@@ -614,7 +598,7 @@ def _organismo():
             "xio": _xio()}
 
 
-# ── ejecucion proxeada (el token de codex vive aca, no en el navegador) ──
+# ── ejecucion proxeada (research y codex corren abiertos en la LAN Face A) ──
 def _ejecutar(depto, modo, texto, densidad):
     texto = (texto or "").strip()
     if not texto:
@@ -622,10 +606,7 @@ def _ejecutar(depto, modo, texto, densidad):
     if depto == "research":
         url, data = RESEARCH_URL + "/run", {"modo": modo, "tema": texto, "densidad": densidad}
     elif depto == "codex":
-        tok = _codex_token()
-        if not tok:
-            return {"ok": False, "error": "codex sin token"}
-        url = CODEX_URL + "/run?t=" + urllib.parse.quote(tok)
+        url = CODEX_URL + "/run"
         data = {"modo": modo, "pedido": texto, "densidad": densidad}
     else:
         return {"ok": False, "error": "departamento no ejecutable"}
@@ -835,8 +816,6 @@ class H(BaseHTTPRequestHandler):
                 return self._json({"error": str(e)[:200], "eventos": [], "guardia": {}})
         if p == "/api/salud":
             return self._json(_organismo())
-        if p == "/api/codex_token":
-            return self._json({"t": _codex_token()})
         if p == "/api/cuotas":
             try:
                 return self._json(cuotas.snapshot())
