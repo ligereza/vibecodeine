@@ -28,7 +28,8 @@ import time
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from research_lib import load_env, mint_job_id
+import pausa
+from research_lib import emitir_evento, load_env, mint_job_id
 from worker import run_tema
 
 # ── configuración ──
@@ -242,6 +243,37 @@ def _guardia_contenido(tema):
         return None
 
 
+def _aplicar_resultado_job(job, r):
+    """Interpreta el dict devuelto por run_tema() y actualiza `job` in-place
+    (listo/FALLO/PAUSADO). Compartido entre el lanzamiento inicial (_lanzar)
+    y el reanudar tras pausa (_reanudar_logic)."""
+    if r.get("pausado"):
+        job["estado"] = "PAUSADO"
+        job["checkpoint"] = r.get("checkpoint", "")
+        job["error"] = (r.get("tail") or "").strip()[:2000]
+        return
+    job["estado"] = "listo" if r.get("ok") else "FALLO"
+    job["path"] = os.path.basename(r["path"]) if r.get("path") else ""
+    if not r.get("ok"):
+        # log explicito: ultimas lineas reales del proceso, no solo "FALLO"
+        job["error"] = (r.get("tail") or "").strip()[-2000:]
+
+
+def _cerrar_job(job, t0):
+    """Cierra el job: ms transcurridos, linea en JOBS_FILE, reindex best-effort."""
+    job["ms"] = int((time.time() - t0) * 1000)
+    try:
+        with open(JOBS_FILE, "a", encoding="utf-8") as f:
+            f.write(json.dumps(job) + "\n")
+    except OSError:
+        pass
+    # el archivo crece -> la memoria/micelio se remodela solo (incremental)
+    try:
+        _reindexar_async()
+    except Exception:  # noqa: BLE001 - el reindex es best-effort
+        pass
+
+
 def _lanzar(modo, tema, n, densidad="medio", memoria=False):
     job = {
         "tema": tema, "modo": modo, "estado": "en cola",
@@ -273,29 +305,73 @@ def _lanzar(modo, tema, n, densidad="medio", memoria=False):
             orden = _orden_canvas() if modo in ("cadena", "refutar") else None
             r = run_tema(modo, tema, n=n, ntfy=True, densidad=densidad,
                         orden=orden, memoria=memoria, job_id=job["job_id"])
-            job["estado"] = "listo" if r.get("ok") else "FALLO"
-            job["path"] = os.path.basename(r["path"]) if r.get("path") else ""
-            if not r.get("ok"):
-                # log explicito: ultimas lineas reales del proceso, no solo "FALLO"
-                job["error"] = (r.get("tail") or "").strip()[-2000:]
+            _aplicar_resultado_job(job, r)
         except Exception as e:
             job["estado"] = "FALLO"
             job["path"] = ""
             job["error"] = str(e)[:2000]
             print(f"[interfaz] job error: {e}", file=sys.stderr)
-        job["ms"] = int((time.time() - t0) * 1000)
+        _cerrar_job(job, t0)
+
+    threading.Thread(target=correr, daemon=True).start()
+
+
+def _reanudar_logic(q):
+    """Decide la accion sobre un job PAUSADO (reintentar/editar/saltar/abortar).
+    Recibe el dict de urllib.parse.parse_qs (valores como listas). Devuelve
+    (status_code, payload). Thread-safe: busca el job bajo JOBS_LOCK. Lanza
+    el hilo de reanudacion cuando corresponde -- testeable sin servidor HTTP
+    real (monkeypatch run_tema / pausa.aplicar_accion)."""
+    job_id = (q.get("job_id") or [""])[0]
+    accion = (q.get("accion") or [""])[0]
+    texto = (q.get("texto") or [""])[0]
+
+    with JOBS_LOCK:
+        job = next((j for j in JOBS if j.get("job_id") == job_id), None)
+    if job is None:
+        return 404, {"ok": False, "error": "job no encontrado"}
+    if job.get("estado") != "PAUSADO":
+        return 400, {"ok": False, "error": "job no esta PAUSADO"}
+
+    if accion == "abortar":
+        job["estado"] = "abortado"
+        try:
+            emitir_evento("research", job_id, "node_end", estado="abortado")
+        except Exception:  # noqa: BLE001 - el evento es best-effort
+            pass
         try:
             with open(JOBS_FILE, "a", encoding="utf-8") as f:
                 f.write(json.dumps(job) + "\n")
         except OSError:
             pass
-        # el archivo crece -> la memoria/micelio se remodela solo (incremental)
-        try:
-            _reindexar_async()
-        except Exception:  # noqa: BLE001 - el reindex es best-effort
-            pass
+        return 200, {"ok": True, "estado": "abortado"}
 
-    threading.Thread(target=correr, daemon=True).start()
+    if accion not in ("reintentar", "editar", "saltar"):
+        return 400, {"ok": False, "error": "accion invalida"}
+
+    try:
+        pausa.aplicar_accion(job["checkpoint"], accion, texto)
+    except ValueError:
+        return 400, {"ok": False, "error": "accion invalida"}
+    except OSError as e:
+        return 500, {"ok": False, "error": str(e)[:300]}
+
+    job["estado"] = "corriendo"
+
+    def relanzar():
+        t0 = time.time()
+        try:
+            r = run_tema(job["modo"], job["tema"], ntfy=True, job_id=job["job_id"],
+                        extra=["--resume", job["checkpoint"]])
+            _aplicar_resultado_job(job, r)
+        except Exception as e:
+            job["estado"] = "FALLO"
+            job["error"] = str(e)[:2000]
+            print(f"[interfaz] job resume error: {e}", file=sys.stderr)
+        _cerrar_job(job, t0)
+
+    threading.Thread(target=relanzar, daemon=True).start()
+    return 200, {"ok": True, "estado": "corriendo"}
 
 
 # ── utilidades ──
@@ -536,6 +612,8 @@ body{
 .job-dot.corriendo{background:#58a6ff;animation:pulse 1s infinite}
 .job-dot.listo{background:#3fb950}
 .job-dot.fallo{background:#f85149}
+.job-dot.pausado{background:#e0a458}
+.job-dot.abortado{background:#8a8578}
 
 /* ── tabs ── */
 .tabs{display:flex;border-bottom:1px solid #21262d}
@@ -1713,6 +1791,29 @@ function repararError(temaEnc, errorEnc) {
   .catch(function() { out.innerHTML = '<span style="color:#ff7b72">Error de conexión</span>'; });
 }
 
+// ── reanudar un job PAUSADO (checkpoint humano) ──
+function reanudar(jobIdEnc, accion) {
+  var texto = '';
+  if (accion === 'editar') {
+    texto = prompt('Nueva consulta:');
+    if (texto === null) return;
+  }
+  fetch('/api/reanudar', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: 'job_id=' + jobIdEnc + '&accion=' + accion + '&texto=' + encodeURIComponent(texto || ''),
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.ok) {
+      refreshJobs();
+    } else {
+      alert(data.error || 'error');
+    }
+  })
+  .catch(function() { alert('Error de conexión'); });
+}
+
 // ── tab switching ──
 function switchTab(tabId) {
   document.querySelectorAll('.tab').forEach(function(t) {
@@ -1748,6 +1849,20 @@ function refreshJobs() {
         } else if (j.estado === 'FALLO') {
           link = '<a href="#" onclick="verError(\'' + encodeURIComponent(j.tema) + '\',\'' +
             encodeURIComponent(j.error || '') + '\');return false;" style="color:#ff7b72;font-size:.75rem">error</a>';
+        } else if (j.estado === 'PAUSADO') {
+          var jidEnc = encodeURIComponent(j.job_id || '');
+          var motivoEsc = esc((j.error || '').slice(0, 160));
+          link = '<span style="color:#e0a458;font-size:.72rem;max-width:140px;' +
+            'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block" ' +
+            'title="' + motivoEsc + '">' + motivoEsc + '</span> ' +
+            '<a href="#" onclick="reanudar(\'' + jidEnc + '\',\'reintentar\');return false;" ' +
+            'style="color:#58a6ff;font-size:.72rem">reintentar</a> ' +
+            '<a href="#" onclick="reanudar(\'' + jidEnc + '\',\'editar\');return false;" ' +
+            'style="color:#58a6ff;font-size:.72rem">editar</a> ' +
+            '<a href="#" onclick="reanudar(\'' + jidEnc + '\',\'saltar\');return false;" ' +
+            'style="color:#58a6ff;font-size:.72rem">saltar</a> ' +
+            '<a href="#" onclick="reanudar(\'' + jidEnc + '\',\'abortar\');return false;" ' +
+            'style="color:#ff7b72;font-size:.72rem">abortar</a>';
         }
         return '<li class="job-item">' +
           '<span class="' + dotClass + '"></span>' +
@@ -2741,6 +2856,23 @@ class H(BaseHTTPRequestHandler):
                         % (urllib.parse.quote(j.get("tema", "")),
                            urllib.parse.quote(j.get("error", "")))
                     )
+                elif j.get("estado") == "PAUSADO":
+                    jid_enc = urllib.parse.quote(j.get("job_id", ""))
+                    motivo_esc = html.escape((j.get("error", "") or "")[:160])
+                    link = (
+                        '<span style="color:#e0a458;font-size:.72rem;max-width:140px;'
+                        'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'
+                        'display:inline-block" title="%s">%s</span> '
+                        '<a href="#" onclick="reanudar(\'%s\',\'reintentar\');return false;" '
+                        'style="color:#58a6ff;font-size:.72rem">reintentar</a> '
+                        '<a href="#" onclick="reanudar(\'%s\',\'editar\');return false;" '
+                        'style="color:#58a6ff;font-size:.72rem">editar</a> '
+                        '<a href="#" onclick="reanudar(\'%s\',\'saltar\');return false;" '
+                        'style="color:#58a6ff;font-size:.72rem">saltar</a> '
+                        '<a href="#" onclick="reanudar(\'%s\',\'abortar\');return false;" '
+                        'style="color:#ff7b72;font-size:.72rem">abortar</a>'
+                        % (motivo_esc, motivo_esc, jid_enc, jid_enc, jid_enc, jid_enc)
+                    )
                 jobs_html += (
                     '<li class="job-item">'
                     '<span class="job-dot %s"></span>'
@@ -2884,6 +3016,13 @@ class H(BaseHTTPRequestHandler):
                 return self._json_response({"ok": True, "diagnostico": dx})
             except Exception as e:  # noqa: BLE001 - el fix es best-effort
                 return self._json_response({"ok": False, "error": str(e)[:300]}, 500)
+
+        # reanudar un job PAUSADO: reintentar / editar / saltar / abortar
+        if self.path == "/api/reanudar":
+            largo = min(int(self.headers.get("Content-Length") or 0), 8000)
+            q = urllib.parse.parse_qs(self.rfile.read(largo).decode())
+            code, payload = _reanudar_logic(q)
+            return self._json_response(payload, code)
 
         return self._html("no", 404)
 
