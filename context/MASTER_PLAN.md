@@ -140,7 +140,13 @@ plantilla real de produccion vive en Desktop/ai_illustrator (fuera del repo).
 
 ### F-E CULTURA / OBRA (motor-omega)
 Estado: tapiz/loom maduro (20 motivos); tilde SPEC sin render; MANIFIESTO
-2/11 hechas; MAPA_GENERATIVO (PR #49) cura 19 ideas a medias.
+6/11 hechas (recuento 2026-07-18 por auditoria de artefactos: #1 #4 #6 #8 #9
+#10 -- #9 y #10 cerradas ese dia via PRs #75/#77/#80; #1 "el repo se performa
+a si mismo" ahora performable de punta a punta con tools/vj_set/osc_sender.py,
+ver tools/vj_set/RUNBOOK.md); 2 parciales (#5 plugin sin tests, #7 registro
+manual); 3 bloqueadas por llaves de usuario (#2 segundo modelo, #3
+conceptual, #11 infra training). MAPA_GENERATIVO (PR #49) cura 19 ideas a
+medias.
 - T-E1 [sonnet] pieza MANIFIESTO #4 -- ESTEGANOGRAFIA: modulo
   tools/svg/steg_changelog.py que embebe version+hash del changelog en canal
   ilegible de los SVG entregados (metadata/atributos no-render) + extractor +
@@ -162,9 +168,17 @@ Estado: tapiz/loom maduro (20 motivos); tilde SPEC sin render; MANIFIESTO
   FILTROS: projects/cultura/cartografia_filtros/ mapea el borde donde un
   agente con full-auth igual choca el clasificador; sembrada con 6 bloqueos
   reales y fechados de ESTA sesion (siluetas neutras, sin payload; guarda en
-  codigo + grep). Ω11 no se cumplio. 8 tests. MANIFIESTO 5/11.
-- BLOQUEADAS (no tocar): #2 (falta 2do modelo), #5 (hardware), #7 (orden del
-  usuario), #11 (infra), (+)2 OBRA_02 (espera lector humano).
+  codigo + grep). Ω11 no se cumplio. 8 tests. MANIFIESTO 6/11 (recuento
+  2026-07-18, ver estado de F-E arriba).
+- T-E5 [HECHA 2026-07-18, sonnet] pieza MANIFIESTO #1 -- EL REPO SE PERFORMA
+  A SI MISMO, parte final: tools/vj_set/osc_sender.py (encoder OSC 1.0
+  stdlib puro + CLI que dispara osc_score.json por UDP a Resolume, con
+  --dry-run/--speed/--desde) + tools/vj_set/RUNBOOK.md (cadena completa
+  git log -> partitura -> UDP). git_performance.py ya generaba la partitura;
+  faltaba quien la enviara.
+- PARCIALES: #5 plugin sin tests, #7 registro manual.
+- BLOQUEADAS (no tocar, llaves del usuario): #2 (falta 2do modelo), #3
+  (conceptual), #11 (infra training), (+)2 OBRA_02 (espera lector humano).
 
 ### F-F INFRA AGENTES (que el repo se opere solo)
 Estado: CI real; airdrop protocol maduro; branch protection AUSENTE;
