@@ -90,6 +90,16 @@ SSID: "NetworkB" signal: -70 freq: 2412
 SSID: "NetworkC"
 """
 
+# Salida REAL de `cmd wifi list-scan-results` capturada en vivo del Xiaomi
+# (HyperOS, 2026-07-18) -- formato columnar, NO el legado "SSID:"/"signal:".
+SCAN_RESULTS_COLUMNAR = """\
+    BSSID              Frequency      RSSI           Age(sec)     SSID                                 Flags
+  58:b5:68:48:bb:08       2432    -84(0:-88/1:-86)     1.919    dkzEe0UQPJn0l6fhz2lTKRkn1Lf2BD1q  [WPA2-EAP/SHA1-CCMP][RSN-EAP/SHA1-CCMP][ESS][MFPC]
+  2c:ea:dc:56:c4:1f       2412    -77(0:-84/1:-78)     8.504    Papucho                           [WPA2-PSK-CCMP][RSN-PSK-CCMP][ESS][WPS]
+  64:9d:f3:d0:da:a8       2432    -68(0:-71/1:-71)     1.878    Gyhltda                           [WPA2-PSK-CCMP][RSN-PSK-CCMP][ESS][WPS]
+  68:59:11:e4:3c:d0       2437    -76(0:-85/1:-77)     7.832    CRISTIAN                          [WPA2-PSK-CCMP][RSN-PSK-CCMP][ESS][WPS]
+"""
+
 
 def make_plugin(tmp_path, controller=None, monkeypatch=None):
     ctx = PluginContext(
@@ -411,6 +421,45 @@ def test_api_scan_parses_ssid_and_signal(client):
     assert ssids["NetworkB"] == -70
     assert ssids["NetworkC"] is None  # matched SSID, no signal on that line
     assert len(body) == 3  # garbage line produced no entry
+
+
+def test_parse_scan_results_columnar_real_device():
+    """Fixture = salida literal del Xiaomi (2026-07-18). El formato columnar
+    es el REAL; el legado SSID:/signal: se conserva como fallback."""
+    nets = wifi_intelligence.parse_scan_results(SCAN_RESULTS_COLUMNAR)
+    assert len(nets) == 4  # header no produce entrada
+    por_ssid = {n["ssid"]: n for n in nets}
+    assert por_ssid["Papucho"]["signal"] == -77
+    assert por_ssid["Papucho"]["frequency"] == 2412
+    assert por_ssid["Papucho"]["bssid"] == "2c:ea:dc:56:c4:1f"
+    assert por_ssid["CRISTIAN"]["signal"] == -76
+    assert "[WPA2-PSK-CCMP]" in por_ssid["Gyhltda"]["flags"]
+    # el SSID largo tipo hash tambien parsea entero
+    assert "dkzEe0UQPJn0l6fhz2lTKRkn1Lf2BD1q" in por_ssid
+
+
+def test_parse_scan_results_legacy_still_supported():
+    nets = wifi_intelligence.parse_scan_results(SCAN_RESULTS_TEXT)
+    assert {n["ssid"] for n in nets} == {"NetworkA", "NetworkB", "NetworkC"}
+
+
+def test_api_scan_columnar_via_route(tmp_path, monkeypatch):
+    controller = FakeController(responses={
+        ("cmd", "wifi", "start-scan"): "",
+        ("cmd", "wifi", "list-scan-results"): SCAN_RESULTS_COLUMNAR,
+    })
+    plugin = make_plugin(tmp_path, controller=controller, monkeypatch=monkeypatch)
+    app = Flask(__name__)
+    for route in plugin.get_routes():
+        app.add_url_rule(route["rule"], endpoint=route["endpoint"],
+                          view_func=route["view_func"], methods=route["methods"])
+    client = app.test_client()
+    r = client.get("/api/plugins/wifi_intelligence/scan")
+    assert r.status_code == 200
+    body = r.get_json()
+    assert len(body) == 4
+    assert {n["ssid"] for n in body} >= {"Papucho", "Gyhltda", "CRISTIAN"}
+    plugin.on_unload()
 
 
 def test_api_scan_shell_exception_returns_error_payload(tmp_path, monkeypatch):
