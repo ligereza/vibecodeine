@@ -1,8 +1,8 @@
 """Versión y changelog de flujo."""
 
-__version__ = "0.54.0"
+__version__ = "0.55.0"
 VERSION = __version__
-__version_info__ = (0, 54, 0)
+__version_info__ = (0, 55, 0)
 
 
 def get_version():
@@ -11,6 +11,30 @@ def get_version():
 
 def get_changelog():
     return {
+        "0.55.0": {
+            "titulo": "MAK pausa-en-error end-to-end + workship Win<->MAK probado",
+            "fecha": "2026-07-18",
+            "highlights": [
+                "pausa-en-error (PLAN_UPSCALE Opcion A): pausa.py nuevo (checkpoint "
+                "stdlib), research.py pausa en fallo terminal (fases fuentes/decidir/"
+                "informe, marca 'PAUSADO: ' + exit 3) y --resume con acciones "
+                "reintentar/editar/saltar; worker.py propaga MAK_JOB_ID y emite "
+                "human_gate; interfaz.py estado PAUSADO + POST /api/reanudar + 4 "
+                "botones (ambos renders); hub.py colores/contadores PAUSADO/abortado. "
+                "44 tests nuevos (12 fcntl-gated corren en CI ubuntu)",
+                "desplegado y VERIFICADO VIVO en 192.168.50.2: ciclo completo "
+                "pausa -> saltar -> resume -> re-pausa -> saltar -> informe "
+                "placeholder exit 0; servicios interfaz/hub reiniciados con el "
+                "codigo nuevo (tambien aterriza el borrado de auth de PR #71 que "
+                "no se habia desplegado)",
+                "workship Win<->MAK probado por primera vez: ollama serve en "
+                "192.168.50.1:11434 (config previa OLLAMA_HOST ya existia), "
+                "llama3.1:8b en VRAM (RTX 4070 detectada) respondio a research_lib "
+                "LLM(order='win') desde el box; deepseek-coder-v2:16b carga en "
+                "10s y responde (codex_lib win ya cableado). Gap: ollama serve "
+                "arrancado a mano, no sobrevive reboot de Windows",
+            ],
+        },
         "0.54.0": {
             "titulo": "PR #71 mergeado: MAK generativo + dispatcher + serve tests + auth-delete",
             "fecha": "2026-07-18",
