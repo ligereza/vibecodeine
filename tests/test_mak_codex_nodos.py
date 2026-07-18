@@ -25,16 +25,25 @@ def _import_interfaz_codex():
     patron que tests/test_mak_fallback.py / test_mak_mirror_fixes.py)."""
     import importlib
 
+    # snapshot + restore: el stub NO puede quedar en sys.modules o envenena
+    # los imports de research_lib de OTROS archivos de test (leccion godspeed:
+    # mutaciones de sys.modules se filtran entre archivos; fallo real CI ubuntu)
+    fake_puesto = False
     if "research_lib" not in sys.modules:
         fake = types.ModuleType("research_lib")
         fake.mint_job_id = lambda: "fake-job-id"
         sys.modules["research_lib"] = fake
+        fake_puesto = True
     if str(MAK_RESEARCH) not in sys.path:
         sys.path.insert(0, str(MAK_RESEARCH))
     if str(MAK_CODEX) not in sys.path:
         sys.path.insert(0, str(MAK_CODEX))
     sys.modules.pop("interfaz_codex", None)
-    return importlib.import_module("interfaz_codex")
+    try:
+        return importlib.import_module("interfaz_codex")
+    finally:
+        if fake_puesto:
+            sys.modules.pop("research_lib", None)
 
 
 try:
