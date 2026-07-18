@@ -81,7 +81,7 @@ Para flyers (después de descargar la imagen de Instagram):
 ```bash
 py scripts/flujo.py clean
 py scripts/flujo.py health
-bash scripts/checkpoint.sh "avance del día"
+# luego: git add + commit + push (checkpoint.sh ya no existe)
 ```
 
 ## Plantillas disponibles
