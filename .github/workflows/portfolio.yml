@@ -54,7 +54,10 @@ jobs:
           fi
           git clone --depth 1 "https://x-access-token:${PORTFOLIO_TOKEN}@github.com/ligereza/portfolio-auto.git" sitio
           mkdir -p sitio/data
-          cp out/flujo-projects.json out/basurero.json out/works.json sitio/data/
+          cp out/flujo-projects.json out/basurero.json sitio/data/
+          # works.json del sitio es CURADO a mano (lista de obras que dibuja la galeria,
+          # schema distinto) -- el catalogo generado se publica con OTRO nombre pa no pisarlo
+          cp out/works.json sitio/data/flujo-works.json
           cd sitio
           git config user.name "flujo-portfolio-bot"
           git config user.email "actions@users.noreply.github.com"
