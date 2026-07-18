@@ -6,6 +6,47 @@ from plugins.base import PluginBase
 import json, re, shlex
 from datetime import datetime
 
+# Formato REAL de `cmd wifi list-scan-results` (HyperOS/Android 13+, verificado
+# en vivo 2026-07-18 sobre el Xiaomi):
+#     BSSID              Frequency      RSSI           Age(sec)     SSID    Flags
+#   2c:ea:dc:56:c4:1f       2412    -77(0:-84/1:-78)     8.504    Papucho  [WPA2-PSK-CCMP][ESS]
+_SCAN_COLUMNAR = re.compile(
+    r"^\s*([0-9a-fA-F:]{17})\s+(\d+)\s+(-?\d+)(?:\([^)]*\))?\s+([\d.]+)\s+(.*?)\s*(\[.*\])?\s*$"
+)
+
+
+def parse_scan_results(out):
+    """Parsea la salida de `cmd wifi list-scan-results` en ambos formatos:
+    columnar (dispositivos reales HyperOS/Android 13+) y legado `SSID:`/`signal:`.
+    Devuelve [{ssid, signal, frequency, bssid, flags}] (claves extra solo si hay dato)."""
+    networks = []
+    for line in out.splitlines():
+        if "SSID:" in line:  # formato legado
+            m = re.search(r'SSID: "?([^"]+)"?', line)
+            if m:
+                net = {"ssid": m.group(1).strip().rstrip(",")}
+                rm = re.search(r"signal: (-?\d+)", line)
+                if rm:
+                    net["signal"] = int(rm.group(1))
+                networks.append(net)
+            continue
+        m = _SCAN_COLUMNAR.match(line)
+        if m:
+            bssid, freq, rssi, _age, ssid, flags = m.groups()
+            ssid = ssid.strip()
+            if not ssid:  # red oculta: sin nombre util
+                continue
+            net = {
+                "ssid": ssid,
+                "signal": int(rssi),
+                "frequency": int(freq),
+                "bssid": bssid.lower(),
+            }
+            if flags:
+                net["flags"] = flags
+            networks.append(net)
+    return networks
+
 
 class WiFiIntelligencePlugin(PluginBase):
     plugin_id = "wifi_intelligence"
@@ -124,17 +165,7 @@ class WiFiIntelligencePlugin(PluginBase):
             self.controller._shell("cmd", "wifi", "start-scan")
             import time; time.sleep(3)
             out = self.controller._shell("cmd", "wifi", "list-scan-results")
-            networks = []
-            for line in out.splitlines():
-                if "SSID:" in line:
-                    m = re.search(r'SSID: "?([^"]+)"?', line)
-                    if m:
-                        net = {"ssid": m.group(1)}
-                        rm = re.search(r'signal: (-?\d+)', line)
-                        if rm:
-                            net["signal"] = int(rm.group(1))
-                        networks.append(net)
-            return jsonify(networks)
+            return jsonify(parse_scan_results(out))
         except Exception as e:
             return jsonify({"error": str(e)})
 
