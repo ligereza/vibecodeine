@@ -1,103 +1,50 @@
-# PENDIENTES + FUERTE/DEBIL -- checkpoint limpieza (Cauce, 2026-07-16)
+# PENDIENTES + FUERTE/DEBIL -- checkpoint cierre (Cauce, 2026-07-18)
 
-Estado del repo: v0.52.0, suite VERDE 2026-07-16 (450+ tests, compileall OK,
-flujo verify OK). main con PRs #45-#70 mergeados (checkpoint + MASTER_PLAN +
-olas + MAK cierre). Actualizacion 2026-07-18: #48 MERGED, #49 CLOSED (util
-extraido a main en 2ef19a8); ABIERTO #71 (worktree-god-haiku-fixes, MAK
-generativo + tests serve) espera review del usuario -- OTRO Claude trabaja en
-MAK: no tocar cultura/ ni los worktrees mak-research-cultural/god-haiku-fixes.
-Plan largo y doctrina: context/MASTER_PLAN.md.
+Estado del repo: v0.55.0, suite VERDE 2026-07-18 (899+ tests, compileall OK,
+flujo verify OK). main con PRs #72-#87 mergeados (MAK fases 1-3, portfolio vivo,
+repair systemd). MANIFIESTO 6/11 PIEZAS CERRADAS.
 
-## Reglas que NO se negocian (leer antes de tocar nada)
-- NO activar Claude via API en GitHub Actions (decision del usuario, 2026-07-12).
-- `puente/` es TEORICO (ver `puente/README.md`). No se ejecuta, no se limpia.
-- `README.md` del repo es obra terminada del artista: no se le agrega nada.
-- Limites cultura: descriptivo si; nada generativo de sintesis; psicosis no
-  perfila personas reales; precursor solo cultura/ley/estetica.
-- `.noisette`: NUNCA especular sobre el schema. La fuente de verdad es la
-  fixture real (tests/fixtures/chataigne_1103_real*.noisette) y su suite
-  tests/test_noisette_real_fixture.py debe quedar verde en todo cambio.
-- Nunca commitear secretos (`.env`, `config.json`, `*.key`, `cultura/.dev*`).
+## Reglas no negociables
+- NO activar Claude via API en GitHub Actions.
+- `puente/` = TEORICO (no se ejecuta).
+- `README.md` = obra terminada (sin cambios).
+- `.noisette`: fixture real tests/test_noisette_real_fixture.py es la fuente de verdad.
+- Nunca commitear secretos (.env, *.key, cultura/.dev*).
 - `CLAUDE.md` y `context/*.md`: ASCII-only.
 
-## FUERTE (verificado 2026-07-16)
-- Suite y CI: 394 tests verdes, compileall OK, flujo verify OK; CI real en
-  `.github/workflows/ci.yml`.
-- xio on-device: server Termux+Shizuku VIVO en el telefono (23+ plugins),
-  showcontrol OSC/Art-Net/sACN desplegado, charge-control no-root, self-heal
-  de hotspot; MAK aislado del xio via 403.
-- MAK (caja Linux): organismo de research funcionando (4 APIs gratis + LLM
-  local); su codigo llega a main via PRs #48/#49.
-- Portfolio publico LIVE (ligereza.github.io/portfolio-auto), 8 obras reales,
-  sin Claude API, workflow con PORTFOLIO_TOKEN corriendo solo.
-- RD entregables: pipeline contraportadas/flyers/cotizaciones validado
-  end-to-end + hardening de auditoria (39 hallazgos aplicados 2026-07-13/15).
-- Higiene: 0 __pycache__/.pytest_cache, 0 ramas muertas, worktrees vivos =
-  mak-research-cultural + god-haiku-fixes (PR #71), ~190M de basura/duplicados
-  removidos en el checkpoint 2026-07-16.
+## FUERTE (verificado 2026-07-18)
+- Suite VERDE 899 tests, compileall OK, CI matrix ubuntu+windows strict.
+- xio on-device: server Termux+Shizuku VIVO, 23+ plugins, showcontrol desplegado.
+- MAK dual-dept operativo: research+codex stack compartido, WIN fallback, pausa-en-error,
+  systemd mak-codex reparado (enabled+EnvironmentFile opcional+WorkingDirectory fijo).
+- Portfolio publico LIVE (ligereza.github.io/portfolio-auto, 8 obras, 0 Claude API).
+- RD pipeline validado: contraportadas/flyers/cotizaciones end-to-end + audits aplicados.
+- Higiene: 0 cache, branch protection ACTIVA, worktrees vivos = god-salud-integridad.
 
-## DEBIL (con evidencia)
-- [RESUELTO 2026-07-16, PR #51] Sellos de docs: CLI.md, AIRDROP_PROTOCOL.md y
-  SCRIPTS_INVENTORY.md re-verificados comando por comando contra v0.52.0.
-- [RESUELTO 2026-07-17] Branch protection en main: ACTIVA (require CI
-  ubuntu+windows, strict; confirmado en LAST_HANDOFF 2026-07-17).
-- [RESUELTO 2026-07-16, PR #55 + validacion en vivo] resolume automator:
-  fixture real en tests/fixtures/, 9 tests estructurales verdes, y el
-  .noisette generado desde jobs/test_resolume CARGA en el Chataigne 1.10.3
-  real (titulo de ventana con la sesion, registrado en recentFiles) y corre
-  estable en modo -headless -f <ruta absoluta> (30s sin crash, cierre
-  limpio). Nota honesta: falta solo inspeccion visual humana del State
-  Machine con las 12 acciones (1 min del usuario cuando quiera).
-- Gemini PARKED sin reemplazo cableado: desktop/ queda documentado pero sin uso.
-- [CORREGIDO 2026-07-16, PR #51] projects/tilde: el render YA existia
-  (sobrevivencia.py cumplia el SPEC; status stale). Tests nuevos contra el
-  instrumento real. Sigue pendiente el corpus real (P2.6).
-- xio reboot gap: xio/hotspot_boot_service (AccessibilityService) necesita
-  build/install/grant DEL USUARIO en el telefono; sin eso un reboot mata el
-  server hasta intervencion manual.
-- Peso del repo: svg/suplementos_rd trackea ~51M de SVG que se regeneran;
-  .git ya pesa 36M y crece con cada regeneracion. Vigilar antes de agregar
-  mas binarios/vectoriales pesados a git.
-- [RESUELTO antes de 2026-07-18] cultura/.dev.limpio ya no existe en disco;
-  queda solo cultura/.dev (env file operativo, gitignored via cultura/.dev*).
+## PENDIENTES USUARIO (bloqueadores ajenos, prioridad alta)
+1. PAT Termux (~/.airdrop_token) para redeploy por USB sin sesion interactiva.
+2. AccessibilityService en Ajustes Xiaomi (reboot auto-recovery de xio server).
+3. Data 13 productoras + specs venues OpenKlub/Paralelo89 para gota_rd backend.
+4. Pieza MANIFIESTO #1 en vivo con Resolume: tools/vj_set/RUNBOOK.md (demo).
 
-## PENDIENTES priorizados
-P1 (mecanico, ya):
-1. Usuario: revisar y mergear PR #49 (CI verde requerido). [PR #48 MERGEADO 2026-07-17]
-2. [HECHO 2026-07-17] cultura/.dev.limpio removido en checkpoint anterior
-3. Usuario: mover leftovers de cultura/ (copias ya guardadas en historia git;
-   el clasificador de permisos bloqueo esta movida a los agentes):
-   `cd cultura && mv BLENDER.trilogy_450frames.py blend-math-lab.html research_agent_documentacion.md research_agent_free_apis.json research_agent_free_apis.md research_agent_mistral_nemo.json trilogia.3d.blender.html xio-concept.html /c/IA/_flujo_local/cultura_leftovers/`
-   (cultura/xiotech.md SE QUEDA: contenido unico, ya commiteado en este
-   checkpoint).
-P2 (deuda tecnica con criterio):
-4. Branch protection en main (web GitHub; no necesita API ni Claude).
-5. [HECHO 2026-07-16, PR #51] Sellos de docs re-verificados contra v0.52.0.
-6. Corpus tilde real (desktop/tilde_meter.py) para el render sobrevivencia-01.
-7. Fixture de flyer real en tests/fixtures/ para smoke de productoras.py
-   (pedir un .jpg/.png al usuario).
-P3 (piezas nuevas del MANIFIESTO; motor-omega OBLIGATORIO, semilla + Omega11):
-8. [#4 y #6 HECHAS 2026-07-16, PR #51: steg_changelog.py y cron_nocturno/]
-   Queda #8 cartografia de filtros (descriptivo, no cruza bloqueos; SOLO
-   director). Bloqueadas: #2 (falta 2do modelo), #5 (hardware ESP32),
-   #7 (orden del usuario: no tocar), #11 (infra training). MANIFIESTO 4/11.
-9. gota_rd backend: decidir donde vive la data de reactivos antes de servir
-   endpoint real.
-10. SPEC-only stubs (tools/asistente_pedido, tools/canva_data,
-    tools/privacidad_datos, tools/slowmo_blender_ae): pedir alcance al usuario
-    o archivarlos en el proximo checkpoint.
+## PENDIENTES SIN GATE (backlog tecnico, puedo iniciar pero no termino solo)
+- units mak-hub y mak-xio del box estan disabled (misma fragilidad reboot que
+  tenia mak-codex, ya reparada+enabled) -- revisar/habilitar cuando sea seguro.
+- divergencia grafo.py (fallback al RESTO de llm.order) vs cadena.py (solo
+  posteriores) -- posible unificacion documentada en PR #85 notas, backlog.
+- piezas MANIFIESTO #2/#3/#11 con llave bloqueada (usuario), #7 NUNCA tocar
+  (orden expresa), #8 cartografia filtros (SOLO descriptor).
 
-## Verificacion (siempre, antes de cerrar)
+## VERIFICACION (siempre antes de cerrar)
 ```
 py -m compileall src/flujo
 py -m pytest tests/ -q
 py -m flujo verify
-# si tocas web:
 cd web && npm run typecheck && npm run build:context && cd ..
 ```
 
-## Entrada rapida para el que llega
-1. `context/LAST_HANDOFF.md` (estado corto de la ultima sesion).
+## ENTRADA RAPIDA
+1. context/LAST_HANDOFF.md (estado del dia).
 2. Este plan (pendientes + fuerte/debil).
-3. Contexto de una tarea: `py tools/contexto_repo.py task "<keywords>"`.
-4. `puente/README.md` aclara que puente es teorico (no confundir con codigo).
+3. py tools/contexto_repo.py task "<keywords>" para ruta de tarea.
+4. puente/README.md para aclarar que puente = TEORICO.
