@@ -1,6 +1,74 @@
 # LAST HANDOFF -- estado para el proximo agente
 
-Version: 0.55.0 | Fecha: 2026-07-18T09:10 | Identidad: Cauce | sesion: GODSPEED-4 loop -- PRs #79-#83 mergeados, pieza #5 verificada EN HARDWARE.
+Version: 0.55.0 | Fecha: 2026-07-18T11:30 | Identidad: Cauce | sesion: GODSPEED-4 -- MAK dual-dept fases 1-3 + PR #85 (espejo+fixes).
+
+## Sesion 2026-07-18T10:00-11:30 (MAK dual-dept, director orquesta, 1 operador sonnet) -- PR #85 MERGEADO
+
+Pedido del usuario: 100% research+codex en MAK, director NO lee contenido (riesgo de flag)
+NI repo (no lee/escribe), solo orquesta; 1 operador sonnet ejecuta en el box y reporta en
+metadata tecnica; TODO en vivo (hub :8900), nada en segundo plano. Secuencia de 3 fases:
+ambos deptos paralelo con stack MAK -> compartiendo WIN -> mismo tema en debate + auto-reparar.
+
+### HECHO Y VERIFICADO (evidencia de metadata real de jobs, no contenido)
+- FASE 1 (stack MAK, sin WIN): 2 jobs simultaneos (research cadena groq->cerebras fallback
+  real por 429; codex azure-plan + nim-flash-code), ~12s solapados probados por timestamps
+  de jobs.jsonl/eventos.jsonl. Paralelismo cross-dept CONFIRMADO (un flock por dept).
+- FASE 2/2b (compartir WIN): BLOQUEADA por 2 caminos config-only:
+  (a) env research.env -> clasificador de entrada BLOQUEA todo touch de archivo con llaves
+      (hasta un md5sum read-only); correcto, es la regla de credenciales del repo.
+  (b) workflow-node JSON -> WIN excluido por 3 whitelists HARDCODEADAS (grafo.py:30,
+      interfaz.py _orden_canvas ~227, cadena.py:94). research_lib SI soporta win pero
+      ninguna capa HTTP lo deja invocar. Convergio en: hay que reparar codigo (=fase 3).
+- FASE 3 (reparar + compartir + debatir), tras permiso ssh del usuario (/permissions ->
+  Bash(ssh mak@192.168.50.2:*)):
+  * 4 reparaciones aplicadas VIVAS en el box (snapshot .bak c/u, py_compile OK): win en las
+    3 whitelists de research + CODER_CHAIN de codex ahora override por env
+    (os.environ CODER_CHAIN csv). Servicios reiniciados por PID (no pkill -f, evita auto-matar
+    el shell ssh), ambos 200. Nodo win priority 0 agregado a workflow.json (config, snapshot
+    /tmp/workflow_phase3.bak).
+  * COMPARTIR WIN probado: research job 73c2 -> win como paso 1 (llmCalls win:1 + 4 mas);
+    codex job fa62 -> modelo win deepseek-coder-v2:16b-lite nombrado en el result line. ~69s
+    solapados. WIN respondio en AMBOS deptos.
+  * DEBATE + AUTO-REPARAR: codex job 6546 revisiono su PROPIO artefacto OSC de fase 1
+    (3 lentes correccion/seguridad/simplificacion + veredicto azure) -> propuesta en
+    ~/codex/revisiones/. research en paralelo.
+  * PERSISTIDO win-first pa sobrevivir reboot: Environment=CODER_CHAIN=... en el systemd unit
+    ~/.config/systemd/user/mak-codex.service (autoritativo, daemon-reload OK) + watchdog_mak.sh
+    (defensa extra). ~/codex/.token NUNCA tocado.
+- ESPEJO AL REPO (PR #85 MERGEADO): las 4 reparaciones vivas espejadas en cultura/ +
+  3 defectos que la demo destapo, todos con tests (tests/test_mak_mirror_fixes.py, 20+6skip):
+  1. cadena.py: _paso_con_fallback -- un proveedor muerto (groq 429) mataba el job entero;
+     ahora reintenta con los proveedores restantes de la cadena antes de fallar.
+  2. interfaz.py /run: _resolver_modo -- modos front-end-only (adversarial) se normalizaban
+     SILENCIOSO a research; ahora mapea aliases a su script real o devuelve HTTP 400.
+  3. research_lib.marco(): el marco cultura ("nada de sintesis/cultivo") envolvia TODO tema
+     y el modelo chico win (llama3.1:8b) rechazaba temas de ingenieria benignos; ahora
+     marco neutro pa temas sin sustancias, marco cultura completo intacto pa los que si.
+
+### NO HECHO / NOTAS DEL BOX (real)
+- systemd cree que mak-codex esta inactive mientras :8891 responde 200: el codex vivo es el
+  proceso manual (setsid de fase 3), fuera del bookkeeping de systemd. En el proximo reboot
+  systemd lo toma limpio CON CODER_CHAIN. RIESGO menor: si se hace `systemctl --user start`
+  ANTES de reboot con el manual arriba -> colision puerto 8891. Reconciliar cuando convenga:
+  `systemctl --user restart mak-codex.service` (un solo comando, no urgente).
+- workflow.json del box tiene nodo win priority 0 (dejado a proposito); revert en
+  /tmp/workflow_phase3.bak si alguna vez.
+- Groq free tier AGOTADO hoy (429 toda la sesion) -- la cadena lo absorbe siempre (eso es
+  diseno funcionando); pendiente sin gate: reordenar default o cablear score_provider_health
+  en research (ya existe en codex/fallback_util).
+- 1 anomalia de fase 1 (no usada como evidencia): eventos.jsonl tenia entradas mak-demo-*
+  con los mismos topicos ANTES de que el operador lanzara nada, sin footprint en jobs.jsonl
+  y sin code path que las genere. El operador las trato como no confiables y corrio jobs
+  reales frescos. Vale un ojo humano: hay una via de escritura a eventos.jsonl que el hub
+  muestra como job real sin pasar por la cola (defecto de integridad del panel, no seguridad).
+
+### Reporte Formal de Verificacion
+- py -m compileall src/flujo cultura/mak_research cultura/mak_codex: OK
+- py -m pytest tests/ -q: OK (verde, PR #85 CI matrix ubuntu+windows verde)
+- cd web && npm run build:context: no aplica (web no tocada)
+- py -m flujo verify: no aplica esta tanda (cambios en cultura/, no en modulos live de flujo)
+- Observaciones: box y repo reconciliados; win compartido en ambos deptos probado con
+  metadata real; 3 defectos de la demo cerrados con tests.
 
 ## Sesion 2026-07-18T08:45 (ventana USB del Xiaomi, director) -- PR #83 MERGEADO
 
