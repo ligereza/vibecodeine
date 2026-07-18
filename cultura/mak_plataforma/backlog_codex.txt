@@ -3,3 +3,7 @@
 una utilidad stdlib que lea un jobs.jsonl y reporte tasa de exito por modo en las ultimas 24h
 un script stdlib que verifique que responden los puertos 8890 8891 y 8900 y devuelva JSON de salud
 un formateador stdlib que tome un informe markdown y lo pase a texto plano ancho 72 para ntfy
+un resumidor stdlib que lea un backlog.jsonl y emita markdown con conteos por estado y las 5 preguntas pendientes de mayor score
+un visor stdlib que lea logs/red.jsonl y genere una timeline ascii de transiciones online/offline por dia
+un generador stdlib de glosario markdown desde un reactivos.json con nombre de reactivo, familia, color hex y nota de seguridad
+una utilidad stdlib que lea eventos.jsonl de un departamento y produzca las ultimas 10 lineas HALLAZGO como resumen markdown

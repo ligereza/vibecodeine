@@ -28,6 +28,10 @@ try:
 except Exception:  # noqa: BLE001 - si falla, asumimos online
     def red_ok():
         return True
+try:
+    import backlog  # noqa: E402
+except Exception:
+    backlog = None
 
 STATE = os.path.join(HOME, "plataforma/.trabajo_state.json")
 LOG = os.path.join(HOME, "plataforma/logs/trabajo.log")
@@ -35,6 +39,9 @@ BACKLOG = os.path.join(HOME, "plataforma/backlog_codex.txt")
 SEMILLAS_F = os.path.join(HOME, "plataforma/semillas_latido.txt")
 RESEARCH = "http://127.0.0.1:8890/run"
 CODEX = "http://127.0.0.1:8891/run"
+BACKLOG_GEN = os.path.join(HOME, "plataforma/backlog.jsonl")
+INFORMES_DIRS = [os.path.join(HOME, "research", d) for d in ("informes", "cadenas", "paneles", "refutaciones", "grafos", "memoria")]
+# nota: dirs que no existen son saltados por cosechar
 
 
 def log(m):
@@ -94,6 +101,10 @@ def _tarea(verbo, st):
     fuente = v["fuente"]
     sems = _lineas(SEMILLAS_F, roles.SEMILLAS)
     if fuente == "concepto":
+        if backlog is not None:
+            entrada = backlog.pop_pendiente(BACKLOG_GEN)
+            if entrada:
+                return ("research", {"modo": v["modo"], "tema": entrada["pregunta"], "densidad": "corto"})
         i = st.get("sem_idx", 0) % len(sems)
         st["sem_idx"] = i + 1
         return ("research", {"modo": v["modo"], "tema": sems[i], "densidad": "corto"})
@@ -124,6 +135,13 @@ def main():
     st = _state()
     if st.get("date") != hoy:
         st = {"date": hoy, "count": 0, "last": 0, "verbo_idx": 0}
+    if backlog is not None:
+        try:
+            n = backlog.cosechar(INFORMES_DIRS, BACKLOG_GEN)
+            if n:
+                log("%s cosecha: +%d preguntas al backlog generativo" % (ts, n))
+        except Exception:
+            pass
     if load1() > roles.LOAD_MAX:
         log("%s skip: load %.2f > %s" % (ts, load1(), roles.LOAD_MAX))
         return
@@ -160,6 +178,11 @@ def main():
         st["count"] = st.get("count", 0) + 1
         st["last"] = now
         _save(st)
+        if backlog is not None and st["count"] % 8 == 0:
+            try:
+                backlog.curar(BACKLOG_GEN)
+            except Exception:
+                pass
         etiqueta = payload.get("tema") or payload.get("pedido") or ""
         log("%s [%s] %s #%d/%d (%s) -> %s"
             % (ts, "on" if online else "OFF", verbo, st["count"], roles.MAX_DIA,
