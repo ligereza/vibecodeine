@@ -1,6 +1,8 @@
 # LAST HANDOFF -- estado para el proximo agente
 
-Version: 0.52.0 | Fecha: 2026-07-18T01:05 | Identidad: Cauce | sesion autonoma: cleanup loop 3min.
+Version: 0.53.0 | Fecha: 2026-07-18T01:50 | Identidad: Cauce | sesion autonoma: cleanup loop 3min.
+Bump 0.53.0: higiene profunda + 41 tests + docs veraces (changelog en version.py).
+Ruta a 0.55: 0.54 = merge PR #71 (user), 0.55 = proximo frente (MAK pausa-en-error o pieza MANIFIESTO).
 
 ## Sesion 2026-07-18T01:00+ (autonoma, loop 3min activo)
 - 8a28651: plugin_guardian duplicado xio/seguridad -> _archive/legacy_20260717_2015

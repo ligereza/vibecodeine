@@ -1,8 +1,8 @@
 """Versión y changelog de flujo."""
 
-__version__ = "0.52.0"
+__version__ = "0.53.0"
 VERSION = __version__
-__version_info__ = (0, 52, 0)
+__version_info__ = (0, 53, 0)
 
 
 def get_version():
@@ -11,6 +11,31 @@ def get_version():
 
 def get_changelog():
     return {
+        "0.53.0": {
+            "titulo": "Higiene profunda + 41 tests offline + docs de estado veraces",
+            "fecha": "2026-07-18",
+            "highlights": [
+                "dedup: plugin_guardian duplicado (xio/seguridad) archivado; canonico "
+                "queda xio/new-plugins (path real de run_server.sh); RUNBOOK resuelto",
+                "relics archivados a _archive/legacy_20260718_0110: INSTALL.txt v0.20 y "
+                "5 one-shot cleanup scripts spent (targets verificados inexistentes); "
+                "refs stale a checkpoint.sh purgadas de cli.py/PRIMER_DIA/"
+                "SCRIPTS_INVENTORY/finish_airdrop.sh",
+                "fix real de aislamiento de tests: test_run_airdrop_checks popeaba "
+                "sys.modules['flujo'] sin restaurar -> AttributeError en monkeypatch "
+                "de tests posteriores (orden-dependiente); snapshot+restore + import "
+                "explicito flujo.paths en 5 archivos",
+                "41 tests offline nuevos (sonnet auditado): ig/download 17 (instaloader "
+                "falso, login/rate-limit/retry/carousel), analyze colors+run 11 (PIL "
+                "en memoria, OCR mock), analyze/export 13 (round-trip binario ACO/ASE); "
+                "serve omitido: PR #71 trae test_serve_api.py",
+                "docs veraces: PLAN_SIGUIENTE_AGENTE (PR 48 MERGED/49 CLOSED/71 OPEN, "
+                "branch protection ACTIVA), SESSION_STATE sin refs a vibo_voz, Makefile "
+                "help PYTHON vs PYTHON_BIN, falso positivo mapping.html cerrado",
+                "verificacion: compileall OK, pytest full verde + 1 skip, flujo verify "
+                "OK, web typecheck+build OK",
+            ],
+        },
         "0.52.0": {
             "titulo": "Checkpoint limpieza total: reglas obsoletas + basura + estado fuerte/debil",
             "fecha": "2026-07-16",

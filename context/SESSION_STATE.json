@@ -1,5 +1,5 @@
 {
-  "version": "0.52.0",
+  "version": "0.53.0",
   "date": "2026-07-18T01:45:00Z",
   "assistant_name": "Cauce",
   "repo_main": "main en 0.52.0 (PRs #50-#69 mergeados). El organismo MAK (rama worktree-mak-research-cultural, equivalente a los PRs #48/#49 mencionados en handoffs previos) se mergea a main en esta misma tanda -- ver seccion MAK abajo. Branch protection en main ACTIVA (require CI ubuntu+windows, strict; confirmado en LAST_HANDOFF 2026-07-17).",
