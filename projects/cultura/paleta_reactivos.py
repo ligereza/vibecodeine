@@ -42,6 +42,7 @@ REACCIONES = [
     {"reactivo": "Marquis", "familia": "opiaceos", "reaccion": "violeta", "hex": "#5b2a6b"},
     {"reactivo": "Marquis", "familia": "2C-B", "reaccion": "verde amarillento", "hex": "#6b8e23"},
     {"reactivo": "Marquis", "familia": "DXM", "reaccion": "gris a negro", "hex": "#3a3a3a"},
+    {"reactivo": "Marquis", "familia": "cocaina", "reaccion": "rosa a durazno (actualizacion DanceSafe 2023)", "hex": "#e0a48c"},
     {"reactivo": "Marquis", "familia": "sin reaccion (blanco)", "reaccion": "sin cambio", "hex": "#efe9dd"},
     # Mecke
     {"reactivo": "Mecke", "familia": "MDMA", "reaccion": "azul a verde a negro", "hex": "#16302a"},
@@ -54,7 +55,7 @@ REACCIONES = [
     {"reactivo": "Mandelin", "familia": "cocaina", "reaccion": "naranja a marron", "hex": "#a8541a"},
     # Simon (distingue amina secundaria)
     {"reactivo": "Simon", "familia": "MDMA (amina 2a)", "reaccion": "azul", "hex": "#1b3a6b"},
-    {"reactivo": "Simon", "familia": "MDA (amina 1a)", "reaccion": "sin cambio", "hex": "#efe9dd"},
+    {"reactivo": "Simon", "familia": "MDA (amina 1a)", "reaccion": "gris a verde oscuro (actualizacion DanceSafe 2023; Simon distingue MDMA azul de MDA)", "hex": "#3a4a3a"},
     # Froehde
     {"reactivo": "Froehde", "familia": "opiaceos", "reaccion": "violeta a verde", "hex": "#3a4a2a"},
     {"reactivo": "Froehde", "familia": "2C-x", "reaccion": "verde oliva", "hex": "#5b6b2a"},
@@ -64,6 +65,7 @@ REACCIONES = [
     # Liebermann
     {"reactivo": "Liebermann", "familia": "MDMA", "reaccion": "negro", "hex": "#1a1a1a"},
     {"reactivo": "Liebermann", "familia": "cocaina", "reaccion": "amarillo", "hex": "#d4b81a"},
+    {"reactivo": "Liebermann", "familia": "cocaina cortada (levamisol / lidocaina)", "reaccion": "rojo oxido (DanceSafe: alerta de corte comun)", "hex": "#a0442a"},
 ]
 
 # Paleta de marca derivada: las reacciones mas iconicas -> roles de identidad.
@@ -83,6 +85,13 @@ DISCLAIMER = (
     "segura una sustancia. Esta paleta es diseno, no un kit de analisis."
 )
 
+FUENTE = (
+    "Cartas publicas de harm-reduction, verificado contra DanceSafe "
+    "(dancesafe.org/testing-kit-instructions, actualizaciones 2023). PRESUNTIVO: "
+    "reaccion valida solo los primeros ~40s (excepto Ehrlich/Morris). El color es "
+    "referencia, no diagnostico."
+)
+
 
 def _reactivos_agrupados():
     grupos: dict[str, list] = {}
@@ -94,7 +103,7 @@ def _reactivos_agrupados():
 def build(out_dir: Path) -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "reactivos.json").write_text(
-        json.dumps({"disclaimer": DISCLAIMER, "reacciones": REACCIONES, "marca": MARCA},
+        json.dumps({"disclaimer": DISCLAIMER, "fuente": FUENTE, "reacciones": REACCIONES, "marca": MARCA},
                    ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
