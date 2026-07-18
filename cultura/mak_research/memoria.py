@@ -364,6 +364,11 @@ def main():
     base = _escribir(tema_raw, result)
     m = result["meta"]
     print("memoria: %d fuentes, llm=%s, %d ms" % (m["n_fuentes"], m["llmCalls"], m["ms"]))
+    _primer_parrafo = next((ln.strip() for ln in (result.get("sintesis") or "").splitlines()
+                           if ln.strip() and not ln.strip().startswith("#")), "")
+    if not _primer_parrafo:
+        _primer_parrafo = "memoria: %d fuentes consultadas" % m["n_fuentes"]
+    print("HALLAZGO: " + _primer_parrafo[:140], flush=True)
     if args.ntfy:
         ntfy_publish(os.environ.get("NTFY_TOPIC_OUT", ""),
                      (result["sintesis"] or "")[:900] + "\n\n" + base + ".md",

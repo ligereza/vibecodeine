@@ -35,6 +35,9 @@ jobs:
       - name: Generar JSON del portfolio
         run: python tools/portfolio/generar_portfolio.py --out out
 
+      - name: Generar catalogo de obras (works.json)
+        run: python tools/portfolio/generar_works.py --salida out/works.json
+
       - name: Artifact (siempre, sirve de dry-run)
         uses: actions/upload-artifact@v4
         with:
@@ -51,7 +54,7 @@ jobs:
           fi
           git clone --depth 1 "https://x-access-token:${PORTFOLIO_TOKEN}@github.com/ligereza/portfolio-auto.git" sitio
           mkdir -p sitio/data
-          cp out/flujo-projects.json out/basurero.json sitio/data/
+          cp out/flujo-projects.json out/basurero.json out/works.json sitio/data/
           cd sitio
           git config user.name "flujo-portfolio-bot"
           git config user.email "actions@users.noreply.github.com"

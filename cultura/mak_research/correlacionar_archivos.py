@@ -134,6 +134,11 @@ def main():
     m = result["meta"]
     print("corpus: %d productos, llm=%s, %d ms"
           % (m["n_productos"], m["llmCalls"], m["ms"]))
+    _primer_parrafo = next((ln.strip() for ln in result["mapa"].splitlines()
+                           if ln.strip() and not ln.strip().startswith("#")), "")
+    if not _primer_parrafo:
+        _primer_parrafo = "corpus: %d productos correlacionados" % m["n_productos"]
+    print("HALLAZGO: " + _primer_parrafo[:140], flush=True)
     if args.ntfy:
         ntfy_publish(os.environ.get("NTFY_TOPIC_OUT", ""),
                      result["mapa"][:900] + "\n\n" + base + ".md",
