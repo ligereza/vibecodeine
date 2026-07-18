@@ -1,9 +1,9 @@
 {
   "version": "0.54.0",
-  "date": "2026-07-18T01:45:00Z",
+  "date": "2026-07-18T03:05:00Z",
   "assistant_name": "Cauce",
   "repo_main": "main en 0.52.0 (PRs #50-#69 mergeados). El organismo MAK (rama worktree-mak-research-cultural, equivalente a los PRs #48/#49 mencionados en handoffs previos) se mergea a main en esta misma tanda -- ver seccion MAK abajo. Branch protection en main ACTIVA (require CI ubuntu+windows, strict; confirmado en LAST_HANDOFF 2026-07-17).",
-  "current_focus": "Cierre de la sesion MAK (organismo research+codex+plataforma+lenguaje, vive en Debian 192.168.50.2 fuera de src/flujo): copia de codigo a cultura/mak_*, handoff actualizado, merge a main. Detalle completo en LAST_HANDOFF.md seccion 'MAK -- cierre 2026-07-17'.",
+  "current_focus": "GODSPEED-3 cerrada: PRs #72 (pausa-en-error+0.55.0) y #73 (rechazo /run+HALLAZGO+works.json) draft con CI verde, ambos desplegados y verificados vivos en el box. Esperan review usuario.",
   "done": [
     "2026-07-18T01:00-01:45 (autonomo, loop 3min): plugin_guardian duplicado archivado (canonico en xio/new-plugins); refs stale a checkpoint.sh purgadas (cli.py, PRIMER_DIA, SCRIPTS_INVENTORY, finish_airdrop.sh); INSTALL.txt v0.20 + 5 one-shot cleanup scripts archivados a _archive/legacy_20260718_0110/; fix real de aislamiento de tests (test_run_airdrop_checks popeaba sys.modules['flujo'] sin restaurar); 28 tests nuevos ig/analyze (sonnet, auditados); Makefile help PYTHON vs PYTHON_BIN; falso positivo 'missing mapping.html' cerrado. Commits 8a28651..1a63c53 pushed. Suite verde en cada paso.",
     "2026-07-17T22:30 (autonomo, limpieza mecanica): PR #48 stale refs corregidas en MASTER_PLAN.md + PLAN_SIGUIENTE_AGENTE.md (PR #48 MERGED 2026-07-17, kept only PR #49 pending), 9 cultura/ leftovers moved to C:/IA/_flujo_local/, docs/DIRECTOR_PLAN.md archived (stale v0.49.0). Suite verde (pytest 394+1skip, flujo verify OK). Commit 156e8b4 pushed.",
@@ -16,19 +16,17 @@
     "2026-07-12: xio Fase 1+2 on-device (Termux+Shizuku, fix critico _rish file-redirect, connectivity_supervisor); fold telar->loom; pieza tilde_residuo (PR #41 MERGEADO); portfolio-auto LIVE con 8 obras reales.",
     "NOTA: el detalle largo de sesiones anteriores se movio de aqui a la historia git de este archivo (checkpoint 2026-07-16); el changelog de codigo vive en src/flujo/version.py get_changelog()."
   ],
-  "doing": [],
+  "doing": [
+    "nada activo -- sesion cerrada limpia"
+  ],
   "next": [
-    "MAK: terminar pausa-en-error de research.py (main() --resume/--accion/--nuevo-input, worker.py reconocer 'PAUSADO: ', endpoint /api/reanudar en interfaz.py + hub.py, botones reintentar/editar/saltar/abortar en el panel). investigar() ya soporta checkpoint= pero nada lo invoca todavia.",
-    "MAK: replicar el emisor de eventos (HALLAZGO: + node_start/llm_result/node_end) en cadena.py/refutar.py/panel.py/grafo.py/memoria.py/revisar.py/testear.py -- hoy solo research.py+generar.py+debug.py tienen contenido semantico real; el resto solo tiene node_start/node_end genericos via worker.py/worker_codex.py.",
-    "MAK: seguridad ollama en WIN -- bind ya restringido a la IP del cable directo (192.168.50.1), pero la regla de firewall de Windows sigue en 'Any remote address' (el New-NetFirewallRule con RemoteAddress fallo por falta de admin). El bind por interfaz ya cierra el riesgo real; la regla de firewall es hardening opcional, requiere UAC.",
-    "Corpus tilde real (desktop/tilde_meter.py) para render sobrevivencia-01; fixture flyer real para smoke productoras.py.",
-    "Piezas MANIFIESTO candidatas (#4 esteganografia, #8 cartografia filtros, #6 cron nocturno) via motor-omega; resto bloqueadas (ver PLAN).",
-    "xio reboot gap: build/install/grant de xio/hotspot_boot_service (AccessibilityService) = parte del usuario en el telefono."
+    "usuario: review/merge PR #72 y #73 (si #72 entra primero, #73 conflictua trivial en LAST_HANDOFF: conservar ambas narrativas)",
+    "usuario: autostart ollama serve Windows (no sobrevive reboot)",
+    "sin gate: Opcion B pieza MANIFIESTO via motor-omega",
+    "sin gate: test_smoke skip permanente (fixture o borrar)"
   ],
   "blockers": [
-    "Gemini API PARKED desde 2026-07-10 (sin API util): desktop/ sin uso hasta que el usuario anuncie key/API nueva (tools/vibo_voz ya eliminado 2026-07-17).",
-    "build_chataigne_noisette_experimental: falta el .noisette real (no re-adivinar, fallo 4 veces).",
-    "Clasificador de permisos bloquea a agentes operaciones de borrado/movida dentro de cultura/ (ahi viven las keys): esas quedan como acciones manuales del usuario."
+    "review humano PRs #72/#73"
   ],
   "ai_stack": {
     "architect_reviewer": "Claude Code (director; arquitectura/critico/codigo que no admite malentendido)",

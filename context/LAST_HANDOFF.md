@@ -1,6 +1,37 @@
 # LAST HANDOFF -- estado para el proximo agente
 
-Version: 0.54.0 | Fecha: 2026-07-18T02:30 | Identidad: Cauce | sesion: cleanup loop + merge PR #71.
+Version: 0.55.0 (en PR #72) | Fecha: 2026-07-18T03:05 | Identidad: Cauce | sesion: GODSPEED-3 (2 olas, PRs #72 y #73).
+
+## Sesion 2026-07-18T02:00-03:05 (GODSPEED-3, director Fable, ola 2 -- esta rama, PR #73)
+
+ESTADO PA EL PROXIMO AGENTE -- dos PRs draft esperando review del usuario, CI verde en ambos:
+
+- PR #72 (rama worktree-god-mak-pausa): pausa-en-error MAK completa (Opcion A de
+  context/PLAN_UPSCALE.md) + bump 0.55.0 + su propio LAST_HANDOFF detallado.
+  Desplegada y VERIFICADA VIVA en el box (ciclo pausa/saltar/resume/informe).
+  Workship Win<->MAK probado: llama3.1:8b (VRAM RTX 4070) y deepseek-coder-v2:16b
+  responden desde el box via order='win' (research_lib y codex_lib ya cableados).
+- PR #73 (esta rama): trabajo.py detecta ok:false de /run (antes contaba como
+  exito), emisor HALLAZGO en correlacionar_archivos.py + memoria.py (cierra el
+  contrato de eventos), works.json en portfolio.yml (Opcion C -- toca workflow CI,
+  revisar ese paso en especial). 10 tests nuevos. Deploy de los 3 .py al box hecho
+  y verificado (python3, _resp_ok probado vivo).
+- MERGE: si #72 entra primero, esta rama conflictua en LAST_HANDOFF/version --
+  resolucion: conservar ambas narrativas, version manda la mas alta. Y viceversa.
+- BOX: servicios interfaz/hub corren el codigo nuevo (restart via watchdogs cron).
+  ollama serve en Windows (192.168.50.1:11434) arrancado A MANO -- no sobrevive
+  reboot; autostart = decision usuario. GPU RTX 4070 SI detectada.
+- Skill godspeed ampliada con lecciones 3ra sesion (.claude/skills/godspeed/SKILL.md,
+  en esta rama): contrato congelado pa writers paralelos, seam-check md5 vivo-vs-
+  espejo, trampa pkill -f via SSH, trampa listado truncado, config persistida antes
+  de rediagnosticar.
+- PENDIENTES USUARIO: review/merge #72 y #73; autostart ollama Windows; llaves de
+  siempre (noisette ojo humano, PAT Termux, AccessibilityService, data productoras).
+- PROXIMO SIN GATE: Opcion B (pieza MANIFIESTO via motor-omega); vigilar peso repo;
+  test_smoke skip permanente (decidir fixture o borrar).
+
+Sesion anterior (0.54.0): PR #71 MERGEADO a main (cd52a69) tras resolver conflictos + fix CI ubuntu
+(iterdir orden). SSH a MAK VERIFICADO: mak@192.168.50.2 (dell-11m, llave autorizada).
 Bump 0.54.0: PR #71 MERGEADO a main (cd52a69) tras resolver conflictos + fix CI ubuntu
 (iterdir orden). SSH a MAK VERIFICADO: mak@192.168.50.2 (dell-11m, llave autorizada).
 Skill godspeed ampliada con lecciones 2da sesion. Rama #71 borrada (local+remota);
