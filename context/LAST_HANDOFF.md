@@ -1,10 +1,38 @@
 # LAST HANDOFF -- estado para el proximo agente
 
-Version: 0.55.0 | Fecha: 2026-07-18T12:30 | Identidad: Cauce | sesion: GODSPEED-5 -- salud de proveedores + integridad panel + reconciliacion systemd codex.
+Version: 0.55.0 | Fecha: 2026-07-18T13:30 | Identidad: Cauce | sesion: GODSPEED-5b -- cierre del dia (1 haiku organiza + 4 lanes).
 
 ## CIERRE DEL DIA 2026-07-18 (resumen para el proximo agente)
 
-PRs #72-#87 mergeados a main (v0.55.0). MANIFIESTO 6/11 piezas. MAK dual-dept research+codex operativo con WIN como proveedor (research+codex comparten stack; fallback nube -> WIN -> ollama-local probado). Demo defects cerrados en PR #85: _paso_con_fallback (proveedor 429 no mata el job), /run modo resolution (no normalizacion silenciosa), cultura marco neutro para temas sin sustancia. WiFi scan parser hardware-verified en Xiaomi (PR #83, columnar + legacy fallback). Autoportfolio vivo (portfolio-auto PR #4/#5, refresh semanal lunes). GODSPEED-5: salud_proveedores demota fallidos 6h, integridad panel marca sin_job, systemd mak-codex reparado (enabled+EnvironmentFile opcional+WorkingDirectory fijo). Pendientes usuario: PAT Termux, AccessibilityService, datos productoras+venues. Pendientes sin gate: mak-hub/mak-xio units disabled (reboot risk); divergencia grafo.py vs cadena.py fallback (documentada PR #85 notas).
+PRs #72-#87 mergeados a main (v0.55.0). MANIFIESTO 6/11 piezas. MAK dual-dept research+codex operativo con WIN como proveedor (research+codex comparten stack; fallback nube -> WIN -> ollama-local probado). Demo defects cerrados en PR #85: _paso_con_fallback (proveedor 429 no mata el job), /run modo resolution (no normalizacion silenciosa), cultura marco neutro para temas sin sustancia. WiFi scan parser hardware-verified en Xiaomi (PR #83, columnar + legacy fallback). Autoportfolio vivo (portfolio-auto PR #4/#5, refresh semanal lunes). GODSPEED-5: salud_proveedores demota fallidos 6h, integridad panel marca sin_job, systemd mak-codex reparado (enabled+EnvironmentFile opcional+WorkingDirectory fijo). Pendientes usuario: PAT Termux, AccessibilityService, datos productoras+venues. Pendientes sin gate: mak-hub/mak-xio units disabled (reboot risk); divergencia grafo.py vs cadena.py fallback (documentada PR #85 notas). [AMBOS CERRADOS en GODSPEED-5b, ver seccion siguiente]
+
+## Sesion 2026-07-18T13:00 (GODSPEED-5b, cierre del dia: 1 haiku organizador + 4 lanes)
+
+- PR #87 MERGEADO (CI matrix verde 2x); rama head borrada tras state==MERGED.
+- Ramas extra purgadas: worktree-god-haiku-fixes (remota, 0 unmerged),
+  god-mak-ola2/god-mak-pausa (locales, 0 unmerged, worktrees removidos).
+- AUDITORIA rama worktree-mak-research-cultural (7 commits unmerged): TODO
+  SUPERSEDED por PRs #48/#49 y refactors posteriores en main (diffs solo
+  net-negativos; mak_lenguaje byte-identico; patch_interfaz.py borrado a
+  proposito en el auth-delete). Rama + worktree ELIMINADOS (los 101 dirty
+  eran deletions no commiteadas de .archive/old-archive, sin contenido).
+- UNITS mak-hub y mak-xio del box: existian pero DISABLED (misma clase que
+  mak-codex); ExecStart targets verificados, WorkingDirectory pineado
+  (%h/plataforma, %h/xio_puente), .bak de cada unit, kill manual por PID +
+  enable --now inmediato (el watchdog relanza en segundos si hay hueco).
+  VERIFICADO: ambos active, MainPID = unico proceso, hub :8900 -> 200.
+  Los 3 servicios del box (codex/hub/xio) ahora systemd-managed + enabled.
+  Espejos en cultura/mak_plataforma/mak-hub.service + mak-xio.service.
+- grafo.py unificado a la semantica de cadena.py: _nodo_con_fallback (intento
+  order=[m] solo; en RuntimeError reintenta con el resto de llm.order sin m;
+  diferencia documentada: grafo no tiene cadena posicional). El fallo del
+  proveedor asignado ahora queda VISIBLE en llm.errors en vez de absorberse
+  silencioso. +5 tests (test_mak_grafo_fallback.py).
+- context/PLAN_SIGUIENTE_AGENTE.md reescrito al estado real (v0.55.0,
+  PRs #72-#87, 51 lineas). README: subseccion MAK en el bloque operativo
+  (arte intacto). Limpieza local: 110 __pycache__ + 4 .pytest_cache + _logs.
+- grafo.py DESPLEGADO al box (~/research/grafo.py, py_compile OK; los modos
+  se importan fresh por job, sin restart necesario).
 
 ## Sesion 2026-07-18T12:00 (GODSPEED-5, director + 5 lectores sonnet + 2 builders sonnet)
 
