@@ -140,6 +140,35 @@ MARCO_CULTURA = (
     "contexto social; nada operativo, nada de sintesis quimica ni cultivo, "
     "no perfilar personas reales): "
 )
+# Marco neutro: mismo nucleo (descriptivo, no perfilar personas reales) SIN
+# las frases de negacion especificas de sustancias. Bug probado en vivo:
+# modelos locales chicos (llama3.1:8b via win) leen "nada de sintesis
+# quimica ni cultivo" en CUALQUIER tema y patron-matchean hacia el rechazo,
+# incluso en ingenieria benigna sin relacion con sustancias.
+MARCO_CULTURA_NEUTRO = (
+    "Investigacion cultural DESCRIPTIVA (historia, estetica, derecho, "
+    "contexto social; nada operativo, no perfilar personas reales): "
+)
+# lista conservadora: ante la duda de si el tema toca sustancias, se
+# prefiere el marco completo (mas proteccion), no el neutro.
+_TERMINOS_SUSTANCIA = (
+    "droga", "drogas", "sustancia", "sustancias", "narcotico", "narcotica",
+    "narcoticos", "narcoticas", "estupefaciente", "estupefacientes",
+    "cannabis", "marihuana", "marijuana", "cocaina", "cocaína", "heroina",
+    "heroína", "opio", "opioide", "opioides", "fentanilo", "metanfetamina",
+    "anfetamina", "anfetaminas", "lsd", "mdma", "extasis", "éxtasis",
+    "psicodelico", "psicodélico", "psicodelica", "psicoactiv", "alcaloide",
+    "cultivo", "sintesis quimica", "síntesis química", "precursor quimico",
+    "precursor químico", "reactivo", "narco", "hongo", "hongos", "ketamina",
+    "peyote", "ayahuasca", "dmt",
+)
+
+
+def _es_tema_sustancia(topic):
+    """True si el tema toca sustancias/farmacos (lista conservadora, no
+    exhaustiva a proposito: ante la duda gana el marco completo)."""
+    t = (topic or "").lower()
+    return any(term in t for term in _TERMINOS_SUSTANCIA)
 
 
 def load_env(path=ENV_FILE):
@@ -386,4 +415,7 @@ def ntfy_publish(topic, message, title="", priority="default", errors=None):
 
 
 def marco(topic, activo=True):
-    return (MARCO_CULTURA + topic) if activo else topic
+    if not activo:
+        return topic
+    frame = MARCO_CULTURA if _es_tema_sustancia(topic) else MARCO_CULTURA_NEUTRO
+    return frame + topic

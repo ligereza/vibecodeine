@@ -44,12 +44,31 @@ NIM_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
 # deepseek-coder:6.7b como ultimo recurso.
 WIN_BASE_URL = "http://192.168.50.1:11434"
 WIN_CODE_MODEL = "deepseek-coder-v2:16b-lite-instruct-q4_K_M"
-CODER_CHAIN = [
-    ("nim", "deepseek-ai/deepseek-v4-pro"),
-    ("nim", "deepseek-ai/deepseek-v4-flash"),
-    ("win", WIN_CODE_MODEL),
-    ("ollama", "deepseek-coder:6.7b"),
-]
+# mapa clave-corta -> (proveedor, modelo); CODER_CHAIN se arma a partir de
+# esto para poder reordenar/recortar la cadena por env var sin tocar codigo
+# (ej. CODER_CHAIN=win,ollama si NIM esta 429 esa sesion).
+_CODER_CHAIN_MAP = {
+    "nim-pro": ("nim", "deepseek-ai/deepseek-v4-pro"),
+    "nim-flash": ("nim", "deepseek-ai/deepseek-v4-flash"),
+    "win": ("win", WIN_CODE_MODEL),
+    "ollama": ("ollama", "deepseek-coder:6.7b"),
+}
+_CODER_CHAIN_DEFAULT = ["nim-pro", "nim-flash", "win", "ollama"]
+
+
+def _parse_coder_chain(csv_value):
+    """CSV de claves de _CODER_CHAIN_MAP -> lista de tuplas (proveedor,
+    modelo). Claves invalidas se descartan; CSV vacio, ausente, o sin
+    ninguna clave valida -> _CODER_CHAIN_DEFAULT completo (nunca una cadena
+    vacia que deje sin coder)."""
+    claves = [c.strip() for c in (csv_value or "").split(",") if c.strip()]
+    claves = [c for c in claves if c in _CODER_CHAIN_MAP]
+    if not claves:
+        claves = _CODER_CHAIN_DEFAULT
+    return [_CODER_CHAIN_MAP[c] for c in claves]
+
+
+CODER_CHAIN = _parse_coder_chain(os.environ.get("CODER_CHAIN"))
 
 # Timeouts por proveedor (segundos), espejo de los valores hardcodeados en
 # _nim (120) y _ollama_chat (300). Solo informativo para el reporte de fallos.
