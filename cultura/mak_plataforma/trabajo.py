@@ -93,6 +93,19 @@ def _post(url, data):
         return r.read(2000).decode("utf-8", "replace")
 
 
+def _resp_ok(resp):
+    """Parsea el body JSON de /run; (True, "") si ok o no-JSON (legacy), (False, error) si ok==false."""
+    try:
+        d = json.loads(resp)
+    except ValueError:
+        return (True, "")
+    if not isinstance(d, dict):
+        return (True, "")
+    if not d.get("ok", True):
+        return (False, str(d.get("error", ""))[:200])
+    return (True, "")
+
+
 def _tarea(verbo, st):
     """Arma (depto, payload_dict) para un verbo, o None si no hay trabajo."""
     v = next((x for x in roles.VERBOS if x["verbo"] == verbo), None)
@@ -175,6 +188,12 @@ def main():
         url = CODEX
     try:
         resp = _post(url, payload)
+        ok, err = _resp_ok(resp)
+        if not ok:
+            log("%s [%s] %s RECHAZADO: %s"
+                % (ts, "on" if online else "OFF", verbo, err))
+            _save(st)
+            return
         st["count"] = st.get("count", 0) + 1
         st["last"] = now
         _save(st)

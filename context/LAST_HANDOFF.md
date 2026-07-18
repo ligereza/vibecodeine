@@ -1,8 +1,43 @@
 # LAST HANDOFF -- estado para el proximo agente
 
-Version: 0.55.0 | Fecha: 2026-07-18T02:45 | Identidad: Cauce | sesion: GODSPEED-3 pausa-en-error + workship Win-MAK.
+Version: 0.55.0 | Fecha: 2026-07-18T07:10 | Identidad: Cauce | sesion: GODSPEED-4 (director) -- PR #72 MERGEADO a main, PR #73 rebaseado sobre 0.55.0.
 
-## Sesion 2026-07-18T02:00+ (GODSPEED-3, director Fable + 4 lectores + 2 builders sonnet, PR #72)
+## Sesion 2026-07-18T07:00 (GODSPEED-4, director): merge #72 + resolucion conflicto #73
+- PR #72 (pausa-en-error, bump 0.55.0) MERGEADO a main con CI matrix verde (ubuntu+windows).
+- Esta rama (#73) mergeo origin/main; conflictos solo en LAST_HANDOFF/SESSION_STATE,
+  resueltos conservando AMBAS narrativas (regla godspeed). Codigo sin conflicto.
+- Worktree god-mak-ola2 seguia lockeado por sesion viva (pid 35300) -- se resolvio en
+  worktree detached aparte, sin tocar la del otro agente.
+
+## Sesion 2026-07-18T02:00-03:05 (GODSPEED-3, director Fable, ola 2 -- esta rama, PR #73)
+
+ESTADO PA EL PROXIMO AGENTE -- dos PRs draft esperando review del usuario, CI verde en ambos:
+
+- PR #72 (rama worktree-god-mak-pausa): pausa-en-error MAK completa (Opcion A de
+  context/PLAN_UPSCALE.md) + bump 0.55.0 + su propio LAST_HANDOFF detallado.
+  Desplegada y VERIFICADA VIVA en el box (ciclo pausa/saltar/resume/informe).
+  Workship Win<->MAK probado: llama3.1:8b (VRAM RTX 4070) y deepseek-coder-v2:16b
+  responden desde el box via order='win' (research_lib y codex_lib ya cableados).
+- PR #73 (esta rama): trabajo.py detecta ok:false de /run (antes contaba como
+  exito), emisor HALLAZGO en correlacionar_archivos.py + memoria.py (cierra el
+  contrato de eventos), works.json en portfolio.yml (Opcion C -- toca workflow CI,
+  revisar ese paso en especial). 10 tests nuevos. Deploy de los 3 .py al box hecho
+  y verificado (python3, _resp_ok probado vivo).
+- MERGE: si #72 entra primero, esta rama conflictua en LAST_HANDOFF/version --
+  resolucion: conservar ambas narrativas, version manda la mas alta. Y viceversa.
+- BOX: servicios interfaz/hub corren el codigo nuevo (restart via watchdogs cron).
+  ollama serve en Windows (192.168.50.1:11434) arrancado A MANO -- no sobrevive
+  reboot; autostart = decision usuario. GPU RTX 4070 SI detectada.
+- Skill godspeed ampliada con lecciones 3ra sesion (.claude/skills/godspeed/SKILL.md,
+  en esta rama): contrato congelado pa writers paralelos, seam-check md5 vivo-vs-
+  espejo, trampa pkill -f via SSH, trampa listado truncado, config persistida antes
+  de rediagnosticar.
+- PENDIENTES USUARIO: review/merge #72 y #73; autostart ollama Windows; llaves de
+  siempre (noisette ojo humano, PAT Termux, AccessibilityService, data productoras).
+- PROXIMO SIN GATE: Opcion B (pieza MANIFIESTO via motor-omega); vigilar peso repo;
+  test_smoke skip permanente (decidir fixture o borrar).
+
+## Sesion 2026-07-18T02:00+ (GODSPEED-3, director Fable + 4 lectores + 2 builders sonnet, PR #72 -- ya mergeado)
 
 - PAUSA-EN-ERROR (PLAN_UPSCALE Opcion A) COMPLETA: pausa.py nuevo (checkpoint stdlib,
   acciones reintentar/editar/saltar), research.py pausa en fallo terminal de las 3 fases
@@ -27,8 +62,8 @@ Version: 0.55.0 | Fecha: 2026-07-18T02:45 | Identidad: Cauce | sesion: GODSPEED-
   OLLAMA_HOST persistido). (2) trabajo.py no parsea el body de /run (200 con ok:false
   cuenta como exito) -- hallazgo off-task, sin tocar. (3) pkill -f via SSH se mata a si
   mismo si el patron matchea la cmdline del bash remoto (2 sesiones SSH perdidas asi).
-- PR #72 (draft, rama worktree-god-mak-pausa): pausa-en-error + bump 0.55.0. Gate:
-  review usuario + CI matrix.
+- PR #72 (rama worktree-god-mak-pausa): pausa-en-error + bump 0.55.0. MERGEADO
+  2026-07-18T07:04 con CI matrix verde.
 
 Sesion anterior (0.54.0): PR #71 MERGEADO a main (cd52a69) tras resolver conflictos + fix CI ubuntu
 (iterdir orden). SSH a MAK VERIFICADO: mak@192.168.50.2 (dell-11m, llave autorizada).
