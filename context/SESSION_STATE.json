@@ -21,7 +21,6 @@
     "MAK: terminar pausa-en-error de research.py (main() --resume/--accion/--nuevo-input, worker.py reconocer 'PAUSADO: ', endpoint /api/reanudar en interfaz.py + hub.py, botones reintentar/editar/saltar/abortar en el panel). investigar() ya soporta checkpoint= pero nada lo invoca todavia.",
     "MAK: replicar el emisor de eventos (HALLAZGO: + node_start/llm_result/node_end) en cadena.py/refutar.py/panel.py/grafo.py/memoria.py/revisar.py/testear.py -- hoy solo research.py+generar.py+debug.py tienen contenido semantico real; el resto solo tiene node_start/node_end genericos via worker.py/worker_codex.py.",
     "MAK: seguridad ollama en WIN -- bind ya restringido a la IP del cable directo (192.168.50.1), pero la regla de firewall de Windows sigue en 'Any remote address' (el New-NetFirewallRule con RemoteAddress fallo por falta de admin). El bind por interfaz ya cierra el riesgo real; la regla de firewall es hardening opcional, requiere UAC.",
-    "Re-verificar sellos v0.48.5 de docs/CLI.md, AGENT_AIRDROP_PROTOCOL.md, SCRIPTS_INVENTORY.md contra la version actual (no subir numero sin re-verificar).",
     "Corpus tilde real (desktop/tilde_meter.py) para render sobrevivencia-01; fixture flyer real para smoke productoras.py.",
     "Piezas MANIFIESTO candidatas (#4 esteganografia, #8 cartografia filtros, #6 cron nocturno) via motor-omega; resto bloqueadas (ver PLAN).",
     "xio reboot gap: build/install/grant de xio/hotspot_boot_service (AccessibilityService) = parte del usuario en el telefono."

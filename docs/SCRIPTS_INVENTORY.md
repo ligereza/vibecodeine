@@ -1,6 +1,6 @@
 # Inventario de scripts
 
-Version: v0.52.0 (verificado 2026-07-16, contra `ls scripts/` + `Makefile` + `.github/workflows/*.yml` reales)
+Version: v0.52.0 (verificado 2026-07-18, contra `ls scripts/` + `Makefile` + `.github/workflows/*.yml` reales)
 
 Este inventario evita que agentes confundan wrappers legacy con el núcleo real.
 
