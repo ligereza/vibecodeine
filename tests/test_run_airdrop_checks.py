@@ -31,6 +31,10 @@ def test_runner_carga_flujo_airdrop_aunque_scripts_este_en_path(monkeypatch):
     scripts = str(Path("scripts").resolve())
     src = str(Path("src").resolve())
     original = list(sys.path)
+    original_flujo_mods = {
+        name: mod for name, mod in sys.modules.items()
+        if name == "flujo" or name.startswith("flujo.")
+    }
     try:
         # Simular el caso de Windows: scripts/ aparece antes que src/.
         sys.modules.pop("flujo", None)
@@ -52,6 +56,11 @@ def test_runner_carga_flujo_airdrop_aunque_scripts_este_en_path(monkeypatch):
     finally:
         sys.path[:] = original
         sys.modules.pop("run_airdrop_checks_under_test", None)
+        # Restaurar el paquete flujo original: dejar el fresh (sin attrs de
+        # submodulos) rompia monkeypatch("flujo.paths...") en tests posteriores.
+        for name in [n for n in sys.modules if n == "flujo" or n.startswith("flujo.")]:
+            sys.modules.pop(name, None)
+        sys.modules.update(original_flujo_mods)
 
 
 def test_runner_expone_skip_push():

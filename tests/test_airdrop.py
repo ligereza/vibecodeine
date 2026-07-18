@@ -11,6 +11,7 @@ import pytest
 from typer.testing import CliRunner
 
 import flujo.airdrop as airdrop
+import flujo.paths  # noqa: F401 -- monkeypatch("flujo.paths.repo_root") necesita el submodulo ya importado
 from flujo.cli import app
 
 runner = CliRunner()
