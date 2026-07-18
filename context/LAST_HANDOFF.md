@@ -1,6 +1,13 @@
 # LAST HANDOFF -- estado para el proximo agente
 
-Version: 0.55.0 (en PR #72) | Fecha: 2026-07-18T03:05 | Identidad: Cauce | sesion: GODSPEED-3 (2 olas, PRs #72 y #73).
+Version: 0.55.0 | Fecha: 2026-07-18T07:10 | Identidad: Cauce | sesion: GODSPEED-4 (director) -- PR #72 MERGEADO a main, PR #73 rebaseado sobre 0.55.0.
+
+## Sesion 2026-07-18T07:00 (GODSPEED-4, director): merge #72 + resolucion conflicto #73
+- PR #72 (pausa-en-error, bump 0.55.0) MERGEADO a main con CI matrix verde (ubuntu+windows).
+- Esta rama (#73) mergeo origin/main; conflictos solo en LAST_HANDOFF/SESSION_STATE,
+  resueltos conservando AMBAS narrativas (regla godspeed). Codigo sin conflicto.
+- Worktree god-mak-ola2 seguia lockeado por sesion viva (pid 35300) -- se resolvio en
+  worktree detached aparte, sin tocar la del otro agente.
 
 ## Sesion 2026-07-18T02:00-03:05 (GODSPEED-3, director Fable, ola 2 -- esta rama, PR #73)
 
@@ -29,6 +36,34 @@ ESTADO PA EL PROXIMO AGENTE -- dos PRs draft esperando review del usuario, CI ve
   siempre (noisette ojo humano, PAT Termux, AccessibilityService, data productoras).
 - PROXIMO SIN GATE: Opcion B (pieza MANIFIESTO via motor-omega); vigilar peso repo;
   test_smoke skip permanente (decidir fixture o borrar).
+
+## Sesion 2026-07-18T02:00+ (GODSPEED-3, director Fable + 4 lectores + 2 builders sonnet, PR #72 -- ya mergeado)
+
+- PAUSA-EN-ERROR (PLAN_UPSCALE Opcion A) COMPLETA: pausa.py nuevo (checkpoint stdlib,
+  acciones reintentar/editar/saltar), research.py pausa en fallo terminal de las 3 fases
+  (marca "PAUSADO: <ck> | <motivo>" + exit 3) y --resume, worker.py propaga MAK_JOB_ID +
+  param extra + evento human_gate, interfaz.py estado PAUSADO + POST /api/reanudar +
+  4 botones en ambos renders + CSS, hub.py _norm/colores/contador. 44 tests nuevos
+  (test_mak_pausa 20 + test_mak_reanudar 24; 12 fcntl-gated solo corren en CI ubuntu).
+  Contrato seguido: cultura/mak_plataforma/diseno/eventos_y_backlog.md.
+- VERIFICADO VIVO en el box: ciclo pausa -> saltar -> resume -> re-pausa (fase informe)
+  -> saltar -> informe placeholder exit 0. /api/reanudar valida job inexistente (404).
+  interfaz.py y hub.py reiniciados con codigo nuevo -- OJO: eso tambien aterrizo el
+  borrado de auth de PR #71 que NUNCA se habia desplegado (el hub vivo aun proxeaba
+  token de codex borrado = bug vivo, muerto ahora).
+- WORKSHIP Win<->MAK PROBADO (pedido del usuario, primera vez): Windows 192.168.50.1
+  (cable directo) con OLLAMA_HOST=192.168.50.1:11434 ya persistido por agente previo y
+  modelos en C:\OLLAMA_MODELS (14.2GB): llama3.1:8b + deepseek-coder-v2:16b-lite-q4.
+  ollama serve arrancado, RTX 4070 SI detectada (llama en VRAM completa; el log CPU-only
+  era de un proceso viejo). Desde el box: research_lib LLM(order='win') respondio OK,
+  codex_lib win (deepseek 16b) responde, carga 10.4s. Cadenas ya cableadas en ambos libs.
+- GAPS REALES: (1) ollama serve en Windows arrancado a mano -- no sobrevive reboot;
+  usuario decide autostart (la app de Ollama al iniciar sesion ya bindea bien por el
+  OLLAMA_HOST persistido). (2) trabajo.py no parsea el body de /run (200 con ok:false
+  cuenta como exito) -- hallazgo off-task, sin tocar. (3) pkill -f via SSH se mata a si
+  mismo si el patron matchea la cmdline del bash remoto (2 sesiones SSH perdidas asi).
+- PR #72 (rama worktree-god-mak-pausa): pausa-en-error + bump 0.55.0. MERGEADO
+  2026-07-18T07:04 con CI matrix verde.
 
 Sesion anterior (0.54.0): PR #71 MERGEADO a main (cd52a69) tras resolver conflictos + fix CI ubuntu
 (iterdir orden). SSH a MAK VERIFICADO: mak@192.168.50.2 (dell-11m, llave autorizada).

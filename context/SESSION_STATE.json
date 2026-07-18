@@ -1,10 +1,11 @@
 {
-  "version": "0.54.0",
-  "date": "2026-07-18T03:05:00Z",
+  "version": "0.55.0",
+  "date": "2026-07-18T07:10:00Z",
   "assistant_name": "Cauce",
-  "repo_main": "main en 0.52.0 (PRs #50-#69 mergeados). El organismo MAK (rama worktree-mak-research-cultural, equivalente a los PRs #48/#49 mencionados en handoffs previos) se mergea a main en esta misma tanda -- ver seccion MAK abajo. Branch protection en main ACTIVA (require CI ubuntu+windows, strict; confirmado en LAST_HANDOFF 2026-07-17).",
-  "current_focus": "GODSPEED-3 cerrada: PRs #72 (pausa-en-error+0.55.0) y #73 (rechazo /run+HALLAZGO+works.json) draft con CI verde, ambos desplegados y verificados vivos en el box. Esperan review usuario.",
+  "repo_main": "main en 0.55.0 (PR #72 pausa-en-error MERGEADO 2026-07-18). Branch protection en main ACTIVA (require CI ubuntu+windows, strict).",
+  "current_focus": "GODSPEED-4: PR #72 mergeado a main; PR #73 (rechazo /run+HALLAZGO+works.json) rebaseado sobre 0.55.0, espera CI + review usuario.",
   "done": [
+    "2026-07-18T02:00-02:45 (GODSPEED-3): pausa-en-error end-to-end (pausa.py, research.py --resume, worker MAK_JOB_ID+human_gate, interfaz PAUSADO+/api/reanudar+botones, hub colores/contadores; 44 tests) desplegado y verificado VIVO en el box (ciclo pausa/saltar/resume/informe placeholder); servicios reiniciados (aterrizo tambien el auth-delete de PR #71 nunca desplegado); workship Win<->MAK probado: llama3.1:8b en VRAM RTX 4070 + deepseek-coder-v2:16b responden a research_lib/codex_lib order='win' desde el box. PR #72 draft.",
     "2026-07-18T01:00-01:45 (autonomo, loop 3min): plugin_guardian duplicado archivado (canonico en xio/new-plugins); refs stale a checkpoint.sh purgadas (cli.py, PRIMER_DIA, SCRIPTS_INVENTORY, finish_airdrop.sh); INSTALL.txt v0.20 + 5 one-shot cleanup scripts archivados a _archive/legacy_20260718_0110/; fix real de aislamiento de tests (test_run_airdrop_checks popeaba sys.modules['flujo'] sin restaurar); 28 tests nuevos ig/analyze (sonnet, auditados); Makefile help PYTHON vs PYTHON_BIN; falso positivo 'missing mapping.html' cerrado. Commits 8a28651..1a63c53 pushed. Suite verde en cada paso.",
     "2026-07-17T22:30 (autonomo, limpieza mecanica): PR #48 stale refs corregidas en MASTER_PLAN.md + PLAN_SIGUIENTE_AGENTE.md (PR #48 MERGED 2026-07-17, kept only PR #49 pending), 9 cultura/ leftovers moved to C:/IA/_flujo_local/, docs/DIRECTOR_PLAN.md archived (stale v0.49.0). Suite verde (pytest 394+1skip, flujo verify OK). Commit 156e8b4 pushed.",
     "2026-07-17 (cierre MAK): organismo research+codex+plataforma+lenguaje corriendo en Debian 192.168.50.2 (fuera del repo) copiado a cultura/mak_research + mak_codex + mak_plataforma + mak_lenguaje. Trabajo de la sesion: WIN (notebook, RTX 4070) integrado como proveedor LLM fuerte de ambos deptos con fallback local; hub.py reconstruido sobre DOM+SVG real (verificado con Playwright real, no solo markup) con iframe embebiendo el editor real de research/codex en vez de un formulario propio; emisor de eventos con contenido semantico real (no contadores de paso) en research.py/generar.py/debug.py via worker.py/worker_codex.py; pausa-en-error con checkpoint/reanudacion INICIADA en research.py (investigar() reescrito) pero NO completada end-to-end (falta --resume en main(), reconocer PASADO: en worker.py, endpoint de reanudacion, botones en el hub). Detalle completo en LAST_HANDOFF.md.",
@@ -17,16 +18,17 @@
     "NOTA: el detalle largo de sesiones anteriores se movio de aqui a la historia git de este archivo (checkpoint 2026-07-16); el changelog de codigo vive en src/flujo/version.py get_changelog()."
   ],
   "doing": [
-    "nada activo -- sesion cerrada limpia"
+    "PR #73 rebaseado sobre 0.55.0: espera CI + review usuario"
   ],
   "next": [
-    "usuario: review/merge PR #72 y #73 (si #72 entra primero, #73 conflictua trivial en LAST_HANDOFF: conservar ambas narrativas)",
+    "usuario: review/merge PR #73 (works.json en portfolio.yml toca workflow CI, revisar ese paso)",
     "usuario: autostart ollama serve Windows (no sobrevive reboot)",
     "sin gate: Opcion B pieza MANIFIESTO via motor-omega",
     "sin gate: test_smoke skip permanente (fixture o borrar)"
   ],
   "blockers": [
-    "review humano PRs #72/#73"
+    "review humano PR #73",
+    "ollama Windows no sobrevive reboot (arrancado a mano)"
   ],
   "ai_stack": {
     "architect_reviewer": "Claude Code (director; arquitectura/critico/codigo que no admite malentendido)",

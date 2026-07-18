@@ -312,7 +312,7 @@ function cerrarPanel(){document.getElementById('panel').classList.remove('open',
  vivoDep=null;clearTimeout(vivoTimer);}
 function pintarJobs(key){var box=document.getElementById('p-jobs');
  var evs=((ORG&&ORG.actividad&&ORG.actividad.eventos)||[]).filter(function(e){return e.depto===key;}).slice(0,8);
- var col={listo:'#9db67c',corriendo:'#d4a259','en cola':'#d4a259',BLOQUEADO:'#c46d5e',FALLO:'#8a5c52'};
+ var col={listo:'#9db67c',corriendo:'#d4a259','en cola':'#d4a259',BLOQUEADO:'#c46d5e',FALLO:'#8a5c52',PAUSADO:'#e0a458',abortado:'#8a8578'};
  var h='';
  if(evs.length)h='<h3>actividad reciente</h3>'+evs.map(function(e){
    return '<div class="jb"><span class="d" style="background:'+(col[e.estado]||'#6e6a5e')+'"></span>'+
@@ -504,6 +504,11 @@ def _norm(j, depto):
     elif est == "FALLO":
         e = (j.get("error", "") or "").strip().replace("\n", " ")
         rz = ("fallo: " + e[-160:]) if e else "fallo"
+    elif est == "PAUSADO":
+        e = (j.get("error", "") or "").strip().replace("\n", " ")
+        rz = "pausado: " + (e[-160:] if e else "esperando humano")
+    elif est == "abortado":
+        rz = "abortado"
     return {"depto": depto, "texto": texto[:130], "estado": est,
             "t": j.get("t", ""), "seg": round(j.get("ms", 0) / 1000) or "", "rz": rz[:200]}
 
@@ -529,7 +534,10 @@ def _actividad():
     evs.sort(key=lambda e: e["t"], reverse=True)
     evs = evs[:26]
     bloq = sum(1 for e in evs if e["estado"] == "BLOQUEADO")
-    return {"eventos": evs, "guardia": {"bloqueados": bloq, "pasaron": len(evs) - bloq}}
+    pausados = sum(1 for e in evs if e["estado"] == "PAUSADO")
+    abortados = sum(1 for e in evs if e["estado"] == "abortado")
+    pasaron = len(evs) - bloq - pausados - abortados
+    return {"eventos": evs, "guardia": {"bloqueados": bloq, "pasaron": pasaron}}
 
 
 # ── micelio (proxy cacheado del grafo semantico de research) ──

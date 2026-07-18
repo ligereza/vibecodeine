@@ -14,6 +14,7 @@ import time
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BASE)
+import pausa  # noqa: E402 -- puro stdlib, safe (sin fcntl)
 from research_lib import emitir_evento, mint_job_id  # noqa: E402
 
 LOCK = os.path.expanduser("~/research/.jobs.lock")
@@ -52,13 +53,16 @@ SIN_TEMA = {"corpus"}
 
 
 def run_tema(modo, tema, n=None, ntfy=True, sin_marco=False, densidad=None,
-            orden=None, memoria=False, timeout=1800, job_id=None):
+            orden=None, memoria=False, timeout=1800, job_id=None, extra=None):
     """modo: research/panel/cadena/refutar/grafo/memoria. n = iteraciones o
     replicas (solo research/panel). orden = CSV de proveedores (cadena/refutar
     respetan el orden de nodos del canvas). memoria=True inyecta los hallazgos
     previos del departamento (solo grafo). job_id: para el log de eventos
     (~/research/eventos.jsonl); si no llega, se acuna uno (uso standalone).
-    Devuelve {ok, path, tail}. Bloquea hasta tomar el lock."""
+    extra: lista de argumentos CLI adicionales pasados tal cual al script
+    (ej. ["--resume", path] para reanudar un checkpoint pausado).
+    Devuelve {ok, path, tail} (o {ok: False, pausado: True, checkpoint, path,
+    tail} si el proceso se pauso por pausa.py). Bloquea hasta tomar el lock."""
     job_id = job_id or mint_job_id()
     script = SCRIPTS.get(modo, "research.py")
     cmd = [sys.executable, os.path.join(BASE, script)]
@@ -76,17 +80,21 @@ def run_tema(modo, tema, n=None, ntfy=True, sin_marco=False, densidad=None,
         cmd.append("--ntfy")
     if sin_marco and modo not in SIN_TEMA:
         cmd.append("--sin-marco")
+    if extra:
+        cmd += extra
 
     os.makedirs(os.path.dirname(LOCK), exist_ok=True)
     with open(LOCK, "w") as lk:
         fcntl.flock(lk, fcntl.LOCK_EX)  # cola implicita: espera su turno
         try:
             p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                 stderr=subprocess.STDOUT, text=True, cwd=BASE)
+                                 stderr=subprocess.STDOUT, text=True, cwd=BASE,
+                                 env=dict(os.environ, MAK_JOB_ID=job_id))
             _set_status("Iniciando...", p.pid)
 
             out_lines = []
             path = ""
+            pausado = [None]  # [(checkpoint_path, motivo)] o [None]
 
             def reader():
                 nonlocal path
@@ -102,6 +110,10 @@ def run_tema(modo, tema, n=None, ntfy=True, sin_marco=False, densidad=None,
                                      fase=modo, resumen=line[len("HALLAZGO: "):].strip()[:140])
                     elif line.startswith("INFORME: "):
                         path = line[len("INFORME: "):].strip()
+                    else:
+                        marca = pausa.parsear_marca(line)
+                        if marca:
+                            pausado[0] = marca
 
             t = threading.Thread(target=reader, daemon=True)
             t.start()
@@ -126,6 +138,13 @@ def run_tema(modo, tema, n=None, ntfy=True, sin_marco=False, densidad=None,
             _clear_status()
 
     out = "".join(out_lines)
+    if pausado[0]:
+        checkpoint_path, motivo = pausado[0]
+        emitir_evento("research", job_id, "human_gate", resumen=motivo[:140],
+                     ruta_checkpoint=checkpoint_path)
+        return {"ok": False, "pausado": True, "checkpoint": checkpoint_path,
+               "path": "", "tail": motivo[:800]}
+
     ok = p.returncode == 0 and bool(path)
     if ok:
         emitir_evento("research", job_id, "node_end", estado="listo",
