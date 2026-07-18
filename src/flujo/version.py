@@ -1,8 +1,8 @@
 """Versión y changelog de flujo."""
 
-__version__ = "0.53.0"
+__version__ = "0.54.0"
 VERSION = __version__
-__version_info__ = (0, 53, 0)
+__version_info__ = (0, 54, 0)
 
 
 def get_version():
@@ -11,6 +11,33 @@ def get_version():
 
 def get_changelog():
     return {
+        "0.54.0": {
+            "titulo": "PR #71 mergeado: MAK generativo + dispatcher + serve tests + auth-delete",
+            "fecha": "2026-07-18",
+            "highlights": [
+                "PR #71 (worktree-god-haiku-fixes) a main: backlog generativo MAK "
+                "(lagunas como semillas, 43 tests), reactivo_matcher delta-E CIE76 "
+                "(30 tests), generar_works.py works.json regenerable (20 tests), "
+                "dispatcher scripts/flujo.py error+exit2 pa 13 comandos retirados, "
+                "21 tests smoke flujo.serve, borrado total auth MAK (LAN privada "
+                "Face A), skill godspeed",
+                "conflictos resueltos por el director: archive README full-content "
+                "preservado, LAST_HANDOFF con AMBAS narrativas (GODSPEED + loop "
+                "autonomo), header 0.53.0",
+                "fix CI real pre-merge: generar_works dependia del orden de "
+                "iterdir() (verde en Windows de suerte, rojo en ubuntu); sorted() "
+                "en ambos scanners = works.json determinista",
+                "skill godspeed ampliada con lecciones 2da sesion: chequear PRs "
+                "abiertos ANTES de delegar, retarget de agente via SendMessage, "
+                "suite de worktree engana (editable install del checkout main), "
+                "verde-en-un-OS no es verde, sys.modules snapshot+restore",
+                "post-merge: worktree god-haiku-fixes removido (dir lockeado "
+                "pendiente de borrar), rama local+remota borradas, SSH a MAK "
+                "verificado (mak@192.168.50.2, dell-11m)",
+                "verificacion: compileall OK, pytest full verde + 1 skip, flujo "
+                "verify OK",
+            ],
+        },
         "0.53.0": {
             "titulo": "Higiene profunda + 41 tests offline + docs de estado veraces",
             "fecha": "2026-07-18",

@@ -119,6 +119,40 @@ Recorded so successors inherit the failures, not just the theory.
   (research+codex station). A worktree off `origin/main` is the WEB flavor and may
   lack work that lives only in LOCAL or on MAK. Never assume one reflects another.
 
+## Second session lessons (2026-07-18b, director+sonnet, PR #71 land)
+
+### What worked
+- **Retarget a running agent instead of kill+respawn.** A sonnet was writing
+  serve tests when the director discovered open PR #71 already contained 21
+  serve tests. One SendMessage descoped it mid-flight; the agent deleted its
+  duplicate work and delivered only the non-overlapping files. Cheaper than
+  respawn, zero merge conflict.
+- **Deterministic-output fix over test fix.** CI-ubuntu failed on an
+  iterdir()-order assumption. The fix went into the GENERATOR (sorted
+  iteration = stable artifact on any fs), not into loosening the test.
+- **Merging two handoff narratives:** on conflict in a ledger doc
+  (LAST_HANDOFF), keep BOTH sessions' history in order; never pick a side and
+  drop the other agent's record.
+
+### New failure modes found (guard these)
+- **In-flight overlap blindness.** Work can already exist in an OPEN PR you
+  did not author. BEFORE fanning out builders: `gh pr list` + check changed
+  files of open PRs against your intended scope. Late discovery cost one
+  agent a full written-then-deleted test file.
+- **Worktree suite is a lie (Windows editable install).** pytest inside a
+  worktree imports the package from the MAIN checkout's editable install --
+  the worktree suite can pass while testing the wrong code. The honest gate
+  for a PR branch is its CI run, not local pytest in the worktree.
+- **Green-on-one-OS is not green.** Windows fs returns sorted dirlists by
+  accident; Linux does not. Any order/casing/path assumption passes locally
+  and dies in the CI matrix. Treat the matrix as the verdict.
+- **sys.modules mutations in tests leak across files.** A test popping
+  sys.modules["flujo"] without restoring broke OTHER files' monkeypatch by
+  string path -- but only in certain subset orders, invisible in full-suite
+  runs that happened to order differently. When a test touches sys.modules /
+  sys.path: snapshot + restore in finally, and repro suspected pollution by
+  running the exact failing SUBSET, not the full suite.
+
 ## Operating checklist
 
 - [ ] Mechanical skeleton first (script, 0 tokens). Never delegate what grep answers.
@@ -133,4 +167,8 @@ Recorded so successors inherit the failures, not just the theory.
       by date, in every store.
 - [ ] Before judging a prior agent: read what they actually claimed.
 - [ ] Verify live state; never assume remote structure.
+- [ ] Before fanning out: `gh pr list` -- does an OPEN PR already cover this?
+- [ ] Scope changed mid-flight? SendMessage the running agent; do not respawn.
+- [ ] PR branch verdict = its CI matrix, never local pytest in a worktree.
+- [ ] Output depends on fs order/casing? Make it deterministic at the source.
 - [ ] Ratchet: leave verification stricter than you found it.
