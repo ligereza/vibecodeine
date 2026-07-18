@@ -127,6 +127,7 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
 #panel .vl.ev-real{color:#d3cfc2}
 #panel .vl.ev-error{color:#d98c7e}
 #panel .vl.ev-paso{color:#5f5b50;font-style:italic}
+#panel .vl.ev-nojob{opacity:.55;border-left:2px solid #6d5e8a;padding-left:6px}
 #toast{position:fixed;z-index:12;bottom:26px;left:50%;transform:translateX(-50%) translateY(30px);
  background:#12100c;border:1px solid #2f2c22;color:#d3cfc2;padding:10px 18px;border-radius:9px;
  font-size:.8rem;opacity:0;transition:.25s;pointer-events:none}
@@ -330,7 +331,9 @@ function cargarVivo(depto){
    var evs=(d.eventos||[]).slice(-14);
    el.innerHTML=evs.map(function(e){
      var cls=e.tipo==='error'?'ev-error':(e.tipo==='llm_result'?'ev-real':'ev-paso');
+     if(e.sin_job)cls+=' ev-nojob';
      var txt=e.resumen||e.detalle||e.contexto||e.estado||'';
+     if(e.sin_job)txt+=' [sin job]';
      return '<div class="vl '+cls+'">'+esc(txt)+'</div>';
    }).join('') || '<div class="vl ev-paso">sin eventos aun</div>';
    el.scrollTop=el.scrollHeight;
@@ -525,6 +528,64 @@ def _jobs_depto(port, jsonl, depto):
             continue
         vistos.add(k)
         evs.append(e)
+    return evs
+
+
+def _eventos_depto(depto, n=40):
+    """Lee eventos.jsonl del depto. Linea mala se salta, no vacia todo (mimica _tail_jsonl)."""
+    ruta = os.path.join(HOME, depto, "eventos.jsonl")
+    try:
+        with open(ruta, encoding="utf-8") as f:
+            lineas = f.readlines()[-n:]
+    except OSError:
+        return []
+    evs = []
+    for ln in lineas:
+        ln = ln.strip()
+        if not ln:
+            continue
+        try:
+            evs.append(json.loads(ln))
+        except json.JSONDecodeError:
+            continue
+    return evs
+
+
+def _job_ids_conocidos(depto):
+    """Union de job_id conocidos: (a) jobs.jsonl local, (b) /api/jobs en vivo del depto.
+    Retorna (ids_set, alguna_fuente_ok_bool) -- ok indica si al menos una fuente respondio."""
+    jsonl = RESEARCH_JOBS if depto == "research" else CODEX_JOBS
+    port = 8890 if depto == "research" else 8891
+    ids = set()
+    try:
+        with open(jsonl, encoding="utf-8"):
+            ok = True
+    except OSError:
+        ok = False
+    for j in _tail_jsonl(jsonl, 200):
+        jid = j.get("job_id")
+        if jid:
+            ids.add(jid)
+    live = _http_json("http://127.0.0.1:%d/api/jobs" % port)
+    if live is not None:
+        ok = True
+        fuente = list(live) if isinstance(live, list) else []
+        for j in fuente:
+            jid = j.get("job_id")
+            if jid:
+                ids.add(jid)
+    return ids, ok
+
+
+def _marcar_sin_job(evs, ids, ok):
+    """Marca (additivo, solo si True) sin_job=True en eventos cuyo job_id no se reconoce.
+    Si ok es False (ninguna fuente respondio), no marca nada -- evita falsos positivos."""
+    if not ok:
+        return evs
+    for ev in evs:
+        jid = ev.get("job_id")
+        if not jid or jid not in ids:
+            ev["sin_job"] = True
     return evs
 
 
@@ -806,16 +867,11 @@ class H(BaseHTTPRequestHandler):
         if p == "/api/eventos":
             q = urllib.parse.parse_qs(u.query)
             depto = (q.get("depto") or [""])[0]
-            n = 40
             if depto not in ("research", "codex"):
                 return self._json({"eventos": []})
-            ruta = os.path.join(HOME, depto, "eventos.jsonl")
-            try:
-                with open(ruta, encoding="utf-8") as f:
-                    lineas = f.readlines()[-n:]
-                evs = [json.loads(x) for x in lineas if x.strip()]
-            except (OSError, json.JSONDecodeError):
-                evs = []
+            evs = _eventos_depto(depto)
+            ids, ok = _job_ids_conocidos(depto)
+            evs = _marcar_sin_job(evs, ids, ok)
             return self._json({"eventos": evs})
         if p == "/api/actividad":
             try:
