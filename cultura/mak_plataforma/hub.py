@@ -44,6 +44,8 @@ TRABAJO_STATE = os.path.join(HOME, "plataforma/.trabajo_state.json")
 RED_STATE = os.path.join(HOME, "plataforma/.red_state.json")
 RED_LOG = os.path.join(HOME, "plataforma/logs/red.jsonl")
 TRABAJO_LOG = os.path.join(HOME, "plataforma/logs/trabajo.log")
+SALUD_PROVEEDORES = os.path.join(HOME, "research/salud_proveedores.json")
+SALUD_PROVEEDORES_VENTANA = 6 * 3600
 try:
     import roles as _roles
     _MAXDIA = _roles.MAX_DIA
@@ -128,6 +130,14 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
 #panel .vl.ev-error{color:#d98c7e}
 #panel .vl.ev-paso{color:#5f5b50;font-style:italic}
 #panel .vl.ev-nojob{opacity:.55;border-left:2px solid #6d5e8a;padding-left:6px}
+#panel .salud-prov{font-size:.74rem}
+#panel .sp-fila{display:flex;align-items:center;gap:8px;padding:4px 0}
+#panel .sp-nom{width:88px;flex:none;color:#c3bfb2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#panel .sp-nom i{color:#d98c7e;font-style:normal;font-size:.68rem}
+#panel .sp-barra{flex:1;height:6px;border-radius:3px;background:#17150f;overflow:hidden}
+#panel .sp-fill{display:block;height:100%;border-radius:3px}
+#panel .sp-n{width:26px;flex:none;text-align:right;color:#5f5b50;font-size:.68rem}
+#panel .sp-vacio{color:#5f5b50;font-size:.74rem}
 #toast{position:fixed;z-index:12;bottom:26px;left:50%;transform:translateX(-50%) translateY(30px);
  background:#12100c;border:1px solid #2f2c22;color:#d3cfc2;padding:10px 18px;border-radius:9px;
  font-size:.8rem;opacity:0;transition:.25s;pointer-events:none}
@@ -310,7 +320,7 @@ function abrirDepto(d){panelDep=d;
  document.getElementById('panel').classList.add('open');
 }
 function cerrarPanel(){document.getElementById('panel').classList.remove('open','wide');panelDep=null;
- vivoDep=null;clearTimeout(vivoTimer);}
+ vivoDep=null;clearTimeout(vivoTimer);saludDep=null;clearTimeout(saludTimer);}
 function pintarJobs(key){var box=document.getElementById('p-jobs');
  var evs=((ORG&&ORG.actividad&&ORG.actividad.eventos)||[]).filter(function(e){return e.depto===key;}).slice(0,8);
  var col={listo:'#9db67c',corriendo:'#d4a259','en cola':'#d4a259',BLOQUEADO:'#c46d5e',FALLO:'#8a5c52',PAUSADO:'#e0a458',abortado:'#8a8578'};
@@ -318,9 +328,33 @@ function pintarJobs(key){var box=document.getElementById('p-jobs');
  if(evs.length)h='<h3>actividad reciente</h3>'+evs.map(function(e){
    return '<div class="jb"><span class="d" style="background:'+(col[e.estado]||'#6e6a5e')+'"></span>'+
      '<span class="t">'+esc(e.texto)+'</span><small>'+esc(e.t)+'</small></div>';}).join('');
+ if(key==='research')h+='<h3 style="margin-top:16px">salud proveedores</h3><div id="p-salud" class="salud-prov">cargando…</div>';
  h+='<h3 style="margin-top:16px">en vivo (contenido real)</h3><div id="p-vivo" class="vivo"></div>';
  box.innerHTML=h;
  cargarVivo(key);
+ if(key==='research')cargarSalud(key); else{saludDep=null;clearTimeout(saludTimer);}
+}
+var saludTimer=null, saludDep=null;
+function cargarSalud(depto){
+ saludDep=depto;
+ fetch('/api/salud').then(function(r){return r.json();}).then(function(d){
+   if(saludDep!==depto)return;
+   var el=document.getElementById('p-salud'); if(!el)return;
+   var provs=d.proveedores||[];
+   if(!provs.length){el.innerHTML='<div class="sp-vacio">sin datos de salud aun</div>';}
+   else{
+     el.innerHTML=provs.map(function(p){
+       var pct=Math.round((p.score||0)*100);
+       var col=p.degradado?'#d98c7e':'#9db67c';
+       return '<div class="sp-fila">'+
+         '<span class="sp-nom">'+esc(p.nombre)+(p.degradado?' <i>degradado</i>':'')+'</span>'+
+         '<span class="sp-barra"><span class="sp-fill" style="width:'+pct+'%;background:'+col+'"></span></span>'+
+         '<span class="sp-n">'+(p.intentos||0)+'</span></div>';
+     }).join('');
+   }
+ }).catch(function(){});
+ clearTimeout(saludTimer);
+ saludTimer=setTimeout(function(){if(saludDep===depto)cargarSalud(depto);},15000);
 }
 var vivoTimer=null, vivoDep=null;
 function cargarVivo(depto){
@@ -658,6 +692,42 @@ def _internet():
     return out
 
 
+def _salud_proveedores():
+    """Salud de proveedores LLM (registro de research_lib._salud_registrar).
+    Devuelve {"proveedores": [{"nombre","score","intentos","degradado"} ...],
+    "desde": ts|null}, orden por score descendente. Lista vacia si el
+    archivo no existe, esta corrupto, tiene forma invalida o la ventana
+    (6h) ya vencio. Nunca lanza."""
+    try:
+        with open(SALUD_PROVEEDORES, encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return {"proveedores": [], "desde": None}
+    if not isinstance(data, dict):
+        return {"proveedores": [], "desde": None}
+    desde = data.get("desde")
+    proveedores_raw = data.get("proveedores")
+    if not isinstance(desde, (int, float)) or not isinstance(proveedores_raw, dict):
+        return {"proveedores": [], "desde": None}
+    if time.time() - desde > SALUD_PROVEEDORES_VENTANA:
+        return {"proveedores": [], "desde": None}
+    out = []
+    for nombre, c in proveedores_raw.items():
+        if not isinstance(c, dict):
+            continue
+        successes = c.get("successes", 0) or 0
+        timeouts = c.get("timeouts", 0) or 0
+        api_errors = c.get("api_errors", 0) or 0
+        errors = c.get("errors", 0) or 0
+        intentos = successes + timeouts + api_errors + errors
+        score = (successes / intentos) if intentos > 0 else 0.0
+        degradado = intentos >= 3 and score < 0.5
+        out.append({"nombre": nombre, "score": score, "intentos": intentos,
+                    "degradado": degradado})
+    out.sort(key=lambda p: p["score"], reverse=True)
+    return {"proveedores": out, "desde": desde}
+
+
 def _organismo():
     return {"salud": salud.snapshot(),
             "micelio_chunks": _micelio_chunks(),
@@ -879,7 +949,10 @@ class H(BaseHTTPRequestHandler):
             except Exception as e:  # noqa: BLE001
                 return self._json({"error": str(e)[:200], "eventos": [], "guardia": {}})
         if p == "/api/salud":
-            return self._json(_organismo())
+            try:
+                return self._json(_salud_proveedores())
+            except Exception as e:  # noqa: BLE001
+                return self._json({"error": str(e)[:200], "proveedores": [], "desde": None})
         if p == "/api/cuotas":
             try:
                 return self._json(cuotas.snapshot())

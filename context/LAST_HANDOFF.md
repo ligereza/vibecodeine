@@ -1,5 +1,13 @@
 # LAST HANDOFF -- estado para el proximo agente
 
+CIERRE VISUAL 2026-07-18T14:00 (ultima tanda Fable, 1 sonnet ejecuta): widget
+"salud proveedores" en el hub (GET /api/salud lee salud_proveedores.json,
+barras por score, degradados en rojo, poll 15s solo con panel research
+abierto; 6 tests, suite verde) -- DESPLEGADO al box via systemctl restart
+mak-hub, /api/salud y /api/organismo en 200, VERIFICADO VISUAL con Playwright
+real contra el hub vivo (screenshot local _logs/, no commiteado). Plan de la
+semana siguiente: context/PLAN_SEMANAL_OPUS.md (operador previsto: Opus).
+
 Version: 0.55.0 | Fecha: 2026-07-18T13:30 | Identidad: Cauce | sesion: GODSPEED-5b -- cierre del dia (1 haiku organiza + 4 lanes).
 
 ## CIERRE DEL DIA 2026-07-18 (resumen para el proximo agente)
