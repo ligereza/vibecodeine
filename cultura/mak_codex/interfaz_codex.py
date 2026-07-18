@@ -270,6 +270,13 @@ class H(BaseHTTPRequestHandler):
     server_version = "MAK-Codex/1.0"
 
     def _auth(self):
+        # xio Face A (home/studio): LAN privada, solo maquinas del duenno
+        # (Linux MAK + Windows). El Linux NUNCA sale a los shows (Face B es
+        # solo el telefono). Sin CODEX_TOKEN en el entorno el codex corre
+        # abierto, igual que research :8890. Re-bloquear = exportar
+        # CODEX_TOKEN otra vez.
+        if not TOKEN:
+            return True
         qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
         t = (qs.get("t") or [""])[0]
         if t == TOKEN or self.headers.get("X-Token") == TOKEN:
@@ -350,10 +357,9 @@ class Servidor(ThreadingHTTPServer):
 
 def main():
     if not TOKEN:
-        print("[codex] FALTA CODEX_TOKEN en el entorno; no arranco "
-              "(la puerta va con llave). Genera uno en ~/codex/.token.",
+        print("[codex] sin CODEX_TOKEN: arranco ABIERTO (LAN privada Face A, "
+              "solo maquinas del duenno). Exporta CODEX_TOKEN para re-bloquear.",
               file=sys.stderr)
-        return 1
     for d in DIRS.values():
         os.makedirs(d, exist_ok=True)
     _cargar_jobs()
