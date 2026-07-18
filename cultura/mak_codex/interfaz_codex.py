@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """interfaz_codex.py -- web del departamento CODEX (puerto 8891).
 
-TOKEN OBLIGATORIO: el server NO arranca sin env CODEX_TOKEN (el codex
-puede ejecutar codigo en sandbox; la puerta va con llave). El watchdog lo
-exporta desde ~/codex/.token. Acceso: http://IP:8891/?t=TOKEN
+AUTH OPCIONAL (xio Face A, LAN privada del duenno): si hay env CODEX_TOKEN
+el acceso va con llave (?t=TOKEN); si NO lo hay, el codex corre abierto,
+igual que research :8890. El Linux MAK solo vive en la red de casa (Face A)
+y nunca sale a los shows (Face B = solo el telefono), asi que codex no queda
+expuesto a la red publica del show. El watchdog exporta el token desde
+~/codex/.token si existe. Re-bloquear = reponer ese archivo.
 """
 import html
 import json
