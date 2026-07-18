@@ -1,5 +1,11 @@
 # PLAN UPSCALE -- ruta 0.53.0 -> 0.55.0+ (Cauce, 2026-07-18)
 
+> ESTADO 2026-07-18T07:55: CONSUMIDO. 0.54.0 hecho (PR #71). 0.55.0 hecho:
+> Opcion A (PR #72), Opcion C (PR #73 + fix #76: el generado se publica como
+> flujo-works.json pa no pisar el curado), Opcion B resuelta por ratchet (pieza
+> #10 ya existia desde PR #38; tests + Omega11 en PRs #75/#77). test_smoke
+> skip eliminado (PR #74). Este doc queda como historico.
+
 Objetivo: dos bumps de milestone en la(s) proxima(s) sesion(es), dejando cada
 frente VERIFICADO y operable por manos gratis. Doctrina: CLAUDE.md (director
 decide/verifica, haiku/sonnet ejecutan volumen, gate CI + revisor).
