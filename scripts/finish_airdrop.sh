@@ -5,7 +5,7 @@ echo "════════════════════════�
 git status --short
 echo ""
 echo "Checkpoint recomendado:"
-echo "  bash scripts/checkpoint.sh \"flujo v0.15 - [descripción]\""
+echo "  git add -A && git commit && git push  # (checkpoint.sh ya no existe)"
 echo ""
 echo "Commit:"
 echo "  git add ."

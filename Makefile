@@ -4,7 +4,8 @@ PYTHON ?= python3
 
 help:
 	@echo "Comandos disponibles:"
-	@echo "  make install     Instalar dependencias (PYTHON_BIN=py|python3 opcional)"
+	@echo "  make install     Instalar dependencias (setup.sh autodetecta py|python3)"
+	@echo "  (en Windows/Git Bash usa PYTHON=py, ej: make test PYTHON=py)"
 	@echo "  make clean       Limpiar basura"
 	@echo "  make test        Ejecutar tests"
 	@echo "  make render      Generar piezas de ejemplo"

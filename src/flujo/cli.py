@@ -461,8 +461,7 @@ def airdrop_finish():
 
     console.print("\n[bold cyan]Pasos recomendados:[/]")
     console.print("  1. Revisar cambios: [bold]git diff[/]")
-    console.print("  2. Hacer checkpoint: [bold]bash scripts/checkpoint.sh \"vX.YZ - descripción\"[/]")
-    console.print("  3. Commit y push.")
+    console.print("  2. Commit y push (o [bold]flujo airdrop[/] si no tienes push directo).")
 
 
 # ============================================================

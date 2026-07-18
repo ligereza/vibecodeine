@@ -5,6 +5,8 @@ from datetime import date
 from pathlib import Path
 import pytest
 
+import flujo.paths  # noqa: F401 -- monkeypatch("flujo.paths.repo_root") necesita el submodulo ya importado
+import flujo.render.piezas  # noqa: F401 -- idem para flujo.render.piezas.repo_root
 from flujo.jobs.job import create_job, list_jobs, find_job, JobInfo
 from flujo.jobs.lifecycle import prepare_job, activate_job, suggest_next_action
 from flujo.jobs.brief import (

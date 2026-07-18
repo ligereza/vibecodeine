@@ -1,6 +1,6 @@
 # Catalogo RD -- Packs y Cotizaciones
 
-Version flujo: 0.52.0
+Version flujo: 0.53.0
 
 ## Fuente de verdad
 

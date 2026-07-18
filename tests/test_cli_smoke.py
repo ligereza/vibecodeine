@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
+import flujo.paths  # noqa: F401 -- monkeypatch("flujo.paths.repo_root") necesita el submodulo ya importado
 from flujo.cli import app
 
 

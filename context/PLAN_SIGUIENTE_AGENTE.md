@@ -1,10 +1,11 @@
 # PENDIENTES + FUERTE/DEBIL -- checkpoint limpieza (Cauce, 2026-07-16)
 
 Estado del repo: v0.52.0, suite VERDE 2026-07-16 (450+ tests, compileall OK,
-flujo verify OK). main con PRs #45-#47 y #50-#55 mergeados (checkpoint +
-MASTER_PLAN + olas 1-3 + noisette real). ABIERTOS #48 (MAK grafo+canvas) y
-#49 (MAPA_GENERATIVO), esperan review del usuario -- OTRO Claude trabaja en
-MAK: no tocar cultura/, el worktree mak-research-cultural ni esos PRs.
+flujo verify OK). main con PRs #45-#70 mergeados (checkpoint + MASTER_PLAN +
+olas + MAK cierre). Actualizacion 2026-07-18: #48 MERGED, #49 CLOSED (util
+extraido a main en 2ef19a8); ABIERTO #71 (worktree-god-haiku-fixes, MAK
+generativo + tests serve) espera review del usuario -- OTRO Claude trabaja en
+MAK: no tocar cultura/ ni los worktrees mak-research-cultural/god-haiku-fixes.
 Plan largo y doctrina: context/MASTER_PLAN.md.
 
 ## Reglas que NO se negocian (leer antes de tocar nada)
@@ -31,14 +32,15 @@ Plan largo y doctrina: context/MASTER_PLAN.md.
   sin Claude API, workflow con PORTFOLIO_TOKEN corriendo solo.
 - RD entregables: pipeline contraportadas/flyers/cotizaciones validado
   end-to-end + hardening de auditoria (39 hallazgos aplicados 2026-07-13/15).
-- Higiene: 0 __pycache__/.pytest_cache, 0 ramas muertas, unico worktree = MAK
-  (PR #48), ~190M de basura/duplicados removidos en este checkpoint.
+- Higiene: 0 __pycache__/.pytest_cache, 0 ramas muertas, worktrees vivos =
+  mak-research-cultural + god-haiku-fixes (PR #71), ~190M de basura/duplicados
+  removidos en el checkpoint 2026-07-16.
 
 ## DEBIL (con evidencia)
 - [RESUELTO 2026-07-16, PR #51] Sellos de docs: CLI.md, AIRDROP_PROTOCOL.md y
   SCRIPTS_INVENTORY.md re-verificados comando por comando contra v0.52.0.
-- Branch protection en main: AUSENTE (gh api 404, verificado 2026-07-13).
-  Accion del usuario en la web de GitHub (require CI verde).
+- [RESUELTO 2026-07-17] Branch protection en main: ACTIVA (require CI
+  ubuntu+windows, strict; confirmado en LAST_HANDOFF 2026-07-17).
 - [RESUELTO 2026-07-16, PR #55 + validacion en vivo] resolume automator:
   fixture real en tests/fixtures/, 9 tests estructurales verdes, y el
   .noisette generado desde jobs/test_resolume CARGA en el Chataigne 1.10.3
@@ -56,8 +58,8 @@ Plan largo y doctrina: context/MASTER_PLAN.md.
 - Peso del repo: svg/suplementos_rd trackea ~51M de SVG que se regeneran;
   .git ya pesa 36M y crece con cada regeneracion. Vigilar antes de agregar
   mas binarios/vectoriales pesados a git.
-- SEGURIDAD local: cultura/.dev.limpio tiene keys vivas duplicadas en disco
-  (ya cubierto por .gitignore cultura/.dev*, no puede commitearse). Borrarlo.
+- [RESUELTO antes de 2026-07-18] cultura/.dev.limpio ya no existe en disco;
+  queda solo cultura/.dev (env file operativo, gitignored via cultura/.dev*).
 
 ## PENDIENTES priorizados
 P1 (mecanico, ya):

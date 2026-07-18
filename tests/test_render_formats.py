@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+import flujo.paths  # noqa: F401 -- monkeypatch("flujo.paths.repo_root") necesita el submodulo ya importado
 from flujo.render.formats import list_formats, suggest_format, FormatInfo
 from flujo.render.piezas import (
     create_project_from_brief,
