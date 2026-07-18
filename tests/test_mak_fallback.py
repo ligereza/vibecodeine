@@ -316,5 +316,91 @@ class TestIntegrationWorkflow:
         assert "win" in explanation and ("88%" in explanation or "89%" in explanation or "80%" in explanation)
 
 
+class TestCoderLLMErrorAggregation:
+    """Integration: CoderLLM.call aggregates ALL failed attempts via fallback_util."""
+
+    @staticmethod
+    def _import_codex_lib():
+        """Import codex_lib with its Linux-only deps stubbed (research_lib, resource)."""
+        import types
+        import importlib
+
+        if "research_lib" not in sys.modules:
+            fake = types.ModuleType("research_lib")
+            fake.LLM = object
+            fake.MODELO_CAPAZ = "fake-model"
+            fake._http_json = lambda *a, **k: {}
+            fake.escala_tok = lambda *a, **k: 1000
+            fake.load_env = lambda: None
+            fake.red_ok = lambda: True
+            fake.slug = lambda s: s
+            fake.stamp = lambda: "stamp"
+            sys.modules["research_lib"] = fake
+        try:
+            import resource  # noqa: F401  # exists on Linux
+        except ImportError:
+            sys.modules["resource"] = types.ModuleType("resource")
+        sys.modules.pop("codex_lib", None)
+        return importlib.import_module("codex_lib")
+
+    def test_call_raises_with_all_attempts(self):
+        """When every provider fails, the raised message lists ALL attempts, not just the last."""
+        codex_lib = self._import_codex_lib()
+        coder = codex_lib.CoderLLM(chain=[
+            ("nim", "deepseek-v4-pro"),
+            ("win", "deepseek-v2:16b"),
+            ("ollama", "deepseek-coder:6.7b"),
+        ])
+        fallos = {
+            "deepseek-v4-pro": TimeoutError("timed out after 120s"),
+            "deepseek-v2:16b": ConnectionError("Connection refused to 192.168.50.1"),
+            "deepseek-coder:6.7b": RuntimeError("HTTP 429: rate limited"),
+        }
+
+        def _boom(system, user, max_tok, model):
+            raise fallos[model]
+
+        coder._nim = _boom
+        coder._win = _boom
+        coder._ollama = _boom
+        with pytest.raises(RuntimeError) as exc_info:
+            coder.call("sys", "user")
+        msg = str(exc_info.value)
+        assert "Todos los coders fallaron:" in msg
+        assert "nim/deepseek-v4-pro" in msg and "timeout" in msg
+        assert "win/deepseek-v2:16b" in msg
+        assert "ollama/deepseek-coder:6.7b" in msg
+        assert "rate limited" in msg or "429" in msg
+        # old behavior showed only the LAST error; earlier attempts must survive
+        assert "120s" in msg  # nim timeout mapped from _PROV_TIMEOUT
+
+    def test_call_empty_response_appears_in_aggregate(self):
+        """Providers returning empty text are reported as failed attempts too."""
+        codex_lib = self._import_codex_lib()
+        coder = codex_lib.CoderLLM(chain=[
+            ("win", "deepseek-v2:16b"),
+            ("ollama", "deepseek-coder:6.7b"),
+        ])
+        coder._win = lambda system, user, max_tok, model: ""
+        coder._ollama = lambda system, user, max_tok, model: (
+            (_ for _ in ()).throw(ConnectionError("connection refused")))
+        with pytest.raises(RuntimeError) as exc_info:
+            coder.call("sys", "user")
+        msg = str(exc_info.value)
+        assert "win/deepseek-v2:16b" in msg  # the empty one, lost before the fix
+        assert "ollama/deepseek-coder:6.7b" in msg
+
+    def test_call_success_path_unchanged(self):
+        """A successful provider returns (text, model) with no exception and stats updated."""
+        codex_lib = self._import_codex_lib()
+        coder = codex_lib.CoderLLM(chain=[("nim", "deepseek-v4-pro")])
+        coder._nim = lambda system, user, max_tok, model: "print('hola')"
+        text, model = coder.call("sys", "user")
+        assert text == "print('hola')"
+        assert model == "deepseek-v4-pro"
+        assert coder.stats["deepseek-v4-pro"] == 1
+        assert coder.errors == []
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
