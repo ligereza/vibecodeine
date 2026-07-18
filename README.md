@@ -116,6 +116,14 @@ The `README.md` art (`arte-ascii-readme.svg`, the animated codeine cup) is a fin
 py projects/tapiz/vibecode_spaces.py archivo.py -m void --svg pieza.svg
 ```
 
+### MAK (research + codex station)
+
+MAK is a Linux box (LAN) running research (:8890) and codex (:8891) departments plus the hub (:8900).
+Source code lives loose in ~/research, ~/codex, ~/plataforma (NOT a repo clone). The repo mirrors are
+cultura/mak_research, mak_codex, mak_plataforma. Deploy = copy files + restart via systemd unit or
+watchdog. Provider chains fall back cloud -> WIN (Windows notebook ollama) -> local ollama. Provider
+health (salud_proveedores) demotes failing providers for 6h.
+
 ### xio (on-device Xiaomi controller)
 
 `xio/` is a Flask controller + plugin engine that runs ON the phone (Termux + Shizuku/rish, non-root, HyperOS)

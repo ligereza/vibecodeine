@@ -1,6 +1,67 @@
 # LAST HANDOFF -- estado para el proximo agente
 
-Version: 0.55.0 | Fecha: 2026-07-18T11:30 | Identidad: Cauce | sesion: GODSPEED-4 -- MAK dual-dept fases 1-3 + PR #85 (espejo+fixes).
+Version: 0.55.0 | Fecha: 2026-07-18T12:30 | Identidad: Cauce | sesion: GODSPEED-5 -- salud de proveedores + integridad panel + reconciliacion systemd codex.
+
+## CIERRE DEL DIA 2026-07-18 (resumen para el proximo agente)
+
+PRs #72-#87 mergeados a main (v0.55.0). MANIFIESTO 6/11 piezas. MAK dual-dept research+codex operativo con WIN como proveedor (research+codex comparten stack; fallback nube -> WIN -> ollama-local probado). Demo defects cerrados en PR #85: _paso_con_fallback (proveedor 429 no mata el job), /run modo resolution (no normalizacion silenciosa), cultura marco neutro para temas sin sustancia. WiFi scan parser hardware-verified en Xiaomi (PR #83, columnar + legacy fallback). Autoportfolio vivo (portfolio-auto PR #4/#5, refresh semanal lunes). GODSPEED-5: salud_proveedores demota fallidos 6h, integridad panel marca sin_job, systemd mak-codex reparado (enabled+EnvironmentFile opcional+WorkingDirectory fijo). Pendientes usuario: PAT Termux, AccessibilityService, datos productoras+venues. Pendientes sin gate: mak-hub/mak-xio units disabled (reboot risk); divergencia grafo.py vs cadena.py fallback (documentada PR #85 notas).
+
+## Sesion 2026-07-18T12:00 (GODSPEED-5, director + 5 lectores sonnet + 2 builders sonnet)
+
+Backlog sin-gate del handoff anterior, 3 frentes cerrados:
+
+### 1. RECONCILIACION SYSTEMD CODEX EN EL BOX (hecha y verificada)
+- El "riesgo menor" del handoff anterior escondia 2 bugs reales: el unit mak-codex
+  tenia EnvironmentFile=%h/codex/.token SIN guion opcional (archivo borrado en el
+  auth-delete de PR #71 -> el unit NUNCA podia arrancar: "Failed to load environment
+  files") Y el unit estaba disabled (el claim "reboot lo toma limpio" era falso por
+  partida doble; solo el watchdog revivia codex).
+- Fix aplicado vivo (unit = config de usuario, lane seguro; .bak dejado): linea
+  EnvironmentFile eliminada, WorkingDirectory=%h/codex agregado (launches manuales
+  siempre corrian desde ~/codex; jobs.jsonl y revisiones/ son relativas), Description
+  sin mencion al token muerto. daemon-reload + enable --now.
+- VERIFICADO: is-active=active, MainPID=296835 es el proceso vivo, :8891 responde 200,
+  Environment=CODER_CHAIN=win,nim-pro,nim-flash,ollama en el unit. Sin proceso manual
+  duplicado. Espejo del unit al repo: cultura/mak_codex/mak-codex.service.
+- Trampa nueva: al matar el proceso manual por PID, el watchdog cron relanzo OTRO
+  manual en segundos -- la reconciliacion real es kill PID + systemctl start inmediato.
+- Observado (sin tocar): mak-hub y mak-xio tienen units disabled tambien -- misma
+  clase de fragilidad al reboot, pendiente sin gate.
+
+### 2. SALUD DE PROVEEDORES EN RESEARCH (backlog Groq 429) -- esta PR
+- research_lib.py: _salud_cargar/_salud_registrar (registro persistente
+  ~/research/salud_proveedores.json, ventana 6h, best-effort sin lock) +
+  orden_por_salud() PURA (degrada al final proveedores con >=3 intentos y
+  score_provider_health < 0.5; ausentes de stats nunca se degradan; orden relativo
+  estable). LLM.call() cablea: reordena tras el bloque red_ok() y registra
+  exito/vacio/excepcion por proveedor (tipo via parse_provider_error). API intacta.
+- cultura/mak_research/fallback_util.py NUEVO: copia byte-identica del de mak_codex
+  (en el box cada dept importa de su propio dir); test ratchet de no-drift.
+- Efecto: groq en 429 acumula api_errors -> a la cola de la cadena por 6h -> la
+  cadena arranca por cerebras sin quemar el primer intento. Auto-sana: si vuelve a
+  responder, su score sube y se re-promueve.
+- tests/test_mak_salud_proveedores.py: 16 tests (umbrales, ventana, corrupto,
+  escenario groq, integracion LLM.call con orden de invocacion, drift espejo).
+
+### 3. INTEGRIDAD DEL PANEL /api/eventos (anomalia mak-demo-*) -- esta PR
+- hub.py: _eventos_depto (parse por linea: UNA linea corrupta ya NO vacia toda la
+  lista -- defecto real que encontraron los lectores), _job_ids_conocidos (union
+  jobs.jsonl tail 200 + /api/jobs vivo del dept, cubre jobs en vuelo),
+  _marcar_sin_job (aditivo: sin_job=True solo cuando ninguna fuente conoce el
+  job_id; si AMBAS fuentes fallan no marca nada). Front: badge [sin job] + CSS
+  ev-nojob. Los eventos fantasma tipo mak-demo-* ahora se ven marcados en el hub.
+- tests/test_mak_hub_eventos.py: 15 tests (regresion linea corrupta, huerfano,
+  local-only, vivo-only/en-vuelo, ambas fuentes caidas, sin job_id, limite n).
+
+### Verificacion (worktree god-salud-integridad)
+- py -m compileall cultura/mak_research cultura/mak_plataforma src/flujo: OK
+- py -m pytest tests/ -q: exit 0, todo verde (31 tests nuevos)
+- Falso positivo evitado: el Grep del harness Windows renderiza "/api/x" como
+  "\api\x" en lineas de contexto -- md5 espejo==vivo + grep en el box lo refuto
+  antes de "arreglar" un bug inexistente.
+- Nota lector (sin tocar): grafo.py hace fallback al resto COMPLETO de llm.order
+  por nodo mientras cadena.py solo cae a proveedores DESPUES del actual -- posible
+  divergencia deliberada de PR #85, documentada aqui por si algun sucesor la unifica.
 
 ## Sesion 2026-07-18T10:00-11:30 (MAK dual-dept, director orquesta, 1 operador sonnet) -- PR #85 MERGEADO
 

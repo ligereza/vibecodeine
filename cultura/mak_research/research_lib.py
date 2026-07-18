@@ -17,6 +17,12 @@ import unicodedata
 import urllib.error
 import urllib.request
 
+try:
+    from fallback_util import score_provider_health, parse_provider_error
+except ImportError:
+    score_provider_health = None
+    parse_provider_error = None
+
 ENV_FILE = os.environ.get(
     "RESEARCH_ENV", os.path.expanduser("~/n8n-local/research.env")
 )
@@ -49,6 +55,12 @@ def escala_tok(base, densidad="medio"):
 # (azure) por defecto; se usa para correlacion semantica y auto-reparacion.
 MODELO_CAPAZ = "azure"
 
+# Salud de proveedores: registro persistente de exitos/fallos por proveedor
+# en una ventana de tiempo, para no reintentar de entrada un proveedor que
+# viene fallando (ej. Groq free-tier en 429). Ver orden_por_salud().
+SALUD_RUTA = os.path.join(os.path.expanduser("~"), "research", "salud_proveedores.json")
+SALUD_VENTANA = 6 * 3600
+
 # Deteccion de internet: rapida y cacheada. Sin red, los departamentos siguen
 # con ollama local en vez de esperar el timeout de cada nube. Al volver la red
 # (ttl 60s) la nube vuelve a ir primera -> la tarea "vuelve al resto".
@@ -71,6 +83,91 @@ def red_ok(ttl=60):
     _RED["t"] = now
     _RED["ok"] = ok
     return ok
+
+
+def _salud_cargar(ruta=None, ahora=None):
+    """Lee el registro de salud de proveedores. Devuelve el dict
+    proveedores (nombre -> {successes, timeouts, api_errors, errors}).
+    Devuelve {} si el archivo no existe, esta corrupto, tiene forma
+    invalida o la ventana (SALUD_VENTANA) ya vencio. Nunca lanza."""
+    ruta = ruta or SALUD_RUTA
+    try:
+        with open(ruta, encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return {}
+    if not isinstance(data, dict):
+        return {}
+    desde = data.get("desde")
+    proveedores = data.get("proveedores")
+    if not isinstance(desde, (int, float)) or not isinstance(proveedores, dict):
+        return {}
+    ahora = ahora if ahora is not None else time.time()
+    if ahora - desde > SALUD_VENTANA:
+        return {}
+    return proveedores
+
+
+def _salud_registrar(proveedor, exito, tipo="other", ruta=None, ahora=None):
+    """Registra un resultado (exito/fallo) de `proveedor` en el archivo de
+    salud, con lectura-modificacion-escritura. Si la ventana vencio o el
+    archivo esta invalido, arranca de cero. Best-effort: sin lock de
+    archivo, incrementos perdidos en carrera concurrente son aceptables.
+    Nunca lanza."""
+    ruta = ruta or SALUD_RUTA
+    ahora = ahora if ahora is not None else time.time()
+    data = None
+    try:
+        with open(ruta, encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        data = None
+    if (not isinstance(data, dict)
+            or not isinstance(data.get("desde"), (int, float))
+            or not isinstance(data.get("proveedores"), dict)
+            or ahora - data["desde"] > SALUD_VENTANA):
+        data = {"desde": ahora, "proveedores": {}}
+    proveedores = data["proveedores"]
+    contadores = proveedores.setdefault(
+        proveedor, {"successes": 0, "timeouts": 0, "api_errors": 0, "errors": 0})
+    if exito:
+        clave = "successes"
+    elif tipo == "timeout":
+        clave = "timeouts"
+    elif tipo == "api_error":
+        clave = "api_errors"
+    else:
+        clave = "errors"
+    contadores[clave] = contadores.get(clave, 0) + 1
+    try:
+        os.makedirs(os.path.dirname(ruta), exist_ok=True)
+        with open(ruta, "w", encoding="utf-8") as f:
+            json.dump(data, f)
+    except (OSError, ValueError):
+        pass
+
+
+def orden_por_salud(orden, stats):
+    """Reordena `orden` (lista de nombres de proveedor) segun `stats` de
+    salud (ver _salud_cargar()). PURA: sin I/O. Un proveedor se DEGRADA
+    (va al final, tras los demas) si tiene >=3 intentos acumulados en
+    stats Y su score_provider_health() es estrictamente menor a 0.5.
+    Proveedores ausentes de stats nunca se degradan. Preserva el orden
+    relativo dentro de cada grupo (no-degradados primero, degradados
+    despues)."""
+    if not stats or score_provider_health is None:
+        return list(orden)
+    scores = dict(score_provider_health(stats))
+    degradados = []
+    resto = []
+    for p in orden:
+        contadores = stats.get(p)
+        intentos = sum(contadores.values()) if isinstance(contadores, dict) else 0
+        if intentos >= 3 and scores.get(p, 1.0) < 0.5:
+            degradados.append(p)
+        else:
+            resto.append(p)
+    return resto + degradados
 
 
 # Slots de modelo por ROL (throughput-first). El grueso a los rapidos; el capaz
@@ -312,6 +409,10 @@ class LLM:
         if not red_ok():
             frente = [p for p in ("win", "ollama") if p in orden]
             orden = frente + [x for x in orden if x not in frente]
+        try:
+            orden = orden_por_salud(orden, _salud_cargar())
+        except Exception:
+            pass
         last = None
         for name in orden:
             if name not in fns or not self._has_key(name):
@@ -320,11 +421,28 @@ class LLM:
                 text = fns[name](system, user, max_tok)
                 if text:
                     self.stats[name] = self.stats.get(name, 0) + 1
+                    try:
+                        _salud_registrar(name, True)
+                    except Exception:
+                        pass
                     return text, name
                 last = name + " devolvio vacio"
+                try:
+                    _salud_registrar(name, False, "empty")
+                except Exception:
+                    pass
             except Exception as e:  # noqa: BLE001 - fallback multi-proveedor
                 last = name + ": " + _err_str(e)
                 self.errors.append(last)
+                try:
+                    tipo = (parse_provider_error(e, name, "?").get("error_type", "other")
+                            if parse_provider_error else "other")
+                except Exception:
+                    tipo = "other"
+                try:
+                    _salud_registrar(name, False, tipo)
+                except Exception:
+                    pass
         raise RuntimeError("Todos los proveedores LLM fallaron. Ultimo: %s" % last)
 
 
