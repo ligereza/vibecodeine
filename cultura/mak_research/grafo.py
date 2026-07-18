@@ -7,7 +7,7 @@ salida concatenada de sus predecesores; los nodos trigger inyectan el
 tema y los nodos output recopilan. Valida flujos extremos antes de correr.
 
 Tipos de nodo: trigger (entrada, lleva el tema), groq/cerebras/azure/
-ollama (accion = una llamada LLM), output (recopila), nota (ignorado).
+win/ollama (accion = una llamada LLM), output (recopila), nota (ignorado).
 Se permiten MULTIPLES triggers y outputs.
 
 Salida: ~/research/grafos/STAMP-slug.{md,json}.
@@ -27,7 +27,7 @@ from research_lib import (LLM, correlacionar, escala_tok, load_env, marco,
 
 OUT_DIR = os.path.expanduser("~/research/grafos")
 WORKFLOW_FILE = os.path.expanduser("~/research/workflow.json")
-PROVEEDORES = ("groq", "cerebras", "azure", "ollama")
+PROVEEDORES = ("groq", "cerebras", "azure", "win", "ollama")
 
 # Limites anti-flujo-extremo (el usuario pidio anticiparse a casos que
 # confunden al modelo). Se validan antes de ejecutar.
