@@ -1,10 +1,11 @@
 {
   "version": "0.55.0",
-  "date": "2026-07-18T08:00:00Z",
+  "date": "2026-07-18T11:30:00Z",
   "assistant_name": "Cauce",
-  "repo_main": "main en 0.55.0, PRs #72-#77 MERGEADOS 2026-07-18 (CI matrix verde c/u). PRs #79/#80/#81 de esta tanda del loop + esta PR (tests wifi_intelligence). Branch protection en main ACTIVA (require CI ubuntu+windows, strict). 0 PRs abiertos tras merge de esta tanda.",
-  "current_focus": "GODSPEED-4 loop cerrado: PRs #79-#83 mergeados. MANIFIESTO 6/11; pieza #5 ahora verificada EN HARDWARE (parser scan columnar real, PR #83, desplegado vivo al Xiaomi). Portfolio-auto catalogo vivo + imagenes LIVE. Backlog autonomo drenado; resto = llaves usuario.",
+  "repo_main": "main en 0.55.0, PRs #72-#85 MERGEADOS 2026-07-18 (CI matrix verde c/u). Branch protection ACTIVA (require CI ubuntu+windows, strict). 0 PRs abiertos.",
+  "current_focus": "MAK dual-dept fases 1-3 cerradas: WIN compartido en research+codex probado con metadata real, codex auto-reviso su propio artefacto, 4 reparaciones vivas en el box + persistidas (systemd) + espejadas al repo con 3 fixes de la demo (PR #85). MANIFIESTO 6/11. Resto = llaves usuario.",
   "done": [
+    "2026-07-18T10:00-11:30 (MAK dual-dept, director orquesta + 1 operador sonnet, TODO en vivo hub :8900): FASE 1 ambos deptos paralelo stack MAK (~12s solapados, fallback groq->cerebras real); FASE 2/2b compartir WIN BLOQUEADA por config-only (env=clasificador de credenciales; workflow-JSON=3 whitelists hardcodeadas) -> converge en reparar codigo; FASE 3 tras permiso ssh usuario: 4 reparaciones vivas (win en 3 whitelists research + CODER_CHAIN env-override codex), reinicio por PID, WIN respondio en AMBOS deptos (research job 73c2 paso 1, codex fa62 deepseek-coder-v2:16b), codex reviso su propio artefacto OSC de fase 1 (propuesta en ~/codex/revisiones/), win-first PERSISTIDO en systemd unit + watchdog (sobrevive reboot). PR #85 MERGEADO: espejo al repo (cultura/) + 3 defectos de la demo con tests (cadena _paso_con_fallback, /run _resolver_modo HTTP400, marco() condicional pa modelo chico). ~/codex/.token nunca tocado. Doctrina de este patron (config->code->env, evitar quemar el clasificador) en skill godspeed 6ta leccion.",
     "2026-07-18T08:45 (ventana USB): flag de PR #82 confirmado en hardware (formato columnar real vs regex SSID:/signal:), parse_scan_results() nuevo con fixture literal del Xiaomi + fallback legado, desplegado por USB (md5 seam-check), server reiniciado (input-dance; RUN_COMMAND requiere permiso Termux), /scan devolvio redes reales, telefono restaurado, PR #83 MERGEADO. Colateral: run_server.sh recopio TODOS los plugins (redeploy showcontrol/hub hecho). Usuario confirmo: ollama autostart + noisette 12 acciones OK.",
     "2026-07-18T08:00+ (GODSPEED-4 loop continuo, director Fable): PR #79 (empaquetador assets obras); portfolio-auto #4/#5 (seccion catalogo vivo + imagenes) VERIFICADO LIVE con curl (flujo-works.json + 2 imagenes 200 en ligereza.github.io/portfolio-auto/proyectos.html, refresh semanal lunes); PR #80 (pieza MANIFIESTO #9 corpus_olvido, 104 capas, Omega11 a tiempo); PR #81 (pieza MANIFIESTO #1 repo-se-performa: osc_sender UDP stdlib + RUNBOOK + recuento 6/11 en MASTER_PLAN.md); esta PR (40 tests offline para xio/new-plugins/wifi_intelligence, pieza #5, mismo patron PluginContext-stub+Flask-test-client de test_showcontrol_token.py; partes device-only sin cobertura, documentado en el test file). Suite completa verde (899 passed, 12 skipped preexistentes) tras cada PR.",
     "2026-07-18T07:00-07:55 (GODSPEED-4, director+haikus+sonnets): merge en orden #72/#73 (conflictos handoff resueltos conservando ambas narrativas)/#74 (test_smoke sin skip)/#75 (pieza #10: 5 tests + Omega11 en SEMILLAS)/#76 (FIX CRITICO: works.json curado de la galeria publica iba a ser pisado por el paso CI de #73 -- schema clash verificado contra el sitio vivo; generado ahora = flujo-works.json)/#77 (paleta_reactivos sync DanceSafe 23 reacciones, igualdad byte-identica en tests). Autoportfolio: workflow disparado, 8 obras publicadas, portfolio-auto PR #4 mergeado (seccion Catalogo vivo), verificado LIVE con curl. Leccion: nunca borrar rama head antes de state==MERGED (PR #77 cerrado por accidente, recuperado del sha).",
@@ -24,14 +25,17 @@
     "nada activo -- sesion cerrada limpia, 0 PRs abiertos en vibecodeine"
   ],
   "next": [
-    "usuario: PAT Termux (~/.airdrop_token) + activar AccessibilityService en Ajustes (el redeploy de plugins ya quedo hecho via run_server.sh 2026-07-18)",
+    "usuario: PAT Termux (~/.airdrop_token) + activar AccessibilityService en Ajustes (redeploy de plugins ya hecho via run_server.sh 2026-07-18)",
     "usuario: data 13 productoras + specs venues OpenKlub/Paralelo89",
     "usuario: pieza #1 en vivo con Resolume (tools/vj_set/RUNBOOK.md)",
-    "sin gate: piezas MANIFIESTO con llave bloqueada (#2/#3/#11); #7 manual por orden expresa, no tocar",
-    "hecho 2026-07-18 (era next): autostart ollama confirmado por usuario; noisette 12 acciones OK ojo humano; parser scan wifi_intelligence verificado EN HARDWARE (PR #83)"
+    "MAK menor (cuando convenga): systemctl --user restart mak-codex.service pa reconciliar systemd (que cree inactive) con el proceso manual vivo -- evita colision puerto 8891 si se hace 'start' antes de reboot; no urgente",
+    "MAK menor: workflow.json del box tiene nodo win priority 0 (a proposito); revert en /tmp/workflow_phase3.bak si alguna vez",
+    "sin gate: Groq 429 (free tier agotado) -- reordenar default o cablear score_provider_health en research (ya existe en codex/fallback_util)",
+    "sin gate: anomalia mak-demo-* en eventos.jsonl del box (escritura al panel sin pasar por la cola) -- ojo humano, integridad del panel, no seguridad",
+    "sin gate: piezas MANIFIESTO con llave bloqueada (#2/#3/#11); #7 manual por orden expresa, no tocar"
   ],
   "blockers": [
-    "ollama Windows no sobrevive reboot (arrancado a mano)"
+    "ollama Windows autostart CONFIRMADO por usuario 2026-07-18 (ya no bloquea)"
   ],
   "ai_stack": {
     "architect_reviewer": "Claude Code (director; arquitectura/critico/codigo que no admite malentendido)",
