@@ -38,6 +38,9 @@ jobs:
       - name: Generar catalogo de obras (works.json)
         run: python tools/portfolio/generar_works.py --salida out/works.json
 
+      - name: Empaquetar assets de obras (imagenes reales)
+        run: python tools/portfolio/empaquetar_assets.py --works out/works.json --assets out/assets/flujo-works
+
       - name: Artifact (siempre, sirve de dry-run)
         uses: actions/upload-artifact@v4
         with:
@@ -58,10 +61,11 @@ jobs:
           # works.json del sitio es CURADO a mano (lista de obras que dibuja la galeria,
           # schema distinto) -- el catalogo generado se publica con OTRO nombre pa no pisarlo
           cp out/works.json sitio/data/flujo-works.json
+          mkdir -p sitio/assets && rm -rf sitio/assets/flujo-works && cp -r out/assets/flujo-works sitio/assets/flujo-works 2>/dev/null || true
           cd sitio
           git config user.name "flujo-portfolio-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add data/
+          git add data/ assets/
           if git diff --cached --quiet; then
             echo "Sin cambios en los datos: nada que publicar."
           else
