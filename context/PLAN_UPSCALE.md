@@ -37,7 +37,9 @@ decide/verifica, haiku/sonnet ejecutan volumen, gate CI + revisor).
   reintentar/editar/saltar/abortar.
 - Deploy pendiente que arrastra: retencion.py + fallback_util + codex_lib
   integrado al box (el PR #71 los deja en repo, no en el box).
-- Gate: connection string SSH del usuario. Sin eso, frente BLOQUEADO.
+- Gate RESUELTO 2026-07-18: SSH = mak@192.168.50.2 (llave id_ed25519 local ya
+  autorizada, host dell-11m, verificado BatchMode). Frente DESBLOQUEADO.
+  Ojo fail2ban: pocas conexiones, usar ControlMaster o comandos agrupados.
 
 ### Opcion B: pieza MANIFIESTO via motor-omega (sin dependencias externas)
 - Candidatas vivas: #8 cartografia filtros (ya tiene base en
