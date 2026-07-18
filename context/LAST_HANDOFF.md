@@ -2,6 +2,43 @@
 
 Version: 0.52.0 | Fecha: 2026-07-18 | Cauce | sesion: GODSPEED (director+haiku). Handoff Claude->Claude, denso, ledger real.
 
+## Sesion 2026-07-18b -- GODSPEED-2: sistema generativo VIVO (misma rama/PR #71)
+
+### HECHO Y VERIFICADO (director + 1 haiku por area, cada claim re-verificado mecanicamente)
+- BACKLOG GENERATIVO implementado desde el contrato diseno/eventos_y_backlog.md seccion 3:
+  plataforma/backlog.py (parsear LAGUNAS DE INFORMACION, dedup por hash normalizado, linaje
+  cap 3, max 3/informe, pop por score+antiguedad, curador con poda) + 43 tests verdes.
+  trabajo.py cableado defensivo: cosecha cada tick, verbo multiplicar hace pop del backlog
+  ANTES de las semillas fijas (roles.SEMILLAS pasa de motor a arranque), curar cada 8 tareas.
+- SEMBRADO: backlog_semilla.jsonl con 8 preguntas de ideas sin comenzar verificadas (2 por
+  area: xio+mak, router+server, portafolio+cultura, rd+colorimetria). backlog_codex.txt +4
+  tareas (resumidor backlog, timeline red, glosario reactivos, resumen HALLAZGOs).
+- DESPLEGADO Y VIVO en 192.168.50.2 (2026-07-18): 13 archivos copiados tras verificar
+  live==espejo por md5 (codex_lib+fallback_util+revisar+testear -> ~/codex; cadena+refutar+
+  panel+grafo+retencion -> ~/research; trabajo+roles+backlog+backlog_codex -> ~/plataforma;
+  semilla -> ~/plataforma/backlog.jsonl). python3 py_compile OK x12 en el box, research y
+  codex responden 200. COSECHA REAL PROBADA: 9 preguntas extraidas de informes existentes
+  (quechua, test1) -> 17 pendientes en cola. El proximo tick ya investiga solo.
+- BUG VIVO ENCONTRADO Y MATADO: el trabajo.py del box aun leia ~/codex/.token (borrado hace
+  2 sesiones) y saltaba TODO verbo codex ("skip: codex sin token" x2 en el log). La sesion
+  del auth-delete no lo cubrio. El deploy lo corrige; codex autonomo revive.
+- src/flujo/analyze/reactivo_matcher.py: lookup inverso de colorimetria RD (hex observado ->
+  familias por delta-E CIE76 en Lab, stdlib puro, disclaimer presuntivo en cada resultado)
+  + 30 tests. Probado contra reactivos.json real.
+- tools/portfolio/generar_works.py: works.json regenerable desde manifests reales de
+  datadrops/ + projects/flyer_eventos/ (nodo 17 MAPA_GENERATIVO, "obras reales" ya no
+  placeholder) + 20 tests. Corrida real: 8/8 obras catalogadas.
+- Reglas de permiso ssh/scp al box: el clasificador BLOQUEA que el agente se auto-otorgue
+  permisos en settings (limite duro correcto). El usuario aprobo por /permissions esta vez.
+
+### NO HECHO (real)
+- Pausa-en-error sigue sin construir (diseno completo, es el item grande del backlog).
+- works.json NO cableado al workflow portfolio.yml (generar_works.py existe y esta testeado;
+  falta un paso en el workflow que lo corra y publique -- editar .github/workflows es de
+  mayor blast radius, decision del usuario).
+- Emisor HALLAZGO en correlacionar_archivos.py/memoria extra: cubierto lo delegable.
+- Contradiccion de lector refutada: xio/FACES.md SI existe (un haiku afirmo que no).
+
 ## Sesion 2026-07-18 -- PR #71 draft (rama worktree-god-haiku-fixes)
 
 ### HECHO Y VERIFICADO
