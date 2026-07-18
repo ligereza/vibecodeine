@@ -223,14 +223,12 @@ curl http://localhost:5000/api/plugins/plugin_guardian/blocked-commands
 curl -X POST http://localhost:5000/api/plugins/plugin_guardian/toggle-review-mode \
   -H "Content-Type: application/json" -d '{"enabled": true}'
 ```
-CONTRADICTION FLAGGED (not resolved): `plugin_guardian` exists as two byte-identical
-copies -- `xio/new-plugins/plugin_guardian/` and
-`xio/seguridad/pluginseguridad/plugin_guardian/` -- same `__init__.py`,
-`security_hook.py`, `manifest.json`, `README.md`. Only `xio/new-plugins/` is on
-the path `run_server.sh` actually deploys (`PLUGINS_DIR=$HOME/xioplugins` <-
-`/sdcard/xio_termux/new-plugins`); `xio/seguridad/` looks like a stale duplicate
-or a separate install bundle. Not deleted per this task's rules -- flagging for
-the user to decide which copy is canonical.
+RESOLVED 2026-07-18: `plugin_guardian` used to exist as two byte-identical
+copies. Canonical copy = `xio/new-plugins/plugin_guardian/` (the path
+`run_server.sh` actually deploys: `PLUGINS_DIR=$HOME/xioplugins` <-
+`/sdcard/xio_termux/new-plugins`). The stale duplicate at
+`xio/seguridad/pluginseguridad/plugin_guardian/` was archived via git mv to
+`_archive/legacy_20260717_2015/xio_seguridad_plugin_guardian/`.
 
 **Layer D -- showcontrol XIO_SHOWCONTROL_TOKEN (public-hotspot shows):** the
 showcontrol plugin (OSC/Art-Net/sACN sender, see
@@ -360,4 +358,3 @@ Source: xio/new/airdrop_push.sh + .github/workflows/airdrop_gate.yml
 | `xio/new-plugins/plugin_guardian/README.md` | full security-sandbox API (audit, alerts, review mode) |
 | `xio/new-plugins/showcontrol/README.md` | OSC/Art-Net/sACN show-control plugin -- cues, timeline, fabric, discovery |
 | `xio/seguridad/INSTALL_SECURITY.md` | plugin_guardian install/verify/troubleshoot steps |
-| `xio/seguridad/pluginseguridad/plugin_guardian/README.md` | duplicate of the new-plugins copy, see section 5 flag |

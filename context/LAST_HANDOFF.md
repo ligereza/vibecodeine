@@ -1,6 +1,41 @@
 # LAST HANDOFF -- estado para el proximo agente
 
-Version: 0.52.0 | Fecha: 2026-07-18 | Cauce | sesion: GODSPEED (director+haiku). Handoff Claude->Claude, denso, ledger real.
+Version: 0.53.0 | Fecha: 2026-07-18T01:50 | Identidad: Cauce | sesion autonoma: cleanup loop 3min.
+Bump 0.53.0: higiene profunda + 41 tests + docs veraces (changelog en version.py).
+Ruta a 0.55: 0.54 = merge PR #71 (user), 0.55 = proximo frente (MAK pausa-en-error o pieza MANIFIESTO).
+
+## Sesion 2026-07-18T01:00+ (autonoma, loop 3min activo)
+- 8a28651: plugin_guardian duplicado xio/seguridad -> _archive/legacy_20260717_2015
+  (canonico queda xio/new-plugins, path que despliega run_server.sh); RUNBOOK flag resuelto;
+  borrado doublecup_v2_3d.svg suelto (0 bytes, copia real tracked en doublecup/)
+- Falso positivo cerrado: "missing mapping.html" del audit de zonas era stale
+  (tracked + build:context lo produce; typecheck y build verdes)
+- c11bcf0: refs stale a checkpoint.sh (inexistente) purgadas de cli.py,
+  PRIMER_DIA.md, SCRIPTS_INVENTORY.md, finish_airdrop.sh; INSTALL.txt (relic
+  v0.20) -> _archive/legacy_20260718_0110/
+- e67f965: 5 one-shot cleanup scripts spent archivados (targets verificados
+  inexistentes): cleanup_safe/moderate/legacy_aggressive.sh,
+  cleanup_repo_hygiene_20260630.py, cleanup_v0359_windows_paths.py
+- 0cd8909: fix test order-dependence real -- test_run_airdrop_checks popeaba
+  sys.modules["flujo"] sin restaurar; snapshot+restore + import explicito
+  flujo.paths en 5 test files
+- 1a63c53 + ca11233: 41 tests nuevos (sonnet, auditados): ig/download (17,
+  instaloader mockeado), analyze colors/run (11, PIL en memoria + OCR mock),
+  analyze/export (13, round-trip binario ACO/ASE). serve/ omitido a proposito:
+  PR #71 abierto ya trae test_serve_api.py (21 tests) -- no duplicar.
+- 4da2936 + a584dc5 + 224558e: SESSION_STATE.json y PLAN_SIGUIENTE_AGENTE.md
+  al dia (PR 48 MERGED / 49 CLOSED / 71 OPEN, branch protection ACTIVA,
+  vibo_voz y .dev.limpio ya no existen, sellos docs refrescados)
+- c8a6cd9: Makefile help corregido (PYTHON vs PYTHON_BIN; python3 no existe
+  en Git Bash Windows)
+- OJO PR #71: contiene el mismo archive de plugin_guardian que main (8a28651)
+  + su propio LAST_HANDOFF -> conflictos chicos esperables al mergear
+- Backlog autonomo AGOTADO al cierre: lo restante necesita usuario (noisette
+  ojo humano, PAT Termux, AccessibilityService, data productoras, review #71)
+  o SSH a MAK (auth pendiente)
+- Suite verde tras cada commit (pytest full verde, 1 skip); flujo verify OK 0.52.0
+
+(rama PR #71, sesiones GODSPEED director+haiku, escritas en 0.52.0; mergeadas bajo 0.53.0)
 
 ## Sesion 2026-07-18b -- GODSPEED-2: sistema generativo VIVO (misma rama/PR #71)
 
