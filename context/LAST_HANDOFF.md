@@ -3,6 +3,7 @@
 Version: 0.53.0 | Fecha: 2026-07-18T01:50 | Identidad: Cauce | sesion autonoma: cleanup loop 3min.
 Bump 0.53.0: higiene profunda + 41 tests + docs veraces (changelog en version.py).
 Ruta a 0.55: 0.54 = merge PR #71 (user), 0.55 = proximo frente (MAK pausa-en-error o pieza MANIFIESTO).
+Plan detallado proxima sesion: context/PLAN_UPSCALE.md. Conflictos PR #71 RESUELTOS (ead2fa2 pusheado, CI corriendo).
 
 ## Sesion 2026-07-18T01:00+ (autonoma, loop 3min activo)
 - 8a28651: plugin_guardian duplicado xio/seguridad -> _archive/legacy_20260717_2015
