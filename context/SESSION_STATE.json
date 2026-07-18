@@ -1,10 +1,11 @@
 {
   "version": "0.52.0",
-  "date": "2026-07-17T22:30:00Z",
+  "date": "2026-07-18T01:45:00Z",
   "assistant_name": "Cauce",
   "repo_main": "main en 0.52.0 (PRs #50-#69 mergeados). El organismo MAK (rama worktree-mak-research-cultural, equivalente a los PRs #48/#49 mencionados en handoffs previos) se mergea a main en esta misma tanda -- ver seccion MAK abajo. Branch protection en main ACTIVA (require CI ubuntu+windows, strict; confirmado en LAST_HANDOFF 2026-07-17).",
   "current_focus": "Cierre de la sesion MAK (organismo research+codex+plataforma+lenguaje, vive en Debian 192.168.50.2 fuera de src/flujo): copia de codigo a cultura/mak_*, handoff actualizado, merge a main. Detalle completo en LAST_HANDOFF.md seccion 'MAK -- cierre 2026-07-17'.",
   "done": [
+    "2026-07-18T01:00-01:45 (autonomo, loop 3min): plugin_guardian duplicado archivado (canonico en xio/new-plugins); refs stale a checkpoint.sh purgadas (cli.py, PRIMER_DIA, SCRIPTS_INVENTORY, finish_airdrop.sh); INSTALL.txt v0.20 + 5 one-shot cleanup scripts archivados a _archive/legacy_20260718_0110/; fix real de aislamiento de tests (test_run_airdrop_checks popeaba sys.modules['flujo'] sin restaurar); 28 tests nuevos ig/analyze (sonnet, auditados); Makefile help PYTHON vs PYTHON_BIN; falso positivo 'missing mapping.html' cerrado. Commits 8a28651..1a63c53 pushed. Suite verde en cada paso.",
     "2026-07-17T22:30 (autonomo, limpieza mecanica): PR #48 stale refs corregidas en MASTER_PLAN.md + PLAN_SIGUIENTE_AGENTE.md (PR #48 MERGED 2026-07-17, kept only PR #49 pending), 9 cultura/ leftovers moved to C:/IA/_flujo_local/, docs/DIRECTOR_PLAN.md archived (stale v0.49.0). Suite verde (pytest 394+1skip, flujo verify OK). Commit 156e8b4 pushed.",
     "2026-07-17 (cierre MAK): organismo research+codex+plataforma+lenguaje corriendo en Debian 192.168.50.2 (fuera del repo) copiado a cultura/mak_research + mak_codex + mak_plataforma + mak_lenguaje. Trabajo de la sesion: WIN (notebook, RTX 4070) integrado como proveedor LLM fuerte de ambos deptos con fallback local; hub.py reconstruido sobre DOM+SVG real (verificado con Playwright real, no solo markup) con iframe embebiendo el editor real de research/codex en vez de un formulario propio; emisor de eventos con contenido semantico real (no contadores de paso) en research.py/generar.py/debug.py via worker.py/worker_codex.py; pausa-en-error con checkpoint/reanudacion INICIADA en research.py (investigar() reescrito) pero NO completada end-to-end (falta --resume en main(), reconocer PASADO: en worker.py, endpoint de reanudacion, botones en el hub). Detalle completo en LAST_HANDOFF.md.",
     "2026-07-16 (misma sesion, post-checkpoint): MASTER_PLAN.md nuevo + olas 1-3 ejecutadas y MERGEADAS (PRs #51/#52/#53): piezas MANIFIESTO #4 y #6 (4/11), docs re-verificados, 26+16 tests nuevos, RUNBOOK xio, token showcontrol (redeploy pendiente), catalogo RD regenerable, y FIX de flujo cotizaciones que estaba roto (brand.py restaurado). Review adversarial sonnet atrapo 1 BLOCKER + el sonnet de T-D2 atrapo el CLI roto -- el gate multi-agente funciona.",
@@ -20,21 +21,20 @@
     "MAK: terminar pausa-en-error de research.py (main() --resume/--accion/--nuevo-input, worker.py reconocer 'PAUSADO: ', endpoint /api/reanudar en interfaz.py + hub.py, botones reintentar/editar/saltar/abortar en el panel). investigar() ya soporta checkpoint= pero nada lo invoca todavia.",
     "MAK: replicar el emisor de eventos (HALLAZGO: + node_start/llm_result/node_end) en cadena.py/refutar.py/panel.py/grafo.py/memoria.py/revisar.py/testear.py -- hoy solo research.py+generar.py+debug.py tienen contenido semantico real; el resto solo tiene node_start/node_end genericos via worker.py/worker_codex.py.",
     "MAK: seguridad ollama en WIN -- bind ya restringido a la IP del cable directo (192.168.50.1), pero la regla de firewall de Windows sigue en 'Any remote address' (el New-NetFirewallRule con RemoteAddress fallo por falta de admin). El bind por interfaz ya cierra el riesgo real; la regla de firewall es hardening opcional, requiere UAC.",
-    "USUARIO: branch protection en main (web GitHub, require CI verde) -- ausente desde que el repo es publico.",
     "Re-verificar sellos v0.48.5 de docs/CLI.md, AGENT_AIRDROP_PROTOCOL.md, SCRIPTS_INVENTORY.md contra la version actual (no subir numero sin re-verificar).",
     "Corpus tilde real (desktop/tilde_meter.py) para render sobrevivencia-01; fixture flyer real para smoke productoras.py.",
     "Piezas MANIFIESTO candidatas (#4 esteganografia, #8 cartografia filtros, #6 cron nocturno) via motor-omega; resto bloqueadas (ver PLAN).",
     "xio reboot gap: build/install/grant de xio/hotspot_boot_service (AccessibilityService) = parte del usuario en el telefono."
   ],
   "blockers": [
-    "Gemini API PARKED desde 2026-07-10 (sin API util): desktop/ y tools/vibo_voz documentados pero sin uso hasta que el usuario anuncie key/API nueva.",
+    "Gemini API PARKED desde 2026-07-10 (sin API util): desktop/ sin uso hasta que el usuario anuncie key/API nueva (tools/vibo_voz ya eliminado 2026-07-17).",
     "build_chataigne_noisette_experimental: falta el .noisette real (no re-adivinar, fallo 4 veces).",
     "Clasificador de permisos bloquea a agentes operaciones de borrado/movida dentro de cultura/ (ahi viven las keys): esas quedan como acciones manuales del usuario."
   ],
   "ai_stack": {
     "architect_reviewer": "Claude Code (director; arquitectura/critico/codigo que no admite malentendido)",
     "mechanical_internal": "subagentes Sonnet (Agent/Workflow model sonnet): lecturas pesadas, busquedas de volumen, ediciones acotadas",
-    "parked": "Gemini API PARKED por directiva del usuario 2026-07-10 (tools/vibo_voz y skills relevo-web/orquestacion-gemini-claude sin uso hasta nueva API)",
+    "parked": "Gemini API PARKED por directiva del usuario 2026-07-10 (skills relevo-web/orquestacion-gemini-claude sin uso hasta nueva API; tools/vibo_voz eliminado 2026-07-17)",
     "writer_fallback_manual": "NVIDIA NIM (--proveedor nvidia; free tier saturado, solo off-peak) y GitHub Models deepseek-v3 (--proveedor github; 8k in/4k out, solo tareas chicas)",
     "local_llm": "MAK (caja Linux): Mistral-Nemo 12B obediente + 4 APIs gratis (Tavily/OpenRouter/Groq/NVIDIA) para research; aislado del xio server (403)",
     "external_support": "Qwen web / LMArena via airdrop autocontenido (manual, no fuente de verdad; docs/airdrop/ARENA_TAPIZ_PLAN.md como plantilla)"
