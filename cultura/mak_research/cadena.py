@@ -38,6 +38,23 @@ ROLES = [
 ]
 
 
+def _paso_con_fallback(llm, orden, proveedor, rol, prompt, max_tok):
+    """Llama al proveedor pedido para este paso; si ese unico proveedor
+    falla (ej. groq 429), reintenta con los proveedores RESTANTES de la
+    cadena (los que vienen despues de el en `orden`) antes de declarar el
+    paso -- y el job -- muerto. Un proveedor caido ya no mata la cadena
+    entera si quedan otros viables. Si no quedan, re-propaga el error tal
+    cual (comportamiento identico al viejo: job FALLA)."""
+    try:
+        return llm.call(rol, prompt, max_tok, order=[proveedor])
+    except RuntimeError:
+        idx = orden.index(proveedor) if proveedor in orden else -1
+        resto = orden[idx + 1:] if idx >= 0 else []
+        if not resto:
+            raise
+        return llm.call(rol, prompt, max_tok, order=resto)
+
+
 def encadenar(tema, orden, densidad="medio"):
     t0 = time.time()
     llm = LLM()
@@ -52,8 +69,8 @@ def encadenar(tema, orden, densidad="medio"):
              flush=True)
         prompt = ('TEMA: "%s"\n\nTEXTO ACUMULADO HASTA AHORA:\n%s\n\n%s'
                   % (tema, texto or "(nada aun, eres el primero)", rol))
-        out, real = llm.call(rol, prompt, escala_tok(500, densidad),
-                             order=[proveedor])
+        out, real = _paso_con_fallback(llm, orden, proveedor, rol, prompt,
+                                       escala_tok(500, densidad))
         print("HALLAZGO: paso %d -- %s" % (i + 1, out[:120].replace("\n", " ")), flush=True)
         detalle.append({"paso": i + 1, "proveedor_pedido": proveedor,
                         "proveedor_real": real, "texto": out})
@@ -93,7 +110,7 @@ def main():
 
     load_env()
     orden = [p.strip() for p in args.orden.split(",")
-            if p.strip() in ("groq", "cerebras", "azure", "ollama")]
+            if p.strip() in ("groq", "cerebras", "azure", "win", "ollama")]
     if not orden:
         orden = ["groq", "cerebras", "azure", "ollama"]
     tema = marco(args.tema, activo=not args.sin_marco)

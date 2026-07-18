@@ -50,6 +50,14 @@ MODO_DIR = {"research": "informes", "panel": "paneles",
             "memoria": "memoria"}
 # modos que NO requieren tema (correlacionan el archivo entero)
 MODO_SIN_TEMA = {"corpus"}
+# alias de modo front-end-only (nombre del canvas/workflow.mode) -> clave
+# real de backend (MODO_DIR). Espejo de MODE_TO_BACKEND en el JS. /run debe
+# aceptar ambos vocabularios: si llega un alias, se traduce; si no es ni
+# alias ni clave real, es un modo desconocido -> 400 (nunca caer callado
+# a un modo por defecto).
+MODO_ALIAS_FRONTEND = {"single": "research", "pipeline": "cadena",
+                       "discussion": "panel", "adversarial": "refutar",
+                       "grafo": "grafo"}
 # paleta cultura (abisal + fungico + tierras) por tipo de producto
 DIR_COLOR = {"informes": "#9db67c", "paneles": "#d4a259",
              "cadenas": "#7ba6a3", "refutaciones": "#c46d5e",
@@ -219,13 +227,32 @@ def _reindexar_async(rebuild=False):
     return True
 
 
+def _resolver_modo(modo):
+    """Resuelve el modo pedido de /run a una clave real de MODO_DIR.
+    Devuelve (modo_real, None) si es valido, o (None, error_dict) si no.
+    Acepta claves reales de backend (research/cadena/panel/refutar/grafo/
+    memoria/corpus) y alias front-end-only (single/pipeline/discussion/
+    adversarial, via MODO_ALIAS_FRONTEND -- espejo de MODE_TO_BACKEND en el
+    JS). Un modo genuinamente desconocido NUNCA cae callado al default
+    (bug probado en vivo: modo=adversarial corria como research)."""
+    if modo in MODO_DIR:
+        return modo, None
+    alias = MODO_ALIAS_FRONTEND.get(modo)
+    if alias:
+        return alias, None
+    validas = sorted(set(MODO_DIR) | set(MODO_ALIAS_FRONTEND))
+    return None, {"ok": False,
+                  "error": "modo invalido: %s. validos: %s"
+                           % (modo, ", ".join(validas))}
+
+
 def _orden_canvas():
     """CSV de proveedores segun la prioridad definida en el canvas.
     Usado por modo=cadena/refutar para que 'ordenar los nodos' en la UI
     realmente cambie el orden de ejecucion, no solo el dibujo."""
     with WORKFLOW_LOCK:
         wf = _load_workflow()
-    provs = [k for k in ("groq", "cerebras", "azure", "ollama")
+    provs = [k for k in ("groq", "cerebras", "azure", "win", "ollama")
             if wf.get("nodes", {}).get(k, {}).get("active", True)]
     provs.sort(key=lambda k: wf["nodes"].get(k, {}).get("priority", 99))
     return ",".join(provs) if provs else None
@@ -2978,9 +3005,9 @@ class H(BaseHTTPRequestHandler):
             largo = min(int(self.headers.get("Content-Length") or 0), 10000)
             q = urllib.parse.parse_qs(self.rfile.read(largo).decode())
             tema = (q.get("tema") or [""])[0].strip()[:300]
-            modo = (q.get("modo") or ["research"])[0]
-            if modo not in MODO_DIR:
-                modo = "research"
+            modo, err = _resolver_modo((q.get("modo") or ["research"])[0])
+            if err is not None:
+                return self._json_response(err, 400)
             densidad = (q.get("densidad") or ["medio"])[0]
             if densidad not in ("corto", "medio", "largo"):
                 densidad = "medio"
