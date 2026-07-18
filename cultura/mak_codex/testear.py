@@ -35,6 +35,7 @@ def testear(path, densidad="medio"):
         "y bordes. Sin mocks de red." % (modulo, codigo, modulo),
         coder_tok(densidad))
     tests = extraer_codigo(bruto)
+    print("HALLAZGO: tests -- " + tests[:120].replace("\n", " "), flush=True)
 
     bloqueo = escanear(codigo) + escanear(tests)
     resultado = {"ok": False, "rc": -1, "stdout": "", "stderr": ""}
@@ -64,6 +65,9 @@ def testear(path, densidad="medio"):
             except subprocess.TimeoutExpired:
                 resultado = {"ok": False, "rc": -9, "stdout": "",
                              "stderr": "timeout 60s"}
+
+    _output = (resultado.get("stdout") or resultado.get("stderr") or "")[:120]
+    print("HALLAZGO: resultado -- " + _output.replace("\n", " "), flush=True)
 
     os.makedirs(REVISIONES, exist_ok=True)
     base = os.path.join(REVISIONES, "%s-test-%s" % (stamp(), slug(modulo)))

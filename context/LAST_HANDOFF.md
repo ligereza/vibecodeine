@@ -37,10 +37,15 @@ Version: 0.52.0 | Fecha: 2026-07-18 | Cauce | sesion: GODSPEED (director+haiku).
   HALLAZGO:->llm_result). El handoff previo lo marco honestamente "NO COMPLETADO"; su linea
   "investigar() fue reescrito" NO coincide con el codigo pero NO fue mentira (trabajo perdido/
   optimista). PROXIMO: CONSTRUIR desde el diseño sobre el emisor -- NO re-buscar, no esta.
-- fallback_util.py NO integrado en codex_lib.py CoderLLM.call (additive listo, necesita el box).
-- retencion.py y fallback_util NO desplegados al box (solo en repo/PR).
-- Emisor semantico (HALLAZGO:) solo en research.py/generar.py/debug.py; falta en
-  cadena/refutar/panel/grafo/memoria/revisar/testear.py (mecanico, delegable por archivo).
+- [HECHO 2026-07-17 sesion godspeed-2] fallback_util INTEGRADO en codex_lib.py CoderLLM.call
+  (import defensivo try/except; al agotar la cadena el RuntimeError agrega TODOS los intentos
+  via aggregate_failures; exito byte-identico; +3 tests integracion = 27 en test_mak_fallback).
+- [HECHO 2026-07-17 sesion godspeed-2] Emisor semantico (HALLAZGO:) agregado a cadena/refutar/
+  panel/grafo (research) + revisar/testear (codex) -- 15 emisiones aditivas con contenido real,
+  hecho por 6 haikus (1 archivo c/u, sin commits propios) + verificacion mecanica del director
+  (grep + py_compile + diff --stat por archivo + suite completa verde).
+- retencion.py, fallback_util y codex_lib.py integrado NO desplegados al box (solo en repo/PR;
+  el deploy al box 192.168.50.2 sigue pendiente y ahora INCLUYE codex_lib.py + fallback_util.py).
 - Firewall Windows ollama sigue "Any remote address" (bind a 192.168.50.1 ya cierra el riesgo real).
 
 ### TOPOLOGIA (memoria: project_tres_repos_topologia -- NO asumir que uno refleja a otro)

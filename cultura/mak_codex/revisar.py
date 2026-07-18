@@ -45,6 +45,10 @@ def revisar(path, densidad="medio"):
             texto, real = "[lente fallo: %s]" % e, None
         hallazgos.append((nombre, real, texto))
 
+    _primer_hall = hallazgos[0][2] if hallazgos else ""
+    if _primer_hall and not _primer_hall.startswith("["):
+        print("HALLAZGO: revision -- " + _primer_hall[:120].replace("\n", " "), flush=True)
+
     print("STATUS: Veredicto (gpt-5-mini)...", flush=True)
     cuerpo = "\n\n".join("[%s]:\n%s" % (n, t) for n, _, t in hallazgos)
     try:
@@ -55,6 +59,8 @@ def revisar(path, densidad="medio"):
             cuerpo, escala_tok(800, densidad))
     except RuntimeError as e:
         veredicto = "[veredicto fallo: %s]" % e
+
+    print("HALLAZGO: veredicto -- " + veredicto[:130].replace("\n", " "), flush=True)
 
     os.makedirs(REVISIONES, exist_ok=True)
     base = os.path.join(REVISIONES, "%s-rev-%s" % (stamp(), slug(os.path.basename(path))))
