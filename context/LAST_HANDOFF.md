@@ -1,9 +1,11 @@
 # LAST HANDOFF -- estado para el proximo agente
 
-Version: 0.53.0 | Fecha: 2026-07-18T01:50 | Identidad: Cauce | sesion autonoma: cleanup loop 3min.
-Bump 0.53.0: higiene profunda + 41 tests + docs veraces (changelog en version.py).
-Ruta a 0.55: 0.54 = merge PR #71 (user), 0.55 = proximo frente (MAK pausa-en-error o pieza MANIFIESTO).
-Plan detallado proxima sesion: context/PLAN_UPSCALE.md. Conflictos PR #71 RESUELTOS (ead2fa2 pusheado, CI corriendo).
+Version: 0.54.0 | Fecha: 2026-07-18T02:30 | Identidad: Cauce | sesion: cleanup loop + merge PR #71.
+Bump 0.54.0: PR #71 MERGEADO a main (cd52a69) tras resolver conflictos + fix CI ubuntu
+(iterdir orden). SSH a MAK VERIFICADO: mak@192.168.50.2 (dell-11m, llave autorizada).
+Skill godspeed ampliada con lecciones 2da sesion. Rama #71 borrada (local+remota);
+dir .claude/worktrees/god-haiku-fixes lockeado por proceso, borrar a mano cuando suelte.
+Ruta 0.55: context/PLAN_UPSCALE.md -- Opcion A (MAK pausa-en-error) DESBLOQUEADA y recomendada.
 
 ## Sesion 2026-07-18T01:00+ (autonoma, loop 3min activo)
 - 8a28651: plugin_guardian duplicado xio/seguridad -> _archive/legacy_20260717_2015
