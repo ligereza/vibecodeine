@@ -103,41 +103,14 @@ def test_todo_hex_de_swatch_html_es_trazable_a_reactivos_json(tmp_path):
 def test_sync_con_reactivos_json_committeado(tmp_path):
     """
     Compara la generacion fresca contra projects/cultura/identidad/reactivos.json
-    (committeado). Si PR #70 verifico datos a mano contra DanceSafe y diverge
-    del script actual, NO forzamos igualdad byte a byte -- solo la forma
-    estructural (mismas claves de nivel superior, mismo shape por entrada).
-    La divergencia real (si existe) se reporta aparte, no se esconde en el test.
+    (committeado). PR #70 verifico a mano contra DanceSafe (23 reacciones +
+    clave "fuente"); ese dato ya esta backporteado a REACCIONES/FUENTE en el
+    script (residuo cerrado, ver puente/SEMILLAS.md 18-jul). Se exige
+    igualdad EXACTA -- ninguna divergencia estructural permitida.
     """
     out = tmp_path / "out"
     pr.build(out)
     fresh = json.loads((out / "reactivos.json").read_text(encoding="utf-8"))
     committed = _committed_reactivos_json()
 
-    if fresh == committed:
-        assert fresh == committed
-        return
-
-    # Divergencia esperada (dato web-verificado a mano en PR #70 le gano al
-    # script): se exige compatibilidad ESTRUCTURAL, no igualdad de contenido.
-    assert set(fresh.keys()) <= set(committed.keys()) or "disclaimer" in committed
-    assert "reacciones" in committed and "marca" in committed
-    assert isinstance(committed["reacciones"], list) and committed["reacciones"]
-    assert isinstance(committed["marca"], list) and committed["marca"]
-
-    campos_reaccion = {"reactivo", "familia", "reaccion", "hex"}
-    for r in fresh["reacciones"]:
-        assert campos_reaccion <= set(r.keys())
-    for r in committed["reacciones"]:
-        assert campos_reaccion <= set(r.keys())
-        assert _HEX_RE.match(r["hex"]), r
-
-    campos_marca = {"rol", "hex", "origen"}
-    for m in fresh["marca"]:
-        assert campos_marca <= set(m.keys())
-    for m in committed["marca"]:
-        assert campos_marca <= set(m.keys())
-        assert _HEX_RE.match(m["hex"]), m
-
-    # La marca (paleta de identidad final) si debe coincidir exactamente --
-    # es lo que consume el resto del repo como color de marca oficial.
-    assert fresh["marca"] == committed["marca"]
+    assert fresh == committed
