@@ -3,6 +3,8 @@
 from pathlib import Path
 import pytest
 
+import flujo.paths  # noqa: F401 -- monkeypatch("flujo.paths.repo_root") necesita el submodulo ya importado
+import flujo.dashboard.scoring  # noqa: F401 -- idem para flujo.dashboard.scoring.repo_root
 from flujo.dashboard import (
     collect_items,
     score_job,
