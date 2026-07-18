@@ -1,6 +1,29 @@
 # LAST HANDOFF -- estado para el proximo agente
 
-Version: 0.52.0 | Fecha: 2026-07-17T23:00 | Identidad: Cauce | sesion autonoma: cleanup + audits.
+Version: 0.52.0 | Fecha: 2026-07-18T00:30 | Identidad: Cauce | sesion autonoma: director+haiku (entender sin leer / mejorar sin escribir).
+
+## Sesion 2026-07-18 (autonoma, PR #71 -- director + subagentes haiku)
+Doctrina "dios teorico haiku": el director no lee ni escribe, solo piensa/delega/verifica.
+Lectores haiku con schema forzado + campo de honestidad; verificacion mecanica (grep/build)
+de cada claim; deteccion de contradicciones en las costuras.
+- flujo: dispatcher scripts/flujo.py da error claro pa 13 comandos retirados (antes fallo
+  silencioso) + tests; 21 tests smoke pa flujo.serve (sin cobertura antes). 2 bugs
+  ALUCINADOS por lectores REFUTADOS por grep (mapping.html "roto" = lo provee web/public/;
+  3/5 gaps de cobertura falsos).
+- MAK codex: AUTH OPCIONAL (Face A LAN privada). interfaz_codex.py + watchdog corren codex
+  ABIERTO sin CODEX_TOKEN (patron de research :8890). Reversible (reponer ~/codex/.token).
+  Flip en vivo = operador, ver cultura/mak_codex/DEPLOY_OPEN.md (el guardrail bloquea a
+  Claude de SSH/token contra MAK). tools/mak/delegar.py = bridge LAN (salud/research/codex).
+- MAK research: cultura/mak_research/retencion.py rota informes (crecian sin limite). +17 tests.
+- MAK codex fiabilidad: cultura/mak_codex/fallback_util.py agrega TODOS los coders fallidos
+  (no solo el ultimo). +24 tests. FALLBACK_FINDINGS.md = integracion pendiente en CoderLLM.
+- xio: FACES.md define Face A (casa: Linux MAK + Windows) vs Face B (show: SOLO telefono, el
+  Linux no sale). Corrige la confusion 32-clientes-sin-AP = NO es exposicion de codex.
+- Suite: 648 passed, 1 skipped. Rama worktree-god-haiku-fixes, PR #71 draft (10 commits).
+- PENDIENTE humano: (a) deployar codex-abierto en el box vivo (DEPLOY_OPEN.md, 1 comando `!`);
+  (b) correr job codex real post-deploy; (c) integrar fallback_util en codex_lib.py:110 (needs box).
+
+## Sesion 2026-07-17T22:30-23:00 (autonoma, cierre)
 
 ## Sesion 2026-07-17T22:30-23:00 (autonoma, cierre)
 - Cleanup: PR #48 stale refs (updated MASTER_PLAN.md, PLAN_SIGUIENTE_AGENTE.md), 9 cultura/ leftovers moved out, docs/DIRECTOR_PLAN.md archived, branch/file trash cleaned
@@ -385,12 +408,46 @@ MANIFIESTO: 4/11 piezas. Las 4 llaves que destraban H2 son del USUARIO:
 - Mergeados hoy: #45, #47 (previos), #50 (checkpoint limpieza + v0.52.0),
   #51 (MASTER_PLAN + ola 1), #52 (ola 2), #53 (ola 3).
 
+## MAK Codex Fallback Analysis (2026-07-17, sesion god-haiku-fixes)
+
+Trabajo: auditoria de la cadena de fallback de CoderLLM ante timeouts y errores
+de proveedores (NIM -> WIN -> Ollama). Deliverable: findings + helper module testeable.
+
+**Archivos:**
+- cultura/mak_codex/FALLBACK_FINDINGS.md: analisis detallado (lineas 110-129 en
+  codex_lib.py; issues: solo "ultimo" error visible, no aggregacion de intentos,
+  timeouts no distinguidos de otros errores, sin reordenamiento por salud de
+  proveedores). Propone 5 mejoras: agregacion de errores (high), timeout tracking
+  (medium), health stats (medium), backoff (low), mensajes claros (high).
+- cultura/mak_codex/fallback_util.py: helper puro (NO deps network/ollama):
+  * parse_provider_error() -- clasifica excepcion en tipo (timeout/connection/
+    api_error/empty/other) + trunca a 100 chars
+  * aggregate_failures() -- formatea lista de intentos en mensaje legible
+  * score_provider_health() -- ranking proveedores por ratio exito
+  * format_chain_suggestion() -- reordena cadena por salud, genera explicacion
+- tests/test_mak_fallback.py: 24 tests (TestParseProviderError x8, TestAggregate
+  Failuresx5, TestScoreProviderHealth x5, TestFormatChainSuggestion x3,
+  TestIntegrationWorkflow x2). Cobertura: tipo de error, truncacion, multi-
+  fallback, ranking, reordenamiento, workflow completo.
+
+**Verificacion (CLI):**
+- py -m py_compile cultura/mak_codex/fallback_util.py: OK
+- py -m pytest tests/test_mak_fallback.py -q: OK (24 passed)
+- py -m pytest tests/ -q -p no:cacheprovider --tb=no: 394+ green, 1 skip,
+  4 fallo en test_mak_retencion (pre-existing Linux path issues, no impacta)
+
+**Decisiones:**
+- NO toque live CoderLLM loop (fuera de scope: "findings + optional tested helper only")
+- Helper module extraible y testeable SIN red/ollama/subprocess deps
+- Fallback_util.py agnostico a implementacion (puede inyectarse en codex_lib
+  futura sin romper tests existentes)
+
 ## Reporte Formal de Verificacion y Tolerancia Cero a Errores
-- py -m compileall src/flujo: OK
-- py -m pytest tests/ -q: OK (394 verdes, 1 skip)
+- py -m compileall src/flujo: OK (anterior), fallback_util.py: OK (nuevo)
+- py -m pytest tests/test_mak_fallback.py -q: OK (24 nuevos)
+- py -m pytest tests/ -q -p no:cacheprovider --tb=no: OK (394+ verdes, 1 skip;
+  test_mak_retencion fallo pre-existing Linux paths)
 - cd web && npm run build:context: no aplica (web no tocada)
-- py -m flujo verify: OK (hub smoke 0.52.0)
-- Observaciones: basura y duplicados fuera; docs de reglas alineados con la
-  realidad (Gemini PARKED, planes viejos marcados historicos); gap de
-  credenciales cerrado en .gitignore; quedan 3 acciones manuales del usuario
-  (PLAN P1.1-P1.3).
+- py -m flujo verify: no aplica (repo source audit, no live modules)
+- Observaciones: findings + helper + tests completos. Listo para que otro agente
+  integre helpers en CoderLLM live loop si se desea.
