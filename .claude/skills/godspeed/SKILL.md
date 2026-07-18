@@ -235,6 +235,40 @@ Recorded so successors inherit the failures, not just the theory.
   calls. When a chain is denied, split it into single-purpose commands before
   concluding the action itself is forbidden.
 
+## Fifth session lessons (2026-07-18d, hardware window: the honest flag pays off)
+
+### The pattern that worked end-to-end
+A builder's mandatory "1 thing I did not understand" flagged that a plugin's
+scan regex was UNVERIFIED against real device output — it tested the code as
+written and refused to assert device behavior. When the user later plugged the
+phone in (USB window), that flag became a 30-minute close-the-loop: capture
+real output -> confirm the regex never matched -> fix with the LITERAL captured
+lines as test fixture -> deploy -> hit the live route -> merge. The honesty
+field is not bureaucracy; it is a queued hardware test waiting for the window.
+- **Hardware windows are perishable — reorder for them.** When the user says
+  "the device is connected now", drop the queue and do the device-gated work
+  first. Everything else keeps; the USB cable does not.
+- **Leave the device as found.** Wifi was off before the scan test: turn it
+  back off after. Capture state BEFORE changing it, restore state AFTER.
+- **Real fixtures from the real device.** The columnar scan format went into
+  the test file verbatim (4 captured lines). Never retype/prettify captured
+  output — whitespace is part of the contract.
+
+### Channel traps (Xiaomi/Termux via adb from Git Bash)
+- `adb shell am startservice ... com.termux.RUN_COMMAND` fails with "Requires
+  permission com.termux.permission.RUN_COMMAND" — the shell uid cannot hold a
+  Termux-granted permission. The working headless path is the input-dance from
+  `xio/new/pc_reboot_watch.sh` (wake, dismiss-keyguard, `am start` Termux,
+  `input text` + keyevent 66).
+- Git Bash mangles `/sdcard/...` into `C:/Program Files/Git/sdcard/...` on adb
+  args — prefix with `MSYS_NO_PATHCONV=1` (the repo's own scripts do this).
+- `run_server.sh` is a FULL redeploy (wipes and recopies ALL plugins from
+  /sdcard) — restarting the server for one plugin also ships every other
+  pending plugin change. Side effect can be useful (it closed a pending
+  redeploy) but know you are shipping everything staged in new-plugins/.
+- adb binaries live only in the MAIN checkout (gitignored) — from a worktree,
+  call them by absolute path.
+
 ## Operating checklist
 
 - [ ] Mechanical skeleton first (script, 0 tokens). Never delegate what grep answers.
