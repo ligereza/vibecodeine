@@ -18,6 +18,7 @@ All requests have timeouts (default 10s). No hardcoding, no token leaks in outpu
 import argparse
 import json
 import os
+import re
 import sys
 import urllib.error
 import urllib.parse
@@ -78,17 +79,36 @@ def _get_token():
     if args.token_file:
         try:
             with open(args.token_file, "r") as f:
-                token = f.read().strip()
+                token = _extract_token(f.read())
             if token:
                 return token, f"file:{args.token_file}"
         except (OSError, IOError) as e:
             raise MAKUsageError(f"Could not read token file: {e}")
 
-    token = os.environ.get("MAK_CODEX_TOKEN")
+    token = _extract_token(os.environ.get("MAK_CODEX_TOKEN", ""))
     if token:
         return token, "env:MAK_CODEX_TOKEN"
 
     return None, "not_found"
+
+
+def _extract_token(raw):
+    """
+    Extract the token value from raw file/env content.
+
+    The MAK box stores ~/codex/.token as an env-file line
+    (CODEX_TOKEN="value"), which the server parses by regex --
+    see cultura/mak_plataforma/hub.py:480. Accept that shape as well
+    as a bare token, stripping any KEY= prefix and surrounding quotes.
+    """
+    if not raw:
+        return ""
+    text = raw.strip()
+    m = re.search(r'(?:CODEX_TOKEN|INTERFAZ_TOKEN|TOKEN)\s*=\s*["\']?([^"\'\s]+)',
+                  text)
+    if m:
+        return m.group(1)
+    return text.strip('"\'')
 
 
 def _http_get(path, host=MAK_HOST, port=HUB_PORT, token=None, timeout=DEFAULT_TIMEOUT):
