@@ -1,6 +1,27 @@
 # LAST HANDOFF -- estado para el proximo agente
 
-Version: 0.55.0 | Fecha: 2026-07-18T08:00+ | Identidad: Cauce | sesion: GODSPEED-4 loop continuo -- PRs #79/#80/#81 + tests wifi_intelligence (pieza #5), MANIFIESTO 6/11.
+Version: 0.55.0 | Fecha: 2026-07-18T09:10 | Identidad: Cauce | sesion: GODSPEED-4 loop -- PRs #79-#83 mergeados, pieza #5 verificada EN HARDWARE.
+
+## Sesion 2026-07-18T08:45 (ventana USB del Xiaomi, director) -- PR #83 MERGEADO
+
+- El flag honesto de PR #82 (regex de scan no verificado contra dispositivo) se
+  CONFIRMO en hardware real: HyperOS emite formato columnar (BSSID/Frequency/
+  RSSI/Age/SSID/Flags), el parser esperaba "SSID:"/"signal:" -- el scan NUNCA
+  funciono en este telefono.
+- Fix: parse_scan_results() columnar (fixture = lineas literales capturadas del
+  Xiaomi) + formato legado como fallback. +3 tests (43 en el archivo).
+- DESPLEGADO Y VERIFICADO VIVO: push por USB (md5 identico), server reiniciado
+  con run_server.sh, GET /scan devolvio redes reales parseadas (ssid con
+  espacios incluido). Telefono restaurado como estaba (wifi off).
+- EFECTO COLATERAL UTIL: run_server.sh recopia TODOS los plugins -- el redeploy
+  pendiente de showcontrol/hub (A4/A8) quedo hecho. Solo falta que el usuario
+  active AccessibilityService en Ajustes.
+- Trampas de canal (tambien en skill godspeed): adb shell NO puede disparar
+  com.termux.RUN_COMMAND (permiso de Termux) -> usar el input-dance de
+  pc_reboot_watch.sh; adb en Git Bash necesita MSYS_NO_PATHCONV=1 o /sdcard/
+  se convierte en C:/Program Files/Git/sdcard/.
+- Usuario confirmo hechas: autostart ollama Windows + noisette 12 acciones OK
+  en Chataigne (ojo humano). Ambos salen de pendientes.
 
 ## Sesion 2026-07-18T08:00+ (GODSPEED-4 loop continuo, director Fable)
 
