@@ -1,10 +1,11 @@
 {
   "version": "0.55.0",
-  "date": "2026-07-18T07:55:00Z",
+  "date": "2026-07-18T08:00:00Z",
   "assistant_name": "Cauce",
-  "repo_main": "main en 0.55.0, PRs #72-#77 MERGEADOS 2026-07-18 (CI matrix verde c/u). Branch protection en main ACTIVA (require CI ubuntu+windows, strict).",
-  "current_focus": "GODSPEED-4 CERRADA: pausa-en-error vivo, autoportfolio catalogo vivo LIVE (flujo-works.json + seccion en proyectos.html, refresh semanal), pieza #10 ratcheteada (tests + Omega11 + sync DanceSafe). PLAN_UPSCALE consumido.",
+  "repo_main": "main en 0.55.0, PRs #72-#77 MERGEADOS 2026-07-18 (CI matrix verde c/u). PRs #79/#80/#81 de esta tanda del loop + esta PR (tests wifi_intelligence). Branch protection en main ACTIVA (require CI ubuntu+windows, strict). 0 PRs abiertos tras merge de esta tanda.",
+  "current_focus": "GODSPEED-4 loop continuo: MANIFIESTO 6/11 (piezas #1/#4/#6/#9/#10 hechas, #5 parcial->tests agregados esta sesion, #7 manual por orden usuario, #2/#3/#11 bloqueadas por llaves usuario sin cambio). Portfolio-auto catalogo vivo + imagenes VERIFICADO LIVE.",
   "done": [
+    "2026-07-18T08:00+ (GODSPEED-4 loop continuo, director Fable): PR #79 (empaquetador assets obras); portfolio-auto #4/#5 (seccion catalogo vivo + imagenes) VERIFICADO LIVE con curl (flujo-works.json + 2 imagenes 200 en ligereza.github.io/portfolio-auto/proyectos.html, refresh semanal lunes); PR #80 (pieza MANIFIESTO #9 corpus_olvido, 104 capas, Omega11 a tiempo); PR #81 (pieza MANIFIESTO #1 repo-se-performa: osc_sender UDP stdlib + RUNBOOK + recuento 6/11 en MASTER_PLAN.md); esta PR (40 tests offline para xio/new-plugins/wifi_intelligence, pieza #5, mismo patron PluginContext-stub+Flask-test-client de test_showcontrol_token.py; partes device-only sin cobertura, documentado en el test file). Suite completa verde (899 passed, 12 skipped preexistentes) tras cada PR.",
     "2026-07-18T07:00-07:55 (GODSPEED-4, director+haikus+sonnets): merge en orden #72/#73 (conflictos handoff resueltos conservando ambas narrativas)/#74 (test_smoke sin skip)/#75 (pieza #10: 5 tests + Omega11 en SEMILLAS)/#76 (FIX CRITICO: works.json curado de la galeria publica iba a ser pisado por el paso CI de #73 -- schema clash verificado contra el sitio vivo; generado ahora = flujo-works.json)/#77 (paleta_reactivos sync DanceSafe 23 reacciones, igualdad byte-identica en tests). Autoportfolio: workflow disparado, 8 obras publicadas, portfolio-auto PR #4 mergeado (seccion Catalogo vivo), verificado LIVE con curl. Leccion: nunca borrar rama head antes de state==MERGED (PR #77 cerrado por accidente, recuperado del sha).",
     "2026-07-18T02:00-02:45 (GODSPEED-3): pausa-en-error end-to-end (pausa.py, research.py --resume, worker MAK_JOB_ID+human_gate, interfaz PAUSADO+/api/reanudar+botones, hub colores/contadores; 44 tests) desplegado y verificado VIVO en el box (ciclo pausa/saltar/resume/informe placeholder); servicios reiniciados (aterrizo tambien el auth-delete de PR #71 nunca desplegado); workship Win<->MAK probado: llama3.1:8b en VRAM RTX 4070 + deepseek-coder-v2:16b responden a research_lib/codex_lib order='win' desde el box. PR #72 draft.",
     "2026-07-18T01:00-01:45 (autonomo, loop 3min): plugin_guardian duplicado archivado (canonico en xio/new-plugins); refs stale a checkpoint.sh purgadas (cli.py, PRIMER_DIA, SCRIPTS_INVENTORY, finish_airdrop.sh); INSTALL.txt v0.20 + 5 one-shot cleanup scripts archivados a _archive/legacy_20260718_0110/; fix real de aislamiento de tests (test_run_airdrop_checks popeaba sys.modules['flujo'] sin restaurar); 28 tests nuevos ig/analyze (sonnet, auditados); Makefile help PYTHON vs PYTHON_BIN; falso positivo 'missing mapping.html' cerrado. Commits 8a28651..1a63c53 pushed. Suite verde en cada paso.",
@@ -23,9 +24,9 @@
   ],
   "next": [
     "usuario: autostart ollama serve Windows (no sobrevive reboot)",
-    "usuario: llaves de siempre (noisette ojo humano, PAT Termux, AccessibilityService, data 13 productoras, specs venues)",
-    "sin gate: siguiente plan (PLAN_UPSCALE consumido; candidatas MANIFIESTO libres #1 repo-se-performa, #3 cuatro-agentes, #9 corpus-olvidadizos)",
-    "sin gate: imagenes de obras en catalogo vivo (hoy solo texto+paleta; requiere resolver rutas de imagen cross-repo)"
+    "usuario: llaves de siempre (noisette ojo humano, PAT Termux, AccessibilityService, data 13 productoras, specs venues) -- sin cambio",
+    "sin gate: piezas MANIFIESTO restantes con llave de usuario bloqueada (#2/#3/#11); #7 es manual por orden expresa, no tocar",
+    "sin gate: wifi_intelligence sigue con partes device-only sin cobertura (parsing real de dumpsys/cmd wifi contra hardware real, scheduler en vivo) -- requiere dispositivo Android/Termux real, no CI"
   ],
   "blockers": [
     "ollama Windows no sobrevive reboot (arrancado a mano)"

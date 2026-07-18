@@ -1,6 +1,26 @@
 # LAST HANDOFF -- estado para el proximo agente
 
-Version: 0.55.0 | Fecha: 2026-07-18T07:55 | Identidad: Cauce | sesion: GODSPEED-4 completa -- PRs #72-#77 mergeados + autoportfolio catalogo vivo LIVE.
+Version: 0.55.0 | Fecha: 2026-07-18T08:00+ | Identidad: Cauce | sesion: GODSPEED-4 loop continuo -- PRs #79/#80/#81 + tests wifi_intelligence (pieza #5), MANIFIESTO 6/11.
+
+## Sesion 2026-07-18T08:00+ (GODSPEED-4 loop continuo, director Fable)
+
+PRs de esta tanda del loop (sobre el cierre GODSPEED-4 anterior, #72-#77 ya mergeados):
+#79 (empaquetador de assets de obras para el portfolio); portfolio-auto #4/#5 (seccion
+catalogo vivo + imagenes) VERIFICADO LIVE con curl -- flujo-works.json y 2 imagenes en
+200 en ligereza.github.io/portfolio-auto/proyectos.html, refresh semanal automatico
+lunes; #80 (pieza MANIFIESTO #9 corpus_olvido, 104 capas, Omega11 declarada a tiempo,
+no retroactiva); #81 (pieza MANIFIESTO #1 repo-se-performa: osc_sender en UDP stdlib
+puro sin dependencias nuevas + RUNBOOK + recuento actualizado a 6/11 en MASTER_PLAN.md);
+y esta PR (tests offline para xio/new-plugins/wifi_intelligence/__init__.py, pieza #5,
+que estaba "parcial: plugin sin tests" -- 40 tests nuevos, mismo patron de
+tests/test_showcontrol_token.py: PluginContext stub + FakeController + Flask test
+client, sin dispositivo real).
+
+ESTADO MANIFIESTO: 6/11 piezas hechas (#1, #4, #6, #9, #10, y la que cerro #76/#77).
+#5 (wifi_intelligence) parcial->tests agregados en esta PR, logica pura cubierta,
+partes device-only quedan sin cobertura (documentado en cabecera del test file).
+#7 manual por orden expresa del usuario (no tocar). #2/#3/#11 bloqueadas por llaves
+de usuario (ver PENDIENTES USUARIO abajo, sin cambio esta sesion).
 
 ## Sesion 2026-07-18T07:00-07:55 (GODSPEED-4, director Fable + 4 haikus + 2 sonnets) -- CIERRE
 
