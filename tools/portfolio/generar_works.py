@@ -80,7 +80,7 @@ def procesar_datadrops(datadrops_dir: Path) -> list[dict]:
     if not datadrops_dir.exists():
         return obras
 
-    for item_dir in datadrops_dir.iterdir():
+    for item_dir in sorted(datadrops_dir.iterdir()):
         if not item_dir.is_dir():
             continue
         manifest_path = item_dir / "manifest.json"
@@ -127,7 +127,7 @@ def procesar_flyer_eventos(flyer_dir: Path) -> list[dict]:
     if not flyer_dir.exists():
         return obras
 
-    for item_dir in flyer_dir.iterdir():
+    for item_dir in sorted(flyer_dir.iterdir()):
         if not item_dir.is_dir():
             continue
         manifest_path = item_dir / "manifest.json"
