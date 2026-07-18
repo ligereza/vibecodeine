@@ -22,7 +22,10 @@ Toda la familia `job_*.py`/`job_new.sh`, `privacy_*.py`, `project_*.py`, `piezas
 `piezas_project_summary.py`, `flyer_from_email.py`, `flyer_analyze.py`, `flyer_index*.py/.sh`,
 `flyer_status*.py/.sh`, `flyer_latest.sh`, `flyer_list.sh`, `ig_download.py`, `ig_redownload.py`,
 `rider_new.py`, `rider_presets.py` fue archivada en `_archive/legacy_20260703_1413/` (2026-07-03)
-por estar superada por la CLI Typer. Tabla de equivalencias completa en
+por estar superada por la CLI Typer. Los one-shot spent (`cleanup_safe.sh`,
+`cleanup_moderate.sh`, `cleanup_legacy_aggressive.sh`, `cleanup_repo_hygiene_20260630.py`,
+`cleanup_v0359_windows_paths.py`) fueron archivados en
+`_archive/legacy_20260718_0110/scripts_oneshot/` (2026-07-18): sus targets ya no existen. Tabla de equivalencias completa en
 `docs/CLI.md` ("Migracion desde scripts legacy"). No están en `scripts/`; no las
 uses como referencia de código vivo.
 
@@ -46,9 +49,6 @@ Cuando exista equivalente `flujo ...`, preferir la CLI; estos scripts siguen pre
 
 - `apply_airdrop.sh`, `finish_airdrop.sh`, `validate_airdrop.py`, `run_airdrop_checks.py`
 - `cleanup_demo_artifacts.sh`, `cleanup_ig_temp_folders.sh`
-- `cleanup_safe.sh`, `cleanup_moderate.sh`, `cleanup_legacy_aggressive.sh`
-- `cleanup_repo_hygiene_20260630.py` (dry-run por defecto; `--apply` solo tras airdrops aplicados y checks en verde)
-- `cleanup_v0359_windows_paths.py` (hotfix puntual de checkout Windows, v0.35.9)
 - `flujo_clean_generated.py` (limpia `__pycache__`, `*.pyc` y generados versionados por error)
 - `limpiar_basura.sh` (usado por `make clean`)
 - `soft_cleanup.py` (recorta espacios finales en archivos de texto, no destructivo)
