@@ -11,6 +11,8 @@ isolation) NEVER coexist on the same network. Code-execution services are archit
 ## FACE A — Home / Studio (dev)
 
 **Setting:** A fully private LAN. Owner's machines only. Geographically: the studio.
+The MAK Linux box and the Windows PC are joined by WiFi AND a direct Ethernet
+cable between them -- a two-machine private link, no third party on the wire.
 
 ### Membership
 | Device | Role | Network | Notes |
@@ -27,8 +29,8 @@ isolation) NEVER coexist on the same network. Code-execution services are archit
 
 ### Trust model
 - All devices are owner-controlled machines with no third parties present
-- Network is fully private (owner's home LAN, no venue exposure)
-- codex token is optional by design (no hostile actors on this network)
+- Network is fully private (owner's home LAN, wifi + direct ethernet, no venue exposure)
+- codex and research run with NO token (auth deleted 2026-07-18): no hostile actors on this network, no public route reaches them
 
 ---
 
@@ -77,7 +79,7 @@ This separation **intentionally avoids the risk of code-execution exposure on a 
 At startup (`run_server.sh`), the phone's current IP (or the hotspot subnet, if visible) determines context:
 
 - **Face A indicators:** IP in range `192.168.50.x` OR the phone is connected via USB to a PC with `tcpip 5555` active.
-  - xio server allows internal requests (from MAK) with minimal auth (optional codex token).
+  - xio server allows internal requests (from MAK) on the private LAN; MAK research/codex run open (no token).
   - Watchdogs + Shizuku run to support the studio dev loop.
   
 - **Face B indicators:** Hotspot is ON (checked with `dumpsys wifi` or `ip addr show wlan1`), IP in range `192.168.127.x` OR `192.168.198.x`.

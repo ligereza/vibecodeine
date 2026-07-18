@@ -36,7 +36,7 @@ rate limits. Tolerante a json corrupto.
 
 Revisa el trabajo del otro agente SIN editarlo: watchdog.sh (bug fd
 9>&- aplicado?), test_research_lib.py (corre verde?), worker/interfaz
-(progreso /status funciona? token opcional? jobs.jsonl?). Prueba
+(progreso /status funciona? jobs.jsonl?). Prueba
 kill-revive del watchdog dos veces seguidas (segunda vez DEBE revivir).
 Escribe hallazgos en ~/research/REVISION_CRUZADA.md seccion
 "## VSCode revisa Antigravity". Luego lee la seccion donde el te

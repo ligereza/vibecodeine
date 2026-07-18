@@ -33,7 +33,6 @@ STATE = os.path.join(HOME, "plataforma/.trabajo_state.json")
 LOG = os.path.join(HOME, "plataforma/logs/trabajo.log")
 BACKLOG = os.path.join(HOME, "plataforma/backlog_codex.txt")
 SEMILLAS_F = os.path.join(HOME, "plataforma/semillas_latido.txt")
-CODEX_TOKEN_FILE = os.path.join(HOME, "codex/.token")
 RESEARCH = "http://127.0.0.1:8890/run"
 CODEX = "http://127.0.0.1:8891/run"
 
@@ -67,15 +66,6 @@ def _save(s):
             json.dump(s, f)
     except OSError:
         pass
-
-
-def _codex_token():
-    try:
-        with open(CODEX_TOKEN_FILE, encoding="utf-8") as f:
-            m = re.search(r'CODEX_TOKEN\s*=\s*["\']?([^"\'\s]+)', f.read())
-            return m.group(1) if m else ""
-    except OSError:
-        return ""
 
 
 def _lineas(path, fallback):
@@ -164,12 +154,7 @@ def main():
     depto, payload = tarea
     url = RESEARCH
     if depto == "codex":
-        tok = _codex_token()
-        if not tok:
-            log("%s skip: codex sin token" % ts)
-            _save(st)
-            return
-        url = CODEX + "?t=" + urllib.parse.quote(tok)
+        url = CODEX
     try:
         resp = _post(url, payload)
         st["count"] = st.get("count", 0) + 1

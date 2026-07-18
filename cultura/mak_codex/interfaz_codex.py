@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 """interfaz_codex.py -- web del departamento CODEX (puerto 8891).
 
-AUTH OPCIONAL (xio Face A, LAN privada del duenno): si hay env CODEX_TOKEN
-el acceso va con llave (?t=TOKEN); si NO lo hay, el codex corre abierto,
-igual que research :8890. El Linux MAK solo vive en la red de casa (Face A)
-y nunca sale a los shows (Face B = solo el telefono), asi que codex no queda
-expuesto a la red publica del show. El watchdog exporta el token desde
-~/codex/.token si existe. Re-bloquear = reponer ese archivo.
+SIN AUTH: el codex corre abierto. Vive solo en xio Face A -- la LAN privada
+de casa (MAK Linux + Windows, unidos por wifi y cable ethernet directo) --
+y nunca sale a los shows (Face B = solo el telefono). No hay red publica que
+lo alcance, asi que no hay token ni puerta. Ver xio/FACES.md.
 """
 import html
 import json
@@ -26,7 +24,6 @@ from worker_codex import run_pedido  # noqa: E402
 from research_lib import mint_job_id  # noqa: E402
 
 PORT = int(os.environ.get("CODEX_PORT", "8891"))
-TOKEN = os.environ.get("CODEX_TOKEN", "")
 DIRS = {"piezas": os.path.join(BASE, "piezas"),
         "revisiones": os.path.join(BASE, "revisiones")}
 JOBS_FILE = os.path.join(BASE, "jobs.jsonl")
@@ -272,22 +269,6 @@ def _piezas():
 class H(BaseHTTPRequestHandler):
     server_version = "MAK-Codex/1.0"
 
-    def _auth(self):
-        # xio Face A (home/studio): LAN privada, solo maquinas del duenno
-        # (Linux MAK + Windows). El Linux NUNCA sale a los shows (Face B es
-        # solo el telefono). Sin CODEX_TOKEN en el entorno el codex corre
-        # abierto, igual que research :8890. Re-bloquear = exportar
-        # CODEX_TOKEN otra vez.
-        if not TOKEN:
-            return True
-        qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
-        t = (qs.get("t") or [""])[0]
-        if t == TOKEN or self.headers.get("X-Token") == TOKEN:
-            return True
-        self._send('{"error":"token requerido (?t=...)"}', 401,
-                   "application/json")
-        return False
-
     def _send(self, body, code=200, ctype="text/html; charset=utf-8"):
         data = body.encode("utf-8")
         self.send_response(code)
@@ -298,8 +279,6 @@ class H(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     def do_GET(self):
-        if not self._auth():
-            return
         u = urllib.parse.urlparse(self.path)
         if u.path == "/api/jobs":
             with JOBS_LOCK:
@@ -330,8 +309,6 @@ class H(BaseHTTPRequestHandler):
         return self._send(PAGINA)
 
     def do_POST(self):
-        if not self._auth():
-            return
         if urllib.parse.urlparse(self.path).path == "/run":
             largo = min(int(self.headers.get("Content-Length") or 0), 12000)
             q = urllib.parse.parse_qs(self.rfile.read(largo).decode())
@@ -359,10 +336,6 @@ class Servidor(ThreadingHTTPServer):
 
 
 def main():
-    if not TOKEN:
-        print("[codex] sin CODEX_TOKEN: arranco ABIERTO (LAN privada Face A, "
-              "solo maquinas del duenno). Exporta CODEX_TOKEN para re-bloquear.",
-              file=sys.stderr)
     for d in DIRS.values():
         os.makedirs(d, exist_ok=True)
     _cargar_jobs()
@@ -373,7 +346,7 @@ def main():
 
     signal.signal(signal.SIGTERM, apagar)
     signal.signal(signal.SIGINT, apagar)
-    print("[codex] en http://0.0.0.0:%d (token requerido)" % PORT, flush=True)
+    print("[codex] en http://0.0.0.0:%d (abierto, sin token)" % PORT, flush=True)
     server.serve_forever()
     return 0
 

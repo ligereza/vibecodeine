@@ -12,13 +12,11 @@ API Contracts extracted from:
   - cultura/mak_codex/interfaz_codex.py (codex endpoints)
   - cultura/mak_plataforma/hub.py (health endpoint)
 
-Token handling: env MAK_CODEX_TOKEN or file via --token-file.
-All requests have timeouts (default 10s). No hardcoding, no token leaks in output.
+All requests have timeouts (default 10s).
+Runs on private LAN (192.168.50.2) with no authentication required.
 """
 import argparse
 import json
-import os
-import re
 import sys
 import urllib.error
 import urllib.parse
@@ -66,52 +64,7 @@ class MAKUsageError(MAKClientError):
     pass
 
 
-def _get_token():
-    """
-    Fetch token from env MAK_CODEX_TOKEN or file via CLI arg.
-    Never print token value.
-    Returns: (token, source) or (None, "not_found")
-    """
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("--token-file", type=str, default=None)
-    args, _ = parser.parse_known_args()
-
-    if args.token_file:
-        try:
-            with open(args.token_file, "r") as f:
-                token = _extract_token(f.read())
-            if token:
-                return token, f"file:{args.token_file}"
-        except (OSError, IOError) as e:
-            raise MAKUsageError(f"Could not read token file: {e}")
-
-    token = _extract_token(os.environ.get("MAK_CODEX_TOKEN", ""))
-    if token:
-        return token, "env:MAK_CODEX_TOKEN"
-
-    return None, "not_found"
-
-
-def _extract_token(raw):
-    """
-    Extract the token value from raw file/env content.
-
-    The MAK box stores ~/codex/.token as an env-file line
-    (CODEX_TOKEN="value"), which the server parses by regex --
-    see cultura/mak_plataforma/hub.py:480. Accept that shape as well
-    as a bare token, stripping any KEY= prefix and surrounding quotes.
-    """
-    if not raw:
-        return ""
-    text = raw.strip()
-    m = re.search(r'(?:CODEX_TOKEN|INTERFAZ_TOKEN|TOKEN)\s*=\s*["\']?([^"\'\s]+)',
-                  text)
-    if m:
-        return m.group(1)
-    return text.strip('"\'')
-
-
-def _http_get(path, host=MAK_HOST, port=HUB_PORT, token=None, timeout=DEFAULT_TIMEOUT):
+def _http_get(path, host=MAK_HOST, port=HUB_PORT, timeout=DEFAULT_TIMEOUT):
     """
     Make HTTP GET request. Returns decoded JSON response.
 
@@ -119,7 +72,6 @@ def _http_get(path, host=MAK_HOST, port=HUB_PORT, token=None, timeout=DEFAULT_TI
         path: URL path (e.g., "/api/salud")
         host: Target host (default MAK_HOST)
         port: Target port (default HUB_PORT)
-        token: Optional auth token (query param t=...)
         timeout: Request timeout in seconds
 
     Returns:
@@ -128,14 +80,8 @@ def _http_get(path, host=MAK_HOST, port=HUB_PORT, token=None, timeout=DEFAULT_TI
     Raises:
         MAKNetworkError: network/timeout issues (exit 1)
         MAKUsageError: API/auth errors (exit 2)
-
-    References:
-        - research interfaz.py line 2628-2637 (_check_auth)
-        - codex interfaz_codex.py line 272-279 (_auth)
     """
     url = f"http://{host}:{port}{path}"
-    if token:
-        url += ("&" if "?" in path else "?") + f"t={urllib.parse.quote(token)}"
 
     try:
         req = urllib.request.Request(
@@ -150,7 +96,7 @@ def _http_get(path, host=MAK_HOST, port=HUB_PORT, token=None, timeout=DEFAULT_TI
             return json.loads(data)
     except urllib.error.HTTPError as e:
         if e.code == 401:
-            raise MAKUsageError("Authentication failed (invalid or missing token)")
+            raise MAKNetworkError(f"HTTP {e.code}: Unauthorized (private LAN access required)")
         raise MAKNetworkError(f"HTTP {e.code}: {e.reason}")
     except (urllib.error.URLError, OSError, TimeoutError) as e:
         raise MAKNetworkError(f"Network error: {e}")
@@ -163,7 +109,6 @@ def _http_post(
     data,
     host=MAK_HOST,
     port=HUB_PORT,
-    token=None,
     timeout=DEFAULT_TIMEOUT,
 ):
     """
@@ -174,7 +119,6 @@ def _http_post(
         data: dict of form parameters
         host: Target host (default MAK_HOST)
         port: Target port (default HUB_PORT)
-        token: Optional auth token (query param t=...)
         timeout: Request timeout in seconds
 
     Returns:
@@ -189,8 +133,6 @@ def _http_post(
         - codex interfaz_codex.py line 325-339 (POST /run)
     """
     url = f"http://{host}:{port}{path}"
-    if token:
-        url += ("&" if "?" in path else "?") + f"t={urllib.parse.quote(token)}"
 
     body = urllib.parse.urlencode(data).encode("utf-8")
     try:
@@ -208,7 +150,7 @@ def _http_post(
             return json.loads(resp_data)
     except urllib.error.HTTPError as e:
         if e.code == 401:
-            raise MAKUsageError("Authentication failed (invalid or missing token)")
+            raise MAKNetworkError(f"HTTP {e.code}: Unauthorized (private LAN access required)")
         if e.code == 400:
             raise MAKUsageError(f"Bad request: {e.reason}")
         raise MAKNetworkError(f"HTTP {e.code}: {e.reason}")
@@ -250,14 +192,8 @@ def cmd_research(args):
         --densidad DENSITY: corto/medio/largo (default: medio)
         --n N: iterations (0-10)
         --memoria: use semantic memory
-        --token-file FILE: path to token file
         --timeout SECONDS: request timeout (default: 10)
     """
-    token, token_src = _get_token()
-    if not token and os.environ.get("INTERFAZ_TOKEN"):
-        token = os.environ.get("INTERFAZ_TOKEN")
-        token_src = "env:INTERFAZ_TOKEN (research)"
-
     if not args.tema:
         raise MAKUsageError("--tema is required")
 
@@ -290,7 +226,6 @@ def cmd_research(args):
             data,
             host=MAK_HOST,
             port=RESEARCH_PORT,
-            token=token,
             timeout=args.timeout,
         )
         if result.get("ok"):
@@ -317,13 +252,8 @@ def cmd_codex(args):
         --pedido TEXT: code request (max 2000 chars)
         --modo MODE: generar/revisar/testear/debug (default: generar)
         --densidad DENSITY: corto/medio/largo (default: medio)
-        --token-file FILE: path to token file (required or MAK_CODEX_TOKEN)
         --timeout SECONDS: request timeout (default: 10)
     """
-    token, token_src = _get_token()
-    if not token:
-        raise MAKUsageError("Token required: --token-file or env MAK_CODEX_TOKEN")
-
     if not args.pedido:
         raise MAKUsageError("--pedido is required")
 
@@ -345,7 +275,6 @@ def cmd_codex(args):
             data,
             host=MAK_HOST,
             port=CODEX_PORT,
-            token=token,
             timeout=args.timeout,
         )
         if result.get("ok"):
@@ -373,12 +302,6 @@ def main():
         type=int,
         default=DEFAULT_TIMEOUT,
         help=f"Request timeout in seconds (default {DEFAULT_TIMEOUT})",
-    )
-    parser.add_argument(
-        "--token-file",
-        type=str,
-        default=None,
-        help="Path to token file (for codex)",
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Command")

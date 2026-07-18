@@ -4,8 +4,8 @@ Test suite for tools/mak/delegar.py.
 All tests are mocked (no real network). Cover:
 - salud parse
 - error paths (network fail -> exit 1)
-- token sourcing from env without leaking
-- submit payload shape
+- research/codex payload shape
+- argument validation
 """
 import json
 import os
@@ -162,79 +162,8 @@ class TestMAKDelegar(unittest.TestCase):
         self.assertEqual(data["n"], "10")
 
     @patch("mak.delegar._http_post")
-    def test_codex_requires_token(self, mock_post):
-        """Test codex rejects missing token."""
-        os.environ.pop("MAK_CODEX_TOKEN", None)
-
-        args = MagicMock(
-            pedido="test",
-            modo="generar",
-            densidad="medio",
-            timeout=10,
-        )
-
-        with self.assertRaises(delegar.MAKUsageError) as ctx:
-            delegar.cmd_codex(args)
-
-        self.assertIn("Token", str(ctx.exception))
-        mock_post.assert_not_called()
-
-    @patch("mak.delegar._http_post")
-    def test_codex_token_from_env(self, mock_post):
-        """Test codex reads token from env without leaking it."""
-        os.environ["MAK_CODEX_TOKEN"] = "secret_token_12345"
-        mock_post.return_value = {"ok": True}
-
-        args = MagicMock(
-            pedido="generate hello world",
-            modo="generar",
-            densidad="medio",
-            timeout=10,
-        )
-
-        with patch("sys.stdout", self.stdout):
-            result = delegar.cmd_codex(args)
-
-        self.assertEqual(result, 0)
-        output = self.stdout.getvalue()
-        # Token must not appear in output
-        self.assertNotIn("secret_token_12345", output)
-        self.assertNotIn("MAK_CODEX_TOKEN", output)
-
-    @patch("mak.delegar._http_post")
-    def test_codex_token_from_file(self, mock_post):
-        """Test codex reads token from file."""
-        mock_post.return_value = {"ok": True}
-
-        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as f:
-            f.write("file_token_54321")
-            token_file = f.name
-
-        try:
-            args = MagicMock(
-                pedido="generate hello",
-                modo="generar",
-                densidad="medio",
-                timeout=10,
-            )
-
-            # Mock _get_token to use the file
-            with patch(
-                "mak.delegar._get_token", return_value=("file_token_54321", f"file:{token_file}")
-            ):
-                with patch("sys.stdout", self.stdout):
-                    result = delegar.cmd_codex(args)
-
-            self.assertEqual(result, 0)
-            output = self.stdout.getvalue()
-            self.assertNotIn("file_token_54321", output)
-        finally:
-            os.unlink(token_file)
-
-    @patch("mak.delegar._http_post")
     def test_codex_submit_success(self, mock_post):
         """Test codex job submission."""
-        os.environ["MAK_CODEX_TOKEN"] = "test_token"
         mock_post.return_value = {"ok": True}
 
         args = MagicMock(
@@ -256,8 +185,6 @@ class TestMAKDelegar(unittest.TestCase):
 
     def test_codex_invalid_modo(self):
         """Test codex rejects invalid modo."""
-        os.environ["MAK_CODEX_TOKEN"] = "test_token"
-
         args = MagicMock(
             pedido="test",
             modo="invalid",
@@ -273,7 +200,6 @@ class TestMAKDelegar(unittest.TestCase):
     @patch("mak.delegar._http_post")
     def test_codex_network_error(self, mock_post):
         """Test codex network error (exit 1)."""
-        os.environ["MAK_CODEX_TOKEN"] = "test_token"
         mock_post.side_effect = delegar.MAKNetworkError("Timeout")
 
         args = MagicMock(
@@ -288,16 +214,6 @@ class TestMAKDelegar(unittest.TestCase):
 
         self.assertEqual(result, 1)
         self.assertIn("network", self.stderr.getvalue())
-
-    @patch("urllib.request.urlopen")
-    def test_http_get_auth_failure(self, mock_urlopen):
-        """Test _http_get handles 401 as usage error."""
-        from urllib.error import HTTPError
-
-        mock_urlopen.side_effect = HTTPError("url", 401, "Unauthorized", {}, None)
-
-        with self.assertRaises(delegar.MAKUsageError):
-            delegar._http_get("/api/test", token="bad_token")
 
     @patch("urllib.request.urlopen")
     def test_http_get_network_timeout(self, mock_urlopen):
