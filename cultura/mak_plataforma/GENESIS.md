@@ -38,7 +38,7 @@ del repo**. Aquí no hay commits: hay órganos que corren y piezas que nacen.
 1. **Sin sudo.** Todo el organismo vive en espacio de usuario.
 2. **El teléfono es sagrado.** El internet de MAK entra por el hotspot del
    Xiaomi (gateway wifi). Hacia él solo peticiones GET de lectura; jamás un
-   endpoint que mute red, hotspot o carga.
+   endpoint que mute red, hotspot o carga. (See `xio/FACES.md` for the two-network architecture: this rule applies to FACE A only.)
 3. **Guardia de recursos.** Ningún trabajo pesado arranca si load > 6,
    memoria < 2 GB o disco < 5 GB (`plataforma/guardia.py`).
 4. **Descargas con allowlist.** Solo https hacia dominios conocidos, con
