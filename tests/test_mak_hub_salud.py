@@ -87,3 +87,22 @@ class TestSaludProveedores:
         monkeypatch.setattr(hub, "SALUD_PROVEEDORES", ruta)
         out = hub._salud_proveedores()
         assert out == {"proveedores": [], "desde": None}
+
+
+class TestPaginaMarcoUnico:
+    """PAGINA se reconstruyo como marco fino + iframe a pantalla completa
+    (interfaz PRO unica). Estos asserts son baratos y evitan una regresion
+    de template que reintroduzca el canvas de nodos viejo."""
+
+    def test_contiene_iframes_de_ambos_deptos(self):
+        assert 'id="ifr-research"' in hub.PAGINA
+        assert 'id="ifr-codex"' in hub.PAGINA
+
+    def test_contiene_tabs_research_codex(self):
+        assert 'data-dep="research"' in hub.PAGINA
+        assert 'data-dep="codex"' in hub.PAGINA
+
+    def test_no_contiene_canvas_organismo_viejo(self):
+        assert "crearEstatico" not in hub.PAGINA
+        assert 'id="circuitos"' not in hub.PAGINA
+        assert "nodo-mic" not in hub.PAGINA
