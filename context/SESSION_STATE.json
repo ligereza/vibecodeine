@@ -1,8 +1,8 @@
 {
   "version": "0.55.0",
-  "date": "2026-07-18T12:30:00Z",
+  "date": "2026-07-18T13:00:00Z",
   "assistant_name": "Cauce",
-  "repo_main": "main en 0.55.0, PRs #72-#85 MERGEADOS 2026-07-18 (CI matrix verde c/u). Branch protection ACTIVA (require CI ubuntu+windows, strict). 0 PRs abiertos.",
+  "repo_main": "main en 0.55.0, PRs #72-#87 MERGEADOS o en curso 2026-07-18 (CI matrix verde c/u). Branch protection ACTIVA (require CI ubuntu+windows, strict). PR #87 merge en curso.",
   "current_focus": "MAK dual-dept fases 1-3 cerradas: WIN compartido en research+codex probado con metadata real, codex auto-reviso su propio artefacto, 4 reparaciones vivas en el box + persistidas (systemd) + espejadas al repo con 3 fixes de la demo (PR #85). MANIFIESTO 6/11. Resto = llaves usuario.",
   "done": [
     "2026-07-18T12:00 (GODSPEED-5, director + 5 lectores + 2 builders sonnet): (1) reconciliacion systemd codex en el box: el unit tenia EnvironmentFile=%h/codex/.token muerto (auth-delete PR #71) y estaba disabled -- nunca podia arrancar; reparado vivo (linea fuera, WorkingDirectory=%h/codex, enable --now), verificado active + MainPID + :8891 200 + CODER_CHAIN en env; espejo cultura/mak_codex/mak-codex.service; trampa nueva: watchdog relanza manual en segundos, reconciliar = kill PID + start inmediato. (2) salud de proveedores en research (backlog Groq 429): _salud_cargar/_salud_registrar (~/research/salud_proveedores.json, ventana 6h) + orden_por_salud pura (degrada >=3 intentos y score<0.5) cableado en LLM.call, fallback_util vendorizado a mak_research con test ratchet de no-drift, 16 tests. (3) integridad panel /api/eventos: parse por linea (1 linea corrupta ya no vacia la lista), _job_ids_conocidos (jobs.jsonl + /api/jobs vivo), _marcar_sin_job aditivo + badge [sin job] en el hub -- anomalia mak-demo-* ahora visible marcada; 15 tests. Suite completa verde en worktree.",

@@ -2,6 +2,10 @@
 
 Version: 0.55.0 | Fecha: 2026-07-18T12:30 | Identidad: Cauce | sesion: GODSPEED-5 -- salud de proveedores + integridad panel + reconciliacion systemd codex.
 
+## CIERRE DEL DIA 2026-07-18 (resumen para el proximo agente)
+
+PRs #72-#87 mergeados a main (v0.55.0). MANIFIESTO 6/11 piezas. MAK dual-dept research+codex operativo con WIN como proveedor (research+codex comparten stack; fallback nube -> WIN -> ollama-local probado). Demo defects cerrados en PR #85: _paso_con_fallback (proveedor 429 no mata el job), /run modo resolution (no normalizacion silenciosa), cultura marco neutro para temas sin sustancia. WiFi scan parser hardware-verified en Xiaomi (PR #83, columnar + legacy fallback). Autoportfolio vivo (portfolio-auto PR #4/#5, refresh semanal lunes). GODSPEED-5: salud_proveedores demota fallidos 6h, integridad panel marca sin_job, systemd mak-codex reparado (enabled+EnvironmentFile opcional+WorkingDirectory fijo). Pendientes usuario: PAT Termux, AccessibilityService, datos productoras+venues. Pendientes sin gate: mak-hub/mak-xio units disabled (reboot risk); divergencia grafo.py vs cadena.py fallback (documentada PR #85 notas).
+
 ## Sesion 2026-07-18T12:00 (GODSPEED-5, director + 5 lectores sonnet + 2 builders sonnet)
 
 Backlog sin-gate del handoff anterior, 3 frentes cerrados:
