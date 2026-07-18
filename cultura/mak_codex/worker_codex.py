@@ -38,9 +38,13 @@ def _clear_status():
         pass
 
 
-def run_pedido(modo, texto, densidad=None, ntfy=True, timeout=900, job_id=None):
+def run_pedido(modo, texto, densidad=None, ntfy=True, timeout=900, job_id=None,
+               cadena=None):
     """Devuelve {ok, path, tail}. Bloquea hasta tomar el lock propio. job_id:
-    para ~/codex/eventos.jsonl; si no llega, se acuna uno (uso standalone)."""
+    para ~/codex/eventos.jsonl; si no llega, se acuna uno (uso standalone).
+    cadena: CSV opcional de claves de coder (ver codex_lib._CODER_CHAIN_MAP)
+    que sobreescribe CODER_CHAIN solo para el subproceso de este job -- no
+    toca el proceso del server ni otros jobs concurrentes."""
     job_id = job_id or mint_job_id()
     script = SCRIPTS.get(modo)
     if not script:
@@ -57,11 +61,17 @@ def run_pedido(modo, texto, densidad=None, ntfy=True, timeout=900, job_id=None):
     if ntfy:
         cmd.append("--ntfy")
 
+    env = None
+    if cadena:
+        env = dict(os.environ)
+        env["CODER_CHAIN"] = cadena
+
     with open(LOCK, "w") as lk:
         fcntl.flock(lk, fcntl.LOCK_EX)
         try:
             p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                 stderr=subprocess.STDOUT, text=True, cwd=BASE)
+                                 stderr=subprocess.STDOUT, text=True, cwd=BASE,
+                                 env=env)
             _set_status("Iniciando...", p.pid)
             out_lines = []
             path = ""
