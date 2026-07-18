@@ -1,6 +1,6 @@
 {
   "version": "0.55.0",
-  "date": "2026-07-18T13:00:00Z",
+  "date": "2026-07-18T13:30:00Z",
   "assistant_name": "Cauce",
   "repo_main": "main en 0.55.0, PRs #72-#87 MERGEADOS o en curso 2026-07-18 (CI matrix verde c/u). Branch protection ACTIVA (require CI ubuntu+windows, strict). PR #87 merge en curso.",
   "current_focus": "MAK dual-dept fases 1-3 cerradas: WIN compartido en research+codex probado con metadata real, codex auto-reviso su propio artefacto, 4 reparaciones vivas en el box + persistidas (systemd) + espejadas al repo con 3 fixes de la demo (PR #85). MANIFIESTO 6/11. Resto = llaves usuario.",
@@ -30,8 +30,7 @@
     "usuario: data 13 productoras + specs venues OpenKlub/Paralelo89",
     "usuario: pieza #1 en vivo con Resolume (tools/vj_set/RUNBOOK.md)",
     "MAK menor: workflow.json del box tiene nodo win priority 0 (a proposito); revert en /tmp/workflow_phase3.bak si alguna vez",
-    "sin gate: units mak-hub y mak-xio del box estan disabled (misma fragilidad de reboot que tenia mak-codex, ya reparado+enabled) -- revisar/habilitar cuando convenga",
-    "sin gate: divergencia fallback grafo.py (resto completo de llm.order) vs cadena.py (solo proveedores posteriores) -- posible unificacion, documentada en LAST_HANDOFF",
+    "sin gate: (nada pendiente de la tanda GODSPEED-5b: units hub/xio enabled, grafo unificado+desplegado, rama mak-research-cultural auditada y borrada)",
     "sin gate: piezas MANIFIESTO con llave bloqueada (#2/#3/#11); #7 manual por orden expresa, no tocar"
   ],
   "blockers": [
