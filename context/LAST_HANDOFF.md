@@ -1,6 +1,13 @@
 # LAST HANDOFF -- estado para el proximo agente
 
-Version: 0.52.0 | Fecha: 2026-07-17T23:00 | Identidad: Cauce | sesion autonoma: cleanup + audits.
+Version: 0.52.0 | Fecha: 2026-07-18T01:05 | Identidad: Cauce | sesion autonoma: cleanup loop 3min.
+
+## Sesion 2026-07-18T01:00 (autonoma, loop 3min activo)
+- Commit 8a28651 (pushed main): plugin_guardian duplicado xio/seguridad -> _archive/legacy_20260717_2015
+  (canonico queda xio/new-plugins, path que despliega run_server.sh); RUNBOOK.md flag seccion 5 resuelto
+- Borrado projects/cultura/doublecup_v2_3d.svg suelto (0 bytes; copia real tracked en doublecup/)
+- Suite: compileall OK, pytest verde (1 skip), flujo verify OK 0.52.0
+- Loop cron 3min activo (job sesion): sigue pendientes autonomos
 
 ## Sesion 2026-07-17T22:30-23:00 (autonoma, cierre)
 - Cleanup: PR #48 stale refs (updated MASTER_PLAN.md, PLAN_SIGUIENTE_AGENTE.md), 9 cultura/ leftovers moved out, docs/DIRECTOR_PLAN.md archived, branch/file trash cleaned
