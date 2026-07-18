@@ -9,8 +9,7 @@ Este inventario evita que agentes confundan wrappers legacy con el núcleo real.
 | Script | Uso |
 |---|---|
 | `scripts/apply_airdrop.sh` | Copia `_airdrop/` al repo y crea backup. No hace tests. |
-| `scripts/checkpoint.sh` | Commit + push con checkpoint. Solo usar después de pruebas OK. |
-| `scripts/finish_airdrop.sh` | Muestra `git status` + recuerda el comando de checkpoint recomendado al cerrar un airdrop manual. |
+| `scripts/finish_airdrop.sh` | Muestra `git status` al cerrar un airdrop manual (menciona checkpoint.sh, ya inexistente). |
 | `scripts/validate_airdrop.py` | Valida `_airdrop/` antes de aplicar (ver `docs/AGENT_AIRDROP_PROTOCOL.md`). |
 | `scripts/run_airdrop_checks.py` | Flujo seguro: valida, aplica, `pip install`, compileall, pytest, health, version+changelog, hub smoke, checkpoint. |
 | `scripts/cleanup_demo_artifacts.sh` | Limpieza controlada de demos/tests históricos. |
@@ -45,7 +44,7 @@ Cuando exista equivalente `flujo ...`, preferir la CLI; estos scripts siguen pre
 
 ### Airdrop / mantenimiento de repo
 
-- `apply_airdrop.sh`, `checkpoint.sh`, `finish_airdrop.sh`, `validate_airdrop.py`, `run_airdrop_checks.py`
+- `apply_airdrop.sh`, `finish_airdrop.sh`, `validate_airdrop.py`, `run_airdrop_checks.py`
 - `cleanup_demo_artifacts.sh`, `cleanup_ig_temp_folders.sh`
 - `cleanup_safe.sh`, `cleanup_moderate.sh`, `cleanup_legacy_aggressive.sh`
 - `cleanup_repo_hygiene_20260630.py` (dry-run por defecto; `--apply` solo tras airdrops aplicados y checks en verde)
