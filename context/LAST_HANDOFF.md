@@ -3,6 +3,21 @@
 Version: 0.56.1 | Fecha: 2026-07-20 (noche) | Identidad: Cauce | sesion:
 rescate de sesion huerfana (capataz autonomo MAK) + cierre.
 
+## LOOP CERRADO (2026-07-20 noche) -- GitHub ES el canal de mando
+Como una señal de la web llega a las maquinas, cableado y verificado:
+1. Agente gratis (Arena, o Claude via issues con `claude.yml`) produce un
+   cambio -> release `airdrop-*` (`airdrop_gate.yml`) o PR directo.
+2. CI + branch protection validan -> merge a main. (gate = los ojos)
+3. **MAK auto-sincroniza main cada 10min** (cron NUEVO `MAK-REPO-SYNC`:
+   `git -C ~/flujo fetch + reset --hard origin/main`) -> el codigo mergeado
+   aterriza solo en la caja. ESTE era el cabo suelto, ahora cerrado.
+4. El organismo MAK (cron: trabajo/capataz/agente_real/entregar/revisor)
+   corre el codigo nuevo en su proximo tick.
+5. WIN NO recibe señal de repo -- es puro endpoint de inferencia Ollama
+   (192.168.50.1:11434) que MAK llama por HTTP. No necesita clon ni pull.
+Resultado: mergear a main = darle una orden a MAK, sin PC, sin cuenta
+Claude. GitHub es el medio de comunicacion, tal como se diseño.
+
 ## Sesion 2026-07-20 noche -- rescate capataz + autonomia MAK
 
 Una sesion previa ("Godspeed tokens deletion issue", `e7893c70`) quedo
