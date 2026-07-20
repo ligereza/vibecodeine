@@ -71,10 +71,14 @@ LOCAL gratis para que corra 24/7 sin depender de free-tier de nube.
    (`ssh mak@192.168.50.2 "tail ~/plataforma/logs/capataz.log"`).
 
 ### Si el cron/automatizacion NO corre
-Prompt inicial en `~/plataforma/PROMPT_INICIAL_QWEN.md` (MAK) -- pegaselo
-a mano a cualquier modelo local (qwen2.5:7b u otro) para que lea
-CAPATAZ.md + capataz.py + este handoff + la bitacora, y opere el menu de
-acciones el mismo, sin necesitar el cron.
+`~/plataforma/SI_EL_CRON_NO_CORRE.md` (MAK): un solo comando --
+`ssh mak@192.168.50.2 "cd ~/plataforma && python3 capataz.py"` -- el
+script YA lee CAPATAZ.md, arma el prompt y llama al modelo el mismo (no
+existe forma de "pasarle un archivo a qwen": Ollama es una API de
+inferencia sin manos, quien lee archivos es capataz.py, que corre en
+MAK). OJO REAL: `capataz.py` linea 169 usa `LLM("cerebras,groq,azure")`
+-- SOLO nube, el proveedor local 'win' (qwen2.5:7b/llama3.1 en la RTX
+4070) todavia no esta en esa cadena, pendiente de agregar como fallback.
 
 ### Verificacion de esta sesion
 No se toco codigo de `src/flujo` -- solo docs/scripts en worktrees +
