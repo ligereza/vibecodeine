@@ -189,7 +189,7 @@ def pedir_decision(m):
         "estos datos, decidi en JSON (solo el JSON, sin texto extra): "
         '{"estado_general": "...", "riesgo_principal": "...", '
         '"proveedor_a_vigilar": "...", "prioridad_manana": "...", '
-        '"accion_concreta": "..."}. Se honesto, sin maquillaje.'
+        '"accion_concreta": "..."}. accion_concreta DEBE ser algo que MAK ejecute con sus propias herramientas (cron, backlog_codex, cadena de proveedores, ajustes_junta.json); NADA de convocar humanos, reuniones, tickets a terceros ni ETAs inventadas -- solo acciones de maquina reales. Se honesto, sin maquillaje.'
     )
     user = json.dumps(m, ensure_ascii=False, indent=2)
     try:
