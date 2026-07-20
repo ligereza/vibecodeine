@@ -164,6 +164,9 @@ airdrop_*_apply_log.txt
 # Playwright MCP (snapshots temporales de sesiones de browsing)
 .playwright-mcp/
 
+# Output suelto de pytest redirigido a archivo (nunca al repo)
+_pytest_out*.txt
+
 # Node / frontend
 node_modules/
 .npm/
