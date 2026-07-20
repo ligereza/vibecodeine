@@ -161,6 +161,9 @@ logo3d*/
 _logs/
 airdrop_*_apply_log.txt
 
+# Playwright MCP (snapshots temporales de sesiones de browsing)
+.playwright-mcp/
+
 # Node / frontend
 node_modules/
 .npm/
@@ -180,4 +183,7 @@ tools/sala3d/.cache/
 backup_before_merge_*/
 backup_manifiestos_*/
 *.original.md
+
+# Google Drive sync (Windows: cliente oficial; MAK: rclone mount, via distinta)
+drive/
 xio/new-plugins/hub/hub.html

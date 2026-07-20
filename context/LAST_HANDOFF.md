@@ -1,5 +1,134 @@
 # LAST HANDOFF -- estado para el proximo agente
 
+Version: 0.56.0 | Fecha: 2026-07-20 | Identidad: Cauce | sesion: incidente
+auth + puente issue-render Windows + MAK (Blender/OneDrive/permisos).
+
+## Sesion 2026-07-20 (Sonnet 5, sesion larga multi-tema)
+
+### 1. Incidente de auth (Claude CLI, no del repo)
+Otro agente, pedido "borra tokens MAK", borro por error la entrada de Claude
+CLI en Windows Credential Manager (scope mal interpretado). Recuperado via
+npm reinstall (claude.oldXXX.exe = normal, Windows renombra exe corriendo,
+ya limpio) + /login que escribio fallback en ~/.claude/.credentials.json.
+Verificado con llamada haiku real. `~/.git` accidental (repo vacio en el
+HOME de Windows, de un setup viejo) borrado -- causaba el error real de
+`--teleport` (buscaba sesiones en el repo equivocado). Detalle: memoria
+reference_claude_cli_auth_topology.
+
+### 2. Auditoria de seguridad (Windows + MAK) -- limpia
+Windows: todos los procesos no-sistema firmados por editores conocidos, red
+sin conexiones raras, unico scheduled task dudoso (SoftLandingCreativeManagementTask)
+resulto ser telemetria Adobe con CLSID ni siquiera registrado (roto, inerte).
+32 procesos huerfanos (bg-pty-host de sesiones CLI viejas) cerrados -> 14.
+MAK: cero tokens en codex/research/hub/watchdog/trabajo.py (verificado en
+vivo, no solo git); el drift de 3f40b09 (trabajo.py exigia ~/codex/.token ya
+borrado) YA estaba desplegado y confirmado limpio. nc en :9876 = clip-bridge-recv
+propio (no backdoor). Puerto 8080 = docker open-webui. Cron/systemd = solo
+servicios MAK-ORGANISMO conocidos.
+
+### 3. Mouse sharing (Barrier) revivido
+barrier-server.service en MAK tenia DISPLAY=:1 hardcodeado pero el X real
+corre en :0 desde el ultimo reboot -- rota desde entonces, coincidencia de
+timing con la sesion, no causado por el usuario ni por mi. Fix: 1 linea en
+el unit file + restart. Verificado ESTAB en el puerto 24800.
+
+### 4. instaloader confirmado muerto -- removido
+IG exige login incluso anonimo (confirmado por el usuario en sesion previa
+de independencia del Droplet Photoshop). src/flujo/eventos/flyer_auto.py:
+removida `_download_instagram` (funcion muerta), ahora usa directo
+`_download_via_mirror` (imginn.com, ya probado vivo). CLAUDE.md corregido
+(la regla vieja decia "usar instaloader"). Tests actualizados. PENDIENTE
+(flaggeado, no hecho): src/flujo/ig/download.py (usado por flyer-import CLI
+y flyer/import_email.py, boton "Descargar post" del editor web) tiene el
+MISMO bug sin el fallback de mirror -- siempre devuelve manual_required hoy.
+
+### 5. Puente issue-render Windows (tools/bridge_issue_render.py) -- NUEVO, probado en vivo
+Gmail->issue ya lo tiene el usuario (fuera del repo). Label real de la
+intake es `instagram` ("Contains Instagram link"), NO `action/descargar-ig`
+(ese solo existia en un test viejo). Script: ve issues abiertos con esa
+label, saca el link IG del body, corre `flujo eventos flyer-auto --render-blender
+--yes --blender-exe <ruta real>` (Blender NO esta en PATH, hay que darla
+completa: `C:\Program Files\Blender Foundation\Blender 4.5\blender.exe`),
+copia el render a `drive/` (Google Drive real-time, ya gitignored), comenta
++cierra el issue. Probado en vivo 2 veces:
+- issue #14: fallo (bug de encoding, ver abajo), quedo abierto (no se
+  cerro mal), state guardado en _logs/bridge_issue_render_state.json.
+- issue #93: exito completo end-to-end. Render GPU real (OptiX, RTX 4070),
+  productora matcheada (Sundeck), copiado a drive/, comentado y cerrado.
+  CAUSA RAIZ de por que #93 se habia cerrado mal el 07-18: el script viejo
+  (deleted, solo quedaba el .pyc huerfano, ya limpiado) corria flyer-auto
+  SIN --render-blender y trataba el reporte vacio como "listo".
+2 bugs de encoding en el wrapper arreglados (decode utf-8 de la salida de
+Blender/Rich, y print a consola con emojis de BlenderKit -- cp1252 default
+de Windows no los soporta, reconfigure stdout/stderr).
+
+### 6. Arquitectura recursos compartidos WIN<->MAK -- INVESTIGADA, NO implementada
+Usuario pidio: acceso mio completo a MAK, MAK sin acceso saliente a Windows
+salvo pedir recursos GPU, patron "como el mouse sharing" (server/cliente).
+Hallazgos:
+- YA EXISTE (commit 6a2b147, #48): proveedor 'win' en research_lib.py/
+  codex_lib.py de MAK -- llama a Ollama en Windows (192.168.50.1:11434,
+  llama3.1:8b) via HTTP. PERO es MAK saliendo hacia Windows, rompe lo
+  unidireccional que pide el usuario ahora.
+- Solucion propuesta (NO implementada): SSH reverse tunnel iniciado por
+  Windows (`ssh -R`) -- Windows abre el canal, MAK solo ve un puerto local,
+  nunca sale. Reemplazaria el proveedor 'win' actual.
+- Para recursos GPU no-LLM (ej. Blender si la GTX1650 de MAK no alcanza):
+  bridge por archivos via drive/ (mismo patron que tools/blender/bridge_blender.py,
+  MYRA/Unreal) -- cero conexion de red entre las maquinas.
+- llama.cpp RPC (dividir UN modelo entre 2 GPUs) investigado y DESCARTADO:
+  solo ayuda a correr modelos mas grandes de lo que entra en una GPU, NO
+  acelera modelos que ya entran (agrega latencia de red entre capas).
+- Decision del usuario: no complicar mas por ahora -- research/codex usan
+  Ollama-WIN cuando haga falta, Blender renderiza directo en MAK sin tocar
+  Windows para nada.
+
+### 7. MAK provisto: Blender + OneDrive + permisos
+- sudoers NOPASSWD acotado por el usuario mismo (/etc/sudoers.d/claude-bridge,
+  solo apt/apt-get/systemctl/onedrive) -- NUNCA se me dio ni pedi la password.
+- Blender 4.5.3 LTS instalado (tarball portable en ~/blender/, sin sudo),
+  verificado corriendo, launcher visible en Escritorio + buscable en apps.
+- OneDrive: el cliente oficial (`onedrive` via apt) genero un phishing
+  warning en el navegador (Brave, no Firefox como asumi al principio) al
+  autenticar -- INVESTIGADO: client_id verificado hardcodeado en el binario
+  oficial de Debian (no inyectado), DNS de login.microsoftonline.com resuelve
+  a infraestructura real de Microsoft (aadg.trafficmanager.net), /etc/hosts
+  limpio. Muy probable falso positivo por heuristica de la URL OAuth larga,
+  pero el usuario decidio cambiar la password de esa cuenta igual (correcto,
+  ante la duda). PIVOT a `rclone` (ya usado para gdrive:) en vez del cliente
+  oficial -- mismo resultado, menos friccion. Remoto `onedrive` configurado
+  (cuenta educativa UC, uccl0-my.sharepoint.com), montado en ~/OneDrive/ via
+  systemd (onedrive-rclone.service, enabled+active), verificado con archivos
+  reales (MAK/, PRESERVER/).
+- GitHub: cuenta `miskirabit` (gh CLI ya autenticado en MAK, DISTINTA de la
+  cuenta personal `ligereza` del usuario -- deliberado, cuenta estudiantil)
+  recibio invitacion Write (no Admin) sobre ligereza/vibecodeine, ACEPTADA
+  desde MAK mismo. Verificado: push:true, admin:false.
+- Panel de estado visible creado: ~/Escritorio/00_ESTADO_CLAUDE.md en MAK
+  (el usuario no podia ver el trabajo por SSH headless) -- se actualiza cada
+  vez que se hace algo ahi, sin que el usuario tenga que preguntar o buscar.
+
+### PENDIENTE para el proximo agente/sesion
+1. Escribir el bridge issue->render EN MAK (paralelo al de Windows, ya
+   probado): mismo flujo pero 100% autonomo -- gh como miskirabit, download
+   via mirror (mismo codigo Python, portable), render con Blender local +
+   GPU de MAK, output al rclone gdrive: existente (Drive de Google = destino
+   final acordado, ahi maneja los correos de la directiva). Trigger: cron
+   (patron nativo de MAK, no un loop -- el usuario explicito no quiere loop).
+2. Confirmar que el usuario efectivamente subio RD + flujo a OneDrive desde
+   Windows y que llega sincronizado a ~/OneDrive/ en MAK (assets: RD.blend,
+   FRAME2.png, historia.psd, data de productoras).
+3. Implementar (si se decide seguir) el SSH reverse tunnel para el proveedor
+   Ollama-WIN unidireccional -- disenado, no construido.
+4. src/flujo/ig/download.py -- mismo fix de instaloader que flyer_auto.py,
+   sin fallback de mirror. Spawneada como task sugerida (task_c2950255).
+5. .gitignore: agregado drive/ y .playwright-mcp/. __pycache__ limpiado
+   local (ya estaba gitignored, no afectaba commits).
+
+### Verificacion de cierre
+py -m compileall src/flujo: OK. py -m pytest tests/ -q: 100% verde (0
+fallos). py -m flujo verify: OK (hub smoke OK). Bump 0.55.0 -> 0.56.0.
+
 CIERRE VISUAL 2026-07-18T14:00 (ultima tanda Fable, 1 sonnet ejecuta): widget
 "salud proveedores" en el hub (GET /api/salud lee salud_proveedores.json,
 barras por score, degradados en rojo, poll 15s solo con panel research

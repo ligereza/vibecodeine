@@ -73,20 +73,6 @@ def _first_downloaded_image(temp_dir: Path) -> Path:
     return Path(sorted(candidates)[0]).resolve()
 
 
-def _download_instagram(shortcode: str, temp_dir: Path) -> Path:
-    import instaloader
-
-    loader = instaloader.Instaloader(
-        download_video_thumbnails=False,
-        download_comments=False,
-        save_metadata=False,
-        compress_json=False,
-    )
-    post = instaloader.Post.from_shortcode(loader.context, shortcode)
-    loader.download_post(post, target=str(temp_dir))
-    return _first_downloaded_image(temp_dir)
-
-
 _MIRROR_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
               "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
 
@@ -348,11 +334,9 @@ def run_eventos_flyer_auto(
             shutil.rmtree(temp_dir, ignore_errors=True)
         temp_dir.mkdir(parents=True, exist_ok=True)
 
-        try:
-            downloaded = _download_instagram(shortcode, temp_dir)
-        except Exception:
-            # IG bloquea instaloader anonimo; intentar mirror publico
-            downloaded = _download_via_mirror(shortcode, temp_dir)
+        # instaloader confirmado no funcional (IG exige login incluso anonimo,
+        # sesion 2026-07-1x); mirror publico es el unico camino que funciona.
+        downloaded = _download_via_mirror(shortcode, temp_dir)
 
         if input_img.exists():
             input_img.unlink()
