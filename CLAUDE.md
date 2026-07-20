@@ -185,7 +185,7 @@ LIMITES: descriptivo si; nada generativo de sintesis; psicosis NUNCA perfila per
 py -m flujo eventos flyer-auto "https://www.instagram.com/p/XXXX/"
 py -m flujo resolume automatizar jobs/<job_id>
 ```
-Instagram: usar `instaloader`. NO `yt-dlp`.
+Instagram: instaloader NO funciona mas (IG exige login incluso anonimo, confirmado 2026-07-1x). Descarga real = mirror publico (`_download_via_mirror` en `flyer_auto.py`, scrapea imginn.com). NO `yt-dlp`.
 
 **Desktop (Gemini->Claude flotante):** `desktop/` (Tkinter puro, no toca `src/flujo/` ni `web/src/`). PARKED (hereda Gemini). Detalle y config: `desktop/` README + `desktop/config.json` gitignored (NUNCA commitear, clave en texto plano).
 

@@ -22,7 +22,7 @@ def test_run_eventos_flyer_auto_copies_input_and_palette(monkeypatch, tmp_path: 
         Image.new("RGB", (20, 20), "purple").save(img)
         return img
 
-    monkeypatch.setattr("flujo.eventos.flyer_auto._download_instagram", fake_download)
+    monkeypatch.setattr("flujo.eventos.flyer_auto._download_via_mirror", fake_download)
     result = run_eventos_flyer_auto("https://www.instagram.com/p/ABC123/", base_dir=tmp_path)
 
     assert result.ok is True
@@ -46,7 +46,7 @@ def test_run_eventos_flyer_auto_blender_render_mock(monkeypatch, tmp_path: Path)
         output_path.write_bytes(b"render")
         return output_path
 
-    monkeypatch.setattr("flujo.eventos.flyer_auto._download_instagram", fake_download)
+    monkeypatch.setattr("flujo.eventos.flyer_auto._download_via_mirror", fake_download)
     monkeypatch.setattr("flujo.eventos.flyer_auto._render_blender_frame", fake_render)
     (tmp_path / "cartelera.blend").write_bytes(b"blend")
 

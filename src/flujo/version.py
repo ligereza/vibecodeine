@@ -1,8 +1,8 @@
 """Versión y changelog de flujo."""
 
-__version__ = "0.55.0"
+__version__ = "0.56.0"
 VERSION = __version__
-__version_info__ = (0, 55, 0)
+__version_info__ = (0, 56, 0)
 
 
 def get_version():
@@ -11,6 +11,34 @@ def get_version():
 
 def get_changelog():
     return {
+        "0.56.0": {
+            "titulo": "Puente issue->render Windows probado en vivo + MAK: OneDrive/Blender/permisos",
+            "fecha": "2026-07-20",
+            "highlights": [
+                "instaloader confirmado no-funcional (IG exige login incluso anonimo); "
+                "removido de flyer_auto.py, unico camino ahora es el mirror publico "
+                "(_download_via_mirror, imginn.com), ya verificado vivo",
+                "tools/bridge_issue_render.py nuevo: issue GitHub (label 'instagram', "
+                "real del intake Gmail) -> flyer-auto --render-blender --yes -> copia "
+                "a drive/ (sync real-time) -> comenta+cierra issue. Probado en vivo "
+                "contra issues #14 y #93 reales, render GPU OptiX confirmado",
+                "causa raiz de #93 (cerrado sin renderizar el 07-18): script viejo "
+                "corria flyer-auto sin --render-blender y trataba el reporte vacio "
+                "como 'listo'; version nueva fuerza el render siempre",
+                "MAK: seguridad Face A verificada limpia (codex/research/hub/watchdog/"
+                "trabajo.py sin tokens, drift de 3f40b09 ya desplegado y confirmado); "
+                "Blender 4.5.3 LTS instalado (portable, sin sudo) + launcher visible; "
+                "OneDrive via rclone (cuenta educativa UC, cliente oficial descartado) "
+                "montado en ~/OneDrive con systemd; sudoers NOPASSWD acotado a "
+                "apt/systemctl/onedrive; miskirabit (cuenta GH separada de MAK) con "
+                "permiso Write scoped sobre el repo; panel visible "
+                "~/Escritorio/00_ESTADO_CLAUDE.md para trabajo por SSH",
+                "arquitectura de recursos compartidos WIN<->MAK investigada (no "
+                "implementada aun): SSH reverse tunnel para Ollama/LLM (WIN inicia, "
+                "unidireccional), bridge por archivos via drive/ para GPU no-LLM "
+                "(Blender), llama.cpp RPC descartado por latencia en modelos chicos",
+            ],
+        },
         "0.55.0": {
             "titulo": "MAK pausa-en-error end-to-end + workship Win<->MAK probado",
             "fecha": "2026-07-18",
