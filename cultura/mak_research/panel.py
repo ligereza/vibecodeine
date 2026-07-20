@@ -17,7 +17,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 from research_lib import (LLM, correlacionar, escala_tok, load_env, marco,
-                          ntfy_publish, slug, stamp, tavily_search)
+                          ntfy_publish, slug, stamp, tavily_search, web_search)
 
 OUT_DIR = os.path.expanduser("~/research/paneles")
 
@@ -70,7 +70,7 @@ def debatir(tema, replicas=2, densidad="medio"):
     print("STATUS: Buscando contextos en paralelo (4 angulos)...", flush=True)
     with ThreadPoolExecutor(max_workers=4) as ex:
         busq = list(ex.map(
-            lambda p: tavily_search(p["query"].format(tema=tema),
+            lambda p: web_search(p["query"].format(tema=tema),
                                     errors=llm.errors), PANEL))
     contextos = {p["angulo"]: _contexto(b) for p, b in zip(PANEL, busq)}
     fuentes = list(dict.fromkeys(
