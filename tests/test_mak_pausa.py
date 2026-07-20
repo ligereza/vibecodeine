@@ -189,7 +189,7 @@ class TestResearchResume:
             "ts": 0,
         }
         monkeypatch.setattr(research, "LLM", FinalizarLLM)
-        monkeypatch.setattr(research, "tavily_search",
+        monkeypatch.setattr(research, "web_search",
                             lambda *a, **k: {"results": [], "answer": None})
 
         resultado = research.investigar("tema-x", iteraciones=3, reanudar=ck)
@@ -202,7 +202,7 @@ class TestResearchResume:
     def test_pausa_en_fase_fuentes_por_runtimeerror(self, tmp_path, monkeypatch, capsys):
         monkeypatch.setattr(pausa, "DIR_CHECKPOINTS", str(tmp_path))
         monkeypatch.setattr(research, "LLM", RompeLLM)
-        monkeypatch.setattr(research, "tavily_search", lambda *a, **k: {
+        monkeypatch.setattr(research, "web_search", lambda *a, **k: {
             "results": [{"url": "http://x.test", "title": "t",
                         "content": "contenido corto"}],
             "answer": None,
