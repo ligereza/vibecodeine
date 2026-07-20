@@ -1,7 +1,78 @@
 ﻿# LAST HANDOFF -- estado para el proximo agente
 
-Version: 0.56.0 | Fecha: 2026-07-20 | Identidad: Cauce | sesion: incidente
-auth + puente issue-render Windows + MAK (Blender/OneDrive/permisos).
+Version: 0.56.1 | Fecha: 2026-07-20 (noche) | Identidad: Cauce | sesion:
+rescate de sesion huerfana (capataz autonomo MAK) + cierre.
+
+## Sesion 2026-07-20 noche -- rescate capataz + autonomia MAK
+
+Una sesion previa ("Godspeed tokens deletion issue", `e7893c70`) quedo
+huerfana: el proceso Git Bash siguio vivo 9h en memoria (Task Manager lo
+mostraba "Claude.exe.old" porque un `npm install` posterior sobreescribio
+el binario en disco mientras el proceso corria -- Windows conserva la
+imagen vieja en memoria, no es corrupcion). Su ultimo estado real (sin
+continuacion, stream murio a media frase): estaba armando el CAPATAZ
+(director autonomo de MAK, sin Claude en el loop) y probando un cerebro
+LOCAL gratis para que corra 24/7 sin depender de free-tier de nube.
+
+### ARREGLADO esta sesion
+- Encontrados 2 worktrees con trabajo listo sin push: `capataz-sintetico`
+  (context/CAPATAZ.md -- usuario sintetico destilado de 894 mensajes
+  reales, voz de presion "todo verde no es descanso") y `doctrina-claude`
+  (context/DOCTRINA_CLAUDE.md -- 190 lineas de ideologia/politicas
+  aprendidas en 3 semanas, para que el repo corra sin Claude). AMBOS
+  PUSHEADOS (ramas `worktree-capataz-sintetico` y `worktree-doctrina-claude`,
+  sin PR abierto -- falta que alguien los abra/mergee).
+- Scripts sueltos del scratch (`capataz_remote.py`, `_scratch_agente_libre.py`,
+  `backlog_codex_script.py`, `mine_corpus.py`, `corpus_candidates.txt`)
+  committeados y pusheados a `worktree-capataz-sintetico`. Verificados
+  contra MAK: `agente_libre.py` y `backlog_codex.py` YA estaban
+  desplegados byte-identicos (diff vacio). `capataz.py` (297 lineas, el
+  director) TAMBIEN ya estaba desplegado pero SIN cron -- agregado:
+  `10,40 * * * * capataz.py >> logs/capataz.log # MAK-CAPATAZ`.
+- BLOQUEO DE SEGURIDAD encontrado y cerrado: `corpus_candidates.txt`
+  (texto crudo de mensajes viejos del usuario) tenia una API key real de
+  Gemini pegada en texto plano (`AIzaSy...`, ya rotada por el usuario
+  segun el propio mensaje). El pre-commit hook la detecto y bloqueo el
+  commit -- redactada antes de pushear. Repo es PUBLICO, la deteccion
+  funciono como debia.
+- Bug propio cometido y corregido en la misma sesion: al probar el pull
+  de `qwen2.5:7b`, un `curl 127.0.0.1:11434` disparo una SEGUNDA instancia
+  de Ollama en Windows bindeada a `0.0.0.0:11434` (expuesta a TODAS las
+  redes, no solo el cable directo a MAK) -- PID 20432, matado apenas
+  detectado. La instancia correcta sigue en `192.168.50.1:11434` (solo
+  interfaz del cable directo, como debe ser).
+- Proceso huerfano de la sesion muerta (PID 31636, 9h vivo, bg-pty-host)
+  matado. El otro PID reportado (22824) ya no existia al chequear.
+
+### PENDIENTE (real, sin maquillar)
+1. **`qwen2.5:7b` pull**: relanzado en la instancia CORRECTA
+   (192.168.50.1:11434), 4.7GB, estaba corriendo en background al cerrar
+   esta sesion -- confirmar que termino (`curl 192.168.50.1:11434/api/tags
+   | grep qwen2.5`).
+2. **Bloqueo real de la mision del capataz, sin resolver**: tool-calling
+   CRUDO de Ollama falla en AMBOS modelos locales (`llama3.1:8b` Y
+   `qwen2.5:7b` devuelven sin `tool_calls`). El cerebro local para el
+   capataz NO funciona todavia por esa via. La sesion muerta encontro
+   (sin probar) la salida: `qwen-agent` (el framework python, ya
+   instalado en MAK con numpy) tiene su PROPIA capa de function-calling
+   por prompt-template, independiente de la API nativa de Ollama --
+   nunca se probo. Ese es el siguiente paso concreto, no un misterio.
+3. **Auto-reparacion del capataz ante error**: la infraestructura YA
+   EXISTE (modo `debug` en codex:8891 -- planner diagnostica, coder
+   reescribe, NUNCA pisa codigo vivo, guarda propuesta en
+   `~/codex/revisiones/`; fallback seguro del capataz es `vetear` si el
+   modelo alucina una accion fuera del menu). Falta cablear que el
+   capataz DISPARE ese modo `debug` automaticamente cuando su propio
+   ciclo falla repetido (hoy el fallback es pasivo, no auto-diagnostico).
+4. **2 PRs por abrir**: `worktree-capataz-sintetico` y
+   `worktree-doctrina-claude` estan pusheadas pero sin PR -- abrirlas y
+   mergearlas a main.
+5. Verificar que `capataz.py` corrio limpio en su primer disparo de cron
+   (`ssh mak@192.168.50.2 "tail ~/plataforma/logs/capataz.log"`).
+
+### Verificacion de esta sesion
+No se toco codigo de `src/flujo` -- solo docs/scripts en worktrees +
+operacion remota en MAK (cron) + Windows (ollama). No aplica pytest.
 
 
 ## 2026-07-20 GODSPEED handover a autonomia
