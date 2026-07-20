@@ -25,8 +25,7 @@ def _skip(d: str) -> bool:
     return d in _SKIP_DIRS or d.startswith(".") or d.startswith("_")
 # carpetas que son SALIDA generada (no tocar / no explorar a mano)
 _GENERADAS = {"jobs", "projects", "datadrops", "context/*.html"}
-_KEY_NAMES = {"README.md", "SKILL.md", "pyproject.toml", "cli.py", "CLAUDE.md",
-              "AGENTS.md", "REPO_MAP.md"}
+_KEY_NAMES = {"README.md", "SKILL.md", "pyproject.toml", "cli.py", "CLAUDE.md"}
 _MAXDEPTH = 3
 
 
@@ -91,14 +90,14 @@ _TASK_ROUTES = [
      [".claude/skills/entregas-rd/", ".claude/skills/taller-svg-rd/SKILL.md",
       "assets/logo/", "svg/suplementos_rd/ (derivar: muchos SVG)"]),
     (("voz", "gemini", "agente", "handoff", "contexto"),
-     ["tools/vibo_voz/", "docs/AI_PROVIDER_ROUTING.md", "docs/AI_OPERATING_LAYER.md"]),
+     ["CLAUDE.md (seccion 'Equipo multi-agente')", "context/LAST_HANDOFF.md"]),
     (("resolume", "chataigne", "noisette"),
      ["src/flujo/resolume/automator.py",
       "BLOQUEADOR: sin .noisette real; no adivinar el schema (ver LAST_HANDOFF)"]),
     (("airdrop", "entrega", "release"),
      ["docs/AGENT_AIRDROP_PROTOCOL.md", "scripts/validate_airdrop.py"]),
     (("test", "pytest"),
-     ["tests/", "docs/AI_OPERATING_LAYER.md"]),
+     ["tests/", "CLAUDE.md (seccion 'Verificacion minima')"]),
 ]
 
 
@@ -106,8 +105,7 @@ def _task(keywords: str):
     kw = keywords.lower()
     print(f"# CONTEXTO PARA LA TAREA: {keywords}\n")
     print("== LEER PRIMERO (fuente de verdad, barato) ==")
-    for r in ("AGENTS.md", "context/LAST_HANDOFF.md",
-              "docs/AI_PROVIDER_ROUTING.md", "docs/REPO_MAP.md"):
+    for r in ("CLAUDE.md", "context/LAST_HANDOFF.md"):
         print(f"  {r}")
     hits = [routes for keys, routes in _TASK_ROUTES if any(k in kw for k in keys)]
     print("\n== RUTAS RELEVANTES A LA TAREA ==")
@@ -119,7 +117,7 @@ def _task(keywords: str):
         print("  (sin match; corre 'map' y elige a mano)")
     print("\n== COMO USARLO (bajo consumo) ==")
     print("  1. Lee tu las fuentes de verdad de arriba (poco volumen, critico).")
-    print("  2. Rutas gordas -> derivar a un modelo barato (Qwen/NIM) o pedir_a_gemini.py.")
+    print("  2. Rutas gordas -> derivar a un subagente Sonnet (Agent tool, model sonnet).")
     print("  3. Da a Aider SOLO los archivos de la tarea. Ver docs/AIDER_API_SETUP.md.")
 
 
