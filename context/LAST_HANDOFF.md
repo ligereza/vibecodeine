@@ -94,6 +94,25 @@ referencia del test que funciono: buscar en el historial de esta sesion
 la config (llm_cfg model_server='http://192.168.50.1:11434/v1',
 api_key='ollama').
 
+### CERRADO EN VIVO: agente_real.py -- el reemplazo, no otro parche
+`~/plataforma/agente_real.py` en MAK: `qwen-agent` Assistant sobre
+`llama3.1:8b` local (WIN, gratis) con 3 herramientas reales
+(`leer_estado`/`vetear`/`entregar`, mismo codigo que ya usaba
+capataz.py). YA EN CRON (`25,55 * * * *`). Probado 2 veces en vivo: el
+MODELO decidio la herramienta (no Python), la ejecuto de verdad
+(`revisor.py --enforce` corrio, exit=0), leyo el resultado real, reporto
+en base a eso. Esto SI es el reemplazo -- reasona, actua, observa, en un
+loop, sin Claude, sin nube. `capataz.py` (el dispatcher viejo) sigue en
+cron tambien, ambos conviven; decidir si se retira capataz.py o se dejan
+los dos es del proximo agente/usuario. Config reproducible: llm_cfg =
+`{'model':'llama3.1:8b','model_server':'http://192.168.50.1:11434/v1',
+'api_key':'ollama'}`, tools con `@register_tool` de
+`qwen_agent.tools.base`. Requiere `pip install soundfile python-dateutil`
+(ya instalado en MAK). Bug de infra resuelto en el camino: Ollama en WIN
+perdio `OLLAMA_MODELS` al reiniciar el proceso -- ahora se relanza con
+`OLLAMA_MODELS=C:\OLLAMA_MODELS OLLAMA_HOST=192.168.50.1:11434 ollama.exe
+serve` si vuelve a pasar.
+
 ### VEREDICTO HONESTO sobre "el capataz" (para el proximo agente, sea cual sea)
 `capataz.py` NO es un agente reflexivo. Es un dispatcher: junta metricas,
 le pregunta a un LLM (nube por defecto) "cual de estas 8 acciones fijas
