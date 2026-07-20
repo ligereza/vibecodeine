@@ -16,6 +16,7 @@ import time
 import unicodedata
 import urllib.error
 import urllib.request
+import urllib.parse
 
 try:
     from fallback_util import score_provider_health, parse_provider_error
@@ -39,6 +40,9 @@ DEFAULTS = {
     # de MAK; se prueba antes que el gemma3:4b local como ultimo recurso.
     "WIN_BASE_URL": "http://192.168.50.1:11434",
     "WIN_MODEL": "llama3.1:8b",
+    # SearXNG propio (LAN, Docker): busqueda sin API key ni tope de
+    # creditos. Reemplaza/complementa Tavily. Ver PLAN.md seccion 2.
+    "SEARXNG_BASE_URL": "http://127.0.0.1:8888",
 }
 
 # Densidad del trabajo: escala max_tok por llamada. Tope duro para no
@@ -450,7 +454,7 @@ def tavily_search(query, depth="basic", max_results=5, errors=None):
     """basic = 1 credito, advanced = 2. 1000/mes gratis."""
     load_env()
     try:
-        return _http_json(
+        _r_tavily = _http_json(
             "https://api.tavily.com/search",
             {"query": query, "search_depth": depth,
              "max_results": max_results, "include_answer": True,
@@ -458,11 +462,40 @@ def tavily_search(query, depth="basic", max_results=5, errors=None):
             {"Authorization": "Bearer " + os.environ["TAVILY_API_KEY"]},
             timeout=30,
         )
+        _salud_registrar("tavily", True, tipo="search")
+        return _r_tavily
     except Exception as e:  # noqa: BLE001 - la busqueda fallida no mata el loop
         if errors is not None:
             errors.append("tavily: " + _err_str(e))
+        _salud_registrar("tavily", False,
+                         "timeout" if isinstance(e, socket.timeout) else "api_error")
         return {"results": [], "answer": None}
 
+
+
+def searxng_search(query, max_results=5, errors=None):
+    """Busqueda via SearXNG propio (LAN, Docker, sin API key ni tope de
+    creditos). Mismo shape de retorno que tavily_search:
+    {"results": [...], "answer": ...}. Registra salud igual que los
+    proveedores LLM -> aparece solo en el panel del hub sin tocar hub.py."""
+    load_env()
+    base = os.environ.get("SEARXNG_BASE_URL", "http://127.0.0.1:8888").rstrip("/")
+    url = base + "/search?q=" + urllib.parse.quote(query) + "&format=json&safesearch=0"
+    try:
+        data = _http_json(url, timeout=30)
+        resultados = [
+            {"url": r.get("url"), "title": r.get("title"),
+             "content": r.get("content")}
+            for r in (data.get("results") or [])[:max_results]
+        ]
+        _salud_registrar("searxng", True, tipo="search")
+        return {"results": resultados, "answer": data.get("answer")}
+    except Exception as e:  # noqa: BLE001 - busqueda fallida no mata el loop
+        if errors is not None:
+            errors.append("searxng: " + _err_str(e))
+        _salud_registrar("searxng", False,
+                         "timeout" if isinstance(e, socket.timeout) else "api_error")
+        return {"results": [], "answer": None}
 
 _TAG_RE = re.compile(r"<script[\s\S]*?</script>|<style[\s\S]*?</style>|<[^>]+>|&[a-z#0-9]+;", re.I)
 
