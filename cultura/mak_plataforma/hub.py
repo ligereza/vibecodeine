@@ -315,7 +315,7 @@ def _norm(j, depto):
     elif est == "abortado":
         rz = "abortado"
     return {"depto": depto, "texto": texto[:130], "estado": est,
-            "t": j.get("t", ""), "seg": round(j.get("ms", 0) / 1000) or "", "rz": rz[:200]}
+            "t": j.get("t", ""), "job_id": j.get("job_id", ""), "seg": round(j.get("ms", 0) / 1000) or "", "rz": rz[:200]}
 
 
 def _jobs_depto(port, jsonl, depto):
@@ -394,7 +394,7 @@ def _marcar_sin_job(evs, ids, ok):
 def _actividad():
     evs = _jobs_depto(8890, RESEARCH_JOBS, "research") + \
           _jobs_depto(8891, CODEX_JOBS, "codex")
-    evs.sort(key=lambda e: e["t"], reverse=True)
+    evs.sort(key=lambda e: e.get("job_id") or e["t"], reverse=True)
     evs = evs[:26]
     bloq = sum(1 for e in evs if e["estado"] == "BLOQUEADO")
     pausados = sum(1 for e in evs if e["estado"] == "PAUSADO")
