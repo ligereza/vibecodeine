@@ -70,6 +70,45 @@ LOCAL gratis para que corra 24/7 sin depender de free-tier de nube.
 5. Verificar que `capataz.py` corrio limpio en su primer disparo de cron
    (`ssh mak@192.168.50.2 "tail ~/plataforma/logs/capataz.log"`).
 
+### DESBLOQUEO REAL, PROBADO EN VIVO (corrige el veredicto de abajo)
+`qwen-agent` SI funciona como agente real sobre modelos locales de Ollama
+-- el tool-calling NATIVO de Ollama esta roto (confirmado, /api/chat sin
+tools= no devuelve tool_calls), pero `qwen_agent.agents.Assistant` lo
+esquiva con su PROPIA capa de function-calling por prompt-template.
+PROBADO EN VIVO en MAK contra `llama3.1:8b` (WIN, 192.168.50.1:11434):
+tool real registrada con `@register_tool`, el modelo la invoco con
+argumentos correctos, ejecuto, observo el resultado, y respondio en base
+a eso -- loop de agente real, gratis, sin nube. Bug de infra encontrado y
+corregido en el camino: Ollama en WIN perdio `OLLAMA_MODELS` al
+reiniciarse (proceso nuevo sin el env persistido) -- corregido, modelos
+visibles de nuevo (deepseek-coder-v2, llama3.1:8b; qwen2.5:7b nunca
+termino de bajar, no es necesario, llama3.1:8b ya sirve).
+
+SIGUIENTE PASO CONCRETO (no otro parche, la pieza que falta de verdad):
+reemplazar el `echo_test` de prueba por herramientas REALES -- leer
+archivos de MAK, correr `entregar.py --limit 1`, `revisor.py --enforce`,
+llamar research:8890/codex:8891 -- y darselas a un `Assistant` de
+qwen-agent en un loop (no un ciclo unico como capataz.py hoy). Codigo de
+referencia del test que funciono: buscar en el historial de esta sesion
+"echo_test" + `register_tool` -- reproducible, no hace falta redescubrir
+la config (llm_cfg model_server='http://192.168.50.1:11434/v1',
+api_key='ollama').
+
+### VEREDICTO HONESTO sobre "el capataz" (para el proximo agente, sea cual sea)
+`capataz.py` NO es un agente reflexivo. Es un dispatcher: junta metricas,
+le pregunta a un LLM (nube por defecto) "cual de estas 8 acciones fijas
+corresponde", y ejecuta esa accion con codigo fijo -- sin dialogo, sin
+memoria entre ciclos salvo el jsonl, sin auto-diagnostico cuando falla
+(cae a un fallback pasivo, "vetear"). Las piezas que SI podrian pensar
+(`junta.py` reflexion diaria, modo `debug` de codex que diagnostica y
+propone fix) existen mas EN NINGUN LADO estan cableadas para que el
+capataz las dispare solo ante su propio error. Es mimica de autonomia
+(ejecuta bien un guion), no reemplazo real de un agente que razona.
+Si otro agente sigue esto: el trabajo real pendiente es CABLEAR
+auto-diagnostico (leer bitacora_capataz.jsonl, detectar fallos propios
+repetidos, disparar debug sobre si mismo antes de vetear), no agregar
+mas acciones al menu.
+
 ### Si el cron/automatizacion NO corre
 `~/plataforma/SI_EL_CRON_NO_CORRE.md` (MAK): un solo comando --
 `ssh mak@192.168.50.2 "cd ~/plataforma && python3 capataz.py"` -- el
