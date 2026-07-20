@@ -1,8 +1,27 @@
-# LAST HANDOFF -- estado para el proximo agente
+﻿# LAST HANDOFF -- estado para el proximo agente
 
 Version: 0.56.0 | Fecha: 2026-07-20 | Identidad: Cauce | sesion: incidente
 auth + puente issue-render Windows + MAK (Blender/OneDrive/permisos).
 
+
+## 2026-07-20 GODSPEED handover a autonomia
+
+DIRECTOR handoff -- organismo autonomo sin dependencia Claude activa.
+
+DONE (verified live today):
+- Ollama-WIN (192.168.50.1:11434) revived; models deepseek-coder-v2:16b-lite-instruct-q4_K_M + llama3.1:8b active; Windows Startup .cmd autostart proven; MAK reaches across LAN. Provider 'win' in research_lib.LLM (win) and codex chain functional.
+- MAK box 24/7 hardening: suspend/sleep/hibernate targets masked (systemctl mask); self-heal proven live (killed research interfaz.py, cron watchdog relaunched, :8890 returned 200). Cron watchdogs */5 cover hub:8900, research interfaz:8890+cola, codex interfaz:8891, xio monitor. Disk 14 percent free.
+- SearXNG self-hosted (Docker 127.0.0.1:8888, --restart unless-stopped, JSON format enabled). searxng_search() added to research_lib.py; web_search() dispatcher (searxng-first, tavily fallback) in research.py/panel.py/refutar.py. Both call _salud_registrar; hub health panel shows searxng successes live. Tavily credits saved.
+- PRs open: #94 fix(ocr) available=False on error (CI green both OS); #95 feat searxng + web_search (check CI status).
+- Handover intent: organism autonomous via cron (trabajo.py every 30 min) + watchdogs + restart policies. Ollama-WIN = local LLM provider. 15-min recall safety check left. Zero dependence on Claude director.
+
+NEXT (minor, if extending):
+- Extend searxng to codex chain (PLAN Fase 4).
+- Wire codex health panel to match research/hub.
+
+BLOCKERS: none critical.
+
+---
 ## Sesion 2026-07-20 (Sonnet 5, sesion larga multi-tema)
 
 ### 1. Incidente de auth (Claude CLI, no del repo)
