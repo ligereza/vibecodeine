@@ -64,6 +64,13 @@ else leaking into your context is a design failure.
 5. **Ratchet.** Every merge leaves verification stricter (new test, new gate).
    The repo becomes progressively harder for future careless agents to break --
    the system learns even though no agent does.
+6. **Ratchet is not a one-way valve -- prune too.** Test count is not a quality
+   signal. A test that only exercises a fake/mocked module instead of real
+   behavior is false security, not coverage (found 2026-07-20: `ig/download.py`
+   tests mocked a fake `instaloader` module the code no longer even imported).
+   When you touch a test file, ask "does this verify reality or a stand-in for
+   reality" -- delete the ones that don't, don't just add more beside them.
+   Measure with coverage (`--cov`), not count.
 
 ## The failure mode to guard: correlated error
 
@@ -369,7 +376,8 @@ another department). Running the thing is a test the readers cannot substitute.
 - [ ] Scope changed mid-flight? SendMessage the running agent; do not respawn.
 - [ ] PR branch verdict = its CI matrix, never local pytest in a worktree.
 - [ ] Output depends on fs order/casing? Make it deterministic at the source.
-- [ ] Ratchet: leave verification stricter than you found it.
+- [ ] Ratchet: leave verification stricter than you found it -- but prune
+      mock-only/dead tests when you touch them; count != quality.
 - [ ] Parallel writers OK in one worktree IF: disjoint files + frozen contract + no git.
 - [ ] Before building on a deployed system: md5 mirror-vs-live seam check.
 - [ ] Feature "deployed" = its FAILURE path driven live, not just 200s.

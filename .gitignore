@@ -16,6 +16,8 @@ build/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+.coverage
+htmlcov/
 
 # Env / secrets
 .env

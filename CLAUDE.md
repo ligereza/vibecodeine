@@ -112,6 +112,11 @@ py -m compileall src/flujo
 py -m pytest tests/ -q
 py -m flujo verify
 ```
+Chequeo de cobertura (opcional, no bloquea): `py -m pytest tests/ --cov=src/flujo --cov-report=term-missing:skip-covered`.
+Cantidad de tests no es senal de calidad. Test que solo verifica un mock/modulo
+falso (no comportamiento real) es basura -- podar al encontrarlo, no sumar
+encima (caso real: tests de `ig/download.py` mockeaban un modulo `instaloader`
+falso que ya no se usaba en produccion, falsa seguridad; corregido 2026-07-20).
 Web:
 ```bash
 cd web && npm run typecheck && npm run build:context && cd ..
