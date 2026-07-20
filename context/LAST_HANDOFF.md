@@ -70,6 +70,12 @@ LOCAL gratis para que corra 24/7 sin depender de free-tier de nube.
 5. Verificar que `capataz.py` corrio limpio en su primer disparo de cron
    (`ssh mak@192.168.50.2 "tail ~/plataforma/logs/capataz.log"`).
 
+### Si el cron/automatizacion NO corre
+Prompt inicial en `~/plataforma/PROMPT_INICIAL_QWEN.md` (MAK) -- pegaselo
+a mano a cualquier modelo local (qwen2.5:7b u otro) para que lea
+CAPATAZ.md + capataz.py + este handoff + la bitacora, y opere el menu de
+acciones el mismo, sin necesitar el cron.
+
 ### Verificacion de esta sesion
 No se toco codigo de `src/flujo` -- solo docs/scripts en worktrees +
 operacion remota en MAK (cron) + Windows (ollama). No aplica pytest.
