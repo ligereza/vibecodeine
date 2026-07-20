@@ -158,3 +158,11 @@ This document serves as a specification for improvements. The live CoderLLM fall
 
 A clean extraction of error parsing and aggregation logic into `fallback_util.py` is feasible and testable without touching network code.
 
+
+## ADVERTENCIA -- verificado en runtime (ts: 2026-07-20 21:00 UTC)
+
+CoderLLM.call() en codex_lib.py revirtio silenciosamente a la implementacion
+naive de este documento (linea 110-129 original) en un hotfix no documentado.
+fallback_util.parse_provider_error / aggregate_failures dejaron de invocarse
+en produccion. La mejora de este documento NO esta activa. Re-verificar antes
+de asumir que el fallback esta resuelto.
