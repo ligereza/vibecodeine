@@ -26,7 +26,7 @@ import time
 
 import pausa
 from research_lib import (LLM, escala_tok, fetch_url, load_env, marco,
-                         ntfy_publish, slug, stamp, tavily_search)
+                         ntfy_publish, slug, stamp, tavily_search, web_search)
 
 OUT_DIR = os.path.expanduser("~/research/informes")
 
@@ -129,7 +129,7 @@ def investigar(topic, iteraciones=3, depth="basic",
             query_history.append(current)
 
         try:
-            search = tavily_search(current, depth, errors=llm.errors)
+            search = web_search(current, depth, errors=llm.errors)
         except Exception as e:  # noqa: BLE001 - blindaje si tavily llega a raise
             pausar(i, "fuentes", "tavily_search: %s" % e)
 

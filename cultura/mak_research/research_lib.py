@@ -497,6 +497,17 @@ def searxng_search(query, max_results=5, errors=None):
                          "timeout" if isinstance(e, socket.timeout) else "api_error")
         return {"results": [], "answer": None}
 
+
+def web_search(query, depth="basic", max_results=5, errors=None):
+    """Busqueda unificada: SearXNG propio primero (sin tope de creditos);
+    Tavily como fallback solo si SearXNG no devuelve resultados. Mismo
+    shape que tavily_search. Ambas rutas registran salud (ver panel hub)."""
+    res = searxng_search(query, max_results=max_results, errors=errors)
+    if res.get("results"):
+        return res
+    return tavily_search(query, depth=depth, max_results=max_results,
+                         errors=errors)
+
 _TAG_RE = re.compile(r"<script[\s\S]*?</script>|<style[\s\S]*?</style>|<[^>]+>|&[a-z#0-9]+;", re.I)
 
 

@@ -21,7 +21,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 from research_lib import (LLM, escala_tok, load_env, marco, ntfy_publish,
-                          slug, stamp, tavily_search)
+                          slug, stamp, tavily_search, web_search)
 
 OUT_DIR = os.path.expanduser("~/research/refutaciones")
 
@@ -56,7 +56,7 @@ def refutar(tema, orden, densidad="medio"):
 
     print("STATUS: Buscando contexto...", flush=True)
     errores = llm.errors
-    search = tavily_search(tema, errors=errores)
+    search = web_search(tema, errors=errores)
     contexto = (search.get("answer") or "") + "\n" + "\n".join(
         "- %s | %s" % (r.get("title", ""), r.get("url", ""))
         for r in (search.get("results") or [])[:5])
