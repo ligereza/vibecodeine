@@ -1,8 +1,8 @@
 """Versión y changelog de flujo."""
 
-__version__ = "0.56.0"
+__version__ = "0.56.1"
 VERSION = __version__
-__version_info__ = (0, 56, 0)
+__version_info__ = (0, 56, 1)
 
 
 def get_version():
@@ -11,6 +11,27 @@ def get_version():
 
 def get_changelog():
     return {
+        "0.56.1": {
+            "titulo": "src/flujo/ig/download.py migrado a mirror + limpieza total de instaloader",
+            "fecha": "2026-07-20",
+            "highlights": [
+                "src/flujo/ig/download.py (usado por 'flyer-import' y 'ig-redownload' "
+                "CLI, y por el boton 'Descargar post' del editor web) tenia el MISMO "
+                "bug que flyer_auto.py: solo instaloader, sin fallback -- siempre "
+                "devolvia manual_required. Reescrito para usar el mirror publico "
+                "(imginn.com), igual que flyer_auto.py. Soporta imagen y carousel; "
+                "video no soportado (el mirror no lo expone). caption/owner/fecha ya "
+                "no disponibles (limitacion real del mirror, no se inventan datos)",
+                "tests/test_ig_download.py reescrito: mock del mirror en vez de un "
+                "modulo instaloader falso",
+                "dependencia 'instaloader' removida de pyproject.toml y requirements.txt",
+                "referencias UI/docs desactualizadas corregidas: docs/CLI.md, "
+                "web/src/components/EventsPanel.tsx, tools/gmail_to_github_issues.gs "
+                "(ya no dicen 'usa instaloader'); docs/INSTALOADER.md, "
+                "docs/EDITOR_INSTAGRAM.md y tools/flyer_eventos/SPEC.md eliminados "
+                "(documentaban solo el flujo muerto)",
+            ],
+        },
         "0.56.0": {
             "titulo": "Puente issue->render Windows probado en vivo + MAK: OneDrive/Blender/permisos",
             "fecha": "2026-07-20",

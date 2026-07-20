@@ -37,10 +37,15 @@ IG exige login incluso anonimo (confirmado por el usuario en sesion previa
 de independencia del Droplet Photoshop). src/flujo/eventos/flyer_auto.py:
 removida `_download_instagram` (funcion muerta), ahora usa directo
 `_download_via_mirror` (imginn.com, ya probado vivo). CLAUDE.md corregido
-(la regla vieja decia "usar instaloader"). Tests actualizados. PENDIENTE
-(flaggeado, no hecho): src/flujo/ig/download.py (usado por flyer-import CLI
-y flyer/import_email.py, boton "Descargar post" del editor web) tiene el
-MISMO bug sin el fallback de mirror -- siempre devuelve manual_required hoy.
+(la regla vieja decia "usar instaloader"). Tests actualizados. RESUELTO
+(sesion 2026-07-20 tarde): src/flujo/ig/download.py (usado por flyer-import
+CLI y flyer/import_email.py, boton "Descargar post" del editor web) tenia
+el MISMO bug -- reescrito para usar el mismo mirror (imginn.com), sin
+instaloader. Soporta imagen y carousel (no video, el mirror no lo expone);
+caption/owner/fecha ya no disponibles (el mirror no los expone confiable).
+tests/test_ig_download.py reescrito con mock de mirror. Dependencia
+`instaloader` removida de pyproject.toml y requirements.txt. Referencias
+en docs/CLI.md, EventsPanel.tsx y gmail_to_github_issues.gs actualizadas.
 
 ### 5. Puente issue-render Windows (tools/bridge_issue_render.py) -- NUEVO, probado en vivo
 Gmail->issue ya lo tiene el usuario (fuera del repo). Label real de la
@@ -120,8 +125,8 @@ Hallazgos:
    FRAME2.png, historia.psd, data de productoras).
 3. Implementar (si se decide seguir) el SSH reverse tunnel para el proveedor
    Ollama-WIN unidireccional -- disenado, no construido.
-4. src/flujo/ig/download.py -- mismo fix de instaloader que flyer_auto.py,
-   sin fallback de mirror. Spawneada como task sugerida (task_c2950255).
+4. [HECHO 2026-07-20 tarde] src/flujo/ig/download.py migrado a mirror
+   (imginn.com), igual que flyer_auto.py. Ver seccion 4 arriba.
 5. .gitignore: agregado drive/ y .playwright-mcp/. __pycache__ limpiado
    local (ya estaba gitignored, no afectaba commits).
 
