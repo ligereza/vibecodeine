@@ -38,7 +38,7 @@ def run_ocr(image_path: Path) -> Dict[str, Any]:
             "lines": len(text.splitlines()),
         }
     except Exception as e:
-        return {"available": True, "error": str(e), "text": ""}
+        return {"available": False, "error": str(e), "text": ""}
 
 def extract_hints_from_text(text: str) -> Dict[str, Any]:
     """Extrae posibles fechas, horas, arrobas, hashtags del OCR"""
