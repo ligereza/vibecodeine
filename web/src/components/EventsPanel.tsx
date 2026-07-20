@@ -30,7 +30,7 @@ export default function EventsPanel() {
           <div className="rounded-xl border border-zinc-800/60 bg-zinc-900/40 p-4 space-y-4">
             <h2 className="text-sm font-bold">Generar flyer desde Instagram</h2>
             <p className="text-xs text-zinc-500">
-              Pega un link de Instagram. El pipeline descarga con instaloader, genera paleta de colores y prepara el flyer.
+              Pega un link de Instagram. El pipeline descarga via mirror publico, genera paleta de colores y prepara el flyer.
             </p>
             <div>
               <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-zinc-600">URL de Instagram</label>
@@ -72,7 +72,7 @@ export default function EventsPanel() {
             <h2 className="text-sm font-bold">Pipeline de Eventos</h2>
             <div className="grid gap-2 sm:grid-cols-2">
               {[
-                { step: '1', title: 'Descarga IG', desc: 'instaloader descarga imagen/video del post' },
+                { step: '1', title: 'Descarga IG', desc: 'mirror publico (imginn.com) descarga la imagen del post' },
                 { step: '2', title: 'Paleta', desc: 'Extrae colores dominantes automaticamente' },
                 { step: '3', title: 'Photoshop', desc: 'Droplet PS aplica plantilla (opcional)' },
                 { step: '4', title: 'Blender', desc: 'Render 3D del flyer (opcional)' },
@@ -101,7 +101,7 @@ export default function EventsPanel() {
           <div className="rounded-xl border border-zinc-800/60 bg-zinc-900/40 p-4 space-y-3">
             <h3 className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">Notas</h3>
             <ul className="space-y-2 text-xs text-zinc-400">
-              <li>&#8226; Usa <strong className="text-zinc-300">instaloader</strong>. No usar yt-dlp.</li>
+              <li>&#8226; Descarga via mirror publico (imginn.com), sin login. No usar yt-dlp ni instaloader (IG exige login incluso anonimo desde 2026-07).</li>
               <li>&#8226; Las fotos descargadas se guardan en el job correspondiente.</li>
               <li>&#8226; El pipeline infiere productora, fecha y venue del post.</li>
               <li>&#8226; Los flyers generados se sirven en SVG Studio (Modo Studio).</li>
