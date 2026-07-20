@@ -670,7 +670,7 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             role = roles_data[0]  # default visual
 
         prompt = role["prompt_template"].format(task=task)
-        full_context = f"Contexto base: Ejecuta `flujo app`. Lee LAST_HANDOFF + AGENT_OPERATING_MANUAL antes de empezar.\n\n{prompt}"
+        full_context = f"Contexto base: Ejecuta `flujo app`. Lee CLAUDE.md + LAST_HANDOFF antes de empezar.\n\n{prompt}"
 
         # Log delegation attempt (to server stdout for traceability). Optional: could append to LAST_HANDOFF via handoff but keep read-only safe.
         print(f"[DELEGATE] {role['name']} <- {task[:80]}")

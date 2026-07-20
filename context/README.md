@@ -38,7 +38,7 @@ Ver también: `LAST_HANDOFF.md`, `../README.md`, `../CLAUDE.md` (mapa del repo) 
 - Usa el **hub** (servido) como centro pro: intake (pedidos → brief + match + crear job real), visual teaser, comandos, sección "Delegar a Agentes Especializados" con guía práctica + prompts listos + live /api/delegate (5 roles paralelos).
 - Abre visualizadores embebidos **desde el hub**: `svg_visualizer.html` (SVG por grupos reales), `plano_demo.html` (interactivo).
 - **Datadrop (MVP funcional):** en pestaña "Herramientas" (o link header "Datadrop (en Herramientas)"): click header abre confiablemente (showTab + scrollToSectionRobust con rAF/retry), scan incoming procesa múltiples fotos, lista limpia (solo procesados con manifest, incoming separado), upload + prepare package for linea v4.1.
-- Para agentes IA: ejecuta `flujo app` → lee LAST_HANDOFF.md + AGENT_OPERATING_MANUAL.md (dentro del hub). Delega paralelo vía hub (o CLI).
+- Para agentes IA: ejecuta `flujo app` → lee CLAUDE.md + LAST_HANDOFF.md. Delega paralelo vía hub (o CLI).
 - Todo: HTMLs + backend = app real. Fallback directo HTML = ok. **Hub + LAST_HANDOFF = fuente de verdad.**
 
 **Integraciones modernas y futuro:**
@@ -148,15 +148,15 @@ Todo alineado a marca flujo, profesional para diseñador Windows.
 - Más tokens roundtrip (Figma plugin bridge gratis).
 - Desktop enhancements (notifs nativas, file assoc via Inno gratis).
 - Intake auto (webhook/IMAP stub, sin deps).
-- Delegación avanzada + sidecars (git clones automáticos, coordination rules ya en AGENT_OPERATING).
+- Delegación avanzada + sidecars (git clones automáticos, coordination rules ya en CLAUDE.md).
 - PWA offline caching mejorado.
 - Prioridad: local-first, gratis, Python core, HTMLs pro = UI.
 
 Visión: un solo `flujo app` = shell diario del diseñador (UI = los tres HTMLs + backend real). Delegación multi-agente paralela (5 roles) permite escalar vía clones.
 
-**Fuente de verdad:** siempre ejecuta `flujo app` → usa hub como workspace. Para reanudar trabajo: `context/LAST_HANDOFF.md` + hub + AGENT_OPERATING_MANUAL.md.
+**Fuente de verdad:** siempre ejecuta `flujo app` → usa hub como workspace. Para reanudar trabajo: `CLAUDE.md` + `context/LAST_HANDOFF.md` + hub.
 
 ## Dirección actual (paralelo + datadrops reales)
 Trabajo paralelo (delegación 2+ roles/sup + clones): auto-compact prep, paths/launchers, brand. Datadrops reales (datadrops/incoming/ + scan + manifests + for_future_ai + _review_package) alimentan linea v4.1 (ground truth para paletas, OCR, traits de entregados reales). Usa `flujo app` + hub para todo (subir/scan/prepare + delegar).
 
-Ver: context/flujo_hub.html (UI + delegación práctica), src/flujo/web/hub.py (backend/APIs/delegate + datadrop), cli.py, docs/AGENT_OPERATING_MANUAL.md, projects/flujo/flujo.json, context/LAST_HANDOFF.md.
+Ver: context/flujo_hub.html (UI + delegación práctica), src/flujo/web/hub.py (backend/APIs/delegate + datadrop), cli.py, CLAUDE.md, projects/flujo/flujo.json, context/LAST_HANDOFF.md.

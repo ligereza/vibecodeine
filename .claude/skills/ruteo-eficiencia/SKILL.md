@@ -26,9 +26,9 @@ sesion Claude Code ya resuelve la forma del pedido.
 
 | Forma del pedido | Ruta | Por que |
 |---|---|---|
-| "que hay en el repo / mapa rapido" sin necesidad de detalle | `py tools/vibo_voz/contexto_repo.py` | 0 tokens, mecanico |
-| Contexto para una tarea concreta (rutas relevantes) | `py tools/vibo_voz/contexto_repo.py task "<keywords>"` | 0 tokens, imprime rutas + como derivarlas |
-| Leer/resumir carpeta gorda (`jobs/`, `projects/`, `svg/suplementos_rd/`, `docs/handoffs/archive/`) | `py tools/vibo_voz/pedir_a_gemini.py "consulta" ruta...` | Modelo barato lee volumen, Claude recibe resumen |
+| "que hay en el repo / mapa rapido" sin necesidad de detalle | `py tools/contexto_repo.py` | 0 tokens, mecanico |
+| Contexto para una tarea concreta (rutas relevantes) | `py tools/contexto_repo.py task "<keywords>"` | 0 tokens, imprime rutas + como derivarlas |
+| Leer/resumir carpeta gorda (`jobs/`, `projects/`, `svg/suplementos_rd/`, `docs/handoffs/archive/`) | Agent tool, `model: sonnet` (Gemini PARKED desde 2026-07-10, no usar) | Modelo barato lee volumen, Claude recibe resumen |
 | Busqueda amplia sin editar ("donde esta X", "que llama a Y", "listar usos de Z") | agente `Explore`, o `cavecrew-investigator` si esta instalado | No carga el hilo principal con exploracion cruda |
 | Edicion quirurgica, 1-2 archivos, alcance ya claro | editar directo, o `cavecrew-builder` si esta instalado | Delegar algo tan chico cuesta mas que hacerlo |
 | Revisar un diff/branch por bugs | `/code-review` (o `cavecrew-reviewer` si esta instalado) | Ya existe, no re-implementar el review a mano |
