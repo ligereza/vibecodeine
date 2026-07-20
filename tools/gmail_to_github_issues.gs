@@ -193,7 +193,7 @@ function buildIssueBody_(area, from, date, subject, plain, gmailLink, instagramL
   const nextStep = area === 'EVENTOS'
     ? [
         '1. Check the Instagram link(s).',
-        '2. Download with flujo/instaloader flow, not yt-dlp.',
+        '2. Download via the flujo mirror-scrape flow (imginn.com), not yt-dlp or instaloader.',
         '3. Run local Photoshop automation after image is downloaded.',
         '4. If request includes brief/plano/svg, create a job in flujo.'
       ]
