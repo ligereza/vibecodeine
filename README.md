@@ -103,7 +103,9 @@ py -m flujo resolume automatizar jobs/<job_id>
 Rule:
 
 ```txt
-Use instaloader for Instagram. Do not use yt-dlp.
+Instaloader no longer works (Instagram requires login even for anonymous
+scraping, confirmed 2026-07-1x). Real download = public mirror scrape
+(_download_via_mirror in flyer_auto.py). Do not use yt-dlp.
 ```
 
 ### Cultura (art-research)

@@ -107,7 +107,10 @@ flujo suplementos contraportada <nombre> --brief "beneficios..."
 flujo suplementos validate svg/suplementos_rd/04_contraportadas/generadas/*.svg
 flujo suplementos illustrator <nombre>
 
-# Flyers / Instagram (usar instaloader, no yt-dlp)
+# Flyers / Instagram
+# flyer-import/ig-redownload usan flujo.ig.download: descarga via mirror
+# publico (imginn.com), sin login. instaloader ya no funciona (IG exige
+# login incluso anonimo, 2026-07-1x) y no se usa en ningun camino. No yt-dlp.
 flujo flyer-import inbox/correo.txt
 flujo ig-redownload --all
 flujo analyze --all
