@@ -51,8 +51,11 @@ area/eventos
 estado/por-revisar
 gmail
 instagram
-action/descargar-ig
 ```
+
+(verificado en vivo contra issues reales 2026-07-20: la label `action/descargar-ig`
+que este doc listaba antes NUNCA aparece; el label real que marca "tiene link IG"
+es `instagram`. tools/bridge_issue_render.py filtra por ese.)
 
 ### Trabajo local
 
@@ -62,7 +65,8 @@ Si es link Instagram, usar el flujo directo EVENTOS:
 py -m flujo eventos flyer-auto "https://www.instagram.com/p/XXXX/"
 ```
 
-Eso descarga con instaloader y actualiza:
+Eso descarga (instaloader confirmado no-funcional, IG exige login incluso
+anonimo; la descarga real es via mirror publico) y actualiza:
 
 ```txt
 C:\rd\AUTOMATIZACION\input_ig.jpg
@@ -70,7 +74,9 @@ C:\rd\AUTOMATIZACION\palette_ig.png
 C:\rd\AUTOMATIZACION\palette_ig.json
 ```
 
-Por defecto NO abre Photoshop ni Blender. Para autorizar el droplet:
+Por defecto NO abre Photoshop ni Blender. `--render-blender` (Blender por
+nodos, sin Photoshop) es el camino recomendado desde 2026-07-10; `--run-droplet`
+queda como legado, solo si falta `FRAME2.png`. Para autorizar el droplet legado:
 
 ```bash
 py -m flujo eventos flyer-auto "https://www.instagram.com/p/XXXX/" --run-droplet

@@ -14,7 +14,8 @@ Hay **dos** tipos de flyer, con destinos distintos:
 - Pieza vectorial → flujo SVG actual (`flujo render`). Aquí no entra Blender.
 
 ### 2. Cartelera para historias de Instagram (digital)
-- Usa la **foto descargada de Instagram** (vía `instaloader`) como base.
+- Usa la **foto descargada de Instagram** (instaloader confirmado no-funcional
+  desde 2026-07; la descarga real es via mirror publico) como base.
 - La foto se **enmarca en Blender** para crear la cartelera (mockup/encuadre 3D
   o composición). Salida digital, vertical (formato historia).
 - Hay **dos variantes = dos proyectos de Photoshop distintos**:
