@@ -3,6 +3,30 @@
 Version: 0.56.1 | Fecha: 2026-07-20 (noche) | Identidad: Cauce | sesion:
 rescate de sesion huerfana (capataz autonomo MAK) + cierre.
 
+## LOOP CERRADO (2026-07-20 noche) -- GitHub ES el canal de mando
+Como una señal de la web llega a las maquinas, cableado y verificado:
+1. Agente gratis (Arena, o Claude via issues con `claude.yml`) produce un
+   cambio -> release `airdrop-*` (`airdrop_gate.yml`) o PR directo.
+2. CI + branch protection validan -> merge a main. (gate = los ojos)
+3. **MAK auto-sincroniza cada 10min** (cron `MAK-REPO-SYNC`): fetch+reset
+   --hard origin/main SOBRE el clon `~/flujo`, Y LUEGO copia el espejo
+   `cp -ru ~/flujo/cultura/mak_{plataforma,research,codex}/. -> ~/{plataforma,
+   research,codex}/`. OJO CRITICO (verificado): los servicios vivos corren
+   de dirs SUELTOS (~/plataforma etc.), NO del clon -- por eso el paso cp
+   es imprescindible; sin el, mergear no tocaba el codigo vivo. Probado:
+   backlog.py del repo == el vivo tras el sync (PROPAGA-OK).
+4. El organismo MAK (cron: trabajo/capataz/agente_real/entregar/revisor,
+   invocaciones python frescas cada tick) corre el codigo nuevo enseguida.
+   CAVEAT honesto: (a) servidores persistentes (research:8890/codex:8891/
+   hub) necesitan restart del watchdog para recargar .py cambiado; (b)
+   capataz.py/agente_real.py/chat_agente.py viven SOLO en la caja, NO en el
+   espejo del repo todavia -- si se quieren gobernar por merge, meterlos a
+   cultura/mak_plataforma/ (via PR, no push directo: branch protection).
+5. WIN NO recibe señal de repo -- es puro endpoint de inferencia Ollama
+   (192.168.50.1:11434) que MAK llama por HTTP. No necesita clon ni pull.
+Resultado: mergear a main = darle una orden a MAK, sin PC, sin cuenta
+Claude. GitHub es el medio de comunicacion, tal como se diseño.
+
 ## Sesion 2026-07-20 noche -- rescate capataz + autonomia MAK
 
 Una sesion previa ("Godspeed tokens deletion issue", `e7893c70`) quedo
