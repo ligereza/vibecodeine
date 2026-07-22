@@ -66,7 +66,8 @@ BACKLOG_CODEX_TXT = os.path.join(PLATAFORMA, "backlog_codex.txt")
 REPO_SLUG = "ligereza/vibecodeine"
 
 ACCIONES = ("investigar", "codificar", "entregar", "vetear",
-            "mejora_libre", "reflexionar", "vigilar_proveedores", "descansar")
+            "mejora_libre", "reflexionar", "vigilar_proveedores", "descansar",
+            "mantener")
 
 # F1a: cadena completa siempre disponible como red de seguridad; el orden
 # (quien contesta primero) es lo que cambia segun riesgo.
@@ -90,6 +91,7 @@ MENU_TXT = (
     "- reflexionar: args {} -- corre la junta diaria (metricas + reflexion, junta.py)\n"
     "- vigilar_proveedores: args {} -- detecta proveedores LLM cronicamente malos (expulsion.py)\n"
     "- descansar: args {\"motivo\": str} -- no-op, DESALENTADO, solo si de verdad no hay nada que hacer\n"
+    "- mantener: args {\"tarea\": \"limpiar|archivar|relanzar|ratchet|todo\"} -- mantenimiento dry-run (reporte, nunca ejecuta)\n"
 )
 
 
@@ -318,6 +320,19 @@ def ejecutar(accion, args):
         return _run(["python3", os.path.join(RESEARCH, "expulsion.py")])
     if accion == "descansar":
         return {"ok": True, "motivo": args.get("motivo") or "(sin motivo)"}
+    if accion == "mantener":
+        tarea = str((args or {}).get("tarea", "todo")).strip()[:20]
+        try:
+            try:
+                from cultura.mak_plataforma import mantenimiento
+            except ImportError:
+                import mantenimiento
+            # capataz SIEMPRE dry-run; ejecucion real es cron/humano via CLI.
+            reporte = mantenimiento.mantener(tarea, execute=False)
+            return {"ok": True, "tarea": tarea,
+                    "reporte": json.dumps(reporte, ensure_ascii=False)[:300]}
+        except Exception as e:  # noqa: BLE001 - mantenimiento no debe tumbar el ciclo
+            return {"ok": False, "error": str(e)[:300]}
     return {"ok": False, "error": "accion sin ejecutor: %s" % accion}
 
 
