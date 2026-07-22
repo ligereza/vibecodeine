@@ -259,6 +259,9 @@ def guardar_pieza(pedido, codigo, resultado, meta):
             f.write("## stdout\n\n```\n%s\n```\n\n" % resultado["stdout"].strip())
         if resultado.get("stderr"):
             f.write("## stderr\n\n```\n%s\n```\n\n" % resultado["stderr"].strip())
+        # meta es generico (lo arma el caller); generar.py le agrega
+        # "smoke_ok"/"smoke_stderr_tail" (F2b/#139) que entregar.py lee de
+        # aca -- jobs.jsonl no tiene ese campo, es el .md el que manda.
         f.write("---\nmeta: %s\n" % json.dumps(meta, ensure_ascii=False))
     return base + ".py", base + ".md"
 
