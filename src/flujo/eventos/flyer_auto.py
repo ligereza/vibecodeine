@@ -77,6 +77,48 @@ _MIRROR_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
               "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
 
 
+def _parth_pick_image_url(data: dict) -> str:
+    """Elige UNA sola imagen del metadata de parth-dl.
+
+    Video/reel -> thumbnail (el flyer necesita imagen fija).
+    Post/carrusel -> SOLO la primera imagen, nunca todas.
+    """
+    images = data.get("images") or []
+    if images:
+        first = images[0]
+        if isinstance(first, str) and first:
+            return first
+        if isinstance(first, dict):
+            for key in ("url", "src"):
+                if first.get(key):
+                    return first[key]
+    thumbnail = data.get("thumbnail")
+    if thumbnail:
+        return thumbnail
+    raise FileNotFoundError("parth-dl no devolvio imagen ni thumbnail.")
+
+
+def _download_via_parth(url: str, shortcode: str, temp_dir: Path) -> Path:
+    """Via primaria de descarga: parth-dl (pip install parth-dl).
+
+    Funciona con reels/video donde el mirror no llega; para video se usa el
+    thumbnail como imagen base. Si el paquete no esta instalado o falla,
+    el caller cae al mirror.
+    """
+    import urllib.request
+
+    from parth_dl import get_info  # lazy: el repo funciona sin parth-dl
+
+    data = get_info(url)
+    image_url = _parth_pick_image_url(data)
+    req = urllib.request.Request(image_url, headers={"User-Agent": _MIRROR_UA})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        payload = r.read()
+    out = temp_dir / f"parth_{shortcode}.jpg"
+    out.write_bytes(payload)
+    return out
+
+
 def _download_via_mirror(shortcode: str, temp_dir: Path) -> Path:
     """Fallback sin login: mirror publico (IG bloquea instaloader anonimo desde 2026).
 
@@ -334,9 +376,13 @@ def run_eventos_flyer_auto(
             shutil.rmtree(temp_dir, ignore_errors=True)
         temp_dir.mkdir(parents=True, exist_ok=True)
 
-        # instaloader confirmado no funcional (IG exige login incluso anonimo,
-        # sesion 2026-07-1x); mirror publico es el unico camino que funciona.
-        downloaded = _download_via_mirror(shortcode, temp_dir)
+        # parth-dl primero: cubre reels/video (thumbnail) y posts (1ra imagen).
+        # imginn quedo 403 Cloudflare (2026-07-22); queda de fallback best-effort.
+        # instaloader confirmado no funcional (IG exige login incluso anonimo).
+        try:
+            downloaded = _download_via_parth(url, shortcode, temp_dir)
+        except Exception:
+            downloaded = _download_via_mirror(shortcode, temp_dir)
 
         if input_img.exists():
             input_img.unlink()
