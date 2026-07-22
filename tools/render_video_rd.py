@@ -34,6 +34,11 @@ def build_expr(video: str, out: str, device: str, max_frames: int | None) -> str
     cap = ""
     if max_frames:
         cap = "sc.frame_end = min(sc.frame_end, %d)\n" % int(max_frames)
+    engine = ""
+    if device == "EEVEE":
+        # EEVEE-Next: fraccion de la VRAM de Cycles; rehabilita GPUs chicas
+        # (GTX 1650 de MAK hace OOM con Cycles en RD.paravideo.blend).
+        engine = "sc.render.engine = 'BLENDER_EEVEE_NEXT'\n"
     gpu = ""
     if device in ("CUDA", "OPTIX"):
         gpu = (
@@ -54,6 +59,7 @@ def build_expr(video: str, out: str, device: str, max_frames: int | None) -> str
         "sc.frame_start = 1\n"
         "sc.frame_end = max(1, clip.frame_duration)\n"
         "%(cap)s"
+        "%(engine)s"
         "if clip.fps:\n"
         "    sc.render.fps = round(clip.fps)\n"
         "vid = bpy.data.images.load(%(video)r)\n"
@@ -80,7 +86,7 @@ def build_expr(video: str, out: str, device: str, max_frames: int | None) -> str
         "r.filepath = %(out)r\n"
         "bpy.ops.render.render(animation=True)\n"
         "print('RENDER_DONE', r.filepath)\n"
-        % {"video": video, "out": out, "cap": cap, "gpu": gpu}
+        % {"video": video, "out": out, "cap": cap, "gpu": gpu, "engine": engine}
     )
 
 
@@ -94,7 +100,7 @@ def main() -> int:
     ap.add_argument("--out", required=True, help="ruta de salida .mp4")
     ap.add_argument("--blend", default=default_blend(), help="plantilla .blend (video)")
     ap.add_argument("--blender", default="blender", help="ejecutable de Blender")
-    ap.add_argument("--device", default="CUDA", choices=["CUDA", "OPTIX", "CPU"],
+    ap.add_argument("--device", default="CUDA", choices=["CUDA", "OPTIX", "CPU", "EEVEE"],
                     help="dispositivo de render (default CUDA)")
     ap.add_argument("--max-frames", type=int, default=None,
                     help="cap de frames (smoke tests)")
