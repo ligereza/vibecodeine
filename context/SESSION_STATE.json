@@ -1,28 +1,26 @@
 {
   "version": "0.56.1",
-  "date": "2026-07-22T16:30:00Z",
+  "date": "2026-07-22T18:30:00Z",
   "assistant_name": "Cauce",
-  "repo_main": "main gobernado: enforce_admins ON (todo por PR + CI, ni admin pushea directo). PRs #122-127 (capataz) + #140 (rescate stash) + #141 (fix verificador) + #142 (parth-dl video) aterrizados hoy. #143 (ratchet pyflakes) en CI. Ramas remotas == PRs abiertos, cero huerfanas.",
-  "current_focus": "MAK autonomo primario / WIN apoyo grafico oportunista (decision usuario 2026-07-22). RD completo en MAK (57GB, 1731 archivos, LAN). Siguiente paso de independencia: hook ollama-local en cadena LLM de capataz.py (deepseek-coder:6.7b ya instalado en MAK).",
+  "repo_main": "main gobernado (enforce_admins). 19 PRs merjeados hoy (#122-152 rango). 0 abiertos, 0 ramas huerfanas. Issues: #131 y #145 cerrados; #139 parcial (3 legacy en allowlist ratchet).",
+  "current_focus": "MAK autonomo con cerebro local desplegado (capataz+ollama verificado en vivo). iskvw.cl vivo HTTP, cert TLS en emision. Gap documentado: descarga IG requiere WIN (login-wall a extractores desde MAK, misma IP -- no insistir).",
   "done": [
     "2026-07-22 GODSPEED orden total (director Fable + haikus/sonnets): merge local concluido; raiz limpiada (11 reportes -> _archive, 8 scripts -> tools/mak_ops); PRs 122-127 aterrizados secuencial con gate; RESCATE 8 archivos cultura del stash 07-16 nunca aterrizados (PR #140); enforce_admins activado; issue #139 (6 NameError latentes en utilidades MAK) + fix verificador (PR #141) + ratchet pyflakes (PR #143); issue #131 resuelto tecnica (PR #142: parth-dl primaria, video->thumbnail, carrusel->primera imagen, e2e VIVO con el reel); RD 57GB -> MAK por tar|ssh integridad verificada; Pages cname=iskvw.cl configurado; exe.old cerrado (proceso huerfano, doctor limpio); MAK verificado por operador (servicios 200, cron ok, espejo fresco, gap: capataz 100% nube)."
   ],
   "doing": [
-    "PR #143 ratchet pyflakes en CI (merge al verde)",
-    "iskvw.cl: esperando registros CNAME en Cloudflare (usuario) para activar https_enforced"
+    "cert TLS iskvw.cl en emision (al responder: https_enforced=true)",
+    "APK hotspot_boot buildeado, install espera toggle MIUI del usuario"
   ],
   "next": [
-    "Hook 'ollama' local en LLM(...) de capataz.py -- deepseek-coder:6.7b en MAK listo, es EL paso de independencia",
-    "pip install parth-dl en MAK si va a correr eventos alla",
-    "Decidir politica utilidades/ MAK (archivar practica vs showcase) + 10 docs candidatos a _archive + 45MB SVG dark",
-    "Video en cartelera.blend: frames auto via movieclip.frame_duration, salida FFmpeg directo (imagen vs video sin decidir)",
-    "Investigar latido.log stale 07-17 (reemplazo o fallo silencioso)",
-    "works.json cablear a portfolio.yml (pendiente heredado)"
+    "CNAME www en Cloudflare (usuario)",
+    "toggle Instalar-via-USB + adb install APK + settings put secure (comandos en xio/hotspot_boot_service/README.md)",
+    "works.json cablear a portfolio.yml (heredado)",
+    "decidir formato video cartelera.blend (disenio listo: movieclip.frame_duration + FFmpeg)",
+    "idea: proxy IG via xio para autonomia total de descarga"
   ],
   "blockers": [
-    "Cloudflare DNS de iskvw.cl: solo el usuario (CNAME @ y www -> ligereza.github.io, DNS-only hasta cert)",
-    "xio: AccessibilityService + PAT Termux son manuales del usuario; telefono inalcanzable hoy",
-    "Ollama WIN apagado (autostart pendiente); irrelevante para MAK-autonomo salvo como acelerador"
+    "IG bloquea extractores desde MAK (gap real, agotado: version/IP/fingerprint) -- descarga IG = WIN",
+    "APK install: INSTALL_FAILED_USER_RESTRICTED hasta toggle MIUI"
   ],
   "ai_stack": {
     "architect_reviewer": "Claude Code (director godspeed; no lee volumen, delega y verifica)",
