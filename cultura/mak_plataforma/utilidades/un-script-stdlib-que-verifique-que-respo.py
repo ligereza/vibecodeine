@@ -11,7 +11,7 @@ import sys
 import threading
 import time
 from datetime import datetime, timezone
-from typing import Dict, Iterable, Optional
+from typing import Dict, Iterable, List, Optional
 
 
 def check_port(host: str, port: int, timeout: float) -> dict:
@@ -90,7 +90,7 @@ def _servidor_efimero(puerto: int, evento_parada: threading.Event) -> None:
         servidor.bind(("127.0.0.1", puerto))
         servidor.listen(1)
         servidor.settimeout(0.5)
-        while not evento_paro.is_set():
+        while not evento_parada.is_set():
             try:
                 conn, _ = servidor.accept()
                 conn.close()
