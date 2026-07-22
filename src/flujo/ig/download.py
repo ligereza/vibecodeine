@@ -45,12 +45,67 @@ def _mirror_image_urls(shortcode: str) -> list[str]:
                            if "t51.2885-19" not in u and "t51.82787-19" not in u]
 
 
-def download_post(url: str, output_dir: Path, retries: int = 1) -> dict:
-    """Descarga via mirror publico (imginn.com).
+def _parth_image_urls(data: dict) -> tuple[list[str], bool]:
+    """Extrae (urls_de_imagen, es_video) del metadata de parth-dl.
 
-    instaloader murio: IG exige login incluso anonimo desde 2026-07-1x. No hay
-    caption/owner/fecha (el mirror no los expone de forma confiable); solo
-    imagenes -- videos no soportados via este camino.
+    Video/reel -> [thumbnail]; post/carrusel -> todas las imagenes (el
+    contrato historico de este modulo entrega el carrusel completo; la
+    regla "solo primera" es del flujo flyer, no de aca).
+    """
+    urls: list[str] = []
+    for item in data.get("images") or []:
+        if isinstance(item, str) and item:
+            urls.append(item)
+        elif isinstance(item, dict):
+            u = item.get("url") or item.get("src")
+            if u:
+                urls.append(u)
+    is_video = data.get("type") == "video"
+    if not urls and data.get("thumbnail"):
+        urls = [data["thumbnail"]]
+    return urls, is_video
+
+
+def _parth_download(url: str, shortcode: str, output_dir: Path) -> dict | None:
+    """Via primaria: parth-dl (pip install parth-dl). None => caer al mirror."""
+    try:
+        from parth_dl import get_info  # lazy: el repo funciona sin parth-dl
+    except ImportError:
+        return None
+    try:
+        data = get_info(url)
+        urls, is_video = _parth_image_urls(data)
+        if not urls:
+            return None
+        copied = []
+        for i, img_url in enumerate(urls, 1):
+            payload = _fetch(img_url)
+            dst = output_dir / ("input_ig.jpg" if i == 1 else f"input_ig_{i}.jpg")
+            dst.write_bytes(payload)
+            copied.append(str(dst))
+    except Exception:
+        return None
+    return {
+        "status": "downloaded",
+        "shortcode": shortcode,
+        "url": url,
+        "media_type": "video" if is_video
+        else ("carousel" if len(copied) > 1 else "image"),
+        "files": copied,
+        "file_count": len(copied),
+        "caption": data.get("caption") or data.get("description") or "",
+        "owner": data.get("uploader") or "",
+        "date": "",
+        "is_video": is_video,
+    }
+
+
+def download_post(url: str, output_dir: Path, retries: int = 1) -> dict:
+    """Descarga IG: parth-dl primaria, mirror imginn fallback.
+
+    imginn quedo 403 Cloudflare para posts (2026-07-22); parth-dl cubre
+    posts, carruseles y video/reel (thumbnail como imagen). instaloader
+    murio (IG exige login incluso anonimo).
     """
     shortcode = extract_shortcode(url)
     if not shortcode:
@@ -62,6 +117,10 @@ def download_post(url: str, output_dir: Path, retries: int = 1) -> dict:
     for f in output_dir.glob("input_ig*"):
         f.unlink(missing_ok=True)
     (output_dir / "ig_caption.txt").unlink(missing_ok=True)
+
+    resultado = _parth_download(url, shortcode, output_dir)
+    if resultado is not None:
+        return resultado
 
     last_err = ""
     for attempt in range(retries + 1):
