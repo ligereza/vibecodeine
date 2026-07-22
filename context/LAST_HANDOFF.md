@@ -122,10 +122,9 @@ LOCAL gratis para que corra 24/7 sin depender de free-tier de nube.
   aprendidas en 3 semanas, para que el repo corra sin Claude). AMBOS
   PUSHEADOS (ramas `worktree-capataz-sintetico` y `worktree-doctrina-claude`,
   sin PR abierto -- falta que alguien los abra/mergee).
-- Scripts sueltos del scratch (`capataz_remote.py`, `_scratch_agente_libre.py`,
-  `backlog_codex_script.py`, `mine_corpus.py`, `corpus_candidates.txt`)
-  committeados y pusheados a `worktree-capataz-sintetico`. Verificados
-  contra MAK: `agente_libre.py` y `backlog_codex.py` YA estaban
+- Scripts sueltos del scratch (archivados 2026-07-22: `capataz_remote.py`, `_scratch_agente_libre.py`,
+  `backlog_codex_script.py`, `mine_corpus.py` movidos a `_archive/legacy_20260722_profundo/`).
+  Verificados contra MAK: `agente_libre.py` y `backlog_codex.py` YA estaban
   desplegados byte-identicos (diff vacio). `capataz.py` (297 lineas, el
   director) TAMBIEN ya estaba desplegado pero SIN cron -- agregado:
   `10,40 * * * * capataz.py >> logs/capataz.log # MAK-CAPATAZ`.
