@@ -3,6 +3,53 @@
 Version: 0.56.1 | Fecha: 2026-07-22 | Identidad: Cauce | sesion:
 orden y mantencion godspeed (director Fable + haikus/sonnets delegados).
 
+## Sesion 2026-07-22 (cierre) -- pendientes resueltos por director
+
+HECHO (2da mitad, todo por PR con CI):
+1. Issue #145 CERRADO (PR #149): parth-dl primaria en flujo/ig/download.py
+   (flyer-import/ig-redownload); video->thumbnail, carrusel completo,
+   caption/owner ahora se llenan. E2E vivo OK.
+2. Capataz con cerebro local (PR #150): LLM('cerebras,groq,azure,ollama').
+   DESPLEGADO Y VERIFICADO en el capataz vivo de MAK (sync 10min).
+3. latido.py REVIVIDO en MAK: el cron habia desaparecido (no fue reemplazo
+   de disenio); restaurado `7 */4 * * *` con backup del crontab previo en
+   /tmp/cron_backup_20260722.txt; corrida manual OK, log fresco.
+4. parth-dl en MAK: instalado 1.1.0 (git) + requests 2.34.2. GAP REAL
+   DOCUMENTADO: IG sirve login-wall al extractor desde MAK aunque la
+   pagina publica carga (curl -4 200) y WIN extrae desde la MISMA IP
+   publica. Agotado: version, IPv4/6, fingerprint requests. NO seguir
+   probando variantes; descarga IG real requiere WIN hoy. Idea futura:
+   proxy de fetches IG via xio (IP movil, Android real).
+5. iskvw.cl VIVO en HTTP (Pages + CNAME Cloudflare del usuario);
+   cert TLS de GitHub en emision -- al responder HTTPS, activar:
+   gh api -X PUT repos/ligereza/portfolio-auto/pages --field https_enforced=true
+   Falta CNAME www (usuario aviso que lo agregaria).
+6. APK hotspot_boot_service BUILDEADO por primera vez (workflow
+   build-xio-apk.yml, PR #151; runner ubuntu, artifact 7 dias).
+   Instalacion via adb BLOQUEADA por HyperOS (INSTALL_FAILED_USER_
+   RESTRICTED): falta toggle "Instalar aplicaciones via USB" en
+   Opciones de desarrollador (usuario). Con el toggle: adb install -r
+   app-debug.apk + settings put secure (comandos exactos en el README
+   del servicio). El APK descargado quedo en scratchpad de la sesion;
+   re-descargable: gh run download 29940029125 -n hotspot-boot-apk.
+7. Archivado docs (PR #152): 10 supersedidos/one-off a
+   _archive/legacy_20260722_docs/. AGENTS.md NO se archiva (stub por
+   convencion, PR #147). SVG dark 09_contraportadas_dark NO se archiva:
+   generador y consumidor VIVOS (gen_contraportadas.py /
+   regen_deliverables.py) -- es cache reproducible + input de entregas.
+8. Skill godspeed: bootstrap any-model (PR #148) validado con simulacion
+   Sonnet-director real (4/4 claims verificados, trampa checkout-detras-
+   de-origin cazada). Sonnet+godspeed = default para mantencion/auditoria.
+9. git stash drop aplicado por el usuario. CNAME @ corregido a
+   ligereza.github.io.
+
+DECISIONES DE DIRECTOR (usuario delego):
+- utilidades/ MAK: SE QUEDAN (produccion activa del loop, gobernada por
+  ratchet pyflakes + PRs); sin archivado periodico por ahora.
+- Video en cartelera.blend: imagen-solo sigue siendo el flujo; rama video
+  (movieclip.frame_duration + FFmpeg directo) queda como issue de disenio
+  cuando el usuario decida formato de entrega.
+
 ## Sesion 2026-07-22 -- orden total, gobernanza, MAK autonomo
 
 DECISION DE ARQUITECTURA (usuario confirmo): MAK = autonomo primario
