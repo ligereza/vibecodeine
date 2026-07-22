@@ -252,6 +252,47 @@ def rd_lookup(familia: str = typer.Argument(..., help="Familia de sustancia, ej.
     console.print(f"\n[dim]{res['disclaimer']}[/]")
 
 
+rd_datos_app = typer.Typer(
+    help="Ingesta privacy-first de datos de campo RD (testeo, atenciones, encuestas).",
+    no_args_is_help=True,
+)
+app.add_typer(rd_datos_app, name="rd-datos")
+
+
+@rd_datos_app.command("ingest")
+def rd_datos_ingest(
+    csv_path: Path = typer.Argument(..., help="Ruta al CSV de terreno a ingerir"),
+    tipo: str = typer.Option(..., "--tipo", "-t", help="testeo | atencion | encuesta"),
+    policy: str = typer.Option(
+        "strict", "--policy", "-p", help="strict (rechaza cualquier PII) | sanitize (sanitiza y persiste)"
+    ),
+    db: Optional[str] = typer.Option(None, "--db", help="Ruta a la DB (default data/rd_datos.db)"),
+):
+    """Ingesta un CSV de datos de campo (testeo de reactivos, atenciones o
+    encuestas) a la DB privacy-first data/rd_datos.db. Toda fila pasa por
+    flujo.privacy.scan_text ANTES de persistir: RUT chileno o numero de
+    tarjeta detectados rechazan la fila SIEMPRE (nunca se loguea el
+    contenido)."""
+    from .rd.datos import ingest_csv
+
+    if not csv_path.exists():
+        _warn(f"No existe el CSV: {csv_path}")
+        raise typer.Exit(1)
+    try:
+        res = ingest_csv(csv_path, tipo, db=db, policy=policy)
+    except ValueError as e:
+        _err(str(e))
+        return
+    _section(f"flujo · rd-datos · ingest · {tipo}")
+    _ok(f"Insertadas: {res.insertadas}")
+    if res.rechazadas_pii:
+        _warn(f"Rechazadas por PII: {res.rechazadas_pii} (contenido nunca logueado)")
+    if res.invalidas:
+        _warn(f"Invalidas (forma): {res.invalidas}")
+        for d in res.detalle_invalidas:
+            console.print(f"    {d}", markup=False)
+
+
 @app.command("tapiz")
 def tapiz(modo: str = typer.Argument("demo", help="demo | stress | live")):
     """Ecosistema Tapiz<->Psicosis<->Fungi: pipeline generativo (tools/compete_engine.py).
