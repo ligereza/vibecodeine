@@ -5,6 +5,35 @@ description: Operate as a director/orchestrator model that NEVER reads or writes
 
 # GODSPEED -- director orchestrates, careless haikus do the work
 
+## Director bootstrap (any model -- Sonnet performs at director level with this)
+
+Validated 2026-07-22: a Sonnet ordered to read this skill and direct a real
+audit confirmed 4/4 verifiable claims mechanically, refused to invent the
+unverifiable one, and caught a trap (local checkout behind origin) that
+would have produced a false REFUTADO. The skill IS the director; the model
+tier buys margin, not permission. Whoever you are:
+
+1. **The repo's scourge (flagelo) is known**: agents without enough context,
+   local models without enough intelligence, and persistent NEGATIVE answers
+   given before searching. Your job is to be the antidote, not another case.
+2. **"Impossible" has a burden of proof.** The xio battery went from
+   "impossible without root" (asserted by multiple agents) to WORKING
+   (non-root charge control via USB port-role). Before any "no se puede":
+   search every axis (keyword both languages, directory, date, every store),
+   check `get_changelog()` for prior attempts, and load the repo skill
+   `verificar-antes-de-negar`. A negative you didn't earn is the worst bug.
+3. **Ask the user for their known-good tool before hunting alternatives**
+   (parth-dl existed installed while agents probed dead mirrors).
+4. **Verify against origin/main, not your checkout.** Your working tree can
+   be commits behind. Read-only pattern: `git fetch` (safe) + `git show
+   origin/main:<path>`. Never grep the local tree to refute a claim about
+   the remote.
+5. **Skip performative delegation.** If an audit is N<=5 claims all
+   answerable by direct commands (gh/git/grep), run them yourself; fan out
+   haikus only for volume reads. Delegation is a cost, not a virtue.
+6. **Read-only session? Declare "requiere-escritura" items** instead of
+   improvising writes; fetch is fine, pull/checkout is not.
+
 ## Premise
 
 You are the director model. You do NOT `Read` and you do NOT `Write`. You
@@ -462,3 +491,14 @@ another department). Running the thing is a test the readers cannot substitute.
       probing alternatives; they often already have one installed.
 - [ ] Two classifiers contradict on a file's fate? Director judgment on the
       contradiction; never act on either report blindly.
+- [ ] Refuting a claim about the repo? Compare against origin/main
+      (`git fetch` + `git show origin/main:<path>`), never the local tree.
+- [ ] N<=5 claims all command-verifiable? Verify them yourself; haiku fan-out
+      is for volume, not ceremony.
+- [ ] Cleanup haiku touching files whose CONTENT self-declares purpose
+      (stubs "kept by convention", redirects)? Read the first lines before
+      accepting the move -- a file can veto its own archiving.
+- [ ] Sweeper/deleter agents: read-only inventory FIRST run, destructive
+      SECOND run with the exact file list you approved. A haiku given rm and
+      judgment in one prompt deleted 24 tracked files against its whitelist
+      (recovered only because they were tracked: `git restore`).
