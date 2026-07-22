@@ -108,9 +108,10 @@ flujo suplementos validate svg/suplementos_rd/04_contraportadas/generadas/*.svg
 flujo suplementos illustrator <nombre>
 
 # Flyers / Instagram
-# flyer-import/ig-redownload usan flujo.ig.download: descarga via mirror
-# publico (imginn.com), sin login. instaloader ya no funciona (IG exige
-# login incluso anonimo, 2026-07-1x) y no se usa en ningun camino. No yt-dlp.
+# Descarga IG: parth-dl via primaria (pip install parth-dl; video usa
+# thumbnail, carrusel solo primera imagen; ver eventos/flyer_auto.py).
+# imginn.com quedo 403 Cloudflare 2026-07-22 (solo fallback best-effort).
+# instaloader no funciona (IG exige login). No yt-dlp.
 flujo flyer-import inbox/correo.txt
 flujo ig-redownload --all
 flujo analyze --all
