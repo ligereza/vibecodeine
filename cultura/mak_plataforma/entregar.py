@@ -67,8 +67,49 @@ def guardar_estado(entregados, slugs):
         log("WARN no pude guardar estado: %s" % e)
 
 
-def leer_jobs_listos():
-    """Jobs con estado listo y sin error, en orden de aparicion (mas viejo primero)."""
+def leer_smoke_meta(md_rel):
+    """Lee el meta JSON que generar.py (via codex_lib.guardar_pieza) escribe
+    al final de la pieza .md -- ahi vive smoke_ok/smoke_stderr_tail (F2b/#139),
+    NO en jobs.jsonl. Busca la ULTIMA ocurrencia de la marca (el meta es
+    siempre lo ultimo que escribe guardar_pieza) para no confundirse si el
+    codigo generado tiene un comentario que por casualidad contiene el texto
+    "meta: ". Devuelve {} si el archivo no existe, no tiene la marca, o el
+    meta no es JSON valido (ej. agente_libre.py escribe un meta de TEXTO
+    plano, no json -- compatibilidad hacia atras/otros modos, ver
+    leer_jobs_listos)."""
+    full_md = os.path.join(PIEZAS_DIR, md_rel)
+    try:
+        with open(full_md, encoding="utf-8") as f:
+            texto = f.read()
+    except OSError:
+        return {}
+    marca = "\n---\nmeta: "
+    i = texto.rfind(marca)
+    if i == -1:
+        return {}
+    try:
+        meta = json.loads(texto[i + len(marca):].strip())
+    except ValueError:
+        return {}
+    return meta if isinstance(meta, dict) else {}
+
+
+def leer_jobs_listos(bypass_smoke=False):
+    """Jobs con estado listo y sin error, en orden de aparicion (mas viejo
+    primero).
+
+    F2b/#139: ademas exige smoke_ok (el sandbox de generar.py corrio Y dio
+    "PRUEBAS OK" / rc==0) salvo bypass_smoke=True (--sin-smoke, bypass
+    humano explicito y logueado). smoke_ok se enriquece desde el meta de la
+    pieza (leer_smoke_meta) si jobs.jsonl no lo trae directo.
+
+    Compatibilidad: jobs VIEJOS (de antes de F2b) o de modos que nunca
+    corren sandbox (revisar/testear/debug/mejora-libre) no tienen smoke_ok
+    -> queda None -> PASAN con warning (transicion suave, no retroactivo).
+    Solo smoke_ok == False EXPLICITO se rechaza (marca estado
+    "rechazado_smoke", mismo mecanismo de estados que ya usa el archivo --
+    en memoria para esta corrida; jobs.jsonl es un ledger append-only y no
+    se reescribe)."""
     out = []
     try:
         with open(CODEX_JOBS, encoding="utf-8") as f:
@@ -80,9 +121,30 @@ def leer_jobs_listos():
                     j = json.loads(line)
                 except ValueError:
                     continue
-                if j.get("estado") == "listo" and not (j.get("error") or "").strip():
-                    if j.get("job_id") and j.get("path"):
-                        out.append(j)
+                if j.get("estado") != "listo" or (j.get("error") or "").strip():
+                    continue
+                if not (j.get("job_id") and j.get("path")):
+                    continue
+                if "smoke_ok" not in j:
+                    meta = leer_smoke_meta(j["path"])
+                    if "smoke_ok" in meta:
+                        j["smoke_ok"] = meta["smoke_ok"]
+                        if meta["smoke_ok"] is False:
+                            j["smoke_stderr_tail"] = meta.get("smoke_stderr_tail", "")
+                smoke_ok = j.get("smoke_ok")
+                if smoke_ok is None:
+                    log("WARN %s: sin smoke_ok (job viejo o modo sin sandbox) -- pasa"
+                        % j["job_id"])
+                elif smoke_ok is False:
+                    if bypass_smoke:
+                        log("BYPASS --sin-smoke: %s entra pese a smoke_ok=False"
+                            % j["job_id"])
+                    else:
+                        j["estado"] = "rechazado_smoke"
+                        log("RECHAZADO_SMOKE %s: %s"
+                            % (j["job_id"], (j.get("smoke_stderr_tail") or "")[:200]))
+                        continue
+                out.append(j)
     except OSError as e:
         log("ERROR no pude leer %s: %s" % (CODEX_JOBS, e))
     return out
@@ -200,10 +262,17 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--limit", type=int, default=1)
+    ap.add_argument("--sin-smoke", action="store_true",
+                    help="bypass humano explicito del gate smoke_ok (F2b/#139): "
+                         "entrega igual piezas con smoke_ok=False. Queda logueado.")
     args = ap.parse_args()
 
+    if args.sin_smoke:
+        log("AVISO: --sin-smoke activo -- gate de smoke-run desactivado por "
+            "decision humana explicita esta corrida")
+
     entregados, slugs_hechos = cargar_estado()
-    jobs = leer_jobs_listos()
+    jobs = leer_jobs_listos(bypass_smoke=args.sin_smoke)
     # dedup por slug: quedarse con el job MAS NUEVO de cada slug no entregado
     por_slug = {}
     for j in jobs:
