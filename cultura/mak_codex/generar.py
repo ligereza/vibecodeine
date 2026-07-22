@@ -84,10 +84,30 @@ def generar(pedido, densidad="medio", ejecutar=True):
     else:
         print("STATUS: --sin-ejecutar: pieza guardada sin correr.", flush=True)
 
+    # F2b/#139: smoke_ok gatea la entrega en entregar.py. True SOLO si el
+    # sandbox de verdad corrio y termino con rc==0 (que en la practica
+    # significa que imprimio "PRUEBAS OK", ver PROMPT_CODER); bloqueado
+    # (patron peligroso, nunca corrio) o --sin-ejecutar cuentan como
+    # smoke_ok=False, no como "desconocido" -- entregar.py NO debe tratar
+    # una pieza nunca ejecutada como si fuera compatible-vieja.
+    if resultado.get("bloqueado"):
+        _razon_smoke = "bloqueado (patron peligroso): " + ", ".join(
+            resultado.get("motivos", []))
+    elif not ejecutar:
+        _razon_smoke = "no ejecutado (--sin-ejecutar)"
+    elif not resultado.get("ok"):
+        _razon_smoke = resultado.get("stderr") or "sandbox fallo sin stderr"
+    else:
+        _razon_smoke = ""
+    smoke_ok = (ejecutar and bool(resultado.get("ok"))
+               and not resultado.get("bloqueado", False))
+
     meta = {"pedido": pedido, "plan_por": real_plan, "codigo_por": real_coder,
-            "reparado": reparado,
+            "reparado": reparado, "smoke_ok": smoke_ok,
             "llmCalls": {"planner": planner.stats, "coder": coder.stats},
             "errors": (planner.errors + coder.errors)[:10], "ms": tiempo_ms(t0)}
+    if not smoke_ok:
+        meta["smoke_stderr_tail"] = _razon_smoke[-300:]
     _estado = ("bloqueado" if resultado.get("bloqueado")
               else ("OK" if resultado.get("ok") else "fallo sandbox"))
     print("HALLAZGO: resultado -- %s (%s, reparado=%s)"
