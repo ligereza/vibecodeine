@@ -1,25 +1,35 @@
 {
   "version": "0.56.1",
-  "date": "2026-07-20T23:59:59Z",
+  "date": "2026-07-22T16:30:00Z",
   "assistant_name": "Cauce",
-  "repo_main": "main en 0.56.1. Sin PRs abiertos, commit directo a main esta sesion (cambios chicos y verificados: instaloader removal completa, bridge nuevo, gitignore, limpieza docs/UI).",
-  "current_focus": "Ollama-WIN + SearXNG + autonomia. Organism autonomous via cron trabajo.py every 30 min + watchdogs. PRs #94 #95 open.",
+  "repo_main": "main gobernado: enforce_admins ON (todo por PR + CI, ni admin pushea directo). PRs #122-127 (capataz) + #140 (rescate stash) + #141 (fix verificador) + #142 (parth-dl video) aterrizados hoy. #143 (ratchet pyflakes) en CI. Ramas remotas == PRs abiertos, cero huerfanas.",
+  "current_focus": "MAK autonomo primario / WIN apoyo grafico oportunista (decision usuario 2026-07-22). RD completo en MAK (57GB, 1731 archivos, LAN). Siguiente paso de independencia: hook ollama-local en cadena LLM de capataz.py (deepseek-coder:6.7b ya instalado en MAK).",
   "done": [
-    "2026-07-20 GODSPEED (director handoff): Ollama-WIN revived (192.168.50.1:11434), models active, autostart via Windows Startup .cmd, MAK reaches across LAN, provider 'win' in research_lib/codex functional. MAK box hardening live (suspend/sleep/hibernate masked, cron watchdogs */5 hub:8900/research:8890-cola/codex:8891/xio, self-heal proven). SearXNG self-hosted (Docker 127.0.0.1:8888), searxng_search in research_lib.py, web_search dispatcher (searxng-first fallback to tavily) in research/panel/refutar, both call _salud_registrar, hub health shows successes live, Tavily credits no longer consumed. PRs open #94 fix(ocr) available=False (CI green both OS) + #95 feat searxng+web_search. Handover intent: zero Claude director dependence, organism autonomous via cron + watchdogs, Ollama-WIN = local provider, 15-min recall safety. Done: Sonnet 5 sesion 2026-07-20 (auth incident recovery, security audit Windows+MAK clean, Barrier mouse-sharing revived, instaloader confirmed dead+removed, bridge_issue_render.py new+live-tested 2x issue #14 fail-safe + #93 success, Blender/OneDrive/sudoers provisioned, research+codex+hub+xio all running autonomous)."
+    "2026-07-22 GODSPEED orden total (director Fable + haikus/sonnets): merge local concluido; raiz limpiada (11 reportes -> _archive, 8 scripts -> tools/mak_ops); PRs 122-127 aterrizados secuencial con gate; RESCATE 8 archivos cultura del stash 07-16 nunca aterrizados (PR #140); enforce_admins activado; issue #139 (6 NameError latentes en utilidades MAK) + fix verificador (PR #141) + ratchet pyflakes (PR #143); issue #131 resuelto tecnica (PR #142: parth-dl primaria, video->thumbnail, carrusel->primera imagen, e2e VIVO con el reel); RD 57GB -> MAK por tar|ssh integridad verificada; Pages cname=iskvw.cl configurado; exe.old cerrado (proceso huerfano, doctor limpio); MAK verificado por operador (servicios 200, cron ok, espejo fresco, gap: capataz 100% nube)."
   ],
-  "doing": [],
+  "doing": [
+    "PR #143 ratchet pyflakes en CI (merge al verde)",
+    "iskvw.cl: esperando registros CNAME en Cloudflare (usuario) para activar https_enforced"
+  ],
   "next": [
-    "Extend SearXNG to codex chain (PLAN Fase 4)",
-    "Wire codex health panel to match research/hub",
-    "Monitor PRs #94 #95 CI status; merge when green"
+    "Hook 'ollama' local en LLM(...) de capataz.py -- deepseek-coder:6.7b en MAK listo, es EL paso de independencia",
+    "pip install parth-dl en MAK si va a correr eventos alla",
+    "Decidir politica utilidades/ MAK (archivar practica vs showcase) + 10 docs candidatos a _archive + 45MB SVG dark",
+    "Video en cartelera.blend: frames auto via movieclip.frame_duration, salida FFmpeg directo (imagen vs video sin decidir)",
+    "Investigar latido.log stale 07-17 (reemplazo o fallo silencioso)",
+    "works.json cablear a portfolio.yml (pendiente heredado)"
   ],
-  "blockers": [],
+  "blockers": [
+    "Cloudflare DNS de iskvw.cl: solo el usuario (CNAME @ y www -> ligereza.github.io, DNS-only hasta cert)",
+    "xio: AccessibilityService + PAT Termux son manuales del usuario; telefono inalcanzable hoy",
+    "Ollama WIN apagado (autostart pendiente); irrelevante para MAK-autonomo salvo como acelerador"
+  ],
   "ai_stack": {
-    "architect_reviewer": "Claude Code (director; arquitectura/critico/codigo que no admite malentendido)",
-    "mechanical_internal": "subagentes Sonnet (Agent/Workflow model sonnet): lecturas pesadas, busquedas de volumen, ediciones acotadas",
-    "parked": "Gemini API PARKED por directiva del usuario 2026-07-10 (skills relevo-web/orquestacion-gemini-claude sin uso hasta nueva API)",
-    "writer_fallback_manual": "NVIDIA NIM (off-peak) y GitHub Models deepseek-v3 (8k in/4k out, tareas chicas)",
-    "local_llm": "MAK (Linux 192.168.50.2): Mistral-Nemo 12B + SearXNG 127.0.0.1:8888 + 4 APIs gratis (Tavily/OpenRouter/Groq/NVIDIA). WIN (RTX 4070): Ollama-WIN 192.168.50.1:11434 (deepseek-coder-v2:16b + llama3.1:8b), Blender 4.5.3 LTS, OneDrive via rclone - autonomo.",
-    "external_support": "Qwen web / LMArena via airdrop autocontenido (manual, no fuente de verdad)"
+    "architect_reviewer": "Claude Code (director godspeed; no lee volumen, delega y verifica)",
+    "mechanical_internal": "haikus (clasificacion/audit/e2e) + sonnets (operador remoto MAK) via Agent",
+    "parked": "Gemini API PARKED (2026-07-10)",
+    "writer_fallback_manual": "NVIDIA NIM off-peak, GitHub Models deepseek-v3",
+    "local_llm": "MAK (192.168.50.2): deepseek-coder:6.7b + gemma3:4b + nomic-embed local, qwen-agent 0.0.34, SearXNG, 4 APIs gratis. WIN (RTX 4070): Ollama apagado hoy, Blender GPU, parth-dl instalado.",
+    "external_support": "Arena/Qwen web via airdrop (manual)"
   }
 }

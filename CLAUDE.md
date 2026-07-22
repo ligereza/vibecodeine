@@ -79,7 +79,18 @@ NotImplementedError
 try/except: pass silencioso
 cambios sin verificacion
 archivos generados/caches dentro del airdrop
+reportes/snapshots/scripts one-off de agente en la RAIZ del repo
 ```
+
+Salidas de agente (diagnosticos, snapshots, checks) van al scratchpad de
+sesion o, si valen, a `tools/` (reusable) / `_archive/` (historico) via PR.
+La raiz se ensucio 2 veces (commits 35058a3 y sesion 07-21); no repetir.
+
+Main esta gobernado con `enforce_admins`: NADIE pushea directo (ni admin,
+ni agente con credencial del usuario). Todo cambio = rama + PR + CI verde.
+Los squash-merge conservan como autor al autor del PR (un merge de PR de
+MAK aparece en `git log` como commit de miskirabit: es normal, paso por el
+gate, no es push directo).
 
 ## Como trabajar
 
@@ -117,6 +128,10 @@ Cantidad de tests no es senal de calidad. Test que solo verifica un mock/modulo
 falso (no comportamiento real) es basura -- podar al encontrarlo, no sumar
 encima (caso real: tests de `ig/download.py` mockeaban un modulo `instaloader`
 falso que ya no se usaba en produccion, falsa seguridad; corregido 2026-07-20).
+Codigo autogenerado (utilidades MAK y similares): compilar NO basta -- 6 de
+24 archivos compilaban con NameError latente (import faltante, typo). Regla:
+smoke-run (ejecutarlo una vez) antes de PR; el ratchet
+`tests/test_utilidades_mak_sanidad.py` (pyflakes) bloquea nuevos casos.
 Web:
 ```bash
 cd web && npm run typecheck && npm run build:context && cd ..
@@ -190,7 +205,7 @@ LIMITES: descriptivo si; nada generativo de sintesis; psicosis NUNCA perfila per
 py -m flujo eventos flyer-auto "https://www.instagram.com/p/XXXX/"
 py -m flujo resolume automatizar jobs/<job_id>
 ```
-Instagram: instaloader NO funciona mas (IG exige login incluso anonimo, confirmado 2026-07-1x). Descarga real = mirror publico (`_download_via_mirror` en `flyer_auto.py`, scrapea imginn.com). NO `yt-dlp`.
+Instagram: descarga real = **parth-dl** (`pip install parth-dl`; `parth_dl.get_info()`, via primaria en `flyer_auto.py` desde 2026-07-22). Video/reel usa thumbnail; carrusel SOLO primera imagen. imginn.com quedo 403 Cloudflare (solo fallback best-effort); instaloader NO funciona (IG exige login); NO `yt-dlp`.
 
 **Desktop (Gemini->Claude flotante):** `desktop/` (Tkinter puro, no toca `src/flujo/` ni `web/src/`). PARKED (hereda Gemini). Detalle y config: `desktop/` README + `desktop/config.json` gitignored (NUNCA commitear, clave en texto plano).
 
