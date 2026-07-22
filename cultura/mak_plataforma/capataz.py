@@ -166,7 +166,9 @@ def pedir_decision(estado):
     )
     user = json.dumps(estado, ensure_ascii=False, indent=2)
     try:
-        llm = LLM("cerebras,groq,azure")
+        # ollama al final = MAK decide LOCAL (gemma3:4b) si toda la nube cae;
+        # red_ok() de research_lib ya lo adelanta solo cuando no hay internet.
+        llm = LLM("cerebras,groq,azure,ollama")
         texto, prov = llm.call(system, user, 500)
     except Exception as e:  # noqa: BLE001 - cadena entera caida
         return None, None, "cerebro caido: %s" % str(e)[:300]
