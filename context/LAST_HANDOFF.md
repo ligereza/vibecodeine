@@ -1,10 +1,86 @@
-﻿# LAST HANDOFF -- estado para el proximo agente
+# LAST HANDOFF -- estado para el proximo agente
 
-Version: 0.56.1 | Fecha: 2026-07-20 (noche) | Identidad: Cauce | sesion:
-rescate de sesion huerfana (capataz autonomo MAK) + cierre.
+Version: 0.56.1 | Fecha: 2026-07-22 | Identidad: Cauce | sesion:
+orden y mantencion godspeed (director Fable + haikus/sonnets delegados).
+
+## Sesion 2026-07-22 -- orden total, gobernanza, MAK autonomo
+
+DECISION DE ARQUITECTURA (usuario confirmo): MAK = autonomo primario
+(WIN solo esta prendido cuando el usuario esta en casa). WIN = apoyo de
+recursos graficos oportunista (GPU render via bridge cuando este vivo).
+Entrega por Google Drive desde quien renderiza (MAK por defecto, rclone
+ya provisto).
+
+HECHO (todo por PR, CI verde en cada uno):
+1. Merge local concluido (usuario estaba a mitad de pull) + push.
+2. Raiz limpiada: 11 reportes one-off (experimentos ollama/arena) ->
+   _archive/legacy_20260722_1110/; 8 scripts operativos -> tools/mak_ops/.
+3. PRs capataz #122-#127 aterrizados en secuencia (update-branch ->
+   CI -> squash-merge). Ramas huerfanas borradas; ramas == PRs abiertos.
+4. RESCATE: stash@{0} (07-16) tenia 8 archivos cultura/ (2483 lineas:
+   BLENDER.trilogy, blend-math-lab, research_agent docs, xio-concept)
+   que NO existian en main bajo ninguna ruta -> PR #140 MERGED.
+   El stash local quedo (classifier bloqueo drop): `git stash drop` manual.
+5. GOBERNANZA: enforce_admins ACTIVADO en branch protection de main.
+   Nadie (ni admin ni agente con credencial de usuario) pushea directo;
+   todo por PR + CI. Revertir si estorba:
+   `gh api -X DELETE repos/ligereza/vibecodeine/branches/main/protection/enforce_admins`
+6. Issue #139: audit de utilidades MAK. 6 archivos con NameError latente
+   (compilan, revientan en runtime). Fix verificador puertos PR #141
+   MERGED (util real: salud 8890/8891/8900). RATCHET PR #143: pyflakes
+   en dev-deps + test que bloquea nuevos undefined-name en utilidades/
+   (allowlist congelada a 4 legacy; pesco un 6to bug en vivo al entrar #127).
+   REGLA NUEVA para el generador MAK: smoke-run antes de PR, compilar no basta.
+7. Issue #131 (evento real, reel IG): imginn 403 Cloudflare total ->
+   PR #142 MERGED: parth-dl (get_info) via primaria; video/reel usa
+   thumbnail, carrusel SOLO primera imagen; mirror fallback. E2E VIVO
+   probado con el reel (paleta OK, productora SELVA Festival sin match DB).
+   parth-dl requiere pip install en la maquina de eventos (WIN ya lo tiene;
+   MAK falta si va a correr eventos).
+8. RD -> MAK: 57GB/1731 archivos transferidos por LAN (tar|ssh, sin nube),
+   integridad verificada (conteo identico). MAK ya tiene assets para operar
+   sin WIN. Nota: RD/AUTOMATIZACION/input_ig.jpg pudo viajar a medio
+   escribir (el e2e corria en paralelo); regenerable.
+9. Portfolio: GitHub Pages de ligereza/portfolio-auto con cname=iskvw.cl
+   configurado. FALTA USUARIO: en Cloudflare DNS agregar CNAME @ ->
+   ligereza.github.io y CNAME www -> ligereza.github.io, AMBOS DNS-only
+   (nube gris) hasta que GitHub emita el cert; despues activar
+   https_enforced (gh api -X PUT .../pages --field https_enforced=true).
+10. Limpieza local: 49 __pycache__ + .pytest_cache + _logs. Suite verde.
+11. exe.old RESUELTO: era imagen en memoria de proceso huerfano tras npm
+    install (ver sesion 07-20); doctor limpio, npm claude 2.1.217 sano.
+
+VERIFICADO EN MAK (operador sonnet, solo lectura):
+- Servicios 8890/8891/8900 todos 200; cron completo; espejo ~/flujo
+  sincroniza cada 10min (tenia el merge de #122 a minutos).
+- Ollama MAK local: deepseek-coder:6.7b + gemma3:4b + nomic-embed.
+  qwen-agent 0.0.34 instalado.
+- GAP CRITICO para autonomia: capataz.py linea ~169 usa
+  LLM('cerebras,groq,azure') -- 100% nube, SIN fallback local. Falta
+  hook 'ollama' local (deepseek-coder ya esta en localhost:11434).
+  Ese hook es EL siguiente paso de independencia real.
+- latido.log stale desde 07-17 (capataz.log si esta fresco) -- confirmar
+  si fue reemplazo de disenio o fallo silencioso.
+- Ollama WIN: APAGADO hoy (proceso no corre; pendiente autostart real).
+
+PENDIENTES USUARIO (nadie mas puede):
+- Cloudflare DNS (punto 9). AccessibilityService Xiaomi + PAT Termux
+  (xio inalcanzable hoy, 000 en IPs conocidas). git stash drop manual.
+
+DECISIONES DE POLITICA ABIERTAS (no ejecutadas a proposito):
+- utilidades/ de MAK: 20+ scripts de practica sin consumidores (audit
+  dice archivar 17; PERO MAK los sigue produciendo via PRs -- definir si
+  el showcase se queda, se archiva periodico, o el generador cambia).
+- docs/: 10 candidatos claros a _archive (MANTENIMIENTO_REPO supersedido,
+  PARA_IA*, 3 audits 06-28, TASK_PROMPTS, README_AIRDROP, 2 privacidad).
+- svg/suplementos_rd/09_contraportadas_dark: 9 SVG de ~5MB (45MB repo);
+  la plantilla real de produccion vive en Desktop/ai_illustrator.
+- Video en cartelera.blend: frames automaticos = cargar mp4 como
+  movieclip en la llamada headless y leer clip.frame_duration; salida
+  video = FFmpeg H264 directo de Blender. Sin decidir imagen vs video.
 
 ## LOOP CERRADO (2026-07-20 noche) -- GitHub ES el canal de mando
-Como una señal de la web llega a las maquinas, cableado y verificado:
+Como una senal de la web llega a las maquinas, cableado y verificado:
 1. Agente gratis (Arena, o Claude via issues con `claude.yml`) produce un
    cambio -> release `airdrop-*` (`airdrop_gate.yml`) o PR directo.
 2. CI + branch protection validan -> merge a main. (gate = los ojos)
@@ -22,10 +98,10 @@ Como una señal de la web llega a las maquinas, cableado y verificado:
    capataz.py/agente_real.py/chat_agente.py viven SOLO en la caja, NO en el
    espejo del repo todavia -- si se quieren gobernar por merge, meterlos a
    cultura/mak_plataforma/ (via PR, no push directo: branch protection).
-5. WIN NO recibe señal de repo -- es puro endpoint de inferencia Ollama
+5. WIN NO recibe senal de repo -- es puro endpoint de inferencia Ollama
    (192.168.50.1:11434) que MAK llama por HTTP. No necesita clon ni pull.
 Resultado: mergear a main = darle una orden a MAK, sin PC, sin cuenta
-Claude. GitHub es el medio de comunicacion, tal como se diseño.
+Claude. GitHub es el medio de comunicacion, tal como se diseno.
 
 ## Sesion 2026-07-20 noche -- rescate capataz + autonomia MAK
 
