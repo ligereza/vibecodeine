@@ -31,3 +31,6 @@ Violar uno = repetir el patron que hizo calificar sesiones de HORRIBLE.
 - I8 LEER LO QUE ESTA DELANTE. El email text del issue, el log real, la
   pantalla: leerlos ANTES de teorizar causas. Un reporte de fallo propio
   puede estar literalmente pegado en el issue.
+
+I1 es la version canonica de la regla de verificacion; CLAUDE.md y
+DOCTRINA_CLAUDE.md la referencian.

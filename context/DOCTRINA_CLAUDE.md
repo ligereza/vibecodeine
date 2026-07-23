@@ -141,7 +141,8 @@ archivo vivo, no tu palabra.
 - Un resultado sospechosamente rapido/bueno: cronometralo vos antes de certificar.
 
 ### Autonomia y self-repair
-- Cron para autonomia, NO loops que el usuario rechazo. Los watchdogs (`*/5`)
+- Cron para autonomia, NO loops que el usuario rechazo (rechazo fechado
+  2026-07-15, commit 764b190 "n8n cerrado fallido"). Los watchdogs (`*/5`)
   reviven servicios; el trinquete de uptime es el cron, no la supervision manual.
 - Airdrop = canal de control sin PC (release `airdrop-*` -> Actions valida -> PR).
 - Si un modelo local va a tomar un rol de agente, necesita las TRES cosas: un

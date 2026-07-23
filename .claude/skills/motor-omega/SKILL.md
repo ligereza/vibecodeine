@@ -19,11 +19,17 @@ qué punto lo agarrés.
 ## Los 5 pasos, en orden, sin saltear
 
 ### (a) Semilla
-Elegí una ⊕ viva de `puente/SEMILLAS.md`, o un pedido real que esté en `inbox/`
-(correo, encargo, entrega pendiente). Está **prohibido** arrancar de "tengo una
-idea buena" — eso no es una semilla, es inercia con disfraz. Si no hay ⊕ viva
-que sirva y no hay pedido real en inbox, no hay paso (a): el motor se queda
-apagado y eso es el resultado correcto, no un bloqueo a resolver.
+Elegí una ⊕ viva de `puente/SEMILLAS.md`, un pedido real que esté en `inbox/`
+(correo, encargo, entrega pendiente), o una intuición humana nombrada del
+usuario — un pedido o idea que el usuario trae, aunque no venga de la tabla
+⊕ ni del inbox. Esta última cuenta como origen válido de primera clase: no
+hace falta disfrazarla de "pedido formal" para que cuente como semilla. Lo
+que sigue **prohibido** es que un agente arranque por ocurrencia propia
+("tengo una idea buena", "sería buena idea") — eso no es una semilla, es
+inercia con disfraz, y la prohibición aplica al agente, no al usuario. Si no
+hay ⊕ viva que sirva, ni pedido real en inbox, ni intuición nombrada del
+usuario, no hay paso (a): el motor se queda apagado y eso es el resultado
+correcto, no un bloqueo a resolver.
 
 Antes de seguir, nombrá en voz alta (o por escrito) cuál ⊕ o qué ítem de inbox
 es el origen. Si no podés nombrarlo, todavía no hay semilla.
@@ -53,6 +59,12 @@ juzgar ("pierde si no me convence") no cuenta: eso deja la pieza en suspenso
 igual que dejó a OBRA_02 en `idea_generativa`. Escribí la Ω11 en el mismo lugar
 donde vayas a registrar el resultado (ver paso e) para que quede fechada junto
 con la semilla.
+
+Regla dura: sin Ω11 declarada ANTES de producir, la pieza **no se expone** —
+no se entrega, no se publica, no sale del scratchpad/rama. La declaración
+retroactiva ("la declaro ahora, tarde") ya no es una práctica aceptable ni se
+registra como "honesto, tarde": una pieza sin Ω11 previa queda no expuesta
+hasta que exista una Ω11 real, aunque el trabajo ya esté terminado.
 
 ### (e) Registro
 El resultado —éxito, indiferencia o fracaso— se fecha en `puente/SEMILLAS.md`,
