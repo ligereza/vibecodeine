@@ -32,5 +32,13 @@ Violar uno = repetir el patron que hizo calificar sesiones de HORRIBLE.
   pantalla: leerlos ANTES de teorizar causas. Un reporte de fallo propio
   puede estar literalmente pegado en el issue.
 
+- I9 RUTEO Y AISLAMIENTO DE BUILDERS (2026-07-23; causa: colision de dos
+  agentes en el checkout principal, archivos untracked perdidos; retiro:
+  cuando el harness aisle workspaces solo). Todo builder nace en la rama
+  de SU linea (db/ONG -> rd, curatoria/artistico -> iskvw, repo/infra ->
+  mejoras) y trabaja en git worktree PROPIO, nunca en el checkout
+  principal. El checkout principal es del usuario y del director (solo
+  lectura).
+
 I1 es la version canonica de la regla de verificacion; CLAUDE.md y
 DOCTRINA_CLAUDE.md la referencian.
