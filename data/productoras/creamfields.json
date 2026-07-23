@@ -5,7 +5,7 @@
   "tipos_fecha": ["FESTIVAL", "HEADLINERS", "RAVE", "OPEN_AIR"],
   "logos": [
     {"id": "creamfields_primary", "knowledge": "knowledge/logos/creamfields.yaml", "estado": "source_needed",
-     "notas": "yaml existente marca status=needs_vectorization. 2 candidatos de imagen en curatoria PR #210 (categoria=logo, sin copiar): CREAMFIELDS/326185116_1242179316368981_6548658173329207605_n.png (obra_6d0ccb045c) y CREAMFIELDS/Comp 1 (0-00-30-04).png (obra_defa9d8353)."}
+     "notas": "yaml existente marca status=needs_vectorization. 2 candidatos de imagen en curatoría PR #210 (categoria=logo, sin copiar): CREAMFIELDS/326185116_1242179316368981_6548658173329207605_n.png (obra_6d0ccb045c) y CREAMFIELDS/Comp 1 (0-00-30-04).png (obra_defa9d8353)."}
   ],
   "venues": [
     {
@@ -13,10 +13,10 @@
       "venue_id": "espacio_riesco",
       "preferido": true,
       "estado": "ejemplo",
-      "notas": "Referencia de ESCALA mainstream (recinto grande), NO sede confirmada por fecha. Marcado estado=ejemplo: confirmar la sede real de cada edicion antes de usar como dato."
+      "notas": "Referencia de ESCALA mainstream (recinto grande), NO sede confirmada por fecha. Marcado estado=ejemplo: confirmar la sede real de cada edición antes de usar como dato."
     },
     {
-      "nombre": "Club Hipico, Santiago Chile",
+      "nombre": "Club Hípico, Santiago Chile",
       "venue_id": null,
       "preferido": false,
       "estado": "candidato_sin_confirmar",
@@ -24,12 +24,12 @@
     }
   ],
   "confirmed": "",
-  "notes": "Marca de festival EDM masivo. tipos_fecha son definicionales (festival de cabezas de cartel). El logo canonico existe en knowledge/logos/creamfields.yaml (source_needed). El venue Espacio Riesco es un ejemplo de escala, no una sede confirmada. Complementado con PR #210 (candidatos_db.jsonl match_ratio=1.0, obra_0304b8fe9a).",
+  "notes": "Marca de festival EDM masivo. tipos_fecha son definicionales (festival de cabezas de cartel). El logo canónico existe en knowledge/logos/creamfields.yaml (source_needed). El venue Espacio Riesco es un ejemplo de escala, no una sede confirmada. Complementado con PR #210 (candidatos_db.jsonl match_ratio=1.0, obra_0304b8fe9a).",
   "eventos": [
     {
       "nombre": "Creamfields Chile 2025",
       "fecha": "11-12 octubre 2025",
-      "venue": "Club Hipico, Santiago",
+      "venue": "Club Hípico, Santiago",
       "estado": "pasado",
       "fuente": "PR #210 obra_0304b8fe9a (ruta_rel FLYER/SEGUNDOTRIPLE.mp4), fecha_cruda '11 - 12 Octubre 2025', match_ratio 1.0"
     }
