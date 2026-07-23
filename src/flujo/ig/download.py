@@ -79,6 +79,72 @@ def _parth_image_urls(data: dict) -> tuple[list[str], bool]:
     return urls, is_video
 
 
+def _meta_content(html: str, prop: str) -> str | None:
+    """Extrae content="..." de un <meta property="prop" .../>, en cualquier
+    orden de atributos (property antes o despues de content)."""
+    prop_re = re.escape(prop)
+    pattern = re.compile(
+        r'<meta\s+[^>]*?property=["\']' + prop_re + r'["\'][^>]*?content=["\']([^"\']+)["\']',
+        re.IGNORECASE,
+    )
+    m = pattern.search(html)
+    if not m:
+        pattern2 = re.compile(
+            r'<meta\s+[^>]*?content=["\']([^"\']+)["\'][^>]*?property=["\']' + prop_re + r'["\']',
+            re.IGNORECASE,
+        )
+        m = pattern2.search(html)
+    if not m:
+        return None
+    return html_mod.unescape(m.group(1))
+
+
+def _cffi_download(url: str, shortcode: str, output_dir: Path) -> dict | None:
+    """Via secundaria: curl_cffi con impersonate="chrome".
+
+    parth-dl (Linux) recibe login-wall de IG por fingerprint TLS; curl_cffi
+    imita el fingerprint TLS de Chrome y obtiene la pagina real (verificado
+    2026-07-23 en el box MAK Debian, https://www.instagram.com/p/DZdW4_vmY4l/).
+    Lazy import: el repo funciona sin la dep. None => caer al mirror.
+    """
+    try:
+        from curl_cffi import requests as cffi_requests
+    except ImportError:
+        return None
+    try:
+        session = cffi_requests.Session()
+        page = session.get(url, impersonate="chrome", timeout=30)
+        html = page.text
+
+        image_url = _meta_content(html, "og:image")
+        if not image_url:
+            return None
+        is_video = _meta_content(html, "og:video") is not None
+        caption = (_meta_content(html, "og:description")
+                   or _meta_content(html, "og:title") or "")
+
+        img_resp = session.get(image_url, impersonate="chrome", timeout=30)
+        dst = output_dir / "input_ig.jpg"
+        dst.write_bytes(img_resp.content)
+        if caption:
+            (output_dir / "ig_caption.txt").write_text(caption, encoding="utf-8")
+    except Exception:
+        return None
+
+    return {
+        "status": "downloaded",
+        "shortcode": shortcode,
+        "url": url,
+        "media_type": "video" if is_video else "image",
+        "files": [str(dst)],
+        "file_count": 1,
+        "caption": caption,
+        "owner": "",
+        "date": "",
+        "is_video": is_video,
+    }
+
+
 def _parth_download(url: str, shortcode: str, output_dir: Path) -> dict | None:
     """Via primaria: parth-dl (pip install parth-dl). None => caer al mirror."""
     try:
@@ -114,11 +180,14 @@ def _parth_download(url: str, shortcode: str, output_dir: Path) -> dict | None:
 
 
 def download_post(url: str, output_dir: Path, retries: int = 1) -> dict:
-    """Descarga IG: parth-dl primaria, mirror imginn fallback.
+    """Descarga IG: parth-dl primaria, curl_cffi (impersonate) secundaria,
+    mirror imginn ultimo fallback.
 
     imginn quedo 403 Cloudflare para posts (2026-07-22); parth-dl cubre
-    posts, carruseles y video/reel (thumbnail como imagen). instaloader
-    murio (IG exige login incluso anonimo).
+    posts, carruseles y video/reel (thumbnail como imagen) pero en Linux
+    puede pegar login-wall por fingerprint TLS -- ahi entra curl_cffi
+    (impersonate="chrome", verificado 2026-07-23). instaloader murio (IG
+    exige login incluso anonimo).
     """
     url = canonicalizar_url(url)
     shortcode = extract_shortcode(url)
@@ -133,6 +202,8 @@ def download_post(url: str, output_dir: Path, retries: int = 1) -> dict:
     (output_dir / "ig_caption.txt").unlink(missing_ok=True)
 
     resultado = _parth_download(url, shortcode, output_dir)
+    if resultado is None:
+        resultado = _cffi_download(url, shortcode, output_dir)
     if resultado is not None:
         return resultado
 
