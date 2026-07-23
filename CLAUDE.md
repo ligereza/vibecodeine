@@ -146,6 +146,11 @@ py -m compileall src/flujo
 py -m pytest tests/ -q
 py -m flujo verify
 ```
+Salvedad de DOCTRINA (2026-07-20, ver `docs/handoffs/archive` PR #97): el
+veredicto de un PR es su matriz de CI (ubuntu+windows), NUNCA el pytest local
+en un worktree -- el editable install importa del checkout principal, y el
+worktree puede pasar testeando el codigo equivocado. Correlo local igual por
+higiene, pero no lo declares veredicto final; eso lo da CI.
 Chequeo de cobertura (opcional, no bloquea): `py -m pytest tests/ --cov=src/flujo --cov-report=term-missing:skip-covered`.
 Cantidad de tests no es senal de calidad. Test que solo verifica un mock/modulo
 falso (no comportamiento real) es basura -- podar al encontrarlo, no sumar
