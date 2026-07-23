@@ -263,4 +263,4 @@ Contradiccion entre fuentes, orden: usuario -> este `CLAUDE.md` -> `context/LAST
 - `puente/OMEGA_MAP.md`: mapa Omega <-> flujo.
 - `puente/SEMILLAS.md`: semillas fechadas -- todo proyecto nuevo arranca de aca.
 - `PLAN_ANUAL_2026-2027.md`: crecimiento con Omega11 por trimestre.
-- skill `motor-omega`: protocolo para piezas nuevas.
+- skill `motor-omega`: 2 reglas pa piezas (Omega11 antes de exponer; fracaso no se reinterpreta).
