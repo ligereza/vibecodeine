@@ -5,29 +5,44 @@ Consolida fichas.jsonl (schema de percepcion.py: fuente, ruta_rel, tipo,
 categoria, ocr_texto, vision{descripcion,estilo,colores,tipo_obra},
 datos_evento{productora,venue,fecha,handles}, calidad_senal, error) en
 candidatos de productora/venue para data/productoras y knowledge/venues,
-con 3 reglas obligatorias (evidencia real, no negociables):
+con 4 reglas obligatorias (evidencia real del corpus, no negociables):
 
-1. Colapso de secuencias: fichas del mismo directorio cuyo nombre es
+1. Filtro de fuente: el jsonl real trae fichas rd E ig mezcladas. Solo se
+   procesa `--fuente` (default "rd"); el resto se descarta ANTES de
+   contar/colapsar/candidatar. Cada linea de candidatos_db.jsonl lleva su
+   "fuente".
+2. Colapso de secuencias: fichas del mismo directorio cuyo nombre es
    numerico correlativo (0001.png..0NNN.png) o difiere solo en sufijo
-   numerico = UNA obra. Representante = mejor calidad_senal (alta>media>
-   baja); se conserva miembros_n. Evidencia: un video frame-dump inflaba
-   una productora x200.
-2. Fuzzy-match (difflib, texto normalizado: lower/sin tildes/sin
+   numerico = UNA obra. Representante (para ruta_rel/calidad_senal) =
+   mejor calidad_senal (alta>media>baja); se conserva miembros_n. La
+   CATEGORIA de la obra es la MAYORIA entre las categorias de los
+   miembros (prioridad flyer_evento > foto_evento ante empate) -- NO la
+   del representante: un representante de mejor calidad pero mal
+   clasificado como material_rd por vision (evidencia real: ~206 fichas
+   Sundeck) no debe borrar la productora de la obra. datos_evento de la
+   obra = agregacion cross-miembro entre los miembros cuya categoria
+   PROPIA sea flyer_evento/foto_evento: productora/venue/fecha = valor
+   no vacio mas frecuente; handles = union sin duplicados.
+3. Fuzzy-match (difflib, texto normalizado: lower/sin tildes/sin
    puntuacion) contra data/productoras/*.json y knowledge/productoras|
    venues/*.yaml -- ratio>=0.82 = canonico, 0.70-0.82 = dudoso, <0.70 =
    "nuevo?". Jamas se manda texto literal a la DB.
-3. Separacion: solo categoria flyer_evento/foto_evento aporta
-   datos_evento; material_rd/ficha_sustancia/logo NUNCA generan
+4. Separacion: solo categoria (de obra) flyer_evento/foto_evento aporta
+   datos_evento; material_rd/ficha_sustancia/logo/otro NUNCA generan
    candidato productora/venue. Valores basura (<3 caracteres
-   alfanumericos, glitches tipo "e)") se descartan.
+   alfanumericos, glitches tipo "e)") se descartan. Identidad propia: RD
+   ("REDUCIENDODANO.CL", sus mails, "RD") no es una productora/venue
+   real -- se marca "identidad_propia" y NUNCA genera candidato nuevo ni
+   propuesta.
 
-    python3 extraccion_db.py FICHAS.jsonl --outdir DIR
+    python3 extraccion_db.py FICHAS.jsonl --outdir DIR [--fuente rd]
         [--catalogo-productoras RUTA] [--catalogo-venues RUTA]
 
 Salidas en --outdir:
 - candidatos_db.jsonl: una linea por obra colapsada.
 - INFORME_CANDIDATOS.md: resumen ejecutivo ASCII.
-- propuestas/*.md: borrador por productora NUEVA con >=2 obras.
+- propuestas/*.md: borrador por productora NUEVA con >=2 obras (nunca
+  para obras marcadas identidad_propia).
 
 Este script NUNCA escribe en data/ ni knowledge/: son solo catalogos de
 lectura para el fuzzy-match. stdlib puro; PyYAML es opcional (si no
@@ -57,12 +72,30 @@ CATEGORIAS_CON_EVENTO = ("flyer_evento", "foto_evento")
 MIN_ALFANUM_VALIDO = 3
 MIN_OBRAS_PROPUESTA = 2
 
+DEFAULT_FUENTE = "rd"
+
 RANK_CALIDAD = {"alta": 3, "media": 2, "baja": 1}
 
+# Deny-list de identidad propia (RD/ONG, no una productora/venue real).
+# Match case-insensitive tras normalizar (normalizar_texto). Los patrones
+# LARGOS (>UMBRAL_PATRON_CORTO_IDENTIDAD chars, ej. dominios/mails) siguen
+# por CONTAINS. Los patrones CORTOS (ej. "rd") matchean por PALABRA
+# COMPLETA (\b...\b) para evitar falsos positivos confirmados contra el
+# corpus real: "records", "yard", "hardgroove" contienen "rd" como
+# substring pero NO son RD.
+IDENTIDAD_PROPIA = (
+    "reduciendodano.cl",
+    "eventos@reduciendodano.cl",
+    "eventos@reduciendo.cl",
+    "rd",
+)
+
+UMBRAL_PATRON_CORTO_IDENTIDAD = 3
+
 CAMPOS_CANDIDATO_JSONL = (
-    "obra_id", "ruta_rel", "miembros_n", "productora_cruda",
+    "obra_id", "fuente", "ruta_rel", "miembros_n", "productora_cruda",
     "productora_canonica", "match_ratio", "venue_crudo", "venue_canonico",
-    "fecha_cruda", "handles", "categoria", "calidad_senal",
+    "fecha_cruda", "handles", "categoria", "calidad_senal", "identidad_propia",
 )
 
 
@@ -114,8 +147,30 @@ def valor_limpio(valor) -> str:
     return "" if es_basura(valor) else valor
 
 
+def es_identidad_propia(crudo: str) -> bool:
+    """True si `crudo` (productora o venue) es la ONG misma (RD), no una
+    productora/venue real -- ver IDENTIDAD_PROPIA. Patrones cortos
+    (<=UMBRAL_PATRON_CORTO_IDENTIDAD) matchean por palabra completa
+    (\\b...\\b); patrones largos (dominios/mails) por contains -- evita
+    que "records"/"yard"/"hardgroove" (contienen "rd" como substring)
+    disparen falso positivo."""
+    norm = normalizar_texto(crudo)
+    if not norm:
+        return False
+    for patron in IDENTIDAD_PROPIA:
+        patron_norm = normalizar_texto(patron)
+        if not patron_norm:
+            continue
+        if len(patron_norm) <= UMBRAL_PATRON_CORTO_IDENTIDAD:
+            if re.search(r"\b%s\b" % re.escape(patron_norm), norm):
+                return True
+        elif patron_norm in norm:
+            return True
+    return False
+
+
 # ---------------------------------------------------------------------------
-# Carga de fichas
+# Carga de fichas + filtro de fuente
 # ---------------------------------------------------------------------------
 
 def cargar_fichas(ruta) -> list[dict]:
@@ -136,16 +191,25 @@ def cargar_fichas(ruta) -> list[dict]:
     return fichas
 
 
+def filtrar_por_fuente(fichas: list[dict], fuente: str) -> list[dict]:
+    """El jsonl real trae fichas rd E ig mezcladas -- se procesa SOLO
+    `fuente` (default "rd"). Si `fuente` es falsy (None/""), no filtra
+    (uso interno/tests; el CLI siempre manda un valor)."""
+    if not fuente:
+        return list(fichas)
+    return [f for f in fichas if (f.get("fuente") or "") == fuente]
+
+
 def separar_fichas(fichas: list[dict]) -> tuple[list[dict], list[dict]]:
     """(sin_error, con_error). Fichas con error != null se apartan aca
-    mismo, antes del colapso: no aportan candidato (regla 3)."""
+    mismo, antes del colapso: no aportan candidato (regla 4)."""
     con_error = [f for f in fichas if f.get("error")]
     sin_error = [f for f in fichas if not f.get("error")]
     return sin_error, con_error
 
 
 # ---------------------------------------------------------------------------
-# Regla 1: colapso de secuencias
+# Regla 2: colapso de secuencias (+ categoria por mayoria)
 # ---------------------------------------------------------------------------
 
 _RE_SUFIJO_NUM = re.compile(r"^(.*?)(\d+)$")
@@ -172,12 +236,15 @@ def _rango_calidad(ficha: dict) -> int:
 
 
 def colapsar_secuencias(fichas: list[dict]) -> list[dict]:
-    """Agrupa `fichas` (ya sin error) por clave_secuencia() en obras.
+    """Agrupa `fichas` (ya sin error, ya filtradas por fuente) por
+    clave_secuencia() en obras.
 
     Cada obra: {"obra_id", "miembros_n", "representante" (la ficha de
-    mejor calidad_senal del grupo), "miembros" (lista completa)}. Orden
-    de entrada estable (por ruta_rel) para que el desempate de
-    representante sea determinista."""
+    mejor calidad_senal del grupo -- fija ruta_rel/calidad_senal/fuente
+    de la obra), "miembros" (lista completa -- fija categoria y
+    datos_evento de la obra, ver categoria_obra() / construir_candidato())}.
+    Orden de entrada estable (por ruta_rel) para que todo desempate sea
+    determinista."""
     fichas_ordenadas = sorted(fichas, key=lambda f: f.get("ruta_rel", "") or "")
     grupos: dict[tuple, list[dict]] = {}
     orden_claves: list[tuple] = []
@@ -204,8 +271,72 @@ def colapsar_secuencias(fichas: list[dict]) -> list[dict]:
     return obras
 
 
+def categoria_obra(miembros: list[dict]) -> str:
+    """Categoria de la obra colapsada = MAYORIA entre las categorias de
+    los miembros (no la del representante -- ver regla 2 en el docstring
+    del modulo). Empate: prioridad flyer_evento > foto_evento > resto
+    (alfabetico, deterministico)."""
+    conteo = Counter((m.get("categoria") or "") for m in miembros)
+    max_cnt = max(conteo.values())
+    empatados = [cat for cat, cnt in conteo.items() if cnt == max_cnt]
+    if len(empatados) == 1:
+        return empatados[0]
+    for prioridad in CATEGORIAS_CON_EVENTO:
+        if prioridad in empatados:
+            return prioridad
+    return sorted(empatados)[0]
+
+
+def _valores_miembros_evento(miembros: list[dict], campo: str) -> list[str]:
+    """Valores no vacios (a_texto crudo, SIN filtro de basura -- ver nota
+    en construir_candidato) de `campo` (dentro de datos_evento) de los
+    miembros cuya categoria PROPIA sea flyer_evento/foto_evento, en
+    orden estable (ruta_rel). El filtro de basura/identidad-propia se
+    aplica DESPUES de elegir el valor mas frecuente (construir_candidato),
+    no aca: si se filtrara basura antes, "RD" (2 alfanum, identidad
+    propia) nunca llegaria a agregarse ni a marcarse como tal."""
+    valores: list[str] = []
+    for m in sorted(miembros, key=lambda f: f.get("ruta_rel", "") or ""):
+        if (m.get("categoria") or "") not in CATEGORIAS_CON_EVENTO:
+            continue
+        crudo = (m.get("datos_evento") or {}).get(campo)
+        valor = a_texto(crudo)
+        if valor:
+            valores.append(valor)
+    return valores
+
+
+def _valor_mas_frecuente(miembros: list[dict], campo: str) -> str:
+    """Valor no vacio MAS FRECUENTE (crudo, sin filtrar) de `campo` entre
+    los miembros que aportan datos_evento (regla 4). Empate: primer
+    valor visto (orden estable por ruta_rel) entre los que llegan al
+    maximo. "" si ningun miembro aporta valor."""
+    valores = _valores_miembros_evento(miembros, campo)
+    if not valores:
+        return ""
+    conteo = Counter(valores)
+    max_cnt = max(conteo.values())
+    for valor in valores:
+        if conteo[valor] == max_cnt:
+            return valor
+    return valores[0]  # inalcanzable, defensivo
+
+
+def _handles_union(miembros: list[dict]) -> list[str]:
+    """Union de handles (sin duplicados, orden de aparicion estable) de
+    los miembros que aportan datos_evento (regla 4)."""
+    vistos: list[str] = []
+    for m in sorted(miembros, key=lambda f: f.get("ruta_rel", "") or ""):
+        if (m.get("categoria") or "") not in CATEGORIAS_CON_EVENTO:
+            continue
+        for h in (m.get("datos_evento") or {}).get("handles") or []:
+            if isinstance(h, str) and h.strip() and h.strip() not in vistos:
+                vistos.append(h.strip())
+    return vistos
+
+
 # ---------------------------------------------------------------------------
-# Regla 2: catalogos (data/productoras, knowledge/productoras, knowledge/venues)
+# Regla 3: catalogos (data/productoras, knowledge/productoras, knowledge/venues)
 # ---------------------------------------------------------------------------
 
 def _extraer_entrada(datos: dict) -> tuple[str, list[str]]:
@@ -324,56 +455,85 @@ def clasificar_ratio(ratio: float) -> str:
     return "nuevo"
 
 
+def _match_o_propio(crudo: str, catalogo: list[dict], identidad_propia: bool) -> tuple:
+    """Igual que mejor_match(), pero si `identidad_propia` es True (o
+    `crudo` esta vacio) nunca corre el fuzzy-match: devuelve (None, 0.0)
+    directo (regla 4 -- RD nunca genera candidato, ni siquiera dudoso)."""
+    if identidad_propia or not crudo:
+        return None, 0.0
+    canonico, ratio = mejor_match(crudo, catalogo)
+    canonico = canonico if clasificar_ratio(ratio) == "match" else None
+    return canonico, ratio
+
+
 # ---------------------------------------------------------------------------
-# Regla 3: separacion categoria -> datos_evento, construccion del candidato
+# Regla 4: separacion categoria -> datos_evento (+ identidad propia),
+# construccion del candidato
 # ---------------------------------------------------------------------------
 
 def construir_candidato(obra: dict, catalogo_productoras: list[dict],
                          catalogo_venues: list[dict]) -> dict:
-    """Candidato completo (uso interno, incluye venue_match_ratio para
-    clasificar venues en el informe -- ese campo NO se escribe en
-    candidatos_db.jsonl, ver CAMPOS_CANDIDATO_JSONL)."""
+    """Candidato completo (uso interno -- incluye venue_match_ratio e
+    identidad_propia_productora/venue por separado para clasificar/filtrar
+    en el informe; esos campos NO se escriben en candidatos_db.jsonl, ver
+    CAMPOS_CANDIDATO_JSONL)."""
     rep = obra["representante"]
-    categoria = rep.get("categoria") or ""
-    datos_evento = rep.get("datos_evento") or {}
+    miembros = obra["miembros"]
+    categoria = categoria_obra(miembros)
 
     if categoria in CATEGORIAS_CON_EVENTO:
-        productora_cruda = valor_limpio(datos_evento.get("productora", ""))
-        venue_crudo = valor_limpio(datos_evento.get("venue", ""))
-        fecha_cruda = a_texto(datos_evento.get("fecha"))
-        handles = [
-            h.strip() for h in (datos_evento.get("handles") or [])
-            if isinstance(h, str) and h.strip()
-        ]
+        productora_bruta = _valor_mas_frecuente(miembros, "productora")
+        venue_bruto = _valor_mas_frecuente(miembros, "venue")
+        fecha_cruda = _valor_mas_frecuente(miembros, "fecha")
+        handles = _handles_union(miembros)
     else:
         # material_rd / ficha_sustancia / logo / otro: NUNCA aportan
-        # datos_evento, aunque vision haya rellenado algo (regla 3).
-        productora_cruda = ""
-        venue_crudo = ""
+        # datos_evento, aunque vision haya rellenado algo en algun
+        # miembro (regla 4).
+        productora_bruta = ""
+        venue_bruto = ""
         fecha_cruda = ""
         handles = []
 
-    productora_canonica, ratio_prod = mejor_match(productora_cruda, catalogo_productoras)
-    venue_canonico, ratio_venue = mejor_match(venue_crudo, catalogo_venues)
+    # Identidad propia se chequea sobre el valor crudo (a_texto, SIN
+    # filtro de basura): "RD" tiene solo 2 caracteres alfanumericos y
+    # es_basura() lo descartaria antes de que llegue a marcarse como
+    # identidad propia. El basura-filter (valor_limpio) solo se aplica
+    # a lo que NO es identidad propia -- RD "vale" como marca de
+    # identidad, no es ruido.
+    identidad_propia_productora = es_identidad_propia(productora_bruta)
+    identidad_propia_venue = es_identidad_propia(venue_bruto)
+
+    productora_cruda = productora_bruta if identidad_propia_productora else (
+        "" if es_basura(productora_bruta) else productora_bruta
+    )
+    venue_crudo = venue_bruto if identidad_propia_venue else (
+        "" if es_basura(venue_bruto) else venue_bruto
+    )
+
+    productora_canonica, ratio_prod = _match_o_propio(
+        productora_cruda, catalogo_productoras, identidad_propia_productora)
+    venue_canonico, ratio_venue = _match_o_propio(
+        venue_crudo, catalogo_venues, identidad_propia_venue)
 
     return {
         "obra_id": obra["obra_id"],
+        "fuente": rep.get("fuente", "") or "",
         "ruta_rel": rep.get("ruta_rel", ""),
         "miembros_n": obra["miembros_n"],
         "productora_cruda": productora_cruda,
-        "productora_canonica": (
-            productora_canonica if clasificar_ratio(ratio_prod) == "match" else None
-        ),
+        "productora_canonica": productora_canonica,
         "match_ratio": ratio_prod,
         "venue_crudo": venue_crudo,
-        "venue_canonico": (
-            venue_canonico if clasificar_ratio(ratio_venue) == "match" else None
-        ),
+        "venue_canonico": venue_canonico,
         "venue_match_ratio": ratio_venue,
         "fecha_cruda": fecha_cruda,
         "handles": handles,
         "categoria": categoria,
         "calidad_senal": rep.get("calidad_senal", "") or "",
+        "identidad_propia": identidad_propia_productora or identidad_propia_venue,
+        "identidad_propia_productora": identidad_propia_productora,
+        "identidad_propia_venue": identidad_propia_venue,
     }
 
 
@@ -397,11 +557,12 @@ def escribir_candidatos_jsonl(ruta, candidatos: list[dict]) -> None:
 
 def agrupar_nuevos_por_productora(candidatos_nuevos: list[dict]) -> list[dict]:
     """candidatos_nuevos: candidatos cuya productora_cruda no matcheo
-    catalogo (clasificacion "nuevo"). Clustering greedy determinista:
-    se procesan ordenados por texto normalizado; cada crudo se suma al
-    primer cluster cuyo representante matchea >=RATIO_CANONICO contra
-    el, si no arranca cluster propio. Cada cluster: {"variantes": [str,
-    ...] (orden de aparicion, con repetidos), "obras": [candidato, ...]}."""
+    catalogo (clasificacion "nuevo") y que NO son identidad_propia.
+    Clustering greedy determinista: se procesan ordenados por texto
+    normalizado; cada crudo se suma al primer cluster cuyo representante
+    matchea >=RATIO_CANONICO contra el, si no arranca cluster propio.
+    Cada cluster: {"variantes": [str, ...] (orden de aparicion, con
+    repetidos), "obras": [candidato, ...]}."""
     ordenados = sorted(
         candidatos_nuevos, key=lambda c: normalizar_texto(c["productora_cruda"])
     )
@@ -447,13 +608,14 @@ def _tabla_conteo(titulo: str, conteo: Counter) -> list[str]:
     return lineas
 
 
-def generar_informe(fichas_todas: list[dict], sin_error: list[dict],
-                     con_error: list[dict], obras: list[dict],
+def generar_informe(fuente: str, total_leidas: int, fichas_procesadas: list[dict],
+                     sin_error: list[dict], con_error: list[dict], obras: list[dict],
                      candidatos: list[dict], clusters_nuevos: list[dict]) -> str:
-    total_fichas = len(fichas_todas)
+    total_fichas = len(fichas_procesadas)
     total_sin_error = len(sin_error)
     total_obras = len(obras)
     total_error = len(con_error)
+    total_descartadas_fuente = total_leidas - total_fichas
 
     por_categoria = Counter(c.get("categoria") or "(sin_categoria)" for c in candidatos)
 
@@ -461,15 +623,16 @@ def generar_informe(fichas_todas: list[dict], sin_error: list[dict],
     dudoso_prod: list[dict] = []
     match_venue: Counter = Counter()
     dudoso_venue: list[dict] = []
+    identidad_propia_obras = [c for c in candidatos if c["identidad_propia"]]
 
     for c in candidatos:
-        if c["productora_cruda"]:
+        if c["productora_cruda"] and not c["identidad_propia_productora"]:
             cat_prod = clasificar_ratio(c["match_ratio"])
             if cat_prod == "match":
                 match_prod[c["productora_canonica"]] += 1
             elif cat_prod == "dudoso":
                 dudoso_prod.append(c)
-        if c["venue_crudo"]:
+        if c["venue_crudo"] and not c["identidad_propia_venue"]:
             cat_venue = clasificar_ratio(c["venue_match_ratio"])
             if cat_venue == "match":
                 match_venue[c["venue_canonico"]] += 1
@@ -481,7 +644,10 @@ def generar_informe(fichas_todas: list[dict], sin_error: list[dict],
         "",
         "## Totales",
         "",
-        "- Fichas totales (fuente rd): %d" % total_fichas,
+        "- Fuente procesada: %s" % fuente,
+        "- Fichas leidas del archivo (todas las fuentes): %d" % total_leidas,
+        "- Fichas descartadas por fuente distinta de '%s': %d" % (fuente, total_descartadas_fuente),
+        "- Fichas totales (fuente %s): %d" % (fuente, total_fichas),
         "- Fichas con error (apartadas, no aportan): %d" % total_error,
         "- Fichas validas (sin error): %d" % total_sin_error,
         "- Obras tras colapso de secuencias: %d" % total_obras,
@@ -535,6 +701,16 @@ def generar_informe(fichas_todas: list[dict], sin_error: list[dict],
         lineas.append("(sin candidatos nuevos)")
     lineas.append("")
 
+    lineas.append("## Identidad propia (RD/ONG -- excluidas de match/dudoso/nuevo/propuestas)")
+    lineas.append("")
+    if identidad_propia_obras:
+        for c in identidad_propia_obras:
+            lineas.append("- obra %s -- productora_cruda=%s venue_crudo=%s" % (
+                c["obra_id"], _md(c["productora_cruda"] or "-"), _md(c["venue_crudo"] or "-")))
+    else:
+        lineas.append("(ninguna)")
+    lineas.append("")
+
     lineas.append("## Fichas con error")
     lineas.append("")
     if con_error:
@@ -560,7 +736,9 @@ def _slug(texto: str) -> str:
 
 def escribir_propuestas(dir_propuestas, clusters_nuevos: list[dict]) -> list[Path]:
     """Un .md por cluster de productora NUEVA con >=2 obras. NUNCA
-    escribe en data/ ni knowledge/ -- son borradores para PR humano."""
+    escribe en data/ ni knowledge/ -- son borradores para PR humano.
+    `clusters_nuevos` ya viene sin obras identidad_propia (filtradas
+    antes de agrupar, ver procesar())."""
     dir_propuestas = Path(dir_propuestas)
     escritos: list[Path] = []
 
@@ -605,14 +783,16 @@ def escribir_propuestas(dir_propuestas, clusters_nuevos: list[dict]) -> list[Pat
 # ---------------------------------------------------------------------------
 
 def procesar(ruta_fichas, outdir, catalogo_productoras_ruta=None,
-             catalogo_venues_ruta=None) -> dict:
+             catalogo_venues_ruta=None, fuente: str = DEFAULT_FUENTE) -> dict:
     """Corre el pipeline completo y devuelve un resumen (usado por main()
     y por los tests). Escribe candidatos_db.jsonl, INFORME_CANDIDATOS.md
-    y propuestas/*.md en `outdir`."""
+    y propuestas/*.md en `outdir`. Solo procesa fichas con fuente ==
+    `fuente` (default "rd"; ver filtrar_por_fuente())."""
     outdir = Path(outdir)
     outdir.mkdir(parents=True, exist_ok=True)
 
-    fichas = cargar_fichas(ruta_fichas)
+    fichas_leidas = cargar_fichas(ruta_fichas)
+    fichas = filtrar_por_fuente(fichas_leidas, fuente)
     sin_error, con_error = separar_fichas(fichas)
 
     catalogo_productoras = cargar_catalogo_productoras(catalogo_productoras_ruta)
@@ -628,16 +808,22 @@ def procesar(ruta_fichas, outdir, catalogo_productoras_ruta=None,
 
     nuevo_prod_candidatos = [
         c for c in candidatos
-        if c["productora_cruda"] and clasificar_ratio(c["match_ratio"]) == "nuevo"
+        if c["productora_cruda"] and not c["identidad_propia_productora"]
+        and clasificar_ratio(c["match_ratio"]) == "nuevo"
     ]
     clusters_nuevos = agrupar_nuevos_por_productora(nuevo_prod_candidatos)
 
-    informe = generar_informe(fichas, sin_error, con_error, obras, candidatos, clusters_nuevos)
+    informe = generar_informe(
+        fuente, len(fichas_leidas), fichas, sin_error, con_error, obras,
+        candidatos, clusters_nuevos,
+    )
     (outdir / "INFORME_CANDIDATOS.md").write_text(informe, encoding="ascii")
 
     propuestas_escritas = escribir_propuestas(outdir / "propuestas", clusters_nuevos)
 
     return {
+        "fuente": fuente,
+        "total_leidas": len(fichas_leidas),
         "total_fichas": len(fichas),
         "total_error": len(con_error),
         "total_obras": len(obras),
@@ -650,10 +836,16 @@ def procesar(ruta_fichas, outdir, catalogo_productoras_ruta=None,
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
         description="Fichas de percepcion (curatoria MAK) -> candidatos DB "
-                    "(productoras/venues), con colapso de secuencias y fuzzy-match.",
+                    "(productoras/venues), con filtro de fuente, colapso de "
+                    "secuencias (categoria por mayoria) y fuzzy-match.",
     )
     parser.add_argument("fichas", help="ruta a fichas.jsonl (schema de percepcion.py)")
     parser.add_argument("--outdir", required=True, help="directorio de salida")
+    parser.add_argument(
+        "--fuente", default=DEFAULT_FUENTE,
+        help="procesar SOLO esta fuente (default: %s); el jsonl real trae "
+             "rd e ig mezcladas" % DEFAULT_FUENTE,
+    )
     parser.add_argument(
         "--catalogo-productoras", dest="catalogo_productoras", default=None,
         help="directorio con catalogo de productoras (json/yaml); "
@@ -675,15 +867,18 @@ def main(argv=None) -> int:
             ruta_fichas, args.outdir,
             catalogo_productoras_ruta=args.catalogo_productoras,
             catalogo_venues_ruta=args.catalogo_venues,
+            fuente=args.fuente,
         )
     except OSError as exc:
         print("ERROR: %s" % exc, file=sys.stderr)
         return 1
 
     print(
-        "candidatos: %d obras (de %d fichas, %d con error apartadas) -- "
-        "nuevos agrupados: %d, propuestas escritas: %d -- salida en %s" % (
-            resumen["total_obras"], resumen["total_fichas"], resumen["total_error"],
+        "candidatos: %d obras (de %d fichas fuente=%s, %d con error apartadas, "
+        "%d descartadas de otra fuente) -- nuevos agrupados: %d, propuestas "
+        "escritas: %d -- salida en %s" % (
+            resumen["total_obras"], resumen["total_fichas"], resumen["fuente"],
+            resumen["total_error"], resumen["total_leidas"] - resumen["total_fichas"],
             len(resumen["clusters_nuevos"]), len(resumen["propuestas"]), args.outdir,
         )
     )
