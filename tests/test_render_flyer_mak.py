@@ -29,13 +29,13 @@ def _synthetic_image(path: Path) -> None:
 def test_build_blender_command_uses_cartelera_blend_and_python_expr():
     cmd = render_flyer_mak.build_blender_command(
         Path("/home/mak/blender/blender"),
-        Path("/home/mak/RD/AUTOMATIZACION/cartelera.blend"),
+        Path("/home/mak/RD/AUTOMATIZACION/RD.blend"),
         Path("/tmp/input_ig.jpg"),
         Path("/tmp/out/render_output.png"),
     )
     assert cmd[0] == str(Path("/home/mak/blender/blender"))
     assert "-b" in cmd
-    assert str(Path("/home/mak/RD/AUTOMATIZACION/cartelera.blend")) in cmd
+    assert str(Path("/home/mak/RD/AUTOMATIZACION/RD.blend")) in cmd
     assert "--python-expr" in cmd
     expr = cmd[cmd.index("--python-expr") + 1]
     assert isinstance(expr, str) and expr
@@ -105,7 +105,7 @@ def test_run_render_fails_clear_when_blend_missing(tmp_path):
         Path("/usr/bin/true"), tmp_path, tmp_path / "no_existe.jpg", tmp_path / "out.png",
     )
     assert ok is False
-    assert "cartelera.blend" in motivo
+    assert "RD.blend" in motivo
 
 
 def test_run_render_ok_when_blender_succeeds_and_writes_output(tmp_path, monkeypatch):
@@ -211,7 +211,7 @@ def test_main_prints_render_fallo_when_render_step_fails(tmp_path, monkeypatch, 
     out_dir = tmp_path / "out"
 
     def fake_run_render(blender_exe, base_dir, imagen_path, output_path):
-        return False, "no existe /home/mak/RD/AUTOMATIZACION/cartelera.blend"
+        return False, "no existe /home/mak/RD/AUTOMATIZACION/RD.blend"
 
     monkeypatch.setattr(render_flyer_mak, "run_render", fake_run_render)
 
@@ -219,4 +219,4 @@ def test_main_prints_render_fallo_when_render_step_fails(tmp_path, monkeypatch, 
     captured = capsys.readouterr()
     assert code == 1
     assert "RENDER_FALLO:" in captured.out
-    assert "cartelera.blend" in captured.out
+    assert "RD.blend" in captured.out

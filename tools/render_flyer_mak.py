@@ -4,18 +4,18 @@
 Camino v2 (self-hosted MAK, sin Photoshop/droplet): descarga ya hecha por
 el workflow (issue_descarga_ig.yml) entrega una imagen local; este script
 hace lo que hacia src/flujo/eventos/flyer_auto.py del lado Windows pero
-para el espejo MAK (cartelera.blend en /home/mak/RD/AUTOMATIZACION/):
+para el espejo MAK (RD.blend en /home/mak/RD/AUTOMATIZACION/):
 
 1. Paleta de color dominante (portado 1:1 de flyer_auto._extract_palette)
    -> palette_ig.png + palette_ig.json en --out.
-2. Render Blender headless de cartelera.blend: inyecta la imagen
+2. Render Blender headless de RD.blend: inyecta la imagen
    descargada en el/los material(es) que usa la convencion real de
    flyer_auto/blender_nodes.py (ver _buscar_materiales_flyer en
    src/flujo/eventos/blender_nodes.py): TODO nodo ShaderNodeTexImage cuyo
    `image.name` contiene "flyer_final" (sin importar mayusculas). NO se
    adivino un nombre de material nuevo -- es la unica convencion real
    encontrada en el codigo existente. Ver el reporte de la tarea para la
-   unica cosa sin verificar: si cartelera.blend en MAK respeta esa misma
+   unica cosa sin verificar: si RD.blend en MAK respeta esa misma
    convencion (no se pudo abrir el .blend real, solo vive en MAK).
 
 Settings anti-OOM para GPU 1650 4GB (Cycles CUDA, nunca CPU/EEVEE): si
@@ -41,7 +41,7 @@ from pathlib import Path
 
 DEFAULT_BASE = "/home/mak/RD/AUTOMATIZACION"
 DEFAULT_BLENDER = "/home/mak/blender/blender"
-BLEND_FILE = "cartelera.blend"
+BLEND_FILE = "RD.blend"  # el real; "RD.blend" era config legacy que nunca existio
 
 # Convencion real (NO adivinada) de src/flujo/eventos/blender_nodes.py
 # _buscar_materiales_flyer(): el nodo de textura que trae el flyer tiene
@@ -211,7 +211,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--imagen", required=True, type=Path, help="imagen descargada del post/reel de IG")
     parser.add_argument("--out", required=True, type=Path, help="directorio de salida (paleta + render)")
-    parser.add_argument("--base", type=Path, default=Path(DEFAULT_BASE), help="carpeta con cartelera.blend y assets")
+    parser.add_argument("--base", type=Path, default=Path(DEFAULT_BASE), help="carpeta con RD.blend y assets")
     parser.add_argument("--blender", type=Path, default=Path(DEFAULT_BLENDER), help="ejecutable de Blender")
     args = parser.parse_args(argv)
 

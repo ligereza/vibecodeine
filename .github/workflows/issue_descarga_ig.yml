@@ -222,7 +222,7 @@ jobs:
               continue
             fi
             curl -s http://127.0.0.1:11434/api/generate -d '{"model":"gemma3:4b","keep_alive":0}' > /dev/null || true
-            salida=$(python3 tools/render_flyer_mak.py --imagen "$out/input_ig.jpg" --out "$out" 2>&1)
+            salida=$(python3 tools/render_flyer_mak.py --imagen "$out/input_ig.jpg" --out "$out" 2>&1 || true)
             echo "$salida"
             if printf '%s\n' "$salida" | grep -q '^RENDER_OK:'; then
               gh issue comment "$n" -R "$GITHUB_REPOSITORY" \
