@@ -22,6 +22,19 @@ def extract_shortcode(url: str) -> str | None:
     return None
 
 
+def canonicalizar_url(url: str) -> str:
+    """Quita el username de la ruta: /usuario/p/SC/ -> /p/SC/.
+
+    parth-dl devuelve 403 con la forma con username (issues #5 y #171,
+    2026-07-22). Preserva tipo (p|reel|tv) y query params.
+    """
+    return re.sub(
+        r"(instagram\.com)/[A-Za-z0-9_.]+/(p|reel|tv)/",
+        r"\1/\2/",
+        url,
+    )
+
+
 def _fetch(url: str, referer: str | None = None) -> bytes:
     headers = {"User-Agent": _MIRROR_UA}
     if referer:
@@ -107,6 +120,7 @@ def download_post(url: str, output_dir: Path, retries: int = 1) -> dict:
     posts, carruseles y video/reel (thumbnail como imagen). instaloader
     murio (IG exige login incluso anonimo).
     """
+    url = canonicalizar_url(url)
     shortcode = extract_shortcode(url)
     if not shortcode:
         return {"status": "error", "reason": "shortcode_no_detectado", "url": url}

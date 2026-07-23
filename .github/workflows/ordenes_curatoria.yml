@@ -1,0 +1,47 @@
+name: ordenes-curatoria
+# Canal de correcciones remotas (telefono/sesion web -> issue -> MAK).
+# Issue con label "cambio" cuyo body tenga una linea "orden: <enum>".
+# Whitelist dura: el runner solo ejecuta ~/curatoria/ordenes.py con el
+# enum parseado como argv; jamas texto libre del issue.
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  issues: write
+  contents: read
+
+concurrency:
+  group: ordenes-curatoria-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  orden:
+    if: github.event.label.name == 'cambio'
+    runs-on: [self-hosted, eventos]
+    timeout-minutes: 10
+    env:
+      ISSUE_BODY: ${{ github.event.issue.body }}
+      ISSUE_NUM: ${{ github.event.issue.number }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: parsear y ejecutar orden whitelisted
+        run: |
+          set -e
+          linea=$(printf '%s' "$ISSUE_BODY" | grep -m1 -E '^orden: (estado|pausar|reanudar|redeploy [A-Za-z0-9][A-Za-z0-9/_.-]{0,80})\s*$' || true)
+          if [ -z "$linea" ]; then
+            gh issue comment "$ISSUE_NUM" -R "$GITHUB_REPOSITORY" \
+              -b "ordenes-curatoria: body sin orden valida. Formato: una linea 'orden: estado|pausar|reanudar|redeploy <rama>'."
+            exit 0
+          fi
+          orden=$(printf '%s' "$linea" | sed 's/^orden: //')
+          set -- $orden
+          salida=$(python3 /home/mak/curatoria/ordenes.py "$@" 2>&1 | tail -40 || true)
+          gh issue comment "$ISSUE_NUM" -R "$GITHUB_REPOSITORY" \
+            -b "ordenes-curatoria ejecuto \`$orden\` en MAK:
+
+          \`\`\`
+          $salida
+          \`\`\`"
+          gh issue close "$ISSUE_NUM" -R "$GITHUB_REPOSITORY"

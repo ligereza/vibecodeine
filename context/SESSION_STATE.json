@@ -1,33 +1,12 @@
 {
   "version": "0.56.1",
-  "date": "2026-07-22T18:30:00Z",
+  "date": "2026-07-23T04:15:00Z",
   "assistant_name": "Cauce",
   "repo_main": "main gobernado (enforce_admins). 19 PRs merjeados hoy (#122-152 rango). 0 abiertos, 0 ramas huerfanas. Issues: #131 y #145 cerrados; #139 parcial (3 legacy en allowlist ratchet).",
-  "current_focus": "MAK autonomo con cerebro local desplegado (capataz+ollama verificado en vivo). iskvw.cl vivo HTTP, cert TLS en emision. Gap documentado: descarga IG requiere WIN (login-wall a extractores desde MAK, misma IP -- no insistir).",
-  "done": [
-    "2026-07-22 GODSPEED orden total (director Fable + haikus/sonnets): merge local concluido; raiz limpiada (11 reportes -> _archive, 8 scripts -> tools/mak_ops); PRs 122-127 aterrizados secuencial con gate; RESCATE 8 archivos cultura del stash 07-16 nunca aterrizados (PR #140); enforce_admins activado; issue #139 (6 NameError latentes en utilidades MAK) + fix verificador (PR #141) + ratchet pyflakes (PR #143); issue #131 resuelto tecnica (PR #142: parth-dl primaria, video->thumbnail, carrusel->primera imagen, e2e VIVO con el reel); RD 57GB -> MAK por tar|ssh integridad verificada; Pages cname=iskvw.cl configurado; exe.old cerrado (proceso huerfano, doctor limpio); MAK verificado por operador (servicios 200, cron ok, espejo fresco, gap: capataz 100% nube)."
-  ],
-  "doing": [
-    "cert TLS iskvw.cl en emision (al responder: https_enforced=true)",
-    "APK hotspot_boot buildeado, install espera toggle MIUI del usuario"
-  ],
-  "next": [
-    "CNAME www en Cloudflare (usuario)",
-    "toggle Instalar-via-USB + adb install APK + settings put secure (comandos en xio/hotspot_boot_service/README.md)",
-    "works.json cablear a portfolio.yml (heredado)",
-    "decidir formato video cartelera.blend (disenio listo: movieclip.frame_duration + FFmpeg)",
-    "idea: proxy IG via xio para autonomia total de descarga"
-  ],
-  "blockers": [
-    "IG bloquea extractores desde MAK (gap real, agotado: version/IP/fingerprint) -- descarga IG = WIN",
-    "APK install: INSTALL_FAILED_USER_RESTRICTED hasta toggle MIUI"
-  ],
-  "ai_stack": {
-    "architect_reviewer": "Claude Code (director godspeed; no lee volumen, delega y verifica)",
-    "mechanical_internal": "haikus (clasificacion/audit/e2e) + sonnets (operador remoto MAK) via Agent",
-    "parked": "Gemini API PARKED (2026-07-10)",
-    "writer_fallback_manual": "NVIDIA NIM off-peak, GitHub Models deepseek-v3",
-    "local_llm": "MAK (192.168.50.2): deepseek-coder:6.7b + gemma3:4b + nomic-embed local, qwen-agent 0.0.34, SearXNG, 4 APIs gratis. WIN (RTX 4070): Ollama apagado hoy, Blender GPU, parth-dl instalado.",
-    "external_support": "Arena/Qwen web via airdrop (manual)"
-  }
+  "current_focus": "Curatoria masiva corriendo en MAK (RD 1731 + IG 1401, ficha unica, checkpoint, ETA ~20h). Vigilancia autonoma: reporter+watchdog cron 20min -> issue GitHub. Canal ordenes remotas via issue label cambio.",
+  "done": "Benchmark F3d aprobado (gemma3 13/13 productora); dpto mak_curatoria construido+desplegado (PR #176 abierto a mejoras); percepcion lanzada; watchdog+reporter+ordenes.py en MAK; flujo eventos issue->descarga MAK vivo (runner self-hosted, URL canonica #175); topologia ramas main+rd/portafolio/mejoras anclada (#169); TLS iskvw.cl completo; F4b/F1b/F2a/F3b/F4a en sus lineas.",
+  "doing": "MAK procesa 3132 archivos solo (nohup+checkpoint); WIN apagado; observacion via issues GitHub.",
+  "next": "1) issue [CURATORIA] TERMINADA -> pasada relacional (fuzzy productoras/venues, cruces RD-IG, candidatos DB+manifest via PR). 2) merge feat/v2-render-mak + workflow_dispatch prueba. 3) re-armar portfolio iskvw (post curatoria). 4) decidir PR #176.",
+  "blockers": "Runner MAK sin persistencia reboot (sudo interactivo usuario). Render reel completo pendiente de diagnostico (se atasco; video correcto = link del issue).",
+  "ai_stack": "Director Fable godspeed; builders/operadores sonnet; MAK: gemma3:4b vision+capataz, tesseract, ffmpeg, runner Actions self-hosted."
 }

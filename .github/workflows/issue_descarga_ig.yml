@@ -1,0 +1,76 @@
+name: issue-descarga-ig
+# Flujo evento-driven: Apps Script (Gmail 8h) crea issue label "instagram"
+# -> este workflow corre EN MAK (runner self-hosted) -> descarga la imagen
+# del link IG -> artifact + comentario en el issue. v2 agregara render.
+# Seguridad: dispara solo con label "instagram" (solo colaboradores
+# etiquetan); el body del issue entra SOLO via env (nunca interpolado).
+
+on:
+  issues:
+    types: [opened, labeled]
+
+permissions:
+  issues: write
+  contents: read
+
+concurrency:
+  group: descarga-ig-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  descarga:
+    if: contains(github.event.issue.labels.*.name, 'action/descargar-ig')
+    runs-on: [self-hosted, eventos]
+    timeout-minutes: 20
+    env:
+      ISSUE_BODY: ${{ github.event.issue.body }}
+      ISSUE_NUM: ${{ github.event.issue.number }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: descargar imagen del issue
+        id: dl
+        run: |
+          set -e
+          url=$(printf '%s' "$ISSUE_BODY" | grep -oE 'https://www\.instagram\.com/[^ )">]+' | head -1)
+          if [ -z "$url" ]; then
+            gh issue comment "$ISSUE_NUM" -R "$GITHUB_REPOSITORY" \
+              -b "runner MAK: issue sin link de instagram detectable."
+            exit 1
+          fi
+          echo "url encontrada (no se imprime completa por higiene de logs)"
+          python3 -c "import parth_dl" 2>/dev/null || \
+            python3 -m pip install --user --quiet --break-system-packages parth-dl
+          out="$RUNNER_TEMP/ig_issue_$ISSUE_NUM"
+          mkdir -p "$out"
+          URL="$url" OUT="$out" PYTHONPATH=src python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          from flujo.ig.download import download_post
+          res = download_post(os.environ["URL"], Path(os.environ["OUT"]))
+          print(json.dumps({k: str(v) for k, v in res.items()}, ensure_ascii=False))
+          PY
+          n=$(find "$out" -type f | wc -l)
+          echo "archivos descargados: $n"
+          test "$n" -gt 0
+          echo "dir=$out" >> "$GITHUB_OUTPUT"
+
+      - name: publicar artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ig-issue-${{ github.event.issue.number }}
+          path: ${{ steps.dl.outputs.dir }}
+          retention-days: 14
+
+      - name: comentar resultado
+        if: success()
+        run: |
+          gh issue comment "$ISSUE_NUM" -R "$GITHUB_REPOSITORY" \
+            -b "runner MAK: descarga OK (v1 evento-driven, sin polling). Imagen como artifact \`ig-issue-$ISSUE_NUM\` en este run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID -- render Blender = v2 pendiente."
+
+      - name: comentar fallo
+        if: failure()
+        run: |
+          gh issue comment "$ISSUE_NUM" -R "$GITHUB_REPOSITORY" \
+            -b "runner MAK: descarga FALLO en run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID -- revisar log."
