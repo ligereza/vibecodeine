@@ -101,9 +101,16 @@ def es_basura(valor: str) -> bool:
     return alfanum < MIN_ALFANUM_VALIDO
 
 
+def a_texto(valor) -> str:
+    """Normaliza str|list|otro a texto plano (gemma3 devuelve listas a veces)."""
+    if isinstance(valor, list):
+        valor = "; ".join(str(x).strip() for x in valor if str(x).strip())
+    return str(valor or "").strip()
+
+
 def valor_limpio(valor) -> str:
     """Valor crudo tal cual si no es basura; "" si lo es o esta vacio."""
-    valor = (valor or "").strip()
+    valor = a_texto(valor)
     return "" if es_basura(valor) else valor
 
 
@@ -333,7 +340,7 @@ def construir_candidato(obra: dict, catalogo_productoras: list[dict],
     if categoria in CATEGORIAS_CON_EVENTO:
         productora_cruda = valor_limpio(datos_evento.get("productora", ""))
         venue_crudo = valor_limpio(datos_evento.get("venue", ""))
-        fecha_cruda = (datos_evento.get("fecha") or "").strip()
+        fecha_cruda = a_texto(datos_evento.get("fecha"))
         handles = [
             h.strip() for h in (datos_evento.get("handles") or [])
             if isinstance(h, str) and h.strip()
