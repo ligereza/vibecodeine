@@ -92,9 +92,10 @@ Los squash-merge conservan como autor al autor del PR (un merge de PR de
 MAK aparece en `git log` como commit de miskirabit: es normal, paso por el
 gate, no es push directo).
 
-Topologia de ramas (2026-07-22): main = SOLO lo perfecto que funciona, sin
-basura. Tres lineas de trabajo permanentes: `rd` (ONG/datos/becas),
-`portafolio` (curatoria/iskvw), `mejoras` (repo/MAK/infra). MAK y agentes
+Topologia de ramas (2026-07-23, ex-`portafolio` renombrada `iskvw`): main =
+SOLO lo perfecto que funciona, sin basura. Tres lineas de trabajo
+permanentes: `rd` (ONG/datos/becas), `iskvw` (curatoria/artistico),
+`mejoras` (repo/MAK/infra). MAK y agentes
 pushean o abren PR contra SU linea, nunca contra main. Feature nueva: nace
 de su linea y vuelve a su linea. Promocion linea -> main = PR curado por el
 director, CI verde obligatorio. Trabajo que no calza en una linea: escalar

@@ -31,7 +31,8 @@ su canal a MAK es GitHub (issues + Actions + runner self-hosted).
    workflow_dispatch de prueba tras merge (gap declarado del builder:
    convencion material cartelera.blend + if mixto sin probar).
 5. Topologia de ramas VIVA (CLAUDE.md): main = solo lo perfecto; lineas
-   permanentes rd/portafolio/mejoras; MAK y agentes JAMAS pushean main.
+   permanentes rd/iskvw/mejoras (iskvw = ex-portafolio, renombrada 2026-07-23);
+   MAK y agentes JAMAS pushean main.
    PR pendiente: #176 (dpto cultura/mak_curatoria -> mejoras; ese codigo
    YA corre desplegado en MAK, el PR es el espejo gate).
 6. Runner MAK self-hosted (labels mak,eventos): corre por nohup, NO
