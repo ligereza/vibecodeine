@@ -31,6 +31,7 @@ import argparse
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 MAK_HOST = "mak@192.168.50.2"
@@ -80,6 +81,46 @@ def contar_local(carpeta: Path) -> tuple[int, int]:
             except OSError:
                 pass
     return n, total
+
+
+def _formatear_barra(enviados: int, total: int, inicio: float, ancho: int = 30) -> str:
+    total = max(total, 1)
+    frac = min(enviados / total, 1.0)
+    llenos = int(ancho * frac)
+    barra = "#" * llenos + "-" * (ancho - llenos)
+    transcurrido = max(time.monotonic() - inicio, 1e-6)
+    vel_mb_s = (enviados / (1024 * 1024)) / transcurrido
+    return (
+        f"\r[{barra}] {frac*100:5.1f}%  "
+        f"{enviados/(1024*1024):8.2f}/{total/(1024*1024):.2f} MB  "
+        f"{vel_mb_s:6.2f} MB/s"
+    )
+
+
+def _copiar_con_progreso(origen, destino, total_bytes: int, chunk: int = 1024 * 1024) -> int:
+    """Lee de `origen` (stdout de tar) y escribe a `destino` (stdin de ssh),
+    contando bytes y pintando la barra en la misma linea."""
+    enviados = 0
+    inicio = time.monotonic()
+    ultimo_render = 0.0
+    while True:
+        datos = origen.read(chunk)
+        if not datos:
+            break
+        try:
+            destino.write(datos)
+        except BrokenPipeError:
+            break
+        enviados += len(datos)
+        ahora = time.monotonic()
+        if ahora - ultimo_render >= 0.1:
+            sys.stdout.write(_formatear_barra(enviados, total_bytes, inicio))
+            sys.stdout.flush()
+            ultimo_render = ahora
+    sys.stdout.write(_formatear_barra(enviados, total_bytes, inicio))
+    sys.stdout.write("\n")
+    sys.stdout.flush()
+    return enviados
 
 
 def ssh_run(cmd: str, check: bool = True) -> subprocess.CompletedProcess:
@@ -146,16 +187,26 @@ def enviar(carpeta: Path, overwrite: bool, merge: bool) -> int:
     tar_cmd = ["tar", "-C", parent, "-cf", "-", nombre]
     ssh_cmd = ["ssh", MAK_HOST, f"tar -xf - -C ~/{MAK_INBOX}/"]
 
+    # total_bytes es una estimacion (tar agrega headers de 512 bytes por
+    # archivo + padding) -- alcanza para la barra, la verificacion real de
+    # abajo compara contenido, no el tamano del stream tar.
+    total_estimado = max(b_local, 1)
+
     tar_proc = subprocess.Popen(tar_cmd, stdout=subprocess.PIPE)
-    ssh_proc = subprocess.Popen(ssh_cmd, stdin=tar_proc.stdout)
-    tar_proc.stdout.close()
-    ssh_proc.communicate()
+    ssh_proc = subprocess.Popen(ssh_cmd, stdin=subprocess.PIPE)
+    try:
+        enviados = _copiar_con_progreso(tar_proc.stdout, ssh_proc.stdin, total_estimado)
+    finally:
+        tar_proc.stdout.close()
+        ssh_proc.stdin.close()
+
     tar_rc = tar_proc.wait()
-    ssh_rc = ssh_proc.returncode
+    ssh_rc = ssh_proc.wait()
 
     if tar_rc != 0 or ssh_rc != 0:
         print(f"FALLO: tar rc={tar_rc} ssh rc={ssh_rc}", file=sys.stderr)
         return 1
+    print(f"Transferidos {enviados:,} bytes (stream tar, incluye headers).")
 
     print("Verificando en destino...")
     n_remoto, b_remoto = contar_remoto(nombre)
