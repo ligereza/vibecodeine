@@ -1,7 +1,63 @@
 # LAST HANDOFF -- estado para el proximo agente
 
-Version: 0.56.1 | Fecha: 2026-07-22 | Identidad: Cauce | sesion:
-orden y mantencion godspeed (director Fable + haikus/sonnets delegados).
+Version: 0.56.1 | Fecha: 2026-07-23 00:15 | Identidad: Cauce | sesion:
+curatoria+DB lanzadas en MAK (director Fable). Cierre para sesion web
+iPhone: el sucesor probablemente NO tiene LAN (ni ssh MAK, WIN apagado);
+su canal a MAK es GitHub (issues + Actions + runner self-hosted).
+
+## Sesion 2026-07-22/23 noche (cierre) -- LO VIVO AHORA MISMO
+
+1. CURATORIA MASIVA CORRIENDO EN MAK: ~/curatoria/percepcion.py nohup
+   sobre ~/RD (1731) + ~/portfolio_media/media (1401 IG, sin stories).
+   Ficha schema UNICO, checkpoint procesados.txt (resume gratis),
+   auto-pausa a 20 errores seguidos. Al cierre: 120/3132, 0 errores en
+   cadena, ~24s/archivo, ETA ~20h. Benchmark F3d APROBADO (13/13
+   productora, 12/13 fecha sobre flyers reales; gemma3:4b se queda).
+2. VIGILANCIA AUTONOMA en MAK (cron */20): reporter.py escribe
+   ~/curatoria/reportes/REPORTE_CURATORIA.md; watchdog.py crea issue
+   GitHub "[CURATORIA] PAUSADA|ESTANCADA|TERMINADA" (label bloqueado).
+   Esperar el issue TERMINADA para arrancar la fase siguiente.
+3. CANAL DE ORDENES REMOTAS (telefono/web SIN LAN): issue con label
+   "cambio", body con linea exacta "orden: estado|pausar|reanudar|
+   redeploy <rama>" -> workflow ordenes-curatoria -> runner MAK ejecuta
+   whitelist ~/curatoria/ordenes.py -> comenta resultado y cierra issue.
+   JAMAS ampliar a shell libre: la whitelist es la muralla.
+4. FLUJO EVENTOS AUTOMATICO: mail -> Apps Script usuario (8h, marca
+   "pedido procesado") -> issue con action/descargar-ig -> workflow
+   issue-descarga-ig -> runner MAK descarga (parth-dl, URL canonicalizada
+   #175) -> artifact + comentario. RENDER EN MAK = v2 SIN MERJEAR (rama
+   feat/v2-render-mak): al merjearla via PR a mejoras->main, barrido cada
+   30 min procesa #171 #173 pendientes y suma render+cierre; correr UN
+   workflow_dispatch de prueba tras merge (gap declarado del builder:
+   convencion material cartelera.blend + if mixto sin probar).
+5. Topologia de ramas VIVA (CLAUDE.md): main = solo lo perfecto; lineas
+   permanentes rd/portafolio/mejoras; MAK y agentes JAMAS pushean main.
+   PR pendiente: #176 (dpto cultura/mak_curatoria -> mejoras; ese codigo
+   YA corre desplegado en MAK, el PR es el espejo gate).
+6. Runner MAK self-hosted (labels mak,eventos): corre por nohup, NO
+   sobrevive reboot de MAK. Fix usuario 1 vez: cd ~/actions-runner &&
+   sudo ./svc.sh install mak && sudo ./svc.sh start.
+7. Lecciones de la sesion (la noche fue calificada FALLIDA por el
+   usuario; detalle en context/failed-handoff.md, untracked local WIN):
+   (a) la palabra del usuario sobre SU sistema es EL DATO, no se litiga;
+   (b) leer lo que esta delante (labels del repo, email text de issues)
+   antes de inventar nombres o teorias; (c) director = spec+veredicto,
+   builders construyen, nada de tareas de haiku a mano; (d) render MAK =
+   GPU Cycles SIEMPRE (OOM = ollama en VRAM: curl keep_alive 0), jamas
+   CPU/EEVEE; video 128 samples sin denoise 12-13s, stills 512; el video
+   del reel = el del LINK del issue (dinamico).
+8. PROXIMO en orden: (1) issue TERMINADA -> PASADA RELACIONAL: fuzzy
+   match productoras/venues contra data/ y knowledge/ (gemma3 destroza
+   nombres propios: "REDUCIENDODADOL", "CAUPOULIDAM" -- jamas aceptar
+   texto literal), cruces RD<->IG, candidatos DB y manifest via PR
+   humano-valida; (2) RECIEN DESPUES re-armar portfolio iskvw (organismo
+   3 mundos, 1 tap, mobile-first; bocetos en scratchpad WIN job
+   d475edb4); (3) plan maestro keen-scribbling-rabin.md (local WIN).
+
+## Sesion 2026-07-22 (cierre anterior) -- pendientes resueltos por director
+
+(sesion previa: orden y mantencion godspeed, director Fable +
+haikus/sonnets delegados)
 
 ## Sesion 2026-07-22 (cierre) -- pendientes resueltos por director
 
