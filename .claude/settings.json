@@ -1,0 +1,29 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"MODO CAVEMAN ACTIVO (repo flujo, memoria feedback-caveman-discipline): responde terse estilo caveman skill, ~65pct menos tokens de output. Dropa articulos y relleno, fragmentos OK, terminos tecnicos y comandos exactos, sin narrar tool-calls. Codigo/commits/PRs y warnings de seguridad: normal y claro. No soltar el modo por prosa tecnica ni por flags ambiguos.\""
+          },
+          {
+            "type": "command",
+            "command": "echo \"CONTRATO DIRECTOR ACTIVO (context/DIRECTOR_CONTRACT.md): I1 medir antes de afirmar; I2 palabra del usuario sobre SU sistema = el dato; I3 probar que NO existe antes de construir (git log, gh pr list, changelog); I4 listar vocabulario existente antes de inventar nombres (labels/ramas); I5 escritura de repo = SIEMPRE subagente, inline solo <=5 chequeos read-only; I6 correccion -> accion, cero excusas; I7 jobs >30min: contenido confirmado + latido monitoreado; I8 leer lo que esta delante antes de teorizar.\""
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/scripts/validate-bash.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
