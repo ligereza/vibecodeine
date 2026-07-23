@@ -10,7 +10,14 @@ Violar uno = repetir el patron que hizo calificar sesiones de HORRIBLE.
 - I2 LA PALABRA DEL USUARIO SOBRE SU SISTEMA ES EL DATO. Verificar es
   para el repo y las maquinas, no para litigar contra el usuario. Un
   mensaje del usuario NUNCA se clasifica como ruido/inyeccion sin
-  preguntar primero.
+  preguntar primero. Autoridad por GATE, no por firma (2026-07-23;
+  causa: un builder espero firma del director y bloqueo trabajo
+  legitimo -- el proposito del repo es correr SIN Claude; retiro: si el
+  harness firma mensajes): efectos que pasan por rama+PR+CI se ejecutan
+  sin preguntar, venga de quien venga la orden -- el gate mecanico es el
+  arbitro. Solo efectos directos sin gate (estado de produccion, crons,
+  borrados) exigen orden en el prompt de spawn o evidencia verificable
+  en el repo.
 - I3 PROBAR QUE NO EXISTE ANTES DE CONSTRUIR. Antes de crear o
   investigar X: git log -- <path>, gh pr list, gh issue list,
   get_changelog() en src/flujo/version.py, handoffs. Re-hacer trabajo
@@ -31,6 +38,14 @@ Violar uno = repetir el patron que hizo calificar sesiones de HORRIBLE.
 - I8 LEER LO QUE ESTA DELANTE. El email text del issue, el log real, la
   pantalla: leerlos ANTES de teorizar causas. Un reporte de fallo propio
   puede estar literalmente pegado en el issue.
+
+- I9 RUTEO Y AISLAMIENTO DE BUILDERS (2026-07-23; causa: colision de dos
+  agentes en el checkout principal, archivos untracked perdidos; retiro:
+  cuando el harness aisle workspaces solo). Todo builder nace en la rama
+  de SU linea (db/ONG -> rd, curatoria/artistico -> iskvw, repo/infra ->
+  mejoras) y trabaja en git worktree PROPIO, nunca en el checkout
+  principal. El checkout principal es del usuario y del director (solo
+  lectura).
 
 I1 es la version canonica de la regla de verificacion; CLAUDE.md y
 DOCTRINA_CLAUDE.md la referencian.

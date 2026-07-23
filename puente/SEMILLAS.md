@@ -2,6 +2,8 @@
 
 Una ⊕ es un residuo fechado de algo que no cruzó una traducción, o un fracaso registrado. Es el único punto de partida válido para un proyecto nuevo, nunca la inercia.
 
+**Nota 23-jul-2026:** Este archivo es ARCHIVO, no permiso. Registro de residuos y resultados; el protocolo vive podado en la skill `motor-omega` (2 reglas: Ω11 antes de exponer, fracaso no se reinterpreta).
+
 | Fecha | ⊕ | Origen | Estado |
 |---|---|---|---|
 | 11-jul-2026 | ⊕₁ asimetría de acceso (quién puede ser contagiado por cuál rama) | OBRA_01 idea_generativa | viva |
