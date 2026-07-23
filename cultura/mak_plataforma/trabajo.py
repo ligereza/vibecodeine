@@ -144,7 +144,10 @@ def _tarea(verbo, st):
 def main():
     ts = time.strftime("%F %T")
     now = time.time()
-    hoy = time.strftime("%Y-%m-%d")
+    # dia anclado a las 19:00 locales (de 19:00 a 19:00), no fecha calendario
+    # 2026-07-23; causa: reset a medianoche regala las horas de trabajo del
+    # usuario; retiro: tope dinamico por medicion de consumo
+    hoy = time.strftime("%Y-%m-%d", time.localtime(now - 19 * 3600))
     st = _state()
     if st.get("date") != hoy:
         st = {"date": hoy, "count": 0, "last": 0, "verbo_idx": 0}
