@@ -9,19 +9,25 @@ Esto habilita un charge-limiter no-root -- el objetivo original de xio (salud de
 bateria) -- que la memoria daba por IMPOSIBLE (dumpsys battery set era cosmetico).
 Empiricamente probado: un comando flipeo Max charging current 0 -> 1.7A@5V.
 
-GAP DRP (medido 2026-07-23, puerto USB de PC legacy 500mA sin PD; reproducido
-por AMBOS caminos: dumpsys crudo Y el endpoint del server
-POST /charge?confirm=1 {"on":false} via adb forward tcp:5000 -- el server
-respondio ok:true pero su propio payload mostro power_role=sink y
-status=charging sin cambio; el camino probado el 07-13 con otro puerto/cargador
-no es el problema, el PUERTO lo es):
-- can_change_power_role=false: el swap NO se aplica NI UN SAMPLE (power_role=sink
-  en 10 muestras a 0.5s tras set-port-roles source host). Ventana = 0s.
+MATRIZ DE PUERTOS (medida 2026-07-23, ambos caminos: dumpsys crudo Y endpoint
+del server POST /charge?confirm=1):
+- Puerto PC LEGACY (500mA, sin PD): can_change_power_role=false. El swap NO
+  aplica NI UN SAMPLE (sink 10/10 a 0.5s; el server respondio ok:true pero su
+  payload mostro power_role=sink). NADA corta por software: se desenchufa.
+- Puerto PC THUNDERBOLT (DRP real, 1.7A): can_change_power_role=true. El corte
+  APLICA (source + status 3 discharging inmediato) pero el partner DRP
+  renegocia de vuelta a sink en ~9-12s. Re-assert cada ~5s SOSTUVO el corte
+  30s continuos; charge on reanuda al instante (sink, 1.7A). De ahi
+  poll_seconds=5 (< ventana): _poll re-corta cada tick mientras level>=cap.
+- Cargador pared simple / hub PD source-only: sin swap no hay corte (mismo
+  caso legacy); hub PD con DRP = caso Thunderbolt.
 - Plan B sysfs (input_suspend / charging_enabled / constant_charge_current_max):
   IMPOSIBLE sin root -- SELinux niega hasta el `ls` de
   /sys/class/power_supply/battery/ al uid shell (2000); rish/Shizuku es el
-  mismo uid, no ayuda. NO reintentar por software: en puerto PC se desenchufa.
-El limiter SI funciona en cargadores/hubs PD con role-swap (medicion 07-13).
+  mismo uid, no ayuda. NO reintentar.
+OJO dumpsys battery: un `dumpsys battery set` viejo puede dejar level/status
+FALSOS pegados (se vio "100% cargando" fantasma); `adb tcpip`/restart de adbd
+lo limpio. Ante lecturas raras: `dumpsys battery reset`.
 
 SEGURIDAD (el telefono es la UNICA internet del usuario; jamas dejarlo morir):
 - limiter APAGADO por defecto (debe cargar libre hasta que el usuario lo active).
@@ -50,7 +56,10 @@ class ChargeControlPlugin(PluginBase):
         "floor": 77,               # reanuda al bajar aca (histeresis)
         "hard_floor": 20,          # nunca morir: fuerza carga por debajo
         "port": "port0",
-        "poll_seconds": 60,
+        # 5s < ventana DRP (~9-12s medida 2026-07-23 en Thunderbolt PC): el
+        # puerto DRP renegocia sink solo, el poll debe re-cortar antes.
+        # Re-assert cada ~5s sostuvo el corte 30s continuos (medido).
+        "poll_seconds": 5,
     }
 
     def __init__(self, context):
