@@ -413,3 +413,297 @@ def test_cli_main_fichas_inexistentes(tmp_path):
         str(tmp_path / "no_existe.jsonl"), "--outdir", str(tmp_path / "out"),
     ])
     assert codigo == 2
+
+
+# ---------------------------------------------------------------------------
+# REVISION v2 -- evidencia del corpus real (2333 fichas, rd+ig mezcladas)
+# ---------------------------------------------------------------------------
+
+# 11. Filtro de fuente: jsonl mezcla rd/ig, se procesa SOLO fuente==rd (default)
+
+def test_filtro_fuente_procesa_solo_rd_por_default(tmp_path):
+    fichas = [
+        _ficha(fuente="rd", ruta_rel="rd_a.png", productora="Marca RD"),
+        _ficha(fuente="ig", ruta_rel="ig_a.png", productora="Marca IG"),
+        _ficha(fuente="ig", ruta_rel="ig_b.png", productora="Otra IG"),
+    ]
+    ruta_in = tmp_path / "fichas.jsonl"
+    _escribir_jsonl(ruta_in, fichas)
+    outdir = tmp_path / "out"
+
+    resumen = extraccion_db.procesar(
+        ruta_in, outdir,
+        catalogo_productoras_ruta=_sin_catalogo(tmp_path),
+        catalogo_venues_ruta=_sin_catalogo(tmp_path, "_vacio_venues"),
+    )
+
+    assert resumen["fuente"] == "rd"
+    assert resumen["total_leidas"] == 3
+    assert resumen["total_fichas"] == 1  # solo la rd
+    assert resumen["total_obras"] == 1
+    (candidato,) = resumen["candidatos"]
+    assert candidato["ruta_rel"] == "rd_a.png"
+    assert candidato["fuente"] == "rd"
+
+    informe = (outdir / "INFORME_CANDIDATOS.md").read_text(encoding="ascii")
+    assert "Fichas leidas del archivo (todas las fuentes): 3" in informe
+    assert "descartadas por fuente distinta de 'rd': 2" in informe
+
+
+def test_filtro_fuente_explicito_ig(tmp_path):
+    fichas = [
+        _ficha(fuente="rd", ruta_rel="rd_a.png"),
+        _ficha(fuente="ig", ruta_rel="ig_a.png", productora="Marca IG"),
+    ]
+    ruta_in = tmp_path / "fichas.jsonl"
+    _escribir_jsonl(ruta_in, fichas)
+    outdir = tmp_path / "out"
+
+    resumen = extraccion_db.procesar(
+        ruta_in, outdir, fuente="ig",
+        catalogo_productoras_ruta=_sin_catalogo(tmp_path),
+        catalogo_venues_ruta=_sin_catalogo(tmp_path, "_vacio_venues"),
+    )
+
+    assert resumen["total_fichas"] == 1
+    (candidato,) = resumen["candidatos"]
+    assert candidato["ruta_rel"] == "ig_a.png"
+    assert candidato["fuente"] == "ig"
+
+
+def test_cli_flag_fuente(tmp_path):
+    fichas = [
+        _ficha(fuente="rd", ruta_rel="rd_a.png"),
+        _ficha(fuente="ig", ruta_rel="ig_a.png"),
+    ]
+    ruta_in = tmp_path / "fichas.jsonl"
+    _escribir_jsonl(ruta_in, fichas)
+    outdir = tmp_path / "out"
+
+    codigo = extraccion_db.main([
+        str(ruta_in), "--outdir", str(outdir), "--fuente", "ig",
+        "--catalogo-productoras", str(_sin_catalogo(tmp_path)),
+        "--catalogo-venues", str(_sin_catalogo(tmp_path, "_vacio_venues")),
+    ])
+
+    assert codigo == 0
+    lineas = (outdir / "candidatos_db.jsonl").read_text(encoding="ascii").strip().splitlines()
+    (registro,) = [json.loads(l) for l in lineas]
+    assert registro["ruta_rel"] == "ig_a.png"
+
+
+# ---------------------------------------------------------------------------
+# 12. Categoria por mayoria en el colapso (la falla grave): representante
+#     material_rd (mejor calidad) pero mayoria flyer_evento -> el candidato
+#     SI se emite, con productora agregada cross-miembro (evidencia real:
+#     ~206 fichas Sundeck desaparecian por esto).
+# ---------------------------------------------------------------------------
+
+def test_categoria_por_mayoria_rescata_productora(tmp_path):
+    fichas = [
+        # representante (mejor calidad) mal clasificado como material_rd
+        # por vision, SIN productora en su propio datos_evento.
+        _ficha(ruta_rel="sundeck/frame_01.png", categoria="material_rd",
+               calidad="alta", productora=""),
+        # 2 miembros de menor calidad, correctamente flyer_evento, con
+        # la productora real -- deben ganar la mayoria (2 vs 1).
+        _ficha(ruta_rel="sundeck/frame_02.png", categoria="flyer_evento",
+               calidad="media", productora="Sundeck", venue="Terraza X",
+               fecha="2026-02-14", handles=["@sundeck"]),
+        _ficha(ruta_rel="sundeck/frame_03.png", categoria="flyer_evento",
+               calidad="baja", productora="Sundeck", venue="",
+               handles=["@sundeckclub"]),
+    ]
+    ruta_in = tmp_path / "fichas.jsonl"
+    _escribir_jsonl(ruta_in, fichas)
+    outdir = tmp_path / "out"
+
+    resumen = extraccion_db.procesar(
+        ruta_in, outdir,
+        catalogo_productoras_ruta=_sin_catalogo(tmp_path),
+        catalogo_venues_ruta=_sin_catalogo(tmp_path, "_vacio_venues"),
+    )
+
+    assert resumen["total_obras"] == 1
+    (candidato,) = resumen["candidatos"]
+    # la obra NO se cae a material_rd -- gana la mayoria flyer_evento.
+    assert candidato["categoria"] == "flyer_evento"
+    # ruta_rel/calidad siguen siendo las del representante (mejor calidad).
+    assert candidato["ruta_rel"] == "sundeck/frame_01.png"
+    assert candidato["calidad_senal"] == "alta"
+    # productora/venue/fecha se agregan cross-miembro (regla 2), no del
+    # representante (que no tenia nada).
+    assert candidato["productora_cruda"] == "Sundeck"
+    assert candidato["venue_crudo"] == "Terraza X"
+    assert candidato["fecha_cruda"] == "2026-02-14"
+    # handles: union de ambos miembros flyer_evento, sin duplicados.
+    assert set(candidato["handles"]) == {"@sundeck", "@sundeckclub"}
+
+
+def test_categoria_obra_mayoria_simple():
+    miembros = [
+        {"categoria": "material_rd"},
+        {"categoria": "flyer_evento"},
+        {"categoria": "flyer_evento"},
+    ]
+    assert extraccion_db.categoria_obra(miembros) == "flyer_evento"
+
+
+def test_categoria_obra_empate_prioriza_flyer_sobre_foto():
+    miembros = [{"categoria": "flyer_evento"}, {"categoria": "foto_evento"}]
+    assert extraccion_db.categoria_obra(miembros) == "flyer_evento"
+
+
+def test_categoria_obra_empate_prioriza_foto_sobre_otro():
+    miembros = [{"categoria": "foto_evento"}, {"categoria": "logo"}]
+    assert extraccion_db.categoria_obra(miembros) == "foto_evento"
+
+
+def test_valor_mas_frecuente_cross_miembro():
+    miembros = [
+        {"ruta_rel": "a.png", "categoria": "flyer_evento",
+         "datos_evento": {"productora": "Sundeck"}},
+        {"ruta_rel": "b.png", "categoria": "flyer_evento",
+         "datos_evento": {"productora": "Sundeck"}},
+        {"ruta_rel": "c.png", "categoria": "flyer_evento",
+         "datos_evento": {"productora": "Otra Marca"}},
+        {"ruta_rel": "d.png", "categoria": "material_rd",
+         "datos_evento": {"productora": "Ruido Que No Cuenta"}},
+    ]
+    assert extraccion_db.categoria_obra(miembros) == "flyer_evento"
+    assert extraccion_db._valor_mas_frecuente(miembros, "productora") == "Sundeck"
+
+
+# ---------------------------------------------------------------------------
+# 13. Identidad propia: RD/ONG no genera candidato nuevo ni propuesta.
+# ---------------------------------------------------------------------------
+
+def test_es_identidad_propia_patrones():
+    assert extraccion_db.es_identidad_propia("REDUCIENDODANO.CL") is True
+    assert extraccion_db.es_identidad_propia("eventos@reduciendodano.cl") is True
+    assert extraccion_db.es_identidad_propia("EVENTOS@reduciendo.cl") is True
+    assert extraccion_db.es_identidad_propia("RD") is True
+    assert extraccion_db.es_identidad_propia("Sundeck") is False
+    assert extraccion_db.es_identidad_propia("") is False
+
+
+def test_identidad_propia_no_genera_candidato_nuevo_ni_propuesta(tmp_path):
+    fichas = [
+        _ficha(ruta_rel="uno.png", productora="REDUCIENDODANO.CL"),
+        _ficha(ruta_rel="dos.png", productora="RD"),
+        _ficha(ruta_rel="tres.png", productora="eventos@reduciendodano.cl"),
+    ]
+    ruta_in = tmp_path / "fichas.jsonl"
+    _escribir_jsonl(ruta_in, fichas)
+    outdir = tmp_path / "out"
+
+    resumen = extraccion_db.procesar(
+        ruta_in, outdir,
+        catalogo_productoras_ruta=_sin_catalogo(tmp_path),
+        catalogo_venues_ruta=_sin_catalogo(tmp_path, "_vacio_venues"),
+    )
+
+    assert resumen["total_obras"] == 3
+    for candidato in resumen["candidatos"]:
+        assert candidato["identidad_propia"] is True
+        assert candidato["productora_canonica"] is None
+
+    # NUNCA entran a "nuevo?" ni generan propuesta, aunque haya >=2 obras
+    # con crudos identidad-propia (que ademas fuzzy-matchearian entre si).
+    assert resumen["clusters_nuevos"] == []
+    assert resumen["propuestas"] == []
+    assert not (outdir / "propuestas").exists()
+
+    informe = (outdir / "INFORME_CANDIDATOS.md").read_text(encoding="ascii")
+    assert "Identidad propia" in informe
+    assert "(sin candidatos nuevos)" in informe
+
+
+def test_identidad_propia_no_bloquea_productora_legitima_de_otra_obra(tmp_path):
+    """Una obra identidad_propia no debe contaminar la clasificacion de
+    otra obra con una productora real distinta."""
+    fichas = [
+        _ficha(ruta_rel="a.png", productora="RD"),
+        _ficha(ruta_rel="b.png", productora="Marca Real Nueva"),
+        _ficha(ruta_rel="c.png", productora="Marca Real Nueva"),
+    ]
+    ruta_in = tmp_path / "fichas.jsonl"
+    _escribir_jsonl(ruta_in, fichas)
+    outdir = tmp_path / "out"
+
+    resumen = extraccion_db.procesar(
+        ruta_in, outdir,
+        catalogo_productoras_ruta=_sin_catalogo(tmp_path),
+        catalogo_venues_ruta=_sin_catalogo(tmp_path, "_vacio_venues"),
+    )
+
+    propio = [c for c in resumen["candidatos"] if c["productora_cruda"] == "RD"]
+    (propio,) = propio
+    assert propio["identidad_propia"] is True
+
+    assert len(resumen["clusters_nuevos"]) == 1
+    (cluster,) = resumen["clusters_nuevos"]
+    assert len(cluster["obras"]) == 2
+    assert len(resumen["propuestas"]) == 1
+
+
+def test_identidad_propia_por_venue(tmp_path):
+    """El mismo deny-list aplica al lado venue, no solo productora: un
+    venue_crudo "RD"/"REDUCIENDODANO.CL" tampoco debe generar match ni
+    ensuciar dudosos/nuevo, aunque la productora de esa obra sea real."""
+    fichas = [
+        _ficha(ruta_rel="a.png", productora="Marca Real", venue="REDUCIENDODANO.CL"),
+        _ficha(ruta_rel="b.png", productora="", venue="RD"),
+    ]
+    ruta_in = tmp_path / "fichas.jsonl"
+    _escribir_jsonl(ruta_in, fichas)
+    outdir = tmp_path / "out"
+
+    resumen = extraccion_db.procesar(
+        ruta_in, outdir,
+        catalogo_productoras_ruta=_sin_catalogo(tmp_path),
+        catalogo_venues_ruta=_sin_catalogo(tmp_path, "_vacio_venues"),
+    )
+
+    assert resumen["total_obras"] == 2
+    por_ruta = {c["ruta_rel"]: c for c in resumen["candidatos"]}
+
+    obra_a = por_ruta["a.png"]
+    assert obra_a["venue_crudo"] == "REDUCIENDODANO.CL"
+    assert obra_a["venue_canonico"] is None
+    assert obra_a["identidad_propia"] is True  # via venue, aunque la productora sea real
+    # la productora real de esa MISMA obra no queda bloqueada por el venue propio.
+    assert obra_a["productora_cruda"] == "Marca Real"
+
+    obra_b = por_ruta["b.png"]
+    assert obra_b["venue_crudo"] == "RD"
+    assert obra_b["identidad_propia"] is True
+
+    # candidatos_db.jsonl: el campo unificado "identidad_propia" queda True.
+    lineas = (outdir / "candidatos_db.jsonl").read_text(encoding="ascii").strip().splitlines()
+    registros = [json.loads(l) for l in lineas]
+    assert all(r["identidad_propia"] is True for r in registros)
+
+
+# ---------------------------------------------------------------------------
+# 14. Schema jsonl v2: campos nuevos "fuente" e "identidad_propia"
+# ---------------------------------------------------------------------------
+
+def test_candidatos_jsonl_incluye_fuente_e_identidad_propia(tmp_path):
+    fichas = [_ficha(fuente="rd", ruta_rel="a.png", productora="RD")]
+    ruta_in = tmp_path / "fichas.jsonl"
+    _escribir_jsonl(ruta_in, fichas)
+    outdir = tmp_path / "out"
+
+    extraccion_db.procesar(
+        ruta_in, outdir,
+        catalogo_productoras_ruta=_sin_catalogo(tmp_path),
+        catalogo_venues_ruta=_sin_catalogo(tmp_path, "_vacio_venues"),
+    )
+
+    lineas = (outdir / "candidatos_db.jsonl").read_text(encoding="ascii").strip().splitlines()
+    registro = json.loads(lineas[0])
+    assert "fuente" in registro
+    assert registro["fuente"] == "rd"
+    assert "identidad_propia" in registro
+    assert registro["identidad_propia"] is True
