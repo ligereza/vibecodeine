@@ -9,6 +9,15 @@ Esto habilita un charge-limiter no-root -- el objetivo original de xio (salud de
 bateria) -- que la memoria daba por IMPOSIBLE (dumpsys battery set era cosmetico).
 Empiricamente probado: un comando flipeo Max charging current 0 -> 1.7A@5V.
 
+GAP DRP (medido 2026-07-23, puerto USB de PC legacy 500mA sin PD):
+- can_change_power_role=false: el swap NO se aplica NI UN SAMPLE (power_role=sink
+  en 10 muestras a 0.5s tras set-port-roles source host). Ventana = 0s.
+- Plan B sysfs (input_suspend / charging_enabled / constant_charge_current_max):
+  IMPOSIBLE sin root -- SELinux niega hasta el `ls` de
+  /sys/class/power_supply/battery/ al uid shell (2000); rish/Shizuku es el
+  mismo uid, no ayuda. NO reintentar por software: en puerto PC se desenchufa.
+El limiter SI funciona en cargadores/hubs PD con role-swap (medicion 07-13).
+
 SEGURIDAD (el telefono es la UNICA internet del usuario; jamas dejarlo morir):
 - limiter APAGADO por defecto (debe cargar libre hasta que el usuario lo active).
 - hard_floor (20%): por debajo se FUERZA la carga y se ignora todo lo demas.
@@ -69,12 +78,34 @@ class ChargeControlPlugin(PluginBase):
     def _charge_on(self):
         """sink device -> recibir carga."""
         self._set_roles("sink", "device")
-        self._last = {"action": "charge_on", "at": datetime.now().isoformat()}
+        self._record("charge_on", expect_role="sink")
 
     def _charge_off(self):
         """source host -> OTG source, no carga."""
         self._set_roles("source", "host")
-        self._last = {"action": "charge_off", "at": datetime.now().isoformat()}
+        self._record("charge_off", expect_role="source")
+
+    def _record(self, action, expect_role):
+        """Registra la accion VERIFICANDO que el rol realmente cambio.
+
+        Medido 2026-07-23 (puerto USB de PC, legacy 500mA sin PD): el puerto
+        reporta can_change_power_role=false y set-port-roles NO tiene efecto
+        (power_role sigue sink a muestreo de 0.5s). Antes el plugin anotaba
+        "carga detenida" sin verificar -- falso. Ahora applied=false + nota
+        honesta cuando el puerto rechaza el cambio.
+        """
+        st = self._usb_state()
+        applied = (st.get("power_role") == expect_role)
+        self._last = {"action": action, "at": datetime.now().isoformat(),
+                      "applied": applied}
+        if not applied:
+            self._last["note"] = ("puerto rechazo el cambio de rol "
+                                  "(can_change_power_role=%s): limiter NO sostiene "
+                                  "en este puerto (tipico PC/DRP sin PD role-swap)"
+                                  % st.get("can_change_power_role"))
+            self.logger.warning("set-port-roles sin efecto: power_role=%s "
+                                "(esperado %s); puerto no soporta role-swap"
+                                % (st.get("power_role"), expect_role))
 
     # ── lecturas ──────────────────────────────────────────────────────
     def _battery(self):
@@ -84,7 +115,8 @@ class ChargeControlPlugin(PluginBase):
             return {"level": None, "charging": False, "status": "unknown", "temperature": 0}
 
     def _usb_state(self):
-        st = {"current_mode": None, "power_role": None, "sink_power": None}
+        st = {"current_mode": None, "power_role": None, "sink_power": None,
+              "can_change_power_role": None}
         try:
             out = self.controller._shell("dumpsys", "usb")
             for line in out.splitlines():
@@ -95,6 +127,10 @@ class ChargeControlPlugin(PluginBase):
                     st["power_role"] = s.split("=", 1)[1]
                 elif s.startswith("sink_power=") and st["sink_power"] is None:
                     st["sink_power"] = s.split("=", 1)[1]
+                elif ("can_change_power_role=" in s
+                        and st["can_change_power_role"] is None):
+                    st["can_change_power_role"] = s.split(
+                        "can_change_power_role=", 1)[1].split()[0].rstrip(",")
         except Exception:
             pass
         return st
