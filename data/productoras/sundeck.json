@@ -2,15 +2,40 @@
   "name": "Sundeck",
   "aliases": [
     "SUNDECK",
-    "Sundeck"
+    "Sundeck",
+    "Sundeck 21 anos"
   ],
   "instagram": "",
   "tipos_fecha": [
     "OPEN_AIR"
   ],
-  "logos": [],
-  "venues": [],
+  "logos": [
+    {
+      "id": "sundeck_primary",
+      "knowledge": "PENDIENTE",
+      "estado": "no_encontrado",
+      "notas": "Sin candidato de logo en curatoria (PR #210, docs/rd/candidatos_curatoria/candidatos_db.jsonl categoria=logo). Solo flyers de evento. FALTA."
+    }
+  ],
+  "venues": [
+    {
+      "nombre": "Espacio Riesco",
+      "venue_id": "espacio_riesco",
+      "preferido": false,
+      "estado": "candidato_sin_confirmar",
+      "notas": "venue_crudo de obra_45bae8c3f6 (flyer AUTOMATIZACION/flyervideo/0001.png, fecha_cruda 01/08). Confirmar antes de usar."
+    }
+  ],
   "confirmed": "",
-  "fuente_datos": "C:/RD nombres de archivo (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano",
-  "notes": "Formato rooftop/day (sundeck) -> OPEN_AIR. Fuente: C:/RD ENTREGA."
+  "fuente_datos": "C:/RD nombres de archivo (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano. Complementado con PR #210 (candidatos_db.jsonl match_ratio=1.0): obra_45bae8c3f6, obra_99ef9a1f8a. obra_b94c5571dc ('Sundeck 21 anos', match_ratio=0.636) queda como alias no confirmado.",
+  "notes": "Formato rooftop/day (sundeck) -> OPEN_AIR. Fuente: C:/RD ENTREGA + curatoria PR #210 (2 obras match canonico).",
+  "eventos": [
+    {
+      "nombre": "Sundeck 21 anos",
+      "fecha": "17 enero 2026",
+      "venue": "needs_confirmation",
+      "estado": "pasado",
+      "fuente": "PR #210 obra_b94c5571dc / obra_99ef9a1f8a (ruta_rel HISTORIAS/SUNDECK.17.2.png, HISTORIAS/SUNDECK.17.png), match_ratio 0.636/1.0"
+    }
+  ]
 }
