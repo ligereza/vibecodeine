@@ -89,7 +89,8 @@ else leaking into your context is a design failure.
    away and re-roll with the failure appended; do not debug their work.
    Per I9 (`context/DIRECTOR_CONTRACT.md`): every builder spawns on its own
    line's branch (rd/iskvw/mejoras) in its own worktree, never in the main
-   checkout -- that checkout is read-only for director/user.
+   checkout -- that checkout is read-only for director/user. Autoridad = gate,
+   no firma (I2).
 4. **Review by tournament, not inspection.** For design-weight work: 2-3
    independent attempts, one judge scores against the spec, winner ships. You
    never read the losing code. Mechanical edits skip the tournament; trust CI.
