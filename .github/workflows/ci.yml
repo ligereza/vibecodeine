@@ -5,7 +5,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main, rd, portafolio, mejoras]
+    branches: [main, rd, iskvw, mejoras]
 jobs:
   test:
     name: test (${{ matrix.os }})
