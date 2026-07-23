@@ -13,8 +13,10 @@ name: issue-descarga-ig
 # comentario de render OK todavia y los procesa uno por uno (reintenta
 # los que fallaron antes; nunca reprocesa uno ya cerrado con exito).
 # Guard anti-eco: el intake Gmail tambien crea issues desde notificaciones
-# de GitHub ("Re: [repo] ...") -- esos se saltan SIEMPRE sin comentar, en
-# ambos caminos (evento y barrido), para no entrar en bucle.
+# de GitHub ("Re: [repo] ..."), a veces con prefijo de area del intake
+# delante ("[EVENTOS] Re: ..." -- ver issue #222) -- esos se saltan SIEMPRE
+# sin comentar, en ambos caminos (evento y barrido), para no entrar en
+# bucle. El regex tolera un prefijo "[algo] " opcional antes de "Re:".
 
 on:
   issues:
@@ -53,7 +55,7 @@ jobs:
         if: github.event_name == 'issues'
         run: |
           set -e
-          if printf '%s' "$ISSUE_TITLE" | grep -qE '^Re:'; then
+          if printf '%s' "$ISSUE_TITLE" | grep -qE '^(\[[^]]+\] )?Re:'; then
             echo "issue #$ISSUE_NUM: titulo empieza con 'Re:' (eco de notificacion de Gmail), salteado sin comentar."
             echo "skip=true" >> "$GITHUB_OUTPUT"
           else
@@ -182,7 +184,7 @@ jobs:
             echo "--- issue #$n ---"
             titulo=$(gh issue view "$n" -R "$GITHUB_REPOSITORY" --json title --jq '.title')
             case "$titulo" in
-              Re:*)
+              Re:*|\[*\]\ Re:*)
                 echo "issue #$n: titulo empieza con 'Re:' (eco), salteado sin comentar."
                 continue
                 ;;
