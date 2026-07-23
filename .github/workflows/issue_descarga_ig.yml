@@ -1,36 +1,68 @@
 name: issue-descarga-ig
 # Flujo evento-driven: Apps Script (Gmail 8h) crea issue label "instagram"
 # -> este workflow corre EN MAK (runner self-hosted) -> descarga la imagen
-# del link IG -> artifact + comentario en el issue. v2 agregara render.
+# del link IG -> render Blender headless (cartelera.blend, sin Photoshop)
+# -> artifact + comentario + cierre del issue.
 # Seguridad: dispara solo con label "instagram" (solo colaboradores
-# etiquetan); el body del issue entra SOLO via env (nunca interpolado).
+# etiquetan); el body/titulo del issue entran SOLO via env (nunca
+# interpolados en un comando shell).
+#
+# Barrido auto-sanador: ademas del evento issues, corre cada 30 min
+# (schedule) y a mano (workflow_dispatch). En esos disparos NO hay un
+# issue "propio": lista los abiertos con label action/descargar-ig sin
+# comentario de render OK todavia y los procesa uno por uno (reintenta
+# los que fallaron antes; nunca reprocesa uno ya cerrado con exito).
+# Guard anti-eco: el intake Gmail tambien crea issues desde notificaciones
+# de GitHub ("Re: [repo] ...") -- esos se saltan SIEMPRE sin comentar, en
+# ambos caminos (evento y barrido), para no entrar en bucle.
 
 on:
   issues:
     types: [opened, labeled]
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
 
 permissions:
   issues: write
   contents: read
 
 concurrency:
-  group: descarga-ig-${{ github.event.issue.number }}
+  group: descarga-ig-${{ github.event.issue.number || 'barrido' }}
   cancel-in-progress: false
 
 jobs:
   descarga:
-    if: contains(github.event.issue.labels.*.name, 'action/descargar-ig')
+    if: >
+      (github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'action/descargar-ig')) ||
+      github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: [self-hosted, eventos]
-    timeout-minutes: 20
+    timeout-minutes: 30
     env:
       ISSUE_BODY: ${{ github.event.issue.body }}
+      ISSUE_TITLE: ${{ github.event.issue.title }}
       ISSUE_NUM: ${{ github.event.issue.number }}
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
 
+      # === camino evento: procesa SOLO el issue que disparo el workflow ===
+
+      - name: chequear anti-eco (issue evento)
+        id: guard
+        if: github.event_name == 'issues'
+        run: |
+          set -e
+          if printf '%s' "$ISSUE_TITLE" | grep -qE '^Re:'; then
+            echo "issue #$ISSUE_NUM: titulo empieza con 'Re:' (eco de notificacion de Gmail), salteado sin comentar."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: descargar imagen del issue
         id: dl
+        if: github.event_name == 'issues' && steps.guard.outputs.skip != 'true'
         run: |
           set -e
           url=$(printf '%s' "$ISSUE_BODY" | grep -oE 'https://www\.instagram\.com/[^ )">]+' | head -1)
@@ -57,6 +89,7 @@ jobs:
           echo "dir=$out" >> "$GITHUB_OUTPUT"
 
       - name: publicar artifact
+        if: github.event_name == 'issues' && steps.guard.outputs.skip != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: ig-issue-${{ github.event.issue.number }}
@@ -64,13 +97,143 @@ jobs:
           retention-days: 14
 
       - name: comentar resultado
-        if: success()
+        if: github.event_name == 'issues' && steps.guard.outputs.skip != 'true'
         run: |
           gh issue comment "$ISSUE_NUM" -R "$GITHUB_REPOSITORY" \
-            -b "runner MAK: descarga OK (v1 evento-driven, sin polling). Imagen como artifact \`ig-issue-$ISSUE_NUM\` en este run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID -- render Blender = v2 pendiente."
+            -b "runner MAK: descarga OK (v2 evento-driven). Imagen como artifact \`ig-issue-$ISSUE_NUM\` en este run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID -- render Blender en curso, ver comentario siguiente."
 
       - name: comentar fallo
-        if: failure()
+        if: failure() && github.event_name == 'issues' && steps.guard.outputs.skip != 'true'
         run: |
           gh issue comment "$ISSUE_NUM" -R "$GITHUB_REPOSITORY" \
             -b "runner MAK: descarga FALLO en run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID -- revisar log."
+
+      - name: liberar VRAM ollama
+        if: github.event_name == 'issues' && steps.guard.outputs.skip != 'true'
+        run: |
+          curl -s http://127.0.0.1:11434/api/generate -d '{"model":"gemma3:4b","keep_alive":0}' > /dev/null || true
+
+      - name: render flyer (Blender MAK)
+        id: render
+        if: github.event_name == 'issues' && steps.guard.outputs.skip != 'true'
+        run: |
+          set +e
+          imagen="${{ steps.dl.outputs.dir }}/input_ig.jpg"
+          outdir="$RUNNER_TEMP/render_issue_$ISSUE_NUM"
+          mkdir -p "$outdir"
+          salida=$(python3 tools/render_flyer_mak.py --imagen "$imagen" --out "$outdir" 2>&1)
+          echo "$salida"
+          linea=$(printf '%s\n' "$salida" | grep -E '^RENDER_(OK|FALLO):' | tail -1)
+          if printf '%s' "$linea" | grep -q '^RENDER_OK:'; then
+            echo "status=ok" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=fallo" >> "$GITHUB_OUTPUT"
+          fi
+          {
+            echo "detalle<<RENDER_EOF"
+            printf '%s\n' "$linea"
+            echo "RENDER_EOF"
+          } >> "$GITHUB_OUTPUT"
+          echo "dir=$outdir" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: publicar render (artifact)
+        if: steps.render.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: render-issue-${{ github.event.issue.number }}
+          path: ${{ steps.render.outputs.dir }}
+          retention-days: 30
+
+      - name: comentar render OK + cerrar issue
+        if: steps.render.outputs.status == 'ok'
+        run: |
+          gh issue comment "$ISSUE_NUM" -R "$GITHUB_REPOSITORY" \
+            -b "runner MAK: render OK. Render Blender en artifact \`render-issue-$ISSUE_NUM\` de este run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          gh issue close "$ISSUE_NUM" -R "$GITHUB_REPOSITORY"
+
+      - name: comentar render FALLO
+        if: steps.render.outputs.status == 'fallo'
+        run: |
+          gh issue comment "$ISSUE_NUM" -R "$GITHUB_REPOSITORY" \
+            -b "runner MAK: render FALLO (${{ steps.render.outputs.detalle }}) en run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID -- descarga OK, issue sigue abierto."
+
+      # === camino barrido: schedule / workflow_dispatch, N issues pendientes ===
+
+      - name: listar issues pendientes (barrido)
+        id: listar
+        if: github.event_name != 'issues'
+        run: |
+          set -e
+          nums=$(gh issue list -R "$GITHUB_REPOSITORY" --label action/descargar-ig --state open --json number --jq '.[].number' --limit 50 | tr '\n' ' ')
+          echo "issues candidatos (label, abiertos): $nums"
+          echo "nums=$nums" >> "$GITHUB_OUTPUT"
+
+      - name: procesar issues pendientes (barrido)
+        id: barrido
+        if: github.event_name != 'issues'
+        run: |
+          set -e
+          python3 -c "import parth_dl" 2>/dev/null || \
+            python3 -m pip install --user --quiet --break-system-packages parth-dl
+          barrido_dir="$RUNNER_TEMP/barrido_$GITHUB_RUN_ID"
+          mkdir -p "$barrido_dir"
+          for n in ${{ steps.listar.outputs.nums }}; do
+            echo "--- issue #$n ---"
+            titulo=$(gh issue view "$n" -R "$GITHUB_REPOSITORY" --json title --jq '.title')
+            case "$titulo" in
+              Re:*)
+                echo "issue #$n: titulo empieza con 'Re:' (eco), salteado sin comentar."
+                continue
+                ;;
+            esac
+            ya_ok=$(gh issue view "$n" -R "$GITHUB_REPOSITORY" --json comments --jq '[.comments[].body] | any(contains("runner MAK: render OK"))')
+            if [ "$ya_ok" = "true" ]; then
+              echo "issue #$n: ya tiene comentario de render OK, salteado."
+              continue
+            fi
+            body=$(gh issue view "$n" -R "$GITHUB_REPOSITORY" --json body --jq '.body')
+            url=$(printf '%s' "$body" | grep -oE 'https://www\.instagram\.com/[^ )">]+' | head -1)
+            if [ -z "$url" ]; then
+              echo "issue #$n: sin link de instagram detectable, salteado sin comentar."
+              continue
+            fi
+            out="$barrido_dir/issue_$n"
+            mkdir -p "$out"
+            if ! URL="$url" OUT="$out" PYTHONPATH=src python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          from flujo.ig.download import download_post
+          res = download_post(os.environ["URL"], Path(os.environ["OUT"]))
+          print(json.dumps({k: str(v) for k, v in res.items()}, ensure_ascii=False))
+          if res.get("status") != "downloaded":
+              raise SystemExit(1)
+          PY
+            then
+              gh issue comment "$n" -R "$GITHUB_REPOSITORY" \
+                -b "runner MAK (barrido): descarga FALLO en run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID."
+              continue
+            fi
+            curl -s http://127.0.0.1:11434/api/generate -d '{"model":"gemma3:4b","keep_alive":0}' > /dev/null || true
+            salida=$(python3 tools/render_flyer_mak.py --imagen "$out/input_ig.jpg" --out "$out" 2>&1)
+            echo "$salida"
+            if printf '%s\n' "$salida" | grep -q '^RENDER_OK:'; then
+              gh issue comment "$n" -R "$GITHUB_REPOSITORY" \
+                -b "runner MAK (barrido): render OK. Render Blender en artifact \`render-barrido-$GITHUB_RUN_ID\` (carpeta issue_$n) de este run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+              gh issue close "$n" -R "$GITHUB_REPOSITORY"
+            else
+              detalle=$(printf '%s\n' "$salida" | grep -E '^RENDER_FALLO:' | tail -1)
+              gh issue comment "$n" -R "$GITHUB_REPOSITORY" \
+                -b "runner MAK (barrido): render FALLO ($detalle) en run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID -- descarga OK, issue sigue abierto."
+            fi
+          done
+          echo "dir=$barrido_dir" >> "$GITHUB_OUTPUT"
+
+      - name: publicar render (barrido, artifact)
+        if: steps.barrido.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: render-barrido-${{ github.run_id }}
+          path: ${{ steps.barrido.outputs.dir }}
+          retention-days: 30
+          if-no-files-found: warn
