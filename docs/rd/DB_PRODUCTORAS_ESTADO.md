@@ -23,6 +23,12 @@ PENDIENTE.
    `rd-db` todavía. Extensión pendiente si se necesita consulta SQL.
 4. Logos van en `knowledge/logos/<slug>.yaml` (workflow de vectorización,
    `logo_clean_lab`); el json de la productora solo referencia el id.
+5. Política de logos (2026-07-23; causa: logo recortado de flyer = derivado
+   de baja calidad sin fuente): los logos NUNCA se recortan de fichas/flyers.
+   De las fichas solo se registra nombre + handle para búsqueda web posterior.
+   El logo oficial se busca en web (perfil IG oficial o sitio de la
+   productora), guardando la url fuente junto al archivo (en MAK:
+   `~/curatoria/logos_oficiales/`).
 
 ## Cobertura de esta entrega
 
