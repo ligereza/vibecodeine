@@ -165,8 +165,8 @@ jobs:
         if: github.event_name != 'issues'
         run: |
           set -e
-          nums=$(gh issue list -R "$GITHUB_REPOSITORY" --label action/descargar-ig --state open --json number --jq '.[].number' --limit 50 | tr '\n' ' ')
-          echo "issues candidatos (label, abiertos): $nums"
+          nums=$(gh issue list -R "$GITHUB_REPOSITORY" --label action/descargar-ig --state open --json number,labels --jq '.[] | select([.labels[].name] | contains(["estado/pendiente-datos"]) | not) | .number' --limit 50 | tr '\n' ' ')
+          echo "issues candidatos (label, abiertos, sin pendiente-datos): $nums"
           echo "nums=$nums" >> "$GITHUB_OUTPUT"
 
       - name: procesar issues pendientes (barrido)
@@ -210,8 +210,15 @@ jobs:
               raise SystemExit(1)
           PY
             then
-              gh issue comment "$n" -R "$GITHUB_REPOSITORY" \
-                -b "runner MAK (barrido): descarga FALLO en run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID."
+              fallos=$(gh issue view "$n" -R "$GITHUB_REPOSITORY" --json comments --jq '[.comments[].body | select(contains("descarga FALLO"))] | length')
+              if [ "$fallos" -ge 1 ]; then
+                gh issue edit "$n" -R "$GITHUB_REPOSITORY" --add-label "estado/pendiente-datos"
+                gh issue comment "$n" -R "$GITHUB_REPOSITORY" \
+                  -b "runner MAK (barrido): descarga fallo 2+ veces -- el post parece PRIVADO o BORRADO (Instagram exige login). Marcado estado/pendiente-datos y excluido de reintentos. Para reactivar: responder con un link publico en un issue nuevo, o quitar la label tras corregir."
+              else
+                gh issue comment "$n" -R "$GITHUB_REPOSITORY" \
+                  -b "runner MAK (barrido): descarga FALLO en run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID (reintento automatico en 30 min; al 2do fallo se marca pendiente-datos)."
+              fi
               continue
             fi
             curl -s http://127.0.0.1:11434/api/generate -d '{"model":"gemma3:4b","keep_alive":0}' > /dev/null || true
