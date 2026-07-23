@@ -587,6 +587,23 @@ def test_es_identidad_propia_patrones():
     assert extraccion_db.es_identidad_propia("") is False
 
 
+def test_es_identidad_propia_patron_corto_no_falso_positivo_substring():
+    """"rd" es corto (<=3 chars) -> matchea por PALABRA COMPLETA, no por
+    contains puro. "records"/"yard"/"hardgroove" contienen "rd" como
+    substring interno pero NO son la ONG RD."""
+    assert extraccion_db.es_identidad_propia("Records Label") is False
+    assert extraccion_db.es_identidad_propia("Yard Productions") is False
+    assert extraccion_db.es_identidad_propia("Hardgroove") is False
+
+
+def test_es_identidad_propia_patron_corto_si_matchea_palabra_completa():
+    """"rd" como palabra completa (sola o junto a otras palabras) SI es
+    identidad propia."""
+    assert extraccion_db.es_identidad_propia("rd") is True
+    assert extraccion_db.es_identidad_propia("Fiesta RD") is True
+    assert extraccion_db.es_identidad_propia("RD Eventos") is True
+
+
 def test_identidad_propia_no_genera_candidato_nuevo_ni_propuesta(tmp_path):
     fichas = [
         _ficha(ruta_rel="uno.png", productora="REDUCIENDODANO.CL"),

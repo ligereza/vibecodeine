@@ -77,17 +77,20 @@ DEFAULT_FUENTE = "rd"
 RANK_CALIDAD = {"alta": 3, "media": 2, "baja": 1}
 
 # Deny-list de identidad propia (RD/ONG, no una productora/venue real).
-# Match case-insensitive y por CONTAINS tras normalizar (normalizar_texto).
-# Riesgo aceptado y documentado: el patron corto "rd" puede dar falso
-# positivo por contains puro contra un texto que lo contenga como
-# substring interno (ej. una palabra que incluya "...rd..."); se
-# implementa literal segun especificacion, no se acota a "token exacto".
+# Match case-insensitive tras normalizar (normalizar_texto). Los patrones
+# LARGOS (>UMBRAL_PATRON_CORTO_IDENTIDAD chars, ej. dominios/mails) siguen
+# por CONTAINS. Los patrones CORTOS (ej. "rd") matchean por PALABRA
+# COMPLETA (\b...\b) para evitar falsos positivos confirmados contra el
+# corpus real: "records", "yard", "hardgroove" contienen "rd" como
+# substring pero NO son RD.
 IDENTIDAD_PROPIA = (
     "reduciendodano.cl",
     "eventos@reduciendodano.cl",
     "eventos@reduciendo.cl",
     "rd",
 )
+
+UMBRAL_PATRON_CORTO_IDENTIDAD = 3
 
 CAMPOS_CANDIDATO_JSONL = (
     "obra_id", "fuente", "ruta_rel", "miembros_n", "productora_cruda",
@@ -146,13 +149,22 @@ def valor_limpio(valor) -> str:
 
 def es_identidad_propia(crudo: str) -> bool:
     """True si `crudo` (productora o venue) es la ONG misma (RD), no una
-    productora/venue real -- ver IDENTIDAD_PROPIA."""
+    productora/venue real -- ver IDENTIDAD_PROPIA. Patrones cortos
+    (<=UMBRAL_PATRON_CORTO_IDENTIDAD) matchean por palabra completa
+    (\\b...\\b); patrones largos (dominios/mails) por contains -- evita
+    que "records"/"yard"/"hardgroove" (contienen "rd" como substring)
+    disparen falso positivo."""
     norm = normalizar_texto(crudo)
     if not norm:
         return False
     for patron in IDENTIDAD_PROPIA:
         patron_norm = normalizar_texto(patron)
-        if patron_norm and patron_norm in norm:
+        if not patron_norm:
+            continue
+        if len(patron_norm) <= UMBRAL_PATRON_CORTO_IDENTIDAD:
+            if re.search(r"\b%s\b" % re.escape(patron_norm), norm):
+                return True
+        elif patron_norm in norm:
             return True
     return False
 
