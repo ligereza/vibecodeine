@@ -9,7 +9,12 @@ Esto habilita un charge-limiter no-root -- el objetivo original de xio (salud de
 bateria) -- que la memoria daba por IMPOSIBLE (dumpsys battery set era cosmetico).
 Empiricamente probado: un comando flipeo Max charging current 0 -> 1.7A@5V.
 
-GAP DRP (medido 2026-07-23, puerto USB de PC legacy 500mA sin PD):
+GAP DRP (medido 2026-07-23, puerto USB de PC legacy 500mA sin PD; reproducido
+por AMBOS caminos: dumpsys crudo Y el endpoint del server
+POST /charge?confirm=1 {"on":false} via adb forward tcp:5000 -- el server
+respondio ok:true pero su propio payload mostro power_role=sink y
+status=charging sin cambio; el camino probado el 07-13 con otro puerto/cargador
+no es el problema, el PUERTO lo es):
 - can_change_power_role=false: el swap NO se aplica NI UN SAMPLE (power_role=sink
   en 10 muestras a 0.5s tras set-port-roles source host). Ventana = 0s.
 - Plan B sysfs (input_suspend / charging_enabled / constant_charge_current_max):
