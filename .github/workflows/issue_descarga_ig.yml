@@ -19,8 +19,8 @@ concurrency:
 
 jobs:
   descarga:
-    if: contains(github.event.issue.labels.*.name, 'instagram')
-    runs-on: [self-hosted, mak]
+    if: contains(github.event.issue.labels.*.name, 'action/descargar-ig')
+    runs-on: [self-hosted, eventos]
     timeout-minutes: 20
     env:
       ISSUE_BODY: ${{ github.event.issue.body }}
