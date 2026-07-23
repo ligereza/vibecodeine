@@ -60,6 +60,7 @@ from ..dashboard import collect_items, render_markdown, render_html
 from ..eventos.presets import infer_event_preset, list_event_presets
 from ..serve.server import api_plano_render as render_plano_api
 from ..cotizaciones_base import generar_cotizacion_base
+from ..rd.informe import resumen_json as rd_datos_resumen_json
 try:
     from ..export.illustrator import prepare_supplement_job_assets
 except Exception:
@@ -394,6 +395,12 @@ class HubRequestHandler(BaseHTTPRequestHandler):
         if path == "/api/agents-roles":
             self._send_json(self._get_agents_roles())
             return
+        if path == "/api/rd-datos-summary":
+            try:
+                self._send_json(self._get_rd_datos_summary())
+            except Exception as e:
+                self._send_json({"disponible": False, "error": str(e)}, status=200)
+            return
         if path == "/manifest.json":
             self._serve_manifest()
             return
@@ -611,6 +618,13 @@ class HubRequestHandler(BaseHTTPRequestHandler):
 
     def _get_dashboard_summary(self) -> dict:
         return build_dashboard_summary(collect_items(self.root))
+
+    def _get_rd_datos_summary(self) -> dict:
+        """GET /api/rd-datos-summary: resumen de la DB privacy-first de
+        datos de campo RD (F3b). Si la DB no existe (nada ingerido todavia)
+        `resumen_json` retorna {"disponible": False} en vez de lanzar --
+        respuesta valida siempre, nunca 500."""
+        return rd_datos_resumen_json()
 
     def _get_agents_roles(self) -> dict:
         """Central definition of specialized agent roles for delegation system.
