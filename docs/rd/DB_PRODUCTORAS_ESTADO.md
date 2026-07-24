@@ -38,23 +38,23 @@ llevan el evento activo captado hoy.
 
 | Productora | Confianza match | Logo | Venue | Eventos | Fuente principal |
 |---|---|---|---|---|---|
-| Sundeck | alta (1.0, 2 obras) | **FALTA** (no_encontrado) | Espacio Riesco -- candidato sin confirmar | 1 pasado (17-ene-2026, needs_confirmation) | PR #210 obra_45bae8c3f6 / obra_99ef9a1f8a |
+| Sundeck | alta (1.0, 2 obras) | **encontrado** (sitio oficial sundeck.cl, sync 2026-07-24) | Espacio Riesco -- candidato sin confirmar | 1 pasado (17-ene-2026, needs_confirmation) | PR #210 obra_45bae8c3f6 / obra_99ef9a1f8a |
 | Piknic Electronik | alta (1.0, 1 obra) | 2 candidatos sin copiar (logo-piknic.png, piknic.png) -- **FALTA copiar+vectorizar** | Parque Padre Hurtado -- confirmado | 1 ACTIVO_VENTA (12-sep-2026) + 1 pasado sin fecha exacta | IG 2026-07-23 + PR #210 obra_25745a1c93 |
-| Creamfields | alta (1.0, 1 obra) | yaml existente (source_needed) + 2 candidatos imagen sin copiar -- **FALTA vectorizar** | Club Hípico -- candidato sin confirmar; Espacio Riesco es ejemplo de escala, no dato | 1 pasado (11/12-oct-2025) | PR #210 obra_0304b8fe9a |
+| Creamfields | alta (1.0, 1 obra) | **encontrado** (ticketera oficial puntoticket, sync 2026-07-24) | Club Hípico -- candidato sin confirmar; Espacio Riesco es ejemplo de escala, no dato | 1 pasado (11/12-oct-2025) | PR #210 obra_0304b8fe9a |
 | OpenKlub | alta (1.0, 1 obra) | **FALTA** (no_encontrado) | Central Cultural -- candidato sin confirmar (nombre genérico, dudoso) | 1 pasado sin año confirmado (6-feb) | PR #210 obra_7879d3d141 |
 | Dame | n/a (identidad ya en repo, no en match PR #210) | **FALTA** (no_encontrado) | Basel Venue Santiago -- confirmado | 1 ACTIVO_ANUNCIADO (Jeff Mills 30yr, 20-nov-2026) | IG 2026-07-23 |
 
 ## Huecos explícitos (cola de trabajo)
 
 FALTA logo (sin ningún candidato en curatoría):
-- Sundeck
 - OpenKlub
 - Dame
 
+Resuelto en la entrega 2026-07-24 (ver sección propia abajo): Sundeck y
+Creamfields ya tienen logo oficial `encontrado` via web anónima (PR #254).
+
 FALTA copiar/vectorizar (candidato existe pero no está en knowledge/logos/):
 - Piknic Electronik: `FLYER/logo-piknic.png` (obra_bd9fc5daf8), `piknic.png` (obra_5add3c6113)
-- Creamfields: `CREAMFIELDS/326185116_..._n.png` (obra_6d0ccb045c), `CREAMFIELDS/Comp 1 (0-00-30-04).png` (obra_defa9d8353)
-  (yaml `knowledge/logos/creamfields.yaml` ya existe, status=needs_vectorization)
 
 FALTA confirmar venue (venue_crudo de una sola obra, no verificado):
 - Sundeck -> Espacio Riesco (obra_45bae8c3f6)
@@ -210,3 +210,76 @@ automático en el repo. Se instaló `vtracer` (`py -m pip install vtracer`)
 como herramienta batch para esta y futuras entregas, pero no se vectorizó
 nada esta vez porque no se consiguió ningún logo raster (ver sección
 anterior).
+
+## Entrega 2026-07-24 (sincronización logos PR #254 -> data/productoras)
+
+PR #254 (`feat(rd): logos oficiales via web anonima + vectores`) descargó
+6 logos oficiales reales a `knowledge/logos/{descargas,vector}/` con su
+`.txt` de fuente y `.yaml` de estado, pero dejó los `data/productoras/*.json`
+sin actualizar (seguían en `PENDIENTE`/`no_encontrado`) y este doc + la
+presentación seguían mostrando 0/20. Esta entrega solo sincroniza el dato
+ya obtenido, no busca logos nuevos.
+
+Los 6 `data/productoras/<slug>.json` actualizados (campo `logos[0]`:
+`estado: "encontrado"`, `archivo` = vector SVG, `raster` = descarga
+original, `fuente` = URL registrada en el `.txt`, `obtenido: 2026-07-24`):
+
+| Productora (json) | yaml PR #254 | Fuente oficial |
+|---|---|---|
+| `sundeck.json` | `sundeck.yaml` | sitio oficial sundeck.cl (Webflow CDN) |
+| `creamfields.json` | `creamfields.yaml` | creamfields.cl / ticketera oficial puntoticket |
+| `thegrid.json` | `thegrid.yaml` | the-grid.club/santiago (SVG del header) |
+| `streetmachine.json` | `street_machine.yaml` | streetmachine.cl (Shopify og:image) |
+| `panalrecords.json` | `panal_records.yaml` | panalrecords.bandcamp.com (foto de perfil oficial) |
+| `freedom.json` | `club_freedom.yaml` | facebook.com/clubfreedomlive (foto de perfil oficial) |
+
+Nota de mapeo: los nombres de archivo no siempre calzan con el slug del
+json (`club_freedom.yaml` -> `freedom.json`, `street_machine.yaml` ->
+`streetmachine.json`, `panal_records.yaml` -> `panalrecords.json`,
+`thegrid.yaml` con raster `grid_system.svg` -> `thegrid.json`; **no
+confundir con `gridsystem.json`**, que es una entidad distinta -- "GRID
+System" de Glovox, sigue `PENDIENTE`, sin research esta entrega).
+
+Los otros 5 con research previo en PR #254 (`piknic`, `dame`, `openklub`,
+`technoyouth`, `glovox`) quedan `PENDIENTE` con su motivo documentado en
+sus respectivos `.yaml` (`status: source_needed`, campo `next_action`):
+
+- `piknic.json`: og:image de piknicelectronik.cl no expuso logo via fetch
+  anónimo (sitio posiblemente JS-rendered); reintentar con vista renderizada
+  o capturar de puntoticket.com/piknicelectronik.
+- `dame.json`: solo perfil IG @fiestadame con foto de perfil 100x100 (bajo
+  umbral 150px) y URL firmada que bloquea descarga sin sesión; falta sitio
+  oficial o press kit.
+- `openklub.json`: dominio openklub.cl no resuelve (DNS); no se identificó
+  cuenta IG/FB oficial en búsqueda inicial; falta re-búsqueda con términos
+  alternativos.
+- `technoyouth.json`: sitio technoyouth.cl devolvió 523 (Cloudflare); perfil
+  IG @technoyouthscl solo entrega foto 100x100 firmada; falta press kit o
+  Bandcamp.
+- `glovox.json`: sitio glovox.io es página de marcas/sponsors, no expone
+  logo propio; perfil IG @glovox solo entrega foto 100x100 firmada; revisar
+  brandfetch.com/glovox.cl o LinkedIn.
+
+Los 9 restantes (amelie, cachorros, frvr, gridsystem, impulsefest, livejam,
+nebula, psiquiatrico, tycircle) no tienen `logos` en absoluto (`sin_dato`)
+-- fuera del alcance de PR #254, sin research todavía.
+
+Contador final: **6/20 logos conseguidos** (antes 0/20).
+
+### Regeneración de dashboards
+
+- `tools/gen_dashboard_productoras.py`: `logo_cell()` ahora resuelve la
+  miniatura desde el campo `logos[0]["raster"]` del json (path real) en vez
+  de asumir `knowledge/logos/descargas/<slug>.png` -- el nombre de archivo
+  descargado no siempre coincide con el slug del json (ver tabla de mapeo
+  arriba) y además hay un `.jpg` (panal_records) y un `.svg` (grid_system)
+  entre los rasters, no solo `.png`.
+- `tools/gen_presentacion_db.py`: agrega `_data_uri()` para embeber el logo
+  (vector SVG si existe, si no el raster) como `data:` URI directamente en
+  el JSON embebido de la página -- la presentación sigue siendo 100%
+  autocontenida (regla dura del generador), ahora con miniatura real de
+  logo en las 6 tarjetas con estado `encontrado`.
+- Regenerado `docs/rd/presentacion_db.html` (`py tools/gen_presentacion_db.py
+  --out docs/rd/presentacion_db.html`): stat "Logos conseguidos" = 6/20,
+  verificado abriendo el archivo (las 6 tarjetas muestran logo, las demás
+  PENDIENTE/no_encontrado/sin_dato con su motivo).
