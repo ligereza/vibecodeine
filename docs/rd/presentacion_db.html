@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reduciendo Dano -- DB de Productoras RD</title>
+<style>
+:root{
+  --bg:#0A0A0A; --panel:#161318; --ink:#F2F2F2; --muted:#9c98a3;
+  --magenta:#C800C8; --amarillo:#FFD21F; --linea:#2a2530;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family: Arial, Helvetica, sans-serif; line-height:1.5;
+}
+header.hero{
+  padding:3rem 1.5rem 2rem; text-align:center; position:relative;
+  border-bottom:1px solid var(--linea);
+}
+header.hero .logo{ width:110px; height:auto; margin:0 auto 1rem; display:block; }
+header.hero h1{
+  font-size:1.6rem; letter-spacing:.04em; text-transform:uppercase;
+  color:var(--amarillo); text-shadow:0 0 18px rgba(255,210,31,.35);
+  margin:.2rem 0;
+}
+header.hero p{ color:var(--muted); max-width:640px; margin:.6rem auto 0; font-size:.92rem; }
+main{ max-width:1180px; margin:0 auto; padding:2rem 1.25rem 4rem; }
+section{ margin-top:2.5rem; }
+h2{
+  font-size:1.05rem; text-transform:uppercase; letter-spacing:.06em;
+  color:var(--amarillo); border-left:3px solid var(--magenta); padding-left:.6rem;
+  margin-bottom:1rem;
+}
+.controls{ display:flex; flex-wrap:wrap; gap:.6rem; margin-bottom:1.2rem; }
+.controls input, .controls select{
+  background:var(--panel); color:var(--ink); border:1px solid var(--linea);
+  border-radius:6px; padding:.5rem .7rem; font-size:.85rem;
+}
+.controls input{ flex:1; min-width:180px; }
+.grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:1rem; }
+.card{
+  background:var(--panel); border-radius:10px; padding:1.1rem;
+  position:relative; overflow:hidden;
+}
+.card::before, .card::after{
+  content:""; position:absolute; inset:0; border-radius:10px; pointer-events:none;
+}
+.card::before{ box-shadow:inset 0 0 0 1.5px rgba(200,0,200,.16); }
+.card::after{ box-shadow:inset 0 0 0 1px rgba(200,0,200,.55); }
+.card h3{ margin:.1rem 0 .3rem; font-size:1.05rem; color:var(--ink); }
+.tipo-pill{
+  display:inline-block; font-size:.68rem; text-transform:uppercase; letter-spacing:.04em;
+  padding:.15rem .5rem; border-radius:12px; background:#241f29; color:var(--muted);
+  margin-bottom:.5rem;
+}
+.tipo-pill.spot{ background:#2a1f10; color:var(--amarillo); }
+.row{ font-size:.8rem; color:var(--muted); margin:.2rem 0; }
+.row b{ color:var(--ink); font-weight:600; }
+.badge{
+  display:inline-block; font-size:.68rem; padding:.12rem .45rem; border-radius:4px;
+  margin:.15rem .25rem .15rem 0;
+}
+.badge.pendiente{ background:#3a1414; color:#ff9d9d; }
+.badge.ok{ background:#123a1e; color:#7ee787; }
+.badge.needs{ background:#3a2e10; color:var(--amarillo); }
+.evento{ margin-top:.5rem; padding:.5rem .6rem; background:#0f0d12; border-radius:6px; font-size:.78rem; }
+.evento b{ color:var(--ink); }
+.evento .fuente{ display:block; color:var(--muted); margin-top:.2rem; font-style:italic; }
+.rel-list{ font-size:.75rem; color:var(--muted); margin-top:.4rem; }
+.empty{ color:var(--muted); font-size:.85rem; padding:1rem; }
+.metodologia, .disclaimer{
+  background:var(--panel); border-radius:10px; padding:1.2rem 1.4rem; font-size:.88rem; color:var(--muted);
+}
+.metodologia b, .disclaimer b{ color:var(--ink); }
+.metodologia ul{ margin:.5rem 0 0 1.1rem; padding:0; }
+.metodologia li{ margin:.3rem 0; }
+.stat-row{ display:flex; gap:1.2rem; flex-wrap:wrap; margin-bottom:1rem; }
+.stat{ background:var(--panel); border-radius:8px; padding:.8rem 1.1rem; min-width:130px; }
+.stat .n{ font-size:1.5rem; color:var(--amarillo); font-weight:700; }
+.stat .l{ font-size:.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+footer{ text-align:center; padding:2rem 1rem; color:var(--muted); font-size:.75rem; border-top:1px solid var(--linea); }
+footer .logo{ width:52px; height:auto; margin:0 auto .6rem; display:block; opacity:.8; }
+a{ color:var(--amarillo); }
+@media (prefers-color-scheme: light){
+  /* La pieza es RAVE/oscura por linea editorial -- se mantiene fija, no responde a tema del sistema. */
+}
+</style>
+</head>
+<body>
+<header class="hero">
+  <svg class="logo" id="Capa_1" data-name="Capa 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060 817.61">
+  <defs>
+    <style>
+      .cls-1, .cls-2 {
+        fill: #000;
+      }
+
+      .cls-3 {
+        fill: none;
+        stroke: #000;
+        stroke-miterlimit: 10;
+        stroke-width: .6165px;
+      }
+
+      .cls-3, .cls-2 {
+        font-family: Helvetica-Bold, Helvetica;
+        font-size: 53.4255px;
+        font-weight: 700;
+        isolation: isolate;
+      }
+    </style>
+  </defs>
+  <g id="Capa_2" data-name="Capa 2">
+    <g id="Layer_1" data-name="Layer 1">
+      <path id="Gota" fill="#ffffff" d="M942.9872,428.0881c-12.0906,10.5536-44.5076,38.1705-71.9355,61.7681-188.5593,162.0849-300.3913,231.7189-402.8204,250.6891-23.5894,4.2165-76.1519,2.8768-103.5634-3.0658-120.0842-25.4799-216.168-110.295-253.9768-223.664-14.0139-41.8034-16.3153-57.1489-16.3153-106.2511,0-47.7624,2.4658-64.834,14.5811-101.6647,34.143-104.1552,113.558-184.5318,214.8364-217.7132,38.9349-12.4687,56.9105-17.1866,100.9989-17.1866,34.9157,0,41.6884,2.4165,57.7982,6.4439,30.6909,7.6686,55.0694,16.8825,91.1193,34.7184,83.6891,41.0308,159.0437,95.5249,307.8955,222.6777,30.1156,25.7018,61.3819,52.3652,69.6258,59.2695,8.055,6.7152,14.5811,13.044,14.3838,13.8167-.3781.6-10.5453,9.8057-22.6278,20.162Z"/>
+      <path class="cls-1" d="M395.0795,304.5929c4.1012,6.408,6.9463,13.5375,8.3837,21.0086,1.5288,7.6714,1.2767,16.4222-.7562,26.2525-2.6028,11.8632-8.1097,23.5236-16.5208,34.9814-8.4111,11.4578-20.014,19.5592-34.8088,24.3045,10.5043,4.6247,17.2524,11.2002,20.2442,19.7264,2.9918,8.5262,2.6329,21.5428-1.0767,39.0499l-3.559,16.7674c-2.3672,11.4084-3.5507,19.1428-3.5507,23.2031,0,6.444,2.1452,11.1892,6.4357,14.2359l-1.1918,6.2631h-57.4448c-.4493-5.5343-.674-9.9947-.674-13.3811.1356-7.2269.9279-14.4265,2.3672-21.5099l4.5782-23.2113c3.1562-15.9235,2.5069-26.5374-1.948-31.8416-4.4549-5.3042-14.3646-7.959-29.7293-7.9645h-53.8612l-20.6716,97.9085h-50.9597l53.0228-249.6699h122.4678c17.3921.3343,30.3786,2.4795,38.9595,6.4357,8.3078,3.7306,15.3565,9.7888,20.2935,17.4414ZM254.9978,324.0727l-14.2276,67.0778h59.0887c11.7426,0,20.8332-1.3562,27.2717-4.0686,11.4084-4.7398,18.6359-14.1098,21.6826-28.1101,3.1672-15.1345.2877-25.299-8.6385-30.4937-5.0795-2.937-13.266-4.4055-24.5593-4.4055h-60.6174Z"/>
+      <path class="cls-1" d="M607.6639,286.1323c16.2578,5.759,28.1703,16.3181,35.7376,31.6772,6.1223,12.5402,9.2804,26.3198,9.2303,40.2746.1109,13.879-1.2223,27.7319-3.9782,41.3349-7.1234,33.1951-19.7729,61.3133-37.9486,84.3548-24.6196,31.0525-55.7845,46.5788-93.4947,46.5788h-107.5579l53.0146-249.6699h107.558c15.3756.2411,27.8553,2.0576,37.439,5.4494ZM503.9937,324.0727l-34.5211,162.9479h48.1077c24.6141,0,44.3761-12.1372,59.2859-36.4116,8.1317-13.3262,14.1153-29.1923,17.951-47.5981,5.4247-25.4141,5.5946-44.9213.5096-58.5215-5.085-13.6002-19.4935-20.4058-43.2254-20.4168h-48.1077Z"/>
+      <path class="cls-1" d="M690.2762,504.2976l2.4658,4.4795c6.4933,11.729,8.9426,18.3948,8.8275,24.0168-.173,1.8634-.6103,3.6927-1.2987,5.433-2.5736,5.9863-8.1306,10.1572-14.5975,10.9564-1.9183.2954-3.877.1918-5.7535-.3041-1.8432-.2815-3.6135-.9209-5.2111-1.8822-5.0601-2.8598-8.4524-7.962-9.1316-13.7345-.2936-1.8365-.2266-3.7125.1973-5.5234.1597-1.0378.4873-2.0428.9699-2.9754.7706-1.5815,1.7222-3.0682,2.8357-4.4302,3.0822-3.9699,6.7892-7.3481,15.1317-13.8167l3.8959-3.0247c.2671-.2381.5625-.4424.8795-.6082,0,0,.3371.6658.7891,1.4137Z"/>
+      <path class="cls-1" d="M685.6159,456.2804c-1.2607,6.5342,3.0143,12.8533,9.5485,14.1141,6.5343,1.2608,12.8534-3.0142,14.1141-9.5485.0345-.1787.0649-.3581.0913-.5381l8.5891-50.6721-23.762-4.0275-8.581,50.6721Z"/>
+      <path class="cls-1" d="M704.4545,500.9112l-27.5594-4.6603,2.2028-13.0112c-2.6544-1.9405-4.9752-4.3002-6.8713-6.9864-4.7869-6.6947-6.6959-15.0264-5.3015-23.1374l19.825-117.1417,61.1353,10.3728-19.8004,117.117c-1.9373,11.5292-10.2032,20.9841-21.3702,24.4442l-2.2603,13.003ZM686.372,489.5028l11.3016,1.9069,1.7343-10.2741,2.7535-.5754c9.1501-1.9216,16.1908-9.2493,17.7455-18.4688l18.4441-109.0292-44.8774-7.5864-18.4195,109.021c-1.5611,9.2177,2.6776,18.4518,10.6851,23.2771l2.4,1.4466-1.7671,10.2823Z"/>
+      <path class="cls-1" d="M764.1843,357.4267l-96.4783-16.3236,4.3645-25.7922,17.6715,2.9918,5.0713-29.9512c2.8507-16.8798,18.8455-28.2526,35.7253-25.4018,16.8798,2.8507,28.2525,18.8455,25.4018,35.7253h0l-5.0631,29.9512,17.6715,2.9918-4.3645,25.8086ZM677.2075,334.3551l80.2205,13.5783,1.6439-9.5508-17.6715-2.9918,6.4111-38.0718c2.0972-12.3948-6.2507-24.1429-18.6455-26.2402s-24.1429,6.2507-26.2402,18.6455h0l-6.444,38.0719-17.6715-2.9836-1.6028,9.5426Z"/>
+      <path class="cls-1" d="M714.589,309.7547l-8.1207-1.3726,2.9672-17.5564c.7077-4.2321,3.0744-8.0071,6.5755-10.4878h0c3.4947-2.4954,7.8422-3.4897,12.0742-2.7617l-1.3726,8.1289c-2.0709-.3601-4.1998.1255-5.9097,1.348h0c-1.7198,1.212-2.883,3.0619-3.2302,5.1371l-2.9836,17.5647Z"/>
+      <text class="cls-2" transform="translate(603.998 532.374)"><tspan x="0" y="0">®</tspan></text>
+      <text class="cls-3" transform="translate(603.998 532.374)"><tspan x="0" y="0">®</tspan></text>
+    </g>
+  </g>
+</svg>
+  <h1>DB de Productoras -- Reduciendo Daño</h1>
+  <p>Presentación formal para la directiva. Base de datos de productoras, spots y eventos
+  del ecosistema electrónico chileno con el que RD trabaja, construida a partir de
+  curatoría de material propio y confirmación directa del equipo. Documento HTML
+  autónomo, pensado para integrarse después a reduciendodano.cl.</p>
+</header>
+
+<main>
+
+<section id="resumen">
+  <h2>Resumen</h2>
+  <div class="stat-row" id="stats"></div>
+</section>
+
+<section id="productoras">
+  <h2>Productoras y spots</h2>
+  <div class="controls">
+    <input id="buscar" type="text" placeholder="Buscar por nombre, alias o venue...">
+    <select id="filtroTipo"><option value="">Todos los tipos</option></select>
+    <select id="filtroLogo">
+      <option value="">Logo: cualquier estado</option>
+      <option value="ok">Logo conseguido</option>
+      <option value="pendiente">Logo pendiente</option>
+    </select>
+  </div>
+  <div class="grid" id="grid"></div>
+</section>
+
+<section id="metodologia">
+  <h2>Metodología</h2>
+  <div class="metodologia">
+    <p><b>Curatoría de base:</b> 1731 fichas curadas manualmente (obras del archivo
+    RD) sirvieron para armar la primera pasada de la DB (identidad, venues, eventos
+    con fecha confirmada por revisión humana).</p>
+    <p><b>Triangulación automática:</b> sobre un corpus ampliado de 2440 fichas
+    (OCR + descripción por visión de cada imagen), una herramienta propia
+    (<code>tools/triangular_fichas.py</code>) cruza productora/venue/fecha/lineup por
+    ficha y agrupa las que corresponden al mismo evento (misma fecha ±1 día,
+    mismo venue o mismo lineup). De 821 fichas con alguna señal utilizable salieron
+    101 agrupaciones candidatas y 348 nombres de productora candidatos.</p>
+    <p><b>Curación final:</b> solo lo verificado (confirmado por el equipo o con
+    evidencia clara y no ambigua) pasa a <code>data/productoras/*.json</code>, que es
+    la única fuente que alimenta esta página. La salida cruda de la
+    triangulación queda como cola de trabajo interna, no se expone acá tal cual
+    porque incluye ruido de OCR (texto girado, imágenes de producto RD mezcladas con
+    flyers) y agrupaciones que a veces fusionan varias ediciones reales de una misma
+    serie.</p>
+    <ul>
+      <li>Ningún dato se inventa: lo no confirmado queda marcado
+      <span class="badge needs">needs_confirmation</span> o
+      <span class="badge pendiente">PENDIENTE</span>.</li>
+      <li>Los logos se buscan siempre en la fuente oficial (perfil de Instagram o sitio
+      web de la productora) -- nunca se recortan de un flyer.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="disclaimer">
+  <h2>Nota de infraestructura</h2>
+  <div class="disclaimer">
+    <p>Esta herramienta y la base de datos que presenta se construyen sobre
+    <b>infraestructura pro-bono</b>: procesamiento y curatoría corren en
+    equipos donados/aportados al proyecto, sin costo para Reduciendo Daño.
+    El objetivo de diseño es que, una vez la ONG lo decida, este mismo archivo
+    HTML se pueda incrustar tal cual en <a href="https://reduciendodano.cl" target="_blank" rel="noopener">reduciendodano.cl</a>
+    sin dependencias externas ni servidores adicionales.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <svg class="logo" id="Capa_1" data-name="Capa 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060 817.61">
+  <defs>
+    <style>
+      .cls-1, .cls-2 {
+        fill: #000;
+      }
+
+      .cls-3 {
+        fill: none;
+        stroke: #000;
+        stroke-miterlimit: 10;
+        stroke-width: .6165px;
+      }
+
+      .cls-3, .cls-2 {
+        font-family: Helvetica-Bold, Helvetica;
+        font-size: 53.4255px;
+        font-weight: 700;
+        isolation: isolate;
+      }
+    </style>
+  </defs>
+  <g id="Capa_2" data-name="Capa 2">
+    <g id="Layer_1" data-name="Layer 1">
+      <path id="Gota" fill="#ffffff" d="M942.9872,428.0881c-12.0906,10.5536-44.5076,38.1705-71.9355,61.7681-188.5593,162.0849-300.3913,231.7189-402.8204,250.6891-23.5894,4.2165-76.1519,2.8768-103.5634-3.0658-120.0842-25.4799-216.168-110.295-253.9768-223.664-14.0139-41.8034-16.3153-57.1489-16.3153-106.2511,0-47.7624,2.4658-64.834,14.5811-101.6647,34.143-104.1552,113.558-184.5318,214.8364-217.7132,38.9349-12.4687,56.9105-17.1866,100.9989-17.1866,34.9157,0,41.6884,2.4165,57.7982,6.4439,30.6909,7.6686,55.0694,16.8825,91.1193,34.7184,83.6891,41.0308,159.0437,95.5249,307.8955,222.6777,30.1156,25.7018,61.3819,52.3652,69.6258,59.2695,8.055,6.7152,14.5811,13.044,14.3838,13.8167-.3781.6-10.5453,9.8057-22.6278,20.162Z"/>
+      <path class="cls-1" d="M395.0795,304.5929c4.1012,6.408,6.9463,13.5375,8.3837,21.0086,1.5288,7.6714,1.2767,16.4222-.7562,26.2525-2.6028,11.8632-8.1097,23.5236-16.5208,34.9814-8.4111,11.4578-20.014,19.5592-34.8088,24.3045,10.5043,4.6247,17.2524,11.2002,20.2442,19.7264,2.9918,8.5262,2.6329,21.5428-1.0767,39.0499l-3.559,16.7674c-2.3672,11.4084-3.5507,19.1428-3.5507,23.2031,0,6.444,2.1452,11.1892,6.4357,14.2359l-1.1918,6.2631h-57.4448c-.4493-5.5343-.674-9.9947-.674-13.3811.1356-7.2269.9279-14.4265,2.3672-21.5099l4.5782-23.2113c3.1562-15.9235,2.5069-26.5374-1.948-31.8416-4.4549-5.3042-14.3646-7.959-29.7293-7.9645h-53.8612l-20.6716,97.9085h-50.9597l53.0228-249.6699h122.4678c17.3921.3343,30.3786,2.4795,38.9595,6.4357,8.3078,3.7306,15.3565,9.7888,20.2935,17.4414ZM254.9978,324.0727l-14.2276,67.0778h59.0887c11.7426,0,20.8332-1.3562,27.2717-4.0686,11.4084-4.7398,18.6359-14.1098,21.6826-28.1101,3.1672-15.1345.2877-25.299-8.6385-30.4937-5.0795-2.937-13.266-4.4055-24.5593-4.4055h-60.6174Z"/>
+      <path class="cls-1" d="M607.6639,286.1323c16.2578,5.759,28.1703,16.3181,35.7376,31.6772,6.1223,12.5402,9.2804,26.3198,9.2303,40.2746.1109,13.879-1.2223,27.7319-3.9782,41.3349-7.1234,33.1951-19.7729,61.3133-37.9486,84.3548-24.6196,31.0525-55.7845,46.5788-93.4947,46.5788h-107.5579l53.0146-249.6699h107.558c15.3756.2411,27.8553,2.0576,37.439,5.4494ZM503.9937,324.0727l-34.5211,162.9479h48.1077c24.6141,0,44.3761-12.1372,59.2859-36.4116,8.1317-13.3262,14.1153-29.1923,17.951-47.5981,5.4247-25.4141,5.5946-44.9213.5096-58.5215-5.085-13.6002-19.4935-20.4058-43.2254-20.4168h-48.1077Z"/>
+      <path class="cls-1" d="M690.2762,504.2976l2.4658,4.4795c6.4933,11.729,8.9426,18.3948,8.8275,24.0168-.173,1.8634-.6103,3.6927-1.2987,5.433-2.5736,5.9863-8.1306,10.1572-14.5975,10.9564-1.9183.2954-3.877.1918-5.7535-.3041-1.8432-.2815-3.6135-.9209-5.2111-1.8822-5.0601-2.8598-8.4524-7.962-9.1316-13.7345-.2936-1.8365-.2266-3.7125.1973-5.5234.1597-1.0378.4873-2.0428.9699-2.9754.7706-1.5815,1.7222-3.0682,2.8357-4.4302,3.0822-3.9699,6.7892-7.3481,15.1317-13.8167l3.8959-3.0247c.2671-.2381.5625-.4424.8795-.6082,0,0,.3371.6658.7891,1.4137Z"/>
+      <path class="cls-1" d="M685.6159,456.2804c-1.2607,6.5342,3.0143,12.8533,9.5485,14.1141,6.5343,1.2608,12.8534-3.0142,14.1141-9.5485.0345-.1787.0649-.3581.0913-.5381l8.5891-50.6721-23.762-4.0275-8.581,50.6721Z"/>
+      <path class="cls-1" d="M704.4545,500.9112l-27.5594-4.6603,2.2028-13.0112c-2.6544-1.9405-4.9752-4.3002-6.8713-6.9864-4.7869-6.6947-6.6959-15.0264-5.3015-23.1374l19.825-117.1417,61.1353,10.3728-19.8004,117.117c-1.9373,11.5292-10.2032,20.9841-21.3702,24.4442l-2.2603,13.003ZM686.372,489.5028l11.3016,1.9069,1.7343-10.2741,2.7535-.5754c9.1501-1.9216,16.1908-9.2493,17.7455-18.4688l18.4441-109.0292-44.8774-7.5864-18.4195,109.021c-1.5611,9.2177,2.6776,18.4518,10.6851,23.2771l2.4,1.4466-1.7671,10.2823Z"/>
+      <path class="cls-1" d="M764.1843,357.4267l-96.4783-16.3236,4.3645-25.7922,17.6715,2.9918,5.0713-29.9512c2.8507-16.8798,18.8455-28.2526,35.7253-25.4018,16.8798,2.8507,28.2525,18.8455,25.4018,35.7253h0l-5.0631,29.9512,17.6715,2.9918-4.3645,25.8086ZM677.2075,334.3551l80.2205,13.5783,1.6439-9.5508-17.6715-2.9918,6.4111-38.0718c2.0972-12.3948-6.2507-24.1429-18.6455-26.2402s-24.1429,6.2507-26.2402,18.6455h0l-6.444,38.0719-17.6715-2.9836-1.6028,9.5426Z"/>
+      <path class="cls-1" d="M714.589,309.7547l-8.1207-1.3726,2.9672-17.5564c.7077-4.2321,3.0744-8.0071,6.5755-10.4878h0c3.4947-2.4954,7.8422-3.4897,12.0742-2.7617l-1.3726,8.1289c-2.0709-.3601-4.1998.1255-5.9097,1.348h0c-1.7198,1.212-2.883,3.0619-3.2302,5.1371l-2.9836,17.5647Z"/>
+      <text class="cls-2" transform="translate(603.998 532.374)"><tspan x="0" y="0">®</tspan></text>
+      <text class="cls-3" transform="translate(603.998 532.374)"><tspan x="0" y="0">®</tspan></text>
+    </g>
+  </g>
+</svg>
+  <div>Reduciendo Daño -- documento generado por <code>tools/gen_presentacion_db.py</code>. Datos: data/productoras/*.json.</div>
+</footer>
+
+<script>
+const DB = [{"slug": "amelie", "nombre": "Amelie", "tipo": "productora", "aliases": ["AMELIE", "Amelie"], "instagram": "", "tipos_fecha": [], "logo_estado": "sin_dato", "venues": [], "eventos": [], "relaciones": [], "confirmed": "", "fuente_datos": "C:/RD nombres de archivo (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano"}, {"slug": "cachorros", "nombre": "Cachorros", "tipo": "productora", "aliases": ["CACHORROS", "CACHORROSPNG", "Cachorros"], "instagram": "", "tipos_fecha": [], "logo_estado": "sin_dato", "venues": [], "eventos": [], "relaciones": [], "confirmed": "", "fuente_datos": "C:/RD nombres de archivo (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano"}, {"slug": "creamfields", "nombre": "Creamfields", "tipo": "productora", "aliases": ["CREAMFIELDS", "creamfields.cl", "Creamfields Chile"], "instagram": "creamfieldscl", "tipos_fecha": ["FESTIVAL", "HEADLINERS", "RAVE", "OPEN_AIR"], "logo_estado": "source_needed", "venues": ["Espacio Riesco", "Club Hípico, Santiago Chile"], "eventos": [{"nombre": "Creamfields Chile 2025", "fecha": "11-12 octubre 2025", "venue": "Club Hípico, Santiago", "estado": "pasado", "fuente": "PR #210 obra_0304b8fe9a (ruta_rel FLYER/SEGUNDOTRIPLE.mp4), fecha_cruda '11 - 12 Octubre 2025', match_ratio 1.0"}], "relaciones": [], "confirmed": "", "fuente_datos": ""}, {"slug": "dame", "nombre": "Dame", "tipo": "productora", "aliases": ["DAME", "DAMEFLYER", "Dame"], "instagram": "", "tipos_fecha": [], "logo_estado": "no_encontrado", "venues": ["Basel Venue Santiago"], "eventos": [{"nombre": "Dame -- Jeff Mills 30 years", "fecha": "20 noviembre 2026", "venue": "Basel Venue Santiago", "estado": "activo_anunciado", "fuente": "post IG 2026-07-23, C:/rd/AUTOMATIZACION/input_ig_DbI68vBCSTc.jpg, captado en esta sesión"}], "relaciones": [], "confirmed": "", "fuente_datos": "C:/RD nombres de archivo (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano. Complementado con post IG del 2026-07-23 (input_ig_DbI68vBCSTc.jpg)."}, {"slug": "freedom", "nombre": "Freedom", "tipo": "spot", "aliases": ["FREEDOM", "Freedom", "spot.freedom", "Club Freedom"], "instagram": "spot.freedom", "tipos_fecha": [], "logo_estado": "no_encontrado", "venues": ["Club Freedom"], "eventos": [{"nombre": "Festival Sentir", "fecha": "needs_confirmation", "venue": "Club Freedom (spot.freedom) -- confirmado por el usuario", "estado": "confirmado_usuario_needs_confirmation_fecha", "fuente": "reel Instagram https://www.instagram.com/reel/DZ3bAdGhp7y/ + palabra del usuario 2026-07-23 (video renderizandose como flyer el mismo dia)"}], "relaciones": [], "confirmed": "2026-07-23 palabra del usuario: tipo=spot, handle IG spot.freedom, nombre_mapas Club Freedom.", "fuente_datos": "Alta directa por palabra del usuario 2026-07-23 (sin research adicional, ver CLAUDE.md regla de gasto)."}, {"slug": "frvr", "nombre": "FRVR", "tipo": "productora", "aliases": ["FRVR"], "instagram": "", "tipos_fecha": [], "logo_estado": "sin_dato", "venues": ["Paralelo 89"], "eventos": [], "relaciones": [], "confirmed": "", "fuente_datos": "C:/RD nombres de archivo (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano"}, {"slug": "glovox", "nombre": "Glovox", "tipo": "productora", "aliases": ["GLOVOX", "Glovox"], "instagram": "", "tipos_fecha": [], "logo_estado": "no_encontrado", "venues": [], "eventos": [], "relaciones": [], "confirmed": "", "fuente_datos": "Alta directa por palabra del usuario 2026-07-23 (sin research adicional, ver CLAUDE.md regla de gasto). Mencion tambien detectada en triangulacion de fichas (co-organizador Piknic Electronik 12-sep-2026, ver data/productoras/piknic.json)."}, {"slug": "gridsystem", "nombre": "GRID System", "tipo": "productora", "aliases": ["GRID SYSTEM", "Grid System", "GRIDSYSTEM"], "instagram": "", "tipos_fecha": ["TECHNO", "UNDERGROUND"], "logo_estado": "no_encontrado", "venues": [], "eventos": [], "relaciones": [], "confirmed": "", "fuente_datos": "Alta directa por palabra del usuario 2026-07-23 (sin research adicional, ver CLAUDE.md regla de gasto)."}, {"slug": "impulsefest", "nombre": "Impulse Fest", "tipo": "productora", "aliases": ["impulsefest", "Impulse Fest", "Impulsefest"], "instagram": "", "tipos_fecha": ["FESTIVAL"], "logo_estado": "sin_dato", "venues": [], "eventos": [], "relaciones": [], "confirmed": "", "fuente_datos": "C:/RD nombres de archivo (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano"}, {"slug": "livejam", "nombre": "LiveJam", "tipo": "productora", "aliases": ["LIVEJAM", "Live Jam", "LiveJam"], "instagram": "", "tipos_fecha": [], "logo_estado": "sin_dato", "venues": [], "eventos": [], "relaciones": [], "confirmed": "", "fuente_datos": "C:/RD nombres de archivo (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano"}, {"slug": "nebula", "nombre": "Nebula", "tipo": "productora", "aliases": ["NEBULA", "Nebula"], "instagram": "", "tipos_fecha": [], "logo_estado": "sin_dato", "venues": [], "eventos": [], "relaciones": [], "confirmed": "", "fuente_datos": "C:/RD nombres de archivo (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano"}, {"slug": "openklub", "nombre": "OpenKlub", "tipo": "productora", "aliases": ["OPENKLUB", "Open Klub", "OpenKlub", "OPEN KLUB"], "instagram": "", "tipos_fecha": ["CLUB"], "logo_estado": "no_encontrado", "venues": ["Central Cultural"], "eventos": [{"nombre": "OpenKlub (edición sin identificar)", "fecha": "viernes 6 febrero, 18:00-04:00 (año no confirmado)", "venue": "Central Cultural (needs_confirmation)", "estado": "pasado_needs_confirmation", "fuente": "PR #210 obra_7879d3d141 (ruta_rel FEBRERO/OPENKLUB.png), fecha_cruda 'VIERNES_06FEBR 18:00_04:00'"}], "relaciones": [{"tipo": "impulsado_por", "objetivo": "TECHNOYOUTH", "fuente": "palabra del usuario 2026-07-23"}, {"tipo": "impulsado_por", "objetivo": "PANAL RECORDS", "fuente": "palabra del usuario 2026-07-23"}], "confirmed": "", "fuente_datos": "C:/RD nombres de archivo (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano. Complementado con PR #210 (candidatos_db.jsonl match_ratio=1.0, obra_7879d3d141, productora_cruda='OPEN KLUB')."}, {"slug": "panalrecords", "nombre": "Panal Records", "tipo": "productora", "aliases": ["PANAL RECORDS", "Panal Records", "PANALRECORDS"], "instagram": "", "tipos_fecha": [], "logo_estado": "no_encontrado", "venues": [], "eventos": [], "relaciones": [{"tipo": "impulsa", "objetivo": "OPENKLUB", "fuente": "palabra del usuario 2026-07-23"}], "confirmed": "", "fuente_datos": "Alta directa por palabra del usuario 2026-07-23 (sin research adicional, ver CLAUDE.md regla de gasto)."}, {"slug": "piknic", "nombre": "Piknic Electronik", "tipo": "productora", "aliases": ["PIKNIC", "PIKNICMARZO", "Piknic", "Piknic Electronik"], "instagram": "", "tipos_fecha": ["OPEN_AIR", "FESTIVAL"], "logo_estado": "candidato_sin_copiar", "venues": ["Parque Padre Hurtado"], "eventos": [{"nombre": "Piknic Electronik Santiago -- lineup PARTIBOI69 (co-org GLOVOX)", "fecha": "12 septiembre 2026", "venue": "Parque Padre Hurtado", "estado": "activo_venta", "fuente": "post IG 2026-07-23, C:/rd/AUTOMATIZACION/input_ig_DbG7Z2qCPrl_2.jpg (imagen + paleta), captado en esta sesión"}, {"nombre": "Piknic (edición sin identificar)", "fecha": "MAR 28 (año no confirmado)", "venue": "Santiago", "estado": "pasado_needs_confirmation", "fuente": "PR #210 obra_25745a1c93 (FEBRERO/ULTIMA/PIKNIC.png), fecha_cruda sin normalizar"}], "relaciones": [], "confirmed": "", "fuente_datos": "C:/RD nombres de archivo (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano. Complementado con PR #210 (candidatos_db.jsonl match_ratio=1.0, obra_25745a1c93, ruta_rel FEBRERO/ULTIMA/PIKNIC.png) y post IG del 2026-07-23 (input_ig_DbG7Z2qCPrl_2.jpg)."}, {"slug": "psiquiatrico", "nombre": "Psiquiatrico", "tipo": "productora", "aliases": ["PSIQUIATRICO", "Psiquiatrico"], "instagram": "", "tipos_fecha": [], "logo_estado": "sin_dato", "venues": [], "eventos": [], "relaciones": [], "confirmed": "", "fuente_datos": "C:/RD nombres de archivo (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano"}, {"slug": "streetmachine", "nombre": "Street Machine", "tipo": "productora", "aliases": ["STREET MACHINE", "STREETMACHINE", "Street Machine"], "instagram": "", "tipos_fecha": [], "logo_estado": "no_encontrado", "venues": [], "eventos": [], "relaciones": [], "confirmed": "", "fuente_datos": "Alta directa por palabra del usuario 2026-07-23 (sin research adicional, ver CLAUDE.md regla de gasto). Mencion tambien detectada en triangulacion de fichas."}, {"slug": "sundeck", "nombre": "Sundeck", "tipo": "productora", "aliases": ["SUNDECK", "Sundeck", "Sundeck 21 años"], "instagram": "", "tipos_fecha": ["OPEN_AIR"], "logo_estado": "no_encontrado", "venues": ["Espacio Riesco"], "eventos": [{"nombre": "Sundeck 21 años", "fecha": "17 enero 2026", "venue": "needs_confirmation", "estado": "pasado", "fuente": "PR #210 obra_b94c5571dc / obra_99ef9a1f8a (ruta_rel HISTORIAS/SUNDECK.17.2.png, HISTORIAS/SUNDECK.17.png), match_ratio 0.636/1.0"}], "relaciones": [], "confirmed": "", "fuente_datos": "C:/RD nombres de archivo (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano. Complementado con PR #210 (candidatos_db.jsonl match_ratio=1.0): obra_45bae8c3f6, obra_99ef9a1f8a. obra_b94c5571dc ('Sundeck 21 años', match_ratio=0.636) queda como alias no confirmado."}, {"slug": "technoyouth", "nombre": "Techno Youth", "tipo": "productora", "aliases": ["TECHNOYOUTH", "Techno Youth", "cl-technoyouthchile"], "instagram": "", "tipos_fecha": ["RAVE", "UNDERGROUND"], "logo_estado": "sin_dato", "venues": [], "eventos": [], "relaciones": [{"tipo": "impulsa", "objetivo": "OPENKLUB", "fuente": "palabra del usuario 2026-07-23"}], "confirmed": "", "fuente_datos": "C:/RD nombres de archivo (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano."}, {"slug": "thegrid", "nombre": "The Grid", "tipo": "productora", "aliases": ["GRID", "thegrid.club", "The Grid Club"], "instagram": "thegrid.club", "tipos_fecha": ["HEADLINERS", "RAVE"], "logo_estado": "source_needed", "venues": [], "eventos": [], "relaciones": [], "confirmed": "2026-07-10 flyer real KI/KI (extraccion Gemini devolvio 'GRID'; confirmado por humano en sesion)", "fuente_datos": ""}, {"slug": "tycircle", "nombre": "TY Circle", "tipo": "productora", "aliases": ["TY", "TYCIRCLE", "TY Circle", "TY.MAYO"], "instagram": "", "tipos_fecha": [], "logo_estado": "sin_dato", "venues": [], "eventos": [], "relaciones": [], "confirmed": "", "fuente_datos": "C:/RD nombres de archivo (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano"}];
+
+function estadoLogo(estado){
+  const okStates = ["source_needed", "candidato_sin_copiar", "candidato_sin_confirmar"];
+  if (!estado || estado === "sin_dato" || estado === "no_encontrado" || estado === "PENDIENTE") return "pendiente";
+  if (okStates.includes(estado)) return "needs";
+  return "ok";
+}
+
+function render(list){
+  const grid = document.getElementById("grid");
+  grid.innerHTML = "";
+  if (!list.length){
+    grid.innerHTML = '<div class="empty">Sin resultados para el filtro actual.</div>';
+    return;
+  }
+  for (const p of list){
+    const card = document.createElement("div");
+    card.className = "card";
+    const cls = estadoLogo(p.logo_estado);
+    const tipoCls = p.tipo === "spot" ? "spot" : "";
+    let html = `<span class="tipo-pill ${tipoCls}">${p.tipo}</span>`;
+    html += `<h3>${p.nombre}</h3>`;
+    html += `<div class="row"><b>Instagram:</b> ${p.instagram || "sin dato"}</div>`;
+    html += `<div class="row"><b>Venues:</b> ${p.venues.length ? p.venues.join(", ") : "sin dato"}</div>`;
+    html += `<div class="row"><b>Logo:</b> <span class="badge ${cls}">${p.logo_estado}</span></div>`;
+    if (p.relaciones && p.relaciones.length){
+      html += '<div class="rel-list">' + p.relaciones.map(r => `${r.tipo} <b>${r.objetivo}</b>`).join(" &middot; ") + '</div>';
+    }
+    if (p.eventos && p.eventos.length){
+      html += p.eventos.map(e => `
+        <div class="evento">
+          <b>${e.nombre || "Evento"}</b><br>
+          ${e.fecha || "fecha sin confirmar"} -- ${e.venue || "venue sin confirmar"}<br>
+          <span class="fuente">Fuente: ${e.fuente || "sin fuente registrada"}</span>
+        </div>`).join("");
+    }
+    card.innerHTML = html;
+    grid.appendChild(card);
+  }
+}
+
+function applyFilters(){
+  const q = document.getElementById("buscar").value.trim().toLowerCase();
+  const tipo = document.getElementById("filtroTipo").value;
+  const logo = document.getElementById("filtroLogo").value;
+  const filtered = DB.filter(p => {
+    if (tipo && p.tipo !== tipo) return false;
+    if (logo && estadoLogo(p.logo_estado) !== logo && !(logo === "pendiente" && estadoLogo(p.logo_estado) === "pendiente")) return false;
+    if (q){
+      const hay = [p.nombre, ...(p.aliases||[]), ...(p.venues||[])].join(" ").toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  render(filtered);
+}
+
+function initStats(){
+  const nProd = DB.filter(p => p.tipo !== "spot").length;
+  const nSpots = DB.filter(p => p.tipo === "spot").length;
+  const nEventos = DB.reduce((a,p) => a + (p.eventos ? p.eventos.length : 0), 0);
+  const nLogosOk = DB.filter(p => estadoLogo(p.logo_estado) === "ok").length;
+  const stats = [
+    [nProd, "Productoras"],
+    [nSpots, "Spots"],
+    [nEventos, "Eventos registrados"],
+    [nLogosOk + "/" + DB.length, "Logos conseguidos"],
+  ];
+  document.getElementById("stats").innerHTML = stats.map(([n,l]) =>
+    `<div class="stat"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("");
+}
+
+function initFilters(){
+  const tipos = [...new Set(DB.map(p => p.tipo))].sort();
+  const sel = document.getElementById("filtroTipo");
+  for (const t of tipos){
+    const opt = document.createElement("option");
+    opt.value = t; opt.textContent = t;
+    sel.appendChild(opt);
+  }
+  document.getElementById("buscar").addEventListener("input", applyFilters);
+  document.getElementById("filtroTipo").addEventListener("change", applyFilters);
+  document.getElementById("filtroLogo").addEventListener("change", applyFilters);
+}
+
+initStats();
+initFilters();
+render(DB);
+</script>
+</body>
+</html>
