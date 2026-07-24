@@ -357,6 +357,7 @@ class FohMonitorPlugin(PluginBase):
         self.register_route("/config", self._api_set_config, methods=["POST"])
 
         self._resolve_log_dir()
+        self._load_setlist()  # sobrevivir restarts del server en pleno show
         self._start_listener("artnet", int(self._cfg("artnet_port")), self._parse_artnet)
         self._start_sacn()
         self._start_listener("osc", int(self._cfg("osc_port")), self._parse_osc_pkt)
@@ -398,6 +399,39 @@ class FohMonitorPlugin(PluginBase):
             d = str(self.data_dir / "foh_logs")
             os.makedirs(d, exist_ok=True)
         self._log_dir_real = d
+
+    # ── persistencia del setlist (restart del server NO borra el show) ─
+    def _setlist_file(self):
+        return os.path.join(self._log_dir_real, "setlist_actual.json")
+
+    def _save_setlist(self):
+        try:
+            with open(self._setlist_file(), "w", encoding="utf-8") as f:
+                json.dump(self._setlist, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            self.logger.error(f"foh setlist save failed: {e}")
+
+    def _load_setlist(self):
+        """Recarga songs + index al arrancar: un restart de watchdog/reboot en
+        pleno show retoma en el tema vigente, no en el tema 1."""
+        try:
+            with open(self._setlist_file(), encoding="utf-8") as f:
+                data = json.load(f)
+            songs = [str(s) for s in data.get("songs", []) if str(s).strip()]
+            if not songs:
+                return
+            idx = int(data.get("index", 0))
+            self._setlist = {
+                "songs": songs,
+                "index": max(-1, min(idx, len(songs) - 1)),
+                "loaded_at": data.get("loaded_at"),
+                "advanced_at": data.get("advanced_at"),
+            }
+            self.logger.info(f"foh setlist recargado: {len(songs)} temas, index {self._setlist['index']}")
+        except FileNotFoundError:
+            pass
+        except Exception as e:
+            self.logger.error(f"foh setlist load failed: {e}")
 
     def _log_path(self, date_str=None):
         date_str = date_str or datetime.now().strftime("%Y%m%d")
@@ -857,6 +891,7 @@ class FohMonitorPlugin(PluginBase):
         self._setlist = {"songs": songs, "index": 0,
                          "loaded_at": datetime.now().isoformat(timespec="seconds"),
                          "advanced_at": None}
+        self._save_setlist()
         self._log_event("setlist_next", {"accion": "cargada", "temas": len(songs), "actual": songs[0]})
         return jsonify({"ok": True, **self._setlist_view()})
 
@@ -869,6 +904,7 @@ class FohMonitorPlugin(PluginBase):
             self._setlist["index"] += 1
         self._setlist["advanced_at"] = datetime.now().isoformat(timespec="seconds")
         cur = songs[self._setlist["index"]]
+        self._save_setlist()
         self._log_event("setlist_next", {"actual": cur, "n": self._setlist["index"] + 1,
                                          "de": len(songs)})
         return jsonify({"ok": True, **self._setlist_view()})
@@ -880,6 +916,7 @@ class FohMonitorPlugin(PluginBase):
         if self._setlist["index"] > 0:
             self._setlist["index"] -= 1
         cur = self._setlist["songs"][self._setlist["index"]]
+        self._save_setlist()
         self._log_event("setlist_next", {"accion": "prev", "actual": cur})
         return jsonify({"ok": True, **self._setlist_view()})
 
