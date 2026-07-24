@@ -3,7 +3,7 @@
 Entrada obligatoria de todo agente. Reemplaza `AGENTS.md` + `docs/AI_OPERATING_LAYER.md`
 + `docs/AI_PROVIDER_ROUTING.md` + `docs/REPO_MAP.md` (en `_archive/`).
 
-**Quick entry (if you just arrived):** read `context/WALKTHROUGH.md` (3 min) before diving, then come back here.
+**Quick entry (if you just arrived):** read `context/WALKTHROUGH.md` (3 min) before diving, then come back here. Starting a NEW project/feature and need a fast inventory (CLI commands, tools/, models/APIs, infra, skills) without reading the whole repo: read `CAPACIDADES.md` (root).
 
 ## Identidad
 
