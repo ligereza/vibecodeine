@@ -13,6 +13,14 @@
   "logos": [],
   "venues": [],
   "confirmed": "",
-  "fuente_datos": "C:/RD nombres de archivo (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano",
-  "notes": "Colectivo/fiesta techno. tipos inferidos del nombre. Fuente: C:/RD (FEBRERO, root webp)."
+  "fuente_datos": "C:/RD nombres de archivo (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano.",
+  "notes": "Colectivo/fiesta techno. tipos inferidos del nombre. Fuente: C:/RD (FEBRERO, root webp). Relacion declarada por el usuario 2026-07-23: TECHNOYOUTH impulsa OPENKLUB junto con PANAL RECORDS.",
+  "relaciones": [
+    {
+      "tipo": "impulsa",
+      "objetivo": "OPENKLUB",
+      "fuente": "palabra del usuario 2026-07-23"
+    }
+  ],
+  "eventos": []
 }
