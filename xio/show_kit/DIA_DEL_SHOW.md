@@ -100,3 +100,56 @@ en la MA3 sería Network Protocols → sACN → output unicast a la laptop.
 
 Nota técnica: el relay reenvía los paquetes tal cual por unicast a
 `192.168.127.125:6454/5568`; el monitor solo escucha, jamás emite hacia el rig.
+
+---
+
+## SHOW "DREF CHOCOLATE" (Curicó) — visuales automáticos por timecode
+
+Cadena: LTC (M-Audio) → Chataigne → OSC `/timecode` a DOS destinos → el
+**cue engine** dispara los clips de Resolume solos, tema por tema.
+
+**Puertos definidos (sin colisión — quién escucha dónde):**
+
+| Puerto | Quién escucha | Quién le manda |
+|---|---|---|
+| 192.168.127.125:**7000** | xio / foh_monitor (teléfono) | Chataigne (`/timecode`) y Resolume (OSC output, actividad VISUAL) |
+| 127.0.0.1:**7001** | cue_engine (esta laptop) | Chataigne (`/timecode`, segundo target) |
+| 127.0.0.1:**7000** | Resolume Arena (OSC **Input**, default) | cue_engine (connects de clips) |
+
+No hay choque: el 7000 del teléfono y el 7000 de Resolume son máquinas
+distintas; en la laptop el engine escucha en 7001.
+
+**Pasos (soundcheck):**
+1. Abrir `dref_chocolate.noisette` en Chataigne. Manual (3 pasos, igual que
+   el flujo general + un target extra):
+   - Sound Card → Inspector → input = **M-Audio** (LTC entra por ahí).
+   - Add Mapping: `Sound Card > LTC > Time` → `OSC > Custom Message` address
+     **`/timecode`** (1 argumento con el valor).
+   - En el módulo OSC → **OSC Outputs → añadir un segundo output**:
+     `127.0.0.1` puerto `7001` (mismo mensaje llega al engine y al teléfono).
+2. Resolume Arena: Preferences → OSC → **OSC Input ON, puerto 7000** (default)
+   y OSC Output → `192.168.127.125:7000` (pal tile VISUAL del teléfono).
+3. Revisar el mapeo: abrir `cue_map_dref.json` — la tabla la genera
+   `py map_dref.py` (re-correr si cambió la composición). Hoy: 21 cues,
+   19 con clip; **"Último Día" y "Pegó fuerte" NO tienen clip en la
+   composición** (quedan null: el engine los anuncia y no dispara nada;
+   si aparecen los .mov, agregar el clip en Arena, re-correr `map_dref.py`
+   o poner layer/clip a mano).
+   OJO ambiguos (2 candidatos, elegido el primero): YOSEKE (layer 4/clip 7,
+   alternativa layer 5/clip 9) y DIABLO SANTO (layer 3/clip 9, alternativa
+   layer 6/clip 7) — confirmar en soundcheck cuál es el bueno.
+4. Doble click a **`cue_engine.bat`**. Muestra TC en vivo + tema vigente y
+   loguea cada disparo en `cue_engine_log_YYYYMMDD.jsonl`.
+   Prueba sin miedo: `cue_engine.bat --dry-run` imprime en vez de mandar.
+5. Probar con la sesión: play al LTC → el clip del tema debe conectarse solo
+   al cruzar cada media hora de TC (y el tile TC del teléfono corre en verde).
+
+**Comportamiento del engine (robustez):**
+- Un cue NO se re-dispara mientras siga vigente (idempotente).
+- Salto/seek del TC (adelante o atrás): dispara UNA vez el cue vigente del
+  nuevo punto y sigue (arrancar el engine a mitad de show también sincroniza).
+- Dispara por **clip** (`/composition/layers/L/clips/C/connect`), no por
+  columna: en esta composición los temas están apilados por layers en pocas
+  columnas — una columna lanzaría 5 temas a la vez.
+- Ctrl+C sale limpio; el log queda pa correlacionar post-show con el JSONL
+  del teléfono (ambos llevan TC).
