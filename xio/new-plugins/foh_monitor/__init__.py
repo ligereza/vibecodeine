@@ -8,6 +8,13 @@ Que hace (TODO lectura, cero interferencia con el rig):
                            best-effort (si HyperOS lo bloquea degrada a unicast
                            y lo anota en /status)
       * OSC    (7000)   -- parse minimo del address pattern (primer string \\0-pad)
+      * Timecode: OSC con address que empiece por tc_address (default /timecode,
+        puente LTC M-Audio -> Chataigne -> OSC) es un canal PROPIO: se parsea el
+        primer arg (string "HH:MM:SS:FF" o float) y se trackea corriendo /
+        congelado (mismo valor >tc_freeze_seconds con paquetes llegando) /
+        caido (sin paquetes > active_window). IMPORTANTE: /timecode NO cuenta
+        como actividad del canal osc/VISUAL -- un show con solo TC entrando no
+        debe marcar "visuales activos".
     Por canal: last_seen, packets/s, activo si hubo paquetes en los ultimos
     N segundos (config active_window, default 5).
   - Audio best-effort via Termux:API: termux-microphone-record a chunks cortos
@@ -70,8 +77,15 @@ body{font:16px/1.3 -apple-system,system-ui,Roboto,sans-serif;background:#07090d;
 .ev .t{color:#6b7280;font-size:11px;margin-right:6px}
 .e-on{border-color:#4ade80}.e-off{border-color:#f87171}.e-set{border-color:#60a5fa}.e-au{border-color:#fbbf24}
 .hot{color:#f87171;font-weight:800}
+.tc{background:#12151d;border:2px solid #232838;border-radius:14px;padding:10px;text-align:center}
+.tc .val{font:900 40px/1.1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.04em}
+.tc .lbl{font-size:11px;color:#8a92a6;text-transform:uppercase;letter-spacing:.1em}
+.tc-run{border-color:#1e7a41}.tc-run .val{color:#4ade80}
+.tc-bad{border-color:#8c2530}.tc-bad .val{color:#f87171}
+.tc-na .val{color:#9aa0b0;font-size:22px}
 </style></head><body>
 <div class=tiles id=tiles></div>
+<div class="tc tc-na" id=tcbox><div class=lbl id=tclbl>TIMECODE</div><div class=val id=tcval>--:--:--:--</div></div>
 <div class=song>
  <div class=lbl>TEMA ACTUAL</div>
  <div class=cur id=cur>--</div>
@@ -84,6 +98,9 @@ body{font:16px/1.3 -apple-system,system-ui,Roboto,sans-serif;background:#07090d;
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function tile(nm,ch){
  if(ch&&ch.na)return '<div class="tile t-na"><div class=nm>'+nm+'</div><div class=st>N/D</div><div class=meta>'+esc(ch.reason||'')+'</div></div>';
+ // nunca visto = gris N/D (esperado si ese canal no se cablea este show);
+ // visto y perdido = rojo OFF (eso si es alerta)
+ if(ch&&!ch.active&&ch.age==null)return '<div class="tile t-na"><div class=nm>'+nm+'</div><div class=st>N/D</div><div class=meta>sin se&ntilde;al aun</div></div>';
  var on=ch&&ch.active,ago=(ch&&ch.age!=null)?('hace '+ch.age+'s'):'nunca';
  var pps=(ch&&ch.pps!=null)?(ch.pps+' pps'):'';
  return '<div class="tile '+(on?'t-on':'t-off')+'"><div class=nm>'+nm+'</div><div class=st>'+(on?'ON':'OFF')+'</div><div class=meta>'+ago+(pps?' &middot; '+pps:'')+'</div></div>';
@@ -98,6 +115,11 @@ function tick(){
   if(luces.age>=1e9)luces.age=null;
   var au=s.audio&&s.audio.available?{active:s.audio.active,age:s.audio.age,pps:null}:{na:1,reason:(s.audio&&s.audio.reason)||'no disponible'};
   document.getElementById('tiles').innerHTML=tile('LUCES',luces)+tile('VISUAL',s.channels.osc)+tile('AUDIO',au);
+  var tc=s.timecode||{},box=document.getElementById('tcbox');
+  var st=tc.state||'sin_senal',run=st=='corriendo';
+  box.className='tc '+(run?'tc-run':(st=='sin_senal'?'tc-na':'tc-bad'));
+  document.getElementById('tcval').textContent=tc.value!=null?tc.value:(st=='sin_senal'?'--:--:--:--':'?');
+  document.getElementById('tclbl').textContent='TIMECODE '+st.toUpperCase().replace('_',' ')+(tc.age!=null?' · hace '+tc.age+'s':'');
   var sl=s.setlist||{};
   document.getElementById('cur').textContent=sl.current||'(sin setlist)';
   document.getElementById('nx').textContent=sl.next?('sigue: '+sl.next):'';
@@ -189,6 +211,8 @@ class FohMonitorPlugin(PluginBase):
         "audio_chunk_seconds": 2,  # duracion de cada muestra de mic
         "audio_threshold_db": -50, # RMS dBFS: por encima => hay audio
         "heartbeat_seconds": 60,
+        "tc_address": "/timecode",  # prefijo OSC del timecode (LTC->Chataigne->OSC)
+        "tc_freeze_seconds": 2,     # mismo valor este tiempo con paquetes => congelado
         "log_dir": "/sdcard/xio_termux/foh_logs",
         "battery_delta": 5,        # loguea bateria al cambiar >= esto (%)
     }
@@ -203,6 +227,10 @@ class FohMonitorPlugin(PluginBase):
             "osc": _Channel("osc"),
         }
         self._sacn_mode = "desconocido"  # multicast | unicast (join fallo)
+        # Timecode: canal propio, excluido del canal osc/VISUAL.
+        self._tc = {"value": None, "last_seen": 0.0, "last_change": 0.0,
+                    "total": 0, "state": "sin_senal"}
+        self._tc_buckets = {}  # segundo -> count (pps del TC)
         self._audio = {"available": False, "reason": "no evaluado", "level_db": None,
                        "active": False, "last_seen": 0.0}
         self._setlist = {"songs": [], "index": -1, "loaded_at": None, "advanced_at": None}
@@ -234,7 +262,7 @@ class FohMonitorPlugin(PluginBase):
         self._resolve_log_dir()
         self._start_listener("artnet", int(self._cfg("artnet_port")), self._parse_artnet)
         self._start_sacn()
-        self._start_listener("osc", int(self._cfg("osc_port")), self._parse_osc)
+        self._start_listener("osc", int(self._cfg("osc_port")), self._parse_osc_pkt)
         self._probe_audio()
         if self._audio["available"] and self._cfg("audio_enabled"):
             t = threading.Thread(target=self._audio_loop, daemon=True, name="foh-audio")
@@ -280,7 +308,9 @@ class FohMonitorPlugin(PluginBase):
 
     def _log_event(self, tipo, detalle):
         """Una linea JSON al archivo del dia (rotacion implicita por nombre)."""
-        ev = {"ts": datetime.now().isoformat(timespec="seconds"), "tipo": tipo, "detalle": detalle}
+        # cada evento lleva el ultimo timecode vigente pa correlacion post-show
+        ev = {"ts": datetime.now().isoformat(timespec="seconds"), "tipo": tipo,
+              "detalle": detalle, "tc": self._tc_current()}
         self._events.append(ev)
         self._events = self._events[-200:]
         try:
@@ -365,6 +395,8 @@ class FohMonitorPlugin(PluginBase):
                 info = parser(data)
             except Exception:
                 info = None
+            if info is False:
+                continue  # manejado por otro canal (p.ej. timecode)
             if info is None:
                 ch.other += 1
             else:
@@ -387,6 +419,97 @@ class FohMonitorPlugin(PluginBase):
             return None
         uni = (data[113] << 8) | data[114]
         return f"E1.31 uni {uni}"
+
+    def _parse_osc_pkt(self, data):
+        """Parser del listener OSC. Los mensajes cuyo address empieza por
+        tc_address alimentan el canal TIMECODE y devuelven False (NO cuentan
+        como actividad del canal osc/VISUAL -- un show con solo TC entrando
+        no debe marcar visuales activos)."""
+        info = self._parse_osc(data)
+        if isinstance(info, str) and info.startswith(str(self._cfg("tc_address"))):
+            self._tc_hit(data)
+            return False
+        return info
+
+    def _tc_hit(self, data):
+        """Registra un paquete de timecode: primer arg string o float."""
+        val = self._osc_first_arg(data)
+        now = time.time()
+        tc = self._tc
+        tc["total"] += 1
+        tc["last_seen"] = now
+        if val is not None and val != tc["value"]:
+            tc["value"] = val
+            tc["last_change"] = now
+        sec = int(now)
+        self._tc_buckets[sec] = self._tc_buckets.get(sec, 0) + 1
+        if len(self._tc_buckets) > 12:
+            cutoff = sec - 10
+            for k in [k for k in self._tc_buckets if k < cutoff]:
+                self._tc_buckets.pop(k, None)
+
+    @staticmethod
+    def _osc_first_arg(data):
+        """Primer argumento de un mensaje OSC como string. Flexible: 's' tal
+        cual, 'f'/'d' formateado, 'i'/'h' entero. None si no hay args."""
+        try:
+            end = data.find(b"\x00")
+            if end <= 0:
+                return None
+            pos = (end + 4) & ~3  # address con padding a 4
+            if pos >= len(data) or data[pos:pos + 1] != b",":
+                return None
+            tend = data.find(b"\x00", pos)
+            if tend < 0:
+                return None
+            tags = data[pos + 1:tend].decode("ascii", "replace")
+            pos = (tend + 4) & ~3
+            if not tags:
+                return None
+            t = tags[0]
+            if t == "s":
+                send = data.find(b"\x00", pos)
+                if send < 0:
+                    return None
+                return data[pos:send].decode("utf-8", "replace")
+            if t == "f":
+                return str(round(struct.unpack(">f", data[pos:pos + 4])[0], 3))
+            if t == "d":
+                return str(round(struct.unpack(">d", data[pos:pos + 8])[0], 3))
+            if t == "i":
+                return str(struct.unpack(">i", data[pos:pos + 4])[0])
+            if t == "h":
+                return str(struct.unpack(">q", data[pos:pos + 8])[0])
+            return None
+        except Exception:
+            return None
+
+    def _tc_state(self):
+        """Estado del timecode + valor vigente (pa /status, panel y JSONL)."""
+        tc = self._tc
+        now = time.time()
+        window = int(self._cfg("active_window"))
+        freeze = float(self._cfg("tc_freeze_seconds"))
+        if not tc["last_seen"]:
+            state, age = "sin_senal", None
+        else:
+            age = round(now - tc["last_seen"], 1)
+            if age > window:
+                state = "caido"
+            elif tc["value"] is not None and (now - tc["last_change"]) > freeze:
+                state = "congelado"
+            else:
+                state = "corriendo"
+        nsec = int(now)
+        pps = round(sum(self._tc_buckets.get(nsec - i, 0) for i in (1, 2, 3)) / 3.0, 1)
+        return {"value": tc["value"], "state": state, "age": age, "pps": pps,
+                "packets_total": tc["total"], "address": str(self._cfg("tc_address"))}
+
+    def _tc_current(self):
+        """Ultimo timecode VIGENTE pa correlacion en el JSONL (null si no hay
+        senal o si el TC esta caido -- un valor viejo correlaciona mal)."""
+        st = self._tc_state()
+        return st["value"] if st["state"] in ("corriendo", "congelado") else None
 
     @staticmethod
     def _parse_osc(data):
@@ -511,6 +634,23 @@ class FohMonitorPlugin(PluginBase):
                 elif a_act and not was:
                     self._log_event("senal_on", {"canal": "audio", "level_db": self._audio["level_db"]})
                 self._prev_active["_audio"] = a_act
+        # timecode: transiciones corriendo <-> congelado/caido (alerta)
+        tcs = self._tc_state()
+        prev_tc = self._prev_active.get("_tc")
+        if tcs["state"] != "sin_senal":
+            if prev_tc is None:
+                self._prev_active["_tc"] = tcs["state"]
+            elif tcs["state"] != prev_tc:
+                if tcs["state"] in ("congelado", "caido") and prev_tc == "corriendo":
+                    self._log_event("tc_freeze", {"estado": tcs["state"],
+                                                  "valor": self._tc["value"],
+                                                  "pps": tcs["pps"]})
+                elif tcs["state"] == "corriendo" and prev_tc in ("congelado", "caido"):
+                    self._log_event("tc_resume", {"valor": self._tc["value"]})
+                elif tcs["state"] == "caido" and prev_tc == "congelado":
+                    self._log_event("tc_freeze", {"estado": "caido",
+                                                  "valor": self._tc["value"], "pps": 0})
+                self._prev_active["_tc"] = tcs["state"]
         # heartbeat + bateria
         hb = int(self._cfg("heartbeat_seconds"))
         if now - self._last_heartbeat >= hb:
@@ -518,6 +658,7 @@ class FohMonitorPlugin(PluginBase):
             bat = self._battery()
             snap = {k: c.snapshot(window)["active"] for k, c in self._channels.items()}
             snap["audio"] = self._audio["active"] if self._audio["available"] else None
+            snap["tc"] = self._tc_state()["state"]
             self._log_event("heartbeat", {"activos": snap, "bateria": bat.get("level"),
                                           "cargando": bat.get("charging")})
             lvl = bat.get("level")
@@ -541,6 +682,7 @@ class FohMonitorPlugin(PluginBase):
         audio.pop("last_seen", None)
         return jsonify({
             "channels": {k: c.snapshot(window) for k, c in self._channels.items()},
+            "timecode": self._tc_state(),
             "sacn_mode": self._sacn_mode,
             "audio": audio,
             "setlist": self._setlist_view(),
@@ -658,8 +800,10 @@ class FohMonitorPlugin(PluginBase):
             if k in ("artnet_port", "sacn_port", "osc_port", "active_window",
                      "audio_chunk_seconds", "heartbeat_seconds", "battery_delta"):
                 v = int(v)
-            elif k == "audio_threshold_db":
+            elif k in ("audio_threshold_db", "tc_freeze_seconds"):
                 v = float(v)
+            elif k == "tc_address":
+                v = str(v)
             elif k == "audio_enabled":
                 v = bool(v)
             self.set_config(k, v)
