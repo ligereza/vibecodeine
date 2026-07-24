@@ -47,5 +47,13 @@ Violar uno = repetir el patron que hizo calificar sesiones de HORRIBLE.
   principal. El checkout principal es del usuario y del director (solo
   lectura).
 
+- I10 IDENTIDAD DEL USUARIO ES INTOCABLE (2026-07-23; causa: un agente
+  navego Instagram en un browser con la sesion del usuario sin permiso --
+  actividad como el usuario sin su palabra; retiro: si el harness aisla
+  sesiones por defecto). Ningun agente opera un browser u herramienta con
+  sesion/identidad del usuario (IG, Gmail, cuentas) sin orden explicita
+  del usuario en el chat PARA ESA tarea. "Es solo lectura" no exime. Via
+  correcta: fetch anonimo o pedir al usuario.
+
 I1 es la version canonica de la regla de verificacion; CLAUDE.md y
 DOCTRINA_CLAUDE.md la referencian.
