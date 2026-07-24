@@ -332,6 +332,11 @@ class FohMonitorPlugin(PluginBase):
         self._events = []          # ring pa el panel (el JSONL es la verdad)
         self._prev_active = {}     # canal -> bool (deteccion de transiciones)
         self._prev_batt = {}       # ultimo estado de bateria logueado
+        # Cache de bateria: la UNICA fuente pa handlers y tick. Solo el thread
+        # refresher toca rish/controller -- una llamada shell sincrona en el
+        # handler de /status colgo el panel en pleno pre-show (rish wedged,
+        # 2026-07-24): el status debe construirse SIEMPRE de memoria.
+        self._batt_cache = {"level": None, "charging": False, "status": "unknown", "temperature": None}
         self._last_heartbeat = 0.0
         self._log_lock = threading.Lock()
         self._log_dir_real = None  # resuelto en on_load
@@ -365,6 +370,8 @@ class FohMonitorPlugin(PluginBase):
         if self._audio["available"] and self._cfg("audio_enabled"):
             t = threading.Thread(target=self._audio_loop, daemon=True, name="foh-audio")
             t.start()
+        threading.Thread(target=self._battery_refresher, daemon=True,
+                         name="foh-batt").start()
         self.context.schedule("foh_tick", self._tick, interval_seconds=1)
         self._log_event("heartbeat", {"msg": "foh_monitor cargado",
                                       "sacn_mode": self._sacn_mode,
@@ -732,10 +739,21 @@ class FohMonitorPlugin(PluginBase):
 
     # ── tick: transiciones + heartbeat + bateria ─────────────────────
     def _battery(self):
-        try:
-            return self.controller.battery_status()
-        except Exception:
-            return {"level": None, "charging": False, "status": "unknown", "temperature": None}
+        """SIEMPRE devuelve el cache en memoria -- jamas una llamada shell
+        sincrona (si rish se cuelga, /status y el tick deben seguir vivos)."""
+        return dict(self._batt_cache)
+
+    def _battery_refresher(self):
+        """Unico lugar que toca rish pa bateria. Si rish se cuelga, se cuelga
+        ESTE thread hasta su timeout interno; el resto del plugin no se entera."""
+        while not self._stop.is_set():
+            try:
+                b = self.controller.battery_status()
+                if isinstance(b, dict) and b.get("level") is not None:
+                    self._batt_cache = b
+            except Exception:
+                pass  # cache viejo > handler colgado
+            self._stop.wait(30)
 
     def _tick(self):
         window = int(self._cfg("active_window"))
