@@ -7,6 +7,15 @@ name: issue-descarga-ig
 # etiquetan); el body/titulo del issue entran SOLO via env (nunca
 # interpolados en un comando shell).
 #
+# META-REGLA render OFF (2026-07-23): la fase de render Blender en MAK
+# produce salida invalida (celeste; deuda documentada de portar
+# blender_nodes.py real). Se retiran del flujo activo los pasos de render
+# (gate `if: false`, codigo intacto para retomar) y el cierre del issue YA
+# NO depende del render. Tras descargar: comentario "media descargado,
+# render pendiente en WIN" + label estado/revision, issue queda ABIERTO.
+# Retiro de esta meta-regla: cuando el render en MAK pase verificacion de
+# varianza contra un flyer real (ver tools/render_flyer_mak.py).
+#
 # Barrido auto-sanador: ademas del evento issues, corre cada 30 min
 # (schedule) y a mano (workflow_dispatch). En esos disparos NO hay un
 # issue "propio": lista los abiertos con label action/descargar-ig sin
@@ -102,7 +111,8 @@ jobs:
         if: github.event_name == 'issues' && steps.guard.outputs.skip != 'true'
         run: |
           gh issue comment "$ISSUE_NUM" -R "$GITHUB_REPOSITORY" \
-            -b "runner MAK: descarga OK (v2 evento-driven). Imagen como artifact \`ig-issue-$ISSUE_NUM\` en este run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID -- render Blender en curso, ver comentario siguiente."
+            -b "runner MAK: descarga OK (v2 evento-driven). Imagen como artifact \`ig-issue-$ISSUE_NUM\` en este run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID -- media descargado, render pendiente en WIN (render Blender en MAK desactivado, ver nota en el workflow)."
+          gh issue edit "$ISSUE_NUM" -R "$GITHUB_REPOSITORY" --add-label "estado/revision" || true
 
       - name: comentar fallo
         if: failure() && github.event_name == 'issues' && steps.guard.outputs.skip != 'true'
@@ -110,14 +120,16 @@ jobs:
           gh issue comment "$ISSUE_NUM" -R "$GITHUB_REPOSITORY" \
             -b "runner MAK: descarga FALLO en run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID -- revisar log."
 
+      # --- render Blender MAK: OFF (2026-07-23), ver meta-regla arriba ---
+
       - name: liberar VRAM ollama
-        if: github.event_name == 'issues' && steps.guard.outputs.skip != 'true'
+        if: false
         run: |
           curl -s http://127.0.0.1:11434/api/generate -d '{"model":"gemma3:4b","keep_alive":0}' > /dev/null || true
 
       - name: render flyer (Blender MAK)
         id: render
-        if: github.event_name == 'issues' && steps.guard.outputs.skip != 'true'
+        if: false
         run: |
           set +e
           imagen="${{ steps.dl.outputs.dir }}/input_ig.jpg"
@@ -140,7 +152,7 @@ jobs:
           exit 0
 
       - name: publicar render (artifact)
-        if: steps.render.outcome == 'success'
+        if: false
         uses: actions/upload-artifact@v4
         with:
           name: render-issue-${{ github.event.issue.number }}
@@ -148,14 +160,14 @@ jobs:
           retention-days: 30
 
       - name: comentar render OK + cerrar issue
-        if: steps.render.outputs.status == 'ok'
+        if: false
         run: |
           gh issue comment "$ISSUE_NUM" -R "$GITHUB_REPOSITORY" \
             -b "runner MAK: render OK. Render Blender en artifact \`render-issue-$ISSUE_NUM\` de este run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           gh issue close "$ISSUE_NUM" -R "$GITHUB_REPOSITORY"
 
       - name: comentar render FALLO
-        if: steps.render.outputs.status == 'fallo'
+        if: false
         run: |
           gh issue comment "$ISSUE_NUM" -R "$GITHUB_REPOSITORY" \
             -b "runner MAK: render FALLO (${{ steps.render.outputs.detalle }}) en run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID -- descarga OK, issue sigue abierto."
@@ -189,9 +201,9 @@ jobs:
                 continue
                 ;;
             esac
-            ya_ok=$(gh issue view "$n" -R "$GITHUB_REPOSITORY" --json comments --jq '[.comments[].body] | any(contains("runner MAK: render OK"))')
+            ya_ok=$(gh issue view "$n" -R "$GITHUB_REPOSITORY" --json comments --jq '[.comments[].body] | any(contains("runner MAK: render OK")) or any(contains("descarga OK"))')
             if [ "$ya_ok" = "true" ]; then
-              echo "issue #$n: ya tiene comentario de render OK, salteado."
+              echo "issue #$n: ya tiene comentario de render OK o descarga OK (render MAK OFF), salteado."
               continue
             fi
             body=$(gh issue view "$n" -R "$GITHUB_REPOSITORY" --json body --jq '.body')
@@ -223,18 +235,27 @@ jobs:
               fi
               continue
             fi
-            curl -s http://127.0.0.1:11434/api/generate -d '{"model":"gemma3:4b","keep_alive":0}' > /dev/null || true
-            salida=$(python3 tools/render_flyer_mak.py --imagen "$out/input_ig.jpg" --out "$out" 2>&1)
-            echo "$salida"
-            if printf '%s\n' "$salida" | grep -q '^RENDER_OK:'; then
-              gh issue comment "$n" -R "$GITHUB_REPOSITORY" \
-                -b "runner MAK (barrido): render OK. Render Blender en artifact \`render-barrido-$GITHUB_RUN_ID\` (carpeta issue_$n) de este run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
-              gh issue close "$n" -R "$GITHUB_REPOSITORY"
-            else
-              detalle=$(printf '%s\n' "$salida" | grep -E '^RENDER_FALLO:' | tail -1)
-              gh issue comment "$n" -R "$GITHUB_REPOSITORY" \
-                -b "runner MAK (barrido): render FALLO ($detalle) en run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID -- descarga OK, issue sigue abierto."
+            # --- render Blender MAK: OFF (2026-07-23), ver meta-regla arriba ---
+            # bloque original (curl ollama + render_flyer_mak.py + comentario
+            # render OK/cierre) preservado atras de `if false` para retomar
+            # cuando el render en MAK pase verificacion de varianza.
+            if false; then
+              curl -s http://127.0.0.1:11434/api/generate -d '{"model":"gemma3:4b","keep_alive":0}' > /dev/null || true
+              salida=$(python3 tools/render_flyer_mak.py --imagen "$out/input_ig.jpg" --out "$out" 2>&1)
+              echo "$salida"
+              if printf '%s\n' "$salida" | grep -q '^RENDER_OK:'; then
+                gh issue comment "$n" -R "$GITHUB_REPOSITORY" \
+                  -b "runner MAK (barrido): render OK. Render Blender en artifact \`render-barrido-$GITHUB_RUN_ID\` (carpeta issue_$n) de este run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+                gh issue close "$n" -R "$GITHUB_REPOSITORY"
+              else
+                detalle=$(printf '%s\n' "$salida" | grep -E '^RENDER_FALLO:' | tail -1)
+                gh issue comment "$n" -R "$GITHUB_REPOSITORY" \
+                  -b "runner MAK (barrido): render FALLO ($detalle) en run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID -- descarga OK, issue sigue abierto."
+              fi
             fi
+            gh issue comment "$n" -R "$GITHUB_REPOSITORY" \
+              -b "runner MAK (barrido): descarga OK. Imagen en artifact \`render-barrido-$GITHUB_RUN_ID\` (carpeta issue_$n) de este run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID -- media descargado, render pendiente en WIN (render Blender en MAK desactivado, ver nota en el workflow). Issue sigue abierto."
+            gh issue edit "$n" -R "$GITHUB_REPOSITORY" --add-label "estado/revision" || true
           done
           echo "dir=$barrido_dir" >> "$GITHUB_OUTPUT"
 
