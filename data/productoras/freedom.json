@@ -13,9 +13,13 @@
   "logos": [
     {
       "id": "freedom_primary",
-      "knowledge": "PENDIENTE",
-      "estado": "no_encontrado",
-      "notas": "Alta directa por dato del usuario 2026-07-23. Buscar logo en handle IG spot.freedom."
+      "knowledge": "knowledge/logos/club_freedom.yaml",
+      "estado": "encontrado",
+      "archivo": "knowledge/logos/vector/club_freedom.svg",
+      "raster": "knowledge/logos/descargas/club_freedom.png",
+      "fuente": "https://www.facebook.com/clubfreedomlive/ (foto de perfil oficial, og:image)",
+      "obtenido": "2026-07-24",
+      "notas": "Logo oficial via web anonima (PR #254): pagina oficial de Facebook clubfreedomlive, og:image de foto de perfil (720x720). Reemplaza el estado no_encontrado previo."
     }
   ],
   "venues": [

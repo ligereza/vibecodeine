@@ -16,8 +16,10 @@ Uso:
 from __future__ import annotations
 
 import argparse
+import base64
 import glob
 import json
+import mimetypes
 from pathlib import Path
 
 LOGO_VARIANT = "blanco"  # fondo oscuro -> logo blanco (regla dura taller-svg-rd)
@@ -28,6 +30,25 @@ def inline_logo(svg_path: Path) -> str:
     return raw[raw.index("<svg"):]
 
 
+def _data_uri(path_str: str | None) -> str | None:
+    """Convierte un archivo de logo (svg/png/jpg) a data-uri autocontenido.
+
+    Devuelve None si el path no viene, no existe, o es un tipo no soportado --
+    nunca se fabrica un logo, solo se embebe el archivo real ya descargado
+    (PR #254, knowledge/logos/{vector,descargas}).
+    """
+    if not path_str:
+        return None
+    path = Path(path_str)
+    if not path.exists():
+        return None
+    mime, _ = mimetypes.guess_type(path.name)
+    if not mime or not mime.startswith("image/"):
+        return None
+    data = base64.b64encode(path.read_bytes()).decode("ascii")
+    return f"data:{mime};base64,{data}"
+
+
 def build_db(productoras_dir: Path) -> list[dict]:
     out = []
     for f in sorted(glob.glob(str(productoras_dir / "*.json"))):
@@ -35,6 +56,9 @@ def build_db(productoras_dir: Path) -> list[dict]:
         slug = Path(f).stem
         logos = d.get("logos", [])
         logo_estado = logos[0]["estado"] if logos else "sin_dato"
+        # Preferir vector (archivo, svg) sobre raster para la miniatura.
+        logo0 = logos[0] if logos else {}
+        logo_img = _data_uri(logo0.get("archivo")) or _data_uri(logo0.get("raster"))
         out.append({
             "slug": slug,
             "nombre": d.get("name", slug),
@@ -43,6 +67,8 @@ def build_db(productoras_dir: Path) -> list[dict]:
             "instagram": d.get("instagram", ""),
             "tipos_fecha": d.get("tipos_fecha", []),
             "logo_estado": logo_estado,
+            "logo_img": logo_img,
+            "logo_fuente": logo0.get("fuente", ""),
             "venues": [v.get("nombre") for v in d.get("venues", []) if v.get("nombre")],
             "eventos": d.get("eventos", []),
             "relaciones": d.get("relaciones", []),
@@ -103,6 +129,10 @@ h2{
 .card::before{ box-shadow:inset 0 0 0 1.5px rgba(200,0,200,.16); }
 .card::after{ box-shadow:inset 0 0 0 1px rgba(200,0,200,.55); }
 .card h3{ margin:.1rem 0 .3rem; font-size:1.05rem; color:var(--ink); }
+.logo-thumb{
+  width:64px; height:64px; object-fit:contain; background:#fff; border-radius:6px;
+  padding:.3rem; margin-bottom:.5rem; display:block;
+}
 .tipo-pill{
   display:inline-block; font-size:.68rem; text-transform:uppercase; letter-spacing:.04em;
   padding:.15rem .5rem; border-radius:12px; background:#241f29; color:var(--muted);
@@ -242,7 +272,11 @@ function render(list){
     card.className = "card";
     const cls = estadoLogo(p.logo_estado);
     const tipoCls = p.tipo === "spot" ? "spot" : "";
-    let html = `<span class="tipo-pill ${tipoCls}">${p.tipo}</span>`;
+    let html = "";
+    if (p.logo_img){
+      html += `<img class="logo-thumb" src="${p.logo_img}" alt="Logo ${p.nombre}" title="Fuente: ${p.logo_fuente || 'sin registrar'}">`;
+    }
+    html += `<span class="tipo-pill ${tipoCls}">${p.tipo}</span>`;
     html += `<h3>${p.nombre}</h3>`;
     html += `<div class="row"><b>Instagram:</b> ${p.instagram || "sin dato"}</div>`;
     html += `<div class="row"><b>Venues:</b> ${p.venues.length ? p.venues.join(", ") : "sin dato"}</div>`;

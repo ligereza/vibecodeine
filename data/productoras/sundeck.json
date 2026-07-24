@@ -12,9 +12,13 @@
   "logos": [
     {
       "id": "sundeck_primary",
-      "knowledge": "PENDIENTE",
-      "estado": "no_encontrado",
-      "notas": "Sin candidato de logo en curatoría (PR #210, docs/rd/candidatos_curatoria/candidatos_db.jsonl categoria=logo). Solo flyers de evento. FALTA."
+      "knowledge": "knowledge/logos/sundeck.yaml",
+      "estado": "encontrado",
+      "archivo": "knowledge/logos/vector/sundeck.svg",
+      "raster": "knowledge/logos/descargas/sundeck.png",
+      "fuente": "https://www.sundeck.cl/ (og logo asset, https://cdn.prod.website-files.com/6266b3520215f67747170742/62681ee4beb1b5bb68596812_Asset%201.png)",
+      "obtenido": "2026-07-24",
+      "notas": "Logo oficial via web anonima (PR #254): sitio oficial sundeck.cl, header Webflow CDN. Reemplaza el estado no_encontrado previo (PR #210 no tenia candidato)."
     }
   ],
   "venues": [

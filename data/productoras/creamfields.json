@@ -4,8 +4,12 @@
   "instagram": "creamfieldscl",
   "tipos_fecha": ["FESTIVAL", "HEADLINERS", "RAVE", "OPEN_AIR"],
   "logos": [
-    {"id": "creamfields_primary", "knowledge": "knowledge/logos/creamfields.yaml", "estado": "source_needed",
-     "notas": "yaml existente marca status=needs_vectorization. 2 candidatos de imagen en curatoría PR #210 (categoria=logo, sin copiar): CREAMFIELDS/326185116_1242179316368981_6548658173329207605_n.png (obra_6d0ccb045c) y CREAMFIELDS/Comp 1 (0-00-30-04).png (obra_defa9d8353)."}
+    {"id": "creamfields_primary", "knowledge": "knowledge/logos/creamfields.yaml", "estado": "encontrado",
+     "archivo": "knowledge/logos/vector/creamfields.svg",
+     "raster": "knowledge/logos/descargas/creamfields.png",
+     "fuente": "https://creamfields.cl/ (ticketera oficial puntoticket, https://static.ptocdn.net/especiales/ptt018_creamfields-2026/img/logo-creamfields.png)",
+     "obtenido": "2026-07-24",
+     "notas": "Logo oficial via web anonima (PR #254): pagina especial puntoticket 2026, logo del sitio de ticketera oficial. Reemplaza el estado source_needed previo; los 2 candidatos de PR #210 quedan sin usar."}
   ],
   "venues": [
     {
