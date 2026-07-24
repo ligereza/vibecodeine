@@ -62,8 +62,59 @@ Sesion larga con exitos verificados, 25+ PRs mergeados.
    - El fix de "color predominante" en flyers tenia slot unico global
      en vez de por-evento; corregido via chip.
 
+## CIERRE 2 (madrugada) -- 2026-07-24
+
+1. PR #263: setlist persistente foh_monitor, probado con 2 restarts
+   reales (sobrevive).
+2. PR #264/#265: CAPACIDADES.md mergeado a main -- inventario del
+   stack (que hay disponible) para arrancar proyectos nuevos sin
+   re-explorar.
+3. PR #266: FIX CRITICO /status del foh_monitor. Causa raiz: el
+   handler llamaba shell rish SINCRONO desde #242 (bloqueaba si rish
+   quedaba trabado). Ahora /status es 100% en memoria + un thread
+   refresher separado; inmune a rish colgado. Panel verificado con
+   screenshot real, tiles OK.
+4. Incidente WIN: 2 procesos find.exe zombie de agentes anteriores
+   matados a mano. Leccion: NUNCA correr `find /` sin maxdepth y sin
+   timeout en Windows -- barre el disco entero y cuelga.
+5. Estado xio al cierre: setlist DREF CHOCOLATE (21 temas) cargado y
+   persistido en el telefono. Panel foh_monitor vivo y visible en
+   pantalla del telefono.
+
+## INSTRUCCIONES SIGUIENTE AGENTE (simples)
+
+El usuario va a probar EN VIVO: conecta la interfaz M-Audio y simula
+SMPTE/LTC para verificar que xio detecta.
+
+1. Contexto minimo: leer CLAUDE.md + CAPACIDADES.md + esta seccion.
+   NO re-explorar el repo entero.
+2. Sistema: xio (telefono, server puerto 5000, plugin foh_monitor)
+   escucha OSC /timecode en puerto 7000. Panel:
+   http://127.0.0.1:5000/api/plugins/foh_monitor/panel (PWA instalada).
+   Registro: /registro. Todo pasivo (no escribe, solo escucha).
+3. Prueba SMPTE:
+   a) abrir xio/show_kit/dref_chocolate.noisette en Chataigne 1.10.3.
+   b) 3 pasos manuales en xio/show_kit/DIA_DEL_SHOW.md: input audio =
+      M-Audio; mapping Sound Card>LTC>Time -> OSC Custom /timecode;
+      segundo output OSC a laptop:7001 si prueban el cue engine.
+   c) el usuario reproduce la senal LTC hacia la M-Audio (el simula).
+   d) VERIFICAR: tile TIMECODE del panel pasa a verde, valor avanza.
+      Congelar la senal >2s debe ponerlo rojo "congelado" y generar
+      evento tc_freeze en /registro.
+   e) si no aparece TC: revisar IP (show con hotspot = 192.168.127.125;
+      en casa = IP wlan del telefono), revisar log de OSC out de
+      Chataigne, correr xio/show_kit/check_show.py.
+4. Emisor sintetico de respaldo (sin interfaz real): el kit tiene el
+   patron para emitir OSC /timecode con `py` a IP_telefono:7000 (ver
+   DIA_DEL_SHOW.md / tests de smoke).
+5. Reglas vigentes: DIRECTOR_CONTRACT.md I1-I10 (se inyectan solas),
+   godspeed (delegar, medir antes de afirmar), gate PR+CI, worktrees
+   obligatorios.
+
 ## PROXIMO (para el sucesor)
 
+0. Prueba SMPTE en vivo (ver arriba) + show DREF real + analisis del
+   registro JSONL post-show.
 1. Show DREF: soundcheck tiene 2 cues ambiguos por resolver, pasos
    manuales en Chataigne pendientes, decidir si se arma un relay si
    el equipo del show lo acepta.
