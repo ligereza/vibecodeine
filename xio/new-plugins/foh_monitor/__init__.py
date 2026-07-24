@@ -51,7 +51,12 @@ _ACN_PID = b"ASC-E1.17\x00\x00\x00"
 # Fetch por URLs RELATIVAS asi el host/IP da igual.
 _PANEL_HTML = """<!doctype html><html lang=es><head><meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>FOH Monitor</title><style>
+<title>FOH Monitor</title>
+<link rel=manifest href=manifest.webmanifest>
+<meta name=mobile-web-app-capable content=yes>
+<meta name=apple-mobile-web-app-capable content=yes>
+<meta name=theme-color content="#07090d">
+<style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
 body{font:16px/1.3 -apple-system,system-ui,Roboto,sans-serif;background:#07090d;color:#e8eaed;
@@ -92,7 +97,7 @@ body{font:16px/1.3 -apple-system,system-ui,Roboto,sans-serif;background:#07090d;
  <div class=nxt id=nx></div>
  <button id=next>NEXT &#9654;</button>
 </div>
-<div class=row><span id=batt></span><span id=sub>...</span></div>
+<div class=row><span id=batt></span><a href=registro style="color:#60a5fa;font-weight:800;text-decoration:none;padding:6px 10px">REGISTRO &#9776;</a><span id=sub>...</span></div>
 <div class=feed id=feed></div>
 <script>
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
@@ -142,6 +147,96 @@ document.getElementById('next').addEventListener('click',function(){
 var wl=null;function lock(){if(navigator.wakeLock&&!wl)navigator.wakeLock.request('screen').then(function(l){wl=l;l.addEventListener('release',function(){wl=null})}).catch(function(){})}
 document.addEventListener('click',lock);document.addEventListener('visibilitychange',function(){if(!document.hidden)lock()});lock();
 tick();setInterval(tick,2000);
+</script></body></html>"""
+
+
+# Registro legible del dia (mobile-first, misma estetica que el panel).
+# Lee el JSONL del dia via fetch relativo a 'log' y lo pinta como tabla
+# filtrable. ?date=YYYYMMDD pa dias anteriores. Sin dependencias externas.
+_REGISTRO_HTML = """<!doctype html><html lang=es><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>FOH Registro</title>
+<link rel=manifest href=manifest.webmanifest>
+<meta name=mobile-web-app-capable content=yes>
+<meta name=apple-mobile-web-app-capable content=yes>
+<meta name=theme-color content="#07090d">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font:14px/1.35 -apple-system,system-ui,Roboto,sans-serif;background:#07090d;color:#e8eaed;
+ padding:10px;max-width:720px;margin:0 auto}
+.top{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+h1{font-size:17px;font-weight:900;letter-spacing:.05em;flex:1}
+.top a{color:#60a5fa;font-weight:800;text-decoration:none;padding:6px 10px;border:1px solid #1c2130;border-radius:10px}
+.sub{color:#8a92a6;font-size:11px}
+.chips{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:2px}
+.chip{flex-shrink:0;padding:8px 14px;border-radius:20px;border:1px solid #232838;background:#12151d;
+ color:#9aa0b0;font-size:13px;font-weight:700}
+.chip.on{background:#1d3a8a;border-color:#2563eb;color:#fff}
+table{width:100%;border-collapse:collapse}
+th{font-size:10px;color:#8a92a6;text-transform:uppercase;letter-spacing:.08em;text-align:left;
+ padding:4px 6px;position:sticky;top:0;background:#07090d}
+td{padding:6px;border-top:1px solid #161a24;vertical-align:top}
+.hora{color:#6b7280;font-size:12px;white-space:nowrap}
+.tc{font:700 12px ui-monospace,Menlo,Consolas,monospace;color:#9aa0b0;white-space:nowrap}
+.tipo{font-weight:800;font-size:12px;white-space:nowrap}
+.det{color:#c9cdd6;font-size:13px;word-break:break-word}
+.t-bad{color:#f87171}.t-ok{color:#4ade80}.t-set{color:#60a5fa}.t-sys{color:#9aa0b0}
+.empty{color:#6b7280;padding:16px;text-align:center}
+</style></head><body>
+<div class=top><h1>REGISTRO <span class=sub id=fecha></span></h1><a href=panel>PANEL &#9654;</a></div>
+<div class=chips id=chips></div>
+<table><thead><tr><th>Hora</th><th>TC</th><th>Tipo</th><th>Detalle</th></tr></thead>
+<tbody id=tb><tr><td colspan=4 class=empty>cargando...</td></tr></tbody></table>
+<div class=sub id=sub style="text-align:center;padding:10px"></div>
+<script>
+var FILTROS={todos:null,
+ senales:['senal_on','senal_off','audio_silencio'],
+ TC:['tc_freeze','tc_resume'],
+ setlist:['setlist_next'],
+ sistema:['heartbeat','bateria']};
+var filtro='todos';
+var qd=new URLSearchParams(location.search).get('date');
+document.getElementById('fecha').textContent=qd?qd:'hoy';
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function cls(t){
+ if(t=='senal_off'||t=='tc_freeze'||t=='audio_silencio')return 't-bad';
+ if(t=='senal_on'||t=='tc_resume')return 't-ok';
+ if(t=='setlist_next')return 't-set';
+ return 't-sys';}
+function compacto(t,d){
+ if(typeof d!='object'||d==null)return esc(String(d));
+ if(t=='senal_on')return esc((d.canal||'')+' ON'+(d.info?' ('+d.info+')':'')+(d.pps?' '+d.pps+'pps':''));
+ if(t=='senal_off')return esc((d.canal||'')+' OFF'+(d.ultimo?' (ultimo '+String(d.ultimo).slice(11)+')':''));
+ if(t=='tc_freeze')return esc('TC '+(d.estado||'')+' en '+(d.valor||'?'));
+ if(t=='tc_resume')return esc('TC corre de nuevo'+(d.valor?' ('+d.valor+')':''));
+ if(t=='setlist_next')return esc((d.accion?d.accion+': ':'')+(d.actual||'')+(d.n?' ('+d.n+'/'+d.de+')':''));
+ if(t=='audio_silencio')return esc('silencio'+(d.level_db!=null?' ('+d.level_db+' dBFS)':''));
+ if(t=='bateria')return esc((d.nivel!=null?d.nivel+'%':'')+(d.cargando?' cargando':' sin cargar')+(d.temp?' '+d.temp+'C':''));
+ if(t=='heartbeat'){if(d.msg)return esc(d.msg);var a=d.activos||{};var on=[];for(var k in a)if(a[k]===true||a[k]=='corriendo')on.push(k);
+  return esc('vivo; activos: '+(on.join(', ')||'ninguno')+(d.bateria!=null?' | bat '+d.bateria+'%':''))}
+ return esc(JSON.stringify(d));}
+function chips(){var h='';for(var f in FILTROS)h+='<div class="chip'+(f==filtro?' on':'')+'" data-f="'+f+'">'+f+'</div>';
+ var el=document.getElementById('chips');el.innerHTML=h;
+ el.querySelectorAll('.chip').forEach(function(c){c.addEventListener('click',function(){filtro=c.dataset.f;chips();render()})})}
+var rows=[];
+function render(){
+ var keep=FILTROS[filtro];
+ var vis=rows.filter(function(r){return !keep||keep.indexOf(r.tipo)>=0});
+ var tb=document.getElementById('tb');
+ if(!vis.length){tb.innerHTML='<tr><td colspan=4 class=empty>sin eventos'+(filtro!='todos'?' de '+filtro:'')+'</td></tr>';return}
+ tb.innerHTML=vis.slice().reverse().map(function(r){
+  return '<tr><td class=hora>'+esc((r.ts||'').slice(11,19))+'</td><td class=tc>'+(r.tc?esc(r.tc):'--')+
+   '</td><td class="tipo '+cls(r.tipo)+'">'+esc(r.tipo)+'</td><td class=det>'+compacto(r.tipo,r.detalle)+'</td></tr>'}).join('')}
+function tick(){
+ fetch('log'+(qd?'?date='+qd:''),{cache:'no-store'}).then(function(r){
+  if(r.status==404)throw 'sin registro pa este dia';
+  if(!r.ok)throw 'HTTP '+r.status;return r.text()})
+ .then(function(txt){
+  rows=txt.split('\\n').filter(Boolean).map(function(l){try{return JSON.parse(l)}catch(e){return null}}).filter(Boolean);
+  render();document.getElementById('sub').textContent=rows.length+' eventos | upd '+new Date().toLocaleTimeString();
+ }).catch(function(e){document.getElementById('tb').innerHTML='<tr><td colspan=4 class=empty>'+esc(e)+'</td></tr>';
+  document.getElementById('sub').textContent=''});}
+chips();tick();setInterval(tick,3000);
 </script></body></html>"""
 
 
@@ -249,6 +344,8 @@ class FohMonitorPlugin(PluginBase):
 
         self.register_route("/status", self._api_status, methods=["GET"])
         self.register_route("/panel", self._api_panel, methods=["GET"])
+        self.register_route("/registro", self._api_registro, methods=["GET"])
+        self.register_route("/manifest.webmanifest", self._api_manifest, methods=["GET"])
         self.register_route("/events", self._api_events, methods=["GET"])
         self.register_route("/setlist", self._api_setlist_get, methods=["GET"])
         self.register_route("/setlist", self._api_setlist_post, methods=["POST"])
@@ -695,6 +792,33 @@ class FohMonitorPlugin(PluginBase):
     def _api_panel(self):
         from flask import Response
         return Response(_PANEL_HTML, mimetype="text/html")
+
+    def _api_registro(self):
+        """GET /registro[?date=YYYYMMDD] -- registro del dia legible, mobile-first."""
+        from flask import Response
+        return Response(_REGISTRO_HTML, mimetype="text/html")
+
+    def _api_manifest(self):
+        """PWA manifest: 'Agregar a pantalla de inicio' abre el panel fullscreen
+        como app (sin APK). Icono = emoji en SVG data-uri, cero assets externos."""
+        from flask import Response
+        icon = ("data:image/svg+xml,"
+                "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E"
+                "%3Crect width='100' height='100' rx='20' fill='%2307090d'/%3E"
+                "%3Ctext x='50' y='62' font-size='52' text-anchor='middle'%3E%F0%9F%8E%9A%3C/text%3E"
+                "%3C/svg%3E")
+        body = json.dumps({
+            "name": "FOH xio",
+            "short_name": "FOH",
+            "display": "fullscreen",
+            "orientation": "portrait",
+            "start_url": "panel",
+            "scope": "./",
+            "background_color": "#07090d",
+            "theme_color": "#07090d",
+            "icons": [{"src": icon, "sizes": "any", "type": "image/svg+xml"}],
+        })
+        return Response(body, mimetype="application/manifest+json")
 
     def _api_events(self):
         from flask import request, jsonify
