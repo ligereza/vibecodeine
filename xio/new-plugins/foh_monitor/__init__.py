@@ -323,6 +323,7 @@ class FohMonitorPlugin(PluginBase):
         "audio_chunk_seconds": 2,  # duracion de cada muestra de mic
         "audio_threshold_db": -50, # RMS dBFS: por encima => hay audio
         "heartbeat_seconds": 60,
+        "battery_poll_seconds": 15,  # cada cuanto el loop refresca bateria (shell); /status usa cache
         "tc_address": "/timecode",  # prefijo OSC del timecode (LTC->Chataigne->OSC)
         "tc_fps": 30,               # fps del LTC, pa convertir segundos->HH:MM:SS:FF en el tile
         "tc_drives_setlist": True,  # el TC entrante mueve solo el tema actual del setlist
@@ -354,6 +355,12 @@ class FohMonitorPlugin(PluginBase):
         self._prev_active = {}     # canal -> bool (deteccion de transiciones)
         self._prev_batt = {}       # ultimo estado de bateria logueado
         self._last_heartbeat = 0.0
+        # bateria CACHEADA: el shell (dumpsys) lo hace el loop _tick cada
+        # battery_poll_seconds; /status sirve el cache -> nunca toca shell en
+        # el request (evita el pile-up de latencia ~25s con varios que miran).
+        self._batt_cache = {"level": None, "charging": False,
+                            "status": "unknown", "temperature": None}
+        self._batt_at = 0.0
         self._log_lock = threading.Lock()
         self._log_dir_real = None  # resuelto en on_load
 
@@ -841,10 +848,20 @@ class FohMonitorPlugin(PluginBase):
 
     # ── tick: transiciones + heartbeat + bateria ─────────────────────
     def _battery(self):
+        """Bateria CACHEADA (sin shell). El refresh real lo hace _refresh_battery
+        desde el loop _tick; /status y el panel sirven este cache -> el request
+        nunca se serializa en el shell-lock (fin del pile-up de ~25s)."""
+        return self._batt_cache
+
+    def _refresh_battery(self):
+        """Lee la bateria real (shell/dumpsys) y actualiza el cache. Solo lo
+        llama el loop _tick, nunca un request."""
         try:
-            return self.controller.battery_status()
+            self._batt_cache = self.controller.battery_status()
         except Exception:
-            return {"level": None, "charging": False, "status": "unknown", "temperature": None}
+            self._batt_cache = {"level": None, "charging": False,
+                                "status": "unknown", "temperature": None}
+        self._batt_at = time.time()
 
     def _tick(self):
         window = int(self._cfg("active_window"))
@@ -891,6 +908,9 @@ class FohMonitorPlugin(PluginBase):
                     self._log_event("tc_freeze", {"estado": "caido",
                                                   "valor": self._tc["value"], "pps": 0})
                 self._prev_active["_tc"] = tcs["state"]
+        # bateria: refresco real (shell) por intervalo, EN el loop -> /status usa cache
+        if now - self._batt_at >= int(self._cfg("battery_poll_seconds")):
+            self._refresh_battery()
         # heartbeat + bateria
         hb = int(self._cfg("heartbeat_seconds"))
         if now - self._last_heartbeat >= hb:
