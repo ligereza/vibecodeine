@@ -332,6 +332,25 @@ curl http://<phone>:5000/api/plugins/foh_monitor/logs            # listar dias
 Registro en el telefono: `/sdcard/xio_termux/foh_logs/show_YYYYMMDD.jsonl`
 (rotacion por dia, un JSON por linea).
 
+**Timecode (LTC -> Chataigne -> OSC):** el canal TC es OSC con address
+`/timecode` (config `tc_address`; primer arg string "HH:MM:SS:FF" o float).
+Estados: corriendo / congelado (mismo valor > `tc_freeze_seconds` con paquetes
+llegando) / caido (sin paquetes > `active_window`); congelado y caido emiten
+`tc_freeze` al JSONL, la vuelta emite `tc_resume`, y CADA evento del registro
+lleva campo `tc` con el timecode vigente (null si no hay) pa correlacion
+post-show. IMPORTANTE: `/timecode` NO cuenta como actividad del canal
+osc/VISUAL (un show con solo TC no marca visuales activos). Tiles del panel:
+canal nunca visto = gris N/D (esperado si no se cablea); visto y perdido =
+rojo OFF (alerta real).
+
+Config Chataigne (5 min): abrir `xio/show_kit/festival_sentir.noisette`
+(generado con el builder validado del repo: modulo OSC -> 192.168.127.125:7000
++ Sound Card con LTC on). Manual restante: elegir la M-Audio como input del
+Sound Card y agregar un Mapping `Sound Card > LTC > Time` -> `OSC Custom
+Message /timecode`. Paso a paso + kit completo del dia (check GO/NO-GO,
+setlist doble-click, relay de luces por cable, playbook de fallas):
+`xio/show_kit/DIA_DEL_SHOW.md`.
+
 **Audio:** requiere `pkg install termux-api ffmpeg` + app Termux:API instalada.
 Si faltan, el tile AUDIO queda "N/D" con el motivo en `/status` -- el resto del
 plugin funciona igual. Umbral: config `audio_threshold_db` (default -50 dBFS).
