@@ -57,7 +57,12 @@ __EV_ROWS__
 """
 
 
-def logo_cell(slug: str, estado: str) -> str:
+def logo_cell(slug: str, estado: str, raster: str | None) -> str:
+    # raster viene del campo logos[0]["raster"] del json (nombre real del
+    # archivo descargado, no siempre == slug, ver PR #254: club_freedom.png
+    # para freedom.json, street_machine.png para streetmachine.json, etc.)
+    if raster and Path(raster).exists():
+        return f'<img class="logo-thumb" src="{Path(raster).as_posix()}">'
     png = Path("knowledge/logos/descargas") / f"{slug}.png"
     if png.exists():
         return f'<img class="logo-thumb" src="{png.as_posix()}">'
@@ -72,6 +77,7 @@ def build(eventos_path: Path, out_path: Path, top: int) -> None:
         slug = Path(f).stem
         logos = d.get("logos", [])
         logo_estado = logos[0]["estado"] if logos else "sin_logo_field"
+        logo_raster = logos[0].get("raster") if logos else None
         tipo = d.get("tipo", "productora")
         tipo_cls = "spot" if tipo == "spot" else ""
         relaciones = d.get("relaciones", [])
@@ -80,7 +86,7 @@ def build(eventos_path: Path, out_path: Path, top: int) -> None:
             for r in relaciones
         ) or "-"
         prod_rows.append(
-            f"<tr><td>{logo_cell(slug, logo_estado)}</td>"
+            f"<tr><td>{logo_cell(slug, logo_estado, logo_raster)}</td>"
             f"<td>{d.get('name', slug)}</td>"
             f'<td class="{tipo_cls}">{tipo}</td>'
             f"<td>{d.get('instagram', '') or '-'}</td>"

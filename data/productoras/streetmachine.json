@@ -10,9 +10,13 @@
   "logos": [
     {
       "id": "streetmachine_primary",
-      "knowledge": "PENDIENTE",
-      "estado": "no_encontrado",
-      "notas": "Alta directa por dato del usuario 2026-07-23. Sin candidato de curatoria; logo se busca en web (IG oficial/sitio)."
+      "knowledge": "knowledge/logos/street_machine.yaml",
+      "estado": "encontrado",
+      "archivo": "knowledge/logos/vector/street_machine.svg",
+      "raster": "knowledge/logos/descargas/street_machine.png",
+      "fuente": "https://www.streetmachine.cl/ (og:image / Shopify CDN)",
+      "obtenido": "2026-07-24",
+      "notas": "Logo oficial via web anonima (PR #254): sitio oficial streetmachine.cl, og:image Shopify. Reemplaza el estado no_encontrado previo."
     }
   ],
   "venues": [],

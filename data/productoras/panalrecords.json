@@ -10,9 +10,13 @@
   "logos": [
     {
       "id": "panalrecords_primary",
-      "knowledge": "PENDIENTE",
-      "estado": "no_encontrado",
-      "notas": "Alta directa por dato del usuario 2026-07-23. Sin candidato de curatoria; logo se busca en web (IG oficial/sitio)."
+      "knowledge": "knowledge/logos/panal_records.yaml",
+      "estado": "encontrado",
+      "archivo": "knowledge/logos/vector/panal_records.svg",
+      "raster": "knowledge/logos/descargas/panal_records.jpg",
+      "fuente": "https://panalrecords.bandcamp.com/ (foto de perfil oficial del sello, og:image)",
+      "obtenido": "2026-07-24",
+      "notas": "Logo oficial via web anonima (PR #254): perfil bandcamp oficial del sello (no es un logo vectorial de marca, es la imagen de perfil usada como identidad visual). Reemplaza el estado no_encontrado previo."
     }
   ],
   "venues": [],
