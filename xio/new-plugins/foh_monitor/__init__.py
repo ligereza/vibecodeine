@@ -309,6 +309,7 @@ class FohMonitorPlugin(PluginBase):
         "heartbeat_seconds": 60,
         "tc_address": "/timecode",  # prefijo OSC del timecode (LTC->Chataigne->OSC)
         "tc_fps": 30,               # fps del LTC, pa convertir segundos->HH:MM:SS:FF en el tile
+        "tc_drives_setlist": True,  # el TC entrante mueve solo el tema actual del setlist
         "tc_freeze_seconds": 2,     # mismo valor este tiempo con paquetes => congelado
         "log_dir": "/sdcard/xio_termux/foh_logs",
         "battery_delta": 5,        # loguea bateria al cambiar >= esto (%)
@@ -328,6 +329,7 @@ class FohMonitorPlugin(PluginBase):
         self._tc = {"value": None, "last_seen": 0.0, "last_change": 0.0,
                     "total": 0, "state": "sin_senal"}
         self._tc_buckets = {}  # segundo -> count (pps del TC)
+        self._tc_song_index = -1  # ultimo tema auto-detectado por TC (evita re-loguear)
         self._audio = {"available": False, "reason": "no evaluado", "level_db": None,
                        "active": False, "last_seen": 0.0}
         self._setlist = {"songs": [], "index": -1, "loaded_at": None, "advanced_at": None}
@@ -574,12 +576,67 @@ class FohMonitorPlugin(PluginBase):
         if val is not None and val != tc["value"]:
             tc["value"] = val
             tc["last_change"] = now
+            self._auto_setlist_por_tc(val)  # solo al cambiar el frame
         sec = int(now)
         self._tc_buckets[sec] = self._tc_buckets.get(sec, 0) + 1
         if len(self._tc_buckets) > 12:
             cutoff = sec - 10
             for k in [k for k in self._tc_buckets if k < cutoff]:
                 self._tc_buckets.pop(k, None)
+
+    @staticmethod
+    def _tc_str_a_segundos(tcstr, fps):
+        """'HH:MM:SS:FF' o segundos-en-string -> segundos (float). None si no
+        parsea. Acepta el mismo formato que el prefijo del setlist y el valor
+        crudo del OSC."""
+        if tcstr is None:
+            return None
+        s = str(tcstr).strip()
+        if ":" in s:
+            parts = s.split(":")
+            try:
+                h = int(parts[0]); m = int(parts[1]); sec = int(parts[2])
+                f = int(parts[3]) if len(parts) > 3 else 0
+            except (ValueError, IndexError):
+                return None
+            return h * 3600 + m * 60 + sec + (f / fps if fps else 0.0)
+        try:
+            return float(s)
+        except (TypeError, ValueError):
+            return None
+
+    def _auto_setlist_por_tc(self, raw_value):
+        """Mueve el tema actual del setlist segun el TC entrante: el tema
+        vigente es el ULTIMO cuyo timecode de inicio (prefijo 'HH:MM:SS:FF  '
+        de cada linea) es <= el TC actual. Loguea el cambio una sola vez.
+        No-op si esta desactivado, sin setlist, o el setlist no trae timecodes."""
+        if not self._cfg("tc_drives_setlist"):
+            return
+        songs = self._setlist["songs"]
+        if not songs:
+            return
+        fps = int(self._cfg("tc_fps"))
+        ahora = self._tc_str_a_segundos(raw_value, fps)
+        if ahora is None:
+            return
+        idx = -1
+        for i, linea in enumerate(songs):
+            prefijo = linea.split(None, 1)[0] if linea.split(None, 1) else ""
+            inicio = self._tc_str_a_segundos(prefijo, fps)
+            if inicio is None:
+                return  # setlist sin timecodes: no auto-avanzar (modo manual)
+            if inicio <= ahora:
+                idx = i
+            else:
+                break  # starts ordenados: el primero mayor corta
+        if idx < 0 or idx == self._tc_song_index:
+            return
+        self._tc_song_index = idx
+        self._setlist["index"] = idx
+        self._setlist["advanced_at"] = datetime.now().isoformat(timespec="seconds")
+        self._save_setlist()
+        self._log_event("setlist_next", {"accion": "auto-tc", "actual": songs[idx],
+                                         "n": idx + 1, "de": len(songs)})
 
     @staticmethod
     def _osc_first_arg(data):
