@@ -8,6 +8,31 @@ El tile **LUCES quedará N/D (gris) toda la noche y eso es lo esperado, no una f
 IP del teléfono en modo hotspot: **192.168.127.125** (verifícala en el paso 3;
 si difiere, usa la real en todos lados).
 
+## LOS DOS SISTEMAS (separación total — leer primero)
+
+Son **dos sistemas independientes**. Ninguno depende del otro; si uno muere,
+el otro sigue como si nada.
+
+### XIO (teléfono) — PASIVO
+- **Solo escucha y registra. No manda NADA al rig, jamás.**
+- Listeners Art-Net/sACN/OSC + tile TC + setlist + JSONL + panel en pantalla.
+- **Si el teléfono muere, el show sigue completo**: pierdes el monitoreo y el
+  registro, nada más. Ningún clip, luz ni timecode pasa por él.
+
+### LAPTOP — ACTIVO (el show en sí)
+- **Chataigne**: recibe el LTC por la M-Audio y lo convierte a OSC `/timecode`.
+- **cue_engine**: escucha ese `/timecode` en la propia laptop (:7001) y dispara
+  los clips de Resolume (localhost:7000). Todo local a la laptop.
+- Si la laptop muere, se pierden los visuales automáticos (se dispara a mano
+  en Arena); el teléfono seguirá registrando lo que sí llegue.
+
+### Único punto de contacto
+Chataigne emite el MISMO mensaje `/timecode` a **dos destinos**: la propia
+laptop (127.0.0.1:7001, pal cue_engine) y el teléfono (192.168.127.125:7000,
+pal tile TC y el registro). Es un envío en paralelo, no una cadena: el
+teléfono no reenvía nada al engine ni el engine le pide nada al teléfono.
+**Cero dependencia mutua.**
+
 ## Soundcheck (pasos en orden)
 
 1. **Teléfono**: enciende el hotspot del Xiaomi. Conéctalo a corriente/powerbank.
