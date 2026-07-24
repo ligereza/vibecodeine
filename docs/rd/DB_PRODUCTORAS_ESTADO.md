@@ -116,3 +116,97 @@ de research -- van en español real, UTF-8 sin BOM.
 
 `db_productoras.html` (scratchpad de sesión) -- tabla interactiva con la
 misma información de este doc, huecos en rojo, para revisión fila por fila.
+
+## Entrega 2026-07-23 (triangulación + productoras nuevas + logos)
+
+### Triangulación (`tools/triangular_fichas.py`)
+
+Corrida sobre `fichas.jsonl` (2440 fichas, scp desde
+`mak@192.168.50.2:~/curatoria/fichas/fichas.jsonl`). Señal usada: campo
+`datos_evento` ya pre-extraído por el pipeline de visión de mak (productora/
+venue/fecha/handles) como fuente principal, complementado con regex sobre
+`ocr_texto` + `vision.descripcion` para casos sin `datos_evento`.
+
+- Total fichas: 2440
+- Fichas con alguna señal (productora/venue/fecha/lineup/handle): 821
+- Eventos triangulados (cluster por fecha ±1 día + venue o solape de
+  lineup): 101
+- Productoras candidatas (menciones agregadas): 348
+
+Nota honesta: mucho del `ocr_texto` es ruido (fotos de producto RD, texto
+girado/ilegible de flyers experimentales serie SUSTANCIA), así que el
+`ocr_texto` crudo aporta poco por sí solo; el campo estructurado
+`datos_evento` es la señal real. Varios "candidatos" de productora en la
+cola larga son fragmentos de OCR roto (mojibake) de descripciones de
+`vision` -- filtrados los casos con carácter de reemplazo (`�`), pero no
+100% limpio. Top con evidencia real (no ruido):
+
+| Productora | Menciones | Nota |
+|---|---|---|
+| SUNDECK | 197 | ya en `data/productoras/sundeck.json` |
+| SUNDEK | 6 | variante ortográfica de SUNDECK, mismo dedup pendiente |
+| PIKNIC ELECTRONIK / PIKNIK ELECTRONIK | 3+3 | ya en `piknic.json` |
+| STREETMACHINE | 2 | alta nueva esta entrega |
+| NEBULA | 2 | ya en `nebula.json` |
+| OPEN KLUB | 2 | ya en `openklub.json` |
+
+Salidas: `eventos.jsonl` y `productoras_candidatas.jsonl` quedaron en el
+scratchpad de la sesión (no en el repo, son datos derivados regenerables --
+re-correr `py tools/triangular_fichas.py <fichas.jsonl> --out-dir <dir>`
+contra un pull fresco de mak para reproducir).
+
+### Productoras nuevas (alta directa, palabra del usuario 2026-07-23)
+
+Sin research adicional (regla de gasto del repo). Archivos en
+`data/productoras/`:
+
+- `gridsystem.json` -- GRID System (distinta de `thegrid.json` / The Grid
+  Club, ya existente).
+- `technoyouth.json` -- ya existía; se agregó campo `relaciones` (impulsa
+  OPENKLUB).
+- `freedom.json` -- **no es productora, es un SPOT** (campo `tipo: spot`).
+  Handle IG confirmado `spot.freedom`, nombre en Google Maps "Club Freedom"
+  (alias). Lugar del evento **Festival Sentir** (ver abajo).
+- `glovox.json` -- Glovox (también aparece como co-organizador en el
+  evento activo de Piknic Electronik del 12-sep-2026, ya documentado en
+  `piknic.json`).
+- `streetmachine.json` -- Street Machine.
+- `panalrecords.json` -- Panal Records (impulsa OPENKLUB junto con
+  TECHNOYOUTH).
+- `openklub.json` -- se agregó campo `relaciones`: impulsado por
+  TECHNOYOUTH y PANAL RECORDS (dato del usuario, sin needs_confirmation).
+
+### Evento nuevo: Festival Sentir
+
+Registrado en `data/productoras/freedom.json` -> `eventos`. Venue
+confirmado por el usuario: Club Freedom (spot.freedom). Fecha:
+`needs_confirmation` (no se investigó, solo lo que trajo el reel). Fuente:
+reel Instagram `https://www.instagram.com/reel/DZ3bAdGhp7y/` + palabra del
+usuario 2026-07-23 (video renderizándose como flyer el mismo día). Sin
+match de productora/lineup contra la triangulación de fichas (evento fuera
+del corpus histórico de mak, es contenido del día).
+
+### Logos (búsqueda superficial)
+
+Intento: `unavatar.io/instagram/<handle>` para las 11 productoras/spots con
+handle conocido o inferido (sundeck, creamfields, piknic, dame, openklub,
+gridsystem, technoyouth, freedom, glovox, streetmachine, panalrecords).
+**Bloqueado**: unavatar.io devuelve HTTP 403 para todas las solicitudes
+(confirmado también con handle de control ajeno al dominio del proyecto,
+así que es un bloqueo del servicio/anti-bot, no una URL mal armada). Se
+cortó ahí según la regla explícita de la tarea ("si un fetch falla,
+PENDIENTE y sigue"). Estado de logos: **todos PENDIENTE** -- ningún
+archivo nuevo en `knowledge/logos/descargas/`. Queda como tarea de research
+sembrada (visita manual a IG oficial o sitio web de cada productora).
+
+### Vectorización
+
+Se buscó herramienta existente (`grep -ri "vector|potrace|vtracer|trace"
+tools/ src/ projects/ .claude/skills/`): existe `projects/logo_clean_lab/`
++ `tools/illustrator/scripts/logo_clean_master.jsx`, pero es un script JSX
+que corre DENTRO de Adobe Illustrator (limpieza manual asistida de nodos),
+no una herramienta batch de raster->vector. No hay CLI de trazado
+automático en el repo. Se instaló `vtracer` (`py -m pip install vtracer`)
+como herramienta batch para esta y futuras entregas, pero no se vectorizó
+nada esta vez porque no se consiguió ningún logo raster (ver sección
+anterior).

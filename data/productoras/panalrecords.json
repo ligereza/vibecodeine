@@ -1,0 +1,30 @@
+{
+  "name": "Panal Records",
+  "aliases": [
+    "PANAL RECORDS",
+    "Panal Records",
+    "PANALRECORDS"
+  ],
+  "instagram": "",
+  "tipos_fecha": [],
+  "logos": [
+    {
+      "id": "panalrecords_primary",
+      "knowledge": "PENDIENTE",
+      "estado": "no_encontrado",
+      "notas": "Alta directa por dato del usuario 2026-07-23. Sin candidato de curatoria; logo se busca en web (IG oficial/sitio)."
+    }
+  ],
+  "venues": [],
+  "confirmed": "",
+  "fuente_datos": "Alta directa por palabra del usuario 2026-07-23 (sin research adicional, ver CLAUDE.md regla de gasto).",
+  "notes": "Sello/colectivo declarado por el usuario. Relacion declarada: PANAL RECORDS impulsa OPENKLUB junto con TECHNOYOUTH.",
+  "relaciones": [
+    {
+      "tipo": "impulsa",
+      "objetivo": "OPENKLUB",
+      "fuente": "palabra del usuario 2026-07-23"
+    }
+  ],
+  "eventos": []
+}
