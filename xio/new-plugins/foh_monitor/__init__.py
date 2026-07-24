@@ -123,7 +123,8 @@ function tick(){
   var tc=s.timecode||{},box=document.getElementById('tcbox');
   var st=tc.state||'sin_senal',run=st=='corriendo';
   box.className='tc '+(run?'tc-run':(st=='sin_senal'?'tc-na':'tc-bad'));
-  document.getElementById('tcval').textContent=tc.value!=null?tc.value:(st=='sin_senal'?'--:--:--:--':'?');
+  var tcshow=tc.display!=null?tc.display:tc.value;
+  document.getElementById('tcval').textContent=tcshow!=null?tcshow:(st=='sin_senal'?'--:--:--:--':'?');
   document.getElementById('tclbl').textContent='TIMECODE '+st.toUpperCase().replace('_',' ')+(tc.age!=null?' · hace '+tc.age+'s':'');
   var sl=s.setlist||{};
   document.getElementById('cur').textContent=sl.current||'(sin setlist)';
@@ -307,6 +308,7 @@ class FohMonitorPlugin(PluginBase):
         "audio_threshold_db": -50, # RMS dBFS: por encima => hay audio
         "heartbeat_seconds": 60,
         "tc_address": "/timecode",  # prefijo OSC del timecode (LTC->Chataigne->OSC)
+        "tc_fps": 30,               # fps del LTC, pa convertir segundos->HH:MM:SS:FF en el tile
         "tc_freeze_seconds": 2,     # mismo valor este tiempo con paquetes => congelado
         "log_dir": "/sdcard/xio_termux/foh_logs",
         "battery_delta": 5,        # loguea bateria al cambiar >= esto (%)
@@ -615,6 +617,32 @@ class FohMonitorPlugin(PluginBase):
         except Exception:
             return None
 
+    def _fmt_tc_display(self, raw):
+        """Valor legible HH:MM:SS:FF pal tile. Chataigne manda el LTC como
+        SEGUNDOS (float en string, ej '23529.267578125'); se convierte a
+        frames con tc_fps. Si ya viniera formateado (trae ':') se muestra tal
+        cual; si no es numerico, crudo. El valor CRUDO se conserva aparte pal
+        JSONL (precision forense)."""
+        if raw is None:
+            return None
+        s = str(raw)
+        if ":" in s:
+            return s
+        try:
+            total = float(s)
+        except (TypeError, ValueError):
+            return s
+        if total < 0:
+            total = 0.0
+        fps = int(self._cfg("tc_fps"))
+        h = int(total // 3600)
+        m = int((total % 3600) // 60)
+        sec = int(total % 60)
+        frames = int(round((total - int(total)) * fps))
+        if frames >= fps:  # el redondeo puede empujar a fps: normalizar
+            frames = fps - 1
+        return "%02d:%02d:%02d:%02d" % (h, m, sec, frames)
+
     def _tc_state(self):
         """Estado del timecode + valor vigente (pa /status, panel y JSONL)."""
         tc = self._tc
@@ -633,7 +661,8 @@ class FohMonitorPlugin(PluginBase):
                 state = "corriendo"
         nsec = int(now)
         pps = round(sum(self._tc_buckets.get(nsec - i, 0) for i in (1, 2, 3)) / 3.0, 1)
-        return {"value": tc["value"], "state": state, "age": age, "pps": pps,
+        return {"value": tc["value"], "display": self._fmt_tc_display(tc["value"]),
+                "state": state, "age": age, "pps": pps,
                 "packets_total": tc["total"], "address": str(self._cfg("tc_address"))}
 
     def _tc_current(self):
