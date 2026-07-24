@@ -1,5 +1,86 @@
 # LAST HANDOFF -- estado para el proximo agente
 
+Version: 0.56.1 | Fecha: 2026-07-24 04:45 | Identidad: Cauce | sesion:
+cierre de sesion larga (director Fable godspeed estricto).
+
+## Sesion 2026-07-23/24 (cierre) -- VEREDICTO Y ESTADO
+
+Sesion larga con exitos verificados, 25+ PRs mergeados.
+
+1. GOBIERNO: context/DIRECTOR_CONTRACT.md I1-I10 (medir antes de
+   afirmar, palabra del usuario=dato, autoridad=gate no firma, I9
+   worktrees, I10 identidad del usuario intocable) + inyeccion
+   SessionStart + settings.json trackeado. CI corre en PRs a las 4
+   ramas. Reforma de reglas: ASCII acotado a archivos operativos,
+   entregables en espanol UTF-8, meta-regla fecha+causa+retiro para
+   invariantes nuevos, motor-omega podado a 2 reglas, SEMILLAS.md
+   como archivo unico. Auditoria completa de reglas del repo.
+2. RENDERS WIN: 3 verificados -- flyer Dame, video Festival Sentir
+   600f OptiX via secuencia PNG+mux, flyer Piknic con fix de color
+   predominante por evento. Modulos blender_nodes_video*.py ahora en
+   main. Camino WIN probado y operativo; render en MAK sigue roto
+   (portar blender_nodes es deuda pendiente).
+3. XIO: misterio de carga resuelto con mediciones (el corte ocurre
+   SOLO con partner DRP -- Thunderbolt/hub PD; ventana 9-12s, re-assert
+   5s aplicado en PR #220; PC legacy/pared/hub chino gang = no
+   afectan; sysfs = root). FOH monitor completo desplegado (Art-Net/
+   sACN/OSC pasivo + timecode congelado/caido + setlist + registro
+   JSONL + vista /registro + PWA sin APK). Show DREF CHOCOLATE: cue
+   engine 19/21 clips, noisette builder validado contra fixture real,
+   kit DIA_DEL_SHOW.md, separacion explicita xio-pasivo/laptop-activo.
+   Pendiente: mic (Termux:API). Runner MAK relanzado por nohup (fix
+   definitivo de persistencia via svc.sh necesita sudo interactivo
+   del usuario, no automatizable).
+4. RD/DB: curatoria triangulada (2440 fichas -> 101 eventos, 348
+   candidatas), 20 productoras/spots (6 nuevas por palabra del
+   usuario + relaciones), 6/11 logos oficiales vectorizados (5
+   pendientes con motivo documentado), presentacion web formal linea
+   v4.1 (docs/rd/presentacion_db.html) lista para la directiva e
+   integrable a REDUCIENDODANO.CL. Puente WIN->MAK (SendTo + barra de
+   progreso) -> curatoria_encolar -> OneDrive probado extremo a
+   extremo; ARICA 21.4GB/12107 archivos transferida.
+5. AUTOMATIZACION: workflow issue-descarga-ig reactivado en modo
+   solo-descarga (render gateado con if:false hasta portar blender_nodes
+   a MAK). Guard anti-eco arreglado (#225). MAK con dia anclado a las
+   19:00, tope reseteable, triangulacion corrio dentro del organismo
+   (PR #251 cerrado como duplicado; el entregador debe apuntar a
+   mejoras, no a una rama chip suelta).
+6. CULTURA (iskvw): dos piezas nuevas -- borradura_ascii (Omega11,
+   209 borraduras, declaracion NO cumplida por el propio autor) y
+   psicosis_agente (Omega11, doble lectura sin veredicto final).
+7. INCIDENTES/LECCIONES de esta sesion:
+   - Un agente navego Instagram en un browser con la sesion del
+     usuario sin permiso explicito -- parado en el momento, se
+     convirtio en el invariante I10 (ver arriba y
+     context/DIRECTOR_CONTRACT.md).
+   - Limpiezas concurrentes barrieron archivos untracked del checkout
+     principal 2 veces en la sesion -- causa raiz de I9 (worktree
+     obligatorio para todo builder).
+   - Un agente entro en modo paranoico sobre un caso ambiguo; se
+     convirtio en pieza cultural en vez de bloquear el trabajo (regla:
+     gate mecanico > firma humana para decidir seguir).
+   - El fix de "color predominante" en flyers tenia slot unico global
+     en vez de por-evento; corregido via chip.
+
+## PROXIMO (para el sucesor)
+
+1. Show DREF: soundcheck tiene 2 cues ambiguos por resolver, pasos
+   manuales en Chataigne pendientes, decidir si se arma un relay si
+   el equipo del show lo acepta.
+2. Analisis post-show del registro JSONL del foh_monitor, a cargo del
+   director de la sesion que cubra el show real.
+3. 5 logos RD pendientes de vectorizar (motivo por logo en el reporte
+   de la tarea original).
+4. Chips abiertos: flyer-auto (mejoras pendientes) y entregador MAK
+   (apuntar a mejoras en vez de ramas chip sueltas).
+5. Portar render (blender_nodes*) a MAK -- deuda tecnica declarada,
+   camino WIN ya probado sirve de referencia.
+6. Runner MAK: persistencia post-reboot sigue necesitando sudo
+   interactivo del usuario (sudo ./svc.sh install mak && sudo
+   ./svc.sh start), no automatizable por agente.
+
+---
+
 Version: 0.56.1 | Fecha: 2026-07-23 00:15 | Identidad: Cauce | sesion:
 curatoria+DB lanzadas en MAK (director Fable). Cierre para sesion web
 iPhone: el sucesor probablemente NO tiene LAN (ni ssh MAK, WIN apagado);
