@@ -193,3 +193,6 @@ backup_manifiestos_*/
 drive/
 xio/new-plugins/hub/hub.html
 PLAN.md
+
+# logs locales del cue engine del show (generados en la laptop)
+xio/show_kit/cue_engine_log_*.jsonl
