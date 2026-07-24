@@ -350,8 +350,8 @@
           },
           {
             "value": [
-              -1031.0,
-              -514.0
+              0.0,
+              0.0
             ],
             "controlAddress": "/viewUIPosition"
           },
@@ -363,7 +363,119 @@
         "niceName": "State 1",
         "type": "State",
         "processors": {
-          "items": [],
+          "items": [
+            {
+              "niceName": "TC forward a foh",
+              "type": "Mapping",
+              "im": {
+                "items": [
+                  {
+                    "parameters": [
+                      {
+                        "value": "/modules/soundCard/values/ltc/ltcTime",
+                        "controlAddress": "/inputValue"
+                      }
+                    ],
+                    "niceName": "Input",
+                    "type": "Input Value"
+                  }
+                ],
+                "viewOffset": [
+                  0,
+                  0
+                ],
+                "viewZoom": 1.0
+              },
+              "params": {
+                "parameters": [
+                  {
+                    "value": 50,
+                    "controlAddress": "/updateRate"
+                  },
+                  {
+                    "value": false,
+                    "controlAddress": "/forceContinuousProcess"
+                  },
+                  {
+                    "value": false,
+                    "controlAddress": "/sendOnInputChangeOnly"
+                  },
+                  {
+                    "value": true,
+                    "controlAddress": "/sendOnOutputChangeOnly"
+                  },
+                  {
+                    "value": false,
+                    "controlAddress": "/sendAfterLoad"
+                  },
+                  {
+                    "value": false,
+                    "controlAddress": "/sendOnActivate"
+                  }
+                ]
+              },
+              "filters": {
+                "items": [],
+                "viewOffset": [
+                  0,
+                  0
+                ],
+                "viewZoom": 1.0
+              },
+              "outputs": {
+                "items": [
+                  {
+                    "niceName": "Output",
+                    "commandModule": "osc",
+                    "commandPath": "",
+                    "commandType": "Custom Message",
+                    "command": {
+                      "parameters": [
+                        {
+                          "value": "/timecode",
+                          "controlAddress": "/address"
+                        }
+                      ],
+                      "paramLinks": {
+                        "#1": {
+                          "linkType": 1,
+                          "mappingValueIndex": 0
+                        }
+                      },
+                      "argManager": {
+                        "items": [
+                          {
+                            "parameters": [
+                              {
+                                "value": "00:00:00:00",
+                                "controlAddress": "/#1"
+                              }
+                            ],
+                            "niceName": "#1",
+                            "type": "String",
+                            "param": {
+                              "value": "00:00:00:00",
+                              "controlAddress": "/states/state1/processors/mapping/outputs/output/command/arguments/#1/#1"
+                            }
+                          }
+                        ],
+                        "viewOffset": [
+                          0,
+                          0
+                        ],
+                        "viewZoom": 1.0
+                      }
+                    }
+                  }
+                ],
+                "viewOffset": [
+                  0,
+                  0
+                ],
+                "viewZoom": 1.0
+              }
+            }
+          ],
           "viewOffset": [
             0,
             0
@@ -373,8 +485,8 @@
       }
     ],
     "viewOffset": [
-      808,
-      453
+      0,
+      0
     ],
     "viewZoom": 1.0,
     "transitions": {
@@ -388,8 +500,8 @@
     "comments": {
       "hideInEditor": true,
       "viewOffset": [
-        808,
-        453
+        0,
+        0
       ],
       "viewZoom": 1.0
     }

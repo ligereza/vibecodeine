@@ -196,3 +196,6 @@ PLAN.md
 
 # logs locales del cue engine del show (generados en la laptop)
 xio/show_kit/cue_engine_log_*.jsonl
+
+# Chataigne autosave (generado)
+xio/show_kit/*_autosave/
