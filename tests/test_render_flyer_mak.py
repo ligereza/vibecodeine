@@ -1,9 +1,10 @@
 """Tests de tools/render_flyer_mak.py -- SIN Blender real (mock subprocess).
 
-Cubre: composicion del comando Blender (blend correcto, --python-expr con
-los settings anti-OOM y el material 'flyer_final'), parseo RENDER_OK/FALLO
-y paleta de color con una imagen sintetica chica (PIL, ya es dependencia
-del repo).
+Cubre: composicion del comando Blender (blend correcto, --python con un
+script temporal que usa las funciones REALES de
+src/flujo/eventos/blender_nodes.py, settings anti-OOM), parseo
+RENDER_OK/FALLO y paleta/color predominante con una imagen sintetica chica
+(PIL, ya es dependencia del repo).
 """
 import importlib.util
 import subprocess
@@ -26,45 +27,55 @@ def _synthetic_image(path: Path) -> None:
     img.save(path)
 
 
-def test_build_blender_command_uses_cartelera_blend_and_python_expr():
+def test_build_blender_command_uses_cartelera_blend_and_python_script():
     cmd = render_flyer_mak.build_blender_command(
         Path("/home/mak/blender/blender"),
         Path("/home/mak/RD/AUTOMATIZACION/cartelera.blend"),
-        Path("/tmp/input_ig.jpg"),
-        Path("/tmp/out/render_output.png"),
+        Path("/tmp/render_flyer_mak_script.py"),
     )
     assert cmd[0] == str(Path("/home/mak/blender/blender"))
     assert "-b" in cmd
     assert str(Path("/home/mak/RD/AUTOMATIZACION/cartelera.blend")) in cmd
-    assert "--python-expr" in cmd
-    expr = cmd[cmd.index("--python-expr") + 1]
-    assert isinstance(expr, str) and expr
+    assert "--python" in cmd
+    assert "--python-expr" not in cmd  # ya no es expr inline, es script real
+    assert str(Path("/tmp/render_flyer_mak_script.py")) in cmd
 
 
-def test_python_expr_contains_anti_oom_settings():
-    expr = render_flyer_mak.build_blender_python_expr(
-        Path("/tmp/input_ig.jpg"), Path("/tmp/render_output.png"),
+def test_script_contains_anti_oom_settings():
+    script = render_flyer_mak.build_blender_script(
+        Path("/tmp/FRAME2.png"), Path("/tmp/input_ig.jpg"),
+        Path("/tmp/RESULTADOS/color_predominante.png"), Path("/tmp/render_output.png"),
     )
-    assert "scene.render.use_simplify = True" in expr
-    assert "texture_limit_render = '2048'" in expr
-    assert "scene.cycles.use_auto_tile = True" in expr
-    assert "scene.cycles.tile_size = 512" in expr
-    assert "scene.render.use_persistent_data = False" in expr
-    assert "scene.cycles.samples = 512" in expr
-    assert "'CUDA'" in expr
-    assert "CPU" not in expr.split("compute_device_type")[0]  # no fallback silencioso a CPU antes de forzar GPU
+    assert "scene.render.use_simplify = True" in script
+    assert "texture_limit_render = '2048'" in script
+    assert "scene.cycles.use_auto_tile = True" in script
+    assert "scene.cycles.tile_size = 512" in script
+    assert "scene.render.use_persistent_data = False" in script
+    assert "scene.cycles.samples = 512" in script
+    assert "'CUDA'" in script
+    assert "CPU" not in script.split("compute_device_type")[0]  # no fallback silencioso a CPU antes de forzar GPU
 
 
-def test_python_expr_contains_flyer_final_material_search_and_no_material_guard():
-    expr = render_flyer_mak.build_blender_python_expr(
-        Path("/tmp/input_ig.jpg"), Path("/tmp/render_output.png"),
+def test_script_uses_real_blender_nodes_functions_not_ad_hoc_swap():
+    script = render_flyer_mak.build_blender_script(
+        Path("/tmp/FRAME2.png"), Path("/tmp/input_ig.jpg"),
+        Path("/tmp/RESULTADOS/color_predominante.png"), Path("/tmp/render_output.png"),
     )
-    assert "flyer_final" in expr
-    assert "TEX_IMAGE" in expr
-    assert "NO_MATERIAL_FLYER_FINAL" in expr  # falla claro si no encuentra el material, no silencioso
-    # las rutas se embeben via repr() (fuente Python valida, backslashes escapados en Windows)
-    assert repr(str(Path("/tmp/input_ig.jpg"))) in expr
-    assert repr(str(Path("/tmp/render_output.png"))) in expr
+    # importa el modulo REAL, no reinventa la busqueda/recoloreo a mano
+    assert "import blender_nodes" in script
+    assert "from blender_gpu import force_gpu" in script
+    assert repr(str(render_flyer_mak.EVENTOS_DIR)) in script
+    # funciones reales de src/flujo/eventos/blender_nodes.py
+    assert "blender_nodes._buscar_materiales_flyer()" in script
+    assert "blender_nodes.build_flyer_nodes(" in script
+    assert "blender_nodes.hue_de_rgb(" in script
+    assert "blender_nodes._color_predominante_bpy(" in script
+    assert "blender_nodes._repuntar_color_predominante(" in script
+    # paleta + imagen se pasan al build/update real, no a un TEX_IMAGE suelto
+    assert repr(str(Path("/tmp/FRAME2.png"))) in script
+    assert repr(str(Path("/tmp/input_ig.jpg"))) in script
+    assert repr(str(Path("/tmp/RESULTADOS/color_predominante.png"))) in script
+    assert repr(str(Path("/tmp/render_output.png"))) in script
 
 
 def test_extract_palette_returns_hex_colors(tmp_path):
@@ -82,6 +93,17 @@ def test_extract_palette_returns_hex_colors(tmp_path):
     import json
     data = json.loads(palette_json.read_text(encoding="utf-8"))
     assert data["colors"] == colores
+
+
+def test_write_predominant_color_returns_hex_and_writes_png(tmp_path):
+    imagen = tmp_path / "input_ig.jpg"
+    _synthetic_image(imagen)
+    out_png = tmp_path / "RESULTADOS" / "color_predominante.png"
+
+    hex_color = render_flyer_mak.write_predominant_color(imagen, out_png)
+
+    assert hex_color.startswith("#") and len(hex_color) == 7
+    assert out_png.exists()
 
 
 def test_parse_render_marker_ok():
@@ -108,10 +130,25 @@ def test_run_render_fails_clear_when_blend_missing(tmp_path):
     assert "cartelera.blend" in motivo
 
 
+def test_run_render_fails_clear_when_frame2_missing(tmp_path):
+    base = tmp_path / "base"
+    base.mkdir()
+    (base / render_flyer_mak.BLEND_FILE).write_text("fake blend", encoding="utf-8")
+    imagen = tmp_path / "input_ig.jpg"
+    imagen.write_bytes(b"fake")
+
+    ok, motivo = render_flyer_mak.run_render(
+        Path("/usr/bin/true"), base, imagen, tmp_path / "out.png",
+    )
+    assert ok is False
+    assert render_flyer_mak.FRAME_FILE in motivo
+
+
 def test_run_render_ok_when_blender_succeeds_and_writes_output(tmp_path, monkeypatch):
     base = tmp_path / "base"
     base.mkdir()
     (base / render_flyer_mak.BLEND_FILE).write_text("fake blend", encoding="utf-8")
+    (base / render_flyer_mak.FRAME_FILE).write_bytes(b"fake frame")
     imagen = tmp_path / "input_ig.jpg"
     imagen.write_bytes(b"fake")
     output = tmp_path / "out" / "render_output.png"
@@ -130,10 +167,45 @@ def test_run_render_ok_when_blender_succeeds_and_writes_output(tmp_path, monkeyp
     assert detalle == str(output)
 
 
+def test_run_render_passes_python_script_flag(tmp_path, monkeypatch):
+    """El camino real usa --python <script temporal>, no --python-expr."""
+    base = tmp_path / "base"
+    base.mkdir()
+    (base / render_flyer_mak.BLEND_FILE).write_text("fake blend", encoding="utf-8")
+    (base / render_flyer_mak.FRAME_FILE).write_bytes(b"fake frame")
+    imagen = tmp_path / "input_ig.jpg"
+    imagen.write_bytes(b"fake")
+    output = tmp_path / "out" / "render_output.png"
+
+    seen = {}
+
+    def fake_run(cmd, capture_output, text, timeout):
+        seen["cmd"] = cmd
+        script_path = Path(cmd[cmd.index("--python") + 1])
+        seen["script_contenido"] = script_path.read_text(encoding="utf-8")
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_bytes(b"fake png")
+        return subprocess.CompletedProcess(cmd, 0, stdout="GPU: ok", stderr="")
+
+    monkeypatch.setattr(render_flyer_mak.subprocess, "run", fake_run)
+
+    render_flyer_mak.run_render(Path("/home/mak/blender/blender"), base, imagen, output)
+
+    cmd = seen["cmd"]
+    assert "--python" in cmd
+    assert "--python-expr" not in cmd
+    script_path = Path(cmd[cmd.index("--python") + 1])
+    assert script_path.suffix == ".py"
+    assert "blender_nodes._buscar_materiales_flyer()" in seen["script_contenido"]
+    # el script temporal se limpia despues de correr
+    assert not script_path.exists()
+
+
 def test_run_render_fallo_when_blender_exits_nonzero(tmp_path, monkeypatch):
     base = tmp_path / "base"
     base.mkdir()
     (base / render_flyer_mak.BLEND_FILE).write_text("fake blend", encoding="utf-8")
+    (base / render_flyer_mak.FRAME_FILE).write_bytes(b"fake frame")
     imagen = tmp_path / "input_ig.jpg"
     imagen.write_bytes(b"fake")
     output = tmp_path / "out" / "render_output.png"
@@ -156,6 +228,7 @@ def test_run_render_fallo_when_output_missing_despite_success_exit(tmp_path, mon
     base = tmp_path / "base"
     base.mkdir()
     (base / render_flyer_mak.BLEND_FILE).write_text("fake blend", encoding="utf-8")
+    (base / render_flyer_mak.FRAME_FILE).write_bytes(b"fake frame")
     imagen = tmp_path / "input_ig.jpg"
     imagen.write_bytes(b"fake")
     output = tmp_path / "out" / "render_output.png"
@@ -209,13 +282,17 @@ def test_main_prints_render_fallo_when_render_step_fails(tmp_path, monkeypatch, 
     imagen = tmp_path / "input_ig.jpg"
     _synthetic_image(imagen)
     out_dir = tmp_path / "out"
+    base = tmp_path / "base"
+    base.mkdir()
 
     def fake_run_render(blender_exe, base_dir, imagen_path, output_path):
         return False, "no existe /home/mak/RD/AUTOMATIZACION/cartelera.blend"
 
     monkeypatch.setattr(render_flyer_mak, "run_render", fake_run_render)
 
-    code = render_flyer_mak.main(["--imagen", str(imagen), "--out", str(out_dir)])
+    code = render_flyer_mak.main([
+        "--imagen", str(imagen), "--out", str(out_dir), "--base", str(base),
+    ])
     captured = capsys.readouterr()
     assert code == 1
     assert "RENDER_FALLO:" in captured.out
