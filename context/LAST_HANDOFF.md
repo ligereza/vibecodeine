@@ -1,5 +1,77 @@
 # LAST HANDOFF -- estado para el proximo agente
 
+Version: 0.56.1 | Fecha: 2026-07-24 (tarde) | Identidad: Cauce | sesion:
+show DREF CHOCOLATE cableado y VERIFICADO EN VIVO con LTC real (Sonnet/Opus).
+
+## Sesion 2026-07-24 (show DREF) -- HECHO Y VERIFICADO EN VIVO
+
+Cadena forense completa de punta a punta con LTC real: DJ-LTC -> loopback
+M-Audio -> Chataigne (noisette Mapping LTC->OSC /timecode) -> xio (telefono)
+-> panel PWA. Todo en main (PR #274, d0a7f79, CI verde ubuntu+windows).
+
+1. NOISETTE (xio/show_kit/dref_chocolate.noisette): fixture REAL guardado por
+   Chataigne 1.10.3 tras la prueba (NO armado a mano). Sound Card LTC
+   input=M-Audio, Mapping LTC->OSC Custom /timecode, OSC output a
+   10.195.40.198:7000 (local OFF). paramLinks {} es CORRECTO (el Mapping
+   alimenta el arg del output automatico). El archivo de la laptop = el que
+   se abre manana.
+2. xio foh_monitor: (a) convierte LTC-segundos -> HH:MM:SS:FF en el tile,
+   guarda segundos CRUDOS en el JSONL (forense); (b) auto-detecta TEMA por TC
+   (setlist con inicio HH:MM:SS:FF por linea); (c) panel rediseñado: TC
+   compacto arriba, TITULO grande, BARRA de progreso interpolada suave; (d)
+   boton NEXT ELIMINADO (peligroso: un toque desincronizaba la auto-deteccion);
+   (e) FIX CRITICO del delay ~25s: /status leia bateria por shell INLINE y se
+   apilaba en el shell-lock -> ahora cacheada (refresh 15s en _tick), medido
+   ~22000ms -> ~21ms.
+3. Duraciones para la barra: ffprobe sobre C:\dref chocolate\mov (dedup .mov),
+   alineadas por indice en xio/show_kit/setlist_durations_dref.json. 19/21 con
+   barra; Ultimo Dia y Pego fuerte SIN visual (por diseno; sin barra, se loguea
+   sin_visual). finfalso.mp4 (16s) recuperado de MAK (curatoria_inbox).
+4. DESPLIEGUE al telefono: adb push + input-dance run_server.sh (adb NO puede
+   matar ni RUN_COMMAND el proceso Termux -- otro UID/permiso -- pero SI puede
+   tipear via input keyevent; metodo en memoria project-xio). Setlist +
+   duraciones PERSISTIDOS en /sdcard/xio_termux/foh_logs/setlist_actual.json
+   (sobreviven restart/reboot; run_server.sh no borra esa carpeta).
+
+## MANANA (show DREF -- nada que construir):
+- Topologia: telefono como CLIENTE en la red, IP 10.195.40.198 (NO hotspot; el
+  relay de luces/output no esta implementado). Si la IP cambiara: pasarla a
+  check_show.py y actualizar el OSC output de Chataigne.
+- Operar: abrir la PWA en el telefono (ya en pantalla de inicio) + Resolume +
+  Chataigne A MANO, play al LTC del DJ. SIN .bat (pedido del usuario: todo por
+  la app PWA, no scripts de laptop). iPhone/laptop en la misma red ven el panel
+  en http://10.195.40.198:5000/api/plugins/foh_monitor/panel (server 0.0.0.0,
+  sin aislar clientes; solo-lectura, varios miran a la vez).
+- Soundcheck: al REABRIR el noisette, confirmar que el arg del Mapping sigue el
+  valor (deberia: el Mapping auto-alimenta; si sale 00:00:00:00 fijo, re-linkear
+  el arg en Chataigne, 10s).
+
+## MEJORAS PENSADAS (LUEGO, no manana):
+- Art-Net: el usuario tiene Titan One (NO MA3). xio ya detecta cualquier Art-Net
+  en :6454 -> apuntar Titan One a 10.195.40.198:6454 prende el tile LUCES. El
+  apendice de DIA_DEL_SHOW.md dice MA3: actualizar a Titan One cuando se cablee.
+- Resolume track-por-track: OSC Output a 10.195.40.198:7000 prende el tile
+  VISUAL al disparar clips, PERO xio NO parsea QUE clip (la cancion sale del
+  TIMECODE, no del clip). Detectar el clip requiere parsear
+  /composition/.../connected en foh_monitor (deferido).
+
+## CICATRIZ DE ESTA SESION (honesto, para el sucesor):
+Dije "no se puede" ANTES de buscar: iba a dejarle al usuario un comando manual
+de Termux concluyendo que "adb no puede reiniciar el server", cuando la memoria
+project-xio-xiaomi-controller YA documentaba el input-dance. El usuario tuvo que
+decir "revisaste las memorias?". Regla (contrato I1/I3, reforzada, memoria
+feedback-verificar-antes-de-negar): antes de CUALQUIER "no se puede"/"no
+existe"/handoff-manual, buscar memoria + repo + web + codigo fuente PRIMERO.
+
+## TEST LOCAL ROJO (NO regresion, verificado): tests/test_ig_cffi_fallback.py
+::test_sin_curl_cffi_... falla SOLO local porque curl_cffi 0.15.0 ESTA instalado
+en esta WIN (el test simula su ausencia popeando sys.modules -- no alcanza si el
+paquete existe). Es de #202, no de esta sesion; CI (sin curl_cffi) verde. Test
+fragil (falla en cualquier maquina con curl_cffi). Fix pendiente: forzar el
+ImportError con sys.modules["curl_cffi"]=None. NO bloquea.
+
+---
+
 Version: 0.56.1 | Fecha: 2026-07-24 04:45 | Identidad: Cauce | sesion:
 cierre de sesion larga (director Fable godspeed estricto).
 
