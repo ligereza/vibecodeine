@@ -1,0 +1,671 @@
+"""
+FOH Monitor -- vigia pasivo de cabina (Front Of House) para show en vivo.
+
+Que hace (TODO lectura, cero interferencia con el rig):
+  - Listeners UDP pasivos en threads daemon:
+      * Art-Net (6454)  -- valida header "Art-Net\\0", cuenta OpDmx
+      * sACN   (5568)   -- valida root layer ACN; join multicast 239.255.u.u
+                           best-effort (si HyperOS lo bloquea degrada a unicast
+                           y lo anota en /status)
+      * OSC    (7000)   -- parse minimo del address pattern (primer string \\0-pad)
+    Por canal: last_seen, packets/s, activo si hubo paquetes en los ultimos
+    N segundos (config active_window, default 5).
+  - Audio best-effort via Termux:API: termux-microphone-record a chunks cortos
+    + decodificacion con ffmpeg a PCM + RMS en python puro. Si falta
+    termux-api o ffmpeg -> "audio: no disponible" SIN romper el resto.
+  - Setlist: cargar lineas de texto, tema actual, /next (tap). Todo al registro.
+  - Registro JSONL por dia: /sdcard/xio_termux/foh_logs/show_YYYYMMDD.jsonl
+    (evento por linea: ts, tipo, detalle). GET /log lo descarga post-show.
+  - Panel: GET /api/plugins/foh_monitor/panel -> HTML autocontenido fullscreen
+    dark pensado pa la pantalla del Xiaomi en FOH (tiles grandes, boton NEXT
+    gordo, auto-refresh 2s, wake-lock best-effort).
+
+Seguridad: NINGUN endpoint en DANGEROUS_ENDPOINTS -- todo es lectura +
+setlist next (inocuo). Los listeners solo hacen bind/recv, jamas envian.
+"""
+
+from plugins.base import PluginBase
+
+import json
+import math
+import os
+import shutil
+import socket
+import struct
+import subprocess
+import threading
+import time
+from datetime import datetime
+
+_ARTNET_HEADER = b"Art-Net\x00"
+_ACN_PID = b"ASC-E1.17\x00\x00\x00"
+
+# Panel autocontenido (sin assets externos: funciona offline en el hotspot).
+# Fetch por URLs RELATIVAS asi el host/IP da igual.
+_PANEL_HTML = """<!doctype html><html lang=es><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>FOH Monitor</title><style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font:16px/1.3 -apple-system,system-ui,Roboto,sans-serif;background:#07090d;color:#e8eaed;
+ display:flex;flex-direction:column;padding:10px;gap:10px;user-select:none}
+.tiles{display:flex;gap:10px}
+.tile{flex:1;border-radius:14px;padding:12px 8px;text-align:center;border:2px solid #232838;background:#12151d;transition:background .3s}
+.tile .nm{font-size:14px;font-weight:800;letter-spacing:.08em}
+.tile .st{font-size:26px;font-weight:900;margin:4px 0}
+.tile .meta{font-size:12px;opacity:.85}
+.t-on{background:#0c2a17;border-color:#1e7a41}.t-on .st{color:#4ade80}
+.t-off{background:#2a0d10;border-color:#8c2530}.t-off .st{color:#f87171}
+.t-na{background:#1a1a20;border-color:#3a3a44}.t-na .st{color:#9aa0b0;font-size:18px}
+.song{background:#12151d;border:2px solid #232838;border-radius:14px;padding:14px;text-align:center}
+.song .lbl{font-size:12px;color:#8a92a6;text-transform:uppercase;letter-spacing:.1em}
+.song .cur{font-size:34px;font-weight:900;margin:6px 0;word-break:break-word}
+.song .nxt{font-size:14px;color:#8a92a6}
+#next{display:block;width:100%;padding:22px;margin-top:10px;font-size:24px;font-weight:900;
+ border:0;border-radius:14px;background:#2563eb;color:#fff;letter-spacing:.1em}
+#next:active{background:#1d4ed8}
+.row{display:flex;gap:10px;align-items:center;font-size:13px;color:#9aa0b0;justify-content:space-between}
+.feed{flex:1;overflow-y:auto;background:#0d1016;border:1px solid #1c2130;border-radius:12px;padding:8px}
+.ev{font-size:13px;padding:5px 8px;border-left:3px solid #333;margin-bottom:4px;background:#12151d;border-radius:0 8px 8px 0}
+.ev .t{color:#6b7280;font-size:11px;margin-right:6px}
+.e-on{border-color:#4ade80}.e-off{border-color:#f87171}.e-set{border-color:#60a5fa}.e-au{border-color:#fbbf24}
+.hot{color:#f87171;font-weight:800}
+</style></head><body>
+<div class=tiles id=tiles></div>
+<div class=song>
+ <div class=lbl>TEMA ACTUAL</div>
+ <div class=cur id=cur>--</div>
+ <div class=nxt id=nx></div>
+ <button id=next>NEXT &#9654;</button>
+</div>
+<div class=row><span id=batt></span><span id=sub>...</span></div>
+<div class=feed id=feed></div>
+<script>
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function tile(nm,ch){
+ if(ch&&ch.na)return '<div class="tile t-na"><div class=nm>'+nm+'</div><div class=st>N/D</div><div class=meta>'+esc(ch.reason||'')+'</div></div>';
+ var on=ch&&ch.active,ago=(ch&&ch.age!=null)?('hace '+ch.age+'s'):'nunca';
+ var pps=(ch&&ch.pps!=null)?(ch.pps+' pps'):'';
+ return '<div class="tile '+(on?'t-on':'t-off')+'"><div class=nm>'+nm+'</div><div class=st>'+(on?'ON':'OFF')+'</div><div class=meta>'+ago+(pps?' &middot; '+pps:'')+'</div></div>';
+}
+function evcls(t){return t.indexOf('senal_on')>=0?'e-on':(t.indexOf('off')>=0||t.indexOf('silencio')>=0?'e-off':(t.indexOf('setlist')>=0?'e-set':'e-au'))}
+function tick(){
+ fetch('status',{cache:'no-store'}).then(function(r){return r.json()}).then(function(s){
+  var luces=s.channels.artnet.active?s.channels.artnet:s.channels.sacn;
+  luces={active:s.channels.artnet.active||s.channels.sacn.active,
+   age:Math.min(s.channels.artnet.age==null?1e9:s.channels.artnet.age,s.channels.sacn.age==null?1e9:s.channels.sacn.age),
+   pps:(s.channels.artnet.pps||0)+(s.channels.sacn.pps||0)};
+  if(luces.age>=1e9)luces.age=null;
+  var au=s.audio&&s.audio.available?{active:s.audio.active,age:s.audio.age,pps:null}:{na:1,reason:(s.audio&&s.audio.reason)||'no disponible'};
+  document.getElementById('tiles').innerHTML=tile('LUCES',luces)+tile('VISUAL',s.channels.osc)+tile('AUDIO',au);
+  var sl=s.setlist||{};
+  document.getElementById('cur').textContent=sl.current||'(sin setlist)';
+  document.getElementById('nx').textContent=sl.next?('sigue: '+sl.next):'';
+  var b=s.battery||{};var bp=[];
+  if(b.level!=null)bp.push('BAT '+b.level+'%'+(b.charging?' &#9889;':''));
+  if(b.temperature)bp.push((b.temperature>=45?'<span class=hot>':'')+b.temperature+'&deg;C'+(b.temperature>=45?'</span>':''));
+  document.getElementById('batt').innerHTML=bp.join(' &middot; ');
+  return fetch('events?limit=10',{cache:'no-store'});
+ }).then(function(r){return r.json()}).then(function(ev){
+  document.getElementById('feed').innerHTML=(ev&&ev.length)?ev.slice().reverse().map(function(x){
+   return '<div class="ev '+evcls(x.tipo||'')+'"><span class=t>'+esc((x.ts||'').slice(11,19))+'</span>'+esc(x.tipo)+' '+esc(typeof x.detalle=='string'?x.detalle:JSON.stringify(x.detalle))+'</div>';
+  }).join(''):'<div class=ev>sin eventos</div>';
+  document.getElementById('sub').textContent='upd '+new Date().toLocaleTimeString();
+ }).catch(function(e){document.getElementById('sub').textContent='ERR '+e});
+}
+document.getElementById('next').addEventListener('click',function(){
+ fetch('next',{method:'POST'}).then(tick);
+});
+// wake-lock best-effort (requiere gesto en algunos Android)
+var wl=null;function lock(){if(navigator.wakeLock&&!wl)navigator.wakeLock.request('screen').then(function(l){wl=l;l.addEventListener('release',function(){wl=null})}).catch(function(){})}
+document.addEventListener('click',lock);document.addEventListener('visibilitychange',function(){if(!document.hidden)lock()});lock();
+tick();setInterval(tick,2000);
+</script></body></html>"""
+
+
+class _Channel:
+    """Estado de un canal de senal (thread-safe por GIL: solo ints/floats)."""
+
+    def __init__(self, name):
+        self.name = name
+        self.last_seen = 0.0     # epoch del ultimo paquete valido
+        self.total = 0           # paquetes validos acumulados
+        self.other = 0           # paquetes en el puerto que NO validaron
+        self.buckets = {}        # segundo(int) -> count, pa packets/s
+        self.info = ""           # detalle libre (universo, address, etc.)
+        self.error = ""          # error de bind/listener si lo hubo
+
+    def hit(self, info=""):
+        now = time.time()
+        self.last_seen = now
+        self.total += 1
+        sec = int(now)
+        self.buckets[sec] = self.buckets.get(sec, 0) + 1
+        if len(self.buckets) > 12:
+            cutoff = sec - 10
+            for k in [k for k in self.buckets if k < cutoff]:
+                self.buckets.pop(k, None)
+        if info:
+            self.info = info
+
+    def pps(self):
+        """Promedio de paquetes/s sobre los ultimos 3 segundos completos."""
+        now = int(time.time())
+        n = sum(self.buckets.get(now - i, 0) for i in (1, 2, 3))
+        return round(n / 3.0, 1)
+
+    def snapshot(self, window):
+        age = None if not self.last_seen else round(time.time() - self.last_seen, 1)
+        return {
+            "active": bool(self.last_seen and age is not None and age <= window),
+            "last_seen": (datetime.fromtimestamp(self.last_seen).isoformat(timespec="seconds")
+                          if self.last_seen else None),
+            "age": age,
+            "pps": self.pps(),
+            "packets_total": self.total,
+            "invalid_packets": self.other,
+            "info": self.info,
+            "error": self.error,
+        }
+
+
+class FohMonitorPlugin(PluginBase):
+    plugin_id = "foh_monitor"
+    name = "FOH Monitor"
+    version = "1.0.0"
+    description = "Vigia pasivo de cabina: Art-Net/sACN/OSC + audio + setlist + registro JSONL del show."
+    author = "Cauce"
+    icon = "activity"
+    category = "network"
+    permissions = ["network"]
+
+    DEFAULTS = {
+        "artnet_port": 6454,
+        "sacn_port": 5568,
+        "osc_port": 7000,
+        "active_window": 5,        # seg sin paquetes => canal OFF
+        "sacn_universes": "1-16",  # universos pa join multicast best-effort
+        "audio_enabled": True,
+        "audio_chunk_seconds": 2,  # duracion de cada muestra de mic
+        "audio_threshold_db": -50, # RMS dBFS: por encima => hay audio
+        "heartbeat_seconds": 60,
+        "log_dir": "/sdcard/xio_termux/foh_logs",
+        "battery_delta": 5,        # loguea bateria al cambiar >= esto (%)
+    }
+
+    def __init__(self, context):
+        super().__init__(context)
+        self._stop = threading.Event()
+        self._sockets = []
+        self._channels = {
+            "artnet": _Channel("artnet"),
+            "sacn": _Channel("sacn"),
+            "osc": _Channel("osc"),
+        }
+        self._sacn_mode = "desconocido"  # multicast | unicast (join fallo)
+        self._audio = {"available": False, "reason": "no evaluado", "level_db": None,
+                       "active": False, "last_seen": 0.0}
+        self._setlist = {"songs": [], "index": -1, "loaded_at": None, "advanced_at": None}
+        self._events = []          # ring pa el panel (el JSONL es la verdad)
+        self._prev_active = {}     # canal -> bool (deteccion de transiciones)
+        self._prev_batt = {}       # ultimo estado de bateria logueado
+        self._last_heartbeat = 0.0
+        self._log_lock = threading.Lock()
+        self._log_dir_real = None  # resuelto en on_load
+
+    # ── lifecycle ────────────────────────────────────────────────────
+    def on_load(self):
+        for k, v in self.DEFAULTS.items():
+            if self.get_config(k, None) is None:
+                self.set_config(k, v)
+
+        self.register_route("/status", self._api_status, methods=["GET"])
+        self.register_route("/panel", self._api_panel, methods=["GET"])
+        self.register_route("/events", self._api_events, methods=["GET"])
+        self.register_route("/setlist", self._api_setlist_get, methods=["GET"])
+        self.register_route("/setlist", self._api_setlist_post, methods=["POST"])
+        self.register_route("/next", self._api_next, methods=["POST"])
+        self.register_route("/prev", self._api_prev, methods=["POST"])
+        self.register_route("/log", self._api_log, methods=["GET"])
+        self.register_route("/logs", self._api_logs, methods=["GET"])
+        self.register_route("/config", self._api_get_config, methods=["GET"])
+        self.register_route("/config", self._api_set_config, methods=["POST"])
+
+        self._resolve_log_dir()
+        self._start_listener("artnet", int(self._cfg("artnet_port")), self._parse_artnet)
+        self._start_sacn()
+        self._start_listener("osc", int(self._cfg("osc_port")), self._parse_osc)
+        self._probe_audio()
+        if self._audio["available"] and self._cfg("audio_enabled"):
+            t = threading.Thread(target=self._audio_loop, daemon=True, name="foh-audio")
+            t.start()
+        self.context.schedule("foh_tick", self._tick, interval_seconds=1)
+        self._log_event("heartbeat", {"msg": "foh_monitor cargado",
+                                      "sacn_mode": self._sacn_mode,
+                                      "audio": self._audio["reason"] if not self._audio["available"] else "ok"})
+        self.logger.info("FOH Monitor loaded (artnet=%s sacn=%s[%s] osc=%s audio=%s)" % (
+            self._cfg("artnet_port"), self._cfg("sacn_port"), self._sacn_mode,
+            self._cfg("osc_port"),
+            "ok" if self._audio["available"] else self._audio["reason"]))
+
+    def on_unload(self):
+        self._stop.set()
+        self.context.cancel_schedule("foh_tick")
+        for s in self._sockets:
+            try:
+                s.close()
+            except Exception:
+                pass
+
+    def _cfg(self, key):
+        return self.get_config(key, self.DEFAULTS.get(key))
+
+    # ── registro JSONL ───────────────────────────────────────────────
+    def _resolve_log_dir(self):
+        d = str(self._cfg("log_dir"))
+        try:
+            os.makedirs(d, exist_ok=True)
+            probe = os.path.join(d, ".probe")
+            with open(probe, "w") as f:
+                f.write("ok")
+            os.remove(probe)
+        except Exception:
+            d = str(self.data_dir / "foh_logs")
+            os.makedirs(d, exist_ok=True)
+        self._log_dir_real = d
+
+    def _log_path(self, date_str=None):
+        date_str = date_str or datetime.now().strftime("%Y%m%d")
+        return os.path.join(self._log_dir_real, f"show_{date_str}.jsonl")
+
+    def _log_event(self, tipo, detalle):
+        """Una linea JSON al archivo del dia (rotacion implicita por nombre)."""
+        ev = {"ts": datetime.now().isoformat(timespec="seconds"), "tipo": tipo, "detalle": detalle}
+        self._events.append(ev)
+        self._events = self._events[-200:]
+        try:
+            with self._log_lock:
+                with open(self._log_path(), "a", encoding="utf-8") as f:
+                    f.write(json.dumps(ev, ensure_ascii=False) + "\n")
+        except Exception as e:
+            self.logger.error(f"foh log write failed: {e}")
+
+    # ── listeners UDP pasivos ────────────────────────────────────────
+    def _bind_udp(self, port):
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        s.settimeout(1.0)
+        s.bind(("0.0.0.0", port))
+        self._sockets.append(s)
+        return s
+
+    def _start_listener(self, key, port, parser):
+        ch = self._channels[key]
+        try:
+            sock = self._bind_udp(port)
+        except Exception as e:
+            ch.error = f"bind {port} fallo: {e}"
+            self.logger.error(f"foh {key}: {ch.error}")
+            return
+        t = threading.Thread(target=self._recv_loop, args=(sock, ch, parser),
+                             daemon=True, name=f"foh-{key}")
+        t.start()
+
+    def _start_sacn(self):
+        ch = self._channels["sacn"]
+        port = int(self._cfg("sacn_port"))
+        try:
+            sock = self._bind_udp(port)
+        except Exception as e:
+            ch.error = f"bind {port} fallo: {e}"
+            self.logger.error(f"foh sacn: {ch.error}")
+            return
+        # join multicast best-effort por universo (239.255.hi.lo). En Android
+        # sin MulticastLock esto puede no recibir nada igual: se anota el modo
+        # y sACN por UNICAST a la IP del telefono siempre funciona.
+        joined = 0
+        for u in self._parse_universes(str(self._cfg("sacn_universes"))):
+            try:
+                grp = socket.inet_aton(f"239.255.{(u >> 8) & 0xFF}.{u & 0xFF}")
+                mreq = struct.pack("4s4s", grp, socket.inet_aton("0.0.0.0"))
+                sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+                joined += 1
+            except Exception:
+                pass
+        self._sacn_mode = f"multicast({joined} joins)" if joined else "unicast (join multicast fallo/bloqueado)"
+        t = threading.Thread(target=self._recv_loop, args=(sock, ch, self._parse_sacn),
+                             daemon=True, name="foh-sacn")
+        t.start()
+
+    @staticmethod
+    def _parse_universes(spec):
+        out = set()
+        for part in spec.replace(" ", "").split(","):
+            if not part:
+                continue
+            try:
+                if "-" in part:
+                    a, b = part.split("-", 1)
+                    out.update(range(int(a), min(int(b), 63999) + 1))
+                else:
+                    out.add(int(part))
+            except Exception:
+                continue
+        return sorted(out)[:64]  # tope sano de joins
+
+    def _recv_loop(self, sock, ch, parser):
+        while not self._stop.is_set():
+            try:
+                data, addr = sock.recvfrom(2048)
+            except socket.timeout:
+                continue
+            except OSError:
+                break  # socket cerrado en unload
+            try:
+                info = parser(data)
+            except Exception:
+                info = None
+            if info is None:
+                ch.other += 1
+            else:
+                ch.hit(info)
+
+    # parsers: devuelven str info si el paquete es valido, None si no
+    @staticmethod
+    def _parse_artnet(data):
+        if len(data) < 12 or not data.startswith(_ARTNET_HEADER):
+            return None
+        opcode = data[8] | (data[9] << 8)
+        if opcode == 0x5000 and len(data) >= 18:  # OpDmx
+            uni = data[14] | (data[15] << 8)
+            return f"OpDmx uni {uni}"
+        return f"op 0x{opcode:04x}"
+
+    @staticmethod
+    def _parse_sacn(data):
+        if len(data) < 126 or data[4:16] != _ACN_PID:
+            return None
+        uni = (data[113] << 8) | data[114]
+        return f"E1.31 uni {uni}"
+
+    @staticmethod
+    def _parse_osc(data):
+        if data.startswith(b"#bundle"):
+            return "#bundle"
+        if not data.startswith(b"/"):
+            return None
+        end = data.find(b"\x00")
+        if end <= 0:
+            return None
+        try:
+            return data[:end].decode("ascii", "replace")
+        except Exception:
+            return None
+
+    # ── audio best-effort (Termux:API + ffmpeg) ──────────────────────
+    def _probe_audio(self):
+        if not self._cfg("audio_enabled"):
+            self._audio.update(available=False, reason="deshabilitado por config")
+            return
+        rec = shutil.which("termux-microphone-record")
+        if not rec:
+            self._audio.update(available=False, reason="termux-microphone-record no instalado (pkg install termux-api + app Termux:API)")
+            return
+        ff = shutil.which("ffmpeg")
+        if not ff:
+            self._audio.update(available=False, reason="ffmpeg no instalado (pkg install ffmpeg) -- sin decodificador no hay RMS")
+            return
+        self._audio.update(available=True, reason="")
+
+    def _audio_loop(self):
+        """Graba chunks cortos, decodifica a PCM s16le mono y calcula RMS dBFS.
+        Cualquier fallo apaga el canal con motivo honesto; nunca tumba el plugin."""
+        tmp = str(self.data_dir / "foh_mic.m4a")
+        fails = 0
+        while not self._stop.is_set():
+            secs = max(1, int(self._cfg("audio_chunk_seconds")))
+            try:
+                try:
+                    os.remove(tmp)
+                except OSError:
+                    pass
+                subprocess.run(["termux-microphone-record", "-f", tmp, "-l", str(secs)],
+                               capture_output=True, timeout=15)
+                # esperar la duracion + margen y cerrar la grabacion
+                self._stop.wait(secs + 0.5)
+                subprocess.run(["termux-microphone-record", "-q"], capture_output=True, timeout=10)
+                if not os.path.exists(tmp) or os.path.getsize(tmp) < 100:
+                    raise RuntimeError("grabacion vacia (mic ocupado o permiso denegado)")
+                p = subprocess.run(["ffmpeg", "-v", "error", "-i", tmp, "-f", "s16le",
+                                    "-ac", "1", "-ar", "8000", "-"],
+                                   capture_output=True, timeout=20)
+                raw = p.stdout
+                if len(raw) < 2:
+                    raise RuntimeError("decodificacion vacia")
+                db = self._rms_dbfs(raw)
+                self._audio["level_db"] = db
+                if db >= float(self._cfg("audio_threshold_db")):
+                    self._audio["active"] = True
+                    self._audio["last_seen"] = time.time()
+                else:
+                    window = int(self._cfg("active_window"))
+                    if time.time() - self._audio["last_seen"] > window:
+                        self._audio["active"] = False
+                fails = 0
+            except Exception as e:
+                fails += 1
+                if fails >= 3:
+                    self._audio.update(available=False, active=False,
+                                       reason=f"mic fallo {fails}x: {e}")
+                    self.logger.error(f"foh audio OFF: {e}")
+                    return
+                self._stop.wait(3)
+
+    @staticmethod
+    def _rms_dbfs(raw):
+        import array
+        samples = array.array("h")
+        samples.frombytes(raw[: len(raw) - (len(raw) % 2)])
+        if not samples:
+            return -120.0
+        acc = 0
+        for v in samples:
+            acc += v * v
+        rms = math.sqrt(acc / len(samples))
+        if rms < 1:
+            return -120.0
+        return round(20 * math.log10(rms / 32768.0), 1)
+
+    # ── tick: transiciones + heartbeat + bateria ─────────────────────
+    def _battery(self):
+        try:
+            return self.controller.battery_status()
+        except Exception:
+            return {"level": None, "charging": False, "status": "unknown", "temperature": None}
+
+    def _tick(self):
+        window = int(self._cfg("active_window"))
+        now = time.time()
+        # transiciones de senal
+        for key, ch in self._channels.items():
+            active = bool(ch.last_seen and (now - ch.last_seen) <= window)
+            was = self._prev_active.get(key)
+            if was is None:
+                self._prev_active[key] = active
+                continue
+            if active and not was:
+                self._log_event("senal_on", {"canal": key, "info": ch.info, "pps": ch.pps()})
+            elif was and not active:
+                self._log_event("senal_off", {"canal": key,
+                                              "ultimo": datetime.fromtimestamp(ch.last_seen).isoformat(timespec="seconds") if ch.last_seen else None})
+            self._prev_active[key] = active
+        # audio silencio (solo si el canal esta vivo)
+        if self._audio["available"]:
+            a_act = self._audio["active"]
+            was = self._prev_active.get("_audio")
+            if was is None:
+                self._prev_active["_audio"] = a_act
+            else:
+                if was and not a_act:
+                    self._log_event("audio_silencio", {"level_db": self._audio["level_db"]})
+                elif a_act and not was:
+                    self._log_event("senal_on", {"canal": "audio", "level_db": self._audio["level_db"]})
+                self._prev_active["_audio"] = a_act
+        # heartbeat + bateria
+        hb = int(self._cfg("heartbeat_seconds"))
+        if now - self._last_heartbeat >= hb:
+            self._last_heartbeat = now
+            bat = self._battery()
+            snap = {k: c.snapshot(window)["active"] for k, c in self._channels.items()}
+            snap["audio"] = self._audio["active"] if self._audio["available"] else None
+            self._log_event("heartbeat", {"activos": snap, "bateria": bat.get("level"),
+                                          "cargando": bat.get("charging")})
+            lvl = bat.get("level")
+            prev_lvl = self._prev_batt.get("level")
+            if lvl is not None and (prev_lvl is None
+                                    or abs(lvl - prev_lvl) >= int(self._cfg("battery_delta"))
+                                    or bat.get("charging") != self._prev_batt.get("charging")):
+                self._log_event("bateria", {"nivel": lvl, "cargando": bat.get("charging"),
+                                            "temp": bat.get("temperature")})
+                self._prev_batt = {"level": lvl, "charging": bat.get("charging")}
+
+    # ── API ──────────────────────────────────────────────────────────
+    def _api_status(self):
+        from flask import jsonify
+        window = int(self._cfg("active_window"))
+        audio = dict(self._audio)
+        if audio.get("last_seen"):
+            audio["age"] = round(time.time() - audio["last_seen"], 1)
+        else:
+            audio["age"] = None
+        audio.pop("last_seen", None)
+        return jsonify({
+            "channels": {k: c.snapshot(window) for k, c in self._channels.items()},
+            "sacn_mode": self._sacn_mode,
+            "audio": audio,
+            "setlist": self._setlist_view(),
+            "battery": self._battery(),
+            "active_window": window,
+            "log_file": self._log_path(),
+            "log_dir": self._log_dir_real,
+        })
+
+    def _api_panel(self):
+        from flask import Response
+        return Response(_PANEL_HTML, mimetype="text/html")
+
+    def _api_events(self):
+        from flask import request, jsonify
+        limit = max(1, min(int(request.args.get("limit", 20)), 200))
+        return jsonify(self._events[-limit:])
+
+    # setlist
+    def _setlist_view(self):
+        songs = self._setlist["songs"]
+        i = self._setlist["index"]
+        return {
+            "songs": songs,
+            "index": i,
+            "current": songs[i] if 0 <= i < len(songs) else None,
+            "next": songs[i + 1] if 0 <= i + 1 < len(songs) else None,
+            "total": len(songs),
+            "loaded_at": self._setlist["loaded_at"],
+            "advanced_at": self._setlist["advanced_at"],
+        }
+
+    def _api_setlist_get(self):
+        from flask import jsonify
+        return jsonify(self._setlist_view())
+
+    def _api_setlist_post(self):
+        """POST {"text": "tema1\\ntema2"} o {"songs": [...]}. Reinicia al tema 0."""
+        from flask import request, jsonify
+        data = request.get_json(silent=True) or {}
+        if isinstance(data.get("songs"), list):
+            songs = [str(s).strip() for s in data["songs"] if str(s).strip()]
+        else:
+            text = data.get("text") or request.get_data(as_text=True) or ""
+            songs = [ln.strip() for ln in text.splitlines() if ln.strip()]
+        if not songs:
+            return jsonify({"ok": False, "error": "setlist vacia: manda 'text' (lineas) o 'songs' (lista)"}), 400
+        self._setlist = {"songs": songs, "index": 0,
+                         "loaded_at": datetime.now().isoformat(timespec="seconds"),
+                         "advanced_at": None}
+        self._log_event("setlist_next", {"accion": "cargada", "temas": len(songs), "actual": songs[0]})
+        return jsonify({"ok": True, **self._setlist_view()})
+
+    def _api_next(self):
+        from flask import jsonify
+        songs = self._setlist["songs"]
+        if not songs:
+            return jsonify({"ok": False, "error": "sin setlist cargada"}), 400
+        if self._setlist["index"] < len(songs) - 1:
+            self._setlist["index"] += 1
+        self._setlist["advanced_at"] = datetime.now().isoformat(timespec="seconds")
+        cur = songs[self._setlist["index"]]
+        self._log_event("setlist_next", {"actual": cur, "n": self._setlist["index"] + 1,
+                                         "de": len(songs)})
+        return jsonify({"ok": True, **self._setlist_view()})
+
+    def _api_prev(self):
+        from flask import jsonify
+        if not self._setlist["songs"]:
+            return jsonify({"ok": False, "error": "sin setlist cargada"}), 400
+        if self._setlist["index"] > 0:
+            self._setlist["index"] -= 1
+        cur = self._setlist["songs"][self._setlist["index"]]
+        self._log_event("setlist_next", {"accion": "prev", "actual": cur})
+        return jsonify({"ok": True, **self._setlist_view()})
+
+    # log download
+    def _api_logs(self):
+        from flask import jsonify
+        try:
+            files = sorted(f for f in os.listdir(self._log_dir_real)
+                           if f.startswith("show_") and f.endswith(".jsonl"))
+        except Exception:
+            files = []
+        return jsonify({"dir": self._log_dir_real, "files": files})
+
+    def _api_log(self):
+        """GET /log[?date=YYYYMMDD] -> descarga el JSONL del dia (pa analisis post-show)."""
+        from flask import request, jsonify, Response
+        date = request.args.get("date", datetime.now().strftime("%Y%m%d"))
+        if not (len(date) == 8 and date.isdigit()):
+            return jsonify({"ok": False, "error": "date debe ser YYYYMMDD"}), 400
+        path = self._log_path(date)
+        if not os.path.exists(path):
+            return jsonify({"ok": False, "error": f"no hay log pa {date}", "dir": self._log_dir_real}), 404
+        with open(path, "r", encoding="utf-8") as f:
+            body = f.read()
+        return Response(body, mimetype="application/x-ndjson",
+                        headers={"Content-Disposition": f"attachment; filename=show_{date}.jsonl"})
+
+    # config
+    def _api_get_config(self):
+        from flask import jsonify
+        return jsonify({k: self._cfg(k) for k in self.DEFAULTS})
+
+    def _api_set_config(self):
+        """Nota: cambiar puertos requiere reiniciar el server (los binds son de carga)."""
+        from flask import request, jsonify
+        data = request.get_json(force=True) or {}
+        changed = {}
+        for k in self.DEFAULTS:
+            if k not in data:
+                continue
+            v = data[k]
+            if k in ("artnet_port", "sacn_port", "osc_port", "active_window",
+                     "audio_chunk_seconds", "heartbeat_seconds", "battery_delta"):
+                v = int(v)
+            elif k == "audio_threshold_db":
+                v = float(v)
+            elif k == "audio_enabled":
+                v = bool(v)
+            self.set_config(k, v)
+            changed[k] = v
+        return jsonify({"ok": True, "changed": changed,
+                        "nota": "puertos/audio aplican al reiniciar el server"})
+
+
+plugin_class = FohMonitorPlugin

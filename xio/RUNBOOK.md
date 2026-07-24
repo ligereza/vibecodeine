@@ -17,6 +17,7 @@ Written 2026-07-16 by consolidating xio/**/*.md + the real scripts under xio/new
 4. [Hotspot self-heal](#4-hotspot-self-heal) -- watchdogs that run without you
 5. [Security -- aislar MAK](#5-security----aislar-mak) -- deny the LLM box, guarded endpoints
 6. [Charge control](#6-charge-control) -- battery cap/floor via USB role, no root
+6b. [FOH monitor](#6b-foh-monitor-cabina) -- vigia pasivo Art-Net/sACN/OSC + setlist + JSONL
 7. [Install / deploy](#7-install--deploy) -- one-time setup + redeploy
 8. [Source docs](#8-source-docs) -- where each section's depth lives
 
@@ -287,6 +288,57 @@ near-dead phone, even with confirm=1.
 Source: `xio/PLAN_SERVICIOS_SIN_ROOT.md` (discovery + rationale),
 `xio/new-plugins/charge_control/__init__.py` (actual endpoints/defaults),
 `xio/HOTSPOT_SHOW_RUNBOOK.md` (power-bank-avoids-reboot framing).
+
+## 6b. FOH monitor (cabina)
+
+Plugin `foh_monitor` (`xio/new-plugins/foh_monitor/`): vigia PASIVO de cabina.
+Listeners UDP read-only (jamas envia): Art-Net :6454, sACN :5568, OSC :7000.
+Registra todo el show a JSONL y sirve un panel touch pa la pantalla del Xiaomi.
+
+**Panel (abrir en el Xiaomi mismo o en cualquier cliente del hotspot):**
+```
+http://<phone>:5000/api/plugins/foh_monitor/panel
+```
+3 tiles LUCES (artnet|sacn) / VISUAL (osc) / AUDIO, tema actual + boton NEXT,
+feed de eventos, bateria. Auto-refresh 2s; wake-lock best-effort (tocar la
+pantalla una vez lo arma; igual sube el timeout de pantalla en Ajustes pa show).
+
+**Apuntar las consolas al telefono:**
+- Art-Net: output del nodo/consola -> IP del telefono (o broadcast de la subred
+  del hotspot, p.ej. `192.168.x.255`), puerto 6454.
+- sACN: UNICAST a la IP del telefono es lo garantizado. El plugin hace join
+  multicast 239.255.u.u (universos config `sacn_universes`, default 1-16)
+  best-effort; Android sin MulticastLock puede no entregar multicast -- el modo
+  real queda anotado en `/status` (`sacn_mode`).
+- OSC: Resolume -> Preferences -> OSC -> OSC Output: IP del telefono, puerto 7000.
+
+**Setlist:**
+```bash
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"text":"Tema 1\nTema 2\nTema 3"}' \
+  http://<phone>:5000/api/plugins/foh_monitor/setlist
+curl -X POST http://<phone>:5000/api/plugins/foh_monitor/next   # o boton NEXT del panel
+```
+
+**Status / registro:**
+```bash
+curl http://<phone>:5000/api/plugins/foh_monitor/status
+curl http://<phone>:5000/api/plugins/foh_monitor/events?limit=20
+# post-show: bajar el JSONL del dia (eventos senal_on/off, setlist, bateria, heartbeat)
+curl -O http://<phone>:5000/api/plugins/foh_monitor/log          # hoy
+curl "http://<phone>:5000/api/plugins/foh_monitor/log?date=20260723" > show.jsonl
+curl http://<phone>:5000/api/plugins/foh_monitor/logs            # listar dias
+```
+Registro en el telefono: `/sdcard/xio_termux/foh_logs/show_YYYYMMDD.jsonl`
+(rotacion por dia, un JSON por linea).
+
+**Audio:** requiere `pkg install termux-api ffmpeg` + app Termux:API instalada.
+Si faltan, el tile AUDIO queda "N/D" con el motivo en `/status` -- el resto del
+plugin funciona igual. Umbral: config `audio_threshold_db` (default -50 dBFS).
+
+Sin endpoints peligrosos: todo es lectura + next de setlist (inocuo).
+
+Source: `xio/new-plugins/foh_monitor/__init__.py`.
 
 ## 7. Install / deploy
 
