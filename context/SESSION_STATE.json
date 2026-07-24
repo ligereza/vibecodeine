@@ -1,26 +1,28 @@
 {
   "version": "0.56.1",
-  "date": "2026-07-22T18:30:00Z",
+  "date": "2026-07-23T00:00:00Z",
   "assistant_name": "Cauce",
-  "repo_main": "main gobernado (enforce_admins). 19 PRs merjeados hoy (#122-152 rango). 0 abiertos, 0 ramas huerfanas. Issues: #131 y #145 cerrados; #139 parcial (3 legacy en allowlist ratchet).",
-  "current_focus": "MAK autonomo con cerebro local desplegado (capataz+ollama verificado en vivo). iskvw.cl vivo HTTP, cert TLS en emision. Gap documentado: descarga IG requiere WIN (login-wall a extractores desde MAK, misma IP -- no insistir).",
+  "repo_main": "main gobernado (enforce_admins). PR #243 (db-productoras-rd, base rd) abierto, CI verde ubuntu+windows.",
+  "current_focus": "DB productoras RD: triangulacion de fichas de curatoria + 6 productoras/spot nuevas + tool de dashboard (PR #243).",
   "done": [
-    "2026-07-22 GODSPEED orden total (director Fable + haikus/sonnets): merge local concluido; raiz limpiada (11 reportes -> _archive, 8 scripts -> tools/mak_ops); PRs 122-127 aterrizados secuencial con gate; RESCATE 8 archivos cultura del stash 07-16 nunca aterrizados (PR #140); enforce_admins activado; issue #139 (6 NameError latentes en utilidades MAK) + fix verificador (PR #141) + ratchet pyflakes (PR #143); issue #131 resuelto tecnica (PR #142: parth-dl primaria, video->thumbnail, carrusel->primera imagen, e2e VIVO con el reel); RD 57GB -> MAK por tar|ssh integridad verificada; Pages cname=iskvw.cl configurado; exe.old cerrado (proceso huerfano, doctor limpio); MAK verificado por operador (servicios 200, cron ok, espejo fresco, gap: capataz 100% nube)."
+    "2026-07-23 tools/triangular_fichas.py: 2440 fichas -> 821 con senal, 101 eventos, 348 productoras candidatas.",
+    "Altas: GRID System, GLOVOX, STREET MACHINE, PANAL RECORDS, FREEDOM (spot), TECHNOYOUTH+OPENKLUB con relaciones.",
+    "Festival Sentir registrado (venue Freedom confirmado, fecha pendiente).",
+    "tools/gen_dashboard_productoras.py + docs/rd/DB_PRODUCTORAS_ESTADO.md actualizado.",
+    "2026-07-22 GODSPEED orden total (ver handoff previo): merge local, raiz limpiada, enforce_admins activado, issue #131/#139/#145 resueltos."
   ],
   "doing": [
-    "cert TLS iskvw.cl en emision (al responder: https_enforced=true)",
-    "APK hotspot_boot buildeado, install espera toggle MIUI del usuario"
+    "PR #243 esperando merge (CI verde, base rd)"
   ],
   "next": [
-    "CNAME www en Cloudflare (usuario)",
-    "toggle Instalar-via-USB + adb install APK + settings put secure (comandos en xio/hotspot_boot_service/README.md)",
-    "works.json cablear a portfolio.yml (heredado)",
-    "decidir formato video cartelera.blend (disenio listo: movieclip.frame_duration + FFmpeg)",
-    "idea: proxy IG via xio para autonomia total de descarga"
+    "Logos de las 11 productoras/spots (unavatar bloqueado, research manual)",
+    "Vectorizar logos con vtracer cuando se consigan",
+    "Confirmar fecha real de Festival Sentir",
+    "Deduplicar variantes OCR (SUNDECK/SUNDEK, PIKNIC/PIKNIK) en productoras_candidatas"
   ],
   "blockers": [
-    "IG bloquea extractores desde MAK (gap real, agotado: version/IP/fingerprint) -- descarga IG = WIN",
-    "APK install: INSTALL_FAILED_USER_RESTRICTED hasta toggle MIUI"
+    "unavatar.io 403 generalizado (logo fetch bloqueado)",
+    "test_ig_cffi_fallback.py fallo local por curl_cffi instalado en el entorno (no en CI, no es de esta sesion)"
   ],
   "ai_stack": {
     "architect_reviewer": "Claude Code (director godspeed; no lee volumen, delega y verifica)",

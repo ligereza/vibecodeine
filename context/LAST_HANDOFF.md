@@ -1,7 +1,48 @@
 # LAST HANDOFF -- estado para el proximo agente
 
-Version: 0.56.1 | Fecha: 2026-07-22 | Identidad: Cauce | sesion:
-orden y mantencion godspeed (director Fable + haikus/sonnets delegados).
+Version: 0.56.1 | Fecha: 2026-07-23 | Identidad: Cauce | sesion:
+DB productoras RD -- triangulacion + altas nuevas (PR #243 base rd).
+
+## Sesion 2026-07-23 -- DB productoras RD (PR #243)
+
+HECHO:
+1. tools/triangular_fichas.py: triangula fichas.jsonl (mak, 2440 fichas)
+   en eventos.jsonl (101 eventos) + productoras_candidatas.jsonl (348).
+   Salidas quedaron en scratchpad de sesion (regenerable, no en repo).
+2. Altas directas (palabra del usuario, sin research): GRID System,
+   GLOVOX, STREET MACHINE, PANAL RECORDS, FREEDOM (tipo=spot, no
+   productora; handle spot.freedom, nombre_mapas Club Freedom).
+   TECHNOYOUTH y OPENKLUB actualizados con campo relaciones (OPENKLUB
+   impulsado por TECHNOYOUTH + PANAL RECORDS).
+3. Evento Festival Sentir registrado en freedom.json (venue confirmado,
+   fecha needs_confirmation, fuente reel IG DZ3bAdGhp7y).
+4. Logos: intento unavatar.io para 11 productoras/spots -- bloqueado
+   (403 generalizado, confirmado con handle de control ajeno). Todo
+   PENDIENTE, sin mas intentos (regla de la tarea).
+5. Vectorizacion: no habia tool batch en el repo; se instalo vtracer
+   para uso futuro. No se vectorizo nada (sin logos raster).
+6. tools/gen_dashboard_productoras.py genera db_productoras.html.
+7. docs/rd/DB_PRODUCTORAS_ESTADO.md actualizado, seccion "Entrega
+   2026-07-23".
+
+PENDIENTE (cola de trabajo siguiente):
+- Logos de las 11 productoras/spots (research web manual, unavatar
+  bloqueado).
+- Vectorizar logos una vez conseguidos (vtracer instalado, listo).
+- Fecha real de Festival Sentir (needs_confirmation).
+- Deduplicar variantes OCR (SUNDECK/SUNDEK, PIKNIC/PIKNIK) en
+  productoras_candidatas si se usa esa lista para altas futuras.
+- Clusters de alto n_fichas en la triangulacion pueden fusionar varias
+  ediciones reales de una misma serie (ej. Sundeck/Espacio Riesco):
+  revisar antes de usarlos como fuente de un evento puntual.
+
+BLOQUEADOR conocido, no de esta sesion: test_ig_cffi_fallback.py::
+test_sin_curl_cffi_instalado_retorna_none_sin_explotar falla en este
+entorno local porque curl_cffi esta instalado (asume que no lo esta).
+CI (ubuntu-latest + windows-latest, PR #243) paso limpio, confirma que
+es artefacto de entorno local, no del cambio de esta sesion.
+
+---
 
 ## Sesion 2026-07-22 (cierre) -- pendientes resueltos por director
 
