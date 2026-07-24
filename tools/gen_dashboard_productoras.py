@@ -46,7 +46,7 @@ __PROD_ROWS__
 </table>
 
 <h2>Eventos triangulados (top __N_EVENTOS__ por evidencia)</h2>
-<p class="small">Cluster por fecha (+-1 dia) + venue o solape de lineup. Ruido conocido: fichas de material_rd (suplementos) contaminan algunos clusters de fecha antigua/invalida -- ver docs/rd/DB_PRODUCTORAS_ESTADO.md seccion "Entrega 2026-07-23".</p>
+<p class="small">Cluster por fecha (+-1 dia) + venue o solape de lineup. Ruido conocido: fichas de material_rd (suplementos) contaminan algunos clusters de fecha antigua/invalida. Clusters de N fichas muy alto pueden fusionar varias ediciones reales de una misma serie (ej. Sundeck/Espacio Riesco encadenado por solape de lineup) -- no usar como fuente de un evento puntual sin revisar las fichas. Ver docs/rd/DB_PRODUCTORAS_ESTADO.md seccion "Entrega 2026-07-23".</p>
 <table>
 <tr><th>Fecha</th><th>Venues (candidatos)</th><th>Productoras (candidatas)</th><th>Lineup</th><th>N fichas</th></tr>
 __EV_ROWS__
