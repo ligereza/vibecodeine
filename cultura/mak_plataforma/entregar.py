@@ -3,8 +3,10 @@
 
 Cierra el loop codex -> repo: cosecha las piezas de codigo que codex dejo en
 estado 'listo', valida que COMPILAN, y las lleva al repo flujo como PR draft
-(gated por CI + branch protection). No toca main. Idempotente via un archivo de
-estado (codex_delivered.json): un job_id ya entregado no se re-procesa.
+contra `mejoras` (codigo general/infra, gated por CI; NUNCA contra main --
+main solo recibe promociones curadas por el director). Idempotente via un
+archivo de estado (codex_delivered.json): un job_id ya entregado no se
+re-procesa.
 
 Filosofia (ver context/CAPATAZ.md + DOCTRINA_CLAUDE.md): MAK piensa Y entrega,
 sin Claude. El gate es el revisor; el humano mergea el draft. Codigo que no
@@ -226,9 +228,10 @@ def entregar_una(job, dry_run):
             % (job_id, slug, dest_rel, branch, len(code)))
         return "dry"
 
-    # rama limpia desde origin/main (no importa en que rama este el clon)
+    # rama limpia desde origin/mejoras -- linea de codigo general/infra (no
+    # importa en que rama este el clon); NUNCA origin/main directo.
     git("fetch", "origin", "--quiet")
-    git("checkout", "-B", branch, "origin/main", "--quiet")
+    git("checkout", "-B", branch, "origin/mejoras", "--quiet")
     dest_abs = os.path.join(REPO, DEST_REL)
     os.makedirs(dest_abs, exist_ok=True)
     with open(os.path.join(REPO, dest_rel), "w", encoding="utf-8") as f:
@@ -242,12 +245,14 @@ def entregar_una(job, dry_run):
     git("commit", "-q", "-m", msg)
     git("push", "-u", "origin", branch, "--quiet")
     pr = subprocess.run(
-        ["gh", "pr", "create", "--draft", "--base", "main", "--head", branch,
+        ["gh", "pr", "create", "--draft", "--base", "mejoras", "--head", branch,
          "--title", "feat(mak): utilidad autogenerada -- %s" % slug,
          "--body", ("Utilidad stdlib autogenerada por codex y cosechada por el "
                     "entregador MAK (job %s).\n\n**Pedido:** %s\n\n"
                     "Compila OK. Draft: revision humana antes de merge. "
-                    "CI dual-OS decide.\n\nParte del loop autonomo MAK->repo "
+                    "CI dual-OS decide. Contra `mejoras` (codigo general/"
+                    "infra); promocion a main es curada aparte por el "
+                    "director.\n\nParte del loop autonomo MAK->repo "
                     "(ver context/CAPATAZ.md)." % (job_id, pedido))],
         cwd=REPO, capture_output=True, text=True)
     url = (pr.stdout or pr.stderr).strip().splitlines()[-1] if (pr.stdout or pr.stderr) else "?"
