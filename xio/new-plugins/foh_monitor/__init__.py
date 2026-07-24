@@ -25,7 +25,7 @@ Que hace (TODO lectura, cero interferencia con el rig):
     (evento por linea: ts, tipo, detalle). GET /log lo descarga post-show.
   - Panel: GET /api/plugins/foh_monitor/panel -> HTML autocontenido fullscreen
     dark pensado pa la pantalla del Xiaomi en FOH (tiles grandes, boton NEXT
-    gordo, auto-refresh 2s, wake-lock best-effort).
+    gordo, auto-refresh 1s + TIMECODE interpolado suave local, wake-lock best-effort).
 
 Seguridad: NINGUN endpoint en DANGEROUS_ENDPOINTS -- todo es lectura +
 setlist next (inocuo). Los listeners solo hacen bind/recv, jamas envian.
@@ -69,33 +69,31 @@ body{font:16px/1.3 -apple-system,system-ui,Roboto,sans-serif;background:#07090d;
 .t-on{background:#0c2a17;border-color:#1e7a41}.t-on .st{color:#4ade80}
 .t-off{background:#2a0d10;border-color:#8c2530}.t-off .st{color:#f87171}
 .t-na{background:#1a1a20;border-color:#3a3a44}.t-na .st{color:#9aa0b0;font-size:18px}
-.song{background:#12151d;border:2px solid #232838;border-radius:14px;padding:14px;text-align:center}
-.song .lbl{font-size:12px;color:#8a92a6;text-transform:uppercase;letter-spacing:.1em}
-.song .cur{font-size:34px;font-weight:900;margin:6px 0;word-break:break-word}
-.song .nxt{font-size:14px;color:#8a92a6}
-#next{display:block;width:100%;padding:22px;margin-top:10px;font-size:24px;font-weight:900;
- border:0;border-radius:14px;background:#2563eb;color:#fff;letter-spacing:.1em}
-#next:active{background:#1d4ed8}
+.now{background:#12151d;border:2px solid #232838;border-radius:16px;padding:14px 12px 16px;text-align:center}
+.now .nowtc{font:800 23px/1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.04em;color:#9aa0b0}
+.now .nowlbl{font-size:10px;color:#8a92a6;text-transform:uppercase;letter-spacing:.12em;margin-top:3px}
+.now .title{font-size:40px;font-weight:900;line-height:1.04;margin:12px 0;word-break:break-word}
+.now .nxt{font-size:13px;color:#8a92a6;margin-top:10px}
+.now.tc-run{border-color:#1e7a41}.now.tc-run .nowtc{color:#4ade80}
+.now.tc-bad{border-color:#8c2530}.now.tc-bad .nowtc{color:#f87171}
+.now.tc-na .nowtc{color:#9aa0b0}
+.bar{position:relative;height:28px;background:#0d1016;border:1px solid #1c2130;border-radius:9px;overflow:hidden}
+.bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,#1e7a41,#4ade80);transition:width .16s linear}
+.bar .pct{position:absolute;top:0;left:0;right:0;line-height:28px;font:800 14px ui-monospace,monospace;color:#e6e9ef;text-shadow:0 1px 3px #000}
 .row{display:flex;gap:10px;align-items:center;font-size:13px;color:#9aa0b0;justify-content:space-between}
 .feed{flex:1;overflow-y:auto;background:#0d1016;border:1px solid #1c2130;border-radius:12px;padding:8px}
 .ev{font-size:13px;padding:5px 8px;border-left:3px solid #333;margin-bottom:4px;background:#12151d;border-radius:0 8px 8px 0}
 .ev .t{color:#6b7280;font-size:11px;margin-right:6px}
 .e-on{border-color:#4ade80}.e-off{border-color:#f87171}.e-set{border-color:#60a5fa}.e-au{border-color:#fbbf24}
 .hot{color:#f87171;font-weight:800}
-.tc{background:#12151d;border:2px solid #232838;border-radius:14px;padding:10px;text-align:center}
-.tc .val{font:900 40px/1.1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.04em}
-.tc .lbl{font-size:11px;color:#8a92a6;text-transform:uppercase;letter-spacing:.1em}
-.tc-run{border-color:#1e7a41}.tc-run .val{color:#4ade80}
-.tc-bad{border-color:#8c2530}.tc-bad .val{color:#f87171}
-.tc-na .val{color:#9aa0b0;font-size:22px}
 </style></head><body>
 <div class=tiles id=tiles></div>
-<div class="tc tc-na" id=tcbox><div class=lbl id=tclbl>TIMECODE</div><div class=val id=tcval>--:--:--:--</div></div>
-<div class=song>
- <div class=lbl>TEMA ACTUAL</div>
- <div class=cur id=cur>--</div>
+<div class="now tc-na" id=nowbox>
+ <div class=nowtc id=tcval>--:--:--:--</div>
+ <div class=nowlbl id=tclbl>TIMECODE</div>
+ <div class=title id=cur>--</div>
+ <div class=bar id=barwrap><i id=barfill></i><span class=pct id=barpct></span></div>
  <div class=nxt id=nx></div>
- <button id=next>NEXT &#9654;</button>
 </div>
 <div class=row><span id=batt></span><a href=registro style="color:#60a5fa;font-weight:800;text-decoration:none;padding:6px 10px">REGISTRO &#9776;</a><span id=sub>...</span></div>
 <div class=feed id=feed></div>
@@ -120,15 +118,18 @@ function tick(){
   if(luces.age>=1e9)luces.age=null;
   var au=s.audio&&s.audio.available?{active:s.audio.active,age:s.audio.age,pps:null}:{na:1,reason:(s.audio&&s.audio.reason)||'no disponible'};
   document.getElementById('tiles').innerHTML=tile('LUCES',luces)+tile('VISUAL',s.channels.osc)+tile('AUDIO',au);
-  var tc=s.timecode||{},box=document.getElementById('tcbox');
+  var tc=s.timecode||{},box=document.getElementById('nowbox');
   var st=tc.state||'sin_senal',run=st=='corriendo';
-  box.className='tc '+(run?'tc-run':(st=='sin_senal'?'tc-na':'tc-bad'));
-  var tcshow=tc.display!=null?tc.display:tc.value;
-  document.getElementById('tcval').textContent=tcshow!=null?tcshow:(st=='sin_senal'?'--:--:--:--':'?');
+  box.className='now '+(run?'tc-run':(st=='sin_senal'?'tc-na':'tc-bad'));
+  // guarda la base pal interpolador local (paintTc/paintBar); NO escribe aca.
+  var base=(tc.value!=null&&!isNaN(parseFloat(tc.value)))?parseFloat(tc.value):null;
+  TC={base:base,state:st,at:performance.now(),fps:tc.fps||30,
+      disp:(tc.display!=null?tc.display:tc.value)};
   document.getElementById('tclbl').textContent='TIMECODE '+st.toUpperCase().replace('_',' ')+(tc.age!=null?' · hace '+tc.age+'s':'');
   var sl=s.setlist||{};
-  document.getElementById('cur').textContent=sl.current||'(sin setlist)';
-  document.getElementById('nx').textContent=sl.next?('sigue: '+sl.next):'';
+  SL={start:(sl.start_sec!=null?sl.start_sec:null),dur:(sl.dur||null)};
+  document.getElementById('cur').textContent=sl.current_name||'(sin setlist)';
+  document.getElementById('nx').textContent=sl.next_name?('sigue: '+sl.next_name):'';
   var b=s.battery||{};var bp=[];
   if(b.level!=null)bp.push('BAT '+b.level+'%'+(b.charging?' &#9889;':''));
   if(b.temperature)bp.push((b.temperature>=45?'<span class=hot>':'')+b.temperature+'&deg;C'+(b.temperature>=45?'</span>':''));
@@ -141,13 +142,28 @@ function tick(){
   document.getElementById('sub').textContent='upd '+new Date().toLocaleTimeString();
  }).catch(function(e){document.getElementById('sub').textContent='ERR '+e});
 }
-document.getElementById('next').addEventListener('click',function(){
- fetch('next',{method:'POST'}).then(tick);
-});
+// interpolador local del TIMECODE: cuenta suave en tiempo real entre polls
+// (LTC = tiempo real, 1s wall = 1s TC), re-sincroniza en cada tick. SOLO
+// cuando el estado es 'corriendo'; si esta congelado/caido/sin senal muestra
+// el valor del server tal cual (un freeze real se ve, no sigue contando).
+var TC={base:null,state:'sin_senal',at:0,fps:30,disp:null};
+var SL={start:null,dur:null};
+function fmtTc(sec,fps){if(sec<0)sec=0;var h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=Math.floor(sec%60),f=Math.floor((sec-Math.floor(sec))*fps);if(f>=fps)f=fps-1;function p(n){return(n<10?'0':'')+n}return p(h)+':'+p(m)+':'+p(s)+':'+p(f)}
+function tcNow(){return (TC.state=='corriendo'&&TC.base!=null)?TC.base+(performance.now()-TC.at)/1000:TC.base}
+function paintTc(){var el=document.getElementById('tcval');if(!el)return;
+ if(TC.state=='corriendo'&&TC.base!=null){el.textContent=fmtTc(TC.base+(performance.now()-TC.at)/1000,TC.fps);}
+ else{el.textContent=TC.disp!=null?TC.disp:(TC.state=='sin_senal'?'--:--:--:--':'?');}}
+function paintBar(){var w=document.getElementById('barwrap'),fi=document.getElementById('barfill'),pc=document.getElementById('barpct');if(!w)return;
+ // barra solo si hay duracion (visual) y TC corriendo/congelado; sin visual -> sin barra.
+ if(SL.dur&&SL.start!=null&&TC.base!=null&&(TC.state=='corriendo'||TC.state=='congelado')){
+  var p=(tcNow()-SL.start)/SL.dur;if(p<0)p=0;if(p>1)p=1;
+  w.style.display='';fi.style.width=(p*100).toFixed(1)+'%';pc.textContent=Math.round(p*100)+'%';
+ }else{w.style.display='none';}}
+setInterval(function(){paintTc();paintBar();},50);
 // wake-lock best-effort (requiere gesto en algunos Android)
 var wl=null;function lock(){if(navigator.wakeLock&&!wl)navigator.wakeLock.request('screen').then(function(l){wl=l;l.addEventListener('release',function(){wl=null})}).catch(function(){})}
 document.addEventListener('click',lock);document.addEventListener('visibilitychange',function(){if(!document.hidden)lock()});lock();
-tick();setInterval(tick,2000);
+tick();setInterval(tick,1000);
 </script></body></html>"""
 
 
@@ -332,7 +348,8 @@ class FohMonitorPlugin(PluginBase):
         self._tc_song_index = -1  # ultimo tema auto-detectado por TC (evita re-loguear)
         self._audio = {"available": False, "reason": "no evaluado", "level_db": None,
                        "active": False, "last_seen": 0.0}
-        self._setlist = {"songs": [], "index": -1, "loaded_at": None, "advanced_at": None}
+        self._setlist = {"songs": [], "durations": [], "index": -1,
+                         "loaded_at": None, "advanced_at": None}
         self._events = []          # ring pa el panel (el JSONL es la verdad)
         self._prev_active = {}     # canal -> bool (deteccion de transiciones)
         self._prev_batt = {}       # ultimo estado de bateria logueado
@@ -425,8 +442,10 @@ class FohMonitorPlugin(PluginBase):
             if not songs:
                 return
             idx = int(data.get("index", 0))
+            durations = self._norm_durations(data.get("durations"), len(songs))
             self._setlist = {
                 "songs": songs,
+                "durations": durations,
                 "index": max(-1, min(idx, len(songs) - 1)),
                 "loaded_at": data.get("loaded_at"),
                 "advanced_at": data.get("advanced_at"),
@@ -635,8 +654,11 @@ class FohMonitorPlugin(PluginBase):
         self._setlist["index"] = idx
         self._setlist["advanced_at"] = datetime.now().isoformat(timespec="seconds")
         self._save_setlist()
+        durs = self._setlist.get("durations") or []
+        sin_visual = not (0 <= idx < len(durs) and durs[idx])
         self._log_event("setlist_next", {"accion": "auto-tc", "actual": songs[idx],
-                                         "n": idx + 1, "de": len(songs)})
+                                         "n": idx + 1, "de": len(songs),
+                                         "sin_visual": sin_visual})
 
     @staticmethod
     def _osc_first_arg(data):
@@ -719,6 +741,7 @@ class FohMonitorPlugin(PluginBase):
         nsec = int(now)
         pps = round(sum(self._tc_buckets.get(nsec - i, 0) for i in (1, 2, 3)) / 3.0, 1)
         return {"value": tc["value"], "display": self._fmt_tc_display(tc["value"]),
+                "fps": int(self._cfg("tc_fps")),
                 "state": state, "age": age, "pps": pps,
                 "packets_total": tc["total"], "address": str(self._cfg("tc_address"))}
 
@@ -946,14 +969,51 @@ class FohMonitorPlugin(PluginBase):
         return jsonify(self._events[-limit:])
 
     # setlist
+    @staticmethod
+    def _norm_durations(raw, n):
+        """Lista de duraciones alineada a n temas: float>0 seg, o None (sin
+        visual). Rellena con None y recorta a n."""
+        out = []
+        if isinstance(raw, list):
+            for v in raw:
+                try:
+                    f = float(v)
+                    out.append(f if f > 0 else None)
+                except (TypeError, ValueError):
+                    out.append(None)
+        return out[:n] + [None] * (n - len(out))
+
+    def _song_name(self, linea):
+        """Nombre del tema sin el prefijo 'HH:MM:SS:FF  ' (pal titulo grande)."""
+        if not linea:
+            return linea
+        parts = linea.split(None, 1)
+        if (len(parts) == 2 and ":" in parts[0]
+                and self._tc_str_a_segundos(parts[0], int(self._cfg("tc_fps"))) is not None):
+            return parts[1]
+        return linea
+
     def _setlist_view(self):
         songs = self._setlist["songs"]
+        durs = self._setlist.get("durations") or []
         i = self._setlist["index"]
+        fps = int(self._cfg("tc_fps"))
+        cur = songs[i] if 0 <= i < len(songs) else None
+        nxt = songs[i + 1] if 0 <= i + 1 < len(songs) else None
+        start_sec = None
+        if cur is not None:
+            p = cur.split(None, 1)
+            if p:
+                start_sec = self._tc_str_a_segundos(p[0], fps)
         return {
             "songs": songs,
             "index": i,
-            "current": songs[i] if 0 <= i < len(songs) else None,
-            "next": songs[i + 1] if 0 <= i + 1 < len(songs) else None,
+            "current": cur,
+            "current_name": self._song_name(cur) if cur else None,
+            "next": nxt,
+            "next_name": self._song_name(nxt) if nxt else None,
+            "start_sec": start_sec,
+            "dur": durs[i] if 0 <= i < len(durs) else None,
             "total": len(songs),
             "loaded_at": self._setlist["loaded_at"],
             "advanced_at": self._setlist["advanced_at"],
@@ -964,7 +1024,8 @@ class FohMonitorPlugin(PluginBase):
         return jsonify(self._setlist_view())
 
     def _api_setlist_post(self):
-        """POST {"text": "tema1\\ntema2"} o {"songs": [...]}. Reinicia al tema 0."""
+        """POST {"text": "tema1\\ntema2"} o {"songs": [...]} + opcional
+        "durations": [...] (seg o null, alineadas por indice). Reinicia al tema 0."""
         from flask import request, jsonify
         data = request.get_json(silent=True) or {}
         if isinstance(data.get("songs"), list):
@@ -974,9 +1035,11 @@ class FohMonitorPlugin(PluginBase):
             songs = [ln.strip() for ln in text.splitlines() if ln.strip()]
         if not songs:
             return jsonify({"ok": False, "error": "setlist vacia: manda 'text' (lineas) o 'songs' (lista)"}), 400
-        self._setlist = {"songs": songs, "index": 0,
+        durations = self._norm_durations(data.get("durations"), len(songs))
+        self._setlist = {"songs": songs, "durations": durations, "index": 0,
                          "loaded_at": datetime.now().isoformat(timespec="seconds"),
                          "advanced_at": None}
+        self._tc_song_index = -1  # re-dispara la auto-deteccion por TC
         self._save_setlist()
         self._log_event("setlist_next", {"accion": "cargada", "temas": len(songs), "actual": songs[0]})
         return jsonify({"ok": True, **self._setlist_view()})
