@@ -30,3 +30,134 @@ _Autor: Cauce (fallback pasivo). Config del show intacta._
 - **Reconciliar post-show:** revisar el anclaje de cues del setlist -- si la intencion
   es avanzar por fin-de-clip, la cue de Ultimo Dia deberia caer cerca de ~00:01:11,
   no en 01:00:00:00. NO se toca en vivo.
+
+---
+
+# POST-SHOW: datos medidos (log real de foh_monitor)
+
+Fuente: `xio/show_kit/_logs/xio_show_2026072{4,5}.jsonl`, descargados de xio
+(`/api/plugins/foh_monitor/log?date=YYYYMMDD`). 2168 eventos.
+Metodo: tiempo entre disparos `setlist_next` (auto-tc), **descontando** las
+ventanas con TC muerto. Confirmado con el usuario tras el show.
+
+**Show: 20:12 (intro) -> 21:27:30. Total ~1h15.**
+
+## Clave de lectura: TC muerto = intencional, no falla
+
+Los tramos sin SMPTE eran contenido, no caidas:
+- **CCTV / visual quieta** -> Random Friends.
+- **Texto y conversacion de DREF con el publico** -> ventanas cortas entre temas.
+
+## Hallazgo 1: el intro era el clip largo (resuelve pendiente)
+
+El TC arranco 20:12:32 y murio en **exactamente 331.0 s = 5:31**.
+- Se uso **"intro - intro ultimo dia" (5:31)**, NO "INTRO" (1:11).
+- Corrige el `pendiente_confirmar` de `setlist_durations_dref.json`.
+- **Explica el gap anotado en preshow:** "Ultimo Dia" venia DENTRO del clip de
+  intro, por eso su cue (n=2, `01:00:00:00`) nunca disparo -- el TC del clip
+  solo llega a 5:31.
+
+## Hallazgo 2: Random Friends (invitado) medido
+
+- Ventana sin TC `21:09:07 -> 21:13:23` = **4:16** (visual CCTV).
+- **A Fuego real = 4:04** (los 8:19 aparentes eran A Fuego + Random Friends).
+
+## Hallazgo 3: Pinky + FINAL FALSO son una unidad
+
+La visual "final falso" estaba separada del clip de Pinky.
+- Pinky visual `21:02:06 -> 21:04:41` = **2:35** (cue `07:02:35:00` disparo exacta).
+- FINAL FALSO `21:04:42 -> 21:05:03` = **0:21**.
+- **Tema Pinky completo = 2:57.** El clip de Pinky (3:03) queda con **28 s sin usar**
+  porque el final falso entra antes. Las duraciones deben calzar entre las dos entradas.
+
+## Hallazgo 4: Enrolar mal calculado en el setlist
+
+- Clip de video: **1:28**. Cancion real: **5:12** (exacto por LTC: cue 08:30:00.033 ->
+  congela 08:35:11.699 = 311.7 s) -> **faltan 3:44 de visual**.
+- Funkysolo: clip 5:03, real **5:46** (+43 s quieto).
+- **Yoseke NO se toco** (confirmado usuario). Su cue n=19 nunca disparo: correcto,
+  no es bug. El hueco Enrolar->Funkysolo es solo Enrolar mal medido.
+
+## Precision del sistema
+
+Los 12 temas que corrieron con SMPTE dieron **+-6 s** contra lo esperado.
+La medicion fue fiable; todos los desvios grandes se explican por tramos sin TC
+(CCTV, texto, conversacion) o por duraciones mal cargadas, no por deriva.
+
+## Duraciones reales medidas (para reconciliar el setlist)
+
+| n | tema | clip cargado | REAL medido | nota |
+|---|---|---|---|---|
+| 1 | intro + Ultimo Dia | 1:11 (INTRO) | **5:31** | usar clip largo; Ultimo Dia va dentro |
+| 3 | 2000s | 4:34 | 4:40 | ok |
+| 4 | Un call | 3:11 | 3:08 | ok |
+| 5 | Lo deberias pensar | 3:57 | 4:12 | ok |
+| 6 | La receta | 4:23 | 4:24 | ok |
+| 7 | Bossa Lova | 3:16 | 3:22 | ok |
+| 8 | 2+1 | 2:25 | 2:30 | ok |
+| 9 | Pego fuerte | sin visual | 3:02 | dato nuevo |
+| 10 | Las flores que te gustan | 4:21 | 4:27 | ok |
+| 11 | Despertador | 2:51 | 2:56 | ok |
+| 12 | Botero | 3:54 | 3:58 | ok |
+| 13 | Llama a tu amiga | 3:03 | 2:09 + 1:03 conversacion | clip ok |
+| 14 | Pinky | 3:03 | 2:35 | +0:21 FINAL FALSO = 2:57 |
+| 15 | FINAL FALSO | 0:16 | 0:21 | separada del clip de Pinky |
+| 16 | A Fuego | 3:54 | 4:04 | ok |
+| -- | **Random Friends (invitado)** | -- | **4:16** | CCTV, sin SMPTE |
+| 17 | Misionar | 2:00 | 2:12 | ok |
+| 18 | Enrolar | 1:28 | **5:12** | clip corto: faltan 3:44 |
+| 19 | Yoseke | 3:14 | -- | NO se toco |
+| 20 | Funkysolo | 5:03 | 5:46 | clip corto |
+
+_Medido por Cauce sobre el log real. Nada se toco en vivo._
+
+## Hallazgo 5: cierre con QR manual, no DIABLO SANTO
+
+- La visual **"DIABLO SANTO FINAL SHOW" (n=21) fue reemplazada por un QR**,
+  soltado **a mano** despues de Funkysolo. Confirmado por el usuario.
+- Coherente con el log: la cue n=21 **nunca disparo** (el ultimo `setlist_next`
+  del show es n=20 Funkysolo a las 21:21:35). No es bug: no se uso.
+- Ventana del QR segun log: Funkysolo 21:21:35 + clip 5:03 -> fin ~21:26:38;
+  reset del panel a intro 21:27:30. **QR visible ~52 s** en esa cola (mas lo que
+  haya quedado tras el reset). TC muere definitivo 21:28:04.
+- El contenido del QR no se registra aqui (material del cliente).
+- **Para el setlist:** el cierre real del show fue Funkysolo -> QR manual.
+  DIABLO SANTO queda sin usar; decidir si se retira del setlist o se deja armado.
+
+## Hallazgo 6: Funkysolo corrio casi sin SMPTE (cierre a ciegas)
+
+- TC arranca `21:21:36` en cue `09:30:00.500` y **muere a los 7 s** (`09:30:07`).
+- El tema siguio **~5:46 sin timecode**, y encima el cierre fue el QR manual.
+- Es decir: **todo el final del show (Funkysolo + QR) corrio a ciegas**, sin TC.
+- A revisar antes del proximo show: por que se corto el LTC de Funkysolo a los 7 s
+  (pista sin LTC grabado / se corto el envio / clip sin la pista de tiempo).
+
+## Duraciones EXACTAS por LTC (tramos con TC limpio)
+
+Metodo mas preciso que el de reloj: valor del propio LTC al entrar la cue y al
+congelarse. Solo tramos con una sola cue adentro.
+
+| tema | cue TC | TC final | REAL | clip | nota |
+|---|---|---|---|---|---|
+| intro + Ultimo Dia | 00:00:00 | 00:05:31 | **5:31** | 1:11 | usar el clip largo |
+| 2000s | 01:30:00 | 01:34:34 | **4:34** | 4:34 | clavado |
+| 2+1 | 04:00:00 | 04:02:25 | **2:25** | 2:25 | clavado |
+| Pego fuerte | 04:30:00 | 04:32:57 | **2:57** | sin visual | dato nuevo |
+| Las flores que te gustan | 05:00:00 | 05:04:21 | **4:20** | 4:21 | clavado |
+| Despertador | 05:30:00 | 05:32:50 | **2:50** | 2:51 | clavado |
+| Botero | 06:00:00 | 06:03:53 | **3:53** | 3:54 | clavado |
+| Llama a tu amiga | 06:30:00 | 06:33:02 | **3:03** | 3:03 | clavado, el clip corrio entero |
+| Misionar | 08:00:00 | 08:02:07 | **2:06** | 2:00 | ok |
+| Enrolar | 08:30:00 | 08:35:11 | **5:12** | 1:28 | faltan 3:44 de visual |
+| Funkysolo | 09:30:00 | 09:30:07 | **0:07 de TC** | 5:03 | LTC caido, ver Hallazgo 6 |
+
+## Trabajo pendiente para el proximo show
+
+1. **Enrolar**: extender la visual de 1:28 a **5:12**.
+2. **intro**: dejar fijo el clip de 5:31 ("intro - intro ultimo dia") y quitar la
+   cue n=2 de Ultimo Dia, o recortar el clip y darle cue propia.
+3. **Funkysolo**: arreglar el LTC que muere a los 7 s.
+4. **Random Friends**: si se repite, darle entrada propia (4:16, CCTV).
+5. **Pinky**: dejar documentado que FINAL FALSO entra a 2:35 y son una unidad (2:57).
+6. **DIABLO SANTO**: decidir si se retira (se cerro con QR manual).
+7. **Yoseke**: quedo sin tocar; su cue n=19 sigue armada.
