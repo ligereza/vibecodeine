@@ -61,6 +61,7 @@ from ..dashboard import collect_items, render_markdown, render_html
 from ..eventos.presets import infer_event_preset, list_event_presets
 from ..serve.server import api_plano_render as render_plano_api
 from ..cotizaciones_base import generar_cotizacion_base
+from ..rd.informe import resumen_json as rd_datos_resumen_json
 try:
     from ..export.illustrator import prepare_supplement_job_assets
 except Exception:
@@ -435,6 +436,12 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 self._send_json({"cola": [], "disponible": False, "error": str(e)}, status=200)
             return
+        if path == "/api/rd-datos-summary":
+            try:
+                self._send_json(self._get_rd_datos_summary())
+            except Exception as e:
+                self._send_json({"disponible": False, "error": str(e)}, status=200)
+            return
         if path == "/manifest.json":
             self._serve_manifest()
             return
@@ -517,17 +524,6 @@ class HubRequestHandler(BaseHTTPRequestHandler):
                 self._send_json(out)
             except Exception as e:
                 self._send_json({"error": str(e), "cmd": cmd if 'cmd' in locals() else ""}, status=400)
-            return
-
-        if p == "/api/delegate":
-            content_length = int(self.headers.get("Content-Length", 0))
-            body = self.rfile.read(content_length).decode("utf-8")
-            try:
-                data = json.loads(body)
-                result = self._handle_delegate(data)
-                self._send_json(result)
-            except Exception as e:
-                self._send_json({"error": str(e)}, status=400)
             return
 
         if p == "/api/create-job-draft":
@@ -1027,6 +1023,13 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             "connected": True,
         }
 
+    def _get_rd_datos_summary(self) -> dict:
+        """GET /api/rd-datos-summary: resumen de la DB privacy-first de
+        datos de campo RD (F3b). Si la DB no existe (nada ingerido todavia)
+        `resumen_json` retorna {"disponible": False} en vez de lanzar --
+        respuesta valida siempre, nunca 500."""
+        return rd_datos_resumen_json()
+
     def _get_agents_roles(self) -> dict:
         """Central definition of specialized agent roles for delegation system.
         Exposed to hub UI and CLI. Supports parallel delegation.
@@ -1076,6 +1079,11 @@ class HubRequestHandler(BaseHTTPRequestHandler):
         """Core of delegation system. Accepts role_id + task, returns precise prompt.
         Optionally can 'log' by suggesting handoff update or running safe cmd.
         Supports simultaneous by handling batch or single.
+
+        No es un endpoint web (el /api/delegate HTTP se retiro 2026-07-25:
+        0 referencias en web/src, `flujo delegate` en cli.py lo cubre). Se
+        mantiene como metodo porque `flujo delegate` (cli.py) lo llama
+        directamente para reusar la misma logica/templates (single source).
         """
         role_id = (data.get("role_id") or data.get("role") or "").strip()
         task = (data.get("task") or data.get("description") or "mejorar la funcionalidad X").strip()
@@ -1837,7 +1845,7 @@ def run_server(host: str = "127.0.0.1", port: int = 8765, root: Path | None = No
     print("  - Hub:      /flujo_hub.html  (UI Delegar: input tarea + botones copian prompts completos por rol)")
     print("  - SVG Viz:  /svg_visualizer.html")
     print("  - Plano:    /plano_demo.html")
-    print("  - APIs:     /api/ping /api/list-svg-works /api/list-jobs /api/parse-real-pedido (POST) /api/run-safe-command /api/create-job-draft (POST) /api/delegate /api/events (SSE live) /manifest.json")
+    print("  - APIs:     /api/ping /api/list-svg-works /api/list-jobs /api/parse-real-pedido (POST) /api/run-safe-command /api/create-job-draft (POST) /api/events (SSE live) /manifest.json")
     print("  - CLI extra: `flujo delegate <role> \"tarea\"` (usa mismos templates formales)")
     print("  - Status:   connected when fetches succeed (graceful static fallback)")
     print("  - Tray:     disponible si pystray + pywebview instalados (ver --desktop)")

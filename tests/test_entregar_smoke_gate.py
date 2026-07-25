@@ -192,6 +192,56 @@ class TestLeerJobsListosSmokeGate:
         assert [j["job_id"] for j in out] == ["j1"]
 
 
+class TestRamaBase:
+    """Topologia de ramas (CLAUDE.md): MAK entrega PRs contra 'mejoras',
+    nunca contra main. entregar_una() debe usar RAMA_BASE, no un literal
+    'main', tanto para el checkout como para gh pr create --base."""
+
+    def test_constante_rama_base_es_mejoras(self):
+        assert entregar.RAMA_BASE == "mejoras"
+
+    def test_checkout_y_pr_create_usan_rama_base(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(entregar, "REPO", str(tmp_path))
+        monkeypatch.setattr(entregar, "LOG", str(tmp_path / "entregar.log"))
+
+        llamadas_git = []
+
+        def fake_git(*args, check=True):
+            llamadas_git.append(args)
+            return None
+
+        llamadas_gh = {}
+
+        class FakeCompleted:
+            returncode = 0
+            stdout = "https://github.com/ligereza/vibecodeine/pull/999\n"
+            stderr = ""
+
+        def fake_run(cmd, cwd=None, capture_output=None, text=None):
+            llamadas_gh["cmd"] = cmd
+            return FakeCompleted()
+
+        monkeypatch.setattr(entregar, "git", fake_git)
+        monkeypatch.setattr(entregar.subprocess, "run", fake_run)
+
+        job = {"job_id": "20260101-000000-abc123", "path": "20260101-000000-abc123.md",
+              "pedido": "pedido de prueba"}
+        monkeypatch.setattr(entregar, "extraer_codigo",
+                            lambda md_path: ("print('x')\n", "fake.py"))
+
+        res = entregar.entregar_una(job, dry_run=False)
+
+        assert res == "ok"
+        checkout = next(c for c in llamadas_git if c[0] == "checkout")
+        assert checkout[3] == "origin/%s" % entregar.RAMA_BASE
+        assert "origin/main" not in checkout
+
+        gh_cmd = llamadas_gh["cmd"]
+        i = gh_cmd.index("--base")
+        assert gh_cmd[i + 1] == entregar.RAMA_BASE
+        assert "main" not in gh_cmd
+
+
 class TestMainSinSmokeFlag:
     def test_main_pasa_bypass_a_leer_jobs_listos(self, tmp_path, monkeypatch):
         """--sin-smoke debe propagarse a leer_jobs_listos(bypass_smoke=True)."""

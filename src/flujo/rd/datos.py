@@ -28,7 +28,9 @@ Diseno de privacidad (no negociable, ver F3a del plan de liberacion):
 """
 from __future__ import annotations
 
+import calendar
 import csv
+import re
 import sqlite3
 from dataclasses import dataclass, field
 from datetime import date
@@ -292,3 +294,93 @@ def ingest_csv(
     finally:
         conn.close()
     return resultado
+
+
+# ---------------------------------------------------------------------------
+# Agregaciones (F3b) -- funciones puras de solo lectura sobre `conectar()`.
+# Ninguna columna de identidad existe en el schema (ver docstring del
+# modulo), asi que ninguna agregacion puede filtrar PII: son GROUP BY sobre
+# columnas cerradas (sustancia/tipo/fecha) o conteos.
+# ---------------------------------------------------------------------------
+
+_TRIMESTRE_RE = re.compile(r"^(\d{4})-Q([1-4])$")
+
+
+def rango_trimestre(trimestre: str) -> tuple[str, str]:
+    """Convierte 'YYYY-Q1'..'YYYY-Q4' al rango ISO inclusive
+    (fecha_inicio, fecha_fin) de ese trimestre. Lanza ValueError si el
+    formato no calza (nunca adivina un trimestre)."""
+    m = _TRIMESTRE_RE.match(trimestre.strip().upper())
+    if not m:
+        raise ValueError(
+            f"trimestre invalido: {trimestre!r} (usa 'YYYY-Q1'..'YYYY-Q4')"
+        )
+    anio = int(m.group(1))
+    q = int(m.group(2))
+    mes_inicio = (q - 1) * 3 + 1
+    mes_fin = mes_inicio + 2
+    ultimo_dia = calendar.monthrange(anio, mes_fin)[1]
+    return f"{anio:04d}-{mes_inicio:02d}-01", f"{anio:04d}-{mes_fin:02d}-{ultimo_dia:02d}"
+
+
+def _filtro_trimestre(trimestre: str | None) -> tuple[str, tuple[str, ...]]:
+    """SQL fragment ('' o 'WHERE fecha BETWEEN ? AND ?') + params."""
+    if trimestre is None:
+        return "", ()
+    inicio, fin = rango_trimestre(trimestre)
+    return "WHERE fecha BETWEEN ? AND ?", (inicio, fin)
+
+
+def tendencias(
+    conn: sqlite3.Connection, trimestre: str | None = None
+) -> list[dict[str, Any]]:
+    """Conteo de `registros_testeo` por mes (YYYY-MM) y sustancia
+    declarada. `trimestre` opcional ('YYYY-Q1'..'YYYY-Q4') filtra el rango.
+    Orden: mes ascendente, conteo descendente."""
+    where, params = _filtro_trimestre(trimestre)
+    sql = (
+        "SELECT strftime('%Y-%m', fecha) AS mes, sustancia_declarada, "
+        "COUNT(*) AS conteo FROM registros_testeo "
+        f"{where} GROUP BY mes, sustancia_declarada "
+        "ORDER BY mes ASC, conteo DESC"
+    )
+    rows = conn.execute(sql, params).fetchall()
+    return [dict(r) for r in rows]
+
+
+def tasa_adulteracion(
+    conn: sqlite3.Connection, trimestre: str | None = None
+) -> list[dict[str, Any]]:
+    """Tasa de no-coincidencia por sustancia declarada: filas donde el
+    reactivo NO confirmo la sustancia declarada (`coincide = 0`) sobre el
+    total de filas testeadas para esa sustancia. `tasa` en [0, 1]; 0.0
+    cuando `total` es 0 (nunca division por cero)."""
+    where, params = _filtro_trimestre(trimestre)
+    sql = (
+        "SELECT sustancia_declarada, "
+        "SUM(CASE WHEN coincide = 0 THEN 1 ELSE 0 END) AS no_coincide, "
+        "COUNT(*) AS total FROM registros_testeo "
+        f"{where} GROUP BY sustancia_declarada "
+        "ORDER BY sustancia_declarada"
+    )
+    rows = conn.execute(sql, params).fetchall()
+    out: list[dict[str, Any]] = []
+    for r in rows:
+        d = dict(r)
+        d["tasa"] = (d["no_coincide"] / d["total"]) if d["total"] else 0.0
+        out.append(d)
+    return out
+
+
+def atenciones_por_tipo(
+    conn: sqlite3.Connection, trimestre: str | None = None
+) -> list[dict[str, Any]]:
+    """Conteo de `atenciones` por `tipo` (vocabulario cerrado
+    `TIPOS_ATENCION`). Orden: conteo descendente."""
+    where, params = _filtro_trimestre(trimestre)
+    sql = (
+        "SELECT tipo, COUNT(*) AS conteo FROM atenciones "
+        f"{where} GROUP BY tipo ORDER BY conteo DESC"
+    )
+    rows = conn.execute(sql, params).fetchall()
+    return [dict(r) for r in rows]
