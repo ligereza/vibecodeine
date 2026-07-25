@@ -23,6 +23,7 @@ import json
 import os
 import re
 import shlex
+import shutil
 import socket
 import subprocess
 import sys
@@ -406,6 +407,12 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 self._send_json({"setlist": [], "registros": [], "error": str(e)}, status=200)
             return
+        if path == "/api/automatizaciones":
+            try:
+                self._send_json(self._get_automatizaciones())
+            except Exception as e:
+                self._send_json({"cola": [], "disponible": False, "error": str(e)}, status=200)
+            return
         if path == "/manifest.json":
             self._serve_manifest()
             return
@@ -623,6 +630,82 @@ class HubRequestHandler(BaseHTTPRequestHandler):
 
     def _get_dashboard_summary(self) -> dict:
         return build_dashboard_summary(collect_items(self.root))
+
+    def _get_automatizaciones(self) -> dict:
+        """Cola real de las automatizaciones (issues de GitHub con labels).
+
+        La cadena es: Gmail -> issue etiquetado -> `tools/bridge_issue_render.py`
+        -> `flujo eventos flyer-auto` (+ Blender) -> drive/ -> comenta y cierra.
+        El tramo Gmail->issue vive FUERA de este repo.
+
+        Hasta ahora la unica forma de saber que habia pendiente era entrar a
+        GitHub a mano. Este endpoint lee la cola con `gh` (ya autenticado en la
+        maquina) y la agrupa por estado/area/accion.
+
+        Degrada sin drama: si no hay `gh`, no hay red o no hay auth, devuelve
+        `disponible: False` con el motivo, en vez de romper el panel.
+        """
+        import subprocess as _sp
+
+        gh = shutil.which("gh")
+        if not gh:
+            return {"cola": [], "disponible": False, "motivo": "gh no esta instalado o no esta en el PATH"}
+
+        try:
+            out = _sp.run(
+                [gh, "issue", "list", "--state", "open", "--limit", "60",
+                 "--json", "number,title,labels,createdAt,url"],
+                cwd=str(self.root), capture_output=True, text=True, timeout=25,
+            )
+        except Exception as e:
+            return {"cola": [], "disponible": False, "motivo": f"gh fallo: {e}"}
+
+        if out.returncode != 0:
+            motivo = (out.stderr or "").strip().splitlines()
+            return {"cola": [], "disponible": False,
+                    "motivo": motivo[0] if motivo else f"gh salio con codigo {out.returncode}"}
+
+        try:
+            issues = json.loads(out.stdout or "[]")
+        except Exception as e:
+            return {"cola": [], "disponible": False, "motivo": f"salida de gh ilegible: {e}"}
+
+        cola = []
+        for it in issues:
+            labels = [str(l.get("name", "")) for l in (it.get("labels") or [])]
+            cola.append({
+                "numero": it.get("number"),
+                "titulo": str(it.get("title") or ""),
+                "url": str(it.get("url") or ""),
+                "creado": str(it.get("createdAt") or "")[:10],
+                "labels": labels,
+                "estado": next((l.split("/", 1)[1] for l in labels if l.startswith("estado/")), ""),
+                "area": next((l.split("/", 1)[1] for l in labels if l.startswith("area/")), ""),
+                "accion": next((l.split("/", 1)[1] for l in labels if l.startswith("action/")), ""),
+                "prioridad": next((l.split("/", 1)[1] for l in labels if l.startswith("prioridad/")), ""),
+                "origen": next((l for l in labels if l in ("gmail", "instagram")), ""),
+                "bloqueado": "bloqueado" in labels,
+            })
+
+        def _cuenta(campo: str) -> dict:
+            r: dict = {}
+            for c in cola:
+                k = c[campo] or "(sin)"
+                r[k] = r.get(k, 0) + 1
+            return r
+
+        return {
+            "cola": cola,
+            "disponible": True,
+            "resumen": {
+                "abiertos": len(cola),
+                "bloqueados": sum(1 for c in cola if c["bloqueado"]),
+                "por_estado": _cuenta("estado"),
+                "por_area": _cuenta("area"),
+                "por_accion": _cuenta("accion"),
+            },
+            "connected": True,
+        }
 
     def _get_show_kit(self) -> dict:
         """Show kit de xio: setlist con timecode, cues, duraciones y registros.
