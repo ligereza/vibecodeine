@@ -526,17 +526,6 @@ class HubRequestHandler(BaseHTTPRequestHandler):
                 self._send_json({"error": str(e), "cmd": cmd if 'cmd' in locals() else ""}, status=400)
             return
 
-        if p == "/api/delegate":
-            content_length = int(self.headers.get("Content-Length", 0))
-            body = self.rfile.read(content_length).decode("utf-8")
-            try:
-                data = json.loads(body)
-                result = self._handle_delegate(data)
-                self._send_json(result)
-            except Exception as e:
-                self._send_json({"error": str(e)}, status=400)
-            return
-
         if p == "/api/create-job-draft":
             content_length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(content_length).decode("utf-8")
@@ -1090,6 +1079,11 @@ class HubRequestHandler(BaseHTTPRequestHandler):
         """Core of delegation system. Accepts role_id + task, returns precise prompt.
         Optionally can 'log' by suggesting handoff update or running safe cmd.
         Supports simultaneous by handling batch or single.
+
+        No es un endpoint web (el /api/delegate HTTP se retiro 2026-07-25:
+        0 referencias en web/src, `flujo delegate` en cli.py lo cubre). Se
+        mantiene como metodo porque `flujo delegate` (cli.py) lo llama
+        directamente para reusar la misma logica/templates (single source).
         """
         role_id = (data.get("role_id") or data.get("role") or "").strip()
         task = (data.get("task") or data.get("description") or "mejorar la funcionalidad X").strip()
@@ -1851,7 +1845,7 @@ def run_server(host: str = "127.0.0.1", port: int = 8765, root: Path | None = No
     print("  - Hub:      /flujo_hub.html  (UI Delegar: input tarea + botones copian prompts completos por rol)")
     print("  - SVG Viz:  /svg_visualizer.html")
     print("  - Plano:    /plano_demo.html")
-    print("  - APIs:     /api/ping /api/list-svg-works /api/list-jobs /api/parse-real-pedido (POST) /api/run-safe-command /api/create-job-draft (POST) /api/delegate /api/events (SSE live) /manifest.json")
+    print("  - APIs:     /api/ping /api/list-svg-works /api/list-jobs /api/parse-real-pedido (POST) /api/run-safe-command /api/create-job-draft (POST) /api/events (SSE live) /manifest.json")
     print("  - CLI extra: `flujo delegate <role> \"tarea\"` (usa mismos templates formales)")
     print("  - Status:   connected when fetches succeed (graceful static fallback)")
     print("  - Tray:     disponible si pystray + pywebview instalados (ver --desktop)")
