@@ -23,6 +23,7 @@ import json
 import os
 import re
 import shlex
+import shutil
 import socket
 import subprocess
 import sys
@@ -394,6 +395,46 @@ class HubRequestHandler(BaseHTTPRequestHandler):
         if path == "/api/agents-roles":
             self._send_json(self._get_agents_roles())
             return
+        if path == "/api/rd-db":
+            try:
+                self._send_json(self._get_rd_db())
+            except Exception as e:
+                self._send_json({"productoras": [], "venues": [], "error": str(e)}, status=200)
+            return
+        if path == "/api/rd-db/logo":
+            # Sirve el logo de una productora para previsualizarlo en el panel.
+            slug = (parse_qs(urlparse(self.path).query).get("slug") or [""])[0].strip().lower()
+            if not re.fullmatch(r"[a-z0-9_-]{1,64}", slug or ""):
+                self.send_error(400, "slug invalido")
+                return
+            base = self.root / "knowledge" / "logos"
+            tipos = {".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg",
+                     ".jpeg": "image/jpeg", ".webp": "image/webp"}
+            # Preferir el vector si existe; si no, la descarga cruda.
+            for cand in [base / "vector" / f"{slug}.svg", *sorted((base / "descargas").glob(f"{slug}.*"))]:
+                if cand.is_file() and cand.suffix.lower() in tipos:
+                    datos = cand.read_bytes()
+                    self.send_response(200)
+                    self.send_header("Content-Type", tipos[cand.suffix.lower()])
+                    self.send_header("Content-Length", str(len(datos)))
+                    self.send_header("Cache-Control", "no-store")
+                    self.end_headers()
+                    self.wfile.write(datos)
+                    return
+            self.send_error(404, "sin logo")
+            return
+        if path == "/api/show-kit":
+            try:
+                self._send_json(self._get_show_kit())
+            except Exception as e:
+                self._send_json({"setlist": [], "registros": [], "error": str(e)}, status=200)
+            return
+        if path == "/api/automatizaciones":
+            try:
+                self._send_json(self._get_automatizaciones())
+            except Exception as e:
+                self._send_json({"cola": [], "disponible": False, "error": str(e)}, status=200)
+            return
         if path == "/manifest.json":
             self._serve_manifest()
             return
@@ -524,6 +565,15 @@ class HubRequestHandler(BaseHTTPRequestHandler):
                 self._send_json({"datadrops": [], "count": 0, "error": str(e)}, status=200)
             return
 
+        if p == "/api/rd-db/logo":
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length).decode("utf-8")
+            try:
+                self._send_json(self._subir_logo(json.loads(body)))
+            except Exception as e:
+                self._send_json({"ok": False, "error": str(e)}, status=400)
+            return
+
         if p == "/api/datadrop-upload":
             content_length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(content_length).decode("utf-8")
@@ -611,6 +661,371 @@ class HubRequestHandler(BaseHTTPRequestHandler):
 
     def _get_dashboard_summary(self) -> dict:
         return build_dashboard_summary(collect_items(self.root))
+
+    def _subir_logo(self, data: dict) -> dict:
+        """Reemplaza el logo de una productora desde el hub.
+
+        Guarda el archivo en `knowledge/logos/descargas/<slug>.<ext>` y, si se
+        entrega, la url de origen en `<slug>.txt` al lado (politica del repo:
+        el logo oficial se busca en web y se guarda con su fuente; NUNCA se
+        recorta de un flyer).
+
+        El slug se valida contra las productoras existentes: no crea fichas
+        nuevas ni acepta rutas arbitrarias.
+        """
+        import base64
+
+        slug = str(data.get("slug") or "").strip().lower()
+        if not slug or not re.fullmatch(r"[a-z0-9_-]{1,64}", slug):
+            return {"ok": False, "error": "slug invalido"}
+        if not (self.root / "data" / "productoras" / f"{slug}.json").is_file():
+            return {"ok": False, "error": f"no existe la productora '{slug}'"}
+
+        nombre = str(data.get("filename") or "")
+        ext = Path(nombre).suffix.lower()
+        if ext not in (".png", ".jpg", ".jpeg", ".webp", ".svg"):
+            return {"ok": False, "error": f"extension no soportada: {ext or '(sin extension)'}"}
+
+        crudo = str(data.get("data") or "")
+        if "," in crudo and crudo.strip().startswith("data:"):
+            crudo = crudo.split(",", 1)[1]
+        try:
+            binario = base64.b64decode(crudo, validate=True)
+        except Exception:
+            return {"ok": False, "error": "contenido no es base64 valido"}
+        if not binario:
+            return {"ok": False, "error": "archivo vacio"}
+        if len(binario) > 12 * 1024 * 1024:
+            return {"ok": False, "error": "archivo demasiado grande (max 12 MB)"}
+
+        destino_dir = self.root / "knowledge" / "logos" / "descargas"
+        destino_dir.mkdir(parents=True, exist_ok=True)
+        # Un solo archivo por productora: reemplazar significa reemplazar.
+        for viejo in destino_dir.glob(f"{slug}.*"):
+            if viejo.suffix.lower() != ".txt":
+                viejo.unlink()
+        destino = destino_dir / f"{slug}{ext}"
+        destino.write_bytes(binario)
+
+        fuente = str(data.get("fuente") or "").strip()
+        if fuente:
+            (destino_dir / f"{slug}.txt").write_text(
+                f"fuente: {fuente}\nsubido: desde el hub\n", encoding="utf-8"
+            )
+
+        return {
+            "ok": True,
+            "slug": slug,
+            "archivo": destino.name,
+            "kb": round(len(binario) / 1024, 1),
+            "fuente_guardada": bool(fuente),
+        }
+
+    def _get_automatizaciones(self) -> dict:
+        """Cola real de las automatizaciones (issues de GitHub con labels).
+
+        La cadena es: Gmail -> issue etiquetado -> `tools/bridge_issue_render.py`
+        -> `flujo eventos flyer-auto` (+ Blender) -> drive/ -> comenta y cierra.
+        El tramo Gmail->issue vive FUERA de este repo.
+
+        Hasta ahora la unica forma de saber que habia pendiente era entrar a
+        GitHub a mano. Este endpoint lee la cola con `gh` (ya autenticado en la
+        maquina) y la agrupa por estado/area/accion.
+
+        Degrada sin drama: si no hay `gh`, no hay red o no hay auth, devuelve
+        `disponible: False` con el motivo, en vez de romper el panel.
+        """
+        import subprocess as _sp
+
+        gh = shutil.which("gh")
+        if not gh:
+            return {"cola": [], "disponible": False, "motivo": "gh no esta instalado o no esta en el PATH"}
+
+        try:
+            out = _sp.run(
+                [gh, "issue", "list", "--state", "open", "--limit", "60",
+                 "--json", "number,title,labels,createdAt,url"],
+                cwd=str(self.root), capture_output=True, text=True, timeout=25,
+            )
+        except Exception as e:
+            return {"cola": [], "disponible": False, "motivo": f"gh fallo: {e}"}
+
+        if out.returncode != 0:
+            motivo = (out.stderr or "").strip().splitlines()
+            return {"cola": [], "disponible": False,
+                    "motivo": motivo[0] if motivo else f"gh salio con codigo {out.returncode}"}
+
+        try:
+            issues = json.loads(out.stdout or "[]")
+        except Exception as e:
+            return {"cola": [], "disponible": False, "motivo": f"salida de gh ilegible: {e}"}
+
+        cola = []
+        for it in issues:
+            labels = [str(l.get("name", "")) for l in (it.get("labels") or [])]
+            cola.append({
+                "numero": it.get("number"),
+                "titulo": str(it.get("title") or ""),
+                "url": str(it.get("url") or ""),
+                "creado": str(it.get("createdAt") or "")[:10],
+                "labels": labels,
+                "estado": next((l.split("/", 1)[1] for l in labels if l.startswith("estado/")), ""),
+                "area": next((l.split("/", 1)[1] for l in labels if l.startswith("area/")), ""),
+                "accion": next((l.split("/", 1)[1] for l in labels if l.startswith("action/")), ""),
+                "prioridad": next((l.split("/", 1)[1] for l in labels if l.startswith("prioridad/")), ""),
+                "origen": next((l for l in labels if l in ("gmail", "instagram")), ""),
+                "bloqueado": "bloqueado" in labels,
+            })
+
+        def _cuenta(campo: str) -> dict:
+            r: dict = {}
+            for c in cola:
+                k = c[campo] or "(sin)"
+                r[k] = r.get(k, 0) + 1
+            return r
+
+        return {
+            "cola": cola,
+            "disponible": True,
+            "resumen": {
+                "abiertos": len(cola),
+                "bloqueados": sum(1 for c in cola if c["bloqueado"]),
+                "por_estado": _cuenta("estado"),
+                "por_area": _cuenta("area"),
+                "por_accion": _cuenta("accion"),
+            },
+            "connected": True,
+        }
+
+    def _get_show_kit(self) -> dict:
+        """Show kit de xio: setlist con timecode, cues, duraciones y registros.
+
+        Es lo que se opera el dia del show (LTC -> Chataigne -> OSC -> panel FOH
+        del telefono). Este endpoint expone SOLO lo que vive en el repo: el
+        estado en vivo del telefono no pasa por aca -- el panel del hub ofrece
+        la IP para consultarlo directo, porque xio y el hub son sistemas
+        independientes a proposito (si uno muere, el otro sigue).
+        """
+        root = self.root
+        kit = root / "xio" / "show_kit"
+        setlist: list[dict] = []
+        duraciones: dict = {}
+
+        dur_f = kit / "setlist_durations_dref.json"
+        if dur_f.is_file():
+            try:
+                duraciones = json.loads(dur_f.read_text(encoding="utf-8"))
+            except Exception:
+                duraciones = {}
+        durs = duraciones.get("durations") or []
+
+        sl_f = kit / "setlist_festival_sentir.txt"
+        if sl_f.is_file():
+            try:
+                lineas = [l.strip() for l in sl_f.read_text(encoding="utf-8").splitlines() if l.strip()]
+            except Exception:
+                lineas = []
+            for i, linea in enumerate(lineas):
+                partes = linea.split(None, 1)
+                tc = partes[0] if partes else ""
+                tema = partes[1].strip() if len(partes) > 1 else linea
+                d = durs[i] if i < len(durs) else None
+                setlist.append({
+                    "indice": i,
+                    "timecode": tc,
+                    "tema": tema,
+                    "duracion_s": d if isinstance(d, (int, float)) else None,
+                })
+
+        cues: list[dict] = []
+        fps = None
+        cm_f = kit / "cue_map_dref.json"
+        if cm_f.is_file():
+            try:
+                cm = json.loads(cm_f.read_text(encoding="utf-8"))
+                fps = cm.get("fps")
+                for c in (cm.get("cues") or []):
+                    if isinstance(c, dict):
+                        cues.append({
+                            "timecode": str(c.get("timecode") or ""),
+                            "layer": c.get("layer"),
+                            "clip": c.get("clip"),
+                            "nota": str(c.get("nota") or c.get("tema") or ""),
+                        })
+            except Exception:
+                pass
+
+        # Registros de show ya guardados (evidencia de shows corridos).
+        registros: list[dict] = []
+        reg_dir = kit / "registros"
+        if reg_dir.is_dir():
+            for sub in sorted(reg_dir.iterdir()):
+                if not sub.is_dir():
+                    continue
+                archivos = []
+                for f in sorted(sub.glob("*.jsonl")):
+                    try:
+                        n = sum(1 for _ in f.open(encoding="utf-8", errors="replace"))
+                    except Exception:
+                        n = 0
+                    archivos.append({"nombre": f.name, "eventos": n, "kb": round(f.stat().st_size / 1024)})
+                registros.append({"show": sub.name, "archivos": archivos})
+
+        return {
+            "setlist": setlist,
+            "cues": cues,
+            "fps": fps,
+            "registros": registros,
+            "resumen": {
+                "temas": len(setlist),
+                "cues": len(cues),
+                "con_duracion": sum(1 for s in setlist if s["duracion_s"]),
+                "shows_registrados": len(registros),
+            },
+            "connected": True,
+        }
+
+    def _get_rd_db(self) -> dict:
+        """Base de datos RD (productoras + venues) para el panel del hub.
+
+        Fuente de verdad: `data/productoras/*.json` + `knowledge/venues/*.yaml`
+        (no `data/rd.db`, que es una proyeccion regenerable y gitignored).
+
+        REGLA DE PRIVACIDAD (2026-07-25, pedido del area de eventos RD): este
+        endpoint arma cada registro campo por campo con una ALLOWLIST explicita.
+        Nunca hace `**dict` del json de origen. Si manana alguien agrega un campo
+        de contacto al json, NO se filtra solo: hay que agregarlo aca a proposito.
+        Campos deliberadamente excluidos: `instagram` y cualquier dato de
+        contacto. Ver tambien PlanoTool.tsx (el rider no lleva bloque de
+        contactos).
+        """
+        root = self.root
+        prods: list[dict] = []
+        pdir = root / "data" / "productoras"
+        logos_dir = root / "knowledge" / "logos"
+        if pdir.is_dir():
+            for f in sorted(pdir.glob("*.json")):
+                try:
+                    d = json.loads(f.read_text(encoding="utf-8"))
+                except Exception:
+                    continue
+                slug = f.stem
+                # Estado del logo: el json referencia el id; el archivo real vive
+                # en knowledge/logos/. Se reporta lo que existe en disco, no lo
+                # que el json dice que deberia existir.
+                logos = d.get("logos") or []
+                estado_logo = "sin_ficha"
+                ref_yaml = ""
+                if logos and isinstance(logos[0], dict):
+                    estado_logo = str(logos[0].get("estado") or "sin_estado")
+                    ref_yaml = str(logos[0].get("knowledge") or "")
+                # El nombre del archivo de logo NO siempre es el slug: en disco
+                # conviven `grid_system.svg` (slug `gridsystem`) y
+                # `club_freedom.svg` (slug `freedom`). Resolver solo por slug
+                # reportaba "sin vector" sobre logos que si existian, y por eso
+                # el estado de la DB se veia peor de lo que era.
+                # Orden: 1) el yaml que referencia el propio json, 2) el slug,
+                # 3) comparacion normalizada (sin guiones ni guiones bajos).
+                cand: list[str] = []
+                if ref_yaml.endswith(".yaml"):
+                    cand.append(Path(ref_yaml).stem)
+                cand.append(slug)
+                tiene_vector = any((logos_dir / "vector" / f"{c}.svg").exists() for c in cand)
+                if not tiene_vector and (logos_dir / "vector").is_dir():
+                    norm = slug.replace("_", "").replace("-", "").lower()
+                    tiene_vector = any(
+                        v.stem.replace("_", "").replace("-", "").lower() == norm
+                        for v in (logos_dir / "vector").glob("*.svg")
+                    )
+                venues_raw = d.get("venues") or []
+                venues = [
+                    {
+                        "nombre": str(v.get("nombre") or ""),
+                        "estado": str(v.get("estado") or ""),
+                        "preferido": bool(v.get("preferido")),
+                    }
+                    for v in venues_raw
+                    if isinstance(v, dict)
+                ]
+                # Eventos normalizados: fecha a ISO y lineup como campo propio.
+                # Sin esto la triangulacion (fecha + headliner -> productora) no
+                # tiene dos campos que cruzar.
+                eventos_norm: list[dict] = []
+                try:
+                    from ..rd.eventos import normalizar_productora
+                    norm, _avisos = normalizar_productora(d)
+                    for ev in (norm.get("eventos") or []):
+                        if isinstance(ev, dict):
+                            eventos_norm.append({
+                                "nombre": str(ev.get("nombre") or ""),
+                                "fecha": str(ev.get("fecha") or ""),
+                                "fecha_iso": ev.get("fecha_iso"),
+                                "fecha_confianza": str(ev.get("fecha_confianza") or ""),
+                                "venue": str(ev.get("venue") or ""),
+                                "estado": str(ev.get("estado") or ""),
+                                "lineup": [str(x) for x in (ev.get("lineup") or [])],
+                                "co_organiza": [str(x) for x in (ev.get("co_organiza") or [])],
+                            })
+                except Exception:
+                    eventos_norm = []
+
+                prods.append({
+                    "slug": slug,
+                    "nombre": str(d.get("name") or slug),
+                    "aliases": [str(a) for a in (d.get("aliases") or [])],
+                    "tipos": [str(t) for t in (d.get("tipos_fecha") or [])],
+                    "venues": venues,
+                    "logo": {"estado": estado_logo, "vector": tiene_vector},
+                    "confirmada": bool(str(d.get("confirmed") or "").strip()),
+                    "confirmacion": str(d.get("confirmed") or ""),
+                    "fuente": str(d.get("fuente_datos") or ""),
+                    "eventos": eventos_norm,
+                })
+
+        venues_cat: list[dict] = []
+        vdir = root / "knowledge" / "venues"
+        if vdir.is_dir():
+            for f in sorted(vdir.glob("*.yaml")):
+                try:
+                    raw = f.read_text(encoding="utf-8")
+                except Exception:
+                    continue
+                # Parseo minimo de las claves planas que interesan: evita
+                # depender de PyYAML en el proceso del servidor.
+                info = {"id": f.stem, "nombre": f.stem, "tipo": "", "escala": "", "capacidad": ""}
+                for line in raw.splitlines():
+                    if line.startswith("name:"):
+                        info["nombre"] = line.split(":", 1)[1].strip()
+                    elif line.startswith("type:"):
+                        info["tipo"] = line.split(":", 1)[1].strip()
+                    elif line.startswith("scale_default:"):
+                        info["escala"] = line.split(":", 1)[1].strip()
+                    elif line.startswith("capacity_bucket:"):
+                        info["capacidad"] = line.split(":", 1)[1].strip()
+                venues_cat.append(info)
+
+        # Estado de la triangulacion: cuantos eventos se pueden cruzar de verdad
+        # (necesitan fecha ISO Y lineup). Es el numero que dice si esa tarea
+        # puede avanzar o si primero hay que completar datos.
+        todos_ev = [e for p in prods for e in p["eventos"]]
+        triangulables = [e for e in todos_ev if e.get("fecha_iso") and e.get("lineup")]
+
+        return {
+            "productoras": prods,
+            "venues": venues_cat,
+            "resumen": {
+                "productoras": len(prods),
+                "con_vector": sum(1 for p in prods if p["logo"]["vector"]),
+                "confirmadas": sum(1 for p in prods if p["confirmada"]),
+                "venues": len(venues_cat),
+                "eventos": len(todos_ev),
+                "eventos_triangulables": len(triangulables),
+                "eventos_sin_fecha_iso": sum(1 for e in todos_ev if not e.get("fecha_iso")),
+                "eventos_sin_lineup": sum(1 for e in todos_ev if not e.get("lineup")),
+            },
+            "excluido_a_proposito": ["instagram", "contactos"],
+            "connected": True,
+        }
 
     def _get_agents_roles(self) -> dict:
         """Central definition of specialized agent roles for delegation system.
@@ -1366,7 +1781,8 @@ def _find_free_port(host: str = "127.0.0.1", start_port: int = 8765, max_tries: 
     return start_port  # fallback (will error later for clear msg)
 
 
-def run_server(host: str = "127.0.0.1", port: int = 8765, root: Path | None = None):
+def run_server(host: str = "127.0.0.1", port: int = 8765, root: Path | None = None,
+               procesar_pendientes: bool = False):
     """Start the HTTP server. root passed from CLI for explicit context.
     Uses auto-detected free port when default is busy.
     In packaged: assets from asset_root, workspace writes go next to exe.
@@ -1397,15 +1813,25 @@ def run_server(host: str = "127.0.0.1", port: int = 8765, root: Path | None = No
             print(f"[flujo] Puerto {port} ocupado → usando {actual_port}")
 
     server = ThreadingHTTPServer((host, actual_port), HubRequestHandler)
-    try:
-        from ..automation import run_pending_flyers
-        automation_result = run_pending_flyers(root=HubRequestHandler.ROOT or repo_root())
-        if automation_result.get("processed", 0):
-            print(f"[flujo] Automatización iniciada: {automation_result['processed']} job(s) procesados")
-        else:
-            print("[flujo] Automatización iniciada: sin jobs pendientes")
-    except Exception as exc:
-        print(f"[flujo] Automatización no pudo arrancar: {exc}")
+    # Procesar jobs al arrancar es OPT-IN a proposito.
+    #
+    # Historia: esto se llamaba con `root=` cuando el parametro es `base_dir`,
+    # asi que lanzaba TypeError, el except lo tragaba y la automatizacion NUNCA
+    # corria. Al corregir el nombre se encendio de golpe un comportamiento que
+    # llevaba tiempo apagado sin que nadie lo supiera: la primera corrida
+    # proceso 7 jobs y creo un proyecto.
+    #
+    # Abrir la app para mirar algo no debe modificar los jobs del usuario. Se
+    # dispara a mano: `flujo app --procesar-pendientes`, o desde el panel de
+    # Automatizaciones.
+    if procesar_pendientes:
+        try:
+            from ..automation import run_pending_flyers
+            res = run_pending_flyers(base_dir=HubRequestHandler.ROOT or repo_root())
+            n = res.get("processed", 0)
+            print(f"[flujo] Pendientes procesados: {n} job(s)" if n else "[flujo] Sin jobs pendientes")
+        except Exception as exc:
+            print(f"[flujo] No se pudieron procesar los pendientes: {exc}")
     print(f"[flujo] Workspace app en http://{host}:{actual_port}")
     print(f"  - Repo root: {r}")
     print("  - Hub:      /flujo_hub.html  (UI Delegar: input tarea + botones copian prompts completos por rol)")
@@ -1424,6 +1850,7 @@ def launch(
     desktop: bool = False,
     open_browser: bool = True,
     root: Path | None = None,
+    procesar_pendientes: bool = False,
 ):
     """Launch server thread + optional desktop or browser.
     root: explicit repo root passed from CLI to give full context to backend.
@@ -1439,7 +1866,7 @@ def launch(
         if actual_port != port:
             print(f"[flujo] Auto-port detection: {port} ocupado → {actual_port}")
     # start server passing root for APIs to use absolute context (also used by static pages)
-    thread = Thread(target=run_server, args=(host, actual_port, root), daemon=True)
+    thread = Thread(target=run_server, args=(host, actual_port, root, procesar_pendientes), daemon=True)
     thread.start()
 
     url = f"http://{host}:{actual_port}/flujo_hub.html"
