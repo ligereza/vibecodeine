@@ -90,7 +90,10 @@ else leaking into your context is a design failure.
    Per I9 (`context/DIRECTOR_CONTRACT.md`): every builder spawns on its own
    line's branch (rd/iskvw/mejoras) in its own worktree, never in the main
    checkout -- that checkout is read-only for director/user. Autoridad = gate,
-   no firma (I2).
+   no firma (I2). Per I10: no builder operates a browser or tool under the
+   user's own session/identity (IG, Gmail, accounts) without the user's
+   explicit chat order for that specific task -- "read-only" does not exempt
+   it; use anonymous fetch or ask the user.
 4. **Review by tournament, not inspection.** For design-weight work: 2-3
    independent attempts, one judge scores against the spec, winner ships. You
    never read the losing code. Mechanical edits skip the tournament; trust CI.

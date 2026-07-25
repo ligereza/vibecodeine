@@ -199,3 +199,38 @@ export function proporcionMonto(pack: Pack, prop: PackProportion): number {
 export function formatCLP(n: number): string {
   return '$' + Math.round(n).toLocaleString('es-CL');
 }
+
+// ── Overrides de precio en runtime (solo bundle standalone) ─────────────
+// PlanoTool.tsx lee `PACKS[preset].precio` en vivo en cada render/export (no
+// lo copia a otra variable al importar), asi que mutar el objeto PACKS en su
+// lugar alcanza para que el override se refleje sin tocar PlanoTool.tsx.
+// Esta funcion NO se llama en ningun lado por default: el hub normal
+// (web/src/main.tsx -> App.tsx) nunca la invoca, asi que PACKS queda con los
+// valores de codigo intactos ahi. Solo el bundle standalone de plano
+// (web/src/mainPlano.tsx) la llama, antes de montar React, con overrides
+// leidos de planoConfig (ver web/src/data/planoConfig.ts).
+//
+// NUNCA cambia nada si no se llama explicitamente. No muta el label/desc/
+// inclusiones -- solo el monto, que es el unico campo que el pedido permite
+// hacer overridable.
+export type PackPriceOverrides = Partial<Record<PackId, number>>;
+
+export function applyPackPriceOverrides(overrides: PackPriceOverrides): void {
+  for (const id of ALL_PACKS) {
+    const precio = overrides[id];
+    if (typeof precio === 'number' && Number.isFinite(precio) && precio > 0) {
+      PACKS[id].precio = Math.round(precio);
+    }
+  }
+}
+
+/** Snapshot inmutable de los precios de codigo (para mostrar "valor por defecto" y para poder restablecer). */
+export const PACKS_DEFAULT_PRICES: Record<PackId, number> = Object.fromEntries(
+  ALL_PACKS.map(id => [id, PACKS[id].precio])
+) as Record<PackId, number>;
+
+export function resetPackPrices(): void {
+  for (const id of ALL_PACKS) {
+    PACKS[id].precio = PACKS_DEFAULT_PRICES[id];
+  }
+}

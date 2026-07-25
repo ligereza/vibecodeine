@@ -124,7 +124,7 @@ archivo vivo, no tu palabra.
 - Un escritor = un worktree. Varios escritores en un worktree SOLO si: archivos
   disjuntos + contrato de interfaz congelado ANTES de lanzar + los builders no
   corren git (el director commitea).
-- Antes de fan-out: `gh pr list` -- ¿un PR abierto ya cubre esto? Si el alcance
+- Antes de fan-out: `gh pr list` -- un PR abierto ya cubre esto? Si el alcance
   cambia a mitad, SendMessage al agente corriendo; no respawnees.
 - Nunca borres la rama head hasta que `gh pr view --json state` diga MERGED.
   Protection estricta invalida ramas de otros PRs en cada merge: aterriza en
