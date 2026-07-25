@@ -1,12 +1,12 @@
 {
   "version": "0.56.1",
-  "date": "2026-07-23T04:15:00Z",
+  "date": "2026-07-25T00:00:00Z",
   "assistant_name": "Cauce",
-  "repo_main": "main gobernado (enforce_admins). 19 PRs merjeados hoy (#122-152 rango). 0 abiertos, 0 ramas huerfanas. Issues: #131 y #145 cerrados; #139 parcial (3 legacy en allowlist ratchet).",
-  "current_focus": "Curatoria masiva corriendo en MAK (RD 1731 + IG 1401, ficha unica, checkpoint, ETA ~20h). Vigilancia autonoma: reporter+watchdog cron 20min -> issue GitHub. Canal ordenes remotas via issue label cambio.",
-  "done": "Benchmark F3d aprobado (gemma3 13/13 productora); dpto mak_curatoria construido+desplegado (PR #176 abierto a mejoras); percepcion lanzada; watchdog+reporter+ordenes.py en MAK; flujo eventos issue->descarga MAK vivo (runner self-hosted, URL canonica #175); topologia ramas main+rd/portafolio/mejoras anclada (#169); TLS iskvw.cl completo; F4b/F1b/F2a/F3b/F4a en sus lineas.",
-  "doing": "MAK procesa 3132 archivos solo (nohup+checkpoint); WIN apagado; observacion via issues GitHub.",
-  "next": "1) issue [CURATORIA] TERMINADA -> pasada relacional (fuzzy productoras/venues, cruces RD-IG, candidatos DB+manifest via PR). 2) merge feat/v2-render-mak + workflow_dispatch prueba. 3) re-armar portfolio iskvw (post curatoria). 4) decidir PR #176.",
-  "blockers": "Runner MAK sin persistencia reboot (sudo interactivo usuario). Render reel completo pendiente de diagnostico (se atasco; video correcto = link del issue).",
-  "ai_stack": "Director Fable godspeed; builders/operadores sonnet; MAK: gemma3:4b vision+capataz, tesseract, ffmpeg, runner Actions self-hosted."
+  "repo_main": "main gobernado (enforce_admins). Rama show/dref-preshow-20260724 rescatada y pusheada (commit 69118fb), falta PR contra rd.",
+  "current_focus": "Orquestacion para el sucesor: context/ORQUESTACION_SUCESOR.md fija fases F0-F5 (cerrar rescate, poda con certificado, manual de independencia, division RD/ISKVW, suplementos en app, registro VIVO/MUERTO).",
+  "done": "Rescate del working tree de la sesion fallida commiteado (src/flujo/rd/eventos.py + tests/test_rd_eventos.py 18 verdes + hub.py 4 contadores en _get_rd_db + context/failed-handoff.md). Plan de mision context/ORQUESTACION_SUCESOR.md creado con triage vivo/muerto medido y decisiones abiertas del usuario.",
+  "doing": "Nada en curso; sesion de orquestacion cerrada, entrega el plan al proximo director.",
+  "next": "F0 cerrar rescate (4 contadores RdDbPanel + PR contra rd) -> F1 poda con certificado de defuncion -> F2 docs/OPERACION_APP.md -> F3 division RD/ISKVW (decision usuario) -> F4 suplementos en app (decision usuario) -> F5 registro VIVO/MUERTO + regla de retiro.",
+  "blockers": "4 decisiones del usuario pendientes (seccion 3 de context/ORQUESTACION_SUCESOR.md): destino de projects/piezas_vectoriales/cotizacion-general..., forma de F3 ISKVW, forma de F4 suplementos, alcance de purga de MB gordos.",
+  "ai_stack": "Director Fable godspeed; builders/operadores sonnet; leccion medida: reporte de modelo barato (Haiku) es claim, no hecho -- 2 de 3 claims de un inventario refutadas con grep."
 }
