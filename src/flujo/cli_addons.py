@@ -17,7 +17,7 @@ No reemplaza nada. Si 'hub' ya existiera, ajusta el nombre aqui.
 
 import typer
 
-hub_app = typer.Typer(help="Hub: servidor local + index/route de C:\\rd (airdrop).",
+hub_app = typer.Typer(help="Hub: servidor local + index/route del arbol de material ($FLUJO_RD_ROOT, ver MAPA.md).",
                       no_args_is_help=True)
 
 
@@ -31,7 +31,7 @@ def hub_serve(port: int = 8777, host: str = "127.0.0.1", open: bool = False):
 @hub_app.command("index", context_settings={"allow_extra_args": True,
                                              "ignore_unknown_options": True})
 def hub_index(ctx: typer.Context):
-    """Indexa C:\\rd para agentes. Pasa args tal cual al indexador.
+    """Indexa el arbol de material ($FLUJO_RD_ROOT) para agentes. Pasa args tal cual al indexador.
     Ej: py -m flujo hub index agent-brief "necesito la etiqueta de creatina" """
     from flujo.index import indexer
     raise typer.Exit(indexer.main(ctx.args))

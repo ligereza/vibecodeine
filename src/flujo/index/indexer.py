@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-flujo.index.indexer  -  Indexador REAL de C:\\rd para agentes/IA
+flujo.index.indexer  -  Indexador REAL del arbol de material para agentes/IA
+
+La raiz del material NO esta cableada: sale de la variable de entorno
+FLUJO_RD_ROOT. Si no esta definida cae a C:\\rd, que es donde vivia
+historicamente en la maquina de trabajo original. Documentado en MAPA.md.
 
 NO mueve, NO borra, NO renombra. Solo LEE el disco y produce un indice JSON
 que cualquier agente puede consultar antes de actuar, para saber:
@@ -13,7 +17,7 @@ que cualquier agente puede consultar antes de actuar, para saber:
   - estadisticas por area/pieza/extension
 
 Comandos:
-  py -m flujo index build            # escanea C:\\rd -> index_rd.json (+ hash opcional)
+  py -m flujo index build            # escanea $FLUJO_RD_ROOT -> index_rd.json (+ hash opcional)
   py -m flujo index build --from-inventory inv.txt   # construye desde un inventario .txt
   py -m flujo index stats            # resumen del indice
   py -m flujo index find "creatina etiqueta"         # buscar (orden por relevancia+fecha)
@@ -206,7 +210,7 @@ def save_index(items, base, path=INDEX_PATH, source="walk"):
             "n_archivos": len(items),
             "peso_total_bytes": total,
             "peso_total_human": human(total),
-            "para": "indice real de C:\\rd para agentes/IA. No mover/borrar; solo consultar.",
+            "para": "indice real del arbol de material para agentes/IA. No mover/borrar; solo consultar.",
         },
         "items": items,
     }
@@ -289,15 +293,34 @@ def stats(idx):
     return by_area, by_pieza, by_ext
 
 
+
+# Raiz del material. Universal: se configura por entorno, no se cablea.
+# Causa (2026-07-25): "C:\\rd" estaba escrito a mano en el codigo y en los
+# textos de ayuda; cualquiera que no fuera la maquina original quedaba afuera.
+# Retiro: cuando el workspace tenga un archivo de config unico y este helper
+# lo lea de ahi.
+RD_ROOT_ENV = "FLUJO_RD_ROOT"
+RD_ROOT_FALLBACK = "C:\\rd"
+
+
+def raiz_material() -> str:
+    """Raiz del arbol de material real (fotos, piezas, entregas).
+
+    Orden: $FLUJO_RD_ROOT -> C:\\rd (valor historico, se conserva para no
+    romper la instalacion existente).
+    """
+    return os.environ.get(RD_ROOT_ENV) or RD_ROOT_FALLBACK
+
+
 # ---------------- CLI ----------------
 
 def cmd_build(args):
     if args.from_inventory:
         items = build_from_inventory(args.from_inventory)
-        base = "C:\\rd"
+        base = raiz_material()
         src = "inventory:" + os.path.basename(args.from_inventory)
     else:
-        base = args.base
+        base = args.base or raiz_material()
         items = build_from_walk(base, do_hash=args.hash)
         src = "walk" + ("+md5" if args.hash else "")
     idx = save_index(items, base, args.out, source=src)
@@ -418,12 +441,13 @@ def cmd_agent_brief(args):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="flujo index",
-                                 description="Indexador real de C:\\rd para agentes (no mueve/borra)")
+                                 description="Indexador real del arbol de material para agentes (no mueve/borra). Raiz: $FLUJO_RD_ROOT")
     ap.add_argument("--out", default=INDEX_PATH, help="ruta del index_rd.json")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     b = sub.add_parser("build", help="escanear disco o inventario -> index_rd.json")
-    b.add_argument("--base", default="C:\\rd")
+    b.add_argument("--base", default=None,
+                   help="Raiz a escanear. Default: $FLUJO_RD_ROOT (ver MAPA.md).")
     b.add_argument("--hash", action="store_true", help="calcular md5 (duplicados exactos)")
     b.add_argument("--from-inventory", default="", help="construir desde un inventario .txt")
     b.set_defaults(func=cmd_build)

@@ -1,63 +1,62 @@
 # LAST HANDOFF -- estado para el proximo agente
 
 Version: 0.56.1 | Fecha: 2026-07-25 (noche) | Identidad: Cauce | sesion:
-consolidacion del repo en 3 lineas + cierre de F0-F3 (director Opus).
+consolidacion en 3 lineas + MAPA.md universal (director Opus).
+
+## ENTRADA: leer MAPA.md (raiz) ANTES que nada
+
+MAPA.md es la puerta de entrada nueva, escrita para dos lectores que no se
+conocen: una persona que no programa y un agente que entra sin contexto.
+Tiene los 3 nombres (vibecodeine=repo, flujo=programa, Dimensiones del
+Orden=sistema), las 3 lineas, los 81 comandos con lo que necesita cada uno
+antes de correr, toda la configuracion por variable de entorno, las 4 zonas
+y las reglas que el repo se hace cumplir solo.
+
+No envejece sola: la tabla de comandos la genera tools/gen_mapa_comandos.py
+desde el --help real, y tests/test_mapa_completo.py pone la CI en rojo si
+aparece un comando o una variable de entorno sin documentar.
 
 ## Sesion 2026-07-25 (consolidacion) -- HECHO
 
-TOPOLOGIA: el repo queda en 3 lineas -- main / rd / iskvw. `mejoras` se
-fundio en main y se retira. Doctrina nueva (orden del usuario): main tiene
-TODO sin falta y las lineas BAJAN de main; una linea ya no es deposito.
+TOPOLOGIA: 3 ramas y ninguna mas -- main / rd / iskvw. `mejoras` se fundio en
+main y se retira. main tiene TODO sin falta y las lineas BAJAN de main.
+CLAUDE.md actualizado (declaraba 4 lineas).
 
-1. PROMOCIONES A MAIN, en orden y con CI verde ubuntu+windows:
-   - #303 rd -> main: DB de productoras, triangulacion, logos oficiales,
-     becas. 10 commits que main nunca habia recibido.
-   - #306 poda-crt -> mejoras: archiva los duplicados CRT sin consumidor.
-   - #305 mejoras -> main: mecanismo de retiro, poda de stack muerto con
-     certificado, docs/OPERACION_APP.md, handoff comprimido.
-   Merge commit (no squash) a proposito: deja las lineas como ancestros de
-   main, asi se ponen al dia por fast-forward sin reescribir historia.
-2. FIX QUE DESTRABO #305 (estaba roja en los dos OS): la poda de stack
-   muerto se llevo _cffi_download y _meta_content de src/flujo/ig/download.py
-   junto con imginn, sin estar en la lista MATAR del triage. curl_cffi es la
-   via que hace funcionar la descarga de IG en Linux -- o sea en el MAK --
-   donde parth-dl pega login-wall por fingerprint TLS (verificada 2026-07-23).
-   Ademas dejo tests/test_ig_cffi_fallback.py importando el simbolo borrado:
-   error de coleccion, suite entera interrumpida. Restaurada como via
+1. PROMOCIONES A MAIN, en orden y con CI verde ubuntu+windows: #303 (rd:
+   DB productoras, triangulacion, logos, becas), #306 (poda CRT -> mejoras),
+   #305 (mejoras: mecanismo de retiro, poda de stack muerto, manual de
+   operacion), #308 (app dividida en 3 mundos + ratchet de higiene
+   documental). Merge commit, no squash: deja las lineas como ancestros y se
+   ponen al dia por fast-forward.
+2. FIX QUE DESTRABO #305 (roja en los dos OS): la poda se llevo
+   _cffi_download y _meta_content de src/flujo/ig/download.py junto con
+   imginn, sin estar en la lista MATAR. curl_cffi es la via que hace andar la
+   descarga de IG en Linux -- o sea en el MAK. Restaurada como via
    secundaria; imginn sigue retirado.
-3. EL RATCHET F5 COBRO SU PRIMERA PIEZA SOLO: al reconciliar mejoras con main,
-   test_tools_en_registro rebato las 3 tools que trajo rd (triangular_fichas,
-   gen_dashboard_productoras, gen_presentacion_db) por no declarar consumidor.
-   Registradas en CAPACIDADES.md con consumidor medido por grep.
-4. HANDOFFS SIN PERDIDA: la compresion de mejoras no cubria el bloque del
-   2026-07-23 que trajo rd; anexado verbatim a docs/handoffs/archive/. Se
-   verifico linea por linea: solo quedan 2 lineas fuera y son una repeticion
-   de la topologia de ramas que ya vive en CLAUDE.md.
-5. RAMAS al dia: rd por fast-forward, iskvw por merge (conserva sus commits).
-
-## ESTADO DE LAS FASES (context/ORQUESTACION_SUCESOR.md)
-
-F0 HECHA (eventos.py + tests + los 4 contadores de RdDbPanel ya en main).
-F1 HECHA (#306 + #305). F2 HECHA (docs/OPERACION_APP.md en main).
-F3 HECHA (division en 3 perfiles, PR aparte). F5 HECHA y probada en vivo.
-F4 (suplementos en la app) sigue esperando decision del usuario.
+3. UNIVERSALIZACION: "C:\rd" estaba cableado en el indexador y en los textos
+   de ayuda. Ahora sale de $FLUJO_RD_ROOT con ese valor como fallback, asi
+   nadie que no sea la maquina original queda afuera. Idem el default de la
+   carpeta de automatizacion.
+4. RATCHETS NUEVOS: test_mapa_completo.py (todo comando y toda variable de
+   entorno documentados) y test_higiene_docs.py (ninguna doc viva afirma un
+   total de tests, un rango de invariantes o una version que no coincida con
+   lo medido). El ratchet de tools ya existente cobro solo 2 piezas esta
+   sesion: las 3 tools que trajo rd y el generador del mapa.
+5. HANDOFFS SIN PERDIDA al reconciliar lineas: el bloque del 07-23 que trajo
+   rd se anexo verbatim al archivo historico.
 
 ## PENDIENTE CONCRETO PARA EL PROXIMO
 
 1. BORRAR 6 RAMAS YA CONSOLIDADAS -- no se pudo desde este entorno: el proxy
    git devuelve 403 en push --delete y el MCP de GitHub no expone borrado de
-   ramas. Verificado antes de proponerlo: NINGUNA aporta una ruta que no
-   exista en main; lo que difiere son versiones mas viejas. Comando:
+   ramas. Verificado: NINGUNA aporta una ruta que no exista en main.
      git push origin --delete mejoras poda-crt-20260725 \
        poda-stack-muerto-20260725 manual-operacion-app-20260725 \
        worktree-orquestacion-sucesor show/dref-preshow-20260724
-2. Actualizar la topologia de CLAUDE.md: hoy declara 3 lineas permanentes
-   (rd/iskvw/mejoras); son 2 (rd/iskvw) mas main.
-3. F4: forma de suplementos en la app (panel lectura+validate, o tarjeta
-   minima). Decision del usuario.
-4. Decisiones abiertas que siguen abiertas: cotizacion untracked en
-   projects/piezas_vectoriales/, y purga de los MB gordos (39MB
-   contraportadas dark; 262MB jobs si esta trackeado).
+2. F4 (suplementos en la app): decision del usuario, sigue abierta.
+3. Cotizacion untracked en projects/piezas_vectoriales/ y purga de los MB
+   gordos (39MB contraportadas dark; 262MB jobs si esta trackeado).
+4. context/WALKTHROUGH.md quedo redundante con MAPA.md: evaluar si se archiva.
 
 ---
 
