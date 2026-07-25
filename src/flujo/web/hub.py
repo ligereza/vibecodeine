@@ -947,6 +947,28 @@ class HubRequestHandler(BaseHTTPRequestHandler):
                     for v in venues_raw
                     if isinstance(v, dict)
                 ]
+                # Eventos normalizados: fecha a ISO y lineup como campo propio.
+                # Sin esto la triangulacion (fecha + headliner -> productora) no
+                # tiene dos campos que cruzar.
+                eventos_norm: list[dict] = []
+                try:
+                    from ..rd.eventos import normalizar_productora
+                    norm, _avisos = normalizar_productora(d)
+                    for ev in (norm.get("eventos") or []):
+                        if isinstance(ev, dict):
+                            eventos_norm.append({
+                                "nombre": str(ev.get("nombre") or ""),
+                                "fecha": str(ev.get("fecha") or ""),
+                                "fecha_iso": ev.get("fecha_iso"),
+                                "fecha_confianza": str(ev.get("fecha_confianza") or ""),
+                                "venue": str(ev.get("venue") or ""),
+                                "estado": str(ev.get("estado") or ""),
+                                "lineup": [str(x) for x in (ev.get("lineup") or [])],
+                                "co_organiza": [str(x) for x in (ev.get("co_organiza") or [])],
+                            })
+                except Exception:
+                    eventos_norm = []
+
                 prods.append({
                     "slug": slug,
                     "nombre": str(d.get("name") or slug),
@@ -957,6 +979,7 @@ class HubRequestHandler(BaseHTTPRequestHandler):
                     "confirmada": bool(str(d.get("confirmed") or "").strip()),
                     "confirmacion": str(d.get("confirmed") or ""),
                     "fuente": str(d.get("fuente_datos") or ""),
+                    "eventos": eventos_norm,
                 })
 
         venues_cat: list[dict] = []
@@ -981,6 +1004,12 @@ class HubRequestHandler(BaseHTTPRequestHandler):
                         info["capacidad"] = line.split(":", 1)[1].strip()
                 venues_cat.append(info)
 
+        # Estado de la triangulacion: cuantos eventos se pueden cruzar de verdad
+        # (necesitan fecha ISO Y lineup). Es el numero que dice si esa tarea
+        # puede avanzar o si primero hay que completar datos.
+        todos_ev = [e for p in prods for e in p["eventos"]]
+        triangulables = [e for e in todos_ev if e.get("fecha_iso") and e.get("lineup")]
+
         return {
             "productoras": prods,
             "venues": venues_cat,
@@ -989,6 +1018,10 @@ class HubRequestHandler(BaseHTTPRequestHandler):
                 "con_vector": sum(1 for p in prods if p["logo"]["vector"]),
                 "confirmadas": sum(1 for p in prods if p["confirmada"]),
                 "venues": len(venues_cat),
+                "eventos": len(todos_ev),
+                "eventos_triangulables": len(triangulables),
+                "eventos_sin_fecha_iso": sum(1 for e in todos_ev if not e.get("fecha_iso")),
+                "eventos_sin_lineup": sum(1 for e in todos_ev if not e.get("lineup")),
             },
             "excluido_a_proposito": ["instagram", "contactos"],
             "connected": True,
