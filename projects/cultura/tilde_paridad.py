@@ -56,8 +56,9 @@ from typing import List, Optional, Tuple
 
 # tilde_residuo vive en este mismo directorio (projects/cultura/).
 _CULTURA_DIR = Path(__file__).resolve().parent
-# tilde_meter vive en desktop/, que NO es un paquete: se agrega su carpeta al path.
-_DESKTOP_DIR = _CULTURA_DIR.resolve().parents[1] / "desktop"
+# tilde_meter vive en tools/ (movido de desktop/ 2026-07-25, poda de stack
+# muerto), que NO es un paquete: se agrega su carpeta al path.
+_DESKTOP_DIR = _CULTURA_DIR.resolve().parents[1] / "tools"
 
 for _d in (_CULTURA_DIR, _DESKTOP_DIR):
     _s = str(_d)
