@@ -152,3 +152,35 @@ jsonschema, requests).
 Actualizar este doc en el mismo PR si algo listado aca cambia (tool
 eliminada, skill nueva, IP/puerto distinto): el doc miente si lista algo que
 ya no existe.
+
+## 5. Registro VIVO/MUERTO (tools/ top-level)
+
+Regla 2026-07-25 (causa: sesiones gastadas arreglando herramientas sin
+consumidor; retiro: cuando exista chequeo automatico de consumidores):
+toda herramienta en `tools/` (top-level, no subdirs) declara aca su
+consumidor medido o entra en REVISAR. `tests/test_higiene_repo.py`
+(`test_tools_en_registro`) exige que el nombre de archivo aparezca en esta
+tabla; archivo sin entrada = ratchet rojo.
+
+| archivo | estado | consumidor/evidencia | ultima senal |
+|---|---|---|---|
+| `becas_calendario.py` | VIVO | RD becas, area operativa | 2026-07 |
+| `bridge_issue_render.py` | VIVO | puente issue -> render WIN | 2026-07 |
+| `compete_engine.py` | VIVO | proyecto tapiz (cultura) | 2026-07 |
+| `context_pack.py` | REVISAR | AI Op Layer 2026-07-25, recien creado, consumidor pendiente | 2026-07-25 |
+| `contexto_repo.py` | VIVO | referenciado en `CLAUDE.md` ("Ahorro de contexto") | 2026-07-25 |
+| `crtdots.py` | REVISAR | cultura, decision de uso pendiente del usuario | sin fecha medida |
+| `enviar_a_mak.py` | VIVO | SendTo WIN -> MAK, probado e2e 2026-07-23 | 2026-07-23 |
+| `handoff.py` | VIVO | genera/actualiza `docs/handoffs/` + `context/LAST_HANDOFF.md` | 2026-07 |
+| `instalar_enviar_a_mak.py` | VIVO | instalador del SendTo de `enviar_a_mak.py` | 2026-07-23 |
+| `render_video_rd.py` | VIVO | pipeline video RD, 4 ejes, semana 2026-07-21 | 2026-07-21 |
+| `system_map.py` | VIVO | mapa mecanico del repo (soporte de `contexto_repo.py`) | 2026-07 |
+| `tapiz_live_loop.py` | REVISAR | cultura, decision de uso pendiente del usuario | sin fecha medida |
+| `tapiz_telemetry.py` | REVISAR | cultura, decision de uso pendiente del usuario | sin fecha medida |
+| `token_budget.py` | REVISAR | AI Op Layer 2026-07-25, recien creado, consumidor pendiente | 2026-07-25 |
+| `verify_all.py` | REVISAR | AI Op Layer 2026-07-25, recien creado, consumidor pendiente | 2026-07-25 |
+
+Nota: el director listo tambien `render_flyer_mak.py` (VIVO, mak_ops) en
+su mensaje de spec, pero ese archivo NO existe en `tools/` de este
+worktree (ni en ninguna ruta del repo, verificado con busqueda global) --
+omitido de la tabla, ver desvio reportado en el cierre de sesion.

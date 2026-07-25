@@ -31,6 +31,9 @@ context/LAST_HANDOFF.md. NO re-explorar el repo entero.
 
 ## 1. Fases en orden (una fase = un PR con CI verde antes de la siguiente)
 
+Nota (2026-07-25): F1 y F5 ya ejecutadas por el director; quedan F0
+(contadores), F2 (manual), F3/F4 (decision usuario).
+
 ### F0 -- Cerrar el rescate (rama show/dref-preshow-20260724, PR contra rd)
 Estado: el rescate del working tree YA se commiteo y pusheo (commit 69118fb:
 src/flujo/rd/eventos.py + tests/test_rd_eventos.py + hub.py + failed-handoff.md,
@@ -69,14 +72,9 @@ src/flujo/comercial/suplementos_config.py. Forma pendiente del usuario
 (seccion 3). Es RD vivo: prioridad sobre F3 si el usuario no responde.
 
 ### F5 -- Mecanismo anti-reincidencia (la fase que evita repetir todo esto)
-1. Seccion nueva en CAPACIDADES.md: registro VIVO/MUERTO -- tabla
-   herramienta -> estado -> consumidor medido -> fecha ultima senal de vida.
-2. Regla nueva en CLAUDE.md (con fecha 2026-07-25, causa: sesiones gastadas
-   arreglando zombies, retiro: cuando exista chequeo automatico de
-   consumidores): "Herramienta sin consumidor medido NI entrada en el registro
-   VIVO/MUERTO de CAPACIDADES.md: se archiva con certificado, NO se arregla."
-El repo tiene ratchets para AGREGAR y ninguno para RETIRAR; esta fase crea el
-mecanismo de retiro.
+HECHO 2026-07-25: tests/test_higiene_repo.py (tope handoff + registro
+tools) + seccion 5 de CAPACIDADES.md; al sucesor solo le queda respetar
+el ratchet.
 
 ## 2. Triage (veredicto del director, evidencia medida 2026-07-25)
 
@@ -85,16 +83,19 @@ mecanismo de retiro.
   Gemini PARKED 2026-07-10. EXCEPCION: desktop/tilde_meter.py es standalone
   vivo (area Cultura de CLAUDE.md) -> mover a tools/ ANTES de archivar el
   resto. Resurreccion: Gemini vuelve con API util.
+  [EJECUTADO 2026-07-25 en PRs de esta sesion]
 - Skills .claude/skills/relevo-web/ y orquestacion-gemini-claude/: dependen de
   Gemini parked; CLAUDE.md ya las marca sin uso. Misma condicion.
+  [EJECUTADO 2026-07-25 en PRs de esta sesion]
 - Fallback imginn en src/flujo/ig/download.py (_mirror_image_urls): 403
   Cloudflare permanente desde 2026-07-22. Podar; queda parth-dl + error claro.
   De paso arreglar tests/test_ig_cffi_fallback.py (fragil: forzar ImportError
   con sys.modules["curl_cffi"] = None; hoy falla en cualquier maquina con
-  curl_cffi instalado).
+  curl_cffi instalado). [EJECUTADO 2026-07-25 en PRs de esta sesion]
 - Endpoint /api/delegate en hub.py: 0 refs en web/src, el CLI ya lo cubre.
   cotizacion/render + SSE: 0 refs en frontend -> podar o declararlos API-only
   en F2 (decidir en el PR, con el manual delante).
+  [EJECUTADO 2026-07-25 en PRs de esta sesion]
 - capataz.py en el cron de MAK: superseded por agente_real.py (LAST_HANDOFF lo
   declara "el reemplazo"; conviven desde 07-20). Retirar del cron, archivar el
   espejo en el repo.
