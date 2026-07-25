@@ -2,7 +2,7 @@
 Tests del render sobrevivencia-01 (projects/tilde/sobrevivencia.py) a nivel
 libreria: importa el modulo directo (no subprocess) y ejercita render_svg()
 sobre un corpus SINTETICO generado con el instrumento real
-desktop/tilde_meter.py -- no con dicts inventados a mano.
+tools/tilde_meter.py -- no con dicts inventados a mano.
 
 Complementa tests/test_tilde_sobrevivencia.py (que ya cubre los 9 criterios
 de aceptacion del SPEC via CLI/subprocess). Este archivo prueba dos cosas
@@ -28,12 +28,12 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DESKTOP_DIR = REPO_ROOT / "desktop"
-for p in (str(REPO_ROOT), str(DESKTOP_DIR)):
+TOOLS_DIR = REPO_ROOT / "tools"
+for p in (str(REPO_ROOT), str(TOOLS_DIR)):
     if p not in sys.path:
         sys.path.insert(0, p)
 
-import tilde_meter  # noqa: E402  (desktop/tilde_meter.py, instrumento real)
+import tilde_meter  # noqa: E402  (tools/tilde_meter.py, instrumento real)
 from projects.tilde import sobrevivencia  # noqa: E402
 
 SVG_NS = "{http://www.w3.org/2000/svg}"

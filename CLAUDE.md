@@ -204,7 +204,7 @@ Nucleo vivo:
 | `.github/workflows/ci.yml` | CI: install, compileall, health, pytest |
 | `pyproject.toml` | Metadata + version (la version manda) |
 | `.claude/skills/*/SKILL.md` | Playbooks de agente |
-| `desktop/` | App flotante Tkinter (enrutador Gemini->Claude, PARKED) |
+| `_archive/legacy_20260725_desktop/` | App flotante Tkinter (enrutador Gemini->Claude, PARKED); archivado 2026-07-25, ver CERTIFICADO.md ahi |
 
 Operacion diaria: `jobs/_template/`, `datadrops/` (`flujo datadrop scan/list/prepare`), `projects/piezas_vectoriales/`, `projects/flyer_eventos/`, `tools/`, `schemas/`. Entrada humana: `flujo app` (fallback `context/flujo_hub.html`).
 
@@ -226,7 +226,7 @@ py -m flujo brief paquete-cotizacion jobs/<job>
 ```
 DB consultable: `py -m flujo rd-db build|reactivo|packs|productora|venues|por-tipo|lookup` (`src/flujo/rd/`, proyeccion regenerable; `data/rd.db` gitignored).
 
-**Cultura (arte-investigacion):** tapiz, tilde, psicosis, precursor. 3er workspace del hub (`CulturaPanel.tsx`). Instrumento tapiz: `projects/tapiz/` (`py projects/tapiz/vibecode_spaces.py archivo.py -m void --svg pieza.svg`). Medidor: `desktop/tilde_meter.py` (standalone). Direccion: `projects/tapiz/DIRECTION.md`. MAK research: `cultura/` -> main via PRs #48/#49, no editar hasta merjear.
+**Cultura (arte-investigacion):** tapiz, tilde, psicosis, precursor. 3er workspace del hub (`CulturaPanel.tsx`). Instrumento tapiz: `projects/tapiz/` (`py projects/tapiz/vibecode_spaces.py archivo.py -m void --svg pieza.svg`). Medidor: `tools/tilde_meter.py` (standalone). Direccion: `projects/tapiz/DIRECTION.md`. MAK research: `cultura/` -> main via PRs #48/#49, no editar hasta merjear.
 LIMITES: descriptivo si; nada generativo de sintesis; psicosis NUNCA perfila personas reales. `README.md` del repo = obra terminada del artista: NO agregarle nada.
 
 **Studio / Eventos:**
@@ -236,7 +236,7 @@ py -m flujo resolume automatizar jobs/<job_id>
 ```
 Instagram: descarga real = **parth-dl** (`pip install parth-dl`; `parth_dl.get_info()`, via primaria en `flyer_auto.py` desde 2026-07-22). Video/reel usa thumbnail; carrusel SOLO primera imagen. imginn.com quedo 403 Cloudflare (solo fallback best-effort); instaloader NO funciona (IG exige login); NO `yt-dlp`.
 
-**Desktop (Gemini->Claude flotante):** `desktop/` (Tkinter puro, no toca `src/flujo/` ni `web/src/`). PARKED (hereda Gemini). Detalle y config: `desktop/` README + `desktop/config.json` gitignored (NUNCA commitear, clave en texto plano).
+**Desktop (Gemini->Claude flotante):** archivado 2026-07-25, ver `_archive/legacy_20260725_desktop/CERTIFICADO.md`.
 
 ## Entrega final (obligatoria)
 

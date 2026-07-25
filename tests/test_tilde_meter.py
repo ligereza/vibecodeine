@@ -1,14 +1,14 @@
-"""Tests de desktop/tilde_meter.py (medidor del proyecto tilde, standalone).
+"""Tests de tools/tilde_meter.py (medidor del proyecto tilde, standalone).
 
-Puro stdlib: no toca tkinter, red, ni la GUI. Se agrega desktop/ al path.
+Puro stdlib: no toca tkinter, red, ni la GUI. Se agrega tools/ al path.
 """
 
 import json
 import sys
 from pathlib import Path
 
-DESKTOP_DIR = Path(__file__).resolve().parents[1] / "desktop"
-sys.path.insert(0, str(DESKTOP_DIR))
+TOOLS_DIR = Path(__file__).resolve().parents[1] / "tools"
+sys.path.insert(0, str(TOOLS_DIR))
 
 import tilde_meter  # noqa: E402
 
