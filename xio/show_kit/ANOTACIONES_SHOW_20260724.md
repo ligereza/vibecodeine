@@ -161,3 +161,71 @@ congelarse. Solo tramos con una sola cue adentro.
 5. **Pinky**: dejar documentado que FINAL FALSO entra a 2:35 y son una unidad (2:57).
 6. **DIABLO SANTO**: decidir si se retira (se cerro con QR manual).
 7. **Yoseke**: quedo sin tocar; su cue n=19 sigue armada.
+
+---
+
+# Chequeo de infraestructura: bateria y red
+
+## Red / estabilidad del server: IMPECABLE durante el show
+
+- Heartbeats cada **60 s exactos** durante todo el show (79 latidos, gap maximo
+  63 s). **Cero caidas del server, cero perdidas de red.**
+- El cambio de IP por DHCP en el venue (`10.195.40.198` -> `10.134.166.149`) fue
+  el unico incidente de red, y fue **antes** del show (resuelto en soundcheck).
+- Los canales Art-Net / sACN / OSC quedaron en 0 paquetes: esperado, este show
+  se opero por timecode, no por señal de consola.
+
+## BATERIA: riesgo critico, hay que resolverlo antes del proximo show
+
+Cronologia real del 24:
+
+| Hora | Nivel | Estado |
+|---|---|---|
+| 00:01 | 89% | cargando |
+| 05:42 | 68% | cargando |
+| 09:50 | 80% | cargando |
+| **10:04** | **84%** | **deja de cargar** |
+| 11:02 | 59% | descargando (temp 40 C) |
+| 13:52 | 4% | descargando |
+| **14:30:31** | -- | **el telefono se apaga: 105 min sin log** |
+| **16:16:00** | **0%** | vuelve encendido, y **se queda en 0% para siempre** |
+| 20:12-21:27 | **0%** | **todo el show corrio en 0%** |
+| ahora | 0% | sigue en 0%, `discharging`, pero el equipo responde |
+
+### Lo que esto significa
+
+1. **El telefono se quedo sin bateria y se apago 6 horas antes del show.**
+   Volvio a las 16:16 porque lo enchufaron.
+2. **Todo el show corrio con la bateria en 0%, alimentado solo por el cable.**
+   Un tiron del cable = se cae el TC y el panel FOH en pleno show. Se zafo.
+3. **Despues del reboot la carga no se recupero.** `charge_control` reporta
+   `level 0`, `discharging`, y **no puede leer el puerto USB**
+   (`current_mode`, `power_role`, `sink_power` = todos `null`).
+   Ultima accion registrada: `charge_on` con nota `hard_floor 20%: carga forzada`
+   -- el sistema intento forzar la carga y aun asi sigue en 0.
+4. `battery_care` esta directamente **sin monitoreo** (`monitoring_active: false`,
+   `total_history_points: 0`, nivel `N/A`).
+
+### Hipotesis a verificar (NO confirmadas, requieren revisar el telefono)
+
+- **La mas probable:** tras el reboot de las 16:16, **Shizuku/rish quedo sin
+  re-autorizar**. Sin ese permiso `charge_control` no puede leer ni cambiar el
+  port-role USB, que es justo el mecanismo con el que este telefono controla la
+  carga (ver memoria del proyecto: control de carga no-root via USB port-role).
+  Encaja con que los tres campos `usb` sean `null`.
+- Alternativas: cable o cargador fallando; puerto USB dañado; el limitador
+  (`cap 80`) quedo en un estado raro -- aunque ahora figura `limiter_enabled: false`.
+
+**No se toco nada del telefono para diagnosticar esto** (solo lecturas HTTP).
+
+### Acciones recomendadas antes del proximo show
+
+1. Revisar fisicamente: cable, cargador y que el telefono este **cargando de verdad**
+   (no solo alimentado).
+2. Re-autorizar **Shizuku/rish** despues de cualquier reboot -- y agregarlo al
+   checklist de dia de show.
+3. Que `check_show.py` **bloquee el GO** si la bateria lee 0% o si el puerto USB
+   no se puede leer. Hoy solo avisa.
+4. Reactivar `battery_care` (`monitoring_active: false`).
+5. Regla de show: el telefono **enchufado y con carga real >60%** antes de empezar,
+   con el cable asegurado (cinta) para que no se lo lleven por delante.
