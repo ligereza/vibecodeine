@@ -8,6 +8,36 @@ El tile **LUCES quedará N/D (gris) toda la noche y eso es lo esperado, no una f
 IP del teléfono en modo hotspot: **192.168.127.125** (verifícala en el paso 3;
 si difiere, usa la real en todos lados).
 
+---
+
+## ⚡ ARRANCAR EL SERVER DEL TELÉFONO (lo primero, y lo que siempre se busca)
+
+Abrir **Termux** en el Xiaomi y escribir:
+
+```sh
+sh /sdcard/xio_termux/run_server.sh
+```
+
+Comprobar que quedó arriba (desde la laptop, con la IP real del teléfono):
+
+```
+http://<IP_TELEFONO>:5000/api/plugins/foh_monitor/panel
+```
+
+**El server NO arranca solo después de un reboot.** Es un hueco conocido
+(ver `xio/HOTSPOT_SHOW_RUNBOOK.md`): si el teléfono se apaga —por batería a 0,
+por ejemplo— al volver hay que lanzarlo **a mano** con ese comando.
+Pasó de verdad el 2026-07-24: el teléfono se quedó sin batería a las 14:30,
+rebooteó, y hubo que arrancarlo a mano antes del show.
+
+**La IP cambia sola.** En un venue con DHCP el teléfono agarra IP nueva. Si el
+panel no responde, buscar la IP real antes que nada: en el teléfono
+`Ajustes > WiFi > (red) > IP`, o escanear desde la laptop. Después hay que
+ponerla en Chataigne (`Modules > OSC > OSC Output > remoteHost`), puerto 7000.
+Pasó el 2026-07-24: `10.195.40.198` → `10.134.166.149`.
+
+---
+
 ## LOS DOS SISTEMAS (separación total — leer primero)
 
 Son **dos sistemas independientes**. Ninguno depende del otro; si uno muere,

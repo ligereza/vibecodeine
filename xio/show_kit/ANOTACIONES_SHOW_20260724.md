@@ -229,3 +229,49 @@ Cronologia real del 24:
 4. Reactivar `battery_care` (`monitoring_active: false`).
 5. Regla de show: el telefono **enchufado y con carga real >60%** antes de empezar,
    con el cable asegurado (cinta) para que no se lo lleven por delante.
+
+---
+
+# Operacion: un gap y un logro
+
+## GAP: el server no se desplego solo, y hubo que buscar el comando
+
+Reportado por el usuario. Dos problemas encadenados con la bateria:
+
+1. **No arranco solo.** El telefono se apago por bateria a las 14:30 y rebooteo
+   ~16:16. **El server no vuelve solo tras un reboot**: es el hueco ya documentado
+   en `xio/HOTSPOT_SHOW_RUNBOOK.md` ("El unico hueco: reboot sin host") y en
+   `xio/PLAN_SERVICIOS_SIN_ROOT.md` ("El unico limite que sigue en pie: el REBOOT").
+   O sea: **la bateria agotada disparo exactamente el escenario previsto como peor caso.**
+   Cadena completa: bateria 0 -> reboot -> sin Shizuku -> sin autostart -> arranque a mano.
+
+2. **Hubo que buscar el comando.** El comando **si estaba documentado**, pero
+   enterrado como nota condicional al final del paso 1 del soundcheck:
+   `sh /sdcard/xio_termux/run_server.sh`.
+
+**Arreglado:** se subio al principio de `DIA_DEL_SHOW.md`, en un bloque propio
+"ARRANCAR EL SERVER DEL TELEFONO", junto con la URL de verificacion y el aviso
+de que la IP cambia sola en un venue con DHCP.
+
+**Pendiente de fondo (no resuelto):** el autostart real tras reboot. Ya hay plan
+escrito (Termux:Boot + Shizuku por wireless-debugging + MIUI autostart, ver
+`PLAN_SERVICIOS_SIN_ROOT.md` fila 3; y el `AccessibilityService` de
+`xio/hotspot_boot_service/`). Mientras no exista, **la defensa primaria es la
+energia**: con el telefono en fuente estable no hay reboot y el hueco no aparece.
+
+## LOGRO: la app se vio desde el escenario, en un iPhone ajeno
+
+- Se le dio la clave a un colega **desde el escenario** y **pudo ver la app en Safari**.
+- Es la primera vez que el panel FOH se consume **fuera de la laptop y fuera del
+  telefono**: otro dispositivo, otro sistema (iOS), otro navegador (Safari), y
+  operado por otra persona.
+- Lo que valida en concreto:
+  - El panel es **multi-cliente de verdad**, no un tablero de un solo espectador.
+  - Funciona en **WebKit/Safari**, no solo en Chromium.
+  - **Sirve al musico en escena**, no solo al FOH: quien esta tocando puede ver
+    el timecode y el tema actual sin depender de nadie.
+  - El acceso por clave a la red del telefono es una via practica en vivo.
+- **Consecuencia:** el panel deja de ser solo monitoreo de FOH y pasa a ser un
+  **monitor de escenario** valido. Vale la pena tratarlo como caso de uso propio
+  (que se ve bien en pantalla chica, que sobreviva a que la pantalla se apague,
+  y como se reparte el acceso sin dar la clave del hotspot a cualquiera).
