@@ -9,7 +9,9 @@ description: >
   real", o cuando estes a punto de negar la existencia de una feature/comando/opcion, o
   cuando un sub-agente reporte "no existe" sobre algo que el usuario afirma con version o
   fecha concreta. Destilada del incidente teleport (2026-07-10): Claude nego 3 veces que
-  `claude --teleport` existiera; era real (docs oficiales + `claude 2.1.206 --help`).
+  `claude --teleport` existiera; era real (docs oficiales + `claude 2.1.206 --help`), o
+  antes de declarar "hecho", "confirmado", "funciona", "OK" sin medicion adjunta
+  (verificar-antes-de-afirmar).
 ---
 
 # Verificar antes de negar: no afirmar "no existe" desde memoria vieja
@@ -80,3 +82,13 @@ Si descubriste que un dato tuyo estaba vencido y es probable que otro modelo lo 
 
 Fuente del incidente: sesion 2026-07-10 (alineacion plano PACKS + teleport). Ver la
 skill hermana `teleport-sesion-web` para el caso concreto que origino esta.
+
+## Simetrico: verificar antes de AFIRMAR
+
+El mismo protocolo aplica al falso POSITIVO. Antes de escribir "hecho",
+"funciona", "confirmado", "OK", "ya esta listo": adjunta la medicion
+(output de comando, test verde, tamano/timestamp de archivo, ojo del
+usuario). Sin medicion, la frase esta prohibida. Casos reales: render
+entregado como OK que salio celeste plano; "corte de bateria confirmado"
+que era falso. Un positivo no ganado es tan caro como un negativo no
+ganado.

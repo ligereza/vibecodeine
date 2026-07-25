@@ -15,6 +15,8 @@ el mismo rol corre en local (gemma3 / deepseek-coder); al volver la red, vuelve
 a la nube. Aca solo se define QUE trabajo y a QUE RITMO.
 """
 
+import os
+
 # verbo -> como se despacha. depto+modo ya traen los modelos correctos por rol.
 VERBOS = [
     {"verbo": "multiplicar", "depto": "research", "modo": "research", "fuente": "concepto"},
@@ -26,7 +28,10 @@ VERBOS = [
 # ritmo (throughput-first pero gentil con cupo/CPU). el cron dispara cada CADA_MIN;
 # GAP evita amontonar; offline el local es serial+lento -> mas espacio.
 CADA_MIN = 30
-MAX_DIA = 24            # tope de tareas autonomas por dia (evita quemar cupo)
+# 2026-07-23 (commit 6a2b147): tope fijo pa proteger cupo diario. Retiro: cuando
+# exista medicion real de consumo que permita tope dinamico. Overrideable por
+# env var MAK_MAX_DIA (default 24).
+MAX_DIA = int(os.environ.get("MAK_MAX_DIA", 24))  # tope de tareas autonomas por dia (evita quemar cupo)
 GAP_MIN = 22            # minimo entre tareas (online)
 GAP_MIN_OFFLINE = 50    # offline: mas espacio (el GPU hace una a la vez)
 LOAD_MAX = 3.0          # si load1 supera esto, el cuerpo esta ocupado: saltar
