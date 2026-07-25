@@ -39,7 +39,14 @@ ZONA_MUERTA = (
 # "394 green tests", "Suite >= 950 tests", "~950 tests"
 CIFRA_TESTS = re.compile(r"\b(\d{2,5})\s*(?:green\s+|verdes\s+)?tests?\b", re.I)
 # Marca de delta historico: no es una afirmacion sobre el total de la suite.
-DELTA = re.compile(r"[+]\s*\d{1,5}\s*(?:green\s+|verdes\s+)?tests?\b|\bnuev[oa]s?\b", re.I)
+# Incluye el caso "tests/test_x.py (N tests verdes)": una cifra pegada a un
+# modulo concreto cuenta ESE modulo, no la suite, y por eso no se pudre.
+DELTA = re.compile(
+    r"[+]\s*\d{1,5}\s*(?:green\s+|verdes\s+)?tests?\b"
+    r"|\bnuev[oa]s?\b"
+    r"|\btest_[A-Za-z0-9_]+\.py\b",
+    re.I,
+)
 # Palabras que convierten la cifra en una afirmacion sobre la suite entera.
 ALCANCE_SUITE = re.compile(r"\bsuite\b|green\s+tests?|tests?\s+verdes|todo\s+verde|0\s+rojos|exit\s+0", re.I)
 
@@ -83,14 +90,17 @@ def test_ningun_doc_vivo_afirma_el_total_de_la_suite():
     """El conteo de tests se mide, no se escribe. Deltas historicos si valen."""
     ofensas = []
     for p in _docs_vivos():
-        for n, linea in _lineas(p):
+        lineas = _lineas(p)
+        previa = ""
+        for n, linea in lineas:
             if not CIFRA_TESTS.search(linea):
+                previa = linea
                 continue
-            if DELTA.search(linea):
-                continue
-            if not ALCANCE_SUITE.search(linea):
-                continue
-            ofensas.append(f"{_rel(p)}:{n}: {linea.strip()}")
+            # La marca de delta puede venir en la linea anterior: la prosa del
+            # repo envuelve a ~75 columnas y parte "tests/test_x.py +\n18 tests".
+            if not DELTA.search(previa + " " + linea) and ALCANCE_SUITE.search(linea):
+                ofensas.append(f"{_rel(p)}:{n}: {linea.strip()}")
+            previa = linea
 
     assert not ofensas, (
         "Cifra del total de la suite escrita en prosa (se pudre sola).\n"
