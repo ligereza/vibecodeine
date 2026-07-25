@@ -293,6 +293,33 @@ def rd_datos_ingest(
             console.print(f"    {d}", markup=False)
 
 
+@rd_datos_app.command("informe")
+def rd_datos_informe(
+    salida: Path = typer.Option(
+        ..., "--salida", "-o", help="Ruta del .md de salida (ej. reportes/informe_2026-Q3.md)"
+    ),
+    trimestre: Optional[str] = typer.Option(
+        None, "--trimestre", "-t", help="Filtrar un trimestre: 'YYYY-Q1'..'YYYY-Q4' (default: todo el historico)"
+    ),
+    db: Optional[str] = typer.Option(None, "--db", help="Ruta a la DB (default data/rd_datos.db)"),
+):
+    """Genera el informe trimestral de datos de campo RD (markdown): 3 tablas
+    (tendencias por sustancia/mes, tasa de no-coincidencia por sustancia,
+    atenciones por tipo) precedidas por el disclaimer obligatorio de
+    resultados presuntivos + datos demo. Escribe el .md en --salida."""
+    from .rd.informe import informe_trimestral
+
+    try:
+        md = informe_trimestral(db_path=db, trimestre=trimestre)
+    except ValueError as e:
+        _err(str(e))
+        return
+    salida.parent.mkdir(parents=True, exist_ok=True)
+    salida.write_text(md, encoding="utf-8")
+    _section(f"flujo · rd-datos · informe{f' · {trimestre}' if trimestre else ''}")
+    _ok(f"Informe escrito: {salida}")
+
+
 @app.command("tapiz")
 def tapiz(modo: str = typer.Argument("demo", help="demo | stress | live")):
     """Ecosistema Tapiz<->Psicosis<->Fungi: pipeline generativo (tools/compete_engine.py).
