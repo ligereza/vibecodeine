@@ -41,7 +41,16 @@ interface VenueCat {
 interface Data {
   productoras: Productora[];
   venues: VenueCat[];
-  resumen?: { productoras: number; con_vector: number; confirmadas: number; venues: number };
+  resumen?: {
+    productoras: number;
+    con_vector: number;
+    confirmadas: number;
+    venues: number;
+    eventos?: number;
+    eventos_triangulables?: number;
+    eventos_sin_fecha_iso?: number;
+    eventos_sin_lineup?: number;
+  };
   excluido_a_proposito?: string[];
   error?: string;
 }
@@ -150,6 +159,10 @@ export default function RdDbPanel() {
               { k: 'Con logo vector', v: `${r.con_vector}/${r.productoras}` },
               { k: 'Confirmadas', v: `${r.confirmadas}/${r.productoras}` },
               { k: 'Venues', v: r.venues },
+              { k: 'Eventos', v: r.eventos ?? 0 },
+              { k: 'Triangulables', v: r.eventos_triangulables ?? 0 },
+              { k: 'Sin lineup', v: r.eventos_sin_lineup ?? 0 },
+              { k: 'Sin fecha ISO', v: r.eventos_sin_fecha_iso ?? 0 },
             ].map(c => (
               <div key={c.k} className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4">
                 <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">{c.k}</div>
