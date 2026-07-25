@@ -1,5 +1,9 @@
-// Mock data based on the real svg_index.json structure from vibecodeine.
-// In production this comes from `py scripts/generate_svg_index.py`.
+// Datos de respaldo con la forma real de svg_index.json.
+// Con backend, el indice real llega por GET /api/list-svg-works (ver la funcion
+// de fetch mas abajo y `_list_svg_works` en src/flujo/web/hub.py), que escanea
+// `svg/` en vivo. Estos datos solo se usan cuando no hay backend.
+// (Antes este comentario apuntaba a un generador en scripts/ que no existe;
+//  se corrigio 2026-07-25 al auditar referencias muertas de la app.)
 
 export type PieceType = 'etiqueta' | 'flyer' | 'pendon' | 'post-ig' | 'sticker' | 'logo' | 'rider' | 'cartelera' | 'stand';
 export type PieceArea = 'suplementos' | 'eventos' | 'comun';
