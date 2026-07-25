@@ -119,7 +119,8 @@ export default function ResolumePanel() {
             <div className="text-xs text-zinc-500 space-y-1">
               <p><strong className="text-zinc-400">Salidas:</strong> show_automation.xml + show_automation.experimental.noisette + osc_cues.csv</p>
               <p><strong className="text-zinc-400">Acciones OSC:</strong> /composition/layers/&#123;layer&#125;/clips/&#123;clip&#125;/connect</p>
-              <p><strong className="text-zinc-400">Spec:</strong> tools/resolume_chataigne_automator/SPEC.md</p>
+              <p><strong className="text-zinc-400">Motor:</strong> src/flujo/resolume/automator.py</p>
+              <p><strong className="text-zinc-400">Schema .noisette:</strong> validado contra fixtures reales de Chataigne 1.10.3</p>
             </div>
           </div>
         </div>

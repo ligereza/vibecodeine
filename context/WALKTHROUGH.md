@@ -2,7 +2,7 @@
 
 ## You just arrived. Read this first (3 min).
 
-Repo: flujo (vibecodeine), version 0.52.0 | date 2026-07-17T22:30 | assistant Cauce (Claude Code)
+Repo: flujo (vibecodeine), version 0.56.1 | date 2026-07-23 | assistant Cauce (Claude Code)
 
 **Status:** main stable, v0.52.0 live, suite green (394 tests + 1 skip), all systems passing CI.
 
@@ -10,8 +10,9 @@ Repo: flujo (vibecodeine), version 0.52.0 | date 2026-07-17T22:30 | assistant Ca
 
 1. **Read CLAUDE.md** (5 min) — rules, mission, team structure, when to escalate cost
 2. **Read context/LAST_HANDOFF.md** (5 min) — what's done, what's next, blockers
-3. **Identify your task** — if unclear, ask the user before diving
-4. **Check if this session already touched it** — grep git log, don't re-derive
+3. **Read context/DIRECTOR_CONTRACT.md** — conduct invariants I1-I8 for any director model
+4. **Identify your task** — if unclear, ask the user before diving
+5. **Check if this session already touched it** — grep git log, don't re-derive
 
 ### Right now
 
