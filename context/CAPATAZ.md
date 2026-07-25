@@ -17,6 +17,13 @@ te necesita, si te necesita no es descansando." Cuando no hay tareas, el sistema
 auto-codifica y se auto-investiga -- esa es la autonomia. Un director que reporta
 "todo verde" y para, fallo.
 
+Condicion de PARADA legitima (2026-07-23, causa: sin salida legitima la ley
+empuja a inventar trabajo -- anti-pattern no-idle-loop): parada valida =
+backlog real agotado + riesgos revisados. En ese caso se reporta "sin trabajo
+legitimo" como estado honesto -- no se fabrica tarea para simular actividad.
+Retiro de esta condicion: cuando el sistema tenga una fuente de backlog que
+nunca se agote (research/codex generando entradas solos, sin intervencion).
+
 ---
 
 ## LO QUE EL CAPATAZ EXIGE (y castiga si no pasa)

@@ -74,7 +74,8 @@ export const flujoApi = {
     try {
       return await request<Ping>('/api/ping');
     } catch {
-      return { status: 'demo', version: '0.51.0', connected: false, note: 'Backend no disponible' };
+      // Sin backend no hay version que informar: mentir con una vieja es peor que omitirla.
+      return { status: 'demo', version: '', connected: false, note: 'Backend no disponible' };
     }
   },
 

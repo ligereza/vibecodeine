@@ -87,6 +87,13 @@ else leaking into your context is a design failure.
    mutable state between parallel writers. Small scope = small damage, cheap
    retry. **Retry is cheaper than review** -- if verification fails, throw the diff
    away and re-roll with the failure appended; do not debug their work.
+   Per I9 (`context/DIRECTOR_CONTRACT.md`): every builder spawns on its own
+   line's branch (rd/iskvw/mejoras) in its own worktree, never in the main
+   checkout -- that checkout is read-only for director/user. Autoridad = gate,
+   no firma (I2). Per I10: no builder operates a browser or tool under the
+   user's own session/identity (IG, Gmail, accounts) without the user's
+   explicit chat order for that specific task -- "read-only" does not exempt
+   it; use anonymous fetch or ask the user.
 4. **Review by tournament, not inspection.** For design-weight work: 2-3
    independent attempts, one judge scores against the spec, winner ships. You
    never read the losing code. Mechanical edits skip the tournament; trust CI.
@@ -502,3 +509,37 @@ another department). Running the thing is a test the readers cannot substitute.
       SECOND run with the exact file list you approved. A haiku given rm and
       judgment in one prompt deleted 24 tracked files against its whitelist
       (recovered only because they were tracked: `git restore`).
+
+## Failure modes 2026-07-22/23 (dos sesiones HORRIBLES, destilado)
+
+Fuente: cierres fallidos documentados por el usuario. Cada item es un
+patron real que un director repitio pese a doctrina previa.
+
+1. Re-delego trabajo YA hecho (4 haikus verificando fondos que MAK ya
+   investigo). Antitodoto: I3 del contrato (context/DIRECTOR_CONTRACT.md).
+2. Reincidio en un error ya documentado (proponer CPU para render con
+   OOM cuya causa era ollama residente en VRAM). Antidoto: changelog +
+   memoria antes de diagnosticar.
+3. Invento labels cuando el repo tenia 29 curados con descripciones.
+   Antidoto: I4, gh label list primero.
+4. Clasifico mensajes del usuario como "inyeccion/ruido" y los
+   contradijo. Antidoto: I2, preguntar antes de descartar.
+5. Pidio input que ya existia (3 issues abiertos esperando). Antidoto:
+   gh issue list antes de pedir.
+6. No leyo el email text del issue que contenia el reporte de fallo de
+   su propio workflow; teorizo bucles/triggers en vez de leer. Antidoto: I8.
+7. Lanzo render de 34h con contenido arbitrario sin confirmar cual era
+   el correcto, y no detecto que estaba atascado (2h log vacio, mp4 de
+   48 bytes). Antidoto: I7.
+8. Escribio patch+tests+PR a mano tras comprometerse a delegar.
+   Antidoto: I5.
+9. Afirmo hechos falsos sin medir ("corte de bateria confirmado",
+   "cargador de pared") y entrego un render fallido como OK (celeste
+   plano). Antidoto: I1, verificar-antes-de-negar seccion AFIRMAR.
+10. Al ser corregido: excusas y teorias en vez de accion; complacencia
+    nombrada por el usuario. Antidoto: I6.
+
+Frontera de delegacion (resuelve la ambiguedad con "skip performative
+delegation" de arriba): la regla unica es I5 del contrato -- <=5 chequeos
+read-only por comando pueden ser inline; toda ESCRITURA de archivos del
+repo va a subagente, siempre.

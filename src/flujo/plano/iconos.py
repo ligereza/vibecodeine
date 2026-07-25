@@ -18,6 +18,7 @@ COLORES: Dict[str, str] = {
     "security": "#f97316", "testeo": "#f59e0b", "contencion": "#7c3aed",
     "food": "#a16207", "heating": "#ef4444", "trash": "#71717a",
     "contact": "#0ea5e9", "sensory": "#8b5cf6",
+    "sillon": "#0d9488", "toalla": "#0891b2",
 }
 
 ETIQUETAS: Dict[str, str] = {
@@ -26,6 +27,7 @@ ETIQUETAS: Dict[str, str] = {
     "security": "Seguridad", "testeo": "Testeo", "contencion": "Contencion",
     "food": "Alimentacion", "heating": "Calefaccion", "trash": "Basureros",
     "contact": "Produccion", "sensory": "Baja Estim.",
+    "sillon": "Sillon doble", "toalla": "Toalla Nova",
 }
 
 
@@ -143,6 +145,25 @@ def _glyph_heating(cx, cy, s, c, sw):
             f' fill="none" stroke="{c}" stroke-width="{sw}" stroke-linecap="round"/>')
 
 
+def _glyph_sillon(cx, cy, s, c, sw):
+    x = lambda n: _hx(cx, n, s); y = lambda n: _hy(cy, n, s)  # noqa: E731
+    return (f'<rect x="{x(24)}" y="{y(56)}" width="{18*s:.1f}" height="{62*s:.1f}" rx="{7*s:.1f}" fill="none" stroke="{c}" stroke-width="{sw}"/>'
+            f'<rect x="{x(118)}" y="{y(56)}" width="{18*s:.1f}" height="{62*s:.1f}" rx="{7*s:.1f}" fill="none" stroke="{c}" stroke-width="{sw}"/>'
+            f'<rect x="{x(40)}" y="{y(42)}" width="{80*s:.1f}" height="{26*s:.1f}" rx="{8*s:.1f}" fill="none" stroke="{c}" stroke-width="{sw}"/>'
+            f'<rect x="{x(40)}" y="{y(66)}" width="{80*s:.1f}" height="{42*s:.1f}" rx="{8*s:.1f}" fill="none" stroke="{c}" stroke-width="{sw}"/>'
+            f'<path d="M {x(80)} {y(66)} V {y(108)}" stroke="{c}" stroke-width="{sw}" stroke-linecap="round"/>')
+
+
+def _glyph_toalla(cx, cy, s, c, sw):
+    x = lambda n: _hx(cx, n, s); y = lambda n: _hy(cy, n, s)  # noqa: E731
+    return (f'<ellipse cx="{x(80)}" cy="{y(46)}" rx="{34*s:.1f}" ry="{14*s:.1f}" fill="none" stroke="{c}" stroke-width="{sw}"/>'
+            f'<ellipse cx="{x(80)}" cy="{y(46)}" rx="{13*s:.1f}" ry="{5*s:.1f}" fill="none" stroke="{c}" stroke-width="{sw}"/>'
+            f'<path d="M {x(46)} {y(46)} V {y(96)} M {x(114)} {y(46)} V {y(96)}" stroke="{c}" stroke-width="{sw}" stroke-linecap="round" fill="none"/>'
+            f'<path d="M {x(46)} {y(96)} C {x(46)} {y(104)} {x(114)} {y(104)} {x(114)} {y(96)}" stroke="{c}" stroke-width="{sw}" fill="none" stroke-linecap="round"/>'
+            f'<path d="M {x(100)} {y(98)} C {x(120)} {y(102)} {x(124)} {y(114)} {x(108)} {y(120)} C {x(94)} {y(126)} {x(98)} {y(134)} {x(114)} {y(138)}" '
+            f'stroke="{c}" stroke-width="{sw}" fill="none" stroke-linecap="round"/>')
+
+
 _GLYPHS: Dict[str, Callable[..., str]] = {
     "power": lambda cx, cy, s, c, sw: _glyph_power(cx, cy, s, c),
     "water": _glyph_water, "table": _glyph_table, "tent": _glyph_tent,
@@ -150,7 +171,7 @@ _GLYPHS: Dict[str, Callable[..., str]] = {
     "extinguisher": _glyph_extinguisher, "testeo": _glyph_testeo,
     "contencion": _glyph_contencion, "light": _glyph_light, "food": _glyph_food,
     "trash": _glyph_trash, "contact": _glyph_contact, "sensory": _glyph_sensory,
-    "heating": _glyph_heating,
+    "heating": _glyph_heating, "sillon": _glyph_sillon, "toalla": _glyph_toalla,
 }
 
 
