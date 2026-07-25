@@ -1,5 +1,5 @@
 """Tests offline para flujo.ig.download: parsing de shortcode y flujo de
-download_post con el mirror (imginn.com) mockeado. Nunca toca la red.
+download_post con parth-dl mockeado (_parth_download). Nunca toca la red.
 """
 
 from pathlib import Path
@@ -39,7 +39,7 @@ def test_extract_shortcode_url_vacia():
     assert extract_shortcode("") is None
 
 
-# ---------------- download_post (mirror mockeado) ----------------
+# ---------------- download_post (parth-dl mockeado via _parth_download) ----------------
 
 def test_download_post_shortcode_no_detectado():
     out = download_post("https://www.instagram.com/sundeckfiestas/", Path("no-importa"))
@@ -48,9 +48,23 @@ def test_download_post_shortcode_no_detectado():
 
 
 def test_download_post_exitoso_imagen(monkeypatch, tmp_path):
-    monkeypatch.setattr(ig_download, "_mirror_image_urls",
-                         lambda shortcode: ["https://imginn.com/img/abc.jpg"])
-    monkeypatch.setattr(ig_download, "_fetch", lambda url, referer=None: b"fake-jpg-bytes")
+    def fake_parth(url, shortcode, output_dir):
+        dst = output_dir / "input_ig.jpg"
+        dst.write_bytes(b"fake-jpg-bytes")
+        return {
+            "status": "downloaded",
+            "shortcode": shortcode,
+            "url": url,
+            "media_type": "image",
+            "files": [str(dst)],
+            "file_count": 1,
+            "caption": "hola",
+            "owner": "cuenta",
+            "date": "",
+            "is_video": False,
+        }
+
+    monkeypatch.setattr(ig_download, "_parth_download", fake_parth)
 
     out_dir = tmp_path / "out"
     out = download_post("https://www.instagram.com/p/ABC123/", out_dir)
@@ -63,11 +77,25 @@ def test_download_post_exitoso_imagen(monkeypatch, tmp_path):
 
 
 def test_download_post_exitoso_carousel(monkeypatch, tmp_path):
-    monkeypatch.setattr(
-        ig_download, "_mirror_image_urls",
-        lambda shortcode: ["https://imginn.com/a.jpg", "https://imginn.com/b.jpg"],
-    )
-    monkeypatch.setattr(ig_download, "_fetch", lambda url, referer=None: b"x")
+    def fake_parth(url, shortcode, output_dir):
+        dst1 = output_dir / "input_ig.jpg"
+        dst2 = output_dir / "input_ig_2.jpg"
+        dst1.write_bytes(b"x")
+        dst2.write_bytes(b"x")
+        return {
+            "status": "downloaded",
+            "shortcode": shortcode,
+            "url": url,
+            "media_type": "carousel",
+            "files": [str(dst1), str(dst2)],
+            "file_count": 2,
+            "caption": "",
+            "owner": "",
+            "date": "",
+            "is_video": False,
+        }
+
+    monkeypatch.setattr(ig_download, "_parth_download", fake_parth)
 
     out_dir = tmp_path / "out"
     out = download_post("https://www.instagram.com/p/CAROUSEL1/", out_dir)
@@ -86,9 +114,25 @@ def test_download_post_limpia_archivos_previos(monkeypatch, tmp_path):
     (out_dir / "input_ig_2.jpg").write_bytes(b"viejo2")
     (out_dir / "ig_caption.txt").write_text("caption vieja", encoding="utf-8")
 
-    monkeypatch.setattr(ig_download, "_mirror_image_urls",
-                         lambda shortcode: ["https://imginn.com/new.jpg"])
-    monkeypatch.setattr(ig_download, "_fetch", lambda url, referer=None: b"nuevo-bytes")
+    def fake_parth(url, shortcode, output_dir):
+        # a esta altura download_post ya debio limpiar los archivos previos
+        assert not (output_dir / "input_ig_2.jpg").exists()
+        dst = output_dir / "input_ig.jpg"
+        dst.write_bytes(b"nuevo-bytes")
+        return {
+            "status": "downloaded",
+            "shortcode": shortcode,
+            "url": url,
+            "media_type": "image",
+            "files": [str(dst)],
+            "file_count": 1,
+            "caption": "",
+            "owner": "",
+            "date": "",
+            "is_video": False,
+        }
+
+    monkeypatch.setattr(ig_download, "_parth_download", fake_parth)
 
     out = download_post("https://www.instagram.com/p/NUEVO1/", out_dir)
 
@@ -98,17 +142,20 @@ def test_download_post_limpia_archivos_previos(monkeypatch, tmp_path):
 
 
 def test_download_post_sin_archivos_es_manual_required(monkeypatch, tmp_path):
-    monkeypatch.setattr(ig_download, "_mirror_image_urls", lambda shortcode: [])
+    def boom(url, shortcode, output_dir):
+        raise RuntimeError("sin_archivos")
+
+    monkeypatch.setattr(ig_download, "_parth_download", boom)
     out = download_post("https://www.instagram.com/p/SINARCHIVOS/", tmp_path / "out", retries=0)
     assert out["status"] == "manual_required"
     assert out["reason"] == "sin_archivos"
 
 
 def test_download_post_rate_limit(monkeypatch, tmp_path):
-    def boom(shortcode):
+    def boom(url, shortcode, output_dir):
         raise RuntimeError("429 Too Many Requests")
 
-    monkeypatch.setattr(ig_download, "_mirror_image_urls", boom)
+    monkeypatch.setattr(ig_download, "_parth_download", boom)
     out = download_post("https://www.instagram.com/p/RATE1/", tmp_path / "out", retries=0)
     assert out["status"] == "manual_required"
     assert out["reason"] == "rate_limit"
@@ -117,16 +164,38 @@ def test_download_post_rate_limit(monkeypatch, tmp_path):
 def test_download_post_reintenta_y_luego_funciona(monkeypatch, tmp_path):
     calls = {"n": 0}
 
-    def flaky(shortcode):
+    def flaky(url, shortcode, output_dir):
         calls["n"] += 1
         if calls["n"] == 1:
             raise RuntimeError("post not found")
-        return ["https://imginn.com/ok.jpg"]
+        dst = output_dir / "input_ig.jpg"
+        dst.write_bytes(b"ok")
+        return {
+            "status": "downloaded",
+            "shortcode": shortcode,
+            "url": url,
+            "media_type": "image",
+            "files": [str(dst)],
+            "file_count": 1,
+            "caption": "",
+            "owner": "",
+            "date": "",
+            "is_video": False,
+        }
 
-    monkeypatch.setattr(ig_download, "_mirror_image_urls", flaky)
-    monkeypatch.setattr(ig_download, "_fetch", lambda url, referer=None: b"ok")
+    monkeypatch.setattr(ig_download, "_parth_download", flaky)
     monkeypatch.setattr("time.sleep", lambda *a, **k: None)
 
     out = download_post("https://www.instagram.com/p/RETRY1/", tmp_path / "out", retries=1)
     assert out["status"] == "downloaded"
     assert calls["n"] == 2
+
+
+def test_download_post_parth_dl_no_instalado(monkeypatch, tmp_path):
+    def boom(url, shortcode, output_dir):
+        raise ImportError("no module named parth_dl")
+
+    monkeypatch.setattr(ig_download, "_parth_download", boom)
+    out = download_post("https://www.instagram.com/p/NOPKG1/", tmp_path / "out", retries=2)
+    assert out["status"] == "manual_required"
+    assert out["reason"] == "parth_dl_no_instalado"
