@@ -1,9 +1,15 @@
-"""Descarga de posts de Instagram: via unica parth-dl.
+"""Descarga de posts de Instagram: parth-dl primaria, curl_cffi secundaria.
 
 imginn retirado 2026-07-25, causa: 403 Cloudflare permanente desde
 2026-07-22, resurreccion: mirror publico funcional verificado.
+
+curl_cffi NO se retira: es la via que hace funcionar la descarga en Linux
+(box MAK), donde parth-dl pega login-wall por fingerprint TLS -- verificado
+2026-07-23. Se restauro el 2026-07-25 tras haber sido podada por error junto
+con imginn.
 """
 
+import html as html_mod
 import re
 import time
 import urllib.request
@@ -70,8 +76,74 @@ def _parth_image_urls(data: dict) -> tuple[list[str], bool]:
     return urls, is_video
 
 
+def _meta_content(html: str, prop: str) -> str | None:
+    """Extrae content="..." de un <meta property="prop" .../>, en cualquier
+    orden de atributos (property antes o despues de content)."""
+    prop_re = re.escape(prop)
+    pattern = re.compile(
+        r'<meta\s+[^>]*?property=["\']' + prop_re + r'["\'][^>]*?content=["\']([^"\']+)["\']',
+        re.IGNORECASE,
+    )
+    m = pattern.search(html)
+    if not m:
+        pattern2 = re.compile(
+            r'<meta\s+[^>]*?content=["\']([^"\']+)["\'][^>]*?property=["\']' + prop_re + r'["\']',
+            re.IGNORECASE,
+        )
+        m = pattern2.search(html)
+    if not m:
+        return None
+    return html_mod.unescape(m.group(1))
+
+
+def _cffi_download(url: str, shortcode: str, output_dir: Path) -> dict | None:
+    """Via secundaria: curl_cffi con impersonate="chrome".
+
+    parth-dl (Linux) recibe login-wall de IG por fingerprint TLS; curl_cffi
+    imita el fingerprint TLS de Chrome y obtiene la pagina real (verificado
+    2026-07-23 en el box MAK Debian, https://www.instagram.com/p/DZdW4_vmY4l/).
+    Lazy import: el repo funciona sin la dep. None => no hay via secundaria.
+    """
+    try:
+        from curl_cffi import requests as cffi_requests
+    except ImportError:
+        return None
+    try:
+        session = cffi_requests.Session()
+        page = session.get(url, impersonate="chrome", timeout=30)
+        html = page.text
+
+        image_url = _meta_content(html, "og:image")
+        if not image_url:
+            return None
+        is_video = _meta_content(html, "og:video") is not None
+        caption = (_meta_content(html, "og:description")
+                   or _meta_content(html, "og:title") or "")
+
+        img_resp = session.get(image_url, impersonate="chrome", timeout=30)
+        dst = output_dir / "input_ig.jpg"
+        dst.write_bytes(img_resp.content)
+        if caption:
+            (output_dir / "ig_caption.txt").write_text(caption, encoding="utf-8")
+    except Exception:
+        return None
+
+    return {
+        "status": "downloaded",
+        "shortcode": shortcode,
+        "url": url,
+        "media_type": "video" if is_video else "image",
+        "files": [str(dst)],
+        "file_count": 1,
+        "caption": caption,
+        "owner": "",
+        "date": "",
+        "is_video": is_video,
+    }
+
+
 def _parth_download(url: str, shortcode: str, output_dir: Path) -> dict:
-    """Via unica: parth-dl (pip install parth-dl).
+    """Via primaria: parth-dl (pip install parth-dl).
 
     Lanza ImportError si el paquete no esta instalado, o la excepcion que
     corresponda (red, sin archivos) si la descarga falla. download_post()
@@ -105,12 +177,13 @@ def _parth_download(url: str, shortcode: str, output_dir: Path) -> dict:
 
 
 def download_post(url: str, output_dir: Path, retries: int = 1) -> dict:
-    """Descarga IG via parth-dl (unica via).
+    """Descarga IG: parth-dl primaria, curl_cffi (impersonate) secundaria.
 
-    parth-dl cubre posts, carruseles y video/reel (thumbnail como imagen).
-    Sin fallback: si parth-dl no esta instalado o falla, retorna
-    manual_required con la razon. instaloader murio (IG exige login
-    incluso anonimo).
+    parth-dl cubre posts, carruseles y video/reel (thumbnail como imagen),
+    pero en Linux puede pegar login-wall por fingerprint TLS -- ahi entra
+    curl_cffi (verificado 2026-07-23 en el box MAK). Si ninguna via sirve,
+    retorna manual_required con la razon. imginn quedo 403 Cloudflare
+    (retirado 2026-07-25); instaloader murio (IG exige login incluso anonimo).
     """
     url = canonicalizar_url(url)
     shortcode = extract_shortcode(url)
@@ -129,7 +202,8 @@ def download_post(url: str, output_dir: Path, retries: int = 1) -> dict:
         try:
             return _parth_download(url, shortcode, output_dir)
         except ImportError:
-            return {"status": "manual_required", "reason": "parth_dl_no_instalado", "url": url}
+            last_err = "parth_dl_no_instalado"
+            break
         except Exception as e:
             err = str(e)
             if "404" in err or "not found" in err.lower():
@@ -142,6 +216,10 @@ def download_post(url: str, output_dir: Path, retries: int = 1) -> dict:
             if attempt < retries:
                 time.sleep(2 + attempt * 3)
                 continue
-            return {"status": "manual_required", "reason": err, "url": url}
+            break
+
+    resultado = _cffi_download(url, shortcode, output_dir)
+    if resultado is not None:
+        return resultado
 
     return {"status": "manual_required", "reason": last_err, "url": url}
