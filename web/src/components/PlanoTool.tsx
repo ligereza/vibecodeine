@@ -4,7 +4,7 @@ import {
   Scan, Users, Moon, Home, Table, Armchair, Box, Zap,
   Lightbulb, Droplet, Thermometer, User, ShieldAlert, HeartPulse, Utensils,
   ChevronRight, ChevronLeft, Settings, Copy, Layers, Grid3X3, FileText,
-  Heart, AlertTriangle, Coffee, RefreshCw, Flame
+  Heart, AlertTriangle, Coffee, RefreshCw, Flame, Sofa, Cylinder
 } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { RD_PALETTE, RD_LOGO, calcCostos, formatCLP, proporcionMonto, ALL_PACKS, PACKS, type ExportTheme, type PackId } from '../rdBrand';
@@ -52,7 +52,9 @@ const ZONE_COLORS: Record<string, string> = {
   contact: '#0ea5e9',
   security: '#f97316',
   medical: '#dc2626',
-  food: '#a16207'
+  food: '#a16207',
+  sillon: '#0d9488',
+  toalla: '#0891b2'
 };
 
 const ZONE_LABELS: Record<string, string> = {
@@ -79,7 +81,9 @@ const ZONE_LABELS: Record<string, string> = {
   contact: 'Contacto Producción',
   security: 'Seguridad',
   medical: 'Equipo Médico',
-  food: 'Alimentación Equipo'
+  food: 'Alimentación Equipo',
+  sillon: 'Sillón doble',
+  toalla: 'Toalla Nova'
 };
 
 
@@ -106,6 +110,8 @@ const SYMBOL_CATALOG: SymbolSpec[] = [
   { key: 'testeo', label: 'Testeo', color: ZONE_COLORS.testeo, icon: 'AlertTriangle', x: 1000, y: 550, w: 200, h: 200 },
   { key: 'contencion', label: 'Contención', color: ZONE_COLORS.contencion, icon: 'Heart', x: 1900, y: 550, w: 200, h: 200 },
   { key: 'extinguisher', label: 'Extintor', color: ZONE_COLORS.extinguisher, icon: 'Flame', x: 2400, y: 900, w: 160, h: 160 },
+  { key: 'sillon', label: 'Sillón doble', color: ZONE_COLORS.sillon, icon: 'Sofa', x: 970, y: 700, w: 180, h: 140 },
+  { key: 'toalla', label: 'Toalla Nova', color: ZONE_COLORS.toalla, icon: 'Cylinder', x: 570, y: 1350, w: 160, h: 160 },
 ];
 
 const SYMBOL_BY_KEY = Object.fromEntries(SYMBOL_CATALOG.map(s => [s.key, s])) as Record<string, SymbolSpec>;
@@ -245,6 +251,8 @@ const renderRequirementIcon = (iconName: string, className = "w-4 h-4 text-zinc-
     case 'HeartPulse': return <HeartPulse className={className} />;
     case 'Utensils': return <Utensils className={className} />;
     case 'Flame': return <Flame className={className} />;
+    case 'Sofa': return <Sofa className={className} />;
+    case 'Cylinder': return <Cylinder className={className} />;
     default: return <Grid3X3 className={className} />;
   }
 };
@@ -662,6 +670,10 @@ export default function PlanoTool() {
         return <><circle cx="80" cy="80" r="58" fill={fill} fillOpacity="0.16" stroke={fill} strokeWidth="9"/><path d="M60 42 H100 M80 42 V82 L112 126 H48 L80 82" fill="none" stroke={fill} strokeWidth="9" strokeLinejoin="round"/></>;
       case 'contencion':
         return <><circle cx="80" cy="80" r="58" fill={fill} fillOpacity="0.16" stroke={fill} strokeWidth="9"/><path d="M80 120 C44 88 44 62 62 52 C74 46 80 56 80 64 C80 56 90 46 102 52 C120 62 116 90 80 120 Z" fill={fill}/></>;
+      case 'sillon':
+        return <><rect x="24" y="56" width="18" height="62" rx="7" fill="none" stroke={fill} strokeWidth="9"/><rect x="118" y="56" width="18" height="62" rx="7" fill="none" stroke={fill} strokeWidth="9"/><rect x="40" y="42" width="80" height="26" rx="8" fill="none" stroke={fill} strokeWidth="9"/><rect x="40" y="66" width="80" height="42" rx="8" fill="none" stroke={fill} strokeWidth="9"/><path d="M80 66 V108" stroke={fill} strokeWidth="9" strokeLinecap="round"/></>;
+      case 'toalla':
+        return <><ellipse cx="80" cy="46" rx="34" ry="14" fill="none" stroke={fill} strokeWidth="9"/><ellipse cx="80" cy="46" rx="13" ry="5" fill="none" stroke={fill} strokeWidth="9"/><path d="M46 46 V96 M114 46 V96" fill="none" stroke={fill} strokeWidth="9" strokeLinecap="round"/><path d="M46 96 C46 104 114 104 114 96" fill="none" stroke={fill} strokeWidth="9" strokeLinecap="round"/><path d="M100 98 C120 102 124 114 108 120 C94 126 98 134 114 138" fill="none" stroke={fill} strokeWidth="9" strokeLinecap="round"/></>;
       default:
         return <><circle cx="80" cy="80" r="54" fill="none" stroke={fill} strokeWidth="9"/><text x="80" y="92" textAnchor="middle" fontSize="42" fill={fill} fontWeight="black">?</text></>;
     }
@@ -809,6 +821,10 @@ export default function PlanoTool() {
         return `<circle cx="${cx}" cy="${cy}" r="${58*scale}" fill="${c}" fill-opacity="0.12" stroke="${c}" stroke-width="${sw}"/><path d="M ${x(60)} ${y(42)} H ${x(100)} M ${x(80)} ${y(42)} V ${y(82)} L ${x(112)} ${y(126)} H ${x(48)} L ${x(80)} ${y(82)}" fill="none" stroke="${c}" stroke-width="${sw}"/>`;
       case 'contencion':
         return `<circle cx="${cx}" cy="${cy}" r="${58*scale}" fill="${c}" fill-opacity="0.12" stroke="${c}" stroke-width="${sw}"/><path d="M ${x(80)} ${y(120)} C ${x(44)} ${y(88)} ${x(44)} ${y(62)} ${x(62)} ${y(52)} C ${x(74)} ${y(46)} ${x(80)} ${y(56)} ${x(80)} ${y(64)} C ${x(80)} ${y(56)} ${x(90)} ${y(46)} ${x(102)} ${y(52)} C ${x(120)} ${y(62)} ${x(116)} ${y(90)} ${x(80)} ${y(120)} Z" fill="${c}"/>`;
+      case 'sillon':
+        return `<rect x="${x(24)}" y="${y(56)}" width="${18*scale}" height="${62*scale}" rx="${7*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><rect x="${x(118)}" y="${y(56)}" width="${18*scale}" height="${62*scale}" rx="${7*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><rect x="${x(40)}" y="${y(42)}" width="${80*scale}" height="${26*scale}" rx="${8*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><rect x="${x(40)}" y="${y(66)}" width="${80*scale}" height="${42*scale}" rx="${8*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><path d="M ${x(80)} ${y(66)} V ${y(108)}" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/>`;
+      case 'toalla':
+        return `<ellipse cx="${x(80)}" cy="${y(46)}" rx="${34*scale}" ry="${14*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><ellipse cx="${x(80)}" cy="${y(46)}" rx="${13*scale}" ry="${5*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><path d="M ${x(46)} ${y(46)} V ${y(96)} M ${x(114)} ${y(46)} V ${y(96)}" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/><path d="M ${x(46)} ${y(96)} C ${x(46)} ${y(104)} ${x(114)} ${y(104)} ${x(114)} ${y(96)}" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/><path d="M ${x(100)} ${y(98)} C ${x(120)} ${y(102)} ${x(124)} ${y(114)} ${x(108)} ${y(120)} C ${x(94)} ${y(126)} ${x(98)} ${y(134)} ${x(114)} ${y(138)}" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/>`;
       default:
         return `<circle cx="${cx}" cy="${cy}" r="${48*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><text x="${cx}" y="${cy + 11*scale}" text-anchor="middle" font-size="${36*scale}" font-family="Arial" font-weight="900" fill="${c}">${escapeHtml(key.slice(0, 2).toUpperCase())}</text>`;
     }
