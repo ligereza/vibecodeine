@@ -169,7 +169,6 @@ tabla; archivo sin entrada = ratchet rojo.
 | `compete_engine.py` | VIVO | proyecto tapiz (cultura) | 2026-07 |
 | `context_pack.py` | REVISAR | AI Op Layer 2026-07-25, recien creado, consumidor pendiente | 2026-07-25 |
 | `contexto_repo.py` | VIVO | referenciado en `CLAUDE.md` ("Ahorro de contexto") | 2026-07-25 |
-| `crtdots.py` | REVISAR | cultura, decision de uso pendiente del usuario | sin fecha medida |
 | `enviar_a_mak.py` | VIVO | SendTo WIN -> MAK, probado e2e 2026-07-23 | 2026-07-23 |
 | `handoff.py` | VIVO | genera/actualiza `docs/handoffs/` + `context/LAST_HANDOFF.md` | 2026-07 |
 | `instalar_enviar_a_mak.py` | VIVO | instalador del SendTo de `enviar_a_mak.py` | 2026-07-23 |
