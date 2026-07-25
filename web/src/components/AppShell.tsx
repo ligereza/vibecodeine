@@ -17,6 +17,18 @@ interface Props {
 
 export default function AppShell({ view, onViewChange, children }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  // La version estuvo cableada a mano y quedo desactualizada semanas (decia
+  // 0.51.0 con el repo en 0.56.1). Se lee del backend; sin backend se omite en
+  // vez de mostrar un numero viejo.
+  const [version, setVersion] = useState<string>('');
+  useEffect(() => {
+    let vivo = true;
+    fetch('/api/ping')
+      .then(r => r.json())
+      .then(d => { if (vivo && d?.version) setVersion(String(d.version)); })
+      .catch(() => {});
+    return () => { vivo = false; };
+  }, []);
   const [mode, setMode] = useState<WorkspaceMode>(resolveInitialProfileId);
 
   const profile = getProfile(mode);
@@ -167,7 +179,7 @@ export default function AppShell({ view, onViewChange, children }: Props) {
             </span>
           </div>
           <div className="text-[10px] text-zinc-600 mt-1">
-            v0.51.0 | gratis/local
+            {version ? `v${version} | ` : ''}gratis/local
           </div>
           <div className="text-[10px] text-zinc-700">
             py -m flujo app

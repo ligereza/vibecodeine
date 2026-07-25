@@ -78,7 +78,7 @@ const ZONE_LABELS: Record<string, string> = {
   chairs: 'Sillas',
   trash: 'Basureros / Señalética',
   light: 'Iluminación',
-  contact: 'Contacto Producción',
+  contact: 'Producción',
   security: 'Seguridad',
   medical: 'Equipo Médico',
   food: 'Alimentación Equipo',
@@ -977,10 +977,7 @@ export default function PlanoTool() {
   .info-cell { border: 1px solid ${pal.borde}; border-left: 4px solid ${pal.accent}; border-radius: 6px; padding: 10px 12px; }
   .info-cell span { display: block; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.14em; color: ${pal.muted}; margin-bottom: 4px; }
   .info-cell strong { font-size: 14px; }
-  .contacts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .contacts .box { padding: 10px 14px; }
-  .fill { display: flex; gap: 8px; align-items: baseline; margin-top: 7px; font-size: 12px; color: ${pal.muted}; }
-  .fill i { flex: 1 1 auto; border-bottom: 1px solid ${pal.muted}; min-height: 14px; }
+  /* Los estilos .contacts/.fill se retiraron junto con el bloque de contactos. */
 </style>
 </head>
 <body>
@@ -1006,18 +1003,10 @@ export default function PlanoTool() {
         <p class="note" style="margin-bottom:10px">Los ítems marcados con <strong>X</strong> son requeridos a producción para este evento; los demás no aplican o los cubre RD.</p>
         <div class="grid">${checklistHtml}</div>
       </section>
-      <section class="contacts">
-        <div class="box">
-          <h3>Coordinación RD (día del evento)</h3>
-          <div class="fill">Nombre <i></i></div>
-          <div class="fill">Teléfono <i></i></div>
-        </div>
-        <div class="box">
-          <h3>Contacto Producción</h3>
-          <div class="fill">Nombre <i></i></div>
-          <div class="fill">Teléfono <i></i></div>
-        </div>
-      </section>
+      <!-- Sin bloque de contactos a proposito (2026-07-25, pedido del area de
+           eventos RD): el rider se presenta a productoras y no debe pedir ni
+           asociar nombres/telefonos de nadie. La coordinacion del dia se
+           acuerda por fuera del documento. No reponer sin orden expresa. -->
     </div>
   </main>
   <main class="page">

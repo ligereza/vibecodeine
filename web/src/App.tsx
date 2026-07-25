@@ -11,6 +11,7 @@ import EventsPanel from './components/EventsPanel';
 import ResolumePanel from './components/ResolumePanel';
 import MappingTool from './components/MappingTool';
 import CulturaPanel from './components/CulturaPanel';
+import ShowPanel from './components/ShowPanel';
 
 function initialView(): AppView {
   if (typeof window === 'undefined') return 'hub';
@@ -38,6 +39,7 @@ export default function App() {
       {view === 'events' && <EventsPanel />}
       {view === 'resolume' && <ResolumePanel />}
       {view === 'mapping' && <MappingTool />}
+      {view === 'show' && <ShowPanel />}
       {view === 'cultura' && <CulturaPanel />}
     </AppShell>
   );

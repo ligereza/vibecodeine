@@ -10,7 +10,7 @@
 
 import {
   LayoutDashboard, Boxes, ClipboardList, Calculator,
-  TerminalSquare, Map, Shapes, Heart, Music, Cpu, Radio, Lightbulb, Layers, Camera,
+  TerminalSquare, Map, Shapes, Heart, Music, Cpu, Radio, Lightbulb, Layers, Camera, Clapperboard,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -25,6 +25,7 @@ export type AppView =
   | 'events'
   | 'resolume'
   | 'mapping'
+  | 'show'
   | 'cultura';
 
 export type WorkspaceMode = 'rd' | 'studio' | 'cultura' | 'rd-plano';
@@ -91,6 +92,7 @@ const RD_NAV: NavItem[] = [
 const STUDIO_NAV: NavItem[] = [
   { view: 'hub', icon: LayoutDashboard, label: 'Dashboard', desc: 'Vista general Studio', edit: false },
   { view: 'visualizer', icon: Shapes, label: 'SVG Studio', desc: 'Galeria + editor visual', edit: true },
+  { view: 'show', icon: Clapperboard, label: 'Show kit', desc: 'Setlist, cues y registros de show', edit: true },
   { view: 'mapping', icon: Lightbulb, label: 'Mapping LED', desc: 'Rigging / pixel mapping', edit: true },
   { view: 'events', icon: Camera, label: 'Eventos / IG', desc: 'Comando flyer-auto', edit: false },
   { view: 'resolume', icon: Radio, label: 'Resolume / Chataigne', desc: 'Comando SMPTE/OSC', edit: false },

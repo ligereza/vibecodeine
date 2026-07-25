@@ -394,6 +394,18 @@ class HubRequestHandler(BaseHTTPRequestHandler):
         if path == "/api/agents-roles":
             self._send_json(self._get_agents_roles())
             return
+        if path == "/api/rd-db":
+            try:
+                self._send_json(self._get_rd_db())
+            except Exception as e:
+                self._send_json({"productoras": [], "venues": [], "error": str(e)}, status=200)
+            return
+        if path == "/api/show-kit":
+            try:
+                self._send_json(self._get_show_kit())
+            except Exception as e:
+                self._send_json({"setlist": [], "registros": [], "error": str(e)}, status=200)
+            return
         if path == "/manifest.json":
             self._serve_manifest()
             return
@@ -611,6 +623,203 @@ class HubRequestHandler(BaseHTTPRequestHandler):
 
     def _get_dashboard_summary(self) -> dict:
         return build_dashboard_summary(collect_items(self.root))
+
+    def _get_show_kit(self) -> dict:
+        """Show kit de xio: setlist con timecode, cues, duraciones y registros.
+
+        Es lo que se opera el dia del show (LTC -> Chataigne -> OSC -> panel FOH
+        del telefono). Este endpoint expone SOLO lo que vive en el repo: el
+        estado en vivo del telefono no pasa por aca -- el panel del hub ofrece
+        la IP para consultarlo directo, porque xio y el hub son sistemas
+        independientes a proposito (si uno muere, el otro sigue).
+        """
+        root = self.root
+        kit = root / "xio" / "show_kit"
+        setlist: list[dict] = []
+        duraciones: dict = {}
+
+        dur_f = kit / "setlist_durations_dref.json"
+        if dur_f.is_file():
+            try:
+                duraciones = json.loads(dur_f.read_text(encoding="utf-8"))
+            except Exception:
+                duraciones = {}
+        durs = duraciones.get("durations") or []
+
+        sl_f = kit / "setlist_festival_sentir.txt"
+        if sl_f.is_file():
+            try:
+                lineas = [l.strip() for l in sl_f.read_text(encoding="utf-8").splitlines() if l.strip()]
+            except Exception:
+                lineas = []
+            for i, linea in enumerate(lineas):
+                partes = linea.split(None, 1)
+                tc = partes[0] if partes else ""
+                tema = partes[1].strip() if len(partes) > 1 else linea
+                d = durs[i] if i < len(durs) else None
+                setlist.append({
+                    "indice": i,
+                    "timecode": tc,
+                    "tema": tema,
+                    "duracion_s": d if isinstance(d, (int, float)) else None,
+                })
+
+        cues: list[dict] = []
+        fps = None
+        cm_f = kit / "cue_map_dref.json"
+        if cm_f.is_file():
+            try:
+                cm = json.loads(cm_f.read_text(encoding="utf-8"))
+                fps = cm.get("fps")
+                for c in (cm.get("cues") or []):
+                    if isinstance(c, dict):
+                        cues.append({
+                            "timecode": str(c.get("timecode") or ""),
+                            "layer": c.get("layer"),
+                            "clip": c.get("clip"),
+                            "nota": str(c.get("nota") or c.get("tema") or ""),
+                        })
+            except Exception:
+                pass
+
+        # Registros de show ya guardados (evidencia de shows corridos).
+        registros: list[dict] = []
+        reg_dir = kit / "registros"
+        if reg_dir.is_dir():
+            for sub in sorted(reg_dir.iterdir()):
+                if not sub.is_dir():
+                    continue
+                archivos = []
+                for f in sorted(sub.glob("*.jsonl")):
+                    try:
+                        n = sum(1 for _ in f.open(encoding="utf-8", errors="replace"))
+                    except Exception:
+                        n = 0
+                    archivos.append({"nombre": f.name, "eventos": n, "kb": round(f.stat().st_size / 1024)})
+                registros.append({"show": sub.name, "archivos": archivos})
+
+        return {
+            "setlist": setlist,
+            "cues": cues,
+            "fps": fps,
+            "registros": registros,
+            "resumen": {
+                "temas": len(setlist),
+                "cues": len(cues),
+                "con_duracion": sum(1 for s in setlist if s["duracion_s"]),
+                "shows_registrados": len(registros),
+            },
+            "connected": True,
+        }
+
+    def _get_rd_db(self) -> dict:
+        """Base de datos RD (productoras + venues) para el panel del hub.
+
+        Fuente de verdad: `data/productoras/*.json` + `knowledge/venues/*.yaml`
+        (no `data/rd.db`, que es una proyeccion regenerable y gitignored).
+
+        REGLA DE PRIVACIDAD (2026-07-25, pedido del area de eventos RD): este
+        endpoint arma cada registro campo por campo con una ALLOWLIST explicita.
+        Nunca hace `**dict` del json de origen. Si manana alguien agrega un campo
+        de contacto al json, NO se filtra solo: hay que agregarlo aca a proposito.
+        Campos deliberadamente excluidos: `instagram` y cualquier dato de
+        contacto. Ver tambien PlanoTool.tsx (el rider no lleva bloque de
+        contactos).
+        """
+        root = self.root
+        prods: list[dict] = []
+        pdir = root / "data" / "productoras"
+        logos_dir = root / "knowledge" / "logos"
+        if pdir.is_dir():
+            for f in sorted(pdir.glob("*.json")):
+                try:
+                    d = json.loads(f.read_text(encoding="utf-8"))
+                except Exception:
+                    continue
+                slug = f.stem
+                # Estado del logo: el json referencia el id; el archivo real vive
+                # en knowledge/logos/. Se reporta lo que existe en disco, no lo
+                # que el json dice que deberia existir.
+                logos = d.get("logos") or []
+                estado_logo = "sin_ficha"
+                ref_yaml = ""
+                if logos and isinstance(logos[0], dict):
+                    estado_logo = str(logos[0].get("estado") or "sin_estado")
+                    ref_yaml = str(logos[0].get("knowledge") or "")
+                # El nombre del archivo de logo NO siempre es el slug: en disco
+                # conviven `grid_system.svg` (slug `gridsystem`) y
+                # `club_freedom.svg` (slug `freedom`). Resolver solo por slug
+                # reportaba "sin vector" sobre logos que si existian, y por eso
+                # el estado de la DB se veia peor de lo que era.
+                # Orden: 1) el yaml que referencia el propio json, 2) el slug,
+                # 3) comparacion normalizada (sin guiones ni guiones bajos).
+                cand: list[str] = []
+                if ref_yaml.endswith(".yaml"):
+                    cand.append(Path(ref_yaml).stem)
+                cand.append(slug)
+                tiene_vector = any((logos_dir / "vector" / f"{c}.svg").exists() for c in cand)
+                if not tiene_vector and (logos_dir / "vector").is_dir():
+                    norm = slug.replace("_", "").replace("-", "").lower()
+                    tiene_vector = any(
+                        v.stem.replace("_", "").replace("-", "").lower() == norm
+                        for v in (logos_dir / "vector").glob("*.svg")
+                    )
+                venues_raw = d.get("venues") or []
+                venues = [
+                    {
+                        "nombre": str(v.get("nombre") or ""),
+                        "estado": str(v.get("estado") or ""),
+                        "preferido": bool(v.get("preferido")),
+                    }
+                    for v in venues_raw
+                    if isinstance(v, dict)
+                ]
+                prods.append({
+                    "slug": slug,
+                    "nombre": str(d.get("name") or slug),
+                    "aliases": [str(a) for a in (d.get("aliases") or [])],
+                    "tipos": [str(t) for t in (d.get("tipos_fecha") or [])],
+                    "venues": venues,
+                    "logo": {"estado": estado_logo, "vector": tiene_vector},
+                    "confirmada": bool(str(d.get("confirmed") or "").strip()),
+                    "confirmacion": str(d.get("confirmed") or ""),
+                    "fuente": str(d.get("fuente_datos") or ""),
+                })
+
+        venues_cat: list[dict] = []
+        vdir = root / "knowledge" / "venues"
+        if vdir.is_dir():
+            for f in sorted(vdir.glob("*.yaml")):
+                try:
+                    raw = f.read_text(encoding="utf-8")
+                except Exception:
+                    continue
+                # Parseo minimo de las claves planas que interesan: evita
+                # depender de PyYAML en el proceso del servidor.
+                info = {"id": f.stem, "nombre": f.stem, "tipo": "", "escala": "", "capacidad": ""}
+                for line in raw.splitlines():
+                    if line.startswith("name:"):
+                        info["nombre"] = line.split(":", 1)[1].strip()
+                    elif line.startswith("type:"):
+                        info["tipo"] = line.split(":", 1)[1].strip()
+                    elif line.startswith("scale_default:"):
+                        info["escala"] = line.split(":", 1)[1].strip()
+                    elif line.startswith("capacity_bucket:"):
+                        info["capacidad"] = line.split(":", 1)[1].strip()
+                venues_cat.append(info)
+
+        return {
+            "productoras": prods,
+            "venues": venues_cat,
+            "resumen": {
+                "productoras": len(prods),
+                "con_vector": sum(1 for p in prods if p["logo"]["vector"]),
+                "confirmadas": sum(1 for p in prods if p["confirmada"]),
+                "venues": len(venues_cat),
+            },
+            "excluido_a_proposito": ["instagram", "contactos"],
+            "connected": True,
+        }
 
     def _get_agents_roles(self) -> dict:
         """Central definition of specialized agent roles for delegation system.
