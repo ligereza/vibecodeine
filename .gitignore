@@ -173,6 +173,11 @@ _pytest_out*.txt
 node_modules/
 .npm/
 web/dist/
+web/dist-plano/
+
+# Entregable standalone del Plano/Rider compartible (build generado, ver
+# web/package.json build:plano) -- nunca commitear el artefacto
+dist_compartir/
 
 # CSV personales de Azure (archivo del usuario, no del repo)
 sub-*-resource-providers-*.csv

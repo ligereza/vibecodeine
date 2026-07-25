@@ -72,10 +72,10 @@ export default function EventsPanel() {
             <h2 className="text-sm font-bold">Pipeline de Eventos</h2>
             <div className="grid gap-2 sm:grid-cols-2">
               {[
-                { step: '1', title: 'Descarga IG', desc: 'mirror publico (imginn.com) descarga la imagen del post' },
+                { step: '1', title: 'Descarga IG', desc: 'parth-dl baja la imagen del post (via primaria desde 2026-07-22)' },
                 { step: '2', title: 'Paleta', desc: 'Extrae colores dominantes automaticamente' },
-                { step: '3', title: 'Photoshop', desc: 'Droplet PS aplica plantilla (opcional)' },
-                { step: '4', title: 'Blender', desc: 'Render 3D del flyer (opcional)' },
+                { step: '3', title: 'Blender', desc: 'Render por nodos, sin Photoshop (opcional)' },
+                { step: '4', title: 'Entrega', desc: 'PNG a drive/ y cierre del issue' },
               ].map(item => (
                 <div key={item.step} className="rounded-lg bg-black/30 border border-zinc-800/40 p-3">
                   <div className="flex items-center gap-2 mb-1">
@@ -101,7 +101,8 @@ export default function EventsPanel() {
           <div className="rounded-xl border border-zinc-800/60 bg-zinc-900/40 p-4 space-y-3">
             <h3 className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">Notas</h3>
             <ul className="space-y-2 text-xs text-zinc-400">
-              <li>&#8226; Descarga via mirror publico (imginn.com), sin login. No usar yt-dlp ni instaloader (IG exige login incluso anonimo desde 2026-07).</li>
+              <li>&#8226; Descarga real = <strong>parth-dl</strong> (via primaria desde 2026-07-22). Video/reel usa el thumbnail; de un carrusel baja SOLO la primera imagen.</li>
+              <li>&#8226; imginn.com quedo en 403 por Cloudflare: solo fallback best-effort. instaloader NO funciona (IG exige login) y yt-dlp no se usa.</li>
               <li>&#8226; Las fotos descargadas se guardan en el job correspondiente.</li>
               <li>&#8226; El pipeline infiere productora, fecha y venue del post.</li>
               <li>&#8226; Los flyers generados se sirven en SVG Studio (Modo Studio).</li>
