@@ -2,7 +2,7 @@ import { type ReactNode, useEffect, useState } from 'react';
 import { Menu, X, ChevronRight } from 'lucide-react';
 import {
   type AppView, type WorkspaceMode,
-  VISIBLE_PROFILES, getProfile, resolveInitialProfileId, persistProfileId, isWorkspaceMode,
+  VISIBLE_PROFILES, getProfile, resolveInitialProfileId, persistProfileId, normalizeProfileId,
 } from '../data/profiles';
 
 // Re-exportados para no romper a quien importaba estos tipos desde AppShell
@@ -54,8 +54,8 @@ export default function AppShell({ view, onViewChange, children }: Props) {
   // solo por esa sesion de pestaña.
   useEffect(() => {
     try {
-      const fromUrl = new URLSearchParams(window.location.search).get('perfil');
-      if (isWorkspaceMode(fromUrl)) persistProfileId(fromUrl);
+      const fromUrl = normalizeProfileId(new URLSearchParams(window.location.search).get('perfil'));
+      if (fromUrl) persistProfileId(fromUrl);
     } catch {
       // location.search inaccesible -- no persistir nada
     }

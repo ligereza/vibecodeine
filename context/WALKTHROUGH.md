@@ -2,15 +2,17 @@
 
 ## You just arrived. Read this first (3 min).
 
-Repo: flujo (vibecodeine), version 0.56.1 | date 2026-07-23 | assistant Cauce (Claude Code)
+Repo: flujo (vibecodeine), version 0.56.1 | date 2026-07-25 | assistant Cauce (Claude Code)
 
-**Status:** main stable, v0.52.0 live, suite green (394 tests + 1 skip), all systems passing CI.
+**Status:** main stable, CI green. No figures in prose: the version comes from
+`pyproject.toml`, the test count from `py -m pytest tests/ -q`. Run them, don't
+trust this line.
 
 ### The 4-step entry
 
 1. **Read CLAUDE.md** (5 min) — rules, mission, team structure, when to escalate cost
 2. **Read context/LAST_HANDOFF.md** (5 min) — what's done, what's next, blockers
-3. **Read context/DIRECTOR_CONTRACT.md** — conduct invariants I1-I8 for any director model
+3. **Read context/DIRECTOR_CONTRACT.md** -- conduct invariants I1-I10 for any director model
 4. **Identify your task** — if unclear, ask the user before diving
 5. **Check if this session already touched it** — grep git log, don't re-derive
 
@@ -27,7 +29,7 @@ Repo: flujo (vibecodeine), version 0.56.1 | date 2026-07-23 | assistant Cauce (C
 - `CLAUDE.md` — operating layer, cost rules, team routing
 - `context/LAST_HANDOFF.md` — state + next + blockers
 - `src/flujo/` — core package (Python, CLI)
-- `tests/` — 394 green tests
+- `tests/` -- suite; the count is whatever `py -m pytest tests/ -q` reports
 - `cultura/` — now clean (9 leftovers moved out today)
 - `docs/` — DIRECTOR_PLAN.md archived (stale v0.49.0)
 
@@ -67,4 +69,5 @@ Commit + push. Brief and terse. No half-work.
 
 ---
 
-**Last updated:** 2026-07-17T22:30 (Cauce, autonomous cleanup session)
+**Last updated:** 2026-07-25 (Cauce -- stale figures removed, guarded by
+`tests/test_higiene_docs.py`)
