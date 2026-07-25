@@ -8,6 +8,7 @@
     "build": "vite build",
     "typecheck": "tsc --noEmit",
     "build:context": "vite build && node scripts/copy-context.mjs",
+    "build:plano": "vite build --config vite.plano.config.ts && node scripts/copy-plano-share.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

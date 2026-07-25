@@ -3,7 +3,7 @@
 Entrada obligatoria de todo agente. Reemplaza `AGENTS.md` + `docs/AI_OPERATING_LAYER.md`
 + `docs/AI_PROVIDER_ROUTING.md` + `docs/REPO_MAP.md` (en `_archive/`).
 
-**Quick entry (if you just arrived):** read `context/WALKTHROUGH.md` (3 min) before diving, then come back here.
+**Quick entry (if you just arrived):** read `context/WALKTHROUGH.md` (3 min) before diving, then come back here. Starting a NEW project/feature and need a fast inventory (CLI commands, tools/, models/APIs, infra, skills) without reading the whole repo: read `CAPACIDADES.md` (root).
 
 ## Identidad
 
@@ -62,10 +62,19 @@ DUDA == escala. cheap model ante la duda: sube, no adivines. tier caro = DECIDIR
 ```txt
 Sistema principal: Windows + Git Bash
 Comandos para usuario: py, no python
-CLAUDE.md y context/LAST_HANDOFF.md: ASCII-only
 Credenciales: nunca guardar tokens, cookies, claves, datos privados ni archivos reales sensibles
 Repo remoto: https://github.com/ligereza/vibecodeine/
 ```
+
+ASCII-only aplica SOLO a `CLAUDE.md` y a `context/*.md` operativos (LAST_HANDOFF.md
+y similares). Fecha: 2026-06-24. Causa: bugs de encoding Windows en esos archivos
+(commits v0.35.7-v0.35.9). Retiro: cuando un chequeo automatico de encoding en CI
+lo vuelva innecesario.
+
+Contraparte obligatoria: TODO entregable (`data/`, `docs/rd/`, informes, DB, piezas
+culturales) va en espanol correcto UTF-8. Mutilar diacriticos en un producto es
+defecto, no estilo (incidente 2026-07-23: "disenio"/"ano" colados en la DB para la
+directiva). ASCII-only NUNCA se extiende a entregables.
 
 ## Regla central
 
@@ -86,11 +95,26 @@ Salidas de agente (diagnosticos, snapshots, checks) van al scratchpad de
 sesion o, si valen, a `tools/` (reusable) / `_archive/` (historico) via PR.
 La raiz se ensucio 2 veces (commits 35058a3 y sesion 07-21); no repetir.
 
+Meta-regla (2026-07-23): toda regla operativa nueva lleva fecha, causa concreta
+y condicion de retiro. Regla sin las tres es candidata a poda en la proxima
+auditoria. Causa de esta meta-regla: la regla ASCII sobrevivio a su contexto
+y termino mutilando entregables. Retiro: cuando el repo tenga otro mecanismo
+de higiene de reglas.
+
 Main esta gobernado con `enforce_admins`: NADIE pushea directo (ni admin,
 ni agente con credencial del usuario). Todo cambio = rama + PR + CI verde.
 Los squash-merge conservan como autor al autor del PR (un merge de PR de
 MAK aparece en `git log` como commit de miskirabit: es normal, paso por el
 gate, no es push directo).
+
+Topologia de ramas (2026-07-23, ex-`portafolio` renombrada `iskvw`): main =
+SOLO lo perfecto que funciona, sin basura. Tres lineas de trabajo
+permanentes: `rd` (ONG/datos/becas), `iskvw` (curatoria/artistico),
+`mejoras` (repo/MAK/infra). MAK y agentes
+pushean o abren PR contra SU linea, nunca contra main. Feature nueva: nace
+de su linea y vuelve a su linea. Promocion linea -> main = PR curado por el
+director, CI verde obligatorio. Trabajo que no calza en una linea: escalar
+antes de inventar rama suelta.
 
 ## Como trabajar
 
@@ -123,6 +147,11 @@ py -m compileall src/flujo
 py -m pytest tests/ -q
 py -m flujo verify
 ```
+Salvedad de DOCTRINA (2026-07-20, ver `docs/handoffs/archive` PR #97): el
+veredicto de un PR es su matriz de CI (ubuntu+windows), NUNCA el pytest local
+en un worktree -- el editable install importa del checkout principal, y el
+worktree puede pasar testeando el codigo equivocado. Correlo local igual por
+higiene, pero no lo declares veredicto final; eso lo da CI.
 Chequeo de cobertura (opcional, no bloquea): `py -m pytest tests/ --cov=src/flujo --cov-report=term-missing:skip-covered`.
 Cantidad de tests no es senal de calidad. Test que solo verifica un mock/modulo
 falso (no comportamiento real) es basura -- podar al encontrarlo, no sumar
@@ -235,4 +264,4 @@ Contradiccion entre fuentes, orden: usuario -> este `CLAUDE.md` -> `context/LAST
 - `puente/OMEGA_MAP.md`: mapa Omega <-> flujo.
 - `puente/SEMILLAS.md`: semillas fechadas -- todo proyecto nuevo arranca de aca.
 - `PLAN_ANUAL_2026-2027.md`: crecimiento con Omega11 por trimestre.
-- skill `motor-omega`: protocolo para piezas nuevas.
+- skill `motor-omega`: 2 reglas pa piezas (Omega11 antes de exponer; fracaso no se reinterpreta).

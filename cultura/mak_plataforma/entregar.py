@@ -22,6 +22,10 @@ import os
 import subprocess
 import sys
 
+# Topologia de ramas (CLAUDE.md): main = solo lo perfecto; MAK entrega contra
+# la linea de trabajo "mejoras", nunca directo a main.
+RAMA_BASE = "mejoras"
+
 HOME = os.path.expanduser("~")
 CODEX_JOBS = os.path.join(HOME, "codex", "jobs.jsonl")
 PIEZAS_DIR = os.path.join(HOME, "codex", "piezas")
@@ -226,9 +230,9 @@ def entregar_una(job, dry_run):
             % (job_id, slug, dest_rel, branch, len(code)))
         return "dry"
 
-    # rama limpia desde origin/main (no importa en que rama este el clon)
+    # rama limpia desde origin/<RAMA_BASE> (no importa en que rama este el clon)
     git("fetch", "origin", "--quiet")
-    git("checkout", "-B", branch, "origin/main", "--quiet")
+    git("checkout", "-B", branch, "origin/%s" % RAMA_BASE, "--quiet")
     dest_abs = os.path.join(REPO, DEST_REL)
     os.makedirs(dest_abs, exist_ok=True)
     with open(os.path.join(REPO, dest_rel), "w", encoding="utf-8") as f:
@@ -242,7 +246,7 @@ def entregar_una(job, dry_run):
     git("commit", "-q", "-m", msg)
     git("push", "-u", "origin", branch, "--quiet")
     pr = subprocess.run(
-        ["gh", "pr", "create", "--draft", "--base", "main", "--head", branch,
+        ["gh", "pr", "create", "--draft", "--base", RAMA_BASE, "--head", branch,
          "--title", "feat(mak): utilidad autogenerada -- %s" % slug,
          "--body", ("Utilidad stdlib autogenerada por codex y cosechada por el "
                     "entregador MAK (job %s).\n\n**Pedido:** %s\n\n"
