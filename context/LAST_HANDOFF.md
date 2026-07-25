@@ -1,30 +1,63 @@
 # LAST HANDOFF -- estado para el proximo agente
 
-Version: 0.56.1 | Fecha: 2026-07-25 | Identidad: Cauce | sesion:
-orquestacion para el sucesor (director Fable, background job).
+Version: 0.56.1 | Fecha: 2026-07-25 (noche) | Identidad: Cauce | sesion:
+consolidacion del repo en 3 lineas + cierre de F0-F3 (director Opus).
 
-## Sesion 2026-07-25 (orquestacion) -- HECHO
+## Sesion 2026-07-25 (consolidacion) -- HECHO
 
-1. RESCATE: working tree de la sesion fallida commiteado y pusheado en
-   show/dref-preshow-20260724 (commit 69118fb): src/flujo/rd/eventos.py +
-   tests/test_rd_eventos.py (18 verdes) + hub.py (4 contadores en _get_rd_db)
-   + context/failed-handoff.md. Nada quedo suelto en el checkout.
-2. PLAN DE MISION: context/ORQUESTACION_SUCESOR.md (este PR) = entrada
-   obligatoria del proximo director. Fases F0-F5 + triage vivo/muerto con
-   evidencia + decisiones abiertas del usuario. Diagnostico central: el repo
-   tiene ratchets para AGREGAR y ninguno para RETIRAR herramientas; F5 crea el
-   mecanismo (registro VIVO/MUERTO en CAPACIDADES.md + regla de retiro).
-3. Leccion de la sesion: un inventario Haiku entrego 2 de 3 claims falsas
-   (spot-check con grep las refuto). Reporte barato = claim, no hecho.
+TOPOLOGIA: el repo queda en 3 lineas -- main / rd / iskvw. `mejoras` se
+fundio en main y se retira. Doctrina nueva (orden del usuario): main tiene
+TODO sin falta y las lineas BAJAN de main; una linea ya no es deposito.
 
-## PROXIMO (en orden, detalle en ORQUESTACION_SUCESOR.md)
+1. PROMOCIONES A MAIN, en orden y con CI verde ubuntu+windows:
+   - #303 rd -> main: DB de productoras, triangulacion, logos oficiales,
+     becas. 10 commits que main nunca habia recibido.
+   - #306 poda-crt -> mejoras: archiva los duplicados CRT sin consumidor.
+   - #305 mejoras -> main: mecanismo de retiro, poda de stack muerto con
+     certificado, docs/OPERACION_APP.md, handoff comprimido.
+   Merge commit (no squash) a proposito: deja las lineas como ancestros de
+   main, asi se ponen al dia por fast-forward sin reescribir historia.
+2. FIX QUE DESTRABO #305 (estaba roja en los dos OS): la poda de stack
+   muerto se llevo _cffi_download y _meta_content de src/flujo/ig/download.py
+   junto con imginn, sin estar en la lista MATAR del triage. curl_cffi es la
+   via que hace funcionar la descarga de IG en Linux -- o sea en el MAK --
+   donde parth-dl pega login-wall por fingerprint TLS (verificada 2026-07-23).
+   Ademas dejo tests/test_ig_cffi_fallback.py importando el simbolo borrado:
+   error de coleccion, suite entera interrumpida. Restaurada como via
+   secundaria; imginn sigue retirado.
+3. EL RATCHET F5 COBRO SU PRIMERA PIEZA SOLO: al reconciliar mejoras con main,
+   test_tools_en_registro rebato las 3 tools que trajo rd (triangular_fichas,
+   gen_dashboard_productoras, gen_presentacion_db) por no declarar consumidor.
+   Registradas en CAPACIDADES.md con consumidor medido por grep.
+4. HANDOFFS SIN PERDIDA: la compresion de mejoras no cubria el bloque del
+   2026-07-23 que trajo rd; anexado verbatim a docs/handoffs/archive/. Se
+   verifico linea por linea: solo quedan 2 lineas fuera y son una repeticion
+   de la topologia de ramas que ya vive en CLAUDE.md.
+5. RAMAS al dia: rd por fast-forward, iskvw por merge (conserva sus commits).
 
-F0 cerrar rescate (4 contadores RdDbPanel + PR contra rd) -> F1 poda con
-certificado de defuncion -> F2 docs/OPERACION_APP.md -> F3 division RD/ISKVW
-(decision usuario) -> F4 suplementos en app (decision usuario) -> F5 registro
-VIVO/MUERTO + regla de retiro.
+## ESTADO DE LAS FASES (context/ORQUESTACION_SUCESOR.md)
 
-BLOCKERS: 4 decisiones del usuario (seccion 3 del doc).
+F0 HECHA (eventos.py + tests + los 4 contadores de RdDbPanel ya en main).
+F1 HECHA (#306 + #305). F2 HECHA (docs/OPERACION_APP.md en main).
+F3 HECHA (division en 3 perfiles, PR aparte). F5 HECHA y probada en vivo.
+F4 (suplementos en la app) sigue esperando decision del usuario.
+
+## PENDIENTE CONCRETO PARA EL PROXIMO
+
+1. BORRAR 6 RAMAS YA CONSOLIDADAS -- no se pudo desde este entorno: el proxy
+   git devuelve 403 en push --delete y el MCP de GitHub no expone borrado de
+   ramas. Verificado antes de proponerlo: NINGUNA aporta una ruta que no
+   exista en main; lo que difiere son versiones mas viejas. Comando:
+     git push origin --delete mejoras poda-crt-20260725 \
+       poda-stack-muerto-20260725 manual-operacion-app-20260725 \
+       worktree-orquestacion-sucesor show/dref-preshow-20260724
+2. Actualizar la topologia de CLAUDE.md: hoy declara 3 lineas permanentes
+   (rd/iskvw/mejoras); son 2 (rd/iskvw) mas main.
+3. F4: forma de suplementos en la app (panel lectura+validate, o tarjeta
+   minima). Decision del usuario.
+4. Decisiones abiertas que siguen abiertas: cotizacion untracked en
+   projects/piezas_vectoriales/, y purga de los MB gordos (39MB
+   contraportadas dark; 262MB jobs si esta trackeado).
 
 ---
 
