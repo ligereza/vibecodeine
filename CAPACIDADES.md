@@ -33,7 +33,6 @@ CLI real (`py -m flujo --help`, v0.56.1), comandos principales:
 | `compete_engine.py` | Pipeline monolitico del ecosistema Tapiz<->Psicosis<->Fungi. |
 | `context_pack.py` | Empaqueta contexto minimo (archivos+fence) para pasar a Aider/Qwen/Claude, bajo consumo. |
 | `contexto_repo.py` | Digest mecanico del repo (0 tokens): arbol + archivos clave. `map` / `task "<keywords>"`. |
-| `crtdots.py` | Convertidor CRT phosphor dot-scanline / Rutt-Etra de imagenes. |
 | `enviar_a_mak.py` | Puente WIN->MAK: envia carpeta a `~/curatoria_inbox/` via tar\|ssh, verifica conteo/bytes. |
 | `handoff.py` | Borrador de cierre de sesion desde git+pyproject (no sobreescribe). |
 | `instalar_enviar_a_mak.py` | Instala integracion "Enviar a" -> MAK curatoria en el explorador de Windows. |
