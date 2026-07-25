@@ -13,12 +13,15 @@ context/LAST_HANDOFF.md. NO re-explorar el repo entero.
 
 - El rol ya esta codificado: skill `godspeed` + context/DIRECTOR_CONTRACT.md
   I1-I10 (se inyectan solos). NO crear otra skill de rol: seria duplicado.
-- Gasto: el director (Opus/Fable) DECIDE, ESPECIFICA y VERIFICA. Sonnet edita
-  con spec cerrada. Haiku lee volumen. Regla dura: TODO reporte de modelo
-  barato es un claim, no un hecho -- spot-checkear con grep/git los que cargan
-  peso. Caso medido 2026-07-25: de 3 claims de un inventario Haiku, 2 refutadas
-  ("_archive vivo con 45 refs" eran menciones en docs, 0 imports; "SSE
-  referenciado en UI" era falso, 0 refs en web/src).
+- Gasto: el director (Opus/Fable) DECIDE, ESPECIFICA y VERIFICA. Sonnet hace
+  TODO el trabajo -- lectura de volumen y edicion con spec cerrada. Haiku NO
+  se usa en este repo (orden del usuario 2026-07-25; causa: un inventario
+  Haiku entrego 3 claims falsas de 3 verificadas -- "_archive vivo con 45
+  refs" eran menciones en docs con 0 imports, "SSE referenciado en la UI" era
+  falso con 0 refs en web/src, y "tools/render_flyer_mak.py" directamente no
+  existe; retiro: si un modelo chico demuestra precision medida en este
+  repo). Regla que sobrevive: TODO reporte de subagente es un claim, no un
+  hecho -- spot-checkear con grep/git los que cargan peso.
 - Prohibiciones vigentes (palabra del usuario, context/failed-handoff.md):
   1. Estructura, no tareas: se construye la maquina, el usuario la dispara.
   2. Nada a medias: no se abre un frente sin cerrar el anterior.
@@ -28,6 +31,9 @@ context/LAST_HANDOFF.md. NO re-explorar el repo entero.
   6. Subagentes construyen SOLO con spec cerrada; nunca "construi esta
      feature" fire-and-forget (ya fallo 2 veces).
   7. Nada de Instagram con identidad/sesion del usuario (I10).
+  8. Ruteo: subagentes SIEMPRE con `model` explicito en la llamada. Omitirlo
+     hereda el modelo del director y quema cuota en volumen (error cometido
+     y corregido por el usuario el 2026-07-25).
 
 ## 1. Fases en orden (una fase = un PR con CI verde antes de la siguiente)
 
