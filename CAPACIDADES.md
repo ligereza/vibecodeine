@@ -177,6 +177,7 @@ tabla; archivo sin entrada = ratchet rojo.
 | `system_map.py` | VIVO | mapa mecanico del repo (soporte de `contexto_repo.py`) | 2026-07 |
 | `tapiz_live_loop.py` | REVISAR | cultura, decision de uso pendiente del usuario | sin fecha medida |
 | `tapiz_telemetry.py` | REVISAR | cultura, decision de uso pendiente del usuario | sin fecha medida |
+| `tilde_meter.py` | VIVO | `projects/cultura/tilde_paridad.py` + `tests/test_tilde_meter.py` + `tests/test_tilde_render.py`; area Cultura de CLAUDE.md | 2026-07-25 (movido de desktop/ en la poda de stack muerto) |
 | `token_budget.py` | REVISAR | AI Op Layer 2026-07-25, recien creado, consumidor pendiente | 2026-07-25 |
 | `verify_all.py` | REVISAR | AI Op Layer 2026-07-25, recien creado, consumidor pendiente | 2026-07-25 |
 
