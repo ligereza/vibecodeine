@@ -3,7 +3,13 @@
 Entrada obligatoria de todo agente. Reemplaza `AGENTS.md` + `docs/AI_OPERATING_LAYER.md`
 + `docs/AI_PROVIDER_ROUTING.md` + `docs/REPO_MAP.md` (en `_archive/`).
 
-**Quick entry (if you just arrived):** read `context/WALKTHROUGH.md` (3 min) before diving, then come back here. Starting a NEW project/feature and need a fast inventory (CLI commands, tools/, models/APIs, infra, skills) without reading the whole repo: read `CAPACIDADES.md` (root).
+**Quick entry (if you just arrived):** read `MAPA.md` (root) FIRST -- que es el
+repo, que hace cada comando, que hay que configurar y cuales son las 4 zonas.
+Es la unica entrada que no envejece sola: su tabla de comandos se genera desde
+el CLI (`py tools/gen_mapa_comandos.py`) y `tests/test_mapa_completo.py` la
+mantiene honesta. Despues volve aca para las reglas de conducta.
+Inventario del stack para arrancar algo nuevo (modelos/APIs, infra, skills):
+`CAPACIDADES.md`. Estado de la ultima sesion: `context/LAST_HANDOFF.md`.
 
 ## Identidad
 
@@ -107,14 +113,22 @@ Los squash-merge conservan como autor al autor del PR (un merge de PR de
 MAK aparece en `git log` como commit de miskirabit: es normal, paso por el
 gate, no es push directo).
 
-Topologia de ramas (2026-07-23, ex-`portafolio` renombrada `iskvw`): main =
-SOLO lo perfecto que funciona, sin basura. Tres lineas de trabajo
-permanentes: `rd` (ONG/datos/becas), `iskvw` (curatoria/artistico),
-`mejoras` (repo/MAK/infra). MAK y agentes
-pushean o abren PR contra SU linea, nunca contra main. Feature nueva: nace
-de su linea y vuelve a su linea. Promocion linea -> main = PR curado por el
-director, CI verde obligatorio. Trabajo que no calza en una linea: escalar
-antes de inventar rama suelta.
+Topologia de ramas (2026-07-25, orden del usuario; reemplaza la de 07-23 que
+declaraba 4 lineas): el repo tiene TRES ramas y ninguna mas.
+
+- `main` = TODO sin falta. Es la version completa; las lineas BAJAN de main.
+- `rd` = ONG / datos / becas.
+- `iskvw` = curatoria / artistico / obra (ex-`portafolio`, renombrada 07-23).
+
+`mejoras` se fundio en main y se retira: una linea de infra separada volvia a
+convertir main en un subconjunto, que es el problema que esta topologia
+arregla. Trabajo de repo/infra nace de main y vuelve a main.
+
+MAK y agentes pushean o abren PR contra SU linea, nunca contra main. Feature
+nueva: nace de su linea y vuelve a su linea. Promocion linea -> main = PR
+curado por el director, CI verde obligatorio. Poner una linea al dia:
+`git merge origin/main` (nunca reescribir historia). Trabajo que no calza en
+una linea: escalar antes de inventar rama suelta.
 
 ## Como trabajar
 

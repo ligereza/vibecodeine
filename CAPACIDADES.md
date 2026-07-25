@@ -34,6 +34,7 @@ CLI real (`py -m flujo --help`, v0.56.1), comandos principales:
 | `context_pack.py` | Empaqueta contexto minimo (archivos+fence) para pasar a Aider/Qwen/Claude, bajo consumo. |
 | `contexto_repo.py` | Digest mecanico del repo (0 tokens): arbol + archivos clave. `map` / `task "<keywords>"`. |
 | `enviar_a_mak.py` | Puente WIN->MAK: envia carpeta a `~/curatoria_inbox/` via tar\|ssh, verifica conteo/bytes. |
+| `gen_mapa_comandos.py` | Genera la tabla de comandos de `MAPA.md` desde el `--help` real del CLI (`--check` falla si quedo desfasado). |
 | `handoff.py` | Borrador de cierre de sesion desde git+pyproject (no sobreescribe). |
 | `instalar_enviar_a_mak.py` | Instala integracion "Enviar a" -> MAK curatoria en el explorador de Windows. |
 | `render_video_rd.py` | Mete un mp4 (reel) en `RD.paravideo.blend` y exporta H264 headless. |
@@ -172,6 +173,7 @@ tabla; archivo sin entrada = ratchet rojo.
 | `gen_dashboard_productoras.py` | VIVO | genera `db_productoras.html`; documentado en `docs/rd/DB_PRODUCTORAS_ESTADO.md`; consume la salida de `triangular_fichas.py` | 2026-07-25 (llega a main con la promocion de `rd`, PR #303) |
 | `gen_presentacion_db.py` | VIVO | genera `docs/rd/presentacion_db.html`, la pieza formal para la directiva RD; documentado en `docs/rd/DB_PRODUCTORAS_ESTADO.md` | 2026-07-25 (llega a main con la promocion de `rd`, PR #303) |
 | `triangular_fichas.py` | VIVO | triangula `fichas.jsonl` de MAK en eventos + productoras candidatas; consumido por `gen_dashboard_productoras.py` y `gen_presentacion_db.py` | 2026-07-25 (llega a main con la promocion de `rd`, PR #303) |
+| `gen_mapa_comandos.py` | VIVO | genera el bloque de comandos de `MAPA.md`; `tests/test_mapa_completo.py` exige que el mapa cubra todo el CLI | 2026-07-25 |
 | `handoff.py` | VIVO | genera/actualiza `docs/handoffs/` + `context/LAST_HANDOFF.md` | 2026-07 |
 | `instalar_enviar_a_mak.py` | VIVO | instalador del SendTo de `enviar_a_mak.py` | 2026-07-23 |
 | `render_video_rd.py` | VIVO | pipeline video RD, 4 ejes, semana 2026-07-21 | 2026-07-21 |

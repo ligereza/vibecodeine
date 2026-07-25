@@ -1376,7 +1376,7 @@ def privacy_check(
 @eventos_app.command("flyer-auto")
 def eventos_flyer_auto(
     url: str = typer.Argument(..., help="Instagram /p/ or /reel/ URL"),
-    base_dir: Optional[Path] = typer.Option(None, "--base-dir", help="Carpeta base automatizacion (default Windows: C:\\rd\\AUTOMATIZACION)"),
+    base_dir: Optional[Path] = typer.Option(None, "--base-dir", help="Carpeta base de automatizacion. Default: $FLUJO_EVENTOS_AUTOMATIZACION_DIR (ver MAPA.md)"),
     run_droplet: bool = typer.Option(False, "--run-droplet", help="Autorizar apertura de Droplet_Flyer.exe con historia.psd"),
     open_blender: bool = typer.Option(False, "--open-blender", help="Abrir cartelera.blend en Blender al final"),
     render_blender: bool = typer.Option(False, "--render-blender", help="Renderizar frame 1 de cartelera.blend a preview_cartelera.png"),
