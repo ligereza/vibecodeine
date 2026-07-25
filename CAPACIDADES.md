@@ -169,6 +169,9 @@ tabla; archivo sin entrada = ratchet rojo.
 | `context_pack.py` | REVISAR | AI Op Layer 2026-07-25, recien creado, consumidor pendiente | 2026-07-25 |
 | `contexto_repo.py` | VIVO | referenciado en `CLAUDE.md` ("Ahorro de contexto") | 2026-07-25 |
 | `enviar_a_mak.py` | VIVO | SendTo WIN -> MAK, probado e2e 2026-07-23 | 2026-07-23 |
+| `gen_dashboard_productoras.py` | VIVO | genera `db_productoras.html`; documentado en `docs/rd/DB_PRODUCTORAS_ESTADO.md`; consume la salida de `triangular_fichas.py` | 2026-07-25 (llega a main con la promocion de `rd`, PR #303) |
+| `gen_presentacion_db.py` | VIVO | genera `docs/rd/presentacion_db.html`, la pieza formal para la directiva RD; documentado en `docs/rd/DB_PRODUCTORAS_ESTADO.md` | 2026-07-25 (llega a main con la promocion de `rd`, PR #303) |
+| `triangular_fichas.py` | VIVO | triangula `fichas.jsonl` de MAK en eventos + productoras candidatas; consumido por `gen_dashboard_productoras.py` y `gen_presentacion_db.py` | 2026-07-25 (llega a main con la promocion de `rd`, PR #303) |
 | `handoff.py` | VIVO | genera/actualiza `docs/handoffs/` + `context/LAST_HANDOFF.md` | 2026-07 |
 | `instalar_enviar_a_mak.py` | VIVO | instalador del SendTo de `enviar_a_mak.py` | 2026-07-23 |
 | `render_video_rd.py` | VIVO | pipeline video RD, 4 ejes, semana 2026-07-21 | 2026-07-21 |
