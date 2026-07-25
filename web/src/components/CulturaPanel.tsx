@@ -61,7 +61,7 @@ function EcosistemaTresD() {
       </div>
       <p className="mb-3 text-[10px] leading-relaxed text-zinc-600">
         Vista Three.js del organismo tapiz: lee la telemetria real de
-        <span className="text-amber-400/80"> tools/dist/system_status.json</span> y
+        <span className="text-amber-400/80"> tools/tapiz_telemetry.py</span> y
         la levanta como escena navegable. La escena carga Three.js desde CDN,
         asi que necesita internet; el hub sigue funcionando offline si no la abres.
       </p>

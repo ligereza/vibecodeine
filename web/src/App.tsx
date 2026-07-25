@@ -11,6 +11,9 @@ import EventsPanel from './components/EventsPanel';
 import ResolumePanel from './components/ResolumePanel';
 import MappingTool from './components/MappingTool';
 import CulturaPanel from './components/CulturaPanel';
+import ShowPanel from './components/ShowPanel';
+import AutomatizacionesPanel from './components/AutomatizacionesPanel';
+import RdDbPanel from './components/RdDbPanel';
 
 function initialView(): AppView {
   if (typeof window === 'undefined') return 'hub';
@@ -38,6 +41,9 @@ export default function App() {
       {view === 'events' && <EventsPanel />}
       {view === 'resolume' && <ResolumePanel />}
       {view === 'mapping' && <MappingTool />}
+      {view === 'show' && <ShowPanel />}
+      {view === 'automatizaciones' && <AutomatizacionesPanel />}
+      {view === 'rd-db' && <RdDbPanel />}
       {view === 'cultura' && <CulturaPanel />}
     </AppShell>
   );

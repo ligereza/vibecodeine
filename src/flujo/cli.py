@@ -2038,6 +2038,7 @@ def serve(
     host: str = typer.Option("127.0.0.1", "--host", help="host (0.0.0.0 para red local)"),
     hub: bool = typer.Option(True, "--hub/--legacy", help="usar el nuevo workspace HTML (flujo_hub.html + visualizadores)"),
     desktop: bool = typer.Option(False, "--desktop", help="abrir en ventana nativa con pywebview (si está instalado)"),
+    procesar_pendientes: bool = typer.Option(False, "--procesar-pendientes", help="al arrancar, avanzar los jobs de flyer pendientes (modifica jobs: por eso no es el default)"),
 ):
     """Iniciar el workspace local (la nueva app profesional).
 
@@ -2057,7 +2058,7 @@ def serve(
             console.print(f"[cyan]flujo workspace (hub) en http://{host}:{port}[/]")
             console.print(f"[dim]Repo context: {r}[/dim]")
             console.print("[dim]APIs reales + drag-drop en hub + auto-port + tray opcional.[/dim]")
-            launch(host=host, port=port, desktop=desktop, root=r)
+            launch(host=host, port=port, desktop=desktop, root=r, procesar_pendientes=procesar_pendientes)
             return
         except Exception as e:
             _warn(f"No se pudo iniciar el workspace nuevo ({e}).")
@@ -2090,9 +2091,10 @@ def app_alias(
     port: int = typer.Option(8765, "--port", "-p"),
     host: str = typer.Option("127.0.0.1", "--host"),
     desktop: bool = typer.Option(False, "--desktop"),
+    procesar_pendientes: bool = typer.Option(False, "--procesar-pendientes", help="al arrancar, avanzar los jobs de flyer pendientes"),
 ):
     """Alias de serve. Lanza la nueva app (hub pro workspace recomendado como entrada diaria). Real backend + parse/create jobs live cuando activo."""
-    serve(port=port, host=host, hub=True, desktop=desktop)
+    serve(port=port, host=host, hub=True, desktop=desktop, procesar_pendientes=procesar_pendientes)
 
 
 # ============================================================
