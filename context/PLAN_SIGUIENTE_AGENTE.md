@@ -13,7 +13,7 @@ repair systemd). MANIFIESTO 6/11 PIEZAS CERRADAS.
 - `CLAUDE.md` y `context/*.md`: ASCII-only.
 
 ## FUERTE (verificado 2026-07-18)
-- Suite VERDE 899 tests, compileall OK, CI matrix ubuntu+windows strict.
+- Suite VERDE (0 rojos; conteo = `py -m pytest tests/ -q`), compileall OK, CI matrix ubuntu+windows strict.
 - xio on-device: server Termux+Shizuku VIVO, 23+ plugins, showcontrol desplegado.
 - MAK dual-dept operativo: research+codex stack compartido, WIN fallback, pausa-en-error,
   systemd mak-codex reparado (enabled+EnvironmentFile opcional+WorkingDirectory fijo).
