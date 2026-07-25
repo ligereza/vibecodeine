@@ -401,6 +401,28 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 self._send_json({"productoras": [], "venues": [], "error": str(e)}, status=200)
             return
+        if path == "/api/rd-db/logo":
+            # Sirve el logo de una productora para previsualizarlo en el panel.
+            slug = (parse_qs(urlparse(self.path).query).get("slug") or [""])[0].strip().lower()
+            if not re.fullmatch(r"[a-z0-9_-]{1,64}", slug or ""):
+                self.send_error(400, "slug invalido")
+                return
+            base = self.root / "knowledge" / "logos"
+            tipos = {".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg",
+                     ".jpeg": "image/jpeg", ".webp": "image/webp"}
+            # Preferir el vector si existe; si no, la descarga cruda.
+            for cand in [base / "vector" / f"{slug}.svg", *sorted((base / "descargas").glob(f"{slug}.*"))]:
+                if cand.is_file() and cand.suffix.lower() in tipos:
+                    datos = cand.read_bytes()
+                    self.send_response(200)
+                    self.send_header("Content-Type", tipos[cand.suffix.lower()])
+                    self.send_header("Content-Length", str(len(datos)))
+                    self.send_header("Cache-Control", "no-store")
+                    self.end_headers()
+                    self.wfile.write(datos)
+                    return
+            self.send_error(404, "sin logo")
+            return
         if path == "/api/show-kit":
             try:
                 self._send_json(self._get_show_kit())
@@ -543,6 +565,15 @@ class HubRequestHandler(BaseHTTPRequestHandler):
                 self._send_json({"datadrops": [], "count": 0, "error": str(e)}, status=200)
             return
 
+        if p == "/api/rd-db/logo":
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length).decode("utf-8")
+            try:
+                self._send_json(self._subir_logo(json.loads(body)))
+            except Exception as e:
+                self._send_json({"ok": False, "error": str(e)}, status=400)
+            return
+
         if p == "/api/datadrop-upload":
             content_length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(content_length).decode("utf-8")
@@ -630,6 +661,65 @@ class HubRequestHandler(BaseHTTPRequestHandler):
 
     def _get_dashboard_summary(self) -> dict:
         return build_dashboard_summary(collect_items(self.root))
+
+    def _subir_logo(self, data: dict) -> dict:
+        """Reemplaza el logo de una productora desde el hub.
+
+        Guarda el archivo en `knowledge/logos/descargas/<slug>.<ext>` y, si se
+        entrega, la url de origen en `<slug>.txt` al lado (politica del repo:
+        el logo oficial se busca en web y se guarda con su fuente; NUNCA se
+        recorta de un flyer).
+
+        El slug se valida contra las productoras existentes: no crea fichas
+        nuevas ni acepta rutas arbitrarias.
+        """
+        import base64
+
+        slug = str(data.get("slug") or "").strip().lower()
+        if not slug or not re.fullmatch(r"[a-z0-9_-]{1,64}", slug):
+            return {"ok": False, "error": "slug invalido"}
+        if not (self.root / "data" / "productoras" / f"{slug}.json").is_file():
+            return {"ok": False, "error": f"no existe la productora '{slug}'"}
+
+        nombre = str(data.get("filename") or "")
+        ext = Path(nombre).suffix.lower()
+        if ext not in (".png", ".jpg", ".jpeg", ".webp", ".svg"):
+            return {"ok": False, "error": f"extension no soportada: {ext or '(sin extension)'}"}
+
+        crudo = str(data.get("data") or "")
+        if "," in crudo and crudo.strip().startswith("data:"):
+            crudo = crudo.split(",", 1)[1]
+        try:
+            binario = base64.b64decode(crudo, validate=True)
+        except Exception:
+            return {"ok": False, "error": "contenido no es base64 valido"}
+        if not binario:
+            return {"ok": False, "error": "archivo vacio"}
+        if len(binario) > 12 * 1024 * 1024:
+            return {"ok": False, "error": "archivo demasiado grande (max 12 MB)"}
+
+        destino_dir = self.root / "knowledge" / "logos" / "descargas"
+        destino_dir.mkdir(parents=True, exist_ok=True)
+        # Un solo archivo por productora: reemplazar significa reemplazar.
+        for viejo in destino_dir.glob(f"{slug}.*"):
+            if viejo.suffix.lower() != ".txt":
+                viejo.unlink()
+        destino = destino_dir / f"{slug}{ext}"
+        destino.write_bytes(binario)
+
+        fuente = str(data.get("fuente") or "").strip()
+        if fuente:
+            (destino_dir / f"{slug}.txt").write_text(
+                f"fuente: {fuente}\nsubido: desde el hub\n", encoding="utf-8"
+            )
+
+        return {
+            "ok": True,
+            "slug": slug,
+            "archivo": destino.name,
+            "kb": round(len(binario) / 1024, 1),
+            "fuente_guardada": bool(fuente),
+        }
 
     def _get_automatizaciones(self) -> dict:
         """Cola real de las automatizaciones (issues de GitHub con labels).
@@ -1658,7 +1748,8 @@ def _find_free_port(host: str = "127.0.0.1", start_port: int = 8765, max_tries: 
     return start_port  # fallback (will error later for clear msg)
 
 
-def run_server(host: str = "127.0.0.1", port: int = 8765, root: Path | None = None):
+def run_server(host: str = "127.0.0.1", port: int = 8765, root: Path | None = None,
+               procesar_pendientes: bool = False):
     """Start the HTTP server. root passed from CLI for explicit context.
     Uses auto-detected free port when default is busy.
     In packaged: assets from asset_root, workspace writes go next to exe.
@@ -1689,15 +1780,25 @@ def run_server(host: str = "127.0.0.1", port: int = 8765, root: Path | None = No
             print(f"[flujo] Puerto {port} ocupado → usando {actual_port}")
 
     server = ThreadingHTTPServer((host, actual_port), HubRequestHandler)
-    try:
-        from ..automation import run_pending_flyers
-        automation_result = run_pending_flyers(root=HubRequestHandler.ROOT or repo_root())
-        if automation_result.get("processed", 0):
-            print(f"[flujo] Automatización iniciada: {automation_result['processed']} job(s) procesados")
-        else:
-            print("[flujo] Automatización iniciada: sin jobs pendientes")
-    except Exception as exc:
-        print(f"[flujo] Automatización no pudo arrancar: {exc}")
+    # Procesar jobs al arrancar es OPT-IN a proposito.
+    #
+    # Historia: esto se llamaba con `root=` cuando el parametro es `base_dir`,
+    # asi que lanzaba TypeError, el except lo tragaba y la automatizacion NUNCA
+    # corria. Al corregir el nombre se encendio de golpe un comportamiento que
+    # llevaba tiempo apagado sin que nadie lo supiera: la primera corrida
+    # proceso 7 jobs y creo un proyecto.
+    #
+    # Abrir la app para mirar algo no debe modificar los jobs del usuario. Se
+    # dispara a mano: `flujo app --procesar-pendientes`, o desde el panel de
+    # Automatizaciones.
+    if procesar_pendientes:
+        try:
+            from ..automation import run_pending_flyers
+            res = run_pending_flyers(base_dir=HubRequestHandler.ROOT or repo_root())
+            n = res.get("processed", 0)
+            print(f"[flujo] Pendientes procesados: {n} job(s)" if n else "[flujo] Sin jobs pendientes")
+        except Exception as exc:
+            print(f"[flujo] No se pudieron procesar los pendientes: {exc}")
     print(f"[flujo] Workspace app en http://{host}:{actual_port}")
     print(f"  - Repo root: {r}")
     print("  - Hub:      /flujo_hub.html  (UI Delegar: input tarea + botones copian prompts completos por rol)")
@@ -1716,6 +1817,7 @@ def launch(
     desktop: bool = False,
     open_browser: bool = True,
     root: Path | None = None,
+    procesar_pendientes: bool = False,
 ):
     """Launch server thread + optional desktop or browser.
     root: explicit repo root passed from CLI to give full context to backend.
@@ -1731,7 +1833,7 @@ def launch(
         if actual_port != port:
             print(f"[flujo] Auto-port detection: {port} ocupado → {actual_port}")
     # start server passing root for APIs to use absolute context (also used by static pages)
-    thread = Thread(target=run_server, args=(host, actual_port, root), daemon=True)
+    thread = Thread(target=run_server, args=(host, actual_port, root, procesar_pendientes), daemon=True)
     thread.start()
 
     url = f"http://{host}:{actual_port}/flujo_hub.html"

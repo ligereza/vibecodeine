@@ -10,7 +10,7 @@
 
 import {
   LayoutDashboard, Boxes, ClipboardList, Calculator,
-  TerminalSquare, Map, Shapes, Heart, Music, Cpu, Radio, Lightbulb, Layers, Camera, Clapperboard, Workflow,
+  TerminalSquare, Map, Shapes, Heart, Music, Cpu, Radio, Lightbulb, Layers, Camera, Clapperboard, Workflow, Database,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -27,6 +27,7 @@ export type AppView =
   | 'mapping'
   | 'show'
   | 'automatizaciones'
+  | 'rd-db'
   | 'cultura';
 
 export type WorkspaceMode = 'rd' | 'studio' | 'cultura' | 'rd-plano';
@@ -87,6 +88,7 @@ const RD_NAV: NavItem[] = [
   { view: 'visualizer', icon: Shapes, label: 'SVG Studio', desc: 'Galeria + editor visual', edit: true },
   { view: 'quote', icon: Calculator, label: 'Cotizacion', desc: 'Presupuesto editable', edit: true },
   { view: 'intake', icon: ClipboardList, label: 'Intake', desc: 'Parsear pedidos y crear jobs', edit: true },
+  { view: 'rd-db', icon: Database, label: 'Base de datos', desc: 'Productoras, venues y logos', edit: true },
   { view: 'automatizaciones', icon: Workflow, label: 'Automatizaciones', desc: 'Cola Gmail -> issue -> render', edit: false },
   { view: 'jobs', icon: Boxes, label: 'Jobs / Suplementos', desc: 'Estado de trabajos', edit: false },
 ];
