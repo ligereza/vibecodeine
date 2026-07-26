@@ -5,6 +5,7 @@
     "1. Exportá el ícono como SVG y guardalo en la carpeta data/plano_simbolos/ (por ejemplo: hidratacion.svg).",
     "2. Agregá un bloque en la lista 'simbolos' de más abajo, copiando el ejemplo comentado.",
     "3. Volvé a generar el plano. Si algo del bloque está mal, el programa avisa por pantalla y sigue con el resto: nunca desaparece un ícono en silencio.",
+    "OJO: hoy estos símbolos salen en el plano que genera `flujo plano`. El editor visual de la app todavía tiene su propia lista de íconos y no los muestra; unir las dos listas está pendiente.",
     "Truco de diseño: si en el SVG usás el color 'currentColor' en vez de un color fijo, el ícono toma el color que le pongas acá y se ve bien tanto en el plano oscuro como en el blanco."
   ],
 

@@ -139,6 +139,18 @@ and say what changes.
 
 ## Open
 
+- **The floor-plan symbol catalogue reaches the Python plan, not the web
+  editor.** Measured live on 2026-07-26 against a running hub: a symbol added to
+  `data/plano_simbolos.json` renders in `flujo plano`, but `PlanoTool.tsx` keeps
+  its own `SYMBOL_CATALOG`, whose entries name icons from a component library
+  rather than SVG files, so a designer's `.svg` has no place in it yet. Closing
+  the gap means teaching that component to draw raw markup for custom keys, and
+  it is the piece that produces the printed A4 a venue receives, so it is worth
+  doing carefully rather than quickly. The instructions the events manager reads
+  now say this outright: a symbol that does not show up in the editor is not
+  broken, it just does not reach there yet.
+
+
 - **The `mak` inbox has no defined drain, and that is the one thing that would
   turn it back into a line.** MAK opens a PR into `mak` every 6 hours; nothing
   moves `mak` into `main`. Verified working on 2026-07-26: the box fetches all

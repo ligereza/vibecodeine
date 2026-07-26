@@ -11,6 +11,13 @@ Si el archivo no aparece, si el nombre no coincide o si algún dato del bloque
 está mal, el programa **avisa por pantalla** y sigue con el resto del plano. Un
 ícono nunca desaparece en silencio.
 
+## Dónde se ve, hoy
+
+Los símbolos que agregues acá salen en el plano que genera `flujo plano`. El
+**editor visual de la app todavía no los muestra**: ese editor tiene su propia
+lista de íconos, y unir las dos listas es trabajo pendiente. O sea: si agregás
+un símbolo y no aparece en el editor, no está roto — todavía no llega ahí.
+
 **Truco de diseño:** si en el SVG usás `currentColor` en lugar de un color fijo,
 el ícono toma el color que le declares en el JSON, y así el mismo archivo se ve
 bien en el plano oscuro y en el blanco.
