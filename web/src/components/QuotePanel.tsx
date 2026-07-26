@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Calculator, Plus, Trash2, Download, RotateCcw, Printer } from 'lucide-react';
 import { cn } from '../utils/cn';
-import { RD_LOGO } from '../rdBrand';
+import { RD_LOGO, ALL_PACKS, PACKS } from '../rdBrand';
 import { DEFAULT_ITEMS, PRESETS, type QuoteLineItem } from '../data/cotizacionServicios';
 
 interface LineItem {
@@ -89,6 +89,18 @@ export default function QuotePanel() {
   };
 
   const removeItem = (id: string) => setItems(prev => prev.filter(it => it.id !== id));
+
+  /** Agrega un pack de servicio en terreno como ítem, con el precio de la tarifa. */
+  const addPack = (id: (typeof ALL_PACKS)[number]) => {
+    const pack = PACKS[id];
+    setItems(prev => [...prev, {
+      id: `pack-${id}-${Date.now()}`,
+      label: `${pack.label} — ${pack.desc}`,
+      qty: 1,
+      price: pack.precio,
+      category: 'Evento',
+    }]);
+  };
 
   const applyPreset = (preset: typeof PRESETS[number]) => {
     setItems(preset.items.map((it, i) => ({ ...it, id: String(Date.now() + i) })));
@@ -274,6 +286,27 @@ export default function QuotePanel() {
                 className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-400 hover:border-zinc-600 hover:text-zinc-200 transition-colors"
               >
                 {p.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Packs de servicio en terreno. Faltaban: la herramienta solo sabia
+              cotizar diseno e impresion, asi que el servicio que RD presta de
+              verdad -- ir al evento -- no se podia cotizar aca. El precio sale
+              de data/rd_packs.json, la misma tarifa que lee el rider, para que
+              una cotizacion y su rider no puedan decir cifras distintas. */}
+          <div className="flex flex-wrap gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 self-center">
+              Servicio en terreno:
+            </span>
+            {ALL_PACKS.map(id => (
+              <button
+                key={id}
+                onClick={() => addPack(id)}
+                title={`${PACKS[id].desc} — se agrega como ítem con su precio de tarifa`}
+                className="rounded-lg border border-emerald-900/60 bg-emerald-950/30 px-3 py-1.5 text-xs text-emerald-300 hover:border-emerald-700 hover:text-emerald-200 transition-colors"
+              >
+                + {PACKS[id].label}
               </button>
             ))}
           </div>

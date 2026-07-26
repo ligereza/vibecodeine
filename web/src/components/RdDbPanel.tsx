@@ -55,6 +55,16 @@ interface Data {
   error?: string;
 }
 
+// Los estados del logo llegan como llaves del dato ("sin_ficha",
+// "no_encontrado"). Mostrados tal cual parecen un error del sistema; acá se
+// dicen como se los diría una persona.
+const ESTADO_LOGO: Record<string, string> = {
+  sin_ficha: 'sin ficha',
+  no_encontrado: 'sin logo',
+  raster: 'logo sin vectorizar',
+  vector: 'logo vectorial',
+};
+
 export default function RdDbPanel() {
   const [data, setData] = useState<Data | null>(null);
   const [estado, setEstado] = useState<'cargando' | 'ok' | 'error'>('cargando');
@@ -155,18 +165,24 @@ export default function RdDbPanel() {
         <>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[
-              { k: 'Productoras', v: r.productoras },
-              { k: 'Con logo vector', v: `${r.con_vector}/${r.productoras}` },
-              { k: 'Confirmadas', v: `${r.confirmadas}/${r.productoras}` },
-              { k: 'Venues', v: r.venues },
-              { k: 'Eventos', v: r.eventos ?? 0 },
-              { k: 'Triangulables', v: r.eventos_triangulables ?? 0 },
-              { k: 'Sin lineup', v: r.eventos_sin_lineup ?? 0 },
-              { k: 'Sin fecha ISO', v: r.eventos_sin_fecha_iso ?? 0 },
+              // Los rotulos van en castellano llano: este panel se le muestra a
+              // la directiva y a gente de fuera del equipo. "Triangulables" y
+              // "fecha ISO" son jerga interna -- nadie afuera sabe que un evento
+              // triangulable es uno que ya tiene fecha Y lineup. El dato es el
+              // mismo; lo que cambia es que ahora se entiende sin traduccion.
+              { k: 'Productoras', v: r.productoras, ayuda: 'Productoras en la base' },
+              { k: 'Con logo vectorial', v: `${r.con_vector}/${r.productoras}`, ayuda: 'Tienen el logo en vector, listo para imprimir' },
+              { k: 'Confirmadas', v: `${r.confirmadas}/${r.productoras}`, ayuda: 'Confirmaron que trabajan con RD' },
+              { k: 'Venues', v: r.venues, ayuda: 'Recintos registrados' },
+              { k: 'Eventos', v: r.eventos ?? 0, ayuda: 'Eventos registrados' },
+              { k: 'Con fecha y lineup', v: r.eventos_triangulables ?? 0, ayuda: 'Tienen los datos completos para cruzarlos' },
+              { k: 'Sin lineup', v: r.eventos_sin_lineup ?? 0, ayuda: 'Falta cargarles el lineup' },
+              { k: 'Sin fecha', v: r.eventos_sin_fecha_iso ?? 0, ayuda: 'Falta cargarles la fecha' },
             ].map(c => (
-              <div key={c.k} className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4">
+              <div key={c.k} title={c.ayuda} className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4">
                 <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">{c.k}</div>
                 <div className="mt-1 text-2xl font-black text-zinc-100">{c.v}</div>
+                <div className="mt-1 text-[10px] leading-snug text-zinc-600">{c.ayuda}</div>
               </div>
             ))}
           </div>
@@ -242,7 +258,10 @@ export default function RdDbPanel() {
                         : 'bg-zinc-800 text-zinc-500'
                     }`}
                   >
-                    {p.logo.vector ? 'vector' : p.logo.estado}
+                    {/* El estado venia crudo del dato: "sin_ficha",
+                        "no_encontrado". Son llaves, no palabras, y se leian
+                        como si algo estuviera roto. */}
+                    {p.logo.vector ? 'logo vectorial' : ESTADO_LOGO[p.logo.estado] || 'sin logo'}
                   </span>
                 </div>
               ))}
