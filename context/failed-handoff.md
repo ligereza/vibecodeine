@@ -1,166 +1,146 @@
-# failed-handoff — sesion 2026-07-25
+# failed-handoff -- sesion 2026-07-25 (tarde/noche)
 
-Sesion cerrada como **intento fallido**. Nada se commiteo ni se pusheo en el
-cierre. Este documento existe para que quien retome no reconstruya nada.
+Cierre parcialmente fallido, por orden del usuario. El failed-handoff anterior
+(sesion de la manana, mismo dia) fue absorbido por ORQUESTACION_SUCESOR.md y
+las promociones de hoy; queda integro en el historial de git de este archivo.
 
-Motivo del cierre: perdida de norte del asistente. Se dispersaba persiguiendo
-cada hallazgo en vez de sostener el encargo (construir estructura), hacia tareas
-que le habian pedido explicitamente que no hiciera, y abria frentes nuevos
-dejando otros a medias.
-
----
-
-## 1. Que quedo commiteado (ya en la rama, verificado)
-
-Rama: `show/dref-preshow-20260724`. **No pusheada en el cierre.**
-
-| Commit | Que |
-|---|---|
-| `8ac242c` | Perfiles de app + plano compartible (`dist_compartir/plano_rd.html`, 1 archivo sin instalacion) + iconos sillon doble / toalla nova |
-| `b72efcb` | Panel **Show kit** + endpoint `/api/rd-db` + version real + rider **sin bloque de contactos** |
-| `27a100b` | Panel **Automatizaciones** (cola Gmail -> issue -> render) |
-| `9c30802` | Purga de informacion desactualizada en la app (7 hallazgos) |
-| `1be876b` | Modulo de vectorizacion de logos |
-| `e82e54c` | Panel **Base de datos RD** con reemplazo de logo + hub sin efectos al arrancar |
-
-### Hallazgos reales corregidos ahi
-
-- **La app mentia la version**: decia `0.51.0` con el repo en `0.56.1`, en 3 lugares.
-- **El pipeline de IG que mostraba la app ya no existia**: citaba imginn (hoy en
-  403 por Cloudflare) y Photoshop Droplet (retirado). La via real es parth-dl +
-  Blender por nodos.
-- **3 rutas de archivo citadas por la app no existian.** Queda un chequeo
-  mecanico: de 21 rutas citadas, 0 rotas.
-- **Bug de matcheo de logos**: los archivos no siempre se llaman como el slug
-  (`grid_system.svg` vs slug `gridsystem`). Se reportaba "sin vector" sobre
-  logos que si existian: el estado de la DB se veia peor que la realidad.
-- **`flujo app` ejecutaba trabajo al abrirse.** `run_pending_flyers` se llamaba
-  con `root=` en vez de `base_dir=`; el `except` se tragaba el TypeError y la
-  automatizacion llevaba tiempo apagada sin que nadie lo supiera. Al corregirlo
-  se encendio de golpe y proceso 7 jobs. Ahora es opt-in
-  (`flujo app --procesar-pendientes`).
+Que fallo NO es el trabajo tecnico (eso aterrizo con CI verde, seccion 2).
+Fallo la DIRECCION: el asistente se descarrilo varias veces persiguiendo
+tareas derivadas en vez del encargo, midio de mas, y disenio el portafolio
+sobre una referencia vieja. El usuario tuvo que interrumpir y corregir
+repetidamente.
 
 ---
 
-## 2. SIN COMMITEAR — en el working tree ahora mismo
+## 1. Modos de falla de esta sesion (para que el proximo no los repita)
 
-**Ojo: esto esta en disco, funciona, y no esta en ningun commit.**
+1. PERDIDA DE NORTE POR TAREA DERIVADA. Encargo: dividir/ordenar el repo.
+   El asistente se desvio a limpiar telefonos de relleno de suplementos y a
+   micro-mediciones. Cita del usuario: "te volviste a descarrilar por una
+   tarea insignificante".
+2. RITMO EQUIVOCADO. Revisar/commitear/testear en pasos de bebe. Ordenes
+   explicitas del usuario que quedan como regla: "es preferible avanzar y
+   revisar cada avance grande que revisar cada paso de bebe"; "basta de
+   revisar si ya sabes"; "no mides nada, solo haz un plan".
+3. ANTI-TEAMWORK. El asistente escribio "pendiente que es tuyo, no mio".
+   Regla del usuario: orientar o pedir, nunca deslindar. Si el entorno
+   bloquea algo (ej. borrar ramas con 403), se construye el canal (se hizo:
+   workflow podar_ramas) o se deja el comando exacto listo.
+4. REFERENCIA VIEJA. El portafolio iskvw.cl se disenio 2 veces sobre notas
+   del failed-handoff anterior (3 mundos, terminal sci-fi, doublecup). El
+   usuario las declaro viejas. Se midio el sitio vivo (archivo digital, 6
+   secciones: Obra/Dibujo/Reactiva/Proyectos/Basurero/Sobre; "imagen como
+   residuo, no como producto") pero TAMPOCO era eso: las referencias reales
+   las mando el usuario EN OTRAS SESIONES cloud, y los contenedores son
+   efimeros -- no llegan a esta sesion ni estan en el repo.
+   LECCION DURA: toda referencia que el usuario comparta se commitea al repo
+   EN LA MISMA SESION (p.ej. bajo la linea iskvw) o se pierde.
+5. PLANES AL NIVEL EQUIVOCADO. Primer plan = lista de limpieza (rechazado:
+   "revisar eliminar actualizar y testear"). Segundo = arquitectura nueva
+   (rechazado: "no estoy abriendo ninguna obra nueva"). El nivel correcto
+   aparecio recien al tercer intento: entregables concretos por area.
 
-- `src/flujo/rd/eventos.py` (nuevo)
-- `tests/test_rd_eventos.py` (nuevo, **18 tests verdes**)
-- `src/flujo/web/hub.py` (modificado: integra los eventos normalizados en `_get_rd_db`)
+## 2. Lo que SI aterrizo hoy (en main, CI verde ubuntu+windows)
 
-Estado verificado antes de cerrar: `pytest tests/test_rd_eventos.py -q` -> 18
-pass; `compileall` OK; endpoint probado contra un servidor real levantado.
+- Consolidacion en 3 lineas: promociones #303 (rd), #306 (poda CRT),
+  #305 (mejoras: mecanismo de retiro + poda + manual). `mejoras` retirada.
+- Fix real que destrabo #305: la poda habia borrado _cffi_download de
+  ig/download.py (la via de descarga IG en Linux/MAK) y su test importaba un
+  simbolo inexistente. Restaurada como via secundaria; imginn sigue muerto.
+- App dividida en 3 mundos (#308): main / rd / iskvw + rd-plano oculto, con
+  migracion de ids viejos (localStorage y ?perfil=).
+- MAPA.md (#309): entrada universal; tabla de comandos generada desde el CLI
+  (tools/gen_mapa_comandos.py) + tests/test_mapa_completo.py que exige todo
+  comando y toda env var documentados. $FLUJO_RD_ROOT reemplaza C:\rd
+  cableado. CLAUDE.md con topologia de 3 lineas y entrada via MAPA.md.
+- tests/test_higiene_docs.py: ninguna doc viva afirma totales de suite,
+  rangos de invariantes ni versiones que contradigan lo medido.
+- PR #310 ABIERTO: workflow podar_ramas (Actions, desde el telefono, dry-run
+  por defecto, escribir BORRAR para ejecutar; protege main/rd/iskvw).
+- Verificacion de la auditoria externa recibida: hallazgos confirmados; su
+  auditor rechazado como herramienta (conclusiones hardcodeadas). Detalle en
+  LAST_HANDOFF.
 
-**Que resuelve:** la triangulacion pendiente es "fecha + headliner ->
-productora", pero en los datos la fecha es prosa (`"12 septiembre 2026"`,
-`"MAR 28 (año no confirmado)"`) y el headliner esta enterrado en el titulo del
-evento (`"... -- lineup PARTIBOI69 (co-org GLOVOX)"`). **No existian los dos
-campos que cruzar.** El modulo los extrae a `fecha_iso`, `lineup[]` y
-`co_organiza[]`, con nivel de confianza y sin inventar el año cuando falta.
+## 3. En vuelo (rama iconos-plano-configurables-20260725, esta rama)
 
-**El numero que aparecio al integrarlo** (antes no se podia medir):
+HECHO y verificado (typecheck + build:context): fallback de simbolo
+personalizado con INICIALES DEL NOMBRE (antes "?" o iniciales de la key
+interna) en las 3 vias de render de PlanoTool.tsx -- canvas
+(renderSymbolGlyph), leyenda en pantalla y print SVG (symbolIconMarkup,
+ambos call sites). Un elemento symbol con key desconocida ya se dibuja bien
+en todas las vistas.
 
-```
-eventos: 7 | triangulables: 1 | sin lineup: 6 | sin fecha_iso: 3
-```
+FALTA (revertido a proposito para no dejar variables muertas; era estado sin
+UI): el catalogo de simbolos personalizados con alta/baja desde el editor.
+Spec cerrada para retomarlo:
+1. Constante PLANO_CUSTOM_SYMBOLS_KEY + tipo CustomSymbol {key,label,color}
+   + loader defensivo de localStorage (~20 lineas).
+2. Estado customSymbols + useEffect de persistencia.
+3. addCustomSymbol(): key `custom-<slug>`, elemento con label/color propios
+   (los elementos ya portan su data; el render fallback ya funciona).
+4. UI en el panel "Simbolos Tecnicos": chips de los custom (click agrega al
+   plano, x lo saca del catalogo) + form nombre + color + boton crear.
+5. Ratchet: round-trip (crear -> aparece en canvas/leyenda/print -> borrar
+   del catalogo no rompe elementos ya colocados).
+CRITERIO DEL USUARIO (textual): "la jefa puede agregar un icono? si no, no
+es configurable".
 
-Conclusion util: **la triangulacion no puede avanzar hoy aunque MAK vuelva.**
-Faltan datos, no procesamiento.
+## 4. Ordenes del usuario de esta sesion que siguen vigentes
 
-Quedo sin hacer: mostrar esos contadores en `RdDbPanel.tsx` (4 lineas).
+- Division por area main / rd / iskvw: HECHA (app y ramas).
+- RD: presentacion web con la DB y tools ya creadas; plano/rider se extrae
+  para la jefa de eventos; el resto se monta en la propuesta directa a la
+  ONG. Sin fecha comprometida con nadie (el asistente invento urgencia y fue
+  corregido).
+- iskvw: portafolio automatizado y NO convencional en iskvw.cl, armado NUEVO
+  en este repo. BLOQUEADO hasta tener las referencias del usuario
+  (pedirselas y COMMITEARLAS, ver 1.4).
+- F4 (panel suplementos en la app): INNECESARIO, palabra del usuario ("los
+  flyers los presentan"). No reabrir.
+- SIN INFO PERSONAL EN EL REPO (orden textual: "no debe haber info
+  personal"): los campos contacto_label/qr_text de suplementos_config.py
+  (7 telefonos +1-809 de relleno) y su uso en export/illustrator.py quedan
+  PENDIENTES de poda bajo esa orden. No construir nada encima de ellos.
+- Premisa central textual: "construir la estructura con capacidad de ser
+  configurable (los datos constantes y variables, o agregar nuevos items, o
+  eliminarlos) Y que todo sea intuitivo, flujo app ya lo tiene".
 
----
+## 5. Los dos planes fallidos (condensados fieles; el proximo decide que
+rescatar -- NO ejecutarlos por autoridad)
 
-## 3. Anotado y NO tocado a proposito
+### Plan A -- "Separar el motor del contenido" (RECHAZADO)
 
-| Que | Nota |
-|---|---|
-| `projects/piezas_vectoriales/cotizacion-general-...` | **Untracked.** Lo creo una prueba del asistente al procesar los 7 jobs. Es trabajo real generado sin pedirlo: borrarlo o conservarlo es decision del usuario |
-| `test_ig_cffi_fallback` | Falla preexistente, verificado con el arbol limpio. Test fragil: asume `curl_cffi` ausente y esta instalado |
-| `thegrid` vs `gridsystem` | Probable duplicado en la DB de productoras |
-| Fondo transparente al vectorizar | **Sin resolver.** vtracer parte el fondo en varios paths; quitarlos por color borra partes del logo del mismo color. Documentado como limite en el modulo |
-| `datadrops`, `delegate`, `cotizacion/render`, SSE | Backend sin UI. **datadrops medido: abandonado desde 2026-06-22** — no vale la pena hacerle pantalla |
-| Logos de productoras | Los busca el usuario por web. **No via Instagram** (un subagente intento entrar a su cuenta: prohibido) |
-| 8 SVG vectorizados | En `C:\Users\issvk\Documents\logos\svg\`. **Quedaron con fondo**, que el usuario declaro inservible. No se metieron al repo |
+Idea: el dominio esta compilado dentro del programa (suplementos = dict
+Python, linea editorial = md suelto con refs rotas). Propuesta: contrato
+schemas/workspace.schema.json + cargador src/flujo/workspace/ + fixture de
+una organizacion inventada cuyo test exige generar piezas sin codigo nuevo +
+trinquete de acoplamiento (refs de dominio en src/flujo solo pueden bajar).
+6 fases estranguladas, orden fisico de carpetas al final.
+Rechazo textual: "no estoy abriendo ninguna obra nueva, simplemente pedi
+dividir el repo por area". Rescatable: la observacion del acoplamiento es
+cierta, y el camino de datos YA existe como fallback en get_suplemento().
 
----
+### Plan B -- "De repo a tres productos" (RECHAZADO EN PARTE: el producto 3
+estaba diseniado sobre referencia vieja)
 
-## 4. Contexto que costo reconstruir (no perderlo)
+P1 App configurable: catalogos editables desde la app (iconos del plano ->
+   suplementos -> textos institucionales orgTexts -> paleta unica web+py),
+   con test de round-trip alta/baja. El test de la jefa manda.
+P2 RD: (a) plano_rd.html standalone para la jefa CON iconos custom, sin
+   contactos; (b) propuesta a la directiva REGENERABLE por comando sobre
+   docs/rd/presentacion_db.html + tools/gen_presentacion_db.py (existentes).
+P3 Portafolio: INVALIDO como estaba diseniado (referencias viejas). Solo
+   sobrevive lo independiente de la estetica: pipeline obra-en-carpeta ->
+   catalogacion -> build -> publicacion automatica (watcher/Action propio;
+   n8n descartado, no reintentarlo), deploy a Pages o a portfolio-auto
+   cuando el usuario agregue ese repo.
+Cierre: merge #310 + poda desde Actions + archivar WALKTHROUGH.md
+(redundante con MAPA.md) + handoff.
 
-- **El portafolio no vive en este repo**: esta en `github.com/ligereza/portfolio-auto`
-  (clon local `C:\IA\portfolio-auto-real`), publicado en **iskvw.cl**, vivo y con
-  TLS OK. La rama `iskvw` de este repo es linea de gobernanza, no tiene el sitio.
-- **La idea del portafolio, textual del usuario (2026-07-22):** *"3 secciones...
-  cada seccion con su estetica independiente mas el menu de entrada... no que se
-  muestren como ventanas sino como mundos separados, no que sean todas scifi
-  tipo tablero neon verde sino que se diferencien."* Los 3 mundos:
-  **[2D/3D] | [RD] | [VIBE-CODEINE]**. Norte actual: **app de portafolio
-  automatica** (se deja una obra en una carpeta y corre la cadena curatoria ->
-  publicacion). n8n ya fallo: **no reintentar**, va con watcher propio.
-- **La referencia scifi** (`ref_scifi/`, en el scratchpad de la sesion
-  `ef0dfb85`) no es un portafolio: es una **terminal con instrumentos
-  generativos corriendo** (reaccion-difusion, Lorenz, red de nodos), con HUD de
-  telemetria y audio. En la seccion 3D **el material cargado se vuelve textura
-  del mesh**; en la 2D el canvas NO lee los pixeles del material (verificado:
-  cero `getImageData`).
-- **El intento v3 del portafolio** quedo completo en el working tree del clon en
-  el scratchpad de `ef0dfb85`, **nunca pusheado**, y el PR #6 esta **cerrado sin
-  merge**. El usuario lo evaluo: *"un portafolio tipico y horrible"* — el
-  subagente no miro la referencia.
-- **`doublecup` / el vaso semantico**: llego por bundle (`refs/remotes/bundle/svg`,
-  commit `473c69f`, 127 archivos). Sistema generativo que **lee el repo** y
-  produce un SVG autoanimado sin JS. Su README pide `servidor.py` para
-  regeneracion por visita: *"es lo que justifica que la pieza salga de GitHub y
-  viva en portafolio propio"*. **No esta en ninguna rama.**
-- **La curatoria de MAK** quedo estancada en 2430/3132 fichas por `ollama`
-  caido, y su salida (`~/curatoria/fichas/fichas.jsonl`) **nunca salio del disco
-  de MAK**. Primer paso cuando MAK vuelva: copiarla a WIN antes de perderla.
-- **RD**: reunion con los dos jefes fundadores. La jefa de eventos **no comparte
-  contactos** (por eso el rider ya no los lleva). La herramienta de plano es
-  privada para ella, para presentar a productoras.
+## 6. Verificacion al cierre de esta rama
 
----
-
-## 5. Plan para retomar (en orden)
-
-1. **Cerrar lo del punto 2**: commitear `eventos.py` + tests + `hub.py`, y
-   mostrar los 4 contadores en `RdDbPanel.tsx`.
-2. **Manual de independencia** en `docs/`: como se opera la app, como se agrega
-   un perfil/panel/endpoint/icono, y las trampas ya pagadas (el rider no lleva
-   contactos; los logos no se recortan de flyers; el hub no procesa jobs al
-   arrancar; el server del telefono no arranca solo tras reboot; la IP cambia
-   por DHCP en el venue).
-3. **Division RD / ISKVW** sobre los perfiles ya construidos.
-4. **Suplementos en la app** (es RD vivo, hoy solo existe como texto).
-
-Fuera de alcance definido: portafolio automatico, modelo de datos enriquecido
-del hub de AI Studio, y la propuesta a la directiva RD (no es codigo).
-
----
-
-## 6. Reglas que el usuario dejo explicitas
-
-1. **Estructura, no tareas.** Se construye la maquina; el usuario la dispara. Si
-   aparece trabajo pendiente, **se anota y se sigue**.
-2. **Nada a medias.** No se empieza lo siguiente sin cerrar lo anterior.
-3. **Suciedad bajo la alfombra: se anota, no se limpia.**
-4. **Cero efectos secundarios.** Ninguna prueba puede modificar datos del usuario.
-5. **Medir antes de afirmar.**
-6. **Subagentes solo para lectura de volumen acotada.** Nunca "construi esta
-   feature": ya fallo dos veces.
-7. **Nada de Instagram.** Ni scraping, ni la sesion del usuario.
-
----
-
-## Verificacion al momento del cierre
-
-```
-py -m compileall src/flujo                  OK
-py -m pytest tests/test_rd_eventos.py -q    18 passed
-py -m pytest tests/ -q                      1 fallo: test_ig_cffi_fallback (preexistente)
-npm run typecheck / build:context / build:plano   OK
-```
-
-Sin commit y sin push en el cierre, por orden del usuario.
+- cd web && npm run typecheck && npm run build:context: OK
+- py -m compileall src/flujo: OK (python no tocado en esta rama)
+- Suite completa y flujo verify: verdes en main al momento de las
+  promociones; esta rama solo toca web y context. Veredicto final = CI del
+  PR.

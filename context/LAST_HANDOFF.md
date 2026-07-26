@@ -1,7 +1,11 @@
 # LAST HANDOFF -- estado para el proximo agente
 
+CIERRE FALLIDO EN DIRECCION (2026-07-25 noche): leer context/failed-handoff.md
+PRIMERO -- modos de falla, ordenes vigentes del usuario y 2 planes rechazados.
+Lo de abajo (consolidacion tecnica) sigue siendo valido y esta en main.
+
 Version: 0.56.1 | Fecha: 2026-07-25 (noche) | Identidad: Cauce | sesion:
-consolidacion en 3 lineas + MAPA.md universal (director Opus).
+consolidacion en 3 lineas + MAPA.md universal (director Opus/Fable).
 
 ## ENTRADA: leer MAPA.md (raiz) ANTES que nada
 
