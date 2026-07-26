@@ -80,6 +80,8 @@ profiles, and the documentation ratchets (`test_mapa_completo`,
 
 | Date | Decision |
 |---|---|
+| 2026-07-26 | **Three working modes**: *modo calma* (answer, execute nothing), *modo repo* (branches/PRs/CI; exits at 0 open PRs, 0 open issues and only the named branches), *modo local* (this machine: config, memory, understanding). Ask which one is active when it is not obvious |
+| 2026-07-26 | **The two portfolio directions on disk are REFERENCES, not competing options**: the live six-section archive and the Cyber Terminal prototype. Both feed the design; neither is "the choice" |
 | 2026-07-26 | **Language split**: Spanish to talk, English for everything inside the repo, correct Spanish with diacritics for anything a human reads as a product |
 | 2026-07-26 | **The portfolio is `iskvw`**: the automated line and the ONLY site. This repo stays PUBLIC. The separate `portfolio-auto` repo is discarded -- it existed because one agent advised making this repo private and the next one patched that by creating a second repo for the site. Both moves were wrong |
 | 2026-07-26 | **No agent opens issues.** The user and his Google Script do: issues are the Gmail -> issue -> render channel, not a task board. Commenting, labelling and closing is fine; opening is not. Verified: nothing in the repo creates them |
@@ -96,16 +98,38 @@ profiles, and the documentation ratchets (`test_mapa_completo`,
 | 2026-07-10 | Gemini: out until the user announces a usable API |
 | 2026-07-26 | Do not reinstall Oh My Posh or anything that puts glyphs or ANSI in the prompt: it dirties the output agents have to parse |
 
+## Built on 2026-07-26, waiting for the user to look
+
+Three prototypes, in the order he asked for. All regenerate from real data by
+command; no figure is written by hand. They are DIRECTIONS, not facts: open them
+and say what changes.
+
+- **RD, proposal for the board** — `py tools/gen_propuesta_directiva.py --out
+  docs/rd/propuesta_directiva.html`. What RD offers, what it has, how field data
+  is protected, and what the board must approve.
+- **ISKVW, archive prototype** — `py tools/gen_iskvw_prototipo.py --out
+  docs/iskvw/prototipo.html`. The live site's identity as an archive plus the
+  Cyber Terminal language, under the rule that no element may claim a datum it
+  does not measure.
+- **MAK and the portfolio, visible in the app** — new read-only `/api/mak` and
+  `/api/portafolio` endpoints with their panels. MAK had zero references in
+  `web/src` before this.
+
 ## Blocked, waiting on the user
 
-- **Portfolio aesthetic references.** The destination is settled: the `iskvw`
-  line, in this public repo. What is missing is the look: the real references
-  were sent from cloud sessions, those containers are ephemeral, and they were
-  never committed. It was designed twice on top of stale notes and rejected both
-  times, so it does not get designed again on assumptions. When they arrive:
-  **commit them on the spot** into `iskvw`, or ingest them with `flujo datadrop`,
-  which exists for exactly this and has never been used. Only the pipeline can be
-  built meanwhile, since it does not depend on the aesthetic.
+- **Portfolio aesthetic references: FOUND, not lost.** Three sessions declared
+  them gone in ephemeral cloud containers. They were one level above the repo on
+  the user's own disk the whole time, because everyone searched the repo and
+  their own memory and then declared absence. Exact locations are in the
+  assistant's local memory (they are personal paths and this repo is public).
+  What is still the user's call is which direction is current — that is style,
+  so it gets asked, never assumed.
+- **Design exports**: two Illustrator sources are ahead of their exports (one by
+  8 days, one by 3), and one exported SVG is 0 bytes, so that export failed and
+  stayed failed. Illustrator 2026 and its COM bridge are verified working, so
+  the re-export is mechanical — but the export settings (resolution, colour
+  profile, which artboards, which formats) are a product decision and need the
+  user's word first.
 
 ## Open
 
@@ -118,3 +142,10 @@ profiles, and the documentation ratchets (`test_mapa_completo`,
   MAK (nothing there creates issues). A session on 2026-07-24 already ran this
   hunt and logged it unresolved. Not urgent, and not worth chasing again without
   a reason.
+- The Gmail bridge still turns GitHub's own notification e-mails into new issues.
+  The workflow already ignores those echoes, so they do no work, but they keep
+  being created: the filter has to live in the user's Apps Script, discarding
+  anything sent by `notifications@github.com`. Outside this repo.
+- The repo's front door is honest again but the CLI still speaks Spanish to the
+  operator, so `MAPA.md`'s generated command table does too. That is deliberate
+  (it mirrors what the user sees when he runs a command), not an oversight.
