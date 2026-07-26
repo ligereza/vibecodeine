@@ -9,6 +9,8 @@
 //   - the quote tool's line items, data/cotizacion_servicios.json. Design and
 //     printing services, which change per job (the user, 2026-07-26: "cada
 //     archivo de illustrator es distinto y los valores igual").
+//   - the floor-plan symbols the events manager adds, data/plano_simbolos.json,
+//     so the editor draws the same ones the Python plan does.
 //
 // If the hub is not reachable (a static build opened from disk) the code values
 // stay: they are the same numbers, only frozen at build time.
@@ -24,6 +26,7 @@ import "./index.css";
 import App from "./App";
 import { applyPackPriceOverrides, type PackId } from "./rdBrand";
 import { loadCotizacionServicios } from "./data/cotizacionServicios";
+import { loadPlanoSimbolos } from "./data/planoSimbolos";
 
 /** Tiempo maximo que la app espera al hub antes de montar con los valores del codigo. */
 const CONFIG_TIMEOUT_MS = 2500;
@@ -52,6 +55,7 @@ const deadline = setTimeout(() => control.abort(), CONFIG_TIMEOUT_MS);
 Promise.all([
   loadTariff(control.signal),
   loadCotizacionServicios(control.signal),
+  loadPlanoSimbolos(control.signal),
 ]).finally(() => {
   clearTimeout(deadline);
   createRoot(document.getElementById("root")!).render(

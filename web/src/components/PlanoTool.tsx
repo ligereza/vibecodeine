@@ -7,6 +7,7 @@ import {
   Heart, AlertTriangle, Coffee, RefreshCw, Flame, Sofa, Cylinder
 } from 'lucide-react';
 import { cn } from '../utils/cn';
+import { SIMBOLOS_PROPIOS, simboloPropio, markupSimboloPropio, guardarSimbolo } from '../data/planoSimbolos';
 import { RD_PALETTE, RD_LOGO, calcCostos, formatCLP, proporcionMonto, ALL_PACKS, PACKS, type ExportTheme, type PackId } from '../rdBrand';
 
 // ── Types ────────────────────────────────────────────────────────────
@@ -114,7 +115,34 @@ const SYMBOL_CATALOG: SymbolSpec[] = [
   { key: 'toalla', label: 'Toalla Nova', color: ZONE_COLORS.toalla, icon: 'Cylinder', x: 570, y: 1350, w: 160, h: 160 },
 ];
 
-const SYMBOL_BY_KEY = Object.fromEntries(SYMBOL_CATALOG.map(s => [s.key, s])) as Record<string, SymbolSpec>;
+// Los simbolos propios (data/plano_simbolos.json) se suman al catalogo de
+// fabrica, para que aparezcan en el selector y no solo al dibujarlos. Se
+// ubican en una columna libre a la derecha; el usuario los mueve como a
+// cualquier otro. Un id que coincide con uno de fabrica solo lo reetiqueta o
+// recolorea, igual que en el lado Python.
+const simbolosPropiosSpec = (): SymbolSpec[] =>
+  SIMBOLOS_PROPIOS.filter(s => !SYMBOL_CATALOG.some(f => f.key === s.id)).map((s, i) => ({
+    key: s.id as TechnicalSymbolKey,
+    label: s.etiqueta,
+    color: s.color,
+    icon: 'Shapes',
+    x: 2600,
+    y: 300 + i * 200,
+    w: 160,
+    h: 160,
+  }));
+
+// PEREZOSO A PROPOSITO: los simbolos propios llegan por fetch (main.tsx) y este
+// modulo se evalua ANTES de que ese fetch termine, asi que armar la lista aca
+// arriba la dejaria siempre vacia. Se arma al usarla.
+const catalogoCompleto = (): SymbolSpec[] => [...SYMBOL_CATALOG, ...simbolosPropiosSpec()];
+
+const specDe = (key: string): SymbolSpec | undefined =>
+  SYMBOL_CATALOG.find(s => s.key === key) || simbolosPropiosSpec().find(s => s.key === key);
+
+/** spec del simbolo, con el de electricidad como ultimo recurso (era el fallback previo). */
+const specOPower = (key: string): SymbolSpec =>
+  specDe(key) || (SYMBOL_CATALOG.find(s => s.key === 'power') as SymbolSpec);
 
 const PLANO_FRAME = { x: 50, y: 50, w: 2870, h: 1950 };
 const GRID = 20;
@@ -154,7 +182,7 @@ const REQUIREMENT_SYMBOL_MAP: Record<string, TechnicalSymbolKey> = {
 };
 
 const makeSymbolElement = (key: TechnicalSymbolKey, idPrefix = 'symbol'): Element => {
-  const spec = SYMBOL_BY_KEY[key] || SYMBOL_BY_KEY.power;
+  const spec = specOPower(key);
   return {
     id: `${idPrefix}-${spec.key}`,
     type: 'symbol',
@@ -266,7 +294,7 @@ const rectLabelFont = (label: string, w: number) =>
   Math.max(24, Math.min(42, Math.round((w - 80) / (0.62 * Math.max(label.length, 1)))));
 
 const placedSymbol = (key: TechnicalSymbolKey, id: string, x: number, y: number, label?: string): Element => {
-  const spec = SYMBOL_BY_KEY[key] || SYMBOL_BY_KEY.power;
+  const spec = specOPower(key);
   const category = SYMBOL_CATEGORY[key] || 'Zonas de Atención';
   return { id, type: 'symbol', symbolKey: spec.key, x, y, w: spec.w, h: spec.h, label: label || spec.label, color: spec.color, visible: true, category };
 };
@@ -361,6 +389,18 @@ export default function PlanoTool() {
   const [page, setPage] = useState<Page>('map');
   const [elements, setElements] = useState<Element[]>(() => buildElements('TESTEO'));
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // Alta de un simbolo propio desde la app. Antes habia que editar
+  // data/plano_simbolos.json a mano y dejar el archivo en una carpeta, que no
+  // es "puede agregar un icono" en ningun sentido util.
+  const [nuevoSimboloAbierto, setNuevoSimboloAbierto] = useState(false);
+  const [nuevoSimboloNombre, setNuevoSimboloNombre] = useState('');
+  const [nuevoSimboloColor, setNuevoSimboloColor] = useState('#38bdf8');
+  const [nuevoSimboloZona, setNuevoSimboloZona] = useState('INFRAESTRUCTURA');
+  const [nuevoSimboloAviso, setNuevoSimboloAviso] = useState<string | null>(null);
+  // SIMBOLOS_PROPIOS se muta fuera de React; esto fuerza el redibujo de la
+  // paleta cuando se guarda uno nuevo.
+  const [refrescoSimbolos, setRefrescoSimbolos] = useState(0);
   const [checkedItems, setCheckedItems] = useState<string[]>(() => {
     try {
       const raw = localStorage.getItem(PLANO_CHECKED_ITEMS_KEY);
@@ -450,7 +490,7 @@ export default function PlanoTool() {
   };
 
   const addSymbol = (st: TechnicalSymbolKey) => {
-    const spec = SYMBOL_BY_KEY[st] || SYMBOL_BY_KEY.power;
+    const spec = specOPower(st);
     const id = `symbol-${st}-${Date.now()}`;
     const newEl: Element = {
       ...makeSymbolElement(st, `symbol-${Date.now()}`),
@@ -681,10 +721,20 @@ export default function PlanoTool() {
         return <><rect x="24" y="56" width="18" height="62" rx="7" fill="none" stroke={fill} strokeWidth="9"/><rect x="118" y="56" width="18" height="62" rx="7" fill="none" stroke={fill} strokeWidth="9"/><rect x="40" y="42" width="80" height="26" rx="8" fill="none" stroke={fill} strokeWidth="9"/><rect x="40" y="66" width="80" height="42" rx="8" fill="none" stroke={fill} strokeWidth="9"/><path d="M80 66 V108" stroke={fill} strokeWidth="9" strokeLinecap="round"/></>;
       case 'toalla':
         return <><ellipse cx="80" cy="46" rx="34" ry="14" fill="none" stroke={fill} strokeWidth="9"/><ellipse cx="80" cy="46" rx="13" ry="5" fill="none" stroke={fill} strokeWidth="9"/><path d="M46 46 V96 M114 46 V96" fill="none" stroke={fill} strokeWidth="9" strokeLinecap="round"/><path d="M46 96 C46 104 114 104 114 96" fill="none" stroke={fill} strokeWidth="9" strokeLinecap="round"/><path d="M100 98 C120 102 124 114 108 120 C94 126 98 134 114 138" fill="none" stroke={fill} strokeWidth="9" strokeLinecap="round"/></>;
-      default:
-        // Simbolo personalizado (creado desde el editor, sin codigo): circulo +
-        // iniciales del nombre. Mismo dibujo en canvas, leyenda y print.
+      default: {
+        // Simbolo del catalogo editable (data/plano_simbolos.json): se incrusta
+        // su .svg. El lienzo de aqui ya es 0..160, que es la misma convencion
+        // que usa markupSimboloPropio, asi que centrar en (80,80) a escala 1
+        // lo deja calzado. Va sanitizado en esa funcion (sin script ni on*).
+        const propio = simboloPropio(key);
+        if (propio?.svg) {
+          const marca = markupSimboloPropio(propio.svg, fill, 80, 80, 1);
+          if (marca) return <g dangerouslySetInnerHTML={{ __html: marca }} />;
+        }
+        // Simbolo sin dibujo utilizable: circulo + iniciales del nombre. Mismo
+        // dibujo en canvas, leyenda y print.
         return <><circle cx="80" cy="80" r="54" fill="none" stroke={fill} strokeWidth="9"/><text x="80" y="94" textAnchor="middle" fontSize="46" fill={fill} fontWeight="bold" fontFamily="monospace">{initialsOf(label)}</text></>;
+      }
     }
   };
 
@@ -835,6 +885,14 @@ export default function PlanoTool() {
       case 'toalla':
         return `<ellipse cx="${x(80)}" cy="${y(46)}" rx="${34*scale}" ry="${14*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><ellipse cx="${x(80)}" cy="${y(46)}" rx="${13*scale}" ry="${5*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><path d="M ${x(46)} ${y(46)} V ${y(96)} M ${x(114)} ${y(46)} V ${y(96)}" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/><path d="M ${x(46)} ${y(96)} C ${x(46)} ${y(104)} ${x(114)} ${y(104)} ${x(114)} ${y(96)}" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/><path d="M ${x(100)} ${y(98)} C ${x(120)} ${y(102)} ${x(124)} ${y(114)} ${x(108)} ${y(120)} C ${x(94)} ${y(126)} ${x(98)} ${y(134)} ${x(114)} ${y(138)}" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/>`;
       default: {
+        // Simbolo propio (data/plano_simbolos.json): se incrusta su .svg con la
+        // misma convencion de 160x160 que los de fabrica. Si el archivo no es
+        // usable, cae al marcador de iniciales de abajo en vez de desaparecer.
+        const propio = simboloPropio(key);
+        if (propio?.svg) {
+          const marca = markupSimboloPropio(propio.svg, c, cx, cy, scale);
+          if (marca) return marca;
+        }
         const words = (label || key).trim().split(/\s+/).filter(Boolean);
         const ini = (words.map(w => w[0]).join('').slice(0, 2) || '?').toUpperCase();
         return `<circle cx="${cx}" cy="${cy}" r="${48*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><text x="${cx}" y="${cy + 11*scale}" text-anchor="middle" font-size="${36*scale}" font-family="Arial" font-weight="900" fill="${c}">${escapeHtml(ini)}</text>`;
@@ -890,7 +948,7 @@ export default function PlanoTool() {
       const color = escapeHtml(printColor(el.color || '#111111'));
       // La leyenda describe TIPOS de simbolo: usa el nombre canonico del catalogo
       // (los elementos pueden venir numerados, ej "Testeo 1").
-      const legendLabel = SYMBOL_BY_KEY[el.symbolKey || '']?.label || el.label;
+      const legendLabel = specDe(el.symbolKey || '')?.label || el.label;
       return `
         <g>
           ${symbolIconMarkup(el.symbolKey || 'symbol', color, x + 40, y + 40, 0.5, legendLabel)}
@@ -1585,7 +1643,7 @@ export default function PlanoTool() {
                               <svg x={0} y={0} width={80} height={80} viewBox="0 0 160 160">
                                 {renderSymbolGlyph(el.symbolKey || 'unknown', fill, el.label)}
                               </svg>
-                              <text x={104} y={52} fontSize={32} fill="#d4d4d8" fontWeight="bold" fontFamily="sans-serif">{(SYMBOL_BY_KEY[el.symbolKey || '']?.label || el.label).toUpperCase().slice(0, 16)}</text>
+                              <text x={104} y={52} fontSize={32} fill="#d4d4d8" fontWeight="bold" fontFamily="sans-serif">{(specDe(el.symbolKey || '')?.label || el.label).toUpperCase().slice(0, 16)}</text>
                             </g>
                           );
                         })}
@@ -1625,16 +1683,101 @@ export default function PlanoTool() {
 
               {/* Add Symbols */}
               <div className="p-4 bg-zinc-900/50 border border-zinc-800 rounded-xl">
-                <h4 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-3">Símbolos Técnicos</h4>
-                <div className="grid grid-cols-4 gap-2 max-h-80 overflow-y-auto pr-1">
-                  {SYMBOL_CATALOG.map(spec => (
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Símbolos Técnicos</h4>
+                  <button
+                    onClick={() => { setNuevoSimboloAbierto(v => !v); setNuevoSimboloAviso(null); }}
+                    className="text-[10px] font-bold text-emerald-400 hover:text-emerald-300"
+                  >
+                    {nuevoSimboloAbierto ? 'Cancelar' : '+ Agregar'}
+                  </button>
+                </div>
+                {nuevoSimboloAbierto && (
+                  <div className="mb-3 space-y-2 rounded-lg border border-zinc-800 bg-zinc-900/60 p-3">
+                    <input
+                      type="text"
+                      value={nuevoSimboloNombre}
+                      onChange={e => setNuevoSimboloNombre(e.target.value)}
+                      placeholder="Nombre (ej: Punto de hidratación)"
+                      className="w-full rounded bg-zinc-950 border border-zinc-800 px-2 py-1.5 text-[11px] text-zinc-200"
+                    />
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={nuevoSimboloColor}
+                        onChange={e => setNuevoSimboloColor(e.target.value)}
+                        className="h-7 w-10 rounded bg-transparent"
+                        title="Color del símbolo"
+                      />
+                      <select
+                        value={nuevoSimboloZona}
+                        onChange={e => setNuevoSimboloZona(e.target.value)}
+                        className="flex-1 rounded bg-zinc-950 border border-zinc-800 px-2 py-1.5 text-[11px] text-zinc-200"
+                      >
+                        <option value="SERVICIOS">Servicios</option>
+                        <option value="INFRAESTRUCTURA">Infraestructura</option>
+                        <option value="SEGURIDAD">Seguridad</option>
+                        <option value="COORDINACION">Coordinación</option>
+                      </select>
+                    </div>
+                    <input
+                      type="file"
+                      accept=".svg,image/svg+xml"
+                      onChange={async e => {
+                        const archivo = e.target.files?.[0];
+                        e.target.value = '';
+                        if (!archivo) return;
+                        if (!nuevoSimboloNombre.trim()) {
+                          setNuevoSimboloAviso('Ponele un nombre antes de elegir el archivo.');
+                          return;
+                        }
+                        setNuevoSimboloAviso('Guardando…');
+                        const svg = await archivo.text();
+                        const r = await guardarSimbolo({
+                          etiqueta: nuevoSimboloNombre.trim(),
+                          color: nuevoSimboloColor,
+                          zona: nuevoSimboloZona,
+                          cuando: 'siempre',
+                          svg,
+                        });
+                        if (r.ok) {
+                          setNuevoSimboloAviso(null);
+                          setNuevoSimboloNombre('');
+                          setNuevoSimboloAbierto(false);
+                          setRefrescoSimbolos(n => n + 1);
+                        } else {
+                          setNuevoSimboloAviso(r.error || 'No se pudo guardar.');
+                        }
+                      }}
+                      className="w-full text-[10px] text-zinc-400 file:mr-2 file:rounded file:border-0 file:bg-zinc-800 file:px-2 file:py-1 file:text-[10px] file:text-zinc-200"
+                    />
+                    <p className="text-[9px] leading-snug text-zinc-500">
+                      Elegí un archivo SVG. Si en el diseño usás el color <code>currentColor</code>,
+                      el ícono toma el color que elijas acá y se ve bien en el plano oscuro y en el blanco.
+                    </p>
+                    {nuevoSimboloAviso && (
+                      <p className="text-[10px] font-semibold text-amber-400">{nuevoSimboloAviso}</p>
+                    )}
+                  </div>
+                )}
+                <div key={refrescoSimbolos} className="grid grid-cols-4 gap-2 max-h-80 overflow-y-auto pr-1">
+                  {catalogoCompleto().map(spec => (
                     <button
                       key={spec.key}
                       onClick={() => addSymbol(spec.key)}
                       title={spec.label}
                       className="flex flex-col items-center p-2 bg-zinc-800/30 border border-zinc-800 rounded-xl hover:bg-zinc-800 group transition-all"
                     >
-                      {renderRequirementIcon(spec.icon, "w-4 h-4 text-zinc-300")}
+                      {/* Los simbolos propios se muestran con SU dibujo, no con
+                          un icono generico: si la jefa de eventos agrega varios,
+                          con un icono comodin no podria distinguirlos aca. */}
+                      {simboloPropio(spec.key)?.svg ? (
+                        <svg viewBox="0 0 160 160" className="w-4 h-4" overflow="visible">
+                          {renderSymbolGlyph(spec.key, spec.color, spec.label)}
+                        </svg>
+                      ) : (
+                        renderRequirementIcon(spec.icon, "w-4 h-4 text-zinc-300")
+                      )}
                       <span className="mt-1.5 text-[7px] uppercase font-black opacity-50 group-hover:opacity-100 truncate max-w-[58px]">{spec.label}</span>
                     </button>
                   ))}

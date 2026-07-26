@@ -1,33 +1,35 @@
 # Símbolos propios del plano
 
-Acá van los archivos `.svg` de los íconos que agregues al plano.
+## Lo normal: agregarlos desde la app
 
-1. Exportá el ícono como SVG y guardalo en esta carpeta.
-2. Declaralo en `data/plano_simbolos.json` (ese archivo lleva las instrucciones
-   y un ejemplo listo para copiar).
-3. Generá el plano de nuevo.
+Abrí **Plano / Rider**, andá al bloque **Símbolos Técnicos** y apretá
+**+ Agregar**. Ponés el nombre, elegís el color y la zona, seleccionás el
+archivo `.svg`, y queda listo: aparece al toque en la paleta, con su dibujo.
 
-Si el archivo no aparece, si el nombre no coincide o si algún dato del bloque
-está mal, el programa **avisa por pantalla** y sigue con el resto del plano. Un
-ícono nunca desaparece en silencio.
-
-## Dónde se ve, hoy
-
-Los símbolos que agregues acá salen en el plano que genera `flujo plano`. El
-**editor visual de la app todavía no los muestra**: ese editor tiene su propia
-lista de íconos, y unir las dos listas es trabajo pendiente. O sea: si agregás
-un símbolo y no aparece en el editor, no está roto — todavía no llega ahí.
+No hace falta tocar ningún archivo a mano para esto.
 
 **Truco de diseño:** si en el SVG usás `currentColor` en lugar de un color fijo,
-el ícono toma el color que le declares en el JSON, y así el mismo archivo se ve
-bien en el plano oscuro y en el blanco.
+el ícono toma el color que elijas en la app, y así el mismo archivo se ve bien
+en el plano oscuro y en el blanco.
 
 El ícono se reescala solo para calzar en su casilla, respetando su proporción.
-No hace falta que lo exportes a un tamaño determinado.
+No hace falta exportarlo a un tamaño determinado.
+
+## Qué queda guardado acá
+
+Los `.svg` que subís se guardan en esta carpeta, y quedan declarados en
+`data/plano_simbolos.json`. Podés editar ese archivo a mano si preferís —por
+ejemplo para cambiarle el nombre o el color a varios de una— pero es opcional.
+Ese archivo también permite dos cosas que la app todavía no ofrece: elegir en
+qué eventos aparece cada símbolo (`cuando`) y renombrar o recolorear uno de los
+17 que vienen de fábrica.
+
+Si algún dato está mal, el programa **avisa por pantalla** y sigue con el resto
+del plano. Un ícono nunca desaparece en silencio.
 
 ## El archivo de ejemplo
 
 `_ejemplo_hidratacion.svg` está acá sólo como referencia de cómo se ve un SVG
-que funciona (fijate en `currentColor`). **No está declarado en el catálogo**, o
-sea que no aparece en ningún plano: no es un símbolo real de la operación, es
-una muestra para copiar. Los símbolos de verdad los definís vos.
+que funciona (fijate en `currentColor`). **No está declarado**, o sea que no
+aparece en ningún plano: no es un símbolo real de la operación, es una muestra
+para copiar.

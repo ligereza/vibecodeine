@@ -408,6 +408,25 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 self._send_json({"proyectos": [], "error": str(e)}, status=200)
             return
+        if path == "/api/plano-simbolos":
+            # The editable symbol catalogue, so the web editor draws the same
+            # symbols as the Python plan. Until this existed, a symbol the
+            # events manager added reached the plan but not the editor she
+            # works in. Re-read per request: the hub outlives any edit.
+            try:
+                from ..plano import iconos as _iconos
+                _iconos.recargar_catalogo()
+                self._send_json({
+                    "simbolos": [
+                        {"id": s["id"], "etiqueta": s["etiqueta"],
+                         "color": s["color"], "zona": s["zona"],
+                         "cuando": s["cuando"], "svg": s["svg"] or ""}
+                        for s in _iconos.CATALOGO.values()
+                    ]
+                })
+            except Exception as e:
+                self._send_json({"simbolos": [], "error": str(e)}, status=200)
+            return
         if path == "/api/cotizacion-servicios":
             # Editable line items for the quote tool (data/cotizacion_servicios
             # .json). These are design/printing services, NOT the field-service
@@ -519,6 +538,76 @@ class HubRequestHandler(BaseHTTPRequestHandler):
         else:
             self.send_error(404)
 
+    # ── Symbols the events manager adds from the app ──────────────────
+    _SIMBOLO_MAX_BYTES = 512 * 1024
+
+    @staticmethod
+    def _slug_simbolo(texto: str) -> str:
+        """Etiqueta -> id ASCII usable como llave y como nombre de archivo."""
+        import re
+        import unicodedata
+
+        base = unicodedata.normalize("NFKD", str(texto or ""))
+        base = base.encode("ascii", "ignore").decode("ascii").lower()
+        base = re.sub(r"[^a-z0-9]+", "_", base).strip("_")
+        return base[:40]
+
+    def _guardar_simbolo_plano(self, datos: dict) -> dict:
+        """Escribe el .svg y declara el simbolo en data/plano_simbolos.json.
+
+        Devuelve siempre un motivo legible cuando rechaza: quien lo usa no lee
+        logs, y un fallo mudo aca se siente como "la app no guarda".
+        """
+        from ..plano import iconos as _iconos
+
+        etiqueta = str(datos.get("etiqueta") or "").strip()
+        if not etiqueta:
+            return {"ok": False, "error": "Falta el nombre del símbolo."}
+
+        contenido = str(datos.get("svg") or "")
+        if not contenido.strip():
+            return {"ok": False, "error": "Falta el archivo SVG."}
+        if len(contenido.encode("utf-8")) > self._SIMBOLO_MAX_BYTES:
+            return {"ok": False, "error": "El SVG pesa más de 512 KB; exportalo más liviano."}
+        if "<svg" not in contenido.lower():
+            return {"ok": False, "error": "Ese archivo no es un SVG."}
+
+        sid = self._slug_simbolo(datos.get("id") or etiqueta)
+        if not sid:
+            return {"ok": False, "error": "El nombre no deja armar un identificador."}
+
+        zona = str(datos.get("zona") or _iconos.ZONA_POR_DEFECTO).upper()
+        if zona not in _iconos.ZONAS_VALIDAS:
+            zona = _iconos.ZONA_POR_DEFECTO
+        cuando = str(datos.get("cuando") or "siempre").lower()
+        if cuando not in _iconos.CUANDOS_VALIDOS:
+            cuando = "siempre"
+
+        raiz = repo_root()
+        carpeta = raiz / "data" / "plano_simbolos"
+        carpeta.mkdir(parents=True, exist_ok=True)
+        nombre_svg = f"{sid}.svg"
+        (carpeta / nombre_svg).write_text(contenido, encoding="utf-8")
+
+        ruta_json = raiz / "data" / "plano_simbolos.json"
+        catalogo = json.loads(ruta_json.read_text(encoding="utf-8")) if ruta_json.exists() else {}
+        entradas = [s for s in (catalogo.get("simbolos") or [])
+                    if isinstance(s, dict) and s.get("id") != sid]
+        entradas.append({
+            "id": sid,
+            "etiqueta": etiqueta,
+            "color": str(datos.get("color") or "#38bdf8"),
+            "svg": nombre_svg,
+            "zona": zona,
+            "cuando": cuando,
+        })
+        catalogo["simbolos"] = entradas
+        ruta_json.write_text(
+            json.dumps(catalogo, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+        _iconos.recargar_catalogo()
+        return {"ok": True, "id": sid, "etiqueta": etiqueta, "archivo": nombre_svg}
+
     def do_POST(self):
         parsed = urlparse(self.path)
         p = parsed.path
@@ -574,6 +663,18 @@ class HubRequestHandler(BaseHTTPRequestHandler):
                 self._send_json(out)
             except Exception as e:
                 self._send_json({"error": str(e), "cmd": cmd if 'cmd' in locals() else ""}, status=400)
+            return
+
+        if p == "/api/plano-simbolos":
+            # Add a symbol from the app. Until this existed the events manager
+            # had to edit data/plano_simbolos.json by hand and drop the file in
+            # a folder, which is not "she can add an icon" in any real sense.
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length).decode("utf-8")
+            try:
+                self._send_json(self._guardar_simbolo_plano(json.loads(body)))
+            except Exception as e:
+                self._send_json({"ok": False, "error": str(e)}, status=400)
             return
 
         if p == "/api/create-job-draft":
