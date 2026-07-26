@@ -408,6 +408,16 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 self._send_json({"proyectos": [], "error": str(e)}, status=200)
             return
+        if path == "/api/cotizacion-servicios":
+            # Editable line items for the quote tool (data/cotizacion_servicios
+            # .json). These are design/printing services, NOT the field-service
+            # tariff: they change per job, so they are a starting point to edit.
+            try:
+                ruta = repo_root() / "data" / "cotizacion_servicios.json"
+                self._send_json(json.loads(ruta.read_text(encoding="utf-8")))
+            except Exception as e:
+                self._send_json({"error": str(e)}, status=200)
+            return
         if path == "/api/rd-packs":
             # The service tariff, from the SAME file the rider and the Python
             # quote read (data/rd_packs.json). Before this, the web carried its

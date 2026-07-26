@@ -64,6 +64,7 @@ data/*.json
 # cotizaba con la copia de respaldo.
 !data/rd_packs.json
 !data/plano_simbolos.json
+!data/cotizacion_servicios.json
 context/DAILY.md
 context/PIPELINE_RESULT.md
 context/dashboard.html

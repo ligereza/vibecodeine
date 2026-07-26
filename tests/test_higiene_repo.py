@@ -47,7 +47,11 @@ def test_tools_en_registro():
 # Configuracion que el usuario edita a mano y que el codigo declara "fuente
 # unica". Si un archivo asi no viaja en el repo, el codigo cae a su respaldo
 # interno y NADIE se entera salvo por una linea en stderr.
-CONFIG_DEL_USUARIO = ("data/rd_packs.json", "data/plano_simbolos.json")
+CONFIG_DEL_USUARIO = (
+    "data/rd_packs.json",
+    "data/plano_simbolos.json",
+    "data/cotizacion_servicios.json",
+)
 
 
 def test_config_del_usuario_versionada():

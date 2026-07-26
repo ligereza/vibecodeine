@@ -60,6 +60,52 @@ def test_el_respaldo_del_typescript_coincide_con_la_tarifa():
     )
 
 
+SERVICIOS = REPO_ROOT / "data" / "cotizacion_servicios.json"
+SERVICIOS_TS = REPO_ROOT / "web" / "src" / "data" / "cotizacionServicios.ts"
+
+
+def test_los_servicios_de_cotizacion_son_configurables():
+    """Palabra del usuario, 2026-07-26: "esos valores son configurables cierto?
+    cada archivo de illustrator es distinto y los valores igual". Estaban
+    cableados en QuotePanel.tsx."""
+    datos = json.loads(SERVICIOS.read_text(encoding="utf-8"))
+    assert datos["items_por_defecto"], "sin items por defecto"
+    assert datos["presets"], "sin presets"
+    for preset in datos["presets"]:
+        assert preset["label"] and preset["items"]
+        for item in preset["items"]:
+            assert isinstance(item["precio"], int) and item["precio"] >= 0
+
+    panel = (REPO_ROOT / "web" / "src" / "components" / "QuotePanel.tsx").read_text(encoding="utf-8")
+    assert "const PRESETS" not in panel and "const DEFAULT_ITEMS" not in panel, (
+        "QuotePanel.tsx volvio a cablear los valores; se leen de "
+        "data/cotizacion_servicios.json"
+    )
+
+
+def test_el_respaldo_de_servicios_coincide_con_el_archivo():
+    """Mismo criterio que la tarifa: un respaldo que contradice al archivo es
+    peor que no tener respaldo."""
+    datos = json.loads(SERVICIOS.read_text(encoding="utf-8"))
+    ts = SERVICIOS_TS.read_text(encoding="utf-8")
+    del_json = sorted(
+        (i["label"], int(i["precio"]))
+        for grupo in [datos["items_por_defecto"]] + [p["items"] for p in datos["presets"]]
+        for i in grupo
+    )
+    del_ts = sorted(
+        (label, int(precio))
+        for label, precio in re.findall(
+            r"label:\s*'([^']+)',\s*qty:\s*\d+,\s*price:\s*(\d+)", ts)
+    )
+    assert del_ts == del_json, (
+        "el respaldo de web/src/data/cotizacionServicios.ts quedo desfasado de "
+        "data/cotizacion_servicios.json; se actualizan en el mismo commit.\n"
+        f"  solo en json: {sorted(set(del_json) - set(del_ts))}\n"
+        f"  solo en ts:   {sorted(set(del_ts) - set(del_json))}"
+    )
+
+
 def test_el_hub_sirve_la_misma_tarifa():
     """/api/rd-packs sale del modulo packs, no de una copia aparte."""
     from flujo.plano import packs

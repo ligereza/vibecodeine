@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { Calculator, Plus, Trash2, Download, RotateCcw, Printer } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { RD_LOGO } from '../rdBrand';
+import { DEFAULT_ITEMS, PRESETS, type QuoteLineItem } from '../data/cotizacionServicios';
 
 interface LineItem {
   id: string;
@@ -13,42 +14,12 @@ interface LineItem {
 
 const CATEGORY_OPTIONS = ['Diseño', 'Impresión', 'Evento', 'Digital', 'Otro'];
 
-const DEFAULT_ITEMS: LineItem[] = [
-  { id: '1', label: 'Diseño etiqueta (vector, 2 revisiones)', qty: 1, price: 65000, category: 'Diseño' },
-  { id: '2', label: 'Impresión etiqueta 16.5x6.5 cm (100 unidades)', qty: 1, price: 48000, category: 'Impresión' },
-  { id: '3', label: 'Post Instagram (3 variaciones)', qty: 1, price: 30000, category: 'Digital' },
-];
-
-const PRESETS: { label: string; items: Omit<LineItem, 'id'>[] }[] = [
-  {
-    label: 'Etiqueta Suplementos',
-    items: [
-      { label: 'Diseño etiqueta vectorial (2 revisiones)', qty: 1, price: 65000, category: 'Diseño' },
-      { label: 'Impresión 100 unidades', qty: 1, price: 48000, category: 'Impresión' },
-      { label: 'Post Instagram', qty: 3, price: 12000, category: 'Digital' },
-    ],
-  },
-  {
-    label: 'Kit Evento BASE',
-    items: [
-      { label: 'Diseño flyer físico A5', qty: 1, price: 45000, category: 'Diseño' },
-      { label: 'Impresión flyer A5 (200 unidades)', qty: 1, price: 35000, category: 'Impresión' },
-      { label: 'Diseño plano/rider operativo', qty: 1, price: 30000, category: 'Diseño' },
-      { label: 'Post Instagram evento', qty: 1, price: 15000, category: 'Digital' },
-    ],
-  },
-  {
-    label: 'Kit Evento MAINSTREAM',
-    items: [
-      { label: 'Diseño flyer físico A4 (2 idiomas)', qty: 1, price: 80000, category: 'Diseño' },
-      { label: 'Impresión flyer A4 (500 unidades)', qty: 1, price: 75000, category: 'Impresión' },
-      { label: 'Diseño pendón 80x180 cm', qty: 1, price: 55000, category: 'Diseño' },
-      { label: 'Diseño cartelera digital', qty: 1, price: 35000, category: 'Digital' },
-      { label: 'Plano/rider MAINSTREAM + SVG', qty: 1, price: 45000, category: 'Diseño' },
-      { label: 'Pack Instagram (5 posts)', qty: 1, price: 40000, category: 'Digital' },
-    ],
-  },
-];
+// Los valores viven en data/cotizacion_servicios.json, editable a mano; el hub
+// los sirve y main.tsx los carga antes de montar React. Estaban cableados aca
+// hasta el 2026-07-26. Son servicios de diseno e impresion, distintos de la
+// tarifa de packs en terreno, y cambian por trabajo: son un punto de partida.
+const withIds = (items: QuoteLineItem[]): LineItem[] =>
+  items.map((it, i) => ({ ...it, id: String(i + 1) }));
 
 function formatCLP(n: number) {
   return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(n);
@@ -66,7 +37,7 @@ interface StoredQuoteState {
 
 function loadStoredState(): StoredQuoteState {
   const fallback: StoredQuoteState = {
-    items: DEFAULT_ITEMS,
+    items: withIds(DEFAULT_ITEMS),
     clientName: '',
     eventName: '',
     notes: '',
@@ -242,7 +213,7 @@ export default function QuotePanel() {
         <div className="flex gap-2">
           <button
             onClick={() => {
-              setItems(DEFAULT_ITEMS);
+              setItems(withIds(DEFAULT_ITEMS));
               setDiscount(0);
               setClientName('');
               setEventName('');
