@@ -58,6 +58,22 @@ const ZONE_COLORS: Record<string, string> = {
   toalla: '#0891b2'
 };
 
+// Una ZONA es superficie que el recinto reserva y entrega: se marca en el piso,
+// se cierra, se ilumina, tiene metros cuadrados. Un SIMBOLO es algo que tiene
+// que estar ahi, en un punto.
+//
+// ZONE_LABELS mezclaba las dos cosas y la paleta ocultaba cinco entradas a mano,
+// asi que la app ofrecia dibujar como area "Toalla Nova", "Sillas" o "Mesas", y
+// tambien "Medidas Recinto" y "Terreno Estable", que no son objetos del plano
+// sino preguntas de checklist. Para el productor tecnico que recibe el plano,
+// una zona de 4 m2 llamada "Sillas" se lee como hecho sin criterio.
+//
+// Separado el 2026-07-26 por decision del usuario. NO se perdio nada: todo lo
+// que salio de aca sigue disponible como simbolo, que es lo que siempre fue.
+const ZONAS_REALES = [
+  'testeo', 'contencion', 'informativo', 'descanso', 'coordinacion', 'circulacion',
+] as const;
+
 const ZONE_LABELS: Record<string, string> = {
   testeo: 'Zona Testeo',
   contencion: 'Contención',
@@ -1668,7 +1684,7 @@ export default function PlanoTool() {
               <div className="p-4 bg-zinc-900/50 border border-zinc-800 rounded-xl space-y-3">
                 <h4 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Zonas de Montaje</h4>
                 <div className="grid grid-cols-2 gap-2">
-                  {Object.entries(ZONE_LABELS).filter(([k]) => !['power','heating','rack','extinguisher','water'].includes(k)).map(([key, label]) => (
+                  {ZONAS_REALES.map(key => [key, ZONE_LABELS[key]] as const).map(([key, label]) => (
                     <button
                       key={key}
                       onClick={() => addElement(key)}

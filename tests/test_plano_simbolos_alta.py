@@ -102,3 +102,41 @@ def test_el_boton_existe_en_la_app():
              / "PlanoTool.tsx").read_text(encoding="utf-8")
     assert "guardarSimbolo(" in panel, "el panel ya no guarda simbolos"
     assert 'accept=".svg,image/svg+xml"' in panel, "desaparecio el selector de archivo"
+
+
+def test_zonas_y_simbolos_son_cosas_distintas():
+    """Una ZONA es superficie que el recinto reserva y entrega; un SIMBOLO es
+    algo que tiene que estar ahi, en un punto.
+
+    La paleta de zonas ofrecia 26 cosas -- incluidas "Toalla Nova", "Sillas" y
+    "Mesas", que no son areas, y "Medidas Recinto" / "Terreno Estable", que son
+    preguntas de checklist -- porque ocultaba cinco entradas a mano en vez de
+    separar los dos conceptos. Decision del usuario, 2026-07-26, mirandolo como
+    el productor tecnico que recibe el plano.
+
+    Nada se perdio: lo que salio de zonas sigue estando como simbolo, y
+    ZONE_LABELS queda completo para que un plano guardado antes siga abriendo.
+    """
+    import re
+    from pathlib import Path
+
+    panel = (Path(__file__).resolve().parents[1] / "web" / "src" / "components"
+             / "PlanoTool.tsx").read_text(encoding="utf-8")
+
+    bloque = panel[panel.index("const ZONAS_REALES"):panel.index("] as const")]
+    reales = set(re.findall(r"'(\w+)'", bloque))
+    assert reales == {"testeo", "contencion", "informativo", "descanso",
+                      "coordinacion", "circulacion"}
+
+    simbolos = set(re.findall(r"key:\s*'(\w+)'", panel))
+    for objeto in ("toalla", "sillon", "chairs", "table", "trash", "scan", "terrain"):
+        assert objeto in simbolos, f"{objeto} salio de zonas y no quedo como simbolo"
+
+    # ZONE_LABELS sigue completo: un plano viejo con una zona de las retiradas
+    # tiene que poder abrirse igual.
+    etiquetas = panel[panel.index("const ZONE_LABELS"):]
+    assert "toalla: 'Toalla Nova'" in etiquetas
+
+    assert "!['power','heating','rack','extinguisher','water'].includes" not in panel, (
+        "volvio la lista de exclusiones a mano; la paleta se arma desde ZONAS_REALES"
+    )
