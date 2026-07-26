@@ -1,0 +1,32 @@
+{
+  "_que_es": "Catálogo de símbolos del plano. Sirve para agregar un ícono que no viene de fábrica, o para cambiarle el nombre o el color a uno que sí viene. No hay que tocar código: se edita este archivo y listo.",
+
+  "_como_agregar_uno": [
+    "1. Exportá el ícono como SVG y guardalo en la carpeta data/plano_simbolos/ (por ejemplo: hidratacion.svg).",
+    "2. Agregá un bloque en la lista 'simbolos' de más abajo, copiando el ejemplo comentado.",
+    "3. Volvé a generar el plano. Si algo del bloque está mal, el programa avisa por pantalla y sigue con el resto: nunca desaparece un ícono en silencio.",
+    "Truco de diseño: si en el SVG usás el color 'currentColor' en vez de un color fijo, el ícono toma el color que le pongas acá y se ve bien tanto en el plano oscuro como en el blanco."
+  ],
+
+  "_campos": {
+    "id": "Nombre corto sin espacios ni acentos. Es la llave interna, no se imprime.",
+    "etiqueta": "El texto que SÍ se imprime debajo del ícono en el plano. Va en español correcto, con acentos.",
+    "color": "Color del ícono en formato #rrggbb.",
+    "svg": "Nombre del archivo dentro de data/plano_simbolos/. Si querés solo renombrar o recolorear un ícono que ya existe, dejá este campo vacío y usá su id.",
+    "zona": "En qué bloque del plano aparece: SERVICIOS, INFRAESTRUCTURA, SEGURIDAD o COORDINACION.",
+    "cuando": "En qué eventos aparece: 'siempre'; 'testeo' solo si el evento incluye testeo; 'jornada_larga' si dura más de 5 horas; 'masivo' solo en eventos masivos; 'manual' nunca por sí solo, únicamente si el evento lo pide por nombre en su lista 'simbolos_extra'."
+  },
+
+  "_ejemplo": {
+    "id": "hidratacion",
+    "etiqueta": "Punto de hidratación",
+    "color": "#38bdf8",
+    "svg": "hidratacion.svg",
+    "zona": "INFRAESTRUCTURA",
+    "cuando": "jornada_larga"
+  },
+
+  "simbolos": []
+}
+
+

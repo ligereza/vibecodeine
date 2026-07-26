@@ -42,3 +42,31 @@ def test_tools_en_registro():
         "CAPACIDADES.md: toda herramienta declara consumidor o no entra "
         "(regla 2026-07-25). Faltan: " + ", ".join(faltantes)
     )
+
+
+# Configuracion que el usuario edita a mano y que el codigo declara "fuente
+# unica". Si un archivo asi no viaja en el repo, el codigo cae a su respaldo
+# interno y NADIE se entera salvo por una linea en stderr.
+CONFIG_DEL_USUARIO = ("data/rd_packs.json", "data/plano_simbolos.json")
+
+
+def test_config_del_usuario_versionada():
+    """Regresion medida: `data/rd_packs.json` se declaro fuente unica de la
+    tarifa RD el 2026-07-26 y quedo fuera del repo, porque .gitignore ignora
+    `data/*.json`. En cualquier otro checkout el rider cotizaba con la copia de
+    respaldo del codigo. Un archivo de configuracion que no viaja no es una
+    fuente de verdad."""
+    import subprocess
+
+    salida = subprocess.run(
+        ["git", "ls-files", "--", *CONFIG_DEL_USUARIO],
+        cwd=REPO_ROOT, capture_output=True, encoding="utf-8", errors="replace",
+    )
+    if salida.returncode != 0:  # sin git disponible no hay nada que medir
+        return
+    versionados = set(salida.stdout.split())
+    faltantes = [p for p in CONFIG_DEL_USUARIO if p not in versionados]
+    assert not faltantes, (
+        "config editable por el usuario fuera del repo (revisa .gitignore, "
+        "necesita una linea `!<ruta>`): " + ", ".join(faltantes)
+    )
