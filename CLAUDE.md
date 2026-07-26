@@ -40,6 +40,27 @@ De ahi salen las tres unicas conductas que importan:
 Antes de preguntarle algo al usuario, buscarlo en `context/LAST_HANDOFF.md` y en
 la memoria local. Preguntar lo ya contestado es el defecto que mas lo desgasta.
 
+## Que regla aplica a que agente (2026-07-26)
+
+Buena parte de las reglas de este repo se escribieron para el agente mas debil de
+la cadena y despues se le aplicaron a todos. Quedan separadas asi:
+
+| Mecanismo | Claude Code local | Agente web / arena |
+|---|---|---|
+| Acceso | lee el repo y pushea | clona el repo, NO pushea |
+| Entrega | rama + PR | ZIP que el usuario aplica y despues pide "revisa" |
+| `_airdrop/` + `validate_airdrop.py` + `run_airdrop_checks.py` | no es su camino | es SU canal, obligatorio |
+| ASCII-only en `CLAUDE.md` y `context/*.md` | lo respeta porque comparte el archivo | es la causa de la regla |
+| `flujo datadrop` | no lo necesita para SI (ve imagenes y PDFs directo); lo corre para dejar la referencia legible a los demas | lo necesita: no puede abrir el binario |
+| Ratchets de doc (`test_mapa_completo`, `test_higiene_docs`) | no son su checklist, pero no los rompe | son su barandilla real |
+| Tests del software | los corre cuando toca el codigo que cubren | idem |
+| Veredicto | la matriz de CI, para los dos | idem |
+
+MAK es un tercer caso: no es un agente que edite el repo, es un box que corre
+research/codex/plataforma. Su doctrina vive en `cultura/mak_plataforma/doctrina/`,
+NO en `context/` -- estaba escrita para el modelo local del box y los Claude la
+leian como propia.
+
 ## Mision
 
 - Claude = ANTES y DESPUES. AHORA con cuota construye base; DESPUES el repo corre sin Claude (agentes gratis Arena + airdrops). Norte: repo upgradeable SIN PC (iPhone/durmiendo) y SIN cuenta Claude.
@@ -97,9 +118,17 @@ Repo remoto: https://github.com/ligereza/vibecodeine/
 ```
 
 ASCII-only aplica SOLO a `CLAUDE.md` y a `context/*.md` operativos (LAST_HANDOFF.md
-y similares). Fecha: 2026-06-24. Causa: bugs de encoding Windows en esos archivos
-(commits v0.35.7-v0.35.9). Retiro: cuando un chequeo automatico de encoding en CI
-lo vuelva innecesario.
+y similares). Fecha: 2026-06-24, precisada 2026-07-26.
+
+**Causa real: es una regla PARA AGENTES WEB, no para Claude local.** El que
+rompia los archivos era un agente web: su camino de ida y vuelta (clonar, editar
+afuera, entregar un ZIP, aplicarlo en Windows) mutila los diacriticos, y de ahi
+salieron los commits corruptos v0.35.7-v0.35.9. Claude Code local escribe UTF-8
+directo al disco y no tiene ese problema. Estos dos archivos siguen en ASCII
+porque los editan LOS DOS: el minimo comun denominador los protege.
+
+Retiro: cuando un chequeo automatico de encoding en CI lo vuelva innecesario, o
+cuando el canal de los agentes web deje de mutilar acentos.
 
 Contraparte obligatoria: TODO entregable (`data/`, `docs/rd/`, informes, DB, piezas
 culturales) va en espanol correcto UTF-8. Mutilar diacriticos en un producto es
