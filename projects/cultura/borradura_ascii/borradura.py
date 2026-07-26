@@ -48,18 +48,16 @@ from typing import Dict, List, Optional, Tuple
 # sea reproducible sobre lo que la regla realmente gobierna, no sobre
 # lo que exista hoy en el directorio (context/*.html, *.json, etc. no
 # son texto operativo en espanol).
+# 2026-07-26: la lista se encogio de 11 a 4. Los siete que faltan no se
+# perdieron -- se archivaron el mismo dia, cuando resulto que siete documentos
+# operativos compitiendo entre si eran la causa de que cada agente reconstruyera
+# el estado desde cero. El corpus sigue siendo lo que la regla ASCII gobierna
+# HOY; que se haya encogido es, en si mismo, el dato.
 ARCHIVOS_OPERATIVOS = [
     "CLAUDE.md",
-    "context/CAPATAZ.md",
-    "context/DIRECTOR_CONTRACT.md",
-    "context/DOCTRINA_CLAUDE.md",
+    "MAPA.md",
     "context/LAST_HANDOFF.md",
-    "context/MASTER_PLAN.md",
-    "context/PLAN_SEMANAL_OPUS.md",
-    "context/PLAN_SIGUIENTE_AGENTE.md",
-    "context/PLAN_UPSCALE.md",
     "context/README.md",
-    "context/WALKTHROUGH.md",
 ]
 
 # Diccionario minimo embebido: palabra_con_marca -> (formas ASCII que puede

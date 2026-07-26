@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="0" skipped="0" tests="1" time="4.774" timestamp="2026-07-25T07:24:16.402644-04:00" hostname="ISKVW"><testcase classname="" name="tests.test_ig_cffi_fallback" time="0.000"><error message="collection failure">#x1B[31mImportError while importing test module 'C:\IA\flujo\.claude\worktrees\agent-a7bd11b6075b57f9d\tests\test_ig_cffi_fallback.py'.
-Hint: make sure your test modules/packages have valid Python names.
-Traceback:
-#x1B[1m#x1B[31mC:\Users\issvk\AppData\Local\Programs\Python\Python311\Lib\importlib\__init__.py#x1B[0m:126: in import_module
-    #x1B[0m#x1B[94mreturn#x1B[39;49;00m _bootstrap._gcd_import(name[level:], package, level)#x1B[90m#x1B[39;49;00m
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^#x1B[90m#x1B[39;49;00m
-#x1B[1m#x1B[31mtests\test_ig_cffi_fallback.py#x1B[0m:15: in &lt;module&gt;
-    #x1B[0m#x1B[94mfrom#x1B[39;49;00m#x1B[90m #x1B[39;49;00m#x1B[04m#x1B[96mflujo#x1B[39;49;00m#x1B[04m#x1B[96m.#x1B[39;49;00m#x1B[04m#x1B[96mig#x1B[39;49;00m#x1B[04m#x1B[96m.#x1B[39;49;00m#x1B[04m#x1B[96mdownload#x1B[39;49;00m#x1B[90m #x1B[39;49;00m#x1B[94mimport#x1B[39;49;00m _cffi_download#x1B[90m#x1B[39;49;00m
-#x1B[1m#x1B[31mE   ImportError: cannot import name '_cffi_download' from 'flujo.ig.download' (C:\IA\flujo\.claude\worktrees\agent-a7bd11b6075b57f9d\src\flujo\ig\download.py)#x1B[0m#x1B[0m</error></testcase></testsuite></testsuites>

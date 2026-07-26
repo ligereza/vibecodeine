@@ -1,15 +1,30 @@
 {
+  "autoMode": {
+    "environment": [
+      "$defaults",
+      "El repo github.com/ligereza/vibecodeine es del propio usuario, que es su unico dueno y revisor. Pushear ramas, abrir/actualizar/mergear PRs, borrar ramas ya consolidadas y disparar sus Actions son operaciones rutinarias, no escrituras a infraestructura ajena.",
+      "El telefono Xiaomi (xio) en la LAN del show y la maquina MAK (Linux) alcanzada por SSH son equipos personales del usuario, no hosts de produccion compartidos.",
+      "C:\\IA\\flujo es el checkout canonico y hay copias del repo en el mismo disco: son del usuario y no se tocan."
+    ],
+    "allow": [
+      "$defaults",
+      "Mergear un PR en ligereza/vibecodeine con CI verde es politica permanente autorizada por el usuario el 2026-07-26: es el unico revisor del repo, y main esta protegida con enforce_admins y checks obligatorios, asi que el gate lo aplica el servidor. No cuenta como Merge Without Review.",
+      "Borrar ramas remotas ya consolidadas y podar worktrees abandonados en .claude/worktrees es mantenimiento rutinario autorizado por el usuario el 2026-07-26. main, rd e iskvw estan protegidas y no se tocan."
+    ],
+    "soft_deny": [
+      "$defaults"
+    ],
+    "hard_deny": [
+      "$defaults"
+    ]
+  },
   "hooks": {
     "SessionStart": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "echo \"MODO CAVEMAN ACTIVO (repo flujo, memoria feedback-caveman-discipline): responde terse estilo caveman skill, ~65pct menos tokens de output. Dropa articulos y relleno, fragmentos OK, terminos tecnicos y comandos exactos, sin narrar tool-calls. Codigo/commits/PRs y warnings de seguridad: normal y claro. No soltar el modo por prosa tecnica ni por flags ambiguos.\""
-          },
-          {
-            "type": "command",
-            "command": "echo \"CONTRATO DIRECTOR ACTIVO (context/DIRECTOR_CONTRACT.md): I1 medir antes de afirmar; I2 palabra del usuario sobre SU sistema = el dato; I3 probar que NO existe antes de construir (git log, gh pr list, changelog); I4 listar vocabulario existente antes de inventar nombres (labels/ramas); I5 escritura de repo = SIEMPRE subagente, inline solo <=5 chequeos read-only; I6 correccion -> accion, cero excusas; I7 jobs >30min: contenido confirmado + latido monitoreado; I8 leer lo que esta delante antes de teorizar.\""
+            "command": "echo \"REGLA UNICA (2026-07-26, palabra del usuario): el usuario NO es experto en informatica, SI es experto en saber lo que quiere. Camino optimo por razones tecnicas = adelante sin preguntar (codigo, regla o config). Asumir un estilo, una estetica o lo que el usuario quiere = error, eso se pregunta. Corolarios: NO HAY ENTREGABLE, se hace lo pedido y nada mas; un hallazgo al paso se anota en una linea y se sigue; avances grandes, no commit+CI cada dos cambios; el repo es un pendrive, el centro es la conversacion. Estado: context/LAST_HANDOFF.md (checkpoint unico, guarda respuestas no preguntas). Lo personal (rutas, IPs, telefonos) va a memoria local, NUNCA al repo: es publico.\""
           }
         ]
       }

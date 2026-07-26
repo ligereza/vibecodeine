@@ -30,8 +30,7 @@ export type AppView =
   | 'rd-db'
   | 'cultura';
 
-// Division en 3 (2026-07-25, orden del usuario; cierra la fase F3 de
-// context/ORQUESTACION_SUCESOR.md): la app espeja la topologia de ramas del
+// Division en 3 (2026-07-25, orden del usuario): la app espeja la topologia de ramas del
 // repo -- main / rd / iskvw. `studio` y `cultura` se fundieron en `iskvw`
 // (la linea de curatoria/artistico, ex-portafolio); `main` es el nucleo
 // transversal, lo que no pertenece ni a la ONG ni a la obra.

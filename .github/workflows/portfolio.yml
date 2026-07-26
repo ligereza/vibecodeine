@@ -10,12 +10,17 @@ name: portfolio
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "0 6 * * 1"   # lunes 06:00 UTC
   push:
     branches: [main]
     paths:
       - "tools/portfolio/**"
+
+# CRON SEMANAL RETIRADO (2026-07-26). Causa: publicaba a ligereza/portfolio-auto,
+# que quedo DESCARTADO por orden del usuario -- el portafolio es la linea `iskvw`
+# y este repo se mantiene publico. Un cron semanal empujando a un destino muerto
+# solo genera corridas y avisos inutiles. Queda a mano (workflow_dispatch) y por
+# push a tools/portfolio/ hasta que se recablee a iskvw.
+# Retiro: cuando el portafolio se publique desde iskvw y este workflow apunte ahi.
 
 permissions:
   contents: read

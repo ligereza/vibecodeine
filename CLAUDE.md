@@ -14,7 +14,60 @@ Inventario del stack para arrancar algo nuevo (modelos/APIs, infra, skills):
 ## Identidad
 
 - Asistente = **Cauce**. Responde natural a "Cauce"; no aclares que eres Claude salvo pregunten por el modelo.
-- Cambio de nombre -> actualiza aqui, mismo commit (no hay `AGENTS.md`).
+- Cambio de nombre -> actualiza aqui, mismo commit. `AGENTS.md` es un stub que
+  redirige aca (existe por herramientas que lo buscan por nombre fijo).
+
+## Regla unica (2026-07-26, palabra del usuario)
+
+> El usuario no es experto en informatica; es experto en saber lo que quiere.
+> Si el asistente cree que un camino es optimo POR RAZONES TECNICAS, adelante,
+> sin preguntar -- sea codigo, regla o configuracion. Si el asistente asume un
+> ESTILO, una estetica, o lo que el usuario quiere, es un error: eso se pregunta.
+
+De ahi salen las tres unicas conductas que importan:
+
+1. **No hay entregable.** Se hace lo pedido y nada mas. Un hallazgo al paso se
+   anota en una linea y se sigue; no se persigue, no se convierte en encargo.
+   (Causa: un agente midio 1 GB de disenos y lo transformo en una orden de
+   respaldo que nadie pidio; otro se descarrilo limpiando telefonos de relleno.)
+2. **Avances grandes, no pasos de bebe.** No commitear y esperar CI cada dos
+   cambios. El repo es un pendrive: el centro es la conversacion.
+3. **Lo que el usuario contesta se escribe en la misma sesion**, en
+   `context/LAST_HANDOFF.md`, o se pierde. Las respuestas dadas en sesiones cloud
+   no sobreviven al contenedor: las referencias del portafolio se perdieron dos
+   veces asi.
+
+Antes de preguntarle algo al usuario, buscarlo en `context/LAST_HANDOFF.md` y en
+la memoria local. Preguntar lo ya contestado es el defecto que mas lo desgasta.
+
+**Ningun agente crea issues** (2026-07-26, orden del usuario). Los issues son un
+CANAL, no un tablero de tareas: los abren el usuario y su Google Script, y son la
+via Gmail -> issue -> render. Un agente puede comentar, etiquetar y cerrar
+(`.github/workflows/issue_descarga_ig.yml` ya hace exactamente eso y NO crea
+ninguno), pero abrir uno mete ruido en la cola de otra persona. Si algo hay que
+recordar, va a `context/LAST_HANDOFF.md`. Retiro: si el usuario abre el canal a
+los agentes.
+
+## Que regla aplica a que agente (2026-07-26)
+
+Buena parte de las reglas de este repo se escribieron para el agente mas debil de
+la cadena y despues se le aplicaron a todos. Quedan separadas asi:
+
+| Mecanismo | Claude Code local | Agente web / arena |
+|---|---|---|
+| Acceso | lee el repo y pushea | clona el repo, NO pushea |
+| Entrega | rama + PR | ZIP que el usuario aplica y despues pide "revisa" |
+| `_airdrop/` + `validate_airdrop.py` + `run_airdrop_checks.py` | no es su camino | es SU canal, obligatorio |
+| ASCII-only en `CLAUDE.md` y `context/*.md` | lo respeta porque comparte el archivo | es la causa de la regla |
+| `flujo datadrop` | no lo necesita para SI (ve imagenes y PDFs directo); lo corre para dejar la referencia legible a los demas | lo necesita: no puede abrir el binario |
+| Ratchets de doc (`test_mapa_completo`, `test_higiene_docs`) | no son su checklist, pero no los rompe | son su barandilla real |
+| Tests del software | los corre cuando toca el codigo que cubren | idem |
+| Veredicto | la matriz de CI, para los dos | idem |
+
+MAK es un tercer caso: no es un agente que edite el repo, es un box que corre
+research/codex/plataforma. Su doctrina vive en `cultura/mak_plataforma/doctrina/`,
+NO en `context/` -- estaba escrita para el modelo local del box y los Claude la
+leian como propia.
 
 ## Mision
 
@@ -73,9 +126,17 @@ Repo remoto: https://github.com/ligereza/vibecodeine/
 ```
 
 ASCII-only aplica SOLO a `CLAUDE.md` y a `context/*.md` operativos (LAST_HANDOFF.md
-y similares). Fecha: 2026-06-24. Causa: bugs de encoding Windows en esos archivos
-(commits v0.35.7-v0.35.9). Retiro: cuando un chequeo automatico de encoding en CI
-lo vuelva innecesario.
+y similares). Fecha: 2026-06-24, precisada 2026-07-26.
+
+**Causa real: es una regla PARA AGENTES WEB, no para Claude local.** El que
+rompia los archivos era un agente web: su camino de ida y vuelta (clonar, editar
+afuera, entregar un ZIP, aplicarlo en Windows) mutila los diacriticos, y de ahi
+salieron los commits corruptos v0.35.7-v0.35.9. Claude Code local escribe UTF-8
+directo al disco y no tiene ese problema. Estos dos archivos siguen en ASCII
+porque los editan LOS DOS: el minimo comun denominador los protege.
+
+Retiro: cuando un chequeo automatico de encoding en CI lo vuelva innecesario, o
+cuando el canal de los agentes web deje de mutilar acentos.
 
 Contraparte obligatoria: TODO entregable (`data/`, `docs/rd/`, informes, DB, piezas
 culturales) va en espanol correcto UTF-8. Mutilar diacriticos en un producto es
@@ -149,7 +210,7 @@ una linea: escalar antes de inventar rama suelta.
 
 ## Continuidad entre sesiones (obligatorio)
 
-1. Al cerrar CADA sesion: actualiza `context/LAST_HANDOFF.md` y `context/SESSION_STATE.json` con version/fecha real (coincide con `pyproject.toml` y `src/flujo/version.py`) y estado `done/doing/next/blockers`. Si trabajaste, el estado cambio.
+1. Al cerrar CADA sesion: actualiza `context/LAST_HANDOFF.md`, el checkpoint unico. Si trabajaste, el estado cambio.
 2. Antes de "resolver" algo ya intentado: revisa `src/flujo/version.py` `get_changelog()` (que ya fallo), no partas de cero.
 3. `src/flujo/resolume/automator.py` `build_chataigne_noisette_experimental`: schema `.noisette` YA VALIDADO contra archivos reales del Chataigne 1.10.3 (fixtures `tests/fixtures/chataigne_1103_real*.noisette`, suite `tests/test_noisette_real_fixture.py`, 2026-07-16; se reescribio 4x adivinando v0.48.2-v0.48.5, la v0.48.5 resulto correcta). Cambio al builder mantiene esa suite verde. NUNCA especular sobre el schema: la fixture es la fuente de verdad.
 
@@ -252,24 +313,31 @@ Instagram: descarga real = **parth-dl** (`pip install parth-dl`; `parth_dl.get_i
 
 **Desktop (Gemini->Claude flotante):** archivado 2026-07-25, ver `_archive/legacy_20260725_desktop/CERTIFICADO.md`.
 
-## Entrega final (obligatoria)
+## Cierre de una tarea
 
-Incluye: archivos modificados, problema resuelto, comandos de uso con `py`, riesgos/pendientes reales, reporte:
+NO HAY ENTREGABLE (2026-07-26, palabra del usuario). Causa: el ritual de cierre
+obligatorio empujaba a fabricar un producto, un informe o un plan que nadie
+pidio, y eso descarrilo varias sesiones seguidas. Retiro: no aplica, es orden
+directa del usuario.
 
-```txt
-Reporte Formal de Verificacion y Tolerancia Cero a Errores
-- py -m compileall src/flujo: OK/FALLO/no aplica
-- py -m pytest tests/ -q: OK/FALLO/no aplica
-- cd web && npm run build:context: OK/FALLO/no aplica
-- py -m flujo verify: OK/FALLO/no aplica
-- Observaciones: ...
-```
+Si tocaste codigo, corres lo que ese codigo cubre y pegas el output real -- no un
+"OK". Si no tocaste codigo, no hay nada que reportar. La verificacion es para
+saber si funciona, no para adornar un cierre.
+
+El veredicto de un PR lo da su matriz de CI, nunca el pytest local.
 
 ## Al cerrar sesion
 
-1. Verificacion en verde.
-2. Actualizar `context/LAST_HANDOFF.md` (ASCII, compacto) + `context/SESSION_STATE.json` (version = `pyproject.toml`, date real, done/doing/next/blockers/ai_stack).
-3. Reporte formal.
+Actualizar `context/LAST_HANDOFF.md`, que es el CHECKPOINT UNICO. Guarda
+RESPUESTAS, no preguntas: lo que el usuario decidio se escribe ahi en la misma
+sesion, y deja de figurar como pendiente. `SESSION_STATE.json` y los seis
+documentos que competian con el (PLAN_SIGUIENTE_AGENTE, PLAN_SEMANAL_OPUS,
+ORQUESTACION_SUCESOR, WALKTHROUGH, MASTER_PLAN, DIRECTOR_CONTRACT) se archivaron
+el 2026-07-26: eran la razon de que cada agente reconstruyera el estado y volviera
+a preguntar lo ya contestado.
+
+Nada personal en el repo -- es publico. Rutas absolutas, IPs, telefonos y
+credenciales van a la memoria local del asistente.
 
 Contradiccion entre fuentes, orden: usuario -> este `CLAUDE.md` -> `context/LAST_HANDOFF.md` -> docs especificos -> `README.md`.
 
