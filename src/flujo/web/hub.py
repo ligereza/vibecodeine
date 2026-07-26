@@ -1499,7 +1499,7 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => n
     # Extended for real backend use from hub (daily driver UX)
     SAFE_PREFIXES = [
         "flujo version", "flujo health", "flujo daily",
-        "flujo brand", "flujo job list", "flujo job next",
+        "flujo job list", "flujo job next",
         "flujo job-status", "flujo plano", "flujo render formats",
         "flujo privacy", "flujo handoff last", "flujo delegate",
         "flujo job prepare", "flujo job new", "flujo render run",
@@ -1749,8 +1749,9 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => n
             "Fuente: fotos reales de flyers/etiquetas/etc ya entregados por usuario.\n"
             "Usa: cada manifest.json (palette, ocr_hints, visual_traits, for_future_ai) + imagen real (datadrops/<id>/img).\n"
             "Objetivo: 'sabrá qué buscar' en briefs/análisis — patrones de paletas reales, contraste, densidad de layouts, textos que aparecen en entregas.\n"
-            "Ej: si datadrops muestran magenta alto contraste en flyers rave oscuros + icon grids densos → valida que linea_editorial + generación lo use.\n"
-            "Privacidad: local only. Coordina Brand Guardian / linea. Copia o cat este archivo + manifests cuando te unas a linea task.\n"
+            "Ej: si los datadrops muestran magenta alto contraste en flyers rave oscuros + icon grids densos, eso es lo que YA se entregó.\n"
+            "Son REFERENCIA, no regla: describen lo entregado, no obligan a que la próxima pieza se vea igual.\n"
+            "Privacidad: local only. Copia o cat este archivo + manifests cuando te unas a la tarea.\n"
             "Generado via hub (`flujo app`) o CLI `py -m flujo datadrop prepare`.\n\n"
         )
         summary_lines = []
@@ -1851,10 +1852,6 @@ class _HubDesktopApi:
     def get_connected(self):
         """Small indicator helper for JS: always report true when bridge present (desktop)."""
         return {"connected": True, "via": "pywebview", "backend": "real", "note": "flujo app --desktop"}
-
-    def export_tokens(self):
-        """Legacy method: design tokens no longer exposed; use projects/flujo/flujo.json directly."""
-        return {"note": "Design tokens removed; use projects/flujo/flujo.json for brand config.", "deprecated": True}
 
     # Datadrop (inverse airdrop) bridge for desktop pywebview
     def list_datadrops(self):

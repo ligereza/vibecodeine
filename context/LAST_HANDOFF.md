@@ -90,6 +90,7 @@ profiles, and the documentation ratchets (`test_mapa_completo`,
 | 2026-07-26 | Agent worktrees under `.claude/worktrees/` are pruned when the task ends. There were 7 abandoned ones, each a full copy of the repo: they multiplied every handoff, checkpoint and doctrine file by 8, so any search returned hundreds of hits with no way to tell which one ruled |
 | 2026-07-26 | MAK's doctrine (`CAPATAZ.md`, `DOCTRINA_CLAUDE.md`) lives in `cultura/mak_plataforma/doctrina/`. It was written for the box's local model, and the Claudes kept reading it as their own |
 | 2026-07-26 | Two useless crons removed: the 30-minute sweep in `issue_descarga_ig` (it re-commented on open issues, GitHub emailed each comment, and the Gmail script turned every email back into an issue) and the weekly `portfolio` job (it published to the discarded repo) |
+| 2026-07-26 | **Brand is information, never a restriction.** User's words: "como info sirve, como limitante o restriccion no -- un dia puedo hacer un post con otra estetica o cuando toque cambio de flyers la app no debe restringir". So the palette is a DEFAULT any caller, event or config may override, and nothing validates a piece against it. Removed: the `flujo brand` CLI group (it only printed that it had been retired), the dead `export_tokens` bridge, and a block in `render/piezas.py` that printed "flujo aplicado automaticamente" while applying nothing inside a silent `try/except`. The quote engine's palette now resolves caller > event `estilo` block > default palette, and the document sent to a productora no longer carries hex codes or the words "usa flujo para consistencia de marca". `flujo.brand` STAYS as the palette reader -- deleting it is exactly how it broke before |
 | 2026-07-25 | Supplements panel in the app: UNNECESSARY. User's words: "los flyers los presentan" |
 | 2026-07-25 | The design folder is not backed up from the repo. What was asked for was extracting structure and data; an agent turned it into a 1 GB backup order nobody requested |
 | 2026-07-25 | The two large plans proposed ("separate the engine from the content" and "from repo to three products") were REJECTED. Do not execute them on your own authority |
@@ -140,10 +141,6 @@ and say what changes.
   items from a different domain (studio/design services) with no source backing
   them. `REFERENCIA_VALORES.pdf` sits in the repo root and no code reads it.
   Money values do not change without the user's word.
-- **Remove the branding system** (user's words, 2026-07-26): it "only caused
-  friction without real use". Measure what consumes it before deleting. This is
-  NOT the RD visual identity, which lives in the approved template and the
-  palette of the content file.
 - **The `mak` inbox has no defined drain, and that is the one thing that would
   turn it back into a line.** MAK opens a PR into `mak` every 6 hours; nothing
   moves `mak` into `main`. Verified working on 2026-07-26: the box fetches all

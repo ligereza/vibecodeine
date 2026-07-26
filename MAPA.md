@@ -134,7 +134,7 @@ program says to the operator who runs it.
 
 <!-- COMANDOS:INICIO -- generado por tools/gen_mapa_comandos.py, no editar a mano -->
 
-Medido sobre el CLI real: **81 comandos** (25 sueltos + 56 dentro de 14 grupos).
+Medido sobre el CLI real: **80 comandos** (24 sueltos + 56 dentro de 14 grupos).
 
 ### Comandos sueltos
 
@@ -143,7 +143,6 @@ Medido sobre el CLI real: **81 comandos** (25 sueltos + 56 dentro de 14 grupos).
 | `py -m flujo ai-prompt` | Genera un prompt listo para copiar en una IA web y convertir pedidos en briefs/cotizaciones. | nada |
 | `py -m flujo analyze` | Analizar colores dominantes y OCR de un proyecto flyer. | nada |
 | `py -m flujo app` | Alias de serve. Lanza la nueva app (hub pro workspace recomendado como entrada diaria). Real backend + parse/create jobs live cuando activo. | nada |
-| `py -m flujo brand` | [LEGACY] Use knowledge/logos instead. | nada |
 | `py -m flujo clean` | Limpiar archivos temporales del repo. | nada |
 | `py -m flujo cotizaciones` | Genera cotización dual integrada con flujo. | nada |
 | `py -m flujo daily` | Generar reporte diario (md + html). | nada |
@@ -287,7 +286,7 @@ Medido sobre el CLI real: **81 comandos** (25 sueltos + 56 dentro de 14 grupos).
 
 | Comando | Que hace | Que necesita antes |
 |---|---|---|
-| `py -m flujo suplementos contraportada` | Generar contraportada SVG para un suplemento. | nada |
+| `py -m flujo suplementos contraportada` | Regenerar las contraportadas desde la plantilla aprobada. | nada |
 | `py -m flujo suplementos illustrator` | Preparar un paquete Illustrator con varias contraportadas de suplementos. | Adobe Illustrator (solo Windows/macOS) |
 | `py -m flujo suplementos list` | Listar suplementos disponibles. | nada |
 | `py -m flujo suplementos validate` | Validar SVGs de suplementos antes de revisar/exportar en Illustrator. | nada |

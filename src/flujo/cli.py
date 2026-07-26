@@ -109,7 +109,6 @@ resolume_app = typer.Typer(help="Automatizacion de shows Resolume/Chataigne por 
 render_app = typer.Typer(help="Render y validación de piezas vectoriales.", no_args_is_help=True)
 airdrop_app = typer.Typer(help="Sistema de actualización profesional (airdrops).", no_args_is_help=True)
 datadrop_app = typer.Typer(help="Gestión de datadrops (fotos reales terminadas).", no_args_is_help=True)
-brand_app = typer.Typer(help="[LEGACY] Use knowledge/logos instead.", no_args_is_help=True)
 
 app.add_typer(job_app, name="job")
 app.add_typer(privacy_app, name="privacy")
@@ -120,7 +119,6 @@ app.add_typer(resolume_app, name="resolume")
 app.add_typer(render_app, name="render")
 app.add_typer(airdrop_app, name="airdrop")
 app.add_typer(datadrop_app, name="datadrop")
-app.add_typer(brand_app, name="brand")
 
 suplementos_app = typer.Typer(help="Generación de contraportadas para suplementos RD.", no_args_is_help=True)
 app.add_typer(suplementos_app, name="suplementos")
@@ -950,8 +948,9 @@ def datadrop_prepare():
         "Fuente: fotos reales de flyers/etiquetas/etc ya entregados por usuario.\n"
         "Usa: cada manifest.json (palette, ocr_hints, visual_traits, for_future_ai) + imagen real (datadrops/<id>/img).\n"
         "Objetivo: 'sabrá qué buscar' en briefs/análisis — patrones de paletas reales, contraste, densidad de layouts, textos OCR de entregas.\n"
-        "Ej: si datadrops muestran magenta alto contraste en flyers rave oscuros + icon grids densos → valida que linea_editorial + generación lo use.\n"
-        "Privacidad: local only. Coordina Brand Guardian / linea. Copia o cat este archivo + manifests cuando te unas a linea task.\n"
+        "Ej: si los datadrops muestran magenta alto contraste en flyers rave oscuros + icon grids densos, eso es lo que YA se entregó.\n"
+        "Son REFERENCIA, no regla: describen lo entregado, no obligan a que la próxima pieza se vea igual.\n"
+        "Privacidad: local only. Copia o cat este archivo + manifests cuando te unas a la tarea.\n"
         "Generado via hub (`flujo app`) o CLI `py -m flujo datadrop prepare`.\n\n"
     )
     summary_lines = []
@@ -2053,8 +2052,11 @@ def cotizaciones(
 ):
     """Genera cotización dual integrada con flujo.
 
-    --para productora: versión externa branded (infografía para productoras)
+    --para productora: versión externa (la que recibe el recinto o la productora)
     --para interno/empresa: desglose detallado interno.
+
+    Los colores salen de la paleta por defecto y el evento puede sobrescribirlos
+    con un bloque `estilo`; no hay estética obligatoria.
     """
     # Robust import for cotizaciones (satellite, not in main pkg layout).
     # Works after `pip install -e .` (flujo in path) + from repo root or packaged context.
@@ -2077,7 +2079,6 @@ def cotizaciones(
         _err(f"No existe: {evento}")
     res = generar_cotizacion(evento, audiencia=para, output_dir=output)
     console.print(f"Cotización generada: {res['files']}")
-    console.print(f"Estilo: {res.get('estilo', 'flujo')}")
 
 
 # ============================================================
@@ -2502,12 +2503,6 @@ def knowledge_logo_lab(
         _err(str(e))
     _ok(f"Logo Lab preparado: {manifest_path}")
 
-
-
-@brand_app.callback()
-def brand_legacy():
-    """El branding rígido fue retirado. Usa knowledge/logos y logo clean lab."""
-    console.print("[yellow]⚠ Brand legacy retirado. Migrado a knowledge/logos.[/]")
 
 
 def main():
