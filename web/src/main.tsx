@@ -12,6 +12,12 @@
 //
 // If the hub is not reachable (a static build opened from disk) the code values
 // stay: they are the same numbers, only frozen at build time.
+//
+// Both fetches are on a hard deadline. Mounting waits for them so no panel ever
+// paints a stale figure, and that is exactly why they must not be able to wait
+// forever: a hub that accepts the connection and then hangs would leave a blank
+// page with nothing on screen to explain it. Past the deadline the requests are
+// aborted and the app mounts on the code values.
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
@@ -19,9 +25,12 @@ import App from "./App";
 import { applyPackPriceOverrides, type PackId } from "./rdBrand";
 import { loadCotizacionServicios } from "./data/cotizacionServicios";
 
-async function loadTariff(): Promise<void> {
+/** Tiempo maximo que la app espera al hub antes de montar con los valores del codigo. */
+const CONFIG_TIMEOUT_MS = 2500;
+
+async function loadTariff(signal: AbortSignal): Promise<void> {
   try {
-    const res = await fetch("/api/rd-packs");
+    const res = await fetch("/api/rd-packs", { signal });
     if (!res.ok) return;
     const data = await res.json();
     const packs = data?.packs;
@@ -33,11 +42,18 @@ async function loadTariff(): Promise<void> {
     }
     applyPackPriceOverrides(overrides);
   } catch {
-    // Hub not reachable: keep the code values rather than blocking the app.
+    // Hub unreachable, or the deadline aborted us: keep the code values.
   }
 }
 
-Promise.all([loadTariff(), loadCotizacionServicios()]).finally(() => {
+const control = new AbortController();
+const deadline = setTimeout(() => control.abort(), CONFIG_TIMEOUT_MS);
+
+Promise.all([
+  loadTariff(control.signal),
+  loadCotizacionServicios(control.signal),
+]).finally(() => {
+  clearTimeout(deadline);
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
       <App />

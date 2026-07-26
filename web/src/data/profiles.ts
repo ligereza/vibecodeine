@@ -80,7 +80,7 @@ export interface Profile {
   shortLabel: string;
   /** Descripcion de 1 linea bajo el selector de workspace. */
   tagline: string;
-  /** Texto del footer del sidebar, ej "Reduciendo Dano". */
+  /** Texto del footer del sidebar, ej "Reduciendo Daño". */
   footerLabel: string;
   /** Titulo de la primera seccion de nav (los items editables), ej "Edicion RD". */
   navTitle: string;
@@ -162,8 +162,8 @@ export const PROFILES: Record<WorkspaceMode, Profile> = {
     id: 'rd',
     label: 'Modo RD',
     shortLabel: 'RD',
-    tagline: 'ONG Reduciendo Dano: Plano/Rider, Cotizaciones, SVG Studio, Intake y la cola de automatizaciones.',
-    footerLabel: 'Reduciendo Dano',
+    tagline: 'ONG Reduciendo Daño: Plano/Rider, Cotizaciones, SVG Studio, Intake y la cola de automatizaciones.',
+    footerLabel: 'Reduciendo Daño',
     navTitle: 'Edicion RD',
     selectorIcon: Heart,
     footerIcon: Heart,

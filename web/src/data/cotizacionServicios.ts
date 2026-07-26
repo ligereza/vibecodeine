@@ -80,9 +80,9 @@ function parseItem(raw: unknown): QuoteLineItem | null {
  * respaldo. Si el hub no responde o el archivo esta roto, se quedan los del
  * codigo: la cotizacion nunca arranca vacia.
  */
-export async function loadCotizacionServicios(): Promise<void> {
+export async function loadCotizacionServicios(signal?: AbortSignal): Promise<void> {
   try {
-    const res = await fetch('/api/cotizacion-servicios');
+    const res = await fetch('/api/cotizacion-servicios', { signal });
     if (!res.ok) return;
     const data = await res.json();
 
@@ -105,6 +105,6 @@ export async function loadCotizacionServicios(): Promise<void> {
       : [];
     if (presets.length) PRESETS.splice(0, PRESETS.length, ...presets);
   } catch {
-    // Sin hub: se usan los valores del codigo.
+    // Sin hub, o el plazo nos aborto: se usan los valores del codigo.
   }
 }
