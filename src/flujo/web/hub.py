@@ -665,6 +665,35 @@ class HubRequestHandler(BaseHTTPRequestHandler):
                 self._send_json({"error": str(e), "cmd": cmd if 'cmd' in locals() else ""}, status=400)
             return
 
+        if p == "/api/plano-simbolos/trazar":
+            # Image -> outline, so a symbol can be added without having it in
+            # SVG. It only PREVIEWS: an automatic trace can come out dirty and
+            # the person who decides whether it is usable is the one looking at
+            # it, not the program.
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length).decode("utf-8")
+            try:
+                import base64
+
+                from ..plano.trazador import TrazadoImposible, trazar
+
+                datos = json.loads(body)
+                crudo = str(datos.get("imagen_b64") or "")
+                if "," in crudo[:64]:       # data:image/png;base64,....
+                    crudo = crudo.split(",", 1)[1]
+                if not crudo:
+                    self._send_json({"ok": False, "error": "Falta la imagen."}, status=400)
+                    return
+                try:
+                    svg = trazar(base64.b64decode(crudo))
+                except TrazadoImposible as e:
+                    self._send_json({"ok": False, "error": str(e)}, status=200)
+                    return
+                self._send_json({"ok": True, "svg": svg})
+            except Exception as e:
+                self._send_json({"ok": False, "error": str(e)}, status=400)
+            return
+
         if p == "/api/plano-simbolos":
             # Add a symbol from the app. Until this existed the events manager
             # had to edit data/plano_simbolos.json by hand and drop the file in

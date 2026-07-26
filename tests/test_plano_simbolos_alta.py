@@ -101,7 +101,11 @@ def test_el_boton_existe_en_la_app():
     panel = (Path(__file__).resolve().parents[1] / "web" / "src" / "components"
              / "PlanoTool.tsx").read_text(encoding="utf-8")
     assert "guardarSimbolo(" in panel, "el panel ya no guarda simbolos"
-    assert 'accept=".svg,image/svg+xml"' in panel, "desaparecio el selector de archivo"
+    assert 'type="file"' in panel and "accept=" in panel, "desaparecio el selector de archivo"
+    assert ".svg" in panel and "image/png" in panel, (
+        "el selector tiene que aceptar SVG y tambien imagenes, que se trazan"
+    )
+    assert "trazarImagen(" in panel, "se perdio el trazado de imagenes"
 
 
 def test_zonas_y_simbolos_son_cosas_distintas():

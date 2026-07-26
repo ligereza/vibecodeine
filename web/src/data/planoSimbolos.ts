@@ -88,6 +88,31 @@ export function markupSimboloPropio(
   return `<g transform="translate(${tx.toFixed(2)} ${ty.toFixed(2)}) scale(${k.toFixed(4)})">${interior}</g>`;
 }
 
+/**
+ * Traza una imagen (PNG/JPG) y devuelve el SVG del contorno, SIN guardarlo.
+ *
+ * Se muestra antes de guardar a proposito: un trazado automatico puede salir
+ * sucio, y quien decide si sirve es quien lo mira. Traza siluetas, que es lo
+ * que es un icono; una foto va a dar una mancha.
+ */
+export async function trazarImagen(archivo: File): Promise<{ ok: boolean; svg?: string; error?: string }> {
+  try {
+    const buf = new Uint8Array(await archivo.arrayBuffer());
+    let bin = '';
+    for (let i = 0; i < buf.length; i++) bin += String.fromCharCode(buf[i]);
+    const res = await fetch('/api/plano-simbolos/trazar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imagen_b64: btoa(bin) }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!data?.ok) return { ok: false, error: data?.error || 'No se pudo trazar la imagen.' };
+    return { ok: true, svg: data.svg };
+  } catch {
+    return { ok: false, error: 'No hay conexión con flujo. Abrí la app con `py -m flujo app`.' };
+  }
+}
+
 export interface NuevoSimbolo {
   etiqueta: string;
   color: string;

@@ -7,7 +7,7 @@ import {
   Heart, AlertTriangle, Coffee, RefreshCw, Flame, Sofa, Cylinder
 } from 'lucide-react';
 import { cn } from '../utils/cn';
-import { SIMBOLOS_PROPIOS, simboloPropio, markupSimboloPropio, guardarSimbolo } from '../data/planoSimbolos';
+import { SIMBOLOS_PROPIOS, simboloPropio, markupSimboloPropio, guardarSimbolo, trazarImagen } from '../data/planoSimbolos';
 import { RD_PALETTE, RD_LOGO, calcCostos, formatCLP, proporcionMonto, ALL_PACKS, PACKS, type ExportTheme, type PackId } from '../rdBrand';
 
 // ── Types ────────────────────────────────────────────────────────────
@@ -414,6 +414,10 @@ export default function PlanoTool() {
   const [nuevoSimboloColor, setNuevoSimboloColor] = useState('#38bdf8');
   const [nuevoSimboloZona, setNuevoSimboloZona] = useState('INFRAESTRUCTURA');
   const [nuevoSimboloAviso, setNuevoSimboloAviso] = useState<string | null>(null);
+  // Si sube una imagen en vez de un SVG, se traza y se le MUESTRA el resultado
+  // antes de guardar: un trazado automatico puede salir sucio y quien decide si
+  // sirve es ella.
+  const [previewSvg, setPreviewSvg] = useState<string | null>(null);
   // SIMBOLOS_PROPIOS se muta fuera de React; esto fuerza el redibujo de la
   // paleta cuando se guarda uno nuevo.
   const [refrescoSimbolos, setRefrescoSimbolos] = useState(0);
@@ -1738,7 +1742,7 @@ export default function PlanoTool() {
                     </div>
                     <input
                       type="file"
-                      accept=".svg,image/svg+xml"
+                      accept=".svg,image/svg+xml,image/png,image/jpeg,image/webp"
                       onChange={async e => {
                         const archivo = e.target.files?.[0];
                         e.target.value = '';
@@ -1747,14 +1751,27 @@ export default function PlanoTool() {
                           setNuevoSimboloAviso('Ponele un nombre antes de elegir el archivo.');
                           return;
                         }
+                        const esSvg = /\.svg$/i.test(archivo.name) || archivo.type.includes('svg');
+                        if (!esSvg) {
+                          // Imagen: se traza y se muestra para que ella apruebe.
+                          setNuevoSimboloAviso('Trazando la imagen…');
+                          const t = await trazarImagen(archivo);
+                          if (!t.ok || !t.svg) {
+                            setPreviewSvg(null);
+                            setNuevoSimboloAviso(t.error || 'No se pudo trazar.');
+                            return;
+                          }
+                          setPreviewSvg(t.svg);
+                          setNuevoSimboloAviso(null);
+                          return;
+                        }
                         setNuevoSimboloAviso('Guardando…');
-                        const svg = await archivo.text();
                         const r = await guardarSimbolo({
                           etiqueta: nuevoSimboloNombre.trim(),
                           color: nuevoSimboloColor,
                           zona: nuevoSimboloZona,
                           cuando: 'siempre',
-                          svg,
+                          svg: await archivo.text(),
                         });
                         if (r.ok) {
                           setNuevoSimboloAviso(null);
@@ -1767,9 +1784,59 @@ export default function PlanoTool() {
                       }}
                       className="w-full text-[10px] text-zinc-400 file:mr-2 file:rounded file:border-0 file:bg-zinc-800 file:px-2 file:py-1 file:text-[10px] file:text-zinc-200"
                     />
+                    {previewSvg && (
+                      <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-950 p-3">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                          Así quedaría
+                        </p>
+                        <div
+                          className="mx-auto h-16 w-16"
+                          style={{ color: nuevoSimboloColor }}
+                          dangerouslySetInnerHTML={{ __html: previewSvg }}
+                        />
+                        <p className="text-[9px] leading-snug text-zinc-500">
+                          Se dibuja el contorno de la imagen. Si salió sucio, probá con una
+                          imagen más simple y de más contraste, o exportá el ícono como SVG.
+                        </p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={async () => {
+                              setNuevoSimboloAviso('Guardando…');
+                              const r = await guardarSimbolo({
+                                etiqueta: nuevoSimboloNombre.trim(),
+                                color: nuevoSimboloColor,
+                                zona: nuevoSimboloZona,
+                                cuando: 'siempre',
+                                svg: previewSvg,
+                              });
+                              if (r.ok) {
+                                setPreviewSvg(null);
+                                setNuevoSimboloAviso(null);
+                                setNuevoSimboloNombre('');
+                                setNuevoSimboloAbierto(false);
+                                setRefrescoSimbolos(n => n + 1);
+                              } else {
+                                setNuevoSimboloAviso(r.error || 'No se pudo guardar.');
+                              }
+                            }}
+                            className="flex-1 rounded bg-emerald-600 px-2 py-1.5 text-[10px] font-bold text-white hover:bg-emerald-500"
+                          >
+                            Usar este
+                          </button>
+                          <button
+                            onClick={() => { setPreviewSvg(null); setNuevoSimboloAviso(null); }}
+                            className="flex-1 rounded border border-zinc-700 px-2 py-1.5 text-[10px] font-bold text-zinc-300 hover:bg-zinc-800"
+                          >
+                            Descartar
+                          </button>
+                        </div>
+                      </div>
+                    )}
                     <p className="text-[9px] leading-snug text-zinc-500">
-                      Elegí un archivo SVG. Si en el diseño usás el color <code>currentColor</code>,
-                      el ícono toma el color que elijas acá y se ve bien en el plano oscuro y en el blanco.
+                      Lo mejor es un archivo SVG. Si sólo tenés una imagen (PNG o JPG),
+                      se traza su contorno y te lo muestro antes de guardarlo.
+                      Si en el diseño usás el color <code>currentColor</code>, el ícono
+                      toma el color que elijas acá y se ve bien en el plano oscuro y en el blanco.
                     </p>
                     {nuevoSimboloAviso && (
                       <p className="text-[10px] font-semibold text-amber-400">{nuevoSimboloAviso}</p>
