@@ -408,6 +408,21 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 self._send_json({"proyectos": [], "error": str(e)}, status=200)
             return
+        if path == "/api/rd-packs":
+            # The service tariff, from the SAME file the rider and the Python
+            # quote read (data/rd_packs.json). Before this, the web carried its
+            # own hardcoded copy in rdBrand.ts, so editing the file changed the
+            # PDF and left the app showing the old prices.
+            try:
+                from ..plano import packs as _packs
+                self._send_json({
+                    "packs": _packs.PACKS,
+                    "orden": _packs.ALL_PACKS,
+                    "default_pack": _packs.DEFAULT_PACK,
+                })
+            except Exception as e:
+                self._send_json({"packs": {}, "error": str(e)}, status=200)
+            return
         if path == "/api/mak":
             # MAK box state. READ-ONLY: this endpoint does a GET and nothing
             # else -- the hub never orders anything from the box.
