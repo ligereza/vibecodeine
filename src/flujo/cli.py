@@ -1843,42 +1843,67 @@ def suplementos_list():
 
 @suplementos_app.command("contraportada")
 def suplementos_contraportada(
-    nombre: str = typer.Argument(..., help="Nombre del suplemento (ej. 'Impulso')"),
-    output: Optional[Path] = typer.Option(
-        None, "--output", "-o",
-        help="Ruta de salida del SVG (default: svg/suplementos_rd/04_contraportadas/generadas/[nombre]_final.svg)"
-    ),
-    brief: Optional[str] = typer.Option(
-        None, "--brief", "-b",
-        help="Brief o texto de beneficio personalizado para sobreescribir la pieza"
+    nombre: Optional[str] = typer.Argument(
+        None, help="Suplemento puntual (ej. 'IMPULSO'). Sin argumento, regenera los 8."
     ),
 ):
-    """Generar contraportada SVG para un suplemento.
+    """Regenerar las contraportadas desde la plantilla aprobada.
+
+    El estilo sale de `svg/suplementos_rd/_plantilla/contraportada_cambios.svg`,
+    que es la exportacion del .ai del usuario y NO se toca. El texto sale del
+    archivo de contenido aprobado. El generador solo superpone el texto dentro
+    de las cajas medidas de la plantilla, asi que cambiar el texto nunca rompe
+    el diseno.
+
+    No hay opcion para escribir texto a mano: en suplementos el texto viene del
+    archivo que manda el encargado de RD, y ese archivo manda (orden del usuario,
+    2026-07-26). El `--brief` que este comando tenia antes era un concepto de
+    EVENTOS colado aca; vive donde corresponde, en plano/rider.
 
     Ejemplo:
-      py -m flujo suplementos contraportada "Impulso" --output salida.svg
-      py -m flujo suplementos contraportada "Creatina"
-      py -m flujo suplementos contraportada "Impulso" --brief "Energía ultra limpia"
+      py -m flujo suplementos contraportada
+      py -m flujo suplementos contraportada "IMPULSO"
     """
-    from .comercial.suplementos_config import get_suplemento
-    from .comercial.contraportada_svg import generar_contraportada
+    import subprocess
+    import sys as _sys
 
-    try:
-        suplemento = get_suplemento(nombre)
-    except KeyError as e:
-        _err(str(e))
+    from .comercial.suplementos_config import get_suplemento, list_suplementos
+    from .paths import repo_root
+
+    raiz = repo_root()
+    if nombre:
+        try:
+            supl = get_suplemento(nombre)
+        except KeyError as e:
+            _err(str(e))
+            console.print(f"  Reales: {', '.join(list_suplementos())}")
+            return
+    else:
+        supl = None
+
+    generador = raiz / ".claude" / "skills" / "entregas-rd" / "generadores" / "gen_contraportadas.py"
+    if not generador.is_file():
+        _err(f"No existe el generador aprobado: {generador}")
         return
 
-    try:
-        svg_path = generar_contraportada(suplemento, output_path=output, brief=brief)
-        _ok(f"Contraportada generada: {svg_path}")
-        console.print(f"  Tamaño: 10×14 cm (2000x2800 px @ 300dpi)")
-        console.print(f"  Nombre: {suplemento.nombre}")
-        console.print(f"  Beneficio: {brief if brief else suplemento.beneficio_1}")
-    except FileNotFoundError as e:
-        _err(f"Plantilla base no encontrada: {e}")
-    except Exception as e:
-        _err(f"No se pudo generar la contraportada: {e}")
+    r = subprocess.run(
+        [_sys.executable, str(generador)],
+        cwd=str(raiz), capture_output=True, encoding="utf-8", errors="replace",
+    )
+    if r.returncode != 0:
+        _err("El generador fallo:")
+        console.print((r.stderr or r.stdout or "").strip()[:1200])
+        return
+
+    salidas = sorted((raiz / "svg" / "suplementos_rd" / "09_contraportadas_dark").glob("*.svg"))
+    if supl is not None:
+        salidas = [p for p in salidas if p.stem == supl.id] or salidas
+        _ok(f"Contraportada regenerada: {supl.nombre}")
+    else:
+        _ok(f"Contraportadas regeneradas: {len(salidas)}")
+    for p in salidas:
+        console.print(f"  · {p.relative_to(raiz)}")
+    console.print("  Tamaño: 10×14 cm (2000x2800 px @ 300dpi)")
 
 
 @suplementos_app.command("validate")

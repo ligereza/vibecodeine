@@ -80,6 +80,7 @@ profiles, and the documentation ratchets (`test_mapa_completo`,
 
 | Date | Decision |
 |---|---|
+| 2026-07-26 | **RD splits into three areas: eventos, suplementos, and general posts.** For SUPPLEMENTS, the text on flyers and labels ALWAYS comes from a file an RD manager sends, and that file wins over research, over the database, over anything an agent produced. Never invent product names, never look up properties, never invent descriptions. Research is legitimate when the user orders it (e.g. researching a post) — the rule is only that a file, when it exists, overrides it. The link to reduciendodano.cl and the QR stay constant on every flyer |
 | 2026-07-26 | **Three working modes**: *modo calma* (answer, execute nothing), *modo repo* (branches/PRs/CI; exits at 0 open PRs, 0 open issues and only the named branches), *modo local* (this machine: config, memory, understanding). Ask which one is active when it is not obvious |
 | 2026-07-26 | **The two portfolio directions on disk are REFERENCES, not competing options**: the live six-section archive and the Cyber Terminal prototype. Both feed the design; neither is "the choice" |
 | 2026-07-26 | **Language split**: Spanish to talk, English for everything inside the repo, correct Spanish with diacritics for anything a human reads as a product |
