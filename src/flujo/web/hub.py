@@ -425,6 +425,10 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             # PDF and left the app showing the old prices.
             try:
                 from ..plano import packs as _packs
+                # Re-read on every request: the hub is a long-lived process and
+                # was answering with the tariff as it stood at startup, so
+                # editing the file changed nothing until a restart.
+                _packs.recargar_tarifa()
                 self._send_json({
                     "packs": _packs.PACKS,
                     "orden": _packs.ALL_PACKS,
@@ -524,6 +528,13 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             body = self.rfile.read(content_length).decode("utf-8")
             try:
                 data = json.loads(body or "{}")
+                # Both config files are read when their module is imported, and
+                # the hub outlives any edit. Re-read them here so a changed
+                # tariff or a newly added symbol shows up on the next render
+                # instead of waiting for a restart.
+                from ..plano import iconos as _iconos, packs as _packs
+                _packs.recargar_tarifa()
+                _iconos.recargar_catalogo()
                 result = render_plano_api(data.get("evento", data))
                 self._send_json(result)
             except Exception as e:

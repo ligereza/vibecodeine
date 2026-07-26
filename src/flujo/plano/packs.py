@@ -122,6 +122,25 @@ def _cargar_tarifa() -> tuple[Dict[str, Dict[str, Any]], List[str], str]:
 
 PACKS, ALL_PACKS, DEFAULT_PACK = _cargar_tarifa()
 
+
+def recargar_tarifa() -> Dict[str, Dict[str, Any]]:
+    """Relee data/rd_packs.json y actualiza PACKS/ALL_PACKS/DEFAULT_PACK.
+
+    Existe porque la tarifa se lee al importar el modulo, y un proceso largo
+    -- el hub -- se quedaba con la copia del arranque: editar el archivo no
+    cambiaba nada hasta reiniciar, que es lo mismo que no ser configurable.
+    El endpoint /api/rd-packs la llama en cada consulta.
+
+    PACKS se muta EN SU SITIO porque otros modulos la tienen referenciada.
+    """
+    global ALL_PACKS, DEFAULT_PACK
+    packs, orden, default = _cargar_tarifa()
+    PACKS.clear()
+    PACKS.update(packs)
+    ALL_PACKS = orden
+    DEFAULT_PACK = default
+    return PACKS
+
 # Alias legacy: los presets de tamano de evento (under/base/mainstream, de
 # src/flujo/eventos/presets.py) ya no alimentan plano/costos, pero se aceptan
 # como sinonimo de pack para no romper eventos/JSON viejos que los usaban.

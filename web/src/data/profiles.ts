@@ -100,8 +100,8 @@ export interface Profile {
 const RD_NAV: NavItem[] = [
   { view: 'hub', icon: LayoutDashboard, label: 'Dashboard', desc: 'Vista general RD', edit: false },
   { view: 'plano', icon: Map, label: 'Plano / Rider', desc: 'Editor de layout de evento', edit: true },
-  { view: 'visualizer', icon: Shapes, label: 'SVG Studio', desc: 'Galeria + editor visual', edit: true },
-  { view: 'quote', icon: Calculator, label: 'Cotizacion', desc: 'Presupuesto editable', edit: true },
+  { view: 'visualizer', icon: Shapes, label: 'SVG Studio', desc: 'Galería + editor visual', edit: true },
+  { view: 'quote', icon: Calculator, label: 'Cotización', desc: 'Presupuesto editable', edit: true },
   { view: 'intake', icon: ClipboardList, label: 'Intake', desc: 'Parsear pedidos y crear jobs', edit: true },
   { view: 'rd-db', icon: Database, label: 'Base de datos', desc: 'Productoras, venues y logos', edit: true },
   { view: 'automatizaciones', icon: Workflow, label: 'Automatizaciones', desc: 'Cola Gmail -> issue -> render', edit: false },
@@ -127,8 +127,8 @@ const ISKVW_NAV: NavItem[] = [
   { view: 'mapping', icon: Lightbulb, label: 'Mapping LED', desc: 'Rigging / pixel mapping', edit: true },
   { view: 'resolume', icon: Radio, label: 'Resolume / Chataigne', desc: 'Comando SMPTE/OSC', edit: false },
   { view: 'events', icon: Camera, label: 'Eventos / IG', desc: 'Comando flyer-auto', edit: false },
-  { view: 'visualizer', icon: Shapes, label: 'SVG Studio', desc: 'Galeria + editor visual', edit: true },
-  { view: 'portafolio', icon: Layers, label: 'Portafolio', desc: 'Catalogo publico de iskvw', edit: false },
+  { view: 'visualizer', icon: Shapes, label: 'SVG Studio', desc: 'Galería + editor visual', edit: true },
+  { view: 'portafolio', icon: Layers, label: 'Portafolio', desc: 'Catálogo público de iskvw', edit: false },
   { view: 'cultura', icon: Layers, label: 'Cultura', desc: 'Instrumentos y lineas de obra', edit: false },
 ];
 
@@ -164,7 +164,7 @@ export const PROFILES: Record<WorkspaceMode, Profile> = {
     shortLabel: 'RD',
     tagline: 'ONG Reduciendo Daño: Plano/Rider, Cotizaciones, SVG Studio, Intake y la cola de automatizaciones.',
     footerLabel: 'Reduciendo Daño',
-    navTitle: 'Edicion RD',
+    navTitle: 'Edición RD',
     selectorIcon: Heart,
     footerIcon: Heart,
     accent: {
@@ -198,7 +198,7 @@ export const PROFILES: Record<WorkspaceMode, Profile> = {
     id: 'rd-plano',
     label: 'Plano RD',
     shortLabel: 'PLANO',
-    tagline: 'Perfil de distribucion: solo el editor de Plano/Rider, para compartir fuera del equipo.',
+    tagline: 'Perfil de distribución: solo el editor de Plano/Rider, para compartir fuera del equipo.',
     footerLabel: 'Plano RD (compartido)',
     navTitle: 'Plano',
     selectorIcon: Map,

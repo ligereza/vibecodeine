@@ -60,6 +60,40 @@ def test_el_respaldo_del_typescript_coincide_con_la_tarifa():
     )
 
 
+def test_editar_el_archivo_se_ve_sin_reiniciar():
+    """La tarifa se lee al importar el modulo, y el hub vive horas. Sin esta
+    recarga, editar data/rd_packs.json no cambiaba nada hasta reiniciar -- que
+    es lo mismo que no ser configurable. Medido en vivo el 2026-07-26: el hub
+    seguia sirviendo el precio del arranque."""
+    from flujo.plano import packs
+
+    original = TARIFA.read_text(encoding="utf-8")
+    datos = json.loads(original)
+    pid = next(iter(datos["packs"]))
+    previo = packs.PACKS[pid]["precio"]
+    try:
+        datos["packs"][pid]["precio"] = previo + 12345
+        TARIFA.write_text(json.dumps(datos, ensure_ascii=False, indent=2), encoding="utf-8")
+        packs.recargar_tarifa()
+        assert packs.PACKS[pid]["precio"] == previo + 12345
+    finally:
+        TARIFA.write_text(original, encoding="utf-8")
+        packs.recargar_tarifa()
+    assert packs.PACKS[pid]["precio"] == previo
+
+
+def test_el_hub_recarga_antes_de_responder():
+    fuente = (REPO_ROOT / "src" / "flujo" / "web" / "hub.py").read_text(encoding="utf-8")
+    assert fuente.count("recargar_tarifa()") >= 2, (
+        "el endpoint de tarifa y el render del plano deben releer el archivo; "
+        "si no, el hub responde con la copia del arranque"
+    )
+    assert "recargar_catalogo()" in fuente, (
+        "el render del plano debe releer el catalogo de simbolos: un icono "
+        "recien agregado no puede exigir reiniciar el hub"
+    )
+
+
 SERVICIOS = REPO_ROOT / "data" / "cotizacion_servicios.json"
 SERVICIOS_TS = REPO_ROOT / "web" / "src" / "data" / "cotizacionServicios.ts"
 
