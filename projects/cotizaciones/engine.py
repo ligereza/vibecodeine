@@ -77,8 +77,9 @@ Tarifa vigente: data/rd_packs.json (misma fuente que el rider).
     accent = colores.get("accent", "#2d5a4a")
     paper = colores.get("paper", "#f8f1e3")
 
-    texto = f"""COTIZACIÓN — {nombre}
-Reduciendo Daño
+    # `costos` already opens with "COTIZACION -- <nombre>", so neither the text
+    # nor the HTML repeats it: the document used to print the same title twice.
+    texto = f"""Reduciendo Daño
 
 {costos}
 
@@ -90,9 +91,9 @@ Reduciendo Daño
 <html lang="es"><meta charset="utf-8">
 <title>Cotización — {nombre}</title>
 <body style="background:{paper};color:{ink};font-family:system-ui,sans-serif;margin:0;padding:2.5rem">
-<h1 style="color:{accent};margin:0 0 1.5rem">Cotización — Reduciendo Daño</h1>
-<h2 style="font-weight:400;margin:0 0 2rem">{nombre}</h2>
+<h1 style="color:{accent};margin:0 0 2rem">Reduciendo Daño</h1>
 <pre style="font-size:1rem;line-height:1.6;white-space:pre-wrap">{costos}</pre>
+<p style="margin-top:2rem">{ev.get('notas', '')}</p>
 </body></html>"""
     (output_dir / "cotizacion_productora.html").write_text(html, encoding="utf-8")
 
