@@ -4,7 +4,7 @@ Entregable en español real, UTF-8 (esta carpeta no es `context/` operativo,
 así que no aplica la regla ASCII-only). Generado 2026-07-23 a partir de:
 PR #210 (feat/candidatos-db-curatoria, docs/rd/candidatos_curatoria/candidatos_db.jsonl,
 970 obras de 1731 fichas curadas) + 2 posts IG del día
-(C:/rd/AUTOMATIZACION/input_ig_DbG7Z2qCPrl_2.jpg, input_ig_DbI68vBCSTc.jpg).
+(descarga IG DbG7Z2qCPrl_2, input_ig_DbI68vBCSTc.jpg).
 
 Fuente de verdad = data/productoras/*.json (editable a mano por el usuario).
 Este doc es una lectura de esos archivos para que el usuario corrija fila por
@@ -79,9 +79,9 @@ Solo 2 eventos entraron con evidencia primaria verificable HOY (imagen +
 fecha + venue legibles en el post):
 
 1. **Piknic Electronik Santiago** -- 12 sep 2026, Parque Padre Hurtado,
-   lineup PARTIBOI69, co-org GLOVOX. Fuente: C:/rd/AUTOMATIZACION/input_ig_DbG7Z2qCPrl_2.jpg.
+   lineup PARTIBOI69, co-org GLOVOX. Fuente: descarga IG DbG7Z2qCPrl_2.
 2. **Dame -- Jeff Mills 30 years** -- 20 nov 2026, Basel Venue Santiago.
-   Fuente: C:/rd/AUTOMATIZACION/input_ig_DbI68vBCSTc.jpg.
+   Fuente: descarga IG DbI68vBCSTc.
 
 Los demás eventos listados arriba vienen de fichas de curatoría (PR #210,
 fechas crudas sin normalizar en varios casos) y están marcados pasado o

@@ -63,7 +63,7 @@ def inline_logo(variant, x, y, w):
 
 Se incrusta como `<svg>` anidado (conserva su viewBox y estilos). Reemplaza al
 `<image ... base64 ...>`. Generar variantes negro/blanco desde el vector maestro
-(`C:/rd/recursos/LOGO RD.svg`, gota negra + RD blanco) intercambiando fills:
+(`$FLUJO_RD_ROOT/recursos/LOGO RD.svg`, gota negra + RD blanco) intercambiando fills:
 blanco = `Gota fill #fff` + letras `#fff->#000` en el `<style>`.
 
 ### B - Paletas por fondo

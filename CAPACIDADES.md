@@ -10,7 +10,7 @@ no en este doc, y actualizalo en el mismo PR que lo detecte.
 
 CLI real (`py -m flujo --help`, v0.56.1), comandos principales:
 
-- `app` / `serve` -- hub local (workspace pro). `hub` -- servidor + index/route de C:\rd.
+- `app` / `serve` -- hub local (workspace pro). `hub` -- servidor + index/route del arbol de material ($FLUJO_RD_ROOT).
 - `job`, `brief`, `intake` -- gestion de jobs y briefs (JSON 1.0).
 - `cotizaciones`, `plano` -- cotizacion dual y plano SVG/rider/costos de stands.
 - `suplementos` -- contraportadas RD (`svg/suplementos_rd/`).
