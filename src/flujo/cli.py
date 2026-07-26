@@ -2092,6 +2092,7 @@ def serve(
     hub: bool = typer.Option(True, "--hub/--legacy", help="usar el nuevo workspace HTML (flujo_hub.html + visualizadores)"),
     desktop: bool = typer.Option(False, "--desktop", help="abrir en ventana nativa con pywebview (si está instalado)"),
     procesar_pendientes: bool = typer.Option(False, "--procesar-pendientes", help="al arrancar, avanzar los jobs de flyer pendientes (modifica jobs: por eso no es el default)"),
+    abrir: bool = typer.Option(True, "--abrir/--no-abrir", help="abrir el navegador al arrancar (--no-abrir deja solo el servidor)"),
 ):
     """Iniciar el workspace local (la nueva app profesional).
 
@@ -2102,6 +2103,8 @@ def serve(
 
     --desktop: ventana nativa premium sin chrome (pywebview gratis + js_api bridge directo Python<->JS + tray + icon).
     --legacy (o --no-hub): usa editor Gradio antiguo (legacy, no primario).
+    --no-abrir: levanta el servidor sin abrir el navegador (util para revisar o
+    automatizar sin acumular pestanas).
     """
     if hub:
         try:
@@ -2111,7 +2114,11 @@ def serve(
             console.print(f"[cyan]flujo workspace (hub) en http://{host}:{port}[/]")
             console.print(f"[dim]Repo context: {r}[/dim]")
             console.print("[dim]APIs reales + drag-drop en hub + auto-port + tray opcional.[/dim]")
-            launch(host=host, port=port, desktop=desktop, root=r, procesar_pendientes=procesar_pendientes)
+            # --no-abrir existe porque levantar el hub para revisarlo o para un
+            # chequeo abria una pestana cada vez; ocho arranques seguidos dejan
+            # ocho pestanas en el navegador del usuario.
+            launch(host=host, port=port, desktop=desktop, root=r,
+                   procesar_pendientes=procesar_pendientes, open_browser=abrir)
             return
         except Exception as e:
             _warn(f"No se pudo iniciar el workspace nuevo ({e}).")
@@ -2145,9 +2152,11 @@ def app_alias(
     host: str = typer.Option("127.0.0.1", "--host"),
     desktop: bool = typer.Option(False, "--desktop"),
     procesar_pendientes: bool = typer.Option(False, "--procesar-pendientes", help="al arrancar, avanzar los jobs de flyer pendientes"),
+    abrir: bool = typer.Option(True, "--abrir/--no-abrir", help="abrir el navegador al arrancar (--no-abrir deja solo el servidor)"),
 ):
     """Alias de serve. Lanza la nueva app (hub pro workspace recomendado como entrada diaria). Real backend + parse/create jobs live cuando activo."""
-    serve(port=port, host=host, hub=True, desktop=desktop, procesar_pendientes=procesar_pendientes)
+    serve(port=port, host=host, hub=True, desktop=desktop,
+          procesar_pendientes=procesar_pendientes, abrir=abrir)
 
 
 # ============================================================
