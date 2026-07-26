@@ -218,6 +218,20 @@ export const PROFILES: Record<WorkspaceMode, Profile> = {
 /** Perfiles visibles en el selector de workspace del hub (excluye hidden). */
 export const VISIBLE_PROFILES: Profile[] = Object.values(PROFILES).filter(p => !p.hidden);
 
+/**
+ * Every view any profile can reach, derived from the profiles themselves so it
+ * cannot drift: adding a panel to a profile makes it linkable automatically.
+ * Used to validate `?vista=` before trusting it (2026-07-26 -- the MAK panel
+ * existed and there was no way to link straight to it).
+ */
+export const LINKABLE_VIEWS: AppView[] = Array.from(
+  new Set(Object.values(PROFILES).flatMap(p => p.nav.map(i => i.view))),
+);
+
+export function isLinkableView(value: string | null | undefined): value is AppView {
+  return !!value && (LINKABLE_VIEWS as string[]).includes(value);
+}
+
 export const DEFAULT_PROFILE_ID: WorkspaceMode = 'rd';
 
 export function isWorkspaceMode(value: string | null | undefined): value is WorkspaceMode {
