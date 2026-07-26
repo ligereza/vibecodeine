@@ -70,7 +70,11 @@ def test_working_command_still_available():
     # Should show usage with available commands
     assert "health" in result.stdout, f"Expected 'health' in available commands, got: {result.stdout}"
     assert "daily" in result.stdout, f"Expected 'daily' in available commands, got: {result.stdout}"
-    assert "app" in result.stdout, f"Expected 'app' in available commands, got: {result.stdout}"
+    # Antes se exigia tambien "app", que en este despachador venia de
+    # scripts/app.py -- la interfaz Gradio vieja, archivada el 2026-07-26 por
+    # estar rota. La entrada real a la app es `py -m flujo app`, no este
+    # despachador, y este test dice en su propio docstring que verifica un
+    # comando que FUNCIONA. Exigir uno muerto era lo contrario.
 
 
 def test_retired_command_not_in_available_list():

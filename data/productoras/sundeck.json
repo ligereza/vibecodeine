@@ -31,8 +31,8 @@
     }
   ],
   "confirmed": "",
-  "fuente_datos": "C:/RD nombres de archivo (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano. Complementado con PR #210 (candidatos_db.jsonl match_ratio=1.0): obra_45bae8c3f6, obra_99ef9a1f8a. obra_b94c5571dc ('Sundeck 21 años', match_ratio=0.636) queda como alias no confirmado.",
-  "notes": "Formato rooftop/day (sundeck) -> OPEN_AIR. Fuente: C:/RD ENTREGA + curatoría PR #210 (2 obras match canónico).",
+  "fuente_datos": "nombres de archivo del archivo de entregas (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano. Complementado con PR #210 (candidatos_db.jsonl match_ratio=1.0): obra_45bae8c3f6, obra_99ef9a1f8a. obra_b94c5571dc ('Sundeck 21 años', match_ratio=0.636) queda como alias no confirmado.",
+  "notes": "Formato rooftop/day (sundeck) -> OPEN_AIR. Fuente: archivo de entregas (ENTREGA) + curatoría PR #210 (2 obras match canónico).",
   "eventos": [
     {
       "nombre": "Sundeck 21 años",

@@ -108,8 +108,8 @@ def _fallback_examples() -> Dict[str, str]:
     productora = (
         "[FALLBACK: projects/cotizaciones/engine.py no disponible ahora mismo, "
         "ver seccion 'Estado del motor de cotizaciones' abajo. Este texto usa "
-        "la misma fuente de precios (flujo.plano.costs.resumen_costos) sin el "
-        "envoltorio de branding de engine.py.]\n\n"
+        "la misma fuente de precios (flujo.plano.costs.resumen_costos) que "
+        "engine.py.]\n\n"
         f"COTIZACION -- {ev['nombre']} | Reduciendo Dano\n\n{costos}"
     )
     interno = (
@@ -166,10 +166,11 @@ def render_catalogo() -> str:
         "",
         "## Fuente de verdad",
         "",
-        "- Fuente canonica de precios: `web/src/rdBrand.ts` (TypeScript, hub web).",
-        "- Fuente unica en Python: `src/flujo/plano/packs.py` (espejo declarado del "
-        "TypeScript; `costs.py` y `engine.py` consumen SOLO este modulo, nunca un "
-        "precio propio).",
+        "- Fuente canonica de precios: `data/rd_packs.json`, editable a mano "
+        "(desde 2026-07-26; antes vivia cableada en dos copias que podian "
+        "desincronizarse, `packs.py` y `web/src/rdBrand.ts`).",
+        "- `src/flujo/plano/packs.py` LEE ese archivo; `costs.py` y `engine.py` "
+        "consumen SOLO ese modulo, nunca un precio propio.",
         "- `precio` es el unico valor absoluto editable por pack; cualquier monto de "
         "desglose se recalcula siempre como `precio*pct/100` (nunca se guarda aparte).",
         "",

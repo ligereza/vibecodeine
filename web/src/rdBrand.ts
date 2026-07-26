@@ -200,15 +200,19 @@ export function formatCLP(n: number): string {
   return '$' + Math.round(n).toLocaleString('es-CL');
 }
 
-// ── Overrides de precio en runtime (solo bundle standalone) ─────────────
+// ── Overrides de precio en runtime ──────────────────────────────────────
 // PlanoTool.tsx lee `PACKS[preset].precio` en vivo en cada render/export (no
 // lo copia a otra variable al importar), asi que mutar el objeto PACKS en su
 // lugar alcanza para que el override se refleje sin tocar PlanoTool.tsx.
-// Esta funcion NO se llama en ningun lado por default: el hub normal
-// (web/src/main.tsx -> App.tsx) nunca la invoca, asi que PACKS queda con los
-// valores de codigo intactos ahi. Solo el bundle standalone de plano
-// (web/src/mainPlano.tsx) la llama, antes de montar React, con overrides
-// leidos de planoConfig (ver web/src/data/planoConfig.ts).
+// Dos entry points la llaman, siempre ANTES de montar React:
+//  - web/src/main.tsx (hub) con la tarifa que sirve /api/rd-packs, o sea
+//    data/rd_packs.json, el mismo archivo que leen el rider y la cotizacion en
+//    Python. Hasta 2026-07-26 el hub NO la llamaba y mostraba los valores de
+//    codigo: editar la tarifa cambiaba el PDF y dejaba la app en lo viejo.
+//  - web/src/mainPlano.tsx (bundle standalone) con los overrides guardados en
+//    planoConfig (ver web/src/data/planoConfig.ts).
+// Los montos escritos abajo son el respaldo para cuando no hay hub que
+// consultar (un build estatico abierto desde el disco).
 //
 // NUNCA cambia nada si no se llama explicitamente. No muta el label/desc/
 // inclusiones -- solo el monto, que es el unico campo que el pedido permite

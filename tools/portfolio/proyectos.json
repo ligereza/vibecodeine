@@ -1,5 +1,5 @@
 {
-  "_comentario": "Fuente curada del portfolio publico (ligereza/portfolio-auto). Editar ESTE archivo es administrar el sitio: el workflow portfolio.yml lo publica junto al basurero. Solo contenido apto para publico; los limites duros de cada proyecto viajan con su descripcion.",
+  "_comentario": "Fuente curada del portafolio publico. Editar ESTE archivo es administrar el sitio: el workflow portfolio.yml lo publica junto al basurero. Solo contenido apto para publico; los limites duros de cada proyecto viajan con su descripcion. IDIOMA (2026-07-26): los campos que LEE UN HUMANO -- nombre, descripcion, titulo -- van en espanol correcto CON acentos y enes, porque este archivo alimenta una pagina publica; un titulo mutilado no es una errata, es un defecto del producto. Los identificadores (id, linea, estado, tags, ruta) quedan en ASCII porque son claves, no texto.",
   "titulo": "ligereza / flujo",
   "proyectos": [
     {
@@ -7,7 +7,7 @@
       "nombre": "Tapiz",
       "linea": "cultura",
       "estado": "activo",
-      "descripcion": "Instrumento de patrones ASCII/SVG con paleta propia; animacion con significado de digestion. Exporta piezas SVG (SMIL) desde codigo. Incluye modos telar de composicion historica de alfombra (field/gul, border/boteh, medallion, mihrab) y modo cauce: la recurrencia de tokens elige el color, patron reconocido y no impuesto.",
+      "descripcion": "Instrumento de patrones ASCII/SVG con paleta propia; animación con significado de digestión. Exporta piezas SVG (SMIL) desde código. Incluye modos telar de composición histórica de alfombra (field/gul, border/boteh, medallion, mihrab) y modo cauce: la recurrencia de tokens elige el color, patrón reconocido y no impuesto.",
       "ruta": "projects/tapiz/",
       "tags": ["ascii", "svg", "generativo-visual"]
     },
@@ -16,7 +16,7 @@
       "nombre": "Tapiz: piezas curadas",
       "linea": "cultura",
       "estado": "activo",
-      "descripcion": "Serie curada de cinco piezas SVG tejidas con el instrumento Tapiz real (nunca dibujadas a mano): una por modo telar (field, border, medallion, mihrab) y una cauce animada (SMIL). Cada pieza teje los espacios de un archivo vivo del repo -- el motor de diagnostico, el validador de airdrop, el telar tejiendose a si mismo -- con comando de regeneracion exacto en su README.",
+      "descripcion": "Serie curada de cinco piezas SVG tejidas con el instrumento Tapiz real (nunca dibujadas a mano): una por modo telar (field, border, medallion, mihrab) y una cauce animada (SMIL). Cada pieza teje los espacios de un archivo vivo del repositorio —el motor de diagnóstico, el validador de airdrop, el telar tejiéndose a sí mismo— con el comando de regeneración exacto en su README.",
       "ruta": "projects/tapiz/piezas_curadas/",
       "tags": ["svg", "generativo-visual", "serie", "telar"]
     },
@@ -25,8 +25,8 @@
       "nombre": "Tilde",
       "linea": "cultura",
       "estado": "v0",
-      "descripcion": "Medidor de supervivencia de marcas del espanol (enie, tildes, apertura de pregunta) cuando el texto pasa por compresion. La tilde como resistencia cultural.",
-      "ruta": "desktop/tilde_meter.py",
+      "descripcion": "Medidor de supervivencia de las marcas del español —la eñe, las tildes, la apertura de pregunta— cuando el texto pasa por compresión. La tilde como resistencia cultural.",
+      "ruta": "tools/tilde_meter.py",
       "tags": ["lengua", "medicion", "compresion"]
     },
     {
@@ -34,7 +34,7 @@
       "nombre": "Psicosis",
       "linea": "cultura",
       "estado": "investigacion",
-      "descripcion": "Dossier sobre como se estudia la conducta y la lectura de indicios (Ginzburg, panico moral, cartografia colectiva). Capa descriptiva y cultural; jamas perfila personas reales.",
+      "descripcion": "Dossier sobre cómo se estudia la conducta y la lectura de indicios (Ginzburg, pánico moral, cartografía colectiva). Capa descriptiva y cultural; jamás perfila personas reales.",
       "ruta": "projects/cultura/dossiers/psicosis.md",
       "tags": ["investigacion", "lectura-de-indicios"]
     },
@@ -43,7 +43,7 @@
       "nombre": "Tapiz Ecosystem Engine",
       "linea": "cultura",
       "estado": "activo",
-      "descripcion": "Motor de diagnostico-a-frontend (Python stdlib puro) del ecosistema Tapiz (activo) / Psicosis (meta) / Fungi (basurero): mide presion de tokens, simula guardrails con mitigacion por contexto artistico y detecta race conditions; compila todo en un system_status.json validable contra el contrato de system_map.py y renderizable en tapiz_renderer.html. Modos --demo, --stress y --live (autorretrato del repo real). Manual de operacion en tools/TAPIZ.md.",
+      "descripcion": "Motor de diagnóstico a frontend (Python estándar puro) del ecosistema Tapiz (activo) / Psicosis (meta) / Fungi (basurero): mide presión de tokens, simula guardarraíles con mitigación por contexto artístico y detecta condiciones de carrera; compila todo en un system_status.json validable contra el contrato de system_map.py y renderizable en tapiz_renderer.html. Modos --demo, --stress y --live (autorretrato del repositorio real). Manual de operación en tools/TAPIZ.md.",
       "ruta": "tools/compete_engine.py",
       "tags": ["python", "generativo-visual", "pipeline"]
     },
@@ -52,7 +52,7 @@
       "nombre": "Precursor",
       "linea": "cultura",
       "estado": "investigacion",
-      "descripcion": "Dossier sobre gramaticas de nombre y estructura (Markush, branding de cepas) desde cultura, ley y estetica. Nada operativo: solo la forma de los nombres.",
+      "descripcion": "Dossier sobre gramáticas de nombre y estructura (Markush, branding de cepas) desde la cultura, la ley y la estética. Nada operativo: solo la forma de los nombres.",
       "ruta": "projects/cultura/dossiers/precursor.md",
       "tags": ["investigacion", "naming"]
     },
@@ -61,16 +61,16 @@
       "nombre": "Plano / Rider RD",
       "linea": "reduccion-de-dano",
       "estado": "activo",
-      "descripcion": "Editor de planos operativos a escala real (1 m = 200 px) y rider PDF para stands de Reduciendo Dano en eventos; packs INFO/TESTEO/COMPLETO.",
+      "descripcion": "Editor de planos operativos a escala real (1 m = 200 px) y rider en PDF para los stands de Reduciendo Daño en eventos; packs Informativo, Testeo y Completo.",
       "ruta": "web/src/components/PlanoTool.tsx",
       "tags": ["svg", "produccion", "eventos"]
     },
     {
       "id": "flyer-eventos",
-      "nombre": "Flyer automatico",
+      "nombre": "Flyer automático",
       "linea": "studio",
       "estado": "activo",
-      "descripcion": "Pipeline flyer de evento sin Photoshop: descarga de IG, paleta por PIL, composicion por nodos dentro de Blender y render GPU.",
+      "descripcion": "Pipeline de flyer de evento sin Photoshop: descarga desde Instagram, paleta por PIL, composición por nodos dentro de Blender y render por GPU.",
       "ruta": "src/flujo/eventos/",
       "tags": ["blender", "automatizacion", "vj"]
     },
@@ -79,7 +79,7 @@
       "nombre": "AutoCanva",
       "linea": "studio",
       "estado": "archivo",
-      "descripcion": "Pipeline Python que convierte datos de producto (XML/JSON) en flyers listos para imprimir (PNG 2000x3000 + SVG editable en Illustrator) para la linea real de 6 suplementos RD; nacio para eliminar el diseno manual repetitivo en Canva. Precursor del pipeline actual de eventos.",
+      "descripcion": "Pipeline en Python que convierte datos de producto (XML/JSON) en flyers listos para imprimir (PNG 2000×3000 y SVG editable en Illustrator) para la línea real de seis suplementos de Reduciendo Daño; nació para eliminar el diseño manual repetitivo en Canva. Precursor del pipeline actual de eventos.",
       "url": "https://github.com/ligereza/autocanva",
       "tags": ["python", "svg", "automatizacion", "flyers"]
     },
@@ -88,7 +88,7 @@
       "nombre": "vibecodeine (flujo)",
       "linea": "madre",
       "estado": "activo",
-      "descripcion": "El repo madre: CLI, hub web, equipo multi-agente y todos los proyectos de arriba. Actua como interfaz de administracion de este portfolio.",
+      "descripcion": "El repositorio madre: CLI, hub web, equipo multiagente y todos los proyectos de arriba. Actúa como interfaz de administración de este portafolio.",
       "url": "https://github.com/ligereza/vibecodeine",
       "tags": ["cli", "hub", "multi-agente"]
     }

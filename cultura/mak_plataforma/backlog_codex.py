@@ -19,6 +19,14 @@ BACKLOG_TXT = os.path.join(HOME, "plataforma", "backlog_codex.txt")
 EVENTOS_CODEX = os.path.join(HOME, "codex", "eventos.jsonl")
 SALUD_PROVEEDORES = os.path.join(HOME, "research", "salud_proveedores.json")
 MAX_PENDIENTES = 40
+# Separate cap for auto-generated items (2026-07-26). Measured cause:
+# trabajo.py walks the backlog in ROTATION, so every line takes a turn. With 15
+# tasks -- 10 of them auto-generated filler like "agregar test / resolver TODO
+# en X" -- the curated priorities got 1 turn out of 15. The filler was not
+# blocking anything: it was diluting. Capping ONLY the auto items (they carry a
+# "# auto DATE" marker) leaves curated tasks undiluted and keeps the mechanism.
+# Retirement: when the backlog gains an explicit per-line priority.
+MAX_AUTO = 3
 MAX_HALLAZGOS = 3
 
 _MARCADOR_RE = re.compile(r"\s*#\s*auto\s+\d{8}\s*$")
@@ -132,8 +140,12 @@ def main():
     agregadas = []
     vistos = set()
 
+    auto_actuales = sum(1 for l in existentes if _MARCADOR_RE.search(l))
+
     for texto in candidatos:
         if total_actual + len(agregadas) >= MAX_PENDIENTES:
+            break
+        if auto_actuales + len(agregadas) >= MAX_AUTO:
             break
         n = _norm(texto)
         if n in existentes_norm or n in vistos:

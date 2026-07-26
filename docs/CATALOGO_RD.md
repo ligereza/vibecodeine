@@ -4,8 +4,8 @@ Version flujo: 0.56.1
 
 ## Fuente de verdad
 
-- Fuente canonica de precios: `web/src/rdBrand.ts` (TypeScript, hub web).
-- Fuente unica en Python: `src/flujo/plano/packs.py` (espejo declarado del TypeScript; `costs.py` y `engine.py` consumen SOLO este modulo, nunca un precio propio).
+- Fuente canonica de precios: `data/rd_packs.json`, editable a mano (desde 2026-07-26; antes vivia cableada en dos copias que podian desincronizarse, `packs.py` y `web/src/rdBrand.ts`).
+- `src/flujo/plano/packs.py` LEE ese archivo; `costs.py` y `engine.py` consumen SOLO ese modulo, nunca un precio propio.
 - `precio` es el unico valor absoluto editable por pack; cualquier monto de desglose se recalcula siempre como `precio*pct/100` (nunca se guarda aparte).
 
 ## Packs
@@ -80,12 +80,7 @@ Nota sobre el motor real: engine.py funciono: los ejemplos abajo son la salida r
 ### Ejemplo -- audiencia productora
 
 ```
-COTIZACIÓN — Festival Ejemplo 2026 | Reduciendo Daño
-
-Estilo: flujo (ink=#1f2a24 accent=#2d5a4a paper=#f8f1e3)
-Formato: infografía lista para Illustrator/Photoshop (ver catálogo)
-
-Demo de layout_mode grid_2x + reglas de rider. Cambia a 'row' para el layout clásico en fila.
+Reduciendo Daño
 
 COTIZACIÓN — Festival Ejemplo 2026
 ========================================
@@ -103,14 +98,14 @@ TOTAL: $300,000
 
 Nota: precio plano por pack de servicio RD (no por hora/voluntario).
 
-Entrega lista. Usa flujo para consistencia de marca.
+Demo de layout_mode grid_2x + reglas de rider. Cambia a 'row' para el layout clásico en fila.
 ```
 
 ### Ejemplo -- audiencia interno (ONG/empresa)
 
 ```
 COTIZACIÓN INTERNA — Festival Ejemplo 2026
-Para: ONG / trabajador / empresa
+Para: equipo Reduciendo Daño
 
 COTIZACIÓN — Festival Ejemplo 2026
 ========================================
@@ -128,8 +123,7 @@ TOTAL: $300,000
 
 Nota: precio plano por pack de servicio RD (no por hora/voluntario).
 
-Notas internas: ajustar precios reales.
-Referencia flujo para tono en comunicaciones.
+Tarifa vigente: data/rd_packs.json (misma fuente que el rider).
 ```
 
 ## Regenerar

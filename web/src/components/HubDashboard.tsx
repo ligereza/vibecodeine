@@ -28,12 +28,12 @@ export default function HubDashboard({ onNavigate }: Props) {
   // Editables primero (producen trabajo dentro de la app); consulta y
   // generadores de comandos copy/paste al final.
   const actions = [
-    { view: 'plano' as const, icon: Map, title: 'Plano / Rider', desc: 'Editor visual de layout, rider y cotización de evento', color: 'from-emerald-500 to-teal-600', badge: 'editable' },
-    { view: 'visualizer' as const, icon: Shapes, title: 'SVG Studio', desc: 'Galería de piezas + Config Editor visual con texto, alineado y distribución', color: 'from-violet-500 to-purple-600', badge: 'editable' },
-    { view: 'quote' as const, icon: Calculator, title: 'Cotización', desc: 'Presupuesto editable con export MD/PDF', color: 'from-pink-500 to-rose-600', badge: 'editable' },
-    { view: 'intake' as const, icon: ClipboardList, title: 'Pegar Pedido', desc: 'Parsear correo/texto y crear job draft', color: 'from-blue-500 to-cyan-600', badge: 'editable' },
-    { view: 'jobs' as const, icon: Boxes, title: 'Ver Jobs', desc: 'Estado real de la carpeta jobs/', color: 'from-yellow-500 to-amber-600' },
-    { view: 'events' as const, icon: Camera, title: 'Eventos / IG', desc: 'Arma el comando flyer-auto para el pipeline local', color: 'from-fuchsia-500 to-violet-600', badge: 'Studio' },
+    { view: 'plano' as const, icon: Map, title: 'Plano / Rider', desc: 'Dibujá el plano del evento y sacá su rider para el recinto', color: 'from-emerald-500 to-teal-600', badge: 'editable' },
+    { view: 'visualizer' as const, icon: Shapes, title: 'SVG Studio', desc: 'Revisá las piezas de diseño y ajustá textos y alineación', color: 'from-violet-500 to-purple-600', badge: 'editable' },
+    { view: 'quote' as const, icon: Calculator, title: 'Cotización', desc: 'Armá el presupuesto y exportalo en PDF', color: 'from-pink-500 to-rose-600', badge: 'editable' },
+    { view: 'intake' as const, icon: ClipboardList, title: 'Pegar Pedido', desc: 'Pegá el correo del cliente y queda anotado como trabajo', color: 'from-blue-500 to-cyan-600', badge: 'editable' },
+    { view: 'jobs' as const, icon: Boxes, title: 'Ver trabajos', desc: 'En qué va cada trabajo, con lo que hay en disco', color: 'from-yellow-500 to-amber-600' },
+    { view: 'events' as const, icon: Camera, title: 'Eventos / IG', desc: 'Prepara el flyer de un evento desde su publicación de Instagram', color: 'from-fuchsia-500 to-violet-600', badge: 'Studio' },
     { view: 'resolume' as const, icon: Radio, title: 'Resolume / Chataigne', desc: 'Arma el comando SMPTE/OSC pre-flight para shows', color: 'from-indigo-500 to-blue-600', badge: 'SMPTE' },
     { view: 'commands' as const, icon: TerminalSquare, title: 'Comandos', desc: 'Copiar checks y build', color: 'from-zinc-400 to-zinc-600' },
     { view: 'cultura' as const, icon: Layers, title: 'Cultura', desc: 'Arte-investigacion: tapiz, tilde, psicosis, precursor', color: 'from-amber-500 to-orange-700', badge: 'Cultura' },
@@ -62,21 +62,21 @@ export default function HubDashboard({ onNavigate }: Props) {
               <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider
                 ${ping?.connected !== false ? 'border-emerald-800 bg-emerald-950/50 text-emerald-400' : 'border-zinc-700 bg-zinc-800/50 text-zinc-400'}`}>
                 <span className={`h-1.5 w-1.5 rounded-full ${ping?.connected !== false ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-500'}`} />
-                {ping?.connected !== false ? 'backend local' : 'modo demo'}
+                {ping?.connected !== false ? 'todo local, sin nube' : 'modo demostración'}
               </span>
             </div>
           </div>
-          <h1 className="text-2xl font-black tracking-tight md:text-3xl">Workspace operativo flujo</h1>
+          <h1 className="text-2xl font-black tracking-tight md:text-3xl">Panel de trabajo</h1>
           <p className="mt-2 max-w-xl text-sm text-zinc-400 leading-relaxed">
-            Entrada diaria para convertir pedidos en jobs trazables, revisar SVGs reales, preparar planos/riders y mantener continuidad entre agentes.
+            Desde acá se atiende el día: se reciben los pedidos, se arman los planos y riders de cada evento, se cotiza y se revisan las piezas de diseño antes de entregarlas.
           </p>
         </div>
 
         {/* Stats row */}
         <div className="relative mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
           {[
-            { label: 'Jobs abiertos', value: openJobs, icon: Activity, color: 'text-amber-400' },
-            { label: 'Total jobs', value: jobs?.count ?? 0, icon: Boxes, color: 'text-blue-400' },
+            { label: 'Trabajos abiertos', value: openJobs, icon: Activity, color: 'text-amber-400' },
+            { label: 'Trabajos en total', value: jobs?.count ?? 0, icon: Boxes, color: 'text-blue-400' },
             { label: 'Versión', value: ping?.version || '—', icon: LayoutDashboard, color: 'text-emerald-400' },
             { label: 'Estado', value: ping?.connected !== false ? 'Conectado' : 'Demo', icon: ping?.connected !== false ? CheckCircle2 : AlertCircle, color: ping?.connected !== false ? 'text-emerald-400' : 'text-zinc-400' },
           ].map(stat => {

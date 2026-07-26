@@ -402,6 +402,68 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 self._send_json({"productoras": [], "venues": [], "error": str(e)}, status=200)
             return
+        if path == "/api/portafolio":
+            try:
+                self._send_json(self._get_portafolio())
+            except Exception as e:
+                self._send_json({"proyectos": [], "error": str(e)}, status=200)
+            return
+        if path == "/api/plano-simbolos":
+            # The editable symbol catalogue, so the web editor draws the same
+            # symbols as the Python plan. Until this existed, a symbol the
+            # events manager added reached the plan but not the editor she
+            # works in. Re-read per request: the hub outlives any edit.
+            try:
+                from ..plano import iconos as _iconos
+                _iconos.recargar_catalogo()
+                self._send_json({
+                    "simbolos": [
+                        {"id": s["id"], "etiqueta": s["etiqueta"],
+                         "color": s["color"], "zona": s["zona"],
+                         "cuando": s["cuando"], "svg": s["svg"] or ""}
+                        for s in _iconos.CATALOGO.values()
+                    ]
+                })
+            except Exception as e:
+                self._send_json({"simbolos": [], "error": str(e)}, status=200)
+            return
+        if path == "/api/cotizacion-servicios":
+            # Editable line items for the quote tool (data/cotizacion_servicios
+            # .json). These are design/printing services, NOT the field-service
+            # tariff: they change per job, so they are a starting point to edit.
+            try:
+                ruta = repo_root() / "data" / "cotizacion_servicios.json"
+                self._send_json(json.loads(ruta.read_text(encoding="utf-8")))
+            except Exception as e:
+                self._send_json({"error": str(e)}, status=200)
+            return
+        if path == "/api/rd-packs":
+            # The service tariff, from the SAME file the rider and the Python
+            # quote read (data/rd_packs.json). Before this, the web carried its
+            # own hardcoded copy in rdBrand.ts, so editing the file changed the
+            # PDF and left the app showing the old prices.
+            try:
+                from ..plano import packs as _packs
+                # Re-read on every request: the hub is a long-lived process and
+                # was answering with the tariff as it stood at startup, so
+                # editing the file changed nothing until a restart.
+                _packs.recargar_tarifa()
+                self._send_json({
+                    "packs": _packs.PACKS,
+                    "orden": _packs.ALL_PACKS,
+                    "default_pack": _packs.DEFAULT_PACK,
+                })
+            except Exception as e:
+                self._send_json({"packs": {}, "error": str(e)}, status=200)
+            return
+        if path == "/api/mak":
+            # MAK box state. READ-ONLY: this endpoint does a GET and nothing
+            # else -- the hub never orders anything from the box.
+            try:
+                self._send_json(self._get_mak())
+            except Exception as e:
+                self._send_json({"disponible": False, "error": str(e)}, status=200)
+            return
         if path == "/api/rd-db/logo":
             # Sirve el logo de una productora para previsualizarlo en el panel.
             slug = (parse_qs(urlparse(self.path).query).get("slug") or [""])[0].strip().lower()
@@ -412,7 +474,7 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             tipos = {".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg",
                      ".jpeg": "image/jpeg", ".webp": "image/webp"}
             # Preferir el vector si existe; si no, la descarga cruda.
-            for cand in [base / "vector" / f"{slug}.svg", *sorted((base / "descargas").glob(f"{slug}.*"))]:
+            for cand in self._candidatos_logo(base, slug, self._ref_logo_de_ficha(self.root, slug)):
                 if cand.is_file() and cand.suffix.lower() in tipos:
                     datos = cand.read_bytes()
                     self.send_response(200)
@@ -476,6 +538,123 @@ class HubRequestHandler(BaseHTTPRequestHandler):
         else:
             self.send_error(404)
 
+    @staticmethod
+    def _ref_logo_de_ficha(raiz, slug: str) -> str:
+        """Nombre de archivo que la ficha de la productora declara para su logo.
+
+        Hace falta porque `club_freedom.svg` es el logo del slug `freedom`, y
+        eso no se deduce del slug: solo lo dice su json.
+        """
+        ficha = raiz / "data" / "productoras" / f"{slug}.json"
+        if not ficha.is_file():
+            return ""
+        try:
+            logos = (json.loads(ficha.read_text(encoding="utf-8")) or {}).get("logos") or []
+            if logos and isinstance(logos[0], dict):
+                ref = str(logos[0].get("knowledge") or "")
+                return Path(ref).stem if ref.endswith(".yaml") else ""
+        except Exception:  # noqa: BLE001 - una ficha rota no puede tumbar el panel
+            return ""
+        return ""
+
+    @staticmethod
+    def _candidatos_logo(base, slug: str, ref: str = "") -> list:
+        """Archivos donde puede estar el logo de `slug`, en orden de preferencia.
+
+        El nombre del archivo NO siempre es el slug: en disco conviven
+        `grid_system.svg` (slug `gridsystem`) y `club_freedom.svg` (slug
+        `freedom`). El resumen de la base ya resolvia asi, pero este endpoint
+        buscaba solo por slug: contaba el logo como existente y despues no podia
+        servirlo, o sea que el panel decia "logo vectorial" sobre un recuadro
+        vacio.
+        """
+        norm = slug.replace("_", "").replace("-", "").lower()
+        candidatos = [base / "vector" / f"{slug}.svg"]
+        if ref:
+            candidatos.append(base / "vector" / f"{ref}.svg")
+        vector = base / "vector"
+        if vector.is_dir():
+            candidatos += [p for p in sorted(vector.glob("*.svg"))
+                           if p.stem.replace("_", "").replace("-", "").lower() == norm]
+        descargas = base / "descargas"
+        if descargas.is_dir():
+            candidatos += sorted(descargas.glob(f"{slug}.*"))
+            if ref:
+                candidatos += sorted(descargas.glob(f"{ref}.*"))
+            candidatos += [p for p in sorted(descargas.glob("*"))
+                           if p.stem.replace("_", "").replace("-", "").lower() == norm]
+        return candidatos
+
+    # ── Symbols the events manager adds from the app ──────────────────
+    _SIMBOLO_MAX_BYTES = 512 * 1024
+
+    @staticmethod
+    def _slug_simbolo(texto: str) -> str:
+        """Etiqueta -> id ASCII usable como llave y como nombre de archivo."""
+        import re
+        import unicodedata
+
+        base = unicodedata.normalize("NFKD", str(texto or ""))
+        base = base.encode("ascii", "ignore").decode("ascii").lower()
+        base = re.sub(r"[^a-z0-9]+", "_", base).strip("_")
+        return base[:40]
+
+    def _guardar_simbolo_plano(self, datos: dict) -> dict:
+        """Escribe el .svg y declara el simbolo en data/plano_simbolos.json.
+
+        Devuelve siempre un motivo legible cuando rechaza: quien lo usa no lee
+        logs, y un fallo mudo aca se siente como "la app no guarda".
+        """
+        from ..plano import iconos as _iconos
+
+        etiqueta = str(datos.get("etiqueta") or "").strip()
+        if not etiqueta:
+            return {"ok": False, "error": "Falta el nombre del símbolo."}
+
+        contenido = str(datos.get("svg") or "")
+        if not contenido.strip():
+            return {"ok": False, "error": "Falta el archivo SVG."}
+        if len(contenido.encode("utf-8")) > self._SIMBOLO_MAX_BYTES:
+            return {"ok": False, "error": "El SVG pesa más de 512 KB; exportalo más liviano."}
+        if "<svg" not in contenido.lower():
+            return {"ok": False, "error": "Ese archivo no es un SVG."}
+
+        sid = self._slug_simbolo(datos.get("id") or etiqueta)
+        if not sid:
+            return {"ok": False, "error": "El nombre no deja armar un identificador."}
+
+        zona = str(datos.get("zona") or _iconos.ZONA_POR_DEFECTO).upper()
+        if zona not in _iconos.ZONAS_VALIDAS:
+            zona = _iconos.ZONA_POR_DEFECTO
+        cuando = str(datos.get("cuando") or "siempre").lower()
+        if cuando not in _iconos.CUANDOS_VALIDOS:
+            cuando = "siempre"
+
+        raiz = repo_root()
+        carpeta = raiz / "data" / "plano_simbolos"
+        carpeta.mkdir(parents=True, exist_ok=True)
+        nombre_svg = f"{sid}.svg"
+        (carpeta / nombre_svg).write_text(contenido, encoding="utf-8")
+
+        ruta_json = raiz / "data" / "plano_simbolos.json"
+        catalogo = json.loads(ruta_json.read_text(encoding="utf-8")) if ruta_json.exists() else {}
+        entradas = [s for s in (catalogo.get("simbolos") or [])
+                    if isinstance(s, dict) and s.get("id") != sid]
+        entradas.append({
+            "id": sid,
+            "etiqueta": etiqueta,
+            "color": str(datos.get("color") or "#38bdf8"),
+            "svg": nombre_svg,
+            "zona": zona,
+            "cuando": cuando,
+        })
+        catalogo["simbolos"] = entradas
+        ruta_json.write_text(
+            json.dumps(catalogo, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+        _iconos.recargar_catalogo()
+        return {"ok": True, "id": sid, "etiqueta": etiqueta, "archivo": nombre_svg}
+
     def do_POST(self):
         parsed = urlparse(self.path)
         p = parsed.path
@@ -485,6 +664,13 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             body = self.rfile.read(content_length).decode("utf-8")
             try:
                 data = json.loads(body or "{}")
+                # Both config files are read when their module is imported, and
+                # the hub outlives any edit. Re-read them here so a changed
+                # tariff or a newly added symbol shows up on the next render
+                # instead of waiting for a restart.
+                from ..plano import iconos as _iconos, packs as _packs
+                _packs.recargar_tarifa()
+                _iconos.recargar_catalogo()
                 result = render_plano_api(data.get("evento", data))
                 self._send_json(result)
             except Exception as e:
@@ -524,6 +710,47 @@ class HubRequestHandler(BaseHTTPRequestHandler):
                 self._send_json(out)
             except Exception as e:
                 self._send_json({"error": str(e), "cmd": cmd if 'cmd' in locals() else ""}, status=400)
+            return
+
+        if p == "/api/plano-simbolos/trazar":
+            # Image -> outline, so a symbol can be added without having it in
+            # SVG. It only PREVIEWS: an automatic trace can come out dirty and
+            # the person who decides whether it is usable is the one looking at
+            # it, not the program.
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length).decode("utf-8")
+            try:
+                import base64
+
+                from ..plano.trazador import TrazadoImposible, trazar
+
+                datos = json.loads(body)
+                crudo = str(datos.get("imagen_b64") or "")
+                if "," in crudo[:64]:       # data:image/png;base64,....
+                    crudo = crudo.split(",", 1)[1]
+                if not crudo:
+                    self._send_json({"ok": False, "error": "Falta la imagen."}, status=400)
+                    return
+                try:
+                    svg = trazar(base64.b64decode(crudo))
+                except TrazadoImposible as e:
+                    self._send_json({"ok": False, "error": str(e)}, status=200)
+                    return
+                self._send_json({"ok": True, "svg": svg})
+            except Exception as e:
+                self._send_json({"ok": False, "error": str(e)}, status=400)
+            return
+
+        if p == "/api/plano-simbolos":
+            # Add a symbol from the app. Until this existed the events manager
+            # had to edit data/plano_simbolos.json by hand and drop the file in
+            # a folder, which is not "she can add an icon" in any real sense.
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length).decode("utf-8")
+            try:
+                self._send_json(self._guardar_simbolo_plano(json.loads(body)))
+            except Exception as e:
+                self._send_json({"ok": False, "error": str(e)}, status=400)
             return
 
         if p == "/api/create-job-draft":
@@ -881,6 +1108,101 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             "connected": True,
         }
 
+    def _get_portafolio(self) -> dict:
+        """Curated portfolio catalogue, for the iskvw panel.
+
+        `iskvw` is the portfolio and the ONLY site (user's decision,
+        2026-07-26), and until now the app had no way to show it: the catalogue
+        could only be edited by opening the json by hand.
+
+        Source: `tools/portfolio/proyectos.json`, which is what the workflow
+        publishes. Editing that file IS administering the site, so this endpoint
+        is READ-ONLY: it shows what is published and in what state, it does not
+        edit. It also reports whether the prototype has been generated, so
+        nobody has to guess whether it exists.
+        """
+        import json as _json
+
+        ruta = self.root / "tools" / "portfolio" / "proyectos.json"
+        if not ruta.is_file():
+            return {"proyectos": [], "error": "no existe tools/portfolio/proyectos.json"}
+        datos = _json.loads(ruta.read_text(encoding="utf-8"))
+        proyectos = []
+        for p in datos.get("proyectos", []):
+            proyectos.append({
+                "id": p.get("id", ""),
+                "nombre": p.get("nombre", ""),
+                "linea": p.get("linea", ""),
+                "estado": p.get("estado", ""),
+                "descripcion": p.get("descripcion", ""),
+                "tags": p.get("tags", []),
+                "ruta": p.get("ruta", ""),
+                "url": p.get("url", ""),
+            })
+        prototipo = self.root / "docs" / "iskvw" / "prototipo.html"
+        return {
+            "titulo": datos.get("titulo", ""),
+            "proyectos": proyectos,
+            "prototipo_generado": prototipo.is_file(),
+            "prototipo_ruta": "docs/iskvw/prototipo.html",
+        }
+
+    def _get_mak(self) -> dict:
+        """State of the MAK box, so it stops being invisible in the interface.
+
+        MAK is the machine meant to keep the repo running without Claude, and
+        until 2026-07-26 it had NOT ONE reference in `web/src` and no endpoint
+        here: the user could not see whether it was alive, what it produced, or
+        what was queued. This fixes that the cheapest way possible.
+
+        READ-ONLY on purpose: it GETs the box hub's `/api/organismo` and nothing
+        else. The hub NEVER orders anything from MAK -- same rule as
+        `xio_puente`, which is GET-only because the phone is live
+        infrastructure. If MAK is off or outside the LAN it returns
+        `disponible: false` with the reason, never an exception and never made-up
+        data.
+
+        The address comes from `FLUJO_MAK_URL` (this repo is public: no
+        hardcoded IPs). Without that variable the panel says it is not
+        configured. User-facing strings stay in Spanish.
+        """
+        import json as _json
+        import os as _os
+        import urllib.request as _url
+
+        base = (_os.environ.get("FLUJO_MAK_URL") or "").strip().rstrip("/")
+        if not base:
+            return {
+                "disponible": False,
+                "configurado": False,
+                "error": "Falta la variable de entorno FLUJO_MAK_URL "
+                         "(por ejemplo http://<ip-del-box>:8900).",
+            }
+        try:
+            with _url.urlopen(base + "/api/organismo", timeout=4) as r:
+                crudo = _json.loads(r.read().decode("utf-8", "replace"))
+        except Exception as e:
+            return {"disponible": False, "configurado": True, "error": str(e)}
+
+        salud = crudo.get("salud") or {}
+        servicios = salud.get("servicios") or {}
+        productos = salud.get("productos") or {}
+        return {
+            "disponible": True,
+            "configurado": True,
+            "ts": salud.get("ts"),
+            "uptime_s": salud.get("uptime_s"),
+            "load": salud.get("load"),
+            "mem_disponible_mb": salud.get("mem_disponible_mb"),
+            "disco_libre_gb": salud.get("disco_libre_gb"),
+            "gpu": salud.get("gpu"),
+            "servicios": {
+                nombre: bool(info.get("vivo")) for nombre, info in servicios.items()
+            },
+            "productos": productos,
+            "micelio_chunks": crudo.get("micelio_chunks"),
+        }
+
     def _get_rd_db(self) -> dict:
         """Base de datos RD (productoras + venues) para el panel del hub.
 
@@ -971,7 +1293,19 @@ class HubRequestHandler(BaseHTTPRequestHandler):
                     "aliases": [str(a) for a in (d.get("aliases") or [])],
                     "tipos": [str(t) for t in (d.get("tipos_fecha") or [])],
                     "venues": venues,
-                    "logo": {"estado": estado_logo, "vector": tiene_vector},
+                    # `archivo` dice si hay algo que servir. El panel pedia el
+                    # logo de las 20 productoras aunque 14 no tienen ninguno, y
+                    # eso dejaba 18 errores 404 en la consola del navegador:
+                    # ruido que se lee como si la app estuviera fallando.
+                    "logo": {
+                        "estado": estado_logo,
+                        "vector": tiene_vector,
+                        "archivo": any(
+                            c.is_file() for c in self._candidatos_logo(
+                                logos_dir, slug,
+                                Path(ref_yaml).stem if ref_yaml.endswith(".yaml") else "")
+                        ),
+                    },
                     "confirmada": bool(str(d.get("confirmed") or "").strip()),
                     "confirmacion": str(d.get("confirmed") or ""),
                     "fuente": str(d.get("fuente_datos") or ""),
@@ -1208,6 +1542,37 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => n
         except Exception:
             pass  # client disconnect is normal
 
+    def _reglas_estado_svg(self) -> tuple:
+        """Reglas de data/svg_estados.json: (lista de reglas, estado por defecto).
+
+        El estado de una pieza NO se puede deducir del archivo -- que un SVG
+        exista no dice si se aprobo. Antes no se declaraba en ningun lado y la
+        galeria marcaba todo como "borrador", incluidas las contraportadas ya
+        impresas: el trabajo terminado se veia como si estuviera a medias.
+        """
+        ruta = repo_root() / "data" / "svg_estados.json"
+        try:
+            datos = json.loads(ruta.read_text(encoding="utf-8"))
+            reglas = [
+                (str(r.get("ruta") or ""), str(r.get("estado") or ""))
+                for r in (datos.get("reglas") or [])
+                if isinstance(r, dict) and r.get("ruta") and r.get("estado")
+            ]
+            return reglas, str(datos.get("por_defecto") or "borrador")
+        except Exception:  # noqa: BLE001 - sin el archivo, todo es borrador
+            return [], "borrador"
+
+    def _estado_svg(self, ruta_rel: str) -> str:
+        """Estado declarado para una pieza. Gana la ULTIMA regla que coincide,
+        para poder escribir una general y despues su excepcion."""
+        reglas, por_defecto = self._reglas_estado_svg()
+        estado = por_defecto
+        objetivo = ruta_rel.replace("\\", "/").lower()
+        for patron, valor in reglas:
+            if patron.replace("\\", "/").lower() in objetivo:
+                estado = valor
+        return estado
+
     def _list_svg_works(self) -> dict:
         """Scan svg/ dir and group like svg_visualizer.html (top folders + key files)."""
         svg_root = self.root / "svg"
@@ -1229,7 +1594,8 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => n
                     "name": svgp.name,
                     "path": rel_str,
                     "kind": kind,
-                    "group": gname
+                    "group": gname,
+                    "status": self._estado_svg(rel_str),
                 })
                 total += 1
             if items:
@@ -1390,7 +1756,7 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => n
     # Extended for real backend use from hub (daily driver UX)
     SAFE_PREFIXES = [
         "flujo version", "flujo health", "flujo daily",
-        "flujo brand", "flujo job list", "flujo job next",
+        "flujo job list", "flujo job next",
         "flujo job-status", "flujo plano", "flujo render formats",
         "flujo privacy", "flujo handoff last", "flujo delegate",
         "flujo job prepare", "flujo job new", "flujo render run",
@@ -1640,8 +2006,9 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => n
             "Fuente: fotos reales de flyers/etiquetas/etc ya entregados por usuario.\n"
             "Usa: cada manifest.json (palette, ocr_hints, visual_traits, for_future_ai) + imagen real (datadrops/<id>/img).\n"
             "Objetivo: 'sabrá qué buscar' en briefs/análisis — patrones de paletas reales, contraste, densidad de layouts, textos que aparecen en entregas.\n"
-            "Ej: si datadrops muestran magenta alto contraste en flyers rave oscuros + icon grids densos → valida que linea_editorial + generación lo use.\n"
-            "Privacidad: local only. Coordina Brand Guardian / linea. Copia o cat este archivo + manifests cuando te unas a linea task.\n"
+            "Ej: si los datadrops muestran magenta alto contraste en flyers rave oscuros + icon grids densos, eso es lo que YA se entregó.\n"
+            "Son REFERENCIA, no regla: describen lo entregado, no obligan a que la próxima pieza se vea igual.\n"
+            "Privacidad: local only. Copia o cat este archivo + manifests cuando te unas a la tarea.\n"
             "Generado via hub (`flujo app`) o CLI `py -m flujo datadrop prepare`.\n\n"
         )
         summary_lines = []
@@ -1742,10 +2109,6 @@ class _HubDesktopApi:
     def get_connected(self):
         """Small indicator helper for JS: always report true when bridge present (desktop)."""
         return {"connected": True, "via": "pywebview", "backend": "real", "note": "flujo app --desktop"}
-
-    def export_tokens(self):
-        """Legacy method: design tokens no longer exposed; use projects/flujo/flujo.json directly."""
-        return {"note": "Design tokens removed; use projects/flujo/flujo.json for brand config.", "deprecated": True}
 
     # Datadrop (inverse airdrop) bridge for desktop pywebview
     def list_datadrops(self):

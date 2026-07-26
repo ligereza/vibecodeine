@@ -25,17 +25,30 @@ def test_prepare_svg_for_illustrator_creates_package(tmp_path: Path) -> None:
 
 
 def test_prepare_supplement_contraportadas_for_illustrator_creates_package(tmp_path: Path) -> None:
+    """The package carries the APPROVED contraportadas, copied, not re-rendered.
+
+    Rewritten 2026-07-26: it used to render each piece from a second, unapproved
+    base template. Now the design is the user's own .ai export and the package
+    just copies it.
+    """
+    from flujo.export.illustrator import _contraportada_aprobada
+    from flujo.comercial.suplementos_config import get_suplemento
+
     package_dir = prepare_supplement_contraportadas_for_illustrator(
-        ["Impulso", "Creatina"],
+        ["IMPULSO", "Creatina Monohidratada"],
         output_dir=tmp_path / "out",
         project_name="suplementos_rd",
     )
 
     assert package_dir.exists()
     assert (package_dir / "svg" / "impulso_final.svg").exists()
-    assert (package_dir / "svg" / "creatina_final.svg").exists()
+    assert (package_dir / "svg" / "creatina_monohidratada_final.svg").exists()
     assert (package_dir / "README.md").exists()
     assert (package_dir / "illustrator_artboards.jsx").exists()
+
+    # byte-for-byte the approved piece: the export never redraws the design
+    aprobada = _contraportada_aprobada(get_suplemento("IMPULSO").id)
+    assert (package_dir / "svg" / "impulso_final.svg").read_bytes() == aprobada.read_bytes()
 
     manifest = json.loads((package_dir / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["type"] == "supplement_contraportadas"
@@ -64,19 +77,21 @@ def test_prepare_supplement_job_assets_dynamic_fallback_and_brief(tmp_path: Path
 
     result = prepare_supplement_job_assets(
         job_dir,
-        request_text="Pedido de contraportada para Post Fiesta. Brief: Energia ultra recargada para la noche",
+        request_text="Pedido de contraportada para POST FIESTA. Brief: Energia ultra recargada para la noche",
     )
 
     assert result["created"] is True
-    assert result["supplement"] == "Post Fiesta"
-    
-    # Read generated SVG and verify custom brief and name
+    assert result["supplement"] == "POST FIESTA"
+
     svg_path = Path(result["svg_path"])
     assert svg_path.exists()
     svg_content = svg_path.read_text(encoding="utf-8")
     assert "POST" in svg_content
     assert "FIESTA" in svg_content
-    # El beneficio real inyectado (el brief) debe aparecer en la pieza...
-    assert "Energia ultra recargada para la noche" in svg_content
-    # ...y el placeholder crudo de la plantilla NO debe sobrevivir.
-    assert "campana para la pieza" not in svg_content
+
+    # THE POINT OF THIS TEST (rewritten 2026-07-26): a free-text brief must NOT
+    # reach a supplement piece. `brief` is an EVENTS concept -- it configures the
+    # plano/rider text -- and supplements take their copy from the file the RD
+    # manager sends, which wins over anything typed in a request. Before this,
+    # the brief was painted straight into the artwork.
+    assert "Energia ultra recargada para la noche" not in svg_content

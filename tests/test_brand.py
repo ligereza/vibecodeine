@@ -57,8 +57,15 @@ def test_lee_colores_del_json_real(tmp_path, monkeypatch):
     brand.load_styles.cache_clear()
 
 
-def test_symbols_que_importan_engine_y_piezas_existen():
-    """Regresion directa del bug: estos nombres DEBEN existir (engine.py y
-    render/piezas.py los importan con 'from ..brand import load_styles, get_color')."""
+def test_symbols_que_importan_sus_consumidores_existen():
+    """Direct regression of the bug: these names MUST exist. The module was once
+    emptied while its callers still imported them, and `flujo cotizaciones` died
+    with ImportError while render/piezas.py swallowed it in a silent except.
+
+    Today the only importer is projects/cotizaciones/engine.py (load_styles), as
+    the DEFAULT palette a caller or an event's own `estilo` block may override.
+    piezas.py stopped importing it on 2026-07-26: it printed "flujo aplicado
+    automaticamente" and applied nothing. get_color stays public because it is
+    the read path for a single colour and removing it is how this bug happened."""
     assert callable(brand.load_styles)
     assert callable(brand.get_color)
