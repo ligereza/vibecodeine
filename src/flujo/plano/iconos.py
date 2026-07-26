@@ -21,13 +21,17 @@ COLORES: Dict[str, str] = {
     "sillon": "#0d9488", "toalla": "#0891b2",
 }
 
+# OJO: las CLAVES son identificadores y se quedan en ASCII (son llaves de datos,
+# no palabras). Los VALORES se IMPRIMEN en el plano y en el rider que ve la jefa
+# de eventos y el venue, asi que van en espanol correcto con acentos: mutilar un
+# diacritico en una pieza que se entrega es un defecto, no un estilo.
 ETIQUETAS: Dict[str, str] = {
-    "tent": "Toldo 3x3", "table": "Mesas", "power": "Electricidad", "light": "Iluminacion",
-    "water": "Agua", "extinguisher": "Extintor", "medical": "Equipo Medico",
-    "security": "Seguridad", "testeo": "Testeo", "contencion": "Contencion",
-    "food": "Alimentacion", "heating": "Calefaccion", "trash": "Basureros",
-    "contact": "Produccion", "sensory": "Baja Estim.",
-    "sillon": "Sillon doble", "toalla": "Toalla Nova",
+    "tent": "Toldo 3x3", "table": "Mesas", "power": "Electricidad", "light": "Iluminación",
+    "water": "Agua", "extinguisher": "Extintor", "medical": "Equipo Médico",
+    "security": "Seguridad", "testeo": "Testeo", "contencion": "Contención",
+    "food": "Alimentación", "heating": "Calefacción", "trash": "Basureros",
+    "contact": "Producción", "sensory": "Baja Estim.",
+    "sillon": "Sillón doble", "toalla": "Toalla Nova",
 }
 
 

@@ -134,6 +134,16 @@ and say what changes.
 
 ## Open
 
+- **Merge the quote tool with the rider's config** (user's words, 2026-07-26).
+  The service-pack tariff is now configurable in `data/rd_packs.json` and the
+  rider reads it, but `QuotePanel.tsx` still carries its own hardcoded line
+  items from a different domain (studio/design services) with no source backing
+  them. `REFERENCIA_VALORES.pdf` sits in the repo root and no code reads it.
+  Money values do not change without the user's word.
+- **Remove the branding system** (user's words, 2026-07-26): it "only caused
+  friction without real use". Measure what consumes it before deleting. This is
+  NOT the RD visual identity, which lives in the approved template and the
+  palette of the content file.
 - **The `mak` inbox has no defined drain, and that is the one thing that would
   turn it back into a line.** MAK opens a PR into `mak` every 6 hours; nothing
   moves `mak` into `main`. Verified working on 2026-07-26: the box fetches all

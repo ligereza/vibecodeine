@@ -26,7 +26,18 @@ from typing import Any, Dict, List
 
 PackId = str  # "INFO" | "TESTEO" | "COMPLETO"
 
-PACKS: Dict[str, Dict[str, Any]] = {
+# CONFIGURABLE desde 2026-07-26 (orden del usuario: "los precios que sean
+# configurables, son de la parte del rider"). La tarifa vive en
+# `data/rd_packs.json`, editable a mano, y este modulo la LEE. Antes estaba
+# cableada aca y otra vez en `web/src/rdBrand.ts`: dos copias del mismo precio
+# que podian desincronizarse sin que nadie se enterara.
+#
+# Si el archivo falta o esta roto, se usa el diccionario de abajo como respaldo
+# y se avisa por stderr -- el rider y la cotizacion no pueden quedarse sin
+# tarifa a mitad de un evento, pero tampoco deben mentir en silencio.
+_PACKS_JSON_REL = "data/rd_packs.json"
+
+_PACKS_RESPALDO: Dict[str, Dict[str, Any]] = {
     "INFO": {
         "id": "INFO",
         "nombre": "Informativo",
@@ -84,9 +95,32 @@ PACKS: Dict[str, Dict[str, Any]] = {
     },
 }
 
-ALL_PACKS: List[str] = ["INFO", "TESTEO", "COMPLETO"]
+def _cargar_tarifa() -> tuple[Dict[str, Dict[str, Any]], List[str], str]:
+    """Read the editable tariff. Falls back to the built-in copy, loudly."""
+    import json
+    import sys
+    from pathlib import Path
 
-DEFAULT_PACK = "TESTEO"
+    raiz = Path(__file__).resolve().parents[3]
+    ruta = raiz / _PACKS_JSON_REL
+    try:
+        datos = json.loads(ruta.read_text(encoding="utf-8"))
+        packs = datos["packs"]
+        orden = datos.get("orden") or list(packs.keys())
+        default = datos.get("default_pack") or orden[0]
+        if not packs:
+            raise ValueError("sin packs")
+        return packs, list(orden), str(default)
+    except Exception as e:  # noqa: BLE001 - se reporta, no se traga
+        print(
+            "AVISO: no se pudo leer %s (%s). Se usa la tarifa de respaldo del "
+            "codigo, que puede estar desactualizada." % (_PACKS_JSON_REL, e),
+            file=sys.stderr,
+        )
+        return _PACKS_RESPALDO, ["INFO", "TESTEO", "COMPLETO"], "TESTEO"
+
+
+PACKS, ALL_PACKS, DEFAULT_PACK = _cargar_tarifa()
 
 # Alias legacy: los presets de tamano de evento (under/base/mainstream, de
 # src/flujo/eventos/presets.py) ya no alimentan plano/costos, pero se aceptan
