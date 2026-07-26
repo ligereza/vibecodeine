@@ -628,7 +628,14 @@ export default function PlanoTool() {
   }, [elements]);
 
   // ─── Render Symbol (Procedural SVG without Emojis) ───
-  const renderSymbolGlyph = (key: string, fill: string) => {
+  // Iniciales del NOMBRE del simbolo (no de la key interna): "Carpa Hidratacion" -> "CH".
+  const initialsOf = (label?: string) => {
+    const words = (label || '').trim().split(/\s+/).filter(Boolean);
+    const ini = words.map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    return ini || '?';
+  };
+
+  const renderSymbolGlyph = (key: string, fill: string, label?: string) => {
     switch (key) {
       case 'scan':
         return <><rect x="28" y="36" width="104" height="84" rx="8" fill="none" stroke={fill} strokeWidth="9" strokeDasharray="12 8"/><path d="M42 58 H118 M42 82 H92 M42 106 H108" stroke={fill} strokeWidth="7" strokeLinecap="round"/></>;
@@ -675,7 +682,9 @@ export default function PlanoTool() {
       case 'toalla':
         return <><ellipse cx="80" cy="46" rx="34" ry="14" fill="none" stroke={fill} strokeWidth="9"/><ellipse cx="80" cy="46" rx="13" ry="5" fill="none" stroke={fill} strokeWidth="9"/><path d="M46 46 V96 M114 46 V96" fill="none" stroke={fill} strokeWidth="9" strokeLinecap="round"/><path d="M46 96 C46 104 114 104 114 96" fill="none" stroke={fill} strokeWidth="9" strokeLinecap="round"/><path d="M100 98 C120 102 124 114 108 120 C94 126 98 134 114 138" fill="none" stroke={fill} strokeWidth="9" strokeLinecap="round"/></>;
       default:
-        return <><circle cx="80" cy="80" r="54" fill="none" stroke={fill} strokeWidth="9"/><text x="80" y="92" textAnchor="middle" fontSize="42" fill={fill} fontWeight="black">?</text></>;
+        // Simbolo personalizado (creado desde el editor, sin codigo): circulo +
+        // iniciales del nombre. Mismo dibujo en canvas, leyenda y print.
+        return <><circle cx="80" cy="80" r="54" fill="none" stroke={fill} strokeWidth="9"/><text x="80" y="94" textAnchor="middle" fontSize="46" fill={fill} fontWeight="bold" fontFamily="monospace">{initialsOf(label)}</text></>;
     }
   };
 
@@ -695,7 +704,7 @@ export default function PlanoTool() {
       >
         <rect width={el.w} height={el.h} fill="transparent" stroke={isSelected ? '#fff' : 'none'} strokeWidth={5} />
         <svg x={0} y={0} width={el.w} height={el.h} viewBox="0 0 160 160" overflow="visible">
-          {renderSymbolGlyph(el.symbolKey || 'unknown', fill)}
+          {renderSymbolGlyph(el.symbolKey || 'unknown', fill, el.label)}
         </svg>
         {/* Sin caption junto al icono: la leyenda decodifica; al seleccionar se ve el nombre */}
         {isSelected && (
@@ -775,7 +784,7 @@ export default function PlanoTool() {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 
-  const symbolIconMarkup = (key: string, color: string, cx: number, cy: number, scale: number) => {
+  const symbolIconMarkup = (key: string, color: string, cx: number, cy: number, scale: number, label?: string) => {
     const sw = Math.max(5, 7 * scale);
     const c = color;
     const x = (n: number) => cx + (n - 80) * scale;
@@ -825,8 +834,11 @@ export default function PlanoTool() {
         return `<rect x="${x(24)}" y="${y(56)}" width="${18*scale}" height="${62*scale}" rx="${7*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><rect x="${x(118)}" y="${y(56)}" width="${18*scale}" height="${62*scale}" rx="${7*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><rect x="${x(40)}" y="${y(42)}" width="${80*scale}" height="${26*scale}" rx="${8*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><rect x="${x(40)}" y="${y(66)}" width="${80*scale}" height="${42*scale}" rx="${8*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><path d="M ${x(80)} ${y(66)} V ${y(108)}" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/>`;
       case 'toalla':
         return `<ellipse cx="${x(80)}" cy="${y(46)}" rx="${34*scale}" ry="${14*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><ellipse cx="${x(80)}" cy="${y(46)}" rx="${13*scale}" ry="${5*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><path d="M ${x(46)} ${y(46)} V ${y(96)} M ${x(114)} ${y(46)} V ${y(96)}" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/><path d="M ${x(46)} ${y(96)} C ${x(46)} ${y(104)} ${x(114)} ${y(104)} ${x(114)} ${y(96)}" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/><path d="M ${x(100)} ${y(98)} C ${x(120)} ${y(102)} ${x(124)} ${y(114)} ${x(108)} ${y(120)} C ${x(94)} ${y(126)} ${x(98)} ${y(134)} ${x(114)} ${y(138)}" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/>`;
-      default:
-        return `<circle cx="${cx}" cy="${cy}" r="${48*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><text x="${cx}" y="${cy + 11*scale}" text-anchor="middle" font-size="${36*scale}" font-family="Arial" font-weight="900" fill="${c}">${escapeHtml(key.slice(0, 2).toUpperCase())}</text>`;
+      default: {
+        const words = (label || key).trim().split(/\s+/).filter(Boolean);
+        const ini = (words.map(w => w[0]).join('').slice(0, 2) || '?').toUpperCase();
+        return `<circle cx="${cx}" cy="${cy}" r="${48*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><text x="${cx}" y="${cy + 11*scale}" text-anchor="middle" font-size="${36*scale}" font-family="Arial" font-weight="900" fill="${c}">${escapeHtml(ini)}</text>`;
+      }
     }
   };
 
@@ -842,7 +854,7 @@ export default function PlanoTool() {
     const scale = Math.max(0.55, Math.min(el.w, el.h) / 170);
     return `
       <g>
-        ${symbolIconMarkup(el.symbolKey || 'symbol', color, cx, cy, scale)}
+        ${symbolIconMarkup(el.symbolKey || 'symbol', color, cx, cy, scale, el.label)}
       </g>`;
   };
 
@@ -881,7 +893,7 @@ export default function PlanoTool() {
       const legendLabel = SYMBOL_BY_KEY[el.symbolKey || '']?.label || el.label;
       return `
         <g>
-          ${symbolIconMarkup(el.symbolKey || 'symbol', color, x + 40, y + 40, 0.5)}
+          ${symbolIconMarkup(el.symbolKey || 'symbol', color, x + 40, y + 40, 0.5, legendLabel)}
           <text x="${x + 104}" y="${y + 52}" font-size="32" font-family="Arial, sans-serif" font-weight="800" fill="${pal.text}">${escapeHtml(legendLabel.toUpperCase().slice(0, 16))}</text>
         </g>`;
     }).join('\n');
@@ -1571,7 +1583,7 @@ export default function PlanoTool() {
                           return (
                             <g key={`legend-${el.id}`} transform={`translate(${48 + col * 410},${160 + row * 100})`}>
                               <svg x={0} y={0} width={80} height={80} viewBox="0 0 160 160">
-                                {renderSymbolGlyph(el.symbolKey || 'unknown', fill)}
+                                {renderSymbolGlyph(el.symbolKey || 'unknown', fill, el.label)}
                               </svg>
                               <text x={104} y={52} fontSize={32} fill="#d4d4d8" fontWeight="bold" fontFamily="sans-serif">{(SYMBOL_BY_KEY[el.symbolKey || '']?.label || el.label).toUpperCase().slice(0, 16)}</text>
                             </g>
