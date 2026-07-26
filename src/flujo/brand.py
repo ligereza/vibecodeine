@@ -1,14 +1,21 @@
-"""Loader central de identidad visual flujo.
+"""Reads the default palette. It is a starting point, not a rule.
 
-Historia: este modulo quedo vaciado ("migrado a knowledge/logos") en una
-migracion previa, pero projects/cotizaciones/engine.py y render/piezas.py
-seguian importando load_styles/get_color de aqui -- engine.py reventaba con
-ImportError (flujo cotizaciones roto) y piezas.py lo tragaba en un
-try/except pass. Restaurado 2026-07-16 (checkpoint Ola 3) leyendo la fuente
-de verdad declarada: projects/flujo/flujo.json (colors).
+User's words, 2026-07-26: "como info sirve, como limitante o restriccion no".
+Any caller may ignore what this returns, and any event or config may override
+it -- one day a post goes out in a different aesthetic, or the flyers change,
+and the app must not push back. See projects/cotizaciones/engine.py for the
+resolution order (caller > event > this palette).
 
-El grupo CLI `flujo brand` sigue LEGACY (usar knowledge/logos); este modulo
-solo hospeda el loader de identidad.
+Source: projects/flujo/flujo.json (colors), with a mirrored fallback below for
+when the package runs outside the repo.
+
+History, because it explains why get_color still exists: this module was once
+emptied ("migrado a knowledge/logos") while its callers still imported
+load_styles/get_color. `flujo cotizaciones` died with ImportError and
+render/piezas.py swallowed it in a try/except pass. Restored 2026-07-16.
+
+The `flujo brand` CLI group was removed on 2026-07-26; it did nothing but print
+that it had been retired.
 """
 from __future__ import annotations
 

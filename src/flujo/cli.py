@@ -109,7 +109,6 @@ resolume_app = typer.Typer(help="Automatizacion de shows Resolume/Chataigne por 
 render_app = typer.Typer(help="Render y validación de piezas vectoriales.", no_args_is_help=True)
 airdrop_app = typer.Typer(help="Sistema de actualización profesional (airdrops).", no_args_is_help=True)
 datadrop_app = typer.Typer(help="Gestión de datadrops (fotos reales terminadas).", no_args_is_help=True)
-brand_app = typer.Typer(help="[LEGACY] Use knowledge/logos instead.", no_args_is_help=True)
 
 app.add_typer(job_app, name="job")
 app.add_typer(privacy_app, name="privacy")
@@ -120,7 +119,6 @@ app.add_typer(resolume_app, name="resolume")
 app.add_typer(render_app, name="render")
 app.add_typer(airdrop_app, name="airdrop")
 app.add_typer(datadrop_app, name="datadrop")
-app.add_typer(brand_app, name="brand")
 
 suplementos_app = typer.Typer(help="Generación de contraportadas para suplementos RD.", no_args_is_help=True)
 app.add_typer(suplementos_app, name="suplementos")
@@ -950,8 +948,9 @@ def datadrop_prepare():
         "Fuente: fotos reales de flyers/etiquetas/etc ya entregados por usuario.\n"
         "Usa: cada manifest.json (palette, ocr_hints, visual_traits, for_future_ai) + imagen real (datadrops/<id>/img).\n"
         "Objetivo: 'sabrá qué buscar' en briefs/análisis — patrones de paletas reales, contraste, densidad de layouts, textos OCR de entregas.\n"
-        "Ej: si datadrops muestran magenta alto contraste en flyers rave oscuros + icon grids densos → valida que linea_editorial + generación lo use.\n"
-        "Privacidad: local only. Coordina Brand Guardian / linea. Copia o cat este archivo + manifests cuando te unas a linea task.\n"
+        "Ej: si los datadrops muestran magenta alto contraste en flyers rave oscuros + icon grids densos, eso es lo que YA se entregó.\n"
+        "Son REFERENCIA, no regla: describen lo entregado, no obligan a que la próxima pieza se vea igual.\n"
+        "Privacidad: local only. Copia o cat este archivo + manifests cuando te unas a la tarea.\n"
         "Generado via hub (`flujo app`) o CLI `py -m flujo datadrop prepare`.\n\n"
     )
     summary_lines = []
@@ -1843,42 +1842,67 @@ def suplementos_list():
 
 @suplementos_app.command("contraportada")
 def suplementos_contraportada(
-    nombre: str = typer.Argument(..., help="Nombre del suplemento (ej. 'Impulso')"),
-    output: Optional[Path] = typer.Option(
-        None, "--output", "-o",
-        help="Ruta de salida del SVG (default: svg/suplementos_rd/04_contraportadas/generadas/[nombre]_final.svg)"
-    ),
-    brief: Optional[str] = typer.Option(
-        None, "--brief", "-b",
-        help="Brief o texto de beneficio personalizado para sobreescribir la pieza"
+    nombre: Optional[str] = typer.Argument(
+        None, help="Suplemento puntual (ej. 'IMPULSO'). Sin argumento, regenera los 8."
     ),
 ):
-    """Generar contraportada SVG para un suplemento.
+    """Regenerar las contraportadas desde la plantilla aprobada.
+
+    El estilo sale de `svg/suplementos_rd/_plantilla/contraportada_cambios.svg`,
+    que es la exportacion del .ai del usuario y NO se toca. El texto sale del
+    archivo de contenido aprobado. El generador solo superpone el texto dentro
+    de las cajas medidas de la plantilla, asi que cambiar el texto nunca rompe
+    el diseno.
+
+    No hay opcion para escribir texto a mano: en suplementos el texto viene del
+    archivo que manda el encargado de RD, y ese archivo manda (orden del usuario,
+    2026-07-26). El `--brief` que este comando tenia antes era un concepto de
+    EVENTOS colado aca; vive donde corresponde, en plano/rider.
 
     Ejemplo:
-      py -m flujo suplementos contraportada "Impulso" --output salida.svg
-      py -m flujo suplementos contraportada "Creatina"
-      py -m flujo suplementos contraportada "Impulso" --brief "Energía ultra limpia"
+      py -m flujo suplementos contraportada
+      py -m flujo suplementos contraportada "IMPULSO"
     """
-    from .comercial.suplementos_config import get_suplemento
-    from .comercial.contraportada_svg import generar_contraportada
+    import subprocess
+    import sys as _sys
 
-    try:
-        suplemento = get_suplemento(nombre)
-    except KeyError as e:
-        _err(str(e))
+    from .comercial.suplementos_config import get_suplemento, list_suplementos
+    from .paths import repo_root
+
+    raiz = repo_root()
+    if nombre:
+        try:
+            supl = get_suplemento(nombre)
+        except KeyError as e:
+            _err(str(e))
+            console.print(f"  Reales: {', '.join(list_suplementos())}")
+            return
+    else:
+        supl = None
+
+    generador = raiz / ".claude" / "skills" / "entregas-rd" / "generadores" / "gen_contraportadas.py"
+    if not generador.is_file():
+        _err(f"No existe el generador aprobado: {generador}")
         return
 
-    try:
-        svg_path = generar_contraportada(suplemento, output_path=output, brief=brief)
-        _ok(f"Contraportada generada: {svg_path}")
-        console.print(f"  Tamaño: 10×14 cm (2000x2800 px @ 300dpi)")
-        console.print(f"  Nombre: {suplemento.nombre}")
-        console.print(f"  Beneficio: {brief if brief else suplemento.beneficio_1}")
-    except FileNotFoundError as e:
-        _err(f"Plantilla base no encontrada: {e}")
-    except Exception as e:
-        _err(f"No se pudo generar la contraportada: {e}")
+    r = subprocess.run(
+        [_sys.executable, str(generador)],
+        cwd=str(raiz), capture_output=True, encoding="utf-8", errors="replace",
+    )
+    if r.returncode != 0:
+        _err("El generador fallo:")
+        console.print((r.stderr or r.stdout or "").strip()[:1200])
+        return
+
+    salidas = sorted((raiz / "svg" / "suplementos_rd" / "09_contraportadas_dark").glob("*.svg"))
+    if supl is not None:
+        salidas = [p for p in salidas if p.stem == supl.id] or salidas
+        _ok(f"Contraportada regenerada: {supl.nombre}")
+    else:
+        _ok(f"Contraportadas regeneradas: {len(salidas)}")
+    for p in salidas:
+        console.print(f"  · {p.relative_to(raiz)}")
+    console.print("  Tamaño: 10×14 cm (2000x2800 px @ 300dpi)")
 
 
 @suplementos_app.command("validate")
@@ -1918,27 +1942,12 @@ def suplementos_illustrator(
     _ok(f"Paquete Illustrator de suplementos preparado: {package_dir}")
 
 
-# ============================================================
-# Dashboard / Portal jefe
-# ============================================================
-
-@app.command("portal")
-def portal(
-    output: Optional[Path] = typer.Option(None, "--output", "-o", help="HTML de salida (default: context/portal_jefe.html)"),
-    repo_url: str = typer.Option("", "--repo-url", help="URL del repo GitHub para botones de nuevo pedido/cambio"),
-    titulo: str = typer.Option("Portal de pedidos", "--titulo", help="Título visible para jefatura"),
-):
-    """Exporta portal visual gratuito para jefatura: estados de jobs + links a GitHub Issues.
-
-    Alternativa local/free a monday.com: GitHub Issues/Projects para entrada y
-    seguimiento, más este HTML estático para una vista simple del avance.
-    """
-    from .portal import export_portal
-
-    out = export_portal(output=output, repo_url=repo_url, titulo=titulo)
-    _section("Portal jefe exportado")
-    _ok(f"HTML: {out}")
-    console.print("  Siguiente: compartir ese HTML, o publicarlo junto a un GitHub Project privado.")
+# El comando `portal` se retiro el 2026-07-26. No estaba viejo: estaba ROTO --
+# reventaba con AttributeError al ejecutarlo. Exportaba un HTML estatico con
+# links a GitHub Issues, planteado como alternativa a monday.com, y hoy choca
+# con dos cosas: el panel de Trabajos ya muestra ese estado, y los issues son un
+# canal de entrada, no un tablero de tareas. Archivado en
+# _archive/legacy_20260726_cli_roto/portal.py con su motivo.
 
 
 @app.command()
@@ -2028,8 +2037,11 @@ def cotizaciones(
 ):
     """Genera cotización dual integrada con flujo.
 
-    --para productora: versión externa branded (infografía para productoras)
+    --para productora: versión externa (la que recibe el recinto o la productora)
     --para interno/empresa: desglose detallado interno.
+
+    Los colores salen de la paleta por defecto y el evento puede sobrescribirlos
+    con un bloque `estilo`; no hay estética obligatoria.
     """
     # Robust import for cotizaciones (satellite, not in main pkg layout).
     # Works after `pip install -e .` (flujo in path) + from repo root or packaged context.
@@ -2052,7 +2064,6 @@ def cotizaciones(
         _err(f"No existe: {evento}")
     res = generar_cotizacion(evento, audiencia=para, output_dir=output)
     console.print(f"Cotización generada: {res['files']}")
-    console.print(f"Estilo: {res.get('estilo', 'flujo')}")
 
 
 # ============================================================
@@ -2063,53 +2074,36 @@ def cotizaciones(
 def serve(
     port: int = typer.Option(8765, "--port", "-p", help="puerto del servidor"),
     host: str = typer.Option("127.0.0.1", "--host", help="host (0.0.0.0 para red local)"),
-    hub: bool = typer.Option(True, "--hub/--legacy", help="usar el nuevo workspace HTML (flujo_hub.html + visualizadores)"),
     desktop: bool = typer.Option(False, "--desktop", help="abrir en ventana nativa con pywebview (si está instalado)"),
     procesar_pendientes: bool = typer.Option(False, "--procesar-pendientes", help="al arrancar, avanzar los jobs de flyer pendientes (modifica jobs: por eso no es el default)"),
+    abrir: bool = typer.Option(True, "--abrir/--no-abrir", help="abrir el navegador al arrancar (--no-abrir deja solo el servidor)"),
 ):
-    """Iniciar el workspace local (la nueva app profesional).
+    """Iniciar el workspace local: el hub, que es la entrada diaria.
 
-    Por defecto (`--hub`): lanza el hub pro workspace (`context/flujo_hub.html` + visualizadores SVG/Plano)
-    servido por servidor HTTP + API real en http://{host}:{port}.
-    APIs: parse intake real (parsePedido usa backend por defecto cuando server activo), list/create jobs, brand desde flujo.json, svg scan live, safe cmds, pywebview bridge + "CONECTADO" indicator.
-    `flujo app` (o serve --desktop) es la entrada diaria obligatoria (hub = pro workspace real).
+    Sirve `context/flujo_hub.html` + los visualizadores SVG/Plano con la API
+    real en http://{host}:{port}: intake, jobs, base de datos RD, tarifa,
+    simbolos del plano y el puente de pywebview.
 
-    --desktop: ventana nativa premium sin chrome (pywebview gratis + js_api bridge directo Python<->JS + tray + icon).
-    --legacy (o --no-hub): usa editor Gradio antiguo (legacy, no primario).
+    --desktop: ventana nativa (pywebview), sin barra de navegador.
+    --no-abrir: levanta el servidor sin abrir el navegador, util para revisar o
+    automatizar sin acumular pestanas.
+
+    Habia un `--legacy` que lanzaba un editor Gradio. Se retiro el 2026-07-26:
+    importaba `flujo.web.editor`, un modulo que NO existe, y caia a
+    `scripts/app.py`, una tercera interfaz sin tocar desde el commit inicial.
+    Encima gradio no esta declarado en pyproject, asi que en una instalacion
+    limpia ese camino ni arrancaba. Archivado en
+    _archive/legacy_20260726_cli_roto/.
     """
-    if hub:
-        try:
-            from .web.hub import launch
-            from .paths import repo_root
-            r = repo_root()
-            console.print(f"[cyan]flujo workspace (hub) en http://{host}:{port}[/]")
-            console.print(f"[dim]Repo context: {r}[/dim]")
-            console.print("[dim]APIs reales + drag-drop en hub + auto-port + tray opcional.[/dim]")
-            launch(host=host, port=port, desktop=desktop, root=r, procesar_pendientes=procesar_pendientes)
-            return
-        except Exception as e:
-            _warn(f"No se pudo iniciar el workspace nuevo ({e}).")
-
-    # Legacy Gradio path
-    import importlib.util
-    if importlib.util.find_spec("gradio") is None:
-        _err("Falta gradio para el modo legacy. Instalar con: pip install gradio")
-
-    try:
-        from .web.editor import launch
-        console.print(f"[cyan]Editor Gradio legacy en http://{host}:{port}[/]")
-        launch(server_name=host, server_port=port)
-    except Exception as e:
-        _warn(f"Error en editor Gradio: {e}")
-        # fallback al script viejo
-        import subprocess
-        from .paths import repo_root
-        root = repo_root()
-        script = root / "scripts" / "app.py"
-        if script.exists():
-            subprocess.run([sys.executable, str(script)], cwd=root)
-        else:
-            _err("No hay forma de lanzar interfaz web.")
+    from .web.hub import launch
+    from .paths import repo_root
+    r = repo_root()
+    console.print(f"[cyan]flujo workspace (hub) en http://{host}:{port}[/]")
+    console.print(f"[dim]Repo context: {r}[/dim]")
+    # --no-abrir existe porque levantar el hub para revisarlo o para un chequeo
+    # abria una pestana cada vez; ocho arranques seguidos dejan ocho pestanas.
+    launch(host=host, port=port, desktop=desktop, root=r,
+           procesar_pendientes=procesar_pendientes, open_browser=abrir)
 
 
 # Alias: flujo app → flujo serve
@@ -2119,9 +2113,11 @@ def app_alias(
     host: str = typer.Option("127.0.0.1", "--host"),
     desktop: bool = typer.Option(False, "--desktop"),
     procesar_pendientes: bool = typer.Option(False, "--procesar-pendientes", help="al arrancar, avanzar los jobs de flyer pendientes"),
+    abrir: bool = typer.Option(True, "--abrir/--no-abrir", help="abrir el navegador al arrancar (--no-abrir deja solo el servidor)"),
 ):
     """Alias de serve. Lanza la nueva app (hub pro workspace recomendado como entrada diaria). Real backend + parse/create jobs live cuando activo."""
-    serve(port=port, host=host, hub=True, desktop=desktop, procesar_pendientes=procesar_pendientes)
+    serve(port=port, host=host, desktop=desktop,
+          procesar_pendientes=procesar_pendientes, abrir=abrir)
 
 
 # ============================================================
@@ -2477,12 +2473,6 @@ def knowledge_logo_lab(
         _err(str(e))
     _ok(f"Logo Lab preparado: {manifest_path}")
 
-
-
-@brand_app.callback()
-def brand_legacy():
-    """El branding rígido fue retirado. Usa knowledge/logos y logo clean lab."""
-    console.print("[yellow]⚠ Brand legacy retirado. Migrado a knowledge/logos.[/]")
 
 
 def main():

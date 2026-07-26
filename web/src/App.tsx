@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import AppShell, { type AppView } from './components/AppShell';
+import { isLinkableView } from './data/profiles';
 import HubDashboard from './components/HubDashboard';
 import JobsPanel from './components/JobsPanel';
 import IntakePanel from './components/IntakePanel';
@@ -14,9 +15,17 @@ import CulturaPanel from './components/CulturaPanel';
 import ShowPanel from './components/ShowPanel';
 import AutomatizacionesPanel from './components/AutomatizacionesPanel';
 import RdDbPanel from './components/RdDbPanel';
+import MakPanel from './components/MakPanel';
+import PortafolioPanel from './components/PortafolioPanel';
 
 function initialView(): AppView {
   if (typeof window === 'undefined') return 'hub';
+  // `?vista=<id>` opens a panel directly, so a panel can be linked or
+  // screenshotted without clicking through the nav. Validated against the views
+  // the profiles actually declare: an unknown value falls through to the path
+  // rules below instead of leaving a blank screen.
+  const pedida = new URLSearchParams(window.location.search).get('vista');
+  if (isLinkableView(pedida)) return pedida;
   const path = window.location.pathname.toLowerCase();
   if (path.includes('svg') || path.includes('visual') || path.includes('config') || path.includes('editor')) return 'visualizer';
   if (path.includes('plano')) return 'plano';
@@ -45,6 +54,8 @@ export default function App() {
       {view === 'automatizaciones' && <AutomatizacionesPanel />}
       {view === 'rd-db' && <RdDbPanel />}
       {view === 'cultura' && <CulturaPanel />}
+      {view === 'mak' && <MakPanel />}
+      {view === 'portafolio' && <PortafolioPanel />}
     </AppShell>
   );
 }

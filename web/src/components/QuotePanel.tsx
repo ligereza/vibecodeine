@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Calculator, Plus, Trash2, Download, RotateCcw, Printer } from 'lucide-react';
 import { cn } from '../utils/cn';
-import { RD_LOGO } from '../rdBrand';
+import { RD_LOGO, ALL_PACKS, PACKS } from '../rdBrand';
+import { DEFAULT_ITEMS, PRESETS, type QuoteLineItem } from '../data/cotizacionServicios';
 
 interface LineItem {
   id: string;
@@ -13,42 +14,12 @@ interface LineItem {
 
 const CATEGORY_OPTIONS = ['Diseño', 'Impresión', 'Evento', 'Digital', 'Otro'];
 
-const DEFAULT_ITEMS: LineItem[] = [
-  { id: '1', label: 'Diseño etiqueta (vector, 2 revisiones)', qty: 1, price: 65000, category: 'Diseño' },
-  { id: '2', label: 'Impresión etiqueta 16.5x6.5 cm (100 unidades)', qty: 1, price: 48000, category: 'Impresión' },
-  { id: '3', label: 'Post Instagram (3 variaciones)', qty: 1, price: 30000, category: 'Digital' },
-];
-
-const PRESETS: { label: string; items: Omit<LineItem, 'id'>[] }[] = [
-  {
-    label: 'Etiqueta Suplementos',
-    items: [
-      { label: 'Diseño etiqueta vectorial (2 revisiones)', qty: 1, price: 65000, category: 'Diseño' },
-      { label: 'Impresión 100 unidades', qty: 1, price: 48000, category: 'Impresión' },
-      { label: 'Post Instagram', qty: 3, price: 12000, category: 'Digital' },
-    ],
-  },
-  {
-    label: 'Kit Evento BASE',
-    items: [
-      { label: 'Diseño flyer físico A5', qty: 1, price: 45000, category: 'Diseño' },
-      { label: 'Impresión flyer A5 (200 unidades)', qty: 1, price: 35000, category: 'Impresión' },
-      { label: 'Diseño plano/rider operativo', qty: 1, price: 30000, category: 'Diseño' },
-      { label: 'Post Instagram evento', qty: 1, price: 15000, category: 'Digital' },
-    ],
-  },
-  {
-    label: 'Kit Evento MAINSTREAM',
-    items: [
-      { label: 'Diseño flyer físico A4 (2 idiomas)', qty: 1, price: 80000, category: 'Diseño' },
-      { label: 'Impresión flyer A4 (500 unidades)', qty: 1, price: 75000, category: 'Impresión' },
-      { label: 'Diseño pendón 80x180 cm', qty: 1, price: 55000, category: 'Diseño' },
-      { label: 'Diseño cartelera digital', qty: 1, price: 35000, category: 'Digital' },
-      { label: 'Plano/rider MAINSTREAM + SVG', qty: 1, price: 45000, category: 'Diseño' },
-      { label: 'Pack Instagram (5 posts)', qty: 1, price: 40000, category: 'Digital' },
-    ],
-  },
-];
+// Los valores viven en data/cotizacion_servicios.json, editable a mano; el hub
+// los sirve y main.tsx los carga antes de montar React. Estaban cableados aca
+// hasta el 2026-07-26. Son servicios de diseno e impresion, distintos de la
+// tarifa de packs en terreno, y cambian por trabajo: son un punto de partida.
+const withIds = (items: QuoteLineItem[]): LineItem[] =>
+  items.map((it, i) => ({ ...it, id: String(i + 1) }));
 
 function formatCLP(n: number) {
   return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(n);
@@ -66,7 +37,7 @@ interface StoredQuoteState {
 
 function loadStoredState(): StoredQuoteState {
   const fallback: StoredQuoteState = {
-    items: DEFAULT_ITEMS,
+    items: withIds(DEFAULT_ITEMS),
     clientName: '',
     eventName: '',
     notes: '',
@@ -118,6 +89,18 @@ export default function QuotePanel() {
   };
 
   const removeItem = (id: string) => setItems(prev => prev.filter(it => it.id !== id));
+
+  /** Agrega un pack de servicio en terreno como ítem, con el precio de la tarifa. */
+  const addPack = (id: (typeof ALL_PACKS)[number]) => {
+    const pack = PACKS[id];
+    setItems(prev => [...prev, {
+      id: `pack-${id}-${Date.now()}`,
+      label: `${pack.label} — ${pack.desc}`,
+      qty: 1,
+      price: pack.precio,
+      category: 'Evento',
+    }]);
+  };
 
   const applyPreset = (preset: typeof PRESETS[number]) => {
     setItems(preset.items.map((it, i) => ({ ...it, id: String(Date.now() + i) })));
@@ -242,7 +225,7 @@ export default function QuotePanel() {
         <div className="flex gap-2">
           <button
             onClick={() => {
-              setItems(DEFAULT_ITEMS);
+              setItems(withIds(DEFAULT_ITEMS));
               setDiscount(0);
               setClientName('');
               setEventName('');
@@ -303,6 +286,27 @@ export default function QuotePanel() {
                 className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-400 hover:border-zinc-600 hover:text-zinc-200 transition-colors"
               >
                 {p.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Packs de servicio en terreno. Faltaban: la herramienta solo sabia
+              cotizar diseno e impresion, asi que el servicio que RD presta de
+              verdad -- ir al evento -- no se podia cotizar aca. El precio sale
+              de data/rd_packs.json, la misma tarifa que lee el rider, para que
+              una cotizacion y su rider no puedan decir cifras distintas. */}
+          <div className="flex flex-wrap gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 self-center">
+              Servicio en terreno:
+            </span>
+            {ALL_PACKS.map(id => (
+              <button
+                key={id}
+                onClick={() => addPack(id)}
+                title={`${PACKS[id].desc} — se agrega como ítem con su precio de tarifa`}
+                className="rounded-lg border border-emerald-900/60 bg-emerald-950/30 px-3 py-1.5 text-xs text-emerald-300 hover:border-emerald-700 hover:text-emerald-200 transition-colors"
+              >
+                + {PACKS[id].label}
               </button>
             ))}
           </div>

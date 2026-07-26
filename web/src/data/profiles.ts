@@ -28,7 +28,9 @@ export type AppView =
   | 'show'
   | 'automatizaciones'
   | 'rd-db'
-  | 'cultura';
+  | 'cultura'
+  | 'mak'
+  | 'portafolio';
 
 // Division en 3 (2026-07-25, orden del usuario): la app espeja la topologia de ramas del
 // repo -- main / rd / iskvw. `studio` y `cultura` se fundieron en `iskvw`
@@ -78,7 +80,7 @@ export interface Profile {
   shortLabel: string;
   /** Descripcion de 1 linea bajo el selector de workspace. */
   tagline: string;
-  /** Texto del footer del sidebar, ej "Reduciendo Dano". */
+  /** Texto del footer del sidebar, ej "Reduciendo Daño". */
   footerLabel: string;
   /** Titulo de la primera seccion de nav (los items editables), ej "Edicion RD". */
   navTitle: string;
@@ -98,20 +100,21 @@ export interface Profile {
 const RD_NAV: NavItem[] = [
   { view: 'hub', icon: LayoutDashboard, label: 'Dashboard', desc: 'Vista general RD', edit: false },
   { view: 'plano', icon: Map, label: 'Plano / Rider', desc: 'Editor de layout de evento', edit: true },
-  { view: 'visualizer', icon: Shapes, label: 'SVG Studio', desc: 'Galeria + editor visual', edit: true },
-  { view: 'quote', icon: Calculator, label: 'Cotizacion', desc: 'Presupuesto editable', edit: true },
-  { view: 'intake', icon: ClipboardList, label: 'Intake', desc: 'Parsear pedidos y crear jobs', edit: true },
+  { view: 'visualizer', icon: Shapes, label: 'SVG Studio', desc: 'Galería + editor visual', edit: true },
+  { view: 'quote', icon: Calculator, label: 'Cotización', desc: 'Presupuesto editable', edit: true },
+  { view: 'intake', icon: ClipboardList, label: 'Pedidos', desc: 'Pegá el correo del cliente y queda anotado', edit: true },
   { view: 'rd-db', icon: Database, label: 'Base de datos', desc: 'Productoras, venues y logos', edit: true },
   { view: 'automatizaciones', icon: Workflow, label: 'Automatizaciones', desc: 'Cola Gmail -> issue -> render', edit: false },
-  { view: 'jobs', icon: Boxes, label: 'Jobs / Suplementos', desc: 'Estado de trabajos', edit: false },
+  { view: 'jobs', icon: Boxes, label: 'Trabajos / Suplementos', desc: 'En qué va cada trabajo', edit: false },
 ];
 
 // main: nucleo transversal. Lo que sirve a las dos lineas y no es de ninguna:
 // estado general, jobs, la cola de automatizaciones y la referencia de CLI.
 const MAIN_NAV: NavItem[] = [
   { view: 'hub', icon: LayoutDashboard, label: 'Dashboard', desc: 'Vista general del sistema', edit: false },
-  { view: 'jobs', icon: Boxes, label: 'Jobs / Suplementos', desc: 'Estado de trabajos', edit: false },
+  { view: 'jobs', icon: Boxes, label: 'Trabajos / Suplementos', desc: 'En qué va cada trabajo', edit: false },
   { view: 'automatizaciones', icon: Workflow, label: 'Automatizaciones', desc: 'Cola Gmail -> issue -> render', edit: false },
+  { view: 'mak', icon: Cpu, label: 'MAK', desc: 'La maquina que trabaja sola', edit: false },
   { view: 'commands', icon: TerminalSquare, label: 'Comandos', desc: 'CLI reference', edit: false },
 ];
 
@@ -124,7 +127,8 @@ const ISKVW_NAV: NavItem[] = [
   { view: 'mapping', icon: Lightbulb, label: 'Mapping LED', desc: 'Rigging / pixel mapping', edit: true },
   { view: 'resolume', icon: Radio, label: 'Resolume / Chataigne', desc: 'Comando SMPTE/OSC', edit: false },
   { view: 'events', icon: Camera, label: 'Eventos / IG', desc: 'Comando flyer-auto', edit: false },
-  { view: 'visualizer', icon: Shapes, label: 'SVG Studio', desc: 'Galeria + editor visual', edit: true },
+  { view: 'visualizer', icon: Shapes, label: 'SVG Studio', desc: 'Galería + editor visual', edit: true },
+  { view: 'portafolio', icon: Layers, label: 'Portafolio', desc: 'Catálogo público de iskvw', edit: false },
   { view: 'cultura', icon: Layers, label: 'Cultura', desc: 'Instrumentos y lineas de obra', edit: false },
 ];
 
@@ -140,7 +144,7 @@ export const PROFILES: Record<WorkspaceMode, Profile> = {
     id: 'main',
     label: 'Main',
     shortLabel: 'MAIN',
-    tagline: 'Nucleo transversal: estado del sistema, jobs, cola de automatizaciones y referencia de comandos.',
+    tagline: 'Núcleo transversal: estado del sistema, trabajos, cola de automatizaciones y referencia de comandos.',
     footerLabel: 'Main / Sistema',
     navTitle: 'Sistema',
     selectorIcon: Cpu,
@@ -158,9 +162,9 @@ export const PROFILES: Record<WorkspaceMode, Profile> = {
     id: 'rd',
     label: 'Modo RD',
     shortLabel: 'RD',
-    tagline: 'ONG Reduciendo Dano: Plano/Rider, Cotizaciones, SVG Studio, Intake y la cola de automatizaciones.',
-    footerLabel: 'Reduciendo Dano',
-    navTitle: 'Edicion RD',
+    tagline: 'ONG Reduciendo Daño: planos y riders de evento, cotizaciones, piezas de diseño y pedidos que llegan por correo.',
+    footerLabel: 'Reduciendo Daño',
+    navTitle: 'Edición RD',
     selectorIcon: Heart,
     footerIcon: Heart,
     accent: {
@@ -194,7 +198,7 @@ export const PROFILES: Record<WorkspaceMode, Profile> = {
     id: 'rd-plano',
     label: 'Plano RD',
     shortLabel: 'PLANO',
-    tagline: 'Perfil de distribucion: solo el editor de Plano/Rider, para compartir fuera del equipo.',
+    tagline: 'Perfil de distribución: solo el editor de Plano/Rider, para compartir fuera del equipo.',
     footerLabel: 'Plano RD (compartido)',
     navTitle: 'Plano',
     selectorIcon: Map,
@@ -213,6 +217,20 @@ export const PROFILES: Record<WorkspaceMode, Profile> = {
 
 /** Perfiles visibles en el selector de workspace del hub (excluye hidden). */
 export const VISIBLE_PROFILES: Profile[] = Object.values(PROFILES).filter(p => !p.hidden);
+
+/**
+ * Every view any profile can reach, derived from the profiles themselves so it
+ * cannot drift: adding a panel to a profile makes it linkable automatically.
+ * Used to validate `?vista=` before trusting it (2026-07-26 -- the MAK panel
+ * existed and there was no way to link straight to it).
+ */
+export const LINKABLE_VIEWS: AppView[] = Array.from(
+  new Set(Object.values(PROFILES).flatMap(p => p.nav.map(i => i.view))),
+);
+
+export function isLinkableView(value: string | null | undefined): value is AppView {
+  return !!value && (LINKABLE_VIEWS as string[]).includes(value);
+}
 
 export const DEFAULT_PROFILE_ID: WorkspaceMode = 'rd';
 

@@ -55,12 +55,26 @@ REQUISITOS: dict[str, str] = {
 
 
 def _help(path: list[str]) -> str:
-    entorno = {**os.environ, "COLUMNS": "400", "TERM": "dumb", "NO_COLOR": "1"}
+    # encoding/errors are explicit ON PURPOSE. With plain `text=True`, Python on
+    # Windows decodes the child's stdout using the locale codepage (cp1252), and
+    # the CLI help contains bytes cp1252 cannot map. The reader thread then dies,
+    # `r.stdout` comes back as None, and the caller crashes three frames away
+    # with "'NoneType' object has no attribute 'splitlines'" -- which points
+    # nowhere near the real cause. Found 2026-07-26: this tool had been silently
+    # broken, so the command table could not be regenerated or checked.
+    entorno = {
+        **os.environ,
+        "COLUMNS": "400",
+        "TERM": "dumb",
+        "NO_COLOR": "1",
+        "PYTHONIOENCODING": "utf-8",
+    }
     r = subprocess.run(
         [sys.executable, "-m", "flujo", *path, "--help"],
-        capture_output=True, text=True, env=entorno, cwd=RAIZ,
+        capture_output=True, env=entorno, cwd=RAIZ,
+        encoding="utf-8", errors="replace",
     )
-    return r.stdout
+    return r.stdout or ""
 
 
 def _parse(texto: str) -> list[tuple[str, str]]:

@@ -58,9 +58,19 @@ def extract_instagram_shortcode(url: str) -> str:
 
 
 def default_base_dir() -> Path:
+    """Carpeta de trabajo de la automatizacion de flyers.
+
+    Orden: la variable propia, despues FLUJO_RD_ROOT (la que ya documenta el
+    repo para el arbol de material), y recien al final el default de Windows.
+    Encadenarla evita tener que declarar dos variables para lo mismo, y deja de
+    depender de que exista una carpeta concreta en una maquina concreta.
+    """
     env = os.getenv("FLUJO_EVENTOS_AUTOMATIZACION_DIR", "").strip()
     if env:
         return Path(env)
+    raiz_rd = os.getenv("FLUJO_RD_ROOT", "").strip()
+    if raiz_rd:
+        return Path(raiz_rd) / "AUTOMATIZACION"
     return DEFAULT_WINDOWS_BASE if os.name == "nt" else Path.cwd() / "eventos_automatizacion"
 
 

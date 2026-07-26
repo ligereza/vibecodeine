@@ -1,15 +1,26 @@
 """Iconos operativos del stand de reduccion de danos (glyphs SVG line-art).
 
-Portados 1:1 desde web/src/components/PlanoTool.tsx (symbolIconMarkup) para que
-el plano del PDF y el editor web muestren los mismos simbolos. Cada glyph es una
-funcion (cx, cy, scale, color) -> str con el markup SVG del icono centrado en
-(cx, cy). La paleta COLORES espeja ZONE_COLORS del web.
+Los 17 iconos base son funciones (cx, cy, scale, color) -> markup SVG centrado
+en (cx, cy), portadas 1:1 desde web/src/components/PlanoTool.tsx para que el PDF
+y el editor web muestren los mismos simbolos. La paleta COLORES espeja
+ZONE_COLORS del web.
+
+CATALOGO ABIERTO (2026-07-26). Criterio del usuario, textual: "puede la jefa de
+eventos agregar un icono? si no, no es configurable". Antes no podia: habria
+tenido que escribir paths SVG a mano en Python Y en TypeScript. Ahora suelta un
+.svg en `data/plano_simbolos/` y lo declara en `data/plano_simbolos.json`; ver
+ese archivo, que lleva las instrucciones. Los 17 base siguen en codigo y el
+catalogo se SUMA: tambien puede reetiquetar o recolorear uno base sin tocarlo.
 """
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List
+import json
+import re
+import sys
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from .engine import es_masivo
+from .engine import _ZONAS_ICONOS, es_masivo
 
 # Espejo de ZONE_COLORS (PlanoTool.tsx) — misma paleta neon en web y PDF.
 COLORES: Dict[str, str] = {
@@ -21,13 +32,17 @@ COLORES: Dict[str, str] = {
     "sillon": "#0d9488", "toalla": "#0891b2",
 }
 
+# OJO: las CLAVES son identificadores y se quedan en ASCII (son llaves de datos,
+# no palabras). Los VALORES se IMPRIMEN en el plano y en el rider que ve la jefa
+# de eventos y el venue, asi que van en espanol correcto con acentos: mutilar un
+# diacritico en una pieza que se entrega es un defecto, no un estilo.
 ETIQUETAS: Dict[str, str] = {
-    "tent": "Toldo 3x3", "table": "Mesas", "power": "Electricidad", "light": "Iluminacion",
-    "water": "Agua", "extinguisher": "Extintor", "medical": "Equipo Medico",
-    "security": "Seguridad", "testeo": "Testeo", "contencion": "Contencion",
-    "food": "Alimentacion", "heating": "Calefaccion", "trash": "Basureros",
-    "contact": "Produccion", "sensory": "Baja Estim.",
-    "sillon": "Sillon doble", "toalla": "Toalla Nova",
+    "tent": "Toldo 3x3", "table": "Mesas", "power": "Electricidad", "light": "Iluminación",
+    "water": "Agua", "extinguisher": "Extintor", "medical": "Equipo Médico",
+    "security": "Seguridad", "testeo": "Testeo", "contencion": "Contención",
+    "food": "Alimentación", "heating": "Calefacción", "trash": "Basureros",
+    "contact": "Producción", "sensory": "Baja Estim.",
+    "sillon": "Sillón doble", "toalla": "Toalla Nova",
 }
 
 
@@ -175,30 +190,241 @@ _GLYPHS: Dict[str, Callable[..., str]] = {
 }
 
 
+# ============================================================
+# Catalogo editable: simbolos que agrega la jefa de eventos
+# ============================================================
+
+_CATALOGO_REL = "data/plano_simbolos.json"
+_SVGS_REL = "data/plano_simbolos"
+
+# Zonas validas del plano, derivadas de engine._ZONAS_ICONOS (nunca copiadas).
+# Un simbolo que declare otra cosa cae en ZONA_POR_DEFECTO con aviso: antes, una
+# clave que no figuraba en ninguna zona se descartaba EN SILENCIO y el icono
+# simplemente no aparecia en el plano.
+ZONAS_VALIDAS = tuple(z for z, _ in _ZONAS_ICONOS)
+ZONA_POR_DEFECTO = ZONAS_VALIDAS[-1]
+
+# `cuando` decide en que eventos aparece el simbolo.
+CUANDOS_VALIDOS = ("siempre", "testeo", "jornada_larga", "masivo", "manual")
+
+_RE_COMENTARIO = re.compile(r"<!--.*?-->", re.S)
+_RE_SCRIPT = re.compile(r"<script\b.*?</script\s*>", re.S | re.I)
+_RE_EVENTO = re.compile(r'\son[a-z]+\s*=\s*(".*?"|\'.*?\')', re.S | re.I)
+_RE_DECL = re.compile(r"<\?xml.*?\?>|<!DOCTYPE.*?>", re.S | re.I)
+_RE_SVG_ABRE = re.compile(r"<svg\b([^>]*)>", re.I)
+_RE_VIEWBOX = re.compile(r'viewBox\s*=\s*["\']([^"\']+)["\']', re.I)
+_RE_MEDIDA = re.compile(r'\b(width|height)\s*=\s*["\']([\d.]+)', re.I)
+
+
+def _avisar(msg: str) -> None:
+    print(f"AVISO plano_simbolos: {msg}", file=sys.stderr)
+
+
+_RAIZ_FIJA: Optional[Path] = None
+
+
+def _raiz() -> Path:
+    return _RAIZ_FIJA or Path(__file__).resolve().parents[3]
+
+
+def _medidas(atributos: str) -> Tuple[float, float]:
+    """Ancho/alto del lienzo del SVG: viewBox si existe, si no width/height."""
+    vb = _RE_VIEWBOX.search(atributos)
+    if vb:
+        partes = vb.group(1).replace(",", " ").split()
+        if len(partes) == 4:
+            try:
+                w, h = float(partes[2]), float(partes[3])
+                if w > 0 and h > 0:
+                    return w, h
+            except ValueError:
+                pass
+    medidas = {k.lower(): float(v) for k, v in _RE_MEDIDA.findall(atributos)}
+    w, h = medidas.get("width", 0.0), medidas.get("height", 0.0)
+    return (w, h) if w > 0 and h > 0 else (160.0, 160.0)
+
+
+def _incrustar_svg(contenido: str, cx: float, cy: float, scale: float, color: str) -> str:
+    """Encaja un .svg de la disenadora en la casilla del icono, centrado.
+
+    Los iconos base dibujan en un lienzo de 160x160 escalado por `scale`; el
+    aporte se reescala a esa misma caja conservando su proporcion, y se centra
+    en (cx, cy). Si el archivo usa `currentColor` -- la convencion habitual al
+    exportar desde Illustrator o Figma -- se reemplaza por el color del simbolo,
+    de modo que el mismo archivo sirve para el tema dark y el blanco.
+
+    Se recorta lo que no debe viajar dentro de un plano que se entrega: la
+    declaracion XML, los comentarios, cualquier <script> y los atributos on*.
+    Es limpieza por texto, no un parser completo de SVG: alcanza para una
+    exportacion de diseno, y no pretende sanear un archivo hostil.
+    """
+    limpio = _RE_SCRIPT.sub("", _RE_COMENTARIO.sub("", _RE_DECL.sub("", contenido)))
+    limpio = _RE_EVENTO.sub("", limpio)
+    apertura = _RE_SVG_ABRE.search(limpio)
+    if not apertura:
+        return ""
+    w, h = _medidas(apertura.group(1))
+    interior = limpio[apertura.end():]
+    cierre = interior.lower().rfind("</svg>")
+    if cierre != -1:
+        interior = interior[:cierre]
+    interior = interior.replace("currentColor", color)
+
+    k = (160.0 * scale) / max(w, h)
+    tx, ty = cx - k * w / 2.0, cy - k * h / 2.0
+    return f'<g transform="translate({tx:.2f} {ty:.2f}) scale({k:.4f})">{interior.strip()}</g>'
+
+
+def _leer_catalogo() -> Dict[str, Dict[str, Any]]:
+    """Lee data/plano_simbolos.json. Un simbolo invalido se salta CON aviso."""
+    ruta = _raiz() / _CATALOGO_REL
+    if not ruta.exists():
+        return {}
+    try:
+        datos = json.loads(ruta.read_text(encoding="utf-8"))
+    except Exception as e:  # noqa: BLE001 - se reporta, no se traga
+        _avisar(f"{_CATALOGO_REL} no se pudo leer ({e}); se ignora el catalogo.")
+        return {}
+
+    catalogo: Dict[str, Dict[str, Any]] = {}
+    for entrada in datos.get("simbolos") or []:
+        if not isinstance(entrada, dict):
+            continue
+        sid = str(entrada.get("id") or "").strip()
+        if not sid:
+            _avisar("hay un simbolo sin 'id'; se salta.")
+            continue
+
+        svg_nombre = str(entrada.get("svg") or "").strip()
+        marca: Optional[str] = None
+        if svg_nombre:
+            archivo = _raiz() / _SVGS_REL / svg_nombre
+            if archivo.exists():
+                try:
+                    marca = archivo.read_text(encoding="utf-8")
+                except Exception as e:  # noqa: BLE001
+                    _avisar(f"'{sid}': no se pudo leer {svg_nombre} ({e}).")
+            else:
+                _avisar(f"'{sid}': falta el archivo {_SVGS_REL}/{svg_nombre}.")
+        if marca is None and sid not in _GLYPHS:
+            _avisar(f"'{sid}': sin dibujo y no es un icono base; se salta.")
+            continue
+
+        zona = str(entrada.get("zona") or ZONA_POR_DEFECTO).upper()
+        if zona not in ZONAS_VALIDAS:
+            _avisar(f"'{sid}': zona '{zona}' no existe; va a {ZONA_POR_DEFECTO}.")
+            zona = ZONA_POR_DEFECTO
+        cuando = str(entrada.get("cuando") or "siempre").lower()
+        if cuando not in CUANDOS_VALIDOS:
+            _avisar(f"'{sid}': cuando '{cuando}' no existe; se usa 'siempre'.")
+            cuando = "siempre"
+
+        catalogo[sid] = {
+            "id": sid,
+            "etiqueta": str(entrada.get("etiqueta") or sid),
+            "color": str(entrada.get("color") or COLORES.get(sid) or "#9ca3af"),
+            "svg": marca,
+            "zona": zona,
+            "cuando": cuando,
+        }
+    return catalogo
+
+
+_COLORES_BASE: Dict[str, str] = dict(COLORES)
+_ETIQUETAS_BASE: Dict[str, str] = dict(ETIQUETAS)
+
+CATALOGO: Dict[str, Dict[str, Any]] = {}
+
+
+def recargar_catalogo(raiz: Optional[Path] = None) -> Dict[str, Dict[str, Any]]:
+    """Relee el catalogo editable y lo aplica sobre los iconos base.
+
+    Se llama sola al importar. `raiz` existe para apuntar a otro checkout (y es
+    el enganche de los tests); COLORES y ETIQUETAS se mutan en su sitio porque
+    engine.py las tiene referenciadas.
+    """
+    global _RAIZ_FIJA
+    if raiz is not None:
+        _RAIZ_FIJA = Path(raiz)
+
+    CATALOGO.clear()
+    CATALOGO.update(_leer_catalogo())
+
+    # Volver a la base primero: si se quita un simbolo del JSON, su etiqueta o
+    # su color no pueden quedar pegados de la carga anterior.
+    COLORES.clear(); COLORES.update(_COLORES_BASE)
+    ETIQUETAS.clear(); ETIQUETAS.update(_ETIQUETAS_BASE)
+
+    # El catalogo se SUMA a los iconos base y puede reetiquetar o recolorear uno
+    # existente sin tocar el codigo.
+    for sid, s in CATALOGO.items():
+        COLORES[sid] = s["color"]
+        ETIQUETAS[sid] = s["etiqueta"]
+    return CATALOGO
+
+
+recargar_catalogo()
+
+
+def zonas_de_iconos() -> List[Tuple[str, List[str]]]:
+    """Agrupacion por zona del plano, con los simbolos del catalogo incluidos.
+
+    Las zonas base viven en engine._ZONAS_ICONOS y NO se copian aca: dos copias
+    de la misma lista se desincronizan sin que nadie lo note.
+    """
+    base: Dict[str, List[str]] = {z: list(ks) for z, ks in _ZONAS_ICONOS}
+    for sid, s in CATALOGO.items():
+        if sid not in _GLYPHS:  # un base recoloreado ya esta en su zona
+            base.setdefault(s["zona"], []).append(sid)
+    return [(z, base[z]) for z, _ in _ZONAS_ICONOS]
+
+
 def icono(key: str, cx: float, cy: float, scale: float = 1.0, color: str | None = None) -> str:
     """Devuelve el markup SVG del icono `key` centrado en (cx, cy)."""
     c = color or COLORES.get(key, "#9ca3af")
     sw = max(3.0, 5.0 * scale)
+    propio = CATALOGO.get(key)
+    if propio and propio["svg"]:
+        marca = _incrustar_svg(propio["svg"], cx, cy, scale, c)
+        if marca:
+            return marca
+        _avisar(f"'{key}': el archivo no parece un SVG valido; se dibuja el marcador neutro.")
     fn = _GLYPHS.get(key)
     if fn is None:
         return (f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{34*scale:.1f}" fill="none" stroke="{c}" stroke-width="{sw}"/>')
-    if key == "power":
-        return fn(cx, cy, scale, c, sw)
     return fn(cx, cy, scale, c, sw)
 
 
 def simbolos_de_evento(ev: Dict[str, Any]) -> List[str]:
     """Iconos operativos que corresponden al evento (regla logica del rider).
 
-    Base siempre presente + condicionales por testeo / jornada / masivo. Sillas
-    quedan fuera a proposito (confunden el plano; el conteo va en el rider).
+    Base siempre presente + condicionales por testeo / jornada / masivo, mas los
+    del catalogo editable segun su `cuando`. Sillas quedan fuera a proposito
+    (confunden el plano; el conteo va en el rider).
+
+    Un evento tambien puede pedir simbolos sueltos en `simbolos_extra`, que es
+    la via para los declarados con cuando="manual".
     """
     base = ["tent", "table", "power", "light", "water", "extinguisher",
             "medical", "security", "trash", "contact"]
-    if bool(ev.get("incluye_testeo", False)):
+    testeo = bool(ev.get("incluye_testeo", False))
+    larga = float(ev.get("duracion_horas", 0) or 0) > 5
+    masivo = es_masivo(ev)
+    if testeo:
         base.append("testeo")
-    if float(ev.get("duracion_horas", 0) or 0) > 5:
+    if larga:
         base.append("food")
-    if es_masivo(ev):
+    if masivo:
         base += ["contencion", "sensory"]
+
+    aplica = {"siempre": True, "testeo": testeo, "jornada_larga": larga,
+              "masivo": masivo, "manual": False}
+    for sid, s in CATALOGO.items():
+        if aplica[s["cuando"]] and sid not in base:
+            base.append(sid)
+
+    for sid in ev.get("simbolos_extra") or []:
+        sid = str(sid).strip()
+        if sid and sid not in base:
+            base.append(sid)
     return base

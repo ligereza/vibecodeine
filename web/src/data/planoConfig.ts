@@ -110,7 +110,7 @@ export function loadPlanoConfig(): StartupLoadResult {
   } catch {
     return {
       config: { ...DEFAULT_PLANO_CONFIG },
-      warning: 'No se pudo leer la configuracion guardada (JSON corrupto): se uso el valor por defecto.',
+      warning: 'No se pudo leer la configuración guardada (JSON corrupto): se usó el valor por defecto.',
     };
   }
 }
@@ -155,7 +155,7 @@ export async function readPlanoConfigFile(file: File): Promise<ImportResult> {
     return { ok: false, warning: 'El archivo no tiene el formato esperado (no es un objeto JSON).' };
   }
   if (parsed.version !== PLANO_CONFIG_VERSION) {
-    return { ok: false, warning: `Version de configuracion no soportada (${String(parsed.version)}, esperada ${PLANO_CONFIG_VERSION}).` };
+    return { ok: false, warning: `Versión de configuración no soportada (${String(parsed.version)}, esperada ${PLANO_CONFIG_VERSION}).` };
   }
   return { ok: true, config: sanitizeConfigBody(parsed) };
 }

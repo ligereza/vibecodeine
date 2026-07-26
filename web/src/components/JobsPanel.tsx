@@ -11,6 +11,29 @@ function statusColor(status?: string) {
   return 'border-zinc-700 bg-zinc-800/40 text-zinc-400';
 }
 
+// Los estados vienen como llaves del dato: EN_DISENO, PENDIENTE_DATOS. Con
+// guion bajo y sin acentos se leen como una variable, no como el estado de un
+// trabajo. Cualquier estado nuevo cae en la regla general, no en un guion.
+const ESTADOS: Record<string, string> = {
+  en_diseno: 'En diseño',
+  pendiente_datos: 'Faltan datos',
+  entregado: 'Entregado',
+  en_revision: 'En revisión',
+  revision: 'En revisión',
+};
+
+function estadoLegible(estado?: string): string {
+  const s = String(estado || '').trim().toLowerCase();
+  if (!s) return 'sin estado';
+  return ESTADOS[s] || s.replace(/_/g, ' ');
+}
+
+/** Solo la carpeta del trabajo: la ruta absoluta muestra dónde vive el repo. */
+function carpetaDe(ruta?: string): string {
+  const partes = String(ruta || '').split(/[\\/]/).filter(Boolean);
+  return partes.length ? `jobs/${partes[partes.length - 1]}` : '—';
+}
+
 function JobCard({ job }: { job: JobItem }) {
   const pendientes = Array.isArray(job.pendientes) ? job.pendientes : job.pendientes ? [String(job.pendientes)] : [];
   return (
@@ -18,19 +41,21 @@ function JobCard({ job }: { job: JobItem }) {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="truncate text-sm font-bold">{job.name}</h3>
-          <p className="mt-1 truncate font-mono text-[10px] text-zinc-600">{job.path || '(sin path)'}</p>
+          <p className="mt-1 truncate font-mono text-[10px] text-zinc-600" title={job.path || ''}>{carpetaDe(job.path)}</p>
         </div>
         <span className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-bold uppercase tracking-widest ${statusColor(job.estado)}`}>
-          {job.estado || 'sin estado'}
+          {estadoLegible(job.estado)}
         </span>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-zinc-500">
-        <div><span className="text-zinc-600">pieza:</span> {job.tipo_pieza || '—'}</div>
+        <div><span className="text-zinc-600">tipo de pieza:</span> {job.tipo_pieza || '—'}</div>
         <div><span className="text-zinc-600">proyecto:</span> {job.proyecto || '—'}</div>
       </div>
       {pendientes.length > 0 && (
         <div className="mt-3 rounded-lg bg-black/25 p-3">
-          <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-zinc-600">Pendientes</div>
+          <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-zinc-600">
+            Falta para poder entregarlo
+          </div>
           <ul className="space-y-1 text-xs text-zinc-400">
             {pendientes.slice(0, 4).map((p, i) => <li key={i}>• {p}</li>)}
           </ul>
@@ -63,9 +88,9 @@ export default function JobsPanel() {
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-black">
-            <Boxes className="h-6 w-6" /> Jobs
+            <Boxes className="h-6 w-6" /> Trabajos
           </h1>
-          <p className="mt-1 text-sm text-zinc-500">Lista real desde /api/list-jobs con fallback demo.</p>
+          <p className="mt-1 text-sm text-zinc-500">Cada trabajo con su estado y lo que le falta para poder entregarse.</p>
         </div>
         <button
           onClick={load}
@@ -80,7 +105,7 @@ export default function JobsPanel() {
         <input
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder="Filtrar por nombre, estado, pieza..."
+          placeholder="Buscar por nombre, estado o tipo de pieza…"
           className="w-full rounded-xl border border-zinc-800 bg-zinc-900/50 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-zinc-600"
         />
       </div>
