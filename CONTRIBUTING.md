@@ -6,8 +6,9 @@ Repo personal de organizacion creativa con CLI unificada (`flujo`).
 
 1. Lee `CLAUDE.md` (raiz): identidad, mision, flujo de trabajo y reglas. Es la
    entrada unica para cualquier agente, humano o IA.
-2. Estado actual: `context/LAST_HANDOFF.md`. Pendientes priorizados:
-   `context/PLAN_SIGUIENTE_AGENTE.md`.
+2. Estado actual, decisiones ya cerradas y ordenes vigentes:
+   `context/LAST_HANDOFF.md`, el checkpoint unico. Leelo antes de preguntar
+   algo que quiza ya esta contestado.
 
 ## Proponer cambios
 

@@ -193,12 +193,22 @@ class TestLeerJobsListosSmokeGate:
 
 
 class TestRamaBase:
-    """Topologia de ramas (CLAUDE.md): MAK entrega PRs contra 'mejoras',
+    """Topologia de ramas (CLAUDE.md): MAK entrega PRs contra su BUZON,
     nunca contra main. entregar_una() debe usar RAMA_BASE, no un literal
-    'main', tanto para el checkout como para gh pr create --base."""
+    'main', tanto para el checkout como para gh pr create --base.
 
-    def test_constante_rama_base_es_mejoras(self):
-        assert entregar.RAMA_BASE == "mejoras"
+    2026-07-26: el buzon dejo de ser 'mejoras' (esa linea se retiro: una
+    linea de infra separada volvia a main un subconjunto) y paso a 'mak'.
+    Lo que este test protege NO es el nombre: es que exista un buzon y que
+    el codigo lo use en los dos lugares. Si el nombre vuelve a cambiar, se
+    cambia aca con su causa; lo que no puede pasar es que RAMA_BASE sea
+    'main'."""
+
+    def test_constante_rama_base_es_el_buzon_mak(self):
+        assert entregar.RAMA_BASE == "mak"
+
+    def test_rama_base_nunca_es_main(self):
+        assert entregar.RAMA_BASE != "main"
 
     def test_checkout_y_pr_create_usan_rama_base(self, tmp_path, monkeypatch):
         monkeypatch.setattr(entregar, "REPO", str(tmp_path))
