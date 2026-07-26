@@ -49,6 +49,20 @@ def validate_svg_file(path: Path, *, expected_size: tuple[int, int] | None = Non
     width = _number(root.get("width"))
     height = _number(root.get("height"))
     viewbox = root.get("viewBox", "")
+
+    # Un SVG puede declarar su tamano SOLO con viewBox, sin width/height: es lo
+    # que exporta Illustrator y es SVG valido. Las contraportadas aprobadas
+    # vienen asi, y el validador las reportaba como "no se pudo leer
+    # width/height" -- avisando de un defecto que no existia sobre las unicas
+    # piezas que se imprimieron.
+    if (width is None or height is None) and viewbox:
+        partes = viewbox.replace(",", " ").split()
+        if len(partes) == 4:
+            vb_w, vb_h = _number(partes[2]), _number(partes[3])
+            if vb_w and vb_h:
+                width = width if width is not None else vb_w
+                height = height if height is not None else vb_h
+
     summary.update({"width": width, "height": height, "viewBox": viewbox})
 
     if expected_size and width is not None and height is not None:
@@ -56,7 +70,7 @@ def validate_svg_file(path: Path, *, expected_size: tuple[int, int] | None = Non
         if abs(width - exp_w) > 2 or abs(height - exp_h) > 2:
             errors.append(f"Tamano inesperado: {width:g}x{height:g}px; esperado {exp_w}x{exp_h}px.")
     elif width is None or height is None:
-        warnings.append("No se pudo leer width/height numerico del SVG.")
+        warnings.append("El SVG no declara tamano: ni width/height ni viewBox.")
 
     text_elements = _count_local(root, "text")
     group_elements = _count_local(root, "g")

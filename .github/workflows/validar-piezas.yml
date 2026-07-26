@@ -32,14 +32,12 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
       - run: python -m pip install -e ".[dev]"
-      - name: Validar editables crema (02)
-        run: python -m flujo suplementos validate svg/suplementos_rd/02_editables_svg/*.svg
-      - name: Validar frentes dark (05)
-        run: python -m flujo suplementos validate svg/suplementos_rd/05_dark_neon/*.svg
-      - name: Validar vectorizados (03 y 06)
-        run: |
-          python -m flujo suplementos validate svg/suplementos_rd/03_final_vectorizado_svg/*.svg
-          python -m flujo suplementos validate svg/suplementos_rd/06_dark_vectorizado_svg/*.svg
+      # Antes se validaban cuatro carpetas -- 02_editables_svg, 05_dark_neon,
+      # 03_final_vectorizado_svg y 06_dark_vectorizado_svg -- que se retiraron
+      # el 2026-07-26 por no corresponder al diseno aprobado. Lo que se imprime
+      # y se entrega vive en 09_contraportadas_dark, y eso es lo que se valida.
+      - name: Validar contraportadas aprobadas (09)
+        run: python -m flujo suplementos validate svg/suplementos_rd/09_contraportadas_dark/*.svg
       - name: Resumen
         if: success()
         run: echo "MOLDE OK - todas las piezas pasan el validador; nada que auditar."

@@ -88,3 +88,44 @@ def test_el_estado_de_una_pieza_se_declara_no_se_adivina():
     for regla in datos["reglas"]:
         assert regla["estado"] in ("aprobado", "en-revision", "borrador")
         assert regla.get("nota"), "cada regla dice POR QUE ese estado"
+
+
+def test_el_validador_entiende_un_svg_con_solo_viewbox(tmp_path):
+    """Un SVG puede declarar su tamaño SÓLO con viewBox: es lo que exporta
+    Illustrator y es SVG válido.
+
+    El validador pedía width/height numéricos y avisaba "no se pudo leer" sobre
+    las 8 contraportadas aprobadas -- las únicas piezas que realmente se
+    imprimieron. Además el workflow de CI validaba cuatro carpetas retiradas el
+    2026-07-26, así que fallaba por buscar archivos que ya no existen.
+    """
+    from flujo.comercial.svg_validator import validate_svg_file
+
+    pieza = tmp_path / "pieza.svg"
+    pieza.write_text(
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2000 2800">'
+        '<g><text>hola</text></g></svg>',
+        encoding="utf-8")
+    res = validate_svg_file(pieza)
+    assert res["summary"]["width"] == 2000
+    assert res["summary"]["height"] == 2800
+    assert not any("no se pudo leer" in w.lower() for w in res["warnings"])
+
+    # Sin viewBox NI width/height sí corresponde avisar.
+    sin_tamano = tmp_path / "sin_tamano.svg"
+    sin_tamano.write_text('<svg xmlns="http://www.w3.org/2000/svg"><g/></svg>', encoding="utf-8")
+    assert any("no declara tamano" in w.lower() for w in validate_svg_file(sin_tamano)["warnings"])
+
+
+def test_ci_valida_la_carpeta_que_existe():
+    texto = (REPO_ROOT / ".github" / "workflows" / "validar-piezas.yml").read_text(encoding="utf-8")
+    # Solo los comandos: los comentarios SI nombran las carpetas retiradas,
+    # porque explican por que ya no se validan.
+    comandos = [ln for ln in texto.splitlines()
+                if "flujo suplementos validate" in ln]
+    assert comandos, "el workflow dejo de validar piezas"
+    assert any("09_contraportadas_dark" in ln for ln in comandos)
+    for retirada in ("02_editables_svg", "05_dark_neon", "03_final_vectorizado_svg",
+                     "06_dark_vectorizado_svg"):
+        assert not any(retirada in ln for ln in comandos), (
+            f"CI valida {retirada}, que ya no existe")
