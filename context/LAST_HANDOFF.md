@@ -65,6 +65,8 @@ pasa. Es dependencia del entorno, no un bug del codigo.
 
 | Fecha | Decision |
 |---|---|
+| 2026-07-26 | **Ningun agente crea issues.** Los abren el usuario y su Google Script: son el canal Gmail -> issue -> render, no un tablero de tareas. Comentar, etiquetar y cerrar si; abrir no. Verificado: nada en el repo los crea hoy |
+| 2026-07-26 | MAK entrega contra el buzon `mak`, no contra la linea retirada `mejoras`. `mak` NO es una cuarta linea: nada vive ahi, su unica salida es un PR a main. Si deja de drenar, se convirtio en linea y hay que corregirlo |
 | 2026-07-26 | Los worktrees de agente en `.claude/worktrees/` se podan al terminar la tarea. Habia 7 abandonados, cada uno una copia completa del repo: multiplicaban por 8 cada handoff, checkpoint y doctrina, y por eso una busqueda devolvia cientos de resultados sin decir cual mandaba |
 | 2026-07-26 | La doctrina de MAK (`CAPATAZ.md`, `DOCTRINA_CLAUDE.md`) vive en `cultura/mak_plataforma/doctrina/`. Estaba escrita para el modelo local del box, y los Claude la leian como propia y se confundian |
 | 2026-07-26 | **El portafolio es `iskvw`: la linea automatizada y la UNICA pagina. Este repo se mantiene PUBLICO.** Queda descartado el repo aparte `portfolio-auto`: existio porque un agente recomendo volver privado este repo y el siguiente parcheo eso creando un segundo repo para la pagina. Las dos movidas fueron un error; no repetirlas ni reabrir el tema |

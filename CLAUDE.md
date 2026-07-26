@@ -40,6 +40,14 @@ De ahi salen las tres unicas conductas que importan:
 Antes de preguntarle algo al usuario, buscarlo en `context/LAST_HANDOFF.md` y en
 la memoria local. Preguntar lo ya contestado es el defecto que mas lo desgasta.
 
+**Ningun agente crea issues** (2026-07-26, orden del usuario). Los issues son un
+CANAL, no un tablero de tareas: los abren el usuario y su Google Script, y son la
+via Gmail -> issue -> render. Un agente puede comentar, etiquetar y cerrar
+(`.github/workflows/issue_descarga_ig.yml` ya hace exactamente eso y NO crea
+ninguno), pero abrir uno mete ruido en la cola de otra persona. Si algo hay que
+recordar, va a `context/LAST_HANDOFF.md`. Retiro: si el usuario abre el canal a
+los agentes.
+
 ## Que regla aplica a que agente (2026-07-26)
 
 Buena parte de las reglas de este repo se escribieron para el agente mas debil de
