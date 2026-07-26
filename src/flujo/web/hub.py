@@ -474,7 +474,7 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             tipos = {".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg",
                      ".jpeg": "image/jpeg", ".webp": "image/webp"}
             # Preferir el vector si existe; si no, la descarga cruda.
-            for cand in [base / "vector" / f"{slug}.svg", *sorted((base / "descargas").glob(f"{slug}.*"))]:
+            for cand in self._candidatos_logo(base, slug, self._ref_logo_de_ficha(self.root, slug)):
                 if cand.is_file() and cand.suffix.lower() in tipos:
                     datos = cand.read_bytes()
                     self.send_response(200)
@@ -537,6 +537,53 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             self._serve_file(file_path)
         else:
             self.send_error(404)
+
+    @staticmethod
+    def _ref_logo_de_ficha(raiz, slug: str) -> str:
+        """Nombre de archivo que la ficha de la productora declara para su logo.
+
+        Hace falta porque `club_freedom.svg` es el logo del slug `freedom`, y
+        eso no se deduce del slug: solo lo dice su json.
+        """
+        ficha = raiz / "data" / "productoras" / f"{slug}.json"
+        if not ficha.is_file():
+            return ""
+        try:
+            logos = (json.loads(ficha.read_text(encoding="utf-8")) or {}).get("logos") or []
+            if logos and isinstance(logos[0], dict):
+                ref = str(logos[0].get("knowledge") or "")
+                return Path(ref).stem if ref.endswith(".yaml") else ""
+        except Exception:  # noqa: BLE001 - una ficha rota no puede tumbar el panel
+            return ""
+        return ""
+
+    @staticmethod
+    def _candidatos_logo(base, slug: str, ref: str = "") -> list:
+        """Archivos donde puede estar el logo de `slug`, en orden de preferencia.
+
+        El nombre del archivo NO siempre es el slug: en disco conviven
+        `grid_system.svg` (slug `gridsystem`) y `club_freedom.svg` (slug
+        `freedom`). El resumen de la base ya resolvia asi, pero este endpoint
+        buscaba solo por slug: contaba el logo como existente y despues no podia
+        servirlo, o sea que el panel decia "logo vectorial" sobre un recuadro
+        vacio.
+        """
+        norm = slug.replace("_", "").replace("-", "").lower()
+        candidatos = [base / "vector" / f"{slug}.svg"]
+        if ref:
+            candidatos.append(base / "vector" / f"{ref}.svg")
+        vector = base / "vector"
+        if vector.is_dir():
+            candidatos += [p for p in sorted(vector.glob("*.svg"))
+                           if p.stem.replace("_", "").replace("-", "").lower() == norm]
+        descargas = base / "descargas"
+        if descargas.is_dir():
+            candidatos += sorted(descargas.glob(f"{slug}.*"))
+            if ref:
+                candidatos += sorted(descargas.glob(f"{ref}.*"))
+            candidatos += [p for p in sorted(descargas.glob("*"))
+                           if p.stem.replace("_", "").replace("-", "").lower() == norm]
+        return candidatos
 
     # ── Symbols the events manager adds from the app ──────────────────
     _SIMBOLO_MAX_BYTES = 512 * 1024
@@ -1246,7 +1293,19 @@ class HubRequestHandler(BaseHTTPRequestHandler):
                     "aliases": [str(a) for a in (d.get("aliases") or [])],
                     "tipos": [str(t) for t in (d.get("tipos_fecha") or [])],
                     "venues": venues,
-                    "logo": {"estado": estado_logo, "vector": tiene_vector},
+                    # `archivo` dice si hay algo que servir. El panel pedia el
+                    # logo de las 20 productoras aunque 14 no tienen ninguno, y
+                    # eso dejaba 18 errores 404 en la consola del navegador:
+                    # ruido que se lee como si la app estuviera fallando.
+                    "logo": {
+                        "estado": estado_logo,
+                        "vector": tiene_vector,
+                        "archivo": any(
+                            c.is_file() for c in self._candidatos_logo(
+                                logos_dir, slug,
+                                Path(ref_yaml).stem if ref_yaml.endswith(".yaml") else "")
+                        ),
+                    },
                     "confirmada": bool(str(d.get("confirmed") or "").strip()),
                     "confirmacion": str(d.get("confirmed") or ""),
                     "fuente": str(d.get("fuente_datos") or ""),

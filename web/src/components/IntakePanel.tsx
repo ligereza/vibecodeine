@@ -33,7 +33,7 @@ export default function IntakePanel() {
           <h1 className="flex items-center gap-2 text-2xl font-black">
             <ClipboardList className="h-6 w-6" /> Intake
           </h1>
-          <p className="mt-1 text-sm text-zinc-500">Pega un correo/pedido, parsea con la lógica real y crea un job draft.</p>
+          <p className="mt-1 text-sm text-zinc-500">Pegá el correo o el pedido tal como llegó. Se leen los datos y queda listo para crear el trabajo.</p>
         </div>
         <div className="rounded-xl border border-zinc-800/60 bg-zinc-900/40 p-4">
           <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-zinc-600">
@@ -60,14 +60,14 @@ export default function IntakePanel() {
               disabled={busy !== null}
               className="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-bold text-black hover:bg-zinc-200 disabled:opacity-60"
             >
-              {busy === 'parse' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />} Parsear
+              {busy === 'parse' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />} Leer pedido
             </button>
             <button
               onClick={create}
               disabled={busy !== null}
               className="flex items-center gap-2 rounded-lg border border-emerald-800/60 bg-emerald-950/40 px-4 py-2 text-sm font-bold text-emerald-200 hover:bg-emerald-900/50 disabled:opacity-60"
             >
-              {busy === 'create' ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />} Crear job draft
+              {busy === 'create' ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />} Crear el trabajo
             </button>
           </div>
         </div>
@@ -75,7 +75,7 @@ export default function IntakePanel() {
 
       <aside className="space-y-4">
         <div className="rounded-xl border border-zinc-800/60 bg-zinc-900/40 p-4">
-          <h2 className="mb-3 text-[10px] font-bold uppercase tracking-widest text-zinc-600">Parse result</h2>
+          <h2 className="mb-3 text-[10px] font-bold uppercase tracking-widest text-zinc-600">Datos leídos del pedido</h2>
           {parsed ? (
             <div className="space-y-3">
               {parsed.error && <div className="rounded-lg border border-red-900/60 bg-red-950/30 p-3 text-xs text-red-300">{parsed.error}</div>}
@@ -94,11 +94,11 @@ export default function IntakePanel() {
                 {JSON.stringify(parsed, null, 2)}
               </pre>
             </div>
-          ) : <p className="text-sm text-zinc-500">Aún no parseado.</p>}
+          ) : <p className="text-sm text-zinc-500">Todavía no se leyó ningún pedido. Pegá el texto y apretá Leer pedido.</p>}
         </div>
 
         <div className="rounded-xl border border-zinc-800/60 bg-zinc-900/40 p-4">
-          <h2 className="mb-3 text-[10px] font-bold uppercase tracking-widest text-zinc-600">Job draft</h2>
+          <h2 className="mb-3 text-[10px] font-bold uppercase tracking-widest text-zinc-600">Trabajo creado</h2>
           {created ? (
             <div className="space-y-3 text-sm">
               <div className={created.created ? 'text-emerald-300' : 'text-yellow-300'}>
@@ -109,7 +109,7 @@ export default function IntakePanel() {
               {created.next && <code className="block rounded-lg bg-black/40 p-3 text-xs text-zinc-300">{created.next}</code>}
               {created.error && <div className="rounded-lg border border-red-900/60 bg-red-950/30 p-3 text-xs text-red-300">{created.error}</div>}
             </div>
-          ) : <p className="text-sm text-zinc-500">Usa Crear job draft para escribir en jobs/.</p>}
+          ) : <p className="text-sm text-zinc-500">Todavía no se creó ningún trabajo.</p>}
         </div>
       </aside>
     </div>

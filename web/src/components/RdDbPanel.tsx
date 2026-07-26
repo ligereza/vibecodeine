@@ -26,7 +26,7 @@ interface Productora {
   aliases: string[];
   tipos: string[];
   venues: Venue[];
-  logo: { estado: string; vector: boolean };
+  logo: { estado: string; vector: boolean; archivo?: boolean };
   confirmada: boolean;
   confirmacion: string;
   fuente: string;
@@ -203,12 +203,21 @@ export default function RdDbPanel() {
                     title="Reemplazar logo"
                     className="group relative flex h-14 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 hover:border-emerald-700"
                   >
-                    <img
-                      src={`/api/rd-db/logo?slug=${p.slug}&v=${rev}`}
-                      alt=""
-                      className="max-h-full max-w-full object-contain p-1"
-                      onError={e => ((e.target as HTMLImageElement).style.visibility = 'hidden')}
-                    />
+                    {/* Solo se pide el logo si el backend dice que hay uno. Antes
+                        se pedia para las 20 y las 14 sin logo devolvian 404: la
+                        consola quedaba con 18 errores rojos que se leen como una
+                        falla de la app, y no lo son. */}
+                    {p.logo.archivo !== false && (
+                      <img
+                        src={`/api/rd-db/logo?slug=${p.slug}&v=${rev}`}
+                        alt=""
+                        className="max-h-full max-w-full object-contain p-1"
+                        onError={e => ((e.target as HTMLImageElement).style.visibility = 'hidden')}
+                      />
+                    )}
+                    {p.logo.archivo === false && (
+                      <span className="text-[9px] uppercase tracking-widest text-zinc-700">sin logo</span>
+                    )}
                     <span className="absolute inset-0 flex items-center justify-center bg-black/70 opacity-0 transition-opacity group-hover:opacity-100">
                       <Upload className="h-4 w-4 text-emerald-300" />
                     </span>
