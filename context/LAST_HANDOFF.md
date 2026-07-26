@@ -67,6 +67,7 @@ pasa. Es dependencia del entorno, no un bug del codigo.
 |---|---|
 | 2026-07-26 | Los worktrees de agente en `.claude/worktrees/` se podan al terminar la tarea. Habia 7 abandonados, cada uno una copia completa del repo: multiplicaban por 8 cada handoff, checkpoint y doctrina, y por eso una busqueda devolvia cientos de resultados sin decir cual mandaba |
 | 2026-07-26 | La doctrina de MAK (`CAPATAZ.md`, `DOCTRINA_CLAUDE.md`) vive en `cultura/mak_plataforma/doctrina/`. Estaba escrita para el modelo local del box, y los Claude la leian como propia y se confundian |
+| 2026-07-26 | **El portafolio es `iskvw`: la linea automatizada y la UNICA pagina. Este repo se mantiene PUBLICO.** Queda descartado el repo aparte `portfolio-auto`: existio porque un agente recomendo volver privado este repo y el siguiente parcheo eso creando un segundo repo para la pagina. Las dos movidas fueron un error; no repetirlas ni reabrir el tema |
 | 2026-07-25 | Panel de suplementos en la app: INNECESARIO. Palabra del usuario: "los flyers los presentan" |
 | 2026-07-25 | No se respalda la carpeta de disenos desde el repo. Se pidio extraer estructura y datos; un agente lo convirtio en un encargo de respaldo de 1 GB que nadie pidio |
 | 2026-07-25 | Los dos planes grandes propuestos ("separar el motor del contenido" y "de repo a tres productos") quedaron RECHAZADOS. No ejecutarlos por autoridad propia |
@@ -78,12 +79,14 @@ pasa. Es dependencia del entorno, no un bug del codigo.
 
 ## Bloqueado esperando al usuario
 
-- **Portafolio iskvw.cl.** Las referencias esteticas reales se mandaron en
-  sesiones cloud, los contenedores son efimeros y nunca se commitearon. Se diseno
-  dos veces sobre notas viejas y las dos se rechazo. No disenar de nuevo sobre
-  suposiciones. Cuando lleguen: **commitearlas en el acto** (o ingerirlas con
-  `flujo datadrop`, que existe justamente para eso), antes de usarlas.
-  Lo unico que sobrevive del plan es el pipeline, que no depende de la estetica.
+- **Referencias esteticas del portafolio.** El destino ya no esta en duda: es la
+  linea `iskvw`, en este repo publico. Lo que falta es la estetica: las
+  referencias reales se mandaron en sesiones cloud, los contenedores son efimeros
+  y nunca se commitearon. Se diseno dos veces sobre notas viejas y las dos se
+  rechazo, asi que no se disena de nuevo sobre suposiciones. Cuando lleguen:
+  **commitearlas en el acto** en `iskvw`, o ingerirlas con `flujo datadrop`, que
+  existe justamente para eso y nunca se uso. Lo unico que se puede construir
+  mientras tanto es el pipeline, que no depende de la estetica.
 
 ## Abierto
 
