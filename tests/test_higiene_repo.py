@@ -51,6 +51,7 @@ CONFIG_DEL_USUARIO = (
     "data/rd_packs.json",
     "data/plano_simbolos.json",
     "data/cotizacion_servicios.json",
+    "data/svg_estados.json",
 )
 
 

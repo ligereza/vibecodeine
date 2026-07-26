@@ -57,3 +57,34 @@ def test_estan_las_piezas_que_si_existen():
         for svg in sorted((REPO_ROOT / carpeta).glob("*.svg")):
             rel = "/" + svg.relative_to(REPO_ROOT).as_posix()
             assert rel in rutas, f"{rel} está en disco pero no en el índice"
+
+
+def test_el_estado_de_una_pieza_se_declara_no_se_adivina():
+    """La galería marcaba TODO como "borrador", incluidas las contraportadas ya
+    impresas y aprobadas: el trabajo terminado se veía a medio hacer.
+
+    El estado no se puede deducir del archivo -- que un SVG exista no dice si se
+    aprobó. Se declara en data/svg_estados.json, editable a mano, y gana la
+    última regla que coincide para poder escribir una general y su excepción.
+    """
+    import json
+
+    from flujo.web.hub import HubRequestHandler
+
+    handler = HubRequestHandler.__new__(HubRequestHandler)
+
+    aprobada = "svg/suplementos_rd/09_contraportadas_dark/02_impulso.svg"
+    assert handler._estado_svg(aprobada) == "aprobado"
+
+    # La plantilla vive DENTRO de suplementos pero no es una pieza que se
+    # entregue: es la excepción que la última regla tiene que poder ganar.
+    plantilla = "svg/suplementos_rd/_plantilla/contraportada_cambios.svg"
+    assert handler._estado_svg(plantilla) == "borrador"
+
+    # Algo no declarado cae al valor por defecto, nunca a "aprobado".
+    assert handler._estado_svg("svg/lo_que_sea/pieza_nueva.svg") == "borrador"
+
+    datos = json.loads((REPO_ROOT / "data" / "svg_estados.json").read_text(encoding="utf-8"))
+    for regla in datos["reglas"]:
+        assert regla["estado"] in ("aprobado", "en-revision", "borrador")
+        assert regla.get("nota"), "cada regla dice POR QUE ese estado"

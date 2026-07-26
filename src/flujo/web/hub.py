@@ -1542,6 +1542,37 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => n
         except Exception:
             pass  # client disconnect is normal
 
+    def _reglas_estado_svg(self) -> tuple:
+        """Reglas de data/svg_estados.json: (lista de reglas, estado por defecto).
+
+        El estado de una pieza NO se puede deducir del archivo -- que un SVG
+        exista no dice si se aprobo. Antes no se declaraba en ningun lado y la
+        galeria marcaba todo como "borrador", incluidas las contraportadas ya
+        impresas: el trabajo terminado se veia como si estuviera a medias.
+        """
+        ruta = repo_root() / "data" / "svg_estados.json"
+        try:
+            datos = json.loads(ruta.read_text(encoding="utf-8"))
+            reglas = [
+                (str(r.get("ruta") or ""), str(r.get("estado") or ""))
+                for r in (datos.get("reglas") or [])
+                if isinstance(r, dict) and r.get("ruta") and r.get("estado")
+            ]
+            return reglas, str(datos.get("por_defecto") or "borrador")
+        except Exception:  # noqa: BLE001 - sin el archivo, todo es borrador
+            return [], "borrador"
+
+    def _estado_svg(self, ruta_rel: str) -> str:
+        """Estado declarado para una pieza. Gana la ULTIMA regla que coincide,
+        para poder escribir una general y despues su excepcion."""
+        reglas, por_defecto = self._reglas_estado_svg()
+        estado = por_defecto
+        objetivo = ruta_rel.replace("\\", "/").lower()
+        for patron, valor in reglas:
+            if patron.replace("\\", "/").lower() in objetivo:
+                estado = valor
+        return estado
+
     def _list_svg_works(self) -> dict:
         """Scan svg/ dir and group like svg_visualizer.html (top folders + key files)."""
         svg_root = self.root / "svg"
@@ -1563,7 +1594,8 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => n
                     "name": svgp.name,
                     "path": rel_str,
                     "kind": kind,
-                    "group": gname
+                    "group": gname,
+                    "status": self._estado_svg(rel_str),
                 })
                 total += 1
             if items:
