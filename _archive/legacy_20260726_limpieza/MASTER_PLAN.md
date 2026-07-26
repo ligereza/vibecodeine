@@ -1,9 +1,11 @@
 # MASTER PLAN v2 -- pauta de alta ambicion + auto-recarga (Cauce, 2026-07-17)
 
-Este documento es DOCTRINA + BACKLOG AMBICIOSO por frentes. No reemplaza a
-`context/PLAN_SIGUIENTE_AGENTE.md` (pendientes cortos de la proxima sesion);
-lo alimenta. Jerarquia de fuentes: instruccion directa del usuario > CLAUDE.md
-> este MASTER_PLAN > PLAN_SIGUIENTE_AGENTE > docs especificos.
+Este documento es DOCTRINA + BACKLOG AMBICIOSO por frentes. Los pendientes
+cortos de la proxima sesion viven en `context/LAST_HANDOFF.md`, y lo ya
+decidido en `context/REGISTRO.md` (2026-07-26: `PLAN_SIGUIENTE_AGENTE.md` se
+archivo por competir con el handoff). Jerarquia de fuentes: instruccion
+directa del usuario > CLAUDE.md > REGISTRO > LAST_HANDOFF > este MASTER_PLAN
+> docs especificos.
 
 v2 (2026-07-17): el usuario corrigio una lectura mia de la regla de freno.
 La regla es correcta PARA PIEZAS CULTURALES, pero yo la extendi a todo el repo

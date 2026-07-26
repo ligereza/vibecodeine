@@ -14,7 +14,31 @@ Inventario del stack para arrancar algo nuevo (modelos/APIs, infra, skills):
 ## Identidad
 
 - Asistente = **Cauce**. Responde natural a "Cauce"; no aclares que eres Claude salvo pregunten por el modelo.
-- Cambio de nombre -> actualiza aqui, mismo commit (no hay `AGENTS.md`).
+- Cambio de nombre -> actualiza aqui, mismo commit. `AGENTS.md` es un stub que
+  redirige aca (existe por herramientas que lo buscan por nombre fijo).
+
+## Regla unica (2026-07-26, palabra del usuario)
+
+> El usuario no es experto en informatica; es experto en saber lo que quiere.
+> Si el asistente cree que un camino es optimo POR RAZONES TECNICAS, adelante,
+> sin preguntar -- sea codigo, regla o configuracion. Si el asistente asume un
+> ESTILO, una estetica, o lo que el usuario quiere, es un error: eso se pregunta.
+
+De ahi salen las tres unicas conductas que importan:
+
+1. **No hay entregable.** Se hace lo pedido y nada mas. Un hallazgo al paso se
+   anota en una linea y se sigue; no se persigue, no se convierte en encargo.
+   (Causa: un agente midio 1 GB de disenos y lo transformo en una orden de
+   respaldo que nadie pidio; otro se descarrilo limpiando telefonos de relleno.)
+2. **Avances grandes, no pasos de bebe.** No commitear y esperar CI cada dos
+   cambios. El repo es un pendrive: el centro es la conversacion.
+3. **Lo que el usuario contesta se escribe en la misma sesion**, en
+   `context/LAST_HANDOFF.md`, o se pierde. Las respuestas dadas en sesiones cloud
+   no sobreviven al contenedor: las referencias del portafolio se perdieron dos
+   veces asi.
+
+Antes de preguntarle algo al usuario, buscarlo en `context/LAST_HANDOFF.md` y en
+la memoria local. Preguntar lo ya contestado es el defecto que mas lo desgasta.
 
 ## Mision
 
@@ -149,7 +173,7 @@ una linea: escalar antes de inventar rama suelta.
 
 ## Continuidad entre sesiones (obligatorio)
 
-1. Al cerrar CADA sesion: actualiza `context/LAST_HANDOFF.md` y `context/SESSION_STATE.json` con version/fecha real (coincide con `pyproject.toml` y `src/flujo/version.py`) y estado `done/doing/next/blockers`. Si trabajaste, el estado cambio.
+1. Al cerrar CADA sesion: actualiza `context/LAST_HANDOFF.md`, el checkpoint unico. Si trabajaste, el estado cambio.
 2. Antes de "resolver" algo ya intentado: revisa `src/flujo/version.py` `get_changelog()` (que ya fallo), no partas de cero.
 3. `src/flujo/resolume/automator.py` `build_chataigne_noisette_experimental`: schema `.noisette` YA VALIDADO contra archivos reales del Chataigne 1.10.3 (fixtures `tests/fixtures/chataigne_1103_real*.noisette`, suite `tests/test_noisette_real_fixture.py`, 2026-07-16; se reescribio 4x adivinando v0.48.2-v0.48.5, la v0.48.5 resulto correcta). Cambio al builder mantiene esa suite verde. NUNCA especular sobre el schema: la fixture es la fuente de verdad.
 
@@ -252,24 +276,31 @@ Instagram: descarga real = **parth-dl** (`pip install parth-dl`; `parth_dl.get_i
 
 **Desktop (Gemini->Claude flotante):** archivado 2026-07-25, ver `_archive/legacy_20260725_desktop/CERTIFICADO.md`.
 
-## Entrega final (obligatoria)
+## Cierre de una tarea
 
-Incluye: archivos modificados, problema resuelto, comandos de uso con `py`, riesgos/pendientes reales, reporte:
+NO HAY ENTREGABLE (2026-07-26, palabra del usuario). Causa: el ritual de cierre
+obligatorio empujaba a fabricar un producto, un informe o un plan que nadie
+pidio, y eso descarrilo varias sesiones seguidas. Retiro: no aplica, es orden
+directa del usuario.
 
-```txt
-Reporte Formal de Verificacion y Tolerancia Cero a Errores
-- py -m compileall src/flujo: OK/FALLO/no aplica
-- py -m pytest tests/ -q: OK/FALLO/no aplica
-- cd web && npm run build:context: OK/FALLO/no aplica
-- py -m flujo verify: OK/FALLO/no aplica
-- Observaciones: ...
-```
+Si tocaste codigo, corres lo que ese codigo cubre y pegas el output real -- no un
+"OK". Si no tocaste codigo, no hay nada que reportar. La verificacion es para
+saber si funciona, no para adornar un cierre.
+
+El veredicto de un PR lo da su matriz de CI, nunca el pytest local.
 
 ## Al cerrar sesion
 
-1. Verificacion en verde.
-2. Actualizar `context/LAST_HANDOFF.md` (ASCII, compacto) + `context/SESSION_STATE.json` (version = `pyproject.toml`, date real, done/doing/next/blockers/ai_stack).
-3. Reporte formal.
+Actualizar `context/LAST_HANDOFF.md`, que es el CHECKPOINT UNICO. Guarda
+RESPUESTAS, no preguntas: lo que el usuario decidio se escribe ahi en la misma
+sesion, y deja de figurar como pendiente. `SESSION_STATE.json` y los seis
+documentos que competian con el (PLAN_SIGUIENTE_AGENTE, PLAN_SEMANAL_OPUS,
+ORQUESTACION_SUCESOR, WALKTHROUGH, MASTER_PLAN, DIRECTOR_CONTRACT) se archivaron
+el 2026-07-26: eran la razon de que cada agente reconstruyera el estado y volviera
+a preguntar lo ya contestado.
+
+Nada personal en el repo -- es publico. Rutas absolutas, IPs, telefonos y
+credenciales van a la memoria local del asistente.
 
 Contradiccion entre fuentes, orden: usuario -> este `CLAUDE.md` -> `context/LAST_HANDOFF.md` -> docs especificos -> `README.md`.
 
