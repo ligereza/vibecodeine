@@ -23,8 +23,15 @@ import subprocess
 import sys
 
 # Topologia de ramas (CLAUDE.md): main = solo lo perfecto; MAK entrega contra
-# la linea de trabajo "mejoras", nunca directo a main.
-RAMA_BASE = "mejoras"
+# su propio BUZON, nunca directo a main.
+#
+# 2026-07-26: era "mejoras", que se retiro como linea (una linea de infra
+# separada volvia a main un subconjunto). `mak` NO es una cuarta linea: es un
+# buzon. Nada vive ahi -- su unica salida es un PR a main que revisa el
+# usuario. Si esta rama deja de drenar, el buzon se convirtio en linea y hay
+# que corregirlo. Retiro: si MAK pasa a entregar directo contra main con un
+# gate propio.
+RAMA_BASE = "mak"
 
 HOME = os.path.expanduser("~")
 CODEX_JOBS = os.path.join(HOME, "codex", "jobs.jsonl")
