@@ -129,13 +129,18 @@ and say what changes.
   assistant's local memory (they are personal paths and this repo is public).
   What is still the user's call is which direction is current — that is style,
   so it gets asked, never assumed.
-- **Design exports**: two Illustrator sources are ahead of their exports (one by
-  8 days, one by 3), and one exported SVG is 0 bytes, so that export failed and
-  stayed failed. The user answered the settings question on 2026-07-26: there is
-  no single global setting to pick, because "cada archivo de illustrator es
-  distinto y los valores igual" — so whatever gets built here reads its settings
-  per file, the same way the tariff and the quote items now do. Illustrator 2026
-  and its COM bridge are verified working.
+- **Design exports.** Re-measured on 2026-07-26, and the entry that used to sit
+  here was wrong twice, which is worth recording: there is NO 0-byte export (the
+  smallest file in the folder is well over 2 KB), and the second source is not
+  "3 days ahead" — it has no exports at all. The real state is one source 7.5
+  days ahead of its two SVGs, and a second source never exported.
+  The settings question is answered: "cada archivo de illustrator es distinto y
+  los valores igual", so this reads its settings per file, like the tariff and
+  the quote items do. What is missing is the user's word on WHICH files to
+  re-export and to what, because the sources are 485 MB and 78 MB and running
+  Illustrator over them acts on his design assets, not on the repo.
+  Lesson attached to this item: a pending task that carries a measurement should
+  be re-measured before acting on it. This one had been repeated for days.
 
 ## Open
 
