@@ -134,7 +134,7 @@ program says to the operator who runs it.
 
 <!-- COMANDOS:INICIO -- generado por tools/gen_mapa_comandos.py, no editar a mano -->
 
-Medido sobre el CLI real: **80 comandos** (24 sueltos + 56 dentro de 14 grupos).
+Medido sobre el CLI real: **79 comandos** (23 sueltos + 56 dentro de 14 grupos).
 
 ### Comandos sueltos
 
@@ -159,8 +159,7 @@ Medido sobre el CLI real: **80 comandos** (24 sueltos + 56 dentro de 14 grupos).
 | `py -m flujo init` | Inicializa carpetas del repo/workspace (jobs/_template, data, inbox, datadrops). | nada |
 | `py -m flujo package` | Empaqueta el hub pro como aplicación de escritorio real .exe (Windows). | solo Windows; empaqueta un .exe |
 | `py -m flujo plano` | Generar plano SVG, rider o costos de stands desde un JSON de evento. | nada |
-| `py -m flujo portal` | Exporta portal visual gratuito para jefatura: estados de jobs + links a GitHub Issues. | nada |
-| `py -m flujo serve` | Iniciar el workspace local (la nueva app profesional). | nada |
+| `py -m flujo serve` | Iniciar el workspace local: el hub, que es la entrada diaria. | nada |
 | `py -m flujo tapiz` | Ecosistema Tapiz<->Psicosis<->Fungi: pipeline generativo (tools/compete_engine.py). | nada; el instrumento vive en `tools/compete_engine.py` |
 | `py -m flujo verify` | Verificación integral local/CI: compileall, tests, health, version y hub smoke. | nada |
 | `py -m flujo version` | Muestra versión y changelog. | nada |

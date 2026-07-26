@@ -1942,27 +1942,12 @@ def suplementos_illustrator(
     _ok(f"Paquete Illustrator de suplementos preparado: {package_dir}")
 
 
-# ============================================================
-# Dashboard / Portal jefe
-# ============================================================
-
-@app.command("portal")
-def portal(
-    output: Optional[Path] = typer.Option(None, "--output", "-o", help="HTML de salida (default: context/portal_jefe.html)"),
-    repo_url: str = typer.Option("", "--repo-url", help="URL del repo GitHub para botones de nuevo pedido/cambio"),
-    titulo: str = typer.Option("Portal de pedidos", "--titulo", help="Título visible para jefatura"),
-):
-    """Exporta portal visual gratuito para jefatura: estados de jobs + links a GitHub Issues.
-
-    Alternativa local/free a monday.com: GitHub Issues/Projects para entrada y
-    seguimiento, más este HTML estático para una vista simple del avance.
-    """
-    from .portal import export_portal
-
-    out = export_portal(output=output, repo_url=repo_url, titulo=titulo)
-    _section("Portal jefe exportado")
-    _ok(f"HTML: {out}")
-    console.print("  Siguiente: compartir ese HTML, o publicarlo junto a un GitHub Project privado.")
+# El comando `portal` se retiro el 2026-07-26. No estaba viejo: estaba ROTO --
+# reventaba con AttributeError al ejecutarlo. Exportaba un HTML estatico con
+# links a GitHub Issues, planteado como alternativa a monday.com, y hoy choca
+# con dos cosas: el panel de Trabajos ya muestra ese estado, y los issues son un
+# canal de entrada, no un tablero de tareas. Archivado en
+# _archive/legacy_20260726_cli_roto/portal.py con su motivo.
 
 
 @app.command()
@@ -2089,60 +2074,36 @@ def cotizaciones(
 def serve(
     port: int = typer.Option(8765, "--port", "-p", help="puerto del servidor"),
     host: str = typer.Option("127.0.0.1", "--host", help="host (0.0.0.0 para red local)"),
-    hub: bool = typer.Option(True, "--hub/--legacy", help="usar el nuevo workspace HTML (flujo_hub.html + visualizadores)"),
     desktop: bool = typer.Option(False, "--desktop", help="abrir en ventana nativa con pywebview (si está instalado)"),
     procesar_pendientes: bool = typer.Option(False, "--procesar-pendientes", help="al arrancar, avanzar los jobs de flyer pendientes (modifica jobs: por eso no es el default)"),
     abrir: bool = typer.Option(True, "--abrir/--no-abrir", help="abrir el navegador al arrancar (--no-abrir deja solo el servidor)"),
 ):
-    """Iniciar el workspace local (la nueva app profesional).
+    """Iniciar el workspace local: el hub, que es la entrada diaria.
 
-    Por defecto (`--hub`): lanza el hub pro workspace (`context/flujo_hub.html` + visualizadores SVG/Plano)
-    servido por servidor HTTP + API real en http://{host}:{port}.
-    APIs: parse intake real (parsePedido usa backend por defecto cuando server activo), list/create jobs, brand desde flujo.json, svg scan live, safe cmds, pywebview bridge + "CONECTADO" indicator.
-    `flujo app` (o serve --desktop) es la entrada diaria obligatoria (hub = pro workspace real).
+    Sirve `context/flujo_hub.html` + los visualizadores SVG/Plano con la API
+    real en http://{host}:{port}: intake, jobs, base de datos RD, tarifa,
+    simbolos del plano y el puente de pywebview.
 
-    --desktop: ventana nativa premium sin chrome (pywebview gratis + js_api bridge directo Python<->JS + tray + icon).
-    --legacy (o --no-hub): usa editor Gradio antiguo (legacy, no primario).
-    --no-abrir: levanta el servidor sin abrir el navegador (util para revisar o
-    automatizar sin acumular pestanas).
+    --desktop: ventana nativa (pywebview), sin barra de navegador.
+    --no-abrir: levanta el servidor sin abrir el navegador, util para revisar o
+    automatizar sin acumular pestanas.
+
+    Habia un `--legacy` que lanzaba un editor Gradio. Se retiro el 2026-07-26:
+    importaba `flujo.web.editor`, un modulo que NO existe, y caia a
+    `scripts/app.py`, una tercera interfaz sin tocar desde el commit inicial.
+    Encima gradio no esta declarado en pyproject, asi que en una instalacion
+    limpia ese camino ni arrancaba. Archivado en
+    _archive/legacy_20260726_cli_roto/.
     """
-    if hub:
-        try:
-            from .web.hub import launch
-            from .paths import repo_root
-            r = repo_root()
-            console.print(f"[cyan]flujo workspace (hub) en http://{host}:{port}[/]")
-            console.print(f"[dim]Repo context: {r}[/dim]")
-            console.print("[dim]APIs reales + drag-drop en hub + auto-port + tray opcional.[/dim]")
-            # --no-abrir existe porque levantar el hub para revisarlo o para un
-            # chequeo abria una pestana cada vez; ocho arranques seguidos dejan
-            # ocho pestanas en el navegador del usuario.
-            launch(host=host, port=port, desktop=desktop, root=r,
-                   procesar_pendientes=procesar_pendientes, open_browser=abrir)
-            return
-        except Exception as e:
-            _warn(f"No se pudo iniciar el workspace nuevo ({e}).")
-
-    # Legacy Gradio path
-    import importlib.util
-    if importlib.util.find_spec("gradio") is None:
-        _err("Falta gradio para el modo legacy. Instalar con: pip install gradio")
-
-    try:
-        from .web.editor import launch
-        console.print(f"[cyan]Editor Gradio legacy en http://{host}:{port}[/]")
-        launch(server_name=host, server_port=port)
-    except Exception as e:
-        _warn(f"Error en editor Gradio: {e}")
-        # fallback al script viejo
-        import subprocess
-        from .paths import repo_root
-        root = repo_root()
-        script = root / "scripts" / "app.py"
-        if script.exists():
-            subprocess.run([sys.executable, str(script)], cwd=root)
-        else:
-            _err("No hay forma de lanzar interfaz web.")
+    from .web.hub import launch
+    from .paths import repo_root
+    r = repo_root()
+    console.print(f"[cyan]flujo workspace (hub) en http://{host}:{port}[/]")
+    console.print(f"[dim]Repo context: {r}[/dim]")
+    # --no-abrir existe porque levantar el hub para revisarlo o para un chequeo
+    # abria una pestana cada vez; ocho arranques seguidos dejan ocho pestanas.
+    launch(host=host, port=port, desktop=desktop, root=r,
+           procesar_pendientes=procesar_pendientes, open_browser=abrir)
 
 
 # Alias: flujo app → flujo serve
@@ -2155,7 +2116,7 @@ def app_alias(
     abrir: bool = typer.Option(True, "--abrir/--no-abrir", help="abrir el navegador al arrancar (--no-abrir deja solo el servidor)"),
 ):
     """Alias de serve. Lanza la nueva app (hub pro workspace recomendado como entrada diaria). Real backend + parse/create jobs live cuando activo."""
-    serve(port=port, host=host, hub=True, desktop=desktop,
+    serve(port=port, host=host, desktop=desktop,
           procesar_pendientes=procesar_pendientes, abrir=abrir)
 
 
