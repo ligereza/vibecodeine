@@ -102,17 +102,17 @@ const RD_NAV: NavItem[] = [
   { view: 'plano', icon: Map, label: 'Plano / Rider', desc: 'Editor de layout de evento', edit: true },
   { view: 'visualizer', icon: Shapes, label: 'SVG Studio', desc: 'Galería + editor visual', edit: true },
   { view: 'quote', icon: Calculator, label: 'Cotización', desc: 'Presupuesto editable', edit: true },
-  { view: 'intake', icon: ClipboardList, label: 'Intake', desc: 'Parsear pedidos y crear jobs', edit: true },
+  { view: 'intake', icon: ClipboardList, label: 'Pedidos', desc: 'Pegá el correo del cliente y queda anotado', edit: true },
   { view: 'rd-db', icon: Database, label: 'Base de datos', desc: 'Productoras, venues y logos', edit: true },
   { view: 'automatizaciones', icon: Workflow, label: 'Automatizaciones', desc: 'Cola Gmail -> issue -> render', edit: false },
-  { view: 'jobs', icon: Boxes, label: 'Jobs / Suplementos', desc: 'Estado de trabajos', edit: false },
+  { view: 'jobs', icon: Boxes, label: 'Trabajos / Suplementos', desc: 'En qué va cada trabajo', edit: false },
 ];
 
 // main: nucleo transversal. Lo que sirve a las dos lineas y no es de ninguna:
 // estado general, jobs, la cola de automatizaciones y la referencia de CLI.
 const MAIN_NAV: NavItem[] = [
   { view: 'hub', icon: LayoutDashboard, label: 'Dashboard', desc: 'Vista general del sistema', edit: false },
-  { view: 'jobs', icon: Boxes, label: 'Jobs / Suplementos', desc: 'Estado de trabajos', edit: false },
+  { view: 'jobs', icon: Boxes, label: 'Trabajos / Suplementos', desc: 'En qué va cada trabajo', edit: false },
   { view: 'automatizaciones', icon: Workflow, label: 'Automatizaciones', desc: 'Cola Gmail -> issue -> render', edit: false },
   { view: 'mak', icon: Cpu, label: 'MAK', desc: 'La maquina que trabaja sola', edit: false },
   { view: 'commands', icon: TerminalSquare, label: 'Comandos', desc: 'CLI reference', edit: false },
@@ -144,7 +144,7 @@ export const PROFILES: Record<WorkspaceMode, Profile> = {
     id: 'main',
     label: 'Main',
     shortLabel: 'MAIN',
-    tagline: 'Nucleo transversal: estado del sistema, jobs, cola de automatizaciones y referencia de comandos.',
+    tagline: 'Núcleo transversal: estado del sistema, trabajos, cola de automatizaciones y referencia de comandos.',
     footerLabel: 'Main / Sistema',
     navTitle: 'Sistema',
     selectorIcon: Cpu,
@@ -162,7 +162,7 @@ export const PROFILES: Record<WorkspaceMode, Profile> = {
     id: 'rd',
     label: 'Modo RD',
     shortLabel: 'RD',
-    tagline: 'ONG Reduciendo Daño: Plano/Rider, Cotizaciones, SVG Studio, Intake y la cola de automatizaciones.',
+    tagline: 'ONG Reduciendo Daño: planos y riders de evento, cotizaciones, piezas de diseño y pedidos que llegan por correo.',
     footerLabel: 'Reduciendo Daño',
     navTitle: 'Edición RD',
     selectorIcon: Heart,

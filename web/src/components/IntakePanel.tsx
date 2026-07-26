@@ -31,7 +31,7 @@ export default function IntakePanel() {
       <section className="space-y-4">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-black">
-            <ClipboardList className="h-6 w-6" /> Intake
+            <ClipboardList className="h-6 w-6" /> Pedidos
           </h1>
           <p className="mt-1 text-sm text-zinc-500">Pegá el correo o el pedido tal como llegó. Se leen los datos y queda listo para crear el trabajo.</p>
         </div>
