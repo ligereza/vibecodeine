@@ -133,6 +133,13 @@ and say what changes.
 
 ## Open
 
+- **The `mak` inbox has no defined drain, and that is the one thing that would
+  turn it back into a line.** MAK opens a PR into `mak` every 6 hours; nothing
+  moves `mak` into `main`. Verified working on 2026-07-26: the box fetches all
+  branches before checking out, so delivery against the inbox does run. What is
+  missing is the exit — today that is a human-curated PR, same as any
+  line -> main promotion. If the inbox ever holds work `main` has not seen for
+  long, the topology has quietly broken and needs fixing, not tolerating.
 - Strip the placeholder phone numbers out of the supplements config and its
   exporter: user's order, "no personal data".
 - Custom symbol catalogue for the floor plan. Acceptance criterion, verbatim:
