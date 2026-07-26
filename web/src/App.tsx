@@ -14,6 +14,8 @@ import CulturaPanel from './components/CulturaPanel';
 import ShowPanel from './components/ShowPanel';
 import AutomatizacionesPanel from './components/AutomatizacionesPanel';
 import RdDbPanel from './components/RdDbPanel';
+import MakPanel from './components/MakPanel';
+import PortafolioPanel from './components/PortafolioPanel';
 
 function initialView(): AppView {
   if (typeof window === 'undefined') return 'hub';
@@ -45,6 +47,8 @@ export default function App() {
       {view === 'automatizaciones' && <AutomatizacionesPanel />}
       {view === 'rd-db' && <RdDbPanel />}
       {view === 'cultura' && <CulturaPanel />}
+      {view === 'mak' && <MakPanel />}
+      {view === 'portafolio' && <PortafolioPanel />}
     </AppShell>
   );
 }

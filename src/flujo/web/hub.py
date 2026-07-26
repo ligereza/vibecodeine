@@ -402,6 +402,20 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 self._send_json({"productoras": [], "venues": [], "error": str(e)}, status=200)
             return
+        if path == "/api/portafolio":
+            try:
+                self._send_json(self._get_portafolio())
+            except Exception as e:
+                self._send_json({"proyectos": [], "error": str(e)}, status=200)
+            return
+        if path == "/api/mak":
+            # MAK box state. READ-ONLY: this endpoint does a GET and nothing
+            # else -- the hub never orders anything from the box.
+            try:
+                self._send_json(self._get_mak())
+            except Exception as e:
+                self._send_json({"disponible": False, "error": str(e)}, status=200)
+            return
         if path == "/api/rd-db/logo":
             # Sirve el logo de una productora para previsualizarlo en el panel.
             slug = (parse_qs(urlparse(self.path).query).get("slug") or [""])[0].strip().lower()
@@ -879,6 +893,101 @@ class HubRequestHandler(BaseHTTPRequestHandler):
                 "shows_registrados": len(registros),
             },
             "connected": True,
+        }
+
+    def _get_portafolio(self) -> dict:
+        """Curated portfolio catalogue, for the iskvw panel.
+
+        `iskvw` is the portfolio and the ONLY site (user's decision,
+        2026-07-26), and until now the app had no way to show it: the catalogue
+        could only be edited by opening the json by hand.
+
+        Source: `tools/portfolio/proyectos.json`, which is what the workflow
+        publishes. Editing that file IS administering the site, so this endpoint
+        is READ-ONLY: it shows what is published and in what state, it does not
+        edit. It also reports whether the prototype has been generated, so
+        nobody has to guess whether it exists.
+        """
+        import json as _json
+
+        ruta = self.root / "tools" / "portfolio" / "proyectos.json"
+        if not ruta.is_file():
+            return {"proyectos": [], "error": "no existe tools/portfolio/proyectos.json"}
+        datos = _json.loads(ruta.read_text(encoding="utf-8"))
+        proyectos = []
+        for p in datos.get("proyectos", []):
+            proyectos.append({
+                "id": p.get("id", ""),
+                "nombre": p.get("nombre", ""),
+                "linea": p.get("linea", ""),
+                "estado": p.get("estado", ""),
+                "descripcion": p.get("descripcion", ""),
+                "tags": p.get("tags", []),
+                "ruta": p.get("ruta", ""),
+                "url": p.get("url", ""),
+            })
+        prototipo = self.root / "docs" / "iskvw" / "prototipo.html"
+        return {
+            "titulo": datos.get("titulo", ""),
+            "proyectos": proyectos,
+            "prototipo_generado": prototipo.is_file(),
+            "prototipo_ruta": "docs/iskvw/prototipo.html",
+        }
+
+    def _get_mak(self) -> dict:
+        """State of the MAK box, so it stops being invisible in the interface.
+
+        MAK is the machine meant to keep the repo running without Claude, and
+        until 2026-07-26 it had NOT ONE reference in `web/src` and no endpoint
+        here: the user could not see whether it was alive, what it produced, or
+        what was queued. This fixes that the cheapest way possible.
+
+        READ-ONLY on purpose: it GETs the box hub's `/api/organismo` and nothing
+        else. The hub NEVER orders anything from MAK -- same rule as
+        `xio_puente`, which is GET-only because the phone is live
+        infrastructure. If MAK is off or outside the LAN it returns
+        `disponible: false` with the reason, never an exception and never made-up
+        data.
+
+        The address comes from `FLUJO_MAK_URL` (this repo is public: no
+        hardcoded IPs). Without that variable the panel says it is not
+        configured. User-facing strings stay in Spanish.
+        """
+        import json as _json
+        import os as _os
+        import urllib.request as _url
+
+        base = (_os.environ.get("FLUJO_MAK_URL") or "").strip().rstrip("/")
+        if not base:
+            return {
+                "disponible": False,
+                "configurado": False,
+                "error": "Falta la variable de entorno FLUJO_MAK_URL "
+                         "(por ejemplo http://<ip-del-box>:8900).",
+            }
+        try:
+            with _url.urlopen(base + "/api/organismo", timeout=4) as r:
+                crudo = _json.loads(r.read().decode("utf-8", "replace"))
+        except Exception as e:
+            return {"disponible": False, "configurado": True, "error": str(e)}
+
+        salud = crudo.get("salud") or {}
+        servicios = salud.get("servicios") or {}
+        productos = salud.get("productos") or {}
+        return {
+            "disponible": True,
+            "configurado": True,
+            "ts": salud.get("ts"),
+            "uptime_s": salud.get("uptime_s"),
+            "load": salud.get("load"),
+            "mem_disponible_mb": salud.get("mem_disponible_mb"),
+            "disco_libre_gb": salud.get("disco_libre_gb"),
+            "gpu": salud.get("gpu"),
+            "servicios": {
+                nombre: bool(info.get("vivo")) for nombre, info in servicios.items()
+            },
+            "productos": productos,
+            "micelio_chunks": crudo.get("micelio_chunks"),
         }
 
     def _get_rd_db(self) -> dict:

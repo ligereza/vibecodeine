@@ -6,24 +6,33 @@
 
 <!--
 
+The visible README is the artwork above (`arte-ascii-readme.svg`, the animated
+codeine cup). It is a finished artist piece and the SVG is never altered. This
+block is hidden on purpose: it is orientation for whoever opens the file, not
+part of the page.
 
-# VIBECODEINE - Operational Agent Workspace - MAIN APP: FLUJO 
+# VIBECODEINE — operational workspace. Main program: FLUJO
 
-`VIBECODEINE` is a local-first workspace for requests, jobs, briefs, design operations, RD/suplementos work, Studio/eventos work, Cultura (art-research), the on-device Xiaomi controller (`xio`), the web hub, and agent-delivered patches.
-Para vivir y ser libre
-This repository is optimized for agent continuity. The goal is operational clarity: read the handoff, make a minimal complete change, verify, and deliver through `_airdrop/` if there is no push access.
+`vibecodeine` is the repository, `flujo` is the program, `Dimensiones del Orden`
+is the system. Local-first workspace for requests, jobs, briefs, design work,
+the RD (NGO) line, the iskvw line (shows, art-research, portfolio), the
+on-device Xiaomi controller (`xio`), the web hub, and agent-delivered patches.
 
-The repo assistant is named `Cauce` (the channel the flow runs through). The mission is to spend the strong model now to build a base that free/cheap agents can maintain later, off-PC and without a Claude account -- success is measured by how little the repo needs the strong model once it is gone.
+The repo assistant is named `Cauce`. The mission is to spend the strong model
+now to build a base that free/cheap agents can maintain later, off-PC and
+without a Claude account — success is measured by how little the repo needs the
+strong model once it is gone.
 
-## Mandatory agent entry
+## Where the real documentation lives
 
-Read in this order:
+This file deliberately does NOT duplicate it. Four documents used to compete for
+"the state" and every agent rebuilt it from scratch; that was fixed on
+2026-07-26, so read these instead:
 
 ```txt
-1. CLAUDE.md
-2. context/LAST_HANDOFF.md
-3. docs/AGENT_AIRDROP_PROTOCOL.md
-4. The files related to the task
+MAPA.md                  what the repo is, every command, what to configure
+CLAUDE.md                how work is done here: the one rule and the conduct
+context/LAST_HANDOFF.md  the single checkpoint: state, decisions, what is blocked
 ```
 
 If there is a conflict, this order wins:
@@ -35,6 +44,14 @@ If there is a conflict, this order wins:
 4. Specific docs
 5. README.md
 ```
+
+## Language
+
+Everything in the repo is written in English: code, docs, commits, PRs. The one
+exception is anything a human reads as a product — RD pieces and data, iskvw
+curation — which goes in correct Spanish **with diacritics**. A title reading
+"reduciendo ano" instead of "reduciendo daño" is not a typo, it reaches the
+client.
 
 ## Environment
 
@@ -100,12 +117,14 @@ py -m flujo eventos flyer-auto "https://www.instagram.com/p/XXXX/"
 py -m flujo resolume automatizar jobs/<job_id>
 ```
 
-Rule:
+Rule (corrected 2026-07-26):
 
 ```txt
-Instaloader no longer works (Instagram requires login even for anonymous
-scraping, confirmed 2026-07-1x). Real download = public mirror scrape
-(_download_via_mirror in flyer_auto.py). Do not use yt-dlp.
+Real download = parth-dl (pip install parth-dl), primary path in flyer_auto.py
+since 2026-07-22. curl_cffi is the secondary path on Linux: it imitates Chrome's
+TLS fingerprint, which is what gets past the login wall there.
+imginn.com is DEAD (403 Cloudflare). instaloader does not work (Instagram
+demands login). Do not use yt-dlp.
 ```
 
 ### Cultura (art-research)
@@ -295,28 +314,17 @@ schemas/          intake schemas
 knowledge/        versioned operational memory
 ```
 
-## Agent final response format
+## Closing a task
 
-Every agent delivery must include:
+THERE IS NO DELIVERABLE (2026-07-26, user's order). The mandatory closing ritual
+that used to live here — a formal verification report with a fixed format —
+pushed agents into fabricating a product, a report or a plan nobody asked for,
+and that derailed several sessions in a row. It was removed.
 
-```txt
-1. Files changed
-2. Problem solved
-3. How to use it with py commands
-4. Real risks or pending work
-5. Reporte Formal de Verificacion y Tolerancia Cero a Errores
-```
-
-Verification report format:
-
-```txt
-Reporte Formal de Verificacion y Tolerancia Cero a Errores
-- py -m compileall src/flujo: OK/FALLO/no aplica
-- py -m pytest tests/ -q: OK/FALLO/no aplica
-- cd web && npm run build:context: OK/FALLO/no aplica
-- py -m flujo verify: OK/FALLO/no aplica
-- Observaciones: ...
-```
+What replaces it: if you touched code, run what that code covers and paste the
+real output, not an "OK". If you did not touch code, there is nothing to report.
+Verification exists to find out whether it works, not to decorate a closing. The
+verdict on a PR is its CI matrix, never the local pytest.
 
 ## License
 

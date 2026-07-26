@@ -28,7 +28,9 @@ export type AppView =
   | 'show'
   | 'automatizaciones'
   | 'rd-db'
-  | 'cultura';
+  | 'cultura'
+  | 'mak'
+  | 'portafolio';
 
 // Division en 3 (2026-07-25, orden del usuario): la app espeja la topologia de ramas del
 // repo -- main / rd / iskvw. `studio` y `cultura` se fundieron en `iskvw`
@@ -112,6 +114,7 @@ const MAIN_NAV: NavItem[] = [
   { view: 'hub', icon: LayoutDashboard, label: 'Dashboard', desc: 'Vista general del sistema', edit: false },
   { view: 'jobs', icon: Boxes, label: 'Jobs / Suplementos', desc: 'Estado de trabajos', edit: false },
   { view: 'automatizaciones', icon: Workflow, label: 'Automatizaciones', desc: 'Cola Gmail -> issue -> render', edit: false },
+  { view: 'mak', icon: Cpu, label: 'MAK', desc: 'La maquina que trabaja sola', edit: false },
   { view: 'commands', icon: TerminalSquare, label: 'Comandos', desc: 'CLI reference', edit: false },
 ];
 
@@ -125,6 +128,7 @@ const ISKVW_NAV: NavItem[] = [
   { view: 'resolume', icon: Radio, label: 'Resolume / Chataigne', desc: 'Comando SMPTE/OSC', edit: false },
   { view: 'events', icon: Camera, label: 'Eventos / IG', desc: 'Comando flyer-auto', edit: false },
   { view: 'visualizer', icon: Shapes, label: 'SVG Studio', desc: 'Galeria + editor visual', edit: true },
+  { view: 'portafolio', icon: Layers, label: 'Portafolio', desc: 'Catalogo publico de iskvw', edit: false },
   { view: 'cultura', icon: Layers, label: 'Cultura', desc: 'Instrumentos y lineas de obra', edit: false },
 ];
 
