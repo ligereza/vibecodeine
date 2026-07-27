@@ -113,10 +113,30 @@ def _copy_to_drive(render_png: Path, number: int, shortcode: str) -> Path | None
         return None
 
 
+# Corta en comilla o fin de linea, no en espacio: "Program Files" y "Blender 4.5"
+# llevan espacios y cortar ahi dejaba media ruta publicada.
+_RUTA_WIN_RE = re.compile(r"[A-Za-z]:\\[^\"'\r\n]*")
+
+
+def _sin_rutas(texto: str) -> str:
+    """Saca las rutas absolutas de Windows del log antes de publicarlo.
+
+    El log de Blender viene lleno de `C:\\Users\\<usuario>\\AppData\\...` y el
+    issue es publico. Se conserva el nombre del archivo, que es lo unico que
+    sirve para diagnosticar; el resto de la ruta no aporta y expone el disco.
+    """
+    return _RUTA_WIN_RE.sub(lambda m: ".../" + m.group(0).rsplit("\\", 1)[-1], texto or "")
+
+
 def _comment_and_close(number: int, ok: bool, url: str, output: str, drive_path: Path | None, dry_run: bool) -> None:
     status = "OK" if ok else "FALLO"
-    extra = f"\n\nRender en Drive: `{drive_path}`" if drive_path else ""
-    body = f"Puente Windows: render {status} para {url}{extra}\n\n```\n{output[-3500:]}\n```"
+    # Solo el nombre del archivo: el issue es PUBLICO y la ruta absoluta publica
+    # la estructura del disco del usuario. Medido en el issue #320, que quedo
+    # cerrado con `C:\...` a la vista. La carpeta es siempre drive/, asi que el
+    # nombre alcanza para encontrarlo.
+    extra = f"\n\nRender en `drive/`: `{drive_path.name}`" if drive_path else ""
+    body = (f"Puente Windows: render {status} para {url}{extra}\n\n"
+            f"```\n{_sin_rutas(output)[-3500:]}\n```")
     if dry_run:
         print(f"[dry-run] comentaria issue #{number} ({status}):\n{body}")
         return

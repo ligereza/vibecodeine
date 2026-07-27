@@ -66,6 +66,7 @@ data/*.json
 !data/plano_simbolos.json
 !data/cotizacion_servicios.json
 !data/svg_estados.json
+!data/piezas_tipos.json
 context/DAILY.md
 context/PIPELINE_RESULT.md
 context/dashboard.html

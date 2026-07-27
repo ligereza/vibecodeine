@@ -277,11 +277,74 @@ def _vectores_por_producto():
     return vecs, meta
 
 
+GRAFO_CACHE = os.path.join(MEM_DIR, "grafo_cache.json")
+
+
+def _aristas_numpy(vecs, paths, umbral, tope_por_nodo):
+    """Las mismas aristas, con una multiplicacion de matrices en vez de un
+    bucle. Devuelve None si numpy no esta, y el llamador sigue por el camino
+    lento -- el resultado es identico, cambia cuanto tarda.
+
+    Por que existe: medido el 2026-07-27, el bucle en Python puro tardaba
+    107.6s para 977 productos (954.529 cosenos de 768 dimensiones) y el hub lo
+    recalculaba casi en cada visita, porque su cache dura 12 segundos.
+    """
+    try:
+        import numpy as np
+    except ImportError:
+        return None
+    m = np.array([vecs[p] for p in paths], dtype=np.float32)
+    normas = np.linalg.norm(m, axis=1, keepdims=True)
+    normas[normas == 0] = 1.0
+    m /= normas
+    sims = m @ m.T
+    np.fill_diagonal(sims, -1.0)          # un nodo no se conecta consigo mismo
+    k = min(tope_por_nodo, len(paths) - 1)
+    if k <= 0:
+        return []
+    top = np.argpartition(-sims, k - 1, axis=1)[:, :k]
+    edges, vistas = [], set()
+    for i in range(len(paths)):
+        vecinos = sorted(((float(sims[i, j]), int(j)) for j in top[i]), reverse=True)
+        for s, j in vecinos:
+            if s < umbral:
+                break
+            key = (i, j) if i < j else (j, i)
+            if key in vistas:
+                continue
+            vistas.add(key)
+            edges.append({"a": os.path.basename(paths[i]),
+                          "b": os.path.basename(paths[j]), "w": round(s, 3)})
+    return edges
+
+
+def _firma_index():
+    """Identidad barata del indice: si no cambio, el grafo tampoco."""
+    try:
+        st = os.stat(INDEX_FILE)
+        return "%d-%d" % (st.st_size, int(st.st_mtime))
+    except OSError:
+        return ""
+
+
 def grafo_semantico(umbral=0.5, tope_por_nodo=4):
     """Grafo de CONEXIONES SEMANTICAS entre productos del departamento:
     nodo = producto, arista = similitud coseno entre sus embeddings (top-k
     por nodo por encima del umbral). El peso de la arista = que tan
-    relacionados estan dos hallazgos. Es el mapa de lo que el depto sabe."""
+    relacionados estan dos hallazgos. Es el mapa de lo que el depto sabe.
+
+    Se cachea en disco contra la firma del indice: el grafo solo cambia cuando
+    cambia lo indexado, y reindexar es un evento de cada 20 minutos como mucho.
+    """
+    firma = "%s|%s|%s" % (_firma_index(), umbral, tope_por_nodo)
+    try:
+        with open(GRAFO_CACHE, encoding="utf-8") as fh:
+            guardado = json.load(fh)
+        if guardado.get("firma") == firma:
+            return guardado["grafo"]
+    except (OSError, ValueError, KeyError):
+        pass
+
     vecs, meta = _vectores_por_producto()
     paths = list(vecs)
     nodes = []
@@ -289,23 +352,35 @@ def grafo_semantico(umbral=0.5, tope_por_nodo=4):
         d, t, nch = meta[p]
         nodes.append({"id": os.path.basename(p), "dir": d, "titulo": t,
                       "chunks": nch})
-    edges, vistas = [], set()
-    for i, a in enumerate(paths):
-        sims = sorted(
-            ((_cos(vecs[a], vecs[b]), j) for j, b in enumerate(paths) if j != i),
-            reverse=True)
-        for s, j in sims[:tope_por_nodo]:
-            if s < umbral:
-                break
-            key = tuple(sorted((i, j)))
-            if key in vistas:
-                continue
-            vistas.add(key)
-            edges.append({"a": os.path.basename(paths[i]),
-                          "b": os.path.basename(paths[j]), "w": round(s, 3)})
-    return {"nodes": nodes, "edges": edges,
-            "meta": {"n_nodos": len(nodes), "n_aristas": len(edges),
-                     "umbral": umbral}}
+
+    edges = _aristas_numpy(vecs, paths, umbral, tope_por_nodo)
+    if edges is None:
+        edges, vistas = [], set()
+        for i, a in enumerate(paths):
+            sims = sorted(
+                ((_cos(vecs[a], vecs[b]), j) for j, b in enumerate(paths) if j != i),
+                reverse=True)
+            for s, j in sims[:tope_por_nodo]:
+                if s < umbral:
+                    break
+                key = tuple(sorted((i, j)))
+                if key in vistas:
+                    continue
+                vistas.add(key)
+                edges.append({"a": os.path.basename(paths[i]),
+                              "b": os.path.basename(paths[j]), "w": round(s, 3)})
+
+    grafo = {"nodes": nodes, "edges": edges,
+             "meta": {"n_nodos": len(nodes), "n_aristas": len(edges),
+                      "umbral": umbral}}
+    try:
+        tmp = GRAFO_CACHE + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as fh:
+            json.dump({"firma": firma, "grafo": grafo}, fh)
+        os.replace(tmp, GRAFO_CACHE)
+    except OSError:
+        pass
+    return grafo
 
 
 def contexto(tema, k=5, max_chars=2500):
