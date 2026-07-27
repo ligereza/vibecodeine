@@ -12,11 +12,12 @@ import { type PackId, PACKS, PACKS_DEFAULT_PRICES, resetPackPrices, formatCLP } 
 // precios de packs editables + import/export de esa config como .json, mas
 // la lista de productoras RD embebida como referencia.
 //
-// ALCANCE HONESTO: iconos custom y presets de layout por productora NO estan
-// aca todavia -- requieren puntos de extension en PlanoTool.tsx (props para
-// leer/escribir `elements`, un registro de simbolos custom) que no existen
-// hoy y que esta sesion no agrego porque ese archivo esta tomado por otro
-// agente. Ver planoConfig.ts y el reporte de sesion para la propuesta.
+// ALCANCE, al 2026-07-27: los iconos propios y los presets de layout YA estan.
+// El comentario anterior decia que faltaban y que requerian puntos de extension
+// en PlanoTool.tsx que no existian; se agregaron ahi mismo (exportar/importar
+// preset, alta de simbolo con guardado local, trazador en el navegador). Lo que
+// sigue sin estar es asociar un preset a una productora DESDE aca: eso lo hace
+// el director contra la base y devuelve el archivo.
 
 const PACK_IDS: PackId[] = ['INFO', 'TESTEO', 'COMPLETO'];
 const PACK_NAMES: Record<PackId, string> = {
@@ -194,8 +195,9 @@ export default function PlanoStandalone({ initialConfig, initialWarning }: Props
                   <Building2 className="h-3 w-3" /> Productoras RD (referencia)
                 </div>
                 <p className="mb-1.5 text-[9px] text-zinc-600">
-                  Lista embebida desde data/productoras/. Todavia no se puede asociar un preset de layout
-                  a una productora en este bundle -- pendiente (ver documentacion).
+                  Lista embebida. Para asociar un plano a una productora: armá el
+                  layout, usá <b>Guardar preset</b> y mandá ese archivo; vuelve
+                  asociado y se abre con <b>Abrir preset</b>.
                 </p>
                 <div className="max-h-24 overflow-y-auto rounded-lg border border-zinc-800 bg-zinc-900/60 p-2 text-[10px] text-zinc-400">
                   {RD_PRODUCTORAS.map(p => p.name).join(' · ')}
