@@ -91,6 +91,7 @@ profiles, and the documentation ratchets (`test_mapa_completo`,
 | 2026-07-26 | MAK's doctrine (`CAPATAZ.md`, `DOCTRINA_CLAUDE.md`) lives in `cultura/mak_plataforma/doctrina/`. It was written for the box's local model, and the Claudes kept reading it as their own |
 | 2026-07-26 | Two useless crons removed: the 30-minute sweep in `issue_descarga_ig` (it re-commented on open issues, GitHub emailed each comment, and the Gmail script turned every email back into an issue) and the weekly `portfolio` job (it published to the discarded repo) |
 | 2026-07-26 | **Every money value is configurable, none is fixed.** The user's answer when asked whose the quote figures were: "esos valores son configurables cierto? cada archivo de illustrator es distinto y los valores igual". So the question was never "are these the right numbers" but "why are they frozen". Three editable files now, all tracked and all with a loud fallback: `data/rd_packs.json` (field-service tariff, read by the rider, the Python quote and the app), `data/cotizacion_servicios.json` (the quote tool's line items and presets — design and printing, which change per job) and `data/plano_simbolos.json`. No figure was altered: they were moved out of the code as they stood. The same rule governs the pending Illustrator re-exports — settings per file, not one global setting |
+| 2026-07-26 | **A symbol added by the events manager reaches BOTH the printed plan and the editor.** It was a two-step day: first the catalogue only fed `flujo plano`, because `PlanoTool.tsx` kept its own list of icons named after a component library, where a designer's `.svg` had no slot. Then the component learnt to draw raw markup for a custom key, on the same 160x160 convention Python already used, and the palette shows each one with its OWN drawing so several are told apart. If she has no SVG, an image is traced and shown before saving. Nothing here is guessed: it was verified in a browser, from an empty catalogue to a symbol drawn on the plan |
 | 2026-07-26 | **The floor-plan symbol catalogue is open.** Acceptance criterion, verbatim: "can the events manager add an icon? if not, it is not configurable". She now drops an `.svg` into `data/plano_simbolos/` and declares it in `data/plano_simbolos.json` (that file carries the instructions, in Spanish, because she is the one reading it). No code, no TypeScript. The catalogue ADDS to the 17 built-ins and can also relabel or recolour one of them. A symbol may declare `cuando` (siempre / testeo / jornada_larga / masivo / manual) and a zone. Two real defects fixed on the way: a key absent from `_ZONAS_ICONOS` used to be dropped from the plan SILENTLY, and the zone list was about to become a second copy — it now derives from `engine._ZONAS_ICONOS`. Anything wrong in the file warns on stderr and the rest of the plan still renders. `data/plano_simbolos/_ejemplo_hidratacion.svg` is a sample to copy and is deliberately NOT declared: it is not a real RD symbol |
 | 2026-07-26 | Placeholder phone numbers: gone. The only remaining match in the repo is the comment recording the incident |
 | 2026-07-26 | **Brand is information, never a restriction.** User's words: "como info sirve, como limitante o restriccion no -- un dia puedo hacer un post con otra estetica o cuando toque cambio de flyers la app no debe restringir". So the palette is a DEFAULT any caller, event or config may override, and nothing validates a piece against it. Removed: the `flujo brand` CLI group (it only printed that it had been retired), the dead `export_tokens` bridge, and a block in `render/piezas.py` that printed "flujo aplicado automaticamente" while applying nothing inside a silent `try/except`. The quote engine's palette now resolves caller > event `estilo` block > default palette, and the document sent to a productora no longer carries hex codes or the words "usa flujo para consistencia de marca". `flujo.brand` STAYS as the palette reader -- deleting it is exactly how it broke before |
@@ -144,17 +145,10 @@ and say what changes.
 
 ## Open
 
-- **The floor-plan symbol catalogue reaches the Python plan, not the web
-  editor.** Measured live on 2026-07-26 against a running hub: a symbol added to
-  `data/plano_simbolos.json` renders in `flujo plano`, but `PlanoTool.tsx` keeps
-  its own `SYMBOL_CATALOG`, whose entries name icons from a component library
-  rather than SVG files, so a designer's `.svg` has no place in it yet. Closing
-  the gap means teaching that component to draw raw markup for custom keys, and
-  it is the piece that produces the printed A4 a venue receives, so it is worth
-  doing carefully rather than quickly. The instructions the events manager reads
-  now say this outright: a symbol that does not show up in the editor is not
-  broken, it just does not reach there yet.
-
+**How this list is kept honest:** on 2026-07-26 it carried an item that had
+already been fixed that same day, plus a second copy of the Illustrator entry
+that contradicted the corrected one. A pending list nobody prunes stops being a
+list of what is pending. Before working an item, check it is still true.
 
 - **The `mak` inbox has no defined drain, and that is the one thing that would
   turn it back into a line.** MAK opens a PR into `mak` every 6 hours; nothing
@@ -163,7 +157,6 @@ and say what changes.
   missing is the exit — today that is a human-curated PR, same as any
   line -> main promotion. If the inbox ever holds work `main` has not seen for
   long, the topology has quietly broken and needs fixing, not tolerating.
-- Two design exports lag behind their source. That is re-exporting, not backing up.
 - The hourly `[OBS]` issue emitter is still unidentified. Ruled out: the repo and
   MAK (nothing there creates issues). A session on 2026-07-24 already ran this
   hunt and logged it unresolved. Not urgent, and not worth chasing again without
