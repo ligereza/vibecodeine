@@ -210,9 +210,15 @@ def tareas_desde_fichas():
                     continue
                 vistos.add(clave)
                 texto = (
-                    "Que productora organizo el evento del %s con %s en el cartel%s? "
-                    "Responder solo si hay fuente que lo confirme; si no, decir que "
-                    "no se encontro."
+                    "En CHILE (Santiago y alrededores), que productora organizo "
+                    "el evento del %s con %s en el cartel%s? "
+                    "REGLAS: el evento es en Chile, si lo que encontras es de "
+                    "otro pais NO sirve. Solo se acepta respuesta con FUENTE "
+                    "VERIFICABLE (URL de la productora, del recinto, de venta "
+                    "de entradas o de prensa que nombre ese evento en esa "
+                    "fecha). Los nombres del cartel son DATO DE ENTRADA, no "
+                    "respuesta: repetirlos no identifica a nadie. Si no hay "
+                    "fuente, responder exactamente NO SE ENCONTRO."
                     % (fecha, ", ".join(heads[:3]),
                        " en %s" % venue if venue else "")
                 )
