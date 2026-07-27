@@ -184,6 +184,42 @@ def _download_via_parth(url: str, shortcode: str, temp_dir: Path) -> Path:
     return out
 
 
+_EMBED_IMG_RE = re.compile(r'class="EmbeddedMediaImage"[^>]*src="([^"]+)"')
+
+
+def _download_via_embed(shortcode: str, temp_dir: Path) -> Path:
+    """Via para Linux: la pagina de embed publica de Instagram.
+
+    Por que existe: parth-dl no llega desde MAK. Instagram le devuelve un muro
+    de login ("All extraction methods failed") antes siquiera de dar la
+    metadata, asi que el arreglo del fingerprint en la descarga de la imagen no
+    alcanzaba -- fallaba un paso antes. Medido el 2026-07-27 con el flyer del
+    issue #322, que Windows bajaba sin problema.
+
+    El embed (`/p/<code>/embed/captioned/`) responde 200 sin login cuando se lo
+    pide imitando a Chrome, y trae la URL real del CDN.
+
+    LIMITE conocido y no disimulado: el embed publica UNA sola imagen, la
+    primera. Si el link pedia otra del carrusel, por aca no se puede cumplir, y
+    quien llama lo dice en vez de entregar la equivocada en silencio.
+    """
+    from curl_cffi import requests as cffi_requests
+
+    pagina = "https://www.instagram.com/p/%s/embed/captioned/" % shortcode
+    r = cffi_requests.get(pagina, impersonate="chrome", timeout=25)
+    if r.status_code != 200:
+        raise FileNotFoundError("el embed devolvio %s" % r.status_code)
+    m = _EMBED_IMG_RE.search(r.text)
+    if not m:
+        raise FileNotFoundError(
+            "el embed no traia imagen (puede ser privado o borrado)")
+    url_img = m.group(1).encode().decode("unicode_escape")
+    url_img = url_img.replace("&amp;", "&")
+    out = temp_dir / f"embed_{shortcode}.jpg"
+    out.write_bytes(_bajar_imagen(url_img))
+    return out
+
+
 def _download_via_mirror(shortcode: str, temp_dir: Path) -> Path:
     """Fallback sin login: mirror publico (IG bloquea instaloader anonimo desde 2026).
 
@@ -441,13 +477,30 @@ def run_eventos_flyer_auto(
             shutil.rmtree(temp_dir, ignore_errors=True)
         temp_dir.mkdir(parents=True, exist_ok=True)
 
-        # parth-dl primero: cubre reels/video (thumbnail) y posts (1ra imagen).
-        # imginn quedo 403 Cloudflare (2026-07-22); queda de fallback best-effort.
+        # Tres vias, en orden de fidelidad:
+        # 1. parth-dl: la mejor -- cubre reels (thumbnail) y respeta que imagen
+        #    del carrusel se pidio. Funciona desde Windows.
+        # 2. embed publico: la que llega desde Linux. Instagram le sirve un muro
+        #    de login a parth-dl desde MAK (medido 2026-07-27, issue #322), pero
+        #    el embed responde 200 imitando a Chrome. Entrega SOLO la primera
+        #    imagen, asi que si el link pedia otra se avisa en vez de mentir.
+        # 3. mirror: imginn quedo 403 Cloudflare (2026-07-22), best-effort.
         # instaloader confirmado no funcional (IG exige login incluso anonimo).
+        indice = _indice_pedido(url)
         try:
             downloaded = _download_via_parth(url, shortcode, temp_dir)
-        except Exception:
-            downloaded = _download_via_mirror(shortcode, temp_dir)
+        except Exception as e_parth:
+            try:
+                downloaded = _download_via_embed(shortcode, temp_dir)
+                if indice > 1:
+                    print(
+                        f"AVISO: el link pedia la imagen {indice} del carrusel, "
+                        "pero se bajo por el embed publico, que solo entrega la "
+                        "primera. El render usa la primera imagen."
+                    )
+            except Exception as e_embed:
+                print(f"parth-dl: {e_parth}\nembed: {e_embed}")
+                downloaded = _download_via_mirror(shortcode, temp_dir)
 
         if input_img.exists():
             input_img.unlink()
