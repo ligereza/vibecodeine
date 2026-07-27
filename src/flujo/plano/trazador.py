@@ -70,7 +70,13 @@ def _mascara(imagen, umbral: int | None) -> Tuple[List[List[bool]], int, int]:
     gris = imagen.convert("L")
     datos = list(gris.getdata())
     corte = _umbral_otsu(datos) if umbral is None else umbral
-    plano = [v < corte for v in datos]
+    # `<=` y no `<`: en Otsu el umbral es el ULTIMO valor de la clase oscura,
+    # no el primero de la clara. Con `<` una imagen de dos tonos puros (negro
+    # 0 sobre blanco 255) da umbral 0, nada cumple `v < 0`, y el trazador
+    # respondia "la imagen salio vacia" sobre un dibujo perfectamente legible.
+    # Se veia solo con iconos nitidos: los suavizados tienen grises intermedios
+    # y el umbral caia lejos del cero.
+    plano = [v <= corte for v in datos]
     # Si el icono es claro sobre fondo oscuro, lo anterior toma el fondo.
     if sum(plano) > len(plano) * 0.6:
         plano = [not v for v in plano]
