@@ -1995,7 +1995,62 @@ var MAPA = {
   hover: null, dragN: null, panM: null, downAt: null,
   sel: null, bridge: null,
   alpha: 0, t: 0, raf: 0,
+  // Un grafo de fuerzas CONVERGE: despues de acomodarse, seguir calculando
+  // fuerzas es tirar CPU. 'quieto' marca ese estado; 'firma' identifica el
+  // grafo para poder recuperar las posiciones ya acomodadas de una visita
+  // anterior en vez de rehacerlas.
+  quieto: false, firma: '',
 };
+
+// Debajo de esto el movimiento ya no se ve. Es el punto donde el mapa esta
+// acomodado y la fisica deja de aportar.
+var MAPA_REPOSO = 0.004;
+
+function mapDespertar(a) {
+  MAPA.alpha = Math.max(MAPA.alpha, a);
+  MAPA.quieto = false;
+  if (MAPA.running && !MAPA.raf) MAPA.raf = requestAnimationFrame(mapLoop);
+}
+
+/** Un solo cuadro, sin fisica. Para mover la vista, el hover o el zoom:
+ *  cambia lo que se ve, no donde estan los nodos. */
+function mapPintar() {
+  if (MAPA.pintarPedido) return;
+  MAPA.pintarPedido = true;
+  requestAnimationFrame(function() {
+    MAPA.pintarPedido = false;
+    mapDraw();
+  });
+}
+
+function mapFirma() {
+  return MAPA.nodes.length + ':' + MAPA.edges.length + ':' + MAPA.umbral.toFixed(2);
+}
+
+/** Guarda donde quedo cada nodo. Volver a abrir el mapa no deberia costar lo
+ *  mismo que armarlo por primera vez. */
+function mapGuardarPosiciones() {
+  try {
+    var pos = {};
+    MAPA.nodes.forEach(function(n) { pos[n.id] = [Math.round(n.x), Math.round(n.y)]; });
+    localStorage.setItem('micelio_pos', JSON.stringify({firma: mapFirma(), pos: pos}));
+  } catch (e) { /* sin localStorage se recalcula, no es grave */ }
+}
+
+/** Devuelve true si pudo restaurar TODAS las posiciones guardadas. Si el grafo
+ *  cambio (nodos nuevos, otro umbral) la firma no coincide y se recalcula. */
+function mapRestaurarPosiciones() {
+  try {
+    var g = JSON.parse(localStorage.getItem('micelio_pos') || 'null');
+    if (!g || g.firma !== mapFirma()) return false;
+    var faltan = 0;
+    MAPA.nodes.forEach(function(n) {
+      var p = g.pos[n.id];
+      if (p) { n.x = p[0]; n.y = p[1]; n.vx = 0; n.vy = 0; } else { faltan++; }
+    });
+    return faltan === 0;
+  } catch (e) { return false; }
+}
 
 function setView(v) {
   var mv = document.getElementById('map-view');
@@ -2005,8 +2060,8 @@ function setView(v) {
     mv.classList.add('show');
     mapResize();
     if (!MAPA.loaded) mapRefresh(true);
-    else MAPA.alpha = Math.max(MAPA.alpha, 0.3);
-    if (!MAPA.running) { MAPA.running = true; MAPA.raf = requestAnimationFrame(mapLoop); }
+    else mapDespertar(0.3);
+    if (!MAPA.running) { MAPA.running = true; mapDespertar(0.05); }
   } else {
     mv.classList.remove('show');
     MAPA.running = false;
@@ -2026,7 +2081,7 @@ function mapSetUmbral(v) {
   MAPA.umbral = v / 100;
   var el = document.getElementById('map-umbral-val');
   if (el) el.textContent = MAPA.umbral.toFixed(2);
-  MAPA.alpha = 1;
+  mapDespertar(1);
   mapLegend();
 }
 
@@ -2069,7 +2124,10 @@ function mapMerge(nodes, edges) {
   MAPA.edges = (edges || []).filter(function(e) { return by[e.a] && by[e.b]; });
   out.forEach(function(n) { n.deg = 0; });
   MAPA.edges.forEach(function(e) { by[e.a].deg++; by[e.b].deg++; });
-  MAPA.alpha = 1;
+  // Si el grafo es el mismo de la ultima visita, se recuperan las
+  // posiciones ya acomodadas y no hace falta rearmar nada.
+  if (mapRestaurarPosiciones()) { MAPA.alpha = 0; MAPA.quieto = true; mapPintar(); }
+  else mapDespertar(1);
 }
 
 function mapLegend() {
@@ -2090,7 +2148,7 @@ function mapLegend() {
 
 function mapToggleDir(d) {
   MAPA.dirOff[d] = !MAPA.dirOff[d];
-  MAPA.alpha = 0.6;
+  mapDespertar(0.6);
   mapLegend();
 }
 
@@ -2125,7 +2183,13 @@ function mapFit() {
 function mapPhysics() {
   var ns = mapVisibleNodes(), es = mapVisibleEdges();
   if (!ns.length) return;
-  var a = Math.max(MAPA.alpha, 0.025);   // nunca congelado: organismo vivo
+  // Antes aca habia un piso (`Math.max(MAPA.alpha, 0.025)`) con el comentario
+  // "nunca congelado: organismo vivo". Ese piso impedia converger, asi que el
+  // mapa recalculaba fuerzas para siempre aunque ya estuviera acomodado y
+  // nadie lo tocara. Vivo no significa hacer cuentas al pedo: el organismo
+  // sigue vivo porque despierta al instante ante cualquier interaccion, dato
+  // nuevo o cambio de umbral (mapDespertar).
+  var a = MAPA.alpha;
   var c = document.getElementById('map-canvas');
   var cx = c.clientWidth / 2, cy = c.clientHeight / 2;
   var i, j, n, m, dx, dy, d2, d, f;
@@ -2255,11 +2319,46 @@ function mapDraw() {
 
 function mapLoop() {
   if (!MAPA.running) return;
+  // Con la pestana oculta no se dibuja: nadie lo esta mirando. La fisica del
+  // mapa compara cada nodo contra todos los demas -- con 977 nodos son
+  // ~477.000 cuentas por cuadro -- y eso dejaba un nucleo de MAK clavado al
+  // 97% mientras la cara quedaba abierta en el kiosco sin nadie enfrente
+  // (medido 2026-07-27). El organismo sigue vivo: apenas la pestana vuelve a
+  // verse, el lazo se reanuda solo.
+  if (document.hidden) {
+    MAPA.raf = null;
+    return;
+  }
   MAPA.t += 0.016;
   mapPhysics();
   mapDraw();
+
+  // Ya acomodado y sin nadie tocandolo: se guarda como quedo y el lazo PARA.
+  // Volver a moverlo, cambiar el umbral o traer datos nuevos lo despierta.
+  // Un nodo seleccionado tiene halo animado, asi que ahi se sigue dibujando
+  // -- pero sin fisica, que es lo caro.
+  var animando = !!(MAPA.sel || MAPA.dragN || MAPA.panM);
+  if (MAPA.alpha < MAPA_REPOSO && !animando) {
+    if (!MAPA.quieto) {
+      MAPA.quieto = true;
+      MAPA.firma = mapFirma();
+      mapGuardarPosiciones();
+    }
+    MAPA.raf = null;
+    return;
+  }
   MAPA.raf = requestAnimationFrame(mapLoop);
 }
+
+// Reanudar al volver a mirar. Sin esto, ocultar la pestana una vez apagaba el
+// mapa para siempre y parecia un cuelgue.
+document.addEventListener('visibilitychange', function() {
+  // Al volver a mirar: si estaba acomodado alcanza con un cuadro; si no,
+  // se reanuda la fisica donde habia quedado.
+  if (document.hidden || !MAPA.running) return;
+  if (MAPA.quieto) mapPintar();
+  else if (!MAPA.raf) MAPA.raf = requestAnimationFrame(mapLoop);
+});
 
 // ── investigar DESDE el micelio: los modos de arriba operan sobre el mapa ──
 // click en pieza -> tarjeta de acciones (abrir / investigar con el modo
@@ -2365,22 +2464,24 @@ function mapBind() {
   c.addEventListener('mousedown', function(e) {
     var w = mapWorld(e), n = mapHit(w);
     MAPA.downAt = {x: e.clientX, y: e.clientY, n: n};
-    if (n) { MAPA.dragN = n; MAPA.alpha = Math.max(MAPA.alpha, 0.4); }
+    if (n) { MAPA.dragN = n; mapDespertar(0.4); }
     else { MAPA.panM = {mx: e.clientX, my: e.clientY, vx: MAPA.view.x, vy: MAPA.view.y}; c.classList.add('grabbing'); }
   });
   c.addEventListener('mousemove', function(e) {
     if (MAPA.dragN) {
       var w = mapWorld(e);
       MAPA.dragN.x = w.x; MAPA.dragN.y = w.y;
-      MAPA.alpha = Math.max(MAPA.alpha, 0.35);
+      mapDespertar(0.35);
       return;
     }
     if (MAPA.panM) {
       MAPA.view.x = MAPA.panM.vx + (e.clientX - MAPA.panM.mx);
       MAPA.view.y = MAPA.panM.vy + (e.clientY - MAPA.panM.my);
+      mapPintar();
       return;
     }
     var n = mapHit(mapWorld(e));
+    if (n !== MAPA.hover) mapPintar();
     MAPA.hover = n;
     c.classList.toggle('hot', !!n);
     if (n && tip) {
@@ -2411,9 +2512,11 @@ function mapBind() {
     MAPA.view.k = nk;
     MAPA.view.x = px - wx * nk;
     MAPA.view.y = py - wy * nk;
+    mapPintar();
   }, {passive: false});
   c.addEventListener('mouseleave', function() {
     if (tip) tip.classList.remove('show');
+    if (MAPA.hover) mapPintar();
     MAPA.hover = null;
   });
 }
