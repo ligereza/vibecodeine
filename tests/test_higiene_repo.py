@@ -44,6 +44,33 @@ def test_tools_en_registro():
     )
 
 
+def test_registro_sin_herramientas_fantasma():
+    """La direccion inversa, que faltaba (2026-07-27).
+
+    El ratchet solo miraba archivo -> registro, asi que una fila de una
+    herramienta BORRADA se quedaba ahi para siempre y nadie se enteraba. Caso
+    medido: `gen_piel_iskvw.py` figuraba como REVISAR en el registro y el
+    archivo no existia en ninguna rama, asi que el inventario mandaba a un
+    agente a buscar una herramienta inexistente. Un registro que miente en una
+    direccion miente igual.
+
+    Retiro: cuando el registro se genere desde el arbol de archivos.
+    """
+    import re
+
+    capacidades = CAPACIDADES.read_text(encoding="utf-8")
+    # Solo las filas de la tabla del registro: `nombre.py` en la primera celda.
+    declaradas = set(re.findall(r"^\|\s*`([a-z0-9_]+\.py)`\s*\|", capacidades,
+                                re.MULTILINE))
+    existentes = {p.name for p in TOOLS_DIR.glob("*.py") if p.is_file()}
+    fantasmas = sorted(declaradas - existentes)
+    assert not fantasmas, (
+        "el registro de CAPACIDADES.md declara herramientas que no existen en "
+        "tools/: se borro el archivo y quedo la fila. Retirar la fila o "
+        "restaurar la herramienta. Fantasmas: " + ", ".join(fantasmas)
+    )
+
+
 # Configuracion que el usuario edita a mano y que el codigo declara "fuente
 # unica". Si un archivo asi no viaja en el repo, el codigo cae a su respaldo
 # interno y NADIE se entera salvo por una linea en stderr.

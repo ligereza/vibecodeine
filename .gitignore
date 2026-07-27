@@ -223,3 +223,8 @@ xio/show_kit/*_autosave/
 # docs/ o assets/, no sueltas arriba.
 /*.png
 !/PLANO.png
+
+# El archivo unificado de iskvw se GENERA (tools/gen_archivo_iskvw.py). No se
+# versiona: congelarlo ahora seria fijar la forma con los datos mas pobres que
+# va a haber, justo antes de que la percepcion del archivo del artista termine.
+iskvw/datos/archivo.json

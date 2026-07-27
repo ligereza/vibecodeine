@@ -11,9 +11,21 @@ Necesito la **cara visible** de un archivo de obra digital. Se llama **ISKVW**.
 No es un portafolio de agencia ni un currículum: es el archivo de un artista, y
 lo que importa es dejar ver la obra, no venderla.
 
-**Leé primero los dos archivos que te paso**: `CONTRATO.md` dice qué tiene que
-cumplir cualquier propuesta, y `ESQUEMA.md` dice exactamente qué datos vas a
-recibir. Todo lo que muestres tiene que salir de ahí.
+**Leé primero los archivos que te paso**: `CONTRATO.md` dice qué tiene que
+cumplir cualquier propuesta, y `ESQUEMA_ARCHIVO.md` dice exactamente qué datos
+vas a recibir. Todo lo que muestres tiene que salir de ahí.
+
+Lo que recibís es **un solo archivo**, `datos/archivo.json`, con dos listas:
+**piezas** y **vínculos entre piezas**. No importa qué hay detrás — obras del
+artista, informes de una máquina que las lee, código — todo llega con la misma
+forma. Eso es a propósito: tu piel no tiene que saber de dónde salió, y el día
+que aparezca un tipo de pieza nuevo, tu piel sigue funcionando sin tocarla.
+
+Hoy son 993 piezas y 3157 vínculos. Los vínculos traen **peso**: algunos están
+medidos de verdad (`semantico`), otros sólo dicen que dos piezas comparten una
+etiqueta (`etiqueta`). **Si tu propuesta dibuja cercanía, distinguí los dos**:
+tratar una coincidencia de palabra como si fuera parentesco medido es
+exactamente el tipo de mentira que este archivo no admite.
 
 ## Lo que NO quiero, y es lo más importante
 

@@ -276,11 +276,18 @@ ALWAYS bound where to look for them.
   compares every pair every frame at `nodeCount || 80` -- the same defect this
   repo already measured and fixed in MAK's micelio. Its `objParser.ts`, which
   normalises any geometry into one scene, IS the answer to how 2D and 3D coexist.
-- **The two iskvw generators have to converge.** `gen_campo_iskvw.py` reads the
-  real archive from the box and produces measured positions;
-  `gen_archivo_iskvw.py` produces the pieces-and-relations contract but reads the
-  8 pieces of `obras.json`. Two outputs (`campo.json`, `archivo.json`) answering one
-  question is how the previous divergence started.
+- **The two iskvw generators split one answer, and the seam is POSITION.** Run
+  against the real box 2026-07-27, measured not read: `gen_archivo_iskvw.py
+  --fuente todo` ALREADY unifies both bodies of work into the pieces-and-relations
+  contract (1004 pieces, 3188 links: 705 obras + 214 informes + 85 codigo, 898 KB)
+  -- `obras.json` is only its default, not a limit, and those 8 are real
+  generative pieces of the repo practice, valid UTF-8, not fake material. What is
+  split is that `gen_campo_iskvw.py`'s measured positions are NOT in the contract:
+  `archivo.json` has relations without positions, `campo.json` positions without
+  relations, and a skin wanting both must know two files. The convergence is
+  position as an OPTIONAL field of the contract, not merging the generators --
+  projecting needs the vectors and the contract does not. Loose thread noticed,
+  not chased: the contract counts 705 obras and the field 697.
 - **iskvw, what it is actually asking for.** Not a style: the SUBSTRATE. Today
   the data/contract/skin split exists only for iskvw, and MAK's micelio has its
   own nodes and its own drawing -- the same work done twice, and a new skin
@@ -340,10 +347,3 @@ list of what is pending. Before working an item, check it is still true.
 - The repo's front door is honest again but the CLI still speaks Spanish to the
   operator, so `MAPA.md`'s generated command table does too. That is deliberate
   (it mirrors what the user sees when he runs a command), not an oversight.
-
-**Correction worth keeping (2026-07-27):** `iskvw/datos/obras.json` is NOT fake
-material and "exercises" undersold it. Those 8 are real generative pieces of the
-repo practice -- VOLA, Campo, Cenefa, Malla Reactiva -- valid UTF-8 with correct
-diacritics, verified byte by byte. So there are TWO BODIES OF WORK, not fake
-against real, which is exactly what the pieces-and-relations contract is for:
-the convergence is one contract over two sources, not one file replacing another.
