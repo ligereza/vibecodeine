@@ -186,7 +186,7 @@ via read-only `/api/mak` and `/api/portafolio` (MAK had zero references in
 
 The same material exists in three places with three different roles, and mixing
 them has already cost whole sessions. On 2026-07-27 a skin ran for hours over
-the 8 exercises in `iskvw/datos/obras.json` while the 697 real works sat in MAK
+the 8 pieces in `iskvw/datos/obras.json` while the 697 archive works sat in MAK
 the whole time. Which layer a datum lives in is not a detail:
 
 | layer | what it is | what lives there | what must NOT |
@@ -251,7 +251,7 @@ ALWAYS bound where to look for them.
   configuration with everything in by default. It dismissed two references the
   user sent WITHOUT OPENING THEM, then asked the list about its own limits and
   got answers inside them. It invented a GPU limit that did not exist. It built
-  for hours on the 8 repo exercises while the real archive was on the box. It
+  for hours on the 8 pieces of `obras.json` while the archive was on the box. It
   shipped positions that came from a hash of the identifier -- a lie the repo had
   ALREADY warned about in `projects/cultura/doublecup/svg/README.md` -- and the
   correction is the only thing of that stretch worth keeping: PCA 3.8%, its own
@@ -278,7 +278,7 @@ ALWAYS bound where to look for them.
 - **The two iskvw generators have to converge.** `gen_campo_iskvw.py` reads the
   real archive from the box and produces measured positions;
   `gen_archivo_iskvw.py` produces the pieces-and-relations contract but reads the
-  8 repo exercises. Two outputs (`campo.json`, `archivo.json`) answering one
+  8 pieces of `obras.json`. Two outputs (`campo.json`, `archivo.json`) answering one
   question is how the previous divergence started.
 - **iskvw, what it is actually asking for.** Not a style: the SUBSTRATE. Today
   the data/contract/skin split exists only for iskvw, and MAK's micelio has its
@@ -339,3 +339,10 @@ list of what is pending. Before working an item, check it is still true.
 - The repo's front door is honest again but the CLI still speaks Spanish to the
   operator, so `MAPA.md`'s generated command table does too. That is deliberate
   (it mirrors what the user sees when he runs a command), not an oversight.
+
+**Correction worth keeping (2026-07-27):** `iskvw/datos/obras.json` is NOT fake
+material and "exercises" undersold it. Those 8 are real generative pieces of the
+repo practice -- VOLA, Campo, Cenefa, Malla Reactiva -- valid UTF-8 with correct
+diacritics, verified byte by byte. So there are TWO BODIES OF WORK, not fake
+against real, which is exactly what the pieces-and-relations contract is for:
+the convergence is one contract over two sources, not one file replacing another.
