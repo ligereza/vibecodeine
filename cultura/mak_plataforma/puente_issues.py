@@ -498,7 +498,7 @@ def main():
             fcntl.flock(fh, fcntl.LOCK_EX if args.esperar_gpu
                         else fcntl.LOCK_EX | fcntl.LOCK_NB)
         except OSError:
-            _log("la GPU esta ocupada (percepcion o micelio); "
+            _log("ya hay una pasada del puente corriendo; "
                  "reintento al proximo tick")
             return 0
 
