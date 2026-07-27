@@ -135,6 +135,10 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
 #pan-render .datos .f{color:#c3bfb2;padding:2px 0}
 #pan-render .datos .f b{color:#8a8577;font-weight:400}
 #pan-render .vacio{color:#5f5b50;font-size:.74rem}
+#pan-render .pend-cab{color:#d4a259;font-size:.7rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+#pan-render .rd.pend{border-color:#4a3a26;background:#100c08}
+#pan-render .rd.pend .motivo{color:#d4a259;font-size:.75rem;margin-top:6px;line-height:1.45}
+#pan-render #r-pendientes{margin-bottom:20px}
 @media(max-width:700px){#pan-render{padding:16px 14px}}
 #centro iframe.on{display:block}
 #franja{flex:none;height:170px;display:flex;border-top:1px solid #211f18;background:#0d0b09;
@@ -195,6 +199,7 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
    la percibió — no que no exista.</div>
   <div id="r-config" class="cfg">cargando…</div>
   <div id="r-aviso"></div>
+  <div id="r-pendientes"></div>
   <div id="r-lista">cargando…</div>
  </div>
 </div>
@@ -312,6 +317,21 @@ function pintarConfigRender(c, pend){
   '<button onclick="guardarConfigRender()">guardar</button>'+
   '<span style="color:#5f5b50;font-size:.7rem">'+pend+' en la bandeja</span>';
 }
+// Lo pendiente va ARRIBA y con su motivo. Es lo unico que necesita al usuario:
+// lo hecho ya esta en su Drive.
+function pintarPendientes(ps){
+ var el=document.getElementById('r-pendientes');
+ if(!ps.length){el.innerHTML='';return;}
+ el.innerHTML='<div class="pend-cab">'+ps.length+' pendiente'+(ps.length>1?'s':'')+
+   ' — necesitan Windows</div>'+ps.map(function(p){
+   return '<div class="rd pend"><div class="cab">'+
+     '<span class="num mal">#'+esc(p.issue)+' · '+esc(p.code||'')+'</span>'+
+     (p.imagen>1?'<span style="color:#5f5b50;font-size:.68rem">imagen '+esc(p.imagen)+'</span>':'')+
+     '<span class="ts">'+esc(p.ts)+'</span></div>'+
+     '<div class="motivo">'+esc(p.pendiente||'sin motivo')+'</div>'+
+     '<div class="link">'+esc(p.url)+'</div></div>';
+ }).join('');
+}
 function pintarRenders(hs){
  var el=document.getElementById('r-lista');
  if(!hs.length){el.innerHTML='<div class="vacio">Todavía no renderizó ningún issue.</div>';return;}
@@ -330,7 +350,7 @@ function pintarRenders(hs){
      : '<div class="datos"><h4>data extraída del flyer</h4>'+
        '<div class="vacio">La curatoría todavía no percibió este flyer.</div></div>';
    return '<div class="rd"><div class="cab">'+
-     '<span class="num'+(h.ok?'':' mal')+'">#'+esc(h.issue)+(h.ok?'':' · falló')+'</span>'+
+     '<span class="num">#'+esc(h.issue)+' · '+esc(h.code||'')+'</span>'+
      (h.imagen>1?'<span style="color:#5f5b50;font-size:.68rem">imagen '+esc(h.imagen)+
        ' del carrusel</span>':'')+
      '<span class="ts">'+esc(h.ts)+'</span></div>'+
@@ -343,6 +363,7 @@ function cargarRender(){
    if(d.error){document.getElementById('r-lista').innerHTML=
      '<div class="vacio">No se pudo leer el departamento: '+esc(d.error)+'</div>';return;}
    pintarConfigRender(d.config||{}, d.pendientes_bandeja||0);
+   pintarPendientes(d.pendientes||[]);
    pintarRenders(d.hechos||[]);
  }).catch(function(){document.getElementById('r-lista').innerHTML=
    '<div class="vacio">No se pudo hablar con el hub.</div>';});
@@ -688,18 +709,28 @@ def _render_estado():
             crudo = (json.load(fh) or {}).get("hechos") or {}
     except (OSError, ValueError):
         crudo = {}
+    pendientes = []
     for numero, d in sorted(crudo.items(), key=lambda kv: kv[1].get("ts", ""),
                             reverse=True):
-        hechos.append({
-            "issue": numero,
-            "url": d.get("url", ""),
-            "ok": bool(d.get("ok")),
-            "destino": d.get("destino") or "",
-            "imagen": d.get("imagen") or 1,
-            "ts": d.get("ts", ""),
-            "datos": _data_extraida(d.get("en_departamento")),
-        })
-    return {"config": cfg, "hechos": hechos[:40],
+        # Un issue puede traer VARIOS links: la jefa manda mas de un evento en
+        # el mismo correo. Cada uno es una pieza con su propio destino.
+        piezas = d.get("piezas")
+        if piezas is None:                      # forma vieja, un solo link
+            piezas = [{"url": d.get("url", ""), "code": "",
+                       "imagen": d.get("imagen") or 1, "ok": bool(d.get("ok")),
+                       "destino": d.get("destino") or "",
+                       "en_departamento": d.get("en_departamento"),
+                       "pendiente": None}]
+        for p in piezas:
+            p = dict(p)
+            p["datos"] = _data_extraida(p.get("en_departamento"))
+            p["issue"] = numero
+            p["ts"] = d.get("ts", "")
+            if p.get("ok"):
+                hechos.append(p)
+            else:
+                pendientes.append(p)
+    return {"config": cfg, "hechos": hechos[:40], "pendientes": pendientes[:20],
             "pendientes_bandeja": _cuenta_bandeja()}
 
 
