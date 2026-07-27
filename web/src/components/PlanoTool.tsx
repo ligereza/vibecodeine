@@ -4,10 +4,10 @@ import {
   Scan, Users, Moon, Home, Table, Armchair, Box, Zap,
   Lightbulb, Droplet, Thermometer, User, ShieldAlert, HeartPulse, Utensils,
   ChevronRight, ChevronLeft, Settings, Copy, Layers, Grid3X3, FileText,
-  Heart, AlertTriangle, Coffee, RefreshCw, Flame, Sofa, Cylinder
+  Heart, AlertTriangle, Coffee, RefreshCw, Flame, Sofa, Cylinder, Save, Upload
 } from 'lucide-react';
 import { cn } from '../utils/cn';
-import { SIMBOLOS_PROPIOS, simboloPropio, markupSimboloPropio, guardarSimbolo, trazarImagen } from '../data/planoSimbolos';
+import { SIMBOLOS_PROPIOS, simboloPropio, markupSimboloPropio, guardarSimbolo, trazarImagen, registrarSimbolosPropios } from '../data/planoSimbolos';
 import { RD_PALETTE, RD_LOGO, calcCostos, formatCLP, proporcionMonto, ALL_PACKS, PACKS, type ExportTheme, type PackId } from '../rdBrand';
 
 // ── Types ────────────────────────────────────────────────────────────
@@ -1236,6 +1236,71 @@ export default function PlanoTool() {
     URL.revokeObjectURL(url);
   };
 
+  // ── el layout como archivo, para que viaje ──
+  // La encargada de eventos arma el plano, exporta el SVG y el rider en PDF,
+  // pero su TRABAJO -- donde puso cada cosa -- se perdia al cerrar la pestana.
+  // Con esto lo manda como archivo, el director lo asocia a la base de datos y
+  // se lo devuelve. Es el unico formato que viaja en las dos direcciones.
+  const PRESET_FORMATO = 1;
+
+  const exportarPreset = () => {
+    const preset_layout = {
+      formato: PRESET_FORMATO,
+      guardado: new Date().toISOString(),
+      evento: { nombre: eventName, fecha: eventDate, lugar: eventVenue },
+      pack: preset,
+      tema: exportTheme,
+      leyenda: { visible: showLegend, x: legendPos.x, y: legendPos.y },
+      grilla: showGrid,
+      // Los simbolos propios viajan con el layout: sin ellos, el plano que
+      // abre el otro lado tendria huecos donde ella puso sus iconos.
+      simbolos_propios: simbolosPropiosSpec(),
+      elementos: elements,
+    };
+    const blob = new Blob([JSON.stringify(preset_layout, null, 2)],
+      { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `preset_${(eventName || 'plano').replace(/\s+/g, '_').toLowerCase()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const importarPreset = async (file: File) => {
+    try {
+      const d = JSON.parse(await file.text());
+      if (!Array.isArray(d?.elementos)) {
+        setBackendStatus('Ese archivo no es un preset de plano.');
+        return;
+      }
+      if (d.formato !== PRESET_FORMATO) {
+        // Se carga igual: negarse por un numero de version dejaria a la
+        // encargada sin poder abrir su propio trabajo. Se avisa y se sigue.
+        setBackendStatus(`Preset de otra version (${d.formato ?? '?'}); se cargo igual.`);
+      }
+      if (Array.isArray(d.simbolos_propios) && d.simbolos_propios.length) {
+        registrarSimbolosPropios(d.simbolos_propios);
+        setRefrescoSimbolos(n => n + 1);
+      }
+      setElements(d.elementos as Element[]);
+      if (d.evento?.nombre) setEventName(d.evento.nombre);
+      if (d.evento?.fecha) setEventDate(d.evento.fecha);
+      if (d.evento?.lugar) setEventVenue(d.evento.lugar);
+      if (d.pack) setPreset(d.pack as PackId);
+      if (d.tema) setExportTheme(d.tema as ExportTheme);
+      if (d.leyenda) {
+        setShowLegend(!!d.leyenda.visible);
+        if (typeof d.leyenda.x === 'number') setLegendPos({ x: d.leyenda.x, y: d.leyenda.y });
+      }
+      if (typeof d.grilla === 'boolean') setShowGrid(d.grilla);
+      setSelectedId(null);
+      setBackendStatus(`Preset cargado: ${d.elementos.length} elementos.`);
+    } catch {
+      setBackendStatus('No se pudo leer el preset (archivo dañado o incompleto).');
+    }
+  };
+
   const loadFromBackend = async (presetId: PackId = preset) => {
     if (window.location.protocol === 'file:') {
       applyPreset(presetId);
@@ -1576,6 +1641,17 @@ export default function PlanoTool() {
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-mono text-zinc-600 mr-2">{Math.round(zoom * 100)}%</span>
                 <button onClick={exportSVG} className="flex items-center gap-1.5 p-2 bg-zinc-900 border border-zinc-800 rounded-lg text-xs font-bold hover:bg-zinc-800 text-zinc-400 hover:text-white"><Download className="w-3.5 h-3.5"/> SVG</button>
+                {/* El layout como archivo: el SVG y el PDF son el resultado,
+                    esto es el TRABAJO, y es lo unico que se puede volver a
+                    abrir y seguir editando. */}
+                <button onClick={exportarPreset} title="Guardar este plano como archivo, para mandarlo o seguirlo despues"
+                  className="flex items-center gap-1.5 p-2 bg-zinc-900 border border-zinc-800 rounded-lg text-xs font-bold hover:bg-zinc-800 text-zinc-400 hover:text-white"><Save className="w-3.5 h-3.5"/> Guardar preset</button>
+                <label title="Abrir un plano guardado"
+                  className="flex items-center gap-1.5 p-2 bg-zinc-900 border border-zinc-800 rounded-lg text-xs font-bold hover:bg-zinc-800 text-zinc-400 hover:text-white cursor-pointer">
+                  <Upload className="w-3.5 h-3.5"/> Abrir preset
+                  <input type="file" accept=".json,application/json" className="hidden"
+                    onChange={e => { const f = e.target.files?.[0]; if (f) importarPreset(f); e.target.value = ''; }} />
+                </label>
               </div>
             </div>
 

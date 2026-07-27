@@ -10,6 +10,8 @@
 // Sin hub (bundle estatico) no hay simbolos propios y el editor funciona con
 // los de fabrica, igual que antes.
 
+import { trazarEnNavegador } from './trazador';
+
 export interface SimboloPropio {
   id: string;
   etiqueta: string;
@@ -109,7 +111,14 @@ export async function trazarImagen(archivo: File): Promise<{ ok: boolean; svg?: 
     if (!data?.ok) return { ok: false, error: data?.error || 'No se pudo trazar la imagen.' };
     return { ok: true, svg: data.svg };
   } catch {
-    return { ok: false, error: 'No hay conexión con flujo. Abrí la app con `py -m flujo app`.' };
+    // Sin servidor se traza en el navegador, con el mismo algoritmo. Antes
+    // esto devolvia "abri la app con py -m flujo app", que es mandar a una
+    // consola a quien recibio un archivo justamente para no tener una.
+    try {
+      return { ok: true, svg: await trazarEnNavegador(archivo) };
+    } catch (e) {
+      return { ok: false, error: (e as Error)?.message || 'No se pudo trazar la imagen.' };
+    }
   }
 }
 
@@ -128,7 +137,67 @@ export interface NuevoSimbolo {
  * Devuelve el motivo cuando falla: quien lo usa no lee logs, y un fallo mudo
  * se siente como "la app no guarda". Sin hub no hay donde escribir y se dice.
  */
+const CLAVE_LOCAL = 'plano_simbolos_propios';
+
+/** Guarda el simbolo en el navegador. Es el camino del HTML suelto.
+ *
+ * Sin esto, el bundle que se le manda a la encargada de eventos le decia "no
+ * hay conexion" justo en la accion que mas usa. Y no es un parche: ella
+ * trabaja con un archivo, no con un servidor. El simbolo queda en su navegador
+ * y ADEMAS viaja dentro del preset que exporta, asi que llega al otro lado.
+ */
+/** Etiqueta -> id, con la MISMA regla que `_slug_simbolo` del hub.
+ *  Si las dos difirieran, el mismo símbolo tendría dos identidades según
+ *  dónde se guardó, y un preset dejaría de encontrarlo. */
+function slugSimbolo(texto: string): string {
+  return texto
+    .normalize('NFKD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 40);
+}
+
+function guardarLocal(nuevo: NuevoSimbolo): { ok: boolean; error?: string } {
+  const id = slugSimbolo(String(nuevo?.etiqueta || ''));
+  if (!id) return { ok: false, error: 'El símbolo necesita un nombre.' };
+  const s: SimboloPropio = {
+    id,
+    etiqueta: String(nuevo.etiqueta || id),
+    color: String(nuevo.color || '#9ca3af'),
+    zona: String(nuevo.zona || ''),
+    cuando: String((nuevo as { cuando?: string }).cuando || 'siempre'),
+    svg: String(nuevo.svg || ''),
+  };
+  const previo = POR_ID.get(id);
+  if (previo) Object.assign(previo, s);
+  else {
+    SIMBOLOS_PROPIOS.push(s);
+    POR_ID.set(id, s);
+  }
+  try {
+    localStorage.setItem(CLAVE_LOCAL, JSON.stringify(simbolosPropiosSpec()));
+  } catch {
+    // Sin localStorage el simbolo vive en esta pestana y viaja en el preset.
+    // Vale mas que negarse a guardarlo.
+  }
+  return { ok: true };
+}
+
+/** Recupera los simbolos guardados en este navegador. Los llama el arranque. */
+export function cargarSimbolosLocales(): number {
+  try {
+    return registrarSimbolosPropios(JSON.parse(localStorage.getItem(CLAVE_LOCAL) || '[]'));
+  } catch {
+    return 0;
+  }
+}
+
 export async function guardarSimbolo(nuevo: NuevoSimbolo): Promise<{ ok: boolean; error?: string }> {
+  // Con hub, el simbolo va al repo y lo ve tambien `flujo plano`. Sin hub
+  // (HTML suelto) queda en el navegador: no es lo mismo, pero es trabajo
+  // guardado en vez de un mensaje de error.
   try {
     const res = await fetch('/api/plano-simbolos', {
       method: 'POST',
@@ -142,8 +211,42 @@ export async function guardarSimbolo(nuevo: NuevoSimbolo): Promise<{ ok: boolean
     await loadPlanoSimbolos();
     return { ok: true };
   } catch {
-    return { ok: false, error: 'No hay conexión con flujo. Abrí la app con `py -m flujo app`.' };
+    return guardarLocal(nuevo);
   }
+}
+
+/** Los simbolos propios tal cual, para meterlos dentro de un preset. */
+export function simbolosPropiosSpec(): SimboloPropio[] {
+  return SIMBOLOS_PROPIOS.map(s => ({ ...s }));
+}
+
+/** Registra simbolos que llegaron DENTRO de un preset, sin hub y sin guardar.
+ *
+ * Por que existe: un preset exportado por la encargada puede traer iconos que
+ * ella creo. Si al abrirlo del otro lado esos iconos no estan, el plano se ve
+ * con huecos justo donde ella puso lo suyo. Se suman a los que haya, sin pisar
+ * uno existente con el mismo id -- lo del disco manda sobre lo que viaja.
+ */
+export function registrarSimbolosPropios(spec: unknown): number {
+  if (!Array.isArray(spec)) return 0;
+  let sumados = 0;
+  for (const raw of spec) {
+    const id = typeof (raw as SimboloPropio)?.id === 'string'
+      ? (raw as SimboloPropio).id.trim() : '';
+    if (!id || POR_ID.has(id)) continue;
+    const s: SimboloPropio = {
+      id,
+      etiqueta: String((raw as SimboloPropio).etiqueta || id),
+      color: String((raw as SimboloPropio).color || '#9ca3af'),
+      zona: String((raw as SimboloPropio).zona || ''),
+      cuando: String((raw as SimboloPropio).cuando || 'siempre'),
+      svg: String((raw as SimboloPropio).svg || ''),
+    };
+    SIMBOLOS_PROPIOS.push(s);
+    POR_ID.set(id, s);
+    sumados++;
+  }
+  return sumados;
 }
 
 export async function loadPlanoSimbolos(signal?: AbortSignal): Promise<void> {
