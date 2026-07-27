@@ -119,7 +119,7 @@ Solo existencia + donde se configura. Nunca el valor de una llave.
 | Blender 4.5 | Render headless (flyer video, Chataigne prep) | WIN: `C:\Program Files\Blender Foundation\Blender 4.5\blender.exe` (OptiX, RTX 4070); MAK: `~/blender/` tarball portable 4.5.3 LTS (CUDA, GTX 1650) |
 | Chataigne builder | Genera `.noisette` para Resolume/Chataigne | `src/flujo/resolume/automator.py::build_chataigne_noisette_experimental`; schema validado contra fixtures reales (`tests/fixtures/chataigne_1103_real*.noisette`, `tests/test_noisette_real_fixture.py`) -- nunca especular, la fixture manda |
 | rclone / OneDrive en MAK | Entrega de renders (Drive de Google via `gdrive:` remote) | systemd `onedrive-rclone.service` en MAK; detalle en `context/LAST_HANDOFF.md` y `src/flujo/version.py` (changelog) |
-| GitHub (gh CLI + runner self-hosted + workflows) | CI, gate de PRs, ordenes de curatoria, publicacion catalogo/portfolio | `gh` CLI local; runner self-hosted `mak` (online, labels `self-hosted,Linux,X64,mak,eventos`, verificado via `gh api repos/.../actions/runners`); workflows activos en `.github/workflows/`: `ci.yml`, `claude.yml`, `airdrop_gate.yml`, `issue_descarga_ig.yml`, `ordenes_curatoria.yml`, `portfolio.yml`, `publicar-catalogo.yml`, `render_piezas_vectoriales.yml`, `validar-piezas.yml`, `build-xio-apk.yml` |
+| GitHub (gh CLI + runner self-hosted + workflows) | CI, gate de PRs, ordenes de curatoria, publicacion catalogo/portfolio | `gh` CLI local; runner self-hosted `mak` (online, labels `self-hosted,Linux,X64,mak,eventos`, verificado via `gh api repos/.../actions/runners`); workflows activos en `.github/workflows/`: `ci.yml`, `claude.yml`, `airdrop_gate.yml`, `issue_descarga_ig.yml`, `ordenes_curatoria.yml`, `render_piezas_vectoriales.yml`, `validar-piezas.yml`, `build-xio-apk.yml` |
 
 Vtracer / curl_cffi / imageio_ffmpeg: usados puntualmente en pipelines de
 render/vectorizacion cuando hace falta, instalados ad-hoc (`pip install
@@ -169,6 +169,7 @@ tabla; archivo sin entrada = ratchet rojo.
 | `compete_engine.py` | VIVO | proyecto tapiz (cultura) | 2026-07 |
 | `context_pack.py` | REVISAR | AI Op Layer 2026-07-25, recien creado, consumidor pendiente | 2026-07-25 |
 | `contexto_repo.py` | VIVO | referenciado en `CLAUDE.md` ("Ahorro de contexto") | 2026-07-25 |
+| `gen_piel_iskvw.py` | REVISAR | piel iskvw; consumidor pendiente de definir junto con DIRECCION.md | 2026-07-27 |
 | `gen_rd_standalone.py` | VIVO | hornea la base RD en `herramientas_rd.html` (bundle sin servidor), `npm run build:rd` | 2026-07-27 |
 | `enviar_a_mak.py` | VIVO | SendTo WIN -> MAK, probado e2e 2026-07-23 | 2026-07-23 |
 | `gen_dashboard_productoras.py` | VIVO | genera `db_productoras.html`; documentado en `docs/rd/DB_PRODUCTORAS_ESTADO.md`; consume la salida de `triangular_fichas.py` | 2026-07-25 (llega a main con la promocion de `rd`, PR #303) |
