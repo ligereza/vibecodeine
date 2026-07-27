@@ -84,33 +84,41 @@ def tareas_desde_fichas():
                 depto, modo = "research", "research"
 
             elif fuente == "ig":
-                linea_inv = _txt(v.get("linea_investigacion"))
+                # Una obra puede proponer las DOS cosas: una pregunta que vale
+                # investigar y un procedimiento que vale programar. Antes esto
+                # era un elif y la linea de investigacion se perdia cada vez que
+                # tambien habia oportunidad de codigo -- probado el 2026-07-26
+                # con una ficha que traia ambas y genero una sola tarea.
+                propuestas = []
                 oport = _txt(v.get("oportunidad_codigo"))
                 if oport:
-                    texto = oport
-                    depto, modo = "codex", "generar"
-                elif linea_inv:
-                    texto = linea_inv
-                    depto, modo = "research", "research"
-                else:
+                    propuestas.append((oport, "codex", "generar"))
+                linea_inv = _txt(v.get("linea_investigacion"))
+                if linea_inv:
+                    propuestas.append((linea_inv, "research", "research"))
+                if not propuestas:
                     continue
             else:
                 continue
 
-            h = _hash(texto)
-            if h in vistos:
-                continue
-            vistos.add(h)
-            tareas.append({
-                "id": h,
-                "origen": fuente,
-                "ficha": f.get("id"),
-                "archivo": f.get("ruta_rel"),
-                "depto": depto,
-                "modo": modo,
-                "texto": texto,
-                "estado": "pendiente",
-            })
+            if fuente == "rd":
+                propuestas = [(texto, depto, modo)]
+
+            for texto_t, depto_t, modo_t in propuestas:
+                h = _hash(texto_t)
+                if h in vistos:
+                    continue
+                vistos.add(h)
+                tareas.append({
+                    "id": h,
+                    "origen": fuente,
+                    "ficha": f.get("id"),
+                    "archivo": f.get("ruta_rel"),
+                    "depto": depto_t,
+                    "modo": modo_t,
+                    "texto": texto_t,
+                    "estado": "pendiente",
+                })
     return tareas
 
 
