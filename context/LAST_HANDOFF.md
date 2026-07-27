@@ -116,6 +116,8 @@ profiles, and the documentation ratchets (`test_mapa_completo`,
 
 | Date | Decision |
 |---|---|
+| 2026-07-27 | **The curation criterion is CONFIGURATION, never a gate waiting on someone.** The system swallows whatever arrives: `data/iskvw_campo_filtro.json` ships entering EVERYTHING, adding a hundred works is running the generator again, and a missing or broken file enters everything and says so on stderr. It is the same lesson already written here for the RD tariff, the floor-plan symbols and the piece kinds. The filter runs BEFORE the projection, because t-SNE places each work relative to the others and dropping works afterwards would leave the rest positioned by neighbours that are gone. Verified: default 697 works / 0 out / 48.9% neighbourhood, restricted to obra+tatuaje 378 works / 319 out / 46.5% recomputed |
+| 2026-07-27 | **The perception classifies at the SOURCE, with a closed vocabulary.** Measured on 937 ig fichas: `vision.tipo_obra` had 20 distinct values, `tatuaje`(42) and `tattoo`(16) were the same type split in half, and `categoria` said 354 works where `tipo_obra` said 503 -- two fields answering one question and drifting. Worse, the new ig prompt had stopped asking for a type at all, so the archive came out with NO classification, and that is what made an agent ask the user to hand-classify 697 works. `TIPOS_OBRA_VALIDOS` invents no name: they are the ones MAK already wrote, collapsed. Anything outside the vocabulary empties instead of becoming a value someone discovers later by counting |
 | 2026-07-27 | **What the people who use this get is a FILE, never a console.** Two self-contained HTMLs, no install, no server, no internet: `plano_rd.html` for the events manager and `herramientas_rd.html` for the rest. Verified by opening them in a browser -- zero console errors across every tab. Regenerated with `py tools/gen_rd_standalone.py` + `npm run build:rd` + `npm run build:plano`. If a feature answers "open the app with py -m flujo app", that feature is broken for its actual user |
 | 2026-07-27 | **Her layout travels as a preset.** She builds the plan, exports the SVG and the rider PDF, and saves a `.json` that carries the elements, the event, the pack and the symbols she created. It goes to the director, gets associated with the database, comes back. Adding a symbol and tracing an image both work offline: the browser tracer is the same algorithm as the Python one, verified byte-for-byte on identical pixels |
 | 2026-07-27 | **An export, not a cut-down branch.** The user asked for an RD line without his own material. A branch that deletes files becomes a SUBSET, and a subset cannot merge back -- that is exactly why `mejoras` was retired. So `rd` stays a full line and what the RD people receive is a generated bundle: it INCLUDES what it names instead of deleting what does not belong. Deleting always forgets something; including cannot |
@@ -158,86 +160,78 @@ profiles, and the documentation ratchets (`test_mapa_completo`,
 
 Three prototypes, in the order he asked for. All regenerate from real data by
 command; no figure is written by hand. They are DIRECTIONS, not facts: open them
-and say what changes.
-
-- **RD, proposal for the board** — `py tools/gen_propuesta_directiva.py --out
-  docs/rd/propuesta_directiva.html`. What RD offers, what it has, how field data
-  is protected, and what the board must approve.
-- **ISKVW, archive prototype** — `py tools/gen_iskvw_prototipo.py --out
-  docs/iskvw/prototipo.html`. The live site's identity as an archive plus the
-  Cyber Terminal language, under the rule that no element may claim a datum it
-  does not measure.
-- **MAK and the portfolio, visible in the app** — new read-only `/api/mak` and
-  `/api/portafolio` endpoints with their panels. MAK had zero references in
-  `web/src` before this.
+and say what changes. `py tools/gen_propuesta_directiva.py` (what RD offers the
+board and what it must approve), `py tools/gen_iskvw_prototipo.py` (the archive
+plus the Cyber Terminal language, under the rule that no element may claim a
+datum it does not measure), and MAK plus the portfolio finally visible in the app
+via read-only `/api/mak` and `/api/portafolio` (MAK had zero references in
+`web/src` before).
 
 ## Blocked, waiting on the user
 
-- **Portfolio aesthetic references: FOUND, not lost.** Three sessions declared
-  them gone in ephemeral cloud containers. They were one level above the repo on
-  the user's own disk the whole time, because everyone searched the repo and
-  their own memory and then declared absence. Exact locations are in the
-  assistant's local memory (they are personal paths and this repo is public).
-  What is still the user's call is which direction is current — that is style,
-  so it gets asked, never assumed.
-- **Design exports.** Re-measured on 2026-07-26, and the entry that used to sit
-  here was wrong twice, which is worth recording: there is NO 0-byte export (the
-  smallest file in the folder is well over 2 KB), and the second source is not
-  "3 days ahead" — it has no exports at all. The real state is one source 7.5
-  days ahead of its two SVGs, and a second source never exported.
-  The settings question is answered: "cada archivo de illustrator es distinto y
-  los valores igual", so this reads its settings per file, like the tariff and
-  the quote items do. What is missing is the user's word on WHICH files to
-  re-export and to what, because the sources are 485 MB and 78 MB and running
-  Illustrator over them acts on his design assets, not on the repo.
-  Lesson attached to this item: a pending task that carries a measurement should
-  be re-measured before acting on it. This one had been repeated for days.
+- **Portfolio aesthetic references: FOUND, not lost**, and the paths are in the
+  assistant's local memory because they are personal. Three sessions declared
+  them gone in ephemeral cloud containers while they sat one level above the repo
+  on his own disk -- everyone searched the repo and their own memory, then
+  declared absence. Which direction is current is style, so it gets asked.
+- **Design exports.** The entry that used to sit here was wrong twice, which is
+  the lesson: a pending task carrying a measurement gets re-measured before
+  anyone acts on it. Real state: one source 7.5 days ahead of its two SVGs, a
+  second source never exported, and no 0-byte file anywhere. Settings are per
+  file, answered ("cada archivo de illustrator es distinto y los valores igual").
+  Missing is only his word on WHICH files to re-export, because the sources are
+  485 MB and 78 MB and running Illustrator over them acts on his design assets.
 
-### Noche del 2026-07-26 -- lo decidido y lo que quedo a medias
+## The three layers: do not confuse them (2026-07-27)
 
-**MAK esta trabajando ahora.** Re-percepcion de `~/RD` con el prompt nuevo,
-encadenada a `~/portfolio_media/media` (iskvw) cuando termine. Guardia en cron
-cada 10 min con `flock`. La cola `material.jsonl` se rearma cada hora y el verbo
-`atender` va primero. NO tocar `procesados.txt` con el proceso vivo.
+The same material exists in three places with three different roles, and mixing
+them has already cost whole sessions. On 2026-07-27 a skin ran for hours over
+the 8 exercises in `iskvw/datos/obras.json` while the 697 real works sat in MAK
+the whole time. Which layer a datum lives in is not a detail:
 
-**A MEDIAS, y es lo primero que hay que retomar:** `cultura/mak_plataforma/ideas.py`
-esta escrito y commiteado pero **NO esta conectado al hub de MAK ni probado**.
-Es el pedido del usuario: poder intervenir -- declarar una idea, que el archivo
-le diga con que obras suyas se relaciona (busqueda semantica del micelio, ya
-verificada funcionando), encargarla al frente de la cola, o priorizar por
-patron. Falta: endpoints en `plataforma/hub.py` (`do_GET`/`do_POST`, ver
-`/api/ejecutar` como molde), una pagina, y probarlo.
+| layer | what it is | what lives there | what must NOT |
+|---|---|---|---|
+| **the repo** (public, GitHub) | what travels and deploys | code, generators, the CONFIG the user edits, generated `datos/*.json` small enough to ship, docs | no heavy assets, nothing personal, no absolute paths, no IPs |
+| **the local folder** (this Windows machine) | the workshop | the source material and the tools that need a licence: the design source, the RD working folder, the Instagram export, the aesthetic references, Illustrator, Blender for heavy video | it is NOT backed up from the repo, and nothing here is assumed present on another machine |
+| **MAK** (the Linux box) | the eye and the memory | perception (`fichas.jsonl`), the micelio index with the embeddings, the traced vectors, the GPU renders | it holds no truth of its own: what it produces enters the repo through a PR, never by hand |
 
-**Decidido y NO reabrir:**
+Where each thing actually is on disk lives in the assistant's local memory, not
+here: this repo is public. Look there BEFORE asking the user.
 
-- **MAK deberia ser el renderizador por defecto, no Windows.** Razon del usuario:
-  si esta afuera puede pedir que le den internet a MAK; si hace falta Windows,
-  no hay render. Falta UNA medicion antes de comprometerlo: nunca se renderizo
-  en MAK, que tiene 4 GB de VRAM y ya dio OOM con ollama residente. Windows
-  queda para lo pesado (video de 600 frames, ya probado ahi).
-- **Cuando MAK renderice, que NO cierre el issue**: comenta y lo deja abierto.
-  Un render malo cuesta GPU, no correccion.
-- **Root en el Samsung J6+: decidido, pospuesto.** La idea es SMS -> prende datos
-  moviles -> MAK tiene internet sin depender de nadie. El teléfono seria un
-  punto de acceso permanente y los datos la valvula. Condicion no negociable:
-  control de carga como el del Xiaomi, o la bateria de un telefono viejo
-  enchufado 24/7 es riesgo de incendio.
-- **httpSMS (NdoleStudio) NO sirve para eso.** Leido: la app necesita internet
-  permanente (push de Firebase) y reenvia los SMS a un servidor por HTTP, no
-  dispara acciones locales. Asume resuelto justo lo que se quiere lograr. Si
-  sirve para el caso inverso: que MAK avise por SMS.
-- **Despertar a MAK ya esta resuelto** (`cultura/mak_plataforma/WAKE_ON_LAN.md`,
-  verificado 2026-07-16): Xiaomi por WoWLAN, Windows por ethernet. El plugin
-  `wake_mak.py` esta staged sin desplegar.
+Two consequences that get repeated as if they were new. A file copied to the box
+does not restart the service that already loaded it, and a running process keeps
+the OLD code after a patch -- so changing MAK's code takes effect on the NEXT
+run, which is also why it is safe to merge while it works. And the exercises in
+the repo are exercises: the real archive is measured on the box.
 
-**El issue de Instagram quedo esperando, sin tocar, a pedido del usuario.** El
-puente `tools/bridge_issue_render.py` NO corre solo: es foreground y hay que
-lanzarlo a mano en Windows porque abre Blender. Ese es el eslabon que el panel
-de Automatizaciones dibuja como automatico y no lo es.
+### Still open from 2026-07-26, in one place
 
-**Cuidado medido esta noche:** un subagente lanzo `find / -iname *.png` en
-Windows y quemo 2124 s de CPU. Al delegar verificacion con capturas, acotar
-SIEMPRE donde buscarlas.
+- `cultura/mak_plataforma/ideas.py` is written and committed but NOT wired into
+  MAK's hub and never tested. The user's ask: declare an idea, have the archive
+  say which of his works it relates to (semantic micelio search, already
+  verified working), put it at the front of the queue, or prioritise by pattern.
+  Missing: endpoints in `plataforma/hub.py` (`/api/ejecutar` is the mould), a
+  page, and a test.
+- **MAK should be the default renderer, not Windows** (user's reason: outdoors he
+  can get internet for MAK; if Windows is required there is no render). One
+  measurement is missing first -- nothing was ever rendered on the box, which has
+  4 GB of VRAM and already OOMed with ollama resident. Windows keeps the heavy
+  work (the 600-frame video, proven there). When MAK renders it does NOT close
+  the issue: it comments and leaves it open, because a bad render costs GPU.
+- **Root on the Samsung J6+: decided, postponed.** SMS -> turns on mobile data ->
+  MAK has internet depending on nobody. Non-negotiable condition: charge control
+  like the Xiaomi's, or an old phone plugged in 24/7 is a fire risk. httpSMS does
+  NOT serve this (it needs permanent internet via Firebase push and forwards SMS
+  to a server; it assumes solved exactly what we want to achieve). Waking MAK is
+  already solved (`cultura/mak_plataforma/WAKE_ON_LAN.md`): Xiaomi by WoWLAN,
+  Windows by ethernet; the `wake_mak.py` plugin is staged, not deployed.
+- `tools/bridge_issue_render.py` does NOT run on its own: it is foreground and
+  has to be launched by hand on Windows because it opens Blender. That is the
+  link the Automations panel draws as automatic and is not.
+
+**Measured care when delegating:** a subagent ran `find / -iname *.png` on
+Windows and burnt 2124 s of CPU. When delegating verification with screenshots,
+ALWAYS bound where to look for them.
 
 ## Open
 
@@ -248,6 +242,44 @@ SIEMPRE donde buscarlas.
   navigation is obvious -> README updated -> the handoff updated on every line.
   **RD and MAK are done. iskvw is what remains.** Its map is
   `docs/rd/MAPA_RD.md` for RD; iskvw still needs its own.
+- **What the 2026-07-27 iskvw stretch got wrong, so it is not repeated.** It was
+  written up as its own file and folded in here, because a second state document
+  is how this repo lost whole sessions before. In order of cost: it treated the
+  curation as a BLOCKER and closed by asking the user to decide which of the 697
+  works were obra -- his correction was one line, "el objetivo n1 era que fuera
+  adaptable a recibir mas obras y que fuera transmutable", and the filter is now
+  configuration with everything in by default. It dismissed two references the
+  user sent WITHOUT OPENING THEM, then asked the list about its own limits and
+  got answers inside them. It invented a GPU limit that did not exist. It built
+  for hours on the 8 repo exercises while the real archive was on the box. It
+  shipped positions that came from a hash of the identifier -- a lie the repo had
+  ALREADY warned about in `projects/cultura/doublecup/svg/README.md` -- and the
+  correction is the only thing of that stretch worth keeping: PCA 3.8%, its own
+  force layout 16.4%, t-SNE 48.9% of neighbourhood preserved. Two of the three
+  looked good and lied, and one of those two was its own. It left 60 zero-byte
+  SVGs that were indistinguishable from good traces, because the tracer opened
+  the destination before tracing. And it tuned a parameter without measuring what
+  it was for: the plan's tracer on photographs gave 13.5% legible and 42% noise;
+  with the right parameters, 60% legible, 2% noise, 18 MB -> 4.9 MB.
+  **If you are about to say "this does not apply" about something he sent you:
+  open it first.**
+- **The libraries that retire hand-written work here, measured on npm
+  2026-07-27** (the previous stretch had to be handed these names verbatim):
+  `@thi.ng/tsne` 0.1.73 is the one that changes something, because the projection
+  needs scikit-learn today and that is why the generator only runs on Windows --
+  in JS the box projects on its own, which is the repo's north star;
+  `@thi.ng/geom-trace-bitmap` 0.3.192 is bitmap -> hairline vector, the tracer;
+  `@thi.ng/rstream-gestures` 5.0.179 is the diaphragm gesture WITH multi-touch,
+  which is the phone, which is the risk never measured; `@thi.ng/distance-
+  transform` 1.0.46. What does NOT serve: the sci-fi reference's `node-network`
+  compares every pair every frame at `nodeCount || 80` -- the same defect this
+  repo already measured and fixed in MAK's micelio. Its `objParser.ts`, which
+  normalises any geometry into one scene, IS the answer to how 2D and 3D coexist.
+- **The two iskvw generators have to converge.** `gen_campo_iskvw.py` reads the
+  real archive from the box and produces measured positions;
+  `gen_archivo_iskvw.py` produces the pieces-and-relations contract but reads the
+  8 repo exercises. Two outputs (`campo.json`, `archivo.json`) answering one
+  question is how the previous divergence started.
 - **iskvw, what it is actually asking for.** Not a style: the SUBSTRATE. Today
   the data/contract/skin split exists only for iskvw, and MAK's micelio has its
   own nodes and its own drawing -- the same work done twice, and a new skin
