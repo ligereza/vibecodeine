@@ -69,6 +69,32 @@ CATEGORIAS_VALIDAS = (
     "foto_evento", "obra", "otro",
 )
 
+# Lo mismo para el archivo del artista. Es un vocabulario CERRADO, y existe por
+# una medicion del 2026-07-27 sobre las 937 fichas ig del corpus real: el prompt
+# viejo dejaba el tipo en texto libre y salieron 20 valores distintos donde
+# tenia que haber un conjunto fijo. Dos pares eran el MISMO tipo escrito de dos
+# formas -- tatuaje(42)/tattoo(16), 58 obras partidas en dos, y obra(503)/
+# obras(3) -- y la cola era tecnica disfrazada de tipo (dibujo, pintura,
+# ilustracion, tela), que ya tiene su propio campo.
+#
+# Ninguno de estos nombres se invento: son los que MAK ya escribio, colapsados.
+# Y hace falta que el tipo VUELVA: el prompt nuevo lo habia dejado de pedir, asi
+# que las fichas ig salian sin ninguna clasificacion -- `categoria` solo se llena
+# desde el prompt RD. Eso es lo que llevo al tramo anterior a pedirle al usuario
+# que clasificara 697 obras a mano.
+TIPOS_OBRA_VALIDOS = (
+    "obra", "tatuaje", "foto_evento", "logo", "flyer_evento",
+    "material_rd", "ficha_sustancia", "otro",
+)
+
+# Lo que el modelo escribe distinto para decir lo mismo. Se normaliza aca, en el
+# ORIGEN, para que no haya que arreglarlo aguas abajo en cada consumidor.
+SINONIMOS_TIPO_OBRA = {
+    "tattoo": "tatuaje", "tatuajes": "tatuaje",
+    "obras": "obra", "obra de arte": "obra", "obras de arte": "obra",
+    "foto": "foto_evento", "fotografia": "foto_evento",
+}
+
 PROMPT_RD = (
     "Esta imagen es material de Reduciendo Dano, una ONG de reduccion de danos "
     "que trabaja en eventos de musica electronica: flyers de fiesta, material "
@@ -99,9 +125,15 @@ PROMPT_ISKVW = (
     "obras del archivo. "
     "Responde SOLO con un objeto JSON, sin texto antes ni despues. Claves "
     "exactas: "
-    '{"descripcion": "", "conceptos": [], "tecnica": "", "materiales": [], '
+    '{"tipo_obra": "", "descripcion": "", "conceptos": [], "tecnica": "", '
+    '"materiales": [], '
     '"colores": [], "texto_visible": "", "datos_extraibles": "", '
     '"linea_investigacion": "", "oportunidad_codigo": ""}. '
+    "tipo_obra debe ser EXACTAMENTE uno de: " + ", ".join(TIPOS_OBRA_VALIDOS) +
+    ". Es lo que la imagen ES, no como esta hecha: si es una obra del artista "
+    "poné obra, si es un tatuaje poné tatuaje, si es la foto de una fiesta poné "
+    "foto_evento. Si no podes decidir, poné otro y no inventes una categoria "
+    "nueva. "
     "conceptos son 3 a 6 ideas o temas que la obra toca, en palabras sueltas o "
     "frases cortas: son las que van a unir esta obra con otras, asi que usa "
     "terminos que se repitan entre obras parecidas y no descripciones unicas. "
@@ -130,6 +162,7 @@ ESQUEMA_POR_FUENTE = {
         ("colores", []),
     ),
     "ig": (
+        ("tipo_obra", ""),
         ("descripcion", ""), ("conceptos", []), ("tecnica", ""),
         ("materiales", []), ("colores", []), ("texto_visible", ""),
         ("datos_extraibles", ""), ("linea_investigacion", ""),
@@ -141,7 +174,8 @@ ESQUEMA_POR_FUENTE = {
 # `datos_evento` (lo extraido, solo RD).
 CLAVES_VISION = {
     "rd": ("texto_visible", "colores"),
-    "ig": ("descripcion", "conceptos", "tecnica", "materiales", "colores",
+    "ig": ("tipo_obra", "descripcion", "conceptos", "tecnica", "materiales",
+           "colores",
            "texto_visible", "datos_extraibles", "linea_investigacion",
            "oportunidad_codigo"),
 }
@@ -458,6 +492,23 @@ def _parsear_json_vision(texto: str, fuente: str = "rd") -> dict:
         datos.setdefault(clave, default)
     if datos.get("categoria") not in CATEGORIAS_VALIDAS:
         datos["categoria"] = ""
+    # El tipo del archivo del artista pasa por el mismo aro que la categoria de
+    # RD: se normaliza el sinonimo y lo que no este en el vocabulario cerrado se
+    # vacia, en vez de quedar como un valor nuevo que despues hay que descubrir
+    # contando. Un modelo que contesta "dibujo digital" esta contestando la
+    # tecnica, y la tecnica ya tiene su campo.
+    if "tipo_obra" in datos:
+        t = str(datos.get("tipo_obra") or "").strip().lower()
+        t = SINONIMOS_TIPO_OBRA.get(t, t)
+        datos["tipo_obra"] = t if t in TIPOS_OBRA_VALIDOS else ""
+        # Una sola pregunta, un solo campo. Medido el 2026-07-27: `categoria`
+        # decia 354 obras y `vision.tipo_obra` decia 503 sobre el mismo corpus,
+        # porque los dos contestaban lo mismo y derivaban. Para el archivo del
+        # artista manda el tipo, que es el que el prompt pide.
+        if datos["tipo_obra"] and not datos.get("categoria"):
+            datos["categoria"] = (datos["tipo_obra"]
+                                  if datos["tipo_obra"] in CATEGORIAS_VALIDAS
+                                  else "obra")
     return datos
 
 
