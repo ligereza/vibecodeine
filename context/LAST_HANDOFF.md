@@ -1,5 +1,41 @@
 # SINGLE CHECKPOINT -- repo state
 
+## READ YOUR MEMORY FIRST. Before anything else. Now.
+
+If you are an incoming agent -- new session, or the same one after a compaction
+-- **stop and read the assistant's local memory before you touch anything.**
+
+This is not a suggestion and it is not optional. On 2026-07-27 the user had to
+order it THREE TIMES in one session, and every time the answer he needed was
+already written down. Each time, the agent had a compaction summary and believed
+it was enough. It was not.
+
+What that costs, measured that same night: an agent "discovered"
+`_master_contraportadas.json` and its generator as if they were findings, hours
+after the same session had built them. It reported a stale ten-minute state as a
+defect. It asserted a cause it had invented. It asked the user two questions he
+had already answered.
+
+**How to actually read it** -- two mechanisms make a memory search come back
+empty while the answer sits there, and both were hit on 2026-07-26:
+
+1. `.remember/` is INVISIBLE to the Grep tool. That folder has a `.gitignore`
+   containing `*`, ripgrep honours it, and says nothing. Search it from
+   PowerShell with `Select-String -Path "<repo>\.remember\*"`, which does not
+   honour gitignore. **Never conclude "it does not exist" from a Grep over paths
+   that might be ignored.**
+2. Older memories are written in English while the conversation runs in Spanish.
+   `curatoria` is filed as `curation`. Search both languages, or the shared stem.
+
+Read `.remember/now.md` and today's `.remember/today-*.md` IN FULL, not by
+grepping for a word. Grepping is how you miss what you did not know to look for.
+The full transcript of a compacted session is also on disk; extract the relevant
+stretches with a script -- never open 25 MB whole.
+
+Then read this file, `CLAUDE.md` and `MAPA.md`. Then work.
+
+---
+
 This is the ONLY state file. There used to be seven competing ones (LAST_HANDOFF,
 SESSION_STATE, PLAN_SIGUIENTE_AGENTE, PLAN_SEMANAL_OPUS, ORQUESTACION_SUCESOR,
 WALKTHROUGH, failed-handoff), which is why every agent rebuilt the state from
@@ -80,6 +116,10 @@ profiles, and the documentation ratchets (`test_mapa_completo`,
 
 | Date | Decision |
 |---|---|
+| 2026-07-27 | **What the people who use this get is a FILE, never a console.** Two self-contained HTMLs, no install, no server, no internet: `plano_rd.html` for the events manager and `herramientas_rd.html` for the rest. Verified by opening them in a browser -- zero console errors across every tab. Regenerated with `py tools/gen_rd_standalone.py` + `npm run build:rd` + `npm run build:plano`. If a feature answers "open the app with py -m flujo app", that feature is broken for its actual user |
+| 2026-07-27 | **Her layout travels as a preset.** She builds the plan, exports the SVG and the rider PDF, and saves a `.json` that carries the elements, the event, the pack and the symbols she created. It goes to the director, gets associated with the database, comes back. Adding a symbol and tracing an image both work offline: the browser tracer is the same algorithm as the Python one, verified byte-for-byte on identical pixels |
+| 2026-07-27 | **An export, not a cut-down branch.** The user asked for an RD line without his own material. A branch that deletes files becomes a SUBSET, and a subset cannot merge back -- that is exactly why `mejoras` was retired. So `rd` stays a full line and what the RD people receive is a generated bundle: it INCLUDES what it names instead of deleting what does not belong. Deleting always forgets something; including cannot |
+| 2026-07-27 | **A branch does not hide history.** Anyone cloning `rd` gets every commit, including everything personal. The board therefore receives a file, never a repository. If a separate repo is ever needed it has to be a fresh one, not a branch |
 | 2026-07-27 | **MAK attends the flyer issues on its own, and it is proven.** Issue #328 arrived by mail, and the box took it from cron, paused the perception, rendered on its GPU, uploaded to Drive, commented and closed -- with nobody launching anything. Then #330 did the same honouring `img_index=2`, and the delivered flyer was the second slide, verified by eye. The bridge is `cultura/mak_plataforma/puente_issues.py`, cron `MAK-PUENTE-ISSUES` every 10 minutes. It PAUSES the perception instead of waiting for it: a corpus takes hours and a request from the user should not queue behind background work. It never opens issues, never publishes disk paths, and closes an issue only when nothing is pending |
 | 2026-07-27 | **What MAK cannot do stays visible instead of failing.** Video goes to Windows by the user's decision (the 600-frame render stays there). A post whose embed returns Instagram's own error page says so. Shadowbanned profiles land in the same bucket. All of it appears in the render department of MAK's face, with the reason, above what was delivered |
 | 2026-07-27 | **Instagram blocks the TLS fingerprint, not the User-Agent.** parth-dl gets a login wall from the box before it can read any metadata, so the chain is parth-dl (from Windows, honours the carousel index) -> the public embed with Chrome impersonation (what reaches from Linux) -> the mirror. The embed's `contextJSON` carries the whole carousel, which is how `img_index` is honoured: get the list, pick one, download only that |
@@ -201,9 +241,29 @@ SIEMPRE donde buscarlas.
 
 ## Open
 
-- **MAK is re-perceiving RD and nobody should touch it.** 907 of 1185 at
-  03:30 on 2026-07-27, about two hours left, then it chains into the artist's
-  archive on its own. Six traps cost real time and are in the assistant's
+- **The order the user set for the last stretch (2026-07-27, his words):**
+  RD presentable with zero errors -> MAK working and autonomous -> iskvw
+  (references + the svg bundle: a structure with CLEAR CONNECTORS so the
+  presentation or the style can be swapped) -> a `MAPA.md` per line so
+  navigation is obvious -> README updated -> the handoff updated on every line.
+  **RD and MAK are done. iskvw is what remains.** Its map is
+  `docs/rd/MAPA_RD.md` for RD; iskvw still needs its own.
+- **iskvw, what it is actually asking for.** Not a style: the SUBSTRATE. Today
+  the data/contract/skin split exists only for iskvw, and MAK's micelio has its
+  own nodes and its own drawing -- the same work done twice, and a new skin
+  serves only one of them. What is missing is the layer in between: a contract
+  of PIECES and RELATIONS that does not know whether the works are the artist's
+  or MAK's reports. A skin asks for "the nodes and their links" and always gets
+  the same shape. Then the terminal skin can show the micelio untouched, an
+  external agent can produce a new aesthetic from ONE document, and when the
+  curation adds concepts and technique per work the old skins keep working --
+  a field you do not know is a field you ignore. MAK does not build this: it
+  FEEDS it, from the archive perception that starts on its own when RD ends.
+  The rule it inherits is the doublecup thesis, already applied all session:
+  **no element may claim a datum it does not encode.**
+- **MAK is re-perceiving and nobody should touch it.** 1239 files at 05:00 on
+  2026-07-27, eight hours in; it chains into the artist's archive on its own.
+  Six traps cost real time and are in the assistant's
   memory: a process launched over SSH does not survive the session, `pgrep`
   alone let two perceptions run on a 4 GB GPU -- which is exactly what killed
   the July run -- `procesados.txt` must not be touched while the job holds it, a
