@@ -118,6 +118,35 @@ en el limbo.
 
 ---
 
+## 11. Todo lo anterior tiene que seguir siendo transmutable
+
+**La condición que manda sobre las diez decisiones de arriba.**
+
+Nada de esto puede quedar cableado en el código. El sitio tiene que seguir
+siendo ajustable, configurable y **transmutable hacia otra estética completa**
+sin reescribirlo: el autor cambia de lenguaje visual seguido, y una pieza que
+sólo sirve para la estética de hoy es una pieza que hay que tirar mañana.
+
+Qué significa en concreto:
+
+- Los diez puntos describen una **gramática**, no un aspecto. Otra piel puede
+  cumplirlos con otra paleta, otra tipografía, otro tipo de movimiento.
+- Los valores que definen el carácter —la constante del resorte al bajar y al
+  subir, los ciclos por minuto del pulso respiratorio, los umbrales de las tres
+  velocidades, los modos del drop— viven en **configuración editable**, como
+  `data/rd_packs.json` o `data/plano_simbolos.json` en el lado de RD. No en el
+  bundle.
+- Una estética nueva se pide con `PROMPT_ESTETICA.md` y entra en
+  `piel/<nombre>/`. La anterior no se borra.
+- Si para cambiar el estilo hay que tocar los datos o la gramática, el contrato
+  se rompió.
+
+La prueba de que se cumple es simple: **un agente externo tiene que poder
+producir una piel nueva leyendo sólo los documentos, sin ver el código de la
+anterior.**
+
+---
+
 ## Lo que se descartó, y por qué
 
 | descartado | motivo |
