@@ -52,6 +52,7 @@ CONFIG_DEL_USUARIO = (
     "data/plano_simbolos.json",
     "data/cotizacion_servicios.json",
     "data/svg_estados.json",
+    "data/iskvw_campo_filtro.json",
 )
 
 
