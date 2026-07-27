@@ -26,6 +26,31 @@
                margin-bottom:9px}
   #ficha p{font-size:.83rem;line-height:1.5;color:#b9b4a8;max-width:48ch}
   #ficha .tags{margin-top:10px;font-size:.66rem;color:#6d685f;letter-spacing:.05em}
+  #f-obra{height:0;overflow:hidden;transition:height .5s ease,opacity .5s ease;
+    opacity:0;margin-bottom:6px}
+  #f-obra.on{height:min(38vh,300px);opacity:1}
+  #f-obra svg{height:100%;width:auto;display:block}
+  /* El trazo es linea, no relleno: el original tenia el contorno y el papel, y
+     un relleno negro sobre fondo negro no se ve. */
+  #f-obra svg path{fill:none;stroke:#cfc9bb;stroke-width:.6;vector-effect:non-scaling-stroke}
+  /* En un telefono la ficha con el trazo medio 393 px sobre 844 -- el 47% de la
+     pantalla, casi la mitad del campo tapada. Medido el 2026-07-27 con viewport
+     390x844 y densidad 3. En pantallas angostas el trazo cede altura para que el
+     campo siga siendo lo que se mira; la obra se sigue leyendo porque es linea y
+     escala sin perder el contorno. */
+  @media (max-width:520px){
+    #ficha{padding:14px 18px 20px}
+    #f-obra.on{height:min(22vh,190px)}
+    #ficha p{font-size:.78rem;max-width:100%}
+    #ficha .tags{margin-top:6px}
+  }
+  /* Telefono acostado: lo escaso es la altura, no el ancho. */
+  @media (max-height:480px){
+    #f-obra.on{height:min(22vh,86px)}
+    #ficha{padding:8px 18px 10px}
+    #ficha h1{font-size:1rem;margin:2px 0}
+    #ficha p{display:none}   /* acostado no hay lugar para leer; queda el nombre */
+  }
   #ficha a{color:#e8e4da;pointer-events:auto;text-decoration:none;
            border-bottom:1px solid #3a372f;font-size:.72rem}
 
@@ -48,6 +73,11 @@
 <div id="aire"></div>
 <div id="pista">desliza</div>
 <div id="ficha">
+  <!-- La obra vectorizada. Es lo UNICO del archivo que puede viajar: 1,6 GB de
+       imagen se vuelven 4,9 MB de trazo, y el visitante no baja los 4,9 -- baja
+       los pocos KB de la obra donde freno. Si una obra no tiene trazo (video, o
+       sin contraste suficiente), no se muestra un hueco: no se muestra nada. -->
+  <div id="f-obra" aria-hidden="true"></div>
   <div class="meta" id="f-meta"></div>
   <h1 id="f-titulo"></h1>
   <p id="f-texto"></p>
@@ -279,6 +309,46 @@ function proyectar(n,d,cx,cy){
   return {x: cx + n.x*W*(0.16+d.apertura*0.30), y: cy + dy*(0.55+d.apertura*0.45)};
 }
 
+/* ── la obra, cuando una resuelve ──
+   Se baja UNA sola, al freno, y se recuerda: 640 de las 697 tienen trazo y bajar
+   los 5 MB juntos para mostrar una sola seria justo lo que el trazado vino a
+   evitar. El nombre del archivo es el hash corto del id ("<hash>-<mediaid>").
+   Una obra sin trazo no deja un hueco: la ficha se muestra sin ella. */
+const _trazos = new Map();
+let _pidTrazo = 0;
+// Que obras tienen trazo. 640 de 697 lo tienen; sin esta lista la piel pedia
+// cualquiera y el navegador registraba un 404 por cada una de las 57 que no.
+// Si el indice no esta, se intenta igual: perder la obra es peor que un 404.
+let _hayTrazo = null;
+const indiceTrazos = fetch('../trazos/_indice.json')
+  .then(r => r.ok ? r.json() : null)
+  .then(d => { _hayTrazo = d ? new Set(d.trazos) : null; })
+  .catch(() => { _hayTrazo = null; });
+
+async function mostrarTrazo(o){
+  const caja = document.getElementById('f-obra');
+  const corto = String(o.id || '').split('-')[0];
+  const mio = ++_pidTrazo;
+  if (!corto){ caja.classList.remove('on'); return; }
+  await indiceTrazos;
+  if (_hayTrazo && !_hayTrazo.has(corto)){
+    caja.classList.remove('on'); caja.innerHTML = '';
+    return;
+  }
+  let svg = _trazos.get(corto);
+  if (svg === undefined){
+    try {
+      const r = await fetch(`../trazos/${corto}.svg`);
+      svg = r.ok ? await r.text() : null;
+    } catch (e){ svg = null; }
+    _trazos.set(corto, svg);
+  }
+  // Si el visitante ya siguió de largo, no se pisa la obra que esté mirando.
+  if (mio !== _pidTrazo) return;
+  if (svg){ caja.innerHTML = svg; caja.classList.add('on'); }
+  else { caja.classList.remove('on'); caja.innerHTML = ''; }
+}
+
 /* ── la resolucion: frenar de golpe es el acento ──
      No siempre resuelve en texto. A veces el campo se ordena y no dice nada,
      y eso es parte del lenguaje: si siempre se resuelve en informacion, el
@@ -305,6 +375,7 @@ function resolver(n){
   document.getElementById('f-tags').textContent =
     (o.tags || o.colores || []).map(t=>'#'+t).join('  ');
   ficha.classList.add('on');
+  mostrarTrazo(o);
   // Una obra resuelta tiene direccion propia: sin migas de pan y sin mapa,
   // pero el que la encontro puede volver y puede mandarla.
   if (o.id) history.replaceState(null,'','#'+o.id);
