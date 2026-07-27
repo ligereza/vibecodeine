@@ -99,12 +99,33 @@ py -m flujo brief paquete-cotizacion jobs/<job>
 
 ### RD / Suplementos
 
-Institutional RD work: supplements, quotes, SVG labels/back covers, stand plans, rider/costs.
+Institutional RD work: supplements, quotes, SVG labels/back covers, stand plans,
+rider/costs. Map of the area, in Spanish because the people who use it read
+Spanish: **[`docs/rd/MAPA_RD.md`](docs/rd/MAPA_RD.md)**.
+
+The people who do this work do not open a console. What they get are files that
+open by double-click, with no install, no server and no internet:
+
+```bash
+py tools/gen_rd_standalone.py    # bakes the database into the bundle
+cd web && npm run build:rd       # -> dist_compartir/herramientas_rd.html
+cd web && npm run build:plano    # -> dist_compartir/plano_rd.html
+```
+
+- `plano_rd.html` — the events manager builds the stand plan, exports the SVG
+  and the rider PDF, adds her own symbols (an SVG, or an image the file traces
+  by itself), and saves her layout as a preset that travels and comes back.
+- `herramientas_rd.html` — database, quote, events and order intake.
+- `docs/rd/propuesta_directiva.html` — what goes to the board.
+
+The database inside the bundle comes from the same function the app serves, with
+its privacy allowlist: field by field, contacts excluded on purpose. It is not a
+copy, because a second copy of that allowlist is how a contact field leaks.
 
 ```bash
 py -m flujo suplementos list
-py -m flujo suplementos contraportada "Impulso" --output salida.svg
-py -m flujo suplementos validate svg/suplementos_rd/04_contraportadas/generadas/*.svg
+py -m flujo suplementos validate svg/suplementos_rd/09_contraportadas_dark/*.svg
+py -m flujo rd-db productora <nombre>
 py -m flujo plano projects/plano/ejemplos/evento_ejemplo.json --validate
 ```
 
