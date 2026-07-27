@@ -80,6 +80,7 @@ CONFIG_DEL_USUARIO = (
     "data/cotizacion_servicios.json",
     "data/svg_estados.json",
     "data/iskvw_campo_filtro.json",
+    "data/iskvw_librerias.json",
 )
 
 
