@@ -55,7 +55,6 @@ from pathlib import Path
 
 HOME = Path.home()
 REPO = "ligereza/vibecodeine"
-ETIQUETA = "instagram"          # "Contains Instagram link", la del intake Gmail
 
 FLUJO_SRC = HOME / "flujo" / "src"
 RAIZ_RD = HOME / "RD"
@@ -75,10 +74,36 @@ LOCK = HOME / "plataforma" / ".puente_issues.lock"
 # triangulacion headliner + fecha -> productora.
 BANDEJA = RAIZ_RD / "desde_issues"
 
-REMOTO = os.environ.get("MAK_RCLONE_REMOTO", "gdrive")
-CARPETA_REMOTA = os.environ.get("MAK_RCLONE_CARPETA", "RD/renders")
-
 ESTADO = HOME / "plataforma" / "puente_issues_estado.json"
+
+# Configuracion editable desde la cara del organismo (departamento render).
+# Se relee en cada pasada a proposito: el cron arranca un proceso nuevo cada
+# vez, pero si algun dia esto vive dentro de un servidor, un cambio hecho en la
+# interfaz tiene que valer sin reiniciar nada.
+CONFIG = HOME / "plataforma" / "render_config.json"
+CONFIG_POR_DEFECTO = {
+    "activo": True,
+    "remoto": "gdrive",
+    "carpeta": "RD/renders",
+    "etiqueta": "instagram",
+    "al_departamento": True,
+    "pausar_percepcion": True,
+}
+
+
+def config():
+    cfg = dict(CONFIG_POR_DEFECTO)
+    try:
+        cfg.update(json.loads(CONFIG.read_text(encoding="utf-8")))
+    except (OSError, ValueError):
+        pass
+    # El entorno sigue mandando sobre el archivo: sirve para probar una
+    # entrega distinta sin tocar la configuracion que usa el cron.
+    cfg["remoto"] = os.environ.get("MAK_RCLONE_REMOTO", cfg["remoto"])
+    cfg["carpeta"] = os.environ.get("MAK_RCLONE_CARPETA", cfg["carpeta"])
+    return cfg
+
+
 IG_RE = re.compile(r"https://www\.instagram\.com/[^\s\)\]\"']+", re.IGNORECASE)
 
 
@@ -107,8 +132,8 @@ def _guardar_estado(st):
         _log("aviso: no pude guardar el estado (%s)" % e)
 
 
-def issues_abiertos():
-    r = _gh("issue", "list", "--repo", REPO, "--label", ETIQUETA,
+def issues_abiertos(etiqueta):
+    r = _gh("issue", "list", "--repo", REPO, "--label", etiqueta,
             "--state", "open", "--json", "number,title,body", "--limit", "20")
     if r.returncode != 0:
         _log("error: gh issue list -- %s" % r.stderr.strip()[:200])
@@ -204,20 +229,20 @@ def renderizar(url):
     return True, salida, png
 
 
-def subir(png, numero, shortcode):
+def subir(png, numero, shortcode, cfg):
     """Entrega real: el render a la nube. Devuelve el destino o None.
 
     Es lo que hace util al puente cuando el usuario no esta en casa: el
     archivo aparece en su Drive, no en un disco al que no puede llegar.
     """
     nombre = "render_issue%d_%s.png" % (numero, shortcode)
-    destino = "%s:%s/%s" % (REMOTO, CARPETA_REMOTA, nombre)
+    destino = "%s:%s/%s" % (cfg["remoto"], cfg["carpeta"], nombre)
     r = subprocess.run(["rclone", "copyto", str(png), destino],
                        capture_output=True, text=True, timeout=900)
     if r.returncode != 0:
         _log("error: rclone -- %s" % r.stderr.strip()[:200])
         return None
-    return "%s/%s" % (CARPETA_REMOTA, nombre)
+    return "%s/%s" % (cfg["carpeta"], nombre)
 
 
 def al_departamento(numero, shortcode):
@@ -283,8 +308,24 @@ def _sin_rutas(texto):
     return _RUTA_ABS.sub(corta, texto or "")
 
 
+def _indice_pedido_local(url):
+    """Que imagen del carrusel pidio el link. Se guarda para que la cara pueda
+    mostrar 'imagen 2 de un carrusel' y no dejar dudas de cual se uso."""
+    import urllib.parse
+    try:
+        crudo = urllib.parse.parse_qs(
+            urllib.parse.urlparse(url).query).get("img_index", ["1"])[0]
+        return max(1, int(crudo))
+    except (ValueError, TypeError):
+        return 1
+
+
 def una_pasada(dry_run=False, solo=None):
-    issues = issues_abiertos()
+    cfg = config()
+    if not cfg.get("activo", True) and solo is None:
+        _log("el departamento de render esta apagado en la configuracion")
+        return 0
+    issues = issues_abiertos(cfg["etiqueta"])
     if solo is not None:
         issues = [i for i in issues if i.get("number") == solo]
     if not issues:
@@ -308,13 +349,19 @@ def una_pasada(dry_run=False, solo=None):
             comentar_y_cerrar(numero, True, url, "[dry-run]", None, None, True)
             continue
 
-        with PercepcionEnPausa():
+        if cfg.get("pausar_percepcion", True):
+            with PercepcionEnPausa():
+                ok, salida, png = renderizar(url)
+        else:
             ok, salida, png = renderizar(url)
-        destino = subir(png, numero, code) if ok else None
-        en_depto = al_departamento(numero, code) if ok else None
+        destino = subir(png, numero, code, cfg) if ok else None
+        en_depto = (al_departamento(numero, code)
+                    if ok and cfg.get("al_departamento", True) else None)
         comentar_y_cerrar(numero, ok, url, salida, destino, en_depto, False)
         st["hechos"][str(numero)] = {"url": url, "ok": ok,
                                      "destino": destino,
+                                     "en_departamento": en_depto,
+                                     "imagen": _indice_pedido_local(url),
                                      "ts": time.strftime("%Y-%m-%dT%H:%M:%S")}
         _guardar_estado(st)
         hechos += 1
