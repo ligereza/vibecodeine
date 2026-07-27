@@ -372,8 +372,15 @@ function resolver(n){
   // silencio antes que voz prestada.
   document.getElementById('f-texto').textContent =
     (o.texto_del_artista || o.description_propia || '');
-  document.getElementById('f-tags').textContent =
-    (o.tags || o.colores || []).map(t=>'#'+t).join('  ');
+  // Las capas son datos que se suman al campo sin que la piel se rehaga
+  // (data/iskvw_capas.json). Una piel que no conoce una capa la ignora; esta
+  // conoce dos y las muestra como lo que son, medidas, no adorno.
+  //   tilde  -- el residuo diacritico de lo percibido (proyecto tilde)
+  //   trazo  -- la densidad del vector de la obra
+  const partes = (o.tags || o.colores || []).map(t=>'#'+t);
+  if (o.tilde && o.tilde.marcas)   partes.push('~' + o.tilde.marcas);
+  if (o.trazo && o.trazo.subtrazos) partes.push('/' + o.trazo.subtrazos);
+  document.getElementById('f-tags').textContent = partes.join('  ');
   ficha.classList.add('on');
   mostrarTrazo(o);
   // Una obra resuelta tiene direccion propia: sin migas de pan y sin mapa,
