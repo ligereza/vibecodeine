@@ -37,6 +37,17 @@ interface Data {
   servicios?: Record<string, boolean>;
   productos?: Record<string, Record<string, number>>;
   micelio_chunks?: number;
+  actividad?: Evento[];
+  trabajo?: { hoy?: number; max?: number; ultimo?: string };
+}
+
+interface Evento {
+  depto: string;
+  texto: string;
+  estado: string;
+  t: string;
+  seg?: number;
+  razon?: string;
 }
 
 function duracion(segundos?: number): string {
@@ -187,9 +198,93 @@ export default function MakPanel() {
             Micelio semántico: {data.micelio_chunks} fragmentos indexados.
           </p>
         )}
+        {/* Un departamento que existe y casi no produjo se pierde entre los
+            otros: el conteo esta ahi, pero nadie compara tres tarjetas para
+            darse cuenta. Se dice. */}
+        {departamentosParados(data.productos).length > 0 && (
+          <p className="text-xs text-amber-400/90 mt-2">
+            Sin trabajo real:{' '}
+            {departamentosParados(data.productos).join(', ')}. El departamento está
+            levantado pero casi no produjo nada.
+          </p>
+        )}
+      </div>
+
+      {/* Lo que el usuario echaba de menos, textual: "veo casi nada de lo que
+          hace, ningun pensamiento, nada corriendo". La caja publica esto y el
+          hub no lo mostraba. */}
+      <div>
+        <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+          <Activity className="w-4 h-4" /> Lo que está haciendo
+        </h3>
+
+        {data.trabajo?.max != null && (
+          <p className="text-xs text-neutral-400 mb-2">
+            Trabajos hoy: <b className="text-neutral-200">{data.trabajo.hoy ?? 0}</b> de{' '}
+            {data.trabajo.max}.{' '}
+            {(data.trabajo.hoy ?? 0) < data.trabajo.max / 4 && (
+              <span className="text-amber-400/90">
+                Está muy por debajo de su capacidad: le sobra máquina y le falta trabajo.
+              </span>
+            )}
+          </p>
+        )}
+
+        {fallidos(data.actividad).length > 0 && (
+          <div className="rounded border border-red-900/60 bg-red-950/20 p-3 mb-2">
+            <div className="text-xs font-semibold text-red-300 mb-1">
+              {fallidos(data.actividad).length} de los últimos {(data.actividad ?? []).length}{' '}
+              trabajos fallaron
+            </div>
+            {fallidos(data.actividad).slice(0, 3).map((e, i) => (
+              <div key={i} className="text-xs text-neutral-400">
+                {e.t} · {e.depto} · {e.texto.slice(0, 70)}
+                {e.razon ? ` — ${e.razon.slice(0, 60)}` : ''}
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="rounded border border-neutral-800 divide-y divide-neutral-800/70">
+          {(data.actividad ?? []).slice(0, 12).map((e, i) => (
+            <div key={i} className="flex items-start gap-2 p-2 text-xs">
+              <span className="text-neutral-600 tabular-nums shrink-0">{e.t}</span>
+              <span className="text-neutral-500 uppercase shrink-0 w-16">{e.depto}</span>
+              <span className="flex-1 text-neutral-300">{e.texto}</span>
+              <span
+                className={`shrink-0 ${
+                  e.estado === 'FALLO' ? 'text-red-400' : 'text-emerald-400/80'
+                }`}
+              >
+                {e.estado === 'FALLO' ? 'falló' : `${e.seg ?? '?'}s`}
+              </span>
+            </div>
+          ))}
+          {(data.actividad ?? []).length === 0 && (
+            <p className="p-3 text-xs text-neutral-500">
+              La caja no reportó actividad. Puede ser que no haya trabajado, o que el
+              registro se haya cortado.
+            </p>
+          )}
+        </div>
+        <p className="text-xs text-neutral-500 mt-2">
+          Cada línea es un trabajo <b>ya terminado</b>: la caja publica cuando cierra,
+          no mientras piensa. Por eso nunca se ve nada «corriendo».
+        </p>
       </div>
     </div>
   );
+}
+
+/** Departamentos levantados que casi no produjeron: se dicen, no se deducen. */
+function departamentosParados(productos?: Record<string, Record<string, number>>): string[] {
+  return Object.entries(productos ?? {})
+    .filter(([, valores]) => Object.values(valores).reduce((a, b) => a + b, 0) <= 1)
+    .map(([depto]) => depto);
+}
+
+function fallidos(eventos?: Evento[]): Evento[] {
+  return (eventos ?? []).filter(e => e.estado === 'FALLO');
 }
 
 function Tarjeta({

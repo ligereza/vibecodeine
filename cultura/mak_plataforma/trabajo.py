@@ -30,6 +30,10 @@ except Exception:  # noqa: BLE001 - si falla, asumimos online
         return True
 try:
     import backlog  # noqa: E402
+    try:
+        import material  # noqa: E402
+    except Exception:
+        material = None
 except Exception:
     backlog = None
 
@@ -113,6 +117,20 @@ def _tarea(verbo, st):
         return None
     fuente = v["fuente"]
     sems = _lineas(SEMILLAS_F, roles.SEMILLAS)
+    if fuente == "material":
+        # La cola que sale de lo percibido (triangulacion RD + lineas de las
+        # obras). Si esta vacia devolvemos None y la rotacion sigue: el modo
+        # autonomo es el fallback, no el default.
+        if material is None:
+            return None
+        tarea = material.pop_pendiente()
+        if not tarea:
+            return None
+        if tarea.get("depto") == "codex":
+            return ("codex", {"modo": tarea.get("modo", "generar"),
+                              "pedido": tarea["texto"], "densidad": "medio"})
+        return ("research", {"modo": tarea.get("modo", "research"),
+                             "tema": tarea["texto"], "densidad": "corto"})
     if fuente == "concepto":
         if backlog is not None:
             entrada = backlog.pop_pendiente(BACKLOG_GEN)

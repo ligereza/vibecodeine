@@ -19,6 +19,10 @@ import os
 
 # verbo -> como se despacha. depto+modo ya traen los modelos correctos por rol.
 VERBOS = [
+    # 'atender' primero: el material real del usuario tiene prioridad sobre el
+    # trabajo autonomo. Si su cola esta vacia, este verbo no produce tarea y la
+    # rotacion sigue con los demas -- o sea, el modo autonomo vuelve solo.
+    {"verbo": "atender", "depto": "research", "modo": "research", "fuente": "material"},
     {"verbo": "multiplicar", "depto": "research", "modo": "research", "fuente": "concepto"},
     {"verbo": "definir",     "depto": "research", "modo": "research", "fuente": "definir"},
     {"verbo": "limpiar",     "depto": "codex",    "modo": "revisar",  "fuente": "modulo"},

@@ -137,11 +137,17 @@ class TestConstruirFicha:
         assert ficha["ruta_rel"] == "flyer.jpg"
         assert ficha["ocr_texto"] == ""
         assert ficha["categoria"] == ""
-        assert set(ficha["vision"].keys()) == {"descripcion", "estilo", "colores", "tipo_obra"}
-        assert ficha["vision"]["descripcion"] == ""
-        assert ficha["vision"]["colores"] == []
-        assert set(ficha["datos_evento"].keys()) == {"productora", "venue", "fecha", "handles"}
+        # El esquema depende del corpus desde 2026-07-26: habia UN prompt para
+        # dos trabajos distintos (extraer datos de un flyer de RD vs. mapear
+        # conceptualmente una obra del archivo), y el constructor de fichas
+        # descartaba en silencio todo campo que el prompt nuevo pedia -- entre
+        # ellos `headliners`, que es la mitad de la formula de triangulacion.
+        # Ante fallo total, `vision` queda vacio: no hay nada que reportar.
+        assert ficha["vision"] == {}
+        assert set(ficha["datos_evento"].keys()) == {
+            "productora", "venue", "fecha", "headliners", "handles"}
         assert ficha["datos_evento"]["handles"] == []
+        assert ficha["datos_evento"]["headliners"] == []
         assert ficha["calidad_senal"] == "baja"
         assert ficha["error"] == "ollama_no_disponible: boom"
         assert isinstance(ficha["seg_proceso"], float)
@@ -163,7 +169,11 @@ class TestConstruirFicha:
         assert ficha["calidad_senal"] == "alta"
         assert ficha["categoria"] == "flyer_evento"
         assert ficha["datos_evento"]["productora"] == "Amelie"
-        assert ficha["vision"]["estilo"] == "neon"
+        # 'estilo' es vocabulario del archivo del artista, no de un flyer de
+        # RD: bajo el esquema por corpus (2026-07-26) una ficha de RD guarda lo
+        # extraible -- texto visible y colores -- y no interpreta la pieza.
+        assert "estilo" not in ficha["vision"]
+        assert ficha["vision"]["colores"] == ["#fff"]
 
     def test_clasificacion_otro_sin_analisis(self, tmp_path):
         with mock.patch("percepcion.ocr_tesseract") as ocr_mock, \
@@ -175,7 +185,9 @@ class TestConstruirFicha:
         vision_mock.assert_not_called()
         assert ficha["tipo"] == "otro"
         assert ficha["ocr_texto"] == ""
-        assert ficha["vision"]["descripcion"] == ""
+        # Sin analisis no hay nada percibido: `vision` vacio en vez de un
+        # diccionario de claves vacias que aparentaba contenido.
+        assert ficha["vision"] == {}
         assert ficha["categoria"] == ""
         assert ficha["error"] is None
         assert ficha["calidad_senal"] == "baja"

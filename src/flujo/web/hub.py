@@ -1201,6 +1201,29 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             },
             "productos": productos,
             "micelio_chunks": crudo.get("micelio_chunks"),
+            # Lo que el panel NO mostraba y es justo lo que el usuario echaba de
+            # menos: "veo casi nada de lo que hace, ningun pensamiento, nada
+            # corriendo". La caja publica su actividad y su cupo del dia, y el
+            # hub los ignoraba: solo decia si estaba viva. Campo por campo, no
+            # `**dict` -- la caja es suya, pero este endpoint es publico y no
+            # reenvia lo que no entiende.
+            "actividad": [
+                {
+                    "depto": str(e.get("depto") or ""),
+                    "texto": str(e.get("texto") or ""),
+                    "estado": str(e.get("estado") or ""),
+                    "t": str(e.get("t") or ""),
+                    "seg": e.get("seg"),
+                    "razon": str(e.get("rz") or ""),
+                }
+                for e in ((crudo.get("actividad") or {}).get("eventos") or [])
+                if isinstance(e, dict)
+            ][:30],
+            "trabajo": {
+                "hoy": (crudo.get("trabajo") or {}).get("hoy"),
+                "max": (crudo.get("trabajo") or {}).get("max"),
+                "ultimo": str((crudo.get("trabajo") or {}).get("ultimo") or ""),
+            },
         }
 
     def _get_rd_db(self) -> dict:
