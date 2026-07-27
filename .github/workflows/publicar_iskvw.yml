@@ -1,0 +1,94 @@
+# Publica iskvw en GitHub Pages (iskvw.cl).
+#
+# Por que existe. El dominio estaba configurado con certificado HTTPS valido y
+# devolvia 404 en TODO, medido el 2026-07-27: Pages esta en modo `workflow` y no
+# habia ningun workflow que subiera nada -- los dos que existian se retiraron en
+# el PR #341 porque publicaban al repo `portfolio-auto`, que quedo descartado.
+# Un dominio configurado que responde un error es peor que un dominio sin sitio.
+#
+# Que sube. SOLO `iskvw/`, no el repo entero: la piel, sus librerias, los datos
+# del campo y los 649 trazos vectoriales. Nada de RD, nada de MAK, nada de xio.
+# Las imagenes originales del archivo NO viajan (1,6 GB); lo que viaja es el
+# trazo, que es exactamente para lo que se hizo: 4,9 MB para 649 obras, y el
+# visitante baja solo la obra donde freno.
+#
+# Verificado antes de existir: la piel corre a 60 fps con 697 nodos en telefono
+# parado, acostado, chico, tablet y escritorio, con CPU estrangulada y densidad
+# 3, cero errores de consola en los cinco.
+name: publicar iskvw
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'iskvw/**'
+      - '.github/workflows/publicar_iskvw.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Un despliegue a la vez. `cancel-in-progress: false` a proposito: cancelar un
+# deploy a medias puede dejar el sitio en un estado que nadie eligio.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.desplegar.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: armar el sitio
+        run: |
+          set -euo pipefail
+          mkdir -p _sitio
+          cp -r iskvw/. _sitio/
+          # La raiz lleva a la piel. Sin esto el dominio sigue en 404, que es
+          # justo el defecto que este workflow viene a cerrar.
+          cp iskvw/piel/campo/index.html _sitio/index.html
+          # index.html en la raiz pide sus datos con '../../datos/...' porque
+          # vive dos niveles mas abajo. Se reescribe a la raiz en la COPIA, no
+          # en el archivo del repo.
+          sed -i "s#\.\./\.\./datos/#datos/#g; s#\.\./trazos/#piel/trazos/#g; s#\.\./lib/#piel/lib/#g" _sitio/index.html
+          # Jekyll ignora todo lo que empieza con _ , y el indice de trazos se
+          # llama _indice.json. Sin esto el sitio pide un archivo que Pages no
+          # publica y la consola se llena de 404.
+          touch _sitio/.nojekyll
+          echo "iskvw.cl" > _sitio/CNAME
+
+      - name: comprobar que lo que se sube existe
+        run: |
+          set -euo pipefail
+          # con contenido
+          for f in index.html piel/campo/index.html datos/campo.json \
+                   piel/trazos/_indice.json CNAME; do
+            test -s "_sitio/$f" || { echo "FALTA o vacio: $f"; exit 1; }
+          done
+          # `.nojekyll` es VACIO por diseño, asi que se comprueba existencia y no
+          # tamaño. Con `test -s` este job fallaba -- encontrado simulando el
+          # armado en local antes de que corriera en CI.
+          test -f _sitio/.nojekyll || { echo "FALTA: .nojekyll"; exit 1; }
+          # `find`, no `ls` con glob: el glob no distingue "no hay archivos" de
+          # "no pude expandir la ruta".
+          n=$(find _sitio/piel/trazos -name '*.svg' | wc -l)
+          test "$n" -gt 600 || { echo "solo $n trazos, se esperaban 600+"; exit 1; }
+          # Un SVG de 0 bytes es indistinguible de un trazo bueno servido: ese
+          # defecto ya paso una vez, 60 archivos vacios en disco.
+          vacios=$(find _sitio/piel/trazos -name '*.svg' -size 0 | wc -l)
+          test "$vacios" -eq 0 || { echo "$vacios trazos vacios"; exit 1; }
+          echo "OK: $n trazos, 0 vacios"
+          du -sh _sitio
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _sitio
+      - id: desplegar
+        uses: actions/deploy-pages@v4

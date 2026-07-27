@@ -253,6 +253,27 @@ def trazar_archivo(base: Path, destino: Path, fichas: dict) -> tuple[int, int]:
     return ok, fallo
 
 
+def escribir_indice_trazos(dir_trazos: Path) -> int:
+    """La lista de obras que TIENEN trazo, para que la piel no pida las que no.
+
+    Medido el 2026-07-27: 640 de las 697 obras tienen trazo (las 57 restantes son
+    video o imagen sin contraste suficiente). Sin esta lista la piel pedia el
+    trazo de cualquiera y el navegador registraba un 404 por cada una. Un 404
+    esperado no es un error, pero ensucia la consola y con eso vuelve
+    indistinguible un fallo de verdad -- y "cero errores de consola" es el
+    criterio con el que se acepta una entrega en este repo.
+
+    No necesita ni los vectores ni la caja: lee el directorio y escribe.
+    """
+    hashes = sorted(p.stem for p in dir_trazos.glob("*.svg")
+                    if p.is_file() and p.stat().st_size > 0)
+    salida = dir_trazos / "_indice.json"
+    salida.write_text(json.dumps({"version": 1, "trazos": hashes}),
+                      encoding="utf-8")
+    print(f"{salida}: {len(hashes)} trazos")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--salida", type=Path,
@@ -267,7 +288,14 @@ def main() -> int:
     ap.add_argument("--filtro", type=Path, default=FILTRO,
                     help="que tipos entran (default: data/iskvw_campo_filtro.json, "
                          "que entra en todo)")
+    ap.add_argument("--indice-trazos", type=Path, default=None,
+                    metavar="DIR",
+                    help="solo escribe DIR/_indice.json con los trazos que hay "
+                         "y termina; no necesita vectores ni la caja")
     args = ap.parse_args()
+
+    if args.indice_trazos:
+        return escribir_indice_trazos(args.indice_trazos)
 
     if args.vectores:
         import numpy as np
