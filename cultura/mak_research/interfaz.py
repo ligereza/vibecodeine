@@ -2255,11 +2255,29 @@ function mapDraw() {
 
 function mapLoop() {
   if (!MAPA.running) return;
+  // Con la pestana oculta no se dibuja: nadie lo esta mirando. La fisica del
+  // mapa compara cada nodo contra todos los demas -- con 977 nodos son
+  // ~477.000 cuentas por cuadro -- y eso dejaba un nucleo de MAK clavado al
+  // 97% mientras la cara quedaba abierta en el kiosco sin nadie enfrente
+  // (medido 2026-07-27). El organismo sigue vivo: apenas la pestana vuelve a
+  // verse, el lazo se reanuda solo.
+  if (document.hidden) {
+    MAPA.raf = null;
+    return;
+  }
   MAPA.t += 0.016;
   mapPhysics();
   mapDraw();
   MAPA.raf = requestAnimationFrame(mapLoop);
 }
+
+// Reanudar al volver a mirar. Sin esto, ocultar la pestana una vez apagaba el
+// mapa para siempre y parecia un cuelgue.
+document.addEventListener('visibilitychange', function() {
+  if (!document.hidden && MAPA.running && !MAPA.raf) {
+    MAPA.raf = requestAnimationFrame(mapLoop);
+  }
+});
 
 // ── investigar DESDE el micelio: los modos de arriba operan sobre el mapa ──
 // click en pieza -> tarjeta de acciones (abrir / investigar con el modo
