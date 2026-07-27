@@ -80,6 +80,14 @@ profiles, and the documentation ratchets (`test_mapa_completo`,
 
 | Date | Decision |
 |---|---|
+| 2026-07-27 | **MAK attends the flyer issues on its own, and it is proven.** Issue #328 arrived by mail, and the box took it from cron, paused the perception, rendered on its GPU, uploaded to Drive, commented and closed -- with nobody launching anything. Then #330 did the same honouring `img_index=2`, and the delivered flyer was the second slide, verified by eye. The bridge is `cultura/mak_plataforma/puente_issues.py`, cron `MAK-PUENTE-ISSUES` every 10 minutes. It PAUSES the perception instead of waiting for it: a corpus takes hours and a request from the user should not queue behind background work. It never opens issues, never publishes disk paths, and closes an issue only when nothing is pending |
+| 2026-07-27 | **What MAK cannot do stays visible instead of failing.** Video goes to Windows by the user's decision (the 600-frame render stays there). A post whose embed returns Instagram's own error page says so. Shadowbanned profiles land in the same bucket. All of it appears in the render department of MAK's face, with the reason, above what was delivered |
+| 2026-07-27 | **Instagram blocks the TLS fingerprint, not the User-Agent.** parth-dl gets a login wall from the box before it can read any metadata, so the chain is parth-dl (from Windows, honours the carousel index) -> the public embed with Chrome impersonation (what reaches from Linux) -> the mirror. The embed's `contextJSON` carries the whole carousel, which is how `img_index` is honoured: get the list, pick one, download only that |
+| 2026-07-27 | **The fast GPU backend is not the same on every machine.** Measured on the same scene: the box's GTX 1650 does 300s on CUDA against 459s on OptiX, because it is the only Turing card without RT cores. The laptop's RTX 4070 is the opposite. `FLUJO_GPU_BACKEND` overrides per machine; MAK's render cron sets CUDA. Do not make either one the global default |
+| 2026-07-27 | **The face is not the cost, the algorithm is.** MAK's browser pinned one of eight cores at 97% with nobody watching. Giving VRAM to a browser would take it from the 4 GB the model and the renders fight over, so the answer was not GPU acceleration: the map's physics compared every node against every other one sixty times a second. The map now converges, caches its layout, and draws a single frame for pan/zoom/hover. User's correction, kept verbatim: "organismo vivo" means it answers instantly, not that it spins |
+| 2026-07-27 | **The printed supplement pieces are the two-sided PDFs; the repo SVGs are the regenerable contraportada of the SAME content.** Compared word by word on CREATINA: identical except line breaking and one copy variant ("En 60 gomitas" vs "En gomitas - 60 gomitas"). The user's decision: leave it as it is. The live pipeline is `_master_contraportadas.json` + `gen_contraportadas.py`; three generators writing into folders deleted weeks ago were archived |
+| 2026-07-27 | **Piece kinds are configuration, not code.** They were a closed TypeScript union plus seven chained ternaries, so adding "pendon" meant recompiling. Now `data/piezas_tipos.json`, served by `/api/piezas-tipos`. Today flyers and back covers; tomorrow banners or labels |
+| 2026-07-27 | **The triangulation queue was asking wrong things and asking them twice.** The user read a task and caught it: "what producer organised the event of 23:00 HRS with LIVE JAM". A time went in as a date, a tagline went in as a line-up, and OCR variants of a venue produced twin questions. 92 questions -> 52 against the real fichas. An event is now its date plus its headliner; the venue is out of the dedup key because it is the field OCR reads differently every time |
 | 2026-07-26 | **RD splits into three areas: eventos, suplementos, and general posts.** For SUPPLEMENTS, the text on flyers and labels ALWAYS comes from a file an RD manager sends, and that file wins over research, over the database, over anything an agent produced. Never invent product names, never look up properties, never invent descriptions. Research is legitimate when the user orders it (e.g. researching a post) — the rule is only that a file, when it exists, overrides it. The link to reduciendodano.cl and the QR stay constant on every flyer |
 | 2026-07-26 | **Three working modes**: *modo calma* (answer, execute nothing), *modo repo* (branches/PRs/CI; exits at 0 open PRs, 0 open issues and only the named branches), *modo local* (this machine: config, memory, understanding). Ask which one is active when it is not obvious |
 | 2026-07-26 | **The two portfolio directions on disk are REFERENCES, not competing options**: the live six-section archive and the Cyber Terminal prototype. Both feed the design; neither is "the choice" |
@@ -193,17 +201,28 @@ SIEMPRE donde buscarlas.
 
 ## Open
 
-- **MAK is re-perceiving both corpora tonight and nobody should touch it.** RD
-  first (feeds the triangulation queue), then the artist's archive (feeds the
-  conceptual map), chained by a cron guard with a real lock. About 17 hours of
-  work. Five traps cost real time today and are recorded in the assistant's
+- **MAK is re-perceiving RD and nobody should touch it.** 907 of 1185 at
+  03:30 on 2026-07-27, about two hours left, then it chains into the artist's
+  archive on its own. Six traps cost real time and are in the assistant's
   memory: a process launched over SSH does not survive the session, `pgrep`
   alone let two perceptions run on a 4 GB GPU -- which is exactly what killed
   the July run -- `procesados.txt` must not be touched while the job holds it, a
-  running process still has the OLD code loaded after a patch, and nested
-  heredocs over SSH break.
-- **When it finishes, read what it produced before giving it more work.** The
-  triangulation queue will hold hundreds of real questions with artist names.
+  running process still has the OLD code loaded after a patch, nested heredocs
+  over SSH break, and **copying a file to the box does not restart the service
+  that already loaded it**.
+- **When it finishes, read what it produced before giving it more work.**
+- **The last hop to the RD database is still missing, and the tool for it
+  already exists.** `cultura/mak_plataforma/mineria_rd.py` was never executed:
+  it walks the material and writes DRAFTS in the real schema of
+  `data/productoras/*.json`, into a separate folder, to enter by human-reviewed
+  PR. Do NOT run it as it stands -- it would re-OCR the same files the
+  perception is already processing and fight for the same GPU. What is worth
+  taking is its OUTPUT side: wire the draft writer to the fichas the perception
+  already produces. The user's constraint: the database in the repo is fine, so
+  the extraction must be clean, must not create duplicates, and must not
+  generate garbage on top of what is already right.
+- **Logos are missing** and live in the user's `Documents\logos` (absolute path
+  in the assistant's memory, not here: this repo is public).
 
 **How this list is kept honest:** on 2026-07-26 it carried an item that had
 already been fixed that same day, plus a second copy of the Illustrator entry
