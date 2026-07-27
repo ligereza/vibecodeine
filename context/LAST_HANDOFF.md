@@ -243,51 +243,39 @@ ALWAYS bound where to look for them.
   navigation is obvious -> README updated -> the handoff updated on every line.
   **RD and MAK are done. iskvw is what remains.** Its map is
   `docs/rd/MAPA_RD.md` for RD; iskvw still needs its own.
-- **What the 2026-07-27 iskvw stretch got wrong, so it is not repeated.** It was
-  written up as its own file and folded in here, because a second state document
-  is how this repo lost whole sessions before. In order of cost: it treated the
-  curation as a BLOCKER and closed by asking the user to decide which of the 697
-  works were obra -- his correction was one line, "el objetivo n1 era que fuera
-  adaptable a recibir mas obras y que fuera transmutable", and the filter is now
-  configuration with everything in by default. It dismissed two references the
-  user sent WITHOUT OPENING THEM, then asked the list about its own limits and
-  got answers inside them. It invented a GPU limit that did not exist. It built
-  for hours on the 8 pieces of `obras.json` while the archive was on the box. It
-  shipped positions that came from a hash of the identifier -- a lie the repo had
-  ALREADY warned about in `projects/cultura/doublecup/svg/README.md` -- and the
-  correction is the only thing of that stretch worth keeping: PCA 3.8%, its own
-  force layout 16.4%, t-SNE 48.9% of neighbourhood preserved. Two of the three
-  looked good and lied, and one of those two was its own. It left 60 zero-byte
-  SVGs that were indistinguishable from good traces, because the tracer opened
-  the destination before tracing. And it tuned a parameter without measuring what
-  it was for: the plan's tracer on photographs gave 13.5% legible and 42% noise;
-  with the right parameters, 60% legible, 2% noise, 18 MB -> 4.9 MB.
-  **If you are about to say "this does not apply" about something he sent you:
-  open it first.**
-- **The libraries that retire hand-written work here, measured on npm
-  2026-07-27** (the previous stretch had to be handed these names verbatim):
-  `@thi.ng/tsne` 0.1.73 is the one that changes something, because the projection
-  needs scikit-learn today and that is why the generator only runs on Windows --
-  in JS the box projects on its own, which is the repo's north star;
-  `@thi.ng/geom-trace-bitmap` 0.3.192 is bitmap -> hairline vector, the tracer;
-  `@thi.ng/rstream-gestures` 5.0.179 is the diaphragm gesture WITH multi-touch,
-  which is the phone, which is the risk never measured; `@thi.ng/distance-
-  transform` 1.0.46. What does NOT serve: the sci-fi reference's `node-network`
+- **What the 2026-07-27 iskvw stretch got wrong.** Detail archived in
+  `docs/handoffs/archive/20260727_iskvw_lo_que_fallo.md` (it treated the curation
+  as a blocker, dismissed two references without opening them, invented a GPU
+  limit, built on the wrong source, shipped positions from a hash the repo had
+  already warned about, left 60 zero-byte SVGs, tuned a parameter without
+  measuring). The one line that matters: **if you are about to say "this does not
+  apply" about something the user sent you, open it first.**
+- **The thi.ng libraries are IN, vendorized, and one of my claims about them was
+  false.** `data/iskvw_librerias.json` declares them and
+  `py tools/vendorizar_iskvw.py` bundles each as a self-contained ESM module in
+  `iskvw/piel/lib/` plus its README alongside -- the skin is static, so no CDN and
+  no build at deploy, and the minified bundle does not say how anything is called.
+  Adding one is an entry in that file and the command. In today, 21.6 KB total:
+  `tsne`, `geom-trace-bitmap` (the tracer), `rstream-gestures` (the diaphragm
+  gesture WITH multi-touch, the phone, the risk never measured), `distance-transform`.
+  **The correction: `@thi.ng/tsne` does NOT replace scikit-learn.** I wrote that it
+  would let the box project on its own. Measured by running it: `DEFAULT_OPTS` has
+  no output-dimension option and `init` does `this.dim = datos[0].length`, so 3D in
+  gives 3D out, 6 gives 6, 12 gives 12. It cannot take 768 down to 2. It converges
+  (the cost drops) and it is useful on already-low-dimensional data, and
+  `gen_campo_iskvw.py` still needs sklearn. `tests/test_iskvw_librerias.py` pins
+  this: if the library ever gains the option, that test fails and the conclusion
+  gets redone. What does NOT serve: the sci-fi reference's `node-network`
   compares every pair every frame at `nodeCount || 80` -- the same defect this
   repo already measured and fixed in MAK's micelio. Its `objParser.ts`, which
   normalises any geometry into one scene, IS the answer to how 2D and 3D coexist.
-- **The two iskvw generators split one answer, and the seam is POSITION.** Run
-  against the real box 2026-07-27, measured not read: `gen_archivo_iskvw.py
-  --fuente todo` ALREADY unifies both bodies of work into the pieces-and-relations
-  contract (1004 pieces, 3188 links: 705 obras + 214 informes + 85 codigo, 898 KB)
-  -- `obras.json` is only its default, not a limit, and those 8 are real
-  generative pieces of the repo practice, valid UTF-8, not fake material. What is
-  split is that `gen_campo_iskvw.py`'s measured positions are NOT in the contract:
-  `archivo.json` has relations without positions, `campo.json` positions without
-  relations, and a skin wanting both must know two files. The convergence is
-  position as an OPTIONAL field of the contract, not merging the generators --
-  projecting needs the vectors and the contract does not. Loose thread noticed,
-  not chased: the contract counts 705 obras and the field 697.
+- **DONE 2026-07-27: the archive is ONE file.** Position is now an optional field
+  of the contract, so `archivo.json` carries relations AND positions: 1004 pieces,
+  3188 links, 697 with position, measured against the box. It was 0 before,
+  because the micelio ids carried the file extension and the field's did not, so
+  the keys never met. Generators stay separate on purpose -- projecting needs the
+  768-dimension vectors and the contract neither has nor wants them. Loose thread
+  noticed, not chased: the contract counts 705 obras and the field 697.
 - **iskvw, what it is actually asking for.** Not a style: the SUBSTRATE. Today
   the data/contract/skin split exists only for iskvw, and MAK's micelio has its
   own nodes and its own drawing -- the same work done twice, and a new skin
