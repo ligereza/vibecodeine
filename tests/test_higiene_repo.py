@@ -81,6 +81,7 @@ CONFIG_DEL_USUARIO = (
     "data/svg_estados.json",
     "data/iskvw_campo_filtro.json",
     "data/iskvw_librerias.json",
+    "data/iskvw_capas.json",
 )
 
 
