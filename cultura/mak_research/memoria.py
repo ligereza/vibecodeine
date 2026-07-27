@@ -30,8 +30,12 @@ RESEARCH = os.path.expanduser("~/research")
 MEM_DIR = os.path.join(RESEARCH, "memoria")
 INDEX_FILE = os.path.join(MEM_DIR, "index.jsonl")
 # carpetas de productos a indexar (los .md legibles)
+# 'corpus' = el archivo del artista (iskvw), una obra por documento,
+# generado por corpus_a_micelio.py desde ~/curatoria/fichas/fichas.jsonl.
+# Antes el micelio solo contenia lo que MAK escribio sobre si mismo, asi que
+# no podia relacionar las obras entre si -- que es el mapa que se queria.
 FUENTES = ("informes", "paneles", "cadenas", "refutaciones",
-           "correlaciones", "grafos", "codex")
+           "correlaciones", "grafos", "codex", "corpus")
 EMBED_MODEL = os.environ.get("OLLAMA_EMBED_MODEL", "nomic-embed-text")
 OLLAMA = os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
 
@@ -104,6 +108,58 @@ def _guardar_index(entradas):
     os.replace(tmp, INDEX_FILE)
 
 
+# ---------------------------------------------------------------------------
+# Puerta de entrada: lo que fallo no es conocimiento
+# ---------------------------------------------------------------------------
+
+# Frases con las que el propio pipeline declara que no produjo nada. Si el
+# cuerpo de un informe contiene una de estas, el informe ES el error.
+MARCAS_DE_FALLO = (
+    "Informe no generado",
+    "Todos los proveedores LLM fallaron",
+    "[ERROR]",
+    "Traceback (most recent call last)",
+    "no disponible:",
+)
+
+# Un documento con menos de esto, una vez quitado el encabezado y el meta, no
+# tiene sustancia que indexar: es un titulo con adornos.
+MINIMO_UTIL = 400
+
+
+def cuerpo_util(texto):
+    """El texto sin encabezado markdown ni bloque meta, para poder medirlo."""
+    lineas = []
+    for linea in (texto or "").splitlines():
+        s = linea.strip()
+        if not s or s.startswith("#") or s.startswith("---"):
+            continue
+        if s.startswith("meta:") or s.startswith("> "):
+            continue
+        lineas.append(s)
+    return "\n".join(lineas)
+
+
+def util_para_micelio(texto, carpeta=None):
+    """(entra, motivo). Decide si un documento merece entrar al mapa.
+
+    Nunca borra nada: el archivo sigue en disco como registro de que ese
+    trabajo se intento. Esto solo decide si cuenta como conocimiento.
+    """
+    if not texto or not texto.strip():
+        return False, "vacio"
+    for marca in MARCAS_DE_FALLO:
+        if marca in texto:
+            return False, "fallo declarado: %s" % marca
+    # El minimo de sustancia es para INFORMES: un informe de tres lineas es un
+    # informe fallido. No aplica al corpus del artista, donde una obra se
+    # describe en un parrafo y eso es exactamente lo que se quiere indexar.
+    # (Sin esta excepcion la puerta dejo fuera 689 de 697 obras.)
+    if carpeta != "corpus" and len(cuerpo_util(texto)) < MINIMO_UTIL:
+        return False, "sin sustancia (<%d caracteres utiles)" % MINIMO_UTIL
+    return True, ""
+
+
 def indexar(rebuild=False, log=lambda s: None):
     """Indexa los .md de las carpetas de productos. Incremental: salta los
     archivos ya indexados con el mismo mtime; re-indexa los que cambiaron.
@@ -116,6 +172,7 @@ def indexar(rebuild=False, log=lambda s: None):
         indexado.setdefault(e["path"], e.get("mtime"))
 
     vigentes = []   # entradas que sobreviven (archivo sin cambios)
+    descartados = []  # (path, motivo) que la puerta dejo fuera
     archivos_actuales = set()
     pendientes = []  # (path, dir, mtime, texto) a re-embeddear
 
@@ -140,6 +197,10 @@ def indexar(rebuild=False, log=lambda s: None):
                 with open(path, encoding="utf-8") as f:
                     texto = f.read()
             except OSError:
+                continue
+            entra, motivo = util_para_micelio(texto, carpeta=d)
+            if not entra:
+                descartados.append((path, motivo))
                 continue
             pendientes.append((path, d, mtime, texto))
 
@@ -216,11 +277,74 @@ def _vectores_por_producto():
     return vecs, meta
 
 
+GRAFO_CACHE = os.path.join(MEM_DIR, "grafo_cache.json")
+
+
+def _aristas_numpy(vecs, paths, umbral, tope_por_nodo):
+    """Las mismas aristas, con una multiplicacion de matrices en vez de un
+    bucle. Devuelve None si numpy no esta, y el llamador sigue por el camino
+    lento -- el resultado es identico, cambia cuanto tarda.
+
+    Por que existe: medido el 2026-07-27, el bucle en Python puro tardaba
+    107.6s para 977 productos (954.529 cosenos de 768 dimensiones) y el hub lo
+    recalculaba casi en cada visita, porque su cache dura 12 segundos.
+    """
+    try:
+        import numpy as np
+    except ImportError:
+        return None
+    m = np.array([vecs[p] for p in paths], dtype=np.float32)
+    normas = np.linalg.norm(m, axis=1, keepdims=True)
+    normas[normas == 0] = 1.0
+    m /= normas
+    sims = m @ m.T
+    np.fill_diagonal(sims, -1.0)          # un nodo no se conecta consigo mismo
+    k = min(tope_por_nodo, len(paths) - 1)
+    if k <= 0:
+        return []
+    top = np.argpartition(-sims, k - 1, axis=1)[:, :k]
+    edges, vistas = [], set()
+    for i in range(len(paths)):
+        vecinos = sorted(((float(sims[i, j]), int(j)) for j in top[i]), reverse=True)
+        for s, j in vecinos:
+            if s < umbral:
+                break
+            key = (i, j) if i < j else (j, i)
+            if key in vistas:
+                continue
+            vistas.add(key)
+            edges.append({"a": os.path.basename(paths[i]),
+                          "b": os.path.basename(paths[j]), "w": round(s, 3)})
+    return edges
+
+
+def _firma_index():
+    """Identidad barata del indice: si no cambio, el grafo tampoco."""
+    try:
+        st = os.stat(INDEX_FILE)
+        return "%d-%d" % (st.st_size, int(st.st_mtime))
+    except OSError:
+        return ""
+
+
 def grafo_semantico(umbral=0.5, tope_por_nodo=4):
     """Grafo de CONEXIONES SEMANTICAS entre productos del departamento:
     nodo = producto, arista = similitud coseno entre sus embeddings (top-k
     por nodo por encima del umbral). El peso de la arista = que tan
-    relacionados estan dos hallazgos. Es el mapa de lo que el depto sabe."""
+    relacionados estan dos hallazgos. Es el mapa de lo que el depto sabe.
+
+    Se cachea en disco contra la firma del indice: el grafo solo cambia cuando
+    cambia lo indexado, y reindexar es un evento de cada 20 minutos como mucho.
+    """
+    firma = "%s|%s|%s" % (_firma_index(), umbral, tope_por_nodo)
+    try:
+        with open(GRAFO_CACHE, encoding="utf-8") as fh:
+            guardado = json.load(fh)
+        if guardado.get("firma") == firma:
+            return guardado["grafo"]
+    except (OSError, ValueError, KeyError):
+        pass
+
     vecs, meta = _vectores_por_producto()
     paths = list(vecs)
     nodes = []
@@ -228,23 +352,35 @@ def grafo_semantico(umbral=0.5, tope_por_nodo=4):
         d, t, nch = meta[p]
         nodes.append({"id": os.path.basename(p), "dir": d, "titulo": t,
                       "chunks": nch})
-    edges, vistas = [], set()
-    for i, a in enumerate(paths):
-        sims = sorted(
-            ((_cos(vecs[a], vecs[b]), j) for j, b in enumerate(paths) if j != i),
-            reverse=True)
-        for s, j in sims[:tope_por_nodo]:
-            if s < umbral:
-                break
-            key = tuple(sorted((i, j)))
-            if key in vistas:
-                continue
-            vistas.add(key)
-            edges.append({"a": os.path.basename(paths[i]),
-                          "b": os.path.basename(paths[j]), "w": round(s, 3)})
-    return {"nodes": nodes, "edges": edges,
-            "meta": {"n_nodos": len(nodes), "n_aristas": len(edges),
-                     "umbral": umbral}}
+
+    edges = _aristas_numpy(vecs, paths, umbral, tope_por_nodo)
+    if edges is None:
+        edges, vistas = [], set()
+        for i, a in enumerate(paths):
+            sims = sorted(
+                ((_cos(vecs[a], vecs[b]), j) for j, b in enumerate(paths) if j != i),
+                reverse=True)
+            for s, j in sims[:tope_por_nodo]:
+                if s < umbral:
+                    break
+                key = tuple(sorted((i, j)))
+                if key in vistas:
+                    continue
+                vistas.add(key)
+                edges.append({"a": os.path.basename(paths[i]),
+                              "b": os.path.basename(paths[j]), "w": round(s, 3)})
+
+    grafo = {"nodes": nodes, "edges": edges,
+             "meta": {"n_nodos": len(nodes), "n_aristas": len(edges),
+                      "umbral": umbral}}
+    try:
+        tmp = GRAFO_CACHE + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as fh:
+            json.dump({"firma": firma, "grafo": grafo}, fh)
+        os.replace(tmp, GRAFO_CACHE)
+    except OSError:
+        pass
+    return grafo
 
 
 def contexto(tema, k=5, max_chars=2500):

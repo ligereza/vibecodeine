@@ -30,9 +30,20 @@ name: issue-descarga-ig
 on:
   issues:
     types: [opened, labeled]
-  schedule:
-    - cron: '*/30 * * * *'
   workflow_dispatch:
+
+# BARRIDO AUTOMATICO RETIRADO (2026-07-26, orden del usuario: "ese cron y esas
+# notificaciones son useless"). Causa medida: el barrido corria cada 30 min y
+# volvia a comentar en los issues abiertos; desde #248 el issue ya no se cierra,
+# asi que la combinacion era un chorro permanente de comentarios -> GitHub le
+# mandaba un aviso por mail a cada uno -> el Apps Script de Gmail convertia cada
+# aviso en un issue nuevo. Ese bucle no existia antes del 2026-07-22, que es
+# cuando se creo este workflow (f5e6048). El guard anti-eco de abajo evita
+# PROCESARLOS, pero no evitaba que se crearan.
+# El barrido sigue disponible a mano con workflow_dispatch.
+# Retiro de esta regla: cuando el render de MAK pase la verificacion de varianza
+# y el issue vuelva a cerrarse solo, el barrido deja de generar ruido y puede
+# volver a programarse.
 
 permissions:
   issues: write

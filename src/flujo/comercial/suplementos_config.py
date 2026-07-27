@@ -1,225 +1,130 @@
-"""Configuración de suplementos RD para CLI y generación de contraportadas.
+"""RD supplements, read from the approved content file.
 
-Define los 7 suplementos principales con sus beneficios, perfiles nutricionales
-y colores de acento. Usado por:
-- CLI: `py -m flujo suplementos contraportada`
-- Generador SVG
-- Hub (futuro: integración datadrop)
+WHY THIS FILE LOOKS LIKE THIS (2026-07-26)
+------------------------------------------
+It used to hold a hardcoded dict of seven supplements. Four of them did not
+exist -- "Recovery", "Colágeno Fit", "Omega+ Immune", "Sleep Relax" -- and the
+copy was gym marketing ("ganancia de masa muscular", "antes del entrenamiento")
+for a harm-reduction NGO, with placeholder Dominican phone numbers
+(`+1 (809) 555-01xx`) for an organisation that operates in Chile. Running
+`flujo suplementos list` printed those invented products as if they were the
+real line.
+
+The user's rule, in his words: for supplements, the text that goes on flyers and
+labels **always comes from a file an RD manager sends, and that file wins**.
+Never invent names, never look up properties, never invent descriptions.
+
+So this module no longer holds content. It reads the approved file:
+
+    projects/piezas_vectoriales/suplementos_rd/01_contenido/contenido_suplementos_rd.json
+
+which is the same source `rd-db` projects and the same one the real generator
+(`.claude/skills/entregas-rd/generadores/gen_contraportadas.py`) overlays onto
+the approved template. One source of truth per axis:
+
+    style -> svg/suplementos_rd/_plantilla/contraportada_cambios.svg (never edited)
+    text  -> the JSON above (comes from the manager)
+
+Contact fields are gone on purpose: the QR and the website are baked into the
+approved template and are the same on every flyer, so nothing injects them.
 """
+from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from functools import lru_cache
 from typing import Dict
+
 from ..paths import repo_root
+
+CONTENIDO_REL = (
+    "projects/piezas_vectoriales/suplementos_rd/01_contenido/"
+    "contenido_suplementos_rd.json"
+)
 
 
 @dataclass
 class Suplemento:
-    """Definición de un suplemento RD."""
+    """One supplement, exactly as the approved content file describes it."""
 
-    nombre: str  # Ej: "Impulso"
-    descripcion: str  # Ej: "Energía sostenible"
-    beneficio_1: str  # Línea 1 de beneficio
-    beneficio_2: str  # Línea 2 de beneficio (opcional)
-    info_nutricional: list[str]  # Bullets de info nutricional (máx 3-4)
-    whatsapp_label: str  # Ej: "Consulta disponibilidad"
-    contacto_label: str  # Ej: "+1 (XXX) XXX-XXXX"
-    qr_text: str  # QR texto o URL para generar QR
-    color_acento: str  # HEX color secundario (opcional, default: #F5C54D)
-    tags: list[str]  # Categorías: "energía", "recuperación", "performance", etc.
+    id: str  # "02_impulso"
+    nombre: str  # "IMPULSO"
+    tipo: str  # "general" | "producto"
+    tag: str  # "Foco sostenido"
+    accent: str  # palette key: "yellow", "purple", ...
+    color_acento: str  # resolved hex from the palette
+    descripcion: list[str]  # paragraphs, verbatim
+    section_title: str  # "Nutrientes" | "Productos" | ...
+    items: list[str] = field(default_factory=list)  # bullets, verbatim
 
 
-SUPLEMENTOS: Dict[str, Suplemento] = {
-    "Impulso": Suplemento(
-        nombre="Impulso",
-        descripcion="Energía sostenible y enfoque mental",
-        beneficio_1="Potencia tu rendimiento físico",
-        beneficio_2="Concentración mental sin colapso",
-        info_nutricional=[
-            "• Cafeína natural + L-Teanina (enfoque sin ansiedad)",
-            "• Vitaminas B para metabolismo óptimo",
-            "• Tomar 1 scoop con agua 30 min antes del entrenamiento",
-        ],
-        whatsapp_label="Consulta sabores",
-        contacto_label="+1 (809) 555-0100",
-        qr_text="https://wa.me/+18095550100",
-        color_acento="#F5C54D",
-        tags=["energía", "performance", "pre-entrenamiento"],
-    ),
-    "Creatina": Suplemento(
-        nombre="Creatina",
-        descripcion="Fuerza y resistencia muscular",
-        beneficio_1="Recuperación acelerada post-entreno",
-        beneficio_2="Ganancia de masa muscular",
-        info_nutricional=[
-            "• Monohidrato 5g por servicio (máxima eficacia)",
-            "• Mejora rendimiento en ejercicios de alta intensidad",
-            "• Mezclar con agua, tomar todos los días",
-        ],
-        whatsapp_label="Dudas sobre ciclos",
-        contacto_label="+1 (809) 555-0101",
-        qr_text="https://wa.me/+18095550101",
-        color_acento="#E74C3C",
-        tags=["fuerza", "recuperación", "masa"],
-    ),
-    "Pre Fiesta": Suplemento(
-        nombre="Pre Fiesta",
-        descripcion="Energía prolongada para la noche",
-        beneficio_1="Energía que dura 8+ horas",
-        beneficio_2="Sin crash: caída gradual y controlada",
-        info_nutricional=[
-            "• Fórmula balanceada: cafeína + aminoácidos + vitaminas",
-            "• Sin azúcar refinada (sweetener natural)",
-            "• Tomar 1-2 scoops según tolerancia, 20 min antes",
-        ],
-        whatsapp_label="Pedir sabor",
-        contacto_label="+1 (809) 555-0102",
-        qr_text="https://wa.me/+18095550102",
-        color_acento="#9B59B6",
-        tags=["energía", "social", "noche"],
-    ),
-    "Recovery": Suplemento(
-        nombre="Recovery",
-        descripcion="Recuperación muscular post-entreno",
-        beneficio_1="Reduce dolor muscular (DOMS)",
-        beneficio_2="Repara fibras y regenera",
-        info_nutricional=[
-            "• Whey protein aislada 25g proteína por scoop",
-            "• Aminoácidos esenciales (EAA) balanceados",
-            "• Dentro de 30 min post-entreno, con agua o leche",
-        ],
-        whatsapp_label="Sabores disponibles",
-        contacto_label="+1 (809) 555-0103",
-        qr_text="https://wa.me/+18095550103",
-        color_acento="#27AE60",
-        tags=["recuperación", "proteína", "post-entreno"],
-    ),
-    "Colágeno Fit": Suplemento(
-        nombre="Colágeno Fit",
-        descripcion="Salud articular y piel firme",
-        beneficio_1="Fortalece articulaciones y ligamentos",
-        beneficio_2="Piel, cabello y uñas radiantes",
-        info_nutricional=[
-            "• Colágeno hidrolizado 10g: absorción máxima",
-            "• Vitamina C + ácido hialurónico",
-            "• Disolver en agua tibia, 1-2 veces por día",
-        ],
-        whatsapp_label="Consulta presentaciones",
-        contacto_label="+1 (809) 555-0104",
-        qr_text="https://wa.me/+18095550104",
-        color_acento="#E8DAEF",
-        tags=["salud", "belleza", "articulaciones"],
-    ),
-    "Omega+ Immune": Suplemento(
-        nombre="Omega+ Immune",
-        descripcion="Inmunidad y salud cardiovascular",
-        beneficio_1="Defensa natural reforzada",
-        beneficio_2="Corazón y sistema nervioso protegido",
-        info_nutricional=[
-            "• Omega-3 3g (EPA + DHA): salud cardiovascular",
-            "• Vitamina D3 + Zinc: inmunidad óptima",
-            "• 2 cápsulas con comida (desayuno o almuerzo)",
-        ],
-        whatsapp_label="Preguntas sobre vegano",
-        contacto_label="+1 (809) 555-0105",
-        qr_text="https://wa.me/+18095550105",
-        color_acento="#3498DB",
-        tags=["salud", "inmunidad", "corazón"],
-    ),
-    "Sleep Relax": Suplemento(
-        nombre="Sleep Relax",
-        descripcion="Sueño profundo y reparador",
-        beneficio_1="Duerme más profundo, descansa mejor",
-        beneficio_2="Despertar sin grogginess",
-        info_nutricional=[
-            "• Magnesio glicinatо 400mg: relajación natural",
-            "• L-Teanina + Melatonina: ciclo sueño-vigilia",
-            "• 1 dosis 30-60 min antes de dormir",
-        ],
-        whatsapp_label="Disponible ahora",
-        contacto_label="+1 (809) 555-0106",
-        qr_text="https://wa.me/+18095550106",
-        color_acento="#34495E",
-        tags=["sueño", "relax", "recuperación"],
-    ),
-}
+def _contenido_path():
+    return repo_root() / CONTENIDO_REL
+
+
+@lru_cache(maxsize=1)
+def _cargar() -> tuple[Dict[str, Suplemento], dict]:
+    """Read the approved file. Raises if it is missing: better a loud failure
+    than silently falling back to invented data, which is what used to happen."""
+    ruta = _contenido_path()
+    if not ruta.is_file():
+        raise FileNotFoundError(
+            "No existe el archivo de contenido aprobado: %s. "
+            "El texto de los suplementos viene de ese archivo, no del codigo." % ruta
+        )
+    datos = json.loads(ruta.read_text(encoding="utf-8"))
+    paleta = datos.get("palette", {})
+    salida: Dict[str, Suplemento] = {}
+    for f in datos.get("flyers", []):
+        acc = f.get("accent", "")
+        salida[f["title"]] = Suplemento(
+            id=f.get("id", ""),
+            nombre=f.get("title", ""),
+            tipo=f.get("type", ""),
+            tag=f.get("tag", ""),
+            accent=acc,
+            color_acento=paleta.get(acc, "#F5C54D"),
+            descripcion=list(f.get("description", []) or []),
+            section_title=f.get("section_title", ""),
+            items=list(f.get("items", []) or []),
+        )
+    return salida, datos.get("project", {})
+
+
+def suplementos() -> Dict[str, Suplemento]:
+    """All supplements, keyed by their real title."""
+    return _cargar()[0]
+
+
+def proyecto() -> dict:
+    """Project-level constants (brand, website, canvas, real size)."""
+    return _cargar()[1]
 
 
 def get_suplemento(nombre: str) -> Suplemento:
-    """Obtener configuración de suplemento por nombre.
+    """Look a supplement up by title or id, case-insensitively.
 
-    Args:
-        nombre: Nombre del suplemento (case-insensitive).
-
-    Returns:
-        Suplemento configurado.
-
-    Raises:
-        KeyError: Si no existe el suplemento.
+    Raises KeyError listing the real names. There is no fallback that fabricates
+    a supplement: if it is not in the approved file, it does not exist.
     """
-    for key, supl in SUPLEMENTOS.items():
-        if key.lower() == nombre.lower():
+    todos = suplementos()
+    objetivo = nombre.strip().lower()
+    for titulo, supl in todos.items():
+        if titulo.lower() == objetivo or supl.id.lower() == objetivo:
             return supl
-
-    # Fallback to loading from the spec JSON if available
-    try:
-        spec_path = repo_root() / "svg" / "suplementos_rd" / "04_contraportadas" / "suplementos_rd_illustrator_spec.json"
-        if spec_path.exists():
-            with open(spec_path, encoding="utf-8") as f:
-                spec_data = json.load(f)
-            for board in spec_data.get("artboards", []):
-                board_name = board.get("name", "")
-                title = board.get("title", "")
-                if board_name.lower() == nombre.lower() or title.lower() == nombre.lower():
-                    body = board.get("body", [])
-                    desc = body[0] if len(body) > 0 else "Suplemento Reduciendo Daño"
-                    benefit2 = body[1] if len(body) > 1 else ""
-                    return Suplemento(
-                        nombre=board_name,
-                        descripcion=desc,
-                        beneficio_1=board.get("cta", "Beneficio por definir"),
-                        beneficio_2=benefit2,
-                        info_nutricional=[f"• {line}" for line in body] if body else ["• Perfil de suplemento nutritivo"],
-                        whatsapp_label="Consulta disponibilidad",
-                        contacto_label=board.get("contact", "WhatsApp RD / QR"),
-                        qr_text=board.get("contact", "WhatsApp RD / QR"),
-                        color_acento="#F5C54D",
-                        tags=["comercial"]
-                    )
-    except Exception:
-        pass
-
-    raise KeyError(f"Suplemento '{nombre}' no encontrado. Disponibles: {list(SUPLEMENTOS.keys())}")
+    raise KeyError(
+        "Suplemento '%s' no existe en el archivo aprobado. Disponibles: %s"
+        % (nombre, list(todos.keys()))
+    )
 
 
 def list_suplementos() -> list[str]:
-    """Listar nombres de suplementos disponibles."""
-    names = list(SUPLEMENTOS.keys())
-    try:
-        spec_path = repo_root() / "svg" / "suplementos_rd" / "04_contraportadas" / "suplementos_rd_illustrator_spec.json"
-        if spec_path.exists():
-            with open(spec_path, encoding="utf-8") as f:
-                spec_data = json.load(f)
-            for board in spec_data.get("artboards", []):
-                board_name = board.get("name", "")
-                if board_name and board_name not in names:
-                    names.append(board_name)
-    except Exception:
-        pass
-    return names
+    """Real supplement names, in the order the approved file declares them."""
+    return list(suplementos().keys())
 
 
 if __name__ == "__main__":
-    # Debug: mostrar config
-    import json
-
-    print("Suplementos disponibles:")
-    for nombre in list_suplementos():
-        print(f"  - {nombre}")
-
-    print("\nEjemplo (Impulso):")
-    s = get_suplemento("Impulso")
-    print(f"  Nombre: {s.nombre}")
-    print(f"  Descripción: {s.descripcion}")
-    print(f"  Beneficio 1: {s.beneficio_1}")
-    print(f"  Info: {s.info_nutricional}")
+    proy = proyecto()
+    print("%s -- %s" % (proy.get("name", "Suplementos"), proy.get("brand", "")))
+    for supl in suplementos().values():
+        print("  %-28s %s" % (supl.nombre, supl.tag))

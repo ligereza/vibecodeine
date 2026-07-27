@@ -7,6 +7,7 @@ Debian). curl_cffi es dep opcional: se mockea via sys.modules (no esta
 instalada en este entorno de tests), snapshot/restore en finally para no
 contaminar otros tests.
 """
+import importlib.util
 import sys
 import types
 
@@ -102,9 +103,21 @@ def test_sin_og_image_retorna_none(fake_curl_cffi, tmp_path):
     assert not (tmp_path / "input_ig.jpg").exists()
 
 
+@pytest.mark.skipif(
+    importlib.util.find_spec("curl_cffi") is not None,
+    reason="curl_cffi instalado: no se puede simular su ausencia y el test saldria a la red real",
+)
 def test_sin_curl_cffi_instalado_retorna_none_sin_explotar(tmp_path):
-    # Sin fixture: curl_cffi NO esta en sys.modules (no instalado en este
-    # entorno) -> ImportError real dentro de _cffi_download -> None.
+    # Sin fixture: curl_cffi NO esta en sys.modules -> ImportError real dentro
+    # de _cffi_download -> None.
+    #
+    # 2026-07-26: sacar el modulo de sys.modules NO alcanza si el paquete esta
+    # instalado -- Python lo re-importa del disco, _cffi_download funciona, y el
+    # test hacia una descarga REAL contra Instagram (falla en la maquina del
+    # usuario con curl_cffi 0.15.0; verde en CI solo porque ahi no esta el
+    # paquete). Un test que sale a la red segun el entorno no mide nada: se
+    # salta donde no puede simularse. Retiro: si la descarga se inyecta por
+    # dependencia y deja de importarse adentro de la funcion.
     sys.modules.pop("curl_cffi", None)
     sys.modules.pop("curl_cffi.requests", None)
 

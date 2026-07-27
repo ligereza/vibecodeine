@@ -25,7 +25,15 @@ try:
 except Exception:
     LLM = None
 
-CAPATAZ_PATH = os.path.join(HOME, "flujo", "context", "CAPATAZ.md")
+# 2026-07-26: CAPATAZ.md salio de context/ (donde Claude lo leia por error y se
+# confundia con su propia doctrina) a la doctrina de MAK, su unico consumidor.
+# Se prueba la ruta nueva primero y se cae a la vieja para no romper un box sin
+# actualizar.
+CAPATAZ_PATH = os.path.join(
+    HOME, "flujo", "cultura", "mak_plataforma", "doctrina", "CAPATAZ.md"
+)
+if not os.path.exists(CAPATAZ_PATH):
+    CAPATAZ_PATH = os.path.join(HOME, "flujo", "context", "CAPATAZ.md")
 SALUD_PROVEEDORES_PATH = os.path.join(HOME, "research", "salud_proveedores.json")
 BACKLOG_RESEARCH_PATH = os.path.join(HOME, "plataforma", "backlog.jsonl")
 BACKLOG_CODEX_PATH = os.path.join(HOME, "plataforma", "backlog_codex.txt")

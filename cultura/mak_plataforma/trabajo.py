@@ -30,6 +30,10 @@ except Exception:  # noqa: BLE001 - si falla, asumimos online
         return True
 try:
     import backlog  # noqa: E402
+    try:
+        import material  # noqa: E402
+    except Exception:
+        material = None
 except Exception:
     backlog = None
 
@@ -113,6 +117,20 @@ def _tarea(verbo, st):
         return None
     fuente = v["fuente"]
     sems = _lineas(SEMILLAS_F, roles.SEMILLAS)
+    if fuente == "material":
+        # La cola que sale de lo percibido (triangulacion RD + lineas de las
+        # obras). Si esta vacia devolvemos None y la rotacion sigue: el modo
+        # autonomo es el fallback, no el default.
+        if material is None:
+            return None
+        tarea = material.pop_pendiente()
+        if not tarea:
+            return None
+        if tarea.get("depto") == "codex":
+            return ("codex", {"modo": tarea.get("modo", "generar"),
+                              "pedido": tarea["texto"], "densidad": "medio"})
+        return ("research", {"modo": tarea.get("modo", "research"),
+                             "tema": tarea["texto"], "densidad": "corto"})
     if fuente == "concepto":
         if backlog is not None:
             entrada = backlog.pop_pendiente(BACKLOG_GEN)
@@ -169,9 +187,15 @@ def main():
         log("%s skip: tope diario (%d)" % (ts, roles.MAX_DIA))
         return
 
-    # round-robin: probar verbos hasta encontrar uno con trabajo
+    # PRIORIDAD: mientras haya material del usuario en cola, se atiende eso.
+    # Sin esto el round-robin le daba 1 de cada 5 turnos y la cola crecia mas
+    # rapido de lo que drenaba -- o sea, el modo autonomo seguia ganando.
+    # Cuando la cola se vacia, el verbo atender no produce tarea y la rotacion normal
+    # sigue su curso: el modo autonomo es el fallback, como fue disenado.
     n = len(roles.VERBOS)
     idx = st.get("verbo_idx", 0) % n
+    if any(v["verbo"] == "atender" for v in roles.VERBOS):
+        idx = next(i for i, v in enumerate(roles.VERBOS) if v["verbo"] == "atender")
     tarea = None
     verbo = None
     for k in range(n):

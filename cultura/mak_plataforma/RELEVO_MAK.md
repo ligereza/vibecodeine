@@ -12,7 +12,21 @@
 
 ## Por que existe (aunque este ocupado)
 
-El organismo MAK vive fuera del repo, en `/home/mak`. Que el rol de director
+El organismo MAK corre en `/home/mak`, pero **su codigo vive en este repo**:
+un cron `MAK-REPO-SYNC` baja `origin/main` cada 10 minutos y copia
+`cultura/mak_plataforma`, `cultura/mak_research` y `cultura/mak_codex` encima
+del codigo de la caja.
+
+> **Editar la caja por SSH no sirve: el sync lo revierte.** Comprobado el
+> 2026-07-26 -- un cambio aplicado a las 21:49 desaparecio a las 21:50. Para
+> cambiar a MAK se edita el espejo de este repo y se mergea a `main`; en 10
+> minutos o menos esta corriendo. Esta linea decia antes "el organismo vive
+> fuera del repo", que hizo trabajar horas contra la premisa equivocada.
+
+Eso es lo que hace posible el norte del proyecto: un agente **sin acceso a la
+caja** cambia el comportamiento de MAK abriendo un PR aca.
+
+Que el rol de director
 sea una cosa **nombrada** — y no algo implicito en una sesion que se cierra —
 es parte de hacerlo visible: que *se vea* quien lo lleva. El asiento existe;
 hoy lo lleno yo.

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-flujo Tapiz Void — Stream negativo de espacios de código (brand enforced).
+flujo Tapiz Void — Stream negativo de espacios de código.
 
 Visualiza patrones de estructura (indentación y vacíos) sin colorear el código.
 Solo los espacios se vuelven visibles como patrón en negativo. Premium dark pro.
@@ -10,7 +10,7 @@ Diseñado para:
 - No acumular recursos: ventana deslizante.
 - Auto-generación para patrones continuos (internal use).
 
-Uso (siempre con flujo brand en mente):
+Uso:
     python -m vibecode.void archivo.py
     python projects/tapiz/vibecode_void.py archivo.py
 """

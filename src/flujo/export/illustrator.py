@@ -1,11 +1,35 @@
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 from typing import Any, Iterable, Union
 
 
 SvgInput = Union[str, Path, Iterable[Union[str, Path]]]
+
+# Where the approved contraportadas live. They are generated from the user's own
+# .ai export (`_plantilla/contraportada_cambios.svg`) plus the approved content
+# file, by `.claude/skills/entregas-rd/generadores/gen_contraportadas.py`.
+CONTRAPORTADAS_REL = "svg/suplementos_rd/09_contraportadas_dark"
+
+
+def _contraportada_aprobada(supl_id: str) -> Path:
+    """Path to the approved contraportada of a supplement.
+
+    Raises instead of falling back to a second template: if the approved piece
+    is missing, the right move is to regenerate it
+    (`py -m flujo suplementos contraportada`), never to render a different one.
+    """
+    from ..paths import repo_root
+
+    ruta = repo_root() / CONTRAPORTADAS_REL / f"{supl_id}.svg"
+    if not ruta.is_file():
+        raise FileNotFoundError(
+            "Falta la contraportada aprobada %s. Regenerala con: "
+            "py -m flujo suplementos contraportada" % ruta
+        )
+    return ruta
 
 
 def prepare_svg_for_illustrator(
@@ -91,7 +115,6 @@ def prepare_supplement_contraportadas_for_illustrator(
         raise ValueError("Se debe indicar al menos un suplemento")
 
     from ..comercial.suplementos_config import get_suplemento
-    from ..comercial.contraportada_svg import generar_contraportada
     from .illustrator_bridge import write_illustrator_artboards
 
     base_output = Path(output_dir) if output_dir else Path("exports") / f"{project_name}_illustrator"
@@ -106,15 +129,21 @@ def prepare_supplement_contraportadas_for_illustrator(
     for name in names:
         suplemento = get_suplemento(name)
         output_path = svg_dir / f"{_slugify(suplemento.nombre)}_final.svg"
-        generar_contraportada(suplemento, output_path=output_path)
+        # Copy the APPROVED contraportada instead of re-rendering one. The design
+        # is the user's .ai export and is never rebuilt from a second template
+        # (2026-07-26: there used to be an ASCII base template producing pieces
+        # that no client ever approved).
+        shutil.copyfile(_contraportada_aprobada(suplemento.id), output_path)
         generated_files.append(output_path.relative_to(package_dir).as_posix())
         artboards.append(
             {
                 "name": suplemento.nombre,
                 "title": suplemento.nombre.upper(),
-                "body": [suplemento.descripcion, *suplemento.info_nutricional[:2]],
-                "cta": suplemento.beneficio_1,
-                "contact": f"{suplemento.whatsapp_label} · {suplemento.contacto_label}",
+                # Verbatim from the approved content file. No contact block: the
+                # QR and the website are baked into the template and are the same
+                # on every piece.
+                "body": [*suplemento.descripcion, *suplemento.items[:2]],
+                "cta": suplemento.tag,
             }
         )
 
@@ -159,7 +188,6 @@ def prepare_supplement_job_assets(
     flows_dir.mkdir(parents=True, exist_ok=True)
 
     from ..comercial.suplementos_config import get_suplemento, list_suplementos
-    from ..comercial.contraportada_svg import generar_contraportada
     from .illustrator_bridge import write_illustrator_artboards
 
     # Dynamically find which supplement is requested
@@ -170,9 +198,13 @@ def prepare_supplement_job_assets(
             if name.lower() in lowered:
                 selected_names.append(name)
     if not selected_names:
-        selected_names = ["Impulso"]
+        selected_names = ["IMPULSO"]
 
-    # Extract brief/benefit text from request_text if not explicitly provided
+    # `brief` is an EVENTS concept (it configures the plano/rider text) and does
+    # not apply to supplements: their copy comes from the approved content file
+    # and that file wins (user's order, 2026-07-26). It is accepted here only so
+    # existing callers do not break, and it is recorded in the job, never
+    # painted into the piece.
     if not brief and request_text:
         match = re.search(r'(?:brief|beneficio|texto|bajada)\s*:\s*([^\n]+)', request_text, re.IGNORECASE)
         if match:
@@ -180,7 +212,7 @@ def prepare_supplement_job_assets(
 
     supplement = get_suplemento(selected_names[0])
     svg_output = flows_dir / "contraportada.svg"
-    generar_contraportada(supplement, output_path=svg_output, brief=brief)
+    shutil.copyfile(_contraportada_aprobada(supplement.id), svg_output)
 
     package_dir = flows_dir / "illustrator_package" / job_path.name
     package_dir.mkdir(parents=True, exist_ok=True)
@@ -197,9 +229,8 @@ def prepare_supplement_job_assets(
             {
                 "name": supplement.nombre,
                 "title": supplement.nombre.upper(),
-                "body": [supplement.descripcion, *supplement.info_nutricional[:2]],
-                "cta": supplement.beneficio_1,
-                "contact": f"{supplement.whatsapp_label} · {supplement.contacto_label}",
+                "body": [*supplement.descripcion, *supplement.items[:2]],
+                "cta": supplement.tag,
             }
         ],
     }

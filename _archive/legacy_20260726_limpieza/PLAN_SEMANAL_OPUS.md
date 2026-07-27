@@ -29,7 +29,8 @@ al backlog del domingo, no se mezcla con el dia siguiente.
 - 06:00 UTC corre el workflow semanal de portfolio-auto. Verificar despues:
   `curl -s https://ligereza.github.io/portfolio-auto/flujo-works.json | py -c "import json,sys;print(len(json.load(sys.stdin)))"`
   (esperado: >=8). Si fallo: `gh run list -R ligereza/portfolio-auto` y reparar.
-- Auditoria semanal repo: `py -m pytest tests/ -q` (esperado exit 0, ~950 tests),
+- Auditoria semanal repo: `py -m pytest tests/ -q` (esperado exit 0; el conteo
+  lo da el propio comando, no se escribe aca),
   `py -m flujo verify`, `py tools/contexto_repo.py`, peso repo (`git count-objects -vH`).
 - Box: pedir al usuario UN reboot del MAK (o hacerlo via ssh si lo autoriza) y
   verificar la tesis de la semana pasada: los 3 units (mak-codex/hub/xio)
@@ -105,7 +106,8 @@ al backlog del domingo, no se mezcla con el dia siguiente.
 
 ## Metricas de exito de la semana (ambicioso pero medible)
 
-- 5+ PRs mergeados con CI matrix verde. Suite >= 950 tests, 0 rojos.
+- 5+ PRs mergeados con CI matrix verde. Suite sin regresiones: 0 rojos y el
+  conteo no baja respecto al inicio de semana (medir con `py -m pytest tests/ -q`).
 - MANIFIESTO: 6/11 -> 8/11 (o justificacion escrita de por que no).
 - Box MAK: 7 dias sin intervencion manual (reboot-proof probado el lunes).
 - 10+ jobs research + 4 codex reales completados; backlog neto creciente.

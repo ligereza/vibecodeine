@@ -1,0 +1,107 @@
+# Poda de ramas ya consolidadas, disparable desde el telefono.
+#
+# Por que existe (2026-07-25): borrar una rama exige `git push --delete` desde
+# una maquina con credenciales. El norte del repo es operarlo SIN PC, y ademas
+# un agente puede quedar detras de un proxy que bloquea el borrado (paso: 403).
+# Esto mueve la operacion al unico lugar que siempre esta disponible: la pestana
+# Actions de GitHub, que se abre igual desde un telefono.
+#
+# Seguridad: NO borra nada que no este completamente contenido en main. Si una
+# rama tiene aunque sea un commit que main no tiene, la salta y lo dice. Corre
+# en seco por defecto: hay que pedir explicitamente que borre.
+#
+# Retiro: cuando el repo tenga limpieza automatica de ramas al mergear un PR.
+
+name: Podar ramas consolidadas
+
+on:
+  workflow_dispatch:
+    inputs:
+      ramas:
+        description: "Ramas a podar, separadas por espacio. Vacio = todas las que ya esten contenidas en main."
+        required: false
+        default: ""
+      confirmar:
+        description: "Escribi BORRAR para que borre de verdad. Cualquier otra cosa = simulacro."
+        required: true
+        default: "simulacro"
+
+permissions:
+  contents: write
+
+jobs:
+  podar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clonar con historia completa
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Revisar y podar
+        env:
+          RAMAS: ${{ inputs.ramas }}
+          CONFIRMAR: ${{ inputs.confirmar }}
+        run: |
+          set -euo pipefail
+          git fetch --prune origin '+refs/heads/*:refs/remotes/origin/*'
+
+          PROTEGIDAS="main rd iskvw"
+
+          if [ -n "${RAMAS// /}" ]; then
+            CANDIDATAS="$RAMAS"
+          else
+            CANDIDATAS=$(git for-each-ref --format='%(refname:short)' refs/remotes/origin \
+              | sed 's|^origin/||' | grep -v '^HEAD$')
+          fi
+
+          BORRAR=""
+          echo "== Revision =="
+          for b in $CANDIDATAS; do
+            case " $PROTEGIDAS " in
+              *" $b "*) echo "PROTEGIDA   $b -- linea permanente, no se toca"; continue ;;
+            esac
+            if ! git rev-parse --verify --quiet "origin/$b" >/dev/null; then
+              echo "NO EXISTE   $b"
+              continue
+            fi
+            if git merge-base --is-ancestor "origin/$b" origin/main; then
+              echo "CONSOLIDADA $b -- todo su contenido esta en main"
+              BORRAR="$BORRAR $b"
+            else
+              n=$(git rev-list --count origin/main.."origin/$b")
+              # Una rama puede tener commits propios y aun asi no aportar NADA
+              # que main no tenga: pasa cuando su trabajo entro por otro camino
+              # (una promocion curada) y lo que le queda son versiones viejas.
+              # Distinguir los dos casos es lo que decide si borrarla pierde algo.
+              nuevas=0
+              for f in $(git diff origin/main..."origin/$b" --name-only); do
+                git cat-file -e "origin/main:$f" 2>/dev/null || nuevas=$((nuevas+1))
+              done
+              if [ "$nuevas" -eq 0 ]; then
+                echo "SE SALTA    $b -- $n commit(s) propios, pero 0 rutas que main no tenga."
+                echo "                  Su contenido esta superado. Borrarla no pierde archivos:"
+                echo "                  es decision humana, no automatica."
+              else
+                echo "SE SALTA    $b -- $n commit(s) propios y $nuevas ruta(s) que NO existen en main."
+                echo "                  NO borrar sin revisar que hay ahi."
+              fi
+            fi
+          done
+
+          if [ -z "${BORRAR// /}" ]; then
+            echo "== Nada que podar =="
+            exit 0
+          fi
+
+          if [ "$CONFIRMAR" != "BORRAR" ]; then
+            echo "== SIMULACRO: se borrarian =>$BORRAR"
+            echo "Volve a correrlo escribiendo BORRAR en el campo de confirmacion."
+            exit 0
+          fi
+
+          for b in $BORRAR; do
+            git push origin --delete "$b"
+            echo "borrada: $b"
+          done
+          echo "== Poda terminada =="

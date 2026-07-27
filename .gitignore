@@ -57,6 +57,16 @@ projects/flyer_eventos/*/refs/*
 
 # Data generada
 data/*.json
+# ...pero estas NO son generadas: son la configuracion que edita el usuario a
+# mano, y sin ellas el codigo cae a su respaldo interno. Excluirlas fue un
+# defecto real: `data/rd_packs.json` se declaro "fuente unica de la tarifa" el
+# 2026-07-26 y nunca entro al repo, asi que en cualquier otro checkout el rider
+# cotizaba con la copia de respaldo.
+!data/rd_packs.json
+!data/plano_simbolos.json
+!data/cotizacion_servicios.json
+!data/svg_estados.json
+!data/piezas_tipos.json
 context/DAILY.md
 context/PIPELINE_RESULT.md
 context/dashboard.html
@@ -174,6 +184,7 @@ node_modules/
 .npm/
 web/dist/
 web/dist-plano/
+web/dist-rd/
 
 # Entregable standalone del Plano/Rider compartible (build generado, ver
 # web/package.json build:plano) -- nunca commitear el artefacto
