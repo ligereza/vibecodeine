@@ -187,15 +187,75 @@ def orden_por_salud(orden, stats):
 # por el mismo criterio: medicion, no costumbre.
 _SLOTS = {
     "razonar": "azure,cerebras,groq,ollama",
-    "bulk": "cerebras,azure,groq,ollama",
+    "bulk": "cerebras,groq,azure,ollama",
     "barato": "ollama,cerebras,groq",
 }
+
+
+# ---------------------------------------------------------------------------
+# Orden derivado de la salud medida
+# ---------------------------------------------------------------------------
+
+# Minimo de llamadas para que un porcentaje signifique algo. Con menos, el
+# proveedor conserva la posicion que le dio la lista escrita: ante la duda se
+# respeta la decision humana, no el ruido estadistico.
+MIN_MUESTRA = 8
+
+
+def salud_medida():
+    """{proveedor: (exitos, total)} desde salud_proveedores.json. {} si no hay."""
+    try:
+        with open(SALUD_RUTA, encoding="utf-8") as f:
+            datos = json.load(f)
+        salida = {}
+        for nombre, v in (datos.get("proveedores") or {}).items():
+            exitos = int(v.get("successes") or 0)
+            total = exitos + int(v.get("timeouts") or 0) \
+                + int(v.get("api_errors") or 0) + int(v.get("errors") or 0)
+            salida[nombre] = (exitos, total)
+        return salida
+    except Exception:
+        return {}
+
+
+def ordenar_por_salud(orden):
+    """Reordena `orden` (lista de proveedores) por efectividad medida.
+
+    Los de muestra insuficiente quedan donde estaban. Nunca se elimina ninguno:
+    un proveedor degradado baja, no desaparece, y vuelve a subir solo cuando
+    su medicion mejora.
+    """
+    salud = salud_medida()
+    if not salud:
+        return list(orden)
+
+    con_datos = []
+    for i, p in enumerate(orden):
+        exitos, total = salud.get(p, (0, 0))
+        if total >= MIN_MUESTRA:
+            con_datos.append((i, p, exitos / total))
+
+    if len(con_datos) < 2:
+        return list(orden)   # nada que reordenar con fundamento
+
+    posiciones = sorted(i for i, _, _ in con_datos)
+    por_calidad = [p for _, p, _ in sorted(con_datos, key=lambda x: -x[2])]
+
+    salida = list(orden)
+    for pos, proveedor in zip(posiciones, por_calidad):
+        salida[pos] = proveedor
+    return salida
 
 
 def orden_rol(rol):
     """Lista de proveedores para un ROL, o None (usa el default de LLM)."""
     s = _SLOTS.get(rol)
-    return [p.strip() for p in s.split(",")] if s else None
+    if not s:
+        return None
+    # La lista escrita fija QUIENES participan; la salud medida decide en que
+    # orden. Asi una degradacion se corrige sola en vez de esperar a que alguien
+    # lea el informe que la caja ya escribio.
+    return ordenar_por_salud([p.strip() for p in s.split(",")])
 
 
 def correlacionar(llm, tema, piezas, densidad="medio"):
@@ -333,12 +393,15 @@ class LLM:
     Code node probado 2026-07-15: cerebras/azure son razonadores, llevan
     margen extra de max_completion_tokens; azure NO acepta temperature)."""
 
-    def __init__(self, order="cerebras,azure,groq,win,ollama"):
+    def __init__(self, order="groq,cerebras,azure,win,ollama"):
         load_env()
         self.stats = {}
         self.errors = []
-        self.order = [p.strip() for p in order.split(",")
-                      if p.strip() in ("groq", "cerebras", "azure", "win", "ollama")]
+        base = [p.strip() for p in order.split(",")
+                if p.strip() in ("groq", "cerebras", "azure", "win", "ollama")]
+        # Misma regla que orden_rol: la lista escrita dice QUIENES participan,
+        # la salud medida decide el orden. Con muestra insuficiente no se toca.
+        self.order = ordenar_por_salud(base)
 
     # -- proveedores ----------------------------------------------------
     def _groq(self, system, user, max_tok):

@@ -187,9 +187,15 @@ def main():
         log("%s skip: tope diario (%d)" % (ts, roles.MAX_DIA))
         return
 
-    # round-robin: probar verbos hasta encontrar uno con trabajo
+    # PRIORIDAD: mientras haya material del usuario en cola, se atiende eso.
+    # Sin esto el round-robin le daba 1 de cada 5 turnos y la cola crecia mas
+    # rapido de lo que drenaba -- o sea, el modo autonomo seguia ganando.
+    # Cuando la cola se vacia, el verbo atender no produce tarea y la rotacion normal
+    # sigue su curso: el modo autonomo es el fallback, como fue disenado.
     n = len(roles.VERBOS)
     idx = st.get("verbo_idx", 0) % n
+    if any(v["verbo"] == "atender" for v in roles.VERBOS):
+        idx = next(i for i, v in enumerate(roles.VERBOS) if v["verbo"] == "atender")
     tarea = None
     verbo = None
     for k in range(n):

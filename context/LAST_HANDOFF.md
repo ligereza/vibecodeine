@@ -94,6 +94,8 @@ profiles, and the documentation ratchets (`test_mapa_completo`,
 | 2026-07-26 | **A symbol added by the events manager reaches BOTH the printed plan and the editor.** It was a two-step day: first the catalogue only fed `flujo plano`, because `PlanoTool.tsx` kept its own list of icons named after a component library, where a designer's `.svg` had no slot. Then the component learnt to draw raw markup for a custom key, on the same 160x160 convention Python already used, and the palette shows each one with its OWN drawing so several are told apart. If she has no SVG, an image is traced and shown before saving. Nothing here is guessed: it was verified in a browser, from an empty catalogue to a symbol drawn on the plan |
 | 2026-07-26 | **The floor-plan symbol catalogue is open.** Acceptance criterion, verbatim: "can the events manager add an icon? if not, it is not configurable". She now drops an `.svg` into `data/plano_simbolos/` and declares it in `data/plano_simbolos.json` (that file carries the instructions, in Spanish, because she is the one reading it). No code, no TypeScript. The catalogue ADDS to the 17 built-ins and can also relabel or recolour one of them. A symbol may declare `cuando` (siempre / testeo / jornada_larga / masivo / manual) and a zone. Two real defects fixed on the way: a key absent from `_ZONAS_ICONOS` used to be dropped from the plan SILENTLY, and the zone list was about to become a second copy — it now derives from `engine._ZONAS_ICONOS`. Anything wrong in the file warns on stderr and the rest of the plan still renders. `data/plano_simbolos/_ejemplo_hidratacion.svg` is a sample to copy and is deliberately NOT declared: it is not a real RD symbol |
 | 2026-07-26 | Placeholder phone numbers: gone. The only remaining match in the repo is the comment recording the incident |
+| 2026-07-26 | **MAK works on the user's material, not on its own output.** It ran at 8% of its daily quota writing cultural genealogies while 57 GB of his material sat untouched. Root cause: ONE prompt for two different jobs, and it never asked for headliners -- half of his own formula ("headliner + fecha = productora encontrable"). Splitting the prompt was not enough: the ficha builder had the old schema hardcoded and silently dropped every new field. Now a verb `atender` goes FIRST and consumes a queue built from what was perceived. **The autonomous mode was NOT removed** -- he designed it for when there is no new material or no internet; it is a fallback again instead of the default. Mirrored in `cultura/mak_*`, PR #316 |
+| 2026-07-26 | **MAK's own reports are acted on, not just filed.** It had written "mitigar la degradacion de groq" and nobody executed it: groq led the provider order with 40% measured success while cerebras (91.4%) came third. Reordered by measurement. The pattern to watch: the box can diagnose itself and cannot act on itself |
 | 2026-07-26 | **Brand is information, never a restriction.** User's words: "como info sirve, como limitante o restriccion no -- un dia puedo hacer un post con otra estetica o cuando toque cambio de flyers la app no debe restringir". So the palette is a DEFAULT any caller, event or config may override, and nothing validates a piece against it. Removed: the `flujo brand` CLI group (it only printed that it had been retired), the dead `export_tokens` bridge, and a block in `render/piezas.py` that printed "flujo aplicado automaticamente" while applying nothing inside a silent `try/except`. The quote engine's palette now resolves caller > event `estilo` block > default palette, and the document sent to a productora no longer carries hex codes or the words "usa flujo para consistencia de marca". `flujo.brand` STAYS as the palette reader -- deleting it is exactly how it broke before |
 | 2026-07-25 | Supplements panel in the app: UNNECESSARY. User's words: "los flyers los presentan" |
 | 2026-07-25 | The design folder is not backed up from the repo. What was asked for was extracting structure and data; an agent turned it into a 1 GB backup order nobody requested |
@@ -144,6 +146,18 @@ and say what changes.
   be re-measured before acting on it. This one had been repeated for days.
 
 ## Open
+
+- **MAK is re-perceiving both corpora tonight and nobody should touch it.** RD
+  first (feeds the triangulation queue), then the artist's archive (feeds the
+  conceptual map), chained by a cron guard with a real lock. About 17 hours of
+  work. Five traps cost real time today and are recorded in the assistant's
+  memory: a process launched over SSH does not survive the session, `pgrep`
+  alone let two perceptions run on a 4 GB GPU -- which is exactly what killed
+  the July run -- `procesados.txt` must not be touched while the job holds it, a
+  running process still has the OLD code loaded after a patch, and nested
+  heredocs over SSH break.
+- **When it finishes, read what it produced before giving it more work.** The
+  triangulation queue will hold hundreds of real questions with artist names.
 
 **How this list is kept honest:** on 2026-07-26 it carried an item that had
 already been fixed that same day, plus a second copy of the Illustrator entry
