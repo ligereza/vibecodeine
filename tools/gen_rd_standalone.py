@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -60,6 +61,28 @@ def main() -> int:
     datos = datos_panel(RAIZ)
     datos["horneado"] = True          # el panel lo usa para decir de donde salio
 
+    # Los logos tambien viajan. El panel los pedia a /api/rd-db/logo y en el
+    # archivo suelto eso da 404: el recuadro quedaba roto justo en las
+    # productoras que SI tienen logo, que es al reves de lo que se quiere
+    # mostrar. Solo los vectoriales, que son livianos y escalan.
+    from flujo.rd.panel import _candidatos_logo
+
+    dir_logos = RAIZ / "knowledge" / "logos"
+    horneados = 0
+    for prod in datos["productoras"]:
+        if not prod.get("logo", {}).get("archivo"):
+            continue
+        for cand in _candidatos_logo(dir_logos, prod["slug"], ""):
+            if cand.is_file() and cand.suffix.lower() == ".svg":
+                svg = cand.read_text(encoding="utf-8", errors="replace")
+                # Lo mismo que se hace con un simbolo del plano: nada de script
+                # ni manejadores en un archivo que se entrega.
+                svg = re.sub(r"<script[\s\S]*?</script\s*>", "", svg, flags=re.I)
+                svg = re.sub(r"\son[a-z]+\s*=\s*(\"[\s\S]*?\"|'[\s\S]*?')", "", svg, flags=re.I)
+                prod["logo_svg"] = svg.strip()
+                horneados += 1
+                break
+
     fugas = revisar(datos)
     if fugas:
         print("ABORTADO: datos que no pueden salir del repo:", ", ".join(fugas[:6]),
@@ -71,8 +94,8 @@ def main() -> int:
                            encoding="utf-8")
     kb = args.salida.stat().st_size / 1024
     print(f"{args.salida.relative_to(RAIZ)}: "
-          f"{len(datos['productoras'])} productoras, {len(datos['venues'])} venues "
-          f"({kb:.1f} KB)")
+          f"{len(datos['productoras'])} productoras, {len(datos['venues'])} venues, "
+          f"{horneados} logos ({kb:.1f} KB)")
     return 0
 
 

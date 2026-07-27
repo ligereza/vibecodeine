@@ -17,6 +17,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default defineConfig({
+  // Este bundle se entrega como archivo suelto: no hay backend al que pedirle.
+  // Con esta marca el codigo NO intenta la llamada y despues cae al respaldo:
+  // intentarla deja errores 404 en la consola de quien abre el archivo, y un
+  // error rojo se lee como "la aplicacion esta fallando" aunque no falle.
+  define: { __SIN_SERVIDOR__: "true" },
   plugins: [react(), tailwindcss(), viteSingleFile()],
   resolve: {
     alias: {

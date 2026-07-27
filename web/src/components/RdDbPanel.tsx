@@ -30,6 +30,8 @@ interface Productora {
   confirmada: boolean;
   confirmacion: string;
   fuente: string;
+  /** SVG del logo horneado en el bundle sin servidor. Ausente con hub. */
+  logo_svg?: string;
 }
 interface VenueCat {
   id: string;
@@ -38,7 +40,13 @@ interface VenueCat {
   escala: string;
   capacidad: string;
 }
+// `__SIN_SERVIDOR__` lo define vite en los builds standalone; en el hub no
+// existe, y ahi vale false.
+const SIN_SERVIDOR = typeof __SIN_SERVIDOR__ !== 'undefined' && __SIN_SERVIDOR__;
+
 interface Data {
+  /** true = los datos vienen dentro del archivo, no de un servidor. */
+  horneado?: boolean;
   productoras: Productora[];
   venues: VenueCat[];
   resumen?: {
@@ -79,22 +87,26 @@ export default function RdDbPanel() {
   // en el archivo que se entrega sin servidor, que es justo donde no hay a
   // quien pedirle. La copia sale de la MISMA funcion que sirve el hub
   // (flujo.rd.panel), horneada por tools/gen_rd_standalone.py.
+  // En el bundle suelto se va derecho al respaldo: probar el servidor primero
+  // dejaba un 404 en la consola de quien abre el archivo.
+  const cargarHorneada = async () => {
+    try {
+      const d = (await import('../data/rdDbEmbebida.json')).default as unknown as Data;
+      setData(d);
+      setEstado('ok');
+    } catch {
+      setEstado('error');
+    }
+  };
+
   const cargar = () =>
-    fetch('/api/rd-db')
+    SIN_SERVIDOR ? cargarHorneada() : fetch('/api/rd-db')
       .then(r => r.json())
       .then(d => {
         setData(d);
         setEstado(d?.error ? 'error' : 'ok');
       })
-      .catch(async () => {
-        try {
-          const horneada = (await import('../data/rdDbEmbebida.json')).default as unknown as Data;
-          setData(horneada);
-          setEstado('ok');
-        } catch {
-          setEstado('error');
-        }
-      });
+      .catch(cargarHorneada);
 
   useEffect(() => {
     cargar();
@@ -155,7 +167,9 @@ export default function RdDbPanel() {
         <div>
           <h1 className="text-xl font-bold tracking-tight">Base de datos RD</h1>
           <p className="text-sm text-zinc-500">
-            Productoras y venues. Fuente: <code className="text-zinc-400">data/productoras/*.json</code>
+            {data?.horneado
+              ? 'Productoras y venues, con los datos dentro de este archivo. Para editarlos hace falta la aplicación completa.'
+              : <>Productoras y venues. Fuente: <code className="text-zinc-400">data/productoras/*.json</code></>}
           </p>
         </div>
       </header>
@@ -203,7 +217,7 @@ export default function RdDbPanel() {
             <div className="flex flex-wrap items-center gap-2 border-b border-zinc-800 px-4 py-3">
               <h2 className="text-sm font-bold">Productoras</h2>
               <span className="text-[11px] text-zinc-600">
-                clic en el recuadro del logo para reemplazarlo
+                {data?.horneado ? '' : 'clic en el recuadro del logo para reemplazarlo'}
               </span>
             </div>
             <div className="divide-y divide-zinc-800/60">
@@ -211,15 +225,26 @@ export default function RdDbPanel() {
                 <div key={p.slug} className="flex items-center gap-4 px-4 py-3">
                   <button
                     onClick={() => pedirArchivo(p.slug)}
-                    disabled={subiendo === p.slug}
-                    title="Reemplazar logo"
+                    disabled={subiendo === p.slug || !!data?.horneado}
+                    title={data?.horneado
+                      ? "Para cambiar el logo hace falta la aplicación completa"
+                      : "Reemplazar logo"}
                     className="group relative flex h-14 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 hover:border-emerald-700"
                   >
                     {/* Solo se pide el logo si el backend dice que hay uno. Antes
                         se pedia para las 20 y las 14 sin logo devolvian 404: la
                         consola quedaba con 18 errores rojos que se leen como una
                         falla de la app, y no lo son. */}
-                    {p.logo.archivo !== false && (
+                    {/* Con el logo horneado se dibuja directo: pedirlo al
+                        backend daba 404 en el archivo suelto y dejaba el
+                        recuadro roto justo en las productoras que SI lo
+                        tienen, al reves de lo que se quiere mostrar. */}
+                    {p.logo_svg ? (
+                      <span
+                        className="max-h-full max-w-full p-1 [&>svg]:h-full [&>svg]:w-full [&>svg]:object-contain"
+                        dangerouslySetInnerHTML={{ __html: p.logo_svg }}
+                      />
+                    ) : (!SIN_SERVIDOR && p.logo.archivo !== false) && (
                       <img
                         src={`/api/rd-db/logo?slug=${p.slug}&v=${rev}`}
                         alt=""
