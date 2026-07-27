@@ -30,6 +30,7 @@ from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
 OBRAS = RAIZ / "iskvw" / "datos" / "obras.json"
+CAMPO = RAIZ / "iskvw" / "datos" / "campo.json"
 SALIDA = RAIZ / "iskvw" / "datos" / "archivo.json"
 
 # Por defecto el micelio se pide a la variable de entorno, no a una IP escrita
@@ -47,6 +48,23 @@ def _id(texto: str) -> str:
     base = unicodedata.normalize("NFKD", str(texto or ""))
     base = base.encode("ascii", "ignore").decode("ascii").lower()
     return re.sub(r"[^a-z0-9]+", "-", base).strip("-")[:60] or "sin-id"
+
+
+def _id_pieza(texto: str) -> str:
+    """El id de una pieza, sin el sufijo de archivo.
+
+    El micelio nombra sus nodos con el archivo entero
+    ("b7fd4e77b4a2-17926032902806396.md") y el campo usa el stem, asi que
+    `_id()` producia "...-md" en un lado y no en el otro y las posiciones NUNCA
+    empalmaban: 1004 piezas, 0 con posicion. La extension es donde el dato esta
+    guardado, no que pieza es.
+    """
+    s = str(texto or "")
+    for ext in (".md", ".txt", ".json", ".jpg", ".jpeg", ".png", ".webp"):
+        if s.lower().endswith(ext):
+            s = s[: -len(ext)]
+            break
+    return _id(s)
 
 
 def _fecha(obra: dict) -> str | None:
@@ -116,26 +134,71 @@ def desde_micelio(url: str = MICELIO_URL, umbral: float = UMBRAL_MICELIO) -> dic
 
     # 'corpus' son las obras del artista percibidas; el resto lo escribio MAK.
     clase = {"corpus": "obra", "codex": "codigo"}
-    piezas = [{
-        "id": _id(n.get("id")),
-        "titulo": str(n.get("titulo") or n.get("id")),
-        "clase": clase.get(n.get("dir"), "informe"),
-        "fecha": None,
-        "resumen": None,
-        "etiquetas": [n["dir"]] if n.get("dir") else [],
-        "peso": int(n.get("chunks") or 1),
-        "medio": {"tipo": "texto"},
-        "estado": "publicada",
-        "extra": {"carpeta": n.get("dir")},
-    } for n in g.get("nodes", [])]
+    # Lo que MAK escribio de una obra del artista es PERCEPCION, no titulo. Lo
+    # ponia como `titulo` y el contrato quedaba afirmando que la obra se llama
+    # "Una mujer sentada bajo una estructura de madera" -- voz de maquina
+    # firmando como el artista. Es el mismo defecto que la piel tenia con el id
+    # de Instagram, un nivel mas abajo. Para las obras el titulo queda VACIO
+    # (silencio antes que voz prestada) y el texto viaja como `percibido`, que
+    # una piel puede usar para buscar y ubicar sin mostrarlo como autoria.
+    # Para los informes y el codigo, que los escribio MAK, el titulo SI es suyo.
+    piezas = []
+    for n in g.get("nodes", []):
+        cl = clase.get(n.get("dir"), "informe")
+        texto = str(n.get("titulo") or "").strip()
+        es_obra = cl == "obra"
+        piezas.append({
+            "id": _id_pieza(n.get("id")),
+            "titulo": "" if es_obra else (texto or _id_pieza(n.get("id"))),
+            "clase": cl,
+            "fecha": None,
+            "resumen": None if es_obra else None,
+            "etiquetas": [n["dir"]] if n.get("dir") else [],
+            "peso": int(n.get("chunks") or 1),
+            "medio": {"tipo": "texto"},
+            "estado": "publicada",
+            "extra": {k: v for k, v in (
+                ("carpeta", n.get("dir")),
+                ("percibido", texto if es_obra else None),
+            ) if v},
+        })
 
     conocidas = {p["id"] for p in piezas}
     vinculos = [{
-        "de": _id(e["a"]), "a": _id(e["b"]),
+        "de": _id_pieza(e["a"]), "a": _id_pieza(e["b"]),
         "peso": round(float(e.get("w") or 0), 3), "clase": "semantico",
     } for e in g.get("edges", [])
-        if _id(e.get("a")) in conocidas and _id(e.get("b")) in conocidas]
+        if _id_pieza(e.get("a")) in conocidas and _id_pieza(e.get("b")) in conocidas]
     return {"piezas": piezas, "vinculos": vinculos}
+
+
+def posiciones(ruta: Path = CAMPO) -> tuple[dict, float | None]:
+    """Las posiciones medidas del campo, para pegarlas al contrato.
+
+    Antes de esto el archivo salia partido en dos y la costura era justamente
+    esto: `archivo.json` traia las relaciones sin posicion y `campo.json` la
+    posicion sin las relaciones, asi que una piel que queria las dos cosas
+    tenia que conocer DOS archivos y unirlos ella. Eso es exactamente lo que el
+    contrato existe para evitar.
+
+    No se fusionan los generadores: proyectar necesita los 768 vectores del
+    micelio y el contrato no los tiene ni los quiere. Lo que viaja es el
+    resultado, que son dos numeros por obra.
+
+    La metrica viaja aparte, en `meta`, porque describe la PROYECCION entera y
+    no una pieza. Si no esta el archivo, no se inventa nada: el contrato sale
+    sin posiciones y una piel que no las encuentra dibuja como sabe.
+    """
+    try:
+        d = json.loads(ruta.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}, None
+    pos = {}
+    for p in d.get("piezas") or []:
+        pid = _id(p.get("id"))
+        if pid and p.get("x") is not None and p.get("y") is not None:
+            pos[pid] = {"x": p["x"], "y": p["y"]}
+    return pos, (d.get("meta") or {}).get("vecindad_conservada")
 
 
 def unir(*partes: dict) -> dict:
@@ -169,6 +232,9 @@ def main() -> int:
     ap.add_argument("--url", default=MICELIO_URL)
     ap.add_argument("--umbral", type=float, default=UMBRAL_MICELIO)
     ap.add_argument("--salida", type=Path, default=SALIDA)
+    ap.add_argument("--posiciones", type=Path, default=CAMPO,
+                    help="campo.json con las posiciones medidas; si no esta, "
+                         "el contrato sale sin posiciones")
     args = ap.parse_args()
 
     partes = []
@@ -186,6 +252,18 @@ def main() -> int:
                 return 1
 
     datos = unir(*partes)
+
+    # La posicion entra como campo OPCIONAL: la pieza que la tiene la lleva y la
+    # que no, no la lleva vacia. Un campo que no conoces es un campo que
+    # ignoras, y un cero fingido seria una posicion afirmada sin medir.
+    pos, vecindad = posiciones(args.posiciones)
+    con_pos = 0
+    for p in datos["piezas"]:
+        xy = pos.get(p["id"])
+        if xy:
+            p["posicion"] = xy
+            con_pos += 1
+
     salida = {
         "version": 1,
         "fuente": args.fuente,
@@ -197,12 +275,24 @@ def main() -> int:
             "vinculos": len(datos["vinculos"]),
             "por_clase": _contar(datos["piezas"], "clase"),
             "vinculos_por_clase": _contar(datos["vinculos"], "clase"),
+            "con_posicion": con_pos,
+            # Describe la PROYECCION entera, no una pieza, asi que va aca. Es la
+            # fraccion de vecinos reales que siguen siendo vecinos en el plano:
+            # si baja, lo que el campo afirma se debilita y hay que decirlo.
+            "vecindad_conservada": vecindad,
         },
     }
     args.salida.parent.mkdir(parents=True, exist_ok=True)
     args.salida.write_text(json.dumps(salida, ensure_ascii=False, indent=1),
                            encoding="utf-8")
-    print(f"{args.salida.relative_to(RAIZ)}: {len(datos['piezas'])} piezas, "
+    # `relative_to` levanta ValueError con una salida fuera del repo, asi que
+    # --salida a cualquier ruta absoluta de afuera reventaba DESPUES de haber
+    # escrito bien el archivo. El nombre corto es una comodidad, no un requisito.
+    try:
+        donde = args.salida.relative_to(RAIZ)
+    except ValueError:
+        donde = args.salida
+    print(f"{donde}: {len(datos['piezas'])} piezas, "
           f"{len(datos['vinculos'])} vinculos "
           f"({args.salida.stat().st_size / 1024:.1f} KB)")
     print("  por clase:", salida["meta"]["por_clase"])
