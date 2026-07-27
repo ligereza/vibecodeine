@@ -646,8 +646,48 @@ def ntfy_publish(topic, message, title="", priority="default", errors=None):
         return False
 
 
+# Marco FACTICO: para consultas concretas sobre eventos publicos y las
+# organizaciones que los producen (la triangulacion de flyers). No es
+# investigacion cultural y enmarcar la pregunta como tal hacia que se buscara
+# en Dialnet o SciELO quien produjo una fiesta -- comprobado el 2026-07-26.
+#
+# Conserva y REFUERZA el limite de los otros marcos: no se perfila a personas.
+# El sujeto es la organizacion; los nombres del cartel son un dato para
+# identificar el evento, no algo sobre lo que investigar.
+MARCO_FACTUAL = (
+    "Consulta FACTICA sobre un evento publico y la organizacion que lo produjo. "
+    "Buscar en fuentes web actuales (sitios de la productora, ticketeras, "
+    "prensa, redes del evento), NO en literatura academica. "
+    "El sujeto es la EMPRESA U ORGANIZACION productora: los nombres de artistas "
+    "solo sirven para identificar de que evento se habla, y no se investiga ni "
+    "se perfila a ninguna persona. "
+    "Responder SOLO con lo que una fuente confirme, citandola. Si no se "
+    "encuentra, decir explicitamente que no se encontro: una respuesta vacia "
+    "verificable vale mas que una plausible inventada. "
+)
+
+# Senales de que la pregunta es de triangulacion y no de investigacion cultural.
+_SENALES_FACTUAL = (
+    "que productora organizo",
+    "quien organizo",
+    "verificar si la productora",
+    "que productora produjo",
+)
+
+
+def _es_pregunta_factual(topic):
+    """Ante la duda, False: se prefiere el marco cultural, que protege mas."""
+    t = (topic or "").lower()
+    return any(s in t for s in _SENALES_FACTUAL)
+
+
 def marco(topic, activo=True):
     if not activo:
         return topic
+    # Una consulta factica sobre quien produjo un evento no es investigacion
+    # cultural: enmarcarla como tal la mandaba a buscar en bases academicas.
+    # El limite de no perfilar personas viaja igual en los tres marcos.
+    if _es_pregunta_factual(topic) and not _es_tema_sustancia(topic):
+        return MARCO_FACTUAL + topic
     frame = MARCO_CULTURA if _es_tema_sustancia(topic) else MARCO_CULTURA_NEUTRO
     return frame + topic
