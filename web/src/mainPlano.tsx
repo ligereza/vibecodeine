@@ -12,9 +12,15 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import PlanoStandalone from './components/PlanoStandalone';
 import { loadPlanoConfig, applyPlanoConfig } from './data/planoConfig';
+import { cargarSimbolosLocales } from './data/planoSimbolos';
 
 const { config, warning } = loadPlanoConfig();
 applyPlanoConfig(config);
+
+// Los simbolos que la encargada creo en ESTE navegador. En el bundle suelto
+// no hay hub que los sirva, asi que si no se cargan aca su trabajo anterior
+// no aparece al reabrir el archivo.
+cargarSimbolosLocales();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
