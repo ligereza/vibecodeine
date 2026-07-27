@@ -340,8 +340,16 @@ def una_pasada(dry_run=False, solo=None):
         if not url:
             _log("#%d sin link de Instagram, lo salteo" % numero)
             continue
-        if str(numero) in st["hechos"] and solo is None:
+        # Solo se saltea lo que SALIO BIEN. Anotar un fallo como "hecho" dejaba
+        # el issue muerto para siempre: el 2026-07-27 el #322 fallo por un 403
+        # de Instagram y los ticks siguientes lo saltearon en silencio, sin
+        # siquiera decir por que. Un fallo casi siempre es transitorio -- red,
+        # bloqueo, GPU ocupada -- y merece el proximo tick.
+        previo = st["hechos"].get(str(numero))
+        if previo and previo.get("ok") and solo is None:
             continue
+        if previo and solo is None:
+            _log("#%d fallo antes (%s); reintento" % (numero, previo.get("ts", "")))
         code = _shortcode(url)
         _log("#%d renderizando %s" % (numero, url))
         if dry_run:
