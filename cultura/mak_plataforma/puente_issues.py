@@ -144,9 +144,24 @@ def issues_abiertos(etiqueta):
         return []
 
 
-def _link_ig(texto):
-    m = IG_RE.search(texto or "")
-    return m.group(0).rstrip(".,)") if m else None
+def _links_ig(texto):
+    """TODOS los links del issue, sin repetir y en orden.
+
+    Antes se tomaba solo el primero. La jefa del usuario manda mas de un evento
+    en el mismo correo -- el issue #326 llego con dos -- y el segundo se perdia
+    en silencio, que es el mismo defecto que este repo persigue: hacer menos de
+    lo pedido sin decirlo.
+    """
+    vistos, salida = set(), []
+    for m in IG_RE.finditer(texto or ""):
+        u = m.group(0).rstrip(".,)")
+        # El cuerpo del issue repite los links (lista + texto del correo).
+        clave = _shortcode(u) + "|" + str(_indice_pedido_local(u))
+        if clave in vistos:
+            continue
+        vistos.add(clave)
+        salida.append(u)
+    return salida
 
 
 def _shortcode(url):
@@ -266,28 +281,66 @@ def al_departamento(numero, shortcode):
         return None
 
 
-def comentar_y_cerrar(numero, ok, url, salida, destino, en_depto, dry_run):
-    estado = "OK" if ok else "FALLO"
-    partes = ["MAK: render %s para %s" % (estado, url)]
-    if destino:
-        partes.append("")
-        partes.append("Entregado en `%s`." % destino)
-    if en_depto:
-        partes.append("Flyer enviado al departamento como `%s`: "
-                      "su data entra a la cadena de RD." % en_depto)
-    # Solo la cola del log y sin rutas: el issue es publico.
-    partes.append("")
-    partes.append("```\n%s\n```" % _sin_rutas(salida)[-2500:])
-    cuerpo = "\n".join(partes)
+def comentar_y_cerrar(numero, completo, piezas, dry_run):
+    """Un comentario que se entiende de un vistazo, con lo pendiente ARRIBA.
 
+    El aviso importante iba al final, detras del log de Blender, y el log se
+    recorta por la cola: el 2026-07-27 el aviso de que no se habia podido
+    respetar la imagen pedida quedo fuera del comentario. Un aviso que nadie
+    lee no existe. Ahora el resumen va primero y el log al fondo, plegado.
+    """
+    hechas = [p for p in piezas if p["ok"]]
+    faltan = [p for p in piezas if not p["ok"]]
+
+    partes = []
+    if completo:
+        partes.append("MAK: **%d de %d** listo." % (len(hechas), len(piezas)))
+    else:
+        partes.append("MAK: **%d de %d** listo. Queda abierto por lo de abajo."
+                      % (len(hechas), len(piezas)))
+    partes.append("")
+
+    for p in hechas:
+        linea = "- [x] `%s`" % p["code"]
+        if p["imagen"] > 1:
+            linea += " (imagen %d del carrusel)" % p["imagen"]
+        if p.get("destino"):
+            linea += " -> `%s`" % p["destino"]
+        partes.append(linea)
+        if p.get("en_departamento"):
+            partes.append("      al departamento como `%s`" % p["en_departamento"])
+
+    for p in faltan:
+        partes.append("- [ ] `%s` **pendiente**: %s"
+                      % (p["code"], p.get("pendiente") or "sin motivo"))
+        partes.append("      %s" % p["url"])
+
+    if faltan:
+        partes.append("")
+        partes.append("Lo pendiente esta en el departamento de render de MAK, "
+                      "y se resuelve desde la app de flujo en Windows.")
+
+    logs = [p for p in piezas if p.get("log")]
+    if logs:
+        partes.append("")
+        partes.append("<details><summary>log</summary>")
+        partes.append("")
+        for p in logs:
+            partes.append("```")
+            partes.append(p["log"])
+            partes.append("```")
+        partes.append("</details>")
+
+    cuerpo = "\n".join(partes)
     if dry_run:
-        _log("[dry-run] comentaria y %s el issue #%d:\n%s"
-             % ("cerraria" if ok else "dejaria abierto", numero, cuerpo))
+        _log("[dry-run] comentaria #%d:\n%s" % (numero, cuerpo))
         return
     r = _gh("issue", "comment", str(numero), "--repo", REPO, "--body", cuerpo)
     if r.returncode != 0:
         _log("error: comentar #%d -- %s" % (numero, r.stderr.strip()[:160]))
-    if ok:
+    # Cerrar solo si NO quedo nada pendiente. Un issue cerrado con trabajo sin
+    # hacer es peor que uno abierto: desaparece de la vista del usuario.
+    if completo:
         c = _gh("issue", "close", str(numero), "--repo", REPO)
         if c.returncode != 0:
             _log("error: cerrar #%d -- %s" % (numero, c.stderr.strip()[:160]))
@@ -320,6 +373,29 @@ def _indice_pedido_local(url):
         return 1
 
 
+ES_VIDEO = re.compile(r"/(?:reel|tv)/", re.IGNORECASE)
+
+
+def _motivo_pendiente(url, salida):
+    """Por que MAK no puede resolver este link, en palabras del usuario.
+
+    Existe porque el modo de falla mas caro no es fallar: es fallar en
+    silencio. Un link que no se puede bajar tiene que quedar VISIBLE con su
+    razon, no desaparecer del issue.
+    """
+    if ES_VIDEO.search(url or ""):
+        return ("es un video: el render de video se hace en Windows, "
+                "desde la app de flujo")
+    texto = (salida or "").lower()
+    if "httperrorpage" in texto or "no traia imagen" in texto:
+        return ("Instagram no expone este post sin sesion (su embed devuelve "
+                "una pagina de error). Pasa con posts sueltos y con perfiles "
+                "con alcance restringido; se resuelve desde Windows")
+    if "403" in texto or "login wall" in texto:
+        return "Instagram bloqueo la descarga; se resuelve desde Windows"
+    return "no se pudo bajar el flyer; se resuelve desde Windows"
+
+
 def una_pasada(dry_run=False, solo=None):
     cfg = config()
     if not cfg.get("activo", True) and solo is None:
@@ -336,44 +412,71 @@ def una_pasada(dry_run=False, solo=None):
     hechos = 0
     for it in issues:
         numero = it.get("number")
-        url = _link_ig(it.get("body") or "")
-        if not url:
+        links = _links_ig(it.get("body") or "")
+        if not links:
             _log("#%d sin link de Instagram, lo salteo" % numero)
             continue
-        # Solo se saltea lo que SALIO BIEN. Anotar un fallo como "hecho" dejaba
-        # el issue muerto para siempre: el 2026-07-27 el #322 fallo por un 403
-        # de Instagram y los ticks siguientes lo saltearon en silencio, sin
-        # siquiera decir por que. Un fallo casi siempre es transitorio -- red,
-        # bloqueo, GPU ocupada -- y merece el proximo tick.
+
         previo = st["hechos"].get(str(numero))
+        # Solo se saltea lo COMPLETO. Anotar un fallo como hecho dejaba el
+        # issue muerto para siempre: el #322 fallo por un 403 y los ticks
+        # siguientes lo saltearon en silencio. Un fallo suele ser transitorio.
         if previo and previo.get("ok") and solo is None:
             continue
         if previo and solo is None:
-            _log("#%d fallo antes (%s); reintento" % (numero, previo.get("ts", "")))
-        code = _shortcode(url)
-        _log("#%d renderizando %s" % (numero, url))
-        if dry_run:
-            _log("[dry-run] no renderizo")
-            comentar_y_cerrar(numero, True, url, "[dry-run]", None, None, True)
-            continue
+            _log("#%d quedo incompleto (%s); reintento"
+                 % (numero, previo.get("ts", "")))
 
-        if cfg.get("pausar_percepcion", True):
-            with PercepcionEnPausa():
+        _log("#%d tiene %d link(s)" % (numero, len(links)))
+        piezas = []
+        for url in links:
+            code = _shortcode(url)
+            idx = _indice_pedido_local(url)
+
+            # El video no se renderiza aca por decision del usuario: el de 600
+            # cuadros se hace en Windows, que tiene la placa grande.
+            if ES_VIDEO.search(url):
+                _log("  %s es video -> pendiente para Windows" % code)
+                piezas.append({"url": url, "code": code, "imagen": idx,
+                               "ok": False, "destino": None,
+                               "en_departamento": None,
+                               "pendiente": _motivo_pendiente(url, "")})
+                continue
+
+            _log("  renderizando %s (imagen %d)" % (code, idx))
+            if dry_run:
+                piezas.append({"url": url, "code": code, "imagen": idx,
+                               "ok": True, "destino": "[dry-run]",
+                               "en_departamento": None, "pendiente": None})
+                continue
+
+            if cfg.get("pausar_percepcion", True):
+                with PercepcionEnPausa():
+                    ok, salida, png = renderizar(url)
+            else:
                 ok, salida, png = renderizar(url)
-        else:
-            ok, salida, png = renderizar(url)
-        destino = subir(png, numero, code, cfg) if ok else None
-        en_depto = (al_departamento(numero, code)
-                    if ok and cfg.get("al_departamento", True) else None)
-        comentar_y_cerrar(numero, ok, url, salida, destino, en_depto, False)
-        st["hechos"][str(numero)] = {"url": url, "ok": ok,
-                                     "destino": destino,
-                                     "en_departamento": en_depto,
-                                     "imagen": _indice_pedido_local(url),
-                                     "ts": time.strftime("%Y-%m-%dT%H:%M:%S")}
+            destino = subir(png, numero, code, cfg) if ok else None
+            en_depto = (al_departamento(numero, code)
+                        if ok and cfg.get("al_departamento", True) else None)
+            piezas.append({
+                "url": url, "code": code, "imagen": idx, "ok": ok,
+                "destino": destino, "en_departamento": en_depto,
+                "pendiente": None if ok else _motivo_pendiente(url, salida),
+                "log": _sin_rutas(salida)[-1200:] if not ok else "",
+            })
+            _log("  %s %s" % (code, "listo" if ok else "pendiente"))
+
+        completo = all(p["ok"] for p in piezas)
+        comentar_y_cerrar(numero, completo, piezas, dry_run)
+        st["hechos"][str(numero)] = {
+            "ok": completo, "piezas": piezas,
+            "ts": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        }
         _guardar_estado(st)
         hechos += 1
-        _log("#%d %s" % (numero, "listo" if ok else "fallo"))
+        _log("#%d %s (%d/%d piezas)"
+             % (numero, "cerrado" if completo else "queda abierto",
+                sum(1 for p in piezas if p["ok"]), len(piezas)))
     return hechos
 
 
