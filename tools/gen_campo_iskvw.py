@@ -30,6 +30,58 @@ from pathlib import Path
 
 INDEX = Path(os.path.expanduser("~/research/memoria/index.jsonl"))
 FICHAS = Path(os.path.expanduser("~/curatoria/fichas/fichas.jsonl"))
+FILTRO = Path(__file__).resolve().parents[1] / "data" / "iskvw_campo_filtro.json"
+
+
+def cargar_filtro(ruta: Path = FILTRO) -> dict:
+    """Que obras entran al campo. Configuracion, NO una puerta que espera.
+
+    El tramo anterior cerro pidiendole al usuario que decidiera cuales de las
+    697 eran obra, y su correccion fue de una linea: el objetivo era que el
+    sistema TRAGUE lo que le llegue y que el criterio sea configuracion. Es la
+    misma leccion ya escrita en este repo para la tarifa RD, los simbolos del
+    plano y los tipos de pieza: lo que cambia se edita en un archivo.
+
+    Asi que el default entra en TODO y sumar obras es correr el generador otra
+    vez. Si el archivo no esta, no se adivina en silencio: se avisa y se entra
+    en todo, que es lo que no pierde nada.
+    """
+    base = {"incluir": [], "excluir": [], "sin_clasificar": "incluir",
+            "sinonimos": {}}
+    try:
+        d = json.loads(ruta.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        print(f"aviso: sin filtro utilizable ({ruta.name}: {exc}); "
+              f"entra TODO el archivo", file=sys.stderr)
+        return base
+    for k in base:
+        if k in d:
+            base[k] = d[k]
+    return base
+
+
+def normalizar(tipo: str, sinonimos: dict) -> str:
+    """El tipo tal como lo va a leer el filtro: minusculas y sin sinonimos.
+
+    Medido el 2026-07-27 sobre las 937 fichas del archivo: `tipo_obra` tenia 20
+    valores distintos donde debia haber un conjunto fijo, y dos pares eran el
+    mismo tipo escrito de dos formas -- tatuaje/tattoo (58 obras partidas en
+    dos) y obra/obras. El vocabulario ya quedo cerrado del lado de la
+    percepcion; esto arregla lo que quedo escrito antes.
+    """
+    t = (tipo or "").strip().lower()
+    return (sinonimos.get(t) or t)
+
+
+def entra(tipo: str, f: dict) -> bool:
+    """Una sola regla, en un solo lugar, para que la salida pueda explicarla."""
+    if not tipo:
+        return f.get("sin_clasificar", "incluir") != "excluir"
+    incluir = [normalizar(x, f["sinonimos"]) for x in f.get("incluir") or []]
+    excluir = [normalizar(x, f["sinonimos"]) for x in f.get("excluir") or []]
+    if incluir and tipo not in incluir:
+        return False
+    return tipo not in excluir
 
 
 def vectores_por_obra():
@@ -128,12 +180,19 @@ def titulos_y_datos():
                 continue
             v = f.get("vision") or {}
             desc = (v.get("descripcion") or "").strip()
-            if not desc:
-                continue
+            # Una obra sin descripcion NO se descarta. Antes se hacia, y era el
+            # mismo defecto en chico: una cuarta parte del archivo no tiene
+            # percepcion todavia, y descartarla aca la borraba del campo sin
+            # que nadie lo viera. Entra con lo que tenga.
             datos[f.get("id", "")] = {
                 "archivo": f.get("ruta_rel") or "",
                 "colores": v.get("colores") or [],
                 "estilo": v.get("estilo") or "",
+                # El tipo puede venir de la percepcion nueva (vision.tipo_obra,
+                # vocabulario cerrado) o de la vieja, que lo escribia en el
+                # campo `categoria` de la ficha. Se leen los dos: el archivo ya
+                # tiene material de las dos corridas.
+                "tipo": (v.get("tipo_obra") or f.get("categoria") or ""),
                 # La descripcion viaja como METADATO: ubica la obra y sirve
                 # para buscar. La piel NO la muestra como texto del artista.
                 "percibido": desc[:180],
@@ -153,7 +212,10 @@ def trazar_archivo(base: Path, destino: Path, fichas: dict) -> tuple[int, int]:
     archivo vacio servido como obra es la misma mentira que el resto del
     sistema persigue, escrita en disco.
     """
-    from ..plano import trazador as T  # type: ignore
+    # Import absoluto: este archivo es un script de `tools/`, no un modulo del
+    # paquete, asi que un `from ..plano import` levanta ImportError antes de
+    # trazar nada. Estaba escrito relativo y nunca se ejecuto por esta via.
+    from flujo.plano import trazador as T  # type: ignore
 
     # Parametros PARA FOTOGRAFIA, distintos de los del plano. Los del plano
     # estan afinados para iconos de alto contraste y verificados byte a byte
@@ -202,6 +264,9 @@ def main() -> int:
                     help="JSON {ids, v} exportado desde la caja")
     ap.add_argument("--meta", type=Path, default=None,
                     help="JSON de fichas exportado desde la caja")
+    ap.add_argument("--filtro", type=Path, default=FILTRO,
+                    help="que tipos entran (default: data/iskvw_campo_filtro.json, "
+                         "que entra en todo)")
     args = ap.parse_args()
 
     if args.vectores:
@@ -218,9 +283,35 @@ def main() -> int:
               file=sys.stderr)
         return 1
 
-    xy, vecindad = proyectar(m)
     meta = (json.loads(args.meta.read_text(encoding="utf-8"))
             if args.meta else titulos_y_datos())
+    filtro = cargar_filtro(args.filtro)
+
+    # El filtro se aplica ANTES de proyectar, no despues: t-SNE ubica cada obra
+    # respecto de las demas, asi que sacar obras del resultado dejaria a las que
+    # quedan colocadas por vecinas que ya no estan. Filtrar despues seria
+    # exactamente el defecto que este archivo persigue -- una posicion que
+    # afirma una cercania que no se midio.
+    tipos = {}
+    for oid in ids:
+        d = meta.get(oid.split("-", 1)[0], {})
+        tipos[oid] = normalizar(d.get("tipo", ""), filtro["sinonimos"])
+    quedan = [i for i, oid in enumerate(ids) if entra(tipos[oid], filtro)]
+    fuera = len(ids) - len(quedan)
+    if not quedan:
+        print("el filtro dejo el campo vacio: revisa "
+              f"{args.filtro.name} ('incluir' vacio = todos)", file=sys.stderr)
+        return 1
+    if len(quedan) < 3:
+        print(f"el filtro dejo {len(quedan)} obras: no alcanza para proyectar",
+              file=sys.stderr)
+        return 1
+    if fuera:
+        import numpy as np
+        ids = [ids[i] for i in quedan]
+        m = np.asarray(m)[quedan]
+
+    xy, vecindad = proyectar(m)
 
     piezas = []
     for i, oid in enumerate(ids):
@@ -233,6 +324,7 @@ def main() -> int:
             "y": round(float(xy[i][1]), 4),
             "colores": d.get("colores", [])[:3],
             "estilo": d.get("estilo", ""),
+            "tipo": tipos[oid],
             "percibido": d.get("percibido", ""),
             "archivo": d.get("archivo", ""),
         })
@@ -247,12 +339,22 @@ def main() -> int:
             # vecina en el plano. El campo AFIRMA que lo cercano se parece:
             # esto lo mide. Si baja, la afirmacion es debil y se dice.
             "vecindad_conservada": round(vecindad, 4),
+            # Que dejo afuera el filtro y con que regla. Va en el archivo para
+            # que un campo mas chico de lo esperado se explique solo, en vez de
+            # parecer material perdido.
+            "filtradas": fuera,
+            "filtro": {k: filtro[k] for k in
+                       ("incluir", "excluir", "sin_clasificar")},
+            "sin_clasificar": sum(1 for p in piezas if not p["tipo"]),
+            "tipos": sorted({p["tipo"] for p in piezas if p["tipo"]}),
         },
     }
     args.salida.write_text(json.dumps(salida, ensure_ascii=False),
                            encoding="utf-8")
     kb = args.salida.stat().st_size / 1024
-    print(f"{args.salida}: {len(piezas)} obras, "
+    print(f"{args.salida}: {len(piezas)} obras "
+          f"({fuera} fuera por filtro, "
+          f"{salida['meta']['sin_clasificar']} sin tipo), "
           f"{salida['meta']['con_percepcion']} con percepcion, "
           f"vecindad conservada {salida['meta']['vecindad_conservada']:.1%} "
           f"({kb:.0f} KB)")
