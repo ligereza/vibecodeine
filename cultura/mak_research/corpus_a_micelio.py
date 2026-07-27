@@ -36,13 +36,20 @@ def documento(f):
     """La ficha como documento legible. Lo que se embebe es este texto."""
     v = f.get("vision") or {}
     partes = []
-    titulo = pathlib.Path(f.get("ruta_rel") or "obra").stem
+    desc = (v.get("descripcion") or "").strip()
+    # El H1 es lo que memoria.py usa como titulo, y es lo unico que ve el usuario
+    # cuando el hub le muestra con que se relaciona una idea suya. El id de
+    # Instagram (18 digitos) no le dice nada a nadie, asi que el encabezado es la
+    # primera frase de lo percibido. NO es un titulo del artista y no se presenta
+    # como tal: el id sigue abajo, en la linea del archivo, que es el dato duro.
+    id_archivo = pathlib.Path(f.get("ruta_rel") or "obra").stem
+    frase = desc.split(". ")[0].strip().rstrip(".")
+    titulo = frase[:90] if frase else id_archivo
     partes.append("# %s" % titulo)
     partes.append("")
     partes.append("Obra del archivo iskvw. Archivo: `%s`" % f.get("ruta_rel"))
     partes.append("")
 
-    desc = (v.get("descripcion") or "").strip()
     if desc:
         partes.append(desc)
         partes.append("")

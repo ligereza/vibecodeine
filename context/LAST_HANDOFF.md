@@ -145,6 +145,52 @@ and say what changes.
   Lesson attached to this item: a pending task that carries a measurement should
   be re-measured before acting on it. This one had been repeated for days.
 
+### Noche del 2026-07-26 -- lo decidido y lo que quedo a medias
+
+**MAK esta trabajando ahora.** Re-percepcion de `~/RD` con el prompt nuevo,
+encadenada a `~/portfolio_media/media` (iskvw) cuando termine. Guardia en cron
+cada 10 min con `flock`. La cola `material.jsonl` se rearma cada hora y el verbo
+`atender` va primero. NO tocar `procesados.txt` con el proceso vivo.
+
+**A MEDIAS, y es lo primero que hay que retomar:** `cultura/mak_plataforma/ideas.py`
+esta escrito y commiteado pero **NO esta conectado al hub de MAK ni probado**.
+Es el pedido del usuario: poder intervenir -- declarar una idea, que el archivo
+le diga con que obras suyas se relaciona (busqueda semantica del micelio, ya
+verificada funcionando), encargarla al frente de la cola, o priorizar por
+patron. Falta: endpoints en `plataforma/hub.py` (`do_GET`/`do_POST`, ver
+`/api/ejecutar` como molde), una pagina, y probarlo.
+
+**Decidido y NO reabrir:**
+
+- **MAK deberia ser el renderizador por defecto, no Windows.** Razon del usuario:
+  si esta afuera puede pedir que le den internet a MAK; si hace falta Windows,
+  no hay render. Falta UNA medicion antes de comprometerlo: nunca se renderizo
+  en MAK, que tiene 4 GB de VRAM y ya dio OOM con ollama residente. Windows
+  queda para lo pesado (video de 600 frames, ya probado ahi).
+- **Cuando MAK renderice, que NO cierre el issue**: comenta y lo deja abierto.
+  Un render malo cuesta GPU, no correccion.
+- **Root en el Samsung J6+: decidido, pospuesto.** La idea es SMS -> prende datos
+  moviles -> MAK tiene internet sin depender de nadie. El teléfono seria un
+  punto de acceso permanente y los datos la valvula. Condicion no negociable:
+  control de carga como el del Xiaomi, o la bateria de un telefono viejo
+  enchufado 24/7 es riesgo de incendio.
+- **httpSMS (NdoleStudio) NO sirve para eso.** Leido: la app necesita internet
+  permanente (push de Firebase) y reenvia los SMS a un servidor por HTTP, no
+  dispara acciones locales. Asume resuelto justo lo que se quiere lograr. Si
+  sirve para el caso inverso: que MAK avise por SMS.
+- **Despertar a MAK ya esta resuelto** (`cultura/mak_plataforma/WAKE_ON_LAN.md`,
+  verificado 2026-07-16): Xiaomi por WoWLAN, Windows por ethernet. El plugin
+  `wake_mak.py` esta staged sin desplegar.
+
+**El issue de Instagram quedo esperando, sin tocar, a pedido del usuario.** El
+puente `tools/bridge_issue_render.py` NO corre solo: es foreground y hay que
+lanzarlo a mano en Windows porque abre Blender. Ese es el eslabon que el panel
+de Automatizaciones dibuja como automatico y no lo es.
+
+**Cuidado medido esta noche:** un subagente lanzo `find / -iname *.png` en
+Windows y quemo 2124 s de CPU. Al delegar verificacion con capturas, acotar
+SIEMPRE donde buscarlas.
+
 ## Open
 
 - **MAK is re-perceiving both corpora tonight and nobody should touch it.** RD

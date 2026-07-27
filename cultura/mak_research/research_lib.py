@@ -550,7 +550,14 @@ def searxng_search(query, max_results=5, errors=None):
     proveedores LLM -> aparece solo en el panel del hub sin tocar hub.py."""
     load_env()
     base = os.environ.get("SEARXNG_BASE_URL", "http://127.0.0.1:8888").rstrip("/")
-    url = base + "/search?q=" + urllib.parse.quote(query) + "&format=json&safesearch=0"
+    # Una pregunta factica se busca en la web, no en bases academicas. Sin
+    # esta categoria SearXNG usa las de su instancia y devolvia Google Scholar
+    # para "que productora organizo la fiesta" -- comprobado el 2026-07-26: el
+    # marco del prompt ya decia "no literatura academica" y el buscador seguia
+    # trayendo scholar, porque el marco encuadra al modelo y no al buscador.
+    categorias = "&categories=general" if _es_pregunta_factual(query) else ""
+    url = (base + "/search?q=" + urllib.parse.quote(query)
+           + "&format=json&safesearch=0" + categorias)
     try:
         data = _http_json(url, timeout=30)
         resultados = [
