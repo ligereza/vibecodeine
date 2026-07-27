@@ -27,6 +27,7 @@ import App from "./App";
 import { applyPackPriceOverrides, type PackId } from "./rdBrand";
 import { loadCotizacionServicios } from "./data/cotizacionServicios";
 import { loadPlanoSimbolos } from "./data/planoSimbolos";
+import { loadVocabularioPiezas } from "./data/svgIndex";
 
 /** Tiempo maximo que la app espera al hub antes de montar con los valores del codigo. */
 const CONFIG_TIMEOUT_MS = 2500;
@@ -56,6 +57,7 @@ Promise.all([
   loadTariff(control.signal),
   loadCotizacionServicios(control.signal),
   loadPlanoSimbolos(control.signal),
+  loadVocabularioPiezas(control.signal),
 ]).finally(() => {
   clearTimeout(deadline);
   createRoot(document.getElementById("root")!).render(

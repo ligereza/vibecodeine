@@ -16,6 +16,8 @@ import re
 import shutil
 import subprocess
 import time
+import urllib.parse
+import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -87,25 +89,82 @@ _MIRROR_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
               "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
 
 
-def _parth_pick_image_url(data: dict) -> str:
+def _indice_pedido(url: str) -> int:
+    """El `img_index` del propio link, 1-based. 1 si no viene.
+
+    Instagram ya pone `?img_index=2` en la URL cuando alguien comparte la
+    segunda imagen de un carrusel. El dato estaba ahi y se ignoraba: se
+    bajaba siempre la primera, asi que un pedido de la segunda devolvia una
+    pieza equivocada sin avisar. No hace falta inventar sintaxis nueva.
+    """
+    try:
+        query = urllib.parse.urlparse(url).query
+        crudo = urllib.parse.parse_qs(query).get("img_index", ["1"])[0]
+        return max(1, int(crudo))
+    except (ValueError, TypeError):
+        return 1
+
+
+def _url_de_imagen(item) -> str:
+    if isinstance(item, str):
+        return item
+    if isinstance(item, dict):
+        for key in ("url", "src"):
+            if item.get(key):
+                return str(item[key])
+    return ""
+
+
+def _parth_pick_image_url(data: dict, indice: int = 1) -> str:
     """Elige UNA sola imagen del metadata de parth-dl.
 
     Video/reel -> thumbnail (el flyer necesita imagen fija).
-    Post/carrusel -> SOLO la primera imagen, nunca todas.
+    Post/carrusel -> la que pidio el link (`img_index`), y si no dice cual,
+    la primera. Nunca todas.
     """
     images = data.get("images") or []
     if images:
-        first = images[0]
-        if isinstance(first, str) and first:
-            return first
-        if isinstance(first, dict):
-            for key in ("url", "src"):
-                if first.get(key):
-                    return first[key]
+        # Si el link pidio una que no existe, se cae a la primera en vez de
+        # fallar: es preferible el flyer equivocado a ningun flyer, y el
+        # numero de imagen se ve en el render.
+        elegida = images[indice - 1] if 0 < indice <= len(images) else images[0]
+        url_img = _url_de_imagen(elegida)
+        if url_img:
+            return url_img
     thumbnail = data.get("thumbnail")
     if thumbnail:
         return thumbnail
     raise FileNotFoundError("parth-dl no devolvio imagen ni thumbnail.")
+
+
+def _bajar_imagen(image_url: str) -> bytes:
+    """Baja la imagen imitando a Chrome de verdad, no solo en el User-Agent.
+
+    Instagram devuelve 403 a Python en Linux aunque el User-Agent diga Chrome:
+    lo que mira es la huella TLS del cliente, y la de urllib se nota. Medido el
+    2026-07-27, cuando MAK fallo con `HTTP Error 403: Forbidden` en el mismo
+    link que Windows bajaba sin problema.
+
+    `curl_cffi` imita el handshake de Chrome y pasa. Si no esta instalado se
+    usa urllib igual, porque en Windows funciona: esto no reemplaza el camino
+    viejo, lo antepone donde hace falta.
+    """
+    try:
+        from curl_cffi import requests as cffi_requests
+    except ImportError:
+        cffi_requests = None
+
+    if cffi_requests is not None:
+        try:
+            r = cffi_requests.get(image_url, impersonate="chrome", timeout=30)
+            if r.status_code == 200 and r.content:
+                return r.content
+        except Exception:
+            pass  # cae a urllib, que en Windows alcanza
+
+    req = urllib.request.Request(image_url, headers={"User-Agent": _MIRROR_UA})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return r.read()
 
 
 def _download_via_parth(url: str, shortcode: str, temp_dir: Path) -> Path:
@@ -115,15 +174,11 @@ def _download_via_parth(url: str, shortcode: str, temp_dir: Path) -> Path:
     thumbnail como imagen base. Si el paquete no esta instalado o falla,
     el caller cae al mirror.
     """
-    import urllib.request
-
     from parth_dl import get_info  # lazy: el repo funciona sin parth-dl
 
     data = get_info(url)
-    image_url = _parth_pick_image_url(data)
-    req = urllib.request.Request(image_url, headers={"User-Agent": _MIRROR_UA})
-    with urllib.request.urlopen(req, timeout=30) as r:
-        payload = r.read()
+    image_url = _parth_pick_image_url(data, _indice_pedido(url))
+    payload = _bajar_imagen(image_url)
     out = temp_dir / f"parth_{shortcode}.jpg"
     out.write_bytes(payload)
     return out
