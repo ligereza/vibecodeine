@@ -185,38 +185,90 @@ def _download_via_parth(url: str, shortcode: str, temp_dir: Path) -> Path:
 
 
 _EMBED_IMG_RE = re.compile(r'class="EmbeddedMediaImage"[^>]*src="([^"]+)"')
+_EMBED_CTX = '"contextJSON":'
 
 
-def _download_via_embed(shortcode: str, temp_dir: Path) -> Path:
-    """Via para Linux: la pagina de embed publica de Instagram.
-
-    Por que existe: parth-dl no llega desde MAK. Instagram le devuelve un muro
-    de login ("All extraction methods failed") antes siquiera de dar la
-    metadata, asi que el arreglo del fingerprint en la descarga de la imagen no
-    alcanzaba -- fallaba un paso antes. Medido el 2026-07-27 con el flyer del
-    issue #322, que Windows bajaba sin problema.
-
-    El embed (`/p/<code>/embed/captioned/`) responde 200 sin login cuando se lo
-    pide imitando a Chrome, y trae la URL real del CDN.
-
-    LIMITE conocido y no disimulado: el embed publica UNA sola imagen, la
-    primera. Si el link pedia otra del carrusel, por aca no se puede cumplir, y
-    quien llama lo dice en vez de entregar la equivocada en silencio.
-    """
+def _embed_html(shortcode: str) -> str:
     from curl_cffi import requests as cffi_requests
 
     pagina = "https://www.instagram.com/p/%s/embed/captioned/" % shortcode
     r = cffi_requests.get(pagina, impersonate="chrome", timeout=25)
     if r.status_code != 200:
         raise FileNotFoundError("el embed devolvio %s" % r.status_code)
-    m = _EMBED_IMG_RE.search(r.text)
-    if not m:
+    return r.text
+
+
+def _embed_imagenes(html_txt: str) -> tuple[str, list[dict]]:
+    """TODAS las imagenes del post, no solo la que muestra el embed.
+
+    El `<img>` visible del embed trae una sola: la primera. Pero la pagina
+    lleva ademas un `contextJSON` con el GraphQL completo, y ahi esta el
+    carrusel entero (`edge_sidecar_to_children`). Medido el 2026-07-27 sobre
+    un post real: el `<img>` daba 1 imagen y el contextJSON daba las 3.
+
+    Se parsea con el decodificador de JSON y no con una expresion regular: el
+    valor es una cadena JSON con JSON adentro, llena de comillas escapadas, y
+    cualquier patron se corta en la primera.
+
+    Devuelve (tipo, [{url, video}]). Si no hay contextJSON cae al `<img>`, que
+    es mejor que nada.
+    """
+    i = html_txt.find(_EMBED_CTX)
+    if i >= 0:
+        try:
+            interior, _ = json.JSONDecoder().raw_decode(html_txt, i + len(_EMBED_CTX))
+            ctx = json.loads(interior)
+            media = (ctx.get("gql_data") or {}).get("shortcode_media") or {}
+            hijos = ((media.get("edge_sidecar_to_children") or {}).get("edges") or [])
+            if hijos:
+                salida = []
+                for h in hijos:
+                    n = h.get("node") or {}
+                    if n.get("display_url"):
+                        salida.append({"url": n["display_url"],
+                                       "video": bool(n.get("is_video"))})
+                if salida:
+                    return media.get("__typename") or "GraphSidecar", salida
+            if media.get("display_url"):
+                # Un reel entrega su cuadro de portada, que es imagen fija y
+                # sirve como base del flyer.
+                return (media.get("__typename") or "GraphImage",
+                        [{"url": media["display_url"],
+                          "video": bool(media.get("is_video"))}])
+        except (ValueError, TypeError):
+            pass
+    m = _EMBED_IMG_RE.search(html_txt)
+    if m:
+        u = m.group(1).encode().decode("unicode_escape").replace("&amp;", "&")
+        return "SoloEmbed", [{"url": u, "video": False}]
+    return "", []
+
+
+def _download_via_embed(shortcode: str, temp_dir: Path, indice: int = 1) -> Path:
+    """Via para Linux: la pagina de embed publica de Instagram.
+
+    Por que existe: parth-dl no llega desde MAK. Instagram le devuelve un muro
+    de login ("All extraction methods failed") antes siquiera de dar la
+    metadata, asi que arreglar el fingerprint en la descarga de la imagen no
+    alcanzaba -- fallaba un paso antes. Medido el 2026-07-27 con el flyer del
+    issue #322, que Windows bajaba sin problema.
+
+    Respeta que imagen del carrusel se pidio, porque el contextJSON las trae
+    todas. Idea del usuario: en vez de pelear con que el embed muestre una
+    sola, conseguir la lista completa y que el codigo elija. Se baja SOLO la
+    elegida -- traer las cinco para descartar cuatro seria pagar el ancho de
+    banda de todas para usar una.
+    """
+    tipo, imgs = _embed_imagenes(_embed_html(shortcode))
+    if not imgs:
         raise FileNotFoundError(
-            "el embed no traia imagen (puede ser privado o borrado)")
-    url_img = m.group(1).encode().decode("unicode_escape")
-    url_img = url_img.replace("&amp;", "&")
+            "el embed no traia imagen (puede ser privado, borrado o restringido)")
+    elegida = imgs[indice - 1] if 0 < indice <= len(imgs) else imgs[0]
     out = temp_dir / f"embed_{shortcode}.jpg"
-    out.write_bytes(_bajar_imagen(url_img))
+    out.write_bytes(_bajar_imagen(elegida["url"]))
+    if indice > len(imgs):
+        print(f"AVISO: se pidio la imagen {indice} pero el post tiene "
+              f"{len(imgs)}. Se uso la primera.")
     return out
 
 
@@ -491,13 +543,7 @@ def run_eventos_flyer_auto(
             downloaded = _download_via_parth(url, shortcode, temp_dir)
         except Exception as e_parth:
             try:
-                downloaded = _download_via_embed(shortcode, temp_dir)
-                if indice > 1:
-                    print(
-                        f"AVISO: el link pedia la imagen {indice} del carrusel, "
-                        "pero se bajo por el embed publico, que solo entrega la "
-                        "primera. El render usa la primera imagen."
-                    )
+                downloaded = _download_via_embed(shortcode, temp_dir, indice)
             except Exception as e_embed:
                 print(f"parth-dl: {e_parth}\nembed: {e_embed}")
                 downloaded = _download_via_mirror(shortcode, temp_dir)
