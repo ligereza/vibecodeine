@@ -259,10 +259,19 @@ function dibujar(){
 // El id del corpus es "<hash>-<slug>". El slug sale del nombre de archivo, no
 // es un titulo que el artista haya puesto. Se muestra igual porque es SUYO --
 // a diferencia de la descripcion, que la escribio una maquina.
+/* El nombre, o el silencio. Nunca un numero.
+   Este respaldo se escribio para `obras.json`, donde el id es un slug y
+   "campo-motor-diagnostico" se vuelve "motor diagnostico". Sobre el archivo
+   real el id es "<hash>-<media id de instagram>", asi que el visitante leia
+   17876911804982196 como si fuera el titulo de la obra. Verificado en
+   navegador el 2026-07-27: cero errores de consola y un numero de 17 digitos
+   ocupando el nombre. Consola limpia no es lo mismo que correcto.
+   La regla es la que esta escrita cuatro lineas mas abajo para el texto:
+   silencio antes que voz prestada. Un fragmento sin letras no es un nombre. */
 function nombreDe(o){
   if (o.title) return o.title;
   const s = String(o.id||'').split('-').slice(1).join(' ').replace(/_/g,' ');
-  return s || String(o.id||'');
+  return /[a-z]/i.test(s) ? s : '';
 }
 
 function proyectar(n,d,cx,cy){
@@ -279,8 +288,13 @@ function resolver(n){
   if (!n || E.foco === n.obra) return;
   E.foco = n.obra;
   const o = n.obra;
+  // `tipo` es el vocabulario CERRADO de la percepcion (obra, tatuaje,
+  // foto_evento...), no texto libre del modelo: es un dato que la obra encoda
+  // y por eso puede mostrarse. Va primero porque cuando no hay titulo es lo
+  // unico que ubica la pieza. `category`/`year` son de obras.json y siguen
+  // sirviendo ahi -- un campo que no viene, no se muestra.
   document.getElementById('f-meta').textContent =
-    [o.category, o.estilo, o.year].filter(Boolean).join(' · ');
+    [o.tipo, o.category, o.estilo, o.year].filter(Boolean).join(' · ');
   document.getElementById('f-titulo').textContent = nombreDe(o);
   // El texto de maquina NO habla por el artista. Lo que MAK percibio sirve
   // para ubicar la obra en el campo y para medir vinculos -- es metadato, no
@@ -383,9 +397,14 @@ async function arrancar(){
   } catch(e){ /* sin servidor se usa el respaldo, sin decir nada */ }
   sembrar(obras);
   // Se entra por el medio del archivo: no hay principio.
+  // El `Math.max(0, ...)` de antes convertia el -1 de "no encontrado" en 0, asi
+  // que el ternario de la linea siguiente nunca podia ser falso: el respaldo
+  // "por el medio del archivo" era codigo muerto y una direccion mala o vacia
+  // caia SIEMPRE en la primera obra. O sea, el archivo si tenia principio, al
+  // revés de lo que dice el comentario de arriba. Sin el max, el -1 llega.
   const ancla = location.hash.slice(1);
-  const i = Math.max(0, NODOS.findIndex(n => n.obra.id === ancla));
-  E.pos = NODOS.length ? NODOS[i>=0?i:Math.floor(NODOS.length/2)].y : 0;
+  const i = NODOS.findIndex(n => n.obra.id === ancla);
+  E.pos = NODOS.length ? NODOS[i >= 0 ? i : Math.floor(NODOS.length/2)].y : 0;
   paso();
 }
 addEventListener('resize', medir);
