@@ -184,6 +184,7 @@ node_modules/
 .npm/
 web/dist/
 web/dist-plano/
+web/dist-rd/
 
 # Entregable standalone del Plano/Rider compartible (build generado, ver
 # web/package.json build:plano) -- nunca commitear el artefacto
