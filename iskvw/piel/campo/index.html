@@ -107,6 +107,23 @@ const c = document.getElementById('c');
 const ctx = c.getContext('2d', {alpha:false});
 let W=0, H=0, DPR=1, OBRAS=[], NODOS=[], LARGO=0;
 
+// Los colores que la percepcion encontro en la obra. Si no hay, se devuelve
+// null y quien llama usa el tono neutro: no se inventa un color.
+const TONOS = {rojo:0, naranja:28, amarillo:52, verde:120, cyan:180, celeste:200,
+  azul:220, violeta:270, morado:280, magenta:310, rosa:330, negro:null,
+  blanco:null, gris:null, marron:20, cafe:20, dorado:45, plateado:null};
+function tonoDe(colores){
+  for (const c of (colores||[])){
+    // La percepcion devuelve cosas como "Rojo (camiseta)" o "Azul oscuro":
+    // vale la primera palabra, el resto es donde esta ese color.
+    const palabra = String(c).toLowerCase().normalize('NFD')
+      .replace(/[̀-ͯ]/g,'').trim().split(/[\s(,]/)[0];
+    const t = TONOS[palabra];
+    if (typeof t === 'number') return t;
+  }
+  return null;
+}
+
 function medir(){
   DPR = Math.min(window.devicePixelRatio||1, 2);   // 2 es techo: 3 no se ve y cuesta
   W = c.clientWidth; H = c.clientHeight;
@@ -130,18 +147,30 @@ function medir(){
    una linea es una afirmacion mas fuerte que una posicion. ── */
 function sembrar(obras){
   OBRAS = obras;
+  // x e y vienen de la proyeccion MEDIDA (tools/gen_campo_iskvw.py): dos obras
+  // cerca en pantalla estan cerca de verdad. Medido sobre las 697: de los 3
+  // vecinos mas afines de cada obra, el 48.9% sigue siendo vecino aca -- 113
+  // veces mejor que repartirlas al azar. Antes esto salia de un hash y la
+  // cercania no significaba nada.
+  const conXY = obras.length && typeof obras[0].x === 'number';
   NODOS = obras.map((o,i) => {
     const h = [...(o.id||o.title||String(i))].reduce((a,ch)=>((a*31+ch.charCodeAt(0))>>>0),7);
     return {
       obra: o,
-      y: i * 460 + (h % 120) - 60,          // separacion en el eje del recorrido
-      x: ((h >> 7) % 1000)/1000 * 1.6 - 0.8, // desviacion lateral, -0.8..0.8
-      r: 26 + ((h >> 3) % 22),
-      fase: (h % 628)/100,                   // cada una respira en su tiempo
-      tono: (h >> 11) % 360,
+      // El eje del recorrido es la coordenada medida, estirada al campo. El
+      // orden de lectura ES la estructura del archivo, no el de un listado.
+      y: conXY ? (o.y + 1) * 2600 : i * 460 + (h % 120) - 60,
+      x: conXY ? o.x : ((h >> 7) % 1000)/1000 * 1.6 - 0.8,
+      r: 18 + ((h >> 3) % 14),
+      fase: (h % 628)/100,
+      // El tono sale del color que la obra TIENE, no de su identificador.
+      tono: tonoDe(o.colores) ?? ((h >> 11) % 360),
     };
   });
-  LARGO = NODOS.length ? NODOS[NODOS.length-1].y + 460 : 0;
+  // El maximo, no el ultimo del arreglo: con posiciones proyectadas el orden
+  // del arreglo no tiene nada que ver con la posicion, y tomar el ultimo
+  // dejaba fuera del campo a la mitad de las obras.
+  LARGO = NODOS.length ? Math.max(...NODOS.map(n => n.y)) + 460 : 0;
 }
 
 /* ── el diafragma: la velocidad decide cuanto se ve y cuan nitido ──
@@ -201,7 +230,7 @@ function dibujar(){
       ctx.font = '11px ui-monospace,monospace';
       ctx.textAlign = 'center';
       ctx.fillStyle = `rgba(232,228,218,${Math.min(at,1)*0.75})`;
-      ctx.fillText((n.obra.title||'').slice(0,42), px, py + r*2.1);
+      ctx.fillText(nombreDe(n.obra).slice(0,42), px, py + r*2.1);
     }
 
     const dist = Math.abs(dy);
@@ -227,6 +256,15 @@ function dibujar(){
   return mejor;
 }
 
+// El id del corpus es "<hash>-<slug>". El slug sale del nombre de archivo, no
+// es un titulo que el artista haya puesto. Se muestra igual porque es SUYO --
+// a diferencia de la descripcion, que la escribio una maquina.
+function nombreDe(o){
+  if (o.title) return o.title;
+  const s = String(o.id||'').split('-').slice(1).join(' ').replace(/_/g,' ');
+  return s || String(o.id||'');
+}
+
 function proyectar(n,d,cx,cy){
   const dy = n.y - E.pos;
   return {x: cx + n.x*W*(0.16+d.apertura*0.30), y: cy + dy*(0.55+d.apertura*0.45)};
@@ -242,15 +280,16 @@ function resolver(n){
   E.foco = n.obra;
   const o = n.obra;
   document.getElementById('f-meta').textContent =
-    [o.category, o.year].filter(Boolean).join(' · ');
-  document.getElementById('f-titulo').textContent = o.title || '';
+    [o.category, o.estilo, o.year].filter(Boolean).join(' · ');
+  document.getElementById('f-titulo').textContent = nombreDe(o);
   // El texto de maquina NO habla por el artista. Lo que MAK percibio sirve
   // para ubicar la obra en el campo y para medir vinculos -- es metadato, no
   // autoria. Si la obra no trae texto propio, el campo se queda callado:
   // silencio antes que voz prestada.
   document.getElementById('f-texto').textContent =
     (o.texto_del_artista || o.description_propia || '');
-  document.getElementById('f-tags').textContent = (o.tags||[]).map(t=>'#'+t).join('  ');
+  document.getElementById('f-tags').textContent =
+    (o.tags || o.colores || []).map(t=>'#'+t).join('  ');
   ficha.classList.add('on');
   // Una obra resuelta tiene direccion propia: sin migas de pan y sin mapa,
   // pero el que la encontro puede volver y puede mandarla.
@@ -334,8 +373,13 @@ async function arrancar(){
   medir();
   let obras = RESPALDO.obras;
   try {
-    const r = await fetch('../../datos/obras.json');
-    if (r.ok){ const d = await r.json(); obras = Array.isArray(d) ? d : (d.obras||obras); }
+    // Primero el campo medido (697 obras reales). Si no esta, las del repo.
+    let r = await fetch('../../datos/campo.json');
+    if (r.ok){ const d = await r.json(); if (d.piezas?.length) obras = d.piezas; }
+    else {
+      r = await fetch('../../datos/obras.json');
+      if (r.ok){ const d = await r.json(); obras = Array.isArray(d) ? d : (d.obras||obras); }
+    }
   } catch(e){ /* sin servidor se usa el respaldo, sin decir nada */ }
   sembrar(obras);
   // Se entra por el medio del archivo: no hay principio.

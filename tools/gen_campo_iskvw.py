@@ -145,20 +145,32 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--salida", type=Path,
                     default=Path(os.path.expanduser("~/campo.json")))
+    # Los vectores viven en MAK y sklearn vive en Windows. En vez de instalar
+    # media ciencia de datos en la caja, se exportan una vez y se proyecta
+    # donde estan las herramientas.
+    ap.add_argument("--vectores", type=Path, default=None,
+                    help="JSON {ids, v} exportado desde la caja")
+    ap.add_argument("--meta", type=Path, default=None,
+                    help="JSON de fichas exportado desde la caja")
     args = ap.parse_args()
 
-    if not INDEX.exists():
-        print(f"no encuentro el indice del micelio en {INDEX}", file=sys.stderr)
+    if args.vectores:
+        import numpy as np
+        d = json.loads(args.vectores.read_text(encoding="utf-8"))
+        ids, m = d["ids"], np.array(d["v"], dtype=np.float32)
+    elif INDEX.exists():
+        ids, m = vectores_por_obra()
+    else:
+        print(f"no encuentro el indice ni --vectores", file=sys.stderr)
         return 1
-
-    ids, m = vectores_por_obra()
     if len(ids) < 3:
         print(f"solo {len(ids)} obras en el corpus: no alcanza para proyectar",
               file=sys.stderr)
         return 1
 
     xy, vecindad = proyectar(m)
-    meta = titulos_y_datos()
+    meta = (json.loads(args.meta.read_text(encoding="utf-8"))
+            if args.meta else titulos_y_datos())
 
     piezas = []
     for i, oid in enumerate(ids):
