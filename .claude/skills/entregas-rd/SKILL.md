@@ -60,29 +60,38 @@ Pasos:
 5. Copiar los archivos finales a `datadrops/cotizacion_general_eventos/`
    (jobs/ es local por convencion; datadrops/ persiste).
 
-### Receta B — reversos de suplementos con QR
+### Receta B — contraportadas de suplementos
 
-Usa `generadores/gen_backs.py` (crema) y `generadores/gen_dark_backs.py`
-(dark). Ambos:
-- respetan la estructura `<g id>` canonica (fondo/marco/header/titulo/cajas/
-  contenido/bloque_qr/footer),
-- validan que el texto no desborde las cajas (assert antes de escribir),
-- generan QR vectorial via `qrcode` (ERROR_CORRECT_M, zona quieta 4 modulos),
-- pasan `py -m flujo suplementos validate` sin hallazgos.
+Es LA receta viva de suplementos, y la unica. El texto se edita en el maestro,
+no en el SVG:
 
-Ajustables: `title`, `desc_paras`, `items`, `accent`, `box1/box2` (posicion y
-altura de las cajas), `desc_wrap` / `item_wrap` (ancho de linea). Si el
-assert de desborde falla, subir el `_wrap` o bajar el `_lead`.
+1. Editar `svg/suplementos_rd/_master_contraportadas.json`. Cada string de
+   `description` es un parrafo y cada string de `items` es un bullet.
+2. Correr `py .claude/skills/entregas-rd/generadores/gen_contraportadas.py`.
+   Las 8 piezas se re-justifican solas al ancho de `wrap`.
+3. Salida: `svg/suplementos_rd/09_contraportadas_dark/`.
 
-Reglas visuales que YA aplican los generadores:
-- Zona blanca del QR: 48 px de padding (~4 modulos).
-- Cuerpo minimo 24 px; headings 48 px; titulo 76-85 px.
-- Margen seguro 120 px lateral, 74 px inferior sobre el footer.
+`wrap.desc_chars` y `wrap.item_chars` reencuadran todo mas ancho o mas
+angosto sin tocar el texto.
 
-Comando de verificacion post-generacion (obligatorio):
+**El texto NUNCA se inventa.** Sale del archivo que manda el encargado de RD
+y ese archivo manda: ni nombres, ni propiedades, ni descripciones propias.
+Causa: hubo cuatro productos inventados (`Colageno Fit`, `Omega+ Immune`,
+`Sleep Relax`, `Recovery`) viviendo en el codigo como si fueran reales.
+
+**Que se imprimio, exactamente:** las piezas fisicas salieron de los PDF de
+la carpeta de entrega del usuario (dos caras, flyer completo). Los SVG de
+`09_contraportadas_dark` son la contraportada regenerable del MISMO
+contenido -- comparado palabra por palabra el 2026-07-27: identico salvo el
+corte de linea (el PDF corta con guion, el SVG re-justifica a 60 caracteres)
+y una variante, "En 60 gomitas" contra "En gomitas - 60 gomitas". No son
+piezas distintas y no hay que elegir una: el PDF es lo entregado, el SVG es
+como se vuelve a generar.
+
+Verificacion post-generacion:
 
 ```bash
-PYTHONPATH=src python3 -m flujo suplementos validate svg/suplementos_rd/02_editables_svg/*.svg
+PYTHONPATH=src python3 -m flujo suplementos validate svg/suplementos_rd/09_contraportadas_dark/*.svg
 ```
 
 ### Receta C — plano operativo (simbologia PlanoTool)
@@ -99,34 +108,17 @@ Modificar la lista `SYMBOLS` para agregar/quitar simbolos: cada tupla es
 No usar `py -m flujo plano <json> -o` — genera un plano viejo con motor
 distinto sin la simbologia. La receta correcta es siempre el generador.
 
-### Receta E — frentes dark de la linea completa (8 productos)
-
-Usa `generadores/gen_dark_fronts.py`. Lee el JSON maestro completo y genera
-los 8 frentes en `svg/suplementos_rd/05_dark_neon/NN_<slug>_dark.svg`
-(2000x2800, sistema rave, logo real embebido). Mejoras sobre los reversos:
-
-- Cajas de altura DINAMICA con tope de crecimiento 1.5x: el contenido se mide
-  primero y las cajas se reparten el alto disponible; el sobrante se centra
-  como aire simetrico (productos cortos no quedan inflados).
-- Texto centrado verticalmente dentro de cada caja.
-- Ajuste de linea por presupuesto de pixeles (`wrap_px`), no por conteo fijo.
-- Kicker canonico "PRODUCTO"/"LINEA" (OJO: no usar la palabra S-U-P-L-E-M-E-N-T-O
-  sola en mayusculas en ningun texto — es placeholder del validador y falla).
-- Soporta los 3 modelos de contenido del JSON: desc+items, desc+versions+usage
-  (Proteina) y general (linea completa).
-- `PER_ID_ACCENT` permite forzar acento por producto (Pre Fiesta usa magenta
-  RD para no chocar con el violeta de Hongos).
-
 ### Receta F — vectorizar (texto a curvas) sin Illustrator
 
 Usa `generadores/gen_vectorizar.py IN.svg OUT.svg [...]`. Convierte cada
-<text> a <path> con las curvas reales de DejaVu Sans/Bold via fontTools
-(mismo resultado que los archivos de 03_final_vectorizado_svg). Respeta
-x/y, tamano, peso, fill y text-anchor. Convenciones de salida:
-- frentes crema -> 03_final_vectorizado_svg/NN_slug_vectorizado.svg
-- piezas dark   -> 06_dark_vectorizado_svg/NN_slug_dark_vectorizado.svg
-Las galerias 04_preview/preview_flyers.html (crema) y
-preview_flyers_dark.html (dark) enlazan editable + vectorizado por pieza.
+<text> a <path> con las curvas reales de DejaVu Sans/Bold via fontTools.
+Respeta x/y, tamano, peso, fill y text-anchor. La salida se nombra al lado
+del original; no hay carpeta fija.
+
+Sirve para congelar una pieza antes de mandarla a imprenta. **Es un camino de
+ida:** el SVG vectorizado ya no tiene texto editable, asi que el editable
+siempre se conserva. Medido el 2026-07-27 en la exportacion del usuario, que
+llego con todo en curvas: 66 trazados y ningun texto vivo.
 
 ### Receta D — variantes dark
 

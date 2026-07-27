@@ -408,6 +408,19 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 self._send_json({"proyectos": [], "error": str(e)}, status=200)
             return
+        if path == "/api/piezas-tipos":
+            # The vocabulary of piece kinds. Today flyers and back covers,
+            # tomorrow banners or labels: adding one is editing a JSON, not
+            # editing TypeScript. Until this existed the kind was decided by
+            # seven chained ternaries inside the web bundle, so a new class of
+            # piece could not be added without recompiling.
+            # Re-read per request: the hub outlives any edit.
+            try:
+                ruta = self.root / "data" / "piezas_tipos.json"
+                self._send_json(json.loads(ruta.read_text(encoding="utf-8")))
+            except Exception as e:
+                self._send_json({"error": str(e), "tipos": []}, status=200)
+            return
         if path == "/api/plano-simbolos":
             # The editable symbol catalogue, so the web editor draws the same
             # symbols as the Python plan. Until this existed, a symbol the

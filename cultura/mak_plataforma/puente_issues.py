@@ -26,7 +26,9 @@ Tres cosas que NO hace, a proposito:
   a la vez es lo que mato la corrida de julio. Pero a diferencia de las otras
   guardias, esta no se retira a esperar: PAUSA la percepcion, renderea y la
   reanuda. Un pedido del usuario le gana al trabajo de fondo, o el flyer
-  llegaria al dia siguiente.
+  llegaria al dia siguiente. Por eso NO toma el lock de la curatoria: ese lo
+  retiene su guardia durante horas, y pedirlo dejaba al puente saliendose en
+  cada tick sin renderizar nunca.
 - **No publica rutas absolutas.** El issue es publico; el comentario lleva el
   destino en la nube y el nombre del archivo, nunca el disco.
 
@@ -60,9 +62,13 @@ RAIZ_RD = HOME / "RD"
 BASE = RAIZ_RD / "AUTOMATIZACION"
 BLENDER = HOME / "blender" / "blender"
 
-# El mismo lock que la curatoria y el micelio. No uno propio: dos locks
-# distintos no se ven entre si y no serializan nada.
-LOCK = HOME / "curatoria" / ".guardia.lock"
+# Lock PROPIO, y aca la razon, que costo un tick perdido el 2026-07-27:
+# el lock de la curatoria (.guardia.lock) lo retiene su guardia durante TODAS
+# las horas que dura una percepcion. Pedirlo aca dejaba al puente saliendose
+# en cada tick -- justo en el caso para el que existe. Este lock solo impide
+# que se solapen dos pasadas del puente; la contencion de GPU contra la
+# percepcion se resuelve pausandola (ver PercepcionEnPausa), no esperandola.
+LOCK = HOME / "plataforma" / ".puente_issues.lock"
 
 # Bandeja del departamento: lo que cae aca lo percibe la curatoria en su
 # proxima pasada (recorre ~/RD y saltea lo ya procesado), y de ahi sale la
