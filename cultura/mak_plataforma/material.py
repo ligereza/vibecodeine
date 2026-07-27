@@ -28,6 +28,8 @@ Uso:
     python3 material.py --contar   # solo informa cuanto hay
 """
 import hashlib
+import re
+import unicodedata
 import json
 import os
 import sys
@@ -43,7 +45,106 @@ _NO_SON_ARTISTAS = {
     "full", "live", "set", "dj", "djs", "lineup", "line up", "guest",
     "invitado", "invitados", "residentes", "special", "guests", "b2b",
     "showcase", "presenta", "presents", "vs", "and", "more", "tba",
+    # Eslogans que el modelo devolvia como si fueran el cartel. "LIVE JAM"
+    # llego a produccion: el flyer decia "NO ES UN DJ SET, ESTO ES UN LIVE
+    # JAM", y salio una pregunta preguntando que productora hizo el evento
+    # "con LIVE JAM en el cartel".
+    "jam", "session", "sessions", "party", "fiesta", "club", "night",
+    "noche", "edition", "edicion", "open", "closing", "opening", "after",
+    "warm", "up", "vol", "aniversario", "anniversary", "tour", "show",
+    "air", "stage", "arena", "festival", "edicion",
 }
+
+# Palabras de ciudad que el OCR pega adelante del lugar: "SANTIAGO DE CHILE
+# ESPACIO RIESGO" es un venue con la ciudad encima, no un venue distinto.
+_CIUDADES = ("santiago de chile", "santiago", "chile", "region metropolitana")
+
+# Un mes escrito, o algo con pinta de fecha. Sin esto entraba "23:00 HRS"
+# como si fuera la fecha del evento.
+_MESES = ("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
+          "agosto", "septiembre", "setiembre", "octubre", "noviembre",
+          "diciembre", "jan", "feb", "mar", "apr", "abr", "may", "jun",
+          "jul", "aug", "ago", "sep", "oct", "nov", "dic", "dec")
+_FECHA_NUM = re.compile(r"\b\d{1,2}\s*[./-]\s*\d{1,2}(\s*[./-]\s*\d{2,4})?\b")
+# El punto es ambiguo: "02.05" es el 2 de mayo y "21.00" son las nueve. Por eso
+# solo cuenta como hora con dos puntos, o con un marcador explicito detras
+# (hrs/am/pm). Sin esta distincion se borraba "02.05, 09.05", que eran las dos
+# fechas de un ciclo, y la ficha quedaba sin fecha.
+_HORARIO = re.compile(
+    r"\b\d{1,2}\s*(?::\s*\d{2}|[.]\s*\d{2}\s*(?=\s*(?:hrs?|horas?|am|pm)))"
+    r"\s*(hrs?|horas?|am|pm)?"
+    r"(\s*[-a]\s*\d{1,2}\s*(?::\s*\d{2}|[.]\s*\d{2})\s*(hrs?|horas?|am|pm)?)?",
+    re.I)
+
+
+def _sin_acentos(t):
+    return "".join(c for c in unicodedata.normalize("NFD", t)
+                   if unicodedata.category(c) != "Mn")
+
+
+def _norm(t):
+    """Forma comparable: sin acentos, sin puntuacion, sin espacios de mas."""
+    t = _sin_acentos(str(t or "").lower())
+    return re.sub(r"[^a-z0-9 ]+", " ", t).strip()
+
+
+def _fecha_util(fecha):
+    """La fecha sin horarios, o "" si lo que vino no es una fecha.
+
+    Devolver "" hace que la ficha NO genere pregunta, que es lo correcto: sin
+    fecha no hay triangulacion posible y preguntar igual solo suma ruido.
+    """
+    limpia = _HORARIO.sub(" ", str(fecha or ""))
+    limpia = re.sub(r"\s{2,}", " ", limpia).strip(" ,-").strip()
+    if not limpia:
+        return ""
+    plana = _sin_acentos(limpia.lower())
+    if any(m in plana for m in _MESES) or _FECHA_NUM.search(plana):
+        return limpia
+    return ""
+
+
+def _venue_util(venue):
+    """El lugar sin la ciudad pegada adelante, o "" si era solo la ciudad.
+
+    Dos casos medidos sobre fichas reales: "SANTIAGO DE CHILE ESPACIO RIESGO"
+    es un venue con la ciudad encima, y "SANTIAGO DE CHILE" a secas no es un
+    venue -- preguntar "en DE CHILE" es peor que no decir donde.
+    """
+    v = re.sub(r"\s{2,}", " ", str(venue or "").strip())
+    for _ in range(3):                       # "santiago" dentro de "santiago de chile"
+        plano = _norm(v)
+        if not plano:
+            return ""
+        if plano in _CIUDADES:               # el venue ERA la ciudad
+            return ""
+        recortado = None
+        for ciudad in _CIUDADES:
+            if plano.startswith(ciudad + " "):
+                recortado = v[len(ciudad):].strip(" ,-")
+                break
+        if recortado is None:
+            break
+        v = recortado
+    plano = _norm(v)
+    # Lo que queda tiene que parecer un lugar, no una sobra ("de chile").
+    if plano in _CIUDADES or len(plano) < 4 or plano in ("de chile", "de"):
+        return ""
+    return v.strip()
+
+
+def _es_artista(nombre):
+    """Un nombre compuesto SOLO de palabras genericas no es nadie.
+
+    El filtro anterior miraba la palabra entera, asi que "LIVE JAM" pasaba por
+    tener mas de 3 caracteres y no estar en la lista.
+    """
+    palabras = [p for p in _norm(nombre).split() if p]
+    if not palabras:
+        return False
+    if len("".join(palabras)) <= 3:
+        return False
+    return any(p not in _NO_SON_ARTISTAS for p in palabras)
 
 
 def _txt(v):
@@ -85,17 +186,29 @@ def tareas_desde_fichas():
                 # ensuciaba la cola con preguntas que no son preguntas.
                 if f.get("categoria") != "flyer_evento":
                     continue
+                # La fecha tiene que ser una fecha. "23:00 HRS" no lo es, y
+                # entraba igual: se pregunto por "el evento del 23:00 HRS".
+                fecha = _fecha_util(fecha)
+                venue = _venue_util(venue)
                 # Sin fecha o sin cartel no hay como triangular.
                 if not fecha or not heads:
                     continue
-                # Ruido tipico del OCR: una sola palabra generica y corta no es
-                # el nombre de nadie ("FULL", "LIVE", "SET").
-                heads = [h for h in heads
-                         if len(h) > 3 and h.lower() not in _NO_SON_ARTISTAS]
+                heads = [h for h in heads if _es_artista(h)]
                 if not heads:
                     continue
                 if prod:
                     continue  # ya se sabe quien fue; no se pregunta de nuevo
+                # Un evento es su fecha mas su CABEZA DE CARTEL, y nada mas.
+                # El venue queda fuera porque el OCR lo lee distinto en cada
+                # pieza ("ESPACIO RIESCO" y "ESPACIO RIESGO" son el mismo
+                # lugar). El resto del line-up tambien queda fuera: del mismo
+                # evento el modelo saco ["AMELIE LENS"] de un flyer y
+                # ["AMÉLIE LENS", "AURA"] de otro, y comparando la lista entera
+                # seguian siendo dos preguntas para el mismo evento.
+                clave = "rd|%s|%s" % (_norm(fecha), _norm(heads[0]))
+                if clave in vistos:
+                    continue
+                vistos.add(clave)
                 texto = (
                     "Que productora organizo el evento del %s con %s en el cartel%s? "
                     "Responder solo si hay fuente que lo confirme; si no, decir que "
