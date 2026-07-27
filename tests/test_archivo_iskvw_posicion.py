@@ -34,17 +34,19 @@ def test_el_sufijo_de_archivo_no_es_parte_de_la_identidad():
     assert G._id_pieza("campo-motor-diagnostico") == "campo-motor-diagnostico"
 
 
-def test_posiciones_lee_el_campo_del_repo():
-    pos, vecindad = G.posiciones()
-    assert pos, "campo.json del repo deberia traer posiciones"
+def test_del_campo_trae_lo_que_una_piel_necesita_para_dibujar():
+    reg, vecindad = G.del_campo()
+    assert reg, "campo.json del repo deberia traer registros"
     assert isinstance(vecindad, float) and 0 < vecindad <= 1, vecindad
-    algun = next(iter(pos.values()))
-    assert set(algun) == {"x", "y"}
+    algun = next(iter(reg.values()))
+    # posicion, y ademas lo descriptivo que el micelio NO tiene
+    for k in ("x", "y", "colores", "tipo", "archivo"):
+        assert k in algun, k
 
 
 def test_sin_archivo_de_posiciones_no_se_inventa_nada(tmp_path):
-    pos, vecindad = G.posiciones(tmp_path / "no_existe.json")
-    assert pos == {} and vecindad is None
+    reg, vecindad = G.del_campo(tmp_path / "no_existe.json")
+    assert reg == {} and vecindad is None
 
 
 def test_la_posicion_es_opcional_pieza_por_pieza(tmp_path):
@@ -64,8 +66,19 @@ def test_la_posicion_es_opcional_pieza_por_pieza(tmp_path):
 
 
 def test_el_contrato_declara_la_metrica_en_meta_no_en_la_pieza():
-    pos, vecindad = G.posiciones()
+    reg, vecindad = G.del_campo()
     assert vecindad is not None
-    algun = next(iter(pos.values()))
+    algun = next(iter(reg.values()))
     assert "vecindad" not in algun, (
         "la vecindad describe la proyeccion entera, no una pieza suelta")
+
+
+def test_una_obra_no_se_declara_medio_texto():
+    """El micelio indexa TEXTO, asi que marcaba toda obra del artista como
+    `medio: texto`. Una obra es una imagen y el campo trae su ruta; un contrato
+    que declara mal el medio hace que una piel decida mal como mostrarla."""
+    reg, _ = G.del_campo()
+    con_archivo = [r for r in reg.values() if r.get("archivo")]
+    assert con_archivo, "el campo del repo deberia traer rutas de archivo"
+    for r in con_archivo[:5]:
+        assert "." in r["archivo"], r["archivo"]

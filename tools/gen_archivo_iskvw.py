@@ -172,8 +172,8 @@ def desde_micelio(url: str = MICELIO_URL, umbral: float = UMBRAL_MICELIO) -> dic
     return {"piezas": piezas, "vinculos": vinculos}
 
 
-def posiciones(ruta: Path = CAMPO) -> tuple[dict, float | None]:
-    """Las posiciones medidas del campo, para pegarlas al contrato.
+def del_campo(ruta: Path = CAMPO) -> tuple[dict, float | None]:
+    """Lo que el campo sabe de cada obra, por id, para pegarlo al contrato.
 
     Antes de esto el archivo salia partido en dos y la costura era justamente
     esto: `archivo.json` traia las relaciones sin posicion y `campo.json` la
@@ -193,12 +193,12 @@ def posiciones(ruta: Path = CAMPO) -> tuple[dict, float | None]:
         d = json.loads(ruta.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return {}, None
-    pos = {}
+    reg = {}
     for p in d.get("piezas") or []:
         pid = _id(p.get("id"))
-        if pid and p.get("x") is not None and p.get("y") is not None:
-            pos[pid] = {"x": p["x"], "y": p["y"]}
-    return pos, (d.get("meta") or {}).get("vecindad_conservada")
+        if pid:
+            reg[pid] = p
+    return reg, (d.get("meta") or {}).get("vecindad_conservada")
 
 
 def unir(*partes: dict) -> dict:
@@ -256,13 +256,29 @@ def main() -> int:
     # La posicion entra como campo OPCIONAL: la pieza que la tiene la lleva y la
     # que no, no la lleva vacia. Un campo que no conoces es un campo que
     # ignoras, y un cero fingido seria una posicion afirmada sin medir.
-    pos, vecindad = posiciones(args.posiciones)
-    con_pos = 0
+    campo, vecindad = del_campo(args.posiciones)
+    con_pos = con_medio = 0
     for p in datos["piezas"]:
-        xy = pos.get(p["id"])
-        if xy:
-            p["posicion"] = xy
+        c = campo.get(p["id"])
+        if not c:
+            continue
+        if c.get("x") is not None and c.get("y") is not None:
+            p["posicion"] = {"x": c["x"], "y": c["y"]}
             con_pos += 1
+        # Lo descriptivo que el micelio no tiene y una piel necesita para
+        # dibujar: color, tipo y estilo. Va a `extra` porque no es parte del
+        # contrato minimo -- una piel que no lo conoce lo ignora.
+        for origen, destino in (("colores", "colores"), ("tipo", "tipo"),
+                                ("estilo", "estilo")):
+            if c.get(origen):
+                p["extra"][destino] = c[origen]
+        # Y el defecto de fondo: el micelio indexa TEXTO, asi que marcaba toda
+        # obra del artista como `medio: texto`. Una obra es una imagen, y el
+        # campo trae su ruta. Un contrato que declara mal el medio hace que una
+        # piel decida mal como mostrarla.
+        if c.get("archivo") and p.get("medio", {}).get("tipo") == "texto":
+            p["medio"] = {"tipo": "imagen", "src": c["archivo"]}
+            con_medio += 1
 
     salida = {
         "version": 1,
@@ -276,6 +292,9 @@ def main() -> int:
             "por_clase": _contar(datos["piezas"], "clase"),
             "vinculos_por_clase": _contar(datos["vinculos"], "clase"),
             "con_posicion": con_pos,
+            "medio_corregido_a_imagen": con_medio,
+            "por_medio": _contar([p.get("medio") or {} for p in datos["piezas"]],
+                                 "tipo"),
             # Describe la PROYECCION entera, no una pieza, asi que va aca. Es la
             # fraccion de vecinos reales que siguen siendo vecinos en el plano:
             # si baja, lo que el campo afirma se debilita y hay que decirlo.
