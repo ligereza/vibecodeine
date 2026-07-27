@@ -141,6 +141,39 @@ def titulos_y_datos():
     return datos
 
 
+def trazar_archivo(base: Path, destino: Path, fichas: dict) -> tuple[int, int]:
+    """Cada obra como contorno vectorial. Es lo unico que puede viajar.
+
+    Medido sobre el archivo real: 1,6 GB de imagen se vuelven 18 MB de trazo,
+    mediana 18 KB por obra. Y el visitante no baja los 18 MB -- baja los 20 KB
+    de la obra donde freno.
+
+    Escribe SOLO si el trazado salio. La primera version abria el archivo antes
+    de trazar y dejo 60 SVG de cero bytes que parecian trazos validos: un
+    archivo vacio servido como obra es la misma mentira que el resto del
+    sistema persigue, escrita en disco.
+    """
+    from ..plano.trazador import TrazadoImposible, trazar  # type: ignore
+
+    destino.mkdir(parents=True, exist_ok=True)
+    ok = fallo = 0
+    for oid, d in fichas.items():
+        origen = base / (d.get("archivo") or "")
+        if not origen.is_file():
+            continue
+        salida = destino / f"{oid}.svg"
+        if salida.exists():
+            continue
+        try:
+            svg = trazar(origen.read_bytes())
+        except (TrazadoImposible, Exception):
+            fallo += 1          # video o imagen sin contraste: no se escribe nada
+            continue
+        salida.write_text(svg, encoding="utf-8")
+        ok += 1
+    return ok, fallo
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--salida", type=Path,
@@ -161,7 +194,7 @@ def main() -> int:
     elif INDEX.exists():
         ids, m = vectores_por_obra()
     else:
-        print(f"no encuentro el indice ni --vectores", file=sys.stderr)
+        print("no encuentro el indice ni --vectores", file=sys.stderr)
         return 1
     if len(ids) < 3:
         print(f"solo {len(ids)} obras en el corpus: no alcanza para proyectar",
