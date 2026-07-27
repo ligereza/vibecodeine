@@ -144,16 +144,33 @@ def titulos_y_datos():
 def trazar_archivo(base: Path, destino: Path, fichas: dict) -> tuple[int, int]:
     """Cada obra como contorno vectorial. Es lo unico que puede viajar.
 
-    Medido sobre el archivo real: 1,6 GB de imagen se vuelven 18 MB de trazo,
-    mediana 18 KB por obra. Y el visitante no baja los 18 MB -- baja los 20 KB
-    de la obra donde freno.
+    Medido sobre el archivo real: 1,6 GB de imagen se vuelven 4,9 MB de trazo,
+    con 649 obras y mediana de 28 subtrazos. Y el visitante no baja los 4,9 MB
+    -- baja los pocos KB de la obra donde freno.
 
     Escribe SOLO si el trazado salio. La primera version abria el archivo antes
     de trazar y dejo 60 SVG de cero bytes que parecian trazos validos: un
     archivo vacio servido como obra es la misma mentira que el resto del
     sistema persigue, escrita en disco.
     """
-    from ..plano.trazador import TrazadoImposible, trazar  # type: ignore
+    from ..plano import trazador as T  # type: ignore
+
+    # Parametros PARA FOTOGRAFIA, distintos de los del plano. Los del plano
+    # estan afinados para iconos de alto contraste y verificados byte a byte
+    # contra el trazador del navegador: no se tocan.
+    #
+    # Con los del plano, el archivo real dio 13.5% de siluetas legibles,
+    # mediana de 156 subtrazos y 42% de ruido: una foto de un tatuaje no se
+    # reduce a un contorno, se rompe en cientos de fragmentos. Subiendo el
+    # area minima y la tolerancia:
+    #
+    #     area 0.0006 tol 0.75  ->  13.5% legible, 42% ruido, 18 MB   (plano)
+    #     area 0.01   tol 2.0   ->  60%   legible,  2% ruido, 4.9 MB  (esto)
+    #     area 0.03   tol 3.5   ->  82%   legible, pero 1 KB por obra
+    #
+    # Se queda el del medio: el ultimo es mas legible de lejos y pierde el
+    # detalle que hace falta cuando una obra resuelve y se mira de cerca.
+    T.AREA_MINIMA, T.TOLERANCIA = 0.01, 2.0
 
     destino.mkdir(parents=True, exist_ok=True)
     ok = fallo = 0
@@ -165,8 +182,8 @@ def trazar_archivo(base: Path, destino: Path, fichas: dict) -> tuple[int, int]:
         if salida.exists():
             continue
         try:
-            svg = trazar(origen.read_bytes())
-        except (TrazadoImposible, Exception):
+            svg = T.trazar(origen.read_bytes())
+        except Exception:
             fallo += 1          # video o imagen sin contraste: no se escribe nada
             continue
         salida.write_text(svg, encoding="utf-8")
