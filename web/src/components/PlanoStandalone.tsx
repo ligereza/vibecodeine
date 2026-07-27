@@ -70,7 +70,7 @@ export default function PlanoStandalone({ initialConfig, initialWarning }: Props
       packPrices[id] = Math.round(n);
     }
     if (bad) {
-      setStatus('Algun precio no es un numero valido (> 0): no se guardo nada.');
+      setStatus('Algún precio no es un número válido (> 0): no se guardó nada.');
       return;
     }
     commit({ ...config, packPrices }, 'Precios guardados y aplicados.');
@@ -108,7 +108,7 @@ export default function PlanoStandalone({ initialConfig, initialWarning }: Props
             className="flex items-center gap-1.5 rounded-lg border border-zinc-700/70 px-3 py-1.5 text-[11px] font-bold text-zinc-300 hover:bg-zinc-800/60"
           >
             <Settings2 className="h-3.5 w-3.5" />
-            {panelOpen ? 'Ocultar configuracion' : 'Configuracion'}
+            {panelOpen ? 'Ocultar configuración' : 'Configuración'}
           </button>
         </div>
       </header>
@@ -171,10 +171,10 @@ export default function PlanoStandalone({ initialConfig, initialWarning }: Props
               </p>
               <div className="flex flex-wrap gap-2">
                 <button onClick={exportConfig} className="flex items-center gap-1.5 rounded-lg border border-zinc-700 px-3 py-1.5 text-[11px] font-bold text-zinc-300 hover:bg-zinc-800/60">
-                  <Download className="h-3.5 w-3.5" /> Exportar configuracion
+                  <Download className="h-3.5 w-3.5" /> Exportar configuración
                 </button>
                 <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1.5 rounded-lg border border-zinc-700 px-3 py-1.5 text-[11px] font-bold text-zinc-300 hover:bg-zinc-800/60">
-                  <Upload className="h-3.5 w-3.5" /> Importar configuracion
+                  <Upload className="h-3.5 w-3.5" /> Importar configuración
                 </button>
                 <input
                   ref={fileInputRef}

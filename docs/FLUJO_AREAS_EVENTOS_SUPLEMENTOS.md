@@ -69,9 +69,9 @@ Eso descarga (instaloader confirmado no-funcional, IG exige login incluso
 anonimo; la descarga real es via mirror publico) y actualiza:
 
 ```txt
-C:\rd\AUTOMATIZACION\input_ig.jpg
-C:\rd\AUTOMATIZACION\palette_ig.png
-C:\rd\AUTOMATIZACION\palette_ig.json
+$FLUJO_RD_ROOT\AUTOMATIZACION\input_ig.jpg
+$FLUJO_RD_ROOT\AUTOMATIZACION\palette_ig.png
+$FLUJO_RD_ROOT\AUTOMATIZACION\palette_ig.json
 ```
 
 Por defecto NO abre Photoshop ni Blender. `--render-blender` (Blender por
@@ -97,9 +97,9 @@ py -m flujo eventos flyer-auto "https://www.instagram.com/p/XXXX/" --render-blen
 Rutas esperadas:
 
 ```txt
-C:\rd\AUTOMATIZACION\Droplet_Flyer.exe
-C:\rd\AUTOMATIZACION\historia.psd
-C:\rd\AUTOMATIZACION\input_ig.jpg
+$FLUJO_RD_ROOT\AUTOMATIZACION\Droplet_Flyer.exe
+$FLUJO_RD_ROOT\AUTOMATIZACION\historia.psd
+$FLUJO_RD_ROOT\AUTOMATIZACION\input_ig.jpg
 ```
 
 Luego sigue la automatizacion local de carpetas/Photoshop del usuario.

@@ -5,9 +5,76 @@
 // (Antes este comentario apuntaba a un generador en scripts/ que no existe;
 //  se corrigio 2026-07-25 al auditar referencias muertas de la app.)
 
-export type PieceType = 'etiqueta' | 'flyer' | 'pendon' | 'post-ig' | 'sticker' | 'logo' | 'rider' | 'cartelera' | 'stand';
-export type PieceArea = 'suplementos' | 'eventos' | 'comun';
-export type PieceMedio = 'impresion' | 'digital';
+// Abiertos a proposito. Antes eran uniones cerradas y el tipo de una pieza se
+// decidia con siete ternarios encadenados mas abajo, asi que sumar "pendon" o
+// cualquier clase nueva obligaba a editar TypeScript y recompilar. El
+// vocabulario real vive en `data/piezas_tipos.json`, lo sirve
+// /api/piezas-tipos, y agregar una clase es editar ese archivo.
+export type PieceType = string;
+export type PieceArea = string;
+export type PieceMedio = string;
+
+export interface TipoPieza { id: string; label: string; claves?: string[] }
+export interface VocabularioPiezas {
+  tipos: TipoPieza[];
+  areas: TipoPieza[];
+  medios: TipoPieza[];
+  tipo_por_defecto?: string;
+  area_por_defecto?: string;
+  medio_por_defecto?: string;
+}
+
+// Respaldo minimo: si el hub no responde, la app sigue clasificando con esto
+// en vez de quedarse sin vocabulario. No pretende ser la lista completa.
+const VOCAB_RESPALDO: VocabularioPiezas = {
+  tipos: [
+    { id: 'contraportada', label: 'Contraportada', claves: ['contraportada', 'reverso'] },
+    { id: 'etiqueta', label: 'Etiqueta', claves: ['etiqueta'] },
+    { id: 'flyer', label: 'Flyer', claves: ['flyer'] },
+  ],
+  areas: [
+    { id: 'eventos', label: 'Eventos', claves: ['evento'] },
+    { id: 'suplementos', label: 'Suplementos', claves: ['supl'] },
+    { id: 'comun', label: 'Comun', claves: [] },
+  ],
+  medios: [
+    { id: 'digital', label: 'Digital', claves: ['digital', 'ig', 'post'] },
+    { id: 'impresion', label: 'Impresion', claves: ['impres'] },
+  ],
+  tipo_por_defecto: 'etiqueta',
+  area_por_defecto: 'comun',
+  medio_por_defecto: 'impresion',
+};
+
+let VOCAB: VocabularioPiezas = VOCAB_RESPALDO;
+
+export function vocabularioPiezas(): VocabularioPiezas {
+  return VOCAB;
+}
+
+/** Carga el vocabulario del hub. Se llama una vez al arrancar la app. */
+export async function loadVocabularioPiezas(signal?: AbortSignal): Promise<void> {
+  try {
+    const res = await fetch('/api/piezas-tipos', { signal });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (Array.isArray(data?.tipos) && data.tipos.length) {
+      VOCAB = { ...VOCAB_RESPALDO, ...data };
+    }
+  } catch {
+    // Sin hub, se sigue con el respaldo. No es un error que valga interrumpir.
+  }
+}
+
+/** Primer id cuyo texto de busqueda contiene alguna de sus claves. */
+function clasificar(texto: string, opciones: TipoPieza[], porDefecto: string): string {
+  for (const o of opciones) {
+    for (const clave of o.claves || []) {
+      if (clave && texto.includes(clave)) return o.id;
+    }
+  }
+  return porDefecto;
+}
 
 export interface SvgPiece {
   id: string;
@@ -28,22 +95,16 @@ export interface SvgPiece {
 }
 
 export const MOCK_SVG_INDEX: SvgPiece[] = [
-  {"id": "01_linea_suplementos_rd_editable", "name": "01_linea_suplementos_rd_editable.svg", "type": "flyer", "area": "suplementos", "medio": "impresion", "herramienta": "svg+illustrator", "product": "Linea completa", "realSizeCm": "10.0x14.0 cm", "canvasPx": "2000x2800", "colors": [], "lastModified": "2026-06-30", "status": "aprobado", "svgUrl": "/svg/suplementos_rd/02_editables_svg/01_linea_suplementos_rd_editable.svg", "notes": "Real SVG - suplementos_rd"},
-  {"id": "02_impulso_editable", "name": "02_impulso_editable.svg", "type": "flyer", "area": "suplementos", "medio": "impresion", "herramienta": "svg+illustrator", "product": "Impulso", "realSizeCm": "10.0x14.0 cm", "canvasPx": "2000x2800", "colors": [], "lastModified": "2026-06-30", "status": "aprobado", "svgUrl": "/svg/suplementos_rd/02_editables_svg/02_impulso_editable.svg", "notes": "Real SVG - suplementos_rd"},
-  {"id": "03_hongos_adaptogenos_editable", "name": "03_hongos_adaptogenos_editable.svg", "type": "flyer", "area": "suplementos", "medio": "impresion", "herramienta": "svg+illustrator", "product": "Hongos Adaptogenos", "realSizeCm": "10.0x14.0 cm", "canvasPx": "2000x2800", "colors": [], "lastModified": "2026-06-30", "status": "aprobado", "svgUrl": "/svg/suplementos_rd/02_editables_svg/03_hongos_adaptogenos_editable.svg", "notes": "Real SVG - suplementos_rd"},
-  {"id": "04_pre_fiesta_editable", "name": "04_pre_fiesta_editable.svg", "type": "flyer", "area": "suplementos", "medio": "impresion", "herramienta": "svg+illustrator", "product": "Pre Fiesta", "realSizeCm": "10.0x14.0 cm", "canvasPx": "2000x2800", "colors": [], "lastModified": "2026-06-30", "status": "aprobado", "svgUrl": "/svg/suplementos_rd/02_editables_svg/04_pre_fiesta_editable.svg", "notes": "Real SVG - suplementos_rd"},
-  {"id": "05_magnesio_editable", "name": "05_magnesio_editable.svg", "type": "flyer", "area": "suplementos", "medio": "impresion", "herramienta": "svg+illustrator", "product": "Magnesio", "realSizeCm": "10.0x14.0 cm", "canvasPx": "2000x2800", "colors": [], "lastModified": "2026-06-30", "status": "aprobado", "svgUrl": "/svg/suplementos_rd/02_editables_svg/05_magnesio_editable.svg", "notes": "Real SVG - suplementos_rd"},
-  {"id": "06_creatina_monohidratada_editable", "name": "06_creatina_monohidratada_editable.svg", "type": "flyer", "area": "suplementos", "medio": "impresion", "herramienta": "svg+illustrator", "product": "Creatina", "realSizeCm": "10.0x14.0 cm", "canvasPx": "2000x2800", "colors": [], "lastModified": "2026-06-30", "status": "aprobado", "svgUrl": "/svg/suplementos_rd/02_editables_svg/06_creatina_monohidratada_editable.svg", "notes": "Real SVG - suplementos_rd"},
-  {"id": "07_proteina_editable", "name": "07_proteina_editable.svg", "type": "flyer", "area": "suplementos", "medio": "impresion", "herramienta": "svg+illustrator", "product": "Proteina", "realSizeCm": "10.0x14.0 cm", "canvasPx": "2000x2800", "colors": [], "lastModified": "2026-06-30", "status": "aprobado", "svgUrl": "/svg/suplementos_rd/02_editables_svg/07_proteina_editable.svg", "notes": "Real SVG - suplementos_rd"},
-  {"id": "08_post_fiesta_editable", "name": "08_post_fiesta_editable.svg", "type": "flyer", "area": "suplementos", "medio": "impresion", "herramienta": "svg+illustrator", "product": "Post Fiesta", "realSizeCm": "10.0x14.0 cm", "canvasPx": "2000x2800", "colors": [], "lastModified": "2026-06-30", "status": "aprobado", "svgUrl": "/svg/suplementos_rd/02_editables_svg/08_post_fiesta_editable.svg", "notes": "Real SVG - suplementos_rd"},
-  {"id": "01_linea_suplementos_rd_vectorizado", "name": "01_linea_suplementos_rd_vectorizado.svg", "type": "flyer", "area": "suplementos", "medio": "impresion", "herramienta": "svg", "product": "Linea completa", "realSizeCm": "10.0x14.0 cm", "canvasPx": "2000x2800", "colors": [], "lastModified": "2026-06-30", "status": "aprobado", "svgUrl": "/svg/suplementos_rd/03_final_vectorizado_svg/01_linea_suplementos_rd_vectorizado.svg", "notes": "Real SVG - suplementos_rd"},
-  {"id": "02_impulso_vectorizado", "name": "02_impulso_vectorizado.svg", "type": "flyer", "area": "suplementos", "medio": "impresion", "herramienta": "svg", "product": "Impulso", "realSizeCm": "10.0x14.0 cm", "canvasPx": "2000x2800", "colors": [], "lastModified": "2026-06-30", "status": "aprobado", "svgUrl": "/svg/suplementos_rd/03_final_vectorizado_svg/02_impulso_vectorizado.svg", "notes": "Real SVG - suplementos_rd"},
-  {"id": "03_hongos_adaptogenos_vectorizado", "name": "03_hongos_adaptogenos_vectorizado.svg", "type": "flyer", "area": "suplementos", "medio": "impresion", "herramienta": "svg", "product": "Hongos Adaptogenos", "realSizeCm": "10.0x14.0 cm", "canvasPx": "2000x2800", "colors": [], "lastModified": "2026-06-30", "status": "aprobado", "svgUrl": "/svg/suplementos_rd/03_final_vectorizado_svg/03_hongos_adaptogenos_vectorizado.svg", "notes": "Real SVG - suplementos_rd"},
-  {"id": "04_pre_fiesta_vectorizado", "name": "04_pre_fiesta_vectorizado.svg", "type": "flyer", "area": "suplementos", "medio": "impresion", "herramienta": "svg", "product": "Pre Fiesta", "realSizeCm": "10.0x14.0 cm", "canvasPx": "2000x2800", "colors": [], "lastModified": "2026-06-30", "status": "aprobado", "svgUrl": "/svg/suplementos_rd/03_final_vectorizado_svg/04_pre_fiesta_vectorizado.svg", "notes": "Real SVG - suplementos_rd"},
-  {"id": "05_magnesio_vectorizado", "name": "05_magnesio_vectorizado.svg", "type": "flyer", "area": "suplementos", "medio": "impresion", "herramienta": "svg", "product": "Magnesio", "realSizeCm": "10.0x14.0 cm", "canvasPx": "2000x2800", "colors": [], "lastModified": "2026-06-30", "status": "aprobado", "svgUrl": "/svg/suplementos_rd/03_final_vectorizado_svg/05_magnesio_vectorizado.svg", "notes": "Real SVG - suplementos_rd"},
-  {"id": "06_creatina_monohidratada_vectorizado", "name": "06_creatina_monohidratada_vectorizado.svg", "type": "flyer", "area": "suplementos", "medio": "impresion", "herramienta": "svg", "product": "Creatina", "realSizeCm": "10.0x14.0 cm", "canvasPx": "2000x2800", "colors": [], "lastModified": "2026-06-30", "status": "aprobado", "svgUrl": "/svg/suplementos_rd/03_final_vectorizado_svg/06_creatina_monohidratada_vectorizado.svg", "notes": "Real SVG - suplementos_rd"},
-  {"id": "07_proteina_vectorizado", "name": "07_proteina_vectorizado.svg", "type": "flyer", "area": "suplementos", "medio": "impresion", "herramienta": "svg", "product": "Proteina", "realSizeCm": "10.0x14.0 cm", "canvasPx": "2000x2800", "colors": [], "lastModified": "2026-06-30", "status": "aprobado", "svgUrl": "/svg/suplementos_rd/03_final_vectorizado_svg/07_proteina_vectorizado.svg", "notes": "Real SVG - suplementos_rd"},
-  {"id": "08_post_fiesta_vectorizado", "name": "08_post_fiesta_vectorizado.svg", "type": "flyer", "area": "suplementos", "medio": "impresion", "herramienta": "svg", "product": "Post Fiesta", "realSizeCm": "10.0x14.0 cm", "canvasPx": "2000x2800", "colors": [], "lastModified": "2026-06-30", "status": "aprobado", "svgUrl": "/svg/suplementos_rd/03_final_vectorizado_svg/08_post_fiesta_vectorizado.svg", "notes": "Real SVG - suplementos_rd"},
+  {"id": "01_linea_suplementos_rd", "name": "01_linea_suplementos_rd.svg", "type": "etiqueta", "area": "suplementos", "medio": "impresion", "herramienta": "illustrator", "product": "Linea completa", "realSizeCm": "10.0x14.0 cm", "canvasPx": "2000x2800", "colors": [], "lastModified": "2026-07-26", "status": "aprobado", "svgUrl": "/svg/suplementos_rd/09_contraportadas_dark/01_linea_suplementos_rd.svg", "notes": "Contraportada regenerable desde _master_contraportadas.json. Lo impreso salio del PDF de dos caras del disenador; el contenido es el mismo"},
+  {"id": "02_impulso", "name": "02_impulso.svg", "type": "etiqueta", "area": "suplementos", "medio": "impresion", "herramienta": "illustrator", "product": "Impulso", "realSizeCm": "10.0x14.0 cm", "canvasPx": "2000x2800", "colors": [], "lastModified": "2026-07-26", "status": "aprobado", "svgUrl": "/svg/suplementos_rd/09_contraportadas_dark/02_impulso.svg", "notes": "Contraportada regenerable desde _master_contraportadas.json. Lo impreso salio del PDF de dos caras del disenador; el contenido es el mismo"},
+  {"id": "03_hongos_adaptogenos", "name": "03_hongos_adaptogenos.svg", "type": "etiqueta", "area": "suplementos", "medio": "impresion", "herramienta": "illustrator", "product": "Hongos Adaptogenos", "realSizeCm": "10.0x14.0 cm", "canvasPx": "2000x2800", "colors": [], "lastModified": "2026-07-26", "status": "aprobado", "svgUrl": "/svg/suplementos_rd/09_contraportadas_dark/03_hongos_adaptogenos.svg", "notes": "Contraportada regenerable desde _master_contraportadas.json. Lo impreso salio del PDF de dos caras del disenador; el contenido es el mismo"},
+  {"id": "04_pre_fiesta", "name": "04_pre_fiesta.svg", "type": "etiqueta", "area": "suplementos", "medio": "impresion", "herramienta": "illustrator", "product": "Pre Fiesta", "realSizeCm": "10.0x14.0 cm", "canvasPx": "2000x2800", "colors": [], "lastModified": "2026-07-26", "status": "aprobado", "svgUrl": "/svg/suplementos_rd/09_contraportadas_dark/04_pre_fiesta.svg", "notes": "Contraportada regenerable desde _master_contraportadas.json. Lo impreso salio del PDF de dos caras del disenador; el contenido es el mismo"},
+  {"id": "05_magnesio", "name": "05_magnesio.svg", "type": "etiqueta", "area": "suplementos", "medio": "impresion", "herramienta": "illustrator", "product": "Magnesio", "realSizeCm": "10.0x14.0 cm", "canvasPx": "2000x2800", "colors": [], "lastModified": "2026-07-26", "status": "aprobado", "svgUrl": "/svg/suplementos_rd/09_contraportadas_dark/05_magnesio.svg", "notes": "Contraportada regenerable desde _master_contraportadas.json. Lo impreso salio del PDF de dos caras del disenador; el contenido es el mismo"},
+  {"id": "06_creatina_monohidratada", "name": "06_creatina_monohidratada.svg", "type": "etiqueta", "area": "suplementos", "medio": "impresion", "herramienta": "illustrator", "product": "Creatina", "realSizeCm": "10.0x14.0 cm", "canvasPx": "2000x2800", "colors": [], "lastModified": "2026-07-26", "status": "aprobado", "svgUrl": "/svg/suplementos_rd/09_contraportadas_dark/06_creatina_monohidratada.svg", "notes": "Contraportada regenerable desde _master_contraportadas.json. Lo impreso salio del PDF de dos caras del disenador; el contenido es el mismo"},
+  {"id": "07_proteina", "name": "07_proteina.svg", "type": "etiqueta", "area": "suplementos", "medio": "impresion", "herramienta": "illustrator", "product": "Proteina", "realSizeCm": "10.0x14.0 cm", "canvasPx": "2000x2800", "colors": [], "lastModified": "2026-07-26", "status": "aprobado", "svgUrl": "/svg/suplementos_rd/09_contraportadas_dark/07_proteina.svg", "notes": "Contraportada regenerable desde _master_contraportadas.json. Lo impreso salio del PDF de dos caras del disenador; el contenido es el mismo"},
+  {"id": "08_post_fiesta", "name": "08_post_fiesta.svg", "type": "etiqueta", "area": "suplementos", "medio": "impresion", "herramienta": "illustrator", "product": "Post Fiesta", "realSizeCm": "10.0x14.0 cm", "canvasPx": "2000x2800", "colors": [], "lastModified": "2026-07-26", "status": "aprobado", "svgUrl": "/svg/suplementos_rd/09_contraportadas_dark/08_post_fiesta.svg", "notes": "Contraportada regenerable desde _master_contraportadas.json. Lo impreso salio del PDF de dos caras del disenador; el contenido es el mismo"},
+  {"id": "packs_servicios_rd_dark", "name": "packs_servicios_rd_dark_editable.svg", "type": "flyer", "area": "eventos", "medio": "digital", "herramienta": "svg", "product": "Packs de servicio", "realSizeCm": "", "canvasPx": "", "colors": [], "lastModified": "2026-07-26", "status": "aprobado", "svgUrl": "/svg/eventos_rd/packs_servicios_rd_dark_editable.svg", "notes": "Los 3 packs de servicio, version oscura"},
+  {"id": "packs_servicios_rd_blanco", "name": "packs_servicios_rd_blanco_editable.svg", "type": "flyer", "area": "eventos", "medio": "impresion", "herramienta": "svg", "product": "Packs de servicio", "realSizeCm": "", "canvasPx": "", "colors": [], "lastModified": "2026-07-26", "status": "aprobado", "svgUrl": "/svg/eventos_rd/packs_servicios_rd_blanco_editable.svg", "notes": "Los 3 packs de servicio, version para imprimir"},
 ] as const;
 
 export async function loadFromApi(): Promise<SvgPiece[]> {
@@ -74,9 +135,9 @@ export async function loadFromApi(): Promise<SvgPiece[]> {
     return {
       id: String(item.id || item.slug || path || name.replace(/\s+/g, '_').toLowerCase()),
       name,
-      type: lower.includes('pendon') ? 'pendon' : lower.includes('sticker') ? 'sticker' : lower.includes('logo') ? 'logo' : lower.includes('rider') ? 'rider' : lower.includes('cartelera') ? 'cartelera' : lower.includes('post') ? 'post-ig' : lower.includes('flyer') ? 'flyer' : 'etiqueta',
-      area: String(groupName).toLowerCase().includes('evento') ? 'eventos' : String(groupName).toLowerCase().includes('supl') ? 'suplementos' : 'comun',
-      medio: lower.includes('ig') || lower.includes('digital') ? 'digital' : 'impresion',
+      type: clasificar(lower, VOCAB.tipos, VOCAB.tipo_por_defecto || 'etiqueta'),
+      area: clasificar(String(groupName).toLowerCase(), VOCAB.areas, VOCAB.area_por_defecto || 'comun'),
+      medio: clasificar(lower, VOCAB.medios, VOCAB.medio_por_defecto || 'impresion'),
       herramienta: String(item.kind || item.herramienta || 'repo'),
       product: item.product,
       realSizeCm: String(item.realSizeCm || item.real_size_cm || '—'),
@@ -100,4 +161,17 @@ export async function loadFromApi(): Promise<SvgPiece[]> {
   return [];
 }
 
-export const TYPE_OPTIONS: PieceType[] = ['etiqueta', 'flyer', 'pendon', 'post-ig', 'sticker', 'logo', 'rider', 'cartelera', 'stand'];
+/** Los tipos que ofrece el filtro. Salen del vocabulario, no de una lista fija. */
+export function typeOptions(): string[] {
+  return VOCAB.tipos.map(t => t.id);
+}
+
+// Compatibilidad: se conserva el nombre que ya usaba el visor, pero ahora lee
+// el vocabulario cargado en vez de una constante escrita a mano.
+export const TYPE_OPTIONS: PieceType[] = new Proxy([] as string[], {
+  get(_t, prop) {
+    const actual = typeOptions();
+    const v = (actual as any)[prop];
+    return typeof v === 'function' ? v.bind(actual) : v;
+  },
+}) as PieceType[];

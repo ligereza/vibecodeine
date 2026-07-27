@@ -5,11 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo \"MODO CAVEMAN ACTIVO (repo flujo, memoria feedback-caveman-discipline): responde terse estilo caveman skill, ~65pct menos tokens de output. Dropa articulos y relleno, fragmentos OK, terminos tecnicos y comandos exactos, sin narrar tool-calls. Codigo/commits/PRs y warnings de seguridad: normal y claro. No soltar el modo por prosa tecnica ni por flags ambiguos.\""
-          },
-          {
-            "type": "command",
-            "command": "echo \"CONTRATO DIRECTOR ACTIVO (context/DIRECTOR_CONTRACT.md): I1 medir antes de afirmar; I2 palabra del usuario sobre SU sistema = el dato; I3 probar que NO existe antes de construir (git log, gh pr list, changelog); I4 listar vocabulario existente antes de inventar nombres (labels/ramas); I5 escritura de repo = SIEMPRE subagente, inline solo <=5 chequeos read-only; I6 correccion -> accion, cero excusas; I7 jobs >30min: contenido confirmado + latido monitoreado; I8 leer lo que esta delante antes de teorizar.\""
+            "command": "echo \"THE ONE RULE (2026-07-26, user's words): the user is NOT a software expert, he IS an expert on what he wants. A path that is optimal for TECHNICAL reasons: go ahead without asking (code, rules, config). Assuming a style, an aesthetic, or what the user wants: that is the error, ask instead. Corollaries: THERE IS NO DELIVERABLE, do what was asked and nothing more; a finding along the way gets one line and you move on, never chase it; big steps, not commit+CI every two changes; the repo is a USB stick, the conversation is the center. State: context/LAST_HANDOFF.md (single checkpoint, stores ANSWERS not questions). LANGUAGE: speak Spanish to the user, write everything else in English (code, memory, docs, commits, PRs); the ONLY exception is what a human reads as a product -- RD pieces and data, iskvw curation -- which must be correct Spanish WITH diacritics, because a title reading 'reduciendo ano' instead of 'reduciendo dano' can cost the user his job. Personal data (absolute paths, IPs, phone numbers, credentials) goes to local memory, NEVER to the repo: it is public.\""
           }
         ]
       }

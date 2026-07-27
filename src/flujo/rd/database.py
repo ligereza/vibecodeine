@@ -129,6 +129,17 @@ CREATE TABLE productora_logos (
     estado         TEXT                -- status (source_needed, listo, ...)
 );
 CREATE INDEX idx_prodlogos_slug ON productora_logos(productora_slug);
+-- OJO, dos cosas distintas se llamaron "eventos" y hay que no confundirlas:
+--
+--   `eventos`            = PLANTILLAS DE COTIZACION. Un tipo de evento con su
+--                          duracion, voluntarios y pack sugerido, para
+--                          presupuestar. Viene de jobs/ y projects/plano/.
+--   `productora_eventos` = EVENTOS REALES de una productora (fecha, venue),
+--                          registro curado a mano en data/productoras/*.json.
+--
+-- Antes solo existia la primera, asi que los eventos reales quedaban dentro del
+-- json sin poder consultarse por SQL (2026-07-26: 7 eventos en 6 productoras
+-- invisibles para `rd-db`). La tabla de abajo cierra ese hueco.
 CREATE TABLE eventos (
     id                   INTEGER PRIMARY KEY,
     nombre               TEXT NOT NULL,
@@ -142,6 +153,16 @@ CREATE TABLE eventos (
     pack_sugerido        TEXT REFERENCES packs(id),  -- por match de voluntarios
     notas                TEXT
 );
+CREATE TABLE productora_eventos (
+    id              INTEGER PRIMARY KEY,
+    productora_slug TEXT NOT NULL REFERENCES productoras(slug),
+    nombre          TEXT NOT NULL,
+    fecha           TEXT,               -- prosa tal cual se registro; puede decir needs_confirmation
+    venue           TEXT,
+    estado          TEXT,               -- pasado | activo_anunciado | confirmado_usuario | ...
+    fuente          TEXT                -- de donde salio el dato; nunca se inventa
+);
+CREATE INDEX idx_prodeventos_slug ON productora_eventos(productora_slug);
 """
 
 
@@ -311,7 +332,7 @@ def build_rd_db(
                 )
 
         # productoras conocidas (store) + tablas hijas: tipos, venues, logos
-        tipo_id = vnk_id = logo_id = 0
+        tipo_id = vnk_id = logo_id = prodev_id = 0
         if prod_dir.exists():
             for pf in sorted(prod_dir.glob("*.json")):
                 try:
@@ -363,6 +384,24 @@ def build_rd_db(
                         "INSERT INTO productora_logos(id, productora_slug, logo_id, knowledge, estado) "
                         "VALUES (?,?,?,?,?)",
                         (logo_id, slug, lg.get("id"), lg.get("knowledge"), lg.get("estado")),
+                    )
+                # eventos REALES de la productora (distintos de las plantillas
+                # de cotizacion: ver el comentario del esquema). Se copian tal
+                # cual, incluida la fuente -- si un campo no esta, queda NULL,
+                # nunca se rellena con un supuesto.
+                for ev in d.get("eventos", []) or []:
+                    prodev_id += 1
+                    conn.execute(
+                        "INSERT INTO productora_eventos(id, productora_slug, nombre, fecha, "
+                        "venue, estado, fuente) VALUES (?,?,?,?,?,?,?)",
+                        (
+                            prodev_id, slug,
+                            str(ev.get("nombre", "")),
+                            ev.get("fecha"),
+                            ev.get("venue"),
+                            ev.get("estado"),
+                            ev.get("fuente"),
+                        ),
                     )
 
         # eventos (jsons con forma de evento) + pack sugerido por voluntarios

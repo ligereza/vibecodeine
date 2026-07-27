@@ -11,8 +11,22 @@ def force_gpu(prefer=("OPTIX", "CUDA", "HIP", "METAL")):
     """Enable the first available GPU compute backend and select all its
     devices. Returns a dict report (backend, devices enabled) for logging.
     Falls back to CPU only if truly no GPU backend is available (never
-    silently renders on CPU when a GPU exists)."""
+    silently renders on CPU when a GPU exists).
+
+    FLUJO_GPU_BACKEND overrides the order for one machine. It exists because
+    OptiX is not always the fast one: measured 2026-07-27 on the same scene,
+    the box's GTX 1650 took 300s on CUDA and 459s on OptiX -- 35% slower. That
+    card is the only Turing WITHOUT RT cores, so OptiX emulates in software
+    what it was built to accelerate. On the laptop's RTX 4070 OptiX wins, which
+    is why this is per-machine and not a new default.
+    """
+    import os
+
     import bpy
+
+    elegido = os.environ.get("FLUJO_GPU_BACKEND", "").strip().upper()
+    if elegido:
+        prefer = (elegido,) + tuple(b for b in prefer if b != elegido)
 
     scene = bpy.context.scene
     if scene.render.engine != "CYCLES":

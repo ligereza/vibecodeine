@@ -16,6 +16,8 @@ import re
 import shutil
 import subprocess
 import time
+import urllib.parse
+import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -58,9 +60,19 @@ def extract_instagram_shortcode(url: str) -> str:
 
 
 def default_base_dir() -> Path:
+    """Carpeta de trabajo de la automatizacion de flyers.
+
+    Orden: la variable propia, despues FLUJO_RD_ROOT (la que ya documenta el
+    repo para el arbol de material), y recien al final el default de Windows.
+    Encadenarla evita tener que declarar dos variables para lo mismo, y deja de
+    depender de que exista una carpeta concreta en una maquina concreta.
+    """
     env = os.getenv("FLUJO_EVENTOS_AUTOMATIZACION_DIR", "").strip()
     if env:
         return Path(env)
+    raiz_rd = os.getenv("FLUJO_RD_ROOT", "").strip()
+    if raiz_rd:
+        return Path(raiz_rd) / "AUTOMATIZACION"
     return DEFAULT_WINDOWS_BASE if os.name == "nt" else Path.cwd() / "eventos_automatizacion"
 
 
@@ -77,25 +89,82 @@ _MIRROR_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
               "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
 
 
-def _parth_pick_image_url(data: dict) -> str:
+def _indice_pedido(url: str) -> int:
+    """El `img_index` del propio link, 1-based. 1 si no viene.
+
+    Instagram ya pone `?img_index=2` en la URL cuando alguien comparte la
+    segunda imagen de un carrusel. El dato estaba ahi y se ignoraba: se
+    bajaba siempre la primera, asi que un pedido de la segunda devolvia una
+    pieza equivocada sin avisar. No hace falta inventar sintaxis nueva.
+    """
+    try:
+        query = urllib.parse.urlparse(url).query
+        crudo = urllib.parse.parse_qs(query).get("img_index", ["1"])[0]
+        return max(1, int(crudo))
+    except (ValueError, TypeError):
+        return 1
+
+
+def _url_de_imagen(item) -> str:
+    if isinstance(item, str):
+        return item
+    if isinstance(item, dict):
+        for key in ("url", "src"):
+            if item.get(key):
+                return str(item[key])
+    return ""
+
+
+def _parth_pick_image_url(data: dict, indice: int = 1) -> str:
     """Elige UNA sola imagen del metadata de parth-dl.
 
     Video/reel -> thumbnail (el flyer necesita imagen fija).
-    Post/carrusel -> SOLO la primera imagen, nunca todas.
+    Post/carrusel -> la que pidio el link (`img_index`), y si no dice cual,
+    la primera. Nunca todas.
     """
     images = data.get("images") or []
     if images:
-        first = images[0]
-        if isinstance(first, str) and first:
-            return first
-        if isinstance(first, dict):
-            for key in ("url", "src"):
-                if first.get(key):
-                    return first[key]
+        # Si el link pidio una que no existe, se cae a la primera en vez de
+        # fallar: es preferible el flyer equivocado a ningun flyer, y el
+        # numero de imagen se ve en el render.
+        elegida = images[indice - 1] if 0 < indice <= len(images) else images[0]
+        url_img = _url_de_imagen(elegida)
+        if url_img:
+            return url_img
     thumbnail = data.get("thumbnail")
     if thumbnail:
         return thumbnail
     raise FileNotFoundError("parth-dl no devolvio imagen ni thumbnail.")
+
+
+def _bajar_imagen(image_url: str) -> bytes:
+    """Baja la imagen imitando a Chrome de verdad, no solo en el User-Agent.
+
+    Instagram devuelve 403 a Python en Linux aunque el User-Agent diga Chrome:
+    lo que mira es la huella TLS del cliente, y la de urllib se nota. Medido el
+    2026-07-27, cuando MAK fallo con `HTTP Error 403: Forbidden` en el mismo
+    link que Windows bajaba sin problema.
+
+    `curl_cffi` imita el handshake de Chrome y pasa. Si no esta instalado se
+    usa urllib igual, porque en Windows funciona: esto no reemplaza el camino
+    viejo, lo antepone donde hace falta.
+    """
+    try:
+        from curl_cffi import requests as cffi_requests
+    except ImportError:
+        cffi_requests = None
+
+    if cffi_requests is not None:
+        try:
+            r = cffi_requests.get(image_url, impersonate="chrome", timeout=30)
+            if r.status_code == 200 and r.content:
+                return r.content
+        except Exception:
+            pass  # cae a urllib, que en Windows alcanza
+
+    req = urllib.request.Request(image_url, headers={"User-Agent": _MIRROR_UA})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return r.read()
 
 
 def _download_via_parth(url: str, shortcode: str, temp_dir: Path) -> Path:
@@ -105,17 +174,101 @@ def _download_via_parth(url: str, shortcode: str, temp_dir: Path) -> Path:
     thumbnail como imagen base. Si el paquete no esta instalado o falla,
     el caller cae al mirror.
     """
-    import urllib.request
-
     from parth_dl import get_info  # lazy: el repo funciona sin parth-dl
 
     data = get_info(url)
-    image_url = _parth_pick_image_url(data)
-    req = urllib.request.Request(image_url, headers={"User-Agent": _MIRROR_UA})
-    with urllib.request.urlopen(req, timeout=30) as r:
-        payload = r.read()
+    image_url = _parth_pick_image_url(data, _indice_pedido(url))
+    payload = _bajar_imagen(image_url)
     out = temp_dir / f"parth_{shortcode}.jpg"
     out.write_bytes(payload)
+    return out
+
+
+_EMBED_IMG_RE = re.compile(r'class="EmbeddedMediaImage"[^>]*src="([^"]+)"')
+_EMBED_CTX = '"contextJSON":'
+
+
+def _embed_html(shortcode: str) -> str:
+    from curl_cffi import requests as cffi_requests
+
+    pagina = "https://www.instagram.com/p/%s/embed/captioned/" % shortcode
+    r = cffi_requests.get(pagina, impersonate="chrome", timeout=25)
+    if r.status_code != 200:
+        raise FileNotFoundError("el embed devolvio %s" % r.status_code)
+    return r.text
+
+
+def _embed_imagenes(html_txt: str) -> tuple[str, list[dict]]:
+    """TODAS las imagenes del post, no solo la que muestra el embed.
+
+    El `<img>` visible del embed trae una sola: la primera. Pero la pagina
+    lleva ademas un `contextJSON` con el GraphQL completo, y ahi esta el
+    carrusel entero (`edge_sidecar_to_children`). Medido el 2026-07-27 sobre
+    un post real: el `<img>` daba 1 imagen y el contextJSON daba las 3.
+
+    Se parsea con el decodificador de JSON y no con una expresion regular: el
+    valor es una cadena JSON con JSON adentro, llena de comillas escapadas, y
+    cualquier patron se corta en la primera.
+
+    Devuelve (tipo, [{url, video}]). Si no hay contextJSON cae al `<img>`, que
+    es mejor que nada.
+    """
+    i = html_txt.find(_EMBED_CTX)
+    if i >= 0:
+        try:
+            interior, _ = json.JSONDecoder().raw_decode(html_txt, i + len(_EMBED_CTX))
+            ctx = json.loads(interior)
+            media = (ctx.get("gql_data") or {}).get("shortcode_media") or {}
+            hijos = ((media.get("edge_sidecar_to_children") or {}).get("edges") or [])
+            if hijos:
+                salida = []
+                for h in hijos:
+                    n = h.get("node") or {}
+                    if n.get("display_url"):
+                        salida.append({"url": n["display_url"],
+                                       "video": bool(n.get("is_video"))})
+                if salida:
+                    return media.get("__typename") or "GraphSidecar", salida
+            if media.get("display_url"):
+                # Un reel entrega su cuadro de portada, que es imagen fija y
+                # sirve como base del flyer.
+                return (media.get("__typename") or "GraphImage",
+                        [{"url": media["display_url"],
+                          "video": bool(media.get("is_video"))}])
+        except (ValueError, TypeError):
+            pass
+    m = _EMBED_IMG_RE.search(html_txt)
+    if m:
+        u = m.group(1).encode().decode("unicode_escape").replace("&amp;", "&")
+        return "SoloEmbed", [{"url": u, "video": False}]
+    return "", []
+
+
+def _download_via_embed(shortcode: str, temp_dir: Path, indice: int = 1) -> Path:
+    """Via para Linux: la pagina de embed publica de Instagram.
+
+    Por que existe: parth-dl no llega desde MAK. Instagram le devuelve un muro
+    de login ("All extraction methods failed") antes siquiera de dar la
+    metadata, asi que arreglar el fingerprint en la descarga de la imagen no
+    alcanzaba -- fallaba un paso antes. Medido el 2026-07-27 con el flyer del
+    issue #322, que Windows bajaba sin problema.
+
+    Respeta que imagen del carrusel se pidio, porque el contextJSON las trae
+    todas. Idea del usuario: en vez de pelear con que el embed muestre una
+    sola, conseguir la lista completa y que el codigo elija. Se baja SOLO la
+    elegida -- traer las cinco para descartar cuatro seria pagar el ancho de
+    banda de todas para usar una.
+    """
+    tipo, imgs = _embed_imagenes(_embed_html(shortcode))
+    if not imgs:
+        raise FileNotFoundError(
+            "el embed no traia imagen (puede ser privado, borrado o restringido)")
+    elegida = imgs[indice - 1] if 0 < indice <= len(imgs) else imgs[0]
+    out = temp_dir / f"embed_{shortcode}.jpg"
+    out.write_bytes(_bajar_imagen(elegida["url"]))
+    if indice > len(imgs):
+        print(f"AVISO: se pidio la imagen {indice} pero el post tiene "
+              f"{len(imgs)}. Se uso la primera.")
     return out
 
 
@@ -376,13 +529,24 @@ def run_eventos_flyer_auto(
             shutil.rmtree(temp_dir, ignore_errors=True)
         temp_dir.mkdir(parents=True, exist_ok=True)
 
-        # parth-dl primero: cubre reels/video (thumbnail) y posts (1ra imagen).
-        # imginn quedo 403 Cloudflare (2026-07-22); queda de fallback best-effort.
+        # Tres vias, en orden de fidelidad:
+        # 1. parth-dl: la mejor -- cubre reels (thumbnail) y respeta que imagen
+        #    del carrusel se pidio. Funciona desde Windows.
+        # 2. embed publico: la que llega desde Linux. Instagram le sirve un muro
+        #    de login a parth-dl desde MAK (medido 2026-07-27, issue #322), pero
+        #    el embed responde 200 imitando a Chrome. Entrega SOLO la primera
+        #    imagen, asi que si el link pedia otra se avisa en vez de mentir.
+        # 3. mirror: imginn quedo 403 Cloudflare (2026-07-22), best-effort.
         # instaloader confirmado no funcional (IG exige login incluso anonimo).
+        indice = _indice_pedido(url)
         try:
             downloaded = _download_via_parth(url, shortcode, temp_dir)
-        except Exception:
-            downloaded = _download_via_mirror(shortcode, temp_dir)
+        except Exception as e_parth:
+            try:
+                downloaded = _download_via_embed(shortcode, temp_dir, indice)
+            except Exception as e_embed:
+                print(f"parth-dl: {e_parth}\nembed: {e_embed}")
+                downloaded = _download_via_mirror(shortcode, temp_dir)
 
         if input_img.exists():
             input_img.unlink()

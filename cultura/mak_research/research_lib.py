@@ -178,6 +178,13 @@ def orden_por_salud(orden, stats):
 # (azure) solo donde razonar importa (sintesis, juez, plan, diagnostico); las
 # tareas cortas ('barato': resumen, status, clasificacion) van local primero
 # para ahorrar cupo. red_ok() ya mete ollama al frente si no hay internet.
+# ORDEN POR EFECTIVIDAD MEDIDA (2026-07-26, ver salud_proveedores.json).
+# Antes groq iba PRIMERO aqui y en el orden por defecto, con 40% de exito
+# medido (2 exitos / 3 api_errors), mientras cerebras -- 91.4% (74/7) -- iba
+# segundo o tercero. El propio organismo escribio el informe pidiendo
+# "mitigar la degradacion de groq" y nadie lo ejecuto; esto lo ejecuta.
+# groq no se elimina: baja a ultimo recurso remoto. Si mejora, vuelve a subir
+# por el mismo criterio: medicion, no costumbre.
 _SLOTS = {
     "razonar": "azure,cerebras,groq,ollama",
     "bulk": "cerebras,groq,azure,ollama",
@@ -185,10 +192,70 @@ _SLOTS = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Orden derivado de la salud medida
+# ---------------------------------------------------------------------------
+
+# Minimo de llamadas para que un porcentaje signifique algo. Con menos, el
+# proveedor conserva la posicion que le dio la lista escrita: ante la duda se
+# respeta la decision humana, no el ruido estadistico.
+MIN_MUESTRA = 8
+
+
+def salud_medida():
+    """{proveedor: (exitos, total)} desde salud_proveedores.json. {} si no hay."""
+    try:
+        with open(SALUD_RUTA, encoding="utf-8") as f:
+            datos = json.load(f)
+        salida = {}
+        for nombre, v in (datos.get("proveedores") or {}).items():
+            exitos = int(v.get("successes") or 0)
+            total = exitos + int(v.get("timeouts") or 0) \
+                + int(v.get("api_errors") or 0) + int(v.get("errors") or 0)
+            salida[nombre] = (exitos, total)
+        return salida
+    except Exception:
+        return {}
+
+
+def ordenar_por_salud(orden):
+    """Reordena `orden` (lista de proveedores) por efectividad medida.
+
+    Los de muestra insuficiente quedan donde estaban. Nunca se elimina ninguno:
+    un proveedor degradado baja, no desaparece, y vuelve a subir solo cuando
+    su medicion mejora.
+    """
+    salud = salud_medida()
+    if not salud:
+        return list(orden)
+
+    con_datos = []
+    for i, p in enumerate(orden):
+        exitos, total = salud.get(p, (0, 0))
+        if total >= MIN_MUESTRA:
+            con_datos.append((i, p, exitos / total))
+
+    if len(con_datos) < 2:
+        return list(orden)   # nada que reordenar con fundamento
+
+    posiciones = sorted(i for i, _, _ in con_datos)
+    por_calidad = [p for _, p, _ in sorted(con_datos, key=lambda x: -x[2])]
+
+    salida = list(orden)
+    for pos, proveedor in zip(posiciones, por_calidad):
+        salida[pos] = proveedor
+    return salida
+
+
 def orden_rol(rol):
     """Lista de proveedores para un ROL, o None (usa el default de LLM)."""
     s = _SLOTS.get(rol)
-    return [p.strip() for p in s.split(",")] if s else None
+    if not s:
+        return None
+    # La lista escrita fija QUIENES participan; la salud medida decide en que
+    # orden. Asi una degradacion se corrige sola en vez de esperar a que alguien
+    # lea el informe que la caja ya escribio.
+    return ordenar_por_salud([p.strip() for p in s.split(",")])
 
 
 def correlacionar(llm, tema, piezas, densidad="medio"):
@@ -330,8 +397,11 @@ class LLM:
         load_env()
         self.stats = {}
         self.errors = []
-        self.order = [p.strip() for p in order.split(",")
-                      if p.strip() in ("groq", "cerebras", "azure", "win", "ollama")]
+        base = [p.strip() for p in order.split(",")
+                if p.strip() in ("groq", "cerebras", "azure", "win", "ollama")]
+        # Misma regla que orden_rol: la lista escrita dice QUIENES participan,
+        # la salud medida decide el orden. Con muestra insuficiente no se toca.
+        self.order = ordenar_por_salud(base)
 
     # -- proveedores ----------------------------------------------------
     def _groq(self, system, user, max_tok):
@@ -480,7 +550,14 @@ def searxng_search(query, max_results=5, errors=None):
     proveedores LLM -> aparece solo en el panel del hub sin tocar hub.py."""
     load_env()
     base = os.environ.get("SEARXNG_BASE_URL", "http://127.0.0.1:8888").rstrip("/")
-    url = base + "/search?q=" + urllib.parse.quote(query) + "&format=json&safesearch=0"
+    # Una pregunta factica se busca en la web, no en bases academicas. Sin
+    # esta categoria SearXNG usa las de su instancia y devolvia Google Scholar
+    # para "que productora organizo la fiesta" -- comprobado el 2026-07-26: el
+    # marco del prompt ya decia "no literatura academica" y el buscador seguia
+    # trayendo scholar, porque el marco encuadra al modelo y no al buscador.
+    categorias = "&categories=general" if _es_pregunta_factual(query) else ""
+    url = (base + "/search?q=" + urllib.parse.quote(query)
+           + "&format=json&safesearch=0" + categorias)
     try:
         data = _http_json(url, timeout=30)
         resultados = [
@@ -576,8 +653,48 @@ def ntfy_publish(topic, message, title="", priority="default", errors=None):
         return False
 
 
+# Marco FACTICO: para consultas concretas sobre eventos publicos y las
+# organizaciones que los producen (la triangulacion de flyers). No es
+# investigacion cultural y enmarcar la pregunta como tal hacia que se buscara
+# en Dialnet o SciELO quien produjo una fiesta -- comprobado el 2026-07-26.
+#
+# Conserva y REFUERZA el limite de los otros marcos: no se perfila a personas.
+# El sujeto es la organizacion; los nombres del cartel son un dato para
+# identificar el evento, no algo sobre lo que investigar.
+MARCO_FACTUAL = (
+    "Consulta FACTICA sobre un evento publico y la organizacion que lo produjo. "
+    "Buscar en fuentes web actuales (sitios de la productora, ticketeras, "
+    "prensa, redes del evento), NO en literatura academica. "
+    "El sujeto es la EMPRESA U ORGANIZACION productora: los nombres de artistas "
+    "solo sirven para identificar de que evento se habla, y no se investiga ni "
+    "se perfila a ninguna persona. "
+    "Responder SOLO con lo que una fuente confirme, citandola. Si no se "
+    "encuentra, decir explicitamente que no se encontro: una respuesta vacia "
+    "verificable vale mas que una plausible inventada. "
+)
+
+# Senales de que la pregunta es de triangulacion y no de investigacion cultural.
+_SENALES_FACTUAL = (
+    "que productora organizo",
+    "quien organizo",
+    "verificar si la productora",
+    "que productora produjo",
+)
+
+
+def _es_pregunta_factual(topic):
+    """Ante la duda, False: se prefiere el marco cultural, que protege mas."""
+    t = (topic or "").lower()
+    return any(s in t for s in _SENALES_FACTUAL)
+
+
 def marco(topic, activo=True):
     if not activo:
         return topic
+    # Una consulta factica sobre quien produjo un evento no es investigacion
+    # cultural: enmarcarla como tal la mandaba a buscar en bases academicas.
+    # El limite de no perfilar personas viaja igual en los tres marcos.
+    if _es_pregunta_factual(topic) and not _es_tema_sustancia(topic):
+        return MARCO_FACTUAL + topic
     frame = MARCO_CULTURA if _es_tema_sustancia(topic) else MARCO_CULTURA_NEUTRO
     return frame + topic

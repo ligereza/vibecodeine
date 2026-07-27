@@ -395,15 +395,14 @@ def render_config(config_path: Path, repo: Optional[Path] = None) -> int:
         print("Render detenido por errores de validación.")
         return 1
 
-    # Integración fuerte con flujo (colores + tono por defecto)
-    try:
-        from ..brand import load_styles, get_color
-        styles = load_styles()
-        if styles and "palette" not in str(config_path):
-            print(f"  → flujo aplicado automáticamente (ink={get_color('ink')}, accent={get_color('accent')})")
-            # Futuro: merge real en el config
-    except Exception:
-        pass
+    # There used to be a block here announcing "flujo aplicado automaticamente"
+    # with the palette's ink/accent. It applied nothing -- it printed the colours
+    # and left a "Futuro: merge real en el config" note, wrapped in a silent
+    # try/except. Removed 2026-07-26: the config is the only thing that decides
+    # how a piece looks. The palette in projects/flujo/flujo.json is available as
+    # a starting point (flujo.brand.load_styles), never as an imposition -- the
+    # user must stay free to make a post in a different aesthetic, or to change
+    # the flyers, without the app pushing back.
 
     generator = repo / "tools" / "piezas_vectoriales" / "scripts" / "generar_desde_json.py"
     if not generator.exists():

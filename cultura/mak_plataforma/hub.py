@@ -10,8 +10,8 @@ el marco, pero el iframe habla directo con :8890/:8891 (LAN privada
 Face A, sin token).
 
 Rutas: / (cara) · /api/organismo · /api/micelio · /api/ejecutar (POST) ·
-/pieza · /api/salud · /api/actividad · /cuotas · /doctrina · /reflexiones ·
-/relevo · /genesis
+/api/ideas (GET+POST) · /pieza · /api/salud · /api/actividad · /cuotas ·
+/doctrina · /reflexiones · /relevo · /genesis
 """
 import html
 import json
@@ -28,6 +28,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import salud  # noqa: E402
 import cuotas  # noqa: E402
+import ideas  # noqa: E402
 
 PORT = int(os.environ.get("HUB_PORT", "8900"))
 HOME = os.path.expanduser("~")
@@ -77,6 +78,68 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
 #topbar #guardia b{color:#c46d5e}#topbar #guardia i{color:#9db67c;font-style:normal}
 #centro{flex:1;min-height:0;position:relative;background:#0a0908}
 #centro iframe{position:absolute;inset:0;width:100%;height:100%;border:none;display:none}
+#pan-ideas{position:absolute;inset:0;overflow-y:auto;padding:26px 30px;display:none}
+#pan-ideas.on{display:block}
+#pan-ideas .intro{color:#6e6a5e;font-size:.74rem;margin-bottom:14px;max-width:640px;line-height:1.5}
+#pan-ideas .caja{display:flex;gap:8px;margin-bottom:8px;max-width:820px}
+#pan-ideas textarea{flex:1;background:#0d0b09;border:1px solid #2a2820;border-radius:6px;
+ color:#c9c5b9;font-family:inherit;font-size:.8rem;padding:10px;resize:vertical;min-height:62px}
+#pan-ideas textarea:focus{outline:none;border-color:#39432c}
+#pan-ideas button{background:#1a2418;border:1px solid #39432c;color:#9db67c;font-family:inherit;
+ font-size:.74rem;padding:7px 14px;border-radius:6px;cursor:pointer;height:fit-content}
+#pan-ideas button:hover{border-color:#5a6a44}
+#pan-ideas button.sec{background:transparent;border-color:#2a2820;color:#8a8577;
+ font-size:.66rem;padding:3px 9px}
+#pan-ideas #aviso{color:#d4a259;font-size:.72rem;margin-bottom:16px;min-height:1em;max-width:820px}
+#pan-ideas .idea{border:1px solid #211f18;border-radius:8px;padding:13px 15px;margin-bottom:11px;
+ background:#0c0a09;max-width:820px}
+#pan-ideas .idea .txt{font-size:.84rem;color:#c9c5b9;line-height:1.45}
+#pan-ideas .idea .meta{color:#5f5b50;font-size:.66rem;margin-top:5px;display:flex;gap:10px;
+ align-items:center;flex-wrap:wrap}
+#pan-ideas .idea .meta .est{color:#9db67c}
+#pan-ideas .rel{margin-top:10px;border-top:1px solid #17150f;padding-top:8px}
+#pan-ideas .rel h4{color:#6e6a5e;font-size:.6rem;text-transform:uppercase;letter-spacing:1px;
+ margin-bottom:6px}
+#pan-ideas .rel .r{font-size:.73rem;padding:3px 0;display:flex;gap:8px;align-items:baseline}
+#pan-ideas .rel .r .obra{color:#d4a259;flex:none;font-size:.62rem}
+#pan-ideas .rel .r .ens{color:#5f5b50;flex:none;font-size:.62rem}
+#pan-ideas .rel .r .ti{color:#c3bfb2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#pan-ideas .rel .r .sc{color:#5f5b50;font-size:.64rem;margin-left:auto;flex:none}
+#pan-ideas .vacio{color:#5f5b50;font-size:.76rem}
+@media(max-width:700px){#pan-ideas{padding:16px 14px}#pan-ideas .caja{flex-direction:column}}
+#pan-render{position:absolute;inset:0;overflow-y:auto;padding:26px 30px;display:none}
+#pan-render.on{display:block}
+#pan-render .intro{color:#6e6a5e;font-size:.74rem;margin-bottom:14px;max-width:680px;line-height:1.5}
+#pan-render .cfg{border:1px solid #211f18;border-radius:8px;padding:13px 15px;
+ margin-bottom:14px;background:#0c0a09;max-width:820px;display:flex;flex-wrap:wrap;
+ gap:14px;align-items:center}
+#pan-render .cfg label{font-size:.72rem;color:#8a8577;display:flex;gap:6px;align-items:center}
+#pan-render .cfg input[type=text]{background:#0b0a08;border:1px solid #2a2820;border-radius:5px;
+ color:#c9c5b9;font-family:inherit;font-size:.74rem;padding:5px 8px;width:150px}
+#pan-render .cfg input[type=text]:focus{outline:none;border-color:#39432c}
+#pan-render button{background:#1a2418;border:1px solid #39432c;color:#9db67c;font-family:inherit;
+ font-size:.72rem;padding:6px 13px;border-radius:6px;cursor:pointer}
+#pan-render button:hover{border-color:#5a6a44}
+#pan-render #r-aviso{color:#d4a259;font-size:.72rem;margin-bottom:14px;min-height:1em}
+#pan-render .rd{border:1px solid #211f18;border-radius:8px;padding:13px 15px;
+ margin-bottom:11px;background:#0c0a09;max-width:820px}
+#pan-render .rd .cab{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+#pan-render .rd .num{color:#9db67c;font-size:.8rem}
+#pan-render .rd .mal{color:#c46d5e}
+#pan-render .rd .ts{color:#5f5b50;font-size:.66rem;margin-left:auto}
+#pan-render .rd .dest{color:#d4a259;font-size:.72rem;margin-top:5px;word-break:break-all}
+#pan-render .rd .link{color:#6e6a5e;font-size:.68rem;margin-top:3px;word-break:break-all}
+#pan-render .datos{margin-top:9px;border-top:1px solid #17150f;padding-top:8px;font-size:.73rem}
+#pan-render .datos h4{color:#6e6a5e;font-size:.6rem;text-transform:uppercase;
+ letter-spacing:1px;margin-bottom:5px}
+#pan-render .datos .f{color:#c3bfb2;padding:2px 0}
+#pan-render .datos .f b{color:#8a8577;font-weight:400}
+#pan-render .vacio{color:#5f5b50;font-size:.74rem}
+#pan-render .pend-cab{color:#d4a259;font-size:.7rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+#pan-render .rd.pend{border-color:#4a3a26;background:#100c08}
+#pan-render .rd.pend .motivo{color:#d4a259;font-size:.75rem;margin-top:6px;line-height:1.45}
+#pan-render #r-pendientes{margin-bottom:20px}
+@media(max-width:700px){#pan-render{padding:16px 14px}}
 #centro iframe.on{display:block}
 #franja{flex:none;height:170px;display:flex;border-top:1px solid #211f18;background:#0d0b09;
  transition:height .18s ease,padding .18s ease;overflow:hidden}
@@ -106,6 +169,8 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
   <div id="tabs">
    <button data-dep="research" class="on">🔬 research</button>
    <button data-dep="codex">💻 codex</button>
+   <button data-dep="ideas">💡 ideas</button>
+   <button data-dep="render">🖼 render</button>
   </div>
  </div>
  <div class="der">
@@ -116,6 +181,27 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
 <div id="centro">
  <iframe id="ifr-research" class="on"></iframe>
  <iframe id="ifr-codex"></iframe>
+ <div id="pan-ideas">
+  <div class="intro">Escribí lo que estás pensando. El archivo te dice con qué se
+   relaciona — tus obras van marcadas aparte de los ensayos de MAK. Si te sirve,
+   mandalo a la cola: una idea tuya entra adelante de todo lo automático.</div>
+  <div class="caja">
+   <textarea id="i-texto" placeholder="una idea, una pregunta, algo que querés empezar…"></textarea>
+   <button onclick="anotarIdea()">anotar</button>
+  </div>
+  <div id="aviso"></div>
+  <div id="i-lista">cargando…</div>
+ </div>
+ <div id="pan-render">
+  <div class="intro">El puente atiende los issues de flyer solo, por cron.
+   Acá se configura, se ve qué renderizó y qué data sacó el departamento de
+   cada flyer. Si una pieza no muestra data, es que la curatoría todavía no
+   la percibió — no que no exista.</div>
+  <div id="r-config" class="cfg">cargando…</div>
+  <div id="r-aviso"></div>
+  <div id="r-pendientes"></div>
+  <div id="r-lista">cargando…</div>
+ </div>
 </div>
 <button id="toggle" onclick="toggleFranja()">▾ actividad / salud</button>
 <div id="franja">
@@ -142,6 +228,11 @@ function activarDep(dep){
  document.querySelectorAll('#centro iframe').forEach(function(f){
    f.classList.toggle('on', f.id==='ifr-'+dep);
  });
+ // 'ideas' y 'render' no son editores embebidos: son paneles propios del hub.
+ document.getElementById('pan-ideas').classList.toggle('on', dep==='ideas');
+ document.getElementById('pan-render').classList.toggle('on', dep==='render');
+ if(dep==='ideas'){cargarIdeas();return;}
+ if(dep==='render'){cargarRender();return;}
  var ifr=document.getElementById('ifr-'+dep);
  if(ifr && !ifr.src){ifr.src=IFR_SRC[dep];}
 }
@@ -149,6 +240,152 @@ document.querySelectorAll('#tabs button').forEach(function(b){
  b.onclick=function(){activarDep(b.getAttribute('data-dep'));};
 });
 activarDep('research');
+
+// ── ideas: intervenir, no mirar ──
+function pintarIdeas(ds){
+ var el=document.getElementById('i-lista');
+ if(!ds.length){el.innerHTML='<div class="vacio">Todavía no hay ideas anotadas.</div>';return;}
+ el.innerHTML=ds.map(function(d){
+   var rel=(d.relacionadas||[]);
+   // Sin relaciones no se inventa una vecindad: se dice que no hubo.
+   var relHtml = rel.length
+     ? '<div class="rel"><h4>se relaciona con</h4>'+rel.map(function(r){
+         return '<div class="r">'+(r.es_obra
+             ? '<span class="obra">obra tuya</span>'
+             : '<span class="ens">MAK</span>')+
+           '<span class="ti">'+esc(r.titulo)+'</span>'+
+           '<span class="sc">'+esc(r.score)+'</span></div>';
+       }).join('')+'</div>'
+     : '<div class="rel"><h4>se relaciona con</h4><div class="vacio">'+
+       'El micelio no devolvió nada para esta idea.</div></div>';
+   var acc = d.estado==='encargada'
+     ? ''
+     : '<button class="sec" onclick="encargarIdea(\''+esc(d.id)+'\',\'research\')">'+
+       'mandar a research</button>'+
+       '<button class="sec" onclick="encargarIdea(\''+esc(d.id)+'\',\'codex\')">'+
+       'mandar a codex</button>';
+   return '<div class="idea"><div class="txt">'+esc(d.texto)+'</div>'+
+     '<div class="meta"><span class="est">'+esc(d.estado||'')+'</span>'+
+     '<span>'+esc(d.ts||'')+'</span>'+acc+'</div>'+relHtml+'</div>';
+ }).join('');
+}
+function cargarIdeas(){
+ fetch('/api/ideas').then(function(r){return r.json();}).then(function(d){
+   if(d.error){document.getElementById('i-lista').innerHTML=
+     '<div class="vacio">No se pudo leer las ideas: '+esc(d.error)+'</div>';return;}
+   pintarIdeas(d.ideas||[]);
+ }).catch(function(){document.getElementById('i-lista').innerHTML=
+   '<div class="vacio">No se pudo leer las ideas.</div>';});
+}
+function _post(cuerpo){
+ return fetch('/api/ideas',{method:'POST',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify(cuerpo)}).then(function(r){return r.json();});
+}
+function anotarIdea(){
+ var ta=document.getElementById('i-texto'), av=document.getElementById('aviso');
+ var t=ta.value.trim();
+ if(!t){av.textContent='Escribí algo primero.';return;}
+ av.textContent='anotando…';
+ _post({accion:'anotar',texto:t}).then(function(d){
+   // El aviso de ideas.py se muestra tal cual: si no se pudo relacionar, se dice.
+   av.textContent = d.ok ? (d.aviso||'') : ('No se anotó: '+(d.error||''));
+   if(d.ok){ta.value='';}
+   cargarIdeas();
+ }).catch(function(){av.textContent='No se pudo hablar con el hub.';});
+}
+function encargarIdea(id,depto){
+ var av=document.getElementById('aviso');
+ _post({accion:'encargar',id:id,depto:depto}).then(function(d){
+   av.textContent = d.ok
+     ? ('A la cola de '+depto+', al frente: '+(d.encargada||''))
+     : ('No se encargó: '+(d.error||''));
+   cargarIdeas();
+ }).catch(function(){av.textContent='No se pudo hablar con el hub.';});
+}
+
+// ── departamento de render ──
+function pintarConfigRender(c, pend){
+ document.getElementById('r-config').innerHTML =
+  '<label><input type="checkbox" id="rc-activo"'+(c.activo?' checked':'')+'> atiende issues</label>'+
+  '<label>destino <input type="text" id="rc-remoto" value="'+esc(c.remoto)+'">:'+
+  '<input type="text" id="rc-carpeta" value="'+esc(c.carpeta)+'"></label>'+
+  '<label>etiqueta <input type="text" id="rc-etiqueta" value="'+esc(c.etiqueta)+'"></label>'+
+  '<label><input type="checkbox" id="rc-depto"'+(c.al_departamento?' checked':'')+
+    '> manda el flyer al departamento</label>'+
+  '<label><input type="checkbox" id="rc-pausa"'+(c.pausar_percepcion?' checked':'')+
+    '> pausa la percepción para renderizar</label>'+
+  '<button onclick="guardarConfigRender()">guardar</button>'+
+  '<span style="color:#5f5b50;font-size:.7rem">'+pend+' en la bandeja</span>';
+}
+// Lo pendiente va ARRIBA y con su motivo. Es lo unico que necesita al usuario:
+// lo hecho ya esta en su Drive.
+function pintarPendientes(ps){
+ var el=document.getElementById('r-pendientes');
+ if(!ps.length){el.innerHTML='';return;}
+ el.innerHTML='<div class="pend-cab">'+ps.length+' pendiente'+(ps.length>1?'s':'')+
+   ' — necesitan Windows</div>'+ps.map(function(p){
+   return '<div class="rd pend"><div class="cab">'+
+     '<span class="num mal">#'+esc(p.issue)+' · '+esc(p.code||'')+'</span>'+
+     (p.imagen>1?'<span style="color:#5f5b50;font-size:.68rem">imagen '+esc(p.imagen)+'</span>':'')+
+     '<span class="ts">'+esc(p.ts)+'</span></div>'+
+     '<div class="motivo">'+esc(p.pendiente||'sin motivo')+'</div>'+
+     '<div class="link">'+esc(p.url)+'</div></div>';
+ }).join('');
+}
+function pintarRenders(hs){
+ var el=document.getElementById('r-lista');
+ if(!hs.length){el.innerHTML='<div class="vacio">Todavía no renderizó ningún issue.</div>';return;}
+ el.innerHTML=hs.map(function(h){
+   var d=h.datos;
+   // Sin ficha no se afirma que la data entro: se dice que falta percibirla.
+   var datos = d
+     ? '<div class="datos"><h4>data extraída del flyer</h4>'+
+       (d.headliners&&d.headliners.length?'<div class="f"><b>artistas:</b> '+
+          esc(d.headliners.join(', '))+'</div>':'')+
+       (d.fecha?'<div class="f"><b>fecha:</b> '+esc(d.fecha)+'</div>':'')+
+       (d.lugar?'<div class="f"><b>lugar:</b> '+esc(d.lugar)+'</div>':'')+
+       (d.productora?'<div class="f"><b>productora:</b> '+esc(d.productora)+'</div>':'')+
+       (d.descripcion?'<div class="f">'+esc(d.descripcion)+'</div>':'')+
+       '</div>'
+     : '<div class="datos"><h4>data extraída del flyer</h4>'+
+       '<div class="vacio">La curatoría todavía no percibió este flyer.</div></div>';
+   return '<div class="rd"><div class="cab">'+
+     '<span class="num">#'+esc(h.issue)+' · '+esc(h.code||'')+'</span>'+
+     (h.imagen>1?'<span style="color:#5f5b50;font-size:.68rem">imagen '+esc(h.imagen)+
+       ' del carrusel</span>':'')+
+     '<span class="ts">'+esc(h.ts)+'</span></div>'+
+     (h.destino?'<div class="dest">'+esc(h.destino)+'</div>':'')+
+     '<div class="link">'+esc(h.url)+'</div>'+datos+'</div>';
+ }).join('');
+}
+function cargarRender(){
+ fetch('/api/render').then(function(r){return r.json();}).then(function(d){
+   if(d.error){document.getElementById('r-lista').innerHTML=
+     '<div class="vacio">No se pudo leer el departamento: '+esc(d.error)+'</div>';return;}
+   pintarConfigRender(d.config||{}, d.pendientes_bandeja||0);
+   pintarPendientes(d.pendientes||[]);
+   pintarRenders(d.hechos||[]);
+ }).catch(function(){document.getElementById('r-lista').innerHTML=
+   '<div class="vacio">No se pudo hablar con el hub.</div>';});
+}
+function guardarConfigRender(){
+ var av=document.getElementById('r-aviso');
+ var cuerpo={
+   activo:document.getElementById('rc-activo').checked,
+   remoto:document.getElementById('rc-remoto').value.trim(),
+   carpeta:document.getElementById('rc-carpeta').value.trim(),
+   etiqueta:document.getElementById('rc-etiqueta').value.trim(),
+   al_departamento:document.getElementById('rc-depto').checked,
+   pausar_percepcion:document.getElementById('rc-pausa').checked
+ };
+ av.textContent='guardando…';
+ fetch('/api/render',{method:'POST',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify(cuerpo)}).then(function(r){return r.json();}).then(function(d){
+   av.textContent = d.ok ? 'Guardado. Vale desde la próxima pasada del cron.'
+                         : ('No se guardó: '+(d.error||''));
+   cargarRender();
+ }).catch(function(){av.textContent='No se pudo hablar con el hub.';});
+}
 
 // ── franja inferior: colapsable ──
 function toggleFranja(){
@@ -416,6 +653,106 @@ def _micelio():
         _MIC_CACHE["data"] = g
         _MIC_CACHE["t"] = ahora
     return _MIC_CACHE["data"]
+
+
+# ── departamento de render (el puente issue -> flyer) ──
+PUENTE_ESTADO = os.path.join(HOME, "plataforma/puente_issues_estado.json")
+RENDER_CONFIG = os.path.join(HOME, "plataforma/render_config.json")
+FICHAS = os.path.join(HOME, "curatoria/fichas/fichas.jsonl")
+
+
+def _config_render():
+    base = {"activo": True, "remoto": "gdrive", "carpeta": "RD/renders",
+            "etiqueta": "instagram", "al_departamento": True,
+            "pausar_percepcion": True}
+    try:
+        with open(RENDER_CONFIG, encoding="utf-8") as fh:
+            base.update(json.load(fh))
+    except (OSError, ValueError):
+        pass
+    return base
+
+
+def _data_extraida(nombre_bandeja):
+    """Lo que el departamento saco del flyer, si ya lo percibio.
+
+    Une los dos lados que hasta ahora no se veian juntos: el render entregado
+    y la ficha que la curatoria produjo del mismo archivo. Sin esto el usuario
+    veia una imagen y tenia que creer que "la data entro"; aca se ve o no se ve.
+    """
+    if not nombre_bandeja:
+        return None
+    try:
+        with open(FICHAS, encoding="utf-8", errors="replace") as fh:
+            for linea in fh:
+                if nombre_bandeja not in linea:
+                    continue
+                f = json.loads(linea)
+                v = f.get("vision") or {}
+                return {
+                    "headliners": v.get("headliners") or [],
+                    "fecha": v.get("fecha") or "",
+                    "lugar": v.get("lugar") or v.get("venue") or "",
+                    "productora": v.get("productora") or "",
+                    "descripcion": (v.get("descripcion") or "")[:220],
+                }
+    except (OSError, ValueError):
+        pass
+    return None
+
+
+def _render_estado():
+    cfg = _config_render()
+    hechos = []
+    try:
+        with open(PUENTE_ESTADO, encoding="utf-8") as fh:
+            crudo = (json.load(fh) or {}).get("hechos") or {}
+    except (OSError, ValueError):
+        crudo = {}
+    pendientes = []
+    for numero, d in sorted(crudo.items(), key=lambda kv: kv[1].get("ts", ""),
+                            reverse=True):
+        # Un issue puede traer VARIOS links: la jefa manda mas de un evento en
+        # el mismo correo. Cada uno es una pieza con su propio destino.
+        piezas = d.get("piezas")
+        if piezas is None:                      # forma vieja, un solo link
+            piezas = [{"url": d.get("url", ""), "code": "",
+                       "imagen": d.get("imagen") or 1, "ok": bool(d.get("ok")),
+                       "destino": d.get("destino") or "",
+                       "en_departamento": d.get("en_departamento"),
+                       "pendiente": None}]
+        for p in piezas:
+            p = dict(p)
+            p["datos"] = _data_extraida(p.get("en_departamento"))
+            p["issue"] = numero
+            p["ts"] = d.get("ts", "")
+            if p.get("ok"):
+                hechos.append(p)
+            else:
+                pendientes.append(p)
+    return {"config": cfg, "hechos": hechos[:40], "pendientes": pendientes[:20],
+            "pendientes_bandeja": _cuenta_bandeja()}
+
+
+def _cuenta_bandeja():
+    ruta = os.path.join(HOME, "RD", "desde_issues")
+    try:
+        return len([n for n in os.listdir(ruta) if n.lower().endswith(".jpg")])
+    except OSError:
+        return 0
+
+
+def _guardar_config_render(nueva):
+    cfg = _config_render()
+    for clave in ("activo", "remoto", "carpeta", "etiqueta",
+                  "al_departamento", "pausar_percepcion"):
+        if clave in nueva:
+            cfg[clave] = nueva[clave]
+    tmp = RENDER_CONFIG + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(cfg, fh, ensure_ascii=False, indent=2)
+    os.replace(tmp, RENDER_CONFIG)
+    return cfg
 
 
 def _trabajo():
@@ -716,6 +1053,17 @@ class H(BaseHTTPRequestHandler):
                 return self._json(_actividad())
             except Exception as e:  # noqa: BLE001
                 return self._json({"error": str(e)[:200], "eventos": [], "guardia": {}})
+        if p == "/api/ideas":
+            try:
+                return self._json({"ideas": list(reversed(ideas.cargar()))})
+            except Exception as e:  # noqa: BLE001
+                return self._json({"error": str(e)[:200], "ideas": []})
+        if p == "/api/render":
+            try:
+                return self._json(_render_estado())
+            except Exception as e:  # noqa: BLE001
+                return self._json({"error": str(e)[:200], "hechos": [],
+                                   "config": {}})
         if p == "/api/salud":
             try:
                 return self._json(_salud_proveedores())
@@ -773,6 +1121,35 @@ class H(BaseHTTPRequestHandler):
             if densidad not in ("corto", "medio", "largo"):
                 densidad = "medio"
             return self._json(_ejecutar(depto, modo, texto, densidad))
+        if u.path == "/api/ideas":
+            largo = min(int(self.headers.get("Content-Length") or 0), 12000)
+            try:
+                body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
+            except (ValueError, TypeError):
+                return self._json({"ok": False, "error": "json invalido"}, 400)
+            accion = str(body.get("accion", ""))
+            texto = str(body.get("texto", ""))[:2000]
+            try:
+                if accion == "anotar":
+                    return self._json(ideas.anotar(texto))
+                if accion == "encargar":
+                    depto = str(body.get("depto", "research"))
+                    return self._json(ideas.encargar(str(body.get("id", "")), depto))
+                if accion == "priorizar":
+                    return self._json(ideas.priorizar(texto))
+            except Exception as e:  # noqa: BLE001
+                return self._json({"ok": False, "error": str(e)[:200]}, 500)
+            return self._json({"ok": False, "error": "accion desconocida"}, 400)
+        if u.path == "/api/render":
+            largo = min(int(self.headers.get("Content-Length") or 0), 4000)
+            try:
+                body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
+            except (ValueError, TypeError):
+                return self._json({"ok": False, "error": "json invalido"}, 400)
+            try:
+                return self._json({"ok": True, "config": _guardar_config_render(body)})
+            except Exception as e:  # noqa: BLE001
+                return self._json({"ok": False, "error": str(e)[:200]}, 500)
         return self._send("no", "text/plain", 404)
 
     def log_message(self, fmt, *args):

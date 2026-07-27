@@ -4,9 +4,10 @@ import {
   Scan, Users, Moon, Home, Table, Armchair, Box, Zap,
   Lightbulb, Droplet, Thermometer, User, ShieldAlert, HeartPulse, Utensils,
   ChevronRight, ChevronLeft, Settings, Copy, Layers, Grid3X3, FileText,
-  Heart, AlertTriangle, Coffee, RefreshCw, Flame, Sofa, Cylinder
+  Heart, AlertTriangle, Coffee, RefreshCw, Flame, Sofa, Cylinder, Save, Upload
 } from 'lucide-react';
 import { cn } from '../utils/cn';
+import { SIMBOLOS_PROPIOS, simboloPropio, markupSimboloPropio, guardarSimbolo, trazarImagen, registrarSimbolosPropios } from '../data/planoSimbolos';
 import { RD_PALETTE, RD_LOGO, calcCostos, formatCLP, proporcionMonto, ALL_PACKS, PACKS, type ExportTheme, type PackId } from '../rdBrand';
 
 // ── Types ────────────────────────────────────────────────────────────
@@ -56,6 +57,22 @@ const ZONE_COLORS: Record<string, string> = {
   sillon: '#0d9488',
   toalla: '#0891b2'
 };
+
+// Una ZONA es superficie que el recinto reserva y entrega: se marca en el piso,
+// se cierra, se ilumina, tiene metros cuadrados. Un SIMBOLO es algo que tiene
+// que estar ahi, en un punto.
+//
+// ZONE_LABELS mezclaba las dos cosas y la paleta ocultaba cinco entradas a mano,
+// asi que la app ofrecia dibujar como area "Toalla Nova", "Sillas" o "Mesas", y
+// tambien "Medidas Recinto" y "Terreno Estable", que no son objetos del plano
+// sino preguntas de checklist. Para el productor tecnico que recibe el plano,
+// una zona de 4 m2 llamada "Sillas" se lee como hecho sin criterio.
+//
+// Separado el 2026-07-26 por decision del usuario. NO se perdio nada: todo lo
+// que salio de aca sigue disponible como simbolo, que es lo que siempre fue.
+const ZONAS_REALES = [
+  'testeo', 'contencion', 'informativo', 'descanso', 'coordinacion', 'circulacion',
+] as const;
 
 const ZONE_LABELS: Record<string, string> = {
   testeo: 'Zona Testeo',
@@ -114,7 +131,34 @@ const SYMBOL_CATALOG: SymbolSpec[] = [
   { key: 'toalla', label: 'Toalla Nova', color: ZONE_COLORS.toalla, icon: 'Cylinder', x: 570, y: 1350, w: 160, h: 160 },
 ];
 
-const SYMBOL_BY_KEY = Object.fromEntries(SYMBOL_CATALOG.map(s => [s.key, s])) as Record<string, SymbolSpec>;
+// Los simbolos propios (data/plano_simbolos.json) se suman al catalogo de
+// fabrica, para que aparezcan en el selector y no solo al dibujarlos. Se
+// ubican en una columna libre a la derecha; el usuario los mueve como a
+// cualquier otro. Un id que coincide con uno de fabrica solo lo reetiqueta o
+// recolorea, igual que en el lado Python.
+const simbolosPropiosSpec = (): SymbolSpec[] =>
+  SIMBOLOS_PROPIOS.filter(s => !SYMBOL_CATALOG.some(f => f.key === s.id)).map((s, i) => ({
+    key: s.id as TechnicalSymbolKey,
+    label: s.etiqueta,
+    color: s.color,
+    icon: 'Shapes',
+    x: 2600,
+    y: 300 + i * 200,
+    w: 160,
+    h: 160,
+  }));
+
+// PEREZOSO A PROPOSITO: los simbolos propios llegan por fetch (main.tsx) y este
+// modulo se evalua ANTES de que ese fetch termine, asi que armar la lista aca
+// arriba la dejaria siempre vacia. Se arma al usarla.
+const catalogoCompleto = (): SymbolSpec[] => [...SYMBOL_CATALOG, ...simbolosPropiosSpec()];
+
+const specDe = (key: string): SymbolSpec | undefined =>
+  SYMBOL_CATALOG.find(s => s.key === key) || simbolosPropiosSpec().find(s => s.key === key);
+
+/** spec del simbolo, con el de electricidad como ultimo recurso (era el fallback previo). */
+const specOPower = (key: string): SymbolSpec =>
+  specDe(key) || (SYMBOL_CATALOG.find(s => s.key === 'power') as SymbolSpec);
 
 const PLANO_FRAME = { x: 50, y: 50, w: 2870, h: 1950 };
 const GRID = 20;
@@ -154,7 +198,7 @@ const REQUIREMENT_SYMBOL_MAP: Record<string, TechnicalSymbolKey> = {
 };
 
 const makeSymbolElement = (key: TechnicalSymbolKey, idPrefix = 'symbol'): Element => {
-  const spec = SYMBOL_BY_KEY[key] || SYMBOL_BY_KEY.power;
+  const spec = specOPower(key);
   return {
     id: `${idPrefix}-${spec.key}`,
     type: 'symbol',
@@ -266,7 +310,7 @@ const rectLabelFont = (label: string, w: number) =>
   Math.max(24, Math.min(42, Math.round((w - 80) / (0.62 * Math.max(label.length, 1)))));
 
 const placedSymbol = (key: TechnicalSymbolKey, id: string, x: number, y: number, label?: string): Element => {
-  const spec = SYMBOL_BY_KEY[key] || SYMBOL_BY_KEY.power;
+  const spec = specOPower(key);
   const category = SYMBOL_CATEGORY[key] || 'Zonas de Atención';
   return { id, type: 'symbol', symbolKey: spec.key, x, y, w: spec.w, h: spec.h, label: label || spec.label, color: spec.color, visible: true, category };
 };
@@ -361,6 +405,22 @@ export default function PlanoTool() {
   const [page, setPage] = useState<Page>('map');
   const [elements, setElements] = useState<Element[]>(() => buildElements('TESTEO'));
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // Alta de un simbolo propio desde la app. Antes habia que editar
+  // data/plano_simbolos.json a mano y dejar el archivo en una carpeta, que no
+  // es "puede agregar un icono" en ningun sentido util.
+  const [nuevoSimboloAbierto, setNuevoSimboloAbierto] = useState(false);
+  const [nuevoSimboloNombre, setNuevoSimboloNombre] = useState('');
+  const [nuevoSimboloColor, setNuevoSimboloColor] = useState('#38bdf8');
+  const [nuevoSimboloZona, setNuevoSimboloZona] = useState('INFRAESTRUCTURA');
+  const [nuevoSimboloAviso, setNuevoSimboloAviso] = useState<string | null>(null);
+  // Si sube una imagen en vez de un SVG, se traza y se le MUESTRA el resultado
+  // antes de guardar: un trazado automatico puede salir sucio y quien decide si
+  // sirve es ella.
+  const [previewSvg, setPreviewSvg] = useState<string | null>(null);
+  // SIMBOLOS_PROPIOS se muta fuera de React; esto fuerza el redibujo de la
+  // paleta cuando se guarda uno nuevo.
+  const [refrescoSimbolos, setRefrescoSimbolos] = useState(0);
   const [checkedItems, setCheckedItems] = useState<string[]>(() => {
     try {
       const raw = localStorage.getItem(PLANO_CHECKED_ITEMS_KEY);
@@ -450,7 +510,7 @@ export default function PlanoTool() {
   };
 
   const addSymbol = (st: TechnicalSymbolKey) => {
-    const spec = SYMBOL_BY_KEY[st] || SYMBOL_BY_KEY.power;
+    const spec = specOPower(st);
     const id = `symbol-${st}-${Date.now()}`;
     const newEl: Element = {
       ...makeSymbolElement(st, `symbol-${Date.now()}`),
@@ -628,7 +688,14 @@ export default function PlanoTool() {
   }, [elements]);
 
   // ─── Render Symbol (Procedural SVG without Emojis) ───
-  const renderSymbolGlyph = (key: string, fill: string) => {
+  // Iniciales del NOMBRE del simbolo (no de la key interna): "Carpa Hidratacion" -> "CH".
+  const initialsOf = (label?: string) => {
+    const words = (label || '').trim().split(/\s+/).filter(Boolean);
+    const ini = words.map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    return ini || '?';
+  };
+
+  const renderSymbolGlyph = (key: string, fill: string, label?: string) => {
     switch (key) {
       case 'scan':
         return <><rect x="28" y="36" width="104" height="84" rx="8" fill="none" stroke={fill} strokeWidth="9" strokeDasharray="12 8"/><path d="M42 58 H118 M42 82 H92 M42 106 H108" stroke={fill} strokeWidth="7" strokeLinecap="round"/></>;
@@ -674,8 +741,20 @@ export default function PlanoTool() {
         return <><rect x="24" y="56" width="18" height="62" rx="7" fill="none" stroke={fill} strokeWidth="9"/><rect x="118" y="56" width="18" height="62" rx="7" fill="none" stroke={fill} strokeWidth="9"/><rect x="40" y="42" width="80" height="26" rx="8" fill="none" stroke={fill} strokeWidth="9"/><rect x="40" y="66" width="80" height="42" rx="8" fill="none" stroke={fill} strokeWidth="9"/><path d="M80 66 V108" stroke={fill} strokeWidth="9" strokeLinecap="round"/></>;
       case 'toalla':
         return <><ellipse cx="80" cy="46" rx="34" ry="14" fill="none" stroke={fill} strokeWidth="9"/><ellipse cx="80" cy="46" rx="13" ry="5" fill="none" stroke={fill} strokeWidth="9"/><path d="M46 46 V96 M114 46 V96" fill="none" stroke={fill} strokeWidth="9" strokeLinecap="round"/><path d="M46 96 C46 104 114 104 114 96" fill="none" stroke={fill} strokeWidth="9" strokeLinecap="round"/><path d="M100 98 C120 102 124 114 108 120 C94 126 98 134 114 138" fill="none" stroke={fill} strokeWidth="9" strokeLinecap="round"/></>;
-      default:
-        return <><circle cx="80" cy="80" r="54" fill="none" stroke={fill} strokeWidth="9"/><text x="80" y="92" textAnchor="middle" fontSize="42" fill={fill} fontWeight="black">?</text></>;
+      default: {
+        // Simbolo del catalogo editable (data/plano_simbolos.json): se incrusta
+        // su .svg. El lienzo de aqui ya es 0..160, que es la misma convencion
+        // que usa markupSimboloPropio, asi que centrar en (80,80) a escala 1
+        // lo deja calzado. Va sanitizado en esa funcion (sin script ni on*).
+        const propio = simboloPropio(key);
+        if (propio?.svg) {
+          const marca = markupSimboloPropio(propio.svg, fill, 80, 80, 1);
+          if (marca) return <g dangerouslySetInnerHTML={{ __html: marca }} />;
+        }
+        // Simbolo sin dibujo utilizable: circulo + iniciales del nombre. Mismo
+        // dibujo en canvas, leyenda y print.
+        return <><circle cx="80" cy="80" r="54" fill="none" stroke={fill} strokeWidth="9"/><text x="80" y="94" textAnchor="middle" fontSize="46" fill={fill} fontWeight="bold" fontFamily="monospace">{initialsOf(label)}</text></>;
+      }
     }
   };
 
@@ -695,7 +774,7 @@ export default function PlanoTool() {
       >
         <rect width={el.w} height={el.h} fill="transparent" stroke={isSelected ? '#fff' : 'none'} strokeWidth={5} />
         <svg x={0} y={0} width={el.w} height={el.h} viewBox="0 0 160 160" overflow="visible">
-          {renderSymbolGlyph(el.symbolKey || 'unknown', fill)}
+          {renderSymbolGlyph(el.symbolKey || 'unknown', fill, el.label)}
         </svg>
         {/* Sin caption junto al icono: la leyenda decodifica; al seleccionar se ve el nombre */}
         {isSelected && (
@@ -775,7 +854,7 @@ export default function PlanoTool() {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 
-  const symbolIconMarkup = (key: string, color: string, cx: number, cy: number, scale: number) => {
+  const symbolIconMarkup = (key: string, color: string, cx: number, cy: number, scale: number, label?: string) => {
     const sw = Math.max(5, 7 * scale);
     const c = color;
     const x = (n: number) => cx + (n - 80) * scale;
@@ -825,8 +904,19 @@ export default function PlanoTool() {
         return `<rect x="${x(24)}" y="${y(56)}" width="${18*scale}" height="${62*scale}" rx="${7*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><rect x="${x(118)}" y="${y(56)}" width="${18*scale}" height="${62*scale}" rx="${7*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><rect x="${x(40)}" y="${y(42)}" width="${80*scale}" height="${26*scale}" rx="${8*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><rect x="${x(40)}" y="${y(66)}" width="${80*scale}" height="${42*scale}" rx="${8*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><path d="M ${x(80)} ${y(66)} V ${y(108)}" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/>`;
       case 'toalla':
         return `<ellipse cx="${x(80)}" cy="${y(46)}" rx="${34*scale}" ry="${14*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><ellipse cx="${x(80)}" cy="${y(46)}" rx="${13*scale}" ry="${5*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><path d="M ${x(46)} ${y(46)} V ${y(96)} M ${x(114)} ${y(46)} V ${y(96)}" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/><path d="M ${x(46)} ${y(96)} C ${x(46)} ${y(104)} ${x(114)} ${y(104)} ${x(114)} ${y(96)}" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/><path d="M ${x(100)} ${y(98)} C ${x(120)} ${y(102)} ${x(124)} ${y(114)} ${x(108)} ${y(120)} C ${x(94)} ${y(126)} ${x(98)} ${y(134)} ${x(114)} ${y(138)}" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/>`;
-      default:
-        return `<circle cx="${cx}" cy="${cy}" r="${48*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><text x="${cx}" y="${cy + 11*scale}" text-anchor="middle" font-size="${36*scale}" font-family="Arial" font-weight="900" fill="${c}">${escapeHtml(key.slice(0, 2).toUpperCase())}</text>`;
+      default: {
+        // Simbolo propio (data/plano_simbolos.json): se incrusta su .svg con la
+        // misma convencion de 160x160 que los de fabrica. Si el archivo no es
+        // usable, cae al marcador de iniciales de abajo en vez de desaparecer.
+        const propio = simboloPropio(key);
+        if (propio?.svg) {
+          const marca = markupSimboloPropio(propio.svg, c, cx, cy, scale);
+          if (marca) return marca;
+        }
+        const words = (label || key).trim().split(/\s+/).filter(Boolean);
+        const ini = (words.map(w => w[0]).join('').slice(0, 2) || '?').toUpperCase();
+        return `<circle cx="${cx}" cy="${cy}" r="${48*scale}" fill="none" stroke="${c}" stroke-width="${sw}"/><text x="${cx}" y="${cy + 11*scale}" text-anchor="middle" font-size="${36*scale}" font-family="Arial" font-weight="900" fill="${c}">${escapeHtml(ini)}</text>`;
+      }
     }
   };
 
@@ -842,7 +932,7 @@ export default function PlanoTool() {
     const scale = Math.max(0.55, Math.min(el.w, el.h) / 170);
     return `
       <g>
-        ${symbolIconMarkup(el.symbolKey || 'symbol', color, cx, cy, scale)}
+        ${symbolIconMarkup(el.symbolKey || 'symbol', color, cx, cy, scale, el.label)}
       </g>`;
   };
 
@@ -878,10 +968,10 @@ export default function PlanoTool() {
       const color = escapeHtml(printColor(el.color || '#111111'));
       // La leyenda describe TIPOS de simbolo: usa el nombre canonico del catalogo
       // (los elementos pueden venir numerados, ej "Testeo 1").
-      const legendLabel = SYMBOL_BY_KEY[el.symbolKey || '']?.label || el.label;
+      const legendLabel = specDe(el.symbolKey || '')?.label || el.label;
       return `
         <g>
-          ${symbolIconMarkup(el.symbolKey || 'symbol', color, x + 40, y + 40, 0.5)}
+          ${symbolIconMarkup(el.symbolKey || 'symbol', color, x + 40, y + 40, 0.5, legendLabel)}
           <text x="${x + 104}" y="${y + 52}" font-size="32" font-family="Arial, sans-serif" font-weight="800" fill="${pal.text}">${escapeHtml(legendLabel.toUpperCase().slice(0, 16))}</text>
         </g>`;
     }).join('\n');
@@ -1144,6 +1234,71 @@ export default function PlanoTool() {
     a.download = `plano_${eventName.replace(/\s+/g, '_').toLowerCase()}.svg`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  // ── el layout como archivo, para que viaje ──
+  // La encargada de eventos arma el plano, exporta el SVG y el rider en PDF,
+  // pero su TRABAJO -- donde puso cada cosa -- se perdia al cerrar la pestana.
+  // Con esto lo manda como archivo, el director lo asocia a la base de datos y
+  // se lo devuelve. Es el unico formato que viaja en las dos direcciones.
+  const PRESET_FORMATO = 1;
+
+  const exportarPreset = () => {
+    const preset_layout = {
+      formato: PRESET_FORMATO,
+      guardado: new Date().toISOString(),
+      evento: { nombre: eventName, fecha: eventDate, lugar: eventVenue },
+      pack: preset,
+      tema: exportTheme,
+      leyenda: { visible: showLegend, x: legendPos.x, y: legendPos.y },
+      grilla: showGrid,
+      // Los simbolos propios viajan con el layout: sin ellos, el plano que
+      // abre el otro lado tendria huecos donde ella puso sus iconos.
+      simbolos_propios: simbolosPropiosSpec(),
+      elementos: elements,
+    };
+    const blob = new Blob([JSON.stringify(preset_layout, null, 2)],
+      { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `preset_${(eventName || 'plano').replace(/\s+/g, '_').toLowerCase()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const importarPreset = async (file: File) => {
+    try {
+      const d = JSON.parse(await file.text());
+      if (!Array.isArray(d?.elementos)) {
+        setBackendStatus('Ese archivo no es un preset de plano.');
+        return;
+      }
+      if (d.formato !== PRESET_FORMATO) {
+        // Se carga igual: negarse por un numero de version dejaria a la
+        // encargada sin poder abrir su propio trabajo. Se avisa y se sigue.
+        setBackendStatus(`Preset de otra version (${d.formato ?? '?'}); se cargo igual.`);
+      }
+      if (Array.isArray(d.simbolos_propios) && d.simbolos_propios.length) {
+        registrarSimbolosPropios(d.simbolos_propios);
+        setRefrescoSimbolos(n => n + 1);
+      }
+      setElements(d.elementos as Element[]);
+      if (d.evento?.nombre) setEventName(d.evento.nombre);
+      if (d.evento?.fecha) setEventDate(d.evento.fecha);
+      if (d.evento?.lugar) setEventVenue(d.evento.lugar);
+      if (d.pack) setPreset(d.pack as PackId);
+      if (d.tema) setExportTheme(d.tema as ExportTheme);
+      if (d.leyenda) {
+        setShowLegend(!!d.leyenda.visible);
+        if (typeof d.leyenda.x === 'number') setLegendPos({ x: d.leyenda.x, y: d.leyenda.y });
+      }
+      if (typeof d.grilla === 'boolean') setShowGrid(d.grilla);
+      setSelectedId(null);
+      setBackendStatus(`Preset cargado: ${d.elementos.length} elementos.`);
+    } catch {
+      setBackendStatus('No se pudo leer el preset (archivo dañado o incompleto).');
+    }
   };
 
   const loadFromBackend = async (presetId: PackId = preset) => {
@@ -1486,6 +1641,17 @@ export default function PlanoTool() {
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-mono text-zinc-600 mr-2">{Math.round(zoom * 100)}%</span>
                 <button onClick={exportSVG} className="flex items-center gap-1.5 p-2 bg-zinc-900 border border-zinc-800 rounded-lg text-xs font-bold hover:bg-zinc-800 text-zinc-400 hover:text-white"><Download className="w-3.5 h-3.5"/> SVG</button>
+                {/* El layout como archivo: el SVG y el PDF son el resultado,
+                    esto es el TRABAJO, y es lo unico que se puede volver a
+                    abrir y seguir editando. */}
+                <button onClick={exportarPreset} title="Guardar este plano como archivo, para mandarlo o seguirlo despues"
+                  className="flex items-center gap-1.5 p-2 bg-zinc-900 border border-zinc-800 rounded-lg text-xs font-bold hover:bg-zinc-800 text-zinc-400 hover:text-white"><Save className="w-3.5 h-3.5"/> Guardar preset</button>
+                <label title="Abrir un plano guardado"
+                  className="flex items-center gap-1.5 p-2 bg-zinc-900 border border-zinc-800 rounded-lg text-xs font-bold hover:bg-zinc-800 text-zinc-400 hover:text-white cursor-pointer">
+                  <Upload className="w-3.5 h-3.5"/> Abrir preset
+                  <input type="file" accept=".json,application/json" className="hidden"
+                    onChange={e => { const f = e.target.files?.[0]; if (f) importarPreset(f); e.target.value = ''; }} />
+                </label>
               </div>
             </div>
 
@@ -1571,9 +1737,9 @@ export default function PlanoTool() {
                           return (
                             <g key={`legend-${el.id}`} transform={`translate(${48 + col * 410},${160 + row * 100})`}>
                               <svg x={0} y={0} width={80} height={80} viewBox="0 0 160 160">
-                                {renderSymbolGlyph(el.symbolKey || 'unknown', fill)}
+                                {renderSymbolGlyph(el.symbolKey || 'unknown', fill, el.label)}
                               </svg>
-                              <text x={104} y={52} fontSize={32} fill="#d4d4d8" fontWeight="bold" fontFamily="sans-serif">{(SYMBOL_BY_KEY[el.symbolKey || '']?.label || el.label).toUpperCase().slice(0, 16)}</text>
+                              <text x={104} y={52} fontSize={32} fill="#d4d4d8" fontWeight="bold" fontFamily="sans-serif">{(specDe(el.symbolKey || '')?.label || el.label).toUpperCase().slice(0, 16)}</text>
                             </g>
                           );
                         })}
@@ -1598,7 +1764,7 @@ export default function PlanoTool() {
               <div className="p-4 bg-zinc-900/50 border border-zinc-800 rounded-xl space-y-3">
                 <h4 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Zonas de Montaje</h4>
                 <div className="grid grid-cols-2 gap-2">
-                  {Object.entries(ZONE_LABELS).filter(([k]) => !['power','heating','rack','extinguisher','water'].includes(k)).map(([key, label]) => (
+                  {ZONAS_REALES.map(key => [key, ZONE_LABELS[key]] as const).map(([key, label]) => (
                     <button
                       key={key}
                       onClick={() => addElement(key)}
@@ -1613,16 +1779,164 @@ export default function PlanoTool() {
 
               {/* Add Symbols */}
               <div className="p-4 bg-zinc-900/50 border border-zinc-800 rounded-xl">
-                <h4 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-3">Símbolos Técnicos</h4>
-                <div className="grid grid-cols-4 gap-2 max-h-80 overflow-y-auto pr-1">
-                  {SYMBOL_CATALOG.map(spec => (
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Símbolos Técnicos</h4>
+                  <button
+                    onClick={() => { setNuevoSimboloAbierto(v => !v); setNuevoSimboloAviso(null); }}
+                    className="text-[10px] font-bold text-emerald-400 hover:text-emerald-300"
+                  >
+                    {nuevoSimboloAbierto ? 'Cancelar' : '+ Agregar'}
+                  </button>
+                </div>
+                {nuevoSimboloAbierto && (
+                  <div className="mb-3 space-y-2 rounded-lg border border-zinc-800 bg-zinc-900/60 p-3">
+                    <input
+                      type="text"
+                      value={nuevoSimboloNombre}
+                      onChange={e => setNuevoSimboloNombre(e.target.value)}
+                      placeholder="Nombre (ej: Punto de hidratación)"
+                      className="w-full rounded bg-zinc-950 border border-zinc-800 px-2 py-1.5 text-[11px] text-zinc-200"
+                    />
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={nuevoSimboloColor}
+                        onChange={e => setNuevoSimboloColor(e.target.value)}
+                        className="h-7 w-10 rounded bg-transparent"
+                        title="Color del símbolo"
+                      />
+                      <select
+                        value={nuevoSimboloZona}
+                        onChange={e => setNuevoSimboloZona(e.target.value)}
+                        className="flex-1 rounded bg-zinc-950 border border-zinc-800 px-2 py-1.5 text-[11px] text-zinc-200"
+                      >
+                        <option value="SERVICIOS">Servicios</option>
+                        <option value="INFRAESTRUCTURA">Infraestructura</option>
+                        <option value="SEGURIDAD">Seguridad</option>
+                        <option value="COORDINACION">Coordinación</option>
+                      </select>
+                    </div>
+                    <input
+                      type="file"
+                      accept=".svg,image/svg+xml,image/png,image/jpeg,image/webp"
+                      onChange={async e => {
+                        const archivo = e.target.files?.[0];
+                        e.target.value = '';
+                        if (!archivo) return;
+                        if (!nuevoSimboloNombre.trim()) {
+                          setNuevoSimboloAviso('Ponele un nombre antes de elegir el archivo.');
+                          return;
+                        }
+                        const esSvg = /\.svg$/i.test(archivo.name) || archivo.type.includes('svg');
+                        if (!esSvg) {
+                          // Imagen: se traza y se muestra para que ella apruebe.
+                          setNuevoSimboloAviso('Trazando la imagen…');
+                          const t = await trazarImagen(archivo);
+                          if (!t.ok || !t.svg) {
+                            setPreviewSvg(null);
+                            setNuevoSimboloAviso(t.error || 'No se pudo trazar.');
+                            return;
+                          }
+                          setPreviewSvg(t.svg);
+                          setNuevoSimboloAviso(null);
+                          return;
+                        }
+                        setNuevoSimboloAviso('Guardando…');
+                        const r = await guardarSimbolo({
+                          etiqueta: nuevoSimboloNombre.trim(),
+                          color: nuevoSimboloColor,
+                          zona: nuevoSimboloZona,
+                          cuando: 'siempre',
+                          svg: await archivo.text(),
+                        });
+                        if (r.ok) {
+                          setNuevoSimboloAviso(null);
+                          setNuevoSimboloNombre('');
+                          setNuevoSimboloAbierto(false);
+                          setRefrescoSimbolos(n => n + 1);
+                        } else {
+                          setNuevoSimboloAviso(r.error || 'No se pudo guardar.');
+                        }
+                      }}
+                      className="w-full text-[10px] text-zinc-400 file:mr-2 file:rounded file:border-0 file:bg-zinc-800 file:px-2 file:py-1 file:text-[10px] file:text-zinc-200"
+                    />
+                    {previewSvg && (
+                      <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-950 p-3">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                          Así quedaría
+                        </p>
+                        <div
+                          className="mx-auto h-16 w-16"
+                          style={{ color: nuevoSimboloColor }}
+                          dangerouslySetInnerHTML={{ __html: previewSvg }}
+                        />
+                        <p className="text-[9px] leading-snug text-zinc-500">
+                          Se dibuja el contorno de la imagen. Si salió sucio, probá con una
+                          imagen más simple y de más contraste, o exportá el ícono como SVG.
+                        </p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={async () => {
+                              setNuevoSimboloAviso('Guardando…');
+                              const r = await guardarSimbolo({
+                                etiqueta: nuevoSimboloNombre.trim(),
+                                color: nuevoSimboloColor,
+                                zona: nuevoSimboloZona,
+                                cuando: 'siempre',
+                                svg: previewSvg,
+                              });
+                              if (r.ok) {
+                                setPreviewSvg(null);
+                                setNuevoSimboloAviso(null);
+                                setNuevoSimboloNombre('');
+                                setNuevoSimboloAbierto(false);
+                                setRefrescoSimbolos(n => n + 1);
+                              } else {
+                                setNuevoSimboloAviso(r.error || 'No se pudo guardar.');
+                              }
+                            }}
+                            className="flex-1 rounded bg-emerald-600 px-2 py-1.5 text-[10px] font-bold text-white hover:bg-emerald-500"
+                          >
+                            Usar este
+                          </button>
+                          <button
+                            onClick={() => { setPreviewSvg(null); setNuevoSimboloAviso(null); }}
+                            className="flex-1 rounded border border-zinc-700 px-2 py-1.5 text-[10px] font-bold text-zinc-300 hover:bg-zinc-800"
+                          >
+                            Descartar
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    <p className="text-[9px] leading-snug text-zinc-500">
+                      Lo mejor es un archivo SVG. Si sólo tenés una imagen (PNG o JPG),
+                      se traza su contorno y te lo muestro antes de guardarlo.
+                      Si en el diseño usás el color <code>currentColor</code>, el ícono
+                      toma el color que elijas acá y se ve bien en el plano oscuro y en el blanco.
+                    </p>
+                    {nuevoSimboloAviso && (
+                      <p className="text-[10px] font-semibold text-amber-400">{nuevoSimboloAviso}</p>
+                    )}
+                  </div>
+                )}
+                <div key={refrescoSimbolos} className="grid grid-cols-4 gap-2 max-h-80 overflow-y-auto pr-1">
+                  {catalogoCompleto().map(spec => (
                     <button
                       key={spec.key}
                       onClick={() => addSymbol(spec.key)}
                       title={spec.label}
                       className="flex flex-col items-center p-2 bg-zinc-800/30 border border-zinc-800 rounded-xl hover:bg-zinc-800 group transition-all"
                     >
-                      {renderRequirementIcon(spec.icon, "w-4 h-4 text-zinc-300")}
+                      {/* Los simbolos propios se muestran con SU dibujo, no con
+                          un icono generico: si la jefa de eventos agrega varios,
+                          con un icono comodin no podria distinguirlos aca. */}
+                      {simboloPropio(spec.key)?.svg ? (
+                        <svg viewBox="0 0 160 160" className="w-4 h-4" overflow="visible">
+                          {renderSymbolGlyph(spec.key, spec.color, spec.label)}
+                        </svg>
+                      ) : (
+                        renderRequirementIcon(spec.icon, "w-4 h-4 text-zinc-300")
+                      )}
                       <span className="mt-1.5 text-[7px] uppercase font-black opacity-50 group-hover:opacity-100 truncate max-w-[58px]">{spec.label}</span>
                     </button>
                   ))}

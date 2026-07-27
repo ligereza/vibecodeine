@@ -253,7 +253,10 @@ def render_svg(ev: Dict[str, Any], px_por_metro: float = 90.0, tema: str = "dark
     cajas, W_m, H_m = solve_layout(ev)
     s = px_por_metro
     activos = set(iconos.simbolos_de_evento(ev))
-    grupos = [(t, [k for k in ks if k in activos]) for t, ks in _ZONAS_ICONOS]
+    # zonas_de_iconos() ya trae los simbolos del catalogo editable; usar la
+    # constante _ZONAS_ICONOS aca dejaba fuera, sin aviso, todo lo que la jefa
+    # de eventos agregara.
+    grupos = [(t, [k for k in ks if k in activos]) for t, ks in iconos.zonas_de_iconos()]
     grupos = [(t, ks) for t, ks in grupos if ks]
 
     margin = 0.8

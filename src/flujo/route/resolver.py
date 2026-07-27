@@ -5,7 +5,8 @@ flujo.route.resolver  -  Router de rutas de RD (NO mueve nada)
 
 Problema que resuelve:
   El repo flujo recibe pedidos (EVENTOS / SUPLEMENTOS) pero no sabe DONDE en
-  C:\\rd estan los archivos ni donde dejar lo nuevo. Mover romperia proyectos
+  el arbol de material ($FLUJO_RD_ROOT) estan los archivos ni donde dejar lo
+  nuevo. Mover romperia proyectos
   de Blender/Photoshop (enlaces). Asi que este router solo RESUELVE rutas
   leyendo un indice (rutas_rd.json) sobre la estructura REAL existente.
 
