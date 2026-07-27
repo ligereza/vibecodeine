@@ -113,6 +113,7 @@ the root of the repo (there is a `.env.example` for reference).
 | `FLUJO_WORKSPACE_ROOT` | Where the program stores and looks for jobs | Uses the repo folder |
 | `FLUJO_MAK_URL` | Address of the hub on the MAK machine, the one that works on its own (for example `http://<box-ip>:8900`). The panel queries it **read-only**: it never orders anything | The MAK panel says it is not configured. Everything else works the same |
 | `FLUJO_EVENTOS_AUTOMATIZACION_DIR` | Folder watched by the events automation | The automation stays off until you define it |
+| `FLUJO_GPU_BACKEND` | Which Cycles backend to try first on this machine (`CUDA`, `OPTIX`, `HIP`). Only worth setting where the default is measurably wrong: on a GTX 1650, CUDA rendered the same scene in 300s against OptiX's 459s, because it is the only Turing card without RT cores | Tries OptiX first, then CUDA. Correct on cards that do have RT cores |
 | `FLUJO_IMAP_HOST`, `FLUJO_IMAP_USER`, `FLUJO_IMAP_PASSWORD` | Mailbox that orders are imported from | Mail import does not work; everything else does |
 | `FLUJO_IMAP_ALLOWED_SENDERS` | List of senders authorised to send orders | For safety it accepts nobody |
 | `FLUJO_IMAP_ALLOW_AIRDROP_ENGINE` | Set to `1` only if you want an update arriving by mail to be able to modify the update engine itself | Off. That is correct: without this, a mail cannot rewrite the mechanism that applies mails |
