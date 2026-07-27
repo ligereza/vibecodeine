@@ -178,9 +178,16 @@ def orden_por_salud(orden, stats):
 # (azure) solo donde razonar importa (sintesis, juez, plan, diagnostico); las
 # tareas cortas ('barato': resumen, status, clasificacion) van local primero
 # para ahorrar cupo. red_ok() ya mete ollama al frente si no hay internet.
+# ORDEN POR EFECTIVIDAD MEDIDA (2026-07-26, ver salud_proveedores.json).
+# Antes groq iba PRIMERO aqui y en el orden por defecto, con 40% de exito
+# medido (2 exitos / 3 api_errors), mientras cerebras -- 91.4% (74/7) -- iba
+# segundo o tercero. El propio organismo escribio el informe pidiendo
+# "mitigar la degradacion de groq" y nadie lo ejecuto; esto lo ejecuta.
+# groq no se elimina: baja a ultimo recurso remoto. Si mejora, vuelve a subir
+# por el mismo criterio: medicion, no costumbre.
 _SLOTS = {
     "razonar": "azure,cerebras,groq,ollama",
-    "bulk": "cerebras,groq,azure,ollama",
+    "bulk": "cerebras,azure,groq,ollama",
     "barato": "ollama,cerebras,groq",
 }
 
@@ -326,7 +333,7 @@ class LLM:
     Code node probado 2026-07-15: cerebras/azure son razonadores, llevan
     margen extra de max_completion_tokens; azure NO acepta temperature)."""
 
-    def __init__(self, order="groq,cerebras,azure,win,ollama"):
+    def __init__(self, order="cerebras,azure,groq,win,ollama"):
         load_env()
         self.stats = {}
         self.errors = []

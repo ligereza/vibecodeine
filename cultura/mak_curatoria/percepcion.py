@@ -69,18 +69,93 @@ CATEGORIAS_VALIDAS = (
     "foto_evento", "obra", "otro",
 )
 
-PROMPT_VISION = (
-    "Analiza esta imagen de una obra/pieza cultural o flyer de evento y "
-    "responde SOLO con un objeto JSON, sin texto adicional antes ni "
-    "despues. Formato exacto de las claves: "
-    '{"descripcion": "", "estilo": "", "colores": [], "tipo_obra": "", '
-    '"categoria": "", "productora": "", "venue": "", "fecha": "", '
-    '"handles": []}. El campo categoria debe ser EXACTAMENTE uno de '
-    "estos valores (enum): flyer_evento, material_rd, logo, "
-    "ficha_sustancia, foto_evento, obra, otro. Si "
-    "parece un flyer de evento completa productora/venue/fecha/handles; "
-    "si no, dejalos vacios. No inventes datos que no veas."
+PROMPT_RD = (
+    "Esta imagen es material de Reduciendo Dano, una ONG de reduccion de danos "
+    "que trabaja en eventos de musica electronica: flyers de fiesta, material "
+    "informativo, fichas de sustancias o logos. NO es una obra de arte. Tu "
+    "trabajo es EXTRAER DATOS, no interpretarla. "
+    "Responde SOLO con un objeto JSON, sin texto antes ni despues. Claves "
+    "exactas: "
+    '{"categoria": "", "productora": "", "venue": "", "fecha": "", '
+    '"headliners": [], "handles": [], "texto_visible": "", "colores": []}. '
+    "categoria debe ser EXACTAMENTE uno de: flyer_evento, material_rd, logo, "
+    "ficha_sustancia, foto_evento, otro. "
+    "headliners son los nombres de artistas del cartel, en orden de tamano "
+    "tipografico: el mas grande primero. Es el dato MAS importante junto con la "
+    "fecha, porque con artista y fecha se puede identificar despues quien "
+    "produjo la fiesta. Si ves nombres de artistas, listalos SIEMPRE, aunque no "
+    "reconozcas la productora. "
+    "handles son cuentas de instagram visibles (@algo). "
+    "texto_visible es todo el texto que puedas leer, tal cual, sin resumir. "
+    "fecha en el formato que aparezca; no la conviertas ni la inventes. "
+    "Si un campo no esta en la imagen, dejalo vacio. No inventes NADA."
 )
+
+
+PROMPT_ISKVW = (
+    "Esta imagen es una obra del archivo personal del artista (iskvw). NO es "
+    "un flyer ni material de una ONG: no busques productora, venue ni fecha de "
+    "evento. Tu trabajo es entenderla para poder RELACIONARLA con las demas "
+    "obras del archivo. "
+    "Responde SOLO con un objeto JSON, sin texto antes ni despues. Claves "
+    "exactas: "
+    '{"descripcion": "", "conceptos": [], "tecnica": "", "materiales": [], '
+    '"colores": [], "texto_visible": "", "datos_extraibles": "", '
+    '"linea_investigacion": "", "oportunidad_codigo": ""}. '
+    "conceptos son 3 a 6 ideas o temas que la obra toca, en palabras sueltas o "
+    "frases cortas: son las que van a unir esta obra con otras, asi que usa "
+    "terminos que se repitan entre obras parecidas y no descripciones unicas. "
+    "tecnica es como parece estar hecha (fotografia, render 3D, collage, ASCII, "
+    "grabado, IA generativa, etc). "
+    "datos_extraibles: si la obra contiene informacion estructurada que se "
+    "podria leer y tabular (una tabla, una serie, coordenadas, una notacion, un "
+    "codigo), describila; si no hay, deja vacio. "
+    "linea_investigacion: si la obra abre una pregunta que valga la pena "
+    "investigar, formulala en una frase; si no, deja vacio. "
+    "oportunidad_codigo: si la obra sugiere un procedimiento que podria "
+    "automatizarse o generarse por codigo (por ejemplo si trata de matematica, "
+    "de patrones, de repeticion o de sistemas), describi en una frase que "
+    "programa la generaria; si no aplica, deja vacio. "
+    "No inventes: si algo no esta, dejalo vacio."
+)
+
+
+# Que claves se conservan de la respuesta del modelo, por corpus. Antes esto
+# estaba cableado a un solo esquema y descartaba en silencio todo lo que pedia
+# el prompt nuevo (headliners, conceptos, oportunidad_codigo...).
+ESQUEMA_POR_FUENTE = {
+    "rd": (
+        ("categoria", ""), ("productora", ""), ("venue", ""), ("fecha", ""),
+        ("headliners", []), ("handles", []), ("texto_visible", ""),
+        ("colores", []),
+    ),
+    "ig": (
+        ("descripcion", ""), ("conceptos", []), ("tecnica", ""),
+        ("materiales", []), ("colores", []), ("texto_visible", ""),
+        ("datos_extraibles", ""), ("linea_investigacion", ""),
+        ("oportunidad_codigo", ""),
+    ),
+}
+
+# Lo que va al bloque `vision` de la ficha (lo descriptivo) y lo que va a
+# `datos_evento` (lo extraido, solo RD).
+CLAVES_VISION = {
+    "rd": ("texto_visible", "colores"),
+    "ig": ("descripcion", "conceptos", "tecnica", "materiales", "colores",
+           "texto_visible", "datos_extraibles", "linea_investigacion",
+           "oportunidad_codigo"),
+}
+CLAVES_EVENTO = ("productora", "venue", "fecha", "headliners", "handles")
+
+
+def prompt_de(fuente: str) -> str:
+    """El prompt que corresponde al corpus. Son dos trabajos distintos.
+
+    'rd' extrae datos de material de la ONG. 'ig' (el archivo del artista)
+    arma el mapa conceptual. Usar uno solo para ambos fue el defecto que hizo
+    inservible la corrida del 2026-07-23.
+    """
+    return PROMPT_RD if fuente == "rd" else PROMPT_ISKVW
 
 
 # ---------------------------------------------------------------------------
@@ -354,7 +429,7 @@ def _imagen_a_b64(path: str, max_lado: int = MAX_LADO_VISION) -> str | None:
         return None
 
 
-def _parsear_json_vision(texto: str) -> dict:
+def _parsear_json_vision(texto: str, fuente: str = "rd") -> dict:
     """Busca el primer '{' y el ultimo '}' y parsea eso como JSON.
 
     Ante cualquier fallo devuelve {"error": ...} en vez de reventar. Ante
@@ -376,18 +451,17 @@ def _parsear_json_vision(texto: str) -> dict:
     if not isinstance(datos, dict):
         return {"error": "json_no_es_objeto"}
 
-    for clave, default in (
-        ("descripcion", ""), ("estilo", ""), ("colores", []), ("tipo_obra", ""),
-        ("categoria", ""), ("productora", ""), ("venue", ""), ("fecha", ""),
-        ("handles", []),
-    ):
+    # El esquema depende de la fuente, igual que el prompt: pedirle
+    # 'productora' a una obra del archivo no tiene sentido, y pedirle
+    # 'conceptos' a un flyer tampoco.
+    for clave, default in ESQUEMA_POR_FUENTE.get(fuente, ESQUEMA_POR_FUENTE["rd"]):
         datos.setdefault(clave, default)
     if datos.get("categoria") not in CATEGORIAS_VALIDAS:
         datos["categoria"] = ""
     return datos
 
 
-def vision_imagen(path: str, timeout: int = 120) -> dict:
+def vision_imagen(path: str, timeout: int = 120, fuente: str = "rd") -> dict:
     """Manda `path` (imagen ya lista, o contact sheet de video) a ollama
     y devuelve el JSON de vision parseado de forma tolerante. Cualquier
     fallo de lectura/red/parseo devuelve {"error": ...} sin lanzar
@@ -398,7 +472,7 @@ def vision_imagen(path: str, timeout: int = 120) -> dict:
 
     payload = json.dumps({
         "model": OLLAMA_MODEL,
-        "prompt": PROMPT_VISION,
+        "prompt": prompt_de(fuente),
         "images": [imagen_b64],
         "stream": False,
     }).encode("utf-8")
@@ -419,7 +493,7 @@ def vision_imagen(path: str, timeout: int = 120) -> dict:
         return {"error": "respuesta_no_json"}
 
     texto_modelo = sobre.get("response", "") if isinstance(sobre, dict) else ""
-    return _parsear_json_vision(texto_modelo)
+    return _parsear_json_vision(texto_modelo, fuente)
 
 
 # ---------------------------------------------------------------------------
@@ -475,13 +549,13 @@ def construir_ficha(entry: dict, dir_tmp: Path, timeout_archivo: int) -> dict:
                     Path(ruta_ocr).unlink(missing_ok=True)
                 except OSError:
                     pass
-            vision = vision_imagen(ruta_abs, timeout=timeout_archivo)
+            vision = vision_imagen(ruta_abs, timeout=timeout_archivo, fuente=fuente)
 
         elif tipo == "video":
             sheet_path = Path(dir_tmp) / ("sheet_%s.jpg" % id_ficha(fuente, ruta_rel))
             ok = generar_contact_sheet(ruta_abs, str(sheet_path), timeout=timeout_archivo)
             if ok:
-                vision = vision_imagen(str(sheet_path), timeout=timeout_archivo)
+                vision = vision_imagen(str(sheet_path), timeout=timeout_archivo, fuente=fuente)
                 try:
                     sheet_path.unlink(missing_ok=True)
                 except OSError:
@@ -493,7 +567,7 @@ def construir_ficha(entry: dict, dir_tmp: Path, timeout_archivo: int) -> dict:
             ocr_texto = ocr_pdftotext_primera_pagina(ruta_abs, timeout=timeout_archivo)
             imagen_pdf = pdf_primera_pagina_a_imagen(ruta_abs, dir_tmp, timeout=timeout_archivo)
             if imagen_pdf:
-                vision = vision_imagen(imagen_pdf, timeout=timeout_archivo)
+                vision = vision_imagen(imagen_pdf, timeout=timeout_archivo, fuente=fuente)
                 try:
                     Path(imagen_pdf).unlink(missing_ok=True)
                 except OSError:
@@ -508,18 +582,16 @@ def construir_ficha(entry: dict, dir_tmp: Path, timeout_archivo: int) -> dict:
     if vision.get("error") and error is None:
         error = vision["error"]
 
-    vision_final = {
-        "descripcion": vision.get("descripcion", "") or "",
-        "estilo": vision.get("estilo", "") or "",
-        "colores": vision.get("colores") or [],
-        "tipo_obra": vision.get("tipo_obra", "") or "",
-    }
-    datos_evento = {
-        "productora": vision.get("productora", "") or "",
-        "venue": vision.get("venue", "") or "",
-        "fecha": vision.get("fecha", "") or "",
-        "handles": vision.get("handles") or [],
-    }
+    claves_vision = CLAVES_VISION.get(fuente, CLAVES_VISION["rd"])
+    vision_final = {k: vision.get(k) for k in claves_vision if vision.get(k)}
+    # Compatibilidad: las fichas viejas y el corpus esperan 'descripcion'.
+    if "descripcion" not in vision_final and vision.get("descripcion"):
+        vision_final["descripcion"] = vision["descripcion"]
+    datos_evento = (
+        {k: (vision.get(k) or ([] if k in ("headliners", "handles") else ""))
+         for k in CLAVES_EVENTO}
+        if fuente == "rd" else {}
+    )
     categoria = vision.get("categoria", "") or ""
 
     return {

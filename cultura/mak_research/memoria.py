@@ -30,8 +30,12 @@ RESEARCH = os.path.expanduser("~/research")
 MEM_DIR = os.path.join(RESEARCH, "memoria")
 INDEX_FILE = os.path.join(MEM_DIR, "index.jsonl")
 # carpetas de productos a indexar (los .md legibles)
+# 'corpus' = el archivo del artista (iskvw), una obra por documento,
+# generado por corpus_a_micelio.py desde ~/curatoria/fichas/fichas.jsonl.
+# Antes el micelio solo contenia lo que MAK escribio sobre si mismo, asi que
+# no podia relacionar las obras entre si -- que es el mapa que se queria.
 FUENTES = ("informes", "paneles", "cadenas", "refutaciones",
-           "correlaciones", "grafos", "codex")
+           "correlaciones", "grafos", "codex", "corpus")
 EMBED_MODEL = os.environ.get("OLLAMA_EMBED_MODEL", "nomic-embed-text")
 OLLAMA = os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
 
@@ -104,6 +108,58 @@ def _guardar_index(entradas):
     os.replace(tmp, INDEX_FILE)
 
 
+# ---------------------------------------------------------------------------
+# Puerta de entrada: lo que fallo no es conocimiento
+# ---------------------------------------------------------------------------
+
+# Frases con las que el propio pipeline declara que no produjo nada. Si el
+# cuerpo de un informe contiene una de estas, el informe ES el error.
+MARCAS_DE_FALLO = (
+    "Informe no generado",
+    "Todos los proveedores LLM fallaron",
+    "[ERROR]",
+    "Traceback (most recent call last)",
+    "no disponible:",
+)
+
+# Un documento con menos de esto, una vez quitado el encabezado y el meta, no
+# tiene sustancia que indexar: es un titulo con adornos.
+MINIMO_UTIL = 400
+
+
+def cuerpo_util(texto):
+    """El texto sin encabezado markdown ni bloque meta, para poder medirlo."""
+    lineas = []
+    for linea in (texto or "").splitlines():
+        s = linea.strip()
+        if not s or s.startswith("#") or s.startswith("---"):
+            continue
+        if s.startswith("meta:") or s.startswith("> "):
+            continue
+        lineas.append(s)
+    return "\n".join(lineas)
+
+
+def util_para_micelio(texto, carpeta=None):
+    """(entra, motivo). Decide si un documento merece entrar al mapa.
+
+    Nunca borra nada: el archivo sigue en disco como registro de que ese
+    trabajo se intento. Esto solo decide si cuenta como conocimiento.
+    """
+    if not texto or not texto.strip():
+        return False, "vacio"
+    for marca in MARCAS_DE_FALLO:
+        if marca in texto:
+            return False, "fallo declarado: %s" % marca
+    # El minimo de sustancia es para INFORMES: un informe de tres lineas es un
+    # informe fallido. No aplica al corpus del artista, donde una obra se
+    # describe en un parrafo y eso es exactamente lo que se quiere indexar.
+    # (Sin esta excepcion la puerta dejo fuera 689 de 697 obras.)
+    if carpeta != "corpus" and len(cuerpo_util(texto)) < MINIMO_UTIL:
+        return False, "sin sustancia (<%d caracteres utiles)" % MINIMO_UTIL
+    return True, ""
+
+
 def indexar(rebuild=False, log=lambda s: None):
     """Indexa los .md de las carpetas de productos. Incremental: salta los
     archivos ya indexados con el mismo mtime; re-indexa los que cambiaron.
@@ -116,6 +172,7 @@ def indexar(rebuild=False, log=lambda s: None):
         indexado.setdefault(e["path"], e.get("mtime"))
 
     vigentes = []   # entradas que sobreviven (archivo sin cambios)
+    descartados = []  # (path, motivo) que la puerta dejo fuera
     archivos_actuales = set()
     pendientes = []  # (path, dir, mtime, texto) a re-embeddear
 
@@ -140,6 +197,10 @@ def indexar(rebuild=False, log=lambda s: None):
                 with open(path, encoding="utf-8") as f:
                     texto = f.read()
             except OSError:
+                continue
+            entra, motivo = util_para_micelio(texto, carpeta=d)
+            if not entra:
+                descartados.append((path, motivo))
                 continue
             pendientes.append((path, d, mtime, texto))
 
