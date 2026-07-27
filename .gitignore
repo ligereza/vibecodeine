@@ -215,3 +215,10 @@ xio/show_kit/cue_engine_log_*.jsonl
 
 # Chataigne autosave (generado)
 xio/show_kit/*_autosave/
+
+# Capturas y salidas sueltas de agente en la RAIZ. El repo ya prohibia dejarlas
+# ahi, pero nada lo impedia: el 2026-07-27 cuatro capturas de verificacion
+# entraron en un commit sin que nadie las viera. Las de verdad viven en
+# docs/ o assets/, no sueltas arriba.
+/*.png
+!/PLANO.png
