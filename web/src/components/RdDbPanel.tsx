@@ -75,6 +75,10 @@ export default function RdDbPanel() {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const objetivo = useRef<string>('');
 
+  // Sin hub se usa la copia horneada en el bundle. Antes esto mostraba "error"
+  // en el archivo que se entrega sin servidor, que es justo donde no hay a
+  // quien pedirle. La copia sale de la MISMA funcion que sirve el hub
+  // (flujo.rd.panel), horneada por tools/gen_rd_standalone.py.
   const cargar = () =>
     fetch('/api/rd-db')
       .then(r => r.json())
@@ -82,7 +86,15 @@ export default function RdDbPanel() {
         setData(d);
         setEstado(d?.error ? 'error' : 'ok');
       })
-      .catch(() => setEstado('error'));
+      .catch(async () => {
+        try {
+          const horneada = (await import('../data/rdDbEmbebida.json')).default as unknown as Data;
+          setData(horneada);
+          setEstado('ok');
+        } catch {
+          setEstado('error');
+        }
+      });
 
   useEffect(() => {
     cargar();

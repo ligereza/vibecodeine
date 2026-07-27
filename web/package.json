@@ -9,7 +9,8 @@
     "typecheck": "tsc --noEmit",
     "build:context": "vite build && node scripts/copy-context.mjs",
     "build:plano": "vite build --config vite.plano.config.ts && node scripts/copy-plano-share.mjs",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:rd": "vite build --config vite.rd.config.ts && node scripts/copy-rd-share.mjs"
   },
   "dependencies": {
     "clsx": "2.1.1",

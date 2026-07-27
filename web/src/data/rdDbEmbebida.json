@@ -1,0 +1,591 @@
+{
+ "productoras": [
+  {
+   "slug": "amelie",
+   "nombre": "Amelie",
+   "aliases": [
+    "AMELIE",
+    "Amelie"
+   ],
+   "tipos": [],
+   "venues": [],
+   "logo": {
+    "estado": "sin_ficha",
+    "vector": false,
+    "archivo": false
+   },
+   "confirmada": false,
+   "confirmacion": "",
+   "fuente": "nombres de archivo del archivo de entregas (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano",
+   "eventos": []
+  },
+  {
+   "slug": "cachorros",
+   "nombre": "Cachorros",
+   "aliases": [
+    "CACHORROS",
+    "CACHORROSPNG",
+    "Cachorros"
+   ],
+   "tipos": [],
+   "venues": [],
+   "logo": {
+    "estado": "sin_ficha",
+    "vector": false,
+    "archivo": false
+   },
+   "confirmada": false,
+   "confirmacion": "",
+   "fuente": "nombres de archivo del archivo de entregas (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano",
+   "eventos": []
+  },
+  {
+   "slug": "creamfields",
+   "nombre": "Creamfields",
+   "aliases": [
+    "CREAMFIELDS",
+    "creamfields.cl",
+    "Creamfields Chile"
+   ],
+   "tipos": [
+    "FESTIVAL",
+    "HEADLINERS",
+    "RAVE",
+    "OPEN_AIR"
+   ],
+   "venues": [
+    {
+     "nombre": "Espacio Riesco",
+     "estado": "ejemplo",
+     "preferido": true
+    },
+    {
+     "nombre": "Club Hípico, Santiago Chile",
+     "estado": "candidato_sin_confirmar",
+     "preferido": false
+    }
+   ],
+   "logo": {
+    "estado": "encontrado",
+    "vector": true,
+    "archivo": true
+   },
+   "confirmada": false,
+   "confirmacion": "",
+   "fuente": "",
+   "eventos": [
+    {
+     "nombre": "Creamfields Chile 2025",
+     "fecha": "11-12 octubre 2025",
+     "fecha_iso": "2025-10-11",
+     "fecha_confianza": "alta",
+     "venue": "Club Hípico, Santiago",
+     "estado": "pasado",
+     "lineup": [],
+     "co_organiza": []
+    }
+   ]
+  },
+  {
+   "slug": "dame",
+   "nombre": "Dame",
+   "aliases": [
+    "DAME",
+    "DAMEFLYER",
+    "Dame"
+   ],
+   "tipos": [],
+   "venues": [
+    {
+     "nombre": "Basel Venue Santiago",
+     "estado": "confirmado_ig_2026-07-23",
+     "preferido": true
+    }
+   ],
+   "logo": {
+    "estado": "no_encontrado",
+    "vector": false,
+    "archivo": false
+   },
+   "confirmada": false,
+   "confirmacion": "",
+   "fuente": "nombres de archivo del archivo de entregas (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano. Complementado con post IG del 2026-07-23 (input_ig_DbI68vBCSTc.jpg).",
+   "eventos": [
+    {
+     "nombre": "Dame -- Jeff Mills 30 years",
+     "fecha": "20 noviembre 2026",
+     "fecha_iso": "2026-11-20",
+     "fecha_confianza": "alta",
+     "venue": "Basel Venue Santiago",
+     "estado": "activo_anunciado",
+     "lineup": [],
+     "co_organiza": []
+    }
+   ]
+  },
+  {
+   "slug": "freedom",
+   "nombre": "Freedom",
+   "aliases": [
+    "FREEDOM",
+    "Freedom",
+    "spot.freedom",
+    "Club Freedom"
+   ],
+   "tipos": [],
+   "venues": [
+    {
+     "nombre": "Club Freedom",
+     "estado": "confirmado_usuario_2026-07-23",
+     "preferido": true
+    }
+   ],
+   "logo": {
+    "estado": "encontrado",
+    "vector": true,
+    "archivo": true
+   },
+   "confirmada": true,
+   "confirmacion": "2026-07-23 palabra del usuario: tipo=spot, handle IG spot.freedom, nombre_mapas Club Freedom.",
+   "fuente": "Alta directa por palabra del usuario 2026-07-23 (sin research adicional, ver CLAUDE.md regla de gasto).",
+   "eventos": [
+    {
+     "nombre": "Festival Sentir",
+     "fecha": "needs_confirmation",
+     "fecha_iso": null,
+     "fecha_confianza": "nula",
+     "venue": "Club Freedom (spot.freedom) -- confirmado por el usuario",
+     "estado": "confirmado_usuario_needs_confirmation_fecha",
+     "lineup": [],
+     "co_organiza": []
+    }
+   ]
+  },
+  {
+   "slug": "frvr",
+   "nombre": "FRVR",
+   "aliases": [
+    "FRVR"
+   ],
+   "tipos": [],
+   "venues": [
+    {
+     "nombre": "Paralelo 89",
+     "estado": "inferido",
+     "preferido": true
+    }
+   ],
+   "logo": {
+    "estado": "sin_ficha",
+    "vector": false,
+    "archivo": false
+   },
+   "confirmada": false,
+   "confirmacion": "",
+   "fuente": "nombres de archivo del archivo de entregas (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano",
+   "eventos": []
+  },
+  {
+   "slug": "glovox",
+   "nombre": "Glovox",
+   "aliases": [
+    "GLOVOX",
+    "Glovox"
+   ],
+   "tipos": [],
+   "venues": [],
+   "logo": {
+    "estado": "no_encontrado",
+    "vector": false,
+    "archivo": false
+   },
+   "confirmada": false,
+   "confirmacion": "",
+   "fuente": "Alta directa por palabra del usuario 2026-07-23 (sin research adicional, ver CLAUDE.md regla de gasto). Mencion tambien detectada en triangulacion de fichas (co-organizador Piknic Electronik 12-sep-2026, ver data/productoras/piknic.json).",
+   "eventos": []
+  },
+  {
+   "slug": "gridsystem",
+   "nombre": "GRID System",
+   "aliases": [
+    "GRID SYSTEM",
+    "Grid System",
+    "GRIDSYSTEM"
+   ],
+   "tipos": [
+    "TECHNO",
+    "UNDERGROUND"
+   ],
+   "venues": [],
+   "logo": {
+    "estado": "no_encontrado",
+    "vector": true,
+    "archivo": true
+   },
+   "confirmada": false,
+   "confirmacion": "",
+   "fuente": "Alta directa por palabra del usuario 2026-07-23 (sin research adicional, ver CLAUDE.md regla de gasto).",
+   "eventos": []
+  },
+  {
+   "slug": "impulsefest",
+   "nombre": "Impulse Fest",
+   "aliases": [
+    "impulsefest",
+    "Impulse Fest",
+    "Impulsefest"
+   ],
+   "tipos": [
+    "FESTIVAL"
+   ],
+   "venues": [],
+   "logo": {
+    "estado": "sin_ficha",
+    "vector": false,
+    "archivo": false
+   },
+   "confirmada": false,
+   "confirmacion": "",
+   "fuente": "nombres de archivo del archivo de entregas (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano",
+   "eventos": []
+  },
+  {
+   "slug": "livejam",
+   "nombre": "LiveJam",
+   "aliases": [
+    "LIVEJAM",
+    "Live Jam",
+    "LiveJam"
+   ],
+   "tipos": [],
+   "venues": [],
+   "logo": {
+    "estado": "sin_ficha",
+    "vector": false,
+    "archivo": false
+   },
+   "confirmada": false,
+   "confirmacion": "",
+   "fuente": "nombres de archivo del archivo de entregas (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano",
+   "eventos": []
+  },
+  {
+   "slug": "nebula",
+   "nombre": "Nebula",
+   "aliases": [
+    "NEBULA",
+    "Nebula"
+   ],
+   "tipos": [],
+   "venues": [],
+   "logo": {
+    "estado": "sin_ficha",
+    "vector": false,
+    "archivo": false
+   },
+   "confirmada": false,
+   "confirmacion": "",
+   "fuente": "nombres de archivo del archivo de entregas (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano",
+   "eventos": []
+  },
+  {
+   "slug": "openklub",
+   "nombre": "OpenKlub",
+   "aliases": [
+    "OPENKLUB",
+    "Open Klub",
+    "OpenKlub",
+    "OPEN KLUB"
+   ],
+   "tipos": [
+    "CLUB"
+   ],
+   "venues": [
+    {
+     "nombre": "Central Cultural",
+     "estado": "candidato_sin_confirmar",
+     "preferido": false
+    }
+   ],
+   "logo": {
+    "estado": "no_encontrado",
+    "vector": false,
+    "archivo": false
+   },
+   "confirmada": false,
+   "confirmacion": "",
+   "fuente": "nombres de archivo del archivo de entregas (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano. Complementado con PR #210 (candidatos_db.jsonl match_ratio=1.0, obra_7879d3d141, productora_cruda='OPEN KLUB').",
+   "eventos": [
+    {
+     "nombre": "OpenKlub (edición sin identificar)",
+     "fecha": "viernes 6 febrero, 18:00-04:00 (año no confirmado)",
+     "fecha_iso": null,
+     "fecha_confianza": "parcial",
+     "venue": "Central Cultural (needs_confirmation)",
+     "estado": "pasado_needs_confirmation",
+     "lineup": [],
+     "co_organiza": []
+    }
+   ]
+  },
+  {
+   "slug": "panalrecords",
+   "nombre": "Panal Records",
+   "aliases": [
+    "PANAL RECORDS",
+    "Panal Records",
+    "PANALRECORDS"
+   ],
+   "tipos": [],
+   "venues": [],
+   "logo": {
+    "estado": "encontrado",
+    "vector": true,
+    "archivo": true
+   },
+   "confirmada": false,
+   "confirmacion": "",
+   "fuente": "Alta directa por palabra del usuario 2026-07-23 (sin research adicional, ver CLAUDE.md regla de gasto).",
+   "eventos": []
+  },
+  {
+   "slug": "piknic",
+   "nombre": "Piknic Electronik",
+   "aliases": [
+    "PIKNIC",
+    "PIKNICMARZO",
+    "Piknic",
+    "Piknic Electronik"
+   ],
+   "tipos": [
+    "OPEN_AIR",
+    "FESTIVAL"
+   ],
+   "venues": [
+    {
+     "nombre": "Parque Padre Hurtado",
+     "estado": "confirmado_ig_2026-07-23",
+     "preferido": true
+    }
+   ],
+   "logo": {
+    "estado": "candidato_sin_copiar",
+    "vector": false,
+    "archivo": false
+   },
+   "confirmada": false,
+   "confirmacion": "",
+   "fuente": "nombres de archivo del archivo de entregas (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano. Complementado con PR #210 (candidatos_db.jsonl match_ratio=1.0, obra_25745a1c93, ruta_rel FEBRERO/ULTIMA/PIKNIC.png) y post IG del 2026-07-23 (input_ig_DbG7Z2qCPrl_2.jpg).",
+   "eventos": [
+    {
+     "nombre": "Piknic Electronik Santiago -- lineup PARTIBOI69 (co-org GLOVOX)",
+     "fecha": "12 septiembre 2026",
+     "fecha_iso": "2026-09-12",
+     "fecha_confianza": "alta",
+     "venue": "Parque Padre Hurtado",
+     "estado": "activo_venta",
+     "lineup": [
+      "PARTIBOI69"
+     ],
+     "co_organiza": [
+      "GLOVOX"
+     ]
+    },
+    {
+     "nombre": "Piknic (edición sin identificar)",
+     "fecha": "MAR 28 (año no confirmado)",
+     "fecha_iso": null,
+     "fecha_confianza": "parcial",
+     "venue": "Santiago",
+     "estado": "pasado_needs_confirmation",
+     "lineup": [],
+     "co_organiza": []
+    }
+   ]
+  },
+  {
+   "slug": "psiquiatrico",
+   "nombre": "Psiquiatrico",
+   "aliases": [
+    "PSIQUIATRICO",
+    "Psiquiatrico"
+   ],
+   "tipos": [],
+   "venues": [],
+   "logo": {
+    "estado": "sin_ficha",
+    "vector": false,
+    "archivo": false
+   },
+   "confirmada": false,
+   "confirmacion": "",
+   "fuente": "nombres de archivo del archivo de entregas (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano",
+   "eventos": []
+  },
+  {
+   "slug": "streetmachine",
+   "nombre": "Street Machine",
+   "aliases": [
+    "STREET MACHINE",
+    "STREETMACHINE",
+    "Street Machine"
+   ],
+   "tipos": [],
+   "venues": [],
+   "logo": {
+    "estado": "encontrado",
+    "vector": true,
+    "archivo": true
+   },
+   "confirmada": false,
+   "confirmacion": "",
+   "fuente": "Alta directa por palabra del usuario 2026-07-23 (sin research adicional, ver CLAUDE.md regla de gasto). Mencion tambien detectada en triangulacion de fichas.",
+   "eventos": []
+  },
+  {
+   "slug": "sundeck",
+   "nombre": "Sundeck",
+   "aliases": [
+    "SUNDECK",
+    "Sundeck",
+    "Sundeck 21 años"
+   ],
+   "tipos": [
+    "OPEN_AIR"
+   ],
+   "venues": [
+    {
+     "nombre": "Espacio Riesco",
+     "estado": "candidato_sin_confirmar",
+     "preferido": false
+    }
+   ],
+   "logo": {
+    "estado": "encontrado",
+    "vector": true,
+    "archivo": true
+   },
+   "confirmada": false,
+   "confirmacion": "",
+   "fuente": "nombres de archivo del archivo de entregas (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano. Complementado con PR #210 (candidatos_db.jsonl match_ratio=1.0): obra_45bae8c3f6, obra_99ef9a1f8a. obra_b94c5571dc ('Sundeck 21 años', match_ratio=0.636) queda como alias no confirmado.",
+   "eventos": [
+    {
+     "nombre": "Sundeck 21 años",
+     "fecha": "17 enero 2026",
+     "fecha_iso": "2026-01-17",
+     "fecha_confianza": "alta",
+     "venue": "needs_confirmation",
+     "estado": "pasado",
+     "lineup": [],
+     "co_organiza": []
+    }
+   ]
+  },
+  {
+   "slug": "technoyouth",
+   "nombre": "Techno Youth",
+   "aliases": [
+    "TECHNOYOUTH",
+    "Techno Youth",
+    "cl-technoyouthchile"
+   ],
+   "tipos": [
+    "RAVE",
+    "UNDERGROUND"
+   ],
+   "venues": [],
+   "logo": {
+    "estado": "sin_ficha",
+    "vector": false,
+    "archivo": false
+   },
+   "confirmada": false,
+   "confirmacion": "",
+   "fuente": "nombres de archivo del archivo de entregas (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano.",
+   "eventos": []
+  },
+  {
+   "slug": "thegrid",
+   "nombre": "The Grid",
+   "aliases": [
+    "GRID",
+    "thegrid.club",
+    "The Grid Club"
+   ],
+   "tipos": [
+    "HEADLINERS",
+    "RAVE"
+   ],
+   "venues": [],
+   "logo": {
+    "estado": "encontrado",
+    "vector": false,
+    "archivo": false
+   },
+   "confirmada": true,
+   "confirmacion": "2026-07-10 flyer real KI/KI (extraccion Gemini devolvio 'GRID'; confirmado por humano en sesion)",
+   "fuente": "",
+   "eventos": []
+  },
+  {
+   "slug": "tycircle",
+   "nombre": "TY Circle",
+   "aliases": [
+    "TY",
+    "TYCIRCLE",
+    "TY Circle",
+    "TY.MAYO"
+   ],
+   "tipos": [],
+   "venues": [],
+   "logo": {
+    "estado": "sin_ficha",
+    "vector": false,
+    "archivo": false
+   },
+   "confirmada": false,
+   "confirmacion": "",
+   "fuente": "nombres de archivo del archivo de entregas (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano",
+   "eventos": []
+  }
+ ],
+ "venues": [
+  {
+   "id": "espacio_riesco",
+   "nombre": "Espacio Riesco",
+   "tipo": "convention_center",
+   "escala": "mainstream",
+   "capacidad": "high"
+  },
+  {
+   "id": "openklub",
+   "nombre": "OpenKlub",
+   "tipo": "club",
+   "escala": "base",
+   "capacidad": "unknown"
+  },
+  {
+   "id": "paralelo_89",
+   "nombre": "Paralelo 89",
+   "tipo": "club",
+   "escala": "base",
+   "capacidad": "unknown"
+  }
+ ],
+ "resumen": {
+  "productoras": 20,
+  "con_vector": 6,
+  "confirmadas": 2,
+  "venues": 3,
+  "eventos": 7,
+  "eventos_triangulables": 1,
+  "eventos_sin_fecha_iso": 3,
+  "eventos_sin_lineup": 6
+ },
+ "excluido_a_proposito": [
+  "instagram",
+  "contactos"
+ ],
+ "connected": true,
+ "horneado": true
+}
