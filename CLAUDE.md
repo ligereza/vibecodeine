@@ -326,6 +326,16 @@ the editable install imports from the main checkout, and the worktree can pass
 while testing the wrong code. Run it locally anyway for hygiene, but do not call
 it the final verdict; CI gives that.
 
+**And it cuts the other way: a red local verify can be a LIE about a green main**
+(2026-07-27, measured). `py -m flujo verify` from a worktree failed with
+"gen_campo_iskvw.py sin entrada en registro" while `main` had that row and every
+PR had passed CI. Cause: the tests it ran were the ones in `C:\IA\flujo`, and that
+checkout was still parked on a feature branch from nine commits earlier -- so a
+doc ratchet measured a stale tree and blamed the branch under test. Before
+"fixing" anything a local run reports, check `git -C <main checkout> branch
+--show-current` and that it is on `main` and up to date. Retirement: when the
+verification runs against the tree it was invoked from.
+
 Coverage check (optional, non-blocking):
 `py -m pytest tests/ --cov=src/flujo --cov-report=term-missing:skip-covered`.
 
