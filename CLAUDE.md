@@ -82,6 +82,15 @@ research/codex/plataforma. Its doctrine lives in
 `cultura/mak_plataforma/doctrina/`, NOT in `context/` -- it was written for the
 box's local model and the Claudes kept reading it as their own.
 
+**MAK's code lives HERE, not on the box** (2026-07-26): a cron `MAK-REPO-SYNC`
+pulls `origin/main` every 10 minutes and copies `cultura/mak_plataforma`,
+`cultura/mak_research` and `cultura/mak_codex` over the running code. Editing
+the box over SSH does not stick -- the sync reverts it, measured the same day: a
+change applied at 21:49 was gone at 21:50. To change MAK, edit the mirror here
+and merge to main. Cause of this note: `RELEVO_MAK.md` said the opposite ("el
+organismo vive fuera del repo") and a whole session was worked against that
+premise. Retirement: if the sync is ever removed.
+
 **No agent opens issues** (2026-07-26, user's order). Issues are a CHANNEL, not a
 task board: the user and his Google Script open them, and they are the
 Gmail -> issue -> render path. An agent may comment, label and close
