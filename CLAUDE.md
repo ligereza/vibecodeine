@@ -91,6 +91,19 @@ and merge to main. Cause of this note: `RELEVO_MAK.md` said the opposite ("el
 organismo vive fuera del repo") and a whole session was worked against that
 premise. Retirement: if the sync is ever removed.
 
+**The sync does NOT cover `cultura/mak_curatoria`, and that makes changes to the
+perception inert** (2026-07-27, measured on the box). The `cp -ru` list names
+`mak_plataforma`, `mak_research` and `mak_codex` only. So the box's repo clone
+pulls the new code and `/home/mak/curatoria/percepcion.py` keeps the old one:
+verified by md5 and by grepping for a constant added that day -- 3 hits in the
+clone, 0 in the copy that actually runs. It is worse than the trap above ("copying
+a file does not restart the service"): the file is not even copied. Until the cron
+gains `&& cp -ru /home/mak/flujo/cultura/mak_curatoria/. /home/mak/curatoria/`,
+anything merged into `mak_curatoria` is in the repo and not in the curation. The
+box also keeps its own state there (`fichas/`, `estado.json`, `procesados.txt`),
+so the copy must stay `-u` and never mirror-delete. Retirement: when the cron
+covers it, or when the curation reads the clone directly.
+
 **No agent opens issues** (2026-07-26, user's order). Issues are a CHANNEL, not a
 task board: the user and his Google Script open them, and they are the
 Gmail -> issue -> render path. An agent may comment, label and close
