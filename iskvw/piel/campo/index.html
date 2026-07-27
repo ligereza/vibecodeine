@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='9' fill='%23e8e4da'/%3E%3C/svg%3E">
+<title>ISKVW</title>
+<style>
+  /* ── El sitio es el metronomo, no escucha nada. No hay menu, no hay
+       portada, no hay indicador de donde estas. Se entra por el medio. ── */
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;overflow:hidden;background:#08080a;overscroll-behavior:none}
+  body{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#e8e4da;
+       touch-action:none;-webkit-user-select:none;user-select:none;cursor:crosshair}
+  canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+
+  /* La ficha aparece SOLO cuando el campo se resuelve. No es un panel:
+     es lo que quedo legible. */
+  #ficha{position:fixed;left:0;right:0;bottom:0;padding:22px 26px 30px;
+         pointer-events:none;opacity:0;transition:opacity .5s ease;
+         background:linear-gradient(to top,rgba(8,8,10,.94),rgba(8,8,10,0))}
+  #ficha.on{opacity:1}
+  #ficha h1{font-size:clamp(1.1rem,4.5vw,1.9rem);font-weight:600;letter-spacing:-.01em;
+            line-height:1.15;margin-bottom:6px}
+  #ficha .meta{font-size:.68rem;color:#8a857a;letter-spacing:.09em;text-transform:uppercase;
+               margin-bottom:9px}
+  #ficha p{font-size:.83rem;line-height:1.5;color:#b9b4a8;max-width:48ch}
+  #ficha .tags{margin-top:10px;font-size:.66rem;color:#6d685f;letter-spacing:.05em}
+  #ficha a{color:#e8e4da;pointer-events:auto;text-decoration:none;
+           border-bottom:1px solid #3a372f;font-size:.72rem}
+
+  /* Respiracion: 16 ciclos por minuto. Bajo 0,3 Hz -- muy lejos de la zona
+     de parpadeo peligrosa, y ancla al cuerpo de quien mira. */
+  #aire{position:fixed;inset:0;pointer-events:none;
+        background:radial-gradient(circle at 50% 45%,rgba(232,228,218,.05),transparent 62%);
+        animation:respirar 3.75s ease-in-out infinite}
+  @keyframes respirar{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:1;transform:scale(1.035)}}
+
+  #pista{position:fixed;top:16px;left:0;right:0;text-align:center;font-size:.63rem;
+         color:#4a463f;letter-spacing:.18em;text-transform:uppercase;
+         pointer-events:none;transition:opacity 1.4s ease}
+  #pista.ido{opacity:0}
+  @media (prefers-reduced-motion:reduce){#aire{animation:none;opacity:.8}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="aire"></div>
+<div id="pista">desliza</div>
+<div id="ficha">
+  <div class="meta" id="f-meta"></div>
+  <h1 id="f-titulo"></h1>
+  <p id="f-texto"></p>
+  <div class="tags" id="f-tags"></div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   ISKVW · campo
+
+   La gramatica, decidida antes de escribir una linea:
+
+     rapido        → divergir     → build      → difuso, muchas
+     lento         → profundizar  → breakdown  → nitida, una
+     frenar de golpe → drop       → resuelve   → legible
+     subir         → perder foco, NO "volver"
+     inercia       → pesada al bajar, liviana al subir
+
+   Regla que ordena todo: la GRAMATICA es invariante, el CONTENIDO variable.
+   El recorrido cambia que obra aparece; nunca como responde el gesto. Si eso
+   se invierte, el visitante se desincroniza consigo mismo -- que es peor que
+   desincronizarse con su musica.
+
+   Y no se explica. Se descubre: si el visitante sabe que hay una correlacion,
+   esto es un catalogo con efectos. Si la encuentra sola, es una camara.
+   ═══════════════════════════════════════════════════════════════════ */
+
+const RESPALDO = {"obras": [{"id": "vola", "title": "VOLÁ · lo visible y lo invisible", "category": "Animación", "year": 2026, "description": "El vaso que el humano ve y el vacío que se anima: figura y fondo de la misma imagen. El nombre lleva su propia tilde — volá / vola decide quién vuela.", "tags": ["generativo", "animación", "smil", "visible-invisible", "tilde"]}, {"id": "campo-motor-diagnostico", "title": "Campo · Motor de Diagnóstico", "category": "Generative", "year": 2026, "description": "El código que audita el sistema, tejido como campo repetido. La telemetría vuelta alfombra.", "tags": ["generativo", "código-tejido", "field"]}, {"id": "cenefa-dossier", "title": "Cenefa · Dossier", "category": "2D", "year": 2026, "description": "Una investigación escrita tejida como borde: el texto que enmarca la obra se vuelve el marco mismo.", "tags": ["generativo", "código-tejido", "border"]}, {"id": "wip-malla-reactiva", "title": "Malla Reactiva", "category": "3D", "year": 2026, "description": "Geometría que responde al cursor y al scroll. WebGL en vivo.", "tags": ["interactivo", "webgl", "tiempo-real"]}, {"id": "sala-flujo-3d", "title": "sala flujo — portafolio 3D", "category": "3D", "year": 2026, "description": "Una galeria a oscuras: las piezas dan la luz. Telar, cauce en rotonda-zootropo, ecosistema, tilde -- recorrida en WebGL + CSS3D, no en fotos de la galeria.", "tags": ["interactivo", "webgl", "css3d", "3d", "tiempo-real"]}, {"id": "tapiz-system-projection", "title": "TAPIZ :: system projection", "category": "Generative", "year": 2026, "description": "system projection :: psicosis / fungi diagnostics :: calm compilation. Panel en vivo (luminous mesh, chromatic mask, chronology) con esporas clickeables que decodifican assets en decadencia.", "tags": ["interactivo", "canvas", "generativo", "psicosis", "diagnostico"]}, {"id": "cauce-sala3d", "title": "Cauce · Sala 3D", "category": "Animación", "year": 2026, "description": "El build de una galería 3D leído por el cauce: mismo token, mismo color, patrón reconocido y no impuesto.", "tags": ["generativo", "animación", "smil"]}, {"id": "medallon-entrada", "title": "Medallón · Entrada", "category": "Generative", "year": 2026, "description": "La puerta del instrumento tejida como medallón mínimo: casi vacía, porque entrar es solo delegar.", "tags": ["generativo", "código-tejido", "medallion"]}]};   // se reemplaza con datos/obras.json
+
+/* ── el estado, todo escalar: nada de scroll nativo con DOM infinito.
+      Un movil de gama media convierte eso en diapositiva. ── */
+const E = {
+  pos: 0,          // posicion en el campo
+  vel: 0,          // velocidad instantanea
+  suave: 0,        // velocidad suavizada -> es el diafragma
+  lat: 0,          // desplazamiento lateral (arrastre horizontal)
+  latObj: 0,
+  foco: null,      // obra resuelta
+  t: 0,
+  tocando: false,
+  ultimoY: 0, ultimoX: 0,
+  quieto: 0,       // cuadros seguidos casi detenido
+};
+
+/* Inercia asimetrica: bajar pesa (entrar al agua), subir es liviano (flotar).
+   Es el mismo resorte con distinta constante -- una linea de diferencia, y el
+   visitante lo siente sin poder nombrarlo. */
+const K_BAJA = 0.055, K_SUBE = 0.11;
+
+const c = document.getElementById('c');
+const ctx = c.getContext('2d', {alpha:false});
+let W=0, H=0, DPR=1, OBRAS=[], NODOS=[], LARGO=0;
+
+function medir(){
+  DPR = Math.min(window.devicePixelRatio||1, 2);   // 2 es techo: 3 no se ve y cuesta
+  W = c.clientWidth; H = c.clientHeight;
+  c.width = W*DPR; c.height = H*DPR;
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+
+/* ── el campo ──
+   PENDIENTE DECLARADO, y no es menor. Hoy la posicion sale de un hash del
+   identificador: es estable, pero NO es distancia semantica. El propio
+   doublecup lo dejo escrito como el riesgo de su pieza:
+
+     "las posiciones de nodo se reparten por rango en cada eje: la cercania
+      entre nodos no es distancia semantica y el espectador la va a leer
+      como si lo fuera"
+
+   Esta piel comete hoy esa misma mentira. Se corrige cuando las posiciones
+   salgan de los 3157 vinculos MEDIDOS del micelio de MAK: ahi la cercania
+   pasa a significar, y el campo deja de afirmar lo que no sabe.
+   Mientras tanto NO se dibujan lineas entre nodos sin etiqueta compartida:
+   una linea es una afirmacion mas fuerte que una posicion. ── */
+function sembrar(obras){
+  OBRAS = obras;
+  NODOS = obras.map((o,i) => {
+    const h = [...(o.id||o.title||String(i))].reduce((a,ch)=>((a*31+ch.charCodeAt(0))>>>0),7);
+    return {
+      obra: o,
+      y: i * 460 + (h % 120) - 60,          // separacion en el eje del recorrido
+      x: ((h >> 7) % 1000)/1000 * 1.6 - 0.8, // desviacion lateral, -0.8..0.8
+      r: 26 + ((h >> 3) % 22),
+      fase: (h % 628)/100,                   // cada una respira en su tiempo
+      tono: (h >> 11) % 360,
+    };
+  });
+  LARGO = NODOS.length ? NODOS[NODOS.length-1].y + 460 : 0;
+}
+
+/* ── el diafragma: la velocidad decide cuanto se ve y cuan nitido ──
+     Es la unica funcion que traduce gesto a imagen, y es pura: misma
+     velocidad, mismo resultado, siempre. Ahi vive la invariancia. */
+function diafragma(v){
+  const s = Math.min(Math.abs(v)/26, 1);      // 0 detenido .. 1 lanzado
+  return {
+    apertura: s,                               // 0 = una obra nitida, 1 = campo difuso
+    alcance: 260 + s*1500,                     // cuantas entran en cuadro
+    nitidez: 1 - s,
+    ruido: s*s,
+  };
+}
+
+function dibujar(){
+  const d = diafragma(E.suave);
+  ctx.fillStyle = '#08080a';
+  ctx.fillRect(0,0,W,H);
+
+  const cx = W/2 + E.lat*W*0.28;
+  const cy = H*0.46;
+  let mejor = null, mejorD = 1e9;
+
+  for (const n of NODOS){
+    const dy = n.y - E.pos;
+    if (Math.abs(dy) > d.alcance) continue;
+
+    const cerca = 1 - Math.min(Math.abs(dy)/d.alcance, 1);   // 1 = en el centro
+    const y = cy + dy * (0.55 + d.apertura*0.45);
+    const x = cx + n.x * W * (0.16 + d.apertura*0.30);
+
+    // respiracion propia, y el ruido crece con la velocidad
+    const resp = 1 + Math.sin(E.t*1.67 + n.fase)*0.055;
+    const jitter = d.ruido * 13;
+    const px = x + (Math.random()-0.5)*jitter;
+    const py = y + (Math.random()-0.5)*jitter;
+    const r = n.r * resp * (0.55 + cerca*0.85);
+
+    // Lo lejano se disuelve; lo cercano se afirma. Sin blur real: el blur
+    // cuesta y en un telefono de gama media se nota.
+    const a = Math.pow(cerca, 1.5) * (0.22 + d.nitidez*0.78);
+    const g = ctx.createRadialGradient(px,py,0,px,py,r*2.4);
+    g.addColorStop(0, `hsla(${n.tono},14%,88%,${a})`);
+    g.addColorStop(.45, `hsla(${n.tono},18%,62%,${a*0.34})`);
+    g.addColorStop(1, 'hsla(0,0%,0%,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(px,py,r*2.4,0,6.2832); ctx.fill();
+
+    ctx.fillStyle = `hsla(${n.tono},20%,92%,${a*0.95})`;
+    ctx.beginPath(); ctx.arc(px,py,r*0.42,0,6.2832); ctx.fill();
+
+    // El titulo solo existe cuando hay nitidez. Dibujar texto es caro:
+    // se paga solo cuando se puede leer.
+    if (cerca > 0.62 && d.nitidez > 0.55){
+      const at = (cerca-0.62)/0.38 * (d.nitidez-0.55)/0.45;
+      ctx.font = '11px ui-monospace,monospace';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = `rgba(232,228,218,${Math.min(at,1)*0.75})`;
+      ctx.fillText((n.obra.title||'').slice(0,42), px, py + r*2.1);
+    }
+
+    const dist = Math.abs(dy);
+    if (dist < mejorD){ mejorD = dist; mejor = n; }
+  }
+
+  // vinculos: solo con el campo abierto, y solo entre lo que comparte etiqueta.
+  // Con el diafragma cerrado estorban; con el abierto SON la imagen.
+  if (d.apertura > 0.3){
+    ctx.lineWidth = 1;
+    for (let i=0;i<NODOS.length;i++){
+      const a1 = NODOS[i]; if (Math.abs(a1.y-E.pos) > d.alcance) continue;
+      for (let j=i+1;j<NODOS.length;j++){
+        const b = NODOS[j]; if (Math.abs(b.y-E.pos) > d.alcance) continue;
+        const comunes = (a1.obra.tags||[]).filter(t=>(b.obra.tags||[]).includes(t)).length;
+        if (!comunes) continue;
+        const p1 = proyectar(a1,d,cx,cy), p2 = proyectar(b,d,cx,cy);
+        ctx.strokeStyle = `rgba(180,175,164,${0.03*comunes*(d.apertura-0.3)/0.7})`;
+        ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();
+      }
+    }
+  }
+  return mejor;
+}
+
+function proyectar(n,d,cx,cy){
+  const dy = n.y - E.pos;
+  return {x: cx + n.x*W*(0.16+d.apertura*0.30), y: cy + dy*(0.55+d.apertura*0.45)};
+}
+
+/* ── la resolucion: frenar de golpe es el acento ──
+     No siempre resuelve en texto. A veces el campo se ordena y no dice nada,
+     y eso es parte del lenguaje: si siempre se resuelve en informacion, el
+     visitante scrollea buscando datos y esto se vuelve un catalogo. */
+const ficha = document.getElementById('ficha');
+function resolver(n){
+  if (!n || E.foco === n.obra) return;
+  E.foco = n.obra;
+  const o = n.obra;
+  document.getElementById('f-meta').textContent =
+    [o.category, o.year].filter(Boolean).join(' · ');
+  document.getElementById('f-titulo').textContent = o.title || '';
+  document.getElementById('f-texto').textContent = o.description || '';
+  document.getElementById('f-tags').textContent = (o.tags||[]).map(t=>'#'+t).join('  ');
+  ficha.classList.add('on');
+  // Una obra resuelta tiene direccion propia: sin migas de pan y sin mapa,
+  // pero el que la encontro puede volver y puede mandarla.
+  if (o.id) history.replaceState(null,'','#'+o.id);
+}
+function disolver(){
+  if (!E.foco) return;
+  E.foco = null; ficha.classList.remove('on');
+}
+
+/* ── gesto ── */
+function empujar(dy, dx){
+  E.vel += dy * 0.42;
+  E.latObj = Math.max(-1, Math.min(1, E.latObj + dx*0.0022));
+  document.getElementById('pista').classList.add('ido');
+}
+addEventListener('wheel', e => { e.preventDefault(); empujar(e.deltaY, e.deltaX); }, {passive:false});
+addEventListener('touchstart', e => {
+  E.tocando = true; E.ultimoY = e.touches[0].clientY; E.ultimoX = e.touches[0].clientX;
+}, {passive:true});
+addEventListener('touchmove', e => {
+  const y = e.touches[0].clientY, x = e.touches[0].clientX;
+  empujar((E.ultimoY - y)*1.5, (E.ultimoX - x)*1.5);
+  E.ultimoY = y; E.ultimoX = x;
+}, {passive:true});
+addEventListener('touchend', () => { E.tocando = false; }, {passive:true});
+
+// Tap: resuelve donde esta. Es el atajo del que ya entendio, y no estorba
+// al que no: tocar sin moverse es lo mismo que frenar.
+addEventListener('pointerup', e => {
+  if (Math.abs(E.suave) < 4) { const n = masCerca(); if (n) resolver(n); }
+}, {passive:true});
+// Izquierda / derecha con teclado, para quien llega sin dedo ni rueda.
+addEventListener('keydown', e => {
+  if (e.key==='ArrowDown') empujar(90,0);
+  if (e.key==='ArrowUp') empujar(-90,0);
+  if (e.key==='ArrowRight') empujar(0,120);
+  if (e.key==='ArrowLeft') empujar(0,-120);
+});
+
+function masCerca(){
+  let m=null, md=1e9;
+  for (const n of NODOS){ const d=Math.abs(n.y-E.pos); if(d<md){md=d;m=n;} }
+  return m;
+}
+
+/* ── el lazo ── */
+let raf = 0;
+function paso(){
+  E.t += 0.016;
+  // La constante depende de la direccion: bajar pesa, subir flota.
+  const k = E.vel > 0 ? K_BAJA : K_SUBE;
+  E.pos += E.vel;
+  // Sin principio y sin final: al pasar el ultimo nodo se vuelve a entrar por
+  // el otro lado. Medido el 2026-07-27: sin esto, pasado el ultimo nodo la
+  // pantalla queda negra y el archivo parece roto.
+  if (LARGO > 0){
+    if (E.pos > LARGO) E.pos -= LARGO;
+    else if (E.pos < 0) E.pos += LARGO;
+  }
+  E.vel *= (1 - k*2.6);
+  if (Math.abs(E.vel) < 0.01) E.vel = 0;
+  E.suave += (E.vel - E.suave) * 0.14;
+  E.lat += (E.latObj - E.lat) * 0.09;
+
+  const mejor = dibujar();
+
+  // frenar de golpe = drop. Se cuentan cuadros quietos para que un roce no
+  // dispare la resolucion.
+  if (Math.abs(E.suave) < 1.6 && !E.tocando){
+    if (++E.quieto > 22) resolver(mejor);
+  } else {
+    E.quieto = 0;
+    if (Math.abs(E.suave) > 5) disolver();
+  }
+  raf = requestAnimationFrame(paso);
+}
+
+/* ── datos: fetch si hay servidor, respaldo incrustado si no ── */
+async function arrancar(){
+  medir();
+  let obras = RESPALDO.obras;
+  try {
+    const r = await fetch('../../datos/obras.json');
+    if (r.ok){ const d = await r.json(); obras = Array.isArray(d) ? d : (d.obras||obras); }
+  } catch(e){ /* sin servidor se usa el respaldo, sin decir nada */ }
+  sembrar(obras);
+  // Se entra por el medio del archivo: no hay principio.
+  const ancla = location.hash.slice(1);
+  const i = Math.max(0, NODOS.findIndex(n => n.obra.id === ancla));
+  E.pos = NODOS.length ? NODOS[i>=0?i:Math.floor(NODOS.length/2)].y : 0;
+  paso();
+}
+addEventListener('resize', medir);
+// Con la pestana oculta no se dibuja: nadie lo esta mirando.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden){ cancelAnimationFrame(raf); raf = 0; }
+  else if (!raf) paso();
+});
+arrancar();
+</script>
+</body>
+</html>
