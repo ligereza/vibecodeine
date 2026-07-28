@@ -22,6 +22,7 @@ import os
 import re
 import shutil
 import signal
+import subprocess
 import sys
 import threading
 import time
@@ -67,6 +68,83 @@ DIR_COLOR = {"informes": "#9db67c", "paneles": "#d4a259",
              "cadenas": "#7ba6a3", "refutaciones": "#c46d5e",
              "correlaciones": "#b48ead", "grafos": "#93a8c7",
              "memoria": "#e0c58f"}
+
+
+def _contar_lineas(path):
+    try:
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            return sum(1 for line in fh if line.strip())
+    except OSError:
+        return 0
+
+
+def _contar_archivos(path, suffix=None):
+    try:
+        names = os.listdir(path)
+    except OSError:
+        return 0
+    return sum(1 for name in names
+               if os.path.isfile(os.path.join(path, name))
+               and (suffix is None or name.endswith(suffix)))
+
+
+def _procesos_vivos():
+    """Read process commands only; never starts, imports or mutates organs."""
+    try:
+        result = subprocess.run(
+            ["pgrep", "-af", "percepcion.py|interfaz.py|cola.py|capataz.py|puente_issues.py"],
+            capture_output=True, text=True, timeout=2, check=False)
+        return result.stdout.lower()
+    except Exception:
+        return ""
+
+
+def _organos():
+    """A live cross-section: matter received, transformed and emitted."""
+    home = os.path.expanduser("~")
+    procs = _procesos_vivos()
+    ideas_n = _contar_lineas(os.path.join(home, "plataforma", "ideas.jsonl"))
+    fichas_n = _contar_lineas(os.path.join(home, "curatoria", "fichas", "fichas.jsonl"))
+    research_n = sum(_contar_archivos(DIRS[d], ".md") for d in
+                     ("informes", "paneles", "cadenas", "refutaciones",
+                      "correlaciones", "grafos", "memoria"))
+    codex_n = _contar_archivos(os.path.join(home, "codex", "piezas"), ".md") + \
+        _contar_archivos(os.path.join(home, "codex", "revisiones"), ".md")
+    cola_n = _contar_lineas(os.path.join(home, "plataforma", "material.jsonl"))
+    frutos = {}
+    try:
+        with open(os.path.join(home, "plataforma", "fructificaciones.json"),
+                  encoding="utf-8") as fh:
+            frutos = json.load(fh)
+    except (OSError, ValueError):
+        pass
+    frutos_n = sum(1 for value in frutos.values()
+                   if isinstance(value, dict) and value.get("estatuto") == "fructifero")
+    return {"organos": [
+        {"id": "entrada", "nombre": "entrada", "verbo": "recibe",
+         "detalle": "obras + ideas + referencias", "cantidad": ideas_n,
+         "unidad": "ideas", "vivo": True, "dirs": ["corpus", "ideas"]},
+        {"id": "curatoria", "nombre": "curatoria", "verbo": "percibe / extrae",
+         "detalle": "iskvw → lectura · RD → datos", "cantidad": fichas_n,
+         "unidad": "fichas", "vivo": "percepcion.py" in procs,
+         "dirs": ["corpus"]},
+        {"id": "research", "nombre": "research", "verbo": "busca / debate",
+         "detalle": "fuentes → hipótesis → contradicción", "cantidad": research_n,
+         "unidad": "productos", "vivo": "interfaz.py" in procs or "cola.py" in procs,
+         "dirs": ["informes", "paneles", "cadenas", "refutaciones",
+                  "correlaciones", "grafos", "memoria"]},
+        {"id": "codex", "nombre": "codex", "verbo": "implementa / prueba",
+         "detalle": "hipótesis → experimento ejecutable", "cantidad": codex_n,
+         "unidad": "piezas", "vivo": "codex/interfaz" in procs,
+         "dirs": ["codex"]},
+        {"id": "plataforma", "nombre": "plataforma", "verbo": "coordina / entrega",
+         "detalle": "colas + guardias + render + PR", "cantidad": cola_n,
+         "unidad": "en cola", "vivo": "capataz.py" in procs,
+         "dirs": ["fusiones"]},
+        {"id": "emerge", "nombre": "emerge", "verbo": "publica / devuelve",
+         "detalle": "fruto → iskvw / main / RD / show", "cantidad": frutos_n,
+         "unidad": "frutos", "vivo": False, "dirs": []},
+    ]}
 FECHA_RE = re.compile(r"(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})-(.+)\.md$")
 DIR_CHIP = {"informes": "informe", "paneles": "panel", "cadenas": "cadena",
             "refutaciones": "refutacion", "correlaciones": "correlacion",
@@ -762,6 +840,25 @@ body{
   position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   flex-direction:column;gap:10px;color:#6e7681;text-align:center;padding:30px;
 }
+.organ-line{
+  position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:7;
+  display:flex;align-items:stretch;gap:0;max-width:calc(100% - 500px);
+  background:#0b0a09e8;border:1px solid #2a2820;border-radius:12px;
+  backdrop-filter:blur(9px);overflow-x:auto;box-shadow:0 8px 30px #0007;
+}
+.organ{
+  position:relative;min-width:132px;padding:9px 12px;border:0;border-right:1px solid #2a2820;
+  background:transparent;color:#c9c5b9;text-align:left;font-family:ui-monospace,monospace;
+  cursor:pointer;
+}
+.organ:last-child{border-right:0}.organ:hover,.organ.on{background:#1a1712}
+.organ .o-cab{display:flex;align-items:center;gap:6px;font-size:.7rem;color:#d4a259}
+.organ .o-dot{width:7px;height:7px;border-radius:50%;background:#5f5b50}
+.organ .o-dot.vivo{background:#9db67c;box-shadow:0 0 8px #9db67c}
+.organ .o-verbo{font-size:.61rem;color:#8a8577;margin-top:3px}
+.organ .o-n{font-size:.67rem;color:#e2ddd0;margin-top:4px}
+.organ:after{content:'→';position:absolute;right:-7px;top:18px;color:#6e6a5e;z-index:2}
+.organ:last-child:after{content:''}
 
 /* ── view toggle (Flujo / Micelio) ── */
 .main-wrap{position:relative}
@@ -2185,6 +2282,36 @@ function mapLente(lente){
   mapDespertar(.5); mapLegend(); mapFit();
 }
 
+function mapOrgano(el){
+  var ya=el.classList.contains('on');
+  document.querySelectorAll('.organ').forEach(function(b){b.classList.remove('on');});
+  MAPA.dirOff={};
+  if(!ya){
+    el.classList.add('on');
+    var dirs=(el.getAttribute('data-dirs')||'').split(',').filter(Boolean);
+    if(dirs.length){
+      var permitidos=new Set(dirs);
+      MAPA.nodes.forEach(function(n){if(!permitidos.has(n.dir))MAPA.dirOff[n.dir]=true;});
+    } else if(el.getAttribute('data-organo')==='emerge'){
+      MAPA.lente='frutos';
+    }
+  } else {
+    MAPA.lente='cultivo';
+  }
+  mapDespertar(.5);mapLegend();mapFit();
+}
+
+function cargarOrganos(){
+  fetch('/api/organos').then(function(r){return r.json();}).then(function(d){
+    (d.organos||[]).forEach(function(o){
+      var el=document.querySelector('[data-organo="'+o.id+'"]');if(!el)return;
+      el.querySelector('.o-dot').classList.toggle('vivo',!!o.vivo);
+      el.querySelector('.o-n').textContent=o.cantidad+' '+o.unidad;
+      el.title=o.detalle;
+    });
+  }).catch(function(){});
+}
+
 function mapFit() {
   var ns = mapVisibleNodes();
   if (!ns.length) return;
@@ -2659,6 +2786,7 @@ document.addEventListener('DOMContentLoaded', function() {
   window.addEventListener('resize', function() { drawConnections(); mapResize(); });
   mapBind();
   setView('mapa');
+  cargarOrganos(); setInterval(cargarOrganos,15000);
   // el micelio crece solo: si esta visible, refresca cada 25s
   setInterval(function() { if (MAPA.running) mapRefresh(false); }, 25000);
   // fit to view on first load
@@ -2840,6 +2968,7 @@ HTML = """<!doctype html>
   <!-- ── CUERPO: materia + afinidad + procedencia ── -->
   <div id="map-view" class="show">
     <canvas id="map-canvas"></canvas>
+    <div class="organ-line" id="organ-line">ORGANOS_PLACEHOLDER</div>
     <div class="map-legend">
       <h4>&#129744; Cuerpo de MAK</h4>
       <div id="legend-rows"></div>
@@ -3048,6 +3177,8 @@ class H(BaseHTTPRequestHandler):
         # API: memoria stats (chunks indexados)
         if u.path == "/api/memoria/stats":
             return self._json_response(_memoria_stats())
+        if u.path == "/api/organos":
+          return self._json_response(_organos())
 
         # API: grafo semantico (nodos=productos, aristas=similitud embeddings)
         if u.path == "/api/memoria/grafo":
@@ -3194,6 +3325,15 @@ class H(BaseHTTPRequestHandler):
         page = page.replace("___ENV_DATA___", env_json)
         page = page.replace("JOBS_PLACEHOLDER", jobs_html)
         page = page.replace("ARCHIVO_PLACEHOLDER", archivo_html)
+        organos_html = "".join(
+          '<button class="organ" data-organo="%s" data-dirs="%s" '
+          'onclick="mapOrgano(this)"><span class="o-cab"><i class="o-dot %s"></i>%s</span>'
+          '<span class="o-verbo">%s</span><span class="o-n">%s %s</span></button>' % (
+            html.escape(o["id"]), html.escape(",".join(o["dirs"])),
+            "vivo" if o["vivo"] else "", html.escape(o["nombre"]),
+            html.escape(o["verbo"]), o["cantidad"], html.escape(o["unidad"]))
+          for o in _organos()["organos"])
+        page = page.replace("ORGANOS_PLACEHOLDER", organos_html)
 
         # mode buttons: initial active CSS class (space already in HTML template)
         page = page.replace(
