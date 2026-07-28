@@ -1988,12 +1988,12 @@ function filtrarArchivo(q) {
 var DIR_COLORS = {informes:'#9db67c',paneles:'#d4a259',cadenas:'#7ba6a3',
                  refutaciones:'#c46d5e',correlaciones:'#b48ead',
                  grafos:'#93a8c7',memoria:'#e0c58f',corpus:'#c98f6a',
-                 codex:'#6fa8dc',ideas:'#f4f1e6'};
+                 codex:'#6fa8dc',ideas:'#f4f1e6',fusiones:'#d98c7e'};
 var MAPA = {
   nodes: [], edges: [], byId: {}, loaded: false, running: false,
   view: {x: 0, y: 0, k: 1}, umbral: 0.55, dirOff: {},
   hover: null, dragN: null, panM: null, downAt: null,
-  sel: null, bridge: null,
+  sel: null, bridge: null, lente: 'cultivo', fusion: [],
   alpha: 0, t: 0, raf: 0,
   // Un grafo de fuerzas CONVERGE: despues de acomodarse, seguir calculando
   // fuerzas es tirar CPU. 'quieto' marca ese estado; 'firma' identifica el
@@ -2116,7 +2116,10 @@ function mapMerge(nodes, edges) {
       birth: MAPA.loaded ? MAPA.t : -99,
       phase: Math.random() * Math.PI * 2,
     };
-    nd.dir = n.dir; nd.titulo = n.titulo; nd.chunks = n.chunks || 1;
+    nd.dir = n.dir; nd.archivo = n.archivo || n.id.split('/').pop();
+    nd.titulo = n.titulo; nd.chunks = n.chunks || 1;
+    nd.estatuto = n.estatuto || 'sustrato'; nd.presion = n.presion || 0;
+    nd.calidad = n.calidad || 'cultivo'; nd.sustancia = n.sustancia || 0;
     nd.r = 5 + Math.min(13, Math.sqrt(nd.chunks) * 2.1);
     by[n.id] = nd; out.push(nd);
   });
@@ -2153,14 +2156,29 @@ function mapToggleDir(d) {
 }
 
 function mapVisibleEdges() {
+  var visibles = new Set(mapVisibleNodes().map(function(n){return n.id;}));
   return MAPA.edges.filter(function(e) {
     var a = MAPA.byId[e.a], b = MAPA.byId[e.b];
     return (e.clase === 'procedencia' || e.w >= MAPA.umbral) && a && b &&
-      !MAPA.dirOff[a.dir] && !MAPA.dirOff[b.dir];
+      visibles.has(a.id) && visibles.has(b.id);
   });
 }
 function mapVisibleNodes() {
-  return MAPA.nodes.filter(function(n) { return !MAPA.dirOff[n.dir]; });
+  return MAPA.nodes.filter(function(n) {
+    if (MAPA.dirOff[n.dir]) return false;
+    if (MAPA.lente === 'compost') return n.calidad === 'compost';
+    if (MAPA.lente === 'cultivo') return n.calidad !== 'compost';
+    if (MAPA.lente === 'frutos') return n.estatuto === 'fructifero';
+    return true;
+  });
+}
+
+function mapLente(lente){
+  MAPA.lente=lente;
+  document.querySelectorAll('[data-lente]').forEach(function(b){
+    b.classList.toggle('active',b.getAttribute('data-lente')===lente);
+  });
+  mapDespertar(.5); mapLegend(); mapFit();
 }
 
 function mapFit() {
@@ -2291,6 +2309,11 @@ function mapDraw() {
     // cuerpo
     ctx.fillStyle = col;
     ctx.beginPath(); ctx.arc(n.x, n.y, r, 0, 6.284); ctx.fill();
+    if (n.estatuto === 'primordio' || n.estatuto === 'fructifero') {
+      ctx.strokeStyle = n.estatuto === 'fructifero' ? '#f4f1e6' : hexA('#d4a259', .75);
+      ctx.lineWidth = (n.estatuto === 'fructifero' ? 3 : 1.5) / v.k;
+      ctx.beginPath(); ctx.arc(n.x, n.y, r + (n.estatuto === 'fructifero' ? 7 : 4), 0, 6.284); ctx.stroke();
+    }
     // nucleo claro
     ctx.fillStyle = hexA('#f4f1e6', 0.75);
     ctx.beginPath(); ctx.arc(n.x - r * 0.25, n.y - r * 0.3, r * 0.32, 0, 6.284); ctx.fill();
@@ -2389,16 +2412,23 @@ function mapNodeClick(n, e) {
   var card = document.getElementById('map-action');
   var modo = workflow.mode || 'single';
   var naturaleza = n.dir === 'corpus' ? 'obra' : (n.dir === 'ideas' ? 'idea' :
-                    (n.dir === 'codex' ? 'código' : 'investigación'));
+                    (n.dir === 'codex' ? 'código' : (n.dir === 'fusiones' ?
+                    'fusión' : 'investigación')));
   card.innerHTML =
     '<div class="ma-title">' + esc(limpiarTema(n.titulo) || n.id) + '</div>' +
-    '<div class="ma-meta">' + esc(naturaleza) + ' · ' + esc(n.dir) + ' &middot; ' + n.chunks + ' frag &middot; ' + n.deg + ' filamentos</div>' +
+    '<div class="ma-meta">' + esc(naturaleza) + ' · ' + esc(n.estatuto) +
+      ' · presión ' + Number(n.presion||0).toFixed(2) + ' · ' + esc(n.dir) +
+      ' &middot; ' + n.chunks + ' frag &middot; ' + n.deg + ' filamentos</div>' +
     '<div class="ma-btns">' +
-      '<button onclick="verArchivo(\'' + esc(n.dir) + '\',\'' + encodeURIComponent(n.id) + '\')">&#128214; Abrir</button>' +
+      '<button onclick="verArchivo(\'' + esc(n.dir) + '\',\'' + encodeURIComponent(n.archivo) + '\')">&#128214; Abrir</button>' +
       '<button class="ma-go" onclick="mapInvestigar(\'' + encodeURIComponent(n.id) + '\')">&#9654; Investigar</button>' +
       '<button onclick="mapDebatir(\'' + encodeURIComponent(n.id) + '\')">&#8644; Debatir</button>' +
       '<button onclick="mapExperimentar(\'' + encodeURIComponent(n.id) + '\')">&#9881; Experimentar</button>' +
       '<button onclick="mapAnotarDesde(\'' + encodeURIComponent(n.id) + '\')">&#10022; Idea desde aquí</button>' +
+      '<button onclick="mapFusionAgregar(\''+encodeURIComponent(n.id)+'\')">&#8645; Añadir a fusión</button>' +
+      (n.estatuto === 'fructifero'
+        ? '<button onclick="mapEstatuto(\''+encodeURIComponent(n.id)+'\',\'devolver\')">&#8595; Devolver al sustrato</button>'
+        : '<button onclick="mapEstatuto(\''+encodeURIComponent(n.id)+'\',\'fructificar\')">&#127812; Fructificar</button>') +
       '<button onclick="mapPuente(\'' + encodeURIComponent(n.id) + '\')">&#128279; Puente</button>' +
       '<button onclick="mapCloseActions()">&#10005;</button>' +
     '</div>';
@@ -2451,11 +2481,49 @@ function mapAnotarDesde(idEnc) {
   if (!texto || !texto.trim()) return;
   fetch('/api/ideas/anotar', {
     method:'POST', headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({accion:'anotar', texto:texto.trim()+'\n\nOrigen visible: '+n.dir+'/'+n.id})
+    body:JSON.stringify({accion:'anotar', texto:texto.trim(),
+      origen_id:n.id, origen_dir:n.dir})
   }).then(function(r){return r.json();}).then(function(d){
     if(d.ok){showToast('Idea guardada; entrará al micelio en el próximo pulso.','success');}
     else showToast('No se anotó: '+(d.error||'?'),'error');
   }).catch(function(){showToast('No se pudo guardar la idea','error');});
+}
+
+function mapEstatuto(idEnc, accion) {
+  var n=MAPA.byId[decodeURIComponent(idEnc)]; if(!n)return;
+  var nota=prompt(accion==='fructificar' ?
+    '¿Por qué esta materia adquiere estatuto visible?' :
+    '¿Por qué vuelve al sustrato?', n.nota_estatuto||'');
+  if(nota===null)return;
+  fetch('/api/fructificacion',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({id:n.id,accion:accion,nota:nota})})
+  .then(function(r){return r.json();}).then(function(d){
+    if(d.ok){showToast('Estatuto guardado por decisión humana.','success'); mapRefresh(false);}
+    else showToast('No se guardó: '+(d.error||'?'),'error');
+  }).catch(function(){showToast('No se pudo guardar el estatuto','error');});
+}
+
+function mapFusionAgregar(idEnc){
+  var id=decodeURIComponent(idEnc);
+  if(MAPA.fusion.indexOf(id)<0)MAPA.fusion.push(id);
+  mapCloseActions();
+  showToast(MAPA.fusion.length+' materias en fusión.','info');
+  var b=document.getElementById('fusion-run'); if(b)b.style.display=MAPA.fusion.length>1?'':'none';
+}
+
+function mapFusionar(){
+  var ns=MAPA.fusion.map(function(id){return MAPA.byId[id];}).filter(Boolean);
+  if(ns.length<2)return;
+  var tema='fusionar sin borrar las fuentes: '+ns.map(function(n){return '"'+limpiarTema(n.titulo)+'"';}).join(' + ')+
+    '. Distinguir coincidencias, contradicciones, pérdidas y una hipótesis nueva verificable.';
+  var fuentes=ns.map(function(n){return n.id;});
+  MAPA.fusion=[]; document.getElementById('fusion-run').style.display='none';
+  fetch('/api/fusion',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({tema:tema,fuentes:fuentes})})
+  .then(function(r){return r.json();}).then(function(d){
+    if(d.ok){showToast('Primordio de fusión creado; Research está trabajando.','success');mapRefresh(false);}
+    else showToast('No se creó la fusión: '+(d.error||'?'),'error');
+  }).catch(function(){showToast('No se pudo crear la fusión','error');});
 }
 
 function mapRunModo(modo, tema, origen) {
@@ -2781,6 +2849,13 @@ HTML = """<!doctype html>
       idea desde ahí. El cuerpo crece cuando esas operaciones devuelven materia.
     </div>
     <div class="map-controls">
+      <div class="tool-group">
+        <button data-lente="cultivo" class="active" onclick="mapLente('cultivo')">cultivo</button>
+        <button data-lente="todo" onclick="mapLente('todo')">todo</button>
+        <button data-lente="compost" onclick="mapLente('compost')">compost</button>
+        <button data-lente="frutos" onclick="mapLente('frutos')">frutos</button>
+        <button id="fusion-run" onclick="mapFusionar()" style="display:none">fusionar selección</button>
+      </div>
       <div class="tool-group">
         <span class="tool-label">Afinidad</span>
         <div class="mc-slider">
@@ -3163,6 +3238,38 @@ class H(BaseHTTPRequestHandler):
           return self._json_response(payload)
         except Exception as e:  # noqa: BLE001
           return self._json_response({"ok": False, "error": str(e)[:200]}, 502)
+
+      if self.path == "/api/fructificacion":
+        largo = min(int(self.headers.get("Content-Length") or 0), 4000)
+        try:
+          body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
+          import fructificacion
+          result = fructificacion.decidir(
+            body.get("id"), body.get("accion"), body.get("nota", ""))
+          # Decision file changed without changing the embedding index;
+          # invalidate only the graph cache so status is visible now.
+          try:
+            os.unlink(memoria.GRAFO_CACHE)
+          except OSError:
+            pass
+          return self._json_response(result, 200 if result.get("ok") else 400)
+        except Exception as e:  # noqa: BLE001
+          return self._json_response({"ok": False, "error": str(e)[:200]}, 500)
+
+      if self.path == "/api/fusion":
+        largo = min(int(self.headers.get("Content-Length") or 0), 12000)
+        try:
+          body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
+          fuentes = [str(x)[:240] for x in body.get("fuentes", []) if x]
+          tema = str(body.get("tema") or "")[:3000]
+          if len(fuentes) < 2 or not tema:
+            return self._json_response({"ok": False, "error": "faltan fuentes"}, 400)
+          import fusion
+          primordio = fusion.crear(tema, fuentes)
+          _lanzar("panel", tema, 1, "medio", False)
+          return self._json_response({"ok": True, "primordio": primordio})
+        except Exception as e:  # noqa: BLE001
+          return self._json_response({"ok": False, "error": str(e)[:200]}, 500)
 
         # API: save workflow
         if self.path == "/api/workflow":

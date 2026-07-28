@@ -35,7 +35,7 @@ INDEX_FILE = os.path.join(MEM_DIR, "index.jsonl")
 # Antes el micelio solo contenia lo que MAK escribio sobre si mismo, asi que
 # no podia relacionar las obras entre si -- que es el mapa que se queria.
 FUENTES = ("informes", "paneles", "cadenas", "refutaciones",
-           "correlaciones", "grafos", "codex", "corpus", "ideas")
+           "correlaciones", "grafos", "codex", "corpus", "ideas", "fusiones")
 EMBED_MODEL = os.environ.get("OLLAMA_EMBED_MODEL", "nomic-embed-text")
 OLLAMA = os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
 
@@ -153,6 +153,21 @@ def cuerpo_util(texto):
     return "\n".join(lineas)
 
 
+def calidad_documento(texto, carpeta, chunks=1):
+    """Diagnostic quality, never deletion. Weak attempts remain as compost."""
+    cuerpo = cuerpo_util(texto)
+    marcas = [m for m in MARCAS_DE_FALLO if m in (texto or "")]
+    if marcas:
+        return {"estado": "compost", "razon": marcas[0], "sustancia": 0.0}
+    if carpeta in ("corpus", "ideas"):
+        return {"estado": "cultivo", "razon": "materia humana", "sustancia": 1.0}
+    largo = len(cuerpo)
+    sustancia = min(1.0, largo / 1800.0)
+    if largo < MINIMO_UTIL:
+        return {"estado": "compost", "razon": "sin sustancia", "sustancia": sustancia}
+    return {"estado": "cultivo", "razon": "", "sustancia": sustancia}
+
+
 def util_para_micelio(texto, carpeta=None):
     """(entra, motivo). Decide si un documento merece entrar al mapa.
 
@@ -220,7 +235,10 @@ def indexar(rebuild=False, log=lambda s: None):
             except OSError:
                 continue
             entra, motivo = util_para_micelio(texto, carpeta=d)
-            if not entra:
+            # Keep weak attempts indexable as historical compost only when they
+            # contain text. A declared runtime failure without content remains
+            # outside because there is nothing to embed.
+            if not entra and not cuerpo_util(texto):
                 descartados.append((path, motivo))
                 continue
             pendientes.append((path, d, mtime, texto, _meta_documento(texto)))
@@ -235,6 +253,7 @@ def indexar(rebuild=False, log=lambda s: None):
     for path, d, mtime, texto, doc_meta in pendientes:
         titulo = _titulo(texto, path)
         chunks = _fragmentar(texto)
+        calidad = calidad_documento(texto, d, len(chunks))
         log("STATUS: Indexando %s (%d frag)..." % (os.path.basename(path), len(chunks)))
         for i, ch in enumerate(chunks):
             vec = _embed(ch)
@@ -242,7 +261,7 @@ def indexar(rebuild=False, log=lambda s: None):
                 continue
             nuevas.append({"path": path, "dir": d, "titulo": titulo,
                            "mtime": mtime, "i": i, "chunk": ch, "vec": vec,
-                           "doc_meta": doc_meta})
+                           "doc_meta": doc_meta, "calidad": calidad})
 
     todas = vigentes + nuevas
     _guardar_index(todas)
@@ -284,12 +303,15 @@ def _vectores_por_producto():
     """Agrupa el index por archivo y promedia los vectores de sus chunks
     -> un vector por producto. Devuelve (vecs{path:vec}, meta{path:(dir,titulo,nchunks)})."""
     from collections import defaultdict
-    grupos, meta = defaultdict(list), {}
-    for e in _cargar_index():
+    grupos, meta, textos_por_path = defaultdict(list), {}, defaultdict(list)
+    entradas = _cargar_index()
+    for e in entradas:
         grupos[e["path"]].append(e.get("vec") or [])
-        prev = meta.get(e["path"], (e["dir"], e["titulo"], 0, {}))
+        textos_por_path[e["path"]].append(e.get("chunk") or "")
+        prev = meta.get(e["path"], (e["dir"], e["titulo"], 0, {}, {}))
         meta[e["path"]] = (e["dir"], e["titulo"], prev[2] + 1,
-                   e.get("doc_meta") or prev[3])
+                   e.get("doc_meta") or prev[3],
+                           e.get("calidad") or prev[4])
     vecs = {}
     for path, lista in grupos.items():
         lista = [v for v in lista if v]
@@ -298,13 +320,24 @@ def _vectores_por_producto():
         dim = len(lista[0])
         n = len(lista)
         vecs[path] = [sum(v[i] for v in lista) / n for i in range(dim)]
+        if not meta[path][4]:
+            textos = textos_por_path[path]
+            meta[path] = (*meta[path][:4], calidad_documento(
+                "\n\n".join(textos), meta[path][0], len(textos)))
     return vecs, meta
 
 
 GRAFO_CACHE = os.path.join(MEM_DIR, "grafo_cache.json")
+GRAFO_SCHEMA_VERSION = 2
 
 
-def _aristas_numpy(vecs, paths, umbral, tope_por_nodo):
+def _node_id(path, meta):
+    """Global identity inside the body; basenames alone collide by source."""
+    d = meta[path][0]
+    return "%s/%s" % (d, os.path.basename(path))
+
+
+def _aristas_numpy(vecs, paths, meta, umbral, tope_por_nodo):
     """Las mismas aristas, con una multiplicacion de matrices en vez de un
     bucle. Devuelve None si numpy no esta, y el llamador sigue por el camino
     lento -- el resultado es identico, cambia cuanto tarda.
@@ -337,8 +370,8 @@ def _aristas_numpy(vecs, paths, umbral, tope_por_nodo):
             if key in vistas:
                 continue
             vistas.add(key)
-            edges.append({"a": os.path.basename(paths[i]),
-                          "b": os.path.basename(paths[j]), "w": round(s, 3),
+            edges.append({"a": _node_id(paths[i], meta),
+                          "b": _node_id(paths[j], meta), "w": round(s, 3),
                           "clase": "afinidad"})
     return edges
 
@@ -361,7 +394,8 @@ def grafo_semantico(umbral=0.5, tope_por_nodo=4):
     Se cachea en disco contra la firma del indice: el grafo solo cambia cuando
     cambia lo indexado, y reindexar es un evento de cada 20 minutos como mucho.
     """
-    firma = "%s|%s|%s" % (_firma_index(), umbral, tope_por_nodo)
+    firma = "v%s|%s|%s|%s" % (
+        GRAFO_SCHEMA_VERSION, _firma_index(), umbral, tope_por_nodo)
     try:
         with open(GRAFO_CACHE, encoding="utf-8") as fh:
             guardado = json.load(fh)
@@ -374,12 +408,15 @@ def grafo_semantico(umbral=0.5, tope_por_nodo=4):
     paths = list(vecs)
     nodes = []
     for p in paths:
-        d, t, nch, doc_meta = meta[p]
-        nodes.append({"id": os.path.basename(p), "dir": d, "titulo": t,
+        d, t, nch, doc_meta, calidad = meta[p]
+        nodes.append({"id": _node_id(p, meta), "archivo": os.path.basename(p),
+                  "dir": d, "titulo": t,
                   "chunks": nch, "naturaleza": doc_meta.get("tipo") or d,
-                  "origen": doc_meta.get("origen")})
+                  "origen": doc_meta.get("origen"),
+                  "calidad": calidad.get("estado", "cultivo"),
+                  "sustancia": calidad.get("sustancia", 0.0)})
 
-    edges = _aristas_numpy(vecs, paths, umbral, tope_por_nodo)
+    edges = _aristas_numpy(vecs, paths, meta, umbral, tope_por_nodo)
     if edges is None:
         edges, vistas = [], set()
         for i, a in enumerate(paths):
@@ -393,8 +430,8 @@ def grafo_semantico(umbral=0.5, tope_por_nodo=4):
                 if key in vistas:
                     continue
                 vistas.add(key)
-                edges.append({"a": os.path.basename(paths[i]),
-                              "b": os.path.basename(paths[j]), "w": round(s, 3),
+                edges.append({"a": _node_id(paths[i], meta),
+                              "b": _node_id(paths[j], meta), "w": round(s, 3),
                               "clase": "afinidad"})
 
     # Explicit provenance is not similarity. An idea remembers which material
@@ -403,17 +440,27 @@ def grafo_semantico(umbral=0.5, tope_por_nodo=4):
     seen = {tuple(sorted((e["a"], e["b"]))) + (e.get("clase", "afinidad"),)
             for e in edges}
     for path in paths:
-        d, _, _, doc_meta = meta[path]
-        if d != "ideas":
-            continue
-        idea_id = os.path.basename(path)
-        for source_id in doc_meta.get("relacionadas") or []:
-            source_id = os.path.basename(str(source_id))
+        d, _, _, doc_meta, _ = meta[path]
+        idea_id = _node_id(path, meta)
+        sources = []
+        if d == "ideas":
+            origen = doc_meta.get("origen_materia")
+            if isinstance(origen, dict) and origen.get("id"):
+                sources.append(str(origen["id"]))
+        elif d == "fusiones":
+            sources.extend(str(x) for x in doc_meta.get("fuentes") or [])
+        for source_id in sources:
             key = tuple(sorted((idea_id, source_id))) + ("procedencia",)
             if source_id in known and key not in seen:
                 edges.append({"a": idea_id, "b": source_id, "w": 1.0,
                               "clase": "procedencia"})
                 seen.add(key)
+
+    try:
+        import fructificacion
+        nodes = fructificacion.evaluar(nodes, edges)
+    except Exception:
+        pass
 
     grafo = {"nodes": nodes, "edges": edges,
              "meta": {"n_nodos": len(nodes), "n_aristas": len(edges),

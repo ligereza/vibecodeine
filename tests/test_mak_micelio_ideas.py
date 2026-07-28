@@ -26,7 +26,8 @@ def test_idea_se_materializa_como_documento_indexable(tmp_path):
         "id": "abc123", "texto": "La cámara como proyector de preguntas",
         "estado": "anotada", "ts": "2026-07-28T10:00:00",
         "relacionadas": [{"titulo": "Obra 1", "carpeta": "corpus",
-                   "score": 0.81, "id": "obra-1.md"}],
+                   "score": 0.81, "id": "corpus/obra-1.md"}],
+        "origen": {"id": "corpus/obra-0.md", "dir": "corpus"},
     }
     origen.write_text(json.dumps(idea, ensure_ascii=False) + "\n", encoding="utf-8")
 
@@ -35,8 +36,8 @@ def test_idea_se_materializa_como_documento_indexable(tmp_path):
     assert resultado["ideas"] == 1
     text = (destino / "idea-abc123.md").read_text(encoding="utf-8")
     assert "La cámara como proyector de preguntas" in text
-    assert "Obra 1 [corpus; 0.810; id=obra-1.md]" in text
-    assert '"relacionadas": ["obra-1.md"]' in text
+    assert "Obra 1 [corpus; 0.810; id=corpus/obra-1.md]" in text
+    assert '"origen_materia": {"id": "corpus/obra-0.md"' in text
     assert '"tipo": "idea"' in text
     assert '"origen": "usuario"' in text
 
@@ -67,6 +68,11 @@ def test_interfaz_ofrece_operaciones_sobre_la_materia():
     assert "setView('mapa');" in interfaz
     assert "tubería clara" in interfaz
     assert "e.clase === 'procedencia'" in interfaz
+    assert "mapLente('compost')" in interfaz
+    assert "mapFusionar" in interfaz
+    assert "mapEstatuto" in interfaz
+    assert 'self.path == "/api/fusion"' in interfaz
+    assert 'data-lente="frutos"' in interfaz
     assert 'self.path == "/api/codex/experimentar"' in interfaz
     assert 'self.path == "/api/ideas/anotar"' in interfaz
 
@@ -76,4 +82,7 @@ def test_memoria_declara_afinidad_y_procedencia():
         encoding="utf-8")
     assert '"clase": "afinidad"' in memoria
     assert '"clase": "procedencia"' in memoria
+    assert "GRAFO_SCHEMA_VERSION" in memoria
+    assert '"calidad": calidad.get' in memoria
     assert '"ideas"' in memoria
+    assert '"fusiones"' in memoria
