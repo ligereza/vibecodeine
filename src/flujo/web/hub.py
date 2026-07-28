@@ -714,7 +714,20 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             return
 
         if p == "/api/run-safe-command":
+            # Origen ajeno = no. Este endpoint corre comandos, y sin esto
+            # cualquier pagina abierta en el navegador del usuario podia
+            # llamarlo con una peticion simple (`text/plain` no dispara
+            # preflight, asi que el CORS `*` de las respuestas no protegia
+            # nada). Hallazgo VCD-02 del diagnostico del 2026-07-27, verificado
+            # ahi con una peticion desde `https://attacker.example`.
+            origen = self.headers.get("Origin")
+            if origen and not self._origen_propio(origen):
+                self._send_json({"error": "origen no permitido"}, status=403)
+                return
             content_length = int(self.headers.get("Content-Length", 0))
+            if content_length > 8192:      # un comando no pesa mas que esto
+                self._send_json({"error": "cuerpo demasiado grande"}, status=413)
+                return
             body = self.rfile.read(content_length).decode("utf-8")
             try:
                 data = json.loads(body)
@@ -1655,17 +1668,82 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => n
         "py -m flujo job list", "py -m flujo delegate", "py -m flujo datadrop",
     ]
 
+    # Flags que un comando de esta lista puede llevar. Cualquier otra opcion se
+    # rechaza: `--output` convertia `flujo privacy sanitize` en "leeme este
+    # archivo y escribime este otro", y ese fue el hallazgo VCD-02 del
+    # diagnostico de seguridad del 2026-07-27, reproducido con una peticion
+    # `text/plain` desde un origen externo que devolvio el contenido de un
+    # archivo por stdout.
+    SAFE_FLAGS = {"--json", "--quiet", "-q", "--verbose", "-v", "--list",
+                  "--dry-run", "--check", "--limit", "--all"}
+
+    @staticmethod
+    def _arg_es_seguro(arg: str) -> bool:
+        """Un argumento que no puede sacar al comando de su propio terreno."""
+        if not arg:
+            return False
+        if arg.startswith("-"):
+            return arg.split("=", 1)[0] in HubRequestHandler.SAFE_FLAGS
+        # Nada de rutas absolutas ni de salir del arbol: `flujo job prepare
+        # /home/user/.ssh` pasaba la allowlist solo por empezar con el prefijo.
+        if arg.startswith(("/", "\\", "~")) or ".." in arg:
+            return False
+        if len(arg) > 1 and arg[1] == ":":      # C:\... en Windows
+            return False
+        # Metacaracteres de shell: no hay shell aca (se usa shlex + lista de
+        # args), pero un argumento con esto no es un dato legitimo de este CLI.
+        return not any(ch in arg for ch in ";|&`$><\n\r\0")
+
+    def _origen_propio(self, origen: str) -> bool:
+        """Solo el propio hub. Un `Origin` de otro sitio no entra.
+
+        Se compara contra el `Host` de la peticion, no contra una lista escrita:
+        el hub cambia de puerto cuando el 8765 esta ocupado, y una lista fija
+        se rompe justo ahi.
+        """
+        from urllib.parse import urlparse
+        try:
+            o = urlparse(origen)
+        except ValueError:
+            return False
+        if o.scheme not in ("http", "https"):
+            return False
+        host = (self.headers.get("Host") or "").strip()
+        if o.netloc == host:
+            return True
+        # `Host` puede venir sin puerto o con otro alias del loopback
+        solo = o.hostname or ""
+        return solo in ("127.0.0.1", "localhost", "::1") and host.split(":")[0] in (
+            "127.0.0.1", "localhost", "::1", "")
+
     def _is_safe_cmd(self, cmd: str) -> bool:
         c = cmd.lower().strip()
         if not c:
             return False
-        for pref in self.SAFE_PREFIXES:
-            if c.startswith(pref.lower()):
-                return True
-        # allow short safe ones
+        if len(c) > 400:                 # nada legitimo aca es tan largo
+            return False
         if c in ("flujo version", "flujo health", "flujo daily"):
             return True
-        return False
+
+        # El prefijo tiene que terminar en LIMITE de palabra. Con `startswith`
+        # a secas, `flujo version-not-safe` pasaba por empezar igual que un
+        # comando permitido.
+        base = None
+        for pref in self.SAFE_PREFIXES:
+            p = pref.lower()
+            if c == p or c.startswith(p + " "):
+                base = p
+                break
+        if base is None:
+            return False
+
+        # Y despues del prefijo, cada argumento se valida uno por uno. La
+        # allowlist decia QUE comando corre; no decia nada de con que.
+        try:
+            resto = shlex.split(cmd.strip()[len(base):])
+        except ValueError:               # comillas sin cerrar
+            return False
+        return all(self._arg_es_seguro(a) for a in resto)
 
     def _run_safe_command(self, cmd: str) -> dict:
         if not self._is_safe_cmd(cmd):
