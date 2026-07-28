@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """research_lib -- nucleo compartido del nucleo research MAK (sin n8n).
 
-Proveedores LLM gratis con fallback (groq -> cerebras -> azure -> ollama),
+Proveedores LLM gratis/locales con fallback (cerebras -> groq -> ollama),
 busqueda Tavily, fetch de paginas y utilidades comunes que usan
 research.py / panel.py / cola.py. Stdlib-only (urllib), Python 3.11.
 
@@ -55,9 +55,9 @@ def escala_tok(base, densidad="medio"):
     return min(int(base * DENSIDAD_TOK.get(densidad, 1.0)), TOPE_TOK)
 
 
-# Modelo "capaz": el mas fuerte razonando/correlacionando. gpt-5-mini
-# (azure) por defecto; se usa para correlacion semantica y auto-reparacion.
-MODELO_CAPAZ = "azure"
+# Modelo capaz gratuito: Cerebras gpt-oss-120b. Azure/gpt-5-mini queda fuera
+# de MAK mientras el usuario trabaja con ese cupo en la sesion principal.
+MODELO_CAPAZ = "cerebras"
 
 # Salud de proveedores: registro persistente de exitos/fallos por proveedor
 # en una ventana de tiempo, para no reintentar de entrada un proveedor que
@@ -175,7 +175,7 @@ def orden_por_salud(orden, stats):
 
 
 # Slots de modelo por ROL (throughput-first). El grueso a los rapidos; el capaz
-# (azure) solo donde razonar importa (sintesis, juez, plan, diagnostico); las
+# (cerebras) donde razonar importa (sintesis, juez, plan, diagnostico); las
 # tareas cortas ('barato': resumen, status, clasificacion) van local primero
 # para ahorrar cupo. red_ok() ya mete ollama al frente si no hay internet.
 # ORDEN POR EFECTIVIDAD MEDIDA (2026-07-26, ver salud_proveedores.json).
@@ -186,8 +186,8 @@ def orden_por_salud(orden, stats):
 # groq no se elimina: baja a ultimo recurso remoto. Si mejora, vuelve a subir
 # por el mismo criterio: medicion, no costumbre.
 _SLOTS = {
-    "razonar": "azure,cerebras,groq,ollama",
-    "bulk": "cerebras,groq,azure,ollama",
+    "razonar": "cerebras,groq,ollama",
+    "bulk": "cerebras,groq,ollama",
     "barato": "ollama,cerebras,groq",
 }
 

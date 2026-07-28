@@ -35,7 +35,7 @@ INDEX_FILE = os.path.join(MEM_DIR, "index.jsonl")
 # Antes el micelio solo contenia lo que MAK escribio sobre si mismo, asi que
 # no podia relacionar las obras entre si -- que es el mapa que se queria.
 FUENTES = ("informes", "paneles", "cadenas", "refutaciones",
-           "correlaciones", "grafos", "codex", "corpus")
+           "correlaciones", "grafos", "codex", "corpus", "ideas")
 EMBED_MODEL = os.environ.get("OLLAMA_EMBED_MODEL", "nomic-embed-text")
 OLLAMA = os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
 
@@ -165,6 +165,14 @@ def indexar(rebuild=False, log=lambda s: None):
     archivos ya indexados con el mismo mtime; re-indexa los que cambiaron.
     Devuelve {archivos, chunks, nuevos}."""
     load_env()
+    # Ideas are canonical in plataforma/ideas.jsonl. Materialize them before
+    # walking FUENTES so they inhabit the same semantic membrane as works,
+    # research and code instead of living in a separate inbox.
+    try:
+        import ideas_a_micelio
+        ideas_a_micelio.sincronizar()
+    except Exception as exc:  # noqa: BLE001 - an unavailable adapter must not erase memory
+        log("aviso: no se sincronizaron ideas: %s" % str(exc)[:120])
     previas = [] if rebuild else _cargar_index()
     # (path -> mtime) ya indexado
     indexado = {}

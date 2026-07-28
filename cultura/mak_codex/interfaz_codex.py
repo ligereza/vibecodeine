@@ -151,7 +151,7 @@ button:hover{background:#b1c893}
 <div class="nodo activo" id="nodo-plan" style="left:290px;top:20px">
   <div class="nodo-h"><div class="nodo-ic">A</div><div><div class="nodo-t">Plan</div>
   <div class="nodo-s">azure · spec/tests</div></div></div>
-  <div class="nodo-b">modelo capaz del research (gpt-5-mini)</div>
+  <div class="nodo-b">planner research (Cerebras gpt-oss-120b)</div>
   <span class="puerto puerto-in"></span><span class="puerto puerto-out"></span>
 </div>
 <div class="nodo activo" id="nodo-coder" style="left:560px;top:20px;width:210px" onclick="toggleCoder()">

@@ -3,8 +3,8 @@
 
 Motor de codigo: DeepSeek via NVIDIA NIM (endpoints gratis hosteados) con
 fallback a un DeepSeek local en ollama. NADA de Qwen (el usuario lo descarto:
-"never understands the task"). El PLANNER (spec) usa el modelo capaz del
-research (gpt-5-mini) porque planificar != codear.
+"never understands the task"). El PLANNER usa Cerebras gpt-oss-120b porque
+planificar != codear; GPT mini/Azure no participa en MAK.
 
 El codigo generado se filtra ESTATICAMENTE y solo entonces corre con limites
 duros de recursos. Piezas en ~/codex/piezas (.py + .md hermano indexable por
@@ -214,9 +214,9 @@ def coder_llm():
 
 
 def planner_llm():
-    """El PLANNER (spec/tests): modelo capaz del research (gpt-5-mini)."""
+    """El PLANNER (spec/tests): Cerebras, con Groq/Ollama de fallback."""
     load_env()
-    return LLM(order="%s,groq,cerebras,ollama" % MODELO_CAPAZ)
+    return LLM(order="%s,groq,ollama" % MODELO_CAPAZ)
 
 
 def escanear(codigo):

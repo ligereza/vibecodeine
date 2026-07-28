@@ -1988,7 +1988,8 @@ function filtrarArchivo(q) {
 // ══════════════════════════════════════════════════════════════════════
 var DIR_COLORS = {informes:'#9db67c',paneles:'#d4a259',cadenas:'#7ba6a3',
                  refutaciones:'#c46d5e',correlaciones:'#b48ead',
-                 grafos:'#93a8c7',memoria:'#e0c58f'};
+                 grafos:'#93a8c7',memoria:'#e0c58f',corpus:'#c98f6a',
+                 codex:'#6fa8dc',ideas:'#f4f1e6'};
 var MAPA = {
   nodes: [], edges: [], byId: {}, loaded: false, running: false,
   view: {x: 0, y: 0, k: 1}, umbral: 0.55, dirOff: {},
@@ -2384,12 +2385,17 @@ function mapNodeClick(n, e) {
   MAPA.sel = n.id;
   var card = document.getElementById('map-action');
   var modo = workflow.mode || 'single';
+  var naturaleza = n.dir === 'corpus' ? 'obra' : (n.dir === 'ideas' ? 'idea' :
+                    (n.dir === 'codex' ? 'código' : 'investigación'));
   card.innerHTML =
     '<div class="ma-title">' + esc(limpiarTema(n.titulo) || n.id) + '</div>' +
-    '<div class="ma-meta">' + esc(n.dir) + ' &middot; ' + n.chunks + ' frag &middot; ' + n.deg + ' filamentos</div>' +
+    '<div class="ma-meta">' + esc(naturaleza) + ' · ' + esc(n.dir) + ' &middot; ' + n.chunks + ' frag &middot; ' + n.deg + ' filamentos</div>' +
     '<div class="ma-btns">' +
       '<button onclick="verArchivo(\'' + esc(n.dir) + '\',\'' + encodeURIComponent(n.id) + '\')">&#128214; Abrir</button>' +
-      '<button class="ma-go" onclick="mapInvestigar(\'' + encodeURIComponent(n.id) + '\')">&#9654; Investigar (' + esc(modo) + ')</button>' +
+      '<button class="ma-go" onclick="mapInvestigar(\'' + encodeURIComponent(n.id) + '\')">&#9654; Investigar</button>' +
+      '<button onclick="mapDebatir(\'' + encodeURIComponent(n.id) + '\')">&#8644; Debatir</button>' +
+      '<button onclick="mapExperimentar(\'' + encodeURIComponent(n.id) + '\')">&#9881; Experimentar</button>' +
+      '<button onclick="mapAnotarDesde(\'' + encodeURIComponent(n.id) + '\')">&#10022; Idea desde aquí</button>' +
       '<button onclick="mapPuente(\'' + encodeURIComponent(n.id) + '\')">&#128279; Puente</button>' +
       '<button onclick="mapCloseActions()">&#10005;</button>' +
     '</div>';
@@ -2411,6 +2417,52 @@ function mapInvestigar(idEnc) {
   if (!n) return;
   mapCloseActions();
   mapRunDesde('profundizar: ' + limpiarTema(n.titulo), 'desde ' + n.dir);
+}
+
+function mapDebatir(idEnc) {
+  var n = MAPA.byId[decodeURIComponent(idEnc)];
+  if (!n) return;
+  mapCloseActions();
+  mapRunModo('panel', 'debatir y contradecir desde esta materia: ' + limpiarTema(n.titulo), 'debate');
+}
+
+function mapExperimentar(idEnc) {
+  var n = MAPA.byId[decodeURIComponent(idEnc)];
+  if (!n) return;
+  mapCloseActions();
+  var pedido = 'Construir un experimento mínimo y medible relacionado con: ' + limpiarTema(n.titulo) +
+    '. Debe declarar entrada, transformación, salida y prueba reproducible.';
+  fetch('/api/codex/experimentar', {
+    method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'pedido='+encodeURIComponent(pedido)+'&modo=generar&densidad=corto'
+  }).then(function(r){return r.json();}).then(function(d){
+    showToast(d.ok ? 'Experimento enviado a Codex; aparecerá como materia nueva.' :
+      ('Codex no aceptó: '+(d.error||'?')), d.ok?'success':'error');
+  }).catch(function(){showToast('No se pudo hablar con Codex','error');});
+}
+
+function mapAnotarDesde(idEnc) {
+  var n = MAPA.byId[decodeURIComponent(idEnc)];
+  if (!n) return;
+  var texto = prompt('Idea nacida desde "' + limpiarTema(n.titulo) + '":');
+  if (!texto || !texto.trim()) return;
+  fetch('/api/ideas/anotar', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({accion:'anotar', texto:texto.trim()+'\n\nOrigen visible: '+n.dir+'/'+n.id})
+  }).then(function(r){return r.json();}).then(function(d){
+    if(d.ok){showToast('Idea guardada; entrará al micelio en el próximo pulso.','success');}
+    else showToast('No se anotó: '+(d.error||'?'),'error');
+  }).catch(function(){showToast('No se pudo guardar la idea','error');});
+}
+
+function mapRunModo(modo, tema, origen) {
+  var dens = (document.getElementById('run-densidad') || {value:'medio'}).value;
+  fetch('/run',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'tema='+encodeURIComponent(tema)+'&modo='+encodeURIComponent(modo)+'&densidad='+dens})
+  .then(function(r){return r.json();}).then(function(d){
+    showToast(d.ok ? ('Proceso iniciado ('+origen+'); su materia volverá al micelio.') :
+      ('Error: '+(d.error||'?')), d.ok?'success':'error');
+  }).catch(function(){showToast('Error de conexión','error');});
 }
 
 function mapPuente(idEnc) {
@@ -3081,6 +3133,34 @@ class H(BaseHTTPRequestHandler):
         self._html(page)
 
     def do_POST(self):
+      # Same-origin bridges: the micelio is the common work surface. The
+      # browser never has to leave it or depend on cross-port CORS.
+      if self.path == "/api/codex/experimentar":
+        largo = min(int(self.headers.get("Content-Length") or 0), 12000)
+        raw = self.rfile.read(largo)
+        try:
+          req = urllib.request.Request(
+            "http://127.0.0.1:8891/run", data=raw, method="POST",
+            headers={"Content-Type": "application/x-www-form-urlencoded"})
+          with urllib.request.urlopen(req, timeout=8) as r:
+            payload = json.loads(r.read(20000).decode("utf-8", "replace"))
+          return self._json_response(payload)
+        except Exception as e:  # noqa: BLE001
+          return self._json_response({"ok": False, "error": str(e)[:200]}, 502)
+
+      if self.path == "/api/ideas/anotar":
+        largo = min(int(self.headers.get("Content-Length") or 0), 12000)
+        raw = self.rfile.read(largo)
+        try:
+          req = urllib.request.Request(
+            "http://127.0.0.1:8900/api/ideas", data=raw, method="POST",
+            headers={"Content-Type": "application/json"})
+          with urllib.request.urlopen(req, timeout=8) as r:
+            payload = json.loads(r.read(20000).decode("utf-8", "replace"))
+          return self._json_response(payload)
+        except Exception as e:  # noqa: BLE001
+          return self._json_response({"ok": False, "error": str(e)[:200]}, 502)
+
         # API: save workflow
         if self.path == "/api/workflow":
             largo = min(int(self.headers.get("Content-Length") or 0), 50000)

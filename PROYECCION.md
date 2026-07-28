@@ -38,8 +38,24 @@ Cuando la inteligencia sea agua, la tubería ya está puesta.
 
 ## 2. La visión: de sistema a obra
 
-El repo puede dejar de ser "la infraestructura de un artista" y ser **la obra
-misma**. Tres órganos ya laten solos: MAK percibe, RD entrega, iskvw expresa.
+El repo no es solamente "la infraestructura de un artista": **main es la obra
+que contiene el avance completo**. El SVG animado del README no la ilustra ni
+la adorna; establece su operación: contenido, forma, historial y mecanismo son
+una misma materia. No se modifica porque es una pieza terminada, pero el resto
+del repositorio continúa lo que esa pieza declara.
+
+Las áreas hacen legible el organismo sin partirlo en repositorios incompletos:
+
+- **RD** es la ONG: intervención, datos, eventos, suplementos y entrega.
+- **iskvw** es el artista: práctica, archivo, curaduría y portafolio.
+- **MAK** es el servidor/generador/curador: percibe, investiga, relaciona y
+   devuelve materia a las otras dos áreas.
+
+En Git, `mak` sigue siendo un inbox que drena a `main`, no una línea permanente.
+En la obra, MAK sí es el tercer órgano. La diferencia evita confundir topología
+de entrega con estructura conceptual.
+
+Tres órganos ya laten solos: MAK percibe, RD entrega, iskvw expresa.
 La dirección de crecimiento no es más features sino más **circulación**:
 fotografía → percepción → archivo → flyer → evento → base RD → percepción.
 Cada trimestre, un eslabón manual de ese círculo se automatiza. Cuando el

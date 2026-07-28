@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""generar.py -- CODEX: plan (gpt-5-mini) -> codigo (DeepSeek) -> sandbox ->
+"""generar.py -- CODEX: plan (Cerebras) -> codigo (DeepSeek) -> scan/run ->
 reparacion -> pieza.
 
     python3 generar.py "un parser de csv a json" [--densidad corto|medio|largo]
@@ -24,7 +24,7 @@ def generar(pedido, densidad="medio", ejecutar=True):
     planner = planner_llm()
     coder = coder_llm()
 
-    print("STATUS: Planificando (gpt-5-mini)...", flush=True)
+    print("STATUS: Planificando (Cerebras gpt-oss-120b)...", flush=True)
     plan, real_plan = planner.call(
         "Eres el arquitecto del departamento Codex. Respondes en espanol, "
         "conciso y tecnico.",

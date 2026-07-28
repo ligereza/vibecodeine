@@ -3,7 +3,7 @@
 
 4 busquedas Tavily en paralelo (angulos historico / estetico / legal /
 tecnico), 4 panelistas = 4 modelos distintos (uno por API disponible),
-N rondas de replica cruzada, sintesis final con gpt-5-mini.
+N rondas de replica cruzada, sintesis final con Cerebras gpt-oss-120b.
 Salida: ~/research/paneles/STAMP-slug.{md,json}.
 
 Uso:
@@ -32,7 +32,7 @@ PANEL = [
      "query": "{tema} estetica arte representacion simbolica",
      "lente": "critico de arte: forma, simbolo, iconografia, como se "
               "representa y que estetica genera"},
-    {"angulo": "legal", "proveedor": "azure",
+    {"angulo": "legal", "proveedor": "groq",
      "query": "{tema} regulacion legal derecho politica publica",
      "lente": "analista juridico: marcos regulatorios, jurisprudencia, "
               "tensiones entre norma y practica cultural"},
@@ -124,7 +124,7 @@ def debatir(tema, replicas=2, densidad="medio"):
             for angulo, real, texto in ex.map(replica, PANEL):
                 habla[angulo].append((real, texto))
 
-    # 4. Sintesis final: gpt-5-mini primero en la cadena.
+    # 4. Sintesis final: Cerebras primero, luego Groq y Ollama local.
     print("STATUS: Sintetizando panel...", flush=True)
     transcripcion = "\n\n".join(
         "### Angulo %s (%s)\n\n%s" % (
@@ -141,7 +141,7 @@ def debatir(tema, replicas=2, densidad="medio"):
         "ABIERTAS, 6. FUENTES CITADAS.\n\nTRANSCRIPCION:\n%s\n\nFUENTES "
         "DE BUSQUEDA:\n%s"
         % (tema, transcripcion[:24000], "\n".join(fuentes)),
-        escala_tok(2200, densidad), order=["azure", "groq", "cerebras", "ollama"])
+        escala_tok(2200, densidad), order=["cerebras", "groq", "ollama"])
     print("HALLAZGO: sintesis -- " + sintesis[:140].replace("\n", " "), flush=True)
 
     # 5. Correlacion semantica: el modelo capaz ordena/relaciona lo que

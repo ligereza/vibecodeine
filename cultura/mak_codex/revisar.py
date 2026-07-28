@@ -49,7 +49,7 @@ def revisar(path, densidad="medio"):
     if _primer_hall and not _primer_hall.startswith("["):
         print("HALLAZGO: revision -- " + _primer_hall[:120].replace("\n", " "), flush=True)
 
-    print("STATUS: Veredicto (gpt-5-mini)...", flush=True)
+    print("STATUS: Veredicto (Cerebras gpt-oss-120b)...", flush=True)
     cuerpo = "\n\n".join("[%s]:\n%s" % (n, t) for n, _, t in hallazgos)
     try:
         veredicto, _ = planner.call(
