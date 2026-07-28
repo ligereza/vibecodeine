@@ -9,7 +9,11 @@ from datetime import datetime
 # Formato REAL de `cmd wifi list-scan-results` (HyperOS/Android 13+, verificado
 # en vivo 2026-07-18 sobre el Xiaomi):
 #     BSSID              Frequency      RSSI           Age(sec)     SSID    Flags
-#   2c:ea:dc:56:c4:1f       2412    -77(0:-84/1:-78)     8.504    Papucho  [WPA2-PSK-CCMP][ESS]
+#   02:00:00:00:00:02       2412    -77(0:-84/1:-78)     8.504    RED-EJEMPLO  [WPA2-PSK-CCMP][ESS]
+# (el ejemplo era una red de un vecino, con su BSSID real, en un repo
+#  publico: un BSSID se resuelve a coordenadas en bases de wardriving.
+#  Ahora es ficticio -- 02: es el bit de "localmente administrada" y no
+#  se asigna a hardware real. VCD-08, 2026-07-27.)
 _SCAN_COLUMNAR = re.compile(
     r"^\s*([0-9a-fA-F:]{17})\s+(\d+)\s+(-?\d+)(?:\([^)]*\))?\s+([\d.]+)\s+(.*?)\s*(\[.*\])?\s*$"
 )

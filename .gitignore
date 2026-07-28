@@ -230,3 +230,9 @@ xio/show_kit/*_autosave/
 # versiona: congelarlo ahora seria fijar la forma con los datos mas pobres que
 # va a haber, justo antes de que la percepcion del archivo del artista termine.
 iskvw/datos/archivo.json
+
+# Herramientas de otros agentes que el usuario tiene en su checkout. No son
+# del repo y se colaron DOS veces en commits mios por un `git add -A`
+# (2026-07-27). Ignorarlas es mas barato que acordarse.
+.agents/
+.codex/

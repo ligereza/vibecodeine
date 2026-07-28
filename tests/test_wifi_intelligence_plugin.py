@@ -1,4 +1,16 @@
 """
+NOTA DE PRIVACIDAD (2026-07-27, hallazgo VCD-08 del diagnostico de seguridad):
+este fixture tenia BSSID y SSID de un escaneo REAL -- redes de vecinos, en un
+repo publico. Un BSSID se resuelve a coordenadas en bases publicas de
+wardriving, asi que eso ubicaba la casa del usuario y exponia datos de terceros
+que nunca dieron permiso.
+
+Ahora son ficticios y se nota que lo son: las MAC empiezan con 02:, el bit de
+"localmente administrada", que no se asigna a hardware real. El test mide el
+PARSEO del formato columnar, asi que los valores no importan; que sean reales,
+si.
+"""
+"""
 Off-device tests for xio/new-plugins/wifi_intelligence/__init__.py (pieza
 MANIFIESTO #5 -- "WiFi Intelligence", registered previously as "parcial:
 plugin sin tests").
@@ -94,10 +106,10 @@ SSID: "NetworkC"
 # (HyperOS, 2026-07-18) -- formato columnar, NO el legado "SSID:"/"signal:".
 SCAN_RESULTS_COLUMNAR = """\
     BSSID              Frequency      RSSI           Age(sec)     SSID                                 Flags
-  58:b5:68:48:bb:08       2432    -84(0:-88/1:-86)     1.919    dkzEe0UQPJn0l6fhz2lTKRkn1Lf2BD1q  [WPA2-EAP/SHA1-CCMP][RSN-EAP/SHA1-CCMP][ESS][MFPC]
-  2c:ea:dc:56:c4:1f       2412    -77(0:-84/1:-78)     8.504    Papucho                           [WPA2-PSK-CCMP][RSN-PSK-CCMP][ESS][WPS]
-  64:9d:f3:d0:da:a8       2432    -68(0:-71/1:-71)     1.878    Gyhltda                           [WPA2-PSK-CCMP][RSN-PSK-CCMP][ESS][WPS]
-  68:59:11:e4:3c:d0       2437    -76(0:-85/1:-77)     7.832    CRISTIAN                          [WPA2-PSK-CCMP][RSN-PSK-CCMP][ESS][WPS]
+  02:00:00:00:00:01       2432    -84(0:-88/1:-86)     1.919    RED-EAP-EJEMPLO                   [WPA2-EAP/SHA1-CCMP][RSN-EAP/SHA1-CCMP][ESS][MFPC]
+  02:00:00:00:00:02       2412    -77(0:-84/1:-78)     8.504    RED-VECINA-1                      [WPA2-PSK-CCMP][RSN-PSK-CCMP][ESS][WPS]
+  02:00:00:00:00:03       2432    -68(0:-71/1:-71)     1.878    RED-VECINA-2                      [WPA2-PSK-CCMP][RSN-PSK-CCMP][ESS][WPS]
+  02:00:00:00:00:04       2437    -76(0:-85/1:-77)     7.832    RED-VECINA-3                      [WPA2-PSK-CCMP][RSN-PSK-CCMP][ESS][WPS]
 """
 
 
@@ -429,13 +441,13 @@ def test_parse_scan_results_columnar_real_device():
     nets = wifi_intelligence.parse_scan_results(SCAN_RESULTS_COLUMNAR)
     assert len(nets) == 4  # header no produce entrada
     por_ssid = {n["ssid"]: n for n in nets}
-    assert por_ssid["Papucho"]["signal"] == -77
-    assert por_ssid["Papucho"]["frequency"] == 2412
-    assert por_ssid["Papucho"]["bssid"] == "2c:ea:dc:56:c4:1f"
-    assert por_ssid["CRISTIAN"]["signal"] == -76
-    assert "[WPA2-PSK-CCMP]" in por_ssid["Gyhltda"]["flags"]
+    assert por_ssid["RED-VECINA-1"]["signal"] == -77
+    assert por_ssid["RED-VECINA-1"]["frequency"] == 2412
+    assert por_ssid["RED-VECINA-1"]["bssid"] == "02:00:00:00:00:02"
+    assert por_ssid["RED-VECINA-3"]["signal"] == -76
+    assert "[WPA2-PSK-CCMP]" in por_ssid["RED-VECINA-2"]["flags"]
     # el SSID largo tipo hash tambien parsea entero
-    assert "dkzEe0UQPJn0l6fhz2lTKRkn1Lf2BD1q" in por_ssid
+    assert "RED-EAP-EJEMPLO" in por_ssid
 
 
 def test_parse_scan_results_legacy_still_supported():
@@ -458,7 +470,7 @@ def test_api_scan_columnar_via_route(tmp_path, monkeypatch):
     assert r.status_code == 200
     body = r.get_json()
     assert len(body) == 4
-    assert {n["ssid"] for n in body} >= {"Papucho", "Gyhltda", "CRISTIAN"}
+    assert {n["ssid"] for n in body} >= {"RED-VECINA-1", "RED-VECINA-2", "RED-VECINA-3"}
     plugin.on_unload()
 
 

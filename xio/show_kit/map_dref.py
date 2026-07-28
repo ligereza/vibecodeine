@@ -22,10 +22,14 @@ import re
 import sys
 import unicodedata
 import xml.etree.ElementTree as ET
+import os
 from pathlib import Path
 
 DEF_TC = r"C:\DREF CHOCOLATE\timecode.json"
-DEF_AVC = r"C:\Users\issvk\Documents\Resolume Arena\Compositions\CURICO DREF.avc"
+# La ruta llevaba el nombre de usuario de Windows en un repo publico
+# (VCD-08). Sale del entorno o del perfil del usuario que corra esto.
+DEF_AVC = os.environ.get("DREF_AVC") or str(
+    Path.home() / "Documents" / "Resolume Arena" / "Compositions" / "CURICO DREF.avc")
 HERE = Path(__file__).resolve().parent
 
 # alias manuales: nombre de tema (normalizado) -> nombre de clip (normalizado)

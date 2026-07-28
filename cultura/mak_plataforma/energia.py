@@ -11,8 +11,28 @@ import json
 import subprocess
 import sys
 
-MAC_ETH = "8c:47:be:20:02:67"    # enp3s0 (enlace al PC Windows)
-MAC_WIFI = "a8:7e:ea:41:63:a1"   # wlp0s20f3 (red del teléfono Xiaomi)
+# Las MAC de las interfaces de esta caja. Estaban escritas aca y este repo es
+# PUBLICO: una MAC identifica hardware y sirve para reconocimiento dirigido
+# (hallazgo VCD-08 del diagnostico de seguridad, 2026-07-27). Ahora se leen del
+# entorno o del propio sistema, que es donde viven de verdad.
+#
+# Se resuelven en este orden: MAK_MAC_ETH / MAK_MAC_WIFI del entorno, y si no,
+# lo que diga /sys para esa interfaz. Si no hay ninguna, quedan vacias y el
+# llamador se entera en vez de comparar contra una constante equivocada.
+def _mac_de(iface: str, var: str) -> str:
+    import os
+    valor = os.environ.get(var, "").strip()
+    if valor:
+        return valor.lower()
+    try:
+        with open("/sys/class/net/%s/address" % iface) as fh:
+            return fh.read().strip().lower()
+    except OSError:
+        return ""
+
+
+MAC_ETH = _mac_de("enp3s0", "MAK_MAC_ETH")    # enlace al PC Windows
+MAC_WIFI = _mac_de("wlp0s20f3", "MAK_MAC_WIFI")  # red del telefono Xiaomi
 CON_ETH = "lan-kvm"
 
 
