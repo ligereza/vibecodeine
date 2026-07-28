@@ -102,7 +102,45 @@ class TestPaginaMarcoUnico:
         assert 'data-dep="research"' in hub.PAGINA
         assert 'data-dep="codex"' in hub.PAGINA
 
+    def test_el_sistema_visible_es_la_entrada_principal(self):
+        assert 'data-dep="sistema" class="on"' in hub.PAGINA
+        assert 'id="pan-sistema" class="on"' in hub.PAGINA
+        assert "activarDep('sistema')" in hub.PAGINA
+        assert "/api/inventario" in hub.PAGINA
+
     def test_no_contiene_canvas_organismo_viejo(self):
         assert "crearEstatico" not in hub.PAGINA
         assert 'id="circuitos"' not in hub.PAGINA
         assert "nodo-mic" not in hub.PAGINA
+
+
+class TestInventarioVisible:
+    def test_cuenta_herramientas_y_productos_sin_ejecutarlos(self, tmp_path, monkeypatch):
+        for nombre in ("plataforma", "research", "codex", "curatoria"):
+            (tmp_path / nombre).mkdir()
+        (tmp_path / "research" / "memoria.py").write_text(
+            '"""Indexa el cuaderno y el micelio."""\nraise RuntimeError("NO EJECUTAR")\n',
+            encoding="utf-8")
+        informes = tmp_path / "research" / "informes"
+        informes.mkdir()
+        (informes / "resultado.md").write_text("evidencia", encoding="utf-8")
+        monkeypatch.setattr(hub, "HOME", str(tmp_path))
+        monkeypatch.setattr(hub, "_procesos_por_organo", lambda: {
+            "plataforma": [], "research": ["interfaz.py"],
+            "codex": [], "curatoria": []})
+
+        inventario = hub._inventario()
+
+        research = next(o for o in inventario["organos"] if o["id"] == "research")
+        assert research["total_herramientas"] == 1
+        assert research["herramientas"][0] == {
+            "nombre": "memoria.py", "descripcion": "Indexa el cuaderno y el micelio."}
+        assert research["total_productos"] == 1
+        assert research["productos"][0]["nombre"] == "informes/resultado.md"
+        assert research["procesos"] == ["interfaz.py"]
+        assert inventario["resumen"]["organos"] == 4
+
+    def test_no_expone_carpetas_fuera_de_los_cuatro_organos(self):
+        assert {o["id"] for o in hub._ORGANOS} == {
+            "plataforma", "research", "codex", "curatoria"}
+        assert all(o["ruta"].startswith("~/") for o in hub._ORGANOS)
