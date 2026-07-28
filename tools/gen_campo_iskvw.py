@@ -47,7 +47,7 @@ def cargar_filtro(ruta: Path = FILTRO) -> dict:
     en todo, que es lo que no pierde nada.
     """
     base = {"incluir": [], "excluir": [], "sin_clasificar": "incluir",
-            "sinonimos": {}}
+            "sinonimos": {}, "carpetas": []}
     try:
         d = json.loads(ruta.read_text(encoding="utf-8"))
     except (OSError, ValueError) as exc:
@@ -71,6 +71,32 @@ def normalizar(tipo: str, sinonimos: dict) -> str:
     """
     t = (tipo or "").strip().lower()
     return (sinonimos.get(t) or t)
+
+
+def de_carpeta(archivo: str) -> str:
+    """De que parte del export viene la obra. Es lo primero del `ruta_rel`."""
+    return (archivo or "").replace("\\", "/").split("/")[0]
+
+
+def entra_carpeta(archivo: str, f: dict) -> bool:
+    """El origen manda sobre el tipo, y por una razon que no es tecnica.
+
+    Medido el 2026-07-27, ya con el sitio publicado: de 640 obras servidas en
+    iskvw.cl solo 208 venian de `posts/`. Habia 141 de `archived_posts/` -- que
+    son publicaciones que el usuario ARCHIVO, o sea que decidio sacar de su
+    perfil -- y 291 de `other/`, que en un export de Instagram no es el feed.
+    Publicar lo archivado revierte una decision suya, y eso no lo arregla
+    ninguna prueba verde.
+
+    `carpetas` vacio significa TODAS, igual que `incluir`: el default no
+    descarta nada y el criterio se edita en el archivo. Si una carpeta se
+    nombra, entra solo esa. Una obra sin ruta no se puede ubicar, asi que
+    cuando hay lista, no entra.
+    """
+    permitidas = [c.strip().lower() for c in (f.get("carpetas") or []) if c]
+    if not permitidas:
+        return True
+    return de_carpeta(archivo).lower() in permitidas
 
 
 def entra(tipo: str, f: dict) -> bool:
@@ -274,6 +300,16 @@ def escribir_indice_trazos(dir_trazos: Path) -> int:
     return 0
 
 
+def _contar_carpetas(piezas: list) -> dict:
+    """De donde salio lo que quedo. Va en la salida para que el alcance de lo
+    publicado sea legible sin abrir el archivo: eso es justo lo que no se vio."""
+    c = {}
+    for p in piezas:
+        k = de_carpeta(p.get("archivo", "")) or "(sin ruta)"
+        c[k] = c.get(k, 0) + 1
+    return dict(sorted(c.items(), key=lambda x: -x[1]))
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--salida", type=Path,
@@ -320,11 +356,13 @@ def main() -> int:
     # quedan colocadas por vecinas que ya no estan. Filtrar despues seria
     # exactamente el defecto que este archivo persigue -- una posicion que
     # afirma una cercania que no se midio.
-    tipos = {}
+    tipos, carpetas = {}, {}
     for oid in ids:
         d = meta.get(oid.split("-", 1)[0], {})
         tipos[oid] = normalizar(d.get("tipo", ""), filtro["sinonimos"])
-    quedan = [i for i, oid in enumerate(ids) if entra(tipos[oid], filtro)]
+        carpetas[oid] = d.get("archivo", "")
+    quedan = [i for i, oid in enumerate(ids)
+              if entra_carpeta(carpetas[oid], filtro) and entra(tipos[oid], filtro)]
     fuera = len(ids) - len(quedan)
     if not quedan:
         print("el filtro dejo el campo vacio: revisa "
@@ -372,7 +410,8 @@ def main() -> int:
             # parecer material perdido.
             "filtradas": fuera,
             "filtro": {k: filtro[k] for k in
-                       ("incluir", "excluir", "sin_clasificar")},
+                       ("incluir", "excluir", "sin_clasificar", "carpetas")},
+            "por_carpeta": _contar_carpetas(piezas),
             "sin_clasificar": sum(1 for p in piezas if not p["tipo"]),
             "tipos": sorted({p["tipo"] for p in piezas if p["tipo"]}),
         },
