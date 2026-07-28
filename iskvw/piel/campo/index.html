@@ -464,7 +464,14 @@ async function tomarForma(o){
     }
     // Tantos puntos como nodos hay: la forma la dibuja el campo entero, asi que
     // pedir mas puntos que nodos seria pedir glifos que nadie puede poner.
-    pts = svg ? muestrear(pathsDe(svg), NODOS.length) : null;
+    // Cuantos puntos se miden. El muestreo es lo unico caro de todo esto y
+    // escala con la densidad del trazo: medido en gama baja con CPU x6, una
+    // obra de 14 puntos costo 60 ms y una de 2031 costo 424 -- casi medio
+    // segundo de tiron al resolverla. El dibujo, en cambio, va a 60 fps con
+    // cualquiera. Asi que se acota lo que cuesta y no lo que se ve: por encima
+    // de 900 subpuntos la figura no gana definicion, solo cuesta.
+    const tope = Math.min(NODOS.length, innerWidth < 520 ? 460 : 900);
+    pts = svg ? muestrear(pathsDe(svg), tope) : null;
     _forma.set(corto, pts);
   }
   if (mio !== _pidForma) return;      // el visitante ya siguio de largo
