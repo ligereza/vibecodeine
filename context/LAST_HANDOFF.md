@@ -112,32 +112,20 @@ Working and verified live: the DREF show chain (LTC -> Chataigne -> OSC -> phone
 profiles, and the documentation ratchets (`test_mapa_completo`,
 `test_higiene_docs`).
 
-## Cierre del 2026-07-27: el diagnostico de seguridad, ejecutado
+## Security diagnosis status (2026-07-28)
 
-El usuario trajo un diagnostico externo con 10 hallazgos. Se cerraron 8 en el
-repo; los dos criticos primero. Lo que vale conservar no es la lista sino tres
-cosas que se aprendieron ejecutandola:
+Eight of ten findings are closed. VCD-06 now caps request bodies at 8 MB in the
+two previously uncapped `src/flujo` handlers (`serve/server.py`, `web/hub.py`)
+and returns 413 on excess; the three `cultura/` handlers were already capped.
+VCD-07 remains partial: pin Actions to SHAs and add Dependabot. VCD-10 was
+assigned to MAK but has not been verified running.
 
-- **El informe no lo ve todo.** Un barrido propio encontro DOS casos que no
-  listaba, y el peor de VCD-08 era uno de ellos: BSSID y SSID de redes de
-  VECINOS en el fixture del plugin de wifi. Un BSSID se resuelve a coordenadas
-  en bases publicas de wardriving. Por eso el ratchet vigila la CLASE y no los
-  casos.
-- **La recomendacion generica puede ser incorrecta para este contexto.** Se puso
-  autenticacion global en xio y el usuario la retiro: su hotspot tiene clave y
-  un token seria friccion en mitad de un show. El propio informe condiciona esa
-  severidad a "una red con clientes no totalmente confiables". Pero su
-  correccion tampoco cubria todo: CORS abierto no lo tapa la clave del wifi,
-  porque ahi el atacante es una pagina web, no un cliente de la red.
-- **Y que sea del usuario no significa que sea seguro.** Sus palabras. El puente
-  de portapapeles (`clip-bridge-recv`) escuchaba en 0.0.0.0 en las cuatro
-  interfaces de MAK y escribia lo recibido DIRECTO al portapapeles: pegar eso en
-  una terminal lo ejecuta. Acotado a la LAN y a 64 KB.
+## Stash triage (2026-07-28)
 
-Sin arreglar y por que: **VCD-06** (limites de recursos) quedo a medias -- el
-tope global de cuerpo en `do_POST` esta escrito y sin commitear. **VCD-07** solo
-a medias: falta fijar las Actions a SHA y poner Dependabot. **VCD-10** esta
-encargado a MAK y NADIE verifico que se ejecute.
+- `stash@{0}` is valuable ASCII-skin work, preserved on
+  `origin/rescate/ascii-campo`; do not merge without the user's aesthetic call.
+- `stash@{1}` is redundant with main.
+- `stash@{2}` is ambiguous and includes rejected documents; do not apply whole.
 
 ## MAK como motor: sirve, y el checkpoint mentia
 
@@ -249,7 +237,9 @@ ALWAYS bound where to look for them.
   presentation or the style can be swapped) -> a `MAPA.md` per line so
   navigation is obvious -> README updated -> the handoff updated on every line.
   **RD and MAK are done. iskvw is what remains.** Its map is
-  `docs/rd/MAPA_RD.md` for RD; iskvw still needs its own.
+  `docs/rd/MAPA_RD.md` for RD; **iskvw's own map EXISTS since PR #368
+  (`iskvw/MAPA.md`)** -- this entry previously said it was missing and that
+  was stale.
 - **What the 2026-07-27 iskvw stretch got wrong.** Detail archived in
   `docs/handoffs/archive/20260727_iskvw_lo_que_fallo.md` (it treated the curation
   as a blocker, dismissed two references without opening them, invented a GPU

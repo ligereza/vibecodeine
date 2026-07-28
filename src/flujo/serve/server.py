@@ -32,6 +32,10 @@ from flujo.cotizaciones_base import generar_cotizacion_base
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse
 
+# Global request-body cap (VCD-06). 8 MB: large enough for a photo sent to the
+# tracer, small enough that an unbounded body cannot exhaust memory.
+MAX_BODY_BYTES = 8 * 1024 * 1024
+
 # raiz del repo = 3 niveles arriba de este archivo (src/flujo/serve/ -> repo)
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
@@ -345,6 +349,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         path = urlparse(self.path).path
         length = int(self.headers.get("Content-Length", 0) or 0)
+        if length > MAX_BODY_BYTES:
+            return self._json({"error": "cuerpo demasiado grande"}, 413)
         raw = self.rfile.read(length) if length else b"{}"
         try:
             payload = json.loads(raw.decode("utf-8") or "{}")
