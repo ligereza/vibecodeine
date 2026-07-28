@@ -6,10 +6,38 @@ fallback a un DeepSeek local en ollama. NADA de Qwen (el usuario lo descarto:
 "never understands the task"). El PLANNER (spec) usa el modelo capaz del
 research (gpt-5-mini) porque planificar != codear.
 
-El codigo generado se filtra ESTATICAMENTE y solo entonces corre en un
-sandbox con limites duros de recursos; lo que toca red/procesos NO se
-ejecuta, queda marcado para revision humana. Piezas en ~/codex/piezas
-(.py + .md hermano indexable por el micelio).
+El codigo generado se filtra ESTATICAMENTE y solo entonces corre con limites
+duros de recursos. Piezas en ~/codex/piezas (.py + .md hermano indexable por
+el micelio).
+
+ESTO NO ES UN SANDBOX, y decia que lo era (VCD-03 del diagnostico de seguridad,
+2026-07-27). El nombre importa porque hace que alguien confie.
+
+`_PELIGRO` es una lista de expresiones regulares. `-I -S`, `setrlimit`, un cwd
+temporal y un entorno reducido acotan RECURSOS; no aislan red, ni sistema de
+archivos, ni usuario, ni syscalls. Un sandbox es una frontera que el codigo de
+adentro no puede cruzar aunque quiera; esto es un colador que reconoce las
+formas que ya vio.
+
+Medido el 2026-07-27 contra las propias regex, 4 de 6 evasiones pasaron:
+
+    import os directo                BLOQUEA
+    string partido en exec           PASA
+    getattr sobre builtins           PASA
+    codecs rot13                     PASA
+    open('/etc/passwd')              BLOQUEA
+    open('../../../etc/passwd')      PASA     <- trivial
+
+No se agregaron mas regex a proposito: taparia esos cuatro y dejaria la misma
+ilusion un poco mas dificil de romper. El escaneo sirve como SENAL -- atrapa el
+descuido y el modelo que genera algo peligroso sin intencion -- y no como
+frontera.
+
+Frontera de verdad, si algun dia se ejecuta codigo que no vino del usuario: VM o
+contenedor rootless, usuario distinto, filesystem minimo de solo lectura, tmpfs
+para la salida, red apagada, seccomp, sin capabilities.
+
+Retiro de esta nota: cuando la ejecucion pase por esa frontera.
 """
 import json
 import os

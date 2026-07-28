@@ -379,14 +379,31 @@ def _cargar_jobs():
 
 
 def _guardia_codex(pedido):
-    """Guardia de entrada del coder: clasifica el pedido de codigo (dual-use
-    calibrado). Fail-open si el filtro no esta."""
+    """Guardia de entrada del coder: clasifica el pedido de codigo.
+
+    FAIL-CLOSED desde el 2026-07-27 (hallazgo VCD-03 del diagnostico de
+    seguridad). Antes, si el filtro no cargaba, devolvia None y el pedido
+    seguia: un guardia que se cae deja de existir justo cuando algo raro pasa,
+    que es cuando mas hace falta. Y "el filtro no esta" es un estado que se
+    provoca -- basta que el modulo falle al importar.
+
+    Se puede volver al comportamiento viejo con CODEX_SIN_GUARDIA=1, para no
+    dejar la caja trabada si el filtro se rompe de verdad; pero hay que pedirlo
+    y queda escrito en el log.
+    """
     try:
         sys.path.insert(0, "/home/mak/plataforma")
         import filtro_entrada
         return filtro_entrada.clasificar(pedido, contexto="codex")
-    except Exception:  # noqa: BLE001 - sin guardia = sigue
-        return None
+    except Exception as e:  # noqa: BLE001
+        if os.environ.get("CODEX_SIN_GUARDIA") == "1":
+            print("AVISO: guardia de codex no disponible (%s) y "
+                  "CODEX_SIN_GUARDIA=1: el pedido sigue sin clasificar" % e)
+            return None
+        return {"decision": "rechazado",
+                "motivo": "el guardia de entrada no esta disponible (%s). "
+                          "Un guardia que se cae no autoriza: rechaza. "
+                          "Para seguir igual, CODEX_SIN_GUARDIA=1" % e}
 
 
 def _validar_cadena(csv_value):
