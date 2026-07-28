@@ -36,7 +36,10 @@ REPO = Path(__file__).resolve().parents[1]
 _MAC_FICTICIA = re.compile(
     r"^(02:|aa:bb|01:23:45|bb:cc:dd|00:00:00|ff:ff:ff|de:ad:be)", re.I)
 _MAC = re.compile(r"\b[0-9a-f]{2}(?::[0-9a-f]{2}){5}\b", re.I)
-_USUARIO_WIN = re.compile(r"C:\\+Users\\+(?!<|%|\$|USUARIO|usuario|USER)[A-Za-z0-9_.-]+")
+# Nombres ficticios que SI pueden estar: son casos de ataque en tests y
+# ejemplos en docs. El ratchet busca el nombre REAL de alguien, no la forma
+# de una ruta -- se lo enseno un falso positivo sobre mi propio test del hub.
+_USUARIO_WIN = re.compile(r"C:\\+Users\\+(?!<|%|\$|USUARIO|usuario|USER|alguien|fulano|ejemplo|tu-usuario)[A-Za-z0-9_.-]+")
 
 _SALTA = (".min.js", ".lock", ".svg", ".png", ".jpg", ".webp", ".pdf",
           "package-lock.json")
