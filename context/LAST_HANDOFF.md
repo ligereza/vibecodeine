@@ -112,49 +112,20 @@ Working and verified live: the DREF show chain (LTC -> Chataigne -> OSC -> phone
 profiles, and the documentation ratchets (`test_mapa_completo`,
 `test_higiene_docs`).
 
-## Cierre del 2026-07-27: el diagnostico de seguridad, ejecutado
+## Security diagnosis status (2026-07-28)
 
-El usuario trajo un diagnostico externo con 10 hallazgos. Se cerraron 8 en el
-repo; los dos criticos primero. Lo que vale conservar no es la lista sino tres
-cosas que se aprendieron ejecutandola:
+Eight of ten findings are closed. VCD-06 now caps request bodies at 8 MB in the
+two previously uncapped `src/flujo` handlers (`serve/server.py`, `web/hub.py`)
+and returns 413 on excess; the three `cultura/` handlers were already capped.
+VCD-07 remains partial: pin Actions to SHAs and add Dependabot. VCD-10 was
+assigned to MAK but has not been verified running.
 
-- **El informe no lo ve todo.** Un barrido propio encontro DOS casos que no
-  listaba, y el peor de VCD-08 era uno de ellos: BSSID y SSID de redes de
-  VECINOS en el fixture del plugin de wifi. Un BSSID se resuelve a coordenadas
-  en bases publicas de wardriving. Por eso el ratchet vigila la CLASE y no los
-  casos.
-- **La recomendacion generica puede ser incorrecta para este contexto.** Se puso
-  autenticacion global en xio y el usuario la retiro: su hotspot tiene clave y
-  un token seria friccion en mitad de un show. El propio informe condiciona esa
-  severidad a "una red con clientes no totalmente confiables". Pero su
-  correccion tampoco cubria todo: CORS abierto no lo tapa la clave del wifi,
-  porque ahi el atacante es una pagina web, no un cliente de la red.
-- **Y que sea del usuario no significa que sea seguro.** Sus palabras. El puente
-  de portapapeles (`clip-bridge-recv`) escuchaba en 0.0.0.0 en las cuatro
-  interfaces de MAK y escribia lo recibido DIRECTO al portapapeles: pegar eso en
-  una terminal lo ejecuta. Acotado a la LAN y a 64 KB.
+## Stash triage (2026-07-28)
 
-Sin arreglar y por que: **VCD-06 CERRADO el 2026-07-28**: the uncommitted fix
-was truly lost (verified: no stash contains it), so it was redone -- global
-8 MB body cap on the two uncapped `src/flujo` handlers (`serve/server.py`,
-`web/hub.py`, 413 on excess); the three `cultura/` handlers already had caps
-committed. **VCD-07** solo a medias: falta fijar las Actions a SHA y poner
-Dependabot. **VCD-10** esta encargado a MAK y NADIE verifico que se ejecute.
-
-## 2026-07-28: stash triage (last Claude session, closing the runway)
-
-Three stashes left by prior agents were triaged read-only:
-
-- `stash@{0}` (ascii-wip-ultimo-agente): VALUABLE, never landed -- rewrites the
-  campo skin (generative ASCII glyphs, pinch gestures via vendored
-  rstream-gestures, hardened SVG path extractor as XSS mitigation). Preserved
-  as branch `rescate/ascii-campo` on origin WITHOUT merging: it is aesthetics,
-  the user decides. The stash itself was left untouched.
-- `stash@{1}` (mak-vocab): redundant, already in main.
-- `stash@{2}` (retirar-destinos-muertos): ambiguous -- it deletes
-  `iskvw/DIRECCION.md`/`MAPA.md` (the rejected docs) but also carries a
-  material.py prompt simplification and two workflow files. Left untouched;
-  whoever picks it up must read the rejected-docs decision above first.
+- `stash@{0}` is valuable ASCII-skin work, preserved on
+  `origin/rescate/ascii-campo`; do not merge without the user's aesthetic call.
+- `stash@{1}` is redundant with main.
+- `stash@{2}` is ambiguous and includes rejected documents; do not apply whole.
 
 ## MAK como motor: sirve, y el checkpoint mentia
 
