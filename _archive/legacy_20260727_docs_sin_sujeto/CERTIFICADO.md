@@ -50,3 +50,14 @@ default es archivar y no quedarse.
 Si alguna herramienta llega a necesitarlo, recuperarlo es un `git mv` y son cinco
 lineas. Lo que no se puede recuperar es el tiempo del proximo que abra el repo y
 tenga que averiguar cual de las dos entradas manda.
+
+## Y `CREATIVE_OPERATIONS_INDEX.md`
+
+Ocho lineas que decian "este repo soporta tres capas operativas" y nada mas.
+Era un INDICE, y el indice de este repo es `MAPA.md` -- generado desde el CLI
+real y con un test que lo mantiene honesto. Dos indices compitiendo es
+exactamente lo que hace que alguien lea el equivocado.
+
+No describia nada verificable: ni un comando, ni un archivo, ni una ruta. Un
+documento que no se puede comprobar no se puede mantener, y este llevaba desde
+el 2026-06-30 sin que nadie lo tocara ni lo citara.
