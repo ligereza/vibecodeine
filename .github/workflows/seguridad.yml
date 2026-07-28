@@ -1,0 +1,87 @@
+# Escaneo de seguridad en CI (VCD-07 del diagnostico, 2026-07-27).
+#
+# Por que existe: hoy los tres hallazgos de dependencias y los datos reales que
+# estaban en el repo se encontraron a mano, leyendo un informe que alguien
+# encargo. Eso no escala y no se repite solo. Este job corre lo mismo en cada
+# PR, y lo unico que hace falta para que sirva es que falle cuando debe.
+#
+# Que NO hace, y se dice en vez de insinuarse:
+#   - no reemplaza una auditoria: encuentra lo conocido, no lo nuevo
+#   - no corre con secretos, a proposito. Un job que escanea codigo no
+#     confiable no debe tener acceso a nada que valga la pena robar
+#   - no bloquea por hallazgos informativos: solo por lo que tiene arreglo
+#
+# Retiro: cuando esto viva en una plataforma que ya lo haga (Dependabot cubre
+# parte, pero no el secret scan ni el PII de VCD-08).
+name: seguridad
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    # Una vez por semana: una dependencia se vuelve vulnerable sin que nadie
+    # toque el repo, asi que esperar al proximo PR no alcanza.
+    - cron: "23 6 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  dependencias:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "20"
+
+      - name: pip-audit
+        run: |
+          python -m pip install --quiet pip-audit
+          # `|| true` NO: si hay una CVE conocida en una dependencia, el PR se
+          # entera. Lo que no tiene arreglo se ignora con --ignore-vuln y queda
+          # escrito aca, que es mejor que un job verde que no mira.
+          pip-audit -r requirements.txt --strict
+          if [ -f xio/new/requirements.txt ]; then
+            pip-audit -r xio/new/requirements.txt --strict
+          fi
+
+      - name: npm audit
+        working-directory: web
+        run: |
+          # --package-lock-only: no instala nada, solo lee el lock. Mas rapido y
+          # no ejecuta scripts de post-install de paquetes que aun no se
+          # revisaron.
+          npm audit --package-lock-only --audit-level=high
+
+  secretos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # gitleaks necesita la historia para escanear commits, no solo el
+          # arbol: un secreto borrado sigue estando en el commit que lo trajo.
+          fetch-depth: 0
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  datos_reales:
+    # El ratchet de VCD-08 ya vive en la suite (tests/test_privacidad_repo.py) y
+    # corre en ci.yml. Se repite aca a proposito para que un fallo de privacidad
+    # se lea como lo que es y no se pierda entre 900 tests verdes.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: MAC, rutas de usuario y redes de terceros
+        run: |
+          python -m pip install --quiet pytest
+          python -m pytest tests/test_privacidad_repo.py -q
