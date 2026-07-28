@@ -5,6 +5,7 @@ Plugins are auto-discovered from the plugins/ directory and can register their o
 """
 
 import os
+import secrets
 import sys
 import json
 import time
@@ -106,6 +107,61 @@ DANGEROUS_ENDPOINTS = {
 _DENY_IPS = frozenset(
     ip.strip() for ip in os.environ.get("XIO_DENY_IPS", "").split(",") if ip.strip()
 )
+
+
+# ── VCD-01: autenticacion GLOBAL, y fail-closed ──────────────────────────────
+# El diagnostico de seguridad del 2026-07-27 lo puso como el hallazgo critico:
+# este servidor escucha en 0.0.0.0 con CORS *, y lo unico que habia era una
+# denylist de IP vacia por defecto y un `?confirm=1` que manda el propio
+# solicitante. Un `confirm` no identifica a nadie. Con eso, cualquiera en el
+# hotspot podia instalar un plugin -- que se ejecuta con exec_module -- y de ahi
+# controlar pantalla, archivos, apps y conectividad del telefono.
+#
+# El token protegia SOLO las rutas del plugin showcontrol. Ahora protege todo,
+# aca, antes de cualquier handler.
+#
+# Por que se genera uno si no hay: fail-closed de verdad seria no arrancar, y
+# eso deja al usuario sin controlador en mitad de un show. Generar y anunciar
+# consigue lo mismo -- nunca queda abierto -- sin dejarlo a pie.
+_TOKEN = os.environ.get("XIO_TOKEN") or os.environ.get("XIO_SHOWCONTROL_TOKEN")
+_TOKEN_GENERADO = False
+if not _TOKEN:
+    _TOKEN = secrets.token_urlsafe(32)          # 256 bits
+    _TOKEN_GENERADO = True
+
+# El propio telefono puede quedar exento, pero hay que PEDIRLO. El informe avisa
+# que loopback no es autenticacion: un proceso local comprometido tambien llega.
+_LOCAL_SIN_TOKEN = os.environ.get("XIO_LOCAL_SIN_TOKEN") == "1"
+_LOOPBACK = {"127.0.0.1", "::1", "localhost"}
+
+# Rutas que responden sin token: solo para saber si esto esta vivo. No dicen
+# nada del telefono ni lo tocan.
+_SIN_TOKEN = {"/api/ping", "/api/health"}
+
+
+def _token_de_la_peticion() -> str:
+    cab = request.headers.get("Authorization", "")
+    if cab.startswith("Bearer "):
+        return cab[7:].strip()
+    return (request.headers.get("X-Xio-Token")
+            or request.args.get("token") or "")
+
+
+@app.before_request
+def _exigir_token():
+    """Sin credencial no se entra. Antes que cualquier handler y sin excepciones
+    por metodo: un GET tambien lee la pantalla y los archivos."""
+    if request.method == "OPTIONS" or request.path in _SIN_TOKEN:
+        return
+    if _LOCAL_SIN_TOKEN and request.remote_addr in _LOOPBACK:
+        return
+    # compare_digest: la comparacion no puede filtrar el token por tiempo
+    if not secrets.compare_digest(_token_de_la_peticion(), _TOKEN):
+        return jsonify({
+            "error": "no_autorizado",
+            "reason": "xio exige un token. Mandalo en Authorization: Bearer <token>, "
+                      "en X-Xio-Token o como ?token=",
+        }), 401
 
 
 @app.before_request
@@ -340,6 +396,12 @@ def api_plugin_reload(plugin_id):
 @app.route("/api/plugins/install", methods=["POST"])
 def api_plugin_install():
     """Install a plugin from uploaded zip or local path."""
+    if os.environ.get("XIO_PERMITIR_INSTALAR_PLUGINS") != "1":
+        return jsonify({
+            "error": "instalacion_desactivada",
+            "reason": "Instalar un plugin ejecuta su codigo en este proceso. "
+                      "Se enciende a proposito con XIO_PERMITIR_INSTALAR_PLUGINS=1.",
+        }), 403
     if not plugin_registry:
         return jsonify({"error": "Plugin system not initialized"}), 500
 
@@ -770,7 +832,13 @@ def api_sequence_run():
 
 @app.after_request
 def after_request(response):
-    response.headers.add("Access-Control-Allow-Origin", "*")
+    # CORS `*` con un servidor que ejecuta acciones es invitar a que cualquier
+    # pagina abierta en el navegador de alguien del hotspot maneje el telefono.
+    # Solo los origenes que se declaren (XIO_ORIGENES, separados por coma).
+    _permitidos = [o.strip() for o in os.environ.get("XIO_ORIGENES", "").split(",") if o.strip()]
+    _origen = request.headers.get("Origin")
+    if _origen and _origen in _permitidos:
+        response.headers.add("Access-Control-Allow-Origin", _origen)
     response.headers.add("Access-Control-Allow-Headers", "Content-Type")
     response.headers.add("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS")
     return response
@@ -783,6 +851,13 @@ if __name__ == "__main__":
     print("=" * 56)
     print("  Xiaomi ADB Web Controller + Plugin System")
     print("  Serving on http://0.0.0.0:5000")
+    if _TOKEN_GENERADO:
+        print("  TOKEN generado para esta sesion: %s" % _TOKEN)
+        print("  (fijalo con XIO_TOKEN para que no cambie al reiniciar)")
+    else:
+        print("  token: tomado del entorno")
+    if _LOCAL_SIN_TOKEN:
+        print("  AVISO: 127.0.0.1 esta exento de token (XIO_LOCAL_SIN_TOKEN=1)")
     print("=" * 56)
 
     # Initialize plugins before starting server
