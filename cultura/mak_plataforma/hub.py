@@ -1131,7 +1131,9 @@ class H(BaseHTTPRequestHandler):
             texto = str(body.get("texto", ""))[:2000]
             try:
                 if accion == "anotar":
-                    return self._json(ideas.anotar(texto))
+                    return self._json(ideas.anotar(
+                        texto, origen_id=body.get("origen_id"),
+                        origen_dir=body.get("origen_dir")))
                 if accion == "encargar":
                     depto = str(body.get("depto", "research"))
                     return self._json(ideas.encargar(str(body.get("id", "")), depto))

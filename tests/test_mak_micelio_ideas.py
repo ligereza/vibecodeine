@@ -25,7 +25,9 @@ def test_idea_se_materializa_como_documento_indexable(tmp_path):
     idea = {
         "id": "abc123", "texto": "La cámara como proyector de preguntas",
         "estado": "anotada", "ts": "2026-07-28T10:00:00",
-        "relacionadas": [{"titulo": "Obra 1", "carpeta": "corpus", "score": 0.81}],
+        "relacionadas": [{"titulo": "Obra 1", "carpeta": "corpus",
+                   "score": 0.81, "id": "corpus/obra-1.md"}],
+        "origen": {"id": "corpus/obra-0.md", "dir": "corpus"},
     }
     origen.write_text(json.dumps(idea, ensure_ascii=False) + "\n", encoding="utf-8")
 
@@ -34,7 +36,8 @@ def test_idea_se_materializa_como_documento_indexable(tmp_path):
     assert resultado["ideas"] == 1
     text = (destino / "idea-abc123.md").read_text(encoding="utf-8")
     assert "La cámara como proyector de preguntas" in text
-    assert "Obra 1 [corpus; 0.810]" in text
+    assert "Obra 1 [corpus; 0.810; id=corpus/obra-1.md]" in text
+    assert '"origen_materia": {"id": "corpus/obra-0.md"' in text
     assert '"tipo": "idea"' in text
     assert '"origen": "usuario"' in text
 
@@ -62,5 +65,42 @@ def test_interfaz_ofrece_operaciones_sobre_la_materia():
     assert "Idea desde aquí" in interfaz
     assert "mapDebatir" in interfaz
     assert "mapExperimentar" in interfaz
+    assert "setView('mapa');" in interfaz
+    assert '<div id="map-view" class="show">' in interfaz
+    assert "tubería clara" in interfaz
+    assert "e.clase === 'procedencia'" in interfaz
+    assert "mapLente('compost')" in interfaz
+    assert "mapFusionar" in interfaz
+    assert "mapEstatuto" in interfaz
+    assert 'self.path == "/api/fusion"' in interfaz
+    assert 'data-lente="frutos"' in interfaz
     assert 'self.path == "/api/codex/experimentar"' in interfaz
     assert 'self.path == "/api/ideas/anotar"' in interfaz
+    assert '"corpus": os.path.expanduser("~/research/corpus")' in interfaz
+    assert '"ideas": os.path.expanduser("~/research/ideas")' in interfaz
+    assert '"codex": os.path.expanduser("~/research/codex")' in interfaz
+    assert '"fusiones": os.path.expanduser("~/research/fusiones")' in interfaz
+
+
+def test_endpoints_historicos_no_quedan_dentro_de_fusion():
+    interfaz = (ROOT / "cultura" / "mak_research" / "interfaz.py").read_text(
+        encoding="utf-8")
+    fusion = interfaz.index('if self.path == "/api/fusion"')
+    workflow = interfaz.index('if self.path == "/api/workflow"', fusion)
+    between = interfaz[fusion:workflow]
+    assert 'return self._json_response({"ok": True, "primordio": primordio})' in between
+    workflow_line = interfaz[workflow:].splitlines()[0]
+    fusion_line = interfaz[fusion:].splitlines()[0]
+    assert len(workflow_line) - len(workflow_line.lstrip()) == \
+        len(fusion_line) - len(fusion_line.lstrip())
+
+
+def test_memoria_declara_afinidad_y_procedencia():
+    memoria = (ROOT / "cultura" / "mak_research" / "memoria.py").read_text(
+        encoding="utf-8")
+    assert '"clase": "afinidad"' in memoria
+    assert '"clase": "procedencia"' in memoria
+    assert "GRAFO_SCHEMA_VERSION" in memoria
+    assert '"calidad": calidad.get' in memoria
+    assert '"ideas"' in memoria
+    assert '"fusiones"' in memoria
