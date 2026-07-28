@@ -9,7 +9,7 @@ ejecucion real de research/codex: el navegador solo habla con :8900 para
 el marco, pero el iframe habla directo con :8890/:8891 (LAN privada
 Face A, sin token).
 
-Rutas: / (cara) · /api/organismo · /api/inventario · /api/micelio · /api/ejecutar (POST) ·
+Rutas: / (cara) · /api/organismo · /api/micelio · /api/ejecutar (POST) ·
 /api/ideas (GET+POST) · /pieza · /api/salud · /api/actividad · /cuotas ·
 /doctrina · /reflexiones · /relevo · /genesis
 """
@@ -140,27 +140,6 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
 #pan-render .rd.pend .motivo{color:#d4a259;font-size:.75rem;margin-top:6px;line-height:1.45}
 #pan-render #r-pendientes{margin-bottom:20px}
 @media(max-width:700px){#pan-render{padding:16px 14px}}
-#pan-sistema{position:absolute;inset:0;overflow-y:auto;padding:24px 28px;display:none}
-#pan-sistema.on{display:block}
-#pan-sistema .intro{color:#8a8577;font-size:.76rem;line-height:1.55;max-width:880px;margin-bottom:18px}
-#pan-sistema .resumen{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;max-width:1050px;margin-bottom:18px}
-#pan-sistema .metrica{border:1px solid #2a2820;background:#0c0a09;border-radius:8px;padding:11px 13px}
-#pan-sistema .metrica b{display:block;color:#9db67c;font-size:1.1rem;margin-bottom:3px}
-#pan-sistema .metrica span{color:#6e6a5e;font-size:.66rem;text-transform:uppercase;letter-spacing:.6px}
-#pan-sistema .organos{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:12px;max-width:1200px}
-#pan-sistema .organo{border:1px solid #211f18;background:#0c0a09;border-radius:9px;padding:14px;min-width:0}
-#pan-sistema .organo h3{font-size:.88rem;color:#d4a259;margin-bottom:3px}
-#pan-sistema .organo .rol{font-size:.68rem;color:#6e6a5e;margin-bottom:11px;line-height:1.4}
-#pan-sistema .ruta{font-size:.67rem;color:#8a8577;background:#080706;padding:6px 8px;border-radius:5px;margin-bottom:9px;word-break:break-all}
-#pan-sistema .seccion{font-size:.6rem;color:#5f5b50;text-transform:uppercase;letter-spacing:1px;margin:10px 0 5px}
-#pan-sistema .herr{display:flex;gap:8px;padding:5px 0;border-bottom:1px solid #17150f;align-items:baseline}
-#pan-sistema .herr:last-child{border-bottom:none}
-#pan-sistema .herr code{color:#9db67c;font-size:.68rem;flex:none}
-#pan-sistema .herr span{font-size:.67rem;color:#8a8577;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#pan-sistema .producto{font-size:.67rem;color:#c3bfb2;padding:3px 0;display:flex;justify-content:space-between;gap:7px}
-#pan-sistema .producto small{color:#5f5b50;flex:none}
-#pan-sistema .proc{display:inline-block;font-size:.62rem;border:1px solid #39432c;color:#9db67c;border-radius:10px;padding:2px 7px;margin:2px 3px 2px 0}
-@media(max-width:700px){#pan-sistema{padding:15px 12px}.organos{grid-template-columns:1fr}}
 #centro iframe.on{display:block}
 #franja{flex:none;height:170px;display:flex;border-top:1px solid #211f18;background:#0d0b09;
  transition:height .18s ease,padding .18s ease;overflow:hidden}
@@ -188,8 +167,7 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
  <div class="izq">
   <h1>&#129744; MAK</h1>
   <div id="tabs">
-    <button data-dep="sistema" class="on">🧭 sistema</button>
-    <button data-dep="research">🔬 research</button>
+   <button data-dep="research" class="on">🔬 research</button>
    <button data-dep="codex">💻 codex</button>
    <button data-dep="ideas">💡 ideas</button>
    <button data-dep="render">🖼 render</button>
@@ -201,13 +179,7 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
  </div>
 </div>
 <div id="centro">
- <div id="pan-sistema" class="on">
-  <div class="intro">Esto es lo que MAK tiene y hace ahora: dónde vive cada órgano,
-   qué herramientas puede ejecutar, qué productos dejó y qué procesos están vivos.
-   No es una foto del escritorio: se lee directamente del disco y de los procesos.</div>
-  <div id="s-contenido">leyendo el organismo…</div>
- </div>
- <iframe id="ifr-research"></iframe>
+ <iframe id="ifr-research" class="on"></iframe>
  <iframe id="ifr-codex"></iframe>
  <div id="pan-ideas">
   <div class="intro">Escribí lo que estás pensando. El archivo te dice con qué se
@@ -246,7 +218,7 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
 
 // ── tabs de departamento: cambian el iframe visible, cargan lazy ──
-var depActual='sistema';
+var depActual='research';
 var IFR_SRC={research:'http://'+location.hostname+':8890/', codex:'http://'+location.hostname+':8891/'};
 function activarDep(dep){
  depActual=dep;
@@ -259,8 +231,6 @@ function activarDep(dep){
  // 'ideas' y 'render' no son editores embebidos: son paneles propios del hub.
  document.getElementById('pan-ideas').classList.toggle('on', dep==='ideas');
  document.getElementById('pan-render').classList.toggle('on', dep==='render');
- document.getElementById('pan-sistema').classList.toggle('on', dep==='sistema');
- if(dep==='sistema'){cargarSistema();return;}
  if(dep==='ideas'){cargarIdeas();return;}
  if(dep==='render'){cargarRender();return;}
  var ifr=document.getElementById('ifr-'+dep);
@@ -269,35 +239,7 @@ function activarDep(dep){
 document.querySelectorAll('#tabs button').forEach(function(b){
  b.onclick=function(){activarDep(b.getAttribute('data-dep'));};
 });
-activarDep('sistema');
-
-// ── sistema: inventario vivo, no otra interfaz paralela ──
-function pintarSistema(d){
- var resumen=d.resumen||{};
- var metricas=[['órganos',resumen.organos||0],['herramientas',resumen.herramientas||0],
-     ['productos',resumen.productos||0],['procesos vivos',resumen.procesos||0]];
- var h='<div class="resumen">'+metricas.map(function(m){return '<div class="metrica"><b>'+m[1]+
-     '</b><span>'+m[0]+'</span></div>';}).join('')+'</div><div class="organos">';
- h+=(d.organos||[]).map(function(o){
-     var ps=(o.procesos||[]).map(function(p){return '<span class="proc">'+esc(p)+'</span>';}).join('')||
-         '<span class="vacio">sin proceso persistente</span>';
-     var hs=(o.herramientas||[]).map(function(x){return '<div class="herr"><code>'+esc(x.nombre)+
-         '</code><span title="'+esc(x.descripcion)+'">'+esc(x.descripcion||'sin descripción')+'</span></div>';}).join('')||
-         '<div class="vacio">sin herramientas declaradas</div>';
-     var outs=(o.productos||[]).map(function(x){return '<div class="producto"><span>'+esc(x.nombre)+
-         '</span><small>'+esc(x.edad)+' · '+esc(x.tamano)+'</small></div>';}).join('')||
-         '<div class="vacio">sin productos todavía</div>';
-    return '<section class="organo"><h3>'+esc(o.nombre)+'</h3><div class="rol">'+esc(o.rol)+'</div>'+
-         '<div class="ruta">'+esc(o.ruta)+'</div><div class="seccion">procesos</div>'+ps+
-         '<div class="seccion">herramientas ('+(o.total_herramientas||0)+')</div>'+hs+
-         '<div class="seccion">productos recientes ('+(o.total_productos||0)+')</div>'+outs+'</section>';
- }).join('');
- document.getElementById('s-contenido').innerHTML=h+'</div>';
-}
-function cargarSistema(){
- fetch('/api/inventario').then(function(r){return r.json();}).then(pintarSistema).catch(function(){
-     document.getElementById('s-contenido').innerHTML='<div class="vacio">No se pudo leer el inventario.</div>';});
-}
+activarDep('research');
 
 // ── ideas: intervenir, no mirar ──
 function pintarIdeas(ds){
@@ -900,139 +842,6 @@ def _organismo():
             "xio": _xio()}
 
 
-_ORGANOS = (
-    {"id": "plataforma", "nombre": "plataforma", "ruta": "~/plataforma",
-     "rol": "Coordina, vigila, entrega y muestra el organismo.",
-     "productos": ("logs", "reflexiones", "utilidades")},
-    {"id": "research", "nombre": "research", "ruta": "~/research",
-     "rol": "Investiga, contrasta fuentes y construye el micelio semántico.",
-     "productos": ("informes", "paneles", "cadenas", "refutaciones",
-                   "correlaciones", "grafos", "memoria")},
-    {"id": "codex", "nombre": "codex", "ruta": "~/codex",
-     "rol": "Planifica, genera, prueba y revisa experimentos de código.",
-     "productos": ("piezas", "revisiones")},
-    {"id": "curatoria", "nombre": "curatoria", "ruta": "~/curatoria",
-     "rol": "Percibe iskvw y extrae datos operativos de RD sin mezclarlos.",
-     "productos": ("fichas", "reportes", "db")},
-)
-
-
-def _descripcion_script(path):
-    """First useful docstring line; never imports or executes the tool."""
-    try:
-        with open(path, encoding="utf-8", errors="replace") as fh:
-            text = fh.read(6000)
-    except OSError:
-        return ""
-    m = re.search(r'^[rubfRUBF]*["\']{3}(.*?)["\']{3}', text, re.S)
-    if m:
-        for line in m.group(1).splitlines():
-            line = line.strip()
-            if line:
-                return line[:150]
-    for line in text.splitlines()[:12]:
-        line = line.strip().lstrip("#").strip()
-        if line and not line.startswith("!"):
-            return line[:150]
-    return ""
-
-
-def _herramientas_organo(base, limite=18):
-    items = []
-    try:
-        nombres = sorted(os.listdir(base))
-    except OSError:
-        return items, 0
-    candidatos = [n for n in nombres
-                  if n.endswith((".py", ".sh")) and not n.startswith("_")]
-    for nombre in candidatos[:limite]:
-        items.append({"nombre": nombre,
-                      "descripcion": _descripcion_script(os.path.join(base, nombre))})
-    return items, len(candidatos)
-
-
-def _humano_bytes(n):
-    for unidad in ("B", "KB", "MB", "GB"):
-        if n < 1024 or unidad == "GB":
-            return ("%.1f %s" % (n, unidad)) if unidad != "B" else "%d B" % n
-        n /= 1024
-
-
-def _edad(ts):
-    segundos = max(0, int(time.time() - ts))
-    if segundos < 60:
-        return "hace %ds" % segundos
-    if segundos < 3600:
-        return "hace %dmin" % (segundos // 60)
-    if segundos < 86400:
-        return "hace %dh" % (segundos // 3600)
-    return "hace %dd" % (segundos // 86400)
-
-
-def _productos_organo(base, carpetas, limite=8):
-    encontrados = []
-    total = 0
-    for carpeta in carpetas:
-        raiz = os.path.join(base, carpeta)
-        try:
-            nombres = os.listdir(raiz)
-        except OSError:
-            continue
-        for nombre in nombres:
-            path = os.path.join(raiz, nombre)
-            if not os.path.isfile(path):
-                continue
-            try:
-                st = os.stat(path)
-            except OSError:
-                continue
-            total += 1
-            encontrados.append((st.st_mtime, {
-                "nombre": "%s/%s" % (carpeta, nombre),
-                "tamano": _humano_bytes(st.st_size), "edad": _edad(st.st_mtime)}))
-    encontrados.sort(key=lambda item: item[0], reverse=True)
-    return [item for _, item in encontrados[:limite]], total
-
-
-def _procesos_por_organo():
-    salida = {o["id"]: [] for o in _ORGANOS}
-    try:
-        import subprocess
-        p = subprocess.run(["pgrep", "-af", "python3|bash"], capture_output=True,
-                           text=True, timeout=2, check=False)
-        lineas = p.stdout.splitlines()
-    except Exception:
-        return salida
-    for organo in _ORGANOS:
-        marca = "/home/mak/%s/" % organo["id"]
-        for linea in lineas:
-            if marca not in linea:
-                continue
-            cmd = linea.split(maxsplit=1)[-1]
-            salida[organo["id"]].append(os.path.basename(cmd.split()[1])
-                                         if len(cmd.split()) > 1 else cmd[:80])
-    return salida
-
-
-def _inventario():
-    procesos = _procesos_por_organo()
-    organos = []
-    for spec in _ORGANOS:
-        base = os.path.join(HOME, spec["id"])
-        herramientas, total_h = _herramientas_organo(base)
-        productos, total_p = _productos_organo(base, spec["productos"])
-        organos.append({**spec, "ruta": base, "herramientas": herramientas,
-                        "total_herramientas": total_h, "productos": productos,
-                        "total_productos": total_p,
-                        "procesos": procesos.get(spec["id"], [])})
-    return {"generado": time.time(), "organos": organos, "resumen": {
-        "organos": len(organos),
-        "herramientas": sum(o["total_herramientas"] for o in organos),
-        "productos": sum(o["total_productos"] for o in organos),
-        "procesos": sum(len(o["procesos"]) for o in organos),
-    }}
-
-
 # ── ejecucion proxeada (research y codex corren abiertos en la LAN Face A) ──
 def _ejecutar(depto, modo, texto, densidad):
     texto = (texto or "").strip()
@@ -1228,12 +1037,6 @@ class H(BaseHTTPRequestHandler):
                 return self._json(_organismo())
             except Exception as e:  # noqa: BLE001
                 return self._json({"error": str(e)[:200]})
-        if p == "/api/inventario":
-            try:
-                return self._json(_inventario())
-            except Exception as e:  # noqa: BLE001
-                return self._json({"error": str(e)[:200], "organos": [],
-                                   "resumen": {}})
         if p == "/api/micelio":
             return self._json(_micelio())
         if p == "/api/eventos":
