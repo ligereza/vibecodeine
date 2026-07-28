@@ -82,6 +82,7 @@ def relacionar(texto, k=6):
         salida.append({
             "titulo": r.get("titulo") or os.path.basename(ruta),
             "carpeta": r.get("dir") or "",
+            "id": os.path.basename(ruta),
             "score": round(float(r.get("score") or 0), 3),
             # 'corpus' = una obra del archivo del artista; el resto es
             # investigacion propia de MAK. La distincion importa: el usuario

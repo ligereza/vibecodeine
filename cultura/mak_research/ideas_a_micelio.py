@@ -23,12 +23,14 @@ def documento(idea: dict) -> str:
     if relacionadas:
         lines += ["", "**Se relacionó al nacer con:**", ""]
         for r in relacionadas:
-            lines.append("- %s [%s; %.3f]" % (
+            lines.append("- %s [%s; %.3f; id=%s]" % (
                 r.get("titulo") or "sin título", r.get("carpeta") or "?",
-                float(r.get("score") or 0)))
+                float(r.get("score") or 0), r.get("id") or ""))
     lines += ["", "---", "meta: " + json.dumps({
         "id": idea.get("id"), "tipo": "idea", "origen": "usuario",
-        "ts": idea.get("ts")}, ensure_ascii=False)]
+        "ts": idea.get("ts"),
+        "relacionadas": [r.get("id") for r in relacionadas if r.get("id")]},
+        ensure_ascii=False)]
     return "\n".join(lines) + "\n"
 
 

@@ -62,6 +62,19 @@ def _titulo(texto, path):
     return os.path.basename(path)
 
 
+def _meta_documento(texto):
+    """Read the final `meta: {...}` line without interpreting prose."""
+    for line in reversed((texto or "").splitlines()):
+        if not line.startswith("meta:"):
+            continue
+        try:
+            data = json.loads(line.split(":", 1)[1].strip())
+            return data if isinstance(data, dict) else {}
+        except ValueError:
+            return {}
+    return {}
+
+
 def _fragmentar(texto):
     """Parte por parrafos y arma fragmentos de ~CHUNK chars con solape."""
     parrafos = [p.strip() for p in texto.split("\n\n") if p.strip()]
@@ -182,7 +195,7 @@ def indexar(rebuild=False, log=lambda s: None):
     vigentes = []   # entradas que sobreviven (archivo sin cambios)
     descartados = []  # (path, motivo) que la puerta dejo fuera
     archivos_actuales = set()
-    pendientes = []  # (path, dir, mtime, texto) a re-embeddear
+    pendientes = []  # (path, dir, mtime, texto, meta) a re-embeddear
 
     for d in FUENTES:
         carpeta = os.path.join(RESEARCH, d)
@@ -210,16 +223,16 @@ def indexar(rebuild=False, log=lambda s: None):
             if not entra:
                 descartados.append((path, motivo))
                 continue
-            pendientes.append((path, d, mtime, texto))
+            pendientes.append((path, d, mtime, texto, _meta_documento(texto)))
 
     # conservar entradas de archivos sin cambios y que aun existen
-    cambiados = {p for p, _, _, _ in pendientes}
+    cambiados = {p for p, _, _, _, _ in pendientes}
     for e in previas:
         if e["path"] in archivos_actuales and e["path"] not in cambiados:
             vigentes.append(e)
 
     nuevas = []
-    for path, d, mtime, texto in pendientes:
+    for path, d, mtime, texto, doc_meta in pendientes:
         titulo = _titulo(texto, path)
         chunks = _fragmentar(texto)
         log("STATUS: Indexando %s (%d frag)..." % (os.path.basename(path), len(chunks)))
@@ -228,7 +241,8 @@ def indexar(rebuild=False, log=lambda s: None):
             if not vec:
                 continue
             nuevas.append({"path": path, "dir": d, "titulo": titulo,
-                           "mtime": mtime, "i": i, "chunk": ch, "vec": vec})
+                           "mtime": mtime, "i": i, "chunk": ch, "vec": vec,
+                           "doc_meta": doc_meta})
 
     todas = vigentes + nuevas
     _guardar_index(todas)
@@ -273,7 +287,9 @@ def _vectores_por_producto():
     grupos, meta = defaultdict(list), {}
     for e in _cargar_index():
         grupos[e["path"]].append(e.get("vec") or [])
-        meta[e["path"]] = (e["dir"], e["titulo"], meta.get(e["path"], (0, 0, 0))[2] + 1)
+        prev = meta.get(e["path"], (e["dir"], e["titulo"], 0, {}))
+        meta[e["path"]] = (e["dir"], e["titulo"], prev[2] + 1,
+                   e.get("doc_meta") or prev[3])
     vecs = {}
     for path, lista in grupos.items():
         lista = [v for v in lista if v]
@@ -322,7 +338,8 @@ def _aristas_numpy(vecs, paths, umbral, tope_por_nodo):
                 continue
             vistas.add(key)
             edges.append({"a": os.path.basename(paths[i]),
-                          "b": os.path.basename(paths[j]), "w": round(s, 3)})
+                          "b": os.path.basename(paths[j]), "w": round(s, 3),
+                          "clase": "afinidad"})
     return edges
 
 
@@ -357,9 +374,10 @@ def grafo_semantico(umbral=0.5, tope_por_nodo=4):
     paths = list(vecs)
     nodes = []
     for p in paths:
-        d, t, nch = meta[p]
+        d, t, nch, doc_meta = meta[p]
         nodes.append({"id": os.path.basename(p), "dir": d, "titulo": t,
-                      "chunks": nch})
+                  "chunks": nch, "naturaleza": doc_meta.get("tipo") or d,
+                  "origen": doc_meta.get("origen")})
 
     edges = _aristas_numpy(vecs, paths, umbral, tope_por_nodo)
     if edges is None:
@@ -376,7 +394,26 @@ def grafo_semantico(umbral=0.5, tope_por_nodo=4):
                     continue
                 vistas.add(key)
                 edges.append({"a": os.path.basename(paths[i]),
-                              "b": os.path.basename(paths[j]), "w": round(s, 3)})
+                              "b": os.path.basename(paths[j]), "w": round(s, 3),
+                              "clase": "afinidad"})
+
+    # Explicit provenance is not similarity. An idea remembers which material
+    # provoked it; draw that as a different pipe even if cosine distance is low.
+    known = {n["id"] for n in nodes}
+    seen = {tuple(sorted((e["a"], e["b"]))) + (e.get("clase", "afinidad"),)
+            for e in edges}
+    for path in paths:
+        d, _, _, doc_meta = meta[path]
+        if d != "ideas":
+            continue
+        idea_id = os.path.basename(path)
+        for source_id in doc_meta.get("relacionadas") or []:
+            source_id = os.path.basename(str(source_id))
+            key = tuple(sorted((idea_id, source_id))) + ("procedencia",)
+            if source_id in known and key not in seen:
+                edges.append({"a": idea_id, "b": source_id, "w": 1.0,
+                              "clase": "procedencia"})
+                seen.add(key)
 
     grafo = {"nodes": nodes, "edges": edges,
              "meta": {"n_nodos": len(nodes), "n_aristas": len(edges),

@@ -1982,9 +1982,8 @@ function filtrarArchivo(q) {
 }
 
 // ══════════════════════════════════════════════════════════════════════
-//  MICELIO -- mapa semantico del archivo (canvas 2D, fisica propia).
-//  Nodo = pieza de research. Filamento = afinidad entre embeddings.
-//  El organismo crece y se remodela con cada research nuevo.
+//  MICELIO -- cuerpo comun: obras, ideas, research y codigo.
+//  Filamento fino = afinidad entre embeddings. Tuberia clara = procedencia.
 // ══════════════════════════════════════════════════════════════════════
 var DIR_COLORS = {informes:'#9db67c',paneles:'#d4a259',cadenas:'#7ba6a3',
                  refutaciones:'#c46d5e',correlaciones:'#b48ead',
@@ -2156,7 +2155,8 @@ function mapToggleDir(d) {
 function mapVisibleEdges() {
   return MAPA.edges.filter(function(e) {
     var a = MAPA.byId[e.a], b = MAPA.byId[e.b];
-    return e.w >= MAPA.umbral && a && b && !MAPA.dirOff[a.dir] && !MAPA.dirOff[b.dir];
+    return (e.clase === 'procedencia' || e.w >= MAPA.umbral) && a && b &&
+      !MAPA.dirOff[a.dir] && !MAPA.dirOff[b.dir];
   });
 }
 function mapVisibleNodes() {
@@ -2213,8 +2213,8 @@ function mapPhysics() {
     var p = MAPA.byId[e.a], q = MAPA.byId[e.b];
     var ddx = q.x - p.x, ddy = q.y - p.y;
     var dist = Math.sqrt(ddx * ddx + ddy * ddy) + 0.01;
-    var rest = 65 + (1 - e.w) * 240;      // mas afines = mas cerca
-    var ff = (dist - rest) * 0.0045 * e.w * a;
+    var rest = e.clase === 'procedencia' ? 95 : 65 + (1 - e.w) * 240;
+    var ff = (dist - rest) * (e.clase === 'procedencia' ? 0.007 : 0.0045) * e.w * a;
     p.vx += (ddx / dist) * ff; p.vy += (ddy / dist) * ff;
     q.vx -= (ddx / dist) * ff; q.vy -= (ddy / dist) * ff;
   });
@@ -2256,12 +2256,15 @@ function mapDraw() {
     var wave = Math.sin(t * 1.15 + ei * 1.7) * Math.min(15, len * 0.06);
     var cxp = mx - (ddy / len) * wave, cyp = my + (ddx / len) * wave;
     var rel = (e.w - um) / Math.max(0.05, 1 - um);
-    ctx.strokeStyle = hexA(col, 0.14 + rel * 0.42);
-    ctx.lineWidth = (0.7 + rel * 2.4) / v.k;
+    var esTuberia = e.clase === 'procedencia';
+    ctx.strokeStyle = esTuberia ? 'rgba(244,241,230,.72)' : hexA(col, 0.14 + rel * 0.42);
+    ctx.lineWidth = (esTuberia ? 2.5 : 0.7 + rel * 2.4) / v.k;
+    ctx.setLineDash(esTuberia ? [8 / v.k, 5 / v.k] : []);
     ctx.beginPath();
     ctx.moveTo(p.x, p.y);
     ctx.quadraticCurveTo(cxp, cyp, q.x, q.y);
     ctx.stroke();
+    ctx.setLineDash([]);
     // espora viajera en los filamentos fuertes
     if (e.w >= 0.72) {
       var u = (t * 0.11 + ei * 0.37) % 1;
@@ -2583,6 +2586,7 @@ document.addEventListener('DOMContentLoaded', function() {
   setInterval(refreshMemStats, 15000);
   window.addEventListener('resize', function() { drawConnections(); mapResize(); });
   mapBind();
+  setView('mapa');
   // el micelio crece solo: si esta visible, refresca cada 25s
   setInterval(function() { if (MAPA.running) mapRefresh(false); }, 25000);
   // fit to view on first load
@@ -2613,12 +2617,12 @@ HTML = """<!doctype html>
     </div>
     <span class="topbar-pill"><span class="status-dot idle" id="status-dot"></span>workflow engine</span>
     <div class="view-toggle">
-      <button id="vt-flujo" class="active" onclick="setView('flujo')" title="Canvas de ejecucion">
+      <button id="vt-flujo" onclick="setView('flujo')" title="Taller tecnico de ejecucion">
         <svg viewBox="0 0 16 16"><rect x="1" y="5" width="4" height="6" rx="1"/><rect x="11" y="5" width="4" height="6" rx="1"/><path d="M5 8h6"/></svg>
-        Flujo</button>
-      <button id="vt-mapa" onclick="setView('mapa')" title="Micelio semantico: el archivo vivo del departamento">
+        Taller</button>
+      <button id="vt-mapa" class="active" onclick="setView('mapa')" title="Cuerpo comun: materia y transformaciones">
         <svg viewBox="0 0 16 16"><circle cx="4" cy="4" r="1.7"/><circle cx="12" cy="5" r="1.7"/><circle cx="7" cy="12" r="1.7"/><path d="M5.4 5 6.4 10.6M5.6 4.4 10.3 4.9M11.2 6.4 8 10.7"/></svg>
-        Micelio</button>
+        Cuerpo</button>
     </div>
   </div>
   <div class="topbar-center">
@@ -2761,21 +2765,20 @@ HTML = """<!doctype html>
     </div>
   </div>
 
-  <!-- ── MICELIO: mapa semantico del archivo (canvas 2D, fisica propia) ── -->
+  <!-- ── CUERPO: materia + afinidad + procedencia ── -->
   <div id="map-view">
     <canvas id="map-canvas"></canvas>
     <div class="map-legend">
-      <h4>&#129744; Micelio del archivo</h4>
+      <h4>&#129744; Cuerpo de MAK</h4>
       <div id="legend-rows"></div>
       <div class="map-counts" id="map-counts"></div>
     </div>
     <div class="map-hint">
-      <b>nodo</b> = pieza de research &middot; <b>filamento</b> = afinidad
-      semantica (embeddings locales) &middot; <b>click en una pieza</b> =
-      abrirla o INVESTIGAR desde ella con el modo activo de arriba; con
-      <b>Puente</b> eliges dos piezas y el departamento investiga la
-      relacion entre ambas. El micelio <b>crece y se remodela</b> con cada
-      research.
+      <b>materia</b> = obra, idea, investigación o código &middot;
+      <b>filamento</b> = afinidad semántica medida &middot;
+      <b>tubería clara</b> = una materia nació explícitamente desde otra.
+      Al tocarla puedes abrir, investigar, debatir, experimentar o anotar una
+      idea desde ahí. El cuerpo crece cuando esas operaciones devuelven materia.
     </div>
     <div class="map-controls">
       <div class="tool-group">
