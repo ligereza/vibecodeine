@@ -62,6 +62,10 @@ from ..eventos.presets import infer_event_preset, list_event_presets
 from ..serve.server import api_plano_render as render_plano_api
 from ..cotizaciones_base import generar_cotizacion_base
 from ..rd.informe import resumen_json as rd_datos_resumen_json
+
+# Global request-body cap (VCD-06). 8 MB: large enough for a photo sent to the
+# tracer, small enough that an unbounded body cannot exhaust memory.
+MAX_BODY_BYTES = 8 * 1024 * 1024
 try:
     from ..export.illustrator import prepare_supplement_job_assets
 except Exception:
@@ -671,6 +675,9 @@ class HubRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         parsed = urlparse(self.path)
         p = parsed.path
+        if int(self.headers.get("Content-Length", 0) or 0) > MAX_BODY_BYTES:
+            self._send_json({"error": "cuerpo demasiado grande"}, status=413)
+            return
 
         if p == "/api/plano/render":
             content_length = int(self.headers.get("Content-Length", 0))

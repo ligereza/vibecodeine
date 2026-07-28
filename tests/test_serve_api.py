@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import pytest
 from flujo.serve.server import (
+    Handler,
+    MAX_BODY_BYTES,
     api_health_stats,
     api_materials,
     api_index_brief,
@@ -18,6 +20,29 @@ from flujo.serve.server import (
     api_plano_render,
     _read_json,
 )
+
+
+class _Headers(dict):
+    def get(self, key, default=None):
+        return super().get(key, default)
+
+
+class _UnreadBody:
+    def read(self, _length):
+        raise AssertionError("oversized request body must not be read")
+
+
+def test_oversized_body_is_rejected_before_reading():
+    handler = Handler.__new__(Handler)
+    handler.path = "/api/plano/render"
+    handler.headers = _Headers({"Content-Length": str(MAX_BODY_BYTES + 1)})
+    handler.rfile = _UnreadBody()
+    response = {}
+    handler._json = lambda body, code=200: response.update(body=body, code=code)
+
+    handler.do_POST()
+
+    assert response == {"body": {"error": "cuerpo demasiado grande"}, "code": 413}
 
 
 def test_module_imports_cleanly():

@@ -16,7 +16,7 @@ Estos tests son los ataques del informe, escritos para que fallen si vuelven.
 """
 from __future__ import annotations
 
-from flujo.web.hub import HubRequestHandler
+from flujo.web.hub import HubRequestHandler, MAX_BODY_BYTES
 
 
 def _seguro(cmd: str) -> bool:
@@ -94,3 +94,21 @@ def test_el_propio_hub_si_entra():
     # el hub cambia de puerto si el 8765 esta ocupado: por eso se compara
     # contra el Host de la peticion y no contra una lista escrita
     assert _origen("http://127.0.0.1:8790", "127.0.0.1:8790")
+
+
+class _CuerpoNoLeible:
+    def read(self, _length):
+        raise AssertionError("no se debe leer un cuerpo que excede el limite")
+
+
+def test_el_limite_global_rechaza_antes_de_leer():
+    fake = HubRequestHandler.__new__(HubRequestHandler)
+    fake.path = "/api/plano/render"
+    fake.headers = _Cabeceras({"Content-Length": str(MAX_BODY_BYTES + 1)})
+    fake.rfile = _CuerpoNoLeible()
+    respuesta = {}
+    fake._send_json = lambda body, status=200: respuesta.update(body=body, status=status)
+
+    HubRequestHandler.do_POST(fake)
+
+    assert respuesta == {"body": {"error": "cuerpo demasiado grande"}, "status": 413}
