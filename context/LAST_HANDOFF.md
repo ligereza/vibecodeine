@@ -112,6 +112,45 @@ Working and verified live: the DREF show chain (LTC -> Chataigne -> OSC -> phone
 profiles, and the documentation ratchets (`test_mapa_completo`,
 `test_higiene_docs`).
 
+## Cierre del 2026-07-27: el diagnostico de seguridad, ejecutado
+
+El usuario trajo un diagnostico externo con 10 hallazgos. Se cerraron 8 en el
+repo; los dos criticos primero. Lo que vale conservar no es la lista sino tres
+cosas que se aprendieron ejecutandola:
+
+- **El informe no lo ve todo.** Un barrido propio encontro DOS casos que no
+  listaba, y el peor de VCD-08 era uno de ellos: BSSID y SSID de redes de
+  VECINOS en el fixture del plugin de wifi. Un BSSID se resuelve a coordenadas
+  en bases publicas de wardriving. Por eso el ratchet vigila la CLASE y no los
+  casos.
+- **La recomendacion generica puede ser incorrecta para este contexto.** Se puso
+  autenticacion global en xio y el usuario la retiro: su hotspot tiene clave y
+  un token seria friccion en mitad de un show. El propio informe condiciona esa
+  severidad a "una red con clientes no totalmente confiables". Pero su
+  correccion tampoco cubria todo: CORS abierto no lo tapa la clave del wifi,
+  porque ahi el atacante es una pagina web, no un cliente de la red.
+- **Y que sea del usuario no significa que sea seguro.** Sus palabras. El puente
+  de portapapeles (`clip-bridge-recv`) escuchaba en 0.0.0.0 en las cuatro
+  interfaces de MAK y escribia lo recibido DIRECTO al portapapeles: pegar eso en
+  una terminal lo ejecuta. Acotado a la LAN y a 64 KB.
+
+Sin arreglar y por que: **VCD-06** (limites de recursos) quedo a medias -- el
+tope global de cuerpo en `do_POST` esta escrito y sin commitear. **VCD-07** solo
+a medias: falta fijar las Actions a SHA y poner Dependabot. **VCD-10** esta
+encargado a MAK y NADIE verifico que se ejecute.
+
+## MAK como motor: sirve, y el checkpoint mentia
+
+`cultura/mak_plataforma/ideas.py` SI esta conectado al hub y funciona -- este
+archivo decia "NO esta conectado ni probado" y por eso nadie lo usaba. Probado
+el 2026-07-27: se declara una idea, el micelio la relaciona solo con obras del
+archivo, y `encargar()` la pone al frente de la cola. Devuelve ok.
+
+El defecto real de MAK es otro y esta medido: `entregar: 107 listos, 37
+entregados, 18 pendientes`, a UNO cada 6 horas. Genera volumen sobre un backlog
+que el mismo se autorellena y lo drena a cuentagotas. El mecanismo para
+dirigirlo existia y estaba invisible.
+
 ## Already decided -- do not reopen
 
 | Date | Decision |
@@ -149,25 +188,13 @@ profiles, and the documentation ratchets (`test_mapa_completo`,
 | 2026-07-26 | **MAK works on the user's material, not on its own output.** It ran at 8% of its daily quota writing cultural genealogies while 57 GB of his material sat untouched. Root cause: ONE prompt for two different jobs, and it never asked for headliners -- half of his own formula ("headliner + fecha = productora encontrable"). Splitting the prompt was not enough: the ficha builder had the old schema hardcoded and silently dropped every new field. Now a verb `atender` goes FIRST and consumes a queue built from what was perceived. **The autonomous mode was NOT removed** -- he designed it for when there is no new material or no internet; it is a fallback again instead of the default. Mirrored in `cultura/mak_*`, PR #316 |
 | 2026-07-26 | **MAK's own reports are acted on, not just filed.** It had written "mitigar la degradacion de groq" and nobody executed it: groq led the provider order with 40% measured success while cerebras (91.4%) came third. Reordered by measurement. The pattern to watch: the box can diagnose itself and cannot act on itself |
 | 2026-07-26 | **Brand is information, never a restriction.** User's words: "como info sirve, como limitante o restriccion no -- un dia puedo hacer un post con otra estetica o cuando toque cambio de flyers la app no debe restringir". So the palette is a DEFAULT any caller, event or config may override, and nothing validates a piece against it. Removed: the `flujo brand` CLI group (it only printed that it had been retired), the dead `export_tokens` bridge, and a block in `render/piezas.py` that printed "flujo aplicado automaticamente" while applying nothing inside a silent `try/except`. The quote engine's palette now resolves caller > event `estilo` block > default palette, and the document sent to a productora no longer carries hex codes or the words "usa flujo para consistencia de marca". `flujo.brand` STAYS as the palette reader -- deleting it is exactly how it broke before |
-| 2026-07-25 | Supplements panel in the app: UNNECESSARY. User's words: "los flyers los presentan" |
-| 2026-07-25 | The design folder is not backed up from the repo. What was asked for was extracting structure and data; an agent turned it into a 1 GB backup order nobody requested |
-| 2026-07-25 | The two large plans proposed ("separate the engine from the content" and "from repo to three products") were REJECTED. Do not execute them on your own authority |
-| 2026-07-25 | `desktop/` (the Tkinter floater) archived |
-| 2026-07-22 | Instagram: `parth-dl` primary, `curl_cffi` secondary on Linux. imginn is dead, instaloader does not work, yt-dlp is not used |
-| 2026-07-16 | n8n: discarded, do not retry |
-| 2026-07-10 | Gemini: out until the user announces a usable API |
-| 2026-07-26 | Do not reinstall Oh My Posh or anything that puts glyphs or ANSI in the prompt: it dirties the output agents have to parse |
+| 2026-07-10 a 07-25 | Decisiones mas viejas, vigentes pero fuera de la lista viva: `docs/handoffs/archive/20260722_25_decisiones.md` (panel de suplementos innecesario, la carpeta de diseno no se respalda desde el repo, los dos planes grandes RECHAZADOS, `desktop/` archivado, Instagram via parth-dl, n8n descartado, Gemini fuera, nada de Oh My Posh) |
 
 ## Built on 2026-07-26, waiting for the user to look
 
-Three prototypes, in the order he asked for. All regenerate from real data by
-command; no figure is written by hand. They are DIRECTIONS, not facts: open them
-and say what changes. `py tools/gen_propuesta_directiva.py` (what RD offers the
-board and what it must approve), `py tools/gen_iskvw_prototipo.py` (the archive
-plus the Cyber Terminal language, under the rule that no element may claim a
-datum it does not measure), and MAK plus the portfolio finally visible in the app
-via read-only `/api/mak` and `/api/portafolio` (MAK had zero references in
-`web/src` before).
+Tres prototipos, todos regenerables por comando desde datos reales. Detalle en
+`docs/handoffs/archive/20260726_prototipos.md`: la propuesta a la directiva RD,
+el prototipo del archivo iskvw, y MAK + portafolio visibles en la app.
 
 ## Blocked, waiting on the user
 
@@ -184,52 +211,31 @@ via read-only `/api/mak` and `/api/portafolio` (MAK had zero references in
   Missing is only his word on WHICH files to re-export, because the sources are
   485 MB and 78 MB and running Illustrator over them acts on his design assets.
 
-## The three layers: do not confuse them (2026-07-27)
+## Las cuatro capas: no confundirlas (2026-07-27)
 
-The same material exists in three places with three different roles, and mixing
-them has already cost whole sessions. On 2026-07-27 a skin ran for hours over
-the 8 pieces in `iskvw/datos/obras.json` while the 697 archive works sat in MAK
-the whole time. Which layer a datum lives in is not a detail:
+El mismo material vive en cuatro lugares con roles distintos, y mezclarlos ya
+costo sesiones enteras. Tabla completa y las dos formas de romperlo en
+`docs/handoffs/archive/20260727_capas.md`. El resumen:
 
-| layer | what it is | what lives there | what must NOT |
-|---|---|---|---|
-| **the repo** (public, GitHub) | what travels and deploys | code, generators, the CONFIG the user edits, generated `datos/*.json` small enough to ship, docs | no heavy assets, nothing personal, no absolute paths, no IPs |
-| **the local folder** (this Windows machine) | the workshop | the source material and the tools that need a licence: the design source, the RD working folder, the Instagram export, the aesthetic references, Illustrator, Blender for heavy video | it is NOT backed up from the repo, and nothing here is assumed present on another machine |
-| **MAK** (the Linux box) | the eye and the memory | perception (`fichas.jsonl`), the micelio index with the embeddings, the traced vectors, the GPU renders | it holds no truth of its own: what it produces enters the repo through a PR, never by hand |
+| el dato | va a |
+|---|---|
+| como funciona algo, por que se decidio, que se midio | el **REPO** (este archivo, CLAUDE.md, el codigo) |
+| donde esta un archivo en el disco, una IP, una MAC, un nombre de usuario | la **MEMORIA LOCAL** del asistente |
+| material pesado y herramientas con licencia | la **CARPETA LOCAL**, que NO se respalda desde el repo |
+| lo que la percepcion vio | **MAK**, y entra al repo por PR |
 
-Where each thing actually is on disk lives in the assistant's local memory, not
-here: this repo is public. Look there BEFORE asking the user.
+Se rompe en las dos direcciones: un dato personal en el repo queda publicado
+para siempre (paso: MAC, BSSID de vecinos y el usuario de Windows -- VCD-08), y
+una decision guardada solo en la memoria local se pierde al cambiar de maquina
+(paso: las referencias del portafolio, dadas por perdidas tres veces).
 
-Two consequences that get repeated as if they were new. A file copied to the box
-does not restart the service that already loaded it, and a running process keeps
-the OLD code after a patch -- so changing MAK's code takes effect on the NEXT
-run, which is also why it is safe to merge while it works. And the exercises in
-the repo are exercises: the real archive is measured on the box.
+### Still open from 2026-07-26
 
-### Still open from 2026-07-26, in one place
-
-- `cultura/mak_plataforma/ideas.py` is written and committed but NOT wired into
-  MAK's hub and never tested. The user's ask: declare an idea, have the archive
-  say which of his works it relates to (semantic micelio search, already
-  verified working), put it at the front of the queue, or prioritise by pattern.
-  Missing: endpoints in `plataforma/hub.py` (`/api/ejecutar` is the mould), a
-  page, and a test.
-- **MAK should be the default renderer, not Windows** (user's reason: outdoors he
-  can get internet for MAK; if Windows is required there is no render). One
-  measurement is missing first -- nothing was ever rendered on the box, which has
-  4 GB of VRAM and already OOMed with ollama resident. Windows keeps the heavy
-  work (the 600-frame video, proven there). When MAK renders it does NOT close
-  the issue: it comments and leaves it open, because a bad render costs GPU.
-- **Root on the Samsung J6+: decided, postponed.** SMS -> turns on mobile data ->
-  MAK has internet depending on nobody. Non-negotiable condition: charge control
-  like the Xiaomi's, or an old phone plugged in 24/7 is a fire risk. httpSMS does
-  NOT serve this (it needs permanent internet via Firebase push and forwards SMS
-  to a server; it assumes solved exactly what we want to achieve). Waking MAK is
-  already solved (`cultura/mak_plataforma/WAKE_ON_LAN.md`): Xiaomi by WoWLAN,
-  Windows by ethernet; the `wake_mak.py` plugin is staged, not deployed.
-- `tools/bridge_issue_render.py` does NOT run on its own: it is foreground and
-  has to be launched by hand on Windows because it opens Blender. That is the
-  link the Automations panel draws as automatic and is not.
+Detalle en `docs/handoffs/archive/20260726_pendientes.md`: `ideas.py` (CONECTADO
+y probado el 2026-07-27, el checkpoint decia lo contrario), MAK como renderizador
+por defecto (falta UNA medicion), root en el Samsung J6+ (decidido, pospuesto),
+y `tools/bridge_issue_render.py`, que NO corre solo aunque el panel lo dibuje
+como automatico.
 
 **Measured care when delegating:** a subagent ran `find / -iname *.png` on
 Windows and burnt 2124 s of CPU. When delegating verification with screenshots,
