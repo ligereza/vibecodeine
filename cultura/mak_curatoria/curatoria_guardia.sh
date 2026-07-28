@@ -48,6 +48,23 @@ def procesados_por_fuente():
     return hechos
 
 
+def cuarentena_por_fuente():
+    hechos = {"rd": set(), "ig": set()}
+    try:
+        with open(os.path.join(CUR, "fallos.json"), encoding="utf-8") as fh:
+            fallos = json.load(fh)
+        for clave, estado in fallos.items():
+            if not isinstance(estado, dict) or not estado.get("cuarentena"):
+                continue
+            if ":" in clave:
+                fuente, ruta = clave.split(":", 1)
+                if fuente in hechos:
+                    hechos[fuente].add(ruta)
+    except (OSError, ValueError):
+        pass
+    return hechos
+
+
 def total(raiz):
     n = 0
     for _, _, archivos in os.walk(raiz):
@@ -56,12 +73,13 @@ def total(raiz):
 
 
 hechos = procesados_por_fuente()
+cuarentena = cuarentena_por_fuente()
 rd_total = total(os.path.expanduser("~/RD"))
-if len(hechos["rd"]) < rd_total:
+if len(hechos["rd"] | cuarentena["rd"]) < rd_total:
     print("rd")
 else:
     ig = os.path.expanduser("~/portfolio_media/media")
-    if os.path.isdir(ig) and len(hechos["ig"]) < total(ig):
+    if os.path.isdir(ig) and len(hechos["ig"] | cuarentena["ig"]) < total(ig):
         print("ig")
     else:
         print("listo")
