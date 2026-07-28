@@ -176,7 +176,7 @@ def es_identidad_propia(crudo: str) -> bool:
 def cargar_fichas(ruta) -> list[dict]:
     """Lee fichas.jsonl, una ficha (dict) por linea. Tolerante: lineas
     vacias/JSON invalido/no-objeto se saltean sin tumbar la carga."""
-    fichas: list[dict] = []
+    fichas: dict[str, dict] = {}
     with Path(ruta).open("r", encoding="utf-8") as f:
         for linea in f:
             linea = linea.strip()
@@ -187,8 +187,10 @@ def cargar_fichas(ruta) -> list[dict]:
             except json.JSONDecodeError:
                 continue
             if isinstance(registro, dict):
-                fichas.append(registro)
-    return fichas
+                clave = "%s:%s" % (registro.get("fuente", ""),
+                                   registro.get("ruta_rel", ""))
+                fichas[clave] = registro
+    return list(fichas.values())
 
 
 def filtrar_por_fuente(fichas: list[dict], fuente: str) -> list[dict]:

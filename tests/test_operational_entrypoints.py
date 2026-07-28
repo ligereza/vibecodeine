@@ -27,7 +27,7 @@ def test_windows_launchers_anchor_the_repo_and_use_current_app_command():
 
 def test_installer_uses_editable_install_instead_of_copying_source_trees():
     installer = _text("instalar.bat").lower()
-    assert 'pip install -e ".[dev]"' in installer
+    assert 'pip install -e ".[dev,web]"' in installer
     assert "xcopy" not in installer
     assert "py -m flujo doctor" in installer
 
@@ -57,3 +57,11 @@ def test_repair_script_installs_fourth_mirror():
     repair = _text("tools/mak_ops/repair_mak_sync.py")
     assert "cultura/mak_curatoria/." in repair
     assert '"$HOME/curatoria/"' in repair
+
+
+def test_curatoria_guard_reconciles_before_declaring_corpus_done():
+    guard = _text("cultura/mak_curatoria/curatoria_guardia.sh")
+    reconcile = guard.index('percepcion.py" reconciliar')
+    decide = guard.index("FUENTE=$(python3")
+    assert reconcile < decide
+    assert 'estado.get("firma") == firma_actual' in guard

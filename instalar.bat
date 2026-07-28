@@ -10,7 +10,7 @@ where py >nul 2>nul || (
 	echo ERROR: Python launcher ^(py^) was not found in PATH.
 	exit /b 127
 )
-py -m pip install -e ".[dev]" || exit /b %errorlevel%
+py -m pip install -e ".[dev,web]" || exit /b %errorlevel%
 echo Running environment diagnostics...
 py -m flujo doctor
 set "RC=%errorlevel%"

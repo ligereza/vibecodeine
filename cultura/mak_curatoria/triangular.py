@@ -72,62 +72,66 @@ def _txt(v):
 def main():
     con_fecha = con_prod = preguntas = 0
     filas = []
+    ultimas = {}
     with open(FICHAS, encoding="utf-8", errors="replace") as fh:
         for linea in fh:
             try:
                 f = json.loads(linea)
             except Exception:
                 continue
-            if f.get("fuente") != "rd":
-                continue
-            if f.get("categoria") not in ("flyer_evento", "foto_evento"):
-                continue
-            e = f.get("datos_evento") or {}
-            fecha = _txt(e.get("fecha"))
-            prod = _txt(e.get("productora"))
-            venue = _txt(e.get("venue"))
-            handles = e.get("handles") or []
-            if isinstance(handles, str): handles = [handles]
-            heads = posibles_headliners(f.get("ocr_texto") or "")
+            clave = "%s:%s" % (f.get("fuente", ""), f.get("ruta_rel", ""))
+            ultimas[clave] = f
+    for f in ultimas.values():
+        if f.get("fuente") != "rd":
+            continue
+        if f.get("categoria") not in ("flyer_evento", "foto_evento"):
+            continue
+        e = f.get("datos_evento") or {}
+        fecha = _txt(e.get("fecha"))
+        prod = _txt(e.get("productora"))
+        venue = _txt(e.get("venue"))
+        handles = e.get("handles") or []
+        if isinstance(handles, str): handles = [handles]
+        heads = posibles_headliners(f.get("ocr_texto") or "")
 
-            if fecha:
-                con_fecha += 1
-            if prod:
-                con_prod += 1
+        if fecha:
+            con_fecha += 1
+        if prod:
+            con_prod += 1
 
-            # Solo vale preguntar si hay fecha Y algo que identifique el evento.
-            if not fecha or not (heads or handles or venue):
-                continue
-            if prod:
-                estado = "confirmar"
-                pregunta = (
-                    "Verificar si la productora '%s' organizo el evento del %s"
-                    % (prod, fecha)
-                    + (" en %s" % venue if venue else "")
-                    + (" con %s en el cartel" % ", ".join(heads[:3]) if heads else "")
-                    + ". Responder con fuente."
-                )
-            else:
-                estado = "descubrir"
-                pregunta = (
-                    "Que productora organizo el evento del %s" % fecha
-                    + (" en %s" % venue if venue else "")
-                    + (" con %s en el cartel" % ", ".join(heads[:3]) if heads else "")
-                    + (" (cuentas visibles: %s)" % ", ".join(handles[:3]) if handles else "")
-                    + "? Responder con la fuente que lo confirma."
-                )
-            preguntas += 1
-            filas.append({
-                "id_ficha": f.get("id"),
-                "archivo": f.get("ruta_rel"),
-                "estado": estado,
-                "fecha": fecha,
-                "venue": venue,
-                "productora_declarada": prod,
-                "handles": handles,
-                "headliners_candidatos": heads,
-                "pregunta": pregunta,
-            })
+        # Solo vale preguntar si hay fecha Y algo que identifique el evento.
+        if not fecha or not (heads or handles or venue):
+            continue
+        if prod:
+            estado = "confirmar"
+            pregunta = (
+                "Verificar si la productora '%s' organizo el evento del %s"
+                % (prod, fecha)
+                + (" en %s" % venue if venue else "")
+                + (" con %s en el cartel" % ", ".join(heads[:3]) if heads else "")
+                + ". Responder con fuente."
+            )
+        else:
+            estado = "descubrir"
+            pregunta = (
+                "Que productora organizo el evento del %s" % fecha
+                + (" en %s" % venue if venue else "")
+                + (" con %s en el cartel" % ", ".join(heads[:3]) if heads else "")
+                + (" (cuentas visibles: %s)" % ", ".join(handles[:3]) if handles else "")
+                + "? Responder con la fuente que lo confirma."
+            )
+        preguntas += 1
+        filas.append({
+            "id_ficha": f.get("id"),
+            "archivo": f.get("ruta_rel"),
+            "estado": estado,
+            "fecha": fecha,
+            "venue": venue,
+            "productora_declarada": prod,
+            "handles": handles,
+            "headliners_candidatos": heads,
+            "pregunta": pregunta,
+        })
 
     with open(SALIDA, "w", encoding="utf-8") as fh:
         for r in filas:

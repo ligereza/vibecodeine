@@ -181,6 +181,11 @@ class TestCheckpoint:
 
         assert resultado == {"rd:recuperada.jpg", "rd:ok.jpg"}
         assert percepcion.cargar_procesados(out) == resultado
+        compactadas = [json.loads(line) for line in
+                   (fichas / "fichas.jsonl").read_text(encoding="utf-8").splitlines()]
+        assert len(compactadas) == 3
+        recuperada = next(row for row in compactadas if row["ruta_rel"] == "recuperada.jpg")
+        assert recuperada["error"] is None
 
 
 # ---------------------------------------------------------------------------

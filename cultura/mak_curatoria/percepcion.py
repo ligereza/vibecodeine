@@ -291,19 +291,32 @@ def reconciliar_checkpoint_fallido(dir_out: Path, procesados: set) -> set:
     fichas = Path(dir_out) / "fichas" / "fichas.jsonl"
     if not fichas.exists() or not procesados:
         return procesados
-    ultimo_error: dict[str, bool] = {}
+    ultimas: dict[str, dict] = {}
+    filas = 0
     try:
         with fichas.open("r", encoding="utf-8") as fh:
             for line in fh:
                 try:
                     ficha = json.loads(line)
                     clave = clave_checkpoint(ficha["fuente"], ficha["ruta_rel"])
-                    ultimo_error[clave] = bool(ficha.get("error"))
+                    ultimas[clave] = ficha
+                    filas += 1
                 except (KeyError, TypeError, json.JSONDecodeError):
                     continue
     except OSError:
         return procesados
-    corregidos = {clave for clave in procesados if not ultimo_error.get(clave, False)}
+    # The file used to append retries, while consumers treated every row as a
+    # distinct work. Compact it atomically so every consumer sees latest-wins.
+    if filas != len(ultimas):
+        tmp_fichas = fichas.with_suffix(".jsonl.tmp")
+        tmp_fichas.write_text(
+            "".join(json.dumps(ficha, ensure_ascii=True) + "\n"
+                    for ficha in ultimas.values()), encoding="utf-8")
+        os.replace(tmp_fichas, fichas)
+    corregidos = {
+        clave for clave in procesados
+        if not bool((ultimas.get(clave) or {}).get("error"))
+    }
     if corregidos == procesados:
         return procesados
     p = Path(dir_out) / "procesados.txt"
@@ -317,8 +330,19 @@ MAX_INTENTOS_FALLIDOS = 3
 
 
 def _firma_entry(entry: dict) -> str:
-    """Stable enough to retry a quarantined path when its file changes."""
-    return "%s:%s" % (entry.get("bytes", 0), entry.get("mtime", 0))
+    """Detect replacement even when copy tools preserve size and mtime."""
+    digest = ""
+    path = entry.get("ruta_abs")
+    if path:
+        try:
+            with open(path, "rb") as fh:
+                head = fh.read(65536)
+                fh.seek(max(0, int(entry.get("bytes", 0)) - 65536))
+                tail = fh.read(65536)
+            digest = hashlib.sha256(head + tail).hexdigest()[:16]
+        except OSError:
+            pass
+    return "%s:%s:%s" % (entry.get("bytes", 0), entry.get("mtime", 0), digest)
 
 
 def cargar_fallos(dir_out: Path) -> dict:
@@ -911,6 +935,16 @@ def main() -> int:
 
     cmd = argv[0]
     resto = argv[1:]
+
+    if cmd == "reconciliar":
+        out = _obtener_flag(resto, "--out")
+        if not out:
+            print("falta --out", file=sys.stderr)
+            return 2
+        antes = cargar_procesados(Path(out))
+        despues = reconciliar_checkpoint_fallido(Path(out), antes)
+        print(json.dumps({"antes": len(antes), "despues": len(despues)}, ensure_ascii=True))
+        return 0
 
     if cmd == "correr":
         raiz_rd = _obtener_flag(resto, "--raiz-rd")
