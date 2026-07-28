@@ -92,7 +92,7 @@ def _procesos_vivos():
     """Read process commands only; never starts, imports or mutates organs."""
     try:
         result = subprocess.run(
-            ["pgrep", "-af", "percepcion.py|interfaz.py|cola.py|capataz.py|puente_issues.py"],
+          ["pgrep", "-af", "percepcion.py|interfaz.py|interfaz_codex.py|cola.py|capataz.py|trabajo.py|puente_issues.py"],
             capture_output=True, text=True, timeout=2, check=False)
         return result.stdout.lower()
     except Exception:
@@ -104,13 +104,24 @@ def _organos():
     home = os.path.expanduser("~")
     procs = _procesos_vivos()
     ideas_n = _contar_lineas(os.path.join(home, "plataforma", "ideas.jsonl"))
+    obras_n = _contar_archivos(DIRS["corpus"], ".md")
     fichas_n = _contar_lineas(os.path.join(home, "curatoria", "fichas", "fichas.jsonl"))
     research_n = sum(_contar_archivos(DIRS[d], ".md") for d in
                      ("informes", "paneles", "cadenas", "refutaciones",
                       "correlaciones", "grafos", "memoria"))
     codex_n = _contar_archivos(os.path.join(home, "codex", "piezas"), ".md") + \
         _contar_archivos(os.path.join(home, "codex", "revisiones"), ".md")
-    cola_n = _contar_lineas(os.path.join(home, "plataforma", "material.jsonl"))
+    cola_n = 0
+    try:
+      with open(os.path.join(home, "plataforma", "material.jsonl"),
+            encoding="utf-8", errors="replace") as fh:
+        for line in fh:
+          try:
+            cola_n += json.loads(line).get("estado") == "pendiente"
+          except ValueError:
+            continue
+    except OSError:
+      pass
     frutos = {}
     try:
         with open(os.path.join(home, "plataforma", "fructificaciones.json"),
@@ -122,8 +133,8 @@ def _organos():
                    if isinstance(value, dict) and value.get("estatuto") == "fructifero")
     return {"organos": [
         {"id": "entrada", "nombre": "entrada", "verbo": "recibe",
-         "detalle": "obras + ideas + referencias", "cantidad": ideas_n,
-         "unidad": "ideas", "vivo": True, "dirs": ["corpus", "ideas"]},
+         "detalle": "obras + ideas + referencias", "cantidad": obras_n + ideas_n,
+         "unidad": "materias", "vivo": True, "dirs": ["corpus", "ideas"]},
         {"id": "curatoria", "nombre": "curatoria", "verbo": "percibe / extrae",
          "detalle": "iskvw → lectura · RD → datos", "cantidad": fichas_n,
          "unidad": "fichas", "vivo": "percepcion.py" in procs,
@@ -135,11 +146,11 @@ def _organos():
                   "correlaciones", "grafos", "memoria"]},
         {"id": "codex", "nombre": "codex", "verbo": "implementa / prueba",
          "detalle": "hipótesis → experimento ejecutable", "cantidad": codex_n,
-         "unidad": "piezas", "vivo": "codex/interfaz" in procs,
+         "unidad": "piezas", "vivo": "interfaz_codex.py" in procs,
          "dirs": ["codex"]},
         {"id": "plataforma", "nombre": "plataforma", "verbo": "coordina / entrega",
          "detalle": "colas + guardias + render + PR", "cantidad": cola_n,
-         "unidad": "en cola", "vivo": "capataz.py" in procs,
+         "unidad": "pendientes", "vivo": "capataz.py" in procs or "trabajo.py" in procs,
          "dirs": ["fusiones"]},
         {"id": "emerge", "nombre": "emerge", "verbo": "publica / devuelve",
          "detalle": "fruto → iskvw / main / RD / show", "cantidad": frutos_n,
@@ -841,10 +852,15 @@ body{
   flex-direction:column;gap:10px;color:#6e7681;text-align:center;padding:30px;
 }
 .organ-line{
-  position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:7;
-  display:flex;align-items:stretch;gap:0;max-width:calc(100% - 500px);
+  position:absolute;left:250px;right:265px;top:14px;z-index:7;
+  display:flex;align-items:stretch;gap:0;max-width:none;
   background:#0b0a09e8;border:1px solid #2a2820;border-radius:12px;
   backdrop-filter:blur(9px);overflow-x:auto;box-shadow:0 8px 30px #0007;
+}
+@media(max-width:800px){
+  .organ-line{left:10px;right:10px;top:64px}
+  .organ{min-width:125px}
+  .map-hint{display:none}
 }
 .organ{
   position:relative;min-width:132px;padding:9px 12px;border:0;border-right:1px solid #2a2820;
@@ -2286,6 +2302,7 @@ function mapOrgano(el){
   var ya=el.classList.contains('on');
   document.querySelectorAll('.organ').forEach(function(b){b.classList.remove('on');});
   MAPA.dirOff={};
+  MAPA.lente='cultivo';
   if(!ya){
     el.classList.add('on');
     var dirs=(el.getAttribute('data-dirs')||'').split(',').filter(Boolean);
@@ -2295,9 +2312,10 @@ function mapOrgano(el){
     } else if(el.getAttribute('data-organo')==='emerge'){
       MAPA.lente='frutos';
     }
-  } else {
-    MAPA.lente='cultivo';
   }
+  document.querySelectorAll('[data-lente]').forEach(function(b){
+    b.classList.toggle('active',b.getAttribute('data-lente')===MAPA.lente);
+  });
   mapDespertar(.5);mapLegend();mapFit();
 }
 

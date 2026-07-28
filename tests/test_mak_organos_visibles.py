@@ -28,11 +28,19 @@ def _load(monkeypatch):
 def test_organos_exponen_transformacion_y_no_departamentos_vacios(tmp_path, monkeypatch):
     monkeypatch.setenv("HOME", str(tmp_path))
     module = _load(monkeypatch)
-    monkeypatch.setattr(module, "_procesos_vivos", lambda: "interfaz.py capataz.py")
+    monkeypatch.setattr(module.os.path, "expanduser", lambda value: value.replace("~", str(tmp_path)))
+    monkeypatch.setattr(
+        module, "_procesos_vivos",
+        lambda: "interfaz.py interfaz_codex.py trabajo.py percepcion.py")
     (tmp_path / "plataforma").mkdir()
     (tmp_path / "plataforma" / "ideas.jsonl").write_text("{}\n", encoding="utf-8")
+    module.DIRS = {name: str(tmp_path / "research" / name) for name in module.DIRS}
     for path in module.DIRS.values():
         Path(path).mkdir(parents=True, exist_ok=True)
+    (Path(module.DIRS["corpus"]) / "obra.md").write_text("obra", encoding="utf-8")
+    (tmp_path / "plataforma" / "material.jsonl").write_text(
+        json.dumps({"estado": "pendiente"}) + "\n" +
+        json.dumps({"estado": "despachada"}) + "\n", encoding="utf-8")
     data = module._organos()["organos"]
     assert [x["id"] for x in data] == [
         "entrada", "curatoria", "research", "codex", "plataforma", "emerge"]
@@ -41,6 +49,10 @@ def test_organos_exponen_transformacion_y_no_departamentos_vacios(tmp_path, monk
         "coordina / entrega", "publica / devuelve"]
     assert next(x for x in data if x["id"] == "research")["vivo"] is True
     assert next(x for x in data if x["id"] == "plataforma")["vivo"] is True
+    assert next(x for x in data if x["id"] == "codex")["vivo"] is True
+    assert next(x for x in data if x["id"] == "curatoria")["vivo"] is True
+    assert next(x for x in data if x["id"] == "entrada")["cantidad"] == 2
+    assert next(x for x in data if x["id"] == "plataforma")["cantidad"] == 1
 
 
 def test_interfaz_contiene_tuberia_y_filtro_sobre_el_mismo_cuerpo():
@@ -51,3 +63,5 @@ def test_interfaz_contiene_tuberia_y_filtro_sobre_el_mismo_cuerpo():
     assert 'if u.path == "/api/organos"' in text
     assert '<div id="map-view" class="show">' in text
     assert "ORGANOS_PLACEHOLDER" in text
+    assert "MAPA.lente='cultivo'" in text
+    assert "@media(max-width:800px)" in text
