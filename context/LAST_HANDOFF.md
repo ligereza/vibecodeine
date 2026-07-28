@@ -134,10 +134,27 @@ cosas que se aprendieron ejecutandola:
   interfaces de MAK y escribia lo recibido DIRECTO al portapapeles: pegar eso en
   una terminal lo ejecuta. Acotado a la LAN y a 64 KB.
 
-Sin arreglar y por que: **VCD-06** (limites de recursos) quedo a medias -- el
-tope global de cuerpo en `do_POST` esta escrito y sin commitear. **VCD-07** solo
-a medias: falta fijar las Actions a SHA y poner Dependabot. **VCD-10** esta
-encargado a MAK y NADIE verifico que se ejecute.
+Sin arreglar y por que: **VCD-06 CERRADO el 2026-07-28**: the uncommitted fix
+was truly lost (verified: no stash contains it), so it was redone -- global
+8 MB body cap on the two uncapped `src/flujo` handlers (`serve/server.py`,
+`web/hub.py`, 413 on excess); the three `cultura/` handlers already had caps
+committed. **VCD-07** solo a medias: falta fijar las Actions a SHA y poner
+Dependabot. **VCD-10** esta encargado a MAK y NADIE verifico que se ejecute.
+
+## 2026-07-28: stash triage (last Claude session, closing the runway)
+
+Three stashes left by prior agents were triaged read-only:
+
+- `stash@{0}` (ascii-wip-ultimo-agente): VALUABLE, never landed -- rewrites the
+  campo skin (generative ASCII glyphs, pinch gestures via vendored
+  rstream-gestures, hardened SVG path extractor as XSS mitigation). Preserved
+  as branch `rescate/ascii-campo` on origin WITHOUT merging: it is aesthetics,
+  the user decides. The stash itself was left untouched.
+- `stash@{1}` (mak-vocab): redundant, already in main.
+- `stash@{2}` (retirar-destinos-muertos): ambiguous -- it deletes
+  `iskvw/DIRECCION.md`/`MAPA.md` (the rejected docs) but also carries a
+  material.py prompt simplification and two workflow files. Left untouched;
+  whoever picks it up must read the rejected-docs decision above first.
 
 ## MAK como motor: sirve, y el checkpoint mentia
 
@@ -249,7 +266,9 @@ ALWAYS bound where to look for them.
   presentation or the style can be swapped) -> a `MAPA.md` per line so
   navigation is obvious -> README updated -> the handoff updated on every line.
   **RD and MAK are done. iskvw is what remains.** Its map is
-  `docs/rd/MAPA_RD.md` for RD; iskvw still needs its own.
+  `docs/rd/MAPA_RD.md` for RD; **iskvw's own map EXISTS since PR #368
+  (`iskvw/MAPA.md`)** -- this entry previously said it was missing and that
+  was stale.
 - **What the 2026-07-27 iskvw stretch got wrong.** Detail archived in
   `docs/handoffs/archive/20260727_iskvw_lo_que_fallo.md` (it treated the curation
   as a blocker, dismissed two references without opening them, invented a GPU
