@@ -82,6 +82,7 @@ def relacionar(texto, k=6):
         salida.append({
             "titulo": r.get("titulo") or os.path.basename(ruta),
             "carpeta": r.get("dir") or "",
+            "id": "%s/%s" % (r.get("dir") or "?", os.path.basename(ruta)),
             "score": round(float(r.get("score") or 0), 3),
             # 'corpus' = una obra del archivo del artista; el resto es
             # investigacion propia de MAK. La distincion importa: el usuario
@@ -91,7 +92,7 @@ def relacionar(texto, k=6):
     return salida
 
 
-def anotar(texto, k=6):
+def anotar(texto, k=6, origen_id=None, origen_dir=None):
     """Registra la idea y le adjunta con que se relacionó al momento de escribirla."""
     texto = (texto or "").strip()
     if not texto:
@@ -107,6 +108,8 @@ def anotar(texto, k=6):
         "texto": texto,
         "ts": time.strftime("%Y-%m-%dT%H:%M:%S"),
         "relacionadas": relacionadas,
+        "origen": ({"id": str(origen_id), "dir": str(origen_dir or "")}
+               if origen_id else None),
         "estado": "anotada",
     }
     filas.append(fila)
