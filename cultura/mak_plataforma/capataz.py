@@ -71,9 +71,9 @@ ACCIONES = ("investigar", "codificar", "entregar", "vetear",
 
 # F1a: cadena completa siempre disponible como red de seguridad; el orden
 # (quien contesta primero) es lo que cambia segun riesgo.
-CADENA_COMPLETA = "cerebras,groq,azure,ollama"
-ORDEN_LOCAL_PRIMERO = ["ollama", "cerebras", "groq", "azure"]
-ORDEN_NUBE_PRIMERO = ["cerebras", "groq", "azure", "ollama"]
+CADENA_COMPLETA = "cerebras,groq,ollama"
+ORDEN_LOCAL_PRIMERO = ["ollama", "cerebras", "groq"]
+ORDEN_NUBE_PRIMERO = ["cerebras", "groq", "ollama"]
 
 # Umbrales de primera pasada (F1a), sin dato historico de ollama-primero
 # todavia -- ajustar con METRICAS_CAPATAZ.md una vez haya bitacora bajo

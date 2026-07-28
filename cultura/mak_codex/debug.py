@@ -3,7 +3,7 @@
 
 NO sobrescribe el modulo vivo: produce una PROPUESTA (.py corregido o el bloque
 parchado + .md con el diagnostico) para revision humana. Rol por tarea:
-planner (gpt-5-mini) DIAGNOSTICA (razonar); coder (DeepSeek) REESCRIBE. Se
+planner (Cerebras) DIAGNOSTICA; coder (DeepSeek) REESCRIBE. Se
 valida que el arreglo compile y que no toque red/procesos.
 
     python3 debug.py /ruta/al/archivo.py [--error "traceback"] [--densidad] [--ntfy]
@@ -32,7 +32,7 @@ def reparar(path, error="", densidad="medio"):
     planner = planner_llm()
     coder = coder_llm()
 
-    print("STATUS: Diagnostico (gpt-5-mini)...", flush=True)
+    print("STATUS: Diagnostico (Cerebras gpt-oss-120b)...", flush=True)
     ctx = "ARCHIVO %s:\n```python\n%s\n```" % (nombre, codigo)
     if error.strip():
         ctx += "\n\nSINTOMA/ERROR observado:\n%s" % error.strip()[:2000]
