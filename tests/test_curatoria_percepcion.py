@@ -110,6 +110,83 @@ class TestCheckpoint:
         procesados = percepcion.cargar_procesados(dir_out)
         assert "rd:a.jpg" in procesados
 
+    def test_un_error_no_se_marca_como_procesado_y_se_reintenta(self, tmp_path):
+        raiz = tmp_path / "rd"
+        raiz.mkdir()
+        (raiz / "a.jpg").write_bytes(b"a")
+        dir_out = tmp_path / "out"
+        error = {
+            "id": "x", "fuente": "rd", "ruta_rel": "a.jpg", "tipo": "imagen",
+            "error": "timeout", "seg_proceso": 0.1,
+        }
+        ok = dict(error, error=None)
+
+        with mock.patch("percepcion.construir_ficha", side_effect=[error, ok]) as construir:
+            assert percepcion.correr(str(raiz), None, str(dir_out)) == 0
+            assert "rd:a.jpg" not in percepcion.cargar_procesados(dir_out)
+            assert percepcion.correr(str(raiz), None, str(dir_out)) == 0
+
+        assert construir.call_count == 2
+        assert "rd:a.jpg" in percepcion.cargar_procesados(dir_out)
+        assert "rd:a.jpg" not in percepcion.cargar_fallos(dir_out)
+
+    def test_error_persistente_entra_en_cuarentena(self, tmp_path):
+        raiz = tmp_path / "rd"
+        raiz.mkdir()
+        archivo = raiz / "a.jpg"
+        archivo.write_bytes(b"a")
+        dir_out = tmp_path / "out"
+        error = {
+            "id": "x", "fuente": "rd", "ruta_rel": "a.jpg", "tipo": "imagen",
+            "error": "timeout", "seg_proceso": 0.1,
+        }
+
+        with mock.patch("percepcion.construir_ficha", return_value=error) as construir:
+            for _ in range(percepcion.MAX_INTENTOS_FALLIDOS + 1):
+                assert percepcion.correr(str(raiz), None, str(dir_out)) == 0
+
+        assert construir.call_count == percepcion.MAX_INTENTOS_FALLIDOS
+        registro = percepcion.cargar_fallos(dir_out)["rd:a.jpg"]
+        assert registro["cuarentena"] is True
+        assert registro["intentos"] == percepcion.MAX_INTENTOS_FALLIDOS
+        assert "rd:a.jpg" not in percepcion.cargar_procesados(dir_out)
+
+    def test_archivo_cambiado_sale_de_cuarentena(self, tmp_path):
+        entry = {"bytes": 1, "mtime": 1.0}
+        fallos = {}
+        clave = "rd:a.jpg"
+        for _ in range(percepcion.MAX_INTENTOS_FALLIDOS):
+            percepcion.registrar_fallo(fallos, clave, entry, "timeout")
+        assert percepcion.esta_en_cuarentena(fallos, clave, entry)
+        assert not percepcion.esta_en_cuarentena(
+            fallos, clave, {"bytes": 2, "mtime": 2.0})
+
+    def test_migra_checkpoint_historico_fallido_usando_el_ultimo_intento(self, tmp_path):
+        out = tmp_path / "out"
+        fichas = out / "fichas"
+        fichas.mkdir(parents=True)
+        (out / "procesados.txt").write_text(
+            "rd:falla.jpg\nrd:recuperada.jpg\nrd:ok.jpg\n", encoding="utf-8")
+        rows = [
+            {"fuente": "rd", "ruta_rel": "falla.jpg", "error": "timeout"},
+            {"fuente": "rd", "ruta_rel": "recuperada.jpg", "error": "timeout"},
+            {"fuente": "rd", "ruta_rel": "recuperada.jpg", "error": None},
+            {"fuente": "rd", "ruta_rel": "ok.jpg", "error": None},
+        ]
+        (fichas / "fichas.jsonl").write_text(
+            "".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
+
+        resultado = percepcion.reconciliar_checkpoint_fallido(
+            out, percepcion.cargar_procesados(out))
+
+        assert resultado == {"rd:recuperada.jpg", "rd:ok.jpg"}
+        assert percepcion.cargar_procesados(out) == resultado
+        compactadas = [json.loads(line) for line in
+                   (fichas / "fichas.jsonl").read_text(encoding="utf-8").splitlines()]
+        assert len(compactadas) == 3
+        recuperada = next(row for row in compactadas if row["ruta_rel"] == "recuperada.jpg")
+        assert recuperada["error"] is None
+
 
 # ---------------------------------------------------------------------------
 # construir_ficha() -- schema completo, incluso ante fallos
@@ -311,7 +388,9 @@ class TestAutoPausa:
         estado = percepcion.cargar_estado(dir_out)
         assert estado["pausado_por"] == "errores_seguidos"
         assert estado["errores_seguidos"] == 3
-        assert estado["procesados"] == 3
+        assert estado["procesados"] == 0
+        assert estado["fallos_reintentables"] == 3
+        assert estado["cuarentena"] == 0
         assert len(estado["ultimos_errores"]) == 3
 
     def test_reset_contador_con_exito(self, tmp_path):
@@ -336,7 +415,8 @@ class TestAutoPausa:
         estado = percepcion.cargar_estado(dir_out)
         assert estado["errores_seguidos"] == 2
         assert estado["errores_totales"] == 4
-        assert estado["procesados"] == 5
+        assert estado["procesados"] == 1
+        assert estado["fallos_reintentables"] == 4
 
 
 # ---------------------------------------------------------------------------

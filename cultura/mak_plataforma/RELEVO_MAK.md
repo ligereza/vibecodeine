@@ -15,7 +15,8 @@
 El organismo MAK corre en `/home/mak`, pero **su codigo vive en este repo**:
 un cron `MAK-REPO-SYNC` baja `origin/main` cada 10 minutos y copia
 `cultura/mak_plataforma`, `cultura/mak_research` y `cultura/mak_codex` encima
-del codigo de la caja.
+del codigo de la caja, y `cultura/mak_curatoria` sobre `~/curatoria` con
+`cp -ru` para preservar `fichas/`, `estado.json` y `procesados.txt`.
 
 > **Editar la caja por SSH no sirve: el sync lo revierte.** Comprobado el
 > 2026-07-26 -- un cambio aplicado a las 21:49 desaparecio a las 21:50. Para

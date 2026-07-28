@@ -26,9 +26,14 @@ if pgrep -f "percepcion.py correr" > /dev/null; then
     exit 0
 fi
 
+# Repair the legacy checkpoint and compact retries before deciding that a
+# corpus is complete. Without this call, a completed legacy corpus never starts
+# Python and therefore never gets a chance to repair itself.
+python3 "$CUR/percepcion.py" reconciliar --out "$CUR" >> "$LOG" 2>&1 || exit 1
+
 # Que corpus toca. Devuelve 'rd', 'ig' o 'listo'.
 FUENTE=$(python3 - <<'PY' 2>/dev/null
-import json, os
+import hashlib, json, os
 
 CUR = os.path.expanduser("~/curatoria")
 
@@ -48,6 +53,35 @@ def procesados_por_fuente():
     return hechos
 
 
+def cuarentena_por_fuente(raices):
+    hechos = {"rd": set(), "ig": set()}
+    try:
+        with open(os.path.join(CUR, "fallos.json"), encoding="utf-8") as fh:
+            fallos = json.load(fh)
+        for clave, estado in fallos.items():
+            if not isinstance(estado, dict) or not estado.get("cuarentena"):
+                continue
+            if ":" in clave:
+                fuente, ruta = clave.split(":", 1)
+                if fuente in hechos and fuente in raices:
+                    try:
+                        st = os.stat(os.path.join(raices[fuente], ruta))
+                        path = os.path.join(raices[fuente], ruta)
+                        with open(path, "rb") as fh:
+                            head = fh.read(65536)
+                            fh.seek(max(0, st.st_size - 65536))
+                            tail = fh.read(65536)
+                        digest = hashlib.sha256(head + tail).hexdigest()[:16]
+                        firma_actual = "%s:%s:%s" % (st.st_size, st.st_mtime, digest)
+                    except OSError:
+                        continue
+                    if estado.get("firma") == firma_actual:
+                        hechos[fuente].add(ruta)
+    except (OSError, ValueError):
+        pass
+    return hechos
+
+
 def total(raiz):
     n = 0
     for _, _, archivos in os.walk(raiz):
@@ -55,13 +89,18 @@ def total(raiz):
     return n
 
 
+raices = {
+    "rd": os.path.expanduser("~/RD"),
+    "ig": os.path.expanduser("~/portfolio_media/media"),
+}
 hechos = procesados_por_fuente()
-rd_total = total(os.path.expanduser("~/RD"))
-if len(hechos["rd"]) < rd_total:
+cuarentena = cuarentena_por_fuente(raices)
+rd_total = total(raices["rd"])
+if len(hechos["rd"] | cuarentena["rd"]) < rd_total:
     print("rd")
 else:
-    ig = os.path.expanduser("~/portfolio_media/media")
-    if os.path.isdir(ig) and len(hechos["ig"]) < total(ig):
+    ig = raices["ig"]
+    if os.path.isdir(ig) and len(hechos["ig"] | cuarentena["ig"]) < total(ig):
         print("ig")
     else:
         print("listo")
