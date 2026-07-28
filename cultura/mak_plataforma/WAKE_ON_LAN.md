@@ -7,8 +7,8 @@ por comando (nunca por inactividad: eso quedó apagado).
 
 | Camino | Cómo | Estado |
 |---|---|---|
-| **Teléfono → MAK (wifi)** | WoWLAN magic-packet a `a8:7e:ea:41:63:a1` | armado; se re-arma antes de cada suspend |
-| **Windows → MAK (ethernet)** | WoL magic a `8c:47:be:20:02:67` | persistido en NetworkManager (`lan-kvm`, wake-on-lan=magic) |
+| **Teléfono → MAK (wifi)** | WoWLAN magic-packet a la MAC wifi de MAK (`MAK_MAC_WIFI`) | armado; se re-arma antes de cada suspend |
+| **Windows → MAK (ethernet)** | WoL magic a la MAC ethernet de MAK (`MAK_MAC_ETH`) | persistido en NetworkManager (`lan-kvm`, wake-on-lan=magic) |
 | **Dormir MAK** | `python3 ~/plataforma/energia.py dormir` (`systemctl suspend`) | disponible (suspend desenmascarado) |
 
 ## Cómo despierta el teléfono a MAK
@@ -39,3 +39,10 @@ python3 ~/plataforma/energia.py estado
 sudo iw phy0 wowlan show          # "magic-packet" = armado
 nmcli -t -f 802-3-ethernet.wake-on-lan con show lan-kvm   # :magic
 ```
+
+> **Las MAC no estan escritas aca a proposito** (2026-07-27, hallazgo VCD-08 y
+> un barrido posterior que encontro ESTE archivo, que el diagnostico no listaba).
+> Este repo es publico y una MAC identifica hardware. Se resuelven en tiempo de
+> ejecucion desde `MAK_MAC_ETH` / `MAK_MAC_WIFI` o desde `/sys/class/net/<if>/address`
+> -- ver `cultura/mak_plataforma/energia.py`. Para verlas en la caja:
+> `cat /sys/class/net/enp3s0/address`.
