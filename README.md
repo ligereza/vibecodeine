@@ -45,6 +45,39 @@ If there is a conflict, this order wins:
 5. README.md
 ```
 
+## The four branches, and what each one is for
+
+There are FOUR and no more. If you find a fifth, it is work in flight or
+something that should have been deleted.
+
+```txt
+main    EVERYTHING, without exception. The complete, working, verifiable
+        version. The lines come DOWN from main, never the other way around.
+        Protected with enforce_admins: NOBODY pushes directly, not the admin
+        and not an agent holding the credential. Every change is a PR with
+        green CI.
+
+rd      The NGO line: Reduciendo Dano. Data, grants, supplements, events.
+        What the RD people receive is a generated FILE, never this repo --
+        a branch does not hide history, and anyone cloning it gets every
+        commit including everything personal.
+
+iskvw   The artistic line: curation, archive, portfolio. Publishes to
+        iskvw.cl through .github/workflows/publicar_iskvw.yml, which uploads
+        ONLY the iskvw/ folder.
+
+mak     NOT a line: it is MAK's INBOX. Nothing lives here. The box opens a PR
+        against it and the only exit is a PR into main. If it ever stops
+        draining, it has become a line and that is a bug, not a state.
+```
+
+To bring a line up to date: `git merge origin/main`, never a rewrite. A line is
+promoted to main by a curated PR with green CI. Work that fits no line gets
+escalated before inventing a loose branch.
+
+Why it matters, measured: a `mejoras` line was retired because it kept turning
+main into a SUBSET, and a subset cannot merge back.
+
 ## Language
 
 Everything in the repo is written in English: code, docs, commits, PRs. The one
