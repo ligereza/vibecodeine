@@ -25,6 +25,21 @@
     "Si este archivo no viaja en el repo, el generador entra en todo y lo avisa por stderr.",
     "Nunca decide en silencio."
   ],
+  "_leeme_carpetas": [
+    "'carpetas' dice de qué parte del export de Instagram puede salir una obra.",
+    "Vacío = todas. Hoy dice posts y reels, por decisión del usuario el 2026-07-27.",
+    "",
+    "Por qué existe: ese día el sitio ya estaba publicado y se midió que de 640",
+    "obras servidas sólo 208 venían de 'posts'. Había 141 de 'archived_posts'",
+    "—publicaciones que él archivó, o sea que decidió sacar de su perfil— y 291",
+    "de 'other', que en un export de Instagram no es el feed. Publicar lo",
+    "archivado revierte una decisión suya, y eso no lo arregla ningún test verde.",
+    "",
+    "'reels' hoy suma 0 obras: la percepción todavía no llegó a esa carpeta (34",
+    "archivos sin procesar). Están declaradas igual, así entran solas cuando la",
+    "percepción pase por ahí, sin que nadie tenga que acordarse."
+  ],
+  "carpetas": ["posts", "reels"],
   "incluir": [],
   "excluir": [],
   "sin_clasificar": "incluir",

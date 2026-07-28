@@ -69,6 +69,7 @@ data/*.json
 !data/piezas_tipos.json
 !data/iskvw_campo_filtro.json
 !data/iskvw_librerias.json
+!data/iskvw_capas.json
 context/DAILY.md
 context/PIPELINE_RESULT.md
 context/dashboard.html

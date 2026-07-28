@@ -85,3 +85,60 @@ def test_un_filtro_roto_no_decide_en_silencio(tmp_path, capsys):
     f = G.cargar_filtro(p)
     assert G.entra("obra", f) and G.entra("", f)
     assert "entra TODO" in capsys.readouterr().err
+
+
+def test_el_filtro_por_carpeta_manda_sobre_el_tipo():
+    """El origen decide antes que el tipo, y la razon no es tecnica.
+
+    Medido el 2026-07-27 con el sitio YA publicado: de 640 obras servidas en
+    iskvw.cl solo 208 venian de `posts/`. Habia 141 de `archived_posts/` --
+    publicaciones que el usuario archivo, o sea que decidio sacar de su perfil
+    -- y 291 de `other/`, que en un export de Instagram no es el feed.
+    Publicar lo archivado revierte una decision suya, y eso no lo arregla
+    ninguna prueba verde.
+    """
+    f = G.cargar_filtro()
+    assert G.entra_carpeta("posts/123.jpg", f)
+    assert not G.entra_carpeta("archived_posts/202009/123.jpg", f)
+    assert not G.entra_carpeta("other/123.jpg", f)
+    # sin lista, entra todo: el default nunca descarta
+    libre = {**f, "carpetas": []}
+    for ruta in ("posts/1.jpg", "other/1.jpg", "archived_posts/x/1.jpg", ""):
+        assert G.entra_carpeta(ruta, libre), ruta
+    # con lista, una obra sin ruta no se puede ubicar y no entra
+    assert not G.entra_carpeta("", f)
+
+
+def test_reels_esta_declarado_aunque_hoy_sume_cero():
+    """La percepcion todavia no llego a `reels` (34 archivos sin procesar el
+    2026-07-27). Esta declarado igual para que entren SOLOS cuando pase por ahi,
+    sin que nadie tenga que acordarse."""
+    f = G.cargar_filtro()
+    assert G.entra_carpeta("reels/123.mp4", f)
+
+
+def test_ningun_trazo_publicado_es_de_una_obra_excluida():
+    """El ratchet de esto: los SVG viajan al sitio, asi que un trazo de una obra
+    filtrada seria material publicado que el filtro dice que no se publica. Ya
+    paso: quedaron 441 trazos de obras que el filtro dejaba fuera."""
+    import glob
+    campo = json.loads((_REPO / "iskvw" / "datos" / "campo.json")
+                       .read_text(encoding="utf-8"))
+    en_campo = {p["id"].split("-")[0] for p in campo["piezas"]}
+    en_disco = {Path(p).stem for p in
+                glob.glob(str(_REPO / "iskvw" / "piel" / "trazos" / "*.svg"))}
+    huerfanos = sorted(en_disco - en_campo)
+    assert not huerfanos, (
+        "hay trazos publicados de obras que el filtro excluye: "
+        + ", ".join(huerfanos[:5]) + f" ({len(huerfanos)} en total)")
+
+
+def test_el_indice_de_trazos_dice_la_verdad():
+    import glob
+    idx = json.loads((_REPO / "iskvw" / "piel" / "trazos" / "_indice.json")
+                     .read_text(encoding="utf-8"))
+    en_disco = {Path(p).stem for p in
+                glob.glob(str(_REPO / "iskvw" / "piel" / "trazos" / "*.svg"))}
+    assert set(idx["trazos"]) == en_disco, (
+        "el indice y el disco no coinciden: correr "
+        "py tools/gen_campo_iskvw.py --indice-trazos iskvw/piel/trazos")
