@@ -77,8 +77,32 @@ jobs:
           test -f _sitio/.nojekyll || { echo "FALTA: .nojekyll"; exit 1; }
           # `find`, no `ls` con glob: el glob no distingue "no hay archivos" de
           # "no pude expandir la ruta".
+          # COHERENCIA, no cantidad. El umbral que habia aca -- "mas de 600
+          # trazos" -- codificaba el tamano que el archivo tenia ese dia, y
+          # cuando el usuario lo restringio a `posts` quedaron 208: la guarda
+          # bloqueo la publicacion CORRECTA y dejo viva la anterior, que
+          # justamente traia el material que se habia sacado por privacidad.
+          # Un umbral absoluto convierte un cambio legitimo de alcance en un
+          # despliegue fallido, y encima falla del lado inseguro.
           n=$(find _sitio/piel/trazos -name '*.svg' | wc -l)
-          test "$n" -gt 600 || { echo "solo $n trazos, se esperaban 600+"; exit 1; }
+          test "$n" -gt 0 || { echo "no hay ningun trazo"; exit 1; }
+          # lo que de verdad importa: el indice y el disco dicen lo mismo, y
+          # ningun trazo sobra respecto del campo que se publica
+          python3 - <<'PY'
+          import json, glob, os, sys
+          idx = json.load(open("_sitio/piel/trazos/_indice.json", encoding="utf-8"))["trazos"]
+          disco = {os.path.basename(f)[:-4] for f in glob.glob("_sitio/piel/trazos/*.svg")}
+          campo = json.load(open("_sitio/datos/campo.json", encoding="utf-8"))["piezas"]
+          ids = {p["id"].split("-")[0] for p in campo}
+          if set(idx) != disco:
+              print("el indice y el disco no coinciden:",
+                    len(set(idx) ^ disco), "de diferencia"); sys.exit(1)
+          sobran = disco - ids
+          if sobran:
+              print("se publicarian", len(sobran),
+                    "trazos de obras que el filtro excluye"); sys.exit(1)
+          print("coherente:", len(disco), "trazos, todos del campo publicado")
+          PY
           # Un SVG de 0 bytes es indistinguible de un trazo bueno servido: ese
           # defecto ya paso una vez, 60 archivos vacios en disco.
           vacios=$(find _sitio/piel/trazos -name '*.svg' -size 0 | wc -l)
