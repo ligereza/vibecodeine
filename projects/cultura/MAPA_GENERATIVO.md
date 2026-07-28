@@ -79,7 +79,7 @@ marcadas como contaminadas o como ancla no independiente; falta la primera
 administración que cumpla el protocolo de aislamiento completo.
 
 **3. `legado-fable`** — `puente/MANIFIESTO.md`, `ULTIMO_ALIENTO.md`,
-`ULTIMO_DESEO.md`, `HANDOFF_manifiesto_del_bioma.md`, `HANDOFF_OPUS.md`,
+`ULTIMO_DESEO.md`, `MANIFIESTO_DEL_BIOMA.md`, `HANDOFF_OPUS.md`,
 `ultimo_1_porciento.py` — *latente* — entropía de registro. El corpus de
 cierre de `idea_generativa` (12-jul-2026): 11 ideas de workflow sin ejecutar,
 la ecuación-testamento `p(n+1)=Cultura[Tilde(Psicosis(Precursor))]`, una
