@@ -2838,7 +2838,7 @@ HTML = """<!doctype html>
   </div>
 
   <!-- ── CUERPO: materia + afinidad + procedencia ── -->
-  <div id="map-view">
+  <div id="map-view" class="show">
     <canvas id="map-canvas"></canvas>
     <div class="map-legend">
       <h4>&#129744; Cuerpo de MAK</h4>

@@ -66,6 +66,7 @@ def test_interfaz_ofrece_operaciones_sobre_la_materia():
     assert "mapDebatir" in interfaz
     assert "mapExperimentar" in interfaz
     assert "setView('mapa');" in interfaz
+    assert '<div id="map-view" class="show">' in interfaz
     assert "tubería clara" in interfaz
     assert "e.clase === 'procedencia'" in interfaz
     assert "mapLente('compost')" in interfaz
