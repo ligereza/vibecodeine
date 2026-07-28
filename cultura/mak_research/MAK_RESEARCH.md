@@ -15,19 +15,20 @@ tema X --> [interfaz web :8890]  [ntfy iPhone]  [CLI ssh]
              |                                     |
    SEARCH Tavily -> FETCH -> ANALYZE       4 busquedas paralelas ->
    (LLM fallback) -> DECIDE -> informe     4 panelistas -> replicas ->
-             |                             sintesis gpt-5-mini
+             |                             sintesis Cerebras gpt-oss-120b
              v                                     v
    ~/research/informes/*.md               ~/research/paneles/*.md
 ```
 
-Cadena LLM con fallback (research_lib.py): groq -> cerebras -> azure ->
-ollama local. Panel: cada angulo pide primero SU proveedor:
+Cadena LLM con fallback (research_lib.py): cerebras -> groq -> ollama local.
+GPT mini/Azure fue retirado de MAK el 2026-07-28 para reservar ese cupo a la
+sesion principal. Panel: cada angulo pide primero SU proveedor:
 
 | Angulo | Proveedor | Modelo |
 |---|---|---|
 | historico | Groq | llama-3.3-70b-versatile |
 | estetico | Ollama local | gemma3:4b (OLLAMA_MODEL; aya-expanse:8b instalado de repuesto) |
-| legal | Azure Foundry | deployment gpt-5-mini |
+| legal | Groq | llama-3.3-70b-versatile |
 | tecnico | Cerebras | gpt-oss-120b |
 
 Search: Tavily (1000 creditos/mes; basic=1, advanced=2).
@@ -61,9 +62,8 @@ Search: Tavily (1000 creditos/mes; basic=1, advanced=2).
 - Cloudflare 403 codigo 1010 si falta User-Agent custom (urllib
   default bloqueado): research_lib._http_json ya manda
   `flujo-mak-research/1.0`.
-- gpt-5-mini y gpt-oss-120b son razonadores: margen
+- gpt-oss-120b es razonador: margen
   `max_completion_tokens = pedido + 2048` o devuelven vacio.
-  Azure gpt-5-mini NO acepta temperature custom.
 - Catalogo free de Cerebras ROTA (hoy: gpt-oss-120b, gemma-4-31b,
   zai-glm-4.7): si model_not_found, `GET https://api.cerebras.ai/v1/models`.
 - qwen3 mete tags `<think>` en la salida: por eso gemma3:4b (ademas
