@@ -281,6 +281,116 @@ def marcar_procesado(dir_out: Path, clave: str) -> None:
         f.write(clave + "\n")
 
 
+def reconciliar_checkpoint_fallido(dir_out: Path, procesados: set) -> set:
+    """Undo the legacy bug that checkpointed failed fichas as successes.
+
+    The latest JSONL row wins, so an old failure followed by a successful retry
+    stays processed. Rewriting is atomic and happens only when reconciliation
+    actually changes the checkpoint.
+    """
+    fichas = Path(dir_out) / "fichas" / "fichas.jsonl"
+    if not fichas.exists() or not procesados:
+        return procesados
+    ultimas: dict[str, dict] = {}
+    filas = 0
+    try:
+        with fichas.open("r", encoding="utf-8") as fh:
+            for line in fh:
+                try:
+                    ficha = json.loads(line)
+                    clave = clave_checkpoint(ficha["fuente"], ficha["ruta_rel"])
+                    ultimas[clave] = ficha
+                    filas += 1
+                except (KeyError, TypeError, json.JSONDecodeError):
+                    continue
+    except OSError:
+        return procesados
+    # The file used to append retries, while consumers treated every row as a
+    # distinct work. Compact it atomically so every consumer sees latest-wins.
+    if filas != len(ultimas):
+        tmp_fichas = fichas.with_suffix(".jsonl.tmp")
+        tmp_fichas.write_text(
+            "".join(json.dumps(ficha, ensure_ascii=True) + "\n"
+                    for ficha in ultimas.values()), encoding="utf-8")
+        os.replace(tmp_fichas, fichas)
+    corregidos = {
+        clave for clave in procesados
+        if not bool((ultimas.get(clave) or {}).get("error"))
+    }
+    if corregidos == procesados:
+        return procesados
+    p = Path(dir_out) / "procesados.txt"
+    tmp = p.with_suffix(".txt.tmp")
+    tmp.write_text("".join(clave + "\n" for clave in sorted(corregidos)), encoding="utf-8")
+    os.replace(tmp, p)
+    return corregidos
+
+
+MAX_INTENTOS_FALLIDOS = 3
+
+
+def _firma_entry(entry: dict) -> str:
+    """Detect replacement even when copy tools preserve size and mtime."""
+    digest = ""
+    path = entry.get("ruta_abs")
+    if path:
+        try:
+            with open(path, "rb") as fh:
+                head = fh.read(65536)
+                fh.seek(max(0, int(entry.get("bytes", 0)) - 65536))
+                tail = fh.read(65536)
+            digest = hashlib.sha256(head + tail).hexdigest()[:16]
+        except OSError:
+            pass
+    return "%s:%s:%s" % (entry.get("bytes", 0), entry.get("mtime", 0), digest)
+
+
+def cargar_fallos(dir_out: Path) -> dict:
+    p = Path(dir_out) / "fallos.json"
+    if not p.exists():
+        return {}
+    try:
+        data = json.loads(p.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def guardar_fallos(dir_out: Path, fallos: dict) -> None:
+    p = Path(dir_out) / "fallos.json"
+    tmp = p.with_suffix(".json.tmp")
+    p.parent.mkdir(parents=True, exist_ok=True)
+    tmp.write_text(json.dumps(fallos, ensure_ascii=True, indent=2) + "\n", encoding="utf-8")
+    os.replace(tmp, p)
+
+
+def registrar_fallo(fallos: dict, clave: str, entry: dict, error: str) -> dict:
+    firma = _firma_entry(entry)
+    previo = fallos.get(clave) if isinstance(fallos.get(clave), dict) else {}
+    intentos = int(previo.get("intentos", 0)) + 1 if previo.get("firma") == firma else 1
+    ahora = datetime.now(timezone.utc).isoformat()
+    registro = {
+        "firma": firma,
+        "intentos": intentos,
+        "error": str(error),
+        "ultimo_intento": ahora,
+        "cuarentena": intentos >= MAX_INTENTOS_FALLIDOS,
+    }
+    if previo.get("firma") == firma and previo.get("primer_intento"):
+        registro["primer_intento"] = previo["primer_intento"]
+    else:
+        registro["primer_intento"] = ahora
+    fallos[clave] = registro
+    return registro
+
+
+def esta_en_cuarentena(fallos: dict, clave: str, entry: dict) -> bool:
+    registro = fallos.get(clave)
+    return bool(isinstance(registro, dict)
+                and registro.get("cuarentena")
+                and registro.get("firma") == _firma_entry(entry))
+
+
 def id_ficha(fuente: str, ruta_rel: str) -> str:
     """Hash corto (12 hex) de fuente+ruta_rel, usado como id de la ficha."""
     return hashlib.sha1(clave_checkpoint(fuente, ruta_rel).encode("utf-8")).hexdigest()[:12]
@@ -720,7 +830,9 @@ def correr(raiz_rd, raiz_ig, dir_out,
     trabajo = construir_trabajo(raiz_rd, raiz_ig, solo_fuente=solo_fuente)
     total_trabajo = len(trabajo)
 
-    procesados_set = cargar_procesados(dir_out)
+    procesados_set = reconciliar_checkpoint_fallido(
+        dir_out, cargar_procesados(dir_out))
+    fallos = cargar_fallos(dir_out)
 
     estado_previo = cargar_estado(dir_out)
     inicio_ts = estado_previo.get("inicio") or datetime.now(timezone.utc).isoformat()
@@ -742,6 +854,12 @@ def correr(raiz_rd, raiz_ig, dir_out,
             "ultimo": datetime.now(timezone.utc).isoformat(),
             "total_trabajo": total_trabajo,
             "procesados": procesados_count,
+            "fallos_reintentables": sum(
+                1 for value in fallos.values()
+                if isinstance(value, dict) and not value.get("cuarentena")),
+            "cuarentena": sum(
+                1 for value in fallos.values()
+                if isinstance(value, dict) and value.get("cuarentena")),
             "por_fuente": por_fuente,
             "errores_totales": errores_totales,
             "errores_seguidos": errores_seguidos,
@@ -754,6 +872,8 @@ def correr(raiz_rd, raiz_ig, dir_out,
         clave = clave_checkpoint(entry["fuente"], entry["ruta_rel"])
         if clave in procesados_set:
             continue
+        if esta_en_cuarentena(fallos, clave, entry):
+            continue
 
         ficha = construir_ficha(entry, dir_tmp, timeout_archivo)
         tiempos.append(ficha.get("seg_proceso") or 0.0)
@@ -762,14 +882,11 @@ def correr(raiz_rd, raiz_ig, dir_out,
 
         escribir_ficha(dir_fichas, ficha)
 
-        procesados_set.add(clave)
-        marcar_procesado(dir_out, clave)
-        procesados_count += 1
-        por_fuente[entry["fuente"]] = por_fuente.get(entry["fuente"], 0) + 1
-
         if ficha.get("error"):
             errores_totales += 1
             errores_seguidos += 1
+            registrar_fallo(fallos, clave, entry, ficha["error"])
+            guardar_fallos(dir_out, fallos)
             ultimos_errores.append({
                 "ruta_rel": entry["ruta_rel"],
                 "error": ficha["error"],
@@ -777,6 +894,12 @@ def correr(raiz_rd, raiz_ig, dir_out,
             ultimos_errores = ultimos_errores[-MAX_ULTIMOS_ERRORES:]
         else:
             errores_seguidos = 0
+            fallos.pop(clave, None)
+            guardar_fallos(dir_out, fallos)
+            procesados_set.add(clave)
+            marcar_procesado(dir_out, clave)
+            procesados_count += 1
+            por_fuente[entry["fuente"]] = por_fuente.get(entry["fuente"], 0) + 1
 
         contador_desde_guardado += 1
         if contador_desde_guardado >= GUARDADO_CADA_N:
@@ -812,6 +935,16 @@ def main() -> int:
 
     cmd = argv[0]
     resto = argv[1:]
+
+    if cmd == "reconciliar":
+        out = _obtener_flag(resto, "--out")
+        if not out:
+            print("falta --out", file=sys.stderr)
+            return 2
+        antes = cargar_procesados(Path(out))
+        despues = reconciliar_checkpoint_fallido(Path(out), antes)
+        print(json.dumps({"antes": len(antes), "despues": len(despues)}, ensure_ascii=True))
+        return 0
 
     if cmd == "correr":
         raiz_rd = _obtener_flag(resto, "--raiz-rd")

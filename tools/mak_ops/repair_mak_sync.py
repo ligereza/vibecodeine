@@ -10,7 +10,7 @@ Hace SOLO lo siguiente en MAK:
 3. respalda el crontab actual en ~/plataforma/backups/;
 4. corrige MAK-REPO-SYNC para actualizar refs/remotes/origin/main;
 5. sincroniza una vez el checkout a origin/main;
-6. copia los tres espejos a los directorios vivos con el mismo cp -ru ya
+6. copia los cuatro espejos a los directorios vivos con el mismo cp -ru ya
    usado por el cron;
 7. verifica branch, hashes, cron y APIs.
 
@@ -21,16 +21,18 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import os
 import subprocess
 from pathlib import Path
 
-HOST = "mak@192.168.50.2"
+HOST = "%s@%s" % (os.environ.get("MAK_USER", "mak"),
+                  os.environ.get("MAK_HOST", "192.168.50.2"))
 REMOTE = r'''set -eu
 STAMP=$(date +%Y%m%d_%H%M%S)
 REPO="$HOME/flujo"
 PLAT="$HOME/plataforma"
 BACKUPS="$PLAT/backups"
-SYNC='*/10 * * * * git -C /home/mak/flujo fetch -q origin +refs/heads/main:refs/remotes/origin/main && git -C /home/mak/flujo checkout -q -B main origin/main && git -C /home/mak/flujo reset -q --hard origin/main && cp -ru /home/mak/flujo/cultura/mak_plataforma/. /home/mak/plataforma/ && cp -ru /home/mak/flujo/cultura/mak_research/. /home/mak/research/ && cp -ru /home/mak/flujo/cultura/mak_codex/. /home/mak/codex/ # MAK-REPO-SYNC'
+SYNC='*/10 * * * * git -C /home/mak/flujo fetch -q origin +refs/heads/main:refs/remotes/origin/main && git -C /home/mak/flujo checkout -q -B main origin/main && git -C /home/mak/flujo reset -q --hard origin/main && cp -ru /home/mak/flujo/cultura/mak_plataforma/. /home/mak/plataforma/ && cp -ru /home/mak/flujo/cultura/mak_research/. /home/mak/research/ && cp -ru /home/mak/flujo/cultura/mak_codex/. /home/mak/codex/ && cp -ru /home/mak/flujo/cultura/mak_curatoria/. /home/mak/curatoria/ # MAK-REPO-SYNC'
 
 say() { printf '\n@@ %s @@\n' "$1"; }
 fail() { say BLOCKED; printf '%s\n' "$1"; exit 20; }
@@ -71,6 +73,7 @@ git -C "$REPO" reset -q --hard origin/main
 cp -ru "$REPO/cultura/mak_plataforma/." "$HOME/plataforma/"
 cp -ru "$REPO/cultura/mak_research/." "$HOME/research/"
 cp -ru "$REPO/cultura/mak_codex/." "$HOME/codex/"
+cp -ru "$REPO/cultura/mak_curatoria/." "$HOME/curatoria/"
 
 say AFTER
 printf 'branch='; git -C "$REPO" branch --show-current

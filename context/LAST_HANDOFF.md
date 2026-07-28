@@ -120,6 +120,19 @@ and returns 413 on excess; the three `cultura/` handlers were already capped.
 VCD-07 remains partial: pin Actions to SHAs and add Dependabot. VCD-10 was
 assigned to MAK but has not been verified running.
 
+## 2026-07-28: Fable handoff recovered
+
+The final session left two PRs. VCD-06 gained direct 413 regressions and merged
+as #372 with five green checks. `PROYECCION.md` is a requested compass, not
+backlog; #373 was rebased after #372 and still requires green CI.
+
+Branch `mejoras-operativas-20260728` stops MAK checkpointing failed perceptions
+as successes, retries them, quarantines unchanged files after three failures,
+and repairs the legacy checkpoint from the latest JSONL row. Live measurement:
+49/5,463 attempts contain errors. It also aligns the Windows verifier with the
+already-live `mak_curatoria -> ~/curatoria` mirror and unifies Windows launchers.
+Merge through the gate; do not copy to MAK manually.
+
 ## Stash triage (2026-07-28)
 
 - `stash@{0}` is valuable ASCII-skin work, preserved on

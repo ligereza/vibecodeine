@@ -35,9 +35,9 @@ def cargar_estado(dir_out) -> dict:
 
 def cargar_fichas(dir_out) -> list[dict]:
     p = Path(dir_out) / "fichas" / "fichas.jsonl"
-    fichas: list[dict] = []
+    fichas: dict[str, dict] = {}
     if not p.exists():
-        return fichas
+        return []
     try:
         with p.open("r", encoding="utf-8") as f:
             for linea in f:
@@ -49,10 +49,12 @@ def cargar_fichas(dir_out) -> list[dict]:
                 except json.JSONDecodeError:
                     continue
                 if isinstance(registro, dict):
-                    fichas.append(registro)
+                    clave = "%s:%s" % (registro.get("fuente", ""),
+                                       registro.get("ruta_rel", ""))
+                    fichas[clave] = registro
     except OSError:
         pass
-    return fichas
+    return list(fichas.values())
 
 
 def _parsear_ts(ts_str: str):
