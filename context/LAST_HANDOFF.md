@@ -106,9 +106,8 @@ and verifiable), `rd` (NGO/data/grants), `iskvw` (curation/artwork), plus `mak`,
 which is MAK's INBOX and not a line: nothing lives there, its only exit is a PR
 into main. Nobody pushes to main directly: it is protected with `enforce_admins`,
 everything lands through a PR with green CI.
-
-User decision 2026-07-28: `main` is the artwork; RD=NGO, iskvw=artist, MAK=
-server/generator/curator (Git inbox, third organ). The finished README SVG is
+User decision 2026-07-28: `main` is the artwork; RD=NGO, iskvw=artist, MAK=server/
+generator/curator (Git inbox, third organ). The finished README SVG is
 never altered. New tools need no technical permission when they remove manual
 work, produce evidence, or add a verified capability -- never utility slop.
 Working and verified live: the DREF show chain (LTC -> Chataigne -> OSC -> phone
