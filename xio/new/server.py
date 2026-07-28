@@ -108,6 +108,26 @@ _DENY_IPS = frozenset(
 )
 
 
+# ── VCD-01: por que aca NO hay token ─────────────────────────────────────────
+# El diagnostico del 2026-07-27 pide autenticacion global, y su propio resumen
+# condiciona la severidad: "CRITICO cuando XIO esta activo en una red con
+# clientes no totalmente confiables". Esa no es la red de este usuario.
+#
+# Decision suya, 2026-07-27: el hotspot tiene clave, la red de casa es suya, y
+# en show tampoco lo deja abierto. Un token seria friccion en el unico momento
+# en que este controlador tiene que responder sin pensarlo -- durante un show,
+# con el telefono como unico aparato.
+#
+# Lo que SI queda cerrado, porque la clave del hotspot no lo cubre:
+#   - CORS: el atacante ahi no es un cliente de la red sino cualquier PAGINA WEB
+#     abierta en un dispositivo ya conectado. La clave no filtra navegadores.
+#   - Instalar plugins: es ejecutar codigo en este proceso, y el vector puede ser
+#     un ZIP que el propio usuario baje. Se enciende a proposito.
+#
+# Retiro de esta nota: si xio alguna vez corre en una red que el usuario no
+# controla, el token vuelve -- el codigo para eso esta en el historial de este
+# archivo (PR #357).
+
 @app.before_request
 def _deny_blocked_sources():
     """Hard-reject requests from denylisted source IPs before any handler runs."""
@@ -340,6 +360,12 @@ def api_plugin_reload(plugin_id):
 @app.route("/api/plugins/install", methods=["POST"])
 def api_plugin_install():
     """Install a plugin from uploaded zip or local path."""
+    if os.environ.get("XIO_PERMITIR_INSTALAR_PLUGINS") != "1":
+        return jsonify({
+            "error": "instalacion_desactivada",
+            "reason": "Instalar un plugin ejecuta su codigo en este proceso. "
+                      "Se enciende a proposito con XIO_PERMITIR_INSTALAR_PLUGINS=1.",
+        }), 403
     if not plugin_registry:
         return jsonify({"error": "Plugin system not initialized"}), 500
 
@@ -770,7 +796,13 @@ def api_sequence_run():
 
 @app.after_request
 def after_request(response):
-    response.headers.add("Access-Control-Allow-Origin", "*")
+    # CORS `*` con un servidor que ejecuta acciones es invitar a que cualquier
+    # pagina abierta en el navegador de alguien del hotspot maneje el telefono.
+    # Solo los origenes que se declaren (XIO_ORIGENES, separados por coma).
+    _permitidos = [o.strip() for o in os.environ.get("XIO_ORIGENES", "").split(",") if o.strip()]
+    _origen = request.headers.get("Origin")
+    if _origen and _origen in _permitidos:
+        response.headers.add("Access-Control-Allow-Origin", _origen)
     response.headers.add("Access-Control-Allow-Headers", "Content-Type")
     response.headers.add("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS")
     return response
