@@ -75,6 +75,23 @@ def test_interfaz_ofrece_operaciones_sobre_la_materia():
     assert 'data-lente="frutos"' in interfaz
     assert 'self.path == "/api/codex/experimentar"' in interfaz
     assert 'self.path == "/api/ideas/anotar"' in interfaz
+    assert '"corpus": os.path.expanduser("~/research/corpus")' in interfaz
+    assert '"ideas": os.path.expanduser("~/research/ideas")' in interfaz
+    assert '"codex": os.path.expanduser("~/research/codex")' in interfaz
+    assert '"fusiones": os.path.expanduser("~/research/fusiones")' in interfaz
+
+
+def test_endpoints_historicos_no_quedan_dentro_de_fusion():
+    interfaz = (ROOT / "cultura" / "mak_research" / "interfaz.py").read_text(
+        encoding="utf-8")
+    fusion = interfaz.index('if self.path == "/api/fusion"')
+    workflow = interfaz.index('if self.path == "/api/workflow"', fusion)
+    between = interfaz[fusion:workflow]
+    assert 'return self._json_response({"ok": True, "primordio": primordio})' in between
+    workflow_line = interfaz[workflow:].splitlines()[0]
+    fusion_line = interfaz[fusion:].splitlines()[0]
+    assert len(workflow_line) - len(workflow_line.lstrip()) == \
+        len(fusion_line) - len(fusion_line.lstrip())
 
 
 def test_memoria_declara_afinidad_y_procedencia():

@@ -42,6 +42,10 @@ DIRS = {
     "correlaciones": os.path.expanduser("~/research/correlaciones"),
     "grafos": os.path.expanduser("~/research/grafos"),
     "memoria": os.path.expanduser("~/research/memoria"),
+    "corpus": os.path.expanduser("~/research/corpus"),
+    "ideas": os.path.expanduser("~/research/ideas"),
+    "codex": os.path.expanduser("~/research/codex"),
+    "fusiones": os.path.expanduser("~/research/fusiones"),
 }
 # modo (backend script) -> carpeta de salida; single reusa el motor de research
 MODO_DIR = {"research": "informes", "panel": "paneles",
@@ -3249,6 +3253,7 @@ class H(BaseHTTPRequestHandler):
           # Decision file changed without changing the embedding index;
           # invalidate only the graph cache so status is visible now.
           try:
+            import memoria
             os.unlink(memoria.GRAFO_CACHE)
           except OSError:
             pass
@@ -3271,8 +3276,8 @@ class H(BaseHTTPRequestHandler):
         except Exception as e:  # noqa: BLE001
           return self._json_response({"ok": False, "error": str(e)[:200]}, 500)
 
-        # API: save workflow
-        if self.path == "/api/workflow":
+      # API: save workflow
+      if self.path == "/api/workflow":
             largo = min(int(self.headers.get("Content-Length") or 0), 50000)
             body = self.rfile.read(largo).decode("utf-8")
             try:
@@ -3286,15 +3291,15 @@ class H(BaseHTTPRequestHandler):
                 self._json_response({"ok": False, "error": str(e)}, 500)
             return
 
-        # config form (legacy endpoint)
-        if self.path == "/config":
+      # config form (legacy endpoint)
+      if self.path == "/config":
             largo = min(int(self.headers.get("Content-Length") or 0), 20000)
             q = urllib.parse.parse_qs(self.rfile.read(largo).decode())
             _guardar_config(q)
             return self._html("Guardado", 200)
 
-        # run workflow
-        if self.path == "/run":
+      # run workflow
+      if self.path == "/run":
             largo = min(int(self.headers.get("Content-Length") or 0), 10000)
             q = urllib.parse.parse_qs(self.rfile.read(largo).decode())
             tema = (q.get("tema") or [""])[0].strip()[:300]
@@ -3317,16 +3322,16 @@ class H(BaseHTTPRequestHandler):
                 return self._json_response({"ok": True})
             return self._json_response({"ok": False, "error": "tema vacío"}, 400)
 
-        # memoria: reindexar el archivo (background). rebuild=1 re-embeddeba todo
-        if self.path == "/api/memoria/index":
+      # memoria: reindexar el archivo (background). rebuild=1 re-embeddeba todo
+      if self.path == "/api/memoria/index":
             largo = min(int(self.headers.get("Content-Length") or 0), 200)
             q = urllib.parse.parse_qs(self.rfile.read(largo).decode())
             rebuild = (q.get("rebuild") or ["0"])[0] in ("1", "true", "on")
             started = _reindexar_async(rebuild=rebuild)
             return self._json_response({"ok": True, "started": started})
 
-        # auto-repair: el modelo capaz diagnostica un job fallido
-        if self.path == "/api/repair":
+      # auto-repair: el modelo capaz diagnostica un job fallido
+      if self.path == "/api/repair":
             largo = min(int(self.headers.get("Content-Length") or 0), 8000)
             q = urllib.parse.parse_qs(self.rfile.read(largo).decode())
             tema = (q.get("tema") or [""])[0][:300]
@@ -3337,14 +3342,14 @@ class H(BaseHTTPRequestHandler):
             except Exception as e:  # noqa: BLE001 - el fix es best-effort
                 return self._json_response({"ok": False, "error": str(e)[:300]}, 500)
 
-        # reanudar un job PAUSADO: reintentar / editar / saltar / abortar
-        if self.path == "/api/reanudar":
+      # reanudar un job PAUSADO: reintentar / editar / saltar / abortar
+      if self.path == "/api/reanudar":
             largo = min(int(self.headers.get("Content-Length") or 0), 8000)
             q = urllib.parse.parse_qs(self.rfile.read(largo).decode())
             code, payload = _reanudar_logic(q)
             return self._json_response(payload, code)
 
-        return self._html("no", 404)
+      return self._html("no", 404)
 
     def log_message(self, fmt, *args):
         # silence request logs: worker.log handles operational logging
