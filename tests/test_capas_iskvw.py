@@ -98,7 +98,12 @@ def test_el_campo_del_repo_lleva_las_capas():
     assert capas, "campo.json deberia declarar en meta que capas corrieron"
     con_tilde = sum(1 for p in campo["piezas"] if "tilde" in p)
     con_trazo = sum(1 for p in campo["piezas"] if "trazo" in p)
-    assert con_tilde > 500 and con_trazo > 500, (con_tilde, con_trazo)
-    # y la cuenta declarada coincide con lo que hay
+    # Lo que se protege NO es cuantas obras hay -- eso lo decide el filtro y
+    # cambio de 697 a 219 cuando el usuario restringio a `posts` -- sino que las
+    # capas hayan corrido y que la cuenta declarada sea cierta. Un umbral fijo
+    # aca convertia un cambio legitimo de alcance en un test rojo.
+    total = len(campo["piezas"])
+    assert total and con_tilde and con_trazo, (total, con_tilde, con_trazo)
     assert capas.get("tilde") == con_tilde
     assert capas.get("trazo") == con_trazo
+    assert con_tilde <= total and con_trazo <= total
