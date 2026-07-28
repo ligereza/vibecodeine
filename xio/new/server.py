@@ -5,7 +5,6 @@ Plugins are auto-discovered from the plugins/ directory and can register their o
 """
 
 import os
-import secrets
 import sys
 import json
 import time
@@ -109,60 +108,25 @@ _DENY_IPS = frozenset(
 )
 
 
-# ── VCD-01: autenticacion GLOBAL, y fail-closed ──────────────────────────────
-# El diagnostico de seguridad del 2026-07-27 lo puso como el hallazgo critico:
-# este servidor escucha en 0.0.0.0 con CORS *, y lo unico que habia era una
-# denylist de IP vacia por defecto y un `?confirm=1` que manda el propio
-# solicitante. Un `confirm` no identifica a nadie. Con eso, cualquiera en el
-# hotspot podia instalar un plugin -- que se ejecuta con exec_module -- y de ahi
-# controlar pantalla, archivos, apps y conectividad del telefono.
+# ── VCD-01: por que aca NO hay token ─────────────────────────────────────────
+# El diagnostico del 2026-07-27 pide autenticacion global, y su propio resumen
+# condiciona la severidad: "CRITICO cuando XIO esta activo en una red con
+# clientes no totalmente confiables". Esa no es la red de este usuario.
 #
-# El token protegia SOLO las rutas del plugin showcontrol. Ahora protege todo,
-# aca, antes de cualquier handler.
+# Decision suya, 2026-07-27: el hotspot tiene clave, la red de casa es suya, y
+# en show tampoco lo deja abierto. Un token seria friccion en el unico momento
+# en que este controlador tiene que responder sin pensarlo -- durante un show,
+# con el telefono como unico aparato.
 #
-# Por que se genera uno si no hay: fail-closed de verdad seria no arrancar, y
-# eso deja al usuario sin controlador en mitad de un show. Generar y anunciar
-# consigue lo mismo -- nunca queda abierto -- sin dejarlo a pie.
-_TOKEN = os.environ.get("XIO_TOKEN") or os.environ.get("XIO_SHOWCONTROL_TOKEN")
-_TOKEN_GENERADO = False
-if not _TOKEN:
-    _TOKEN = secrets.token_urlsafe(32)          # 256 bits
-    _TOKEN_GENERADO = True
-
-# El propio telefono puede quedar exento, pero hay que PEDIRLO. El informe avisa
-# que loopback no es autenticacion: un proceso local comprometido tambien llega.
-_LOCAL_SIN_TOKEN = os.environ.get("XIO_LOCAL_SIN_TOKEN") == "1"
-_LOOPBACK = {"127.0.0.1", "::1", "localhost"}
-
-# Rutas que responden sin token: solo para saber si esto esta vivo. No dicen
-# nada del telefono ni lo tocan.
-_SIN_TOKEN = {"/api/ping", "/api/health"}
-
-
-def _token_de_la_peticion() -> str:
-    cab = request.headers.get("Authorization", "")
-    if cab.startswith("Bearer "):
-        return cab[7:].strip()
-    return (request.headers.get("X-Xio-Token")
-            or request.args.get("token") or "")
-
-
-@app.before_request
-def _exigir_token():
-    """Sin credencial no se entra. Antes que cualquier handler y sin excepciones
-    por metodo: un GET tambien lee la pantalla y los archivos."""
-    if request.method == "OPTIONS" or request.path in _SIN_TOKEN:
-        return
-    if _LOCAL_SIN_TOKEN and request.remote_addr in _LOOPBACK:
-        return
-    # compare_digest: la comparacion no puede filtrar el token por tiempo
-    if not secrets.compare_digest(_token_de_la_peticion(), _TOKEN):
-        return jsonify({
-            "error": "no_autorizado",
-            "reason": "xio exige un token. Mandalo en Authorization: Bearer <token>, "
-                      "en X-Xio-Token o como ?token=",
-        }), 401
-
+# Lo que SI queda cerrado, porque la clave del hotspot no lo cubre:
+#   - CORS: el atacante ahi no es un cliente de la red sino cualquier PAGINA WEB
+#     abierta en un dispositivo ya conectado. La clave no filtra navegadores.
+#   - Instalar plugins: es ejecutar codigo en este proceso, y el vector puede ser
+#     un ZIP que el propio usuario baje. Se enciende a proposito.
+#
+# Retiro de esta nota: si xio alguna vez corre en una red que el usuario no
+# controla, el token vuelve -- el codigo para eso esta en el historial de este
+# archivo (PR #357).
 
 @app.before_request
 def _deny_blocked_sources():
@@ -851,13 +815,6 @@ if __name__ == "__main__":
     print("=" * 56)
     print("  Xiaomi ADB Web Controller + Plugin System")
     print("  Serving on http://0.0.0.0:5000")
-    if _TOKEN_GENERADO:
-        print("  TOKEN generado para esta sesion: %s" % _TOKEN)
-        print("  (fijalo con XIO_TOKEN para que no cambie al reiniciar)")
-    else:
-        print("  token: tomado del entorno")
-    if _LOCAL_SIN_TOKEN:
-        print("  AVISO: 127.0.0.1 esta exento de token (XIO_LOCAL_SIN_TOKEN=1)")
     print("=" * 56)
 
     # Initialize plugins before starting server
