@@ -30,6 +30,29 @@ def check_and_apply_email_airdrops() -> dict:
     descarga el archivo adjunto (que debe ser un ZIP de airdrop),
     lo extrae en _airdrop/ y ejecuta la validación y aplicación automática.
     """
+    # VCD-09 (diagnostico de seguridad, 2026-07-27): esta funcion autoriza
+    # comparando UNICAMENTE la direccion del header `From:`, descarga un ZIP, lo
+    # aplica y dispara commit/push. `From:` no es una firma: es texto que
+    # cualquiera escribe. SPF/DKIM/DMARC pueden ayudar en el servidor de correo,
+    # pero aca no se verifica ningun resultado de autenticacion ni ninguna firma
+    # del artefacto.
+    #
+    # Y no la llama nadie: se busco en todo el repo y no hay comando ni cron que
+    # la invoque. Asi que es una mina sin consumidor, y lo proporcional no es
+    # inventarle un sistema de firmas para algo que no se usa: es que no pueda
+    # dispararse sola. Queda apagada salvo que alguien la encienda a proposito.
+    #
+    # Si algun dia se quiere de verdad: artefacto firmado (minisign/Sigstore),
+    # verificar clave y digest, aplicar en rama aislada, aprobacion humana antes
+    # de correr nada con credenciales de push.
+    #
+    # Retiro de esta guarda: cuando el artefacto venga firmado y verificado.
+    if os.getenv("FLUJO_IMAP_AUTOAPLICAR") != "1":
+        return {"ok": False, "error":
+                "aplicar airdrops por correo esta apagado: autoriza por el header "
+                "From:, que es falsificable, y aplica y pushea codigo. Encender "
+                "a proposito con FLUJO_IMAP_AUTOAPLICAR=1."}
+
     host = os.getenv("FLUJO_IMAP_HOST")
     user = os.getenv("FLUJO_IMAP_USER")
     password = os.getenv("FLUJO_IMAP_PASSWORD")
