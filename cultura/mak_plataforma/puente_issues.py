@@ -205,13 +205,21 @@ class PercepcionEnPausa:
         if self.pids:
             _log("percepcion en pausa (%s) mientras renderizo"
                  % ",".join(str(p) for p in self.pids))
-            # Que ollama suelte la VRAM: con el modelo residente, el render
-            # no entra en los 4 GB. Es la causa de los OOM historicos.
-            subprocess.run(
-                ["curl", "-s", "http://127.0.0.1:11434/api/generate",
-                 "-d", '{"model":"gemma3:4b","keep_alive":0}'],
-                capture_output=True, timeout=30)
-            time.sleep(4)
+        # Que ollama suelte la VRAM: con el modelo residente, el render no entra
+        # en los 4 GB. Es la causa de los OOM historicos.
+        #
+        # Esto va FUERA del `if self.pids` (2026-07-27). Antes solo se liberaba
+        # cuando habia percepcion corriendo, y el modelo queda residente lo
+        # cargue quien lo cargue: research, codex o el hub tambien lo levantan.
+        # Medido en la caja ese dia: gemma3:4b con 1814 MiB de VRAM tomados y
+        # 0% de uso. Con la percepcion detenida y el modelo cargado, el render
+        # salia a competir por la memoria y esa es exactamente la condicion del
+        # OOM que este bloque existe para evitar.
+        subprocess.run(
+            ["curl", "-s", "http://127.0.0.1:11434/api/generate",
+             "-d", '{"model":"gemma3:4b","keep_alive":0}'],
+            capture_output=True, timeout=30)
+        time.sleep(4)
         return self
 
     def __exit__(self, *exc):
