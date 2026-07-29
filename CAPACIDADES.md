@@ -169,7 +169,8 @@ tabla; archivo sin entrada = ratchet rojo.
 | `compete_engine.py` | VIVO | proyecto tapiz (cultura) | 2026-07 |
 | `context_pack.py` | REVISAR | AI Op Layer 2026-07-25, recien creado, consumidor pendiente | 2026-07-25 |
 | `contexto_repo.py` | VIVO | referenciado en `CLAUDE.md` ("Ahorro de contexto") | 2026-07-25 |
-| `gen_archivo_iskvw.py` | REVISAR | propuesta de sustrato iskvw 2026-07-27; probado contra obras y micelio, sin piel que lo consuma todavia | 2026-07-27 |
+| `gen_archivo_iskvw.py` | REVISAR | genera `iskvw/datos/archivo.json`, el contrato piezas+vinculos; desde 2026-07-29 su conversion micelio->contrato vive en `cultura/mak_plataforma/contrato_archivo.py`, compartida con `GET /api/archivo` del hub de MAK (ese endpoint SI tiene consumidor potencial); el archivo de salida sigue sin piel que lo consuma -- pasa a VIVO cuando una lo lea; `tests/test_contrato_archivo.py` | 2026-07-29 |
+| `gen_propuestas_rd.py` | VIVO | el ultimo salto a la base RD: alimenta el escritor de borradores de `mineria_rd.py` desde `docs/rd/candidatos_curatoria/candidatos_db.jsonl` (ya digerido por `extraccion_db`), sin OCR ni GPU; re-matchea contra los catalogos ACTUALES, reporta dudosos sin proponerlos y exige evidencia >= 2; los borradores salen a una carpeta aparte y entran solo por PR humano; `tests/test_gen_propuestas_rd.py` | 2026-07-29 |
 | `gen_rd_standalone.py` | VIVO | hornea la base RD en `herramientas_rd.html` (bundle sin servidor), `npm run build:rd` | 2026-07-27 |
 | `enviar_a_mak.py` | VIVO | SendTo WIN -> MAK, probado e2e 2026-07-23 | 2026-07-23 |
 | `gen_dashboard_productoras.py` | VIVO | genera `db_productoras.html`; documentado en `docs/rd/DB_PRODUCTORAS_ESTADO.md`; consume la salida de `triangular_fichas.py` | 2026-07-25 (llega a main con la promocion de `rd`, PR #303) |
