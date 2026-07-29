@@ -134,22 +134,24 @@ noise on origin: `podar_ramas` now deletes a superseded branch when named
 explicitly + BORRAR (squash heads are never ancestors of main, so the old rule
 never could). Run it once from the Actions tab naming the four.
 
-## MAK inbox draft #375: REJECTED on review (2026-07-29)
+## Resume from the computers (2026-07-29, box + Windows just powered on)
 
-The one undrained commit on `mak` (240-line codex utility) does not do what
-the junta asked: it operates on in-memory simulated queues never wired to the
-real `mak_codex` ones, writes `ajustes_junta.json` relative to CWD, and
-implements no cron despite the title. Utility slop; do NOT promote to main.
-Draining the inbox needs a credentialed reset (`git push origin main:mak
---force-with-lease`) since agents can only push their own branch. Issue #379
-was closed the same day: a Gmail bridge echo of #371's closing, not a request.
-
-## Stash triage (2026-07-28)
-
-`stash@{0}` is valuable ASCII-skin work, preserved on `origin/rescate/
-ascii-campo`: do not merge without the user's aesthetic call. `stash@{1}` is
-redundant with main; `stash@{2}` is ambiguous, includes rejected documents,
-do not apply whole.
+Everything of this cloud session is MERGED (#380, #393, #394); the repo is at
+its 4 permanent branches + `rescate/ascii-campo` (valuable ASCII-skin work
+from stash@{0}; do not merge without the user's aesthetic call). On the BOX:
+1. Reset the inbox: `git push origin main:mak --force-with-lease` -- the one
+   undrained commit (#375, codex utility) was REJECTED on review: simulated
+   in-memory queues never wired to real `mak_codex`, no cron despite the
+   title. Do NOT promote it. (Agents cannot push this reset.)
+2. The sync cron still does not cover `mak_curatoria` -- add
+   `&& cp -ru /home/mak/flujo/cultura/mak_curatoria/. /home/mak/curatoria/`
+   (keep `-u`, never mirror-delete) or perception changes stay inert.
+3. Verify VCD-10 actually runs, and curl `GET /api/archivo` on the hub once
+   the sync delivers `contrato_archivo.py` (the substrate contract).
+On WINDOWS only user decisions pend: Illustrator re-exports, logos, the
+ascii-campo call. New rule in CLAUDE.md, "the machine/human cut": machine
+KEYS stay ASCII, human-read VALUES keep correct Spanish -- venue drafts now
+keep tildes in `name:`, with a regression test.
 
 ## MAK como motor: sirve, y el checkpoint mentia
 

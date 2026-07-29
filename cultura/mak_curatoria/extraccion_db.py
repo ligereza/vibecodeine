@@ -117,10 +117,13 @@ def normalizar_texto(texto: str) -> str:
 
 
 def a_ascii(valor) -> str:
-    """Fuerza cualquier valor a ASCII puro (repo ASCII-only) para volcar
-    en .md/.jsonl de texto libre: quita acentos, descarta lo que quede
-    no-ascii. Usar SOLO para texto mostrado en markdown -- candidatos_db
-    ya sale ascii-safe via json.dumps(ensure_ascii=True)."""
+    """Fuerza cualquier valor a ASCII puro: quita acentos, descarta lo que
+    quede no-ascii. Es una conversion CON PERDIDA, asi que solo es legal
+    para claves de maquina y para el informe operativo interno
+    (INFORME_CANDIDATOS.md) -- nunca para un valor que un humano lee como
+    producto (regla 2026-07-29 en CLAUDE.md, "the machine/human cut").
+    Los nombres canonicos CON tildes viven en candidatos_db.jsonl, que
+    escapa unicode sin perdida via json.dumps(ensure_ascii=True)."""
     texto = "" if valor is None else str(valor)
     texto = unicodedata.normalize("NFKD", texto)
     return texto.encode("ascii", "ignore").decode("ascii")
