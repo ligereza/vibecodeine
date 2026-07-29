@@ -11,11 +11,11 @@ license = {text = "MIT"}
 dependencies = [
     "matplotlib>=3.7.0",
     "pyyaml>=6.0",
-    "pydantic>=2.7",
+    "pydantic>=2.13.4",
     "typer>=0.12",
     "rich>=13.0",
-    "jsonschema>=4.0",
-    "requests>=2.0",
+    "jsonschema>=4.26.0",
+    "requests>=2.34.2",
 ]
 
 [project.optional-dependencies]
@@ -33,7 +33,7 @@ desktop-extras = [
     "Pillow>=10",      # for tray image gen (free)
 ]
 build = [
-    "pyinstaller>=6.0",  # free packaging to .exe; 'flujo package'. Not runtime dep.
+    "pyinstaller>=6.21.0",  # free packaging to .exe; 'flujo package'. Not runtime dep.
 ]
 
 [project.scripts]
