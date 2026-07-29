@@ -531,9 +531,14 @@ def _borrador_venue_yaml(slug: str, datos: dict) -> str:
         "mineria_rd.py sobre ~/RD, evidencia en %d archivo(s) (%s)"
         % (datos["evidencia"], fuente)
     )
+    # El corte humano/maquina (2026-07-29): el `id` es clave de maquina y va
+    # ASCII; el `name` lo lee un humano y calca data/productoras, que lleva
+    # tildes ("Teatro Caupolican" en un borrador es la clase de perdida que
+    # ya llego una vez a la directiva). Causa: el primer run real perdio la
+    # tilde de Caupolican. Retiro: si knowledge/venues declara otra norma.
     lineas = [
         "id: %s" % json.dumps(slug, ensure_ascii=True),
-        "name: %s" % json.dumps(datos["nombre"], ensure_ascii=True),
+        "name: %s" % json.dumps(datos["nombre"], ensure_ascii=False),
         "type: unknown",
         "scale_default: base",
         "capacity_bucket: unknown",
