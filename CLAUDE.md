@@ -61,6 +61,24 @@ down the most.
 
 Retirement: none. This is a direct order from the user.
 
+**The machine/human cut inside ONE file (2026-07-29, user's order).** A file
+being "machine data" does not license stripping diacritics from the VALUES a
+human reads in it. The line is:
+
+- Machine KEYS -- ids, slugs, filenames, json keys, cron/config/workflow
+  files, everything Dependabot manages (dependabot.yml, lockfiles, pinned
+  SHAs), MAK's checkpoints -- ASCII/English, as always.
+- JSON escaping (`ensure_ascii=True`, accents become backslash-u00e1 style escapes)
+  is LOSSLESS and fine for machine serialization (candidatos_db.jsonl works
+  this way: the tilde comes back intact on decode).
+- Stripping (`a_ascii`, NFKD-drop) is LOSSY and only legal for machine keys.
+  A human-read VALUE (a venue name, a title, a description) keeps correct
+  Spanish even inside a draft, a yaml, or a report an operator curates.
+
+Cause: the first real run of the RD draft writer emitted
+`name: "Teatro Caupolican"` -- the same defect class as "reduciendo ano".
+Retirement: when a CI check enforces the cut.
+
 ## Which rule applies to which agent (2026-07-26)
 
 Many of this repo's rules were written for the weakest agent in the chain and
