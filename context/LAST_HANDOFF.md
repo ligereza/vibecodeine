@@ -281,19 +281,19 @@ ALWAYS bound where to look for them.
   the keys never met. Generators stay separate on purpose -- projecting needs the
   768-dimension vectors and the contract neither has nor wants them. Loose thread
   noticed, not chased: the contract counts 705 obras and the field 697.
-- **iskvw, what it is actually asking for.** Not a style: the SUBSTRATE. Today
-  the data/contract/skin split exists only for iskvw, and MAK's micelio has its
-  own nodes and its own drawing -- the same work done twice, and a new skin
-  serves only one of them. What is missing is the layer in between: a contract
-  of PIECES and RELATIONS that does not know whether the works are the artist's
-  or MAK's reports. A skin asks for "the nodes and their links" and always gets
-  the same shape. Then the terminal skin can show the micelio untouched, an
-  external agent can produce a new aesthetic from ONE document, and when the
-  curation adds concepts and technique per work the old skins keep working --
-  a field you do not know is a field you ignore. MAK does not build this: it
-  FEEDS it, from the archive perception that starts on its own when RD ends.
-  The rule it inherits is the doublecup thesis, already applied all session:
-  **no element may claim a datum it does not encode.**
+- **iskvw, what it is actually asking for: the SUBSTRATE -- first brick laid
+  2026-07-29.** The micelio -> pieces+relations conversion now lives in ONE
+  place, `cultura/mak_plataforma/contrato_archivo.py` (pure function), shared
+  by `tools/gen_archivo_iskvw.py` and by the box's face at `GET /api/archivo`
+  (hub.py is covered by the sync cron), so any skin or external agent asks
+  "the pieces and their links" and always gets the ESQUEMA_ARCHIVO shape --
+  without knowing the micelio's internal node schema. Id formation can no
+  longer fork (the 1004-pieces/0-positions trap); `tests/test_contrato_archivo.py`
+  pins the delegation. Still open of the substrate vision: no skin CONSUMES
+  archivo.json yet (the live campo skin reads campo.json, which carries no
+  vinculos), and drawing measured links on the site is a style call for the
+  user. The rule it inherits is the doublecup thesis: **no element may claim
+  a datum it does not encode.**
 - **MAK is re-perceiving and nobody should touch it.** 1239 files at 05:00 on
   2026-07-27, eight hours in; it chains into the artist's archive on its own.
   Six traps cost real time and are in the assistant's
@@ -304,16 +304,15 @@ ALWAYS bound where to look for them.
   over SSH break, and **copying a file to the box does not restart the service
   that already loaded it**.
 - **When it finishes, read what it produced before giving it more work.**
-- **The last hop to the RD database is still missing, and the tool for it
-  already exists.** `cultura/mak_plataforma/mineria_rd.py` was never executed:
-  it walks the material and writes DRAFTS in the real schema of
-  `data/productoras/*.json`, into a separate folder, to enter by human-reviewed
-  PR. Do NOT run it as it stands -- it would re-OCR the same files the
-  perception is already processing and fight for the same GPU. What is worth
-  taking is its OUTPUT side: wire the draft writer to the fichas the perception
-  already produces. The user's constraint: the database in the repo is fine, so
-  the extraction must be clean, must not create duplicates, and must not
-  generate garbage on top of what is already right.
+- **DONE 2026-07-29: the last hop to the RD database is wired.**
+  `tools/gen_propuestas_rd.py` feeds `mineria_rd.proponer()` from the repo's
+  own `candidatos_db.jsonl` (no OCR, no GPU, no box), re-matching against the
+  CURRENT catalogues, reporting dudosos without drafting them, requiring
+  evidence >= 2. Measured on the real 970 rows: 0 new productoras (7 already
+  known), 2 real venue drafts (Club Hipico, Teatro Caupolican), 0 garbage.
+  Two defects found and fixed on the way: "Reduciendo Dano Chile" escaped the
+  own-identity deny-list (pattern added + regression test), and cities came
+  out as venues (geography filter). Drafts enter only by human-reviewed PR.
 - **Logos are missing** and live in the user's `Documents\logos` (absolute path
   in the assistant's memory, not here: this repo is public).
 

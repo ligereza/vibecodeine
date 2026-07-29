@@ -87,6 +87,7 @@ IDENTIDAD_PROPIA = (
     "reduciendodano.cl",
     "eventos@reduciendodano.cl",
     "eventos@reduciendo.cl",
+    "reduciendo dano",
     "rd",
 )
 

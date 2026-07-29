@@ -9,7 +9,7 @@ ejecucion real de research/codex: el navegador solo habla con :8900 para
 el marco, pero el iframe habla directo con :8890/:8891 (LAN privada
 Face A, sin token).
 
-Rutas: / (cara) · /api/organismo · /api/micelio · /api/ejecutar (POST) ·
+Rutas: / (cara) · /api/organismo · /api/micelio · /api/archivo · /api/ejecutar (POST) ·
 /api/ideas (GET+POST) · /pieza · /api/salud · /api/actividad · /cuotas ·
 /doctrina · /reflexiones · /relevo · /genesis
 """
@@ -29,6 +29,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import salud  # noqa: E402
 import cuotas  # noqa: E402
 import ideas  # noqa: E402
+import contrato_archivo  # noqa: E402
 
 PORT = int(os.environ.get("HUB_PORT", "8900"))
 HOME = os.path.expanduser("~")
@@ -1039,6 +1040,25 @@ class H(BaseHTTPRequestHandler):
                 return self._json({"error": str(e)[:200]})
         if p == "/api/micelio":
             return self._json(_micelio())
+        if p == "/api/archivo":
+            # The substrate contract (iskvw/ESQUEMA_ARCHIVO.md): the same
+            # micelio, served as pieces + relations so a skin or an external
+            # agent never needs to know the internal node schema. Conversion
+            # is shared with tools/gen_archivo_iskvw.py (contrato_archivo).
+            try:
+                cuerpo = contrato_archivo.convertir(_micelio())
+                return self._json({
+                    "version": 1,
+                    "fuente": "micelio",
+                    "generado": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+                    "piezas": cuerpo["piezas"],
+                    "vinculos": cuerpo["vinculos"],
+                    "meta": {"piezas": len(cuerpo["piezas"]),
+                             "vinculos": len(cuerpo["vinculos"])},
+                })
+            except Exception as e:  # noqa: BLE001
+                return self._json({"error": str(e)[:200],
+                                   "piezas": [], "vinculos": []})
         if p == "/api/eventos":
             q = urllib.parse.parse_qs(u.query)
             depto = (q.get("depto") or [""])[0]

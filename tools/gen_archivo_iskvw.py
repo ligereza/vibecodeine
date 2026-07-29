@@ -22,13 +22,15 @@ import json
 import os
 import re
 import sys
-import unicodedata
 import urllib.request
 from datetime import datetime
 from itertools import combinations
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(RAIZ / "cultura" / "mak_plataforma"))
+import contrato_archivo  # noqa: E402
+
 OBRAS = RAIZ / "iskvw" / "datos" / "obras.json"
 CAMPO = RAIZ / "iskvw" / "datos" / "campo.json"
 SALIDA = RAIZ / "iskvw" / "datos" / "archivo.json"
@@ -44,27 +46,11 @@ MIN_ETIQUETAS = 1
 UMBRAL_MICELIO = 0.55
 
 
-def _id(texto: str) -> str:
-    base = unicodedata.normalize("NFKD", str(texto or ""))
-    base = base.encode("ascii", "ignore").decode("ascii").lower()
-    return re.sub(r"[^a-z0-9]+", "-", base).strip("-")[:60] or "sin-id"
-
-
-def _id_pieza(texto: str) -> str:
-    """El id de una pieza, sin el sufijo de archivo.
-
-    El micelio nombra sus nodos con el archivo entero
-    ("b7fd4e77b4a2-17926032902806396.md") y el campo usa el stem, asi que
-    `_id()` producia "...-md" en un lado y no en el otro y las posiciones NUNCA
-    empalmaban: 1004 piezas, 0 con posicion. La extension es donde el dato esta
-    guardado, no que pieza es.
-    """
-    s = str(texto or "")
-    for ext in (".md", ".txt", ".json", ".jpg", ".jpeg", ".png", ".webp"):
-        if s.lower().endswith(ext):
-            s = s[: -len(ext)]
-            break
-    return _id(s)
+# La formacion de ids y la conversion micelio -> contrato viven en UN solo
+# lugar, compartido con el hub de la caja (2026-07-29): duplicarlas aqui es
+# como las claves dejaron de empalmar una vez (1004 piezas, 0 con posicion).
+_id = contrato_archivo._id
+_id_pieza = contrato_archivo._id_pieza
 
 
 def _fecha(obra: dict) -> str | None:
@@ -132,44 +118,10 @@ def desde_micelio(url: str = MICELIO_URL, umbral: float = UMBRAL_MICELIO) -> dic
     with urllib.request.urlopen(pedido, timeout=90) as r:
         g = json.loads(r.read().decode("utf-8", "replace"))
 
-    # 'corpus' son las obras del artista percibidas; el resto lo escribio MAK.
-    clase = {"corpus": "obra", "codex": "codigo"}
-    # Lo que MAK escribio de una obra del artista es PERCEPCION, no titulo. Lo
-    # ponia como `titulo` y el contrato quedaba afirmando que la obra se llama
-    # "Una mujer sentada bajo una estructura de madera" -- voz de maquina
-    # firmando como el artista. Es el mismo defecto que la piel tenia con el id
-    # de Instagram, un nivel mas abajo. Para las obras el titulo queda VACIO
-    # (silencio antes que voz prestada) y el texto viaja como `percibido`, que
-    # una piel puede usar para buscar y ubicar sin mostrarlo como autoria.
-    # Para los informes y el codigo, que los escribio MAK, el titulo SI es suyo.
-    piezas = []
-    for n in g.get("nodes", []):
-        cl = clase.get(n.get("dir"), "informe")
-        texto = str(n.get("titulo") or "").strip()
-        es_obra = cl == "obra"
-        piezas.append({
-            "id": _id_pieza(n.get("id")),
-            "titulo": "" if es_obra else (texto or _id_pieza(n.get("id"))),
-            "clase": cl,
-            "fecha": None,
-            "resumen": None if es_obra else None,
-            "etiquetas": [n["dir"]] if n.get("dir") else [],
-            "peso": int(n.get("chunks") or 1),
-            "medio": {"tipo": "texto"},
-            "estado": "publicada",
-            "extra": {k: v for k, v in (
-                ("carpeta", n.get("dir")),
-                ("percibido", texto if es_obra else None),
-            ) if v},
-        })
-
-    conocidas = {p["id"] for p in piezas}
-    vinculos = [{
-        "de": _id_pieza(e["a"]), "a": _id_pieza(e["b"]),
-        "peso": round(float(e.get("w") or 0), 3), "clase": "semantico",
-    } for e in g.get("edges", [])
-        if _id_pieza(e.get("a")) in conocidas and _id_pieza(e.get("b")) in conocidas]
-    return {"piezas": piezas, "vinculos": vinculos}
+    # La conversion (titulo vacio para obras, percibido en extra, vinculos
+    # semanticos filtrados a ids conocidos) vive en contrato_archivo.convertir,
+    # compartida con GET /api/archivo del hub de la caja.
+    return contrato_archivo.convertir(g)
 
 
 def del_campo(ruta: Path = CAMPO) -> tuple[dict, float | None]:
