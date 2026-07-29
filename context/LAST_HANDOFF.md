@@ -115,33 +115,41 @@ Working and verified live: the DREF show chain (LTC -> Chataigne -> OSC -> phone
 profiles, and the documentation ratchets (`test_mapa_completo`,
 `test_higiene_docs`).
 
-## Security diagnosis status (2026-07-28)
+## Security diagnosis: 9 of 10 closed (2026-07-29)
 
-Eight of ten findings are closed. VCD-06 now caps request bodies at 8 MB in the
-two previously uncapped `src/flujo` handlers (`serve/server.py`, `web/hub.py`)
-and returns 413 on excess; the three `cultura/` handlers were already capped.
-VCD-07 remains partial: pin Actions to SHAs and add Dependabot. VCD-10 was
-assigned to MAK but has not been verified running.
+VCD-06 caps request bodies at 8 MB (413 on excess) in the two previously
+uncapped `src/flujo` handlers; the `cultura/` ones were already capped.
+VCD-07 closed 2026-07-29: every workflow `uses:` pinned to a peeled-tag commit
+SHA (with a `# vX` comment so Dependabot can bump it), plus
+`.github/dependabot.yml` for github-actions, npm (`/web`) and pip, weekly.
+Only VCD-10 remains: assigned to MAK, never verified running.
 
-## 2026-07-28: Fable handoff recovered
+## 2026-07-28 Fable session: everything landed (verified 2026-07-29)
 
-The final session left two PRs. VCD-06 gained direct 413 regressions and merged
-as #372 with five green checks. `PROYECCION.md` is a requested compass, not
-backlog; #373 was rebased after #372 and still requires green CI.
+#372 (VCD-06 with direct 413 regressions), #373 (`PROYECCION.md`, a requested
+compass, not backlog), #374 (`mejoras-operativas`: MAK stops checkpointing
+failed perceptions as successes, retries + quarantine, Windows verifier
+aligned), and #376/#377/#378. The four squash-merged `*-20260728` branches are
+noise on origin: `podar_ramas` now deletes a superseded branch when named
+explicitly + BORRAR (squash heads are never ancestors of main, so the old rule
+never could). Run it once from the Actions tab naming the four.
 
-Branch `mejoras-operativas-20260728` stops MAK checkpointing failed perceptions
-as successes, retries them, quarantines unchanged files after three failures,
-and repairs the legacy checkpoint from the latest JSONL row. Live measurement:
-49/5,463 attempts contain errors. It also aligns the Windows verifier with the
-already-live `mak_curatoria -> ~/curatoria` mirror and unifies Windows launchers.
-Merge through the gate; do not copy to MAK manually.
+## MAK inbox draft #375: REJECTED on review (2026-07-29)
+
+The one undrained commit on `mak` (240-line codex utility) does not do what
+the junta asked: it operates on in-memory simulated queues never wired to the
+real `mak_codex` ones, writes `ajustes_junta.json` relative to CWD, and
+implements no cron despite the title. Utility slop; do NOT promote to main.
+Draining the inbox needs a credentialed reset (`git push origin main:mak
+--force-with-lease`) since agents can only push their own branch. Issue #379
+was closed the same day: a Gmail bridge echo of #371's closing, not a request.
 
 ## Stash triage (2026-07-28)
 
-- `stash@{0}` is valuable ASCII-skin work, preserved on
-  `origin/rescate/ascii-campo`; do not merge without the user's aesthetic call.
-- `stash@{1}` is redundant with main.
-- `stash@{2}` is ambiguous and includes rejected documents; do not apply whole.
+`stash@{0}` is valuable ASCII-skin work, preserved on `origin/rescate/
+ascii-campo`: do not merge without the user's aesthetic call. `stash@{1}` is
+redundant with main; `stash@{2}` is ambiguous, includes rejected documents,
+do not apply whole.
 
 ## MAK como motor: sirve, y el checkpoint mentia
 
@@ -175,23 +183,7 @@ dirigirlo existia y estaba invisible.
 | 2026-07-27 | **The printed supplement pieces are the two-sided PDFs; the repo SVGs are the regenerable contraportada of the SAME content.** Compared word by word on CREATINA: identical except line breaking and one copy variant ("En 60 gomitas" vs "En gomitas - 60 gomitas"). The user's decision: leave it as it is. The live pipeline is `_master_contraportadas.json` + `gen_contraportadas.py`; three generators writing into folders deleted weeks ago were archived |
 | 2026-07-27 | **Piece kinds are configuration, not code.** They were a closed TypeScript union plus seven chained ternaries, so adding "pendon" meant recompiling. Now `data/piezas_tipos.json`, served by `/api/piezas-tipos`. Today flyers and back covers; tomorrow banners or labels |
 | 2026-07-27 | **The triangulation queue was asking wrong things and asking them twice.** The user read a task and caught it: "what producer organised the event of 23:00 HRS with LIVE JAM". A time went in as a date, a tagline went in as a line-up, and OCR variants of a venue produced twin questions. 92 questions -> 52 against the real fichas. An event is now its date plus its headliner; the venue is out of the dedup key because it is the field OCR reads differently every time |
-| 2026-07-26 | **RD splits into three areas: eventos, suplementos, and general posts.** For SUPPLEMENTS, the text on flyers and labels ALWAYS comes from a file an RD manager sends, and that file wins over research, over the database, over anything an agent produced. Never invent product names, never look up properties, never invent descriptions. Research is legitimate when the user orders it (e.g. researching a post) — the rule is only that a file, when it exists, overrides it. The link to reduciendodano.cl and the QR stay constant on every flyer |
-| 2026-07-26 | **Three working modes**: *modo calma* (answer, execute nothing), *modo repo* (branches/PRs/CI; exits at 0 open PRs, 0 open issues and only the named branches), *modo local* (this machine: config, memory, understanding). Ask which one is active when it is not obvious |
-| 2026-07-26 | **The two portfolio directions on disk are REFERENCES, not competing options**: the live six-section archive and the Cyber Terminal prototype. Both feed the design; neither is "the choice" |
-| 2026-07-26 | **Language split**: Spanish to talk, English for everything inside the repo, correct Spanish with diacritics for anything a human reads as a product |
-| 2026-07-26 | **The portfolio is `iskvw`**: the automated line and the ONLY site. This repo stays PUBLIC. The separate `portfolio-auto` repo is discarded -- it existed because one agent advised making this repo private and the next one patched that by creating a second repo for the site. Both moves were wrong |
-| 2026-07-26 | **No agent opens issues.** The user and his Google Script do: issues are the Gmail -> issue -> render channel, not a task board. Commenting, labelling and closing is fine; opening is not. Verified: nothing in the repo creates them |
-| 2026-07-26 | MAK delivers against the `mak` inbox, not the retired `mejoras` line. If that branch ever stops draining into main, it has become a line and must be fixed |
-| 2026-07-26 | Agent worktrees under `.claude/worktrees/` are pruned when the task ends. There were 7 abandoned ones, each a full copy of the repo: they multiplied every handoff, checkpoint and doctrine file by 8, so any search returned hundreds of hits with no way to tell which one ruled |
-| 2026-07-26 | MAK's doctrine (`CAPATAZ.md`, `DOCTRINA_CLAUDE.md`) lives in `cultura/mak_plataforma/doctrina/`. It was written for the box's local model, and the Claudes kept reading it as their own |
-| 2026-07-26 | Two useless crons removed: the 30-minute sweep in `issue_descarga_ig` (it re-commented on open issues, GitHub emailed each comment, and the Gmail script turned every email back into an issue) and the weekly `portfolio` job (it published to the discarded repo) |
-| 2026-07-26 | **Every money value is configurable, none is fixed.** The user's answer when asked whose the quote figures were: "esos valores son configurables cierto? cada archivo de illustrator es distinto y los valores igual". So the question was never "are these the right numbers" but "why are they frozen". Three editable files now, all tracked and all with a loud fallback: `data/rd_packs.json` (field-service tariff, read by the rider, the Python quote and the app), `data/cotizacion_servicios.json` (the quote tool's line items and presets — design and printing, which change per job) and `data/plano_simbolos.json`. No figure was altered: they were moved out of the code as they stood. The same rule governs the pending Illustrator re-exports — settings per file, not one global setting |
-| 2026-07-26 | **A symbol added by the events manager reaches BOTH the printed plan and the editor.** It was a two-step day: first the catalogue only fed `flujo plano`, because `PlanoTool.tsx` kept its own list of icons named after a component library, where a designer's `.svg` had no slot. Then the component learnt to draw raw markup for a custom key, on the same 160x160 convention Python already used, and the palette shows each one with its OWN drawing so several are told apart. If she has no SVG, an image is traced and shown before saving. Nothing here is guessed: it was verified in a browser, from an empty catalogue to a symbol drawn on the plan |
-| 2026-07-26 | **The floor-plan symbol catalogue is open.** Acceptance criterion, verbatim: "can the events manager add an icon? if not, it is not configurable". She now drops an `.svg` into `data/plano_simbolos/` and declares it in `data/plano_simbolos.json` (that file carries the instructions, in Spanish, because she is the one reading it). No code, no TypeScript. The catalogue ADDS to the 17 built-ins and can also relabel or recolour one of them. A symbol may declare `cuando` (siempre / testeo / jornada_larga / masivo / manual) and a zone. Two real defects fixed on the way: a key absent from `_ZONAS_ICONOS` used to be dropped from the plan SILENTLY, and the zone list was about to become a second copy — it now derives from `engine._ZONAS_ICONOS`. Anything wrong in the file warns on stderr and the rest of the plan still renders. `data/plano_simbolos/_ejemplo_hidratacion.svg` is a sample to copy and is deliberately NOT declared: it is not a real RD symbol |
-| 2026-07-26 | Placeholder phone numbers: gone. The only remaining match in the repo is the comment recording the incident |
-| 2026-07-26 | **MAK works on the user's material, not on its own output.** It ran at 8% of its daily quota writing cultural genealogies while 57 GB of his material sat untouched. Root cause: ONE prompt for two different jobs, and it never asked for headliners -- half of his own formula ("headliner + fecha = productora encontrable"). Splitting the prompt was not enough: the ficha builder had the old schema hardcoded and silently dropped every new field. Now a verb `atender` goes FIRST and consumes a queue built from what was perceived. **The autonomous mode was NOT removed** -- he designed it for when there is no new material or no internet; it is a fallback again instead of the default. Mirrored in `cultura/mak_*`, PR #316 |
-| 2026-07-26 | **MAK's own reports are acted on, not just filed.** It had written "mitigar la degradacion de groq" and nobody executed it: groq led the provider order with 40% measured success while cerebras (91.4%) came third. Reordered by measurement. The pattern to watch: the box can diagnose itself and cannot act on itself |
-| 2026-07-26 | **Brand is information, never a restriction.** User's words: "como info sirve, como limitante o restriccion no -- un dia puedo hacer un post con otra estetica o cuando toque cambio de flyers la app no debe restringir". So the palette is a DEFAULT any caller, event or config may override, and nothing validates a piece against it. Removed: the `flujo brand` CLI group (it only printed that it had been retired), the dead `export_tokens` bridge, and a block in `render/piezas.py` that printed "flujo aplicado automaticamente" while applying nothing inside a silent `try/except`. The quote engine's palette now resolves caller > event `estilo` block > default palette, and the document sent to a productora no longer carries hex codes or the words "usa flujo para consistencia de marca". `flujo.brand` STAYS as the palette reader -- deleting it is exactly how it broke before |
+| 2026-07-26 | Las 17 decisiones de ese dia, vigentes: `docs/handoffs/archive/20260726_decisiones.md` (tres modos de trabajo, iskvw es el portafolio, nadie abre issues, valores de dinero configurables, catalogo de simbolos abierto, brand como info, MAK atiende material del usuario, idioma dividido, referencias como referencias, worktrees podados, crons inutiles fuera) |
 | 2026-07-10 a 07-25 | Decisiones mas viejas, vigentes pero fuera de la lista viva: `docs/handoffs/archive/20260722_25_decisiones.md` (panel de suplementos innecesario, la carpeta de diseno no se respalda desde el repo, los dos planes grandes RECHAZADOS, `desktop/` archivado, Instagram via parth-dl, n8n descartado, Gemini fuera, nada de Oh My Posh) |
 
 ## Built on 2026-07-26, waiting for the user to look

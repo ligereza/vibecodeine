@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clonar con historia completa
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
 
@@ -79,9 +79,20 @@ jobs:
                 git cat-file -e "origin/main:$f" 2>/dev/null || nuevas=$((nuevas+1))
               done
               if [ "$nuevas" -eq 0 ]; then
-                echo "SE SALTA    $b -- $n commit(s) propios, pero 0 rutas que main no tenga."
-                echo "                  Su contenido esta superado. Borrarla no pierde archivos:"
-                echo "                  es decision humana, no automatica."
+                # Caso squash-merge (2026-07-29): un PR mergeado con squash deja
+                # la rama con commits que NUNCA son ancestro de main, asi que la
+                # regla de arriba jamas la borra. Si el humano NOMBRO la rama
+                # explicitamente y ademas escribio BORRAR, eso ES la decision
+                # humana: se borra. Sin nombre explicito, se sigue saltando.
+                if [ -n "${RAMAS// /}" ] && [ "$CONFIRMAR" = "BORRAR" ]; then
+                  echo "SUPERADA    $b -- $n commit(s) propios, 0 rutas que main no tenga."
+                  echo "                  Nombrada explicitamente + BORRAR: se poda."
+                  BORRAR="$BORRAR $b"
+                else
+                  echo "SE SALTA    $b -- $n commit(s) propios, pero 0 rutas que main no tenga."
+                  echo "                  Su contenido esta superado. Borrarla no pierde archivos:"
+                  echo "                  nombrala explicitamente + BORRAR para podarla."
+                fi
               else
                 echo "SE SALTA    $b -- $n commit(s) propios y $nuevas ruta(s) que NO existen en main."
                 echo "                  NO borrar sin revisar que hay ahi."
