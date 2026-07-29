@@ -148,10 +148,11 @@ from stash@{0}; do not merge without the user's aesthetic call). On the BOX:
    (keep `-u`, never mirror-delete) or perception changes stay inert.
 3. Verify VCD-10 actually runs, and curl `GET /api/archivo` on the hub once
    the sync delivers `contrato_archivo.py` (the substrate contract).
-On WINDOWS only user decisions pend: Illustrator re-exports, logos, the
-ascii-campo call. New rule in CLAUDE.md, "the machine/human cut": machine
-KEYS stay ASCII, human-read VALUES keep correct Spanish -- venue drafts now
-keep tildes in `name:`, with a regression test.
+On WINDOWS the only pending user decision is the ascii-campo aesthetic call
+(Illustrator exports and logos: RESOLVED, his word 2026-07-29 -- see below).
+New rule in CLAUDE.md, "the machine/human cut": machine KEYS stay ASCII,
+human-read VALUES keep correct Spanish -- venue drafts now keep tildes in
+`name:`, with a regression test.
 
 ## MAK como motor: sirve, y el checkpoint mentia
 
@@ -201,13 +202,11 @@ el prototipo del archivo iskvw, y MAK + portafolio visibles en la app.
   them gone in ephemeral cloud containers while they sat one level above the repo
   on his own disk -- everyone searched the repo and their own memory, then
   declared absence. Which direction is current is style, so it gets asked.
-- **Design exports.** The entry that used to sit here was wrong twice, which is
-  the lesson: a pending task carrying a measurement gets re-measured before
-  anyone acts on it. Real state: one source 7.5 days ahead of its two SVGs, a
-  second source never exported, and no 0-byte file anywhere. Settings are per
-  file, answered ("cada archivo de illustrator es distinto y los valores igual").
-  Missing is only his word on WHICH files to re-export, because the sources are
-  485 MB and 78 MB and running Illustrator over them acts on his design assets.
+- **Design exports: RESOLVED (user's word, 2026-07-29).** This entry had
+  already been wrong twice; the third failure was staying listed as pending
+  after the user resolved it -- an agent repeated it back to him as open and
+  he had to correct it. Details live on his machines, not here. The lesson
+  compounds: an answer not written in-session gets asked again.
 
 ## Las cuatro capas: no confundirlas (2026-07-27)
 
@@ -315,8 +314,10 @@ ALWAYS bound where to look for them.
   Two defects found and fixed on the way: "Reduciendo Dano Chile" escaped the
   own-identity deny-list (pattern added + regression test), and cities came
   out as venues (geography filter). Drafts enter only by human-reviewed PR.
-- **Logos are missing** and live in the user's `Documents\logos` (absolute path
-  in the assistant's memory, not here: this repo is public).
+- **Logos: RESOLVED (user's word, 2026-07-29).** This file and
+  `docs/rd/MAPA_RD.md` ("6 de 20") kept it listed as pending after the fact;
+  the standalone already bakes the vector logos in (#335). If MAPA_RD's count
+  is re-measured, do it against the real `knowledge/logos/`, not this note.
 
 **How this list is kept honest:** on 2026-07-26 it carried an item that had
 already been fixed that same day, plus a second copy of the Illustrator entry
