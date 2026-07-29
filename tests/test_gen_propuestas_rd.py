@@ -215,6 +215,24 @@ def test_borradores_calcan_schema_y_quedan_en_outdir(tmp_path):
         "productoras", "venues", "RESUMEN.md"}
 
 
+def test_el_nombre_del_venue_conserva_la_tilde(tmp_path):
+    # regla 2026-07-29 (CLAUDE.md, "the machine/human cut"): el id es clave
+    # de maquina (ascii), el name lo lee un humano -- "Teatro Caupolican"
+    # sin tilde en el borrador es la misma clase de defecto que
+    # "reduciendo ano". Medido en el primer run real.
+    candidatos = [
+        _candidato(obra_id="o%d" % i, venue="Teatro Caupolicán")
+        for i in range(2)
+    ]
+    consolidado, _ = gen.consolidar_candidatos(candidatos, **SIN_CATALOGO)
+    outdir = tmp_path / "propuestas"
+    gen.mineria_rd.proponer(consolidado, str(outdir))
+    yaml_txt = (outdir / "venues" / "teatro_caupolican.yaml").read_text(
+        encoding="utf-8")
+    assert 'name: "Teatro Caupolicán"' in yaml_txt
+    assert 'id: "teatro_caupolican"' in yaml_txt  # la clave sigue ascii
+
+
 def test_main_contra_jsonl_real_del_repo(tmp_path, capsys):
     # el espejo versionado existe y el pipeline entero corre sin explotar
     espejo = REPO_ROOT / "docs" / "rd" / "candidatos_curatoria" / "candidatos_db.jsonl"

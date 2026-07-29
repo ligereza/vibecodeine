@@ -134,22 +134,25 @@ noise on origin: `podar_ramas` now deletes a superseded branch when named
 explicitly + BORRAR (squash heads are never ancestors of main, so the old rule
 never could). Run it once from the Actions tab naming the four.
 
-## MAK inbox draft #375: REJECTED on review (2026-07-29)
+## Resume from the computers (2026-07-29, box + Windows just powered on)
 
-The one undrained commit on `mak` (240-line codex utility) does not do what
-the junta asked: it operates on in-memory simulated queues never wired to the
-real `mak_codex` ones, writes `ajustes_junta.json` relative to CWD, and
-implements no cron despite the title. Utility slop; do NOT promote to main.
-Draining the inbox needs a credentialed reset (`git push origin main:mak
---force-with-lease`) since agents can only push their own branch. Issue #379
-was closed the same day: a Gmail bridge echo of #371's closing, not a request.
-
-## Stash triage (2026-07-28)
-
-`stash@{0}` is valuable ASCII-skin work, preserved on `origin/rescate/
-ascii-campo`: do not merge without the user's aesthetic call. `stash@{1}` is
-redundant with main; `stash@{2}` is ambiguous, includes rejected documents,
-do not apply whole.
+Everything of this cloud session is MERGED (#380, #393, #394); the repo is at
+its 4 permanent branches + `rescate/ascii-campo` (valuable ASCII-skin work
+from stash@{0}; do not merge without the user's aesthetic call). On the BOX:
+1. Reset the inbox: `git push origin main:mak --force-with-lease` -- the one
+   undrained commit (#375, codex utility) was REJECTED on review: simulated
+   in-memory queues never wired to real `mak_codex`, no cron despite the
+   title. Do NOT promote it. (Agents cannot push this reset.)
+2. The sync cron still does not cover `mak_curatoria` -- add
+   `&& cp -ru /home/mak/flujo/cultura/mak_curatoria/. /home/mak/curatoria/`
+   (keep `-u`, never mirror-delete) or perception changes stay inert.
+3. Verify VCD-10 actually runs, and curl `GET /api/archivo` on the hub once
+   the sync delivers `contrato_archivo.py` (the substrate contract).
+On WINDOWS the only pending user decision is the ascii-campo aesthetic call
+(Illustrator exports and logos: RESOLVED, his word 2026-07-29 -- see below).
+New rule in CLAUDE.md, "the machine/human cut": machine KEYS stay ASCII,
+human-read VALUES keep correct Spanish -- venue drafts now keep tildes in
+`name:`, with a regression test.
 
 ## MAK como motor: sirve, y el checkpoint mentia
 
@@ -199,13 +202,11 @@ el prototipo del archivo iskvw, y MAK + portafolio visibles en la app.
   them gone in ephemeral cloud containers while they sat one level above the repo
   on his own disk -- everyone searched the repo and their own memory, then
   declared absence. Which direction is current is style, so it gets asked.
-- **Design exports.** The entry that used to sit here was wrong twice, which is
-  the lesson: a pending task carrying a measurement gets re-measured before
-  anyone acts on it. Real state: one source 7.5 days ahead of its two SVGs, a
-  second source never exported, and no 0-byte file anywhere. Settings are per
-  file, answered ("cada archivo de illustrator es distinto y los valores igual").
-  Missing is only his word on WHICH files to re-export, because the sources are
-  485 MB and 78 MB and running Illustrator over them acts on his design assets.
+- **Design exports: RESOLVED (user's word, 2026-07-29).** This entry had
+  already been wrong twice; the third failure was staying listed as pending
+  after the user resolved it -- an agent repeated it back to him as open and
+  he had to correct it. Details live on his machines, not here. The lesson
+  compounds: an answer not written in-session gets asked again.
 
 ## Las cuatro capas: no confundirlas (2026-07-27)
 
@@ -313,8 +314,10 @@ ALWAYS bound where to look for them.
   Two defects found and fixed on the way: "Reduciendo Dano Chile" escaped the
   own-identity deny-list (pattern added + regression test), and cities came
   out as venues (geography filter). Drafts enter only by human-reviewed PR.
-- **Logos are missing** and live in the user's `Documents\logos` (absolute path
-  in the assistant's memory, not here: this repo is public).
+- **Logos: RESOLVED (user's word, 2026-07-29).** This file and
+  `docs/rd/MAPA_RD.md` ("6 de 20") kept it listed as pending after the fact;
+  the standalone already bakes the vector logos in (#335). If MAPA_RD's count
+  is re-measured, do it against the real `knowledge/logos/`, not this note.
 
 **How this list is kept honest:** on 2026-07-26 it carried an item that had
 already been fixed that same day, plus a second copy of the Illustrator entry
