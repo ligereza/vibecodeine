@@ -65,6 +65,17 @@ GEOGRAFIA_NO_VENUE = frozenset({
 })
 
 
+def _clave(nombre: str) -> str:
+    """Accumulation key for NEW candidates: accents do not split identity.
+
+    mineria_rd._slug alone keys "Nébula Fest" and "Nebula Fest" apart (it
+    never strips accents), so a name spelled both ways split its evidence and
+    fell under the threshold -- the same twin class this tool exists to avoid.
+    Normalize first (extraccion_db strips accents), then slug.
+    """
+    return mineria_rd._slug(extraccion_db.normalizar_texto(nombre))
+
+
 def cargar_candidatos(path: Path) -> list[dict]:
     """candidatos_db.jsonl rows, latest-wins by obra_id (the file may carry
     re-runs; counting repeated rows would inflate evidence)."""
@@ -77,6 +88,10 @@ def cargar_candidatos(path: Path) -> list[dict]:
             try:
                 registro = json.loads(linea)
             except json.JSONDecodeError:
+                continue
+            # JSON valido que no es objeto (fila corrupta/editada) se salta
+            # igual que el JSON roto: una fila mala no aborta la corrida.
+            if not isinstance(registro, dict):
                 continue
             obra_id = registro.get("obra_id")
             if obra_id:
@@ -144,6 +159,7 @@ def consolidar_candidatos(
             "categoria_no_evento": 0,
             "sin_nombres": 0,
             "venue_geografia": 0,
+            "identidad_propia_nombre": 0,
         },
         "productoras": {"conocidas": 0, "dudosas": [], "nuevas": 0, "evidencia_corta": []},
         "venues": {"conocidos": 0, "dudosos": [], "nuevos": 0, "evidencia_corta": []},
@@ -166,7 +182,10 @@ def consolidar_candidatos(
             informe["descartes"]["sin_nombres"] += 1
             continue
 
-        if nombre_prod and not extraccion_db.es_identidad_propia(nombre_prod):
+        if nombre_prod and extraccion_db.es_identidad_propia(nombre_prod):
+            informe["descartes"]["identidad_propia_nombre"] += 1
+            nombre_prod = ""
+        if nombre_prod:
             canonico, ratio = extraccion_db.mejor_match(nombre_prod, catalogo_productoras)
             clase = extraccion_db.clasificar_ratio(ratio)
             if clase == "match":
@@ -176,12 +195,15 @@ def consolidar_candidatos(
                     "%s ~ %s (%.3f)" % (nombre_prod, canonico, ratio)
                 )
             else:
-                _acumular(productoras, mineria_rd._slug(nombre_prod), nombre_prod, registro)
+                _acumular(productoras, _clave(nombre_prod), nombre_prod, registro)
 
         if nombre_venue and extraccion_db.normalizar_texto(nombre_venue) in GEOGRAFIA_NO_VENUE:
             informe["descartes"]["venue_geografia"] += 1
             nombre_venue = ""
-        if nombre_venue and not extraccion_db.es_identidad_propia(nombre_venue):
+        if nombre_venue and extraccion_db.es_identidad_propia(nombre_venue):
+            informe["descartes"]["identidad_propia_nombre"] += 1
+            nombre_venue = ""
+        if nombre_venue:
             canonico_v, ratio_v = extraccion_db.mejor_match(nombre_venue, catalogo_venues)
             clase_v = extraccion_db.clasificar_ratio(ratio_v)
             if clase_v == "match":
@@ -191,7 +213,7 @@ def consolidar_candidatos(
                     "%s ~ %s (%.3f)" % (nombre_venue, canonico_v, ratio_v)
                 )
             else:
-                entrada = venues.setdefault(mineria_rd._slug(nombre_venue), {
+                entrada = venues.setdefault(_clave(nombre_venue), {
                     "nombre": nombre_venue,
                     "archivos_fuente": set(),
                 })
@@ -220,9 +242,11 @@ def consolidar_candidatos(
 def _imprimir_informe(informe: dict) -> None:
     d = informe["descartes"]
     print("filas: %d | descartes: fuente %d, identidad propia %d, "
-          "categoria %d, sin nombres %d, venue=geografia %d"
+          "categoria %d, sin nombres %d, venue=geografia %d, "
+          "identidad propia por nombre %d"
           % (informe["filas"], d["fuente_no_rd"], d["identidad_propia"],
-             d["categoria_no_evento"], d["sin_nombres"], d["venue_geografia"]))
+             d["categoria_no_evento"], d["sin_nombres"], d["venue_geografia"],
+             d["identidad_propia_nombre"]))
     for etiqueta, clave_c, clave_n in (
         ("productoras", "conocidas", "nuevas"),
         ("venues", "conocidos", "nuevos"),

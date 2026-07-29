@@ -57,6 +57,37 @@ def _jsonl(tmp_path, filas):
 SIN_CATALOGO = {"catalogo_productoras": [], "catalogo_venues": []}
 
 
+def test_fila_json_valida_pero_no_objeto_se_salta(tmp_path):
+    # gate 2026-07-29: '"just a string"' era JSON valido, llegaba a .get()
+    # y abortaba la corrida entera con AttributeError
+    p = tmp_path / "candidatos_db.jsonl"
+    p.write_text(
+        '"just a string"\n[1, 2]\n%s\n' % json.dumps(_candidato(obra_id="ok")),
+        encoding="utf-8")
+    candidatos = gen.cargar_candidatos(p)
+    assert [c["obra_id"] for c in candidatos] == ["ok"]
+
+
+def test_las_tildes_no_parten_la_evidencia():
+    # gate 2026-07-29: _slug no pela acentos, asi que "Nébula Fest" y
+    # "Nebula Fest" acumulaban por separado y ninguna llegaba al umbral
+    candidatos = [
+        _candidato(obra_id="o1", ruta_rel="a.png", productora="Nébula Fest"),
+        _candidato(obra_id="o2", ruta_rel="b.png", productora="Nebula Fest"),
+    ]
+    consolidado, _ = gen.consolidar_candidatos(candidatos, **SIN_CATALOGO)
+    assert list(consolidado["productoras_nuevas"]) == ["nebula_fest"]
+    assert consolidado["productoras_nuevas"]["nebula_fest"]["evidencia"] == 2
+
+
+def test_identidad_por_nombre_se_cuenta_no_se_calla():
+    # gate 2026-07-29: el descarte por nombre (flag en falso, nombre en la
+    # deny-list) no sumaba a ningun contador y el informe no cuadraba
+    candidatos = [_candidato(obra_id="o1", productora="Reduciendo Daño Chile")]
+    _, informe = gen.consolidar_candidatos(candidatos, **SIN_CATALOGO)
+    assert informe["descartes"]["identidad_propia_nombre"] == 1
+
+
 def test_latest_wins_por_obra_id(tmp_path):
     p = _jsonl(tmp_path, [
         _candidato(obra_id="obra_1", productora="Nebula Fest"),
