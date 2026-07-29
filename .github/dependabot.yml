@@ -1,0 +1,26 @@
+# VCD-07 (2026-07-29): the security diagnosis asked for two things -- pin
+# Actions to SHAs (done in the workflows, each pin keeps a `# vX` comment so
+# Dependabot can bump it) and automated dependency updates. This is the second
+# half. Weekly and capped so the PR queue stays quiet; every PR still goes
+# through the gate (green CI, human merge).
+# Retirement: if the repo adopts another update mechanism.
+
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+
+  - package-ecosystem: "npm"
+    directory: "/web"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
