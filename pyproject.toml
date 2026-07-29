@@ -33,7 +33,7 @@ desktop-extras = [
     "Pillow>=10",      # for tray image gen (free)
 ]
 build = [
-    "pyinstaller>=6.0",  # free packaging to .exe; 'flujo package'. Not runtime dep.
+    "pyinstaller>=6.21.0",  # free packaging to .exe; 'flujo package'. Not runtime dep.
 ]
 
 [project.scripts]
