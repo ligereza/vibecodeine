@@ -93,9 +93,9 @@ def test_el_centro_se_usa_cuando_la_pieza_no_existe():
 
 
 @requiere_node
-def test_sin_hash_se_entra_por_el_medio():
+def test_sin_hash_se_entra_por_la_primera_obra():
     r = _correr("", NODOS)
-    assert r["pos"] == 500        # el del medio de tres
+    assert r["pos"] == 100        # la primera: es como se ve el sitio
 
 
 @requiere_node
@@ -114,7 +114,7 @@ def test_una_semilla_con_basura_no_afirma_una_posicion():
     r = _correr("#centro=hola&escala=chau", NODOS)
     assert r["leido"].get("centro") is None
     assert r["leido"].get("escala") is None
-    assert r["pos"] == 500        # cae al medio, no a NaN
+    assert r["pos"] == 100        # cae a la primera, no a NaN
 
 
 @requiere_node
