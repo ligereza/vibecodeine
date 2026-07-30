@@ -41,7 +41,15 @@ def _svg_compilado():
 
 requiere_backend = pytest.mark.skipif(
     rasterizador.backend_disponible() is None,
-    reason="esta maquina no tiene cairosvg ni Edge")
+    reason="esta maquina no tiene cairosvg ni navegador")
+
+# Rasterizar y ANIMAR son dos capacidades, y confundirlas costo una matriz de
+# CI en rojo: en ubuntu el backend era cairosvg, que dibuja perfecto y no
+# ejecuta animaciones CSS, asi que todo cuadro salia igual al primero.
+requiere_anima = pytest.mark.skipif(
+    rasterizador.backend_disponible(anima=True) is None,
+    reason="ningun backend dibuja y anima aca -- %s"
+           % rasterizador.por_que_no_hay_navegador(True))
 
 
 # ---------------------------------------------------------------------------
@@ -49,6 +57,7 @@ requiere_backend = pytest.mark.skipif(
 # ---------------------------------------------------------------------------
 def test_sin_backends_levanta_error_propio_no_systemexit(monkeypatch):
     monkeypatch.setattr(rasterizador, "_cairosvg", lambda: None)
+    monkeypatch.setattr(rasterizador, "_binarios", lambda: [])
     monkeypatch.setattr(rasterizador, "_edge", lambda: None)
     assert rasterizador.backend_disponible() is None
     with pytest.raises(rasterizador.RasterizadorNoDisponibleError):
@@ -57,6 +66,7 @@ def test_sin_backends_levanta_error_propio_no_systemexit(monkeypatch):
 
 def test_sin_backends_no_es_systemexit_ni_importerror(monkeypatch):
     monkeypatch.setattr(rasterizador, "_cairosvg", lambda: None)
+    monkeypatch.setattr(rasterizador, "_binarios", lambda: [])
     monkeypatch.setattr(rasterizador, "_edge", lambda: None)
     try:
         rasterizador.rasterizar(_svg_compilado())
@@ -91,6 +101,7 @@ def test_mutacion_reintroducir_sys_exit_lo_atraparia():
 
 def test_critico_sin_backend_devuelve_error_sin_reventar(monkeypatch):
     monkeypatch.setattr(rasterizador, "_cairosvg", lambda: None)
+    monkeypatch.setattr(rasterizador, "_binarios", lambda: [])
     monkeypatch.setattr(rasterizador, "_edge", lambda: None)
     r = critico.analizar(_svg_compilado(), nombre="raster-test")
     assert "error" in r
@@ -124,7 +135,7 @@ def test_rasterizar_produce_png_real():
     assert len(datos) > 100
 
 
-@requiere_backend
+@requiere_anima
 def test_animar_produce_gif_y_mide_cuadros_distintos(tmp_path):
     salida = tmp_path / "salida.gif"
     ruta, n, distintos = rasterizador.animar(
@@ -133,7 +144,53 @@ def test_animar_produce_gif_y_mide_cuadros_distintos(tmp_path):
     assert n == 4
     datos = salida.read_bytes()
     assert datos[:6] == b"GIF89a"
-    assert distintos > 1, "la animacion no llego al rasterizador (todos los cuadros iguales)"
+    b = rasterizador.backend_disponible(anima=True)
+    sonda_q = rasterizador.rasterizar(rasterizador._SONDA_ANIMA,
+                                      tam=rasterizador._TAM_SONDA,
+                                      backend=b, anima=True)
+    sonda_m = rasterizador.rasterizar(rasterizador._SONDA_ANIMA,
+                                      tam=rasterizador._TAM_SONDA,
+                                      avance_ms=500, backend=b, anima=True)
+    assert distintos > 1, (
+        "todos los cuadros iguales. backend=%s (rasteriza: %s); sonda "
+        "%d/%d B %s -- si la sonda difiere y el SVG real no, el backend anima "
+        "pero no esta dibujando el contenido"
+        % (b, rasterizador.backend_disponible(), len(sonda_q), len(sonda_m),
+           "IGUALES" if sonda_q == sonda_m else "distintos"))
+
+
+def test_un_backend_que_dibuja_y_no_anima_lo_dice_en_vez_de_mentir(tmp_path,
+                                                                   monkeypatch):
+    """LA regresion de la matriz de CI del 2026-07-30.
+
+    ubuntu tenia cairosvg: rasteriza impecable y no ejecuta ni una animacion
+    CSS, asi que los 12 cuadros del ciclo salian identicos. `animar()` devolvia
+    `distintos=1` y el llamador leia ese 1 como "el icono declara un movimiento
+    que no ocurre" -- una acusacion contra 16 archivos sanos. El 1 de "no lo
+    medi" y el 1 de "esta muerto" eran el mismo numero.
+
+    Un instrumento incapaz levanta BackendNoAnimaError. Nunca un numero.
+    """
+    class _Ciego:
+        """Dibuja distinto segun el tamano, e ignora el animation-delay: es lo
+        que hace un rasterizador estatico de verdad."""
+        @staticmethod
+        def svg2png(bytestring=None, output_width=None, output_height=None):
+            return b"\x89PNG" + bytes([output_width or 0]) * 8
+
+    monkeypatch.setattr(rasterizador, "_cairosvg", lambda: _Ciego)
+    monkeypatch.setattr(rasterizador, "_binarios", lambda: [])
+    monkeypatch.setattr(rasterizador, "_edge", lambda: None)
+    monkeypatch.setattr(rasterizador, "_ANIMADORES", {})
+    monkeypatch.setattr(rasterizador, "_SONDEADOS", {})
+    monkeypatch.setattr(rasterizador, "_PERFIL_ELEGIDO", {})
+
+    assert rasterizador.backend_disponible() == "cairosvg", (
+        "sigue sirviendo para rasterizar: la capacidad que falta es la otra")
+    assert rasterizador.backend_disponible(anima=True) is None
+
+    with pytest.raises(rasterizador.BackendNoAnimaError):
+        rasterizador.animar(_svg_compilado(), tmp_path / "no.gif", cuadros=4)
 
 
 @requiere_backend
@@ -184,6 +241,7 @@ def test_un_edge_que_existe_y_no_rasteriza_cuenta_como_ausente(monkeypatch):
     """
     rasterizador._SONDEADOS.clear()
     monkeypatch.setattr(rasterizador, "_cairosvg", lambda: None)
+    monkeypatch.setattr(rasterizador, "_binarios", lambda: [sys.executable])
     monkeypatch.setattr(rasterizador, "_edge", lambda: sys.executable)
 
     assert Path(sys.executable).exists(), "el binario falso tiene que existir"
@@ -204,10 +262,12 @@ def test_la_sonda_no_sobrevive_a_que_cambie_el_binario(monkeypatch):
     rasterizador._SONDEADOS.clear()
     monkeypatch.setattr(rasterizador, "_cairosvg", lambda: None)
 
+    monkeypatch.setattr(rasterizador, "_binarios", lambda: [sys.executable])
     monkeypatch.setattr(rasterizador, "_edge", lambda: sys.executable)
     assert rasterizador.backend_disponible() is None
     assert rasterizador._SONDEADOS.get(sys.executable) is False
 
+    monkeypatch.setattr(rasterizador, "_binarios", lambda: [])
     monkeypatch.setattr(rasterizador, "_edge", lambda: None)
     assert rasterizador.backend_disponible() is None
     rasterizador._SONDEADOS.clear()

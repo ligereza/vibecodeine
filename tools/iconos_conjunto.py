@@ -417,9 +417,11 @@ def cmd_animar(raiz: Path, args) -> int:
     scratchpad o a donde diga --salida, nunca al repo."""
     from motor_semantico import rasterizador
 
-    if rasterizador.backend_disponible() is None:
-        print("no hay rasterizador en esta maquina (ni cairosvg ni Edge)",
-              file=sys.stderr)
+    if rasterizador.backend_disponible(anima=True) is None:
+        print("no hay backend que ejecute animaciones CSS en esta maquina "
+              "(hay para rasterizar: %s). Medir movimiento pide un navegador: "
+              "Edge o Chrome/Chromium." % (rasterizador.backend_disponible()
+                                           or "ninguno"), file=sys.stderr)
         return 1
     destino = (args.salida or (raiz / "_animados")).resolve()
     destino.mkdir(parents=True, exist_ok=True)

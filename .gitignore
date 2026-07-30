@@ -237,6 +237,9 @@ iskvw/datos/archivo.json
 # (2026-07-27). Ignorarlas es mas barato que acordarse.
 .agents/
 .codex/
+# Configuracion del editor del usuario. No es del repo y no se borra: se
+# ignora, por la misma razon que las dos de arriba.
+.vscode/
 
 # GIF de verificacion de un conjunto de iconos: los produce
 # `py tools/iconos_conjunto.py animar` para MEDIR que la animacion existe

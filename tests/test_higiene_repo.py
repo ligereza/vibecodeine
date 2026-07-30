@@ -105,3 +105,75 @@ def test_config_del_usuario_versionada():
         "config editable por el usuario fuera del repo (revisa .gitignore, "
         "necesita una linea `!<ruta>`): " + ", ".join(faltantes)
     )
+
+
+# Los modulos que un OPERADOR corre desde la consola de Windows. Ahi la salida
+# se codifica en cp1252, y un glifo que no existe en esa tabla no es un detalle
+# estetico: `print` levanta UnicodeEncodeError y el comando muere a mitad.
+# Medido el 2026-07-30: el motor semantico llego con ✓ ✗ ⚠ · ─ ═ → ≥ y reventaba
+# al imprimir su primer mensaje de error. Se limpio a mano, y esta regla existe
+# porque limpiar a mano no impide que el proximo archivo lo traiga de vuelta.
+#
+# Las TILDES no entran aca y no son el problema: cp1252 tiene á é í ó ú ñ ¿ ¡.
+# Lo que se prohibe son los glifos decorativos fuera de esa tabla. El espanol
+# correcto de un valor que lee un humano se conserva siempre.
+#
+# Retiro: cuando el repo fije PYTHONIOENCODING=utf-8 para todo comando que el
+# operador corre, y eso este verificado en Windows.
+# Alcance: TODO lo que un operador corre desde la consola. Con excepciones
+# DECLARADAS por archivo, porque al medir tools/ entero aparecieron glifos que
+# son CONTENIDO y no decoracion, y forzarles ASCII seria repetir el error que
+# una vez mutilo los productos del repo. Una excepcion sin razon escrita no
+# vale: si no se puede decir por que ese glifo significa algo, es decoracion y
+# se saca.
+ZONA_CONSOLA = ("tools", "cultura/mak_codex/motor_semantico")
+
+GLIFOS_QUE_SIGNIFICAN = {
+    "tools/compete_engine.py":
+        "dibuja marcos y sombreados como PIEZA (bloques y lineas de caja): el "
+        "glifo es la obra, no un adorno del log",
+    "tools/tilde_meter.py":
+        "Omega y el subindice son la notacion de Motor Omega, y el circulo "
+        "cruzado es su operador; renombrarlos en ASCII cambia lo que dicen",
+    "tools/system_map.py":
+        "las flechas dibujan el diagrama de arquitectura que el comando imprime",
+    "tools/gen_mapa_comandos.py":
+        "reproduce el arbol de comandos con las mismas lineas que muestra MAPA.md",
+}
+
+
+def _fuera_de_cp1252(texto: str) -> set[str]:
+    return {c for c in texto
+            if ord(c) > 127 and c.encode("cp1252", "ignore") == b""}
+
+
+def test_lo_que_corre_en_la_consola_del_operador_es_imprimible():
+    ofensas = []
+    for rel in ZONA_CONSOLA:
+        carpeta = REPO_ROOT / rel
+        if not carpeta.is_dir():
+            continue
+        for py in sorted(carpeta.glob("*.py")):
+            nombre = py.relative_to(REPO_ROOT).as_posix()
+            if nombre in GLIFOS_QUE_SIGNIFICAN:
+                continue
+            malos = _fuera_de_cp1252(py.read_text(encoding="utf-8"))
+            if malos:
+                ofensas.append("%s: %s" % (
+                    nombre, " ".join(sorted(hex(ord(c)) for c in malos))))
+    assert not ofensas, (
+        "Glifos que la consola cp1252 de Windows no puede imprimir. No es "
+        "estetica: `print` levanta UnicodeEncodeError y el comando muere a "
+        "mitad. Reemplazalos por ASCII (OK, x, !, -, ->, >=). Las tildes NO "
+        "son el problema y se conservan.\n  " + "\n  ".join(ofensas))
+
+
+def test_toda_excepcion_de_glifo_apunta_a_un_archivo_real_y_con_razon():
+    """Una lista de excepciones que nadie poda deja de ser una lista. Si el
+    archivo ya no existe, o dejo de tener glifos, la fila sale."""
+    for nombre, razon in GLIFOS_QUE_SIGNIFICAN.items():
+        ruta = REPO_ROOT / nombre
+        assert ruta.is_file(), "excepcion fantasma: %s ya no existe" % nombre
+        assert len(razon) > 40, "%s: la razon tiene que decir por que" % nombre
+        assert _fuera_de_cp1252(ruta.read_text(encoding="utf-8")), (
+            "%s ya no tiene glifos no imprimibles: saca la excepcion" % nombre)

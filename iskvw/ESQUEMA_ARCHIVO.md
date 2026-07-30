@@ -111,7 +111,8 @@ Y una que sale de esta forma:
 ```bash
 py tools/gen_archivo_iskvw.py --fuente obras    # las obras del artista
 py tools/gen_archivo_iskvw.py --fuente micelio  # lo que MAK relacionó
-py tools/gen_archivo_iskvw.py --fuente todo     # las dos, en un solo archivo
+py tools/gen_archivo_iskvw.py --fuente ensayos  # los ensayos y sus íconos
+py tools/gen_archivo_iskvw.py --fuente todo     # todas, en un solo archivo
 ```
 
 Sale a `iskvw/datos/archivo.json`. Una piel lee ESE archivo y nada más.
@@ -123,6 +124,31 @@ con etiquetas en común quedan unidas, con peso según cuántas comparten. Es lo
 
 **La fuente `micelio`** trae los vínculos que MAK midió de verdad, por cercanía
 entre los textos. Ahí `clase` sí es `semantico`.
+
+**La fuente `ensayos`** (2026-07-30) trae los ensayos curados de
+`docs/cultura/ensayos/` con su anexo iconográfico: el ensayo entra como una
+pieza `informe`, cada **concepto nombrable** como una pieza `concepto` colgada
+de él, y cada ícono que existe en disco como una `pieza_grafica` colgada de su
+concepto. Es el tramo que faltaba para que lo que MAK produce le sirva al
+portafolio: antes un ensayo terminaba en una carpeta que ninguna piel miraba.
+
+Tres cosas de esa fuente, porque son las reglas y no detalles:
+
+- sus vínculos son `clase: "manual"`, **nunca** `semantico`: los declara un
+  manifiesto, nadie midió una distancia;
+- un ícono declarado en el manifiesto y **ausente del disco no produce pieza**
+  — una pieza que afirma un archivo que no está es la mentira que la regla 1
+  prohíbe;
+- `extra.declara_animacion` dice que el SVG **tiene keyframes**, que es un dato
+  que el archivo codifica y cualquiera puede verificar sin rasterizar. Que se
+  mueva de forma perceptible es otra pregunta y se mide aparte contando cuadros
+  distintos (`py tools/iconos_conjunto.py animar`). Medido el 2026-07-30 sobre
+  los dieciséis: todos dan 10 de 10 cuadros distintos.
+
+Cada clase de pieza lleva su prefijo en el id (`ensayo-`, `concepto-`,
+`icono-`) para que un ensayo y una obra del artista no puedan colisionar: dos
+piezas distintas con el mismo id se fusionarían al unir las fuentes y una
+desaparecería.
 
 Cuando la percepción del archivo termine, las obras van a tener las dos cosas: sus
 datos y sus vínculos medidos.

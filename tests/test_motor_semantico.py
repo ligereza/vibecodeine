@@ -407,3 +407,59 @@ def test_mutacion_distancia_asimetrica_se_detecta():
         algebra.distancia = original
     assert algebra.distancia(TAZ, ACID) == algebra.distancia(ACID, TAZ)
     assert algebra.distancia(a_chico, b_chico) == algebra.distancia(b_chico, a_chico)
+
+
+def test_el_prompt_muestra_la_forma_y_no_solo_la_describe():
+    """Medido con un modelo real (gpt-4.1-mini via GitHub Models, tres briefs):
+    SIN el ejemplo, 1 de 3 llegaba a SVG y hacian falta hasta tres rondas de
+    reparacion, porque el modelo usaba el vocabulario correcto colgado de otra
+    estructura y `composicion`/`tono` llegaban vacios. CON el ejemplo, 3 de 3 en
+    la PRIMERA ronda.
+
+    El vocabulario cerrado impide inventar palabras; no alcanza para fijar la
+    FORMA. Por eso el ejemplo no es adorno del prompt y este test existe: si
+    alguien lo saca para acortar el prompt, el rendimiento se cae y no se nota
+    hasta que un modelo real falla.
+    """
+    resumen = esquema.resumen_para_prompt()
+    assert "LA FORMA EXACTA" in resumen
+    for campo in ("slug", "titulo", "composicion", "tono", "capas"):
+        assert '"%s"' % campo in resumen, "el ejemplo no muestra '%s'" % campo
+    # y el ejemplo tiene que ser una spec que de verdad compila
+    fallos = compilador.validar_spec(esquema.EJEMPLO)
+    assert not fallos, "el ejemplo del prompt no pasa su propia validacion: %s" % fallos
+    svg, _ = compilador.compilar(esquema.EJEMPLO, "ejemplo")
+    ET.fromstring(svg)
+
+
+def test_la_frontera_con_un_modelo_se_valida_por_tipo():
+    """Lo encontro un modelo REAL en el primer intento: devolvio `composicion`
+    como diccionario y `validar_spec` levantaba TypeError -- y el modo `iconos`
+    solo atrapa ValueError, asi que no era un rechazo con su motivo sino el modo
+    entero cayendose. Un mock nunca produce esto: devuelve los tipos esperados.
+    """
+    malformadas = [
+        {"composicion": {"a": 1}, "tono": "acido", "capas": []},
+        {"composicion": "centro_unico", "tono": ["acido"], "capas": []},
+        {"composicion": "centro_unico", "tono": "acido", "capas": {"x": 1}},
+        {"composicion": "centro_unico", "tono": "acido", "capas": ["protagonista"]},
+        {"composicion": "centro_unico", "tono": "acido",
+         "capas": [{"rol": "protagonista", "figura": ["onda"]}]},
+        {"composicion": "centro_unico", "tono": "acido",
+         "capas": [{"rol": "protagonista", "figura": "onda", "gesto": 7}]},
+        ["ni siquiera es un objeto"],
+        "un texto suelto",
+    ]
+    for spec in malformadas:
+        fallos = compilador.validar_spec(spec)      # no puede levantar
+        assert fallos, "acepto una spec malformada: %r" % (spec,)
+        assert all(isinstance(f, str) and f for f in fallos)
+
+
+def test_un_valor_de_otro_tipo_se_rechaza_y_no_cae_al_default():
+    """`gesto: 7` no es "quieto": es un error del modelo. Caer al default en
+    silencio devuelve un icono que nadie pidio y no dice por que."""
+    spec = {"composicion": "centro_unico", "tono": "acido",
+            "capas": [{"rol": "protagonista", "figura": "onda", "gesto": 7}]}
+    fallos = compilador.validar_spec(spec)
+    assert any("gesto" in f and "int" in f for f in fallos)

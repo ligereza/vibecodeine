@@ -762,7 +762,12 @@ def verify(
         root,
     )
     if run_pytest:
-        _run_verify_subprocess("pytest", [sys.executable, "-m", "pytest", "tests/", "-q"], root)
+        # -rs: los motivos de los saltos SE IMPRIMEN. Sin eso, un guardian que
+        # se salta y uno que mide se ven igual de verdes -- el 2026-07-30 la
+        # matriz quedo verde saltandose los 16 iconos y hubo que ir a contar
+        # puntos en el log para notarlo.
+        _run_verify_subprocess(
+            "pytest", [sys.executable, "-m", "pytest", "tests/", "-q", "-rs"], root)
     _run_verify_subprocess("health", [sys.executable, "-m", "flujo", "health"], root)
     _run_verify_subprocess("version", [sys.executable, "-m", "flujo", "version"], root)
     if hub_smoke:

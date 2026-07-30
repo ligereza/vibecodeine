@@ -95,42 +95,89 @@ def contraste(a, b):
 
 
 # -- validación semántica -------------------------------------------------
+def _palabra(valor):
+    """El valor si es una PALABRA, o None. La escribe un modelo, asi que puede
+    llegar cualquier cosa donde deberia haber un texto.
+
+    Medido el 2026-07-30, con un modelo de verdad y en el primer intento: pidio
+    `composicion` y devolvio un diccionario. Con `comp not in COMPOSICIONES`
+    eso levanta `TypeError: unhashable type: 'dict'` -- y el modo `iconos` solo
+    atrapa `ValueError`, asi que el fallo no era un rechazo con su motivo sino
+    el modo entero cayendose. Un mock nunca produce esto: devuelve los tipos
+    que uno espera. La frontera con un modelo se valida por TIPO antes que por
+    valor, o no se valida.
+    """
+    return valor if isinstance(valor, str) else None
+
+
 def validar_spec(spec):
     fallos = []
-    comp = spec.get("composicion")
+    if not isinstance(spec, dict):
+        return ["la spec tiene que ser un objeto JSON, llego %s"
+                % type(spec).__name__]
+    comp = _palabra(spec.get("composicion"))
     if comp not in COMPOSICIONES:
-        fallos.append(f"composicion '{comp}' no existe. Opciones: {sorted(COMPOSICIONES)}")
+        fallos.append(f"composicion '{spec.get('composicion')}' no existe. "
+                      f"Tiene que ser UNA palabra. Opciones: {sorted(COMPOSICIONES)}")
         return fallos
-    tono = spec.get("tono")
+    tono = _palabra(spec.get("tono"))
     if tono not in TONOS:
-        fallos.append(f"tono '{tono}' no existe. Opciones: {sorted(TONOS)}")
+        fallos.append(f"tono '{spec.get('tono')}' no existe. Tiene que ser UNA "
+                      f"palabra. Opciones: {sorted(TONOS)}")
     ranuras = COMPOSICIONES[comp]
     capas = spec.get("capas", [])
+    if not isinstance(capas, list):
+        fallos.append("'capas' tiene que ser una lista, llego %s"
+                      % type(capas).__name__)
+        return fallos
+    sueltas = [i for i, c in enumerate(capas) if not isinstance(c, dict)]
+    if sueltas:
+        fallos.append("las capas %s no son objetos: cada capa es un objeto con "
+                      "'rol' y ('figura' o 'texto')"
+                      % ", ".join(str(i) for i in sueltas))
+        return fallos
     if not capas:
         fallos.append("hace falta al menos una capa")
     if not any(c.get("rol") == "protagonista" for c in capas) and "protagonista" in ranuras:
         fallos.append("falta la capa 'protagonista' (la lectura principal)")
     vistos = set()
     for i, c in enumerate(capas):
-        rol = c.get("rol")
+        rol = _palabra(c.get("rol"))
         if rol not in ranuras:
-            fallos.append(f"capa {i}: rol '{rol}' no existe en '{comp}'. "
-                          f"Disponibles: {sorted(ranuras)}")
+            fallos.append(f"capa {i}: rol '{c.get('rol')}' no existe en "
+                          f"'{comp}'. Disponibles: {sorted(ranuras)}")
         if rol in vistos:
             fallos.append(f"capa {i}: rol '{rol}' repetido")
         vistos.add(rol)
-        fig, txt = c.get("figura"), c.get("texto")
+        fig = _palabra(c.get("figura"))
+        txt = c.get("texto")
+        if c.get("figura") is not None and fig is None:
+            fallos.append(f"capa {i}: 'figura' tiene que ser una palabra del "
+                          f"vocabulario, llego {type(c.get('figura')).__name__}")
+        if txt is not None and not isinstance(txt, (str, int, float)):
+            fallos.append(f"capa {i}: 'texto' tiene que ser texto, llego "
+                          f"{type(txt).__name__}")
+            txt = None
         if not fig and txt is None:
             fallos.append(f"capa {i}: necesita 'figura' o 'texto'")
         if fig and fig not in FIGURAS:
             fallos.append(f"capa {i}: figura '{fig}' no existe. Opciones: {sorted(FIGURAS)}")
-        g = c.get("gesto", "quieto")
-        if g not in GESTOS:
-            fallos.append(f"capa {i}: gesto '{g}' no existe. Opciones: {sorted(GESTOS)}")
-        r = c.get("ritmo", "medio")
-        if r not in RITMOS:
-            fallos.append(f"capa {i}: ritmo '{r}' no existe. Opciones: {sorted(RITMOS)}")
-    if len([c for c in capas if c.get("gesto", "quieto") != "quieto"]) > 5:
+        # Un valor presente y de otro tipo se RECHAZA, no se ignora: caer al
+        # default en silencio es aceptar una spec que el modelo escribio mal y
+        # devolverle un icono que no pidio.
+        for campo, tabla in (("gesto", GESTOS), ("ritmo", RITMOS)):
+            crudo = c.get(campo)
+            if crudo is None:
+                continue                      # ausente = default declarado
+            palabra = _palabra(crudo)
+            if palabra is None:
+                fallos.append(f"capa {i}: '{campo}' tiene que ser una palabra "
+                              f"del vocabulario, llego {type(crudo).__name__}")
+            elif palabra not in tabla:
+                fallos.append(f"capa {i}: {campo} '{palabra}' no existe. "
+                              f"Opciones: {sorted(tabla)}")
+    if len([c for c in capas
+            if (_palabra(c.get("gesto")) or "quieto") != "quieto"]) > 5:
         fallos.append("más de 5 capas animadas: el ícono se vuelve ruido")
     return fallos
 

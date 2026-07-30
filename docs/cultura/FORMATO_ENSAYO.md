@@ -102,10 +102,17 @@ No es un ícono estático. Cuatro consecuencias, que son reglas:
 4. **La verificación es un GIF, no un PNG.** Un cuadro suelto no distingue
    *quieto* de *animado*: valida algo que no es lo que se construyó.
    `py tools/iconos_conjunto.py animar` rasteriza cuadros a lo largo del ciclo y
-   **cuenta cuántos son distintos**. Medido el 2026-07-30 sobre los 16: quince
-   dieron 10 de 10 cuadros distintos y `11-inclusividad-raices-queer-negras` dio
-   3 de 10 — su animación es casi estática, y eso se sabe porque se midió. Los
-   GIF no entran al repo: son instrumento de medición, no entregable.
+   **cuenta cuántos son distintos**. Medirlo exige un **navegador**: cairosvg
+   dibuja impecable y no ejecuta una sola animación CSS, así que devolvía todos
+   los cuadros iguales y el guardián leía ese empate como «el archivo miente».
+   Rasterizar y animar son dos capacidades distintas, y ahora la segunda se
+   mide con una sonda antes de prometer un veredicto. Medido el 2026-07-30 sobre los 16: los
+   dieciséis dan 10 de 10. La regla que lo sostiene es de coherencia y no un
+   umbral: **un ícono que declara `@keyframes` tiene que moverse dentro de su
+   propio ciclo**, y el ciclo se le pregunta al archivo en vez de suponer una
+   ventana fija. La primera medición dio un falso positivo —un ícono acusado de
+   estático— y el defecto era del instrumento, no de la pieza. Los GIF no entran
+   al repo: son instrumento de medición, no entregable.
 
 ### Los comandos
 

@@ -99,3 +99,100 @@ def convertir(grafo: dict) -> dict:
     } for e in grafo.get("edges", [])
         if _id_pieza(e.get("a")) in conocidas and _id_pieza(e.get("b")) in conocidas]
     return {"piezas": piezas, "vinculos": vinculos}
+
+
+def desde_ensayo(ensayo: dict) -> dict:
+    """An ENSAYO with its iconographic annex -> the same contract shape.
+
+    Why here and not in the generator: an essay exists on BOTH sides. The repo
+    keeps the curated ones under `docs/cultura/ensayos/<tema>/`, and the box
+    writes them to `~/research/informes/` (`research.py --formato ensayo`). One
+    pure function, two consumers -- the same reason `convertir()` lives here.
+    This is what makes MAK's output reach the portfolio instead of stopping at
+    a folder nobody reads.
+
+    `ensayo` is what the caller already has on disk, nothing invented:
+        {"slug", "titulo", "fecha"?, "resumen"?, "ruta"?,
+         "conceptos": [{"n", "slug", "titulo", "descripcion", "ancla"?,
+                        "archivo"?, "estilo"?}]}
+
+    Three classes of piece and two of link, and every one of them encodes
+    something the manifest really says (the doublecup rule -- no element claims
+    a datum it does not encode):
+
+    - the essay              -> clase `informe`, its own title (MAK wrote it)
+    - each nameable concept  -> clase `concepto`, linked to the essay
+    - each icon that EXISTS  -> clase `pieza_grafica`, medio svg, linked to its
+      concept. An icon declared in the manifest but missing from disk produces
+      NO piece: a piece that claims a file that is not there is exactly the
+      lie this contract forbids.
+
+    Links are `clase: "manual"`, never `semantico`: nobody measured a distance
+    here, the relation is declared by the manifest. Calling it measured would
+    be the same defect as the tag-derived links pretending to be semantic.
+    """
+    slug_ensayo = _id(ensayo.get("slug") or ensayo.get("titulo") or "ensayo")
+    id_ensayo = "ensayo-%s" % slug_ensayo
+    piezas = [{
+        "id": id_ensayo,
+        "titulo": str(ensayo.get("titulo") or slug_ensayo),
+        "clase": "informe",
+        "fecha": ensayo.get("fecha"),
+        "resumen": ensayo.get("resumen"),
+        "etiquetas": ["ensayo", "cultura"],
+        "peso": max(1, len(ensayo.get("conceptos") or [])),
+        "medio": ({"tipo": "texto", "src": ensayo["ruta"]}
+                  if ensayo.get("ruta") else {"tipo": "texto"}),
+        "estado": "publicada",
+        "extra": {"formato": "ensayo"},
+    }]
+    vinculos = []
+    for c in ensayo.get("conceptos") or []:
+        titulo = str(c.get("titulo") or "").strip()
+        if not titulo:
+            continue                      # sin nombre no es un concepto nombrable
+        id_concepto = "concepto-%s-%s" % (slug_ensayo, _id(c.get("slug") or titulo))
+        piezas.append({
+            "id": id_concepto,
+            "titulo": titulo,
+            "clase": "concepto",
+            "fecha": None,
+            "resumen": str(c.get("descripcion") or "").strip() or None,
+            "etiquetas": ["ensayo", slug_ensayo],
+            "peso": 1,
+            "medio": {"tipo": "texto"},
+            "estado": "publicada",
+            "extra": {k: v for k, v in (("ancla", c.get("ancla")),
+                                        ("n", c.get("n"))) if v},
+        })
+        vinculos.append({"de": id_concepto, "a": id_ensayo, "peso": 1.0,
+                         "clase": "manual"})
+        src = c.get("archivo_src")
+        if not src:
+            continue                      # el icono no existe en disco: no entra
+        id_icono = "icono-%s-%s" % (slug_ensayo, _id(c.get("slug") or titulo))
+        piezas.append({
+            "id": id_icono,
+            "titulo": titulo,
+            "clase": "pieza_grafica",
+            "fecha": None,
+            "resumen": str(c.get("descripcion") or "").strip() or None,
+            "etiquetas": [e for e in ["icono", "animado", slug_ensayo,
+                                      (c.get("estilo") or "").strip()] if e],
+            "peso": 1,
+            "medio": {"tipo": "imagen", "src": src},
+            "estado": "publicada",
+            # `declara_animacion` y no `anima`: lo que el archivo codifica es
+            # que TIENE keyframes, y eso lo puede ver quien lo lee sin
+            # rasterizar. Que se MUEVA de forma perceptible es otra cosa y se
+            # mide aparte contando cuadros distintos (`iconos_conjunto animar`,
+            # y `tests/test_iconos_conjunto.py` exige que todo icono que declara
+            # keyframes se mueva dentro de su propio ciclo). Son dos hechos
+            # distintos y el contrato solo puede afirmar el que el archivo
+            # codifica -- la regla que existe para hacer cumplir.
+            "extra": ({"declara_animacion": True}
+                      if c.get("declara_animacion") else {}),
+        })
+        vinculos.append({"de": id_icono, "a": id_concepto, "peso": 1.0,
+                         "clase": "manual"})
+    return {"piezas": piezas, "vinculos": vinculos}

@@ -13,6 +13,7 @@ detras.
 Uso:
     py tools/gen_archivo_iskvw.py --fuente obras
     py tools/gen_archivo_iskvw.py --fuente micelio --url http://<caja>:8890
+    py tools/gen_archivo_iskvw.py --fuente ensayos
     py tools/gen_archivo_iskvw.py --fuente todo
 """
 from __future__ import annotations
@@ -34,6 +35,7 @@ import contrato_archivo  # noqa: E402
 OBRAS = RAIZ / "iskvw" / "datos" / "obras.json"
 CAMPO = RAIZ / "iskvw" / "datos" / "campo.json"
 SALIDA = RAIZ / "iskvw" / "datos" / "archivo.json"
+ENSAYOS = RAIZ / "docs" / "cultura" / "ensayos"
 
 # Por defecto el micelio se pide a la variable de entorno, no a una IP escrita
 # en el repo: este repositorio es publico.
@@ -124,6 +126,56 @@ def desde_micelio(url: str = MICELIO_URL, umbral: float = UMBRAL_MICELIO) -> dic
     return contrato_archivo.convertir(g)
 
 
+def desde_ensayos(raiz: Path = ENSAYOS) -> dict:
+    """Los ensayos curados del repo, con su anexo iconografico.
+
+    Es el tramo que faltaba para que lo que MAK produce le sirva al portafolio:
+    hasta ahora un ensayo terminaba en una carpeta que ninguna piel miraba. La
+    conversion vive en `contrato_archivo.desde_ensayo` porque un ensayo existe
+    en los DOS lados (aca los curados, en la caja los que escribe
+    `research.py --formato ensayo`).
+
+    Nada se inventa: el titulo sale del H1 del documento y los conceptos del
+    manifiesto. Un icono declarado que no esta en disco NO entra -- una pieza
+    que afirma un archivo ausente es justo la mentira que el esquema prohibe.
+    """
+    if not raiz.is_dir():
+        return {"piezas": [], "vinculos": []}
+    partes = []
+    for carpeta in sorted(p for p in raiz.iterdir() if p.is_dir()):
+        doc = carpeta / "ensayo.md"
+        manifiesto = carpeta / "iconos.json"
+        if not doc.is_file():
+            continue
+        texto = doc.read_text(encoding="utf-8", errors="replace")
+        h1 = re.search(r"^#\s+(.+)$", texto, re.MULTILINE)
+        conceptos = []
+        if manifiesto.is_file():
+            try:
+                conceptos = json.loads(manifiesto.read_text(encoding="utf-8"))
+            except ValueError:
+                conceptos = []
+        for c in conceptos:
+            svg = carpeta / "iconos" / str(c.get("archivo") or "")
+            if c.get("archivo") and svg.is_file():
+                c["archivo_src"] = "%s/%s" % (
+                    carpeta.relative_to(RAIZ).as_posix(), "iconos/" + c["archivo"])
+                # Se LEE del archivo, no se afirma: tiene keyframes o no los
+                # tiene. Que se mueva de forma perceptible se mide contando
+                # cuadros distintos, que es otra pregunta y otro comando.
+                c["declara_animacion"] = "@keyframes" in svg.read_text(
+                    encoding="utf-8", errors="replace")
+        partes.append(contrato_archivo.desde_ensayo({
+            "slug": carpeta.name,
+            "titulo": (h1.group(1).strip() if h1 else carpeta.name),
+            "ruta": doc.relative_to(RAIZ).as_posix(),
+            "conceptos": conceptos,
+        }))
+    if not partes:
+        return {"piezas": [], "vinculos": []}
+    return unir(*partes)
+
+
 def del_campo(ruta: Path = CAMPO) -> tuple[dict, float | None]:
     """Lo que el campo sabe de cada obra, por id, para pegarlo al contrato.
 
@@ -180,7 +232,9 @@ def _riqueza(p: dict) -> int:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--fuente", choices=("obras", "micelio", "todo"), default="obras")
+    ap.add_argument("--fuente",
+                    choices=("obras", "micelio", "ensayos", "todo"),
+                    default="obras")
     ap.add_argument("--url", default=MICELIO_URL)
     ap.add_argument("--umbral", type=float, default=UMBRAL_MICELIO)
     ap.add_argument("--salida", type=Path, default=SALIDA)
@@ -202,6 +256,8 @@ def main() -> int:
                   file=sys.stderr)
             if args.fuente == "micelio":
                 return 1
+    if args.fuente in ("ensayos", "todo"):
+        partes.append(desde_ensayos())
 
     datos = unir(*partes)
 

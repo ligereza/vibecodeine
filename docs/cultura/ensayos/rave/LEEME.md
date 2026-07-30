@@ -38,10 +38,14 @@ py tools/iconos_conjunto.py animar --raiz docs/cultura/ensayos/rave --salida <sc
 - **Las fuentes del ensayo están declaradas como deuda** en su cabecera: el texto
   cita fuentes que no viajaron con el material original. Se completan leyendo, no
   inventando una URL.
-- Medido el 2026-07-30: quince íconos dan 10 de 10 cuadros distintos y
-  `11-inclusividad-raices-queer-negras` da 3 de 10 — su animación es casi
-  estática. Está anotado, no arreglado: es una decisión de diseño de quien lo
-  edite.
+- Medido el 2026-07-30: **los dieciséis dan 10 de 10 cuadros distintos**. La
+  primera medición acusó a `11-inclusividad-raices-queer-negras` de estar casi
+  estático y era falso: el defecto era del instrumento —el avance de la
+  animación se inyectaba después de la palabra `infinite` y en una regla
+  `... infinite alternate` dejaba `alternate` colgando, así que el navegador
+  descartaba la declaración entera. Ahora el avance va como regla global y
+  `tests/test_iconos_conjunto.py` exige que todo ícono que declara `@keyframes`
+  se mueva dentro de **su propio** ciclo.
 
 ## De dónde salió
 
