@@ -236,6 +236,73 @@ Measured by diffing the disks, which is the check that had never been run.
   (`tools/watsonx_smoke.py`). Stage 1 fits in the free tier; the $200 credit is
   untouched. It is opt-in (`LLM(order="watsonx")`), not in the default chain.
 
+## The organism writes and nobody reads (2026-07-30, the day's thesis)
+
+Everything measured on the two DISKS -- not on GitHub, which is the trap that
+produced this whole class of miss -- says one thing: **this system produces and
+nothing consumes.** Nine measurements, one shape:
+
+- `trabajo.py` answers up to 24 questions a day from a backlog that REFILLS
+  ITSELF (`cosecha: +3 preguntas al backlog generativo`). Result: 50 reports,
+  11 distinct topics, 40 of them sharing one prefix. The same question answered
+  forty times.
+- `latido.py` is healthy and has produced 44 cultural reports nobody read.
+- `agente_real.py` has failed every 30 minutes since 2026-07-23 -- it points at
+  WIN's ollama, which the user deliberately retired -- writing 1.5 MB of
+  tracebacks into a log nobody opens. It is NOT silent; it is unread.
+- `expulsion.py` watches `_SLOTS` while the provider that actually fails
+  (`win`) lives in `LLM.__init__`'s default order. A watchman that by
+  construction cannot see the failure, invoked only when another LLM feels
+  like it.
+- `retencion.py` was written 2026-07-17 with the right policy (keep 50, move to
+  archive/, never delete) and was never wired to cron.
+- `utilidades/` is a WRITE-ONLY directory, verified with a runtime-shaped check
+  and not just grep: one process writes, one watches "observationally", zero
+  read, import, list or execute.
+- **217 reports were moved into an archive/ at 16:28:34 and nobody could
+  attribute it.** Not the capataz (it chose `vetear`), not a dry run (same md5,
+  the code only moves under `--apply`), not the hub, not the shell history.
+  That is not a mystery to solve: it is what three autonomous loops, a dozen
+  crons and SSH sessions sharing a filesystem without a log produce by default.
+
+### What changed today, and what it cost to learn
+
+**The sync is authoritative now.** `cp -ru` became `cp -r` (never `--delete`,
+which would erase the box's own state) AFTER verifying drift is zero across the
+five organs. Until today, one edit on the box froze that file forever: that is
+how `revisor.py` came to merge PRs by itself, for ten days, from a copy that
+existed on one disk only.
+
+**`mutaciones.py`** signs state mutations, inside the tools that already exist.
+Not a fourth loop, not a dashboard -- the point 9 defect is fixed by SUBTRACTING
+loops, not by adding observers.
+
+**A Fable subagent was asked to reason about its own artifacts.** Its diagnosis
+matched the measurements and its ordering was better than mine (make the sync
+authoritative FIRST, because a fix edited in the repo does not land while the
+box holds frozen copies). Its distinction is worth keeping: `retencion` is well
+designed and badly wired; `expulsion` and the `codificar` channel are badly
+DESIGNED, and that changes the repair. Two things it got wrong, both caught:
+it proposed `rsync --delete` (would erase the box's state) and placed `tavily`
+in the LLM chain when tavily is the search provider.
+
+### The rule the assistant adopted, so it stops asking
+
+Act without asking on anything REVERSIBLE -- the whole repo (git returns it) and
+anything on the box that ADDS or MOVES. Stop only for what DELETES on the box or
+STOPS a service. Fear applied to everything is not caution, it is paralysis;
+applied to the irreversible, it is the job.
+
+### Still open, measured and not rushed
+
+- The backlog dedup: `trabajo.py` should not enqueue a question whose slug
+  already exists in `informes/`. Attacks the biggest pile at its cause.
+- Wiring `retencion.py` to cron (the policy was decided thirteen days ago).
+- `agente_real`: it is a THIRD decision loop competing with capataz. Decide
+  which one lives before rewiring it to watsonx.
+- `expulsion`: badly designed, so do NOT implement its `--enforce` stub. Giving
+  a blind watchman the power to act automates the blindness.
+
 ## MAK como motor: sirve, y el checkpoint mentia
 
 `cultura/mak_plataforma/ideas.py` SI esta conectado al hub y funciona -- este
