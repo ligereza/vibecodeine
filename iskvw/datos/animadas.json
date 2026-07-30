@@ -1,0 +1,189 @@
+{
+ "version": 1,
+ "piezas": [
+  {
+   "obra_id": "vola",
+   "titulo": "VOLÁ · lo visible y lo invisible",
+   "src": "iskvw/piel/animadas/vola.svg",
+   "spec": {
+    "composicion": "centro_y_satelites",
+    "tono": "subterraneo",
+    "capas": [
+     {
+      "rol": "protagonista",
+      "figura": "red",
+      "gesto": "latir",
+      "ritmo": "rapido"
+     },
+     {
+      "rol": "satelite_1",
+      "figura": "disco",
+      "gesto": "quieto"
+     }
+    ]
+   },
+   "declara_animacion": true
+  },
+  {
+   "obra_id": "campo-motor-diagnostico",
+   "titulo": "Campo · Motor de Diagnóstico",
+   "src": "iskvw/piel/animadas/campo-motor-diagnostico.svg",
+   "spec": {
+    "composicion": "confrontacion",
+    "tono": "campo",
+    "capas": [
+     {
+      "rol": "protagonista",
+      "figura": "ojo",
+      "gesto": "respirar",
+      "ritmo": "muy_lento"
+     },
+     {
+      "rol": "base",
+      "figura": "espiral",
+      "gesto": "quieto"
+     }
+    ]
+   },
+   "declara_animacion": true
+  },
+  {
+   "obra_id": "cenefa-dossier",
+   "titulo": "Cenefa · Dossier",
+   "src": "iskvw/piel/animadas/cenefa-dossier.svg",
+   "spec": {
+    "composicion": "confrontacion",
+    "tono": "vitral",
+    "capas": [
+     {
+      "rol": "protagonista",
+      "figura": "muro",
+      "gesto": "respirar",
+      "ritmo": "medio"
+     },
+     {
+      "rol": "lado_izq",
+      "figura": "horizonte",
+      "gesto": "quieto"
+     }
+    ]
+   },
+   "declara_animacion": true
+  },
+  {
+   "obra_id": "wip-malla-reactiva",
+   "titulo": "Malla Reactiva",
+   "src": "iskvw/piel/animadas/wip-malla-reactiva.svg",
+   "spec": {
+    "composicion": "horizonte",
+    "tono": "acido",
+    "capas": [
+     {
+      "rol": "protagonista",
+      "figura": "figura",
+      "gesto": "temblar",
+      "ritmo": "muy_lento"
+     },
+     {
+      "rol": "marca",
+      "figura": "rayos",
+      "gesto": "quieto"
+     }
+    ]
+   },
+   "declara_animacion": true
+  },
+  {
+   "obra_id": "sala-flujo-3d",
+   "titulo": "sala flujo — portafolio 3D",
+   "src": "iskvw/piel/animadas/sala-flujo-3d.svg",
+   "spec": {
+    "composicion": "confrontacion",
+    "tono": "acido",
+    "capas": [
+     {
+      "rol": "protagonista",
+      "figura": "documento",
+      "gesto": "derivar",
+      "ritmo": "rapido"
+     },
+     {
+      "rol": "lado_der",
+      "figura": "muro",
+      "gesto": "quieto"
+     }
+    ]
+   },
+   "declara_animacion": true
+  },
+  {
+   "obra_id": "tapiz-system-projection",
+   "titulo": "TAPIZ :: system projection",
+   "src": "iskvw/piel/animadas/tapiz-system-projection.svg",
+   "spec": {
+    "composicion": "protagonista_y_flancos",
+    "tono": "documento",
+    "capas": [
+     {
+      "rol": "protagonista",
+      "figura": "puerta",
+      "gesto": "respirar",
+      "ritmo": "medio"
+     },
+     {
+      "rol": "base",
+      "figura": "anillo",
+      "gesto": "quieto"
+     }
+    ]
+   },
+   "declara_animacion": true
+  },
+  {
+   "obra_id": "cauce-sala3d",
+   "titulo": "Cauce · Sala 3D",
+   "src": "iskvw/piel/animadas/cauce-sala3d.svg",
+   "spec": {
+    "composicion": "protagonista_y_flancos",
+    "tono": "papel",
+    "capas": [
+     {
+      "rol": "protagonista",
+      "figura": "multitud",
+      "gesto": "respirar",
+      "ritmo": "muy_rapido"
+     },
+     {
+      "rol": "flanco_izq",
+      "figura": "ojo",
+      "gesto": "quieto"
+     }
+    ]
+   },
+   "declara_animacion": true
+  },
+  {
+   "obra_id": "medallon-entrada",
+   "titulo": "Medallón · Entrada",
+   "src": "iskvw/piel/animadas/medallon-entrada.svg",
+   "spec": {
+    "composicion": "centro_y_satelites",
+    "tono": "concreto",
+    "capas": [
+     {
+      "rol": "protagonista",
+      "figura": "muro",
+      "gesto": "respirar",
+      "ritmo": "muy_lento"
+     },
+     {
+      "rol": "satelite_1",
+      "figura": "maquina",
+      "gesto": "quieto"
+     }
+    ]
+   },
+   "declara_animacion": true
+  }
+ ]
+}

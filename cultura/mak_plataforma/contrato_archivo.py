@@ -196,3 +196,46 @@ def desde_ensayo(ensayo: dict) -> dict:
         vinculos.append({"de": id_icono, "a": id_concepto, "peso": 1.0,
                          "clase": "manual"})
     return {"piezas": piezas, "vinculos": vinculos}
+
+
+def desde_animadas(manifiesto: dict, existe=None) -> dict:
+    """Las piezas animadas derivadas de las obras curadas, al contrato.
+
+    El generador (`tools/gen_animadas_obras.py`) deriva UNA pieza por obra con
+    el motor semantico, determinista desde el id. Aca vive la conversion por
+    la misma razon que `desde_ensayo`: la pieza existe en ambos lados (el repo
+    la versiona, la caja puede regenerarla) y dos conversiones divergen.
+
+    Mismas reglas del esquema: el vinculo es `manual` (lo declara el
+    manifiesto, nadie midio una distancia) y una pieza cuyo svg NO esta en
+    disco no entra -- el contrato no afirma lo que no puede mostrarse.
+    `existe` se inyecta en tests; por defecto pregunta al disco real.
+    """
+    if existe is None:
+        from pathlib import Path as _P
+        raiz = _P(__file__).resolve().parents[2]
+        existe = lambda src: (raiz / src).is_file()  # noqa: E731
+    piezas, vinculos = [], []
+    for fila in manifiesto.get("piezas") or []:
+        oid = fila.get("obra_id")
+        src = fila.get("src")
+        if not oid or not src or not existe(src):
+            continue
+        id_pieza = "animada-%s" % oid
+        piezas.append({
+            "id": id_pieza,
+            "titulo": str(fila.get("titulo") or oid),
+            "clase": "pieza_grafica",
+            "fecha": None,
+            "resumen": None,
+            "etiquetas": ["animada", "generativa", "motor-semantico"],
+            "peso": 1,
+            "medio": {"tipo": "imagen", "src": src},
+            "estado": "publicada",
+            "extra": ({"declara_animacion": True, "derivada_de": oid}
+                      if fila.get("declara_animacion")
+                      else {"derivada_de": oid}),
+        })
+        vinculos.append({"de": id_pieza, "a": oid, "peso": 1.0,
+                         "clase": "manual"})
+    return {"piezas": piezas, "vinculos": vinculos}
