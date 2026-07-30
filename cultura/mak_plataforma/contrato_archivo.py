@@ -185,11 +185,11 @@ def desde_ensayo(ensayo: dict) -> dict:
             # `declara_animacion` y no `anima`: lo que el archivo codifica es
             # que TIENE keyframes, y eso lo puede ver quien lo lee sin
             # rasterizar. Que se MUEVA de forma perceptible es otra cosa y se
-            # mide aparte contando cuadros distintos (`iconos_conjunto animar`;
-            # medido el 2026-07-30: quince de dieciseis dan 10/10 y uno da
-            # 3/10). Afirmar `anima: true` para los dieciseis seria reclamar un
-            # dato que el archivo no tiene -- la regla que este contrato existe
-            # para hacer cumplir.
+            # mide aparte contando cuadros distintos (`iconos_conjunto animar`,
+            # y `tests/test_iconos_conjunto.py` exige que todo icono que declara
+            # keyframes se mueva dentro de su propio ciclo). Son dos hechos
+            # distintos y el contrato solo puede afirmar el que el archivo
+            # codifica -- la regla que existe para hacer cumplir.
             "extra": ({"declara_animacion": True}
                       if c.get("declara_animacion") else {}),
         })

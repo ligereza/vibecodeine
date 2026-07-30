@@ -143,7 +143,7 @@ Tres cosas de esa fuente, porque son las reglas y no detalles:
   que el archivo codifica y cualquiera puede verificar sin rasterizar. Que se
   mueva de forma perceptible es otra pregunta y se mide aparte contando cuadros
   distintos (`py tools/iconos_conjunto.py animar`). Medido el 2026-07-30 sobre
-  los dieciséis: quince dan 10 de 10 cuadros distintos y uno da 3 de 10.
+  los dieciséis: todos dan 10 de 10 cuadros distintos.
 
 Cada clase de pieza lleva su prefijo en el id (`ensayo-`, `concepto-`,
 `icono-`) para que un ensayo y una obra del artista no puedan colisionar: dos

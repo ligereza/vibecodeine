@@ -145,8 +145,15 @@ Five decisions of that landing, which do not get re-litigated:
    group declaring `data-rol/figura/gesto/ritmo` with a `<title>`, so it opens
    in Illustrator/Inkscape and each element answers for what it encodes.
 3. **Verification is a GIF, never a PNG** -- a single frame cannot tell still
-   from animated. Fifteen of the sixteen give 10/10 distinct frames,
-   `11-inclusividad` gives 3/10. GIFs are an instrument and do not enter the repo.
+   from animated. All sixteen give 10/10 distinct frames. The rule that holds it
+   is COHERENCE, not a threshold: an icon that declares `@keyframes` must move
+   within ITS OWN cycle, and the cycle is asked of the file instead of assuming
+   a fixed window. The first measurement produced a false positive -- one icon
+   accused of being static -- and the defect was the instrument: the animation
+   advance was injected after the word `infinite`, which in a
+   `... infinite alternate` rule left `alternate` dangling and the browser
+   dropped the whole declaration. GIFs are an instrument, not a deliverable, and
+   do not enter the repo.
 4. **Each icon declares the passage that justifies it** (`ancla`, pinned by a
    test): the text is the organ that justifies the content that sustains the form.
 5. **thi.ng is IN USE, not noted**: `hiccup` + `hiccup-svg` + `color` in

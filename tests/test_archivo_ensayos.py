@@ -130,9 +130,12 @@ def test_el_ancla_viaja_en_extra():
 
 
 def test_declara_animacion_solo_si_el_llamador_lo_midio():
-    """No se afirma: se lee del archivo. Quince de los dieciséis íconos reales
-    dan 10/10 cuadros distintos y uno da 3/10, así que `anima: true` para todos
-    habría sido un dato que el archivo no tiene."""
+    """No se afirma: se lee del archivo.
+
+    Que un SVG declare keyframes y que se mueva de forma perceptible son dos
+    hechos distintos, y el contrato solo puede afirmar el que el archivo
+    codifica. Lo segundo se mide aparte (`tests/test_iconos_conjunto.py` exige
+    que todo icono que declara animación se mueva dentro de su propio ciclo)."""
     d = contrato.desde_ensayo(UN_ENSAYO)
     ico = [p for p in d["piezas"] if p["clase"] == "pieza_grafica"][0]
     assert ico["extra"] == {"declara_animacion": True}

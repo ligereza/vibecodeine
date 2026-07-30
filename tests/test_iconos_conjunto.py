@@ -190,3 +190,55 @@ def test_mutacion_construir_no_deterministico_se_detectaria(tmp_path, monkeypatc
     IC.cmd_construir(raiz, types.SimpleNamespace(titulo=None))
     html2 = (raiz / "galeria.html").read_text(encoding="utf-8")
     assert html1 != html2, "la mutacion no vario el output, ajustar el caso"
+
+
+# --------------------------------------------------------------------------
+# La animacion: coherencia entre lo que el archivo declara y lo que hace
+# --------------------------------------------------------------------------
+import re as _re
+
+sys.path.insert(0, str(REPO / "cultura" / "mak_codex"))
+from motor_semantico import rasterizador as _ras  # noqa: E402
+
+_requiere_backend = pytest.mark.skipif(
+    _ras.backend_disponible() is None,
+    reason="sin rasterizador en esta maquina (ni cairosvg ni Edge)")
+
+
+def _ciclo_ms(svg: str) -> int:
+    """El ciclo mas largo que el propio archivo declara, en ms.
+
+    Muestrear una ventana fija seria injusto con un icono de ciclo lento: no se
+    moveria dentro de la ventana y el test lo llamaria muerto sin que lo este.
+    Se le pregunta al archivo cuanto dura su animacion mas larga.
+    """
+    duraciones = [float(x) * (1000 if u == "s" else 1)
+                  for x, u in _re.findall(r"animation:[^;}]*?([\d.]+)(m?s)", svg)]
+    return int(max(duraciones)) if duraciones else 0
+
+
+@_requiere_backend
+@pytest.mark.parametrize("svg_path", sorted((RAVE / "iconos").glob("*.svg")),
+                         ids=lambda p: p.stem)
+def test_un_icono_que_declara_animacion_se_mueve_en_su_propio_ciclo(svg_path):
+    """La regla es de COHERENCIA, no un umbral: si el archivo declara
+    `@keyframes`, muestrear su propio ciclo tiene que dar cuadros distintos. Un
+    icono que dice animarse y no cambia nada le miente al lector -- y es la
+    clase de defecto que ningun chequeo estatico ve, porque el XML es valido.
+
+    Un icono SIN keyframes no entra: no declara nada, no debe nada.
+    """
+    svg = IC.resolver_vars(svg_path.read_text(encoding="utf-8"))
+    if "@keyframes" not in svg:
+        pytest.skip("no declara animacion")
+    ciclo = _ciclo_ms(svg)
+    assert ciclo > 0, "declara @keyframes y ninguna duracion: nada lo dispara"
+
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmp:
+        _, cuadros, distintos = _ras.animar(
+            svg, Path(tmp) / "x.gif", cuadros=4,
+            ciclo_ms=ciclo, tam=96)
+    assert distintos > 1, (
+        "declara animacion de %d ms y los %d cuadros de su propio ciclo son "
+        "identicos: el archivo afirma un movimiento que no ocurre" % (ciclo, cuadros))

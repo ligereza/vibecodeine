@@ -25,6 +25,16 @@ dev = [
     "pre-commit>=4.6.1",
     "pyflakes>=3.4.0",  # ratchet #139: NameError latentes en codigo autogenerado
 ]
+render = [
+    # El critico perceptual del motor semantico mide sobre PIXELES, asi que sin
+    # rasterizador su codigo no se ejecuta y queda sin cubrir. En Linux cairosvg
+    # anda; en el Windows del usuario NO carga su DLL y el motor cae al backend
+    # de Edge, que es justamente por lo que `rasterizador.py` tiene dos.
+    # Va en un extra propio y no en `dev` para no cargarle cairo a quien solo
+    # quiere correr los tests que no rasterizan.
+    "cairosvg>=2.8.2",
+    "Pillow>=12.3.0",
+]
 web = [
     "pywebview>=6.2.1",  # desktop window (BSD free); pip install pywebview
 ]

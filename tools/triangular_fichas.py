@@ -167,7 +167,10 @@ def triangular(fichas_path: Path, out_dir: Path, sample_debug: int = 0) -> dict:
         productoras = {
             p for p in productoras
             if p.upper() not in {"RD", "REDUCIENDODANO", "REDUCIENDODANO.CL", "EVENTOS@REDUCIENDODANO.CL", "EVENTOSOREDUCIENDODANO.CL"}
-            and "�" not in p
+            # U+FFFD escrito como escape y no como glifo: es el centinela de
+            # mojibake (un nombre que ya perdio bytes en el OCR), y el archivo
+            # que lo busca no tiene por que llevarlo literal.
+            and "\ufffd" not in p
             and len(p) >= 3
             and re.search(r"[A-Za-zÁÉÍÓÚÑáéíóúñ]{3,}", p)
         }

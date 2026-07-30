@@ -50,6 +50,27 @@ class RasterizadorNoDisponibleError(RuntimeError):
     """No hay backend de rasterizado en esta maquina."""
 
 
+def _adelantar(svg_txt, avance_ms):
+    """Adelanta TODAS las animaciones del SVG con un delay negativo.
+
+    Se hace con una regla global inyectada en el propio documento y no
+    reescribiendo cada declaracion. La version anterior reemplazaba la palabra
+    `infinite` por `infinite;animation-delay:-Xms`, y eso rompia toda regla con
+    la forma `animation: nombre 11s ease-in-out infinite alternate`: el
+    `alternate` quedaba colgando despues del delay y el navegador DESCARTABA la
+    declaracion entera. Resultado medido el 2026-07-30: un icono que si se
+    animaba salia con los cuatro cuadros identicos y el test lo acusaba de
+    afirmar un movimiento inexistente. El defecto era del instrumento.
+
+    `!important` y `*` porque el objetivo es medir, no respetar cascada.
+    """
+    regla = "<style>*{animation-delay:-%dms !important}</style>" % avance_ms
+    i = svg_txt.find(">", svg_txt.find("<svg"))
+    if i < 0:
+        return svg_txt
+    return svg_txt[:i + 1] + regla + svg_txt[i + 1:]
+
+
 def _cairosvg():
     """El modulo cairosvg si es usable, o None. OJO: no basta con ImportError
     -- cairosvg encuentra el paquete y revienta con OSError al no encontrar la
@@ -123,8 +144,7 @@ def rasterizar(svg_txt, tam=TAM, avance_ms=None):
     """
     txt = svg_txt
     if avance_ms:
-        txt = txt.replace("infinite",
-                          "infinite;animation-delay:-%dms" % avance_ms)
+        txt = _adelantar(txt, avance_ms)
     backend = backend_disponible()
     if backend is None:
         raise RasterizadorNoDisponibleError(
