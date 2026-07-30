@@ -80,9 +80,28 @@ py tools/vendorizar_iskvw.py
 `piel/trazos/_indice.json`, `piel/lib/*.js`. `datos/archivo.json` se genera y
 **no se versiona**.
 
+**La piel pide el sustrato** (2026-07-30): `piel/campo` intenta
+`datos/archivo.json` primero —piezas **y** vínculos, así que por ahí entran los
+ensayos de MAK con sus conceptos e íconos— y si no está sigue exactamente como
+antes con `campo.json` y `obras.json`. Como `archivo.json` no se versiona, hoy
+el camino vivo es el respaldo: la degradación es lo normal, no la excepción.
+
+**Una sesión es una semilla** (2026-07-30, PROYECCION 6.2): el hash dejó de ser
+sólo un ancla y ahora codifica la lectura completa,
+`#semilla=<pieza>&centro=<y>&escala=<lateral>`, escrita con `replaceState` al
+terminar un gesto. Misma semilla + mismo archivo = misma constelación, fijado
+por `tests/test_iskvw_semilla.py` contra este mismo archivo. Un enlace viejo de
+sólo id sigue funcionando.
+
 ## Lo que falta, y de quién es
 
 - **La dirección**: qué es este archivo como obra. **Del usuario.**
+- **Cómo se ven los vínculos.** El dato ya llega a la piel (`VINCULOS`) y no se
+  dibuja: una línea entre dos obras es una afirmación estética sobre el
+  archivo. **Del usuario.**
+- **Si los ensayos se publican en iskvw.cl.** Hoy `archivo.json` no se versiona,
+  así que el sitio no los ve. Que la investigación de MAK aparezca junto a la
+  obra del artista es una decisión de autoría. **Del usuario.**
 - **Qué son las 8 piezas de `obras.json`** frente a las 219 del archivo. **Del usuario.**
 - La piel `terminal` sigue leyendo sólo `obras.json`: no ve el archivo.
 - 34 reels sin percibir en MAK. Ya están declarados en el filtro: entran solos.

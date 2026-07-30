@@ -147,6 +147,10 @@ const K_BAJA = 0.055, K_SUBE = 0.11;
 const c = document.getElementById('c');
 const ctx = c.getContext('2d', {alpha:false});
 let W=0, H=0, DPR=1, OBRAS=[], NODOS=[], LARGO=0;
+// Los vinculos del contrato, cuando el sustrato los trae. Se guardan aunque
+// todavia no se dibujen: como se ven es una decision del artista, no del
+// programa, y el dato tiene que estar antes de que esa decision se pueda tomar.
+let VINCULOS=[];
 
 // Los colores que la percepcion encontro en la obra. Si no hay, se devuelve
 // null y quien llama usa el tono neutro: no se inventa un color.
@@ -186,6 +190,29 @@ function medir(){
    pasa a significar, y el campo deja de afirmar lo que no sabe.
    Mientras tanto NO se dibujan lineas entre nodos sin etiqueta compartida:
    una linea es una afirmacion mas fuerte que una posicion. ── */
+/* ── el contrato, traducido a lo que esta piel ya sabe leer ──
+   Una pieza del contrato no tiene la misma forma que una obra del campo: la
+   posicion viaja en `posicion:{x,y}` (campo OPCIONAL, porque una pieza sin
+   medir no afirma una posicion) y el titulo puede venir VACIO a proposito --
+   en una obra del artista, lo que MAK percibio no es autoria, viaja en
+   `extra.percibido`. Traducir aca y no cambiar `sembrar()` mantiene el resto
+   de la piel igual: la regla del esquema es que la piel se cambia sin tocar
+   los datos, y vale al reves. Campo que no conoces, campo que ignoras. */
+function delContrato(p){
+  const pos = p.posicion || {};
+  return {
+    id: p.id,
+    title: p.titulo || p.extra?.percibido || '',
+    description: p.resumen || '',
+    tags: p.etiquetas || [],
+    x: typeof pos.x === 'number' ? pos.x : undefined,
+    y: typeof pos.y === 'number' ? pos.y : undefined,
+    colores: p.extra?.colores,
+    clase: p.clase,
+    medio: p.medio,
+  };
+}
+
 function sembrar(obras){
   OBRAS = obras;
   // x e y vienen de la proyeccion MEDIDA (tools/gen_campo_iskvw.py): dos obras
@@ -552,6 +579,10 @@ function empujar(dy, dx){
   E.vel += dy * 0.42;
   E.latObj = Math.max(-1, Math.min(1, E.latObj + dx*0.0022));
   document.getElementById('pista').classList.add('ido');
+  // La lectura a la que alguien llego queda en la URL: la sesion se puede
+  // volver a abrir y se puede pasar. Altera la lectura LOCAL, nunca el
+  // archivo canonico.
+  escribirSemilla();
 }
 /* ── el gesto, con @thi.ng/rstream-gestures ──
    Antes esto eran cuatro listeners a mano y un solo dedo moviendo en dos ejes:
@@ -678,17 +709,80 @@ function paso(ahora){
   raf = requestAnimationFrame(paso);
 }
 
+/* ── la sesion como SEMILLA reproducible ──
+   PROYECCION.md 6.2: un gesto altera la lectura LOCAL, nunca el archivo
+   canonico, y una sesion se comparte como una URL. El criterio no es de
+   opinion: misma semilla + mismo archivo = misma constelacion.
+
+       #semilla=<id-de-pieza>&centro=<y>&escala=<lateral>
+
+   Antes el hash era solo un ancla: el id de una pieza y nada mas, asi que la
+   lectura a la que alguien llego no se podia volver a abrir ni pasarle a
+   nadie. `semilla` sigue aceptando el hash pelado (`#una-pieza`) para no
+   romper un enlace viejo. */
+function leerSemilla(){
+  const bruto = location.hash.slice(1);
+  if (!bruto) return {};
+  if (!bruto.includes('=')) return {semilla: bruto};   // enlace viejo: un id
+  const q = new URLSearchParams(bruto);
+  const num = (k) => {
+    const v = parseFloat(q.get(k));
+    return Number.isFinite(v) ? v : undefined;         // basura = ausente
+  };
+  return {semilla: q.get('semilla') || undefined, centro: num('centro'),
+          escala: num('escala')};
+}
+
+function aplicarSemilla(s){
+  // El id manda sobre el centro: nombra una pieza, y una pieza es un lugar
+  // exacto. El centro solo se usa cuando no hay pieza nombrada o no existe.
+  const i = s.semilla ? NODOS.findIndex(n => n.obra.id === s.semilla) : -1;
+  if (i >= 0) E.pos = NODOS[i].y;
+  else if (s.centro !== undefined) E.pos = Math.max(0, Math.min(LARGO, s.centro));
+  // Se entra por el medio del archivo: no hay principio.
+  else E.pos = NODOS.length ? NODOS[Math.floor(NODOS.length/2)].y : 0;
+  if (s.escala !== undefined) E.latObj = E.lat = Math.max(-1, Math.min(1, s.escala));
+}
+
+/* Escribir la semilla NO es navegar: `replaceState` para que el boton atras
+   siga sirviendo para salir del sitio y no para deshacer un scroll. */
+let escribiendo = 0;
+function escribirSemilla(){
+  if (escribiendo) return;
+  escribiendo = setTimeout(() => {
+    escribiendo = 0;
+    if (!NODOS.length) return;
+    const p = new URLSearchParams();
+    if (E.foco?.obra?.id) p.set('semilla', E.foco.obra.id);
+    p.set('centro', Math.round(E.pos));
+    p.set('escala', E.lat.toFixed(3));
+    try { history.replaceState(null, '', '#' + p.toString()); }
+    catch(e){ /* un navegador que no deja reescribir el hash sigue andando */ }
+  }, 400);   // el gesto termina antes de que la URL se escriba
+}
+
 /* ── datos: fetch si hay servidor, respaldo incrustado si no ── */
 async function arrancar(){
   medir();
   let obras = RESPALDO.obras;
   try {
-    // Primero el campo medido (697 obras reales). Si no esta, las del repo.
-    let r = await fetch('../../datos/campo.json');
-    if (r.ok){ const d = await r.json(); if (d.piezas?.length) obras = d.piezas; }
-    else {
-      r = await fetch('../../datos/obras.json');
-      if (r.ok){ const d = await r.json(); obras = Array.isArray(d) ? d : (d.obras||obras); }
+    // 1. El SUSTRATO: archivo.json trae piezas Y vinculos en la forma del
+    //    contrato (iskvw/ESQUEMA_ARCHIVO.md), asi que ademas de las obras
+    //    llegan los ensayos de MAK con sus conceptos e iconos. Hasta ahora
+    //    ninguna piel lo pedia: se generaba y nadie lo leia.
+    let r = await fetch('../../datos/archivo.json');
+    if (r.ok){
+      const d = await r.json();
+      if (d.piezas?.length){ obras = d.piezas.map(delContrato); VINCULOS = d.vinculos || []; }
+    }
+    // 2. Si no esta (hoy no se publica), el campo medido, igual que siempre.
+    if (obras === RESPALDO.obras){
+      r = await fetch('../../datos/campo.json');
+      if (r.ok){ const d = await r.json(); if (d.piezas?.length) obras = d.piezas; }
+      else {
+        r = await fetch('../../datos/obras.json');
+        if (r.ok){ const d = await r.json(); obras = Array.isArray(d) ? d : (d.obras||obras); }
+      }
     }
   } catch(e){ /* sin servidor se usa el respaldo, sin decir nada */ }
   sembrar(obras);
@@ -698,9 +792,7 @@ async function arrancar(){
   // "por el medio del archivo" era codigo muerto y una direccion mala o vacia
   // caia SIEMPRE en la primera obra. O sea, el archivo si tenia principio, al
   // revés de lo que dice el comentario de arriba. Sin el max, el -1 llega.
-  const ancla = location.hash.slice(1);
-  const i = NODOS.findIndex(n => n.obra.id === ancla);
-  E.pos = NODOS.length ? NODOS[i >= 0 ? i : Math.floor(NODOS.length/2)].y : 0;
+  aplicarSemilla(leerSemilla());
   paso();
 }
 addEventListener('resize', medir);

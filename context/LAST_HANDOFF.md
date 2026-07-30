@@ -125,127 +125,83 @@ contrato del "cuaderno", el primer estudio de UNA obra en seis representaciones,
 la travesia de thi.ng por familias y el modelo de interaccion de iskvw.cl (gesto
 que altera la lectura LOCAL, sesion como semilla reproducible en la URL).
 
-## The rave zip: LANDED 2026-07-30, and it grew a format
+## The rave zip: LANDED 2026-07-30 (PR #402, CI green)
 
-The zip from the cloud session is in the repo. What landed, and where:
+The whole system is in the repo. Where things are: the essay and its 16 animated
+icons at `docs/cultura/ensayos/rave/` (out of `context/`, in ONE place, sources
+declared as a DEBT in its header rather than invented); the motor as a codex
+capability at `cultura/mak_codex/motor_semantico/` + mode `iconos`, with
+`entregar.py` guarding the Python-delivery path against `.svg` pieces; a new
+research format at `docs/cultura/FORMATO_ENSAYO.md` (`research.py --formato
+ensayo`, which emits the nameable concepts already shaped for the `iconos`
+mode); and the why, with its measurements and its honest limits, in
+`docs/cultura/MOTOR_SEMANTICO.md`.
 
-- **The essay is a PRODUCT and it moved out of `context/`**:
-  `docs/cultura/ensayos/rave/ensayo.md`, with its 16 hand-written animated
-  icons, their manifest and their edition guide. It exists in ONE place; the
-  copy pasted into `context/` was deleted, not duplicated. Its sources are
-  declared as a DEBT in its header -- it quotes sources that never travelled
-  with the material, and inventing a URL to cover that is forbidden.
-- **The motor semantico is a codex capability**:
-  `cultura/mak_codex/motor_semantico/` (covered by the sync cron, so it reaches
-  the box) plus the new mode `iconos` (`cultura/mak_codex/iconos.py`, registered
-  in `worker_codex.SCRIPTS` and in both selects of the interface). A blind agent
-  writes MEANING with a closed vocabulary and a deterministic compiler makes the
-  geometry. Reproduced on landing: 9 of 10 specs compile and the 1 rejection is
-  the legitimate one (missing `protagonista`). `entregar.py` gained a guard: an
-  `iconos` job never enters the delivery path that compiles pieces as Python.
-- **A new research format, ENSAYO** (`cultura/mak_research/formato_ensayo.py`,
-  `research.py --formato ensayo`): narrated parts, a table where two readings
-  compete, a timeline, a closing that argues, sources with URL, and an
-  iconographic annex. Contract: `docs/cultura/FORMATO_ENSAYO.md`. It emits
-  `<stamp>-<slug>.conceptos.json`, already in the shape codex's `iconos` mode
-  consumes -- that is the loop closing. Written as a module APART because
-  `research.py` is from 07-20 and stale code does not get patched blind.
-- **The purpose is written**: `docs/cultura/MOTOR_SEMANTICO.md` (the 44%->11%
-  measurement, the four failure modes killed by construction, the trap where the
-  QA tool was wrong and the SVG right, the critic's bias toward the conventional)
-  + `REFERENCIAS_MOTOR.md` verbatim.
+Five decisions of that landing, which do not get re-litigated:
 
-### Three decisions the user made while it landed (2026-07-30)
+1. **The style is NOT unified.** Every topic asks for its own presentation, so
+   `coro` is the default and `sistema` the argued exception.
+2. **The artefact is an ANIMATION and it is editable**: every layer is a named
+   group declaring `data-rol/figura/gesto/ritmo` with a `<title>`, so it opens
+   in Illustrator/Inkscape and each element answers for what it encodes.
+3. **Verification is a GIF, never a PNG** -- a single frame cannot tell still
+   from animated. Fifteen of the sixteen give 10/10 distinct frames,
+   `11-inclusividad` gives 3/10. GIFs are an instrument and do not enter the repo.
+4. **Each icon declares the passage that justifies it** (`ancla`, pinned by a
+   test): the text is the organ that justifies the content that sustains the form.
+5. **thi.ng is IN USE, not noted**: `hiccup` + `hiccup-svg` + `color` in
+   `docs/cultura/lib/compilador.js`, the browser twin, verified headless. The
+   geometry is EXPORTED from the Python vocabulary, never ported by hand.
+   **`CAPACIDADES.md` section 6 is the index to read BEFORE writing a generator,
+   a pipeline or a graph from scratch**, with `tests/test_thing_registro.py`
+   keeping it honest; `graph` + `transducers` + `validate` are the named next
+   candidates, aimed at the micelio. A second recommendation doc (3D/liveshow:
+   webgl, shader-ast, matrices, vectors, noise, rstream, imgui) has a Prototype B
+   that IS the iskvw campo and an audio/OSC layer that is the DREF chain already
+   running.
 
-1. **The style is deliberately NOT unified.** Every topic researched is
-   different, so each word carries a different cultural presentation. `coro`
-   (polyphonic) is the default; `sistema` (unified) only for technical topics,
-   and only justified in writing.
-2. **The artefact is an ANIMATION, not an icon, and it is EDITABLE.** Every
-   layer compiles to `<g id="capa-N-rol" data-rol data-figura data-gesto
-   data-ritmo><title>`: it opens in Illustrator/Inkscape as a named layer, gets
-   edited in design and re-integrated, and each element answers for what it
-   encodes -- the doublecup thesis applied to form. Verification is a **GIF, not
-   a PNG**: a single frame cannot tell *still* from *animated*, so it validates
-   something other than what was built. Measured over the 16: fifteen give 10/10
-   distinct frames, `11-inclusividad` gives 3/10 (nearly static; noted, not
-   fixed). GIFs are an instrument, not a deliverable: they do not enter the repo.
-3. **Each icon declares the passage that justifies it** (`ancla` in the
-   manifest, pinned by a test). The text is the organ that justifies the content
-   that sustains the form: an icon without an anchor claims a meaning the essay
-   never gave it.
+Three defects the CI matrix caught that a green local Windows run did not: a
+backend that EXISTS and does not rasterize (`/usr/bin/microsoft-edge` on the
+ubuntu runner) must count as absent -- it is probed now, once per binary; the
+vendorized `*.README.md` are THIRD-PARTY docs and live in a declared
+`ZONA_AJENA`; and the doc ratchet reads `git ls-files`, so **a new `.md` not yet
+committed is invisible to it** -- a green local run before the commit says
+nothing about the files the commit is about to add.
 
-### thi.ng stopped being a note and became a mechanism
+## iskvw: the substrate is consumed, and MAK's essays reach it (2026-07-30)
 
-The user asked for thi.ng across several sessions; measuring it found ONE live
-library of four vendorized, while the next session would order the same
-capability written from scratch. So:
+The portfolio had none of `PROYECCION.md`'s integrations wired, and the user's
+priority is that what gets built in MAK be useful to iskvw. Three cuts, all
+verified running:
 
-- **`hiccup` + `hiccup-svg` + `color` are IN USE**, vendorized to
-  `docs/cultura/lib/`, in `compilador.js`: the browser twin of the motor, and a
-  *taller* in the gallery where a spec compiles with no Python and no PC. The
-  geometry was NOT ported by hand -- `tools/gen_vocabulario_motor.py` exports the
-  Python vocabulary as data (`--verificar` fails if it went stale), so there is
-  one source of truth. Measured: the 9 specs produce equivalent SVG on both sides
-  and the layer groups are byte-identical.
-- **`CAPACIDADES.md` section 6 is the index an agent reads BEFORE writing a
-  generator, a pipeline or a graph from scratch**, with a state per library and
-  `tests/test_thing_registro.py` keeping it honest. `graph` + `transducers` +
-  `validate` are the named next candidates, aimed at the micelio -- deliberately
-  NOT in this PR so the review stays coherent. A second recommendation doc
-  (3D/liveshow: webgl, shader-ast, matrices, vectors, noise, rstream, imgui) has
-  a Prototype B that IS the iskvw campo and an audio/OSC layer that is the DREF
-  chain already running.
-- Two honest findings: `@thi.ng/color` has no WCAG contrast-ratio export in this
-  version (only `luminanceSrgb`, so the ratio is computed locally and
-  documented), and `tools/vendorizar_iskvw.py` silently lost the bundle when
-  `--destino` was relative (esbuild resolved it against its own temp dir) --
-  fixed.
+1. **An essay enters the archive through the same contract.**
+   `contrato_archivo.desde_ensayo()` (in the contract, not the generator,
+   because an essay exists on both sides) + `gen_archivo_iskvw.py --fuente
+   ensayos`. Measured on the real material: 1 essay + 16 concepts + 16 icons =
+   33 pieces and 32 links; `--fuente todo` gives 41 pieces and 50 links, so the
+   research now sits next to the artist's works. Its rules: links are `manual`
+   and never `semantico` (a manifest declares them, nobody measured a distance),
+   an icon declared and absent from disk produces NO piece, and
+   `extra.declara_animacion` is READ from the file (it has keyframes) instead of
+   asserted -- claiming `anima: true` for all sixteen would be a datum the file
+   does not have.
+2. **The skin asks for the substrate.** `piel/campo` tries `archivo.json` first
+   (pieces AND links) and degrades exactly as before to `campo.json` /
+   `obras.json`. Since `archivo.json` is not versioned, the fallback IS the live
+   path today: zero risk, and the data is there the day it gets published.
+3. **A session is a reproducible seed** (PROYECCION 6.2):
+   `#semilla=<pieza>&centro=<y>&escala=<lateral>`, written with `replaceState`
+   when a gesture ends. Same seed + same archive = same constellation, pinned by
+   `tests/test_iskvw_semilla.py`, which extracts the two functions from the
+   published file and runs them in node -- so it tests what ships, not a copy.
+   Garbage in the hash stays absent rather than becoming a NaN position, and an
+   old id-only link still works.
 
-### The user's priority for what comes next (2026-07-30, his words)
-
-**Whatever gets built in MAK has to be useful to the ISKVW portfolio**, and the
-new essay format has to be at the portfolio's level: iskvw was left with none of
-`PROYECCION.md`'s integrations wired. That is the next stretch, not a wish.
-
-## MAK como motor: sirve, y el checkpoint mentia
-
-`cultura/mak_plataforma/ideas.py` SI esta conectado al hub y funciona -- este
-archivo decia "NO esta conectado ni probado" y por eso nadie lo usaba. Probado
-el 2026-07-27: se declara una idea, el micelio la relaciona solo con obras del
-archivo, y `encargar()` la pone al frente de la cola. Devuelve ok.
-
-El defecto real de MAK es otro y esta medido: `entregar: 107 listos, 37
-entregados, 18 pendientes`, a UNO cada 6 horas. Genera volumen sobre un backlog
-que el mismo se autorellena y lo drena a cuentagotas. El mecanismo para
-dirigirlo existia y estaba invisible.
-
-## Already decided -- do not reopen
-
-| Date | Decision |
-|---|---|
-| 2026-07-27 | Las 16 decisiones de ese dia, vigentes: `docs/handoffs/archive/20260727_decisiones.md` (riesgo telefono CERRADO 60fps x4, el loop no escribe docs, curacion=configuracion, vocabulario cerrado en la fuente, archivos no consola, preset viaja, export no rama, MAK atiende issues solo, TLS no UA, CUDA vs OptiX por maquina, la cara no es el costo, PDFs=piezas, tipos=config, cola de triangulacion) |
-| 2026-07-26 | Las 17 decisiones de ese dia, vigentes: `docs/handoffs/archive/20260726_decisiones.md` (tres modos de trabajo, iskvw es el portafolio, nadie abre issues, valores de dinero configurables, catalogo de simbolos abierto, brand como info, MAK atiende material del usuario, idioma dividido, referencias como referencias, worktrees podados, crons inutiles fuera) |
-| 2026-07-10 a 07-25 | Decisiones mas viejas, vigentes pero fuera de la lista viva: `docs/handoffs/archive/20260722_25_decisiones.md` (panel de suplementos innecesario, la carpeta de diseno no se respalda desde el repo, los dos planes grandes RECHAZADOS, `desktop/` archivado, Instagram via parth-dl, n8n descartado, Gemini fuera, nada de Oh My Posh) |
-
-## Built on 2026-07-26, waiting for the user to look
-
-Tres prototipos, todos regenerables por comando desde datos reales. Detalle en
-`docs/handoffs/archive/20260726_prototipos.md`: la propuesta a la directiva RD,
-el prototipo del archivo iskvw, y MAK + portafolio visibles en la app.
-
-## Blocked, waiting on the user
-
-- **Portfolio aesthetic references: FOUND, not lost**, and the paths are in the
-  assistant's local memory because they are personal. Three sessions declared
-  them gone in ephemeral cloud containers while they sat one level above the repo
-  on his own disk -- everyone searched the repo and their own memory, then
-  declared absence. Which direction is current is style, so it gets asked.
-- **Design exports: RESOLVED (user's word, 2026-07-29).** This entry had
-  already been wrong twice; the third failure was staying listed as pending
-  after the user resolved it -- an agent repeated it back to him as open and
-  he had to correct it. Details live on his machines, not here. The lesson
-  compounds: an answer not written in-session gets asked again.
+**Two decisions left, and they are the user's, written into `iskvw/MAPA.md`:**
+how the links LOOK (a line between two works is an aesthetic claim about the
+archive; the data already reaches the skin as `VINCULOS` and is deliberately not
+drawn), and whether the essays get PUBLISHED on iskvw.cl (that MAK's research
+appears beside the artist's work is a question of authorship).
 
 ## Las cuatro capas: no confundirlas (2026-07-27)
 
