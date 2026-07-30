@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" data-name="07-berlin-muro-techno">
+<style>
+  /* ══ PALETA — edita libremente estos valores ══ */
+  svg{
+    --fondo: #15151a;
+    --acento: #ff3b30;
+    --hueco: #232329;
+    --borde: #5c5c68;
+    --hormigon: #4a4a55;
+    --escombro: #6a6a78;
+    --suelo: #0e0e12;
+    /* ── velocidades (mayor = más lento) ── */
+    --vel-muro: 5s;
+    --vel-ondas: 1.9s;
+  }
+
+.i7L{animation:i7l var(--vel-muro) ease-in-out infinite}.i7R{animation:i7r var(--vel-muro) ease-in-out infinite}
+@keyframes i7l{0%,15%{transform:translate(0,0) rotate(0)}55%,100%{transform:translate(-13px,4px) rotate(-8deg)}}
+@keyframes i7r{0%,15%{transform:translate(0,0) rotate(0)}55%,100%{transform:translate(13px,4px) rotate(8deg)}}
+.i7br{animation:i7fall var(--vel-muro) ease-in infinite}
+.i7br:nth-of-type(2){animation-delay:.25s}.i7br:nth-of-type(3){animation-delay:.5s}
+@keyframes i7fall{0%,20%{transform:translate(0,0) rotate(0);opacity:1}70%,100%{transform:translate(0,42px) rotate(46deg);opacity:0}}
+.i7w{transform-origin:60px 62px;animation:i7pulse var(--vel-ondas) ease-out infinite}
+.i7w:nth-of-type(2){animation-delay:.63s}.i7w:nth-of-type(3){animation-delay:1.26s}
+@keyframes i7pulse{0%{transform:scale(.4);opacity:0}25%{opacity:.9}100%{transform:scale(1.5);opacity:0}}
+</style>
+<rect width="120" height="120" fill="var(--fondo)"/>
+<g fill="none" stroke="var(--acento)" stroke-width="2.6"><circle class="i7w" cx="60" cy="62" r="26"/><circle class="i7w" cx="60" cy="62" r="26"/><circle class="i7w" cx="60" cy="62" r="26"/></g>
+<circle cx="60" cy="62" r="17" fill="var(--hueco)" stroke="var(--borde)" stroke-width="2"/>
+<circle cx="60" cy="62" r="7" fill="var(--acento)"/>
+<g class="i7L" fill="var(--hormigon)" stroke="var(--fondo)" stroke-width="2">
+  <rect x="4" y="30" width="42" height="14"/><rect x="4" y="44" width="42" height="14"/><rect x="4" y="58" width="42" height="14"/><rect x="4" y="72" width="42" height="14"/><rect x="4" y="86" width="42" height="14"/>
+</g>
+<g class="i7R" fill="var(--hormigon)" stroke="var(--fondo)" stroke-width="2">
+  <rect x="74" y="30" width="42" height="14"/><rect x="74" y="44" width="42" height="14"/><rect x="74" y="58" width="42" height="14"/><rect x="74" y="72" width="42" height="14"/><rect x="74" y="86" width="42" height="14"/>
+</g>
+<g fill="var(--escombro)"><rect class="i7br" x="46" y="34" width="12" height="9"/><rect class="i7br" x="63" y="30" width="11" height="9"/><rect class="i7br" x="49" y="88" width="10" height="8"/></g>
+<rect x="0" y="100" width="120" height="20" fill="var(--suelo)"/>
+<rect x="0" y="100" width="120" height="2.5" fill="var(--acento)" opacity=".7"/>
+</svg>

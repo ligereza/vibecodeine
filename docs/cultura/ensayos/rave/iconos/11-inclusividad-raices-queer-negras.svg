@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" data-name="11-inclusividad-raices-queer-negras">
+<style>
+  /* ══ PALETA — edita libremente estos valores ══ */
+  svg{
+    --fondo: #1b1224;
+    --arco-1: #ff2e7e;
+    --arco-2: #ff9f1c;
+    --arco-3: #ffe74c;
+    --arco-4: #2ee6a5;
+    --piel-1: #3d2b1f;
+    --piel-2: #f2c9a0;
+    --piel-3: #7a4b2a;
+    --piel-4: #2b1d14;
+    --piel-5: #d99a6c;
+    --piel-6: #f7e0c8;
+    --suelo: #0f0817;
+    /* ── velocidades (mayor = más lento) ── */
+    --vel-gente: 4.6s;
+    --vel-arcos: 3.4s;
+  }
+
+.i11p{animation:i11sw var(--vel-gente) ease-in-out infinite;transform-box:fill-box;transform-origin:center bottom}
+.i11p:nth-of-type(1){animation-delay:0s}.i11p:nth-of-type(2){animation-delay:.35s}.i11p:nth-of-type(3){animation-delay:.7s}
+.i11p:nth-of-type(4){animation-delay:1.05s}.i11p:nth-of-type(5){animation-delay:1.4s}.i11p:nth-of-type(6){animation-delay:1.75s}
+@keyframes i11sw{0%,100%{transform:rotate(-3deg) translateY(0)}50%{transform:rotate(3deg) translateY(-4px)}}
+.i11arc{stroke-dasharray:120;animation:i11d var(--vel-arcos) ease-in-out infinite alternate}
+@keyframes i11d{from{stroke-dashoffset:120}to{stroke-dashoffset:0}}
+</style>
+<rect width="120" height="120" fill="var(--fondo)"/>
+<g stroke="none">
+<path class="i11arc" d="M14,96a46,46 0 0 1 92,0" fill="none" stroke="var(--arco-1)" stroke-width="9" stroke-linecap="round" opacity=".9"/>
+<path class="i11arc" d="M24,96a36,36 0 0 1 72,0" fill="none" stroke="var(--arco-2)" stroke-width="9" stroke-linecap="round" opacity=".9" style="animation-delay:.2s"/>
+<path class="i11arc" d="M34,96a26,26 0 0 1 52,0" fill="none" stroke="var(--arco-3)" stroke-width="9" stroke-linecap="round" opacity=".9" style="animation-delay:.4s"/>
+<path class="i11arc" d="M44,96a16,16 0 0 1 32,0" fill="none" stroke="var(--arco-4)" stroke-width="9" stroke-linecap="round" opacity=".9" style="animation-delay:.6s"/>
+</g>
+<g>
+<g class="i11p"><circle cx="18" cy="72" r="7" fill="var(--piel-1)"/><path d="M9,96V84a9,9 0 0 1 18,0v12Z" fill="var(--piel-1)"/></g>
+<g class="i11p"><circle cx="35" cy="64" r="7.5" fill="var(--piel-2)"/><path d="M25.5,96V78a9.5,9.5 0 0 1 19,0v18Z" fill="var(--piel-2)"/></g>
+<g class="i11p"><circle cx="53" cy="58" r="8" fill="var(--piel-3)"/><path d="M43,96V74a10,10 0 0 1 20,0v22Z" fill="var(--piel-3)"/></g>
+<g class="i11p"><circle cx="70" cy="60" r="8" fill="var(--piel-4)"/><path d="M60,96V76a10,10 0 0 1 20,0v20Z" fill="var(--piel-4)"/></g>
+<g class="i11p"><circle cx="87" cy="65" r="7.5" fill="var(--piel-5)"/><path d="M77.5,96V79a9.5,9.5 0 0 1 19,0v17Z" fill="var(--piel-5)"/></g>
+<g class="i11p"><circle cx="103" cy="72" r="7" fill="var(--piel-6)"/><path d="M94,96V84a9,9 0 0 1 18,0v12Z" fill="var(--piel-6)"/></g>
+</g>
+<rect x="0" y="96" width="120" height="24" fill="var(--suelo)"/>
+<rect x="0" y="96" width="120" height="3" fill="var(--arco-1)"/>
+</svg>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" data-name="15-criminal-justice-act-1994">
+<style>
+  /* ══ PALETA — edita libremente estos valores ══ */
+  svg{
+    --mesa: #e9e5da;
+    --hoja: #fbf9f3;
+    --tinta: #1a1a20;
+    --doblez: #d8d3c6;
+    --sello: #c0392b;
+    --renglon: #8b8677;
+    --nota: #6b6759;
+    /* ── velocidades (mayor = más lento) ── */
+    --vel-beats: 1.5s;
+    --vel-sello: 4.2s;
+  }
+
+.i15beat circle{animation:i15b var(--vel-beats) ease-in-out infinite}
+.i15beat circle:nth-child(2){animation-delay:.18s}.i15beat circle:nth-child(3){animation-delay:.36s}
+.i15beat circle:nth-child(4){animation-delay:.54s}.i15beat circle:nth-child(5){animation-delay:.72s}
+@keyframes i15b{0%,100%{transform:translateY(0);opacity:.55}50%{transform:translateY(-4px);opacity:1}}
+.i15stamp{transform-origin:78px 70px;animation:i15st var(--vel-sello) ease-out infinite}
+@keyframes i15st{0%{transform:rotate(-16deg) scale(2.4);opacity:0}12%{transform:rotate(-16deg) scale(1);opacity:1}90%,100%{transform:rotate(-16deg) scale(1);opacity:1}}
+.i15line{animation:i15w var(--vel-sello) steps(1) infinite}
+@keyframes i15w{0%,60%{opacity:1}61%,100%{opacity:.35}}
+</style>
+<rect width="120" height="120" fill="var(--mesa)"/>
+<g><rect x="18" y="8" width="84" height="104" fill="var(--hoja)" stroke="var(--tinta)" stroke-width="2.6"/>
+<path d="M102,8l-12,12h12Z" fill="var(--doblez)"/></g>
+<g font-family="ui-monospace,Menlo,monospace" font-weight="700" font-size="7" fill="var(--tinta)" letter-spacing=".5">
+<text x="26" y="30">CRIMINAL JUSTICE</text><text x="26" y="39.5" font-size="6.1">&amp; PUBLIC ORDER ACT</text>
+</g>
+<text x="26" y="54" font-family="ui-monospace,Menlo,monospace" font-weight="700" font-size="13" fill="var(--sello)">1994</text>
+<g class="i15line" stroke="var(--renglon)" stroke-width="1.8" stroke-linecap="round">
+<path d="M26,62h68M26,68h54M26,74h62"/></g>
+<g class="i15beat" fill="var(--tinta)"><circle cx="30" cy="88" r="3"/><circle cx="42" cy="88" r="3"/><circle cx="54" cy="88" r="3"/><circle cx="66" cy="88" r="3"/><circle cx="78" cy="88" r="3"/></g>
+<path d="M26,96h68" stroke="var(--sello)" stroke-width="2.4" stroke-linecap="round"/>
+<text x="60" y="105" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="4.6" fill="var(--nota)" letter-spacing=".2">"SUCCESSION OF REPETITIVE BEATS"</text>
+<g class="i15stamp">
+  <circle cx="78" cy="70" r="21" fill="none" stroke="var(--sello)" stroke-width="3" opacity=".9"/>
+  <circle cx="78" cy="70" r="16.5" fill="none" stroke="var(--sello)" stroke-width="1.1" opacity=".7"/>
+  <g font-family="Impact,'Arial Black',sans-serif" font-size="12" fill="var(--sello)" opacity=".95" letter-spacing="1">
+    <text x="78" y="75" text-anchor="middle">VOID</text>
+  </g>
+</g>
+</svg>

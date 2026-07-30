@@ -36,6 +36,18 @@ ZONA_MUERTA = (
     "projects/cultura/corpus_olvido/",
 )
 
+# Documentacion AJENA: el README que viaja al lado de cada libreria
+# vendorizada (`tools/vendorizar_iskvw.py` lo copia a proposito, porque el
+# bundle minificado no dice como se llama a nada). No la escribimos nosotros y
+# no habla de este repo, asi que las reglas de higiene de una doc VIVA no le
+# aplican: `hiccup.README.md` cita la version 2.0.0 DE ESA LIBRERIA y el
+# ratchet de version la leia como si afirmara la version de flujo (CI rojo,
+# 2026-07-30). Retiro: si algun dia dejamos de versionar los README ajenos.
+ZONA_AJENA = (
+    "docs/cultura/lib/",
+    "iskvw/piel/lib/",
+)
+
 # "394 green tests", "Suite >= 950 tests", "~950 tests"
 CIFRA_TESTS = re.compile(r"\b(\d{2,5})\s*(?:green\s+|verdes\s+)?tests?\b", re.I)
 # Marca de delta historico: no es una afirmacion sobre el total de la suite.
@@ -58,7 +70,14 @@ VERSION_PYPROJECT = re.compile(r'^version\s*=\s*"([^"]+)"', re.M)
 
 
 def _docs_vivos() -> list[Path]:
-    """Todos los .md versionados fuera de zona muerta."""
+    """Todos los .md versionados fuera de zona muerta y de zona ajena.
+
+    OJO, medido el 2026-07-30: esto lee `git ls-files`, asi que un .md NUEVO y
+    todavia sin commitear es INVISIBLE para este ratchet. Una corrida local
+    verde antes del commit no dice nada sobre los archivos que el commit va a
+    agregar -- fue asi como cuatro README vendorizados pasaron el pytest local y
+    tumbaron el CI. Si agregas docs, `git add` primero y despues corre esto.
+    """
     r = subprocess.run(
         ["git", "ls-files", "*.md"],
         cwd=RAIZ,
@@ -70,7 +89,7 @@ def _docs_vivos() -> list[Path]:
     return [
         RAIZ / f
         for f in r.stdout.split("\n")
-        if f and not f.startswith(ZONA_MUERTA)
+        if f and not f.startswith(ZONA_MUERTA) and not f.startswith(ZONA_AJENA)
     ]
 
 

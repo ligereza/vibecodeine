@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EL INFORME RAVE - 16 iconos animados</title>
+<style>
+:root{--bg:#08080b;--panel:#101017;--line:#23232e;--ink:#f2f2f5;--dim:#8b8b9c;--acid:#d7ff2e}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(900px 500px at 15% -10%,#16162150,transparent 70%),
+ radial-gradient(800px 500px at 95% 10%,#1c0f2050,transparent 70%),var(--bg);
+ color:var(--ink);font-family:"Inter","Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+header{padding:56px 32px 26px;max-width:1400px;margin:0 auto}
+.eyebrow{font:600 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.34em;color:var(--acid);text-transform:uppercase}
+h1{font-size:clamp(30px,5.2vw,58px);line-height:.98;margin:16px 0 10px;letter-spacing:-.03em;font-weight:800}
+h1 span{color:var(--dim);font-weight:300}
+.sub{color:var(--dim);max-width:72ch;font-size:15px;line-height:1.6;margin:0}
+.bar{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+button{background:#15151d;color:var(--ink);border:1px solid var(--line);padding:9px 15px;border-radius:999px;
+ cursor:pointer;font:600 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.06em;transition:.18s}
+button:hover{border-color:var(--acid);color:var(--acid)}
+button.on{background:var(--acid);color:#000;border-color:var(--acid)}
+main{max-width:1400px;margin:0 auto;padding:14px 32px 90px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:22px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:18px 18px 16px;
+ display:flex;flex-direction:column;gap:12px;transition:.22s;position:relative;overflow:hidden}
+.card:hover{border-color:#3a3a4a;transform:translateY(-3px)}
+.num{position:absolute;top:14px;right:16px;font:700 11px/1 ui-monospace,Menlo,monospace;color:#3c3c4c;letter-spacing:.1em}
+.ico{width:100%;aspect-ratio:1;display:block;border-radius:14px;background:#000;overflow:hidden}
+.meta h2{font-size:15.5px;margin:0 0 5px;letter-spacing:-.01em;line-height:1.25}
+.meta p{margin:0;font-size:12.5px;line-height:1.5;color:var(--dim)}
+.tags{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:auto;padding-top:4px}
+.style{font:600 9.5px/1 ui-monospace,Menlo,monospace;letter-spacing:.13em;color:#5f5f72;text-transform:uppercase}
+.dl{background:none;border:1px solid var(--line);padding:6px 10px;font-size:9.5px;border-radius:8px;letter-spacing:.1em}
+body.paused .ico *{animation-play-state:paused!important}
+footer{max-width:1400px;margin:0 auto;padding:0 32px 70px;color:#54546a;font-size:12px;line-height:1.7}
+.taller{max-width:1400px;margin:0 auto;padding:0 32px 70px}
+.taller h2{font-size:20px;letter-spacing:-.01em;margin:0 0 6px}
+.taller p{color:var(--dim);font-size:13px;line-height:1.6;max-width:74ch;margin:0 0 14px}
+.taller .fila{display:grid;grid-template-columns:minmax(280px,1fr) 260px;gap:18px;align-items:start}
+.taller textarea{width:100%;min-height:210px;background:#0c0c12;color:var(--ink);border:1px solid var(--line);
+ border-radius:14px;padding:14px;font:12.5px/1.55 ui-monospace,Menlo,monospace;resize:vertical}
+.taller .salida{background:#000;border:1px solid var(--line);border-radius:14px;aspect-ratio:1;overflow:hidden}
+.taller .salida svg{width:100%;height:100%;display:block}
+.taller .aviso{font:12px/1.6 ui-monospace,Menlo,monospace;color:#8b8b9c;white-space:pre-wrap;margin-top:10px}
+.taller .aviso.mal{color:#ff7a9c}
+@media(max-width:760px){.taller .fila{grid-template-columns:1fr}}
+@media(max-width:640px){header{padding:34px 18px 18px}main{padding:8px 18px 60px}footer{padding:0 18px 50px}
+ .taller{padding:0 18px 50px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">Anexo iconografico - 16 piezas - SVG animado</div>
+  <h1>EL INFORME RAVE <span>/ un icono por concepto nombrable</span></h1>
+  <p class="sub">Galeria GENERADA desde <code>iconos/</code> y
+  <code>iconos.json</code>. Edita cualquier <code>.svg</code> y vuelve a correr
+  <code>py tools/iconos_conjunto.py construir</code>. Cada pieza tiene su propio
+  lenguaje visual a proposito: cada tema pide su propia presentacion.</p>
+  <div class="bar">
+    <button id="toggle">&#9208; PAUSAR ANIMACIONES</button>
+    <button id="light">&#9689; FONDO CLARO</button>
+    <button id="dlall">&#10515; DESCARGAR TODOS LOS SVG</button>
+  </div>
+</header>
+<main><div class="grid">
+<article class="card"><span class="num">01</span>
+<svg class="ico" data-name="01-paradise-garage" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" data-name="01-paradise-garage">
+<style>
+  /* ══ PALETA — edita libremente estos valores ══ */
+  svg{
+    --papel: #f2e7d2;
+    --tinta: #14141a;
+    --rayo: #e2452c;
+    --disco: #1f4fd8;
+    /* ── velocidades (mayor = más lento) ── */
+    --vel-rayos: 7s;
+    --vel-rayas: 1.6s;
+    --vel-baile: 1.5s;
+  }
+
+.i1bg{fill:var(--papel)}.i1k{fill:none;stroke:var(--tinta);stroke-width:5;stroke-linecap:square}
+.i1r{fill:var(--rayo)}.i1sun{fill:var(--disco)}
+.i1rays{transform-origin:60px 47px;animation:i1sw var(--vel-rayos) ease-in-out infinite}
+@keyframes i1sw{0%,100%{transform:rotate(-15deg)}50%{transform:rotate(15deg)}}
+.i1stripes{animation:i1sp var(--vel-rayas) linear infinite}
+@keyframes i1sp{to{transform:translateX(8px)}}
+.i1d{animation:i1b var(--vel-baile) ease-in-out infinite}
+.i1d:nth-of-type(2){animation-delay:.25s}.i1d:nth-of-type(3){animation-delay:.5s}
+@keyframes i1b{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+</style>
+<rect class="i1bg" width="120" height="120"/>
+<g class="i1rays" opacity=".85">
+  <path class="i1r" d="M60,47 L36,-6 L52,-6Z"/><path class="i1r" d="M60,47 L84,-6 L68,-6Z"/>
+  <path class="i1r" d="M60,47 L4,26 L4,40Z"/><path class="i1r" d="M60,47 L116,26 L116,40Z"/>
+  <path class="i1r" d="M60,47 L18,92 L28,100Z" opacity=".55"/><path class="i1r" d="M60,47 L102,92 L92,100Z" opacity=".55"/>
+</g>
+<clipPath id="c1"><circle cx="60" cy="47" r="17"/></clipPath>
+<circle class="i1sun" cx="60" cy="47" r="17"/>
+<g clip-path="url(#c1)" stroke="var(--papel)" stroke-width="1.4" opacity=".85">
+  <g class="i1stripes"><path d="M36,30v34M44,30v34M52,30v34M60,30v34M68,30v34M76,30v34M84,30v34"/></g>
+  <path d="M40,40h40M38,47h44M40,54h40"/>
+</g>
+<path class="i1k" d="M16,104V64a44,44 0 0 1 88,0v40"/>
+<rect x="8" y="104" width="104" height="7" fill="var(--tinta)"/>
+<g fill="var(--tinta)"><rect class="i1d" x="34" y="86" width="7" height="18" rx="3.5"/><rect class="i1d" x="56" y="82" width="7" height="22" rx="3.5"/><rect class="i1d" x="78" y="88" width="7" height="16" rx="3.5"/></g>
+</svg>
+<div class="meta"><h2>Paradise Garage / The Loft</h2><p>NYC años 70: la pista como espacio político, la noche invertida, el DJ toda la noche sin parar.</p></div>
+<div class="tags"><span class="style">Bauhaus geométrico</span><button class="dl">SVG</button></div>
+</article>
+<article class="card"><span class="num">02</span>
+<svg class="ico" data-name="02-warehouse-house-chicago" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" data-name="02-warehouse-house-chicago">
+<style>
+  /* ══ PALETA — edita libremente estos valores ══ */
+  svg{
+    --fondo: #0d0d18;
+    --vidrio-1: #ffb02e;
+    --vidrio-2: #ff2e7e;
+    --vidrio-3: #2ee6ff;
+    --vidrio-4: #7b5cff;
+    --vinilo: #14141f;
+    --surco: #4a4a63;
+    --estructura: #f2f2f5;
+    /* ── velocidades (mayor = más lento) ── */
+    --vel-vidrios: 4s;
+    --vel-vinilo: 3.4s;
+  }
+
+.i2w{animation:i2g var(--vel-vidrios) ease-in-out infinite}
+.i2w:nth-of-type(2){animation-delay:.5s}.i2w:nth-of-type(3){animation-delay:1s}.i2w:nth-of-type(4){animation-delay:1.5s}
+.i2w:nth-of-type(5){animation-delay:2s}.i2w:nth-of-type(6){animation-delay:2.5s}.i2w:nth-of-type(7){animation-delay:3s}
+.i2w:nth-of-type(8){animation-delay:3.5s}
+@keyframes i2g{0%,100%{opacity:.5}50%{opacity:1}}
+.i2vin{transform-origin:60px 52px;animation:i2r var(--vel-vinilo) linear infinite}
+@keyframes i2r{to{transform:rotate(360deg)}}
+.i2halo{transform-origin:60px 52px;animation:i2h var(--vel-vidrios) ease-in-out infinite}
+@keyframes i2h{0%,100%{opacity:.12;transform:scale(1)}50%{opacity:.3;transform:scale(1.12)}}
+</style>
+<rect width="120" height="120" fill="var(--fondo)"/>
+<circle class="i2halo" cx="60" cy="52" r="40" fill="var(--vidrio-1)"/>
+<g transform="translate(60,52)">
+  <g fill="var(--vidrio-1)"><path class="i2w" d="M0,0 L-9.9,-24 A26,26 0 0 1 9.9,-24 Z"/></g>
+  <g fill="var(--vidrio-2)"><path class="i2w" transform="rotate(45)" d="M0,0 L-9.9,-24 A26,26 0 0 1 9.9,-24 Z"/></g>
+  <g fill="var(--vidrio-3)"><path class="i2w" transform="rotate(90)" d="M0,0 L-9.9,-24 A26,26 0 0 1 9.9,-24 Z"/></g>
+  <g fill="var(--vidrio-1)"><path class="i2w" transform="rotate(135)" d="M0,0 L-9.9,-24 A26,26 0 0 1 9.9,-24 Z"/></g>
+  <g fill="var(--vidrio-4)"><path class="i2w" transform="rotate(180)" d="M0,0 L-9.9,-24 A26,26 0 0 1 9.9,-24 Z"/></g>
+  <g fill="var(--vidrio-2)"><path class="i2w" transform="rotate(225)" d="M0,0 L-9.9,-24 A26,26 0 0 1 9.9,-24 Z"/></g>
+  <g fill="var(--vidrio-3)"><path class="i2w" transform="rotate(270)" d="M0,0 L-9.9,-24 A26,26 0 0 1 9.9,-24 Z"/></g>
+  <g fill="var(--vidrio-1)"><path class="i2w" transform="rotate(315)" d="M0,0 L-9.9,-24 A26,26 0 0 1 9.9,-24 Z"/></g>
+</g>
+<g stroke="var(--fondo)" stroke-width="3" fill="none">
+  <circle cx="60" cy="52" r="26"/><circle cx="60" cy="52" r="17"/>
+  <path d="M60,26v52M34,52h52M42,34l36,36M78,34L42,70"/>
+</g>
+<g class="i2vin"><circle cx="60" cy="52" r="15" fill="var(--vinilo)"/>
+<g fill="none" stroke="var(--surco)" stroke-width="1"><circle cx="60" cy="52" r="12"/><circle cx="60" cy="52" r="9"/><circle cx="60" cy="52" r="6"/></g>
+<circle cx="60" cy="52" r="2.6" fill="var(--vidrio-1)"/><rect x="59" y="38" width="2" height="5" fill="var(--vidrio-1)" opacity=".7"/></g>
+<path d="M14,96V58L60,26l46,32v38Z" fill="none" stroke="var(--estructura)" stroke-width="3.4" stroke-linejoin="round"/>
+<rect x="14" y="96" width="92" height="10" fill="var(--estructura)"/>
+</svg>
+<div class="meta"><h2>The Warehouse · House</h2><p>Chicago 1977-83: Frankie Knuckles y «una iglesia para los que cayeron en desgracia». El underground como refugio.</p></div>
+<div class="tags"><span class="style">Vitral / rosetón</span><button class="dl">SVG</button></div>
+</article>
+<article class="card"><span class="num">03</span>
+<svg class="ico" data-name="03-detroit-techno" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" data-name="03-detroit-techno">
+<style>
+  /* ══ PALETA — edita libremente estos valores ══ */
+  svg{
+    --fondo: #061826;
+    --grilla: #12455f;
+    --linea: #2ee6ff;
+    --acento: #d7ff2e;
+    /* ── velocidades (mayor = más lento) ── */
+    --vel-engranaje-1: 6s;
+    --vel-engranaje-2: 4.2s;
+    --vel-engranaje-3: 5s;
+    --vel-ciudad: 2.4s;
+  }
+
+.i3g1{transform-origin:42px 46px;animation:i3cw var(--vel-engranaje-1) linear infinite}
+.i3g2{transform-origin:80px 40px;animation:i3ccw var(--vel-engranaje-2) linear infinite}
+.i3g3{transform-origin:64px 74px;animation:i3ccw var(--vel-engranaje-3) linear infinite}
+@keyframes i3cw{to{transform:rotate(360deg)}}@keyframes i3ccw{to{transform:rotate(-360deg)}}
+.i3sk rect{animation:i3f var(--vel-ciudad) steps(2) infinite}
+.i3sk rect:nth-child(2){animation-delay:.4s}.i3sk rect:nth-child(3){animation-delay:.8s}
+.i3sk rect:nth-child(4){animation-delay:1.2s}.i3sk rect:nth-child(5){animation-delay:1.6s}
+@keyframes i3f{0%{opacity:.35}50%{opacity:1}}
+</style>
+<rect width="120" height="120" fill="var(--fondo)"/>
+<g stroke="var(--grilla)" stroke-width=".7" opacity=".75">
+<path d="M10,0v120M30,0v120M50,0v120M70,0v120M90,0v120M110,0v120M0,10h120M0,30h120M0,50h120M0,70h120M0,90h120M0,110h120"/>
+</g>
+<g fill="none" stroke="var(--linea)">
+  <g class="i3g1"><circle cx="42" cy="46" r="19" stroke-width="6" stroke-dasharray="4 5.9"/><circle cx="42" cy="46" r="13" stroke-width="2"/><path d="M42,33v26M29,46h26" stroke-width="1.6"/></g>
+  <g class="i3g2"><circle cx="80" cy="40" r="13" stroke-width="5" stroke-dasharray="3.4 4.6"/><circle cx="80" cy="40" r="8" stroke-width="2"/><path d="M80,32v16" stroke-width="1.6"/></g>
+  <g class="i3g3"><circle cx="64" cy="74" r="14" stroke-width="5" stroke-dasharray="3.6 4.9"/><circle cx="64" cy="74" r="9" stroke-width="2"/><path d="M55,74h18" stroke-width="1.6"/></g>
+</g>
+<g class="i3sk" fill="var(--linea)" opacity=".9">
+<rect x="10" y="98" width="9" height="14"/><rect x="23" y="92" width="9" height="20"/><rect x="36" y="102" width="9" height="10"/>
+<rect x="88" y="94" width="9" height="18"/><rect x="101" y="100" width="9" height="12"/>
+</g>
+<path d="M6,112h108" stroke="var(--linea)" stroke-width="2.4"/>
+<g fill="var(--acento)"><circle cx="42" cy="46" r="2.6"/><circle cx="80" cy="40" r="2.2"/><circle cx="64" cy="74" r="2.4"/></g>
+</svg>
+<div class="meta"><h2>Detroit · Belleville Three</h2><p>Techno desde la ciudad-máquina: fábricas vacías, drum machines y futurismo negro (Atkins, May, Saunderson).</p></div>
+<div class="tags"><span class="style">Blueprint técnico</span><button class="dl">SVG</button></div>
+</article>
+<article class="card"><span class="num">04</span>
+<svg class="ico" data-name="04-ibiza-balearic-1987" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" data-name="04-ibiza-balearic-1987">
+<style>
+  /* ══ PALETA — edita libremente estos valores ══ */
+  svg{
+    --cielo-alto: #2b1055;
+    --cielo-medio: #a83279;
+    --cielo-bajo: #ff7a3d;
+    --sol-alto: #ffe259;
+    --sol-bajo: #ff5f6d;
+    --fondo: #150a24;
+    --mar: #1b0a2e;
+    --olas: #ff9c5b;
+    /* ── velocidades (mayor = más lento) ── */
+    --vel-sol: 6s;
+    --vel-mar: 3.2s;
+    --vel-puntos: 2s;
+  }
+
+.i4sun{animation:i4up var(--vel-sol) ease-in-out infinite}
+@keyframes i4up{0%,100%{transform:translateY(4px)}50%{transform:translateY(-3px)}}
+.i4sea path{animation:i4w var(--vel-mar) ease-in-out infinite}
+.i4sea path:nth-child(2){animation-delay:.4s}.i4sea path:nth-child(3){animation-delay:.8s}
+@keyframes i4w{0%,100%{transform:translateX(-3px)}50%{transform:translateX(3px)}}
+.i4dot{animation:i4p var(--vel-puntos) ease-in-out infinite}
+.i4dot:nth-of-type(2){animation-delay:.3s}.i4dot:nth-of-type(3){animation-delay:.6s}.i4dot:nth-of-type(4){animation-delay:.9s}
+@keyframes i4p{0%,100%{transform:translateY(0);opacity:.85}50%{transform:translateY(-5px);opacity:1}}
+</style>
+<defs>
+<linearGradient id="g4s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--cielo-alto)"/><stop offset=".55" stop-color="var(--cielo-medio)"/><stop offset="1" stop-color="var(--cielo-bajo)"/></linearGradient>
+<linearGradient id="g4b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--sol-alto)"/><stop offset="1" stop-color="var(--sol-bajo)"/></linearGradient>
+<clipPath id="c4"><circle cx="60" cy="60" r="50"/></clipPath>
+</defs>
+<rect width="120" height="120" fill="var(--fondo)"/>
+<g clip-path="url(#c4)">
+  <rect x="10" y="10" width="100" height="100" fill="url(#g4s)"/>
+  <g class="i4sun"><circle cx="60" cy="66" r="27" fill="url(#g4b)"/>
+    <g fill="var(--cielo-medio)" opacity=".55"><rect x="30" y="62" width="60" height="3.4"/><rect x="30" y="69" width="60" height="4.4"/><rect x="30" y="77" width="60" height="5.4"/><rect x="30" y="86" width="60" height="6.4"/></g>
+  </g>
+  <rect x="10" y="88" width="100" height="24" fill="var(--mar)"/>
+  <g class="i4sea" stroke="var(--olas)" stroke-width="2" stroke-linecap="round" fill="none" opacity=".9">
+    <path d="M14,95h20M44,95h22M76,95h22"/><path d="M20,102h26M56,102h18M84,102h20"/><path d="M16,109h18M46,109h30M86,109h16"/>
+  </g>
+  <g fill="var(--sol-alto)">
+    <circle class="i4dot" cx="40" cy="42" r="3.4"/><circle class="i4dot" cx="53" cy="36" r="3.4"/><circle class="i4dot" cx="67" cy="36" r="3.4"/><circle class="i4dot" cx="80" cy="42" r="3.4"/>
+  </g>
+</g>
+<circle cx="60" cy="60" r="50" fill="none" stroke="var(--sol-alto)" stroke-width="3.5"/>
+<circle cx="60" cy="60" r="55" fill="none" stroke="var(--sol-alto)" stroke-width="1.2" opacity=".5" stroke-dasharray="2 4"/>
+</svg>
+<div class="meta"><h2>La conexión Ibiza · 1987</h2><p>Cuatro DJs, Amnesia al aire libre, eclecticismo balearic y MDMA. Vuelven a Londres transformados.</p></div>
+<div class="tags"><span class="style">Sticker retro-sunset</span><button class="dl">SVG</button></div>
+</article>
+<article class="card"><span class="num">05</span>
+<svg class="ico" data-name="05-shoom-smiley-acid-house" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" data-name="05-shoom-smiley-acid-house">
+<style>
+  /* ══ PALETA — edita libremente estos valores ══ */
+  svg{
+    --fondo: #12120a;
+    --aura: #d7ff2e;
+    --cara: #e8ff33;
+    /* ── velocidades (mayor = más lento) ── */
+    --vel-cara: 3s;
+    --vel-parpadeo: 4s;
+    --vel-goteo: 2.6s;
+  }
+
+.i5f{transform-origin:60px 58px;animation:i5wob var(--vel-cara) ease-in-out infinite}
+@keyframes i5wob{0%,100%{transform:rotate(-7deg) scale(1)}50%{transform:rotate(7deg) scale(1.05)}}
+.i5eye{transform-origin:center;animation:i5blink var(--vel-parpadeo) ease-in-out infinite}
+@keyframes i5blink{0%,92%,100%{transform:scaleY(1)}96%{transform:scaleY(.12)}}
+.i5drip{animation:i5dr var(--vel-goteo) ease-in infinite}
+.i5drip:nth-of-type(2){animation-delay:1.1s}
+@keyframes i5dr{0%{transform:translateY(0);opacity:0}20%{opacity:1}100%{transform:translateY(30px);opacity:0}}
+.i5ring{transform-origin:60px 58px;animation:i5rg var(--vel-goteo) ease-out infinite}
+@keyframes i5rg{0%{transform:scale(.85);opacity:.85}100%{transform:scale(1.5);opacity:0}}
+</style>
+<rect width="120" height="120" fill="var(--fondo)"/>
+<circle class="i5ring" cx="60" cy="58" r="44" fill="none" stroke="var(--aura)" stroke-width="3"/>
+<g class="i5f">
+<circle cx="60" cy="58" r="42" fill="var(--cara)"/>
+<g fill="var(--fondo)">
+  <ellipse class="i5eye" cx="45" cy="46" rx="5.4" ry="9"/>
+  <ellipse class="i5eye" cx="75" cy="46" rx="5.4" ry="9"/>
+  <path d="M33,64a27,27 0 0 0 54,0 6,6 0 0 0-11,0 16,16 0 0 1-32,0 6,6 0 0 0-11,0Z"/>
+</g>
+</g>
+<g fill="var(--cara)">
+<path class="i5drip" d="M52,96c0-5 8-5 8,0s-8,5-8,0Z"/>
+<path class="i5drip" d="M74,92c0-4.5 7-4.5 7,0s-7,4.5-7,0Z"/>
+</g>
+<circle cx="60" cy="58" r="42" fill="none" stroke="var(--fondo)" stroke-width="0"/>
+</svg>
+<div class="meta"><h2>Shoom · el Smiley</h2><p>Dic 1987, Southwark: Danny Rampling recrea Amnesia en un gimnasio. El smiley se vuelve bandera del acid house.</p></div>
+<div class="tags"><span class="style">Acid pop / logo puro</span><button class="dl">SVG</button></div>
+</article>
+<article class="card"><span class="num">06</span>
+<svg class="ico" data-name="06-segundo-verano-del-amor" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" data-name="06-segundo-verano-del-amor">
+<style>
+  /* ══ PALETA — edita libremente estos valores ══ */
+  svg{
+    --papel: #fff3e0;
+    --rayo: #ff6b2c;
+    --sol: #ffd23f;
+    --corazon: #ff2e5b;
+    --tinta: #1a1a2e;
+    /* ── velocidades (mayor = más lento) ── */
+    --vel-latido: 1.15s;
+    --vel-rayos: 24s;
+    --vel-trazo: 5s;
+    --vel-brillo: 2.6s;
+  }
+
+.i6rays{transform-origin:60px 56px;animation:i6spin var(--vel-rayos) linear infinite}
+@keyframes i6spin{to{transform:rotate(360deg)}}
+.i6draw{stroke-dasharray:230;stroke-dashoffset:230;animation:i6d var(--vel-trazo) ease-in-out infinite}
+@keyframes i6d{0%{stroke-dashoffset:230}45%,80%{stroke-dashoffset:0}100%{stroke-dashoffset:-230}}
+.i6heart{transform-origin:60px 57px;animation:i6beat var(--vel-latido) ease-in-out infinite}
+@keyframes i6beat{0%,100%{transform:scale(1)}18%{transform:scale(1.16)}34%{transform:scale(.98)}52%{transform:scale(1.09)}}
+.i6r{animation:i6fl var(--vel-brillo) ease-in-out infinite}
+@keyframes i6fl{0%,100%{opacity:.55}50%{opacity:1}}
+</style>
+<rect width="120" height="120" fill="var(--papel)"/>
+<g class="i6rays" stroke="var(--rayo)" stroke-width="5" stroke-linecap="round">
+  <g class="i6r">
+  <path d="M60,8v13M60,91v13M8,56h13M99,56h13M23,19l9,9M88,84l9,9M97,19l-9,9M32,84l-9,9"/>
+  </g>
+</g>
+<circle cx="60" cy="56" r="33" fill="var(--sol)"/>
+<path class="i6heart" d="M60,76c-14-9-23-17-23-27a12.5,12.5 0 0 1 23-6.6A12.5,12.5 0 0 1 83,49c0,10-9,18-23,27Z" fill="var(--corazon)"/>
+<path class="i6draw" d="M18,102c10-8 20-8 30,0s20,8 30,0 20-8 26,0" fill="none" stroke="var(--tinta)" stroke-width="4.5" stroke-linecap="round"/>
+<g font-family="ui-monospace,Menlo,monospace" font-weight="700" font-size="13" fill="var(--tinta)">
+  <text x="14" y="24">88</text><text x="88" y="24" text-anchor="middle">89</text>
+</g>
+</svg>
+<div class="meta"><h2>Segundo Verano del Amor</h2><p>1988-89: la rave se derrama por Gran Bretaña. Sube el baile, baja el hooliganismo. Euforia colectiva.</p></div>
+<div class="tags"><span class="style">Marcador dibujado a mano</span><button class="dl">SVG</button></div>
+</article>
+<article class="card"><span class="num">07</span>
+<svg class="ico" data-name="07-berlin-muro-techno" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" data-name="07-berlin-muro-techno">
+<style>
+  /* ══ PALETA — edita libremente estos valores ══ */
+  svg{
+    --fondo: #15151a;
+    --acento: #ff3b30;
+    --hueco: #232329;
+    --borde: #5c5c68;
+    --hormigon: #4a4a55;
+    --escombro: #6a6a78;
+    --suelo: #0e0e12;
+    /* ── velocidades (mayor = más lento) ── */
+    --vel-muro: 5s;
+    --vel-ondas: 1.9s;
+  }
+
+.i7L{animation:i7l var(--vel-muro) ease-in-out infinite}.i7R{animation:i7r var(--vel-muro) ease-in-out infinite}
+@keyframes i7l{0%,15%{transform:translate(0,0) rotate(0)}55%,100%{transform:translate(-13px,4px) rotate(-8deg)}}
+@keyframes i7r{0%,15%{transform:translate(0,0) rotate(0)}55%,100%{transform:translate(13px,4px) rotate(8deg)}}
+.i7br{animation:i7fall var(--vel-muro) ease-in infinite}
+.i7br:nth-of-type(2){animation-delay:.25s}.i7br:nth-of-type(3){animation-delay:.5s}
+@keyframes i7fall{0%,20%{transform:translate(0,0) rotate(0);opacity:1}70%,100%{transform:translate(0,42px) rotate(46deg);opacity:0}}
+.i7w{transform-origin:60px 62px;animation:i7pulse var(--vel-ondas) ease-out infinite}
+.i7w:nth-of-type(2){animation-delay:.63s}.i7w:nth-of-type(3){animation-delay:1.26s}
+@keyframes i7pulse{0%{transform:scale(.4);opacity:0}25%{opacity:.9}100%{transform:scale(1.5);opacity:0}}
+</style>
+<rect width="120" height="120" fill="var(--fondo)"/>
+<g fill="none" stroke="var(--acento)" stroke-width="2.6"><circle class="i7w" cx="60" cy="62" r="26"/><circle class="i7w" cx="60" cy="62" r="26"/><circle class="i7w" cx="60" cy="62" r="26"/></g>
+<circle cx="60" cy="62" r="17" fill="var(--hueco)" stroke="var(--borde)" stroke-width="2"/>
+<circle cx="60" cy="62" r="7" fill="var(--acento)"/>
+<g class="i7L" fill="var(--hormigon)" stroke="var(--fondo)" stroke-width="2">
+  <rect x="4" y="30" width="42" height="14"/><rect x="4" y="44" width="42" height="14"/><rect x="4" y="58" width="42" height="14"/><rect x="4" y="72" width="42" height="14"/><rect x="4" y="86" width="42" height="14"/>
+</g>
+<g class="i7R" fill="var(--hormigon)" stroke="var(--fondo)" stroke-width="2">
+  <rect x="74" y="30" width="42" height="14"/><rect x="74" y="44" width="42" height="14"/><rect x="74" y="58" width="42" height="14"/><rect x="74" y="72" width="42" height="14"/><rect x="74" y="86" width="42" height="14"/>
+</g>
+<g fill="var(--escombro)"><rect class="i7br" x="46" y="34" width="12" height="9"/><rect class="i7br" x="63" y="30" width="11" height="9"/><rect class="i7br" x="49" y="88" width="10" height="8"/></g>
+<rect x="0" y="100" width="120" height="20" fill="var(--suelo)"/>
+<rect x="0" y="100" width="120" height="2.5" fill="var(--acento)" opacity=".7"/>
+</svg>
+<div class="meta"><h2>Berlín: cae el muro, sale el techno</h2><p>1989: búnkeres, centrales y fábricas de la RDA se vuelven catedrales de una religión secular sin puertas.</p></div>
+<div class="tags"><span class="style">Brutalista concreto</span><button class="dl">SVG</button></div>
+</article>
+<article class="card"><span class="num">08</span>
+<svg class="ico" data-name="08-roland-tb-303" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" data-name="08-roland-tb-303">
+<style>
+  /* ══ PALETA — edita libremente estos valores ══ */
+  svg{
+    --fondo: #0c0c0f;
+    --carcasa: #c9c9cf;
+    --carcasa-borde: #8b8b96;
+    --panel: #1d1d24;
+    --logo: #ff4b2b;
+    --perilla: #26262e;
+    --indicador: #e8e8ee;
+    --pantalla: #16161c;
+    --led-on: #d7ff2e;
+    --led-off: #3a3a44;
+    /* ── velocidades (mayor = más lento) ── */
+    --vel-secuencia: 1.6s;
+    --vel-perilla-1: 4s;
+    --vel-perilla-2: 3.1s;
+    --vel-perilla-3: 2.4s;
+    --vel-perilla-4: 5s;
+  }
+
+.i8k1{transform-origin:31px 46px}.i8k2{transform-origin:52px 46px}.i8k3{transform-origin:73px 46px}.i8k4{transform-origin:94px 46px}
+.i8k1{animation:i8t1 var(--vel-perilla-1) ease-in-out infinite}.i8k2{animation:i8t2 var(--vel-perilla-2) ease-in-out infinite}
+.i8k3{animation:i8t3 var(--vel-perilla-3) ease-in-out infinite}.i8k4{animation:i8t2 var(--vel-perilla-4) ease-in-out infinite reverse}
+@keyframes i8t1{0%,100%{transform:rotate(-115deg)}50%{transform:rotate(60deg)}}
+@keyframes i8t2{0%,100%{transform:rotate(-70deg)}50%{transform:rotate(120deg)}}
+@keyframes i8t3{0%,100%{transform:rotate(20deg)}50%{transform:rotate(-130deg)}}
+.i8s{animation:i8step var(--vel-secuencia) steps(1) infinite;fill:var(--led-off)}
+.i8s:nth-of-type(1){animation-delay:0s}.i8s:nth-of-type(2){animation-delay:.2s}.i8s:nth-of-type(3){animation-delay:.4s}.i8s:nth-of-type(4){animation-delay:.6s}
+.i8s:nth-of-type(5){animation-delay:.8s}.i8s:nth-of-type(6){animation-delay:1s}.i8s:nth-of-type(7){animation-delay:1.2s}.i8s:nth-of-type(8){animation-delay:1.4s}
+@keyframes i8step{0%,12%{fill:var(--led-on)}13%,100%{fill:var(--led-off)}}
+</style>
+<rect width="120" height="120" fill="var(--fondo)"/>
+<rect x="8" y="20" width="104" height="80" rx="9" fill="var(--carcasa)"/>
+<rect x="8" y="20" width="104" height="80" rx="9" fill="none" stroke="var(--carcasa-borde)" stroke-width="2"/>
+<rect x="14" y="26" width="92" height="10" rx="3" fill="var(--panel)"/>
+<rect x="14" y="26" width="34" height="10" rx="3" fill="var(--logo)"/>
+<circle cx="103" cy="31" r="2.4" fill="var(--led-on)"/>
+<g>
+ <g fill="var(--perilla)"><circle cx="31" cy="46" r="9"/><circle cx="52" cy="46" r="9"/><circle cx="73" cy="46" r="9"/><circle cx="94" cy="46" r="9"/></g>
+ <g stroke="var(--indicador)" stroke-width="2.4" stroke-linecap="round">
+  <path class="i8k1" d="M31,46v-7"/><path class="i8k2" d="M52,46v-7"/><path class="i8k3" d="M73,46v-7"/><path class="i8k4" d="M94,46v-7"/>
+ </g>
+</g>
+<rect x="14" y="60" width="92" height="16" rx="3" fill="var(--pantalla)"/>
+<path d="M16,68c4-8 6,8 10,0s6,8 10,0 6,8 10,0 6,8 10,0 6,8 10,0 6,8 10,0 6,8 10,0 6,8 8,0" fill="none" stroke="var(--led-on)" stroke-width="2" stroke-linecap="round" opacity=".9"/>
+<g>
+<rect class="i8s" x="15" y="82" width="10" height="10" rx="2"/><rect class="i8s" x="28" y="82" width="10" height="10" rx="2"/>
+<rect class="i8s" x="41" y="82" width="10" height="10" rx="2"/><rect class="i8s" x="54" y="82" width="10" height="10" rx="2"/>
+<rect class="i8s" x="67" y="82" width="10" height="10" rx="2"/><rect class="i8s" x="80" y="82" width="10" height="10" rx="2"/>
+<rect class="i8s" x="93" y="82" width="10" height="10" rx="2"/><rect class="i8s" x="106" y="82" width="4" height="10" rx="1.5"/>
+</g>
+</svg>
+<div class="meta"><h2>Roland TB-303</h2><p>Fracaso comercial de 1981 (10.000 unidades) que en Chicago se convirtió en la voz squelchy del acid house.</p></div>
+<div class="tags"><span class="style">Skeuomorfismo de aparato</span><button class="dl">SVG</button></div>
+</article>
+<article class="card"><span class="num">09</span>
+<svg class="ico" data-name="09-acid-lsd-estado-alterado" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" data-name="09-acid-lsd-estado-alterado">
+<style>
+  /* ══ PALETA — edita libremente estos valores ══ */
+  svg{
+    --fondo: #10061c;
+    --blob-centro: #ffd93d;
+    --blob-medio: #ff2e7e;
+    --blob-borde: #5b1e9e;
+    --filamento: #ffe9a8;
+    --pupila: #0d0418;
+    --iris: #d7ff2e;
+    --papel: #f4efe4;
+    /* ── velocidades (mayor = más lento) ── */
+    --vel-blob: 8s;
+    --vel-anillo: 12s;
+    --vel-ojo: 3.6s;
+  }
+
+.i9blob{animation:i9m var(--vel-blob) ease-in-out infinite;transform-origin:60px 60px}
+@keyframes i9m{0%,100%{transform:scale(1) rotate(0)}33%{transform:scale(1.06) rotate(6deg)}66%{transform:scale(.95) rotate(-6deg)}}
+.i9r1{transform-origin:60px 60px;animation:i9s var(--vel-anillo) linear infinite}
+.i9r2{transform-origin:60px 60px;animation:i9s var(--vel-blob) linear infinite reverse}
+@keyframes i9s{to{transform:rotate(360deg)}}
+.i9tab{animation:i9t var(--vel-ojo) ease-in-out infinite}
+@keyframes i9t{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-6px) rotate(4deg)}}
+.i9eye{transform-origin:60px 60px;animation:i9e var(--vel-ojo) ease-in-out infinite}
+@keyframes i9e{0%,100%{transform:scale(1)}50%{transform:scale(1.22)}}
+</style>
+<defs>
+<radialGradient id="g9" cx=".5" cy=".5"><stop offset="0" stop-color="var(--blob-centro)"/><stop offset=".45" stop-color="var(--blob-medio)"/><stop offset="1" stop-color="var(--blob-borde)"/></radialGradient>
+<filter id="f9"><feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="4"><animate attributeName="baseFrequency" values="0.02;0.045;0.02" dur="10s" repeatCount="indefinite"/></feTurbulence><feDisplacementMap in="SourceGraphic" scale="7"/></filter>
+</defs>
+<rect width="120" height="120" fill="var(--fondo)"/>
+<g filter="url(#f9)" class="i9blob">
+  <circle cx="60" cy="60" r="48" fill="url(#g9)"/>
+  <g class="i9r1" fill="none" stroke="var(--fondo)" stroke-width="3" opacity=".55">
+    <circle cx="60" cy="60" r="41"/><circle cx="60" cy="60" r="33"/><circle cx="60" cy="60" r="25"/>
+  </g>
+  <g class="i9r2" fill="none" stroke="var(--filamento)" stroke-width="1.6" opacity=".8">
+    <path d="M60,14a46,46 0 0 1 0,92a30,30 0 0 1 0,-60a16,16 0 0 0 0,-32"/>
+  </g>
+</g>
+<g class="i9eye"><ellipse cx="60" cy="60" rx="21" ry="12" fill="var(--pupila)"/>
+<circle cx="60" cy="60" r="9" fill="var(--iris)"/><circle cx="60" cy="60" r="4" fill="var(--pupila)"/>
+<ellipse cx="60" cy="60" rx="21" ry="12" fill="none" stroke="var(--filamento)" stroke-width="2.2"/></g>
+<g class="i9tab"><rect x="88" y="86" width="20" height="20" rx="3" fill="var(--papel)" stroke="var(--pupila)" stroke-width="2"/>
+<circle cx="98" cy="96" r="5" fill="var(--blob-medio)"/><path d="M88,96h20M98,86v20" stroke="var(--pupila)" stroke-width=".8" opacity=".4"/></g>
+</svg>
+<div class="meta"><h2>Ácido: sonido y sustancia</h2><p>La doble hélice: el squelch de la 303 y el LSD del Music Box. Ron Hardy bautiza el track; Pierre era anti-drogas.</p></div>
+<div class="tags"><span class="style">Psicodelia líquida</span><button class="dl">SVG</button></div>
+</article>
+<article class="card"><span class="num">10</span>
+<svg class="ico" data-name="10-plur-codigo-moral" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" data-name="10-plur-codigo-moral">
+<style>
+  /* ══ PALETA — edita libremente estos valores ══ */
+  svg{
+    --papel: #f4f4f0;
+    --orbita: #c9c9c2;
+    --enlace: #b7b7ae;
+    --paz: #2ee6a5;
+    --paz-tinta: #0d1b16;
+    --amor: #ff2e5b;
+    --unidad: #2e7bff;
+    --respeto: #ffb02e;
+    --respeto-tinta: #241a06;
+    --tinta: #1a1a20;
+    /* ── velocidades (mayor = más lento) ── */
+    --vel-simbolos: 4.4s;
+    --vel-enlace: 1.6s;
+    --vel-orbita: 18s;
+  }
+
+.i10q{animation:i10in var(--vel-simbolos) ease-in-out infinite}
+.i10q:nth-of-type(1){animation-delay:0s}.i10q:nth-of-type(2){animation-delay:.3s}
+.i10q:nth-of-type(3){animation-delay:.6s}.i10q:nth-of-type(4){animation-delay:.9s}
+@keyframes i10in{0%,70%,100%{transform:translate(0,0)}20%,50%{transform:translate(0,-3px)}}
+.i10link{stroke-dasharray:6 5;animation:i10dash var(--vel-enlace) linear infinite}
+@keyframes i10dash{to{stroke-dashoffset:-11}}
+.i10c{transform-origin:60px 60px;animation:i10rot var(--vel-orbita) linear infinite}
+@keyframes i10rot{to{transform:rotate(360deg)}}
+</style>
+<rect width="120" height="120" fill="var(--papel)"/>
+<circle class="i10c" cx="60" cy="60" r="46" fill="none" stroke="var(--orbita)" stroke-width="1.5" stroke-dasharray="1 6" stroke-linecap="round"/>
+<g class="i10link" stroke="var(--enlace)" stroke-width="2" fill="none"><path d="M38,38h44M38,82h44M38,38v44M82,38v44"/></g>
+<!-- P paz -->
+<g class="i10q" transform="translate(0,0)">
+  <circle cx="35" cy="35" r="15" fill="var(--paz)"/>
+  <g stroke="var(--paz-tinta)" stroke-width="2.6" stroke-linecap="round"><path d="M35,25v20M35,45l-7-7M35,45l7-7M28,35h14"/></g>
+</g>
+<!-- L amor -->
+<g class="i10q">
+  <circle cx="85" cy="35" r="15" fill="var(--amor)"/>
+  <path d="M85,44c-7-4.6-11.5-8.4-11.5-13a6,6 0 0 1 11.5-3.2A6,6 0 0 1 96.5,31c0,4.6-4.5,8.4-11.5,13Z" fill="#fff"/>
+</g>
+<!-- U unidad -->
+<g class="i10q">
+  <circle cx="35" cy="85" r="15" fill="var(--unidad)"/>
+  <g fill="#fff"><circle cx="29" cy="80" r="4"/><circle cx="41" cy="80" r="4"/><path d="M23,93a6,6 0 0 1 12,0Z"/><path d="M35,93a6,6 0 0 1 12,0Z"/></g>
+</g>
+<!-- R respeto -->
+<g class="i10q">
+  <circle cx="85" cy="85" r="15" fill="var(--respeto)"/>
+  <g fill="none" stroke="var(--respeto-tinta)" stroke-width="2.8" stroke-linecap="round">
+    <path d="M78,90V80a2.6,2.6 0 0 1 5.2,0M83.2,80v-2a2.6,2.6 0 0 1 5.2,0v2M88.4,81a2.6,2.6 0 0 1 4.4,1.8v4a8,8 0 0 1-14.8,3.4"/>
+  </g>
+</g>
+<g font-family="ui-monospace,Menlo,monospace" font-weight="700" font-size="9.5" fill="var(--tinta)" letter-spacing="1">
+<text x="60" y="62" text-anchor="middle">PLUR</text>
+</g>
+</svg>
+<div class="meta"><h2>PLUR</h2><p>Paz, Amor, Unidad y Respeto: el código no escrito. Hoy vive en carpas de reducción de daño y salas silenciosas.</p></div>
+<div class="tags"><span class="style">Pictograma señalética</span><button class="dl">SVG</button></div>
+</article>
+<article class="card"><span class="num">11</span>
+<svg class="ico" data-name="11-inclusividad-raices-queer-negras" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" data-name="11-inclusividad-raices-queer-negras">
+<style>
+  /* ══ PALETA — edita libremente estos valores ══ */
+  svg{
+    --fondo: #1b1224;
+    --arco-1: #ff2e7e;
+    --arco-2: #ff9f1c;
+    --arco-3: #ffe74c;
+    --arco-4: #2ee6a5;
+    --piel-1: #3d2b1f;
+    --piel-2: #f2c9a0;
+    --piel-3: #7a4b2a;
+    --piel-4: #2b1d14;
+    --piel-5: #d99a6c;
+    --piel-6: #f7e0c8;
+    --suelo: #0f0817;
+    /* ── velocidades (mayor = más lento) ── */
+    --vel-gente: 4.6s;
+    --vel-arcos: 3.4s;
+  }
+
+.i11p{animation:i11sw var(--vel-gente) ease-in-out infinite;transform-box:fill-box;transform-origin:center bottom}
+.i11p:nth-of-type(1){animation-delay:0s}.i11p:nth-of-type(2){animation-delay:.35s}.i11p:nth-of-type(3){animation-delay:.7s}
+.i11p:nth-of-type(4){animation-delay:1.05s}.i11p:nth-of-type(5){animation-delay:1.4s}.i11p:nth-of-type(6){animation-delay:1.75s}
+@keyframes i11sw{0%,100%{transform:rotate(-3deg) translateY(0)}50%{transform:rotate(3deg) translateY(-4px)}}
+.i11arc{stroke-dasharray:120;animation:i11d var(--vel-arcos) ease-in-out infinite alternate}
+@keyframes i11d{from{stroke-dashoffset:120}to{stroke-dashoffset:0}}
+</style>
+<rect width="120" height="120" fill="var(--fondo)"/>
+<g stroke="none">
+<path class="i11arc" d="M14,96a46,46 0 0 1 92,0" fill="none" stroke="var(--arco-1)" stroke-width="9" stroke-linecap="round" opacity=".9"/>
+<path class="i11arc" d="M24,96a36,36 0 0 1 72,0" fill="none" stroke="var(--arco-2)" stroke-width="9" stroke-linecap="round" opacity=".9" style="animation-delay:.2s"/>
+<path class="i11arc" d="M34,96a26,26 0 0 1 52,0" fill="none" stroke="var(--arco-3)" stroke-width="9" stroke-linecap="round" opacity=".9" style="animation-delay:.4s"/>
+<path class="i11arc" d="M44,96a16,16 0 0 1 32,0" fill="none" stroke="var(--arco-4)" stroke-width="9" stroke-linecap="round" opacity=".9" style="animation-delay:.6s"/>
+</g>
+<g>
+<g class="i11p"><circle cx="18" cy="72" r="7" fill="var(--piel-1)"/><path d="M9,96V84a9,9 0 0 1 18,0v12Z" fill="var(--piel-1)"/></g>
+<g class="i11p"><circle cx="35" cy="64" r="7.5" fill="var(--piel-2)"/><path d="M25.5,96V78a9.5,9.5 0 0 1 19,0v18Z" fill="var(--piel-2)"/></g>
+<g class="i11p"><circle cx="53" cy="58" r="8" fill="var(--piel-3)"/><path d="M43,96V74a10,10 0 0 1 20,0v22Z" fill="var(--piel-3)"/></g>
+<g class="i11p"><circle cx="70" cy="60" r="8" fill="var(--piel-4)"/><path d="M60,96V76a10,10 0 0 1 20,0v20Z" fill="var(--piel-4)"/></g>
+<g class="i11p"><circle cx="87" cy="65" r="7.5" fill="var(--piel-5)"/><path d="M77.5,96V79a9.5,9.5 0 0 1 19,0v17Z" fill="var(--piel-5)"/></g>
+<g class="i11p"><circle cx="103" cy="72" r="7" fill="var(--piel-6)"/><path d="M94,96V84a9,9 0 0 1 18,0v12Z" fill="var(--piel-6)"/></g>
+</g>
+<rect x="0" y="96" width="120" height="24" fill="var(--suelo)"/>
+<rect x="0" y="96" width="120" height="3" fill="var(--arco-1)"/>
+</svg>
+<div class="meta"><h2>Inclusividad desde las raíces</h2><p>Nacida en comunidades negras y gays de Chicago: en la pista, la diversidad no se tolera, se celebra.</p></div>
+<div class="tags"><span class="style">Collage papel recortado</span><button class="dl">SVG</button></div>
+</article>
+<article class="card"><span class="num">12</span>
+<svg class="ico" data-name="12-taz-zona-autonoma-temporal" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" data-name="12-taz-zona-autonoma-temporal">
+<style>
+  /* ══ PALETA — edita libremente estos valores ══ */
+  svg{
+    --papel: #f0ead8;
+    --grilla: #a89d7d;
+    --curva: #6b6248;
+    --zona: #d7ff2e;
+    --marca: #c0392b;
+    /* ── velocidades (mayor = más lento) ── */
+    --vel-aparicion: 6s;
+    --vel-borde: 2s;
+  }
+
+.i12z{animation:i12app var(--vel-aparicion) ease-in-out infinite}
+@keyframes i12app{0%{opacity:0;transform:scale(.85)}15%,60%{opacity:1;transform:scale(1)}85%,100%{opacity:0;transform:scale(1.15)}}
+.i12dash{stroke-dasharray:5 4;animation:i12run var(--vel-borde) linear infinite}
+@keyframes i12run{to{stroke-dashoffset:-18}}
+.i12grid path{animation:i12fade var(--vel-aparicion) ease-in-out infinite}
+@keyframes i12fade{0%,100%{opacity:.5}40%{opacity:.16}}
+.i12star{transform-origin:60px 58px;animation:i12tw var(--vel-aparicion) ease-in-out infinite}
+@keyframes i12tw{0%,100%{opacity:0}25%,55%{opacity:1}}
+</style>
+<rect width="120" height="120" fill="var(--papel)"/>
+<g class="i12grid" stroke="var(--grilla)" stroke-width=".9">
+<path d="M12,0v120M28,0v120M44,0v120M60,0v120M76,0v120M92,0v120M108,0v120M0,12h120M0,28h120M0,44h120M0,60h120M0,76h120M0,92h120M0,108h120"/>
+</g>
+<g stroke="var(--curva)" stroke-width="1.6" fill="none" opacity=".7">
+<path d="M0,88c14-6 22,4 34,0s20-12 34-8 26,10 34,6 18,2 18,2"/>
+<path d="M0,26c16,4 24-6 38-2s22,10 36,6 30-8 30-8"/>
+</g>
+<g class="i12z" style="transform-origin:60px 58px">
+  <circle cx="60" cy="58" r="30" fill="var(--zona)" opacity=".28"/>
+  <circle class="i12dash" cx="60" cy="58" r="30" fill="none" stroke="#111" stroke-width="3"/>
+  <g class="i12star" fill="#111"><path d="M60,44l3.4,8.6L72,56l-8.6,3.4L60,68l-3.4-8.6L48,56l8.6-3.4Z"/></g>
+  <g font-family="ui-monospace,Menlo,monospace" font-weight="700" font-size="11" fill="#111" letter-spacing="2">
+    <text x="60" y="97" text-anchor="middle">T.A.Z.</text>
+  </g>
+</g>
+<g stroke="var(--marca)" stroke-width="2.4" opacity=".85" stroke-linecap="round"><path d="M96,14l14,14M110,14L96,28"/></g>
+<g font-family="ui-monospace,Menlo,monospace" font-size="5.8" fill="var(--curva)" letter-spacing=".4">
+<text x="60" y="113" text-anchor="middle">FUERA DEL MAPA DEL ESTADO</text>
+</g>
+</svg>
+<div class="meta"><h2>Zona Autónoma Temporal</h2><p>Hakim Bey: espacios fuera del mapa del Estado cuyo poder está en desvanecerse al amanecer. Autonomía sin permanencia.</p></div>
+<div class="tags"><span class="style">Mapa esotérico / cartografía</span><button class="dl">SVG</button></div>
+</article>
+<article class="card"><span class="num">13</span>
+<svg class="ico" data-name="13-spiral-tribe-free-party" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" data-name="13-spiral-tribe-free-party">
+<style>
+  /* ══ PALETA — edita libremente estos valores ══ */
+  svg{
+    --fondo: #000000;
+    --resplandor: #12220a;
+    --verde: #7dff2e;
+    --blanco: #ffffff;
+    /* ── velocidades (mayor = más lento) ── */
+    --vel-rotacion: 9s;
+    --vel-trazo: 7s;
+    --vel-pulso: 2.2s;
+    --vel-parpadeo: 1.1s;
+  }
+
+.i13sp{transform-origin:60px 60px;animation:i13r var(--vel-rotacion) linear infinite}
+@keyframes i13r{to{transform:rotate(-360deg)}}
+.i13tr{stroke-dasharray:1400;stroke-dashoffset:0;animation:i13d var(--vel-trazo) ease-in-out infinite}
+@keyframes i13d{0%,8%{stroke-dashoffset:1400}55%,100%{stroke-dashoffset:0}}
+.i13sh{animation:i13f var(--vel-parpadeo) steps(2) infinite}
+@keyframes i13f{0%,49%{opacity:.25}50%,100%{opacity:.7}}
+.i13ring{transform-origin:60px 60px;animation:i13p var(--vel-pulso) ease-out infinite}
+@keyframes i13p{0%{transform:scale(.6);opacity:.8}100%{transform:scale(1.35);opacity:0}}
+</style>
+<rect width="120" height="120" fill="var(--fondo)"/>
+<circle class="i13sh" cx="60" cy="60" r="52" fill="var(--resplandor)"/>
+<circle class="i13ring" cx="60" cy="60" r="46" fill="none" stroke="var(--verde)" stroke-width="2"/>
+<g class="i13sp">
+<path class="i13tr" d="M61.50,60.00 L61.97,61.28 L61.35,62.96 L59.89,63.95 L57.83,64.11 L55.67,63.14 L54.04,61.03 L53.52,58.10 L54.51,54.96 L57.04,52.41 L60.76,51.18 L64.93,51.82 L68.62,54.46 L70.88,58.75 L71.18,62.60 L69.43,67.71 L65.35,71.71 L59.61,73.57 L54.88,73.14 L49.10,70.01 L45.88,65.97 L44.18,60.90 L44.29,55.39 L46.33,50.07 L50.16,45.62 L55.44,42.64 L61.58,41.59 L67.89,42.72 L73.61,46.00 L77.99,51.15 L80.44,57.65 L80.55,64.78 L78.19,71.69 L73.53,77.54 L67.01,81.57 L59.34,83.19 L51.39,82.11 L44.12,78.33 L38.43,72.18 L35.07,64.31 L34.39,58.54 L35.89,49.81 L40.33,41.95 L47.29,35.92 L56.05,32.53 L65.62,32.29 L74.87,35.34 L82.70,41.44 L88.11,49.97 L90.38,60.00 L89.10,70.38 L84.33,79.89 L76.50,87.36 L66.45,91.83 L55.30,92.66 L44.35,89.65 L34.91,83.02 L28.15,73.46 L24.96,62.00 L25.82,49.96 L30.75,38.75 L39.30,29.73 L50.54,24.02 L63.23,22.41 L75.89,25.21 L87.02,32.19 L95.27,42.66 L99.57,55.46 L100.00,60.00"
+ fill="none" stroke="var(--verde)" stroke-width="4.6" stroke-linecap="round"/>
+</g>
+<g fill="none" stroke="var(--blanco)" stroke-width="3" stroke-linecap="round">
+<path d="M12,60a12,12 0 0 1 0-14M8,64a17,17 0 0 1 0-22"/>
+<path d="M108,60a12,12 0 0 0 0-14M112,64a17,17 0 0 0 0-22"/>
+</g>
+<g font-family="Impact,'Arial Black',sans-serif" font-size="13" fill="var(--blanco)" letter-spacing="3">
+<text x="60" y="112" text-anchor="middle">SPIRAL</text>
+</g>
+</svg>
+<div class="meta"><h2>Spiral Tribe</h2><p>1990: sound system nómada, tekno hardcore y teknivals. «Free no por gratis: libre mientras estás allí.»</p></div>
+<div class="tags"><span class="style">Tribal esténcil / spray</span><button class="dl">SVG</button></div>
+</article>
+<article class="card"><span class="num">14</span>
+<svg class="ico" data-name="14-castlemorton-1992" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" data-name="14-castlemorton-1992">
+<style>
+  /* ══ PALETA — edita libremente estos valores ══ */
+  svg{
+    --cielo-alto: #0b1030;
+    --cielo-bajo: #3a1a4e;
+    --haz: #d7ff2e;
+    --luna: #f6f1c9;
+    --campo: #132a1c;
+    --equipo: #0d0d12;
+    --equipo-int: #1a1a22;
+    --gente: #8fe0b0;
+    /* ── velocidades (mayor = más lento) ── */
+    --vel-saltos: 1.05s;
+    --vel-haces: 5s;
+    --vel-luna: 4s;
+    --vel-estrellas: 3s;
+  }
+
+.i14b circle{animation:i14j var(--vel-saltos) ease-in-out infinite}
+@keyframes i14j{0%,100%{transform:translateY(0)}45%{transform:translateY(-3.5px)}}
+.i14beam{transform-origin:60px 34px;animation:i14sc var(--vel-haces) ease-in-out infinite}
+.i14beam2{transform-origin:60px 34px;animation:i14sc var(--vel-haces) ease-in-out infinite reverse}
+@keyframes i14sc{0%,100%{transform:rotate(-26deg)}50%{transform:rotate(26deg)}}
+.i14moon{animation:i14gl var(--vel-luna) ease-in-out infinite}
+@keyframes i14gl{0%,100%{opacity:.85}50%{opacity:1}}
+.i14st{animation:i14tw var(--vel-estrellas) ease-in-out infinite}
+.i14st:nth-of-type(2){animation-delay:.7s}.i14st:nth-of-type(3){animation-delay:1.4s}.i14st:nth-of-type(4){animation-delay:2.1s}
+@keyframes i14tw{0%,100%{opacity:.25}50%{opacity:1}}
+</style>
+<defs><linearGradient id="g14" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--cielo-alto)"/><stop offset="1" stop-color="var(--cielo-bajo)"/></linearGradient>
+<linearGradient id="g14b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--haz)" stop-opacity=".7"/><stop offset="1" stop-color="var(--haz)" stop-opacity="0"/></linearGradient></defs>
+<rect width="120" height="120" fill="url(#g14)"/>
+<g fill="#fff"><circle class="i14st" cx="18" cy="18" r="1.4"/><circle class="i14st" cx="96" cy="14" r="1.6"/><circle class="i14st" cx="106" cy="34" r="1.2"/><circle class="i14st" cx="30" cy="34" r="1.3"/></g>
+<circle class="i14moon" cx="94" cy="26" r="9" fill="var(--luna)"/><circle cx="90" cy="23" r="8" fill="var(--cielo-alto)" opacity=".9"/>
+<path d="M0,74c18-12 30,2 46-4s28-14 44-8 22,10 30,8v50H0Z" fill="var(--campo)"/>
+<g class="i14beam"><path d="M60,34L26,4h68Z" fill="url(#g14b)" transform="translate(0,0) scale(1,-1) translate(0,-68)" opacity=".55"/></g>
+<g class="i14beam2"><path d="M60,34L34,2h52Z" fill="url(#g14b)" transform="scale(1,-1) translate(0,-68)" opacity=".4"/></g>
+<g transform="translate(60,42)"><rect x="-13" y="-8" width="26" height="20" rx="2" fill="var(--equipo)" stroke="var(--haz)" stroke-width="1.6"/>
+<circle cx="0" cy="2" r="6" fill="var(--equipo-int)" stroke="var(--haz)" stroke-width="1.4"/><circle cx="0" cy="-4" r="2" fill="var(--haz)"/></g>
+<g class="i14b" fill="var(--gente)" opacity=".62">
+<circle cx="41.7" cy="78.5" r="1.11" style="animation-delay:1.95s"/><circle cx="15.5" cy="90.1" r="1.65" style="animation-delay:1.1s"/><circle cx="14.0" cy="89.2" r="1.61" style="animation-delay:0.11s"/><circle cx="53.1" cy="76.1" r="1.00" style="animation-delay:0.27s"/><circle cx="52.1" cy="98.8" r="2.06" style="animation-delay:0.37s"/><circle cx="31.2" cy="92.8" r="1.78" style="animation-delay:2.84s"/><circle cx="68.0" cy="85.9" r="1.46" style="animation-delay:2.93s"/><circle cx="12.8" cy="99.8" r="2.10" style="animation-delay:0.87s"/><circle cx="23.0" cy="77.5" r="1.06" style="animation-delay:0.93s"/><circle cx="92.9" cy="79.4" r="1.15" style="animation-delay:1.74s"/><circle cx="74.4" cy="85.2" r="1.42" style="animation-delay:1.64s"/><circle cx="14.5" cy="75.8" r="0.98" style="animation-delay:0.62s"/><circle cx="78.8" cy="86.8" r="1.50" style="animation-delay:0.94s"/><circle cx="68.9" cy="87.6" r="1.53" style="animation-delay:0.9s"/><circle cx="90.6" cy="95.0" r="1.88" style="animation-delay:0.73s"/><circle cx="67.7" cy="89.8" r="1.64" style="animation-delay:2.63s"/><circle cx="83.9" cy="82.6" r="1.30" style="animation-delay:2.94s"/><circle cx="20.3" cy="86.5" r="1.49" style="animation-delay:2.27s"/><circle cx="23.8" cy="88.7" r="1.58" style="animation-delay:0.12s"/><circle cx="77.5" cy="96.9" r="1.97" style="animation-delay:1.72s"/><circle cx="99.0" cy="83.4" r="1.34" style="animation-delay:2.09s"/><circle cx="69.8" cy="91.4" r="1.71" style="animation-delay:1.37s"/><circle cx="95.4" cy="102.3" r="2.22" style="animation-delay:1.42s"/><circle cx="77.1" cy="75.8" r="0.98" style="animation-delay:2.1s"/><circle cx="75.3" cy="103.8" r="2.29" style="animation-delay:2.47s"/><circle cx="37.6" cy="85.6" r="1.44" style="animation-delay:2.01s"/><circle cx="10.3" cy="87.9" r="1.55" style="animation-delay:0.5s"/><circle cx="20.2" cy="75.8" r="0.98" style="animation-delay:2.3s"/><circle cx="21.5" cy="81.4" r="1.25" style="animation-delay:1.17s"/><circle cx="98.6" cy="76.4" r="1.01" style="animation-delay:1.35s"/><circle cx="65.1" cy="100.5" r="2.14" style="animation-delay:2.46s"/><circle cx="97.9" cy="82.4" r="1.29" style="animation-delay:1.25s"/><circle cx="45.3" cy="100.5" r="2.14" style="animation-delay:2.87s"/><circle cx="23.7" cy="79.3" r="1.15" style="animation-delay:0.7s"/><circle cx="32.3" cy="88.5" r="1.58" style="animation-delay:1.77s"/><circle cx="35.3" cy="74.1" r="0.91" style="animation-delay:1.26s"/><circle cx="46.4" cy="91.0" r="1.69" style="animation-delay:2.86s"/><circle cx="79.8" cy="89.5" r="1.62" style="animation-delay:1.85s"/><circle cx="78.3" cy="75.6" r="0.98" style="animation-delay:2.7s"/><circle cx="89.1" cy="100.2" r="2.12" style="animation-delay:2.39s"/><circle cx="48.8" cy="86.0" r="1.46" style="animation-delay:0.31s"/><circle cx="74.0" cy="75.9" r="0.99" style="animation-delay:0.2s"/><circle cx="29.7" cy="78.9" r="1.13" style="animation-delay:1.02s"/><circle cx="13.5" cy="74.0" r="0.90" style="animation-delay:0.45s"/><circle cx="18.6" cy="84.9" r="1.41" style="animation-delay:0.08s"/><circle cx="98.9" cy="92.4" r="1.76" style="animation-delay:0.45s"/><circle cx="34.2" cy="84.4" r="1.39" style="animation-delay:1.09s"/><circle cx="20.8" cy="99.5" r="2.09" style="animation-delay:2.98s"/><circle cx="56.5" cy="88.5" r="1.58" style="animation-delay:0.26s"/><circle cx="94.2" cy="78.8" r="1.13" style="animation-delay:0.07s"/><circle cx="106.9" cy="89.8" r="1.64" style="animation-delay:0.44s"/><circle cx="64.5" cy="74.8" r="0.94" style="animation-delay:1.58s"/><circle cx="109.8" cy="99.9" r="2.11" style="animation-delay:2.09s"/><circle cx="88.3" cy="90.0" r="1.65" style="animation-delay:2.34s"/><circle cx="42.3" cy="80.7" r="1.21" style="animation-delay:2.43s"/><circle cx="93.1" cy="96.2" r="1.94" style="animation-delay:0.68s"/><circle cx="61.8" cy="84.7" r="1.40" style="animation-delay:0.09s"/><circle cx="10.9" cy="82.4" r="1.29" style="animation-delay:0.78s"/><circle cx="80.0" cy="102.7" r="2.24" style="animation-delay:1.34s"/><circle cx="105.5" cy="103.6" r="2.28" style="animation-delay:2.87s"/><circle cx="45.9" cy="80.6" r="1.21" style="animation-delay:0.68s"/><circle cx="28.5" cy="80.1" r="1.19" style="animation-delay:1.87s"/><circle cx="101.6" cy="99.2" r="2.08" style="animation-delay:1.44s"/><circle cx="75.9" cy="98.0" r="2.02" style="animation-delay:0.25s"/><circle cx="86.0" cy="88.3" r="1.57" style="animation-delay:0.54s"/><circle cx="90.1" cy="84.0" r="1.37" style="animation-delay:2.4s"/>
+</g>
+<g font-family="ui-monospace,Menlo,monospace" font-weight="700" font-size="8" fill="var(--haz)" letter-spacing="1">
+<text x="60" y="115" text-anchor="middle">20.000 — 80.000</text></g>
+</svg>
+<div class="meta"><h2>Castlemorton · mayo 1992</h2><p>La mayor rave ilegal del Reino Unido: una mini ciudad temporal fuera de todo control. Juicio de 3 meses, absolución.</p></div>
+<div class="tags"><span class="style">Editorial nocturno</span><button class="dl">SVG</button></div>
+</article>
+<article class="card"><span class="num">15</span>
+<svg class="ico" data-name="15-criminal-justice-act-1994" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" data-name="15-criminal-justice-act-1994">
+<style>
+  /* ══ PALETA — edita libremente estos valores ══ */
+  svg{
+    --mesa: #e9e5da;
+    --hoja: #fbf9f3;
+    --tinta: #1a1a20;
+    --doblez: #d8d3c6;
+    --sello: #c0392b;
+    --renglon: #8b8677;
+    --nota: #6b6759;
+    /* ── velocidades (mayor = más lento) ── */
+    --vel-beats: 1.5s;
+    --vel-sello: 4.2s;
+  }
+
+.i15beat circle{animation:i15b var(--vel-beats) ease-in-out infinite}
+.i15beat circle:nth-child(2){animation-delay:.18s}.i15beat circle:nth-child(3){animation-delay:.36s}
+.i15beat circle:nth-child(4){animation-delay:.54s}.i15beat circle:nth-child(5){animation-delay:.72s}
+@keyframes i15b{0%,100%{transform:translateY(0);opacity:.55}50%{transform:translateY(-4px);opacity:1}}
+.i15stamp{transform-origin:78px 70px;animation:i15st var(--vel-sello) ease-out infinite}
+@keyframes i15st{0%{transform:rotate(-16deg) scale(2.4);opacity:0}12%{transform:rotate(-16deg) scale(1);opacity:1}90%,100%{transform:rotate(-16deg) scale(1);opacity:1}}
+.i15line{animation:i15w var(--vel-sello) steps(1) infinite}
+@keyframes i15w{0%,60%{opacity:1}61%,100%{opacity:.35}}
+</style>
+<rect width="120" height="120" fill="var(--mesa)"/>
+<g><rect x="18" y="8" width="84" height="104" fill="var(--hoja)" stroke="var(--tinta)" stroke-width="2.6"/>
+<path d="M102,8l-12,12h12Z" fill="var(--doblez)"/></g>
+<g font-family="ui-monospace,Menlo,monospace" font-weight="700" font-size="7" fill="var(--tinta)" letter-spacing=".5">
+<text x="26" y="30">CRIMINAL JUSTICE</text><text x="26" y="39.5" font-size="6.1">&amp; PUBLIC ORDER ACT</text>
+</g>
+<text x="26" y="54" font-family="ui-monospace,Menlo,monospace" font-weight="700" font-size="13" fill="var(--sello)">1994</text>
+<g class="i15line" stroke="var(--renglon)" stroke-width="1.8" stroke-linecap="round">
+<path d="M26,62h68M26,68h54M26,74h62"/></g>
+<g class="i15beat" fill="var(--tinta)"><circle cx="30" cy="88" r="3"/><circle cx="42" cy="88" r="3"/><circle cx="54" cy="88" r="3"/><circle cx="66" cy="88" r="3"/><circle cx="78" cy="88" r="3"/></g>
+<path d="M26,96h68" stroke="var(--sello)" stroke-width="2.4" stroke-linecap="round"/>
+<text x="60" y="105" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="4.6" fill="var(--nota)" letter-spacing=".2">"SUCCESSION OF REPETITIVE BEATS"</text>
+<g class="i15stamp">
+  <circle cx="78" cy="70" r="21" fill="none" stroke="var(--sello)" stroke-width="3" opacity=".9"/>
+  <circle cx="78" cy="70" r="16.5" fill="none" stroke="var(--sello)" stroke-width="1.1" opacity=".7"/>
+  <g font-family="Impact,'Arial Black',sans-serif" font-size="12" fill="var(--sello)" opacity=".95" letter-spacing="1">
+    <text x="78" y="75" text-anchor="middle">VOID</text>
+  </g>
+</g>
+</svg>
+<div class="meta"><h2>Criminal Justice Act · 1994</h2><p>El Estado legisla contra «beats repetitivos». Autechre y The Prodigy responden; la escena se exilia y se vuelve global.</p></div>
+<div class="tags"><span class="style">Documento legal sellado</span><button class="dl">SVG</button></div>
+</article>
+<article class="card"><span class="num">16</span>
+<svg class="ico" data-name="16-comercializacion-legado-vivo" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" data-name="16-comercializacion-legado-vivo">
+<style>
+  /* ══ PALETA — edita libremente estos valores ══ */
+  svg{
+    --fondo: #06060a;
+    --glitch-a: #ff2e7e;
+    --glitch-b: #2ee6ff;
+    --contorno: #f2f2f5;
+    --acento: #d7ff2e;
+    --scanline: #2c2c38;
+    /* ── velocidades (mayor = más lento) ── */
+    --vel-glitch: 3.4s;
+    --vel-ecualizador: 1.3s;
+    --vel-scan: 3s;
+  }
+
+.i16g1{animation:i16gl var(--vel-glitch) steps(1) infinite;mix-blend-mode:screen}
+.i16g2{animation:i16gr var(--vel-glitch) steps(1) infinite;mix-blend-mode:screen}
+@keyframes i16gl{0%,88%{transform:translate(0,0)}90%{transform:translate(-4px,1px)}94%{transform:translate(3px,-2px)}98%{transform:translate(-2px,0)}}
+@keyframes i16gr{0%,88%{transform:translate(0,0)}90%{transform:translate(4px,-1px)}94%{transform:translate(-3px,2px)}98%{transform:translate(2px,0)}}
+.i16scan{animation:i16sc var(--vel-scan) linear infinite}
+@keyframes i16sc{from{transform:translateY(-16px)}to{transform:translateY(120px)}}
+.i16bar rect{animation:i16eq var(--vel-ecualizador) ease-in-out infinite;transform-box:fill-box;transform-origin:center bottom}
+.i16bar rect:nth-child(1){animation-delay:0s}.i16bar rect:nth-child(2){animation-delay:.16s}.i16bar rect:nth-child(3){animation-delay:.32s}
+.i16bar rect:nth-child(4){animation-delay:.48s}.i16bar rect:nth-child(5){animation-delay:.64s}.i16bar rect:nth-child(6){animation-delay:.8s}
+.i16bar rect:nth-child(7){animation-delay:.96s}
+@keyframes i16eq{0%,100%{transform:scaleY(.35)}50%{transform:scaleY(1)}}
+.i16core{transform-origin:60px 52px;animation:i16pu var(--vel-ecualizador) ease-in-out infinite}
+@keyframes i16pu{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.1);opacity:1}}
+</style>
+<rect width="120" height="120" fill="var(--fondo)"/>
+<g opacity=".9">
+<g class="i16g1" fill="var(--glitch-a)"><path d="M60,20l30,17v34L60,88 30,71V37Z" opacity=".55"/></g>
+<g class="i16g2" fill="var(--glitch-b)"><path d="M60,20l30,17v34L60,88 30,71V37Z" opacity=".55"/></g>
+<path d="M60,20l30,17v34L60,88 30,71V37Z" fill="none" stroke="var(--contorno)" stroke-width="2.6" stroke-linejoin="round"/>
+</g>
+<g class="i16core"><circle cx="60" cy="52" r="12" fill="none" stroke="var(--acento)" stroke-width="2.4"/><circle cx="60" cy="52" r="4.5" fill="var(--acento)"/></g>
+<g class="i16bar" fill="var(--acento)">
+<rect x="16" y="94" width="8" height="18"/><rect x="29" y="94" width="8" height="18"/><rect x="42" y="94" width="8" height="18"/>
+<rect x="55" y="94" width="8" height="18"/><rect x="68" y="94" width="8" height="18"/><rect x="81" y="94" width="8" height="18"/><rect x="94" y="94" width="8" height="18"/>
+</g>
+<rect x="0" y="112" width="120" height="2" fill="var(--scanline)"/>
+<g opacity=".14" fill="#fff"><rect class="i16scan" x="0" y="0" width="120" height="10"/></g>
+<g stroke="var(--scanline)" stroke-width=".7" opacity=".5"><path d="M0,6h120M0,14h120M0,22h120M0,30h120M0,38h120M0,46h120M0,54h120M0,62h120M0,70h120M0,78h120M0,86h120M0,94h120M0,102h120M0,110h120"/></g>
+</svg>
+<div class="meta"><h2>Comercialización y legado vivo</h2><p>De Ministry of Sound a Tomorrowland; de cripto-raves a Telegram. El ADN sigue: «esta noche las reglas no aplican aquí».</p></div>
+<div class="tags"><span class="style">Glitch digital</span><button class="dl">SVG</button></div>
+</article>
+</div></main>
+<section class="taller" id="taller" hidden>
+  <h2>Taller: el motor semantico, aca mismo</h2>
+  <p>Los 16 de arriba estan escritos a mano. Esto es lo otro: una spec de
+  SIGNIFICADO -- vocabulario cerrado, sin coordenadas ni colores -- compilada a
+  SVG animado <strong>en tu navegador</strong>, con el mismo vocabulario que usa
+  el motor en la caja. Cambia una palabra y mira lo que pasa; si escribes una
+  que no existe, el motor te dice cuales son las validas.</p>
+  <div class="fila">
+    <div>
+      <textarea id="spec" spellcheck="false">{
+ "slug": "muro-que-emite",
+ "titulo": "El muro que se parte",
+ "brief": "dos muros se abren y liberan una onda",
+ "composicion": "confrontacion",
+ "tono": "concreto",
+ "capas": [
+  {
+   "rol": "lado_izq",
+   "figura": "muro",
+   "gesto": "desplazar_fuera",
+   "ritmo": "lento"
+  },
+  {
+   "rol": "lado_der",
+   "figura": "muro",
+   "gesto": "desplazar_fuera",
+   "ritmo": "lento"
+  },
+  {
+   "rol": "protagonista",
+   "figura": "onda",
+   "gesto": "emanar",
+   "ritmo": "rapido"
+  }
+ ]
+}</textarea>
+      <button id="compilar">COMPILAR</button>
+      <div class="aviso" id="aviso"></div>
+    </div>
+    <div class="salida" id="salida"></div>
+  </div>
+</section>
+<footer></footer>
+<script>
+document.getElementById('toggle').addEventListener('click',e=>{
+  document.body.classList.toggle('paused');
+  const p=document.body.classList.contains('paused');
+  e.target.textContent=p?'\u25b6 REANUDAR ANIMACIONES':'\u23f8 PAUSAR ANIMACIONES';
+  e.target.classList.toggle('on',p);
+});
+document.getElementById('light').addEventListener('click',e=>{
+  const l=getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()!=='#ececef';
+  const s=document.documentElement.style;
+  s.setProperty('--bg',l?'#ececef':'#08080b');
+  s.setProperty('--panel',l?'#ffffff':'#101017');
+  s.setProperty('--line',l?'#dcdce2':'#23232e');
+  s.setProperty('--ink',l?'#101014':'#f2f2f5');
+  s.setProperty('--dim',l?'#63636f':'#8b8b9c');
+  e.target.classList.toggle('on',l);
+});
+function grab(svg){
+  const c=svg.cloneNode(true);
+  c.setAttribute('xmlns','http://www.w3.org/2000/svg');
+  c.removeAttribute('class');
+  return new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n'+c.outerHTML],{type:'image/svg+xml'});
+}
+function save(blob,name){
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+}
+document.querySelectorAll('.dl').forEach(b=>b.addEventListener('click',()=>{
+  const svg=b.closest('.card').querySelector('svg');
+  save(grab(svg),svg.dataset.name+'.svg');
+}));
+document.getElementById('dlall').addEventListener('click',()=>{
+  document.querySelectorAll('.card svg').forEach((s,i)=>setTimeout(()=>save(grab(s),s.dataset.name+'.svg'),i*280));
+});
+</script>
+<script type="module">
+(async () => {
+  const panel = document.getElementById('taller');
+  if (!panel) return;
+  try {
+    const [{compilar, ErrorSemantico}, vocab] = await Promise.all([
+      import('../../lib/compilador.js'),
+      fetch('../../lib/vocabulario.json').then(r => r.json()),
+    ]);
+    const area = document.getElementById('spec');
+    const salida = document.getElementById('salida');
+    const aviso = document.getElementById('aviso');
+    const pintar = () => {
+      try {
+        const spec = JSON.parse(area.value);
+        const {svg, avisos} = compilar(spec, vocab, spec.slug || 'taller');
+        salida.innerHTML = svg;
+        aviso.className = 'aviso';
+        aviso.textContent = avisos.length
+          ? 'compilado, con avisos:\n- ' + avisos.join('\n- ')
+          : 'compilado sin avisos.';
+      } catch (e) {
+        aviso.className = 'aviso mal';
+        aviso.textContent = (e instanceof ErrorSemantico)
+          ? 'rechazado por el motor:\n' + e.message
+          : 'JSON invalido: ' + e.message;
+      }
+    };
+    area.addEventListener('input', pintar);
+    document.getElementById('compilar').addEventListener('click', pintar);
+    panel.hidden = false;
+    pintar();
+  } catch (e) {
+    // La galeria no se rompe por esto: el taller es un extra.
+    panel.hidden = true;
+  }
+})();
+</script>
+</body>
+</html>

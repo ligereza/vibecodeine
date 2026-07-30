@@ -294,6 +294,32 @@ def guardar_pieza(pedido, codigo, resultado, meta):
     return base + ".py", base + ".md"
 
 
+def guardar_pieza_generica(pedido, contenido, meta, ext="py", lang="python",
+                           nota_md=""):
+    """Como guardar_pieza pero con extension y lenguaje de fence variables.
+
+    Existe para el modo `iconos`, cuya pieza es un .svg y no un .py. Es una
+    funcion NUEVA y no un cambio de firma a proposito: generar/revisar/testear/
+    debug dependen de guardar_pieza y no se toca lo que ya sirve.
+
+    Mantiene el footer '---\\nmeta: {...}' porque es de ahi -- y no de
+    jobs.jsonl -- de donde entregar.py lee smoke_ok.
+    """
+    os.makedirs(PIEZAS, exist_ok=True)
+    base = os.path.join(PIEZAS, "%s-%s" % (stamp(), slug(pedido)))
+    contenido = contenido or ""
+    with open(base + "." + ext, "w", encoding="utf-8") as f:
+        f.write(contenido if contenido.endswith("\n") else contenido + "\n")
+    with open(base + ".md", "w", encoding="utf-8") as f:
+        f.write("# Codex: %s\n\n" % pedido)
+        if nota_md:
+            f.write(nota_md.rstrip() + "\n\n")
+        if contenido.strip():
+            f.write("```%s\n%s\n```\n\n" % (lang, contenido.strip()))
+        f.write("---\nmeta: %s\n" % json.dumps(meta, ensure_ascii=False))
+    return base + "." + ext, base + ".md"
+
+
 def guardia_espera():
     """Gate de recursos de la plataforma; sin guardia = sigue igual."""
     try:
