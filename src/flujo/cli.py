@@ -1952,7 +1952,7 @@ def suplementos_illustrator(
 # links a GitHub Issues, planteado como alternativa a monday.com, y hoy choca
 # con dos cosas: el panel de Trabajos ya muestra ese estado, y los issues son un
 # canal de entrada, no un tablero de tareas. Archivado en
-# _archive/legacy_20260726_cli_roto/portal.py con su motivo.
+# retirado el 2026-07-30 con su motivo; vive en el historial de git.
 
 
 @app.command()
@@ -2098,7 +2098,7 @@ def serve(
     `scripts/app.py`, una tercera interfaz sin tocar desde el commit inicial.
     Encima gradio no esta declarado en pyproject, asi que en una instalacion
     limpia ese camino ni arrancaba. Archivado en
-    _archive/legacy_20260726_cli_roto/.
+    el historial de git (retirado del arbol el 2026-07-30).
     """
     from .web.hub import launch
     from .paths import repo_root

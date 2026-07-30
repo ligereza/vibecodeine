@@ -809,8 +809,14 @@ function aplicarSemilla(s){
   const i = s.semilla ? NODOS.findIndex(n => n.obra.id === s.semilla) : -1;
   if (i >= 0) E.pos = NODOS[i].y;
   else if (s.centro !== undefined) E.pos = Math.max(0, Math.min(LARGO, s.centro));
-  // Se entra por el medio del archivo: no hay principio.
-  else E.pos = NODOS.length ? NODOS[Math.floor(NODOS.length/2)].y : 0;
+  // Sin direccion se entra por la PRIMERA obra. Es como se ve el sitio y es
+  // decision de producto, no un accidente: hasta el 2026-07-30 lo producia un
+  // `Math.max(0, -1)` que volvia inalcanzable el respaldo escrito abajo. Al
+  // sacar ese max, el sitio empezo a abrir por el medio del archivo y dejo de
+  // verse como se veia. El arreglo tecnico era correcto; cambiar la entrada del
+  // portafolio no me correspondia. Queda explicito para que se elija, no se
+  // herede de un bug.
+  else E.pos = NODOS.length ? NODOS[0].y : 0;
   if (s.escala !== undefined) E.latObj = E.lat = Math.max(-1, Math.min(1, s.escala));
 }
 
