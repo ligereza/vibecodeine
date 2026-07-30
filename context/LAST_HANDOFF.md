@@ -102,122 +102,151 @@ VCD-06 (8 MB body cap, 413 on excess) and VCD-07 (every workflow `uses:` pinned
 to a commit SHA + `dependabot.yml`) are closed. Only VCD-10 remains: assigned to
 MAK, never verified running.
 
-## Pending on the machines (2026-07-29, still true)
+## Branches: the four lines, and one rescue (2026-07-30)
 
-#372-#374 and #376/#377/#378 all merged; the four squash-merged `*-20260728`
-branches are noise on origin (run `podar_ramas` from Actions). On the BOX: reset
-the inbox with `git push origin main:mak --force-with-lease` -- the one undrained
-commit (#375) was REJECTED on review (simulated in-memory queues never wired to
-real `mak_codex`), and agents cannot push that reset; then verify VCD-10 really
-runs and curl `GET /api/archivo` on the hub. The sync cron already covers
-`mak_curatoria -> ~/curatoria` (verified on the box). On WINDOWS the only pending
-user decision is the `rescate/ascii-campo` aesthetic call.
+`main`, `rd`, `iskvw`, `mak` -- plus `rescate/ascii-campo`, which STAYS: it
+holds the ASCII-skin work and merging it is the user's aesthetic call. Cleaned
+up that day: two stale worktrees (`flujo-organos`, `flujo-sin-gptmini`, whose
+content main already had -- verified file by file, not by SHA, because squash
+merges rewrite them), three local branches, and two remote branches already
+merged. `.vscode/` is ignored now, for the same reason `.agents/` and `.codex/`
+are: it is the user's and a `git add -A` swallowed its cousins twice.
 
-## La noche SOL y los puertos: cerrado, detalle archivado
+## Pending on the machines, and the SOL night (archived detail)
 
-Auditado el 2026-07-29 y comprimido aca el 2026-07-30. Detalle completo en
-`docs/handoffs/archive/20260729_sol_noche.md`. Lo que hay que saber: nada se
-perdio (todo merged, #372/#374/#376/#377/#378), los ~$200 de Azure fueron 125M
-tokens con retraso de facturacion y NO una fuga, Azure queda ABANDONADO (palabra
-del usuario), y los dos pendientes que SOL declaro se cerraron por verificacion
-sin codigo nuevo. Sigue owed la lista de trabajo de teoria del portafolio: el
-contrato del "cuaderno", el primer estudio de UNA obra en seis representaciones,
-la travesia de thi.ng por familias y el modelo de interaccion de iskvw.cl (gesto
-que altera la lectura LOCAL, sesion como semilla reproducible en la URL).
+Full detail: `docs/handoffs/archive/20260729_sol_noche.md`. Nothing was lost
+that night, the Azure figure was billing lag and not a leak, and Azure is
+ABANDONED (his word). On the BOX: reset the inbox with
+`git push origin main:mak --force-with-lease` -- the one undrained commit (#375)
+was REJECTED on review and agents cannot push that reset -- then verify VCD-10
+really runs and curl `GET /api/archivo`. The sync cron already covers
+`mak_curatoria`. Still owed from the portfolio-theory debate: the "cuaderno"
+contract, one work across six representations, thi.ng traversed by families, and
+the iskvw.cl interaction model.
 
-## The rave zip: LANDED 2026-07-30 (PR #402, CI green)
+## The rave zip: LANDED 2026-07-30 (PR #402, merged)
 
-The whole system is in the repo. Where things are: the essay and its 16 animated
-icons at `docs/cultura/ensayos/rave/` (out of `context/`, in ONE place, sources
-declared as a DEBT in its header rather than invented); the motor as a codex
-capability at `cultura/mak_codex/motor_semantico/` + mode `iconos`, with
-`entregar.py` guarding the Python-delivery path against `.svg` pieces; a new
-research format at `docs/cultura/FORMATO_ENSAYO.md` (`research.py --formato
-ensayo`, which emits the nameable concepts already shaped for the `iconos`
-mode); and the why, with its measurements and its honest limits, in
-`docs/cultura/MOTOR_SEMANTICO.md`.
+Where things are: the essay and its 16 animated icons at
+`docs/cultura/ensayos/rave/`; the motor as a codex capability at
+`cultura/mak_codex/motor_semantico/` + mode `iconos`; the new research format in
+`docs/cultura/FORMATO_ENSAYO.md` (`research.py --formato ensayo`); the why, with
+its measurements and honest limits, in `docs/cultura/MOTOR_SEMANTICO.md`.
 
-Five decisions of that landing, which do not get re-litigated:
+Five decisions of that landing, not to be re-litigated:
 
-1. **The style is NOT unified.** Every topic asks for its own presentation, so
-   `coro` is the default and `sistema` the argued exception.
-2. **The artefact is an ANIMATION and it is editable**: every layer is a named
-   group declaring `data-rol/figura/gesto/ritmo` with a `<title>`, so it opens
-   in Illustrator/Inkscape and each element answers for what it encodes.
+1. **The style is NOT unified**: `coro` by default, `sistema` the argued exception.
+2. **The artefact is an ANIMATION and it is EDITABLE**: every layer is a named
+   group declaring `data-rol/figura/gesto/ritmo` with a `<title>`, so it opens in
+   Illustrator/Inkscape and each element answers for what it encodes.
 3. **Verification is a GIF, never a PNG** -- a single frame cannot tell still
-   from animated. All sixteen give 10/10 distinct frames. The rule that holds it
-   is COHERENCE, not a threshold: an icon that declares `@keyframes` must move
-   within ITS OWN cycle, and the cycle is asked of the file instead of assuming
-   a fixed window. The first measurement produced a false positive -- one icon
-   accused of being static -- and the defect was the instrument: the animation
-   advance was injected after the word `infinite`, which in a
-   `... infinite alternate` rule left `alternate` dangling and the browser
-   dropped the whole declaration. GIFs are an instrument, not a deliverable, and
-   do not enter the repo.
+   from animated. An instrument, not a deliverable: GIFs do not enter the repo.
 4. **Each icon declares the passage that justifies it** (`ancla`, pinned by a
    test): the text is the organ that justifies the content that sustains the form.
 5. **thi.ng is IN USE, not noted**: `hiccup` + `hiccup-svg` + `color` in
-   `docs/cultura/lib/compilador.js`, the browser twin, verified headless. The
+   `docs/cultura/lib/compilador.js`, the browser twin, verified headless; the
    geometry is EXPORTED from the Python vocabulary, never ported by hand.
    **`CAPACIDADES.md` section 6 is the index to read BEFORE writing a generator,
-   a pipeline or a graph from scratch**, with `tests/test_thing_registro.py`
-   keeping it honest; `graph` + `transducers` + `validate` are the named next
-   candidates, aimed at the micelio. A second recommendation doc (3D/liveshow:
-   webgl, shader-ast, matrices, vectors, noise, rstream, imgui) has a Prototype B
-   that IS the iskvw campo and an audio/OSC layer that is the DREF chain already
+   a pipeline or a graph from scratch** (`tests/test_thing_registro.py` keeps it
+   honest). Next candidates, aimed at the micelio: `graph`, `transducers`,
+   `validate`. A second recommendation doc (3D/liveshow) has a Prototype B that
+   IS the iskvw campo and an audio/OSC layer that is the DREF chain already
    running.
 
 Three defects the CI matrix caught that a green local Windows run did not: a
-backend that EXISTS and does not rasterize (`/usr/bin/microsoft-edge` on the
-ubuntu runner) must count as absent -- it is probed now, once per binary; the
-vendorized `*.README.md` are THIRD-PARTY docs and live in a declared
-`ZONA_AJENA`; and the doc ratchet reads `git ls-files`, so **a new `.md` not yet
-committed is invisible to it** -- a green local run before the commit says
-nothing about the files the commit is about to add.
+backend that EXISTS and does not rasterize must count as absent (probed now,
+once per binary); the vendorized `*.README.md` are THIRD-PARTY docs and live in
+a declared `ZONA_AJENA`; and the doc ratchet reads `git ls-files`, so **a new
+`.md` not yet committed is invisible to it**.
+
+## What a real model did to a boundary a mock never touched (2026-07-30)
+
+The `iconos` mode had only been exercised with a FAKE model -- one that returns
+exactly the types you expect. The first run against a real one (gpt-4.1-mini via
+GitHub Models; NOT the Azure account SOL drained) found two things in the first
+attempt. Detail and numbers: `docs/cultura/MOTOR_SEMANTICO.md`.
+
+1. **The boundary with a model is validated by TYPE before value.** It returned
+   `composicion` as a dict; that raises `TypeError`, and the mode only catches
+   `ValueError` -- so it was not a rejection with its reason, it was the mode
+   falling over. Fixed, with a wrong-typed value REJECTED instead of silently
+   defaulting.
+2. **A closed vocabulary stops invented words; it does not fix the SHAPE.**
+   Vocabulary alone -> 1 of 3 briefs reached an SVG, with up to three repair
+   rounds. Vocabulary + ONE complete example spec -> **3 of 3 on the first
+   round**. The example is `esquema.EJEMPLO` and a test demands it stay.
+
+**A measurement that was WRONG, corrected everywhere:** "one of the sixteen
+icons is nearly static" was a defect of the INSTRUMENT (the animation advance
+was injected after `infinite`, killing a `... infinite alternate` rule). All
+sixteen give 10/10 distinct frames, and the guard is coherence, not a threshold:
+an icon that declares `@keyframes` must move within ITS OWN cycle.
+
+**Still NOT closed, named so nobody finds it by surprise:** the full `iconos.py`
+-- resource guard, saved piece, job -- has never run in its place on the box.
+What was measured is the same prompt and the same compiler, from Windows.
 
 ## iskvw: the substrate is consumed, and MAK's essays reach it (2026-07-30)
 
-The portfolio had none of `PROYECCION.md`'s integrations wired, and the user's
-priority is that what gets built in MAK be useful to iskvw. Three cuts, all
-verified running:
+The portfolio had none of `PROYECCION.md`'s integrations wired. Three cuts, all
+verified running; detail in `iskvw/MAPA.md` and `iskvw/ESQUEMA_ARCHIVO.md`:
 
-1. **An essay enters the archive through the same contract.**
-   `contrato_archivo.desde_ensayo()` (in the contract, not the generator,
-   because an essay exists on both sides) + `gen_archivo_iskvw.py --fuente
-   ensayos`. Measured on the real material: 1 essay + 16 concepts + 16 icons =
-   33 pieces and 32 links; `--fuente todo` gives 41 pieces and 50 links, so the
-   research now sits next to the artist's works. Its rules: links are `manual`
-   and never `semantico` (a manifest declares them, nobody measured a distance),
-   an icon declared and absent from disk produces NO piece, and
-   `extra.declara_animacion` is READ from the file (it has keyframes) instead of
-   asserted -- claiming `anima: true` for all sixteen would be a datum the file
-   does not have.
-2. **The skin asks for the substrate.** `piel/campo` tries `archivo.json` first
-   (pieces AND links) and degrades exactly as before to `campo.json` /
-   `obras.json`. Since `archivo.json` is not versioned, the fallback IS the live
-   path today: zero risk, and the data is there the day it gets published.
-3. **A session is a reproducible seed** (PROYECCION 6.2):
-   `#semilla=<pieza>&centro=<y>&escala=<lateral>`, written with `replaceState`
-   when a gesture ends. Same seed + same archive = same constellation, pinned by
-   `tests/test_iskvw_semilla.py`, which extracts the two functions from the
-   published file and runs them in node -- so it tests what ships, not a copy.
-   Garbage in the hash stays absent rather than becoming a NaN position, and an
-   old id-only link still works.
+1. **An essay enters the archive through the same contract**
+   (`contrato_archivo.desde_ensayo` + `--fuente ensayos`): 1 essay + 16 concepts
+   + 16 icons = 33 pieces, 32 links; `--fuente todo` gives 41 and 50. Links are
+   `manual` and never `semantico`, an icon absent from disk produces NO piece,
+   and `declara_animacion` is READ from the file.
+2. **The skin asks for the substrate**: `archivo.json` first, degrading exactly
+   as before. It is not versioned, so the fallback IS today's live path.
+3. **A session is a reproducible seed** (`#semilla=&centro=&escala=`), pinned by
+   a test that runs the PUBLISHED file's own functions in node.
 
-**The links are DRAWN: always, faint, by weight** (his call, 2026-07-30).
-Opacity comes from the link's weight with a low ceiling, they go UNDERNEATH the
-works -- the relation is the substrate, the work is what you look at -- and a
-link needs BOTH ends in frame or it is dropped. The neighbours are indexed once
-at seeding: the every-pair-every-frame defect of the reference this field came
-from is pinned by `tests/test_iskvw_vinculos.py`. Measured over the campo's 219
-pieces: 207 to 615 segments per frame depending on where you read, against the
-23,871 pairs an all-against-all would cost. NOT measured, so not claimed: frames
-per second on a phone.
+**The links are DRAWN: always, faint, by weight** (his call). They go underneath
+the works, a link needs BOTH ends in frame, and the neighbours are indexed once
+-- the every-pair-every-frame defect is pinned by a test. Measured: 207 to 615
+segments per frame against the 23,871 pairs an all-against-all would cost. NOT
+measured, so not claimed: frames per second on a phone.
 
 **Still the user's, and he wants to DEBATE it first:** whether the essays get
-published on iskvw.cl. `archivo.json` is not versioned, so the site does not see
-them; that MAK's research appears beside the artist's work is a question of
-authorship. The bridge is built and unused.
+published on iskvw.cl. The bridge is built and unused.
+
+## MAK como motor: sirve, y el checkpoint mentia
+
+`cultura/mak_plataforma/ideas.py` SI esta conectado al hub y funciona -- este
+archivo decia "NO esta conectado ni probado" y por eso nadie lo usaba. Probado
+el 2026-07-27: se declara una idea, el micelio la relaciona solo con obras del
+archivo, y `encargar()` la pone al frente de la cola. Devuelve ok.
+
+El defecto real de MAK es otro y esta medido: `entregar: 107 listos, 37
+entregados, 18 pendientes`, a UNO cada 6 horas. Genera volumen sobre un backlog
+que el mismo se autorellena y lo drena a cuentagotas. El mecanismo para
+dirigirlo existia y estaba invisible.
+
+## Already decided -- do not reopen
+
+| Date | Decision |
+|---|---|
+| 2026-07-27 | Las 16 decisiones de ese dia, vigentes: `docs/handoffs/archive/20260727_decisiones.md` (riesgo telefono CERRADO 60fps x4, el loop no escribe docs, curacion=configuracion, vocabulario cerrado en la fuente, archivos no consola, preset viaja, export no rama, MAK atiende issues solo, TLS no UA, CUDA vs OptiX por maquina, la cara no es el costo, PDFs=piezas, tipos=config, cola de triangulacion) |
+| 2026-07-26 | Las 17 decisiones de ese dia, vigentes: `docs/handoffs/archive/20260726_decisiones.md` (tres modos de trabajo, iskvw es el portafolio, nadie abre issues, valores de dinero configurables, catalogo de simbolos abierto, brand como info, MAK atiende material del usuario, idioma dividido, referencias como referencias, worktrees podados, crons inutiles fuera) |
+| 2026-07-10 a 07-25 | Decisiones mas viejas, vigentes pero fuera de la lista viva: `docs/handoffs/archive/20260722_25_decisiones.md` (panel de suplementos innecesario, la carpeta de diseno no se respalda desde el repo, los dos planes grandes RECHAZADOS, `desktop/` archivado, Instagram via parth-dl, n8n descartado, Gemini fuera, nada de Oh My Posh) |
+
+## Built on 2026-07-26, waiting for the user to look
+
+Tres prototipos, todos regenerables por comando desde datos reales. Detalle en
+`docs/handoffs/archive/20260726_prototipos.md`: la propuesta a la directiva RD,
+el prototipo del archivo iskvw, y MAK + portafolio visibles en la app.
+
+## Blocked, waiting on the user
+
+- **Portfolio aesthetic references: FOUND, not lost**, and the paths are in the
+  assistant's local memory because they are personal. Three sessions declared
+  them gone in ephemeral cloud containers while they sat one level above the repo
+  on his own disk -- everyone searched the repo and their own memory, then
+  declared absence. Which direction is current is style, so it gets asked.
+- **Design exports: RESOLVED (user's word, 2026-07-29).** This entry had
+  already been wrong twice; the third failure was staying listed as pending
+  after the user resolved it -- an agent repeated it back to him as open and
+  he had to correct it. Details live on his machines, not here. The lesson
+  compounds: an answer not written in-session gets asked again.
 
 ## Las cuatro capas: no confundirlas (2026-07-27)
 
