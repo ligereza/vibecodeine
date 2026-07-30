@@ -42,6 +42,7 @@ CLI real (`py -m flujo --help`, v0.56.1), comandos principales:
 | `tapiz_live_loop.py` | Daemon-poller que corre `compete_engine` en modo `--live` a intervalo fijo. |
 | `tapiz_telemetry.py` | Construye el autorretrato en vivo del ecosistema (`system_status.json`). |
 | `token_budget.py` | Estima tokens de un set de archivos antes de mandarlos a un modelo. |
+| `venue.py` | Base abierta de venues para VJ/tecnica: `sembrar` (una linea por sala) -> JSON validado contra `schemas/venue.schema.json` con tier de `confianza` por dato, `validar`/`listar`/`sitio` (HTML autocontenido consultable desde telefono). `tests/test_venue.py`. |
 | `verify_all.py` | Verificacion del repo en un comando: compileall + pytest + `flujo verify` (opcional `--web`). |
 
 `xio/` (server telefono + show kit): server Flask (`xio/actual/server.py`,
