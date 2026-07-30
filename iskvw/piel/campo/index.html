@@ -60,6 +60,13 @@
     transition:max-height .9s ease,opacity .9s ease;
     font-size:.66rem;line-height:1.7;color:#8a857a;letter-spacing:.04em}
   #ficha.desplegada .mas{max-height:9em;opacity:1;margin-top:10px}
+  /* La pieza grafica se presenta ELLA MISMA al quedarse quieto: el svg
+     animado es la obra, no una descripcion -- la regla de la VOZ se respeta
+     porque no aparece texto de maquina, aparece la pieza. */
+  #ficha .icono{max-height:0;opacity:0;overflow:hidden;
+    transition:max-height 1.1s ease,opacity 1.1s ease}
+  #ficha.desplegada .icono{max-height:13em;opacity:1;margin-top:10px}
+  #ficha .icono svg{height:11em;width:auto;display:block}
   #ficha a{color:#e8e4da;pointer-events:auto;text-decoration:none;
            border-bottom:1px solid #3a372f;font-size:.72rem}
 
@@ -86,6 +93,7 @@
   <h1 id="f-titulo"></h1>
   <p id="f-texto"></p>
   <div class="tags" id="f-tags"></div>
+  <div class="icono" id="f-icono"></div>
   <div class="mas" id="f-mas"></div>
 </div>
 
@@ -663,6 +671,7 @@ function resolver(n){
   if (o.estilo) filas.push(['registro', o.estilo]);
   document.getElementById('f-mas').textContent =
     filas.map(([k, v]) => `${k} ${v}`).join('   ·   ');
+  presentarIcono(o);
   // Una obra resuelta tiene direccion propia: sin migas de pan y sin mapa,
   // pero el que la encontro puede volver y puede mandarla.
   if (o.id) history.replaceState(null,'','#'+o.id);
@@ -670,6 +679,29 @@ function resolver(n){
 function disolver(){
   if (!E.foco) return;
   E.foco = null; ficha.classList.remove('on');
+}
+
+/* Una pieza grafica trae su svg animado (medio.src, ruta del repo publicada
+   tal cual en el sitio). Al resolverla se trae UNA vez y queda en cache; se
+   inserta inline para que sus keyframes corran -- un <img> congela SMIL en
+   algunos navegadores y ademas no hereda nada. Si el asset no esta (servidor
+   local sirviendo solo iskvw/), la ficha sigue sin el: el campo no depende
+   del icono, el icono enriquece al campo. */
+const ICONOS = new Map();
+function presentarIcono(o){
+  const caja = document.getElementById('f-icono');
+  caja.innerHTML = '';
+  const src = o.clase === 'pieza_grafica' && o.medio && o.medio.src;
+  if (!src || !/\.svg$/.test(src)) return;
+  if (ICONOS.has(src)){ caja.innerHTML = ICONOS.get(src); return; }
+  // Absoluta a la raiz del sitio: la piel vive copiada en / y en /piel/campo/
+  // a la vez, y una ruta relativa solo puede servir a una de las dos.
+  fetch('/' + src).then(r => r.ok ? r.text() : null).then(t => {
+    if (!t || t.indexOf('<svg') < 0) return;
+    ICONOS.set(src, t);
+    // sigue siendo la obra resuelta? (el visitante pudo moverse mientras cargaba)
+    if (E.foco && E.foco.id === o.id) caja.innerHTML = t;
+  }).catch(()=>{});
 }
 
 /* ── gesto ── */
