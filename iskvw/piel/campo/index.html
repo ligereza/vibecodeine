@@ -225,6 +225,23 @@ function delContrato(p){
   };
 }
 
+/* Doublecup: la textura no usa una rampa generica -- sus caracteres SON el
+   vocabulario percibido de la obra (titulo, etiquetas, tipo), tildes
+   incluidas: el residuo diacritico aparece literalmente en la textura.
+   Ordenado por frecuencia para que lo mas propio de la obra sea lo que mas
+   se ve. El campo generativo sigue gobernando ritmo y densidad; el CONTENIDO
+   ahora codifica la curatoria. Si una obra no trae letras, cae a la rampa. */
+function alfabetoDe(o){
+  const base = ((o.title||'') + ' ' + (o.tags||[]).join(' ') + ' ' +
+                (o.tipo||'')).toLowerCase();
+  const visto = new Map();
+  for (const ch of base)
+    if (/[a-z0-9áéíóúñü]/.test(ch))
+      visto.set(ch, (visto.get(ch)||0)+1);
+  if (!visto.size) return null;
+  return [...visto.entries()].sort((a,b)=>b[1]-a[1]).map(e=>e[0]);
+}
+
 function sembrar(obras){
   OBRAS = obras;
   // x e y vienen de la proyeccion MEDIDA (tools/gen_campo_iskvw.py): dos obras
@@ -237,6 +254,7 @@ function sembrar(obras){
     const h = [...(o.id||o.title||String(i))].reduce((a,ch)=>((a*31+ch.charCodeAt(0))>>>0),7);
     return {
       obra: o,
+      letras: alfabetoDe(o),
       // El eje del recorrido es la coordenada medida, estirada al campo. El
       // orden de lectura ES la estructura del archivo, no el de un listado.
       y: conXY ? (o.y + 1) * 2600 : i * 460 + (h % 120) - 60,
@@ -406,7 +424,16 @@ function dibujar(){
               + Math.sin((destino[0]+destino[1])*9 + tGlifo*1.37) * 0.5 * (1 + E.fuerza*2);
       const nivel = Math.max(0, Math.min(RAMPA.length-1,
         Math.round(((v + 1.5)/3) * (RAMPA.length-1) * (0.55 + E.despliegue*0.45))));
-      const g2 = RAMPA[nivel];
+      // Doublecup: en los niveles bajos la rampa conserva el vacio (espacio,
+      // punto); desde ahi el caracter es del vocabulario de la obra, elegido
+      // por una segunda frecuencia del mismo campo para que la textura
+      // respire sin repetirse. Contenido curatorial, ritmo generativo.
+      let g2 = RAMPA[nivel];
+      if (nivel >= 2 && n.letras){
+        const vi = Math.sin(destino[0]*23 - tGlifo*0.7)
+                 * Math.cos(destino[1]*19 + tGlifo*0.43);
+        g2 = n.letras[Math.floor(((vi+1)/2) * 977) % n.letras.length];
+      }
       if (g2 !== ' '){
         ctx.fillStyle = `hsla(${n.tono},16%,90%,${((F-0.35)/0.65) * (0.5 + nivel/(RAMPA.length-1)*0.5)})`;
         ctx.fillText(g2, px, py);
