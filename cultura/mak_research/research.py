@@ -26,6 +26,11 @@ import time
 
 import formato_ensayo
 import pausa
+
+try:
+    import fuentes
+except ImportError:          # el organo puede correr sin la compuerta
+    fuentes = None
 from research_lib import (LLM, escala_tok, fetch_url, load_env, marco,
                          ntfy_publish, slug, stamp, tavily_search, web_search)
 
@@ -201,6 +206,12 @@ def investigar(topic, iteraciones=3, depth="basic",
 
     sources = list(dict.fromkeys(f["url"] for f in findings if f.get("url")))
 
+    # La compuerta de fuente: una pregunta sobre derecho chileno no se responde
+    # con un PDF de pedagogia peruano. `dom` es None para casi todo -- la mayoria
+    # de las preguntas culturales NO tienen fuente primaria y no deben estorbarse.
+    dom = fuentes.dominio_de_tema(topic) if fuentes else None
+    ev = fuentes.evaluar(topic, sources, dom) if (fuentes and dom) else None
+
     if saltar_informe:
         report = ("[Informe omitido por accion humana: saltar] La fase de "
                   "generacion de informe fue saltada tras una pausa; ver "
@@ -211,18 +222,27 @@ def investigar(topic, iteraciones=3, depth="basic",
     es_ensayo = formato == "ensayo"
     print("STATUS: Generando %s final..." % formato, flush=True)
     try:
+        sistema_ensayo = formato_ensayo.SISTEMA
+        sistema_informe = (
+            "Eres un investigador senior. Redactas informes claros en "
+            "espanol correcto (con tildes), en formato Markdown.")
+        if ev:
+            # Sin fuente primaria la TAREA cambia: de sintetizar a reportar la
+            # ausencia. No es un aviso al margen, es otra instruccion.
+            extra = fuentes.instruccion_sintesis(sources, dom)
+            sistema_ensayo += extra
+            sistema_informe += extra
         if es_ensayo:
             # El ensayo pide mas espacio que el informe: son partes narradas con
             # tabla comparativa, cronologia y cierre argumentado, no cinco
             # secciones enumeradas.
             report, _ = llm.call(
-                formato_ensayo.SISTEMA,
+                sistema_ensayo,
                 formato_ensayo.prompt_documento(topic, findings, sources),
                 int(escala_tok(2000, densidad) * 1.8))
         else:
             report, _ = llm.call(
-                "Eres un investigador senior. Redactas informes claros en "
-                "espanol correcto (con tildes), en formato Markdown.",
+                sistema_informe,
                 "Genera un informe con secciones: 1. RESUMEN EJECUTIVO, "
                 "2. HALLAZGOS PRINCIPALES (cita fuente URL), 3. ANALISIS "
                 "CRITICO, 4. LAGUNAS DE INFORMACION, 5. PROXIMOS PASOS.\n\n"
@@ -234,9 +254,18 @@ def investigar(topic, iteraciones=3, depth="basic",
     except RuntimeError as e:
         pausar(iteraciones, formato, str(e))
 
+    if ev and ev["sin_fuente_primaria"]:
+        # Arriba de todo y antes de armar: un lector que abre el archivo tiene
+        # que ver la marca antes que cualquier afirmacion.
+        report = fuentes.encabezado(sources, dom) + "\n" + report
+
     resultado = _armar_resultado(topic, report, t0, findings, query_history,
                                  sources, llm)
     resultado["formato"] = formato
+    if ev:
+        # Sin esto no se puede auditar despues cual informe se apoyo en que.
+        resultado["meta"]["dominio"] = ev["dominio"]
+        resultado["meta"]["fuentes_primarias"] = ev["fuentes_primarias"]
     if es_ensayo:
         # Los conceptos se piden DESPUES y sobre el texto final: los que importan
         # son los que el ensayo termino sosteniendo, no los que se anticiparon.

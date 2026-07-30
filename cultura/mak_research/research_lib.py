@@ -358,6 +358,32 @@ def load_env(path=ENV_FILE):
     return env
 
 
+# ------------------------------------------------------------------ watsonx
+# El token IAM de IBM vence a la hora, asi que se cambia la API key por un
+# bearer y se cachea. Sin cache, cada llamada pagaria 460 ms de ida y vuelta a
+# iam.cloud.ibm.com antes de empezar a trabajar.
+_WX_TOK = {"t": None, "exp": 0.0}
+
+
+def _wx_token():
+    if _WX_TOK["t"] and time.time() < _WX_TOK["exp"] - 60:
+        return _WX_TOK["t"]
+    cuerpo = urllib.parse.urlencode({
+        "grant_type": "urn:ibm:params:oauth:grant-type:apikey",
+        "apikey": os.environ.get("WATSONX_API_KEY", ""),
+    }).encode()
+    req = urllib.request.Request(
+        "https://iam.cloud.ibm.com/identity/token", data=cuerpo,
+        headers={"Content-Type": "application/x-www-form-urlencoded",
+                 "Accept": "application/json",
+                 "User-Agent": "flujo-mak-research/1.0"})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        d = json.loads(r.read().decode("utf-8", "replace"))
+    _WX_TOK["t"] = d["access_token"]
+    _WX_TOK["exp"] = time.time() + float(d.get("expires_in", 3600))
+    return _WX_TOK["t"]
+
+
 def _http_json(url, body=None, headers=None, timeout=60, method=None):
     data = json.dumps(body).encode() if body is not None else None
     # UA custom: Cloudflare devuelve 403 codigo 1010 al UA default de
@@ -397,8 +423,13 @@ class LLM:
         load_env()
         self.stats = {}
         self.errors = []
+        # La lista blanca dice QUIENES pueden participar. `watsonx` entra aca y
+        # NO en el `order` por defecto de la firma: existe para pedirlo
+        # explicito (`LLM(order="watsonx")`) hasta tener salud medida, que es
+        # como entra cualquier proveedor nuevo a la cadena.
         base = [p.strip() for p in order.split(",")
-                if p.strip() in ("groq", "cerebras", "azure", "win", "ollama")]
+                if p.strip() in ("groq", "cerebras", "azure", "win", "ollama",
+                                 "watsonx")]
         # Misma regla que orden_rol: la lista escrita dice QUIENES participan,
         # la salud medida decide el orden. Con muestra insuficiente no se toca.
         self.order = ordenar_por_salud(base)
@@ -425,6 +456,28 @@ class LLM:
             timeout=60,
         )
         return r["choices"][0]["message"]["content"].strip()
+
+    def _watsonx(self, system, user, max_tok):
+        """IBM watsonx.ai. Verificado 4/4 por `tools/watsonx_smoke.py` contra la
+        cuenta real el 2026-07-30: bearer en 460 ms, 24 modelos visibles, chat
+        en 681 ms, 58 tokens = $0.000044.
+
+        NO entra en la cadena por defecto (`_SLOTS` y `order` quedan intactos):
+        se pide explicito con `LLM(order="watsonx")` hasta tener salud medida.
+        """
+        base = os.environ.get("WATSONX_URL", "https://us-south.ml.cloud.ibm.com")
+        r = _http_json(
+            base.rstrip("/") + "/ml/v1/text/chat?version=2024-10-08",
+            {"model_id": os.environ.get("WATSONX_MODEL",
+                                        "meta-llama/llama-3-3-70b-instruct"),
+             "project_id": os.environ.get("WATSONX_PROJECT_ID", ""),
+             "messages": _msgs(system, user),
+             "max_tokens": max_tok,
+             "temperature": 0.3},
+            {"Authorization": "Bearer " + _wx_token()},
+            timeout=90,
+        )
+        return (r["choices"][0]["message"]["content"] or "").strip()
 
     def _azure(self, system, user, max_tok):
         base = os.environ["AZURE_ENDPOINT"].rstrip("/")
@@ -468,14 +521,15 @@ class LLM:
     def _has_key(self, name):
         need = {"groq": "GROQ_API_KEY", "cerebras": "CEREBRAS_API_KEY",
                 "azure": "AZURE_API_KEY", "win": "WIN_BASE_URL",
-                "ollama": "OLLAMA_BASE_URL"}
+                "ollama": "OLLAMA_BASE_URL", "watsonx": "WATSONX_API_KEY"}
         return bool(os.environ.get(need[name]))
 
     def call(self, system, user, max_tok=1024, order=None):
         """Devuelve (texto, proveedor). Recorre la cadena hasta respuesta
         no vacia; acumula errores no fatales en self.errors."""
         fns = {"groq": self._groq, "cerebras": self._cerebras,
-               "azure": self._azure, "win": self._win, "ollama": self._ollama}
+               "azure": self._azure, "win": self._win, "ollama": self._ollama,
+               "watsonx": self._watsonx}
         orden = list(order or self.order)
         # sin internet: win/ollama primero (LAN directa, no depende de internet;
         # no esperar los timeouts de la nube). WIN (RTX 4070) antes que el
