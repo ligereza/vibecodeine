@@ -8,6 +8,7 @@ Sin red, sin ollama. interfaz_codex.py importa worker_codex.py -> fcntl
 (Linux-only): se gatea igual que tests/test_mak_mirror_fixes.py, para no
 saltear todo el archivo en Windows/CI sin fcntl.
 """
+import re
 import sys
 import types
 from pathlib import Path
@@ -106,3 +107,71 @@ class TestPaginaCanvasDeNodos:
     def test_conserva_el_formulario_clasico_en_su_propio_tab(self):
         assert 'id="tab-clasico"' in interfaz_codex.PAGINA
         assert 'id="pedido-clasico"' in interfaz_codex.PAGINA
+
+
+@requiere_fcntl
+class TestModoIconosReachableEndToEnd:
+    """El modo `iconos` (spec semantica -> SVG) tiene que ser alcanzable de
+    punta a punta desde la interfaz web, o la pieza existe en disco y es
+    invisible: no aparece en el <select>, el server la rechaza antes de
+    lanzarla, o /f la sirve 404 porque NOMBRE_OK/FECHA_RE no reconocen su
+    nombre de archivo (.svg)."""
+
+    def test_value_iconos_aparece_en_los_dos_selects(self):
+        """PAGINA es la UNICA plantilla (no hay una segunda constante): trae
+        el select del canvas (id="modo-canvas") y el del tab clasico
+        (id="modo"), y los dos deben ofrecer iconos."""
+        pagina = interfaz_codex.PAGINA
+        assert pagina.count('value="iconos"') >= 2, (
+            "value=\"iconos\" deberia aparecer en el select del canvas Y en "
+            "el del tab clasico")
+        # cada select declarado explicitamente trae la opcion
+        for anchor in ('id="modo-canvas"', 'id="modo"'):
+            i = pagina.index(anchor)
+            cierre = pagina.index("</select>", i)
+            assert 'value="iconos"' in pagina[i:cierre], anchor
+
+    def test_whitelist_server_side_incluye_iconos(self):
+        """do_POST descarta a 'generar' cualquier modo que no reconozca; si
+        'iconos' no esta en esa tupla, un pedido de iconos legitimo se
+        silencia como si fuera 'generar'."""
+        src = Path(interfaz_codex.__file__).read_text(encoding="utf-8")
+        m = re.search(r'if modo not in \(([^)]*)\):', src)
+        assert m, "no encuentro la whitelist de modos en do_POST"
+        assert '"iconos"' in m.group(1)
+
+    def test_nombre_ok_acepta_svg_y_sigue_aceptando_md_py(self):
+        assert interfaz_codex.NOMBRE_OK.match("20260730-000000-icono-test.svg")
+        assert interfaz_codex.NOMBRE_OK.match("pieza.md")
+        assert interfaz_codex.NOMBRE_OK.match("pieza.py")
+        assert not interfaz_codex.NOMBRE_OK.match("pieza.exe")
+
+    def test_fecha_re_parsea_un_svg_estampado(self):
+        m = interfaz_codex.FECHA_RE.match(
+            "20260730-153045-el-muro-que-se-parte.svg")
+        assert m
+        assert m.group(8) == "svg"
+        assert m.group(7) == "el-muro-que-se-parte"
+
+    def test_scripts_de_worker_codex_mapea_iconos_a_su_script(self):
+        worker_codex = sys.modules["worker_codex"]
+        assert worker_codex.SCRIPTS["iconos"] == "iconos.py"
+
+    def test_iconos_no_es_un_modo_de_ruta(self):
+        """iconos recibe un BRIEF de texto, no una ruta a un .py existente
+        (a diferencia de revisar/testear/debug): si 'iconos' terminara en
+        MODOS_RUTA, run_pedido le exigiria un archivo real bajo /home/mak y
+        un brief de texto normal fallaria siempre con 'ruta invalida'."""
+        worker_codex = sys.modules["worker_codex"]
+        assert "iconos" not in worker_codex.MODOS_RUTA
+
+    def test_mutacion_scripts_sin_iconos_se_detecta(self):
+        """Mutation check: si SCRIPTS perdiera la entrada 'iconos' (o
+        apuntara al script equivocado), la comparacion de arriba debe
+        fallar. Se simula con un dict de prueba, no editando worker_codex.py
+        en disco."""
+        worker_codex = sys.modules["worker_codex"]
+        scripts_mutados = dict(worker_codex.SCRIPTS)
+        scripts_mutados.pop("iconos", None)
+        with pytest.raises(KeyError):
+            assert scripts_mutados["iconos"] == "iconos.py"

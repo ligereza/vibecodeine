@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" data-name="10-plur-codigo-moral">
+<style>
+  /* ══ PALETA — edita libremente estos valores ══ */
+  svg{
+    --papel: #f4f4f0;
+    --orbita: #c9c9c2;
+    --enlace: #b7b7ae;
+    --paz: #2ee6a5;
+    --paz-tinta: #0d1b16;
+    --amor: #ff2e5b;
+    --unidad: #2e7bff;
+    --respeto: #ffb02e;
+    --respeto-tinta: #241a06;
+    --tinta: #1a1a20;
+    /* ── velocidades (mayor = más lento) ── */
+    --vel-simbolos: 4.4s;
+    --vel-enlace: 1.6s;
+    --vel-orbita: 18s;
+  }
+
+.i10q{animation:i10in var(--vel-simbolos) ease-in-out infinite}
+.i10q:nth-of-type(1){animation-delay:0s}.i10q:nth-of-type(2){animation-delay:.3s}
+.i10q:nth-of-type(3){animation-delay:.6s}.i10q:nth-of-type(4){animation-delay:.9s}
+@keyframes i10in{0%,70%,100%{transform:translate(0,0)}20%,50%{transform:translate(0,-3px)}}
+.i10link{stroke-dasharray:6 5;animation:i10dash var(--vel-enlace) linear infinite}
+@keyframes i10dash{to{stroke-dashoffset:-11}}
+.i10c{transform-origin:60px 60px;animation:i10rot var(--vel-orbita) linear infinite}
+@keyframes i10rot{to{transform:rotate(360deg)}}
+</style>
+<rect width="120" height="120" fill="var(--papel)"/>
+<circle class="i10c" cx="60" cy="60" r="46" fill="none" stroke="var(--orbita)" stroke-width="1.5" stroke-dasharray="1 6" stroke-linecap="round"/>
+<g class="i10link" stroke="var(--enlace)" stroke-width="2" fill="none"><path d="M38,38h44M38,82h44M38,38v44M82,38v44"/></g>
+<!-- P paz -->
+<g class="i10q" transform="translate(0,0)">
+  <circle cx="35" cy="35" r="15" fill="var(--paz)"/>
+  <g stroke="var(--paz-tinta)" stroke-width="2.6" stroke-linecap="round"><path d="M35,25v20M35,45l-7-7M35,45l7-7M28,35h14"/></g>
+</g>
+<!-- L amor -->
+<g class="i10q">
+  <circle cx="85" cy="35" r="15" fill="var(--amor)"/>
+  <path d="M85,44c-7-4.6-11.5-8.4-11.5-13a6,6 0 0 1 11.5-3.2A6,6 0 0 1 96.5,31c0,4.6-4.5,8.4-11.5,13Z" fill="#fff"/>
+</g>
+<!-- U unidad -->
+<g class="i10q">
+  <circle cx="35" cy="85" r="15" fill="var(--unidad)"/>
+  <g fill="#fff"><circle cx="29" cy="80" r="4"/><circle cx="41" cy="80" r="4"/><path d="M23,93a6,6 0 0 1 12,0Z"/><path d="M35,93a6,6 0 0 1 12,0Z"/></g>
+</g>
+<!-- R respeto -->
+<g class="i10q">
+  <circle cx="85" cy="85" r="15" fill="var(--respeto)"/>
+  <g fill="none" stroke="var(--respeto-tinta)" stroke-width="2.8" stroke-linecap="round">
+    <path d="M78,90V80a2.6,2.6 0 0 1 5.2,0M83.2,80v-2a2.6,2.6 0 0 1 5.2,0v2M88.4,81a2.6,2.6 0 0 1 4.4,1.8v4a8,8 0 0 1-14.8,3.4"/>
+  </g>
+</g>
+<g font-family="ui-monospace,Menlo,monospace" font-weight="700" font-size="9.5" fill="var(--tinta)" letter-spacing="1">
+<text x="60" y="62" text-anchor="middle">PLUR</text>
+</g>
+</svg>

@@ -1,0 +1,146 @@
+[
+  {
+    "n": "01",
+    "archivo": "01-paradise-garage.svg",
+    "slug": "01-paradise-garage",
+    "titulo": "Paradise Garage / The Loft",
+    "descripcion": "NYC años 70: la pista como espacio político, la noche invertida, el DJ toda la noche sin parar.",
+    "estilo": "Bauhaus geométrico",
+    "ancla": "### 1.1 Nueva York: La Cuna Olvidada (1970s)"
+  },
+  {
+    "n": "02",
+    "archivo": "02-warehouse-house-chicago.svg",
+    "slug": "02-warehouse-house-chicago",
+    "titulo": "The Warehouse · House",
+    "descripcion": "Chicago 1977-83: Frankie Knuckles y «una iglesia para los que cayeron en desgracia». El underground como refugio.",
+    "estilo": "Vitral / rosetón",
+    "ancla": "### 1.2 Chicago: El Nacimiento del House (1980s)"
+  },
+  {
+    "n": "03",
+    "archivo": "03-detroit-techno.svg",
+    "slug": "03-detroit-techno",
+    "titulo": "Detroit · Belleville Three",
+    "descripcion": "Techno desde la ciudad-máquina: fábricas vacías, drum machines y futurismo negro (Atkins, May, Saunderson).",
+    "estilo": "Blueprint técnico",
+    "ancla": "### 1.3 Detroit: La Máquina del Techno (1980s)"
+  },
+  {
+    "n": "04",
+    "archivo": "04-ibiza-balearic-1987.svg",
+    "slug": "04-ibiza-balearic-1987",
+    "titulo": "La conexión Ibiza · 1987",
+    "descripcion": "Cuatro DJs, Amnesia al aire libre, eclecticismo balearic y MDMA. Vuelven a Londres transformados.",
+    "estilo": "Sticker retro-sunset",
+    "ancla": "### 2.1 La Conexión Ibiza (1987)"
+  },
+  {
+    "n": "05",
+    "archivo": "05-shoom-smiley-acid-house.svg",
+    "slug": "05-shoom-smiley-acid-house",
+    "titulo": "Shoom · el Smiley",
+    "descripcion": "Dic 1987, Southwark: Danny Rampling recrea Amnesia en un gimnasio. El smiley se vuelve bandera del acid house.",
+    "estilo": "Acid pop / logo puro",
+    "ancla": "### 2.2 Shoom: La Primera Rave Moderna (Diciembre 1987)"
+  },
+  {
+    "n": "06",
+    "archivo": "06-segundo-verano-del-amor.svg",
+    "slug": "06-segundo-verano-del-amor",
+    "titulo": "Segundo Verano del Amor",
+    "descripcion": "1988-89: la rave se derrama por Gran Bretaña. Sube el baile, baja el hooliganismo. Euforia colectiva.",
+    "estilo": "Marcador dibujado a mano",
+    "ancla": "### 2.3 El Segundo Verano del Amor (1988-1989)"
+  },
+  {
+    "n": "07",
+    "archivo": "07-berlin-muro-techno.svg",
+    "slug": "07-berlin-muro-techno",
+    "titulo": "Berlín: cae el muro, sale el techno",
+    "descripcion": "1989: búnkeres, centrales y fábricas de la RDA se vuelven catedrales de una religión secular sin puertas.",
+    "estilo": "Brutalista concreto",
+    "ancla": "### 2.5 Berlín: El Muro Cae, el Techno Emerge"
+  },
+  {
+    "n": "08",
+    "archivo": "08-roland-tb-303.svg",
+    "slug": "08-roland-tb-303",
+    "titulo": "Roland TB-303",
+    "descripcion": "Fracaso comercial de 1981 (10.000 unidades) que en Chicago se convirtió en la voz squelchy del acid house.",
+    "estilo": "Skeuomorfismo de aparato",
+    "ancla": "### 4.1 Ácido como SONIDO: El Accidente de la Roland TB-303"
+  },
+  {
+    "n": "09",
+    "archivo": "09-acid-lsd-estado-alterado.svg",
+    "slug": "09-acid-lsd-estado-alterado",
+    "titulo": "Ácido: sonido y sustancia",
+    "descripcion": "La doble hélice: el squelch de la 303 y el LSD del Music Box. Ron Hardy bautiza el track; Pierre era anti-drogas.",
+    "estilo": "Psicodelia líquida",
+    "ancla": "### 4.2 Ácido como DROGA: LSD y la Experiencia Psicodélica"
+  },
+  {
+    "n": "10",
+    "archivo": "10-plur-codigo-moral.svg",
+    "slug": "10-plur-codigo-moral",
+    "titulo": "PLUR",
+    "descripcion": "Paz, Amor, Unidad y Respeto: el código no escrito. Hoy vive en carpas de reducción de daño y salas silenciosas.",
+    "estilo": "Pictograma señalética",
+    "ancla": "### 3.2 La Cultura: El Rave como Movimiento Social"
+  },
+  {
+    "n": "11",
+    "archivo": "11-inclusividad-raices-queer-negras.svg",
+    "slug": "11-inclusividad-raices-queer-negras",
+    "titulo": "Inclusividad desde las raíces",
+    "descripcion": "Nacida en comunidades negras y gays de Chicago: en la pista, la diversidad no se tolera, se celebra.",
+    "estilo": "Collage papel recortado",
+    "ancla": "### 3.2 La Cultura: El Rave como Movimiento Social"
+  },
+  {
+    "n": "12",
+    "archivo": "12-taz-zona-autonoma-temporal.svg",
+    "slug": "12-taz-zona-autonoma-temporal",
+    "titulo": "Zona Autónoma Temporal",
+    "descripcion": "Hakim Bey: espacios fuera del mapa del Estado cuyo poder está en desvanecerse al amanecer. Autonomía sin permanencia.",
+    "estilo": "Mapa esotérico / cartografía",
+    "ancla": "### 5.2 La Ilegalidad como FILOSOFÍA: La TAZ y Spiral Tribe"
+  },
+  {
+    "n": "13",
+    "archivo": "13-spiral-tribe-free-party.svg",
+    "slug": "13-spiral-tribe-free-party",
+    "titulo": "Spiral Tribe",
+    "descripcion": "1990: sound system nómada, tekno hardcore y teknivals. «Free no por gratis: libre mientras estás allí.»",
+    "estilo": "Tribal esténcil / spray",
+    "ancla": "### 5.2 La Ilegalidad como FILOSOFÍA: La TAZ y Spiral Tribe"
+  },
+  {
+    "n": "14",
+    "archivo": "14-castlemorton-1992.svg",
+    "slug": "14-castlemorton-1992",
+    "titulo": "Castlemorton · mayo 1992",
+    "descripcion": "La mayor rave ilegal del Reino Unido: una mini ciudad temporal fuera de todo control. Juicio de 3 meses, absolución.",
+    "estilo": "Editorial nocturno",
+    "ancla": "### 5.3 Castlemorton: El Evento que Cambió Todo (Mayo 1992)"
+  },
+  {
+    "n": "15",
+    "archivo": "15-criminal-justice-act-1994.svg",
+    "slug": "15-criminal-justice-act-1994",
+    "titulo": "Criminal Justice Act · 1994",
+    "descripcion": "El Estado legisla contra «beats repetitivos». Autechre y The Prodigy responden; la escena se exilia y se vuelve global.",
+    "estilo": "Documento legal sellado",
+    "ancla": "### 5.4 La Criminal Justice Act de 1994: El Estado Contraataca"
+  },
+  {
+    "n": "16",
+    "archivo": "16-comercializacion-legado-vivo.svg",
+    "slug": "16-comercializacion-legado-vivo",
+    "titulo": "Comercialización y legado vivo",
+    "descripcion": "De Ministry of Sound a Tomorrowland; de cripto-raves a Telegram. El ADN sigue: «esta noche las reglas no aplican aquí».",
+    "estilo": "Glitch digital",
+    "ancla": "## PARTE VII: CONCLUSIÓN — El Legado Vivo"
+  }
+]

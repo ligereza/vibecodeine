@@ -24,6 +24,7 @@ import os
 import sys
 import time
 
+import formato_ensayo
 import pausa
 from research_lib import (LLM, escala_tok, fetch_url, load_env, marco,
                          ntfy_publish, slug, stamp, tavily_search, web_search)
@@ -87,7 +88,7 @@ def _armar_resultado(topic, report, t0, findings, query_history, sources, llm):
 
 def investigar(topic, iteraciones=3, depth="basic",
                providers="groq,cerebras,azure,ollama", densidad="medio",
-               sin_marco=False, reanudar=None):
+               sin_marco=False, reanudar=None, formato="informe"):
     t0 = time.time()
     llm = LLM(providers)
     iteraciones = min(max(iteraciones, 1), 10)
@@ -207,24 +208,58 @@ def investigar(topic, iteraciones=3, depth="basic",
         return _armar_resultado(topic, report, t0, findings, query_history,
                                 sources, llm)
 
-    print("STATUS: Generando informe final...", flush=True)
+    es_ensayo = formato == "ensayo"
+    print("STATUS: Generando %s final..." % formato, flush=True)
     try:
-        report, _ = llm.call(
-            "Eres un investigador senior. Redactas informes claros en "
-            "espanol correcto (con tildes), en formato Markdown.",
-            "Genera un informe con secciones: 1. RESUMEN EJECUTIVO, "
-            "2. HALLAZGOS PRINCIPALES (cita fuente URL), 3. ANALISIS "
-            "CRITICO, 4. LAGUNAS DE INFORMACION, 5. PROXIMOS PASOS.\n\n"
-            'TEMA: "%s"\n\nHALLAZGOS:\n%s\n\nFUENTES:\n%s'
-            % (topic, json.dumps(findings, ensure_ascii=False, indent=1)[:14000],
-               "\n".join(sources)),
-            escala_tok(2000, densidad),
-        )
+        if es_ensayo:
+            # El ensayo pide mas espacio que el informe: son partes narradas con
+            # tabla comparativa, cronologia y cierre argumentado, no cinco
+            # secciones enumeradas.
+            report, _ = llm.call(
+                formato_ensayo.SISTEMA,
+                formato_ensayo.prompt_documento(topic, findings, sources),
+                int(escala_tok(2000, densidad) * 1.8))
+        else:
+            report, _ = llm.call(
+                "Eres un investigador senior. Redactas informes claros en "
+                "espanol correcto (con tildes), en formato Markdown.",
+                "Genera un informe con secciones: 1. RESUMEN EJECUTIVO, "
+                "2. HALLAZGOS PRINCIPALES (cita fuente URL), 3. ANALISIS "
+                "CRITICO, 4. LAGUNAS DE INFORMACION, 5. PROXIMOS PASOS.\n\n"
+                'TEMA: "%s"\n\nHALLAZGOS:\n%s\n\nFUENTES:\n%s'
+                % (topic, json.dumps(findings, ensure_ascii=False, indent=1)[:14000],
+                   "\n".join(sources)),
+                escala_tok(2000, densidad),
+            )
     except RuntimeError as e:
-        pausar(iteraciones, "informe", str(e))
+        pausar(iteraciones, formato, str(e))
 
-    return _armar_resultado(topic, report, t0, findings, query_history,
-                            sources, llm)
+    resultado = _armar_resultado(topic, report, t0, findings, query_history,
+                                 sources, llm)
+    resultado["formato"] = formato
+    if es_ensayo:
+        # Los conceptos se piden DESPUES y sobre el texto final: los que importan
+        # son los que el ensayo termino sosteniendo, no los que se anticiparon.
+        # Si esto falla, el ensayo NO se pierde: queda sin anexo, con el motivo
+        # escrito. Lo caro de producir es el documento.
+        print("STATUS: Extrayendo conceptos nombrables para el anexo...",
+              flush=True)
+        try:
+            bruto, _ = llm.call(formato_ensayo.SISTEMA_CONCEPTOS,
+                                formato_ensayo.prompt_conceptos(topic, report),
+                                escala_tok(1200, densidad))
+        except RuntimeError as e:
+            resultado["conceptos"] = []
+            resultado["conceptos_problemas"] = ["no se pudieron pedir: %s" % e]
+        else:
+            conceptos, problemas = formato_ensayo.parsear_conceptos(bruto, report)
+            resultado["conceptos"] = conceptos
+            resultado["conceptos_problemas"] = problemas
+            print("HALLAZGO: %d conceptos nombrables%s"
+                  % (len(conceptos),
+                     ", %d problemas" % len(problemas) if problemas else ""),
+                  flush=True)
+    return resultado
 
 
 def main():
@@ -235,6 +270,11 @@ def main():
     ap.add_argument("--providers", default="groq,cerebras,azure,ollama")
     ap.add_argument("--densidad", choices=("corto", "medio", "largo"), default="medio",
                     help="escala tokens por llamada; techo duro anti-timeout")
+    ap.add_argument("--formato", choices=formato_ensayo.FORMATOS,
+                    default="informe",
+                    help="ensayo: partes narradas, tabla comparativa, "
+                         "cronologia, cierre argumentado y anexo de conceptos "
+                         "nombrables (ver docs/cultura/FORMATO_ENSAYO.md)")
     ap.add_argument("--sin-marco", action="store_true",
                     help="sin el marco cultural descriptivo")
     ap.add_argument("--ntfy", action="store_true",
@@ -260,12 +300,14 @@ def main():
             params.get("densidad", args.densidad),
             sin_marco=params.get("sin_marco", args.sin_marco),
             reanudar=ck,
+            formato=params.get("formato", args.formato),
         )
     elif args.tema:
         topic = marco(args.tema, activo=not args.sin_marco)
         tema_para_slug = args.tema
         result = investigar(topic, args.iteraciones, args.depth, args.providers,
-                            args.densidad, sin_marco=args.sin_marco)
+                            args.densidad, sin_marco=args.sin_marco,
+                            formato=args.formato)
     else:
         ap.error("tema requerido (o usar --resume <checkpoint>)")
         return 2
@@ -278,6 +320,16 @@ def main():
         f.write("# %s\n\n%s\n\n---\nmeta: %s\n"
                 % (tema_para_slug, result["report"],
                    json.dumps(result["meta"], ensure_ascii=False)))
+
+    # El anexo sale como archivo hermano, ya en la forma que consume el modo
+    # `iconos` de codex: un concepto nombrable por entrada, con su ancla al
+    # pasaje del ensayo que lo justifica.
+    if result.get("conceptos"):
+        with open(base + ".conceptos.json", "w", encoding="utf-8") as f:
+            json.dump(result["conceptos"], f, ensure_ascii=False, indent=2)
+        print("ANEXO: " + base + ".conceptos.json")
+    for problema in result.get("conceptos_problemas") or []:
+        print("! anexo: %s" % problema)
 
     m = result["meta"]
     print("informe: %d iteraciones, %d findings, %d fuentes, %d ms, llm=%s"

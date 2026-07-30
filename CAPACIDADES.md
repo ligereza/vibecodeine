@@ -176,13 +176,15 @@ tabla; archivo sin entrada = ratchet rojo.
 | `gen_dashboard_productoras.py` | VIVO | genera `db_productoras.html`; documentado en `docs/rd/DB_PRODUCTORAS_ESTADO.md`; consume la salida de `triangular_fichas.py` | 2026-07-25 (llega a main con la promocion de `rd`, PR #303) |
 | `gen_presentacion_db.py` | VIVO | genera `docs/rd/presentacion_db.html`, la pieza formal para la directiva RD; documentado en `docs/rd/DB_PRODUCTORAS_ESTADO.md` | 2026-07-25 (llega a main con la promocion de `rd`, PR #303) |
 | `gen_propuesta_directiva.py` | VIVO | genera `docs/rd/propuesta_directiva.html`, la propuesta a la directiva (que ofrece RD, con que cuenta, como protege los datos y que necesita aprobar); lee `data/rd.db`, asi que ninguna cifra se escribe a mano | 2026-07-26 |
-| `vendorizar_iskvw.py` | VIVO | empaqueta las librerias de `data/iskvw_librerias.json` como modulos ESM autocontenidos en `iskvw/piel/lib/` (hoy 4 de thi.ng: tsne, geom-trace-bitmap, rstream-gestures, distance-transform) + su README al lado; la piel es estatica y no puede depender de un CDN ni de un build; `tests/test_iskvw_librerias.py` las importa en node y les pide trabajo | 2026-07-27 |
+| `vendorizar_iskvw.py` | VIVO | empaqueta librerias npm como modulos ESM autocontenidos + su README al lado, para paginas estaticas que no pueden depender de un CDN ni de un build. DOS manifiestos: `data/iskvw_librerias.json` -> `iskvw/piel/lib/` (4 de thi.ng) y `data/motor_librerias.json` -> `docs/cultura/lib/` (hiccup, hiccup-svg, color, para el compilador de navegador del motor semantico). `tests/test_iskvw_librerias.py` las importa en node y les pide trabajo; `tests/test_thing_registro.py` cruza los manifiestos con la seccion 6. Dos arreglos 2026-07-30: `--destino` se resuelve absoluto (esbuild corre en un temporal y perdia el bundle) y el chequeo de huerfanos solo mira bundles vendorizados (los `.js` escritos a mano en el destino se reportaban como sobrantes) | 2026-07-30 |
 | `gen_capas_iskvw.py` | VIVO | corre las capas de `data/iskvw_capas.json` sobre `iskvw/datos/campo.json` y deja un dato medido por obra (hoy `tilde`, el residuo diacritico de lo percibido via `tools/tilde_meter.py`, y `trazo`, la densidad del vector); sumar una capa es una entrada mas y una funcion, sin tocar la piel; `tests/test_capas_iskvw.py` | 2026-07-27 |
 | `gen_campo_iskvw.py` | VIVO | genera `iskvw/datos/campo.json`, las posiciones del campo de iskvw; proyecta los embeddings del micelio de MAK con t-SNE (48.9% de vecindad conservada, medido contra PCA 3.8% y fuerzas 16.4%) y toma que tipos entran de `data/iskvw_campo_filtro.json`; consumido por `iskvw/piel/campo/index.html` | 2026-07-27 |
 | `gen_iskvw_prototipo.py` | VIVO | genera `docs/iskvw/prototipo.html`, el prototipo del portafolio ISKVW; lee `tools/portfolio/proyectos.json` y mide el repo al generar, sin telemetria decorativa | 2026-07-26 |
 | `triangular_fichas.py` | VIVO | triangula `fichas.jsonl` de MAK en eventos + productoras candidatas; consumido por `gen_dashboard_productoras.py` y `gen_presentacion_db.py` | 2026-07-25 (llega a main con la promocion de `rd`, PR #303) |
 | `gen_mapa_comandos.py` | VIVO | genera el bloque de comandos de `MAPA.md`; `tests/test_mapa_completo.py` exige que el mapa cubra todo el CLI | 2026-07-25 |
 | `handoff.py` | VIVO | genera/actualiza `docs/handoffs/` + `context/LAST_HANDOFF.md` | 2026-07 |
+| `iconos_conjunto.py` | VIVO | valida y construye la galeria de un CONJUNTO de iconos (`--raiz`, sirve a cualquiera, no solo al del ensayo rave); consumidor medido: `docs/cultura/ensayos/rave/` (16 iconos, 0 errores) y el anexo iconografico que exige `docs/cultura/FORMATO_ENSAYO.md`; `tests/test_iconos_conjunto.py` | 2026-07-30 |
+| `gen_vocabulario_motor.py` | VIVO | exporta el vocabulario del motor semantico (22 figuras/12 gestos/9 tonos) a `docs/cultura/lib/vocabulario.json` para que el MISMO spec compile en el navegador sin re-portar la geometria a mano; consumidor: `docs/cultura/lib/compilador.js` + el taller de la galeria; `--verificar` falla si quedo viejo respecto de `vocabulario.py`; `tests/test_compilador_navegador.py` | 2026-07-30 |
 | `instalar_enviar_a_mak.py` | VIVO | instalador del SendTo de `enviar_a_mak.py` | 2026-07-23 |
 | `render_video_rd.py` | VIVO | pipeline video RD, 4 ejes, semana 2026-07-21 | 2026-07-21 |
 | `system_map.py` | VIVO | mapa mecanico del repo (soporte de `contexto_repo.py`) | 2026-07 |
@@ -196,3 +198,47 @@ Nota: el director listo tambien `render_flyer_mak.py` (VIVO, mak_ops) en
 su mensaje de spec, pero ese archivo NO existe en `tools/` de este
 worktree (ni en ninguna ruta del repo, verificado con busqueda global) --
 omitido de la tabla, ver desvio reportado en el cierre de sesion.
+
+## 6. thi.ng: LEER ANTES de escribir un generador, un pipeline o un grafo
+
+Regla 2026-07-30 (causa: el usuario pidio thi.ng en varias sesiones seguidas y
+al medirlo habia UNA sola libreria viva de cuatro vendorizadas, mientras la
+sesion siguiente mandaba a escribir la misma capacidad desde cero. Retiro:
+cuando cada fila EN USO tenga su test y ninguna quede en `candidata`).
+
+thi.ng son ~350 paquetes de Karsten Schmidt (`https://thi.ng/#tags`), en
+TypeScript. Hay una recomendacion externa priorizada de 15 para este repo. Esta
+tabla es el estado REAL, medido, no la recomendacion:
+
+| paquete | estado | donde, y que retira | senal |
+|---|---|---|---|
+| `@thi.ng/rstream-gestures` | **EN USO** | `iskvw/piel/campo/index.html` la carga con `import('../lib/gestos.js')`; trajo el pellizco multi-touch (antes: cuatro listeners y un solo dedo). Degrada a los listeners si no carga | 2026-07-27 |
+| `@thi.ng/hiccup` + `@thi.ng/hiccup-svg` | **EN USO** | `docs/cultura/lib/compilador.js`: el gemelo de navegador del motor semantico arma el arbol SVG con `svg/group/rect/text` + `serialize`, en vez de concatenar strings. El taller de `docs/cultura/ensayos/rave/galeria.html` compila una spec sin Python y sin PC | 2026-07-30 |
+| `@thi.ng/color` | **EN USO** | mismo compilador: el contraste WCAG lo calcula la libreria en vez de repetir la formula de luminancia a mano | 2026-07-30 |
+| `@thi.ng/tsne` | **descartada con medicion** | no puede bajar 768 dimensiones a 2 (dim de salida = dim de entrada), asi que `tools/gen_campo_iskvw.py` sigue con sklearn. `tests/test_iskvw_librerias.py` fija el limite para que nadie lo reintente | 2026-07-27 |
+| `@thi.ng/geom-trace-bitmap` | vendorizada, sin consumidor | imagen a vector de linea. El trazador vive en Python y ya esta afinado; solo paga si trazar se mueve al navegador | 2026-07-27 |
+| `@thi.ng/distance-transform` | vendorizada, sin consumidor | campo de distancia, paso previo para engrosar/erosionar un trazo. Ninguna piel llego a ese paso | 2026-07-27 |
+| `@thi.ng/graph` + `@thi.ng/rstream-graph` | **candidata, prioridad 1** | el micelio: `cultura/mak_plataforma/contrato_archivo.py` ya entrega 1004 piezas y 3188 vinculos como funcion pura. El grafo de thi.ng NO reemplaza el almacenamiento: entra como capa de analisis en memoria sobre lo ya indexado | sin medir |
+| `@thi.ng/transducers` | candidata, prioridad 2 | los pipelines de ingesta/curatoria (`mak_curatoria`, `extraccion_db`) como transformaciones composables | sin medir |
+| `@thi.ng/validate` | candidata, prioridad 3 | limite de seguridad antes de persistir: metadatos de una pieza, config de un conjunto | sin medir |
+| `@thi.ng/geom` | candidata | geometria 2D. Se solapa con las 22 figuras del vocabulario, que hoy son geometria a mano en Python | sin medir |
+| `@thi.ng/fuzzy`, `@thi.ng/intervals`, `@thi.ng/rdom`, `@thi.ng/atom`, `@thi.ng/associative`, `@thi.ng/parse` | no evaluadas | busqueda tolerante, rangos de fechas, interfaz reactiva, estado, consultas anidadas, parsers | -- |
+
+Como se agrega una: entrada en el manifiesto que corresponda
+(`data/iskvw_librerias.json` para la piel de iskvw, `data/motor_librerias.json`
+para el motor) y `py tools/vendorizar_iskvw.py --manifiesto <m> --destino <d>`.
+Queda un ESM autocontenido con su README al lado: sin CDN, sin build, funciona
+sin internet. `--destino` tiene que poder resolverse absoluto (esbuild corre en
+un temporal).
+
+Las dos reglas que esta tabla hace cumplir:
+
+1. **No se escribe desde cero una capacidad que tiene fila aca.** Si la fila
+   dice `candidata`, el trabajo es medirla y adoptarla o descartarla con
+   numero -- no reimplementarla.
+2. **Una libreria entra cuando retira trabajo escrito a mano, medido.** No por
+   prioridad en una lista. `@thi.ng/tsne` es el ejemplo: prioridad alta en la
+   recomendacion, descartada al medirla.
+
+Lo que la recomendacion externa pide NO priorizar todavia: WebGL, shaders,
+fisica, particulas, audio, simulacion, hardware, fabricacion digital.

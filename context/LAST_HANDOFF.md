@@ -2,35 +2,27 @@
 
 ## READ YOUR MEMORY FIRST. Before anything else. Now.
 
-If you are an incoming agent -- new session, or the same one after a compaction
--- **stop and read the assistant's local memory before you touch anything.**
+New session, or the same one after a compaction: **read the assistant's local
+memory before touching anything.** Not optional. On 2026-07-27 the user had to
+order it THREE times in one session and every answer was already written down;
+that night an agent "discovered" files the same session had built, reported a
+stale state as a defect and asked two answered questions.
 
-This is not optional. On 2026-07-27 the user had to order it THREE TIMES in
-one session; every time the answer was already written down. A compaction
-summary is not enough.
-
-What that costs, measured that same night: an agent "discovered" files the
-same session had built, reported a stale state as a defect, asserted an
-invented cause, and asked two already-answered questions.
-
-**How to actually read it** -- two mechanisms make a memory search come back
-empty while the answer sits there (both hit 2026-07-26): `.remember/` is
-INVISIBLE to Grep (its `.gitignore` says `*`; use PowerShell
-`Select-String -Path "<repo>\.remember\*"`), and older memories are in
-English while the conversation runs in Spanish (`curatoria` = `curation`;
-search both). Read `.remember/now.md` and today's `today-*.md` IN FULL, not by
-grepping. A compacted session's transcript is on disk; extract stretches with
-a script, never open 25 MB whole.
+Two mechanisms make a memory search come back empty while the answer sits there:
+`.remember/` is INVISIBLE to Grep (its `.gitignore` says `*` -- use PowerShell
+`Select-String -Path "<repo>\.remember\*"`), and older memories are in English
+while the conversation runs in Spanish (`curatoria` = `curation`; search both).
+Read `.remember/now.md` and today's `today-*.md` IN FULL. A compacted session's
+transcript is on disk: extract stretches with a script, never open 25 MB whole.
 
 Then read this file, `CLAUDE.md` and `MAPA.md`. Then work.
 
 ---
 
-This is the ONLY state file. There used to be seven competing ones (LAST_HANDOFF,
-SESSION_STATE, PLAN_SIGUIENTE_AGENTE, PLAN_SEMANAL_OPUS, ORQUESTACION_SUCESOR,
-WALKTHROUGH, failed-handoff), which is why every agent rebuilt the state from
-scratch and asked the user things he had already answered. They were merged here
-on 2026-07-26. The old ones live on in git history and in docs/handoffs/archive/.
+This is the ONLY state file. There used to be seven competing ones, which is why
+every agent rebuilt the state from scratch and asked the user what he had already
+answered; they were merged here on 2026-07-26 and live on in git history and in
+`docs/handoffs/archive/`.
 
 Together with `CLAUDE.md` and `MAPA.md`, this is everything an incoming agent
 needs to read.
@@ -58,10 +50,9 @@ Corollaries, learned from the sessions that failed:
 - **There is no deliverable.** Do what was asked. Never invent a product, a plan,
   a report or a backup nobody requested. A finding along the way gets one line
   and you move on.
-- **Big steps, not baby steps.** Do not commit and wait for CI every two changes;
-  the user asked for this explicitly.
+- **Big steps, not baby steps.** Do not commit and wait for CI every two changes.
 - The repo is a USB stick. The conversation is the center, not the repo.
-- Measuring exists to answer something that was asked. Measuring beyond that is
+- Measuring exists to answer something that was asked; measuring beyond that is
   how you lose the thread.
 
 ## Language (2026-07-26, user's decision)
@@ -107,107 +98,115 @@ profiles, and the documentation ratchets (`test_mapa_completo`,
 
 ## Security diagnosis: 9 of 10 closed (2026-07-29)
 
-VCD-06 caps request bodies at 8 MB (413 on excess) in the two previously
-uncapped `src/flujo` handlers; the `cultura/` ones were already capped.
-VCD-07 closed 2026-07-29: every workflow `uses:` pinned to a peeled-tag commit
-SHA (with a `# vX` comment so Dependabot can bump it), plus
-`.github/dependabot.yml` for github-actions, npm (`/web`) and pip, weekly.
-Only VCD-10 remains: assigned to MAK, never verified running.
+VCD-06 (8 MB body cap, 413 on excess) and VCD-07 (every workflow `uses:` pinned
+to a commit SHA + `dependabot.yml`) are closed. Only VCD-10 remains: assigned to
+MAK, never verified running.
 
-## 2026-07-28 Fable session: everything landed (verified 2026-07-29)
+## Pending on the machines (2026-07-29, still true)
 
-#372-#374 and #376/#377/#378 all merged. The four squash-merged `*-20260728`
-branches are noise on origin: run `podar_ramas` once from Actions naming them
-(+ BORRAR).
+#372-#374 and #376/#377/#378 all merged; the four squash-merged `*-20260728`
+branches are noise on origin (run `podar_ramas` from Actions). On the BOX: reset
+the inbox with `git push origin main:mak --force-with-lease` -- the one undrained
+commit (#375) was REJECTED on review (simulated in-memory queues never wired to
+real `mak_codex`), and agents cannot push that reset; then verify VCD-10 really
+runs and curl `GET /api/archivo` on the hub. The sync cron already covers
+`mak_curatoria -> ~/curatoria` (verified on the box). On WINDOWS the only pending
+user decision is the `rescate/ascii-campo` aesthetic call.
 
-## Resume from the computers (2026-07-29, box + Windows just powered on)
+## La noche SOL y los puertos: cerrado, detalle archivado
 
-Everything of this cloud session is MERGED (#380, #393, #394); the repo is at
-its 4 permanent branches + `rescate/ascii-campo` (valuable ASCII-skin work
-from stash@{0}; do not merge without the user's aesthetic call). On the BOX:
-1. Reset the inbox: `git push origin main:mak --force-with-lease` -- the one
-   undrained commit (#375, codex utility) was REJECTED on review: simulated
-   in-memory queues never wired to real `mak_codex`, no cron despite the
-   title. Do NOT promote it. (Agents cannot push this reset.)
-2. DONE (verified on the box 2026-07-29): the sync cron now covers
-   `mak_curatoria -> ~/curatoria` (`crontab -l` shows the fourth `cp -ru`).
-3. Verify VCD-10 actually runs, and curl `GET /api/archivo` on the hub once
-   the sync delivers `contrato_archivo.py` (the substrate contract).
-On WINDOWS the only pending user decision is the ascii-campo aesthetic call
-(Illustrator exports and logos: RESOLVED, his word 2026-07-29 -- see below).
-New rule in CLAUDE.md, "the machine/human cut": machine KEYS stay ASCII,
-human-read VALUES keep correct Spanish -- venue drafts now keep tildes in
-`name:`, with a regression test.
+Auditado el 2026-07-29 y comprimido aca el 2026-07-30. Detalle completo en
+`docs/handoffs/archive/20260729_sol_noche.md`. Lo que hay que saber: nada se
+perdio (todo merged, #372/#374/#376/#377/#378), los ~$200 de Azure fueron 125M
+tokens con retraso de facturacion y NO una fuga, Azure queda ABANDONADO (palabra
+del usuario), y los dos pendientes que SOL declaro se cerraron por verificacion
+sin codigo nuevo. Sigue owed la lista de trabajo de teoria del portafolio: el
+contrato del "cuaderno", el primer estudio de UNA obra en seis representaciones,
+la travesia de thi.ng por familias y el modelo de interaccion de iskvw.cl (gesto
+que altera la lectura LOCAL, sesion como semilla reproducible en la URL).
 
-## 2026-07-29: the SOL night audited -- nothing lost, spend explained
+## The rave zip: LANDED 2026-07-30, and it grew a format
 
-The user worked 2026-07-28 ~01:00-08:28 in VS Code with "SOL" (Azure Foundry
-`gpt-5.6-sol`, GPT-5.6 Sol tier $5/$30 per M). Audit verdict, cross-checked
-against WIN local folders and the box (local evidence > repo):
+The zip from the cloud session is in the repo. What landed, and where:
 
-- The ~$200 Azure figure = 125M tokens of Sol surfacing through the 8-72h
-  billing lag (mostly cached input, ~$1.57/M avg). No key leak (never
-  committed, no calls after 08:00), no collectable debt (no card). Azure is
-  ABANDONED going forward, user's word 2026-07-29.
-- SOL worked in four WIN checkouts (flujo-mejoras, flujo-vcd06,
-  flujo-sin-gptmini, flujo-organos), never C:\IA\flujo, never over SSH on the
-  box (zero logins that morning). Everything merged: #374, #372-tests, #376,
-  #377, #378; the box got it via the sync cron. Its 19 uncommitted lines
-  (azure opt-in gate) are stashed as `sol-azure-optin-gate-redundante`,
-  redundant since #376.
-- SOL's declared-unfinished bug: the organs layer "floating over Taller" in
-  the research interface (:8890) -- something removes the class after load.
-- Dependabot appeared via PR #380 (VCD-07), not SOL, not an intruder.
+- **The essay is a PRODUCT and it moved out of `context/`**:
+  `docs/cultura/ensayos/rave/ensayo.md`, with its 16 hand-written animated
+  icons, their manifest and their edition guide. It exists in ONE place; the
+  copy pasted into `context/` was deleted, not duplicated. Its sources are
+  declared as a DEBT in its header -- it quotes sources that never travelled
+  with the material, and inventing a URL to cover that is forbidden.
+- **The motor semantico is a codex capability**:
+  `cultura/mak_codex/motor_semantico/` (covered by the sync cron, so it reaches
+  the box) plus the new mode `iconos` (`cultura/mak_codex/iconos.py`, registered
+  in `worker_codex.SCRIPTS` and in both selects of the interface). A blind agent
+  writes MEANING with a closed vocabulary and a deterministic compiler makes the
+  geometry. Reproduced on landing: 9 of 10 specs compile and the 1 rejection is
+  the legitimate one (missing `protagonista`). `entregar.py` gained a guard: an
+  `iconos` job never enters the delivery path that compiles pieces as Python.
+- **A new research format, ENSAYO** (`cultura/mak_research/formato_ensayo.py`,
+  `research.py --formato ensayo`): narrated parts, a table where two readings
+  compete, a timeline, a closing that argues, sources with URL, and an
+  iconographic annex. Contract: `docs/cultura/FORMATO_ENSAYO.md`. It emits
+  `<stamp>-<slug>.conceptos.json`, already in the shape codex's `iconos` mode
+  consumes -- that is the loop closing. Written as a module APART because
+  `research.py` is from 07-20 and stale code does not get patched blind.
+- **The purpose is written**: `docs/cultura/MOTOR_SEMANTICO.md` (the 44%->11%
+  measurement, the four failure modes killed by construction, the trap where the
+  QA tool was wrong and the SVG right, the critic's bias toward the conventional)
+  + `REFERENCIAS_MOTOR.md` verbatim.
 
-## The rave zip: MAK's report+icons capability, not yet landed (2026-07-29)
+### Three decisions the user made while it landed (2026-07-30)
 
-`workspace-019fa8a1...zip` in Downloads (08:12, never processed by SOL) is a
-COMPLETE system from the user's cloud session: rave-culture report + 16
-animated SVG icons + validator/builder/exporter, PLUS `motor-semantico/`
-(blind agent writes semantic specs, WCAG critic, 44%->11% defect reduction).
-The concrete form of "MAK produces reports WITH matching icons, feeding the
-portfolio". Lives only in Downloads; landing it in the repo is pending.
+1. **The style is deliberately NOT unified.** Every topic researched is
+   different, so each word carries a different cultural presentation. `coro`
+   (polyphonic) is the default; `sistema` (unified) only for technical topics,
+   and only justified in writing.
+2. **The artefact is an ANIMATION, not an icon, and it is EDITABLE.** Every
+   layer compiles to `<g id="capa-N-rol" data-rol data-figura data-gesto
+   data-ritmo><title>`: it opens in Illustrator/Inkscape as a named layer, gets
+   edited in design and re-integrated, and each element answers for what it
+   encodes -- the doublecup thesis applied to form. Verification is a **GIF, not
+   a PNG**: a single frame cannot tell *still* from *animated*, so it validates
+   something other than what was built. Measured over the 16: fifteen give 10/10
+   distinct frames, `11-inclusividad` gives 3/10 (nearly static; noted, not
+   fixed). GIFs are an instrument, not a deliverable: they do not enter the repo.
+3. **Each icon declares the passage that justifies it** (`ancla` in the
+   manifest, pinned by a test). The text is the organ that justifies the content
+   that sustains the form: an icon without an anchor claims a meaning the essay
+   never gave it.
 
-## SOL portfolio theory: what landed vs what is still owed (2026-07-29)
+### thi.ng stopped being a note and became a mechanism
 
-The 05:15-06:05 debate landed its METABOLISM half as #377/#378 (sustrato/
-primordio/fruiting body, compost, fusion, human estatuto, organs). Still owed,
-per SOL's own plan (its last coherent answer, 06:03):
-1. The "cuaderno" contract: exploration unit schema (question -> source ->
-   representation -> hypothesis -> experiment -> measured result -> failure ->
-   relation to a work -> decision integrate/reserve/discard); schema+evaluator
-   in the repo, notes in MAK.
-2. First study: ONE real work across six representations (raster, SVG trace,
-   distance field, graph, 768-d embedding, code+seed) -- what each conserves,
-   destroys, allows.
-3. thi.ng / awesome-generative-art traversed by families (form, relation,
-   variation, appearance, interaction, preservation, authorship), batches of
-   5 candidates, three gates (technical/conceptual/curatorial). Nothing enters
-   the portfolio automatically.
-4. iskvw.cl interaction model: gestures alter the LOCAL reading, never the
-   canonical archive; a session is a reproducible seed URL
-   (#semilla=...&centro=...&escala=...). Visitor's device computes its OWN
-   experience only -- no silent compute capture.
+The user asked for thi.ng across several sessions; measuring it found ONE live
+library of four vendorized, while the next session would order the same
+capability written from scratch. So:
 
-## 2026-07-29 night session: SOL pendings closed, ports audited
+- **`hiccup` + `hiccup-svg` + `color` are IN USE**, vendorized to
+  `docs/cultura/lib/`, in `compilador.js`: the browser twin of the motor, and a
+  *taller* in the gallery where a spec compiles with no Python and no PC. The
+  geometry was NOT ported by hand -- `tools/gen_vocabulario_motor.py` exports the
+  Python vocabulary as data (`--verificar` fails if it went stale), so there is
+  one source of truth. Measured: the 9 specs produce equivalent SVG on both sides
+  and the layer groups are byte-identical.
+- **`CAPACIDADES.md` section 6 is the index an agent reads BEFORE writing a
+  generator, a pipeline or a graph from scratch**, with a state per library and
+  `tests/test_thing_registro.py` keeping it honest. `graph` + `transducers` +
+  `validate` are the named next candidates, aimed at the micelio -- deliberately
+  NOT in this PR so the review stays coherent. A second recommendation doc
+  (3D/liveshow: webgl, shader-ast, matrices, vectors, noise, rstream, imgui) has
+  a Prototype B that IS the iskvw campo and an audio/OSC layer that is the DREF
+  chain already running.
+- Two honest findings: `@thi.ng/color` has no WCAG contrast-ratio export in this
+  version (only `luminanceSrgb`, so the ratio is computed locally and
+  documented), and `tools/vendorizar_iskvw.py` silently lost the bundle when
+  `--destino` was relative (esbuild resolved it against its own temp dir) --
+  fixed.
 
-- SOL's two pendings CLOSED BY VERIFICATION, no new code: the organs-layer
-  bug was fixed by SOL's own last commits (live on the box, organ-line inside
-  #map-view, 6 organs with live data); the codex kitchen is the :8900 face's
-  codex tab embedding :8891.
-- The 05:18-06:05 debate DECISIONS are distilled in PROYECCION.md section 6
-  (three lives, gesture contract, seed URL, meritocracia authorship thesis,
-  device ethics, internal tags, thi.ng library divergence to reconcile). The
-  owed WORK list stays in the section above.
-- Port audits (WIN+MAK, read-only evidence): everything maps to known
-  software. Removed on MAK: dangling n8n image (~1.5 GB) + /home/mak/n8n-local.
-  CUPS printerless but needs sudo (user's call). Open WebUI: no code depends
-  on it, one human hit in 72h -- user decides. WIN: Docker Desktop STOPPED,
-  ~7 GB, nothing under C:\IA uses it -- `winget uninstall Docker.DockerDesktop`
-  approved, blocked by permissions this session. Wondershare WsidService
-  (0.0.0.0:20271) unnecessary; CodeMeter/usbipd/Logi stay (user hardware).
-- Azure abandoned (user): the SOL night spent the credits (125M tokens,
-  billing lag, no leak; audit in local memory). MAK password stays.
+### The user's priority for what comes next (2026-07-30, his words)
+
+**Whatever gets built in MAK has to be useful to the ISKVW portfolio**, and the
+new essay format has to be at the portfolio's level: iskvw was left with none of
+`PROYECCION.md`'s integrations wired. That is the next stretch, not a wish.
 
 ## MAK como motor: sirve, y el checkpoint mentia
 

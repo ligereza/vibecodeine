@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" data-name="12-taz-zona-autonoma-temporal">
+<style>
+  /* ══ PALETA — edita libremente estos valores ══ */
+  svg{
+    --papel: #f0ead8;
+    --grilla: #a89d7d;
+    --curva: #6b6248;
+    --zona: #d7ff2e;
+    --marca: #c0392b;
+    /* ── velocidades (mayor = más lento) ── */
+    --vel-aparicion: 6s;
+    --vel-borde: 2s;
+  }
+
+.i12z{animation:i12app var(--vel-aparicion) ease-in-out infinite}
+@keyframes i12app{0%{opacity:0;transform:scale(.85)}15%,60%{opacity:1;transform:scale(1)}85%,100%{opacity:0;transform:scale(1.15)}}
+.i12dash{stroke-dasharray:5 4;animation:i12run var(--vel-borde) linear infinite}
+@keyframes i12run{to{stroke-dashoffset:-18}}
+.i12grid path{animation:i12fade var(--vel-aparicion) ease-in-out infinite}
+@keyframes i12fade{0%,100%{opacity:.5}40%{opacity:.16}}
+.i12star{transform-origin:60px 58px;animation:i12tw var(--vel-aparicion) ease-in-out infinite}
+@keyframes i12tw{0%,100%{opacity:0}25%,55%{opacity:1}}
+</style>
+<rect width="120" height="120" fill="var(--papel)"/>
+<g class="i12grid" stroke="var(--grilla)" stroke-width=".9">
+<path d="M12,0v120M28,0v120M44,0v120M60,0v120M76,0v120M92,0v120M108,0v120M0,12h120M0,28h120M0,44h120M0,60h120M0,76h120M0,92h120M0,108h120"/>
+</g>
+<g stroke="var(--curva)" stroke-width="1.6" fill="none" opacity=".7">
+<path d="M0,88c14-6 22,4 34,0s20-12 34-8 26,10 34,6 18,2 18,2"/>
+<path d="M0,26c16,4 24-6 38-2s22,10 36,6 30-8 30-8"/>
+</g>
+<g class="i12z" style="transform-origin:60px 58px">
+  <circle cx="60" cy="58" r="30" fill="var(--zona)" opacity=".28"/>
+  <circle class="i12dash" cx="60" cy="58" r="30" fill="none" stroke="#111" stroke-width="3"/>
+  <g class="i12star" fill="#111"><path d="M60,44l3.4,8.6L72,56l-8.6,3.4L60,68l-3.4-8.6L48,56l8.6-3.4Z"/></g>
+  <g font-family="ui-monospace,Menlo,monospace" font-weight="700" font-size="11" fill="#111" letter-spacing="2">
+    <text x="60" y="97" text-anchor="middle">T.A.Z.</text>
+  </g>
+</g>
+<g stroke="var(--marca)" stroke-width="2.4" opacity=".85" stroke-linecap="round"><path d="M96,14l14,14M110,14L96,28"/></g>
+<g font-family="ui-monospace,Menlo,monospace" font-size="5.8" fill="var(--curva)" letter-spacing=".4">
+<text x="60" y="113" text-anchor="middle">FUERA DEL MAPA DEL ESTADO</text>
+</g>
+</svg>

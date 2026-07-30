@@ -1,0 +1,315 @@
+<!-- This file is generated - DO NOT EDIT! -->
+<!-- Please see: https://codeberg.org/thi.ng/umbrella/src/branch/develop/CONTRIBUTING.md#changes-to-readme-files -->
+# ![@thi.ng/hiccup-svg](https://codeberg.org/thi.ng/umbrella/media/branch/develop/assets/banners/thing-hiccup-svg.svg?b89d2384)
+
+[![npm version](https://img.shields.io/npm/v/@thi.ng/hiccup-svg.svg)](https://www.npmjs.com/package/@thi.ng/hiccup-svg)
+![npm downloads](https://img.shields.io/npm/dm/@thi.ng/hiccup-svg.svg)
+[![Mastodon Follow](https://img.shields.io/mastodon/follow/109331703950160316?domain=https%3A%2F%2Fmastodon.thi.ng&style=social)](https://mastodon.thi.ng/@toxi)
+
+> [!NOTE]
+
+> This is one of 216 standalone projects. LLM-free, human-made and
+> cared for software, maintained as part of the
+> [@thi.ng/umbrella](https://codeberg.org/thi.ng/umbrella/) ecosystem and
+> anti-framework.
+>
+> 🚀 Please help me to work full-time on these projects by [sponsoring
+> me](https://codeberg.org/thi.ng/umbrella/src/branch/develop/CONTRIBUTING.md#donations).
+> Thank you! ❤️
+
+- [About](#about)
+  - [Important](#important)
+  - [SVG conversion of @thi.ng/geom & @thi.ng/hiccup-canvas shape trees](#svg-conversion-of-thinggeom--thinghiccup-canvas-shape-trees)
+  - [Automatic attribute conversions](#automatic-attribute-conversions)
+    - [Colors](#colors)
+    - [Transforms](#transforms)
+- [Status](#status)
+- [Installation](#installation)
+- [Dependencies](#dependencies)
+- [Usage examples](#usage-examples)
+- [API](#api)
+- [Authors](#authors)
+- [License](#license)
+
+## About
+
+SVG element functions for [@thi.ng/hiccup](https://codeberg.org/thi.ng/umbrella/src/branch/develop/packages/hiccup) & related tooling.
+
+### Important
+
+The functions provided here do produce valid hiccup elements, but
+since none of them make use of (or support) the global hiccup / hdom
+context object, they can ONLY be invoked directly, i.e. they MUST be
+called like:
+
+```ts
+import { circle, svg } from "@thi.ng/hiccup-svg";
+
+// correct (direct invocation)
+svg({}, circle([0, 0], 100, { fill: "red" }));
+
+// incorrect / unsupported (lazy evaluation)
+[svg, {}, [circle, [0, 0], 100, { fill: "red" }]]
+```
+
+### SVG conversion of @thi.ng/geom & @thi.ng/hiccup-canvas shape trees
+
+Since v2.0.0 this package provides a conversion utility to translate the more
+compact syntax used by
+[@thi.ng/geom](https://codeberg.org/thi.ng/umbrella/src/branch/develop/packages/geom)
+and
+[@thi.ng/hiccup-canvas](https://codeberg.org/thi.ng/umbrella/src/branch/develop/packages/hiccup-canvas)
+shape trees (designed for more performant realtime / canvas drawing) into a SVG
+serializable hiccup format.
+
+The
+[`convertTree()`](https://docs.thi.ng/umbrella/hiccup-svg/functions/convertTree.html)
+function takes a pre-normalized hiccup tree of geom/hiccup-canvas shape
+definitions and recursively converts it into an hiccup flavor which is ready for
+SVG serialization (i.e. using stringified geometry attribs). This conversion
+also involves translation & re-organization of various attributes. This function
+returns a new tree. The original remains untouched, as will any unrecognized
+tree / shape nodes (those will be transferred as-is to the result tree).
+Conversion can be explicitly disabled for individual elements (tree branches) by
+setting the `__convert: false` control attribute. See example below.
+
+Tree conversion can be implicitly triggered by providing a `__convert: true`
+attribute to the root `svg()` element. This conversion also supports the
+`__prec` control attribute which can be used (on a per-shape basis) to control
+the formatting used for various floating point values (except color
+conversions). Child shapes (of a group) inherit the precision setting of their
+parent.
+
+```ts
+import { svg } from "@thi.ng/hiccup-svg";
+
+// create SVG root element and convert body
+svg(
+    { width: 100, height: 100, __convert: true, __prec: 3 },
+    ["rect", { fill: [1, 0, 0] }, [1.2345, -1.2345], 100, 100]
+)
+// [
+//   'svg',
+//   {
+//     version: '1.1',
+//     xmlns: 'http://www.w3.org/2000/svg',
+//     'xmlns:xlink': 'http://www.w3.org/1999/xlink',
+//     width: 100,
+//     height: 100
+//   },
+//   ['rect', { fill: '#ff0000', x: '1.234', y: '-1.234', width: '100', height: '100' }]
+// ]
+```
+
+### Automatic attribute conversions
+
+#### Colors
+
+Since v3.1.0:
+
+Color conversions are only applied to `fill` and `stroke` attributes and
+color stops provided to `linearGradient()`, `radialGradient()`
+
+##### String
+
+String color attribs prefixed with `$` are replaced with `url(#...)`
+refs (e.g. to refer to  gradients), else used as is (untransformed)
+
+##### Number
+
+Interpreted as ARGB hex value:
+
+`{ fill: 0xffaabbcc }` => `{ fill: "#aabbcc" }`
+
+##### Array
+
+Interpreted as float RGB(A):
+
+`{ fill: [1, 0.8, 0.6, 0.4] }` => `{ fill: "rgba(255,204,153,0.40)" }`
+
+##### [@thi.ng/color](https://codeberg.org/thi.ng/umbrella/src/branch/develop/packages/color) values
+
+Converted to CSS color strings:
+
+`{ fill: hcya(0.1666, 1, 0.8859) }` => `{ fill: "#ffff00" }`
+
+#### Transforms
+
+(i.e. `transform`, `rotate`, `scale`, `translate`)
+
+If an element has a `transform` attrib, conversion of the other
+transformation attribs will be skipped, else the values are assumed to
+be either strings or:
+
+- `transform`: 6-element numeric array ([2x3 matrix in column major
+  order](https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/transform#Matrix))
+- `translate`: 2-element array
+- `rotate`: number (angle in radians)
+- `scale`: number (uniform scale) or 2-elem array
+
+If no `transform`, but others are given, the resulting transformation
+order will always be TRS. Any string values will be used as-is and
+therefore need to be complete, e.g. `{ rotate: "rotate(60)" }`
+
+## Status
+
+**STABLE** - used in production
+
+[Search or submit any issues for this package](https://codeberg.org/thi.ng/umbrella/issues?q=%5Bhiccup-svg%5D)
+
+## Installation
+
+```bash
+yarn add @thi.ng/hiccup-svg
+```
+
+ESM import:
+
+```ts
+import * as svg from "@thi.ng/hiccup-svg";
+```
+
+Browser ESM import:
+
+```html
+<script type="module" src="https://esm.run/@thi.ng/hiccup-svg"></script>
+```
+
+[JSDelivr documentation](https://www.jsdelivr.com/)
+
+For Node.js REPL:
+
+```js
+const svg = await import("@thi.ng/hiccup-svg");
+```
+
+Package sizes (brotli'd, pre-treeshake): ESM: 2.53 KB
+
+## Dependencies
+
+- [@thi.ng/api](https://codeberg.org/thi.ng/umbrella/src/branch/develop/packages/api)
+- [@thi.ng/checks](https://codeberg.org/thi.ng/umbrella/src/branch/develop/packages/checks)
+- [@thi.ng/color](https://codeberg.org/thi.ng/umbrella/src/branch/develop/packages/color)
+- [@thi.ng/prefixes](https://codeberg.org/thi.ng/umbrella/src/branch/develop/packages/prefixes)
+
+Note: @thi.ng/api is in _most_ cases a type-only import (not used at runtime)
+
+## Usage examples
+
+17 projects in this repo's
+[/examples](https://codeberg.org/thi.ng/umbrella/src/branch/develop/examples)
+directory are using this package:
+
+| Screenshot                                                                                                                           | Description                                                                      | Live demo                                                | Source                                                                                        |
+|:-------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------------------------------------------------------|:---------------------------------------------------------|:----------------------------------------------------------------------------------------------|
+| <img src="https://codeberg.org/thi.ng/umbrella/media/branch/develop/assets/examples/color-contrast.avif" width="240"/>               | Tool to interactively compute & visualize color contrasts against WCAG threshold | [Demo](https://demo.thi.ng/umbrella/color-contrast/)     | [Source](https://codeberg.org/thi.ng/umbrella/src/branch/develop/examples/color-contrast)     |
+| <img src="https://codeberg.org/thi.ng/umbrella/media/branch/develop/assets/examples/color-themes.png" width="240"/>                  | Probabilistic color theme generator                                              | [Demo](https://demo.thi.ng/umbrella/color-themes/)       | [Source](https://codeberg.org/thi.ng/umbrella/src/branch/develop/examples/color-themes)       |
+| <img src="https://codeberg.org/thi.ng/umbrella/media/branch/develop/assets/examples/commit-heatmap.png" width="240"/>                | Heatmap visualization of this mono-repo's commits                                |                                                          | [Source](https://codeberg.org/thi.ng/umbrella/src/branch/develop/examples/commit-heatmap)     |
+| <img src="https://codeberg.org/thi.ng/umbrella/media/branch/develop/assets/examples/crypto-chart.png" width="240"/>                  | Basic crypto-currency candle chart with multiple moving averages plots           | [Demo](https://demo.thi.ng/umbrella/crypto-chart/)       | [Source](https://codeberg.org/thi.ng/umbrella/src/branch/develop/examples/crypto-chart)       |
+| <img src="https://codeberg.org/thi.ng/umbrella/media/branch/develop/assets/examples/dominant-colors.png" width="240"/>               | Color palette generation via dominant color extraction from uploaded images      | [Demo](https://demo.thi.ng/umbrella/dominant-colors/)    | [Source](https://codeberg.org/thi.ng/umbrella/src/branch/develop/examples/dominant-colors)    |
+| <img src="https://codeberg.org/thi.ng/umbrella/media/branch/develop/assets/examples/gesture-analysis.png" width="240"/>              | Mouse gesture / stroke analysis, simplification, corner detection                | [Demo](https://demo.thi.ng/umbrella/gesture-analysis/)   | [Source](https://codeberg.org/thi.ng/umbrella/src/branch/develop/examples/gesture-analysis)   |
+| <img src="https://codeberg.org/thi.ng/umbrella/media/branch/develop/assets/hdom-canvas/hdom-canvas-shapes-results.png" width="240"/> | Various hdom-canvas shape drawing examples & SVG conversion / export             | [Demo](https://demo.thi.ng/umbrella/hdom-canvas-shapes/) | [Source](https://codeberg.org/thi.ng/umbrella/src/branch/develop/examples/hdom-canvas-shapes) |
+| <img src="https://codeberg.org/thi.ng/umbrella/media/branch/develop/assets/examples/package-stats.png" width="240"/>                 | CLI util to visualize umbrella pkg stats                                         |                                                          | [Source](https://codeberg.org/thi.ng/umbrella/src/branch/develop/examples/package-stats)      |
+| <img src="https://codeberg.org/thi.ng/umbrella/media/branch/develop/assets/examples/pointfree-svg.png" width="240"/>                 | Generate SVG using pointfree DSL                                                 |                                                          | [Source](https://codeberg.org/thi.ng/umbrella/src/branch/develop/examples/pointfree-svg)      |
+| <img src="https://codeberg.org/thi.ng/umbrella/media/branch/develop/assets/examples/poly-spline.png" width="240"/>                   | Polygon to cubic curve conversion & visualization                                | [Demo](https://demo.thi.ng/umbrella/poly-spline/)        | [Source](https://codeberg.org/thi.ng/umbrella/src/branch/develop/examples/poly-spline)        |
+| <img src="https://codeberg.org/thi.ng/umbrella/media/branch/develop/assets/examples/rdom-reactive-svg.jpg" width="240"/>             | Animated SVG elements with reactive attributes                                   | [Demo](https://demo.thi.ng/umbrella/rdom-reactive-svg/)  | [Source](https://codeberg.org/thi.ng/umbrella/src/branch/develop/examples/rdom-reactive-svg)  |
+| <img src="https://codeberg.org/thi.ng/umbrella/media/branch/develop/assets/examples/rdom-svg-nodes.png" width="240"/>                | rdom powered SVG graph with draggable nodes                                      | [Demo](https://demo.thi.ng/umbrella/rdom-svg-nodes/)     | [Source](https://codeberg.org/thi.ng/umbrella/src/branch/develop/examples/rdom-svg-nodes)     |
+| <img src="https://codeberg.org/thi.ng/umbrella/media/branch/develop/assets/examples/rstream-grid.jpg" width="240"/>                  | Interactive grid generator, SVG generation & export, undo/redo support           | [Demo](https://demo.thi.ng/umbrella/rstream-grid/)       | [Source](https://codeberg.org/thi.ng/umbrella/src/branch/develop/examples/rstream-grid)       |
+| <img src="https://codeberg.org/thi.ng/umbrella/media/branch/develop/assets/examples/svg-resample.png" width="240"/>                  | SVG path parsing & dynamic resampling                                            | [Demo](https://demo.thi.ng/umbrella/svg-resample/)       | [Source](https://codeberg.org/thi.ng/umbrella/src/branch/develop/examples/svg-resample)       |
+| <img src="https://codeberg.org/thi.ng/umbrella/media/branch/develop/assets/examples/svg-waveform.jpg" width="240"/>                  | Additive waveform synthesis & SVG visualization with undo/redo                   | [Demo](https://demo.thi.ng/umbrella/svg-waveform/)       | [Source](https://codeberg.org/thi.ng/umbrella/src/branch/develop/examples/svg-waveform)       |
+| <img src="https://codeberg.org/thi.ng/umbrella/media/branch/develop/assets/examples/viz-ridge-lines.avif" width="240"/>              | Interactive ridge-line plot                                                      | [Demo](https://demo.thi.ng/umbrella/viz-ridge-lines/)    | [Source](https://codeberg.org/thi.ng/umbrella/src/branch/develop/examples/viz-ridge-lines)    |
+| <img src="https://codeberg.org/thi.ng/umbrella/media/branch/develop/assets/examples/viz-scatter-plot.avif" width="240"/>             | Interactive scatter & line plot of low-discrepancy samples                       | [Demo](https://demo.thi.ng/umbrella/viz-scatter-plot/)   | [Source](https://codeberg.org/thi.ng/umbrella/src/branch/develop/examples/viz-scatter-plot)   |
+
+## API
+
+[Generated API docs](https://docs.thi.ng/umbrella/hiccup-svg/)
+
+```ts
+import * as svg from "@thi.ng/hiccup-svg";
+import { serialize } from "@thi.ng/hiccup";
+import * as fs "node:fs";
+
+fs.writeFileSync(
+    "hello.svg",
+    serialize(
+        svg.svg(
+            { width: 100, height: 100 },
+            svg.defs(svg.linearGradient("grad", [0, 0], [0, 1], [[0, "red"], [1, "blue"]])),
+            svg.circle([50, 50], 50, { fill: "url(#grad)" }),
+            svg.text([50, 55], "Hello", { fill: "white", "text-anchor": "middle" })
+        )
+    ));
+```
+
+Minimal example showing SVG conversion of a hiccup-canvas scene (also see
+[@thi.ng/geom](https://codeberg.org/thi.ng/umbrella/src/branch/develop/packages/geom)
+for another compatible approach):
+
+```ts
+import { svg } from "@thi.ng/hiccup-svg";
+import { serialize } from "@thi.ng/hiccup";
+import { writeFileSync } from "node:fs";
+
+// scene tree defined for hiccup-canvas
+const scene = [
+    ["defs", {},
+        ["radialGradient",
+            { id: "bg", from: [150, 280], to: [150, 300], r1: 300, r2: 100 },
+            [[0, "#07f"], [0.5, "#0ef"], [0.8, "#efe"], [1, "#af0"]]],
+        ["radialGradient",
+            { id: "sun", from: [110, 120], to: [110, 120], r1: 5, r2: 50 },
+            [[0, "#fff"], [1, "rgba(255,255,192,0)"]]]
+    ],
+    ["circle", { fill: "$bg" }, [150, 150], 130],
+    ["circle", { fill: "$sun" }, [110, 120], 50],
+];
+
+writeFileSync(
+    "radialgradient.svg",
+    serialize(
+        svg({ width: 300, height: 300, __convert: true }, scene)
+    )
+);
+```
+
+Result:
+
+```xml
+<svg version="1.1"
+    xmlns="http://www.w3.org/2000/svg"
+    xmlns:xlink="http://www.w3.org/1999/xlink" width="300" height="300">
+    <defs>
+        <radialGradient id="bg" fx="150.00" fy="280.00" cx="150.00" cy="300.00" fr="300.00" r="100.00" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#07f"/>
+            <stop offset="0.5" stop-color="#0ef"/>
+            <stop offset="0.8" stop-color="#efe"/>
+            <stop offset="1" stop-color="#af0"/>
+        </radialGradient>
+        <radialGradient id="sun" fx="110.00" fy="120.00" cx="110.00" cy="120.00" fr="5.00" r="50.00" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#fff"/>
+            <stop offset="1" stop-color="rgb(255,255,192)" stop-opacity="0"/>
+        </radialGradient>
+    </defs>
+    <circle cx="150.00" cy="150.00" r="130.00" fill="url(#bg)"/>
+    <circle cx="110.00" cy="120.00" r="50.00" fill="url(#sun)"/>
+</svg>
+```
+
+## Authors
+
+- [Karsten Schmidt](https://thi.ng)
+
+If this project contributes to an academic publication, please cite it as:
+
+```bibtex
+@misc{thing-hiccup-svg,
+  title = "@thi.ng/hiccup-svg",
+  author = "Karsten Schmidt",
+  note = "https://thi.ng/hiccup-svg",
+  year = 2016
+}
+```
+
+## License
+
+&copy; 2016 - 2026 Karsten Schmidt // Apache License 2.0

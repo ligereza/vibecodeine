@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" data-name="02-warehouse-house-chicago">
+<style>
+  /* ══ PALETA — edita libremente estos valores ══ */
+  svg{
+    --fondo: #0d0d18;
+    --vidrio-1: #ffb02e;
+    --vidrio-2: #ff2e7e;
+    --vidrio-3: #2ee6ff;
+    --vidrio-4: #7b5cff;
+    --vinilo: #14141f;
+    --surco: #4a4a63;
+    --estructura: #f2f2f5;
+    /* ── velocidades (mayor = más lento) ── */
+    --vel-vidrios: 4s;
+    --vel-vinilo: 3.4s;
+  }
+
+.i2w{animation:i2g var(--vel-vidrios) ease-in-out infinite}
+.i2w:nth-of-type(2){animation-delay:.5s}.i2w:nth-of-type(3){animation-delay:1s}.i2w:nth-of-type(4){animation-delay:1.5s}
+.i2w:nth-of-type(5){animation-delay:2s}.i2w:nth-of-type(6){animation-delay:2.5s}.i2w:nth-of-type(7){animation-delay:3s}
+.i2w:nth-of-type(8){animation-delay:3.5s}
+@keyframes i2g{0%,100%{opacity:.5}50%{opacity:1}}
+.i2vin{transform-origin:60px 52px;animation:i2r var(--vel-vinilo) linear infinite}
+@keyframes i2r{to{transform:rotate(360deg)}}
+.i2halo{transform-origin:60px 52px;animation:i2h var(--vel-vidrios) ease-in-out infinite}
+@keyframes i2h{0%,100%{opacity:.12;transform:scale(1)}50%{opacity:.3;transform:scale(1.12)}}
+</style>
+<rect width="120" height="120" fill="var(--fondo)"/>
+<circle class="i2halo" cx="60" cy="52" r="40" fill="var(--vidrio-1)"/>
+<g transform="translate(60,52)">
+  <g fill="var(--vidrio-1)"><path class="i2w" d="M0,0 L-9.9,-24 A26,26 0 0 1 9.9,-24 Z"/></g>
+  <g fill="var(--vidrio-2)"><path class="i2w" transform="rotate(45)" d="M0,0 L-9.9,-24 A26,26 0 0 1 9.9,-24 Z"/></g>
+  <g fill="var(--vidrio-3)"><path class="i2w" transform="rotate(90)" d="M0,0 L-9.9,-24 A26,26 0 0 1 9.9,-24 Z"/></g>
+  <g fill="var(--vidrio-1)"><path class="i2w" transform="rotate(135)" d="M0,0 L-9.9,-24 A26,26 0 0 1 9.9,-24 Z"/></g>
+  <g fill="var(--vidrio-4)"><path class="i2w" transform="rotate(180)" d="M0,0 L-9.9,-24 A26,26 0 0 1 9.9,-24 Z"/></g>
+  <g fill="var(--vidrio-2)"><path class="i2w" transform="rotate(225)" d="M0,0 L-9.9,-24 A26,26 0 0 1 9.9,-24 Z"/></g>
+  <g fill="var(--vidrio-3)"><path class="i2w" transform="rotate(270)" d="M0,0 L-9.9,-24 A26,26 0 0 1 9.9,-24 Z"/></g>
+  <g fill="var(--vidrio-1)"><path class="i2w" transform="rotate(315)" d="M0,0 L-9.9,-24 A26,26 0 0 1 9.9,-24 Z"/></g>
+</g>
+<g stroke="var(--fondo)" stroke-width="3" fill="none">
+  <circle cx="60" cy="52" r="26"/><circle cx="60" cy="52" r="17"/>
+  <path d="M60,26v52M34,52h52M42,34l36,36M78,34L42,70"/>
+</g>
+<g class="i2vin"><circle cx="60" cy="52" r="15" fill="var(--vinilo)"/>
+<g fill="none" stroke="var(--surco)" stroke-width="1"><circle cx="60" cy="52" r="12"/><circle cx="60" cy="52" r="9"/><circle cx="60" cy="52" r="6"/></g>
+<circle cx="60" cy="52" r="2.6" fill="var(--vidrio-1)"/><rect x="59" y="38" width="2" height="5" fill="var(--vidrio-1)" opacity=".7"/></g>
+<path d="M14,96V58L60,26l46,32v38Z" fill="none" stroke="var(--estructura)" stroke-width="3.4" stroke-linejoin="round"/>
+<rect x="14" y="96" width="92" height="10" fill="var(--estructura)"/>
+</svg>

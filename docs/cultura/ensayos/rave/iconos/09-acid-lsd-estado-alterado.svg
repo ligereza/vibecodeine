@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" data-name="09-acid-lsd-estado-alterado">
+<style>
+  /* ══ PALETA — edita libremente estos valores ══ */
+  svg{
+    --fondo: #10061c;
+    --blob-centro: #ffd93d;
+    --blob-medio: #ff2e7e;
+    --blob-borde: #5b1e9e;
+    --filamento: #ffe9a8;
+    --pupila: #0d0418;
+    --iris: #d7ff2e;
+    --papel: #f4efe4;
+    /* ── velocidades (mayor = más lento) ── */
+    --vel-blob: 8s;
+    --vel-anillo: 12s;
+    --vel-ojo: 3.6s;
+  }
+
+.i9blob{animation:i9m var(--vel-blob) ease-in-out infinite;transform-origin:60px 60px}
+@keyframes i9m{0%,100%{transform:scale(1) rotate(0)}33%{transform:scale(1.06) rotate(6deg)}66%{transform:scale(.95) rotate(-6deg)}}
+.i9r1{transform-origin:60px 60px;animation:i9s var(--vel-anillo) linear infinite}
+.i9r2{transform-origin:60px 60px;animation:i9s var(--vel-blob) linear infinite reverse}
+@keyframes i9s{to{transform:rotate(360deg)}}
+.i9tab{animation:i9t var(--vel-ojo) ease-in-out infinite}
+@keyframes i9t{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-6px) rotate(4deg)}}
+.i9eye{transform-origin:60px 60px;animation:i9e var(--vel-ojo) ease-in-out infinite}
+@keyframes i9e{0%,100%{transform:scale(1)}50%{transform:scale(1.22)}}
+</style>
+<defs>
+<radialGradient id="g9" cx=".5" cy=".5"><stop offset="0" stop-color="var(--blob-centro)"/><stop offset=".45" stop-color="var(--blob-medio)"/><stop offset="1" stop-color="var(--blob-borde)"/></radialGradient>
+<filter id="f9"><feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="4"><animate attributeName="baseFrequency" values="0.02;0.045;0.02" dur="10s" repeatCount="indefinite"/></feTurbulence><feDisplacementMap in="SourceGraphic" scale="7"/></filter>
+</defs>
+<rect width="120" height="120" fill="var(--fondo)"/>
+<g filter="url(#f9)" class="i9blob">
+  <circle cx="60" cy="60" r="48" fill="url(#g9)"/>
+  <g class="i9r1" fill="none" stroke="var(--fondo)" stroke-width="3" opacity=".55">
+    <circle cx="60" cy="60" r="41"/><circle cx="60" cy="60" r="33"/><circle cx="60" cy="60" r="25"/>
+  </g>
+  <g class="i9r2" fill="none" stroke="var(--filamento)" stroke-width="1.6" opacity=".8">
+    <path d="M60,14a46,46 0 0 1 0,92a30,30 0 0 1 0,-60a16,16 0 0 0 0,-32"/>
+  </g>
+</g>
+<g class="i9eye"><ellipse cx="60" cy="60" rx="21" ry="12" fill="var(--pupila)"/>
+<circle cx="60" cy="60" r="9" fill="var(--iris)"/><circle cx="60" cy="60" r="4" fill="var(--pupila)"/>
+<ellipse cx="60" cy="60" rx="21" ry="12" fill="none" stroke="var(--filamento)" stroke-width="2.2"/></g>
+<g class="i9tab"><rect x="88" y="86" width="20" height="20" rx="3" fill="var(--papel)" stroke="var(--pupila)" stroke-width="2"/>
+<circle cx="98" cy="96" r="5" fill="var(--blob-medio)"/><path d="M88,96h20M98,86v20" stroke="var(--pupila)" stroke-width=".8" opacity=".4"/></g>
+</svg>

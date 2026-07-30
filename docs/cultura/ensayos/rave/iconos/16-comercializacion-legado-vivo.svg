@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" data-name="16-comercializacion-legado-vivo">
+<style>
+  /* ══ PALETA — edita libremente estos valores ══ */
+  svg{
+    --fondo: #06060a;
+    --glitch-a: #ff2e7e;
+    --glitch-b: #2ee6ff;
+    --contorno: #f2f2f5;
+    --acento: #d7ff2e;
+    --scanline: #2c2c38;
+    /* ── velocidades (mayor = más lento) ── */
+    --vel-glitch: 3.4s;
+    --vel-ecualizador: 1.3s;
+    --vel-scan: 3s;
+  }
+
+.i16g1{animation:i16gl var(--vel-glitch) steps(1) infinite;mix-blend-mode:screen}
+.i16g2{animation:i16gr var(--vel-glitch) steps(1) infinite;mix-blend-mode:screen}
+@keyframes i16gl{0%,88%{transform:translate(0,0)}90%{transform:translate(-4px,1px)}94%{transform:translate(3px,-2px)}98%{transform:translate(-2px,0)}}
+@keyframes i16gr{0%,88%{transform:translate(0,0)}90%{transform:translate(4px,-1px)}94%{transform:translate(-3px,2px)}98%{transform:translate(2px,0)}}
+.i16scan{animation:i16sc var(--vel-scan) linear infinite}
+@keyframes i16sc{from{transform:translateY(-16px)}to{transform:translateY(120px)}}
+.i16bar rect{animation:i16eq var(--vel-ecualizador) ease-in-out infinite;transform-box:fill-box;transform-origin:center bottom}
+.i16bar rect:nth-child(1){animation-delay:0s}.i16bar rect:nth-child(2){animation-delay:.16s}.i16bar rect:nth-child(3){animation-delay:.32s}
+.i16bar rect:nth-child(4){animation-delay:.48s}.i16bar rect:nth-child(5){animation-delay:.64s}.i16bar rect:nth-child(6){animation-delay:.8s}
+.i16bar rect:nth-child(7){animation-delay:.96s}
+@keyframes i16eq{0%,100%{transform:scaleY(.35)}50%{transform:scaleY(1)}}
+.i16core{transform-origin:60px 52px;animation:i16pu var(--vel-ecualizador) ease-in-out infinite}
+@keyframes i16pu{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.1);opacity:1}}
+</style>
+<rect width="120" height="120" fill="var(--fondo)"/>
+<g opacity=".9">
+<g class="i16g1" fill="var(--glitch-a)"><path d="M60,20l30,17v34L60,88 30,71V37Z" opacity=".55"/></g>
+<g class="i16g2" fill="var(--glitch-b)"><path d="M60,20l30,17v34L60,88 30,71V37Z" opacity=".55"/></g>
+<path d="M60,20l30,17v34L60,88 30,71V37Z" fill="none" stroke="var(--contorno)" stroke-width="2.6" stroke-linejoin="round"/>
+</g>
+<g class="i16core"><circle cx="60" cy="52" r="12" fill="none" stroke="var(--acento)" stroke-width="2.4"/><circle cx="60" cy="52" r="4.5" fill="var(--acento)"/></g>
+<g class="i16bar" fill="var(--acento)">
+<rect x="16" y="94" width="8" height="18"/><rect x="29" y="94" width="8" height="18"/><rect x="42" y="94" width="8" height="18"/>
+<rect x="55" y="94" width="8" height="18"/><rect x="68" y="94" width="8" height="18"/><rect x="81" y="94" width="8" height="18"/><rect x="94" y="94" width="8" height="18"/>
+</g>
+<rect x="0" y="112" width="120" height="2" fill="var(--scanline)"/>
+<g opacity=".14" fill="#fff"><rect class="i16scan" x="0" y="0" width="120" height="10"/></g>
+<g stroke="var(--scanline)" stroke-width=".7" opacity=".5"><path d="M0,6h120M0,14h120M0,22h120M0,30h120M0,38h120M0,46h120M0,54h120M0,62h120M0,70h120M0,78h120M0,86h120M0,94h120M0,102h120M0,110h120"/></g>
+</svg>
