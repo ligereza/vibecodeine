@@ -111,7 +111,7 @@ the root of the repo (there is a `.env.example` for reference).
 |---|---|---|
 | `FLUJO_RD_ROOT` | Where the tree of real material lives (photos, pieces, deliveries) that the indexer walks | Uses `C:\rd`, where it lived on the original machine. On any other machine you have to define it |
 | `FLUJO_WORKSPACE_ROOT` | Where the program stores and looks for jobs | Uses the repo folder |
-| `FLUJO_MAK_URL` | Address of the hub on the MAK machine, the one that works on its own (for example `http://<box-ip>:8900`). The panel queries it **read-only**: it never orders anything | The MAK panel says it is not configured. Everything else works the same |
+| `FLUJO_MAK_URL` | Address of the face on the MAK machine, the one that works on its own (for example `http://<box-ip>:8900`). The box exposes three organs: the research body on `:8890`, codex on `:8891`, and the face on `:8900`, which embeds the other two. The panel queries it **read-only**: it never orders anything | The MAK panel says it is not configured. Everything else works the same |
 | `FLUJO_EVENTOS_AUTOMATIZACION_DIR` | Folder watched by the events automation | The automation stays off until you define it |
 | `FLUJO_IMAP_AUTOAPLICAR` | Enciende aplicar airdrops recibidos por correo. Apagado por defecto desde el hallazgo VCD-09: esa via autoriza comparando el header `From:`, que es texto falsificable, y despues aplica y pushea codigo. Para encenderla de verdad hace falta artefacto firmado y aprobacion humana, no solo esta variable | apagado |
 | `FLUJO_GPU_BACKEND` | Which Cycles backend to try first on this machine (`CUDA`, `OPTIX`, `HIP`). Only worth setting where the default is measurably wrong: on a GTX 1650, CUDA rendered the same scene in 300s against OptiX's 459s, because it is the only Turing card without RT cores | Tries OptiX first, then CUDA. Correct on cards that do have RT cores |
@@ -367,6 +367,11 @@ In this order, without exploring the whole repo:
 4. `py tools/contexto_repo.py task "<keywords>"` — tells you which files to look
    at for *your* task. Do not read the whole repo: it is expensive and ages
    badly.
+
+If your task lives in one line, that line has its own map: `docs/rd/MAPA_RD.md`
+for RD, `iskvw/MAPA.md` for the artwork (the `iskvw/` folder holds the skin,
+its data and its contract). For vision and long-range direction — not backlog —
+read `PROYECCION.md`.
 
 Four things that tripped up the ones who came before:
 
