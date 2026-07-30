@@ -45,6 +45,19 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
+      - name: generar el sustrato (archivo.json)
+        run: |
+          set -euo pipefail
+          # archivo.json esta gitignoreado: es una proyeccion regenerable. La
+          # piel lo pide primero y cae a campo.json si falta. Sin este paso el
+          # sitio publicado nunca lo llevaba, asi que los ensayos de MAK y sus
+          # vinculos no llegaban al campo: la mitad de #403 que no se publico.
+          # El generador avisa que no alcanza el micelio (la caja no es
+          # visible desde CI) y sigue con el material del repo: eso es lo
+          # esperado, no un error.
+          python3 tools/gen_archivo_iskvw.py --fuente todo
+          test -s iskvw/datos/archivo.json
+
       - name: armar el sitio
         run: |
           set -euo pipefail
@@ -68,7 +81,7 @@ jobs:
           set -euo pipefail
           # con contenido
           for f in index.html piel/campo/index.html datos/campo.json \
-                   piel/trazos/_indice.json CNAME; do
+                   datos/archivo.json piel/trazos/_indice.json CNAME; do
             test -s "_sitio/$f" || { echo "FALTA o vacio: $f"; exit 1; }
           done
           # `.nojekyll` es VACIO por diseño, asi que se comprueba existencia y no
