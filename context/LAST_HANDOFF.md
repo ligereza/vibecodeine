@@ -149,14 +149,15 @@ Five decisions of that landing, not to be re-litigated:
    a pipeline or a graph from scratch** (`tests/test_thing_registro.py` keeps it
    honest). Next candidates: `graph`, `transducers`, `validate`.
 
-Four defects the CI matrix caught that a green local Windows run did not: a
-backend that EXISTS and does not rasterize counts as absent (probed per binary);
-vendorized `*.README.md` are THIRD-PARTY, in a declared `ZONA_AJENA`; the doc
-ratchet reads `git ls-files`, so **an uncommitted `.md` is invisible to it**;
-and **rasterizing is not animating** -- cairosvg runs no CSS, so ubuntu got 16
-identical frames and the guard read that tie as "the file lies". Movement now
-demands a backend PROVED to animate (never an ambiguous 1), and `--no-sandbox`
-is Linux-only: on Windows it returns a blank PNG.
+Defects the CI matrix caught that a green local Windows run did not, and they
+are all ONE lesson -- the instrument must earn the right to accuse a file:
+vendorized `*.README.md` are THIRD-PARTY (`ZONA_AJENA`); the doc ratchet reads
+`git ls-files`, so **an uncommitted `.md` is invisible to it**; rasterizing is
+not animating (cairosvg runs no CSS); a browser is picked by PROBE -- binary and
+flags both -- because the runner's first one cannot draw; and the blank frames
+were `--window-size`: below ~100 px the new headless captures from a viewport
+that never painted, so the window is asked large and the result CROPPED. `flujo verify` runs pytest
+with `-rs`: a guard that skips must not look like one that measured.
 
 ## What a real model did to a boundary a mock never touched (2026-07-30)
 
@@ -166,24 +167,20 @@ GitHub Models; NOT the Azure account SOL drained) found two things in the first
 attempt. Detail and numbers: `docs/cultura/MOTOR_SEMANTICO.md`.
 
 1. **The boundary with a model is validated by TYPE before value.** It returned
-   `composicion` as a dict; that raises `TypeError`, and the mode only catches
-   `ValueError` -- so it was not a rejection with its reason, it was the mode
-   falling over. Fixed, with a wrong-typed value REJECTED instead of silently
-   defaulting.
+   `composicion` as a dict, which raises `TypeError` while the mode only caught
+   `ValueError`: not a rejection with its reason, a fall. A wrong-typed value is
+   now REJECTED, never silently defaulted.
 2. **A closed vocabulary stops invented words; it does not fix the SHAPE.**
-   Vocabulary alone -> 1 of 3 briefs reached an SVG, with up to three repair
-   rounds. Vocabulary + ONE complete example spec -> **3 of 3 on the first
-   round**. The example is `esquema.EJEMPLO` and a test demands it stay.
+   Vocabulary alone -> 1 of 3 briefs reached an SVG. Vocabulary + ONE complete
+   example spec -> **3 of 3 on the first round** (`esquema.EJEMPLO`, pinned).
 
-**A measurement that was WRONG, corrected everywhere:** "one of the sixteen
-icons is nearly static" was a defect of the INSTRUMENT (the animation advance
-was injected after `infinite`, killing a `... infinite alternate` rule). All
-sixteen give 10/10 distinct frames, and the guard is coherence, not a threshold:
-an icon that declares `@keyframes` must move within ITS OWN cycle.
+**A measurement that was WRONG, corrected everywhere:** "one icon is nearly
+static" was the INSTRUMENT (the advance was injected after `infinite`, killing
+a `... infinite alternate` rule). All sixteen move within their own cycle.
 
-**Still NOT closed, named so nobody finds it by surprise:** the full `iconos.py`
--- resource guard, saved piece, job -- has never run in its place on the box.
-What was measured is the same prompt and the same compiler, from Windows.
+**Still NOT closed:** the full `iconos.py` -- resource guard, saved piece, job
+-- has never run in its place on the box. What was measured is the same prompt
+and the same compiler, from Windows.
 
 ## iskvw: the substrate is consumed, and MAK's essays reach it (2026-07-30)
 
@@ -191,20 +188,19 @@ The portfolio had none of `PROYECCION.md`'s integrations wired. Three cuts, all
 verified running; detail in `iskvw/MAPA.md` and `iskvw/ESQUEMA_ARCHIVO.md`:
 
 1. **An essay enters the archive through the same contract**
-   (`contrato_archivo.desde_ensayo` + `--fuente ensayos`): 1 essay + 16 concepts
-   + 16 icons = 33 pieces, 32 links; `--fuente todo` gives 41 and 50. Links are
-   `manual` and never `semantico`, an icon absent from disk produces NO piece,
-   and `declara_animacion` is READ from the file.
+   (`contrato_archivo.desde_ensayo` + `--fuente ensayos`): 33 pieces, 32 links;
+   `--fuente todo` gives 41 and 50. Links are `manual`, never `semantico`; an
+   icon absent from disk produces NO piece.
 2. **The skin asks for the substrate**: `archivo.json` first, degrading exactly
    as before. It is not versioned, so the fallback IS today's live path.
 3. **A session is a reproducible seed** (`#semilla=&centro=&escala=`), pinned by
    a test that runs the PUBLISHED file's own functions in node.
 
-**The links are DRAWN: always, faint, by weight** (his call). They go underneath
-the works, a link needs BOTH ends in frame, and the neighbours are indexed once
--- the every-pair-every-frame defect is pinned by a test. Measured: 207 to 615
-segments per frame against the 23,871 pairs an all-against-all would cost. NOT
-measured, so not claimed: frames per second on a phone.
+**The links are DRAWN: always, faint, by weight** (his call). Underneath the
+works, both ends in frame, neighbours indexed once -- the every-pair-every-frame
+defect is pinned by a test. Measured: 207 to 615 segments per frame against the
+23,871 pairs an all-against-all would cost. NOT measured, so not claimed: frames
+per second on a phone.
 
 **Still the user's, and he wants to DEBATE it first:** whether the essays get
 published on iskvw.cl. The bridge is built and unused.
@@ -227,6 +223,7 @@ dirigirlo existia y estaba invisible.
 |---|---|
 | 2026-07-27 | Las 16 decisiones de ese dia, vigentes: `docs/handoffs/archive/20260727_decisiones.md` (riesgo telefono CERRADO 60fps x4, el loop no escribe docs, curacion=configuracion, vocabulario cerrado en la fuente, archivos no consola, preset viaja, export no rama, MAK atiende issues solo, TLS no UA, CUDA vs OptiX por maquina, la cara no es el costo, PDFs=piezas, tipos=config, cola de triangulacion) |
 | 2026-07-26 | Las 17 decisiones de ese dia, vigentes: `docs/handoffs/archive/20260726_decisiones.md` (tres modos de trabajo, iskvw es el portafolio, nadie abre issues, valores de dinero configurables, catalogo de simbolos abierto, brand como info, MAK atiende material del usuario, idioma dividido, referencias como referencias, worktrees podados, crons inutiles fuera) |
+| 2026-07-30 | `utilidades/` trazado hasta el origen. Dos fuentes: (a) mejora_libre -> `agente_libre.py` sin `--objetivo` -> sus 6 semillas fijas; funciona como fue disenado. (b) `capataz.py:297` accion "codificar" con pedidos de forma OPERATIVA (actualizar ajustes_junta.json, ejecutar backlog_codex, cron) enrutados a un canal cuyo contrato es un archivo stdlib autocontenido que NUNCA se ejecuta. Un pedido de ops no puede satisfacerse con un archivo que nadie corre: el coder inventa rutas y CLIs porque no puede verificarlas. El defecto es de ENRUTAMIENTO, no del codigo ni de la infra (ajustes_junta.json, backlog_codex.py y salud_proveedores.json SI existen). NADA SE BORRA. Los 3 PR del buzon (#375 #400 #404) quedan sin mergear hasta resolver el enrutamiento. Trabajo siguiente, NO en este cierre: que el prompt de codificar rechace pedidos con forma de ops, o que exista un verbo real para "cambiar un ajuste en la caja" (hoy solo esta "mantener", que es dry-run). |
 | 2026-07-10 a 07-25 | Decisiones mas viejas, vigentes pero fuera de la lista viva: `docs/handoffs/archive/20260722_25_decisiones.md` (panel de suplementos innecesario, la carpeta de diseno no se respalda desde el repo, los dos planes grandes RECHAZADOS, `desktop/` archivado, Instagram via parth-dl, n8n descartado, Gemini fuera, nada de Oh My Posh) |
 
 ## Built on 2026-07-26, waiting for the user to look
@@ -337,6 +334,9 @@ list of what is pending. Before working an item, check it is still true.
   missing is the exit — today that is a human-curated PR, same as any
   line -> main promotion. If the inbox ever holds work `main` has not seen for
   long, the topology has quietly broken and needs fixing, not tolerating.
+- **`rd` and `iskvw` point at the SAME commit (`abc26891`)** while the README
+  calls them different lines. Written down, not resolved: whether that is
+  intentional is the user's call.
 - The hourly `[OBS]` issue emitter is still unidentified. Ruled out: the repo and
   MAK (nothing there creates issues). A session on 2026-07-24 already ran this
   hunt and logged it unresolved. Not urgent, and not worth chasing again without
