@@ -25,9 +25,13 @@ from flask import Blueprint, jsonify
 
 bp = Blueprint("wake_mak", __name__, url_prefix="/wake_mak")
 
-# La MAC real NO viaja en un repo publico: se lee del entorno. En la caja va
-# en `MAC_WIFI_MAK`, junto al resto de la configuracion del puente.
-MAC_WIFI_MAK = os.environ.get("MAC_WIFI_MAK", "02:00:00:00:00:00")
+# La MAC real NO viaja en un repo publico: se lee del entorno. Este archivo esta
+# en `staged/`, o sea que se DESPLIEGA AL TELEFONO, y alli la variable tiene que
+# existir igual -- por eso la ausencia no cae a un valor de ejemplo: sin
+# `MAC_WIFI_MAK` el endpoint responde el motivo. Un paquete magico enviado a una
+# MAC de relleno no despierta nada y no falla: se pierde en el broadcast, que es
+# la peor forma de romperse.
+MAC_WIFI_MAK = os.environ.get("MAC_WIFI_MAK", "")
 BROADCAST = "255.255.255.255"
 PUERTOS = (9, 7)
 
@@ -39,7 +43,12 @@ def _magic(mac):
     return b"\xff" * 6 + bytes.fromhex(limpia) * 16
 
 
-def despertar(mac=MAC_WIFI_MAK):
+def despertar(mac=None):
+    mac = mac or MAC_WIFI_MAK
+    if not mac:
+        raise ValueError(
+            "falta MAC_WIFI_MAK en el entorno: sin la MAC de destino no hay "
+            "paquete magico que enviar")
     paquete = _magic(mac)
     enviados = 0
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
