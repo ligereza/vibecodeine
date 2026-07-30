@@ -227,17 +227,20 @@ def _diagnostico(svg: str, ciclo: int) -> str:
     b = _ras.backend_disponible(anima=True)
     partes = ["backend=%s (rasteriza: %s)" % (b, _ras.backend_disponible())]
     try:
-        a = _ras.rasterizar(svg, tam=96, backend=b)
-        z = _ras.rasterizar(svg, tam=96, avance_ms=ciclo // 2, backend=b)
+        a = _ras.rasterizar(svg, tam=96, backend=b, anima=True)
+        z = _ras.rasterizar(svg, tam=96, avance_ms=ciclo // 2, backend=b,
+                            anima=True)
         partes.append("PNG cuadro0=%d B, medio ciclo=%d B, %s"
                       % (len(a), len(z),
                          "IGUALES" if a == z else "distintos"))
-        sonda_q = _ras.rasterizar(_ras._SONDA_ANIMA, tam=8, backend=b)
-        sonda_m = _ras.rasterizar(_ras._SONDA_ANIMA, tam=8, avance_ms=500,
-                                  backend=b)
-        partes.append("sonda 8px: %d/%d B, %s"
-                      % (len(sonda_q), len(sonda_m),
-                         "IGUALES" if sonda_q == sonda_m else "distintos"))
+        sq = _ras.rasterizar(_ras._SONDA_ANIMA, tam=_ras._TAM_SONDA,
+                             backend=b, anima=True)
+        sm = _ras.rasterizar(_ras._SONDA_ANIMA, tam=_ras._TAM_SONDA,
+                             avance_ms=500, backend=b, anima=True)
+        partes.append("sonda %dpx: %d/%d B, %s; perfil=%s"
+                      % (_ras._TAM_SONDA, len(sq), len(sm),
+                         "IGUALES" if sq == sm else "distintos",
+                         _ras._perfil_navegador()))
     except Exception as e:  # el diagnostico no puede tapar el fallo real
         partes.append("diagnostico incompleto: %r" % (e,))
     return "; ".join(partes)
@@ -262,9 +265,15 @@ def test_un_icono_que_declara_animacion_se_mueve_en_su_propio_ciclo(svg_path):
 
     import tempfile
     with tempfile.TemporaryDirectory() as tmp:
-        _, cuadros, distintos = _ras.animar(
-            svg, Path(tmp) / "x.gif", cuadros=4,
-            ciclo_ms=ciclo, tam=96)
+        try:
+            _, cuadros, distintos = _ras.animar(
+                svg, Path(tmp) / "x.gif", cuadros=4,
+                ciclo_ms=ciclo, tam=96)
+        except _ras.BackendNoDibujaError as e:
+            # Se dice en voz alta y se sigue: un instrumento que no dibuja la
+            # pieza no tiene nada que declarar SOBRE la pieza. Acusarla seria
+            # exactamente el error que costo tres matrices rojas.
+            pytest.skip("instrumento incapaz, no defecto del archivo: %s" % e)
     # El mensaje NOMBRA al instrumento. Sin eso, una acusacion al archivo y un
     # instrumento ciego se leen igual, y esta suite ya gasto dos vueltas de CI
     # aprendiendo la diferencia.

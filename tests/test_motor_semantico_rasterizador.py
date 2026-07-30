@@ -141,11 +141,14 @@ def test_animar_produce_gif_y_mide_cuadros_distintos(tmp_path):
     datos = salida.read_bytes()
     assert datos[:6] == b"GIF89a"
     b = rasterizador.backend_disponible(anima=True)
-    sonda_q = rasterizador.rasterizar(rasterizador._SONDA_ANIMA, tam=8, backend=b)
-    sonda_m = rasterizador.rasterizar(rasterizador._SONDA_ANIMA, tam=8,
-                                      avance_ms=500, backend=b)
+    sonda_q = rasterizador.rasterizar(rasterizador._SONDA_ANIMA,
+                                      tam=rasterizador._TAM_SONDA,
+                                      backend=b, anima=True)
+    sonda_m = rasterizador.rasterizar(rasterizador._SONDA_ANIMA,
+                                      tam=rasterizador._TAM_SONDA,
+                                      avance_ms=500, backend=b, anima=True)
     assert distintos > 1, (
-        "todos los cuadros iguales. backend=%s (rasteriza: %s); sonda 8px "
+        "todos los cuadros iguales. backend=%s (rasteriza: %s); sonda "
         "%d/%d B %s -- si la sonda difiere y el SVG real no, el backend anima "
         "pero no esta dibujando el contenido"
         % (b, rasterizador.backend_disponible(), len(sonda_q), len(sonda_m),

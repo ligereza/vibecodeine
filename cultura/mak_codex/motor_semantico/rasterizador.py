@@ -51,27 +51,35 @@ NAVEGADOR_CANDS = [
 ]
 
 
-# Banderas que dependen del sistema, y estan MEDIDAS una por una (2026-07-30,
-# icono 08-roland-tb-303, 96 px):
-#   --no-sandbox           Linux/CI: imprescindible (contenedor sin user
-#                          namespaces, o proceso como root; sin ella el
-#                          navegador arranca y muere, que es como el runner de
-#                          ubuntu paso por "Edge existe y no rasteriza").
-#                          Windows: VENENO. Devuelve un PNG en blanco de 291
-#                          bytes en vez de los 3673 del icono, y como es un PNG
-#                          valido nadie lo nota hasta que todos los cuadros
-#                          salen identicos y el test acusa al archivo.
-#   --disable-dev-shm-usage  inofensiva en los dos (3673 bytes con y sin ella).
-#   --virtual-time-budget    adelanta el reloj virtual y NO captura antes de que
-#                          la pagina pinte. En Windows no cambia el resultado
-#                          (4 cuadros distintos con y sin ella); existe por la
-#                          maquina lenta, donde una captura al primer paint
-#                          devuelve el mismo cuadro en blanco siempre -- y
-#                          cuadros iguales es justo la forma que tiene este
-#                          instrumento de mentir.
+# Las banderas del navegador NO se eligen por sistema operativo: se PRUEBAN.
+# Tres vueltas de matriz roja el 2026-07-30 ensenaron por que.
+#
+#   --no-sandbox            Linux/CI: imprescindible (contenedor sin user
+#                           namespaces). Windows: VENENO -- devuelve un PNG
+#                           valido y EN BLANCO de 291 bytes donde el icono rinde
+#                           3673, y nadie lo nota hasta que todos los cuadros
+#                           salen iguales y el guardian acusa al archivo.
+#   --disable-dev-shm-usage inofensiva en los dos (3673 B con y sin ella).
+#   --virtual-time-budget   no captura antes de que la pagina pinte.
+#
+# Elegirlas por `os.name` parecia suficiente y no lo era: en ubuntu el
+# navegador arrancaba, animaba una sonda de 8x8 y dibujaba las piezas reales en
+# blanco igual. Un perfil que sirve en una maquina puede estar ciego en otra, y
+# eso no se deduce -- se mide. Asi que se prueban en orden y gana el primero que
+# DIBUJA Y MUEVE una pieza representativa. El primero de la lista es el que ya
+# funcionaba en Windows, para no arriesgar lo que estaba sano.
 # Solo se abre un HTML local generado aca, nunca contenido remoto.
-_BANDERAS_SO = ["--disable-dev-shm-usage", "--virtual-time-budget=500"] + (
-    [] if os.name == "nt" else ["--no-sandbox"])
+_BASE = ["--disable-gpu", "--no-first-run"]
+_PERFILES = [
+    ["--headless=new", "--disable-dev-shm-usage"],
+    ["--headless=new", "--disable-dev-shm-usage", "--no-sandbox"],
+    ["--headless=new", "--disable-dev-shm-usage", "--no-sandbox",
+     "--virtual-time-budget=1000"],
+    ["--headless=old", "--disable-dev-shm-usage", "--no-sandbox"],
+    ["--headless=old", "--disable-dev-shm-usage", "--no-sandbox",
+     "--virtual-time-budget=1000"],
+    ["--headless", "--disable-dev-shm-usage", "--no-sandbox"],
+]
 
 
 class RasterizadorNoDisponibleError(RuntimeError):
@@ -90,6 +98,17 @@ class BackendNoAnimaError(RasterizadorNoDisponibleError):
     numero que se parece a un veredicto. Es la misma leccion que
     `_navegador_funciona()` -- existir no es funcionar -- un nivel mas adentro:
     funcionar para una cosa no es funcionar para la otra.
+    """
+
+
+class BackendNoDibujaError(BackendNoAnimaError):
+    """Pasa la sonda y no dibuja ESTA pieza: devuelve un cuadro liso.
+
+    Medido en ubuntu el 2026-07-30: un navegador que animaba la sonda entregaba
+    los iconos reales en 291 bytes -- un PNG valido y vacio, donde Windows daba
+    3673. Todos los cuadros salian iguales entre si y el guardian lo leia como
+    "el archivo afirma un movimiento que no ocurre". Un lienzo liso no es una
+    medicion del icono: es una medicion del vacio.
     """
 
 
@@ -140,15 +159,24 @@ _navegador = _edge  # nombre honesto; ya no es necesariamente Edge
 _SONDA = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'>" \
          "<rect width='8' height='8' fill='#f00'/></svg>"
 
-# Sonda de ANIMACION: un cuadrado que va de negro a blanco en 1000 ms. En el
-# instante 0 y en el 500 tiene que dar pixeles distintos. Es la unica forma
-# honesta de saber si el backend ejecuta CSS: preguntarselo, no deducirlo de
-# su nombre.
+# Sonda de ANIMACION. Fue un cuadrado de 8x8 y ese tamano la volvio inutil: en
+# ubuntu la pasaba un navegador que dibujaba las piezas reales EN BLANCO. Una
+# sonda que no se parece al trabajo no prueba nada sobre el trabajo.
+# Ahora tiene lo que tiene un icono -- varias formas, varios colores, un
+# translate y un cambio de color a lo largo de 1000 ms -- y se mide a 96 px,
+# el tamano al que se juzga de verdad.
 _SONDA_ANIMA = (
-    "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'>"
-    "<style>@keyframes p{from{fill:#000}to{fill:#fff}}"
-    "rect{animation:p 1000ms linear infinite}</style>"
-    "<rect width='8' height='8' fill='#000'/></svg>")
+    "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>"
+    "<style>@keyframes p{from{fill:#0a0a0a}to{fill:#f0f0f0}}"
+    "@keyframes m{from{transform:translateX(-18px)}"
+    "to{transform:translateX(18px)}}"
+    ".a{animation:p 1000ms linear infinite}"
+    ".b{animation:m 1000ms linear infinite}</style>"
+    "<rect width='100' height='100' fill='#3355cc'/>"
+    "<circle class='a' cx='50' cy='34' r='22' fill='#0a0a0a'/>"
+    "<rect class='b' x='30' y='68' width='40' height='14' fill='#ee2244'/>"
+    "</svg>")
+_TAM_SONDA = 96
 
 #  identidad del backend -> si rasteriza / si anima. Indexado por identidad y
 #  no un solo booleano a proposito: asi el resultado no sobrevive a que cambie
@@ -174,28 +202,97 @@ def _edge_funciona():
         return False
     if binario not in _SONDEADOS:
         try:
-            _SONDEADOS[binario] = _rasterizar_edge(_SONDA, 8)[:4] == b"\x89PNG"
-        except Exception:
             # Cualquier motivo -- binario roto, sin sandbox, sin HOME -- cuenta
             # como "no sirve". No se distingue porque no cambia la decision: no
             # hay con que rasterizar.
+            _SONDEADOS[binario] = _perfil_navegador(anima=False) is not None
+        except Exception:
             _SONDEADOS[binario] = False
     return _SONDEADOS[binario]
 
 
+def _dibujo_vivo(png):
+    """Si ESE PNG contiene una pieza dibujada, y no un cuadro liso.
+
+    Es el criterio que faltaba. Un PNG valido y en blanco pasa cualquier
+    chequeo de formato, y despues todos los cuadros del ciclo salen iguales
+    entre si -- indistinguible de un icono muerto. Un dibujo real tiene mas de
+    dos colores; un lienzo vacio tiene uno.
+
+    Sin Pillow se cae a un piso de bytes: un PNG liso de 96 px pesa ~300 B.
+    """
+    if not png or png[:4] != b"\x89PNG":
+        return False
+    try:
+        from PIL import Image
+        import io
+        im = Image.open(io.BytesIO(png)).convert("RGB")
+        colores = im.getcolors(maxcolors=64)
+        return colores is None or len(colores) > 2
+    except Exception:
+        return len(png) > 800
+
+
+def _mide_movimiento(rasterizar_fn):
+    """(dibuja_y_mueve) para una forma de rasterizar. La sonda se juzga con dos
+    preguntas, no una: el cuadro tiene que TENER dibujo y ademas CAMBIAR."""
+    quieto = rasterizar_fn(_SONDA_ANIMA)
+    if not _dibujo_vivo(quieto):
+        return False
+    movido = rasterizar_fn(_adelantar(_SONDA_ANIMA, 500))
+    return _dibujo_vivo(movido) and quieto != movido
+
+
 def _anima(backend):
-    """Si ESE backend mueve una animacion CSS. Medido con la sonda, cacheado
-    por identidad del backend."""
+    """Si ESE backend dibuja Y mueve. Medido con la sonda representativa,
+    cacheado por identidad del backend."""
     clave = backend if backend == "cairosvg" else (_edge() or "?")
     if clave not in _ANIMADORES:
         try:
-            quieto = _rasterizar_con(backend, _SONDA_ANIMA, 8)
-            movido = _rasterizar_con(
-                backend, _adelantar(_SONDA_ANIMA, 500), 8)
-            _ANIMADORES[clave] = quieto != movido
+            if backend == "edge":
+                _ANIMADORES[clave] = _perfil_navegador() is not None
+            else:
+                _ANIMADORES[clave] = _mide_movimiento(
+                    lambda t: _rasterizar_con(backend, t, _TAM_SONDA))
         except Exception:
             _ANIMADORES[clave] = False
     return _ANIMADORES[clave]
+
+
+_PERFIL_ELEGIDO = {}
+
+
+def _perfil_navegador(anima=True):
+    """El primer perfil de banderas que sirve para lo que se le pide, o None.
+
+    Aca es donde el instrumento se gana el derecho a acusar a un archivo. Con
+    `anima=True` el listón es DIBUJAR Y MOVER la sonda representativa; con
+    `anima=False` basta con producir un PNG. Se prueban en orden y se recuerda
+    el ganador por binario; si ninguno sirve, esta maquina no puede medir y hay
+    que decirlo, no estimarlo.
+    """
+    binario = _edge()
+    if not binario:
+        return None
+    clave = (binario, anima)
+    if clave not in _PERFIL_ELEGIDO:
+        elegido = None
+        for perfil in _PERFILES:
+            try:
+                if anima:
+                    ok = _mide_movimiento(
+                        lambda t, p=perfil: _rasterizar_edge(
+                            t, _TAM_SONDA, perfil=p))
+                else:
+                    ok = _rasterizar_edge(_SONDA, 8, perfil=perfil)[:4] \
+                        == b"\x89PNG"
+                if ok:
+                    elegido = perfil
+                    break
+            except Exception:
+                continue
+        _PERFIL_ELEGIDO[clave] = elegido
+    return _PERFIL_ELEGIDO[clave]
 
 
 def backend_disponible(anima=False):
@@ -220,14 +317,16 @@ def backend_disponible(anima=False):
     return "edge" if _edge_funciona() else None
 
 
-def _rasterizar_con(backend, txt, tam):
+def _rasterizar_con(backend, txt, tam, anima=False):
     if backend == "cairosvg":
         return _cairosvg().svg2png(bytestring=txt.encode("utf-8"),
                                    output_width=tam, output_height=tam)
-    return _rasterizar_edge(txt, tam)
+    # Para medir movimiento se usa el perfil que se gano ese derecho; para
+    # rasterizar a secas, el primero que produzca PNG.
+    return _rasterizar_edge(txt, tam, perfil=_perfil_navegador(anima=anima))
 
 
-def rasterizar(svg_txt, tam=TAM, avance_ms=None, backend=None):
+def rasterizar(svg_txt, tam=TAM, avance_ms=None, backend=None, anima=False):
     """SVG (str) -> bytes PNG de tam x tam.
 
     avance_ms adelanta la animacion inyectando un animation-delay negativo: es
@@ -235,6 +334,11 @@ def rasterizar(svg_txt, tam=TAM, avance_ms=None, backend=None):
     Solo lo respeta un backend que anime, y quien quiera medir movimiento pide
     ese backend explicitamente (`backend_disponible(anima=True)`) en vez de
     confiar en el que toque.
+
+    `anima=True` es una bandera aparte y no se deduce de `avance_ms`: el cuadro
+    0 de una secuencia va SIN avance y tiene que salir del mismo perfil de
+    navegador que los demas. Deducirlo lo haria salir de otro, y comparar dos
+    cuadros producidos por instrumentos distintos no mide nada.
     """
     txt = svg_txt
     if avance_ms:
@@ -244,10 +348,10 @@ def rasterizar(svg_txt, tam=TAM, avance_ms=None, backend=None):
         raise RasterizadorNoDisponibleError(
             "ningun rasterizador disponible: cairosvg no se puede importar y "
             "no se encontro navegador. Instala cairosvg (Linux) o Edge/Chrome.")
-    return _rasterizar_con(backend, txt, tam)
+    return _rasterizar_con(backend, txt, tam, anima=anima)
 
 
-def _rasterizar_edge(svg_txt, tam):
+def _rasterizar_edge(svg_txt, tam, perfil=None):
     edge = _edge()
     inicio = svg_txt.find("<svg")
     if inicio < 0:
@@ -262,9 +366,8 @@ def _rasterizar_edge(svg_txt, tam):
         entrada.write_text(html, encoding="utf-8")
         png = tmp / "out.png"
         subprocess.run(
-            [edge, "--headless=new", "--disable-gpu", "--no-first-run"]
-            + _BANDERAS_SO +
-            ["--user-data-dir=%s" % (tmp / "perfil"),
+            [edge] + _BASE + (perfil or _PERFILES[0])
+            + ["--user-data-dir=%s" % (tmp / "perfil"),
              "--window-size=%d,%d" % (tam, tam),
              "--screenshot=%s" % png, entrada.as_uri()],
             check=False, timeout=90,
@@ -309,11 +412,22 @@ def animar(svg_txt, salida, cuadros=12, ciclo_ms=4000, tam=256):
         # avance_ms=0 en el primer cuadro: es el frame 0 real, el que decide si
         # el icono nace visible (invariante 3 del compilador).
         png = rasterizar(svg_txt, tam=tam, avance_ms=(n * paso) or None,
-                         backend=backend)
+                         backend=backend, anima=True)
         import io
         im = Image.open(io.BytesIO(png)).convert("RGB")
         imgs.append(im)
         firmas.append(im.tobytes())
+    # Ultimo control antes de devolver un numero: el backend puede haber pasado
+    # la sonda y no estar dibujando ESTA pieza. Si el cuadro 0 es un lienzo
+    # liso, lo que sigue no es una medicion del icono, es una medicion del
+    # vacio -- y sus cuadros iguales acusarian al archivo por un defecto que es
+    # del instrumento.
+    colores = imgs[0].getcolors(maxcolors=64)
+    if colores is not None and len(colores) <= 2:
+        raise BackendNoDibujaError(
+            "el backend %s devolvio un cuadro liso (%d color/es): no esta "
+            "dibujando esta pieza, asi que no hay movimiento que medir"
+            % (backend, len(colores)))
     distintos = len(set(firmas))
     salida = pathlib.Path(salida)
     imgs[0].save(salida, save_all=True, append_images=imgs[1:],
