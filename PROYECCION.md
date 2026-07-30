@@ -145,6 +145,68 @@ desde `iskvw/MAPA.md` + `context/LAST_HANDOFF.md`.
 
 ---
 
+## 6. El debate SOL (2026-07-28, 5:18–6:05 am) — decisiones rescatadas del chat
+
+Esa madrugada el usuario debatió el portafolio con SOL (GPT-5.6) durante una
+hora. La infraestructura aterrizó (librerías vendorizadas, gestos,
+`vecindad_conservada`); las decisiones conceptuales quedaron solo en el log
+del chat y se rescatan aquí. Son respuestas del usuario: no se reabren, se
+ejecutan.
+
+1. **Las tres vidas del organismo.** Vida *autónoma*: MAK percibe, investiga y
+   regenera el archivo aunque nadie visite el sitio — la vida profunda, la que
+   independiza al portafolio del tráfico. Vida *reactiva*: el visitante toca y
+   el organismo responde. Vida *histórica*: una interacción deja una lectura
+   reproducible que puede guardarse y compartirse. Las tres se implementan;
+   nunca se confunden. MAK explora todos los caminos; iskvw muestra solo lo
+   que el organismo logró digerir.
+
+2. **El contrato de gestos: navegación Y alteración interpretativa.** Scroll,
+   drag, tap y zoom navegan, y además alteran la *lectura local* — peso de
+   relaciones, centro semántico, escala de vecindad. La obra y sus datos
+   canónicos no cambian jamás; al recargar se vuelve al estado canónico. Una
+   lectura se puede fijar como semilla reproducible en la URL
+   (`#semilla=…&centro=…&escala=…`): misma semilla + mismo archivo = misma
+   constelación. Edición interpretativa, nunca edición del archivo.
+
+3. **La tesis de autoría ("LA MERITOCRACIA").** Ni "100% IA" (borra el
+   criterio, la biografía y el riesgo del artista) ni ocultar la IA (miente
+   sobre el organismo) ni "IA como herramienta" (MAK no es Photoshop: percibe
+   y propone). La fórmula honesta: *el artista produce la práctica y asume las
+   decisiones; la máquina percibe el archivo, propone relaciones y puede
+   equivocarse delante del público.* El mérito no es el sufrimiento ni mover
+   cada píxel: es la selección con consecuencias — esto entra, esto no, y si
+   la obra falla no se culpa al modelo.
+
+4. **El dispositivo del visitante trabaja para su propia experiencia.**
+   Calcular relaciones del subconjunto visible, fuerzas, disposiciones desde
+   una semilla: legítimo y local. Usar CPU/GPU ajena en silencio para el
+   archivo global o para MAK: descartado (batería, consentimiento, no
+   determinismo, dependencia de visitas). Si algún día se contribuye cómputo,
+   será con opt-in explícito.
+
+5. **Taxonomías: 12 tags internas, cero visibles.** Las tags de thi.ng
+   describen *mecanismos* dentro de MAK (composition, dataflow, graph,
+   geometry, topology, generative, reactive, transformation, random…), nunca
+   la identidad artística de una obra en iskvw. `awesome-generative-art` entra
+   como genealogía crítica de ~6 referencias, 0 dependencias instaladas.
+
+6. **Divergencia de librerías pendiente de resolver.** Lo vendorizado hoy
+   (tsne, geom-trace-bitmap, rstream-gestures, distance-transform) es anterior
+   al debate. SOL propuso: productivas `rstream-gestures`, `adjacency`,
+   `geom-accel`, `random`; experimentales `geom-resample`, `distance-transform`,
+   `geom-trace-bitmap`; y **descartó `tsne`** ("no sirve para 768→2"). Nadie ha
+   reconciliado ambas listas; hacerlo es trabajo técnico, no otra discusión.
+
+7. **La matemática como oro.** Un espacio vectorial obliga a declarar mecanismo,
+   distancia, reducción y pérdida. La cifra de `vecindad_conservada` importa más
+   que cualquier animación: declara cuánto de la relación original sobrevivió al
+   hacerse visible. La obra no dice "la matemática demuestra mi archivo" sino
+   "esta matemática produce una lectura situada, y expongo su potencia y su
+   pérdida".
+
+---
+
 **La despedida, en una línea:** el sistema ya casi no necesita al modelo caro,
 y eso no es una pérdida — es la prueba de que funcionó. El sistema nunca fue
 el modelo.
