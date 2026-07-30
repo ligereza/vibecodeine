@@ -198,6 +198,46 @@ def desde_ensayo(ensayo: dict) -> dict:
     return {"piezas": piezas, "vinculos": vinculos}
 
 
+def desde_campo(campo: dict) -> dict:
+    """Las obras CURADAS del campo medido, al contrato.
+
+    campo.json es la proyeccion de lo que MAK percibio de las obras reales del
+    artista (la carpeta de material que se mando a curar), ya pasada por el
+    filtro que el usuario configuro. Hasta ahora solo daba POSICIONES: si el
+    micelio no estaba alcanzable (CI, maquina apagada), el archivo salia sin
+    las obras -- un portafolio sin las obras del artista. Esta conversion las
+    hace piezas de primera clase con lo que el campo si midio.
+
+    `titulo` va None a proposito: el artista no titulo estas piezas y el
+    percibido es texto de maquina -- va a `extra.percibido`, nunca como
+    titulo (regla de la VOZ). `unir()` deduplica contra el micelio por id y
+    la fuente mas rica completa los campos.
+    """
+    piezas = []
+    for c in campo.get("piezas") or []:
+        cid = c.get("id")
+        if not cid:
+            continue
+        extra = {}
+        for k in ("colores", "tipo", "estilo", "tilde", "trazo", "percibido"):
+            if c.get(k):
+                extra[k] = c[k]
+        piezas.append({
+            "id": cid,
+            "titulo": None,
+            "clase": "obra",
+            "fecha": None,
+            "resumen": None,
+            "etiquetas": [t for t in ("curada", c.get("tipo")) if t],
+            "peso": 1,
+            "medio": ({"tipo": "imagen", "src": c["archivo"]}
+                      if c.get("archivo") else {"tipo": "imagen"}),
+            "estado": "publicada",
+            "extra": extra,
+        })
+    return {"piezas": piezas, "vinculos": []}
+
+
 def desde_animadas(manifiesto: dict, existe=None) -> dict:
     """Las piezas animadas derivadas de las obras curadas, al contrato.
 

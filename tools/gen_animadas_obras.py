@@ -1,26 +1,28 @@
 #!/usr/bin/env python3
-"""Cada obra curada genera su pieza animada por el motor semantico.
+"""Cada obra curada del artista genera su pieza animada por el motor semantico.
 
 El ensayo rave fue la DEMO del mecanismo (spec cerrada -> compilar -> svg
-animado); el sistema existe para las obras del artista. Este generador cierra
-ese circuito: lee las obras curadas (`iskvw/datos/obras.json`), deriva para
-cada una UNA spec del vocabulario cerrado del motor -- semantica donde los
-datos alcanzan, sembrada por el id donde no -- y compila su pieza animada.
+animado); el sistema existe para las obras reales: la carpeta de material que
+el artista mando a curar y que MAK percibio. Este generador lee el campo
+medido (`iskvw/datos/campo.json`, ya bajo el filtro que el usuario configuro)
+y deriva para cada obra UNA spec del vocabulario cerrado del motor:
 
-Determinista a proposito: misma obra -> misma spec -> misma pieza, sin azar
-de reloj. Es la misma tesis del timecode como semilla (PROYECCION.md): lo
-generativo se puede verificar como un test.
+- semantica donde lo percibido alcanza: los COLORES medidos eligen el tono
+  (naranja -> atardecer, azul -> blueprint...), la TILDE late, lo reactivo
+  tiembla, y una figura o un tono nombrados por el estilo/percibido de la
+  obra se usan tal cual;
+- sembrada por el id donde no: mismo id -> misma spec -> misma pieza,
+  sin reloj y sin random (la tesis del timecode como semilla).
 
     py tools/gen_animadas_obras.py            # escribe svg + manifiesto
-    py tools/gen_animadas_obras.py --check    # falla si el disco no coincide
 
 Salidas:
     iskvw/piel/animadas/<obra_id>.svg
     iskvw/datos/animadas.json   (manifiesto que lee contrato_archivo)
 
 La pieza entra al archivo como `pieza_grafica` vinculada a su obra via
-`contrato_archivo.desde_animadas()`, y la piel ya sabe presentarla al
-quedarse quieto (mismo mecanismo que los iconos de ensayo).
+`contrato_archivo.desde_animadas()`, y la piel la presenta al quedarse
+quieto (mismo mecanismo que los iconos de ensayo).
 """
 from __future__ import annotations
 
@@ -37,23 +39,48 @@ from motor_semantico.compilador import (  # noqa: E402
     COMPOSICIONES, FIGURAS, GESTOS, RITMOS, TONOS, compilar, validar_spec,
 )
 
-OBRAS = RAIZ / "iskvw" / "datos" / "obras.json"
+CAMPO = RAIZ / "iskvw" / "datos" / "campo.json"
 SALIDA_SVG = RAIZ / "iskvw" / "piel" / "animadas"
 MANIFIESTO = RAIZ / "iskvw" / "datos" / "animadas.json"
 
 GESTOS_VIVOS = sorted(g for g in GESTOS if g != "quieto")
 
-# Palabra de la obra -> gesto, SOLO donde el mapeo significa algo y no es una
-# ocurrencia: la tilde late (es la senal del proyecto tilde), lo generativo
-# respira, lo reactivo tiembla. Todo lo demas cae a la semilla.
-GESTO_POR_TAG = {
+# Color MEDIDO por la percepcion -> tono del motor. Mapeo declarado, no
+# adivinado: cada entrada es discutible a la vista y por eso vive aca arriba.
+TONO_POR_COLOR = {
+    "naranja": "atardecer",
+    "rojo": "atardecer",
+    "amarillo": "acido",
+    "verde": "campo",
+    "azul": "blueprint",
+    "celeste": "blueprint",
+    "morado": "subterraneo",
+    "violeta": "subterraneo",
+    "rosa": "vitral",
+    "rosado": "vitral",
+    "negro": "subterraneo",
+    "gris": "concreto",
+    "blanco": "papel",
+    "cafe": "documento",
+    "marron": "documento",
+}
+
+# Palabra percibida -> gesto, SOLO donde el mapeo significa algo: la tilde
+# late (la senal del proyecto tilde), lo psicodelico deriva, lo reactivo
+# tiembla. Orden = prioridad semantica. Lo demas cae a la semilla.
+GESTO_POR_PALABRA = {
     "tilde": "latir",
-    "generativo": "respirar",
-    "generativa": "respirar",
+    "psicodelia": "derivar",
+    "psicodelico": "derivar",
+    "psicodelica": "derivar",
+    "surrealismo": "derivar",
     "reactiva": "temblar",
     "reactivo": "temblar",
+    "glitch": "temblar",
     "proyeccion": "emanar",
     "projection": "emanar",
+    "geometrico": "girar",
+    "geometrica": "girar",
 }
 
 
@@ -68,48 +95,59 @@ def _semilla(obra_id: str) -> "list[int]":
 
 def _palabras(obra: dict) -> "list[str]":
     crudo = " ".join([
-        obra.get("title") or "", obra.get("category") or "",
-        " ".join(obra.get("tags") or []),
+        obra.get("tipo") or "", obra.get("estilo") or "",
+        obra.get("percibido") or "",
     ])
-    return [_ascii(p) for p in crudo.replace("/", " ").split() if p]
+    limpio = "".join(c if c.isalnum() else " " for c in crudo)
+    return [_ascii(p) for p in limpio.split() if len(p) > 2]
 
 
 def derivar_spec(obra: dict) -> dict:
-    """Una spec valida del vocabulario cerrado, derivada de la obra.
+    """Una spec valida del vocabulario cerrado, derivada de lo percibido.
 
-    Prioridad: coincidencia literal de palabra (figura/tono nombrados por la
-    propia obra) > regla semantica declarada (GESTO_POR_TAG) > semilla del id.
-    Nunca reloj, nunca random: el mismo id produce la misma spec siempre.
+    Prioridad: la tilde medida > palabra semantica declarada > coincidencia
+    literal (figura/tono que el percibido nombra) > color medido (tono) >
+    semilla del id. Nunca reloj, nunca random.
     """
-    s = _semilla(obra.get("id") or obra.get("title") or "obra")
+    s = _semilla(obra.get("id") or "obra")
     palabras = _palabras(obra)
-
-    figuras_dichas = [p for p in palabras if p in FIGURAS]
-    tonos_dichos = [p for p in palabras if p in TONOS]
-    # El orden de GESTO_POR_TAG es prioridad SEMANTICA (la tilde manda sobre
-    # lo generativo), no el orden en que la obra escribio sus etiquetas.
     presentes = set(palabras)
-    gesto_dicho = next((g for p, g in GESTO_POR_TAG.items()
-                        if p in presentes), None)
+
+    # gesto: la tilde medida manda; despues la palabra; despues la semilla
+    marcas = (obra.get("tilde") or {}).get("marcas") or 0
+    if marcas > 0:
+        gesto = "latir"
+    else:
+        gesto = next((g for p, g in GESTO_POR_PALABRA.items()
+                      if p in presentes), None) \
+            or GESTOS_VIVOS[s[3] % len(GESTOS_VIVOS)]
+
+    # tono: nombrado > color medido > semilla
+    tonos_dichos = [p for p in palabras if p in TONOS]
+    tono = tonos_dichos[0] if tonos_dichos else None
+    if not tono:
+        for color in obra.get("colores") or []:
+            tono = TONO_POR_COLOR.get(_ascii(color))
+            if tono:
+                break
+    if not tono:
+        tono = sorted(TONOS)[s[1] % len(TONOS)]
+
+    figs = sorted(FIGURAS)
+    figuras_dichas = [p for p in palabras if p in FIGURAS]
+    fig_prota = figuras_dichas[0] if figuras_dichas else figs[s[2] % len(figs)]
 
     comps = sorted(COMPOSICIONES)
     comp = comps[s[0] % len(comps)]
     ranuras = sorted(COMPOSICIONES[comp])
-    tono = tonos_dichos[0] if tonos_dichos else sorted(TONOS)[s[1] % len(TONOS)]
-
-    figs = sorted(FIGURAS)
-    fig_prota = figuras_dichas[0] if figuras_dichas else figs[s[2] % len(figs)]
-    gesto_prota = gesto_dicho or GESTOS_VIVOS[s[3] % len(GESTOS_VIVOS)]
     ritmos = sorted(RITMOS)
 
     capas = [{
         "rol": "protagonista",
         "figura": fig_prota,
-        "gesto": gesto_prota,
+        "gesto": gesto,
         "ritmo": ritmos[s[4] % len(ritmos)],
     }]
-    # Una segunda capa quieta da fondo sin volver ruido la pieza; el rol sale
-    # de las ranuras reales de la composicion elegida.
     otros = [r for r in ranuras if r != "protagonista"]
     if otros:
         capas.append({
@@ -121,7 +159,8 @@ def derivar_spec(obra: dict) -> dict:
 
 
 def generar() -> "list[dict]":
-    obras = json.loads(OBRAS.read_text(encoding="utf-8"))
+    campo = json.loads(CAMPO.read_text(encoding="utf-8"))
+    obras = campo.get("piezas") or []
     SALIDA_SVG.mkdir(parents=True, exist_ok=True)
     filas = []
     for obra in obras:
@@ -137,7 +176,9 @@ def generar() -> "list[dict]":
         destino.write_text(svg, encoding="utf-8", newline="\n")
         filas.append({
             "obra_id": oid,
-            "titulo": obra.get("title") or oid,
+            # titulo = id: el percibido es texto de maquina y no titula
+            # (regla de la VOZ); el artista no titulo estas piezas.
+            "titulo": oid,
             "src": destino.relative_to(RAIZ).as_posix(),
             "spec": spec,
             "declara_animacion": any(
@@ -148,27 +189,15 @@ def generar() -> "list[dict]":
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--check", action="store_true",
-                    help="no escribe: falla si el disco difiere de lo derivado")
-    args = ap.parse_args()
-
-    filas = generar() if not args.check else None
-    if args.check:
-        antes = MANIFIESTO.read_text(encoding="utf-8") if MANIFIESTO.exists() else ""
-        filas = generar()
-        ahora = json.dumps({"version": 1, "piezas": filas},
-                           ensure_ascii=False, indent=1)
-        if antes.strip() != ahora.strip():
-            print("animadas.json no coincide con lo derivado: regenerar")
-            return 1
-        print(f"coherente: {len(filas)} piezas animadas")
-        return 0
-
+    ap.parse_args()
+    filas = generar()
     MANIFIESTO.write_text(
         json.dumps({"version": 1, "piezas": filas}, ensure_ascii=False, indent=1),
         encoding="utf-8", newline="\n")
     animadas = sum(1 for f in filas if f["declara_animacion"])
-    print(f"{len(filas)} piezas ({animadas} animadas) -> {SALIDA_SVG.relative_to(RAIZ)}")
+    total = sum(f.stat().st_size for f in SALIDA_SVG.glob("*.svg"))
+    print(f"{len(filas)} piezas ({animadas} animadas) -> "
+          f"{SALIDA_SVG.relative_to(RAIZ)} ({total/1024:.0f} KB)")
     print(f"manifiesto -> {MANIFIESTO.relative_to(RAIZ)}")
     return 0
 

@@ -220,6 +220,20 @@ def desde_animadas(manifiesto: Path = ANIMADAS) -> dict:
     return contrato_archivo.desde_animadas(datos)
 
 
+def desde_campo_curado(ruta: Path = CAMPO) -> dict:
+    """Las obras curadas del campo medido como piezas del contrato.
+
+    La correccion de fondo del 2026-07-30: sin micelio alcanzable (CI), el
+    archivo salia SIN las obras del artista -- solo tools, ensayos e iconos.
+    El campo ya carga lo percibido bajo el filtro del usuario; ahora ademas
+    de posiciones aporta las piezas. La conversion vive en el contrato.
+    """
+    if not ruta.is_file():
+        return {"piezas": [], "vinculos": []}
+    datos = json.loads(ruta.read_text(encoding="utf-8"))
+    return contrato_archivo.desde_campo(datos)
+
+
 def unir(*partes: dict) -> dict:
     """Junta fuentes sin duplicar: una obra percibida por MAK y la misma obra
     cargada a mano son UNA pieza. Gana la que trae mas datos."""
@@ -248,7 +262,8 @@ def _riqueza(p: dict) -> int:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--fuente",
-                    choices=("obras", "micelio", "ensayos", "animadas", "todo"),
+                    choices=("obras", "campo", "micelio", "ensayos", "animadas",
+                             "todo"),
                     default="obras")
     ap.add_argument("--url", default=MICELIO_URL)
     ap.add_argument("--umbral", type=float, default=UMBRAL_MICELIO)
@@ -261,6 +276,8 @@ def main() -> int:
     partes = []
     if args.fuente in ("obras", "todo"):
         partes.append(desde_obras())
+    if args.fuente in ("campo", "todo"):
+        partes.append(desde_campo_curado(args.posiciones))
     if args.fuente in ("micelio", "todo"):
         try:
             partes.append(desde_micelio(args.url, args.umbral))
