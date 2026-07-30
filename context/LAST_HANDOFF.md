@@ -143,9 +143,8 @@ from stash@{0}; do not merge without the user's aesthetic call). On the BOX:
    undrained commit (#375, codex utility) was REJECTED on review: simulated
    in-memory queues never wired to real `mak_codex`, no cron despite the
    title. Do NOT promote it. (Agents cannot push this reset.)
-2. The sync cron still does not cover `mak_curatoria` -- add
-   `&& cp -ru /home/mak/flujo/cultura/mak_curatoria/. /home/mak/curatoria/`
-   (keep `-u`, never mirror-delete) or perception changes stay inert.
+2. DONE (verified on the box 2026-07-29): the sync cron now covers
+   `mak_curatoria -> ~/curatoria` (`crontab -l` shows the fourth `cp -ru`).
 3. Verify VCD-10 actually runs, and curl `GET /api/archivo` on the hub once
    the sync delivers `contrato_archivo.py` (the substrate contract).
 On WINDOWS the only pending user decision is the ascii-campo aesthetic call
@@ -153,6 +152,87 @@ On WINDOWS the only pending user decision is the ascii-campo aesthetic call
 New rule in CLAUDE.md, "the machine/human cut": machine KEYS stay ASCII,
 human-read VALUES keep correct Spanish -- venue drafts now keep tildes in
 `name:`, with a regression test.
+
+## 2026-07-29: the SOL night audited -- nothing lost, spend explained
+
+The user worked 2026-07-28 ~01:00-08:28 in VS Code with "SOL" (Azure Foundry
+`gpt-5.6-sol`, GPT-5.6 Sol tier $5/$30 per M). Audit verdict, cross-checked
+against WIN local folders and the box (local evidence > repo):
+
+- The ~$200 Azure figure = 125M tokens of Sol surfacing through the 8-72h
+  billing lag (mostly cached input, ~$1.57/M avg). No key leak (never
+  committed, no calls after 08:00), no collectable debt (no card). Azure is
+  ABANDONED going forward, user's word 2026-07-29.
+- SOL worked in four WIN checkouts (flujo-mejoras, flujo-vcd06,
+  flujo-sin-gptmini, flujo-organos), never C:\IA\flujo, never over SSH on the
+  box (zero logins that morning). Everything merged: #374, #372-tests, #376,
+  #377, #378; the box got it via the sync cron. Its 19 uncommitted lines
+  (azure opt-in gate) are stashed as `sol-azure-optin-gate-redundante`,
+  redundant since #376.
+- SOL's declared-unfinished bug: the organs layer "floating over Taller" in
+  the research interface (:8890) -- something removes the class after load.
+- Dependabot appeared via PR #380 (VCD-07), not SOL, not an intruder.
+
+## The rave zip: MAK's report+icons capability, not yet landed (2026-07-29)
+
+`workspace-019fa8a1...zip` in Downloads (08:12, the file SOL never got to
+process) is a COMPLETE working system from the user's cloud session: a rave-
+culture report with 16 hand-written animated SVG icons, palette-refactored,
+with validator/builder/PNG-exporter, PLUS `motor-semantico/`: an engine where
+a blind agent writes semantic specs (22 figures, 12 gestures, closed
+vocabulary) instead of coordinates, with a WCAG perceptual critic -- measured
+44% -> 11% visual-defect reduction vs direct SVG writing. This is the concrete
+form of the user's idea: MAK produces reports (research) WITH matching icons/
+illustrations (codex), feeding the portfolio. It lives only in Downloads and
+the session scratchpad; landing it in the repo is pending.
+
+## SOL portfolio theory: what landed vs what is still owed (2026-07-29)
+
+The 05:15-06:05 debate landed its METABOLISM half as #377/#378 (sustrato/
+primordio/fruiting body, compost, fusion, human estatuto, organs). Still owed,
+per SOL's own plan (its last coherent answer, 06:03):
+1. The "cuaderno" contract: exploration unit schema (question -> source ->
+   representation -> hypothesis -> experiment -> measured result -> failure ->
+   relation to a work -> decision integrate/reserve/discard); schema+evaluator
+   in the repo, notes in MAK.
+2. First study: ONE real work across six representations (raster, SVG trace,
+   distance field, graph, 768-d embedding, code+seed) -- what each conserves,
+   destroys, allows.
+3. thi.ng / awesome-generative-art traversed by families (form, relation,
+   variation, appearance, interaction, preservation, authorship), batches of
+   5 candidates, three gates (technical/conceptual/curatorial). Nothing enters
+   the portfolio automatically.
+4. iskvw.cl interaction model: gestures alter the LOCAL reading, never the
+   canonical archive; a session is a reproducible seed URL
+   (#semilla=...&centro=...&escala=...). Visitor's device computes its OWN
+   experience only -- no silent compute capture.
+
+## 2026-07-29 night session: SOL pendings closed, ports audited
+
+- SOL's two declared pendings are CLOSED BY VERIFICATION, no new code:
+  (1) the "organs layer floating over Taller" bug was fixed by SOL's own last
+  commits (content in main; verified live on the box: organ-line sits INSIDE
+  #map-view, all 6 organs render with live data); (2) the codex kitchen is
+  exposed: the :8900 face embeds the full :8891 interface as its codex tab.
+- The 05:18-06:05 debate DECISIONS (three lives, gesture contract, seed URL,
+  the meritocracia authorship thesis, visitor-device ethics, 12 internal tags,
+  the library divergence: SOL wants adjacency/geom-accel/random in and tsne
+  OUT vs what is vendored) are distilled in PROYECCION.md section 6. The owed
+  WORK list stays in the section above this one.
+- Port audits (WIN + MAK, subagents, read-only evidence): everything maps to
+  known software. MAK candidates removed this session: dangling n8n docker
+  image (~1.5 GB) and /home/mak/n8n-local leftover. CUPS has no printer but
+  needs sudo to disable (user's call, command documented in the audit).
+  Open WebUI (:8080, root, LAN): zero code dependency, one human page-load in
+  72h -- user decides. WIN: Docker Desktop is STOPPED, ~7 GB, nothing local
+  uses it (no compose/Dockerfile anywhere under C:\IA) -- removal approved in
+  principle, not executed against the shutdown timer; one-liner:
+  `winget uninstall Docker.DockerDesktop`. Wondershare service (WsidService,
+  0.0.0.0:20271) looks unnecessary; CodeMeter 22351 stays (Resolume-class
+  licensing); usbipd/Logi stay (user hardware).
+- Azure is abandoned (user, 2026-07-29): credits exhausted by the SOL night
+  (125M tokens, billing lag, no leak -- full audit in assistant local memory).
+  MAK password stays (single-user LAN, user's call).
 
 ## MAK como motor: sirve, y el checkpoint mentia
 
