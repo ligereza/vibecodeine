@@ -236,6 +236,104 @@ Measured by diffing the disks, which is the check that had never been run.
   (`tools/watsonx_smoke.py`). Stage 1 fits in the free tier; the $200 credit is
   untouched. It is opt-in (`LLM(order="watsonx")`), not in the default chain.
 
+## THE INVENTORIES (2026-07-30). Measured on the DISKS, not on GitHub
+
+The mistake that cost this session repeatedly: asking git when the question was
+about a machine. These three were taken by walking the filesystems. They are
+written HERE because the first time they were only printed to a conversation,
+which is the same defect this whole file is about -- measuring and leaving the
+result where nobody finds it.
+
+### 1. Python in the WIN folder `c:\IAlujo` -- 695 files, 129.952 lines
+
+    tests 159 (25.766)   src/flujo 95 (20.921)   mak_plataforma 62 (12.198)
+    xio/new-plugins 56 (12.730)   mak_research 32 (8.674)   tapiz 32 (3.173)
+    tools 31 (7.487)   scripts 24 (2.995)   projects/cultura 19 (5.171)
+    mak_codex 17 (4.061)   + 78 files across nine _archive/legacy_* folders
+
+    By last change: 551 in July, 144 stayed in June (pre-Claude).
+
+### 2. Python on MAK, outside its clone -- 398 files, 83.756 lines
+
+    Apps/llama.cpp 108 (29.405)   codex/piezas 97 (11.904)   research 32 (8.416)
+    utilidades 32 (4.275)   plataforma 29 (7.713)   curatoria_inbox 46 (10.056)
+    codex 10 (2.216)   OneDrive/MAK 9 (3.202)   curatoria 7 (2.619)
+    motor_semantico 7 (1.845)   lenguaje 4   RD 6   xio_puente 3
+
+    By last change: 364 in July, 34 from April-June (curatoria_inbox: the
+    user's own material, sent WIN -> MAK to offload; not the box's code).
+
+### 3. Markdown on both machines -- 2.636 files, 231.715 lines
+
+    WIN  784 files / 75.134 lines. Biggest: _archive/legacy_historico_previo 226
+         (RETIRED today), docs/handoffs 103 (93 RETIRED today), docs 49,
+         .claude/skills 26, .agents/skills 26 (UNVERSIONED FORK: 10 of 41 differ,
+         paths rewritten to .Codex/, a directory that does not exist),
+         projects/cultura 24, .remember 20.
+         By last change: 377 July, 407 June.
+
+    MAK  1.852 files / 156.581 lines, and 57% is what the box wrote itself:
+         research/corpus 697, research/informes 266, codex/piezas 97.
+         The repo knew 26 of MAK's documents. The machine had 1.852.
+
+**What the three say together:** the repo's own inventory counts 946 .md across
+six branches and reads as complete; against the disks it covers about a third.
+The heaviest things in this system are not code someone wrote -- they are output
+a machine produced, and until today nothing measured whether any of it was read.
+
+## VERDICT (2026-07-30)
+
+**The root defect is one: this organism produces and nothing consumes.** Every
+finding of the day is that shape, and the fixes that matter are the ones that
+close a loop rather than add another producer.
+
+What was true this morning and is not true now:
+
+- The box ran code that existed on ONE disk (`revisor.py` merging PRs by itself
+  for ten days, `xio_puente/monitor.py` started by a systemd unit, three
+  curatoria files one of which a workflow IN THIS REPO invokes by absolute
+  path). All rescued; drift is now zero across five organs and the sync is
+  authoritative (`cp -r`, never `--delete`).
+- The safety frame was being sent to the SEARCH ENGINE, which is why the same
+  Peruvian pedagogy PDF appears in four RD reports about four unrelated
+  subjects. It now goes to the model's system prompt; the search gets the
+  subject alone.
+- `win` -- a machine the user retired -- sat first in the provider chain with a
+  300 s timeout while its docstring promised "cae rapido". 22 of the 37 failed
+  codex jobs are `timeout 900s`. Removing it from the chain IS the fix for the
+  dominant failure; the retry the organism asked for three times is not needed.
+- The routing that produced 4.275 inert lines is closed at the source, and the
+  hole that let PR #407 through one hour later ("crear ... cron jobs": artifact
+  verb, operational target) is closed by checking the TARGET before the verb.
+- Deleted, not disconnected: `agente_real` (repo, box, and its 1,5 MB log),
+  `utilidades/` (32 files), `_archive/legacy_2026*` (181), the archive inside
+  the archive (283), 93 version checkpoints, 4 cleanup scripts nobody invoked,
+  4 files pretending to be tests. **Criterion, so it stops being decided case by
+  case: where git holds the history, DELETE; where nothing holds it -- the box
+  -- archive. A tag is not accumulation: it is a name for a commit git already
+  keeps.**
+- `rescate/ascii-campo` and the `mak` inbox: retired and emptied, both anchored
+  in permanent tags (`ascii-campo-20260730`, `mak-buzon-20260730`), their value
+  extracted first -- the ASCII technique into `iskvw/piel/campo/ASCII_REFERENCIA.md`,
+  the inbox's into a measurement (37 codex jobs in FALLO, zero retry logic).
+
+**The portfolio, and the mistake that matters most.** Removing a misplaced
+`Math.max(0, -1)` was correct -- it made a written fallback reachable for the
+first time -- but that fallback opened the site in the MIDDLE of the archive
+instead of the first work, and `publicar_iskvw.yml` deploys from `main` on any
+change under `iskvw/**`. The technical fix changed the product. The entry is now
+explicit on the first work, stated as a decision instead of inherited from a
+bug. **Lesson: a correct fix to dishonest code can still change what a visitor
+sees, and that is not the assistant's call to make.**
+
+**What is NOT fixed and is named so nobody finds it by surprise:** `expulsion.py`
+is badly DESIGNED, not badly wired -- it watches `_SLOTS` while the failing
+provider lives in `LLM.__init__`'s order, and its vigilance depends on another
+LLM choosing to vigilate. Do not implement its `--enforce` stub: giving a blind
+watchman power automates the blindness. And `trabajo.py` still harvests its own
+questions without checking whether it already answered them -- 40 of 50 reports
+share one prefix.
+
 ## The organism writes and nobody reads (2026-07-30, the day's thesis)
 
 Everything measured on the two DISKS -- not on GitHub, which is the trap that
