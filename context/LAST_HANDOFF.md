@@ -197,11 +197,20 @@ verified running:
    Garbage in the hash stays absent rather than becoming a NaN position, and an
    old id-only link still works.
 
-**Two decisions left, and they are the user's, written into `iskvw/MAPA.md`:**
-how the links LOOK (a line between two works is an aesthetic claim about the
-archive; the data already reaches the skin as `VINCULOS` and is deliberately not
-drawn), and whether the essays get PUBLISHED on iskvw.cl (that MAK's research
-appears beside the artist's work is a question of authorship).
+**The links are DRAWN: always, faint, by weight** (his call, 2026-07-30).
+Opacity comes from the link's weight with a low ceiling, they go UNDERNEATH the
+works -- the relation is the substrate, the work is what you look at -- and a
+link needs BOTH ends in frame or it is dropped. The neighbours are indexed once
+at seeding: the every-pair-every-frame defect of the reference this field came
+from is pinned by `tests/test_iskvw_vinculos.py`. Measured over the campo's 219
+pieces: 207 to 615 segments per frame depending on where you read, against the
+23,871 pairs an all-against-all would cost. NOT measured, so not claimed: frames
+per second on a phone.
+
+**Still the user's, and he wants to DEBATE it first:** whether the essays get
+published on iskvw.cl. `archivo.json` is not versioned, so the site does not see
+them; that MAK's research appears beside the artist's work is a question of
+authorship. The bridge is built and unused.
 
 ## Las cuatro capas: no confundirlas (2026-07-27)
 

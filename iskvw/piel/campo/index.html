@@ -151,6 +151,10 @@ let W=0, H=0, DPR=1, OBRAS=[], NODOS=[], LARGO=0;
 // todavia no se dibujen: como se ven es una decision del artista, no del
 // programa, y el dato tiene que estar antes de que esa decision se pueda tomar.
 let VINCULOS=[];
+// Vecinos por INDICE de nodo: [indice, peso, indice, peso, ...]. Se arma una
+// vez en `sembrar()`. Es lo que evita recorrer todos los pares en cada frame,
+// que es el defecto medido de la referencia de la que salio este campo.
+let VECINOS=[];
 
 // Los colores que la percepcion encontro en la obra. Si no hay, se devuelve
 // null y quien llama usa el tono neutro: no se inventa un color.
@@ -239,6 +243,23 @@ function sembrar(obras){
   // del arreglo no tiene nada que ver con la posicion, y tomar el ultimo
   // dejaba fuera del campo a la mitad de las obras.
   LARGO = NODOS.length ? Math.max(...NODOS.map(n => n.y)) + 460 : 0;
+
+  // Los vinculos, indexados por nodo UNA vez. Un vinculo cuyas dos puntas no
+  // esten en el campo se descarta aca y no vuelve a costar nada: dibujar una
+  // linea hacia una pieza que no existe seria afirmar una relacion sin sus dos
+  // extremos.
+  VECINOS = NODOS.map(() => []);
+  if (VINCULOS.length){
+    const porId = new Map();
+    NODOS.forEach((n, i) => porId.set(n.obra.id, i));
+    for (const v of VINCULOS){
+      const a = porId.get(v.de), b = porId.get(v.a);
+      if (a === undefined || b === undefined || a === b) continue;
+      const peso = Math.max(0, Math.min(1, Number(v.peso) || 0));
+      VECINOS[a].push(b, peso);
+      VECINOS[b].push(a, peso);
+    }
+  }
 }
 
 /* ── el diafragma: la velocidad decide cuanto se ve y cuan nitido ──
@@ -279,14 +300,16 @@ function dibujar(){
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   }
 
-  for (let ni = 0; ni < NODOS.length; ni++){
+  /* Donde cae un nodo en pantalla. Una sola funcion porque la usan DOS pasadas
+     -- los vinculos y los nodos -- y dos copias de la misma cuenta divergen el
+     dia que alguien toca una. Devuelve null si el nodo esta fuera de alcance:
+     con la obra armada ninguno se descarta, porque los lejanos son justamente
+     los que vienen a completar la figura. */
+  function posicionDe(ni){
     const n = NODOS[ni];
     const dy = n.y - E.pos;
     const destino = F > 0.02 && E.formaPts ? E.formaPts[ni] : null;
-    // Con la obra armada, ningun nodo se descarta por lejania: los que estan
-    // fuera del alcance son justamente los que vienen a completar la figura.
-    if (Math.abs(dy) > d.alcance && !destino) continue;
-
+    if (Math.abs(dy) > d.alcance && !destino) return null;
     const cerca = 1 - Math.min(Math.abs(dy)/d.alcance, 1);   // 1 = en el centro
     let y = cy + dy * (0.55 + d.apertura*0.45);
     let x = cx + n.x * W * (0.16 + d.apertura*0.30);
@@ -294,6 +317,53 @@ function dibujar(){
       x += (cx + destino[0]*escalaForma - x) * F;
       y += (cy + destino[1]*escalaForma - y) * F;
     }
+    return {x, y, cerca};
+  }
+
+  /* ── los vinculos, debajo de las obras ──
+     Se dibujan SIEMPRE y su opacidad sale del peso del vinculo: un vinculo mas
+     fuerte se ve mas. Decision del usuario, 2026-07-30.
+
+     Van antes del bucle de nodos para quedar por DEBAJO: la relacion es el
+     sustrato, la obra es lo que se mira.
+
+     Lo que este bucle NO hace, porque ya costo caro en la referencia de la que
+     salio el campo: recorrer todos los pares en cada frame. Los vecinos se
+     indexan una vez en `sembrar()` y aca solo se recorre la lista del nodo, y
+     solo si AMBAS puntas estan en la banda visible. Con el archivo completo son
+     miles de vinculos y la mayoria, en cualquier momento, esta fuera de
+     pantalla. */
+  if (VECINOS.length){
+    ctx.lineWidth = 1;
+    for (let ni = 0; ni < NODOS.length; ni++){
+      const lista = VECINOS[ni];
+      if (!lista) continue;
+      const a = posicionDe(ni);
+      if (!a) continue;
+      for (let k = 0; k < lista.length; k += 2){
+        const nj = lista[k];
+        if (nj < ni) continue;              // cada vinculo una sola vez
+        const b = posicionDe(nj);
+        if (!b) continue;
+        // Tenue: el techo es bajo a proposito. La linea acompana, no compite.
+        const alfa = lista[k+1] * 0.16 * Math.min(a.cerca, b.cerca)
+                     * (0.25 + d.nitidez*0.75);
+        if (alfa < 0.012) continue;         // por debajo de esto no se ve
+        ctx.strokeStyle = `rgba(210,220,255,${alfa.toFixed(3)})`;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+      }
+    }
+  }
+
+  for (let ni = 0; ni < NODOS.length; ni++){
+    const n = NODOS[ni];
+    const p = posicionDe(ni);
+    if (!p) continue;
+    const cerca = p.cerca;
+    let x = p.x, y = p.y;
 
     // respiracion propia, y el ruido crece con la velocidad
     const resp = 1 + Math.sin(E.t*1.67 + n.fase)*0.055;
