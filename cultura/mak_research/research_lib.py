@@ -33,6 +33,7 @@ DEFAULTS = {
     "CEREBRAS_MODEL": "gpt-oss-120b",
     "AZURE_ENDPOINT": "https://ligereza.services.ai.azure.com",
     "AZURE_DEPLOYMENT": "gpt-5-mini",
+    "RESEARCH_AZURE_ENABLED": "0",
     "OLLAMA_BASE_URL": "http://127.0.0.1:11434",
     "OLLAMA_MODEL": "gemma3:4b",
     # WIN: notebook Windows con RTX 4070 (8GB VRAM), alcanzable SOLO por el
@@ -358,6 +359,32 @@ def load_env(path=ENV_FILE):
     return env
 
 
+# ------------------------------------------------------------------ watsonx
+# El token IAM de IBM vence a la hora, asi que se cambia la API key por un
+# bearer y se cachea. Sin cache, cada llamada pagaria 460 ms de ida y vuelta a
+# iam.cloud.ibm.com antes de empezar a trabajar.
+_WX_TOK = {"t": None, "exp": 0.0}
+
+
+def _wx_token():
+    if _WX_TOK["t"] and time.time() < _WX_TOK["exp"] - 60:
+        return _WX_TOK["t"]
+    cuerpo = urllib.parse.urlencode({
+        "grant_type": "urn:ibm:params:oauth:grant-type:apikey",
+        "apikey": os.environ.get("WATSONX_API_KEY", ""),
+    }).encode()
+    req = urllib.request.Request(
+        "https://iam.cloud.ibm.com/identity/token", data=cuerpo,
+        headers={"Content-Type": "application/x-www-form-urlencoded",
+                 "Accept": "application/json",
+                 "User-Agent": "flujo-mak-research/1.0"})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        d = json.loads(r.read().decode("utf-8", "replace"))
+    _WX_TOK["t"] = d["access_token"]
+    _WX_TOK["exp"] = time.time() + float(d.get("expires_in", 3600))
+    return _WX_TOK["t"]
+
+
 def _http_json(url, body=None, headers=None, timeout=60, method=None):
     data = json.dumps(body).encode() if body is not None else None
     # UA custom: Cloudflare devuelve 403 codigo 1010 al UA default de
@@ -397,11 +424,23 @@ class LLM:
         load_env()
         self.stats = {}
         self.errors = []
+        # La lista blanca dice QUIENES pueden participar. `watsonx` entra aca y
+        # NO en el `order` por defecto de la firma: existe para pedirlo
+        # explicito (`LLM(order="watsonx")`) hasta tener salud medida, que es
+        # como entra cualquier proveedor nuevo a la cadena.
         base = [p.strip() for p in order.split(",")
-                if p.strip() in ("groq", "cerebras", "azure", "win", "ollama")]
+                if p.strip() in ("groq", "cerebras", "azure", "win", "ollama",
+                                 "watsonx")]
+        if not self._azure_enabled():
+            base = [provider for provider in base if provider != "azure"]
         # Misma regla que orden_rol: la lista escrita dice QUIENES participan,
         # la salud medida decide el orden. Con muestra insuficiente no se toca.
         self.order = ordenar_por_salud(base)
+
+    @staticmethod
+    def _azure_enabled():
+        """Azure LLM calls require an explicit opt-in to spend credits."""
+        return os.environ.get("RESEARCH_AZURE_ENABLED") == "1"
 
     # -- proveedores ----------------------------------------------------
     def _groq(self, system, user, max_tok):
@@ -425,6 +464,28 @@ class LLM:
             timeout=60,
         )
         return r["choices"][0]["message"]["content"].strip()
+
+    def _watsonx(self, system, user, max_tok):
+        """IBM watsonx.ai. Verificado 4/4 por `tools/watsonx_smoke.py` contra la
+        cuenta real el 2026-07-30: bearer en 460 ms, 24 modelos visibles, chat
+        en 681 ms, 58 tokens = $0.000044.
+
+        NO entra en la cadena por defecto (`_SLOTS` y `order` quedan intactos):
+        se pide explicito con `LLM(order="watsonx")` hasta tener salud medida.
+        """
+        base = os.environ.get("WATSONX_URL", "https://us-south.ml.cloud.ibm.com")
+        r = _http_json(
+            base.rstrip("/") + "/ml/v1/text/chat?version=2024-10-08",
+            {"model_id": os.environ.get("WATSONX_MODEL",
+                                        "meta-llama/llama-3-3-70b-instruct"),
+             "project_id": os.environ.get("WATSONX_PROJECT_ID", ""),
+             "messages": _msgs(system, user),
+             "max_tokens": max_tok,
+             "temperature": 0.3},
+            {"Authorization": "Bearer " + _wx_token()},
+            timeout=90,
+        )
+        return (r["choices"][0]["message"]["content"] or "").strip()
 
     def _azure(self, system, user, max_tok):
         base = os.environ["AZURE_ENDPOINT"].rstrip("/")
@@ -468,15 +529,18 @@ class LLM:
     def _has_key(self, name):
         need = {"groq": "GROQ_API_KEY", "cerebras": "CEREBRAS_API_KEY",
                 "azure": "AZURE_API_KEY", "win": "WIN_BASE_URL",
-                "ollama": "OLLAMA_BASE_URL"}
+                "ollama": "OLLAMA_BASE_URL", "watsonx": "WATSONX_API_KEY"}
         return bool(os.environ.get(need[name]))
 
     def call(self, system, user, max_tok=1024, order=None):
         """Devuelve (texto, proveedor). Recorre la cadena hasta respuesta
         no vacia; acumula errores no fatales en self.errors."""
         fns = {"groq": self._groq, "cerebras": self._cerebras,
-               "azure": self._azure, "win": self._win, "ollama": self._ollama}
+               "azure": self._azure, "win": self._win, "ollama": self._ollama,
+               "watsonx": self._watsonx}
         orden = list(order or self.order)
+        if not self._azure_enabled():
+            orden = [provider for provider in orden if provider != "azure"]
         # sin internet: win/ollama primero (LAN directa, no depende de internet;
         # no esperar los timeouts de la nube). WIN (RTX 4070) antes que el
         # gemma3 local de MAK -- mas fuerte, mismo cable.
@@ -688,12 +752,46 @@ def _es_pregunta_factual(topic):
     return any(s in t for s in _SENALES_FACTUAL)
 
 
+def marco_solo(topic, activo=True):
+    """El encuadre SIN el tema pegado, para ponerlo en el `system` del modelo.
+
+    Existe por un defecto medido el 2026-07-30 sobre la tanda entera de informes
+    RD. `marco()` devuelve encuadre+tema, y ese string completo se estaba
+    mandando al BUSCADOR: 148 caracteres de "investigacion cultural DESCRIPTIVA
+    (historia, estetica, derecho, contexto social...)" antes del tema real.
+    Tavily hace match de palabras, asi que las dominantes eran las del encuadre
+    y devolvia metodologia de la investigacion: el MISMO PDF de pedagogia
+    peruano aparece en cuatro de los cinco informes, sobre cuatro temas que no
+    tienen nada que ver entre si, mas una guia para tesistas, una definicion de
+    diccionario y dos portadas de Google Scholar listadas como fuentes.
+
+    El encuadre es correcto y protege de verdad -- pero protege en el MODELO,
+    que es quien podria escribir una guia de consumo. El buscador solo tiene que
+    recibir el tema. La prueba de que el mecanismo funciona cuando el prefijo no
+    lo tapa: el informe de factibilidad si encontro uchile.cl, medicina.udd.cl y
+    portal.saludarica.cl, fuentes chilenas reales.
+    """
+    if not activo:
+        return ""
+    if _es_pregunta_factual(topic) and not _es_tema_sustancia(topic):
+        return MARCO_FACTUAL
+    return MARCO_CULTURA if _es_tema_sustancia(topic) else MARCO_CULTURA_NEUTRO
+
+
 def marco(topic, activo=True):
     if not activo:
         return topic
     # Una consulta factica sobre quien produjo un evento no es investigacion
     # cultural: enmarcarla como tal la mandaba a buscar en bases academicas.
     # El limite de no perfilar personas viaja igual en los tres marcos.
+    #
+    # OJO (2026-07-30): ese arreglo trataba el sintoma en un solo caso, y su
+    # condicion `and not _es_tema_sustancia` dejaba fuera justo la clase de
+    # pregunta de RD -- la que mas rompia. Hoy la causa esta cortada de raiz:
+    # el encuadre ya NO viaja al buscador (ver `marco_solo`), asi que esta
+    # eleccion decide unicamente que se le dice al MODELO, y para sustancias el
+    # marco cultural es el que corresponde. La exclusion se queda, pero ahora
+    # significa otra cosa.
     if _es_pregunta_factual(topic) and not _es_tema_sustancia(topic):
         return MARCO_FACTUAL + topic
     frame = MARCO_CULTURA if _es_tema_sustancia(topic) else MARCO_CULTURA_NEUTRO

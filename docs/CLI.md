@@ -5,7 +5,7 @@
 
 La CLI `flujo` (Typer, `src/flujo/cli.py`) es la entrada principal al sistema. La mayoria de los scripts sueltos historicos de `scripts/` fueron archivados en `_archive/legacy_*/` por estar superados por comandos `flujo ...` (ver `docs/HIGIENE_REPO.md`).
 
-Este documento es la unica referencia de comandos que hace falta leer; `docs/COMANDOS.md` y `docs/COMANDO_UNIFICADO.md` quedan como redirects historicos. `docs/INTEGRACION_CLI.md` es un doc aparte (arquitectura interna de como se registra el namespace `flujo hub ...`), no un duplicado de este.
+Este documento es la unica referencia de comandos que hace falta leer. `docs/INTEGRACION_CLI.md` es un doc aparte (arquitectura interna de como se registra el namespace `flujo hub ...`), no un duplicado de este.
 
 ## Instalacion
 
@@ -208,4 +208,4 @@ Estos scripts fueron archivados en `_archive/legacy_20260703_1413/` (2026-07-03)
 | `py scripts/piezas_formatos.py` | `flujo render formats` |
 | `py scripts/rider_new.py` | `flujo plano ... --rider` |
 
-Nota: `scripts/piezas_generar.py`, `scripts/piezas_check_outputs.py` y `scripts/flyer_create_project.py` NO fueron archivados — siguen vivos en `.github/workflows/render_piezas_vectoriales.yml` y `make new-flyer` respectivamente. `scripts/flujo.py` (wrapper legacy pre-Typer, ver `docs/COMANDO_UNIFICADO.md`) tampoco fue archivado pero no tiene uso real en CI/Makefile; preferir siempre `flujo ...`.
+Nota: `scripts/piezas_generar.py`, `scripts/piezas_check_outputs.py` y `scripts/flyer_create_project.py` NO fueron archivados — siguen vivos en `.github/workflows/render_piezas_vectoriales.yml` y `make new-flyer` respectivamente. `scripts/flujo.py` (wrapper legacy pre-Typer) tampoco fue archivado pero no tiene uso real en CI/Makefile; preferir siempre `flujo ...`.
