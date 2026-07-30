@@ -277,6 +277,51 @@ def pedir_decision(estado):
     return decision, prov, None, decisor_nivel, escalado, razones_riesgo
 
 
+# Verbos de OPERACIONES: piden actuar sobre la maquina. El canal `codificar`
+# produce un archivo stdlib autocontenido que NADIE ejecuta, asi que un pedido
+# de estos no puede cumplirse -- y el coder, obligado a responder algo, escribe
+# un script que HARIA eso si alguien lo corriera, inventando rutas (/etc/mak/ en
+# vez de ~/plataforma/) y CLIs que no puede verificar.
+#
+# Medido el 2026-07-30 sobre los 32 archivos de `utilidades/`: 4.275 lineas, 28
+# de ellas sin un solo invocador. Los nombres de archivo son los pedidos, y se
+# parten en dos grupos limpios: "una utilidad stdlib que..." (el canal SI puede)
+# y "actualizar ajustes_junta.json" / "ejecutar backlog_codex" / "implementar
+# los pasos de la ultima decision" (el canal NO puede, nunca pudo).
+#
+# El defecto no es el codigo generado ni la infraestructura -- ajustes_junta.json,
+# backlog_codex.py y salud_proveedores.json existen. Es de ENRUTAMIENTO. Esto lo
+# corta en el origen en vez de acumular archivos inertes.
+VERBOS_DE_OPERACIONES = (
+    "actualizar", "ejecutar", "implementar", "procesar", "aplicar", "correr",
+    "reiniciar", "desplegar", "configurar", "instalar", "run ", "lanzar",
+)
+# Señales de que el pedido apunta a la maquina y no a un artefacto.
+BLANCOS_DE_OPERACIONES = (
+    "/etc/", "/usr/local/bin", "/home/mak", "crontab", "systemctl",
+    "la ultima decision", "ultima decision", "tareas pendientes",
+)
+
+
+def pedido_de_operaciones(pedido):
+    """Motivo por el que este pedido NO puede cumplirse en `codificar`, o None.
+
+    Un pedido de operaciones no se satisface con un archivo que nadie corre.
+    Mientras no exista un verbo real para "cambiar un ajuste en la caja" (hoy
+    solo esta `mantener`, que es dry-run), lo honesto es rechazarlo diciendo por
+    que, no producir un script que finge haberlo hecho.
+    """
+    p = " " + (pedido or "").strip().lower()
+    for blanco in BLANCOS_DE_OPERACIONES:
+        if blanco in p:
+            return "apunta a %s" % blanco.strip()
+    primera = p.strip().split(" ")[0] if p.strip() else ""
+    for verbo in VERBOS_DE_OPERACIONES:
+        if primera == verbo.strip() or p.startswith(" " + verbo):
+            return "empieza con el verbo de operaciones '%s'" % verbo.strip()
+    return None
+
+
 def validar(decision):
     if not isinstance(decision, dict):
         return False, "decision no es un dict"
@@ -298,6 +343,15 @@ def ejecutar(accion, args):
         pedido = str(args.get("pedido") or "").strip()[:2000]
         if not pedido:
             return {"ok": False, "error": "pedido vacio"}
+        malo = pedido_de_operaciones(pedido)
+        if malo:
+            # Se rechaza ANTES de gastar el coder, y se dice por que. El pedido
+            # no se pierde: queda en el log del capataz, que es donde se ve
+            # cuantas veces el organismo quiso operar y no pudo.
+            return {"ok": False, "error": "pedido de OPERACIONES enrutado a "
+                    "codificar (%s). El canal produce un archivo stdlib que "
+                    "nadie ejecuta, asi que este pedido no puede cumplirse aqui."
+                    % malo, "rechazado": pedido[:200]}
         r = _http_post_form("http://127.0.0.1:8891/run",
                              {"pedido": pedido, "modo": "generar", "densidad": "medio"})
         if not r.get("ok"):
