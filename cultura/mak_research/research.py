@@ -32,6 +32,7 @@ try:
 except ImportError:          # el organo puede correr sin la compuerta
     fuentes = None
 from research_lib import (LLM, escala_tok, fetch_url, load_env, marco,
+                          marco_solo,
                          ntfy_publish, slug, stamp, tavily_search, web_search)
 
 OUT_DIR = os.path.expanduser("~/research/informes")
@@ -97,6 +98,12 @@ def investigar(topic, iteraciones=3, depth="basic",
     t0 = time.time()
     llm = LLM(providers)
     iteraciones = min(max(iteraciones, 1), 10)
+    # El encuadre de seguridad va al MODELO, nunca al buscador. Pegarselo al
+    # tema mandaba 148 caracteres de "investigacion cultural descriptiva
+    # (historia, estetica, derecho...)" a Tavily, que hace match de palabras y
+    # devolvia papers de metodologia: el mismo PDF peruano en cuatro informes
+    # sobre cuatro temas distintos. Detalle en research_lib.marco_solo().
+    guardia = marco_solo(topic, activo=not sin_marco)
 
     saltar_informe = False
     if reanudar:
@@ -154,8 +161,9 @@ def investigar(topic, iteraciones=3, depth="basic",
                 continue
             try:
                 analysis, _ = llm.call(
-                    "Eres un asistente de investigacion. Analizas contenido web "
-                    "y devuelves SOLO JSON valido, sin markdown ni texto extra.",
+                    guardia + "Eres un asistente de investigacion. Analizas "
+                    "contenido web y devuelves SOLO JSON valido, sin markdown "
+                    "ni texto extra.",
                     'Tema: "%s"\nTITULO: %s\nURL: %s\n\nCONTENIDO:\n%s\n\n'
                     'Devuelve JSON: {"key_facts":["..."],"relevance":'
                     '"alta|media|baja","summary":"2-3 frases","new_angles":["..."]}'
@@ -179,7 +187,7 @@ def investigar(topic, iteraciones=3, depth="basic",
 
         try:
             decision, _ = llm.call(
-                None,
+                guardia or None,
                 'Eres agente de investigacion. Tema: "%s". Iteracion %d/%d.\n'
                 "Hallazgos recientes:\n%s\n\n"
                 'Si la informacion ya cubre el tema responde EXACTAMENTE '
@@ -222,8 +230,8 @@ def investigar(topic, iteraciones=3, depth="basic",
     es_ensayo = formato == "ensayo"
     print("STATUS: Generando %s final..." % formato, flush=True)
     try:
-        sistema_ensayo = formato_ensayo.SISTEMA
-        sistema_informe = (
+        sistema_ensayo = guardia + formato_ensayo.SISTEMA
+        sistema_informe = guardia + (
             "Eres un investigador senior. Redactas informes claros en "
             "espanol correcto (con tildes), en formato Markdown.")
         if ev:
@@ -332,7 +340,10 @@ def main():
             formato=params.get("formato", args.formato),
         )
     elif args.tema:
-        topic = marco(args.tema, activo=not args.sin_marco)
+        # El tema viaja LIMPIO al buscador: `investigar()` arma el encuadre y se
+        # lo da al MODELO. Antes se enmarcaba aca y el string entero terminaba
+        # en la query de Tavily.
+        topic = args.tema
         tema_para_slug = args.tema
         result = investigar(topic, args.iteraciones, args.depth, args.providers,
                             args.densidad, sin_marco=args.sin_marco,

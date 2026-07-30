@@ -752,12 +752,46 @@ def _es_pregunta_factual(topic):
     return any(s in t for s in _SENALES_FACTUAL)
 
 
+def marco_solo(topic, activo=True):
+    """El encuadre SIN el tema pegado, para ponerlo en el `system` del modelo.
+
+    Existe por un defecto medido el 2026-07-30 sobre la tanda entera de informes
+    RD. `marco()` devuelve encuadre+tema, y ese string completo se estaba
+    mandando al BUSCADOR: 148 caracteres de "investigacion cultural DESCRIPTIVA
+    (historia, estetica, derecho, contexto social...)" antes del tema real.
+    Tavily hace match de palabras, asi que las dominantes eran las del encuadre
+    y devolvia metodologia de la investigacion: el MISMO PDF de pedagogia
+    peruano aparece en cuatro de los cinco informes, sobre cuatro temas que no
+    tienen nada que ver entre si, mas una guia para tesistas, una definicion de
+    diccionario y dos portadas de Google Scholar listadas como fuentes.
+
+    El encuadre es correcto y protege de verdad -- pero protege en el MODELO,
+    que es quien podria escribir una guia de consumo. El buscador solo tiene que
+    recibir el tema. La prueba de que el mecanismo funciona cuando el prefijo no
+    lo tapa: el informe de factibilidad si encontro uchile.cl, medicina.udd.cl y
+    portal.saludarica.cl, fuentes chilenas reales.
+    """
+    if not activo:
+        return ""
+    if _es_pregunta_factual(topic) and not _es_tema_sustancia(topic):
+        return MARCO_FACTUAL
+    return MARCO_CULTURA if _es_tema_sustancia(topic) else MARCO_CULTURA_NEUTRO
+
+
 def marco(topic, activo=True):
     if not activo:
         return topic
     # Una consulta factica sobre quien produjo un evento no es investigacion
     # cultural: enmarcarla como tal la mandaba a buscar en bases academicas.
     # El limite de no perfilar personas viaja igual en los tres marcos.
+    #
+    # OJO (2026-07-30): ese arreglo trataba el sintoma en un solo caso, y su
+    # condicion `and not _es_tema_sustancia` dejaba fuera justo la clase de
+    # pregunta de RD -- la que mas rompia. Hoy la causa esta cortada de raiz:
+    # el encuadre ya NO viaja al buscador (ver `marco_solo`), asi que esta
+    # eleccion decide unicamente que se le dice al MODELO, y para sustancias el
+    # marco cultural es el que corresponde. La exclusion se queda, pero ahora
+    # significa otra cosa.
     if _es_pregunta_factual(topic) and not _es_tema_sustancia(topic):
         return MARCO_FACTUAL + topic
     frame = MARCO_CULTURA if _es_tema_sustancia(topic) else MARCO_CULTURA_NEUTRO
