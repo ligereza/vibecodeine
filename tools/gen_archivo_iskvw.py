@@ -36,6 +36,7 @@ OBRAS = RAIZ / "iskvw" / "datos" / "obras.json"
 CAMPO = RAIZ / "iskvw" / "datos" / "campo.json"
 SALIDA = RAIZ / "iskvw" / "datos" / "archivo.json"
 ENSAYOS = RAIZ / "docs" / "cultura" / "ensayos"
+ANIMADAS = RAIZ / "iskvw" / "datos" / "animadas.json"
 
 # Por defecto el micelio se pide a la variable de entorno, no a una IP escrita
 # en el repo: este repositorio es publico.
@@ -205,6 +206,34 @@ def del_campo(ruta: Path = CAMPO) -> tuple[dict, float | None]:
     return reg, (d.get("meta") or {}).get("vecindad_conservada")
 
 
+def desde_animadas(manifiesto: Path = ANIMADAS) -> dict:
+    """Las piezas animadas que el motor semantico derivo de las obras curadas.
+
+    Una por obra, determinista desde el id (tools/gen_animadas_obras.py). La
+    conversion vive en `contrato_archivo.desde_animadas` por la regla de
+    siempre: la pieza existe en los dos lados y dos conversiones divergen.
+    Sin manifiesto se sigue sin el: las animadas enriquecen, no condicionan.
+    """
+    if not manifiesto.is_file():
+        return {"piezas": [], "vinculos": []}
+    datos = json.loads(manifiesto.read_text(encoding="utf-8"))
+    return contrato_archivo.desde_animadas(datos)
+
+
+def desde_campo_curado(ruta: Path = CAMPO) -> dict:
+    """Las obras curadas del campo medido como piezas del contrato.
+
+    La correccion de fondo del 2026-07-30: sin micelio alcanzable (CI), el
+    archivo salia SIN las obras del artista -- solo tools, ensayos e iconos.
+    El campo ya carga lo percibido bajo el filtro del usuario; ahora ademas
+    de posiciones aporta las piezas. La conversion vive en el contrato.
+    """
+    if not ruta.is_file():
+        return {"piezas": [], "vinculos": []}
+    datos = json.loads(ruta.read_text(encoding="utf-8"))
+    return contrato_archivo.desde_campo(datos)
+
+
 def unir(*partes: dict) -> dict:
     """Junta fuentes sin duplicar: una obra percibida por MAK y la misma obra
     cargada a mano son UNA pieza. Gana la que trae mas datos."""
@@ -233,7 +262,8 @@ def _riqueza(p: dict) -> int:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--fuente",
-                    choices=("obras", "micelio", "ensayos", "todo"),
+                    choices=("obras", "campo", "micelio", "ensayos", "animadas",
+                             "todo"),
                     default="obras")
     ap.add_argument("--url", default=MICELIO_URL)
     ap.add_argument("--umbral", type=float, default=UMBRAL_MICELIO)
@@ -246,6 +276,8 @@ def main() -> int:
     partes = []
     if args.fuente in ("obras", "todo"):
         partes.append(desde_obras())
+    if args.fuente in ("campo", "todo"):
+        partes.append(desde_campo_curado(args.posiciones))
     if args.fuente in ("micelio", "todo"):
         try:
             partes.append(desde_micelio(args.url, args.umbral))
@@ -258,6 +290,8 @@ def main() -> int:
                 return 1
     if args.fuente in ("ensayos", "todo"):
         partes.append(desde_ensayos())
+    if args.fuente in ("animadas", "todo"):
+        partes.append(desde_animadas())
 
     datos = unir(*partes)
 
