@@ -75,11 +75,26 @@ _PERFILES = [
     ["--headless=new", "--disable-dev-shm-usage", "--no-sandbox"],
     ["--headless=new", "--disable-dev-shm-usage", "--no-sandbox",
      "--virtual-time-budget=1000"],
-    ["--headless=old", "--disable-dev-shm-usage", "--no-sandbox"],
-    ["--headless=old", "--disable-dev-shm-usage", "--no-sandbox",
-     "--virtual-time-budget=1000"],
     ["--headless", "--disable-dev-shm-usage", "--no-sandbox"],
 ]
+# Nada de `--headless=old`: Chromium 141 contesta "Old Headless mode has been
+# removed from the Chrome binary". Serian entradas muertas que solo alargan
+# cada sondeo.
+
+# LA CAUSA, medida en Linux con Chromium 141 el 2026-07-30 variando SOLO el
+# tamano (mismo icono, mismas banderas): 8 px -> 119 B y 2 colores, 96 px ->
+# 291 B y 2 colores, 110 px -> 617 B, 120 px -> 962 B, 256 px -> 9081 B. Y la
+# prueba que lo aisla: con --window-size=256 el MISMO render a 8 px da 985 B y
+# 47 colores.
+#
+# El headless nuevo impone una ventana minima (~100 px). Pedir
+# --window-size=96,96 recorta la ventana al minimo pero captura al tamano
+# pedido, desde un viewport que nunca pinto: de ahi el PNG valido y VACIO. En
+# Windows el minimo es otro, y por eso ahi el mismo icono daba 3673 B.
+#
+# La ventana no es el tamano de salida: es el lienzo. Se pide grande y se
+# RECORTA -- nunca se reescala, porque no se resamplea lo que se va a medir.
+VENTANA_MIN = 256
 
 
 class RasterizadorNoDisponibleError(RuntimeError):
@@ -233,14 +248,39 @@ def _dibujo_vivo(png):
         return len(png) > 800
 
 
+# Los colores que la sonda PONE en el lienzo. Es el criterio exacto: un
+# instrumento que sirve me devuelve las formas que le di. "Mas de dos colores"
+# no alcanzaba -- en ubuntu un fondo con antialias pasaba ese liston mientras
+# las figuras no se dibujaban, y cuatro iconos con fondo de dos tonos seguian
+# acusados de no moverse.
+_COLORES_SONDA = ((0x33, 0x55, 0xcc), (0xee, 0x22, 0x44))
+
+
+def _tiene_colores(png, esperados, tolerancia=40):
+    try:
+        from PIL import Image
+        import io
+        im = Image.open(io.BytesIO(png)).convert("RGB")
+    except Exception:
+        return len(png) > 800  # sin Pillow, solo queda el piso de bytes
+    presentes = [c for _n, c in (im.getcolors(maxcolors=100000) or [])]
+    for esperado in esperados:
+        if not any(all(abs(a - b) <= tolerancia for a, b in zip(c, esperado))
+                   for c in presentes):
+            return False
+    return True
+
+
 def _mide_movimiento(rasterizar_fn):
     """(dibuja_y_mueve) para una forma de rasterizar. La sonda se juzga con dos
-    preguntas, no una: el cuadro tiene que TENER dibujo y ademas CAMBIAR."""
+    preguntas, no una: el cuadro tiene que MOSTRAR las figuras que le puse y
+    ademas CAMBIAR. Sin la primera, la segunda mide ruido."""
     quieto = rasterizar_fn(_SONDA_ANIMA)
-    if not _dibujo_vivo(quieto):
+    if not _dibujo_vivo(quieto) or not _tiene_colores(quieto, _COLORES_SONDA):
         return False
     movido = rasterizar_fn(_adelantar(_SONDA_ANIMA, 500))
-    return _dibujo_vivo(movido) and quieto != movido
+    return (_dibujo_vivo(movido) and _tiene_colores(movido, _COLORES_SONDA)
+            and quieto != movido)
 
 
 def _anima(backend):
@@ -365,17 +405,37 @@ def _rasterizar_edge(svg_txt, tam, perfil=None):
         entrada = tmp / "in.html"
         entrada.write_text(html, encoding="utf-8")
         png = tmp / "out.png"
+        ventana = max(tam, VENTANA_MIN)
         subprocess.run(
             [edge] + _BASE + (perfil or _PERFILES[0])
             + ["--user-data-dir=%s" % (tmp / "perfil"),
-             "--window-size=%d,%d" % (tam, tam),
+             "--window-size=%d,%d" % (ventana, ventana),
              "--screenshot=%s" % png, entrada.as_uri()],
             check=False, timeout=90,
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         if not png.exists() or png.stat().st_size == 0:
             raise RasterizadorNoDisponibleError(
                 "Edge headless no produjo PNG (%s)" % edge)
-        return png.read_bytes()
+        datos = png.read_bytes()
+    if ventana == tam:
+        return datos
+    # El SVG va pegado arriba a la izquierda (margin:0), asi que el recorte es
+    # exacto y no hay que buscar nada. RECORTE, nunca reescalado: resamplear lo
+    # que despues se compara cuadro a cuadro inventaria diferencias.
+    try:
+        from PIL import Image
+        import io
+        im = Image.open(io.BytesIO(datos)).convert("RGBA").crop(
+            (0, 0, tam, tam))
+        buf = io.BytesIO()
+        im.save(buf, "PNG")
+        return buf.getvalue()
+    except ImportError:
+        # Sin Pillow no se puede recortar; devolver la ventana entera seria
+        # entregar otra cosa que la pedida, callado.
+        raise RasterizadorNoDisponibleError(
+            "hace falta Pillow para recortar la ventana de %d px al tamano "
+            "pedido de %d px" % (ventana, tam))
 
 
 def animar(svg_txt, salida, cuadros=12, ciclo_ms=4000, tam=256):
