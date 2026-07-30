@@ -31,14 +31,12 @@ py -m pytest tests/ -q
 py -m flujo health
 ```
 
-Limpieza de generados/caches (equivalente, dos formas vivas):
+Limpieza de generados/caches:
 
 ```bash
-flujo clean --generated       # via CLI Typer
-py scripts/flujo_clean_generated.py   # script directo (pycache + outputs regenerables de piezas_vectoriales)
-py scripts/flujo_health.py            # chequeo directo (usado tambien por .github/workflows/render_piezas_vectoriales.yml)
-bash scripts/cleanup_demo_artifacts.sh --dry-run
-bash scripts/cleanup_demo_artifacts.sh --apply   # elimina jobs/projects de demo listados arriba + caches + backups airdrop
+flujo clean --generated       # via CLI Typer (pycache + outputs regenerables de piezas_vectoriales)
+py scripts/flujo_health.py    # chequeo directo (usado tambien por .github/workflows/render_piezas_vectoriales.yml)
+bash scripts/limpiar_basura.sh   # usado por make clean
 ```
 
 ## Antes de aceptar un airdrop externo
@@ -60,3 +58,17 @@ Ver `docs/AGENT_AIRDROP_PROTOCOL.md` para el detalle completo (que valida, que h
 **Actual (2026-06):** `context/flujo_hub.html` + `svg_visualizer.html` + `plano_demo.html` + `LAST_HANDOFF.md` son la fuente de verdad diaria.
 
 Histórico (checkpoints, _archive, reference_old) se movió a `_archive/legacy_historico_previo/` y se RETIRÓ el 2026-07-30: era un archivo dentro de un archivo dentro de un archivo, 283 archivos que nadie volvió a abrir. Vive en el historial de git, que es para lo que existe. Mantener el root limpio; el mapa del repo está en `CLAUDE.md`.
+
+**Herramientas de limpieza, estado 2026-07-30.** Vivas: `limpiar_basura.sh`
+(usado por `make clean`), `find_duplicates.py` y `suggest_repo_hygiene.py` --
+esta última **se invoca a mano**, no la llama ningún cron ni workflow, sirve
+como señal de cobertura cuando alguien quiere revisar el estado del repo.
+Retirados el 2026-07-30 por no tener invocador real (ni Makefile, ni
+`.github/workflows/*.yml`, ni cron, solo mención en docs): `flujo_clean_generated.py`,
+`soft_cleanup.py`, `cleanup_demo_artifacts.sh`, `cleanup_ig_temp_folders.sh`.
+Los checkpoints de versión en `docs/handoffs/archive/` (los `HANDOFF_v0.4x.md`,
+`HOTFIX_*.md` y similares, ~93 archivos) también se retiraron ese día: git ya
+es el registro de esa historia, y ninguno de esos archivos tenía un consumidor
+real (ni el handoff vivo ni `CLAUDE.md` los citaban por nombre). Lo que sí se
+cita por nombre se queda: las ocho notas de decisiones de julio 2026 en esa
+misma carpeta.
