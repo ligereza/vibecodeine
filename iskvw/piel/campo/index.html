@@ -317,7 +317,7 @@ function dibujar(){
       x += (cx + destino[0]*escalaForma - x) * F;
       y += (cy + destino[1]*escalaForma - y) * F;
     }
-    return {x, y, cerca};
+    return {x, y, cerca, destino};
   }
 
   /* ── los vinculos, debajo de las obras ──
@@ -363,6 +363,7 @@ function dibujar(){
     const p = posicionDe(ni);
     if (!p) continue;
     const cerca = p.cerca;
+    const destino = p.destino;
     let x = p.x, y = p.y;
 
     // respiracion propia, y el ruido crece con la velocidad
@@ -417,7 +418,7 @@ function dibujar(){
       ctx.fillText(nombreDe(n.obra).slice(0,42), px, py + r*2.1);
     }
 
-    const dist = Math.abs(dy);
+    const dist = Math.abs(n.y - E.pos);
     if (dist < mejorD){ mejorD = dist; mejor = n; }
   }
 
