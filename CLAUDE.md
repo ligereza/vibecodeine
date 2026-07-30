@@ -47,11 +47,19 @@ down the most.
 
 - **Talking to the user: Spanish.**
 - **Everything else: English.** Code, comments, `context/*.md`, this file, agent
-  docs, commit messages, PR titles and bodies, the assistant's memory. Cause: the
-  system is already English (Python, git, identifiers, labels), so a Spanish term
-  inside it becomes unsearchable -- the `curatoria` subsystem was recorded in
-  memory as `curation`, and searching the Spanish word returned "nothing found"
-  while the answer was sitting there.
+  docs, commit messages, PR titles and bodies, the assistant's memory. The reason
+  is not taste, it is SEARCH: a Spanish term inside an English system becomes
+  unfindable -- `curatoria` was recorded in memory as `curation`, and searching
+  the Spanish word answered "nothing found" while the note sat right there.
+- **The tree does NOT match that rule yet, and pretending otherwise is what
+  keeps costing sessions.** Measured 2026-07-30: 236 Python files carry Spanish
+  comments against 36 in English. An agent that reads the rule, searches in
+  English and finds nothing concludes the thing does not exist -- then rebuilds
+  it or reports it missing. **Read `docs/GLOSSARY.md` before concluding that
+  something is absent**: it maps every Spanish domain term to its English one.
+  New code is written in English; existing Spanish names that a cron line or a
+  systemd unit already invokes are NOT renamed, because the rename breaks the
+  machine that works.
 - **The exception, non-negotiable: anything a human reads as a product.** RD
   pieces and data, iskvw curation, anything shown to the board or a client goes
   in correct Spanish WITH diacritics. A title reading "reduciendo ano" instead of
