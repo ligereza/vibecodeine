@@ -159,14 +159,33 @@ def _cairosvg():
         return None
 
 
+def _binarios():
+    """TODOS los navegadores presentes, en orden de preferencia.
+
+    Devolver solo el primero fue el ultimo disfraz del mismo error: en el
+    runner de ubuntu el primero es /usr/bin/microsoft-edge, medido como
+    incapaz, y /usr/bin/google-chrome no se probaba nunca -- 17 guardias
+    saltados por un binario mal elegido, no por una plataforma incapaz.
+    Existir no es funcionar, tambien para el binario.
+
+    En Windows Edge va primero, que es lo que ya estaba sano.
+    """
+    orden = NAVEGADOR_CANDS if os.name == "nt" else (
+        [c for c in NAVEGADOR_CANDS if "chrom" in c.lower()]
+        + [c for c in NAVEGADOR_CANDS if "chrom" not in c.lower()])
+    hallados = [c for c in orden if os.path.exists(c)]
+    for nombre in ("google-chrome", "chromium", "microsoft-edge", "msedge"):
+        ruta = shutil.which(nombre)
+        if ruta and ruta not in hallados:
+            hallados.append(ruta)
+    return hallados
+
+
 def _edge():
-    """El binario de navegador, si hay alguno. Conserva el nombre historico
+    """El primer navegador presente, o None. Conserva el nombre historico
     porque es el punto que los tests intervienen para fingir su ausencia."""
-    for e in NAVEGADOR_CANDS:
-        if os.path.exists(e):
-            return e
-    return (shutil.which("microsoft-edge") or shutil.which("msedge")
-            or shutil.which("google-chrome") or shutil.which("chromium"))
+    hallados = _binarios()
+    return hallados[0] if hallados else None
 
 
 _navegador = _edge  # nombre honesto; ya no es necesariamente Edge
@@ -220,7 +239,7 @@ def _edge_funciona():
             # Cualquier motivo -- binario roto, sin sandbox, sin HOME -- cuenta
             # como "no sirve". No se distingue porque no cambia la decision: no
             # hay con que rasterizar.
-            _SONDEADOS[binario] = _perfil_navegador(anima=False) is not None
+            _SONDEADOS[binario] = _elegir_navegador(anima=False) is not None
         except Exception:
             _SONDEADOS[binario] = False
     return _SONDEADOS[binario]
@@ -302,37 +321,69 @@ def _anima(backend):
 _PERFIL_ELEGIDO = {}
 
 
-def _perfil_navegador(anima=True):
-    """El primer perfil de banderas que sirve para lo que se le pide, o None.
+_INTENTOS = {}
+
+
+def _elegir_navegador(anima=True):
+    """El primer par (binario, perfil) que sirve para lo que se le pide.
 
     Aca es donde el instrumento se gana el derecho a acusar a un archivo. Con
-    `anima=True` el listón es DIBUJAR Y MOVER la sonda representativa; con
-    `anima=False` basta con producir un PNG. Se prueban en orden y se recuerda
-    el ganador por binario; si ninguno sirve, esta maquina no puede medir y hay
-    que decirlo, no estimarlo.
+    `anima=True` el liston es DIBUJAR Y MOVER la sonda; con `anima=False` basta
+    con producir un PNG. Se recorren TODOS los binarios contra TODOS los
+    perfiles, no el primero de cada uno, y se recuerda el par ganador. Si
+    ninguno sirve, esta maquina no puede medir y hay que decirlo con nombres,
+    no estimarlo: `_INTENTOS` guarda como fallo cada uno.
     """
-    binario = _edge()
-    if not binario:
-        return None
-    clave = (binario, anima)
+    # La clave incluye los binarios presentes, no solo la pregunta: con una
+    # clave global el resultado del primer sondeo sobrevivia a que cambiara el
+    # entorno, que es exactamente lo que `_SONDEADOS` aprendio a no hacer.
+    binarios = _binarios()
+    clave = (anima, tuple(binarios))
     if clave not in _PERFIL_ELEGIDO:
-        elegido = None
-        for perfil in _PERFILES:
-            try:
-                if anima:
-                    ok = _mide_movimiento(
-                        lambda t, p=perfil: _rasterizar_edge(
-                            t, _TAM_SONDA, perfil=p))
-                else:
-                    ok = _rasterizar_edge(_SONDA, 8, perfil=perfil)[:4] \
-                        == b"\x89PNG"
-                if ok:
-                    elegido = perfil
-                    break
-            except Exception:
-                continue
-        _PERFIL_ELEGIDO[clave] = elegido
+        ganador, fallos = None, []
+        for binario in binarios:
+            for perfil in _PERFILES:
+                try:
+                    if anima:
+                        ok = _mide_movimiento(
+                            lambda t, b=binario, p=perfil: _rasterizar_edge(
+                                t, _TAM_SONDA, perfil=p, binario=b))
+                    else:
+                        ok = _rasterizar_edge(
+                            _SONDA, 8, perfil=perfil,
+                            binario=binario)[:4] == b"\x89PNG"
+                    if ok:
+                        ganador = (binario, perfil)
+                        break
+                    fallos.append("%s %s: no %s"
+                                  % (os.path.basename(binario), perfil[0],
+                                     "dibuja/mueve la sonda" if anima
+                                     else "produjo PNG"))
+                except Exception as e:
+                    fallos.append("%s %s: %s"
+                                  % (os.path.basename(binario), perfil[0],
+                                     type(e).__name__))
+            if ganador:
+                break
+        _PERFIL_ELEGIDO[clave] = ganador
+        _INTENTOS[clave] = fallos
     return _PERFIL_ELEGIDO[clave]
+
+
+def _perfil_navegador(anima=True):
+    par = _elegir_navegador(anima=anima)
+    return par[1] if par else None
+
+
+def por_que_no_hay_navegador(anima=True):
+    """Que se probo y como fallo. Un salto que no nombra lo que intento cuesta
+    una sesion en vez de una linea de log."""
+    hallados = _binarios()
+    if not hallados:
+        return "no se encontro ningun navegador (%s)" % ", ".join(
+            NAVEGADOR_CANDS[:3] + ["..."])
+    fallos = _INTENTOS.get((anima, tuple(hallados))) or ["sin intentos"]
+    return "probados %d binario(s): %s" % (len(hallados), "; ".join(fallos))
 
 
 def backend_disponible(anima=False):
@@ -363,7 +414,10 @@ def _rasterizar_con(backend, txt, tam, anima=False):
                                    output_width=tam, output_height=tam)
     # Para medir movimiento se usa el perfil que se gano ese derecho; para
     # rasterizar a secas, el primero que produzca PNG.
-    return _rasterizar_edge(txt, tam, perfil=_perfil_navegador(anima=anima))
+    par = _elegir_navegador(anima=anima)
+    return _rasterizar_edge(txt, tam,
+                            perfil=par[1] if par else None,
+                            binario=par[0] if par else None)
 
 
 def rasterizar(svg_txt, tam=TAM, avance_ms=None, backend=None, anima=False):
@@ -391,8 +445,8 @@ def rasterizar(svg_txt, tam=TAM, avance_ms=None, backend=None, anima=False):
     return _rasterizar_con(backend, txt, tam, anima=anima)
 
 
-def _rasterizar_edge(svg_txt, tam, perfil=None):
-    edge = _edge()
+def _rasterizar_edge(svg_txt, tam, perfil=None, binario=None):
+    edge = binario or _edge()
     inicio = svg_txt.find("<svg")
     if inicio < 0:
         raise ValueError("el texto no contiene un <svg")

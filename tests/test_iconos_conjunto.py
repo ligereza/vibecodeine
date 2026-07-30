@@ -207,7 +207,8 @@ from motor_semantico import rasterizador as _ras  # noqa: E402
 # estaba muerto era el instrumento.
 _requiere_backend = pytest.mark.skipif(
     _ras.backend_disponible(anima=True) is None,
-    reason="sin backend que ejecute animaciones CSS (hace falta un navegador)")
+    reason="sin backend que dibuje y anime -- %s"
+           % _ras.por_que_no_hay_navegador(True))
 
 
 def _ciclo_ms(svg: str) -> int:
