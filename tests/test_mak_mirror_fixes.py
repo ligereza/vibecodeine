@@ -46,6 +46,15 @@ class TestWinEnWhitelists:
         llm = research_lib.LLM(order="groq,win,ollama")
         assert llm.order == ["groq", "win", "ollama"]
 
+    def test_azure_requires_explicit_spend_opt_in(self, monkeypatch):
+        monkeypatch.delenv("RESEARCH_AZURE_ENABLED", raising=False)
+        llm = research_lib.LLM(order="azure,cerebras")
+        assert llm.order == ["cerebras"]
+
+        monkeypatch.setenv("RESEARCH_AZURE_ENABLED", "1")
+        llm = research_lib.LLM(order="azure,cerebras")
+        assert llm.order == ["azure", "cerebras"]
+
 
 # ── fix 5: fallback intra-paso de cadena.py ──
 

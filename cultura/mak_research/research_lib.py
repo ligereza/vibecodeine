@@ -33,6 +33,7 @@ DEFAULTS = {
     "CEREBRAS_MODEL": "gpt-oss-120b",
     "AZURE_ENDPOINT": "https://ligereza.services.ai.azure.com",
     "AZURE_DEPLOYMENT": "gpt-5-mini",
+    "RESEARCH_AZURE_ENABLED": "0",
     "OLLAMA_BASE_URL": "http://127.0.0.1:11434",
     "OLLAMA_MODEL": "gemma3:4b",
     # WIN: notebook Windows con RTX 4070 (8GB VRAM), alcanzable SOLO por el
@@ -430,9 +431,16 @@ class LLM:
         base = [p.strip() for p in order.split(",")
                 if p.strip() in ("groq", "cerebras", "azure", "win", "ollama",
                                  "watsonx")]
+        if not self._azure_enabled():
+            base = [provider for provider in base if provider != "azure"]
         # Misma regla que orden_rol: la lista escrita dice QUIENES participan,
         # la salud medida decide el orden. Con muestra insuficiente no se toca.
         self.order = ordenar_por_salud(base)
+
+    @staticmethod
+    def _azure_enabled():
+        """Azure LLM calls require an explicit opt-in to spend credits."""
+        return os.environ.get("RESEARCH_AZURE_ENABLED") == "1"
 
     # -- proveedores ----------------------------------------------------
     def _groq(self, system, user, max_tok):
@@ -531,6 +539,8 @@ class LLM:
                "azure": self._azure, "win": self._win, "ollama": self._ollama,
                "watsonx": self._watsonx}
         orden = list(order or self.order)
+        if not self._azure_enabled():
+            orden = [provider for provider in orden if provider != "azure"]
         # sin internet: win/ollama primero (LAN directa, no depende de internet;
         # no esperar los timeouts de la nube). WIN (RTX 4070) antes que el
         # gemma3 local de MAK -- mas fuerte, mismo cable.
