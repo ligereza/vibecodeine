@@ -62,9 +62,16 @@ NAVEGADOR_CANDS = [
 #                          valido nadie lo nota hasta que todos los cuadros
 #                          salen identicos y el test acusa al archivo.
 #   --disable-dev-shm-usage  inofensiva en los dos (3673 bytes con y sin ella).
+#   --virtual-time-budget    adelanta el reloj virtual y NO captura antes de que
+#                          la pagina pinte. En Windows no cambia el resultado
+#                          (4 cuadros distintos con y sin ella); existe por la
+#                          maquina lenta, donde una captura al primer paint
+#                          devuelve el mismo cuadro en blanco siempre -- y
+#                          cuadros iguales es justo la forma que tiene este
+#                          instrumento de mentir.
 # Solo se abre un HTML local generado aca, nunca contenido remoto.
-_BANDERAS_SO = (["--disable-dev-shm-usage"] if os.name == "nt"
-                else ["--no-sandbox", "--disable-dev-shm-usage"])
+_BANDERAS_SO = ["--disable-dev-shm-usage", "--virtual-time-budget=500"] + (
+    [] if os.name == "nt" else ["--no-sandbox"])
 
 
 class RasterizadorNoDisponibleError(RuntimeError):

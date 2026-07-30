@@ -222,6 +222,27 @@ def _ciclo_ms(svg: str) -> int:
     return int(max(duraciones)) if duraciones else 0
 
 
+def _diagnostico(svg: str, ciclo: int) -> str:
+    """Que backend midio, y que devolvio. Se arma solo cuando algo falla."""
+    b = _ras.backend_disponible(anima=True)
+    partes = ["backend=%s (rasteriza: %s)" % (b, _ras.backend_disponible())]
+    try:
+        a = _ras.rasterizar(svg, tam=96, backend=b)
+        z = _ras.rasterizar(svg, tam=96, avance_ms=ciclo // 2, backend=b)
+        partes.append("PNG cuadro0=%d B, medio ciclo=%d B, %s"
+                      % (len(a), len(z),
+                         "IGUALES" if a == z else "distintos"))
+        sonda_q = _ras.rasterizar(_ras._SONDA_ANIMA, tam=8, backend=b)
+        sonda_m = _ras.rasterizar(_ras._SONDA_ANIMA, tam=8, avance_ms=500,
+                                  backend=b)
+        partes.append("sonda 8px: %d/%d B, %s"
+                      % (len(sonda_q), len(sonda_m),
+                         "IGUALES" if sonda_q == sonda_m else "distintos"))
+    except Exception as e:  # el diagnostico no puede tapar el fallo real
+        partes.append("diagnostico incompleto: %r" % (e,))
+    return "; ".join(partes)
+
+
 @_requiere_backend
 @pytest.mark.parametrize("svg_path", sorted((RAVE / "iconos").glob("*.svg")),
                          ids=lambda p: p.stem)
@@ -244,6 +265,10 @@ def test_un_icono_que_declara_animacion_se_mueve_en_su_propio_ciclo(svg_path):
         _, cuadros, distintos = _ras.animar(
             svg, Path(tmp) / "x.gif", cuadros=4,
             ciclo_ms=ciclo, tam=96)
+    # El mensaje NOMBRA al instrumento. Sin eso, una acusacion al archivo y un
+    # instrumento ciego se leen igual, y esta suite ya gasto dos vueltas de CI
+    # aprendiendo la diferencia.
     assert distintos > 1, (
         "declara animacion de %d ms y los %d cuadros de su propio ciclo son "
-        "identicos: el archivo afirma un movimiento que no ocurre" % (ciclo, cuadros))
+        "identicos: o el archivo afirma un movimiento que no ocurre, o el "
+        "instrumento no lo ve. %s" % (ciclo, cuadros, _diagnostico(svg, ciclo)))
