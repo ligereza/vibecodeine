@@ -47,11 +47,19 @@ down the most.
 
 - **Talking to the user: Spanish.**
 - **Everything else: English.** Code, comments, `context/*.md`, this file, agent
-  docs, commit messages, PR titles and bodies, the assistant's memory. Cause: the
-  system is already English (Python, git, identifiers, labels), so a Spanish term
-  inside it becomes unsearchable -- the `curatoria` subsystem was recorded in
-  memory as `curation`, and searching the Spanish word returned "nothing found"
-  while the answer was sitting there.
+  docs, commit messages, PR titles and bodies, the assistant's memory. The reason
+  is not taste, it is SEARCH: a Spanish term inside an English system becomes
+  unfindable -- `curatoria` was recorded in memory as `curation`, and searching
+  the Spanish word answered "nothing found" while the note sat right there.
+- **The tree does NOT match that rule yet, and pretending otherwise is what
+  keeps costing sessions.** Measured 2026-07-30: 236 Python files carry Spanish
+  comments against 36 in English. An agent that reads the rule, searches in
+  English and finds nothing concludes the thing does not exist -- then rebuilds
+  it or reports it missing. **Read `docs/GLOSSARY.md` before concluding that
+  something is absent**: it maps every Spanish domain term to its English one.
+  New code is written in English; existing Spanish names that a cron line or a
+  systemd unit already invokes are NOT renamed, because the rename breaks the
+  machine that works.
 - **The exception, non-negotiable: anything a human reads as a product.** RD
   pieces and data, iskvw curation, anything shown to the board or a client goes
   in correct Spanish WITH diacritics. A title reading "reduciendo ano" instead of
@@ -109,26 +117,22 @@ and merge to main. Cause of this note: `RELEVO_MAK.md` said the opposite ("el
 organismo vive fuera del repo") and a whole session was worked against that
 premise. Retirement: if the sync is ever removed.
 
-**The sync does NOT cover `cultura/mak_curatoria`, and that makes changes to the
-perception inert** (2026-07-27, measured on the box). The `cp -ru` list names
-`mak_plataforma`, `mak_research` and `mak_codex` only. So the box's repo clone
-pulls the new code and `/home/mak/curatoria/percepcion.py` keeps the old one:
-verified by md5 and by grepping for a constant added that day -- 3 hits in the
-clone, 0 in the copy that actually runs. It is worse than the trap above ("copying
-a file does not restart the service"): the file is not even copied. Until the cron
-gains `&& cp -ru /home/mak/flujo/cultura/mak_curatoria/. /home/mak/curatoria/`,
-anything merged into `mak_curatoria` is in the repo and not in the curation. The
-box also keeps its own state there (`fichas/`, `estado.json`, `procesados.txt`),
-so the copy must stay `-u` and never mirror-delete. Retirement: when the cron
-covers it, or when the curation reads the clone directly.
+**The sync DOES cover `cultura/mak_curatoria` since some point before
+2026-07-30** -- measured that day by reading the box's crontab: the `MAK-REPO-SYNC`
+line copies `mak_plataforma`, `mak_research`, `mak_codex` AND `mak_curatoria`.
+The note that used to live here said the opposite and was stale.
 
-**No agent opens issues** (2026-07-26, user's order). Issues are a CHANNEL, not a
-task board: the user and his Google Script open them, and they are the
-Gmail -> issue -> render path. An agent may comment, label and close
-(`.github/workflows/issue_descarga_ig.yml` does exactly that and creates none),
-but opening one adds noise to someone else's queue. If something has to be
-remembered, it goes to `context/LAST_HANDOFF.md`. Retirement: if the user opens
-the channel to agents.
+**What is NOT closed is the direction of the copy.** It is `cp -ru`, and `-u`
+means "only if the source is NEWER", so a single edit made on the box freezes
+that file forever: the repo version never lands again. Measured 2026-07-30:
+`revisor.py` was 165 lines in the repo and 216 on the box, and those 51 extra
+lines were `enforce_pr()` -- code that merges PRs by itself, running every 6
+hours by cron, living on one disk with no review and no backup. The repo copy,
+the one anybody reads to understand what the reviewer does, did not even have
+the `--enforce` flag it is invoked with. `cultura/mak_plataforma/coherencia.py`
+measures this drift in both directions; run it on the box. Retirement: when the
+sync makes the repo authoritative for code (`cp -r`) and the detector stays
+green on its own.
 
 ## Mission
 
@@ -209,16 +213,23 @@ Remote repo: https://github.com/ligereza/vibecodeine/
 ASCII-only applies ONLY to `CLAUDE.md` and the operational `context/*.md`
 (LAST_HANDOFF.md and similar). Date: 2026-06-24, clarified 2026-07-26.
 
-**Real cause: this is a rule FOR WEB AGENTS, not for local Claude.** What broke
-those files was a web agent: its round trip (clone, edit elsewhere, deliver a
-ZIP, apply it on Windows) mangles diacritics, and that produced the corrupted
-commits v0.35.7-v0.35.9. Local Claude Code writes UTF-8 straight to disk and does
-not have that problem. These two files stay ASCII because BOTH edit them: the
-lowest common denominator protects them. Since 2026-07-26 they are written in
-English anyway, so the rule costs nothing.
+**What is actually verified, and where:** `tests/test_higiene_repo.py` asks that
+every character SURVIVE A ROUND TRIP THROUGH cp1252 -- not that it be ASCII. An
+em dash passes; a character that a Windows round trip would mangle does not.
+Write these two files in plain ASCII if you have the choice, but the enforced
+rule is the round trip.
 
-Retirement: when an automatic encoding check in CI makes it unnecessary, or when
-the web-agent channel stops mangling accents.
+The history of this rule -- which agent broke which commits and why -- is in
+`_archive/` and in git. It does not live here on purpose: on 2026-07-30 the
+prose said "ASCII-only" while the test measured cp1252, and an agent reading a
+console rendering of a perfectly good em dash found a ready-made culprit in the
+text and "fixed" a character the user had written himself. **A rule whose prose
+no longer describes its own enforcement is worse than no rule, because it reads
+as measured truth.** A rule says what is checked and where; its story goes to
+the archive.
+
+Retirement: when the encoding check covers every file and this paragraph becomes
+a duplicate of the test.
 
 Mandatory counterpart: EVERY human-facing product (`data/`, `docs/rd/`, reports,
 the database, cultural pieces) goes in correct Spanish UTF-8. ASCII-only NEVER
@@ -436,7 +447,7 @@ Daily operation: `jobs/_template/`, `datadrops/`
 
 Generated / historical (do NOT edit by hand): `jobs/20*`,
 `projects/piezas_vectoriales/20*`, `datadrops/` (output), `context/*.html` (via
-`npm run build:context`), `_airdrop*`, `_logs/`, `_archive/legacy_historico_previo/`, `_archive/`,
+`npm run build:context`), `_airdrop*`, `_logs/`, `_archive/`,
 `docs/handoffs/archive/`. `data/*.db`, `*.sqlite*`, `context/DAILY.md`,
 `context/dashboard.html` do not go into commits (`context/LAST_HANDOFF.md` does).
 

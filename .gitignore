@@ -245,3 +245,7 @@ iskvw/datos/archivo.json
 # `py tools/iconos_conjunto.py animar` para MEDIR que la animacion existe
 # (cuadros distintos), no para entregar. Instrumento, no artefacto.
 docs/cultura/ensayos/*/_animados/
+
+# La configuracion del editor es del usuario: un `git add -A` ya se trago sus
+# primas dos veces (.agents/, .codex/).
+.vscode/

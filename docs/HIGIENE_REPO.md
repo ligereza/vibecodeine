@@ -59,4 +59,4 @@ Ver `docs/AGENT_AIRDROP_PROTOCOL.md` para el detalle completo (que valida, que h
 
 **Actual (2026-06):** `context/flujo_hub.html` + `svg_visualizer.html` + `plano_demo.html` + `LAST_HANDOFF.md` son la fuente de verdad diaria.
 
-Histórico (checkpoints, _archive, reference_old) movido a `_archive/legacy_historico_previo/`. Mantener el root limpio. Ver `_archive/legacy_historico_previo/README.md` y `CLAUDE.md` (mapa del repo).
+Histórico (checkpoints, _archive, reference_old) se movió a `_archive/legacy_historico_previo/` y se RETIRÓ el 2026-07-30: era un archivo dentro de un archivo dentro de un archivo, 283 archivos que nadie volvió a abrir. Vive en el historial de git, que es para lo que existe. Mantener el root limpio; el mapa del repo está en `CLAUDE.md`.

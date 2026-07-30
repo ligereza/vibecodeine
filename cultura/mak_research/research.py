@@ -26,7 +26,13 @@ import time
 
 import formato_ensayo
 import pausa
+
+try:
+    import fuentes
+except ImportError:          # el organo puede correr sin la compuerta
+    fuentes = None
 from research_lib import (LLM, escala_tok, fetch_url, load_env, marco,
+                          marco_solo,
                          ntfy_publish, slug, stamp, tavily_search, web_search)
 
 OUT_DIR = os.path.expanduser("~/research/informes")
@@ -92,6 +98,12 @@ def investigar(topic, iteraciones=3, depth="basic",
     t0 = time.time()
     llm = LLM(providers)
     iteraciones = min(max(iteraciones, 1), 10)
+    # El encuadre de seguridad va al MODELO, nunca al buscador. Pegarselo al
+    # tema mandaba 148 caracteres de "investigacion cultural descriptiva
+    # (historia, estetica, derecho...)" a Tavily, que hace match de palabras y
+    # devolvia papers de metodologia: el mismo PDF peruano en cuatro informes
+    # sobre cuatro temas distintos. Detalle en research_lib.marco_solo().
+    guardia = marco_solo(topic, activo=not sin_marco)
 
     saltar_informe = False
     if reanudar:
@@ -149,8 +161,9 @@ def investigar(topic, iteraciones=3, depth="basic",
                 continue
             try:
                 analysis, _ = llm.call(
-                    "Eres un asistente de investigacion. Analizas contenido web "
-                    "y devuelves SOLO JSON valido, sin markdown ni texto extra.",
+                    guardia + "Eres un asistente de investigacion. Analizas "
+                    "contenido web y devuelves SOLO JSON valido, sin markdown "
+                    "ni texto extra.",
                     'Tema: "%s"\nTITULO: %s\nURL: %s\n\nCONTENIDO:\n%s\n\n'
                     'Devuelve JSON: {"key_facts":["..."],"relevance":'
                     '"alta|media|baja","summary":"2-3 frases","new_angles":["..."]}'
@@ -174,7 +187,7 @@ def investigar(topic, iteraciones=3, depth="basic",
 
         try:
             decision, _ = llm.call(
-                None,
+                guardia or None,
                 'Eres agente de investigacion. Tema: "%s". Iteracion %d/%d.\n'
                 "Hallazgos recientes:\n%s\n\n"
                 'Si la informacion ya cubre el tema responde EXACTAMENTE '
@@ -201,6 +214,12 @@ def investigar(topic, iteraciones=3, depth="basic",
 
     sources = list(dict.fromkeys(f["url"] for f in findings if f.get("url")))
 
+    # La compuerta de fuente: una pregunta sobre derecho chileno no se responde
+    # con un PDF de pedagogia peruano. `dom` es None para casi todo -- la mayoria
+    # de las preguntas culturales NO tienen fuente primaria y no deben estorbarse.
+    dom = fuentes.dominio_de_tema(topic) if fuentes else None
+    ev = fuentes.evaluar(topic, sources, dom) if (fuentes and dom) else None
+
     if saltar_informe:
         report = ("[Informe omitido por accion humana: saltar] La fase de "
                   "generacion de informe fue saltada tras una pausa; ver "
@@ -211,18 +230,27 @@ def investigar(topic, iteraciones=3, depth="basic",
     es_ensayo = formato == "ensayo"
     print("STATUS: Generando %s final..." % formato, flush=True)
     try:
+        sistema_ensayo = guardia + formato_ensayo.SISTEMA
+        sistema_informe = guardia + (
+            "Eres un investigador senior. Redactas informes claros en "
+            "espanol correcto (con tildes), en formato Markdown.")
+        if ev:
+            # Sin fuente primaria la TAREA cambia: de sintetizar a reportar la
+            # ausencia. No es un aviso al margen, es otra instruccion.
+            extra = fuentes.instruccion_sintesis(sources, dom)
+            sistema_ensayo += extra
+            sistema_informe += extra
         if es_ensayo:
             # El ensayo pide mas espacio que el informe: son partes narradas con
             # tabla comparativa, cronologia y cierre argumentado, no cinco
             # secciones enumeradas.
             report, _ = llm.call(
-                formato_ensayo.SISTEMA,
+                sistema_ensayo,
                 formato_ensayo.prompt_documento(topic, findings, sources),
                 int(escala_tok(2000, densidad) * 1.8))
         else:
             report, _ = llm.call(
-                "Eres un investigador senior. Redactas informes claros en "
-                "espanol correcto (con tildes), en formato Markdown.",
+                sistema_informe,
                 "Genera un informe con secciones: 1. RESUMEN EJECUTIVO, "
                 "2. HALLAZGOS PRINCIPALES (cita fuente URL), 3. ANALISIS "
                 "CRITICO, 4. LAGUNAS DE INFORMACION, 5. PROXIMOS PASOS.\n\n"
@@ -234,9 +262,18 @@ def investigar(topic, iteraciones=3, depth="basic",
     except RuntimeError as e:
         pausar(iteraciones, formato, str(e))
 
+    if ev and ev["sin_fuente_primaria"]:
+        # Arriba de todo y antes de armar: un lector que abre el archivo tiene
+        # que ver la marca antes que cualquier afirmacion.
+        report = fuentes.encabezado(sources, dom) + "\n" + report
+
     resultado = _armar_resultado(topic, report, t0, findings, query_history,
                                  sources, llm)
     resultado["formato"] = formato
+    if ev:
+        # Sin esto no se puede auditar despues cual informe se apoyo en que.
+        resultado["meta"]["dominio"] = ev["dominio"]
+        resultado["meta"]["fuentes_primarias"] = ev["fuentes_primarias"]
     if es_ensayo:
         # Los conceptos se piden DESPUES y sobre el texto final: los que importan
         # son los que el ensayo termino sosteniendo, no los que se anticiparon.
@@ -303,7 +340,10 @@ def main():
             formato=params.get("formato", args.formato),
         )
     elif args.tema:
-        topic = marco(args.tema, activo=not args.sin_marco)
+        # El tema viaja LIMPIO al buscador: `investigar()` arma el encuadre y se
+        # lo da al MODELO. Antes se enmarcaba aca y el string entero terminaba
+        # en la query de Tavily.
+        topic = args.tema
         tema_para_slug = args.tema
         result = investigar(topic, args.iteraciones, args.depth, args.providers,
                             args.densidad, sin_marco=args.sin_marco,

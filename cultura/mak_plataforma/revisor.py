@@ -9,12 +9,15 @@ Solo escribe un veredicto a reflexiones/revisor_shadow.json + log. El merge lo
 decide un humano/jefe leyendo este veredicto. Enforcement (marcar ready / cerrar)
 es un paso deliberado posterior, cuando el shadow valide los veredictos.
 """
+import argparse
 import ast
 import json
 import os
 import subprocess
 import sys
 import time
+
+REPO_SLUG = "ligereza/vibecodeine"
 
 HOME = os.path.expanduser("~")
 REPO = os.path.join(HOME, "flujo")
@@ -126,8 +129,51 @@ def revisar_pr(n, branch, path, veredictos):
         % (n, v["veredicto"], ok1, ok2, ok3, (m2 or m3 or m1 or "todo OK")))
 
 
+def ci_verde(n):
+    """True si TODOS los checks del PR pasaron (ninguno pending/fail)."""
+    rc, out, err = sh(["gh", "pr", "checks", str(n), "--repo", REPO_SLUG])
+    if rc != 0 and not out.strip():
+        return False
+    estados = [ln.split("\t")[1].lower() for ln in out.splitlines()
+               if "\t" in ln and len(ln.split("\t")) > 1]
+    if not estados:
+        return False
+    return all("pass" in e for e in estados)
+
+
+def enforce_pr(v):
+    """Aplica el veredicto sobre el PR (el box actua sobre si mismo). PASS + CI
+    verde -> ready + merge (miskirabit, requiere checks verdes por branch
+    protection). NO-APROBADO -> comenta, deja en draft (no cierra, no pierde
+    trabajo). Nunca lanza."""
+    n = v["pr"]
+    if v["veredicto"] == "PASS":
+        if not ci_verde(n):
+            log("PR #%d PASS pero CI no verde aun -- espero proximo ciclo" % n)
+            return "espera-ci"
+        sh(["gh", "pr", "ready", str(n), "--repo", REPO_SLUG])
+        sh(["gh", "pr", "comment", str(n), "--repo", REPO_SLUG, "-b",
+            "revisor MAK: OK (mecanico) + CI verde. Merge autonomo."])
+        rc, out, err = sh(["gh", "pr", "merge", str(n), "--repo", REPO_SLUG,
+                           "--squash", "--delete-branch"])
+        if rc == 0:
+            log("PR #%d MERGEADO autonomo por el box" % n)
+            return "merged"
+        log("PR #%d merge fallo: %s" % (n, (err or out).strip()[:160]))
+        return "merge-fallo"
+    else:
+        sh(["gh", "pr", "comment", str(n), "--repo", REPO_SLUG, "-b",
+            "revisor MAK: NO APROBADO -- queda en draft para revision."])
+        log("PR #%d NO-APROBADO (comentado, sin cerrar)" % n)
+        return "no-aprobado"
+
+
 def main():
-    rc, out, err = sh(["gh", "pr", "list", "--repo", "ligereza/vibecodeine",
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--enforce", action="store_true",
+                    help="aplica el veredicto (ready/merge/comment); sin esto solo observa")
+    args = ap.parse_args()
+    rc, out, err = sh(["gh", "pr", "list", "--repo", REPO_SLUG,
                        "--state", "open", "--json",
                        "number,headRefName,isDraft,files"])
     if rc != 0:
@@ -148,7 +194,12 @@ def main():
         if not pys:
             continue
         revisar_pr(pr["number"], branch, pys[0], veredictos)
-    rep = {"ts": time.time(), "modo": "shadow (observacional, no toca PRs)",
+    if args.enforce:
+        for v in veredictos:
+            if v["veredicto"] in ("PASS", "NO-APROBADO"):
+                v["accion"] = enforce_pr(v)
+    rep = {"ts": time.time(),
+           "modo": "enforce" if args.enforce else "shadow (observacional)",
            "veredictos": veredictos}
     try:
         os.makedirs(os.path.dirname(OUT), exist_ok=True)

@@ -17,17 +17,46 @@ LAST_HANDOFF = REPO_ROOT / "context" / "LAST_HANDOFF.md"
 CAPACIDADES = REPO_ROOT / "CAPACIDADES.md"
 TOOLS_DIR = REPO_ROOT / "tools"
 
-MAX_HANDOFF_LINES = 350
+# El tope de 350 lineas se RETIRO el 2026-07-30, y esta es su acta.
+#
+# Su premisa era que un archivo largo es un archivo malo. Su efecto medido, el
+# dia que se retiro: obligo a comprimir CINCO veces mediciones tomadas esa misma
+# tarde -- lo unico del archivo que todavia nadie habia leido -- para no tocar
+# parrafos de julio que nadie volvio a mirar. Un tope no tiene nocion de valor,
+# asi que siempre cobra lo mas nuevo y protege lo mas viejo por antiguedad.
+#
+# Lo que si vale es podar por OBSOLESCENCIA, no por tamano: una seccion que
+# lleva semanas sin tocarse se archiva. Eso pide fechas por seccion, que hoy el
+# archivo no tiene; cuando las tenga, el reemplazo va aca.
+UTILIDADES = REPO_ROOT / "cultura" / "mak_plataforma" / "utilidades"
+
+# Cuantos archivos de utilidades/ no los invoca NADIE fuera del directorio.
+# Medido el 2026-07-30: 28 de 32 (4.275 lineas). El numero solo puede BAJAR.
+#
+# El ratchet viejo del directorio media `py_compile` + pyflakes, que es
+# ortografia: los 32 archivos compilan y 28 no los ejecuta nadie. Que algo se
+# use es semantica, y ningun chequeo preguntaba "esto sirve?". La causa esta
+# trazada y NO es el codigo: capataz.py enruta pedidos con forma de OPERACIONES
+# a un canal cuyo contrato es un archivo stdlib autocontenido que nunca se
+# ejecuta. Este numero es el termometro de ese defecto.
+MAX_UTILIDADES_INERTES = 28
 
 
-def test_handoff_dentro_del_tope():
-    contenido = LAST_HANDOFF.read_text(encoding="utf-8")
-    lineas = contenido.splitlines()
-    assert len(lineas) <= MAX_HANDOFF_LINES, (
-        "LAST_HANDOFF.md excede 350 lineas: comprimir y archivar a "
-        "docs/handoffs/archive/ (regla 2026-07-25, causa: llego a 1554 "
-        "lineas; retiro: cuando el handoff viva en un sistema con "
-        "rotacion automatica)"
+def test_utilidades_inertes_no_aumentan():
+    if not UTILIDADES.is_dir():
+        return
+    archivos = sorted(p for p in UTILIDADES.glob("*.py") if p.is_file())
+    otros = [p for p in REPO_ROOT.rglob("*.py")
+             if UTILIDADES not in p.parents and ".git" not in p.parts]
+    cuerpo = "\n".join(
+        p.read_text(encoding="utf-8", errors="replace") for p in otros)
+    inertes = [p.name for p in archivos if p.stem not in cuerpo]
+    assert len(inertes) <= MAX_UTILIDADES_INERTES, (
+        "utilidades/ tiene %d archivos que no invoca nadie (el tope medido es "
+        "%d). No se resuelve borrando: se resuelve en el ENRUTAMIENTO, que es "
+        "donde nace -- un pedido de operaciones no puede satisfacerse con un "
+        "archivo que nadie ejecuta. Nuevos inertes: %s"
+        % (len(inertes), MAX_UTILIDADES_INERTES, ", ".join(inertes[:5]))
     )
 
 
