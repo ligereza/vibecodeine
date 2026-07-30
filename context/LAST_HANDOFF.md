@@ -199,6 +199,43 @@ defect is pinned by a test. Measured: 207 to 615 segments per frame against the
 **Still the user's, and he wants to DEBATE it first:** whether the essays get
 published on iskvw.cl. The bridge is built and unused.
 
+## The repo is not the truth: the two machines are (2026-07-30)
+
+Measured by diffing the disks, which is the check that had never been run.
+`coherence.py` does it now, on the box, in both directions.
+
+- **Did SOL's work reach MAK? YES, all of it.** SOL never entered the box -- its
+  own session log says three times it had no LAN or SSH access -- so everything
+  arrived through the sync cron. The only file the cron cannot update is
+  `revisor.py`, frozen since 2026-07-20, which is BEFORE SOL and has exactly two
+  commits. Nothing of SOL's was lost. This is the answer to a question that was
+  asked twice; it is written here so it is not asked a third time.
+- **Six live files existed on one disk only.** `.github/workflows/ordenes_curatoria.yml`
+  -- in this repo -- executes `/home/mak/curatoria/ordenes.py`, which was
+  nowhere in git. `xio_puente/monitor.py` (172 lines) is started by a systemd
+  unit and had no copy either. All rescued; the sync cron now covers
+  `mak_xio_puente`.
+- **Why it happened: `cp -ru`.** `-u` means "only if the source is NEWER", so one
+  edit on the box freezes that file forever. repo -> box is forced every 10
+  minutes; box -> repo never happens. `revisor.py` was 165 lines here and 216
+  there, and those 51 lines were `enforce_pr()` -- code that merges PRs by
+  itself, running every 6 hours, unreviewed. **Pending and ordered: switch the
+  cron to `cp -r` AFTER this merges**, never before, or the sync overwrites the
+  live reviewer with the old copy.
+- **SOL's Azure spend gate was in a stash, not lost** (`stash@{0}`, 2026-07-29):
+  Azure leaves the chain unless `RESEARCH_AZURE_ENABLED=1`. Applied. The other
+  three stashes were checked by CONTENT: two are already in main or in
+  `rescate/ascii-campo`, and the fourth would delete `iskvw/MAPA.md`, which main
+  deliberately has.
+- **The language rule finally has its measurement**: 236 Python files with
+  Spanish comments against 36 in English, while `CLAUDE.md` claims English. That
+  gap is why an agent searches in English, finds nothing and declares the thing
+  missing. `docs/GLOSSARY.md` maps both sides; new code is English; names that a
+  cron line or a systemd unit already invokes are NOT renamed.
+- **IBM watsonx works from BOTH machines**, verified 4/4 before a line was wired
+  (`tools/watsonx_smoke.py`). Stage 1 fits in the free tier; the $200 credit is
+  untouched. It is opt-in (`LLM(order="watsonx")`), not in the default chain.
+
 ## MAK como motor: sirve, y el checkpoint mentia
 
 `cultura/mak_plataforma/ideas.py` SI esta conectado al hub y funciona -- este
