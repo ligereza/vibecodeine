@@ -249,3 +249,8 @@ docs/cultura/ensayos/*/_animados/
 # La configuracion del editor es del usuario: un `git add -A` ya se trago sus
 # primas dos veces (.agents/, .codex/).
 .vscode/
+
+# Base de venues: los .json sembrados y el sitio son DERIVADOS (se regeneran
+# con `py tools/venue.py sembrar|sitio`); la semilla .txt es la fuente y viaja.
+data/venues/*.json
+web/venues/index.html
