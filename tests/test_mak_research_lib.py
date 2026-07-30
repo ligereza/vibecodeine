@@ -1,4 +1,17 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""Movido desde cultura/mak_research/ el 2026-07-30.
+
+Vivia junto al modulo que prueba, o sea FUERA de tests/, y `flujo verify` corre
+`pytest tests/`: llevaba trece dias sin ejecutarse una sola vez. El guardian de
+un incidente documentado que nunca corre no protege de nada.
+"""
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cultura" / "mak_research"))
+
+#!/usr/bin/env python3
 """Pruebas unitarias para research_lib.py usando mocks (sin consumo de APIs)."""
 
 import json
