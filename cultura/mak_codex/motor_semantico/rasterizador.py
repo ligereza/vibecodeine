@@ -69,12 +69,47 @@ def _edge():
     return hallado
 
 
+_SONDA = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'>" \
+         "<rect width='8' height='8' fill='#f00'/></svg>"
+#  ruta del binario -> si rasteriza. Indexado por RUTA y no un solo booleano a
+#  proposito: asi el resultado no sobrevive a que cambie el binario encontrado
+#  (un test que finge "no hay Edge" tiene que ver "no hay Edge", no la sonda
+#  vieja).
+_SONDEADOS = {}
+
+
+def _edge_funciona():
+    """Si el Edge que encontramos DE VERDAD produce un PNG. Se sondea una vez
+    por binario y se recuerda.
+
+    Existir no es funcionar, y medirlo costo un CI rojo (2026-07-30): el runner
+    de ubuntu TIENE `/usr/bin/microsoft-edge` y no rasteriza. Con la deteccion
+    por existencia, `backend_disponible()` decia "edge", los tests no se
+    saltaban y el fallo aparecia en medio de un analisis en vez de al
+    preguntar. Un backend que existe y no sirve es peor que uno ausente:
+    convierte una capacidad faltante en un error tardio.
+    """
+    binario = _edge()
+    if not binario:
+        return False
+    if binario not in _SONDEADOS:
+        try:
+            _SONDEADOS[binario] = _rasterizar_edge(_SONDA, 8)[:4] == b"\x89PNG"
+        except Exception:
+            # Cualquier motivo -- binario roto, sin sandbox, sin HOME -- cuenta
+            # como "no sirve". No se distingue porque no cambia la decision: no
+            # hay con que rasterizar.
+            _SONDEADOS[binario] = False
+    return _SONDEADOS[binario]
+
+
 def backend_disponible():
     """'cairosvg', 'edge' o None. Es la pregunta que hay que hacer antes de
-    prometer un analisis perceptual."""
+    prometer un analisis perceptual, y la respuesta esta MEDIDA: el backend se
+    sondea una vez con un SVG de 8x8."""
     if _cairosvg() is not None:
         return "cairosvg"
-    return "edge" if _edge() else None
+    return "edge" if _edge_funciona() else None
 
 
 def rasterizar(svg_txt, tam=TAM, avance_ms=None):

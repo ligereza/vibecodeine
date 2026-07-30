@@ -167,3 +167,47 @@ def test_mutacion_lienzo_vacio_da_puntaje_cero():
     r = critico.analizar(svg_vacio, nombre="vacio")
     assert r["puntaje"] == 0
     assert any("VAC" in a.upper() for a in r["alertas"])
+
+
+def test_un_edge_que_existe_y_no_rasteriza_cuenta_como_ausente(monkeypatch):
+    """El defecto que puso el CI en rojo el 2026-07-30, fijado.
+
+    El runner de ubuntu TIENE `/usr/bin/microsoft-edge` y no produce PNG. Con
+    la deteccion por existencia de archivo, `backend_disponible()` respondia
+    "edge", los tests que dependen de un rasterizador NO se saltaban, y el
+    fallo aparecia en medio de un analisis perceptual en vez de al preguntar
+    por la capacidad.
+
+    Se simula con un binario que existe de verdad y no es Edge: el propio
+    interprete de Python. Si algun dia la deteccion vuelve a mirar solo si el
+    archivo existe, este test se pone rojo.
+    """
+    rasterizador._SONDEADOS.clear()
+    monkeypatch.setattr(rasterizador, "_cairosvg", lambda: None)
+    monkeypatch.setattr(rasterizador, "_edge", lambda: sys.executable)
+
+    assert Path(sys.executable).exists(), "el binario falso tiene que existir"
+    assert rasterizador.backend_disponible() is None
+    with pytest.raises(rasterizador.RasterizadorNoDisponibleError):
+        rasterizador.rasterizar("<svg/>")
+    rasterizador._SONDEADOS.clear()
+
+
+def test_la_sonda_no_sobrevive_a_que_cambie_el_binario(monkeypatch):
+    """La sonda se recuerda por RUTA, no en un booleano global.
+
+    Con un solo booleano, el resultado del primer sondeo contaminaba cualquier
+    consulta posterior: un test que finge "no hay Edge" veia el 'si sirve' de
+    la corrida anterior. Indexar por binario es lo que hace que la memoria de
+    la medicion no mienta cuando el entorno cambia.
+    """
+    rasterizador._SONDEADOS.clear()
+    monkeypatch.setattr(rasterizador, "_cairosvg", lambda: None)
+
+    monkeypatch.setattr(rasterizador, "_edge", lambda: sys.executable)
+    assert rasterizador.backend_disponible() is None
+    assert rasterizador._SONDEADOS.get(sys.executable) is False
+
+    monkeypatch.setattr(rasterizador, "_edge", lambda: None)
+    assert rasterizador.backend_disponible() is None
+    rasterizador._SONDEADOS.clear()
