@@ -35,19 +35,55 @@ import tempfile
 
 TAM = 256
 
-# Edge: mismos candidatos que tools/svg/svg_to_pdf.py mas los de Linux, por si
-# la caja algun dia lo tiene. Se prueba por existencia, no por fe.
-EDGE_CANDS = [
+# Navegadores: los mismos candidatos de Edge que tools/svg/svg_to_pdf.py, mas
+# Chrome/Chromium, que es lo que hay en un runner de Linux y en la caja. Se
+# prueba por ejecucion, no por existencia.
+NAVEGADOR_CANDS = [
     r"C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
     r"C:/Program Files/Microsoft/Edge/Application/msedge.exe",
     "/usr/bin/microsoft-edge",
     "/usr/bin/microsoft-edge-stable",
     "/opt/microsoft/msedge/msedge",
+    "/usr/bin/google-chrome",
+    "/usr/bin/google-chrome-stable",
+    "/usr/bin/chromium",
+    "/usr/bin/chromium-browser",
 ]
+
+
+# Banderas que dependen del sistema, y estan MEDIDAS una por una (2026-07-30,
+# icono 08-roland-tb-303, 96 px):
+#   --no-sandbox           Linux/CI: imprescindible (contenedor sin user
+#                          namespaces, o proceso como root; sin ella el
+#                          navegador arranca y muere, que es como el runner de
+#                          ubuntu paso por "Edge existe y no rasteriza").
+#                          Windows: VENENO. Devuelve un PNG en blanco de 291
+#                          bytes en vez de los 3673 del icono, y como es un PNG
+#                          valido nadie lo nota hasta que todos los cuadros
+#                          salen identicos y el test acusa al archivo.
+#   --disable-dev-shm-usage  inofensiva en los dos (3673 bytes con y sin ella).
+# Solo se abre un HTML local generado aca, nunca contenido remoto.
+_BANDERAS_SO = (["--disable-dev-shm-usage"] if os.name == "nt"
+                else ["--no-sandbox", "--disable-dev-shm-usage"])
 
 
 class RasterizadorNoDisponibleError(RuntimeError):
     """No hay backend de rasterizado en esta maquina."""
+
+
+class BackendNoAnimaError(RasterizadorNoDisponibleError):
+    """Hay con que rasterizar, pero no con que MEDIR movimiento.
+
+    Existe porque el 2026-07-30 la matriz de CI se puso roja acusando a los 16
+    iconos de estar quietos: en ubuntu el backend era cairosvg, que rasteriza
+    perfecto y NO ejecuta animaciones CSS. Los cuadros salian identicos, y el
+    llamador leia ese 1 como "el archivo miente" cuando decia "no lo medi".
+
+    Un instrumento incapaz tiene que decir que no puede, nunca devolver un
+    numero que se parece a un veredicto. Es la misma leccion que
+    `_navegador_funciona()` -- existir no es funcionar -- un nivel mas adentro:
+    funcionar para una cosa no es funcionar para la otra.
+    """
 
 
 def _adelantar(svg_txt, avance_ms):
@@ -83,25 +119,41 @@ def _cairosvg():
 
 
 def _edge():
-    for e in EDGE_CANDS:
+    """El binario de navegador, si hay alguno. Conserva el nombre historico
+    porque es el punto que los tests intervienen para fingir su ausencia."""
+    for e in NAVEGADOR_CANDS:
         if os.path.exists(e):
             return e
-    hallado = shutil.which("microsoft-edge") or shutil.which("msedge")
-    return hallado
+    return (shutil.which("microsoft-edge") or shutil.which("msedge")
+            or shutil.which("google-chrome") or shutil.which("chromium"))
 
+
+_navegador = _edge  # nombre honesto; ya no es necesariamente Edge
 
 _SONDA = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'>" \
          "<rect width='8' height='8' fill='#f00'/></svg>"
-#  ruta del binario -> si rasteriza. Indexado por RUTA y no un solo booleano a
-#  proposito: asi el resultado no sobrevive a que cambie el binario encontrado
-#  (un test que finge "no hay Edge" tiene que ver "no hay Edge", no la sonda
-#  vieja).
+
+# Sonda de ANIMACION: un cuadrado que va de negro a blanco en 1000 ms. En el
+# instante 0 y en el 500 tiene que dar pixeles distintos. Es la unica forma
+# honesta de saber si el backend ejecuta CSS: preguntarselo, no deducirlo de
+# su nombre.
+_SONDA_ANIMA = (
+    "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'>"
+    "<style>@keyframes p{from{fill:#000}to{fill:#fff}}"
+    "rect{animation:p 1000ms linear infinite}</style>"
+    "<rect width='8' height='8' fill='#000'/></svg>")
+
+#  identidad del backend -> si rasteriza / si anima. Indexado por identidad y
+#  no un solo booleano a proposito: asi el resultado no sobrevive a que cambie
+#  el binario encontrado (un test que finge "no hay navegador" tiene que ver
+#  "no hay navegador", no la sonda vieja).
 _SONDEADOS = {}
+_ANIMADORES = {}
 
 
 def _edge_funciona():
-    """Si el Edge que encontramos DE VERDAD produce un PNG. Se sondea una vez
-    por binario y se recuerda.
+    """Si el navegador que encontramos DE VERDAD produce un PNG. Se sondea una
+    vez por binario y se recuerda.
 
     Existir no es funcionar, y medirlo costo un CI rojo (2026-07-30): el runner
     de ubuntu TIENE `/usr/bin/microsoft-edge` y no rasteriza. Con la deteccion
@@ -124,37 +176,68 @@ def _edge_funciona():
     return _SONDEADOS[binario]
 
 
-def backend_disponible():
-    """'cairosvg', 'edge' o None. Es la pregunta que hay que hacer antes de
-    prometer un analisis perceptual, y la respuesta esta MEDIDA: el backend se
-    sondea una vez con un SVG de 8x8."""
+def _anima(backend):
+    """Si ESE backend mueve una animacion CSS. Medido con la sonda, cacheado
+    por identidad del backend."""
+    clave = backend if backend == "cairosvg" else (_edge() or "?")
+    if clave not in _ANIMADORES:
+        try:
+            quieto = _rasterizar_con(backend, _SONDA_ANIMA, 8)
+            movido = _rasterizar_con(
+                backend, _adelantar(_SONDA_ANIMA, 500), 8)
+            _ANIMADORES[clave] = quieto != movido
+        except Exception:
+            _ANIMADORES[clave] = False
+    return _ANIMADORES[clave]
+
+
+def backend_disponible(anima=False):
+    """'cairosvg', 'edge' o None; el backend se sondea una vez con un SVG 8x8.
+
+    Con `anima=True` la pregunta es otra y mas estrecha: cual sirve para MEDIR
+    movimiento. cairosvg rasteriza impecable y no ejecuta ni una animacion CSS,
+    asi que para un GIF no es un backend peor: no es un backend. Se prefiere el
+    navegador y la capacidad se MIDE con `_anima()`, no se declara por nombre.
+    """
+    if anima:
+        for backend in ("edge", "cairosvg"):
+            if backend == "edge" and not _edge_funciona():
+                continue
+            if backend == "cairosvg" and _cairosvg() is None:
+                continue
+            if _anima(backend):
+                return backend
+        return None
     if _cairosvg() is not None:
         return "cairosvg"
     return "edge" if _edge_funciona() else None
 
 
-def rasterizar(svg_txt, tam=TAM, avance_ms=None):
+def _rasterizar_con(backend, txt, tam):
+    if backend == "cairosvg":
+        return _cairosvg().svg2png(bytestring=txt.encode("utf-8"),
+                                   output_width=tam, output_height=tam)
+    return _rasterizar_edge(txt, tam)
+
+
+def rasterizar(svg_txt, tam=TAM, avance_ms=None, backend=None):
     """SVG (str) -> bytes PNG de tam x tam.
 
-    avance_ms adelanta la animacion inyectando un animation-delay negativo:
-    es como se mide si el icono esta VIVO (si el frame tardio difiere del 0).
-    Solo lo respeta un backend que anime; Edge headless si, cairosvg no
-    necesariamente -- el llamador debe tratar un delta 0 como "no medido",
-    no como "muerto".
+    avance_ms adelanta la animacion inyectando un animation-delay negativo: es
+    como se mide si el icono esta VIVO (si el cuadro tardio difiere del 0).
+    Solo lo respeta un backend que anime, y quien quiera medir movimiento pide
+    ese backend explicitamente (`backend_disponible(anima=True)`) en vez de
+    confiar en el que toque.
     """
     txt = svg_txt
     if avance_ms:
         txt = _adelantar(txt, avance_ms)
-    backend = backend_disponible()
+    backend = backend or backend_disponible()
     if backend is None:
         raise RasterizadorNoDisponibleError(
             "ningun rasterizador disponible: cairosvg no se puede importar y "
-            "no se encontro Edge. Instala cairosvg (Linux) o Edge (Windows).")
-    if backend == "cairosvg":
-        cairosvg = _cairosvg()
-        return cairosvg.svg2png(bytestring=txt.encode("utf-8"),
-                                output_width=tam, output_height=tam)
-    return _rasterizar_edge(txt, tam)
+            "no se encontro navegador. Instala cairosvg (Linux) o Edge/Chrome.")
+    return _rasterizar_con(backend, txt, tam)
 
 
 def _rasterizar_edge(svg_txt, tam):
@@ -172,8 +255,9 @@ def _rasterizar_edge(svg_txt, tam):
         entrada.write_text(html, encoding="utf-8")
         png = tmp / "out.png"
         subprocess.run(
-            [edge, "--headless=new", "--disable-gpu", "--no-first-run",
-             "--user-data-dir=%s" % (tmp / "perfil"),
+            [edge, "--headless=new", "--disable-gpu", "--no-first-run"]
+            + _BANDERAS_SO +
+            ["--user-data-dir=%s" % (tmp / "perfil"),
              "--window-size=%d,%d" % (tam, tam),
              "--screenshot=%s" % png, entrada.as_uri()],
             check=False, timeout=90,
@@ -194,7 +278,11 @@ def animar(svg_txt, salida, cuadros=12, ciclo_ms=4000, tam=256):
 
     Devuelve (ruta, n_cuadros, cuadros_distintos). El tercer numero es la
     medicion que importa: si todos los cuadros son iguales, la animacion NO
-    esta pasando en el rasterizador y hay que decirlo, no suponerla.
+    esta pasando y hay que decirlo, no suponerla.
+
+    Y por eso mismo exige un backend que anime, medido: con uno que no lo hace
+    ese tercer numero seria un 1 indistinguible del 1 de un icono muerto, y un
+    numero ambiguo en un instrumento es peor que una excepcion.
     """
     try:
         from PIL import Image
@@ -202,12 +290,19 @@ def animar(svg_txt, salida, cuadros=12, ciclo_ms=4000, tam=256):
         raise RasterizadorNoDisponibleError("Pillow no disponible: %s" % e)
     if cuadros < 2:
         raise ValueError("un GIF necesita al menos 2 cuadros")
+    backend = backend_disponible(anima=True)
+    if backend is None:
+        raise BackendNoAnimaError(
+            "no hay backend que ejecute animaciones CSS (hay: %s). Medir "
+            "movimiento necesita un navegador: Edge o Chrome/Chromium."
+            % (backend_disponible() or "ninguno"))
     paso = ciclo_ms // cuadros
     imgs, firmas = [], []
     for n in range(cuadros):
         # avance_ms=0 en el primer cuadro: es el frame 0 real, el que decide si
         # el icono nace visible (invariante 3 del compilador).
-        png = rasterizar(svg_txt, tam=tam, avance_ms=(n * paso) or None)
+        png = rasterizar(svg_txt, tam=tam, avance_ms=(n * paso) or None,
+                         backend=backend)
         import io
         im = Image.open(io.BytesIO(png)).convert("RGB")
         imgs.append(im)

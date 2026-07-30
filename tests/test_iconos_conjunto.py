@@ -200,9 +200,14 @@ import re as _re
 sys.path.insert(0, str(REPO / "cultura" / "mak_codex"))
 from motor_semantico import rasterizador as _ras  # noqa: E402
 
+# El guarda pregunta por la capacidad EXACTA que este test usa, no por una
+# parecida. Preguntaba `backend_disponible()` a secas y en ubuntu la respuesta
+# era cairosvg, que rasteriza y no ejecuta una sola animacion CSS: los 16
+# iconos salieron acusados de estar quietos con la matriz de CI en rojo. Lo que
+# estaba muerto era el instrumento.
 _requiere_backend = pytest.mark.skipif(
-    _ras.backend_disponible() is None,
-    reason="sin rasterizador en esta maquina (ni cairosvg ni Edge)")
+    _ras.backend_disponible(anima=True) is None,
+    reason="sin backend que ejecute animaciones CSS (hace falta un navegador)")
 
 
 def _ciclo_ms(svg: str) -> int:

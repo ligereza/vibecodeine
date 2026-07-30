@@ -147,16 +147,16 @@ Five decisions of that landing, not to be re-litigated:
    geometry is EXPORTED from the Python vocabulary, never ported by hand.
    **`CAPACIDADES.md` section 6 is the index to read BEFORE writing a generator,
    a pipeline or a graph from scratch** (`tests/test_thing_registro.py` keeps it
-   honest). Next candidates, aimed at the micelio: `graph`, `transducers`,
-   `validate`. A second recommendation doc (3D/liveshow) has a Prototype B that
-   IS the iskvw campo and an audio/OSC layer that is the DREF chain already
-   running.
+   honest). Next candidates: `graph`, `transducers`, `validate`.
 
-Three defects the CI matrix caught that a green local Windows run did not: a
-backend that EXISTS and does not rasterize must count as absent (probed now,
-once per binary); the vendorized `*.README.md` are THIRD-PARTY docs and live in
-a declared `ZONA_AJENA`; and the doc ratchet reads `git ls-files`, so **a new
-`.md` not yet committed is invisible to it**.
+Four defects the CI matrix caught that a green local Windows run did not: a
+backend that EXISTS and does not rasterize counts as absent (probed per binary);
+vendorized `*.README.md` are THIRD-PARTY, in a declared `ZONA_AJENA`; the doc
+ratchet reads `git ls-files`, so **an uncommitted `.md` is invisible to it**;
+and **rasterizing is not animating** -- cairosvg runs no CSS, so ubuntu got 16
+identical frames and the guard read that tie as "the file lies". Movement now
+demands a backend PROVED to animate (never an ambiguous 1), and `--no-sandbox`
+is Linux-only: on Windows it returns a blank PNG.
 
 ## What a real model did to a boundary a mock never touched (2026-07-30)
 

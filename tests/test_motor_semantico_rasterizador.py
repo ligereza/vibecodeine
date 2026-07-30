@@ -41,7 +41,14 @@ def _svg_compilado():
 
 requiere_backend = pytest.mark.skipif(
     rasterizador.backend_disponible() is None,
-    reason="esta maquina no tiene cairosvg ni Edge")
+    reason="esta maquina no tiene cairosvg ni navegador")
+
+# Rasterizar y ANIMAR son dos capacidades, y confundirlas costo una matriz de
+# CI en rojo: en ubuntu el backend era cairosvg, que dibuja perfecto y no
+# ejecuta animaciones CSS, asi que todo cuadro salia igual al primero.
+requiere_anima = pytest.mark.skipif(
+    rasterizador.backend_disponible(anima=True) is None,
+    reason="ningun backend de esta maquina ejecuta animaciones CSS")
 
 
 # ---------------------------------------------------------------------------
@@ -124,7 +131,7 @@ def test_rasterizar_produce_png_real():
     assert len(datos) > 100
 
 
-@requiere_backend
+@requiere_anima
 def test_animar_produce_gif_y_mide_cuadros_distintos(tmp_path):
     salida = tmp_path / "salida.gif"
     ruta, n, distintos = rasterizador.animar(
@@ -134,6 +141,38 @@ def test_animar_produce_gif_y_mide_cuadros_distintos(tmp_path):
     datos = salida.read_bytes()
     assert datos[:6] == b"GIF89a"
     assert distintos > 1, "la animacion no llego al rasterizador (todos los cuadros iguales)"
+
+
+def test_un_backend_que_dibuja_y_no_anima_lo_dice_en_vez_de_mentir(tmp_path,
+                                                                   monkeypatch):
+    """LA regresion de la matriz de CI del 2026-07-30.
+
+    ubuntu tenia cairosvg: rasteriza impecable y no ejecuta ni una animacion
+    CSS, asi que los 12 cuadros del ciclo salian identicos. `animar()` devolvia
+    `distintos=1` y el llamador leia ese 1 como "el icono declara un movimiento
+    que no ocurre" -- una acusacion contra 16 archivos sanos. El 1 de "no lo
+    medi" y el 1 de "esta muerto" eran el mismo numero.
+
+    Un instrumento incapaz levanta BackendNoAnimaError. Nunca un numero.
+    """
+    class _Ciego:
+        """Dibuja distinto segun el tamano, e ignora el animation-delay: es lo
+        que hace un rasterizador estatico de verdad."""
+        @staticmethod
+        def svg2png(bytestring=None, output_width=None, output_height=None):
+            return b"\x89PNG" + bytes([output_width or 0]) * 8
+
+    monkeypatch.setattr(rasterizador, "_cairosvg", lambda: _Ciego)
+    monkeypatch.setattr(rasterizador, "_edge", lambda: None)
+    monkeypatch.setattr(rasterizador, "_ANIMADORES", {})
+    monkeypatch.setattr(rasterizador, "_SONDEADOS", {})
+
+    assert rasterizador.backend_disponible() == "cairosvg", (
+        "sigue sirviendo para rasterizar: la capacidad que falta es la otra")
+    assert rasterizador.backend_disponible(anima=True) is None
+
+    with pytest.raises(rasterizador.BackendNoAnimaError):
+        rasterizador.animar(_svg_compilado(), tmp_path / "no.gif", cuadros=4)
 
 
 @requiere_backend
