@@ -18,13 +18,16 @@ Prerequisito en MAK: WoWLAN armado antes de suspender (hook
 apagado total (S5) la wifi no escucha; ahi solo despierta por ethernet
 (desde el PC Windows).
 """
+import os
 import socket
 
 from flask import Blueprint, jsonify
 
 bp = Blueprint("wake_mak", __name__, url_prefix="/wake_mak")
 
-MAC_WIFI_MAK = "a8:7e:ea:41:63:a1"   # tarjeta wifi de MAK (red del telefono)
+# La MAC real NO viaja en un repo publico: se lee del entorno. En la caja va
+# en `MAC_WIFI_MAK`, junto al resto de la configuracion del puente.
+MAC_WIFI_MAK = os.environ.get("MAC_WIFI_MAK", "02:00:00:00:00:00")
 BROADCAST = "255.255.255.255"
 PUERTOS = (9, 7)
 
