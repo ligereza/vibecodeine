@@ -447,7 +447,7 @@ Daily operation: `jobs/_template/`, `datadrops/`
 
 Generated / historical (do NOT edit by hand): `jobs/20*`,
 `projects/piezas_vectoriales/20*`, `datadrops/` (output), `context/*.html` (via
-`npm run build:context`), `_airdrop*`, `_logs/`, `_archive/legacy_historico_previo/`, `_archive/`,
+`npm run build:context`), `_airdrop*`, `_logs/`, `_archive/`,
 `docs/handoffs/archive/`. `data/*.db`, `*.sqlite*`, `context/DAILY.md`,
 `context/dashboard.html` do not go into commits (`context/LAST_HANDOFF.md` does).
 

@@ -89,7 +89,7 @@ archivados (ver arriba); usar `flujo flyer-import`, `flujo analyze`, `flujo inde
 - `flujo_daily.py` (usado por `make daily`; equivalente CLI: `flujo daily`)
 - `flujo_health.py` (usado por `.github/workflows/render_piezas_vectoriales.yml`; equivalente CLI: `flujo health`)
 - `flujo_pipeline.py` (usado por `make pipeline NAME="..." EMAIL=...`; correo -> job -> proyecto -> render con inferencia de tipo/medidas)
-- `flujo.py` (wrapper unificado legacy pre-Typer, ver `docs/COMANDO_UNIFICADO.md`; sin uso real en CI/Makefile, preferir `flujo ...`)
+- `flujo.py` (wrapper unificado legacy pre-Typer; sin uso real en CI/Makefile, preferir `flujo ...`)
 - `setup.sh` (usado por `make install`)
 - `_common.py` (helpers compartidos entre scripts; no es ejecutable por sí mismo)
 
