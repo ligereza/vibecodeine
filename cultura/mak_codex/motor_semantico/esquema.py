@@ -76,6 +76,30 @@ def construir():
     }
 
 
+# Una spec COMPLETA y valida, para que el prompt MUESTRE la forma en vez de
+# describirla. Medido el 2026-07-30 contra un modelo real (gpt-4.1-mini via
+# GitHub Models, tres briefs, hasta tres rondas de reparacion): sin ejemplo el
+# modelo usaba el vocabulario correcto pero colgado de otra estructura
+# --`composicion` y `tono` llegaban vacios-- y solo 1 de 3 briefs terminaba en
+# SVG. El vocabulario cerrado impide inventar palabras; no alcanza para fijar
+# la FORMA.
+EJEMPLO = {
+    "slug": "berlin-muro",
+    "titulo": "El muro que se parte",
+    "brief": "dos muros se abren y liberan una onda",
+    "composicion": "confrontacion",
+    "tono": "concreto",
+    "capas": [
+        {"rol": "lado_izq", "figura": "muro", "gesto": "desplazar_fuera",
+         "ritmo": "lento"},
+        {"rol": "lado_der", "figura": "muro", "gesto": "desplazar_fuera",
+         "ritmo": "lento"},
+        {"rol": "protagonista", "figura": "onda", "gesto": "emanar",
+         "ritmo": "rapido"},
+    ],
+}
+
+
 def resumen_para_prompt():
     """Vocabulario en texto compacto, para pegar en el prompt del agente."""
     L = ["VOCABULARIO CERRADO — usa solo estas palabras.", "", "FIGURAS:"]
@@ -87,6 +111,11 @@ def resumen_para_prompt():
     for c, r in sorted(COMPOSICIONES.items()):
         L.append(f"  {c:<24} {', '.join(sorted(r))}")
     L += ["", "RITMOS: " + ", ".join(sorted(RITMOS))]
+    L += ["", "LA FORMA EXACTA, con todos los campos en el nivel de arriba:",
+          json.dumps(EJEMPLO, ensure_ascii=False, indent=1),
+          "", "Devuelve UN objeto con ESA forma: slug, titulo, brief, "
+          "composicion, tono y capas van en el nivel de arriba, nunca "
+          "anidados dentro de otra cosa."]
     return "\n".join(L)
 
 

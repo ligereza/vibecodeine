@@ -190,3 +190,95 @@ def test_mutacion_construir_no_deterministico_se_detectaria(tmp_path, monkeypatc
     IC.cmd_construir(raiz, types.SimpleNamespace(titulo=None))
     html2 = (raiz / "galeria.html").read_text(encoding="utf-8")
     assert html1 != html2, "la mutacion no vario el output, ajustar el caso"
+
+
+# --------------------------------------------------------------------------
+# La animacion: coherencia entre lo que el archivo declara y lo que hace
+# --------------------------------------------------------------------------
+import re as _re
+
+sys.path.insert(0, str(REPO / "cultura" / "mak_codex"))
+from motor_semantico import rasterizador as _ras  # noqa: E402
+
+# El guarda pregunta por la capacidad EXACTA que este test usa, no por una
+# parecida. Preguntaba `backend_disponible()` a secas y en ubuntu la respuesta
+# era cairosvg, que rasteriza y no ejecuta una sola animacion CSS: los 16
+# iconos salieron acusados de estar quietos con la matriz de CI en rojo. Lo que
+# estaba muerto era el instrumento.
+_requiere_backend = pytest.mark.skipif(
+    _ras.backend_disponible(anima=True) is None,
+    reason="sin backend que dibuje y anime -- %s"
+           % _ras.por_que_no_hay_navegador(True))
+
+
+def _ciclo_ms(svg: str) -> int:
+    """El ciclo mas largo que el propio archivo declara, en ms.
+
+    Muestrear una ventana fija seria injusto con un icono de ciclo lento: no se
+    moveria dentro de la ventana y el test lo llamaria muerto sin que lo este.
+    Se le pregunta al archivo cuanto dura su animacion mas larga.
+    """
+    duraciones = [float(x) * (1000 if u == "s" else 1)
+                  for x, u in _re.findall(r"animation:[^;}]*?([\d.]+)(m?s)", svg)]
+    return int(max(duraciones)) if duraciones else 0
+
+
+def _diagnostico(svg: str, ciclo: int) -> str:
+    """Que backend midio, y que devolvio. Se arma solo cuando algo falla."""
+    b = _ras.backend_disponible(anima=True)
+    partes = ["backend=%s (rasteriza: %s)" % (b, _ras.backend_disponible())]
+    try:
+        a = _ras.rasterizar(svg, tam=96, backend=b, anima=True)
+        z = _ras.rasterizar(svg, tam=96, avance_ms=ciclo // 2, backend=b,
+                            anima=True)
+        partes.append("PNG cuadro0=%d B, medio ciclo=%d B, %s"
+                      % (len(a), len(z),
+                         "IGUALES" if a == z else "distintos"))
+        sq = _ras.rasterizar(_ras._SONDA_ANIMA, tam=_ras._TAM_SONDA,
+                             backend=b, anima=True)
+        sm = _ras.rasterizar(_ras._SONDA_ANIMA, tam=_ras._TAM_SONDA,
+                             avance_ms=500, backend=b, anima=True)
+        partes.append("sonda %dpx: %d/%d B, %s; perfil=%s"
+                      % (_ras._TAM_SONDA, len(sq), len(sm),
+                         "IGUALES" if sq == sm else "distintos",
+                         _ras._perfil_navegador()))
+    except Exception as e:  # el diagnostico no puede tapar el fallo real
+        partes.append("diagnostico incompleto: %r" % (e,))
+    return "; ".join(partes)
+
+
+@_requiere_backend
+@pytest.mark.parametrize("svg_path", sorted((RAVE / "iconos").glob("*.svg")),
+                         ids=lambda p: p.stem)
+def test_un_icono_que_declara_animacion_se_mueve_en_su_propio_ciclo(svg_path):
+    """La regla es de COHERENCIA, no un umbral: si el archivo declara
+    `@keyframes`, muestrear su propio ciclo tiene que dar cuadros distintos. Un
+    icono que dice animarse y no cambia nada le miente al lector -- y es la
+    clase de defecto que ningun chequeo estatico ve, porque el XML es valido.
+
+    Un icono SIN keyframes no entra: no declara nada, no debe nada.
+    """
+    svg = IC.resolver_vars(svg_path.read_text(encoding="utf-8"))
+    if "@keyframes" not in svg:
+        pytest.skip("no declara animacion")
+    ciclo = _ciclo_ms(svg)
+    assert ciclo > 0, "declara @keyframes y ninguna duracion: nada lo dispara"
+
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmp:
+        try:
+            _, cuadros, distintos = _ras.animar(
+                svg, Path(tmp) / "x.gif", cuadros=4,
+                ciclo_ms=ciclo, tam=96)
+        except _ras.BackendNoDibujaError as e:
+            # Se dice en voz alta y se sigue: un instrumento que no dibuja la
+            # pieza no tiene nada que declarar SOBRE la pieza. Acusarla seria
+            # exactamente el error que costo tres matrices rojas.
+            pytest.skip("instrumento incapaz, no defecto del archivo: %s" % e)
+    # El mensaje NOMBRA al instrumento. Sin eso, una acusacion al archivo y un
+    # instrumento ciego se leen igual, y esta suite ya gasto dos vueltas de CI
+    # aprendiendo la diferencia.
+    assert distintos > 1, (
+        "declara animacion de %d ms y los %d cuadros de su propio ciclo son "
+        "identicos: o el archivo afirma un movimiento que no ocurre, o el "
+        "instrumento no lo ve. %s" % (ciclo, cuadros, _diagnostico(svg, ciclo)))

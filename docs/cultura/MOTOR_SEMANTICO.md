@@ -70,6 +70,43 @@ mide antes de dibujarse; el contraste se calcula con WCAG y si falla se cambia
 el rol de color avisando; el agente no concatena strings, así que `&`, `<` y `>`
 se escapan solos.
 
+
+## El camino con un modelo real, medido el 2026-07-30
+
+Hasta esta fecha el modo `iconos` sólo se había probado con un modelo **falso**
+—uno que devuelve exactamente los tipos que uno espera—. La primera prueba con
+un modelo de verdad encontró dos cosas en el primer intento, y ninguna habría
+aparecido con un mock.
+
+**1. La frontera con un modelo se valida por TIPO antes que por valor.** El
+modelo devolvió `composicion` como un diccionario. `validar_spec` hacía
+`comp not in COMPOSICIONES` y eso levanta `TypeError: unhashable type: 'dict'`
+— y el modo `iconos` sólo atrapa `ValueError`, así que el resultado no era un
+rechazo con su motivo sino el modo entero cayéndose. Su promesa de «nunca
+levanta» era falsa. Ahora cada campo se valida por tipo, un valor de otro tipo
+se **rechaza** en vez de caer al default en silencio, y
+`tests/test_motor_semantico.py` fija ocho formas malformadas.
+
+**2. El vocabulario cerrado impide inventar palabras; no alcanza para fijar la
+forma.** Con el mismo modelo (`gpt-4.1-mini`) y los mismos tres briefs:
+
+| prompt | briefs que llegaron a SVG | rondas |
+|---|---|---|
+| vocabulario solo | **1 de 3** | hasta 3 de reparación |
+| vocabulario + una spec de ejemplo completa | **3 de 3** | **1**, la primera |
+
+Los rechazos del primer caso son informativos: el modelo usaba las palabras
+correctas colgadas de otra estructura, y `composicion` y `tono` llegaban
+vacíos. Mostrar la forma en vez de describirla la arregló. El ejemplo vive en
+`esquema.EJEMPLO`, entra al prompt por `resumen_para_prompt()` y un test exige
+que siga ahí: sacarlo para acortar el prompt no rompe nada visible, y el
+rendimiento se cae sin que nadie lo note hasta que un modelo real falla.
+
+Lo que esto NO dice: que el modo esté probado de punta a punta en la caja. La
+medición se hizo desde Windows contra el mismo prompt y el mismo compilador; el
+`iconos.py` completo —con su guardia de recursos, su pieza guardada y su job—
+sigue sin correr en su lugar.
+
 ## El hallazgo más instructivo: mi propio QA mentía
 
 Primer render del motor: **9 de 9 en negro**. El diagnóstico fácil era «el motor

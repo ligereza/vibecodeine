@@ -80,9 +80,36 @@ py tools/vendorizar_iskvw.py
 `piel/trazos/_indice.json`, `piel/lib/*.js`. `datos/archivo.json` se genera y
 **no se versiona**.
 
+**La piel pide el sustrato** (2026-07-30): `piel/campo` intenta
+`datos/archivo.json` primero —piezas **y** vínculos, así que por ahí entran los
+ensayos de MAK con sus conceptos e íconos— y si no está sigue exactamente como
+antes con `campo.json` y `obras.json`. Como `archivo.json` no se versiona, hoy
+el camino vivo es el respaldo: la degradación es lo normal, no la excepción.
+
+**Los vínculos se dibujan siempre, tenues y por peso** (decisión del usuario,
+2026-07-30): la opacidad sale del peso del vínculo, con techo bajo, y van
+**debajo** de las obras — la relación es el sustrato, la obra es lo que se mira.
+Se descarta todo vínculo que no tenga sus **dos** puntas en cuadro, y los vecinos
+se indexan una vez al sembrar: el defecto de recorrer todos los pares en cada
+frame está fijado por `tests/test_iskvw_vinculos.py`. Medido sobre las 219
+piezas del campo: entre 207 y 615 segmentos por frame según dónde se lea, contra
+23.871 pares que costaría el todos-contra-todos. Lo que NO se midió, y por eso
+no se afirma: cuadros por segundo en un teléfono.
+
+**Una sesión es una semilla** (2026-07-30, PROYECCION 6.2): el hash dejó de ser
+sólo un ancla y ahora codifica la lectura completa,
+`#semilla=<pieza>&centro=<y>&escala=<lateral>`, escrita con `replaceState` al
+terminar un gesto. Misma semilla + mismo archivo = misma constelación, fijado
+por `tests/test_iskvw_semilla.py` contra este mismo archivo. Un enlace viejo de
+sólo id sigue funcionando.
+
 ## Lo que falta, y de quién es
 
 - **La dirección**: qué es este archivo como obra. **Del usuario.**
+- **Si los ensayos se publican en iskvw.cl.** Hoy `archivo.json` no se versiona,
+  así que el sitio no los ve. Que la investigación de MAK aparezca junto a la
+  obra del artista es una decisión de autoría, y el usuario la dejó **para
+  debatir**: el puente está construido y sin usar.
 - **Qué son las 8 piezas de `obras.json`** frente a las 219 del archivo. **Del usuario.**
 - La piel `terminal` sigue leyendo sólo `obras.json`: no ve el archivo.
 - 34 reels sin percibir en MAK. Ya están declarados en el filtro: entran solos.
