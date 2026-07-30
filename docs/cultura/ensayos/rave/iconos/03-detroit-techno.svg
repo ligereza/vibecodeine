@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" data-name="03-detroit-techno">
+<style>
+  /* ══ PALETA — edita libremente estos valores ══ */
+  svg{
+    --fondo: #061826;
+    --grilla: #12455f;
+    --linea: #2ee6ff;
+    --acento: #d7ff2e;
+    /* ── velocidades (mayor = más lento) ── */
+    --vel-engranaje-1: 6s;
+    --vel-engranaje-2: 4.2s;
+    --vel-engranaje-3: 5s;
+    --vel-ciudad: 2.4s;
+  }
+
+.i3g1{transform-origin:42px 46px;animation:i3cw var(--vel-engranaje-1) linear infinite}
+.i3g2{transform-origin:80px 40px;animation:i3ccw var(--vel-engranaje-2) linear infinite}
+.i3g3{transform-origin:64px 74px;animation:i3ccw var(--vel-engranaje-3) linear infinite}
+@keyframes i3cw{to{transform:rotate(360deg)}}@keyframes i3ccw{to{transform:rotate(-360deg)}}
+.i3sk rect{animation:i3f var(--vel-ciudad) steps(2) infinite}
+.i3sk rect:nth-child(2){animation-delay:.4s}.i3sk rect:nth-child(3){animation-delay:.8s}
+.i3sk rect:nth-child(4){animation-delay:1.2s}.i3sk rect:nth-child(5){animation-delay:1.6s}
+@keyframes i3f{0%{opacity:.35}50%{opacity:1}}
+</style>
+<rect width="120" height="120" fill="var(--fondo)"/>
+<g stroke="var(--grilla)" stroke-width=".7" opacity=".75">
+<path d="M10,0v120M30,0v120M50,0v120M70,0v120M90,0v120M110,0v120M0,10h120M0,30h120M0,50h120M0,70h120M0,90h120M0,110h120"/>
+</g>
+<g fill="none" stroke="var(--linea)">
+  <g class="i3g1"><circle cx="42" cy="46" r="19" stroke-width="6" stroke-dasharray="4 5.9"/><circle cx="42" cy="46" r="13" stroke-width="2"/><path d="M42,33v26M29,46h26" stroke-width="1.6"/></g>
+  <g class="i3g2"><circle cx="80" cy="40" r="13" stroke-width="5" stroke-dasharray="3.4 4.6"/><circle cx="80" cy="40" r="8" stroke-width="2"/><path d="M80,32v16" stroke-width="1.6"/></g>
+  <g class="i3g3"><circle cx="64" cy="74" r="14" stroke-width="5" stroke-dasharray="3.6 4.9"/><circle cx="64" cy="74" r="9" stroke-width="2"/><path d="M55,74h18" stroke-width="1.6"/></g>
+</g>
+<g class="i3sk" fill="var(--linea)" opacity=".9">
+<rect x="10" y="98" width="9" height="14"/><rect x="23" y="92" width="9" height="20"/><rect x="36" y="102" width="9" height="10"/>
+<rect x="88" y="94" width="9" height="18"/><rect x="101" y="100" width="9" height="12"/>
+</g>
+<path d="M6,112h108" stroke="var(--linea)" stroke-width="2.4"/>
+<g fill="var(--acento)"><circle cx="42" cy="46" r="2.6"/><circle cx="80" cy="40" r="2.2"/><circle cx="64" cy="74" r="2.4"/></g>
+</svg>

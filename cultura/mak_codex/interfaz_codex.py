@@ -32,8 +32,8 @@ PORT = int(os.environ.get("CODEX_PORT", "8891"))
 DIRS = {"piezas": os.path.join(BASE, "piezas"),
         "revisiones": os.path.join(BASE, "revisiones")}
 JOBS_FILE = os.path.join(BASE, "jobs.jsonl")
-NOMBRE_OK = re.compile(r"^[A-Za-z0-9._-]+\.(md|py)$")
-FECHA_RE = re.compile(r"^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})-(.+)\.(md|py)$")
+NOMBRE_OK = re.compile(r"^[A-Za-z0-9._-]+\.(md|py|svg)$")
+FECHA_RE = re.compile(r"^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})-(.+)\.(md|py|svg)$")
 
 # Claves validas de coder (espejo de codex_lib._CODER_CHAIN_MAP, sin
 # importar codex_lib aca para no acoplar el server web al motor). El orden
@@ -171,6 +171,7 @@ button:hover{background:#b1c893}
       <option value="generar">Generar (plan -&gt; código -&gt; sandbox)</option>
       <option value="revisar">Revisar (3 lentes adversariales)</option>
       <option value="testear">Testear (unittest en sandbox)</option>
+      <option value="iconos">Iconos (spec sem&aacute;ntica -&gt; SVG animado)</option>
     </select>
     <select id="densidad-canvas" onchange="syncDensidad()">
       <option value="corto">corto</option><option value="medio" selected>medio</option>
@@ -204,7 +205,8 @@ button:hover{background:#b1c893}
 <textarea id="pedido-clasico" placeholder="generar: describe el programa&#10;revisar/testear: ruta absoluta a un .py bajo /home/mak"></textarea>
 <select id="modo"><option value="generar">Generar (plan -&gt; código -&gt; sandbox)</option>
 <option value="revisar">Revisar (3 lentes adversariales)</option>
-<option value="testear">Testear (unittest en sandbox)</option></select>
+<option value="testear">Testear (unittest en sandbox)</option>
+<option value="iconos">Iconos (spec sem&aacute;ntica -&gt; SVG animado)</option></select>
 <select id="densidad"><option value="corto">corto</option><option value="medio" selected>medio</option>
 <option value="largo">largo</option></select>
 <button onclick="ejecutarClasico()">&#9654; Ejecutar</button></div>
@@ -476,7 +478,8 @@ def _piezas():
         except OSError:
             continue
         for n in nombres:
-            if not (n.endswith(".md") or n.endswith(".py")):
+            if not (n.endswith(".md") or n.endswith(".py")
+                    or n.endswith(".svg")):
                 continue
             m = FECHA_RE.match(n)
             if m:
@@ -541,7 +544,8 @@ class H(BaseHTTPRequestHandler):
             modo = (q.get("modo") or ["generar"])[0]
             densidad = (q.get("densidad") or ["medio"])[0]
             cadena = _validar_cadena((q.get("cadena") or [""])[0])
-            if modo not in ("generar", "revisar", "testear", "debug"):
+            if modo not in ("generar", "revisar", "testear", "debug",
+                            "iconos"):
                 modo = "generar"
             if densidad not in ("corto", "medio", "largo"):
                 densidad = "medio"

@@ -55,11 +55,23 @@ def leer(ruta: Path = MANIFIESTO) -> list[dict]:
 
 
 def huerfanos(libs: list[dict], destino: Path = DESTINO) -> list[str]:
-    """Bundles en disco que ya no estan declarados. Se informan, no se borran."""
+    """Bundles VENDORIZADOS en disco que ya no estan declarados. Se informan,
+    no se borran.
+
+    Un bundle vendorizado se reconoce por su `<nombre>.README.md` al lado --
+    la misma convencion que escribe `vendorizar()`. Sin ese filtro, cualquier
+    `.js` escrito a mano en la carpeta destino se reporta como sobrante:
+    medido el 2026-07-30 sobre `docs/cultura/lib/`, donde vive
+    `compilador.js`, el gemelo de navegador del motor semantico. Decirle
+    "sobra y no esta declarado" a un archivo escrito a mano es la clase de
+    aviso por la que alguien lo borra.
+    """
     if not destino.is_dir():
         return []
     declarados = {e["nombre"] + ".js" for e in libs}
-    return sorted(p.name for p in destino.glob("*.js") if p.name not in declarados)
+    return sorted(p.name for p in destino.glob("*.js")
+                  if p.name not in declarados
+                  and p.with_suffix(".README.md").is_file())
 
 
 def _npx() -> str:
@@ -117,6 +129,11 @@ def main() -> int:
                     help="no baja nada: dice que falta y que sobra")
     ap.add_argument("--solo", default=None, help="un nombre del manifiesto")
     args = ap.parse_args()
+    # --destino tiene que ser ABSOLUTO: esbuild corre con cwd en un directorio
+    # temporal, asi que un `--outfile=docs/cultura/lib/x.js` relativo se
+    # resuelve contra ESE temporal y el bundle se escribe donde nadie lo ve
+    # (medido el 2026-07-30: quedo el README y no quedo el .js).
+    args.destino = args.destino.resolve()
 
     try:
         libs = leer(args.manifiesto)
@@ -157,8 +174,12 @@ def main() -> int:
                   file=sys.stderr)
             fallos += 1
             continue
+        try:
+            mostrar = p.relative_to(RAIZ)
+        except ValueError:          # un destino fuera del repo sigue siendo valido
+            mostrar = p
         print(f"  {e['nombre']:<10} {e['paquete']}@{e['version']} -> "
-              f"{p.relative_to(RAIZ)} ({p.stat().st_size / 1024:.1f} KB)")
+              f"{mostrar} ({p.stat().st_size / 1024:.1f} KB)")
     return 1 if fallos else 0
 
 

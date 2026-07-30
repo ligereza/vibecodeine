@@ -16,8 +16,10 @@ BASE = "/home/mak/codex"
 LOCK = os.path.join(BASE, ".jobs.lock")
 STATUS_FILE = os.path.join(BASE, ".estado.json")
 SCRIPTS = {"generar": "generar.py", "revisar": "revisar.py",
-           "testear": "testear.py", "debug": "debug.py"}
-# revisar/testear/debug reciben una RUTA; generar recibe el pedido en texto
+           "testear": "testear.py", "debug": "debug.py",
+           "iconos": "iconos.py"}
+# revisar/testear/debug reciben una RUTA; generar e iconos reciben el pedido en
+# texto (iconos: un brief visual, del que el modelo escribe una spec semantica)
 MODOS_RUTA = {"revisar", "testear", "debug"}
 
 

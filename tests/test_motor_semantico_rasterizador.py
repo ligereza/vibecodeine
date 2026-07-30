@@ -1,0 +1,169 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""tests/test_motor_semantico_rasterizador.py -- el rasterizador (SVG->PNG,
+dos backends) y el critico perceptual que se apoya en el.
+
+El defecto que esto guarda (ver docstring de critico.py): la version original
+llamaba sys.exit() al importarse cuando no habia backend, lo que volvia el
+modulo INIMPORTABLE y por lo tanto intesteable. `rasterizador.rasterizar()`
+debe levantar `RasterizadorNoDisponibleError` -- nunca SystemExit, nunca
+ImportError -- y `critico.analizar()` debe devolver un dict con 'error' en vez
+de reventar.
+
+Import de ambos modulos con CERO backends instalados debe funcionar siempre;
+los tests que necesitan pixeles reales se saltan si esta maquina no tiene
+ninguno (`backend_disponible()`).
+"""
+import sys
+from pathlib import Path
+
+import pytest
+
+REPO = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO / "cultura" / "mak_codex"))
+
+# el import en si mismo es la primera prueba: si critico.py todavia llamara
+# sys.exit() al importarse con dependencias ausentes, esta linea reventaria
+# la coleccion entera de pytest.
+from motor_semantico import compilador, critico, rasterizador  # noqa: E402
+
+SPEC_SIMPLE = {
+    "slug": "raster-test", "composicion": "centro_unico", "tono": "acido",
+    "capas": [{"rol": "protagonista", "figura": "disco", "gesto": "girar",
+               "ritmo": "rapido"}],
+}
+
+
+def _svg_compilado():
+    svg, _avisos = compilador.compilar(SPEC_SIMPLE, "raster-test")
+    return svg
+
+
+requiere_backend = pytest.mark.skipif(
+    rasterizador.backend_disponible() is None,
+    reason="esta maquina no tiene cairosvg ni Edge")
+
+
+# ---------------------------------------------------------------------------
+# sin ningun backend: la excepcion correcta, nunca SystemExit/ImportError
+# ---------------------------------------------------------------------------
+def test_sin_backends_levanta_error_propio_no_systemexit(monkeypatch):
+    monkeypatch.setattr(rasterizador, "_cairosvg", lambda: None)
+    monkeypatch.setattr(rasterizador, "_edge", lambda: None)
+    assert rasterizador.backend_disponible() is None
+    with pytest.raises(rasterizador.RasterizadorNoDisponibleError):
+        rasterizador.rasterizar(_svg_compilado())
+
+
+def test_sin_backends_no_es_systemexit_ni_importerror(monkeypatch):
+    monkeypatch.setattr(rasterizador, "_cairosvg", lambda: None)
+    monkeypatch.setattr(rasterizador, "_edge", lambda: None)
+    try:
+        rasterizador.rasterizar(_svg_compilado())
+        pytest.fail("deberia haber levantado RasterizadorNoDisponibleError")
+    except SystemExit:
+        pytest.fail("levanto SystemExit: es el defecto original (sys.exit al "
+                    "no encontrar backend), que vuelve el modulo intesteable")
+    except ImportError:
+        pytest.fail("levanto ImportError en vez de RasterizadorNoDisponibleError")
+    except rasterizador.RasterizadorNoDisponibleError:
+        pass
+
+
+def test_mutacion_reintroducir_sys_exit_lo_atraparia():
+    """Verificacion viva de que el guard de arriba de verdad distingue: si
+    rasterizar() volviera a llamar sys.exit() (el bug original), pytest lo
+    veria como un SystemExit no capturado por 'except RasterizadorNoDisponible-
+    Error' y el test de arriba fallaria. Lo probamos aca en un sandbox
+    (una funcion standalone que reproduce el bug), sin tocar el modulo real."""
+    def _version_vieja_con_bug():
+        sys.exit("ningun rasterizador disponible")
+
+    with pytest.raises(SystemExit):
+        _version_vieja_con_bug()
+    # y confirmamos que ese SystemExit efectivamente NO es una instancia de
+    # RasterizadorNoDisponibleError (si lo fuera, el bug seria invisible)
+    try:
+        _version_vieja_con_bug()
+    except BaseException as e:
+        assert not isinstance(e, rasterizador.RasterizadorNoDisponibleError)
+
+
+def test_critico_sin_backend_devuelve_error_sin_reventar(monkeypatch):
+    monkeypatch.setattr(rasterizador, "_cairosvg", lambda: None)
+    monkeypatch.setattr(rasterizador, "_edge", lambda: None)
+    r = critico.analizar(_svg_compilado(), nombre="raster-test")
+    assert "error" in r
+    assert r["puntaje"] is None
+    assert isinstance(r["error"], str) and r["error"]
+
+
+def test_mutacion_critico_sin_backend_capturaria_una_excepcion_no_manejada(monkeypatch):
+    """Si critico.analizar() dejara de capturar RasterizadorNoDisponibleError
+    (por ejemplo si alguien angostara el except a solo SinPillowError),
+    analizar() reventaria en vez de devolver {'error': ...}. Simulamos ese
+    angostamiento monkeypencheando rasterizador.rasterizar para levantar un
+    RuntimeError distinto que el except actual NO atrapa, y confirmamos que
+    ESO si revienta -- lo que prueba que el except real (que abajo seguimos
+    confiando) es especifico y no un `except Exception` disfrazado."""
+    def _explota(*a, **k):
+        raise RuntimeError("boom no relacionado")
+
+    monkeypatch.setattr(rasterizador, "rasterizar", _explota)
+    with pytest.raises(RuntimeError):
+        critico.analizar(_svg_compilado(), nombre="raster-test")
+
+
+# ---------------------------------------------------------------------------
+# con el backend real de esta maquina
+# ---------------------------------------------------------------------------
+@requiere_backend
+def test_rasterizar_produce_png_real():
+    datos = rasterizador.rasterizar(_svg_compilado(), tam=96)
+    assert datos[:8] == b"\x89PNG\r\n\x1a\n"
+    assert len(datos) > 100
+
+
+@requiere_backend
+def test_animar_produce_gif_y_mide_cuadros_distintos(tmp_path):
+    salida = tmp_path / "salida.gif"
+    ruta, n, distintos = rasterizador.animar(
+        _svg_compilado(), salida, cuadros=4, tam=96)
+    assert ruta == salida
+    assert n == 4
+    datos = salida.read_bytes()
+    assert datos[:6] == b"GIF89a"
+    assert distintos > 1, "la animacion no llego al rasterizador (todos los cuadros iguales)"
+
+
+@requiere_backend
+def test_animar_con_un_cuadro_rechaza(tmp_path):
+    with pytest.raises(ValueError):
+        rasterizador.animar(_svg_compilado(), tmp_path / "no.gif", cuadros=1)
+
+
+@requiere_backend
+def test_critico_analiza_svg_real_con_metricas_sanas():
+    r = critico.analizar(_svg_compilado(), nombre="raster-test")
+    assert r.get("error") is None
+    assert r["puntaje"] is not None
+    assert 0 <= r["puntaje"] <= 100
+    assert 0 <= r["tinta"] <= 1
+    assert 0 <= r["descentrado"]
+    assert r["margen"] >= 0
+
+
+@requiere_backend
+def test_mutacion_lienzo_vacio_da_puntaje_cero():
+    """Verificacion viva de que analizar() de verdad mide y no solo devuelve
+    un puntaje fijo: un SVG con viewBox correcto pero SIN contenido dibujado
+    (fondo=figura, o directamente vacio) debe puntuar 0 y alertar lienzo
+    vacio. No es un mock: es un SVG real, rasterizado de verdad."""
+    svg_vacio = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">\n'
+        '<rect width="120" height="120" fill="#000000"/>\n'
+        "</svg>\n")
+    r = critico.analizar(svg_vacio, nombre="vacio")
+    assert r["puntaje"] == 0
+    assert any("VAC" in a.upper() for a in r["alertas"])

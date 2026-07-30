@@ -136,6 +136,16 @@ def leer_jobs_listos(bypass_smoke=False):
                     continue
                 if not (j.get("job_id") and j.get("path")):
                     continue
+                # El modo `iconos` produce un .svg, y este camino de entrega
+                # COMPILA la pieza como Python antes de abrir el PR. Se corta
+                # aca -- antes de extraer_codigo/compila -- y no mas abajo:
+                # asi ninguna pieza que no sea codigo llega a un paso que
+                # asume codigo. Exclusion por modo explicito y no lista de
+                # inclusion, porque los jobs viejos no traen 'modo'.
+                if (j.get("modo") or "") == "iconos":
+                    log("SKIP %s: modo iconos (pieza .svg), no entra al camino "
+                        "de entrega de codigo Python" % j["job_id"])
+                    continue
                 if "smoke_ok" not in j:
                     meta = leer_smoke_meta(j["path"])
                     if "smoke_ok" in meta:

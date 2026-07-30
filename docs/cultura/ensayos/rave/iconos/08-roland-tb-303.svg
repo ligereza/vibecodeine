@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" data-name="08-roland-tb-303">
+<style>
+  /* ══ PALETA — edita libremente estos valores ══ */
+  svg{
+    --fondo: #0c0c0f;
+    --carcasa: #c9c9cf;
+    --carcasa-borde: #8b8b96;
+    --panel: #1d1d24;
+    --logo: #ff4b2b;
+    --perilla: #26262e;
+    --indicador: #e8e8ee;
+    --pantalla: #16161c;
+    --led-on: #d7ff2e;
+    --led-off: #3a3a44;
+    /* ── velocidades (mayor = más lento) ── */
+    --vel-secuencia: 1.6s;
+    --vel-perilla-1: 4s;
+    --vel-perilla-2: 3.1s;
+    --vel-perilla-3: 2.4s;
+    --vel-perilla-4: 5s;
+  }
+
+.i8k1{transform-origin:31px 46px}.i8k2{transform-origin:52px 46px}.i8k3{transform-origin:73px 46px}.i8k4{transform-origin:94px 46px}
+.i8k1{animation:i8t1 var(--vel-perilla-1) ease-in-out infinite}.i8k2{animation:i8t2 var(--vel-perilla-2) ease-in-out infinite}
+.i8k3{animation:i8t3 var(--vel-perilla-3) ease-in-out infinite}.i8k4{animation:i8t2 var(--vel-perilla-4) ease-in-out infinite reverse}
+@keyframes i8t1{0%,100%{transform:rotate(-115deg)}50%{transform:rotate(60deg)}}
+@keyframes i8t2{0%,100%{transform:rotate(-70deg)}50%{transform:rotate(120deg)}}
+@keyframes i8t3{0%,100%{transform:rotate(20deg)}50%{transform:rotate(-130deg)}}
+.i8s{animation:i8step var(--vel-secuencia) steps(1) infinite;fill:var(--led-off)}
+.i8s:nth-of-type(1){animation-delay:0s}.i8s:nth-of-type(2){animation-delay:.2s}.i8s:nth-of-type(3){animation-delay:.4s}.i8s:nth-of-type(4){animation-delay:.6s}
+.i8s:nth-of-type(5){animation-delay:.8s}.i8s:nth-of-type(6){animation-delay:1s}.i8s:nth-of-type(7){animation-delay:1.2s}.i8s:nth-of-type(8){animation-delay:1.4s}
+@keyframes i8step{0%,12%{fill:var(--led-on)}13%,100%{fill:var(--led-off)}}
+</style>
+<rect width="120" height="120" fill="var(--fondo)"/>
+<rect x="8" y="20" width="104" height="80" rx="9" fill="var(--carcasa)"/>
+<rect x="8" y="20" width="104" height="80" rx="9" fill="none" stroke="var(--carcasa-borde)" stroke-width="2"/>
+<rect x="14" y="26" width="92" height="10" rx="3" fill="var(--panel)"/>
+<rect x="14" y="26" width="34" height="10" rx="3" fill="var(--logo)"/>
+<circle cx="103" cy="31" r="2.4" fill="var(--led-on)"/>
+<g>
+ <g fill="var(--perilla)"><circle cx="31" cy="46" r="9"/><circle cx="52" cy="46" r="9"/><circle cx="73" cy="46" r="9"/><circle cx="94" cy="46" r="9"/></g>
+ <g stroke="var(--indicador)" stroke-width="2.4" stroke-linecap="round">
+  <path class="i8k1" d="M31,46v-7"/><path class="i8k2" d="M52,46v-7"/><path class="i8k3" d="M73,46v-7"/><path class="i8k4" d="M94,46v-7"/>
+ </g>
+</g>
+<rect x="14" y="60" width="92" height="16" rx="3" fill="var(--pantalla)"/>
+<path d="M16,68c4-8 6,8 10,0s6,8 10,0 6,8 10,0 6,8 10,0 6,8 10,0 6,8 10,0 6,8 10,0 6,8 8,0" fill="none" stroke="var(--led-on)" stroke-width="2" stroke-linecap="round" opacity=".9"/>
+<g>
+<rect class="i8s" x="15" y="82" width="10" height="10" rx="2"/><rect class="i8s" x="28" y="82" width="10" height="10" rx="2"/>
+<rect class="i8s" x="41" y="82" width="10" height="10" rx="2"/><rect class="i8s" x="54" y="82" width="10" height="10" rx="2"/>
+<rect class="i8s" x="67" y="82" width="10" height="10" rx="2"/><rect class="i8s" x="80" y="82" width="10" height="10" rx="2"/>
+<rect class="i8s" x="93" y="82" width="10" height="10" rx="2"/><rect class="i8s" x="106" y="82" width="4" height="10" rx="1.5"/>
+</g>
+</svg>
