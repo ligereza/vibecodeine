@@ -126,71 +126,66 @@ the iskvw.cl interaction model.
 
 ## The rave zip: LANDED 2026-07-30 (PR #402, merged)
 
-Where things are: the essay and its 16 animated icons at
-`docs/cultura/ensayos/rave/`; the motor as a codex capability at
-`cultura/mak_codex/motor_semantico/` + mode `iconos`; the new research format in
-`docs/cultura/FORMATO_ENSAYO.md` (`research.py --formato ensayo`); the why, with
-its measurements and honest limits, in `docs/cultura/MOTOR_SEMANTICO.md`.
+Where things are: essay + 16 animated icons in `docs/cultura/ensayos/rave/`; the
+motor as a codex capability in `cultura/mak_codex/motor_semantico/` + mode
+`iconos`; the research format in `docs/cultura/FORMATO_ENSAYO.md`; the why,
+measured, in `MOTOR_SEMANTICO.md`.
 
 Five decisions of that landing, not to be re-litigated:
 
 1. **The style is NOT unified**: `coro` by default, `sistema` the argued exception.
-2. **The artefact is an ANIMATION and it is EDITABLE**: every layer is a named
-   group declaring `data-rol/figura/gesto/ritmo` with a `<title>`, so it opens in
+2. **The artefact is an ANIMATION and EDITABLE**: every layer is a named group
+   declaring `data-rol/figura/gesto/ritmo` with a `<title>`, so it opens in
    Illustrator/Inkscape and each element answers for what it encodes.
-3. **Verification is a GIF, never a PNG** -- a single frame cannot tell still
-   from animated. An instrument, not a deliverable: GIFs do not enter the repo.
-4. **Each icon declares the passage that justifies it** (`ancla`, pinned by a
-   test): the text is the organ that justifies the content that sustains the form.
-5. **thi.ng is IN USE, not noted**: `hiccup` + `hiccup-svg` + `color` in
-   `docs/cultura/lib/compilador.js`, the browser twin, verified headless; the
-   geometry is EXPORTED from the Python vocabulary, never ported by hand.
-   **`CAPACIDADES.md` section 6 is the index to read BEFORE writing a generator,
-   a pipeline or a graph from scratch** (`tests/test_thing_registro.py` keeps it
-   honest). Next candidates: `graph`, `transducers`, `validate`.
+3. **Verification is a GIF, never a PNG**: one frame cannot tell still from
+   animated. An instrument, not a deliverable -- GIFs stay out of the repo.
+4. **Each icon declares the passage that justifies it** (`ancla`, pinned).
+5. **thi.ng is IN USE, not noted**: `hiccup` + `hiccup-svg` + `color` in the
+   browser twin `docs/cultura/lib/compilador.js`, verified headless; geometry is
+   EXPORTED from the Python vocabulary, never ported by hand. **`CAPACIDADES.md`
+   section 6 is the index to read BEFORE writing a generator, a pipeline or a
+   graph from scratch** (`tests/test_thing_registro.py`).
 
-Defects the CI matrix caught that a green local Windows run did not, and they
-are all ONE lesson -- the instrument must earn the right to accuse a file:
-vendorized `*.README.md` are THIRD-PARTY (`ZONA_AJENA`); the doc ratchet reads
+Defects the CI matrix caught that a green local Windows run did not, all ONE
+lesson -- **the instrument must earn the right to accuse a file**: vendorized
+`*.README.md` are THIRD-PARTY (`ZONA_AJENA`); the doc ratchet reads
 `git ls-files`, so **an uncommitted `.md` is invisible to it**; rasterizing is
-not animating (cairosvg runs no CSS); a browser is picked by PROBE -- binary and
-flags both -- because the runner's first one cannot draw; and the blank frames
-were `--window-size`: below ~100 px the new headless captures from a viewport
-that never painted, so the window is asked large and the result CROPPED. `flujo verify` runs pytest
-with `-rs`: a guard that skips must not look like one that measured.
+not animating (cairosvg runs no CSS); binary AND flags are picked by PROBE,
+since the runner's first browser cannot draw; and the blank frames were
+`--window-size` -- below ~100 px the new headless captures from a viewport that
+never painted, so the window is asked large and the result CROPPED. `flujo
+verify` runs pytest with `-rs`: a guard that skips must not look like one that
+measured.
 
 ## What a real model did to a boundary a mock never touched (2026-07-30)
 
-The `iconos` mode had only been exercised with a FAKE model -- one that returns
-exactly the types you expect. The first run against a real one (gpt-4.1-mini via
-GitHub Models; NOT the Azure account SOL drained) found two things in the first
-attempt. Detail and numbers: `docs/cultura/MOTOR_SEMANTICO.md`.
+The `iconos` mode had only met a FAKE model -- one returning exactly the types
+you expect. The first real one (gpt-4.1-mini via GitHub Models; NOT the Azure
+account SOL drained) found two things at once. Numbers: `MOTOR_SEMANTICO.md`.
 
 1. **The boundary with a model is validated by TYPE before value.** It returned
-   `composicion` as a dict, which raises `TypeError` while the mode only caught
-   `ValueError`: not a rejection with its reason, a fall. A wrong-typed value is
-   now REJECTED, never silently defaulted.
+   `composicion` as a dict, raising `TypeError` while the mode caught only
+   `ValueError`: not a rejection with its reason, a fall. Now REJECTED.
 2. **A closed vocabulary stops invented words; it does not fix the SHAPE.**
-   Vocabulary alone -> 1 of 3 briefs reached an SVG. Vocabulary + ONE complete
-   example spec -> **3 of 3 on the first round** (`esquema.EJEMPLO`, pinned).
+   Vocabulary alone -> 1 of 3 briefs reached an SVG. Vocabulary + ONE example
+   spec -> **3 of 3 on the first round** (`esquema.EJEMPLO`, pinned).
 
-**A measurement that was WRONG, corrected everywhere:** "one icon is nearly
-static" was the INSTRUMENT (the advance was injected after `infinite`, killing
-a `... infinite alternate` rule). All sixteen move within their own cycle.
+**A measurement that was WRONG:** "one icon is nearly static" was the INSTRUMENT
+(the advance injected after `infinite` killed a `... infinite alternate` rule).
+All sixteen move within their own cycle.
 
 **Still NOT closed:** the full `iconos.py` -- resource guard, saved piece, job
--- has never run in its place on the box. What was measured is the same prompt
-and the same compiler, from Windows.
+-- has never run in its place on the box; what ran was the same prompt and
+compiler, from Windows.
 
 ## iskvw: the substrate is consumed, and MAK's essays reach it (2026-07-30)
 
 The portfolio had none of `PROYECCION.md`'s integrations wired. Three cuts, all
-verified running; detail in `iskvw/MAPA.md` and `iskvw/ESQUEMA_ARCHIVO.md`:
+verified running; detail in `iskvw/MAPA.md` + `ESQUEMA_ARCHIVO.md`:
 
 1. **An essay enters the archive through the same contract**
    (`contrato_archivo.desde_ensayo` + `--fuente ensayos`): 33 pieces, 32 links;
-   `--fuente todo` gives 41 and 50. Links are `manual`, never `semantico`; an
-   icon absent from disk produces NO piece.
+   `--fuente todo` gives 41 and 50. Links `manual`, never `semantico`.
 2. **The skin asks for the substrate**: `archivo.json` first, degrading exactly
    as before. It is not versioned, so the fallback IS today's live path.
 3. **A session is a reproducible seed** (`#semilla=&centro=&escala=`), pinned by
@@ -199,8 +194,7 @@ verified running; detail in `iskvw/MAPA.md` and `iskvw/ESQUEMA_ARCHIVO.md`:
 **The links are DRAWN: always, faint, by weight** (his call). Underneath the
 works, both ends in frame, neighbours indexed once -- the every-pair-every-frame
 defect is pinned by a test. Measured: 207 to 615 segments per frame against the
-23,871 pairs an all-against-all would cost. NOT measured, so not claimed: frames
-per second on a phone.
+23,871 pairs an all-against-all would cost. NOT measured: fps on a phone.
 
 **Still the user's, and he wants to DEBATE it first:** whether the essays get
 published on iskvw.cl. The bridge is built and unused.
@@ -337,6 +331,12 @@ list of what is pending. Before working an item, check it is still true.
 - **`rd` and `iskvw` point at the SAME commit (`abc26891`)** while the README
   calls them different lines. Written down, not resolved: whether that is
   intentional is the user's call.
+- **4 local stashes never examined** (none from this session):
+  `sol-azure-optin-gate-redundante`, `ascii-wip-ultimo-agente`,
+  `mak-vocab-ultimo-agente`, and a WIP of `retirar-destinos-muertos`. A local
+  stash is invisible to the repo and dies with the machine. Pending: open them
+  one by one. The first matters most -- the user suspected for days that work
+  from the SOL session was never applied and was told it did not exist.
 - The hourly `[OBS]` issue emitter is still unidentified. Ruled out: the repo and
   MAK (nothing there creates issues). A session on 2026-07-24 already ran this
   hunt and logged it unresolved. Not urgent, and not worth chasing again without
