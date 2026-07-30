@@ -420,7 +420,15 @@ class LLM:
     Code node probado 2026-07-15: cerebras/azure son razonadores, llevan
     margen extra de max_completion_tokens; azure NO acepta temperature)."""
 
-    def __init__(self, order="groq,cerebras,azure,win,ollama"):
+    # `win` SALIO del orden por defecto (2026-07-30). Es un notebook Windows que
+    # el usuario retiro a proposito -- todo corre en MAK -- y seguia primero en
+    # la cadena costando hasta 300 s por intento: `_win` delega en
+    # `_ollama_like`, cuyo timeout es 300, mientras su propio docstring promete
+    # "timeout corto... cae rapido al fallback siguiente". Medido el 2026-07-30
+    # en salud_proveedores.json: win 0 exitos / 3 timeouts en una sola ventana.
+    # Sigue en la lista blanca del filtro de abajo: se puede pedir explicito con
+    # LLM(order="win") si algun dia esa maquina vuelve a servir modelos.
+    def __init__(self, order="groq,cerebras,azure,ollama"):
         load_env()
         self.stats = {}
         self.errors = []

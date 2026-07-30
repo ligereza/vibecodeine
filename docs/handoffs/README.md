@@ -10,9 +10,12 @@ Este directorio centraliza la historia operacional del repo.
 
 - [context/LAST_HANDOFF.md](../../context/LAST_HANDOFF.md): estado diario y proximo paso operativo (unica fuente que un agente deberia leer para continuidad).
 - Nivel raiz de esta carpeta: **solo** los `HANDOFF_*.md`/`HOTFIX_*.md` de la sesion o semana en curso (referencia puntual, no indice). Al 2026-07-12 no hay ninguno vigente: los de la semana anterior se archivaron en `archive/handoffs/`. El estado corto vive en `context/LAST_HANDOFF.md`.
-- [docs/handoffs/archive](archive): snapshots, hotfixes y handoffs antiguos (2026-06-16 a 2026-06-30, 84 archivos).
-  - [docs/handoffs/archive/root](archive/root): handoffs que antes estaban en la raiz del repo.
-  - [docs/handoffs/archive/handoffs](archive/handoffs): handoffs que antes estaban sueltos aqui (nivel raiz de esta carpeta) o en el antiguo subdirectorio `current/` (retirado 2026-07-03, no tenia regla documentada y quedo obsoleto).
+- [docs/handoffs/archive](archive): memoria comprimida CON consumidor -- ocho notas
+  de decisiones (julio 2026) citadas por nombre desde `context/LAST_HANDOFF.md`
+  o `CLAUDE.md`. Los ~93 checkpoints de version que vivian aqui (`HANDOFF_v0.4x.md`,
+  `HOTFIX_*.md`, snapshots 2026-06-16 a 2026-06-30 en las subcarpetas `root/` y
+  `handoffs/`) se retiraron el 2026-07-30: cero citas reales, git ya guarda esa
+  historia completa (`git log`, `git show`).
 
 ## Regla
 

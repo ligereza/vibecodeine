@@ -70,7 +70,7 @@ else
   echo 'checkout=missing'
 fi
 say CONTROL_FILES
-for f in "$HOME/plataforma/trabajo.py" "$HOME/plataforma/guardia.py" "$HOME/plataforma/agente_real.py"; do
+for f in "$HOME/plataforma/trabajo.py" "$HOME/plataforma/guardia.py"; do
   [ -f "$f" ] && printf '%s=present\n' "$f" || printf '%s=missing\n' "$f"
 done
 '''

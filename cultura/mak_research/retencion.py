@@ -181,6 +181,17 @@ def main():
         # Apply retention.
         keep_list, archive_list = retention_plan(reports, args.keep)
         files_moved = apply_retention(archive_list, dir_path)
+        # Whoever moves state signs it. On 2026-07-30, 217 reports were moved
+        # into archive/ and nobody could say who did it. The action was right;
+        # the silence was not.
+        try:
+            import sys as _sys
+            _sys.path.insert(0, os.path.expanduser("~/plataforma"))
+            from mutaciones import registrar
+            registrar("retencion", "%d archivos -> %s/archive (keep=%d)"
+                      % (files_moved, dir_path, args.keep), origen=__file__)
+        except Exception:
+            pass
         print(f"\nApplied: {files_moved} files moved to archive/")
         return 0
 

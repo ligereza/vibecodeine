@@ -14,6 +14,10 @@ Two parts:
 
 This only prints recommendations. It never deletes, moves, or edits files.
 See docs/HIGIENE_REPO.md and CLAUDE.md for policy.
+
+Invoked by hand only -- no cron, Makefile target, or workflow calls this
+(verified 2026-07-30). It stays in scripts/ as a manual coverage signal, not
+as automation.
 """
 
 import json

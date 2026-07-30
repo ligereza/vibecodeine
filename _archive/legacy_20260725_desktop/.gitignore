@@ -1,6 +1,0 @@
-config.json
-.env
-.env.local
-__pycache__/
-*.pyc
-tilde_log.jsonl

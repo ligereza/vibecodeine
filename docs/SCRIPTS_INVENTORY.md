@@ -12,8 +12,6 @@ Este inventario evita que agentes confundan wrappers legacy con el núcleo real.
 | `scripts/finish_airdrop.sh` | Muestra `git status` al cerrar un airdrop manual (menciona checkpoint.sh, ya inexistente). |
 | `scripts/validate_airdrop.py` | Valida `_airdrop/` antes de aplicar (ver `docs/AGENT_AIRDROP_PROTOCOL.md`). |
 | `scripts/run_airdrop_checks.py` | Flujo seguro: valida, aplica, `pip install`, compileall, pytest, health, version+changelog, hub smoke, checkpoint. |
-| `scripts/cleanup_demo_artifacts.sh` | Limpieza controlada de demos/tests históricos. |
-| `scripts/cleanup_ig_temp_folders.sh` | Limpia carpetas temporales Instagram. |
 
 ## Wrappers legacy archivados (ya no viven en `scripts/`)
 
@@ -28,6 +26,12 @@ por estar superada por la CLI Typer. Los one-shot spent (`cleanup_safe.sh`,
 `_archive/legacy_20260718_0110/scripts_oneshot/` (2026-07-18): sus targets ya no existen. Tabla de equivalencias completa en
 `docs/CLI.md` ("Migracion desde scripts legacy"). No están en `scripts/`; no las
 uses como referencia de código vivo.
+
+`flujo_clean_generated.py`, `soft_cleanup.py`, `cleanup_demo_artifacts.sh` y
+`cleanup_ig_temp_folders.sh` se retiraron con `git rm` el 2026-07-30: verificado
+que ningún `Makefile`/`.github/workflows/*.yml`/cron los invocaba, solo
+aparecían mencionados en esta misma documentación. Detalle en
+`docs/HIGIENE_REPO.md`.
 
 ## Wrappers/compatibilidad CLI (vigentes)
 
@@ -48,11 +52,8 @@ Cuando exista equivalente `flujo ...`, preferir la CLI; estos scripts siguen pre
 ### Airdrop / mantenimiento de repo
 
 - `apply_airdrop.sh`, `finish_airdrop.sh`, `validate_airdrop.py`, `run_airdrop_checks.py`
-- `cleanup_demo_artifacts.sh`, `cleanup_ig_temp_folders.sh`
-- `flujo_clean_generated.py` (limpia `__pycache__`, `*.pyc` y generados versionados por error)
 - `limpiar_basura.sh` (usado por `make clean`)
-- `soft_cleanup.py` (recorta espacios finales en archivos de texto, no destructivo)
-- `suggest_repo_hygiene.py` (solo sugiere, no borra ni mueve nada; ver `docs/HIGIENE_REPO.md`)
+- `suggest_repo_hygiene.py` (solo sugiere, no borra ni mueve nada; se invoca a mano, ningún cron/workflow lo llama; ver `docs/HIGIENE_REPO.md`)
 - `sanitize_sensitive.py` (reemplaza credenciales/secrets por placeholders en texto)
 - `find_duplicates.py` (detecta archivos duplicados por hash de contenido)
 - `github_setup_labels.py` (crea/actualiza labels de GitHub; requiere `GITHUB_TOKEN`)
