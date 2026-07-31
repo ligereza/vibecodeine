@@ -339,6 +339,53 @@ def test_la_sala_demo_mide_limpio():
     assert abs(dim_esc[1] - declarado["profundidad"]["m"]) <= venue.TOLERANCIA_COTA_M
 
 
+# ------------------------------------------------- orbitas: la camara como dato
+ORBITA_ESQUEMA = json.loads(
+    (REPO / "schemas" / "orbita.schema.json").read_text(encoding="utf-8"))
+DIR_ORBITAS = REPO / "data" / "orbitas"
+
+
+def _valida_orbita(doc: dict) -> list[str]:
+    import jsonschema
+
+    val = jsonschema.Draft202012Validator(ORBITA_ESQUEMA)
+    return [e.message for e in val.iter_errors(doc)]
+
+
+def test_toda_orbita_del_repo_valida_contra_su_esquema():
+    """Every committed camera path is schema-clean, or the sequence tool would
+    reject at run time what the repo shipped as good."""
+    archivos = sorted(DIR_ORBITAS.glob("*.json"))
+    assert archivos, "no hay ninguna orbita en data/orbitas/"
+    for p in archivos:
+        errores = _valida_orbita(json.loads(p.read_text(encoding="utf-8")))
+        assert errores == [], f"{p.name}: {errores}"
+
+
+def test_la_orbita_de_ejemplo_es_la_vuelta_por_defecto():
+    """The shipped example IS the viewer's default turn written as data: a
+    closed two-keyframe loop from 0 to exactly 2*pi. The node smoke proves the
+    frames match; this pins the numbers the claim rests on."""
+    import math
+
+    doc = json.loads(
+        (DIR_ORBITAS / "vuelta-completa.json").read_text(encoding="utf-8"))
+    assert doc["cerrar"] is True
+    giros = [k["giro"] for k in doc["puntos"]]
+    assert giros == [0, math.tau]
+
+
+def test_el_esquema_de_orbita_rechaza_lo_invalido():
+    for malo in (
+        {"puntos": [{"giro": 0}]},                                # 1 keyframe
+        {"puntos": [{"alto": 0.4}, {"giro": 1}]},                 # sin giro
+        {"puntos": [{"giro": 0, "alto": 2.0}, {"giro": 1}]},      # alto fuera de tope
+        {"puntos": [{"giro": 0, "dist": 0}, {"giro": 1}]},        # dist no positiva
+        {"puntos": [{"giro": 0}, {"giro": 1}], "sorpresa": 1},    # clave inventada
+    ):
+        assert _valida_orbita(malo) != [], f"acepto {malo}"
+
+
 # ----------------------------------------------------------------- sitio
 def test_el_sitio_no_publica_las_salas_no_publicas(tmp_path, monkeypatch):
     monkeypatch.setattr(venue, "DIR_VENUES", tmp_path / "v")
