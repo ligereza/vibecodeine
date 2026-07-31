@@ -196,6 +196,20 @@ works, both ends in frame, neighbours indexed once -- the every-pair-every-frame
 defect is pinned by a test. Measured: 207 to 615 segments per frame against the
 23,871 pairs an all-against-all would cost. NOT measured: fps on a phone.
 
+**The frame cost now has an instrument (2026-07-31):**
+`node tools/iskvw_piel_medir.mjs` runs the PUBLISHED skin's functions in node
+(smoke technique), enters through the real seed model, and COUNTS the work per
+frame deterministically. Reference-machine numbers (2-core Linux container,
+node 22): archivo substrate 479 pieces / 269 links indexed once, worst grid
+scenario 30 segments per frame; campo fallback 219 works, 0 segments always
+(no vinculos shipped), dense open band 217 gradients + 434 arcs per frame at
+4-6 ms. `tests/test_iskvw_piel_medir.py` pins the COUNTS (never ms) and a
+1200-segment ceiling against the 23,871-pair defect. The phone fps stays the
+user's to take -- now WITH a comparator. Finding, one line: with archivo.json
+the skin ignores the measured positions (conXY looks only at piezas[0], the
+'vola' tool piece, which has none), so the whole 479 field falls back to
+hash positions; not touched here, it is how the live site draws today.
+
 **Still the user's, and he wants to DEBATE it first:** whether the essays get
 published on iskvw.cl. The bridge is built and unused.
 
