@@ -445,6 +445,12 @@ PROVIDER_ENV_KEY = {
 }
 PROVIDERS = tuple(PROVIDER_ENV_KEY)
 
+# Los que aceptan que se les pida un modelo CONCRETO por llamada. El resto
+# ignora el pedido y usa el suyo: pedirle un modelo a quien no puede elegirlo
+# no es un error, es que ahi no habia nada que elegir. Sumar uno es agregarlo
+# aca y darle el parametro `model` a su metodo.
+PROVIDERS_CON_MODELO = ("watsonx",)
+
 
 class LLM:
     """Cadena de proveedores con fallback y stats (mismo diseno que el
@@ -513,7 +519,7 @@ class LLM:
         )
         return r["choices"][0]["message"]["content"].strip()
 
-    def _watsonx(self, system, user, max_tok):
+    def _watsonx(self, system, user, max_tok, model=None):
         """IBM watsonx.ai. Verificado 4/4 por `tools/watsonx_smoke.py` contra la
         cuenta real el 2026-07-30: bearer en 460 ms, 24 modelos visibles, chat
         en 681 ms, 58 tokens = $0.000044.
@@ -526,8 +532,8 @@ class LLM:
         base = os.environ.get("WATSONX_URL", "https://us-south.ml.cloud.ibm.com")
         r = _http_json(
             base.rstrip("/") + "/ml/v1/text/chat?version=2024-10-08",
-            {"model_id": os.environ.get("WATSONX_MODEL",
-                                        "meta-llama/llama-3-3-70b-instruct"),
+            {"model_id": model or os.environ.get(
+                "WATSONX_MODEL", "meta-llama/llama-3-3-70b-instruct"),
              "project_id": os.environ.get("WATSONX_PROJECT_ID", ""),
              "messages": _msgs(system, user),
              "max_tokens": max_tok,
@@ -579,9 +585,18 @@ class LLM:
     def _has_key(self, name):
         return bool(os.environ.get(PROVIDER_ENV_KEY[name]))
 
-    def call(self, system, user, max_tok=1024, order=None):
+    def call(self, system, user, max_tok=1024, order=None, model=None):
         """Devuelve (texto, proveedor). Recorre la cadena hasta respuesta
-        no vacia; acumula errores no fatales en self.errors."""
+        no vacia; acumula errores no fatales en self.errors.
+
+        `model` pide un modelo CONCRETO al proveedor que lo soporte (hoy solo
+        watsonx, que expone 24). Existe para que un flujo adversarial pueda
+        poner modelos DISTINTOS en cada papel: medido el 2026-07-31, un
+        proponente y un refutador que son el mismo modelo no son adversarios --
+        el refutador discutio matices de la tesis en vez de si el hecho era
+        cierto. Se pasa por parametro y no por variable de entorno porque los
+        refutadores corren en hilos: un `os.environ` compartido se pisaria.
+        """
         # Se deriva del padron: mantener aca una segunda copia de los nombres es
         # como se rompio `refutar.py`. Cada proveedor de `PROVIDERS` tiene su
         # metodo `_<nombre>`, y si falta, falta ruidosamente al llamarlo.
@@ -604,7 +619,9 @@ class LLM:
             if name not in fns or not self._has_key(name):
                 continue
             try:
-                text = fns[name](system, user, max_tok)
+                text = (fns[name](system, user, max_tok, model)
+                        if model and name in PROVIDERS_CON_MODELO
+                        else fns[name](system, user, max_tok))
                 if text:
                     self.stats[name] = self.stats.get(name, 0) + 1
                     try:

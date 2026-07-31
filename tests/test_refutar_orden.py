@@ -55,6 +55,42 @@ def test_refutar_no_longer_carries_its_own_provider_list():
     assert "PROVIDERS" in codigo
 
 
+def test_the_source_gate_verdict_is_read_from_evaluar_not_recomputed():
+    """`meta.sin_fuente_primaria` must come from `fuentes.evaluar()`'s own key.
+    The first version asked for `primarias`, a key that dict does not have, so
+    it stamped SIN FUENTE PRIMARIA on a run that had six primary sources -- the
+    report contradicted its own status line."""
+    fuentes = pytest.importorskip("fuentes")
+    ev = fuentes.evaluar("Ley 20.000 de Chile: que dice sobre las ONG",
+                         ["https://www.bcn.cl/leychile/navegar?i=1201614"])
+    assert "sin_fuente_primaria" in ev and "fuentes_primarias" in ev
+    assert ev["dominio"] == "cl_legal"
+    assert ev["fuentes_primarias"], "bcn.cl must count as primary for cl_legal"
+    assert ev["sin_fuente_primaria"] is False
+    # and the key the tool used to ask for simply does not exist
+    assert "primarias" not in ev
+
+    fuente = (RAIZ / "cultura" / "mak_research" / "refutar.py").read_text(
+        encoding="utf-8")
+    assert 'evaluacion["sin_fuente_primaria"]' in fuente
+    assert 'evaluacion.get("primarias")' not in fuente
+
+
+def test_the_frame_never_reaches_the_search():
+    """`marco_solo` exists so the cultural framing goes to the MODEL and not to
+    the search engine. `refutar.py` still glued it onto the topic and searched
+    with the whole string, which is why a question about Chilean law came back
+    with UNAM cultural-studies papers."""
+    fuente = (RAIZ / "cultura" / "mak_research" / "refutar.py").read_text(
+        encoding="utf-8")
+    codigo = "\n".join(l for l in fuente.splitlines()
+                       if not l.lstrip().startswith("#"))
+    assert "marco_solo" in codigo
+    # the framed string must never be what gets searched
+    assert "web_search(tema" not in codigo or "marco(" not in codigo
+    assert "marco(args.tema" not in codigo
+
+
 def test_a_single_requested_provider_fills_all_three_roles():
     """Asking for one provider must not hand the judge's seat to another one
     that has no key -- that is how the last slot used to become `azure`."""
