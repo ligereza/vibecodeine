@@ -45,6 +45,8 @@ CLI real (`py -m flujo --help`, v0.56.1), comandos principales:
 | `gen_animadas_obras.py` | Cada obra curada -> su pieza animada por el motor semantico, determinista desde el id (misma obra = misma pieza); escribe `iskvw/piel/animadas/*.svg` + `iskvw/datos/animadas.json`, que `contrato_archivo.desde_animadas` mete al archivo vinculada a su obra. `tests/test_gen_animadas_obras.py`. |
 | `token_budget.py` | Estima tokens de un set de archivos antes de mandarlos a un modelo. |
 | `venue.py` | Base abierta de venues para VJ/tecnica: `sembrar` (una linea por sala) -> JSON validado contra `schemas/venue.schema.json` con tier de `confianza` por dato, `validar`/`listar`/`sitio` (HTML autocontenido consultable desde telefono). `tests/test_venue.py`. |
+| `venue_geometria_scd.py` | Sala DEMO en polilineas 3D (bloque `geometria` del esquema) derivada del modelo radial del teatro SCD Plaza Egana -> `data/venues/scd-plaza-egana.json`, material por defecto del visor `iskvw/piel/venue/`. |
+| `venue3d_smoke.mjs` | Corre el JS del visor de salas en node con stubs de DOM: geometria cargada, aristas realmente trazadas, la proyeccion se mueve al orbitar y el recorte por presupuesto se reporta en pantalla. `tests/test_venue3d_smoke.py`. |
 | `verify_all.py` | Verificacion del repo en un comando: compileall + pytest + `flujo verify` (opcional `--web`). |
 
 `xio/` (server telefono + show kit): server Flask (`xio/actual/server.py`,
@@ -197,6 +199,7 @@ tabla; archivo sin entrada = ratchet rojo.
 | `tapiz_telemetry.py` | REVISAR | cultura, decision de uso pendiente del usuario | sin fecha medida |
 | `tilde_meter.py` | VIVO | `projects/cultura/tilde_paridad.py` + `tests/test_tilde_meter.py` + `tests/test_tilde_render.py`; area Cultura de CLAUDE.md | 2026-07-25 (movido de desktop/ en la poda de stack muerto) |
 | `token_budget.py` | REVISAR | AI Op Layer 2026-07-25, recien creado, consumidor pendiente | 2026-07-25 |
+| `venue_geometria_scd.py` | VIVO | genera la sala DEMO `data/venues/scd-plaza-egana.json` (derivada del modelo radial de `projects/plano/referencia_plano_teatro.py`) que abre por defecto el visor `iskvw/piel/venue/`; `tests/test_venue.py` verifica que el archivo del repo sea lo que imprime el generador | 2026-07-30 |
 | `verify_all.py` | REVISAR | AI Op Layer 2026-07-25, recien creado, consumidor pendiente | 2026-07-25 |
 
 Nota: el director listo tambien `render_flyer_mak.py` (VIVO, mak_ops) en
