@@ -784,3 +784,76 @@ Renames are NOT demanded: cron/systemd consumers keep their names, per
 `docs/GLOSSARY.md`. The tool also prints a soft FYI (not enforced) of
 widespread Spanish identifiers the glossary does not map yet -- top spread:
 `nombre` (69 files), `salida` (63), `ruta` (62), `linea` (46), `datos` (45).
+
+## 2026-07-31: the zip landed, and the field was lying since the substrate
+
+The ten area branches produced overnight arrived as a bundle on the user's
+disk, audited by a web agent. All of it is in `main` now (#421 + #422), plus
+three defects that only surfaced BECAUSE it landed. Verified by content, not by
+SHA -- squash merges rewrite them.
+
+**The one defect that mattered.** `iskvw/piel/campo/index.html` decided for the
+WHOLE field whether the archive carried a projection by reading `obras[0]`.
+True while `campo.json` was the only source (219 works, all projected); false
+the moment `archivo.json` arrived (479 pieces, 219 with a measured position and
+260 without -- the derived animated pieces, MAK's essays, and the 8 `obras.json`
+entries that are TOOLS and not works). The first entry is one of those, so the
+published site spread everything by hash and the measured projection was never
+used. Measured with the substrate on disk: 203 marks per frame instead of 7647,
+field stretched to ~220.000 px, effects patch INERT. Whole suite green.
+
+**Why the suite could be green: the instrument measured the easy world.**
+`archivo.json` is gitignored and only `publicar_iskvw.yml` generated it, so CI
+tested a one-source world while the site served another. `ci.yml` now generates
+it before the tests, and the smoke compares the drawn field against the data on
+disk (red on the old skin, green on the new). That is the cut that kills the
+class.
+
+**Landing the areas then exposed a SECOND link layer that had never drawn.** It
+joins pieces by shared tag, all-against-all, per frame. It drew ZERO while
+`campo.json` was the source (those pieces carry no `tags`); the substrate gives
+all 479 `etiquetas` and lit it up: 35.902 segments and 31,7 ms per frame against
+a ceiling of 1200 the repo itself declares. Now gated on there being no measured
+links -- `archivo.json` brings 269 MEASURED ones, drawn by weight underneath
+(the artist's call of 2026-07-30). 99 segments, 1,0 ms. Nothing a visitor ever
+saw was removed: it only ever drew where it still draws. The pinned counts were
+re-taken for the same reason -- 0/6/30/0/9/14/14 counted a defect, not a cost.
+
+**The render bridge, same shape.** `renderizar` and `entregar` were one act
+against a fixed `render_output.png`, so a failed upload cost a whole new render:
+issue #420 rendered twice (~7 min each) while rclone had written 363 MB trying
+to deliver 16,6 MB -- an internal retry loop, not a slow link (8 MB went up at
+306 KiB/s in the same window). The render is saved under its own name, a pass
+that finds it only delivers, and rclone's retries are bounded.
+
+**MAK does its work well, and the handoff's own measurement was wrong.** This
+file said 40 of 50 reports shared one prefix. Measured 2026-07-31: 83 reports,
+53 of them the productora triangulation, and those 53 are 53 DISTINCT events --
+the slug truncates at 40 chars and collapses them in a listing. 35 of 53
+identified the productora, 18 did not, and the ones that failed say so in the
+RESUMEN and open a LAGUNAS section. That is the good behaviour, not the
+dangerous one.
+
+**watsonx is on the FREE Lite plan and the $200 credit is untouched.** Measured
+with `tools/watsonx_smoke.py` on the box: IAM bearer OK in 475 ms, 24 models
+visible, and the chat call returns `429 consumption_limit_reached -- the total
+number of free concurrent requests for model meta-llama/llama-3-3-70b-instruct
+has reached its limit 10`. `/home/mak/n8n-local/research.env` carries ONLY the
+four `WATSONX_*` keys, so `refutar.py`'s default chain (groq, cerebras, azure,
+ollama) has no credentials at all and dies with "Todos los proveedores
+fallaron. Ultimo: None". Consequence, and it is the answer to "how does IBM
+raise quality": `refutar.py` cannot run today -- 83 reports, ONE refutation,
+from 2026-07-16, about mate. Moving the watsonx Runtime instance from Lite to a
+paid plan is a console action in IBM Cloud and it is the user's; it is what
+makes the adversarial pass viable and what starts consuming the credit.
+
+**Branch topology is back to the four lines.** `main`, `rd`, `iskvw` (both
+fast-forwarded to main, 0 behind), `mak` (the inbox, 14 behind, untouched).
+Three stale branches deleted AFTER tagging them (`archivo/<branch>-20260731`,
+plus `efectos-419-20260731`), per the repo's own criterion: a tag is a name for
+a commit git already keeps. PR #419 closed as superseded.
+
+**Still the user's, and not touched:** whether MAK's essays get published on
+iskvw.cl, and where the 260 unpositioned pieces belong beyond not breaking the
+field. `MEMORIA_DIRECCION.md` -- the document that orders the income lines --
+is NOT in the repo; it lives only on his disk.
