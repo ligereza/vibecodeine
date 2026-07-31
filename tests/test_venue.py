@@ -207,6 +207,78 @@ def test_la_geometria_ajustada_no_dispara_el_aviso_de_memoria():
     assert venue.coherencia(_base(geometria=_geo())) == []
 
 
+# ------------------------------------------------------- geometria, medida
+def test_medir_geometria_cuenta_aristas_cierres_y_bbox():
+    """A closed unit square plus one open diagonal: every number is checkable
+    by hand, so a regression here is a wrong count, not a style change."""
+    cuadrado = {"puntos": [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 0]],
+                "confianza": "medido", "capa": "escenario"}
+    diagonal = {"puntos": [[0, 0, 0], [1, 1, 2]], "confianza": "aportado"}
+    m = venue.medir_geometria(_base(geometria=_geo(cuadrado, diagonal)))
+    assert m["polilineas"] == 2
+    assert m["aristas"] == 5
+    assert m["puntos"] == 7
+    assert m["cerradas"] == 1 and m["abiertas"] == 1
+    assert m["degenerados"] == 0
+    assert m["dim"] == [1, 1, 2]
+    assert m["por_confianza"] == {"medido": 4, "aportado": 1}
+    assert m["dim_por_capa"]["escenario"] == [1, 1, 0]
+
+
+def test_medir_geometria_devuelve_none_sin_bloque():
+    assert venue.medir_geometria(_base()) is None
+
+
+def test_un_segmento_de_largo_cero_se_cuenta_y_se_avisa():
+    """It draws nothing and still spends edge budget: a defect the screen
+    cannot show, so the numbers have to."""
+    pl = _poli(puntos=[[0, 0, 0], [0, 0, 0], [1, 0, 0]])
+    v = _base(geometria=_geo(pl))
+    assert venue.medir_geometria(v)["degenerados"] == 1
+    assert any("largo cero" in a for a in venue.coherencia(v))
+
+
+def test_avisa_si_la_cota_declarada_contradice_el_dibujo():
+    """escenario.ancho says 10 m, the drawn stage layer spans 8 m: one of the
+    two lies, and the file has to say so about itself."""
+    escenario = {"puntos": [[-4, 0, 0], [4, 0, 0]], "confianza": "aportado",
+                 "capa": "escenario"}
+    v = _base(escenario={"ancho": {"m": 10, "confianza": "aportado"}},
+              geometria=_geo(escenario))
+    assert any("Uno de los dos miente" in a for a in venue.coherencia(v))
+
+
+def test_no_avisa_si_la_cota_y_el_dibujo_coinciden():
+    escenario = {"puntos": [[-5, 0, 0], [5, 0, 0]], "confianza": "aportado",
+                 "capa": "escenario"}
+    v = _base(escenario={"ancho": {"m": 10, "confianza": "aportado"}},
+              geometria=_geo(escenario))
+    assert not any("miente" in a for a in venue.coherencia(v))
+
+
+def test_avisa_si_la_geometria_supera_el_tope_del_visor():
+    gorda = {"puntos": [[(i % 100) / 10, i // 100, 0] for i in range(900)],
+             "confianza": "ajustado"}
+    v = _base(geometria=_geo(gorda))
+    assert venue.medir_geometria(v)["aristas"] == 899
+    assert any("tope del visor" in a for a in venue.coherencia(v))
+
+
+def test_el_comando_geometria_reporta_numeros_y_falla_con_degenerados(
+        tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(venue, "DIR_VENUES", tmp_path)
+    limpio = _base(id="limpio", geometria=_geo())
+    roto = _base(id="roto",
+                 geometria=_geo(_poli(puntos=[[0, 0, 0], [0, 0, 0], [1, 0, 0]])))
+    (tmp_path / "limpio.json").write_text(json.dumps(limpio), encoding="utf-8")
+    assert venue.geometria() == 0
+    salida = capsys.readouterr().out
+    assert "limpio: 1 polilineas · 1 aristas" in salida
+    (tmp_path / "roto.json").write_text(json.dumps(roto), encoding="utf-8")
+    assert venue.geometria() == 1, "un segmento de largo cero tiene que fallar"
+    assert "largo cero 1" in capsys.readouterr().out
+
+
 # ------------------------------------------------- la sala demo que viaja en el repo
 DEMO = REPO / "data" / "venues" / "scd-plaza-egana.json"
 
@@ -252,6 +324,19 @@ def test_la_sala_demo_se_regenera_igual():
     assert venue_geometria_scd.documento() == _demo(), (
         "el archivo y su generador divergieron: correr py tools/venue_geometria_scd.py"
     )
+
+
+def test_la_sala_demo_mide_limpio():
+    """The demo passes its own numeric bar: the counts the PR declared, zero
+    zero-length segments, and a drawn stage that matches the declared measure
+    (that agreement is also what keeps coherencia() silent on it)."""
+    m = venue.medir_geometria(_demo())
+    assert m["polilineas"] == 56 and m["aristas"] == 503
+    assert m["degenerados"] == 0
+    dim_esc = m["dim_por_capa"]["escenario"]
+    declarado = _demo()["escenario"]
+    assert abs(dim_esc[0] - declarado["ancho"]["m"]) <= venue.TOLERANCIA_COTA_M
+    assert abs(dim_esc[1] - declarado["profundidad"]["m"]) <= venue.TOLERANCIA_COTA_M
 
 
 # ----------------------------------------------------------------- sitio
