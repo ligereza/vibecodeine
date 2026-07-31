@@ -207,13 +207,21 @@ class TestConstruirFicha:
 
         assert set(ficha.keys()) == {
             "id", "fuente", "ruta_rel", "tipo", "categoria", "bytes", "mtime",
-            "ocr_texto", "vision", "datos_evento", "calidad_senal", "error",
-            "seg_proceso", "ts",
+            "ocr_texto", "vision", "datos_evento", "medicion", "calidad_senal",
+            "error", "seg_proceso", "ts",
         }
         assert ficha["fuente"] == "rd"
         assert ficha["ruta_rel"] == "flyer.jpg"
         assert ficha["ocr_texto"] == ""
         assert ficha["categoria"] == ""
+        # `medicion` entra el 2026-07-31 y es lo que este caso demuestra mejor
+        # que ningun otro: la vision REVENTÓ y el ocr corrio vacio, y hasta hoy
+        # las dos cosas se escribian igual -- vacio. Medido sobre las 3.138
+        # fichas reales, `ocr_texto` venia vacio en el 76% sin decir nunca si
+        # era "no habia texto", "no aplica" o "se cayo".
+        assert ficha["medicion"]["vision"]["estado"] == "fallo"
+        assert "ollama_no_disponible" in ficha["medicion"]["vision"]["detalle"]
+        assert ficha["medicion"]["ocr"]["estado"] == "fallo"
         # El esquema depende del corpus desde 2026-07-26: habia UN prompt para
         # dos trabajos distintos (extraer datos de un flyer de RD vs. mapear
         # conceptualmente una obra del archivo), y el constructor de fichas

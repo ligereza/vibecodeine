@@ -661,6 +661,48 @@ def vision_imagen(path: str, timeout: int = 120, fuente: str = "rd") -> dict:
 # Paso 6: ficha (schema UNICO)
 # ---------------------------------------------------------------------------
 
+ESTADOS_MEDICION = ("medido", "vacio", "no_intentado", "fallo")
+
+# Que mediciones aplican a cada tipo de archivo. Es la tabla que convierte un
+# `""` en una respuesta: si el tipo no esta aca, la medicion NO se intento.
+APLICA = {
+    "imagen": ("ocr", "vision"),
+    "video": ("vision",),
+    "pdf": ("ocr", "vision"),
+    "otro": (),
+}
+
+
+def estado_medicion(aplica: bool, valor, error=None) -> dict:
+    """Say WHAT was measured and what was not, instead of leaving a bare `""`.
+
+    Measured 2026-07-31 over the 3.138 real fichas: `ocr_texto` empty in 76%,
+    `datos_evento` empty in 69%. That emptiness meant three different things at
+    once -- the OCR was never run for this file type, it ran and the image
+    carried no text, or it blew up -- and nothing downstream could tell them
+    apart. A skin cannot decide what to do with a datum whose absence has no
+    reason, and neither can a weak model. So the reason travels with the datum:
+
+        no_intentado  esta medicion no aplica a este tipo de archivo
+        fallo         se intento y reventó (el motivo va en `detalle`)
+        vacio         se midio de verdad y no habia nada
+        medido        se midio y hay dato
+
+    Pure on purpose: it takes no path and runs no model, so it is testable off
+    the box and a change in it cannot break a perception run.
+    """
+    if not aplica:
+        return {"estado": "no_intentado", "detalle": "no aplica a este tipo"}
+    if error:
+        return {"estado": "fallo", "detalle": str(error)[:200]}
+    vacio = valor in (None, "", [], {}) or (
+        isinstance(valor, str) and not valor.strip())
+    if vacio:
+        return {"estado": "vacio", "detalle": "se midio y no habia dato"}
+    tam = len(valor) if hasattr(valor, "__len__") else 1
+    return {"estado": "medido", "detalle": "%d" % tam}
+
+
 def calcular_calidad_senal(ocr_texto: str, vision: dict) -> str:
     """alta: vision parseo limpio y (ocr>50 chars o descripcion>100).
     baja: vision con error (fallo parcial) o sin ninguna senal.
@@ -755,6 +797,19 @@ def construir_ficha(entry: dict, dir_tmp: Path, timeout_archivo: int) -> dict:
     )
     categoria = vision.get("categoria", "") or ""
 
+    # Cada medicion declara su estado. Los campos de siempre NO se tocan: el
+    # corpus, el micelio y el contrato del archivo los leen tal cual, y romper
+    # eso para agregar honestidad seria cambiar un defecto por otro.
+    aplica = APLICA.get(tipo, ())
+    medicion = {
+        "ocr": estado_medicion("ocr" in aplica, ocr_texto, error),
+        "vision": estado_medicion("vision" in aplica, vision_final, error),
+        "datos_evento": estado_medicion(
+            fuente == "rd" and "vision" in aplica,
+            [v for v in datos_evento.values() if v] if datos_evento else [],
+            error),
+    }
+
     return {
         "id": id_ficha(fuente, ruta_rel),
         "fuente": fuente,
@@ -766,6 +821,7 @@ def construir_ficha(entry: dict, dir_tmp: Path, timeout_archivo: int) -> dict:
         "ocr_texto": (ocr_texto or "")[:1500],
         "vision": vision_final,
         "datos_evento": datos_evento,
+        "medicion": medicion,
         "calidad_senal": calcular_calidad_senal(ocr_texto, vision),
         "error": error,
         "seg_proceso": round(time.time() - t0, 3),
