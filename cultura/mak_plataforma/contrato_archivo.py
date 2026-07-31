@@ -238,6 +238,54 @@ def desde_campo(campo: dict) -> dict:
     return {"piezas": piezas, "vinculos": []}
 
 
+def desde_laser(manifiesto: dict, campo: dict, existe=None) -> dict:
+    """Las piezas laser/plotter derivadas del material, al contrato.
+
+    `flujo laser lote` camina la carpeta de material y deriva un svg por
+    imagen (rayado o campo de flujo, semilla del nombre). La clave de union
+    con el campo curado es el MEDIA ID: campo.json trae
+    `archivo: posts/<media_id>.mp4` y el material se llama `<media_id>.jpg`
+    -- mismos digitos, misma obra. Una pieza cuyo stem no calza con ninguna
+    obra curada entra igual (es material del artista) pero sin vinculo.
+    Mismas reglas duras: svg ausente = pieza que no entra.
+    """
+    if existe is None:
+        from pathlib import Path as _P
+        raiz = _P(__file__).resolve().parents[2]
+        existe = lambda src: (raiz / src).is_file()  # noqa: E731
+    por_stem = {}
+    for c in campo.get("piezas") or []:
+        archivo = c.get("archivo") or ""
+        stem = archivo.rsplit("/", 1)[-1].rsplit(".", 1)[0]
+        if stem:
+            por_stem[stem] = c["id"]
+    piezas, vinculos = [], []
+    for fila in manifiesto.get("piezas") or []:
+        stem = fila.get("stem")
+        src = fila.get("src")
+        if not stem or not src or not existe(src):
+            continue
+        id_pieza = "laser-%s" % stem
+        obra = por_stem.get(stem)
+        piezas.append({
+            "id": id_pieza,
+            "titulo": stem,
+            "clase": "pieza_grafica",
+            "fecha": None,
+            "resumen": None,
+            "etiquetas": ["laser", fila.get("modo") or "flow", "plotter"],
+            "peso": 1,
+            "medio": {"tipo": "imagen", "src": src},
+            "estado": "publicada",
+            "extra": ({"derivada_de": obra, "semilla": fila.get("semilla")}
+                      if obra else {"semilla": fila.get("semilla")}),
+        })
+        if obra:
+            vinculos.append({"de": id_pieza, "a": obra, "peso": 1.0,
+                             "clase": "manual"})
+    return {"piezas": piezas, "vinculos": vinculos}
+
+
 def desde_animadas(manifiesto: dict, existe=None) -> dict:
     """Las piezas animadas derivadas de las obras curadas, al contrato.
 

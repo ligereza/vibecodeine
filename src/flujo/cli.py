@@ -106,6 +106,7 @@ brief_app = typer.Typer(help="Operaciones sobre briefs.", no_args_is_help=True)
 intake_app = typer.Typer(help="Intake estructurado de pedidos (JSON 1.0).", no_args_is_help=True)
 eventos_app = typer.Typer(help="Automatizaciones del area EVENTOS.", no_args_is_help=True)
 resolume_app = typer.Typer(help="Automatizacion de shows Resolume/Chataigne por SMPTE/OSC.", no_args_is_help=True)
+laser_app = typer.Typer(help="Estetica vectorial para laser/plotter (vpype): rayado, campos de flujo.", no_args_is_help=True)
 render_app = typer.Typer(help="Render y validación de piezas vectoriales.", no_args_is_help=True)
 airdrop_app = typer.Typer(help="Sistema de actualización profesional (airdrops).", no_args_is_help=True)
 datadrop_app = typer.Typer(help="Gestión de datadrops (fotos reales terminadas).", no_args_is_help=True)
@@ -116,6 +117,7 @@ app.add_typer(brief_app, name="brief")
 app.add_typer(intake_app, name="intake")
 app.add_typer(eventos_app, name="eventos")
 app.add_typer(resolume_app, name="resolume")
+app.add_typer(laser_app, name="laser")
 app.add_typer(render_app, name="render")
 app.add_typer(airdrop_app, name="airdrop")
 app.add_typer(datadrop_app, name="datadrop")
@@ -1982,6 +1984,108 @@ def daily(
     media = sum(1 for i in items if i.priority.value == "media")
     baja = sum(1 for i in items if i.priority.value == "baja")
     console.print(f"  alta: {alta}  media: {media}  baja: {baja}")
+
+
+# ============================================================
+# Laser / plotter (estetica vectorial via vpype)
+# ============================================================
+
+@laser_app.command("estado")
+def laser_estado():
+    """Que parte de la cadena vpype esta instalada, medido ejecutandola."""
+    from .laser import verificar
+    estado = verificar()
+    for pieza, ok in estado.items():
+        console.print(f"  {'OK ' if ok else '-- '}{pieza}")
+    if not estado["vpype"]:
+        # \[all] escapado: rich se come [all] como si fuera markup
+        console.print('Instalar: pip install "vpype\\[all]" hatched y el '
+                      'plugin flow desde git (ver flujo laser --help)')
+        raise typer.Exit(1)
+
+
+def _laser_reporte(destino, medida):
+    """Presupuesto de puntos: 600-1000 por frame a 30 kpps
+    (docs/laser/TOOLKIT_INDICE.md). Decirlo siempre, nunca recortar solo."""
+    aviso = "" if medida["dentro"] else         "  [AVISO: sobre el presupuesto, simplificar mas o partir la pieza]"
+    tol = (" (linesimplify %smm)" % medida["tolerancia_mm"]
+           if medida["tolerancia_mm"] else "")
+    console.print(f"OK -> {destino}  {medida['puntos']} puntos{tol}{aviso}")
+
+
+@laser_app.command("hatched")
+def laser_hatched(
+    imagen: Path = typer.Argument(..., help="imagen de entrada (jpg/png/webp)"),
+    salida: Optional[Path] = typer.Option(None, "--output", "-o", help="SVG de salida"),
+    pitch: int = typer.Option(4, "--pitch", help="separacion del rayado en px"),
+):
+    """Zonas oscuras a rayado: un logo solido deja de llegar hueco al laser."""
+    from .laser import hatched
+    if not imagen.exists():
+        _err(f"No existe: {imagen}")
+        raise typer.Exit(1)
+    destino = salida or imagen.with_suffix(".hatched.svg")
+    try:
+        medida = hatched(imagen, destino, pitch=pitch)
+    except RuntimeError as e:
+        _err(str(e))
+        raise typer.Exit(1)
+    _laser_reporte(destino, medida)
+
+
+@laser_app.command("flow")
+def laser_flow(
+    imagen: Path = typer.Argument(..., help="imagen de entrada (jpg/png/webp)"),
+    salida: Optional[Path] = typer.Option(None, "--output", "-o", help="SVG de salida"),
+    semilla: int = typer.Option(7, "--semilla", help="misma semilla = mismo dibujo"),
+):
+    """La imagen se vuelve trazos largos de campo de flujo, casi sin saltos."""
+    from .laser import flow
+    if not imagen.exists():
+        _err(f"No existe: {imagen}")
+        raise typer.Exit(1)
+    destino = salida or imagen.with_suffix(".flow.svg")
+    try:
+        medida = flow(imagen, destino, semilla=semilla)
+    except RuntimeError as e:
+        _err(str(e))
+        raise typer.Exit(1)
+    _laser_reporte(destino, medida)
+
+
+@laser_app.command("lote")
+def laser_lote(
+    carpeta: Path = typer.Argument(..., help="carpeta con el material (imagenes)"),
+    modo: str = typer.Option("flow", "--modo", help="flow | hatched"),
+    limite: Optional[int] = typer.Option(None, "--limite", help="procesar solo N"),
+):
+    """Deriva una pieza laser por imagen y escribe el manifiesto del archivo.
+
+    Las salidas van a iskvw/piel/laser/ y el manifiesto a
+    iskvw/datos/laser.json: con eso las piezas entran al archivo del
+    portafolio vinculadas a su obra curada (la clave es el media id del
+    nombre de archivo). En MAK corre igual: mismo repo, misma orden.
+    """
+    from .laser import lote
+    if modo not in ("flow", "hatched"):
+        _err("modo tiene que ser flow o hatched")
+        raise typer.Exit(1)
+    if not carpeta.is_dir():
+        _err(f"No es carpeta: {carpeta}")
+        raise typer.Exit(1)
+    raiz = Path(__file__).resolve().parents[2]
+    try:
+        filas = lote(carpeta, raiz / "iskvw" / "piel" / "laser",
+                     raiz / "iskvw" / "datos" / "laser.json",
+                     modo=modo, limite=limite)
+    except RuntimeError as e:
+        _err(str(e))
+        raise typer.Exit(1)
+    buenas = [f for f in filas if "src" in f]
+    con_error = len(filas) - len(buenas)
+    console.print(f"{len(buenas)} piezas {modo} -> iskvw/piel/laser/ "
+                  f"({con_error} con error)")
+    console.print("manifiesto -> iskvw/datos/laser.json")
 
 
 # ============================================================

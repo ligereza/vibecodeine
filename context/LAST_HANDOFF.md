@@ -550,3 +550,47 @@ list of what is pending. Before working an item, check it is still true.
 - The repo's front door is honest again but the CLI still speaks Spanish to the
   operator, so `MAPA.md`'s generated command table does too. That is deliberate
   (it mirrors what the user sees when he runs a command), not an oversight.
+
+## The night session (2026-07-30, Fable): the field is ALIVE, and the laser line opened
+
+The portfolio breakage the user reported was found by EXECUTING, not reading:
+PR #403's refactor left `destino`/`dy` out of scope -- ReferenceError on frame
+one, frozen canvas, every python test green because nothing ran the skin's JS.
+Fixed, plus the guard so the class dies: `tools/iskvw_piel_smoke.mjs` runs the
+real inline script in node in CI, walks the field so the per-node code
+executes, fails on async errors and on a vacuously-empty field (verified both
+ways: exit 1 on the broken skin). PRs #408-#412, all merged:
+
+- #408 skin fix + smoke guard + archivo.json generated at publish time.
+- #409 venue commons base (block B of paqueteintegrar; block A landed in #405).
+- #410 crontab.mak versioned + reference ratchet (see the correction below).
+- #411 a pieza_grafica presents ITS OWN animated svg on the stay-still gesture.
+- #412 the artist's works: 219 curated pieces (campo.json under the user's
+  filter) become first-class contract pieces via `desde_campo` -- the
+  CI-generated archive used to carry NO artist works when the micelio was
+  unreachable -- and each derives its animated piece with the motor semantico
+  (deterministic: measured tilde -> latir (160 works), measured colors -> tono,
+  id-seeded elsewhere). Field measured live: 479 pieces, 269 links, 61 fps,
+  doublecup texture (the glyphs ARE each work's perceived vocabulary,
+  diacritics included). The user's corrections that shaped it: the 8 obras.json
+  entries are TOOLS, not works; the rave essay was the DEMO of the mechanism.
+
+A correction of my own inside the night: I restored `agente_real.py` citing a
+cron that the day session had already retired -- stale evidence, my own
+crontab capture proved it and I did not re-read it. Reverted (file out of repo
+and box again); the crontab ratchet stays and would have caught exactly this.
+
+The laser line (user's toolkit now in-repo at `docs/laser/TOOLKIT_INDICE.md`,
+his real rig: 2x Pangolin, FB3-QS, QuickShow without BEYOND): `flujo laser`
+CLI (hatched / flow / lote -> manifest), the 600-1000 points-per-frame budget
+built in (declared tolerances in order, over-budget REPORTED never cropped),
+`desde_laser` joins pieces to curated works by media id. Upstream state,
+measured: vpype installs fine; the hatched and flow-imager PLUGINS are broken
+against numpy 2.x (flow: kdtree TypeError; hatched: empty output) -- numpy<2
+pin under verification at close. The tool degrades honestly (estado + clear
+install instructions) either way.
+
+Deploy state at close: iskvw.cl serves the #411 build (41 pieces, essay icons
+reachable). The 479-piece field ships when the laser-tool PR merges: it
+carries the workflow fix (mirror iskvw-internal piece dirs at their repo
+paths) for the deploy that the new coherence gate correctly blocked.

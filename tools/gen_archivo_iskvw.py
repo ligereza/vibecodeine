@@ -37,6 +37,7 @@ CAMPO = RAIZ / "iskvw" / "datos" / "campo.json"
 SALIDA = RAIZ / "iskvw" / "datos" / "archivo.json"
 ENSAYOS = RAIZ / "docs" / "cultura" / "ensayos"
 ANIMADAS = RAIZ / "iskvw" / "datos" / "animadas.json"
+LASER = RAIZ / "iskvw" / "datos" / "laser.json"
 
 # Por defecto el micelio se pide a la variable de entorno, no a una IP escrita
 # en el repo: este repositorio es publico.
@@ -234,6 +235,21 @@ def desde_campo_curado(ruta: Path = CAMPO) -> dict:
     return contrato_archivo.desde_campo(datos)
 
 
+def desde_laser_manifiesto(campo_ruta: Path = CAMPO,
+                           ruta: Path = LASER) -> dict:
+    """Las piezas laser/plotter del manifiesto, unidas al campo por media id.
+
+    Genera `flujo laser lote`; la conversion vive en el contrato
+    (`desde_laser`). Sin manifiesto se sigue sin el.
+    """
+    if not ruta.is_file():
+        return {"piezas": [], "vinculos": []}
+    manif = json.loads(ruta.read_text(encoding="utf-8"))
+    campo = (json.loads(campo_ruta.read_text(encoding="utf-8"))
+             if campo_ruta.is_file() else {})
+    return contrato_archivo.desde_laser(manif, campo)
+
+
 def unir(*partes: dict) -> dict:
     """Junta fuentes sin duplicar: una obra percibida por MAK y la misma obra
     cargada a mano son UNA pieza. Gana la que trae mas datos."""
@@ -263,7 +279,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--fuente",
                     choices=("obras", "campo", "micelio", "ensayos", "animadas",
-                             "todo"),
+                             "laser", "todo"),
                     default="obras")
     ap.add_argument("--url", default=MICELIO_URL)
     ap.add_argument("--umbral", type=float, default=UMBRAL_MICELIO)
@@ -292,6 +308,8 @@ def main() -> int:
         partes.append(desde_ensayos())
     if args.fuente in ("animadas", "todo"):
         partes.append(desde_animadas())
+    if args.fuente in ("laser", "todo"):
+        partes.append(desde_laser_manifiesto(args.posiciones))
 
     datos = unir(*partes)
 

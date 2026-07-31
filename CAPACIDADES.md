@@ -17,6 +17,7 @@ CLI real (`py -m flujo --help`, v0.56.1), comandos principales:
 - `rd-db`, `rd-datos` -- DB consultable RD (reactivos/packs/productoras/venues) + ingesta privacy-first.
 - `eventos` -- automatizaciones (incluye `flyer-auto` desde link de Instagram).
 - `resolume` -- automatizacion de shows Resolume/Chataigne por SMPTE/OSC (`.noisette`, schema validado contra fixtures reales).
+- `laser` -- estetica vectorial para laser/plotter via vpype (externo, opcional): `hatched` (relleno->rayado), `flow` (imagen->campo de flujo, semilla determinista), `lote` (carpeta de material -> svgs + manifiesto que entra al archivo iskvw). Presupuesto de puntos 600-1000/frame integrado; restricciones duras y rig del usuario en `docs/laser/TOOLKIT_INDICE.md`.
 - `render`, `analyze`, `export` -- render/validacion de piezas vectoriales, analisis de color/OCR, export ZIP.
 - `tapiz` -- pipeline generativo Tapiz<->Psicosis<->Fungi (`tools/compete_engine.py`).
 - `datadrop`, `index`, `flyer-import`, `flyer-list`, `ig-redownload` -- ingesta y catalogo de material real.
