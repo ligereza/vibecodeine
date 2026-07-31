@@ -65,3 +65,41 @@ def test_abstraccion_se_acota_e_ids_desconocidos_se_ignoran():
     a = next(p for p in r["piezas"] if p["id"] == "a")
     assert a["extra"]["abstraccion"] == 1.0
     assert len(r["piezas"]) == 3
+
+# ── The three optional fields (2026-07-31): peso, serie, nota ──────────
+# The curation grows by fields that change NOTHING until the artist writes
+# them: a new default would be an aesthetic decision that is not ours.
+
+
+def test_peso_serie_y_nota_viajan_cuando_se_escriben():
+    cur = {"piezas": {"a": {"peso": 2.5, "serie": "raíces",
+                            "nota": "Ésta abre la serie — el daño y el año."}}}
+    r = contrato_archivo.aplicar_curaduria(_datos(), cur, existe=lambda s: True)
+    a = next(p for p in r["piezas"] if p["id"] == "a")
+    assert a["peso"] == 2.5
+    assert a["extra"]["serie"] == "raíces"
+    # human-read value: the diacritics survive the whole pass, verbatim
+    assert a["extra"]["nota"] == "Ésta abre la serie — el daño y el año."
+
+
+def test_campos_opcionales_son_inertes_si_no_se_escriben():
+    """A piece the curation does not name keeps exactly what its source
+    measured: no peso appears, no serie, no nota. Optional means inert."""
+    cur = {"piezas": {"a": {"titulo": "sólo el título"}}}
+    r = contrato_archivo.aplicar_curaduria(_datos(), cur, existe=lambda s: True)
+    a = next(p for p in r["piezas"] if p["id"] == "a")
+    assert "peso" not in a
+    assert "serie" not in a["extra"] and "nota" not in a["extra"]
+    b = next(p for p in r["piezas"] if p["id"] == "b")
+    assert b["extra"] == {} and "peso" not in b
+
+
+def test_peso_no_positivo_no_desplaza_al_medido():
+    """peso <= 0 says nothing (a piece with no matter is `mostrar: false`,
+    not weight zero), so the source's own peso survives."""
+    datos = _datos()
+    datos["piezas"][0]["peso"] = 3
+    cur = {"piezas": {"a": {"peso": 0}}}
+    r = contrato_archivo.aplicar_curaduria(datos, cur, existe=lambda s: True)
+    a = next(p for p in r["piezas"] if p["id"] == "a")
+    assert a["peso"] == 3

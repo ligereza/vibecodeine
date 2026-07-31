@@ -70,6 +70,11 @@ py tools/gen_archivo_iskvw.py --fuente todo
 
 # las librerías de la piel, como módulos ESM sin CDN ni build
 py tools/vendorizar_iskvw.py
+
+# la curaduría, validada antes de entrar al portón: ids desconocidos o
+# duplicados, campos inválidos, svg firmado ausente, diacríticos mutilados
+py tools/validar_curaduria.py
+py tools/validar_curaduria.py --curaduria <descarga>/curaduria.json
 ```
 
 ## Qué se edita a mano y qué se genera
@@ -80,13 +85,28 @@ py tools/vendorizar_iskvw.py
 `data/iskvw_librerias.json` — qué librerías se vendorizan.
 
 **Se edita a mano o con el panel**: `datos/curaduria.json` — la mano del
-artista (título, mostrar, abstracción, svg firmado, régimen). El panel es
-`iskvw/editor.html`: una página estática, sin build y sin servidor propio. Se
-abre con el repo servido desde la raíz (`py -m http.server`, después
+artista (título, mostrar, abstracción, svg firmado, régimen, y desde
+2026-07-31 tres campos opcionales que no cambian nada hasta que se escriben:
+**peso** — número > 0, cuánta materia tiene la pieza, desplaza al peso medido
+del contrato—, **serie** —etiqueta de agrupación, viaja en `extra.serie`— y
+**nota** —la nota del artista, en `extra.nota`, español correcto con tildes).
+El panel es `iskvw/editor.html`: una página estática, sin build y sin servidor
+propio. Se abre con el repo servido desde la raíz (`py -m http.server`, después
 `/iskvw/editor.html`), lee `datos/archivo.json` y si no está `datos/campo.json`,
 y su única salida es un **`curaduria.json` que se descarga**: no escribe en
 disco, el archivo entra por el mismo portón que todo lo demás. Una pieza que no
 se toca **no aparece** en ese archivo — cada id que sale es una decisión.
+
+Tres protecciones del panel (2026-07-31): **importar** un `curaduria.json`
+descargado y todavía no commiteado para seguir editándolo (botón en la
+cabecera; sin eso, reabrir la página retomaba en silencio la copia vieja del
+repo); el navegador **pregunta antes de cerrar** si hay ediciones que no se
+descargaron (descargar es lo que marca el estado como a salvo); y un campo por
+pieza que el panel **no entiende viaja intacto** en la salida — la misma regla
+que el tablero declara para sus valores no booleanos. El circuito completo
+—panel → validador → consumidor— está fijado por
+`tests/test_curaduria_roundtrip.py`: lo que el panel exporta valida sin
+errores y es exactamente lo que `aplicar_curaduria()` obedece.
 
 La misma página tiene el **tablero de mejoras**: `datos/tablero.json`
 (`{"version": 1, "mejoras": {…}}`), un interruptor por clave. Las claves las
