@@ -50,7 +50,7 @@ import time
 
 sys.path.insert(0, "/home/mak/research")
 from research_lib import (LLM, MODELO_CAPAZ, _http_json, escala_tok,  # noqa: E402
-                          load_env, red_ok, slug, stamp)
+                          load_env, red_ok, slug, stamp, watsonx_chat)
 
 # fallback_util vive junto a este archivo (deploy plano en ~/codex). Si falta
 # en la caja viva, fallback_util queda en None y el mensaje de error de
@@ -76,12 +76,36 @@ WIN_CODE_MODEL = "deepseek-coder-v2:16b-lite-instruct-q4_K_M"
 # esto para poder reordenar/recortar la cadena por env var sin tocar codigo
 # (ej. CODER_CHAIN=win,ollama si NIM esta 429 esa sesion).
 _CODER_CHAIN_MAP = {
+    "wx-llama": ("watsonx", "meta-llama/llama-3-3-70b-instruct"),
+    "wx-granite": ("watsonx", "ibm/granite-4-h-small"),
     "nim-pro": ("nim", "deepseek-ai/deepseek-v4-pro"),
     "nim-flash": ("nim", "deepseek-ai/deepseek-v4-flash"),
     "win": ("win", WIN_CODE_MODEL),
     "ollama": ("ollama", "deepseek-coder:6.7b"),
 }
-_CODER_CHAIN_DEFAULT = ["nim-pro", "nim-flash", "win", "ollama"]
+# watsonx encabeza, y `win` SALE del default. No es preferencia: `win` es la
+# notebook que el usuario retiro, sondeada el 2026-07-31 desde la caja -- no
+# responde -- y sin embargo iba PRIMERA en la cadena viva
+# (CODER_CHAIN=win,nim-pro,nim-flash,ollama). De los 109 trabajos en FALLO, 22
+# son literalmente `timeout 900s`: la cadena empezaba esperando a una maquina
+# apagada. Sigue en el mapa porque la notebook puede volver; deja de ser lo
+# primero que se intenta por defecto.
+#
+# La eleccion de modelo esta MEDIDA, no elegida por su nombre
+# (`tools/watsonx_coder_bench.py`, 2026-07-31, cuenta real, dos corridas): una
+# tarea de fusionar intervalos con seis casos EJECUTADOS. Cuatro de cinco
+# candidatos dan 6/6 entre 1.300 y 2.800 ms; el unico que falla es
+# **granite-8b-CODE-instruct** (5/6), y falla la regla de descartar el tramo
+# invalido: `[(5,1),(2,4)]` le sale `[(2,4),(5,1)]`. El unico etiquetado "code"
+# es el peor de la tanda -- por eso esto se mide y no se elige leyendo nombres.
+# Lidera llama-3-3-70b, que ademas ya traia 32/32 medido en research;
+# granite-4-h-small va segundo por ser el rapido que acierta.
+# Lo que una sola tarea NO decide es cual de los 6/6 sirve mas para trabajo de
+# codigo real; eso se cambia con CODER_CHAIN, sin tocar codigo. (Una medicion
+# que no se sostuvo: mistral-small dio 39 s en la primera corrida y 1,7 s en la
+# segunda. Era un pico, no una propiedad -- por eso van dos corridas.)
+_CODER_CHAIN_DEFAULT = ["wx-llama", "wx-granite", "nim-pro", "nim-flash",
+                        "ollama"]
 
 
 def _parse_coder_chain(csv_value):
@@ -166,6 +190,13 @@ class CoderLLM:
     def _win(self, system, user, max_tok, model):
         return self._ollama_chat(WIN_BASE_URL, system, user, max_tok, model)
 
+    def _watsonx(self, system, user, max_tok, model):
+        """El endpoint no se reimplementa aca: se comparte con research. La
+        temperatura SI cambia -- 0.1 en vez de 0.3 -- porque un coder tibio
+        inventa APIs que no existen, y eso es la mitad de los archivos inertes
+        que este departamento produjo."""
+        return watsonx_chat(system, user, max_tok, model, temperatura=0.1)
+
     def call(self, system, user, max_tok=1200):
         cadena = list(self.chain)
         # sin internet: win/ollama primero (LAN directa, no depende de
@@ -173,7 +204,10 @@ class CoderLLM:
         if not red_ok():
             frente = [c for c in cadena if c[0] in ("win", "ollama")]
             cadena = frente + [c for c in cadena if c not in frente]
-        fns = {"nim": self._nim, "win": self._win, "ollama": self._ollama}
+        # Se deriva del mapa de la cadena: mantener aca una segunda lista de
+        # proveedores es como `refutar.py` quedo sin poder llamar a watsonx.
+        fns = {p: getattr(self, "_" + p)
+               for p, _ in _CODER_CHAIN_MAP.values()}
         last = None
         intentos = []  # todos los intentos fallidos, no solo el ultimo
         for prov, model in cadena:

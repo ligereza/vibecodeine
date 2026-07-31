@@ -857,3 +857,82 @@ a commit git already keeps. PR #419 closed as superseded.
 iskvw.cl, and where the 260 unpositioned pieces belong beyond not breaking the
 field. `MEMORIA_DIRECCION.md` -- the document that orders the income lines --
 is NOT in the repo; it lives only on his disk.
+
+## 2026-07-31, second half: the two departments that could not reach their provider
+
+IBM watsonx moved off the free Lite plan to a paid instance (the user's console
+action; the API key never changed and the project needed re-associating, which
+took a few minutes to propagate). That unblocked a measurement that had been
+impossible, and it found the same defect twice.
+
+**`refutar.py` could not be run at all, and it was not the rate limit.** It
+filtered its `--orden` against a literal `("groq", "cerebras", "azure",
+"ollama")` written by hand, which predates `watsonx` and `win`. So
+`--orden watsonx` was dropped without a word, the list came out empty, the
+default chain took over, and every provider in it was skipped for having no
+key: `RuntimeError: Todos los proveedores fallaron. Ultimo: None` -- a message
+that names nobody because nothing was ever attempted. On the box,
+`/home/mak/n8n-local/research.env` carries ONLY the four `WATSONX_*` keys, so
+the tool discarded the only provider with credentials and blamed the providers.
+That is why the adversarial pass had run ONCE since 2026-07-16: 83 reports, one
+refutation, about mate. Fixed in #426: `PROVIDERS` / `PROVIDER_ENV_KEY` in
+`research_lib` are the single source, `call()` derives its dispatch from them,
+and an unknown name is dropped OUT LOUD.
+
+**The same shape in codex, one hour later (#427).** The live chain was
+`CODER_CHAIN=win,nim-pro,nim-flash,ollama` -- `win` FIRST, and `win` is the
+notebook the user retired; probed from the box it does not answer. Of 109 codex
+jobs in FALLO, 22 read literally `timeout 900s`. The department that writes
+code began every job waiting on a machine that is off, while watsonx was not
+even a key in the map. `watsonx_chat()` is now a module function shared by both
+departments (codex gets no second copy of the endpoint, and asks for
+temperature 0.1 because a warm coder invents APIs). `win` leaves the default
+and stays in the map.
+
+**The model is measured, never chosen by its name.**
+`tools/watsonx_coder_bench.py`, two runs on the real account, six
+interval-merging cases EXECUTED: four of five candidates 6/6 between 1,3 and
+2,8 s, and `ibm/granite-8b-CODE-instruct` 5/6 -- the only one labelled "code"
+is the only one that fails, and it fails by keeping the invalid interval
+instead of dropping it. A measurement that did NOT hold is recorded with it:
+mistral-small took 39 s on the first run and 1,7 s on the second, so that was a
+spike and not a property. Two runs is the reason it is known.
+
+**The adversarial pass RUNS now, and as first wired it would have rubber
+stamped the lie.** Run against the claim of the most dangerous report in the
+repo it answered "sostiene parcialmente", citing UNAM cultural-studies papers
+and a Swedish Wikipedia stats dump. Cause: `refutar.py` glued the cultural
+frame onto the topic and searched with the whole string -- exactly what
+`marco_solo()` was written to cut in `research.py` on 2026-07-30, still alive
+there. With the frame going to the MODEL, the source gate choosing the queries
+(`fuentes.dominio_de_tema` -> `sugerir_queries` -> `evaluar` ->
+`instruccion_sintesis`), and a different model per role, the same claim comes
+back: `dominio cl_legal -- 6 de 10 fuentes son primarias`, sources reaching
+`bcn.cl/leychile`, the proponent refusing to argue it, and the verdict
+**"REFUTADA por falta de respaldo en las fuentes primarias"**.
+
+**MAK does its work well, and this file's own measurement was wrong.** It said
+40 of 50 reports shared one prefix. Measured: 83 reports, 53 of them the
+productora triangulation, and those 53 are 53 DISTINCT events -- the slug
+truncates at 40 characters and collapses them in a listing. 35 of 53 identified
+the productora, 18 did not, and the ones that failed say so in the RESUMEN and
+open a LAGUNAS section.
+
+**Named, not fixed:** the search itself is flaky. `web_search` goes to a
+self-hosted SearXNG first and falls back to Tavily, and the box has no Tavily
+key, so a pass can come back with zero sources. With zero the gate reports
+honestly (0 of 0) and the verdict softens -- the reasoning is right, the
+evidence was not there. And `refutar` is NOT wired as an automatic per-report
+gate: doing that before the search is reliable would stamp "adversarially
+verified" on invented claims.
+
+**On automating the model choice (the user asked).** The BENCH can run alone --
+it executes code against cases, there is no judgement in it. Letting a model
+decide which model leads is the `expulsion.py` pattern and must not be built:
+today's run is the proof, since a model asked "which one codes best" would have
+answered "the one called code-instruct", which is the one that failed.
+
+**Deploy verified against the LIVE site, not the repo:** `iskvw.cl` serves
+`const medida = o =>` (1 hit), `conXY` (0 hits), and `datos/archivo.json` with
+479 pieces / 269 links / 219 positioned. The published portfolio draws the
+works where they were measured.
