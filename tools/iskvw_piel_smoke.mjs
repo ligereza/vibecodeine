@@ -178,6 +178,42 @@ if (base.trabajoDeNodo < 1) morir(new Error("per-node draw code never executed: 
 if (base.patchOn !== false) morir(new Error(`without a board the patch must stay off, got ${base.patchOn}`));
 console.log(`OK: boot + frames ran without throwing (NODOS=${base.nodos}, marcas=${base.traza.length})`);
 
+// A piece that CARRIES a measured position must be drawn at it. The skin used
+// to decide that for the WHOLE field from `obras[0]`, true while campo.json
+// was the only source and false the moment archivo.json arrived carrying 219
+// projected works next to 260 that are not. The field then fell back to
+// hashes, stretched to ~220.000 px and drew 203 marks per frame instead of
+// 7647 -- with the whole suite green, because CI never generated the
+// substrate. This compares the drawn field against the data on disk, which is
+// the only way that class of defect stops being invisible.
+{
+  let d = null;
+  try {
+    d = JSON.parse(readFileSync(join(raiz, "iskvw", "datos", "archivo.json"), "utf8"));
+  } catch (e) {
+    // Sin sustrato en disco no hay nada que exigir: es el caso del clon limpio.
+    if (!e || e.code !== "ENOENT") throw e;
+  }
+  const esperadas = new Map();
+  for (const p of ((d && d.piezas) || []))
+    if (p.posicion && typeof p.posicion.y === "number")
+      esperadas.set(p.id, (p.posicion.y + 1) * 2600);
+  if (esperadas.size) {
+    const ys = base.evaluar("NODOS.map(n => [n.obra && n.obra.id, n.y])", []);
+    let colocadas = 0, mal = null;
+    for (const [id, y] of ys) {
+      const q = esperadas.get(id);
+      if (q === undefined) continue;
+      if (Math.abs(y - q) < 0.5) colocadas++;
+      else mal = mal || `${id}: dibujada en ${y.toFixed(0)}, medida en ${q.toFixed(0)}`;
+    }
+    if (colocadas !== esperadas.size)
+      morir(new Error(`the substrate carries ${esperadas.size} measured positions `
+        + `and the field honours ${colocadas} (${mal || "id missing from the field"})`));
+    console.log(`OK: ${colocadas} works drawn at their measured position`);
+  }
+}
+
 // ── 2. the board that actually ships, whatever it says ────────────────────
 const tableroReal = JSON.parse(readFileSync(join(raiz, "iskvw", "datos", "tablero.json"), "utf8"));
 const conArchivo = await correr({ tablero: tableroReal });
