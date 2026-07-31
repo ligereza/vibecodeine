@@ -70,6 +70,11 @@ py tools/gen_archivo_iskvw.py --fuente todo
 
 # las librerías de la piel, como módulos ESM sin CDN ni build
 py tools/vendorizar_iskvw.py
+
+# la curaduría, validada antes de entrar al portón: ids desconocidos o
+# duplicados, campos inválidos, svg firmado ausente, diacríticos mutilados
+py tools/validar_curaduria.py
+py tools/validar_curaduria.py --curaduria <descarga>/curaduria.json
 ```
 
 ## Qué se edita a mano y qué se genera
