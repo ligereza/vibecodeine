@@ -199,6 +199,27 @@ defect is pinned by a test. Measured: 207 to 615 segments per frame against the
 **Still the user's, and he wants to DEBATE it first:** whether the essays get
 published on iskvw.cl. The bridge is built and unused.
 
+## iskvw: the curation chain closed in a loop (2026-07-31)
+
+The chain from #414/#416 (panel -> curaduria.json -> aplicar_curaduria)
+grew three things, all tested; detail in `iskvw/MAPA.md`:
+
+1. **Three optional fields, inert until written**: `peso` (>0, displaces the
+   contract's measured peso), `serie` (extra.serie) and `nota` (extra.nota,
+   human-read: correct Spanish pinned by test). No skin draws them yet on
+   purpose -- what a skin does with them is the artist's call, not an agent's.
+2. **`tools/validar_curaduria.py`**: says out loud what the consumer swallows
+   silently (unknown/duplicate ids, absent signed svg, invalid values,
+   mangled diacritics = ERROR). Exit 1 on errors; the CLI runs over the repo's
+   real files inside `tests/test_validar_curaduria.py`, so it is already a CI
+   gate.
+3. **Panel robustness**: import a downloaded curaduria.json to continue
+   editing, beforeunload guard against losing edits, and unknown per-piece
+   fields travel out untouched. `tests/test_curaduria_roundtrip.py` runs the
+   REAL construirCuraduria() from editor.html in node, feeds the output to
+   the validator (0 errors) and then to aplicar_curaduria(): the three
+   parties provably speak one dialect. No look change to the panel.
+
 ## The repo is not the truth: the two machines are (2026-07-30)
 
 Measured by diffing the disks, which is the check that had never been run.
