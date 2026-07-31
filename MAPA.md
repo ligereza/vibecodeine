@@ -157,7 +157,7 @@ program says to the operator who runs it.
 
 <!-- COMANDOS:INICIO -- generado por tools/gen_mapa_comandos.py, no editar a mano -->
 
-Medido sobre el CLI real: **87 comandos** (23 sueltos + 64 dentro de 15 grupos).
+Medido sobre el CLI real: **91 comandos** (23 sueltos + 68 dentro de 16 grupos).
 
 ### Comandos sueltos
 
@@ -271,6 +271,15 @@ Medido sobre el CLI real: **87 comandos** (23 sueltos + 64 dentro de 15 grupos).
 | `py -m flujo laser lote` | Deriva una pieza laser por imagen y escribe el manifiesto del archivo. | nada |
 | `py -m flujo laser medir` | Los numeros reales del frame: puntos, trazos, dibujo y viaje apagado. | nada |
 | `py -m flujo laser ild` | SVG a ILDA Type 5 (RGB): el formato que QuickShow SI importa. | nada |
+
+### Grupo `micelio` -- El sobre micelio/1: semilla, fruto y nutriente entre un modelo web sin API y el organismo.
+
+| Comando | Que hace | Que necesita antes |
+|---|---|---|
+| `py -m flujo micelio formato` | Imprime el formato para PEGARSELO al modelo web antes de contarle la idea. | nada |
+| `py -m flujo micelio validar` | Dice si el sobre sirve, y si no, QUE le falta -- en castellano, para poder pegarle la respuesta de vuelta al modelo que lo escribio. | nada |
+| `py -m flujo micelio fruto` | Mide un dataset y arma un fruto que CABE en una ventana de chat. | nada |
+| `py -m flujo micelio verificar` | Corre el criterio y devuelve VERDE o ROJO. Es el semaforo del ciclo. | nada |
 
 ### Grupo `privacy` -- Privacidad para textos antes de IA externa.
 
