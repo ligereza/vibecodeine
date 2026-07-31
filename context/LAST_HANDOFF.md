@@ -234,6 +234,23 @@ Found while editing that loop and fixed in the same commit: `abstr` was a free
 variable in the glyph branch, only evaluated under the `industrial` regime -- a
 ReferenceError waiting for the artist to switch regimes.
 
+**Re-landed on top of venue+vigia (2026-07-31).** Main moved after the branch
+(PRs #417 and #418); the merge had ONE conflict, in `tablero.json`: main added
+the `venue3d` flag, the branch added `patch_efectos` plus the wiring. Resolved
+keeping BOTH flags off plus the full wiring. All piel/venue/vigia tests green
+after the merge (full suite 1762 passed, 42 skipped).
+
+**Per-effect switches (2026-07-31), same session:** the patch was all-or-nothing
+under the master. Now `efectos` in `tablero.json` gives each of the five its own
+switch, all SHIPPED ON so the master alone behaves as before; a switch in false
+drops that effect's routes at compile time (coefficient exactly zero, zero cost
+per frame). Measured effect by effect in the smoke -- each runs ALONE and must
+leave the signature only it can leave (curvatura displaces without recolouring,
+sangrado recolours without displacing, desgarro tears x-only, pulso alters the
+glyph trace, gravedad drifts the reading), and with all five off the loud board
+draws mark for mark like no board at all. The pytest demands the six new
+measurements by name.
+
 ## The repo is not the truth: the two machines are (2026-07-30)
 
 Measured by diffing the disks, which is the check that had never been run.
