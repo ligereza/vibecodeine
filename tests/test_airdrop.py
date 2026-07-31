@@ -41,8 +41,8 @@ def test_airdrop_signatures_are_versionless():
     assert scan_params == [], "scan_airdrop() no debe pedir versión"
 
     apply_params = list(inspect.signature(airdrop.apply_airdrop).parameters)
-    # solo el flag opcional dry_run
-    assert apply_params in ([], ["dry_run"]), apply_params
+    # solo flags opcionales: dry_run y allow_unsigned (override humano VCD-09)
+    assert apply_params in ([], ["dry_run"], ["dry_run", "allow_unsigned"]), apply_params
 
 
 # ---------------------------------------------------------------------------

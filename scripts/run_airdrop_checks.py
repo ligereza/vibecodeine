@@ -131,11 +131,13 @@ def _airdrop_dry_run(log) -> None:
     _write(log, f"Total: {len(changes)} archivos serían afectados.")
 
 
-def _airdrop_apply(log) -> None:
+def _airdrop_apply(log, allow_unsigned: bool = False) -> None:
     _ensure_src_first()
     from flujo.airdrop import apply_airdrop
 
-    changes = apply_airdrop()
+    # allow_unsigned is the explicit HUMAN override for the signed-airdrop gate
+    # (VCD-09): a person typed --allow-unsigned after reviewing the payload.
+    changes = apply_airdrop(allow_unsigned=allow_unsigned)
     if not changes:
         raise RuntimeError("No hay archivos pendientes en _airdrop/")
     _write(log, "Airdrop aplicado:")
@@ -200,6 +202,15 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Permite airdrops que modifican src/flujo/airdrop.py tras revisión explícita",
     )
+    parser.add_argument(
+        "--allow-unsigned",
+        action="store_true",
+        help=(
+            "Aprobación humana explícita: aplicar un payload sin firma válida "
+            "aunque FLUJO_AIRDROP_HMAC_KEY esté configurada (solo tras revisión "
+            "manual; nunca automatizado)"
+        ),
+    )
     args = parser.parse_args(argv)
 
     LOG_DIR.mkdir(exist_ok=True)
@@ -228,7 +239,7 @@ def main(argv: list[str] | None = None) -> int:
                     ),
                 ),
                 ("airdrop dry-run", lambda: _run_step(log, "flujo.airdrop.scan_airdrop()", lambda: _airdrop_dry_run(log))),
-                ("airdrop apply", lambda: _run_step(log, "flujo.airdrop.apply_airdrop()", lambda: _airdrop_apply(log))),
+                ("airdrop apply", lambda: _run_step(log, "flujo.airdrop.apply_airdrop()", lambda: _airdrop_apply(log, args.allow_unsigned))),
             ])
 
         compile_targets = ["src", "scripts", "tests"]

@@ -5,13 +5,15 @@ del repo (ej. `_airdrop/src/flujo/cli.py`). Luego `flujo airdrop apply` los
 copia a su destino, crea backup, y dispara checkpoint + push automáticamente.
 """
 
+import hashlib
+import hmac
 import json
 import os
 import shutil
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from .paths import repo_root
 
@@ -68,9 +70,160 @@ def _cleanup_empty_parents(path: Path, repo: Path) -> None:
         current = current.parent
 
 
+# --- Signed airdrops (VCD-09) --------------------------------------------
+# The mail path used to authorize by comparing the forgeable `From:` header
+# and then apply + push code. The real fix is a signed artifact plus a human
+# approval. Convention follows cultura/mak_plataforma/mutaciones.py's style
+# (plain-JSON artifacts, stdlib only); the crypto is HMAC-SHA256 with a shared
+# key from the FLUJO_AIRDROP_HMAC_KEY environment variable.
+#
+# Artifacts, both living at the root of _airdrop/ and never applied as payload:
+#   _airdrop_signed_manifest.json  {"version": 1, "algorithm": "hmac-sha256",
+#                                   "files": {"rel/path": "<sha256 hex>", ...}}
+#   _airdrop_signed_manifest.sig   hex HMAC-SHA256 of the manifest file bytes
+#
+# With no key configured, behavior is byte-for-byte the historical one.
+SIGNED_MANIFEST_NAME = "_airdrop_signed_manifest.json"
+SIGNATURE_NAME = "_airdrop_signed_manifest.sig"
+SIGNING_KEY_ENV = "FLUJO_AIRDROP_HMAC_KEY"
+_SIGNING_ALGORITHM = "hmac-sha256"
+
+
+class AirdropSignatureError(RuntimeError):
+    """A signed-airdrop policy refusal. Carries one reason per offending file."""
+
+    def __init__(self, problems: List[str]):
+        self.problems = list(problems)
+        detail = "\n".join(f"  - {p}" for p in self.problems)
+        super().__init__(
+            "Firma del airdrop inválida; no se aplicó nada:\n" + detail +
+            "\nSi un humano revisó el contenido y lo aprueba, puede aplicar con "
+            "--allow-unsigned (nunca automatizado)."
+        )
+
+
+def get_signing_key() -> Optional[bytes]:
+    """Key bytes from FLUJO_AIRDROP_HMAC_KEY, or None when unset/empty."""
+    raw = os.getenv(SIGNING_KEY_ENV, "")
+    return raw.encode("utf-8") if raw else None
+
+
+def _sha256_file(path: Path) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def build_signed_manifest() -> Dict:
+    """Deterministic manifest of the current _airdrop/ payload.
+
+    Same payload bytes -> same manifest bytes: no timestamps, sorted keys.
+    """
+    files = {c["rel"]: _sha256_file(c["src"]) for c in scan_airdrop()}
+    return {"version": 1, "algorithm": _SIGNING_ALGORITHM, "files": files}
+
+
+def manifest_to_bytes(manifest: Dict) -> bytes:
+    """Canonical serialization: what gets written and what gets signed."""
+    return json.dumps(
+        manifest, ensure_ascii=True, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+
+
+def sign_airdrop() -> Tuple[Path, Path]:
+    """Write manifest + detached HMAC signature for the _airdrop/ payload."""
+    key = get_signing_key()
+    if key is None:
+        raise RuntimeError(
+            f"{SIGNING_KEY_ENV} no está configurada: no se puede firmar."
+        )
+    if not scan_airdrop():
+        raise RuntimeError("No hay archivos en _airdrop/ para firmar.")
+    data = manifest_to_bytes(build_signed_manifest())
+    signature = hmac.new(key, data, hashlib.sha256).hexdigest()
+    base = get_airdrop_dir()
+    manifest_path = base / SIGNED_MANIFEST_NAME
+    signature_path = base / SIGNATURE_NAME
+    manifest_path.write_bytes(data)
+    signature_path.write_text(signature + "\n", encoding="ascii")
+    return manifest_path, signature_path
+
+
+def verify_airdrop() -> List[str]:
+    """Verify the signed manifest against the actual _airdrop/ payload.
+
+    Returns a list of problems (empty = valid signature and intact payload).
+    Every problem names the exact file and the reason, in operator Spanish.
+    """
+    key = get_signing_key()
+    if key is None:
+        return [
+            f"{SIGNING_KEY_ENV} no está configurada: no se puede verificar la firma."
+        ]
+    base = get_airdrop_dir()
+    manifest_path = base / SIGNED_MANIFEST_NAME
+    signature_path = base / SIGNATURE_NAME
+    problems: List[str] = []
+    if not manifest_path.exists():
+        problems.append(
+            f"{SIGNED_MANIFEST_NAME}: falta el manifiesto firmado (payload sin firmar)"
+        )
+    if not signature_path.exists():
+        problems.append(
+            f"{SIGNATURE_NAME}: falta la firma separada (payload sin firmar)"
+        )
+    if problems:
+        return problems
+
+    data = manifest_path.read_bytes()
+    expected = hmac.new(key, data, hashlib.sha256).hexdigest()
+    actual = signature_path.read_text(encoding="ascii", errors="replace").strip()
+    if not hmac.compare_digest(expected, actual):
+        return [
+            f"{SIGNED_MANIFEST_NAME}: la firma HMAC no corresponde al manifiesto "
+            "(manifiesto adulterado o clave distinta)"
+        ]
+
+    try:
+        manifest = json.loads(data)
+    except json.JSONDecodeError:
+        return [f"{SIGNED_MANIFEST_NAME}: no es JSON válido"]
+    if not isinstance(manifest, dict) or manifest.get("algorithm") != _SIGNING_ALGORITHM:
+        return [
+            f"{SIGNED_MANIFEST_NAME}: algoritmo no soportado "
+            f"(se espera {_SIGNING_ALGORITHM})"
+        ]
+    declared = manifest.get("files")
+    if not isinstance(declared, dict):
+        return [f"{SIGNED_MANIFEST_NAME}: falta el mapa 'files'"]
+
+    present = {c["rel"]: c["src"] for c in scan_airdrop()}
+    for rel in sorted(declared):
+        if rel not in present:
+            problems.append(
+                f"{rel}: aparece en el manifiesto firmado pero falta en _airdrop/"
+            )
+        elif _sha256_file(present[rel]) != declared[rel]:
+            problems.append(
+                f"{rel}: el contenido no coincide con su hash SHA-256 del "
+                "manifiesto (archivo adulterado)"
+            )
+    for rel in sorted(present):
+        if rel not in declared:
+            problems.append(
+                f"{rel}: está en _airdrop/ pero no en el manifiesto firmado "
+                "(archivo agregado sin firmar)"
+            )
+    return problems
+
+
 # archivos que se ignoran al escanear _airdrop/
 # .gitignore se permite explícitamente porque es un archivo legítimo de actualización
-_IGNORE = {".gitkeep", ".DS_Store"}
+# The signature artifacts are metadata about the payload, never payload:
+# they are ignored so apply can never copy them into the repo root.
+_IGNORE = {".gitkeep", ".DS_Store", SIGNED_MANIFEST_NAME, SIGNATURE_NAME}
 
 
 def _is_ignored(src: Path) -> bool:
@@ -113,16 +266,27 @@ def list_airdrop_files() -> List[str]:
     return [c["rel"] for c in scan_airdrop()]
 
 
-def apply_airdrop(dry_run: bool = False) -> List[Dict]:
+def apply_airdrop(dry_run: bool = False, allow_unsigned: bool = False) -> List[Dict]:
     """Aplica todos los archivos de `_airdrop/` al repo.
 
     1. Crea backup de los archivos existentes (REPLACE) en `_airdrop_backups/`.
     2. Copia cada archivo a su destino (creando carpetas si hace falta).
     3. Da permiso de ejecución a los `.sh`.
+
+    Signed-airdrop gate (VCD-09): when FLUJO_AIRDROP_HMAC_KEY is configured,
+    an unsigned or tampered payload is refused with the exact file and reason.
+    `allow_unsigned=True` is the documented HUMAN override (a person typing
+    `--allow-unsigned` after reviewing the payload); automation never sets it.
+    With no key configured, behavior is exactly the historical one.
     """
     changes = scan_airdrop()
     if not changes or dry_run:
         return changes
+
+    if get_signing_key() is not None and not allow_unsigned:
+        problems = verify_airdrop()
+        if problems:
+            raise AirdropSignatureError(problems)
 
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     backup_dir = get_backup_base_dir() / timestamp

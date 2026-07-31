@@ -70,6 +70,10 @@ D  iPad → TD → Laser CHOP → Laser Device CHOP → Helios → ILDA in      
    Solo puntos con color y un bit de blanking. → usar **vpype-hatched** para simular relleno.
 7. **No existe plugin ILDA para vpype**, ni extensión de Inkscape que exporte ILDA,
    ni conversor SVG→ILDA online funcional, ni paquete de ILDA en PyPI.
+   *Sigue siendo cierto para herramientas externas. Desde 2026-07-31 el repo trae
+   el suyo: `flujo laser ild pieza.svg` escribe ILDA Type 5 (RGB, nunca paleta),
+   verifica el archivo releyéndolo, y `flujo laser lote --ild` lo hace por lote —
+   la ruta B se cierra sin Modulaser ni msvg2ild.*
 8. **Toda la línea Lasershow Converter de Pangolin** exige LD2000 o BEYOND.
 9. **Pangolin CHOP** habla con BEYOND por DLL local (mensajes de Windows): misma máquina,
    solo Windows, sin red. Y TD no-comercial solo funciona con BEYOND demo.
@@ -106,7 +110,7 @@ D  iPad → TD → Laser CHOP → Laser Device CHOP → Helios → ILDA in      
 
 | Si el usuario pregunta por… | Ir a |
 |---|---|
-| Convertir un SVG a .ild | §03 + §04 |
+| Convertir un SVG a .ild | `flujo laser ild pieza.svg` (en el repo) · externas: §03 + §04 |
 | Que una figura rellena no salga hueca | §04 (vpype-hatched) |
 | Animación de verdad | §06 (Blender) o §08 |
 | Recuperar el dibujo en vivo del iPad | §01 + §10 (Helios) |

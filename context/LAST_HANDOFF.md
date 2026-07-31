@@ -96,11 +96,34 @@ Working and verified live: the DREF show chain (LTC -> Chataigne -> OSC -> phone
 profiles, and the documentation ratchets (`test_mapa_completo`,
 `test_higiene_docs`).
 
+## Venue layer deepened: measured geometry, camera as data, flag consumed (2026-07-31)
+
+On top of PR #418 (venue polylines + orbitable viewer): `tools/venue.py
+geometria` now measures the geometry block (edges per tier/capa, bbox, closed/
+open, zero-length segments, declared measure vs drawn stage -- coherencia warns
+when they disagree by >0.15 m); camera paths are DATA (`schemas/
+orbita.schema.json`, `data/orbitas/vuelta-completa.json` reproduces the default
+turn frame for frame, `venue_secuencia.mjs --orbita`); the viewer takes
+`?venue=<id>` (registry form) and `?giro/alto/dist` with the shipped values as
+defaults; and the campo skin finally CONSUMES `mejoras.venue3d` -- off (today's
+value) changes nothing, on shows a `sala` link. Both branches are asserted in
+the smokes. Nothing new is visible by default.
+
 ## Security diagnosis: 9 of 10 closed (2026-07-29)
 
 VCD-06 (8 MB body cap, 413 on excess) and VCD-07 (every workflow `uses:` pinned
 to a commit SHA + `dependabot.yml`) are closed. Only VCD-10 remains: assigned to
 MAK, never verified running.
+
+VCD-09 got its REAL fix on 2026-07-31 (it was only mitigated before, by keeping
+the mail path off): signed airdrops. `flujo airdrop sign` writes a SHA-256
+manifest + detached HMAC-SHA256 signature (key in `FLUJO_AIRDROP_HMAC_KEY`);
+`verify` names the exact file that fails; with the key set, `apply` refuses
+unsigned/tampered payloads and the only escape is a human typing
+`--allow-unsigned`. The IMAP autoapply path now demands key + valid signature
+even when `FLUJO_IMAP_AUTOAPLICAR=1`, and never uses the override. No key
+configured = behavior byte-for-byte as before. Detail:
+`docs/AGENT_AIRDROP_PROTOCOL.md` "Airdrop firmado".
 
 ## Branches: the four lines, and one rescue (2026-07-30)
 
@@ -196,8 +219,102 @@ works, both ends in frame, neighbours indexed once -- the every-pair-every-frame
 defect is pinned by a test. Measured: 207 to 615 segments per frame against the
 23,871 pairs an all-against-all would cost. NOT measured: fps on a phone.
 
+**The frame cost now has an instrument (2026-07-31):**
+`node tools/iskvw_piel_medir.mjs` runs the PUBLISHED skin's functions in node
+(smoke technique), enters through the real seed model, and COUNTS the work per
+frame deterministically. Reference-machine numbers (2-core Linux container,
+node 22): archivo substrate 479 pieces / 269 links indexed once, worst grid
+scenario 30 segments per frame; campo fallback 219 works, 0 segments always
+(no vinculos shipped), dense open band 217 gradients + 434 arcs per frame at
+4-6 ms. `tests/test_iskvw_piel_medir.py` pins the COUNTS (never ms) and a
+1200-segment ceiling against the 23,871-pair defect. The phone fps stays the
+user's to take -- now WITH a comparator. Finding, one line: with archivo.json
+the skin ignores the measured positions (conXY looks only at piezas[0], the
+'vola' tool piece, which has none), so the whole 479 field falls back to
+hash positions; not touched here, it is how the live site draws today.
+
 **Still the user's, and he wants to DEBATE it first:** whether the essays get
 published on iskvw.cl. The bridge is built and unused.
+
+## The works deform the field: the effects patch (2026-07-30, PR pending)
+
+The artist's idea, and it is doublecup's: a work is not EXHIBITED in the field,
+it DEFORMS it -- with what the work itself measures. `iskvw/datos/tablero.json`
+is a modular-synth patch bay: each row wires a SIGNAL of the piece (tilde marks,
+vector subtrazos, how much of what was perceived carries hue, the break tag, its
+mass) to an EFFECT it exerts on its neighbours -- `pulso` (their glyph time
+dilates and contracts), `curvatura` (they turn around the work), `sangrado`
+(its colour bleeds onto them), `desgarro` (glyphs tear by rows) and `gravedad`
+(the reading leans on a heavy piece when passing). No datum, no effect: the
+coefficient is zero. An effect is an assertion, and no piece asserts what it
+does not have.
+
+**The master flag `mejoras.patch_efectos` SHIPS OFF.** Turning the portfolio's
+rendering on is the artist's call, not a side effect of merging a branch.
+
+What makes "off changes nothing" a number instead of a claim: the smoke tool
+boots the skin three times -- no board, the shipped board, the flag on -- and
+demands the first two draw mark for mark the same (7.647 marks identical) while
+the third deforms measurably. Measured in headless chromium too: 7.824 marks
+identical with the shipped board; with the flag on, 4.080 of them displaced and
+1.248 colour changes. One neighbour, named: (609.32, 361.41) -> (585.62, 426.69)
+and `rgba(239,231,231)` -> `rgba(239,238,231)`, pulled toward the emitter's hue.
+
+**Cost:** the first version did sin/cos INSIDE the node loop -- 4,5 ms per frame
+at 479 nodes (+14%). The rotation is now resolved once per frame per emitter and
+the node only walks a fraction of it; the difference against OFF is then within
+noise (+-3% over two independent runs, at 219 and at 479 nodes), 58-60 fps at
+479. At most THREE works emit per frame, chosen in one scalar pass: no pair of
+nodes is ever visited, which is the defect this field was built to avoid.
+
+Found while editing that loop and fixed in the same commit: `abstr` was a free
+variable in the glyph branch, only evaluated under the `industrial` regime -- a
+ReferenceError waiting for the artist to switch regimes.
+
+**Re-landed on top of venue+vigia (2026-07-31).** Main moved after the branch
+(PRs #417 and #418); the merge had ONE conflict, in `tablero.json`: main added
+the `venue3d` flag, the branch added `patch_efectos` plus the wiring. Resolved
+keeping BOTH flags off plus the full wiring. All piel/venue/vigia tests green
+after the merge (full suite 1762 passed, 42 skipped).
+
+**Per-effect switches (2026-07-31), same session:** the patch was all-or-nothing
+under the master. Now `efectos` in `tablero.json` gives each of the five its own
+switch, all SHIPPED ON so the master alone behaves as before; a switch in false
+drops that effect's routes at compile time (coefficient exactly zero, zero cost
+per frame). Measured effect by effect in the smoke -- each runs ALONE and must
+leave the signature only it can leave (curvatura displaces without recolouring,
+sangrado recolours without displacing, desgarro tears x-only, pulso alters the
+glyph trace, gravedad drifts the reading), and with all five off the loud board
+draws mark for mark like no board at all. The pytest demands the six new
+measurements by name.
+
+**Integration (2026-07-31):** effects and the venue layer now share ONE
+`tablero.json` fetch in `arrancar()` -- `aplicarTablero(t)` feeds the patch,
+`capaVenue(t)` gates the sala link behind `mejoras.venue3d`. The venue smoke
+assertions were ported into the `correr({tablero})` architecture of
+`tools/iskvw_piel_smoke.mjs`: the shipped board must leave the sala link
+exactly as `venue3d` says, and forcing the flag on must create it.
+
+## iskvw: the curation chain closed in a loop (2026-07-31)
+
+The chain from #414/#416 (panel -> curaduria.json -> aplicar_curaduria)
+grew three things, all tested; detail in `iskvw/MAPA.md`:
+
+1. **Three optional fields, inert until written**: `peso` (>0, displaces the
+   contract's measured peso), `serie` (extra.serie) and `nota` (extra.nota,
+   human-read: correct Spanish pinned by test). No skin draws them yet on
+   purpose -- what a skin does with them is the artist's call, not an agent's.
+2. **`tools/validar_curaduria.py`**: says out loud what the consumer swallows
+   silently (unknown/duplicate ids, absent signed svg, invalid values,
+   mangled diacritics = ERROR). Exit 1 on errors; the CLI runs over the repo's
+   real files inside `tests/test_validar_curaduria.py`, so it is already a CI
+   gate.
+3. **Panel robustness**: import a downloaded curaduria.json to continue
+   editing, beforeunload guard against losing edits, and unknown per-piece
+   fields travel out untouched. `tests/test_curaduria_roundtrip.py` runs the
+   REAL construirCuraduria() from editor.html in node, feeds the output to
+   the validator (0 errors) and then to aplicar_curaduria(): the three
+   parties provably speak one dialect. No look change to the panel.
 
 ## The repo is not the truth: the two machines are (2026-07-30)
 
@@ -247,12 +364,18 @@ Measured by diffing the disks, which is the check that had never been run.
   `cerebras`: nobody measured llama-3-3-70b against gpt-oss-120b for synthesis,
   and that is a judgement call, not a technical default. Retirement: when the
   credit runs out or expires (~2026-08-18).
-- **The source gate has no scientific domain.** `fuentes.py` `DOMINIOS` covers
-  `cl_legal`, `cl_fondos` and `norma_tecnica` only, so six of those eight
-  biomedical topics got `dominio: None` and no primary-source requirement at
-  all. The reports cite scielo/revistas, but nothing checks it. A `biomedico`
-  domain (pubmed.ncbi.nlm.nih.gov, scielo, who.int, emcdda/euda, ispch) is the
-  missing piece for the RD scientific base -- not done here, one line as agreed.
+- **The source gate HAS a scientific domain since 2026-07-31.** `fuentes.py`
+  `DOMINIOS` used to cover `cl_legal`, `cl_fondos` and `norma_tecnica` only, so
+  six of those eight biomedical topics got `dominio: None` and no
+  primary-source requirement at all. Now `biomedico` (pubmed/ncbi, scielo and
+  its country hosts, who.int, euda/emcdda, ispch, cochrane) gates biomedical /
+  harm-reduction / pharmacology / epidemiology topics exactly like `cl_legal`;
+  it sits LAST in the dict so legal topics that mention harm reduction keep
+  hitting `cl_legal` first. Same commit: `dominio_de_tema` now folds
+  diacritics before matching, because harvested questions come from human-read
+  reports WITH tildes while the pistas are ASCII -- "farmacologia" used to
+  miss "farmacologia" with an accent, and "codigo penal" missed the accented
+  form too. Pinned in `tests/test_fuentes.py`.
 
 ## THE INVENTORIES (2026-07-30). Measured on the DISKS, not on GitHub
 
@@ -348,9 +471,9 @@ sees, and that is not the assistant's call to make.**
 is badly DESIGNED, not badly wired -- it watches `_SLOTS` while the failing
 provider lives in `LLM.__init__`'s order, and its vigilance depends on another
 LLM choosing to vigilate. Do not implement its `--enforce` stub: giving a blind
-watchman power automates the blindness. And `trabajo.py` still harvests its own
-questions without checking whether it already answered them -- 40 of 50 reports
-share one prefix.
+watchman power automates the blindness. The other defect this paragraph named
+-- the harvest never checking what it already answered -- is closed since
+2026-07-31 (see "Still open, measured and not rushed").
 
 ## The organism writes and nobody reads (2026-07-30, the day's thesis)
 
@@ -411,8 +534,14 @@ applied to the irreversible, it is the job.
 
 ### Still open, measured and not rushed
 
-- The backlog dedup: `trabajo.py` should not enqueue a question whose slug
-  already exists in `informes/`. Attacks the biggest pile at its cause.
+- DONE 2026-07-31: the backlog dedup. `backlog.cosechar` (the harvest
+  `trabajo.py` calls every tick) no longer enqueues a question whose slug --
+  `research_lib.slug`, THE function that names report files, reused, never
+  reimplemented -- already exists as a report in the informes dirs or as any
+  backlog entry in any state. This is the cause of the 40-of-50 shared-prefix
+  pile: two questions differing only after the 40-char slug hashed differently
+  but produced the SAME report file. Pinned in `tests/test_mak_backlog.py`,
+  including `backlog.slug is research_lib.slug`.
 - Wiring `retencion.py` to cron (the policy was decided thirteen days ago).
 - `agente_real`: it is a THIRD decision loop competing with capataz. Decide
   which one lives before rewiring it to watsonx.
@@ -612,3 +741,46 @@ Deploy state at close: iskvw.cl serves the #411 build (41 pieces, essay icons
 reachable). The 479-piece field ships when the laser-tool PR merges: it
 carries the workflow fix (mirror iskvw-internal piece dirs at their repo
 paths) for the deploy that the new coherence gate correctly blocked.
+
+## Laser line, second pass (2026-07-31, Fable worktree): route B closes in-repo
+
+The toolkit's own restrictions were the spec: QuickShow imports ONLY
+.ILD/.LDA/... never SVG (restriction 5), and no ILDA package exists on PyPI
+nor as a vpype plugin (restriction 7) -- until now the SVG->.ild step needed
+Modulaser (subscription) or msvg2ild (monochrome, AGPL). `src/flujo/laser.py`
+now carries, pure Python and vpype-free:
+
+- `flujo laser ild pieza.svg`: ILDA format 5 (2D true color, NEVER palette --
+  the toolkit's golden rule) with blanked dwell points per stroke, byte
+  deterministic, and the CLI re-reads every file it writes before reporting
+  (`leer_ild` is the verification half). Smoke-run measured: 3-stroke SVG ->
+  320-byte .ild, 32 points (24 blanked), format 5, re-read matches.
+- `flujo laser medir pieza.svg`: vertices, subpaths (<8 rule), drawn length
+  and PEN-UP TRAVEL in numbers. `--medir-viaje` on hatched/flow measures the
+  blanked travel before AND after linemerge/linesort (one extra vpype pass;
+  test fixture: 198.0 ud -> 98.0 ud), so the sort benefit is a number.
+- `flujo laser lote --ild` drops a QuickShow-importable .ild next to each SVG;
+  manifest rows gain ild/puntos_ild/trazos/viaje_apagado (additive, contract
+  join untouched). Defaults unchanged: SVG-only, same vpype pipeline args.
+
+The geometry layer refuses curves/rects/text with the vpype flattening
+instruction instead of silently dropping shapes. Restriction 7 in
+TOOLKIT_INDICE.md now carries the in-repo note so nobody re-researches an
+external converter that the repo already has. Still pending from the night:
+a completed flow_img run (experimental), scanner kpps confirmation.
+## The language rule has its ratchet (2026-07-31)
+
+`tools/idioma.py` measures the language of COMMENTS AND DOCSTRINGS ONLY
+(never identifiers, never product strings) in every tracked `*.py`
+(`git ls-files`, archive + vendorized zones excluded, same convention as
+`test_higiene_docs`). Measured on the real tree: 581 files = 388 Spanish +
+96 English + 38 mixed + 59 none, so 426 files carry Spanish -- the 07-30
+"236 vs 36" note undercounted because it did not read docstrings.
+`tests/test_idioma_ratchet.py` pins that set in
+`tests/fixtures/idioma_baseline.txt`: a NEW file carrying Spanish comments
+fails the suite with the offender named; cleaning files never fails, and the
+pin is lowered with `python3 tools/idioma.py --baseline > <fixture>`.
+Renames are NOT demanded: cron/systemd consumers keep their names, per
+`docs/GLOSSARY.md`. The tool also prints a soft FYI (not enforced) of
+widespread Spanish identifiers the glossary does not map yet -- top spread:
+`nombre` (69 files), `salida` (63), `ruta` (62), `linea` (46), `datos` (45).

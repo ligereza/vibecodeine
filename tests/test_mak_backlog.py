@@ -333,6 +333,122 @@ class TestCosechar:
         assert os.path.exists(estado_path)
 
 
+class TestDedupPorSlug:
+    """La cosecha no re-encola lo ya preguntado (2026-07-31).
+
+    El defecto medido: 40 de 50 informes en la caja compartian un prefijo --
+    la misma pregunta respondida cuarenta veces, porque cosechar deduplicaba
+    solo por hash del texto completo y nunca miraba los informes ya escritos.
+    El slug ES el nombre del informe (research.py: STAMP-slug.md), asi que la
+    pregunta ya respondida se detecta por su slug en el directorio de informes
+    o en el backlog."""
+
+    def test_el_slug_es_el_de_research_lib(self):
+        """La formacion de ids NO se bifurca (la trampa 1004-piezas/0-posiciones):
+        backlog reusa exactamente research_lib.slug, no una copia."""
+        import research_lib
+        assert backlog.slug is research_lib.slug
+
+    def test_no_encola_pregunta_ya_respondida_en_informes(self, tmp_path):
+        """Una pregunta cuyo slug ya existe como informe no vuelve al backlog."""
+        informes_dir = tmp_path / "informes"
+        informes_dir.mkdir()
+
+        respondida = "efectos de la ketamina en poblacion adolescente"
+        nueva = "senaletica de reduccion de danos en festivales"
+
+        # research.py ya escribio el informe de la primera: STAMP-slug.md
+        (informes_dir / ("20260730-120000-%s.md" % backlog.slug(respondida))
+         ).write_text("# informe previo, sin lagunas\n", encoding="utf-8")
+
+        (informes_dir / "nuevo.md").write_text(f"""
+## LAGUNAS DE INFORMACION
+- {respondida}
+- {nueva}
+""", encoding="utf-8")
+
+        backlog_path = tmp_path / "backlog.jsonl"
+        n = backlog.cosechar([str(informes_dir)], str(backlog_path))
+
+        assert n == 1
+        entradas = backlog.cargar(str(backlog_path))
+        assert len(entradas) == 1
+        assert entradas[0]["pregunta"] == nueva
+
+    def test_no_encola_variante_que_solo_difiere_tras_el_slug(self, tmp_path):
+        """El defecto de los 40 prefijos: dos preguntas que difieren recien
+        despues de los 40 caracteres del slug hashean distinto pero producirian
+        EL MISMO archivo de informe. La segunda no se encola."""
+        informes_dir = tmp_path / "informes"
+        informes_dir.mkdir()
+
+        base = "impacto de la reduccion de danos en fiestas electronicas"
+        v1 = base + " de Santiago durante 2025"
+        v2 = base + " de Valparaiso durante 2024"
+        assert backlog._hash(v1) != backlog._hash(v2)
+        assert backlog.slug(v1) == backlog.slug(v2)
+
+        (informes_dir / "informe.md").write_text(f"""
+## LAGUNAS DE INFORMACION
+- {v1}
+- {v2}
+""", encoding="utf-8")
+
+        backlog_path = tmp_path / "backlog.jsonl"
+        n = backlog.cosechar([str(informes_dir)], str(backlog_path))
+
+        assert n == 1
+        entradas = backlog.cargar(str(backlog_path))
+        assert entradas[0]["pregunta"] == v1
+
+    def test_no_encola_slug_ya_presente_en_el_backlog(self, tmp_path):
+        """El backlog cuenta en CUALQUIER estado: una pregunta ya descartada o
+        ya lista no vuelve a entrar aunque su texto varie tras el slug."""
+        informes_dir = tmp_path / "informes"
+        informes_dir.mkdir()
+
+        base = "protocolos de hidratacion y golpe de calor en eventos masivos"
+        ya_en_backlog = base + " (revision 2024)"
+        variante = base + " (revision 2026)"
+        assert backlog.slug(ya_en_backlog) == backlog.slug(variante)
+
+        backlog_path = tmp_path / "backlog.jsonl"
+        backlog.guardar_append(str(backlog_path), [{
+            "id": "bl-viejo", "pregunta": ya_en_backlog, "linaje": [],
+            "score": 0.0, "estado": "listo", "fecha": "2026-07-01",
+        }])
+
+        (informes_dir / "informe.md").write_text(f"""
+## LAGUNAS DE INFORMACION
+- {variante}
+""", encoding="utf-8")
+
+        n = backlog.cosechar([str(informes_dir)], str(backlog_path))
+        assert n == 0
+        entradas = backlog.cargar(str(backlog_path))
+        assert len(entradas) == 1  # solo la vieja
+
+    def test_informes_sin_stamp_tambien_cuentan(self, tmp_path):
+        """Los informes curados a mano (docs/rd/informes) no llevan STAMP:
+        su nombre entero es el slug."""
+        informes_dir = tmp_path / "informes"
+        informes_dir.mkdir()
+
+        pregunta = "ley 20000 marco legal"
+        assert backlog.slug(pregunta) == "ley-20000-marco-legal"
+        (informes_dir / "ley-20000-marco-legal.md").write_text(
+            "# informe curado\n", encoding="utf-8")
+
+        (informes_dir / "nuevo.md").write_text(f"""
+## LAGUNAS DE INFORMACION
+- {pregunta}
+""", encoding="utf-8")
+
+        backlog_path = tmp_path / "backlog.jsonl"
+        n = backlog.cosechar([str(informes_dir)], str(backlog_path))
+        assert n == 0
+
+
 class TestDerivador:
     """Tests para derivar."""
 
