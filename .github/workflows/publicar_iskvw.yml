@@ -84,6 +84,17 @@ jobs:
             mkdir -p "_sitio/$dir_ensayo"
             cp "$dir_ensayo"/*.svg "_sitio/$dir_ensayo/" 2>/dev/null || true
           done
+          # Misma regla para lo que vive DENTRO de iskvw/: el sitio aplana el
+          # prefijo (la raiz ES iskvw/), pero el contrato declara rutas de
+          # repo (iskvw/piel/...). Se espeja ese prefijo para que el src del
+          # contrato sea una URL verdadera. Atrapado por la compuerta de
+          # coherencia en el primer deploy con animadas: 219 piezas cuyo svg
+          # no era alcanzable.
+          for dir_pieza in iskvw/piel/animadas iskvw/piel/laser; do
+            [ -d "$dir_pieza" ] || continue
+            mkdir -p "_sitio/$dir_pieza"
+            cp "$dir_pieza"/*.svg "_sitio/$dir_pieza/" 2>/dev/null || true
+          done
 
       - name: comprobar que lo que se sube existe
         run: |
