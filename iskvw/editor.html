@@ -75,6 +75,9 @@
   .controles .campo>span{font-size:.57rem}
   .t-titulo{width:min(280px,52vw)}
   .t-svg{width:min(230px,52vw)}
+  .t-peso{width:70px}
+  .t-serie{width:130px}
+  .t-nota{width:min(280px,52vw)}
   .valor{font-size:.66rem;color:#8a857a;min-width:2.4em;display:inline-block}
   .fila-check{flex-direction:row;align-items:center;gap:6px}
   .fila-check span{text-transform:none;letter-spacing:.04em;font-size:.68rem;color:#8a857a}
@@ -126,6 +129,8 @@
       </select>
     </label>
     <span id="contador"><b>0</b> piezas editadas</span>
+    <button id="importar" type="button">Importar curaduria.json…</button>
+    <input id="importar-archivo" type="file" accept=".json,application/json" hidden>
     <button id="descargar">Descargar curaduria.json</button>
   </div>
 </header>
@@ -183,6 +188,14 @@
 
 const CLASES_MEDIO = /\.(svg|jpe?g|png|webp|gif|avif)$/i;
 
+/* The per-piece fields this page can EDIT. Anything else found in an entry
+   travels through construirCuraduria() untouched: a field a future agent (or
+   the artist's own hand) added is a datum this page does not understand, and
+   destroying it would be worse than not offering to edit it -- the same rule
+   the tablero already states for its non-boolean values. */
+const CAMPOS = ["titulo", "mostrar", "abstraccion", "svg", "regimen",
+                "peso", "serie", "nota"];
+
 let PIEZAS = [];            // the archive, in contract shape
 let BASE = null;            // curaduria.json as it was loaded (may not exist)
 let REGIMEN_GLOBAL = "semantico";
@@ -232,13 +245,7 @@ async function cargar(){
   }
   PIEZAS = d.piezas;
 
-  BASE = await leerJSON("datos/curaduria.json");
-  if (!BASE || typeof BASE !== "object") BASE = {version: 1, regimen: "semantico", piezas: {}};
-  REGIMEN_GLOBAL = BASE.regimen || "semantico";
-  for (const [id, c] of Object.entries(BASE.piezas || {})){
-    if (c && typeof c === "object") EDICIONES.set(id, Object.assign({}, c));
-  }
-  document.getElementById("regimen-global").value = REGIMEN_GLOBAL;
+  sembrarBase(await leerJSON("datos/curaduria.json"));
 
   const clases = [...new Set(PIEZAS.map(p => p.clase).filter(Boolean))].sort();
   const sel = document.getElementById("f-clase");
@@ -253,6 +260,52 @@ async function cargar(){
     (EDICIONES.size ? " · " + EDICIONES.size + " ya venían curadas" : "");
   pintar();
   contar();
+  firmaCur = JSON.stringify(construirCuraduria());
+}
+
+/* One entry point for "this is now the loaded curaduria.json", shared by the
+   initial fetch and by the import button: seeding in two places is how the
+   two paths would drift apart. */
+function sembrarBase(b){
+  BASE = (b && typeof b === "object" && !Array.isArray(b))
+       ? b : {version: 1, regimen: "semantico", piezas: {}};
+  REGIMEN_GLOBAL = BASE.regimen || "semantico";
+  EDICIONES.clear();
+  for (const [id, c] of Object.entries(BASE.piezas || {})){
+    if (c && typeof c === "object") EDICIONES.set(id, Object.assign({}, c));
+  }
+  document.getElementById("regimen-global").value = REGIMEN_GLOBAL;
+}
+
+/* ── Import: continue editing a file that is not the repo's ─────────────
+   The normal cycle reads datos/curaduria.json, but the artist's freshest
+   version is often the one he just DOWNLOADED and has not committed yet.
+   Without this, reopening the page silently resumes from the older repo copy
+   and his last session's decisions look lost. Importing replaces the whole
+   editing state (it is a load, not a merge); if there are undownloaded edits
+   it asks first, because replacing them is the one destructive act this page
+   can perform. */
+function importar(archivo){
+  const aviso = document.getElementById("aviso");
+  archivo.text().then(t => {
+    let b = null;
+    try { b = JSON.parse(t); } catch (e){ b = null; }
+    if (!b || typeof b !== "object" || Array.isArray(b)){
+      aviso.className = "malo";
+      aviso.textContent = "El archivo importado no es un curaduria.json válido: no se tocó nada.";
+      return;
+    }
+    if (hayCambiosCuraduria() &&
+        !confirm("Hay ediciones sin descargar. ¿Reemplazarlas con el archivo importado?"))
+      return;
+    sembrarBase(b);
+    pintar();
+    contar();
+    firmaCur = JSON.stringify(construirCuraduria());
+    aviso.className = "";
+    aviso.textContent = "curaduria.json importado: " +
+      Object.keys(BASE.piezas || {}).length + " piezas curadas · régimen " + REGIMEN_GLOBAL;
+  });
 }
 
 /* ── El tablero de mejoras ───────────────────────────────────────────────
@@ -292,6 +345,7 @@ async function cargarTablero(){
   MEJORAS.clear();
   for (const [k, v] of Object.entries(TABLERO.mejoras)) MEJORAS.set(k, v);
   pintarTablero();
+  firmaTab = JSON.stringify(construirTablero());
 }
 
 function pintarTablero(){
@@ -371,6 +425,11 @@ function construirCuraduria(){
   for (const id of [...EDICIONES.keys()].sort()){
     const c = EDICIONES.get(id) || {};
     const limpio = {};
+    // A field this page does not edit travels out untouched (see CAMPOS).
+    for (const [k, v] of Object.entries(c)){
+      if (!CAMPOS.includes(k) && v !== null && v !== undefined && v !== "")
+        limpio[k] = v;
+    }
     // A field only travels if it says something. `mostrar: true`,
     // `abstraccion: 0` and an empty title ARE the default: writing them would
     // turn "the artist decided" into noise.
@@ -380,6 +439,9 @@ function construirCuraduria(){
       limpio.abstraccion = Math.round(c.abstraccion * 100) / 100;
     if (c.svg) limpio.svg = c.svg;
     if (c.regimen) limpio.regimen = c.regimen;
+    if (typeof c.peso === "number" && c.peso > 0) limpio.peso = c.peso;
+    if (c.serie) limpio.serie = c.serie;
+    if (c.nota) limpio.nota = c.nota;
     if (Object.keys(limpio).length) piezas[id] = limpio;
   }
   const salida = {};
@@ -396,6 +458,32 @@ function contar(){
   document.getElementById("contador").innerHTML =
     "<b>" + n + "</b> " + (n === 1 ? "pieza editada" : "piezas editadas");
 }
+
+/* ── Not losing an afternoon of curation ────────────────────────────────
+   The page holds every edit in memory and its only exit is a download, so a
+   closed tab used to be 479 pieces of judgement gone without a sound. The
+   signatures are what the LAST download (or the initial load) would have
+   produced; while the current output differs from them, leaving the page
+   asks first. Downloading is what marks the state as safe -- the browser is
+   not told about the commit, and does not pretend to know about it. */
+let firmaCur = null;
+let firmaTab = null;
+
+function hayCambiosCuraduria(){
+  return firmaCur !== null && JSON.stringify(construirCuraduria()) !== firmaCur;
+}
+
+function hayCambiosTablero(){
+  return firmaTab !== null && TABLERO !== null &&
+         JSON.stringify(construirTablero()) !== firmaTab;
+}
+
+addEventListener("beforeunload", e => {
+  if (hayCambiosCuraduria() || hayCambiosTablero()){
+    e.preventDefault();
+    e.returnValue = "";   // the text is the browser's, not ours
+  }
+});
 
 /* One file per button, each labelled with the name it writes. A single button
    for both would make "apagué una mejora" look saved when what came down was
@@ -420,7 +508,8 @@ function editar(id, campo, valor){
   const vivo = Object.keys(c).some(k =>
     !(c[k] === "" || c[k] === null || c[k] === undefined ||
       (k === "mostrar" && c[k] !== false) ||
-      (k === "abstraccion" && !(c[k] > 0))));
+      (k === "abstraccion" && !(c[k] > 0)) ||
+      (k === "peso" && !(c[k] > 0))));
   if (vivo) EDICIONES.set(id, c); else EDICIONES.delete(id);
   const f = FILAS.get(id);
   if (f){
@@ -569,6 +658,32 @@ function fila(p){
   reg.addEventListener("change", () => editar(p.id, "regimen", reg.value || null));
   ctr.appendChild(campoCon("Régimen", reg));
 
+  // The three optional fields (2026-07-31). Empty NEVER travels: an unwritten
+  // peso keeps whatever the source measured, an unwritten serie/nota adds
+  // nothing -- the same default-silence rule as every other control here.
+  const peso = document.createElement("input");
+  peso.type = "number"; peso.className = "t-peso";
+  peso.min = "0"; peso.step = "0.5";
+  peso.value = typeof ed.peso === "number" ? String(ed.peso) : "";
+  peso.placeholder = "1";
+  peso.addEventListener("input", () => {
+    const v = parseFloat(peso.value);
+    editar(p.id, "peso", Number.isFinite(v) && v > 0 ? v : null);
+  });
+  ctr.appendChild(campoCon("Peso", peso));
+
+  const serie = document.createElement("input");
+  serie.type = "text"; serie.className = "t-serie"; serie.value = ed.serie || "";
+  serie.placeholder = "serie o grupo";
+  serie.addEventListener("input", () => editar(p.id, "serie", serie.value.trim()));
+  ctr.appendChild(campoCon("Serie", serie));
+
+  const nota = document.createElement("input");
+  nota.type = "text"; nota.className = "t-nota"; nota.value = ed.nota || "";
+  nota.placeholder = "tu nota, con tildes";
+  nota.addEventListener("input", () => editar(p.id, "nota", nota.value.trim()));
+  ctr.appendChild(campoCon("Nota", nota));
+
   cuerpo.appendChild(ctr);
   div.appendChild(cuerpo);
   return div;
@@ -601,9 +716,24 @@ document.getElementById("regimen-global").addEventListener("change", e => {
   REGIMEN_GLOBAL = e.target.value;
 });
 document.getElementById("descargar")
-  .addEventListener("click", () => bajar("curaduria.json", construirCuraduria()));
+  .addEventListener("click", () => {
+    const d = construirCuraduria();
+    firmaCur = JSON.stringify(d);   // downloaded = in the artist's hands
+    bajar("curaduria.json", d);
+  });
 document.getElementById("descargar-tablero")
-  .addEventListener("click", () => bajar("tablero.json", construirTablero()));
+  .addEventListener("click", () => {
+    const d = construirTablero();
+    firmaTab = JSON.stringify(d);
+    bajar("tablero.json", d);
+  });
+document.getElementById("importar")
+  .addEventListener("click", () => document.getElementById("importar-archivo").click());
+document.getElementById("importar-archivo")
+  .addEventListener("change", e => {
+    if (e.target.files && e.target.files[0]) importar(e.target.files[0]);
+    e.target.value = "";   // reimporting the same file must fire again
+  });
 
 // The filter bar sticks right under the header, whose height depends on how
 // the text wraps.
