@@ -177,6 +177,17 @@ def coherencia(v: dict) -> list[str]:
                         f"{vid}: {grupo}.{k} dice 'medido' pero fuente_datos=memoria. "
                         "De memoria no es medido."
                     )
+        # La misma regla en la geometria: dibujar de memoria es dibujar, no medir.
+        n = sum(
+            1
+            for pl in ((v.get("geometria") or {}).get("polilineas") or [])
+            if pl.get("confianza") == "medido"
+        )
+        if n:
+            avisos.append(
+                f"{vid}: {n} polilineas dicen 'medido' pero fuente_datos=memoria. "
+                "De memoria no es medido."
+            )
 
     esc = v.get("escenario") or {}
     sala = v.get("sala") or {}

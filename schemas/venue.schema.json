@@ -102,6 +102,77 @@
       }
     },
 
+    "geometria": {
+      "type": "object",
+      "description": "OPCIONAL. La sala como POLILINEAS, no como malla, ni foto, ni nube de puntos: solo lineas, que es lo que un laser puede dibujar y lo que un rider puede citar. Un venue sin este bloque sigue siendo valido -- casi todos no lo tienen. Ejes en metros: x = ancho (0 al centro del escenario, crece a la derecha mirando a la sala), y = profundidad (0 en el fondo del escenario, crece hacia el publico), z = altura sobre el piso de la sala. La confianza es POR POLILINEA, no por archivo: el contorno del escenario puede estar medido y el techo puede ser una suposicion, y el dibujo tiene que poder decirlo.",
+      "required": ["unidad", "polilineas"],
+      "additionalProperties": false,
+      "properties": {
+        "unidad": {
+          "const": "m",
+          "description": "metros. No hay otra opcion a proposito: una geometria con unidad ambigua es una geometria inservible."
+        },
+        "nota": {
+          "type": "string",
+          "description": "de donde salio esta geometria. Si es derivada de un modelo o de un generador, se dice aca y no en un README."
+        },
+        "polilineas": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["puntos", "confianza"],
+            "additionalProperties": false,
+            "properties": {
+              "puntos": {
+                "type": "array",
+                "minItems": 2,
+                "description": "cadena abierta de vertices [x, y, z]. Para cerrarla se repite el primer punto al final: explicito, sin bandera que interpretar.",
+                "items": {
+                  "type": "array",
+                  "minItems": 3,
+                  "maxItems": 3,
+                  "items": {"type": "number", "minimum": -500, "maximum": 500}
+                }
+              },
+              "confianza": {"$ref": "#/$defs/confianza"},
+              "etiqueta": {"type": "string"},
+              "capa": {
+                "type": "string",
+                "description": "agrupa polilineas (escenario, butacas, muros, balcon). Sirve para el presupuesto de aristas del visor y para el mapeo a capas del laser."
+              },
+              "metodo": {
+                "type": "string",
+                "description": "como se obtuvo: 'lidar', 'huincha', 'derivado del modelo radial', 'plano del venue'"
+              }
+            }
+          }
+        },
+        "artefactos": {
+          "type": "array",
+          "description": "obstrucciones UBICADAS: la lista de la raiz las nombra, esta las pone en el espacio.",
+          "items": {
+            "type": "object",
+            "required": ["tipo", "punto", "confianza"],
+            "additionalProperties": false,
+            "properties": {
+              "tipo": {"type": "string"},
+              "punto": {
+                "type": "array",
+                "minItems": 3,
+                "maxItems": 3,
+                "items": {"type": "number", "minimum": -500, "maximum": 500}
+              },
+              "radio": {"type": "number", "exclusiveMinimum": 0, "maximum": 50},
+              "altura": {"type": "number", "exclusiveMinimum": 0, "maximum": 100},
+              "confianza": {"$ref": "#/$defs/confianza"},
+              "nota": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
+
     "artefactos": {
       "type": "array",
       "description": "columnas, palcos, barras, obstrucciones de linea de vision",

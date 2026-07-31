@@ -149,6 +149,111 @@ def test_el_esquema_rechaza_medidas_absurdas():
         assert _valida(v) != [], f"acepto {malo} m"
 
 
+# ----------------------------------------------------------------- geometria
+def _poli(**extra) -> dict:
+    pl = {"puntos": [[0, 0, 0], [1, 0, 0]], "confianza": "ajustado"}
+    pl.update(extra)
+    return pl
+
+
+def _geo(*polilineas, **extra) -> dict:
+    g = {"unidad": "m", "polilineas": list(polilineas) or [_poli()]}
+    g.update(extra)
+    return g
+
+
+def test_un_venue_sin_geometria_sigue_siendo_valido():
+    """El bloque es opcional: la base entera existe sin una sola polilinea."""
+    assert _valida(_base()) == []
+    v = venue.parsear_semilla("Santiago | Sin Plano | club | 8 | 4 | 5 | 7 | -")
+    assert "geometria" not in v and _valida(v) == []
+
+
+def test_la_geometria_minima_valida():
+    assert _valida(_base(geometria=_geo())) == []
+
+
+def test_la_geometria_exige_confianza_por_polilinea():
+    """La confianza es POR LINEA: el contorno medido y el techo supuesto conviven."""
+    assert _valida(_base(geometria=_geo({"puntos": [[0, 0, 0], [1, 0, 0]]}))) != []
+    assert _valida(_base(geometria=_geo(_poli(confianza="masomenos")))) != []
+
+
+def test_la_geometria_rechaza_puntos_que_no_son_3d():
+    for malo in ([0, 0], [0, 0, 0, 0], [0, 0, "alto"]):
+        v = _base(geometria=_geo(_poli(puntos=[[0, 0, 0], malo])))
+        assert _valida(v) != [], f"acepto un punto {malo}"
+
+
+def test_una_polilinea_de_un_solo_punto_no_es_una_linea():
+    assert _valida(_base(geometria=_geo(_poli(puntos=[[0, 0, 0]])))) != []
+
+
+def test_la_unidad_es_metros_y_no_se_negocia():
+    """Una geometria con unidad ambigua es una geometria inservible."""
+    assert _valida(_base(geometria=_geo(unidad="cm"))) != []
+
+
+def test_la_geometria_rechaza_coordenadas_absurdas():
+    assert _valida(_base(geometria=_geo(_poli(puntos=[[0, 0, 0], [9999, 0, 0]])))) != []
+
+
+def test_avisa_si_la_geometria_dice_medido_pero_la_fuente_es_memoria():
+    v = _base(geometria=_geo(_poli(confianza="medido")))
+    assert any("polilineas dicen 'medido'" in a for a in venue.coherencia(v))
+
+
+def test_la_geometria_ajustada_no_dispara_el_aviso_de_memoria():
+    assert venue.coherencia(_base(geometria=_geo())) == []
+
+
+# ------------------------------------------------- la sala demo que viaja en el repo
+DEMO = REPO / "data" / "venues" / "scd-plaza-egana.json"
+
+
+def _demo() -> dict:
+    return json.loads(DEMO.read_text(encoding="utf-8"))
+
+
+def test_la_sala_demo_existe_y_valida():
+    """Es el material por defecto del visor: si no valida, el visor abre roto."""
+    assert DEMO.is_file(), "falta la sala demo (py tools/venue_geometria_scd.py)"
+    assert _valida(_demo()) == []
+    assert venue.coherencia(_demo()) == []
+
+
+def test_la_sala_demo_se_declara_demo_en_el_archivo():
+    """El disclaimer vive en el DATO, no en un README que nadie abre al lado."""
+    v = _demo()
+    assert "DEMO" in v["notas"] and "DEMO" in v["geometria"]["nota"]
+    assert "firmado_por" not in v, "una demo no la firma nadie"
+    assert v["fuente_datos"] != "memoria"
+
+
+def test_la_sala_demo_mezcla_niveles_de_confianza():
+    """El visor tiene que poder dibujar solido, segmentado y tenue con datos reales."""
+    niveles = {pl["confianza"] for pl in _demo()["geometria"]["polilineas"]}
+    assert {"medido", "ajustado"} <= niveles
+    assert len(niveles) >= 3, f"la demo no ejercita los tiers: {niveles}"
+
+
+def test_la_sala_demo_cabe_en_el_presupuesto_de_aristas():
+    """800 es el tope declarado del visor. Si la demo lo pasa, el visor recorta
+    su propio material por defecto -- avisando, pero recorta."""
+    aristas = sum(len(pl["puntos"]) - 1 for pl in _demo()["geometria"]["polilineas"])
+    assert 0 < aristas <= 800, f"{aristas} aristas: no cabe en el presupuesto"
+
+
+def test_la_sala_demo_se_regenera_igual():
+    """Derivada de verdad: el archivo del repo es lo que imprime su generador."""
+    sys.path.insert(0, str(REPO / "tools"))
+    import venue_geometria_scd
+
+    assert venue_geometria_scd.documento() == _demo(), (
+        "el archivo y su generador divergieron: correr py tools/venue_geometria_scd.py"
+    )
+
+
 # ----------------------------------------------------------------- sitio
 def test_el_sitio_no_publica_las_salas_no_publicas(tmp_path, monkeypatch):
     monkeypatch.setattr(venue, "DIR_VENUES", tmp_path / "v")
