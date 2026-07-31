@@ -7,6 +7,15 @@
  },
 
  "_patch": "El cableado de la mejora `patch_efectos`: la obra no se exhibe en el campo, lo deforma, y lo deforma con lo que ella misma mide. Cada fila conecta un DATO de la pieza con un EFECTO que ejerce sobre lo que tiene alrededor, como un patch de sintetizador modular. Si la obra no trae el dato, el efecto vale cero: no se inventa nada. La llave de arriba manda; apagada, la piel dibuja exactamente igual que antes.",
+
+ "_llaves": "Cada efecto tiene además su propia llave, aquí abajo en `efectos`. La maestra manda: con ella apagada nada suena. Con la maestra encendida, un efecto en false queda mudo —coeficiente exactamente cero— y los demás siguen sonando. Una llave ausente es un efecto encendido: el default conserva el comportamiento de siempre.",
+ "efectos": {
+  "pulso": true,
+  "curvatura": true,
+  "sangrado": true,
+  "desgarro": true,
+  "gravedad": true
+ },
  "patch": [
   { "dato": "tilde",    "efecto": "pulso",     "ganancia": 1.0 },
   { "dato": "trazo",    "efecto": "curvatura", "ganancia": 1.0 },

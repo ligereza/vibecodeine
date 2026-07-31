@@ -50,7 +50,16 @@ def test_the_smoke_still_measures_the_effects_patch():
     salida = proc.stdout + proc.stderr
     for esperado in ("flag off draws exactly as before",
                      "patch on deforms",
-                     "gravedad pulls the reading"):
+                     "gravedad pulls the reading",
+                     # Per-effect switches: each effect is measured ALONE by
+                     # the signature only it can leave, and the all-off run
+                     # proves every switch gates to exactly zero.
+                     "curvatura alone displaces",
+                     "sangrado alone recolours",
+                     "desgarro alone tears x-only",
+                     "pulso alone bends glyph time",
+                     "gravedad alone pulls the reading",
+                     "every switch off under master on draws exactly the base"):
         assert esperado in salida, (
             "the smoke no longer measures the effects patch (%r missing):\n%s"
             % (esperado, salida)
@@ -78,6 +87,17 @@ def test_the_board_is_wiring_and_ships_off():
     # drops one is how an effect stops being maintained.
     assert {f["efecto"] for f in t["patch"]} == {
         "pulso", "curvatura", "sangrado", "desgarro", "gravedad"}
+    # Every effect has its own switch under the master, and all ship ON: with
+    # only the master flag the patch behaves exactly as it always did. A
+    # switch the board silently drops would freeze that effect's default in
+    # the skin, unreadable from the file the artist actually edits.
+    assert set(t["efectos"]) == {
+        "pulso", "curvatura", "sangrado", "desgarro", "gravedad"}
+    for efecto, encendido in t["efectos"].items():
+        assert encendido is True, (
+            "tablero.json ships with effect %r off: shipped defaults preserve "
+            "current behaviour, per-effect curation is the artist's edit"
+            % efecto)
 
 
 def test_the_skin_reads_the_board_and_survives_its_absence():

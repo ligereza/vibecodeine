@@ -244,6 +244,14 @@ const PATCH_DEFECTO = [
 // recorre en cada cuadro, asi que no se recorre un arreglo de objetos.
 const PATCH = {on:false, rutas:new Float64Array(0)};
 
+// Per-effect switches UNDER the master flag (`efectos` in the board). All ON
+// by default, so a board that only carries the master flag behaves exactly as
+// it always did. A switch set to false silences THAT effect and only that one:
+// its routes are dropped at compile time, so an off effect leaves a
+// coefficient of exactly zero and costs nothing per frame. Absent or unknown
+// keys change nothing -- the board only speaks about effects the skin knows.
+const EF_ON = new Uint8Array(EFECTOS.length).fill(1);
+
 function compilarPatch(filas){
   const out = [];
   for (const f of (filas||[])){
@@ -253,6 +261,9 @@ function compilarPatch(filas){
     // Adivinar cual quiso decir seria inventar una intencion que no esta
     // escrita, y ese es justo el error que el esquema prohibe.
     if (s < 0 || e < 0) continue;
+    // A route into an effect whose switch is off is a wire into a muted
+    // module: dropping it here is what makes "off" mean zero, not "small".
+    if (!EF_ON[e]) continue;
     const g = Number(f.ganancia);
     if (!Number.isFinite(g) || g <= 0) continue;
     out.push(s, e, Math.min(g, 8));       // techo: una ganancia no es infinita
@@ -264,7 +275,12 @@ compilarPatch(PATCH_DEFECTO);
 function aplicarTablero(t){
   if (!t || typeof t !== 'object') return;
   PATCH.on = !!(t.mejoras && t.mejoras.patch_efectos);
-  if (Array.isArray(t.patch) && t.patch.length) compilarPatch(t.patch);
+  if (t.efectos && typeof t.efectos === 'object')
+    for (let e = 0; e < EFECTOS.length; e++)
+      if (t.efectos[EFECTOS[e]] === false) EF_ON[e] = 0;
+  // Recompile even when the board brings no wiring of its own: the default
+  // wiring has to honour the per-effect switches too.
+  compilarPatch(Array.isArray(t.patch) && t.patch.length ? t.patch : PATCH_DEFECTO);
 }
 
 /* Las senales de UNA obra, medidas una sola vez al sembrar. Cada una queda

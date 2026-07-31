@@ -129,6 +129,15 @@ la piel dibuja exactamente igual que antes —medido, no declarado: el
 publicado y exige que las 7.647 marcas del dibujo sean idénticas. Encenderla es
 decisión del artista, y se hace editando ese archivo, no la piel.
 
+Bajo la maestra, **cada efecto tiene su propia llave** (`efectos` en el
+tablero, todas publicadas encendidas): con la maestra prendida, un efecto en
+`false` queda mudo —coeficiente exactamente cero, sus rutas se descartan al
+compilar— y los demás siguen. También medido, efecto por efecto: el smoke corre
+cada llave a solas y exige la firma que sólo ese efecto puede dejar (curvatura
+desplaza sin tocar color, sangrado tiñe sin desplazar, desgarro corta sólo en
+x, pulso altera la traza de glifos, gravedad desvía la lectura), y con las
+cinco apagadas el tablero fuerte dibuja marca por marca igual que sin tablero.
+
 **Los vínculos se dibujan siempre, tenues y por peso** (decisión del usuario,
 2026-07-30): la opacidad sale del peso del vínculo, con techo bajo, y van
 **debajo** de las obras — la relación es el sustrato, la obra es lo que se mira.

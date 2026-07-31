@@ -207,19 +207,30 @@ if (encendido.failed) morir(encendido.failed);
 if (encendido.patchOn !== true) morir(new Error("the board turned the patch on and PATCH.on stayed false"));
 if (encendido.emisores < 1) morir(new Error("patch on and nobody emitted: no work deformed anything"));
 
-let movidas = 0, maxSalto = 0, tonos = 0;
-const n = Math.min(base.traza.length, encendido.traza.length);
-for (let i = 0; i < n; i++) {
-  const a = base.traza[i].split(","), b = encendido.traza[i].split(",");
-  if (a.length < 3 || b.length < 3) continue;
-  const dx = Math.abs(+b[0] - +a[0]), dy = Math.abs(+b[1] - +a[1]);
-  if (dx + dy > 0.5) { movidas++; maxSalto = Math.max(maxSalto, Math.hypot(dx, dy)); }
-  if (a.slice(2).join(",") !== b.slice(2).join(",")) tonos++;
+// Numeric comparison of two drawing traces. `movidas`/`maxSalto`/`maxDy` are
+// geometry (a mark landed elsewhere), `tonos` is colour at the same index,
+// `difs` is any difference at all including a different mark COUNT -- the
+// only signature pulso leaves, since bending glyph time skips or adds glyphs.
+function comparar(a, b) {
+  let movidas = 0, maxSalto = 0, maxDy = 0, tonos = 0;
+  let difs = Math.abs(a.traza.length - b.traza.length);
+  const n = Math.min(a.traza.length, b.traza.length);
+  for (let i = 0; i < n; i++) {
+    if (a.traza[i] !== b.traza[i]) difs++;
+    const pa = a.traza[i].split(","), pb = b.traza[i].split(",");
+    if (pa.length < 3 || pb.length < 3) continue;
+    const dx = Math.abs(+pb[0] - +pa[0]), dy = Math.abs(+pb[1] - +pa[1]);
+    if (dx + dy > 0.5) { movidas++; maxSalto = Math.max(maxSalto, Math.hypot(dx, dy)); maxDy = Math.max(maxDy, dy); }
+    if (pa.slice(2).join(",") !== pb.slice(2).join(",")) tonos++;
+  }
+  return { movidas, maxSalto, maxDy, tonos, difs, n };
 }
-if (!movidas) morir(new Error("patch on and not a single mark moved: the effects are inert"));
-if (!tonos) morir(new Error("patch on and no colour changed: sangrado is inert"));
-console.log(`OK: patch on deforms -- ${movidas}/${n} marks displaced `
-  + `(max ${maxSalto.toFixed(1)} px), ${tonos} colour changes, ${encendido.emisores} emitters`);
+
+const todo = comparar(base, encendido);
+if (!todo.movidas) morir(new Error("patch on and not a single mark moved: the effects are inert"));
+if (!todo.tonos) morir(new Error("patch on and no colour changed: sangrado is inert"));
+console.log(`OK: patch on deforms -- ${todo.movidas}/${todo.n} marks displaced `
+  + `(max ${todo.maxSalto.toFixed(1)} px), ${todo.tonos} colour changes, ${encendido.emisores} emitters`);
 
 // ── 4. gravedad, which touches state and not the canvas ───────────────────
 // Measured without walking the field, because the walk overwrites E.pos every
@@ -245,3 +256,86 @@ const deriva = Math.abs(conGravedad.pos - sinGravedad.pos);
 if (!(deriva > 1)) morir(new Error(`gravedad is inert: the reading drifted ${deriva} px with the patch on`));
 console.log(`OK: gravedad pulls the reading ${deriva.toFixed(1)} px in 30 frames `
   + `(off: ${sinGravedad.pos.toFixed(1)}, on: ${conGravedad.pos.toFixed(1)})`);
+
+// ── 5. the per-effect switches: each effect answers for what it encodes ────
+// Under the master flag every effect has its own switch (`efectos` in the
+// board). The doublecup rule: each switch is measured by the signature ONLY
+// its effect can leave -- and a solo run doubles as proof that the other four
+// switches really silence theirs, because their signatures must read zero.
+const EFECTOS_NOMBRES = ["pulso", "curvatura", "sangrado", "desgarro", "gravedad"];
+const solo = (efecto) => ({
+  ...fuerte,
+  efectos: Object.fromEntries(EFECTOS_NOMBRES.map(e => [e, e === efecto])),
+});
+
+// pulso bends glyph TIME, and glyph time is only drawn when the field folds
+// into a work's form. Headless that state is unreachable through real data
+// (the stroke fetch 404s in the sandbox), so the form is poked directly --
+// same licence as marcarQuiebre above.
+const armarForma = `
+if (typeof E!=='undefined' && typeof NODOS!=='undefined' && NODOS.length){
+  E.foco = {id:'__smoke__'};
+  E.forma = 1;
+  E.formaPts = NODOS.map((n, i) => [Math.cos(i*2.399), Math.sin(i*2.399)]);
+}`;
+
+// curvatura alone: geometry moves, colour does not.
+const baseQ = await correr({ antes: marcarQuiebre });
+const soloCurva = await correr({ tablero: solo("curvatura"), antes: marcarQuiebre });
+if (soloCurva.failed) morir(soloCurva.failed);
+const mCurva = comparar(baseQ, soloCurva);
+if (!(mCurva.movidas > 0)) morir(new Error("curvatura alone displaced nothing: its switch is inert"));
+if (mCurva.tonos !== 0) morir(new Error(`curvatura alone changed ${mCurva.tonos} colours: sangrado's switch leaks`));
+console.log(`OK: curvatura alone displaces (${mCurva.movidas} marks, max ${mCurva.maxSalto.toFixed(1)} px) and zero colour changes`);
+
+// sangrado alone: colour moves, geometry does not.
+const soloSangre = await correr({ tablero: solo("sangrado"), antes: marcarQuiebre });
+if (soloSangre.failed) morir(soloSangre.failed);
+const mSangre = comparar(baseQ, soloSangre);
+if (!(mSangre.tonos > 0)) morir(new Error("sangrado alone recoloured nothing: its switch is inert"));
+if (mSangre.movidas !== 0) morir(new Error(`sangrado alone displaced ${mSangre.movidas} marks: a geometry effect leaks`));
+console.log(`OK: sangrado alone recolours (${mSangre.tonos} marks) and zero displacement`);
+
+// desgarro alone: tears are horizontal rows -- x moves, y never does.
+const soloTira = await correr({ tablero: solo("desgarro"), antes: marcarQuiebre });
+if (soloTira.failed) morir(soloTira.failed);
+const mTira = comparar(baseQ, soloTira);
+if (!(mTira.movidas > 0)) morir(new Error("desgarro alone displaced nothing: its switch is inert"));
+if (mTira.maxDy > 0.01) morir(new Error(`desgarro alone moved a mark ${mTira.maxDy.toFixed(2)} px in y: tears are x-only, curvatura's switch leaks`));
+if (mTira.tonos !== 0) morir(new Error(`desgarro alone changed ${mTira.tonos} colours: sangrado's switch leaks`));
+console.log(`OK: desgarro alone tears x-only (${mTira.movidas} marks, max ${mTira.maxSalto.toFixed(1)} px, max dy ${mTira.maxDy.toFixed(2)})`);
+
+// pulso alone: glyph time dilates, so glyphs change or vanish -- but nothing
+// is pushed around and no state drifts.
+const glifoBase = await correr({ antes: armarForma });
+if (glifoBase.failed) morir(glifoBase.failed);
+const soloPulso = await correr({ tablero: solo("pulso"), antes: armarForma });
+if (soloPulso.failed) morir(soloPulso.failed);
+const mPulso = comparar(glifoBase, soloPulso);
+if (!(mPulso.difs > 0)) morir(new Error("pulso alone left the glyph trace identical: its switch is inert"));
+console.log(`OK: pulso alone bends glyph time (${mPulso.difs} trace differences over ${glifoBase.traza.length} marks)`);
+
+// gravedad alone: the reading drifts, exactly as in section 4.
+const soloGrav = await correr({ tablero: solo("gravedad"), caminar: false, antes: desviar });
+if (soloGrav.failed) morir(soloGrav.failed);
+const derivaSolo = Math.abs(soloGrav.pos - sinGravedad.pos);
+if (!(derivaSolo > 1)) morir(new Error(`gravedad alone is inert: the reading drifted ${derivaSolo} px`));
+console.log(`OK: gravedad alone pulls the reading ${derivaSolo.toFixed(1)} px`);
+
+// ── 6. master on, every switch off: the field must not feel a thing ────────
+// This is what makes each switch a real gate and not a suggestion: with all
+// five off the loud board has to draw mark for mark like no board at all, in
+// both drawing modes, and the reading must not drift a pixel.
+const mudo = solo("__ninguno__");           // every switch false
+const apagadoQ = await correr({ tablero: mudo, antes: marcarQuiebre });
+if (apagadoQ.failed) morir(apagadoQ.failed);
+if (!igual(baseQ, apagadoQ)) morir(new Error("every switch off and the field trace still changed"));
+const apagadoGlifo = await correr({ tablero: mudo, antes: armarForma });
+if (apagadoGlifo.failed) morir(apagadoGlifo.failed);
+if (!igual(glifoBase, apagadoGlifo)) morir(new Error("every switch off and the glyph trace still changed"));
+const apagadoGrav = await correr({ tablero: mudo, caminar: false, antes: desviar });
+if (apagadoGrav.failed) morir(apagadoGrav.failed);
+const derivaMuda = Math.abs(apagadoGrav.pos - sinGravedad.pos);
+if (derivaMuda > 1e-6) morir(new Error(`every switch off and the reading still drifted ${derivaMuda} px`));
+console.log(`OK: every switch off under master on draws exactly the base `
+  + `(${baseQ.traza.length} + ${glifoBase.traza.length} marks identical, drift ${derivaMuda.toFixed(1)} px)`);
