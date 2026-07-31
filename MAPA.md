@@ -157,7 +157,7 @@ program says to the operator who runs it.
 
 <!-- COMANDOS:INICIO -- generado por tools/gen_mapa_comandos.py, no editar a mano -->
 
-Medido sobre el CLI real: **85 comandos** (23 sueltos + 62 dentro de 15 grupos).
+Medido sobre el CLI real: **87 comandos** (23 sueltos + 64 dentro de 15 grupos).
 
 ### Comandos sueltos
 
