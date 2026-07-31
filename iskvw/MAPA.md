@@ -30,7 +30,7 @@ iskvw/
     obras.json         8 piezas generativas del repo (VOLÁ, Campo, Cenefa…)
     campo.json         219 obras del archivo, con posición medida y capas
     curaduria.json     la mano del artista sobre lo percibido
-    tablero.json       qué mejoras están encendidas
+    tablero.json       qué mejoras están encendidas, y el patch de efectos
   piel/
     campo/             la piel viva: el organismo. Es la raíz del sitio
     terminal/          piel anterior. Lee sólo obras.json (8 piezas)
@@ -108,6 +108,26 @@ que no entiende.
 ensayos de MAK con sus conceptos e íconos— y si no está sigue exactamente como
 antes con `campo.json` y `obras.json`. Como `archivo.json` no se versiona, hoy
 el camino vivo es el respaldo: la degradación es lo normal, no la excepción.
+
+**La obra deforma el campo, y lo deforma con lo que ella mide** (2026-07-30):
+la mejora `patch_efectos` del tablero, y su cableado vive en el mismo archivo
+—`patch`, al lado de `mejoras`— como un patch de sintetizador modular. El
+editor lo devuelve intacto: sólo toca las llaves, no el cableado.
+Cada fila conecta una
+**señal** de la pieza —sus marcas de tilde, los subtrazos de su vector, cuánto
+de lo que se le percibió tiene tono, la etiqueta de quiebre, su materia— con un
+**efecto** sobre lo que tiene alrededor: `pulso` (el tiempo de los glifos
+vecinos se dilata y se contrae), `curvatura` (los vecinos giran alrededor de la
+obra), `sangrado` (su color se corre sobre ellos), `desgarro` (los glifos se
+cortan por filas) y `gravedad` (la lectura se apoya en la pieza pesada al
+pasar). Si la obra no trae el dato, el efecto vale **cero**: un efecto es una
+afirmación, y ninguna pieza afirma lo que no tiene.
+
+La llave maestra es `mejoras.patch_efectos` y **se publica apagada**. Apagada,
+la piel dibuja exactamente igual que antes —medido, no declarado: el
+`tools/iskvw_piel_smoke.mjs` arranca la piel sin tablero y con el tablero
+publicado y exige que las 7.647 marcas del dibujo sean idénticas. Encenderla es
+decisión del artista, y se hace editando ese archivo, no la piel.
 
 **Los vínculos se dibujan siempre, tenues y por peso** (decisión del usuario,
 2026-07-30): la opacidad sale del peso del vínculo, con techo bajo, y van

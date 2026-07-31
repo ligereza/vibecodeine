@@ -169,16 +169,198 @@ let VECINOS=[];
 const TONOS = {rojo:0, naranja:28, amarillo:52, verde:120, cyan:180, celeste:200,
   azul:220, violeta:270, morado:280, magenta:310, rosa:330, negro:null,
   blanco:null, gris:null, marron:20, cafe:20, dorado:45, plateado:null};
+// La percepcion devuelve cosas como "Rojo (camiseta)" o "Azul oscuro": vale la
+// primera palabra, el resto es donde esta ese color. Una sola copia de la
+// cuenta porque la usan el tono y la saturacion, y dos copias divergen.
+function palabraColor(c){
+  return String(c).toLowerCase().normalize('NFD')
+    .replace(/[̀-ͯ]/g,'').trim().split(/[\s(,]/)[0];
+}
 function tonoDe(colores){
   for (const c of (colores||[])){
-    // La percepcion devuelve cosas como "Rojo (camiseta)" o "Azul oscuro":
-    // vale la primera palabra, el resto es donde esta ese color.
-    const palabra = String(c).toLowerCase().normalize('NFD')
-      .replace(/[̀-ͯ]/g,'').trim().split(/[\s(,]/)[0];
-    const t = TONOS[palabra];
+    const t = TONOS[palabraColor(c)];
     if (typeof t === 'number') return t;
   }
   return null;
+}
+// Proporcion CROMATICA de lo percibido: negro, blanco, gris y plateado no
+// tienen tono, asi que una obra acromatica no puede tenirle el color a nadie.
+// No es una saturacion HSL medida sobre el pixel -- es la que declara la
+// percepcion, y es el unico dato de color que el archivo tiene.
+function saturacionDe(colores){
+  let vistos = 0, cromaticos = 0;
+  for (const c of (colores||[])){
+    const p = palabraColor(c);
+    if (!(p in TONOS)) continue;          // no es del vocabulario: no cuenta
+    vistos++;
+    if (typeof TONOS[p] === 'number') cromaticos++;
+  }
+  return vistos ? cromaticos/vistos : 0;
+}
+
+/* ═══ el patch de efectos ═══════════════════════════════════════════════
+   La obra no se EXHIBE en el campo: lo DEFORMA. Y lo deforma con lo que ella
+   misma mide -- las tildes que carga, los subtrazos de su vector, los colores
+   que la percepcion le encontro, su materia. Cada coeficiente de aca abajo
+   sale de un dato de la pieza; no hay una sola constante decorativa. Si la
+   obra no trae el dato, el efecto vale CERO y el campo queda como estaba: la
+   primera regla del contrato es que ninguna pieza afirma un dato que no tiene,
+   y un efecto es una afirmacion.
+
+   Se cablea como un sintetizador modular. Una fila del tablero conecta una
+   SENAL (un dato de la obra) con un EFECTO (que le hace al espacio vecino) y
+   una ganancia. Probar otra combinacion es editar `datos/tablero.json`, no
+   esta piel: es la misma regla del esquema -- la piel se cambia sin tocar los
+   datos, y al reves.
+
+   La llave maestra es `mejoras.patch_efectos`, y esta en false hasta que el
+   artista la mueva. En false el bucle de dibujo hace exactamente las mismas
+   cuentas que hacia antes de existir este bloque: lo unico que se paga es un
+   booleano por cuadro.
+
+   Lo que este patch NO hace, porque el costo esta medido y es la ley de esta
+   piel: recorrer pares de nodos. En cada cuadro emiten como mucho TRES obras
+   -- las mas cercanas a la lectura --, sus coeficientes se calculan una vez
+   por cuadro sobre arreglos ya reservados, y cada nodo mira solo esas tres.
+   Nada se reserva dentro del bucle.
+   ══════════════════════════════════════════════════════════════════════ */
+const SENALES = ['tilde','trazo','color','etiqueta','peso'];
+const EFECTOS = ['pulso','curvatura','sangrado','desgarro','gravedad'];
+const EF_PULSO=0, EF_CURVATURA=1, EF_SANGRADO=2, EF_DESGARRO=3, EF_GRAVEDAD=4;
+const MAX_EMISORES = 3;
+
+// El cableado por defecto: uno a uno, cada dato al efecto que le corresponde.
+// Es lo que el tablero escribe tal cual; vive tambien aca para que la piel
+// abra sin el archivo (regla 3 del contrato: abre sin internet).
+const PATCH_DEFECTO = [
+  {dato:'tilde',    efecto:'pulso',     ganancia:1},
+  {dato:'trazo',    efecto:'curvatura', ganancia:1},
+  {dato:'color',    efecto:'sangrado',  ganancia:1},
+  {dato:'etiqueta', efecto:'desgarro',  ganancia:1},
+  {dato:'peso',     efecto:'gravedad',  ganancia:1},
+];
+
+// rutas: plano, [senal, efecto, ganancia, senal, efecto, ganancia, ...]. Se
+// recorre en cada cuadro, asi que no se recorre un arreglo de objetos.
+const PATCH = {on:false, rutas:new Float64Array(0)};
+
+function compilarPatch(filas){
+  const out = [];
+  for (const f of (filas||[])){
+    const s = SENALES.indexOf(f && f.dato);
+    const e = EFECTOS.indexOf(f && f.efecto);
+    // Una fila que nombra algo que la piel no conoce se descarta entera.
+    // Adivinar cual quiso decir seria inventar una intencion que no esta
+    // escrita, y ese es justo el error que el esquema prohibe.
+    if (s < 0 || e < 0) continue;
+    const g = Number(f.ganancia);
+    if (!Number.isFinite(g) || g <= 0) continue;
+    out.push(s, e, Math.min(g, 8));       // techo: una ganancia no es infinita
+  }
+  PATCH.rutas = Float64Array.from(out);
+}
+compilarPatch(PATCH_DEFECTO);
+
+function aplicarTablero(t){
+  if (!t || typeof t !== 'object') return;
+  PATCH.on = !!(t.mejoras && t.mejoras.patch_efectos);
+  if (Array.isArray(t.patch) && t.patch.length) compilarPatch(t.patch);
+}
+
+/* Las senales de UNA obra, medidas una sola vez al sembrar. Cada una queda
+   entre 0 y 1, y vale 0 cuando el dato no esta. Los divisores no son gusto:
+   salen del archivo medido (219 piezas, iskvw/datos/campo.json) -- marcas de
+   tilde llegan a 6, los subtrazos tienen mediana 22 y percentil 90 en 83, los
+   puntos del vector llegan a 1633. */
+function senalesDe(o){
+  const s = new Float64Array(SENALES.length);
+  s[0] = Math.min((o.tilde && o.tilde.marcas || 0) / 6, 1);
+  s[1] = Math.min((o.trazo && o.trazo.subtrazos || 0) / 90, 1);
+  s[2] = saturacionDe(o.colores);
+  s[3] = quebrada(o) ? 1 : 0;
+  // La materia de la pieza. El contrato la declara (`peso`, por defecto 1);
+  // cuando no viene, se usa la materia MEDIDA de su vector -- el mismo hecho
+  // por otra via, no un relleno. Sin ninguna de las dos no hay gravedad: no se
+  // inventa masa.
+  s[4] = typeof o.peso === 'number' ? Math.min(o.peso/3, 1)
+       : Math.min((o.trazo && o.trazo.puntos || 0) / 1600, 1);
+  return s;
+}
+// La etiqueta de quiebre es CURATORIAL: la pone quien clasifica la obra, no la
+// piel. Sin etiqueta no hay desgarro -- el campo no decide solo que una pieza
+// esta rota.
+const RE_QUIEBRE = /glitch|reactiv|error|ruido|psicosis|quiebre|fallo/i;
+function quebrada(o){
+  const etqs = o.tags || o.etiquetas;
+  if (Array.isArray(etqs))
+    for (const t of etqs) if (RE_QUIEBRE.test(String(t))) return true;
+  return RE_QUIEBRE.test(String(o.estilo || ''));
+}
+
+// Los emisores del cuadro. Todo reservado una vez: en cada cuadro se
+// reescriben estos mismos arreglos.
+const EMIS = {
+  n: 0,
+  idx:  new Int32Array(MAX_EMISORES),
+  x:    new Float64Array(MAX_EMISORES),
+  y:    new Float64Array(MAX_EMISORES),
+  campo:new Float64Array(MAX_EMISORES),   // su `y` en el campo, no en pantalla
+  tono: new Float64Array(MAX_EMISORES),
+  coef: new Float64Array(MAX_EMISORES * EFECTOS.length),
+  // El giro de la curvatura, resuelto una vez por cuadro y por emisor. Medido:
+  // hacer el seno y el coseno DENTRO del bucle de nodos costaba 4,5 ms por
+  // cuadro con 479 nodos (37,3 contra 32,8 apagado, un 14% de mas). Aca son
+  // tres senos por cuadro en vez de mil quinientos.
+  giroCo:new Float64Array(MAX_EMISORES),
+  giroSi:new Float64Array(MAX_EMISORES),
+  activo:false,                            // algun coeficiente distinto de cero
+};
+const _dEmis = new Float64Array(MAX_EMISORES);
+
+/* Las tres obras mas cercanas a la lectura, en UNA pasada escalar sobre `y`.
+   Sin ordenar el arreglo (eso seria O(n log n) por cuadro y reservaria) y sin
+   mirar un solo par de nodos. Fuera de alcance no emite nadie. */
+function elegirEmisores(alcance){
+  EMIS.n = 0;
+  if (!PATCH.on || !PATCH.rutas.length) return;
+  for (let i = 0; i < NODOS.length; i++){
+    const dy = Math.abs(NODOS[i].y - E.pos);
+    if (dy > alcance) continue;
+    if (EMIS.n === MAX_EMISORES && dy >= _dEmis[MAX_EMISORES-1]) continue;
+    let k = Math.min(EMIS.n, MAX_EMISORES-1);
+    while (k > 0 && _dEmis[k-1] > dy){
+      _dEmis[k] = _dEmis[k-1]; EMIS.idx[k] = EMIS.idx[k-1]; k--;
+    }
+    _dEmis[k] = dy; EMIS.idx[k] = i;
+    if (EMIS.n < MAX_EMISORES) EMIS.n++;
+  }
+  // El coeficiente de cada efecto: dato de la obra por ganancia de la ruta,
+  // sumado. Dos rutas al mismo efecto se suman, como dos cables a la misma
+  // entrada.
+  EMIS.coef.fill(0);
+  EMIS.activo = false;
+  const R = PATCH.rutas;
+  for (let k = 0; k < EMIS.n; k++){
+    const n = NODOS[EMIS.idx[k]];
+    const base = k * EFECTOS.length;
+    for (let r = 0; r < R.length; r += 3)
+      EMIS.coef[base + (R[r+1]|0)] += n.sen[R[r]|0] * R[r+2];
+    EMIS.campo[k] = n.y;
+    // El giro de la curvatura ya resuelto: adentro del bucle de nodos solo
+    // quedan multiplicaciones.
+    const ang = Math.min(EMIS.coef[base+EF_CURVATURA], 1.2) * 0.9;
+    EMIS.giroCo[k] = Math.cos(ang);
+    EMIS.giroSi[k] = Math.sin(ang);
+    for (let e = 0; e < EFECTOS.length; e++)
+      if (EMIS.coef[base+e] > 0.001) EMIS.activo = true;
+  }
+}
+
+// Mezcla de tonos por el camino CORTO del circulo: de 350 a 10 son 20 grados,
+// no 340. Sin esto el sangrado daria una vuelta entera por el arcoiris.
+function mezclarTono(a, b, m){
+  const dif = ((b - a + 540) % 360) - 180;
+  return (a + dif*m + 360) % 360;
 }
 
 function medir(){
@@ -224,6 +406,12 @@ function delContrato(p){
     medio: p.medio,
     abstraccion: p.extra?.abstraccion || 0,
     firmada: !!p.extra?.firmada,
+    // Materia declarada y capas medidas: son las senales del patch de efectos.
+    // `peso` es campo del contrato; tilde y trazo viajan en `extra`, igual que
+    // los colores, porque son lo que la percepcion midio sobre la pieza.
+    peso: typeof p.peso === 'number' ? p.peso : undefined,
+    tilde: p.extra?.tilde,
+    trazo: p.extra?.trazo,
   };
 }
 
@@ -265,6 +453,8 @@ function sembrar(obras){
       fase: (h % 628)/100,
       // El tono sale del color que la obra TIENE, no de su identificador.
       tono: tonoDe(o.colores) ?? ((h >> 11) % 360),
+      // Lo que esta obra le hace al campo, medido una sola vez.
+      sen: senalesDe(o),
     };
   });
   // El maximo, no el ultimo del arreglo: con posiciones proyectadas el orden
@@ -310,6 +500,9 @@ function diafragma(v){
 
 function dibujar(){
   const d = diafragma(E.suave);
+  // Quien deforma este cuadro. Con el patch apagado esto sale en la primera
+  // linea y EMIS.n queda en 0.
+  elegirEmisores(d.alcance);
   ctx.fillStyle = '#08080a';
   ctx.fillRect(0,0,W,H);
 
@@ -326,6 +519,20 @@ function dibujar(){
   if (F > 0.02){
     ctx.font = `${Math.max(7, escalaForma/34)}px ui-monospace,monospace`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  }
+
+  // Donde cae en pantalla cada obra que emite, y con que tono tine. Tres
+  // llamadas por cuadro, no una por nodo. `posicionDe` es una declaracion, asi
+  // que ya esta disponible aca arriba.
+  const conPatch = PATCH.on && EMIS.n > 0 && EMIS.activo;
+  const invAlcance = 1 / d.alcance;      // una division por cuadro, no por nodo
+  if (conPatch){
+    for (let k = 0; k < EMIS.n; k++){
+      const p = posicionDe(EMIS.idx[k]);
+      EMIS.x[k] = p ? p.x : cx;
+      EMIS.y[k] = p ? p.y : cy;
+      EMIS.tono[k] = NODOS[EMIS.idx[k]].tono;
+    }
   }
 
   /* Donde cae un nodo en pantalla. Una sola funcion porque la usan DOS pasadas
@@ -397,9 +604,56 @@ function dibujar(){
     // respiracion propia, y el ruido crece con la velocidad
     const resp = 1 + Math.sin(E.t*1.67 + n.fase)*0.055;
     const jitter = d.ruido * 13;
-    const px = x + (Math.random()-0.5)*jitter;
-    const py = y + (Math.random()-0.5)*jitter;
+    let px = x + (Math.random()-0.5)*jitter;
+    let py = y + (Math.random()-0.5)*jitter;
     const r = n.r * resp * (0.55 + cerca*0.85);
+
+    /* ── lo que las obras cercanas le hacen a ESTE nodo ──
+       Cuatro efectos de dibujo; el quinto (gravedad) toca el estado y vive en
+       `paso()`. El peso de cada uno es la distancia AL EMISOR, no al centro de
+       la pantalla: la obra deforma lo que tiene alrededor, y a su propio lado
+       del campo. Con el patch apagado nada de esto se ejecuta y `tono` y `tG`
+       son literalmente los de antes. */
+    let tono = n.tono, tG = tGlifo;
+    if (conPatch){
+      let pulso = 0, tira = 0, sangre = 0, sangreTono = 0;
+      for (let k = 0; k < EMIS.n; k++){
+        if (EMIS.idx[k] === ni) continue;     // una obra no se deforma a si misma
+        const inf = 1 - Math.min(Math.abs(n.y - EMIS.campo[k]) * invAlcance, 1);
+        if (inf < 0.01) continue;
+        const b = k * EFECTOS.length;
+        pulso += EMIS.coef[b+EF_PULSO] * inf;
+        tira  += EMIS.coef[b+EF_DESGARRO] * inf;
+        const s = EMIS.coef[b+EF_SANGRADO] * inf;
+        if (s > 0){ sangre += s; sangreTono += EMIS.tono[k] * s; }
+        // curvatura: el nodo gira ALREDEDOR de la obra, asi que se dobla el
+        // espacio y no se lo estira. El giro es el mismo para todos (ya
+        // resuelto arriba) y lo que cambia con la distancia es CUANTO se
+        // recorre de el: el que esta al lado de la obra llega entero, el
+        // lejano se queda a medio camino. Va adentro del bucle porque cada
+        // emisor curva sobre su propio centro, y dos curvas se componen.
+        if (EMIS.coef[b+EF_CURVATURA] > 0.004){
+          const ux = px - EMIS.x[k], uy = py - EMIS.y[k];
+          const co = EMIS.giroCo[k], si = EMIS.giroSi[k];
+          px += (EMIS.x[k] + ux*co - uy*si - px) * inf;
+          py += (EMIS.y[k] + ux*si + uy*co - py) * inf;
+        }
+      }
+      // pulso: el tiempo del glifo se dilata y se contrae junto a la obra. No
+      // es mas rapido: es una respiracion del tiempo, asi que vuelve.
+      if (pulso > 0.001)
+        tG = tGlifo * (1 + Math.sin(E.t*1.9 + n.fase) * Math.min(pulso,1) * 0.6);
+      // sangrado: el color de la obra se corre sobre lo que tiene cerca.
+      if (sangre > 0.001)
+        tono = mezclarTono(n.tono, sangreTono/sangre, Math.min(sangre,1) * 0.85);
+      // desgarro: el corte es por FILA de 9 px -- una cinta que salta de pista,
+      // no ruido por pixel. Determinista dado E.t: el mismo cuadro se rompe
+      // igual dos veces.
+      if (tira > 0.01){
+        const fila = (py / 9 | 0) + (E.t * 3 | 0);
+        px += (fila & 1 ? 1 : -1) * Math.min(tira, 1) * 16;
+      }
+    }
 
     // Lo lejano se disuelve; lo cercano se afirma. Sin blur real: el blur
     // cuesta y en un telefono de gama media se nota.
@@ -411,8 +665,8 @@ function dibujar(){
     const soloGlifo = destino && F > 0.35;
     if (!soloGlifo){
     const g = ctx.createRadialGradient(px,py,0,px,py,r*2.4);
-    g.addColorStop(0, `hsla(${n.tono},14%,88%,${a})`);
-    g.addColorStop(.45, `hsla(${n.tono},18%,62%,${a*0.34})`);
+    g.addColorStop(0, `hsla(${tono},14%,88%,${a})`);
+    g.addColorStop(.45, `hsla(${tono},18%,62%,${a*0.34})`);
     g.addColorStop(1, 'hsla(0,0%,0%,0)');
     ctx.fillStyle = g;
     ctx.beginPath(); ctx.arc(px,py,r*2.4,0,6.2832); ctx.fill();
@@ -422,8 +676,8 @@ function dibujar(){
       // El glifo sale de un campo que evoluciona, asi que el patron nunca se
       // repite: es generativo, no una animacion guardada. Cuando la obra se
       // desarrolla (visitante quieto), la materia sube y se lee mas.
-      const v = Math.sin(destino[0]*17 + tGlifo) * Math.cos(destino[1]*13 - tGlifo*0.61)
-              + Math.sin((destino[0]+destino[1])*9 + tGlifo*1.37) * 0.5 * (1 + E.fuerza*2);
+      const v = Math.sin(destino[0]*17 + tG) * Math.cos(destino[1]*13 - tG*0.61)
+              + Math.sin((destino[0]+destino[1])*9 + tG*1.37) * 0.5 * (1 + E.fuerza*2);
       const RMP = rampa();
       const nivel = Math.max(0, Math.min(RMP.length-1,
         Math.round(((v + 1.5)/3) * (RMP.length-1) * (0.55 + E.despliegue*0.45))));
@@ -433,18 +687,21 @@ function dibujar(){
       // respire sin repetirse. Contenido curatorial, ritmo generativo.
       let g2 = RMP[nivel];
       if (nivel >= 2 && n.letras){
-        const vi = Math.sin(destino[0]*23 - tGlifo*0.7)
-                 * Math.cos(destino[1]*19 + tGlifo*0.43);
-        g2 = REGIMEN === 'industrial' && abstr < 0.5
+        const vi = Math.sin(destino[0]*23 - tG*0.7)
+                 * Math.cos(destino[1]*19 + tG*0.43);
+        // `abstr` no existia: era una variable suelta que solo se evaluaba bajo
+        // el regimen industrial, asi que el ReferenceError esperaba a que el
+        // artista lo encendiera. La abstraccion es de la OBRA (curaduria.json).
+        g2 = REGIMEN === 'industrial' && (n.obra.abstraccion || 0) < 0.5
            ? RMP[Math.max(2, nivel)]
            : n.letras[Math.floor(((vi+1)/2) * 977) % n.letras.length];
       }
       if (g2 !== ' '){
-        ctx.fillStyle = `hsla(${tonoRegimen(n)},16%,90%,${((F-0.35)/0.65) * (0.5 + nivel/(RMP.length-1)*0.5)})`;
+        ctx.fillStyle = `hsla(${tonoRegimen(n, tono)},16%,90%,${((F-0.35)/0.65) * (0.5 + nivel/(RMP.length-1)*0.5)})`;
         ctx.fillText(g2, px, py);
       }
     } else {
-      ctx.fillStyle = `hsla(${n.tono},20%,92%,${a*0.95})`;
+      ctx.fillStyle = `hsla(${tono},20%,92%,${a*0.95})`;
       ctx.beginPath(); ctx.arc(px,py,r*0.42,0,6.2832); ctx.fill();
     }
 
@@ -532,7 +789,13 @@ const REG = {
   industrial: { rampa: ' .░▒▓█▓▒░█', tono: 96 },
 };
 function rampa(){ return (REG[REGIMEN] || {}).rampa || RAMPA; }
-function tonoRegimen(n){ const r = REG[REGIMEN]; return r && r.tono != null ? r.tono : n.tono; }
+// `base` es el tono ya sangrado por el patch; bajo el regimen industrial no se
+// usa, porque ahi el monocromo fosforo es la decision del artista y ningun
+// efecto la pisa.
+function tonoRegimen(n, base){
+  const r = REG[REGIMEN];
+  return r && r.tono != null ? r.tono : (base != null ? base : n.tono);
+}
 
 // Que obras tienen trazo: 208 de 219. Sin esta lista la piel pedia cualquiera y
 // el navegador registraba un 404 por cada una de las que no, y un 404 esperado
@@ -814,6 +1077,25 @@ function paso(ahora){
   // La constante depende de la direccion: bajar pesa, subir flota.
   const k = E.vel > 0 ? K_BAJA : K_SUBE;
   E.pos += E.vel;
+  /* gravedad: el quinto efecto del patch, y el unico que toca el ESTADO y no
+     el dibujo -- por eso vive aca y no en el bucle de nodos. Una obra con
+     materia TIRA de la lectura cuando se le pasa cerca. Los emisores son los
+     del cuadro anterior, que es lo que corresponde: la gravedad se siente
+     donde uno estaba entrando, no donde ya llego.
+     Lo que se siente es un IMAN: con el archivo medido las obras estan a una
+     veintena de pixeles unas de otras, asi que la constante no es un frenado
+     lento sino un enganche corto -- la lectura se apoya en la pieza pesada y
+     pasa de largo por la liviana.
+     El tope de 0,6 px por cuadro no es prudencia: sin el, la pieza mas pesada
+     del archivo se queda con el visitante. Un gesto empuja 0,42 por pixel
+     arrastrado, asi que siempre gana. La obra tira, nunca atrapa. */
+  if (PATCH.on && EMIS.n && EMIS.coef[EF_GRAVEDAD] > 0.001){
+    const dy = NODOS[EMIS.idx[0]].y - E.pos;
+    const inf = 1 - Math.min(Math.abs(dy)/900, 1);
+    if (inf > 0)
+      E.pos += Math.max(-0.6, Math.min(0.6,
+        dy * 0.05 * inf * Math.min(EMIS.coef[EF_GRAVEDAD], 1)));
+  }
   // Sin principio y sin final: al pasar el ultimo nodo se vuelve a entrar por
   // el otro lado. Medido el 2026-07-27: sin esto, pasado el ultimo nodo la
   // pantalla queda negra y el archivo parece roto.
@@ -937,6 +1219,13 @@ async function arrancar(){
       }
     }
   } catch(e){ /* sin servidor se usa el respaldo, sin decir nada */ }
+  // 3. El TABLERO: el cableado del patch de efectos y su llave maestra. Que no
+  //    este es el caso normal y no es un error -- sin tablero no hay patch y la
+  //    piel dibuja como siempre.
+  try {
+    const rt = await fetch('../../datos/tablero.json');
+    if (rt.ok) aplicarTablero(await rt.json());
+  } catch(e){ /* sin tablero, sin efectos */ }
   sembrar(obras);
   // Se entra por el medio del archivo: no hay principio.
   // El `Math.max(0, ...)` de antes convertia el -1 de "no encontrado" en 0, asi
