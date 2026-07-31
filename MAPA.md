@@ -133,7 +133,8 @@ the root of the repo (there is a `.env.example` for reference).
 | `FLUJO_WORKSPACE_ROOT` | Where the program stores and looks for jobs | Uses the repo folder |
 | `FLUJO_MAK_URL` | Address of the face on the MAK machine, the one that works on its own (for example `http://<box-ip>:8900`). The box exposes three organs: the research body on `:8890`, codex on `:8891`, and the face on `:8900`, which embeds the other two. The panel queries it **read-only**: it never orders anything | The MAK panel says it is not configured. Everything else works the same |
 | `FLUJO_EVENTOS_AUTOMATIZACION_DIR` | Folder watched by the events automation | The automation stays off until you define it |
-| `FLUJO_IMAP_AUTOAPLICAR` | Enciende aplicar airdrops recibidos por correo. Apagado por defecto desde el hallazgo VCD-09: esa via autoriza comparando el header `From:`, que es texto falsificable, y despues aplica y pushea codigo. Para encenderla de verdad hace falta artefacto firmado y aprobacion humana, no solo esta variable | apagado |
+| `FLUJO_AIRDROP_HMAC_KEY` | Shared key for signed airdrops (VCD-09). With it set, `flujo airdrop sign` writes a SHA-256 manifest plus a detached HMAC-SHA256 signature into `_airdrop/`, `flujo airdrop verify` checks them naming the exact file that fails, and `airdrop apply` refuses unsigned or tampered payloads — the only escape is a human typing `--allow-unsigned` after reviewing the payload | Signing is off and `apply`/`dry-run` behave exactly as before this key existed |
+| `FLUJO_IMAP_AUTOAPLICAR` | Enciende aplicar airdrops recibidos por correo. Apagado por defecto desde el hallazgo VCD-09: esa via autorizaba comparando el header `From:`, que es texto falsificable, y despues aplica y pushea codigo. Encendida, ademas exige `FLUJO_AIRDROP_HMAC_KEY` configurada y firma HMAC valida del payload (`flujo airdrop sign`/`verify`); sin firma valida no aplica nada, y esa via nunca usa el override humano `--allow-unsigned` | apagado |
 | `FLUJO_GPU_BACKEND` | Which Cycles backend to try first on this machine (`CUDA`, `OPTIX`, `HIP`). Only worth setting where the default is measurably wrong: on a GTX 1650, CUDA rendered the same scene in 300s against OptiX's 459s, because it is the only Turing card without RT cores | Tries OptiX first, then CUDA. Correct on cards that do have RT cores |
 | `FLUJO_IMAP_HOST`, `FLUJO_IMAP_USER`, `FLUJO_IMAP_PASSWORD` | Mailbox that orders are imported from | Mail import does not work; everything else does |
 | `FLUJO_IMAP_ALLOWED_SENDERS` | List of senders authorised to send orders | For safety it accepts nobody |
@@ -156,7 +157,7 @@ program says to the operator who runs it.
 
 <!-- COMANDOS:INICIO -- generado por tools/gen_mapa_comandos.py, no editar a mano -->
 
-Medido sobre el CLI real: **83 comandos** (23 sueltos + 60 dentro de 15 grupos).
+Medido sobre el CLI real: **85 comandos** (23 sueltos + 62 dentro de 15 grupos).
 
 ### Comandos sueltos
 
@@ -193,6 +194,8 @@ Medido sobre el CLI real: **83 comandos** (23 sueltos + 60 dentro de 15 grupos).
 | `py -m flujo airdrop status` | Muestra la versión actual del sistema flujo. | nada |
 | `py -m flujo airdrop list` | Lista los archivos pendientes de aplicar en _airdrop/. | nada |
 | `py -m flujo airdrop dry-run` | Simula la aplicación del airdrop sin realizar cambios. | nada |
+| `py -m flujo airdrop sign` | Genera el manifiesto SHA-256 y la firma HMAC del payload de _airdrop/. | `FLUJO_AIRDROP_HMAC_KEY` (clave compartida de firma) |
+| `py -m flujo airdrop verify` | Verifica la firma HMAC y los hashes SHA-256 del payload de _airdrop/. | `FLUJO_AIRDROP_HMAC_KEY` (clave compartida de firma) |
 | `py -m flujo airdrop apply` | Aplica los archivos de _airdrop/, crea backup y dispara checkpoint + push. | nada |
 | `py -m flujo airdrop rollback` | Revierte los cambios al último backup de airdrop. | nada |
 | `py -m flujo airdrop finish` | Finaliza el proceso de airdrop (estatus y sugerencias). | nada |

@@ -102,6 +102,16 @@ VCD-06 (8 MB body cap, 413 on excess) and VCD-07 (every workflow `uses:` pinned
 to a commit SHA + `dependabot.yml`) are closed. Only VCD-10 remains: assigned to
 MAK, never verified running.
 
+VCD-09 got its REAL fix on 2026-07-31 (it was only mitigated before, by keeping
+the mail path off): signed airdrops. `flujo airdrop sign` writes a SHA-256
+manifest + detached HMAC-SHA256 signature (key in `FLUJO_AIRDROP_HMAC_KEY`);
+`verify` names the exact file that fails; with the key set, `apply` refuses
+unsigned/tampered payloads and the only escape is a human typing
+`--allow-unsigned`. The IMAP autoapply path now demands key + valid signature
+even when `FLUJO_IMAP_AUTOAPLICAR=1`, and never uses the override. No key
+configured = behavior byte-for-byte as before. Detail:
+`docs/AGENT_AIRDROP_PROTOCOL.md` "Airdrop firmado".
+
 ## Branches: the four lines, and one rescue (2026-07-30)
 
 `main`, `rd`, `iskvw`, `mak` -- plus `rescate/ascii-campo`, which STAYS: it

@@ -444,6 +444,44 @@ def airdrop_dry_run():
         _err(str(e))
 
 
+@airdrop_app.command("sign")
+def airdrop_sign():
+    """Genera el manifiesto SHA-256 y la firma HMAC del payload de _airdrop/.
+
+    Requiere la clave en la variable de entorno FLUJO_AIRDROP_HMAC_KEY.
+    Escribe _airdrop/_airdrop_signed_manifest.json y su .sig separado.
+    """
+    from .airdrop import sign_airdrop
+    try:
+        manifest_path, signature_path = sign_airdrop()
+    except Exception as e:
+        _err(str(e))
+        return
+    _section("Airdrop firmado")
+    console.print(f"  Manifiesto: [bold cyan]{manifest_path}[/]")
+    console.print(f"  Firma:      [bold cyan]{signature_path}[/]")
+    _ok("Payload firmado. Verifícalo con: flujo airdrop verify")
+
+
+@airdrop_app.command("verify")
+def airdrop_verify():
+    """Verifica la firma HMAC y los hashes SHA-256 del payload de _airdrop/.
+
+    Nombra el archivo exacto que falla y por qué. Sale con código 1 si algo
+    falla. Requiere FLUJO_AIRDROP_HMAC_KEY configurada.
+    """
+    from .airdrop import scan_airdrop, verify_airdrop
+    problems = verify_airdrop()
+    if problems:
+        _section("Verificación de firma: FALLÓ")
+        for p in problems:
+            console.print(f"  [red]✗[/] {p}")
+        _err("Firma de _airdrop/ inválida. No apliques este payload.")
+        return
+    total = len(scan_airdrop())
+    _ok(f"Firma válida: {total} archivo(s) verificados contra el manifiesto firmado.")
+
+
 @airdrop_app.command("apply")
 def airdrop_apply(
     message: Optional[str] = typer.Argument(
@@ -457,6 +495,15 @@ def airdrop_apply(
         "--allow-airdrop-engine",
         help="permitir cambios al motor src/flujo/airdrop.py tras revisión explícita",
     ),
+    allow_unsigned: bool = typer.Option(
+        False,
+        "--allow-unsigned",
+        help=(
+            "aprobación humana explícita: aplicar un payload sin firma válida "
+            "aunque FLUJO_AIRDROP_HMAC_KEY esté configurada (solo tras revisión "
+            "manual; nunca automatizado)"
+        ),
+    ),
 ):
     """Aplica los archivos de _airdrop/, crea backup y dispara checkpoint + push."""
     from .airdrop import apply_airdrop, run_auto_checkpoint, scan_airdrop
@@ -469,7 +516,7 @@ def airdrop_apply(
         if not skip_validation:
             _validate_airdrop_or_exit(allow_airdrop_engine=allow_airdrop_engine)
 
-        changes = apply_airdrop()
+        changes = apply_airdrop(allow_unsigned=allow_unsigned)
 
         _section("Airdrop Aplicado")
         for c in changes:
