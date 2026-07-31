@@ -24,10 +24,13 @@ iskvw/
   PROMPT_ESTETICA.md   lo que se le pasa a un agente externo para pedir una piel
   README.md            índice de esta carpeta
   MAPA.md              este archivo
+  editor.html          el panel de curaduría: se abre, se edita, se descarga
   datos/
     ESQUEMA.md         qué campos tiene obras.json
     obras.json         8 piezas generativas del repo (VOLÁ, Campo, Cenefa…)
     campo.json         219 obras del archivo, con posición medida y capas
+    curaduria.json     la mano del artista sobre lo percibido
+    tablero.json       qué mejoras están encendidas
   piel/
     campo/             la piel viva: el organismo. Es la raíz del sitio
     terminal/          piel anterior. Lee sólo obras.json (8 piezas)
@@ -75,6 +78,26 @@ py tools/vendorizar_iskvw.py
 `data/iskvw_campo_filtro.json` — qué obras entran, hoy `posts` y `reels`.
 `data/iskvw_capas.json` — qué capas corren.
 `data/iskvw_librerias.json` — qué librerías se vendorizan.
+
+**Se edita a mano o con el panel**: `datos/curaduria.json` — la mano del
+artista (título, mostrar, abstracción, svg firmado, régimen). El panel es
+`iskvw/editor.html`: una página estática, sin build y sin servidor propio. Se
+abre con el repo servido desde la raíz (`py -m http.server`, después
+`/iskvw/editor.html`), lee `datos/archivo.json` y si no está `datos/campo.json`,
+y su única salida es un **`curaduria.json` que se descarga**: no escribe en
+disco, el archivo entra por el mismo portón que todo lo demás. Una pieza que no
+se toca **no aparece** en ese archivo — cada id que sale es una decisión.
+
+La misma página tiene el **tablero de mejoras**: `datos/tablero.json`
+(`{"version": 1, "mejoras": {…}}`), un interruptor por clave. Las claves las
+agrega el agente que trae cada mejora; el editor **no conoce ninguna** y dibuja
+las que encuentre, así que una mejora nueva aparece sola sin tocar la página. El
+ciclo es **prender → descargar → subir**: hasta que el archivo no entra al repo,
+no cambió nada. Cada archivo tiene su propio botón, porque son dos archivos
+distintos y un botón único haría que apagar una mejora pareciera guardado
+cuando lo que bajó fue la curaduría. Un valor que no es `true`/`false` se
+muestra de sólo lectura y viaja de vuelta intacto: el editor no destruye un dato
+que no entiende.
 
 **Se genera** y no se toca a mano: `datos/campo.json`,
 `piel/trazos/_indice.json`, `piel/lib/*.js`. `datos/archivo.json` se genera y
