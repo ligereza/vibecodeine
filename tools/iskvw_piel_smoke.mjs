@@ -33,6 +33,7 @@ const noop = () => {};
 async function correr({ tablero = null, cuadros = 30, caminar = true, antes = null } = {}) {
   let trabajoDeNodo = 0;       // per-node draw work actually executed
   const traza = [];            // every mark: what, where, in which colour
+  const pedidos = [];          // every URL the skin asked for, to prove wiring ran
   let pincel = "";             // current fillStyle
   const marca = (x, y) => {
     // Rounded: the point is whether the patch MOVED something, not float noise.
@@ -84,6 +85,7 @@ async function correr({ tablero = null, cuadros = 30, caminar = true, antes = nu
     // the loop chews on; anything else 404s like the fallback path expects.
     fetch: async (url) => {
       const s = String(url);
+      pedidos.push(s);
       if (/datos\/tablero\.json$/.test(s)) {
         return tablero
           ? { ok: true, json: async () => tablero }
@@ -151,11 +153,15 @@ async function correr({ tablero = null, cuadros = 30, caminar = true, antes = nu
     try { return vm.runInContext(expr, context); } catch { return porDefecto; }
   };
   return {
-    failed, traza, trabajoDeNodo,
+    failed, traza, trabajoDeNodo, pedidos,
     nodos: leer("typeof NODOS !== 'undefined' && NODOS ? NODOS.length : -1", -1),
     pos: leer("typeof E !== 'undefined' ? E.pos : null", null),
     emisores: leer("typeof EMIS !== 'undefined' ? EMIS.n : -1", -1),
     patchOn: leer("typeof PATCH !== 'undefined' ? PATCH.on : null", null),
+    // The venue layer's observables: whether the sala link exists after boot,
+    // and a hatch to call capaVenue() again inside this run's sandbox.
+    salaVisible: leer("typeof SALA_VISIBLE !== 'undefined' ? SALA_VISIBLE : null", null),
+    evaluar: (expr, porDefecto) => leer(expr, porDefecto),
   };
 }
 
@@ -185,6 +191,31 @@ if (tableroReal.mejoras && tableroReal.mejoras.patch_efectos) {
 } else {
   console.log(`OK: flag off draws exactly as before (${base.traza.length} marks identical)`);
 }
+
+// ── 2b. the venue layer, behind its own flag on the SAME tablero fetch ─────
+// Ported from the venue branch's smoke into this architecture: the shipped
+// boot above ran against the REAL tablero.json, so the sala link must mirror
+// exactly what mejoras.venue3d says; forcing the flag on must create it, and
+// a flag whose consumer vanished must fail here, not at the show.
+if (conArchivo.evaluar("typeof capaVenue === 'function'", false) !== true)
+  morir(new Error("capaVenue is missing: mejoras.venue3d has no consumer again"));
+if (!conArchivo.pedidos.some(u => /tablero\.json$/.test(u)))
+  morir(new Error("boot never asked for tablero.json: the flag is read by nobody"));
+const flagReal = tableroReal.mejoras.venue3d;
+if (conArchivo.salaVisible !== (flagReal === true))
+  morir(new Error(`venue layer visible=${conArchivo.salaVisible} with venue3d=${flagReal}: the flag does not gate`));
+if (base.salaVisible !== false)
+  morir(new Error(`no board and the venue layer is visible=${base.salaVisible}`));
+const conSala = await correr({
+  tablero: { ...tableroReal, mejoras: { ...tableroReal.mejoras, venue3d: true } },
+});
+if (conSala.failed) morir(conSala.failed);
+if (conSala.salaVisible !== true)
+  morir(new Error("forcing venue3d=true did not enable the venue layer"));
+if (conSala.evaluar("capaVenue({mejoras:{venue3d:false}})", null) !== false)
+  morir(new Error("capaVenue reports on for a tablero that says off"));
+console.log(`OK: venue layer gates on venue3d -- shipped ${flagReal === true ? "on" : "off"} `
+  + `(visible=${conArchivo.salaVisible}), forced on creates the sala link`);
 
 // ── 3. the patch on, with gains loud enough to be unambiguous ─────────────
 // The board's own routing, only louder, plus one node forced to carry the

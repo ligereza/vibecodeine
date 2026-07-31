@@ -186,6 +186,107 @@ def test_primera_corrida_no_dispara_la_regla_de_oro(tmp_path):
     assert r["n_items"] == 0 and r["alerta"] == ""
 
 
+# ------------------------------------------------------ REGLA DE AVALANCHA
+
+def _titulos(n, sello=""):
+    return ["Convocatoria numero %d de la temporada %s" % (i, sello)
+            for i in range(n)]
+
+
+def test_avalancha_un_cambio_de_urls_alerta_y_no_notifica_item_a_item(
+        monkeypatch, tmp_path):
+    """El otro lado de la regla de oro: si el sitio cambia la forma de sus
+    URLs, TODO re-hashea como nuevo. Eso es una alerta, no 299 avisos."""
+    enviados = []
+    monkeypatch.setattr(vigia, "ntfy_publish",
+                        lambda t, m, title="", priority="default", errors=None:
+                        enviados.append((t, m, title, priority)) or True)
+    monkeypatch.setenv("VIGIA_NTFY_TOPIC", "general")
+    monkeypatch.delenv("VIGIA_NTFY_TOPIC_ENFERMERIA", raising=False)
+
+    estado = tmp_path / "estado"
+    url = FUENTE["url"]
+    vigia.correr([FUENTE], str(estado),
+                 abrir=abridor({url: _pagina(_titulos(20), "/aviso/")}),
+                 notificar=False, ahora=1000.0)
+
+    # Mismos titulos, permalinks nuevos: el diff ve 20 items "nuevos".
+    enviados.clear()
+    r = vigia.correr([FUENTE], str(estado),
+                     abrir=abridor({url: _pagina(_titulos(20), "/v2/aviso/")}),
+                     notificar=True, ahora=2000.0)[0]
+    assert r["suprimido"] == 20
+    assert "de golpe" in r["alerta"]
+    assert any(p == "high" for _, _, _, p in enviados), "la avalancha alerta"
+    cuerpos = [m for _, m, titulo, _ in enviados if "ROTO" not in titulo]
+    assert not any("Convocatoria numero" in c for c in cuerpos), (
+        "los items de la avalancha no se notifican uno a uno")
+
+    # Tercera corrida, misma pagina: los hashes quedaron registrados y todo
+    # vuelve a la calma -- la avalancha grita UNA vez.
+    enviados.clear()
+    r3 = vigia.correr([FUENTE], str(estado),
+                      abrir=abridor({url: _pagina(_titulos(20), "/v2/aviso/")}),
+                      notificar=True, ahora=3000.0)[0]
+    assert r3["nuevos"] == [] and r3["alerta"] == ""
+    assert enviados == []
+
+
+def test_avalancha_primera_corrida_no_es_avalancha(tmp_path):
+    """Sin historia, todo-nuevo es lo esperado: la primera corrida de una
+    fuente con 300 items no puede gritar."""
+    r = vigia.correr([FUENTE], str(tmp_path / "estado"),
+                     abrir=abridor({FUENTE["url"]: _pagina(_titulos(300))}),
+                     notificar=False, ahora=1000.0)[0]
+    assert r["alerta"] == ""
+    assert len(r["nuevos"]) == 300
+
+
+def test_avalancha_fuente_chica_no_grita():
+    """Una fuente de 5 items que rota entera es churn normal, no avalancha:
+    el minimo absoluto existe para eso."""
+    previo = {"n_items": 5, "ultimo_nuevo_ts": 900.0}
+    assert vigia.regla_de_avalancha(previo, 5, 5) == ""
+
+
+def test_avalancha_es_configurable_por_fuente(tmp_path):
+    """avalancha_minimo=0 en fuentes.json desactiva la regla para esa fuente;
+    la aesthetica del umbral no esta cableada en el codigo."""
+    fuente = dict(FUENTE, avalancha_minimo=0)
+    estado = tmp_path / "estado"
+    url = fuente["url"]
+    vigia.correr([fuente], str(estado),
+                 abrir=abridor({url: _pagina(_titulos(20), "/aviso/")}),
+                 notificar=False, ahora=1000.0)
+    r = vigia.correr([fuente], str(estado),
+                     abrir=abridor({url: _pagina(_titulos(20), "/v2/")}),
+                     notificar=False, ahora=2000.0)[0]
+    assert r["alerta"] == "" and "suprimido" not in r
+    assert len(r["nuevos"]) == 20
+
+
+def test_avalancha_bajo_umbral_notifica_normal(tmp_path):
+    """4 items nuevos sobre 20 es un dia bueno, no una rotura."""
+    estado = tmp_path / "estado"
+    url = FUENTE["url"]
+    vigia.correr([FUENTE], str(estado),
+                 abrir=abridor({url: _pagina(_titulos(20), "/aviso/")}),
+                 notificar=False, ahora=1000.0)
+    pagina = _pagina(_titulos(20), "/aviso/") + _pagina(_titulos(4, "extra"),
+                                                        "/aviso/x")
+    r = vigia.correr([FUENTE], str(estado), abrir=abridor({url: pagina}),
+                     notificar=False, ahora=2000.0)[0]
+    assert len(r["nuevos"]) == 4
+    assert r["alerta"] == "" and "suprimido" not in r
+
+
+def test_avalancha_no_pisa_la_regla_de_oro():
+    """Cero tras no-cero sigue siendo la alerta de oro, nunca una avalancha."""
+    previo = {"n_items": 20, "ultimo_nuevo_ts": 900.0}
+    assert vigia.regla_de_avalancha(previo, 0, 0) == ""
+    assert "0 items" in vigia.regla_de_oro(previo, 0, 0, 2000.0)
+
+
 # --------------------------------------------------------- conditional GET
 
 def test_cabeceras_condicionales_se_envian():
@@ -241,6 +342,141 @@ def test_el_estado_vive_bajo_estado_y_esta_gitignorado(tmp_path):
     assert "cultura/mak_vigia/estado/" in gitignore, (
         "el estado del vigia es local de la caja y no entra al repo")
     assert vigia.ESTADO_DIR.endswith(("estado", "estado/"))
+
+
+# ------------------------------------------------- retencion del estado
+
+def _pagina_enlaces(pares):
+    filas = "".join('<li><a href="%s">%s</a></li>' % (href, t)
+                    for t, href in pares)
+    return ("<html><body><ul>%s</ul></body></html>" % filas).encode("utf-8")
+
+
+DIA = 86400.0
+
+
+def test_compactar_mueve_lo_viejo_a_archive_y_nunca_borra(monkeypatch, tmp_path):
+    """La politica de retencion que el repo ya decidio (retencion.py,
+    2026-07-17): conservar lo que el diff necesita, MOVER el resto a archive/,
+    jamas borrar. Un hash que sigue en la pagina NUNCA se archiva, porque
+    resurgiria como 'nuevo'."""
+    firmas = []
+    monkeypatch.setattr(vigia, "registrar_mutacion",
+                        lambda accion, detalle="", origen=None, ruta=None:
+                        firmas.append((accion, detalle)) or True)
+    estado = tmp_path / "estado"
+    url = FUENTE["url"]
+    viejas = [("Antigua residencia en La Serena todavia listada", "/aviso/a"),
+              ("Antigua beca de teatro ya cerrada", "/aviso/b"),
+              ("Antiguo concurso de danza ya cerrado", "/aviso/c")]
+    vigia.correr([FUENTE], str(estado), abrir=abridor({url: _pagina_enlaces(viejas)}),
+                 notificar=False, ahora=1000.0)
+    originales = (estado / vigia.VISTOS).read_text(encoding="utf-8")
+    assert len(originales.strip().splitlines()) == 3
+
+    # 200 dias despues: 'a' sigue listada, 'b' y 'c' ya no, aparece 'd'.
+    despues = 1000.0 + 200 * DIA
+    pagina2 = _pagina_enlaces([viejas[0],
+                               ("Nueva convocatoria de artes mediales", "/aviso/d")])
+    vigia.correr([FUENTE], str(estado), abrir=abridor({url: pagina2}),
+                 notificar=False, ahora=despues, max_vistos=3)
+
+    quedan = [json.loads(l) for l in
+              (estado / vigia.VISTOS).read_text(encoding="utf-8").splitlines()]
+    titulos_quedan = {r["titulo"] for r in quedan}
+    assert "Antigua residencia en La Serena todavia listada" in titulos_quedan, (
+        "un hash aun visible en la pagina no se archiva")
+    assert "Nueva convocatoria de artes mediales" in titulos_quedan
+    assert "Antigua beca de teatro ya cerrada" not in titulos_quedan
+
+    archivos = list((estado / "archive").glob("vistos_*.jsonl"))
+    assert len(archivos) == 1, "lo archivado se mueve, no se borra"
+    archivadas = [json.loads(l) for l in
+                  archivos[0].read_text(encoding="utf-8").splitlines()]
+    assert {r["titulo"] for r in archivadas} == {
+        "Antigua beca de teatro ya cerrada",
+        "Antiguo concurso de danza ya cerrado"}
+    # Nada se pierde: la union de ambos archivos es el contenido original + d.
+    assert len(quedan) + len(archivadas) == 4
+
+    # Y el movimiento quedo FIRMADO (el incidente de los 217 informes sin
+    # autor, 2026-07-30: mover estado sin firma es lo prohibido).
+    assert firmas and firmas[0][0] == "vigia_compactar"
+    assert "2 registros" in firmas[0][1]
+
+    # El hash conservado sigue haciendo su trabajo: la misma pagina no
+    # re-notifica nada.
+    r3 = vigia.correr([FUENTE], str(estado), abrir=abridor({url: pagina2}),
+                      notificar=False, ahora=despues + 3600)[0]
+    assert r3["nuevos"] == []
+
+
+def test_compactar_bajo_el_tope_no_toca_nada(tmp_path):
+    estado = tmp_path / "estado"
+    vigia.correr([FUENTE], str(estado),
+                 abrir=abridor({FUENTE["url"]: _pagina(["Convocatoria de artes escenicas 2026"])}),
+                 notificar=False, ahora=1000.0)
+    antes = (estado / vigia.VISTOS).read_text(encoding="utf-8")
+    c = vigia.compactar_vistos(str(estado), ahora=1000.0 + 400 * DIA,
+                               max_registros=vigia.MAX_VISTOS)
+    assert c["archivados"] == 0
+    assert (estado / vigia.VISTOS).read_text(encoding="utf-8") == antes
+    assert not (estado / "archive").exists()
+
+
+def test_compactar_lo_reciente_se_queda_aunque_deje_la_pagina(monkeypatch, tmp_path):
+    """El corte es doble: viejo Y fuera de la pagina. Un aviso que salio ayer
+    de la pagina sigue en la memoria hasta cumplir los dias."""
+    monkeypatch.setattr(vigia, "registrar_mutacion", lambda *a, **k: True)
+    estado = tmp_path / "estado"
+    url = FUENTE["url"]
+    vigia.correr([FUENTE], str(estado),
+                 abrir=abridor({url: _pagina_enlaces(
+                     [("Convocatoria breve de video arte", "/aviso/x")])}),
+                 notificar=False, ahora=1000.0)
+    vigia.correr([FUENTE], str(estado),
+                 abrir=abridor({url: _pagina_enlaces(
+                     [("Otra convocatoria de fotografia analoga", "/aviso/y")])}),
+                 notificar=False, ahora=1000.0 + 2 * DIA)
+    c = vigia.compactar_vistos(str(estado), ahora=1000.0 + 3 * DIA,
+                               max_registros=0)
+    assert c["archivados"] == 0, "2 dias no son %d" % vigia.DIAS_COMPACTAR
+
+
+def test_compactar_conserva_una_linea_malformada(monkeypatch, tmp_path):
+    """Una linea que no parsea es un dato de alguien que no podemos fechar:
+    se queda donde esta."""
+    monkeypatch.setattr(vigia, "registrar_mutacion", lambda *a, **k: True)
+    estado = tmp_path / "estado"
+    estado.mkdir()
+    (estado / vigia.VISTOS).write_text(
+        "esto no es json\n"
+        + json.dumps({"h": "abc", "fuente": "demo",
+                      "titulo": "Vieja convocatoria sin pagina",
+                      "url": "", "ts": 0}) + "\n",
+        encoding="utf-8")
+    c = vigia.compactar_vistos(str(estado), ahora=400 * DIA, max_registros=0)
+    assert c["archivados"] == 1
+    assert "esto no es json" in (estado / vigia.VISTOS).read_text(encoding="utf-8")
+
+
+def test_compactar_desde_la_cli(tmp_path, capsys):
+    """--compactar es el verbo de mantenimiento: compacta y sale, sin tocar
+    la red ni las fuentes."""
+    estado = tmp_path / "estado"
+    vigia.correr([FUENTE], str(estado),
+                 abrir=abridor({FUENTE["url"]: _pagina(["Convocatoria reciente de muralismo"])}),
+                 notificar=False)
+    codigo = vigia.main(["--estado", str(estado), "--compactar"])
+    assert codigo == 0
+    assert "compactado: 0 de 1" in capsys.readouterr().out
+
+
+def test_la_firma_es_la_de_mutaciones_de_plataforma():
+    """No una segunda bitacora: la que ya contesta 'quien movio esto'."""
+    assert vigia.registrar_mutacion is not None, "mutaciones no se pudo importar"
+    import mutaciones
+    assert vigia.registrar_mutacion is mutaciones.registrar
 
 
 def test_una_fuente_caida_no_mata_la_corrida(tmp_path):
@@ -316,6 +552,117 @@ def test_extraccion_json_de_un_listado_real():
     assert items[1]["url"].endswith("i=2")
 
 
+RSS_FIJO = """<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+ <channel>
+  <title>Convocatorias del centro cultural</title>
+  <link>https://ejemplo.cl/</link>
+  <item>
+   <title><![CDATA[Residencia de creación en Valparaíso]]></title>
+   <link>https://ejemplo.cl/convocatorias/residencia-valparaiso</link>
+   <content:encoded><![CDATA[<p>bases y condiciones</p>]]></content:encoded>
+  </item>
+  <item>
+   <title>Beca corta</title>
+   <link>/convocatorias/beca-corta</link>
+  </item>
+  <item>
+   <title><![CDATA[Residencia de creación en Valparaíso]]></title>
+   <link>https://ejemplo.cl/convocatorias/residencia-valparaiso</link>
+  </item>
+ </channel>
+</rss>"""
+
+ATOM_FIJO = """<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+ <title>Fondos abiertos</title>
+ <link rel="self" href="https://fondos.ejemplo.org/feed.xml"/>
+ <entry>
+  <title>Fondo de fomento a la música regional</title>
+  <link rel="self" href="https://fondos.ejemplo.org/api/entrada/9"/>
+  <link rel="alternate" href="https://fondos.ejemplo.org/fondo/musica"/>
+ </entry>
+ <entry>
+  <title>Fondo del libro y la lectura</title>
+  <link href="/fondo/libro"/>
+ </entry>
+</feed>"""
+
+
+def test_extraccion_rss_con_cdata_tildes_y_url_relativa():
+    """Un feed WordPress real: CDATA, namespaces, enlaces relativos y un item
+    repetido. El titulo conserva sus tildes; la URL se resuelve absoluta."""
+    items = vigia.extraer_feed(RSS_FIJO, "https://ejemplo.cl/feed/")
+    assert len(items) == 2, "el item duplicado se pliega"
+    assert items[0]["titulo"] == "Residencia de creación en Valparaíso"
+    assert items[0]["url"] == "https://ejemplo.cl/convocatorias/residencia-valparaiso"
+    assert items[1]["url"] == "https://ejemplo.cl/convocatorias/beca-corta"
+
+
+def test_extraccion_rss_no_aplica_la_heuristica_de_navegacion():
+    """En un feed cada <item> ES un item por contrato: un titulo corto
+    ('Beca corta', 2 palabras) se queda. Botarlo seria el parser fabricando
+    el cero silencioso que la regla de oro persigue."""
+    items = vigia.extraer_feed(RSS_FIJO, "https://ejemplo.cl/feed/")
+    assert any(i["titulo"] == "Beca corta" for i in items)
+
+
+def test_extraccion_atom_prefiere_el_enlace_alternate():
+    items = vigia.extraer_feed(ATOM_FIJO, "https://fondos.ejemplo.org/feed.xml")
+    assert len(items) == 2
+    assert items[0]["url"] == "https://fondos.ejemplo.org/fondo/musica", (
+        "rel=self es la API del feed; rel=alternate es la página que lee la persona")
+    assert items[1]["url"] == "https://fondos.ejemplo.org/fondo/libro"
+
+
+def test_xml_roto_da_cero_sin_reventar_y_la_regla_de_oro_lo_ve(tmp_path):
+    """Un feed que deja de ser XML parsea a cero; eso no tumba la corrida y
+    el cero-tras-no-cero grita como con HTML."""
+    assert vigia.extraer_feed("<rss><channel><item>", "https://x.cl/") == []
+    fuente = dict(FUENTE, id="feed", formato="rss")
+    estado = tmp_path / "estado"
+    url = fuente["url"]
+    vigia.correr([fuente], str(estado),
+                 abrir=abridor({url: RSS_FIJO.encode("utf-8")}),
+                 notificar=False, ahora=1000.0)
+    r = vigia.correr([fuente], str(estado),
+                     abrir=abridor({url: b"pagina de mantenimiento"}),
+                     notificar=False, ahora=2000.0)[0]
+    assert r["n_items"] == 0
+    assert "0 items" in r["alerta"]
+
+
+def test_el_diff_funciona_igual_sobre_un_feed(tmp_path):
+    """El contrato completo de la fuente rss: primera corrida todo nuevo,
+    segunda nada, y una entrada agregada al feed es exactamente un aviso."""
+    fuente = dict(FUENTE, id="feed", formato="rss")
+    estado = tmp_path / "estado"
+    url = fuente["url"]
+    crudo = RSS_FIJO.encode("utf-8")
+    r1 = vigia.correr([fuente], str(estado), abrir=abridor({url: crudo}),
+                      notificar=False, ahora=1000.0)[0]
+    assert len(r1["nuevos"]) == 2
+    r2 = vigia.correr([fuente], str(estado), abrir=abridor({url: crudo}),
+                      notificar=False, ahora=2000.0)[0]
+    assert r2["nuevos"] == []
+
+    con_extra = RSS_FIJO.replace(
+        " </channel>",
+        " <item><title>Nueva convocatoria de danza contemporánea</title>"
+        "<link>https://ejemplo.cl/convocatorias/danza</link></item>\n </channel>")
+    r3 = vigia.correr([fuente], str(estado),
+                      abrir=abridor({url: con_extra.encode("utf-8")}),
+                      notificar=False, ahora=3000.0)[0]
+    assert len(r3["nuevos"]) == 1
+    assert r3["nuevos"][0]["titulo"] == "Nueva convocatoria de danza contemporánea"
+
+
+def test_el_filtro_de_palabras_tambien_rige_para_feeds():
+    fuente = {"id": "feed", "formato": "rss"}
+    items = vigia.extraer(RSS_FIJO, fuente, "https://ejemplo.cl/feed/")
+    assert len(vigia.filtrar(items, ["residencia"], None)) == 1
+
+
 def test_no_hay_modelo_en_el_vigia():
     """v1 es un diff. Si algun dia aparece un LLM aca, que sea una decision
     explicita y no un deslizamiento: este test es el guardarrail."""
@@ -335,7 +682,7 @@ def test_fuentes_json_es_valido_y_completo():
     for f in fuentes:
         assert f["url"].startswith("https://"), f["id"]
         assert f.get("nombre") and f.get("tipo"), f["id"]
-        assert f.get("formato", "html") in ("html", "json"), f["id"]
+        assert f.get("formato", "html") in ("html", "json", "rss", "atom"), f["id"]
         assert f["id"].isascii(), "los ids son claves de maquina"
 
 

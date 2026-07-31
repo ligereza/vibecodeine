@@ -2010,7 +2010,17 @@ def _laser_reporte(destino, medida):
     aviso = "" if medida["dentro"] else         "  [AVISO: sobre el presupuesto, simplificar mas o partir la pieza]"
     tol = (" (linesimplify %smm)" % medida["tolerancia_mm"]
            if medida["tolerancia_mm"] else "")
-    console.print(f"OK -> {destino}  {medida['puntos']} puntos{tol}{aviso}")
+    extra = ""
+    if medida.get("trazos") is not None:
+        extra = (f", {medida['trazos']} trazos, "
+                 f"viaje apagado {medida['viaje_apagado']} ud")
+    console.print(f"OK -> {destino}  {medida['puntos']} puntos{tol}{extra}{aviso}")
+    antes = medida.get("viaje_apagado_antes")
+    despues = medida.get("viaje_apagado_despues")
+    if antes is not None and despues is not None:
+        baja = (100 * (antes - despues) / antes) if antes else 0.0
+        console.print(f"viaje apagado antes del orden: {antes} ud -> "
+                      f"despues: {despues} ud ({baja:.0f}% menos)")
 
 
 @laser_app.command("hatched")
@@ -2018,6 +2028,7 @@ def laser_hatched(
     imagen: Path = typer.Argument(..., help="imagen de entrada (jpg/png/webp)"),
     salida: Optional[Path] = typer.Option(None, "--output", "-o", help="SVG de salida"),
     pitch: int = typer.Option(4, "--pitch", help="separacion del rayado en px"),
+    medir_viaje: bool = typer.Option(False, "--medir-viaje", help="mide el viaje apagado antes/despues de ordenar (una pasada extra de vpype)"),
 ):
     """Zonas oscuras a rayado: un logo solido deja de llegar hueco al laser."""
     from .laser import hatched
@@ -2026,7 +2037,7 @@ def laser_hatched(
         raise typer.Exit(1)
     destino = salida or imagen.with_suffix(".hatched.svg")
     try:
-        medida = hatched(imagen, destino, pitch=pitch)
+        medida = hatched(imagen, destino, pitch=pitch, medir_viaje=medir_viaje)
     except RuntimeError as e:
         _err(str(e))
         raise typer.Exit(1)
@@ -2038,6 +2049,7 @@ def laser_flow(
     imagen: Path = typer.Argument(..., help="imagen de entrada (jpg/png/webp)"),
     salida: Optional[Path] = typer.Option(None, "--output", "-o", help="SVG de salida"),
     semilla: int = typer.Option(7, "--semilla", help="misma semilla = mismo dibujo"),
+    medir_viaje: bool = typer.Option(False, "--medir-viaje", help="mide el viaje apagado antes/despues de ordenar (una pasada extra de vpype)"),
 ):
     """La imagen se vuelve trazos largos de campo de flujo, casi sin saltos."""
     from .laser import flow
@@ -2046,7 +2058,7 @@ def laser_flow(
         raise typer.Exit(1)
     destino = salida or imagen.with_suffix(".flow.svg")
     try:
-        medida = flow(imagen, destino, semilla=semilla)
+        medida = flow(imagen, destino, semilla=semilla, medir_viaje=medir_viaje)
     except RuntimeError as e:
         _err(str(e))
         raise typer.Exit(1)
@@ -2058,6 +2070,7 @@ def laser_lote(
     carpeta: Path = typer.Argument(..., help="carpeta con el material (imagenes)"),
     modo: str = typer.Option("flow", "--modo", help="flow | hatched"),
     limite: Optional[int] = typer.Option(None, "--limite", help="procesar solo N"),
+    ild: bool = typer.Option(False, "--ild", help="escribe ademas un .ild (ILDA Type 5, importable en QuickShow) junto a cada SVG"),
 ):
     """Deriva una pieza laser por imagen y escribe el manifiesto del archivo.
 
@@ -2077,7 +2090,7 @@ def laser_lote(
     try:
         filas = lote(carpeta, raiz / "iskvw" / "piel" / "laser",
                      raiz / "iskvw" / "datos" / "laser.json",
-                     modo=modo, limite=limite)
+                     modo=modo, limite=limite, ild=ild)
     except RuntimeError as e:
         _err(str(e))
         raise typer.Exit(1)
@@ -2085,7 +2098,84 @@ def laser_lote(
     con_error = len(filas) - len(buenas)
     console.print(f"{len(buenas)} piezas {modo} -> iskvw/piel/laser/ "
                   f"({con_error} con error)")
+    if ild:
+        con_ild = sum(1 for f in buenas if "ild" in f)
+        console.print(f"{con_ild} archivos .ild (ILDA Type 5) junto a los SVG")
     console.print("manifiesto -> iskvw/datos/laser.json")
+
+
+@laser_app.command("medir")
+def laser_medir(
+    svg: Path = typer.Argument(..., help="SVG de trazos (salida de vpype o similar)"),
+    presupuesto: int = typer.Option(800, "--presupuesto", help="puntos por frame (600-1000 a 30 kpps)"),
+):
+    """Los numeros reales del frame: puntos, trazos, dibujo y viaje apagado.
+
+    Es la respuesta medida a 'esto se ve bien en laser?': cada salto en
+    negro gasta puntos sin dibujar y la regla de diseno del toolkit pide
+    menos de 8 subtrazos. No necesita vpype instalado.
+    """
+    from .laser import medir
+    if not svg.exists():
+        _err(f"No existe: {svg}")
+        raise typer.Exit(1)
+    try:
+        m = medir(svg)
+    except RuntimeError as e:
+        _err(str(e))
+        raise typer.Exit(1)
+    dentro = m["puntos"] <= presupuesto
+    console.print(f"{svg}")
+    console.print(f"  puntos: {m['puntos']}  (presupuesto {presupuesto}: "
+                  f"{'dentro' if dentro else 'SOBRE'})")
+    console.print(f"  trazos: {m['trazos']}"
+                  + ("  [AVISO: el toolkit pide <8 subtrazos]"
+                     if m["trazos"] >= 8 else ""))
+    console.print(f"  dibujo: {m['dibujo']} ud   "
+                  f"viaje apagado: {m['viaje_apagado']} ud")
+    if not dentro:
+        raise typer.Exit(1)
+
+
+@laser_app.command("ild")
+def laser_ild(
+    svg: Path = typer.Argument(..., help="SVG de trazos a convertir"),
+    salida: Optional[Path] = typer.Option(None, "--output", "-o", help=".ild de salida"),
+    color: str = typer.Option("255,255,255", "--color", help="R,G,B del trazo (blanco = los 3 canales)"),
+    reposo: int = typer.Option(4, "--reposo", help="puntos apagados de reposo al inicio y fin de cada trazo"),
+):
+    """SVG a ILDA Type 5 (RGB): el formato que QuickShow SI importa.
+
+    Cierra la ruta B del toolkit sin Modulaser ni msvg2ild: exporta 2D true
+    color (nunca tabla de paleta) y verifica el archivo releyendolo antes de
+    reportar. Revisar igual en ilda-viewer antes del venue.
+    """
+    from .laser import escribir_ild, leer_ild
+    if not svg.exists():
+        _err(f"No existe: {svg}")
+        raise typer.Exit(1)
+    try:
+        rgb = tuple(int(c) for c in color.split(","))
+        if len(rgb) != 3 or any(not 0 <= c <= 255 for c in rgb):
+            raise ValueError
+    except ValueError:
+        _err("--color tiene que ser R,G,B con valores 0-255")
+        raise typer.Exit(1)
+    destino = salida or svg.with_suffix(".ild")
+    try:
+        r = escribir_ild(svg, destino, color=rgb, reposo=reposo)
+        frames = leer_ild(destino)
+    except RuntimeError as e:
+        _err(str(e))
+        raise typer.Exit(1)
+    if len(frames) != 1 or len(frames[0]["puntos"]) != r["puntos_ild"]:
+        _err(f"verificacion fallo: el .ild releido no coincide ({destino})")
+        raise typer.Exit(1)
+    aviso = ("" if r["puntos_ild"] <= 1000 else
+             "  [AVISO: sobre 1000 puntos con reposo incluido, simplificar]")
+    console.print(f"OK -> {destino}  {r['puntos_ild']} puntos ILDA "
+                  f"({r['en_blanco']} apagados, {r['trazos']} trazos), "
+                  f"verificado releyendo{aviso}")
 
 
 # ============================================================

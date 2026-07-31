@@ -59,7 +59,10 @@ def test_the_smoke_still_measures_the_effects_patch():
                      "desgarro alone tears x-only",
                      "pulso alone bends glyph time",
                      "gravedad alone pulls the reading",
-                     "every switch off under master on draws exactly the base"):
+                     "every switch off under master on draws exactly the base",
+                     # The venue layer rides the SAME tablero fetch: its flag
+                     # must gate the sala link in both states.
+                     "venue layer gates on venue3d"):
         assert esperado in salida, (
             "the smoke no longer measures the effects patch (%r missing):\n%s"
             % (esperado, salida)

@@ -108,3 +108,101 @@ def test_entradas_rotas_no_rompen():
     for malas in ([], None, ["", "no-es-url", None, 42]):
         prim, sec = fuentes.clasificar(malas, "cl_legal")
         assert prim == []
+
+
+# --- dominio biomedico (2026-07-31) -----------------------------------------
+# El caso que lo motivo: el lote watsonx de 8 informes cientificos de reduccion
+# de danos (2026-07-30) -- seis de ocho salieron con `dominio: None` y por lo
+# tanto SIN exigencia de fuente primaria. Estos tests fijan que los temas
+# biomedicos pasan por la misma compuerta que cl_legal.
+
+TEMAS_BIOMEDICOS = [
+    "farmacologia de la MDMA y neurotoxicidad en consumo recreativo",
+    "epidemiologia del consumo de estimulantes en Chile",
+    "drug checking en eventos masivos: evidencia de reduccion de danos",
+    "sobredosis por opioides sinteticos: deteccion temprana",
+    "toxicidad de adulterantes en cocaina segun ensayo clinico",
+]
+
+
+def test_detecta_dominio_biomedico_por_el_tema():
+    for tema in TEMAS_BIOMEDICOS:
+        assert fuentes.dominio_de_tema(tema) == "biomedico", tema
+
+
+def test_detecta_dominio_con_tildes():
+    """Las preguntas cosechadas de informes vienen en castellano correcto, CON
+    tildes; las pistas son ASCII. Sin plegado de diacriticos la compuerta se
+    salta exactamente los temas que debe vigilar."""
+    assert fuentes.dominio_de_tema(
+        "farmacología y toxicología de la ketamina") == "biomedico"
+    assert fuentes.dominio_de_tema(
+        "reducción de daños en fiestas electrónicas") == "biomedico"
+    # y el plegado tambien repara a los dominios viejos:
+    assert fuentes.dominio_de_tema(
+        "código penal chileno y sanciones por microtráfico") == "cl_legal"
+
+
+def test_cl_legal_gana_sobre_biomedico_en_tema_legal():
+    """Un tema legal que menciona reduccion de danos sigue siendo cl_legal:
+    el orden del dict decide y biomedico va ultimo a proposito."""
+    tema = ("Ley 20.000 Chile y marco legal para servicios de analisis de "
+            "sustancias y reduccion de danos")
+    assert fuentes.dominio_de_tema(tema) == "cl_legal"
+
+
+def test_biomedico_exige_primaria_igual_que_cl_legal():
+    """Sin primaria: mismo mecanismo que cl_legal -- marca, encabezado que
+    prohibe citar e instruccion que cambia la tarea."""
+    tema = TEMAS_BIOMEDICOS[0]
+    ev = fuentes.evaluar(tema, FUENTES_DEL_INFORME_MALO)
+    assert ev["dominio"] == "biomedico"
+    assert ev["sin_fuente_primaria"] is True
+    assert ev["marca"] == "SIN FUENTE PRIMARIA"
+    txt = fuentes.encabezado(FUENTES_DEL_INFORME_MALO, "biomedico")
+    assert "SIN FUENTE PRIMARIA" in txt
+    assert "No citar como respaldo" in txt
+    ins = fuentes.instruccion_sintesis(FUENTES_DEL_INFORME_MALO, "biomedico")
+    assert "PROHIBIDO afirmar" in ins
+
+
+def test_biomedico_reconoce_sus_primarias():
+    urls = [
+        "https://pubmed.ncbi.nlm.nih.gov/31013837/",
+        "https://www.scielo.cl/scielo.php?pid=S0034-98872020000700123",
+        "https://www.who.int/publications/i/item/9789240088254",
+        "https://www.euda.europa.eu/publications/european-drug-report/2025_en",
+        "https://www.ispch.gob.cl/anamed/farmacovigilancia/",
+        "https://www.cochranelibrary.com/cdsr/doi/10.1002/14651858.CD012021",
+        "https://eesppnsrmadrededios.edu.pe/libros/1.pdf",
+    ]
+    prim, sec = fuentes.clasificar(urls, "biomedico")
+    assert len(prim) == 6
+    assert sec == ["https://eesppnsrmadrededios.edu.pe/libros/1.pdf"]
+    ev = fuentes.evaluar(TEMAS_BIOMEDICOS[1], urls)
+    assert ev["dominio"] == "biomedico"
+    assert ev["sin_fuente_primaria"] is False
+    assert ev["marca"] is None
+    assert fuentes.encabezado(urls, "biomedico") == ""
+
+
+def test_biomedico_scholar_no_es_primaria():
+    """scholar.google indexa PubMed pero no ES PubMed: sigue en NUNCA_PRIMARIA."""
+    assert not fuentes.hay_primaria(
+        ["https://scholar.google.com/scholar?q=mdma+neurotoxicity"], "biomedico")
+
+
+def test_biomedico_queries_sugeridas_agregan_site():
+    qs = fuentes.sugerir_queries("farmacologia de la ketamina", "biomedico")
+    assert qs[0] == "farmacologia de la ketamina"
+    assert any("site:pubmed.ncbi.nlm.nih.gov" in q for q in qs)
+    assert any("site:scielo.org" in q for q in qs)
+
+
+def test_los_temas_culturales_siguen_sin_dominio():
+    """La compuerta nueva no debe estorbar la investigacion cultural: un tema
+    de estetica que no habla de farmacologia ni epidemiologia queda sin dominio."""
+    assert fuentes.dominio_de_tema(
+        "iconografia del double cup en la cultura visual del trap") is None
+    assert fuentes.dominio_de_tema(
+        "historia del vjing y el mapping en la escena de Santiago") is None
