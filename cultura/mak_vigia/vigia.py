@@ -32,6 +32,7 @@ import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
+import xml.etree.ElementTree as ET
 from html.parser import HTMLParser
 
 BASE = os.path.dirname(os.path.abspath(__file__))
@@ -257,9 +258,67 @@ def extraer_json(texto, fuente, base_url):
     return salida
 
 
+def _local(tag):
+    """Namespace-free element name: '{http://...Atom}entry' -> 'entry'.
+    Feeds ship under half a dozen namespace spellings; the LOCAL name is the
+    part that does not rot."""
+    return tag.rsplit("}", 1)[-1].lower() if isinstance(tag, str) else ""
+
+
+def extraer_feed(texto, base_url):
+    """RSS 2.0 / Atom, stdlib only. A feed is already a machine listing: every
+    <item>/<entry> IS an item by contract, so the HTML heuristics (title
+    length, navigation stopwords) do not apply here -- dropping a real entry
+    because its title is short would be the parser causing the silent zero the
+    golden rule exists to catch. Same contract out: titulo + url."""
+    try:
+        # Re-encode: ET refuses a str that carries its own encoding
+        # declaration ('<?xml version="1.0" encoding="utf-8"?>'), and every
+        # real feed carries one. The bytes were already decoded honestly by
+        # decodificar(), so utf-8 here is lossless.
+        raiz = ET.fromstring(texto.encode("utf-8"))
+    except (ET.ParseError, ValueError):
+        return []
+    salida, vistos = [], set()
+    for el in raiz.iter():
+        if _local(el.tag) not in ("item", "entry"):
+            continue
+        titulo, url, url_alterna = "", "", ""
+        for hijo in el:
+            nombre = _local(hijo.tag)
+            if nombre == "title" and not titulo:
+                titulo = _ESPACIOS.sub(" ", (hijo.text or "").strip())
+                titulo = titulo[:MAX_CHARS_TITULO]
+            elif nombre == "link":
+                # RSS puts the URL in the text; Atom in href, where
+                # rel="alternate" (or no rel) is the human-facing page.
+                href = (hijo.get("href") or "").strip()
+                rel = (hijo.get("rel") or "alternate").lower()
+                if href and rel == "alternate" and not url:
+                    url = href
+                elif href and not url_alterna:
+                    url_alterna = href
+                elif not href and hijo.text and hijo.text.strip() and not url:
+                    url = hijo.text.strip()
+        if not titulo:
+            continue
+        destino = url or url_alterna
+        if destino:
+            destino = urllib.parse.urljoin(base_url, destino)
+        clave = (plegar(titulo), destino)
+        if clave in vistos:
+            continue
+        vistos.add(clave)
+        salida.append({"titulo": titulo, "url": destino})
+    return salida
+
+
 def extraer(texto, fuente, base_url):
-    if (fuente.get("formato") or "html").lower() == "json":
+    formato = (fuente.get("formato") or "html").lower()
+    if formato == "json":
         return extraer_json(texto, fuente, base_url)
+    if formato in ("rss", "atom"):
+        return extraer_feed(texto, base_url)
     return extraer_html(texto, base_url)
 
 

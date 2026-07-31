@@ -552,6 +552,117 @@ def test_extraccion_json_de_un_listado_real():
     assert items[1]["url"].endswith("i=2")
 
 
+RSS_FIJO = """<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+ <channel>
+  <title>Convocatorias del centro cultural</title>
+  <link>https://ejemplo.cl/</link>
+  <item>
+   <title><![CDATA[Residencia de creación en Valparaíso]]></title>
+   <link>https://ejemplo.cl/convocatorias/residencia-valparaiso</link>
+   <content:encoded><![CDATA[<p>bases y condiciones</p>]]></content:encoded>
+  </item>
+  <item>
+   <title>Beca corta</title>
+   <link>/convocatorias/beca-corta</link>
+  </item>
+  <item>
+   <title><![CDATA[Residencia de creación en Valparaíso]]></title>
+   <link>https://ejemplo.cl/convocatorias/residencia-valparaiso</link>
+  </item>
+ </channel>
+</rss>"""
+
+ATOM_FIJO = """<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+ <title>Fondos abiertos</title>
+ <link rel="self" href="https://fondos.ejemplo.org/feed.xml"/>
+ <entry>
+  <title>Fondo de fomento a la música regional</title>
+  <link rel="self" href="https://fondos.ejemplo.org/api/entrada/9"/>
+  <link rel="alternate" href="https://fondos.ejemplo.org/fondo/musica"/>
+ </entry>
+ <entry>
+  <title>Fondo del libro y la lectura</title>
+  <link href="/fondo/libro"/>
+ </entry>
+</feed>"""
+
+
+def test_extraccion_rss_con_cdata_tildes_y_url_relativa():
+    """Un feed WordPress real: CDATA, namespaces, enlaces relativos y un item
+    repetido. El titulo conserva sus tildes; la URL se resuelve absoluta."""
+    items = vigia.extraer_feed(RSS_FIJO, "https://ejemplo.cl/feed/")
+    assert len(items) == 2, "el item duplicado se pliega"
+    assert items[0]["titulo"] == "Residencia de creación en Valparaíso"
+    assert items[0]["url"] == "https://ejemplo.cl/convocatorias/residencia-valparaiso"
+    assert items[1]["url"] == "https://ejemplo.cl/convocatorias/beca-corta"
+
+
+def test_extraccion_rss_no_aplica_la_heuristica_de_navegacion():
+    """En un feed cada <item> ES un item por contrato: un titulo corto
+    ('Beca corta', 2 palabras) se queda. Botarlo seria el parser fabricando
+    el cero silencioso que la regla de oro persigue."""
+    items = vigia.extraer_feed(RSS_FIJO, "https://ejemplo.cl/feed/")
+    assert any(i["titulo"] == "Beca corta" for i in items)
+
+
+def test_extraccion_atom_prefiere_el_enlace_alternate():
+    items = vigia.extraer_feed(ATOM_FIJO, "https://fondos.ejemplo.org/feed.xml")
+    assert len(items) == 2
+    assert items[0]["url"] == "https://fondos.ejemplo.org/fondo/musica", (
+        "rel=self es la API del feed; rel=alternate es la página que lee la persona")
+    assert items[1]["url"] == "https://fondos.ejemplo.org/fondo/libro"
+
+
+def test_xml_roto_da_cero_sin_reventar_y_la_regla_de_oro_lo_ve(tmp_path):
+    """Un feed que deja de ser XML parsea a cero; eso no tumba la corrida y
+    el cero-tras-no-cero grita como con HTML."""
+    assert vigia.extraer_feed("<rss><channel><item>", "https://x.cl/") == []
+    fuente = dict(FUENTE, id="feed", formato="rss")
+    estado = tmp_path / "estado"
+    url = fuente["url"]
+    vigia.correr([fuente], str(estado),
+                 abrir=abridor({url: RSS_FIJO.encode("utf-8")}),
+                 notificar=False, ahora=1000.0)
+    r = vigia.correr([fuente], str(estado),
+                     abrir=abridor({url: b"pagina de mantenimiento"}),
+                     notificar=False, ahora=2000.0)[0]
+    assert r["n_items"] == 0
+    assert "0 items" in r["alerta"]
+
+
+def test_el_diff_funciona_igual_sobre_un_feed(tmp_path):
+    """El contrato completo de la fuente rss: primera corrida todo nuevo,
+    segunda nada, y una entrada agregada al feed es exactamente un aviso."""
+    fuente = dict(FUENTE, id="feed", formato="rss")
+    estado = tmp_path / "estado"
+    url = fuente["url"]
+    crudo = RSS_FIJO.encode("utf-8")
+    r1 = vigia.correr([fuente], str(estado), abrir=abridor({url: crudo}),
+                      notificar=False, ahora=1000.0)[0]
+    assert len(r1["nuevos"]) == 2
+    r2 = vigia.correr([fuente], str(estado), abrir=abridor({url: crudo}),
+                      notificar=False, ahora=2000.0)[0]
+    assert r2["nuevos"] == []
+
+    con_extra = RSS_FIJO.replace(
+        " </channel>",
+        " <item><title>Nueva convocatoria de danza contemporánea</title>"
+        "<link>https://ejemplo.cl/convocatorias/danza</link></item>\n </channel>")
+    r3 = vigia.correr([fuente], str(estado),
+                      abrir=abridor({url: con_extra.encode("utf-8")}),
+                      notificar=False, ahora=3000.0)[0]
+    assert len(r3["nuevos"]) == 1
+    assert r3["nuevos"][0]["titulo"] == "Nueva convocatoria de danza contemporánea"
+
+
+def test_el_filtro_de_palabras_tambien_rige_para_feeds():
+    fuente = {"id": "feed", "formato": "rss"}
+    items = vigia.extraer(RSS_FIJO, fuente, "https://ejemplo.cl/feed/")
+    assert len(vigia.filtrar(items, ["residencia"], None)) == 1
+
+
 def test_no_hay_modelo_en_el_vigia():
     """v1 es un diff. Si algun dia aparece un LLM aca, que sea una decision
     explicita y no un deslizamiento: este test es el guardarrail."""
@@ -571,7 +682,7 @@ def test_fuentes_json_es_valido_y_completo():
     for f in fuentes:
         assert f["url"].startswith("https://"), f["id"]
         assert f.get("nombre") and f.get("tipo"), f["id"]
-        assert f.get("formato", "html") in ("html", "json"), f["id"]
+        assert f.get("formato", "html") in ("html", "json", "rss", "atom"), f["id"]
         assert f["id"].isascii(), "los ids son claves de maquina"
 
 
