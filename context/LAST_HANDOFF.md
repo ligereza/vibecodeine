@@ -622,3 +622,20 @@ Deploy state at close: iskvw.cl serves the #411 build (41 pieces, essay icons
 reachable). The 479-piece field ships when the laser-tool PR merges: it
 carries the workflow fix (mirror iskvw-internal piece dirs at their repo
 paths) for the deploy that the new coherence gate correctly blocked.
+
+## The language rule has its ratchet (2026-07-31)
+
+`tools/idioma.py` measures the language of COMMENTS AND DOCSTRINGS ONLY
+(never identifiers, never product strings) in every tracked `*.py`
+(`git ls-files`, archive + vendorized zones excluded, same convention as
+`test_higiene_docs`). Measured on the real tree: 581 files = 388 Spanish +
+96 English + 38 mixed + 59 none, so 426 files carry Spanish -- the 07-30
+"236 vs 36" note undercounted because it did not read docstrings.
+`tests/test_idioma_ratchet.py` pins that set in
+`tests/fixtures/idioma_baseline.txt`: a NEW file carrying Spanish comments
+fails the suite with the offender named; cleaning files never fails, and the
+pin is lowered with `python3 tools/idioma.py --baseline > <fixture>`.
+Renames are NOT demanded: cron/systemd consumers keep their names, per
+`docs/GLOSSARY.md`. The tool also prints a soft FYI (not enforced) of
+widespread Spanish identifiers the glossary does not map yet -- top spread:
+`nombre` (69 files), `salida` (63), `ruta` (62), `linea` (46), `datos` (45).
