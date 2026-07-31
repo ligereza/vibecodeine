@@ -118,8 +118,42 @@ if (!failed && nodos < 1) failed = new Error(`field is empty (NODOS=${nodos}): d
 if (!failed && trabajoDeNodo < 1)
   failed = new Error("per-node draw code never executed: the smoke proved nothing");
 
+// A piece that CARRIES a measured position must be drawn at it. The skin used
+// to decide that for the whole field from `obras[0]`, which was true while
+// campo.json was the only source and false the moment archivo.json arrived
+// carrying 219 projected works next to 260 pieces that are not projected. The
+// field then fell back to hashes, stretched to ~220.000 px, and drew 203 marks
+// per frame instead of 7647 -- with the whole suite green, because CI never
+// generated the substrate. This is the assertion that class of defect cannot
+// survive: it compares the drawn field against the data on disk.
+let colocadas = 0;
+if (!failed) {
+  try {
+    const d = JSON.parse(readFileSync(join(raiz, "iskvw", "datos", "archivo.json"), "utf8"));
+    const esperadas = new Map();
+    for (const p of (d.piezas || []))
+      if (p.posicion && typeof p.posicion.y === "number")
+        esperadas.set(p.id, (p.posicion.y + 1) * 2600);
+    if (esperadas.size) {
+      const ys = vm.runInContext(
+        "NODOS.map(n => [n.obra && n.obra.id, n.y])", context);
+      let mal = null;
+      for (const [id, y] of ys) {
+        const q = esperadas.get(id);
+        if (q === undefined) continue;
+        if (Math.abs(y - q) < 0.5) colocadas++;
+        else mal = mal || `${id}: dibujada en ${y.toFixed(0)}, medida en ${q.toFixed(0)}`;
+      }
+      if (colocadas !== esperadas.size)
+        failed = new Error(`the substrate carries ${esperadas.size} measured positions `
+          + `and the field honours ${colocadas} (${mal || "id missing from the field"})`);
+    }
+  } catch { /* sin sustrato en disco no hay nada que exigir: es el caso del clon limpio */ }
+}
+
 if (failed) {
   console.error("SKIN SMOKE FAILED:", failed && failed.stack || failed);
   process.exit(1);
 }
-console.log(`OK: boot + frames ran without throwing (NODOS=${nodos})`);
+console.log(`OK: boot + frames ran without throwing (NODOS=${nodos}`
+  + (colocadas ? `, ${colocadas} en su posicion medida` : "") + ")");
