@@ -20,6 +20,12 @@ MultiLineString), so the pin and the git build are REQUIRED, not preference:
     pip install "vpype[all]" "numpy<2"
     pip install "git+https://github.com/plottertools/hatched"
     pip install "git+https://github.com/serycjon/vpype-flow-imager"
+
+Verified state per mode (2026-07-30, this machine): hatched WORKS (168 pts
+on the test image, within budget). flow_img installs and registers but two
+runs on a 400px test exceeded 10 minutes without finishing -- treat flow as
+experimental until someone measures a completed run; hatched is the proven
+route.
 """
 from __future__ import annotations
 
