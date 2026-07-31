@@ -247,12 +247,18 @@ Measured by diffing the disks, which is the check that had never been run.
   `cerebras`: nobody measured llama-3-3-70b against gpt-oss-120b for synthesis,
   and that is a judgement call, not a technical default. Retirement: when the
   credit runs out or expires (~2026-08-18).
-- **The source gate has no scientific domain.** `fuentes.py` `DOMINIOS` covers
-  `cl_legal`, `cl_fondos` and `norma_tecnica` only, so six of those eight
-  biomedical topics got `dominio: None` and no primary-source requirement at
-  all. The reports cite scielo/revistas, but nothing checks it. A `biomedico`
-  domain (pubmed.ncbi.nlm.nih.gov, scielo, who.int, emcdda/euda, ispch) is the
-  missing piece for the RD scientific base -- not done here, one line as agreed.
+- **The source gate HAS a scientific domain since 2026-07-31.** `fuentes.py`
+  `DOMINIOS` used to cover `cl_legal`, `cl_fondos` and `norma_tecnica` only, so
+  six of those eight biomedical topics got `dominio: None` and no
+  primary-source requirement at all. Now `biomedico` (pubmed/ncbi, scielo and
+  its country hosts, who.int, euda/emcdda, ispch, cochrane) gates biomedical /
+  harm-reduction / pharmacology / epidemiology topics exactly like `cl_legal`;
+  it sits LAST in the dict so legal topics that mention harm reduction keep
+  hitting `cl_legal` first. Same commit: `dominio_de_tema` now folds
+  diacritics before matching, because harvested questions come from human-read
+  reports WITH tildes while the pistas are ASCII -- "farmacologia" used to
+  miss "farmacologia" with an accent, and "codigo penal" missed the accented
+  form too. Pinned in `tests/test_fuentes.py`.
 
 ## THE INVENTORIES (2026-07-30). Measured on the DISKS, not on GitHub
 
@@ -348,9 +354,9 @@ sees, and that is not the assistant's call to make.**
 is badly DESIGNED, not badly wired -- it watches `_SLOTS` while the failing
 provider lives in `LLM.__init__`'s order, and its vigilance depends on another
 LLM choosing to vigilate. Do not implement its `--enforce` stub: giving a blind
-watchman power automates the blindness. And `trabajo.py` still harvests its own
-questions without checking whether it already answered them -- 40 of 50 reports
-share one prefix.
+watchman power automates the blindness. The other defect this paragraph named
+-- the harvest never checking what it already answered -- is closed since
+2026-07-31 (see "Still open, measured and not rushed").
 
 ## The organism writes and nobody reads (2026-07-30, the day's thesis)
 
@@ -411,8 +417,14 @@ applied to the irreversible, it is the job.
 
 ### Still open, measured and not rushed
 
-- The backlog dedup: `trabajo.py` should not enqueue a question whose slug
-  already exists in `informes/`. Attacks the biggest pile at its cause.
+- DONE 2026-07-31: the backlog dedup. `backlog.cosechar` (the harvest
+  `trabajo.py` calls every tick) no longer enqueues a question whose slug --
+  `research_lib.slug`, THE function that names report files, reused, never
+  reimplemented -- already exists as a report in the informes dirs or as any
+  backlog entry in any state. This is the cause of the 40-of-50 shared-prefix
+  pile: two questions differing only after the 40-char slug hashed differently
+  but produced the SAME report file. Pinned in `tests/test_mak_backlog.py`,
+  including `backlog.slug is research_lib.slug`.
 - Wiring `retencion.py` to cron (the policy was decided thirteen days ago).
 - `agente_real`: it is a THIRD decision loop competing with capataz. Decide
   which one lives before rewiring it to watsonx.
