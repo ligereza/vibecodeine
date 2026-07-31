@@ -20,8 +20,8 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-from research_lib import (LLM, escala_tok, load_env, marco, ntfy_publish,
-                          slug, stamp, tavily_search, web_search)
+from research_lib import (LLM, PROVIDERS, escala_tok, load_env, marco,
+                          ntfy_publish, slug, stamp, tavily_search, web_search)
 
 OUT_DIR = os.path.expanduser("~/research/refutaciones")
 
@@ -49,8 +49,13 @@ SISTEMA_JUEZ = (
 def refutar(tema, orden, densidad="medio"):
     t0 = time.time()
     llm = LLM()
+    # Hacen falta tres papeles (propone / refuta / juzga). Si pidieron menos, se
+    # repite lo PEDIDO en vez de completar con la cadena entera: pedir un solo
+    # proveedor y recibir de juez a otro que no tiene llave es como moria esto
+    # antes -- el ultimo puesto se llenaba con `azure` y el juicio no ocurria.
     if len(orden) < 3:
-        orden = (orden + ["groq", "cerebras", "azure", "ollama"])[:4]
+        orden = [orden[i % len(orden)] for i in range(3)] if orden else \
+            list(PROVIDERS)[:4]
     proponente, jueza = orden[0], orden[-1]
     refutadores = orden[1:-1] or [p for p in orden if p != proponente][:1]
 
@@ -125,11 +130,22 @@ def main():
     args = ap.parse_args()
 
     load_env()
-    orden = [p.strip() for p in args.orden.split(",")
-            if p.strip() in ("groq", "cerebras", "azure", "ollama")]
+    # El filtro sale de `research_lib.PROVIDERS`, no de una lista escrita aca:
+    # la copia a mano se quedo sin `watsonx` ni `win` y los descartaba en
+    # silencio. Un nombre que no existe SI se descarta -- pero avisando, porque
+    # un dedazo que deja la lista vacia terminaba en "Ultimo: None", un error
+    # que no nombra a nadie porque nunca se intento nada.
+    pedidos = [p.strip() for p in args.orden.split(",") if p.strip()]
+    orden = [p for p in pedidos if p in PROVIDERS]
+    desconocidos = [p for p in pedidos if p not in PROVIDERS]
+    if desconocidos:
+        print("AVISO: proveedor desconocido, lo salteo: %s (validos: %s)"
+              % (", ".join(desconocidos), ", ".join(PROVIDERS)), flush=True)
+    if not orden:
+        print("AVISO: --orden quedo vacio, uso la cadena por defecto",
+              flush=True)
     tema = marco(args.tema, activo=not args.sin_marco)
-    result = refutar(tema, orden or ["groq", "cerebras", "azure", "ollama"],
-                     args.densidad)
+    result = refutar(tema, orden or list(PROVIDERS), args.densidad)
 
     os.makedirs(args.out, exist_ok=True)
     base = os.path.join(args.out, "%s-%s" % (stamp(), slug(args.tema)))

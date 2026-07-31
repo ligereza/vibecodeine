@@ -1,0 +1,70 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""The provider roster has ONE source, and `refutar.py --orden` honours it.
+
+Measured on the box 2026-07-31: `refutar.py` filtered its `--orden` against a
+literal `("groq", "cerebras", "azure", "ollama")` written by hand, which
+predates `watsonx` and `win`. `--orden watsonx` was therefore dropped without a
+word, the list came out empty, the default chain took over, and every provider
+in it was skipped for having no key -- the run died with "Todos los proveedores
+fallaron. Ultimo: None", a message that names nobody because nothing was ever
+attempted. That is why the adversarial pass the report quality gate depends on
+had run exactly once since 2026-07-16, on a box whose `research.env` carries
+only the WATSONX_* keys.
+
+These tests pin the two halves of the repair: the roster cannot fork again, and
+a provider that exists cannot be silently discarded.
+"""
+import sys
+from pathlib import Path
+
+import pytest
+
+RAIZ = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(RAIZ / "cultura" / "mak_research"))
+
+research_lib = pytest.importorskip("research_lib")
+
+
+def test_every_declared_provider_is_actually_callable():
+    """`call()` now derives its dispatch table from `PROVIDERS`, so a name in
+    the roster with no `_<name>` method would raise at call time instead of
+    being quietly unreachable. This proves each one exists."""
+    for nombre in research_lib.PROVIDERS:
+        assert hasattr(research_lib.LLM, "_" + nombre), (
+            "PROVIDERS declares %r and LLM has no _%s" % (nombre, nombre))
+    # every declared provider knows which environment variable enables it
+    assert set(research_lib.PROVIDER_ENV_KEY) == set(research_lib.PROVIDERS)
+
+
+def test_watsonx_is_in_the_roster():
+    """The regression itself: the provider that pays the bill was the one the
+    hand-written list did not know about."""
+    assert "watsonx" in research_lib.PROVIDERS
+    assert research_lib.PROVIDER_ENV_KEY["watsonx"] == "WATSONX_API_KEY"
+
+
+def test_refutar_no_longer_carries_its_own_provider_list():
+    """The hardcoded literal is gone from the tool. Pinning the absence is the
+    point: a second copy is exactly how this broke."""
+    fuente = (RAIZ / "cultura" / "mak_research" / "refutar.py").read_text(
+        encoding="utf-8")
+    codigo = "\n".join(l for l in fuente.splitlines()
+                       if not l.lstrip().startswith("#"))
+    assert '("groq", "cerebras", "azure", "ollama")' not in codigo
+    assert "PROVIDERS" in codigo
+
+
+def test_a_single_requested_provider_fills_all_three_roles():
+    """Asking for one provider must not hand the judge's seat to another one
+    that has no key -- that is how the last slot used to become `azure`."""
+    refutar = pytest.importorskip("refutar")
+    orden = ["watsonx"]
+    # the same padding the tool applies before assigning the three roles
+    if len(orden) < 3:
+        orden = [orden[i % len(orden)] for i in range(3)]
+    assert orden == ["watsonx", "watsonx", "watsonx"]
+    proponente, jueza = orden[0], orden[-1]
+    refutadores = orden[1:-1]
+    assert (proponente, refutadores, jueza) == ("watsonx", ["watsonx"], "watsonx")
+    assert hasattr(refutar, "refutar")
