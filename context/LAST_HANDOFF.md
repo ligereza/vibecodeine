@@ -96,6 +96,19 @@ Working and verified live: the DREF show chain (LTC -> Chataigne -> OSC -> phone
 profiles, and the documentation ratchets (`test_mapa_completo`,
 `test_higiene_docs`).
 
+## Venue layer deepened: measured geometry, camera as data, flag consumed (2026-07-31)
+
+On top of PR #418 (venue polylines + orbitable viewer): `tools/venue.py
+geometria` now measures the geometry block (edges per tier/capa, bbox, closed/
+open, zero-length segments, declared measure vs drawn stage -- coherencia warns
+when they disagree by >0.15 m); camera paths are DATA (`schemas/
+orbita.schema.json`, `data/orbitas/vuelta-completa.json` reproduces the default
+turn frame for frame, `venue_secuencia.mjs --orbita`); the viewer takes
+`?venue=<id>` (registry form) and `?giro/alto/dist` with the shipped values as
+defaults; and the campo skin finally CONSUMES `mejoras.venue3d` -- off (today's
+value) changes nothing, on shows a `sala` link. Both branches are asserted in
+the smokes. Nothing new is visible by default.
+
 ## Security diagnosis: 9 of 10 closed (2026-07-29)
 
 VCD-06 (8 MB body cap, 413 on excess) and VCD-07 (every workflow `uses:` pinned

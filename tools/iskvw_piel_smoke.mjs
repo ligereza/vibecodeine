@@ -50,6 +50,7 @@ const getEl = id => {
 };
 
 let rafQueue = [];
+const pedidos = [];   // every URL the skin asked for, to prove wiring ran
 const sandbox = {
   console, Math, JSON, Date, performance: { now: () => rafQueue.length * 16.7 },
   requestAnimationFrame: cb => { rafQueue.push(cb); return rafQueue.length; },
@@ -58,7 +59,8 @@ const sandbox = {
   // fetch: resolve datos/* against the repo so the REAL data shapes are what
   // the loop chews on; anything else 404s like the fallback path expects.
   fetch: async (url) => {
-    const m = String(url).match(/datos\/(campo|archivo|obras)\.json$/);
+    pedidos.push(String(url));
+    const m = String(url).match(/datos\/(campo|archivo|obras|tablero)\.json$/);
     if (m) {
       try {
         const txt = readFileSync(join(raiz, "iskvw", "datos", `${m[1]}.json`), "utf8");
@@ -117,6 +119,30 @@ const nodos = vm.runInContext("typeof NODOS !== 'undefined' && NODOS ? NODOS.len
 if (!failed && nodos < 1) failed = new Error(`field is empty (NODOS=${nodos}): data did not load, loop untested`);
 if (!failed && trabajoDeNodo < 1)
   failed = new Error("per-node draw code never executed: the smoke proved nothing");
+
+// the venue layer stays behind its flag, and both branches are measured: the
+// boot above ran against the REAL tablero.json (venue3d=false today), so
+// nothing may have appeared; forcing the flag on must create the link, and a
+// flag whose consumer vanished must fail here, not at the show.
+if (!failed) {
+  const consumidor = vm.runInContext("typeof capaVenue === 'function'", context);
+  if (!consumidor) {
+    failed = new Error("capaVenue is missing: mejoras.venue3d has no consumer again");
+  } else if (!pedidos.some(u => /tablero\.json$/.test(u))) {
+    failed = new Error("boot never asked for tablero.json: the flag is read by nobody");
+  } else {
+    const flagReal = JSON.parse(readFileSync(
+      join(raiz, "iskvw", "datos", "tablero.json"), "utf8")).mejoras.venue3d;
+    const visible = vm.runInContext("SALA_VISIBLE", context);
+    if (visible !== (flagReal === true))
+      failed = new Error(`venue layer visible=${visible} with venue3d=${flagReal}: the flag does not gate`);
+    else if (vm.runInContext("capaVenue({mejoras:{venue3d:true}})", context) !== true ||
+             vm.runInContext("SALA_VISIBLE", context) !== true)
+      failed = new Error("forcing venue3d=true did not enable the venue layer");
+    else if (vm.runInContext("capaVenue({mejoras:{venue3d:false}})", context) !== false)
+      failed = new Error("capaVenue reports on for a tablero that says off");
+  }
+}
 
 if (failed) {
   console.error("SKIN SMOKE FAILED:", failed && failed.stack || failed);
