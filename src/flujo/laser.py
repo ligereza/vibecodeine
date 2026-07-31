@@ -14,8 +14,11 @@ pip-installed CLI, this module shells out to it and fails with instructions,
 never with a traceback. Determinism: `flow` accepts a seed and `lote` derives
 it from the file name, so the same material produces the same piece.
 
-Install (once):
-    pip install "vpype[all]" hatched
+Install (once), measured 2026-07-30 -- the PyPI builds of both plugins are
+broken against numpy 2.x (flow: kdtree TypeError; hatched: shapely empty
+MultiLineString), so the pin and the git build are REQUIRED, not preference:
+    pip install "vpype[all]" "numpy<2"
+    pip install "git+https://github.com/plottertools/hatched"
     pip install "git+https://github.com/serycjon/vpype-flow-imager"
 """
 from __future__ import annotations
@@ -57,11 +60,13 @@ def puntos(svg: Path) -> int:
     no es opcional (docs/laser/TOOLKIT_INDICE.md)."""
     import re
     texto = svg.read_text(encoding="utf-8", errors="replace")
-    n = 0
+    # vpype emite tres formas: <line> suelto (2 puntos), <polyline points>
+    # (un punto por par x,y) y <path d> (un punto por par de coordenadas).
+    n = 2 * len(re.findall(r"<line\b", texto))
     for m in re.finditer(r'points="([^"]+)"', texto):
-        n += m.group(1).count(",") or len(m.group(1).split()) // 2
+        n += len(re.findall(r"-?\d[\d.eE+-]*[,\s]+-?\d", m.group(1)))
     for m in re.finditer(r'\bd="([^"]+)"', texto):
-        n += len(re.findall(r"[MLHVCSQTAmlhvcsqta]|\s-?\d", m.group(1))) // 2
+        n += len(re.findall(r"-?\d[\d.eE+-]*[,\s]+-?\d", m.group(1)))
     return n
 
 
