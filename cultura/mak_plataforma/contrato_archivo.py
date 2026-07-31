@@ -238,6 +238,59 @@ def desde_campo(campo: dict) -> dict:
     return {"piezas": piezas, "vinculos": []}
 
 
+def aplicar_curaduria(datos: dict, curaduria: dict, existe=None) -> dict:
+    """La mano del artista SOBRE lo percibido, nunca debajo.
+
+    `iskvw/datos/curaduria.json` es el archivo humano de la edicion -- simple
+    a proposito, editable a mano sin panel. Por id de pieza:
+
+      titulo       la voz del artista donde la maquina dejo silencio
+      mostrar      false = la pieza no entra al archivo publicado
+      abstraccion  0..1: cuanto se abstrae en la piel (1 = pura textura de
+                   glifos, 0 = pieza completa; para obras sin contexto o
+                   con trazo debil la falla se transmuta, no se esconde)
+      svg          ruta a una version editada A MANO que desplaza a la
+                   generada -- el tier FIRMADO: la maquina propone, el
+                   humano firma (si el archivo no existe, se ignora y se
+                   conserva el generado: nunca un src que 404ea)
+      regimen      por pieza; el global va en curaduria["regimen"]
+
+    Se aplica AL FINAL, sobre el resultado de unir(): gana sobre cualquier
+    fuente. Ids desconocidos se ignoran sin ruido -- la curaduria puede
+    nombrar obras que el filtro de hoy dejo fuera.
+    """
+    if existe is None:
+        from pathlib import Path as _P
+        raiz = _P(__file__).resolve().parents[2]
+        existe = lambda src: (raiz / src).is_file()  # noqa: E731
+    por_id = curaduria.get("piezas") or {}
+    piezas, fuera = [], set()
+    for p in datos["piezas"]:
+        c = por_id.get(p["id"])
+        if not c:
+            piezas.append(p)
+            continue
+        if c.get("mostrar") is False:
+            fuera.add(p["id"])
+            continue
+        q = dict(p)
+        q["extra"] = dict(q.get("extra") or {})
+        if c.get("titulo"):
+            q["titulo"] = str(c["titulo"])
+            q["extra"]["titulo_firmado"] = True
+        if c.get("abstraccion") is not None:
+            q["extra"]["abstraccion"] = max(0.0, min(1.0, float(c["abstraccion"])))
+        if c.get("regimen"):
+            q["extra"]["regimen"] = str(c["regimen"])
+        if c.get("svg") and existe(c["svg"]):
+            q["medio"] = {"tipo": "imagen", "src": c["svg"]}
+            q["extra"]["firmada"] = True
+        piezas.append(q)
+    vinculos = [v for v in datos["vinculos"]
+                if v["de"] not in fuera and v["a"] not in fuera]
+    return {"piezas": piezas, "vinculos": vinculos}
+
+
 def desde_laser(manifiesto: dict, campo: dict, existe=None) -> dict:
     """Las piezas laser/plotter derivadas del material, al contrato.
 

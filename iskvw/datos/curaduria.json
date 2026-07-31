@@ -1,0 +1,6 @@
+{
+ "_doc": "La mano del artista. Editable a mano: titulo (tu voz, con tildes), mostrar (false = fuera del archivo publicado), abstraccion 0..1 (1 = pura textura de glifos), svg (ruta a tu version editada, tier firmado), regimen por pieza. El regimen global de abajo gobierna la piel entera: semantico | industrial.",
+ "version": 1,
+ "regimen": "semantico",
+ "piezas": {}
+}
