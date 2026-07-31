@@ -57,6 +57,13 @@ UA = ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
 
 # Days without a single new item before the source is declared broken.
 DIAS_SIN_NUEVOS = 4
+# Flood rule (regla de la avalancha): a source with history whose parse is
+# suddenly mostly-new is far more likely to have changed its URL shape than to
+# have published half a site of genuine news. Both knobs are per-source
+# overridable in fuentes.json (avalancha_minimo / avalancha_fraccion); 0
+# disables the rule for that source.
+AVALANCHA_MINIMO = 10
+AVALANCHA_FRACCION = 0.5
 TIMEOUT = 30
 MIN_CHARS_TITULO = 12
 MIN_PALABRAS_TITULO = 3
@@ -374,6 +381,35 @@ def regla_de_oro(previo, n_items, n_nuevos, ahora, dias=DIAS_SIN_NUEVOS):
     return ""
 
 
+def regla_de_avalancha(previo, n_items, n_nuevos, minimo=AVALANCHA_MINIMO,
+                       fraccion=AVALANCHA_FRACCION):
+    """The flood side of the golden rule. Silence is one way a watcher lies;
+    a flood is the other: when a site changes its permalink shape, every item
+    re-hashes and the diff reports the WHOLE page as new. 299 'new' items on
+    two phones is spam that drowns real news and teaches everyone to ignore
+    the topic -- the same defect the golden rule exists for, mirrored.
+
+    Returns an alert string when a source WITH HISTORY parses mostly-new
+    (>= minimo items and >= fraccion of the parse), else "". The first run of
+    a source has no history and is legitimately all-new: never a flood.
+
+    The caller suppresses per-item notification for a flooded source but still
+    RECORDS the hashes, so after the one alert the following runs are quiet.
+    """
+    if minimo <= 0 or fraccion <= 0:
+        return ""
+    if int(previo.get("n_items") or 0) <= 0:
+        return ""
+    if n_items <= 0 or n_nuevos < minimo:
+        return ""
+    if n_nuevos / float(n_items) < fraccion:
+        return ""
+    return ("%d de %d ítems aparecen nuevos de golpe (umbral %d y %d%%): "
+            "probable cambio en la forma de las URLs; quedan registrados "
+            "sin notificar uno a uno"
+            % (n_nuevos, n_items, minimo, int(fraccion * 100)))
+
+
 # ------------------------------------------------------------------ corrida
 
 def cargar_fuentes(path=FUENTES):
@@ -431,7 +467,17 @@ def revisar_fuente(fuente, previo, vistos, ahora, abrir=None, dias=DIAS_SIN_NUEV
         nuevos.append({"h": h, "fuente": fid, "titulo": it["titulo"],
                        "url": it.get("url", ""), "ts": int(ahora)})
     res["nuevos"] = nuevos
-    res["alerta"] = regla_de_oro(previo, len(items), len(nuevos), ahora, dias)
+    oro = regla_de_oro(previo, len(items), len(nuevos), ahora, dias)
+    avalancha = "" if oro else regla_de_avalancha(
+        previo, len(items), len(nuevos),
+        minimo=fuente.get("avalancha_minimo", AVALANCHA_MINIMO),
+        fraccion=fuente.get("avalancha_fraccion", AVALANCHA_FRACCION))
+    if avalancha:
+        # One high-priority alert instead of a page of per-item lines. The
+        # hashes are still recorded by the caller, so the flood alerts once
+        # and the runs after it are quiet.
+        res["suprimido"] = len(nuevos)
+    res["alerta"] = oro or avalancha
     nuevo_estado["n_items"] = len(items)
     if nuevos:
         nuevo_estado["ultimo_nuevo_ts"] = ahora
@@ -446,6 +492,10 @@ def revisar_fuente(fuente, previo, vistos, ahora, abrir=None, dias=DIAS_SIN_NUEV
 def _mensaje(resultados, cabeza):
     lineas = []
     for r in resultados:
+        if r.get("suprimido"):
+            # Flooded source: its alert already tells the story; listing the
+            # items one by one is the spam the flood rule exists to stop.
+            continue
         if r["nuevos"]:
             lineas.append("* %s (%d):" % (r["nombre"], len(r["nuevos"])))
             for n in r["nuevos"][:12]:

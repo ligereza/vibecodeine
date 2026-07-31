@@ -186,6 +186,107 @@ def test_primera_corrida_no_dispara_la_regla_de_oro(tmp_path):
     assert r["n_items"] == 0 and r["alerta"] == ""
 
 
+# ------------------------------------------------------ REGLA DE AVALANCHA
+
+def _titulos(n, sello=""):
+    return ["Convocatoria numero %d de la temporada %s" % (i, sello)
+            for i in range(n)]
+
+
+def test_avalancha_un_cambio_de_urls_alerta_y_no_notifica_item_a_item(
+        monkeypatch, tmp_path):
+    """El otro lado de la regla de oro: si el sitio cambia la forma de sus
+    URLs, TODO re-hashea como nuevo. Eso es una alerta, no 299 avisos."""
+    enviados = []
+    monkeypatch.setattr(vigia, "ntfy_publish",
+                        lambda t, m, title="", priority="default", errors=None:
+                        enviados.append((t, m, title, priority)) or True)
+    monkeypatch.setenv("VIGIA_NTFY_TOPIC", "general")
+    monkeypatch.delenv("VIGIA_NTFY_TOPIC_ENFERMERIA", raising=False)
+
+    estado = tmp_path / "estado"
+    url = FUENTE["url"]
+    vigia.correr([FUENTE], str(estado),
+                 abrir=abridor({url: _pagina(_titulos(20), "/aviso/")}),
+                 notificar=False, ahora=1000.0)
+
+    # Mismos titulos, permalinks nuevos: el diff ve 20 items "nuevos".
+    enviados.clear()
+    r = vigia.correr([FUENTE], str(estado),
+                     abrir=abridor({url: _pagina(_titulos(20), "/v2/aviso/")}),
+                     notificar=True, ahora=2000.0)[0]
+    assert r["suprimido"] == 20
+    assert "de golpe" in r["alerta"]
+    assert any(p == "high" for _, _, _, p in enviados), "la avalancha alerta"
+    cuerpos = [m for _, m, titulo, _ in enviados if "ROTO" not in titulo]
+    assert not any("Convocatoria numero" in c for c in cuerpos), (
+        "los items de la avalancha no se notifican uno a uno")
+
+    # Tercera corrida, misma pagina: los hashes quedaron registrados y todo
+    # vuelve a la calma -- la avalancha grita UNA vez.
+    enviados.clear()
+    r3 = vigia.correr([FUENTE], str(estado),
+                      abrir=abridor({url: _pagina(_titulos(20), "/v2/aviso/")}),
+                      notificar=True, ahora=3000.0)[0]
+    assert r3["nuevos"] == [] and r3["alerta"] == ""
+    assert enviados == []
+
+
+def test_avalancha_primera_corrida_no_es_avalancha(tmp_path):
+    """Sin historia, todo-nuevo es lo esperado: la primera corrida de una
+    fuente con 300 items no puede gritar."""
+    r = vigia.correr([FUENTE], str(tmp_path / "estado"),
+                     abrir=abridor({FUENTE["url"]: _pagina(_titulos(300))}),
+                     notificar=False, ahora=1000.0)[0]
+    assert r["alerta"] == ""
+    assert len(r["nuevos"]) == 300
+
+
+def test_avalancha_fuente_chica_no_grita():
+    """Una fuente de 5 items que rota entera es churn normal, no avalancha:
+    el minimo absoluto existe para eso."""
+    previo = {"n_items": 5, "ultimo_nuevo_ts": 900.0}
+    assert vigia.regla_de_avalancha(previo, 5, 5) == ""
+
+
+def test_avalancha_es_configurable_por_fuente(tmp_path):
+    """avalancha_minimo=0 en fuentes.json desactiva la regla para esa fuente;
+    la aesthetica del umbral no esta cableada en el codigo."""
+    fuente = dict(FUENTE, avalancha_minimo=0)
+    estado = tmp_path / "estado"
+    url = fuente["url"]
+    vigia.correr([fuente], str(estado),
+                 abrir=abridor({url: _pagina(_titulos(20), "/aviso/")}),
+                 notificar=False, ahora=1000.0)
+    r = vigia.correr([fuente], str(estado),
+                     abrir=abridor({url: _pagina(_titulos(20), "/v2/")}),
+                     notificar=False, ahora=2000.0)[0]
+    assert r["alerta"] == "" and "suprimido" not in r
+    assert len(r["nuevos"]) == 20
+
+
+def test_avalancha_bajo_umbral_notifica_normal(tmp_path):
+    """4 items nuevos sobre 20 es un dia bueno, no una rotura."""
+    estado = tmp_path / "estado"
+    url = FUENTE["url"]
+    vigia.correr([FUENTE], str(estado),
+                 abrir=abridor({url: _pagina(_titulos(20), "/aviso/")}),
+                 notificar=False, ahora=1000.0)
+    pagina = _pagina(_titulos(20), "/aviso/") + _pagina(_titulos(4, "extra"),
+                                                        "/aviso/x")
+    r = vigia.correr([FUENTE], str(estado), abrir=abridor({url: pagina}),
+                     notificar=False, ahora=2000.0)[0]
+    assert len(r["nuevos"]) == 4
+    assert r["alerta"] == "" and "suprimido" not in r
+
+
+def test_avalancha_no_pisa_la_regla_de_oro():
+    """Cero tras no-cero sigue siendo la alerta de oro, nunca una avalancha."""
+    previo = {"n_items": 20, "ultimo_nuevo_ts": 900.0}
+    assert vigia.regla_de_avalancha(previo, 0, 0) == ""
+    assert "0 items" in vigia.regla_de_oro(previo, 0, 0, 2000.0)
+
+
 # --------------------------------------------------------- conditional GET
 
 def test_cabeceras_condicionales_se_envian():
