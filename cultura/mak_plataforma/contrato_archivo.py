@@ -255,6 +255,18 @@ def aplicar_curaduria(datos: dict, curaduria: dict, existe=None) -> dict:
                    conserva el generado: nunca un src que 404ea)
       regimen      por pieza; el global va en curaduria["regimen"]
 
+    Y tres campos OPCIONALES, inertes mientras no se escriban (2026-07-31):
+    la curaduria crece por campos que NO cambian nada hasta que el artista
+    los usa, porque un default nuevo seria una decision estetica ajena.
+
+      peso         numero > 0: cuanta materia tiene la pieza (el campo `peso`
+                   del contrato, ESQUEMA_ARCHIVO.md: sirve para el tamano);
+                   desplaza al peso que la fuente haya medido
+      serie        etiqueta de agrupacion (va a extra["serie"]): la mano que
+                   dice "estas van juntas" sin inventar un vinculo medido
+      nota         la nota del artista (va a extra["nota"]), valor que lee un
+                   humano: espanol correcto con tildes, nunca se degrada
+
     Se aplica AL FINAL, sobre el resultado de unir(): gana sobre cualquier
     fuente. Ids desconocidos se ignoran sin ruido -- la curaduria puede
     nombrar obras que el filtro de hoy dejo fuera.
@@ -282,6 +294,14 @@ def aplicar_curaduria(datos: dict, curaduria: dict, existe=None) -> dict:
             q["extra"]["abstraccion"] = max(0.0, min(1.0, float(c["abstraccion"])))
         if c.get("regimen"):
             q["extra"]["regimen"] = str(c["regimen"])
+        if c.get("peso") is not None:
+            peso = float(c["peso"])
+            if peso > 0:
+                q["peso"] = peso
+        if c.get("serie"):
+            q["extra"]["serie"] = str(c["serie"])
+        if c.get("nota"):
+            q["extra"]["nota"] = str(c["nota"])
         if c.get("svg") and existe(c["svg"]):
             q["medio"] = {"tipo": "imagen", "src": c["svg"]}
             q["extra"]["firmada"] = True
