@@ -186,8 +186,17 @@ def orden_por_salud(orden, stats):
 # "mitigar la degradacion de groq" y nadie lo ejecuto; esto lo ejecuta.
 # groq no se elimina: baja a ultimo recurso remoto. Si mejora, vuelve a subir
 # por el mismo criterio: medicion, no costumbre.
+# 2026-07-30: `watsonx` encabeza `razonar` por la misma regla -- 32/32 llamadas
+# exitosas medidas ese dia (ver LLM.__init__). `bulk` y `barato` NO cambian:
+# barato existe para ahorrar cupo con el modelo local, y meter ahi un proveedor
+# de credito con fecha de vencimiento seria gastarlo en resumenes y clasificacion
+# en vez de en la base cientifica. Retiro: el del credito IBM (2026-08-18).
+# Nota honesta para quien venga: `orden_rol`/`_SLOTS` HOY no tienen llamador en
+# el repo (research.py toma su cadena de `--providers`, y el resto usa `LLM()`
+# directo). Cambiar esta tabla declara la intencion; lo que de verdad rutea es el
+# `order` por defecto de LLM y el default de research.py.
 _SLOTS = {
-    "razonar": "cerebras,groq,ollama",
+    "razonar": "watsonx,cerebras,groq,ollama",
     "bulk": "cerebras,groq,ollama",
     "barato": "ollama,cerebras,groq",
 }
@@ -428,14 +437,23 @@ class LLM:
     # en salud_proveedores.json: win 0 exitos / 3 timeouts en una sola ventana.
     # Sigue en la lista blanca del filtro de abajo: se puede pedir explicito con
     # LLM(order="win") si algun dia esa maquina vuelve a servir modelos.
-    def __init__(self, order="groq,cerebras,azure,ollama"):
+    # `watsonx` ENTRO al orden por defecto y va PRIMERO (2026-07-30). Entro por
+    # donde entra todo proveedor nuevo aca: salud medida, no confianza. Lote real
+    # de 8 informes cortos con `--providers watsonx` sobre temas cientificos de
+    # reduccion de dano, corrido en la caja MAK: 8/8 informes, 32/32 llamadas LLM
+    # exitosas, 0 errores, 0 timeouts, 33.7-48.9 s por informe (media 42.1 s,
+    # incluye busqueda y fetch). Queda registrado en salud_proveedores.json como
+    # watsonx 32 successes / 0 fallos. Va primero porque el credito IBM ($200)
+    # VENCE el 2026-08-18: gastarlo en la base cientifica es el uso, y groq
+    # (40% medido el 2026-07-26) y cerebras siguen detras como respaldo real.
+    # Retiro: cuando el credito se agote o venza -- ahi baja y cerebras vuelve a
+    # encabezar --, o si su salud medida cae bajo la de cerebras.
+    def __init__(self, order="watsonx,groq,cerebras,azure,ollama"):
         load_env()
         self.stats = {}
         self.errors = []
-        # La lista blanca dice QUIENES pueden participar. `watsonx` entra aca y
-        # NO en el `order` por defecto de la firma: existe para pedirlo
-        # explicito (`LLM(order="watsonx")`) hasta tener salud medida, que es
-        # como entra cualquier proveedor nuevo a la cadena.
+        # La lista blanca dice QUIENES pueden participar; el `order` de la firma
+        # dice en que posicion arrancan y la salud medida decide el resto.
         base = [p.strip() for p in order.split(",")
                 if p.strip() in ("groq", "cerebras", "azure", "win", "ollama",
                                  "watsonx")]
@@ -478,8 +496,10 @@ class LLM:
         cuenta real el 2026-07-30: bearer en 460 ms, 24 modelos visibles, chat
         en 681 ms, 58 tokens = $0.000044.
 
-        NO entra en la cadena por defecto (`_SLOTS` y `order` quedan intactos):
-        se pide explicito con `LLM(order="watsonx")` hasta tener salud medida.
+        Salud medida el 2026-07-30 en la caja MAK con el organo completo (no un
+        smoke): 8 informes de research.py, 32/32 llamadas LLM exitosas, 0
+        errores. Desde esa medicion encabeza el orden por defecto; ver el
+        comentario de LLM.__init__ para la causa y la condicion de retiro.
         """
         base = os.environ.get("WATSONX_URL", "https://us-south.ml.cloud.ibm.com")
         r = _http_json(
