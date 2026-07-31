@@ -269,7 +269,25 @@ Measured by diffing the disks, which is the check that had never been run.
   cron line or a systemd unit already invokes are NOT renamed.
 - **IBM watsonx works from BOTH machines**, verified 4/4 before a line was wired
   (`tools/watsonx_smoke.py`). Stage 1 fits in the free tier; the $200 credit is
-  untouched. It is opt-in (`LLM(order="watsonx")`), not in the default chain.
+  untouched.
+- **watsonx is now FIRST in the default chain (2026-07-30), by measured health,
+  not by trust.** Real batch on the MAK box, 8 short `research.py` reports on
+  scientific harm-reduction topics with `--providers watsonx`: 8/8 reports,
+  32/32 LLM calls, 0 errors, 0 timeouts, 33.7-48.9 s per report (mean 42.1 s,
+  search and fetch included). Two of the eight hit the source gate's `cl_legal`
+  domain and BOTH found primary sources (bcn.cl, ispch.gob.cl x2), so no report
+  needed the SIN FUENTE PRIMARIA mark. Promoted in `LLM.__init__`, in
+  `research.py --providers` (the one that actually routes the queue: worker.py
+  never passes `--providers`) and in `_SLOTS["razonar"]`. `MODELO_CAPAZ` stays
+  `cerebras`: nobody measured llama-3-3-70b against gpt-oss-120b for synthesis,
+  and that is a judgement call, not a technical default. Retirement: when the
+  credit runs out or expires (~2026-08-18).
+- **The source gate has no scientific domain.** `fuentes.py` `DOMINIOS` covers
+  `cl_legal`, `cl_fondos` and `norma_tecnica` only, so six of those eight
+  biomedical topics got `dominio: None` and no primary-source requirement at
+  all. The reports cite scielo/revistas, but nothing checks it. A `biomedico`
+  domain (pubmed.ncbi.nlm.nih.gov, scielo, who.int, emcdda/euda, ispch) is the
+  missing piece for the RD scientific base -- not done here, one line as agreed.
 
 ## THE INVENTORIES (2026-07-30). Measured on the DISKS, not on GitHub
 
