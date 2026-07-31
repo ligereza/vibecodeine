@@ -52,6 +52,27 @@ iskvw/
 de cada obra en 768 dimensiones, qué fracción sigue siendo vecina en el plano.
 Si baja, lo que el campo afirma se debilita y hay que decirlo.
 
+## El costo por frame de la piel, medido (2026-07-31)
+
+`node tools/iskvw_piel_medir.mjs` corre las funciones REALES de la piel
+publicada en node (misma técnica que el smoke), entra por el modelo de semilla
+`#semilla=&centro=&escala=` y CUENTA el trabajo de cada frame. Los conteos son
+deterministas y los fija `tests/test_iskvw_piel_medir.py`; los milisegundos son
+de la máquina que midió y jamás se fijan. Máquina de referencia: contenedor
+Linux de 2 núcleos, node 22.
+
+| | |
+|---|---|
+| sustrato `archivo.json` (479 piezas) | **269 vínculos** indexados una vez (1076 entradas) |
+| peor escenario de la grilla | **30 segmentos por frame** (centro del campo, diafragma abierto) |
+| todos-contra-todos, la referencia | 23.871 pares (219 obras) / 114.481 (479 piezas) por frame |
+| sustrato `campo.json` (el respaldo vivo) | **0 segmentos** siempre: no publica vínculos |
+| banda densa abierta, trabajo por nodo | 217 gradientes + 434 arcos por frame, 4–6 ms en la referencia |
+| techo fijado | 1200 segmentos por frame — 40× lo medido, 20× bajo el defecto |
+
+Lo que sigue sin medirse: cuadros por segundo en un teléfono. Eso lo mide el
+usuario con el aparato en la mano; ahora tiene contra qué comparar.
+
 ## Los comandos
 
 ```bash
@@ -75,6 +96,8 @@ py tools/vendorizar_iskvw.py
 # duplicados, campos inválidos, svg firmado ausente, diacríticos mutilados
 py tools/validar_curaduria.py
 py tools/validar_curaduria.py --curaduria <descarga>/curaduria.json
+# el costo por frame de la piel, contado en node: determinista, sin red
+node tools/iskvw_piel_medir.mjs
 ```
 
 ## Qué se edita a mano y qué se genera

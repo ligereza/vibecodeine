@@ -115,6 +115,16 @@ VCD-06 (8 MB body cap, 413 on excess) and VCD-07 (every workflow `uses:` pinned
 to a commit SHA + `dependabot.yml`) are closed. Only VCD-10 remains: assigned to
 MAK, never verified running.
 
+VCD-09 got its REAL fix on 2026-07-31 (it was only mitigated before, by keeping
+the mail path off): signed airdrops. `flujo airdrop sign` writes a SHA-256
+manifest + detached HMAC-SHA256 signature (key in `FLUJO_AIRDROP_HMAC_KEY`);
+`verify` names the exact file that fails; with the key set, `apply` refuses
+unsigned/tampered payloads and the only escape is a human typing
+`--allow-unsigned`. The IMAP autoapply path now demands key + valid signature
+even when `FLUJO_IMAP_AUTOAPLICAR=1`, and never uses the override. No key
+configured = behavior byte-for-byte as before. Detail:
+`docs/AGENT_AIRDROP_PROTOCOL.md` "Airdrop firmado".
+
 ## Branches: the four lines, and one rescue (2026-07-30)
 
 `main`, `rd`, `iskvw`, `mak` -- plus `rescate/ascii-campo`, which STAYS: it
@@ -208,6 +218,20 @@ verified running; detail in `iskvw/MAPA.md` + `ESQUEMA_ARCHIVO.md`:
 works, both ends in frame, neighbours indexed once -- the every-pair-every-frame
 defect is pinned by a test. Measured: 207 to 615 segments per frame against the
 23,871 pairs an all-against-all would cost. NOT measured: fps on a phone.
+
+**The frame cost now has an instrument (2026-07-31):**
+`node tools/iskvw_piel_medir.mjs` runs the PUBLISHED skin's functions in node
+(smoke technique), enters through the real seed model, and COUNTS the work per
+frame deterministically. Reference-machine numbers (2-core Linux container,
+node 22): archivo substrate 479 pieces / 269 links indexed once, worst grid
+scenario 30 segments per frame; campo fallback 219 works, 0 segments always
+(no vinculos shipped), dense open band 217 gradients + 434 arcs per frame at
+4-6 ms. `tests/test_iskvw_piel_medir.py` pins the COUNTS (never ms) and a
+1200-segment ceiling against the 23,871-pair defect. The phone fps stays the
+user's to take -- now WITH a comparator. Finding, one line: with archivo.json
+the skin ignores the measured positions (conXY looks only at piezas[0], the
+'vola' tool piece, which has none), so the whole 479 field falls back to
+hash positions; not touched here, it is how the live site draws today.
 
 **Still the user's, and he wants to DEBATE it first:** whether the essays get
 published on iskvw.cl. The bridge is built and unused.
@@ -744,3 +768,19 @@ instruction instead of silently dropping shapes. Restriction 7 in
 TOOLKIT_INDICE.md now carries the in-repo note so nobody re-researches an
 external converter that the repo already has. Still pending from the night:
 a completed flow_img run (experimental), scanner kpps confirmation.
+## The language rule has its ratchet (2026-07-31)
+
+`tools/idioma.py` measures the language of COMMENTS AND DOCSTRINGS ONLY
+(never identifiers, never product strings) in every tracked `*.py`
+(`git ls-files`, archive + vendorized zones excluded, same convention as
+`test_higiene_docs`). Measured on the real tree: 581 files = 388 Spanish +
+96 English + 38 mixed + 59 none, so 426 files carry Spanish -- the 07-30
+"236 vs 36" note undercounted because it did not read docstrings.
+`tests/test_idioma_ratchet.py` pins that set in
+`tests/fixtures/idioma_baseline.txt`: a NEW file carrying Spanish comments
+fails the suite with the offender named; cleaning files never fails, and the
+pin is lowered with `python3 tools/idioma.py --baseline > <fixture>`.
+Renames are NOT demanded: cron/systemd consumers keep their names, per
+`docs/GLOSSARY.md`. The tool also prints a soft FYI (not enforced) of
+widespread Spanish identifiers the glossary does not map yet -- top spread:
+`nombre` (69 files), `salida` (63), `ruta` (62), `linea` (46), `datos` (45).

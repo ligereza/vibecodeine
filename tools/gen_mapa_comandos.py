@@ -40,6 +40,8 @@ REQUISITOS: dict[str, str] = {
     "hub route": "`FLUJO_RD_ROOT` apuntando al arbol de material",
     "flyer-import": "casilla de correo: `FLUJO_IMAP_HOST`, `FLUJO_IMAP_USER`, "
                     "`FLUJO_IMAP_PASSWORD`, `FLUJO_IMAP_ALLOWED_SENDERS`",
+    "airdrop sign": "`FLUJO_AIRDROP_HMAC_KEY` (clave compartida de firma)",
+    "airdrop verify": "`FLUJO_AIRDROP_HMAC_KEY` (clave compartida de firma)",
     "eventos flyer-auto": "`pip install parth-dl`; para render tambien Blender",
     "ig-redownload": "`pip install parth-dl`",
     "render run": "Blender instalado",

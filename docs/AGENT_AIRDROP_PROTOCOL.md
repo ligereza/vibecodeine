@@ -109,6 +109,29 @@ Flags utiles: `--resume` (salta validate/dry-run/apply, corre checks+checkpoint 
 
 Nota Windows/Git Bash: el runner es Python puro; no invoca `bash` internamente para apply/checkpoint (a diferencia de versiones muy antiguas de este doc que mencionaban `apply_airdrop.sh`/`checkpoint.sh`).
 
+## Airdrop firmado (cierre VCD-09)
+
+Con la variable de entorno `FLUJO_AIRDROP_HMAC_KEY` configurada, el motor exige
+un artefacto firmado; sin la variable, `apply`/`dry-run` se comportan exactamente
+igual que siempre.
+
+```bash
+py -m flujo airdrop sign     # escribe _airdrop/_airdrop_signed_manifest.json (SHA-256 por archivo) + .sig (HMAC-SHA256)
+py -m flujo airdrop verify   # verifica firma y hashes; nombra el archivo exacto que falla; sale con 1 si algo falla
+```
+
+Reglas:
+
+- Con clave configurada, `airdrop apply` (CLI, runner y correo) rechaza payloads
+  sin firma o adulterados, nombrando archivo y motivo.
+- El override `--allow-unsigned` (en `flujo airdrop apply` y en
+  `run_airdrop_checks.py`) es la aprobacion humana: lo tipea una persona que
+  reviso el contenido. Nunca lo usa una automatizacion.
+- El canal de correo (`FLUJO_IMAP_AUTOAPLICAR=1`) exige ademas clave configurada
+  y firma valida: sin eso no aplica nada, y jamas pasa `--allow-unsigned`.
+- Los dos artefactos de firma viven en la raiz de `_airdrop/` y nunca se copian
+  al repo como payload.
+
 ## Regla de fallo
 
 Si algo falla, no declarar exito. Reportar:
