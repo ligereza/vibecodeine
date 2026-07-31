@@ -62,7 +62,9 @@ router activo con auto-heal, FOH monitor). Runbook: `xio/RUNBOOK.md`,
 (consumo), `descargar.py`, `red_watch.py`, `GENESIS.md` (doctrina). Hermanos:
 `cultura/mak_codex/` (agente libre, sandbox, token), `cultura/mak_research/`
 (research multi-modelo, `research_lib.py`), `cultura/mak_lenguaje/`
-(diccionario 55k, senal tilde), `cultura/mak_curatoria/`.
+(diccionario 55k, senal tilde), `cultura/mak_curatoria/`,
+`cultura/mak_vigia/` (vigilancia de convocatorias: descarga -> normaliza ->
+hashea -> difea -> notifica; sin modelo y sin GPU).
 
 `knowledge/` -- knowledge base local: `productoras/`, `venues/`, `logos/`,
 `templates/`, `examples/`, `dossiers/` (referencia para cotizaciones/briefs).
@@ -167,6 +169,7 @@ tabla; archivo sin entrada = ratchet rojo.
 
 | archivo | estado | consumidor/evidencia | ultima senal |
 |---|---|---|---|
+| `cultura/mak_vigia/vigia.py` | VIVO | cron `MAK-VIGIA` (`vigia_guardia.sh`, cada hora, lock propio `.vigia.lock`); notifica por ntfy a `VIGIA_NTFY_TOPIC` y, para las fuentes `tipo: enfermeria`, a `VIGIA_NTFY_TOPIC_ENFERMERIA`. Es un DIFF, no un LLM: descarga -> normaliza -> sha256 -> compara contra `estado/vistos.jsonl` -> notifica solo lo nuevo; cero tokens, cero GPU, ningun modelo. Regla de oro: una fuente que pasa a parsear CERO items, o que lleva 4 dias sin nada nuevo, dispara notificacion de ERROR en prioridad alta -- el silencio no puede parecerse a "funciona". Corrida real 2026-07-30 sobre las 6 fuentes de `fuentes.json`: 430 items, segunda corrida 0 nuevos y 2 fuentes en 304. `tests/test_vigia.py` (32 tests) | 2026-07-30 |
 | `becas_calendario.py` | VIVO | RD becas, area operativa | 2026-07 |
 | `bridge_issue_render.py` | VIVO | puente issue -> render WIN | 2026-07 |
 | `compete_engine.py` | VIVO | proyecto tapiz (cultura) | 2026-07 |

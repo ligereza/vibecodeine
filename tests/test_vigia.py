@@ -1,0 +1,461 @@
+# -*- coding: utf-8 -*-
+"""Tests for cultura/mak_vigia/vigia.py -- the watch department.
+
+The department is a diff, so the tests are about the diff: a new item must be
+detected exactly once, a source that goes quiet must SCREAM instead of
+returning a tidy empty list, and the conditional-GET headers must actually
+leave the machine. No network is touched: every fetch is a fake opener.
+"""
+import importlib.util
+import json
+import sys
+import time
+from pathlib import Path
+
+import pytest
+
+RAIZ = Path(__file__).resolve().parents[1]
+VIGIA_DIR = RAIZ / "cultura" / "mak_vigia"
+
+
+def _cargar():
+    spec = importlib.util.spec_from_file_location(
+        "vigia_bajo_prueba", VIGIA_DIR / "vigia.py")
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = mod
+    spec.loader.exec_module(mod)
+    return mod
+
+
+vigia = _cargar()
+
+
+# --------------------------------------------------------------- utilidades
+
+class RespuestaFalsa:
+    def __init__(self, cuerpo=b"", headers=None, status=200):
+        self._cuerpo = cuerpo
+        self.headers = headers or {}
+        self.status = status
+
+    def read(self):
+        return self._cuerpo
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+
+def abridor(paginas, registro=None):
+    """Fake urlopen. paginas: url -> bytes | (bytes, headers) | Exception."""
+    def _abrir(req, timeout=None):
+        if registro is not None:
+            registro.append(req)
+        r = paginas[req.full_url]
+        if isinstance(r, Exception):
+            raise r
+        if isinstance(r, tuple):
+            return RespuestaFalsa(r[0], r[1])
+        return RespuestaFalsa(r)
+    return _abrir
+
+
+def _pagina(titulos, prefijo="/aviso/"):
+    filas = "".join(
+        '<li><a href="%s%d">%s</a></li>' % (prefijo, i, t)
+        for i, t in enumerate(titulos))
+    return ("<html><body><ul>%s</ul></body></html>" % filas).encode("utf-8")
+
+
+FUENTE = {"id": "demo", "nombre": "Demo", "tipo": "general",
+          "url": "https://ejemplo.cl/lista", "formato": "html"}
+
+
+# ------------------------------------------------------- diff por hash
+
+def test_hash_diff_detecta_lo_nuevo_y_solo_una_vez(tmp_path):
+    estado = tmp_path / "estado"
+    paginas = {FUENTE["url"]: _pagina(["Convocatoria de residencia en Valparaiso",
+                                       "Beca de movilidad para artistas"])}
+
+    r1 = vigia.correr([FUENTE], str(estado), abrir=abridor(paginas),
+                      notificar=False, ahora=1000.0)[0]
+    assert r1["n_items"] == 2
+    assert len(r1["nuevos"]) == 2, "la primera corrida ve todo como nuevo"
+
+    # Misma pagina, segunda corrida: nada nuevo.
+    r2 = vigia.correr([FUENTE], str(estado), abrir=abridor(paginas),
+                      notificar=False, ahora=2000.0)[0]
+    assert r2["n_items"] == 2
+    assert r2["nuevos"] == [], "un item ya visto no se vuelve a notificar"
+
+    # Aparece uno mas: solo ese es nuevo.
+    paginas[FUENTE["url"]] = _pagina([
+        "Convocatoria de residencia en Valparaiso",
+        "Beca de movilidad para artistas",
+        "Residencia de invierno en Chiloe"])
+    r3 = vigia.correr([FUENTE], str(estado), abrir=abridor(paginas),
+                      notificar=False, ahora=3000.0)[0]
+    assert len(r3["nuevos"]) == 1
+    assert r3["nuevos"][0]["titulo"] == "Residencia de invierno en Chiloe"
+
+
+def test_hash_ignora_mayusculas_y_tildes_del_mismo_aviso(tmp_path):
+    """Un portal que re-acentua su propio titulo no genera un aviso falso."""
+    estado = tmp_path / "estado"
+    url = FUENTE["url"]
+    vigia.correr([FUENTE], str(estado),
+                 abrir=abridor({url: _pagina(["Concurso de Composicion Musical"])}),
+                 notificar=False, ahora=1000.0)
+    r = vigia.correr([FUENTE], str(estado),
+                     abrir=abridor({url: _pagina(["CONCURSO DE COMPOSICIÓN MUSICAL"])}),
+                     notificar=False, ahora=2000.0)[0]
+    assert r["nuevos"] == []
+
+
+def test_el_titulo_conserva_las_tildes_aunque_el_hash_las_pliegue(tmp_path):
+    """El hash es clave de maquina y se pliega a ASCII; el titulo que lee una
+    persona conserva el espanol correcto (el corte maquina/humano)."""
+    estado = tmp_path / "estado"
+    pagina = _pagina(["Técnico en Enfermería para el Hospital de Ñuñoa"])
+    r = vigia.correr([FUENTE], str(estado), abrir=abridor({FUENTE["url"]: pagina}),
+                     notificar=False, ahora=1000.0)[0]
+    assert r["nuevos"][0]["titulo"] == "Técnico en Enfermería para el Hospital de Ñuñoa"
+    linea = (estado / vigia.VISTOS).read_text(encoding="utf-8").strip()
+    assert json.loads(linea)["titulo"].startswith("Técnico en Enfermería")
+
+
+# ----------------------------------------------------------- REGLA DE ORO
+
+def test_regla_de_oro_cero_despues_de_no_cero_es_ERROR(tmp_path):
+    """La linea que decide si el departamento sirve: una pagina que sigue
+    respondiendo 200 pero ahora parsea CERO items no puede devolver silencio."""
+    estado = tmp_path / "estado"
+    url = FUENTE["url"]
+    r1 = vigia.correr([FUENTE], str(estado),
+                      abrir=abridor({url: _pagina(["Residencia de verano en Antofagasta",
+                                                   "Beca de creacion literaria"])}),
+                      notificar=False, ahora=1000.0)[0]
+    assert r1["n_items"] == 2 and r1["alerta"] == ""
+
+    # El sitio cambia su HTML: responde 200 y no parsea nada.
+    r2 = vigia.correr([FUENTE], str(estado),
+                      abrir=abridor({url: b"<html><body><div>rediseno</div></body></html>"}),
+                      notificar=False, ahora=2000.0)[0]
+    assert r2["n_items"] == 0
+    assert r2["alerta"], "cero tras no-cero DEBE gritar, no callar"
+    assert "0 items" in r2["alerta"]
+
+
+def test_regla_de_oro_n_dias_sin_novedades_es_ERROR():
+    """La otra forma de morir callado: la fuente responde y parsea bien, pero
+    lleva N dias sin un solo item nuevo."""
+    dia = 86400.0
+    previo = {"n_items": 5, "ultimo_nuevo_ts": 0.0}
+
+    # Dentro del umbral: silencio legitimo.
+    assert vigia.regla_de_oro(previo, 5, 0, 3 * dia, dias=4) == ""
+    # Cruzado el umbral: error.
+    alerta = vigia.regla_de_oro(previo, 5, 0, 4 * dia, dias=4)
+    assert alerta and "nuevo" in alerta
+
+    # Con algo nuevo, no hay alerta por mas dias que hayan pasado.
+    assert vigia.regla_de_oro(previo, 5, 1, 40 * dia, dias=4) == ""
+
+
+def test_regla_de_oro_no_castiga_un_304():
+    """304 es el servidor diciendo 'no cambio': no es una fuente rota."""
+    fuente = dict(FUENTE)
+    import urllib.error
+    err = urllib.error.HTTPError(fuente["url"], 304, "Not Modified", {}, None)
+    previo = {"n_items": 7, "etag": 'W/"abc"', "ultimo_nuevo_ts": 0.0}
+    r = vigia.revisar_fuente(fuente, previo, set(), 90 * 86400.0,
+                             abrir=abridor({fuente["url"]: err}))
+    assert r["codigo"] == 304
+    assert r["alerta"] == "", "un 304 no puede disparar la regla de oro"
+    assert r["n_items"] == 7, "conserva el conteo previo"
+
+
+def test_primera_corrida_no_dispara_la_regla_de_oro(tmp_path):
+    """Sin estado previo, cero items es 'todavia no sabemos', no una rotura."""
+    r = vigia.correr([FUENTE], str(tmp_path / "estado"),
+                     abrir=abridor({FUENTE["url"]: b"<html></html>"}),
+                     notificar=False, ahora=1000.0)[0]
+    assert r["n_items"] == 0 and r["alerta"] == ""
+
+
+# --------------------------------------------------------- conditional GET
+
+def test_cabeceras_condicionales_se_envian():
+    previo = {"etag": 'W/"v3"', "last_modified": "Mon, 28 Jul 2026 10:00:00 GMT"}
+    h = vigia.cabeceras_condicionales(previo)
+    assert h["If-None-Match"] == 'W/"v3"'
+    assert h["If-Modified-Since"] == "Mon, 28 Jul 2026 10:00:00 GMT"
+    assert h["User-Agent"]
+
+
+def test_sin_estado_previo_no_hay_cabeceras_condicionales():
+    h = vigia.cabeceras_condicionales({})
+    assert "If-None-Match" not in h and "If-Modified-Since" not in h
+
+
+def test_validadores_se_guardan_y_se_reenvian(tmp_path):
+    """Ida y vuelta real: la respuesta trae ETag/Last-Modified, quedan en el
+    estado, y la corrida siguiente los manda de vuelta."""
+    estado = tmp_path / "estado"
+    url = FUENTE["url"]
+    headers = {"ETag": 'W/"v1"',
+               "Last-Modified": "Mon, 28 Jul 2026 10:00:00 GMT"}
+    vigia.correr([FUENTE], str(estado),
+                 abrir=abridor({url: (_pagina(["Residencia de otono en Chillan"]),
+                                      headers)}),
+                 notificar=False, ahora=1000.0)
+
+    guardado = json.loads((estado / vigia.ULTIMO).read_text(encoding="utf-8"))
+    assert guardado["demo"]["etag"] == 'W/"v1"'
+    assert guardado["demo"]["last_modified"] == "Mon, 28 Jul 2026 10:00:00 GMT"
+
+    peticiones = []
+    vigia.correr([FUENTE], str(estado),
+                 abrir=abridor({url: (b"<html></html>", {})}, peticiones),
+                 notificar=False, ahora=2000.0)
+    enviadas = peticiones[0].headers
+    # urllib normaliza los nombres de cabecera a Capitalizado.
+    assert enviadas.get("If-none-match") == 'W/"v1"'
+    assert enviadas.get("If-modified-since") == "Mon, 28 Jul 2026 10:00:00 GMT"
+
+
+# ----------------------------------------------------------------- estado
+
+def test_el_estado_vive_bajo_estado_y_esta_gitignorado(tmp_path):
+    estado = tmp_path / "estado"
+    vigia.correr([FUENTE], str(estado),
+                 abrir=abridor({FUENTE["url"]: _pagina(["Beca de residencia en Punta Arenas"])}),
+                 notificar=False, ahora=1000.0)
+    assert (estado / vigia.VISTOS).exists()
+    assert (estado / vigia.ULTIMO).exists()
+
+    gitignore = (RAIZ / ".gitignore").read_text(encoding="utf-8")
+    assert "cultura/mak_vigia/estado/" in gitignore, (
+        "el estado del vigia es local de la caja y no entra al repo")
+    assert vigia.ESTADO_DIR.endswith(("estado", "estado/"))
+
+
+def test_una_fuente_caida_no_mata_la_corrida(tmp_path):
+    """Un 403 en una fuente no puede llevarse las otras cinco por delante."""
+    import urllib.error
+    rota = dict(FUENTE, id="rota", url="https://caida.cl/x")
+    sana = dict(FUENTE, id="sana", url="https://viva.cl/x")
+    paginas = {
+        rota["url"]: urllib.error.HTTPError(rota["url"], 403, "Forbidden", {}, None),
+        sana["url"]: _pagina(["Convocatoria abierta de arte sonoro"]),
+    }
+    res = vigia.correr([rota, sana], str(tmp_path / "estado"),
+                       abrir=abridor(paginas), notificar=False, ahora=1000.0)
+    por_id = {r["id"]: r for r in res}
+    assert "403" in por_id["rota"]["error"]
+    assert len(por_id["sana"]["nuevos"]) == 1
+
+
+# ------------------------------------------------------------- extraccion
+
+def test_decodifica_aunque_el_servidor_mienta_sobre_el_charset():
+    """Caso real medido en empleospublicos.cl y fondos.gob.cl: declaran utf-8
+    y mandan cp1252. Decodificar 'como dijeron' destruiria las tildes."""
+    crudo = "Técnico en Enfermería".encode("cp1252")
+    texto = vigia.decodificar(crudo, {"Content-Type": "application/json; charset=utf-8"})
+    assert texto == "Técnico en Enfermería"
+    assert "�" not in texto
+
+
+def test_utf8_valido_se_respeta():
+    crudo = "Composición Musical".encode("utf-8")
+    assert vigia.decodificar(crudo, {"Content-Type": "text/html"}) == "Composición Musical"
+
+
+def test_un_ancla_sin_cerrar_no_se_come_el_resto_de_la_pagina():
+    """El defecto que hacia parsear 0 convocatorias en resartis.org: sin cierre
+    inferido, un <a> abierto se tragaba todos los enlaces siguientes."""
+    html = ('<div><a href="/roto">enlace sin cerrar de la cabecera'
+            '<h2><a href="/aviso/1">Residencia internacional en Bruselas</a></h2>'
+            '<h2><a href="/aviso/2">Beca de movilidad para creadores</a></h2></div>')
+    items = vigia.extraer_html(html, "https://ejemplo.cl/lista")
+    titulos = [i["titulo"] for i in items]
+    assert "Residencia internacional en Bruselas" in titulos
+    assert "Beca de movilidad para creadores" in titulos
+
+
+def test_filtro_por_url_y_por_palabra():
+    html = ('<a href="/open-call/uno">Residencia de invierno en Oslo</a>'
+            '<a href="/quienes-somos">Conoce a nuestro equipo</a>'
+            '<a href="/open-call/dos">Beca de fotografia documental</a>')
+    items = vigia.extraer_html(html, "https://ejemplo.org/")
+    assert len(vigia.filtrar(items, None, ["/open-call/"])) == 2
+    assert len(vigia.filtrar(items, ["residencia"], ["/open-call/"])) == 1
+    assert len(vigia.filtrar(items, None, None)) == 3
+
+
+def test_extraccion_json_de_un_listado_real():
+    """Forma exacta del endpoint de empleospublicos."""
+    fuente = {"id": "ep", "formato": "json",
+              "json_titulo": ["Cargo", "Institución / Entidad"],
+              "json_url": ["url"]}
+    crudo = json.dumps([
+        {"Cargo": "Técnico en Enfermería",
+         "Institución / Entidad": "Hospital de San Carlos",
+         "url": "https://www.empleospublicos.cl/pub/x.aspx?i=1"},
+        {"Cargo": "Enfermero(a) de Urgencia",
+         "Institución / Entidad": "Servicio de Salud Ñuble",
+         "url": "https://www.empleospublicos.cl/pub/x.aspx?i=2"},
+    ], ensure_ascii=False)
+    items = vigia.extraer(crudo, fuente, "https://www.empleospublicos.cl/")
+    assert len(items) == 2
+    assert items[0]["titulo"] == "Técnico en Enfermería - Hospital de San Carlos"
+    assert items[1]["url"].endswith("i=2")
+
+
+def test_no_hay_modelo_en_el_vigia():
+    """v1 es un diff. Si algun dia aparece un LLM aca, que sea una decision
+    explicita y no un deslizamiento: este test es el guardarrail."""
+    fuente = (VIGIA_DIR / "vigia.py").read_text(encoding="utf-8").lower()
+    for palabra in ("import torch", "openai", "ollama", "anthropic",
+                    "llm(", "gpt-", "transformers"):
+        assert palabra not in fuente, "el vigia v1 no usa modelos: %s" % palabra
+
+
+# ------------------------------------------------------------- fuentes.json
+
+def test_fuentes_json_es_valido_y_completo():
+    fuentes = vigia.cargar_fuentes(str(VIGIA_DIR / "fuentes.json"))
+    assert fuentes, "la lista de vigilancia no puede estar vacia"
+    ids = [f["id"] for f in fuentes]
+    assert len(ids) == len(set(ids)), "ids duplicados: el hash se mezclaria"
+    for f in fuentes:
+        assert f["url"].startswith("https://"), f["id"]
+        assert f.get("nombre") and f.get("tipo"), f["id"]
+        assert f.get("formato", "html") in ("html", "json"), f["id"]
+        assert f["id"].isascii(), "los ids son claves de maquina"
+
+
+def test_hay_una_fuente_de_enfermeria_para_el_topico_aparte():
+    fuentes = vigia.cargar_fuentes(str(VIGIA_DIR / "fuentes.json"))
+    assert any(f["tipo"] == "enfermeria" for f in fuentes)
+    assert any(f["tipo"] != "enfermeria" for f in fuentes)
+
+
+# ------------------------------------------------------------- notificacion
+
+def test_notificacion_por_lote_y_por_topico_separado(monkeypatch, tmp_path):
+    """Dos telefonos distintos, y como maximo un mensaje por lote y topico:
+    notificar item por item convertiria el vigia en spam en un dia."""
+    enviados = []
+    monkeypatch.setattr(vigia, "ntfy_publish",
+                        lambda t, m, title="", priority="default", errors=None:
+                        enviados.append((t, m, title, priority)) or True)
+    monkeypatch.setenv("VIGIA_NTFY_TOPIC", "general")
+    monkeypatch.setenv("VIGIA_NTFY_TOPIC_ENFERMERIA", "salud")
+
+    enf = dict(FUENTE, id="enf", tipo="enfermeria", url="https://salud.cl/x")
+    res = dict(FUENTE, id="res", tipo="residencias", url="https://arte.cl/x")
+    paginas = {enf["url"]: _pagina(["Enfermera de urgencia en Rancagua",
+                                    "Tecnico en enfermeria en Chillan"]),
+               res["url"]: _pagina(["Residencia de arte sonoro en Berlin"])}
+    vigia.correr([enf, res], str(tmp_path / "estado"),
+                 abrir=abridor(paginas), notificar=True, ahora=1000.0)
+
+    por_topico = {t: m for t, m, _, _ in enviados}
+    assert set(por_topico) == {"salud", "general"}
+    assert len(enviados) == 2, "un mensaje por topico, no uno por aviso"
+    assert "Enfermera de urgencia en Rancagua" in por_topico["salud"]
+    assert "Residencia de arte sonoro" in por_topico["general"]
+    assert "Enfermera" not in por_topico["general"], "los topicos no se cruzan"
+
+
+def test_la_alerta_de_la_regla_de_oro_va_en_prioridad_alta(monkeypatch, tmp_path):
+    enviados = []
+    monkeypatch.setattr(vigia, "ntfy_publish",
+                        lambda t, m, title="", priority="default", errors=None:
+                        enviados.append((t, m, title, priority)) or True)
+    monkeypatch.setenv("VIGIA_NTFY_TOPIC", "general")
+    monkeypatch.delenv("VIGIA_NTFY_TOPIC_ENFERMERIA", raising=False)
+
+    estado = tmp_path / "estado"
+    url = FUENTE["url"]
+    vigia.correr([FUENTE], str(estado),
+                 abrir=abridor({url: _pagina(["Residencia de invierno en Lima"])}),
+                 notificar=True, ahora=1000.0)
+    enviados.clear()
+    vigia.correr([FUENTE], str(estado), abrir=abridor({url: b"<html></html>"}),
+                 notificar=True, ahora=2000.0)
+
+    assert enviados, "la fuente rota tiene que notificar"
+    assert any(p == "high" for _, _, _, p in enviados)
+    assert any("ROTO" in titulo for _, _, titulo, _ in enviados)
+
+
+def test_sin_topico_configurado_no_revienta(monkeypatch, tmp_path):
+    monkeypatch.delenv("VIGIA_NTFY_TOPIC", raising=False)
+    monkeypatch.delenv("VIGIA_NTFY_TOPIC_ENFERMERIA", raising=False)
+    vigia.correr([FUENTE], str(tmp_path / "estado"),
+                 abrir=abridor({FUENTE["url"]: _pagina(["Beca de residencia en Quito"])}),
+                 notificar=True, ahora=1000.0)
+
+
+def test_reutiliza_ntfy_publish_de_research_lib():
+    """No una segunda implementacion: la del organismo."""
+    assert vigia.ntfy_publish is not None, "research_lib no se pudo importar"
+    import research_lib
+    assert vigia.ntfy_publish is research_lib.ntfy_publish
+
+
+# ------------------------------------------------------------------ guardia
+
+def test_la_guardia_usa_su_propio_lock():
+    """Nunca el lock compartido de curatoria/micelio: el vigia no toca la GPU
+    y quedaria esperando horas detras de una percepcion."""
+    sh = (VIGIA_DIR / "vigia_guardia.sh").read_text(encoding="utf-8")
+    # Solo lo ejecutable: los comentarios SI nombran el lock compartido, porque
+    # explican por que este no lo usa.
+    codigo = [ln for ln in sh.splitlines() if not ln.lstrip().startswith("#")]
+    assert any("flock -n 9" in ln for ln in codigo)
+    assert any(".vigia.lock" in ln and "exec 9>" in ln for ln in codigo)
+    assert not any("guardia.lock" in ln for ln in codigo)
+
+
+def test_la_guardia_esta_en_el_crontab():
+    cron = (RAIZ / "cultura" / "mak_plataforma" / "crontab.mak").read_text(
+        encoding="utf-8")
+    lineas = [ln for ln in cron.splitlines() if "MAK-VIGIA" in ln]
+    assert len(lineas) == 1, "una sola linea de cron para el vigia"
+    assert "vigia_guardia.sh" in lineas[0]
+    assert lineas[0].startswith("45 * * * *"), "cada hora, no cada minuto"
+
+
+@pytest.mark.parametrize("nombre", ["vigia.py", "fuentes.json",
+                                    "vigia_guardia.sh"])
+def test_el_departamento_esta_completo(nombre):
+    assert (VIGIA_DIR / nombre).exists()
+
+
+def test_solo_stdlib():
+    """Estilo mak_lenguaje: sin dependencias externas. Lo unico de fuera es
+    research_lib, que tambien es stdlib y vive en el mismo repo."""
+    fuente = (VIGIA_DIR / "vigia.py").read_text(encoding="utf-8")
+    externas = {"requests", "bs4", "beautifulsoup", "lxml", "feedparser",
+                "httpx", "aiohttp", "selenium", "playwright", "numpy"}
+    for linea in fuente.splitlines():
+        ls = linea.strip()
+        if ls.startswith(("import ", "from ")):
+            modulo = ls.split()[1].split(".")[0].lower()
+            assert modulo not in externas, ls
+
+
+def test_el_tiempo_no_se_congela(tmp_path):
+    """time.time() por defecto: el parametro 'ahora' es solo para los tests."""
+    antes = time.time()
+    res = vigia.correr([FUENTE], str(tmp_path / "estado"),
+                       abrir=abridor({FUENTE["url"]: _pagina(["Convocatoria de video experimental"])}),
+                       notificar=False)
+    assert res[0]["nuevos"][0]["ts"] >= int(antes)
