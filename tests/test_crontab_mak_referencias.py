@@ -26,6 +26,7 @@ ESPEJO = {
     "codex": "cultura/mak_codex",
     "curatoria": "cultura/mak_curatoria",
     "lenguaje": "cultura/mak_lenguaje",
+    "vigia": "cultura/mak_vigia",
 }
 
 # Box-local by design: state, logs, or infrastructure the repo does not carry.
