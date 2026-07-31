@@ -763,7 +763,17 @@ function dibujar(){
 
   // vinculos: solo con el campo abierto, y solo entre lo que comparte etiqueta.
   // Con el diafragma cerrado estorban; con el abierto SON la imagen.
-  if (d.apertura > 0.3 && E.forma < 0.3){
+  // Y solo cuando NO hay vinculos medidos. Esta capa infiere una relacion de
+  // una etiqueta compartida, que es justo lo que el sustrato ya no obliga a
+  // adivinar: `archivo.json` trae 269 vinculos MEDIDOS y los dibuja la capa de
+  // abajo, por peso. Compartir una etiqueta no es un vinculo -- afirmarlo es
+  // el mismo defecto que un elemento reclamando un dato que no codifica.
+  // Ademas no escalaba: es todos-contra-todos por cuadro. Medido el
+  // 2026-07-31, con el campo por fin en su tamano real (5.644 px y no 220.000):
+  // 35.902 segmentos y 31,7 ms por cuadro contra 2,8 ms sin ella, con un techo
+  // declarado de 1.200. Dibujaba CERO mientras la fuente era campo.json, cuyas
+  // piezas no traen `tags`, asi que esto no quita nada que se haya visto.
+  if (d.apertura > 0.3 && E.forma < 0.3 && !VINCULOS.length){
     ctx.lineWidth = 1;
     for (let i=0;i<NODOS.length;i++){
       const a1 = NODOS[i]; if (Math.abs(a1.y-E.pos) > d.alcance) continue;

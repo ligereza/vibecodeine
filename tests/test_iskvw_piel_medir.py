@@ -42,14 +42,22 @@ GENERADOR = RAIZ / "tools" / "gen_archivo_iskvw.py"
 PIN_ARCHIVO = {
     "nodos": 479,
     "vinculos_indexados": 269,
+    # Re-pinned 2026-07-31. The old numbers (0/6/30/0/9/14/14) were taken on a
+    # field that was NOT the real one: the skin decided from `obras[0]` whether
+    # the archive carried a projection, the first piece has none, and the 479
+    # nodes were spread by hash over ~220.000 px instead of the measured 5.644.
+    # Almost nothing was ever in frame, so almost no link was ever drawn and
+    # these counts measured a defect, not a cost. With the positions honoured
+    # the same grid draws 6..107, which is the measured-links layer doing its
+    # job: 269 links, both ends in frame, faint by weight.
     "segmentos": {          # per scenario: link segments actually stroked
-        "entrada cerrada": 0,
-        "entrada abierta": 6,
-        "medio abierto": 30,
-        "denso cerrado": 0,
-        "denso medio": 9,
-        "denso abierto": 14,
-        "denso escalado": 14,
+        "entrada cerrada": 6,
+        "entrada abierta": 85,
+        "medio abierto": 107,
+        "denso cerrado": 4,
+        "denso medio": 68,
+        "denso abierto": 99,
+        "denso escalado": 99,
     },
 }
 PIN_CAMPO = {
