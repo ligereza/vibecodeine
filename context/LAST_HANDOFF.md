@@ -612,3 +612,30 @@ Deploy state at close: iskvw.cl serves the #411 build (41 pieces, essay icons
 reachable). The 479-piece field ships when the laser-tool PR merges: it
 carries the workflow fix (mirror iskvw-internal piece dirs at their repo
 paths) for the deploy that the new coherence gate correctly blocked.
+
+## Laser line, second pass (2026-07-31, Fable worktree): route B closes in-repo
+
+The toolkit's own restrictions were the spec: QuickShow imports ONLY
+.ILD/.LDA/... never SVG (restriction 5), and no ILDA package exists on PyPI
+nor as a vpype plugin (restriction 7) -- until now the SVG->.ild step needed
+Modulaser (subscription) or msvg2ild (monochrome, AGPL). `src/flujo/laser.py`
+now carries, pure Python and vpype-free:
+
+- `flujo laser ild pieza.svg`: ILDA format 5 (2D true color, NEVER palette --
+  the toolkit's golden rule) with blanked dwell points per stroke, byte
+  deterministic, and the CLI re-reads every file it writes before reporting
+  (`leer_ild` is the verification half). Smoke-run measured: 3-stroke SVG ->
+  320-byte .ild, 32 points (24 blanked), format 5, re-read matches.
+- `flujo laser medir pieza.svg`: vertices, subpaths (<8 rule), drawn length
+  and PEN-UP TRAVEL in numbers. `--medir-viaje` on hatched/flow measures the
+  blanked travel before AND after linemerge/linesort (one extra vpype pass;
+  test fixture: 198.0 ud -> 98.0 ud), so the sort benefit is a number.
+- `flujo laser lote --ild` drops a QuickShow-importable .ild next to each SVG;
+  manifest rows gain ild/puntos_ild/trazos/viaje_apagado (additive, contract
+  join untouched). Defaults unchanged: SVG-only, same vpype pipeline args.
+
+The geometry layer refuses curves/rects/text with the vpype flattening
+instruction instead of silently dropping shapes. Restriction 7 in
+TOOLKIT_INDICE.md now carries the in-repo note so nobody re-researches an
+external converter that the repo already has. Still pending from the night:
+a completed flow_img run (experimental), scanner kpps confirmation.
