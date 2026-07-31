@@ -156,7 +156,7 @@ program says to the operator who runs it.
 
 <!-- COMANDOS:INICIO -- generado por tools/gen_mapa_comandos.py, no editar a mano -->
 
-Medido sobre el CLI real: **83 comandos** (23 sueltos + 60 dentro de 15 grupos).
+Medido sobre el CLI real: **85 comandos** (23 sueltos + 62 dentro de 15 grupos).
 
 ### Comandos sueltos
 
@@ -266,6 +266,8 @@ Medido sobre el CLI real: **83 comandos** (23 sueltos + 60 dentro de 15 grupos).
 | `py -m flujo laser hatched` | Zonas oscuras a rayado: un logo solido deja de llegar hueco al laser. | nada |
 | `py -m flujo laser flow` | La imagen se vuelve trazos largos de campo de flujo, casi sin saltos. | nada |
 | `py -m flujo laser lote` | Deriva una pieza laser por imagen y escribe el manifiesto del archivo. | nada |
+| `py -m flujo laser medir` | Los numeros reales del frame: puntos, trazos, dibujo y viaje apagado. | nada |
+| `py -m flujo laser ild` | SVG a ILDA Type 5 (RGB): el formato que QuickShow SI importa. | nada |
 
 ### Grupo `privacy` -- Privacidad para textos antes de IA externa.
 
