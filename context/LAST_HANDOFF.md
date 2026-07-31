@@ -199,6 +199,41 @@ defect is pinned by a test. Measured: 207 to 615 segments per frame against the
 **Still the user's, and he wants to DEBATE it first:** whether the essays get
 published on iskvw.cl. The bridge is built and unused.
 
+## The works deform the field: the effects patch (2026-07-30, PR pending)
+
+The artist's idea, and it is doublecup's: a work is not EXHIBITED in the field,
+it DEFORMS it -- with what the work itself measures. `iskvw/datos/tablero.json`
+is a modular-synth patch bay: each row wires a SIGNAL of the piece (tilde marks,
+vector subtrazos, how much of what was perceived carries hue, the break tag, its
+mass) to an EFFECT it exerts on its neighbours -- `pulso` (their glyph time
+dilates and contracts), `curvatura` (they turn around the work), `sangrado`
+(its colour bleeds onto them), `desgarro` (glyphs tear by rows) and `gravedad`
+(the reading leans on a heavy piece when passing). No datum, no effect: the
+coefficient is zero. An effect is an assertion, and no piece asserts what it
+does not have.
+
+**The master flag `mejoras.patch_efectos` SHIPS OFF.** Turning the portfolio's
+rendering on is the artist's call, not a side effect of merging a branch.
+
+What makes "off changes nothing" a number instead of a claim: the smoke tool
+boots the skin three times -- no board, the shipped board, the flag on -- and
+demands the first two draw mark for mark the same (7.647 marks identical) while
+the third deforms measurably. Measured in headless chromium too: 7.824 marks
+identical with the shipped board; with the flag on, 4.080 of them displaced and
+1.248 colour changes. One neighbour, named: (609.32, 361.41) -> (585.62, 426.69)
+and `rgba(239,231,231)` -> `rgba(239,238,231)`, pulled toward the emitter's hue.
+
+**Cost:** the first version did sin/cos INSIDE the node loop -- 4,5 ms per frame
+at 479 nodes (+14%). The rotation is now resolved once per frame per emitter and
+the node only walks a fraction of it; the difference against OFF is then within
+noise (+-3% over two independent runs, at 219 and at 479 nodes), 58-60 fps at
+479. At most THREE works emit per frame, chosen in one scalar pass: no pair of
+nodes is ever visited, which is the defect this field was built to avoid.
+
+Found while editing that loop and fixed in the same commit: `abstr` was a free
+variable in the glyph branch, only evaluated under the `industrial` regime -- a
+ReferenceError waiting for the artist to switch regimes.
+
 ## The repo is not the truth: the two machines are (2026-07-30)
 
 Measured by diffing the disks, which is the check that had never been run.
