@@ -52,6 +52,19 @@ try:
 except ImportError:  # pragma: no cover - the mirror is always present in repo
     ntfy_publish = None
 
+# Whoever moves state signs it. On 2026-07-30, 217 reports were moved into an
+# archive/ and NOBODY could attribute it -- the expected outcome of loops,
+# crons and SSH sessions sharing a filesystem without a log. Same dual path as
+# research_lib: the box runs /home/mak/plataforma, CI runs the repo mirror.
+for _ruta in ("/home/mak/plataforma",
+              os.path.join(os.path.dirname(BASE), "mak_plataforma")):
+    if os.path.isdir(_ruta) and _ruta not in sys.path:
+        sys.path.append(_ruta)
+try:
+    from mutaciones import registrar as registrar_mutacion
+except ImportError:  # pragma: no cover - the mirror is always present in repo
+    registrar_mutacion = None
+
 UA = ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/124.0 Safari/537.36")
 
@@ -64,6 +77,12 @@ DIAS_SIN_NUEVOS = 4
 # disables the rule for that source.
 AVALANCHA_MINIMO = 10
 AVALANCHA_FRACCION = 0.5
+# Retention of the vigia's own memory: vistos.jsonl is append-only and would
+# grow forever. Over MAX_VISTOS records, entries older than DIAS_COMPACTAR
+# days whose hash is no longer on any watched page MOVE to estado/archive/
+# (the repo's retention policy: keep N, archive, never delete).
+MAX_VISTOS = 5000
+DIAS_COMPACTAR = 90
 TIMEOUT = 30
 MIN_CHARS_TITULO = 12
 MIN_PALABRAS_TITULO = 3
@@ -348,6 +367,98 @@ def guardar_ultimo(estado_dir, datos):
     os.replace(tmp, _p(estado_dir, ULTIMO))
 
 
+def hashes_vigentes(ultimo):
+    """Union of every source's last full parse: the hashes the diff still
+    NEEDS. Anything outside this set and older than the cutoff is memory of
+    listings that already left the pages."""
+    v = set()
+    for est in (ultimo or {}).values():
+        if isinstance(est, dict):
+            v.update(h for h in est.get("hashes") or []
+                     if isinstance(h, str))
+    return v
+
+
+def compactar_vistos(estado_dir, ahora=None, ultimo=None,
+                     dias=DIAS_COMPACTAR, max_registros=MAX_VISTOS):
+    """Retention of the vigia's own memory: keep what the diff still needs,
+    MOVE the rest to estado/archive/, never delete -- the same policy
+    retencion.py decided for the research reports (keep N, archive/, no rm).
+
+    A record is archived only when it is older than `dias` AND its hash is no
+    longer on any watched page, so an archived hash cannot resurface by
+    itself. If a site re-lists an archived item months later, that re-listing
+    notifies again -- accepted on purpose: a call that reopens IS news.
+
+    Order of writes is crash-safe by construction: the archive copy lands
+    first, the trimmed vistos.jsonl replaces the old one after (os.replace,
+    atomic). A crash in between leaves a duplicate, never a loss.
+
+    Whoever moves state signs it (mutaciones.registrar): on 2026-07-30, 217
+    files moved into an archive/ and nobody could say who did it. The action
+    was right; the silence was not.
+
+    Returns a summary dict; {"archivados": 0} means nothing moved."""
+    ahora = time.time() if ahora is None else ahora
+    ruta = _p(estado_dir, VISTOS)
+    try:
+        with open(ruta, encoding="utf-8") as f:
+            lineas = [ln.rstrip("\n") for ln in f if ln.strip()]
+    except OSError:
+        return {"total": 0, "archivados": 0, "quedan": 0, "archivo": ""}
+    resumen = {"total": len(lineas), "archivados": 0,
+               "quedan": len(lineas), "archivo": ""}
+    if len(lineas) <= max_registros:
+        return resumen
+
+    ultimo = cargar_ultimo(estado_dir) if ultimo is None else ultimo
+    vigentes = hashes_vigentes(ultimo)
+    corte = ahora - dias * 86400.0
+    mantener, archivar = [], []
+    for linea in lineas:
+        try:
+            reg = json.loads(linea)
+        except ValueError:
+            # A malformed line is somebody's data we cannot date: it stays.
+            mantener.append(linea)
+            continue
+        ts = reg.get("ts")
+        es_viejo = isinstance(ts, (int, float)) and float(ts) < corte
+        if es_viejo and reg.get("h") not in vigentes:
+            archivar.append(linea)
+        else:
+            mantener.append(linea)
+    if not archivar:
+        return resumen
+
+    arch_dir = os.path.join(estado_dir, "archive")
+    os.makedirs(arch_dir, exist_ok=True)
+    destino = os.path.join(
+        arch_dir, "vistos_%s.jsonl" % time.strftime("%Y%m%d",
+                                                    time.gmtime(ahora)))
+    with open(destino, "a", encoding="utf-8") as f:
+        for linea in archivar:
+            f.write(linea + "\n")
+    tmp = ruta + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        for linea in mantener:
+            f.write(linea + "\n")
+    os.replace(tmp, ruta)
+
+    if registrar_mutacion is not None:
+        try:
+            registrar_mutacion(
+                "vigia_compactar",
+                "%d registros -> %s (quedan %d, dias=%d)"
+                % (len(archivar), destino, len(mantener), dias),
+                origen=__file__)
+        except Exception:  # noqa: BLE001 - signing must never break the move
+            pass
+    resumen.update(archivados=len(archivar), quedan=len(mantener),
+                   archivo=destino)
+    return resumen
+
+
 # ------------------------------------------------------------ regla de oro
 
 def regla_de_oro(previo, n_items, n_nuevos, ahora, dias=DIAS_SIN_NUEVOS):
@@ -467,6 +578,13 @@ def revisar_fuente(fuente, previo, vistos, ahora, abrir=None, dias=DIAS_SIN_NUEV
         nuevos.append({"h": h, "fuente": fid, "titulo": it["titulo"],
                        "url": it.get("url", ""), "ts": int(ahora)})
     res["nuevos"] = nuevos
+    if items:
+        # The full current parse, hashed. This is what compaction consults so
+        # a hash still visible on the page is NEVER archived (it would
+        # resurface as "new"). On a zero parse the previous set is kept: the
+        # golden rule already screams there, and archiving the page's real
+        # hashes during a breakage would double-notify after the fix.
+        nuevo_estado["hashes"] = [hash_item(fid, it) for it in items]
     oro = regla_de_oro(previo, len(items), len(nuevos), ahora, dias)
     avalancha = "" if oro else regla_de_avalancha(
         previo, len(items), len(nuevos),
@@ -519,7 +637,7 @@ def _mensaje_alerta(resultados):
 
 
 def correr(fuentes=None, estado_dir=ESTADO_DIR, abrir=None, notificar=True,
-           ahora=None, dias=DIAS_SIN_NUEVOS):
+           ahora=None, dias=DIAS_SIN_NUEVOS, max_vistos=MAX_VISTOS):
     ahora = time.time() if ahora is None else ahora
     fuentes = cargar_fuentes() if fuentes is None else fuentes
     ultimo = cargar_ultimo(estado_dir)
@@ -536,6 +654,12 @@ def correr(fuentes=None, estado_dir=ESTADO_DIR, abrir=None, notificar=True,
     if registros:
         anotar_vistos(estado_dir, registros)
     guardar_ultimo(estado_dir, ultimo)
+
+    # Housekeeping INSIDE the existing hourly run -- not a new loop, not a new
+    # cron. It only acts when the file crosses the cap, and it signs the move.
+    if max_vistos is not None:
+        compactar_vistos(estado_dir, ahora=ahora, ultimo=ultimo,
+                         max_registros=max_vistos)
 
     if notificar:
         _notificar(resultados)
@@ -575,13 +699,25 @@ def main(argv=None):
                     help="dias sin items nuevos antes de declarar la fuente rota")
     ap.add_argument("--sin-notificar", action="store_true")
     ap.add_argument("--solo", default="", help="id de una fuente")
+    ap.add_argument("--max-vistos", type=int, default=MAX_VISTOS,
+                    help="registros en vistos.jsonl antes de compactar")
+    ap.add_argument("--compactar", action="store_true",
+                    help="compacta el estado ahora (sin revisar fuentes) y sale")
     args = ap.parse_args(argv)
+
+    if args.compactar:
+        c = compactar_vistos(args.estado, max_registros=0)
+        print("compactado: %d de %d registros -> %s (quedan %d)"
+              % (c["archivados"], c["total"], c["archivo"] or "-",
+                 c["quedan"]))
+        return 0
 
     fuentes = cargar_fuentes(args.fuentes)
     if args.solo:
         fuentes = [f for f in fuentes if f["id"] == args.solo]
     res = correr(fuentes=fuentes, estado_dir=args.estado,
-                 notificar=not args.sin_notificar, dias=args.dias)
+                 notificar=not args.sin_notificar, dias=args.dias,
+                 max_vistos=args.max_vistos)
     roto = 0
     for r in res:
         marca = "!" if (r["alerta"] or r["error"]) else " "

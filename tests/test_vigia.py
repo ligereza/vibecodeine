@@ -344,6 +344,141 @@ def test_el_estado_vive_bajo_estado_y_esta_gitignorado(tmp_path):
     assert vigia.ESTADO_DIR.endswith(("estado", "estado/"))
 
 
+# ------------------------------------------------- retencion del estado
+
+def _pagina_enlaces(pares):
+    filas = "".join('<li><a href="%s">%s</a></li>' % (href, t)
+                    for t, href in pares)
+    return ("<html><body><ul>%s</ul></body></html>" % filas).encode("utf-8")
+
+
+DIA = 86400.0
+
+
+def test_compactar_mueve_lo_viejo_a_archive_y_nunca_borra(monkeypatch, tmp_path):
+    """La politica de retencion que el repo ya decidio (retencion.py,
+    2026-07-17): conservar lo que el diff necesita, MOVER el resto a archive/,
+    jamas borrar. Un hash que sigue en la pagina NUNCA se archiva, porque
+    resurgiria como 'nuevo'."""
+    firmas = []
+    monkeypatch.setattr(vigia, "registrar_mutacion",
+                        lambda accion, detalle="", origen=None, ruta=None:
+                        firmas.append((accion, detalle)) or True)
+    estado = tmp_path / "estado"
+    url = FUENTE["url"]
+    viejas = [("Antigua residencia en La Serena todavia listada", "/aviso/a"),
+              ("Antigua beca de teatro ya cerrada", "/aviso/b"),
+              ("Antiguo concurso de danza ya cerrado", "/aviso/c")]
+    vigia.correr([FUENTE], str(estado), abrir=abridor({url: _pagina_enlaces(viejas)}),
+                 notificar=False, ahora=1000.0)
+    originales = (estado / vigia.VISTOS).read_text(encoding="utf-8")
+    assert len(originales.strip().splitlines()) == 3
+
+    # 200 dias despues: 'a' sigue listada, 'b' y 'c' ya no, aparece 'd'.
+    despues = 1000.0 + 200 * DIA
+    pagina2 = _pagina_enlaces([viejas[0],
+                               ("Nueva convocatoria de artes mediales", "/aviso/d")])
+    vigia.correr([FUENTE], str(estado), abrir=abridor({url: pagina2}),
+                 notificar=False, ahora=despues, max_vistos=3)
+
+    quedan = [json.loads(l) for l in
+              (estado / vigia.VISTOS).read_text(encoding="utf-8").splitlines()]
+    titulos_quedan = {r["titulo"] for r in quedan}
+    assert "Antigua residencia en La Serena todavia listada" in titulos_quedan, (
+        "un hash aun visible en la pagina no se archiva")
+    assert "Nueva convocatoria de artes mediales" in titulos_quedan
+    assert "Antigua beca de teatro ya cerrada" not in titulos_quedan
+
+    archivos = list((estado / "archive").glob("vistos_*.jsonl"))
+    assert len(archivos) == 1, "lo archivado se mueve, no se borra"
+    archivadas = [json.loads(l) for l in
+                  archivos[0].read_text(encoding="utf-8").splitlines()]
+    assert {r["titulo"] for r in archivadas} == {
+        "Antigua beca de teatro ya cerrada",
+        "Antiguo concurso de danza ya cerrado"}
+    # Nada se pierde: la union de ambos archivos es el contenido original + d.
+    assert len(quedan) + len(archivadas) == 4
+
+    # Y el movimiento quedo FIRMADO (el incidente de los 217 informes sin
+    # autor, 2026-07-30: mover estado sin firma es lo prohibido).
+    assert firmas and firmas[0][0] == "vigia_compactar"
+    assert "2 registros" in firmas[0][1]
+
+    # El hash conservado sigue haciendo su trabajo: la misma pagina no
+    # re-notifica nada.
+    r3 = vigia.correr([FUENTE], str(estado), abrir=abridor({url: pagina2}),
+                      notificar=False, ahora=despues + 3600)[0]
+    assert r3["nuevos"] == []
+
+
+def test_compactar_bajo_el_tope_no_toca_nada(tmp_path):
+    estado = tmp_path / "estado"
+    vigia.correr([FUENTE], str(estado),
+                 abrir=abridor({FUENTE["url"]: _pagina(["Convocatoria de artes escenicas 2026"])}),
+                 notificar=False, ahora=1000.0)
+    antes = (estado / vigia.VISTOS).read_text(encoding="utf-8")
+    c = vigia.compactar_vistos(str(estado), ahora=1000.0 + 400 * DIA,
+                               max_registros=vigia.MAX_VISTOS)
+    assert c["archivados"] == 0
+    assert (estado / vigia.VISTOS).read_text(encoding="utf-8") == antes
+    assert not (estado / "archive").exists()
+
+
+def test_compactar_lo_reciente_se_queda_aunque_deje_la_pagina(monkeypatch, tmp_path):
+    """El corte es doble: viejo Y fuera de la pagina. Un aviso que salio ayer
+    de la pagina sigue en la memoria hasta cumplir los dias."""
+    monkeypatch.setattr(vigia, "registrar_mutacion", lambda *a, **k: True)
+    estado = tmp_path / "estado"
+    url = FUENTE["url"]
+    vigia.correr([FUENTE], str(estado),
+                 abrir=abridor({url: _pagina_enlaces(
+                     [("Convocatoria breve de video arte", "/aviso/x")])}),
+                 notificar=False, ahora=1000.0)
+    vigia.correr([FUENTE], str(estado),
+                 abrir=abridor({url: _pagina_enlaces(
+                     [("Otra convocatoria de fotografia analoga", "/aviso/y")])}),
+                 notificar=False, ahora=1000.0 + 2 * DIA)
+    c = vigia.compactar_vistos(str(estado), ahora=1000.0 + 3 * DIA,
+                               max_registros=0)
+    assert c["archivados"] == 0, "2 dias no son %d" % vigia.DIAS_COMPACTAR
+
+
+def test_compactar_conserva_una_linea_malformada(monkeypatch, tmp_path):
+    """Una linea que no parsea es un dato de alguien que no podemos fechar:
+    se queda donde esta."""
+    monkeypatch.setattr(vigia, "registrar_mutacion", lambda *a, **k: True)
+    estado = tmp_path / "estado"
+    estado.mkdir()
+    (estado / vigia.VISTOS).write_text(
+        "esto no es json\n"
+        + json.dumps({"h": "abc", "fuente": "demo",
+                      "titulo": "Vieja convocatoria sin pagina",
+                      "url": "", "ts": 0}) + "\n",
+        encoding="utf-8")
+    c = vigia.compactar_vistos(str(estado), ahora=400 * DIA, max_registros=0)
+    assert c["archivados"] == 1
+    assert "esto no es json" in (estado / vigia.VISTOS).read_text(encoding="utf-8")
+
+
+def test_compactar_desde_la_cli(tmp_path, capsys):
+    """--compactar es el verbo de mantenimiento: compacta y sale, sin tocar
+    la red ni las fuentes."""
+    estado = tmp_path / "estado"
+    vigia.correr([FUENTE], str(estado),
+                 abrir=abridor({FUENTE["url"]: _pagina(["Convocatoria reciente de muralismo"])}),
+                 notificar=False)
+    codigo = vigia.main(["--estado", str(estado), "--compactar"])
+    assert codigo == 0
+    assert "compactado: 0 de 1" in capsys.readouterr().out
+
+
+def test_la_firma_es_la_de_mutaciones_de_plataforma():
+    """No una segunda bitacora: la que ya contesta 'quien movio esto'."""
+    assert vigia.registrar_mutacion is not None, "mutaciones no se pudo importar"
+    import mutaciones
+    assert vigia.registrar_mutacion is mutaciones.registrar
+
+
 def test_una_fuente_caida_no_mata_la_corrida(tmp_path):
     """Un 403 en una fuente no puede llevarse las otras cinco por delante."""
     import urllib.error
