@@ -38,6 +38,7 @@ SALIDA = RAIZ / "iskvw" / "datos" / "archivo.json"
 ENSAYOS = RAIZ / "docs" / "cultura" / "ensayos"
 ANIMADAS = RAIZ / "iskvw" / "datos" / "animadas.json"
 LASER = RAIZ / "iskvw" / "datos" / "laser.json"
+CURADURIA = RAIZ / "iskvw" / "datos" / "curaduria.json"
 
 # Por defecto el micelio se pide a la variable de entorno, no a una IP escrita
 # en el repo: este repositorio es publico.
@@ -340,6 +341,14 @@ def main() -> int:
             p["medio"] = {"tipo": "imagen", "src": c["archivo"]}
             con_medio += 1
 
+    # La mano del artista, al final y sobre todo: titulo firmado, mostrar,
+    # abstraccion, svg firmado y regimen (contrato_archivo.aplicar_curaduria).
+    regimen = None
+    if CURADURIA.is_file():
+        cur = json.loads(CURADURIA.read_text(encoding="utf-8"))
+        datos = contrato_archivo.aplicar_curaduria(datos, cur)
+        regimen = cur.get("regimen")
+
     salida = {
         "version": 1,
         "fuente": args.fuente,
@@ -347,6 +356,7 @@ def main() -> int:
         "piezas": datos["piezas"],
         "vinculos": datos["vinculos"],
         "meta": {
+            "regimen": regimen,
             "piezas": len(datos["piezas"]),
             "vinculos": len(datos["vinculos"]),
             "por_clase": _contar(datos["piezas"], "clase"),
