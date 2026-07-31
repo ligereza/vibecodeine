@@ -87,10 +87,23 @@ const RESPALDO = {
 };
 
 const PARAM = new URLSearchParams(location.search);
-const RUTA = PARAM.get("venue") || "../../../data/venues/scd-plaza-egana.json";
+/* ?venue= takes a bare id from the registry (data/venues/<id>.json) or a full
+   path. The id form is what a link, a QR or the sequence tool can carry without
+   knowing where this page lives. */
+const PEDIDO = PARAM.get("venue") || "";
+const RUTA = !PEDIDO ? "../../../data/venues/scd-plaza-egana.json"
+  : (/[/.]/.test(PEDIDO) ? PEDIDO : `../../../data/venues/${PEDIDO}.json`);
 /* El tope existe para que 60 fps sea una promesa y no una esperanza. Se puede
    bajar por URL (?aristas=120) justamente para VER como avisa el recorte. */
 const TOPE = Math.max(1, parseInt(PARAM.get("aristas"), 10) || 800);
+/* The starting camera is DATA, not code: ?giro=&alto=&dist= override it per
+   link, and the defaults are exactly the values that shipped. dist is in
+   metres and 0 means "let the auto-framing decide", which is the default. */
+const numParam = (clave, porDefecto) => {
+  const v = parseFloat(PARAM.get(clave));
+  return Number.isFinite(v) ? v : porDefecto;
+};
+const DIST_URL = numParam("dist", 0);
 
 /* Orden de sacrificio: lo primero que se va es lo que nadie respalda. */
 const ORDEN = ["medido", "citado", "ajustado", "aportado", "no_verificado"];
@@ -134,7 +147,9 @@ const M = {
 };
 
 /* ═══ estado ═══ */
-const CAM = {giro: -0.45, alto: 0.62, dist: 40, foco: [0, 0, 0]};
+const CAM = {giro: numParam("giro", -0.45),
+             alto: Math.max(-1.45, Math.min(1.45, numParam("alto", 0.62))),
+             dist: 40, foco: [0, 0, 0]};
 const ESTADO = {
   venue: null, lineas: [], aristas: 0, dibujadas: 0, omitidas: 0,
   porNivel: {}, apagados: {}, fps: 0, cuadros: 0, t0: 0, mvp: null
@@ -197,6 +212,9 @@ function encuadrar() {
   const radio = Math.max(1, Math.hypot(mx[0]-mn[0], mx[1]-mn[1], mx[2]-mn[2]) / 2);
   CAM.dist = CAM.destino = radio / Math.tan(0.525) * 1.15;
   CAM.min = radio * 0.04; CAM.max = radio * 6;   // el minimo deja ENTRAR a la sala
+  // an explicit ?dist= wins over the auto-framing, clamped to the same rails
+  // the wheel obeys -- a link cannot park the camera where a hand cannot go
+  if (DIST_URL > 0) CAM.dist = CAM.destino = Math.max(CAM.min, Math.min(CAM.max, DIST_URL));
 }
 
 /* FOV ancho a proposito: la referencia del artista es un panorama
@@ -309,12 +327,40 @@ function svgDeCuadro(giro, alto_, w = 1080, h = 1080, dist = CAM.dist) {
          `height="${h}"><rect width="${w}" height="${h}" fill="#08080a"/>${capas.join("")}</svg>`;
 }
 
+/* A camera path is DATA: keyframes {giro, alto?, dist?} lerped over the frame
+   count (schemas/orbita.schema.json; --orbita in tools/venue_secuencia.mjs).
+   `cerrar` treats the path as a loop -- the endpoint frame is not emitted, so
+   frame 0 follows the last one seamlessly. The default full turn is itself a
+   two-keyframe closed path through this same code, which is why an orbit FILE
+   can reproduce it frame for frame and the smoke can prove that it does. */
+function interpolarRuta(ruta, t) {
+  const n = ruta.length;
+  if (n === 1 || t <= 0) return ruta[0];
+  if (t >= 1) return ruta[n - 1];             // exact endpoint, no float drift
+  const s = t * (n - 1), i = Math.floor(s), f = s - i;
+  const a = ruta[i], b = ruta[i + 1], mez = (x, y) => x + (y - x) * f;
+  return {giro: mez(a.giro, b.giro), alto: mez(a.alto, b.alto),
+          dist: mez(a.dist, b.dist)};
+}
+
 function secuencia(cuadros = 120, opciones = {}) {
-  const {alto_: incl = CAM.alto, w = 1080, h = 1080, dist = CAM.dist, desde = 0} = opciones;
+  const {alto_: incl = CAM.alto, w = 1080, h = 1080, dist = CAM.dist,
+         desde = 0, ruta = null, cerrar = !(ruta && ruta.length)} = opciones;
+  const camino = (ruta && ruta.length
+    ? ruta
+    : [{giro: desde}, {giro: desde + 2 * Math.PI}])   // the default turn, as data
+    .map(k => ({
+      giro: Number.isFinite(+k.giro) ? +k.giro : 0,
+      alto: Number.isFinite(+k.alto) ? +k.alto : incl,
+      dist: Number.isFinite(+k.dist) && +k.dist > 0 ? +k.dist : dist,
+    }));
   const salida = [];
-  for (let i = 0; i < cuadros; i++)
-    salida.push(svgDeCuadro(desde + i * 2 * Math.PI / cuadros, incl, w, h, dist));
-  return salida;                              // la vuelta completa cierra sola
+  for (let i = 0; i < cuadros; i++) {
+    const t = cuadros === 1 ? 0 : i / (cerrar ? cuadros : cuadros - 1);
+    const k = interpolarRuta(camino, t);
+    salida.push(svgDeCuadro(k.giro, k.alto, w, h, k.dist));
+  }
+  return salida;
 }
 
 /* ═══ los numeros a la vista ═══ */

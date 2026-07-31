@@ -15,6 +15,7 @@ Uso:
     py tools/venue.py sembrar semillas.txt      # de memoria -> JSON (aportado)
     py tools/venue.py validar                   # esquema + coherencia
     py tools/venue.py listar                    # tabla, con % de completitud
+    py tools/venue.py geometria                 # numeros del bloque geometria
     py tools/venue.py sitio                     # HTML unico, offline, telefono
 
 Formato de semilla (una sala por linea, `#` es comentario). Campos vacios: `-`
@@ -150,6 +151,111 @@ def sembrar(ruta: Path) -> int:
     return n
 
 
+# --------------------------------------------------------------------------- geometria
+# The viewer's declared default edge budget (iskvw/piel/venue/index.html, TOPE).
+# A venue over it still renders, but the viewer will crop it -- loudly. The
+# number lives here too so `geometria`/`validar` can say it BEFORE anyone opens
+# a browser.
+TOPE_VISOR = 800
+# Declared measure vs drawn extent: past this gap, one of the two is wrong.
+TOLERANCIA_COTA_M = 0.15
+
+
+def medir_geometria(v: dict) -> dict | None:
+    """Numbers about the `geometria` block. None when the venue has none.
+
+    Everything here is counted, not judged: edge totals per confianza tier,
+    bounding box, closed/open polylines, zero-length segments. The judging
+    happens in `coherencia()`, on top of these numbers.
+    """
+    g = v.get("geometria")
+    if not isinstance(g, dict):
+        return None
+    polilineas = g.get("polilineas") or []
+    por_confianza: dict[str, int] = {}
+    aristas_por_capa: dict[str, int] = {}
+    bb_por_capa: dict[str, list[list[float]]] = {}
+    mn = [float("inf")] * 3
+    mx = [float("-inf")] * 3
+    puntos = aristas = degenerados = cerradas = abiertas = 0
+    for pl in polilineas:
+        ps = pl.get("puntos") or []
+        puntos += len(ps)
+        n = max(0, len(ps) - 1)
+        aristas += n
+        conf = pl.get("confianza", "no_verificado")
+        por_confianza[conf] = por_confianza.get(conf, 0) + n
+        capa = pl.get("capa") or "sin_capa"
+        aristas_por_capa[capa] = aristas_por_capa.get(capa, 0) + n
+        bb = bb_por_capa.setdefault(
+            capa, [[float("inf")] * 3, [float("-inf")] * 3])
+        for q in ps:
+            for k in range(3):
+                if q[k] < mn[k]:
+                    mn[k] = q[k]
+                if q[k] > mx[k]:
+                    mx[k] = q[k]
+                if q[k] < bb[0][k]:
+                    bb[0][k] = q[k]
+                if q[k] > bb[1][k]:
+                    bb[1][k] = q[k]
+        # a zero-length segment draws nothing and still spends edge budget
+        degenerados += sum(1 for a, b in zip(ps, ps[1:]) if a == b)
+        if len(ps) >= 3 and ps[0] == ps[-1]:
+            cerradas += 1
+        elif ps:
+            abiertas += 1
+    if not puntos:
+        mn = mx = [0.0, 0.0, 0.0]
+    dim = [round(mx[k] - mn[k], 3) for k in range(3)]
+    dim_por_capa = {
+        c: [round(b[1][k] - b[0][k], 3) for k in range(3)]
+        for c, b in bb_por_capa.items()
+    }
+    return {
+        "polilineas": len(polilineas),
+        "puntos": puntos,
+        "aristas": aristas,
+        "por_confianza": por_confianza,
+        "aristas_por_capa": aristas_por_capa,
+        "dim": dim,
+        "dim_por_capa": dim_por_capa,
+        "degenerados": degenerados,
+        "cerradas": cerradas,
+        "abiertas": abiertas,
+    }
+
+
+def geometria() -> int:
+    """Numeric report per venue with geometry. Fails only on hard defects."""
+    venues = cargar_todos()
+    con_geo = fallas = 0
+    for v in sorted(venues, key=lambda x: x.get("id", "")):
+        m = medir_geometria(v)
+        if not m:
+            continue
+        con_geo += 1
+        vid = v.get("id", "?")
+        print(f"{vid}: {m['polilineas']} polilineas · {m['aristas']} aristas · "
+              f"{m['dim'][0]} x {m['dim'][1]} x {m['dim'][2]} m")
+        print(f"  cerradas {m['cerradas']} · abiertas {m['abiertas']} · "
+              f"segmentos de largo cero {m['degenerados']}")
+        for k in sorted(m["por_confianza"]):
+            print(f"  {k:<15} {m['por_confianza'][k]:>4} aristas")
+        for c in sorted(m["aristas_por_capa"]):
+            d = m["dim_por_capa"][c]
+            print(f"  capa {c:<18} {m['aristas_por_capa'][c]:>4} aristas · "
+                  f"{d[0]} x {d[1]} x {d[2]} m")
+        if m["degenerados"]:
+            fallas += 1
+        if m["aristas"] > TOPE_VISOR:
+            print(f"  aviso: {m['aristas']} aristas superan el tope del visor "
+                  f"({TOPE_VISOR}): recortara avisando")
+    print(f"\n{con_geo} de {len(venues)} venues con geometria · "
+          f"{fallas} con segmentos de largo cero")
+    return 1 if fallas else 0
+
+
 # --------------------------------------------------------------------------- validar
 def coherencia(v: dict) -> list[str]:
     """Chequeos que el esquema no puede hacer. Avisan, no corrigen."""
@@ -201,6 +307,35 @@ def coherencia(v: dict) -> list[str]:
     for c in v.get("citas") or []:
         if not (c.get("fuente") or "").strip():
             avisos.append(f"{vid}: una cita sin fuente. Se cita o se marca no_verificado.")
+
+    # Geometry, measured: these checks are numbers, not opinions.
+    m = medir_geometria(v)
+    if m:
+        if m["degenerados"]:
+            avisos.append(
+                f"{vid}: {m['degenerados']} segmentos de largo cero en la "
+                "geometria. No dibujan nada y gastan presupuesto de aristas."
+            )
+        if m["aristas"] > TOPE_VISOR:
+            avisos.append(
+                f"{vid}: {m['aristas']} aristas superan el tope del visor "
+                f"({TOPE_VISOR}). El visor recorta avisando, pero recorta."
+            )
+        # The declared stage measure and the drawn stage layer have to agree:
+        # a data sheet that contradicts its own drawing is worse than either.
+        dim_esc = m["dim_por_capa"].get("escenario")
+        if dim_esc:
+            declarado = v.get("escenario") or {}
+            for eje, clave in ((0, "ancho"), (1, "profundidad")):
+                d = declarado.get(clave)
+                if isinstance(d, dict) and isinstance(d.get("m"), (int, float)):
+                    delta = abs(dim_esc[eje] - d["m"])
+                    if delta > TOLERANCIA_COTA_M:
+                        avisos.append(
+                            f"{vid}: escenario.{clave} declara {d['m']} m pero "
+                            f"la capa 'escenario' dibuja {dim_esc[eje]} m "
+                            f"(delta {round(delta, 3)} m). Uno de los dos miente."
+                        )
     return avisos
 
 
@@ -248,13 +383,15 @@ def listar() -> int:
     if not venues:
         print("no hay venues todavia. Sembra: py tools/venue.py sembrar semillas.txt")
         return 0
-    print(f"{'ciudad':<14} {'nombre':<28} {'tipo':<10} {'datos':>6}  firma")
-    print("-" * 74)
+    print(f"{'ciudad':<14} {'nombre':<28} {'tipo':<10} {'datos':>6} {'aristas':>8}  firma")
+    print("-" * 82)
     for v in sorted(venues, key=lambda x: (x.get("ciudad", ""), x.get("nombre", ""))):
         firma = v.get("firmado_por") or "-"
+        m = medir_geometria(v)
+        aristas = str(m["aristas"]) if m else "-"
         print(
             f"{v.get('ciudad','')[:14]:<14} {v.get('nombre','')[:28]:<28} "
-            f"{v.get('tipo','')[:10]:<10} {completitud(v):>5}%  {firma}"
+            f"{v.get('tipo','')[:10]:<10} {completitud(v):>5}% {aristas:>8}  {firma}"
         )
     print(f"\n{len(venues)} venues.")
     return 0
@@ -359,6 +496,8 @@ def main(argv: list[str]) -> int:
         return validar()
     if cmd == "listar":
         return listar()
+    if cmd == "geometria":
+        return geometria()
     if cmd == "sitio":
         return sitio()
     print(__doc__)

@@ -5,7 +5,9 @@
 // MOVES when the camera orbits, and that a cap smaller than the venue crops
 // LOUDLY -- cropping in silence is the one defect that looks perfect on a
 // screenshot. Invoked by tests/test_venue3d_smoke.py. Node >= 18.
-import { correr } from "./venue3d_contexto.mjs";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { correr, RAIZ } from "./venue3d_contexto.mjs";
 
 const problemas = [];
 const exigir = (cond, msg) => { if (!cond) problemas.push(msg); };
@@ -88,6 +90,50 @@ if (!problemas.length) {
          "the export lost the confianza layers or their dashes");
   const trazos = (svgs[0].match(/[ML]/g) || []).length;
   exigir(trazos > 100, `the exported frame is nearly empty (${trazos} path commands)`);
+}
+
+// ── 5. the camera is data: URL params, bare-id venues, orbit paths ───────
+// the untouched run kept its shipped defaults (run b never got a gesture)
+exigir(b.leer("CAM.giro") === -0.45 && b.leer("CAM.alto") === 0.62,
+       "the default starting camera drifted from the shipped values");
+const c = await correr("?venue=scd-plaza-egana&giro=1.2&alto=0.3&dist=12");
+if (c.falla) {
+  console.error("VENUE SKIN SMOKE FAILED (param run):", c.falla.stack || c.falla);
+  process.exit(1);
+}
+exigir(c.leer("ESTADO.aristas") === aristas,
+       "a bare ?venue=<id> did not resolve against data/venues/: the registry form is dead");
+exigir(c.leer("CAM.giro") === 1.2 && c.leer("CAM.alto") === 0.3,
+       "?giro/?alto did not reach the camera");
+exigir(c.leer("CAM.dist") === 12 && c.leer("CAM.destino") === 12,
+       "?dist did not override the auto-framing (or missed the zoom target)");
+
+if (!problemas.length) {
+  // the shipped example orbit reproduces the default turn FRAME FOR FRAME:
+  // that is the whole claim of "the orbit is data", so it is measured, not told
+  const ejemplo = JSON.parse(
+    readFileSync(join(RAIZ, "data", "orbitas", "vuelta-completa.json"), "utf8"));
+  const base = "w: 400, h: 400, alto_: 0.45, dist: 30";
+  const porDefecto = a.leer(`JSON.stringify(secuencia(6, {${base}}))`);
+  const porArchivo = a.leer(
+    `JSON.stringify(secuencia(6, {${base}, ruta: ${JSON.stringify(ejemplo.puntos)}, ` +
+    `cerrar: ${ejemplo.cerrar === true}}))`);
+  exigir(porDefecto === porArchivo,
+         "data/orbitas/vuelta-completa.json does not reproduce the default turn frame for frame");
+
+  // an OPEN path lands exactly on its first and last keyframes
+  const abierta = `secuencia(5, {${base}, ruta: [{giro: 0}, {giro: Math.PI / 2}]})`;
+  exigir(a.leer(`${abierta}[0] === svgDeCuadro(0, 0.45, 400, 400, 30)`),
+         "an open path does not start at its first keyframe");
+  exigir(a.leer(`${abierta}[4] === svgDeCuadro(Math.PI / 2, 0.45, 400, 400, 30)`),
+         "an open path does not end at its last keyframe");
+  exigir(a.leer(`new Set(${abierta}).size`) === 5,
+         "an open path repeats frames: the lerp is not spreading");
+
+  // dist keyframes move the camera even with the azimuth held still
+  exigir(a.leer(`new Set(secuencia(3, {${base}, ` +
+                "ruta: [{giro: 0.3, dist: 12}, {giro: 0.3, dist: 30}]})).size") === 3,
+         "dist keyframes did not move the camera: the path ignores dist");
 }
 
 if (problemas.length) {
