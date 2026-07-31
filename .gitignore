@@ -260,3 +260,8 @@ docs/cultura/ensayos/*/_animados/
 # con `py tools/venue.py sembrar|sitio`); la semilla .txt es la fuente y viaja.
 data/venues/*.json
 web/venues/index.html
+# Excepcion: la sala DEMO del visor 3D viaja, porque es el material por defecto
+# de `iskvw/piel/venue/` -- sin ella el visor abre vacio en cualquier checkout.
+# Tambien es derivada, y su generador esta al lado:
+# `py tools/venue_geometria_scd.py`.
+!data/venues/scd-plaza-egana.json
