@@ -424,6 +424,34 @@ def _msgs(system, user):
     return [{"role": "user", "content": user}]
 
 
+# The provider roster, in ONE place. It used to be written out by hand in every
+# tool that accepted a provider list, and those copies went stale silently:
+# `refutar.py` filtered its `--orden` against a literal
+# ("groq", "cerebras", "azure", "ollama") that predates `watsonx` and `win`, so
+# `--orden watsonx` was dropped without a word, the list came out empty, the
+# default chain took over and every one of its providers was skipped for having
+# no key. The tool died with "Todos los proveedores fallaron. Ultimo: None" --
+# a message that names nothing because nothing was ever attempted. Measured
+# 2026-07-31 on the box, where `research.env` carries ONLY the WATSONX_* keys:
+# that is why the adversarial pass the quality gate depends on had run exactly
+# once since 2026-07-16. A roster that can go stale is worse than no roster.
+PROVIDER_ENV_KEY = {
+    "watsonx": "WATSONX_API_KEY",
+    "groq": "GROQ_API_KEY",
+    "cerebras": "CEREBRAS_API_KEY",
+    "azure": "AZURE_API_KEY",
+    "win": "WIN_BASE_URL",
+    "ollama": "OLLAMA_BASE_URL",
+}
+PROVIDERS = tuple(PROVIDER_ENV_KEY)
+
+# Los que aceptan que se les pida un modelo CONCRETO por llamada. El resto
+# ignora el pedido y usa el suyo: pedirle un modelo a quien no puede elegirlo
+# no es un error, es que ahi no habia nada que elegir. Sumar uno es agregarlo
+# aca y darle el parametro `model` a su metodo.
+PROVIDERS_CON_MODELO = ("watsonx",)
+
+
 class LLM:
     """Cadena de proveedores con fallback y stats (mismo diseno que el
     Code node probado 2026-07-15: cerebras/azure son razonadores, llevan
@@ -491,7 +519,7 @@ class LLM:
         )
         return r["choices"][0]["message"]["content"].strip()
 
-    def _watsonx(self, system, user, max_tok):
+    def _watsonx(self, system, user, max_tok, model=None):
         """IBM watsonx.ai. Verificado 4/4 por `tools/watsonx_smoke.py` contra la
         cuenta real el 2026-07-30: bearer en 460 ms, 24 modelos visibles, chat
         en 681 ms, 58 tokens = $0.000044.
@@ -504,8 +532,8 @@ class LLM:
         base = os.environ.get("WATSONX_URL", "https://us-south.ml.cloud.ibm.com")
         r = _http_json(
             base.rstrip("/") + "/ml/v1/text/chat?version=2024-10-08",
-            {"model_id": os.environ.get("WATSONX_MODEL",
-                                        "meta-llama/llama-3-3-70b-instruct"),
+            {"model_id": model or os.environ.get(
+                "WATSONX_MODEL", "meta-llama/llama-3-3-70b-instruct"),
              "project_id": os.environ.get("WATSONX_PROJECT_ID", ""),
              "messages": _msgs(system, user),
              "max_tokens": max_tok,
@@ -555,17 +583,24 @@ class LLM:
                                  os.environ["WIN_MODEL"], system, user, max_tok)
 
     def _has_key(self, name):
-        need = {"groq": "GROQ_API_KEY", "cerebras": "CEREBRAS_API_KEY",
-                "azure": "AZURE_API_KEY", "win": "WIN_BASE_URL",
-                "ollama": "OLLAMA_BASE_URL", "watsonx": "WATSONX_API_KEY"}
-        return bool(os.environ.get(need[name]))
+        return bool(os.environ.get(PROVIDER_ENV_KEY[name]))
 
-    def call(self, system, user, max_tok=1024, order=None):
+    def call(self, system, user, max_tok=1024, order=None, model=None):
         """Devuelve (texto, proveedor). Recorre la cadena hasta respuesta
-        no vacia; acumula errores no fatales en self.errors."""
-        fns = {"groq": self._groq, "cerebras": self._cerebras,
-               "azure": self._azure, "win": self._win, "ollama": self._ollama,
-               "watsonx": self._watsonx}
+        no vacia; acumula errores no fatales en self.errors.
+
+        `model` pide un modelo CONCRETO al proveedor que lo soporte (hoy solo
+        watsonx, que expone 24). Existe para que un flujo adversarial pueda
+        poner modelos DISTINTOS en cada papel: medido el 2026-07-31, un
+        proponente y un refutador que son el mismo modelo no son adversarios --
+        el refutador discutio matices de la tesis en vez de si el hecho era
+        cierto. Se pasa por parametro y no por variable de entorno porque los
+        refutadores corren en hilos: un `os.environ` compartido se pisaria.
+        """
+        # Se deriva del padron: mantener aca una segunda copia de los nombres es
+        # como se rompio `refutar.py`. Cada proveedor de `PROVIDERS` tiene su
+        # metodo `_<nombre>`, y si falta, falta ruidosamente al llamarlo.
+        fns = {name: getattr(self, "_" + name) for name in PROVIDERS}
         orden = list(order or self.order)
         if not self._azure_enabled():
             orden = [provider for provider in orden if provider != "azure"]
@@ -584,7 +619,9 @@ class LLM:
             if name not in fns or not self._has_key(name):
                 continue
             try:
-                text = fns[name](system, user, max_tok)
+                text = (fns[name](system, user, max_tok, model)
+                        if model and name in PROVIDERS_CON_MODELO
+                        else fns[name](system, user, max_tok))
                 if text:
                     self.stats[name] = self.stats.get(name, 0) + 1
                     try:

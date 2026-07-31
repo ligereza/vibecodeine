@@ -20,8 +20,13 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-from research_lib import (LLM, escala_tok, load_env, marco, ntfy_publish,
-                          slug, stamp, tavily_search, web_search)
+from research_lib import (LLM, PROVIDERS, escala_tok, load_env, marco_solo,
+                          ntfy_publish, slug, stamp, web_search)
+
+try:
+    import fuentes
+except ImportError:          # el flujo puede correr sin la compuerta
+    fuentes = None
 
 OUT_DIR = os.path.expanduser("~/research/refutaciones")
 
@@ -46,39 +51,94 @@ SISTEMA_JUEZ = (
 )
 
 
-def refutar(tema, orden, densidad="medio"):
+def refutar(tema, orden, densidad="medio", marco_activo=True, modelos=None):
+    """`tema` es el tema CRUDO. El encuadre se le da al MODELO, nunca al
+    buscador.
+
+    Esta funcion recibia el tema con el encuadre ya pegado adelante y se lo
+    mandaba entero a `web_search`. Es exactamente el defecto que `marco_solo()`
+    fue escrito para cortar en `research.py` el 2026-07-30, y que aca seguia
+    vivo: medido el 2026-07-31 contra una afirmacion sobre derecho chileno, las
+    fuentes que volvieron fueron estudios culturales de la UNAM, una pagina
+    peruana sobre que es la investigacion cultural y un volcado de estadisticas
+    de Wikipedia en sueco -- y el veredicto fue que la tesis "sostiene
+    parcialmente". Con el tema limpio y la compuerta puesta, la busqueda llega a
+    minsal.cl y el veredicto se da vuelta.
+    """
     t0 = time.time()
     llm = LLM()
+    modelos = modelos or {}
+    # Hacen falta tres papeles (propone / refuta / juzga). Si pidieron menos, se
+    # repite lo PEDIDO en vez de completar con la cadena entera: pedir un solo
+    # proveedor y recibir de juez a otro que no tiene llave es como moria esto
+    # antes -- el ultimo puesto se llenaba con `azure` y el juicio no ocurria.
     if len(orden) < 3:
-        orden = (orden + ["groq", "cerebras", "azure", "ollama"])[:4]
+        orden = [orden[i % len(orden)] for i in range(3)] if orden else \
+            list(PROVIDERS)[:4]
     proponente, jueza = orden[0], orden[-1]
     refutadores = orden[1:-1] or [p for p in orden if p != proponente][:1]
 
+    # El encuadre va al SYSTEM de cada papel; el buscador recibe el tema solo.
+    encuadre = marco_solo(tema, activo=marco_activo)
+    sis_prop = encuadre + SISTEMA_PROPONENTE
+    sis_ref = encuadre + SISTEMA_REFUTADOR
+    sis_juez = encuadre + SISTEMA_JUEZ
+
     print("STATUS: Buscando contexto...", flush=True)
     errores = llm.errors
-    search = web_search(tema, errors=errores)
-    contexto = (search.get("answer") or "") + "\n" + "\n".join(
+    # La compuerta de dominio decide QUE se busca. Para casi todo devuelve None
+    # y no estorba: la mayoria de las preguntas culturales no tienen una fuente
+    # primaria que exigir.
+    dom = fuentes.dominio_de_tema(tema) if fuentes else None
+    consultas = (fuentes.sugerir_queries(tema, dom) if (fuentes and dom)
+                 else [tema])
+    resultados, respuesta = [], ""
+    for q in consultas[:3]:
+        s = web_search(q, errors=errores)
+        respuesta = respuesta or (s.get("answer") or "")
+        resultados.extend(s.get("results") or [])
+    urls = list(dict.fromkeys(r["url"] for r in resultados if r.get("url")))
+    contexto = respuesta + "\n" + "\n".join(
         "- %s | %s" % (r.get("title", ""), r.get("url", ""))
-        for r in (search.get("results") or [])[:5])
-    fuentes = [r["url"] for r in (search.get("results") or []) if r.get("url")]
+        for r in resultados[:8])
+
+    # Sin fuente primaria la TAREA cambia: de sostener una tesis a reportar que
+    # no hay con que sostenerla. No es un aviso al margen, es otra instruccion
+    # -- y es la diferencia entre un juez que dice "sostiene parcialmente" y uno
+    # que dice que nadie trajo la ley.
+    evaluacion = fuentes.evaluar(tema, urls, dom) if (fuentes and dom) else None
+    if evaluacion:
+        extra = fuentes.instruccion_sintesis(urls, dom)
+        sis_prop += extra
+        sis_juez += extra
+        sis_ref += extra
+        print("STATUS: dominio %s -- %d de %d fuentes son primarias"
+              % (dom, len(evaluacion["fuentes_primarias"]), len(urls)),
+              flush=True)
 
     print("STATUS: Proponente (%s) escribe la tesis..." % proponente, flush=True)
     tesis, real_prop = llm.call(
-        SISTEMA_PROPONENTE,
+        sis_prop,
         'TEMA: "%s"\n\nCONTEXTO DE BUSQUEDA:\n%s\n\nEscribe tu TESIS '
-        "(200-250 palabras): afirmacion concreta + 3 argumentos con fuente."
+        "(200-250 palabras): afirmacion concreta + 3 argumentos con fuente. "
+        "Si el contexto no sostiene la afirmacion, DILO: una tesis sin fuente "
+        "no es una tesis debil, es una que no se puede escribir."
         % (tema, contexto),
-        escala_tok(700, densidad), order=[proponente])
+        escala_tok(700, densidad), order=[proponente],
+        model=modelos.get("proponente"))
     print("HALLAZGO: propuesta -- " + tesis.replace("\n", " ")[:140], flush=True)
 
     def refutacion(prov):
         out, real = llm.call(
-            SISTEMA_REFUTADOR,
-            'TEMA: "%s"\n\nTESIS A REFUTAR:\n%s\n\nEscribe tu REFUTACION '
-            "(150-200 palabras): fallas concretas, o admite que resiste "
-            "si es honesto."
-            % (tema, tesis),
-            escala_tok(500, densidad), order=[prov])
+            sis_ref,
+            'TEMA: "%s"\n\nTESIS A REFUTAR:\n%s\n\nFUENTES DISPONIBLES:\n%s\n\n'
+            "Escribe tu REFUTACION (150-200 palabras). Empieza por el HECHO: "
+            "cual afirmacion NO esta respaldada por las fuentes de arriba. "
+            "Recien despues, fallas de razonamiento. Si la tesis resiste, "
+            "dilo honestamente."
+            % (tema, tesis, "\n".join("- " + u for u in urls[:8])),
+            escala_tok(500, densidad), order=[prov],
+            model=modelos.get("refutador"))
         print("HALLAZGO: refutacion -- " + out.replace("\n", " ")[:140], flush=True)
         return prov, real, out
 
@@ -90,12 +150,16 @@ def refutar(tema, orden, densidad="medio"):
     texto_refutaciones = "\n\n".join(
         "[%s]: %s" % (prov, out) for prov, _, out in refutaciones)
     veredicto, real_juez = llm.call(
-        SISTEMA_JUEZ,
-        'TEMA: "%s"\n\nTESIS:\n%s\n\nREFUTACIONES:\n%s\n\nEmite tu '
-        "VEREDICTO con secciones: 1. TESIS EVALUADA, 2. REFUTACIONES "
-        "CONSIDERADAS, 3. VEREDICTO (sostiene/parcial/refutada), 4. RAZONES."
-        % (tema, tesis, texto_refutaciones),
-        escala_tok(900, densidad), order=[jueza])
+        sis_juez,
+        'TEMA: "%s"\n\nTESIS:\n%s\n\nREFUTACIONES:\n%s\n\nFUENTES:\n%s\n\n'
+        "Emite tu VEREDICTO con secciones: 1. TESIS EVALUADA, 2. REFUTACIONES "
+        "CONSIDERADAS, 3. VEREDICTO (sostiene/parcial/refutada), 4. RAZONES. "
+        "Una tesis cuyas afirmaciones no aparecen en las fuentes queda "
+        "REFUTADA por falta de respaldo, por bien escrita que este."
+        % (tema, tesis, texto_refutaciones,
+           "\n".join("- " + u for u in urls[:8])),
+        escala_tok(900, densidad), order=[jueza],
+        model=modelos.get("juez"))
     print("HALLAZGO: veredicto -- " + veredicto.replace("\n", " ")[:140], flush=True)
 
     return {
@@ -106,10 +170,23 @@ def refutar(tema, orden, densidad="medio"):
                          for r, real, t in refutaciones],
         "meta": {
             "proponente": proponente, "refutadores": refutadores,
-            "juez": jueza, "fuentes": fuentes,
+            "juez": jueza, "fuentes": urls,
+            "dominio": dom,
+            # La llave se lee de `evaluar()`, no se recalcula: la primera
+            # version preguntaba por `primarias`, una llave que ese dict no
+            # tiene, asi que marcaba SIN FUENTE PRIMARIA incluso con seis
+            # fuentes primarias en la mano. Un instrumento que se contradice con
+            # su propia linea de estado no puede acusar a nadie.
+            "sin_fuente_primaria": bool(
+                evaluacion and evaluacion["sin_fuente_primaria"]),
+            "fuentes_primarias": (evaluacion["fuentes_primarias"]
+                                  if evaluacion else []),
+            "modelos": modelos or None,
             "llmCalls": llm.stats, "errors": llm.errors[:20],
             "ms": int((time.time() - t0) * 1000),
         },
+        "encabezado": (fuentes.encabezado(urls, dom)
+                       if (fuentes and dom) else ""),
     }
 
 
@@ -120,26 +197,48 @@ def main():
                     help="CSV: primero propone, ultimo juzga, resto refuta")
     ap.add_argument("--densidad", choices=("corto", "medio", "largo"), default="medio")
     ap.add_argument("--sin-marco", action="store_true")
+    ap.add_argument("--modelos", default="",
+                    help="CSV de hasta 3: modelo del proponente, del refutador "
+                         "y del juez. Solo lo respetan los proveedores que "
+                         "eligen modelo (hoy watsonx). Un mismo modelo en dos "
+                         "papeles no es un adversario.")
     ap.add_argument("--ntfy", action="store_true")
     ap.add_argument("--out", default=OUT_DIR)
     args = ap.parse_args()
 
     load_env()
-    orden = [p.strip() for p in args.orden.split(",")
-            if p.strip() in ("groq", "cerebras", "azure", "ollama")]
-    tema = marco(args.tema, activo=not args.sin_marco)
-    result = refutar(tema, orden or ["groq", "cerebras", "azure", "ollama"],
-                     args.densidad)
+    # El filtro sale de `research_lib.PROVIDERS`, no de una lista escrita aca:
+    # la copia a mano se quedo sin `watsonx` ni `win` y los descartaba en
+    # silencio. Un nombre que no existe SI se descarta -- pero avisando, porque
+    # un dedazo que deja la lista vacia terminaba en "Ultimo: None", un error
+    # que no nombra a nadie porque nunca se intento nada.
+    pedidos = [p.strip() for p in args.orden.split(",") if p.strip()]
+    orden = [p for p in pedidos if p in PROVIDERS]
+    desconocidos = [p for p in pedidos if p not in PROVIDERS]
+    if desconocidos:
+        print("AVISO: proveedor desconocido, lo salteo: %s (validos: %s)"
+              % (", ".join(desconocidos), ", ".join(PROVIDERS)), flush=True)
+    if not orden:
+        print("AVISO: --orden quedo vacio, uso la cadena por defecto",
+              flush=True)
+    ms = [m.strip() for m in args.modelos.split(",") if m.strip()]
+    modelos = {}
+    for papel, i in (("proponente", 0), ("refutador", 1), ("juez", 2)):
+        if len(ms) > i:
+            modelos[papel] = ms[i]
+    # El tema viaja CRUDO: el encuadre se le da al modelo dentro de refutar().
+    result = refutar(args.tema, orden or list(PROVIDERS), args.densidad,
+                     marco_activo=not args.sin_marco, modelos=modelos)
 
     os.makedirs(args.out, exist_ok=True)
     base = os.path.join(args.out, "%s-%s" % (stamp(), slug(args.tema)))
     with open(base + ".json", "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=1)
     with open(base + ".md", "w", encoding="utf-8") as f:
-        f.write("# Adversarial: %s\n\n%s\n\n---\n\n## Tesis (%s)\n\n%s\n\n"
+        f.write("# Adversarial: %s\n\n%s%s\n\n---\n\n## Tesis (%s)\n\n%s\n\n"
                 "## Refutaciones\n\n"
-                % (args.tema, result["veredicto"], result["tesis"]["proveedor"],
-                   result["tesis"]["texto"]))
+                % (args.tema, result["encabezado"], result["veredicto"],
+                   result["tesis"]["proveedor"], result["tesis"]["texto"]))
         for r in result["refutaciones"]:
             f.write("### %s (real: %s)\n\n%s\n\n" % (r["proveedor"], r["real"], r["texto"]))
         f.write("---\nmeta: %s\n" % json.dumps(result["meta"], ensure_ascii=False))
