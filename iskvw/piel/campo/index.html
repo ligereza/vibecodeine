@@ -222,6 +222,8 @@ function delContrato(p){
     colores: p.extra?.colores,
     clase: p.clase,
     medio: p.medio,
+    abstraccion: p.extra?.abstraccion || 0,
+    firmada: !!p.extra?.firmada,
   };
 }
 
@@ -422,20 +424,23 @@ function dibujar(){
       // desarrolla (visitante quieto), la materia sube y se lee mas.
       const v = Math.sin(destino[0]*17 + tGlifo) * Math.cos(destino[1]*13 - tGlifo*0.61)
               + Math.sin((destino[0]+destino[1])*9 + tGlifo*1.37) * 0.5 * (1 + E.fuerza*2);
-      const nivel = Math.max(0, Math.min(RAMPA.length-1,
-        Math.round(((v + 1.5)/3) * (RAMPA.length-1) * (0.55 + E.despliegue*0.45))));
+      const RMP = rampa();
+      const nivel = Math.max(0, Math.min(RMP.length-1,
+        Math.round(((v + 1.5)/3) * (RMP.length-1) * (0.55 + E.despliegue*0.45))));
       // Doublecup: en los niveles bajos la rampa conserva el vacio (espacio,
       // punto); desde ahi el caracter es del vocabulario de la obra, elegido
       // por una segunda frecuencia del mismo campo para que la textura
       // respire sin repetirse. Contenido curatorial, ritmo generativo.
-      let g2 = RAMPA[nivel];
+      let g2 = RMP[nivel];
       if (nivel >= 2 && n.letras){
         const vi = Math.sin(destino[0]*23 - tGlifo*0.7)
                  * Math.cos(destino[1]*19 + tGlifo*0.43);
-        g2 = n.letras[Math.floor(((vi+1)/2) * 977) % n.letras.length];
+        g2 = REGIMEN === 'industrial' && abstr < 0.5
+           ? RMP[Math.max(2, nivel)]
+           : n.letras[Math.floor(((vi+1)/2) * 977) % n.letras.length];
       }
       if (g2 !== ' '){
-        ctx.fillStyle = `hsla(${n.tono},16%,90%,${((F-0.35)/0.65) * (0.5 + nivel/(RAMPA.length-1)*0.5)})`;
+        ctx.fillStyle = `hsla(${tonoRegimen(n)},16%,90%,${((F-0.35)/0.65) * (0.5 + nivel/(RMP.length-1)*0.5)})`;
         ctx.fillText(g2, px, py);
       }
     } else {
@@ -518,6 +523,16 @@ let _pidForma = 0;
    Sale gratis lo que antes costaba: un solo canvas, un solo bucle, y la ficha
    deja de ocupar media pantalla del telefono. */
 const RAMPA = ' .:-=+*#%@';
+/* Regimen estetico global (curaduria.json -> meta.regimen). 'industrial'
+   cambia la sustancia, no el mecanismo: rampa de bloques CP437 -- el linaje
+   ANSI/Atari, el caracter como unidad industrial -- y monocromo fosforo en
+   vez del tono por obra. La decision es del artista, no de la piel. */
+let REGIMEN = 'semantico';
+const REG = {
+  industrial: { rampa: ' .░▒▓█▓▒░█', tono: 96 },
+};
+function rampa(){ return (REG[REGIMEN] || {}).rampa || RAMPA; }
+function tonoRegimen(n){ const r = REG[REGIMEN]; return r && r.tono != null ? r.tono : n.tono; }
 
 // Que obras tienen trazo: 208 de 219. Sin esta lista la piel pedia cualquiera y
 // el navegador registraba un 404 por cada una de las que no, y un 404 esperado
@@ -691,6 +706,7 @@ const ICONOS = new Map();
 function presentarIcono(o){
   const caja = document.getElementById('f-icono');
   caja.innerHTML = '';
+  if ((o.abstraccion || 0) >= 0.8) return;   // curada como pura textura
   const src = o.clase === 'pieza_grafica' && o.medio && o.medio.src;
   if (!src || !/\.svg$/.test(src)) return;
   if (ICONOS.has(src)){ caja.innerHTML = ICONOS.get(src); return; }
@@ -909,7 +925,7 @@ async function arrancar(){
     let r = await fetch('../../datos/archivo.json');
     if (r.ok){
       const d = await r.json();
-      if (d.piezas?.length){ obras = d.piezas.map(delContrato); VINCULOS = d.vinculos || []; }
+      if (d.piezas?.length){ obras = d.piezas.map(delContrato); VINCULOS = d.vinculos || []; REGIMEN = d.meta?.regimen || REGIMEN; }
     }
     // 2. Si no esta (hoy no se publica), el campo medido, igual que siempre.
     if (obras === RESPALDO.obras){
