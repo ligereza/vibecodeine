@@ -251,7 +251,19 @@ function sembrar(obras){
   // vecinos mas afines de cada obra, el 48.9% sigue siendo vecino aca -- 113
   // veces mejor que repartirlas al azar. Antes esto salia de un hash y la
   // cercania no significaba nada.
-  const conXY = obras.length && typeof obras[0].x === 'number';
+  // Cada pieza decide SOLA si trae posicion medida. Antes esto se resolvia
+  // mirando `obras[0]`: con UNA fuente (campo.json, las 219 proyectadas) era
+  // cierto, y dejo de serlo cuando llego el sustrato. `archivo.json` trae esas
+  // mismas 219 con posicion junto a 260 que no la tienen -- las piezas
+  // animadas que cada obra deriva, los ensayos, y las 8 entradas de obras.json
+  // que son HERRAMIENTAS y no obras. La primera del arreglo es una de esas
+  // ultimas, asi que el campo entero caia al hash y la proyeccion medida no se
+  // usaba nunca. Medido: 203 marcas por cuadro en vez de 7647, y el patch de
+  // efectos inerte porque los emisores quedaban lejos de todo.
+  // Una pieza que TIENE su posicion se dibuja ahi. Negarla es la misma mentira
+  // que dibujar un vinculo sin sus dos extremos.
+  const medida = o => typeof o.x === 'number' && typeof o.y === 'number';
+  const proyectadas = obras.filter(medida).length;
   NODOS = obras.map((o,i) => {
     const h = [...(o.id||o.title||String(i))].reduce((a,ch)=>((a*31+ch.charCodeAt(0))>>>0),7);
     return {
@@ -259,8 +271,14 @@ function sembrar(obras){
       letras: alfabetoDe(o),
       // El eje del recorrido es la coordenada medida, estirada al campo. El
       // orden de lectura ES la estructura del archivo, no el de un listado.
-      y: conXY ? (o.y + 1) * 2600 : i * 460 + (h % 120) - 60,
-      x: conXY ? o.x : ((h >> 7) % 1000)/1000 * 1.6 - 0.8,
+      // Sin posicion propia se reparte por hash DENTRO del campo medido: fuera
+      // de el, 260 piezas estirarian el recorrido a 220.000 px y dejarian una
+      // obra por pantalla. Si NADIE trae posicion no hay campo que respetar y
+      // vale el reparto de siempre.
+      y: medida(o) ? (o.y + 1) * 2600
+        : proyectadas ? h % 5200
+        : i * 460 + (h % 120) - 60,
+      x: medida(o) ? o.x : ((h >> 7) % 1000)/1000 * 1.6 - 0.8,
       r: 18 + ((h >> 3) % 14),
       fase: (h % 628)/100,
       // El tono sale del color que la obra TIENE, no de su identificador.

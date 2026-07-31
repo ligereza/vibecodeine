@@ -252,6 +252,21 @@ def renderizar(url):
     return True, salida, png
 
 
+def guardado(numero, shortcode):
+    """El render con nombre propio, para que renderizar y entregar se separen.
+
+    `render_output.png` es una ruta FIJA que el CLI reescribe en cada corrida,
+    asi que una entrega fallida costaba un render nuevo. Medido el 2026-07-31:
+    el issue #420 se renderizo dos veces seguidas (~7 min cada una) porque
+    rclone no alcanzaba a subirlo, y la pasada siguiente empezaba de cero en
+    vez de reintentar la entrega. Con nombre propio, una pasada que encuentra
+    el render hecho SOLO entrega.
+    """
+    d = BASE / "renders"
+    d.mkdir(parents=True, exist_ok=True)
+    return d / ("render_issue%d_%s.png" % (numero, shortcode))
+
+
 def subir(png, numero, shortcode, cfg):
     """Entrega real: el render a la nube. Devuelve el destino o None.
 
@@ -260,7 +275,14 @@ def subir(png, numero, shortcode, cfg):
     """
     nombre = "render_issue%d_%s.png" % (numero, shortcode)
     destino = "%s:%s/%s" % (cfg["remoto"], cfg["carpeta"], nombre)
-    r = subprocess.run(["rclone", "copyto", str(png), destino],
+    # Los reintentos se acotan a proposito. Medido el 2026-07-31 sobre el #420:
+    # rclone llevaba escritos 363 MB para entregar un PNG de 16,6 MB -- estaba
+    # reintentando en bucle, no subiendo lento (una prueba de 8 MB en la misma
+    # ventana subio a 306 KiB/s). Un bucle interno se come el timeout entero y
+    # la pasada reporta "fallo" sin decir que nunca dejo de intentar. Acotado,
+    # falla temprano y el render queda guardado para el siguiente intento.
+    r = subprocess.run(["rclone", "copyto", "--retries", "1",
+                        "--low-level-retries", "3", str(png), destino],
                        capture_output=True, text=True, timeout=900)
     if r.returncode != 0:
         _log("error: rclone -- %s" % r.stderr.strip()[:200])
@@ -451,18 +473,33 @@ def una_pasada(dry_run=False, solo=None):
                                "pendiente": _motivo_pendiente(url, "")})
                 continue
 
-            _log("  renderizando %s (imagen %d)" % (code, idx))
             if dry_run:
+                _log("  renderizando %s (imagen %d)" % (code, idx))
                 piezas.append({"url": url, "code": code, "imagen": idx,
                                "ok": True, "destino": "[dry-run]",
                                "en_departamento": None, "pendiente": None})
                 continue
 
-            if cfg.get("pausar_percepcion", True):
-                with PercepcionEnPausa():
-                    ok, salida, png = renderizar(url)
+            # Renderizar y entregar son dos actos, no uno. Si el render de una
+            # pasada anterior sigue en disco, esta pasada solo lo entrega: la
+            # GPU no vuelve a trabajar por un fallo que era de la red.
+            hecho = guardado(numero, code)
+            if hecho.exists() and hecho.stat().st_size > 0:
+                _log("  %s ya renderizado -- solo entrego" % code)
+                ok, salida, png = True, "", hecho
             else:
-                ok, salida, png = renderizar(url)
+                _log("  renderizando %s (imagen %d)" % (code, idx))
+                if cfg.get("pausar_percepcion", True):
+                    with PercepcionEnPausa():
+                        ok, salida, png = renderizar(url)
+                else:
+                    ok, salida, png = renderizar(url)
+                if ok:
+                    # El CLI escribe siempre en la misma ruta: se copia con
+                    # nombre propio ANTES de intentar la entrega, que es lo que
+                    # puede fallar.
+                    shutil.copy2(str(png), str(hecho))
+                    png = hecho
             destino = subir(png, numero, code, cfg) if ok else None
             en_depto = (al_departamento(numero, code)
                         if ok and cfg.get("al_departamento", True) else None)
