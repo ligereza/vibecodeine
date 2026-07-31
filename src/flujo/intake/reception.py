@@ -24,6 +24,30 @@ def _safe_extract_zip(zip_ref: zipfile.ZipFile, dest: Path) -> None:
         target.relative_to(dest)
     zip_ref.extractall(dest)
 
+def _signed_airdrop_gate() -> "str | None":
+    """VCD-09 signed-artifact gate for the mail path.
+
+    The `From:` header is forgeable text, so it can never be the authorization
+    to apply and push code. When the mail path is enabled, the payload MUST
+    carry a valid HMAC-SHA256 signature (key in FLUJO_AIRDROP_HMAC_KEY): no
+    key configured means nothing gets applied, and this path NEVER uses the
+    human override (--allow-unsigned is a person typing it, not automation).
+
+    Returns the refusal reason, or None when the extracted payload verifies.
+    """
+    from ..airdrop import SIGNING_KEY_ENV, get_signing_key, verify_airdrop
+
+    if get_signing_key() is None:
+        return (
+            f"{SIGNING_KEY_ENV} no esta configurada: el canal de correo exige "
+            "artefacto firmado (flujo airdrop sign) y sin clave no se aplica nada."
+        )
+    problems = verify_airdrop()
+    if problems:
+        return "firma del airdrop invalida: " + "; ".join(problems)
+    return None
+
+
 def check_and_apply_email_airdrops() -> dict:
     """Se conecta al buzón IMAP especificado en variables de entorno,
     busca correos con asunto '[flujo-airdrop]' de remitentes autorizados,
@@ -42,11 +66,12 @@ def check_and_apply_email_airdrops() -> dict:
     # inventarle un sistema de firmas para algo que no se usa: es que no pueda
     # dispararse sola. Queda apagada salvo que alguien la encienda a proposito.
     #
-    # Si algun dia se quiere de verdad: artefacto firmado (minisign/Sigstore),
-    # verificar clave y digest, aplicar en rama aislada, aprobacion humana antes
-    # de correr nada con credenciales de push.
-    #
-    # Retiro de esta guarda: cuando el artefacto venga firmado y verificado.
+    # Cierre del hallazgo (2026-07-31): el artefacto firmado existe. Aun con
+    # FLUJO_IMAP_AUTOAPLICAR=1, `_signed_airdrop_gate()` exige clave
+    # FLUJO_AIRDROP_HMAC_KEY configurada Y firma HMAC-SHA256 valida del payload
+    # (`flujo airdrop sign` / `verify`); sin eso no se aplica nada. Esta guarda
+    # de encendido se mantiene igual como primera capa: encender el canal sigue
+    # siendo una decision humana explicita.
     if os.getenv("FLUJO_IMAP_AUTOAPLICAR") != "1":
         return {"ok": False, "error":
                 "aplicar airdrops por correo esta apagado: autoriza por el header "
@@ -128,6 +153,20 @@ def check_and_apply_email_airdrops() -> dict:
                         temp_zip.unlink()
                     except Exception:
                         pass
+
+                    # VCD-09: signed artifact required. Refuse BEFORE invoking
+                    # apply; this path never passes --allow-unsigned (the human
+                    # override exists only for a person at a keyboard).
+                    gate_error = _signed_airdrop_gate()
+                    if gate_error is not None:
+                        mail.store(e_id, "+FLAGS", "\\Seen")
+                        processed_count += 1
+                        applied_airdrops.append({
+                            "filename": filename,
+                            "success": False,
+                            "error": gate_error,
+                        })
+                        break  # Solo un zip por correo
 
                     # Aplicar el airdrop usando el Python actual. Cambios al motor
                     # solo se permiten con opt-in explícito por variable de entorno.
