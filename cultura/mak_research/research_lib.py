@@ -452,6 +452,30 @@ PROVIDERS = tuple(PROVIDER_ENV_KEY)
 PROVIDERS_CON_MODELO = ("watsonx",)
 
 
+def watsonx_chat(system, user, max_tok, model=None, temperatura=0.3):
+    """Una llamada de chat a watsonx.ai. Funcion de modulo y no metodo porque
+    el departamento codex tambien necesita este proveedor y NO deberia tener
+    una segunda copia del endpoint: el mismo `refutar.py` acaba de costar una
+    tarde por una lista de proveedores duplicada a mano.
+
+    `temperatura` la elige quien llama: research redacta (0.3) y codex escribe
+    codigo, donde una temperatura alta inventa APIs que no existen (0.1).
+    """
+    base = os.environ.get("WATSONX_URL", "https://us-south.ml.cloud.ibm.com")
+    r = _http_json(
+        base.rstrip("/") + "/ml/v1/text/chat?version=2024-10-08",
+        {"model_id": model or os.environ.get(
+            "WATSONX_MODEL", "meta-llama/llama-3-3-70b-instruct"),
+         "project_id": os.environ.get("WATSONX_PROJECT_ID", ""),
+         "messages": _msgs(system, user),
+         "max_tokens": max_tok,
+         "temperature": temperatura},
+        {"Authorization": "Bearer " + _wx_token()},
+        timeout=90,
+    )
+    return (r["choices"][0]["message"]["content"] or "").strip()
+
+
 class LLM:
     """Cadena de proveedores con fallback y stats (mismo diseno que el
     Code node probado 2026-07-15: cerebras/azure son razonadores, llevan
@@ -529,19 +553,7 @@ class LLM:
         errores. Desde esa medicion encabeza el orden por defecto; ver el
         comentario de LLM.__init__ para la causa y la condicion de retiro.
         """
-        base = os.environ.get("WATSONX_URL", "https://us-south.ml.cloud.ibm.com")
-        r = _http_json(
-            base.rstrip("/") + "/ml/v1/text/chat?version=2024-10-08",
-            {"model_id": model or os.environ.get(
-                "WATSONX_MODEL", "meta-llama/llama-3-3-70b-instruct"),
-             "project_id": os.environ.get("WATSONX_PROJECT_ID", ""),
-             "messages": _msgs(system, user),
-             "max_tokens": max_tok,
-             "temperature": 0.3},
-            {"Authorization": "Bearer " + _wx_token()},
-            timeout=90,
-        )
-        return (r["choices"][0]["message"]["content"] or "").strip()
+        return watsonx_chat(system, user, max_tok, model, temperatura=0.3)
 
     def _azure(self, system, user, max_tok):
         base = os.environ["AZURE_ENDPOINT"].rstrip("/")

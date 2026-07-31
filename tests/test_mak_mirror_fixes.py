@@ -200,15 +200,27 @@ class TestCoderChainEnvOverride:
             codex_lib._CODER_CHAIN_MAP[k] for k in codex_lib._CODER_CHAIN_DEFAULT
         ]
 
-    def test_default_preserva_las_4_entradas_originales(self, monkeypatch):
+    def test_el_default_arranca_por_un_proveedor_que_contesta(self, monkeypatch):
+        """Reemplaza a `test_default_preserva_las_4_entradas_originales`
+        (2026-07-31). Aquel fijaba las cuatro entradas de siempre y por eso
+        protegia el defecto en vez del contrato: la primera era `win`, la
+        notebook que el usuario retiro, sondeada desde la caja ese dia -- no
+        contesta. De los 109 trabajos en FALLO del codex, 22 dicen literalmente
+        `timeout 900s`: cada trabajo empezaba esperando a una maquina apagada.
+
+        Lo que se fija ahora es la propiedad, no la lista: quien encabeza tiene
+        que ser alcanzable, y `win` sigue disponible por env var para cuando la
+        notebook vuelva."""
         monkeypatch.delenv("CODER_CHAIN", raising=False)
         codex_lib = _import_codex_lib()
-        assert codex_lib.CODER_CHAIN == [
-            ("nim", "deepseek-ai/deepseek-v4-pro"),
-            ("nim", "deepseek-ai/deepseek-v4-flash"),
-            ("win", codex_lib.WIN_CODE_MODEL),
-            ("ollama", "deepseek-coder:6.7b"),
-        ]
+        assert codex_lib.CODER_CHAIN[0] == ("watsonx",
+                                            "meta-llama/llama-3-3-70b-instruct")
+        assert ("win", codex_lib.WIN_CODE_MODEL) not in codex_lib.CODER_CHAIN
+        # sigue existiendo como opcion explicita
+        assert codex_lib._CODER_CHAIN_MAP["win"] == ("win",
+                                                     codex_lib.WIN_CODE_MODEL)
+        # y la cadena nunca queda sin un motor local de ultimo recurso
+        assert codex_lib.CODER_CHAIN[-1] == ("ollama", "deepseek-coder:6.7b")
 
 
 # ── fix 7: marco() condicional (research_lib.py, usado por research.py) ──
