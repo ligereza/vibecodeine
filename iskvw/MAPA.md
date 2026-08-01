@@ -58,23 +58,33 @@ sea dos cifras del mismo campo en una página.
 de cada obra en 768 dimensiones, qué fracción sigue siendo vecina en el plano.
 Si baja, lo que el campo afirma se debilita y hay que decirlo.
 
-## El costo por frame de la piel, medido (2026-07-31)
+## El costo por frame de la piel, medido (2026-08-01)
 
 `node tools/iskvw_piel_medir.mjs` corre las funciones REALES de la piel
 publicada en node (misma técnica que el smoke), entra por el modelo de semilla
 `#semilla=&centro=&escala=` y CUENTA el trabajo de cada frame. Los conteos son
 deterministas y los fija `tests/test_iskvw_piel_medir.py`; los milisegundos son
-de la máquina que midió y jamás se fijan. Máquina de referencia: contenedor
-Linux de 2 núcleos, node 22.
+de la máquina que midió y jamás se fijan.
+
+Esta tabla quedó vieja dos veces sin que nadie la corrigiera: seguía diciendo
+"217 gradientes + 434 arcos" y "30 segmentos" cuando `nodo_glifo` (#433) ya
+había vuelto el nodo un glifo (0 gradientes, 0 arcos) y el propio
+`tests/test_iskvw_piel_medir.py` tenía pineado 107 como peor caso, no 30. Re-
+medida hoy, con dos cambios reales encima: el vínculo pasó a dibujarse como haz
+de láser (halo ancho + núcleo fino, `globalCompositeOperation='lighter'`, pedido
+del artista), así que cada segmento cuesta DOS trazos en vez de uno; y el nodo
+perdió el piso que `E.despliegue` le ponía a la densidad del glifo, así que se
+dibujan más caracteres por cuadro durante la navegación. Los dos mueven el
+número; ninguno se acerca al techo.
 
 | | |
 |---|---|
 | sustrato `archivo.json` (479 piezas) | **269 vínculos** indexados una vez (1076 entradas) |
-| peor escenario de la grilla | **30 segmentos por frame** (centro del campo, diafragma abierto) |
+| peor escenario de la grilla | **214 segmentos por frame** (medio abierto) — exactamente el doble del pre-láser (107): un trazo de halo y uno de núcleo por vínculo, ningún vínculo de más |
 | todos-contra-todos, la referencia | 23.871 pares (219 obras) / 114.481 (479 piezas) por frame |
 | sustrato `campo.json` (el respaldo vivo) | **0 segmentos** siempre: no publica vínculos |
-| banda densa abierta, trabajo por nodo | 217 gradientes + 434 arcos por frame, 4–6 ms en la referencia |
-| techo fijado | 1200 segmentos por frame — 40× lo medido, 20× bajo el defecto |
+| banda densa abierta, trabajo por nodo | el nodo es glifo desde #433 (0 gradientes, 0 arcos): **656 `fillText`** por cuadro sobre `archivo.json` (370 sobre el respaldo `campo.json`), incluye el halo del glifo cuando es lo bastante opaco para necesitarlo |
+| techo fijado | 1200 segmentos por frame — 5,6× lo medido, 535× bajo el todos-contra-todos |
 
 Lo que sigue sin medirse: cuadros por segundo en un teléfono. Eso lo mide el
 usuario con el aparato en la mano; ahora tiene contra qué comparar.
