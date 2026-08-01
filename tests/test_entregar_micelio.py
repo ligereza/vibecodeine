@@ -48,17 +48,17 @@ class TestConstruirSalida:
         assert "generado" in salida
 
     def test_vinculos_a_nodos_fantasma_no_cuentan(self):
-        # contrato_archivo.convertir ya filtra a ids conocidos -- confirma
-        # que ese filtro es lo que produce el 0 que dispara el gate.
+        # contrato_archivo.convertir already filters to known ids -- confirms
+        # that filter is what produces the 0 that trips the gate below.
         _, n_piezas, n_vinculos = EM.construir_salida(GRAFO_SIN_VINCULOS, 0.55)
         assert (n_piezas, n_vinculos) == (1, 0)
 
 
 class TestGateDeCero:
-    """El gate real vive en main(): 0 vinculos = ERROR, nada se escribe ni
-    se abre PR. Se ejercita via main() porque ahi vive la decision, pero
-    ninguna de estas dos ramas llega a tocar git/gh (ver docstring del
-    modulo)."""
+    """The real gate lives in main(): 0 vinculos = ERROR, nothing gets
+    written and no PR opens. Exercised via main() because that is where
+    the decision lives, but neither of these two branches ever reaches
+    git/gh (see the module docstring)."""
 
     def test_micelio_inalcanzable_sale_1_sin_tocar_git(self, monkeypatch, capsys):
         def _explota(url, umbral, timeout=90):
@@ -90,7 +90,7 @@ class TestGateDeCero:
         assert EM.main() == 0
         salida = capsys.readouterr().out
         assert "DRY-RUN" in salida
-        assert "1 vinculos" in salida or "1, " in salida  # conteo real, no adivinado
+        assert "1 vinculos" in salida or "1, " in salida  # real count, not guessed
 
 
 class TestSinGenerado:

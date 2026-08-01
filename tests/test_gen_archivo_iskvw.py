@@ -20,8 +20,8 @@ import gen_archivo_iskvw as G  # noqa: E402
 
 
 def test_snapshot_ausente_da_partes_vacias(tmp_path):
-    # Mismo contrato que cualquier otra fuente opcional aca: sin archivo,
-    # sigue sin el -- nunca un resultado inventado.
+    # Same contract as every other optional source here: without the file,
+    # it stays without it -- never an invented result.
     vacio = G.desde_micelio_snapshot(tmp_path / "no-existe.json")
     assert vacio == {"piezas": [], "vinculos": []}
 
@@ -51,8 +51,9 @@ def test_snapshot_con_listas_ausentes_no_revienta(tmp_path):
 
 def test_todo_cae_al_snapshot_cuando_el_micelio_en_vivo_falla(
         tmp_path, monkeypatch, capsys):
-    """--fuente todo: si desde_micelio() explota (el caso real de CI), main()
-    no debe perder el snapshot versionado -- ese es todo el punto de tenerlo."""
+    """--fuente todo: if desde_micelio() blows up (the real CI case), main()
+    must not lose the versioned snapshot -- that is the entire point of
+    having one."""
     def _explota(url, umbral):
         raise TimeoutError("simulated: CI cannot reach the box")
     monkeypatch.setattr(G, "desde_micelio", _explota)
@@ -77,20 +78,20 @@ def test_todo_cae_al_snapshot_cuando_el_micelio_en_vivo_falla(
     assert rc == 0
 
     aviso = capsys.readouterr().err
-    assert "snapshot" in aviso  # dice explicitamente que degrado, no lo esconde
+    assert "snapshot" in aviso  # says explicitly that it degraded, does not hide it
 
     datos = json.loads(salida.read_text(encoding="utf-8"))
     ids = {p["id"] for p in datos["piezas"]}
     assert "snap-obra" in ids
     clases = {v["clase"] for v in datos["vinculos"]}
-    assert "semantico" in clases  # el vinculo medido del snapshot llego
+    assert "semantico" in clases  # the snapshot's measured link made it through
 
 
 def test_fuente_micelio_explicita_no_usa_snapshot_y_falla_fuerte(
         tmp_path, monkeypatch):
-    """--fuente micelio (a diferencia de 'todo') pide el micelio EN VIVO y
-    nada mas: si no responde, error real -- no degrada en silencio a un
-    snapshot que puede estar viejo."""
+    """--fuente micelio (unlike 'todo') asks for the LIVE micelio and
+    nothing else: if it does not respond, a real error -- it never
+    silently degrades to a snapshot that might be stale."""
     def _explota(url, umbral):
         raise TimeoutError("simulated")
     monkeypatch.setattr(G, "desde_micelio", _explota)
@@ -104,12 +105,12 @@ def test_fuente_micelio_explicita_no_usa_snapshot_y_falla_fuerte(
 
 def test_fuente_micelio_snapshot_explicita_lee_solo_el_snapshot(
         tmp_path, monkeypatch):
-    """--fuente micelio_snapshot aisla la ruta de main(): confirma que ESA
-    rama llama a desde_micelio_snapshot() y no otra cosa. (La lectura real
-    de archivo -> piezas/vinculos ya la cubren los tests de arriba, que
-    pasan `ruta` explicita -- el default del argumento se liga en tiempo de
-    definicion, asi que parchear la constante del modulo despues no lo
-    alcanzaria.)"""
+    """--fuente micelio_snapshot isolates main()'s branch: confirms THAT
+    branch calls desde_micelio_snapshot() and nothing else. (The real
+    file -> piezas/vinculos read is already covered by the tests above,
+    which pass an explicit `ruta` -- the argument's default binds at
+    definition time, so patching the module constant afterward would
+    never reach it.)"""
     def _snapshot_falso():
         return {
             "piezas": [{"id": "solo-snapshot", "titulo": "", "clase": "obra",
