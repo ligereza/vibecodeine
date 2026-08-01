@@ -1,6 +1,6 @@
 # Estado del repo
 
-Ultima actualizacion: **2026-08-01, 03:55**.
+Ultima actualizacion: **2026-08-01, 03:15**.
 
 Este archivo se lee en dos minutos o no sirve. Llego a 1.666 lineas apiladas y
 nadie lo leia -- ni los agentes que lo editaban. La historia esta en
@@ -21,9 +21,9 @@ Ninguna la puede tomar un agente. Estan ordenadas por lo que cuesta no tomarla.
 | Que | El numero que hace falta para decidir |
 |---|---|
 | **El reloj de IBM** | ~US$36/dia por TENER el plan. Todo el trabajo de dos dias costo US$0,56. Bajar a Lite se hace desde la consola, no por API. |
-| ~~Degradar las ocurrencias encoladas~~ | **HECHO 2026-08-01 03:22.** 2.656 tareas de `ig` pasaron a `propuesta`; queda 1 pendiente real. Respaldo en `~/plataforma/material.jsonl.bak-20260801`. Lo despachado (155) no se toco. |
+| **Degradar las ocurrencias encoladas** | 2.657 tareas de `ig` esperan. Ya no nacen mas (arreglado), pero las viejas siguen. `python3 material.py --degradar-ocurrencias --aplicar` en la caja. Reversible: cambia un estado, no borra. |
 | **Consolidar las 1.354 fichas de watsonx** | `tipo_obra` 67%->100%, `materiales` 66%->99,6%. Pero **4.595 valores quedarian mas cortos** que los actuales. `tools/consolidar_fichas.py --aplicar`. |
-| ~~Encender `nodo_glifo`~~ | **ENCENDIDA** en el PR #433: el nodo deja de ser circulo. Medido en la banda densa: gradientes 217->0, arcos 434->0. Apagarla es una llave en `datos/tablero.json`. |
+| **Encender `nodo_glifo`** | El nodo deja de ser un circulo y pasa a ser glifo: arcos 764->0, gradientes 382->0. Publicada apagada en `datos/tablero.json`. Ojo: con ella encendida el medidor no puede fijar el costo por cuadro (ver muro 3). |
 | **Si los ensayos de MAK se publican en iskvw.cl** | Lo dejaste para debatir -- y **ya estan publicados** desde el 2026-07-31: el sustrato lleva 16 conceptos y 1 informe. La maquina tomo la decision por vos. |
 | **La geometria del campo** | Dijiste que la pediste "mil veces" y **no esta escrita en ningun lado**: se busco en los 5 documentos, todo el repo, la historia de git en todas las ramas, `.remember/` y los issues. Se perdio en conversacion. Lo unico escrito es `iskvw/piel/campo/ASCII_REFERENCIA.md`. |
 | **`patch_efectos` y `venue3d`** | Construidos y apagados en `datos/tablero.json`. Encenderlos es del artista. |
@@ -42,13 +42,12 @@ Un muro nombrado es entrega valida. Estos no los resuelve mas trabajo.
 2. **La rama `mak` no drena.** 33 utilidades autogeneradas mergeadas ahi, 0 en
    main -- main las borro en #406 y siguen llegando. Su unica salida deberia ser
    un PR a main.
-3. ~~El nodo-glifo no se puede medir.~~ **RESUELTO 2026-08-01.** Eran dos cosas
-   distintas y una era un defecto real: el glifo se elegia sobre la posicion ya
-   temblada por `Math.random()`, asi que el azar decidia el conteo. Corregido, el
-   campo se lee en la posicion estable del nodo. Lo que quedaba -- que la cuenta
-   se mueva entre cuadros -- es el patron generativo haciendo lo suyo, y el
-   medidor ahora fija el PEOR cuadro y publica el rango en vez de exigir que
-   todos sean iguales.
+3. **El nodo-glifo no se puede medir.** Con la llave encendida el conteo por
+   cuadro varia (366, 367...) porque el patron es generativo y su nivel depende
+   de un campo que evoluciona. El medidor exige que cada cuadro haga el mismo
+   trabajo, y hace bien: esa regla existe para que una regresion de costo se vea.
+   La direccion para resolverlo esta en `PROYECCION.md` 5.5 (sembrar lo
+   generativo con algo determinista).
 4. **La triangulacion de RD produce cero fuentes primarias.** 70 informes vivos,
    46 dicen NO SE ENCONTRO y **0 de 70** tienen `verificacion.fuentes_primarias`
    con algo adentro.
@@ -66,10 +65,9 @@ recien despues verifica que exista; no es una copia congelada. La piel degrada a
 las ig termino (1.401/1.401, 0 errores) y esta en
 `~/curatoria/pasadas/v4_watsonx_20260801/` en la caja, **sin consolidar**.
 
-**La cola de MAK.** 2.812 tareas: 2.656 `propuesta`, 155 despachadas, 1
-pendiente. Lo que nace de `oportunidad_codigo` y `linea_investigacion` nace como
-`propuesta` y no se despacha; solo la triangulacion de RD sigue siendo trabajo.
-El corte rige en la caja desde que sincronice main.
+**La cola de MAK.** 2.812 tareas. Desde hoy, lo que nace de `oportunidad_codigo`
+y `linea_investigacion` nace como `propuesta` y no se despacha; solo la
+triangulacion de RD (116) sigue siendo trabajo.
 
 **La busqueda.** Funciona con `TAVILY_API_KEY` puesta en
 `~/n8n-local/research.env` (permisos 600). Los cuatro motores generales de
@@ -179,6 +177,68 @@ modelo -- las parafrasea, y una decision parafraseada deja de ser la decision,
 que es justo el problema que se quiere arreglar. Hay que pedirle que diga QUE
 TURNOS contienen una decision, y sacar la cita de la transcripcion por indice.
 Textual por construccion, sin nada que verificar despues.
+
+### El prompt, listo para correr
+
+No se le piden citas al modelo: se le piden NUMEROS de turno. La cita sale de la
+transcripcion por indice, textual por construccion.
+
+MAPA (`ibm/granite-3-8b-instruct`, 23 llamadas de ~95k tokens):
+
+```txt
+SISTEMA
+Sos un clasificador de turnos de conversacion. Recibis turnos NUMERADOS de una
+persona hablando con asistentes de IA sobre su repositorio. Devolves SOLO un
+objeto JSON, sin explicaciones ni markdown.
+
+USUARIO
+Clasifica cada turno. NO copies ni cites el texto: ya lo tengo. Devolve el
+NUMERO del turno y una etiqueta.
+
+{"marcados": [{"n": 1234, "tipo": "decision|orden|correccion|queja",
+               "sobre": "de que trata, MAXIMO 6 palabras"}]}
+
+REGLAS:
+- `decision`: elige entre opciones, define como debe ser algo, cierra un debate.
+- `orden`: pide que se haga algo concreto.
+- `correccion`: le dice al asistente que se equivoco.
+- `queja`: repite algo con fastidio, o reclama que no se hizo.
+- Un turno que no es ninguna de las cuatro NO se incluye. Una lista corta y
+  cierta vale mas que una larga e inflada.
+- `sobre` es una ETIQUETA para agrupar despues, no un resumen.
+- Si dudas entre incluir y no incluir, no incluyas.
+
+TURNOS:
+[0001] ...
+```
+
+REDUCCION (`openai/gpt-oss-120b`, 1 llamada):
+
+```txt
+Estas son etiquetas de turnos clasificados a lo largo de un mes. Agrupa las que
+hablan de LO MISMO y ordena por cuantas veces aparece.
+
+{"temas": [{"tema": "...", "veces": N, "turnos": [1234, 5678],
+            "primera_fecha": "...", "ultima_fecha": "...",
+            "tipos": {"decision": N, "queja": N}}]}
+
+REGLAS:
+- Un tema que aparece muchas veces con `queja` o `correccion` es algo que la
+  persona tuvo que repetir porque nadie lo anoto. Ese es el hallazgo.
+- No recomiendes nada. No priorices. Conta.
+```
+
+Por que asi vale la pena: la salida son numeros y etiquetas de seis palabras,
+asi que el tope de tokens deja de ser un recorte callado; el hallazgo es el
+CONTEO, no la prosa; y lo unico que el modelo redacta es la etiqueta, de manera
+que si se equivoca agrupa mal pero no inventa una decision.
+
+Los estratos ya estan extraidos: `tools/leer_mes_watsonx.py` se borro por no
+tener consumidor, pero su parte util era `estratos_del_mes()`, que separa
+usuario / asistente / lineas de error de los `.jsonl` de
+`~/.claude/projects/c--IA-flujo/`. La llave de watsonx vive solo en la caja
+(`~/n8n-local/research.env`), asi que se extrae en la maquina del usuario y se
+corre alla.
 
 ## 6. Para un agente que recien llega
 
