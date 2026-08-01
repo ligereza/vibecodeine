@@ -1,42 +1,42 @@
-#!/usr/bin/env python3
-"""conversacion.py -- lee el mes de conversacion como corpus, no como historial.
+"""conversacion.py -- reads a month of sessions as a corpus, not as history.
 
-Tercer hermano de `arqueologia.py` (que lee el historial de git) y de
-`esfuerzo.py` (que lee el costo de producir un informe como medicion del
-tema). Mismo molde, tercer corpus: las transcripciones de las sesiones.
+Third sibling of `arqueologia.py` (which reads git history) and `esfuerzo.py`
+(which reads the cost of producing a report as a measurement of the topic).
+Same mould, third corpus: the session transcripts.
 
-Nadie las escribio para ser leidas asi. Se acumularon solas, fechadas, en
-`~/.claude/projects/<proyecto>/*.jsonl`, y contienen lo unico que el repo
-NO tiene: lo que el usuario decidio, ordeno, corrigio y tuvo que repetir.
-Por eso se puede leer hacia atras sobre todo lo ya acumulado, sin
-instrumentar nada.
+Nobody wrote them to be read this way. They piled up on their own, dated, under
+`~/.claude/projects/<project>/*.jsonl`, and they hold the one thing the repo
+does NOT have: what the user decided, ordered, corrected and had to repeat.
+That is why they can be read backwards over everything already accumulated,
+with nothing instrumented in advance.
 
-Las dos reglas heredadas de sus hermanos, por las mismas razones:
+The two rules inherited from its siblings, for the same reasons:
 
-  1. NINGUNA lista blanca escrita a mano decide que se lee. Los tipos de
-     registro y los bloques de contenido se DESCUBREN en el corpus; lo que
-     el extractor ve y no sabe leer aparece EN VOZ ALTA en la seccion
-     "no entendidos" en vez de perderse en silencio.
+  1. NO hand-written allowlist decides what gets read. Record types and content
+     blocks are DISCOVERED in the corpus; whatever the extractor sees and
+     cannot read is reported OUT LOUD in the "not understood" section instead
+     of vanishing silently.
 
-  2. NINGUN valor por defecto. Si un dato no vino, queda ausente y se
-     cuenta como ausente. Rellenarlo con algo plausible volveria la falta
-     indistinguible de una medicion real.
+  2. NO default values. If a datum did not arrive it stays absent and is
+     counted as absent. Filling it with something plausible would make the gap
+     indistinguishable from a real measurement.
 
-Y la tercera, que es la que hace que valga la pena:
+And the third one, which is what makes this worth running:
 
-  3. La salida NO es el bruto. Un tema del que se hablo mucho ocupa muchos
-     turnos y eso no dice nada. Sale el RESIDUO: lo observado menos lo
-     esperado para su tamano. La anomalia es el hallazgo.
+  3. The output is NOT the raw figure. A topic that was discussed a lot takes
+     up many turns and that says nothing. What comes out is the RESIDUAL:
+     observed minus expected for its size. The anomaly is the finding.
 
-El instrumento central es MECANICO y no cuesta un token: un tema que el
-usuario tuvo que volver a explicar en SESIONES DISTINTAS es un tema que
-nadie anoto. La repeticion entre sesiones -- no dentro de una -- es la
-firma de una decision perdida.
+The central instrument is MECHANICAL and costs zero tokens: a topic the user
+had to explain again in DIFFERENT SESSIONS is a topic nobody wrote down.
+Repetition across sessions -- not within one -- is the signature of a lost
+decision.
 
-Uso:
+Usage:
     py tools/conversacion.py estratos [--raiz ...] [--salida turnos.jsonl]
     py tools/conversacion.py medir    --turnos turnos.jsonl [--salida CONVERSACION.md]
     py tools/conversacion.py lotes    --turnos turnos.jsonl --destino lotes/ [--ventana 95000]
+    py tools/conversacion.py clasificar --turnos turnos.jsonl --capa usuario --salida m.json
     py tools/conversacion.py citar    --turnos turnos.jsonl --marcados marcados.json
 
 Stdlib-only, Python 3.11.
@@ -53,24 +53,25 @@ import unicodedata
 from pathlib import Path
 from typing import Any, Iterator
 
-# Bloques de contenido que SI son habla humana o del asistente. Todo lo
-# demas (tool_use, tool_result, thinking, imagenes) se cuenta aparte: es el
-# repo pegado de vuelta, no conversacion. Medido: 39,2 MB de 47 MB utiles.
+# Content blocks that ARE human or assistant speech. Everything else
+# (tool_use, tool_result, thinking, images) is counted apart: it is the repo
+# pasted back, not conversation. Measured: 39.2 MB out of 47 MB.
 BLOQUES_TEXTO = {"text"}
 
-# Que turno lo escribio un humano NO se adivina por el texto: el registro
-# ya lo trae en `origin.kind`. La primera version de este modulo lo decidia
-# por una lista de prefijos escrita a mano, y esa lista dejo de coincidir
-# con la realidad -- los resumenes de compactacion y los prompts de skill
-# no empiezan por ninguno de ellos, entraron como habla del usuario y se
-# comieron los primeros 30 puestos de la medicion. Es la misma forma de
-# defecto que el repo ya vio siete veces. El campo se lee, no se infiere.
+# Which turn a human wrote is NOT guessed from the text: the record already
+# carries it in `origin.kind`. The first version of this module decided it
+# with a hand-written list of prefixes, and that list stopped matching
+# reality -- compaction summaries and skill prompts begin with none of them,
+# entered as user speech and ate the top 30 places of the measurement. Same
+# defect shape this repo has already seen seven times. The field is read,
+# never inferred.
 CLASE_HUMANA = "human"
 
-# `promptSource` distingue COMO llego ese turno humano (tecleado, por SDK,
-# encolado, sugerencia aceptada). No filtra: se guarda para poder contar.
-# Un turno con `origin.kind` ausente no se asume humano ni sintetico: se
-# cuenta aparte, porque no saberlo es un dato y rellenarlo seria inventarlo.
+# `promptSource` says HOW that human turn arrived (typed, via SDK, queued,
+# suggestion accepted). It does not filter: it is kept so it can be counted.
+# A turn with no `origin.kind` is assumed neither human nor synthetic: it is
+# counted apart, because not knowing is a datum and filling it would invent
+# one.
 
 PALABRAS_VACIAS = {
     "que", "de", "la", "el", "en", "y", "a", "los", "las", "un", "una", "es",
@@ -83,8 +84,8 @@ PALABRAS_VACIAS = {
 # --------------------------------------------------------------------- lectura
 
 def _texto_de(contenido: Any, no_entendidos: collections.Counter) -> tuple[str, int]:
-    """Devuelve (texto humano, bloques no-texto). Regla 1: lo que no
-    entiende lo CUENTA, no lo tira."""
+    """Returns (human text, non-text blocks). Rule 1: what it does not
+    understand gets COUNTED, not dropped."""
     if isinstance(contenido, str):
         return contenido, 0
     if not isinstance(contenido, list):
@@ -109,7 +110,7 @@ def _texto_de(contenido: Any, no_entendidos: collections.Counter) -> tuple[str, 
 
 
 def _clase_de(d: dict) -> str:
-    """`humano`, `harness` o `sin_declarar`. Lo dice el registro, no el texto."""
+    """`humano`, `harness` or `sin_declarar`. The record says so, not the text."""
     origen = d.get("origin")
     if not isinstance(origen, dict):
         return "sin_declarar" if origen is None else "harness"
@@ -121,11 +122,11 @@ def _clase_de(d: dict) -> str:
 
 def leer_turnos(raices: list[Path]) -> tuple[list[dict], collections.Counter,
                                              collections.Counter, list[str]]:
-    """Recorre los .jsonl y devuelve turnos con su INDICE de origen.
+    """Walks the .jsonl files and returns turns with their SOURCE INDEX.
 
-    El indice (archivo, linea) es lo que permite sacar la cita textual
-    despues sin pedirsela a ningun modelo: una cita parafraseada deja de
-    ser la cita."""
+    The index (file, line) is what makes the verbatim quote recoverable
+    later without asking any model for it: a paraphrased quote stops being
+    the quote."""
     turnos: list[dict] = []
     tipos: collections.Counter = collections.Counter()
     no_entendidos: collections.Counter = collections.Counter()
@@ -203,16 +204,16 @@ def normalizar(txt: str) -> list[str]:
 
 def repeticion_entre_sesiones(turnos: list[dict], grado: int = 3,
                               minimo_sesiones: int = 3) -> list[dict]:
-    """El instrumento central, y no cuesta un token.
+    """The central instrument, and it costs zero tokens.
 
-    Un n-grama que el usuario escribe en VARIAS SESIONES DISTINTAS es algo
-    que tuvo que volver a explicar porque nadie lo anoto. Repetirlo dentro
-    de una sesion es normal -- se esta hablando del tema. Repetirlo en
-    sesiones separadas por dias es la firma de una decision perdida.
+    An n-gram the user writes across SEVERAL DIFFERENT SESSIONS is something
+    they had to explain again because nobody wrote it down. Repeating it
+    inside one session is normal -- that is talking about the topic.
+    Repeating it in sessions days apart is the signature of a lost decision.
 
-    Se devuelve el RESIDUO, no el bruto (regla 3): un n-grama de un tema
-    del que se hablo mucho aparece mucho, y eso no dice nada. Se compara
-    contra cuantas sesiones tocaron alguna de sus palabras."""
+    What comes back is the RESIDUAL, not the raw count (rule 3): an n-gram
+    from a much-discussed topic appears often, and that says nothing. It is
+    compared against how many sessions touched any of its words."""
     por_grama: dict[tuple, set] = collections.defaultdict(set)
     por_palabra: dict[str, set] = collections.defaultdict(set)
     ejemplo: dict[tuple, int] = {}
@@ -232,11 +233,11 @@ def repeticion_entre_sesiones(turnos: list[dict], grado: int = 3,
     for g, sesiones in por_grama.items():
         if len(sesiones) < minimo_sesiones:
             continue
-        # Esperado: si el tema se toca en S sesiones, sus palabras tambien.
-        # Un grama que sobrevive ENTERO en casi todas esas sesiones es una
-        # formula que el usuario repite, no un tema del que se habla.
+        # Expected: if the topic comes up in S sessions, so do its words. A
+        # gram surviving WHOLE across nearly all of them is a formula the
+        # user repeats, not a topic being discussed.
         alcance = min(len(por_palabra[p]) for p in g)
-        if alcance < len(sesiones):        # no deberia pasar; si pasa, no puntua
+        if alcance < len(sesiones):        # should not happen; if it does, no score
             continue
         filas.append({
             "grama": " ".join(g),
@@ -250,11 +251,11 @@ def repeticion_entre_sesiones(turnos: list[dict], grado: int = 3,
 
 
 def coste_por_sesion(turnos: list[dict], minimo_turnos: int = 8) -> list[dict]:
-    """Cuanto costo cada sesion, leido como medicion de la sesion.
+    """What each session cost, read as a measurement of the session.
 
-    Herencia directa de `esfuerzo.py`: un tema que necesito muchos turnos
-    del usuario POR turno del asistente no fue mas caro, fue peor
-    entendido. El residuo se calcula contra la mediana del corpus."""
+    Straight from `esfuerzo.py`: a topic that needed many user turns PER
+    assistant turn was not more expensive, it was worse understood. The
+    residual is computed against the median of the corpus."""
     por_sesion: dict[str, list[dict]] = collections.defaultdict(list)
     for t in turnos:
         if t["sesion"]:
@@ -264,9 +265,9 @@ def coste_por_sesion(turnos: list[dict], minimo_turnos: int = 8) -> list[dict]:
     for sid, ts in por_sesion.items():
         humanos = [t for t in ts if t["clase"] == "humano"]
         asist = [t for t in ts if t["rol"] == "assistant"]
-        # Una sesion de un turno da insistencia 1.00 y puntua alto por ruido:
-        # con un solo par no hay proporcion que medir. El minimo no descarta
-        # la sesion, la deja fuera del RANKING, que es cosa distinta.
+        # A one-turn session gives insistence 1.00 and scores high on noise:
+        # with a single pair there is no ratio to measure. The minimum does
+        # not discard the session, it keeps it out of the RANKING.
         if len(humanos) < minimo_turnos or len(asist) < minimo_turnos:
             continue
         fechas = sorted(t["ts"] for t in ts if t["ts"])
@@ -287,8 +288,8 @@ def coste_por_sesion(turnos: list[dict], minimo_turnos: int = 8) -> list[dict]:
         desv = [abs(x - med) for x in ins]
         mad = statistics.median(desv) or (sum(desv) / len(desv))
         for f in filas:
-            # Sin escala no se puntua: fabricar una para mostrar un numero
-            # es el defecto que este modulo evita.
+            # No scale, no score: fabricating one just to show a number is
+            # the defect this module exists to avoid.
             f["residuo"] = (round((f["insistencia"] - med) / (1.4826 * mad), 3)
                             if mad > 0 else None)
     else:
@@ -302,11 +303,11 @@ def coste_por_sesion(turnos: list[dict], minimo_turnos: int = 8) -> list[dict]:
 
 def lotes(turnos: list[dict], ventana_tokens: int, solo_usuario: bool
           ) -> Iterator[tuple[int, list[dict]]]:
-    """Corta el corpus en lotes que ENTRAN en la ventana del modelo.
+    """Cuts the corpus into batches that FIT the model window.
 
-    La estimacion es chars/3.4 (espanol, mas denso que ingles). No se
-    apura al limite: el tope existe para que ningun turno se recorte a la
-    mitad, porque un turno cortado se clasifica mal y nadie se entera."""
+    The estimate is chars/3.4 (Spanish, denser than English). It does not
+    crowd the limit: the cap exists so no turn is sliced in half, because a
+    truncated turn is misclassified and nobody finds out."""
     seleccion = [t for t in turnos
                  if not t["sintetico"] and (t["rol"] == "user" or not solo_usuario)]
     lote: list[dict] = []
@@ -324,14 +325,14 @@ def lotes(turnos: list[dict], ventana_tokens: int, solo_usuario: bool
 
 
 def render_lote(lote: list[dict], tope_chars: int = 4000) -> str:
-    """Un turno por bloque, NUMERADO. El numero es el unico dato que el
-    modelo tiene que devolver, y es lo que permite recuperar la cita
-    textual de la transcripcion sin pedirsela a el."""
+    """One turn per block, NUMBERED. The number is the only datum the model
+    has to return, and it is what makes the verbatim quote recoverable from
+    the transcript without asking the model for it."""
     out = []
     for t in lote:
         txt = t["texto"]
         if len(txt) > tope_chars:
-            # Se declara el corte. Un recorte callado es un dato falso.
+            # The cut is declared. A silent truncation is a false datum.
             txt = txt[:tope_chars] + "\n[...CORTADO %d chars...]" % (len(txt) - tope_chars)
         out.append("[%04d] %s" % (t["n"], txt))
     return "\n\n".join(out)
@@ -339,11 +340,11 @@ def render_lote(lote: list[dict], tope_chars: int = 4000) -> str:
 
 # -------------------------------------------------------------------- watsonx
 
-# No se le piden CITAS al modelo. Se le piden NUMEROS de turno, y la cita
-# sale de la transcripcion por indice. Una decision parafraseada deja de
-# ser la decision -- que es justo el problema que este modulo arregla. Ese
-# es tambien el motivo de que el tope de tokens deje de ser un recorte
-# callado: la salida son numeros y etiquetas de seis palabras.
+# The model is NOT asked for QUOTES. It is asked for turn NUMBERS, and the
+# quote comes from the transcript by index. A paraphrased decision stops
+# being the decision -- which is exactly the problem this module fixes. It
+# is also why the token cap stops being a silent truncation: the output is
+# numbers and six-word labels.
 PROMPTS = {
     "usuario": (
         "Sos un clasificador de turnos de conversacion. Recibis turnos "
@@ -426,9 +427,9 @@ def _wx_chat(base, tok, proyecto, modelo, system, user, max_tok, timeout=600):
 
 
 def _json_de(txt: str) -> dict | None:
-    """Saca el objeto JSON de una respuesta que pudo venir con adornos.
-    Devuelve None si no hay: un fallo de formato se CUENTA, no se rellena
-    con una lista vacia que despues parece una lectura sin hallazgos."""
+    """Pulls the JSON object out of a response that may arrive decorated.
+    Returns None when there is none: a format failure is COUNTED, never
+    filled with an empty list that later reads as a run with no findings."""
     t = txt.strip()
     if t.startswith("```"):
         t = re.sub(r"^```[a-z]*\n|\n```$", "", t).strip()
@@ -677,7 +678,7 @@ def main() -> int:
         for idx, lote in partes:
             if idx < a.desde:
                 continue
-            if time.time() - t_tok > 3000:          # el bearer vence a la hora
+            if time.time() - t_tok > 3000:          # the bearer expires hourly
                 tok, t_tok = _wx_token(key), time.time()
             texto = user + render_lote(lote)
             t0 = time.time()
@@ -700,7 +701,7 @@ def main() -> int:
                         continue
                     fallos.append({"lote": idx, "error": "HTTP %d %s" % (e.code, cuerpo)})
                     break
-                except Exception as e:                # noqa: BLE001 - se reporta
+                except Exception as e:                # noqa: BLE001 - reported
                     if intento < 3:
                         time.sleep(5 * (intento + 1))
                         continue
@@ -717,8 +718,8 @@ def main() -> int:
                 (crudo / ("%s_%03d.txt" % (a.capa, idx))).write_text(resp, encoding="utf-8")
             obj = _json_de(resp)
             if obj is None:
-                # Un fallo de formato se CUENTA. Rellenarlo con una lista
-                # vacia lo volveria indistinguible de un lote sin hallazgos.
+                # A format failure is COUNTED. Filling it with an empty list
+                # would make it indistinguishable from a batch with no hits.
                 fallos.append({"lote": idx, "error": "respuesta sin JSON legible"})
                 print("  lote %d: sin JSON (%d chars)" % (idx, len(resp)))
                 continue
