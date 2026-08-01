@@ -173,6 +173,63 @@ def verificar(sobre: dict, raiz: str | Path = ".") -> Resultado:
                      checks=checks)
 
 
+# Las tres preguntas que convierten una OCURRENCIA en una tarea. Inventar que
+# hacer esta bien; decidirlo sin formato no.
+#
+# Medido el 2026-08-01: MAK se puso a las 02:00 a "generar una base de datos de
+# tatuajes por tipo de imagen y elementos". Nadie lo decidio. Salio de
+# `oportunidad_codigo` de una foto de 2020 -- un campo donde al modelo se le
+# pide explicitamente que ESPECULE ("si la obra sugiere un procedimiento que
+# podria automatizarse, describi que programa la generaria") -- y `material.py`
+# lo convierte textual en orden de trabajo. Ese campo viene lleno en el 77,9%
+# de 1.354 obras.
+#
+# Y la tercera pregunta existe por un error MIO del mismo dia: conclui que
+# nadie conectaba los conceptos de un ensayo con el motor de iconos, cuando
+# `tools/iconos_conjunto.py` existe, tiene tests, produjo 16 iconos y esta
+# registrado en CAPACIDADES.md -- un archivo que edite cinco veces esa noche
+# sin leerlo nunca. Un grep vacio no es evidencia de ausencia: es evidencia de
+# que la consulta fue estrecha.
+PREGUNTAS_PROPUESTA = (
+    ("consumidor",
+     "QUIEN lo va a usar cuando este hecho. No 'seria util': un nombre. Sin "
+     "consumidor no es una tarea, es una ocurrencia."),
+    ("ya_busque_en",
+     "DONDE buscaste que no exista ya, y que encontraste. Como minimo el "
+     "registro VIVO de CAPACIDADES.md y la tabla de MAPA.md, que estan "
+     "generados y no se pudren."),
+    ("criterio",
+     "COMO se sabe que salio bien, en la forma que corre una maquina. Es el "
+     "mismo `criterio` de una semilla."),
+)
+
+
+def evaluar_propuesta(propuesta: dict) -> dict:
+    """Does this idea qualify as a task? Returns what is missing, never a bare no.
+
+    Inventing what to do is fine. Deciding it without a format is not: that is
+    how a model musing over a photo of a tattoo became a work order at 2am.
+
+    This does not judge whether the idea is GOOD -- nobody can automate that.
+    It asks the three things whose absence turns any idea into noise: who will
+    use it, where you looked for it already, and how anyone will know it
+    worked.
+    """
+    faltan = []
+    for clave, porque in PREGUNTAS_PROPUESTA:
+        valor = propuesta.get(clave)
+        if clave == "criterio":
+            ok = isinstance(valor, list) and bool(valor)
+        else:
+            ok = bool(str(valor or "").strip())
+        if not ok:
+            faltan.append({"falta": clave, "porque": porque})
+    return {"formato": FORMATO, "tipo": "propuesta",
+            "asunto": str(propuesta.get("asunto") or "")[:200],
+            "es_tarea": not faltan,
+            "le_falta": faltan}
+
+
 def cosechar(sobre: dict, raiz: str | Path = ".", tope: int = TOPE_FRUTO_BYTES) -> dict:
     """Run the criterion and RETURN AN ENVELOPE: `fruto` if green, `hongo` if red.
 
