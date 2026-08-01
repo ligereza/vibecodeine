@@ -307,9 +307,7 @@ def investigar(topic, iteraciones=3, depth="basic",
     print("STATUS: Generando %s final..." % formato, flush=True)
     try:
         sistema_ensayo = guardia + formato_ensayo.SISTEMA
-        sistema_informe = guardia + (
-            "Eres un investigador senior. Redactas informes claros en "
-            "espanol correcto (con tildes), en formato Markdown.")
+        sistema_informe = guardia + formato_ensayo.SISTEMA_INFORME
         if ev:
             # Sin fuente primaria la TAREA cambia: de sintetizar a reportar la
             # ausencia. No es un aviso al margen, es otra instruccion.
@@ -325,14 +323,13 @@ def investigar(topic, iteraciones=3, depth="basic",
                 formato_ensayo.prompt_documento(topic, findings, sources),
                 int(escala_tok(2000, densidad) * 1.8))
         else:
+            # El informe tambien tiene contrato desde el 2026-08-01. Era una
+            # linea pidiendo cinco secciones enumeradas, y es el formato POR
+            # DEFECTO: eso era lo que el organismo producia todos los dias.
             report, _ = llm.call(
                 sistema_informe,
-                "Genera un informe con secciones: 1. RESUMEN EJECUTIVO, "
-                "2. HALLAZGOS PRINCIPALES (cita fuente URL), 3. ANALISIS "
-                "CRITICO, 4. LAGUNAS DE INFORMACION, 5. PROXIMOS PASOS.\n\n"
-                'TEMA: "%s"\n\nHALLAZGOS:\n%s\n\nFUENTES:\n%s'
-                % (topic, json.dumps(findings, ensure_ascii=False, indent=1)[:14000],
-                   "\n".join(sources)),
+                formato_ensayo.prompt_informe(topic, findings, sources,
+                                              query_history),
                 escala_tok(2000, densidad),
             )
     except RuntimeError as e:

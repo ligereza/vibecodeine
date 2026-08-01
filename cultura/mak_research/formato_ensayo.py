@@ -52,6 +52,103 @@ SISTEMA = ("Eres un ensayista cultural. Escribes en espanol correcto CON TILDES,
            "en Markdown. Argumentas: no enumeras. Cada afirmacion verificable "
            "lleva su fuente.")
 
+# ---------------------------------------------------------------- informe
+# El otro formato. Hasta el 2026-08-01 su prompt era UNA LINEA pidiendo cinco
+# secciones enumeradas -- resumen ejecutivo, hallazgos, analisis, lagunas,
+# proximos pasos -- y es el formato POR DEFECTO, asi que era lo que el
+# organismo producia todos los dias. Un informe de consultora generica sobre
+# un corpus que nadie encargo.
+#
+# No se convierte en un ensayo: son cosas distintas y el ensayo ya existe. Un
+# informe responde una pregunta con lo que se encontro, y lo que lo vuelve
+# util no es la prosa, es que se pueda REFUTAR: que cada afirmacion diga de
+# donde sale, que lo que no se encontro se diga como ausencia y no se rellene,
+# y que la confianza sea un dato y no un tono.
+#
+# Las exigencias salen de defectos medidos en el corpus vivo (70 informes,
+# 2026-08-01): 46 decian NO SE ENCONTRO y 0 de 70 traian una sola fuente
+# primaria, mientras el texto sonaba igual de seguro en los dos casos.
+EXIGENCIAS_INFORME = (
+    "TITULO que diga el hallazgo, no el tema. \"Tres productoras comparten "
+    "venue y ninguna declara vinculo\" es un titulo; \"Informe sobre "
+    "productoras\" es una carpeta.",
+
+    "Abre con la RESPUESTA, en dos o tres lineas, antes de cualquier metodo o "
+    "contexto. Si la respuesta es que no se encontro, eso ES la respuesta y va "
+    "primero: nadie tiene que leer cuatro secciones para descubrirlo.",
+
+    "Cada afirmacion verificable lleva su fuente PEGADA, con la URL entre "
+    "parentesis al final de la frase. Una afirmacion sin fuente se escribe "
+    "igual, pero marcada: \"(sin fuente: inferido de X)\". Lo que no se puede "
+    "atribuir se declara, no se omite ni se disfraza.",
+
+    "Distingue TRES estados y nunca los mezcla: lo que las fuentes DICEN, lo "
+    "que vos INFERIS de ellas, y lo que NO SE ENCONTRO. Un informe que suena "
+    "igual de seguro en los tres casos es peor que no tenerlo, porque manda a "
+    "actuar sobre una suposicion.",
+
+    "Lo que NO SE ENCONTRO va con el mismo peso que lo encontrado, y dice "
+    "DONDE se busco -- pero SOLO con las consultas que estan listadas abajo en "
+    "CONSULTAS REALIZADAS. Si no hay lista, escribis \"no se encontro\" a "
+    "secas. NUNCA inventes donde se busco: en la primera prueba de este "
+    "formato el modelo escribio \"buscado en registros municipales y archivos "
+    "de la municipalidad\" y ahi no busco nadie. Una busqueda inventada es "
+    "peor que no declarar ninguna, porque cierra la pregunta en falso.",
+
+    "Si hay lecturas que se contradicen, van LAS DOS, una al lado de la otra, "
+    "con su fuente cada una. No se promedian ni se elige la mas comoda.",
+
+    "CIERRA con lo que cambiaria el resultado: que dato falta, donde estaria, "
+    "y que decision distinta se tomaria si apareciera. Sin lista de \"proximos "
+    "pasos\" generica -- una accion concreta o ninguna.",
+
+    "Nada de relleno: sin 'es importante destacar', sin 'en conclusion', sin "
+    "parrafo de contexto que no aporte un dato. Si una frase se puede borrar "
+    "sin perder informacion, sobra.",
+)
+
+
+def prompt_informe(tema: str, findings, sources, consultas=None) -> str:
+    """El prompt del informe.
+
+    `consultas` son las busquedas que de verdad se hicieron (`query_history`).
+    Van al prompt porque sin ellas el modelo INVENTA donde se busco: medido en
+    la primera prueba de este formato, escribio "buscado en registros
+    municipales y archivos de la municipalidad" sobre una corrida que solo
+    consulto la web. Una ausencia sostenida por una busqueda que no ocurrio
+    cierra la pregunta en falso, y eso es peor que dejarla abierta."""
+    import json as _json
+    numeradas = "\n".join("%d. %s" % (i, e)
+                          for i, e in enumerate(EXIGENCIAS_INFORME, 1))
+    return (
+        "Escribe un INFORME sobre el tema. Un informe cumple OCHO exigencias y "
+        "las cumple TODAS; si una no se puede cumplir con el material que "
+        "tenes, decilo en el texto en vez de simularla.\n\n"
+        "%s\n\n"
+        "Estructura libre: no hay secciones obligatorias y NO las numeres. Lo "
+        "que manda es la exigencia 2 (la respuesta primero) y la 5 (la "
+        "ausencia pesa igual). Si el material da para tres parrafos, son tres "
+        "parrafos -- estirar un informe corto para que parezca completo es la "
+        "unica falta que no tiene arreglo.\n\n"
+        'TEMA: "%s"\n\nHALLAZGOS:\n%s\n\nFUENTES:\n%s%s'
+        % (numeradas, tema,
+           _json.dumps(findings, ensure_ascii=False, indent=1)[:14000],
+           "\n".join(sources),
+           ("\n\nCONSULTAS REALIZADAS (las UNICAS que podes citar como "
+            "\"donde se busco\"):\n"
+            + "\n".join("- %s" % c for c in consultas))
+           if consultas else
+           "\n\nCONSULTAS REALIZADAS: no se registraron. Entonces NO declares "
+           "donde se busco -- escribi \"no se encontro\" a secas.")
+    )
+
+
+SISTEMA_INFORME = (
+    "Eres un investigador senior. Escribes en espanol correcto CON TILDES, en "
+    "Markdown. Tu informe se juzga por si se puede REFUTAR: cada afirmacion "
+    "dice de donde sale, y lo que no se encontro se declara como ausencia en "
+    "vez de rellenarse con algo plausible.")
+
 SISTEMA_CONCEPTOS = (
     "Extraes los conceptos NOMBRABLES de un ensayo. Un concepto nombrable se "
     "dice con una frase nominal ('la zona autonoma temporal', 'la Roland "
