@@ -846,7 +846,15 @@ def construir_ficha(entry: dict, dir_tmp: Path, timeout_archivo: int) -> dict:
     # `if vision.get(k)` bota tambien los valores VACIOS, asi que una medicion
     # legitimamente vacia y una clave que nunca llego quedan identicas.
     # No se cambia que se guarda: se cambia que ahora se SABE cual es cual.
-    _ignoradas = {"error", "_motor"}
+    # `_ignoradas` son las claves que NO van al bloque `vision` pero SI se
+    # usan: `datos_evento` se arma con CLAVES_EVENTO y `categoria` sale un
+    # poco mas abajo, las dos leyendo este mismo dict. Sin restarlas, el aviso
+    # anunciaba que se descartaban seis claves que en realidad se guardan --
+    # medido en la sonda RD del 2026-08-01, 7 de 10 archivos avisando de un
+    # descarte que no ocurre. Una falsa alarma es el defecto espejo del
+    # descarte callado: manda al operador a perseguir un fantasma, y la
+    # proxima alarma verdadera ya no se cree.
+    _ignoradas = {"error", "_motor", "categoria"} | set(CLAVES_EVENTO)
     desconocidas = sorted(set(vision) - set(claves_vision) - _ignoradas)
     vacias = sorted(k for k in claves_vision
                     if k in vision and not vision.get(k))
@@ -957,7 +965,8 @@ def guardar_estado(dir_out, estado: dict) -> None:
 def correr(raiz_rd, raiz_ig, dir_out,
            max_errores_seguidos: int = DEFAULT_MAX_ERRORES_SEGUIDOS,
            timeout_archivo: int = DEFAULT_TIMEOUT_ARCHIVO,
-           solo_fuente: str | None = None) -> int:
+           solo_fuente: str | None = None,
+           limite: int | None = None) -> int:
     """Corre la percepcion sobre ambos corpus. Retorna el codigo de salida:
 
     0 = termino todo el trabajo pendiente.
@@ -980,6 +989,15 @@ def correr(raiz_rd, raiz_ig, dir_out,
     dir_tmp.mkdir(parents=True, exist_ok=True)
 
     trabajo = construir_trabajo(raiz_rd, raiz_ig, solo_fuente=solo_fuente)
+    # `--limite` existe para SONDEAR un corpus sin correrlo entero: el usuario
+    # pidio 10 flyers de RD, no los miles que hay. El recorte se dice en la
+    # salida -- un total mas chico sin explicacion se lee como "eso era todo el
+    # corpus", y el que compare cobertura despues estaria dividiendo por el
+    # numero equivocado.
+    if limite is not None and limite > 0 and len(trabajo) > limite:
+        print("LIMITE: sonda de %d de %d archivos (el resto NO se toca)"
+              % (limite, len(trabajo)), flush=True)
+        trabajo = trabajo[:limite]
     total_trabajo = len(trabajo)
 
     procesados_set = reconciliar_checkpoint_fallido(
@@ -1111,6 +1129,13 @@ def main() -> int:
             print("ERROR: --solo-fuente debe ser rd o ig", file=sys.stderr)
             return 2
 
+        limite_txt = _obtener_flag(resto, "--limite")
+        try:
+            limite = int(limite_txt) if limite_txt else None
+        except ValueError:
+            print("ERROR: --limite debe ser un entero", file=sys.stderr)
+            return 2
+
         try:
             max_errores = int(_obtener_flag(
                 resto, "--max-errores-seguidos", DEFAULT_MAX_ERRORES_SEGUIDOS))
@@ -1127,6 +1152,7 @@ def main() -> int:
                 max_errores_seguidos=max_errores,
                 timeout_archivo=timeout_archivo,
                 solo_fuente=solo_fuente,
+                limite=limite,
             )
         except Exception as exc:
             print("ERROR correr: %s" % exc, file=sys.stderr)

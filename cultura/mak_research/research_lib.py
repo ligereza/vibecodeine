@@ -758,8 +758,20 @@ def searxng_search(query, max_results=5, errors=None):
     # marco del prompt ya decia "no literatura academica" y el buscador seguia
     # trayendo scholar, porque el marco encuadra al modelo y no al buscador.
     categorias = "&categories=general" if _es_pregunta_factual(query) else ""
+    # `SEARXNG_ENGINES` deja apuntar a motores concretos sin tocar la config de
+    # la instancia. NO hay lista por defecto a proposito: una lista de motores
+    # escrita en el codigo es la misma trampa que este archivo ya pago tres
+    # veces -- el dia que bing se tape tambien, quedaria fija y ciega. Vacio =
+    # los motores que la instancia tenga configurados.
+    # Medido 2026-08-01 sobre la caja, con los cuatro generales caidos:
+    #   bing 10 resultados | mojeek 1 | wikipedia y wikidata 0 pero vivos
+    #   brave, google, startpage, duckduckgo, qwant, marginalia, stract: CAPTCHA
+    #   o "too many requests"
+    # O sea que la instancia se puede destapar sin cambiar codigo.
+    motores = os.environ.get("SEARXNG_ENGINES", "").strip()
+    engines = ("&engines=" + urllib.parse.quote(motores)) if motores else ""
     url = (base + "/search?q=" + urllib.parse.quote(query)
-           + "&format=json&safesearch=0" + categorias)
+           + "&format=json&safesearch=0" + categorias + engines)
     try:
         data = _http_json(url, timeout=30)
         resultados = [
@@ -767,25 +779,70 @@ def searxng_search(query, max_results=5, errors=None):
              "content": r.get("content")}
             for r in (data.get("results") or [])[:max_results]
         ]
-        _salud_registrar("searxng", True, tipo="search")
-        return {"results": resultados, "answer": data.get("answer")}
+        if resultados:
+            _salud_registrar("searxng", True, tipo="search")
+            return {"results": resultados, "answer": data.get("answer"),
+                    "ciego": False}
+        # HTTP 200 con CERO resultados son DOS hechos distintos y hasta el
+        # 2026-08-01 salian identicos: "busque y no hay nada" y "ningun motor
+        # pudo buscar". Medido ese dia en la caja: los cuatro motores generales
+        # devolvian `unresponsive_engines` -- brave y google cse suspendidos por
+        # demasiadas peticiones, duckduckgo y startpage pidiendo CAPTCHA -- y
+        # SearXNG contestaba 200 con `results: []`. Un lector aguas abajo lee
+        # eso como "la web no dice nada del tema" y escribe un informe que
+        # concluye que no hay fuentes. No es lo mismo no encontrar que no ver.
+        mudos = [m for m in (data.get("unresponsive_engines") or [])
+                 if isinstance(m, (list, tuple)) and m]
+        motivo = "; ".join(
+            "%s (%s)" % (m[0], m[1] if len(m) > 1 else "sin detalle")
+            for m in mudos)
+        _salud_registrar("searxng", False, "ciego" if mudos else "empty")
+        if mudos and errors is not None:
+            errors.append("searxng ciego: " + motivo)
+        return {"results": [], "answer": data.get("answer"),
+                "ciego": bool(mudos), "motivo": motivo}
     except Exception as e:  # noqa: BLE001 - busqueda fallida no mata el loop
         if errors is not None:
             errors.append("searxng: " + _err_str(e))
         _salud_registrar("searxng", False,
                          "timeout" if isinstance(e, socket.timeout) else "api_error")
-        return {"results": [], "answer": None}
+        return {"results": [], "answer": None, "ciego": True,
+                "motivo": _err_str(e)}
 
 
 def web_search(query, depth="basic", max_results=5, errors=None):
     """Busqueda unificada: SearXNG propio primero (sin tope de creditos);
     Tavily como fallback solo si SearXNG no devuelve resultados. Mismo
-    shape que tavily_search. Ambas rutas registran salud (ver panel hub)."""
+    shape que tavily_search. Ambas rutas registran salud (ver panel hub).
+
+    Devuelve ademas `ciego`: True cuando NADIE pudo buscar, que es distinto de
+    haber buscado y no encontrar. Quien decide si hay fuentes tiene que poder
+    distinguirlo -- si no, un buscador tapado produce un informe que concluye
+    que el tema no tiene respaldo en la web.
+    """
     res = searxng_search(query, max_results=max_results, errors=errors)
     if res.get("results"):
         return res
-    return tavily_search(query, depth=depth, max_results=max_results,
-                         errors=errors)
+    if not os.environ.get("TAVILY_API_KEY"):
+        # Medido 2026-08-01 en la caja: no hay llave. Sin respaldo, un SearXNG
+        # tapado deja la cadena entera sin ojos, y eso se dice.
+        motivo = res.get("motivo") or ""
+        if res.get("ciego"):
+            motivo = (motivo + "; " if motivo else "") + \
+                     "sin TAVILY_API_KEY: no hay buscador de respaldo"
+            if errors is not None:
+                errors.append("web_search: " + motivo)
+        res["motivo"] = motivo
+        return res
+    tav = tavily_search(query, depth=depth, max_results=max_results,
+                        errors=errors)
+    # Tavily tampoco vio nada: si SearXNG estaba ciego, la busqueda entera lo
+    # esta. Un `ciego: False` aca seria afirmar que se busco bien.
+    tav.setdefault("ciego", False)
+    if not tav.get("results") and res.get("ciego"):
+        tav["ciego"] = True
+        tav["motivo"] = res.get("motivo") or ""
+    return tav
 
 _TAG_RE = re.compile(r"<script[\s\S]*?</script>|<style[\s\S]*?</style>|<[^>]+>|&[a-z#0-9]+;", re.I)
 

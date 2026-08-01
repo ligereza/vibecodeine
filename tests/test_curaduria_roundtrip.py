@@ -74,8 +74,17 @@ console.log(JSON.stringify(construirCuraduria()));
 """ % (_extraer_campos(), _extraer_funcion("construirCuraduria"),
        json.dumps(ediciones, ensure_ascii=False),
        json.dumps(base, ensure_ascii=False), json.dumps(regimen))
+    # `encoding` es explicito A PROPOSITO, igual que en gen_mapa_comandos._help.
+    # Con `text=True` a secas, Python en Windows decodifica la salida de node
+    # con el codepage local (cp1252), y estas pruebas viajan justamente con
+    # "Diseno y dano -- el ano" en tildes. Sin esto, los tres tests fallaban en
+    # una consola normal mostrando `Dise?o y da?o` y pasaban en CI, que exporta
+    # PYTHONUTF8=1: el que los corriera en su maquina veria una corrupcion de
+    # diacriticos que no existe y "arreglaria" el dato. Ya paso una vez en este
+    # repo, el 2026-07-30, con un em dash que el usuario habia escrito bien.
     r = subprocess.run(["node", "--input-type=module", "-e", guion],
-                       capture_output=True, text=True, timeout=60)
+                       capture_output=True, text=True, encoding="utf-8",
+                       timeout=60)
     assert r.returncode == 0, r.stderr
     return json.loads(r.stdout.strip().splitlines()[-1])
 
@@ -166,7 +175,8 @@ console.log(JSON.stringify(construirCuraduria()));
 """ % (_extraer_campos(), _extraer_funcion("construirCuraduria"),
        _extraer_funcion("sembrarBase"), json.dumps(base, ensure_ascii=False))
     r = subprocess.run(["node", "--input-type=module", "-e", guion],
-                       capture_output=True, text=True, timeout=60)
+                       capture_output=True, text=True, encoding="utf-8",
+                       timeout=60)
     assert r.returncode == 0, r.stderr
     salida = json.loads(r.stdout.strip().splitlines()[-1])
     assert salida["piezas"] == base["piezas"]
@@ -182,5 +192,5 @@ def test_el_script_entero_del_editor_parsea():
     fin = texto.index("</script>")
     r = subprocess.run(["node", "--input-type=module", "--check", "-"],
                        input=texto[inicio:fin], capture_output=True,
-                       text=True, timeout=60)
+                       text=True, encoding="utf-8", timeout=60)
     assert r.returncode == 0, r.stderr
