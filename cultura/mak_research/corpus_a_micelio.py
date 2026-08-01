@@ -32,6 +32,33 @@ def _slug(texto, n=60):
     return (s or "obra")[:n]
 
 
+def _texto(val):
+    """Un campo de texto de la ficha, sea cual sea la forma en que llego.
+
+    El modelo de vision devuelve una LISTA cuando encuentra varios textos en
+    la obra, y un string cuando encuentra uno. Medido sobre las 3.138 fichas
+    reales el 2026-08-01: `vision.texto_visible` es lista en 20 fichas
+    (`['WATER GAME', 'PEPSI-COLA']`), `datos_evento.fecha` en 18 y
+    `datos_evento.venue` en 6. El consumidor asumia string y `.strip()`
+    reventaba con `AttributeError: 'list' object has no attribute 'strip'`,
+    matando el cron `MAK-CORPUS` en cada corrida horaria.
+
+    Se UNE, no se descarta ni se toma el primero: dos textos leidos en una
+    obra son dos textos de esa obra, y quedarse con uno pierde la mitad del
+    dato que se pago por medir.
+
+    Lo que NO es texto (numero, booleano, dict) devuelve "" en vez de su
+    repr: meter `{'a': 1}` dentro de un documento que se va a embeber
+    ensucia el vector con sintaxis que nadie escribio.
+    """
+    if isinstance(val, str):
+        return val.strip()
+    if isinstance(val, (list, tuple)):
+        piezas = [_texto(x) for x in val]
+        return " - ".join(p for p in piezas if p)
+    return ""
+
+
 def documento(f):
     """La ficha como documento legible. Lo que se embebe es este texto."""
     v = f.get("vision") or {}
@@ -71,7 +98,7 @@ def documento(f):
         ("linea_investigacion", "Linea de investigacion"),
         ("oportunidad_codigo", "Oportunidad de codigo"),
     ):
-        val = (v.get(clave) or "").strip() if isinstance(v.get(clave), str) else ""
+        val = _texto(v.get(clave))
         if val:
             partes.append("**%s:** %s" % (rotulo, val))
 
@@ -82,8 +109,8 @@ def documento(f):
     # la descripcion de un modelo mirando pixeles, y por eso va SEPARADO y
     # rotulado: quien lea el documento tiene que poder distinguir quien dijo
     # que. Vacio en las fichas anteriores al 2026-08-01, y ahi no se inventa.
-    autor = (f.get("texto_autor") or "").strip()
-    fecha = (f.get("fecha_publicacion") or "").strip()
+    autor = _texto(f.get("texto_autor"))
+    fecha = _texto(f.get("fecha_publicacion"))
     if fecha:
         partes.append("**Publicada:** %s" % fecha)
     if autor:
@@ -92,7 +119,7 @@ def documento(f):
         partes.append("")
         partes.append(autor[:2000])
 
-    texto_visible = (v.get("texto_visible") or f.get("ocr_texto") or "").strip()
+    texto_visible = _texto(v.get("texto_visible")) or _texto(f.get("ocr_texto"))
     if texto_visible:
         partes.append("")
         partes.append("**Texto en la obra:**")
@@ -125,7 +152,7 @@ def main():
             if f.get("fuente") != "ig":
                 continue          # RD va por triangulacion, no por el mapa
             v = f.get("vision") or {}
-            if not (v.get("descripcion") or "").strip():
+            if not _texto(v.get("descripcion")):
                 saltados += 1     # sin percepcion util no hay nodo
                 continue
             nombre = "%s-%s.md" % (f.get("id", "sin-id"),

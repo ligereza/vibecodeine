@@ -122,17 +122,29 @@ premise. Retirement: if the sync is ever removed.
 line copies `mak_plataforma`, `mak_research`, `mak_codex` AND `mak_curatoria`.
 The note that used to live here said the opposite and was stale.
 
-**What is NOT closed is the direction of the copy.** It is `cp -ru`, and `-u`
-means "only if the source is NEWER", so a single edit made on the box freezes
-that file forever: the repo version never lands again. Measured 2026-07-30:
-`revisor.py` was 165 lines in the repo and 216 on the box, and those 51 extra
-lines were `enforce_pr()` -- code that merges PRs by itself, running every 6
-hours by cron, living on one disk with no review and no backup. The repo copy,
-the one anybody reads to understand what the reviewer does, did not even have
-the `--enforce` flag it is invoked with. `cultura/mak_plataforma/coherencia.py`
-measures this drift in both directions; run it on the box. Retirement: when the
-sync makes the repo authoritative for code (`cp -r`) and the detector stays
-green on its own.
+**The direction of the copy is CLOSED, and the repo wins.** Measured
+2026-08-01 by reading the box's crontab and diffing the files: the sync line is
+`cp -r` -- no `-u` -- so it overwrites every run regardless of timestamps.
+Compared file by file that day: **75 python files under `~/plataforma`,
+`~/research`, `~/codex` and `~/curatoria`, 0 different from `origin/main`, 0
+missing.** An edit made on the box lasts at most ten minutes; to change MAK you
+edit the mirror here and merge to main.
+
+This paragraph said the opposite until that day, and the cost was not
+cosmetic: it claimed the sync was `cp -ru` and that "a single edit made on the
+box freezes that file forever", which reads as *MAK cannot be fixed from the
+repo* -- and that is the one thing anybody arriving here needs to know is
+false. It also cited `revisor.py` as 165 lines in the repo against 216 on the
+box, with `enforce_pr()` living only on one disk. Measured the same day: **216
+and 216, identical.** That drift was closed at some point and nobody updated
+the rule, so the rule kept sending people away from the fix.
+
+Same defect shape as the `mak`-branch wall in `context/LAST_HANDOFF.md`, found
+the same day: a sentence that described a real state once, kept being read as a
+measurement after it stopped being true. `cultura/mak_plataforma/coherencia.py`
+measures the drift in both directions; run it on the box before trusting this
+paragraph again. Retirement: when that detector runs on its own and this
+paragraph becomes a duplicate of it.
 
 ## Mission
 
