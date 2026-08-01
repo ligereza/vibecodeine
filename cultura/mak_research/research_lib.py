@@ -452,6 +452,75 @@ PROVIDERS = tuple(PROVIDER_ENV_KEY)
 PROVIDERS_CON_MODELO = ("watsonx",)
 
 
+def _watsonx_llamar(mensajes, model, max_tok, temperatura, timeout):
+    """El UNICO lugar que conoce el endpoint de watsonx.
+
+    Existe porque `tests/test_codex_cadena.py` lo exige contando las
+    apariciones de la ruta en este archivo, y esa cuenta atrapo el defecto en
+    el acto: al escribir `watsonx_vision` quedaron DOS copias de la misma URL.
+    Es exactamente lo que costo una tarde en `refutar.py` -- un padron de
+    proveedores escrito a mano en dos archivos, uno se quedo viejo en silencio.
+    Un guardian sirve cuando acusa a quien lo escribio.
+
+    Lo unico que cambia entre un chat y una lectura de imagen es el CONTENIDO
+    de los mensajes; el transporte es el mismo y vive aca una sola vez.
+    """
+    base = os.environ.get("WATSONX_URL", "https://us-south.ml.cloud.ibm.com")
+    r = _http_json(
+        base.rstrip("/") + "/ml/v1/text/chat?version=2024-10-08",
+        {"model_id": model,
+         "project_id": os.environ.get("WATSONX_PROJECT_ID", ""),
+         "messages": mensajes,
+         "max_tokens": max_tok,
+         "temperature": temperatura},
+        {"Authorization": "Bearer " + _wx_token()},
+        timeout=timeout,
+    )
+    return (r["choices"][0]["message"]["content"] or "").strip()
+
+
+def watsonx_vision(prompt, imagen_b64, model=None, max_tok=700, temperatura=0.1,
+                   timeout=240):
+    """Una llamada que lleva una IMAGEN. Mismo endpoint, un solo lugar.
+
+    El departamento de percepcion lee el archivo con `gemma3:4b` en una placa
+    de 4 GB, y por eso el 76% de las 3.138 fichas no trae texto. Este es el
+    transporte que le permite preguntarle a un modelo que ve de verdad.
+
+    Se probo ANTES de escribirlo (`tools/watsonx_vision_smoke.py`, 2026-07-31):
+    los tres candidatos de la cuenta aceptaron la imagen y sacaron venue, fecha
+    y cuatro headliners de un flyer cuya ficha no tenia nada de eso. La
+    capacidad se habia inferido de los NOMBRES -- `task_ids` no declara tarea de
+    vision -- asi que primero se midio, la misma regla que dejo a `_watsonx`
+    fuera de la cadena hasta que `watsonx_smoke.py` dio 4/4.
+
+    El modelo por defecto lo eligio el BANCO, no su nombre
+    (`tools/watsonx_vision_bench.py`, 8 imagenes reales, mitad de las que hoy
+    vuelven vacias). El nombre volvio a mentir, igual que esta manana con
+    `granite-8b-CODE-instruct`:
+
+        llama-3-2-11b-VISION   solape 0.414   3 inventados   40.175 tok
+        mistral-small-3-1-24b  solape 0.807   0 inventados    7.710 tok
+        llama-4-maverick-17b   solape 0.807   1 inventado    12.019 tok
+
+    El unico que se llama "vision" recupera la mitad del texto, inventa tres
+    veces y cuesta cinco veces mas. Manda mistral-small: mismo solape que el
+    mejor y CERO invencion, que en la base de RD es lo que decide -- una
+    productora inventada es un cliente equivocado.
+
+    Temperatura baja por lo mismo: un modelo tibio rellena `productora` con algo
+    plausible. Un campo vacio es una respuesta correcta; uno inventado no.
+    """
+    return _watsonx_llamar(
+        [{"role": "user", "content": [
+            {"type": "text", "text": prompt},
+            {"type": "image_url",
+             "image_url": {"url": "data:image/jpeg;base64," + imagen_b64}}]}],
+        model or os.environ.get("WATSONX_VISION_MODEL",
+                                "mistralai/mistral-small-3-1-24b-instruct-2503"),
+        max_tok, temperatura, timeout)
+
+
 def watsonx_chat(system, user, max_tok, model=None, temperatura=0.3):
     """Una llamada de chat a watsonx.ai. Funcion de modulo y no metodo porque
     el departamento codex tambien necesita este proveedor y NO deberia tener
@@ -461,19 +530,11 @@ def watsonx_chat(system, user, max_tok, model=None, temperatura=0.3):
     `temperatura` la elige quien llama: research redacta (0.3) y codex escribe
     codigo, donde una temperatura alta inventa APIs que no existen (0.1).
     """
-    base = os.environ.get("WATSONX_URL", "https://us-south.ml.cloud.ibm.com")
-    r = _http_json(
-        base.rstrip("/") + "/ml/v1/text/chat?version=2024-10-08",
-        {"model_id": model or os.environ.get(
-            "WATSONX_MODEL", "meta-llama/llama-3-3-70b-instruct"),
-         "project_id": os.environ.get("WATSONX_PROJECT_ID", ""),
-         "messages": _msgs(system, user),
-         "max_tokens": max_tok,
-         "temperature": temperatura},
-        {"Authorization": "Bearer " + _wx_token()},
-        timeout=90,
-    )
-    return (r["choices"][0]["message"]["content"] or "").strip()
+    return _watsonx_llamar(
+        _msgs(system, user),
+        model or os.environ.get("WATSONX_MODEL",
+                                "meta-llama/llama-3-3-70b-instruct"),
+        max_tok, temperatura, 90)
 
 
 class LLM:

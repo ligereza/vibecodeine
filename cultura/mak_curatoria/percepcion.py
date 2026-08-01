@@ -527,15 +527,28 @@ def construir_comando_contact_sheet(path_video: str, path_salida: str,
     ]
 
 
-def generar_contact_sheet(path_video: str, path_salida: str, timeout: int = 60) -> bool:
-    """Genera el contact sheet en `path_salida`. True si el archivo quedo."""
+def generar_contact_sheet(path_video: str, path_salida: str, timeout: int = 60):
+    """Genera el contact sheet. Devuelve (ok, motivo).
+
+    Antes devolvia solo True/False y capturaba el stderr de ffmpeg SIN LEERLO,
+    asi que todo fallo terminaba escrito como `contact_sheet_fallo` a secas.
+    Medido el 2026-07-31: ese fue el UNICO modo de fallo de una corrida de 127
+    fichas -- 10 de 10 -- y el mensaje no decia por que ninguna vez. Un modo de
+    fallo que se repite diez veces sin motivo no es un error, es un dato que
+    nadie recogio."""
     duracion = ffprobe_duracion(path_video, timeout=min(timeout, 30))
     comando = construir_comando_contact_sheet(path_video, path_salida, duracion)
     try:
-        subprocess.run(comando, capture_output=True, timeout=timeout, check=False)
-    except (OSError, subprocess.SubprocessError):
-        return False
-    return Path(path_salida).exists()
+        r = subprocess.run(comando, capture_output=True, timeout=timeout,
+                           check=False)
+    except subprocess.TimeoutExpired:
+        return False, "ffmpeg paso los %ds" % timeout
+    except OSError as e:
+        return False, "no pude ejecutar ffmpeg: %s" % e
+    if Path(path_salida).exists():
+        return True, ""
+    err = (r.stderr or b"").decode("utf-8", "replace").strip().splitlines()
+    return False, "rc=%d %s" % (r.returncode, (err[-1] if err else "sin stderr")[:160])
 
 
 # ---------------------------------------------------------------------------
@@ -631,6 +644,37 @@ def vision_imagen(path: str, timeout: int = 120, fuente: str = "rd") -> dict:
     if imagen_b64 is None:
         return {"error": "no_se_pudo_leer_imagen"}
 
+    # Which engine reads the image. `ollama` by default: without the variable
+    # the behaviour is byte for byte today's, so a corpus run cannot be changed
+    # by accident. `watsonx` is the paid one that actually sees -- probed
+    # 2026-07-31 before this line existed (tools/watsonx_vision_smoke.py).
+    #
+    # The resize, the prompt and the tolerant parse are REUSED, not rewritten:
+    # only the transport changes. If watsonx fails for any reason it falls back
+    # to ollama, and the ficha's `medicion.vision` says who answered -- a
+    # corpus run must not die because the cloud did.
+    if os.environ.get("PERCEPCION_VISION", "ollama").lower() == "watsonx":
+        try:
+            # Se busca por el sys.path normal PRIMERO. La version anterior
+            # insertaba `~/research` en la posicion 0, o sea una ruta absoluta
+            # del home ganandole a todo: imposible correr una copia parchada
+            # para probar, e imposible fuera de la caja. El home queda como
+            # ULTIMO recurso, que es lo que de verdad es.
+            try:
+                from research_lib import watsonx_vision
+            except ImportError:
+                sys.path.append(os.path.expanduser("~/research"))
+                from research_lib import watsonx_vision
+            texto = watsonx_vision(prompt_de(fuente), imagen_b64,
+                                   timeout=timeout)
+            d = _parsear_json_vision(texto, fuente)
+            if not d.get("error"):
+                d["_motor"] = "watsonx"
+                return d
+        except Exception as exc:                 # noqa: BLE001 - cae a ollama
+            print("aviso: watsonx no pudo, caigo a ollama (%s)" % str(exc)[:120],
+                  flush=True)
+
     payload = json.dumps({
         "model": OLLAMA_MODEL,
         "prompt": prompt_de(fuente),
@@ -654,12 +698,59 @@ def vision_imagen(path: str, timeout: int = 120, fuente: str = "rd") -> dict:
         return {"error": "respuesta_no_json"}
 
     texto_modelo = sobre.get("response", "") if isinstance(sobre, dict) else ""
-    return _parsear_json_vision(texto_modelo, fuente)
+    d = _parsear_json_vision(texto_modelo, fuente)
+    # Ollama tambien se firma. Si solo firmara watsonx, la AUSENCIA de firma
+    # significaria dos cosas a la vez -- "respondio ollama" y "nadie atribuyo"
+    # -- y el campo dejaria de servir para lo unico que existe.
+    d["_motor"] = "ollama"
+    return d
 
 
 # ---------------------------------------------------------------------------
 # Paso 6: ficha (schema UNICO)
 # ---------------------------------------------------------------------------
+
+ESTADOS_MEDICION = ("medido", "vacio", "no_intentado", "fallo")
+
+# Que mediciones aplican a cada tipo de archivo. Es la tabla que convierte un
+# `""` en una respuesta: si el tipo no esta aca, la medicion NO se intento.
+APLICA = {
+    "imagen": ("ocr", "vision"),
+    "video": ("vision",),
+    "pdf": ("ocr", "vision"),
+    "otro": (),
+}
+
+
+def estado_medicion(aplica: bool, valor, error=None) -> dict:
+    """Say WHAT was measured and what was not, instead of leaving a bare `""`.
+
+    Measured 2026-07-31 over the 3.138 real fichas: `ocr_texto` empty in 76%,
+    `datos_evento` empty in 69%. That emptiness meant three different things at
+    once -- the OCR was never run for this file type, it ran and the image
+    carried no text, or it blew up -- and nothing downstream could tell them
+    apart. A skin cannot decide what to do with a datum whose absence has no
+    reason, and neither can a weak model. So the reason travels with the datum:
+
+        no_intentado  esta medicion no aplica a este tipo de archivo
+        fallo         se intento y reventó (el motivo va en `detalle`)
+        vacio         se midio de verdad y no habia nada
+        medido        se midio y hay dato
+
+    Pure on purpose: it takes no path and runs no model, so it is testable off
+    the box and a change in it cannot break a perception run.
+    """
+    if not aplica:
+        return {"estado": "no_intentado", "detalle": "no aplica a este tipo"}
+    if error:
+        return {"estado": "fallo", "detalle": str(error)[:200]}
+    vacio = valor in (None, "", [], {}) or (
+        isinstance(valor, str) and not valor.strip())
+    if vacio:
+        return {"estado": "vacio", "detalle": "se midio y no habia dato"}
+    tam = len(valor) if hasattr(valor, "__len__") else 1
+    return {"estado": "medido", "detalle": "%d" % tam}
+
 
 def calcular_calidad_senal(ocr_texto: str, vision: dict) -> str:
     """alta: vision parseo limpio y (ocr>50 chars o descripcion>100).
@@ -714,7 +805,8 @@ def construir_ficha(entry: dict, dir_tmp: Path, timeout_archivo: int) -> dict:
 
         elif tipo == "video":
             sheet_path = Path(dir_tmp) / ("sheet_%s.jpg" % id_ficha(fuente, ruta_rel))
-            ok = generar_contact_sheet(ruta_abs, str(sheet_path), timeout=timeout_archivo)
+            ok, motivo_sheet = generar_contact_sheet(
+                ruta_abs, str(sheet_path), timeout=timeout_archivo)
             if ok:
                 vision = vision_imagen(str(sheet_path), timeout=timeout_archivo, fuente=fuente)
                 try:
@@ -722,7 +814,9 @@ def construir_ficha(entry: dict, dir_tmp: Path, timeout_archivo: int) -> dict:
                 except OSError:
                     pass
             else:
-                vision = {"error": "contact_sheet_fallo"}
+                # El motivo VIAJA. Diez fallos identicos sin causa fueron el
+                # unico modo de fallo de la corrida del 2026-07-31.
+                vision = {"error": "contact_sheet_fallo: " + motivo_sheet}
 
         elif tipo == "pdf":
             ocr_texto = ocr_pdftotext_primera_pagina(ruta_abs, timeout=timeout_archivo)
@@ -745,6 +839,22 @@ def construir_ficha(entry: dict, dir_tmp: Path, timeout_archivo: int) -> dict:
 
     claves_vision = CLAVES_VISION.get(fuente, CLAVES_VISION["rd"])
     vision_final = {k: vision.get(k) for k in claves_vision if vision.get(k)}
+    # Este filtro tiene DOS canales silenciosos y los dos costaron una hora el
+    # 2026-07-31. `CLAVES_VISION` es una lista blanca escrita a mano: una clave
+    # que el modelo devuelve y no esta declarada se cae sin decir nada -- asi
+    # se perdio `_motor` y el conteo culpo al transporte, que funcionaba. Y
+    # `if vision.get(k)` bota tambien los valores VACIOS, asi que una medicion
+    # legitimamente vacia y una clave que nunca llego quedan identicas.
+    # No se cambia que se guarda: se cambia que ahora se SABE cual es cual.
+    _ignoradas = {"error", "_motor"}
+    desconocidas = sorted(set(vision) - set(claves_vision) - _ignoradas)
+    vacias = sorted(k for k in claves_vision
+                    if k in vision and not vision.get(k))
+    ausentes = sorted(k for k in claves_vision if k not in vision)
+    if desconocidas:
+        print("aviso: %s devolvio claves no declaradas y se descartan: %s"
+              % (id_ficha(fuente, ruta_rel), ", ".join(desconocidas)),
+              flush=True)
     # Compatibilidad: las fichas viejas y el corpus esperan 'descripcion'.
     if "descripcion" not in vision_final and vision.get("descripcion"):
         vision_final["descripcion"] = vision["descripcion"]
@@ -754,6 +864,36 @@ def construir_ficha(entry: dict, dir_tmp: Path, timeout_archivo: int) -> dict:
         if fuente == "rd" else {}
     )
     categoria = vision.get("categoria", "") or ""
+
+    # Cada medicion declara su estado. Los campos de siempre NO se tocan: el
+    # corpus, el micelio y el contrato del archivo los leen tal cual, y romper
+    # eso para agregar honestidad seria cambiar un defecto por otro.
+    aplica = APLICA.get(tipo, ())
+    # QUIEN respondio la vision. Va en `medicion` y no dentro de `vision`
+    # porque `vision_final` se filtra a CLAVES_VISION y cualquier clave extra
+    # se cae en silencio -- medido el 2026-07-31: una corrida entera con
+    # watsonx reporto `_motor: 0` en las 119 fichas y parecia que la ruta nueva
+    # nunca se habia tomado. El transporte estaba bien; el instrumento miraba
+    # un campo que el propio constructor descartaba.
+    # SIN default. `or "ollama"` rellenaba la ausencia con un valor plausible,
+    # que es el mismo defecto que este campo existe para matar: el proximo que
+    # cuente motores contaria fantasmas. Si nadie atribuyo, lo dice.
+    motor = (vision or {}).get("_motor") or "sin_atribucion"
+    medicion = {
+        "ocr": estado_medicion("ocr" in aplica, ocr_texto, error),
+        "vision": estado_medicion("vision" in aplica, vision_final, error),
+        "datos_evento": estado_medicion(
+            fuente == "rd" and "vision" in aplica,
+            [v for v in datos_evento.values() if v] if datos_evento else [],
+            error),
+    }
+    medicion["vision"]["motor"] = motor
+    if desconocidas:
+        medicion["vision"]["claves_desconocidas"] = desconocidas
+    if vacias:
+        medicion["vision"]["claves_vacias"] = vacias
+    if ausentes:
+        medicion["vision"]["claves_ausentes"] = ausentes
 
     return {
         "id": id_ficha(fuente, ruta_rel),
@@ -766,6 +906,7 @@ def construir_ficha(entry: dict, dir_tmp: Path, timeout_archivo: int) -> dict:
         "ocr_texto": (ocr_texto or "")[:1500],
         "vision": vision_final,
         "datos_evento": datos_evento,
+        "medicion": medicion,
         "calidad_senal": calcular_calidad_senal(ocr_texto, vision),
         "error": error,
         "seg_proceso": round(time.time() - t0, 3),
@@ -826,6 +967,17 @@ def correr(raiz_rd, raiz_ig, dir_out,
     dir_fichas = dir_out / "fichas"
     dir_tmp = dir_out / "_tmp"
     dir_out.mkdir(parents=True, exist_ok=True)
+    # `_tmp` se crea UNA vez, aca, y no en cada rama que escribe adentro.
+    # Lo creaban `preparar_imagen_para_ocr` y `pdf_primera_pagina_a_imagen`;
+    # la rama de VIDEO no, y ffmpeg contra un directorio inexistente responde
+    # `Conversion failed!` -- generico, sin decir que falta el directorio.
+    # Medido el 2026-07-31: ese fue el UNICO modo de fallo de la corrida sobre
+    # el corpus del artista, 10 de 10 y despues 8 de 8, todos videos de
+    # `archived_posts/`, que es donde el recorrido empieza. Cuando el primer
+    # archivo de un corpus es un video, el contact sheet no puede escribir
+    # nunca. Tres funciones hacian lo mismo y una se olvido: la respuesta no es
+    # agregar el cuarto mkdir, es que ninguna tenga que acordarse.
+    dir_tmp.mkdir(parents=True, exist_ok=True)
 
     trabajo = construir_trabajo(raiz_rd, raiz_ig, solo_fuente=solo_fuente)
     total_trabajo = len(trabajo)
