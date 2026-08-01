@@ -793,6 +793,7 @@ def tavily_search(query, depth="basic", max_results=5, errors=None):
             timeout=30,
         )
         _salud_registrar("tavily", True, tipo="search")
+        _r_tavily["motor"] = "tavily"
         return _r_tavily
     except Exception as e:  # noqa: BLE001 - la busqueda fallida no mata el loop
         if errors is not None:
@@ -840,7 +841,7 @@ def searxng_search(query, max_results=5, errors=None):
         if resultados:
             _salud_registrar("searxng", True, tipo="search")
             return {"results": resultados, "answer": data.get("answer"),
-                    "ciego": False}
+                    "ciego": False, "motor": "searxng"}
         # HTTP 200 con CERO resultados son DOS hechos distintos y hasta el
         # 2026-08-01 salian identicos: "busque y no hay nada" y "ningun motor
         # pudo buscar". Medido ese dia en la caja: los cuatro motores generales

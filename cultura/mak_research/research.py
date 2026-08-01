@@ -32,8 +32,8 @@ try:
 except ImportError:          # el organo puede correr sin la compuerta
     fuentes = None
 from research_lib import (LLM, escala_tok, fetch_url, load_env, marco,
-                          marco_solo,
-                         marcadores_de_plantilla, ntfy_publish, slug, stamp, tavily_search, web_search)
+                          marcadores_de_plantilla, marco_solo, ntfy_publish,
+                          slug, stamp, tavily_search, web_search)
 
 OUT_DIR = os.path.expanduser("~/research/informes")
 
@@ -215,7 +215,15 @@ def investigar(topic, iteraciones=3, depth="basic",
                    % (search.get("motivo") or "sin detalle"))
 
         if search.get("answer"):
-            findings.append({"type": "tavily_answer", "iteration": i + 1,
+            # El TIPO se queda como esta: `estadisticas.py` lo cuenta por ese
+            # nombre y renombrarlo romperia el conteo historico. Lo que se
+            # agrega es QUIEN respondio -- hasta hoy un informe decia
+            # "tavily_answer" hubiera contestado tavily o searxng, asi que
+            # buscar "tavily" en los informes daba 123 aciertos y ninguno
+            # probaba una llamada a tavily. Un nombre no es una atribucion.
+            findings.append({"type": "tavily_answer",
+                             "motor": search.get("motor") or "sin_atribucion",
+                             "iteration": i + 1,
                              "query": current, "content": search["answer"]})
 
         fresh = [r for r in (search.get("results") or [])

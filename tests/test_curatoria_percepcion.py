@@ -11,6 +11,8 @@ proyecto_dir = test_dir.parent
 sys.path.insert(0, str(proyecto_dir / "cultura" / "mak_curatoria"))
 
 import percepcion  # noqa: E402
+
+RAIZ_MOD = proyecto_dir / "cultura" / "mak_curatoria"
 import reporter  # noqa: E402
 
 
@@ -922,3 +924,60 @@ class TestMetadatosDelArtista:
             ficha = percepcion.construir_ficha(self._entry(), tmp_path, 5,
                                                meta_ig=meta)
         assert ficha["medicion"]["metadatos"]["encoding_sospechoso"] is True
+
+
+class TestTecnicaCanonica:
+    """`tecnica` is free text and therefore drifts. Measured on 2026-08-01 over
+    the 1.401 ig fichas: 54 raw values that are 48 concepts, with 5 groups
+    written more than one way -- `fotografia`(35) vs `fotografía`(163),
+    `Ilustración digital`(5) vs `ilustración digital`(103) vs `ilustracion
+    digital`(9). Same shape as `tatuaje`/`tattoo`, which already has a fix.
+
+    The split is what matters: case and whitespace can be decided looking at ONE
+    value, so they are fixed at the origin. The accent cannot -- to know whether
+    `fotografia` is a typo for `fotografía` you have to see that the same corpus
+    holds 163 of the accented one. Deciding that from a single ficha would be
+    inventing.
+    """
+
+    def test_case_and_spacing_are_fixed_at_the_origin(self):
+        d = percepcion._parsear_json_vision(
+            '{"tecnica": "  Ilustración   Digital "}', "ig")
+        assert d["tecnica"] == "ilustración digital"
+
+    def test_the_accent_is_never_stripped(self):
+        """It is a value a human reads. `a_ascii` on it is the defect class of
+        "reduciendo ano"."""
+        d = percepcion._parsear_json_vision('{"tecnica": "fotografía"}', "ig")
+        assert d["tecnica"] == "fotografía"
+
+    def test_the_accented_variant_wins_even_when_it_is_a_minority(self):
+        """In Spanish the accent is not a style option."""
+        m = percepcion.canonizar_tecnicas(["grabado"] * 50 + ["grabádo"])
+        assert m == {"grabado": "grabádo"} or m == {}, m
+
+    def test_the_real_collisions_of_the_corpus_are_resolved(self):
+        m = percepcion.canonizar_tecnicas(
+            ["fotografia"] * 35 + ["fotografía"] * 163 +
+            ["ilustracion digital"] * 9 + ["ilustración digital"] * 103)
+        assert m == {"fotografia": "fotografía",
+                     "ilustracion digital": "ilustración digital"}
+
+    def test_a_value_with_no_variants_is_left_alone(self):
+        """A map that touches what has no collision would rewrite the corpus
+        for nothing."""
+        assert percepcion.canonizar_tecnicas(["collage"] * 4) == {}
+
+    def test_with_no_accents_anywhere_there_is_nothing_to_correct(self):
+        assert percepcion.canonizar_tecnicas(["render 3d", "render 3d"]) == {}
+
+    def test_empty_values_do_not_create_a_group(self):
+        assert percepcion.canonizar_tecnicas(["", None, "collage"]) == {}
+
+    def test_a_technique_nobody_ever_saw_is_handled_too(self):
+        """The map comes from the DATA, not from a list. A technique that
+        appears tomorrow needs nobody to remember anything -- which is the
+        whole difference from `SINONIMOS_TIPO_OBRA`, that does need it."""
+        m = percepcion.canonizar_tecnicas(
+            ["xilografia inversa"] * 2 + ["xilografía inversa"] * 7)
+        assert m == {"xilografia inversa": "xilografía inversa"}

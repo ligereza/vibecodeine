@@ -235,6 +235,46 @@ def respaldo_evento(datos_evento: dict, ocr_texto: str,
     return out
 
 
+def canonizar_tecnicas(valores):
+    """Un mapa valor -> grafia canonica, decidido MIRANDO EL CORPUS.
+
+    Una ficha sola no alcanza para saber si `fotografia` es un error o una
+    palabra sin tilde: hace falta ver que en el mismo corpus hay 163
+    `fotografía` y 35 `fotografia`. Por eso esto recibe TODOS los valores y no
+    uno.
+
+    Gana la variante ACENTUADA cuando existe, aunque sea minoria: en castellano
+    la tilde no es una opcion de estilo, y el valor que sale de aca lo lee un
+    humano. Entre variantes igual de acentuadas gana la mas frecuente. Si
+    ninguna lleva tilde, tambien la mas frecuente -- ahi no hay nada que
+    corregir.
+
+    No hay lista escrita a mano: el mapa sale de los datos, asi que el dia que
+    aparezca una tecnica nueva no hay que acordarse de nada.
+    """
+    grupos = {}
+    for valor in valores:
+        if not valor:
+            continue
+        texto = " ".join(str(valor).lower().split())
+        clave = _plegar_texto(texto)
+        grupos.setdefault(clave, {})
+        grupos[clave][texto] = grupos[clave].get(texto, 0) + 1
+    mapa = {}
+    for variantes in grupos.values():
+        if len(variantes) < 2:
+            continue
+        def _rango(par):
+            texto, veces = par
+            return (any(unicodedata.combining(c)
+                        for c in unicodedata.normalize("NFKD", texto)), veces)
+        canonica = max(variantes.items(), key=_rango)[0]
+        for texto in variantes:
+            if texto != canonica:
+                mapa[texto] = canonica
+    return mapa
+
+
 def prompt_de(fuente: str, texto_autor: str = "", fecha: str = "") -> str:
     """El prompt que corresponde al corpus. Son dos trabajos distintos.
 
@@ -698,6 +738,20 @@ def _parsear_json_vision(texto: str, fuente: str = "rd") -> dict:
     # vacia, en vez de quedar como un valor nuevo que despues hay que descubrir
     # contando. Un modelo que contesta "dibujo digital" esta contestando la
     # tecnica, y la tecnica ya tiene su campo.
+    # La TECNICA es texto libre y por eso deriva. Medido el 2026-08-01 sobre las
+    # 1.401 fichas ig: 54 valores crudos distintos que son 48 conceptos, con 5
+    # grupos escritos de mas de una forma y ~330 fichas involucradas --
+    # `fotografia`(35) vs `fotografía`(163), `Ilustración digital`(5) vs
+    # `ilustración digital`(103) vs `ilustracion digital`(9).
+    #
+    # Aca se arregla SOLO lo que se puede decidir mirando un valor solo:
+    # mayusculas y espacios. La tilde NO: para saber si `fotografia` es un
+    # error de `fotografía` hay que ver el corpus entero, y decidirlo desde una
+    # ficha suelta seria inventar. Eso lo hace `canonizar_tecnicas()`, que ve
+    # todas. Y la tilde NUNCA se borra: es un valor que lee un humano.
+    if datos.get("tecnica"):
+        datos["tecnica"] = " ".join(str(datos["tecnica"]).lower().split())
+
     if "tipo_obra" in datos:
         t = str(datos.get("tipo_obra") or "").strip().lower()
         t = SINONIMOS_TIPO_OBRA.get(t, t)
