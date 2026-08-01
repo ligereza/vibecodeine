@@ -42,22 +42,30 @@ GENERADOR = RAIZ / "tools" / "gen_archivo_iskvw.py"
 PIN_ARCHIVO = {
     "nodos": 479,
     "vinculos_indexados": 269,
-    # Re-pinned 2026-07-31. The old numbers (0/6/30/0/9/14/14) were taken on a
-    # field that was NOT the real one: the skin decided from `obras[0]` whether
-    # the archive carried a projection, the first piece has none, and the 479
-    # nodes were spread by hash over ~220.000 px instead of the measured 5.644.
-    # Almost nothing was ever in frame, so almost no link was ever drawn and
-    # these counts measured a defect, not a cost. With the positions honoured
-    # the same grid draws 6..107, which is the measured-links layer doing its
-    # job: 269 links, both ends in frame, faint by weight.
+    # Re-pinned 2026-07-31, then again 2026-08-01 when the link became a laser
+    # beam for the artist's "bloom lighting laser" request
+    # (globalCompositeOperation='lighter', a wide translucent halo pass then a
+    # thin bright core pass, so crossing links SUM light instead of covering
+    # each other). Every kept link now strokes TWICE, so each count below is
+    # exactly double what it measured the day before -- the numbers moving in
+    # lockstep (2x, no more, no fewer) is the proof the technique changed HOW
+    # a link is painted and not WHICH links draw. Worst case 214, still 5.6x
+    # under the 1200 ceiling (TECHO_SEGMENTOS below).
+    #
+    # History: the numbers before 2026-07-31 (0/6/30/0/9/14/14) were taken on
+    # a field that was NOT the real one: the skin decided from `obras[0]`
+    # whether the archive carried a projection, the first piece has none, and
+    # the 479 nodes were spread by hash over ~220.000 px instead of the
+    # measured 5.644. Almost nothing was ever in frame, so almost no link was
+    # ever drawn and those counts measured a defect, not a cost.
     "segmentos": {          # per scenario: link segments actually stroked
-        "entrada cerrada": 6,
-        "entrada abierta": 85,
-        "medio abierto": 107,
-        "denso cerrado": 4,
-        "denso medio": 68,
-        "denso abierto": 99,
-        "denso escalado": 99,
+        "entrada cerrada": 12,
+        "entrada abierta": 170,
+        "medio abierto": 214,
+        "denso cerrado": 8,
+        "denso medio": 136,
+        "denso abierto": 198,
+        "denso escalado": 198,
     },
 }
 PIN_CAMPO = {

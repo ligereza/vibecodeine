@@ -576,7 +576,13 @@ function dibujar(){
   // Se calcula una vez por cuadro; lo unico que paga por nodo es el que de
   // verdad recibe luz, y emiten como mucho tres obras.
   const GLIFO_PX = Math.max(7, escalaForma/34);
-  if (F > 0.02){
+  // Con `nodo_glifo` encendida -- como se publica -- TODO nodo pasa por
+  // `fillText`, no solo la obra resuelta: `soloGlifo` ya no depende de `F`
+  // cuando la llave esta puesta. `F` arranca en 0 exacto y solo se mueve si
+  // alguna vez algo resuelve, asi que un visitante que solo navega dejaba la
+  // fuente sin inicializar -- el tamano de letra de la sesion quedaba
+  // librado a lo que hubiera puesto el navegador, nunca a `GLIFO_PX`.
+  if (F > 0.02 || NODO_GLIFO){
     ctx.font = `${GLIFO_PX}px ui-monospace,monospace`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   }
@@ -629,7 +635,19 @@ function dibujar(){
      miles de vinculos y la mayoria, en cualquier momento, esta fuera de
      pantalla. */
   if (VECINOS.length){
-    ctx.lineWidth = 1;
+    // ── el vinculo como haz de laser, no como linea plana ──
+    // Pedido del artista: "bloom lighting laser". Un haz real tiene un nucleo
+    // fino y saturado con un halo alrededor, y dos haces que se cruzan SUMAN
+    // luz -- no se tapan. `lighter` es composicion aditiva: donde dos trazos
+    // semitransparentes se superponen, el pixel se aclara en vez de
+    // mezclarse por encima. El halo (ancho, tenue) va primero y el nucleo
+    // (fino, brillante) encima, los dos del mismo tono frio para que el
+    // cruce siga leyendose como luz y no como un segundo color.
+    // El alfa de cada pasada sigue saliendo de la MISMA formula de siempre
+    // -- peso del vinculo por cercania por nitidez -- asi que el bloom
+    // cambia COMO se pinta un vinculo, nunca CUANDO se lo ve: la regla
+    // "tenue, acompana, no compite" (2026-07-30) sigue mandando.
+    ctx.globalCompositeOperation = 'lighter';
     for (let ni = 0; ni < NODOS.length; ni++){
       const lista = VECINOS[ni];
       if (!lista) continue;
@@ -644,13 +662,15 @@ function dibujar(){
         const alfa = lista[k+1] * 0.16 * Math.min(a.cerca, b.cerca)
                      * (0.25 + d.nitidez*0.75);
         if (alfa < 0.012) continue;         // por debajo de esto no se ve
-        ctx.strokeStyle = `rgba(210,220,255,${alfa.toFixed(3)})`;
-        ctx.beginPath();
-        ctx.moveTo(a.x, a.y);
-        ctx.lineTo(b.x, b.y);
-        ctx.stroke();
+        ctx.lineWidth = 3.2;
+        ctx.strokeStyle = `rgba(150,195,255,${(alfa*0.55).toFixed(3)})`;
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = `rgba(225,235,255,${Math.min(alfa*2.3, 1).toFixed(3)})`;
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
       }
     }
+    ctx.globalCompositeOperation = 'source-over';
   }
 
   for (let ni = 0; ni < NODOS.length; ni++){
@@ -787,8 +807,17 @@ function dibujar(){
       const v = Math.sin(q[0]*17 + tG) * Math.cos(q[1]*13 - tG*0.61)
               + Math.sin((q[0]+q[1])*9 + tG*1.37) * 0.5 * (1 + E.fuerza*2);
       const RMP = rampa();
+      // El nivel YA NO depende de E.despliegue. Ese piso (55% a 100%) apagaba
+      // la textura generativa mientras se navegaba: despliegue solo sube
+      // quieto 5s (0,02 por cuadro) y cae en unos 8 cuadros al primer gesto,
+      // asi que "el campo esta apagado mientras se navega" era medible, no
+      // una lectura -- el nivel nunca alcanzaba el extremo denso de la rampa
+      // sin cinco segundos inmoviles. El glifo se genera con su rango
+      // COMPLETO siempre; quedarse quieto sigue revelando algo distinto (la
+      // ficha y el tamano de la forma resuelta, mas abajo), nunca la
+      // densidad del glifo.
       const nivel = Math.max(0, Math.min(RMP.length-1,
-        Math.round(((v + 1.5)/3) * (RMP.length-1) * (0.55 + E.despliegue*0.45))));
+        Math.round(((v + 1.5)/3) * (RMP.length-1))));
       // Doublecup: en los niveles bajos la rampa conserva el vacio (espacio,
       // punto); desde ahi el caracter es del vocabulario de la obra, elegido
       // por una segunda frecuencia del mismo campo para que la textura
@@ -809,7 +838,29 @@ function dibujar(){
         // nodo se lee como se leia el circulo: por cercania y nitidez. Usar
         // `F` cuando no hay obra dejaria el campo entero invisible.
         const aG = destino && F > 0.35 ? (F-0.35)/0.65 : a;
-        ctx.fillStyle = `hsla(${tonoRegimen(n, tono)},16%,90%,${aG * (0.5 + nivel/(RMP.length-1)*0.5)})`;
+        const tonoFinal = tonoRegimen(n, tono);
+        const alfaGlifo = aG * (0.5 + nivel/(RMP.length-1)*0.5);
+        // ── el glifo con halo: el mismo pedido de "bloom lighting laser" ──
+        // Un segundo trazo del MISMO caracter, mas grande y tenue, DEBAJO --
+        // `lighter` para que el halo de un glifo y el de su vecino SUMEN luz
+        // donde se superponen (la textura densa brilla donde se junta) en
+        // vez de taparse. El nucleo, sin cambios mas abajo, sigue siendo el
+        // trazo nitido de siempre: el halo se AGREGA, no reemplaza nada de lo
+        // que ya dibujaba el glifo. Se salta bajo el piso de opacidad: un
+        // glifo casi invisible no necesita un halo que nadie va a ver, y
+        // evita pagar el doble de `fillText` en el fondo difuso del campo.
+        if (alfaGlifo > 0.05){
+          const fHalo = ctx.font;
+          const mH = /^([\d.]+)px/.exec(fHalo);
+          const pxHalo = (mH ? parseFloat(mH[1]) : GLIFO_PX) * 1.9;
+          ctx.globalCompositeOperation = 'lighter';
+          ctx.font = `${pxHalo}px ui-monospace,monospace`;
+          ctx.fillStyle = `hsla(${tonoFinal},70%,75%,${(alfaGlifo*0.4).toFixed(3)})`;
+          ctx.fillText(g2, px, py);
+          ctx.font = fHalo;
+          ctx.globalCompositeOperation = 'source-over';
+        }
+        ctx.fillStyle = `hsla(${tonoFinal},16%,90%,${alfaGlifo})`;
         // luz: el vecino se DILATA. Aca y no en `r`, porque con `nodo_glifo`
         // encendida -- que es como se publica -- el nodo no es un circulo y
         // `r` no llega a dibujarse: su unico consumidor es el gradiente del
