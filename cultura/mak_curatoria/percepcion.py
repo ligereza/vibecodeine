@@ -24,7 +24,7 @@ Si PIL no esta disponible, todo esto cae a leer/usar los bytes crudos.
 
     python3 percepcion.py correr --raiz-rd RUTA --raiz-ig RUTA --out DIR
         [--max-errores-seguidos 20] [--timeout-archivo 120]
-        [--solo-fuente rd|ig]
+        [--solo-fuente rd|ig] [--limite N] [--meta-ig ig_meta.json]
     python3 percepcion.py estado --out DIR
 """
 import base64
@@ -235,14 +235,39 @@ def respaldo_evento(datos_evento: dict, ocr_texto: str,
     return out
 
 
-def prompt_de(fuente: str) -> str:
+def prompt_de(fuente: str, texto_autor: str = "", fecha: str = "") -> str:
     """El prompt que corresponde al corpus. Son dos trabajos distintos.
 
     'rd' extrae datos de material de la ONG. 'ig' (el archivo del artista)
     arma el mapa conceptual. Usar uno solo para ambos fue el defecto que hizo
     inservible la corrida del 2026-07-23.
     """
-    return PROMPT_RD if fuente == "rd" else PROMPT_ISKVW
+    base = PROMPT_RD if fuente == "rd" else PROMPT_ISKVW
+    if not (texto_autor or fecha):
+        return base
+    # Lo que el ARTISTA escribio sobre su propia obra, y cuando la publico.
+    # Un modelo mirando un render dice "composicion 3D abstracta"; el artista
+    # escribio "Animacion 3D para @sweettoothskully, meses de ensayo y error",
+    # que nombra la tecnica, el encargo, la duracion y la intencion. Eso NO
+    # esta en los pixeles y ningun modelo lo recupera de ahi. Medido sobre el
+    # export real: 1.013 de 1.401 fichas ig tienen texto propio y 1.124 tienen
+    # fecha exacta.
+    #
+    # Va como CONTEXTO, no como respuesta: el modelo sigue teniendo que mirar
+    # la imagen. Si copia el texto en vez de leer la obra, el campo deja de
+    # medir lo que dice medir.
+    extra = [chr(10) + chr(10) +
+             "CONTEXTO QUE APORTA EL ARTISTA (no es la respuesta, es lo "
+             "que el escribio al publicarla):"]
+    if fecha:
+        extra.append("Publicada el %s." % fecha)
+    if texto_autor:
+        extra.append('Sus palabras: "%s"' % texto_autor[:1200].replace('"', "'"))
+    extra.append("Usalo para acertar la TECNICA y la idea principal, que es "
+                 "donde una imagen sola engana. NO lo copies como descripcion "
+                 "ni inventes lo que ahi no dice: describi lo que VES, y que "
+                 "el contexto te ayude a nombrarlo bien.")
+    return base + chr(10).join(extra)
 
 
 # ---------------------------------------------------------------------------
@@ -688,7 +713,8 @@ def _parsear_json_vision(texto: str, fuente: str = "rd") -> dict:
     return datos
 
 
-def vision_imagen(path: str, timeout: int = 120, fuente: str = "rd") -> dict:
+def vision_imagen(path: str, timeout: int = 120, fuente: str = "rd",
+                  texto_autor: str = "", fecha: str = "") -> dict:
     """Manda `path` (imagen ya lista, o contact sheet de video) a ollama
     y devuelve el JSON de vision parseado de forma tolerante. Cualquier
     fallo de lectura/red/parseo devuelve {"error": ...} sin lanzar
@@ -718,7 +744,8 @@ def vision_imagen(path: str, timeout: int = 120, fuente: str = "rd") -> dict:
             except ImportError:
                 sys.path.append(os.path.expanduser("~/research"))
                 from research_lib import watsonx_vision
-            texto = watsonx_vision(prompt_de(fuente), imagen_b64,
+            texto = watsonx_vision(prompt_de(fuente, texto_autor, fecha),
+                                   imagen_b64,
                                    timeout=timeout)
             d = _parsear_json_vision(texto, fuente)
             if not d.get("error"):
@@ -730,7 +757,7 @@ def vision_imagen(path: str, timeout: int = 120, fuente: str = "rd") -> dict:
 
     payload = json.dumps({
         "model": OLLAMA_MODEL,
-        "prompt": prompt_de(fuente),
+        "prompt": prompt_de(fuente, texto_autor, fecha),
         "images": [imagen_b64],
         "stream": False,
     }).encode("utf-8")
@@ -828,7 +855,8 @@ def _mtime_a_fecha(mtime) -> str:
         return ""
 
 
-def construir_ficha(entry: dict, dir_tmp: Path, timeout_archivo: int) -> dict:
+def construir_ficha(entry: dict, dir_tmp: Path, timeout_archivo: int,
+                    meta_ig: dict | None = None) -> dict:
     """Construye la ficha de schema UNICO para un item de trabajo.
 
     Nunca lanza: cualquier excepcion durante el analisis queda como
@@ -837,6 +865,11 @@ def construir_ficha(entry: dict, dir_tmp: Path, timeout_archivo: int) -> dict:
     """
     fuente = entry["fuente"]
     ruta_rel = entry["ruta_rel"]
+    # Lo que el artista escribio y cuando lo publico, si el export lo trae.
+    # Sale de `tools/ig_metadatos.py`; la clave es el nombre del archivo.
+    _meta = (meta_ig or {}).get(os.path.basename(ruta_rel)) or {}
+    texto_autor = _meta.get("texto") or ""
+    fecha_publicacion = _meta.get("fecha") or ""
     ruta_abs = entry["ruta_abs"]
     tipo = entry["tipo"]
 
@@ -854,14 +887,17 @@ def construir_ficha(entry: dict, dir_tmp: Path, timeout_archivo: int) -> dict:
                     Path(ruta_ocr).unlink(missing_ok=True)
                 except OSError:
                     pass
-            vision = vision_imagen(ruta_abs, timeout=timeout_archivo, fuente=fuente)
+            vision = vision_imagen(ruta_abs, timeout=timeout_archivo, fuente=fuente,
+                                   texto_autor=texto_autor, fecha=fecha_publicacion)
 
         elif tipo == "video":
             sheet_path = Path(dir_tmp) / ("sheet_%s.jpg" % id_ficha(fuente, ruta_rel))
             ok, motivo_sheet = generar_contact_sheet(
                 ruta_abs, str(sheet_path), timeout=timeout_archivo)
             if ok:
-                vision = vision_imagen(str(sheet_path), timeout=timeout_archivo, fuente=fuente)
+                vision = vision_imagen(str(sheet_path), timeout=timeout_archivo,
+                                       fuente=fuente, texto_autor=texto_autor,
+                                       fecha=fecha_publicacion)
                 try:
                     sheet_path.unlink(missing_ok=True)
                 except OSError:
@@ -949,6 +985,22 @@ def construir_ficha(entry: dict, dir_tmp: Path, timeout_archivo: int) -> dict:
             error),
     }
     medicion["vision"]["motor"] = motor
+    if _meta:
+        # El contexto CAMBIA la respuesta del modelo, asi que tiene que quedar
+        # registrado: dos fichas con el mismo motor y distinto contexto no son
+        # comparables, y quien mida cobertura despues tiene que poder separarlas.
+        medicion["metadatos"] = {
+            "fuente": "export_ig",
+            "con_texto_autor": bool(texto_autor),
+            "con_fecha": bool(fecha_publicacion),
+            "en_el_prompt": bool(texto_autor or fecha_publicacion),
+        }
+        if _meta.get("encoding_sospechoso"):
+            medicion["metadatos"]["encoding_sospechoso"] = True
+    else:
+        medicion["metadatos"] = {"fuente": "sin_metadatos",
+                                 "con_texto_autor": False, "con_fecha": False,
+                                 "en_el_prompt": False}
     if fuente == "rd" and datos_evento:
         medicion["datos_evento"].update(
             respaldo_evento(datos_evento, ocr_texto,
@@ -968,6 +1020,12 @@ def construir_ficha(entry: dict, dir_tmp: Path, timeout_archivo: int) -> dict:
         "categoria": categoria,
         "bytes": entry.get("bytes", 0),
         "mtime": _mtime_a_fecha(entry.get("mtime")),
+        # Lo que el artista escribio y cuando lo publico. NO sale de ningun
+        # modelo: sale del export, y por eso vale mas que cualquier
+        # descripcion generada. Vacio cuando el export no lo trae, sin
+        # rellenar: 277 de las 1.401 fichas ig no casan con ninguna entrada.
+        "fecha_publicacion": fecha_publicacion,
+        "texto_autor": texto_autor[:2000],
         "ocr_texto": (ocr_texto or "")[:1500],
         "vision": vision_final,
         "datos_evento": datos_evento,
@@ -1023,7 +1081,8 @@ def correr(raiz_rd, raiz_ig, dir_out,
            max_errores_seguidos: int = DEFAULT_MAX_ERRORES_SEGUIDOS,
            timeout_archivo: int = DEFAULT_TIMEOUT_ARCHIVO,
            solo_fuente: str | None = None,
-           limite: int | None = None) -> int:
+           limite: int | None = None,
+           meta_ig: str | None = None) -> int:
     """Corre la percepcion sobre ambos corpus. Retorna el codigo de salida:
 
     0 = termino todo el trabajo pendiente.
@@ -1044,6 +1103,22 @@ def correr(raiz_rd, raiz_ig, dir_out,
     # nunca. Tres funciones hacian lo mismo y una se olvido: la respuesta no es
     # agregar el cuarto mkdir, es que ninguna tenga que acordarse.
     dir_tmp.mkdir(parents=True, exist_ok=True)
+
+    mapa_meta = {}
+    if meta_ig:
+        # Si se pidio y no se puede leer, se ABORTA. Seguir sin el mapa daria
+        # una corrida completa, plausible y sin el dato que la justificaba, y
+        # nadie lo notaria hasta contar fichas horas despues.
+        try:
+            mapa_meta = json.loads(Path(meta_ig).read_text(encoding="utf-8"))
+            mapa_meta = mapa_meta.get("medios") or mapa_meta
+        except (OSError, ValueError) as exc:
+            print("ERROR: no pude leer --meta-ig %s (%s)" % (meta_ig, exc),
+                  file=sys.stderr)
+            return 2
+        con_texto = sum(1 for v in mapa_meta.values() if v.get("texto"))
+        print("META: %d archivos con metadatos del export, %d con texto del "
+              "artista" % (len(mapa_meta), con_texto), flush=True)
 
     trabajo = construir_trabajo(raiz_rd, raiz_ig, solo_fuente=solo_fuente)
     # `--limite` existe para SONDEAR un corpus sin correrlo entero: el usuario
@@ -1102,7 +1177,8 @@ def correr(raiz_rd, raiz_ig, dir_out,
         if esta_en_cuarentena(fallos, clave, entry):
             continue
 
-        ficha = construir_ficha(entry, dir_tmp, timeout_archivo)
+        ficha = construir_ficha(entry, dir_tmp, timeout_archivo,
+                                meta_ig=mapa_meta)
         tiempos.append(ficha.get("seg_proceso") or 0.0)
         if len(tiempos) > 200:
             del tiempos[:-200]
@@ -1186,6 +1262,7 @@ def main() -> int:
             print("ERROR: --solo-fuente debe ser rd o ig", file=sys.stderr)
             return 2
 
+        meta_ig = _obtener_flag(resto, "--meta-ig")
         limite_txt = _obtener_flag(resto, "--limite")
         try:
             limite = int(limite_txt) if limite_txt else None
@@ -1210,6 +1287,7 @@ def main() -> int:
                 timeout_archivo=timeout_archivo,
                 solo_fuente=solo_fuente,
                 limite=limite,
+                meta_ig=meta_ig,
             )
         except Exception as exc:
             print("ERROR correr: %s" % exc, file=sys.stderr)

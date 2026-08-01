@@ -207,6 +207,7 @@ class TestConstruirFicha:
 
         assert set(ficha.keys()) == {
             "id", "fuente", "ruta_rel", "tipo", "categoria", "bytes", "mtime",
+            "fecha_publicacion", "texto_autor",
             "ocr_texto", "vision", "datos_evento", "medicion", "calidad_senal",
             "error", "seg_proceso", "ts",
         }
@@ -832,3 +833,92 @@ class TestRespaldoEvento:
         med = ficha["medicion"]["datos_evento"]
         assert med["con_respaldo"] == ["venue"]
         assert med["sin_respaldo"] == ["productora"]
+
+
+# ---------------------------------------------------------------------------
+# What the artist wrote about his own work
+# ---------------------------------------------------------------------------
+
+class TestMetadatosDelArtista:
+    """The Instagram export shipped with the media already carries, for most
+    files, the date the work was published and the text the artist wrote about
+    it. Measured on the real export: 1.013 of 1.401 ig fichas have his own
+    text, 1.124 have an exact date.
+
+    A model looking at a render says "abstract 3D composition". The artist
+    wrote "Animacion 3D para @sweettoothskully, meses de ensayo y error" --
+    technique, client, duration and intent. None of that is in the pixels.
+    """
+
+    def _entry(self, ruta_rel="obra.jpg"):
+        return {"fuente": "ig", "ruta_rel": ruta_rel, "ruta_abs": ruta_rel,
+                "tipo": "imagen", "bytes": 1, "mtime": 0}
+
+    def test_the_context_reaches_the_prompt(self):
+        base = percepcion.prompt_de("ig")
+        con = percepcion.prompt_de("ig", "Animacion 3D para un cliente",
+                                   "2026-06-16")
+        assert len(con) > len(base)
+        assert "Animacion 3D para un cliente" in con
+        assert "2026-06-16" in con
+        assert con.startswith(base), "el prompt original no se toca"
+
+    def test_no_context_leaves_the_prompt_untouched(self):
+        """A run without the map has to be byte for byte the old behaviour, or
+        two runs stop being comparable without anyone noticing."""
+        assert percepcion.prompt_de("ig") == percepcion.prompt_de("ig", "", "")
+        assert percepcion.prompt_de("rd") == percepcion.prompt_de("rd", "", "")
+
+    def test_the_prompt_forbids_copying_the_text_as_the_answer(self):
+        con = percepcion.prompt_de("ig", "algo que escribio", "2026-01-01")
+        assert "NO lo copies" in con, (
+            "si el modelo copia el texto en vez de mirar la obra, la "
+            "descripcion deja de medir lo que dice medir")
+
+    def test_the_ficha_carries_date_and_text_without_a_model(self, tmp_path):
+        meta = {"obra.jpg": {"fecha": "2026-06-16",
+                             "texto": "Animacion 3D, meses de ensayo"}}
+        with mock.patch("percepcion.ocr_tesseract", return_value=""), \
+             mock.patch("percepcion.vision_imagen", return_value={"tecnica": "3D"}):
+            ficha = percepcion.construir_ficha(self._entry(), tmp_path, 5,
+                                               meta_ig=meta)
+        assert ficha["fecha_publicacion"] == "2026-06-16"
+        assert ficha["texto_autor"] == "Animacion 3D, meses de ensayo"
+        assert ficha["medicion"]["metadatos"]["en_el_prompt"] is True
+
+    def test_a_file_the_export_does_not_know_says_so(self, tmp_path):
+        """277 of the 1.401 ig files match no entry. That absence is reported,
+        never filled: two fichas with the same engine and different context are
+        not comparable, and whoever measures coverage has to be able to
+        separate them."""
+        with mock.patch("percepcion.ocr_tesseract", return_value=""), \
+             mock.patch("percepcion.vision_imagen", return_value={}):
+            ficha = percepcion.construir_ficha(self._entry("desconocida.jpg"),
+                                               tmp_path, 5, meta_ig={})
+        assert ficha["fecha_publicacion"] == ""
+        assert ficha["texto_autor"] == ""
+        assert ficha["medicion"]["metadatos"] == {
+            "fuente": "sin_metadatos", "con_texto_autor": False,
+            "con_fecha": False, "en_el_prompt": False}
+
+    def test_the_context_actually_travels_to_the_vision_call(self, tmp_path):
+        """Storing it in the ficha and not sending it would be the whole point
+        missed: the value is in the model reading the work better."""
+        meta = {"obra.jpg": {"fecha": "2026-06-16", "texto": "grabado en metal"}}
+        with mock.patch("percepcion.ocr_tesseract", return_value=""), \
+             mock.patch("percepcion.vision_imagen", return_value={}) as vi:
+            percepcion.construir_ficha(self._entry(), tmp_path, 5, meta_ig=meta)
+        assert vi.call_args.kwargs["texto_autor"] == "grabado en metal"
+        assert vi.call_args.kwargs["fecha"] == "2026-06-16"
+
+    def test_suspect_encoding_is_flagged_on_the_ficha(self, tmp_path):
+        """Instagram writes UTF-8 and the export decodes it as latin-1. Text
+        that could not be recovered is marked, not shipped as if it were
+        fine -- it is the same defect class as "reduciendo ano"."""
+        meta = {"obra.jpg": {"fecha": "", "texto": "colecciA3n",
+                             "encoding_sospechoso": True}}
+        with mock.patch("percepcion.ocr_tesseract", return_value=""), \
+             mock.patch("percepcion.vision_imagen", return_value={}):
+            ficha = percepcion.construir_ficha(self._entry(), tmp_path, 5,
+                                               meta_ig=meta)
+        assert ficha["medicion"]["metadatos"]["encoding_sospechoso"] is True

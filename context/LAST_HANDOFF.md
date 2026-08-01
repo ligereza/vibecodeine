@@ -1465,3 +1465,76 @@ queda marcada en `procesados.txt`, que es lo unico irreversible de todo esto.
 quedarian mas cortos que los actuales. Que un modelo mejor escriba mas breve no
 es perdida; que `materiales` pase de cinco a uno probablemente si. Mirar los
 encogidos es el paso que faltaba y que ningun numero de ayer permitia.
+
+---
+
+## 2026-08-01 (madrugada, tercera tanda) -- el dato que estaba al lado y nadie usaba
+
+Correccion del usuario que reordena todo el trabajo sobre el portafolio: no
+quiere curatoria, quiere lo mismo que se le hace a RD -- discriminar la obra,
+acertar la TECNICA, encontrar la figura -- y **el dato que mas sirve esta en la
+misma carpeta de donde salio la media: la fecha y la descripcion**.
+
+Tenia razon y estaba sin usar.
+
+### Lo que habia en el disco
+
+El export de Instagram (`C:\IA\portfolio ig`, en la maquina del usuario) trae
+`info/your_instagram_activity/media/*.json` con, por cada archivo publicado, el
+timestamp exacto y el texto que el artista escribio al publicarlo.
+
+```txt
+archivos de media mapeados        1.125
+  con texto del artista           1.014  (90%)
+  con fecha exacta                1.125  (100%)
+  rango                           2018-11-29 -> 2026-06-16
+casan con las fichas ig            1.124 de 1.401  (80%)
+```
+
+Un modelo mirando un render dice "composicion 3D abstracta". El artista habia
+escrito "Animacion 3D para @sweettoothskully, meses de ensayo y error": nombra
+la tecnica, el encargo, la duracion y la intencion. **Nada de eso esta en los
+pixeles y ningun modelo lo recupera de ahi.**
+
+### El texto venia ROTO y era invisible
+
+Instagram escribe UTF-8 y el export lo decodifica como latin-1: `coleccion`
+llega como `colecciA3n` y los emoji como basura. Un round trip
+(`s.encode("latin-1").decode("utf-8")`) lo recupera. **Sin eso, las palabras
+del artista habrian entrado al portafolio con la misma clase de defecto que
+"reduciendo ano"** -- y esta vez sobre su propio texto. `tools/ig_metadatos.py`
+se queda con la version que tenga MENOS marcas de mojibake (reparar un texto ya
+correcto lo rompe) y lo que no pudo recuperar lo MARCA en vez de entregarlo
+como si estuviera bien: 6 casos de 1.125.
+
+Lee SOLO `your_instagram_activity/media/`. Al lado viven mensajes privados,
+likes e interacciones de historias, y toda ruta que pase por ahi se rechaza por
+nombre. Es la regla que el usuario corrigio ayer, aplicada donde importa.
+
+### Medido: el contexto cambia la lectura
+
+Cuarenta obras, mismo modelo, mismo tamano, lo unico distinto es que el prompt
+lleva la fecha y el texto del artista:
+
+```txt
+cambio de tecnica        9 de 40  ->  7 reales + 2 que son solo la tilde
+cambio de tipo_obra      1 de 40
+descripcion promedio     87 -> 120 caracteres
+```
+
+Los reales son reclasificaciones, no matices: `arte digital` -> `dibujo
+digital`, `dibujo animado` -> `animacion tradicional`, y una `fotografia` que
+en realidad era `relieve y vidrieria`.
+
+**Y aparecio un defecto nuevo al contar**: el modelo ahora responde con tildes
+correctas (`fotografía`, `animación`) donde antes escribia ASCII, asi que el
+mismo valor existe con dos grafias en el corpus. Es el problema
+`tatuaje`/`tattoo` otra vez. El valor que lee un humano CONSERVA la tilde; lo
+que hace falta es normalizar para agrupar, no para mostrar. Anotado, sin
+arreglar todavia.
+
+El contexto va como CONTEXTO y el prompt se lo dice explicito: *"NO lo copies
+como descripcion ni inventes lo que ahi no dice"*. Si el modelo copiara el
+texto en vez de mirar la obra, el campo dejaria de medir lo que dice medir.
+Y `medicion.metadatos` declara si esta ficha tuvo contexto: dos fichas con el
+mismo motor y distinto contexto no son comparables.
