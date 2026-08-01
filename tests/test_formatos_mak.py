@@ -171,3 +171,43 @@ def test_the_manifest_carries_the_request_that_produced_it():
     assert m["pedido"] == "listar funciones publicas de un modulo"
     assert m["codigo_por"] == "watsonx"
     assert m["formato"] == "pieza/1"
+
+
+# ------------------------------------------------- el selector de vision
+
+def test_without_the_env_var_perception_still_uses_ollama():
+    """The safety property, pinned. A corpus run must not change engine by
+    accident: without PERCEPCION_VISION the behaviour is byte for byte the one
+    that produced the 3.138 fichas. This is the guarantee that the watsonx path
+    can exist without anybody having to be around to watch it."""
+    fuente = (RAIZ / "cultura" / "mak_curatoria" / "percepcion.py").read_text(
+        encoding="utf-8")
+    assert 'os.environ.get("PERCEPCION_VISION", "ollama")' in fuente, (
+        "el default tiene que ser ollama en el propio getenv, no en un if suelto")
+    # y la rama de watsonx solo se toma con la variable puesta en watsonx
+    assert '.lower() == "watsonx"' in fuente
+
+
+def test_the_watsonx_vision_path_falls_back_instead_of_dying():
+    """The cloud failing must not kill a corpus run: percepcion catches and
+    continues to ollama. A run that dies halfway through 3.138 images because
+    a token expired is a run nobody can leave unattended."""
+    fuente = (RAIZ / "cultura" / "mak_curatoria" / "percepcion.py").read_text(
+        encoding="utf-8")
+    i = fuente.index('PERCEPCION_VISION')
+    bloque = fuente[i:i + 1400]
+    assert "except Exception" in bloque, "sin captura, la nube tumba la corrida"
+    assert "caigo a ollama" in bloque, "y tiene que DECIR que cayo"
+
+
+def test_the_watsonx_endpoint_lives_in_exactly_one_place():
+    """Two copies of the same URL is how `refutar.py` cost an afternoon. This
+    counts them, and it already caught the author of this very change adding a
+    second one while writing the vision transport."""
+    lib = (RAIZ / "cultura" / "mak_research" / "research_lib.py").read_text(
+        encoding="utf-8")
+    assert lib.count("ml/v1/text/chat") == 1, (
+        "el endpoint de watsonx aparece mas de una vez: chat y vision tienen "
+        "que compartir _watsonx_llamar")
+    for fn in ("def watsonx_chat(", "def watsonx_vision(", "def _watsonx_llamar("):
+        assert fn in lib

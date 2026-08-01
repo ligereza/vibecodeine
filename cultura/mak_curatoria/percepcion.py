@@ -631,6 +631,29 @@ def vision_imagen(path: str, timeout: int = 120, fuente: str = "rd") -> dict:
     if imagen_b64 is None:
         return {"error": "no_se_pudo_leer_imagen"}
 
+    # Which engine reads the image. `ollama` by default: without the variable
+    # the behaviour is byte for byte today's, so a corpus run cannot be changed
+    # by accident. `watsonx` is the paid one that actually sees -- probed
+    # 2026-07-31 before this line existed (tools/watsonx_vision_smoke.py).
+    #
+    # The resize, the prompt and the tolerant parse are REUSED, not rewritten:
+    # only the transport changes. If watsonx fails for any reason it falls back
+    # to ollama, and the ficha's `medicion.vision` says who answered -- a
+    # corpus run must not die because the cloud did.
+    if os.environ.get("PERCEPCION_VISION", "ollama").lower() == "watsonx":
+        try:
+            sys.path.insert(0, os.path.expanduser("~/research"))
+            from research_lib import watsonx_vision
+            texto = watsonx_vision(prompt_de(fuente), imagen_b64,
+                                   timeout=timeout)
+            d = _parsear_json_vision(texto, fuente)
+            if not d.get("error"):
+                d["_motor"] = "watsonx"
+                return d
+        except Exception as exc:                 # noqa: BLE001 - cae a ollama
+            print("aviso: watsonx no pudo, caigo a ollama (%s)" % str(exc)[:120],
+                  flush=True)
+
     payload = json.dumps({
         "model": OLLAMA_MODEL,
         "prompt": prompt_de(fuente),
