@@ -116,3 +116,54 @@ def test_a_missing_manifest_says_so_instead_of_looking_empty(tmp_path):
 def test_truncated_output_declares_that_it_was_truncated():
     """A silent truncation reads as "that was everything it said"."""
     assert "recortado" in FUENTE
+
+
+# --------------------------------------------------- the failure notice
+
+def test_a_failed_command_reports_whether_anyone_was_told():
+    """ntfy is for when nobody is at the machine. At the keyboard the rc and
+    the stderr are right there; away from it, a button that failed in silence
+    is worse than no button. What is pinned here is that the answer says
+    whether the notice ACTUALLY went out -- claiming `true` on a no-op would be
+    the same defect as a default filling an absence."""
+    import os
+    os.environ.pop("FLUJO_NTFY_TOPIC", None)
+    h = _handler(RAIZ)
+    r = h._correr_comando({"cmd": "version", "confirmar": True,
+                           "args": ["--no-existe"]})
+    assert r["ok"] is False and r["rc"] != 0
+    assert r["aviso_enviado"] is False, (
+        "sin topic configurado nadie fue avisado, y eso se dice")
+
+
+def test_a_successful_command_notifies_nobody():
+    """Success is not news. A notification per button press is how a channel
+    gets muted in a week, and then the failures do not arrive either."""
+    h = _handler(RAIZ)
+    r = h._correr_comando({"cmd": "version", "confirmar": True})
+    assert r["ok"] is True
+    assert r["aviso_enviado"] is False
+
+
+def test_the_channel_state_travels_with_the_manifest():
+    """The interface has to be able to say 'nobody will be told' instead of
+    implying somebody will."""
+    assert '"aviso"' in FUENTE or 'manifiesto["aviso"]' in FUENTE
+    assert "FLUJO_NTFY_TOPIC" in FUENTE
+
+
+def test_the_title_header_is_folded_to_ascii():
+    """A gotcha MAK already paid for in July: the ntfy `Title` header rejects
+    accents. The BODY keeps them -- it is what a human reads."""
+    from flujo.aviso import _ascii
+    assert _ascii("reducción de daño") == "reduccion de dano"
+    assert _ascii("") == ""
+
+
+def test_a_notice_never_takes_down_what_it_reports():
+    """Best effort: a failing notification must not turn a reported failure
+    into a crash."""
+    from flujo.aviso import avisar
+    assert avisar("x", topic="") is False
+    fuente = (RAIZ / "src" / "flujo" / "aviso.py").read_text(encoding="utf-8")
+    assert "except Exception" in fuente and "return False" in fuente

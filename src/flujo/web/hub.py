@@ -368,7 +368,15 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             # de una lista escrita a mano: una lista a mano se queda vieja y
             # descarta en silencio, que es el defecto que este repo encontro
             # tres veces el 2026-07-31.
-            self._send_json(self._leer_manifiesto_comandos())
+            manifiesto = self._leer_manifiesto_comandos()
+            from ..aviso import configurado as _aviso_ok
+            # La interfaz tiene que poder decir "nadie se va a enterar" en vez
+            # de dar a entender que alguien se entera.
+            manifiesto["aviso"] = {
+                "configurado": _aviso_ok(),
+                "como": "exporta FLUJO_NTFY_TOPIC=<tu topic de ntfy.sh>",
+            }
+            self._send_json(manifiesto)
             return
         if path == "/api/ping":
             self._send_json({
@@ -966,9 +974,24 @@ class HubRequestHandler(BaseHTTPRequestHandler):
                 return t
             aviso = "[...recortado, %d caracteres antes...]" % (len(t) - tope)
             return aviso + chr(10) + t[-tope:]
+        # Si fallo y hay a donde avisar, avisa. Es para cuando el usuario NO
+        # esta en la maquina: al teclado ya ve el rc y el stderr aca abajo, y
+        # una notificacion encima seria ruido. Lejos, un boton que fallo en
+        # silencio es peor que no tener boton.
+        aviso_enviado = False
+        if r.returncode != 0:
+            from ..aviso import avisar
+            ultima = [l for l in (r.stderr or "").strip().splitlines() if l.strip()]
+            detalle = ultima[-1][:200] if ultima else "sin stderr"
+            aviso_enviado = avisar(
+                "%s -> rc=%d%s%s" % (cmd, r.returncode, chr(10), detalle),
+                titulo="flujo: fallo un comando")
         return {"cmd": cmd, "args": args, "rc": r.returncode,
                 "ok": r.returncode == 0,
-                "stdout": _cola(r.stdout), "stderr": _cola(r.stderr)}
+                "stdout": _cola(r.stdout), "stderr": _cola(r.stderr),
+                # Se declara si SALIO el aviso, no si se intento: la interfaz
+                # no puede decir "te avise" cuando no hay topic configurado.
+                "aviso_enviado": aviso_enviado}
 
     def _serve_file(self, file_path: Path):
         try:

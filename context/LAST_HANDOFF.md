@@ -997,3 +997,78 @@ Earlier the same day the same technique had already paid: 22 identical
 Before opening a debugger: group the failures by literal message and look at
 the distribution. The information is almost always already written, many times
 over, in a log nobody reads.
+
+## Where this was left, 2026-07-31 night (PR #428)
+
+Everything below is IN PR #428, green on the full matrix at close.
+
+**The skin is swappable now, and it was never verified.** There were THREE
+skins -- `campo` (1323 lines), `terminal` (772), `venue` (505) -- and both
+`iskvw_piel_smoke.mjs` and `iskvw_piel_medir.mjs` read the literal path
+`.../piel/campo/index.html`. Two of three had NO verification and NO
+measurement of any kind. Pointing the battery at them broke three times and
+NONE of the breaks was the skin: the canvas was only returned for the id "c",
+element-level `querySelectorAll` was never stubbed, and the "work done" metric
+counted gradients and glyphs -- how CAMPO draws, while venue draws polylines.
+The instrument was shaped like one skin and called that a verification. Both
+skins work: venue draws 503 edges, terminal 3.480 marks.
+
+What exists now: `schemas/piel.schema.json` + a `piel.json` per skin declaring
+what it fetches, HOW WHAT IT DREW IS COUNTED (`medida`), and per layer THE
+DATUM IT ENCODES. The battery is a common CORE plus extras gated on declared
+capabilities. Stubs live once in `tools/lib/piel_dom.mjs`. A manifest that lies
+FAILS -- there is a test that breaks one on purpose and restores it.
+
+**The substrate: watsonx sees, and the model was chosen by measurement.**
+Probe first (`tools/watsonx_vision_smoke.py`) because vision was inferred from
+model NAMES. Then a bench with two ground truths already on disk and never
+used: tesseract's OCR (non-empty in 24% of fichas) and the ficha gemma3
+produced. Invention counts AGAINST. Result, and it is the second time in one
+day that a model's name lied:
+
+    llama-3-2-11b-VISION   solape 0.414   3 inventados   40.175 tok
+    mistral-small-3-1-24b  solape 0.807   0 inventados    7.710 tok
+    llama-4-maverick-17b   solape 0.807   1 inventado    12.019 tok
+
+`PERCEPCION_VISION=ollama|watsonx`, ollama by default: without the variable the
+behaviour is byte for byte today's. Run in progress at close: **610 of 1401 ig
+fichas, 0 errors**, ~4 s/file, ~964 tokens/image -> the whole corpus is about
+US$2. The credit still cannot be burned by this work; what rises is what is
+seen. Measured on 105 attributed fichas: `tipo_obra` 0% -> 100% (the field
+whose absence forced classifying 697 works by hand), `colores` 87% -> 100%,
+`texto_visible` 22% -> 20% (WORSE, said because it is worse).
+
+**Buttons, behind a gate made of generated data.** `context/comandos.json` is
+the CLI as DATA (91 commands, 16 groups), generated from the same tree as
+MAPA.md's table so they cannot fork; each entry carries `estado` (`listo`, or
+`falta: <what>`) so an interface can show OBJECTIVES instead of commands.
+`GET /api/comandos` and `POST /api/comando` run one command FROM the manifest
+only -- no free-form string, no shell. `destructivo: True` demands
+`confirmar`; `null` demands it too, because "nobody classified it" is not "it
+is safe". `FLUJO_NTFY_TOPIC` notifies FAILURES only, and the answer declares
+whether anyone was actually told.
+
+### The count that closed a question, and the unit that fooled me
+
+Asked where "the other 8" failures were between `10 fallos.json` and `18
+medicion.vision=fallo`: there was no gap. `fallos.json` counts FILES, the
+ficha field counts ROWS, and a retried file writes a ficha per attempt -- 8
+files x2 + 2 files x1 = 18 rows over 10 files. Two units measuring one fact,
+reported by me as if they were two populations.
+
+The real finding underneath: **retrying is useless when the cause is
+structural.** All 10 were the missing `_tmp` directory, so every retry only
+duplicated the ficha. After the fix: 0 files, 0 rows.
+
+### Next, in order
+
+1. Finish the ig run (~800 left) and re-measure coverage over the full 1401
+   with attribution. Then the same for 10 RD flyers as a probe -- RD is more
+   OCR than description and its database is partly done.
+2. `B.2` has the API but NO UI yet: the hub does not draw the buttons.
+   `context/comandos.json` is there and `/api/comandos` serves it; what is
+   missing is the panel that renders it.
+3. The search is still the weak link for `refutar`: SearXNG first, no Tavily
+   key, so a pass can come back with zero sources. Until that is fixed,
+   wiring refutar as an automatic per-report gate would stamp "adversarially
+   verified" on invented claims.

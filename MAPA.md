@@ -139,6 +139,7 @@ the root of the repo (there is a `.env.example` for reference).
 | `FLUJO_IMAP_HOST`, `FLUJO_IMAP_USER`, `FLUJO_IMAP_PASSWORD` | Mailbox that orders are imported from | Mail import does not work; everything else does |
 | `FLUJO_IMAP_ALLOWED_SENDERS` | List of senders authorised to send orders | For safety it accepts nobody |
 | `FLUJO_IMAP_ALLOW_AIRDROP_ENGINE` | Set to `1` only if you want an update arriving by mail to be able to modify the update engine itself | Off. That is correct: without this, a mail cannot rewrite the mechanism that applies mails |
+| `FLUJO_NTFY_TOPIC` | Topic de ntfy.sh al que avisar cuando un comando lanzado desde el hub FALLA. Existe para cuando nadie esta en la maquina: al teclado el hub ya muestra el codigo de salida y el stderr, y una notificacion encima seria ruido. Solo avisa fallos -- una notificacion por cada boton apretado es como se silencia un canal en una semana, y entonces los fallos tampoco llegan | No avisa a nadie, y la respuesta de la API lo DICE (`aviso_enviado: false`) en vez de dar a entender que alguien se entero |
 | `FLYER_BASE` | Folder where event flyers are stored | Uses a folder next to the working area |
 | `FLUJO_WEB_DEBUG` | Shows detailed app errors | Off, which is correct in normal use |
 | `FLUJO_PACKAGED` | Set by the installer when the app runs as an `.exe` | Assumes you run from the repo |
