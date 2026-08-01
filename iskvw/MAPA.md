@@ -42,11 +42,17 @@ iskvw/
 
 | | |
 |---|---|
-| obras en el campo | **219**, todas de `posts/` |
+| **piezas que publica el sitio** (`archivo.json`) | **479** — 235 `pieza_grafica`, 227 `obra`, 16 `concepto`, 1 `informe` |
+| **vínculos que publica el sitio** | **269** — 251 `manual`, 18 `etiqueta` |
+| obras con posición medida (`campo.json`, el respaldo) | **219**, todas de `posts/` |
 | con trazo publicado | **208** (las 11 restantes son video o sin contraste) |
 | capas | `tilde` en 219, `trazo` en 208 |
 | vecindad conservada | **48,6 %** — lo que la proyección puede afirmar |
-| piezas de `obras.json` | 8 |
+| piezas de `obras.json` | 8, y son HERRAMIENTAS del repo, no obras |
+
+Las dos primeras filas son lo que se ve hoy; la tercera es el respaldo. Hasta el
+2026-08-01 esta tabla publicaba sólo el 219 y veinte líneas más abajo el 479, o
+sea dos cifras del mismo campo en una página.
 
 `vecindad_conservada` es el número que sostiene el campo: de los vecinos reales
 de cada obra en 768 dimensiones, qué fracción sigue siendo vecina en el plano.
@@ -146,11 +152,23 @@ que no entiende.
 `piel/trazos/_indice.json`, `piel/lib/*.js`. `datos/archivo.json` se genera y
 **no se versiona**.
 
-**La piel pide el sustrato** (2026-07-30): `piel/campo` intenta
-`datos/archivo.json` primero —piezas **y** vínculos, así que por ahí entran los
-ensayos de MAK con sus conceptos e íconos— y si no está sigue exactamente como
-antes con `campo.json` y `obras.json`. Como `archivo.json` no se versiona, hoy
-el camino vivo es el respaldo: la degradación es lo normal, no la excepción.
+**La piel pide el sustrato, y lo recibe** (medido 2026-08-01): `piel/campo` y
+`piel/terminal` intentan `datos/archivo.json` primero —piezas **y** vínculos—
+y si no está siguen con `campo.json` y `obras.json`.
+
+`archivo.json` **no se versiona pero SÍ se publica**: el workflow lo genera con
+`gen_archivo_iskvw.py --fuente todo` antes de subir, y recién después verifica
+que exista. El sitio vivo sirve 479 piezas y 269 vínculos desde el 2026-07-31
+(run del 2026-08-01T02:47 UTC, 479/269). La degradación existe y no se toma.
+
+Hasta el 2026-08-01 este párrafo decía lo contrario —"hoy el camino vivo es el
+respaldo"— y era cierto sólo entre el 2026-07-30 18:40 y las 23:10 UTC del
+MISMO día, cuando CI empezó a generarlo (PR #408). Cuatro horas y media de
+vigencia, y sobrevivió a dos ediciones posteriores de este archivo. **Una frase
+que describe un estado que dejó de existir es peor que ninguna: se lee como
+medición.** El micelio de MAK, en cambio, NO entra en CI (el runner no ve la
+caja: `no se pudo leer el micelio (Connection refused)`), así que sus vínculos
+no llegan al sitio y eso sí sigue siendo cierto.
 
 **La obra deforma el campo, y lo deforma con lo que ella mide** (2026-07-30):
 la mejora `patch_efectos` del tablero, y su cableado vive en el mismo archivo
@@ -205,6 +223,14 @@ sólo id sigue funcionando.
   así que el sitio no los ve. Que la investigación de MAK aparezca junto a la
   obra del artista es una decisión de autoría, y el usuario la dejó **para
   debatir**: el puente está construido y sin usar.
-- **Qué son las 8 piezas de `obras.json`** frente a las 219 del archivo. **Del usuario.**
-- La piel `terminal` sigue leyendo sólo `obras.json`: no ve el archivo.
+- ~~Qué son las 8 piezas de `obras.json`~~ **CONTESTADO por el usuario**: son
+  HERRAMIENTAS del repo (VOLÁ, Campo, Cenefa…), no obras. Siguió publicado como
+  pregunta abierta hasta el 2026-08-01 aunque la respuesta estaba escrita — que
+  es exactamente el defecto que el handoff existe para evitar.
+- ~~La piel `terminal` sigue leyendo sólo `obras.json`~~ **HECHO 2026-08-01**:
+  lee `archivo.json` con el mismo orden de respaldo que `campo`. Medido contra
+  el sustrato real: 479 obras, 53 etiquetas, 8 categorías.
+- **Los vínculos del micelio no llegan al sitio**: el runner de CI no ve la caja
+  MAK, así que `--fuente todo` los omite y lo dice en el log. Las 479 piezas
+  salen del material del repo.
 - 34 reels sin percibir en MAK. Ya están declarados en el filtro: entran solos.

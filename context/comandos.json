@@ -1,6 +1,6 @@
 {
  "formato": "comandos/1",
- "total": 91,
+ "total": 93,
  "grupos": [
   "airdrop",
   "brief",
@@ -628,6 +628,24 @@
    "invocacion": "py -m flujo micelio verificar",
    "grupo": "micelio",
    "desc": "Corre el criterio y devuelve VERDE o ROJO. Es el semaforo del ciclo.",
+   "requiere": "",
+   "estado": "listo",
+   "destructivo": null
+  },
+  {
+   "cmd": "micelio cosechar",
+   "invocacion": "py -m flujo micelio cosechar",
+   "grupo": "micelio",
+   "desc": "Corre el criterio y devuelve el SOBRE de vuelta: fruto si crecio, hongo si no.",
+   "requiere": "",
+   "estado": "listo",
+   "destructivo": null
+  },
+  {
+   "cmd": "micelio depositar",
+   "invocacion": "py -m flujo micelio depositar",
+   "grupo": "micelio",
+   "desc": "Mete el sobre en la cola de trabajo del organismo.",
    "requiere": "",
    "estado": "listo",
    "destructivo": null

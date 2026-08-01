@@ -11,6 +11,8 @@ proyecto_dir = test_dir.parent
 sys.path.insert(0, str(proyecto_dir / "cultura" / "mak_curatoria"))
 
 import percepcion  # noqa: E402
+
+RAIZ_MOD = proyecto_dir / "cultura" / "mak_curatoria"
 import reporter  # noqa: E402
 
 
@@ -207,6 +209,7 @@ class TestConstruirFicha:
 
         assert set(ficha.keys()) == {
             "id", "fuente", "ruta_rel", "tipo", "categoria", "bytes", "mtime",
+            "fecha_publicacion", "texto_autor",
             "ocr_texto", "vision", "datos_evento", "medicion", "calidad_senal",
             "error", "seg_proceso", "ts",
         }
@@ -751,3 +754,230 @@ class TestLimite:
         with mock.patch("percepcion.construir_ficha", return_value=ficha):
             percepcion.correr(str(tmp_path), None, str(tmp_path / "out"))
         assert "LIMITE" not in capsys.readouterr().out
+
+
+# ---------------------------------------------------------------------------
+# Was it READ, or was it inferred?
+# ---------------------------------------------------------------------------
+
+class TestRespaldoEvento:
+    """Measured on 300 real RD files on 2026-08-01: `venue` appeared in the
+    text read from the image 99% of the time and `headliners` 97%, but
+    `productora` only 33% -- of 173 extracted productoras, 116 were nowhere in
+    the text. Almost all of them said "Reduciendo Dano": the model inferred the
+    producer from CONTEXT (this is RD material) instead of reading it off the
+    poster.
+
+    That is not a lie, but it is not reading either, and the RD database is fed
+    from here: a wrong productora is a wrong client. So it is MARKED, never
+    deleted -- an inferred value can be the right one, and the person curating
+    it decides. What cannot happen is that it reaches the database
+    indistinguishable from one that was read.
+    """
+
+    def test_a_value_that_appears_in_the_text_is_supported(self):
+        r = percepcion.respaldo_evento(
+            {"venue": "Club Hipico"}, "CLUB HIPICO 01 MAYO", "")
+        assert r == {"con_respaldo": ["venue"]}
+
+    def test_a_value_nobody_read_is_flagged(self):
+        r = percepcion.respaldo_evento(
+            {"productora": "Reduciendo Dano"}, "SUSTANCIA NEBULA", "")
+        assert r["sin_respaldo"] == ["productora"]
+        assert "con_respaldo" not in r
+
+    def test_the_flag_never_deletes_the_value(self):
+        datos = {"productora": "Reduciendo Dano"}
+        percepcion.respaldo_evento(datos, "", "")
+        assert datos["productora"] == "Reduciendo Dano", (
+            "un dato deducido puede ser el correcto; el que decide es quien lo "
+            "cura, no este archivo")
+
+    def test_the_vision_text_counts_as_read_too(self):
+        """Tesseract reads 62% of these files and the model 84%. Scoring only
+        against OCR would flag as invented what the model actually read."""
+        r = percepcion.respaldo_evento(
+            {"headliners": ["ADRIATIQUE"]}, "", "ADRIATIQUE COLYN")
+        assert r == {"con_respaldo": ["headliners"]}
+
+    def test_dates_are_not_scored_at_all(self):
+        """The model normalises ("VIERNES 01 MAYO" -> "2026-05-01"), so word
+        overlap would report "unsupported" over a correct reading. Measuring
+        with the wrong instrument and reporting the result is worse than not
+        measuring."""
+        r = percepcion.respaldo_evento(
+            {"fecha": "2026-05-01"}, "VIERNES 01 MAYO", "")
+        assert "fecha" not in r.get("sin_respaldo", [])
+        assert "fecha" not in r.get("con_respaldo", [])
+
+    def test_handles_are_not_scored_either(self):
+        """An @ is legitimately derived from an email on the poster."""
+        r = percepcion.respaldo_evento(
+            {"handles": ["@reduciendodano.cl"]}, "eventos@reduciendodano.cl", "")
+        assert r == {}
+
+    def test_accents_do_not_break_the_match(self):
+        r = percepcion.respaldo_evento(
+            {"venue": "Teatro Caupolicán"}, "TEATRO CAUPOLICAN", "")
+        assert r == {"con_respaldo": ["venue"]}
+
+    def test_nothing_extracted_says_nothing(self):
+        assert percepcion.respaldo_evento({}, "texto", "texto") == {}
+
+    def test_it_lands_in_the_ficha(self, tmp_path):
+        entry = {"fuente": "rd", "ruta_rel": "f.jpg", "ruta_abs": "f.jpg",
+                 "tipo": "imagen", "bytes": 1, "mtime": 0}
+        vision = {"texto_visible": "CLUB HIPICO", "venue": "Club Hipico",
+                  "productora": "Reduciendo Dano"}
+        with mock.patch("percepcion.ocr_tesseract", return_value=""), \
+             mock.patch("percepcion.vision_imagen", return_value=vision):
+            ficha = percepcion.construir_ficha(entry, tmp_path, 5)
+        med = ficha["medicion"]["datos_evento"]
+        assert med["con_respaldo"] == ["venue"]
+        assert med["sin_respaldo"] == ["productora"]
+
+
+# ---------------------------------------------------------------------------
+# What the artist wrote about his own work
+# ---------------------------------------------------------------------------
+
+class TestMetadatosDelArtista:
+    """The Instagram export shipped with the media already carries, for most
+    files, the date the work was published and the text the artist wrote about
+    it. Measured on the real export: 1.013 of 1.401 ig fichas have his own
+    text, 1.124 have an exact date.
+
+    A model looking at a render says "abstract 3D composition". The artist
+    wrote "Animacion 3D para @sweettoothskully, meses de ensayo y error" --
+    technique, client, duration and intent. None of that is in the pixels.
+    """
+
+    def _entry(self, ruta_rel="obra.jpg"):
+        return {"fuente": "ig", "ruta_rel": ruta_rel, "ruta_abs": ruta_rel,
+                "tipo": "imagen", "bytes": 1, "mtime": 0}
+
+    def test_the_context_reaches_the_prompt(self):
+        base = percepcion.prompt_de("ig")
+        con = percepcion.prompt_de("ig", "Animacion 3D para un cliente",
+                                   "2026-06-16")
+        assert len(con) > len(base)
+        assert "Animacion 3D para un cliente" in con
+        assert "2026-06-16" in con
+        assert con.startswith(base), "el prompt original no se toca"
+
+    def test_no_context_leaves_the_prompt_untouched(self):
+        """A run without the map has to be byte for byte the old behaviour, or
+        two runs stop being comparable without anyone noticing."""
+        assert percepcion.prompt_de("ig") == percepcion.prompt_de("ig", "", "")
+        assert percepcion.prompt_de("rd") == percepcion.prompt_de("rd", "", "")
+
+    def test_the_prompt_forbids_copying_the_text_as_the_answer(self):
+        con = percepcion.prompt_de("ig", "algo que escribio", "2026-01-01")
+        assert "NO lo copies" in con, (
+            "si el modelo copia el texto en vez de mirar la obra, la "
+            "descripcion deja de medir lo que dice medir")
+
+    def test_the_ficha_carries_date_and_text_without_a_model(self, tmp_path):
+        meta = {"obra.jpg": {"fecha": "2026-06-16",
+                             "texto": "Animacion 3D, meses de ensayo"}}
+        with mock.patch("percepcion.ocr_tesseract", return_value=""), \
+             mock.patch("percepcion.vision_imagen", return_value={"tecnica": "3D"}):
+            ficha = percepcion.construir_ficha(self._entry(), tmp_path, 5,
+                                               meta_ig=meta)
+        assert ficha["fecha_publicacion"] == "2026-06-16"
+        assert ficha["texto_autor"] == "Animacion 3D, meses de ensayo"
+        assert ficha["medicion"]["metadatos"]["en_el_prompt"] is True
+
+    def test_a_file_the_export_does_not_know_says_so(self, tmp_path):
+        """277 of the 1.401 ig files match no entry. That absence is reported,
+        never filled: two fichas with the same engine and different context are
+        not comparable, and whoever measures coverage has to be able to
+        separate them."""
+        with mock.patch("percepcion.ocr_tesseract", return_value=""), \
+             mock.patch("percepcion.vision_imagen", return_value={}):
+            ficha = percepcion.construir_ficha(self._entry("desconocida.jpg"),
+                                               tmp_path, 5, meta_ig={})
+        assert ficha["fecha_publicacion"] == ""
+        assert ficha["texto_autor"] == ""
+        assert ficha["medicion"]["metadatos"] == {
+            "fuente": "sin_metadatos", "con_texto_autor": False,
+            "con_fecha": False, "en_el_prompt": False}
+
+    def test_the_context_actually_travels_to_the_vision_call(self, tmp_path):
+        """Storing it in the ficha and not sending it would be the whole point
+        missed: the value is in the model reading the work better."""
+        meta = {"obra.jpg": {"fecha": "2026-06-16", "texto": "grabado en metal"}}
+        with mock.patch("percepcion.ocr_tesseract", return_value=""), \
+             mock.patch("percepcion.vision_imagen", return_value={}) as vi:
+            percepcion.construir_ficha(self._entry(), tmp_path, 5, meta_ig=meta)
+        assert vi.call_args.kwargs["texto_autor"] == "grabado en metal"
+        assert vi.call_args.kwargs["fecha"] == "2026-06-16"
+
+    def test_suspect_encoding_is_flagged_on_the_ficha(self, tmp_path):
+        """Instagram writes UTF-8 and the export decodes it as latin-1. Text
+        that could not be recovered is marked, not shipped as if it were
+        fine -- it is the same defect class as "reduciendo ano"."""
+        meta = {"obra.jpg": {"fecha": "", "texto": "colecciA3n",
+                             "encoding_sospechoso": True}}
+        with mock.patch("percepcion.ocr_tesseract", return_value=""), \
+             mock.patch("percepcion.vision_imagen", return_value={}):
+            ficha = percepcion.construir_ficha(self._entry(), tmp_path, 5,
+                                               meta_ig=meta)
+        assert ficha["medicion"]["metadatos"]["encoding_sospechoso"] is True
+
+
+class TestTecnicaCanonica:
+    """`tecnica` is free text and therefore drifts. Measured on 2026-08-01 over
+    the 1.401 ig fichas: 54 raw values that are 48 concepts, with 5 groups
+    written more than one way -- `fotografia`(35) vs `fotografía`(163),
+    `Ilustración digital`(5) vs `ilustración digital`(103) vs `ilustracion
+    digital`(9). Same shape as `tatuaje`/`tattoo`, which already has a fix.
+
+    The split is what matters: case and whitespace can be decided looking at ONE
+    value, so they are fixed at the origin. The accent cannot -- to know whether
+    `fotografia` is a typo for `fotografía` you have to see that the same corpus
+    holds 163 of the accented one. Deciding that from a single ficha would be
+    inventing.
+    """
+
+    def test_case_and_spacing_are_fixed_at_the_origin(self):
+        d = percepcion._parsear_json_vision(
+            '{"tecnica": "  Ilustración   Digital "}', "ig")
+        assert d["tecnica"] == "ilustración digital"
+
+    def test_the_accent_is_never_stripped(self):
+        """It is a value a human reads. `a_ascii` on it is the defect class of
+        "reduciendo ano"."""
+        d = percepcion._parsear_json_vision('{"tecnica": "fotografía"}', "ig")
+        assert d["tecnica"] == "fotografía"
+
+    def test_the_accented_variant_wins_even_when_it_is_a_minority(self):
+        """In Spanish the accent is not a style option."""
+        m = percepcion.canonizar_tecnicas(["grabado"] * 50 + ["grabádo"])
+        assert m == {"grabado": "grabádo"} or m == {}, m
+
+    def test_the_real_collisions_of_the_corpus_are_resolved(self):
+        m = percepcion.canonizar_tecnicas(
+            ["fotografia"] * 35 + ["fotografía"] * 163 +
+            ["ilustracion digital"] * 9 + ["ilustración digital"] * 103)
+        assert m == {"fotografia": "fotografía",
+                     "ilustracion digital": "ilustración digital"}
+
+    def test_a_value_with_no_variants_is_left_alone(self):
+        """A map that touches what has no collision would rewrite the corpus
+        for nothing."""
+        assert percepcion.canonizar_tecnicas(["collage"] * 4) == {}
+
+    def test_with_no_accents_anywhere_there_is_nothing_to_correct(self):
+        assert percepcion.canonizar_tecnicas(["render 3d", "render 3d"]) == {}
+
+    def test_empty_values_do_not_create_a_group(self):
+        assert percepcion.canonizar_tecnicas(["", None, "collage"]) == {}
+
+    def test_a_technique_nobody_ever_saw_is_handled_too(self):
+        """The map comes from the DATA, not from a list. A technique that
+        appears tomorrow needs nobody to remember anything -- which is the
+        whole difference from `SINONIMOS_TIPO_OBRA`, that does need it."""
+        m = percepcion.canonizar_tecnicas(
+            ["xilografia inversa"] * 2 + ["xilografía inversa"] * 7)
+        assert m == {"xilografia inversa": "xilografía inversa"}

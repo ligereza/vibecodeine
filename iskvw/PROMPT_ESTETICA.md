@@ -1,7 +1,14 @@
 # Prompt para pedir una estética nueva
 
 Copiá todo lo que está bajo la línea y pegalo en Arena, en Google AI Studio o en
-el agente que uses, **junto con** `CONTRATO.md` y `datos/ESQUEMA.md`.
+el agente que uses, **junto con** `CONTRATO.md` y `ESQUEMA_ARCHIVO.md`.
+
+Los tres archivos tienen que decir lo MISMO. El 2026-08-01 no lo decían: este
+prompt mandaba leer `archivo.json` y entregar contra `obras.json`, declaraba
+993 piezas donde hay 479, y la línea de arriba pedía adjuntar `datos/ESQUEMA.md`,
+que documenta otro archivo. Un modelo web que reciba instrucciones que se
+contradicen escribe una piel para datos que no existen, y eso no se descubre
+hasta publicarla.
 
 Lo que devuelva va a `piel/<nombre>/` y no toca nada más.
 
@@ -21,11 +28,21 @@ artista, informes de una máquina que las lee, código — todo llega con la mis
 forma. Eso es a propósito: tu piel no tiene que saber de dónde salió, y el día
 que aparezca un tipo de pieza nuevo, tu piel sigue funcionando sin tocarla.
 
-Hoy son 993 piezas y 3157 vínculos. Los vínculos traen **peso**: algunos están
-medidos de verdad (`semantico`), otros sólo dicen que dos piezas comparten una
-etiqueta (`etiqueta`). **Si tu propuesta dibuja cercanía, distinguí los dos**:
-tratar una coincidencia de palabra como si fuera parentesco medido es
-exactamente el tipo de mentira que este archivo no admite.
+Hoy son **479 piezas y 269 vínculos**, medidos sobre el archivo que el sitio
+publica (2026-08-01). Las piezas se reparten en 235 `pieza_grafica`, 227 `obra`,
+16 `concepto` y 1 `informe`. Los vínculos son 251 `manual` y 18 `etiqueta`.
+
+Cada pieza trae: `id`, `titulo`, `clase`, `fecha`, `resumen`, `etiquetas`,
+`peso`, `medio`, `estado` y `extra`. Cada vínculo trae `de`, `a`, `peso` y
+`clase`. **Ninguna pieza trae coordenadas**: si tu propuesta necesita
+posiciones, las calcula ella.
+
+Los vínculos traen **peso**, y su `clase` dice de qué están hechos: `manual` es
+una relación declarada, `etiqueta` sólo dice que dos piezas comparten una
+palabra. **Si tu propuesta dibuja cercanía, distinguí las clases**: tratar una
+coincidencia de palabra como si fuera parentesco medido es exactamente el tipo
+de mentira que este archivo no admite. Si aparece una clase que no conocés,
+dibujala como la más débil y decilo, no la asimiles a la más fuerte.
 
 ## Lo que NO quiero, y es lo más importante
 
@@ -71,8 +88,14 @@ desplazarse.
 
 ## Qué entregar
 
-Una carpeta autocontenida con un `index.html` que se abra con doble clic y lea
-`datos/obras.json`. Si usás librerías, que viajen adentro.
+Una carpeta autocontenida con un `index.html` que lea **`datos/archivo.json`**
+—el mismo que se describe arriba— con rutas relativas desde `piel/<nombre>/`, o
+sea `../../datos/archivo.json`. Si usás librerías, que viajen adentro.
+
+Este párrafo decía `datos/obras.json` y se contradecía con el resto del
+documento: `obras.json` son 8 entradas y son HERRAMIENTAS del repo, no obras.
+Una piel escrita contra ese archivo muestra 8 cosas donde hay 479, y el error
+no se ve hasta que se publica.
 
 Y aparte, en tu respuesta: **tres o cuatro líneas explicando cuál es la idea**.
 Qué es esto, por qué esta forma y no otra, y qué hace el visitante. Si no podés

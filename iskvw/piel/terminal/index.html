@@ -752,18 +752,63 @@ function arrancar(obras){
   recalcularFiltro();
 }
 
-/* intento de fetch real primero (sirve si esto se abre por http://) */
-fetch('../../datos/obras.json').then(r=>{
-  if(!r.ok) throw new Error('sin servidor http');
-  return r.json();
-}).then(arrancar).catch(()=>{
-  try{
-    const el = document.getElementById('datos-obras');
-    arrancar(JSON.parse(el.textContent));
-  }catch(e){
-    arrancar([]);
+/* ---------- de donde salen las obras ----------
+
+   Esta piel leia SOLO `obras.json`, que son 8 entradas y son HERRAMIENTAS, no
+   obras -- lo dice el manifiesto de `campo` con esas palabras. Habia tres
+   pieles y una sola con el archivo detras, asi que "intercambiable" era cierto
+   en el disco y falso para quien mira: cambiar a esta mostraba 8 herramientas
+   en vez de 1.401 obras.
+
+   El sustrato es `archivo.json`, el mismo contrato que lee `campo`. Se pide
+   PRIMERO, igual que alla, y si no esta se cae a `obras.json` y despues al
+   JSON incrustado (que existe para poder abrir esto con file://, donde el
+   fetch lo bloquea CORS). El orden es el mismo que el de campo a proposito:
+   dos pieles que caen distinto ante el mismo dato no son dos pieles del mismo
+   archivo. */
+function desdeArchivo(d){
+  const piezas = (d && Array.isArray(d.piezas)) ? d.piezas : [];
+  return piezas.map(p => {
+    const extra = p.extra || {};
+    return {
+      id: p.id,
+      title: p.titulo || p.id,
+      tags: p.etiquetas || [],
+      /* `clase` es lo que la pieza ES en el contrato; `extra.categoria` es lo
+         que dijo la percepcion. Se prefiere lo percibido y se cae a la clase,
+         sin inventar una tercera. */
+      category: extra.categoria || p.clase || '',
+      technique: extra.tecnica || '',
+      /* `anunciada` = sin archivo detras. Mostrarla como terminada es la
+         mentira que el contrato prohibe, y esta piel ya sabe pintar eso. */
+      placeholder: p.estado === 'anunciada',
+      createdAt: p.fecha || '',
+      year: (p.fecha || '').slice(0,4),
+      mediaType: (p.medio && p.medio.tipo) || '',
+      svg: (p.medio && p.medio.src) || ''
+    };
+  });
+}
+
+function cargar(rutas, i){
+  i = i || 0;
+  if(i >= rutas.length){
+    try{
+      arrancar(JSON.parse(document.getElementById('datos-obras').textContent));
+    }catch(e){ arrancar([]); }
+    return;
   }
-});
+  fetch(rutas[i]).then(r=>{
+    if(!r.ok) throw new Error('sin servidor http');
+    return r.json();
+  }).then(d=>{
+    const obras = Array.isArray(d) ? d : desdeArchivo(d);
+    if(!obras.length) throw new Error('vacio');
+    arrancar(obras);
+  }).catch(()=> cargar(rutas, i+1));
+}
+
+cargar(['../../datos/archivo.json', '../../datos/obras.json']);
 
 })();
 </script>
