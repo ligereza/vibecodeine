@@ -177,3 +177,60 @@ def test_mutacion_limite_no_truncado_se_detectaria():
     # la funcion real si trunca:
     conceptos, _ = F.parsear_conceptos(json.dumps(crudos))
     assert len(conceptos) <= F.MAX_CONCEPTOS
+
+# --------------------------------------------------- exigencias verificables
+
+_ENSAYO_QUE_CUMPLE = """# La tilde como frontera
+
+## PARTE I: EL ORIGEN - donde la marca empieza a separar
+La imprenta la fija en 1492 y el uso se estabiliza recien en 1815
+(https://memoriachilena.gob.cl/x).
+
+## PARTE II: LA RUPTURA - cuando el teclado la vuelve opcional
+Fuente: https://scielo.cl/y
+
+## PARTE III: LO QUE QUEDA - dos lecturas del mismo signo
+| lectura ortografica | lectura politica |
+|---|---|
+| la tilde ordena | la tilde marca quien escribe bien |
+"""
+
+
+def test_un_ensayo_completo_no_incumple_nada():
+    assert F.exigencias_incumplidas(_ENSAYO_QUE_CUMPLE) == []
+
+
+def test_un_informe_disfrazado_de_ensayo_se_detecta():
+    """Lo que el verificador existe para atrapar.
+
+    Medido 2026-08-01 sobre una corrida real con `--formato ensayo`: el
+    documento traia sus 10 conceptos de anexo y CERO partes narradas. Las
+    siete exigencias estaban en el prompt desde el 2026-07-30 y nadie
+    verificaba que se cumplieran, asi que eran una suplica.
+    """
+    faltan = F.exigencias_incumplidas(
+        "Un texto plano sin estructura." + chr(10) * 2 + "Otro parrafo mas.")
+    nombres = [f.split(":")[0] for f in faltan]
+    assert "PARTES NARRADAS" in nombres
+    assert "TABLA DONDE DOS LECTURAS COMPITEN" in nombres
+    assert "CRONOLOGIA" in nombres
+    assert "FUENTES CON URL" in nombres
+
+
+def test_el_motivo_es_el_pedido_no_el_diagnostico():
+    """Cada motivo se le repite al modelo tal cual, asi que se escribe como
+    instruccion. Si dijera solo 'faltan partes' no serviria para reintentar."""
+    faltan = F.exigencias_incumplidas("nada")
+    partes = next(f for f in faltan if f.startswith("PARTES"))
+    assert "titulo" in partes.lower() and "tesis" in partes.lower()
+
+
+def test_la_cronologia_acepta_cualquier_siglo():
+    """El rango estaba pegado a 1800 y la genealogia de un signo diacritico
+    empieza en la imprenta: 1492 quedaba fuera y el ensayo perdia su
+    cronologia por el rango, no por el contenido."""
+    con_siglo_xv = chr(10).join(
+        ["## A", "## B", "## C", "En 1492 y 1535.", "http://x", "|---|", ""])
+    nombres = [f.split(":")[0]
+               for f in F.exigencias_incumplidas(con_siglo_xv)]
+    assert "CRONOLOGIA" not in nombres

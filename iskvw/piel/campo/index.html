@@ -571,8 +571,13 @@ function dibujar(){
   const F = E.forma;
   const escalaForma = Math.min(W, H) * (0.34 + E.despliegue * 0.16);
   const tGlifo = E.t * (E.formaTempo || 0.6);
+  // El cuerpo del glifo se guarda para que `luz` pueda dilatarlo por nodo sin
+  // volver a componer la cadena de la fuente ni leerla de vuelta del contexto.
+  // Se calcula una vez por cuadro; lo unico que paga por nodo es el que de
+  // verdad recibe luz, y emiten como mucho tres obras.
+  const GLIFO_PX = Math.max(7, escalaForma/34);
   if (F > 0.02){
-    ctx.font = `${Math.max(7, escalaForma/34)}px ui-monospace,monospace`;
+    ctx.font = `${GLIFO_PX}px ui-monospace,monospace`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   }
 
@@ -669,9 +674,13 @@ function dibujar(){
        la pantalla: la obra deforma lo que tiene alrededor, y a su propio lado
        del campo. Con el patch apagado nada de esto se ejecuta y `tono` y `tG`
        son literalmente los de antes. */
-    let tono = n.tono, tG = tGlifo;
+    // `luz` vive en este scope y no dentro de `if (conPatch)` porque quien
+    // la consume es el bloque del GLIFO, que se dibuja mas abajo y afuera.
+    // Declarada adentro daba `ReferenceError: luz is not defined` en el
+    // primer cuadro -- lo atrapo el banco, que es para lo que esta.
+    let tono = n.tono, tG = tGlifo, luz = 0;
     if (conPatch){
-      let pulso = 0, tira = 0, sangre = 0, sangreTono = 0, luz = 0;
+      let pulso = 0, tira = 0, sangre = 0, sangreTono = 0;
       for (let k = 0; k < EMIS.n; k++){
         if (EMIS.idx[k] === ni) continue;     // una obra no se deforma a si misma
         const inf = 1 - Math.min(Math.abs(n.y - EMIS.campo[k]) * invAlcance, 1);
@@ -801,7 +810,36 @@ function dibujar(){
         // `F` cuando no hay obra dejaria el campo entero invisible.
         const aG = destino && F > 0.35 ? (F-0.35)/0.65 : a;
         ctx.fillStyle = `hsla(${tonoRegimen(n, tono)},16%,90%,${aG * (0.5 + nivel/(RMP.length-1)*0.5)})`;
-        ctx.fillText(g2, px, py);
+        // luz: el vecino se DILATA. Aca y no en `r`, porque con `nodo_glifo`
+        // encendida -- que es como se publica -- el nodo no es un circulo y
+        // `r` no llega a dibujarse: su unico consumidor es el gradiente del
+        // bloque `if (!soloGlifo)`, que con la llave puesta nunca corre.
+        // El efecto se escribio primero contra `r` y el banco lo midio con un
+        // tablero sin `nodo_glifo`: 4.259 radios dilatados en un regimen que
+        // el sitio no usa. Medir el regimen equivocado da un numero cierto
+        // sobre algo que nadie ve.
+        if (luz > 0.001){
+          // Se guarda y se devuelve la fuente QUE HABIA, no `GLIFO_PX`.
+          // Restaurar a `GLIFO_PX` parecia equivalente y no lo es: el titulo
+          // de una obra se dibuja con `11px` y deja el contexto ahi, asi que
+          // "restaurar" al cuerpo del glifo ENCOGIA las marcas siguientes.
+          // Medido: 1.421 glifos pasaban de 11 a 9,6 px con el efecto puesto,
+          // o sea el efecto que dilata estaba achicando.
+          const fPrev = ctx.font;
+          // Se escala LA FUENTE PUESTA, no `GLIFO_PX`. No son lo mismo: el
+          // titulo de una obra deja el contexto en 11px y el cuerpo del glifo
+          // puede ser 7 (su minimo), asi que partir de `GLIFO_PX` daba 9,8 --
+          // MENOS que lo que habia. Medido: 22.110 px de tipo sin el efecto
+          // contra 19.162 con el. El efecto que dilata estaba achicando, y lo
+          // dijo el banco, no yo.
+          const mF = /^([\d.]+)px/.exec(fPrev);
+          const basePx = mF ? parseFloat(mF[1]) : GLIFO_PX;
+          ctx.font = `${basePx * (1 + Math.min(luz, 1) * 0.4)}px ui-monospace,monospace`;
+          ctx.fillText(g2, px, py);
+          ctx.font = fPrev;
+        } else {
+          ctx.fillText(g2, px, py);
+        }
       }
     } else {
       ctx.fillStyle = `hsla(${tono},20%,92%,${a*0.95})`;
