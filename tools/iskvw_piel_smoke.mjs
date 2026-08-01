@@ -427,17 +427,20 @@ console.log(`OK: venue layer gates on venue3d -- shipped ${flagReal === true ? "
 // The board's own routing, only louder, plus one node forced to carry the
 // break tag: campo.json has no curatorial tags yet, so desgarro would sit
 // untested on real data and rot.
+// The wiring comes from the BOARD, amplified; it used to be five rows typed
+// out here. A hand-written copy of a table that lives somewhere else stops
+// matching it the day the table grows, and it did: `luz` was added to the
+// board, `solo("luz")` inherited THIS patch instead, its row was never
+// compiled, the coefficient stayed at zero and the bench reported the effect
+// inert. Two hours went into the effect and the fault was here. Only the gain
+// is the bench's business -- what is wired to what is the artist's.
 const fuerte = {
   version: 1,
   mejoras: { patch_efectos: true },
-  patch: [
-    { dato: "tilde", efecto: "pulso", ganancia: 6 },
-    { dato: "trazo", efecto: "curvatura", ganancia: 6 },
-    { dato: "color", efecto: "sangrado", ganancia: 6 },
-    { dato: "etiqueta", efecto: "desgarro", ganancia: 6 },
-    { dato: "peso", efecto: "gravedad", ganancia: 6 },
-  ],
+  patch: (tableroReal.patch || []).map(f => ({ ...f, ganancia: 6 })),
 };
+if (!fuerte.patch.length)
+  morir(new Error("the board carries no patch rows: the bench has nothing to amplify"));
 const marcarQuiebre = "if (typeof NODOS!=='undefined') for (let i=0;i<NODOS.length;i+=7) NODOS[i].sen[3]=1;";
 const encendido = await correr({ tablero: fuerte, antes: marcarQuiebre });
 if (encendido.failed) morir(encendido.failed);
@@ -561,26 +564,35 @@ const mPulso = comparar(glifoBase, soloPulso);
 if (!(mPulso.difs > 0)) morir(new Error("pulso alone left the glyph trace identical: its switch is inert"));
 console.log(`OK: pulso alone bends glyph time (${mPulso.difs} trace differences over ${glifoBase.traza.length} marks)`);
 
-// ── MURO: `luz` esta escrita y no se pudo medir ──────────────────────────
-// El efecto existe en la piel (EF_LUZ, acumulador, escala del radio) y su
-// llave esta en el tablero, pero NINGUNA fila lo alimenta y por eso no se
-// afirma que funcione. Corriendo `solo("luz")` la traza vuelve identica.
-// Lo que SI quedo medido y arreglado buscandolo: este banco era CIEGO AL
-// TAMANO. La traza guardaba posicion y color, `arc` descartaba su radio y
-// `createRadialGradient` -- que es como se pinta un nodo en el regimen por
-// defecto -- descartaba los suyos. Un efecto que solo cambia el tamano
-// dibujaba un campo distinto y este banco lo declaraba "identico". Ahora los
-// radios entran en la traza: las diferencias detectadas subieron de 11.119 a
-// 11.978 sobre las mismas 13.528 marcas.
-// Tres hipotesis descartadas con medicion: no era el radio de `arc` (se
-// capturo, sigue inerte), no era el del gradiente (se capturo, sigue inerte),
-// y no era el escenario (se corrio bajo `armarForma`, el mismo de `pulso`,
-// que come del mismo dato `tilde`; sigue inerte). Queda por descartar que el
-// coeficiente llegue en cero porque el dato `tilde` no alcanza a los
-// emisores headless -- que es una pregunta sobre los DATOS, no sobre el
-// efecto.
-// Se retira cuando una corrida mida el rastro, o cuando se pruebe que el
-// dato no llega y el cableado tenga que ser otro.
+// luz alone: the neighbours DILATE. Its signature is the RADIUS, measured
+// directly from the trace -- not inferred from what it leaves untouched.
+// The first version of this test demanded zero displacement and zero colour
+// change, and that was a guess, not a measurement: `r` feeds the gradient and
+// the position jitter downstream, so growing it moves 673 marks and recolours
+// 4941 as a side effect. What no other effect does is change the radius
+// itself, and that is what gets asserted here.
+// Reading it at all took two fixes to THIS bench, not to the effect: the
+// trace kept position and colour only (`arc` dropped its radius and
+// `createRadialGradient` -- how a node is really painted in the default
+// regime -- dropped both of its), and `fuerte.patch` was a hand-typed copy of
+// the board that never grew the new row, so `solo("luz")` compiled a
+// coefficient of zero. The effect read "inert" twice while being correct.
+const soloLuz = await correr({ tablero: solo("luz"), antes: marcarQuiebre });
+if (soloLuz.failed) morir(soloLuz.failed);
+const mLuz = comparar(baseQ, soloLuz);
+const radio = (t) => t.split(",").find(p => p.startsWith("r"));
+let radiosDistintos = 0, radiosCrecidos = 0;
+for (let i = 0; i < Math.min(baseQ.traza.length, soloLuz.traza.length); i++) {
+  const a = radio(baseQ.traza[i]), b = radio(soloLuz.traza[i]);
+  if (a === undefined || b === undefined || a === b) continue;
+  radiosDistintos++;
+  if (parseFloat(b.slice(1)) > parseFloat(a.slice(1))) radiosCrecidos++;
+}
+if (!(radiosDistintos > 0))
+  morir(new Error("luz alone changed no radius: its switch is inert"));
+if (radiosCrecidos !== radiosDistintos)
+  morir(new Error(`luz shrank ${radiosDistintos - radiosCrecidos} radii: it dilates, it does not contract`));
+console.log(`OK: luz alone dilates ${radiosCrecidos} radii (every change grows, none shrinks)`);
 
 // gravedad alone: the reading drifts, exactly as in section 4.
 const soloGrav = await correr({ tablero: solo("gravedad"), caminar: false, antes: desviar });
