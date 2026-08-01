@@ -10,6 +10,7 @@ CI, never close, comment-and-wait on NO-APROBADO. `gh` and `git` never run:
 `sh` is faked and records every argv.
 """
 import importlib.util
+import pytest
 import json
 import sys
 from pathlib import Path
@@ -129,13 +130,38 @@ def _pr_verdicto(monkeypatch, src, pedido="contar lineas en un log"):
     return veredictos[0]
 
 
-def test_revisar_pr_pass_cuando_los_tres_gates_pasan(monkeypatch):
+def test_revisar_pr_pass_cuando_los_cuatro_gates_pasan(monkeypatch):
     v = _pr_verdicto(monkeypatch,
                      "import json\ndef contar(archivo):\n"
                      "    return len(open(archivo).readlines())  # lineas\n")
     assert v["veredicto"] == "PASS"
-    assert v["gates"] == {"compila": True, "stdlib_only": True,
-                          "pedido_match": True}
+    assert v["gates"] == {"encoding": True, "compila": True,
+                          "stdlib_only": True, "pedido_match": True}
+
+
+def test_encoding_roto_es_rechazo_y_no_excepcion():
+    """Bytes that are not valid UTF-8 must be REJECTED, never explode.
+
+    `sh()` reads with `text=True`, so invalid bytes arrive as surrogates
+    instead of failing there. What happens next is worse than approving them:
+    `compile()` raises `UnicodeEncodeError`, which is NOT a `SyntaxError`, so
+    `gate_compila` does not catch it and the exception propagates. One broken
+    file takes down the WHOLE reviewer run and every PR behind it goes
+    unreviewed with nobody asking why. 3 of the 33 utilities in the `mak`
+    inbox have that shape (measured 2026-08-01).
+    """
+    roto = (b"# comentario " + bytes([0x81]) + b" roto\nx = 1\n").decode(
+        "utf-8", "surrogateescape")
+    ok, motivo = revisor.gate_encoding(roto)
+    assert ok is False, "a non-UTF-8 file has to be rejected"
+    assert "encoding" in motivo.lower()
+
+    # And this is why it runs FIRST: what the next gate does with the SAME
+    # input. `gate_compila` only catches SyntaxError.
+    with pytest.raises(UnicodeEncodeError):
+        revisor.gate_compila(roto)
+
+    assert revisor.gate_encoding("# ok\nimport json\nx = 1\n")[0] is True
 
 
 def test_revisar_pr_un_gate_caido_es_no_aprobado(monkeypatch):
