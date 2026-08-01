@@ -936,3 +936,64 @@ answered "the one called code-instruct", which is the one that failed.
 `const medida = o =>` (1 hit), `conXY` (0 hits), and `datos/archivo.json` with
 479 pieces / 269 links / 219 positioned. The published portfolio draws the
 works where they were measured.
+
+## The comments in a file are its incident log. Read them BEFORE editing it
+
+2026-07-31, and it is the best thing found that day. The same defect was hit
+THREE times in one afternoon, and the third time the bite was already written
+three lines above the line being edited.
+
+The shape, every time: **a hand-written list that stopped matching reality,
+discarding in silence the only thing that worked, and an error blaming
+something else.**
+
+    #426  refutar.py     a literal ("groq","cerebras","azure","ollama") that
+                         predates watsonx -> dropped the ONLY provider with a
+                         key -> died saying "Todos los proveedores fallaron.
+                         Ultimo: None". Nothing had been attempted.
+    #427  codex_lib.py   _CODER_CHAIN_MAP with no watsonx and `win` -- a
+                         retired machine -- first -> 22 jobs reading
+                         `timeout 900s`.
+    (3rd) percepcion.py  CLAVES_VISION, a hand-written allow-list of keys,
+                         swallowed the `_motor` field -> a whole run reported
+                         "motor watsonx: 0" and the transport got blamed for a
+                         path that had worked all along.
+
+And `percepcion.py` carried this, three lines above the line in question:
+
+> "Antes esto estaba cableado a un solo esquema y descartaba en silencio todo
+> lo que pedia el prompt nuevo (headliners, conceptos, oportunidad_codigo...)"
+
+The file had been bitten by that exact dog before and wrote it down. Nobody
+read it. **A comment is not decoration and it is not documentation: it is the
+scar of an incident, and it is the cheapest warning in the repo.** Read the
+comments around what you are about to touch before touching it.
+
+Three rules that follow, and they are mechanical, not moral:
+
+1. **What is discarded, is discarded OUT LOUD.** Any allow-list must report
+   what it dropped, with the id of the record. Two lines:
+   `set(recibido) - set(declarado)` and a print.
+2. **A default that fills an absence destroys the field that measures it.**
+   `motor = vision.get("_motor") or "ollama"` turns "nobody attributed this"
+   into "ollama did it", and the next count counts ghosts. If it did not come,
+   it says so (`sin_atribucion`).
+3. **An empty value and a value that never arrived are not the same fact.**
+   `if vision.get(k)` collapses them, and then no consumer can tell a
+   measurement that found nothing from a key nobody sent.
+
+Retirement: when a check enforces rule 1 across the repo.
+
+## Do not debug: COUNT
+
+Same day, same session. An hour was spent chasing a symptom that a grouped
+count answered in one step: 127 fichas, and grouping the failures by their
+LITERAL message gave `10 contact_sheet_fallo` and nothing else. One failure
+mode, ffmpeg on `.mp4`, with zero relation to what was being debugged.
+
+Earlier the same day the same technique had already paid: 22 identical
+`timeout 900s` entries in the codex job log WERE the diagnosis, not noise.
+
+Before opening a debugger: group the failures by literal message and look at
+the distribution. The information is almost always already written, many times
+over, in a log nobody reads.
