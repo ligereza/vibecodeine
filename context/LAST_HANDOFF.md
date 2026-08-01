@@ -1411,3 +1411,57 @@ leido. `fecha` y `handles` quedan FUERA de la medicion a proposito: el modelo
 normaliza la fecha y la arroba se deduce legitimamente de un correo, asi que
 compararlas por palabras diria "sin respaldo" sobre lecturas correctas. Medir
 con el instrumento equivocado y reportar el resultado es peor que no medir.
+
+### La consolidacion NO se aplico, y la razon es la mejor medicion del dia
+
+Una revision adversarial (21 agentes, cuatro lentes, cada hallazgo refutado por
+un esceptico independiente) midio la herramienta contra el archivo real y
+encontro que **mi propia herramienta tenia el defecto de la casa**.
+
+`consolidar_fichas.py` contaba TRES casos por campo -- mejorado (la vieja
+vacia), heredado (la nueva vacia), perdido (desaparecio) -- e imprimia
+`campos perdidos: 0` como compuerta para autorizar la escritura. Medido sobre
+el archivo de verdad:
+
+```txt
+decisiones campo a campo      17.602
+reportadas por el informe      1.879   (10,7%)
+ambas llenas e iguales         2.705
+ambas llenas y DISTINTAS       9.348   <- pisadas sin nombrar una sola
+   de esas, la nueva MAS CHICA 4.595
+```
+
+Una descripcion de 260 caracteres quedaba en "Una pintura abstracta con figuras
+humanas y elementos naturales." `materiales` pasaba de cinco items a uno. Nada
+de eso aparecia en el informe, porque los tres cubos estaban escritos a mano
+sobre un test de PRESENCIA que dejo de cubrir la mayoria de lo que hace la
+operacion. **Un cero que solo podia dar cero, leido como garantia.**
+
+Y un segundo hallazgo, tambien confirmado: la ficha fusionada arrastraba el
+bloque `medicion` de la pasada nueva, asi que declaraba `claves_ausentes` sobre
+campos que la fusion acababa de llenar. Peor: `comparar_cobertura_fichas.py`
+atribuye por `medicion.vision.motor` y no leia `heredado`, asi que medir el
+archivo fusionado le habria acreditado a watsonx el 100% de
+`oportunidad_codigo` cuando lo real es 77,9% -- **el instrumento honesto que se
+construyo ayer, convertido en mentiroso por la fusion de hoy.**
+
+Arreglado, y ahora el ensayo dice:
+
+```txt
+MEJORADOS      1.482
+HEREDADOS        397
+REEMPLAZADOS   9.348   (4.595 quedan mas chicos)
+campos que quedan vacios habiendo tenido valor: 0
+```
+
+Tambien: atribucion POR CAMPO (`heredado: {campo: motor}`, porque un motor por
+ficha pierde el rastro en la segunda fusion), `medicion` recalculada tras la
+fusion, temporal con nombre propio (`percepcion.py` usa el mismo `.jsonl.tmp`
+sobre el mismo archivo) y la escritura exige que NO haya percepcion corriendo
+(`pgrep` + `flock`): una ficha apendeada en la ventana desaparece del vivo y
+queda marcada en `procesados.txt`, que es lo unico irreversible de todo esto.
+
+**La decision de aplicar es tuya y ahora tenes con que tomarla:** 4.595 valores
+quedarian mas cortos que los actuales. Que un modelo mejor escriba mas breve no
+es perdida; que `materiales` pase de cinco a uno probablemente si. Mirar los
+encogidos es el paso que faltaba y que ningun numero de ayer permitia.

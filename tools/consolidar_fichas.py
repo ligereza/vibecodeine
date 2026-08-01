@@ -83,11 +83,68 @@ def cargar(ruta: Path) -> tuple[list[dict], dict[str, int]]:
     return filas, indice
 
 
+def _tamano(v) -> int:
+    """How much there is. Not a quality judgement -- just enough to see when a
+    replacement made a value SMALLER, which is the thing the report has to
+    stop hiding."""
+    if isinstance(v, str):
+        return len(v.strip())
+    if isinstance(v, (list, tuple, dict)):
+        return len(v)
+    return 1
+
+
+def _motor_de(ficha: dict) -> str:
+    return (((ficha.get("medicion") or {}).get("vision") or {}).get("motor")
+            or "sin_atribucion")
+
+
 def fusionar(vieja: dict, nueva: dict) -> tuple[dict, dict]:
-    """A new ficha over an old one. Returns (ficha, counts)."""
+    """A new ficha over an old one. Returns (ficha, counts).
+
+    There are FOUR outcomes per field, not three. The first version of this
+    function counted `mejorado` (old empty), `heredado` (new empty) and
+    `perdido` (gone) -- and an adversarial pass over the real archive found
+    that those three buckets covered 1.879 of 17.602 decisions. The other
+    15.723 were fields BOTH passes filled, where the new one won with no
+    comparison and no line in the report: 9.348 of them differed, and 4.595 of
+    those got smaller. A 260-character description became "Una pintura
+    abstracta con figuras humanas y elementos naturales."
+
+    That is this repo's house defect built into the very tool meant to protect
+    against it: three hand-written buckets over a presence test, silently
+    dropping the majority of what the operation does, under a headline reading
+    "campos perdidos: 0". The fix is not to change who wins -- a new non-empty
+    value winning is the declared policy and it stands -- it is to COUNT the
+    case and show it, so the person authorising the write is looking at a
+    number that measures something.
+    """
     salida = dict(nueva)
     mejorados: list[str] = []
     heredados: list[str] = []
+    reemplazados: list[str] = []
+    encogidos: list[str] = []
+    motor_viejo = _motor_de(vieja)
+    heredado_por_campo: dict[str, str] = {}
+    # Attribution the OLD ficha already carried per field: a second
+    # consolidation must not re-sign as its own what a third engine measured.
+    heredado_previo = (((vieja.get("medicion") or {}).get("vision") or {})
+                       .get("heredado") or {})
+    if not isinstance(heredado_previo, dict):
+        heredado_previo = {}
+
+    def _anotar(nombre, val_old, val_new):
+        if lleno(val_old) and not lleno(val_new):
+            heredado_por_campo[nombre] = heredado_previo.get(nombre, motor_viejo)
+            heredados.append(nombre)
+            return True                      # el viejo se conserva
+        if lleno(val_new) and not lleno(val_old):
+            mejorados.append(nombre)
+        elif lleno(val_new) and lleno(val_old) and val_new != val_old:
+            reemplazados.append(nombre)
+            if _tamano(val_new) < _tamano(val_old):
+                encogidos.append(nombre)
+        return False
 
     for bloque in BLOQUES:
         v_old = vieja.get(bloque) or {}
@@ -95,35 +152,48 @@ def fusionar(vieja: dict, nueva: dict) -> tuple[dict, dict]:
         if not isinstance(v_old, dict) or not isinstance(v_new, dict):
             continue
         for k, val in v_old.items():
-            if lleno(val) and not lleno(v_new.get(k)):
+            if _anotar("%s.%s" % (bloque, k), val, v_new.get(k)):
                 v_new[k] = val
-                heredados.append("%s.%s" % (bloque, k))
-            elif lleno(v_new.get(k)) and not lleno(val):
-                mejorados.append("%s.%s" % (bloque, k))
         for k, val in (nueva.get(bloque) or {}).items():
             if lleno(val) and k not in v_old:
                 mejorados.append("%s.%s" % (bloque, k))
         salida[bloque] = v_new
 
     for k in SIMPLES:
-        if lleno(vieja.get(k)) and not lleno(nueva.get(k)):
+        if _anotar(k, vieja.get(k), nueva.get(k)):
             salida[k] = vieja[k]
-            heredados.append(k)
-        elif lleno(nueva.get(k)) and not lleno(vieja.get(k)):
-            mejorados.append(k)
 
-    # The mixing is DECLARED. A ficha carrying fields from two engines with no
-    # record of which came from which is worse than either pass alone.
+    # The mixing is DECLARED, and PER FIELD. `heredado` used to be a flat list
+    # plus one `motor_heredado` for the whole ficha, which loses the trail as
+    # soon as a second consolidation runs -- exactly the use this tool was
+    # written for. A map field -> engine survives any number of passes.
     med = dict(salida.get("medicion") or {})
     vis = dict(med.get("vision") or {})
-    if heredados:
-        vis["heredado"] = sorted(set(heredados))
-        vis["motor_heredado"] = (
-            ((vieja.get("medicion") or {}).get("vision") or {}).get("motor")
-            or "sin_atribucion")
+    vis.pop("motor_heredado", None)
+    if heredado_por_campo:
+        vis["heredado"] = dict(sorted(heredado_por_campo.items()))
+    else:
+        vis.pop("heredado", None)
+    # `medicion` came from the NEW pass and described the new pass. After the
+    # merge it describes a ficha that no longer exists: it listed as absent
+    # keys that the merge had just filled. Recomputed here so the ficha does
+    # not contradict itself -- and so `comparar_cobertura_fichas.py`, built to
+    # be honest about attribution, is not turned into a liar by this merge.
+    contenido = salida.get("vision") or {}
+    if isinstance(contenido, dict):
+        vis["detalle"] = str(len([1 for v in contenido.values() if lleno(v)]))
+        for clave in ("claves_vacias", "claves_ausentes"):
+            resto = [c for c in (vis.get(clave) or []) if not lleno(contenido.get(c))]
+            if resto:
+                vis[clave] = resto
+            else:
+                vis.pop(clave, None)
+        if contenido and vis.get("estado") in ("vacio", "no_intentado"):
+            vis["estado"] = "medido"
     med["vision"] = vis
     salida["medicion"] = med
-    return salida, {"mejorados": mejorados, "heredados": heredados}
+    return salida, {"mejorados": mejorados, "heredados": heredados,
+                    "reemplazados": reemplazados, "encogidos": encogidos}
 
 
 def perdidos(vieja: dict, fusionada: dict) -> list[str]:
@@ -165,9 +235,9 @@ def main() -> int:
     nuevas_filas, nuevo_indice = cargar(a.nueva)
 
     reemplazadas = agregadas = 0
-    total_mejorados = total_heredados = 0
-    campos_mejorados: dict[str, int] = {}
-    campos_heredados: dict[str, int] = {}
+    conteo: dict[str, dict[str, int]] = {
+        "mejorados": {}, "heredados": {}, "reemplazados": {}, "encogidos": {}}
+    totales = {k: 0 for k in conteo}
     perdidas: list[tuple[str, list[str]]] = []
     saltadas_por_motor = 0
     salida = list(filas)
@@ -187,12 +257,10 @@ def main() -> int:
                 perdidas.append((fid, faltan))
             salida[indice[fid]] = fusion
             reemplazadas += 1
-            total_mejorados += len(cuentas["mejorados"])
-            total_heredados += len(cuentas["heredados"])
-            for c in cuentas["mejorados"]:
-                campos_mejorados[c] = campos_mejorados.get(c, 0) + 1
-            for c in cuentas["heredados"]:
-                campos_heredados[c] = campos_heredados.get(c, 0) + 1
+            for grupo in conteo:
+                totales[grupo] += len(cuentas[grupo])
+                for c in cuentas[grupo]:
+                    conteo[grupo][c] = conteo[grupo].get(c, 0) + 1
         else:
             salida.append(nueva)
             agregadas += 1
@@ -209,12 +277,29 @@ def main() -> int:
     print("fichas que se AGREGAN (no estaban):              %d" % agregadas)
     print("resultado: %d filas" % len(salida))
     print()
-    print("campos MEJORADOS por la pasada nueva: %d" % total_mejorados)
-    for c, n in sorted(campos_mejorados.items(), key=lambda x: -x[1])[:12]:
+    def _tabla(titulo, grupo, tope=12):
+        print("%s: %d" % (titulo, totales[grupo]))
+        for c, n in sorted(conteo[grupo].items(), key=lambda x: -x[1])[:tope]:
+            print("   %5d  %s" % (n, c))
+
+    _tabla("campos que la pasada nueva llena y la vieja no tenia (MEJORADOS)",
+           "mejorados")
+    _tabla("campos que la nueva NO trajo y se conservan (HEREDADOS)",
+           "heredados")
+    # Este es el bloque que faltaba, y era la mayoria. Ver `fusionar`.
+    _tabla("campos que las DOS tenian y la nueva PISA (REEMPLAZADOS)",
+           "reemplazados")
+    print("   de esos, %d quedan MAS CHICOS que el valor que habia:"
+          % totales["encogidos"])
+    for c, n in sorted(conteo["encogidos"].items(), key=lambda x: -x[1])[:12]:
         print("   %5d  %s" % (n, c))
-    print("campos HEREDADOS de la pasada vieja: %d" % total_heredados)
-    for c, n in sorted(campos_heredados.items(), key=lambda x: -x[1])[:12]:
-        print("   %5d  %s" % (n, c))
+    print()
+    print("Un reemplazo NO es una perdida: la politica declarada es que un "
+          "valor nuevo no vacio gana.")
+    print("Pero se cuenta y se muestra, porque hasta hoy este informe decia "
+          "'perdidos: 0' mientras")
+    print("pisaba miles de valores medidos sin nombrar uno solo. Mira los "
+          "ENCOGIDOS antes de aplicar.")
     print()
     if perdidas:
         print("!!! CAMPOS PERDIDOS en %d fichas -- la fusion tiene un agujero, "
@@ -222,17 +307,64 @@ def main() -> int:
         for fid, faltan in perdidas[:5]:
             print("   %s -> %s" % (fid, ", ".join(faltan)))
         return 1
-    print("campos perdidos: 0")
+    print("campos que quedan vacios habiendo tenido valor: 0")
 
     if not a.aplicar:
         print()
         print("(ensayo: no se escribio nada. Para aplicar: --aplicar)")
         return 0
 
+    # NADIE MAS puede estar escribiendo. `percepcion.py` corre por cron cada 10
+    # minutos y AGREGA lineas al mismo archivo; una ficha apendeada entre que se
+    # lee y que se pisa desaparece del vivo y queda marcada en `procesados.txt`,
+    # o sea un hueco que ningun reintento rescata. Es lo unico irreversible de
+    # toda la operacion: el resto lo cubre el respaldo.
+    if _hay_percepcion_corriendo():
+        print("!!! hay una percepcion corriendo: escribir ahora puede tragarse "
+              "las fichas que esta agregando. NO se toco nada.", file=sys.stderr)
+        return 1
+    candado = a.archivo.parent / ".consolidar.lock"
+    with candado.open("w", encoding="utf-8") as fh_lock:
+        if not _tomar_candado(fh_lock):
+            print("!!! otro proceso tiene el candado (%s). NO se toco nada."
+                  % candado, file=sys.stderr)
+            return 1
+        return _escribir(a.archivo, salida)
+
+
+def _hay_percepcion_corriendo() -> bool:
+    """Solo tiene sentido donde vive el archivo, que es Linux. En Windows no
+    hay pgrep y tampoco hay cron de percepcion: se responde que no, y se dice
+    por que aca en vez de fingir una comprobacion."""
+    import subprocess
+    try:
+        r = subprocess.run(["pgrep", "-f", "percepcion.py correr"],
+                           capture_output=True, timeout=15)
+        return r.returncode == 0
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
+def _tomar_candado(fh) -> bool:
+    """flock no bloqueante, el mismo idiom que ya usa curatoria_guardia.sh."""
+    try:
+        import fcntl
+    except ImportError:
+        return True                          # Windows: no hay concurrencia aca
+    try:
+        fcntl.flock(fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return True
+    except OSError:
+        return False
+
+
+def _escribir(archivo: Path, salida: list[dict]) -> int:
     sello = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
-    respaldo = a.archivo.with_suffix(".jsonl.bak-" + sello)
-    shutil.copy2(a.archivo, respaldo)
-    tmp = a.archivo.with_suffix(".jsonl.tmp")
+    respaldo = archivo.with_suffix(".jsonl.bak-" + sello)
+    shutil.copy2(archivo, respaldo)
+    # Nombre PROPIO: `percepcion.py` usa `.jsonl.tmp` sobre el mismo archivo, y
+    # dos procesos escribiendo el mismo temporal se pisan sin decir nada.
+    tmp = archivo.with_suffix(".jsonl.consolidar.tmp")
     with tmp.open("w", encoding="utf-8") as fh:
         for d in salida:
             fh.write(json.dumps(d, ensure_ascii=False) + "\n")
@@ -244,7 +376,7 @@ def main() -> int:
               "NO se piso el vivo (queda en %s)"
               % (len(releidas), len(salida), tmp), file=sys.stderr)
         return 1
-    tmp.replace(a.archivo)
+    tmp.replace(archivo)
     print()
     print("aplicado. respaldo en %s" % respaldo.name)
     return 0
