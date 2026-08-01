@@ -45,6 +45,19 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
+      - name: generar el sustrato (archivo.json)
+        run: |
+          set -euo pipefail
+          # archivo.json esta gitignoreado: es una proyeccion regenerable. La
+          # piel lo pide primero y cae a campo.json si falta. Sin este paso el
+          # sitio publicado nunca lo llevaba, asi que los ensayos de MAK y sus
+          # vinculos no llegaban al campo: la mitad de #403 que no se publico.
+          # El generador avisa que no alcanza el micelio (la caja no es
+          # visible desde CI) y sigue con el material del repo: eso es lo
+          # esperado, no un error.
+          python3 tools/gen_archivo_iskvw.py --fuente todo
+          test -s iskvw/datos/archivo.json
+
       - name: armar el sitio
         run: |
           set -euo pipefail
@@ -62,13 +75,33 @@ jobs:
           # publica y la consola se llena de 404.
           touch _sitio/.nojekyll
           echo "iskvw.cl" > _sitio/CNAME
+          # Los iconos animados de los ensayos: el sustrato los declara como
+          # piezas (medio.src con la ruta del repo) y la piel los presenta al
+          # quedarse quieto. Viajan con su ruta de repo INTACTA -- asi el
+          # contrato no miente y no hay reescritura que mantener.
+          for dir_ensayo in docs/cultura/ensayos/*/iconos; do
+            [ -d "$dir_ensayo" ] || continue
+            mkdir -p "_sitio/$dir_ensayo"
+            cp "$dir_ensayo"/*.svg "_sitio/$dir_ensayo/" 2>/dev/null || true
+          done
+          # Misma regla para lo que vive DENTRO de iskvw/: el sitio aplana el
+          # prefijo (la raiz ES iskvw/), pero el contrato declara rutas de
+          # repo (iskvw/piel/...). Se espeja ese prefijo para que el src del
+          # contrato sea una URL verdadera. Atrapado por la compuerta de
+          # coherencia en el primer deploy con animadas: 219 piezas cuyo svg
+          # no era alcanzable.
+          for dir_pieza in iskvw/piel/animadas iskvw/piel/laser; do
+            [ -d "$dir_pieza" ] || continue
+            mkdir -p "_sitio/$dir_pieza"
+            cp "$dir_pieza"/*.svg "_sitio/$dir_pieza/" 2>/dev/null || true
+          done
 
       - name: comprobar que lo que se sube existe
         run: |
           set -euo pipefail
           # con contenido
           for f in index.html piel/campo/index.html datos/campo.json \
-                   piel/trazos/_indice.json CNAME; do
+                   datos/archivo.json piel/trazos/_indice.json CNAME; do
             test -s "_sitio/$f" || { echo "FALTA o vacio: $f"; exit 1; }
           done
           # `.nojekyll` es VACIO por diseño, asi que se comprueba existencia y no
@@ -102,6 +135,25 @@ jobs:
               print("se publicarian", len(sobran),
                     "trazos de obras que el filtro excluye"); sys.exit(1)
           print("coherente:", len(disco), "trazos, todos del campo publicado")
+          PY
+          # Toda pieza grafica del sustrato debe tener su svg EN el sitio: un
+          # medio.src que 404ea es el contrato afirmando una obra que el
+          # visitante no puede ver -- la mentira exacta que el doublecup
+          # prohibe. (La piel degrada sin el, pero degradar en silencio para
+          # siempre es como se pierden las animaciones sin que nadie lo note.)
+          python3 - <<'PY'
+          import json, os, sys
+          piezas = json.load(open("_sitio/datos/archivo.json", encoding="utf-8"))["piezas"]
+          rotos = [p["medio"]["src"] for p in piezas
+                   if p.get("clase") == "pieza_grafica"
+                   and p.get("medio", {}).get("src")
+                   and not os.path.isfile(os.path.join("_sitio", p["medio"]["src"]))]
+          if rotos:
+              print("piezas graficas sin su svg en el sitio:", len(rotos))
+              for r in rotos[:5]: print("  ", r)
+              sys.exit(1)
+          n = sum(1 for p in piezas if p.get("clase") == "pieza_grafica")
+          print(f"iconos coherentes: {n} piezas graficas, todas con su svg servido")
           PY
           # Un SVG de 0 bytes es indistinguible de un trazo bueno servido: ese
           # defecto ya paso una vez, 60 archivos vacios en disco.

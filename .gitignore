@@ -103,6 +103,12 @@ xio/**/.pc_watch.pid
 # glob cubre .dev y cualquier copia (.dev.limpio, .dev.bak, ...)
 cultura/.dev*
 
+# vigia: estado local de la caja (hashes vistos + validadores de conditional GET).
+# Es lo que hace que un aviso se notifique UNA vez; versionarlo mezclaria el
+# estado de la caja con el de cada checkout y reviviria avisos ya notificados.
+cultura/mak_vigia/estado/
+cultura/mak_vigia/.vigia.lock
+
 # pieza MANIFIESTO #6 cron nocturno: variantes generadas (lapidas.log SI se versiona)
 tools/cron_nocturno/salidas/
 
@@ -249,3 +255,13 @@ docs/cultura/ensayos/*/_animados/
 # La configuracion del editor es del usuario: un `git add -A` ya se trago sus
 # primas dos veces (.agents/, .codex/).
 .vscode/
+
+# Base de venues: los .json sembrados y el sitio son DERIVADOS (se regeneran
+# con `py tools/venue.py sembrar|sitio`); la semilla .txt es la fuente y viaja.
+data/venues/*.json
+web/venues/index.html
+# Excepcion: la sala DEMO del visor 3D viaja, porque es el material por defecto
+# de `iskvw/piel/venue/` -- sin ella el visor abre vacio en cualquier checkout.
+# Tambien es derivada, y su generador esta al lado:
+# `py tools/venue_geometria_scd.py`.
+!data/venues/scd-plaza-egana.json

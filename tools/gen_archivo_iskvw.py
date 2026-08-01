@@ -13,8 +13,15 @@ detras.
 Uso:
     py tools/gen_archivo_iskvw.py --fuente obras
     py tools/gen_archivo_iskvw.py --fuente micelio --url http://<caja>:8890
+    py tools/gen_archivo_iskvw.py --fuente micelio_snapshot
     py tools/gen_archivo_iskvw.py --fuente ensayos
     py tools/gen_archivo_iskvw.py --fuente todo
+
+`--fuente todo` intenta el micelio EN VIVO y, si no responde (el caso de CI:
+publicar_iskvw.yml corre en ubuntu-latest y no alcanza la caja, LAN privada),
+cae al snapshot versionado en iskvw/datos/micelio.json -- escrito por la caja
+misma via cultura/mak_plataforma/entregar_micelio.py, porque solo ella puede
+alcanzarse a si misma.
 """
 from __future__ import annotations
 
@@ -36,6 +43,16 @@ OBRAS = RAIZ / "iskvw" / "datos" / "obras.json"
 CAMPO = RAIZ / "iskvw" / "datos" / "campo.json"
 SALIDA = RAIZ / "iskvw" / "datos" / "archivo.json"
 ENSAYOS = RAIZ / "docs" / "cultura" / "ensayos"
+ANIMADAS = RAIZ / "iskvw" / "datos" / "animadas.json"
+LASER = RAIZ / "iskvw" / "datos" / "laser.json"
+CURADURIA = RAIZ / "iskvw" / "datos" / "curaduria.json"
+# Snapshot committed by cultura/mak_plataforma/entregar_micelio.py, running
+# ON the box (2026-08-01): publicar_iskvw.yml runs on ubuntu-latest, which
+# was never going to reach the box's private-LAN address -- confirmed the
+# same day by fetching the live archivo.json and finding 0 of 269 published
+# vinculos were clase "semantico". Same committed-snapshot shape campo.json
+# already uses for obra positions; this covers the micelio's measured links.
+MICELIO_SNAPSHOT = RAIZ / "iskvw" / "datos" / "micelio.json"
 
 # Por defecto el micelio se pide a la variable de entorno, no a una IP escrita
 # en el repo: este repositorio es publico.
@@ -126,6 +143,22 @@ def desde_micelio(url: str = MICELIO_URL, umbral: float = UMBRAL_MICELIO) -> dic
     return contrato_archivo.convertir(g)
 
 
+def desde_micelio_snapshot(ruta: Path = MICELIO_SNAPSHOT) -> dict:
+    """The micelio's measured graph, already converted and committed by the
+    box (cultura/mak_plataforma/entregar_micelio.py) -- because CI cannot
+    reach the box directly, only the box can put this data here.
+
+    A snapshot, not live: it only advances when the box opens a new PR, the
+    same pattern campo.json already uses for obra positions. Same rule as
+    every other optional fuente here: an absent file is an absent source,
+    never an invented empty result.
+    """
+    if not ruta.is_file():
+        return {"piezas": [], "vinculos": []}
+    d = json.loads(ruta.read_text(encoding="utf-8"))
+    return {"piezas": d.get("piezas") or [], "vinculos": d.get("vinculos") or []}
+
+
 def desde_ensayos(raiz: Path = ENSAYOS) -> dict:
     """Los ensayos curados del repo, con su anexo iconografico.
 
@@ -205,6 +238,49 @@ def del_campo(ruta: Path = CAMPO) -> tuple[dict, float | None]:
     return reg, (d.get("meta") or {}).get("vecindad_conservada")
 
 
+def desde_animadas(manifiesto: Path = ANIMADAS) -> dict:
+    """Las piezas animadas que el motor semantico derivo de las obras curadas.
+
+    Una por obra, determinista desde el id (tools/gen_animadas_obras.py). La
+    conversion vive en `contrato_archivo.desde_animadas` por la regla de
+    siempre: la pieza existe en los dos lados y dos conversiones divergen.
+    Sin manifiesto se sigue sin el: las animadas enriquecen, no condicionan.
+    """
+    if not manifiesto.is_file():
+        return {"piezas": [], "vinculos": []}
+    datos = json.loads(manifiesto.read_text(encoding="utf-8"))
+    return contrato_archivo.desde_animadas(datos)
+
+
+def desde_campo_curado(ruta: Path = CAMPO) -> dict:
+    """Las obras curadas del campo medido como piezas del contrato.
+
+    La correccion de fondo del 2026-07-30: sin micelio alcanzable (CI), el
+    archivo salia SIN las obras del artista -- solo tools, ensayos e iconos.
+    El campo ya carga lo percibido bajo el filtro del usuario; ahora ademas
+    de posiciones aporta las piezas. La conversion vive en el contrato.
+    """
+    if not ruta.is_file():
+        return {"piezas": [], "vinculos": []}
+    datos = json.loads(ruta.read_text(encoding="utf-8"))
+    return contrato_archivo.desde_campo(datos)
+
+
+def desde_laser_manifiesto(campo_ruta: Path = CAMPO,
+                           ruta: Path = LASER) -> dict:
+    """Las piezas laser/plotter del manifiesto, unidas al campo por media id.
+
+    Genera `flujo laser lote`; la conversion vive en el contrato
+    (`desde_laser`). Sin manifiesto se sigue sin el.
+    """
+    if not ruta.is_file():
+        return {"piezas": [], "vinculos": []}
+    manif = json.loads(ruta.read_text(encoding="utf-8"))
+    campo = (json.loads(campo_ruta.read_text(encoding="utf-8"))
+             if campo_ruta.is_file() else {})
+    return contrato_archivo.desde_laser(manif, campo)
+
+
 def unir(*partes: dict) -> dict:
     """Junta fuentes sin duplicar: una obra percibida por MAK y la misma obra
     cargada a mano son UNA pieza. Gana la que trae mas datos."""
@@ -233,7 +309,8 @@ def _riqueza(p: dict) -> int:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--fuente",
-                    choices=("obras", "micelio", "ensayos", "todo"),
+                    choices=("obras", "campo", "micelio", "micelio_snapshot",
+                             "ensayos", "animadas", "laser", "todo"),
                     default="obras")
     ap.add_argument("--url", default=MICELIO_URL)
     ap.add_argument("--umbral", type=float, default=UMBRAL_MICELIO)
@@ -246,6 +323,8 @@ def main() -> int:
     partes = []
     if args.fuente in ("obras", "todo"):
         partes.append(desde_obras())
+    if args.fuente in ("campo", "todo"):
+        partes.append(desde_campo_curado(args.posiciones))
     if args.fuente in ("micelio", "todo"):
         try:
             partes.append(desde_micelio(args.url, args.umbral))
@@ -256,8 +335,27 @@ def main() -> int:
                   file=sys.stderr)
             if args.fuente == "micelio":
                 return 1
+            # CI no puede alcanzar la caja (LAN privada, publicar_iskvw.yml
+            # corre en ubuntu-latest) -- no es una falla del snapshot, es el
+            # motivo por el que existe. Sin el, "todo" seguia sin ningun
+            # vinculo semantico (0 de 269, medido 2026-08-01); con el, lleva
+            # lo ultimo que la caja pudo empujar.
+            snap = desde_micelio_snapshot()
+            if snap["piezas"] or snap["vinculos"]:
+                print(f"aviso: uso el snapshot versionado en su lugar "
+                      f"({len(snap['piezas'])} piezas, "
+                      f"{len(snap['vinculos'])} vinculos, "
+                      f"{MICELIO_SNAPSHOT.relative_to(RAIZ)}).",
+                      file=sys.stderr)
+                partes.append(snap)
+    if args.fuente == "micelio_snapshot":
+        partes.append(desde_micelio_snapshot())
     if args.fuente in ("ensayos", "todo"):
         partes.append(desde_ensayos())
+    if args.fuente in ("animadas", "todo"):
+        partes.append(desde_animadas())
+    if args.fuente in ("laser", "todo"):
+        partes.append(desde_laser_manifiesto(args.posiciones))
 
     datos = unir(*partes)
 
@@ -288,6 +386,14 @@ def main() -> int:
             p["medio"] = {"tipo": "imagen", "src": c["archivo"]}
             con_medio += 1
 
+    # La mano del artista, al final y sobre todo: titulo firmado, mostrar,
+    # abstraccion, svg firmado y regimen (contrato_archivo.aplicar_curaduria).
+    regimen = None
+    if CURADURIA.is_file():
+        cur = json.loads(CURADURIA.read_text(encoding="utf-8"))
+        datos = contrato_archivo.aplicar_curaduria(datos, cur)
+        regimen = cur.get("regimen")
+
     salida = {
         "version": 1,
         "fuente": args.fuente,
@@ -295,6 +401,7 @@ def main() -> int:
         "piezas": datos["piezas"],
         "vinculos": datos["vinculos"],
         "meta": {
+            "regimen": regimen,
             "piezas": len(datos["piezas"]),
             "vinculos": len(datos["vinculos"]),
             "por_clase": _contar(datos["piezas"], "clase"),

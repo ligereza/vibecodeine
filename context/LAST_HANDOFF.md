@@ -1,387 +1,292 @@
-# SINGLE CHECKPOINT -- repo state
+# Estado del repo
 
-## READ YOUR MEMORY FIRST. Before anything else. Now.
+Ultima actualizacion: **2026-08-01, 09:01**.
 
-New session, or the same one after a compaction: **read the assistant's local
-memory before touching anything.** Not optional. On 2026-07-27 the user had to
-order it THREE times in one session and every answer was already written down;
-that night an agent "discovered" files the same session had built, reported a
-stale state as a defect and asked two answered questions.
+Este archivo se lee en dos minutos o no sirve. Llego a 1.666 lineas apiladas y
+nadie lo leia -- ni los agentes que lo editaban. La historia esta en
+`docs/handoffs/archive/HANDOFF_hasta_20260801.md`; aca queda solo lo que hoy es
+cierto.
 
-Two mechanisms make a memory search come back empty while the answer sits there:
-`.remember/` is INVISIBLE to Grep (its `.gitignore` says `*` -- use PowerShell
-`Select-String -Path "<repo>\.remember\*"`), and older memories are in English
-while the conversation runs in Spanish (`curatoria` = `curation`; search both).
-Read `.remember/now.md` and today's `today-*.md` IN FULL. A compacted session's
-transcript is on disk: extract stretches with a script, never open 25 MB whole.
-
-Then read this file, `CLAUDE.md` and `MAPA.md`. Then work.
+**Como se mantiene:** se REESCRIBE, no se le agrega al final. Un hallazgo va a
+su seccion y reemplaza lo que decia antes. Si algo dejo de ser cierto, se borra
+-- una frase que describe un estado que ya no existe se lee como medicion, y esa
+es la trampa que costo mas caro (ver "Lo que este repo aprendio", regla 1).
 
 ---
 
-This is the ONLY state file. There used to be seven competing ones, which is why
-every agent rebuilt the state from scratch and asked the user what he had already
-answered; they were merged here on 2026-07-26 and live on in git history and in
-`docs/handoffs/archive/`.
+## 1. Lo que espera una decision TUYA
 
-Together with `CLAUDE.md` and `MAPA.md`, this is everything an incoming agent
-needs to read.
+Ninguna la puede tomar un agente. Estan ordenadas por lo que cuesta no tomarla.
 
-**How it is kept:** it stores ANSWERS, not questions. When the user decides
-something, it gets written here IN THE SAME SESSION. An item stays under "Open"
-ONLY while nobody has answered it; the moment it is answered it moves to
-"Already decided" and leaves the pending list.
-
-**What does NOT belong here:** absolute paths, IPs, phone numbers, credentials or
-anything personal. This repo is public. That lives in the assistant's local
-memory.
-
----
-
-## The one rule (2026-07-26, user's words)
-
-> The user is not a software expert; he is an expert on what he wants.
-> If the assistant believes a path is optimal for TECHNICAL reasons, go ahead,
-> no need to ask -- code, rules or configuration alike. If the assistant assumes
-> a STYLE, an aesthetic, or what the user wants, that is an error: ask.
-
-Corollaries, learned from the sessions that failed:
-
-- **There is no deliverable.** Do what was asked. Never invent a product, a plan,
-  a report or a backup nobody requested. A finding along the way gets one line
-  and you move on.
-- **Big steps, not baby steps.** Do not commit and wait for CI every two changes.
-- The repo is a USB stick. The conversation is the center, not the repo.
-- Measuring exists to answer something that was asked; measuring beyond that is
-  how you lose the thread.
-
-## Language (2026-07-26, user's decision)
-
-- **Talking to the user: Spanish.**
-- **Everything else: English** -- code, comments, this checkpoint, CLAUDE.md,
-  agent docs, commit messages, PR titles and bodies, the assistant's memory. The
-  system is already English (Python, git, identifiers, labels), and a Spanish
-  term inside it becomes unsearchable: the `curatoria` subsystem was recorded in
-  memory as `curation`, so searching the Spanish word returned "nothing found"
-  while the answer sat there.
-- **The exception, and it is not negotiable: anything a human reads as a
-  product.** RD pieces and data, iskvw curation, anything shown to the board or
-  to a client goes in correct Spanish WITH diacritics. A title reading
-  "reduciendo ano" instead of "reduciendo dano" is not a typo, it is the user
-  getting fired. Mangled diacritics in a product are a defect, never a style.
-
-## Who each agent is (this decides which rules apply)
-
-- **Claude Code local** (this session): reads the repo and pushes. The tests that
-  protect the software apply. The airdrop validators are not its path.
-- **Web / arena agent**: clones the repo but does NOT push. Delivers a ZIP the
-  user applies, then asks for a review. `_airdrop/`,
-  `scripts/validate_airdrop.py` and the documentation ratchets exist for it.
-- **MAK** (Linux box): runs research/codex/plataforma. Its doctrine lives in
-  `cultura/mak_plataforma/doctrina/`, NOT in `context/`.
-
-## State
-
-Version 0.56.1. Topology: THREE lines and no more -- `main` (everything, working
-and verifiable), `rd` (NGO/data/grants), `iskvw` (curation/artwork), plus `mak`,
-which is MAK's INBOX and not a line: nothing lives there, its only exit is a PR
-into main. Nobody pushes to main directly: it is protected with `enforce_admins`,
-everything lands through a PR with green CI.
-User decision 2026-07-28: `main` is the artwork; RD=NGO, iskvw=artist, MAK=server/
-generator/curator (Git inbox, third organ). The finished README SVG is
-never altered. New tools need no technical permission when they remove manual
-work, produce evidence, or add a verified capability -- never utility slop.
-Working and verified live: the DREF show chain (LTC -> Chataigne -> OSC -> phone
--> PWA panel), the RD database with normalized events, the hub split into 3
-profiles, and the documentation ratchets (`test_mapa_completo`,
-`test_higiene_docs`).
-
-## Security diagnosis: 9 of 10 closed (2026-07-29)
-
-VCD-06 (8 MB body cap, 413 on excess) and VCD-07 (every workflow `uses:` pinned
-to a commit SHA + `dependabot.yml`) are closed. Only VCD-10 remains: assigned to
-MAK, never verified running.
-
-## Branches: the four lines, and one rescue (2026-07-30)
-
-`main`, `rd`, `iskvw`, `mak` -- plus `rescate/ascii-campo`, which STAYS: it
-holds the ASCII-skin work and merging it is the user's aesthetic call. Cleaned
-up that day: two stale worktrees (`flujo-organos`, `flujo-sin-gptmini`, whose
-content main already had -- verified file by file, not by SHA, because squash
-merges rewrite them), three local branches, and two remote branches already
-merged. `.vscode/` is ignored now, for the same reason `.agents/` and `.codex/`
-are: it is the user's and a `git add -A` swallowed its cousins twice.
-
-## Pending on the machines, and the SOL night (archived detail)
-
-Full detail: `docs/handoffs/archive/20260729_sol_noche.md`. Nothing was lost
-that night, the Azure figure was billing lag and not a leak, and Azure is
-ABANDONED (his word). On the BOX: reset the inbox with
-`git push origin main:mak --force-with-lease` -- the one undrained commit (#375)
-was REJECTED on review and agents cannot push that reset -- then verify VCD-10
-really runs and curl `GET /api/archivo`. The sync cron already covers
-`mak_curatoria`. Still owed from the portfolio-theory debate: the "cuaderno"
-contract, one work across six representations, thi.ng traversed by families, and
-the iskvw.cl interaction model.
-
-## The rave zip: LANDED 2026-07-30 (PR #402, merged)
-
-Where things are: essay + 16 animated icons in `docs/cultura/ensayos/rave/`; the
-motor as a codex capability in `cultura/mak_codex/motor_semantico/` + mode
-`iconos`; the research format in `docs/cultura/FORMATO_ENSAYO.md`; the why,
-measured, in `MOTOR_SEMANTICO.md`.
-
-Five decisions of that landing, not to be re-litigated:
-
-1. **The style is NOT unified**: `coro` by default, `sistema` the argued exception.
-2. **The artefact is an ANIMATION and EDITABLE**: every layer is a named group
-   declaring `data-rol/figura/gesto/ritmo` with a `<title>`, so it opens in
-   Illustrator/Inkscape and each element answers for what it encodes.
-3. **Verification is a GIF, never a PNG**: one frame cannot tell still from
-   animated. An instrument, not a deliverable -- GIFs stay out of the repo.
-4. **Each icon declares the passage that justifies it** (`ancla`, pinned).
-5. **thi.ng is IN USE, not noted**: `hiccup` + `hiccup-svg` + `color` in the
-   browser twin `docs/cultura/lib/compilador.js`, verified headless; geometry is
-   EXPORTED from the Python vocabulary, never ported by hand. **`CAPACIDADES.md`
-   section 6 is the index to read BEFORE writing a generator, a pipeline or a
-   graph from scratch** (`tests/test_thing_registro.py`).
-
-Defects the CI matrix caught that a green local Windows run did not, all ONE
-lesson -- **the instrument must earn the right to accuse a file**: vendorized
-`*.README.md` are THIRD-PARTY (`ZONA_AJENA`); the doc ratchet reads
-`git ls-files`, so **an uncommitted `.md` is invisible to it**; rasterizing is
-not animating (cairosvg runs no CSS); binary AND flags are picked by PROBE,
-since the runner's first browser cannot draw; and the blank frames were
-`--window-size` -- below ~100 px the new headless captures from a viewport that
-never painted, so the window is asked large and the result CROPPED. `flujo
-verify` runs pytest with `-rs`: a guard that skips must not look like one that
-measured.
-
-## What a real model did to a boundary a mock never touched (2026-07-30)
-
-The `iconos` mode had only met a FAKE model -- one returning exactly the types
-you expect. The first real one (gpt-4.1-mini via GitHub Models; NOT the Azure
-account SOL drained) found two things at once. Numbers: `MOTOR_SEMANTICO.md`.
-
-1. **The boundary with a model is validated by TYPE before value.** It returned
-   `composicion` as a dict, raising `TypeError` while the mode caught only
-   `ValueError`: not a rejection with its reason, a fall. Now REJECTED.
-2. **A closed vocabulary stops invented words; it does not fix the SHAPE.**
-   Vocabulary alone -> 1 of 3 briefs reached an SVG. Vocabulary + ONE example
-   spec -> **3 of 3 on the first round** (`esquema.EJEMPLO`, pinned).
-
-**A measurement that was WRONG:** "one icon is nearly static" was the INSTRUMENT
-(the advance injected after `infinite` killed a `... infinite alternate` rule).
-All sixteen move within their own cycle.
-
-**Still NOT closed:** the full `iconos.py` -- resource guard, saved piece, job
--- has never run in its place on the box; what ran was the same prompt and
-compiler, from Windows.
-
-## iskvw: the substrate is consumed, and MAK's essays reach it (2026-07-30)
-
-The portfolio had none of `PROYECCION.md`'s integrations wired. Three cuts, all
-verified running; detail in `iskvw/MAPA.md` + `ESQUEMA_ARCHIVO.md`:
-
-1. **An essay enters the archive through the same contract**
-   (`contrato_archivo.desde_ensayo` + `--fuente ensayos`): 33 pieces, 32 links;
-   `--fuente todo` gives 41 and 50. Links `manual`, never `semantico`.
-2. **The skin asks for the substrate**: `archivo.json` first, degrading exactly
-   as before. It is not versioned, so the fallback IS today's live path.
-3. **A session is a reproducible seed** (`#semilla=&centro=&escala=`), pinned by
-   a test that runs the PUBLISHED file's own functions in node.
-
-**The links are DRAWN: always, faint, by weight** (his call). Underneath the
-works, both ends in frame, neighbours indexed once -- the every-pair-every-frame
-defect is pinned by a test. Measured: 207 to 615 segments per frame against the
-23,871 pairs an all-against-all would cost. NOT measured: fps on a phone.
-
-**Still the user's, and he wants to DEBATE it first:** whether the essays get
-published on iskvw.cl. The bridge is built and unused.
-
-## The repo is not the truth: the two machines are (2026-07-30)
-
-Measured by diffing the disks, which is the check that had never been run.
-`coherence.py` does it now, on the box, in both directions.
-
-- **Did SOL's work reach MAK? YES, all of it.** SOL never entered the box -- its
-  own session log says three times it had no LAN or SSH access -- so everything
-  arrived through the sync cron. The only file the cron cannot update is
-  `revisor.py`, frozen since 2026-07-20, which is BEFORE SOL and has exactly two
-  commits. Nothing of SOL's was lost. This is the answer to a question that was
-  asked twice; it is written here so it is not asked a third time.
-- **Six live files existed on one disk only.** `.github/workflows/ordenes_curatoria.yml`
-  -- in this repo -- executes `/home/mak/curatoria/ordenes.py`, which was
-  nowhere in git. `xio_puente/monitor.py` (172 lines) is started by a systemd
-  unit and had no copy either. All rescued; the sync cron now covers
-  `mak_xio_puente`.
-- **Why it happened: `cp -ru`.** `-u` means "only if the source is NEWER", so one
-  edit on the box freezes that file forever. repo -> box is forced every 10
-  minutes; box -> repo never happens. `revisor.py` was 165 lines here and 216
-  there, and those 51 lines were `enforce_pr()` -- code that merges PRs by
-  itself, running every 6 hours, unreviewed. **Pending and ordered: switch the
-  cron to `cp -r` AFTER this merges**, never before, or the sync overwrites the
-  live reviewer with the old copy.
-- **SOL's Azure spend gate was in a stash, not lost** (`stash@{0}`, 2026-07-29):
-  Azure leaves the chain unless `RESEARCH_AZURE_ENABLED=1`. Applied. The other
-  three stashes were checked by CONTENT: two are already in main or in
-  `rescate/ascii-campo`, and the fourth would delete `iskvw/MAPA.md`, which main
-  deliberately has.
-- **The language rule finally has its measurement**: 236 Python files with
-  Spanish comments against 36 in English, while `CLAUDE.md` claims English. That
-  gap is why an agent searches in English, finds nothing and declares the thing
-  missing. `docs/GLOSSARY.md` maps both sides; new code is English; names that a
-  cron line or a systemd unit already invokes are NOT renamed.
-- **IBM watsonx works from BOTH machines**, verified 4/4 before a line was wired
-  (`tools/watsonx_smoke.py`). Stage 1 fits in the free tier; the $200 credit is
-  untouched. It is opt-in (`LLM(order="watsonx")`), not in the default chain.
-
-## MAK como motor: sirve, y el checkpoint mentia
-
-`cultura/mak_plataforma/ideas.py` SI esta conectado al hub y funciona -- este
-archivo decia "NO esta conectado ni probado" y por eso nadie lo usaba. Probado
-el 2026-07-27: se declara una idea, el micelio la relaciona solo con obras del
-archivo, y `encargar()` la pone al frente de la cola. Devuelve ok.
-
-El defecto real de MAK es otro y esta medido: `entregar: 107 listos, 37
-entregados, 18 pendientes`, a UNO cada 6 horas. Genera volumen sobre un backlog
-que el mismo se autorellena y lo drena a cuentagotas. El mecanismo para
-dirigirlo existia y estaba invisible.
-
-## Already decided -- do not reopen
-
-| Date | Decision |
+| Que | El numero que hace falta para decidir |
 |---|---|
-| 2026-07-27 | Las 16 decisiones de ese dia, vigentes: `docs/handoffs/archive/20260727_decisiones.md` (riesgo telefono CERRADO 60fps x4, el loop no escribe docs, curacion=configuracion, vocabulario cerrado en la fuente, archivos no consola, preset viaja, export no rama, MAK atiende issues solo, TLS no UA, CUDA vs OptiX por maquina, la cara no es el costo, PDFs=piezas, tipos=config, cola de triangulacion) |
-| 2026-07-26 | Las 17 decisiones de ese dia, vigentes: `docs/handoffs/archive/20260726_decisiones.md` (tres modos de trabajo, iskvw es el portafolio, nadie abre issues, valores de dinero configurables, catalogo de simbolos abierto, brand como info, MAK atiende material del usuario, idioma dividido, referencias como referencias, worktrees podados, crons inutiles fuera) |
-| 2026-07-30 | `utilidades/` trazado hasta el origen. Dos fuentes: (a) mejora_libre -> `agente_libre.py` sin `--objetivo` -> sus 6 semillas fijas; funciona como fue disenado. (b) `capataz.py:297` accion "codificar" con pedidos de forma OPERATIVA (actualizar ajustes_junta.json, ejecutar backlog_codex, cron) enrutados a un canal cuyo contrato es un archivo stdlib autocontenido que NUNCA se ejecuta. Un pedido de ops no puede satisfacerse con un archivo que nadie corre: el coder inventa rutas y CLIs porque no puede verificarlas. El defecto es de ENRUTAMIENTO, no del codigo ni de la infra (ajustes_junta.json, backlog_codex.py y salud_proveedores.json SI existen). NADA SE BORRA. Los 3 PR del buzon (#375 #400 #404) quedan sin mergear hasta resolver el enrutamiento. Trabajo siguiente, NO en este cierre: que el prompt de codificar rechace pedidos con forma de ops, o que exista un verbo real para "cambiar un ajuste en la caja" (hoy solo esta "mantener", que es dry-run). |
-| 2026-07-10 a 07-25 | Decisiones mas viejas, vigentes pero fuera de la lista viva: `docs/handoffs/archive/20260722_25_decisiones.md` (panel de suplementos innecesario, la carpeta de diseno no se respalda desde el repo, los dos planes grandes RECHAZADOS, `desktop/` archivado, Instagram via parth-dl, n8n descartado, Gemini fuera, nada de Oh My Posh) |
+| **El reloj de IBM** | ~US$36/dia por TENER el plan. Todo el trabajo de dos dias costo US$0,56. Bajar a Lite se hace desde la consola, no por API. |
+| **Consolidar las 1.354 fichas de watsonx** | `tipo_obra` 67%->100%, `materiales` 66%->99,6%. Pero **4.595 valores quedarian mas cortos** que los actuales. `tools/consolidar_fichas.py --aplicar`. |
+| **Encender `nodo_glifo`** | El nodo deja de ser un circulo y pasa a ser glifo: arcos 764->0, gradientes 382->0. Publicada apagada en `datos/tablero.json`. Ojo: con ella encendida el medidor no puede fijar el costo por cuadro (ver muro 3). |
+| **Si los ensayos de MAK se publican en iskvw.cl** | Lo dejaste para debatir -- y **ya estan publicados** desde el 2026-07-31: el sustrato lleva 16 conceptos y 1 informe. La maquina tomo la decision por vos. |
+| **La geometria del campo** | Dijiste que la pediste "mil veces" y **no esta escrita en ningun lado**: se busco en los 5 documentos, todo el repo, la historia de git en todas las ramas, `.remember/` y los issues. Se perdio en conversacion. Lo unico escrito es `iskvw/piel/campo/ASCII_REFERENCIA.md`. |
+| **`patch_efectos` y `venue3d`** | Construidos y apagados en `datos/tablero.json`. Encenderlos es del artista. |
+| **La direccion de iskvw como obra** | `iskvw/MAPA.md` la declara tuya y sigue vacia. |
 
-## Built on 2026-07-26, waiting for the user to look
+---
 
-Tres prototipos, todos regenerables por comando desde datos reales. Detalle en
-`docs/handoffs/archive/20260726_prototipos.md`: la propuesta a la directiva RD,
-el prototipo del archivo iskvw, y MAK + portafolio visibles en la app.
+## 2. Muros nombrados
 
-## Blocked, waiting on the user
+Un muro nombrado es entrega valida. Estos no los resuelve mas trabajo.
 
-- **Portfolio aesthetic references: FOUND, not lost**, and the paths are in the
-  assistant's local memory because they are personal. Three sessions declared
-  them gone in ephemeral cloud containers while they sat one level above the repo
-  on his own disk -- everyone searched the repo and their own memory, then
-  declared absence. Which direction is current is style, so it gets asked.
-- **Design exports: RESOLVED (user's word, 2026-07-29).** This entry had
-  already been wrong twice; the third failure was staying listed as pending
-  after the user resolved it -- an agent repeated it back to him as open and
-  he had to correct it. Details live on his machines, not here. The lesson
-  compounds: an answer not written in-session gets asked again.
+1. **El micelio no llegaba al sitio -- causa corregida y mecanismo construido
+   (2026-08-01).** Este archivo mezclaba dos hechos independientes bajo "el
+   runner de CI no ve la caja". Medido: el runner self-hosted `mak` SI esta
+   offline (`gh api .../actions/runners`, muerto a mitad de un retry el
+   2026-07-24 14:03:59Z, sin proceso ni unidad systemd) -- pero
+   `publicar_iskvw.yml` corre en `ubuntu-latest`, y el propio workflow ya
+   declaraba en su comentario que no alcanzar la caja es ESPERADO, no una
+   caida: una maquina en la nube nunca iba a llegar a una IP de LAN privada,
+   con ese runner vivo o muerto. Medido sobre lo publicado ese dia: 269
+   vinculos, **0 de clase `semantico`** -- los 227 `obra` que si aparecen
+   salen de `campo.json` + `obras.json` (219 + 8, commiteados a mano), nunca
+   del micelio en vivo. Construido: `cultura/mak_plataforma/entregar_micelio.py`
+   corre EN la caja, lee el micelio local y abre PR contra `mak` con
+   `iskvw/datos/micelio.json` (mismo patron que `entregar.py`, hard-falla sin
+   escribir nada si el micelio no responde o da 0 vinculos);
+   `gen_archivo_iskvw.py --fuente todo` cae a ese snapshot cuando el micelio en
+   vivo no responde. Probado real, no en seco: **PR #440, 1530 piezas, 4921
+   vinculos, los 4921 de clase `semantico`**. Pendiente de un humano: #440
+   (contra `mak`) y el PR de este mecanismo (contra `main`) siguen sin
+   mergear -- el sitio publicado sigue en 269 hasta que ambos entren y
+   `publicar_iskvw.yml` corra de nuevo.
+2. **La rama `mak` no drena.** 33 utilidades autogeneradas en `mak`, **0 en
+   main**. Su unica salida deberia ser un PR a main y ese PR nunca se abrio.
+   **Correccion medida el 2026-08-01:** este muro decia "main las borro en
+   #406" y es FALSO. `git show 7310956 --name-status -- cultura/mak_plataforma/utilidades/`
+   no devuelve un solo archivo: #406 no toco esa carpeta. Nunca estuvieron en
+   main -- no fueron rechazadas, no llegaron. Aparecen bajo `--diff-filter=D`
+   solo por como el squash compara contra su padre, y contar ese filtro sin
+   abrir el commit es lo que fabrico la frase. Importa porque cambia la
+   decision entera: "main las evaluo y las tiro" manda a NO drenar; "nadie las
+   miro nunca" manda a que alguien las abra. Leidas las 33 ese dia: 9 invocan
+   subprocess (son ordenes operativas, no utilidades), ~10 son de sandbox y
+   pesan menos de 1 KB, y 6 sirven de verdad -- `osc_encode.py` la mejor,
+   porque todo Resolume/Chataigne/xio habla OSC.
 
-## Las cuatro capas: no confundirlas (2026-07-27)
 
-Repo = como/por que/medido; memoria local = rutas/IPs/personal; carpeta local
-= material pesado; MAK = lo percibido, entra por PR. Tabla completa y las dos
-formas de romperlo: `docs/handoffs/archive/20260727_capas.md`.
+3. **El nodo-glifo no se puede medir.** Con la llave encendida el conteo por
+   cuadro varia (366, 367...) porque el patron es generativo y su nivel depende
+   de un campo que evoluciona. El medidor exige que cada cuadro haga el mismo
+   trabajo, y hace bien: esa regla existe para que una regresion de costo se vea.
+   La direccion para resolverlo esta en `PROYECCION.md` 5.5 (sembrar lo
+   generativo con algo determinista).
+4. **La triangulacion de RD produce cero fuentes primarias.** 70 informes vivos,
+   46 dicen NO SE ENCONTRO y **0 de 70** tienen `verificacion.fuentes_primarias`
+   con algo adentro.
 
-### Still open from 2026-07-26
+---
 
-Detalle en `docs/handoffs/archive/20260726_pendientes.md` (ideas.py CONECTADO,
-render por defecto sin medir, root J6+ pospuesto, bridge_issue_render no corre
-solo). Delegating: bound every search -- a subagent's `find /` burnt 2124s.
+## 3. Que corre hoy, medido
 
-## Open
+**El sitio.** `iskvw.cl` publica **479 piezas y 269 vinculos**. El workflow
+GENERA `archivo.json` con `gen_archivo_iskvw.py --fuente todo` antes de subir y
+recien despues verifica que exista; no es una copia congelada. La piel degrada a
+`campo.json` solo si eso falla, y no falla desde el 2026-07-31.
 
-- **The order the user set for the last stretch (2026-07-27, his words):**
-  RD presentable with zero errors -> MAK working and autonomous -> iskvw
-  (references + the svg bundle: a structure with CLEAR CONNECTORS so the
-  presentation or the style can be swapped) -> a `MAPA.md` per line so
-  navigation is obvious -> README updated -> the handoff updated on every line.
-  **RD and MAK are done. iskvw is what remains.** Its map is
-  `docs/rd/MAPA_RD.md` for RD; **iskvw's own map EXISTS since PR #368
-  (`iskvw/MAPA.md`)** -- this entry previously said it was missing and that
-  was stale.
-- **What the 2026-07-27 iskvw stretch got wrong.** Detail archived in
-  `docs/handoffs/archive/20260727_iskvw_lo_que_fallo.md` (it treated the curation
-  as a blocker, dismissed two references without opening them, invented a GPU
-  limit, built on the wrong source, shipped positions from a hash the repo had
-  already warned about, left 60 zero-byte SVGs, tuned a parameter without
-  measuring). The one line that matters: **if you are about to say "this does not
-  apply" about something the user sent you, open it first.**
-- **thi.ng libraries IN, vendorized** (`data/iskvw_librerias.json` +
-  `py tools/vendorizar_iskvw.py` -> self-contained ESM in `iskvw/piel/lib/`,
-  21.6 KB: tsne, geom-trace-bitmap, rstream-gestures, distance-transform).
-  **Correction, measured: `@thi.ng/tsne` cannot take 768 down to 2** (output
-  dim = input dim), so `gen_campo_iskvw.py` still needs sklearn;
-  `tests/test_iskvw_librerias.py` pins it. The sci-fi reference's
-  `node-network` has the every-pair-every-frame defect; its `objParser.ts` IS
-  the 2D/3D answer.
-- **DONE 2026-07-27: the archive is ONE file.** Position is now an optional field
-  of the contract, so `archivo.json` carries relations AND positions: 1004 pieces,
-  3188 links, 697 with position, measured against the box. It was 0 before,
-  because the micelio ids carried the file extension and the field's did not, so
-  the keys never met. Generators stay separate on purpose -- projecting needs the
-  768-dimension vectors and the contract neither has nor wants them. Loose thread
-  noticed, not chased: the contract counts 705 obras and the field 697.
-- **iskvw, what it is actually asking for: the SUBSTRATE -- first brick laid
-  2026-07-29.** The micelio -> pieces+relations conversion now lives in ONE
-  place, `cultura/mak_plataforma/contrato_archivo.py` (pure function), shared
-  by `tools/gen_archivo_iskvw.py` and by the box's face at `GET /api/archivo`
-  (hub.py is covered by the sync cron), so any skin or external agent asks
-  "the pieces and their links" and always gets the ESQUEMA_ARCHIVO shape --
-  without knowing the micelio's internal node schema. Id formation can no
-  longer fork (the 1004-pieces/0-positions trap); `tests/test_contrato_archivo.py`
-  pins the delegation. Still open of the substrate vision: no skin CONSUMES
-  archivo.json yet (the live campo skin reads campo.json, which carries no
-  vinculos), and drawing measured links on the site is a style call for the
-  user. The rule it inherits is the doublecup thesis: **no element may claim
-  a datum it does not encode.**
-- **MAK re-perceives on its own; do not touch it mid-run.** The six traps
-  that cost real time (SSH-launched processes die, pgrep let two perceptions
-  share 4 GB, procesados.txt is held, patched code is not loaded code, nested
-  heredocs break, copying a file does not restart its service) are in the
-  assistant's memory. When it finishes, read its output before feeding it.
-- **DONE 2026-07-29: the last hop to the RD database is wired.**
-  `tools/gen_propuestas_rd.py` feeds `mineria_rd.proponer()` from the repo's
-  own `candidatos_db.jsonl` (no OCR, no GPU, no box), re-matching against the
-  CURRENT catalogues, reporting dudosos without drafting them, requiring
-  evidence >= 2. Measured on the real 970 rows: 0 new productoras (7 already
-  known), 2 real venue drafts (Club Hipico, Teatro Caupolican), 0 garbage.
-  Two defects found and fixed on the way: "Reduciendo Dano Chile" escaped the
-  own-identity deny-list (pattern added + regression test), and cities came
-  out as venues (geography filter). Drafts enter only by human-reviewed PR.
-- **Logos: RESOLVED (user's word, 2026-07-29).** This file and
-  `docs/rd/MAPA_RD.md` ("6 de 20") kept it listed as pending after the fact;
-  the standalone already bakes the vector logos in (#335). If MAPA_RD's count
-  is re-measured, do it against the real `knowledge/logos/`, not this note.
+**La percepcion.** 3.138 fichas: 1.737 rd, 1.401 ig. La pasada de watsonx sobre
+las ig termino (1.401/1.401, 0 errores) y esta en
+`~/curatoria/pasadas/v4_watsonx_20260801/` en la caja, **sin consolidar**.
 
-**How this list is kept honest:** on 2026-07-26 it carried an item that had
-already been fixed that same day, plus a second copy of the Illustrator entry
-that contradicted the corrected one. A pending list nobody prunes stops being a
-list of what is pending. Before working an item, check it is still true.
+**La cola de MAK.** 2.812 tareas y **ninguna pendiente**: 2.656 en `propuesta` y 156 en `despachada`. Medido el 2026-08-01 leyendo
+`material.jsonl` en la caja y confirmando contra `material.pop_pendiente`,
+que filtra por `estado == "pendiente"` -- o sea, la cola entera esta
+inerte y `atender` devuelve None en cada tick.
 
-- **The `mak` inbox has no defined drain, and that is the one thing that would
-  turn it back into a line.** MAK opens a PR into `mak` every 6 hours; nothing
-  moves `mak` into `main`. Verified working on 2026-07-26: the box fetches all
-  branches before checking out, so delivery against the inbox does run. What is
-  missing is the exit — today that is a human-curated PR, same as any
-  line -> main promotion. If the inbox ever holds work `main` has not seen for
-  long, the topology has quietly broken and needs fixing, not tolerating.
-- **`rd` and `iskvw` point at the SAME commit (`abc26891`)** while the README
-  calls them different lines. Written down, not resolved: whether that is
-  intentional is the user's call.
-- **4 local stashes never examined** (none from this session):
-  `sol-azure-optin-gate-redundante`, `ascii-wip-ultimo-agente`,
-  `mak-vocab-ultimo-agente`, and a WIP of `retirar-destinos-muertos`. A local
-  stash is invisible to the repo and dies with the machine. Pending: open them
-  one by one. The first matters most -- the user suspected for days that work
-  from the SOL session was never applied and was told it did not exist.
-- The hourly `[OBS]` issue emitter is still unidentified. Ruled out: the repo and
-  MAK (nothing there creates issues). A session on 2026-07-24 already ran this
-  hunt and logged it unresolved. Not urgent, and not worth chasing again without
-  a reason.
-- The Gmail bridge still turns GitHub's own notification e-mails into new issues.
-  The workflow already ignores those echoes, so they do no work, but they keep
-  being created: the filter has to live in the user's Apps Script, discarding
-  anything sent by `notifications@github.com`. Outside this repo.
-- The repo's front door is honest again but the CLI still speaks Spanish to the
-  operator, so `MAPA.md`'s generated command table does too. That is deliberate
-  (it mirrors what the user sees when he runs a command), not an oversight.
+Esto corrige DOS frases que este archivo traia como pendientes y ya no lo
+eran. La primera pedia una decision tuya: "degradar las ocurrencias
+encoladas, `python3 material.py --degradar-ocurrencias --aplicar`". Ya
+esta aplicada. La segunda decia que "solo la triangulacion de RD (116)
+sigue siendo trabajo", y **esas 116 tambien estan en `propuesta`**: la
+degradacion se llevo por delante el unico trabajo real que quedaba, junto
+con las ocurrencias que apuntaba a frenar.
+
+La consecuencia se ve en el log: `atender` no tiene de donde sacar nada,
+asi que el organismo corre su modo autonomo -- `multiplicar` sobre el
+backlog -- que es lo que produce un informe cada 30 minutos. Reactivar las
+116 de RD es cambiar un estado, no borrar nada.
+
+**La busqueda.** Funciona con `TAVILY_API_KEY` puesta en
+`~/n8n-local/research.env` (permisos 600). Los cuatro motores generales de
+SearXNG siguen tapados de forma intermitente; el sistema lo detecta y pausa en
+vez de escribir un informe de memoria.
+
+**El debate adversarial.** Tres modelos distintos, uno por papel: proponente
+`mistral-medium-2505`, refutador `llama-3-3-70b`, juez `granite-4-h-small`. El
+informe declara en su primera linea si hubo debate o no.
+
+---
+
+## 4. Lo que este repo aprendio, y cuesta caro olvidar
+
+Cada una salio de un incidente medido. Estan en orden de cuantas veces volvio a
+aparecer el mismo defecto.
+
+1. **Una lista, un default, un comentario o un orden escritos a mano dejan de
+   coincidir con la realidad, descartan en silencio lo unico que funcionaba, y
+   el error culpa a otra cosa.** Aparecio siete veces en dos dias: la tupla de
+   proveedores de `refutar.py`, el `_CODER_CHAIN_MAP` de codex, `CLAVES_VISION`
+   tragandose `_motor`, el comentario del banco de vision diciendo 1024 donde
+   produccion usa 1280, el requisito "nada" de `tapiz`, los tres cubos de
+   `consolidar_fichas` cubriendo 1.879 de 17.602 decisiones, y la frase de
+   `iskvw/MAPA.md` que caduco a las cuatro horas y media de escribirse.
+   **Antes de depurar, preguntarse si el bug tiene esta forma.**
+
+2. **NO DEPURES: CONTA.** Agrupar los fallos por su mensaje literal antes de
+   abrir nada. Resolvio en un paso lo que llevaba una hora, tres veces.
+
+3. **Un grep vacio no es evidencia de ausencia**, es evidencia de que la
+   consulta fue estrecha. El 2026-08-01 se concluyo que nadie conectaba los
+   conceptos de un ensayo con el motor de iconos, cuando `tools/iconos_conjunto.py`
+   existe, tiene tests, produjo 16 iconos y **esta registrado en
+   `CAPACIDADES.md`** -- un archivo editado cinco veces esa noche sin abrirlo.
+   Antes de construir: leer el registro VIVO de `CAPACIDADES.md` y la tabla de
+   `MAPA.md`, que estan generados y no se pudren.
+
+4. **Contar es el metodo correcto para ENCONTRAR un defecto y el equivocado para
+   declararlo resuelto.** Se midio `bing: 10 resultados` y se lo dio por bueno;
+   mirando los resultados, eran basura no relacionada. Un conteo dice cuantos;
+   solo mirar dice cuales.
+
+5. **Nunca rellenar una ausencia con un valor plausible.** Un `or "ollama"`
+   destruye el campo que existe para medir quien respondio.
+
+6. **Una falsa alarma es tan grave como un descarte callado.** Manda a perseguir
+   un fantasma y quema la credibilidad de la proxima alarma verdadera.
+
+7. **Los comentarios de un archivo son su bitacora de incidentes: se leen ANTES
+   de editarlo.**
+
+8. **Compilar y `pyflakes` no son evidencia.** Corrida real y conteo comparado
+   contra los numeros de antes. `pyflakes` si atrapa lo que `compileall` no ve
+   (un `%` que quedo ligado al string equivocado).
+
+9. **Inventar que hacer esta bien; decidirlo sin formato no** (palabras del
+   usuario). Las tres preguntas que convierten una ocurrencia en tarea estan en
+   `flujo.micelio.evaluar_propuesta`: quien lo va a usar, donde se busco que no
+   exista ya, y como se sabe que salio bien.
+
+10. **Lo que el usuario responde se escribe en la misma sesion o se pierde.** La
+    geometria del campo se perdio asi.
+
+---
+
+## 5. El circuito micelio, para usarlo
+
+Tu flujo: le pedis una semilla a un modelo web, la depositas, y si hay bug el
+micelio te entrega un hongo; le pasas el hongo al modelo, que responde con un
+nutriente; si el nutriente lo arregla, se crea un fruto.
+
+```bash
+py -m flujo micelio formato              # el texto que le pegas al modelo web
+py -m flujo micelio validar sobre.json   # dice que le falta, en castellano
+py -m flujo micelio depositar sobre.json --aplicar
+py -m flujo micelio cosechar sobre.json  # -> fruto si crecio, hongo si no
+```
+
+El hongo lleva que criterios se pusieron rojos con su mensaje literal, cuales
+pasaron, el pedido original y **el contenido real de los archivos** que el
+criterio nombra. Sale con codigo 1 para que un script lo use como compuerta.
+
+Probado de punta a punta el 2026-08-01: vuelta 1 ROJO (faltaba `normalizar` y la
+prueba), vuelta 2 con un nutriente arreglo dos de tres en 71 segundos.
+**Muro:** `codex generar` entrega UN archivo, asi que un criterio que pide un
+segundo archivo en una ruta concreta no lo puede cumplir.
+
+---
+
+## 5b. El mes de conversacion, medido y sin leer
+
+Las decisiones que se perdieron estan en las transcripciones y en ningun archivo
+del repo. Medido el 2026-08-01 sobre `~/.claude/projects/c--IA-flujo/`:
+
+```txt
+122 sesiones, 2026-07-01 a 2026-08-01, 316,7 MB de JSONL
+  turnos del usuario   4.264   3,0 MB   lo que decidio y se perdio
+  turnos del asistente 9.844   4,6 MB   lo que prometio y dio por hecho
+  lineas de error      3.005   0,2 MB   los fallos, agrupables por mensaje
+  tool_result                 39,2 MB   el repo pegado de vuelta: no aporta
+```
+
+Se intento leerlo con watsonx y el usuario lo cancelo. **Lo que quedo aprendido
+es el diseno correcto**, por si se retoma: no hay que pedirle las citas al
+modelo -- las parafrasea, y una decision parafraseada deja de ser la decision,
+que es justo el problema que se quiere arreglar. Hay que pedirle que diga QUE
+TURNOS contienen una decision, y sacar la cita de la transcripcion por indice.
+Textual por construccion, sin nada que verificar despues.
+
+### El prompt, listo para correr
+
+No se le piden citas al modelo: se le piden NUMEROS de turno. La cita sale de la
+transcripcion por indice, textual por construccion.
+
+MAPA (`ibm/granite-3-8b-instruct`, 23 llamadas de ~95k tokens):
+
+```txt
+SISTEMA
+Sos un clasificador de turnos de conversacion. Recibis turnos NUMERADOS de una
+persona hablando con asistentes de IA sobre su repositorio. Devolves SOLO un
+objeto JSON, sin explicaciones ni markdown.
+
+USUARIO
+Clasifica cada turno. NO copies ni cites el texto: ya lo tengo. Devolve el
+NUMERO del turno y una etiqueta.
+
+{"marcados": [{"n": 1234, "tipo": "decision|orden|correccion|queja",
+               "sobre": "de que trata, MAXIMO 6 palabras"}]}
+
+REGLAS:
+- `decision`: elige entre opciones, define como debe ser algo, cierra un debate.
+- `orden`: pide que se haga algo concreto.
+- `correccion`: le dice al asistente que se equivoco.
+- `queja`: repite algo con fastidio, o reclama que no se hizo.
+- Un turno que no es ninguna de las cuatro NO se incluye. Una lista corta y
+  cierta vale mas que una larga e inflada.
+- `sobre` es una ETIQUETA para agrupar despues, no un resumen.
+- Si dudas entre incluir y no incluir, no incluyas.
+
+TURNOS:
+[0001] ...
+```
+
+REDUCCION (`openai/gpt-oss-120b`, 1 llamada):
+
+```txt
+Estas son etiquetas de turnos clasificados a lo largo de un mes. Agrupa las que
+hablan de LO MISMO y ordena por cuantas veces aparece.
+
+{"temas": [{"tema": "...", "veces": N, "turnos": [1234, 5678],
+            "primera_fecha": "...", "ultima_fecha": "...",
+            "tipos": {"decision": N, "queja": N}}]}
+
+REGLAS:
+- Un tema que aparece muchas veces con `queja` o `correccion` es algo que la
+  persona tuvo que repetir porque nadie lo anoto. Ese es el hallazgo.
+- No recomiendes nada. No priorices. Conta.
+```
+
+Por que asi vale la pena: la salida son numeros y etiquetas de seis palabras,
+asi que el tope de tokens deja de ser un recorte callado; el hallazgo es el
+CONTEO, no la prosa; y lo unico que el modelo redacta es la etiqueta, de manera
+que si se equivoca agrupa mal pero no inventa una decision.
+
+Los estratos ya estan extraidos: `tools/leer_mes_watsonx.py` se borro por no
+tener consumidor, pero su parte util era `estratos_del_mes()`, que separa
+usuario / asistente / lineas de error de los `.jsonl` de
+`~/.claude/projects/c--IA-flujo/`. La llave de watsonx vive solo en la caja
+(`~/n8n-local/research.env`), asi que se extrae en la maquina del usuario y se
+corre alla.
+
+## 6. Para un agente que recien llega
+
+Leer, en este orden: `CLAUDE.md`, este archivo, `MAPA.md`. Si vas a tocar iskvw,
+tambien `iskvw/MAPA.md`. Si vas a construir una herramienta, **primero** el
+registro VIVO de `CAPACIDADES.md`: 4 de las 45 entradas tienen como unico
+consumidor su propio test, y agregar la 46a sin mirar es como se llego a eso.
+
+El veredicto de un PR es su matriz de CI, nunca el pytest local.

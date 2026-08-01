@@ -110,6 +110,100 @@ def _resp_ok(resp):
     return (True, "")
 
 
+# Un tema que es el TEXTO DE UN FALLO no es un tema. Medido el 2026-08-01: el
+# organismo estaba investigando "**Detalles del Evento:** No se encontraron
+# detalles especificos", con los asteriscos de Markdown adentro. Eso no salio
+# de una pregunta: salio de un campo vacio de una ficha, entro al backlog que
+# se autorellena, y produjo un informe cada 30 minutos por cron. El formato del
+# informe se puede arreglar -- se arreglo el mismo dia -- y no sirve de nada:
+# un informe impecable sobre "no se encontraron detalles" sigue siendo basura,
+# solo que mejor escrita.
+#
+# SOLO marcas de render, y esa lista corta es el resultado de haberse
+# equivocado midiendo. La primera version rechazaba tambien por frases de
+# ausencia ("no se encontro", "falta de", "no hay informacion"), y al correrla
+# contra el backlog real -- 167 preguntas -- rechazaba 82. Mirando las 82, la
+# mitad eran preguntas de investigacion LEGITIMAS: "la falta de investigacion
+# sobre la relacion entre la estetica y la construccion de identidades
+# culturales" es un tema, no un fallo. El filtro habria borrado la mitad del
+# trabajo del organismo.
+#
+# Y la hipotesis de que la cola era una pregunta repetida tampoco se sostuvo:
+# agrupadas por vocabulario, las 167 dan 150 grupos distintos. Solo 32 se
+# repiten, y varias de esas son eventos DISTINTOS con la misma forma de
+# pregunta, que no es repetirse.
+#
+# Lo unico que quedo probado como defecto fue el MARCADO: un tema no es un
+# fragmento de documento. Esta es la red de ultimo momento; el arreglo de
+# verdad esta en `backlog.preguntas_del_informe`, que lee el dato en vez de
+# parsear la prosa.
+_MARCAS_DE_RENDER = ("**", "##", "```", "|---")
+
+# Se reusa el limpiador de `backlog` en vez de escribir un segundo: dos
+# limpiadores del mismo marcado se separan, y entonces la cola y el que la
+# consume dejan de coincidir sobre que es un tema.
+try:
+    from backlog import _limpiar_render
+except ImportError:
+    _limpiar_render = None
+
+
+def tema_limpio(texto):
+    """(tema, motivo). El tema listo para usar, o "" con el motivo del descarte.
+
+    REPARA antes de rechazar, y esa es la diferencia que costo medirlo: en el
+    backlog real hay 66 preguntas de 167 que traen marcado (`**Titulo:** cuerpo`)
+    y NO son basura -- son preguntas envueltas en el formato del informe del que
+    salieron. Tirarlas seria tirar el 40% del trabajo acumulado del organismo
+    por un problema de presentacion.
+
+    Solo se descarta lo que despues de desenvuelto no queda siendo nada: una
+    fila de tabla, un separador, un titulo vacio.
+
+    Devuelve el MOTIVO para que quien llame pueda contar por que descarto: un
+    rechazo silencioso deja la cola vaciandose sin que nadie sepa de que."""
+    t = (texto or "").strip()
+    if _limpiar_render is not None:
+        t = _limpiar_render(t)
+    else:
+        # Sin backlog importable se limpia lo minimo, en vez de dejar pasar el
+        # marcado entero. Degradar no es lo mismo que no hacer nada.
+        for m in _MARCAS_DE_RENDER:
+            t = t.replace(m, " ")
+        t = t.strip()
+    if len(t) < 12:
+        return "", "queda en %d caracteres despues de limpiar el marcado" % len(t)
+    if len(t) > 400:
+        return "", "demasiado largo (%d caracteres)" % len(t)
+    if not any(c.isalpha() for c in t):
+        return "", "no tiene una sola letra"
+    return t, ""
+
+
+# Que formato pide cada verbo, y por que no es el mismo para todos.
+#
+# Medido el 2026-08-01 sobre los ultimos 40 informes: `informe` en 40 de 40 y
+# `densidad: corto` en todas. El formato `ensayo` existe desde el 2026-07-30
+# con siete exigencias -- tesis que se puede negar, tabla donde compiten dos
+# lecturas, cronologia, cierre que argumenta, anexo iconografico -- y no se
+# invoco NUNCA, porque este archivo nunca mandaba el parametro y research.py
+# caia a su default. El motor de calidad estaba apagado.
+#
+# El corte no es de gusto:
+#   - `atender` trabaja la cola de material (triangulacion RD: quien organizo
+#     tal evento). Eso es un DATO y se responde con un informe corto y
+#     verificable. Un ensayo sobre "quien organizo la fiesta" seria ridiculo.
+#   - `multiplicar` y `definir` trabajan temas culturales del backlog. Eso es
+#     lo que se merece el nombre research, y el ensayo es el formato que lo
+#     exige. Con densidad `medio` porque `corto` le da 64 segundos y 6 fuentes:
+#     no alcanza para sostener una tesis.
+FORMATO_POR_VERBO = {
+    "atender":     ("informe", "corto"),
+    "multiplicar": ("ensayo",  "medio"),
+    "definir":     ("ensayo",  "medio"),
+}
+
+
 def _tarea(verbo, st):
     """Arma (depto, payload_dict) para un verbo, o None si no hay trabajo."""
     v = next((x for x in roles.VERBOS if x["verbo"] == verbo), None)
@@ -129,21 +223,41 @@ def _tarea(verbo, st):
         if tarea.get("depto") == "codex":
             return ("codex", {"modo": tarea.get("modo", "generar"),
                               "pedido": tarea["texto"], "densidad": "medio"})
+        tema, motivo = tema_limpio(tarea["texto"])
+        if not tema:
+            print("tema descartado (%s): %.70s" % (motivo, tarea["texto"]),
+                  flush=True)
+            return None
+        fmt, dens = FORMATO_POR_VERBO.get(verbo, ("informe", "corto"))
         return ("research", {"modo": tarea.get("modo", "research"),
-                             "tema": tarea["texto"], "densidad": "corto"})
+                             "tema": tema, "densidad": dens, "formato": fmt})
     if fuente == "concepto":
         if backlog is not None:
             entrada = backlog.pop_pendiente(BACKLOG_GEN)
             if entrada:
-                return ("research", {"modo": v["modo"], "tema": entrada["pregunta"], "densidad": "corto"})
+                tema, motivo = tema_limpio(entrada["pregunta"])
+                if not tema:
+                    # Se DICE. Una tarea que desaparece sin dejar rastro es
+                    # como esta cola se lleno de vinnetas sin que nadie lo
+                    # notara durante dias.
+                    print("tema descartado (%s): %.70s"
+                          % (motivo, entrada["pregunta"]), flush=True)
+                    return None
+                fmt, dens = FORMATO_POR_VERBO.get(verbo, ("informe", "corto"))
+                return ("research", {"modo": v["modo"], "tema": tema,
+                                     "densidad": dens, "formato": fmt})
         i = st.get("sem_idx", 0) % len(sems)
         st["sem_idx"] = i + 1
-        return ("research", {"modo": v["modo"], "tema": sems[i], "densidad": "corto"})
+        fmt, dens = FORMATO_POR_VERBO.get(verbo, ("informe", "corto"))
+        return ("research", {"modo": v["modo"], "tema": sems[i],
+                             "densidad": dens, "formato": fmt})
     if fuente == "definir":
         i = st.get("def_idx", 0) % len(sems)
         st["def_idx"] = i + 1
         tema = "definicion cultural precisa y genealogia de: " + sems[i]
-        return ("research", {"modo": v["modo"], "tema": tema, "densidad": "corto"})
+        fmt, dens = FORMATO_POR_VERBO.get(verbo, ("informe", "corto"))
+        return ("research", {"modo": v["modo"], "tema": tema,
+                             "densidad": dens, "formato": fmt})
     if fuente == "modulo":
         mods = roles.MODULOS
         i = st.get("mod_idx", 0) % len(mods)

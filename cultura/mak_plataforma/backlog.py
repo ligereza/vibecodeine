@@ -6,13 +6,34 @@ entradas de backlog deduplicadas y ranqueadas. Enforza las reglas de poda:
   1. Max N preguntas por informe
   2. Profundidad de linaje <= 3
   3. Curador: descarta redundantes/triviales
+  4. Slug dedup: una pregunta cuyo slug ya existe como informe o en el
+     backlog NO se encola de nuevo (2026-07-31; causa medida: 40 de 50
+     informes compartian un prefijo -- la misma pregunta respondida 40 veces,
+     porque cosechar nunca miraba lo ya respondido)
 """
 import json
 import os
 import re
+import sys
 import unicodedata
 from datetime import datetime
 from hashlib import sha1
+
+# Report files are named STAMP-slug.md by research.py, with the slug minted by
+# research_lib.slug(). Deduplicating against those files REQUIRES the exact
+# same function -- a second slug formation is how the 1004-pieces/0-positions
+# trap happened (two id formations that never met). Two layouts share this
+# file: the repo (cultura/mak_plataforma + cultura/mak_research) and the box
+# (~/plataforma + ~/research); do not depend on the caller's sys.path.
+_DIR = os.path.dirname(os.path.abspath(__file__))
+for _cand in (os.path.join(_DIR, "..", "mak_research"),
+              os.path.join(_DIR, "..", "research")):
+    if os.path.isdir(_cand) and _cand not in sys.path:
+        sys.path.insert(0, _cand)
+try:
+    from research_lib import slug
+except ImportError:  # without research_lib the hash dedup still applies
+    slug = None
 
 
 def _norm(texto):
@@ -76,12 +97,125 @@ def parsear_lagunas(texto):
         if match:
             # Remover el bullet
             pregunta = re.sub(r'^[-*]\s+|\d+\.\s+', '', linea).strip()
+            pregunta = _limpiar_render(pregunta)
             if pregunta:
                 # Capear a 300 chars
                 pregunta = pregunta[:300]
                 preguntas.append(pregunta)
 
     return preguntas
+
+
+def _limpiar_render(linea):
+    """Saca el MARCADO de una vinneta y devuelve la pregunta que traia adentro.
+
+    Medido el 2026-08-01: el organismo estaba investigando un tema llamado
+    literalmente `**Detalles del Evento:** No se encontraron detalles
+    especificos`, asteriscos incluidos, y produjo un informe de 10 minutos por
+    cron con ese titulo. La pregunta util estaba ahi -- llego envuelta en el
+    formato con el que se habia renderizado el informe anterior.
+
+    Se midio antes de escribir esto, porque la primera lectura fue equivocada
+    dos veces: el backlog real tiene 167 preguntas que agrupan en 150 grupos
+    distintos, asi que NO era redundancia (32 repetidas, y varias de esas son
+    eventos distintos), y las vinnetas que empiezan por "La falta de..."
+    producen preguntas de investigacion legitimas -- filtrarlas por su forma
+    habria matado temas buenos. Lo unico defectuoso era el marcado.
+
+    Solo se quita FORMATO. Ni una palabra de la pregunta se descarta: si
+    despues de limpiar no queda nada, es que la linea era solo marcado.
+    """
+    t = (linea or "").strip()
+    # `**Titulo:** cuerpo` -> el titulo es la etiqueta de la vinneta y el
+    # cuerpo es la pregunta. Si no hay cuerpo, el titulo ES la pregunta.
+    m = re.match(r'^\*\*(.+?):?\*\*:?\s*(.*)$', t, re.S)
+    if m:
+        titulo, cuerpo = m.group(1).strip(), m.group(2).strip()
+        t = cuerpo or titulo
+    # Enfasis suelto, comillas de codigo y encabezados que se colaron.
+    t = re.sub(r'\*\*|__|`|^#+\s*', '', t).strip()
+    # Una linea de tabla o un separador no es una pregunta.
+    if t.startswith('|') or set(t) <= set('-|: '):
+        return ''
+    return t.strip()
+
+
+def preguntas_del_informe(dir_path, filename, contenido):
+    """Lo que un informe deja abierto. EL DATO PRIMERO, la prosa despues.
+
+    `research.py` escribe un `.json` al lado de cada `.md`, y ese json es la
+    fuente de verdad -- el propio codigo lo dice: "`report` es un RENDER de lo
+    de abajo". Desde el 2026-08-01 trae `preguntas_abiertas`, pedidas al modelo
+    como array y no incrustadas en el texto.
+
+    Por que dejo de leerse la prosa: `parsear_lagunas` buscaba con una regex la
+    seccion "LAGUNAS DE INFORMACION" del Markdown, asi que el loop dependia de
+    como se VEIA el informe. Costo dos cosas el mismo dia: un tema entro a la
+    cola llamado literalmente "**Detalles del Evento:** No se encontraron
+    detalles especificos" -- asteriscos del render incluidos -- y produjo su
+    propio informe por cron; y al cambiar el formato esa manana la seccion
+    dejo de emitirse, con lo cual el parser habria devuelto vacio y el backlog
+    se habria secado SIN QUE NADIE SE ENTERE. Un loop que se apaga en silencio
+    es peor que uno que falla.
+
+    El fallback NO se saca: hay cientos de informes viejos con la seccion
+    escrita y ese material sigue siendo alimento valido. Tres estados, y son
+    distintos entre si:
+      - json con `preguntas_abiertas` -> se usa, aunque sea []. Lista vacia
+        significa "este informe no dejo nada abierto", que es una respuesta.
+      - json sin la clave, o sin json -> informe viejo: se parsea la prosa.
+      - json con `preguntas_abiertas_error` -> no se pudo preguntar; tambien
+        se parsea la prosa, porque ausencia no es vacio.
+    """
+    ruta_json = os.path.join(dir_path, filename[:-3] + '.json')
+    try:
+        with open(ruta_json, 'r', encoding='utf-8') as f:
+            doc = json.load(f)
+    except (OSError, ValueError):
+        return parsear_lagunas(contenido)
+    if isinstance(doc, dict) and isinstance(doc.get('preguntas_abiertas'), list):
+        return [q for q in doc['preguntas_abiertas'] if isinstance(q, str) and q.strip()]
+    return parsear_lagunas(contenido)
+
+
+_STAMP_RE = re.compile(r'^\d{8}-\d{6}-')
+
+
+def _slug_de_informe(filename):
+    """Slug de un archivo de informe: research.py los nombra STAMP-slug.md."""
+    base = filename[:-3] if filename.endswith('.md') else filename
+    return _STAMP_RE.sub('', base)
+
+
+def slugs_ocupados(informes_dirs, entradas):
+    """Slugs ya 'tomados': uno por informe existente (el sistema YA respondio
+    esa pregunta) y uno por entrada del backlog en cualquier estado (ya esta
+    encolada, en curso, respondida o descartada). Una pregunta cuyo slug esta
+    aca no debe encolarse de nuevo.
+
+    Args:
+        informes_dirs: list[str] de directorios con informes *.md
+        entradas: list[dict] del backlog actual
+
+    Returns:
+        set[str]: slugs ocupados (vacio si research_lib.slug no esta)
+    """
+    if slug is None:
+        return set()
+    tomados = set()
+    for e in entradas:
+        pregunta = e.get('pregunta')
+        if pregunta:
+            tomados.add(slug(pregunta))
+    for dir_path in informes_dirs:
+        try:
+            nombres = os.listdir(dir_path)
+        except OSError:
+            continue
+        for filename in nombres:
+            if filename.endswith('.md'):
+                tomados.add(_slug_de_informe(filename))
+    return tomados
 
 
 def cargar(backlog_path):
@@ -138,8 +272,10 @@ def cosechar(informes_dirs, backlog_path, max_por_informe=3, profundidad_max=3, 
 
     Escanea cada dir (no recursivo) por *.md. Rastrea archivos procesados por
     (filename, mtime) en archivo de estado JSON, para saltar informes ya cosechados.
-    Dedup por _hash() contra entradas existentes y preguntas ya agregadas en esta run.
-    Toma max N preguntas por informe.
+    Dedup por _hash() contra entradas existentes y preguntas ya agregadas en esta
+    run, y por slug (research_lib.slug, el mismo que nombra los informes) contra
+    los informes ya escritos y el backlog completo: una pregunta ya respondida
+    no vuelve a encolarse. Toma max N preguntas por informe.
 
     Args:
         informes_dirs: list[str] de directorios a escanear
@@ -162,19 +298,22 @@ def cosechar(informes_dirs, backlog_path, max_por_informe=3, profundidad_max=3, 
     except (OSError, ValueError, json.JSONDecodeError):
         pass
 
+    if not isinstance(informes_dirs, list):
+        informes_dirs = [informes_dirs]
+
     # Cargar backlog existente
     existentes = cargar(backlog_path)
     hashes_existentes = {_hash(e['pregunta']) for e in existentes}
+
+    # Slugs ya respondidos (informes en disco) o ya encolados: la cosecha no
+    # vuelve a encolar lo que el sistema ya pregunto o ya respondio.
+    ocupados = slugs_ocupados(informes_dirs, existentes)
 
     # Hashes de preguntas ya agregadas en esta run
     hashes_agregadas = set()
 
     nuevas_entradas = []
     fecha_hoy = datetime.now().strftime('%Y-%m-%d')
-
-    # Procesar cada directorio
-    if not isinstance(informes_dirs, list):
-        informes_dirs = [informes_dirs]
 
     for dir_path in informes_dirs:
         try:
@@ -201,7 +340,7 @@ def cosechar(informes_dirs, backlog_path, max_por_informe=3, profundidad_max=3, 
                 except OSError:
                     continue
 
-                preguntas = parsear_lagunas(contenido)
+                preguntas = preguntas_del_informe(dir_path, filename, contenido)
 
                 # Tomar max_por_informe, dedup
                 agregadas_esta_run = 0
@@ -211,6 +350,12 @@ def cosechar(informes_dirs, backlog_path, max_por_informe=3, profundidad_max=3, 
 
                     h = _hash(pregunta)
                     if h in hashes_existentes or h in hashes_agregadas:
+                        continue
+
+                    # Dedup por slug: si ya hay un informe (o una entrada) con
+                    # este slug, la pregunta ya fue hecha -- no se re-encola.
+                    s = slug(pregunta) if slug is not None else None
+                    if s is not None and s in ocupados:
                         continue
 
                     # Nueva entrada
@@ -225,6 +370,8 @@ def cosechar(informes_dirs, backlog_path, max_por_informe=3, profundidad_max=3, 
                     }
                     nuevas_entradas.append(entrada)
                     hashes_agregadas.add(h)
+                    if s is not None:
+                        ocupados.add(s)
                     agregadas_esta_run += 1
 
                 # Marcar como procesado

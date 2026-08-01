@@ -14,7 +14,7 @@ reanuda con --resume <path>.
 
 Uso:
     python3 research.py "tema" [--iteraciones 3] [--depth basic|advanced]
-                        [--providers groq,cerebras,azure,ollama]
+                        [--providers watsonx,groq,cerebras,azure,ollama]
                         [--sin-marco] [--ntfy]
     python3 research.py --resume ~/research/checkpoints/<job_id>.json
 """
@@ -32,8 +32,8 @@ try:
 except ImportError:          # el organo puede correr sin la compuerta
     fuentes = None
 from research_lib import (LLM, escala_tok, fetch_url, load_env, marco,
-                          marco_solo,
-                         ntfy_publish, slug, stamp, tavily_search, web_search)
+                          marcadores_de_plantilla, marco_solo, ntfy_publish,
+                          slug, stamp, tavily_search, web_search)
 
 OUT_DIR = os.path.expanduser("~/research/informes")
 
@@ -71,13 +71,70 @@ def _pausar(topic, iteraciones, depth, providers, densidad, sin_marco,
     sys.exit(3)
 
 
-def _armar_resultado(topic, report, t0, findings, query_history, sources, llm):
+def hallazgos_de(findings, topic=None, dominio=None):
+    """The findings in the shape anyone can consume, each with its SOURCE.
+
+    A report is prose, and prose cannot be consumed without parsing it: a skin,
+    a button, or an agent that does not know this repo cannot ask a markdown
+    which source a claim came from. The raw `findings` already existed but they
+    mix types and hang off the search backend's internal detail.
+
+    Here every finding carries its url, its title and -- when the topic has a
+    domain with declared primary sources -- whether that source is PRIMARY.
+    That mark is what separates "the BCN says so" from "a Peruvian pedagogy PDF
+    says so", which is the most serious defect found in this repo.
+
+    Pure function: no network, no disk, so a change here cannot break a run and
+    it is testable off the box.
+    """
+    salida = []
+    for f in findings or []:
+        url = f.get("url") or ""
+        contenido = f.get("content")
+        if contenido is None:
+            analisis = f.get("analysis")
+            contenido = (json.dumps(analisis, ensure_ascii=False)
+                         if isinstance(analisis, (dict, list)) else analisis)
+        primaria = None
+        if fuentes and dominio and url:
+            prim, _ = fuentes.clasificar([url], dominio)
+            primaria = bool(prim)
+        salida.append({
+            "tipo": f.get("type") or "?",
+            "iteracion": f.get("iteration"),
+            "consulta": f.get("query"),
+            "titulo": f.get("title") or "",
+            "fuente": url,
+            "primaria": primaria,
+            "contenido": (contenido or "")[:1200],
+        })
+    return salida
+
+
+def _armar_resultado(topic, report, t0, findings, query_history, sources, llm,
+                     evaluacion=None):
     _primer_parrafo = next((ln.strip() for ln in report.splitlines()
                            if ln.strip() and not ln.strip().startswith("#")), "")
     print("HALLAZGO: " + _primer_parrafo[:140], flush=True)
+    dom = (evaluacion or {}).get("dominio")
     return {
         "topic": topic,
+        # `report` es un RENDER de lo de abajo, no la fuente de verdad. Se deja
+        # primero porque es lo que lee un humano, pero lo que consume una
+        # maquina son `hallazgos` y `verificacion`.
         "report": report,
+        "hallazgos": hallazgos_de(findings, topic, dom),
+        "verificacion": {
+            "dominio": dom,
+            "fuentes_primarias": (evaluacion or {}).get("fuentes_primarias", []),
+            # Sin dominio declarado no se AFIRMA que falte fuente primaria: la
+            # mayoria de las preguntas culturales no tienen una que exigir, y
+            # marcarlas seria una acusacion inventada.
+            "sin_fuente_primaria": (evaluacion or {}).get("sin_fuente_primaria"),
+            # Se llena cuando `refutar.py` pasa por encima. `null` significa
+            # NADIE LO REVISO, que es distinto de "resistio la revision".
+            "refutado": None,
+        },
         "meta": {
             "iterations": len(query_history),
             "queries": query_history,
@@ -93,7 +150,7 @@ def _armar_resultado(topic, report, t0, findings, query_history, sources, llm):
 
 
 def investigar(topic, iteraciones=3, depth="basic",
-               providers="groq,cerebras,azure,ollama", densidad="medio",
+               providers="watsonx,groq,cerebras,azure,ollama", densidad="medio",
                sin_marco=False, reanudar=None, formato="informe"):
     t0 = time.time()
     llm = LLM(providers)
@@ -146,8 +203,27 @@ def investigar(topic, iteraciones=3, depth="basic",
         except Exception as e:  # noqa: BLE001 - blindaje si tavily llega a raise
             pausar(i, "fuentes", "tavily_search: %s" % e)
 
+        # Ciego NO es vacio. Si ningun motor pudo buscar, seguir produce un
+        # informe escrito de memoria con la forma de uno documentado. Se pausa,
+        # que es para lo que existe el checkpoint: el job espera a que el
+        # buscador vuelva en vez de gastar tokens en aire. Medido 2026-08-01:
+        # SearXNG devolvia 200 con cero resultados y sus cuatro motores
+        # generales suspendidos (CAPTCHA / demasiadas peticiones), sin
+        # TAVILY_API_KEY de respaldo.
+        if search.get("ciego") and not (search.get("results") or []):
+            pausar(i, "fuentes", "busqueda ciega: %s"
+                   % (search.get("motivo") or "sin detalle"))
+
         if search.get("answer"):
-            findings.append({"type": "tavily_answer", "iteration": i + 1,
+            # El TIPO se queda como esta: `estadisticas.py` lo cuenta por ese
+            # nombre y renombrarlo romperia el conteo historico. Lo que se
+            # agrega es QUIEN respondio -- hasta hoy un informe decia
+            # "tavily_answer" hubiera contestado tavily o searxng, asi que
+            # buscar "tavily" en los informes daba 123 aciertos y ninguno
+            # probaba una llamada a tavily. Un nombre no es una atribucion.
+            findings.append({"type": "tavily_answer",
+                             "motor": search.get("motor") or "sin_atribucion",
+                             "iteration": i + 1,
                              "query": current, "content": search["answer"]})
 
         fresh = [r for r in (search.get("results") or [])
@@ -225,15 +301,13 @@ def investigar(topic, iteraciones=3, depth="basic",
                   "generacion de informe fue saltada tras una pausa; ver "
                   "findings crudos para el detalle recolectado.")
         return _armar_resultado(topic, report, t0, findings, query_history,
-                                sources, llm)
+                                sources, llm, ev)
 
     es_ensayo = formato == "ensayo"
     print("STATUS: Generando %s final..." % formato, flush=True)
     try:
         sistema_ensayo = guardia + formato_ensayo.SISTEMA
-        sistema_informe = guardia + (
-            "Eres un investigador senior. Redactas informes claros en "
-            "espanol correcto (con tildes), en formato Markdown.")
+        sistema_informe = guardia + formato_ensayo.SISTEMA_INFORME
         if ev:
             # Sin fuente primaria la TAREA cambia: de sintetizar a reportar la
             # ausencia. No es un aviso al margen, es otra instruccion.
@@ -249,18 +323,84 @@ def investigar(topic, iteraciones=3, depth="basic",
                 formato_ensayo.prompt_documento(topic, findings, sources),
                 int(escala_tok(2000, densidad) * 1.8))
         else:
+            # El informe tambien tiene contrato desde el 2026-08-01. Era una
+            # linea pidiendo cinco secciones enumeradas, y es el formato POR
+            # DEFECTO: eso era lo que el organismo producia todos los dias.
             report, _ = llm.call(
                 sistema_informe,
-                "Genera un informe con secciones: 1. RESUMEN EJECUTIVO, "
-                "2. HALLAZGOS PRINCIPALES (cita fuente URL), 3. ANALISIS "
-                "CRITICO, 4. LAGUNAS DE INFORMACION, 5. PROXIMOS PASOS.\n\n"
-                'TEMA: "%s"\n\nHALLAZGOS:\n%s\n\nFUENTES:\n%s'
-                % (topic, json.dumps(findings, ensure_ascii=False, indent=1)[:14000],
-                   "\n".join(sources)),
+                formato_ensayo.prompt_informe(topic, findings, sources,
+                                              query_history),
                 escala_tok(2000, densidad),
             )
     except RuntimeError as e:
         pausar(iteraciones, formato, str(e))
+
+    # Un informe con la plantilla sin rellenar no esta terminado, por mas que
+    # tenga las cinco secciones. Medido el 2026-08-01: 36 de 102 informes
+    # reales traian "**Investigador:** [Tu Nombre]". Se pide UNA vez mas,
+    # nombrando el hueco; si vuelve igual, el informe sale marcado arriba de
+    # todo en vez de fingir que esta listo.
+    # El ensayo se verifica contra SUS PROPIAS exigencias, con el mismo molde
+    # que la plantilla sin rellenar: se cuenta, se pide de nuevo lo que falto,
+    # y si vuelve igual se MARCA el documento en vez de aprobarlo.
+    # Medido el 2026-08-01 sobre una corrida real: 10 conceptos en el anexo, 0
+    # partes narradas y 0 tablas -- dos de siete. Las exigencias estaban en el
+    # prompt desde el 2026-07-30 y nadie las verificaba, asi que eran una
+    # suplica. Lo caro de producir es el documento: por eso se reintenta una
+    # vez y despues se entrega marcado, nunca se descarta.
+    if es_ensayo:
+        faltan = formato_ensayo.exigencias_incumplidas(report)
+        if faltan:
+            print("AVISO: el ensayo incumple %d exigencias, lo pido de nuevo"
+                  % len(faltan), flush=True)
+            try:
+                reintento, _ = llm.call(
+                    sistema_ensayo,
+                    ("Este texto se pidio como ENSAYO y no cumple estas "
+                     "exigencias:" + chr(10) + chr(10) + "%s" + chr(10) + chr(10)
+                     + "Reescribilo COMPLETO cumpliendolas. No agregues una "
+                     "seccion al final para tapar el hueco: las partes son la "
+                     "estructura del texto y la tabla va donde las dos "
+                     "lecturas se enfrentan." + chr(10) + chr(10) + "%s")
+                    % (chr(10).join("- " + f for f in faltan), report),
+                    int(escala_tok(2000, densidad) * 1.8))
+                if reintento and len(
+                        formato_ensayo.exigencias_incumplidas(reintento)) < len(faltan):
+                    report = reintento
+                    faltan = formato_ensayo.exigencias_incumplidas(report)
+            except RuntimeError:
+                pass
+        if faltan:
+            # Se entrega marcado. Un ensayo que no cumple y no lo dice se lee
+            # como si cumpliera, que es peor que no tenerlo.
+            report = ("> AVISO: este ensayo no cumple %d de sus exigencias "
+                      "despues de un reintento (%s)."
+                      % (len(faltan), "; ".join(f.split(":")[0] for f in faltan))
+                      + chr(10) + chr(10) + report)
+
+    huecos = marcadores_de_plantilla(report)
+    if huecos:
+        print("AVISO: el informe trae plantilla sin rellenar (%s), lo pido de "
+              "nuevo" % ", ".join(huecos), flush=True)
+        try:
+            reintento, _ = llm.call(
+                sistema_informe,
+                ("Este texto quedo con marcadores de plantilla sin rellenar "
+                 "(%s). Reescribilo COMPLETO sin ningun hueco: no hay un autor "
+                 "que poner ni una fecha que completar despues, sos vos quien "
+                 "lo escribe ahora. Si un dato no lo tenes, decilo con "
+                 "palabras, no con un corchete." + chr(10) + chr(10) + "%s")
+                % (", ".join(huecos), report),
+                escala_tok(2000, densidad))
+            if reintento and not marcadores_de_plantilla(reintento):
+                report = reintento
+                huecos = []
+        except RuntimeError:
+            pass
+    if huecos:
+        report = ("> AVISO: este informe quedo con plantilla sin rellenar "
+                  "(%s) despues de un reintento. No esta terminado."
+                  % ", ".join(huecos)) + chr(10) + chr(10) + report
 
     if ev and ev["sin_fuente_primaria"]:
         # Arriba de todo y antes de armar: un lector que abre el archivo tiene
@@ -268,8 +408,30 @@ def investigar(topic, iteraciones=3, depth="basic",
         report = fuentes.encabezado(sources, dom) + "\n" + report
 
     resultado = _armar_resultado(topic, report, t0, findings, query_history,
-                                 sources, llm)
+                                 sources, llm, ev)
     resultado["formato"] = formato
+
+    # Lo que el informe deja ABIERTO, como DATO y no dentro de la prosa. Es lo
+    # que alimenta el loop del organismo (`backlog.cosechar` -> tema nuevo), y
+    # hasta hoy se sacaba parseando la seccion "LAGUNAS DE INFORMACION" del
+    # Markdown. Eso ataba el loop a como se veia el texto: un tema entro
+    # llamado "**Detalles del Evento:** No se encontraron detalles" con los
+    # asteriscos adentro, y el cambio de formato de esta misma manana habria
+    # dejado el parser en cero sin que nadie se entere.
+    # Si esto falla el informe NO se pierde y el loop TAMPOCO: queda sin el
+    # campo y `backlog` cae a su parseo de siempre.
+    print("STATUS: Extrayendo preguntas abiertas...", flush=True)
+    try:
+        bruto_q, _ = llm.call(formato_ensayo.SISTEMA_PREGUNTAS,
+                              formato_ensayo.prompt_preguntas(topic, report),
+                              escala_tok(600, densidad))
+        resultado["preguntas_abiertas"] = formato_ensayo.parsear_preguntas(bruto_q)
+    except RuntimeError as e:
+        # Ausente != vacio. `[]` significa "el informe no dejo nada abierto";
+        # la ausencia de la clave significa "no se pudo preguntar", y quien
+        # cosecha tiene que poder distinguirlas.
+        resultado["preguntas_abiertas_error"] = str(e)
+
     if ev:
         # Sin esto no se puede auditar despues cual informe se apoyo en que.
         resultado["meta"]["dominio"] = ev["dominio"]
@@ -304,7 +466,12 @@ def main():
     ap.add_argument("tema", nargs="?", help="tema a investigar (opcional con --resume)")
     ap.add_argument("--iteraciones", type=int, default=2)  # frugal: mas es opt-in
     ap.add_argument("--depth", choices=("basic", "advanced"), default="basic")
-    ap.add_argument("--providers", default="groq,cerebras,azure,ollama")
+    # watsonx primero desde el 2026-07-30 (salud medida 32/32, ver
+    # research_lib.LLM.__init__). Este default es el que rutea de verdad: la cola
+    # de la caja (worker.py -> research.py) NUNCA pasa --providers, asi que un
+    # cambio que solo tocara _SLOTS no habria movido un solo job.
+    ap.add_argument("--providers",
+                    default="watsonx,groq,cerebras,azure,ollama")
     ap.add_argument("--densidad", choices=("corto", "medio", "largo"), default="medio",
                     help="escala tokens por llamada; techo duro anti-timeout")
     ap.add_argument("--formato", choices=formato_ensayo.FORMATOS,

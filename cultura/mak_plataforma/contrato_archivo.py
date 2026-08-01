@@ -196,3 +196,207 @@ def desde_ensayo(ensayo: dict) -> dict:
         vinculos.append({"de": id_icono, "a": id_concepto, "peso": 1.0,
                          "clase": "manual"})
     return {"piezas": piezas, "vinculos": vinculos}
+
+
+def desde_campo(campo: dict) -> dict:
+    """Las obras CURADAS del campo medido, al contrato.
+
+    campo.json es la proyeccion de lo que MAK percibio de las obras reales del
+    artista (la carpeta de material que se mando a curar), ya pasada por el
+    filtro que el usuario configuro. Hasta ahora solo daba POSICIONES: si el
+    micelio no estaba alcanzable (CI, maquina apagada), el archivo salia sin
+    las obras -- un portafolio sin las obras del artista. Esta conversion las
+    hace piezas de primera clase con lo que el campo si midio.
+
+    `titulo` va None a proposito: el artista no titulo estas piezas y el
+    percibido es texto de maquina -- va a `extra.percibido`, nunca como
+    titulo (regla de la VOZ). `unir()` deduplica contra el micelio por id y
+    la fuente mas rica completa los campos.
+    """
+    piezas = []
+    for c in campo.get("piezas") or []:
+        cid = c.get("id")
+        if not cid:
+            continue
+        extra = {}
+        for k in ("colores", "tipo", "estilo", "tilde", "trazo", "percibido"):
+            if c.get(k):
+                extra[k] = c[k]
+        piezas.append({
+            "id": cid,
+            "titulo": None,
+            "clase": "obra",
+            "fecha": None,
+            "resumen": None,
+            "etiquetas": [t for t in ("curada", c.get("tipo")) if t],
+            "peso": 1,
+            "medio": ({"tipo": "imagen", "src": c["archivo"]}
+                      if c.get("archivo") else {"tipo": "imagen"}),
+            "estado": "publicada",
+            "extra": extra,
+        })
+    return {"piezas": piezas, "vinculos": []}
+
+
+def aplicar_curaduria(datos: dict, curaduria: dict, existe=None) -> dict:
+    """La mano del artista SOBRE lo percibido, nunca debajo.
+
+    `iskvw/datos/curaduria.json` es el archivo humano de la edicion -- simple
+    a proposito, editable a mano sin panel. Por id de pieza:
+
+      titulo       la voz del artista donde la maquina dejo silencio
+      mostrar      false = la pieza no entra al archivo publicado
+      abstraccion  0..1: cuanto se abstrae en la piel (1 = pura textura de
+                   glifos, 0 = pieza completa; para obras sin contexto o
+                   con trazo debil la falla se transmuta, no se esconde)
+      svg          ruta a una version editada A MANO que desplaza a la
+                   generada -- el tier FIRMADO: la maquina propone, el
+                   humano firma (si el archivo no existe, se ignora y se
+                   conserva el generado: nunca un src que 404ea)
+      regimen      por pieza; el global va en curaduria["regimen"]
+
+    Y tres campos OPCIONALES, inertes mientras no se escriban (2026-07-31):
+    la curaduria crece por campos que NO cambian nada hasta que el artista
+    los usa, porque un default nuevo seria una decision estetica ajena.
+
+      peso         numero > 0: cuanta materia tiene la pieza (el campo `peso`
+                   del contrato, ESQUEMA_ARCHIVO.md: sirve para el tamano);
+                   desplaza al peso que la fuente haya medido
+      serie        etiqueta de agrupacion (va a extra["serie"]): la mano que
+                   dice "estas van juntas" sin inventar un vinculo medido
+      nota         la nota del artista (va a extra["nota"]), valor que lee un
+                   humano: espanol correcto con tildes, nunca se degrada
+
+    Se aplica AL FINAL, sobre el resultado de unir(): gana sobre cualquier
+    fuente. Ids desconocidos se ignoran sin ruido -- la curaduria puede
+    nombrar obras que el filtro de hoy dejo fuera.
+    """
+    if existe is None:
+        from pathlib import Path as _P
+        raiz = _P(__file__).resolve().parents[2]
+        existe = lambda src: (raiz / src).is_file()  # noqa: E731
+    por_id = curaduria.get("piezas") or {}
+    piezas, fuera = [], set()
+    for p in datos["piezas"]:
+        c = por_id.get(p["id"])
+        if not c:
+            piezas.append(p)
+            continue
+        if c.get("mostrar") is False:
+            fuera.add(p["id"])
+            continue
+        q = dict(p)
+        q["extra"] = dict(q.get("extra") or {})
+        if c.get("titulo"):
+            q["titulo"] = str(c["titulo"])
+            q["extra"]["titulo_firmado"] = True
+        if c.get("abstraccion") is not None:
+            q["extra"]["abstraccion"] = max(0.0, min(1.0, float(c["abstraccion"])))
+        if c.get("regimen"):
+            q["extra"]["regimen"] = str(c["regimen"])
+        if c.get("peso") is not None:
+            peso = float(c["peso"])
+            if peso > 0:
+                q["peso"] = peso
+        if c.get("serie"):
+            q["extra"]["serie"] = str(c["serie"])
+        if c.get("nota"):
+            q["extra"]["nota"] = str(c["nota"])
+        if c.get("svg") and existe(c["svg"]):
+            q["medio"] = {"tipo": "imagen", "src": c["svg"]}
+            q["extra"]["firmada"] = True
+        piezas.append(q)
+    vinculos = [v for v in datos["vinculos"]
+                if v["de"] not in fuera and v["a"] not in fuera]
+    return {"piezas": piezas, "vinculos": vinculos}
+
+
+def desde_laser(manifiesto: dict, campo: dict, existe=None) -> dict:
+    """Las piezas laser/plotter derivadas del material, al contrato.
+
+    `flujo laser lote` camina la carpeta de material y deriva un svg por
+    imagen (rayado o campo de flujo, semilla del nombre). La clave de union
+    con el campo curado es el MEDIA ID: campo.json trae
+    `archivo: posts/<media_id>.mp4` y el material se llama `<media_id>.jpg`
+    -- mismos digitos, misma obra. Una pieza cuyo stem no calza con ninguna
+    obra curada entra igual (es material del artista) pero sin vinculo.
+    Mismas reglas duras: svg ausente = pieza que no entra.
+    """
+    if existe is None:
+        from pathlib import Path as _P
+        raiz = _P(__file__).resolve().parents[2]
+        existe = lambda src: (raiz / src).is_file()  # noqa: E731
+    por_stem = {}
+    for c in campo.get("piezas") or []:
+        archivo = c.get("archivo") or ""
+        stem = archivo.rsplit("/", 1)[-1].rsplit(".", 1)[0]
+        if stem:
+            por_stem[stem] = c["id"]
+    piezas, vinculos = [], []
+    for fila in manifiesto.get("piezas") or []:
+        stem = fila.get("stem")
+        src = fila.get("src")
+        if not stem or not src or not existe(src):
+            continue
+        id_pieza = "laser-%s" % stem
+        obra = por_stem.get(stem)
+        piezas.append({
+            "id": id_pieza,
+            "titulo": stem,
+            "clase": "pieza_grafica",
+            "fecha": None,
+            "resumen": None,
+            "etiquetas": ["laser", fila.get("modo") or "flow", "plotter"],
+            "peso": 1,
+            "medio": {"tipo": "imagen", "src": src},
+            "estado": "publicada",
+            "extra": ({"derivada_de": obra, "semilla": fila.get("semilla")}
+                      if obra else {"semilla": fila.get("semilla")}),
+        })
+        if obra:
+            vinculos.append({"de": id_pieza, "a": obra, "peso": 1.0,
+                             "clase": "manual"})
+    return {"piezas": piezas, "vinculos": vinculos}
+
+
+def desde_animadas(manifiesto: dict, existe=None) -> dict:
+    """Las piezas animadas derivadas de las obras curadas, al contrato.
+
+    El generador (`tools/gen_animadas_obras.py`) deriva UNA pieza por obra con
+    el motor semantico, determinista desde el id. Aca vive la conversion por
+    la misma razon que `desde_ensayo`: la pieza existe en ambos lados (el repo
+    la versiona, la caja puede regenerarla) y dos conversiones divergen.
+
+    Mismas reglas del esquema: el vinculo es `manual` (lo declara el
+    manifiesto, nadie midio una distancia) y una pieza cuyo svg NO esta en
+    disco no entra -- el contrato no afirma lo que no puede mostrarse.
+    `existe` se inyecta en tests; por defecto pregunta al disco real.
+    """
+    if existe is None:
+        from pathlib import Path as _P
+        raiz = _P(__file__).resolve().parents[2]
+        existe = lambda src: (raiz / src).is_file()  # noqa: E731
+    piezas, vinculos = [], []
+    for fila in manifiesto.get("piezas") or []:
+        oid = fila.get("obra_id")
+        src = fila.get("src")
+        if not oid or not src or not existe(src):
+            continue
+        id_pieza = "animada-%s" % oid
+        piezas.append({
+            "id": id_pieza,
+            "titulo": str(fila.get("titulo") or oid),
+            "clase": "pieza_grafica",
+            "fecha": None,
+            "resumen": None,
+            "etiquetas": ["animada", "generativa", "motor-semantico"],
+            "peso": 1,
+            "medio": {"tipo": "imagen", "src": src},
+            "estado": "publicada",
+            "extra": ({"declara_animacion": True, "derivada_de": oid}
+                      if fila.get("declara_animacion")
+                      else {"derivada_de": oid}),
+        })
+        vinculos.append({"de": id_pieza, "a": oid, "peso": 1.0,
+                         "clase": "manual"})
+    return {"piezas": piezas, "vinculos": vinculos}

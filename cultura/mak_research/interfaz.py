@@ -394,7 +394,7 @@ def _cerrar_job(job, t0):
         pass
 
 
-def _lanzar(modo, tema, n, densidad="medio", memoria=False):
+def _lanzar(modo, tema, n, densidad="medio", memoria=False, formato=None):
     job = {
         "tema": tema, "modo": modo, "estado": "en cola",
         "path": "", "error": "", "t": time.strftime("%H:%M:%S"),
@@ -423,8 +423,15 @@ def _lanzar(modo, tema, n, densidad="medio", memoria=False):
                 return
         try:
             orden = _orden_canvas() if modo in ("cadena", "refutar") else None
+            # `formato` viaja como argumento CLI porque asi lo recibe
+            # research.py (`--formato`). Solo se manda si llego: sin esto el
+            # script usa su default y el ensayo -- que existe con siete
+            # exigencias desde el 2026-07-30 -- no se invoco NUNCA en 40 de 40
+            # informes medidos.
+            extra = ["--formato", formato] if formato else None
             r = run_tema(modo, tema, n=n, ntfy=True, densidad=densidad,
-                        orden=orden, memoria=memoria, job_id=job["job_id"])
+                        orden=orden, memoria=memoria, job_id=job["job_id"],
+                        extra=extra)
             _aplicar_resultado_job(job, r)
         except Exception as e:
             job["estado"] = "FALLO"
@@ -3467,6 +3474,12 @@ class H(BaseHTTPRequestHandler):
             densidad = (q.get("densidad") or ["medio"])[0]
             if densidad not in ("corto", "medio", "largo"):
                 densidad = "medio"
+            # Un formato que no existe se ignora en vez de romper el pedido:
+            # quien lo manda es otro proceso y un typo no puede dejar al
+            # organismo sin trabajar. La lista sale de formato_ensayo.FORMATOS.
+            formato = (q.get("formato") or [""])[0].strip() or None
+            if formato not in ("informe", "ensayo"):
+                formato = None
             memoria = (q.get("memoria") or ["0"])[0] in ("1", "true", "on")
             try:
                 n = int((q.get("n") or [""])[0])
@@ -3476,7 +3489,7 @@ class H(BaseHTTPRequestHandler):
             if not tema and modo in MODO_SIN_TEMA:
                 tema = "corpus"  # placeholder: corpus ignora el tema
             if tema:
-                _lanzar(modo, tema, n, densidad, memoria)
+                _lanzar(modo, tema, n, densidad, memoria, formato)
                 return self._json_response({"ok": True})
             return self._json_response({"ok": False, "error": "tema vacío"}, 400)
 

@@ -24,10 +24,13 @@ iskvw/
   PROMPT_ESTETICA.md   lo que se le pasa a un agente externo para pedir una piel
   README.md            índice de esta carpeta
   MAPA.md              este archivo
+  editor.html          el panel de curaduría: se abre, se edita, se descarga
   datos/
     ESQUEMA.md         qué campos tiene obras.json
     obras.json         8 piezas generativas del repo (VOLÁ, Campo, Cenefa…)
     campo.json         219 obras del archivo, con posición medida y capas
+    curaduria.json     la mano del artista sobre lo percibido
+    tablero.json       qué mejoras están encendidas, y el patch de efectos
   piel/
     campo/             la piel viva: el organismo. Es la raíz del sitio
     terminal/          piel anterior. Lee sólo obras.json (8 piezas)
@@ -39,15 +42,42 @@ iskvw/
 
 | | |
 |---|---|
-| obras en el campo | **219**, todas de `posts/` |
+| **piezas que publica el sitio** (`archivo.json`) | **479** — 235 `pieza_grafica`, 227 `obra`, 16 `concepto`, 1 `informe` |
+| **vínculos que publica el sitio** | **269** — 251 `manual`, 18 `etiqueta` |
+| obras con posición medida (`campo.json`, el respaldo) | **219**, todas de `posts/` |
 | con trazo publicado | **208** (las 11 restantes son video o sin contraste) |
 | capas | `tilde` en 219, `trazo` en 208 |
 | vecindad conservada | **48,6 %** — lo que la proyección puede afirmar |
-| piezas de `obras.json` | 8 |
+| piezas de `obras.json` | 8, y son HERRAMIENTAS del repo, no obras |
+
+Las dos primeras filas son lo que se ve hoy; la tercera es el respaldo. Hasta el
+2026-08-01 esta tabla publicaba sólo el 219 y veinte líneas más abajo el 479, o
+sea dos cifras del mismo campo en una página.
 
 `vecindad_conservada` es el número que sostiene el campo: de los vecinos reales
 de cada obra en 768 dimensiones, qué fracción sigue siendo vecina en el plano.
 Si baja, lo que el campo afirma se debilita y hay que decirlo.
+
+## El costo por frame de la piel, medido (2026-07-31)
+
+`node tools/iskvw_piel_medir.mjs` corre las funciones REALES de la piel
+publicada en node (misma técnica que el smoke), entra por el modelo de semilla
+`#semilla=&centro=&escala=` y CUENTA el trabajo de cada frame. Los conteos son
+deterministas y los fija `tests/test_iskvw_piel_medir.py`; los milisegundos son
+de la máquina que midió y jamás se fijan. Máquina de referencia: contenedor
+Linux de 2 núcleos, node 22.
+
+| | |
+|---|---|
+| sustrato `archivo.json` (479 piezas) | **269 vínculos** indexados una vez (1076 entradas) |
+| peor escenario de la grilla | **30 segmentos por frame** (centro del campo, diafragma abierto) |
+| todos-contra-todos, la referencia | 23.871 pares (219 obras) / 114.481 (479 piezas) por frame |
+| sustrato `campo.json` (el respaldo vivo) | **0 segmentos** siempre: no publica vínculos |
+| banda densa abierta, trabajo por nodo | 217 gradientes + 434 arcos por frame, 4–6 ms en la referencia |
+| techo fijado | 1200 segmentos por frame — 40× lo medido, 20× bajo el defecto |
+
+Lo que sigue sin medirse: cuadros por segundo en un teléfono. Eso lo mide el
+usuario con el aparato en la mano; ahora tiene contra qué comparar.
 
 ## Los comandos
 
@@ -67,6 +97,13 @@ py tools/gen_archivo_iskvw.py --fuente todo
 
 # las librerías de la piel, como módulos ESM sin CDN ni build
 py tools/vendorizar_iskvw.py
+
+# la curaduría, validada antes de entrar al portón: ids desconocidos o
+# duplicados, campos inválidos, svg firmado ausente, diacríticos mutilados
+py tools/validar_curaduria.py
+py tools/validar_curaduria.py --curaduria <descarga>/curaduria.json
+# el costo por frame de la piel, contado en node: determinista, sin red
+node tools/iskvw_piel_medir.mjs
 ```
 
 ## Qué se edita a mano y qué se genera
@@ -76,15 +113,91 @@ py tools/vendorizar_iskvw.py
 `data/iskvw_capas.json` — qué capas corren.
 `data/iskvw_librerias.json` — qué librerías se vendorizan.
 
+**Se edita a mano o con el panel**: `datos/curaduria.json` — la mano del
+artista (título, mostrar, abstracción, svg firmado, régimen, y desde
+2026-07-31 tres campos opcionales que no cambian nada hasta que se escriben:
+**peso** — número > 0, cuánta materia tiene la pieza, desplaza al peso medido
+del contrato—, **serie** —etiqueta de agrupación, viaja en `extra.serie`— y
+**nota** —la nota del artista, en `extra.nota`, español correcto con tildes).
+El panel es `iskvw/editor.html`: una página estática, sin build y sin servidor
+propio. Se abre con el repo servido desde la raíz (`py -m http.server`, después
+`/iskvw/editor.html`), lee `datos/archivo.json` y si no está `datos/campo.json`,
+y su única salida es un **`curaduria.json` que se descarga**: no escribe en
+disco, el archivo entra por el mismo portón que todo lo demás. Una pieza que no
+se toca **no aparece** en ese archivo — cada id que sale es una decisión.
+
+Tres protecciones del panel (2026-07-31): **importar** un `curaduria.json`
+descargado y todavía no commiteado para seguir editándolo (botón en la
+cabecera; sin eso, reabrir la página retomaba en silencio la copia vieja del
+repo); el navegador **pregunta antes de cerrar** si hay ediciones que no se
+descargaron (descargar es lo que marca el estado como a salvo); y un campo por
+pieza que el panel **no entiende viaja intacto** en la salida — la misma regla
+que el tablero declara para sus valores no booleanos. El circuito completo
+—panel → validador → consumidor— está fijado por
+`tests/test_curaduria_roundtrip.py`: lo que el panel exporta valida sin
+errores y es exactamente lo que `aplicar_curaduria()` obedece.
+
+La misma página tiene el **tablero de mejoras**: `datos/tablero.json`
+(`{"version": 1, "mejoras": {…}}`), un interruptor por clave. Las claves las
+agrega el agente que trae cada mejora; el editor **no conoce ninguna** y dibuja
+las que encuentre, así que una mejora nueva aparece sola sin tocar la página. El
+ciclo es **prender → descargar → subir**: hasta que el archivo no entra al repo,
+no cambió nada. Cada archivo tiene su propio botón, porque son dos archivos
+distintos y un botón único haría que apagar una mejora pareciera guardado
+cuando lo que bajó fue la curaduría. Un valor que no es `true`/`false` se
+muestra de sólo lectura y viaja de vuelta intacto: el editor no destruye un dato
+que no entiende.
+
 **Se genera** y no se toca a mano: `datos/campo.json`,
 `piel/trazos/_indice.json`, `piel/lib/*.js`. `datos/archivo.json` se genera y
 **no se versiona**.
 
-**La piel pide el sustrato** (2026-07-30): `piel/campo` intenta
-`datos/archivo.json` primero —piezas **y** vínculos, así que por ahí entran los
-ensayos de MAK con sus conceptos e íconos— y si no está sigue exactamente como
-antes con `campo.json` y `obras.json`. Como `archivo.json` no se versiona, hoy
-el camino vivo es el respaldo: la degradación es lo normal, no la excepción.
+**La piel pide el sustrato, y lo recibe** (medido 2026-08-01): `piel/campo` y
+`piel/terminal` intentan `datos/archivo.json` primero —piezas **y** vínculos—
+y si no está siguen con `campo.json` y `obras.json`.
+
+`archivo.json` **no se versiona pero SÍ se publica**: el workflow lo genera con
+`gen_archivo_iskvw.py --fuente todo` antes de subir, y recién después verifica
+que exista. El sitio vivo sirve 479 piezas y 269 vínculos desde el 2026-07-31
+(run del 2026-08-01T02:47 UTC, 479/269). La degradación existe y no se toma.
+
+Hasta el 2026-08-01 este párrafo decía lo contrario —"hoy el camino vivo es el
+respaldo"— y era cierto sólo entre el 2026-07-30 18:40 y las 23:10 UTC del
+MISMO día, cuando CI empezó a generarlo (PR #408). Cuatro horas y media de
+vigencia, y sobrevivió a dos ediciones posteriores de este archivo. **Una frase
+que describe un estado que dejó de existir es peor que ninguna: se lee como
+medición.** El micelio de MAK, en cambio, NO entra en CI (el runner no ve la
+caja: `no se pudo leer el micelio (Connection refused)`), así que sus vínculos
+no llegan al sitio y eso sí sigue siendo cierto.
+
+**La obra deforma el campo, y lo deforma con lo que ella mide** (2026-07-30):
+la mejora `patch_efectos` del tablero, y su cableado vive en el mismo archivo
+—`patch`, al lado de `mejoras`— como un patch de sintetizador modular. El
+editor lo devuelve intacto: sólo toca las llaves, no el cableado.
+Cada fila conecta una
+**señal** de la pieza —sus marcas de tilde, los subtrazos de su vector, cuánto
+de lo que se le percibió tiene tono, la etiqueta de quiebre, su materia— con un
+**efecto** sobre lo que tiene alrededor: `pulso` (el tiempo de los glifos
+vecinos se dilata y se contrae), `curvatura` (los vecinos giran alrededor de la
+obra), `sangrado` (su color se corre sobre ellos), `desgarro` (los glifos se
+cortan por filas) y `gravedad` (la lectura se apoya en la pieza pesada al
+pasar). Si la obra no trae el dato, el efecto vale **cero**: un efecto es una
+afirmación, y ninguna pieza afirma lo que no tiene.
+
+La llave maestra es `mejoras.patch_efectos` y **se publica apagada**. Apagada,
+la piel dibuja exactamente igual que antes —medido, no declarado: el
+`tools/iskvw_piel_smoke.mjs` arranca la piel sin tablero y con el tablero
+publicado y exige que las 7.647 marcas del dibujo sean idénticas. Encenderla es
+decisión del artista, y se hace editando ese archivo, no la piel.
+
+Bajo la maestra, **cada efecto tiene su propia llave** (`efectos` en el
+tablero, todas publicadas encendidas): con la maestra prendida, un efecto en
+`false` queda mudo —coeficiente exactamente cero, sus rutas se descartan al
+compilar— y los demás siguen. También medido, efecto por efecto: el smoke corre
+cada llave a solas y exige la firma que sólo ese efecto puede dejar (curvatura
+desplaza sin tocar color, sangrado tiñe sin desplazar, desgarro corta sólo en
+x, pulso altera la traza de glifos, gravedad desvía la lectura), y con las
+cinco apagadas el tablero fuerte dibuja marca por marca igual que sin tablero.
 
 **Los vínculos se dibujan siempre, tenues y por peso** (decisión del usuario,
 2026-07-30): la opacidad sale del peso del vínculo, con techo bajo, y van
@@ -110,6 +223,14 @@ sólo id sigue funcionando.
   así que el sitio no los ve. Que la investigación de MAK aparezca junto a la
   obra del artista es una decisión de autoría, y el usuario la dejó **para
   debatir**: el puente está construido y sin usar.
-- **Qué son las 8 piezas de `obras.json`** frente a las 219 del archivo. **Del usuario.**
-- La piel `terminal` sigue leyendo sólo `obras.json`: no ve el archivo.
+- ~~Qué son las 8 piezas de `obras.json`~~ **CONTESTADO por el usuario**: son
+  HERRAMIENTAS del repo (VOLÁ, Campo, Cenefa…), no obras. Siguió publicado como
+  pregunta abierta hasta el 2026-08-01 aunque la respuesta estaba escrita — que
+  es exactamente el defecto que el handoff existe para evitar.
+- ~~La piel `terminal` sigue leyendo sólo `obras.json`~~ **HECHO 2026-08-01**:
+  lee `archivo.json` con el mismo orden de respaldo que `campo`. Medido contra
+  el sustrato real: 479 obras, 53 etiquetas, 8 categorías.
+- **Los vínculos del micelio no llegan al sitio**: el runner de CI no ve la caja
+  MAK, así que `--fuente todo` los omite y lo dice en el log. Las 479 piezas
+  salen del material del repo.
 - 34 reels sin percibir en MAK. Ya están declarados en el filtro: entran solos.

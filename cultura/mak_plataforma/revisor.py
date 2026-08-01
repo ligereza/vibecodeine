@@ -4,10 +4,23 @@ entregador subio como PR draft (branch capataz/*). Gates ESTATICOS, mechanical-
 first (mas confiable que el juicio de un modelo chico sobre codigo de otro modelo
 chico): compila + stdlib-only + el pedido se refleja en el codigo.
 
-NO ejecuta el codigo revisado. NO toca el PR (no ready/comment/close/merge).
-Solo escribe un veredicto a reflexiones/revisor_shadow.json + log. El merge lo
-decide un humano/jefe leyendo este veredicto. Enforcement (marcar ready / cerrar)
-es un paso deliberado posterior, cuando el shadow valide los veredictos.
+NO ejecuta el codigo revisado.
+
+DOS MODOS, y la diferencia importa:
+  - sin `--enforce`: observacional. Escribe el veredicto a
+    reflexiones/revisor_shadow.json + log y no toca el PR.
+  - con `--enforce`: ACTUA. `enforce_pr` marca ready, comenta y MERGEA. Corre
+    asi por cron cada 6 horas.
+
+Esta cabecera decia "NO toca el PR (no ready/comment/close/merge)" mientras
+`enforce_pr` ya mergeaba, y el cron ya lo invocaba con --enforce. Quien leia
+el archivo para saber que hacia la maquina leia lo contrario de lo que hacia.
+
+Solo actua sobre PRs con rama HEAD `capataz/*` Y rama BASE `RAMA_BUZON`. El
+segundo filtro se agrego el 2026-08-01: el primero mira de donde viene el PR
+y no a donde va, asi que una rama `capataz/*` apuntando a main se mergeaba
+sola. Nunca ocurrio -- `entregar.py` siempre usa `mak` -- pero eso es una
+costumbre de otro archivo, no una garantia de este.
 """
 import argparse
 import ast
@@ -18,6 +31,9 @@ import sys
 import time
 
 REPO_SLUG = "ligereza/vibecodeine"
+# El buzon de MAK. `enforce_pr` solo actua sobre PRs con ESTA base:
+# lo que mergea declara contra que mergea.
+RAMA_BUZON = "mak"
 
 HOME = os.path.expanduser("~")
 REPO = os.path.join(HOME, "flujo")
@@ -56,6 +72,34 @@ def pedido_de(job_hex):
     except OSError:
         pass
     return ""
+
+
+def gate_encoding(src):
+    """El fuente tiene que ser UTF-8 de verdad, no UTF-8 con agujeros.
+
+    `sh()` lee con `text=True`, asi que los bytes que no son UTF-8 valido
+    entran como SURROGATES en vez de reventar ahi.
+
+    Y lo que pasa despues es peor que aprobarlos: `compile()` levanta
+    `UnicodeEncodeError`, que NO es `SyntaxError`, asi que `gate_compila` no lo
+    captura y la excepcion se propaga hasta arriba. Un solo archivo con el
+    encoding roto tumba la corrida COMPLETA del revisor, y todos los PR que
+    venian detras se quedan sin revisar sin que nadie lo pida.
+
+    Medido el 2026-08-01: de las 33 utilidades del buzon `mak`, 3 tienen esa
+    forma. Este gate corre PRIMERO justamente por eso -- las atrapa como
+    NO-APROBADO, con su motivo, antes de que lleguen a `compile()`.
+
+    Se prueba re-codificando: si el texto no vuelve a bytes, no era texto.
+    """
+    try:
+        (src or "").encode("utf-8")
+    except UnicodeEncodeError as e:
+        malo = (src or "")[e.start:e.start + 1]
+        return False, ("encoding roto en la posicion %d (%r): el archivo no es "
+                       "UTF-8 y no se puede leer fuera de la caja"
+                       % (e.start, malo))
+    return True, ""
 
 
 def gate_compila(src):
@@ -114,19 +158,25 @@ def revisar_pr(n, branch, path, veredictos):
         log("PR #%d ERROR: no pude leer %s" % (n, path))
         return
     gates = {}
+    # El encoding va PRIMERO: un archivo que no se puede leer no tiene sentido
+    # compilar, y `compile()` sobre surrogates lanza UnicodeEncodeError, que
+    # `gate_compila` no captura -- eso tumbaba la corrida entera.
+    ok0, m0 = gate_encoding(src); gates["encoding"] = ok0
     ok1, m1 = gate_compila(src); gates["compila"] = ok1
     ok2, m2 = gate_stdlib(src); gates["stdlib_only"] = ok2
     ok3, m3 = gate_pedido(src, pedido); gates["pedido_match"] = ok3
-    passed = ok1 and ok2 and ok3
+    passed = ok0 and ok1 and ok2 and ok3
     v = {"pr": n, "branch": branch, "archivo": path,
          "pedido": pedido[:120],
          "veredicto": "PASS" if passed else "NO-APROBADO",
          "gates": gates,
-         "detalle": {"compila": m1, "stdlib": m2, "pedido": m3},
+         "detalle": {"encoding": m0, "compila": m1, "stdlib": m2,
+                     "pedido": m3},
          "bytes": len(src)}
     veredictos.append(v)
-    log("PR #%d %s | compila=%s stdlib=%s pedido=%s | %s"
-        % (n, v["veredicto"], ok1, ok2, ok3, (m2 or m3 or m1 or "todo OK")))
+    log("PR #%d %s | encoding=%s compila=%s stdlib=%s pedido=%s | %s"
+        % (n, v["veredicto"], ok0, ok1, ok2, ok3,
+           (m0 or m2 or m3 or m1 or "todo OK")))
 
 
 def ci_verde(n):
@@ -175,7 +225,7 @@ def main():
     args = ap.parse_args()
     rc, out, err = sh(["gh", "pr", "list", "--repo", REPO_SLUG,
                        "--state", "open", "--json",
-                       "number,headRefName,isDraft,files"])
+                       "number,headRefName,baseRefName,isDraft,files"])
     if rc != 0:
         log("ERROR gh pr list: %s" % err.strip()[:160])
         return 1
@@ -188,6 +238,25 @@ def main():
     for pr in prs:
         branch = pr.get("headRefName", "")
         if not branch.startswith("capataz/"):
+            continue
+        # El filtro de arriba mira la rama HEAD; este mira la BASE, y son
+        # cosas distintas. `enforce_pr` mergea, y sin esta linea alcanzaba con
+        # que un PR llevara una rama `capataz/*` apuntando a main para que un
+        # cron lo cerrara solo cada 6 horas. Hoy `entregar.py` siempre usa
+        # `mak` como base, pero eso es una costumbre de otro archivo, no una
+        # garantia de este. Lo que mergea declara contra que mergea.
+        # AUSENTE no es lo mismo que DISTINTA, y esa diferencia importa aca:
+        # un PR que declara otra base se rechaza, pero uno que no trae el campo
+        # (un `gh` viejo, una respuesta recortada) no se puede juzgar por el.
+        # Tratar la ausencia como rechazo apagaria el revisor entero en
+        # silencio -- el modo de fallo que este archivo ya tuvo con su propia
+        # cabecera. Se procesa y se DICE, para que se vea en el log.
+        base = pr.get("baseRefName")
+        if base is None or base == "":
+            log("PR #%d sin baseRefName declarado: se revisa igual" % pr["number"])
+        elif base != RAMA_BUZON:
+            log("PR #%d ignorado: base '%s', no '%s'"
+                % (pr["number"], base, RAMA_BUZON))
             continue
         pys = [f["path"] for f in (pr.get("files") or [])
                if f["path"].endswith(".py")]

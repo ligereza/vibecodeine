@@ -106,9 +106,11 @@ brief_app = typer.Typer(help="Operaciones sobre briefs.", no_args_is_help=True)
 intake_app = typer.Typer(help="Intake estructurado de pedidos (JSON 1.0).", no_args_is_help=True)
 eventos_app = typer.Typer(help="Automatizaciones del area EVENTOS.", no_args_is_help=True)
 resolume_app = typer.Typer(help="Automatizacion de shows Resolume/Chataigne por SMPTE/OSC.", no_args_is_help=True)
+laser_app = typer.Typer(help="Estetica vectorial para laser/plotter (vpype): rayado, campos de flujo.", no_args_is_help=True)
 render_app = typer.Typer(help="Render y validación de piezas vectoriales.", no_args_is_help=True)
 airdrop_app = typer.Typer(help="Sistema de actualización profesional (airdrops).", no_args_is_help=True)
 datadrop_app = typer.Typer(help="Gestión de datadrops (fotos reales terminadas).", no_args_is_help=True)
+micelio_app = typer.Typer(help="El sobre micelio/1: semilla, fruto y nutriente entre un modelo web sin API y el organismo.", no_args_is_help=True)
 
 app.add_typer(job_app, name="job")
 app.add_typer(privacy_app, name="privacy")
@@ -116,9 +118,261 @@ app.add_typer(brief_app, name="brief")
 app.add_typer(intake_app, name="intake")
 app.add_typer(eventos_app, name="eventos")
 app.add_typer(resolume_app, name="resolume")
+app.add_typer(laser_app, name="laser")
 app.add_typer(render_app, name="render")
 app.add_typer(airdrop_app, name="airdrop")
 app.add_typer(datadrop_app, name="datadrop")
+app.add_typer(micelio_app, name="micelio")
+
+
+@micelio_app.command("formato")
+def micelio_formato(
+    salida: str = typer.Option("", "--salida", help="Escribirlo a un archivo en vez de a la pantalla."),
+):
+    """Imprime el formato para PEGARSELO al modelo web antes de contarle la idea.
+
+    Es el primer paso del ciclo y el unico que hace el usuario a mano. Existe
+    para que la parte cara -- el unico modelo capaz que queda, en un chat, sin
+    API -- no dependa de acordarse de las reglas.
+    """
+    from .micelio import formato_para_el_modelo
+    texto = formato_para_el_modelo()
+    if salida:
+        Path(salida).write_text(texto, encoding="utf-8")
+        console.print(f"OK -> {salida}")
+    else:
+        # print pelado, no console.print: esto se copia y se pega, y rich le
+        # mete saltos de linea que le cambian el sentido a un bloque JSON.
+        print(texto)
+
+
+@micelio_app.command("validar")
+def micelio_validar(
+    archivo: str = typer.Argument(..., help="El sobre que devolvio el modelo web (acepta el ```json alrededor)."),
+):
+    """Dice si el sobre sirve, y si no, QUE le falta -- en castellano, para
+    poder pegarle la respuesta de vuelta al modelo que lo escribio."""
+    from .micelio import SobreInvalido, leer
+    try:
+        sobre = leer(archivo)
+    except SobreInvalido as e:
+        console.print(f"[red]sobre invalido[/red]: {e}")
+        raise typer.Exit(1)
+    except OSError as e:
+        console.print(f"[red]no pude leerlo[/red]: {e}")
+        raise typer.Exit(2)
+    crit = sobre.get("criterio") or []
+    console.print(f"OK  {sobre['tipo']}: {sobre['asunto']}")
+    for c in crit:
+        console.print(f"    criterio {c['tipo']}: {c.get('nombre', '')}")
+    if sobre["tipo"] == "fruto" and sobre.get("recortado"):
+        console.print(f"[yellow]recortado[/yellow]: {sobre['recortado']} "
+                      "-- lo que estas leyendo NO es todo")
+
+
+@micelio_app.command("fruto")
+def micelio_fruto(
+    dataset: str = typer.Argument(..., help="Un .json o .jsonl a medir (archivo.json, fichas.jsonl...)."),
+    salida: str = typer.Option("", "--salida", help="Escribir el sobre a un archivo."),
+    asunto: str = typer.Option("", "--asunto", help="La linea que lo describe."),
+):
+    """Mide un dataset y arma un fruto que CABE en una ventana de chat.
+
+    El fruto no es un volcado: lleva el estado medido, lo anomalo, unas pocas
+    muestras del extremo pobre y punteros. Si algo se recorto para que entrara,
+    lo dice en `recortado` -- un recorte callado se lee como "esto era todo".
+    """
+    import json as _json
+
+    from .micelio import escribir as _escribir, fruto as _fruto, medir_dataset
+    try:
+        medido, anomalias, muestras = medir_dataset(dataset)
+    except OSError as e:
+        console.print(f"[red]no pude leerlo[/red]: {e}")
+        raise typer.Exit(2)
+    sobre = _fruto(
+        asunto or f"estado de {Path(dataset).name}",
+        medido, anomalias, muestras,
+        punteros=[str(dataset)],
+    )
+    texto = _json.dumps(sobre, ensure_ascii=False, indent=1)
+    if salida:
+        _escribir(sobre, salida)
+        console.print(f"OK -> {salida}  ({len(texto)} bytes, pegable)")
+    else:
+        print(texto)
+    for a in anomalias:
+        console.print(f"[yellow]anomalia[/yellow] {a['campo']}: "
+                      f"{a.get('cobertura_pct', '?')}% de cobertura")
+
+
+@micelio_app.command("verificar")
+def micelio_verificar(
+    archivo: str = typer.Argument(..., help="Sobre con `criterio` (semilla o nutriente)."),
+    raiz: str = typer.Option(".", "--raiz", help="Desde donde se resuelven las rutas."),
+):
+    """Corre el criterio y devuelve VERDE o ROJO. Es el semaforo del ciclo.
+
+    Un modelo debil no necesita entender el pedido: repite hasta que esto da
+    verde. Sale con codigo 1 en rojo, para que un script lo use como compuerta.
+    """
+    from .micelio import SobreInvalido, leer, verificar as _verificar
+    try:
+        sobre = leer(archivo)
+    except SobreInvalido as e:
+        console.print(f"[red]sobre invalido[/red]: {e}")
+        raise typer.Exit(2)
+    r = _verificar(sobre, raiz)
+    for c in r.checks:
+        color = "green" if c["verde"] else "red"
+        console.print(f"[{color}]{'OK  ' if c['verde'] else 'FALLA'}[/{color}] "
+                      f"{c['nombre']}: {c['detalle']}")
+    if not r.checks:
+        console.print("[yellow]el sobre no trae criterio: no hay nada que "
+                      "verificar, y eso NO es verde[/yellow]")
+    console.print("[green]VERDE[/green]" if r.verde else "[red]ROJO[/red]")
+    if not r.verde:
+        raise typer.Exit(1)
+
+@micelio_app.command("cosechar")
+def micelio_cosechar(
+    archivo: str = typer.Argument(..., help="El sobre `semilla` o `nutriente` que se depositó."),
+    raiz: str = typer.Option(".", "--raiz", help="Desde donde se resuelven las rutas."),
+    salida: str = typer.Option("", "--salida", help="Escribir el sobre a un archivo."),
+):
+    """Corre el criterio y devuelve el SOBRE de vuelta: fruto si crecio, hongo si no.
+
+    Es la pata de regreso del circuito, y era la que faltaba. `verificar`
+    imprime VERDE o ROJO en una consola, que no le sirve al unico lector que
+    importa aca: un modelo web sin API, que solo recibe lo que una persona
+    pega en un chat.
+
+    El flujo, en palabras del usuario: le pide una semilla a un modelo web, la
+    deposita, y SI HAY BUG el micelio le entrega un hongo; le pasa el hongo al
+    modelo, que responde con un nutriente; si el nutriente lo arregla, la
+    semilla corre y se crea un fruto.
+
+    Por eso el hongo no es un log de error: es el sobre que un modelo necesita
+    para escribir la correccion sin ver la maquina -- que se pidio, que
+    criterios se pusieron rojos con su mensaje literal, y que produjo el
+    organismo de verdad.
+    """
+    import json as _json
+    from .micelio import SobreInvalido, cosechar as _cosechar, leer
+    try:
+        sobre = leer(archivo)
+    except SobreInvalido as e:
+        console.print(f"[red]sobre invalido[/red]: {e}")
+        raise typer.Exit(2)
+    resultado = _cosechar(sobre, raiz)
+    texto = _json.dumps(resultado, ensure_ascii=False, indent=1)
+    if salida:
+        from pathlib import Path as _Path
+        _Path(salida).parent.mkdir(parents=True, exist_ok=True)
+        _Path(salida).write_text(texto, encoding="utf-8")
+        console.print(f"escrito: {salida}")
+    else:
+        print(texto)
+    # Codigo 1 cuando es hongo, para que un script lo use como compuerta.
+    if resultado["tipo"] == "hongo":
+        raise typer.Exit(1)
+
+
+@micelio_app.command("depositar")
+def micelio_depositar(
+    archivo: str = typer.Argument(..., help="Sobre `semilla` o `nutriente` a depositar."),
+    cola: str = typer.Option("", "--cola", help="material.jsonl del organismo (por defecto ~/plataforma/material.jsonl)."),
+    depto: str = typer.Option("codex", "--depto", help="Departamento que la trabaja: codex o research."),
+    aplicar: bool = typer.Option(False, "--aplicar", help="Escribir de verdad en la cola."),
+):
+    """Mete el sobre en la cola de trabajo del organismo.
+
+    Este es el eslabon que faltaba. El formato existia, el organismo existia, y
+    entre los dos no habia nada: una semilla validada se quedaba en un archivo
+    que nadie leia. `material.jsonl` es la cola que `trabajo.py` consume ANTES
+    que las fuentes autonomas, asi que depositar ahi es lo que hace que la
+    semilla se trabaje sola.
+
+    Dos cosas viajan al organismo y las dos importan:
+
+    - el CRITERIO va dentro del texto de la tarea. Quien la ejecuta es un
+      modelo debil sin supervision: si no le decis como se lo va a medir, no
+      puede saber si termino.
+    - el sobre queda guardado al lado de la cola, asi que `micelio verificar`
+      puede correr el mismo criterio despues, contra el trabajo real.
+    """
+    import json as _json
+    import hashlib as _hashlib
+    from pathlib import Path as _Path
+    from .micelio import SobreInvalido, leer
+    try:
+        sobre = leer(archivo)
+    except SobreInvalido as e:
+        console.print(f"[red]sobre invalido[/red]: {e}")
+        raise typer.Exit(2)
+    if sobre.get("tipo") not in ("semilla", "nutriente"):
+        console.print("[red]solo se depositan semillas y nutrientes[/red]; "
+                      f"este es `{sobre.get('tipo')}`")
+        raise typer.Exit(2)
+    if depto not in ("codex", "research"):
+        console.print("[red]--depto tiene que ser codex o research[/red]")
+        raise typer.Exit(2)
+
+    ruta_cola = _Path(cola) if cola else _Path.home() / "plataforma" / "material.jsonl"
+    cuerpo = _json.dumps(sobre.get("cuerpo") or {}, ensure_ascii=False, indent=1)
+    criterio = _json.dumps(sobre.get("criterio") or [], ensure_ascii=False, indent=1)
+    texto = (
+        f"{sobre['asunto']}\n\nQUE HAY QUE HACER:\n{cuerpo}\n\n"
+        "COMO SE VA A MEDIR (esto se corre tal cual, no es una sugerencia):\n"
+        f"{criterio}\n\n"
+        "No entregues hasta que ese criterio de verde. Si no podes hacerlo dar "
+        "verde, decilo y decir por que es una entrega valida; inventar que "
+        "funciona no lo es."
+    )
+    tarea = {
+        "id": _hashlib.sha1(texto.encode("utf-8")).hexdigest()[:12],
+        "origen": "micelio",
+        "depto": depto,
+        "modo": depto,
+        "texto": texto,
+        "estado": "pendiente",
+        "sobre": sobre["asunto"][:120],
+    }
+
+    if not aplicar:
+        console.print(f"[yellow]ensayo[/yellow]: no se escribio nada. "
+                      f"Iria a {ruta_cola} como tarea {tarea['id']} "
+                      f"para {depto}, {len(texto)} caracteres.")
+        console.print("Para depositarla de verdad: --aplicar")
+        return
+
+    ruta_cola.parent.mkdir(parents=True, exist_ok=True)
+    # Dedup por id: depositar dos veces la misma semilla no la trabaja dos
+    # veces. La cola ya deduplica por hash del texto y esto respeta lo mismo.
+    existentes = set()
+    if ruta_cola.exists():
+        for linea in ruta_cola.read_text(encoding="utf-8").splitlines():
+            linea = linea.strip()
+            if not linea:
+                continue
+            try:
+                existentes.add(_json.loads(linea).get("id"))
+            except ValueError:
+                continue
+    if tarea["id"] in existentes:
+        console.print(f"[yellow]ya estaba en la cola[/yellow] ({tarea['id']}): "
+                      "no se duplica")
+        return
+    with ruta_cola.open("a", encoding="utf-8") as fh:
+        fh.write(_json.dumps(tarea, ensure_ascii=False) + "\n")
+    guardado = ruta_cola.parent / f"sobre-{tarea['id']}.json"
+    guardado.write_text(_json.dumps(sobre, ensure_ascii=False, indent=1),
+                        encoding="utf-8")
+    console.print(f"[green]depositada[/green] {tarea['id']} en {ruta_cola} "
+                  f"para {depto}")
+    console.print(f"el sobre quedo en {guardado.name}; para el semaforo: "
+                  f"py -m flujo micelio verificar {guardado}")
+
 
 suplementos_app = typer.Typer(help="Generación de contraportadas para suplementos RD.", no_args_is_help=True)
 app.add_typer(suplementos_app, name="suplementos")
@@ -442,6 +696,44 @@ def airdrop_dry_run():
         _err(str(e))
 
 
+@airdrop_app.command("sign")
+def airdrop_sign():
+    """Genera el manifiesto SHA-256 y la firma HMAC del payload de _airdrop/.
+
+    Requiere la clave en la variable de entorno FLUJO_AIRDROP_HMAC_KEY.
+    Escribe _airdrop/_airdrop_signed_manifest.json y su .sig separado.
+    """
+    from .airdrop import sign_airdrop
+    try:
+        manifest_path, signature_path = sign_airdrop()
+    except Exception as e:
+        _err(str(e))
+        return
+    _section("Airdrop firmado")
+    console.print(f"  Manifiesto: [bold cyan]{manifest_path}[/]")
+    console.print(f"  Firma:      [bold cyan]{signature_path}[/]")
+    _ok("Payload firmado. Verifícalo con: flujo airdrop verify")
+
+
+@airdrop_app.command("verify")
+def airdrop_verify():
+    """Verifica la firma HMAC y los hashes SHA-256 del payload de _airdrop/.
+
+    Nombra el archivo exacto que falla y por qué. Sale con código 1 si algo
+    falla. Requiere FLUJO_AIRDROP_HMAC_KEY configurada.
+    """
+    from .airdrop import scan_airdrop, verify_airdrop
+    problems = verify_airdrop()
+    if problems:
+        _section("Verificación de firma: FALLÓ")
+        for p in problems:
+            console.print(f"  [red]✗[/] {p}")
+        _err("Firma de _airdrop/ inválida. No apliques este payload.")
+        return
+    total = len(scan_airdrop())
+    _ok(f"Firma válida: {total} archivo(s) verificados contra el manifiesto firmado.")
+
+
 @airdrop_app.command("apply")
 def airdrop_apply(
     message: Optional[str] = typer.Argument(
@@ -455,6 +747,15 @@ def airdrop_apply(
         "--allow-airdrop-engine",
         help="permitir cambios al motor src/flujo/airdrop.py tras revisión explícita",
     ),
+    allow_unsigned: bool = typer.Option(
+        False,
+        "--allow-unsigned",
+        help=(
+            "aprobación humana explícita: aplicar un payload sin firma válida "
+            "aunque FLUJO_AIRDROP_HMAC_KEY esté configurada (solo tras revisión "
+            "manual; nunca automatizado)"
+        ),
+    ),
 ):
     """Aplica los archivos de _airdrop/, crea backup y dispara checkpoint + push."""
     from .airdrop import apply_airdrop, run_auto_checkpoint, scan_airdrop
@@ -467,7 +768,7 @@ def airdrop_apply(
         if not skip_validation:
             _validate_airdrop_or_exit(allow_airdrop_engine=allow_airdrop_engine)
 
-        changes = apply_airdrop()
+        changes = apply_airdrop(allow_unsigned=allow_unsigned)
 
         _section("Airdrop Aplicado")
         for c in changes:
@@ -1952,7 +2253,7 @@ def suplementos_illustrator(
 # links a GitHub Issues, planteado como alternativa a monday.com, y hoy choca
 # con dos cosas: el panel de Trabajos ya muestra ese estado, y los issues son un
 # canal de entrada, no un tablero de tareas. Archivado en
-# _archive/legacy_20260726_cli_roto/portal.py con su motivo.
+# retirado el 2026-07-30 con su motivo; vive en el historial de git.
 
 
 @app.command()
@@ -1982,6 +2283,198 @@ def daily(
     media = sum(1 for i in items if i.priority.value == "media")
     baja = sum(1 for i in items if i.priority.value == "baja")
     console.print(f"  alta: {alta}  media: {media}  baja: {baja}")
+
+
+# ============================================================
+# Laser / plotter (estetica vectorial via vpype)
+# ============================================================
+
+@laser_app.command("estado")
+def laser_estado():
+    """Que parte de la cadena vpype esta instalada, medido ejecutandola."""
+    from .laser import verificar
+    estado = verificar()
+    for pieza, ok in estado.items():
+        console.print(f"  {'OK ' if ok else '-- '}{pieza}")
+    if not estado["vpype"]:
+        # \[all] escapado: rich se come [all] como si fuera markup
+        console.print('Instalar: pip install "vpype\\[all]" hatched y el '
+                      'plugin flow desde git (ver flujo laser --help)')
+        raise typer.Exit(1)
+
+
+def _laser_reporte(destino, medida):
+    """Presupuesto de puntos: 600-1000 por frame a 30 kpps
+    (docs/laser/TOOLKIT_INDICE.md). Decirlo siempre, nunca recortar solo."""
+    aviso = "" if medida["dentro"] else         "  [AVISO: sobre el presupuesto, simplificar mas o partir la pieza]"
+    tol = (" (linesimplify %smm)" % medida["tolerancia_mm"]
+           if medida["tolerancia_mm"] else "")
+    extra = ""
+    if medida.get("trazos") is not None:
+        extra = (f", {medida['trazos']} trazos, "
+                 f"viaje apagado {medida['viaje_apagado']} ud")
+    console.print(f"OK -> {destino}  {medida['puntos']} puntos{tol}{extra}{aviso}")
+    antes = medida.get("viaje_apagado_antes")
+    despues = medida.get("viaje_apagado_despues")
+    if antes is not None and despues is not None:
+        baja = (100 * (antes - despues) / antes) if antes else 0.0
+        console.print(f"viaje apagado antes del orden: {antes} ud -> "
+                      f"despues: {despues} ud ({baja:.0f}% menos)")
+
+
+@laser_app.command("hatched")
+def laser_hatched(
+    imagen: Path = typer.Argument(..., help="imagen de entrada (jpg/png/webp)"),
+    salida: Optional[Path] = typer.Option(None, "--output", "-o", help="SVG de salida"),
+    pitch: int = typer.Option(4, "--pitch", help="separacion del rayado en px"),
+    medir_viaje: bool = typer.Option(False, "--medir-viaje", help="mide el viaje apagado antes/despues de ordenar (una pasada extra de vpype)"),
+):
+    """Zonas oscuras a rayado: un logo solido deja de llegar hueco al laser."""
+    from .laser import hatched
+    if not imagen.exists():
+        _err(f"No existe: {imagen}")
+        raise typer.Exit(1)
+    destino = salida or imagen.with_suffix(".hatched.svg")
+    try:
+        medida = hatched(imagen, destino, pitch=pitch, medir_viaje=medir_viaje)
+    except RuntimeError as e:
+        _err(str(e))
+        raise typer.Exit(1)
+    _laser_reporte(destino, medida)
+
+
+@laser_app.command("flow")
+def laser_flow(
+    imagen: Path = typer.Argument(..., help="imagen de entrada (jpg/png/webp)"),
+    salida: Optional[Path] = typer.Option(None, "--output", "-o", help="SVG de salida"),
+    semilla: int = typer.Option(7, "--semilla", help="misma semilla = mismo dibujo"),
+    medir_viaje: bool = typer.Option(False, "--medir-viaje", help="mide el viaje apagado antes/despues de ordenar (una pasada extra de vpype)"),
+):
+    """La imagen se vuelve trazos largos de campo de flujo, casi sin saltos."""
+    from .laser import flow
+    if not imagen.exists():
+        _err(f"No existe: {imagen}")
+        raise typer.Exit(1)
+    destino = salida or imagen.with_suffix(".flow.svg")
+    try:
+        medida = flow(imagen, destino, semilla=semilla, medir_viaje=medir_viaje)
+    except RuntimeError as e:
+        _err(str(e))
+        raise typer.Exit(1)
+    _laser_reporte(destino, medida)
+
+
+@laser_app.command("lote")
+def laser_lote(
+    carpeta: Path = typer.Argument(..., help="carpeta con el material (imagenes)"),
+    modo: str = typer.Option("flow", "--modo", help="flow | hatched"),
+    limite: Optional[int] = typer.Option(None, "--limite", help="procesar solo N"),
+    ild: bool = typer.Option(False, "--ild", help="escribe ademas un .ild (ILDA Type 5, importable en QuickShow) junto a cada SVG"),
+):
+    """Deriva una pieza laser por imagen y escribe el manifiesto del archivo.
+
+    Las salidas van a iskvw/piel/laser/ y el manifiesto a
+    iskvw/datos/laser.json: con eso las piezas entran al archivo del
+    portafolio vinculadas a su obra curada (la clave es el media id del
+    nombre de archivo). En MAK corre igual: mismo repo, misma orden.
+    """
+    from .laser import lote
+    if modo not in ("flow", "hatched"):
+        _err("modo tiene que ser flow o hatched")
+        raise typer.Exit(1)
+    if not carpeta.is_dir():
+        _err(f"No es carpeta: {carpeta}")
+        raise typer.Exit(1)
+    raiz = Path(__file__).resolve().parents[2]
+    try:
+        filas = lote(carpeta, raiz / "iskvw" / "piel" / "laser",
+                     raiz / "iskvw" / "datos" / "laser.json",
+                     modo=modo, limite=limite, ild=ild)
+    except RuntimeError as e:
+        _err(str(e))
+        raise typer.Exit(1)
+    buenas = [f for f in filas if "src" in f]
+    con_error = len(filas) - len(buenas)
+    console.print(f"{len(buenas)} piezas {modo} -> iskvw/piel/laser/ "
+                  f"({con_error} con error)")
+    if ild:
+        con_ild = sum(1 for f in buenas if "ild" in f)
+        console.print(f"{con_ild} archivos .ild (ILDA Type 5) junto a los SVG")
+    console.print("manifiesto -> iskvw/datos/laser.json")
+
+
+@laser_app.command("medir")
+def laser_medir(
+    svg: Path = typer.Argument(..., help="SVG de trazos (salida de vpype o similar)"),
+    presupuesto: int = typer.Option(800, "--presupuesto", help="puntos por frame (600-1000 a 30 kpps)"),
+):
+    """Los numeros reales del frame: puntos, trazos, dibujo y viaje apagado.
+
+    Es la respuesta medida a 'esto se ve bien en laser?': cada salto en
+    negro gasta puntos sin dibujar y la regla de diseno del toolkit pide
+    menos de 8 subtrazos. No necesita vpype instalado.
+    """
+    from .laser import medir
+    if not svg.exists():
+        _err(f"No existe: {svg}")
+        raise typer.Exit(1)
+    try:
+        m = medir(svg)
+    except RuntimeError as e:
+        _err(str(e))
+        raise typer.Exit(1)
+    dentro = m["puntos"] <= presupuesto
+    console.print(f"{svg}")
+    console.print(f"  puntos: {m['puntos']}  (presupuesto {presupuesto}: "
+                  f"{'dentro' if dentro else 'SOBRE'})")
+    console.print(f"  trazos: {m['trazos']}"
+                  + ("  [AVISO: el toolkit pide <8 subtrazos]"
+                     if m["trazos"] >= 8 else ""))
+    console.print(f"  dibujo: {m['dibujo']} ud   "
+                  f"viaje apagado: {m['viaje_apagado']} ud")
+    if not dentro:
+        raise typer.Exit(1)
+
+
+@laser_app.command("ild")
+def laser_ild(
+    svg: Path = typer.Argument(..., help="SVG de trazos a convertir"),
+    salida: Optional[Path] = typer.Option(None, "--output", "-o", help=".ild de salida"),
+    color: str = typer.Option("255,255,255", "--color", help="R,G,B del trazo (blanco = los 3 canales)"),
+    reposo: int = typer.Option(4, "--reposo", help="puntos apagados de reposo al inicio y fin de cada trazo"),
+):
+    """SVG a ILDA Type 5 (RGB): el formato que QuickShow SI importa.
+
+    Cierra la ruta B del toolkit sin Modulaser ni msvg2ild: exporta 2D true
+    color (nunca tabla de paleta) y verifica el archivo releyendolo antes de
+    reportar. Revisar igual en ilda-viewer antes del venue.
+    """
+    from .laser import escribir_ild, leer_ild
+    if not svg.exists():
+        _err(f"No existe: {svg}")
+        raise typer.Exit(1)
+    try:
+        rgb = tuple(int(c) for c in color.split(","))
+        if len(rgb) != 3 or any(not 0 <= c <= 255 for c in rgb):
+            raise ValueError
+    except ValueError:
+        _err("--color tiene que ser R,G,B con valores 0-255")
+        raise typer.Exit(1)
+    destino = salida or svg.with_suffix(".ild")
+    try:
+        r = escribir_ild(svg, destino, color=rgb, reposo=reposo)
+        frames = leer_ild(destino)
+    except RuntimeError as e:
+        _err(str(e))
+        raise typer.Exit(1)
+    if len(frames) != 1 or len(frames[0]["puntos"]) != r["puntos_ild"]:
+        _err(f"verificacion fallo: el .ild releido no coincide ({destino})")
+        raise typer.Exit(1)
+    aviso = ("" if r["puntos_ild"] <= 1000 else
+             "  [AVISO: sobre 1000 puntos con reposo incluido, simplificar]")
+    console.print(f"OK -> {destino}  {r['puntos_ild']} puntos ILDA "
+                  f"({r['en_blanco']} apagados, {r['trazos']} trazos), "
+                  f"verificado releyendo{aviso}")
 
 
 # ============================================================
@@ -2098,7 +2591,7 @@ def serve(
     `scripts/app.py`, una tercera interfaz sin tocar desde el commit inicial.
     Encima gradio no esta declarado en pyproject, asi que en una instalacion
     limpia ese camino ni arrancaba. Archivado en
-    _archive/legacy_20260726_cli_roto/.
+    el historial de git (retirado del arbol el 2026-07-30).
     """
     from .web.hub import launch
     from .paths import repo_root

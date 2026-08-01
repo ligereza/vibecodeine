@@ -298,6 +298,10 @@ VERBOS_DE_OPERACIONES = (
 )
 # Señales de que el pedido apunta a la maquina y no a un artefacto.
 BLANCOS_DE_OPERACIONES = (
+    # "cron job" entro por el PR #407 del 2026-07-30, una hora despues de que
+    # este detector existiera: el pedido empezaba con "crear" -- verbo de
+    # artefacto, aceptado -- y pedia cron jobs. El verbo disfraza; el BLANCO no.
+    "cron job", "cron-job", "cronjob", "cron ",
     "/etc/", "/usr/local/bin", "/home/mak", "crontab", "systemctl",
     "la ultima decision", "ultima decision", "tareas pendientes",
 )

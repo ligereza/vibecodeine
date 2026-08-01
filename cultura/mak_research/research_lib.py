@@ -186,8 +186,17 @@ def orden_por_salud(orden, stats):
 # "mitigar la degradacion de groq" y nadie lo ejecuto; esto lo ejecuta.
 # groq no se elimina: baja a ultimo recurso remoto. Si mejora, vuelve a subir
 # por el mismo criterio: medicion, no costumbre.
+# 2026-07-30: `watsonx` encabeza `razonar` por la misma regla -- 32/32 llamadas
+# exitosas medidas ese dia (ver LLM.__init__). `bulk` y `barato` NO cambian:
+# barato existe para ahorrar cupo con el modelo local, y meter ahi un proveedor
+# de credito con fecha de vencimiento seria gastarlo en resumenes y clasificacion
+# en vez de en la base cientifica. Retiro: el del credito IBM (2026-08-18).
+# Nota honesta para quien venga: `orden_rol`/`_SLOTS` HOY no tienen llamador en
+# el repo (research.py toma su cadena de `--providers`, y el resto usa `LLM()`
+# directo). Cambiar esta tabla declara la intencion; lo que de verdad rutea es el
+# `order` por defecto de LLM y el default de research.py.
 _SLOTS = {
-    "razonar": "cerebras,groq,ollama",
+    "razonar": "watsonx,cerebras,groq,ollama",
     "bulk": "cerebras,groq,ollama",
     "barato": "ollama,cerebras,groq",
 }
@@ -415,19 +424,207 @@ def _msgs(system, user):
     return [{"role": "user", "content": user}]
 
 
+# The provider roster, in ONE place. It used to be written out by hand in every
+# tool that accepted a provider list, and those copies went stale silently:
+# `refutar.py` filtered its `--orden` against a literal
+# ("groq", "cerebras", "azure", "ollama") that predates `watsonx` and `win`, so
+# `--orden watsonx` was dropped without a word, the list came out empty, the
+# default chain took over and every one of its providers was skipped for having
+# no key. The tool died with "Todos los proveedores fallaron. Ultimo: None" --
+# a message that names nothing because nothing was ever attempted. Measured
+# 2026-07-31 on the box, where `research.env` carries ONLY the WATSONX_* keys:
+# that is why the adversarial pass the quality gate depends on had run exactly
+# once since 2026-07-16. A roster that can go stale is worse than no roster.
+PROVIDER_ENV_KEY = {
+    "watsonx": "WATSONX_API_KEY",
+    "groq": "GROQ_API_KEY",
+    "cerebras": "CEREBRAS_API_KEY",
+    "azure": "AZURE_API_KEY",
+    "win": "WIN_BASE_URL",
+    "ollama": "OLLAMA_BASE_URL",
+}
+PROVIDERS = tuple(PROVIDER_ENV_KEY)
+
+# Los que aceptan que se les pida un modelo CONCRETO por llamada. El resto
+# ignora el pedido y usa el suyo: pedirle un modelo a quien no puede elegirlo
+# no es un error, es que ahi no habia nada que elegir. Sumar uno es agregarlo
+# aca y darle el parametro `model` a su metodo.
+PROVIDERS_CON_MODELO = ("watsonx",)
+
+# Modelos por PAPEL para el flujo adversarial, de familias distintas.
+#
+# Medido el 2026-07-31: una corrida de `refutar` reporto `llm={'watsonx': 3}`
+# -- el mismo modelo hizo de proponente, de refutador y de juez. Eso no es un
+# debate, es un monologo con tres titulos: el refutador discutio matices de su
+# propia tesis en vez de si el hecho era cierto, y el juez le dio la razon.
+#
+# Las tres familias se PROBARON contra la cuenta real el 2026-08-01, no se
+# eligieron de una lista: `mistral-large-2512` responde 404 y quedo fuera por
+# eso, no por criterio. Las que contestan: mistral-medium, mistral-small,
+# llama-3-3-70b, llama-4-maverick, granite-4-h-small, granite-3-8b.
+MODELOS_POR_PAPEL = {
+    "watsonx": {
+        "proponente": "mistralai/mistral-medium-2505",
+        "refutador": "meta-llama/llama-3-3-70b-instruct",
+        "juez": "ibm/granite-4-h-small",
+    },
+}
+
+
+# Marcas de que el modelo entrego la FORMA de un informe en vez de un informe.
+# Medido el 2026-08-01 sobre los 102 informes reales de la caja: 36 (35%) traen
+# un marcador sin rellenar, casi siempre "**Investigador:** [Tu Nombre]". El
+# modelo no fallo en investigar: imito la plantilla de un documento de
+# investigacion, con el hueco del autor incluido. Un informe asi se lee como
+# terminado y no lo esta, que es el mismo defecto que un 200 con cero
+# resultados o un "campos perdidos: 0".
+PLANTILLA_SIN_RELLENAR = (
+    "[su nombre]", "[tu nombre", "[nombre del", "[nombre de la",
+    "[insertar", "[completar", "[a completar", "[pendiente]", "[fecha]",
+    "[todo]", "[xxx", "xxxx", "lorem ipsum",
+)
+
+
+def marcadores_de_plantilla(texto):
+    """Los marcadores que quedaron sin rellenar. Vacio = ninguno.
+
+    Se compara en minusculas y se devuelve la lista, no un booleano: quien lo
+    use tiene que poder DECIR cual encontro. Un rechazo sin motivo manda a
+    adivinar, y este repo ya pago eso.
+    """
+    bajo = (texto or "").lower()
+    return [m for m in PLANTILLA_SIN_RELLENAR if m in bajo]
+
+
+def modelos_por_papel(proveedor, pedidos=None):
+    """Que modelo le toca a cada papel. Lo pedido a mano gana siempre.
+
+    Devuelve {} para un proveedor que no elige modelo: ahi no hay nada que
+    repartir, y rellenarlo con nombres que ese proveedor ignora seria inventar
+    una diversidad que no existe.
+    """
+    base = dict(MODELOS_POR_PAPEL.get(proveedor) or {})
+    for papel, valor in (pedidos or {}).items():
+        if valor:
+            base[papel] = valor
+    return base
+
+
+def _watsonx_llamar(mensajes, model, max_tok, temperatura, timeout):
+    """El UNICO lugar que conoce el endpoint de watsonx.
+
+    Existe porque `tests/test_codex_cadena.py` lo exige contando las
+    apariciones de la ruta en este archivo, y esa cuenta atrapo el defecto en
+    el acto: al escribir `watsonx_vision` quedaron DOS copias de la misma URL.
+    Es exactamente lo que costo una tarde en `refutar.py` -- un padron de
+    proveedores escrito a mano en dos archivos, uno se quedo viejo en silencio.
+    Un guardian sirve cuando acusa a quien lo escribio.
+
+    Lo unico que cambia entre un chat y una lectura de imagen es el CONTENIDO
+    de los mensajes; el transporte es el mismo y vive aca una sola vez.
+    """
+    base = os.environ.get("WATSONX_URL", "https://us-south.ml.cloud.ibm.com")
+    r = _http_json(
+        base.rstrip("/") + "/ml/v1/text/chat?version=2024-10-08",
+        {"model_id": model,
+         "project_id": os.environ.get("WATSONX_PROJECT_ID", ""),
+         "messages": mensajes,
+         "max_tokens": max_tok,
+         "temperature": temperatura},
+        {"Authorization": "Bearer " + _wx_token()},
+        timeout=timeout,
+    )
+    return (r["choices"][0]["message"]["content"] or "").strip()
+
+
+def watsonx_vision(prompt, imagen_b64, model=None, max_tok=700, temperatura=0.1,
+                   timeout=240):
+    """Una llamada que lleva una IMAGEN. Mismo endpoint, un solo lugar.
+
+    El departamento de percepcion lee el archivo con `gemma3:4b` en una placa
+    de 4 GB, y por eso el 76% de las 3.138 fichas no trae texto. Este es el
+    transporte que le permite preguntarle a un modelo que ve de verdad.
+
+    Se probo ANTES de escribirlo (`tools/watsonx_vision_smoke.py`, 2026-07-31):
+    los tres candidatos de la cuenta aceptaron la imagen y sacaron venue, fecha
+    y cuatro headliners de un flyer cuya ficha no tenia nada de eso. La
+    capacidad se habia inferido de los NOMBRES -- `task_ids` no declara tarea de
+    vision -- asi que primero se midio, la misma regla que dejo a `_watsonx`
+    fuera de la cadena hasta que `watsonx_smoke.py` dio 4/4.
+
+    El modelo por defecto lo eligio el BANCO, no su nombre
+    (`tools/watsonx_vision_bench.py`, 8 imagenes reales, mitad de las que hoy
+    vuelven vacias). El nombre volvio a mentir, igual que esta manana con
+    `granite-8b-CODE-instruct`:
+
+        llama-3-2-11b-VISION   solape 0.414   3 inventados   40.175 tok
+        mistral-small-3-1-24b  solape 0.807   0 inventados    7.710 tok
+        llama-4-maverick-17b   solape 0.807   1 inventado    12.019 tok
+
+    El unico que se llama "vision" recupera la mitad del texto, inventa tres
+    veces y cuesta cinco veces mas. Manda mistral-small: mismo solape que el
+    mejor y CERO invencion, que en la base de RD es lo que decide -- una
+    productora inventada es un cliente equivocado.
+
+    Temperatura baja por lo mismo: un modelo tibio rellena `productora` con algo
+    plausible. Un campo vacio es una respuesta correcta; uno inventado no.
+    """
+    return _watsonx_llamar(
+        [{"role": "user", "content": [
+            {"type": "text", "text": prompt},
+            {"type": "image_url",
+             "image_url": {"url": "data:image/jpeg;base64," + imagen_b64}}]}],
+        model or os.environ.get("WATSONX_VISION_MODEL",
+                                "mistralai/mistral-small-3-1-24b-instruct-2503"),
+        max_tok, temperatura, timeout)
+
+
+def watsonx_chat(system, user, max_tok, model=None, temperatura=0.3):
+    """Una llamada de chat a watsonx.ai. Funcion de modulo y no metodo porque
+    el departamento codex tambien necesita este proveedor y NO deberia tener
+    una segunda copia del endpoint: el mismo `refutar.py` acaba de costar una
+    tarde por una lista de proveedores duplicada a mano.
+
+    `temperatura` la elige quien llama: research redacta (0.3) y codex escribe
+    codigo, donde una temperatura alta inventa APIs que no existen (0.1).
+    """
+    return _watsonx_llamar(
+        _msgs(system, user),
+        model or os.environ.get("WATSONX_MODEL",
+                                "meta-llama/llama-3-3-70b-instruct"),
+        max_tok, temperatura, 90)
+
+
 class LLM:
     """Cadena de proveedores con fallback y stats (mismo diseno que el
     Code node probado 2026-07-15: cerebras/azure son razonadores, llevan
     margen extra de max_completion_tokens; azure NO acepta temperature)."""
 
-    def __init__(self, order="groq,cerebras,azure,win,ollama"):
+    # `win` SALIO del orden por defecto (2026-07-30). Es un notebook Windows que
+    # el usuario retiro a proposito -- todo corre en MAK -- y seguia primero en
+    # la cadena costando hasta 300 s por intento: `_win` delega en
+    # `_ollama_like`, cuyo timeout es 300, mientras su propio docstring promete
+    # "timeout corto... cae rapido al fallback siguiente". Medido el 2026-07-30
+    # en salud_proveedores.json: win 0 exitos / 3 timeouts en una sola ventana.
+    # Sigue en la lista blanca del filtro de abajo: se puede pedir explicito con
+    # LLM(order="win") si algun dia esa maquina vuelve a servir modelos.
+    # `watsonx` ENTRO al orden por defecto y va PRIMERO (2026-07-30). Entro por
+    # donde entra todo proveedor nuevo aca: salud medida, no confianza. Lote real
+    # de 8 informes cortos con `--providers watsonx` sobre temas cientificos de
+    # reduccion de dano, corrido en la caja MAK: 8/8 informes, 32/32 llamadas LLM
+    # exitosas, 0 errores, 0 timeouts, 33.7-48.9 s por informe (media 42.1 s,
+    # incluye busqueda y fetch). Queda registrado en salud_proveedores.json como
+    # watsonx 32 successes / 0 fallos. Va primero porque el credito IBM ($200)
+    # VENCE el 2026-08-18: gastarlo en la base cientifica es el uso, y groq
+    # (40% medido el 2026-07-26) y cerebras siguen detras como respaldo real.
+    # Retiro: cuando el credito se agote o venza -- ahi baja y cerebras vuelve a
+    # encabezar --, o si su salud medida cae bajo la de cerebras.
+    def __init__(self, order="watsonx,groq,cerebras,azure,ollama"):
         load_env()
         self.stats = {}
         self.errors = []
-        # La lista blanca dice QUIENES pueden participar. `watsonx` entra aca y
-        # NO en el `order` por defecto de la firma: existe para pedirlo
-        # explicito (`LLM(order="watsonx")`) hasta tener salud medida, que es
-        # como entra cualquier proveedor nuevo a la cadena.
+        # La lista blanca dice QUIENES pueden participar; el `order` de la firma
+        # dice en que posicion arrancan y la salud medida decide el resto.
         base = [p.strip() for p in order.split(",")
                 if p.strip() in ("groq", "cerebras", "azure", "win", "ollama",
                                  "watsonx")]
@@ -465,27 +662,17 @@ class LLM:
         )
         return r["choices"][0]["message"]["content"].strip()
 
-    def _watsonx(self, system, user, max_tok):
+    def _watsonx(self, system, user, max_tok, model=None):
         """IBM watsonx.ai. Verificado 4/4 por `tools/watsonx_smoke.py` contra la
         cuenta real el 2026-07-30: bearer en 460 ms, 24 modelos visibles, chat
         en 681 ms, 58 tokens = $0.000044.
 
-        NO entra en la cadena por defecto (`_SLOTS` y `order` quedan intactos):
-        se pide explicito con `LLM(order="watsonx")` hasta tener salud medida.
+        Salud medida el 2026-07-30 en la caja MAK con el organo completo (no un
+        smoke): 8 informes de research.py, 32/32 llamadas LLM exitosas, 0
+        errores. Desde esa medicion encabeza el orden por defecto; ver el
+        comentario de LLM.__init__ para la causa y la condicion de retiro.
         """
-        base = os.environ.get("WATSONX_URL", "https://us-south.ml.cloud.ibm.com")
-        r = _http_json(
-            base.rstrip("/") + "/ml/v1/text/chat?version=2024-10-08",
-            {"model_id": os.environ.get("WATSONX_MODEL",
-                                        "meta-llama/llama-3-3-70b-instruct"),
-             "project_id": os.environ.get("WATSONX_PROJECT_ID", ""),
-             "messages": _msgs(system, user),
-             "max_tokens": max_tok,
-             "temperature": 0.3},
-            {"Authorization": "Bearer " + _wx_token()},
-            timeout=90,
-        )
-        return (r["choices"][0]["message"]["content"] or "").strip()
+        return watsonx_chat(system, user, max_tok, model, temperatura=0.3)
 
     def _azure(self, system, user, max_tok):
         base = os.environ["AZURE_ENDPOINT"].rstrip("/")
@@ -527,17 +714,24 @@ class LLM:
                                  os.environ["WIN_MODEL"], system, user, max_tok)
 
     def _has_key(self, name):
-        need = {"groq": "GROQ_API_KEY", "cerebras": "CEREBRAS_API_KEY",
-                "azure": "AZURE_API_KEY", "win": "WIN_BASE_URL",
-                "ollama": "OLLAMA_BASE_URL", "watsonx": "WATSONX_API_KEY"}
-        return bool(os.environ.get(need[name]))
+        return bool(os.environ.get(PROVIDER_ENV_KEY[name]))
 
-    def call(self, system, user, max_tok=1024, order=None):
+    def call(self, system, user, max_tok=1024, order=None, model=None):
         """Devuelve (texto, proveedor). Recorre la cadena hasta respuesta
-        no vacia; acumula errores no fatales en self.errors."""
-        fns = {"groq": self._groq, "cerebras": self._cerebras,
-               "azure": self._azure, "win": self._win, "ollama": self._ollama,
-               "watsonx": self._watsonx}
+        no vacia; acumula errores no fatales en self.errors.
+
+        `model` pide un modelo CONCRETO al proveedor que lo soporte (hoy solo
+        watsonx, que expone 24). Existe para que un flujo adversarial pueda
+        poner modelos DISTINTOS en cada papel: medido el 2026-07-31, un
+        proponente y un refutador que son el mismo modelo no son adversarios --
+        el refutador discutio matices de la tesis en vez de si el hecho era
+        cierto. Se pasa por parametro y no por variable de entorno porque los
+        refutadores corren en hilos: un `os.environ` compartido se pisaria.
+        """
+        # Se deriva del padron: mantener aca una segunda copia de los nombres es
+        # como se rompio `refutar.py`. Cada proveedor de `PROVIDERS` tiene su
+        # metodo `_<nombre>`, y si falta, falta ruidosamente al llamarlo.
+        fns = {name: getattr(self, "_" + name) for name in PROVIDERS}
         orden = list(order or self.order)
         if not self._azure_enabled():
             orden = [provider for provider in orden if provider != "azure"]
@@ -556,7 +750,9 @@ class LLM:
             if name not in fns or not self._has_key(name):
                 continue
             try:
-                text = fns[name](system, user, max_tok)
+                text = (fns[name](system, user, max_tok, model)
+                        if model and name in PROVIDERS_CON_MODELO
+                        else fns[name](system, user, max_tok))
                 if text:
                     self.stats[name] = self.stats.get(name, 0) + 1
                     try:
@@ -584,6 +780,41 @@ class LLM:
         raise RuntimeError("Todos los proveedores LLM fallaron. Ultimo: %s" % last)
 
 
+# Tope duro de Tavily, medido contra la API el 2026-08-01: una consulta de mas
+# de 400 caracteres responde HTTP 400 "Query is too long" y CERO resultados.
+TOPE_CONSULTA = 400
+
+
+def consulta_de(tema, tope=TOPE_CONSULTA):
+    """Lo que se le manda al BUSCADOR, que no es lo que se le manda al modelo.
+
+    Las tareas de triangulacion de RD miden 530 caracteres porque llevan la
+    pregunta Y las reglas para el modelo en el mismo texto: "...que productora
+    organizo el evento del 21 DE MARZO 2026 con ADRIATIQUE... REGLAS: el evento
+    es en Chile, si lo que encontras es de otro pais NO sirve. Solo se acepta
+    respuesta con FUENTE VERIFICABLE...". Un buscador hace match de palabras: le
+    estabamos mandando instrucciones de comportamiento como si fueran terminos.
+
+    Es el MISMO defecto que `marco_solo()` arreglo el 2026-07-26, cuando 148
+    caracteres de encuadre viajaban a Tavily y devolvian el mismo PDF de
+    metodologia peruano para cuatro temas distintos. Volvio a entrar por la cola
+    de material, escrito a mano en otro archivo.
+
+    Se corta en el primer "REGLAS:" y, si aun no entra, en el ultimo espacio
+    antes del tope: partir una palabra por la mitad inventa un termino que nadie
+    escribio.
+    """
+    texto = " ".join(str(tema or "").split())
+    corte = texto.upper().find("REGLAS:")
+    if corte > 20:
+        texto = texto[:corte].strip(" .,;")
+    if len(texto) <= tope:
+        return texto
+    recorte = texto[:tope]
+    espacio = recorte.rfind(" ")
+    return (recorte[:espacio] if espacio > tope // 2 else recorte).strip()
+
+
 def tavily_search(query, depth="basic", max_results=5, errors=None):
     """basic = 1 credito, advanced = 2. 1000/mes gratis."""
     load_env()
@@ -597,6 +828,7 @@ def tavily_search(query, depth="basic", max_results=5, errors=None):
             timeout=30,
         )
         _salud_registrar("tavily", True, tipo="search")
+        _r_tavily["motor"] = "tavily"
         return _r_tavily
     except Exception as e:  # noqa: BLE001 - la busqueda fallida no mata el loop
         if errors is not None:
@@ -620,8 +852,20 @@ def searxng_search(query, max_results=5, errors=None):
     # marco del prompt ya decia "no literatura academica" y el buscador seguia
     # trayendo scholar, porque el marco encuadra al modelo y no al buscador.
     categorias = "&categories=general" if _es_pregunta_factual(query) else ""
+    # `SEARXNG_ENGINES` deja apuntar a motores concretos sin tocar la config de
+    # la instancia. NO hay lista por defecto a proposito: una lista de motores
+    # escrita en el codigo es la misma trampa que este archivo ya pago tres
+    # veces -- el dia que bing se tape tambien, quedaria fija y ciega. Vacio =
+    # los motores que la instancia tenga configurados.
+    # Medido 2026-08-01 sobre la caja, con los cuatro generales caidos:
+    #   bing 10 resultados | mojeek 1 | wikipedia y wikidata 0 pero vivos
+    #   brave, google, startpage, duckduckgo, qwant, marginalia, stract: CAPTCHA
+    #   o "too many requests"
+    # O sea que la instancia se puede destapar sin cambiar codigo.
+    motores = os.environ.get("SEARXNG_ENGINES", "").strip()
+    engines = ("&engines=" + urllib.parse.quote(motores)) if motores else ""
     url = (base + "/search?q=" + urllib.parse.quote(query)
-           + "&format=json&safesearch=0" + categorias)
+           + "&format=json&safesearch=0" + categorias + engines)
     try:
         data = _http_json(url, timeout=30)
         resultados = [
@@ -629,25 +873,86 @@ def searxng_search(query, max_results=5, errors=None):
              "content": r.get("content")}
             for r in (data.get("results") or [])[:max_results]
         ]
-        _salud_registrar("searxng", True, tipo="search")
-        return {"results": resultados, "answer": data.get("answer")}
+        if resultados:
+            _salud_registrar("searxng", True, tipo="search")
+            return {"results": resultados, "answer": data.get("answer"),
+                    "ciego": False, "motor": "searxng"}
+        # HTTP 200 con CERO resultados son DOS hechos distintos y hasta el
+        # 2026-08-01 salian identicos: "busque y no hay nada" y "ningun motor
+        # pudo buscar". Medido ese dia en la caja: los cuatro motores generales
+        # devolvian `unresponsive_engines` -- brave y google cse suspendidos por
+        # demasiadas peticiones, duckduckgo y startpage pidiendo CAPTCHA -- y
+        # SearXNG contestaba 200 con `results: []`. Un lector aguas abajo lee
+        # eso como "la web no dice nada del tema" y escribe un informe que
+        # concluye que no hay fuentes. No es lo mismo no encontrar que no ver.
+        mudos = [m for m in (data.get("unresponsive_engines") or [])
+                 if isinstance(m, (list, tuple)) and m]
+        motivo = "; ".join(
+            "%s (%s)" % (m[0], m[1] if len(m) > 1 else "sin detalle")
+            for m in mudos)
+        _salud_registrar("searxng", False, "ciego" if mudos else "empty")
+        if mudos and errors is not None:
+            errors.append("searxng ciego: " + motivo)
+        return {"results": [], "answer": data.get("answer"),
+                "ciego": bool(mudos), "motivo": motivo}
     except Exception as e:  # noqa: BLE001 - busqueda fallida no mata el loop
         if errors is not None:
             errors.append("searxng: " + _err_str(e))
         _salud_registrar("searxng", False,
                          "timeout" if isinstance(e, socket.timeout) else "api_error")
-        return {"results": [], "answer": None}
+        return {"results": [], "answer": None, "ciego": True,
+                "motivo": _err_str(e)}
 
 
 def web_search(query, depth="basic", max_results=5, errors=None):
     """Busqueda unificada: SearXNG propio primero (sin tope de creditos);
     Tavily como fallback solo si SearXNG no devuelve resultados. Mismo
-    shape que tavily_search. Ambas rutas registran salud (ver panel hub)."""
+    shape que tavily_search. Ambas rutas registran salud (ver panel hub).
+
+    Devuelve ademas `ciego`: True cuando NADIE pudo buscar, que es distinto de
+    haber buscado y no encontrar. Quien decide si hay fuentes tiene que poder
+    distinguirlo -- si no, un buscador tapado produce un informe que concluye
+    que el tema no tiene respaldo en la web.
+    """
+    consulta = consulta_de(query)
+    if consulta != " ".join(str(query or "").split()) and errors is not None:
+        errors.append("consulta acortada para buscar: %d -> %d caracteres"
+                      % (len(str(query or "")), len(consulta)))
+    query = consulta
     res = searxng_search(query, max_results=max_results, errors=errors)
     if res.get("results"):
         return res
-    return tavily_search(query, depth=depth, max_results=max_results,
-                         errors=errors)
+    if not os.environ.get("TAVILY_API_KEY"):
+        # Medido 2026-08-01 en la caja: no hay llave. Sin respaldo, un SearXNG
+        # tapado deja la cadena entera sin ojos, y eso se dice.
+        motivo = res.get("motivo") or ""
+        if res.get("ciego"):
+            motivo = (motivo + "; " if motivo else "") + \
+                     "sin TAVILY_API_KEY: no hay buscador de respaldo"
+            if errors is not None:
+                errors.append("web_search: " + motivo)
+        res["motivo"] = motivo
+        return res
+    errores_antes = len(errors) if errors is not None else 0
+    tav = tavily_search(query, depth=depth, max_results=max_results,
+                        errors=errors)
+    # Tavily tampoco vio nada: si SearXNG estaba ciego, la busqueda entera lo
+    # esta. Un `ciego: False` aca seria afirmar que se busco bien.
+    tav.setdefault("ciego", False)
+    if not tav.get("results") and res.get("ciego"):
+        tav["ciego"] = True
+        # LOS DOS MOTIVOS, no el ultimo. La primera version pisaba el motivo
+        # con el de SearXNG y tiraba el de Tavily, asi que 19 tareas pausaron
+        # con "brave suspendido; duckduckgo CAPTCHA" cuando la causa real era
+        # `HTTP 400 Query is too long` -- el error de Tavily. Ni un solo
+        # checkpoint lo nombraba; sobrevivio unicamente en el registro de salud
+        # (28 api_errors). El instrumento borraba al culpable, que es el mismo
+        # defecto que el instrumento existe para no cometer.
+        motivos = [res.get("motivo") or ""]
+        if errors is not None:
+            motivos += [e for e in errors[errores_antes:] if e.startswith("tavily")]
+        tav["motivo"] = "; ".join(m for m in motivos if m)
+    return tav
 
 _TAG_RE = re.compile(r"<script[\s\S]*?</script>|<style[\s\S]*?</style>|<[^>]+>|&[a-z#0-9]+;", re.I)
 
