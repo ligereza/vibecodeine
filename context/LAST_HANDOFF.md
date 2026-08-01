@@ -1269,3 +1269,38 @@ productora, venue` -- y las seis se GUARDAN (`datos_evento` se arma con
 CLAVES_EVENTO leyendo el mismo dict). **Una falsa alarma es el defecto espejo
 del descarte callado**: manda a perseguir un fantasma y quema la credibilidad
 de la proxima alarma verdadera.
+
+### La corrida ig termino: 1.401 de 1.401, 0 errores
+
+Cerro a las 03:19 UTC, casi dos horas seguidas. El archivo tiene 1.401 filas y
+1.401 ids UNICOS, o sea ningun reintento quedo duplicado.
+
+```txt
+motores   watsonx 1.354 | ollama 5 | sin_atribucion 42
+errores   0
+```
+
+Los 42 `sin_atribucion` no son un agujero: son los `.srt` del corpus, tipo
+`otro`, con `estado: no_intentado` -- "no aplica a este tipo". Es el campo de
+atribucion diciendo la verdad en vez de rellenar. Los 5 de ollama son el
+fallback funcionando.
+
+Cobertura final sobre las 1.354 fichas que watsonx firmo, contra la pasada de
+gemma3 SOBRE LOS MISMOS ARCHIVOS:
+
+```txt
+tipo_obra            67,2% -> 100,0%   (+32,8)
+materiales           65,7% ->  99,6%   (+34,0)
+colores              95,6% -> 100,0%   (+4,4)
+descripcion/conceptos/tecnica  99,9% -> 100%
+datos_extraibles      0,1% ->   0,4%
+linea_investigacion  99,8% ->  98,9%   (-0,9)
+texto_visible        17,4% ->  14,8%   (-2,6)
+oportunidad_codigo   98,7% ->  77,9%   (-20,8)
+```
+
+La salida quedo copiada fuera de `/tmp` (que se borra al reiniciar) en
+`~/curatoria/pasadas/v4_watsonx_20260801/`, 1,8 MB. **Consolidarla sobre
+`fichas.jsonl` sigue siendo paso humano**: son 1.354 fichas nuevas encima de
+las 3.138 actuales, y el que decide si el cambio vale es el que mira el
+resultado, no el que lo midio.
