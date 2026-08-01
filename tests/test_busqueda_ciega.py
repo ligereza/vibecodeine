@@ -127,7 +127,7 @@ def test_refutar_stops_instead_of_signing_an_unsourced_report():
     assert 'if result is None:' in fuente and 'return 3' in fuente
     # and the wall happens BEFORE any model is asked to write a thesis
     assert fuente.index("if ciegas and not resultados:") < fuente.index(
-        "Proponente (%s) escribe la tesis")
+        "escribe la tesis")
 
 
 def test_research_pauses_on_a_blind_search():

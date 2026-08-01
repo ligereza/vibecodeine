@@ -21,7 +21,8 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 from research_lib import (LLM, PROVIDERS, escala_tok, load_env, marco_solo,
-                          ntfy_publish, slug, stamp, web_search)
+                          modelos_por_papel, ntfy_publish, slug, stamp,
+                          web_search)
 
 try:
     import fuentes
@@ -135,7 +136,16 @@ def refutar(tema, orden, densidad="medio", marco_activo=True, modelos=None):
               % (dom, len(evaluacion["fuentes_primarias"]), len(urls)),
               flush=True)
 
-    print("STATUS: Proponente (%s) escribe la tesis..." % proponente, flush=True)
+    # Un debate donde el mismo modelo hace los tres papeles es un monologo con
+    # tres titulos: medido el 2026-07-31, `llm={'watsonx': 3}` -- el refutador
+    # discutio matices de su propia tesis en vez de si el hecho era cierto, y el
+    # juez le dio la razon. Si el proveedor deja elegir modelo, cada papel toca
+    # una familia distinta. Lo que venga por --modelos manda.
+    modelos = modelos_por_papel(proponente, modelos)
+
+    print("STATUS: Proponente (%s / %s) escribe la tesis..."
+          % (proponente, modelos.get("proponente") or "modelo por defecto"),
+          flush=True)
     tesis, real_prop = llm.call(
         sis_prop,
         'TEMA: "%s"\n\nCONTEXTO DE BUSQUEDA:\n%s\n\nEscribe tu TESIS '
@@ -208,6 +218,12 @@ def refutar(tema, orden, densidad="medio", marco_activo=True, modelos=None):
             "fuentes_primarias": (evaluacion["fuentes_primarias"]
                                   if evaluacion else []),
             "modelos": modelos or None,
+            # Cuantos modelos DISTINTOS participaron de verdad. Un informe con
+            # uno solo no fue verificado adversarialmente por mas que la
+            # plantilla diga "refutacion": el lector tiene que poder saberlo sin
+            # leer el codigo.
+            "modelos_distintos": len({v for v in (modelos or {}).values() if v}),
+            "es_debate": len({v for v in (modelos or {}).values() if v}) >= 2,
             "llmCalls": llm.stats, "errors": llm.errors[:20],
             "ms": int((time.time() - t0) * 1000),
         },
@@ -266,9 +282,25 @@ def main():
     with open(base + ".json", "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=1)
     with open(base + ".md", "w", encoding="utf-8") as f:
-        f.write("# Adversarial: %s\n\n%s%s\n\n---\n\n## Tesis (%s)\n\n%s\n\n"
+        # Si no hubo debate, el informe lo dice ARRIBA. Un documento titulado
+        # "Adversarial" que salio de un solo modelo discutiendo consigo mismo
+        # es peor que no tenerlo: se lee como verificado.
+        _m = result["meta"]
+        _mods = _m.get("modelos") or {}
+        if _m.get("es_debate"):
+            aviso = ("> Debate entre %d modelos distintos -- proponente: %s | "
+                     "refutador: %s | juez: %s.\n\n"
+                     % (_m.get("modelos_distintos", 0),
+                        _mods.get("proponente", "?"),
+                        _mods.get("refutador", "?"),
+                        _mods.get("juez", "?")))
+        else:
+            aviso = ("> AVISO: esto NO es un debate. Los tres papeles los "
+                     "respondio el mismo modelo, asi que nada de lo que sigue "
+                     "fue contrastado por una voz independiente.\n\n")
+        f.write("# Adversarial: %s\n\n%s%s%s\n\n---\n\n## Tesis (%s)\n\n%s\n\n"
                 "## Refutaciones\n\n"
-                % (args.tema, result["encabezado"], result["veredicto"],
+                % (args.tema, aviso, result["encabezado"], result["veredicto"],
                    result["tesis"]["proveedor"], result["tesis"]["texto"]))
         for r in result["refutaciones"]:
             f.write("### %s (real: %s)\n\n%s\n\n" % (r["proveedor"], r["real"], r["texto"]))

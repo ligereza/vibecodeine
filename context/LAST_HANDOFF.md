@@ -1538,3 +1538,35 @@ como descripcion ni inventes lo que ahi no dice"*. Si el modelo copiara el
 texto en vez de mirar la obra, el campo dejaria de medir lo que dice medir.
 Y `medicion.metadatos` declara si esta ficha tuvo contexto: dos fichas con el
 mismo motor y distinto contexto no son comparables.
+
+### El "debate" adversarial era un monologo con tres titulos
+
+Medido el 2026-07-31 y no visto: una corrida de `refutar` reportaba
+`llm={'watsonx': 3}`. El MISMO modelo hacia de proponente, de refutador y de
+juez. El refutador discutia matices de su propia tesis en vez de si el hecho
+era cierto, el juez le daba la razon, y el archivo salia titulado "Adversarial"
+y se leia como verificado.
+
+`LLM.call` ya aceptaba un modelo por llamada y su propio docstring ya decia que
+los papeles tenian que usar modelos DISTINTOS. Nadie los repartia, asi que
+nadie los usaba. Una capacidad sin quien la invoque es una capacidad que no
+existe.
+
+Los tres modelos se PROBARON contra la cuenta real antes de elegirlos --
+`mistral-large-2512` responde 404 y quedo fuera por eso, no por criterio:
+
+```txt
+proponente  mistralai/mistral-medium-2505
+refutador   meta-llama/llama-3-3-70b-instruct
+juez        ibm/granite-4-h-small
+```
+
+Tres familias distintas. Corrida real con eso puesto: 10 fuentes, 1 de 3
+consultas ciega (anotada), y el refutador ataca un HECHO en vez de un matiz --
+*"la afirmacion de que el alcohol ha sido desplazado por otras drogas no esta
+respaldada por fuentes primarias"*. Eso es lo que no pasaba antes.
+
+Y el informe lo DICE en su primera linea: `> Debate entre 3 modelos distintos
+-- proponente: ... | refutador: ... | juez: ...`. Cuando no hay debate, la
+linea dice lo contrario, arriba de todo: **un documento titulado "Adversarial"
+que salio de un solo modelo discutiendo consigo mismo es peor que no tenerlo.**

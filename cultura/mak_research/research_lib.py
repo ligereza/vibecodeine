@@ -451,6 +451,39 @@ PROVIDERS = tuple(PROVIDER_ENV_KEY)
 # aca y darle el parametro `model` a su metodo.
 PROVIDERS_CON_MODELO = ("watsonx",)
 
+# Modelos por PAPEL para el flujo adversarial, de familias distintas.
+#
+# Medido el 2026-07-31: una corrida de `refutar` reporto `llm={'watsonx': 3}`
+# -- el mismo modelo hizo de proponente, de refutador y de juez. Eso no es un
+# debate, es un monologo con tres titulos: el refutador discutio matices de su
+# propia tesis en vez de si el hecho era cierto, y el juez le dio la razon.
+#
+# Las tres familias se PROBARON contra la cuenta real el 2026-08-01, no se
+# eligieron de una lista: `mistral-large-2512` responde 404 y quedo fuera por
+# eso, no por criterio. Las que contestan: mistral-medium, mistral-small,
+# llama-3-3-70b, llama-4-maverick, granite-4-h-small, granite-3-8b.
+MODELOS_POR_PAPEL = {
+    "watsonx": {
+        "proponente": "mistralai/mistral-medium-2505",
+        "refutador": "meta-llama/llama-3-3-70b-instruct",
+        "juez": "ibm/granite-4-h-small",
+    },
+}
+
+
+def modelos_por_papel(proveedor, pedidos=None):
+    """Que modelo le toca a cada papel. Lo pedido a mano gana siempre.
+
+    Devuelve {} para un proveedor que no elige modelo: ahi no hay nada que
+    repartir, y rellenarlo con nombres que ese proveedor ignora seria inventar
+    una diversidad que no existe.
+    """
+    base = dict(MODELOS_POR_PAPEL.get(proveedor) or {})
+    for papel, valor in (pedidos or {}).items():
+        if valor:
+            base[papel] = valor
+    return base
+
 
 def _watsonx_llamar(mensajes, model, max_tok, temperatura, timeout):
     """El UNICO lugar que conoce el endpoint de watsonx.
