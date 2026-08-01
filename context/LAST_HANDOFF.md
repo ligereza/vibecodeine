@@ -39,9 +39,20 @@ Un muro nombrado es entrega valida. Estos no los resuelve mas trabajo.
    (`Connection refused`), asi que `gen_archivo_iskvw.py --fuente todo` omite sus
    vinculos y lo dice en el log. Las 479 piezas publicadas salen del material del
    repo.
-2. **La rama `mak` no drena.** 33 utilidades autogeneradas mergeadas ahi, 0 en
-   main -- main las borro en #406 y siguen llegando. Su unica salida deberia ser
-   un PR a main.
+2. **La rama `mak` no drena.** 33 utilidades autogeneradas en `mak`, **0 en
+   main**. Su unica salida deberia ser un PR a main y ese PR nunca se abrio.
+   **Correccion del 2026-08-01:** este muro decia "main las borro en #406", y
+   es FALSO. `git show 7310956 --name-status -- cultura/mak_plataforma/utilidades/`
+   no devuelve un solo archivo: #406 no toco esa carpeta. Las utilidades nunca
+   estuvieron en main -- no fueron rechazadas, no llegaron. Aparecen bajo
+   `--diff-filter=D` solo por como el squash compara contra su padre, y contar
+   ese filtro sin mirar el commit es lo que fabrico la frase.
+   Importa porque cambia la decision entera: "main las evaluo y las tiro"
+   manda a NO drenar; "nadie las miro nunca" manda a que alguien las abra. Lo
+   escribio una sesion de este mismo modelo cuatro horas antes (#432), y la
+   sesion siguiente la cito como medicion para justificar automatizar el
+   drenaje. Se cayo porque el usuario pregunto "y si es slop?", no porque
+   alguien la verificara.
 3. ~~El nodo-glifo no se puede medir.~~ **RESUELTO 2026-08-01.** Eran dos cosas
    distintas y una era un defecto real: el glifo se elegia sobre la posicion ya
    temblada por `Math.random()`, asi que el azar decidia el conteo. Corregido, el
