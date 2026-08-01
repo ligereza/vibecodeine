@@ -63,6 +63,13 @@ async function correr({ tablero = null, cuadros = 30, caminar = true, antes = nu
   const traza = [];            // every mark: what, where, in which colour
   const pedidos = [];          // every URL the skin asked for, to prove wiring ran
   let pincel = "";             // current fillStyle
+  let fuente = "";             // current font -- the SIZE of a glyph mark
+  // Los px de la fuente actual, o undefined si no hay. Se lee del estado del
+  // contexto en vez de re-parsear en cada marca.
+  const fuentePx = () => {
+    const m = /^([\d.]+)px/.exec(fuente);
+    return m ? parseFloat(m[1]) : undefined;
+  };
   // `r` is optional and only `arc` carries it. It is recorded because the
   // trace used to keep position and colour ONLY, which made the instrument
   // blind to a whole class of effect: anything that changes SIZE drew a
@@ -90,14 +97,34 @@ async function correr({ tablero = null, cuadros = 30, caminar = true, antes = nu
         };
       if (k === "createLinearGradient")
         return (x, y) => { trabajoDeNodo++; marca(x, y); return { addColorStop: (o, c) => traza.push(`g:${c}`) }; };
-      if (k === "fillText") return (g, x, y) => { trabajoDeNodo++; marca(x, y); };
+      // El TAMANO del glifo entra en la traza igual que el radio del circulo.
+      // Sin esto el banco vuelve a ser ciego al tamano por la otra mitad: bajo
+      // `nodo_glifo` -- que es como se publica -- el nodo se pinta con
+      // `fillText`, no con un arco, asi que un efecto que solo dilata dibujaba
+      // un campo distinto y la traza lo daba por identico. Es exactamente el
+      // mismo defecto que se arreglo para `arc`, en el camino que de verdad
+      // corre en produccion.
+      if (k === "fillText")
+        return (g, x, y) => { trabajoDeNodo++; marca(x, y, fuentePx()); };
+      // `font` se LEE, como en un canvas de verdad. Sin esto el stub devolvia
+      // un noop y cualquier codigo que guarde la fuente para restaurarla
+      // despues -- que es lo correcto cuando se la cambia por un nodo --
+      // restauraba `undefined` y el banco medía un estado que el navegador no
+      // tiene.
+      if (k === "font") return fuente;
       if (k === "arc") return (x, y, r) => marca(x, y, r);
       if (k === "moveTo" || k === "lineTo") return (x, y) => marca(x, y);
       if (k === "measureText") return () => ({ width: 10 });
       if (k === "getImageData") return () => ({ data: new Uint8ClampedArray(4) });
       return noop;
     },
-    set: (t, k, v) => { if (k === "fillStyle" || k === "strokeStyle") pincel = String(v); return true; },
+    set: (t, k, v) => {
+      if (k === "fillStyle" || k === "strokeStyle") pincel = String(v);
+      // La fuente se sigue igual que el pincel, y por la misma razon: es
+      // estado del contexto que decide COMO sale la marca.
+      if (k === "font") fuente = String(v);
+      return true;
+    },
   });
   const canvas = {
     getContext: () => ctx2d, width: 800, height: 600,
@@ -434,11 +461,34 @@ console.log(`OK: venue layer gates on venue3d -- shipped ${flagReal === true ? "
 // compiled, the coefficient stayed at zero and the bench reported the effect
 // inert. Two hours went into the effect and the fault was here. Only the gain
 // is the bench's business -- what is wired to what is the artist's.
+// The improvements come from the REAL board, with the patch forced on. It
+// used to declare `mejoras: {patch_efectos: true}` and nothing else, which
+// silently measured a regime the site does not run: with `nodo_glifo` off a
+// node is drawn as a circle with a radial gradient, and with it ON -- which is
+// how the site ships since #433 -- it is drawn as a glyph and that gradient
+// never executes. `luz` was written against the gradient radius and this bench
+// reported 4.259 dilated radii, a true number about something nobody sees.
+// A bench that measures a regime the product does not use is worse than no
+// bench: it produces evidence for the wrong thing.
 const fuerte = {
   version: 1,
-  mejoras: { patch_efectos: true },
+  // `nodo_glifo` OFF on purpose: the four drawing effects have signatures that
+  // only separate under the circle regime -- with the node drawn as a glyph its
+  // alpha depends on position, so moving a node also recolours it and
+  // "curvatura displaces without recolouring" stops being true. Effects are
+  // measured where their signature is distinguishable.
+  mejoras: { ...(tableroReal.mejoras || {}), patch_efectos: true,
+             nodo_glifo: false },
   patch: (tableroReal.patch || []).map(f => ({ ...f, ganancia: 6 })),
 };
+// The regime the SITE actually runs. `luz` is measured here and nowhere else:
+// it dilates the glyph, and the glyph only exists with this key on. The first
+// version of this effect scaled `r`, whose only consumer is the gradient in
+// `if (!soloGlifo)` -- dead code once the key is on -- and this bench happily
+// reported 4.259 dilated radii in a regime the site does not use.
+const fuerteGlifo = { ...fuerte,
+  mejoras: { ...(tableroReal.mejoras || {}), patch_efectos: true,
+             nodo_glifo: true } };
 if (!fuerte.patch.length)
   morir(new Error("the board carries no patch rows: the bench has nothing to amplify"));
 const marcarQuiebre = "if (typeof NODOS!=='undefined') for (let i=0;i<NODOS.length;i+=7) NODOS[i].sen[3]=1;";
@@ -577,22 +627,38 @@ console.log(`OK: pulso alone bends glyph time (${mPulso.difs} trace differences 
 // regime -- dropped both of its), and `fuerte.patch` was a hand-typed copy of
 // the board that never grew the new row, so `solo("luz")` compiled a
 // coefficient of zero. The effect read "inert" twice while being correct.
-const soloLuz = await correr({ tablero: solo("luz"), antes: marcarQuiebre });
+const soloGlifoBase = await correr({ tablero: {...fuerteGlifo,
+  efectos: Object.fromEntries(EFECTOS_NOMBRES.map(e => [e, false]))},
+  antes: marcarQuiebre });
+if (soloGlifoBase.failed) morir(soloGlifoBase.failed);
+const soloLuz = await correr({ tablero: {...fuerteGlifo,
+  efectos: Object.fromEntries(EFECTOS_NOMBRES.map(e => [e, e === "luz"]))},
+  antes: marcarQuiebre });
 if (soloLuz.failed) morir(soloLuz.failed);
-const mLuz = comparar(baseQ, soloLuz);
-const radio = (t) => t.split(",").find(p => p.startsWith("r"));
-let radiosDistintos = 0, radiosCrecidos = 0;
-for (let i = 0; i < Math.min(baseQ.traza.length, soloLuz.traza.length); i++) {
-  const a = radio(baseQ.traza[i]), b = radio(soloLuz.traza[i]);
-  if (a === undefined || b === undefined || a === b) continue;
-  radiosDistintos++;
-  if (parseFloat(b.slice(1)) > parseFloat(a.slice(1))) radiosCrecidos++;
-}
-if (!(radiosDistintos > 0))
-  morir(new Error("luz alone changed no radius: its switch is inert"));
-if (radiosCrecidos !== radiosDistintos)
-  morir(new Error(`luz shrank ${radiosDistintos - radiosCrecidos} radii: it dilates, it does not contract`));
-console.log(`OK: luz alone dilates ${radiosCrecidos} radii (every change grows, none shrinks)`);
+const mLuz = comparar(soloGlifoBase, soloLuz);
+// La firma de `luz` es el TAMANO TOTAL dibujado, no marca contra marca.
+// Comparar por indice no sirve aca: la traza mezcla glifos (9,6 px) y titulos
+// (11 px, los dibuja otro bloque), asi que un titulo que aparece o desaparece
+// corre todo un lugar y el banco termina comparando un glifo contra un titulo.
+// Medido asi decia "luz encoge 1.421 radios" con el efecto funcionando.
+// La suma no depende del orden: si el efecto dilata, hay mas pixeles de tipo
+// en el cuadro, y punto.
+const sumaTam = (t) => t.reduce((acc, m) => {
+  const r = m.split(",").find(p => p.startsWith("r"));
+  return acc + (r ? parseFloat(r.slice(1)) || 0 : 0);
+}, 0);
+const conTam = (t) => t.filter(m => m.split(",").some(p => p.startsWith("r"))).length;
+const tamBase = sumaTam(soloGlifoBase.traza), tamLuz = sumaTam(soloLuz.traza);
+const nBase = conTam(soloGlifoBase.traza), nLuz = conTam(soloLuz.traza);
+if (!(nBase > 0))
+  morir(new Error("no hay una sola marca con tamano en el regimen glifo: "
+    + "el banco no puede medir `luz` y lo dice en vez de aprobarla"));
+if (!(tamLuz > tamBase))
+  morir(new Error(`luz no dilata: ${tamBase.toFixed(0)} px de tipo sin ella `
+    + `contra ${tamLuz.toFixed(0)} con ella (${nBase} y ${nLuz} marcas)`));
+console.log(`OK: luz alone dilates the glyphs: ${tamBase.toFixed(0)} -> `
+  + `${tamLuz.toFixed(0)} px of type over ${nLuz} marks `
+  + `(+${(100*(tamLuz/tamBase-1)).toFixed(1)}%)`);
 
 // gravedad alone: the reading drifts, exactly as in section 4.
 const soloGrav = await correr({ tablero: solo("gravedad"), caminar: false, antes: desviar });

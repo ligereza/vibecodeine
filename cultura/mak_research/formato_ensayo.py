@@ -249,6 +249,70 @@ def prompt_documento(tema: str, findings, sources) -> str:
            "\n".join(sources)))
 
 
+# Cuanto de cada exigencia alcanza para decir que se cumplio. Son minimos
+# BAJOS a proposito: el verificador esta para atrapar el documento que no
+# intento, no para pelear con el que intento y le salio corto. Un ensayo con
+# 4 partes y una tabla pasa; el que salio con 0 y 0 no es un ensayo, es un
+# informe con otro nombre.
+MIN_PARTES = 3
+MIN_TABLAS = 1
+MIN_FECHAS = 2
+
+
+def exigencias_incumplidas(texto: str) -> list[str]:
+    """Que exigencias del ensayo NO se cumplieron, en palabras.
+
+    Devuelve una lista vacia cuando el documento pasa. Cada elemento es el
+    pedido concreto que se le va a repetir al modelo, asi que se escribe como
+    instruccion y no como diagnostico.
+
+    Solo mira lo que se puede CONTAR sobre el texto. La tesis, el argumento y
+    la calidad de la prosa no entran: un verificador que pretenda medir eso
+    con una regex termina rechazando lo bueno y aprobando lo que imita la
+    forma. Lo que se cuenta son las cuatro exigencias que dejan huella
+    estructural, y con eso alcanza para separar el ensayo del informe
+    disfrazado -- que es lo que se midio el 2026-08-01: 0 partes, 0 tablas.
+    """
+    t = texto or ""
+    faltan = []
+
+    partes = len(re.findall(r"^#{2,3} +\S", t, re.M))
+    if partes < MIN_PARTES:
+        faltan.append(
+            "PARTES NARRADAS: hay %d y el ensayo pide entre 5 y 8. Cada parte "
+            "lleva un titulo que dice de que se trata y anticipa una tesis "
+            "(\"PARTE IV: EL ACIDO - La doble helice del movimiento\"), nunca "
+            "\"4. HALLAZGOS\"" % partes)
+
+    # Una tabla markdown se reconoce por su linea de separacion.
+    tablas = len(re.findall(r"^\s*\|?[\s:-]*-{3,}[\s:|-]*$", t, re.M))
+    if tablas < MIN_TABLAS:
+        faltan.append(
+            "TABLA DONDE DOS LECTURAS COMPITEN: no hay ninguna. No es una "
+            "tabla de datos: es una que distingue dos formas de leer el mismo "
+            "objeto, una por columna")
+
+    # Cronologia: anos de cuatro digitos o fechas. Se cuentan distintos para
+    # que repetir el mismo ano cinco veces no la de por cumplida.
+    # Desde el ano 1000: un ensayo cultural cita cualquier siglo, y con el
+    # rango pegado a 1800 la genealogia de un signo diacritico -- que empieza
+    # en la imprenta -- quedaba sin cronologia. Lo atrapo la prueba con 1492.
+    fechas = set(re.findall(r"\b(1\d{3}|20[0-2]\d)\b", t))
+    if len(fechas) < MIN_FECHAS:
+        faltan.append(
+            "CRONOLOGIA: aparecen %d fechas distintas. El ensayo pide una "
+            "linea de tiempo con fechas y hechos, para que sirva como "
+            "material reutilizable" % len(fechas))
+
+    if "http" not in t:
+        faltan.append(
+            "FUENTES CON URL: no hay una sola. Cada afirmacion verificable "
+            "lleva su fuente; si falta, se DECLARA la deuda y jamas se "
+            "inventa una URL")
+
+    return faltan
+
+
 def prompt_conceptos(tema: str, documento: str) -> str:
     """El prompt que saca los conceptos nombrables del ensayo ya escrito.
 

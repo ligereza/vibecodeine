@@ -340,6 +340,44 @@ def investigar(topic, iteraciones=3, depth="basic",
     # reales traian "**Investigador:** [Tu Nombre]". Se pide UNA vez mas,
     # nombrando el hueco; si vuelve igual, el informe sale marcado arriba de
     # todo en vez de fingir que esta listo.
+    # El ensayo se verifica contra SUS PROPIAS exigencias, con el mismo molde
+    # que la plantilla sin rellenar: se cuenta, se pide de nuevo lo que falto,
+    # y si vuelve igual se MARCA el documento en vez de aprobarlo.
+    # Medido el 2026-08-01 sobre una corrida real: 10 conceptos en el anexo, 0
+    # partes narradas y 0 tablas -- dos de siete. Las exigencias estaban en el
+    # prompt desde el 2026-07-30 y nadie las verificaba, asi que eran una
+    # suplica. Lo caro de producir es el documento: por eso se reintenta una
+    # vez y despues se entrega marcado, nunca se descarta.
+    if es_ensayo:
+        faltan = formato_ensayo.exigencias_incumplidas(report)
+        if faltan:
+            print("AVISO: el ensayo incumple %d exigencias, lo pido de nuevo"
+                  % len(faltan), flush=True)
+            try:
+                reintento, _ = llm.call(
+                    sistema_ensayo,
+                    ("Este texto se pidio como ENSAYO y no cumple estas "
+                     "exigencias:" + chr(10) + chr(10) + "%s" + chr(10) + chr(10)
+                     + "Reescribilo COMPLETO cumpliendolas. No agregues una "
+                     "seccion al final para tapar el hueco: las partes son la "
+                     "estructura del texto y la tabla va donde las dos "
+                     "lecturas se enfrentan." + chr(10) + chr(10) + "%s")
+                    % (chr(10).join("- " + f for f in faltan), report),
+                    int(escala_tok(2000, densidad) * 1.8))
+                if reintento and len(
+                        formato_ensayo.exigencias_incumplidas(reintento)) < len(faltan):
+                    report = reintento
+                    faltan = formato_ensayo.exigencias_incumplidas(report)
+            except RuntimeError:
+                pass
+        if faltan:
+            # Se entrega marcado. Un ensayo que no cumple y no lo dice se lee
+            # como si cumpliera, que es peor que no tenerlo.
+            report = ("> AVISO: este ensayo no cumple %d de sus exigencias "
+                      "despues de un reintento (%s)."
+                      % (len(faltan), "; ".join(f.split(":")[0] for f in faltan))
+                      + chr(10) + chr(10) + report)
+
     huecos = marcadores_de_plantilla(report)
     if huecos:
         print("AVISO: el informe trae plantilla sin rellenar (%s), lo pido de "

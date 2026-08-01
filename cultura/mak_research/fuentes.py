@@ -135,6 +135,52 @@ DOMINIOS: dict[str, dict] = {
         ),
         "sitios_sugeridos": ("pubmed.ncbi.nlm.nih.gov", "scielo.org", "who.int"),
     },
+    # El dominio de lo que el organismo investiga de VERDAD. Medido el
+    # 2026-08-01 sobre los ultimos 55 informes: 54 salieron con
+    # `dominio: None`, o sea la compuerta de fuentes primarias NUNCA corrio, y
+    # el handoff lo leia como "produce cero fuentes primarias" -- como si
+    # fallara buscandolas. No fallaba: nadie le habia dicho cuales son. Los
+    # tres dominios que existian son institucionales chilenos y el 98% de los
+    # temas de MAK son eventos y productoras.
+    #
+    # Va ULTIMO y sus pistas son del OFICIO, no del ambiente. `dominio_de_tema`
+    # devuelve el primero que matchea, asi que un dominio ancho puesto arriba
+    # se come a los especificos: con la pista `fiesta` y en primer lugar, este
+    # se llevaba "reduccion de danos en fiestas electronicas", que es
+    # biomedico. Lo atrapo `test_detecta_dominio_con_tildes`.
+    #
+    # Que es primaria aca: quien ORGANIZO dice quien organizo. El Instagram de
+    # la productora, el sitio del venue y la ticketera son el registro; una
+    # nota de prensa o un agregador son secundarias, porque repiten. Ese corte
+    # es el mismo que el usuario usa a mano ("headliner + fecha = productora
+    # encontrable").
+    "cl_eventos": {
+        "descripcion": "eventos y productoras en Chile: quien organizo, donde y cuando",
+        "primarias": (
+            "instagram.com",
+            "facebook.com/events",
+            "passline.com",
+            "puntoticket.com",
+            "ticketplus.cl",
+            "portaldisc.com",
+            "clubhipico.cl",
+            "movistararena.cl",
+            "teatrocaupolican.cl",
+            "espacioriesco.cl",
+            "blondie.cl",
+            "clubchocolate.cl",
+            "bar-loreto.cl",
+            "sala-metronomo.cl",
+        ),
+        "pistas": (
+            "productora", "que productora", "quien organizo", "organizo el evento",
+            "evento del", "festival", "line up", "lineup", "headliner",
+            "venue", "recinto", "club hipico", "caupolican", "movistar arena",
+            "espacio riesco", "blondie", "tocata",
+            "ticketera", "entradas para",
+        ),
+        "sitios_sugeridos": ("instagram.com", "passline.com", "puntoticket.com"),
+    },
 }
 
 # Hosts que NUNCA cuentan como primaria en ningun dominio: son buscadores,

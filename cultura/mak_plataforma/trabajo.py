@@ -180,6 +180,30 @@ def tema_limpio(texto):
     return t, ""
 
 
+# Que formato pide cada verbo, y por que no es el mismo para todos.
+#
+# Medido el 2026-08-01 sobre los ultimos 40 informes: `informe` en 40 de 40 y
+# `densidad: corto` en todas. El formato `ensayo` existe desde el 2026-07-30
+# con siete exigencias -- tesis que se puede negar, tabla donde compiten dos
+# lecturas, cronologia, cierre que argumenta, anexo iconografico -- y no se
+# invoco NUNCA, porque este archivo nunca mandaba el parametro y research.py
+# caia a su default. El motor de calidad estaba apagado.
+#
+# El corte no es de gusto:
+#   - `atender` trabaja la cola de material (triangulacion RD: quien organizo
+#     tal evento). Eso es un DATO y se responde con un informe corto y
+#     verificable. Un ensayo sobre "quien organizo la fiesta" seria ridiculo.
+#   - `multiplicar` y `definir` trabajan temas culturales del backlog. Eso es
+#     lo que se merece el nombre research, y el ensayo es el formato que lo
+#     exige. Con densidad `medio` porque `corto` le da 64 segundos y 6 fuentes:
+#     no alcanza para sostener una tesis.
+FORMATO_POR_VERBO = {
+    "atender":     ("informe", "corto"),
+    "multiplicar": ("ensayo",  "medio"),
+    "definir":     ("ensayo",  "medio"),
+}
+
+
 def _tarea(verbo, st):
     """Arma (depto, payload_dict) para un verbo, o None si no hay trabajo."""
     v = next((x for x in roles.VERBOS if x["verbo"] == verbo), None)
@@ -204,8 +228,9 @@ def _tarea(verbo, st):
             print("tema descartado (%s): %.70s" % (motivo, tarea["texto"]),
                   flush=True)
             return None
+        fmt, dens = FORMATO_POR_VERBO.get(verbo, ("informe", "corto"))
         return ("research", {"modo": tarea.get("modo", "research"),
-                             "tema": tema, "densidad": "corto"})
+                             "tema": tema, "densidad": dens, "formato": fmt})
     if fuente == "concepto":
         if backlog is not None:
             entrada = backlog.pop_pendiente(BACKLOG_GEN)
@@ -218,16 +243,21 @@ def _tarea(verbo, st):
                     print("tema descartado (%s): %.70s"
                           % (motivo, entrada["pregunta"]), flush=True)
                     return None
+                fmt, dens = FORMATO_POR_VERBO.get(verbo, ("informe", "corto"))
                 return ("research", {"modo": v["modo"], "tema": tema,
-                                     "densidad": "corto"})
+                                     "densidad": dens, "formato": fmt})
         i = st.get("sem_idx", 0) % len(sems)
         st["sem_idx"] = i + 1
-        return ("research", {"modo": v["modo"], "tema": sems[i], "densidad": "corto"})
+        fmt, dens = FORMATO_POR_VERBO.get(verbo, ("informe", "corto"))
+        return ("research", {"modo": v["modo"], "tema": sems[i],
+                             "densidad": dens, "formato": fmt})
     if fuente == "definir":
         i = st.get("def_idx", 0) % len(sems)
         st["def_idx"] = i + 1
         tema = "definicion cultural precisa y genealogia de: " + sems[i]
-        return ("research", {"modo": v["modo"], "tema": tema, "densidad": "corto"})
+        fmt, dens = FORMATO_POR_VERBO.get(verbo, ("informe", "corto"))
+        return ("research", {"modo": v["modo"], "tema": tema,
+                             "densidad": dens, "formato": fmt})
     if fuente == "modulo":
         mods = roles.MODULOS
         i = st.get("mod_idx", 0) % len(mods)
