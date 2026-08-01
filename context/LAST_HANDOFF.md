@@ -1209,3 +1209,63 @@ lista escrita a mano.**
   Hasta arreglarla NO cablear `refutar` como compuerta automatica: pondria
   sello de "verificado" sobre afirmaciones inventadas.
 - El reloj de IBM sigue corriendo a ~US$36 por dia por existir.
+
+### La busqueda estaba ciega, y contestaba 200
+
+Medido en la caja: SearXNG devolvia HTTP 200 con `results: []` en 7 de 10
+consultas reales. La razon estaba en un campo que nadie leia --
+`unresponsive_engines` traia los CUATRO motores generales caidos a la vez
+(brave y google cse "Suspended: too many requests", duckduckgo y startpage
+pidiendo CAPTCHA). La misma consulta seis veces seguidas dio cero seis veces,
+asi que no era la consulta. Y no hay `TAVILY_API_KEY` en la caja, o sea que el
+respaldo tampoco existe.
+
+`web_search` devolvia el MISMO diccionario vacio para dos hechos distintos:
+"busque y no hay nada" y "nadie pudo buscar". Aguas abajo eso se lee como que
+la web no tiene nada del tema, y `refutar.py` -- que firma su salida como
+verificada adversarialmente -- habria escrito que una afirmacion no tiene
+fuentes cuando en realidad nadie miro. **Un "no verificable" falso es el mismo
+defecto que un "verificado" falso: los dos reportan una medicion que no se
+hizo.** El panel de salud tenia el mismo agujero: un 200 con cero resultados se
+registraba como EXITO, asi que searxng aparecia verde estando ciego.
+
+Ahora `searxng_search` devuelve `ciego` + `motivo`, nombra los motores caidos
+en la lista de errores del job y registra salud como fallo tipo `ciego`;
+`web_search` conserva la ceguera cuando no hay llave de respaldo; `refutar` se
+detiene con un MURO y no escribe NADA (un archivo en `out/` es indistinguible
+de uno bueno para el que lo lea despues) y anota `busquedas_ciegas` cuando si
+corre; `research` pausa en el checkpoint que ya tenia.
+
+Probado corriendo, no compilando: con el buscador alcanzable, 2 de 3 consultas
+ciegas y 5 fuentes reales -> informe escrito, ceguera anotada en `meta.errors`.
+Con `SEARXNG_BASE_URL` apuntando a un puerto muerto -> exit 3, tres lineas
+MURO, ningun directorio de salida creado, cero llamadas a modelo.
+
+**Esto NO arregla el buscador.** Los motores siguen tapados. Lo que cambia es
+que ahora se sabe, y que nada firma un informe sin fuentes. Arreglarlo es
+configurar motores que no se tapen en la instancia SearXNG de la caja (fuera
+del repo: la sync no copia esa config) o poner una `TAVILY_API_KEY`.
+
+### La sonda de RD: 10 flyers
+
+`percepcion.py correr ... --limite 10`. La primera sonda cayo sobre los diez
+primeros archivos de `~/RD`, que son logos y fichas de sustancia: cero flyers,
+cero `datos_evento`, y ninguna respuesta sobre flyers. Se repitio sobre
+`~/RD/FLYER`.
+
+Resultado: 3 de 3 `flyer_evento` con `datos_evento` lleno, valores anclados en
+la imagen. Tesseract leyo `OCT 04` donde el modelo leyo
+`OCT 04 PARQUE PADRE HURTADO`; una hoja de contacto de video dio venue + fecha
++ handles sobre una cartelera que el OCR no toco. `productora` quedo VACIA en
+las tres: el modelo prefiere no llenarla antes que adivinar, que es justo lo
+que importa aca -- una productora equivocada es un cliente equivocado.
+
+Una inferencia blanda que queda anotada y sin arreglar: convirtio el correo
+`eventos@reduciendodano.cl` en el handle `@reduciendodano.cl`.
+
+Y la sonda encontro un defecto en el arreglo de ayer: el aviso de descarte
+anunciaba que se descartaban `categoria, fecha, handles, headliners,
+productora, venue` -- y las seis se GUARDAN (`datos_evento` se arma con
+CLAVES_EVENTO leyendo el mismo dict). **Una falsa alarma es el defecto espejo
+del descarte callado**: manda a perseguir un fantasma y quema la credibilidad
+de la proxima alarma verdadera.
