@@ -93,10 +93,29 @@ def refutar(tema, orden, densidad="medio", marco_activo=True, modelos=None):
     consultas = (fuentes.sugerir_queries(tema, dom) if (fuentes and dom)
                  else [tema])
     resultados, respuesta = [], ""
+    ciegas, motivo_ciego = 0, ""
     for q in consultas[:3]:
         s = web_search(q, errors=errores)
         respuesta = respuesta or (s.get("answer") or "")
         resultados.extend(s.get("results") or [])
+        if s.get("ciego"):
+            ciegas += 1
+            motivo_ciego = motivo_ciego or (s.get("motivo") or "sin detalle")
+
+    # Si NADIE pudo buscar, este mecanismo no puede correr. Sin fuentes, el
+    # proponente escribe de memoria y los refutadores discuten sobre nada; el
+    # informe sale con el sello de "verificado adversarialmente" encima de
+    # afirmaciones que nunca se contrastaron. Medido 2026-08-01: SearXNG
+    # devolvia HTTP 200 y cero resultados con sus cuatro motores generales
+    # suspendidos, y no habia TAVILY_API_KEY de respaldo. Un muro nombrado es
+    # entrega valida; un informe con sello falso no.
+    if ciegas and not resultados:
+        print("MURO: la busqueda esta ciega, no se puede refutar nada.",
+              flush=True)
+        print("MURO: " + motivo_ciego, flush=True)
+        print("MURO: arreglar el buscador (motores de SearXNG o "
+              "TAVILY_API_KEY) antes de volver a correr esto.", flush=True)
+        return None
     urls = list(dict.fromkeys(r["url"] for r in resultados if r.get("url")))
     contexto = respuesta + "\n" + "\n".join(
         "- %s | %s" % (r.get("title", ""), r.get("url", ""))
@@ -179,6 +198,13 @@ def refutar(tema, orden, densidad="medio", marco_activo=True, modelos=None):
             # su propia linea de estado no puede acusar a nadie.
             "sin_fuente_primaria": bool(
                 evaluacion and evaluacion["sin_fuente_primaria"]),
+            # Cuantas de las consultas no vieron nada. El muro solo salta si
+            # NINGUNA vio; con los motores intermitentes lo normal es que
+            # algunas caigan, y un informe con 5 fuentes de 1 consulta de 3 no
+            # es lo mismo que uno con 5 fuentes de 3 de 3. Se anota para que el
+            # que lo lea sepa que la busqueda venia coja.
+            "busquedas_ciegas": ciegas,
+            "busquedas": len(consultas[:3]),
             "fuentes_primarias": (evaluacion["fuentes_primarias"]
                                   if evaluacion else []),
             "modelos": modelos or None,
@@ -229,6 +255,11 @@ def main():
     # El tema viaja CRUDO: el encuadre se le da al modelo dentro de refutar().
     result = refutar(args.tema, orden or list(PROVIDERS), args.densidad,
                      marco_activo=not args.sin_marco, modelos=modelos)
+    # `None` = muro nombrado adentro (hoy: la busqueda ciega). NO se escribe
+    # informe: un archivo en `out/` es indistinguible de uno bueno para quien
+    # lo lea despues, y este mecanismo firma "verificado adversarialmente".
+    if result is None:
+        return 3
 
     os.makedirs(args.out, exist_ok=True)
     base = os.path.join(args.out, "%s-%s" % (stamp(), slug(args.tema)))

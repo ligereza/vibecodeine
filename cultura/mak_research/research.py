@@ -203,6 +203,17 @@ def investigar(topic, iteraciones=3, depth="basic",
         except Exception as e:  # noqa: BLE001 - blindaje si tavily llega a raise
             pausar(i, "fuentes", "tavily_search: %s" % e)
 
+        # Ciego NO es vacio. Si ningun motor pudo buscar, seguir produce un
+        # informe escrito de memoria con la forma de uno documentado. Se pausa,
+        # que es para lo que existe el checkpoint: el job espera a que el
+        # buscador vuelva en vez de gastar tokens en aire. Medido 2026-08-01:
+        # SearXNG devolvia 200 con cero resultados y sus cuatro motores
+        # generales suspendidos (CAPTCHA / demasiadas peticiones), sin
+        # TAVILY_API_KEY de respaldo.
+        if search.get("ciego") and not (search.get("results") or []):
+            pausar(i, "fuentes", "busqueda ciega: %s"
+                   % (search.get("motivo") or "sin detalle"))
+
         if search.get("answer"):
             findings.append({"type": "tavily_answer", "iteration": i + 1,
                              "query": current, "content": search["answer"]})
