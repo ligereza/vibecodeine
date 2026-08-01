@@ -1072,3 +1072,60 @@ duplicated the ficha. After the fix: 0 files, 0 rows.
    key, so a pass can come back with zero sources. Until that is fixed,
    wiring refutar as an automatic per-report gate would stamp "adversarially
    verified" on invented claims.
+
+## The IBM credit is burned by the CLOCK, not by the work (2026-07-31, measured)
+
+This corrects, with billing data, something said earlier the same night. It is
+the most expensive thing in this file.
+
+The question was where two million tokens came from. They were real -- the
+perception run, 1.946 tokens per image measured on the production path, 715 of
+720 fichas attributed to watsonx. But they are not what costs money. The
+account's own billing API says:
+
+    agosto (desde 00:00 UTC), instance mak-watsonx-runtime
+      INSTANCES                    0,0323 instancia   ->  US$ 35,81
+      MODEL_INFERENCE_THIRD_PARTY  1.834 RU           ->  US$  0,19
+                                                          ---------
+                                                          US$ 36,00
+    julio entero, en el plan Lite
+      448 RU third-party + 15 RU IBM                  ->  US$  0,05
+
+**99,5% of the spend is a fixed charge for HAVING the paid plan.** `0,0323
+instancia` is the fraction of the month elapsed -- about one day -- so the plan
+prorates to roughly US$1.110 a month. The 1,34 million tokens of perception are
+those nineteen cents.
+
+Consequence, and it inverts what was said before: the US$200 credit is NOT
+safe from being spent. Earlier that night the conclusion was "this work cannot
+burn the credit", and that is true of TOKENS and false of the TOTAL. At ~US$36
+a day the credit is gone in under six days, not on 2026-08-18.
+
+Two things follow, and both are the user's call because they are money:
+
+1. **While the plan is on, using it is free.** The day is already paid; the
+   marginal cost of a run is cents. So anything worth measuring should be
+   measured NOW, not scheduled.
+2. **Going back to Lite stops the clock.** Lite caps concurrency at 10, which
+   breaks `refutar`'s parallel refuters, but sequential perception works there.
+   Nobody has checked whether the paid plan has a cheaper variant; only the
+   `plan_id` is visible from the API, not the catalogue.
+
+How to read it again, without a console:
+`billing.cloud.ibm.com/v4/accounts/<bss>/usage/<YYYY-MM>`, with the account id
+read from the `account.bss` claim of the IAM token. Cost per metric is in
+`resources[].plans[].usage[].cost`.
+
+**And a measuring trap found on the way:** the bench reported 964 tokens per
+image and the real run spends 1.946. Not the model -- the SIZE. The bench
+resizes to 1024 px, `percepcion.py` to 1280 (`MAX_LADO_VISION`). That doubles
+the token cost, and nobody has measured whether those 256 px of side buy any
+accuracy: the `solape 0.807` that chose the model was obtained at the CHEAP
+size. In money it is pennies; as a habit it is paying double for something
+never measured.
+
+**State at close:** the ig run is left going on purpose -- the day is paid.
+720 of 1401 fichas, 0 errors, ~4 s/file, output in `/tmp/fichas_v4` on the box
+(NOT over `fichas.jsonl`; comparing the two passes is the only way to show it
+improved). When it finishes: coverage over the full 1401 with attribution, and
+then the same 1024-vs-1280 comparison.
