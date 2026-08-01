@@ -214,6 +214,53 @@ def perdidos(vieja: dict, fusionada: dict) -> list[str]:
     return faltan
 
 
+def _plegar(texto):
+    import unicodedata
+    d = unicodedata.normalize("NFKD", texto or "")
+    return "".join(c for c in d if not unicodedata.combining(c)).lower().strip()
+
+
+def colisiones_de_tecnica(filas):
+    """Same technique written more than one way. Map variant -> canonical.
+
+    Free text drifts: measured over the 1.401 ig fichas, `tecnica` held 54 raw
+    values that are 48 concepts -- `fotografia`(35) next to `fotografía`(163),
+    `ilustracion digital` in three spellings. Two spellings of one technique are
+    two labels in the artist's portfolio.
+
+    The accented variant wins even when it is a minority: in Spanish the accent
+    is not a style option, and this value is read by a human. There is no
+    hand-written list -- the map comes from the corpus, so a technique that
+    appears tomorrow needs nobody to remember anything.
+
+    This only REPORTS. Rewriting values is a separate decision and it has its
+    own flag: a tool whose whole point is not changing data behind your back
+    cannot start changing data behind your back.
+    """
+    import unicodedata
+    grupos: dict[str, dict[str, int]] = {}
+    for f in filas:
+        valor = (f.get("vision") or {}).get("tecnica")
+        if not valor:
+            continue
+        texto = " ".join(str(valor).lower().split())
+        grupos.setdefault(_plegar(texto), {})
+        grupos[_plegar(texto)][texto] = grupos[_plegar(texto)].get(texto, 0) + 1
+    mapa = {}
+    for variantes in grupos.values():
+        if len(variantes) < 2:
+            continue
+        def _rango(par):
+            texto, veces = par
+            return (any(unicodedata.combining(c)
+                        for c in unicodedata.normalize("NFKD", texto)), veces)
+        canonica = max(variantes.items(), key=_rango)[0]
+        for texto in variantes:
+            if texto != canonica:
+                mapa[texto] = canonica
+    return mapa
+
+
 def main() -> int:
     p = argparse.ArgumentParser(
         description=__doc__.splitlines()[0],
@@ -224,6 +271,10 @@ def main() -> int:
                    help="solo traer las fichas que ESE motor midio")
     p.add_argument("--aplicar", action="store_true",
                    help="escribir de verdad (por defecto solo informa)")
+    p.add_argument("--canonizar-tecnica", action="store_true",
+                   dest="canonizar",
+                   help="unificar las grafias de `tecnica` (se informan "
+                        "siempre; con esta bandera ademas se reescriben)")
     a = p.parse_args()
 
     for ruta in (a.archivo, a.nueva):
@@ -308,6 +359,27 @@ def main() -> int:
             print("   %s -> %s" % (fid, ", ".join(faltan)))
         return 1
     print("campos que quedan vacios habiendo tenido valor: 0")
+
+    # Las colisiones de grafia se INFORMAN siempre, se arreglan solo si se
+    # pidio. Un valor que cambia sin que nadie lo haya pedido es justo lo que
+    # esta herramienta existe para no hacer.
+    colisiones = colisiones_de_tecnica(salida)
+    if colisiones:
+        print()
+        print("tecnicas escritas de mas de una forma: %d" % len(colisiones))
+        for variante, canonica in sorted(colisiones.items()):
+            print("   %-26s -> %s" % (variante, canonica))
+        if a.canonizar:
+            tocadas = 0
+            for f in salida:
+                vis = f.get("vision") or {}
+                actual = " ".join(str(vis.get("tecnica") or "").lower().split())
+                if actual in colisiones:
+                    vis["tecnica"] = colisiones[actual]
+                    tocadas += 1
+            print("   unificadas en %d fichas" % tocadas)
+        else:
+            print("   (no se tocaron: --canonizar-tecnica las unifica)")
 
     if not a.aplicar:
         print()

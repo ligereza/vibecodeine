@@ -196,3 +196,59 @@ def test_it_refuses_to_write_while_a_perception_is_running():
     assert "_hay_percepcion_corriendo" in fuente
     assert "percepcion.py correr" in fuente
     assert "flock" in fuente and "LOCK_NB" in fuente
+
+
+# ------------------------------------------------- spellings of one technique
+
+def test_two_spellings_of_one_technique_are_reported():
+    """Free text drifts. Over the 1.401 ig fichas `tecnica` held 54 raw values
+    that are 48 concepts -- two spellings of one technique are two labels in
+    the artist's portfolio."""
+    m = _mod()
+    filas = ([_ficha(str(i), {"tecnica": "fotografia"}) for i in range(35)] +
+             [_ficha("x%d" % i, {"tecnica": "fotografía"}) for i in range(163)])
+    assert m.colisiones_de_tecnica(filas) == {"fotografia": "fotografía"}
+
+
+def test_the_accented_one_wins_even_as_a_minority():
+    """In Spanish the accent is not a style option, and this value is read by a
+    human."""
+    m = _mod()
+    filas = ([_ficha(str(i), {"tecnica": "grabado"}) for i in range(50)] +
+             [_ficha("y", {"tecnica": "grabádo"})])
+    assert m.colisiones_de_tecnica(filas) == {"grabado": "grabádo"}
+
+
+def test_a_technique_with_no_variants_is_left_alone():
+    m = _mod()
+    assert m.colisiones_de_tecnica(
+        [_ficha(str(i), {"tecnica": "collage"}) for i in range(4)]) == {}
+
+
+def test_reporting_never_rewrites_by_itself(tmp_path):
+    """A tool whose whole point is not changing data behind your back cannot
+    start changing data behind your back."""
+    a, b = tmp_path / "a.jsonl", tmp_path / "b.jsonl"
+    _escribir(a, [_ficha("1", {"tecnica": "fotografia"}),
+                  _ficha("2", {"tecnica": "fotografía"})])
+    _escribir(b, [_ficha("1", {"tecnica": "fotografia"})])
+    r = _correr(a, b, "--aplicar")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "tecnicas escritas de mas de una forma: 1" in r.stdout
+    assert "no se tocaron" in r.stdout
+    valores = {json.loads(l)["vision"]["tecnica"]
+               for l in a.read_text(encoding="utf-8").splitlines() if l.strip()}
+    assert valores == {"fotografia", "fotografía"}, "sin la bandera no se toca"
+
+
+def test_the_flag_unifies_and_says_how_many(tmp_path):
+    a, b = tmp_path / "a.jsonl", tmp_path / "b.jsonl"
+    _escribir(a, [_ficha("1", {"tecnica": "fotografia"}),
+                  _ficha("2", {"tecnica": "fotografía"})])
+    _escribir(b, [_ficha("1", {"tecnica": "fotografia"})])
+    r = _correr(a, b, "--aplicar", "--canonizar-tecnica")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "unificadas en 1 fichas" in r.stdout
+    valores = {json.loads(l)["vision"]["tecnica"]
+               for l in a.read_text(encoding="utf-8").splitlines() if l.strip()}
+    assert valores == {"fotografía"}
