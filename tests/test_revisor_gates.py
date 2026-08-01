@@ -239,3 +239,43 @@ def test_main_con_enforce_registra_la_accion(monkeypatch, tmp_path):
     assert rep["modo"] == "enforce"
     assert rep["veredictos"][0]["accion"] == "merged"
     assert fake.hubo("gh", "merge")
+
+def test_solo_mergea_contra_el_buzon(tmp_path, monkeypatch):
+    """`enforce_pr` merges, so the reviewer must declare WHICH branch it acts
+    against.
+
+    The only filter looked at the HEAD branch (`capataz/*`), which says where
+    the PR comes from and not where it goes: a `capataz/*` branch pointing at
+    main would be closed by a cron every 6 hours with nobody deciding it. It
+    never happened because `entregar.py` always uses `mak` as base, but that
+    is another file's habit, not this file's guarantee.
+
+    And an ABSENT field is not a wrong base: treating absence as rejection
+    would silence the whole reviewer, which is the failure mode this file
+    already had with its own header.
+    """
+    vistos = []
+    monkeypatch.setattr(revisor, "revisar_pr",
+                        lambda n, b, p_, v: vistos.append(n))
+    prs = [
+        {"number": 1, "headRefName": "capataz/x-aaa", "baseRefName": "mak",
+         "files": [{"path": "a.py"}]},
+        {"number": 2, "headRefName": "capataz/y-bbb", "baseRefName": "main",
+         "files": [{"path": "b.py"}]},
+        {"number": 3, "headRefName": "capataz/z-ccc",
+         "files": [{"path": "c.py"}]},
+        {"number": 4, "headRefName": "feature/otra", "baseRefName": "mak",
+         "files": [{"path": "d.py"}]},
+    ]
+    monkeypatch.setattr(revisor, "sh",
+                        lambda args: (0, json.dumps(prs), ""))
+    monkeypatch.setattr(revisor, "OUT", str(tmp_path / "out.json"))
+    monkeypatch.setattr(revisor, "LOG", str(tmp_path / "r.log"))
+    monkeypatch.setattr(sys, "argv", ["revisor.py"])
+
+    revisor.main()
+
+    assert 1 in vistos, "a capataz/* PR against the inbox is reviewed"
+    assert 2 not in vistos, "a capataz/* PR against MAIN is left alone"
+    assert 3 in vistos, "no baseRefName still reviewed: absent != different"
+    assert 4 not in vistos, "a branch that is not capataz/* is none of its business"

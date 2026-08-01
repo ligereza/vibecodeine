@@ -4,10 +4,23 @@ entregador subio como PR draft (branch capataz/*). Gates ESTATICOS, mechanical-
 first (mas confiable que el juicio de un modelo chico sobre codigo de otro modelo
 chico): compila + stdlib-only + el pedido se refleja en el codigo.
 
-NO ejecuta el codigo revisado. NO toca el PR (no ready/comment/close/merge).
-Solo escribe un veredicto a reflexiones/revisor_shadow.json + log. El merge lo
-decide un humano/jefe leyendo este veredicto. Enforcement (marcar ready / cerrar)
-es un paso deliberado posterior, cuando el shadow valide los veredictos.
+NO ejecuta el codigo revisado.
+
+DOS MODOS, y la diferencia importa:
+  - sin `--enforce`: observacional. Escribe el veredicto a
+    reflexiones/revisor_shadow.json + log y no toca el PR.
+  - con `--enforce`: ACTUA. `enforce_pr` marca ready, comenta y MERGEA. Corre
+    asi por cron cada 6 horas.
+
+Esta cabecera decia "NO toca el PR (no ready/comment/close/merge)" mientras
+`enforce_pr` ya mergeaba, y el cron ya lo invocaba con --enforce. Quien leia
+el archivo para saber que hacia la maquina leia lo contrario de lo que hacia.
+
+Solo actua sobre PRs con rama HEAD `capataz/*` Y rama BASE `RAMA_BUZON`. El
+segundo filtro se agrego el 2026-08-01: el primero mira de donde viene el PR
+y no a donde va, asi que una rama `capataz/*` apuntando a main se mergeaba
+sola. Nunca ocurrio -- `entregar.py` siempre usa `mak` -- pero eso es una
+costumbre de otro archivo, no una garantia de este.
 """
 import argparse
 import ast
@@ -18,6 +31,9 @@ import sys
 import time
 
 REPO_SLUG = "ligereza/vibecodeine"
+# El buzon de MAK. `enforce_pr` solo actua sobre PRs con ESTA base:
+# lo que mergea declara contra que mergea.
+RAMA_BUZON = "mak"
 
 HOME = os.path.expanduser("~")
 REPO = os.path.join(HOME, "flujo")
@@ -175,7 +191,7 @@ def main():
     args = ap.parse_args()
     rc, out, err = sh(["gh", "pr", "list", "--repo", REPO_SLUG,
                        "--state", "open", "--json",
-                       "number,headRefName,isDraft,files"])
+                       "number,headRefName,baseRefName,isDraft,files"])
     if rc != 0:
         log("ERROR gh pr list: %s" % err.strip()[:160])
         return 1
@@ -188,6 +204,25 @@ def main():
     for pr in prs:
         branch = pr.get("headRefName", "")
         if not branch.startswith("capataz/"):
+            continue
+        # El filtro de arriba mira la rama HEAD; este mira la BASE, y son
+        # cosas distintas. `enforce_pr` mergea, y sin esta linea alcanzaba con
+        # que un PR llevara una rama `capataz/*` apuntando a main para que un
+        # cron lo cerrara solo cada 6 horas. Hoy `entregar.py` siempre usa
+        # `mak` como base, pero eso es una costumbre de otro archivo, no una
+        # garantia de este. Lo que mergea declara contra que mergea.
+        # AUSENTE no es lo mismo que DISTINTA, y esa diferencia importa aca:
+        # un PR que declara otra base se rechaza, pero uno que no trae el campo
+        # (un `gh` viejo, una respuesta recortada) no se puede juzgar por el.
+        # Tratar la ausencia como rechazo apagaria el revisor entero en
+        # silencio -- el modo de fallo que este archivo ya tuvo con su propia
+        # cabecera. Se procesa y se DICE, para que se vea en el log.
+        base = pr.get("baseRefName")
+        if base is None or base == "":
+            log("PR #%d sin baseRefName declarado: se revisa igual" % pr["number"])
+        elif base != RAMA_BUZON:
+            log("PR #%d ignorado: base '%s', no '%s'"
+                % (pr["number"], base, RAMA_BUZON))
             continue
         pys = [f["path"] for f in (pr.get("files") or [])
                if f["path"].endswith(".py")]
