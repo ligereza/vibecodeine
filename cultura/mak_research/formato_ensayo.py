@@ -143,6 +143,81 @@ def prompt_informe(tema: str, findings, sources, consultas=None) -> str:
     )
 
 
+# --------------------------------------------------- preguntas abiertas
+# El loop del organismo se alimenta de lo que un informe deja sin responder:
+# `backlog.cosechar` lo saca del informe y vuelve como tema. Hasta el
+# 2026-08-01 lo sacaba PARSEANDO LA PROSA -- buscaba la seccion "LAGUNAS DE
+# INFORMACION" con una regex sobre el Markdown renderizado.
+#
+# Eso ata el loop a como se VE el texto. Dos consecuencias medidas el mismo
+# dia: un tema entro al backlog llamado literalmente "**Detalles del Evento:**
+# No se encontraron detalles especificos" -- con los asteriscos del render
+# adentro -- y produjo un informe por cron; y al cambiar el formato del
+# informe esa manana, esa seccion dejo de existir, asi que el parser habria
+# devuelto vacio y el backlog se habria dejado de llenar SIN QUE NADIE SE
+# ENTERE. El loop no se rompe por un bug: se rompe por un cambio de estilo.
+#
+# Por eso ahora se piden APARTE y como dato. El `.json` del informe ya es la
+# fuente de verdad ("`report` es un RENDER de lo de abajo", dice research.py);
+# esto agrega el campo que faltaba. Es una llamada corta con salida corta: la
+# contesta cualquier proveedor de la cadena, incluido el ollama local cuando
+# el credito de IBM se termine.
+SISTEMA_PREGUNTAS = (
+    "Extraes las preguntas que un informe deja ABIERTAS. Devuelves UNICAMENTE "
+    "un array JSON de strings, sin markdown ni explicaciones.")
+
+
+def prompt_preguntas(tema: str, documento: str) -> str:
+    """Las preguntas abiertas del informe ya escrito, como DATO.
+
+    Se piden sobre el texto final y no antes: lo que quedo abierto se sabe
+    cuando el informe termino, no cuando empezo."""
+    return (
+        "Del informe que sigue, extrae entre 0 y 5 preguntas que quedaron "
+        "ABIERTAS: lo que habria que averiguar despues. Devolve un array JSON "
+        "de strings.\n\n"
+        "REGLAS:\n"
+        "- Cada pregunta se tiene que poder BUSCAR sola, sin haber leido este "
+        "informe. \"Quien organizo el evento del 24/08/2023 en Club Hipico\" "
+        "sirve; \"la falta de informacion detallada\" no, porque no dice sobre "
+        "que.\n"
+        "- Sin marcado: ni asteriscos, ni almohadillas, ni vinnetas. Es un "
+        "dato, no un renglon de documento.\n"
+        "- Si el informe respondio lo que se pregunto y no deja nada abierto, "
+        "devolve []. Una lista vacia es una respuesta valida y frecuente; "
+        "inventar preguntas para llenarla es como una cola de trabajo se llena "
+        "de trabajo que nadie pidio.\n"
+        "- No repitas la pregunta que el informe ya contesto.\n\n"
+        'TEMA: "%s"\n\nINFORME:\n%s'
+        % (tema, documento[:20000]))
+
+
+def parsear_preguntas(bruto: str) -> list:
+    """Las preguntas del array JSON. No levanta: un array mal formado no puede
+    tumbar el informe, que es lo que de verdad costo producir. Devuelve [] y
+    quien llame decide -- hoy `research.py` cae al parseo de prosa de siempre,
+    asi que el loop nunca se queda sin alimento."""
+    m = re.search(r"\[.*\]", bruto or "", re.S)
+    if not m:
+        return []
+    try:
+        crudos = json.loads(m.group(0))
+    except ValueError:
+        return []
+    if not isinstance(crudos, list):
+        return []
+    salida = []
+    for q in crudos:
+        if not isinstance(q, str):
+            continue
+        # Se limpia el marcado igual que `backlog._limpiar_render`: un modelo
+        # que ignora la regla no puede meter formato dentro de la cola.
+        t = re.sub(r"\*\*|__|`|^#+\s*|^[-*]\s+", "", q).strip()
+        if len(t) >= 12 and any(c.isalpha() for c in t):
+            salida.append(t[:300])
+    return salida[:5]
+
+
 SISTEMA_INFORME = (
     "Eres un investigador senior. Escribes en espanol correcto CON TILDES, en "
     "Markdown. Tu informe se juzga por si se puede REFUTAR: cada afirmacion "

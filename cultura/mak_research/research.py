@@ -372,6 +372,28 @@ def investigar(topic, iteraciones=3, depth="basic",
     resultado = _armar_resultado(topic, report, t0, findings, query_history,
                                  sources, llm, ev)
     resultado["formato"] = formato
+
+    # Lo que el informe deja ABIERTO, como DATO y no dentro de la prosa. Es lo
+    # que alimenta el loop del organismo (`backlog.cosechar` -> tema nuevo), y
+    # hasta hoy se sacaba parseando la seccion "LAGUNAS DE INFORMACION" del
+    # Markdown. Eso ataba el loop a como se veia el texto: un tema entro
+    # llamado "**Detalles del Evento:** No se encontraron detalles" con los
+    # asteriscos adentro, y el cambio de formato de esta misma manana habria
+    # dejado el parser en cero sin que nadie se entere.
+    # Si esto falla el informe NO se pierde y el loop TAMPOCO: queda sin el
+    # campo y `backlog` cae a su parseo de siempre.
+    print("STATUS: Extrayendo preguntas abiertas...", flush=True)
+    try:
+        bruto_q, _ = llm.call(formato_ensayo.SISTEMA_PREGUNTAS,
+                              formato_ensayo.prompt_preguntas(topic, report),
+                              escala_tok(600, densidad))
+        resultado["preguntas_abiertas"] = formato_ensayo.parsear_preguntas(bruto_q)
+    except RuntimeError as e:
+        # Ausente != vacio. `[]` significa "el informe no dejo nada abierto";
+        # la ausencia de la clave significa "no se pudo preguntar", y quien
+        # cosecha tiene que poder distinguirlas.
+        resultado["preguntas_abiertas_error"] = str(e)
+
     if ev:
         # Sin esto no se puede auditar despues cual informe se apoyo en que.
         resultado["meta"]["dominio"] = ev["dominio"]
