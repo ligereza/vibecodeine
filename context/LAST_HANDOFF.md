@@ -1304,3 +1304,69 @@ La salida quedo copiada fuera de `/tmp` (que se borra al reiniciar) en
 `fichas.jsonl` sigue siendo paso humano**: son 1.354 fichas nuevas encima de
 las 3.138 actuales, y el que decide si el cambio vale es el que mira el
 resultado, no el que lo midio.
+
+---
+
+## 2026-08-01 (madrugada, segunda tanda) -- el circuito micelio dio su primera vuelta
+
+Se ejecutaron las cuatro cosas del plan. Esto es lo que salio.
+
+### El circuito cierra, y su limite quedo medido
+
+Se escribio una semilla REAL (un indice de busqueda sobre las 3.138 fichas,
+sin modelo y sin red), se valido, se deposito en la cola de MAK, MAK produjo un
+fruto y el semaforo lo midio. Dos vueltas:
+
+```txt
+vuelta 1 (semilla)    ROJO   falta normalizar(), falta la prueba
+vuelta 2 (nutriente)  2 de 3 en verde en 71 segundos
+                      OK   normalizar('LAPIZ sobre Papel') -> 'lapiz sobre papel'
+                      OK   normalizar('Diseno y DANO')     -> 'diseno y dano'
+                      FALLA falta tests/test_indice_curatoria.py
+```
+
+El canal de correccion FUNCIONA: el nutriente tomo un rojo con tres defectos
+nombrados y arreglo dos en 71 segundos, incluido el de las tildes. Eso responde
+lo que se pregunto hace dias: **el circuito no es unidireccional.**
+
+**El muro, y es estructural, no del modelo:** `codex generar` entrega UNA pieza,
+un solo archivo. Un criterio que exige un segundo archivo en una ruta concreta
+no lo puede cumplir ese departamento como esta. O las semillas escriben
+criterios que caben en un modulo, o codex tiene que poder escribir mas de un
+archivo. Nombrado, no resuelto.
+
+### Por que el circuito no habia cerrado nunca
+
+No era el formato ni el organismo. Era el ORDEN. La cola tenia 2.733 tareas
+pendientes cosechadas de las propias fichas, y una semilla depositada hoy
+quedaba detras de TODAS. A la velocidad real del organismo, meses. Medido
+contra el archivo real: FIFO puro elegia una tarea `rd` con 2.732 por delante
+de la semilla.
+
+`pop_pendiente` ahora atiende primero lo de `origen: micelio`. Una intencion
+escrita a mano no compite en igualdad con 2.733 tareas que el sistema se genero
+solo.
+
+### El primer fruto tenia el defecto de la casa
+
+El codigo de la vuelta 1 hacia `if termino in str(ficha).lower()`: comparaba
+contra la REPRESENTACION del diccionario entero, asi que un termino podia
+coincidir con el id, con la ruta del archivo o con el nombre de una clave. Es
+justo el "resultado por casualidad" que la semilla prohibia -- y el criterio lo
+agarro sin que nadie leyera el codigo. Para eso existe el criterio.
+
+### La plata, medida hoy
+
+```txt
+julio entero (plan Lite)                        US$  0,05
+agosto: INSTANCES  0,0323 instancia             US$ 35,81
+        MODEL_INFERENCE  5.312 RU               US$  0,56
+```
+
+Todo el trabajo de anoche -- 1.401 fichas, dos sondas de RD, los bancos, dos
+vueltas de codex -- costo **56 centavos**. El plan cuesta ~36 dolares por dia
+por existir. La proporcion es 1 a 64.
+
+Eso NO lo decido yo, pero el numero ya no es una estimacion: mientras el plan
+este puesto, usarlo es gratis; tenerlo puesto sin usarlo es todo el costo.
+Bajar a Lite se hace desde la consola de IBM, no por API.
