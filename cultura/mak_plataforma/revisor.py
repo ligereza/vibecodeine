@@ -74,6 +74,34 @@ def pedido_de(job_hex):
     return ""
 
 
+def gate_encoding(src):
+    """El fuente tiene que ser UTF-8 de verdad, no UTF-8 con agujeros.
+
+    `sh()` lee con `text=True`, asi que los bytes que no son UTF-8 valido
+    entran como SURROGATES en vez de reventar ahi.
+
+    Y lo que pasa despues es peor que aprobarlos: `compile()` levanta
+    `UnicodeEncodeError`, que NO es `SyntaxError`, asi que `gate_compila` no lo
+    captura y la excepcion se propaga hasta arriba. Un solo archivo con el
+    encoding roto tumba la corrida COMPLETA del revisor, y todos los PR que
+    venian detras se quedan sin revisar sin que nadie lo pida.
+
+    Medido el 2026-08-01: de las 33 utilidades del buzon `mak`, 3 tienen esa
+    forma. Este gate corre PRIMERO justamente por eso -- las atrapa como
+    NO-APROBADO, con su motivo, antes de que lleguen a `compile()`.
+
+    Se prueba re-codificando: si el texto no vuelve a bytes, no era texto.
+    """
+    try:
+        (src or "").encode("utf-8")
+    except UnicodeEncodeError as e:
+        malo = (src or "")[e.start:e.start + 1]
+        return False, ("encoding roto en la posicion %d (%r): el archivo no es "
+                       "UTF-8 y no se puede leer fuera de la caja"
+                       % (e.start, malo))
+    return True, ""
+
+
 def gate_compila(src):
     try:
         compile(src, "<pr>", "exec")
@@ -130,19 +158,25 @@ def revisar_pr(n, branch, path, veredictos):
         log("PR #%d ERROR: no pude leer %s" % (n, path))
         return
     gates = {}
+    # El encoding va PRIMERO: un archivo que no se puede leer no tiene sentido
+    # compilar, y `compile()` sobre surrogates lanza UnicodeEncodeError, que
+    # `gate_compila` no captura -- eso tumbaba la corrida entera.
+    ok0, m0 = gate_encoding(src); gates["encoding"] = ok0
     ok1, m1 = gate_compila(src); gates["compila"] = ok1
     ok2, m2 = gate_stdlib(src); gates["stdlib_only"] = ok2
     ok3, m3 = gate_pedido(src, pedido); gates["pedido_match"] = ok3
-    passed = ok1 and ok2 and ok3
+    passed = ok0 and ok1 and ok2 and ok3
     v = {"pr": n, "branch": branch, "archivo": path,
          "pedido": pedido[:120],
          "veredicto": "PASS" if passed else "NO-APROBADO",
          "gates": gates,
-         "detalle": {"compila": m1, "stdlib": m2, "pedido": m3},
+         "detalle": {"encoding": m0, "compila": m1, "stdlib": m2,
+                     "pedido": m3},
          "bytes": len(src)}
     veredictos.append(v)
-    log("PR #%d %s | compila=%s stdlib=%s pedido=%s | %s"
-        % (n, v["veredicto"], ok1, ok2, ok3, (m2 or m3 or m1 or "todo OK")))
+    log("PR #%d %s | encoding=%s compila=%s stdlib=%s pedido=%s | %s"
+        % (n, v["veredicto"], ok0, ok1, ok2, ok3,
+           (m0 or m2 or m3 or m1 or "todo OK")))
 
 
 def ci_verde(n):
