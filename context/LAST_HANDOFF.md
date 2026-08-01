@@ -21,7 +21,6 @@ Ninguna la puede tomar un agente. Estan ordenadas por lo que cuesta no tomarla.
 | Que | El numero que hace falta para decidir |
 |---|---|
 | **El reloj de IBM** | ~US$36/dia por TENER el plan. Todo el trabajo de dos dias costo US$0,56. Bajar a Lite se hace desde la consola, no por API. |
-| **Degradar las ocurrencias encoladas** | 2.657 tareas de `ig` esperan. Ya no nacen mas (arreglado), pero las viejas siguen. `python3 material.py --degradar-ocurrencias --aplicar` en la caja. Reversible: cambia un estado, no borra. |
 | **Consolidar las 1.354 fichas de watsonx** | `tipo_obra` 67%->100%, `materiales` 66%->99,6%. Pero **4.595 valores quedarian mas cortos** que los actuales. `tools/consolidar_fichas.py --aplicar`. |
 | **Encender `nodo_glifo`** | El nodo deja de ser un circulo y pasa a ser glifo: arcos 764->0, gradientes 382->0. Publicada apagada en `datos/tablero.json`. Ojo: con ella encendida el medidor no puede fijar el costo por cuadro (ver muro 3). |
 | **Si los ensayos de MAK se publican en iskvw.cl** | Lo dejaste para debatir -- y **ya estan publicados** desde el 2026-07-31: el sustrato lleva 16 conceptos y 1 informe. La maquina tomo la decision por vos. |
@@ -77,9 +76,23 @@ recien despues verifica que exista; no es una copia congelada. La piel degrada a
 las ig termino (1.401/1.401, 0 errores) y esta en
 `~/curatoria/pasadas/v4_watsonx_20260801/` en la caja, **sin consolidar**.
 
-**La cola de MAK.** 2.812 tareas. Desde hoy, lo que nace de `oportunidad_codigo`
-y `linea_investigacion` nace como `propuesta` y no se despacha; solo la
-triangulacion de RD (116) sigue siendo trabajo.
+**La cola de MAK.** 2.812 tareas y **ninguna pendiente**: 2.656 en `propuesta` y 156 en `despachada`. Medido el 2026-08-01 leyendo
+`material.jsonl` en la caja y confirmando contra `material.pop_pendiente`,
+que filtra por `estado == "pendiente"` -- o sea, la cola entera esta
+inerte y `atender` devuelve None en cada tick.
+
+Esto corrige DOS frases que este archivo traia como pendientes y ya no lo
+eran. La primera pedia una decision tuya: "degradar las ocurrencias
+encoladas, `python3 material.py --degradar-ocurrencias --aplicar`". Ya
+esta aplicada. La segunda decia que "solo la triangulacion de RD (116)
+sigue siendo trabajo", y **esas 116 tambien estan en `propuesta`**: la
+degradacion se llevo por delante el unico trabajo real que quedaba, junto
+con las ocurrencias que apuntaba a frenar.
+
+La consecuencia se ve en el log: `atender` no tiene de donde sacar nada,
+asi que el organismo corre su modo autonomo -- `multiplicar` sobre el
+backlog -- que es lo que produce un informe cada 30 minutos. Reactivar las
+116 de RD es cambiar un estado, no borrar nada.
 
 **La busqueda.** Funciona con `TAVILY_API_KEY` puesta en
 `~/n8n-local/research.env` (permisos 600). Los cuatro motores generales de
