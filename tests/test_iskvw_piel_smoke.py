@@ -56,7 +56,10 @@ def test_the_smoke_still_measures_the_effects_patch():
                      # texto literal, o sea una cadena escrita a mano que dejo
                      # de coincidir con lo que existe -- la forma que este repo
                      # ya encontro siete veces esta semana.
-                     "patch off draws exactly as the same board without it",
+                     # With the patch shipped ON the bench takes the other road: it
+                     # asserts the published board CHANGES the drawing, which is
+                     # the same claim measured from the other side.
+                     "el tablero publicado cambia el dibujo",
                      "patch on deforms",
                      "gravedad pulls the reading",
                      # Per-effect switches: each effect is measured ALONE by
@@ -68,6 +71,9 @@ def test_the_smoke_still_measures_the_effects_patch():
                      "pulso alone bends glyph time",
                      "gravedad alone pulls the reading",
                      "every switch off under master on draws exactly the base",
+                     # luz is the only effect that touches SIZE, and reading it
+                     # took teaching this bench to record radii at all.
+                     "luz alone dilates",
                      # The venue layer rides the SAME tablero fetch: its flag
                      # must gate the sala link in both states.
                      "venue layer gates on venue3d"):
@@ -77,18 +83,25 @@ def test_the_smoke_still_measures_the_effects_patch():
         )
 
 
-def test_the_board_is_wiring_and_ships_off():
+def test_the_board_is_wiring_and_ships_on():
     """`datos/tablero.json` is the artist's patch bay, and it is DATA.
 
-    Every route names a signal and an effect the skin knows; the master flag
-    ships off, because turning the portfolio's rendering on is the artist's
-    decision and not a side effect of merging a branch.
+    Every route names a signal and an effect the skin knows.
+
+    The master flag used to be pinned OFF here, because turning the
+    portfolio's rendering on is the artist's decision and not a side effect of
+    merging a branch. That reason still holds and the assertion flipped anyway:
+    on 2026-08-01 the artist took the decision, the same way he took it for
+    `nodo_glifo` in #433. What this test defends is not the value -- it is that
+    the value is HIS. Pinned on, an agent that silently turns it off is caught
+    just as an agent that silently turned it on used to be.
     """
     t = json.loads(TABLERO.read_text(encoding="utf-8"))
     piel = PIEL.read_text(encoding="utf-8")
-    assert t["mejoras"]["patch_efectos"] is False, (
-        "tablero.json ships with the effects patch ON: that changes how the "
-        "portfolio looks for everyone, and it is not this file's call")
+    assert t["mejoras"]["patch_efectos"] is True, (
+        "tablero.json ships with the effects patch OFF: the artist turned it "
+        "on on 2026-08-01 and the portfolio draws with it. Turning it back "
+        "off changes what every visitor sees and is not this file's call")
     # The names have to exist in the skin, or the route is a wire to nowhere.
     for fila in t["patch"]:
         assert "'%s'" % fila["dato"] in piel, "unknown signal: %s" % fila["dato"]
@@ -97,13 +110,13 @@ def test_the_board_is_wiring_and_ships_off():
     # The five effects the skin implements are all wired: a board that quietly
     # drops one is how an effect stops being maintained.
     assert {f["efecto"] for f in t["patch"]} == {
-        "pulso", "curvatura", "sangrado", "desgarro", "gravedad"}
+        "pulso", "curvatura", "sangrado", "desgarro", "gravedad", "luz"}
     # Every effect has its own switch under the master, and all ship ON: with
     # only the master flag the patch behaves exactly as it always did. A
     # switch the board silently drops would freeze that effect's default in
     # the skin, unreadable from the file the artist actually edits.
     assert set(t["efectos"]) == {
-        "pulso", "curvatura", "sangrado", "desgarro", "gravedad"}
+        "pulso", "curvatura", "sangrado", "desgarro", "gravedad", "luz"}
     for efecto, encendido in t["efectos"].items():
         assert encendido is True, (
             "tablero.json ships with effect %r off: shipped defaults preserve "

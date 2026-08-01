@@ -63,18 +63,35 @@ async function correr({ tablero = null, cuadros = 30, caminar = true, antes = nu
   const traza = [];            // every mark: what, where, in which colour
   const pedidos = [];          // every URL the skin asked for, to prove wiring ran
   let pincel = "";             // current fillStyle
-  const marca = (x, y) => {
+  // `r` is optional and only `arc` carries it. It is recorded because the
+  // trace used to keep position and colour ONLY, which made the instrument
+  // blind to a whole class of effect: anything that changes SIZE drew a
+  // different field and measured as "identical". `luz` was written, wired and
+  // reported inert by this very smoke for exactly that reason. Position and
+  // colour still compare on their own (`movidas`, `tonos`), so a size change
+  // shows up in `difs` without ever being mistaken for a displacement.
+  const marca = (x, y, r) => {
     // Rounded: the point is whether the patch MOVED something, not float noise.
-    traza.push(`${x.toFixed(2)},${y.toFixed(2)},${pincel}`);
+    traza.push(`${x.toFixed(2)},${y.toFixed(2)},${pincel}`
+      + (r === undefined ? "" : `,r${r.toFixed(2)}`));
   };
 
   const ctx2d = new Proxy({}, {
     get: (t, k) => {
       if (k === "canvas") return canvas;
-      if (k === "createRadialGradient" || k === "createLinearGradient")
+      // The radial gradient is how a node is actually painted in the default
+      // regime -- `arc` only runs on other paths. Its radii are arguments 3
+      // and 6, and dropping them is what made the trace blind to size.
+      if (k === "createRadialGradient")
+        return (x, y, r0, x1, y1, r1) => {
+          trabajoDeNodo++;
+          marca(x, y, r1 === undefined ? r0 : r1);
+          return { addColorStop: (o, c) => traza.push(`g:${c}`) };
+        };
+      if (k === "createLinearGradient")
         return (x, y) => { trabajoDeNodo++; marca(x, y); return { addColorStop: (o, c) => traza.push(`g:${c}`) }; };
       if (k === "fillText") return (g, x, y) => { trabajoDeNodo++; marca(x, y); };
-      if (k === "arc") return (x, y) => marca(x, y);
+      if (k === "arc") return (x, y, r) => marca(x, y, r);
       if (k === "moveTo" || k === "lineTo") return (x, y) => marca(x, y);
       if (k === "measureText") return () => ({ width: 10 });
       if (k === "getImageData") return () => ({ data: new Uint8ClampedArray(4) });
@@ -410,17 +427,20 @@ console.log(`OK: venue layer gates on venue3d -- shipped ${flagReal === true ? "
 // The board's own routing, only louder, plus one node forced to carry the
 // break tag: campo.json has no curatorial tags yet, so desgarro would sit
 // untested on real data and rot.
+// The wiring comes from the BOARD, amplified; it used to be five rows typed
+// out here. A hand-written copy of a table that lives somewhere else stops
+// matching it the day the table grows, and it did: `luz` was added to the
+// board, `solo("luz")` inherited THIS patch instead, its row was never
+// compiled, the coefficient stayed at zero and the bench reported the effect
+// inert. Two hours went into the effect and the fault was here. Only the gain
+// is the bench's business -- what is wired to what is the artist's.
 const fuerte = {
   version: 1,
   mejoras: { patch_efectos: true },
-  patch: [
-    { dato: "tilde", efecto: "pulso", ganancia: 6 },
-    { dato: "trazo", efecto: "curvatura", ganancia: 6 },
-    { dato: "color", efecto: "sangrado", ganancia: 6 },
-    { dato: "etiqueta", efecto: "desgarro", ganancia: 6 },
-    { dato: "peso", efecto: "gravedad", ganancia: 6 },
-  ],
+  patch: (tableroReal.patch || []).map(f => ({ ...f, ganancia: 6 })),
 };
+if (!fuerte.patch.length)
+  morir(new Error("the board carries no patch rows: the bench has nothing to amplify"));
 const marcarQuiebre = "if (typeof NODOS!=='undefined') for (let i=0;i<NODOS.length;i+=7) NODOS[i].sen[3]=1;";
 const encendido = await correr({ tablero: fuerte, antes: marcarQuiebre });
 if (encendido.failed) morir(encendido.failed);
@@ -482,7 +502,16 @@ console.log(`OK: gravedad pulls the reading ${deriva.toFixed(1)} px in 30 frames
 // board). The doublecup rule: each switch is measured by the signature ONLY
 // its effect can leave -- and a solo run doubles as proof that the other four
 // switches really silence theirs, because their signatures must read zero.
-const EFECTOS_NOMBRES = ["pulso", "curvatura", "sangrado", "desgarro", "gravedad"];
+// Derived from the board, NOT written by hand. It used to be a literal list,
+// and a literal list stops matching reality the day an effect is added: the
+// new effect would never be silenced in a solo run, so every other effect's
+// signature would quietly include it. That is the same defect shape this repo
+// has already paid for seven times. If the board grows an effect, this grows
+// with it or the run fails loudly.
+const EFECTOS_NOMBRES = Object.keys(tableroReal.efectos || {});
+if (EFECTOS_NOMBRES.length < 5)
+  morir(new Error(`the board declares ${EFECTOS_NOMBRES.length} effects: `
+    + `the per-effect section cannot measure what is not declared`));
 const solo = (efecto) => ({
   ...fuerte,
   efectos: Object.fromEntries(EFECTOS_NOMBRES.map(e => [e, e === efecto])),
@@ -534,6 +563,36 @@ if (soloPulso.failed) morir(soloPulso.failed);
 const mPulso = comparar(glifoBase, soloPulso);
 if (!(mPulso.difs > 0)) morir(new Error("pulso alone left the glyph trace identical: its switch is inert"));
 console.log(`OK: pulso alone bends glyph time (${mPulso.difs} trace differences over ${glifoBase.traza.length} marks)`);
+
+// luz alone: the neighbours DILATE. Its signature is the RADIUS, measured
+// directly from the trace -- not inferred from what it leaves untouched.
+// The first version of this test demanded zero displacement and zero colour
+// change, and that was a guess, not a measurement: `r` feeds the gradient and
+// the position jitter downstream, so growing it moves 673 marks and recolours
+// 4941 as a side effect. What no other effect does is change the radius
+// itself, and that is what gets asserted here.
+// Reading it at all took two fixes to THIS bench, not to the effect: the
+// trace kept position and colour only (`arc` dropped its radius and
+// `createRadialGradient` -- how a node is really painted in the default
+// regime -- dropped both of its), and `fuerte.patch` was a hand-typed copy of
+// the board that never grew the new row, so `solo("luz")` compiled a
+// coefficient of zero. The effect read "inert" twice while being correct.
+const soloLuz = await correr({ tablero: solo("luz"), antes: marcarQuiebre });
+if (soloLuz.failed) morir(soloLuz.failed);
+const mLuz = comparar(baseQ, soloLuz);
+const radio = (t) => t.split(",").find(p => p.startsWith("r"));
+let radiosDistintos = 0, radiosCrecidos = 0;
+for (let i = 0; i < Math.min(baseQ.traza.length, soloLuz.traza.length); i++) {
+  const a = radio(baseQ.traza[i]), b = radio(soloLuz.traza[i]);
+  if (a === undefined || b === undefined || a === b) continue;
+  radiosDistintos++;
+  if (parseFloat(b.slice(1)) > parseFloat(a.slice(1))) radiosCrecidos++;
+}
+if (!(radiosDistintos > 0))
+  morir(new Error("luz alone changed no radius: its switch is inert"));
+if (radiosCrecidos !== radiosDistintos)
+  morir(new Error(`luz shrank ${radiosDistintos - radiosCrecidos} radii: it dilates, it does not contract`));
+console.log(`OK: luz alone dilates ${radiosCrecidos} radii (every change grows, none shrinks)`);
 
 // gravedad alone: the reading drifts, exactly as in section 4.
 const soloGrav = await correr({ tablero: solo("gravedad"), caminar: false, antes: desviar });
