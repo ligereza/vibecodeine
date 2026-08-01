@@ -26,6 +26,7 @@ vacia, el organismo vuelve solo a su modo autonomo.
 Uso:
     python3 material.py            # reconstruye la cola desde las fichas
     python3 material.py --contar   # solo informa cuanto hay
+    python3 material.py --degradar-ocurrencias [--aplicar]
 """
 import hashlib
 import re
@@ -157,6 +158,35 @@ def _hash(texto):
     return hashlib.sha1(texto.lower().encode("utf-8")).hexdigest()[:12]
 
 
+# Con que estado nace una tarea segun de donde salio, y es la diferencia entre
+# una pregunta y una ocurrencia.
+#
+# `rd` triangula: la pregunta la define el flyer -- fecha + cabeza de cartel --
+# y la respuesta es un nombre con una URL o "NO SE ENCONTRO". Eso es una
+# pregunta y nace `pendiente`.
+#
+# `ig` sale de `oportunidad_codigo` y `linea_investigacion`, dos campos donde al
+# modelo se le pide EXPLICITAMENTE que especule: "si la obra sugiere un
+# procedimiento que podria automatizarse, describi que programa la generaria".
+# Eso es una ocurrencia sobre una foto, y hasta el 2026-08-01 se convertia
+# textual en orden de trabajo.
+#
+# Medido ese dia sobre la cola real: 2.812 tareas, de las cuales 2.696 (95,9%)
+# nacieron asi -- 1.342 desde `oportunidad_codigo` y 1.354 desde
+# `linea_investigacion`, con 1.342 obras generando las DOS. Al ritmo real del
+# organismo (~15 al dia) son 177 dias de cola, y se rellena cada hora. Una de
+# ellas mando a MAK a "generar una base de datos de tatuajes por tipo de imagen
+# y elementos" a las 02:00, desde una foto de 2020. Nadie lo decidio.
+#
+# Inventar que hacer esta bien; DECIDIRLO sin formato no (palabras del usuario,
+# 2026-08-01). Asi que nacen `propuesta`: quedan escritas, contadas y visibles,
+# y `pop_pendiente` no las despacha. Para pasar a `pendiente` tienen que
+# responder las tres preguntas de `flujo.micelio.evaluar_propuesta` -- quien lo
+# va a usar, donde se busco que no exista ya, y como se sabe que salio bien.
+# No se borran: la ocurrencia puede ser buena y el archivo es del artista.
+ESTADO_INICIAL = {"rd": "pendiente", "ig": "propuesta"}
+
+
 def tareas_desde_fichas():
     vistos = set()
     tareas = []
@@ -258,7 +288,10 @@ def tareas_desde_fichas():
                     "depto": depto_t,
                     "modo": modo_t,
                     "texto": texto_t,
-                    "estado": "pendiente",
+                    # La variable de arriba se llama `propuestas` desde que se
+                    # escribio, y despues se apendeaban como ordenes. Las de
+                    # `ig` vuelven a ser lo que su nombre dice.
+                    "estado": ESTADO_INICIAL[fuente],
                 })
     return tareas
 
@@ -321,7 +354,39 @@ def reconstruir():
     return len(salida), pend
 
 
+def degradar_ocurrencias(aplicar=False):
+    """Las tareas de `ig` que ya estan encoladas vuelven a ser propuestas.
+
+    `ESTADO_INICIAL` arregla las que NACEN de ahora en adelante. Las que ya
+    estan en la cola siguen `pendiente`, porque `reconstruir()` conserva el
+    estado anterior a proposito ("no revivir lo ya despachado"). Sin esta
+    migracion el arreglo no toca las 2.696 que ya existen.
+
+    Lo DESPACHADO no se toca: ya se trabajo, y volverlo atras seria reescribir
+    lo que paso. Solo cambia lo que todavia no salio.
+    """
+    filas = cargar()
+    afectadas = [r for r in filas
+                 if r.get("origen") == "ig" and r.get("estado") == "pendiente"]
+    if aplicar:
+        for r in afectadas:
+            r["estado"] = "propuesta"
+        if afectadas:
+            guardar(filas)
+    return len(afectadas), len(filas)
+
+
 def main():
+    if "--degradar-ocurrencias" in sys.argv:
+        aplicar = "--aplicar" in sys.argv
+        n, total = degradar_ocurrencias(aplicar)
+        print("  cola: %d filas | de `ig` pendientes: %d" % (total, n))
+        if aplicar:
+            print("  pasadas a `propuesta`: %d" % n)
+            print("  quedan como tarea solo las que nacieron de una pregunta")
+        else:
+            print("  (ensayo: no se escribio nada. Para aplicar: --aplicar)")
+        return
     if "--contar" in sys.argv:
         filas = cargar()
         pend = sum(1 for r in filas if r.get("estado") == "pendiente")
