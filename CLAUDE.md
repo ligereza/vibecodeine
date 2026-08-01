@@ -483,6 +483,22 @@ LIMITS: descriptive yes; nothing generative by synthesis; psicosis NEVER profile
 real people. The artwork `arte-ascii-readme.svg` is the artist's finished piece
 and is not altered; the README text around it is ordinary repo content.
 
+**What may be fed to a model (2026-07-31, user's correction).** The rule used
+to be read as "nothing from the RD corpus leaves the box, ever", and it would
+have blocked re-reading the archive with a better model. His correction, in his
+words: it meant NEW input carrying personal data is not accepted. What is
+already a PRODUCT -- his flyers, his works, material that already passed that
+filter -- can be reviewed. So:
+
+- NEW input with personal data: does not enter. Unchanged.
+- Already-produced material: can be re-read, measured and re-perceived.
+
+Cause: that rule lived only in `MEMORIA_DIRECCION.md`, on his disk, outside the
+repo -- so every agent either invented it or ignored it. An operating rule that
+is not in the repo does not exist for whoever comes next. Retirement: when the
+perception pipeline enforces the cut itself instead of asking an agent to
+remember it.
+
 **Studio / Events:**
 ```bash
 py -m flujo eventos flyer-auto "https://www.instagram.com/p/XXXX/"

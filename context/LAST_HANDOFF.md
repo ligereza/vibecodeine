@@ -1129,3 +1129,178 @@ never measured.
 (NOT over `fichas.jsonl`; comparing the two passes is the only way to show it
 improved). When it finishes: coverage over the full 1401 with attribution, and
 then the same 1024-vs-1280 comparison.
+
+---
+
+## 2026-08-01 (madrugada) -- lo medido y lo que quedo andando
+
+Los dos numeros que faltaban del cierre anterior existen ahora, y ninguno se
+parece a lo que se suponia.
+
+### 1024 vs 1280: los 256 px SI compran lectura
+
+Misma muestra determinista de 12 imagenes, mismo modelo
+(`mistral-small-3-1-24b`), lo unico que cambia es el lado mayor:
+
+```txt
+lado   solape OCR   tokens   ms/imagen   inventados
+1024      0,642     12.232     2.287         0
+1280      0,761     16.411     2.176         0
+```
+
++18,5% de lectura por +34% de tokens, misma latencia. Produccion (1280) estaba
+bien; el que estaba mal era el BANCO, que reescalaba a 1024 con un comentario
+que decia "same as percepcion.MAX_LADO_VISION". Todo numero que ese banco
+produjo -- incluido el `solape 0.807` con que se eligio el modelo -- midio un
+tamano que nadie corre. Ahora el banco corre a 1280 y tiene `--lado`.
+
+Lo que NO se midio: solo 12 imagenes y un modelo. Alcanza para decidir que no
+hay que bajar a 1024; no alcanza para afirmar que 1600 no seria mejor.
+
+### Cobertura v1 vs v4, sobre los MISMOS archivos
+
+`py tools/comparar_cobertura_fichas.py <antes> <despues> --motor watsonx`.
+Filtra por `medicion.vision.motor` para que una pasada con fallback no le
+acredite a watsonx lo que respondio ollama, y solo cuenta ids presentes en las
+dos pasadas: cobertura sobre conjuntos distintos no es una comparacion.
+
+Sobre 923 fichas ig, gemma3:4b -> watsonx:
+
+```txt
+tipo_obra            51,9% -> 100,0%     (+48,1)
+materiales           68,7% ->  99,6%     (+30,9)
+colores              95,0% -> 100,0%     (+5,0)
+descripcion/conceptos/tecnica  99,9% -> 100%
+oportunidad_codigo   99,1% ->  75,9%     (-23,2)
+```
+
+La unica caida real es `oportunidad_codigo`: watsonx omite la clave en 225
+imagenes donde el modelo chico siempre decia algo. No es plantilla en ninguna
+de las dos (1.258 y 640 valores distintos), asi que es un modelo callandose,
+no un descarte del pipeline. Queda como dato, no como pendiente.
+
+### Los botones existen y aprietan
+
+El panel de Comandos era una lista escrita a mano de ~30 comandos con boton de
+"copiar". El CLI real tiene 91. Ahora el panel se dibuja desde
+`context/comandos.json` (generado por introspeccion) y corre por
+`POST /api/comando`. Sin backend DICE que no hay botones en vez de mostrar
+botones muertos; `destructivo: null` pide confirmacion con el motivo de ESE
+caso; un comando que no esta listo se muestra igual, con lo que le falta.
+
+### Tercer comentario que mentia en 24 horas
+
+`gen_mapa_comandos.py` tenia a `tapiz` con requisito
+`"nada; el instrumento vive en tools/compete_engine.py"` -- prosa que dice que
+no hace falta nada, metida en el campo que significa "esto falta". El generador
+emitia `falta: nada` y un boton habria anunciado que al comando le falta nada.
+74 -> 75 comandos listos.
+
+Van tres en un dia: el comentario del banco (1024 "same as percepcion"), el
+requisito de `tapiz`, y antes `CLAVES_VISION`. **Un comentario tambien es una
+lista escrita a mano.**
+
+### Estado al cerrar
+
+- PR #428 mergeado. PR #429 abierto (botones + comparador + `--lado`).
+- La corrida ig sigue: 1.024 de 1.401, 0 errores, salida en `/tmp/fichas_v4`
+  en la caja, NUNCA encima de `fichas.jsonl`. Consolidar es paso humano.
+- Sin tocar: la busqueda de research (SearXNG sin llave de Tavily de respaldo).
+  Hasta arreglarla NO cablear `refutar` como compuerta automatica: pondria
+  sello de "verificado" sobre afirmaciones inventadas.
+- El reloj de IBM sigue corriendo a ~US$36 por dia por existir.
+
+### La busqueda estaba ciega, y contestaba 200
+
+Medido en la caja: SearXNG devolvia HTTP 200 con `results: []` en 7 de 10
+consultas reales. La razon estaba en un campo que nadie leia --
+`unresponsive_engines` traia los CUATRO motores generales caidos a la vez
+(brave y google cse "Suspended: too many requests", duckduckgo y startpage
+pidiendo CAPTCHA). La misma consulta seis veces seguidas dio cero seis veces,
+asi que no era la consulta. Y no hay `TAVILY_API_KEY` en la caja, o sea que el
+respaldo tampoco existe.
+
+`web_search` devolvia el MISMO diccionario vacio para dos hechos distintos:
+"busque y no hay nada" y "nadie pudo buscar". Aguas abajo eso se lee como que
+la web no tiene nada del tema, y `refutar.py` -- que firma su salida como
+verificada adversarialmente -- habria escrito que una afirmacion no tiene
+fuentes cuando en realidad nadie miro. **Un "no verificable" falso es el mismo
+defecto que un "verificado" falso: los dos reportan una medicion que no se
+hizo.** El panel de salud tenia el mismo agujero: un 200 con cero resultados se
+registraba como EXITO, asi que searxng aparecia verde estando ciego.
+
+Ahora `searxng_search` devuelve `ciego` + `motivo`, nombra los motores caidos
+en la lista de errores del job y registra salud como fallo tipo `ciego`;
+`web_search` conserva la ceguera cuando no hay llave de respaldo; `refutar` se
+detiene con un MURO y no escribe NADA (un archivo en `out/` es indistinguible
+de uno bueno para el que lo lea despues) y anota `busquedas_ciegas` cuando si
+corre; `research` pausa en el checkpoint que ya tenia.
+
+Probado corriendo, no compilando: con el buscador alcanzable, 2 de 3 consultas
+ciegas y 5 fuentes reales -> informe escrito, ceguera anotada en `meta.errors`.
+Con `SEARXNG_BASE_URL` apuntando a un puerto muerto -> exit 3, tres lineas
+MURO, ningun directorio de salida creado, cero llamadas a modelo.
+
+**Esto NO arregla el buscador.** Los motores siguen tapados. Lo que cambia es
+que ahora se sabe, y que nada firma un informe sin fuentes. Arreglarlo es
+configurar motores que no se tapen en la instancia SearXNG de la caja (fuera
+del repo: la sync no copia esa config) o poner una `TAVILY_API_KEY`.
+
+### La sonda de RD: 10 flyers
+
+`percepcion.py correr ... --limite 10`. La primera sonda cayo sobre los diez
+primeros archivos de `~/RD`, que son logos y fichas de sustancia: cero flyers,
+cero `datos_evento`, y ninguna respuesta sobre flyers. Se repitio sobre
+`~/RD/FLYER`.
+
+Resultado: 3 de 3 `flyer_evento` con `datos_evento` lleno, valores anclados en
+la imagen. Tesseract leyo `OCT 04` donde el modelo leyo
+`OCT 04 PARQUE PADRE HURTADO`; una hoja de contacto de video dio venue + fecha
++ handles sobre una cartelera que el OCR no toco. `productora` quedo VACIA en
+las tres: el modelo prefiere no llenarla antes que adivinar, que es justo lo
+que importa aca -- una productora equivocada es un cliente equivocado.
+
+Una inferencia blanda que queda anotada y sin arreglar: convirtio el correo
+`eventos@reduciendodano.cl` en el handle `@reduciendodano.cl`.
+
+Y la sonda encontro un defecto en el arreglo de ayer: el aviso de descarte
+anunciaba que se descartaban `categoria, fecha, handles, headliners,
+productora, venue` -- y las seis se GUARDAN (`datos_evento` se arma con
+CLAVES_EVENTO leyendo el mismo dict). **Una falsa alarma es el defecto espejo
+del descarte callado**: manda a perseguir un fantasma y quema la credibilidad
+de la proxima alarma verdadera.
+
+### La corrida ig termino: 1.401 de 1.401, 0 errores
+
+Cerro a las 03:19 UTC, casi dos horas seguidas. El archivo tiene 1.401 filas y
+1.401 ids UNICOS, o sea ningun reintento quedo duplicado.
+
+```txt
+motores   watsonx 1.354 | ollama 5 | sin_atribucion 42
+errores   0
+```
+
+Los 42 `sin_atribucion` no son un agujero: son los `.srt` del corpus, tipo
+`otro`, con `estado: no_intentado` -- "no aplica a este tipo". Es el campo de
+atribucion diciendo la verdad en vez de rellenar. Los 5 de ollama son el
+fallback funcionando.
+
+Cobertura final sobre las 1.354 fichas que watsonx firmo, contra la pasada de
+gemma3 SOBRE LOS MISMOS ARCHIVOS:
+
+```txt
+tipo_obra            67,2% -> 100,0%   (+32,8)
+materiales           65,7% ->  99,6%   (+34,0)
+colores              95,6% -> 100,0%   (+4,4)
+descripcion/conceptos/tecnica  99,9% -> 100%
+datos_extraibles      0,1% ->   0,4%
+linea_investigacion  99,8% ->  98,9%   (-0,9)
+texto_visible        17,4% ->  14,8%   (-2,6)
+oportunidad_codigo   98,7% ->  77,9%   (-20,8)
+```
+
+La salida quedo copiada fuera de `/tmp` (que se borra al reiniciar) en
+`~/curatoria/pasadas/v4_watsonx_20260801/`, 1,8 MB. **Consolidarla sobre
+`fichas.jsonl` sigue siendo paso humano**: son 1.354 fichas nuevas encima de
+las 3.138 actuales, y el que decide si el cambio vale es el que mira el
+resultado, no el que lo midio.

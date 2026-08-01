@@ -673,3 +673,81 @@ class TestReporter:
         assert ruta1 == ruta2
         assert contenido1 != contenido2
         assert "ESTADO: TERMINADO" in contenido2
+
+
+# ---------------------------------------------------------------------------
+# The alarm that cried wolf, and the probe flag
+# ---------------------------------------------------------------------------
+
+class TestAvisoDeDescarte:
+    """The discard warning added on 2026-07-31 was itself announcing a discard
+    that does not happen.
+
+    `datos_evento` is built from CLAVES_EVENTO and `categoria` is read a few
+    lines below, both from the same `vision` dict -- so those keys are USED,
+    not dropped. The warning subtracted neither, and the RD probe of
+    2026-08-01 printed "se descartan: categoria, fecha, handles, headliners,
+    productora, venue" for 7 of 10 files while storing every one of them.
+
+    A false alarm is the mirror image of a silent discard: it sends whoever is
+    reading to chase a ghost, and the next real alarm is not believed. Both are
+    the interface lying about what the machine did.
+    """
+
+    def _entry(self):
+        return {"fuente": "rd", "ruta_rel": "flyer.jpg", "ruta_abs": "flyer.jpg",
+                "tipo": "imagen", "bytes": 1, "mtime": 0}
+
+    def test_keys_that_are_stored_elsewhere_are_not_called_discarded(
+            self, tmp_path, capsys):
+        vision = {"texto_visible": "OCT 04", "colores": ["negro"],
+                  "categoria": "flyer_evento", "productora": "RD",
+                  "venue": "Parque", "fecha": "OCT 04",
+                  "headliners": [], "handles": ["@rd"]}
+        with mock.patch("percepcion.ocr_tesseract", return_value=""), \
+             mock.patch("percepcion.vision_imagen", return_value=vision):
+            ficha = percepcion.construir_ficha(self._entry(), tmp_path, 5)
+
+        assert "se descartan" not in capsys.readouterr().out
+        # and they really are stored, which is why the warning was wrong
+        assert ficha["datos_evento"]["venue"] == "Parque"
+        assert ficha["categoria"] == "flyer_evento"
+
+    def test_a_genuinely_unknown_key_is_still_announced(self, tmp_path, capsys):
+        """The alarm has to keep working; the fix narrows it, not silences it."""
+        vision = {"texto_visible": "x", "clave_que_nadie_declaro": "algo"}
+        with mock.patch("percepcion.ocr_tesseract", return_value=""), \
+             mock.patch("percepcion.vision_imagen", return_value=vision):
+            ficha = percepcion.construir_ficha(self._entry(), tmp_path, 5)
+
+        salida = capsys.readouterr().out
+        assert "se descartan" in salida
+        assert "clave_que_nadie_declaro" in salida
+        assert "clave_que_nadie_declaro" not in ficha["vision"]
+
+
+class TestLimite:
+    """`--limite` exists to PROBE a corpus without running it whole: the user
+    asked for 10 RD flyers, not the 1.737 files that root holds."""
+
+    def test_the_cut_is_announced(self, tmp_path, capsys):
+        for i in range(5):
+            (tmp_path / ("%02d.jpg" % i)).write_bytes(b"x")
+        salida_dir = tmp_path / "out"
+        ficha = {"id": "x", "error": None, "fuente": "rd", "tipo": "imagen"}
+        with mock.patch("percepcion.construir_ficha", return_value=ficha):
+            percepcion.correr(str(tmp_path), None, str(salida_dir), limite=2)
+
+        salida = capsys.readouterr().out
+        assert "LIMITE: sonda de 2 de 5 archivos" in salida, (
+            "un total mas chico sin explicacion se lee como 'eso era todo el "
+            "corpus', y quien compare cobertura despues divide por el numero "
+            "equivocado")
+
+    def test_without_the_flag_nothing_is_cut(self, tmp_path, capsys):
+        for i in range(3):
+            (tmp_path / ("%02d.jpg" % i)).write_bytes(b"x")
+        ficha = {"id": "x", "error": None, "fuente": "rd", "tipo": "imagen"}
+        with mock.patch("percepcion.construir_ficha", return_value=ficha):
+            percepcion.correr(str(tmp_path), None, str(tmp_path / "out"))
+        assert "LIMITE" not in capsys.readouterr().out

@@ -25,8 +25,8 @@
    "invocacion": "py -m flujo tapiz",
    "grupo": "",
    "desc": "Ecosistema Tapiz<->Psicosis<->Fungi: pipeline generativo (tools/compete_engine.py).",
-   "requiere": "nada; el instrumento vive en `tools/compete_engine.py`",
-   "estado": "falta: nada; el instrumento vive en `tools/compete_engine.py`",
+   "requiere": "",
+   "estado": "listo",
    "destructivo": null
   },
   {

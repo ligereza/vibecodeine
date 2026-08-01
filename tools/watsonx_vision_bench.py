@@ -59,7 +59,13 @@ except ImportError:
 
 FICHAS = os.path.expanduser("~/curatoria/fichas/fichas.jsonl")
 RAIZ_RD = os.path.expanduser("~/RD")
-MAX_LADO = 1024                     # same as percepcion.MAX_LADO_VISION
+# Production resizes to 1280 (`percepcion.MAX_LADO_VISION`). This said 1024 with
+# a comment claiming it was "the same as percepcion" -- it was not, and that
+# turned every number this bench produced into a measurement of a size nobody
+# runs. `--lado` exists so the question "do those 256 px buy anything" gets an
+# answer instead of an assumption: the run pays roughly double the image tokens
+# for them.
+MAX_LADO = 1280
 
 MODELOS = (
     "meta-llama/llama-3-2-11b-vision-instruct",
@@ -113,7 +119,7 @@ def _token():
         return json.loads(r.read())["access_token"]
 
 
-def _b64(ruta):
+def _b64(ruta, max_lado=MAX_LADO):
     """Igual que percepcion._imagen_a_b64: si no se achica, un PNG de 16 MB se
     va en 21 MB de base64 y la llamada tarda 36 s en vez de unos pocos."""
     if Image is not None:
@@ -121,8 +127,8 @@ def _b64(ruta):
             with Image.open(ruta) as im:
                 im = im.convert("RGB")
                 w, h = im.size
-                if max(w, h) > MAX_LADO:
-                    e = MAX_LADO / max(w, h)
+                if max(w, h) > max_lado:
+                    e = max_lado / max(w, h)
                     im = im.resize((max(1, int(w * e)), max(1, int(h * e))),
                                    Image.LANCZOS)
                 buf = io.BytesIO()
@@ -205,6 +211,9 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--muestras", type=int, default=8)
     ap.add_argument("--modelos", default=",".join(MODELOS))
+    ap.add_argument("--lado", type=int, default=MAX_LADO,
+                    help="lado mayor al que se reescala la imagen antes de "
+                         "mandarla (produccion usa %d)" % MAX_LADO)
     args = ap.parse_args()
 
     if not os.environ.get("WATSONX_API_KEY"):
@@ -225,7 +234,8 @@ def main():
         solapes, llenados, sin_respaldo, fallos, ms_tot, tok_tot = [], 0, 0, 0, 0, 0
         for etiqueta, grupo in (("con_ocr", con_ocr), ("vacia", vacias)):
             for ruta, ficha in grupo:
-                ok, ms, texto, tokens = preguntar(token, modelo, _b64(ruta))
+                ok, ms, texto, tokens = preguntar(token, modelo,
+                                                  _b64(ruta, args.lado))
                 ms_tot += ms
                 tok_tot += tokens
                 if not ok:
