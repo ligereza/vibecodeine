@@ -64,6 +64,15 @@ async function correr({ tablero = null, cuadros = 30, caminar = true, antes = nu
   const pedidos = [];          // every URL the skin asked for, to prove wiring ran
   let pincel = "";             // current fillStyle
   let fuente = "";             // current font -- the SIZE of a glyph mark
+  // The bloom changes HOW a mark is painted, not just its colour: `lighter`
+  // makes two translucent strokes SUM light where they overlap instead of
+  // painting over each other, which is exactly what turns a flat line or
+  // glyph into a laser halo. Without this the bench is blind to the blend
+  // mode -- the same defect already fixed once for the arc's radius and the
+  // glyph's font size: an effect that only changes HOW something is drawn,
+  // never WHERE, measured as if it did not exist.
+  let mezcla = "source-over";  // current globalCompositeOperation
+  let grosor = 1;               // current lineWidth -- the halo is WIDER than the core
   // Los px de la fuente actual, o undefined si no hay. Se lee del estado del
   // contexto en vez de re-parsear en cada marca.
   const fuentePx = () => {
@@ -79,7 +88,14 @@ async function correr({ tablero = null, cuadros = 30, caminar = true, antes = nu
   // shows up in `difs` without ever being mistaken for a displacement.
   const marca = (x, y, r) => {
     // Rounded: the point is whether the patch MOVED something, not float noise.
-    traza.push(`${x.toFixed(2)},${y.toFixed(2)},${pincel}`
+    // `m:` and `w` only appear when they differ from the plain-paint default,
+    // so every trace recorded before the bloom existed reads byte-identical
+    // to what this produces today -- the exact-equality comparisons below
+    // (`igual()`) never cared about blend mode or stroke width, so they must
+    // not start seeing a difference where there is none.
+    const m = mezcla !== "source-over" ? `,m:${mezcla}` : "";
+    const w = grosor !== 1 ? `,w${grosor.toFixed(2)}` : "";
+    traza.push(`${x.toFixed(2)},${y.toFixed(2)},${pincel}${m}${w}`
       + (r === undefined ? "" : `,r${r.toFixed(2)}`));
   };
 
@@ -123,6 +139,11 @@ async function correr({ tablero = null, cuadros = 30, caminar = true, antes = nu
       // La fuente se sigue igual que el pincel, y por la misma razon: es
       // estado del contexto que decide COMO sale la marca.
       if (k === "font") fuente = String(v);
+      // El bloom del laser (vinculos y glifos) se declara con estos dos, no
+      // con un color nuevo: seguidos igual que el resto del estado del
+      // contexto, por la misma razon que `pincel` y `fuente`.
+      if (k === "globalCompositeOperation") mezcla = String(v);
+      if (k === "lineWidth") grosor = Number(v) || 1;
       return true;
     },
   });

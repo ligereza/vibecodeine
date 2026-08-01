@@ -1,6 +1,6 @@
 # Estado del repo
 
-Ultima actualizacion: **2026-08-01, 09:01**.
+Ultima actualizacion: **2026-08-01, 10:31**.
 
 Este archivo se lee en dos minutos o no sirve. Llego a 1.666 lineas apiladas y
 nadie lo leia -- ni los agentes que lo editaban. La historia esta en
@@ -22,10 +22,8 @@ Ninguna la puede tomar un agente. Estan ordenadas por lo que cuesta no tomarla.
 |---|---|
 | **El reloj de IBM** | ~US$36/dia por TENER el plan. Todo el trabajo de dos dias costo US$0,56. Bajar a Lite se hace desde la consola, no por API. |
 | **Consolidar las 1.354 fichas de watsonx** | `tipo_obra` 67%->100%, `materiales` 66%->99,6%. Pero **4.595 valores quedarian mas cortos** que los actuales. `tools/consolidar_fichas.py --aplicar`. |
-| **Encender `nodo_glifo`** | El nodo deja de ser un circulo y pasa a ser glifo: arcos 764->0, gradientes 382->0. Publicada apagada en `datos/tablero.json`. Ojo: con ella encendida el medidor no puede fijar el costo por cuadro (ver muro 3). |
 | **Si los ensayos de MAK se publican en iskvw.cl** | Lo dejaste para debatir -- y **ya estan publicados** desde el 2026-07-31: el sustrato lleva 16 conceptos y 1 informe. La maquina tomo la decision por vos. |
 | **La geometria del campo** | Dijiste que la pediste "mil veces" y **no esta escrita en ningun lado**: se busco en los 5 documentos, todo el repo, la historia de git en todas las ramas, `.remember/` y los issues. Se perdio en conversacion. Lo unico escrito es `iskvw/piel/campo/ASCII_REFERENCIA.md`. |
-| **`patch_efectos` y `venue3d`** | Construidos y apagados en `datos/tablero.json`. Encenderlos es del artista. |
 | **La direccion de iskvw como obra** | `iskvw/MAPA.md` la declara tuya y sigue vacia. |
 
 ---
@@ -70,13 +68,7 @@ Un muro nombrado es entrega valida. Estos no los resuelve mas trabajo.
    porque todo Resolume/Chataigne/xio habla OSC.
 
 
-3. **El nodo-glifo no se puede medir.** Con la llave encendida el conteo por
-   cuadro varia (366, 367...) porque el patron es generativo y su nivel depende
-   de un campo que evoluciona. El medidor exige que cada cuadro haga el mismo
-   trabajo, y hace bien: esa regla existe para que una regresion de costo se vea.
-   La direccion para resolverlo esta en `PROYECCION.md` 5.5 (sembrar lo
-   generativo con algo determinista).
-4. **La triangulacion de RD produce cero fuentes primarias.** 70 informes vivos,
+3. **La triangulacion de RD produce cero fuentes primarias.** 70 informes vivos,
    46 dicen NO SE ENCONTRO y **0 de 70** tienen `verificacion.fuentes_primarias`
    con algo adentro.
 
@@ -88,6 +80,30 @@ Un muro nombrado es entrega valida. Estos no los resuelve mas trabajo.
 GENERA `archivo.json` con `gen_archivo_iskvw.py --fuente todo` antes de subir y
 recien despues verifica que exista; no es una copia congelada. La piel degrada a
 `campo.json` solo si eso falla, y no falla desde el 2026-07-31.
+
+**El campo genera durante la navegacion, y tiene bloom laser (2026-08-01).**
+Dos pedidos del artista sobre el mismo archivo. (1) El glifo por-nodo
+(`nodo_glifo`, encendido desde #433) tenia su densidad topada al 55% mientras
+se navegaba: el piso lo ponia `E.despliegue`, que solo sube quieto 5s (2% por
+cuadro) y cae en ~8 cuadros al primer gesto. Sacado el piso: el glifo usa su
+rango completo SIEMPRE; quedarse quieto sigue revelando algo distinto (la
+ficha y el tamano de la forma resuelta), nunca la densidad del glifo. De paso,
+`ctx.font` quedaba sin inicializar para un visitante que solo navega y nunca
+resuelve una obra (`F` arranca en 0 exacto): corregido. (2) Vinculos y glifos
+ahora se pintan con doble trazo -- halo ancho y tenue debajo, nucleo fino y
+brillante encima -- en `globalCompositeOperation='lighter'`, para que los
+cruces SUMEN luz en vez de taparse. Sin llave nueva en el tablero: va directo,
+como los vinculos-siempre-visibles del 2026-07-30, porque es un pedido
+explicito del artista y no una propuesta a decidir. Medido:
+`grep -cE "shadowBlur|bloom|glow|globalCompositeOperation" iskvw/piel/campo/index.html`
+0->7 (4 ocurrencias de codigo real); peor caso de segmentos por frame
+(`archivo.json`, 269 vinculos) 107->214 -- exactamente el doble, cada vinculo
+sigue siendo el mismo, 5,6x bajo el techo de 1200. `tests/test_iskvw_piel_medir.py`
+re-pineado con los numeros reales; `tools/iskvw_piel_smoke.mjs` extendido para
+que `globalCompositeOperation` y `lineWidth` dejen firma en la traza (antes el
+banco era ciego al modo de mezcla, igual que antes lo fue al radio y a la
+fuente). Suite completa + smoke + medir en verde. PR: rama
+`laser-bloom-campo-genera`.
 
 **La percepcion.** 3.138 fichas: 1.737 rd, 1.401 ig. La pasada de watsonx sobre
 las ig termino (1.401/1.401, 0 errores) y esta en
