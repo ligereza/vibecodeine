@@ -1570,3 +1570,60 @@ Y el informe lo DICE en su primera linea: `> Debate entre 3 modelos distintos
 -- proponente: ... | refutador: ... | juez: ...`. Cuando no hay debate, la
 linea dice lo contrario, arriba de todo: **un documento titulado "Adversarial"
 que salio de un solo modelo discutiendo consigo mismo es peor que no tenerlo.**
+
+### El 35% de los informes traia la plantilla sin rellenar
+
+Contado sobre los 102 informes reales de la caja: **36 tienen un marcador sin
+completar**, casi siempre `**Investigador:** [Tu Nombre]`. El modelo no fallo
+en investigar: imito la PLANTILLA de un documento de investigacion, con el
+hueco del autor incluido, y el archivo salio con sus cinco secciones y aspecto
+de terminado.
+
+Es el mismo defecto que un HTTP 200 con cero resultados o un `campos perdidos:
+0`: algo que se lee como hecho y no lo esta. Y es exactamente lo que el usuario
+nombro al pedir que los informes fueran de calidad.
+
+`research_lib.marcadores_de_plantilla()` los detecta y DICE cuales encontro
+(un rechazo sin motivo manda a adivinar). `research.py` pide el informe UNA vez
+mas nombrando el hueco -- y la instruccion dice lo que hay que hacer en vez de
+"reescribilo": *"no hay un autor que poner ni una fecha que completar despues,
+sos vos quien lo escribe ahora; si un dato no lo tenes, decilo con palabras, no
+con un corchete"*. Si vuelve igual, el informe sale con el aviso ARRIBA DE
+TODO, antes de cualquier afirmacion.
+
+Un corchete que NO es plantilla (una cita `[1]`) no lo dispara: gritar en falso
+cuesta lo mismo que callar.
+
+### MURO: no hay busqueda en la caja, y bloquea lo mas grande del plan
+
+Drenar la cola de MAK -- 2.730 tareas pendientes, la mayoria triangulaciones de
+RD -- es lo unico que la ventana pagada desbloquea y no se puede hacer despues.
+**No se puede correr.** Medido esta madrugada, tres veces:
+
+```txt
+instancia SearXNG, categoria general    0 resultados
+   motores caidos: brave (too many requests), duckduckgo (CAPTCHA),
+                   google cse (too many requests), startpage (CAPTCHA)
+engines=bing, consulta larga (207 car)  10 resultados -> dle.rae.es
+engines=bing, consulta corta (50 car)   10 resultados -> un video de youtube
+sin TAVILY_API_KEY                      no hay respaldo
+```
+
+No es el largo de la consulta: probe corta y larga, las dos dan basura por
+bing y cero por la instancia. El conector de bing de esa instancia devuelve
+resultados no relacionados, y los cuatro motores generales estan tapados.
+
+La cadena se comporta BIEN ante eso: `research.py` pausa con el motivo escrito
+en el checkpoint en vez de escribir un informe de memoria. Se probo en vivo hoy
+y eso fue exactamente lo que hizo.
+
+**Ningun cambio de codigo lo arregla.** Las dos salidas, y las dos son del
+usuario:
+
+1. Una `TAVILY_API_KEY` en `~/n8n-local/research.env` (1.000 busquedas gratis
+   al mes). Es la mas directa.
+2. Arreglar los motores de la instancia SearXNG de la caja -- su config vive en
+   docker, fuera del repo, y la sync no la copia.
+
+Mientras tanto: todo lo que dependa de research esta detenido por diseno, y eso
+es preferible a 2.730 informes inventados entrando a la base de RD.

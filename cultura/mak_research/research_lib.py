@@ -471,6 +471,31 @@ MODELOS_POR_PAPEL = {
 }
 
 
+# Marcas de que el modelo entrego la FORMA de un informe en vez de un informe.
+# Medido el 2026-08-01 sobre los 102 informes reales de la caja: 36 (35%) traen
+# un marcador sin rellenar, casi siempre "**Investigador:** [Tu Nombre]". El
+# modelo no fallo en investigar: imito la plantilla de un documento de
+# investigacion, con el hueco del autor incluido. Un informe asi se lee como
+# terminado y no lo esta, que es el mismo defecto que un 200 con cero
+# resultados o un "campos perdidos: 0".
+PLANTILLA_SIN_RELLENAR = (
+    "[su nombre]", "[tu nombre", "[nombre del", "[nombre de la",
+    "[insertar", "[completar", "[a completar", "[pendiente]", "[fecha]",
+    "[todo]", "[xxx", "xxxx", "lorem ipsum",
+)
+
+
+def marcadores_de_plantilla(texto):
+    """Los marcadores que quedaron sin rellenar. Vacio = ninguno.
+
+    Se compara en minusculas y se devuelve la lista, no un booleano: quien lo
+    use tiene que poder DECIR cual encontro. Un rechazo sin motivo manda a
+    adivinar, y este repo ya pago eso.
+    """
+    bajo = (texto or "").lower()
+    return [m for m in PLANTILLA_SIN_RELLENAR if m in bajo]
+
+
 def modelos_por_papel(proveedor, pedidos=None):
     """Que modelo le toca a cada papel. Lo pedido a mano gana siempre.
 
