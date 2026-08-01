@@ -780,6 +780,41 @@ class LLM:
         raise RuntimeError("Todos los proveedores LLM fallaron. Ultimo: %s" % last)
 
 
+# Tope duro de Tavily, medido contra la API el 2026-08-01: una consulta de mas
+# de 400 caracteres responde HTTP 400 "Query is too long" y CERO resultados.
+TOPE_CONSULTA = 400
+
+
+def consulta_de(tema, tope=TOPE_CONSULTA):
+    """Lo que se le manda al BUSCADOR, que no es lo que se le manda al modelo.
+
+    Las tareas de triangulacion de RD miden 530 caracteres porque llevan la
+    pregunta Y las reglas para el modelo en el mismo texto: "...que productora
+    organizo el evento del 21 DE MARZO 2026 con ADRIATIQUE... REGLAS: el evento
+    es en Chile, si lo que encontras es de otro pais NO sirve. Solo se acepta
+    respuesta con FUENTE VERIFICABLE...". Un buscador hace match de palabras: le
+    estabamos mandando instrucciones de comportamiento como si fueran terminos.
+
+    Es el MISMO defecto que `marco_solo()` arreglo el 2026-07-26, cuando 148
+    caracteres de encuadre viajaban a Tavily y devolvian el mismo PDF de
+    metodologia peruano para cuatro temas distintos. Volvio a entrar por la cola
+    de material, escrito a mano en otro archivo.
+
+    Se corta en el primer "REGLAS:" y, si aun no entra, en el ultimo espacio
+    antes del tope: partir una palabra por la mitad inventa un termino que nadie
+    escribio.
+    """
+    texto = " ".join(str(tema or "").split())
+    corte = texto.upper().find("REGLAS:")
+    if corte > 20:
+        texto = texto[:corte].strip(" .,;")
+    if len(texto) <= tope:
+        return texto
+    recorte = texto[:tope]
+    espacio = recorte.rfind(" ")
+    return (recorte[:espacio] if espacio > tope // 2 else recorte).strip()
+
+
 def tavily_search(query, depth="basic", max_results=5, errors=None):
     """basic = 1 credito, advanced = 2. 1000/mes gratis."""
     load_env()
@@ -879,6 +914,11 @@ def web_search(query, depth="basic", max_results=5, errors=None):
     distinguirlo -- si no, un buscador tapado produce un informe que concluye
     que el tema no tiene respaldo en la web.
     """
+    consulta = consulta_de(query)
+    if consulta != " ".join(str(query or "").split()) and errors is not None:
+        errors.append("consulta acortada para buscar: %d -> %d caracteres"
+                      % (len(str(query or "")), len(consulta)))
+    query = consulta
     res = searxng_search(query, max_results=max_results, errors=errors)
     if res.get("results"):
         return res
