@@ -1304,3 +1304,40 @@ La salida quedo copiada fuera de `/tmp` (que se borra al reiniciar) en
 `fichas.jsonl` sigue siendo paso humano**: son 1.354 fichas nuevas encima de
 las 3.138 actuales, y el que decide si el cambio vale es el que mira el
 resultado, no el que lo midio.
+
+### Correccion del mismo dia: conte resultados donde habia que mirar relevancia
+
+Horas despues de escribir que "una lista escrita a mano que dejo de coincidir
+con la realidad" es el defecto de la casa, hice exactamente eso.
+
+Medi los motores de SearXNG uno por uno y anote `bing 10 resultados`. Diez
+resultados. Nunca mire QUE resultados eran. Con `SEARXNG_ENGINES=bing,mojeek,
+wikipedia` puesto en la caja, `refutar` corrio sin ceguera, trajo 5 fuentes y
+las cinco hablaban de Google Gemini. La consulta era sobre reduccion de dano en
+fiestas electronicas.
+
+Al repetir la misma consulta contra `bing` tres veces salieron tres conjuntos
+de basura DISTINTOS -- mulching en Charlotte, defensemirror, robertsspace --
+mientras que para "gato negro" o "python list comprehension" responde perfecto.
+Y la categoria general de la instancia, sin tocar nada, habia devuelto 20
+resultados con `reduciendodano.cl` primero.
+
+O sea: **fijar motores a mano reemplazo algo que funcionaba por algo que
+parecia funcionar.** Peor que ciego, porque un informe con cinco fuentes se lee
+como documentado. Revertido en la caja (`research.env` volvio a su copia).
+
+Lo que SI quedo medido y sigue en pie:
+
+- El bloqueo es INTERMITENTE. La misma consulta: 20 resultados en una ventana,
+  0 un minuto despues con los cuatro motores caidos. Una medicion sola no
+  describe el estado; por eso el instrumento correcto es la deteccion de
+  ceguera, que distingue las ventanas en vez de promediarlas.
+- La cadena se comporta bien en las dos puntas: ciego -> muro y cero informe;
+  con fuentes malas -> el proponente escribio "no es posible escribir una tesis
+  informada" en vez de inventarla.
+- `SEARXNG_ENGINES` queda como variable, vacia por defecto y sin lista en el
+  codigo. El que la use tiene que MIRAR los resultados, no contarlos.
+
+La regla que sale de esto, y es nueva: **contar es el metodo correcto para
+encontrar el defecto, y el metodo equivocado para declararlo resuelto.** Un
+conteo dice cuantos; solo mirar dice cuales.
