@@ -758,8 +758,20 @@ def searxng_search(query, max_results=5, errors=None):
     # marco del prompt ya decia "no literatura academica" y el buscador seguia
     # trayendo scholar, porque el marco encuadra al modelo y no al buscador.
     categorias = "&categories=general" if _es_pregunta_factual(query) else ""
+    # `SEARXNG_ENGINES` deja apuntar a motores concretos sin tocar la config de
+    # la instancia. NO hay lista por defecto a proposito: una lista de motores
+    # escrita en el codigo es la misma trampa que este archivo ya pago tres
+    # veces -- el dia que bing se tape tambien, quedaria fija y ciega. Vacio =
+    # los motores que la instancia tenga configurados.
+    # Medido 2026-08-01 sobre la caja, con los cuatro generales caidos:
+    #   bing 10 resultados | mojeek 1 | wikipedia y wikidata 0 pero vivos
+    #   brave, google, startpage, duckduckgo, qwant, marginalia, stract: CAPTCHA
+    #   o "too many requests"
+    # O sea que la instancia se puede destapar sin cambiar codigo.
+    motores = os.environ.get("SEARXNG_ENGINES", "").strip()
+    engines = ("&engines=" + urllib.parse.quote(motores)) if motores else ""
     url = (base + "/search?q=" + urllib.parse.quote(query)
-           + "&format=json&safesearch=0" + categorias)
+           + "&format=json&safesearch=0" + categorias + engines)
     try:
         data = _http_json(url, timeout=30)
         resultados = [

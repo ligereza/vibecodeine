@@ -137,3 +137,46 @@ def test_research_pauses_on_a_blind_search():
         encoding="utf-8")
     assert 'search.get("ciego")' in fuente
     assert 'busqueda ciega' in fuente
+
+
+# --------------------------------------------------- pointing at live engines
+
+def test_no_default_engine_list_is_written_into_the_code():
+    """`SEARXNG_ENGINES` lets an operator point at engines that answer without
+    touching the instance's config. There is deliberately NO default list: a
+    list of engines written into the code is the same trap this file already
+    paid for three times -- the day bing gets blocked too, a fixed list would
+    stay there, blind."""
+    fuente = (RAIZ / "cultura" / "mak_research" / "research_lib.py").read_text(
+        encoding="utf-8")
+    assert 'SEARXNG_ENGINES' in fuente
+    assert 'os.environ.get("SEARXNG_ENGINES", "")' in fuente
+    assert 'SEARXNG_ENGINES", "bing' not in fuente
+
+
+def test_the_engine_list_reaches_the_url(monkeypatch):
+    visto = {}
+
+    def espia(url, *a, **k):
+        visto["url"] = url
+        return {"results": []}
+
+    monkeypatch.setattr(research_lib, "_http_json", espia)
+    monkeypatch.setenv("SEARXNG_ENGINES", "bing,mojeek")
+    research_lib.searxng_search("algo")
+    assert "engines=bing%2Cmojeek" in visto["url"]
+
+
+def test_no_engines_set_means_no_parameter(monkeypatch):
+    """Empty must not turn into `engines=`, which SearXNG reads as "no engines"
+    -- an accidental way to guarantee zero results."""
+    visto = {}
+
+    def espia(url, *a, **k):
+        visto["url"] = url
+        return {"results": []}
+
+    monkeypatch.setattr(research_lib, "_http_json", espia)
+    monkeypatch.delenv("SEARXNG_ENGINES", raising=False)
+    research_lib.searxng_search("algo")
+    assert "engines=" not in visto["url"]
