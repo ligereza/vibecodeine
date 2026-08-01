@@ -184,7 +184,7 @@ Medido sobre el CLI real: **91 comandos** (23 sueltos + 68 dentro de 16 grupos).
 | `py -m flujo package` | Empaqueta el hub pro como aplicación de escritorio real .exe (Windows). | solo Windows; empaqueta un .exe |
 | `py -m flujo plano` | Generar plano SVG, rider o costos de stands desde un JSON de evento. | nada |
 | `py -m flujo serve` | Iniciar el workspace local: el hub, que es la entrada diaria. | nada |
-| `py -m flujo tapiz` | Ecosistema Tapiz<->Psicosis<->Fungi: pipeline generativo (tools/compete_engine.py). | nada; el instrumento vive en `tools/compete_engine.py` |
+| `py -m flujo tapiz` | Ecosistema Tapiz<->Psicosis<->Fungi: pipeline generativo (tools/compete_engine.py). | nada |
 | `py -m flujo verify` | Verificación integral local/CI: compileall, tests, health, version y hub smoke. | nada |
 | `py -m flujo version` | Muestra versión y changelog. | nada |
 

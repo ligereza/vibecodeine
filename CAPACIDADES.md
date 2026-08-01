@@ -33,6 +33,7 @@ CLI real (`py -m flujo --help`, v0.56.1), comandos principales:
 | `bridge_issue_render.py` | Puente Windows: issue GitHub label "instagram" -> `flyer-auto` Blender -> drive/. |
 | `compete_engine.py` | Pipeline monolitico del ecosistema Tapiz<->Psicosis<->Fungi. |
 | `context_pack.py` | Empaqueta contexto minimo (archivos+fence) para pasar a Aider/Qwen/Claude, bajo consumo. |
+| `comparar_cobertura_fichas.py` | Dos pasadas de percepcion comparadas campo a campo sobre los MISMOS archivos, filtrando por motor. |
 | `contexto_repo.py` | Digest mecanico del repo (0 tokens): arbol + archivos clave. `map` / `task "<keywords>"`. |
 | `enviar_a_mak.py` | Puente WIN->MAK: envia carpeta a `~/curatoria_inbox/` via tar\|ssh, verifica conteo/bytes. |
 | `gen_mapa_comandos.py` | Genera la tabla de comandos de `MAPA.md` desde el `--help` real del CLI (`--check` falla si quedo desfasado). |
@@ -178,6 +179,7 @@ tabla; archivo sin entrada = ratchet rojo.
 | `bridge_issue_render.py` | VIVO | puente issue -> render WIN | 2026-07 |
 | `compete_engine.py` | VIVO | proyecto tapiz (cultura) | 2026-07 |
 | `context_pack.py` | REVISAR | AI Op Layer 2026-07-25, recien creado, consumidor pendiente | 2026-07-25 |
+| `comparar_cobertura_fichas.py` | VIVO | compara dos pasadas de `percepcion.py` campo a campo SOBRE LOS MISMOS ids (lo que no esta en ambas no se cuenta) y filtra por `medicion.vision.motor`, para que una pasada con fallback no le acredite a watsonx lo que respondio ollama; corrida real 2026-08-01 sobre 923 fichas ig, v1 gemma3 vs v4 watsonx: `tipo_obra` 51.9%->100%, `materiales` 68.7%->99.6%, `colores` 95%->100%, y la unica caida real `oportunidad_codigo` 99.1%->75.9% (watsonx omite la clave en 225 imagenes; ninguna de las dos pasadas era plantilla: 1258 y 640 valores distintos) | 2026-08-01 |
 | `contexto_repo.py` | VIVO | referenciado en `CLAUDE.md` ("Ahorro de contexto") | 2026-07-25 |
 | `gen_archivo_iskvw.py` | REVISAR | genera `iskvw/datos/archivo.json`, el contrato piezas+vinculos; desde 2026-07-29 su conversion micelio->contrato vive en `cultura/mak_plataforma/contrato_archivo.py`, compartida con `GET /api/archivo` del hub de MAK (ese endpoint SI tiene consumidor potencial); el archivo de salida sigue sin piel que lo consuma -- pasa a VIVO cuando una lo lea; `tests/test_contrato_archivo.py` | 2026-07-29 |
 | `gen_propuestas_rd.py` | VIVO | el ultimo salto a la base RD: alimenta el escritor de borradores de `mineria_rd.py` desde `docs/rd/candidatos_curatoria/candidatos_db.jsonl` (ya digerido por `extraccion_db`), sin OCR ni GPU; re-matchea contra los catalogos ACTUALES, reporta dudosos sin proponerlos y exige evidencia >= 2; los borradores salen a una carpeta aparte y entran solo por PR humano; `tests/test_gen_propuestas_rd.py` | 2026-07-29 |

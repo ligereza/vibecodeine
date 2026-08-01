@@ -55,8 +55,13 @@ REQUISITOS: dict[str, str] = {
     "package": "solo Windows; empaqueta un .exe",
     "rd-db build": "fuentes de datos en `data/` (la DB se regenera, no se versiona)",
     "rd-datos ingest": "un CSV de campo; la DB privacy-first se crea sola",
-    "tapiz": "nada; el instrumento vive en `tools/compete_engine.py`",
 }
+# `tapiz` used to sit in the table above with the requirement "nada; el
+# instrumento vive en `tools/compete_engine.py`" -- prose that says there is NO
+# requirement, sitting in the field that means "this is missing". The generator
+# does what it is told and emitted `estado: "falta: nada; ..."`, so a button
+# would announce that the command lacks nothing. A requirement of "nada" is an
+# empty requirement; where the instrument lives belongs in the description.
 
 
 def _help(path: list[str]) -> str:
