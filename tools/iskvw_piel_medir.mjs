@@ -193,12 +193,31 @@ async function medirEscenario(substrate, nombre, hash, pinch) {
     if (i >= warmup) { tiempos.push(dt); porFrame.push({ ...piel.cnt }); }
   }
 
-  // Determinism is the contract: with the gesture frozen, every measured frame
-  // must do identical work. Random jitter moves pixels, never counts.
-  const primero = JSON.stringify(porFrame[0]);
-  for (const f of porFrame) {
-    if (JSON.stringify(f) !== primero)
-      throw new Error(`unstable counts in ${nombre}: ${primero} vs ${JSON.stringify(f)}`);
+  // El contrato es que el trabajo por cuadro sea ACOTADO y reproducible, no que
+  // sea constante. Las dos cosas coincidian mientras el nodo era un arco: se
+  // dibujaban 764 arcos hubiera el tiempo que hubiera. Con el nodo como glifo
+  // no: el nivel de la rampa sale de un campo que evoluciona, y un nodo que cae
+  // en el vacio de la rampa no se dibuja, asi que la cuenta se mueve entre
+  // cuadros -- 366, 367 -- por diseno y no por azar.
+  //
+  // Exigir igualdad ahi no medía determinismo, medía que el dibujo fuera
+  // estatico. Lo que este medidor existe para atrapar es una REGRESION de
+  // costo, y para eso lo que manda es el PEOR cuadro. Se reporta el maximo y,
+  // cuando un contador se mueve, tambien su minimo -- un rango callado se leeria
+  // como un numero exacto.
+  //
+  // Lo que SI sigue siendo error: que el azar entre en la cuenta. Se detecto
+  // asi el 2026-08-01, cuando el glifo se elegia sobre la posicion ya temblada
+  // por `Math.random()` y dos corridas daban 370 y 369 para el mismo cuadro.
+  // Por eso el rango se publica: si crece sin que nadie toque la piel, hay
+  // ruido donde no deberia haberlo.
+  const claves = Object.keys(porFrame[0]);
+  const cnt = {}, rango = {};
+  for (const k of claves) {
+    const vs = porFrame.map(f => f[k]);
+    const min = Math.min(...vs), max = Math.max(...vs);
+    cnt[k] = max;
+    if (min !== max) rango[k] = [min, max];
   }
 
   const estado = JSON.parse(vm.runInContext(`JSON.stringify({
@@ -213,7 +232,10 @@ async function medirEscenario(substrate, nombre, hash, pinch) {
   tiempos.sort((a, b) => a - b);
   return {
     sustrato: substrate, escenario: nombre, hash, pinch,
-    ...estado, ...porFrame[0],
+    ...estado, ...cnt,
+    // Solo aparece cuando algun contador se movio entre cuadros. Un rango
+    // callado se leeria como un numero exacto.
+    ...(Object.keys(rango).length ? { rango } : {}),
     // n*(n-1)/2: what the all-against-all defect would cost on this substrate.
     todos_los_pares: estado.nodos * (estado.nodos - 1) / 2,
     ms_mediana: Number(tiempos[Math.floor(tiempos.length / 2)].toFixed(3)),
