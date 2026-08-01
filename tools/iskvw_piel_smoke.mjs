@@ -63,18 +63,35 @@ async function correr({ tablero = null, cuadros = 30, caminar = true, antes = nu
   const traza = [];            // every mark: what, where, in which colour
   const pedidos = [];          // every URL the skin asked for, to prove wiring ran
   let pincel = "";             // current fillStyle
-  const marca = (x, y) => {
+  // `r` is optional and only `arc` carries it. It is recorded because the
+  // trace used to keep position and colour ONLY, which made the instrument
+  // blind to a whole class of effect: anything that changes SIZE drew a
+  // different field and measured as "identical". `luz` was written, wired and
+  // reported inert by this very smoke for exactly that reason. Position and
+  // colour still compare on their own (`movidas`, `tonos`), so a size change
+  // shows up in `difs` without ever being mistaken for a displacement.
+  const marca = (x, y, r) => {
     // Rounded: the point is whether the patch MOVED something, not float noise.
-    traza.push(`${x.toFixed(2)},${y.toFixed(2)},${pincel}`);
+    traza.push(`${x.toFixed(2)},${y.toFixed(2)},${pincel}`
+      + (r === undefined ? "" : `,r${r.toFixed(2)}`));
   };
 
   const ctx2d = new Proxy({}, {
     get: (t, k) => {
       if (k === "canvas") return canvas;
-      if (k === "createRadialGradient" || k === "createLinearGradient")
+      // The radial gradient is how a node is actually painted in the default
+      // regime -- `arc` only runs on other paths. Its radii are arguments 3
+      // and 6, and dropping them is what made the trace blind to size.
+      if (k === "createRadialGradient")
+        return (x, y, r0, x1, y1, r1) => {
+          trabajoDeNodo++;
+          marca(x, y, r1 === undefined ? r0 : r1);
+          return { addColorStop: (o, c) => traza.push(`g:${c}`) };
+        };
+      if (k === "createLinearGradient")
         return (x, y) => { trabajoDeNodo++; marca(x, y); return { addColorStop: (o, c) => traza.push(`g:${c}`) }; };
       if (k === "fillText") return (g, x, y) => { trabajoDeNodo++; marca(x, y); };
-      if (k === "arc") return (x, y) => marca(x, y);
+      if (k === "arc") return (x, y, r) => marca(x, y, r);
       if (k === "moveTo" || k === "lineTo") return (x, y) => marca(x, y);
       if (k === "measureText") return () => ({ width: 10 });
       if (k === "getImageData") return () => ({ data: new Uint8ClampedArray(4) });
@@ -482,7 +499,16 @@ console.log(`OK: gravedad pulls the reading ${deriva.toFixed(1)} px in 30 frames
 // board). The doublecup rule: each switch is measured by the signature ONLY
 // its effect can leave -- and a solo run doubles as proof that the other four
 // switches really silence theirs, because their signatures must read zero.
-const EFECTOS_NOMBRES = ["pulso", "curvatura", "sangrado", "desgarro", "gravedad"];
+// Derived from the board, NOT written by hand. It used to be a literal list,
+// and a literal list stops matching reality the day an effect is added: the
+// new effect would never be silenced in a solo run, so every other effect's
+// signature would quietly include it. That is the same defect shape this repo
+// has already paid for seven times. If the board grows an effect, this grows
+// with it or the run fails loudly.
+const EFECTOS_NOMBRES = Object.keys(tableroReal.efectos || {});
+if (EFECTOS_NOMBRES.length < 5)
+  morir(new Error(`the board declares ${EFECTOS_NOMBRES.length} effects: `
+    + `the per-effect section cannot measure what is not declared`));
 const solo = (efecto) => ({
   ...fuerte,
   efectos: Object.fromEntries(EFECTOS_NOMBRES.map(e => [e, e === efecto])),
@@ -534,6 +560,27 @@ if (soloPulso.failed) morir(soloPulso.failed);
 const mPulso = comparar(glifoBase, soloPulso);
 if (!(mPulso.difs > 0)) morir(new Error("pulso alone left the glyph trace identical: its switch is inert"));
 console.log(`OK: pulso alone bends glyph time (${mPulso.difs} trace differences over ${glifoBase.traza.length} marks)`);
+
+// ── MURO: `luz` esta escrita y no se pudo medir ──────────────────────────
+// El efecto existe en la piel (EF_LUZ, acumulador, escala del radio) y su
+// llave esta en el tablero, pero NINGUNA fila lo alimenta y por eso no se
+// afirma que funcione. Corriendo `solo("luz")` la traza vuelve identica.
+// Lo que SI quedo medido y arreglado buscandolo: este banco era CIEGO AL
+// TAMANO. La traza guardaba posicion y color, `arc` descartaba su radio y
+// `createRadialGradient` -- que es como se pinta un nodo en el regimen por
+// defecto -- descartaba los suyos. Un efecto que solo cambia el tamano
+// dibujaba un campo distinto y este banco lo declaraba "identico". Ahora los
+// radios entran en la traza: las diferencias detectadas subieron de 11.119 a
+// 11.978 sobre las mismas 13.528 marcas.
+// Tres hipotesis descartadas con medicion: no era el radio de `arc` (se
+// capturo, sigue inerte), no era el del gradiente (se capturo, sigue inerte),
+// y no era el escenario (se corrio bajo `armarForma`, el mismo de `pulso`,
+// que come del mismo dato `tilde`; sigue inerte). Queda por descartar que el
+// coeficiente llegue en cero porque el dato `tilde` no alcanza a los
+// emisores headless -- que es una pregunta sobre los DATOS, no sobre el
+// efecto.
+// Se retira cuando una corrida mida el rastro, o cuando se pruebe que el
+// dato no llega y el cableado tenga que ser otro.
 
 // gravedad alone: the reading drifts, exactly as in section 4.
 const soloGrav = await correr({ tablero: solo("gravedad"), caminar: false, antes: desviar });

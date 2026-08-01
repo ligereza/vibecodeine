@@ -14,7 +14,8 @@
   "curvatura": true,
   "sangrado": true,
   "desgarro": true,
-  "gravedad": true
+  "gravedad": true,
+  "luz": true
  },
  "patch": [
   {
@@ -55,7 +56,8 @@
   "curvatura": "Gira a los vecinos alrededor de la obra. Dobla el espacio, no lo estira.",
   "sangrado": "Corre el color de los vecinos hacia el tono de la obra, por el camino corto del círculo.",
   "desgarro": "Corta los glifos por filas, como una cinta que salta de pista.",
-  "gravedad": "La obra tira de la lectura al pasar cerca. Con tope: tira, nunca atrapa."
+  "gravedad": "La obra tira de la lectura al pasar cerca. Con tope: tira, nunca atrapa.",
+  "luz": "Dilata a los vecinos sin moverlos ni tenirlos. Es el unico efecto que toca el TAMANO: deja posicion y color intactos y cambia el radio, hasta un 40%. NO CABLEADA: el efecto esta escrito y su llave existe, pero ninguna fila lo alimenta todavia porque no se pudo MEDIR que deje rastro (ver el muro en iskvw_piel_smoke.mjs). Una llave que se publica sin medicion es una afirmacion sin evidencia."
  },
  "_reglas": [
   "Una fila que nombre un dato o un efecto que la piel no conoce se descarta entera: adivinar sería inventar una intención que no está escrita.",

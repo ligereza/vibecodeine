@@ -233,8 +233,14 @@ function saturacionDe(colores){
    Nada se reserva dentro del bucle.
    ══════════════════════════════════════════════════════════════════════ */
 const SENALES = ['tilde','trazo','color','etiqueta','peso'];
-const EFECTOS = ['pulso','curvatura','sangrado','desgarro','gravedad'];
-const EF_PULSO=0, EF_CURVATURA=1, EF_SANGRADO=2, EF_DESGARRO=3, EF_GRAVEDAD=4;
+// El orden importa y la lista se declara ANTES que los buffers: `EF_ON` y
+// `EMIS.coef` se dimensionan con `EFECTOS.length`, asi que agregar un efecto
+// con un `push` posterior deja los buffers cortos y el indice nuevo escribe
+// sobre la franja del emisor siguiente, en silencio. Un efecto se agrega
+// aca arriba o no se agrega.
+const EFECTOS = ['pulso','curvatura','sangrado','desgarro','gravedad','luz'];
+const EF_PULSO=0, EF_CURVATURA=1, EF_SANGRADO=2, EF_DESGARRO=3, EF_GRAVEDAD=4,
+      EF_LUZ=5;
 const MAX_EMISORES = 3;
 
 // El cableado por defecto: uno a uno, cada dato al efecto que le corresponde.
@@ -655,7 +661,7 @@ function dibujar(){
     const jitter = d.ruido * 13;
     let px = x + (Math.random()-0.5)*jitter;
     let py = y + (Math.random()-0.5)*jitter;
-    const r = n.r * resp * (0.55 + cerca*0.85);
+    let r = n.r * resp * (0.55 + cerca*0.85);
 
     /* ── lo que las obras cercanas le hacen a ESTE nodo ──
        Cuatro efectos de dibujo; el quinto (gravedad) toca el estado y vive en
@@ -665,7 +671,7 @@ function dibujar(){
        son literalmente los de antes. */
     let tono = n.tono, tG = tGlifo;
     if (conPatch){
-      let pulso = 0, tira = 0, sangre = 0, sangreTono = 0;
+      let pulso = 0, tira = 0, sangre = 0, sangreTono = 0, luz = 0;
       for (let k = 0; k < EMIS.n; k++){
         if (EMIS.idx[k] === ni) continue;     // una obra no se deforma a si misma
         const inf = 1 - Math.min(Math.abs(n.y - EMIS.campo[k]) * invAlcance, 1);
@@ -675,6 +681,7 @@ function dibujar(){
         tira  += EMIS.coef[b+EF_DESGARRO] * inf;
         const s = EMIS.coef[b+EF_SANGRADO] * inf;
         if (s > 0){ sangre += s; sangreTono += EMIS.tono[k] * s; }
+        luz   += EMIS.coef[b+EF_LUZ] * inf;
         // curvatura: el nodo gira ALREDEDOR de la obra, asi que se dobla el
         // espacio y no se lo estira. El giro es el mismo para todos (ya
         // resuelto arriba) y lo que cambia con la distancia es CUANTO se
@@ -702,6 +709,13 @@ function dibujar(){
         const fila = (py / 9 | 0) + (E.t * 3 | 0);
         px += (fila & 1 ? 1 : -1) * Math.min(tira, 1) * 16;
       }
+      // luz: la obra dilata a sus vecinos sin moverlos ni tenirlos. Es el
+      // unico efecto que toca el TAMANO, y por eso su firma no se confunde
+      // con ninguna de las otras cuatro: curvatura desplaza sin recolorear,
+      // sangrado recolorea sin desplazar, desgarro corta solo en x, y esta
+      // deja posicion y color intactos y cambia el radio. Tope en 40%: mas
+      // que eso y los glifos vecinos se pisan entre si.
+      if (luz > 0.001) r *= 1 + Math.min(luz, 1) * 0.4;
     }
 
     // Lo lejano se disuelve; lo cercano se afirma. Sin blur real: el blur
