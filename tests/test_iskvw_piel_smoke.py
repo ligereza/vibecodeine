@@ -48,7 +48,15 @@ def test_the_smoke_still_measures_the_effects_patch():
     """
     proc = _correr_smoke()
     salida = proc.stdout + proc.stderr
-    for esperado in ("flag off draws exactly as before",
+    for esperado in (# 2026-08-01: el mensaje decia "flag off draws exactly as
+                     # before" y comparaba contra "sin tablero". Al encender
+                     # `nodo_glifo` el dibujo cambio por OTRA llave y ese
+                     # control acusaba al patch, asi que ahora compara contra el
+                     # mismo tablero con el patch apagado. Este test fijaba el
+                     # texto literal, o sea una cadena escrita a mano que dejo
+                     # de coincidir con lo que existe -- la forma que este repo
+                     # ya encontro siete veces esta semana.
+                     "patch off draws exactly as the same board without it",
                      "patch on deforms",
                      "gravedad pulls the reading",
                      # Per-effect switches: each effect is measured ALONE by

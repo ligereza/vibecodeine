@@ -350,13 +350,35 @@ const tableroReal = JSON.parse(readFileSync(join(raiz, "iskvw", "datos", "tabler
 const conArchivo = await correr({ tablero: tableroReal });
 if (conArchivo.failed) morir(conArchivo.failed);
 const igual = (a, b) => a.traza.length === b.traza.length && a.traza.every((v, i) => v === b.traza[i]);
+// La comparacion es contra el MISMO tablero con `patch_efectos` apagado, no
+// contra "sin tablero". Lo que se afirma es que el patch apagado dibuja como si
+// no existiera -- y eso tiene que seguir siendo cierto aunque el tablero traiga
+// OTRAS llaves encendidas.
+//
+// Hasta el 2026-08-01 el baseline era el run SIN tablero, que funcionaba
+// mientras `patch_efectos` era la unica mejora. Al encender `nodo_glifo` el
+// dibujo cambio por una llave distinta y este control acuso al patch. Un
+// control que atribuye un cambio a la llave equivocada es una falsa alarma, y
+// una falsa alarma cuesta lo mismo que un descarte callado.
+const sinPatch = JSON.parse(JSON.stringify(tableroReal));
+sinPatch.mejoras = { ...(sinPatch.mejoras || {}), patch_efectos: false };
+const basePatch = await correr({ tablero: sinPatch });
+if (basePatch.failed) morir(basePatch.failed);
 if (tableroReal.mejoras && tableroReal.mejoras.patch_efectos) {
   console.log("OK: datos/tablero.json ships with the patch ON (by the artist's hand)");
-} else if (!igual(base, conArchivo)) {
-  morir(new Error("tablero.json has patch_efectos=false and the drawing CHANGED: "
-    + "off must be byte-for-byte the old behaviour"));
+} else if (!igual(basePatch, conArchivo)) {
+  morir(new Error("tablero.json has patch_efectos=false and the drawing CHANGED "
+    + "against the same board with the patch off"));
 } else {
-  console.log(`OK: flag off draws exactly as before (${base.traza.length} marks identical)`);
+  console.log(`OK: patch off draws exactly as the same board without it `
+    + `(${basePatch.traza.length} marks identical)`);
+}
+// Y lo que el tablero publicado SI cambia respecto de no tener tablero, se
+// dice: es la diferencia que el artista encendio a mano.
+if (!igual(base, conArchivo)) {
+  console.log(`OK: el tablero publicado cambia el dibujo `
+    + `(${base.traza.length} -> ${conArchivo.traza.length} marcas), que es lo que `
+    + `sus llaves encendidas afirman hacer`);
 }
 
 // ── 2b. the venue layer, behind its own flag on the SAME tablero fetch ─────

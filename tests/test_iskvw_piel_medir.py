@@ -68,9 +68,18 @@ PIN_CAMPO = {
     # being drawn on a substrate that declares none -- that is an affirmation
     # without data, not a feature.
     "segmentos": 0,
-    # The dense worst case of per-node work: one radial gradient and two arcs
-    # per drawn node, nearly the whole 219-work field inside the open band.
-    "denso_abierto_gradientes": 217,
+    # The dense worst case of per-node work, and since 2026-08-01 it is a
+    # different one. With `mejoras.nodo_glifo` on the node stopped being a
+    # circle -- one radial gradient plus two arcs per drawn node, 217 gradients
+    # and 434 arcs in the dense band -- and became a glyph: ZERO gradients, ZERO
+    # arcs, one `fillText` per node that does not land on the ramp's empty slot.
+    #
+    # It is not only cheaper: it is the technique the artist asked for, written
+    # in `iskvw/piel/campo/ASCII_REFERENCIA.md` since 2026-07-30 and applied
+    # only to the resolved work. If these numbers go back to non-zero, the
+    # circle came back.
+    "denso_abierto_gradientes": 0,
+    "denso_abierto_arcos": 0,
 }
 
 # The documented reference cost this instrument guards against: all-against-all
@@ -134,8 +143,13 @@ def test_the_grid_covers_both_substrates_and_reports_ms(medida):
 
 
 def test_segment_counts_are_the_pinned_numbers(medida):
-    """Counts are deterministic, so they are pinned EXACTLY. A drift here with
-    unchanged data is a change in the skin's frame cost."""
+    """Counts are pinned by their WORST frame. Until 2026-08-01 every frame was
+    required to do identical work, which held while the node was an arc -- 764
+    arcs whatever the time was. The glyph comes from a field that evolves, and a
+    node landing on the ramp's empty slot is not drawn, so the count moves
+    between frames BY DESIGN. What this meter exists to catch is a cost
+    regression, and for that the worst frame rules; the range is published
+    whenever a counter moves."""
     archivo = _sustrato(medida, "archivo")
     assert {n: e["segmentos"] for n, e in archivo.items()} == PIN_ARCHIVO["segmentos"]
     for e in archivo.values():
@@ -145,9 +159,13 @@ def test_segment_counts_are_the_pinned_numbers(medida):
     for e in campo.values():
         assert e["nodos"] == PIN_CAMPO["nodos"]
         assert e["segmentos"] == PIN_CAMPO["segmentos"]
+    # With the node as a glyph neither a gradient nor an arc is created: the
+    # halo and the solid circle are exactly what got replaced. A non-zero value
+    # here means the node went back to being a circle.
     assert campo["denso abierto"]["gradientes"] == PIN_CAMPO["denso_abierto_gradientes"]
-    # per drawn node: exactly one radial gradient and two arcs (halo + core)
-    assert campo["denso abierto"]["arcos"] == 2 * campo["denso abierto"]["gradientes"]
+    assert campo["denso abierto"]["arcos"] == PIN_CAMPO["denso_abierto_arcos"]
+    # And there are real glyphs: if this were 0, the node would not be drawn.
+    assert campo["denso abierto"]["textos"] > 0
 
 
 def test_the_neighbour_index_is_built_once_and_sized_right(medida):
