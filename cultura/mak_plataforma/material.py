@@ -285,18 +285,27 @@ def guardar(filas):
 
 
 def pop_pendiente():
-    """Saca la primera tarea pendiente y la marca. Devuelve None si no hay.
+    """Saca la siguiente tarea pendiente y la marca. Devuelve None si no hay.
 
     Lo usa trabajo.py. Si devuelve None, el organismo cae a su modo autonomo,
     que es exactamente para lo que ese modo existe.
+
+    Lo depositado a mano va PRIMERO (`origen: micelio`). Medido el 2026-08-01:
+    la cola tenia 2.733 tareas pendientes cosechadas de las fichas, y una
+    semilla depositada ese dia quedaba detras de todas ellas -- a la velocidad
+    real del organismo, meses. El formato del sobre estaba bien y el organismo
+    tambien; el circuito no cerraba por el ORDEN. Una intencion escrita a mano
+    no compite en igualdad con 2.733 tareas que el propio sistema se genero.
     """
     filas = cargar()
-    for r in filas:
-        if r.get("estado") == "pendiente":
-            r["estado"] = "despachada"
-            guardar(filas)
-            return r
-    return None
+    pendientes = [r for r in filas if r.get("estado") == "pendiente"]
+    if not pendientes:
+        return None
+    elegida = next((r for r in pendientes if r.get("origen") == "micelio"),
+                   pendientes[0])
+    elegida["estado"] = "despachada"
+    guardar(filas)
+    return elegida
 
 
 def reconstruir():

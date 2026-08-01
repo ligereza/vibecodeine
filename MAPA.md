@@ -158,7 +158,7 @@ program says to the operator who runs it.
 
 <!-- COMANDOS:INICIO -- generado por tools/gen_mapa_comandos.py, no editar a mano -->
 
-Medido sobre el CLI real: **91 comandos** (23 sueltos + 68 dentro de 16 grupos).
+Medido sobre el CLI real: **92 comandos** (23 sueltos + 69 dentro de 16 grupos).
 
 ### Comandos sueltos
 
@@ -281,6 +281,7 @@ Medido sobre el CLI real: **91 comandos** (23 sueltos + 68 dentro de 16 grupos).
 | `py -m flujo micelio validar` | Dice si el sobre sirve, y si no, QUE le falta -- en castellano, para poder pegarle la respuesta de vuelta al modelo que lo escribio. | nada |
 | `py -m flujo micelio fruto` | Mide un dataset y arma un fruto que CABE en una ventana de chat. | nada |
 | `py -m flujo micelio verificar` | Corre el criterio y devuelve VERDE o ROJO. Es el semaforo del ciclo. | nada |
+| `py -m flujo micelio depositar` | Mete el sobre en la cola de trabajo del organismo. | nada |
 
 ### Grupo `privacy` -- Privacidad para textos antes de IA externa.
 

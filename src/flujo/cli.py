@@ -234,6 +234,102 @@ def micelio_verificar(
     if not r.verde:
         raise typer.Exit(1)
 
+@micelio_app.command("depositar")
+def micelio_depositar(
+    archivo: str = typer.Argument(..., help="Sobre `semilla` o `nutriente` a depositar."),
+    cola: str = typer.Option("", "--cola", help="material.jsonl del organismo (por defecto ~/plataforma/material.jsonl)."),
+    depto: str = typer.Option("codex", "--depto", help="Departamento que la trabaja: codex o research."),
+    aplicar: bool = typer.Option(False, "--aplicar", help="Escribir de verdad en la cola."),
+):
+    """Mete el sobre en la cola de trabajo del organismo.
+
+    Este es el eslabon que faltaba. El formato existia, el organismo existia, y
+    entre los dos no habia nada: una semilla validada se quedaba en un archivo
+    que nadie leia. `material.jsonl` es la cola que `trabajo.py` consume ANTES
+    que las fuentes autonomas, asi que depositar ahi es lo que hace que la
+    semilla se trabaje sola.
+
+    Dos cosas viajan al organismo y las dos importan:
+
+    - el CRITERIO va dentro del texto de la tarea. Quien la ejecuta es un
+      modelo debil sin supervision: si no le decis como se lo va a medir, no
+      puede saber si termino.
+    - el sobre queda guardado al lado de la cola, asi que `micelio verificar`
+      puede correr el mismo criterio despues, contra el trabajo real.
+    """
+    import json as _json
+    import hashlib as _hashlib
+    from pathlib import Path as _Path
+    from .micelio import SobreInvalido, leer
+    try:
+        sobre = leer(archivo)
+    except SobreInvalido as e:
+        console.print(f"[red]sobre invalido[/red]: {e}")
+        raise typer.Exit(2)
+    if sobre.get("tipo") not in ("semilla", "nutriente"):
+        console.print("[red]solo se depositan semillas y nutrientes[/red]; "
+                      f"este es `{sobre.get('tipo')}`")
+        raise typer.Exit(2)
+    if depto not in ("codex", "research"):
+        console.print("[red]--depto tiene que ser codex o research[/red]")
+        raise typer.Exit(2)
+
+    ruta_cola = _Path(cola) if cola else _Path.home() / "plataforma" / "material.jsonl"
+    cuerpo = _json.dumps(sobre.get("cuerpo") or {}, ensure_ascii=False, indent=1)
+    criterio = _json.dumps(sobre.get("criterio") or [], ensure_ascii=False, indent=1)
+    texto = (
+        f"{sobre['asunto']}\n\nQUE HAY QUE HACER:\n{cuerpo}\n\n"
+        "COMO SE VA A MEDIR (esto se corre tal cual, no es una sugerencia):\n"
+        f"{criterio}\n\n"
+        "No entregues hasta que ese criterio de verde. Si no podes hacerlo dar "
+        "verde, decilo y decir por que es una entrega valida; inventar que "
+        "funciona no lo es."
+    )
+    tarea = {
+        "id": _hashlib.sha1(texto.encode("utf-8")).hexdigest()[:12],
+        "origen": "micelio",
+        "depto": depto,
+        "modo": depto,
+        "texto": texto,
+        "estado": "pendiente",
+        "sobre": sobre["asunto"][:120],
+    }
+
+    if not aplicar:
+        console.print(f"[yellow]ensayo[/yellow]: no se escribio nada. "
+                      f"Iria a {ruta_cola} como tarea {tarea['id']} "
+                      f"para {depto}, {len(texto)} caracteres.")
+        console.print("Para depositarla de verdad: --aplicar")
+        return
+
+    ruta_cola.parent.mkdir(parents=True, exist_ok=True)
+    # Dedup por id: depositar dos veces la misma semilla no la trabaja dos
+    # veces. La cola ya deduplica por hash del texto y esto respeta lo mismo.
+    existentes = set()
+    if ruta_cola.exists():
+        for linea in ruta_cola.read_text(encoding="utf-8").splitlines():
+            linea = linea.strip()
+            if not linea:
+                continue
+            try:
+                existentes.add(_json.loads(linea).get("id"))
+            except ValueError:
+                continue
+    if tarea["id"] in existentes:
+        console.print(f"[yellow]ya estaba en la cola[/yellow] ({tarea['id']}): "
+                      "no se duplica")
+        return
+    with ruta_cola.open("a", encoding="utf-8") as fh:
+        fh.write(_json.dumps(tarea, ensure_ascii=False) + "\n")
+    guardado = ruta_cola.parent / f"sobre-{tarea['id']}.json"
+    guardado.write_text(_json.dumps(sobre, ensure_ascii=False, indent=1),
+                        encoding="utf-8")
+    console.print(f"[green]depositada[/green] {tarea['id']} en {ruta_cola} "
+                  f"para {depto}")
+    console.print(f"el sobre quedo en {guardado.name}; para el semaforo: "
+                  f"py -m flujo micelio verificar {guardado}")
+
+
 suplementos_app = typer.Typer(help="Generación de contraportadas para suplementos RD.", no_args_is_help=True)
 app.add_typer(suplementos_app, name="suplementos")
 
