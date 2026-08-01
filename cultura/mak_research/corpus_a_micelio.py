@@ -75,6 +75,23 @@ def documento(f):
         if val:
             partes.append("**%s:** %s" % (rotulo, val))
 
+    # LO QUE ESCRIBIO EL ARTISTA. Es el material mas rico que hay para embeber
+    # y no salio de ningun modelo: viene del export de Instagram, con la fecha
+    # exacta de publicacion (`tools/ig_metadatos.py`, 2026-08-01). Un embedding
+    # armado sobre las palabras del autor no es lo mismo que uno armado sobre
+    # la descripcion de un modelo mirando pixeles, y por eso va SEPARADO y
+    # rotulado: quien lea el documento tiene que poder distinguir quien dijo
+    # que. Vacio en las fichas anteriores al 2026-08-01, y ahi no se inventa.
+    autor = (f.get("texto_autor") or "").strip()
+    fecha = (f.get("fecha_publicacion") or "").strip()
+    if fecha:
+        partes.append("**Publicada:** %s" % fecha)
+    if autor:
+        partes.append("")
+        partes.append("**Lo que escribio el artista al publicarla:**")
+        partes.append("")
+        partes.append(autor[:2000])
+
     texto_visible = (v.get("texto_visible") or f.get("ocr_texto") or "").strip()
     if texto_visible:
         partes.append("")
@@ -86,7 +103,12 @@ def documento(f):
     partes.append("---")
     partes.append("meta: %s" % json.dumps(
         {"id": f.get("id"), "fuente": "iskvw", "tipo": f.get("tipo"),
-         "categoria": f.get("categoria"), "mtime": f.get("mtime")},
+         "categoria": f.get("categoria"), "mtime": f.get("mtime"),
+         # La fecha de publicacion es un dato duro y distinto de `mtime`, que
+         # es cuando el archivo toco este disco. Con ella el micelio puede
+         # relacionar por tiempo y no solo por parecido.
+         "fecha_publicacion": f.get("fecha_publicacion") or None,
+         "texto_autor": bool(f.get("texto_autor"))},
         ensure_ascii=False))
     return "\n".join(partes) + "\n"
 

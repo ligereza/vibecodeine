@@ -933,6 +933,7 @@ def web_search(query, depth="basic", max_results=5, errors=None):
                 errors.append("web_search: " + motivo)
         res["motivo"] = motivo
         return res
+    errores_antes = len(errors) if errors is not None else 0
     tav = tavily_search(query, depth=depth, max_results=max_results,
                         errors=errors)
     # Tavily tampoco vio nada: si SearXNG estaba ciego, la busqueda entera lo
@@ -940,7 +941,17 @@ def web_search(query, depth="basic", max_results=5, errors=None):
     tav.setdefault("ciego", False)
     if not tav.get("results") and res.get("ciego"):
         tav["ciego"] = True
-        tav["motivo"] = res.get("motivo") or ""
+        # LOS DOS MOTIVOS, no el ultimo. La primera version pisaba el motivo
+        # con el de SearXNG y tiraba el de Tavily, asi que 19 tareas pausaron
+        # con "brave suspendido; duckduckgo CAPTCHA" cuando la causa real era
+        # `HTTP 400 Query is too long` -- el error de Tavily. Ni un solo
+        # checkpoint lo nombraba; sobrevivio unicamente en el registro de salud
+        # (28 api_errors). El instrumento borraba al culpable, que es el mismo
+        # defecto que el instrumento existe para no cometer.
+        motivos = [res.get("motivo") or ""]
+        if errors is not None:
+            motivos += [e for e in errors[errores_antes:] if e.startswith("tavily")]
+        tav["motivo"] = "; ".join(m for m in motivos if m)
     return tav
 
 _TAG_RE = re.compile(r"<script[\s\S]*?</script>|<style[\s\S]*?</style>|<[^>]+>|&[a-z#0-9]+;", re.I)
