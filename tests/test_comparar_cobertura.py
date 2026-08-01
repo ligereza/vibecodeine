@@ -84,7 +84,7 @@ def test_empty_and_absent_are_counted_apart(tmp_path):
                   _ficha("2", {"tecnica": "dibujo"})])
     d = _correr(a, b)
     campo = d["campos"]["tecnica"]["antes"]
-    assert campo == {"lleno": 0, "vacio": 1, "ausente": 1}
+    assert campo == {"lleno": 0, "vacio": 1, "ausente": 1, "heredado": 0}
 
 
 def test_a_key_no_list_knows_about_is_still_counted(tmp_path):
@@ -109,3 +109,57 @@ def test_a_retry_row_wins_over_the_first_attempt(tmp_path):
     d = _correr(a, b)
     assert d["comparadas"] == 1
     assert d["campos"]["tecnica"]["despues"]["lleno"] == 1
+
+
+# --------------------------------------------------- inherited is not filled
+
+def test_an_inherited_field_is_not_credited_to_the_signing_engine(tmp_path):
+    """`tools/consolidar_fichas.py` merges field by field, so a ficha signed by
+    watsonx can carry a field ollama produced. Measured on the merged archive
+    on 2026-08-01: counting those as filled reported `oportunidad_codigo` at
+    100% for watsonx when the real figure is 77,9% and the other 291 were
+    ollama's. That is the exact lie this tool exists to prevent, walking in
+    through the side door."""
+    a, b = tmp_path / "a.jsonl", tmp_path / "b.jsonl"
+    _escribir(a, [_ficha("1", {"tecnica": "collage"}, motor="ollama")])
+    fusionada = {
+        "id": "1", "fuente": "ig", "vision": {"tecnica": "collage"},
+        "medicion": {"vision": {"estado": "medido", "motor": "watsonx",
+                                "heredado": {"vision.tecnica": "ollama"}}},
+    }
+    _escribir(b, [fusionada])
+    d = _correr(a, b)
+    campo = d["campos"]["tecnica"]["despues"]
+    assert campo["lleno"] == 0, "watsonx no midio ese campo"
+    assert campo["heredado"] == 1
+
+
+def test_a_field_the_engine_did_measure_still_counts(tmp_path):
+    """The fix must not swallow real coverage: only what is declared inherited
+    stops counting."""
+    a, b = tmp_path / "a.jsonl", tmp_path / "b.jsonl"
+    _escribir(a, [_ficha("1", {})])
+    fusionada = {
+        "id": "1", "fuente": "ig",
+        "vision": {"tecnica": "collage", "colores": ["negro"]},
+        "medicion": {"vision": {"motor": "watsonx",
+                                "heredado": {"vision.tecnica": "ollama"}}},
+    }
+    _escribir(b, [fusionada])
+    d = _correr(a, b)
+    assert d["campos"]["colores"]["despues"]["lleno"] == 1
+    assert d["campos"]["tecnica"]["despues"]["heredado"] == 1
+
+
+def test_the_old_flat_list_format_says_it_does_not_know_the_engine(tmp_path):
+    """An earlier merge wrote `heredado` as a flat list with a single
+    `motor_heredado` for the whole ficha. What was inherited is known; from
+    whom is not -- and that is said, not guessed."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "cmp_cob", RAIZ / "tools" / "comparar_cobertura_fichas.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    ficha = {"medicion": {"vision": {"heredado": ["vision.tecnica"]}}}
+    assert mod.heredados_de(ficha) == {"vision.tecnica": "sin_atribucion"}
+    assert mod.heredados_de({}) == {}

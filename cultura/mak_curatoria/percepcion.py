@@ -24,7 +24,7 @@ Si PIL no esta disponible, todo esto cae a leer/usar los bytes crudos.
 
     python3 percepcion.py correr --raiz-rd RUTA --raiz-ig RUTA --out DIR
         [--max-errores-seguidos 20] [--timeout-archivo 120]
-        [--solo-fuente rd|ig]
+        [--solo-fuente rd|ig] [--limite N] [--meta-ig ig_meta.json]
     python3 percepcion.py estado --out DIR
 """
 import base64
@@ -32,9 +32,11 @@ import hashlib
 import io
 import json
 import os
+import re
 import subprocess
 import sys
 import time
+import unicodedata
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
@@ -181,15 +183,131 @@ CLAVES_VISION = {
 }
 CLAVES_EVENTO = ("productora", "venue", "fecha", "headliners", "handles")
 
+# Campos de `datos_evento` cuyo valor SE PUEDE contrastar contra el texto que
+# se leyo de la imagen. `fecha` queda fuera a proposito: el modelo normaliza
+# ("VIERNES 01 MAYO" -> "2026-05-01") y comparar palabras diria "sin respaldo"
+# sobre una lectura correcta. Medir con el instrumento equivocado y reportar el
+# resultado es peor que no medir. `handles` tampoco: una arroba se deduce
+# legitimamente de un correo.
+CONTRASTABLES = ("productora", "venue", "headliners")
 
-def prompt_de(fuente: str) -> str:
+
+def _plegar_texto(t: str) -> str:
+    d = unicodedata.normalize("NFKD", t or "")
+    return "".join(c for c in d if not unicodedata.combining(c)).lower()
+
+
+def _palabras_de(t: str, minimo: int = 3) -> set:
+    return {p for p in re.findall(r"[a-z0-9]+", _plegar_texto(t))
+            if len(p) >= minimo}
+
+
+def respaldo_evento(datos_evento: dict, ocr_texto: str,
+                    texto_visible: str) -> dict:
+    """Que campos extraidos APARECEN en el texto que se leyo de la imagen.
+
+    Medido el 2026-08-01 sobre 300 archivos reales de RD: `venue` tenia
+    respaldo en el 99% de los casos y `headliners` en el 97%, pero
+    `productora` solo en el 33% -- de 173 productoras extraidas, 116 no
+    figuraban en el texto. Casi todas decian "Reduciendo Dano": el modelo
+    dedujo la productora del CONTEXTO (es material de RD) en vez de leerla del
+    cartel. No es mentira, pero tampoco es lectura, y la base RD se alimenta de
+    aca: una productora equivocada es un cliente equivocado.
+
+    Marca, NO borra. Un dato deducido puede ser el correcto y el que decide es
+    quien lo cura, no este archivo. Lo que no puede pasar es que llegue a la
+    base sin distinguirse de uno leido.
+    """
+    base = _palabras_de((ocr_texto or "") + " " + (texto_visible or ""))
+    sin_respaldo, con_respaldo = [], []
+    for campo in CONTRASTABLES:
+        valor = datos_evento.get(campo)
+        if not valor:
+            continue
+        texto = " ".join(valor) if isinstance(valor, list) else str(valor)
+        (con_respaldo if _palabras_de(texto) & base
+         else sin_respaldo).append(campo)
+    out = {}
+    if con_respaldo:
+        out["con_respaldo"] = con_respaldo
+    if sin_respaldo:
+        out["sin_respaldo"] = sin_respaldo
+    return out
+
+
+def canonizar_tecnicas(valores):
+    """Un mapa valor -> grafia canonica, decidido MIRANDO EL CORPUS.
+
+    Una ficha sola no alcanza para saber si `fotografia` es un error o una
+    palabra sin tilde: hace falta ver que en el mismo corpus hay 163
+    `fotografía` y 35 `fotografia`. Por eso esto recibe TODOS los valores y no
+    uno.
+
+    Gana la variante ACENTUADA cuando existe, aunque sea minoria: en castellano
+    la tilde no es una opcion de estilo, y el valor que sale de aca lo lee un
+    humano. Entre variantes igual de acentuadas gana la mas frecuente. Si
+    ninguna lleva tilde, tambien la mas frecuente -- ahi no hay nada que
+    corregir.
+
+    No hay lista escrita a mano: el mapa sale de los datos, asi que el dia que
+    aparezca una tecnica nueva no hay que acordarse de nada.
+    """
+    grupos = {}
+    for valor in valores:
+        if not valor:
+            continue
+        texto = " ".join(str(valor).lower().split())
+        clave = _plegar_texto(texto)
+        grupos.setdefault(clave, {})
+        grupos[clave][texto] = grupos[clave].get(texto, 0) + 1
+    mapa = {}
+    for variantes in grupos.values():
+        if len(variantes) < 2:
+            continue
+        def _rango(par):
+            texto, veces = par
+            return (any(unicodedata.combining(c)
+                        for c in unicodedata.normalize("NFKD", texto)), veces)
+        canonica = max(variantes.items(), key=_rango)[0]
+        for texto in variantes:
+            if texto != canonica:
+                mapa[texto] = canonica
+    return mapa
+
+
+def prompt_de(fuente: str, texto_autor: str = "", fecha: str = "") -> str:
     """El prompt que corresponde al corpus. Son dos trabajos distintos.
 
     'rd' extrae datos de material de la ONG. 'ig' (el archivo del artista)
     arma el mapa conceptual. Usar uno solo para ambos fue el defecto que hizo
     inservible la corrida del 2026-07-23.
     """
-    return PROMPT_RD if fuente == "rd" else PROMPT_ISKVW
+    base = PROMPT_RD if fuente == "rd" else PROMPT_ISKVW
+    if not (texto_autor or fecha):
+        return base
+    # Lo que el ARTISTA escribio sobre su propia obra, y cuando la publico.
+    # Un modelo mirando un render dice "composicion 3D abstracta"; el artista
+    # escribio "Animacion 3D para @sweettoothskully, meses de ensayo y error",
+    # que nombra la tecnica, el encargo, la duracion y la intencion. Eso NO
+    # esta en los pixeles y ningun modelo lo recupera de ahi. Medido sobre el
+    # export real: 1.013 de 1.401 fichas ig tienen texto propio y 1.124 tienen
+    # fecha exacta.
+    #
+    # Va como CONTEXTO, no como respuesta: el modelo sigue teniendo que mirar
+    # la imagen. Si copia el texto en vez de leer la obra, el campo deja de
+    # medir lo que dice medir.
+    extra = [chr(10) + chr(10) +
+             "CONTEXTO QUE APORTA EL ARTISTA (no es la respuesta, es lo "
+             "que el escribio al publicarla):"]
+    if fecha:
+        extra.append("Publicada el %s." % fecha)
+    if texto_autor:
+        extra.append('Sus palabras: "%s"' % texto_autor[:1200].replace('"', "'"))
+    extra.append("Usalo para acertar la TECNICA y la idea principal, que es "
+                 "donde una imagen sola engana. NO lo copies como descripcion "
+                 "ni inventes lo que ahi no dice: describi lo que VES, y que "
+                 "el contexto te ayude a nombrarlo bien.")
+    return base + chr(10).join(extra)
 
 
 # ---------------------------------------------------------------------------
@@ -620,6 +738,20 @@ def _parsear_json_vision(texto: str, fuente: str = "rd") -> dict:
     # vacia, en vez de quedar como un valor nuevo que despues hay que descubrir
     # contando. Un modelo que contesta "dibujo digital" esta contestando la
     # tecnica, y la tecnica ya tiene su campo.
+    # La TECNICA es texto libre y por eso deriva. Medido el 2026-08-01 sobre las
+    # 1.401 fichas ig: 54 valores crudos distintos que son 48 conceptos, con 5
+    # grupos escritos de mas de una forma y ~330 fichas involucradas --
+    # `fotografia`(35) vs `fotografía`(163), `Ilustración digital`(5) vs
+    # `ilustración digital`(103) vs `ilustracion digital`(9).
+    #
+    # Aca se arregla SOLO lo que se puede decidir mirando un valor solo:
+    # mayusculas y espacios. La tilde NO: para saber si `fotografia` es un
+    # error de `fotografía` hay que ver el corpus entero, y decidirlo desde una
+    # ficha suelta seria inventar. Eso lo hace `canonizar_tecnicas()`, que ve
+    # todas. Y la tilde NUNCA se borra: es un valor que lee un humano.
+    if datos.get("tecnica"):
+        datos["tecnica"] = " ".join(str(datos["tecnica"]).lower().split())
+
     if "tipo_obra" in datos:
         t = str(datos.get("tipo_obra") or "").strip().lower()
         t = SINONIMOS_TIPO_OBRA.get(t, t)
@@ -635,7 +767,8 @@ def _parsear_json_vision(texto: str, fuente: str = "rd") -> dict:
     return datos
 
 
-def vision_imagen(path: str, timeout: int = 120, fuente: str = "rd") -> dict:
+def vision_imagen(path: str, timeout: int = 120, fuente: str = "rd",
+                  texto_autor: str = "", fecha: str = "") -> dict:
     """Manda `path` (imagen ya lista, o contact sheet de video) a ollama
     y devuelve el JSON de vision parseado de forma tolerante. Cualquier
     fallo de lectura/red/parseo devuelve {"error": ...} sin lanzar
@@ -665,7 +798,8 @@ def vision_imagen(path: str, timeout: int = 120, fuente: str = "rd") -> dict:
             except ImportError:
                 sys.path.append(os.path.expanduser("~/research"))
                 from research_lib import watsonx_vision
-            texto = watsonx_vision(prompt_de(fuente), imagen_b64,
+            texto = watsonx_vision(prompt_de(fuente, texto_autor, fecha),
+                                   imagen_b64,
                                    timeout=timeout)
             d = _parsear_json_vision(texto, fuente)
             if not d.get("error"):
@@ -677,7 +811,7 @@ def vision_imagen(path: str, timeout: int = 120, fuente: str = "rd") -> dict:
 
     payload = json.dumps({
         "model": OLLAMA_MODEL,
-        "prompt": prompt_de(fuente),
+        "prompt": prompt_de(fuente, texto_autor, fecha),
         "images": [imagen_b64],
         "stream": False,
     }).encode("utf-8")
@@ -775,7 +909,8 @@ def _mtime_a_fecha(mtime) -> str:
         return ""
 
 
-def construir_ficha(entry: dict, dir_tmp: Path, timeout_archivo: int) -> dict:
+def construir_ficha(entry: dict, dir_tmp: Path, timeout_archivo: int,
+                    meta_ig: dict | None = None) -> dict:
     """Construye la ficha de schema UNICO para un item de trabajo.
 
     Nunca lanza: cualquier excepcion durante el analisis queda como
@@ -784,6 +919,11 @@ def construir_ficha(entry: dict, dir_tmp: Path, timeout_archivo: int) -> dict:
     """
     fuente = entry["fuente"]
     ruta_rel = entry["ruta_rel"]
+    # Lo que el artista escribio y cuando lo publico, si el export lo trae.
+    # Sale de `tools/ig_metadatos.py`; la clave es el nombre del archivo.
+    _meta = (meta_ig or {}).get(os.path.basename(ruta_rel)) or {}
+    texto_autor = _meta.get("texto") or ""
+    fecha_publicacion = _meta.get("fecha") or ""
     ruta_abs = entry["ruta_abs"]
     tipo = entry["tipo"]
 
@@ -801,14 +941,17 @@ def construir_ficha(entry: dict, dir_tmp: Path, timeout_archivo: int) -> dict:
                     Path(ruta_ocr).unlink(missing_ok=True)
                 except OSError:
                     pass
-            vision = vision_imagen(ruta_abs, timeout=timeout_archivo, fuente=fuente)
+            vision = vision_imagen(ruta_abs, timeout=timeout_archivo, fuente=fuente,
+                                   texto_autor=texto_autor, fecha=fecha_publicacion)
 
         elif tipo == "video":
             sheet_path = Path(dir_tmp) / ("sheet_%s.jpg" % id_ficha(fuente, ruta_rel))
             ok, motivo_sheet = generar_contact_sheet(
                 ruta_abs, str(sheet_path), timeout=timeout_archivo)
             if ok:
-                vision = vision_imagen(str(sheet_path), timeout=timeout_archivo, fuente=fuente)
+                vision = vision_imagen(str(sheet_path), timeout=timeout_archivo,
+                                       fuente=fuente, texto_autor=texto_autor,
+                                       fecha=fecha_publicacion)
                 try:
                     sheet_path.unlink(missing_ok=True)
                 except OSError:
@@ -896,6 +1039,26 @@ def construir_ficha(entry: dict, dir_tmp: Path, timeout_archivo: int) -> dict:
             error),
     }
     medicion["vision"]["motor"] = motor
+    if _meta:
+        # El contexto CAMBIA la respuesta del modelo, asi que tiene que quedar
+        # registrado: dos fichas con el mismo motor y distinto contexto no son
+        # comparables, y quien mida cobertura despues tiene que poder separarlas.
+        medicion["metadatos"] = {
+            "fuente": "export_ig",
+            "con_texto_autor": bool(texto_autor),
+            "con_fecha": bool(fecha_publicacion),
+            "en_el_prompt": bool(texto_autor or fecha_publicacion),
+        }
+        if _meta.get("encoding_sospechoso"):
+            medicion["metadatos"]["encoding_sospechoso"] = True
+    else:
+        medicion["metadatos"] = {"fuente": "sin_metadatos",
+                                 "con_texto_autor": False, "con_fecha": False,
+                                 "en_el_prompt": False}
+    if fuente == "rd" and datos_evento:
+        medicion["datos_evento"].update(
+            respaldo_evento(datos_evento, ocr_texto,
+                            (vision_final or {}).get("texto_visible")))
     if desconocidas:
         medicion["vision"]["claves_desconocidas"] = desconocidas
     if vacias:
@@ -911,6 +1074,12 @@ def construir_ficha(entry: dict, dir_tmp: Path, timeout_archivo: int) -> dict:
         "categoria": categoria,
         "bytes": entry.get("bytes", 0),
         "mtime": _mtime_a_fecha(entry.get("mtime")),
+        # Lo que el artista escribio y cuando lo publico. NO sale de ningun
+        # modelo: sale del export, y por eso vale mas que cualquier
+        # descripcion generada. Vacio cuando el export no lo trae, sin
+        # rellenar: 277 de las 1.401 fichas ig no casan con ninguna entrada.
+        "fecha_publicacion": fecha_publicacion,
+        "texto_autor": texto_autor[:2000],
         "ocr_texto": (ocr_texto or "")[:1500],
         "vision": vision_final,
         "datos_evento": datos_evento,
@@ -966,7 +1135,8 @@ def correr(raiz_rd, raiz_ig, dir_out,
            max_errores_seguidos: int = DEFAULT_MAX_ERRORES_SEGUIDOS,
            timeout_archivo: int = DEFAULT_TIMEOUT_ARCHIVO,
            solo_fuente: str | None = None,
-           limite: int | None = None) -> int:
+           limite: int | None = None,
+           meta_ig: str | None = None) -> int:
     """Corre la percepcion sobre ambos corpus. Retorna el codigo de salida:
 
     0 = termino todo el trabajo pendiente.
@@ -987,6 +1157,22 @@ def correr(raiz_rd, raiz_ig, dir_out,
     # nunca. Tres funciones hacian lo mismo y una se olvido: la respuesta no es
     # agregar el cuarto mkdir, es que ninguna tenga que acordarse.
     dir_tmp.mkdir(parents=True, exist_ok=True)
+
+    mapa_meta = {}
+    if meta_ig:
+        # Si se pidio y no se puede leer, se ABORTA. Seguir sin el mapa daria
+        # una corrida completa, plausible y sin el dato que la justificaba, y
+        # nadie lo notaria hasta contar fichas horas despues.
+        try:
+            mapa_meta = json.loads(Path(meta_ig).read_text(encoding="utf-8"))
+            mapa_meta = mapa_meta.get("medios") or mapa_meta
+        except (OSError, ValueError) as exc:
+            print("ERROR: no pude leer --meta-ig %s (%s)" % (meta_ig, exc),
+                  file=sys.stderr)
+            return 2
+        con_texto = sum(1 for v in mapa_meta.values() if v.get("texto"))
+        print("META: %d archivos con metadatos del export, %d con texto del "
+              "artista" % (len(mapa_meta), con_texto), flush=True)
 
     trabajo = construir_trabajo(raiz_rd, raiz_ig, solo_fuente=solo_fuente)
     # `--limite` existe para SONDEAR un corpus sin correrlo entero: el usuario
@@ -1045,7 +1231,8 @@ def correr(raiz_rd, raiz_ig, dir_out,
         if esta_en_cuarentena(fallos, clave, entry):
             continue
 
-        ficha = construir_ficha(entry, dir_tmp, timeout_archivo)
+        ficha = construir_ficha(entry, dir_tmp, timeout_archivo,
+                                meta_ig=mapa_meta)
         tiempos.append(ficha.get("seg_proceso") or 0.0)
         if len(tiempos) > 200:
             del tiempos[:-200]
@@ -1129,6 +1316,7 @@ def main() -> int:
             print("ERROR: --solo-fuente debe ser rd o ig", file=sys.stderr)
             return 2
 
+        meta_ig = _obtener_flag(resto, "--meta-ig")
         limite_txt = _obtener_flag(resto, "--limite")
         try:
             limite = int(limite_txt) if limite_txt else None
@@ -1153,6 +1341,7 @@ def main() -> int:
                 timeout_archivo=timeout_archivo,
                 solo_fuente=solo_fuente,
                 limite=limite,
+                meta_ig=meta_ig,
             )
         except Exception as exc:
             print("ERROR correr: %s" % exc, file=sys.stderr)

@@ -32,8 +32,8 @@ try:
 except ImportError:          # el organo puede correr sin la compuerta
     fuentes = None
 from research_lib import (LLM, escala_tok, fetch_url, load_env, marco,
-                          marco_solo,
-                         ntfy_publish, slug, stamp, tavily_search, web_search)
+                          marcadores_de_plantilla, marco_solo, ntfy_publish,
+                          slug, stamp, tavily_search, web_search)
 
 OUT_DIR = os.path.expanduser("~/research/informes")
 
@@ -215,7 +215,15 @@ def investigar(topic, iteraciones=3, depth="basic",
                    % (search.get("motivo") or "sin detalle"))
 
         if search.get("answer"):
-            findings.append({"type": "tavily_answer", "iteration": i + 1,
+            # El TIPO se queda como esta: `estadisticas.py` lo cuenta por ese
+            # nombre y renombrarlo romperia el conteo historico. Lo que se
+            # agrega es QUIEN respondio -- hasta hoy un informe decia
+            # "tavily_answer" hubiera contestado tavily o searxng, asi que
+            # buscar "tavily" en los informes daba 123 aciertos y ninguno
+            # probaba una llamada a tavily. Un nombre no es una atribucion.
+            findings.append({"type": "tavily_answer",
+                             "motor": search.get("motor") or "sin_atribucion",
+                             "iteration": i + 1,
                              "query": current, "content": search["answer"]})
 
         fresh = [r for r in (search.get("results") or [])
@@ -329,6 +337,35 @@ def investigar(topic, iteraciones=3, depth="basic",
             )
     except RuntimeError as e:
         pausar(iteraciones, formato, str(e))
+
+    # Un informe con la plantilla sin rellenar no esta terminado, por mas que
+    # tenga las cinco secciones. Medido el 2026-08-01: 36 de 102 informes
+    # reales traian "**Investigador:** [Tu Nombre]". Se pide UNA vez mas,
+    # nombrando el hueco; si vuelve igual, el informe sale marcado arriba de
+    # todo en vez de fingir que esta listo.
+    huecos = marcadores_de_plantilla(report)
+    if huecos:
+        print("AVISO: el informe trae plantilla sin rellenar (%s), lo pido de "
+              "nuevo" % ", ".join(huecos), flush=True)
+        try:
+            reintento, _ = llm.call(
+                sistema_informe,
+                ("Este texto quedo con marcadores de plantilla sin rellenar "
+                 "(%s). Reescribilo COMPLETO sin ningun hueco: no hay un autor "
+                 "que poner ni una fecha que completar despues, sos vos quien "
+                 "lo escribe ahora. Si un dato no lo tenes, decilo con "
+                 "palabras, no con un corchete." + chr(10) + chr(10) + "%s")
+                % (", ".join(huecos), report),
+                escala_tok(2000, densidad))
+            if reintento and not marcadores_de_plantilla(reintento):
+                report = reintento
+                huecos = []
+        except RuntimeError:
+            pass
+    if huecos:
+        report = ("> AVISO: este informe quedo con plantilla sin rellenar "
+                  "(%s) despues de un reintento. No esta terminado."
+                  % ", ".join(huecos)) + chr(10) + chr(10) + report
 
     if ev and ev["sin_fuente_primaria"]:
         # Arriba de todo y antes de armar: un lector que abre el archivo tiene

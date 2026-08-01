@@ -56,3 +56,49 @@ Sobre el `index.html` actual de `main`, que ya trae la semilla (`#semilla=`) y
 el dibujado de vínculos. La técnica es independiente de las dos: cambia CÓMO se
 pinta cada obra, no qué se posiciona ni qué se une. No se mergea la rama; se
 aplica esto encima.
+
+
+## Aplicada al NODO (2026-08-01)
+
+La técnica estaba escrita acá desde el 2026-07-30 y se aplicó sólo a la obra
+RESUELTA. Medido: la maquinaria de glifos —la rampa, el campo que evoluciona, el
+vocabulario de la pieza, la regla doublecup— corría únicamente bajo
+`destino && F > 0.35`, o sea con el visitante cerca y quieto. **El resto del
+tiempo cada nodo eran dos arcos**: un gradiente radial y un círculo sólido. Eso
+es el círculo con hilos que se ve el 95% del tiempo.
+
+`mejoras.nodo_glifo` en `datos/tablero.json` hace que el nodo use la MISMA
+materia que la obra: el mismo campo, evaluado en la posición del nodo en vez de
+en el punto de la forma. No se inventó una estética: se aplicó la escrita un
+nivel más arriba. **Se publica apagada**; encenderla es del artista, igual que
+`patch_efectos`.
+
+Medido con `tools/iskvw_piel_medir.mjs`, escenario "entrada abierta" sobre las
+479 piezas:
+
+| | apagada | encendida |
+|---|---|---|
+| arcos por cuadro | 764 | **0** |
+| gradientes por cuadro | 382 | **0** |
+| textos por cuadro | 0 | ~373 |
+| segmentos (vínculos) | 85 | 85 |
+
+Sale más barata además de distinta: se dejan de crear dos gradientes por nodo y
+por cuadro, que es lo caro de ese bucle.
+
+## El muro que apareció al medirla
+
+Encendida, **el conteo no es determinista**: 373 textos en un cuadro y 374 en el
+siguiente. El medidor lo rechaza, y hace bien — su regla existe para que una
+regresión de costo se vea.
+
+La causa no es un defecto de esta mejora: el patrón es GENERATIVO y su nivel en
+la rampa depende de un campo que evoluciona con el tiempo, así que un nodo cruza
+el umbral del vacío (`g2 === ' '`) entre un cuadro y otro. Esa dependencia
+existía desde siempre en la obra resuelta; nunca se vio porque en los escenarios
+medidos `textos` era 0.
+
+**Antes de encenderla hay que resolver eso**, y la dirección ya está escrita en
+`PROYECCION.md` §5.5: sembrar lo generativo con un valor determinista —el índice
+de cuadro o el timecode— para que `render(t) == render(t)`. Mientras el conteo
+baile, encenderla deja al repo sin forma de fijar el costo de un cuadro.

@@ -3,8 +3,11 @@
  "version": 1,
  "mejoras": {
   "venue3d": false,
-  "patch_efectos": false
+  "patch_efectos": false,
+  "nodo_glifo": false
  },
+
+ "_nodo_glifo": "Cada nodo del campo se dibuja como GLIFO en vez de como circulo, con la misma materia que ya usa la obra cuando resuelve: la rampa, el campo que evoluciona y el vocabulario de la pieza. La tecnica y su causa estan en iskvw/piel/campo/ASCII_REFERENCIA.md, en palabras del artista mirando Safari. Apagada, la piel dibuja exactamente igual que antes. Encendida, deja de crear dos gradientes por nodo y por cuadro, asi que ademas sale mas barata.",
 
  "_patch": "El cableado de la mejora `patch_efectos`: la obra no se exhibe en el campo, lo deforma, y lo deforma con lo que ella misma mide. Cada fila conecta un DATO de la pieza con un EFECTO que ejerce sobre lo que tiene alrededor, como un patch de sintetizador modular. Si la obra no trae el dato, el efecto vale cero: no se inventa nada. La llave de arriba manda; apagada, la piel dibuja exactamente igual que antes.",
 

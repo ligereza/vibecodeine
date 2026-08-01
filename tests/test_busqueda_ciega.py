@@ -127,7 +127,7 @@ def test_refutar_stops_instead_of_signing_an_unsourced_report():
     assert 'if result is None:' in fuente and 'return 3' in fuente
     # and the wall happens BEFORE any model is asked to write a thesis
     assert fuente.index("if ciegas and not resultados:") < fuente.index(
-        "Proponente (%s) escribe la tesis")
+        "escribe la tesis")
 
 
 def test_research_pauses_on_a_blind_search():
@@ -180,3 +180,26 @@ def test_no_engines_set_means_no_parameter(monkeypatch):
     monkeypatch.delenv("SEARXNG_ENGINES", raising=False)
     research_lib.searxng_search("algo")
     assert "engines=" not in visto["url"]
+
+
+def test_the_reason_names_BOTH_searchers_not_just_the_last(monkeypatch):
+    """The first version overwrote the reason with SearXNG's and threw away
+    Tavily's, so 19 tasks paused reporting "brave suspended; duckduckgo CAPTCHA"
+    when the real cause was Tavily answering `HTTP 400 Query is too long`. Not
+    one checkpoint named it; it survived only in the health registry, as 28
+    api_errors. The instrument was erasing the culprit -- which is the very
+    defect the instrument exists to prevent."""
+    monkeypatch.setenv("TAVILY_API_KEY", "x")
+
+    def falso(url, *a, **k):
+        if "tavily" in str(url):
+            raise OSError("HTTP Error 400: Query is too long")
+        return {"results": [], "unresponsive_engines": [["brave", "CAPTCHA"]]}
+
+    monkeypatch.setattr(research_lib, "_http_json", falso)
+    errores = []
+    r = research_lib.web_search("algo", errors=errores)
+    assert r["ciego"] is True
+    assert "brave" in r["motivo"], "el motivo de searxng sigue"
+    assert "too long" in r["motivo"], (
+        "y el de tavily tambien, que era la causa real")

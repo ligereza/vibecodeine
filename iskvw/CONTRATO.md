@@ -5,30 +5,43 @@ entero sin tocar el contenido ni romper nada**. El portafolio cambia seguido;
 lo que no cambia es lo que hay que mostrar y lo que no se puede mentir.
 
 Se lo podés pasar completo a un agente externo (Arena, Google AI Studio, el que
-sea) junto con `PROMPT_ESTETICA.md`, y lo que devuelva tiene que encajar acá sin
-que nadie edite los datos.
+sea) junto con `PROMPT_ESTETICA.md` y `ESQUEMA_ARCHIVO.md`, y lo que devuelva
+tiene que encajar acá sin que nadie edite los datos.
+
+**Corregido el 2026-08-01:** este documento mandaba leer `datos/obras.json`, que
+son 8 entradas y son HERRAMIENTAS del repo, mientras el sitio publicado sirve
+`datos/archivo.json` con 479 piezas. Los tres archivos que se le pasan a un
+agente externo decian cosas distintas, asi que una piel encargada afuera se
+escribia contra datos que no existen -- y el error no aparece hasta publicarla.
 
 ---
 
 ## Las tres capas, y por qué están separadas
 
 ```
-  datos/obras.json     CONTENIDO   -- no cambia cuando cambia el estilo
+  datos/archivo.json   CONTENIDO   -- no cambia cuando cambia el estilo
   CONTRATO.md          CONTRATO    -- qué hay que mostrar y qué no se puede mentir
   piel/<la-que-sea>/   PIEL        -- se despega y se reemplaza entera
 ```
 
 La piel **consume** los datos y **cumple** el contrato. No los modifica, no
 agrega campos, no inventa. Si una piel necesita un dato que no está en
-`obras.json`, ese dato se agrega primero al contenido — nunca se hardcodea en
+`archivo.json`, ese dato se agrega primero al contenido — nunca se hardcodea en
 la piel, porque entonces deja de ser reemplazable.
 
 ---
 
 ## Qué recibe una piel
 
-Un único archivo: `datos/obras.json`. Su forma está en `datos/ESQUEMA.md` y
-cada campo dice si es obligatorio o puede faltar.
+Un único archivo: **`datos/archivo.json`**, con dos listas, `piezas` y
+`vinculos`. Su forma está en `ESQUEMA_ARCHIVO.md` y cada campo dice si es
+obligatorio o puede faltar. Medido el 2026-08-01 sobre lo que el sitio publica:
+479 piezas y 269 vínculos, y **ninguna pieza trae coordenadas** — si una piel
+necesita posiciones, las calcula ella.
+
+`datos/obras.json` y `datos/campo.json` siguen existiendo y son RESPALDOS: la
+piel viva los pide sólo si `archivo.json` no está. Una piel nueva se escribe
+contra `archivo.json`; que degrade a los otros es opcional y se declara.
 
 Nada más. Sin API, sin backend, sin build propio del contenido. Una piel es
 HTML/CSS/JS (o un bundle) que lee ese JSON y lo dibuja.
@@ -59,6 +72,14 @@ pueda cambiar sin miedo.
 5. **La piel se puede borrar y poner otra sin tocar `datos/`.**
    Si para cambiar el estilo hay que editar el contenido, el contrato se rompió.
 
+6. **Una clase de pieza o de vínculo que no conocés no se descarta ni se
+   asimila.** El archivo crece: hoy hay `obra`, `pieza_grafica`, `concepto` e
+   `informe`, y mañana hay otra. Una piel que sólo dibuja lo que su autor
+   conocía deja de mostrar el archivo sin avisar. Dibujala de la forma más
+   neutra que tengas y decilo.
+   *Causa: es el defecto que este repo encontró cinco veces en dos días — una
+   lista escrita a mano que dejó de coincidir con lo que existe.*
+
 ---
 
 ## Lo que NO tiene que ser
@@ -79,7 +100,9 @@ Esto es dirección, y viene del autor:
 
 ## Cómo se cambia el estilo
 
-1. Se le pasa a un agente `PROMPT_ESTETICA.md` + este contrato + `datos/ESQUEMA.md`.
+1. Se le pasa a un agente `PROMPT_ESTETICA.md` + este contrato +
+   `ESQUEMA_ARCHIVO.md`. Los tres tienen que decir lo mismo: si se contradicen,
+   el agente escribe contra datos que no existen.
 2. Lo que devuelva se pone en `piel/<nombre-nuevo>/`.
 3. Se abre. Si cumple las cinco reglas de arriba y se ve bien, se apunta ahí.
 4. La piel anterior queda en su carpeta: cambiar de estilo no borra el anterior.

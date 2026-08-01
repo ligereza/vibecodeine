@@ -80,20 +80,48 @@ def lleno(valor) -> bool:
     return True
 
 
+def heredados_de(ficha: dict) -> dict:
+    """Fields this ficha did NOT measure: it keeps them from an earlier pass.
+
+    `tools/consolidar_fichas.py` writes them when it merges. Without reading
+    them, this tool credits the row's engine with what another one answered --
+    measured on 2026-08-01 over the merged archive: `oportunidad_codigo` came
+    out at 100% for watsonx when the real figure is 77,9% and the other 291
+    were ollama's. It is exactly the lie this file exists to prevent, walking
+    in through the side door.
+    """
+    h = (((ficha.get("medicion") or {}).get("vision") or {}).get("heredado")
+         or {})
+    if isinstance(h, dict):
+        return h
+    # Old format: a flat list with no engine. What was inherited is known;
+    # from whom is not -- and that is said, not guessed.
+    return {c: "sin_atribucion" for c in h} if isinstance(h, list) else {}
+
+
 def contar(fichas: dict[str, dict], ids: list[str], claves: list[str]) -> dict:
-    """Per key: how many of `ids` have it filled, empty, or absent."""
+    """Per key: how many of `ids` have it filled, empty, absent or inherited.
+
+    `heredado` is NOT `lleno`: the field has a value, but this pass did not
+    produce it. Counting it as filled is how a merge quietly inflates the
+    coverage of whichever engine happens to sign the row.
+    """
     out = {}
     for k in claves:
-        llenos = vacios = ausentes = 0
+        llenos = vacios = ausentes = heredados = 0
         for i in ids:
-            vision = fichas[i].get("vision") or {}
-            if k not in vision:
+            ficha = fichas[i]
+            vision = ficha.get("vision") or {}
+            if ("vision." + k) in heredados_de(ficha):
+                heredados += 1
+            elif k not in vision:
                 ausentes += 1
             elif lleno(vision[k]):
                 llenos += 1
             else:
                 vacios += 1
-        out[k] = {"lleno": llenos, "vacio": vacios, "ausente": ausentes}
+        out[k] = {"lleno": llenos, "vacio": vacios, "ausente": ausentes,
+                  "heredado": heredados}
     return out
 
 
@@ -169,10 +197,20 @@ def main() -> int:
         pa = 100.0 * ca[k]["lleno"] / n
         pd = 100.0 * cd[k]["lleno"] / n
         marca = "" if abs(pd - pa) < 0.05 else ("  <<<" if pd > pa else "  !!!")
-        print("%-22s %6d %5.1f%% %6d %5.1f%%  %+6.1f%s"
-              % (k, ca[k]["lleno"], pa, cd[k]["lleno"], pd, pd - pa, marca))
+        # `heredado` is reported apart and NEVER added to `lleno`: the field
+        # has a value, but this pass did not produce it.
+        her = cd[k].get("heredado", 0)
+        print("%-22s %6d %5.1f%% %6d %5.1f%%  %+6.1f%s%s"
+              % (k, ca[k]["lleno"], pa, cd[k]["lleno"], pd, pd - pa, marca,
+                 ("   (+%d heredados, no cuentan)" % her) if her else ""))
     print()
     print("!!! = la pasada nueva llena MENOS que la vieja")
+    heredados_tot = sum(cd[k].get("heredado", 0) for k in claves)
+    if heredados_tot:
+        print("heredados = campos que la ficha CONSERVA de una pasada anterior. "
+              "No se cuentan como llenos:")
+        print("el motor que firma la fila no los midio, y acreditarselos es la "
+              "mentira que este archivo evita.")
     return 0
 
 

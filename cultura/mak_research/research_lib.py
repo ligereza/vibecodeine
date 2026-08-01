@@ -451,6 +451,64 @@ PROVIDERS = tuple(PROVIDER_ENV_KEY)
 # aca y darle el parametro `model` a su metodo.
 PROVIDERS_CON_MODELO = ("watsonx",)
 
+# Modelos por PAPEL para el flujo adversarial, de familias distintas.
+#
+# Medido el 2026-07-31: una corrida de `refutar` reporto `llm={'watsonx': 3}`
+# -- el mismo modelo hizo de proponente, de refutador y de juez. Eso no es un
+# debate, es un monologo con tres titulos: el refutador discutio matices de su
+# propia tesis en vez de si el hecho era cierto, y el juez le dio la razon.
+#
+# Las tres familias se PROBARON contra la cuenta real el 2026-08-01, no se
+# eligieron de una lista: `mistral-large-2512` responde 404 y quedo fuera por
+# eso, no por criterio. Las que contestan: mistral-medium, mistral-small,
+# llama-3-3-70b, llama-4-maverick, granite-4-h-small, granite-3-8b.
+MODELOS_POR_PAPEL = {
+    "watsonx": {
+        "proponente": "mistralai/mistral-medium-2505",
+        "refutador": "meta-llama/llama-3-3-70b-instruct",
+        "juez": "ibm/granite-4-h-small",
+    },
+}
+
+
+# Marcas de que el modelo entrego la FORMA de un informe en vez de un informe.
+# Medido el 2026-08-01 sobre los 102 informes reales de la caja: 36 (35%) traen
+# un marcador sin rellenar, casi siempre "**Investigador:** [Tu Nombre]". El
+# modelo no fallo en investigar: imito la plantilla de un documento de
+# investigacion, con el hueco del autor incluido. Un informe asi se lee como
+# terminado y no lo esta, que es el mismo defecto que un 200 con cero
+# resultados o un "campos perdidos: 0".
+PLANTILLA_SIN_RELLENAR = (
+    "[su nombre]", "[tu nombre", "[nombre del", "[nombre de la",
+    "[insertar", "[completar", "[a completar", "[pendiente]", "[fecha]",
+    "[todo]", "[xxx", "xxxx", "lorem ipsum",
+)
+
+
+def marcadores_de_plantilla(texto):
+    """Los marcadores que quedaron sin rellenar. Vacio = ninguno.
+
+    Se compara en minusculas y se devuelve la lista, no un booleano: quien lo
+    use tiene que poder DECIR cual encontro. Un rechazo sin motivo manda a
+    adivinar, y este repo ya pago eso.
+    """
+    bajo = (texto or "").lower()
+    return [m for m in PLANTILLA_SIN_RELLENAR if m in bajo]
+
+
+def modelos_por_papel(proveedor, pedidos=None):
+    """Que modelo le toca a cada papel. Lo pedido a mano gana siempre.
+
+    Devuelve {} para un proveedor que no elige modelo: ahi no hay nada que
+    repartir, y rellenarlo con nombres que ese proveedor ignora seria inventar
+    una diversidad que no existe.
+    """
+    base = dict(MODELOS_POR_PAPEL.get(proveedor) or {})
+    for papel, valor in (pedidos or {}).items():
+        if valor:
+            base[papel] = valor
+    return base
+
 
 def _watsonx_llamar(mensajes, model, max_tok, temperatura, timeout):
     """El UNICO lugar que conoce el endpoint de watsonx.
@@ -722,6 +780,41 @@ class LLM:
         raise RuntimeError("Todos los proveedores LLM fallaron. Ultimo: %s" % last)
 
 
+# Tope duro de Tavily, medido contra la API el 2026-08-01: una consulta de mas
+# de 400 caracteres responde HTTP 400 "Query is too long" y CERO resultados.
+TOPE_CONSULTA = 400
+
+
+def consulta_de(tema, tope=TOPE_CONSULTA):
+    """Lo que se le manda al BUSCADOR, que no es lo que se le manda al modelo.
+
+    Las tareas de triangulacion de RD miden 530 caracteres porque llevan la
+    pregunta Y las reglas para el modelo en el mismo texto: "...que productora
+    organizo el evento del 21 DE MARZO 2026 con ADRIATIQUE... REGLAS: el evento
+    es en Chile, si lo que encontras es de otro pais NO sirve. Solo se acepta
+    respuesta con FUENTE VERIFICABLE...". Un buscador hace match de palabras: le
+    estabamos mandando instrucciones de comportamiento como si fueran terminos.
+
+    Es el MISMO defecto que `marco_solo()` arreglo el 2026-07-26, cuando 148
+    caracteres de encuadre viajaban a Tavily y devolvian el mismo PDF de
+    metodologia peruano para cuatro temas distintos. Volvio a entrar por la cola
+    de material, escrito a mano en otro archivo.
+
+    Se corta en el primer "REGLAS:" y, si aun no entra, en el ultimo espacio
+    antes del tope: partir una palabra por la mitad inventa un termino que nadie
+    escribio.
+    """
+    texto = " ".join(str(tema or "").split())
+    corte = texto.upper().find("REGLAS:")
+    if corte > 20:
+        texto = texto[:corte].strip(" .,;")
+    if len(texto) <= tope:
+        return texto
+    recorte = texto[:tope]
+    espacio = recorte.rfind(" ")
+    return (recorte[:espacio] if espacio > tope // 2 else recorte).strip()
+
+
 def tavily_search(query, depth="basic", max_results=5, errors=None):
     """basic = 1 credito, advanced = 2. 1000/mes gratis."""
     load_env()
@@ -735,6 +828,7 @@ def tavily_search(query, depth="basic", max_results=5, errors=None):
             timeout=30,
         )
         _salud_registrar("tavily", True, tipo="search")
+        _r_tavily["motor"] = "tavily"
         return _r_tavily
     except Exception as e:  # noqa: BLE001 - la busqueda fallida no mata el loop
         if errors is not None:
@@ -782,7 +876,7 @@ def searxng_search(query, max_results=5, errors=None):
         if resultados:
             _salud_registrar("searxng", True, tipo="search")
             return {"results": resultados, "answer": data.get("answer"),
-                    "ciego": False}
+                    "ciego": False, "motor": "searxng"}
         # HTTP 200 con CERO resultados son DOS hechos distintos y hasta el
         # 2026-08-01 salian identicos: "busque y no hay nada" y "ningun motor
         # pudo buscar". Medido ese dia en la caja: los cuatro motores generales
@@ -820,6 +914,11 @@ def web_search(query, depth="basic", max_results=5, errors=None):
     distinguirlo -- si no, un buscador tapado produce un informe que concluye
     que el tema no tiene respaldo en la web.
     """
+    consulta = consulta_de(query)
+    if consulta != " ".join(str(query or "").split()) and errors is not None:
+        errors.append("consulta acortada para buscar: %d -> %d caracteres"
+                      % (len(str(query or "")), len(consulta)))
+    query = consulta
     res = searxng_search(query, max_results=max_results, errors=errors)
     if res.get("results"):
         return res
@@ -834,6 +933,7 @@ def web_search(query, depth="basic", max_results=5, errors=None):
                 errors.append("web_search: " + motivo)
         res["motivo"] = motivo
         return res
+    errores_antes = len(errors) if errors is not None else 0
     tav = tavily_search(query, depth=depth, max_results=max_results,
                         errors=errors)
     # Tavily tampoco vio nada: si SearXNG estaba ciego, la busqueda entera lo
@@ -841,7 +941,17 @@ def web_search(query, depth="basic", max_results=5, errors=None):
     tav.setdefault("ciego", False)
     if not tav.get("results") and res.get("ciego"):
         tav["ciego"] = True
-        tav["motivo"] = res.get("motivo") or ""
+        # LOS DOS MOTIVOS, no el ultimo. La primera version pisaba el motivo
+        # con el de SearXNG y tiraba el de Tavily, asi que 19 tareas pausaron
+        # con "brave suspendido; duckduckgo CAPTCHA" cuando la causa real era
+        # `HTTP 400 Query is too long` -- el error de Tavily. Ni un solo
+        # checkpoint lo nombraba; sobrevivio unicamente en el registro de salud
+        # (28 api_errors). El instrumento borraba al culpable, que es el mismo
+        # defecto que el instrumento existe para no cometer.
+        motivos = [res.get("motivo") or ""]
+        if errors is not None:
+            motivos += [e for e in errors[errores_antes:] if e.startswith("tavily")]
+        tav["motivo"] = "; ".join(m for m in motivos if m)
     return tav
 
 _TAG_RE = re.compile(r"<script[\s\S]*?</script>|<style[\s\S]*?</style>|<[^>]+>|&[a-z#0-9]+;", re.I)
