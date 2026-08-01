@@ -241,18 +241,18 @@ def test_main_con_enforce_registra_la_accion(monkeypatch, tmp_path):
     assert fake.hubo("gh", "merge")
 
 def test_solo_mergea_contra_el_buzon(tmp_path, monkeypatch):
-    """`enforce_pr` mergea, asi que el revisor tiene que declarar CONTRA QUE
-    rama actua.
+    """`enforce_pr` merges, so the reviewer must declare WHICH branch it acts
+    against.
 
-    El unico filtro miraba la rama HEAD (`capataz/*`), que dice de donde viene
-    el PR y no a donde va: una rama `capataz/*` apuntando a main la cerraba un
-    cron cada 6 horas sin que nadie lo decidiera. Nunca ocurrio porque
-    `entregar.py` siempre usa `mak` de base, pero eso es una costumbre de otro
-    archivo y no una garantia de este.
+    The only filter looked at the HEAD branch (`capataz/*`), which says where
+    the PR comes from and not where it goes: a `capataz/*` branch pointing at
+    main would be closed by a cron every 6 hours with nobody deciding it. It
+    never happened because `entregar.py` always uses `mak` as base, but that
+    is another file's habit, not this file's guarantee.
 
-    Y la AUSENCIA del campo no cuenta como base equivocada: tratarla como
-    rechazo apagaria el revisor entero en silencio, que es el modo de fallo
-    que este archivo ya tuvo.
+    And an ABSENT field is not a wrong base: treating absence as rejection
+    would silence the whole reviewer, which is the failure mode this file
+    already had with its own header.
     """
     vistos = []
     monkeypatch.setattr(revisor, "revisar_pr",
@@ -275,7 +275,7 @@ def test_solo_mergea_contra_el_buzon(tmp_path, monkeypatch):
 
     revisor.main()
 
-    assert 1 in vistos, "un PR capataz/* contra el buzon se revisa"
-    assert 2 not in vistos, "un PR capataz/* contra MAIN no se toca"
-    assert 3 in vistos, "sin baseRefName se revisa igual: ausente != distinta"
-    assert 4 not in vistos, "una rama que no es capataz/* no es asunto suyo"
+    assert 1 in vistos, "a capataz/* PR against the inbox is reviewed"
+    assert 2 not in vistos, "a capataz/* PR against MAIN is left alone"
+    assert 3 in vistos, "no baseRefName still reviewed: absent != different"
+    assert 4 not in vistos, "a branch that is not capataz/* is none of its business"
