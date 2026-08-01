@@ -32,9 +32,11 @@ import hashlib
 import io
 import json
 import os
+import re
 import subprocess
 import sys
 import time
+import unicodedata
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
@@ -180,6 +182,57 @@ CLAVES_VISION = {
            "oportunidad_codigo"),
 }
 CLAVES_EVENTO = ("productora", "venue", "fecha", "headliners", "handles")
+
+# Campos de `datos_evento` cuyo valor SE PUEDE contrastar contra el texto que
+# se leyo de la imagen. `fecha` queda fuera a proposito: el modelo normaliza
+# ("VIERNES 01 MAYO" -> "2026-05-01") y comparar palabras diria "sin respaldo"
+# sobre una lectura correcta. Medir con el instrumento equivocado y reportar el
+# resultado es peor que no medir. `handles` tampoco: una arroba se deduce
+# legitimamente de un correo.
+CONTRASTABLES = ("productora", "venue", "headliners")
+
+
+def _plegar_texto(t: str) -> str:
+    d = unicodedata.normalize("NFKD", t or "")
+    return "".join(c for c in d if not unicodedata.combining(c)).lower()
+
+
+def _palabras_de(t: str, minimo: int = 3) -> set:
+    return {p for p in re.findall(r"[a-z0-9]+", _plegar_texto(t))
+            if len(p) >= minimo}
+
+
+def respaldo_evento(datos_evento: dict, ocr_texto: str,
+                    texto_visible: str) -> dict:
+    """Que campos extraidos APARECEN en el texto que se leyo de la imagen.
+
+    Medido el 2026-08-01 sobre 300 archivos reales de RD: `venue` tenia
+    respaldo en el 99% de los casos y `headliners` en el 97%, pero
+    `productora` solo en el 33% -- de 173 productoras extraidas, 116 no
+    figuraban en el texto. Casi todas decian "Reduciendo Dano": el modelo
+    dedujo la productora del CONTEXTO (es material de RD) en vez de leerla del
+    cartel. No es mentira, pero tampoco es lectura, y la base RD se alimenta de
+    aca: una productora equivocada es un cliente equivocado.
+
+    Marca, NO borra. Un dato deducido puede ser el correcto y el que decide es
+    quien lo cura, no este archivo. Lo que no puede pasar es que llegue a la
+    base sin distinguirse de uno leido.
+    """
+    base = _palabras_de((ocr_texto or "") + " " + (texto_visible or ""))
+    sin_respaldo, con_respaldo = [], []
+    for campo in CONTRASTABLES:
+        valor = datos_evento.get(campo)
+        if not valor:
+            continue
+        texto = " ".join(valor) if isinstance(valor, list) else str(valor)
+        (con_respaldo if _palabras_de(texto) & base
+         else sin_respaldo).append(campo)
+    out = {}
+    if con_respaldo:
+        out["con_respaldo"] = con_respaldo
+    if sin_respaldo:
+        out["sin_respaldo"] = sin_respaldo
+    return out
 
 
 def prompt_de(fuente: str) -> str:
@@ -896,6 +949,10 @@ def construir_ficha(entry: dict, dir_tmp: Path, timeout_archivo: int) -> dict:
             error),
     }
     medicion["vision"]["motor"] = motor
+    if fuente == "rd" and datos_evento:
+        medicion["datos_evento"].update(
+            respaldo_evento(datos_evento, ocr_texto,
+                            (vision_final or {}).get("texto_visible")))
     if desconocidas:
         medicion["vision"]["claves_desconocidas"] = desconocidas
     if vacias:

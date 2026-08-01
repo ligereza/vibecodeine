@@ -751,3 +751,84 @@ class TestLimite:
         with mock.patch("percepcion.construir_ficha", return_value=ficha):
             percepcion.correr(str(tmp_path), None, str(tmp_path / "out"))
         assert "LIMITE" not in capsys.readouterr().out
+
+
+# ---------------------------------------------------------------------------
+# Was it READ, or was it inferred?
+# ---------------------------------------------------------------------------
+
+class TestRespaldoEvento:
+    """Measured on 300 real RD files on 2026-08-01: `venue` appeared in the
+    text read from the image 99% of the time and `headliners` 97%, but
+    `productora` only 33% -- of 173 extracted productoras, 116 were nowhere in
+    the text. Almost all of them said "Reduciendo Dano": the model inferred the
+    producer from CONTEXT (this is RD material) instead of reading it off the
+    poster.
+
+    That is not a lie, but it is not reading either, and the RD database is fed
+    from here: a wrong productora is a wrong client. So it is MARKED, never
+    deleted -- an inferred value can be the right one, and the person curating
+    it decides. What cannot happen is that it reaches the database
+    indistinguishable from one that was read.
+    """
+
+    def test_a_value_that_appears_in_the_text_is_supported(self):
+        r = percepcion.respaldo_evento(
+            {"venue": "Club Hipico"}, "CLUB HIPICO 01 MAYO", "")
+        assert r == {"con_respaldo": ["venue"]}
+
+    def test_a_value_nobody_read_is_flagged(self):
+        r = percepcion.respaldo_evento(
+            {"productora": "Reduciendo Dano"}, "SUSTANCIA NEBULA", "")
+        assert r["sin_respaldo"] == ["productora"]
+        assert "con_respaldo" not in r
+
+    def test_the_flag_never_deletes_the_value(self):
+        datos = {"productora": "Reduciendo Dano"}
+        percepcion.respaldo_evento(datos, "", "")
+        assert datos["productora"] == "Reduciendo Dano", (
+            "un dato deducido puede ser el correcto; el que decide es quien lo "
+            "cura, no este archivo")
+
+    def test_the_vision_text_counts_as_read_too(self):
+        """Tesseract reads 62% of these files and the model 84%. Scoring only
+        against OCR would flag as invented what the model actually read."""
+        r = percepcion.respaldo_evento(
+            {"headliners": ["ADRIATIQUE"]}, "", "ADRIATIQUE COLYN")
+        assert r == {"con_respaldo": ["headliners"]}
+
+    def test_dates_are_not_scored_at_all(self):
+        """The model normalises ("VIERNES 01 MAYO" -> "2026-05-01"), so word
+        overlap would report "unsupported" over a correct reading. Measuring
+        with the wrong instrument and reporting the result is worse than not
+        measuring."""
+        r = percepcion.respaldo_evento(
+            {"fecha": "2026-05-01"}, "VIERNES 01 MAYO", "")
+        assert "fecha" not in r.get("sin_respaldo", [])
+        assert "fecha" not in r.get("con_respaldo", [])
+
+    def test_handles_are_not_scored_either(self):
+        """An @ is legitimately derived from an email on the poster."""
+        r = percepcion.respaldo_evento(
+            {"handles": ["@reduciendodano.cl"]}, "eventos@reduciendodano.cl", "")
+        assert r == {}
+
+    def test_accents_do_not_break_the_match(self):
+        r = percepcion.respaldo_evento(
+            {"venue": "Teatro Caupolicán"}, "TEATRO CAUPOLICAN", "")
+        assert r == {"con_respaldo": ["venue"]}
+
+    def test_nothing_extracted_says_nothing(self):
+        assert percepcion.respaldo_evento({}, "texto", "texto") == {}
+
+    def test_it_lands_in_the_ficha(self, tmp_path):
+        entry = {"fuente": "rd", "ruta_rel": "f.jpg", "ruta_abs": "f.jpg",
+                 "tipo": "imagen", "bytes": 1, "mtime": 0}
+        vision = {"texto_visible": "CLUB HIPICO", "venue": "Club Hipico",
+                  "productora": "Reduciendo Dano"}
+        with mock.patch("percepcion.ocr_tesseract", return_value=""), \
+             mock.patch("percepcion.vision_imagen", return_value=vision):
+            ficha = percepcion.construir_ficha(entry, tmp_path, 5)
+        med = ficha["medicion"]["datos_evento"]
+        assert med["con_respaldo"] == ["venue"]
+        assert med["sin_respaldo"] == ["productora"]

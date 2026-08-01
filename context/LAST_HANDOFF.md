@@ -1370,3 +1370,44 @@ por existir. La proporcion es 1 a 64.
 Eso NO lo decido yo, pero el numero ya no es una estimacion: mientras el plan
 este puesto, usarlo es gratis; tenerlo puesto sin usarlo es todo el costo.
 Bajar a Lite se hace desde la consola de IBM, no por API.
+
+### RD sobre 300 archivos: la premisa se da vuelta, y una correccion de la sonda de 10
+
+La sonda de 10 flyers de anoche decia que `productora` quedaba VACIA y que eso
+era el buen comportamiento. Sobre 300 archivos dice lo contrario.
+
+```txt
+n=300   flyer_evento 196 | material_rd 47 | logo 9 | ficha_sustancia 7
+
+texto leido:   ocr 187 (62%)  |  vision 251 (84%)  |  ambos 187  |  ninguno 49
+caracteres:    ocr 43 prom    |  vision 80 prom
+
+datos_evento     llenos   con respaldo en el texto leido
+  venue            158        157   (99%)
+  headliners       101         98   (97%)
+  fecha            203        123   (61%)
+  productora       173         57   (33%)   <-- 116 SIN respaldo
+```
+
+Dos lecturas, las dos importan:
+
+1. **La premisa se confirma para el TEXTO.** La vision lee en 84% de los
+   archivos contra 62% del OCR, y casi el doble de caracteres. Los 187 que el
+   OCR leyo son un subconjunto: la vision no perdio ninguno y sumo 64.
+2. **Y se cae para un campo EXTRAIDO.** De 173 productoras, 116 no figuran en
+   ningun texto leido de la imagen. Casi todas dicen "Reduciendo Dano": el
+   modelo deduce la productora del CONTEXTO (es material de RD) en vez de
+   leerla del cartel. No es mentira, pero no es lectura -- y la base RD se
+   alimenta de aca.
+
+**La sonda de 10 daba la conclusion opuesta.** Diez archivos alcanzaban para
+ver que la vision lee mas; no alcanzaban para ver que inventa donde deduce.
+
+`percepcion.respaldo_evento` ahora marca cada campo extraido como
+`con_respaldo` o `sin_respaldo` dentro de `medicion.datos_evento`. **Marca, no
+borra**: un dato deducido puede ser el correcto y el que decide es quien lo
+cura. Lo que no puede pasar es que llegue a la base sin distinguirse de uno
+leido. `fecha` y `handles` quedan FUERA de la medicion a proposito: el modelo
+normaliza la fecha y la arroba se deduce legitimamente de un correo, asi que
+compararlas por palabras diria "sin respaldo" sobre lecturas correctas. Medir
+con el instrumento equivocado y reportar el resultado es peor que no medir.
