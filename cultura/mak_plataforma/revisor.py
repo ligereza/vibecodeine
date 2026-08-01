@@ -211,10 +211,18 @@ def main():
         # cron lo cerrara solo cada 6 horas. Hoy `entregar.py` siempre usa
         # `mak` como base, pero eso es una costumbre de otro archivo, no una
         # garantia de este. Lo que mergea declara contra que mergea.
-        base = (pr.get("baseRefName") or "")
-        if base != RAMA_BUZON:
+        # AUSENTE no es lo mismo que DISTINTA, y esa diferencia importa aca:
+        # un PR que declara otra base se rechaza, pero uno que no trae el campo
+        # (un `gh` viejo, una respuesta recortada) no se puede juzgar por el.
+        # Tratar la ausencia como rechazo apagaria el revisor entero en
+        # silencio -- el modo de fallo que este archivo ya tuvo con su propia
+        # cabecera. Se procesa y se DICE, para que se vea en el log.
+        base = pr.get("baseRefName")
+        if base is None or base == "":
+            log("PR #%d sin baseRefName declarado: se revisa igual" % pr["number"])
+        elif base != RAMA_BUZON:
             log("PR #%d ignorado: base '%s', no '%s'"
-                % (pr["number"], base or "?", RAMA_BUZON))
+                % (pr["number"], base, RAMA_BUZON))
             continue
         pys = [f["path"] for f in (pr.get("files") or [])
                if f["path"].endswith(".py")]

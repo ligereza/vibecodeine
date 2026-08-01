@@ -239,3 +239,43 @@ def test_main_con_enforce_registra_la_accion(monkeypatch, tmp_path):
     assert rep["modo"] == "enforce"
     assert rep["veredictos"][0]["accion"] == "merged"
     assert fake.hubo("gh", "merge")
+
+def test_solo_mergea_contra_el_buzon(tmp_path, monkeypatch):
+    """`enforce_pr` mergea, asi que el revisor tiene que declarar CONTRA QUE
+    rama actua.
+
+    El unico filtro miraba la rama HEAD (`capataz/*`), que dice de donde viene
+    el PR y no a donde va: una rama `capataz/*` apuntando a main la cerraba un
+    cron cada 6 horas sin que nadie lo decidiera. Nunca ocurrio porque
+    `entregar.py` siempre usa `mak` de base, pero eso es una costumbre de otro
+    archivo y no una garantia de este.
+
+    Y la AUSENCIA del campo no cuenta como base equivocada: tratarla como
+    rechazo apagaria el revisor entero en silencio, que es el modo de fallo
+    que este archivo ya tuvo.
+    """
+    vistos = []
+    monkeypatch.setattr(revisor, "revisar_pr",
+                        lambda n, b, p_, v: vistos.append(n))
+    prs = [
+        {"number": 1, "headRefName": "capataz/x-aaa", "baseRefName": "mak",
+         "files": [{"path": "a.py"}]},
+        {"number": 2, "headRefName": "capataz/y-bbb", "baseRefName": "main",
+         "files": [{"path": "b.py"}]},
+        {"number": 3, "headRefName": "capataz/z-ccc",
+         "files": [{"path": "c.py"}]},
+        {"number": 4, "headRefName": "feature/otra", "baseRefName": "mak",
+         "files": [{"path": "d.py"}]},
+    ]
+    monkeypatch.setattr(revisor, "sh",
+                        lambda args: (0, json.dumps(prs), ""))
+    monkeypatch.setattr(revisor, "OUT", str(tmp_path / "out.json"))
+    monkeypatch.setattr(revisor, "LOG", str(tmp_path / "r.log"))
+    monkeypatch.setattr(sys, "argv", ["revisor.py"])
+
+    revisor.main()
+
+    assert 1 in vistos, "un PR capataz/* contra el buzon se revisa"
+    assert 2 not in vistos, "un PR capataz/* contra MAIN no se toca"
+    assert 3 in vistos, "sin baseRefName se revisa igual: ausente != distinta"
+    assert 4 not in vistos, "una rama que no es capataz/* no es asunto suyo"
