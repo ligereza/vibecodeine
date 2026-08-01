@@ -41,7 +41,7 @@ from pathlib import Path
 from typing import Any
 
 FORMATO = "micelio/1"
-TIPOS = ("semilla", "fruto", "nutriente")
+TIPOS = ("semilla", "hongo", "fruto", "nutriente")
 
 # A fruto that does not fit in a chat window breaks the cycle at its most
 # important step: the return trip. 12 KB is about 3.000 tokens, which leaves
@@ -171,6 +171,91 @@ def verificar(sobre: dict, raiz: str | Path = ".") -> Resultado:
         checks.append({"nombre": nombre, "verde": verde, "detalle": detalle})
     return Resultado(verde=all(c["verde"] for c in checks) and bool(checks),
                      checks=checks)
+
+
+def cosechar(sobre: dict, raiz: str | Path = ".", tope: int = TOPE_FRUTO_BYTES) -> dict:
+    """Run the criterion and RETURN AN ENVELOPE: `fruto` if green, `hongo` if red.
+
+    This is the return leg of the circuit and it was missing. The semaphore
+    existed and printed VERDE or ROJO to a console, which is useless to the
+    only reader that matters here: a web model with no API, that gets whatever
+    a person pastes into a chat.
+
+    The user's flow, in his words: he asks a web model for a `semilla`, deposits
+    it, and **if there is a bug the micelio hands him a `hongo`**; he passes the
+    hongo to the web model, which answers with a `nutriente`; if the nutriente
+    fixes it, the seed runs and a `fruto` is created.
+
+    So the hongo is not an error log. It is the envelope a model needs to write
+    a correction WITHOUT seeing the machine: what was asked, which criteria went
+    red and with what literal message, and what the organism actually produced.
+    Anything cut is declared -- a hongo that silently drops the failing file
+    reads as if the failure had no context.
+    """
+    r = verificar(sobre, raiz)
+    rojos = [c for c in r.checks if not c["verde"]]
+    base = {
+        "formato": FORMATO,
+        "de": sobre.get("asunto", "")[:200],
+        "criterio": sobre.get("criterio") or [],
+    }
+    if r.verde:
+        return dict(base, tipo="fruto", asunto="crecio: " + sobre.get("asunto", "")[:150],
+                    cuerpo={"verde": True,
+                            "checks": r.checks,
+                            "que_se_pidio": sobre.get("cuerpo") or {}})
+
+    # Lo que el organismo produjo, para que el modelo web pueda corregirlo sin
+    # ver la maquina. Sin esto el nutriente se escribe a ciegas.
+    piezas, recortado = _piezas_del_criterio(sobre, raiz, tope)
+    if not r.checks:
+        rojos = [{"nombre": "sin criterio", "verde": False,
+                  "detalle": "el sobre no trae criterio: no hay nada que "
+                             "verificar, y eso NO es verde"}]
+    hongo = dict(base, tipo="hongo",
+                 asunto="no crecio: " + sobre.get("asunto", "")[:150],
+                 cuerpo={"verde": False,
+                         "fallaron": rojos,
+                         "pasaron": [c for c in r.checks if c["verde"]],
+                         "que_se_pidio": sobre.get("cuerpo") or {},
+                         "lo_que_hay": piezas,
+                         "que_hacer": "Devolve un sobre `nutriente` con el "
+                                      "mismo `criterio`, diciendo QUE cambiar y "
+                                      "DONDE. No expliques nada fuera del JSON."})
+    if recortado:
+        hongo["recortado"] = recortado
+    return hongo
+
+
+def _piezas_del_criterio(sobre: dict, raiz: Path | str, tope: int) -> tuple[dict, dict]:
+    """The files the criterion points at, so the hongo carries the evidence."""
+    raiz = Path(raiz)
+    piezas: dict[str, str] = {}
+    recortado: dict[str, Any] = {}
+    rutas: list[str] = []
+    for c in sobre.get("criterio") or []:
+        for clave in ("modulo", "ruta"):
+            if c.get(clave):
+                rutas.append(str(c[clave]))
+    gastado = 0
+    for ruta in dict.fromkeys(rutas):
+        p = raiz / ruta
+        if not p.is_file():
+            piezas[ruta] = "(no existe)"
+            continue
+        try:
+            texto = p.read_text(encoding="utf-8", errors="replace")
+        except OSError as e:
+            piezas[ruta] = "(no se pudo leer: %s)" % e
+            continue
+        disponible = max(0, tope - gastado)
+        if len(texto) > disponible:
+            recortado[ruta] = {"bytes_totales": len(texto),
+                               "bytes_incluidos": disponible}
+            texto = texto[:disponible]
+        gastado += len(texto)
+        piezas[ruta] = texto
+    return piezas, recortado
 
 
 def _correr_criterio(c: dict, raiz: Path) -> tuple[bool, str]:
@@ -421,18 +506,32 @@ REGLAS
 3. No pongas rutas absolutas ni datos personales: el repo es publico.
 4. Devolve SOLO el JSON.
 
-QUE VAS A RECIBIR DE VUELTA
+QUE VAS A RECIBIR DE VUELTA, Y ES UNA DE DOS
 
-El organismo responde con un sobre `"tipo":"fruto"`, con esta forma:
+El organismo corre el criterio y devuelve un sobre. Siempre uno de estos dos:
 
-    "cuerpo": {
-      "medido":    { numeros del estado real },
-      "anomalias": [ lo que no cuadra ],
-      "muestras":  [ unos pocos casos concretos ],
-      "punteros":  [ donde esta el resto ]
-    }
-    "recortado": { cuantos elementos se sacaron para que entrara }
+  fruto   crecio. El criterio dio verde entero. No hay nada que corregir.
+
+  hongo   NO crecio. Trae, para que puedas escribir la correccion SIN VER LA
+          MAQUINA:
+            "fallaron":    que criterios se pusieron rojos, con el mensaje
+                           literal de cada uno
+            "pasaron":     los que si, para que no rompas lo que funciona
+            "que_se_pidio": el cuerpo de la semilla original
+            "lo_que_hay":  el contenido REAL de los archivos que el criterio
+                           nombra, tal como estan ahora
+            "recortado":   si algo no entro, cuanto se dejo afuera
+
+SI TE LLEGA UN HONGO, TU RESPUESTA ES UN NUTRIENTE
+
+Un sobre `"tipo":"nutriente"` con el MISMO `criterio` -- no lo aflojes para que
+pase: un criterio ablandado da verde sobre trabajo que no se hizo. En `cuerpo`
+va que cambiar y donde. Mira `fallaron` antes que nada: ahi esta el mensaje
+literal, que dice mas que cualquier suposicion sobre por que fallo.
+
+El ciclo entero es: semilla -> (hongo -> nutriente -> hongo -> ...) -> fruto.
+Se repite hasta que crece, y quien decide si crecio es el criterio, no vos ni
+yo.
 
 `recortado` no es un detalle: si dice algo, lo que estas leyendo NO es todo.
-Pedi los punteros antes de concluir.
 """

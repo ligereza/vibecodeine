@@ -234,6 +234,50 @@ def micelio_verificar(
     if not r.verde:
         raise typer.Exit(1)
 
+@micelio_app.command("cosechar")
+def micelio_cosechar(
+    archivo: str = typer.Argument(..., help="El sobre `semilla` o `nutriente` que se depositó."),
+    raiz: str = typer.Option(".", "--raiz", help="Desde donde se resuelven las rutas."),
+    salida: str = typer.Option("", "--salida", help="Escribir el sobre a un archivo."),
+):
+    """Corre el criterio y devuelve el SOBRE de vuelta: fruto si crecio, hongo si no.
+
+    Es la pata de regreso del circuito, y era la que faltaba. `verificar`
+    imprime VERDE o ROJO en una consola, que no le sirve al unico lector que
+    importa aca: un modelo web sin API, que solo recibe lo que una persona
+    pega en un chat.
+
+    El flujo, en palabras del usuario: le pide una semilla a un modelo web, la
+    deposita, y SI HAY BUG el micelio le entrega un hongo; le pasa el hongo al
+    modelo, que responde con un nutriente; si el nutriente lo arregla, la
+    semilla corre y se crea un fruto.
+
+    Por eso el hongo no es un log de error: es el sobre que un modelo necesita
+    para escribir la correccion sin ver la maquina -- que se pidio, que
+    criterios se pusieron rojos con su mensaje literal, y que produjo el
+    organismo de verdad.
+    """
+    import json as _json
+    from .micelio import SobreInvalido, cosechar as _cosechar, leer
+    try:
+        sobre = leer(archivo)
+    except SobreInvalido as e:
+        console.print(f"[red]sobre invalido[/red]: {e}")
+        raise typer.Exit(2)
+    resultado = _cosechar(sobre, raiz)
+    texto = _json.dumps(resultado, ensure_ascii=False, indent=1)
+    if salida:
+        from pathlib import Path as _Path
+        _Path(salida).parent.mkdir(parents=True, exist_ok=True)
+        _Path(salida).write_text(texto, encoding="utf-8")
+        console.print(f"escrito: {salida}")
+    else:
+        print(texto)
+    # Codigo 1 cuando es hongo, para que un script lo use como compuerta.
+    if resultado["tipo"] == "hongo":
+        raise typer.Exit(1)
+
+
 @micelio_app.command("depositar")
 def micelio_depositar(
     archivo: str = typer.Argument(..., help="Sobre `semilla` o `nutriente` a depositar."),
