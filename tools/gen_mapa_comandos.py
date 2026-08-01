@@ -21,6 +21,7 @@ lo llame.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import subprocess
@@ -34,6 +35,8 @@ FIN = "<!-- COMANDOS:FIN -->"
 
 # Que necesita cada comando ANTES de funcionar. Vacio = nada, se corre y anda.
 # Se escribe a mano a proposito: es la unica columna que el --help no sabe.
+COMANDOS = MAPA.parent / "context" / "comandos.json"
+
 REQUISITOS: dict[str, str] = {
     "index": "`FLUJO_RD_ROOT` apuntando al arbol de material",
     "hub index": "`FLUJO_RD_ROOT` apuntando al arbol de material",
@@ -119,6 +122,70 @@ def invocables(arbol: dict[str, dict]) -> list[str]:
     return out
 
 
+# Comandos que CAMBIAN algo fuera del repo o que no se deshacen solos. Un boton
+# que borra no puede verse igual que uno que lista.
+#
+# Es una lista DECLARADA, no adivinada. La primera version los deducia buscando
+# verbos dentro del nombre ("delete", "push", "aplicar"...), que es precisamente
+# la lista escrita a mano que se queda vieja y descarta en silencio -- el defecto
+# que este repo encontro tres veces en un dia. Un nombre no dice lo que un
+# comando hace.
+#
+# Y lo que NO esta declarado sale como `null`, no como `false`: "nadie lo
+# declaro" no es lo mismo que "es seguro". Rellenar esa ausencia con un valor
+# plausible es como un campo de atribucion se vuelve inutil.
+DESTRUCTIVOS: frozenset[str] = frozenset({
+    "airdrop apply",
+    "datadrop prepare",
+    "index",
+    "hub index",
+    "resolume automatizar",
+    "render run",
+    "render bridge",
+    "render illustrator",
+    "eventos flyer-auto",
+    "flyer-import",
+    "ig-redownload",
+})
+
+
+def manifiesto(arbol: dict[str, dict]) -> dict:
+    """El CLI como DATOS, no como prosa.
+
+    `MAPA.md` ya se genera de la introspeccion real del CLI, pero sale a
+    markdown: para usarlo hay que copiar y pegar. Un boton no puede leer prosa,
+    y un agente gratuito al que se le habla en abstracto tampoco. Esto es la
+    misma verdad en la forma que consume una maquina, y se regenera del mismo
+    lugar -- si el CLI cambia y esto no, el mismo `--check` que cuida la tabla
+    lo va a decir.
+
+    Cada entrada trae `estado`, que es lo que permite presentar OBJETIVOS en vez
+    de comandos: `listo` cuando no necesita nada, o lo que le falta.
+    """
+    salida = []
+    for cmd in invocables(arbol):
+        raiz = cmd.split(" ")[0]
+        datos = arbol[raiz]
+        desc = dict(datos["sub"]).get(cmd.split(" ", 1)[1], "") if datos["sub"] else datos["desc"]
+        req = REQUISITOS.get(cmd, "")
+        salida.append({
+            "cmd": cmd,
+            "invocacion": "py -m flujo " + cmd,
+            "grupo": raiz if datos["sub"] else "",
+            "desc": (desc or "").strip(),
+            "requiere": req,
+            "estado": "listo" if not req else "falta: " + req,
+            # null = nadie lo declaro. Ver el comentario de DESTRUCTIVOS.
+            "destructivo": True if cmd in DESTRUCTIVOS else None,
+        })
+    return {
+        "formato": "comandos/1",
+        "total": len(salida),
+        "grupos": sorted({e["grupo"] for e in salida if e["grupo"]}),
+        "comandos": salida,
+    }
+
+
 def _fila(cmd: str, desc: str) -> str:
     req = REQUISITOS.get(cmd, "")
     desc = desc.replace("|", "\\|").strip() or "(sin descripcion en el --help)"
@@ -165,15 +232,29 @@ def main() -> int:
                     help="no escribe: falla si MAPA.md quedo desfasado del CLI")
     args = ap.parse_args()
 
-    nuevo = aplicar(render(arbol_cli()))
+    arbol = arbol_cli()
+    nuevo = aplicar(render(arbol))
+
+    # El manifiesto sale SIEMPRE que se regenere la tabla, del mismo arbol: dos
+    # generadores separados es como una lista escrita a mano se queda vieja.
+    man = json.dumps(manifiesto(arbol), ensure_ascii=False, indent=1) + chr(10)
+    man_actual = COMANDOS.read_text(encoding="utf-8") if COMANDOS.exists() else ""
+
     actual = MAPA.read_text(encoding="utf-8")
-    if nuevo == actual:
-        print("MAPA.md al dia con el CLI.")
+    if nuevo == actual and man == man_actual:
+        print("MAPA.md y context/comandos.json al dia con el CLI.")
         return 0
     if args.check:
-        print("MAPA.md DESFASADO del CLI. Corre: py tools/gen_mapa_comandos.py",
-              file=sys.stderr)
+        print("MAPA.md o context/comandos.json DESFASADO del CLI. Corre: "
+              "py tools/gen_mapa_comandos.py", file=sys.stderr)
         return 1
+    if man != man_actual:
+        COMANDOS.parent.mkdir(parents=True, exist_ok=True)
+        COMANDOS.write_text(man, encoding="utf-8")
+        print("context/comandos.json actualizado (%d comandos)."
+              % manifiesto(arbol)["total"])
+    if nuevo == actual:
+        return 0
     MAPA.write_text(nuevo, encoding="utf-8")
     print("MAPA.md actualizado.")
     return 0

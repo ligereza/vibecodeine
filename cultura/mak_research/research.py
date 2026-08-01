@@ -71,13 +71,70 @@ def _pausar(topic, iteraciones, depth, providers, densidad, sin_marco,
     sys.exit(3)
 
 
-def _armar_resultado(topic, report, t0, findings, query_history, sources, llm):
+def hallazgos_de(findings, topic=None, dominio=None):
+    """The findings in the shape anyone can consume, each with its SOURCE.
+
+    A report is prose, and prose cannot be consumed without parsing it: a skin,
+    a button, or an agent that does not know this repo cannot ask a markdown
+    which source a claim came from. The raw `findings` already existed but they
+    mix types and hang off the search backend's internal detail.
+
+    Here every finding carries its url, its title and -- when the topic has a
+    domain with declared primary sources -- whether that source is PRIMARY.
+    That mark is what separates "the BCN says so" from "a Peruvian pedagogy PDF
+    says so", which is the most serious defect found in this repo.
+
+    Pure function: no network, no disk, so a change here cannot break a run and
+    it is testable off the box.
+    """
+    salida = []
+    for f in findings or []:
+        url = f.get("url") or ""
+        contenido = f.get("content")
+        if contenido is None:
+            analisis = f.get("analysis")
+            contenido = (json.dumps(analisis, ensure_ascii=False)
+                         if isinstance(analisis, (dict, list)) else analisis)
+        primaria = None
+        if fuentes and dominio and url:
+            prim, _ = fuentes.clasificar([url], dominio)
+            primaria = bool(prim)
+        salida.append({
+            "tipo": f.get("type") or "?",
+            "iteracion": f.get("iteration"),
+            "consulta": f.get("query"),
+            "titulo": f.get("title") or "",
+            "fuente": url,
+            "primaria": primaria,
+            "contenido": (contenido or "")[:1200],
+        })
+    return salida
+
+
+def _armar_resultado(topic, report, t0, findings, query_history, sources, llm,
+                     evaluacion=None):
     _primer_parrafo = next((ln.strip() for ln in report.splitlines()
                            if ln.strip() and not ln.strip().startswith("#")), "")
     print("HALLAZGO: " + _primer_parrafo[:140], flush=True)
+    dom = (evaluacion or {}).get("dominio")
     return {
         "topic": topic,
+        # `report` es un RENDER de lo de abajo, no la fuente de verdad. Se deja
+        # primero porque es lo que lee un humano, pero lo que consume una
+        # maquina son `hallazgos` y `verificacion`.
         "report": report,
+        "hallazgos": hallazgos_de(findings, topic, dom),
+        "verificacion": {
+            "dominio": dom,
+            "fuentes_primarias": (evaluacion or {}).get("fuentes_primarias", []),
+            # Sin dominio declarado no se AFIRMA que falte fuente primaria: la
+            # mayoria de las preguntas culturales no tienen una que exigir, y
+            # marcarlas seria una acusacion inventada.
+            "sin_fuente_primaria": (evaluacion or {}).get("sin_fuente_primaria"),
+            # Se llena cuando `refutar.py` pasa por encima. `null` significa
+            # NADIE LO REVISO, que es distinto de "resistio la revision".
+            "refutado": None,
+        },
         "meta": {
             "iterations": len(query_history),
             "queries": query_history,
@@ -225,7 +282,7 @@ def investigar(topic, iteraciones=3, depth="basic",
                   "generacion de informe fue saltada tras una pausa; ver "
                   "findings crudos para el detalle recolectado.")
         return _armar_resultado(topic, report, t0, findings, query_history,
-                                sources, llm)
+                                sources, llm, ev)
 
     es_ensayo = formato == "ensayo"
     print("STATUS: Generando %s final..." % formato, flush=True)
@@ -268,7 +325,7 @@ def investigar(topic, iteraciones=3, depth="basic",
         report = fuentes.encabezado(sources, dom) + "\n" + report
 
     resultado = _armar_resultado(topic, report, t0, findings, query_history,
-                                 sources, llm)
+                                 sources, llm, ev)
     resultado["formato"] = formato
     if ev:
         # Sin esto no se puede auditar despues cual informe se apoyo en que.

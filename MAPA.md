@@ -139,6 +139,7 @@ the root of the repo (there is a `.env.example` for reference).
 | `FLUJO_IMAP_HOST`, `FLUJO_IMAP_USER`, `FLUJO_IMAP_PASSWORD` | Mailbox that orders are imported from | Mail import does not work; everything else does |
 | `FLUJO_IMAP_ALLOWED_SENDERS` | List of senders authorised to send orders | For safety it accepts nobody |
 | `FLUJO_IMAP_ALLOW_AIRDROP_ENGINE` | Set to `1` only if you want an update arriving by mail to be able to modify the update engine itself | Off. That is correct: without this, a mail cannot rewrite the mechanism that applies mails |
+| `FLUJO_NTFY_TOPIC` | Topic de ntfy.sh al que avisar cuando un comando lanzado desde el hub FALLA. Existe para cuando nadie esta en la maquina: al teclado el hub ya muestra el codigo de salida y el stderr, y una notificacion encima seria ruido. Solo avisa fallos -- una notificacion por cada boton apretado es como se silencia un canal en una semana, y entonces los fallos tampoco llegan | No avisa a nadie, y la respuesta de la API lo DICE (`aviso_enviado: false`) en vez de dar a entender que alguien se entero |
 | `FLYER_BASE` | Folder where event flyers are stored | Uses a folder next to the working area |
 | `FLUJO_WEB_DEBUG` | Shows detailed app errors | Off, which is correct in normal use |
 | `FLUJO_PACKAGED` | Set by the installer when the app runs as an `.exe` | Assumes you run from the repo |
@@ -157,7 +158,7 @@ program says to the operator who runs it.
 
 <!-- COMANDOS:INICIO -- generado por tools/gen_mapa_comandos.py, no editar a mano -->
 
-Medido sobre el CLI real: **87 comandos** (23 sueltos + 64 dentro de 15 grupos).
+Medido sobre el CLI real: **91 comandos** (23 sueltos + 68 dentro de 16 grupos).
 
 ### Comandos sueltos
 
@@ -271,6 +272,15 @@ Medido sobre el CLI real: **87 comandos** (23 sueltos + 64 dentro de 15 grupos).
 | `py -m flujo laser lote` | Deriva una pieza laser por imagen y escribe el manifiesto del archivo. | nada |
 | `py -m flujo laser medir` | Los numeros reales del frame: puntos, trazos, dibujo y viaje apagado. | nada |
 | `py -m flujo laser ild` | SVG a ILDA Type 5 (RGB): el formato que QuickShow SI importa. | nada |
+
+### Grupo `micelio` -- El sobre micelio/1: semilla, fruto y nutriente entre un modelo web sin API y el organismo.
+
+| Comando | Que hace | Que necesita antes |
+|---|---|---|
+| `py -m flujo micelio formato` | Imprime el formato para PEGARSELO al modelo web antes de contarle la idea. | nada |
+| `py -m flujo micelio validar` | Dice si el sobre sirve, y si no, QUE le falta -- en castellano, para poder pegarle la respuesta de vuelta al modelo que lo escribio. | nada |
+| `py -m flujo micelio fruto` | Mide un dataset y arma un fruto que CABE en una ventana de chat. | nada |
+| `py -m flujo micelio verificar` | Corre el criterio y devuelve VERDE o ROJO. Es el semaforo del ciclo. | nada |
 
 ### Grupo `privacy` -- Privacidad para textos antes de IA externa.
 

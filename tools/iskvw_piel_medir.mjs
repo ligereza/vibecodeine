@@ -29,13 +29,15 @@ import vm from "node:vm";
 import { performance } from "node:perf_hooks";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
+import { documentoStub, elementoGenerico, resolverPedido } from "./lib/piel_dom.mjs";
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-let archivoPath = null, frames = 5, warmup = 3, soloJson = false;
+let archivoPath = null, frames = 5, warmup = 3, soloJson = false, pielPedida = null;
 const argv = process.argv.slice(2);
 for (let i = 0; i < argv.length; i++) {
   if (argv[i] === "--archivo") archivoPath = resolve(argv[++i]);
+  else if (argv[i] === "--piel") pielPedida = argv[++i];
   else if (argv[i] === "--frames") frames = Number(argv[++i]) || 5;
   else if (argv[i] === "--json") soloJson = true;
   else { console.error(`unknown argument: ${argv[i]}`); process.exit(2); }
@@ -45,7 +47,28 @@ if (!archivoPath) {
   if (existsSync(porDefecto)) archivoPath = porDefecto;
 }
 
-const html = readFileSync(join(raiz, "iskvw", "piel", "campo", "index.html"), "utf8");
+// Que piel se mide. Era el literal "campo", y por eso `terminal` y `venue`
+// nunca tuvieron una medicion de costo: no habia como pedirsela.
+//   node tools/iskvw_piel_medir.mjs [--piel terminal]
+const PIEL = pielPedida || "campo";
+const rutaPiel = join(raiz, "iskvw", "piel", PIEL, "index.html");
+if (!existsSync(rutaPiel)) {
+  console.error(`no existe la piel ${PIEL} (${rutaPiel})`);
+  process.exit(2);
+}
+const html = readFileSync(rutaPiel, "utf8");
+
+// El manifiesto decide COMO se mide. La grilla de escenarios de mas abajo
+// -- centro denso, apertura del diafragma, semilla en el hash -- es la
+// gramatica de `campo`, no una medicion generica: una piel sin campo
+// recorrible no tiene una "posicion de lectura mas densa". Asi que las pieles
+// que no declaran esa capacidad se miden con lo que SI es comun a todas:
+// arrancar, bombear cuadros y contar operaciones de dibujo.
+let MANIFIESTO = {};
+try {
+  MANIFIESTO = JSON.parse(readFileSync(join(raiz, "iskvw", "piel", PIEL, "piel.json"), "utf8"));
+} catch { /* sin manifiesto se mide igual, en modo comun */ }
+const GRILLA = (MANIFIESTO.capacidades || []).includes("posiciones_medidas");
 const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
 if (!scripts.length) { console.error("no inline <script> found"); process.exit(2); }
 
@@ -76,24 +99,14 @@ function arrancarPiel({ substrate, hash }) {
     },
     set: () => true,
   });
-  const canvas = {
-    getContext: () => ctx2d, width: 800, height: 600,
-    clientWidth: 800, clientHeight: 600,
-    style: {}, addEventListener: noop, removeEventListener: noop,
-    getBoundingClientRect: () => ({ left: 0, top: 0, width: 800, height: 600 }),
-  };
-  const el = () => ({
-    classList: { add: noop, remove: noop, toggle: noop, contains: () => false },
-    style: {}, addEventListener: noop, removeEventListener: noop,
-    textContent: "", innerHTML: "", appendChild: noop, setAttribute: noop,
-    getBoundingClientRect: () => ({ left: 0, top: 0, width: 800, height: 600 }),
-  });
-  const elements = new Map();
-  const getEl = id => {
-    if (id === "c") return canvas;
-    if (!elements.has(id)) elements.set(id, el());
-    return elements.get(id);
-  };
+  // Stubs compartidos con la sonda (tools/lib/piel_dom.mjs): cada herramienta
+  // tenia su copia y las dos tenian la forma de `campo`, que es como dos de
+  // tres pieles quedaron sin medicion. Un arreglo duplicado es el mismo defecto
+  // que un padron de proveedores escrito a mano dos veces.
+  const canvas = elementoGenerico(ctx2d);
+  const el = () => elementoGenerico(ctx2d);
+  const doc = documentoStub(ctx2d, canvas);
+  const getEl = doc.getElementById;
 
   let rafQueue = [];
   const sandbox = {
@@ -117,14 +130,17 @@ function arrancarPiel({ substrate, hash }) {
         }
         return { ok: false, json: async () => ({}) };
       }
-      const m = u.match(/datos\/(campo|obras)\.json$/);
-      if (m) {
+      // Cualquier ruta relativa a la piel, no solo `datos/*.json` por nombre.
+      // Servir unicamente los archivos que UNA piel pide no es una medicion.
+      const partes = resolverPedido(u, PIEL);
+      if (partes) {
         try {
-          const txt = readFileSync(join(raiz, "iskvw", "datos", `${m[1]}.json`), "utf8");
-          return { ok: true, json: async () => JSON.parse(txt) };
-        } catch { return { ok: false, json: async () => ({}) }; }
+          const txt = readFileSync(join(raiz, ...partes), "utf8");
+          return { ok: true, json: async () => JSON.parse(txt),
+                   text: async () => txt };
+        } catch { /* cae al 404 de abajo */ }
       }
-      return { ok: false, json: async () => ({}) };
+      return { ok: false, json: async () => ({}), text: async () => "" };
     },
     addEventListener: noop, removeEventListener: noop, history: { replaceState: noop },
     location: { hash, href: "http://medir.local/" },
@@ -132,13 +148,7 @@ function arrancarPiel({ substrate, hash }) {
     devicePixelRatio: 1, innerWidth: 800, innerHeight: 600,
   };
   sandbox.window = sandbox;
-  sandbox.document = {
-    getElementById: getEl,
-    querySelector: () => el(), querySelectorAll: () => [],
-    addEventListener: noop, removeEventListener: noop,
-    body: el(), documentElement: el(), hidden: false,
-    createElement: () => el(),
-  };
+  sandbox.document = doc;
 
   const context = vm.createContext(sandbox);
   let failed = null;
@@ -242,6 +252,45 @@ function centroDenso(ys) {
 
 const substratos = ["campo"];
 if (archivoPath) substratos.unshift("archivo");
+
+// ── modo comun: vale para cualquier piel ──────────────────────────────────
+if (!GRILLA) {
+  const filasComunes = [];
+  for (const sub of substratos) {
+    const piel = arrancarPiel({ substrate: sub, hash: "" });
+    await espera(25);
+    if (piel.fallo()) { console.error(String(piel.fallo())); process.exit(1); }
+    const tiempos = [];
+    for (let i = 0; i < warmup + frames; i++) {
+      piel.resetCnt();
+      const lote = piel.tomarFrames();
+      if (!lote.length) break;               // una piel puede no animar: es valido
+      const t0 = performance.now();
+      for (const cb of lote) cb(t0);
+      const dt = performance.now() - t0;
+      if (piel.fallo()) { console.error(String(piel.fallo())); process.exit(1); }
+      if (i >= warmup) tiempos.push(dt);
+    }
+    const c = { ...piel.cnt };
+    piel.cerrar();
+    const orden = [...tiempos].sort((a, b) => a - b);
+    filasComunes.push({
+      sustrato: sub, escenario: "arranque + cuadros", ...c,
+      ms_mediana: orden.length ? Number(orden[orden.length >> 1].toFixed(3)) : 0,
+    });
+  }
+  const cols = ["sustrato", "escenario", "segmentos", "lineas", "arcos",
+                "gradientes", "textos", "ms_mediana"];
+  console.log(cols.map(c => c.padEnd(c === "escenario" ? 20 : 12)).join(""));
+  for (const f of filasComunes)
+    console.log(cols.map(c => String(f[c] ?? "-").padEnd(c === "escenario" ? 20 : 12)).join(""));
+  console.log(`
+piel ${PIEL}: medida en modo comun (no declara `
+              + `posiciones_medidas, asi que la grilla de campo no le aplica)`);
+  console.log(JSON.stringify({ version: 1, piel: PIEL, modo: "comun",
+                               escenarios: filasComunes }));
+  process.exit(0);
+}
 
 const filas = [];
 for (const s of substratos) {

@@ -361,6 +361,23 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             path = "/plano_demo.html"
 
         # API endpoints (real backend)
+        if path == "/api/comandos":
+            # El CLI como datos, para que la interfaz dibuje BOTONES en vez de
+            # pedirle a alguien que copie y pegue un comando. Sale del archivo
+            # generado por introspeccion real (tools/gen_mapa_comandos.py), no
+            # de una lista escrita a mano: una lista a mano se queda vieja y
+            # descarta en silencio, que es el defecto que este repo encontro
+            # tres veces el 2026-07-31.
+            manifiesto = self._leer_manifiesto_comandos()
+            from ..aviso import configurado as _aviso_ok
+            # La interfaz tiene que poder decir "nadie se va a enterar" en vez
+            # de dar a entender que alguien se entera.
+            manifiesto["aviso"] = {
+                "configurado": _aviso_ok(),
+                "como": "exporta FLUJO_NTFY_TOPIC=<tu topic de ntfy.sh>",
+            }
+            self._send_json(manifiesto)
+            return
         if path == "/api/ping":
             self._send_json({
                 "status": "ok",
@@ -679,6 +696,17 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             self._send_json({"error": "cuerpo demasiado grande"}, status=413)
             return
 
+        if p == "/api/comando":
+            largo = int(self.headers.get("Content-Length", 0) or 0)
+            try:
+                datos = json.loads(self.rfile.read(largo).decode("utf-8") or "{}")
+            except ValueError:
+                self._send_json({"error": "cuerpo no es JSON"}, status=400)
+                return
+            resultado = self._correr_comando(datos)
+            self._send_json(resultado, status=resultado.pop("_http", 200))
+            return
+
         if p == "/api/plano/render":
             content_length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(content_length).decode("utf-8")
@@ -869,6 +897,101 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             return
 
         self.send_error(404)
+
+    def _leer_manifiesto_comandos(self) -> dict:
+        """El manifiesto generado. Si falta, lo DICE en vez de devolver vacio:
+        una lista de botones vacia se lee como 'no hay nada que hacer'."""
+        ruta = self.root / "context" / "comandos.json"
+        try:
+            return json.loads(ruta.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as e:
+            return {"formato": "comandos/1", "total": 0, "grupos": [],
+                    "comandos": [],
+                    "error": "no pude leer context/comandos.json (%s). "
+                             "Generalo con: py tools/gen_mapa_comandos.py" % e}
+
+    def _correr_comando(self, datos: dict) -> dict:
+        """Corre UN comando del manifiesto. La compuerta sale de datos
+        GENERADOS, no de una lista escrita aca.
+
+        Tres cosas que hacen que esto no sea una puerta abierta:
+
+        1. El comando tiene que estar EN el manifiesto, que se genera del CLI
+           real. No se acepta una cadena libre, asi que no hay comando que no
+           exista ya en el repo.
+        2. Sin shell. `subprocess` recibe una lista, asi que un argumento no
+           puede convertirse en otro comando.
+        3. Lo declarado `destructivo` exige `confirmar: true` explicito. Y lo
+           que NADIE declaro (`destructivo: null`) tambien lo exige: "nadie lo
+           clasifico" no es "es seguro", y tratarlo como seguro es como un
+           default plausible destruye el campo que lo mide.
+        """
+        cmd = str(datos.get("cmd") or "").strip()
+        if not cmd:
+            return {"error": "falta `cmd`", "_http": 400}
+        manifiesto = self._leer_manifiesto_comandos()
+        entrada = next((c for c in manifiesto.get("comandos", [])
+                        if c["cmd"] == cmd), None)
+        if entrada is None:
+            return {"error": "ese comando no esta en context/comandos.json; "
+                             "no se corre nada que el CLI no declare",
+                    "_http": 400}
+        destructivo = entrada.get("destructivo")
+        if destructivo is not False and not datos.get("confirmar"):
+            # El motivo dice la VERDAD de cada caso. Decirle "cambia cosas" a
+            # un comando que nadie clasifico seria afirmar lo que no se sabe --
+            # el mismo defecto que rellenar una ausencia con un valor plausible.
+            motivo = ("esta declarado como destructivo"
+                      if destructivo is True
+                      else "nadie lo clasifico todavia, y sin clasificar no se "
+                           "asume que sea seguro")
+            return {"error": "pide `confirmar: true`: " + motivo,
+                    "destructivo": destructivo,
+                    "estado": entrada.get("estado"), "_http": 409}
+
+        args = datos.get("args") or []
+        if not isinstance(args, list) or len(args) > 20:
+            return {"error": "`args` tiene que ser una lista de hasta 20",
+                    "_http": 400}
+        args = [str(a) for a in args]
+
+        orden = [sys.executable, "-m", "flujo"] + cmd.split(" ") + args
+        try:
+            r = subprocess.run(orden, capture_output=True, text=True,
+                               encoding="utf-8", errors="replace",
+                               cwd=str(self.root), timeout=600)
+        except subprocess.TimeoutExpired:
+            return {"error": "el comando paso los 600 s y se corto",
+                    "cmd": cmd, "_http": 504}
+        except OSError as e:
+            return {"error": "no pude ejecutarlo: %s" % e, "cmd": cmd,
+                    "_http": 500}
+        # La salida se recorta y se DICE que se recorto: un recorte callado se
+        # lee como "esto fue todo lo que dijo".
+        def _cola(t, tope=8000):
+            t = t or ""
+            if len(t) <= tope:
+                return t
+            aviso = "[...recortado, %d caracteres antes...]" % (len(t) - tope)
+            return aviso + chr(10) + t[-tope:]
+        # Si fallo y hay a donde avisar, avisa. Es para cuando el usuario NO
+        # esta en la maquina: al teclado ya ve el rc y el stderr aca abajo, y
+        # una notificacion encima seria ruido. Lejos, un boton que fallo en
+        # silencio es peor que no tener boton.
+        aviso_enviado = False
+        if r.returncode != 0:
+            from ..aviso import avisar
+            ultima = [l for l in (r.stderr or "").strip().splitlines() if l.strip()]
+            detalle = ultima[-1][:200] if ultima else "sin stderr"
+            aviso_enviado = avisar(
+                "%s -> rc=%d%s%s" % (cmd, r.returncode, chr(10), detalle),
+                titulo="flujo: fallo un comando")
+        return {"cmd": cmd, "args": args, "rc": r.returncode,
+                "ok": r.returncode == 0,
+                "stdout": _cola(r.stdout), "stderr": _cola(r.stderr),
+                # Se declara si SALIO el aviso, no si se intento: la interfaz
+                # no puede decir "te avise" cuando no hay topic configurado.
+                "aviso_enviado": aviso_enviado}
 
     def _serve_file(self, file_path: Path):
         try:

@@ -19,9 +19,37 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), "..");
-const html = readFileSync(join(raiz, "iskvw", "piel", "campo", "index.html"), "utf8");
+
+// Which skin. It used to be the literal string "campo", and that is why
+// `terminal` (772 lines) and `venue` (505) had NO verification at all: this
+// tool and the meter both pointed at one of the three skins, so two of them
+// could have been broken for months and nothing would have said so. `campo`
+// stays the default so CI and every existing invocation keep working.
+//   node tools/iskvw_piel_smoke.mjs [piel]
+const PIEL = process.argv[2] || "campo";
+const rutaPiel = join(raiz, "iskvw", "piel", PIEL, "index.html");
+let html;
+try {
+  html = readFileSync(rutaPiel, "utf8");
+} catch {
+  console.error(`no existe la piel ${PIEL} (${rutaPiel})`);
+  process.exit(2);
+}
 const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
 if (!scripts.length) { console.error("no inline <script> found"); process.exit(2); }
+
+// El manifiesto: lo que la piel DECLARA que pide y como se mide lo que dibujo.
+// Sin esto la bateria tendria que adivinar el nombre de sus variables, y por eso
+// antes solo servia para `campo`: asumia `NODOS`, que es un global de esa piel.
+let MANIFIESTO = null;
+try {
+  MANIFIESTO = JSON.parse(readFileSync(join(raiz, "iskvw", "piel", PIEL, "piel.json"), "utf8"));
+} catch {
+  console.error(`la piel ${PIEL} no declara piel.json -- una piel sin manifiesto `
+                + `no se puede verificar (ver schemas/piel.schema.json)`);
+  process.exit(2);
+}
+const CAPACIDADES = new Set(MANIFIESTO.capacidades || []);
 
 const noop = () => {};
 
@@ -60,12 +88,42 @@ async function correr({ tablero = null, cuadros = 30, caminar = true, antes = nu
     style: {}, addEventListener: noop, removeEventListener: noop,
     getBoundingClientRect: () => ({ left: 0, top: 0, width: 800, height: 600 }),
   };
-  const el = () => ({
-    classList: { add: noop, remove: noop, toggle: noop, contains: () => false },
-    style: {}, addEventListener: noop, removeEventListener: noop,
-    textContent: "", innerHTML: "", appendChild: noop, setAttribute: noop,
-    getBoundingClientRect: () => ({ left: 0, top: 0, width: 800, height: 600 }),
-  });
+  // A generic element, and generic is the point. The first version returned a
+  // canvas ONLY for the id "c" and an element with six methods for anything
+  // else -- which is exactly why this battery could never be pointed at another
+  // skin. Measured 2026-07-31 the moment it was: `terminal` died on
+  // `canvas.getContext is not a function` (its canvas has a different id) and
+  // `venue` on `L.querySelectorAll is not a function` (element-level query was
+  // not stubbed at all). Neither was a defect of the skin: the instrument was
+  // shaped like one skin and called that a verification.
+  //
+  // So every element can be a canvas and every element answers the DOM surface
+  // a skin plausibly touches. An over-generous stub can hide a real DOM bug,
+  // and that trade is deliberate: the alternative was two skins with no
+  // verification whatsoever.
+  const el = () => {
+    const nodo = {
+      classList: { add: noop, remove: noop, toggle: noop, contains: () => false },
+      style: {}, dataset: {},
+      addEventListener: noop, removeEventListener: noop, dispatchEvent: noop,
+      textContent: "", innerHTML: "", value: "", checked: false, id: "",
+      width: 800, height: 600, clientWidth: 800, clientHeight: 600,
+      offsetWidth: 800, offsetHeight: 600, scrollTop: 0, scrollHeight: 600,
+      children: [], childNodes: [], firstChild: null, parentNode: null,
+      getContext: () => ctx2d,
+      appendChild: (h) => h, removeChild: (h) => h, insertBefore: (h) => h,
+      replaceChildren: noop, remove: noop, cloneNode: () => el(),
+      setAttribute: noop, removeAttribute: noop, getAttribute: () => null,
+      hasAttribute: () => false,
+      querySelector: () => el(), querySelectorAll: () => [],
+      closest: () => null, contains: () => false,
+      focus: noop, blur: noop, click: noop, scrollIntoView: noop,
+      getBoundingClientRect: () => ({ left: 0, top: 0, right: 800, bottom: 600,
+                                      width: 800, height: 600, x: 0, y: 0 }),
+      toDataURL: () => "data:,",
+    };
+    return nodo;
+  };
   const elements = new Map();
   const getEl = id => {
     if (id === "c") return canvas;
@@ -91,14 +149,33 @@ async function correr({ tablero = null, cuadros = 30, caminar = true, antes = nu
           ? { ok: true, json: async () => tablero }
           : { ok: false, json: async () => ({}) };
       }
-      const m = s.match(/datos\/(campo|archivo|obras)\.json$/);
-      if (m) {
-        try {
-          const txt = readFileSync(join(raiz, "iskvw", "datos", `${m[1]}.json`), "utf8");
-          return { ok: true, json: async () => JSON.parse(txt) };
-        } catch { return { ok: false, json: async () => ({}) }; }
+      // Any repo-relative path, not just `datos/*.json`. The first version
+      // matched three filenames by name, so the `venue` skin -- which asks for
+      // `../../../data/venues/scd-plaza-egana.json` -- got a 404 from the
+      // instrument and its loader was never exercised. A battery that only
+      // serves the files one skin happens to want is not a battery.
+      // `..` segments are resolved and then REFUSED if they escape the repo:
+      // this reads real files, and a skin should not be able to make it read
+      // outside the checkout.
+      // Se resuelve DESDE `iskvw/piel/<piel>/`, que es de donde la piel cuelga.
+      // Los `..` no se colapsan antes de combinar -- ese fue el error de la
+      // primera version: `../../datos/archivo.json` se comia a si mismo contra
+      // una lista vacia y campo se quedaba sin sustrato (NODOS=8, el respaldo).
+      const limpio = String(url).replace(/[?#].*$/, "");
+      const abs = ["iskvw", "piel", PIEL];
+      let escapa = false;
+      for (const p of limpio.split("/")) {
+        if (p === "" || p === ".") continue;
+        if (p === "..") { if (!abs.length) { escapa = true; break; } abs.pop(); }
+        else abs.push(p);
       }
-      return { ok: false, json: async () => ({}) };
+      // Un pedido que se sale del checkout no se sirve: esto lee archivos
+      // REALES y una piel no puede usar la sonda para mirar fuera del repo.
+      if (escapa) return { ok: false, json: async () => ({}), text: async () => "" };
+      try {
+        const txt = readFileSync(join(raiz, ...abs), "utf8");
+        return { ok: true, json: async () => JSON.parse(txt), text: async () => txt };
+      } catch { return { ok: false, json: async () => ({}), text: async () => "" }; }
     },
     addEventListener: noop, removeEventListener: noop, history: { replaceState: noop },
     location: { hash: "", href: "http://smoke.local/" },
@@ -112,6 +189,10 @@ async function correr({ tablero = null, cuadros = 30, caminar = true, antes = nu
     addEventListener: noop, removeEventListener: noop,
     body: el(), documentElement: el(), hidden: false,
     createElement: () => el(),
+    // Namespaced: una piel que arma SVG lo usa, y sin esto moria en el primer
+    // gesto que tocara esa rama -- que era justo la que nunca se ejercitaba.
+    createElementNS: () => el(),
+    createTextNode: () => el(),
   };
 
   const context = vm.createContext(sandbox);
@@ -137,6 +218,9 @@ async function correr({ tablero = null, cuadros = 30, caminar = true, antes = nu
       // field: each frame, park the view on a different node so the per-node
       // code executes for real.
       for (let i = 0; i < cuadros && rafQueue.length; i++) {
+        // Caminar el campo es un gesto de `campo`: mueve E.pos para que el
+        // codigo por-nodo se ejecute de verdad. En una piel que no lo tiene,
+        // la expresion no hace nada y no molesta.
         if (caminar)
           vm.runInContext(
             "if (typeof E!=='undefined' && typeof NODOS!=='undefined' && NODOS.length)" +
@@ -154,6 +238,8 @@ async function correr({ tablero = null, cuadros = 30, caminar = true, antes = nu
   };
   return {
     failed, traza, trabajoDeNodo, pedidos,
+    // La medida que la PIEL declara, no la que esta sonda supone.
+    medida: MANIFIESTO.medida ? leer(MANIFIESTO.medida, -1) : null,
     nodos: leer("typeof NODOS !== 'undefined' && NODOS ? NODOS.length : -1", -1),
     pos: leer("typeof E !== 'undefined' ? E.pos : null", null),
     emisores: leer("typeof EMIS !== 'undefined' ? EMIS.n : -1", -1),
@@ -170,11 +256,56 @@ function morir(msg) {
   process.exit(1);
 }
 
-// ── 1. the skin as it ships: no board at all ──────────────────────────────
+// ── 1. EL NUCLEO: lo que se le exige a CUALQUIER piel ─────────────────────
+// Todo lo de aca abajo vale para una piel de una capa o de mil, y no supone ni
+// una sola variable suya. Lo especifico de `campo` viene despues y solo si su
+// manifiesto lo declara: exigirle a `terminal` las pruebas de `campo` seria
+// medirla con la forma de otra, que es exactamente el error que tenia esta
+// herramienta cuando la ruta era el literal "campo".
 const base = await correr({});
 if (base.failed) morir(base.failed);
+
+// 1.a Dibujo de verdad. La traza la cuenta ESTA sonda sobre el canvas, asi que
+// no depende de como la piel llame a sus cosas ni de COMO dibuje. Cero marcas
+// es el modo clasico de sonda verde que no probo nada.
+//
+// `trabajoDeNodo` NO sirve aca aunque lo parezca: cuenta gradientes y glifos,
+// que es como dibuja `campo`. Medido al apuntar la bateria a la tercera piel:
+// `venue` dibuja polilineas -- moveTo/lineTo/stroke, ni un gradiente -- y daba
+// cero. La metrica tambien estaba con forma de una sola piel.
+if (!base.traza.length)
+  morir(new Error("la piel no dibujo una sola marca: arranco sin material"));
+
+// 1.b Pidio lo que declaro. Los `obligatorio: true` tienen que aparecer en los
+// pedidos reales; declarar de mas hace FALLAR, no pasar.
+for (const d of (MANIFIESTO.datos || [])) {
+  const pedido = base.pedidos.some(u => String(u).includes(d.ruta.replace(/^\.\.\//, "")));
+  if (d.obligatorio && !pedido)
+    morir(new Error(`el manifiesto declara ${d.ruta} como obligatorio y la piel `
+                    + `nunca lo pidio`));
+}
+
+// 1.c La medida que la piel declara. Es lo unico que permite exigirle lo mismo
+// a pieles que no comparten una variable.
+if (MANIFIESTO.medida) {
+  if (!(base.medida > 0))
+    morir(new Error(`la medida declarada (${MANIFIESTO.medida}) dio `
+                    + `${base.medida}: la piel arranco sin material`));
+  console.log(`OK: nucleo -- ${base.medida} segun su propia medida, `
+              + `${base.traza.length} marcas, ${base.pedidos.length} pedidos`);
+} else {
+  console.log(`OK: nucleo -- ${base.traza.length} marcas, `
+              + `${base.pedidos.length} pedidos (no declara medida propia)`);
+}
+
+// ── 2. lo especifico de campo, solo si lo declara ─────────────────────────
+if (!CAPACIDADES.has("patch_efectos") && !CAPACIDADES.has("posiciones_medidas")) {
+  console.log(`OK: ${PIEL} paso la bateria comun (no declara capacidades extra)`);
+  process.exit(0);
+}
 if (base.nodos < 1) morir(new Error(`field is empty (NODOS=${base.nodos}): data did not load, loop untested`));
-if (base.trabajoDeNodo < 1) morir(new Error("per-node draw code never executed: the smoke proved nothing"));
+if (base.trabajoDeNodo < 1)
+  morir(new Error("per-node draw code never executed: the smoke proved nothing"));
 if (base.patchOn !== false) morir(new Error(`without a board the patch must stay off, got ${base.patchOn}`));
 console.log(`OK: boot + frames ran without throwing (NODOS=${base.nodos}, marcas=${base.traza.length})`);
 

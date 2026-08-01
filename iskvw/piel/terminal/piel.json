@@ -1,0 +1,17 @@
+{
+ "formato": "piel/1",
+ "nombre": "terminal",
+ "resumen": "El archivo como panel de consola: filtros por etiqueta y categoria sobre las obras, con una red de nodos generativa de fondo tejida desde sus `tags`.",
+ "datos": [
+  {"ruta": "../../datos/obras.json", "obligatorio": false,
+   "para": "las obras. Lleva una copia incrustada del mismo JSON para poder abrirse con file://, donde el fetch lo bloquea CORS."}
+ ],
+ "medida": "",
+ "capas": [
+  {"nombre": "listado", "codifica": "titulo+category+tags"},
+  {"nombre": "red", "codifica": "tags", "inerte_sin_dato": false}
+ ],
+ "gestos": ["click en chip de categoria", "click en chip de etiqueta"],
+ "degrada": "Si el fetch falla usa el JSON incrustado: se abre igual desde el disco, sin servidor. Es la unica piel que no depende de que haya algo servido.",
+ "capacidades": []
+}

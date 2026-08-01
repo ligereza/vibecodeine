@@ -936,3 +936,196 @@ answered "the one called code-instruct", which is the one that failed.
 `const medida = o =>` (1 hit), `conXY` (0 hits), and `datos/archivo.json` with
 479 pieces / 269 links / 219 positioned. The published portfolio draws the
 works where they were measured.
+
+## The comments in a file are its incident log. Read them BEFORE editing it
+
+2026-07-31, and it is the best thing found that day. The same defect was hit
+THREE times in one afternoon, and the third time the bite was already written
+three lines above the line being edited.
+
+The shape, every time: **a hand-written list that stopped matching reality,
+discarding in silence the only thing that worked, and an error blaming
+something else.**
+
+    #426  refutar.py     a literal ("groq","cerebras","azure","ollama") that
+                         predates watsonx -> dropped the ONLY provider with a
+                         key -> died saying "Todos los proveedores fallaron.
+                         Ultimo: None". Nothing had been attempted.
+    #427  codex_lib.py   _CODER_CHAIN_MAP with no watsonx and `win` -- a
+                         retired machine -- first -> 22 jobs reading
+                         `timeout 900s`.
+    (3rd) percepcion.py  CLAVES_VISION, a hand-written allow-list of keys,
+                         swallowed the `_motor` field -> a whole run reported
+                         "motor watsonx: 0" and the transport got blamed for a
+                         path that had worked all along.
+
+And `percepcion.py` carried this, three lines above the line in question:
+
+> "Antes esto estaba cableado a un solo esquema y descartaba en silencio todo
+> lo que pedia el prompt nuevo (headliners, conceptos, oportunidad_codigo...)"
+
+The file had been bitten by that exact dog before and wrote it down. Nobody
+read it. **A comment is not decoration and it is not documentation: it is the
+scar of an incident, and it is the cheapest warning in the repo.** Read the
+comments around what you are about to touch before touching it.
+
+Three rules that follow, and they are mechanical, not moral:
+
+1. **What is discarded, is discarded OUT LOUD.** Any allow-list must report
+   what it dropped, with the id of the record. Two lines:
+   `set(recibido) - set(declarado)` and a print.
+2. **A default that fills an absence destroys the field that measures it.**
+   `motor = vision.get("_motor") or "ollama"` turns "nobody attributed this"
+   into "ollama did it", and the next count counts ghosts. If it did not come,
+   it says so (`sin_atribucion`).
+3. **An empty value and a value that never arrived are not the same fact.**
+   `if vision.get(k)` collapses them, and then no consumer can tell a
+   measurement that found nothing from a key nobody sent.
+
+Retirement: when a check enforces rule 1 across the repo.
+
+## Do not debug: COUNT
+
+Same day, same session. An hour was spent chasing a symptom that a grouped
+count answered in one step: 127 fichas, and grouping the failures by their
+LITERAL message gave `10 contact_sheet_fallo` and nothing else. One failure
+mode, ffmpeg on `.mp4`, with zero relation to what was being debugged.
+
+Earlier the same day the same technique had already paid: 22 identical
+`timeout 900s` entries in the codex job log WERE the diagnosis, not noise.
+
+Before opening a debugger: group the failures by literal message and look at
+the distribution. The information is almost always already written, many times
+over, in a log nobody reads.
+
+## Where this was left, 2026-07-31 night (PR #428)
+
+Everything below is IN PR #428, green on the full matrix at close.
+
+**The skin is swappable now, and it was never verified.** There were THREE
+skins -- `campo` (1323 lines), `terminal` (772), `venue` (505) -- and both
+`iskvw_piel_smoke.mjs` and `iskvw_piel_medir.mjs` read the literal path
+`.../piel/campo/index.html`. Two of three had NO verification and NO
+measurement of any kind. Pointing the battery at them broke three times and
+NONE of the breaks was the skin: the canvas was only returned for the id "c",
+element-level `querySelectorAll` was never stubbed, and the "work done" metric
+counted gradients and glyphs -- how CAMPO draws, while venue draws polylines.
+The instrument was shaped like one skin and called that a verification. Both
+skins work: venue draws 503 edges, terminal 3.480 marks.
+
+What exists now: `schemas/piel.schema.json` + a `piel.json` per skin declaring
+what it fetches, HOW WHAT IT DREW IS COUNTED (`medida`), and per layer THE
+DATUM IT ENCODES. The battery is a common CORE plus extras gated on declared
+capabilities. Stubs live once in `tools/lib/piel_dom.mjs`. A manifest that lies
+FAILS -- there is a test that breaks one on purpose and restores it.
+
+**The substrate: watsonx sees, and the model was chosen by measurement.**
+Probe first (`tools/watsonx_vision_smoke.py`) because vision was inferred from
+model NAMES. Then a bench with two ground truths already on disk and never
+used: tesseract's OCR (non-empty in 24% of fichas) and the ficha gemma3
+produced. Invention counts AGAINST. Result, and it is the second time in one
+day that a model's name lied:
+
+    llama-3-2-11b-VISION   solape 0.414   3 inventados   40.175 tok
+    mistral-small-3-1-24b  solape 0.807   0 inventados    7.710 tok
+    llama-4-maverick-17b   solape 0.807   1 inventado    12.019 tok
+
+`PERCEPCION_VISION=ollama|watsonx`, ollama by default: without the variable the
+behaviour is byte for byte today's. Run in progress at close: **610 of 1401 ig
+fichas, 0 errors**, ~4 s/file, ~964 tokens/image -> the whole corpus is about
+US$2. The credit still cannot be burned by this work; what rises is what is
+seen. Measured on 105 attributed fichas: `tipo_obra` 0% -> 100% (the field
+whose absence forced classifying 697 works by hand), `colores` 87% -> 100%,
+`texto_visible` 22% -> 20% (WORSE, said because it is worse).
+
+**Buttons, behind a gate made of generated data.** `context/comandos.json` is
+the CLI as DATA (91 commands, 16 groups), generated from the same tree as
+MAPA.md's table so they cannot fork; each entry carries `estado` (`listo`, or
+`falta: <what>`) so an interface can show OBJECTIVES instead of commands.
+`GET /api/comandos` and `POST /api/comando` run one command FROM the manifest
+only -- no free-form string, no shell. `destructivo: True` demands
+`confirmar`; `null` demands it too, because "nobody classified it" is not "it
+is safe". `FLUJO_NTFY_TOPIC` notifies FAILURES only, and the answer declares
+whether anyone was actually told.
+
+### The count that closed a question, and the unit that fooled me
+
+Asked where "the other 8" failures were between `10 fallos.json` and `18
+medicion.vision=fallo`: there was no gap. `fallos.json` counts FILES, the
+ficha field counts ROWS, and a retried file writes a ficha per attempt -- 8
+files x2 + 2 files x1 = 18 rows over 10 files. Two units measuring one fact,
+reported by me as if they were two populations.
+
+The real finding underneath: **retrying is useless when the cause is
+structural.** All 10 were the missing `_tmp` directory, so every retry only
+duplicated the ficha. After the fix: 0 files, 0 rows.
+
+### Next, in order
+
+1. Finish the ig run (~800 left) and re-measure coverage over the full 1401
+   with attribution. Then the same for 10 RD flyers as a probe -- RD is more
+   OCR than description and its database is partly done.
+2. `B.2` has the API but NO UI yet: the hub does not draw the buttons.
+   `context/comandos.json` is there and `/api/comandos` serves it; what is
+   missing is the panel that renders it.
+3. The search is still the weak link for `refutar`: SearXNG first, no Tavily
+   key, so a pass can come back with zero sources. Until that is fixed,
+   wiring refutar as an automatic per-report gate would stamp "adversarially
+   verified" on invented claims.
+
+## The IBM credit is burned by the CLOCK, not by the work (2026-07-31, measured)
+
+This corrects, with billing data, something said earlier the same night. It is
+the most expensive thing in this file.
+
+The question was where two million tokens came from. They were real -- the
+perception run, 1.946 tokens per image measured on the production path, 715 of
+720 fichas attributed to watsonx. But they are not what costs money. The
+account's own billing API says:
+
+    agosto (desde 00:00 UTC), instance mak-watsonx-runtime
+      INSTANCES                    0,0323 instancia   ->  US$ 35,81
+      MODEL_INFERENCE_THIRD_PARTY  1.834 RU           ->  US$  0,19
+                                                          ---------
+                                                          US$ 36,00
+    julio entero, en el plan Lite
+      448 RU third-party + 15 RU IBM                  ->  US$  0,05
+
+**99,5% of the spend is a fixed charge for HAVING the paid plan.** `0,0323
+instancia` is the fraction of the month elapsed -- about one day -- so the plan
+prorates to roughly US$1.110 a month. The 1,34 million tokens of perception are
+those nineteen cents.
+
+Consequence, and it inverts what was said before: the US$200 credit is NOT
+safe from being spent. Earlier that night the conclusion was "this work cannot
+burn the credit", and that is true of TOKENS and false of the TOTAL. At ~US$36
+a day the credit is gone in under six days, not on 2026-08-18.
+
+Two things follow, and both are the user's call because they are money:
+
+1. **While the plan is on, using it is free.** The day is already paid; the
+   marginal cost of a run is cents. So anything worth measuring should be
+   measured NOW, not scheduled.
+2. **Going back to Lite stops the clock.** Lite caps concurrency at 10, which
+   breaks `refutar`'s parallel refuters, but sequential perception works there.
+   Nobody has checked whether the paid plan has a cheaper variant; only the
+   `plan_id` is visible from the API, not the catalogue.
+
+How to read it again, without a console:
+`billing.cloud.ibm.com/v4/accounts/<bss>/usage/<YYYY-MM>`, with the account id
+read from the `account.bss` claim of the IAM token. Cost per metric is in
+`resources[].plans[].usage[].cost`.
+
+**And a measuring trap found on the way:** the bench reported 964 tokens per
+image and the real run spends 1.946. Not the model -- the SIZE. The bench
+resizes to 1024 px, `percepcion.py` to 1280 (`MAX_LADO_VISION`). That doubles
+the token cost, and nobody has measured whether those 256 px of side buy any
+accuracy: the `solape 0.807` that chose the model was obtained at the CHEAP
+size. In money it is pennies; as a habit it is paying double for something
+never measured.
+
+**State at close:** the ig run is left going on purpose -- the day is paid.
+720 of 1401 fichas, 0 errors, ~4 s/file, output in `/tmp/fichas_v4` on the box
+(NOT over `fichas.jsonl`; comparing the two passes is the only way to show it
+improved). When it finishes: coverage over the full 1401 with attribution, and
+then the same 1024-vs-1280 comparison.

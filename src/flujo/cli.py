@@ -110,6 +110,7 @@ laser_app = typer.Typer(help="Estetica vectorial para laser/plotter (vpype): ray
 render_app = typer.Typer(help="Render y validación de piezas vectoriales.", no_args_is_help=True)
 airdrop_app = typer.Typer(help="Sistema de actualización profesional (airdrops).", no_args_is_help=True)
 datadrop_app = typer.Typer(help="Gestión de datadrops (fotos reales terminadas).", no_args_is_help=True)
+micelio_app = typer.Typer(help="El sobre micelio/1: semilla, fruto y nutriente entre un modelo web sin API y el organismo.", no_args_is_help=True)
 
 app.add_typer(job_app, name="job")
 app.add_typer(privacy_app, name="privacy")
@@ -121,6 +122,117 @@ app.add_typer(laser_app, name="laser")
 app.add_typer(render_app, name="render")
 app.add_typer(airdrop_app, name="airdrop")
 app.add_typer(datadrop_app, name="datadrop")
+app.add_typer(micelio_app, name="micelio")
+
+
+@micelio_app.command("formato")
+def micelio_formato(
+    salida: str = typer.Option("", "--salida", help="Escribirlo a un archivo en vez de a la pantalla."),
+):
+    """Imprime el formato para PEGARSELO al modelo web antes de contarle la idea.
+
+    Es el primer paso del ciclo y el unico que hace el usuario a mano. Existe
+    para que la parte cara -- el unico modelo capaz que queda, en un chat, sin
+    API -- no dependa de acordarse de las reglas.
+    """
+    from .micelio import formato_para_el_modelo
+    texto = formato_para_el_modelo()
+    if salida:
+        Path(salida).write_text(texto, encoding="utf-8")
+        console.print(f"OK -> {salida}")
+    else:
+        # print pelado, no console.print: esto se copia y se pega, y rich le
+        # mete saltos de linea que le cambian el sentido a un bloque JSON.
+        print(texto)
+
+
+@micelio_app.command("validar")
+def micelio_validar(
+    archivo: str = typer.Argument(..., help="El sobre que devolvio el modelo web (acepta el ```json alrededor)."),
+):
+    """Dice si el sobre sirve, y si no, QUE le falta -- en castellano, para
+    poder pegarle la respuesta de vuelta al modelo que lo escribio."""
+    from .micelio import SobreInvalido, leer
+    try:
+        sobre = leer(archivo)
+    except SobreInvalido as e:
+        console.print(f"[red]sobre invalido[/red]: {e}")
+        raise typer.Exit(1)
+    except OSError as e:
+        console.print(f"[red]no pude leerlo[/red]: {e}")
+        raise typer.Exit(2)
+    crit = sobre.get("criterio") or []
+    console.print(f"OK  {sobre['tipo']}: {sobre['asunto']}")
+    for c in crit:
+        console.print(f"    criterio {c['tipo']}: {c.get('nombre', '')}")
+    if sobre["tipo"] == "fruto" and sobre.get("recortado"):
+        console.print(f"[yellow]recortado[/yellow]: {sobre['recortado']} "
+                      "-- lo que estas leyendo NO es todo")
+
+
+@micelio_app.command("fruto")
+def micelio_fruto(
+    dataset: str = typer.Argument(..., help="Un .json o .jsonl a medir (archivo.json, fichas.jsonl...)."),
+    salida: str = typer.Option("", "--salida", help="Escribir el sobre a un archivo."),
+    asunto: str = typer.Option("", "--asunto", help="La linea que lo describe."),
+):
+    """Mide un dataset y arma un fruto que CABE en una ventana de chat.
+
+    El fruto no es un volcado: lleva el estado medido, lo anomalo, unas pocas
+    muestras del extremo pobre y punteros. Si algo se recorto para que entrara,
+    lo dice en `recortado` -- un recorte callado se lee como "esto era todo".
+    """
+    import json as _json
+
+    from .micelio import escribir as _escribir, fruto as _fruto, medir_dataset
+    try:
+        medido, anomalias, muestras = medir_dataset(dataset)
+    except OSError as e:
+        console.print(f"[red]no pude leerlo[/red]: {e}")
+        raise typer.Exit(2)
+    sobre = _fruto(
+        asunto or f"estado de {Path(dataset).name}",
+        medido, anomalias, muestras,
+        punteros=[str(dataset)],
+    )
+    texto = _json.dumps(sobre, ensure_ascii=False, indent=1)
+    if salida:
+        _escribir(sobre, salida)
+        console.print(f"OK -> {salida}  ({len(texto)} bytes, pegable)")
+    else:
+        print(texto)
+    for a in anomalias:
+        console.print(f"[yellow]anomalia[/yellow] {a['campo']}: "
+                      f"{a.get('cobertura_pct', '?')}% de cobertura")
+
+
+@micelio_app.command("verificar")
+def micelio_verificar(
+    archivo: str = typer.Argument(..., help="Sobre con `criterio` (semilla o nutriente)."),
+    raiz: str = typer.Option(".", "--raiz", help="Desde donde se resuelven las rutas."),
+):
+    """Corre el criterio y devuelve VERDE o ROJO. Es el semaforo del ciclo.
+
+    Un modelo debil no necesita entender el pedido: repite hasta que esto da
+    verde. Sale con codigo 1 en rojo, para que un script lo use como compuerta.
+    """
+    from .micelio import SobreInvalido, leer, verificar as _verificar
+    try:
+        sobre = leer(archivo)
+    except SobreInvalido as e:
+        console.print(f"[red]sobre invalido[/red]: {e}")
+        raise typer.Exit(2)
+    r = _verificar(sobre, raiz)
+    for c in r.checks:
+        color = "green" if c["verde"] else "red"
+        console.print(f"[{color}]{'OK  ' if c['verde'] else 'FALLA'}[/{color}] "
+                      f"{c['nombre']}: {c['detalle']}")
+    if not r.checks:
+        console.print("[yellow]el sobre no trae criterio: no hay nada que "
+                      "verificar, y eso NO es verde[/yellow]")
+    console.print("[green]VERDE[/green]" if r.verde else "[red]ROJO[/red]")
+    if not r.verde:
+        raise typer.Exit(1)
 
 suplementos_app = typer.Typer(help="Generación de contraportadas para suplementos RD.", no_args_is_help=True)
 app.add_typer(suplementos_app, name="suplementos")

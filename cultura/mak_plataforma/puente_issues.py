@@ -311,73 +311,39 @@ def al_departamento(numero, shortcode):
         return None
 
 
-def comentar_y_cerrar(numero, completo, piezas, dry_run):
-    """Un comentario que se entiende de un vistazo, con lo pendiente ARRIBA.
+def cerrar_si_esta(numero, completo, piezas, dry_run):
+    """Close the issue when the render is DELIVERED. It never comments.
 
-    El aviso importante iba al final, detras del log de Blender, y el log se
-    recorta por la cola: el 2026-07-27 el aviso de que no se habia podido
-    respetar la imagen pedida quedo fuera del comentario. Un aviso que nadie
-    lee no existe. Ahora el resumen va primero y el log al fondo, plegado.
+    The user's order, 2026-07-31, after seeing an issue with ELEVEN comments:
+    it should not create issues nor comment, only close when it has the render;
+    otherwise the issue stays open and he will see it.
+
+    How it got there: this commented on EVERY pass and only closed when
+    everything had gone through. The cron runs every 10 minutes, so a request
+    that does not finish becomes a comment every ten minutes -- eleven comments
+    is under two hours. And every comment mails the user, and that mail can come
+    back as a new issue through the Gmail bridge: the comment was not noise, it
+    was the fuel of a loop.
+
+    An open issue IS the message. It does not need writing down.
+
+    What is lost: the failure detail no longer sits in the issue. What is not
+    lost: it stays in `puente_issues_estado.json` and in the log, which is where
+    whoever can act on it looks.
     """
-    hechas = [p for p in piezas if p["ok"]]
-    faltan = [p for p in piezas if not p["ok"]]
-
-    partes = []
-    if completo:
-        partes.append("MAK: **%d de %d** listo." % (len(hechas), len(piezas)))
-    else:
-        partes.append("MAK: **%d de %d** listo. Queda abierto por lo de abajo."
-                      % (len(hechas), len(piezas)))
-    partes.append("")
-
-    for p in hechas:
-        linea = "- [x] `%s`" % p["code"]
-        if p["imagen"] > 1:
-            linea += " (imagen %d del carrusel)" % p["imagen"]
-        if p.get("destino"):
-            linea += " -> `%s`" % p["destino"]
-        partes.append(linea)
-        if p.get("en_departamento"):
-            partes.append("      al departamento como `%s`" % p["en_departamento"])
-
-    for p in faltan:
-        partes.append("- [ ] `%s` **pendiente**: %s"
-                      % (p["code"], p.get("pendiente") or "sin motivo"))
-        partes.append("      %s" % p["url"])
-
-    if faltan:
-        partes.append("")
-        partes.append("Lo pendiente esta en el departamento de render de MAK, "
-                      "y se resuelve desde la app de flujo en Windows.")
-
-    logs = [p for p in piezas if p.get("log")]
-    if logs:
-        partes.append("")
-        partes.append("<details><summary>log</summary>")
-        partes.append("")
-        for p in logs:
-            partes.append("```")
-            partes.append(p["log"])
-            partes.append("```")
-        partes.append("</details>")
-
-    cuerpo = "\n".join(partes)
-    if dry_run:
-        _log("[dry-run] comentaria #%d:\n%s" % (numero, cuerpo))
+    if not completo:
+        pendientes = [p["code"] for p in piezas if not p["ok"]]
+        _log("  #%d queda ABIERTO (%s pendiente) -- no comento" %
+             (numero, ", ".join(pendientes) or "sin detalle"))
         return
-    r = _gh("issue", "comment", str(numero), "--repo", REPO, "--body", cuerpo)
-    if r.returncode != 0:
-        _log("error: comentar #%d -- %s" % (numero, r.stderr.strip()[:160]))
-    # Cerrar solo si NO quedo nada pendiente. Un issue cerrado con trabajo sin
-    # hacer es peor que uno abierto: desaparece de la vista del usuario.
-    if completo:
-        c = _gh("issue", "close", str(numero), "--repo", REPO)
-        if c.returncode != 0:
-            _log("error: cerrar #%d -- %s" % (numero, c.stderr.strip()[:160]))
-
-
-_RUTA_ABS = re.compile(r"(?:[A-Za-z]:\\[^\"'\r\n]*|/home/[^\s\"'\r\n]*)")
-
+    if dry_run:
+        _log("[dry-run] cerraria #%d" % numero)
+        return
+    c = _gh("issue", "close", str(numero), "--repo", REPO)
+    if c.returncode != 0:
+        _log("error: cerrar #%d -- %s" % (numero, c.stderr.strip()[:160]))
+    else:
+        _log("  #%d CERRADO: el render esta entregado" % numero)
 
 def _sin_rutas(texto):
     """Deja el nombre del archivo y borra el resto de la ruta.
@@ -512,7 +478,7 @@ def una_pasada(dry_run=False, solo=None):
             _log("  %s %s" % (code, "listo" if ok else "pendiente"))
 
         completo = all(p["ok"] for p in piezas)
-        comentar_y_cerrar(numero, completo, piezas, dry_run)
+        cerrar_si_esta(numero, completo, piezas, dry_run)
         st["hechos"][str(numero)] = {
             "ok": completo, "piezas": piezas,
             "ts": time.strftime("%Y-%m-%dT%H:%M:%S"),
