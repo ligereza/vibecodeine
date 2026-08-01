@@ -1,6 +1,6 @@
 # Estado del repo
 
-Ultima actualizacion: **2026-08-01, 03:15**.
+Ultima actualizacion: **2026-08-01, 09:01**.
 
 Este archivo se lee en dos minutos o no sirve. Llego a 1.666 lineas apiladas y
 nadie lo leia -- ni los agentes que lo editaban. La historia esta en
@@ -34,10 +34,27 @@ Ninguna la puede tomar un agente. Estan ordenadas por lo que cuesta no tomarla.
 
 Un muro nombrado es entrega valida. Estos no los resuelve mas trabajo.
 
-1. **El micelio no llega al sitio.** El runner de CI no ve la caja MAK
-   (`Connection refused`), asi que `gen_archivo_iskvw.py --fuente todo` omite sus
-   vinculos y lo dice en el log. Las 479 piezas publicadas salen del material del
-   repo.
+1. **El micelio no llegaba al sitio -- causa corregida y mecanismo construido
+   (2026-08-01).** Este archivo mezclaba dos hechos independientes bajo "el
+   runner de CI no ve la caja". Medido: el runner self-hosted `mak` SI esta
+   offline (`gh api .../actions/runners`, muerto a mitad de un retry el
+   2026-07-24 14:03:59Z, sin proceso ni unidad systemd) -- pero
+   `publicar_iskvw.yml` corre en `ubuntu-latest`, y el propio workflow ya
+   declaraba en su comentario que no alcanzar la caja es ESPERADO, no una
+   caida: una maquina en la nube nunca iba a llegar a una IP de LAN privada,
+   con ese runner vivo o muerto. Medido sobre lo publicado ese dia: 269
+   vinculos, **0 de clase `semantico`** -- los 227 `obra` que si aparecen
+   salen de `campo.json` + `obras.json` (219 + 8, commiteados a mano), nunca
+   del micelio en vivo. Construido: `cultura/mak_plataforma/entregar_micelio.py`
+   corre EN la caja, lee el micelio local y abre PR contra `mak` con
+   `iskvw/datos/micelio.json` (mismo patron que `entregar.py`, hard-falla sin
+   escribir nada si el micelio no responde o da 0 vinculos);
+   `gen_archivo_iskvw.py --fuente todo` cae a ese snapshot cuando el micelio en
+   vivo no responde. Probado real, no en seco: **PR #440, 1530 piezas, 4921
+   vinculos, los 4921 de clase `semantico`**. Pendiente de un humano: #440
+   (contra `mak`) y el PR de este mecanismo (contra `main`) siguen sin
+   mergear -- el sitio publicado sigue en 269 hasta que ambos entren y
+   `publicar_iskvw.yml` corra de nuevo.
 2. **La rama `mak` no drena.** 33 utilidades autogeneradas en `mak`, **0 en
    main**. Su unica salida deberia ser un PR a main y ese PR nunca se abrio.
    **Correccion medida el 2026-08-01:** este muro decia "main las borro en

@@ -13,8 +13,15 @@ detras.
 Uso:
     py tools/gen_archivo_iskvw.py --fuente obras
     py tools/gen_archivo_iskvw.py --fuente micelio --url http://<caja>:8890
+    py tools/gen_archivo_iskvw.py --fuente micelio_snapshot
     py tools/gen_archivo_iskvw.py --fuente ensayos
     py tools/gen_archivo_iskvw.py --fuente todo
+
+`--fuente todo` intenta el micelio EN VIVO y, si no responde (el caso de CI:
+publicar_iskvw.yml corre en ubuntu-latest y no alcanza la caja, LAN privada),
+cae al snapshot versionado en iskvw/datos/micelio.json -- escrito por la caja
+misma via cultura/mak_plataforma/entregar_micelio.py, porque solo ella puede
+alcanzarse a si misma.
 """
 from __future__ import annotations
 
@@ -39,6 +46,13 @@ ENSAYOS = RAIZ / "docs" / "cultura" / "ensayos"
 ANIMADAS = RAIZ / "iskvw" / "datos" / "animadas.json"
 LASER = RAIZ / "iskvw" / "datos" / "laser.json"
 CURADURIA = RAIZ / "iskvw" / "datos" / "curaduria.json"
+# Snapshot committed by cultura/mak_plataforma/entregar_micelio.py, running
+# ON the box (2026-08-01): publicar_iskvw.yml runs on ubuntu-latest, which
+# was never going to reach the box's private-LAN address -- confirmed the
+# same day by fetching the live archivo.json and finding 0 of 269 published
+# vinculos were clase "semantico". Same committed-snapshot shape campo.json
+# already uses for obra positions; this covers the micelio's measured links.
+MICELIO_SNAPSHOT = RAIZ / "iskvw" / "datos" / "micelio.json"
 
 # Por defecto el micelio se pide a la variable de entorno, no a una IP escrita
 # en el repo: este repositorio es publico.
@@ -127,6 +141,22 @@ def desde_micelio(url: str = MICELIO_URL, umbral: float = UMBRAL_MICELIO) -> dic
     # semanticos filtrados a ids conocidos) vive en contrato_archivo.convertir,
     # compartida con GET /api/archivo del hub de la caja.
     return contrato_archivo.convertir(g)
+
+
+def desde_micelio_snapshot(ruta: Path = MICELIO_SNAPSHOT) -> dict:
+    """The micelio's measured graph, already converted and committed by the
+    box (cultura/mak_plataforma/entregar_micelio.py) -- because CI cannot
+    reach the box directly, only the box can put this data here.
+
+    A snapshot, not live: it only advances when the box opens a new PR, the
+    same pattern campo.json already uses for obra positions. Same rule as
+    every other optional fuente here: an absent file is an absent source,
+    never an invented empty result.
+    """
+    if not ruta.is_file():
+        return {"piezas": [], "vinculos": []}
+    d = json.loads(ruta.read_text(encoding="utf-8"))
+    return {"piezas": d.get("piezas") or [], "vinculos": d.get("vinculos") or []}
 
 
 def desde_ensayos(raiz: Path = ENSAYOS) -> dict:
@@ -279,8 +309,8 @@ def _riqueza(p: dict) -> int:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--fuente",
-                    choices=("obras", "campo", "micelio", "ensayos", "animadas",
-                             "laser", "todo"),
+                    choices=("obras", "campo", "micelio", "micelio_snapshot",
+                             "ensayos", "animadas", "laser", "todo"),
                     default="obras")
     ap.add_argument("--url", default=MICELIO_URL)
     ap.add_argument("--umbral", type=float, default=UMBRAL_MICELIO)
@@ -305,6 +335,21 @@ def main() -> int:
                   file=sys.stderr)
             if args.fuente == "micelio":
                 return 1
+            # CI no puede alcanzar la caja (LAN privada, publicar_iskvw.yml
+            # corre en ubuntu-latest) -- no es una falla del snapshot, es el
+            # motivo por el que existe. Sin el, "todo" seguia sin ningun
+            # vinculo semantico (0 de 269, medido 2026-08-01); con el, lleva
+            # lo ultimo que la caja pudo empujar.
+            snap = desde_micelio_snapshot()
+            if snap["piezas"] or snap["vinculos"]:
+                print(f"aviso: uso el snapshot versionado en su lugar "
+                      f"({len(snap['piezas'])} piezas, "
+                      f"{len(snap['vinculos'])} vinculos, "
+                      f"{MICELIO_SNAPSHOT.relative_to(RAIZ)}).",
+                      file=sys.stderr)
+                partes.append(snap)
+    if args.fuente == "micelio_snapshot":
+        partes.append(desde_micelio_snapshot())
     if args.fuente in ("ensayos", "todo"):
         partes.append(desde_ensayos())
     if args.fuente in ("animadas", "todo"):

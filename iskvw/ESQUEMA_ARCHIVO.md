@@ -109,11 +109,25 @@ Y una que sale de esta forma:
 ## Cómo se genera
 
 ```bash
-py tools/gen_archivo_iskvw.py --fuente obras    # las obras del artista
-py tools/gen_archivo_iskvw.py --fuente micelio  # lo que MAK relacionó
-py tools/gen_archivo_iskvw.py --fuente ensayos  # los ensayos y sus íconos
-py tools/gen_archivo_iskvw.py --fuente todo     # todas, en un solo archivo
+py tools/gen_archivo_iskvw.py --fuente obras             # las obras del artista
+py tools/gen_archivo_iskvw.py --fuente micelio            # lo que MAK relacionó, EN VIVO
+py tools/gen_archivo_iskvw.py --fuente micelio_snapshot   # lo último que la caja empujó
+py tools/gen_archivo_iskvw.py --fuente ensayos            # los ensayos y sus íconos
+py tools/gen_archivo_iskvw.py --fuente todo               # todas, en un solo archivo
 ```
+
+**El micelio en vivo no es alcanzable desde CI** (2026-08-01, medido): el
+workflow que publica el sitio corre en `ubuntu-latest`, una máquina en la nube
+que nunca pudo llegar a la LAN privada de la caja MAK -- no es una caída, el
+propio workflow lo declara esperado. Medido el mismo día sobre lo publicado en
+producción: 269 vínculos, 0 de clase `semantico`. `--fuente todo` intenta el
+micelio en vivo primero y, si no responde, cae a `iskvw/datos/micelio.json`
+-- un snapshot ya convertido que **la caja misma escribe y entrega por PR**
+(`cultura/mak_plataforma/entregar_micelio.py`, mismo patrón de
+`entregar.py`: git + `gh pr create` contra la rama `mak`), porque sólo ella
+puede alcanzarse a sí misma. Mismo mecanismo que ya usa `campo.json` para las
+posiciones: un snapshot versionado, no en vivo, que avanza cuando alguien lo
+vuelve a empujar.
 
 Sale a `iskvw/datos/archivo.json`. Una piel lee ESE archivo y nada más.
 
