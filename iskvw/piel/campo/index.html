@@ -280,9 +280,16 @@ function compilarPatch(filas){
 }
 compilarPatch(PATCH_DEFECTO);
 
+/* El nodo como glifo en vez de como circulo. Se publica APAGADA y la enciende
+   el artista desde `datos/tablero.json`, igual que `patch_efectos`: una llave
+   ausente es una mejora que no existe todavia, no una apagada, y quien la lee
+   decide su default. El de aca es false, que es la piel de siempre. */
+let NODO_GLIFO = false;
+
 function aplicarTablero(t){
   if (!t || typeof t !== 'object') return;
   PATCH.on = !!(t.mejoras && t.mejoras.patch_efectos);
+  NODO_GLIFO = !!(t.mejoras && t.mejoras.nodo_glifo);
   if (t.efectos && typeof t.efectos === 'object')
     for (let e = 0; e < EFECTOS.length; e++)
       if (t.efectos[EFECTOS[e]] === false) EF_ON[e] = 0;
@@ -704,7 +711,29 @@ function dibujar(){
     // pintar dos veces la misma materia, y crear un gradiente por nodo y por
     // cuadro es lo caro de este bucle. Medido con 697 nodos, CPU x6 y densidad
     // 3: dibujando los dos, 34 fps.
-    const soloGlifo = destino && F > 0.35;
+    /* ── el nodo COMO GLIFO, no como circulo ──
+       La tecnica esta escrita desde el 2026-07-30 en ASCII_REFERENCIA.md, con
+       la causa dicha por el usuario mirando Safari: «los vectorizados se
+       vuelven monotonos, y el svg tiene que ser la forma animada, ASCII como
+       patron, no una linea. Asi que el trazo deja de dibujarse como contorno:
+       se MUESTREA la forma».
+
+       Se aplico a la obra RESUELTA y no al nodo. Medido el 2026-08-01: la
+       maquinaria de glifos --la rampa, el campo que evoluciona, el vocabulario
+       de la obra, la regla doublecup-- corre solo cuando `destino && F > 0.35`,
+       o sea cuando el visitante esta cerca y quieto. El resto del tiempo cada
+       nodo son DOS arcos: un gradiente radial y un circulo solido. Eso es el
+       circulo con hilos que se ve el 95% del tiempo.
+
+       Encendida la llave, el nodo usa la MISMA materia que la obra: el mismo
+       campo, evaluado en la posicion del nodo en vez de en el punto de la
+       forma. No se inventa una estetica nueva: se aplica la escrita un nivel
+       mas arriba. Y sale mas barato -- se dejan de crear dos gradientes por
+       nodo y por cuadro, que es lo caro de este bucle.
+
+       Se publica APAGADA. Encenderla es decision del artista, igual que
+       `patch_efectos`: se edita `datos/tablero.json`, no la piel. */
+    const soloGlifo = (destino && F > 0.35) || NODO_GLIFO;
     if (!soloGlifo){
     const g = ctx.createRadialGradient(px,py,0,px,py,r*2.4);
     g.addColorStop(0, `hsla(${tono},14%,88%,${a})`);
@@ -718,8 +747,12 @@ function dibujar(){
       // El glifo sale de un campo que evoluciona, asi que el patron nunca se
       // repite: es generativo, no una animacion guardada. Cuando la obra se
       // desarrolla (visitante quieto), la materia sube y se lee mas.
-      const v = Math.sin(destino[0]*17 + tG) * Math.cos(destino[1]*13 - tG*0.61)
-              + Math.sin((destino[0]+destino[1])*9 + tG*1.37) * 0.5 * (1 + E.fuerza*2);
+      // Sin obra resuelta no hay punto de forma: el campo se evalua en la
+      // posicion del propio nodo. Es el mismo campo y la misma formula; lo
+      // unico que cambia es donde se lo mide.
+      const q = destino || [px*0.012, py*0.012];
+      const v = Math.sin(q[0]*17 + tG) * Math.cos(q[1]*13 - tG*0.61)
+              + Math.sin((q[0]+q[1])*9 + tG*1.37) * 0.5 * (1 + E.fuerza*2);
       const RMP = rampa();
       const nivel = Math.max(0, Math.min(RMP.length-1,
         Math.round(((v + 1.5)/3) * (RMP.length-1) * (0.55 + E.despliegue*0.45))));
@@ -729,8 +762,8 @@ function dibujar(){
       // respire sin repetirse. Contenido curatorial, ritmo generativo.
       let g2 = RMP[nivel];
       if (nivel >= 2 && n.letras){
-        const vi = Math.sin(destino[0]*23 - tG*0.7)
-                 * Math.cos(destino[1]*19 + tG*0.43);
+        const vi = Math.sin(q[0]*23 - tG*0.7)
+                 * Math.cos(q[1]*19 + tG*0.43);
         // `abstr` no existia: era una variable suelta que solo se evaluaba bajo
         // el regimen industrial, asi que el ReferenceError esperaba a que el
         // artista lo encendiera. La abstraccion es de la OBRA (curaduria.json).
@@ -739,7 +772,11 @@ function dibujar(){
            : n.letras[Math.floor(((vi+1)/2) * 977) % n.letras.length];
       }
       if (g2 !== ' '){
-        ctx.fillStyle = `hsla(${tonoRegimen(n, tono)},16%,90%,${((F-0.35)/0.65) * (0.5 + nivel/(RMP.length-1)*0.5)})`;
+        // Con obra resuelta la opacidad sube con el despliegue; sin ella, el
+        // nodo se lee como se leia el circulo: por cercania y nitidez. Usar
+        // `F` cuando no hay obra dejaria el campo entero invisible.
+        const aG = destino && F > 0.35 ? (F-0.35)/0.65 : a;
+        ctx.fillStyle = `hsla(${tonoRegimen(n, tono)},16%,90%,${aG * (0.5 + nivel/(RMP.length-1)*0.5)})`;
         ctx.fillText(g2, px, py);
       }
     } else {
