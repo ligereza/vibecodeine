@@ -20,6 +20,11 @@ interface Venue {
   estado: string;
   preferido: boolean;
 }
+interface Evento {
+  nombre: string;
+  fuentes_primarias?: string[];
+  sin_fuente_primaria?: boolean;
+}
 interface Productora {
   slug: string;
   nombre: string;
@@ -30,6 +35,7 @@ interface Productora {
   confirmada: boolean;
   confirmacion: string;
   fuente: string;
+  eventos?: Evento[];
   /** SVG del logo horneado en el bundle sin servidor. Ausente con hub. */
   logo_svg?: string;
 }
@@ -56,6 +62,7 @@ interface Data {
     venues: number;
     eventos?: number;
     eventos_triangulables?: number;
+    eventos_sin_fuente_primaria?: number;
     eventos_sin_fecha_iso?: number;
     eventos_sin_lineup?: number;
   };
@@ -202,6 +209,7 @@ export default function RdDbPanel() {
               { k: 'Venues', v: r.venues, ayuda: 'Recintos registrados' },
               { k: 'Eventos', v: r.eventos ?? 0, ayuda: 'Eventos registrados' },
               { k: 'Con fecha y lineup', v: r.eventos_triangulables ?? 0, ayuda: 'Tienen los datos completos para cruzarlos' },
+              { k: 'Sin fuente primaria', v: r.eventos_sin_fuente_primaria ?? 0, ayuda: 'Falta URL oficial, ticketera o venue' },
               { k: 'Sin lineup', v: r.eventos_sin_lineup ?? 0, ayuda: 'Falta cargarles el lineup' },
               { k: 'Sin fecha', v: r.eventos_sin_fecha_iso ?? 0, ayuda: 'Falta cargarles la fecha' },
             ].map(c => (
@@ -276,6 +284,17 @@ export default function RdDbPanel() {
                       ) : (
                         <span className="flex items-center gap-1 text-[10px] text-zinc-600">
                           <CircleDashed className="h-3 w-3" /> sin confirmar
+                        </span>
+                      )}
+                      {(p.eventos?.length ?? 0) > 0 && (
+                        <span className={`rounded px-1.5 py-px text-[10px] ${
+                          p.eventos!.some(e => e.sin_fuente_primaria)
+                            ? 'bg-amber-950/50 text-amber-300'
+                            : 'bg-emerald-950/50 text-emerald-300'
+                        }`}>
+                          {p.eventos!.filter(e => e.sin_fuente_primaria).length
+                            ? `${p.eventos!.filter(e => e.sin_fuente_primaria).length} sin fuente primaria`
+                            : 'fuentes primarias OK'}
                         </span>
                       )}
                     </div>

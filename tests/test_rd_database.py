@@ -8,6 +8,7 @@ y que el disclaimer presuntivo viaja con los datos.
 """
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -194,11 +195,9 @@ def test_venue_preferido_via_fixture_sintetica(tmp_path: Path):
     """La maquinaria venue-preferido + enlace canonico, con una productora
     sintetica (no contamina el store real): 2 venues, el segundo preferido y
     enlazado al venue canonico Espacio Riesco."""
-    import json as _json
-
     pdir = tmp_path / "prods"
     pdir.mkdir()
-    (pdir / "acme.json").write_text(_json.dumps({
+    (pdir / "acme.json").write_text(json.dumps({
         "name": "Acme Fiestas",
         "tipos_fecha": ["club", "after"],
         "venues": [
@@ -214,3 +213,53 @@ def test_venue_preferido_via_fixture_sintetica(tmp_path: Path):
     assert set(prof["tipos_fecha"]) == {"CLUB", "AFTER"}
     pref = [v for v in prof["venues"] if v["preferido"]][0]
     assert pref["venue_id"] == "espacio_riesco"   # enlazado al canonico
+
+
+def test_productora_eventos_persisten_veredicto_de_fuente_primaria(tmp_path: Path):
+    """Event evidence uses MAK's source gate, but the RD projection persists
+    the verdict so panels/reports can surface it without re-running research."""
+    import json as _json
+
+    pdir = tmp_path / "prods"
+    pdir.mkdir()
+    (pdir / "acme.json").write_text(_json.dumps({
+        "name": "Acme Fiestas",
+        "eventos": [
+            {
+                "nombre": "Acme confirmado",
+                "fecha": "2026-11-20",
+                "venue": "Basel Venue",
+                "estado": "activo_anunciado",
+                "fuente": "post oficial https://www.instagram.com/p/DaRCFPhCfdM/",
+            },
+            {
+                "nombre": "Acme sin fuente",
+                "fecha": "needs_confirmation",
+                "venue": "TBA",
+                "estado": "candidato",
+                "fuente": "comentario interno sin URL",
+            },
+        ],
+    }, ensure_ascii=False), encoding="utf-8")
+
+    path = tmp_path / "rd.db"
+    db.build_rd_db(path, productoras_dir=pdir)
+    conn = db.connect(path)
+    try:
+        rows = [
+            dict(r) for r in conn.execute(
+                "SELECT nombre, fuentes_primarias, sin_fuente_primaria "
+                "FROM productora_eventos ORDER BY nombre"
+            ).fetchall()
+        ]
+    finally:
+        conn.close()
+
+    assert rows[0]["nombre"] == "Acme confirmado"
+    assert json.loads(rows[0]["fuentes_primarias"]) == [
+        "https://www.instagram.com/p/DaRCFPhCfdM/"
+    ]
+    assert rows[0]["sin_fuente_primaria"] == 0
+    assert rows[1]["nombre"] == "Acme sin fuente"
+    assert json.loads(rows[1]["fuentes_primarias"]) == []
+    assert rows[1]["sin_fuente_primaria"] == 1

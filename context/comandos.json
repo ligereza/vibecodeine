@@ -457,8 +457,8 @@
    "invocacion": "py -m flujo render bridge",
    "grupo": "render",
    "desc": "Generar un script JSX para Illustrator a partir de un JSON de entrada.",
-   "requiere": "Blender instalado",
-   "estado": "falta: Blender instalado",
+   "requiere": "Adobe Illustrator (solo Windows/macOS)",
+   "estado": "falta: Adobe Illustrator (solo Windows/macOS)",
    "destructivo": true
   },
   {

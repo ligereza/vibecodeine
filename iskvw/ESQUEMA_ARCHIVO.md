@@ -113,7 +113,8 @@ py tools/gen_archivo_iskvw.py --fuente obras             # las obras del artista
 py tools/gen_archivo_iskvw.py --fuente micelio            # lo que MAK relacionó, EN VIVO
 py tools/gen_archivo_iskvw.py --fuente micelio_snapshot   # lo último que la caja empujó
 py tools/gen_archivo_iskvw.py --fuente ensayos            # los ensayos y sus íconos
-py tools/gen_archivo_iskvw.py --fuente todo               # todas, en un solo archivo
+py tools/gen_archivo_iskvw.py --fuente todo               # archivo público, sin ensayos
+py tools/gen_archivo_iskvw.py --fuente todo --incluir-ensayos
 ```
 
 **El micelio en vivo no es alcanzable desde CI** (2026-08-01, medido): el
@@ -143,8 +144,15 @@ entre los textos. Ahí `clase` sí es `semantico`.
 `docs/cultura/ensayos/` con su anexo iconográfico: el ensayo entra como una
 pieza `informe`, cada **concepto nombrable** como una pieza `concepto` colgada
 de él, y cada ícono que existe en disco como una `pieza_grafica` colgada de su
-concepto. Es el tramo que faltaba para que lo que MAK produce le sirva al
-portafolio: antes un ensayo terminaba en una carpeta que ninguna piel miraba.
+concepto. Es el tramo que hace que el research tenga garantía visual: si MAK
+dice que entendió un tema, el anexo prueba si puede volverlo sistema
+representativo (post, semilla SVG/laser, animación, pieza ASCII como
+VIBE-CODEINE). No es basura ni decoración.
+
+Desde el 2026-08-05 esa fuente es **opt-in**: `--fuente ensayos` la mira sola y
+`--fuente todo --incluir-ensayos` la mezcla deliberadamente. `--fuente todo`
+sin flag publica el archivo de obra/taller y no mezcla informes ni conceptos
+de investigación por accidente.
 
 Tres cosas de esa fuente, porque son las reglas y no detalles:
 
@@ -164,5 +172,6 @@ Cada clase de pieza lleva su prefijo en el id (`ensayo-`, `concepto-`,
 piezas distintas con el mismo id se fusionarían al unir las fuentes y una
 desaparecería.
 
-Cuando la percepción del archivo termine, las obras van a tener las dos cosas: sus
-datos y sus vínculos medidos.
+Cuando la percepción del archivo termine, las obras van a tener las dos cosas:
+sus datos y sus vínculos medidos. Cuando el research necesite verse, entra por
+su propia puerta.

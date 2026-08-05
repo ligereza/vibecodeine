@@ -98,6 +98,38 @@ def test_dispatch_rechazado_no_incrementa_count(monkeypatch):
     assert saved.get("last", 0) == 0
 
 
+def test_harvested_factual_question_does_not_use_essay_shape(monkeypatch):
+    """A factual event question can arrive through the generative backlog.
+
+    Measured on MAK 2026-08-05: "Quien organizo el evento del 2023-10-28" ran
+    under verb `multiplicar`, requested essay format, and produced PARTE I /
+    ANEXO ICONOGRAFICO around a triangulation task. The output contract must
+    follow the product, not the rotation verb."""
+    if trabajo.backlog is None:
+        pytest.skip("backlog not importable")
+    monkeypatch.setattr(trabajo.backlog, "pop_pendiente",
+                        lambda _path: {
+                            "pregunta": "Quien organizo el evento del 2023-10-28",
+                        })
+    depto, payload = trabajo._tarea("multiplicar", {})
+    assert depto == "research"
+    assert payload["formato"] == "informe"
+    assert payload["densidad"] == "corto"
+
+
+def test_cultural_multiplicar_topic_still_uses_essay_shape(monkeypatch):
+    if trabajo.backlog is None:
+        pytest.skip("backlog not importable")
+    monkeypatch.setattr(trabajo.backlog, "pop_pendiente",
+                        lambda _path: {
+                            "pregunta": "genealogia cultural de la tilde en el arte digital",
+                        })
+    depto, payload = trabajo._tarea("multiplicar", {})
+    assert depto == "research"
+    assert payload["formato"] == "ensayo"
+    assert payload["densidad"] == "medio"
+
+
 def test_hallazgo_marker_en_correlacionar_archivos():
     src = (REPO_ROOT / "cultura" / "mak_research" / "correlacionar_archivos.py").read_text(
         encoding="utf-8")

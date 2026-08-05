@@ -15,8 +15,13 @@ lanza los scripts `.jsx` del repo. Los botones cambian segun la app activa.
 - **After Effects**
   - Titulos -> composiciones (`after_effects/scripts/titles_to_comps.jsx`)
 
-El panel no duplica scripts: ejecuta los `.jsx` que viven en `tools/`. Si mueves
-el repo, edita `REPO_TOOLS` en `js/main.js`.
+El panel no duplica scripts: ejecuta los `.jsx` que viven en `tools/`. Si el
+panel queda copiado fuera del repo, configura `repo_tools_path` en
+`config.json` o en:
+
+```txt
+%APPDATA%\Adobe\CEP\preferences\vibo_adobe_panel\config.json
+```
 
 ## Instalacion (Windows, modo desarrollo)
 
@@ -44,7 +49,8 @@ el repo, edita `REPO_TOOLS` en `js/main.js`.
    Copy-Item -Recurse -Force "C:\IA\flujo\tools\adobe_panel\*" $dst
    ```
 
-   Alternativa sin copiar: crea un enlace simbolico para que el panel siga al repo:
+   Alternativa recomendada: crea un enlace simbolico para que el panel siga al
+   repo y encuentre `tools/` sin copiar scripts:
 
    ```powershell
    New-Item -ItemType SymbolicLink -Path "$env:APPDATA\Adobe\CEP\extensions\com.vibo.adobepanel" -Target "C:\IA\flujo\tools\adobe_panel"
@@ -55,6 +61,12 @@ el repo, edita `REPO_TOOLS` en `js/main.js`.
 4. Abre el panel desde el menu:
    - Illustrator / Photoshop: `Ventana > Extensiones > Vibo Adobe Panel`
    - After Effects: `Ventana > Extensiones > Vibo Adobe Panel`
+
+5. Diagnostico sin abrir Adobe:
+
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File C:\IA\flujo\tools\adobe_panel\check_install.ps1
+   ```
 
 ## Notas
 

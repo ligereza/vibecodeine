@@ -22,12 +22,25 @@ HOME = os.path.expanduser("~")
 import sys
 sys.path.insert(0, os.path.join(HOME, "plataforma"))
 sys.path.insert(0, os.path.join(HOME, "research"))
+_DIR = os.path.dirname(os.path.abspath(__file__))
+for _cand in (os.path.join(_DIR, "..", "mak_research"),
+              os.path.join(_DIR, "..", "research")):
+    if os.path.isdir(_cand) and _cand not in sys.path:
+        sys.path.insert(0, _cand)
 import roles  # noqa: E402
 try:
     from research_lib import red_ok  # comparte la deteccion de red
 except Exception:  # noqa: BLE001 - si falla, asumimos online
     def red_ok():
         return True
+    def _es_pregunta_factual(_topic):
+        return False
+else:
+    try:
+        from research_lib import _es_pregunta_factual  # noqa: E402
+    except Exception:  # noqa: BLE001 - format routing degrades to verb routing
+        def _es_pregunta_factual(_topic):
+            return False
 try:
     import backlog  # noqa: E402
     try:
@@ -204,6 +217,20 @@ FORMATO_POR_VERBO = {
 }
 
 
+def format_for_task(verbo, tema):
+    """The product shape wins over the verb.
+
+    Measured 2026-08-05 on MAK: a harvested backlog question named "Quien
+    organizo el evento del 2023-10-28" ran as verb `multiplicar`, so the
+    dispatcher requested an essay and produced PARTE I / ANEXO ICONOGRAFICO
+    around a factual triangulation. The factual detector already existed in
+    research_lib for the prompt frame; the missing seam was using that same
+    detector for the output format."""
+    if _es_pregunta_factual(tema):
+        return ("informe", "corto")
+    return FORMATO_POR_VERBO.get(verbo, ("informe", "corto"))
+
+
 def _tarea(verbo, st):
     """Arma (depto, payload_dict) para un verbo, o None si no hay trabajo."""
     v = next((x for x in roles.VERBOS if x["verbo"] == verbo), None)
@@ -228,7 +255,7 @@ def _tarea(verbo, st):
             print("tema descartado (%s): %.70s" % (motivo, tarea["texto"]),
                   flush=True)
             return None
-        fmt, dens = FORMATO_POR_VERBO.get(verbo, ("informe", "corto"))
+        fmt, dens = format_for_task(verbo, tema)
         return ("research", {"modo": tarea.get("modo", "research"),
                              "tema": tema, "densidad": dens, "formato": fmt})
     if fuente == "concepto":
@@ -243,19 +270,19 @@ def _tarea(verbo, st):
                     print("tema descartado (%s): %.70s"
                           % (motivo, entrada["pregunta"]), flush=True)
                     return None
-                fmt, dens = FORMATO_POR_VERBO.get(verbo, ("informe", "corto"))
+                fmt, dens = format_for_task(verbo, tema)
                 return ("research", {"modo": v["modo"], "tema": tema,
                                      "densidad": dens, "formato": fmt})
         i = st.get("sem_idx", 0) % len(sems)
         st["sem_idx"] = i + 1
-        fmt, dens = FORMATO_POR_VERBO.get(verbo, ("informe", "corto"))
+        fmt, dens = format_for_task(verbo, sems[i])
         return ("research", {"modo": v["modo"], "tema": sems[i],
                              "densidad": dens, "formato": fmt})
     if fuente == "definir":
         i = st.get("def_idx", 0) % len(sems)
         st["def_idx"] = i + 1
         tema = "definicion cultural precisa y genealogia de: " + sems[i]
-        fmt, dens = FORMATO_POR_VERBO.get(verbo, ("informe", "corto"))
+        fmt, dens = format_for_task(verbo, tema)
         return ("research", {"modo": v["modo"], "tema": tema,
                              "densidad": dens, "formato": fmt})
     if fuente == "modulo":

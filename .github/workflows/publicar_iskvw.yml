@@ -22,6 +22,8 @@ on:
     branches: [main]
     paths:
       - 'iskvw/**'
+      - 'tools/gen_archivo_iskvw.py'
+      - 'cultura/mak_plataforma/contrato_archivo.py'
       - '.github/workflows/publicar_iskvw.yml'
   workflow_dispatch:
 
@@ -48,13 +50,14 @@ jobs:
       - name: generar el sustrato (archivo.json)
         run: |
           set -euo pipefail
-          # archivo.json esta gitignoreado: es una proyeccion regenerable. La
-          # piel lo pide primero y cae a campo.json si falta. Sin este paso el
-          # sitio publicado nunca lo llevaba, asi que los ensayos de MAK y sus
-          # vinculos no llegaban al campo: la mitad de #403 que no se publico.
-          # El generador avisa que no alcanza el micelio (la caja no es
-          # visible desde CI) y sigue con el material del repo: eso es lo
-          # esperado, no un error.
+          # archivo.json is a regenerable projection. The skin asks for it
+          # first and falls back to campo.json if missing. Essays are not part
+          # of the default public substrate: their iconographic annex is a
+          # valid research guarantee, but iskvw.cl must not mix reports and
+          # concepts into the artwork archive unless explicitly requested.
+          # The generator warns when it cannot reach the micelio (the box is
+          # not visible from CI) and continues with repo material; that is
+          # expected, not an error.
           python3 tools/gen_archivo_iskvw.py --fuente todo
           test -s iskvw/datos/archivo.json
 
@@ -75,15 +78,6 @@ jobs:
           # publica y la consola se llena de 404.
           touch _sitio/.nojekyll
           echo "iskvw.cl" > _sitio/CNAME
-          # Los iconos animados de los ensayos: el sustrato los declara como
-          # piezas (medio.src con la ruta del repo) y la piel los presenta al
-          # quedarse quieto. Viajan con su ruta de repo INTACTA -- asi el
-          # contrato no miente y no hay reescritura que mantener.
-          for dir_ensayo in docs/cultura/ensayos/*/iconos; do
-            [ -d "$dir_ensayo" ] || continue
-            mkdir -p "_sitio/$dir_ensayo"
-            cp "$dir_ensayo"/*.svg "_sitio/$dir_ensayo/" 2>/dev/null || true
-          done
           # Misma regla para lo que vive DENTRO de iskvw/: el sitio aplana el
           # prefijo (la raiz ES iskvw/), pero el contrato declara rutas de
           # repo (iskvw/piel/...). Se espeja ese prefijo para que el src del
@@ -136,6 +130,12 @@ jobs:
                     "trazos de obras que el filtro excluye"); sys.exit(1)
           print("coherente:", len(disco), "trazos, todos del campo publicado")
           PY
+          # Every graphic piece in the substrate must have its svg IN the site:
+          # today these are animated archive derivatives, not the research
+          # essay icons. Research SVGs stay available through the explicit
+          # `--fuente ensayos` / `--incluir-ensayos` lane, not by accidental
+          # default publication.
+          #
           # Toda pieza grafica del sustrato debe tener su svg EN el sitio: un
           # medio.src que 404ea es el contrato afirmando una obra que el
           # visitante no puede ver -- la mentira exacta que el doublecup
@@ -153,7 +153,7 @@ jobs:
               for r in rotos[:5]: print("  ", r)
               sys.exit(1)
           n = sum(1 for p in piezas if p.get("clase") == "pieza_grafica")
-          print(f"iconos coherentes: {n} piezas graficas, todas con su svg servido")
+          print(f"svg coherentes: {n} piezas graficas, todas con su svg servido")
           PY
           # Un SVG de 0 bytes es indistinguible de un trazo bueno servido: ese
           # defecto ya paso una vez, 60 archivos vacios en disco.
