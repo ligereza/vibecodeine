@@ -27,7 +27,10 @@ VERBOS = [
     {"verbo": "definir",     "depto": "research", "modo": "research", "fuente": "definir"},
     {"verbo": "limpiar",     "depto": "codex",    "modo": "revisar",  "fuente": "modulo"},
     {"verbo": "desarrollar", "depto": "codex",    "modo": "generar",  "fuente": "backlog"},
-    {"verbo": "repasar",     "depto": "research", "modo": "research", "fuente": "revision"},
+    {"verbo": "repasar",     "depto": "research", "modo": "research", "fuente": "idle"},
+    {"verbo": "discutir",    "depto": "research", "modo": "panel",    "fuente": "idle"},
+    {"verbo": "refutar",     "depto": "research", "modo": "refutar",  "fuente": "idle"},
+    {"verbo": "exponer",     "depto": "research", "modo": "research", "fuente": "idle"},
 ]
 
 # ritmo (throughput-first pero gentil con cupo/CPU). el cron dispara cada CADA_MIN;
@@ -51,9 +54,10 @@ MODULOS = [
     "/home/mak/lenguaje/hook_barrido.py",
 ]
 
-# SEMILLAS ya no es el motor sino la semilla de ARRANQUE; el motor es
-# ~/plataforma/backlog.jsonl (cosechado de las LAGUNAS DE INFORMACION de cada
-# informe por backlog.py; ver diseno/eventos_y_backlog.md).
+# SEMILLAS ya no es el motor infinito. trabajo.py only uses them when
+# MAK_SEED_FALLBACK=1; otherwise an empty real backlog routes to idle executive
+# nodes (review/discuss/refute/expose) instead of producing more essays.
+# The normal engine is ~/plataforma/backlog.jsonl, harvested from open questions.
 SEMILLAS = [
     "genealogia cultural de la tilde y los signos diacriticos del castellano",
     "el paradigma indiciario de Ginzburg como lente para leer registros culturales",

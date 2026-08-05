@@ -7,6 +7,7 @@ exito. _resp_ok separa exito real de rechazo, tolerando bodies legacy
 no-JSON o sin campo "ok" (se tratan como exito, no rompen compat).
 """
 import sys
+import json
 from pathlib import Path
 
 import pytest
@@ -163,6 +164,23 @@ def test_idle_review_uses_revision_format(monkeypatch):
     assert "revision" in payload["tema"]
 
 
+@pytest.mark.parametrize(("verbo", "expected"), [
+    ("repasar", {"modo": "research", "formato": "revision"}),
+    ("discutir", {"modo": "panel"}),
+    ("refutar", {"modo": "refutar"}),
+    ("exponer", {"modo": "research", "formato": "exposicion"}),
+])
+def test_idle_executive_nodes_have_distinct_contracts(monkeypatch, verbo, expected):
+    monkeypatch.setattr(trabajo, "_has_pending_material", lambda: False)
+    monkeypatch.setattr(trabajo, "_has_pending_research_backlog", lambda: False)
+    monkeypatch.setattr(trabajo, "_has_pending_codex_backlog", lambda: False)
+    depto, payload = trabajo._tarea(verbo, {})
+    assert depto == "research"
+    for key, value in expected.items():
+        assert payload[key] == value
+    assert payload["densidad"] == "corto"
+
+
 @pytest.mark.parametrize("pending", [
     "_has_pending_material",
     "_has_pending_research_backlog",
@@ -173,7 +191,69 @@ def test_idle_review_waits_for_real_backlog(monkeypatch, pending):
     monkeypatch.setattr(trabajo, "_has_pending_research_backlog", lambda: False)
     monkeypatch.setattr(trabajo, "_has_pending_codex_backlog", lambda: False)
     monkeypatch.setattr(trabajo, pending, lambda: True)
-    assert trabajo._tarea("repasar", {}) is None
+    for verbo in ("repasar", "discutir", "refutar", "exponer"):
+        assert trabajo._tarea(verbo, {}) is None
+
+
+def test_seeds_are_not_infinite_default_when_backlog_is_empty(monkeypatch):
+    if trabajo.backlog is None:
+        pytest.skip("backlog not importable")
+    monkeypatch.delenv("MAK_SEED_FALLBACK", raising=False)
+    monkeypatch.setattr(trabajo.backlog, "pop_pendiente", lambda _path: None)
+    assert trabajo._tarea("multiplicar", {}) is None
+    assert trabajo._tarea("definir", {}) is None
+
+
+def test_seed_fallback_is_explicit_opt_in(monkeypatch):
+    if trabajo.backlog is None:
+        pytest.skip("backlog not importable")
+    monkeypatch.setenv("MAK_SEED_FALLBACK", "1")
+    monkeypatch.setattr(trabajo.backlog, "pop_pendiente", lambda _path: None)
+    depto, payload = trabajo._tarea("multiplicar", {})
+    assert depto == "research"
+    assert payload["formato"] == "ensayo"
+    assert payload["tema"]
+
+
+def test_idle_decision_writes_auditable_jsonl(monkeypatch, tmp_path):
+    audit = tmp_path / "idle_decisions.jsonl"
+    monkeypatch.setattr(trabajo, "IDLE_AUDIT", str(audit))
+    monkeypatch.setattr(trabajo, "_pending_snapshot", lambda: {
+        "material": False,
+        "research_backlog": False,
+        "codex_backlog": False,
+    })
+    trabajo._audit_idle_decision(
+        "2026-08-05 12:30:00", True, "exponer", "research",
+        {"modo": "research", "formato": "exposicion", "densidad": "corto",
+         "tema": "exponer cabos sueltos"},
+        "accepted", '{"ok": true}')
+    rows = [json.loads(line) for line in audit.read_text(encoding="utf-8").splitlines()]
+    assert rows == [{
+        "depto": "research",
+        "densidad": "corto",
+        "formato": "exposicion",
+        "modo": "research",
+        "online": True,
+        "pending": {"codex_backlog": False, "material": False,
+                    "research_backlog": False},
+        "response_preview": '{"ok": true}',
+        "status": "accepted",
+        "tema": "exponer cabos sueltos",
+        "ts": "2026-08-05 12:30:00",
+        "verbo": "exponer",
+    }]
+
+
+def test_idle_audit_ignores_productive_verbs(monkeypatch, tmp_path):
+    audit = tmp_path / "idle_decisions.jsonl"
+    monkeypatch.setattr(trabajo, "IDLE_AUDIT", str(audit))
+    trabajo._audit_idle_decision(
+        "2026-08-05 12:30:00", True, "multiplicar", "research",
+        {"modo": "research", "formato": "ensayo", "densidad": "medio",
+         "tema": "tilde"},
+        "accepted", '{"ok": true}')
+    assert not audit.exists()
 
 
 def test_hallazgo_marker_en_correlacionar_archivos():
