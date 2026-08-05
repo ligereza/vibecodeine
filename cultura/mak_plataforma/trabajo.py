@@ -2,11 +2,13 @@
 """trabajo.py -- el orquestador del trabajo autonomo del organismo MAK.
 
 El cron lo dispara cada CADA_MIN. En cada tick hace UNA unidad de trabajo,
-ciclando los verbos de roles.py (multiplicar/definir/limpiar/desarrollar) por
-round-robin, con topes de carga/cupo/gap. El ritmo se adapta a la red: offline
-(local serial y lento) se espacia mas. El fallback nube<->local lo maneja
-red_ok() dentro de las libs de cada departamento; aca solo se decide QUE y
-CUANDO, y se despacha por HTTP a research :8890 / codex :8891.
+ciclando los verbos de roles.py por round-robin, con topes de carga/cupo/gap.
+La cola real manda primero; si no hay trabajo productivo, los verbos idle
+revisan, discuten, refutan o exponen en vez de fabricar mas ensayos. El ritmo
+se adapta a la red: offline (local serial y lento) se espacia mas. El fallback
+nube<->local lo maneja red_ok() dentro de las libs de cada departamento; aca
+solo se decide QUE y CUANDO, y se despacha por HTTP a research :8890 / codex
+:8891.
 
 Apagar: quitar la linea MAK-TRABAJO del crontab.
 Ajustar ritmo/verbos/modulos/semillas: editar roles.py.
@@ -28,6 +30,10 @@ for _cand in (os.path.join(_DIR, "..", "mak_research"),
     if os.path.isdir(_cand) and _cand not in sys.path:
         sys.path.insert(0, _cand)
 import roles  # noqa: E402
+try:
+    import research_router  # noqa: E402
+except Exception:  # noqa: BLE001 - legacy deployment without the new router
+    research_router = None
 try:
     from research_lib import red_ok  # comparte la deteccion de red
 except Exception:  # noqa: BLE001 - si falla, asumimos online
@@ -52,6 +58,9 @@ except Exception:
 
 STATE = os.path.join(HOME, "plataforma/.trabajo_state.json")
 LOG = os.path.join(HOME, "plataforma/logs/trabajo.log")
+IDLE_AUDIT = os.path.join(HOME, "plataforma/idle_decisions.jsonl")
+IDLE_LEDGER_REVIEWS = os.path.join(HOME, "plataforma/idle_ledger_reviews.jsonl")
+COMMON_LEDGER = os.path.join(HOME, "plataforma/common_ledger.jsonl")
 BACKLOG = os.path.join(HOME, "plataforma/backlog_codex.txt")
 SEMILLAS_F = os.path.join(HOME, "plataforma/semillas_latido.txt")
 RESEARCH = "http://127.0.0.1:8890/run"
@@ -67,6 +76,31 @@ def log(m):
             f.write(m + "\n")
     except OSError:
         pass
+
+
+def _append_jsonl(path, row):
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
+    except OSError:
+        pass
+
+
+def _read_jsonl(path, limit=500):
+    rows = []
+    try:
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                try:
+                    row = json.loads(line)
+                except ValueError:
+                    continue
+                if isinstance(row, dict):
+                    rows.append(row)
+    except OSError:
+        return []
+    return rows[-max(0, int(limit)):]
 
 
 def load1():
@@ -99,6 +133,185 @@ def _lineas(path, fallback):
         return xs or fallback
     except OSError:
         return fallback
+
+
+def _has_pending_material():
+    if material is None:
+        return False
+    try:
+        return any(r.get("estado") == "pendiente" for r in material.cargar())
+    except Exception:  # noqa: BLE001 - idle review must degrade safely
+        return False
+
+
+def _has_pending_research_backlog():
+    if backlog is None:
+        return False
+    try:
+        return any(e.get("estado") == "pendiente"
+                   for e in backlog.cargar(BACKLOG_GEN))
+    except Exception:  # noqa: BLE001 - idle review must degrade safely
+        return False
+
+
+def _has_pending_codex_backlog():
+    return bool(_lineas(BACKLOG, []))
+
+
+def _pending_snapshot():
+    return {
+        "material": _has_pending_material(),
+        "research_backlog": _has_pending_research_backlog(),
+        "codex_backlog": _has_pending_codex_backlog(),
+    }
+
+
+def _idle_review_topic(st):
+    return _idle_node_payload("repasar", st)["tema"]
+
+
+def _idle_review_allowed():
+    pending = _pending_snapshot()
+    return not any(pending.values())
+
+
+def _is_idle_verbo(verbo):
+    return verbo in IDLE_NODES
+
+
+def _seed_fallback_enabled():
+    return os.environ.get("MAK_SEED_FALLBACK", "0").lower() in (
+        "1", "true", "yes", "on")
+
+
+IDLE_NODES = {
+    "repasar": {
+        "modo": "research",
+        "formato": "revision",
+        "densidad": "corto",
+        "temas": [
+            "revision operativa de los ultimos informes MAK: detectar formato equivocado, fuentes debiles y acciones ejecutivas",
+            "revision de cola y autonomia MAK: distinguir research, curatoria, codex, discusion y exposicion",
+            "revision de calidad MAK: que trabajos deben archivarse, refutarse o exponerse antes de producir mas",
+        ],
+    },
+    "discutir": {
+        "modo": "panel",
+        "densidad": "corto",
+        "n": "1",
+        "temas": [
+            "discusion ejecutiva: cuando MAK debe investigar, revisar, exponer o archivar en vez de producir mas",
+            "discusion critica: limites entre iskvw public archive, research lane y RD primary-source work",
+        ],
+    },
+    "refutar": {
+        "modo": "refutar",
+        "densidad": "corto",
+        "temas": [
+            "refutar la tesis: los ultimos informes MAK son confiables como corpus de verdad",
+            "refutar la tesis: mas autonomia MAK significa producir mas documentos",
+        ],
+    },
+    "exponer": {
+        "modo": "research",
+        "formato": "exposicion",
+        "densidad": "corto",
+        "temas": [
+            "exponer para lectura humana que aprendio MAK de sus ultimos hallazgos sin convertirlo en informe ni ensayo",
+            "exponer una curatoria breve de cabos sueltos MAK separando evidencia, interpretacion y usos posibles",
+        ],
+    },
+}
+
+
+def _idle_node_payload(verbo, st):
+    node = IDLE_NODES.get(verbo)
+    if not node:
+        return None
+    if verbo == "repasar":
+        ledger_payload = _idle_ledger_review_payload(st)
+        if ledger_payload:
+            return ledger_payload
+    topics = node["temas"]
+    key = "idle_%s_idx" % verbo
+    i = st.get(key, 0) % len(topics)
+    st[key] = i + 1
+    payload = {"modo": node["modo"], "tema": topics[i],
+               "densidad": node.get("densidad", "corto")}
+    if node.get("formato"):
+        payload["formato"] = node["formato"]
+    if node.get("n"):
+        payload["n"] = node["n"]
+    return payload
+
+
+def _idle_ledger_review_payload(st):
+    """Pick one pending ledger item for no-cost idle introspection."""
+    seen = set(st.get("idle_ledger_seen", [])[-200:])
+    candidates = []
+    for row in _read_jsonl(COMMON_LEDGER):
+        if row.get("type") == "reject" or row.get("confidence") == "low":
+            row_id = row.get("id") or ""
+            if row_id and row_id not in seen:
+                candidates.append(row)
+    if not candidates:
+        return None
+    row = candidates[-1]
+    row_id = row.get("id") or ""
+    st["idle_ledger_seen"] = (list(seen) + [row_id])[-200:]
+    return {
+        "modo": "ledger_review",
+        "formato": "ledger",
+        "densidad": "corto",
+        "tema": "ledger pending: %s" % str(row.get("claim") or "")[:180],
+        "ledger_id": row_id,
+        "domain": row.get("domain", ""),
+        "action": row.get("action", ""),
+        "reason": row.get("reject_reason", ""),
+        "source": row.get("source", ""),
+    }
+
+
+def _run_local_idle(payload):
+    """Execute a local idle unit without calling research/codex or spending LLM."""
+    if payload.get("modo") != "ledger_review":
+        return json.dumps({"ok": False, "error": "unknown local idle mode"})
+    row = {
+        "ts": time.strftime("%F %T"),
+        "schema": "mak-idle-ledger-review-v1",
+        "ledger_id": payload.get("ledger_id", ""),
+        "domain": payload.get("domain", ""),
+        "action": payload.get("action", ""),
+        "source": payload.get("source", ""),
+        "reason": payload.get("reason", ""),
+        "next_action": "review or rerun the source batch with stronger evidence",
+    }
+    _append_jsonl(IDLE_LEDGER_REVIEWS, row)
+    return json.dumps({"ok": True, "local": True, "mode": "ledger_review",
+                       "ledger_id": row["ledger_id"]})
+
+
+def _audit_idle_decision(ts, online, verbo, depto, payload, status,
+                         response="", error=""):
+    if not _is_idle_verbo(verbo):
+        return
+    row = {
+        "ts": ts,
+        "online": bool(online),
+        "verbo": verbo,
+        "depto": depto,
+        "modo": payload.get("modo"),
+        "formato": payload.get("formato", ""),
+        "densidad": payload.get("densidad", ""),
+        "tema": payload.get("tema", ""),
+        "status": status,
+        "pending": _pending_snapshot(),
+    }
+    if response:
+        row["response_preview"] = str(response)[:300]
+    if error:
+        row["error"] = str(error)[:200]
+    _append_jsonl(IDLE_AUDIT, row)
 
 
 def _post(url, data):
@@ -226,6 +439,10 @@ def format_for_task(verbo, tema):
     around a factual triangulation. The factual detector already existed in
     research_lib for the prompt frame; the missing seam was using that same
     detector for the output format."""
+    if research_router is not None:
+        route = research_router.route_research_task(
+            verbo, tema, factual_detector=_es_pregunta_factual)
+        return (route.formato, route.densidad)
     if _es_pregunta_factual(tema):
         return ("informe", "corto")
     return FORMATO_POR_VERBO.get(verbo, ("informe", "corto"))
@@ -273,12 +490,16 @@ def _tarea(verbo, st):
                 fmt, dens = format_for_task(verbo, tema)
                 return ("research", {"modo": v["modo"], "tema": tema,
                                      "densidad": dens, "formato": fmt})
+        if not _seed_fallback_enabled():
+            return None
         i = st.get("sem_idx", 0) % len(sems)
         st["sem_idx"] = i + 1
         fmt, dens = format_for_task(verbo, sems[i])
         return ("research", {"modo": v["modo"], "tema": sems[i],
                              "densidad": dens, "formato": fmt})
     if fuente == "definir":
+        if not _seed_fallback_enabled():
+            return None
         i = st.get("def_idx", 0) % len(sems)
         st["def_idx"] = i + 1
         tema = "definicion cultural precisa y genealogia de: " + sems[i]
@@ -297,6 +518,15 @@ def _tarea(verbo, st):
         i = st.get("bl_idx", 0) % len(bl)
         st["bl_idx"] = i + 1
         return ("codex", {"modo": v["modo"], "pedido": bl[i], "densidad": "medio"})
+    if fuente == "idle":
+        if not _idle_review_allowed():
+            return None
+        payload = _idle_node_payload(verbo, st)
+        if not payload:
+            return None
+        if payload.get("modo") == "ledger_review":
+            return ("local", payload)
+        return (v["depto"], payload)
     return None
 
 
@@ -354,12 +584,29 @@ def main():
     url = RESEARCH
     if depto == "codex":
         url = CODEX
+    if depto == "local":
+        resp = _run_local_idle(payload)
+        ok, err = _resp_ok(resp)
+        if ok:
+            st["count"] = st.get("count", 0) + 1
+            st["last"] = now
+            _save(st)
+            log("%s OK local %.80s" % (ts, payload.get("modo", "")))
+            _audit_idle_decision(ts, online, verbo, depto, payload,
+                                 "accepted", resp)
+        else:
+            log("%s RECHAZO local: %s" % (ts, err))
+            _audit_idle_decision(ts, online, verbo, depto, payload,
+                                 "rejected", resp, err)
+        return
     try:
         resp = _post(url, payload)
         ok, err = _resp_ok(resp)
         if not ok:
             log("%s [%s] %s RECHAZADO: %s"
                 % (ts, "on" if online else "OFF", verbo, err))
+            _audit_idle_decision(ts, online, verbo, depto, payload,
+                                 "rejected", resp, err)
             _save(st)
             return
         st["count"] = st.get("count", 0) + 1
@@ -374,9 +621,13 @@ def main():
         log("%s [%s] %s #%d/%d (%s) -> %s"
             % (ts, "on" if online else "OFF", verbo, st["count"], roles.MAX_DIA,
                etiqueta[:60], resp[:50]))
+        _audit_idle_decision(ts, online, verbo, depto, payload,
+                             "accepted", resp)
     except Exception as e:  # noqa: BLE001 - el orquestador no debe morir
         _save(st)
         log("%s [%s] %s FALLO: %s" % (ts, "on" if online else "OFF", verbo, str(e)[:120]))
+        _audit_idle_decision(ts, online, verbo, depto, payload,
+                             "failed", error=str(e))
 
 
 if __name__ == "__main__":
