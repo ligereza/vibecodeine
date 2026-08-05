@@ -305,11 +305,15 @@ def investigar(topic, iteraciones=3, depth="basic",
 
     es_ensayo = formato == "ensayo"
     es_revision = formato == "revision"
+    es_exposicion = formato == "exposicion"
+    es_curatoria = formato == "curatoria"
     print("STATUS: Generando %s final..." % formato, flush=True)
     try:
         sistema_ensayo = guardia + formato_ensayo.SISTEMA
         sistema_informe = guardia + formato_ensayo.SISTEMA_INFORME
         sistema_revision = guardia + formato_ensayo.SISTEMA_REVISION
+        sistema_exposicion = guardia + formato_ensayo.SISTEMA_EXPOSICION
+        sistema_curatoria = guardia + formato_ensayo.SISTEMA_CURATORIA
         if ev:
             # Sin fuente primaria la TAREA cambia: de sintetizar a reportar la
             # ausencia. No es un aviso al margen, es otra instruccion.
@@ -317,6 +321,8 @@ def investigar(topic, iteraciones=3, depth="basic",
             sistema_ensayo += extra
             sistema_informe += extra
             sistema_revision += extra
+            sistema_exposicion += extra
+            sistema_curatoria += extra
         if es_ensayo:
             # El ensayo pide mas espacio que el informe: son partes narradas con
             # tabla comparativa, cronologia y cierre argumentado, no cinco
@@ -330,6 +336,20 @@ def investigar(topic, iteraciones=3, depth="basic",
                 sistema_revision,
                 formato_ensayo.prompt_revision(topic, findings, sources,
                                                query_history),
+                escala_tok(1800, densidad),
+            )
+        elif es_exposicion:
+            report, _ = llm.call(
+                sistema_exposicion,
+                formato_ensayo.prompt_exposicion(topic, findings, sources,
+                                                 query_history),
+                escala_tok(1800, densidad),
+            )
+        elif es_curatoria:
+            report, _ = llm.call(
+                sistema_curatoria,
+                formato_ensayo.prompt_curatoria(topic, findings, sources,
+                                                query_history),
                 escala_tok(1800, densidad),
             )
         else:

@@ -25,7 +25,7 @@ from __future__ import annotations
 import json
 import re
 
-FORMATOS = ("informe", "ensayo", "revision")
+FORMATOS = ("informe", "ensayo", "revision", "exposicion", "curatoria")
 
 # Las siete exigencias, en el orden en que un lector las encuentra.
 EXIGENCIAS = (
@@ -57,6 +57,18 @@ SISTEMA_REVISION = (
     "espanol correcto CON TILDES, en Markdown. No produces una investigacion "
     "nueva: revisas calidad, formato, deuda, riesgos y siguiente accion "
     "verificable. Tu tono es sobrio, desconfiado y ejecutivo.")
+
+SISTEMA_EXPOSICION = (
+    "Eres editor de exposicion para un artista/director. Escribes en espanol "
+    "correcto CON TILDES, en Markdown. Tu tarea no es investigar mas ni "
+    "vender: convertir material ya observado en una pieza clara para lectura "
+    "humana, separando evidencia, interpretacion y uso posible.")
+
+SISTEMA_CURATORIA = (
+    "Eres curador de archivo para iskvw. Escribes en espanol correcto CON "
+    "TILDES, en Markdown. No haces un informe academico ni un ensayo: lees "
+    "obra, archivo, familia visual, montaje posible y limites de publicacion. "
+    "Separas descripcion, interpretacion y decision curatorial.")
 
 # ---------------------------------------------------------------- informe
 # El otro formato. Hasta el 2026-08-01 su prompt era UNA LINEA pidiendo cinco
@@ -175,6 +187,70 @@ def prompt_revision(tema: str, findings, sources, consultas=None) -> str:
         "- Si no hay evidencia suficiente, el veredicto es revisar, no confiar.\n"
         "- No propongas producir mas piezas si antes falta validar calidad.\n"
         "- No inventes fuentes internas que no aparezcan en HALLAZGOS o FUENTES.\n\n"
+        'TEMA: "%s"\n\nHALLAZGOS:\n%s\n\nFUENTES:\n%s%s'
+        % (tema,
+           _json.dumps(findings, ensure_ascii=False, indent=1)[:14000],
+           "\n".join(sources),
+           ("\n\nCONSULTAS REALIZADAS:\n"
+            + "\n".join("- %s" % c for c in consultas))
+           if consultas else
+           "\n\nCONSULTAS REALIZADAS: no se registraron.")
+    )
+
+
+def prompt_exposicion(tema: str, findings, sources, consultas=None) -> str:
+    """Prompt for human-facing exposition.
+
+    This differs from `informe`: it is not a factual answer first. It differs
+    from `ensayo`: it does not need a thesis or icon annex. It is a bridge from
+    internal material to something the user can read, curate, post, or reject.
+    """
+    import json as _json
+    return (
+        "Escribe una EXPOSICION clara del material observado. No investigues "
+        "mas, no inventes un cierre comercial y no lo conviertas en ensayo.\n\n"
+        "Estructura obligatoria:\n"
+        "1. QUE HAY AQUI: descripcion breve y legible.\n"
+        "2. EVIDENCIA: bullets con fuente o marca '(sin fuente: inferido)'.\n"
+        "3. LECTURA POSIBLE: interpretacion util para artista/disenador, "
+        "marcada como interpretacion.\n"
+        "4. USOS POSIBLES: hasta 4 formatos concretos (post, ficha, icono, "
+        "pieza SVG, archivo, informe RD, curatoria), sin prometer que esten "
+        "listos.\n"
+        "5. QUE NO SE DEBE AFIRMAR: limites y huecos.\n\n"
+        'TEMA: "%s"\n\nHALLAZGOS:\n%s\n\nFUENTES:\n%s%s'
+        % (tema,
+           _json.dumps(findings, ensure_ascii=False, indent=1)[:14000],
+           "\n".join(sources),
+           ("\n\nCONSULTAS REALIZADAS:\n"
+            + "\n".join("- %s" % c for c in consultas))
+           if consultas else
+           "\n\nCONSULTAS REALIZADAS: no se registraron.")
+    )
+
+
+def prompt_curatoria(tema: str, findings, sources, consultas=None) -> str:
+    """Prompt for iskvw/art archive curation.
+
+    Curation is not a report with nicer adjectives. It decides how a work or
+    family of works can be read, grouped, shown or kept in quarantine.
+    """
+    import json as _json
+    return (
+        "Escribe una CURATORIA de archivo sobre el material observado. No lo "
+        "conviertas en informe tecnico ni en ensayo cultural general.\n\n"
+        "Estructura obligatoria:\n"
+        "1. NUCLEO DE OBRA: que aparece, con descripcion visual concreta.\n"
+        "2. FAMILIA / CONSTELACION: con que piezas, gestos, materiales o "
+        "motivos dialoga.\n"
+        "3. LECTURA CURATORIAL: interpretacion marcada como interpretacion, "
+        "sin afirmar biografia ni intencion no documentada.\n"
+        "4. POSIBLE MONTAJE O PUBLICACION: archivo, ficha, post, sala, SVG, "
+        "serie o descarte razonado.\n"
+        "5. PRUEBA VISUAL: icono, gesto SVG, paleta o composicion minima que "
+        "demuestre comprension del tema; si falta material visual, declaralo.\n"
+        "6. LIMITES: que no se debe mezclar con RD ni presentar como fuente "
+        "factual.\n\n"
         'TEMA: "%s"\n\nHALLAZGOS:\n%s\n\nFUENTES:\n%s%s'
         % (tema,
            _json.dumps(findings, ensure_ascii=False, indent=1)[:14000],
