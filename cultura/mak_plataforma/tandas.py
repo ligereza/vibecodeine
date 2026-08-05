@@ -28,6 +28,13 @@ except Exception:  # noqa: BLE001 - direct script deployment on MAK
         import discernment
     except Exception:  # noqa: BLE001 - discernment prompt is optional
         discernment = None
+try:
+    from . import providers as external_providers
+except Exception:  # noqa: BLE001 - direct script deployment on MAK
+    try:
+        import providers as external_providers
+    except Exception:  # noqa: BLE001 - batch briefs can run without providers
+        external_providers = None
 
 HOME = os.path.expanduser("~")
 LEDGER = os.path.join(HOME, "plataforma/external_batches.jsonl")
@@ -44,36 +51,73 @@ RESULT_REQUIRED = (
     "reject_reason",
 )
 
+
+def _print_json(payload, indent=None):
+    """Print machine JSON safely on Windows cp1252 consoles."""
+    print(json.dumps(payload, ensure_ascii=True, indent=indent))
+
 AREAS = {
     "mak_quality": {
         "purpose": "audit MAK output quality and detect wrong formats or weak evidence",
         "default_paths": ["~/research/informes", "~/research/paneles",
                           "~/research/refutaciones", "~/plataforma/logs"],
+        "evidence_paths": ["cultura/mak_plataforma/trabajo.py",
+                           "cultura/mak_plataforma/research_router.py",
+                           "cultura/mak_research/research_lib.py",
+                           "context/LAST_HANDOFF.md"],
         "actions": ["archive", "refute", "expose", "repair_queue", "reject"],
     },
     "rd_evidence": {
         "purpose": "surface primary-source leads for RD without mixing with curation",
         "default_paths": ["data", "docs/rd", "jobs", "svg/suplementos_rd"],
+        "evidence_paths": ["src/flujo/rd/database.py",
+                           "src/flujo/rd/panel.py",
+                           "cultura/mak_research/fuentes.py",
+                           "tests/test_rd_database.py",
+                           "tests/test_fuentes.py"],
         "actions": ["verify_source", "triangulate", "reject", "draft_report"],
     },
     "iskvw_curation": {
         "purpose": "separate public archive, curation, and artwork interpretation",
         "default_paths": ["cultura/mak_curatoria", "projects", "docs/cultura"],
+        "evidence_paths": ["tools/gen_archivo_iskvw.py",
+                           "tools/validar_curaduria.py",
+                           "tools/consolidar_fichas.py",
+                           "docs/cultura/FORMATO_ENSAYO.md",
+                           "context/LAST_HANDOFF.md"],
         "actions": ["curate", "expose", "archive", "reject"],
     },
     "tool_archaeology": {
         "purpose": "find duplicated or unused tools before creating new code",
         "default_paths": ["tools", "src/flujo", "cultura"],
+        "evidence_paths": ["CAPACIDADES.md",
+                           "tools/context_pack.py",
+                           "tools/token_budget.py",
+                           "tools/system_map.py",
+                           "tools/arqueologia.py",
+                           "tools/esfuerzo.py"],
         "actions": ["reuse", "merge", "retire", "test", "reject"],
     },
     "svg_pipeline": {
         "purpose": "map SVG generation paths for RD, laser, animation, and thi.ng measurement",
         "default_paths": ["svg", "projects", "tools", "web/src"],
+        "evidence_paths": ["cultura/mak_codex/iconos.py",
+                           "docs/cultura/MOTOR_SEMANTICO.md",
+                           "docs/cultura/lib/compilador.js",
+                           "src/flujo/laser.py",
+                           "tests/test_thing_registro.py",
+                           "tests/test_iskvw_librerias.py"],
         "actions": ["measure", "prototype", "reuse", "reject"],
     },
     "adobe_rescue": {
         "purpose": "rescue Illustrator/Adobe bridge work without confusing it with Blender",
         "default_paths": ["docs", "tools", "src/flujo", "exports"],
+        "evidence_paths": ["tools/illustrator/README.md",
+                           "tools/adobe_panel/README.md",
+                           "tools/adobe_panel/js/main.js",
+                           "tools/adobe_panel/check_install.ps1",
+                           "src/flujo/export/illustrator.py",
+                           "src/flujo/export/illustrator_bridge.py"],
         "actions": ["rescue", "bridge", "reuse", "reject"],
     },
 }
@@ -99,7 +143,8 @@ def provider_plan(available, allow_premium=True):
     return order
 
 
-def build_brief(area, batch_id, paths=None, providers=None, allow_premium=True):
+def build_brief(area, batch_id, paths=None, providers=None, allow_premium=True,
+                include_evidence=False, max_evidence_chars=60000):
     """Build the model-facing brief without binding it to one provider."""
     if area not in AREAS:
         raise ValueError("unknown area: %s" % area)
@@ -114,7 +159,10 @@ def build_brief(area, batch_id, paths=None, providers=None, allow_premium=True):
         "paths": selected_paths,
         "provider_plan": plan,
         "allowed_actions": cfg["actions"],
-        "prompt": _prompt(area, batch_id, cfg, selected_paths, plan),
+        "prompt": _prompt(
+            area, batch_id, cfg, selected_paths, plan,
+            evidence=evidence_package(area, max_chars=max_evidence_chars)
+            if include_evidence else ""),
         "result_required": list(RESULT_REQUIRED),
     }
     if discernment is not None:
@@ -131,7 +179,12 @@ def build_brief(area, batch_id, paths=None, providers=None, allow_premium=True):
     return brief
 
 
-def _prompt(area, batch_id, cfg, paths, plan):
+def _prompt(area, batch_id, cfg, paths, plan, evidence=""):
+    evidence_block = (
+        "\nPAQUETE DE EVIDENCIA LOCAL:\n%s\n" % evidence
+        if evidence else
+        "\nPAQUETE DE EVIDENCIA LOCAL: no incluido en este brief.\n"
+    )
     return (
         "Eres un agente externo de MAK. Tu proveedor puede ser temporal; el "
         "contrato NO lo es. Trabaja solo con el material de esta tanda.\n\n"
@@ -139,7 +192,8 @@ def _prompt(area, batch_id, cfg, paths, plan):
         "BATCH: %s\n"
         "PROPOSITO: %s\n"
         "RUTAS:\n%s\n\n"
-        "PLAN DE PROVEEDORES: %s\n\n"
+        "PLAN DE PROVEEDORES: %s\n"
+        "%s\n"
         "DEVUELVE SOLO JSON con esta forma:\n"
         "{\n"
         '  "items": [{\n'
@@ -160,8 +214,34 @@ def _prompt(area, batch_id, cfg, paths, plan):
         % (area, batch_id, cfg["purpose"],
            "\n".join("- " + p for p in paths),
            ", ".join(plan) if plan else "(sin proveedor preferido)",
+           evidence_block,
            "|".join(cfg["actions"]))
     )
+
+
+def evidence_package(area, max_chars=60000):
+    """Return a bounded local evidence pack for external models."""
+    if area not in AREAS:
+        raise ValueError("unknown area: %s" % area)
+    chunks = []
+    remaining = int(max_chars)
+    for path in AREAS[area].get("evidence_paths", []):
+        if remaining <= 0:
+            break
+        if not os.path.isfile(path):
+            continue
+        try:
+            with open(path, encoding="utf-8", errors="replace") as fh:
+                text = fh.read()
+        except OSError:
+            continue
+        budget = max(500, min(remaining, max_chars // 3))
+        if len(text) > budget:
+            text = text[:budget] + "\n... [truncated]\n"
+        block = "\n### %s\n%s\n" % (path, text)
+        chunks.append(block)
+        remaining -= len(block)
+    return "".join(chunks).strip()
 
 
 def validate_result(payload):
@@ -267,6 +347,61 @@ def write_brief(brief, out_dir=None):
     return path
 
 
+def _parse_provider_json(text):
+    if isinstance(text, dict):
+        return text
+    if discernment is not None:
+        extracted = discernment.extract_json(text)
+        if extracted is not None:
+            return extracted
+    return json.loads(text)
+
+
+def run_external_batch(area, batch_id, provider, paths=None, model=None,
+                       out_dir=None, common_path=COMMON_LEDGER,
+                       use_ollama=True, max_tokens=2500):
+    """Run one external provider, persist raw output, then ingest through the gate."""
+    if external_providers is None:
+        raise RuntimeError("external_providers_unavailable")
+    brief = build_brief(area, batch_id, paths=paths,
+                        providers=[provider, "ollama"],
+                        include_evidence=True)
+    prompt = brief["prompt"]
+    raw = external_providers.call(
+        provider, prompt, model=model, max_tokens=max_tokens, temperature=0.1)
+    out_dir = out_dir or os.path.join(HOME, "plataforma/tandas")
+    os.makedirs(out_dir, exist_ok=True)
+    raw_path = os.path.join(out_dir, "%s-%s-%s.raw.txt" % (area, batch_id, provider))
+    with open(raw_path, "w", encoding="utf-8") as fh:
+        fh.write(raw)
+    try:
+        payload = _parse_provider_json(raw)
+    except ValueError:
+        append_ledger({
+            "area": area,
+            "batch_id": batch_id,
+            "provider": provider,
+            "status": "invalid",
+            "items": 0,
+            "errors": ["provider_output_not_json"],
+        })
+        return {"ok": False, "status": "invalid", "raw_path": raw_path,
+                "errors": ["provider_output_not_json"]}
+    result = ingest_result(
+        payload, area, common_path=common_path, source=provider,
+        use_ollama=use_ollama)
+    append_ledger({
+        "area": area,
+        "batch_id": batch_id,
+        "provider": provider,
+        "status": result.get("status", ""),
+        "items": result.get("items", 0),
+        "errors": result.get("errors", []),
+    })
+    result["raw_path"] = raw_path
+    return result
+
+
 def summarize_ledger(path=LEDGER, limit=20):
     """Small deterministic summary of external batch activity."""
     rows = []
@@ -319,6 +454,9 @@ def main(argv=None):
                          help="exclude temporary premium providers")
     p_brief.add_argument("--path", action="append", dest="paths",
                          help="override/add path; repeatable")
+    p_brief.add_argument("--with-evidence", action="store_true",
+                         help="include bounded local evidence snippets")
+    p_brief.add_argument("--max-evidence-chars", type=int, default=60000)
 
     p_val = sub.add_parser("validate", help="validate result JSON from stdin")
     p_val.add_argument("--ledger-provider", default="")
@@ -336,22 +474,33 @@ def main(argv=None):
     p_ingest.add_argument("--common-ledger", default=COMMON_LEDGER)
     p_ingest.add_argument("--no-ollama", action="store_true",
                           help="use deterministic local review only")
+    p_run = sub.add_parser("run",
+                           help="call one external provider and ingest through local review")
+    p_run.add_argument("area", choices=sorted(AREAS))
+    p_run.add_argument("batch_id")
+    p_run.add_argument("--provider", choices=["watsonx", "aws"], required=True)
+    p_run.add_argument("--model", default="")
+    p_run.add_argument("--path", action="append", dest="paths")
+    p_run.add_argument("--out-dir", default="")
+    p_run.add_argument("--common-ledger", default=COMMON_LEDGER)
+    p_run.add_argument("--max-tokens", type=int, default=2500)
+    p_run.add_argument("--no-ollama", action="store_true")
 
     args = parser.parse_args(argv)
     if args.cmd == "areas":
-        print(json.dumps({"schema": SCHEMA_VERSION, "areas": sorted(AREAS)},
-                         ensure_ascii=False, indent=2))
+        _print_json({"schema": SCHEMA_VERSION, "areas": sorted(AREAS)}, indent=2)
         return 0
     if args.cmd == "brief":
         providers = [p.strip() for p in args.providers.split(",") if p.strip()]
         brief = build_brief(args.area, args.batch_id, paths=args.paths,
                             providers=providers,
-                            allow_premium=not args.no_premium)
-        print(json.dumps(brief, ensure_ascii=False, indent=2))
+                            allow_premium=not args.no_premium,
+                            include_evidence=args.with_evidence,
+                            max_evidence_chars=args.max_evidence_chars)
+        _print_json(brief, indent=2)
         return 0
     if args.cmd == "summary":
-        print(json.dumps(summarize_ledger(args.ledger, args.limit),
-                         ensure_ascii=False, indent=2))
+        _print_json(summarize_ledger(args.ledger, args.limit), indent=2)
         return 0
     if args.cmd == "validate":
         raw = sys.stdin.read()
@@ -382,12 +531,11 @@ def main(argv=None):
             if common_errors:
                 ok = False
                 errors = errors + common_errors
-        print(json.dumps({"ok": ok, "errors": errors}, ensure_ascii=False))
+        _print_json({"ok": ok, "errors": errors})
         return 0 if ok else 2
     if args.cmd == "review-prompt":
         if discernment is None:
-            print(json.dumps({"ok": False, "errors": ["discernment_unavailable"]},
-                             ensure_ascii=False))
+            _print_json({"ok": False, "errors": ["discernment_unavailable"]})
             return 2
         raw = sys.stdin.read()
         try:
@@ -401,7 +549,19 @@ def main(argv=None):
         result = ingest_result(
             raw, args.area, common_path=args.common_ledger,
             source=args.provider, use_ollama=not args.no_ollama)
-        print(json.dumps(result, ensure_ascii=False))
+        _print_json(result)
+        return 0 if result["ok"] else 2
+    if args.cmd == "run":
+        try:
+            result = run_external_batch(
+                args.area, args.batch_id, args.provider, paths=args.paths,
+                model=args.model or None, out_dir=args.out_dir or None,
+                common_path=args.common_ledger,
+                use_ollama=not args.no_ollama, max_tokens=args.max_tokens)
+        except Exception as exc:  # noqa: BLE001 - operator-facing CLI
+            result = {"ok": False, "status": "provider_error",
+                      "errors": [str(exc)[:200]]}
+        _print_json(result)
         return 0 if result["ok"] else 2
     return 1
 

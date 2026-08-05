@@ -3,6 +3,7 @@ import subprocess
 import sys
 
 from cultura.mak_plataforma import tandas
+from cultura.mak_plataforma import providers
 
 
 def test_provider_plan_burns_premium_before_free_and_local():
@@ -23,6 +24,16 @@ def test_build_brief_is_provider_agnostic_but_structured():
     assert brief["provider_plan"] == ["watsonx", "ollama"]
     assert brief["result_required"] == list(tandas.RESULT_REQUIRED)
     assert "Cada item debe poder sobrevivir" in brief["prompt"]
+    assert "PAQUETE DE EVIDENCIA LOCAL: no incluido" in brief["prompt"]
+
+
+def test_build_brief_can_include_bounded_evidence():
+    brief = tandas.build_brief(
+        "adobe_rescue", "b001", providers=["aws"], include_evidence=True,
+        max_evidence_chars=5000)
+    assert "PAQUETE DE EVIDENCIA LOCAL" in brief["prompt"]
+    assert "tools/adobe_panel/README.md" in brief["prompt"]
+    assert len(brief["prompt"]) < 12000
 
 
 def test_validate_result_accepts_atomic_items():
@@ -111,9 +122,86 @@ def test_cli_brief_outputs_portable_json():
     assert data["provider_plan"] == ["aws", "ollama"]
 
 
+def test_cli_brief_can_include_evidence():
+    result = subprocess.run(
+        [sys.executable, "-m", "cultura.mak_plataforma.tandas", "brief",
+         "svg_pipeline", "svg01", "--providers", "watsonx",
+         "--with-evidence", "--max-evidence-chars", "5000"],
+        capture_output=True, text=True, timeout=20)
+    assert result.returncode == 0
+    data = json.loads(result.stdout)
+    assert "cultura/mak_codex/iconos.py" in data["prompt"]
+
+
 def test_cli_validate_rejects_bad_json():
     result = subprocess.run(
         [sys.executable, "-m", "cultura.mak_plataforma.tandas", "validate"],
         input="not json", capture_output=True, text=True, timeout=20)
     assert result.returncode == 2
     assert json.loads(result.stdout)["errors"] == ["not_json"]
+
+
+def test_provider_env_aliases_normalize_ibm_names(monkeypatch, tmp_path):
+    env = tmp_path / ".env"
+    env.write_text(
+        "IBM_CLOUD_APIKEY=ibm-key\n"
+        "IBM_PROJECT_ID=ibm-project\n"
+        "IBM_CLOUD_URL=https://example.ibm\n"
+        "AWS_REGION=us-west-2\n",
+        encoding="utf-8",
+    )
+    for key in ("WATSONX_API_KEY", "WATSONX_PROJECT_ID", "WATSONX_URL",
+                "AWS_DEFAULT_REGION"):
+        monkeypatch.delenv(key, raising=False)
+    providers.load_env(str(env))
+    assert providers.os.environ["WATSONX_API_KEY"] == "ibm-key"
+    assert providers.os.environ["WATSONX_PROJECT_ID"] == "ibm-project"
+    assert providers.os.environ["WATSONX_URL"] == "https://example.ibm"
+    assert providers.os.environ["AWS_DEFAULT_REGION"] == "us-west-2"
+
+
+def test_run_external_batch_persists_raw_and_ingests(monkeypatch, tmp_path):
+    common = tmp_path / "common_ledger.jsonl"
+    out_dir = tmp_path / "tandas"
+
+    def fake_call(provider, prompt, model=None, max_tokens=2500, temperature=0.1):
+        assert provider == "watsonx"
+        assert "AREA: tool_archaeology" in prompt
+        assert model == "fake-model"
+        assert max_tokens == 123
+        return json.dumps({"items": [{
+            "claim": "existing archaeology tool should be reused",
+            "evidence": ["tools/contexto_repo.py"],
+            "files": ["tools/contexto_repo.py"],
+            "confidence": "high",
+            "action": "reuse",
+            "reject_reason": "",
+        }]})
+
+    monkeypatch.setattr(tandas.external_providers, "call", fake_call)
+    result = tandas.run_external_batch(
+        "tool_archaeology", "r001", "watsonx", model="fake-model",
+        out_dir=str(out_dir), common_path=str(common),
+        use_ollama=False, max_tokens=123)
+    assert result["status"] == "accepted"
+    assert (out_dir / "tool_archaeology-r001-watsonx.raw.txt").is_file()
+    rows = [json.loads(line) for line in common.read_text(encoding="utf-8").splitlines()]
+    assert [row["type"] for row in rows] == ["decision", "evidence"]
+
+
+def test_cli_run_reports_provider_error_without_traceback():
+    env = {
+        key: value for key, value in providers.os.environ.items()
+        if not key.startswith(("WATSONX", "IBM_", "AWS_"))
+    }
+    env["PYTHONPATH"] = providers.os.getcwd()
+    result = subprocess.run(
+        [sys.executable, "-m", "cultura.mak_plataforma.tandas", "run",
+         "rd_evidence", "r001", "--provider", "watsonx", "--model", "nope",
+         "--common-ledger", "NUL", "--no-ollama"],
+        capture_output=True, text=True, timeout=20, cwd=str(providers.os.path.dirname(__file__) or "."),
+        env=env)
+    assert result.returncode == 2
+    data = json.loads(result.stdout)
+    assert data["status"] == "provider_error"
+    assert "Traceback" not in result.stderr
