@@ -117,6 +117,28 @@ def test_harvested_factual_question_does_not_use_essay_shape(monkeypatch):
     assert payload["densidad"] == "corto"
 
 
+@pytest.mark.parametrize("pregunta", [
+    "Que productora se encargo del evento en Santiago de Chile el 31 de enero de 2023",
+    "Quien es el responsable de supervisar la seguridad privada en eventos masivos en Chile",
+    "Cómo se coordina la seguridad entre las autoridades y los organizadores en la práctica",
+    "¿Cuál es la política de devolución y reembolso de Ticketmaster?",
+    "¿Cómo puedo comprar entradas en Puntoticket?",
+])
+def test_harvested_operational_questions_do_not_get_iconographic_essays(
+        pregunta, monkeypatch):
+    """Real MAK corpus 2026-08-05: operational/event questions were harvested
+    under `multiplicar` and came out as essays with concept annexes. They must
+    stay reports, even when the rotation verb is cultural."""
+    if trabajo.backlog is None:
+        pytest.skip("backlog not importable")
+    monkeypatch.setattr(trabajo.backlog, "pop_pendiente",
+                        lambda _path: {"pregunta": pregunta})
+    depto, payload = trabajo._tarea("multiplicar", {})
+    assert depto == "research"
+    assert payload["formato"] == "informe"
+    assert payload["densidad"] == "corto"
+
+
 def test_cultural_multiplicar_topic_still_uses_essay_shape(monkeypatch):
     if trabajo.backlog is None:
         pytest.skip("backlog not importable")
