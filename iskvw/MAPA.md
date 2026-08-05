@@ -42,8 +42,8 @@ iskvw/
 
 | | |
 |---|---|
-| **piezas que publica el sitio** (`archivo.json`) | **479** — 235 `pieza_grafica`, 227 `obra`, 16 `concepto`, 1 `informe` |
-| **vínculos que publica el sitio** | **269** — 251 `manual`, 18 `etiqueta` |
+| **piezas que publica el sitio** (`archivo.json`) | **446** — 219 `pieza_grafica`, 227 `obra` |
+| **vínculos que publica el sitio** | **237** — 219 `manual`, 18 `etiqueta` |
 | obras con posición medida (`campo.json`, el respaldo) | **219**, todas de `posts/` |
 | con trazo publicado | **208** (las 11 restantes son video o sin contraste) |
 | capas | `tilde` en 219, `trazo` en 208 |
@@ -69,9 +69,9 @@ Linux de 2 núcleos, node 22.
 
 | | |
 |---|---|
-| sustrato `archivo.json` (479 piezas) | **269 vínculos** indexados una vez (1076 entradas) |
-| peor escenario de la grilla | **30 segmentos por frame** (centro del campo, diafragma abierto) |
-| todos-contra-todos, la referencia | 23.871 pares (219 obras) / 114.481 (479 piezas) por frame |
+| sustrato `archivo.json` (446 piezas) | **237 vínculos** indexados una vez (948 entradas) |
+| peor escenario de la grilla | **103 segmentos por frame** (centro del campo, diafragma abierto) |
+| todos-contra-todos, la referencia | 23.871 pares (219 obras) / 99.235 (446 piezas) por frame |
 | sustrato `campo.json` (el respaldo vivo) | **0 segmentos** siempre: no publica vínculos |
 | banda densa abierta, trabajo por nodo | 217 gradientes + 434 arcos por frame, 4–6 ms en la referencia |
 | techo fijado | 1200 segmentos por frame — 40× lo medido, 20× bajo el defecto |
@@ -92,8 +92,12 @@ py tools/gen_campo_iskvw.py --indice-trazos iskvw/piel/trazos
 py tools/gen_capas_iskvw.py            # correr las activas
 py tools/gen_capas_iskvw.py --listar   # qué hay y qué corre
 
-# el contrato unificado: obras del repo + micelio de MAK, una sola forma
+# el contrato unificado público: obras del repo + micelio de MAK, una sola forma
 py tools/gen_archivo_iskvw.py --fuente todo
+
+# vista explícita de research ilustrado: informes + conceptos + anexos SVG
+py tools/gen_archivo_iskvw.py --fuente ensayos
+py tools/gen_archivo_iskvw.py --fuente todo --incluir-ensayos
 
 # las librerías de la piel, como módulos ESM sin CDN ni build
 py tools/vendorizar_iskvw.py
@@ -158,8 +162,11 @@ y si no está siguen con `campo.json` y `obras.json`.
 
 `archivo.json` **no se versiona pero SÍ se publica**: el workflow lo genera con
 `gen_archivo_iskvw.py --fuente todo` antes de subir, y recién después verifica
-que exista. El sitio vivo sirve 479 piezas y 269 vínculos desde el 2026-07-31
-(run del 2026-08-01T02:47 UTC, 479/269). La degradación existe y no se toma.
+que exista. Desde el 2026-08-05 `todo` excluye ensayos por defecto: el sitio
+publica 446 piezas y 237 vínculos del archivo de obra/taller. La vista de
+research ilustrado sigue viva con `--fuente ensayos` o
+`--fuente todo --incluir-ensayos`: 33 piezas y 32 vínculos adicionales en la
+medición local de ese día.
 
 Hasta el 2026-08-01 este párrafo decía lo contrario —"hoy el camino vivo es el
 respaldo"— y era cierto sólo entre el 2026-07-30 18:40 y las 23:10 UTC del
@@ -219,18 +226,19 @@ sólo id sigue funcionando.
 ## Lo que falta, y de quién es
 
 - **La dirección**: qué es este archivo como obra. **Del usuario.**
-- **Si los ensayos se publican en iskvw.cl.** Hoy `archivo.json` no se versiona,
-  así que el sitio no los ve. Que la investigación de MAK aparezca junto a la
-  obra del artista es una decisión de autoría, y el usuario la dejó **para
-  debatir**: el puente está construido y sin usar.
+- **Si los ensayos se publican en iskvw.cl.** Decidido por frontera, no por
+  descarte: los ensayos y sus íconos son un producto válido del research, pero
+  no entran al archivo público por defecto. Se publican sólo por opt-in explícito
+  (`--incluir-ensayos`) o en una piel/vista separada de research.
 - ~~Qué son las 8 piezas de `obras.json`~~ **CONTESTADO por el usuario**: son
   HERRAMIENTAS del repo (VOLÁ, Campo, Cenefa…), no obras. Siguió publicado como
   pregunta abierta hasta el 2026-08-01 aunque la respuesta estaba escrita — que
   es exactamente el defecto que el handoff existe para evitar.
 - ~~La piel `terminal` sigue leyendo sólo `obras.json`~~ **HECHO 2026-08-01**:
   lee `archivo.json` con el mismo orden de respaldo que `campo`. Medido contra
-  el sustrato real: 479 obras, 53 etiquetas, 8 categorías.
+  el sustrato público actual: 446 piezas, 53 etiquetas, 8 categorías.
 - **Los vínculos del micelio no llegan al sitio**: el runner de CI no ve la caja
-  MAK, así que `--fuente todo` los omite y lo dice en el log. Las 479 piezas
-  salen del material del repo.
+  MAK, así que `--fuente todo` los omite y lo dice en el log. Las 446 piezas
+  salen del material público del repo; los ensayos ilustrados quedan en la vista
+  explícita de research.
 - 34 reels sin percibir en MAK. Ya están declarados en el filtro: entran solos.

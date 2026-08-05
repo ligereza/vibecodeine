@@ -308,6 +308,7 @@ function reactivosUnicos(){
 
 function pintarStats(){
   const el = document.getElementById("stats");
+  const eventosSinFuentePrimaria = DATOS.productora_eventos.filter(e => Number(e.sin_fuente_primaria || 0) === 1).length;
   el.innerHTML = [
     stat(DATOS.packs.length, "paquetes de servicio"),
     stat(DATOS.productoras.length, "productoras y spots"),
@@ -316,7 +317,8 @@ function pintarStats(){
     stat(DATOS.reactivos.length, "reacciones registradas"),
     stat(DATOS.suplementos.length, "suplementos"),
     stat(DATOS.logos.length, "logos oficiales"),
-    stat(DATOS.productora_eventos.length, "eventos registrados")
+    stat(DATOS.productora_eventos.length, "eventos registrados"),
+    stat(eventosSinFuentePrimaria, "eventos sin fuente primaria")
   ].join("");
 }
 
@@ -364,7 +366,8 @@ function pintarCapacidad(){
 
   const eventos = DATOS.productora_eventos.map(e => {
     const cuando = e.fecha && !String(e.fecha).includes("needs_confirmation") ? ` · ${e.fecha}` : " · fecha sin confirmar";
-    return `${e.nombre}${cuando}`;
+    const fuente = Number(e.sin_fuente_primaria || 0) === 1 ? " · sin fuente primaria" : " · fuente primaria";
+    return `${e.nombre}${cuando}${fuente}`;
   });
 
   el.innerHTML = [

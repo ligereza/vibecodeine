@@ -109,10 +109,14 @@ def datos_panel(root) -> dict:
             # tiene dos campos que cruzar.
             eventos_norm: list[dict] = []
             try:
+                from ..rd.database import _event_source_gate
                 from ..rd.eventos import normalizar_productora
                 norm, _avisos = normalizar_productora(d)
                 for ev in (norm.get("eventos") or []):
                     if isinstance(ev, dict):
+                        fuentes_primarias, sin_fuente_primaria = _event_source_gate(
+                            ev.get("fuente")
+                        )
                         eventos_norm.append({
                             "nombre": str(ev.get("nombre") or ""),
                             "fecha": str(ev.get("fecha") or ""),
@@ -120,6 +124,9 @@ def datos_panel(root) -> dict:
                             "fecha_confianza": str(ev.get("fecha_confianza") or ""),
                             "venue": str(ev.get("venue") or ""),
                             "estado": str(ev.get("estado") or ""),
+                            "fuente": str(ev.get("fuente") or ""),
+                            "fuentes_primarias": json.loads(fuentes_primarias),
+                            "sin_fuente_primaria": bool(sin_fuente_primaria),
                             "lineup": [str(x) for x in (ev.get("lineup") or [])],
                             "co_organiza": [str(x) for x in (ev.get("co_organiza") or [])],
                         })
@@ -178,6 +185,7 @@ def datos_panel(root) -> dict:
     # puede avanzar o si primero hay que completar datos.
     todos_ev = [e for p in prods for e in p["eventos"]]
     triangulables = [e for e in todos_ev if e.get("fecha_iso") and e.get("lineup")]
+    sin_fuente_primaria = [e for e in todos_ev if e.get("sin_fuente_primaria")]
 
     return {
         "productoras": prods,
@@ -189,10 +197,10 @@ def datos_panel(root) -> dict:
             "venues": len(venues_cat),
             "eventos": len(todos_ev),
             "eventos_triangulables": len(triangulables),
+            "eventos_sin_fuente_primaria": len(sin_fuente_primaria),
             "eventos_sin_fecha_iso": sum(1 for e in todos_ev if not e.get("fecha_iso")),
             "eventos_sin_lineup": sum(1 for e in todos_ev if not e.get("lineup")),
         },
         "excluido_a_proposito": ["instagram", "contactos"],
         "connected": True,
     }
-

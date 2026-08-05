@@ -318,7 +318,7 @@ Medido sobre el CLI real: **93 comandos** (23 sueltos + 70 dentro de 16 grupos).
 |---|---|---|
 | `py -m flujo render run` | Renderizar un proyecto piezas_vectoriales. | Blender instalado |
 | `py -m flujo render illustrator` | Preparar un paquete listo para abrir en Illustrator desde uno o varios SVG. | Adobe Illustrator (solo Windows/macOS) |
-| `py -m flujo render bridge` | Generar un script JSX para Illustrator a partir de un JSON de entrada. | Blender instalado |
+| `py -m flujo render bridge` | Generar un script JSX para Illustrator a partir de un JSON de entrada. | Adobe Illustrator (solo Windows/macOS) |
 | `py -m flujo render validate` | Validar un config.json sin renderizar. | nada |
 | `py -m flujo render formats` | Listar, filtrar o sugerir formatos/plantillas. | nada |
 | `py -m flujo render rescale` | Reescalar proporción (medida cm) o resolución (DPI) de un config.json. | nada |

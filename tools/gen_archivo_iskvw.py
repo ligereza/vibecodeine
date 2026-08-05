@@ -16,12 +16,23 @@ Uso:
     py tools/gen_archivo_iskvw.py --fuente micelio_snapshot
     py tools/gen_archivo_iskvw.py --fuente ensayos
     py tools/gen_archivo_iskvw.py --fuente todo
+    py tools/gen_archivo_iskvw.py --fuente todo --incluir-ensayos
 
 `--fuente todo` intenta el micelio EN VIVO y, si no responde (el caso de CI:
 publicar_iskvw.yml corre en ubuntu-latest y no alcanza la caja, LAN privada),
 cae al snapshot versionado en iskvw/datos/micelio.json -- escrito por la caja
 misma via cultura/mak_plataforma/entregar_micelio.py, porque solo ella puede
 alcanzarse a si misma.
+
+Essays are explicit opt-in. Their iconographic annex is not junk: it is a
+research guarantee lane. If MAK claims to understand a topic, the concepts and
+SVG annex test whether the reading can become a representative visual system
+(post proposal, laser/plotter seed, animated SVG, README-like ASCII digestion).
+The 2026-08-05 correction is only the publication boundary: `--fuente todo`
+previously mixed `informe` and `concepto` pieces into iskvw.cl by default, so
+curation material appeared with report shape and reports appeared as archive
+pieces. Use `--fuente ensayos` or `--incluir-ensayos` when that research view is
+deliberately requested.
 """
 from __future__ import annotations
 
@@ -318,6 +329,10 @@ def main() -> int:
     ap.add_argument("--posiciones", type=Path, default=CAMPO,
                     help="campo.json con las posiciones medidas; si no esta, "
                          "el contrato sale sin posiciones")
+    ap.add_argument("--incluir-ensayos", action="store_true",
+                    help="include docs/cultura/ensayos in --fuente todo; "
+                         "off by default so the public iskvw archive does not "
+                         "mix research reports with artwork")
     args = ap.parse_args()
 
     partes = []
@@ -350,7 +365,8 @@ def main() -> int:
                 partes.append(snap)
     if args.fuente == "micelio_snapshot":
         partes.append(desde_micelio_snapshot())
-    if args.fuente in ("ensayos", "todo"):
+    if args.fuente == "ensayos" or (args.fuente == "todo"
+                                    and args.incluir_ensayos):
         partes.append(desde_ensayos())
     if args.fuente in ("animadas", "todo"):
         partes.append(desde_animadas())

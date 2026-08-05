@@ -3,6 +3,8 @@
 # Se corre via cron cada 5 minutos.
 
 BASE="$HOME/research"
+ENV_FILE="${RESEARCH_ENV:-$HOME/n8n-local/research.env}"
+COLA_DISABLED="$BASE/.cola.disabled.missing_ntfy"
 cd "$BASE" || exit 1
 
 # 1. Lock para no duplicar el watchdog si por alguna razon se cuelga
@@ -23,10 +25,21 @@ for log in cola.log interfaz.log; do
     fi
 done
 
-# 3. Levantar cola.py si no corre
-if ! pgrep -f "python3.*cola\.py" > /dev/null; then
-    echo "$(date) - cola.py no esta corriendo. Lanzando..."
-    nohup python3 "$BASE/cola.py" >> "$BASE/cola.log" 2>&1 9>&- &
+# 3. Start cola.py only when the mobile ntfy inbox is configured.
+# Without this guard cron restarts cola.py every five minutes and fills
+# cola.log with the same "Falta NTFY_TOPIC_IN" line. That is not a service; it
+# is noise that hides the real status of MAK.
+if [ -n "${NTFY_TOPIC_IN:-}" ] || { [ -f "$ENV_FILE" ] && grep -Eq '^[[:space:]]*NTFY_TOPIC_IN=.+$' "$ENV_FILE"; }; then
+    rm -f "$COLA_DISABLED"
+    if ! pgrep -f "python3.*cola\.py" > /dev/null; then
+        echo "$(date) - cola.py no esta corriendo. Lanzando..."
+        nohup python3 "$BASE/cola.py" >> "$BASE/cola.log" 2>&1 9>&- &
+    fi
+else
+    if [ ! -f "$COLA_DISABLED" ]; then
+        echo "$(date) - cola.py desactivada: falta NTFY_TOPIC_IN en research.env"
+        : > "$COLA_DISABLED"
+    fi
 fi
 
 # 4. Levantar interfaz.py si no corre

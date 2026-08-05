@@ -128,3 +128,62 @@ def test_fuente_micelio_snapshot_explicita_lee_solo_el_snapshot(
     assert G.main() == 0
     datos = json.loads(salida.read_text(encoding="utf-8"))
     assert [p["id"] for p in datos["piezas"]] == ["solo-snapshot"]
+
+
+def test_todo_does_not_publish_essays_by_default(tmp_path, monkeypatch):
+    """iskvw.cl is the artwork archive; research reports are an opt-in view.
+
+    Measured 2026-08-05: --fuente todo was mixing one `informe`, sixteen
+    `concepto` pieces and sixteen essay icons into the public archive. That
+    made curation material appear with report shape. The essay icons remain a
+    valid research guarantee lane; they just do not publish by accident."""
+    monkeypatch.setattr(G, "desde_obras", lambda: {"piezas": [], "vinculos": []})
+    monkeypatch.setattr(G, "desde_campo_curado",
+                        lambda _ruta: {"piezas": [], "vinculos": []})
+    monkeypatch.setattr(G, "desde_micelio",
+                        lambda _url, _umbral: {"piezas": [], "vinculos": []})
+    monkeypatch.setattr(G, "desde_animadas",
+                        lambda: {"piezas": [], "vinculos": []})
+    monkeypatch.setattr(G, "desde_laser_manifiesto",
+                        lambda _campo: {"piezas": [], "vinculos": []})
+    monkeypatch.setattr(G, "desde_ensayos",
+                        lambda: {"piezas": [{"id": "ensayo-rave",
+                                             "clase": "informe",
+                                             "titulo": "Rave"}],
+                                 "vinculos": []})
+
+    salida = tmp_path / "archivo.json"
+    monkeypatch.setattr(sys, "argv", [
+        "gen_archivo_iskvw.py", "--fuente", "todo", "--salida", str(salida),
+        "--posiciones", str(tmp_path / "sin-campo.json"),
+    ])
+    assert G.main() == 0
+    datos = json.loads(salida.read_text(encoding="utf-8"))
+    assert datos["piezas"] == []
+
+
+def test_todo_can_include_essays_when_explicitly_requested(
+        tmp_path, monkeypatch):
+    monkeypatch.setattr(G, "desde_obras", lambda: {"piezas": [], "vinculos": []})
+    monkeypatch.setattr(G, "desde_campo_curado",
+                        lambda _ruta: {"piezas": [], "vinculos": []})
+    monkeypatch.setattr(G, "desde_micelio",
+                        lambda _url, _umbral: {"piezas": [], "vinculos": []})
+    monkeypatch.setattr(G, "desde_animadas",
+                        lambda: {"piezas": [], "vinculos": []})
+    monkeypatch.setattr(G, "desde_laser_manifiesto",
+                        lambda _campo: {"piezas": [], "vinculos": []})
+    monkeypatch.setattr(G, "desde_ensayos",
+                        lambda: {"piezas": [{"id": "ensayo-rave",
+                                             "clase": "informe",
+                                             "titulo": "Rave"}],
+                                 "vinculos": []})
+
+    salida = tmp_path / "archivo.json"
+    monkeypatch.setattr(sys, "argv", [
+        "gen_archivo_iskvw.py", "--fuente", "todo", "--incluir-ensayos",
+        "--salida", str(salida), "--posiciones", str(tmp_path / "sin-campo.json"),
+    ])
+    assert G.main() == 0
+    datos = json.loads(salida.read_text(encoding="utf-8"))
+    assert [p["id"] for p in datos["piezas"]] == ["ensayo-rave"]

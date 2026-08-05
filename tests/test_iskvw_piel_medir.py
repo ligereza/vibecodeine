@@ -31,33 +31,35 @@ RAIZ = Path(__file__).resolve().parents[1]
 MEDIR = RAIZ / "tools" / "iskvw_piel_medir.mjs"
 GENERADOR = RAIZ / "tools" / "gen_archivo_iskvw.py"
 
-# Measured 2026-07-31 on the published skin with the repo's real data:
+# Measured 2026-08-05 on the published skin with the repo's real data:
 # archivo.json generated exactly like the publish workflow does
 # (gen_archivo_iskvw.py --fuente todo; the micelio is unreachable in CI and
-# the generator degrades by design, same as at publish time), and campo.json
-# as the live fallback. If these numbers change because the DATA changed
-# (new curated works, new essays, new links), re-run
+# the generator degrades by design, same as at publish time; essays are an
+# explicit research view, not default public substrate), and campo.json as the
+# live fallback. If these numbers change because the DATA changed
+# (new curated works, new public links), re-run
 # `node tools/iskvw_piel_medir.mjs` and re-pin. If the data did NOT change,
 # the skin's frame cost changed: that is the regression this file exists for.
 PIN_ARCHIVO = {
-    "nodos": 479,
-    "vinculos_indexados": 269,
+    "nodos": 446,
+    "vinculos_indexados": 237,
     # Re-pinned 2026-07-31. The old numbers (0/6/30/0/9/14/14) were taken on a
     # field that was NOT the real one: the skin decided from `obras[0]` whether
-    # the archive carried a projection, the first piece has none, and the 479
-    # nodes were spread by hash over ~220.000 px instead of the measured 5.644.
+    # the archive carried a projection, the first piece has none, and the old
+    # 479-piece mixed archive was spread by hash over ~220.000 px instead of
+    # the measured 5.644.
     # Almost nothing was ever in frame, so almost no link was ever drawn and
     # these counts measured a defect, not a cost. With the positions honoured
-    # the same grid draws 6..107, which is the measured-links layer doing its
-    # job: 269 links, both ends in frame, faint by weight.
+    # the same grid now draws 6..103, which is the measured-links layer doing
+    # its job: 237 links, both ends in frame, faint by weight.
     "segmentos": {          # per scenario: link segments actually stroked
         "entrada cerrada": 6,
-        "entrada abierta": 85,
-        "medio abierto": 107,
+        "entrada abierta": 79,
+        "medio abierto": 103,
         "denso cerrado": 4,
         "denso medio": 68,
-        "denso abierto": 99,
-        "denso escalado": 99,
+        "denso abierto": 94,
+        "denso escalado": 94,
     },
 }
 PIN_CAMPO = {
@@ -83,9 +85,9 @@ PIN_CAMPO = {
 }
 
 # The documented reference cost this instrument guards against: all-against-all
-# on the 219 works is 23,871 pairs per frame (n*(n-1)/2), and 114,481 on the
-# 479-piece substrate. Worst measured across the whole grid today: 30 segments
-# per frame. The ceiling is 1200: 40x headroom over the measure -- so data
+# on the 219 works is 23,871 pairs per frame (n*(n-1)/2), and 99,235 on the
+# 446-piece substrate. Worst measured across the whole grid today: 103 segments
+# per frame. The ceiling is 1200: 11x headroom over the measure -- so data
 # growth and curation pass without touching this file -- while staying ~20x
 # BELOW the smaller all-pairs cost, so a return of the every-pair-every-frame
 # defect (or the culling breaking) turns this red long before a phone stutters.

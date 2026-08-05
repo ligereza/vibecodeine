@@ -48,7 +48,7 @@ REQUISITOS: dict[str, str] = {
     "eventos flyer-auto": "`pip install parth-dl`; para render tambien Blender",
     "ig-redownload": "`pip install parth-dl`",
     "render run": "Blender instalado",
-    "render bridge": "Blender instalado",
+    "render bridge": "Adobe Illustrator (solo Windows/macOS)",
     "render illustrator": "Adobe Illustrator (solo Windows/macOS)",
     "suplementos illustrator": "Adobe Illustrator (solo Windows/macOS)",
     "resolume automatizar": "Chataigne y Resolume abiertos en la maquina del show",
