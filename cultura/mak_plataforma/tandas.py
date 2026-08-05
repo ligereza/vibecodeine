@@ -144,7 +144,8 @@ def provider_plan(available, allow_premium=True):
 
 
 def build_brief(area, batch_id, paths=None, providers=None, allow_premium=True,
-                include_evidence=False, max_evidence_chars=60000):
+                include_evidence=False, max_evidence_chars=60000,
+                instruction=""):
     """Build the model-facing brief without binding it to one provider."""
     if area not in AREAS:
         raise ValueError("unknown area: %s" % area)
@@ -162,7 +163,8 @@ def build_brief(area, batch_id, paths=None, providers=None, allow_premium=True,
         "prompt": _prompt(
             area, batch_id, cfg, selected_paths, plan,
             evidence=evidence_package(area, max_chars=max_evidence_chars)
-            if include_evidence else ""),
+            if include_evidence else "",
+            instruction=instruction),
         "result_required": list(RESULT_REQUIRED),
     }
     if discernment is not None:
@@ -179,11 +181,15 @@ def build_brief(area, batch_id, paths=None, providers=None, allow_premium=True,
     return brief
 
 
-def _prompt(area, batch_id, cfg, paths, plan, evidence=""):
+def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction=""):
     evidence_block = (
         "\nPAQUETE DE EVIDENCIA LOCAL:\n%s\n" % evidence
         if evidence else
         "\nPAQUETE DE EVIDENCIA LOCAL: no incluido en este brief.\n"
+    )
+    instruction_block = (
+        "\nINSTRUCCION DE ESTA RONDA:\n%s\n" % instruction.strip()
+        if instruction else ""
     )
     return (
         "Eres un agente externo de MAK. Tu proveedor puede ser temporal; el "
@@ -194,6 +200,7 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence=""):
         "RUTAS:\n%s\n\n"
         "PLAN DE PROVEEDORES: %s\n"
         "%s\n"
+        "%s"
         "DEVUELVE SOLO JSON con esta forma:\n"
         "{\n"
         '  "items": [{\n'
@@ -215,6 +222,7 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence=""):
            "\n".join("- " + p for p in paths),
            ", ".join(plan) if plan else "(sin proveedor preferido)",
            evidence_block,
+           instruction_block,
            "|".join(cfg["actions"]))
     )
 
@@ -359,13 +367,14 @@ def _parse_provider_json(text):
 
 def run_external_batch(area, batch_id, provider, paths=None, model=None,
                        out_dir=None, common_path=COMMON_LEDGER,
-                       use_ollama=True, max_tokens=2500):
+                       batch_path=LEDGER, use_ollama=True, max_tokens=2500,
+                       instruction=""):
     """Run one external provider, persist raw output, then ingest through the gate."""
     if external_providers is None:
         raise RuntimeError("external_providers_unavailable")
     brief = build_brief(area, batch_id, paths=paths,
                         providers=[provider, "ollama"],
-                        include_evidence=True)
+                        include_evidence=True, instruction=instruction)
     prompt = brief["prompt"]
     raw = external_providers.call(
         provider, prompt, model=model, max_tokens=max_tokens, temperature=0.1)
@@ -384,7 +393,7 @@ def run_external_batch(area, batch_id, provider, paths=None, model=None,
             "status": "invalid",
             "items": 0,
             "errors": ["provider_output_not_json"],
-        })
+        }, path=batch_path)
         return {"ok": False, "status": "invalid", "raw_path": raw_path,
                 "errors": ["provider_output_not_json"]}
     result = ingest_result(
@@ -397,7 +406,7 @@ def run_external_batch(area, batch_id, provider, paths=None, model=None,
         "status": result.get("status", ""),
         "items": result.get("items", 0),
         "errors": result.get("errors", []),
-    })
+    }, path=batch_path)
     result["raw_path"] = raw_path
     return result
 
@@ -457,6 +466,8 @@ def main(argv=None):
     p_brief.add_argument("--with-evidence", action="store_true",
                          help="include bounded local evidence snippets")
     p_brief.add_argument("--max-evidence-chars", type=int, default=60000)
+    p_brief.add_argument("--instruction", default="",
+                         help="extra round-specific instruction")
 
     p_val = sub.add_parser("validate", help="validate result JSON from stdin")
     p_val.add_argument("--ledger-provider", default="")
@@ -482,9 +493,13 @@ def main(argv=None):
     p_run.add_argument("--model", default="")
     p_run.add_argument("--path", action="append", dest="paths")
     p_run.add_argument("--out-dir", default="")
+    p_run.add_argument("--ledger", default=LEDGER,
+                       help="external batch run ledger path")
     p_run.add_argument("--common-ledger", default=COMMON_LEDGER)
     p_run.add_argument("--max-tokens", type=int, default=2500)
     p_run.add_argument("--no-ollama", action="store_true")
+    p_run.add_argument("--instruction", default="",
+                       help="extra round-specific instruction")
 
     args = parser.parse_args(argv)
     if args.cmd == "areas":
@@ -496,7 +511,8 @@ def main(argv=None):
                             providers=providers,
                             allow_premium=not args.no_premium,
                             include_evidence=args.with_evidence,
-                            max_evidence_chars=args.max_evidence_chars)
+                            max_evidence_chars=args.max_evidence_chars,
+                            instruction=args.instruction)
         _print_json(brief, indent=2)
         return 0
     if args.cmd == "summary":
@@ -556,8 +572,9 @@ def main(argv=None):
             result = run_external_batch(
                 args.area, args.batch_id, args.provider, paths=args.paths,
                 model=args.model or None, out_dir=args.out_dir or None,
-                common_path=args.common_ledger,
-                use_ollama=not args.no_ollama, max_tokens=args.max_tokens)
+                common_path=args.common_ledger, batch_path=args.ledger,
+                use_ollama=not args.no_ollama, max_tokens=args.max_tokens,
+                instruction=args.instruction)
         except Exception as exc:  # noqa: BLE001 - operator-facing CLI
             result = {"ok": False, "status": "provider_error",
                       "errors": [str(exc)[:200]]}
