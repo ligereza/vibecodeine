@@ -7,6 +7,7 @@ exito. _resp_ok separa exito real de rechazo, tolerando bodies legacy
 no-JSON o sin campo "ok" (se tratan como exito, no rompen compat).
 """
 import sys
+import json
 from pathlib import Path
 
 import pytest
@@ -150,6 +151,201 @@ def test_cultural_multiplicar_topic_still_uses_essay_shape(monkeypatch):
     assert depto == "research"
     assert payload["formato"] == "ensayo"
     assert payload["densidad"] == "medio"
+
+
+def test_idle_review_uses_revision_format(monkeypatch):
+    monkeypatch.setattr(trabajo, "_has_pending_material", lambda: False)
+    monkeypatch.setattr(trabajo, "_has_pending_research_backlog", lambda: False)
+    monkeypatch.setattr(trabajo, "_has_pending_codex_backlog", lambda: False)
+    monkeypatch.setattr(trabajo, "_idle_ledger_review_payload", lambda _st: None)
+    depto, payload = trabajo._tarea("repasar", {})
+    assert depto == "research"
+    assert payload["formato"] == "revision"
+    assert payload["densidad"] == "corto"
+    assert "revision" in payload["tema"]
+
+
+@pytest.mark.parametrize(("verbo", "expected"), [
+    ("repasar", {"modo": "research", "formato": "revision"}),
+    ("discutir", {"modo": "panel"}),
+    ("refutar", {"modo": "refutar"}),
+    ("exponer", {"modo": "research", "formato": "exposicion"}),
+])
+def test_idle_executive_nodes_have_distinct_contracts(monkeypatch, verbo, expected):
+    monkeypatch.setattr(trabajo, "_has_pending_material", lambda: False)
+    monkeypatch.setattr(trabajo, "_has_pending_research_backlog", lambda: False)
+    monkeypatch.setattr(trabajo, "_has_pending_codex_backlog", lambda: False)
+    monkeypatch.setattr(trabajo, "_idle_ledger_review_payload", lambda _st: None)
+    depto, payload = trabajo._tarea(verbo, {})
+    assert depto == "research"
+    for key, value in expected.items():
+        assert payload[key] == value
+    assert payload["densidad"] == "corto"
+
+
+@pytest.mark.parametrize("pending", [
+    "_has_pending_material",
+    "_has_pending_research_backlog",
+    "_has_pending_codex_backlog",
+])
+def test_idle_review_waits_for_real_backlog(monkeypatch, pending):
+    monkeypatch.setattr(trabajo, "_has_pending_material", lambda: False)
+    monkeypatch.setattr(trabajo, "_has_pending_research_backlog", lambda: False)
+    monkeypatch.setattr(trabajo, "_has_pending_codex_backlog", lambda: False)
+    monkeypatch.setattr(trabajo, pending, lambda: True)
+    for verbo in ("repasar", "discutir", "refutar", "exponer"):
+        assert trabajo._tarea(verbo, {}) is None
+
+
+def test_repasar_reviews_pending_ledger_locally(monkeypatch, tmp_path):
+    common = tmp_path / "common_ledger.jsonl"
+    monkeypatch.setattr(trabajo, "COMMON_LEDGER", str(common))
+    monkeypatch.setattr(trabajo, "_has_pending_material", lambda: False)
+    monkeypatch.setattr(trabajo, "_has_pending_research_backlog", lambda: False)
+    monkeypatch.setattr(trabajo, "_has_pending_codex_backlog", lambda: False)
+    common.write_text(json.dumps({
+        "id": "abc123",
+        "schema": "mak-ledger-v1",
+        "source": "local_review:aws",
+        "domain": "svg",
+        "type": "reject",
+        "claim": "revise svg claim",
+        "action": "reject",
+        "reject_reason": "missing benchmark",
+    }) + "\n", encoding="utf-8")
+
+    depto, payload = trabajo._tarea("repasar", {})
+
+    assert depto == "local"
+    assert payload["modo"] == "ledger_review"
+    assert payload["ledger_id"] == "abc123"
+    assert payload["domain"] == "svg"
+
+
+def test_local_idle_ledger_review_writes_jsonl(monkeypatch, tmp_path):
+    reviews = tmp_path / "idle_ledger_reviews.jsonl"
+    monkeypatch.setattr(trabajo, "IDLE_LEDGER_REVIEWS", str(reviews))
+
+    resp = trabajo._run_local_idle({
+        "modo": "ledger_review",
+        "ledger_id": "abc123",
+        "domain": "svg",
+        "action": "reject",
+        "reason": "missing benchmark",
+        "source": "local_review:aws",
+    })
+
+    assert json.loads(resp)["ok"] is True
+    row = json.loads(reviews.read_text(encoding="utf-8"))
+    assert row["schema"] == "mak-idle-ledger-review-v1"
+    assert row["ledger_id"] == "abc123"
+
+
+def test_main_local_idle_does_not_post_http(monkeypatch, tmp_path):
+    common = tmp_path / "common_ledger.jsonl"
+    reviews = tmp_path / "idle_ledger_reviews.jsonl"
+    saved = {}
+    monkeypatch.setattr(trabajo, "COMMON_LEDGER", str(common))
+    monkeypatch.setattr(trabajo, "IDLE_LEDGER_REVIEWS", str(reviews))
+    monkeypatch.setattr(trabajo, "_post", lambda *_a, **_k: (_ for _ in ()).throw(
+        AssertionError("local idle must not call HTTP")))
+    monkeypatch.setattr(trabajo, "_save", lambda s: saved.update(s))
+    monkeypatch.setattr(trabajo, "log", lambda _m: None)
+    monkeypatch.setattr(trabajo, "load1", lambda: 0.0)
+    monkeypatch.setattr(trabajo, "_state", lambda: {
+        "date": trabajo.time.strftime("%Y-%m-%d", trabajo.time.localtime(
+            trabajo.time.time() - 19 * 3600)),
+        "count": 0, "last": 0, "verbo_idx": 0,
+    })
+    monkeypatch.setattr(trabajo.roles, "VERBOS", [{
+        "verbo": "repasar", "depto": "research", "modo": "research", "fuente": "idle",
+    }])
+    monkeypatch.setattr(trabajo.roles, "LOAD_MAX", 999)
+    monkeypatch.setattr(trabajo.roles, "GAP_MIN", 0)
+    monkeypatch.setattr(trabajo.roles, "GAP_MIN_OFFLINE", 0)
+    monkeypatch.setattr(trabajo.roles, "MAX_DIA", 999)
+    monkeypatch.setattr(trabajo, "red_ok", lambda: True)
+    monkeypatch.setattr(trabajo, "_has_pending_material", lambda: False)
+    monkeypatch.setattr(trabajo, "_has_pending_research_backlog", lambda: False)
+    monkeypatch.setattr(trabajo, "_has_pending_codex_backlog", lambda: False)
+    if trabajo.backlog is not None:
+        monkeypatch.setattr(trabajo.backlog, "cosechar", lambda *a, **k: 0)
+    common.write_text(json.dumps({
+        "id": "abc123",
+        "schema": "mak-ledger-v1",
+        "source": "local_review:aws",
+        "domain": "svg",
+        "type": "reject",
+        "claim": "revise svg claim",
+        "action": "reject",
+        "reject_reason": "missing benchmark",
+    }) + "\n", encoding="utf-8")
+
+    trabajo.main()
+
+    assert saved["count"] == 1
+    assert reviews.is_file()
+
+
+def test_seeds_are_not_infinite_default_when_backlog_is_empty(monkeypatch):
+    if trabajo.backlog is None:
+        pytest.skip("backlog not importable")
+    monkeypatch.delenv("MAK_SEED_FALLBACK", raising=False)
+    monkeypatch.setattr(trabajo.backlog, "pop_pendiente", lambda _path: None)
+    assert trabajo._tarea("multiplicar", {}) is None
+    assert trabajo._tarea("definir", {}) is None
+
+
+def test_seed_fallback_is_explicit_opt_in(monkeypatch):
+    if trabajo.backlog is None:
+        pytest.skip("backlog not importable")
+    monkeypatch.setenv("MAK_SEED_FALLBACK", "1")
+    monkeypatch.setattr(trabajo.backlog, "pop_pendiente", lambda _path: None)
+    depto, payload = trabajo._tarea("multiplicar", {})
+    assert depto == "research"
+    assert payload["formato"] == "ensayo"
+    assert payload["tema"]
+
+
+def test_idle_decision_writes_auditable_jsonl(monkeypatch, tmp_path):
+    audit = tmp_path / "idle_decisions.jsonl"
+    monkeypatch.setattr(trabajo, "IDLE_AUDIT", str(audit))
+    monkeypatch.setattr(trabajo, "_pending_snapshot", lambda: {
+        "material": False,
+        "research_backlog": False,
+        "codex_backlog": False,
+    })
+    trabajo._audit_idle_decision(
+        "2026-08-05 12:30:00", True, "exponer", "research",
+        {"modo": "research", "formato": "exposicion", "densidad": "corto",
+         "tema": "exponer cabos sueltos"},
+        "accepted", '{"ok": true}')
+    rows = [json.loads(line) for line in audit.read_text(encoding="utf-8").splitlines()]
+    assert rows == [{
+        "depto": "research",
+        "densidad": "corto",
+        "formato": "exposicion",
+        "modo": "research",
+        "online": True,
+        "pending": {"codex_backlog": False, "material": False,
+                    "research_backlog": False},
+        "response_preview": '{"ok": true}',
+        "status": "accepted",
+        "tema": "exponer cabos sueltos",
+        "ts": "2026-08-05 12:30:00",
+        "verbo": "exponer",
+    }]
+
+
+def test_idle_audit_ignores_productive_verbs(monkeypatch, tmp_path):
+    audit = tmp_path / "idle_decisions.jsonl"
+    monkeypatch.setattr(trabajo, "IDLE_AUDIT", str(audit))
+    trabajo._audit_idle_decision(
+        "2026-08-05 12:30:00", True, "multiplicar", "research",
+        {"modo": "research", "formato": "ensayo", "densidad": "medio",
+         "tema": "tilde"},
+        "accepted", '{"ok": true}')
+    assert not audit.exists()
 
 
 def test_hallazgo_marker_en_correlacionar_archivos():

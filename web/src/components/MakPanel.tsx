@@ -39,6 +39,7 @@ interface Data {
   micelio_chunks?: number;
   actividad?: Evento[];
   trabajo?: { hoy?: number; max?: number; ultimo?: string };
+  tandas?: Tandas;
 }
 
 interface Evento {
@@ -48,6 +49,18 @@ interface Evento {
   t: string;
   seg?: number;
   razon?: string;
+}
+
+interface Tandas {
+  common_rows?: number;
+  batch_rows?: number;
+  accepted?: number;
+  rejected_or_revise?: number;
+  decisions?: number;
+  by_domain?: Record<string, number>;
+  by_provider?: Record<string, number>;
+  pending?: Array<{ domain: string; claim: string; action: string; reason: string }>;
+  last_batches?: Array<{ area?: string; provider?: string; status?: string; items?: number }>;
 }
 
 function duracion(segundos?: number): string {
@@ -272,6 +285,64 @@ export default function MakPanel() {
           no mientras piensa. Por eso nunca se ve nada «corriendo».
         </p>
       </div>
+
+      <div>
+        <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+          <Boxes className="w-4 h-4" /> Tandas externas y juicio local
+        </h3>
+        {data.tandas && (data.tandas.common_rows ?? 0) > 0 ? (
+          <div className="space-y-3">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <Tarjeta icono={<Activity className="w-4 h-4" />} titulo="Aceptadas">
+                {data.tandas.accepted ?? 0}
+              </Tarjeta>
+              <Tarjeta icono={<AlertTriangle className="w-4 h-4" />} titulo="Revisar/rechazar">
+                {data.tandas.rejected_or_revise ?? 0}
+              </Tarjeta>
+              <Tarjeta icono={<Boxes className="w-4 h-4" />} titulo="Decisiones">
+                {data.tandas.decisions ?? 0}
+              </Tarjeta>
+              <Tarjeta icono={<Activity className="w-4 h-4" />} titulo="Corridas">
+                {data.tandas.batch_rows ?? 0}
+              </Tarjeta>
+            </div>
+            <div className="grid gap-3 lg:grid-cols-2">
+              <MiniConteo titulo="Áreas" valores={data.tandas.by_domain} />
+              <MiniConteo titulo="Proveedores" valores={data.tandas.by_provider} />
+            </div>
+            {(data.tandas.pending ?? []).length > 0 && (
+              <div className="rounded border border-amber-900/60 bg-amber-950/10 p-3">
+                <div className="text-xs font-semibold text-amber-300 mb-1">
+                  Pendiente de revisión
+                </div>
+                {(data.tandas.pending ?? []).map((item, i) => (
+                  <div key={i} className="text-xs text-neutral-400">
+                    {item.domain} · {item.action} · {item.claim}
+                    {item.reason ? ` — ${item.reason}` : ''}
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="rounded border border-neutral-800 divide-y divide-neutral-800/70">
+              {(data.tandas.last_batches ?? []).slice(-6).map((b, i) => (
+                <div key={i} className="flex gap-2 p-2 text-xs">
+                  <span className="text-neutral-500 uppercase w-28">{b.area}</span>
+                  <span className="text-neutral-400 w-16">{b.provider}</span>
+                  <span className={b.status === 'accepted' ? 'text-emerald-400' : 'text-amber-300'}>
+                    {b.status}
+                  </span>
+                  <span className="text-neutral-500">{b.items ?? 0} items</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <p className="text-xs text-neutral-500">
+            Todavía no hay ledger de tandas externas visible. Cuando Watsonx/AWS produzcan
+            hallazgos, entran acá solo después del juicio local.
+          </p>
+        )}
+      </div>
     </div>
   );
 }
@@ -285,6 +356,26 @@ function departamentosParados(productos?: Record<string, Record<string, number>>
 
 function fallidos(eventos?: Evento[]): Evento[] {
   return (eventos ?? []).filter(e => e.estado === 'FALLO');
+}
+
+function MiniConteo({ titulo, valores }: { titulo: string; valores?: Record<string, number> }) {
+  const pares = Object.entries(valores ?? {});
+  return (
+    <div className="rounded border border-neutral-800 p-3">
+      <div className="text-xs uppercase tracking-wide text-neutral-500 mb-2">{titulo}</div>
+      {pares.length === 0 ? (
+        <p className="text-xs text-neutral-500">sin datos</p>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {pares.map(([k, v]) => (
+            <span key={k} className="text-xs px-2 py-1 rounded border border-neutral-700 text-neutral-300">
+              {k}: <b className="text-emerald-300">{v}</b>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function Tarjeta({

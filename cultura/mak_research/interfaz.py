@@ -30,6 +30,7 @@ import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import pausa
+import formato_ensayo
 from research_lib import emitir_evento, load_env, mint_job_id
 from worker import run_tema
 
@@ -3478,7 +3479,7 @@ class H(BaseHTTPRequestHandler):
             # quien lo manda es otro proceso y un typo no puede dejar al
             # organismo sin trabajar. La lista sale de formato_ensayo.FORMATOS.
             formato = (q.get("formato") or [""])[0].strip() or None
-            if formato not in ("informe", "ensayo"):
+            if formato not in formato_ensayo.FORMATOS:
                 formato = None
             memoria = (q.get("memoria") or ["0"])[0] in ("1", "true", "on")
             try:

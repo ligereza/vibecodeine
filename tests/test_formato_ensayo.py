@@ -25,6 +25,35 @@ def test_prompt_documento_incluye_las_siete_exigencias():
         assert exigencia in p
 
 
+def test_revision_is_a_first_class_format():
+    assert "revision" in F.FORMATOS
+    p = F.prompt_revision("calidad MAK", [{"type": "sample"}], ["file://x"])
+    assert "REVISION OPERATIVA" in p
+    assert "NODOS EJECUTIVOS" in p
+    assert "repasar, discutir, exponer, refutar o archivar" in p
+    assert "No rehagas investigaciones antiguas" in p
+
+
+def test_exposicion_is_a_first_class_format():
+    assert "exposicion" in F.FORMATOS
+    p = F.prompt_exposicion("cabos sueltos", [{"type": "sample"}], ["file://x"])
+    assert "EXPOSICION" in p
+    assert "QUE HAY AQUI" in p
+    assert "LECTURA POSIBLE" in p
+    assert "QUE NO SE DEBE AFIRMAR" in p
+    assert "no lo conviertas en ensayo" in p
+
+
+def test_curatoria_is_a_first_class_format():
+    assert "curatoria" in F.FORMATOS
+    p = F.prompt_curatoria("archivo iskvw", [{"type": "sample"}], ["file://x"])
+    assert "CURATORIA" in p
+    assert "NUCLEO DE OBRA" in p
+    assert "FAMILIA / CONSTELACION" in p
+    assert "PRUEBA VISUAL" in p
+    assert "no se debe mezclar con RD" in p
+
+
 def test_mutacion_exigencia_faltante_se_detecta():
     """Verificacion viva: si prompt_documento dejara de incluir una exigencia
     (por ejemplo si alguien acortara la lista antes de formatear), la
