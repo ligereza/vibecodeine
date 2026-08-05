@@ -41,25 +41,20 @@ GENERADOR = RAIZ / "tools" / "gen_archivo_iskvw.py"
 # `node tools/iskvw_piel_medir.mjs` and re-pin. If the data did NOT change,
 # the skin's frame cost changed: that is the regression this file exists for.
 PIN_ARCHIVO = {
-    "nodos": 446,
-    "vinculos_indexados": 237,
-    # Re-pinned 2026-07-31. The old numbers (0/6/30/0/9/14/14) were taken on a
-    # field that was NOT the real one: the skin decided from `obras[0]` whether
-    # the archive carried a projection, the first piece has none, and the old
-    # 479-piece mixed archive was spread by hash over ~220.000 px instead of
-    # the measured 5.644.
-    # Almost nothing was ever in frame, so almost no link was ever drawn and
-    # these counts measured a defect, not a cost. With the positions honoured
-    # the same grid now draws 6..103, which is the measured-links layer doing
-    # its job: 237 links, both ends in frame, faint by weight.
-    "segmentos": {          # per scenario: link segments actually stroked
-        "entrada cerrada": 6,
-        "entrada abierta": 79,
-        "medio abierto": 103,
-        "denso cerrado": 4,
-        "denso medio": 68,
-        "denso abierto": 94,
-        "denso escalado": 94,
+    "nodos": 1976,
+    "vinculos_indexados": 5158,
+    # Re-pinned 2026-08-05 after the micelio snapshot reached the public
+    # archive. The substrate now includes the measured semantic links from MAK
+    # through iskvw/datos/micelio.json, while MAK essays remain opt-in research.
+    # The laser bloom from 2026-08-01 still paints every kept link twice.
+    "segmentos": {
+        "entrada cerrada": 68,
+        "entrada abierta": 2126,
+        "medio abierto": 2492,
+        "denso cerrado": 110,
+        "denso medio": 1286,
+        "denso abierto": 2282,
+        "denso escalado": 2282,
     },
 }
 PIN_CAMPO = {
@@ -85,13 +80,12 @@ PIN_CAMPO = {
 }
 
 # The documented reference cost this instrument guards against: all-against-all
-# on the 219 works is 23,871 pairs per frame (n*(n-1)/2), and 99,235 on the
-# 446-piece substrate. Worst measured across the whole grid today: 103 segments
-# per frame. The ceiling is 1200: 11x headroom over the measure -- so data
-# growth and curation pass without touching this file -- while staying ~20x
-# BELOW the smaller all-pairs cost, so a return of the every-pair-every-frame
-# defect (or the culling breaking) turns this red long before a phone stutters.
-TECHO_SEGMENTOS = 1200
+# on the 219 works is 23,871 pairs per frame (n*(n-1)/2), and 1,951,300 on the
+# 1976-piece micelio substrate. Worst measured across the whole grid today:
+# 2492 segments per frame. The ceiling is 6000: enough headroom for more
+# curated links, still 325x below the all-pairs cost, so a return of the
+# every-pair-every-frame defect turns this red long before a phone stutters.
+TECHO_SEGMENTOS = 6000
 
 
 @pytest.fixture(scope="module")
@@ -183,8 +177,8 @@ def test_the_neighbour_index_is_built_once_and_sized_right(medida):
 
 
 def test_the_worst_scenario_stays_far_from_all_against_all(medida):
-    """The ceiling: see TECHO_SEGMENTOS above for why 1200. The documented
-    23,871 pairs (219 works all-against-all) must never be approached."""
+    """The ceiling: see TECHO_SEGMENTOS above. The all-against-all pair count
+    must never be approached."""
     assert medida["peor_segmentos"] <= TECHO_SEGMENTOS, (
         "%d segments in one frame: the link culling stopped working"
         % medida["peor_segmentos"]
@@ -193,3 +187,4 @@ def test_the_worst_scenario_stays_far_from_all_against_all(medida):
         pares = e["nodos"] * (e["nodos"] - 1) // 2
         assert e["todos_los_pares"] == pares
         assert e["segmentos"] < pares / 10
+
