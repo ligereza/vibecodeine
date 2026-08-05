@@ -1322,10 +1322,10 @@ class HubRequestHandler(BaseHTTPRequestHandler):
         hardcoded IPs). Without that variable the panel says it is not
         configured. User-facing strings stay in Spanish.
         """
-        import json as _json
         import os as _os
         import urllib.request as _url
 
+        tandas = self._get_mak_tandas()
         base = (_os.environ.get("FLUJO_MAK_URL") or "").strip().rstrip("/")
         if not base:
             return {
@@ -1333,12 +1333,18 @@ class HubRequestHandler(BaseHTTPRequestHandler):
                 "configurado": False,
                 "error": "Falta la variable de entorno FLUJO_MAK_URL "
                          "(por ejemplo http://<ip-del-box>:8900).",
+                "tandas": tandas,
             }
         try:
             with _url.urlopen(base + "/api/organismo", timeout=4) as r:
-                crudo = _json.loads(r.read().decode("utf-8", "replace"))
+                crudo = json.loads(r.read().decode("utf-8", "replace"))
         except Exception as e:
-            return {"disponible": False, "configurado": True, "error": str(e)}
+            return {
+                "disponible": False,
+                "configurado": True,
+                "error": str(e),
+                "tandas": tandas,
+            }
 
         salud = crudo.get("salud") or {}
         servicios = salud.get("servicios") or {}
@@ -1380,7 +1386,79 @@ class HubRequestHandler(BaseHTTPRequestHandler):
                 "max": (crudo.get("trabajo") or {}).get("max"),
                 "ultimo": str((crudo.get("trabajo") or {}).get("ultimo") or ""),
             },
+            "tandas": tandas,
         }
+
+    def _get_mak_tandas(self) -> dict:
+        """Read-only surface for external batch decisions and accepted evidence."""
+        import os as _os
+        from collections import Counter
+        from pathlib import Path as _Path
+
+        common_path = _Path(_os.environ.get(
+            "FLUJO_MAK_COMMON_LEDGER",
+            _os.path.join(_os.path.expanduser("~"), "plataforma", "common_ledger.jsonl"),
+        ))
+        batch_path = _Path(_os.environ.get(
+            "FLUJO_MAK_BATCH_LEDGER",
+            _os.path.join(_os.path.expanduser("~"), "plataforma", "external_batches.jsonl"),
+        ))
+
+        common_rows = self._read_jsonl(common_path)
+        batch_rows = self._read_jsonl(batch_path)
+        verdicts = Counter()
+        by_domain = Counter()
+        by_provider = Counter()
+        pending = []
+        for row in common_rows:
+            domain = str(row.get("domain") or "")
+            source = str(row.get("source") or "")
+            item_type = str(row.get("type") or "")
+            action = str(row.get("action") or "")
+            by_domain[domain] += 1
+            if ":" in source:
+                by_provider[source.split(":", 1)[0]] += 1
+            if item_type == "evidence":
+                verdicts["accepted"] += 1
+            elif item_type == "reject":
+                verdicts["rejected_or_revise"] += 1
+                pending.append({
+                    "domain": domain,
+                    "claim": str(row.get("claim") or "")[:180],
+                    "action": action,
+                    "reason": str(row.get("reject_reason") or "")[:180],
+                })
+            elif item_type == "decision":
+                verdicts["decisions"] += 1
+        return {
+            "common_ledger": str(common_path),
+            "batch_ledger": str(batch_path),
+            "common_rows": len(common_rows),
+            "batch_rows": len(batch_rows),
+            "accepted": verdicts["accepted"],
+            "rejected_or_revise": verdicts["rejected_or_revise"],
+            "decisions": verdicts["decisions"],
+            "by_domain": dict(by_domain),
+            "by_provider": dict(by_provider),
+            "pending": pending[-8:],
+            "last_batches": batch_rows[-8:],
+        }
+
+    @staticmethod
+    def _read_jsonl(path) -> list[dict]:
+        rows = []
+        try:
+            with open(path, encoding="utf-8") as fh:
+                for line in fh:
+                    try:
+                        row = json.loads(line)
+                    except ValueError:
+                        continue
+                    if isinstance(row, dict):
+                        rows.append(row)
+        except OSError:
+            return []
+        return rows
 
     def _get_rd_db(self) -> dict:
         """Delegado en `flujo.rd.panel`: la misma funcion que hornea el HTML
