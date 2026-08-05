@@ -108,6 +108,22 @@ class TestResearchLib(unittest.TestCase):
             self.assertIn("groq: HTTP 500", llm.errors[0])
         self.assertEqual(llm.stats.get("cerebras"), 1)
 
+    def test_factual_detector_covers_operational_event_questions(self):
+        samples = [
+            "Que productora se encargo del evento en Santiago de Chile el 31 de enero de 2023",
+            "Quien es el responsable de supervisar la seguridad privada en eventos masivos en Chile",
+            "Cómo se coordina la seguridad entre las autoridades y los organizadores en la práctica",
+            "¿Cuál es la política de devolución y reembolso de Ticketmaster?",
+            "¿Cómo puedo comprar entradas en Puntoticket?",
+        ]
+        for sample in samples:
+            with self.subTest(sample=sample):
+                self.assertTrue(research_lib._es_pregunta_factual(sample))
+
+    def test_factual_detector_does_not_swallow_cultural_identity_topic(self):
+        self.assertFalse(research_lib._es_pregunta_factual(
+            "Cómo afecta la tecnología a la identidad en la producción y creatividad"))
+
 
 if __name__ == '__main__':
     unittest.main()

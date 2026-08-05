@@ -1045,15 +1045,38 @@ MARCO_FACTUAL = (
 # Senales de que la pregunta es de triangulacion y no de investigacion cultural.
 _SENALES_FACTUAL = (
     "que productora organizo",
-    "quien organizo",
-    "verificar si la productora",
+    "que productora se encargo",
     "que productora produjo",
+    "quien organizo",
+    "quien fue el organizador",
+    "quien es el responsable",
+    "responsable de la planificacion",
+    "responsable de supervisar",
+    "verificar si la productora",
+    "seguridad en eventos masivos",
+    "seguridad privada en eventos",
+    "respuesta en caso de incidentes",
+    "coordina la seguridad",
+    "coordina la respuesta",
+    "autoriza la seguridad",
+    "garantizar la seguridad en eventos",
+    "recinto donde se realizara el evento",
+    "politica de devolucion",
+    "proceso de autoatencion",
+    "comprar entradas",
+    "plataformas de venta de entradas",
+    "ticketera",
 )
+
+
+def _fold_for_factual(texto):
+    nfkd = unicodedata.normalize("NFKD", texto or "")
+    return "".join(c for c in nfkd if not unicodedata.combining(c))
 
 
 def _es_pregunta_factual(topic):
     """Ante la duda, False: se prefiere el marco cultural, que protege mas."""
-    t = (topic or "").lower()
+    t = _fold_for_factual((topic or "").lower())
     return any(s in t for s in _SENALES_FACTUAL)
 
 
