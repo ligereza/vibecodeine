@@ -152,6 +152,30 @@ def test_cultural_multiplicar_topic_still_uses_essay_shape(monkeypatch):
     assert payload["densidad"] == "medio"
 
 
+def test_idle_review_uses_revision_format(monkeypatch):
+    monkeypatch.setattr(trabajo, "_has_pending_material", lambda: False)
+    monkeypatch.setattr(trabajo, "_has_pending_research_backlog", lambda: False)
+    monkeypatch.setattr(trabajo, "_has_pending_codex_backlog", lambda: False)
+    depto, payload = trabajo._tarea("repasar", {})
+    assert depto == "research"
+    assert payload["formato"] == "revision"
+    assert payload["densidad"] == "corto"
+    assert "revision" in payload["tema"]
+
+
+@pytest.mark.parametrize("pending", [
+    "_has_pending_material",
+    "_has_pending_research_backlog",
+    "_has_pending_codex_backlog",
+])
+def test_idle_review_waits_for_real_backlog(monkeypatch, pending):
+    monkeypatch.setattr(trabajo, "_has_pending_material", lambda: False)
+    monkeypatch.setattr(trabajo, "_has_pending_research_backlog", lambda: False)
+    monkeypatch.setattr(trabajo, "_has_pending_codex_backlog", lambda: False)
+    monkeypatch.setattr(trabajo, pending, lambda: True)
+    assert trabajo._tarea("repasar", {}) is None
+
+
 def test_hallazgo_marker_en_correlacionar_archivos():
     src = (REPO_ROOT / "cultura" / "mak_research" / "correlacionar_archivos.py").read_text(
         encoding="utf-8")

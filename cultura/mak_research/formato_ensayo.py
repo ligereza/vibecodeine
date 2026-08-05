@@ -25,7 +25,7 @@ from __future__ import annotations
 import json
 import re
 
-FORMATOS = ("informe", "ensayo")
+FORMATOS = ("informe", "ensayo", "revision")
 
 # Las siete exigencias, en el orden en que un lector las encuentra.
 EXIGENCIAS = (
@@ -51,6 +51,12 @@ EXIGENCIAS = (
 SISTEMA = ("Eres un ensayista cultural. Escribes en espanol correcto CON TILDES, "
            "en Markdown. Argumentas: no enumeras. Cada afirmacion verificable "
            "lleva su fuente.")
+
+SISTEMA_REVISION = (
+    "Eres auditor critico de un organismo autonomo llamado MAK. Escribes en "
+    "espanol correcto CON TILDES, en Markdown. No produces una investigacion "
+    "nueva: revisas calidad, formato, deuda, riesgos y siguiente accion "
+    "verificable. Tu tono es sobrio, desconfiado y ejecutivo.")
 
 # ---------------------------------------------------------------- informe
 # El otro formato. Hasta el 2026-08-01 su prompt era UNA LINEA pidiendo cinco
@@ -140,6 +146,43 @@ def prompt_informe(tema: str, findings, sources, consultas=None) -> str:
            if consultas else
            "\n\nCONSULTAS REALIZADAS: no se registraron. Entonces NO declares "
            "donde se busco -- escribi \"no se encontro\" a secas.")
+    )
+
+
+def prompt_revision(tema: str, findings, sources, consultas=None) -> str:
+    """Prompt for MAK introspection/review mode.
+
+    This is deliberately not an essay and not a normal report. It is a control
+    surface for idle autonomy: when no real user/backlog task is pending, MAK
+    should inspect itself instead of fabricating more cultural output.
+    """
+    import json as _json
+    return (
+        "Escribe una REVISION OPERATIVA de MAK sobre el tema indicado. "
+        "No rehagas investigaciones antiguas y no conviertas esto en ensayo.\n\n"
+        "La revision debe tener exactamente estas secciones:\n"
+        "1. VEREDICTO: una frase que diga si el sistema debe confiar, revisar "
+        "o detener la linea observada.\n"
+        "2. EVIDENCIA OBSERVADA: 3 a 6 bullets, cada uno con fuente o con "
+        "'sin fuente: inferido de los hallazgos'.\n"
+        "3. RIESGOS DE FORMATO: lista concreta de mezclas peligrosas "
+        "(ensayo/informe/curatoria/codex/research) si aparecen.\n"
+        "4. NODOS EJECUTIVOS: hasta 5 acciones atomicas clasificadas como "
+        "repasar, discutir, exponer, refutar o archivar.\n"
+        "5. SIGUIENTE ACCION VERIFICABLE: una sola accion, con archivo o "
+        "comando si corresponde.\n\n"
+        "Reglas:\n"
+        "- Si no hay evidencia suficiente, el veredicto es revisar, no confiar.\n"
+        "- No propongas producir mas piezas si antes falta validar calidad.\n"
+        "- No inventes fuentes internas que no aparezcan en HALLAZGOS o FUENTES.\n\n"
+        'TEMA: "%s"\n\nHALLAZGOS:\n%s\n\nFUENTES:\n%s%s'
+        % (tema,
+           _json.dumps(findings, ensure_ascii=False, indent=1)[:14000],
+           "\n".join(sources),
+           ("\n\nCONSULTAS REALIZADAS:\n"
+            + "\n".join("- %s" % c for c in consultas))
+           if consultas else
+           "\n\nCONSULTAS REALIZADAS: no se registraron.")
     )
 
 

@@ -101,6 +101,48 @@ def _lineas(path, fallback):
         return fallback
 
 
+def _has_pending_material():
+    if material is None:
+        return False
+    try:
+        return any(r.get("estado") == "pendiente" for r in material.cargar())
+    except Exception:  # noqa: BLE001 - idle review must degrade safely
+        return False
+
+
+def _has_pending_research_backlog():
+    if backlog is None:
+        return False
+    try:
+        return any(e.get("estado") == "pendiente"
+                   for e in backlog.cargar(BACKLOG_GEN))
+    except Exception:  # noqa: BLE001 - idle review must degrade safely
+        return False
+
+
+def _has_pending_codex_backlog():
+    return bool(_lineas(BACKLOG, []))
+
+
+def _idle_review_topic(st):
+    topics = [
+        "revision operativa de los ultimos informes MAK: detectar formato equivocado, fuentes debiles y acciones ejecutivas",
+        "revision de cola y autonomia MAK: distinguir research, curatoria, codex, discusion y exposicion",
+        "revision de calidad MAK: que trabajos deben archivarse, refutarse o exponerse antes de producir mas",
+    ]
+    i = st.get("rev_idx", 0) % len(topics)
+    st["rev_idx"] = i + 1
+    return topics[i]
+
+
+def _idle_review_allowed():
+    return not (
+        _has_pending_material()
+        or _has_pending_research_backlog()
+        or _has_pending_codex_backlog()
+    )
+
+
 def _post(url, data):
     body = urllib.parse.urlencode(data).encode()
     req = urllib.request.Request(
@@ -297,6 +339,11 @@ def _tarea(verbo, st):
         i = st.get("bl_idx", 0) % len(bl)
         st["bl_idx"] = i + 1
         return ("codex", {"modo": v["modo"], "pedido": bl[i], "densidad": "medio"})
+    if fuente == "revision":
+        if not _idle_review_allowed():
+            return None
+        return ("research", {"modo": v["modo"], "tema": _idle_review_topic(st),
+                             "densidad": "corto", "formato": "revision"})
     return None
 
 
