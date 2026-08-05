@@ -27,6 +27,7 @@ VERBOS = [
     {"verbo": "definir",     "depto": "research", "modo": "research", "fuente": "definir"},
     {"verbo": "limpiar",     "depto": "codex",    "modo": "revisar",  "fuente": "modulo"},
     {"verbo": "desarrollar", "depto": "codex",    "modo": "generar",  "fuente": "backlog"},
+    {"verbo": "repasar",     "depto": "research", "modo": "research", "fuente": "revision"},
 ]
 
 # ritmo (throughput-first pero gentil con cupo/CPU). el cron dispara cada CADA_MIN;

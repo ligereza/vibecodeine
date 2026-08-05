@@ -304,16 +304,19 @@ def investigar(topic, iteraciones=3, depth="basic",
                                 sources, llm, ev)
 
     es_ensayo = formato == "ensayo"
+    es_revision = formato == "revision"
     print("STATUS: Generando %s final..." % formato, flush=True)
     try:
         sistema_ensayo = guardia + formato_ensayo.SISTEMA
         sistema_informe = guardia + formato_ensayo.SISTEMA_INFORME
+        sistema_revision = guardia + formato_ensayo.SISTEMA_REVISION
         if ev:
             # Sin fuente primaria la TAREA cambia: de sintetizar a reportar la
             # ausencia. No es un aviso al margen, es otra instruccion.
             extra = fuentes.instruccion_sintesis(sources, dom)
             sistema_ensayo += extra
             sistema_informe += extra
+            sistema_revision += extra
         if es_ensayo:
             # El ensayo pide mas espacio que el informe: son partes narradas con
             # tabla comparativa, cronologia y cierre argumentado, no cinco
@@ -322,6 +325,13 @@ def investigar(topic, iteraciones=3, depth="basic",
                 sistema_ensayo,
                 formato_ensayo.prompt_documento(topic, findings, sources),
                 int(escala_tok(2000, densidad) * 1.8))
+        elif es_revision:
+            report, _ = llm.call(
+                sistema_revision,
+                formato_ensayo.prompt_revision(topic, findings, sources,
+                                               query_history),
+                escala_tok(1800, densidad),
+            )
         else:
             # El informe tambien tiene contrato desde el 2026-08-01. Era una
             # linea pidiendo cinco secciones enumeradas, y es el formato POR
