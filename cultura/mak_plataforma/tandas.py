@@ -21,6 +21,13 @@ except Exception:  # noqa: BLE001 - direct script deployment on MAK
         import ledger as common_ledger
     except Exception:  # noqa: BLE001 - batch validation can run without ledger
         common_ledger = None
+try:
+    from . import discernment
+except Exception:  # noqa: BLE001 - direct script deployment on MAK
+    try:
+        import discernment
+    except Exception:  # noqa: BLE001 - discernment prompt is optional
+        discernment = None
 
 HOME = os.path.expanduser("~")
 LEDGER = os.path.join(HOME, "plataforma/external_batches.jsonl")
@@ -64,6 +71,11 @@ AREAS = {
         "default_paths": ["svg", "projects", "tools", "web/src"],
         "actions": ["measure", "prototype", "reuse", "reject"],
     },
+    "adobe_rescue": {
+        "purpose": "rescue Illustrator/Adobe bridge work without confusing it with Blender",
+        "default_paths": ["docs", "tools", "src/flujo", "exports"],
+        "actions": ["rescue", "bridge", "reuse", "reject"],
+    },
 }
 
 PROVIDER_LANES = {
@@ -94,7 +106,7 @@ def build_brief(area, batch_id, paths=None, providers=None, allow_premium=True):
     cfg = AREAS[area]
     selected_paths = list(paths or cfg["default_paths"])
     plan = provider_plan(providers or [], allow_premium=allow_premium)
-    return {
+    brief = {
         "schema": SCHEMA_VERSION,
         "area": area,
         "batch_id": batch_id,
@@ -105,6 +117,18 @@ def build_brief(area, batch_id, paths=None, providers=None, allow_premium=True):
         "prompt": _prompt(area, batch_id, cfg, selected_paths, plan),
         "result_required": list(RESULT_REQUIRED),
     }
+    if discernment is not None:
+        brief["local_review"] = {
+            "provider": "ollama",
+            "schema": discernment.SCHEMA_VERSION,
+            "prompt": discernment.build_review_prompt(area, {
+                "area": area,
+                "batch_id": batch_id,
+                "result_required": list(RESULT_REQUIRED),
+                "allowed_actions": cfg["actions"],
+            }),
+        }
+    return brief
 
 
 def _prompt(area, batch_id, cfg, paths, plan):
@@ -197,6 +221,41 @@ def append_common_ledger(payload, area, path=COMMON_LEDGER, source="external"):
                                                 source=source)
 
 
+def ingest_result(payload, area, common_path=COMMON_LEDGER, source="external",
+                  reviewer=None, use_ollama=True):
+    """Validate, locally judge, then append only accepted facts to common ledger."""
+    ok, errors = validate_result(payload)
+    if not ok:
+        return {"ok": False, "status": "invalid", "errors": errors,
+                "review": None, "items": 0}
+    if isinstance(payload, str):
+        payload = json.loads(payload)
+    if discernment is None or common_ledger is None:
+        return {"ok": False, "status": "unavailable",
+                "errors": ["discernment_or_ledger_unavailable"],
+                "review": None, "items": 0}
+    review, meta = discernment.review_payload(
+        area, payload, reviewer=reviewer, use_ollama=use_ollama)
+    review_ok, review_errors = discernment.validate_review(review, area=area)
+    if not review_ok:
+        return {"ok": False, "status": "bad_review", "errors": review_errors,
+                "review": review, "items": 0, "review_meta": meta}
+    _review_ok, review_append_errors, _review_row = common_ledger.append_review(
+        review, area, path=common_path, source="local_review:%s" % source)
+    if review_append_errors:
+        return {"ok": False, "status": "review_ledger_error",
+                "errors": review_append_errors, "review": review,
+                "items": 0, "review_meta": meta}
+    if review["verdict"] != "accept":
+        return {"ok": False, "status": review["verdict"], "errors": [],
+                "review": review, "items": 0, "review_meta": meta}
+    rows, ledger_errors = append_common_ledger(
+        payload, area, path=common_path, source=source)
+    return {"ok": not ledger_errors, "status": "accepted",
+            "errors": ledger_errors, "review": review, "items": len(rows),
+            "review_meta": meta}
+
+
 def write_brief(brief, out_dir=None):
     """Persist a generated brief for any external provider/operator."""
     out_dir = out_dir or os.path.join(HOME, "plataforma/tandas")
@@ -267,6 +326,16 @@ def main(argv=None):
     p_val.add_argument("--ledger-batch", default="")
     p_val.add_argument("--ledger", default="")
     p_val.add_argument("--common-ledger", default="")
+    p_review = sub.add_parser("review-prompt",
+                              help="build local Ollama review prompt for JSON stdin")
+    p_review.add_argument("area", choices=sorted(AREAS))
+    p_ingest = sub.add_parser("ingest",
+                              help="validate, local-review and ingest JSON stdin")
+    p_ingest.add_argument("area", choices=sorted(AREAS))
+    p_ingest.add_argument("--provider", default="external")
+    p_ingest.add_argument("--common-ledger", default=COMMON_LEDGER)
+    p_ingest.add_argument("--no-ollama", action="store_true",
+                          help="use deterministic local review only")
 
     args = parser.parse_args(argv)
     if args.cmd == "areas":
@@ -315,6 +384,25 @@ def main(argv=None):
                 errors = errors + common_errors
         print(json.dumps({"ok": ok, "errors": errors}, ensure_ascii=False))
         return 0 if ok else 2
+    if args.cmd == "review-prompt":
+        if discernment is None:
+            print(json.dumps({"ok": False, "errors": ["discernment_unavailable"]},
+                             ensure_ascii=False))
+            return 2
+        raw = sys.stdin.read()
+        try:
+            payload = json.loads(raw)
+        except ValueError:
+            payload = {"raw": raw}
+        print(discernment.build_review_prompt(args.area, payload))
+        return 0
+    if args.cmd == "ingest":
+        raw = sys.stdin.read()
+        result = ingest_result(
+            raw, args.area, common_path=args.common_ledger,
+            source=args.provider, use_ollama=not args.no_ollama)
+        print(json.dumps(result, ensure_ascii=False))
+        return 0 if result["ok"] else 2
     return 1
 
 
