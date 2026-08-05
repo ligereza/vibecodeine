@@ -144,6 +144,7 @@ def external_item_to_ledger(item, area):
         "mak_quality": "mak",
         "svg_pipeline": "svg",
         "tool_archaeology": "repo",
+        "adobe_rescue": "adobe",
     }
     item_type = "reject" if item.get("action") == "reject" else "evidence"
     return {
@@ -172,6 +173,34 @@ def append_external_result(payload, area, path=LEDGER, source="external"):
         else:
             errors.extend("item_%d_%s" % (idx, e) for e in item_errors)
     return rows, errors
+
+
+def review_to_ledger(review, area):
+    domain = str(review.get("domain") or "").lower()
+    verdict = str(review.get("verdict") or "").lower()
+    item_type = "decision" if verdict == "accept" else "reject"
+    action = {
+        "rd": "reject" if verdict == "reject" else "verify_source",
+        "iskvw": "reject" if verdict == "reject" else "curate",
+        "mak": "reject" if verdict == "reject" else "decide",
+        "svg": "reject" if verdict == "reject" else "measure",
+        "adobe": "reject" if verdict == "reject" else "rescue",
+        "repo": "reject" if verdict == "reject" else "test",
+    }.get(domain, "reject")
+    return {
+        "domain": domain,
+        "type": item_type,
+        "claim": "%s review for %s: %s" % (verdict, area, review.get("reason", "")),
+        "evidence": review.get("missing_evidence", []) + review.get("risks", []),
+        "files": [],
+        "confidence": "medium" if verdict == "accept" else "low",
+        "action": action,
+        "reject_reason": "" if item_type != "reject" else review.get("reason", ""),
+    }
+
+
+def append_review(review, area, path=LEDGER, source="local_review"):
+    return append_item(review_to_ledger(review, area), path=path, source=source)
 
 
 def main(argv=None):
