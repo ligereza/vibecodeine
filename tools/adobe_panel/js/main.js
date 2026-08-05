@@ -5,35 +5,79 @@
 // ==========================================================================
 var cs = new CSInterface();
 
+function normPath(path) {
+  return String(path || "").replace(/\\/g, "/").replace(/\/+$/, "");
+}
+
+function joinPath(base, tail) {
+  return normPath(base) + "/" + String(tail || "").replace(/^\/+/, "");
+}
+
+function parentPath(path) {
+  var p = normPath(path);
+  return p.substring(0, p.lastIndexOf("/"));
+}
+
+function pathExists(path) {
+  try {
+    return window.cep && window.cep.fs && window.cep.fs.stat(path).err === 0;
+  } catch(e) {
+    return false;
+  }
+}
+
+function readJson(path) {
+  try {
+    if (!window.cep || !window.cep.fs || !pathExists(path)) return null;
+    var res = window.cep.fs.readFile(path);
+    if (res.err !== 0) return null;
+    return JSON.parse(res.data);
+  } catch(e) {
+    return null;
+  }
+}
+
+function toolsRootIfValid(path) {
+  var root = normPath(path);
+  if (!root) return "";
+  if (pathExists(joinPath(root, "illustrator/scripts/logo_clean_master.jsx"))) return root;
+  return "";
+}
+
 function getRepoToolsPath() {
   // 1) Intentar variable de entorno ADOBE_PANEL_REPO_ROOT (si CEP la expone)
   try {
     if (cs && cs.getEnvironmentVariable) {
       var envPath = cs.getEnvironmentVariable("ADOBE_PANEL_REPO_ROOT");
-      if (envPath && envPath.length > 0) return envPath;
+      var envRoot = toolsRootIfValid(envPath);
+      if (envRoot) return envRoot;
     }
   } catch(e) {}
   
   // 2) Leer desde config.json
   try {
-    var configFolder = new Folder(cs.getSystemPath("userSystem") + "/Adobe/CEP/preferences/vibo_adobe_panel");
-    if (!configFolder.exists) configFolder.create();
-    var configFile = new File(configFolder.fsName + "/config.json");
-    if (configFile.exists) {
-      configFile.encoding = "UTF-8";
-      configFile.open("r");
-      var content = configFile.read();
-      configFile.close();
-      var cfg = JSON.parse(content);
-      if (cfg.repo_tools_path && cfg.repo_tools_path.length > 0) {
-        return cfg.repo_tools_path;
-      }
+    var userData = cs.getSystemPath(SystemPath.USER_DATA);
+    var cfg = readJson(joinPath(userData, "Adobe/CEP/preferences/vibo_adobe_panel/config.json"));
+    if (cfg) {
+      var cfgRoot = toolsRootIfValid(cfg.repo_tools_path);
+      if (cfgRoot) return cfgRoot;
     }
   } catch(e) {}
-  
-  // 3) Fallback: ruta relativa desde la ubicacion del panel
-  var currentDir = new Folder($.fileName).parent;
-  return currentDir.fsName.replace(/\\/g, "/");
+
+  // 3) Leer config.json junto al panel si existe (modo repo/symlink).
+  var currentDir = normPath(cs.getSystemPath(SystemPath.EXTENSION));
+  try {
+    var localCfg = readJson(joinPath(currentDir, "config.json"));
+    if (localCfg) {
+      var localRoot = toolsRootIfValid(localCfg.repo_tools_path);
+      if (localRoot) return localRoot;
+    }
+  } catch(e) {}
+
+  // 4) Fallback: el panel vive en tools/adobe_panel; los scripts viven en tools/.
+  var parentRoot = toolsRootIfValid(parentPath(currentDir));
+  if (parentRoot) return parentRoot;
+  return currentDir;
 }
 
 var REPO_TOOLS = getRepoToolsPath();

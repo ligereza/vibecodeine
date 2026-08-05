@@ -5,8 +5,9 @@ el agente que uses, **junto con** `CONTRATO.md` y `ESQUEMA_ARCHIVO.md`.
 
 Los tres archivos tienen que decir lo MISMO. El 2026-08-01 no lo decían: este
 prompt mandaba leer `archivo.json` y entregar contra `obras.json`, declaraba
-993 piezas donde hay 479, y la línea de arriba pedía adjuntar `datos/ESQUEMA.md`,
-que documenta otro archivo. Un modelo web que reciba instrucciones que se
+993 piezas donde había 479, y la línea de arriba pedía adjuntar `datos/ESQUEMA.md`,
+que documenta otro archivo. El 2026-08-05 se corrigió otra mezcla: los ensayos
+ilustrados de research no son el archivo público por defecto. Un modelo web que reciba instrucciones que se
 contradicen escribe una piel para datos que no existen, y eso no se descubre
 hasta publicarla.
 
@@ -24,13 +25,14 @@ vas a recibir. Todo lo que muestres tiene que salir de ahí.
 
 Lo que recibís es **un solo archivo**, `datos/archivo.json`, con dos listas:
 **piezas** y **vínculos entre piezas**. No importa qué hay detrás — obras del
-artista, informes de una máquina que las lee, código — todo llega con la misma
-forma. Eso es a propósito: tu piel no tiene que saber de dónde salió, y el día
+artista, piezas gráficas derivadas del taller, código — todo llega con la misma
+forma. Los informes y conceptos de research existen como vista explícita, pero
+no entran al archivo público por defecto. Eso es a propósito: tu piel no tiene que saber de dónde salió, y el día
 que aparezca un tipo de pieza nuevo, tu piel sigue funcionando sin tocarla.
 
-Hoy son **479 piezas y 269 vínculos**, medidos sobre el archivo que el sitio
-publica (2026-08-01). Las piezas se reparten en 235 `pieza_grafica`, 227 `obra`,
-16 `concepto` y 1 `informe`. Los vínculos son 251 `manual` y 18 `etiqueta`.
+Hoy son **446 piezas y 237 vínculos**, medidos sobre el archivo que el sitio
+publica (2026-08-05). Las piezas se reparten en 219 `pieza_grafica` y 227
+`obra`. Los vínculos son 219 `manual` y 18 `etiqueta`.
 
 Cada pieza trae: `id`, `titulo`, `clase`, `fecha`, `resumen`, `etiquetas`,
 `peso`, `medio`, `estado` y `extra`. Cada vínculo trae `de`, `a`, `peso` y
@@ -94,7 +96,7 @@ sea `../../datos/archivo.json`. Si usás librerías, que viajen adentro.
 
 Este párrafo decía `datos/obras.json` y se contradecía con el resto del
 documento: `obras.json` son 8 entradas y son HERRAMIENTAS del repo, no obras.
-Una piel escrita contra ese archivo muestra 8 cosas donde hay 479, y el error
+Una piel escrita contra ese archivo muestra 8 cosas donde hay 446, y el error
 no se ve hasta que se publica.
 
 Y aparte, en tu respuesta: **tres o cuatro líneas explicando cuál es la idea**.

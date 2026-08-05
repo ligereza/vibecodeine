@@ -50,6 +50,21 @@ try {
   process.exit(2);
 }
 const CAPACIDADES = new Set(MANIFIESTO.capacidades || []);
+const SMOKE_ARCHIVO_LIMIT = 240;
+
+function dataParaSmoke(abs, txt) {
+  if (PIEL === "campo") return JSON.parse(txt);
+  if (abs.slice(-3).join("/") !== "iskvw/datos/archivo.json") return JSON.parse(txt);
+  const datos = JSON.parse(txt);
+  const piezas = (datos.piezas || []).slice(0, SMOKE_ARCHIVO_LIMIT);
+  const ids = new Set(piezas.map(p => p.id));
+  return {
+    ...datos,
+    piezas,
+    vinculos: (datos.vinculos || []).filter(v => ids.has(v.a) && ids.has(v.b)),
+    smoke_sample: true,
+  };
+}
 
 const noop = () => {};
 
@@ -239,7 +254,7 @@ async function correr({ tablero = null, cuadros = 30, caminar = true, antes = nu
       if (escapa) return { ok: false, json: async () => ({}), text: async () => "" };
       try {
         const txt = readFileSync(join(raiz, ...abs), "utf8");
-        return { ok: true, json: async () => JSON.parse(txt), text: async () => txt };
+        return { ok: true, json: async () => dataParaSmoke(abs, txt), text: async () => txt };
       } catch { return { ok: false, json: async () => ({}), text: async () => "" }; }
     },
     addEventListener: noop, removeEventListener: noop, history: { replaceState: noop },

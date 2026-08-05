@@ -20,6 +20,8 @@ vuelve segura una sustancia.
 from __future__ import annotations
 
 import json
+import importlib.util
+import re
 import sqlite3
 from pathlib import Path
 from typing import Any
@@ -34,6 +36,7 @@ _SUPLEMENTOS_JSON = (
     / "01_contenido" / "contenido_suplementos_rd.json"
 )
 _PRODUCTORAS_DIR = _REPO / "data" / "productoras"
+_FUENTES_PY = _REPO / "cultura" / "mak_research" / "fuentes.py"
 _VENUES_DIR = _REPO / "knowledge" / "venues"     # *.yaml canonicos
 _LOGOS_DIR = _REPO / "knowledge" / "logos"       # *.yaml canonicos
 # Directorios donde viven jsons con forma de evento (voluntarios/asistentes/...)
@@ -43,6 +46,8 @@ _EVENTOS_GLOBS = (
 )
 # Campos minimos para considerar un json como "evento" (evita packs_servicios y otros)
 _EVENTO_MARKERS = ("voluntarios", "asistentes_estimados")
+_URL_RE = re.compile(r"https?://[^\s),;]+")
+_FUENTES_MODULE: Any | None = None
 
 _SCHEMA = """
 CREATE TABLE meta (
@@ -160,10 +165,40 @@ CREATE TABLE productora_eventos (
     fecha           TEXT,               -- prosa tal cual se registro; puede decir needs_confirmation
     venue           TEXT,
     estado          TEXT,               -- pasado | activo_anunciado | confirmado_usuario | ...
-    fuente          TEXT                -- de donde salio el dato; nunca se inventa
+    fuente          TEXT,               -- de donde salio el dato; nunca se inventa
+    fuentes_primarias TEXT,             -- JSON: primary URLs according to fuente gate
+    sin_fuente_primaria INTEGER NOT NULL DEFAULT 1
 );
 CREATE INDEX idx_prodeventos_slug ON productora_eventos(productora_slug);
 """
+
+
+def _load_fuentes_module():
+    global _FUENTES_MODULE
+    if _FUENTES_MODULE is not None:
+        return _FUENTES_MODULE
+    spec = importlib.util.spec_from_file_location("mak_research_fuentes", _FUENTES_PY)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot load source gate from {_FUENTES_PY}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    _FUENTES_MODULE = module
+    return module
+
+
+def _event_source_gate(source_text: Any) -> tuple[str, int]:
+    """Evaluate the event source field through MAK's source gate.
+
+    The RD database is a regenerable projection, so it can persist the verdict
+    without owning the source-classification rules. Those stay in
+    `cultura/mak_research/fuentes.py`.
+    """
+    text = "" if source_text is None else str(source_text)
+    urls = _URL_RE.findall(text)
+    evaluation = _load_fuentes_module().evaluar("evento productora RD", urls, "cl_eventos")
+    return json.dumps(evaluation["fuentes_primarias"], ensure_ascii=False), int(
+        bool(evaluation["sin_fuente_primaria"])
+    )
 
 
 def _load_yaml(path: Path) -> dict[str, Any] | None:
@@ -391,9 +426,13 @@ def build_rd_db(
                 # nunca se rellena con un supuesto.
                 for ev in d.get("eventos", []) or []:
                     prodev_id += 1
+                    fuentes_primarias, sin_fuente_primaria = _event_source_gate(
+                        ev.get("fuente")
+                    )
                     conn.execute(
                         "INSERT INTO productora_eventos(id, productora_slug, nombre, fecha, "
-                        "venue, estado, fuente) VALUES (?,?,?,?,?,?,?)",
+                        "venue, estado, fuente, fuentes_primarias, sin_fuente_primaria) "
+                        "VALUES (?,?,?,?,?,?,?,?,?)",
                         (
                             prodev_id, slug,
                             str(ev.get("nombre", "")),
@@ -401,6 +440,8 @@ def build_rd_db(
                             ev.get("venue"),
                             ev.get("estado"),
                             ev.get("fuente"),
+                            fuentes_primarias,
+                            sin_fuente_primaria,
                         ),
                     )
 

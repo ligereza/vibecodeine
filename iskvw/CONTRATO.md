@@ -10,7 +10,9 @@ tiene que encajar acá sin que nadie edite los datos.
 
 **Corregido el 2026-08-01:** este documento mandaba leer `datos/obras.json`, que
 son 8 entradas y son HERRAMIENTAS del repo, mientras el sitio publicado sirve
-`datos/archivo.json` con 479 piezas. Los tres archivos que se le pasan a un
+`datos/archivo.json`. Medido el 2026-08-05, el sustrato publico son 446 piezas
+del archivo de obra/taller; los ensayos de research son una vista explicita, no
+el default. Los tres archivos que se le pasan a un
 agente externo decian cosas distintas, asi que una piel encargada afuera se
 escribia contra datos que no existen -- y el error no aparece hasta publicarla.
 
@@ -35,8 +37,8 @@ la piel, porque entonces deja de ser reemplazable.
 
 Un único archivo: **`datos/archivo.json`**, con dos listas, `piezas` y
 `vinculos`. Su forma está en `ESQUEMA_ARCHIVO.md` y cada campo dice si es
-obligatorio o puede faltar. Medido el 2026-08-01 sobre lo que el sitio publica:
-479 piezas y 269 vínculos, y **ninguna pieza trae coordenadas** — si una piel
+obligatorio o puede faltar. Medido el 2026-08-05 sobre lo que el sitio publica:
+446 piezas y 237 vínculos, y **ninguna pieza trae coordenadas** — si una piel
 necesita posiciones, las calcula ella.
 
 `datos/obras.json` y `datos/campo.json` siguen existiendo y son RESPALDOS: la
@@ -73,10 +75,10 @@ pueda cambiar sin miedo.
    Si para cambiar el estilo hay que editar el contenido, el contrato se rompió.
 
 6. **Una clase de pieza o de vínculo que no conocés no se descarta ni se
-   asimila.** El archivo crece: hoy hay `obra`, `pieza_grafica`, `concepto` e
-   `informe`, y mañana hay otra. Una piel que sólo dibuja lo que su autor
-   conocía deja de mostrar el archivo sin avisar. Dibujala de la forma más
-   neutra que tengas y decilo.
+   asimila.** El archivo crece: el sustrato público hoy trae `obra` y
+   `pieza_grafica`; la vista explícita de research puede traer `concepto` e
+   `informe`. Una piel que sólo dibuja lo que su autor conocía deja de mostrar
+   el archivo sin avisar. Dibujala de la forma más neutra que tengas y decilo.
    *Causa: es el defecto que este repo encontró cinco veces en dos días — una
    lista escrita a mano que dejó de coincidir con lo que existe.*
 

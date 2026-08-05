@@ -206,3 +206,39 @@ def test_los_temas_culturales_siguen_sin_dominio():
         "iconografia del double cup en la cultura visual del trap") is None
     assert fuentes.dominio_de_tema(
         "historia del vjing y el mapping en la escena de Santiago") is None
+
+
+# --- event/producer domain (2026-08-05) -------------------------------------
+
+def test_event_producer_questions_use_the_event_domain():
+    assert fuentes.dominio_de_tema(
+        "Quien organizo el evento del 2023-10-28 con headliner Nina Kraviz"
+    ) == "cl_eventos"
+    assert fuentes.dominio_de_tema(
+        "Que productora llevo ese line up al Club Hípico"
+    ) == "cl_eventos"
+
+
+def test_event_domain_recognizes_promoter_and_ticketing_sources():
+    urls = [
+        "https://www.instagram.com/p/C0REAL/",
+        "https://www.passline.com/eventos/fiesta-real",
+        "https://noticias.example.com/nota-sobre-la-fiesta",
+    ]
+    prim, sec = fuentes.clasificar(urls, "cl_eventos")
+    assert prim == urls[:2]
+    assert sec == urls[2:]
+    ev = fuentes.evaluar("quien organizo el evento del viernes", urls)
+    assert ev["dominio"] == "cl_eventos"
+    assert ev["sin_fuente_primaria"] is False
+
+
+def test_event_domain_without_primary_source_reports_absence():
+    ev = fuentes.evaluar(
+        "quien organizo el evento con lineup PARTIBOI69",
+        ["https://noticias.example.com/resena"],
+    )
+    assert ev["dominio"] == "cl_eventos"
+    assert ev["sin_fuente_primaria"] is True
+    assert ev["fuentes_primarias"] == []
+    assert ev["marca"] == "SIN FUENTE PRIMARIA"

@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 
 from flujo.web.hub import HubRequestHandler
+from flujo.rd.panel import datos_panel
 
 
 def _armar(raiz, *, vector=(), descargas=(), fichas=None):
@@ -81,3 +82,34 @@ def test_el_panel_solo_pide_el_logo_si_existe():
     assert "p.logo.archivo !== false" in panel, (
         "el panel volvió a pedir el logo de todas las productoras"
     )
+
+
+def test_datos_panel_expone_fuentes_primarias_de_eventos(tmp_path):
+    fichas = tmp_path / "data" / "productoras"
+    fichas.mkdir(parents=True)
+    (tmp_path / "knowledge" / "logos" / "vector").mkdir(parents=True)
+    (tmp_path / "knowledge" / "venues").mkdir(parents=True)
+    (fichas / "acme.json").write_text(json.dumps({
+        "name": "Acme",
+        "eventos": [
+            {
+                "nombre": "Evento oficial",
+                "fecha": "2026-11-20",
+                "fuente": "post oficial https://www.instagram.com/p/DaRCFPhCfdM/",
+            },
+            {
+                "nombre": "Evento rumor",
+                "fecha": "needs_confirmation",
+                "fuente": "comentario sin URL",
+            },
+        ],
+    }), encoding="utf-8")
+
+    data = datos_panel(tmp_path)
+    eventos = data["productoras"][0]["eventos"]
+
+    assert data["resumen"]["eventos_sin_fuente_primaria"] == 1
+    assert eventos[0]["fuentes_primarias"] == ["https://www.instagram.com/p/DaRCFPhCfdM/"]
+    assert eventos[0]["sin_fuente_primaria"] is False
+    assert eventos[1]["fuentes_primarias"] == []
+    assert eventos[1]["sin_fuente_primaria"] is True
