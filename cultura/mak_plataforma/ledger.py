@@ -1,0 +1,230 @@
+#!/usr/bin/env python3
+"""Append-only common ledger for MAK decisions and external findings.
+
+This is the circulation layer: model output becomes small typed records that
+can be reviewed, rejected, surfaced or reused without reading old reports.
+"""
+from __future__ import annotations
+
+from collections import Counter
+import argparse
+import hashlib
+import json
+import os
+import time
+
+
+HOME = os.path.expanduser("~")
+LEDGER = os.path.join(HOME, "plataforma/common_ledger.jsonl")
+SCHEMA_VERSION = "mak-ledger-v1"
+
+ITEM_TYPES = ("evidence", "idea", "task", "decision", "reject", "artifact")
+DOMAINS = ("rd", "iskvw", "mak", "svg", "adobe", "repo")
+CONFIDENCE = ("high", "medium", "low", "unknown")
+
+ACTION_BY_DOMAIN = {
+    "rd": ("verify_source", "triangulate", "draft_report", "reject"),
+    "iskvw": ("curate", "expose", "archive", "reject"),
+    "mak": ("archive", "refute", "expose", "repair_queue", "reject",
+            "review", "decide"),
+    "svg": ("measure", "prototype", "reuse", "reject"),
+    "adobe": ("rescue", "bridge", "reuse", "reject"),
+    "repo": ("reuse", "merge", "retire", "test", "reject"),
+}
+
+SECRET_MARKERS = ("api_key", "apikey", "secret", "token", "password",
+                  "credential", "authorization", "bearer")
+
+
+def _stable_id(item):
+    basis = "|".join(str(item.get(k, "")) for k in
+                     ("domain", "type", "claim", "action"))
+    return hashlib.sha1(basis.encode("utf-8")).hexdigest()[:12]
+
+
+def _safe_text(value, limit=2000):
+    text = str(value or "")
+    folded = text.lower()
+    if any(marker in folded for marker in SECRET_MARKERS):
+        return "[redacted]"
+    return text[:limit]
+
+
+def normalize_item(item, source="manual", ts=None):
+    if not isinstance(item, dict):
+        raise ValueError("item_not_object")
+    row = {
+        "schema": SCHEMA_VERSION,
+        "ts": ts or time.strftime("%F %T"),
+        "source": _safe_text(source, 120),
+        "domain": str(item.get("domain") or "").lower(),
+        "type": str(item.get("type") or "").lower(),
+        "claim": _safe_text(item.get("claim"), 1000),
+        "evidence": [_safe_text(x, 800) for x in item.get("evidence", [])],
+        "files": [_safe_text(x, 400) for x in item.get("files", [])],
+        "confidence": str(item.get("confidence") or "unknown").lower(),
+        "action": str(item.get("action") or "").lower(),
+        "reject_reason": _safe_text(item.get("reject_reason"), 800),
+    }
+    row["id"] = item.get("id") or _stable_id(row)
+    return row
+
+
+def validate_item(item, source="manual"):
+    try:
+        row = normalize_item(item, source=source)
+    except ValueError as exc:
+        return False, [str(exc)], None
+    errors = []
+    if row["schema"] != SCHEMA_VERSION:
+        errors.append("bad_schema")
+    if row["domain"] not in DOMAINS:
+        errors.append("bad_domain")
+    if row["type"] not in ITEM_TYPES:
+        errors.append("bad_type")
+    if row["confidence"] not in CONFIDENCE:
+        errors.append("bad_confidence")
+    if not row["claim"] and row["type"] != "reject":
+        errors.append("missing_claim")
+    if not isinstance(row["evidence"], list):
+        errors.append("evidence_not_list")
+    if not isinstance(row["files"], list):
+        errors.append("files_not_list")
+    allowed = ACTION_BY_DOMAIN.get(row["domain"], ())
+    if row["action"] not in allowed:
+        errors.append("bad_action_for_domain")
+    if row["type"] == "reject" and not row["reject_reason"]:
+        errors.append("reject_without_reason")
+    return not errors, errors, row
+
+
+def append_item(item, path=LEDGER, source="manual"):
+    ok, errors, row = validate_item(item, source=source)
+    if not ok:
+        return False, errors, None
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "a", encoding="utf-8") as fh:
+        fh.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
+    return True, [], row
+
+
+def read_items(path=LEDGER, limit=None):
+    rows = []
+    try:
+        with open(path, encoding="utf-8") as fh:
+            for line in fh:
+                try:
+                    row = json.loads(line)
+                except ValueError:
+                    continue
+                if isinstance(row, dict) and row.get("schema") == SCHEMA_VERSION:
+                    rows.append(row)
+    except OSError:
+        rows = []
+    if limit is not None:
+        rows = rows[-max(0, int(limit)):]
+    return rows
+
+
+def summarize(path=LEDGER, limit=50):
+    rows = read_items(path, limit=limit)
+    return {
+        "total": len(rows),
+        "by_domain": dict(Counter(r.get("domain", "") for r in rows)),
+        "by_type": dict(Counter(r.get("type", "") for r in rows)),
+        "by_action": dict(Counter(r.get("action", "") for r in rows)),
+        "last": rows[-5:],
+    }
+
+
+def external_item_to_ledger(item, area):
+    domain_by_area = {
+        "rd_evidence": "rd",
+        "iskvw_curation": "iskvw",
+        "mak_quality": "mak",
+        "svg_pipeline": "svg",
+        "tool_archaeology": "repo",
+        "adobe_rescue": "adobe",
+    }
+    item_type = "reject" if item.get("action") == "reject" else "evidence"
+    return {
+        "domain": domain_by_area.get(area, "mak"),
+        "type": item_type,
+        "claim": item.get("claim", ""),
+        "evidence": item.get("evidence", []),
+        "files": item.get("files", []),
+        "confidence": item.get("confidence", "unknown"),
+        "action": item.get("action", ""),
+        "reject_reason": item.get("reject_reason", ""),
+    }
+
+
+def append_external_result(payload, area, path=LEDGER, source="external"):
+    if isinstance(payload, str):
+        payload = json.loads(payload)
+    rows = []
+    errors = []
+    for idx, item in enumerate(payload.get("items", []) if isinstance(payload, dict) else []):
+        ok, item_errors, row = append_item(
+            external_item_to_ledger(item, area), path=path,
+            source="%s:%s" % (source, area))
+        if ok:
+            rows.append(row)
+        else:
+            errors.extend("item_%d_%s" % (idx, e) for e in item_errors)
+    return rows, errors
+
+
+def review_to_ledger(review, area):
+    domain = str(review.get("domain") or "").lower()
+    verdict = str(review.get("verdict") or "").lower()
+    item_type = "decision" if verdict == "accept" else "reject"
+    action = {
+        "rd": "reject" if verdict == "reject" else "verify_source",
+        "iskvw": "reject" if verdict == "reject" else "curate",
+        "mak": "reject" if verdict == "reject" else "decide",
+        "svg": "reject" if verdict == "reject" else "measure",
+        "adobe": "reject" if verdict == "reject" else "rescue",
+        "repo": "reject" if verdict == "reject" else "test",
+    }.get(domain, "reject")
+    return {
+        "domain": domain,
+        "type": item_type,
+        "claim": "%s review for %s: %s" % (verdict, area, review.get("reason", "")),
+        "evidence": review.get("missing_evidence", []) + review.get("risks", []),
+        "files": [],
+        "confidence": "medium" if verdict == "accept" else "low",
+        "action": action,
+        "reject_reason": "" if item_type != "reject" else review.get("reason", ""),
+    }
+
+
+def append_review(review, area, path=LEDGER, source="local_review"):
+    return append_item(review_to_ledger(review, area), path=path, source=source)
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description="MAK common append-only ledger")
+    sub = parser.add_subparsers(dest="cmd", required=True)
+    p_add = sub.add_parser("append", help="append one ledger item from stdin")
+    p_add.add_argument("--ledger", default=LEDGER)
+    p_add.add_argument("--source", default="manual")
+    p_sum = sub.add_parser("summary", help="summarize ledger")
+    p_sum.add_argument("--ledger", default=LEDGER)
+    p_sum.add_argument("--limit", type=int, default=50)
+    args = parser.parse_args(argv)
+    if args.cmd == "append":
+        ok, errors, row = append_item(json.loads(input()), path=args.ledger,
+                                      source=args.source)
+        print(json.dumps({"ok": ok, "errors": errors, "item": row},
+                         ensure_ascii=False))
+        return 0 if ok else 2
+    if args.cmd == "summary":
+        print(json.dumps(summarize(args.ledger, args.limit),
+                         ensure_ascii=False, indent=2))
+        return 0
+    return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
