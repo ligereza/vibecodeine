@@ -59,6 +59,8 @@ except Exception:
 STATE = os.path.join(HOME, "plataforma/.trabajo_state.json")
 LOG = os.path.join(HOME, "plataforma/logs/trabajo.log")
 IDLE_AUDIT = os.path.join(HOME, "plataforma/idle_decisions.jsonl")
+IDLE_LEDGER_REVIEWS = os.path.join(HOME, "plataforma/idle_ledger_reviews.jsonl")
+COMMON_LEDGER = os.path.join(HOME, "plataforma/common_ledger.jsonl")
 BACKLOG = os.path.join(HOME, "plataforma/backlog_codex.txt")
 SEMILLAS_F = os.path.join(HOME, "plataforma/semillas_latido.txt")
 RESEARCH = "http://127.0.0.1:8890/run"
@@ -83,6 +85,22 @@ def _append_jsonl(path, row):
             f.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
     except OSError:
         pass
+
+
+def _read_jsonl(path, limit=500):
+    rows = []
+    try:
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                try:
+                    row = json.loads(line)
+                except ValueError:
+                    continue
+                if isinstance(row, dict):
+                    rows.append(row)
+    except OSError:
+        return []
+    return rows[-max(0, int(limit)):]
 
 
 def load1():
@@ -210,6 +228,10 @@ def _idle_node_payload(verbo, st):
     node = IDLE_NODES.get(verbo)
     if not node:
         return None
+    if verbo == "repasar":
+        ledger_payload = _idle_ledger_review_payload(st)
+        if ledger_payload:
+            return ledger_payload
     topics = node["temas"]
     key = "idle_%s_idx" % verbo
     i = st.get(key, 0) % len(topics)
@@ -221,6 +243,52 @@ def _idle_node_payload(verbo, st):
     if node.get("n"):
         payload["n"] = node["n"]
     return payload
+
+
+def _idle_ledger_review_payload(st):
+    """Pick one pending ledger item for no-cost idle introspection."""
+    seen = set(st.get("idle_ledger_seen", [])[-200:])
+    candidates = []
+    for row in _read_jsonl(COMMON_LEDGER):
+        if row.get("type") == "reject" or row.get("confidence") == "low":
+            row_id = row.get("id") or ""
+            if row_id and row_id not in seen:
+                candidates.append(row)
+    if not candidates:
+        return None
+    row = candidates[-1]
+    row_id = row.get("id") or ""
+    st["idle_ledger_seen"] = (list(seen) + [row_id])[-200:]
+    return {
+        "modo": "ledger_review",
+        "formato": "ledger",
+        "densidad": "corto",
+        "tema": "ledger pending: %s" % str(row.get("claim") or "")[:180],
+        "ledger_id": row_id,
+        "domain": row.get("domain", ""),
+        "action": row.get("action", ""),
+        "reason": row.get("reject_reason", ""),
+        "source": row.get("source", ""),
+    }
+
+
+def _run_local_idle(payload):
+    """Execute a local idle unit without calling research/codex or spending LLM."""
+    if payload.get("modo") != "ledger_review":
+        return json.dumps({"ok": False, "error": "unknown local idle mode"})
+    row = {
+        "ts": time.strftime("%F %T"),
+        "schema": "mak-idle-ledger-review-v1",
+        "ledger_id": payload.get("ledger_id", ""),
+        "domain": payload.get("domain", ""),
+        "action": payload.get("action", ""),
+        "source": payload.get("source", ""),
+        "reason": payload.get("reason", ""),
+        "next_action": "review or rerun the source batch with stronger evidence",
+    }
+    _append_jsonl(IDLE_LEDGER_REVIEWS, row)
+    return json.dumps({"ok": True, "local": True, "mode": "ledger_review",
+                       "ledger_id": row["ledger_id"]})
 
 
 def _audit_idle_decision(ts, online, verbo, depto, payload, status,
@@ -456,6 +524,8 @@ def _tarea(verbo, st):
         payload = _idle_node_payload(verbo, st)
         if not payload:
             return None
+        if payload.get("modo") == "ledger_review":
+            return ("local", payload)
         return (v["depto"], payload)
     return None
 
@@ -514,6 +584,21 @@ def main():
     url = RESEARCH
     if depto == "codex":
         url = CODEX
+    if depto == "local":
+        resp = _run_local_idle(payload)
+        ok, err = _resp_ok(resp)
+        if ok:
+            st["count"] = st.get("count", 0) + 1
+            st["last"] = now
+            _save(st)
+            log("%s OK local %.80s" % (ts, payload.get("modo", "")))
+            _audit_idle_decision(ts, online, verbo, depto, payload,
+                                 "accepted", resp)
+        else:
+            log("%s RECHAZO local: %s" % (ts, err))
+            _audit_idle_decision(ts, online, verbo, depto, payload,
+                                 "rejected", resp, err)
+        return
     try:
         resp = _post(url, payload)
         ok, err = _resp_ok(resp)
