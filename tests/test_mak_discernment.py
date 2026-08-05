@@ -77,6 +77,48 @@ def test_deterministic_review_revises_missing_evidence():
     assert review["missing_evidence"]
 
 
+def test_deterministic_review_rejects_redacted_or_secret_material():
+    review = discernment.deterministic_review(
+        "mak_quality", {"items": [{
+            "claim": "[redacted] config proves the queue works",
+            "evidence": ["~/n8n-local/research.env"],
+            "files": ["~/n8n-local/research.env"],
+            "confidence": "high",
+            "action": "archive",
+            "reject_reason": "",
+        }]})
+    assert review["verdict"] == "reject"
+    assert any("secret" in risk or "redacted" in risk for risk in review["risks"])
+
+
+def test_deterministic_review_revises_action_without_files():
+    review = discernment.deterministic_review(
+        "adobe_rescue", {"items": [{
+            "claim": "adobe bridge exists",
+            "evidence": ["README says so"],
+            "files": [],
+            "confidence": "high",
+            "action": "rescue",
+            "reject_reason": "",
+        }]})
+    assert review["verdict"] == "revise"
+    assert any("files for" in item for item in review["missing_evidence"])
+
+
+def test_deterministic_review_revises_weak_negative_claims():
+    review = discernment.deterministic_review(
+        "tool_archaeology", {"items": [{
+            "claim": "no existe herramienta para mapear arquitectura",
+            "evidence": [],
+            "files": [],
+            "confidence": "medium",
+            "action": "test",
+            "reject_reason": "",
+        }]})
+    assert review["verdict"] == "revise"
+    assert any("negative claim" in item for item in review["missing_evidence"])
+
+
 def test_review_payload_uses_valid_injected_local_judge():
     def fake_reviewer(_prompt):
         return json.dumps({
@@ -103,6 +145,32 @@ def test_review_payload_falls_back_when_local_judge_breaks():
         "svg_pipeline", {"items": []}, reviewer=broken)
     assert review["verdict"] == "reject"
     assert meta["reviewer"] == "deterministic"
+    assert meta["fallback"] is True
+
+
+def test_invalid_ollama_acceptance_downgrades_to_revise():
+    def wrong_domain(_prompt):
+        return json.dumps({
+            "schema": discernment.SCHEMA_VERSION,
+            "verdict": "accept",
+            "domain": "svg",
+            "reason": "looks fine",
+            "risks": [],
+            "missing_evidence": [],
+            "next_action": "append",
+        })
+
+    review, meta = discernment.review_payload(
+        "adobe_rescue", {"items": [{
+            "claim": "adobe bridge exists",
+            "evidence": ["tools/adobe_panel/README.md"],
+            "files": ["tools/adobe_panel/README.md"],
+            "confidence": "high",
+            "action": "rescue",
+            "reject_reason": "",
+        }]}, reviewer=wrong_domain)
+    assert review["verdict"] == "revise"
+    assert "valid local review" in review["missing_evidence"]
     assert meta["fallback"] is True
 
 

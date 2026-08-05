@@ -158,10 +158,26 @@ def deterministic_review(area, payload):
         claim = str(item.get("claim", "") if isinstance(item, dict) else "")
         files = item.get("files", []) if isinstance(item, dict) else []
         action = item.get("action", "") if isinstance(item, dict) else ""
+        if item.get("confidence") == "low":
+            missing.append("low confidence for: %s" % claim[:80])
         if not evidence:
             missing.append("evidence for: %s" % claim[:80])
+        if action in ("reuse", "merge", "retire", "test", "measure", "prototype",
+                      "rescue", "bridge", "curate", "expose", "repair_queue",
+                      "verify_source", "triangulate") and not files:
+            missing.append("files for: %s" % claim[:80])
         folded = " ".join([claim, " ".join(map(str, evidence)),
                            " ".join(map(str, files))]).lower()
+        if "[redacted]" in folded:
+            risks.append("provider output touched redacted or secret-looking material")
+        if any(marker in folded for marker in (
+                ".env", "api_key", "apikey", "secret", "token", "password",
+                "credential", "authorization", "bearer")):
+            risks.append("provider output references secret-bearing material")
+        if any(marker in folded for marker in (
+                "no hay ", "no existe ", "missing ", "is absent", "does not exist")):
+            if not files or not evidence:
+                missing.append("negative claim needs concrete search evidence: %s" % claim[:80])
         if area == "rd_evidence" and "iskvw" in folded:
             risks.append("RD item mentions iskvw; domain mixed")
         if area == "iskvw_curation" and ("reduccion de dano" in folded or "harm reduction" in folded):
@@ -220,6 +236,12 @@ def review_payload(area, payload, reviewer=None, use_ollama=True):
         if ok:
             return review, {"reviewer": "ollama", "fallback": False}
         baseline["risks"] = baseline["risks"] + ["ollama review invalid: %s" % ",".join(errors)]
+        if baseline["verdict"] == "accept":
+            baseline["verdict"] = "revise"
+            baseline["reason"] = "ollama review invalid: %s" % ",".join(errors)
+            baseline["missing_evidence"] = (
+                baseline["missing_evidence"] + ["valid local review"]
+            )[:8]
         return baseline, {"reviewer": "deterministic", "fallback": True,
                           "errors": errors}
     except Exception as exc:  # noqa: BLE001 - local judge must not block ledger forever

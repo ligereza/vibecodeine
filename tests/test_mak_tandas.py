@@ -36,6 +36,14 @@ def test_build_brief_can_include_bounded_evidence():
     assert len(brief["prompt"]) < 12000
 
 
+def test_build_brief_accepts_round_instruction():
+    brief = tandas.build_brief(
+        "mak_quality", "r002", providers=["watsonx"],
+        instruction="Refute the previous batch; do not repeat claims.")
+    assert "INSTRUCCION DE ESTA RONDA" in brief["prompt"]
+    assert "Refute the previous batch" in brief["prompt"]
+
+
 def test_validate_result_accepts_atomic_items():
     ok, errors = tandas.validate_result({
         "items": [{
@@ -162,11 +170,13 @@ def test_provider_env_aliases_normalize_ibm_names(monkeypatch, tmp_path):
 
 def test_run_external_batch_persists_raw_and_ingests(monkeypatch, tmp_path):
     common = tmp_path / "common_ledger.jsonl"
+    batch = tmp_path / "external_batches.jsonl"
     out_dir = tmp_path / "tandas"
 
     def fake_call(provider, prompt, model=None, max_tokens=2500, temperature=0.1):
         assert provider == "watsonx"
         assert "AREA: tool_archaeology" in prompt
+        assert "Find omissions" in prompt
         assert model == "fake-model"
         assert max_tokens == 123
         return json.dumps({"items": [{
@@ -181,12 +191,15 @@ def test_run_external_batch_persists_raw_and_ingests(monkeypatch, tmp_path):
     monkeypatch.setattr(tandas.external_providers, "call", fake_call)
     result = tandas.run_external_batch(
         "tool_archaeology", "r001", "watsonx", model="fake-model",
-        out_dir=str(out_dir), common_path=str(common),
-        use_ollama=False, max_tokens=123)
+        out_dir=str(out_dir), common_path=str(common), batch_path=str(batch),
+        use_ollama=False, max_tokens=123, instruction="Find omissions")
     assert result["status"] == "accepted"
     assert (out_dir / "tool_archaeology-r001-watsonx.raw.txt").is_file()
     rows = [json.loads(line) for line in common.read_text(encoding="utf-8").splitlines()]
     assert [row["type"] for row in rows] == ["decision", "evidence"]
+    batch_row = json.loads(batch.read_text(encoding="utf-8"))
+    assert batch_row["provider"] == "watsonx"
+    assert batch_row["status"] == "accepted"
 
 
 def test_cli_run_reports_provider_error_without_traceback():
