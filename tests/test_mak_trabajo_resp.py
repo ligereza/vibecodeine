@@ -157,6 +157,7 @@ def test_idle_review_uses_revision_format(monkeypatch):
     monkeypatch.setattr(trabajo, "_has_pending_material", lambda: False)
     monkeypatch.setattr(trabajo, "_has_pending_research_backlog", lambda: False)
     monkeypatch.setattr(trabajo, "_has_pending_codex_backlog", lambda: False)
+    monkeypatch.setattr(trabajo, "_idle_ledger_review_payload", lambda _st: None)
     depto, payload = trabajo._tarea("repasar", {})
     assert depto == "research"
     assert payload["formato"] == "revision"
@@ -174,6 +175,7 @@ def test_idle_executive_nodes_have_distinct_contracts(monkeypatch, verbo, expect
     monkeypatch.setattr(trabajo, "_has_pending_material", lambda: False)
     monkeypatch.setattr(trabajo, "_has_pending_research_backlog", lambda: False)
     monkeypatch.setattr(trabajo, "_has_pending_codex_backlog", lambda: False)
+    monkeypatch.setattr(trabajo, "_idle_ledger_review_payload", lambda _st: None)
     depto, payload = trabajo._tarea(verbo, {})
     assert depto == "research"
     for key, value in expected.items():
@@ -193,6 +195,96 @@ def test_idle_review_waits_for_real_backlog(monkeypatch, pending):
     monkeypatch.setattr(trabajo, pending, lambda: True)
     for verbo in ("repasar", "discutir", "refutar", "exponer"):
         assert trabajo._tarea(verbo, {}) is None
+
+
+def test_repasar_reviews_pending_ledger_locally(monkeypatch, tmp_path):
+    common = tmp_path / "common_ledger.jsonl"
+    monkeypatch.setattr(trabajo, "COMMON_LEDGER", str(common))
+    monkeypatch.setattr(trabajo, "_has_pending_material", lambda: False)
+    monkeypatch.setattr(trabajo, "_has_pending_research_backlog", lambda: False)
+    monkeypatch.setattr(trabajo, "_has_pending_codex_backlog", lambda: False)
+    common.write_text(json.dumps({
+        "id": "abc123",
+        "schema": "mak-ledger-v1",
+        "source": "local_review:aws",
+        "domain": "svg",
+        "type": "reject",
+        "claim": "revise svg claim",
+        "action": "reject",
+        "reject_reason": "missing benchmark",
+    }) + "\n", encoding="utf-8")
+
+    depto, payload = trabajo._tarea("repasar", {})
+
+    assert depto == "local"
+    assert payload["modo"] == "ledger_review"
+    assert payload["ledger_id"] == "abc123"
+    assert payload["domain"] == "svg"
+
+
+def test_local_idle_ledger_review_writes_jsonl(monkeypatch, tmp_path):
+    reviews = tmp_path / "idle_ledger_reviews.jsonl"
+    monkeypatch.setattr(trabajo, "IDLE_LEDGER_REVIEWS", str(reviews))
+
+    resp = trabajo._run_local_idle({
+        "modo": "ledger_review",
+        "ledger_id": "abc123",
+        "domain": "svg",
+        "action": "reject",
+        "reason": "missing benchmark",
+        "source": "local_review:aws",
+    })
+
+    assert json.loads(resp)["ok"] is True
+    row = json.loads(reviews.read_text(encoding="utf-8"))
+    assert row["schema"] == "mak-idle-ledger-review-v1"
+    assert row["ledger_id"] == "abc123"
+
+
+def test_main_local_idle_does_not_post_http(monkeypatch, tmp_path):
+    common = tmp_path / "common_ledger.jsonl"
+    reviews = tmp_path / "idle_ledger_reviews.jsonl"
+    saved = {}
+    monkeypatch.setattr(trabajo, "COMMON_LEDGER", str(common))
+    monkeypatch.setattr(trabajo, "IDLE_LEDGER_REVIEWS", str(reviews))
+    monkeypatch.setattr(trabajo, "_post", lambda *_a, **_k: (_ for _ in ()).throw(
+        AssertionError("local idle must not call HTTP")))
+    monkeypatch.setattr(trabajo, "_save", lambda s: saved.update(s))
+    monkeypatch.setattr(trabajo, "log", lambda _m: None)
+    monkeypatch.setattr(trabajo, "load1", lambda: 0.0)
+    monkeypatch.setattr(trabajo, "_state", lambda: {
+        "date": trabajo.time.strftime("%Y-%m-%d", trabajo.time.localtime(
+            trabajo.time.time() - 19 * 3600)),
+        "count": 0, "last": 0, "verbo_idx": 0,
+    })
+    monkeypatch.setattr(trabajo.roles, "VERBOS", [{
+        "verbo": "repasar", "depto": "research", "modo": "research", "fuente": "idle",
+    }])
+    monkeypatch.setattr(trabajo.roles, "LOAD_MAX", 999)
+    monkeypatch.setattr(trabajo.roles, "GAP_MIN", 0)
+    monkeypatch.setattr(trabajo.roles, "GAP_MIN_OFFLINE", 0)
+    monkeypatch.setattr(trabajo.roles, "MAX_DIA", 999)
+    monkeypatch.setattr(trabajo, "red_ok", lambda: True)
+    monkeypatch.setattr(trabajo, "_has_pending_material", lambda: False)
+    monkeypatch.setattr(trabajo, "_has_pending_research_backlog", lambda: False)
+    monkeypatch.setattr(trabajo, "_has_pending_codex_backlog", lambda: False)
+    if trabajo.backlog is not None:
+        monkeypatch.setattr(trabajo.backlog, "cosechar", lambda *a, **k: 0)
+    common.write_text(json.dumps({
+        "id": "abc123",
+        "schema": "mak-ledger-v1",
+        "source": "local_review:aws",
+        "domain": "svg",
+        "type": "reject",
+        "claim": "revise svg claim",
+        "action": "reject",
+        "reject_reason": "missing benchmark",
+    }) + "\n", encoding="utf-8")
+
+    trabajo.main()
+
+    assert saved["count"] == 1
+    assert reviews.is_file()
 
 
 def test_seeds_are_not_infinite_default_when_backlog_is_empty(monkeypatch):
