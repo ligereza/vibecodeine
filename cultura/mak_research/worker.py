@@ -11,6 +11,8 @@ import subprocess
 import sys
 import threading
 import time
+import urllib.parse
+import urllib.request
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BASE)
@@ -19,6 +21,8 @@ from research_lib import emitir_evento, mint_job_id  # noqa: E402
 
 LOCK = os.path.expanduser("~/research/.jobs.lock")
 STATUS_FILE = os.path.expanduser("~/research/.current_status.json")
+CODEX_RUN_URL = os.environ.get("MAK_CODEX_RUN_URL", "http://127.0.0.1:8891/run")
+AUTO_ICONOS_MAX = int(os.environ.get("MAK_AUTO_ICONOS_MAX", "6"))
 
 
 def _set_status(msg, pid):
@@ -50,6 +54,95 @@ SCRIPTS = {"research": "research.py", "panel": "panel.py",
 N_FLAG = {"research": "--iteraciones", "panel": "--replicas"}
 # corpus no toma tema posicional (correlaciona el archivo entero)
 SIN_TEMA = {"corpus"}
+
+
+def _annex_paths_from_output(out):
+    """Extract concept annex paths printed by research.py.
+
+    research.py prints `ANEXO: /path/file.conceptos.json` only when an essay
+    produced named concepts. That is the seam between research and visual work:
+    the markdown report is for a human, the annex is machine-readable material
+    for Codex icon generation.
+    """
+    paths = []
+    for line in (out or "").splitlines():
+        if line.startswith("ANEXO: "):
+            path = line[len("ANEXO: "):].strip()
+            if path:
+                paths.append(path)
+    return paths
+
+
+def _icon_prompt(concept, annex_path):
+    title = str(concept.get("titulo") or concept.get("slug") or "").strip()
+    description = str(concept.get("descripcion") or "").strip()
+    style = str(concept.get("estilo") or "").strip()
+    anchor = str(concept.get("ancla") or "").strip()
+    parts = [
+        "Icono SVG animado para anexo iconográfico de un ensayo MAK.",
+        "Concepto: %s" % title,
+    ]
+    if description:
+        parts.append("Descripción: %s" % description)
+    if style:
+        parts.append("Estilo sugerido: %s" % style)
+    if anchor:
+        parts.append("Ancla del ensayo: %s" % anchor)
+    parts.append("Origen: %s" % annex_path)
+    parts.append("Debe ser representativo del concepto, no decorativo.")
+    return "\n".join(parts)
+
+
+def _post_codex_icon(prompt, densidad):
+    data = urllib.parse.urlencode({
+        "modo": "iconos",
+        "pedido": prompt,
+        "densidad": densidad or "medio",
+    }).encode()
+    req = urllib.request.Request(
+        CODEX_RUN_URL, data=data, method="POST",
+        headers={"Content-Type": "application/x-www-form-urlencoded"})
+    with urllib.request.urlopen(req, timeout=5) as r:
+        body = r.read(600).decode("utf-8", "replace")
+    try:
+        payload = json.loads(body)
+    except ValueError:
+        return True
+    return bool(payload.get("ok", True))
+
+
+def enqueue_annex_icons(annex_path, densidad="medio", max_icons=AUTO_ICONOS_MAX):
+    """Queue Codex icon jobs for a research essay annex.
+
+    This is intentionally best-effort. A finished essay must not become failed
+    because the visual department is down; the failure is returned to the caller
+    as metadata and can be logged as a department-health problem.
+    """
+    if os.environ.get("MAK_AUTO_ICONOS", "1").lower() in ("0", "false", "no"):
+        return {"queued": 0, "errors": ["MAK_AUTO_ICONOS disabled"]}
+    try:
+        with open(annex_path, encoding="utf-8") as f:
+            concepts = json.load(f)
+    except (OSError, ValueError) as e:
+        return {"queued": 0, "errors": [str(e)[:200]]}
+    if not isinstance(concepts, list):
+        return {"queued": 0, "errors": ["annex is not a list"]}
+
+    queued = 0
+    errors = []
+    for concept in concepts[:max(0, int(max_icons))]:
+        if not isinstance(concept, dict):
+            continue
+        prompt = _icon_prompt(concept, annex_path)
+        try:
+            if _post_codex_icon(prompt, densidad):
+                queued += 1
+            else:
+                errors.append("codex rejected %r" % concept.get("titulo"))
+        except Exception as e:  # noqa: BLE001 - visual queue must not break research
+            errors.append(str(e)[:200])
+            break
+    return {"queued": queued, "errors": errors[:5]}
 
 
 def run_tema(modo, tema, n=None, ntfy=True, sin_marco=False, densidad=None,
@@ -149,8 +242,19 @@ def run_tema(modo, tema, n=None, ntfy=True, sin_marco=False, densidad=None,
     if ok:
         emitir_evento("research", job_id, "node_end", estado="listo",
                       ruta_completa=path)
+        visual = {"queued": 0, "errors": []}
+        for annex_path in _annex_paths_from_output(out):
+            r = enqueue_annex_icons(annex_path, densidad=densidad or "medio")
+            visual["queued"] += r.get("queued", 0)
+            visual["errors"].extend(r.get("errors", []))
+        if visual["queued"]:
+            emitir_evento("research", job_id, "llm_result", fase="iconos",
+                         resumen="%d iconos SVG encolados en Codex"
+                         % visual["queued"])
     else:
         emitir_evento("research", job_id, "error", tipo_error="fallo_proceso",
                       contexto=out[-300:].strip())
         emitir_evento("research", job_id, "node_end", estado="FALLO")
-    return {"ok": ok, "path": path, "tail": out[-800:]}
+    return {"ok": ok, "path": path, "tail": out[-800:],
+            "iconos_enviados": visual["queued"] if ok else 0,
+            "iconos_errores": visual["errors"] if ok else []}
