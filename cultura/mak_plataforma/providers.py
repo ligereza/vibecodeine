@@ -147,6 +147,40 @@ def aws_bedrock_chat(prompt, model=None, max_tokens=2500, temperature=0.1):
     return "".join(part.get("text", "") for part in output).strip()
 
 
+def _openai_compatible_chat(provider, prompt, model=None, max_tokens=2500,
+                            temperature=0.1):
+    load_env()
+    config = {
+        "cerebras": (
+            "CEREBRAS_API_KEY", "CEREBRAS_BASE_URL",
+            "https://api.cerebras.ai/v1", "CEREBRAS_MODEL",
+            "llama-3.3-70b"),
+        "groq": (
+            "GROQ_API_KEY", "GROQ_BASE_URL",
+            "https://api.groq.com/openai/v1", "GROQ_MODEL",
+            "llama-3.3-70b-versatile"),
+    }[provider]
+    api_key = os.environ.get(config[0], "")
+    if not api_key:
+        raise RuntimeError("missing_%s" % config[0])
+    request = urllib.request.Request(
+        os.environ.get(config[1], config[2]).rstrip("/") + "/chat/completions",
+        data=json.dumps({
+            "model": model or os.environ.get(config[3], config[4]),
+            "messages": [{"role": "system", "content": "Return only valid JSON. No prose."},
+                         {"role": "user", "content": prompt}],
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+        }).encode("utf-8"),
+        headers={"Authorization": "Bearer " + api_key,
+                 "Content-Type": "application/json",
+                 "User-Agent": "flujo-mak-batches/1.0"},
+    )
+    with urllib.request.urlopen(request, timeout=120) as response:
+        payload = json.loads(response.read().decode("utf-8", "replace"))
+    return (payload["choices"][0]["message"]["content"] or "").strip()
+
+
 def call(provider, prompt, model=None, max_tokens=2500, temperature=0.1):
     provider = str(provider or "").lower()
     if provider == "watsonx":
@@ -155,4 +189,15 @@ def call(provider, prompt, model=None, max_tokens=2500, temperature=0.1):
     if provider == "aws":
         return aws_bedrock_chat(prompt, model=model, max_tokens=max_tokens,
                                 temperature=temperature)
+    if provider == "ollama":
+        try:
+            from . import discernment
+        except ImportError:
+            import discernment
+        return discernment.call_ollama(prompt, model=model, max_tokens=max_tokens,
+                                       temperature=temperature)
+    if provider in ("cerebras", "groq"):
+        return _openai_compatible_chat(provider, prompt, model=model,
+                                       max_tokens=max_tokens,
+                                       temperature=temperature)
     raise ValueError("unknown_provider:%s" % provider)
