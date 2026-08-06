@@ -118,6 +118,10 @@ def test_validate_evidence_paths_accepts_repo_files():
     assert tandas.validate_evidence_paths(payload) == (True, [])
 
 
+def test_parse_provider_json_accepts_fenced_json():
+    assert tandas._parse_provider_json("```json\n{\"items\": []}\n```") == {"items": []}
+
+
 def test_append_ledger_does_not_persist_secrets(tmp_path):
     path = tmp_path / "external_batches.jsonl"
     saved = tandas.append_ledger({
