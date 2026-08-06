@@ -211,6 +211,7 @@ def _corpus_review_payload(st):
             "source_path": path,
             "review_id": review_id,
             "output_contract": contract_for_task("repasar", topic),
+            "work_contract": work_contract("repasar", topic),
         }
     return None
 
@@ -523,6 +524,54 @@ def contract_for_task(verbo, tema):
     return ["claim", "sources", "uncertainty", "next_action"]
 
 
+def work_contract(verbo, tema):
+    """Build the typed receipt that travels with every research dispatch."""
+    if research_router is not None:
+        route = research_router.route_research_task(
+            verbo, tema, factual_detector=_es_pregunta_factual)
+        return {
+            "schema": "mak-work-contract-v1",
+            "domain": route.domain,
+            "intent": route.intent,
+            "format": route.formato,
+            "density": route.densidad,
+            "required_fields": list(route.required_fields),
+            "reason": route.reason,
+        }
+    formato, densidad = format_for_task(verbo, tema)
+    return {
+        "schema": "mak-work-contract-v1",
+        "domain": "research",
+        "intent": "answer",
+        "format": formato,
+        "density": densidad,
+        "required_fields": contract_for_task(verbo, tema),
+        "reason": "conservative local fallback",
+    }
+
+
+def validate_work_contract(verbo, payload):
+    """Reject route drift before a research request reaches MAK services."""
+    if payload.get("modo") != "research":
+        return []
+    tema = payload.get("tema", "")
+    actual = payload.get("work_contract") or {}
+    expected = work_contract(verbo, tema)
+    errors = []
+    for field in ("domain", "intent", "format", "density"):
+        if actual.get(field) != expected[field]:
+            errors.append("work_contract_%s_mismatch" % field)
+    if actual.get("required_fields") != expected["required_fields"]:
+        errors.append("work_contract_required_fields_mismatch")
+    if payload.get("formato") != expected["format"]:
+        errors.append("payload_format_mismatch")
+    if payload.get("densidad") != expected["density"]:
+        errors.append("payload_density_mismatch")
+    if payload.get("output_contract") != expected["required_fields"]:
+        errors.append("output_contract_mismatch")
+    return errors
+
+
 def _tarea(verbo, st):
     """Arma (depto, payload_dict) para un verbo, o None si no hay trabajo."""
     v = next((x for x in roles.VERBOS if x["verbo"] == verbo), None)
@@ -550,7 +599,8 @@ def _tarea(verbo, st):
         fmt, dens = format_for_task(verbo, tema)
         return ("research", {"modo": tarea.get("modo", "research"),
                              "tema": tema, "densidad": dens, "formato": fmt,
-                             "output_contract": contract_for_task(verbo, tema)})
+                             "output_contract": contract_for_task(verbo, tema),
+                             "work_contract": work_contract(verbo, tema)})
     if fuente == "concepto":
         if verbo == "multiplicar" and _should_review_corpus(st):
             payload = _corpus_review_payload(st)
@@ -570,7 +620,8 @@ def _tarea(verbo, st):
                 fmt, dens = format_for_task(verbo, tema)
                 return ("research", {"modo": v["modo"], "tema": tema,
                                      "densidad": dens, "formato": fmt,
-                                     "output_contract": contract_for_task(verbo, tema)})
+                                     "output_contract": contract_for_task(verbo, tema),
+                                     "work_contract": work_contract(verbo, tema)})
         if not _seed_fallback_enabled():
             return None
         i = st.get("sem_idx", 0) % len(sems)
@@ -578,7 +629,8 @@ def _tarea(verbo, st):
         fmt, dens = format_for_task(verbo, sems[i])
         return ("research", {"modo": v["modo"], "tema": sems[i],
                              "densidad": dens, "formato": fmt,
-                             "output_contract": contract_for_task(verbo, sems[i])})
+                             "output_contract": contract_for_task(verbo, sems[i]),
+                             "work_contract": work_contract(verbo, sems[i])})
     if fuente == "definir":
         if not _seed_fallback_enabled():
             return None
@@ -588,7 +640,8 @@ def _tarea(verbo, st):
         fmt, dens = format_for_task(verbo, tema)
         return ("research", {"modo": v["modo"], "tema": tema,
                              "densidad": dens, "formato": fmt,
-                             "output_contract": contract_for_task(verbo, tema)})
+                             "output_contract": contract_for_task(verbo, tema),
+                             "work_contract": work_contract(verbo, tema)})
     if fuente == "modulo":
         mods = roles.MODULOS
         i = st.get("mod_idx", 0) % len(mods)
@@ -681,6 +734,14 @@ def main():
             log("%s RECHAZO local: %s" % (ts, err))
             _audit_idle_decision(ts, online, verbo, depto, payload,
                                  "rejected", resp, err)
+        return
+    contract_errors = validate_work_contract(verbo, payload)
+    if contract_errors:
+        error = ",".join(contract_errors)
+        log("%s RECHAZO local de contrato: %s" % (ts, error))
+        _audit_idle_decision(ts, online, verbo, depto, payload,
+                             "rejected", error=error)
+        _save(st)
         return
     try:
         resp = _post(url, payload)

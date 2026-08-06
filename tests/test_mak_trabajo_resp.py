@@ -117,6 +117,24 @@ def test_harvested_factual_question_does_not_use_essay_shape(monkeypatch):
     assert payload["formato"] == "informe"
     assert payload["densidad"] == "corto"
     assert "sources" in payload["output_contract"]
+    assert payload["work_contract"]["schema"] == "mak-work-contract-v1"
+    assert payload["work_contract"]["format"] == payload["formato"]
+
+
+def test_route_contract_rejects_format_drift():
+    payload = {
+        "modo": "research",
+        "tema": "Quien organizo el evento en Santiago",
+        "formato": "ensayo",
+        "densidad": "medio",
+        "output_contract": ["thesis"],
+        "work_contract": {"domain": "research", "intent": "essay",
+                           "format": "ensayo", "density": "medio",
+                           "required_fields": ["thesis"]},
+    }
+    errors = trabajo.validate_work_contract("multiplicar", payload)
+    assert "work_contract_domain_mismatch" in errors
+    assert "payload_format_mismatch" in errors
 
 
 @pytest.mark.parametrize("pregunta", [
