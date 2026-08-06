@@ -92,6 +92,18 @@ def test_validate_product_contract_accepts_complete_area_fields():
     assert tandas.validate_product_contract(payload, "mak_quality") == (True, [])
 
 
+def test_validate_evidence_paths_rejects_invented_files():
+    payload = {"items": [{"files": ["does/not/exist.py"]}]}
+    ok, errors = tandas.validate_evidence_paths(payload)
+    assert ok is False
+    assert errors == ["item_0_missing_evidence_path_0"]
+
+
+def test_validate_evidence_paths_accepts_repo_files():
+    payload = {"items": [{"files": ["cultura/mak_plataforma/trabajo.py"]}]}
+    assert tandas.validate_evidence_paths(payload) == (True, [])
+
+
 def test_append_ledger_does_not_persist_secrets(tmp_path):
     path = tmp_path / "external_batches.jsonl"
     saved = tandas.append_ledger({
