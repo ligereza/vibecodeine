@@ -60,6 +60,8 @@ STATE = os.path.join(HOME, "plataforma/.trabajo_state.json")
 LOG = os.path.join(HOME, "plataforma/logs/trabajo.log")
 IDLE_AUDIT = os.path.join(HOME, "plataforma/idle_decisions.jsonl")
 IDLE_LEDGER_REVIEWS = os.path.join(HOME, "plataforma/idle_ledger_reviews.jsonl")
+IDLE_BENCHMARK_REVIEWS = os.path.join(HOME, "plataforma/idle_benchmark_reviews.jsonl")
+BENCHMARK = os.path.join(HOME, "plataforma/corpus_benchmark.json")
 CORPUS_REVIEW_LOG = os.path.join(HOME, "plataforma/corpus_reviews.jsonl")
 COMMON_LEDGER = os.path.join(HOME, "plataforma/common_ledger.jsonl")
 BACKLOG = os.path.join(HOME, "plataforma/backlog_codex.txt")
@@ -103,6 +105,15 @@ def _read_jsonl(path, limit=500):
     except OSError:
         return []
     return rows[-max(0, int(limit)):]
+
+
+def _read_json(path):
+    try:
+        with open(path, encoding="utf-8") as f:
+            value = json.load(f)
+        return value
+    except (OSError, ValueError):
+        return None
 
 
 def load1():
@@ -296,6 +307,9 @@ def _idle_node_payload(verbo, st):
     if not node:
         return None
     if verbo == "repasar":
+        benchmark_payload = _benchmark_review_payload(st)
+        if benchmark_payload:
+            return benchmark_payload
         ledger_payload = _idle_ledger_review_payload(st)
         if ledger_payload:
             return ledger_payload
@@ -310,6 +324,35 @@ def _idle_node_payload(verbo, st):
     if node.get("n"):
         payload["n"] = node["n"]
     return payload
+
+
+def _benchmark_review_payload(st):
+    """Pick one benchmark defect for no-cost local queue review."""
+    data = _read_json(BENCHMARK)
+    if not isinstance(data, dict):
+        return None
+    seen = set(st.get("benchmark_seen", [])[-500:])
+    priority = {"route_format_mismatch": 0,
+                "essay_structural_gaps": 1,
+                "missing_or_unknown_format": 2}
+    queue = sorted(data.get("queue") or data.get("issues") or [],
+                   key=lambda item: priority.get(item.get("kind"), 9))
+    for issue in queue:
+        key = "%s:%s" % (issue.get("kind", ""), issue.get("path", ""))
+        if not issue.get("path") or key in seen:
+            continue
+        st["benchmark_seen"] = (list(seen) + [key])[-500:]
+        return {
+            "modo": "benchmark_review",
+            "formato": "benchmark",
+            "densidad": "corto",
+            "tema": "benchmark: %s" % issue.get("path"),
+            "benchmark_key": key,
+            "benchmark_kind": issue.get("kind", ""),
+            "benchmark_action": issue.get("next_action", "manual_review"),
+            "benchmark_path": issue.get("path", ""),
+        }
+    return None
 
 
 def _idle_ledger_review_payload(st):
@@ -341,6 +384,20 @@ def _idle_ledger_review_payload(st):
 
 def _run_local_idle(payload):
     """Execute a local idle unit without calling research/codex or spending LLM."""
+    if payload.get("modo") == "benchmark_review":
+        row = {
+            "ts": time.strftime("%F %T"),
+            "schema": "mak-idle-benchmark-review-v1",
+            "benchmark_key": payload.get("benchmark_key", ""),
+            "kind": payload.get("benchmark_kind", ""),
+            "path": payload.get("benchmark_path", ""),
+            "next_action": payload.get("benchmark_action", "manual_review"),
+            "status": "queued_for_repair",
+        }
+        _append_jsonl(IDLE_BENCHMARK_REVIEWS, row)
+        return json.dumps({"ok": True, "local": True,
+                           "mode": "benchmark_review",
+                           "benchmark_key": row["benchmark_key"]})
     if payload.get("modo") != "ledger_review":
         return json.dumps({"ok": False, "error": "unknown local idle mode"})
     row = {
@@ -664,7 +721,7 @@ def _tarea(verbo, st):
         payload = _idle_node_payload(verbo, st)
         if not payload:
             return None
-        if payload.get("modo") == "ledger_review":
+        if payload.get("modo") in ("ledger_review", "benchmark_review"):
             return ("local", payload)
         return (v["depto"], payload)
     return None
