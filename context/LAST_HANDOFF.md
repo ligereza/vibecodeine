@@ -1,6 +1,6 @@
 # Estado del repo
 
-Ultima actualizacion: **2026-08-05, Cauce director loop**.
+Ultima actualizacion: **2026-08-06, Faro: circuito MAK verificado en MAK**.
 
 Este archivo se lee en dos minutos o no sirve. Llego a 1.666 lineas apiladas y
 nadie lo leia -- ni los agentes que lo editaban. La historia esta en
@@ -11,6 +11,36 @@ cierto.
 su seccion y reemplaza lo que decia antes. Si algo dejo de ser cierto, se borra
 -- una frase que describe un estado que ya no existe se lee como medicion, y esa
 es la trampa que costo mas caro (ver "Lo que este repo aprendio", regla 1).
+
+---
+
+## Estado vigente 2026-08-06
+
+Esta seccion manda sobre las notas historicas posteriores cuando describan un
+estado distinto.
+
+- Director operativo: **Faro**. Windows dirige y verifica; MAK ejecuta modelos.
+- Ramas remotas: solo `main`, `mak`, `rd`, `iskvw`; las cuatro apuntan al mismo
+  commit de `main`. No hay PR abiertos.
+- El circuito real de MAK ya escribio ledger persistente: 49 filas comunes y
+  21 tandas registradas. Watsonx y AWS funcionaron; los fallos de proveedor se
+  registran y no abortan la ronda.
+- La corrida de seis areas produjo evidencia aceptada en SVG, pero retuvo
+  resultados de MAK, Adobe y arqueologia cuando faltaba evidencia o habia
+  mezcla de dominios.
+- Las tandas nuevas exigen bloque `product` por area. Si falta, quedan en
+  `revise` y no entran como verdad al ledger.
+- La prueba sin Watsonx, AWS ni Ollama acepto una entrada valida mediante
+  fallback determinista y escribio ledger.
+- MAK tiene `material.jsonl`: 2.812 entradas, 0 pendientes. Tiene 46 preguntas
+  generativas pendientes y 162 informes; el siguiente trabajo autonomo debe
+  revisar ese corpus, no multiplicarlo sin limite.
+- `cola.py` no esta en el crontab vivo. No se debe reactivar sin demostrar un
+  consumidor; puede retirarse o convertirse en inbox explicito.
+- Los archivos no rastreados en `/home/mak/flujo` son evidencia externa y no se
+  borran automaticamente: `.claude`, `crudo_lotes`, `director_snapshot.md`,
+  auditorias, `mineria_estado.json` y `turnos_flujo.jsonl` quedan en cuarentena
+  hasta ser clasificados.
 
 ---
 
