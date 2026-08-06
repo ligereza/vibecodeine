@@ -26,6 +26,8 @@ def test_build_brief_is_provider_agnostic_but_structured():
     assert brief["result_required"] == list(tandas.RESULT_REQUIRED)
     assert "Cada item debe poder sobrevivir" in brief["prompt"]
     assert "PAQUETE DE EVIDENCIA LOCAL: no incluido" in brief["prompt"]
+    assert brief["product_contract"] == ["verdict", "defect_class", "queue_action"]
+    assert "CONTRATO DE PRODUCTO" in brief["prompt"]
 
 
 def test_build_brief_can_include_bounded_evidence():
