@@ -190,12 +190,17 @@ def call(provider, prompt, model=None, max_tokens=2500, temperature=0.1):
         return aws_bedrock_chat(prompt, model=model, max_tokens=max_tokens,
                                 temperature=temperature)
     if provider == "ollama":
+        load_env()
         try:
             from . import discernment
         except ImportError:
             import discernment
-        return discernment.call_ollama(prompt, model=model, max_tokens=max_tokens,
-                                       temperature=temperature)
+        return discernment.call_ollama(
+            prompt,
+            base_url=os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434"),
+            model=model or os.environ.get("OLLAMA_MODEL", "gemma3:4b"),
+            max_tokens=max_tokens,
+            temperature=temperature)
     if provider in ("cerebras", "groq"):
         return _openai_compatible_chat(provider, prompt, model=model,
                                        max_tokens=max_tokens,
