@@ -99,8 +99,28 @@ def inspect_corpus(root, since=0):
     totals["structural_pass"] = sum(
         1 for product in products
         if not any(issue.get("path") == product["path"] for issue in issues))
+    for issue in issues:
+        issue["next_action"] = _next_action(issue)
     return {"schema": "mak-corpus-benchmark-v1", "root": str(root),
-            "totals": dict(totals), "products": products, "issues": issues}
+            "totals": dict(totals), "products": products, "issues": issues,
+            "queue": issues}
+
+
+def _next_action(issue):
+    kind = issue.get("kind")
+    if kind == "route_format_mismatch":
+        if issue.get("declared") == "ensayo" and issue.get("expected") == "informe":
+            return "review_then_relabel_as_informe"
+        if issue.get("declared") == "informe" and issue.get("expected") == "ensayo":
+            return "review_then_rebuild_or_keep_informe"
+        return "review_route"
+    if kind == "essay_structural_gaps":
+        return "review_then_repair_or_archive"
+    if kind == "missing_or_unknown_format":
+        return "legacy_review"
+    if kind == "missing_markdown":
+        return "locate_or_quarantine_pair"
+    return "manual_review"
 
 
 def main(argv=None):
