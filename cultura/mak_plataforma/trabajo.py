@@ -60,6 +60,7 @@ STATE = os.path.join(HOME, "plataforma/.trabajo_state.json")
 LOG = os.path.join(HOME, "plataforma/logs/trabajo.log")
 IDLE_AUDIT = os.path.join(HOME, "plataforma/idle_decisions.jsonl")
 IDLE_LEDGER_REVIEWS = os.path.join(HOME, "plataforma/idle_ledger_reviews.jsonl")
+CORPUS_REVIEW_LOG = os.path.join(HOME, "plataforma/corpus_reviews.jsonl")
 COMMON_LEDGER = os.path.join(HOME, "plataforma/common_ledger.jsonl")
 BACKLOG = os.path.join(HOME, "plataforma/backlog_codex.txt")
 SEMILLAS_F = os.path.join(HOME, "plataforma/semillas_latido.txt")
@@ -67,6 +68,7 @@ RESEARCH = "http://127.0.0.1:8890/run"
 CODEX = "http://127.0.0.1:8891/run"
 BACKLOG_GEN = os.path.join(HOME, "plataforma/backlog.jsonl")
 INFORMES_DIRS = [os.path.join(HOME, "research", d) for d in ("informes", "cadenas", "paneles", "refutaciones", "grafos", "memoria")]
+CORPUS_REVIEW_EVERY = max(1, int(os.environ.get("MAK_CORPUS_REVIEW_EVERY", 4)))
 # nota: dirs que no existen son saltados por cosechar
 
 
@@ -164,6 +166,70 @@ def _pending_snapshot():
         "research_backlog": _has_pending_research_backlog(),
         "codex_backlog": _has_pending_codex_backlog(),
     }
+
+
+def _corpus_files():
+    """Return reviewable reports without duplicating the research pipeline."""
+    files = []
+    for directory in INFORMES_DIRS:
+        try:
+            names = os.listdir(directory)
+        except OSError:
+            continue
+        for name in names:
+            if not name.lower().endswith((".md", ".txt")):
+                continue
+            path = os.path.join(directory, name)
+            if os.path.isfile(path):
+                files.append(path)
+    return sorted(files, key=lambda path: (os.path.getmtime(path), path))
+
+
+def _corpus_review_id(path):
+    try:
+        stat = os.stat(path)
+        return "%s:%d:%d" % (path, stat.st_mtime_ns, stat.st_size)
+    except OSError:
+        return path
+
+
+def _corpus_review_payload(st):
+    """Select one old report for review, retaining retryability on failure."""
+    seen = set(st.get("corpus_review_seen", [])[-500:])
+    inflight = st.get("corpus_review_inflight", "")
+    for path in _corpus_files():
+        review_id = _corpus_review_id(path)
+        if review_id in seen or review_id == inflight:
+            continue
+        st["corpus_review_inflight"] = review_id
+        topic = "revisar informe MAK antes de producir mas: %s" % os.path.basename(path)
+        return {
+            "modo": "research",
+            "formato": "revision",
+            "densidad": "corto",
+            "tema": topic,
+            "source_path": path,
+            "review_id": review_id,
+            "output_contract": contract_for_task("repasar", topic),
+        }
+    return None
+
+
+def _finish_corpus_review(st, payload, accepted):
+    review_id = payload.get("review_id", "")
+    if not review_id:
+        return
+    if accepted:
+        seen = list(st.get("corpus_review_seen", []))
+        st["corpus_review_seen"] = (seen + [review_id])[-500:]
+    if st.get("corpus_review_inflight") == review_id:
+        st.pop("corpus_review_inflight", None)
+
+
+def _should_review_corpus(st):
+    if st.get("count", 0) <= 0 or st.get("count", 0) % CORPUS_REVIEW_EVERY:
+        return False
+    return bool(_corpus_files())
 
 
 def _idle_review_topic(st):
@@ -486,6 +552,10 @@ def _tarea(verbo, st):
                              "tema": tema, "densidad": dens, "formato": fmt,
                              "output_contract": contract_for_task(verbo, tema)})
     if fuente == "concepto":
+        if verbo == "multiplicar" and _should_review_corpus(st):
+            payload = _corpus_review_payload(st)
+            if payload:
+                return ("research", payload)
         if backlog is not None:
             entrada = backlog.pop_pendiente(BACKLOG_GEN)
             if entrada:
@@ -620,10 +690,12 @@ def main():
                 % (ts, "on" if online else "OFF", verbo, err))
             _audit_idle_decision(ts, online, verbo, depto, payload,
                                  "rejected", resp, err)
+            _finish_corpus_review(st, payload, False)
             _save(st)
             return
         st["count"] = st.get("count", 0) + 1
         st["last"] = now
+        _finish_corpus_review(st, payload, True)
         _save(st)
         if backlog is not None and st["count"] % 8 == 0:
             try:

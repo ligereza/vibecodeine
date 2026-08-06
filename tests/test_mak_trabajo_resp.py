@@ -154,6 +154,52 @@ def test_cultural_multiplicar_topic_still_uses_essay_shape(monkeypatch):
     assert payload["densidad"] == "medio"
 
 
+def test_multiplicar_periodically_reviews_corpus_before_new_backlog(monkeypatch, tmp_path):
+    if trabajo.backlog is None:
+        pytest.skip("backlog not importable")
+    report = tmp_path / "informe-viejo.md"
+    report.write_text("informe para revisar", encoding="utf-8")
+    monkeypatch.setattr(trabajo, "INFORMES_DIRS", [str(tmp_path)])
+    monkeypatch.setattr(trabajo, "CORPUS_REVIEW_EVERY", 4)
+    monkeypatch.setattr(trabajo.backlog, "pop_pendiente", lambda _path: {
+        "pregunta": "genealogia cultural de una practica"
+    })
+
+    depto, payload = trabajo._tarea("multiplicar", {"count": 4})
+
+    assert depto == "research"
+    assert payload["formato"] == "revision"
+    assert payload["source_path"] == str(report)
+    assert payload["output_contract"]
+
+
+def test_corpus_review_retries_after_rejection(monkeypatch, tmp_path):
+    report = tmp_path / "informe.md"
+    report.write_text("x", encoding="utf-8")
+    monkeypatch.setattr(trabajo, "INFORMES_DIRS", [str(tmp_path)])
+    state = {"count": 4}
+    payload = trabajo._corpus_review_payload(state)
+    assert payload["review_id"] == state["corpus_review_inflight"]
+    trabajo._finish_corpus_review(state, payload, False)
+    retry = trabajo._corpus_review_payload(state)
+    assert retry["review_id"] == payload["review_id"]
+
+
+def test_corpus_review_is_marked_only_after_acceptance(tmp_path):
+    report = tmp_path / "informe.md"
+    report.write_text("x", encoding="utf-8")
+    state = {"count": 4}
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(trabajo, "INFORMES_DIRS", [str(tmp_path)])
+    try:
+        payload = trabajo._corpus_review_payload(state)
+        trabajo._finish_corpus_review(state, payload, True)
+        assert payload["review_id"] in state["corpus_review_seen"]
+        assert trabajo._corpus_review_payload(state) is None
+    finally:
+        monkeypatch.undo()
+
+
 def test_idle_review_uses_revision_format(monkeypatch):
     monkeypatch.setattr(trabajo, "_has_pending_material", lambda: False)
     monkeypatch.setattr(trabajo, "_has_pending_research_backlog", lambda: False)
