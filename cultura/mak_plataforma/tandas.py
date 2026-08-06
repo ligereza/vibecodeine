@@ -467,10 +467,34 @@ def _product_repair_prompt(area, payload):
         % (fields, template, json.dumps(payload, ensure_ascii=False, indent=2)))
 
 
+def _product_response_schema(area):
+    product = {field: {"type": "string"} for field in PRODUCT_CONTRACTS[area]}
+    item = {
+        "type": "object",
+        "properties": {
+            "claim": {"type": "string"},
+            "evidence": {"type": "array", "items": {"type": "string"}},
+            "files": {"type": "array", "items": {"type": "string"}},
+            "confidence": {"type": "string"},
+            "action": {"type": "string"},
+            "reject_reason": {"type": "string"},
+            "product": {"type": "object", "properties": product,
+                        "required": list(PRODUCT_CONTRACTS[area])},
+        },
+        "required": ["claim", "evidence", "files", "confidence", "action",
+                      "reject_reason", "product"],
+    }
+    return {"type": "object", "properties": {
+        "items": {"type": "array", "items": item}}, "required": ["items"]}
+
+
 def _repair_product_payload(area, payload, provider, model, max_tokens):
+    kwargs = {}
+    if provider == "ollama":
+        kwargs["response_format"] = _product_response_schema(area)
     raw = external_providers.call(
         provider, _product_repair_prompt(area, payload), model=model,
-        max_tokens=min(max_tokens, 1400), temperature=0.0)
+        max_tokens=min(max_tokens, 1400), temperature=0.0, **kwargs)
     return _parse_provider_json(raw), raw
 
 
@@ -486,9 +510,12 @@ def run_external_batch(area, batch_id, provider, paths=None, model=None,
                         include_evidence=True, instruction=instruction)
     prompt = brief["prompt"]
     try:
+        kwargs = {}
+        if provider == "ollama":
+            kwargs["response_format"] = _product_response_schema(area)
         raw = external_providers.call(
             provider, prompt, model=model, max_tokens=max_tokens,
-            temperature=0.1)
+            temperature=0.1, **kwargs)
     except Exception as exc:  # noqa: BLE001 - one provider must not kill a round
         error = str(exc).strip() or exc.__class__.__name__
         row = append_ledger({
