@@ -217,13 +217,16 @@ def deterministic_review(area, payload):
 
 
 def call_ollama(prompt, base_url=OLLAMA_BASE_URL, model=OLLAMA_MODEL, timeout=120,
-                max_tokens=700, temperature=0.1):
-    body = json.dumps({
+                max_tokens=700, temperature=0.1, response_format=None):
+    body_payload = {
         "model": model,
         "prompt": prompt,
         "stream": False,
         "options": {"temperature": temperature, "num_predict": max_tokens},
-    }).encode("utf-8")
+    }
+    if response_format:
+        body_payload["format"] = response_format
+    body = json.dumps(body_payload).encode("utf-8")
     req = urllib.request.Request(
         base_url.rstrip("/") + "/api/generate",
         data=body,
