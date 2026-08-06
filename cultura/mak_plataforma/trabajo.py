@@ -448,6 +448,15 @@ def format_for_task(verbo, tema):
     return FORMATO_POR_VERBO.get(verbo, ("informe", "corto"))
 
 
+def contract_for_task(verbo, tema):
+    """Return the output contract alongside the selected product shape."""
+    if research_router is not None:
+        route = research_router.route_research_task(
+            verbo, tema, factual_detector=_es_pregunta_factual)
+        return list(route.required_fields)
+    return ["claim", "sources", "uncertainty", "next_action"]
+
+
 def _tarea(verbo, st):
     """Arma (depto, payload_dict) para un verbo, o None si no hay trabajo."""
     v = next((x for x in roles.VERBOS if x["verbo"] == verbo), None)
@@ -474,7 +483,8 @@ def _tarea(verbo, st):
             return None
         fmt, dens = format_for_task(verbo, tema)
         return ("research", {"modo": tarea.get("modo", "research"),
-                             "tema": tema, "densidad": dens, "formato": fmt})
+                             "tema": tema, "densidad": dens, "formato": fmt,
+                             "output_contract": contract_for_task(verbo, tema)})
     if fuente == "concepto":
         if backlog is not None:
             entrada = backlog.pop_pendiente(BACKLOG_GEN)
@@ -489,14 +499,16 @@ def _tarea(verbo, st):
                     return None
                 fmt, dens = format_for_task(verbo, tema)
                 return ("research", {"modo": v["modo"], "tema": tema,
-                                     "densidad": dens, "formato": fmt})
+                                     "densidad": dens, "formato": fmt,
+                                     "output_contract": contract_for_task(verbo, tema)})
         if not _seed_fallback_enabled():
             return None
         i = st.get("sem_idx", 0) % len(sems)
         st["sem_idx"] = i + 1
         fmt, dens = format_for_task(verbo, sems[i])
         return ("research", {"modo": v["modo"], "tema": sems[i],
-                             "densidad": dens, "formato": fmt})
+                             "densidad": dens, "formato": fmt,
+                             "output_contract": contract_for_task(verbo, sems[i])})
     if fuente == "definir":
         if not _seed_fallback_enabled():
             return None
@@ -505,7 +517,8 @@ def _tarea(verbo, st):
         tema = "definicion cultural precisa y genealogia de: " + sems[i]
         fmt, dens = format_for_task(verbo, tema)
         return ("research", {"modo": v["modo"], "tema": tema,
-                             "densidad": dens, "formato": fmt})
+                             "densidad": dens, "formato": fmt,
+                             "output_contract": contract_for_task(verbo, tema)})
     if fuente == "modulo":
         mods = roles.MODULOS
         i = st.get("mod_idx", 0) % len(mods)

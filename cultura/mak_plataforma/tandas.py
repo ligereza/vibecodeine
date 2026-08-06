@@ -376,8 +376,26 @@ def run_external_batch(area, batch_id, provider, paths=None, model=None,
                         providers=[provider, "ollama"],
                         include_evidence=True, instruction=instruction)
     prompt = brief["prompt"]
-    raw = external_providers.call(
-        provider, prompt, model=model, max_tokens=max_tokens, temperature=0.1)
+    try:
+        raw = external_providers.call(
+            provider, prompt, model=model, max_tokens=max_tokens,
+            temperature=0.1)
+    except Exception as exc:  # noqa: BLE001 - one provider must not kill a round
+        error = str(exc).strip() or exc.__class__.__name__
+        row = append_ledger({
+            "area": area,
+            "batch_id": batch_id,
+            "provider": provider,
+            "status": "provider_error",
+            "items": 0,
+            "errors": [error[:200]],
+        }, path=batch_path)
+        return {
+            "ok": False,
+            "status": row["status"],
+            "raw_path": "",
+            "errors": row["errors"],
+        }
     out_dir = out_dir or os.path.join(HOME, "plataforma/tandas")
     os.makedirs(out_dir, exist_ok=True)
     raw_path = os.path.join(out_dir, "%s-%s-%s.raw.txt" % (area, batch_id, provider))

@@ -20,6 +20,20 @@ class ResearchRoute:
     densidad: str
     reason: str
 
+    @property
+    def required_fields(self) -> tuple[str, ...]:
+        return OUTPUT_CONTRACTS[self.formato]
+
+
+OUTPUT_CONTRACTS = {
+    "informe": ("claim", "sources", "uncertainty", "next_action"),
+    "curatoria": ("reading", "selection", "relationships", "public_status"),
+    "revision": ("verdict", "defects", "decision", "next_action"),
+    "exposicion": ("thesis", "audience", "copy", "visual_proposal"),
+    "ensayo": ("thesis", "counterreading", "chronology", "argument"),
+    "ledger": ("verdict", "evidence", "next_action"),
+}
+
 
 DEFAULT_BY_VERB = {
     "atender": ResearchRoute("research", "answer", "informe", "corto",
