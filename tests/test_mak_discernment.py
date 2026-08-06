@@ -52,6 +52,18 @@ def test_validate_review_rejects_wrong_area_domain():
     assert "bad_domain" in errors
 
 
+def test_normalize_review_domain_accepts_area_alias_only():
+    review = {"domain": "adobe_rescue", "verdict": "accept"}
+    normalized = discernment.normalize_review_domain(review, "adobe_rescue")
+    assert normalized["domain"] == "adobe"
+
+
+def test_normalize_review_domain_does_not_cross_domains():
+    review = {"domain": "iskvw", "verdict": "accept"}
+    normalized = discernment.normalize_review_domain(review, "adobe_rescue")
+    assert normalized["domain"] == "iskvw"
+
+
 def test_cli_review_prompt_reads_json_from_stdin():
     result = subprocess.run(
         [sys.executable, "-m", "cultura.mak_plataforma.tandas",
