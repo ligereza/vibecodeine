@@ -22,9 +22,13 @@ estado distinto.
 - Director operativo: **Faro**. Windows dirige y verifica; MAK ejecuta modelos.
 - Ramas remotas: solo `main`, `mak`, `rd`, `iskvw`; las cuatro apuntan al mismo
   commit de `main`. No hay PR abiertos.
-- El circuito real de MAK ya escribio ledger persistente: 49 filas comunes y
-  21 tandas registradas. Watsonx y AWS funcionaron; los fallos de proveedor se
+- El circuito real de MAK ya escribio ledger persistente: 86 filas comunes y
+  35 tandas registradas. Watsonx y AWS funcionaron; los fallos de proveedor se
   registran y no abortan la ronda.
+- El gate de evidencia detecto 21 filas historicas con rutas inexistentes y las
+  dejo en `/home/mak/plataforma/common_ledger_quarantine.jsonl`; el ledger
+  comun no se reescribe. `autonomia status` expone esa cuarentena y su proxima
+  accion.
 - La corrida de seis areas produjo evidencia aceptada en SVG, pero retuvo
   resultados de MAK, Adobe y arqueologia cuando faltaba evidencia o habia
   mezcla de dominios.
@@ -33,8 +37,8 @@ estado distinto.
 - La prueba sin Watsonx, AWS ni Ollama acepto una entrada valida mediante
   fallback determinista y escribio ledger.
 - MAK tiene `material.jsonl`: 2.812 entradas, 0 pendientes. Tiene 46 preguntas
-  generativas pendientes y 162 informes; el siguiente trabajo autonomo debe
-  revisar ese corpus, no multiplicarlo sin limite.
+  generativas pendientes y 185 informes; el loop ya ejecuto una revision real
+  y selecciona un informe antiguo cada cuatro unidades productivas.
 - `cola.py` no esta en el crontab vivo. No se debe reactivar sin demostrar un
   consumidor; puede retirarse o convertirse en inbox explicito.
 - Los archivos no rastreados en `/home/mak/flujo` son evidencia externa y no se
