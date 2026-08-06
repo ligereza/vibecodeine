@@ -34,6 +34,7 @@ REPO_SLUG = "ligereza/vibecodeine"
 # El buzon de MAK. `enforce_pr` solo actua sobre PRs con ESTA base:
 # lo que mergea declara contra que mergea.
 RAMA_BUZON = "mak"
+RUTA_UTILIDADES = "cultura/mak_plataforma/utilidades/"
 
 HOME = os.path.expanduser("~")
 REPO = os.path.join(HOME, "flujo")
@@ -142,6 +143,23 @@ def gate_pedido(src, pedido):
     if hits:
         return True, "match: " + ",".join(hits[:4])
     return False, "el codigo no refleja el pedido (0 palabras clave)"
+
+
+def rutas_fuera_de_zona(files):
+    """Paths a capataz PR is not allowed to touch.
+
+    MAK's autonomous delivery channel is intentionally narrow: one generated
+    Python utility under cultura/mak_plataforma/utilidades/. If the branch
+    drags Dependabot, workflow or web changes, the reviewer must veto the PR
+    instead of silently reviewing the first .py file and merging the rest.
+    """
+    out = []
+    for f in files or []:
+        path = f.get("path") if isinstance(f, dict) else str(f)
+        path = (path or "").replace("\\", "/")
+        if not path.startswith(RUTA_UTILIDADES):
+            out.append(path)
+    return out
 
 
 def revisar_pr(n, branch, path, veredictos):
@@ -258,8 +276,21 @@ def main():
             log("PR #%d ignorado: base '%s', no '%s'"
                 % (pr["number"], base, RAMA_BUZON))
             continue
-        pys = [f["path"] for f in (pr.get("files") or [])
-               if f["path"].endswith(".py")]
+        files = pr.get("files") or []
+        fuera = rutas_fuera_de_zona(files)
+        if fuera:
+            veredictos.append({
+                "pr": pr["number"],
+                "branch": branch,
+                "veredicto": "NO-APROBADO",
+                "razon": "capataz toca rutas fuera de utilidades",
+                "rutas_fuera_de_zona": fuera,
+                "gates": {"zona_utilidades": False},
+            })
+            log("PR #%d NO-APROBADO: rutas fuera de %s: %s"
+                % (pr["number"], RUTA_UTILIDADES, ", ".join(fuera[:5])))
+            continue
+        pys = [f["path"] for f in files if f["path"].endswith(".py")]
         if not pys:
             continue
         revisar_pr(pr["number"], branch, pys[0], veredictos)

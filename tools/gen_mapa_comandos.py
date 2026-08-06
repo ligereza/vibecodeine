@@ -55,6 +55,8 @@ REQUISITOS: dict[str, str] = {
     "package": "solo Windows; empaqueta un .exe",
     "rd-db build": "fuentes de datos en `data/` (la DB se regenera, no se versiona)",
     "rd-datos ingest": "un CSV de campo; la DB privacy-first se crea sola",
+    "autonomia run": "SSH a MAK (`mak@192.168.50.2`) para ejecucion real; "
+                     "`--executor local` solo para pruebas/dry-run",
 }
 # `tapiz` used to sit in the table above with the requirement "nada; el
 # instrumento vive en `tools/compete_engine.py`" -- prose that says there is NO
