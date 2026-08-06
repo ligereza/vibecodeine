@@ -123,6 +123,17 @@ class TestAplicarResultadoJob:
         assert job["estado"] == "FALLO"
         assert job["error"] == "traceback boom"
 
+    def test_contract_mismatch_turns_ready_job_into_failure(self, tmp_path):
+        output = tmp_path / "resultado.md"
+        output.write_text("# Resultado\n", encoding="utf-8")
+        output.with_suffix(".json").write_text(
+            '{"formato": "informe"}', encoding="utf-8")
+        job = {"work_contract": {"format": "curatoria"}}
+        interfaz._aplicar_resultado_job(
+            job, {"ok": True, "path": str(output)})
+        assert job["estado"] == "FALLO"
+        assert job["error"] == "work_contract_output_format_mismatch"
+
     def test_pausado(self):
         job = {}
         r = {"ok": False, "pausado": True, "checkpoint": "/home/mak/research/checkpoints/j1.json",

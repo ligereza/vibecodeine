@@ -382,7 +382,11 @@ def _audit_idle_decision(ts, online, verbo, depto, payload, status,
 
 
 def _post(url, data):
-    body = urllib.parse.urlencode(data).encode()
+    fields = dict(data)
+    if isinstance(fields.get("work_contract"), dict):
+        fields["work_contract"] = json.dumps(
+            fields["work_contract"], ensure_ascii=True, sort_keys=True)
+    body = urllib.parse.urlencode(fields).encode()
     req = urllib.request.Request(
         url, data=body, method="POST",
         headers={"Content-Type": "application/x-www-form-urlencoded"})
