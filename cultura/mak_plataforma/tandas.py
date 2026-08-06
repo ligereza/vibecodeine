@@ -434,6 +434,17 @@ def write_brief(brief, out_dir=None):
 def _parse_provider_json(text):
     if isinstance(text, dict):
         return text
+    clean = str(text or "").strip()
+    if clean.startswith("```"):
+        lines = clean.splitlines()
+        if lines and lines[0].lstrip().startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].strip().startswith("```"):
+            lines = lines[:-1]
+        try:
+            return json.loads("\n".join(lines))
+        except ValueError:
+            pass
     if discernment is not None:
         extracted = discernment.extract_json(text)
         if extracted is not None:
