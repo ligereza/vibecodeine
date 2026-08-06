@@ -32,7 +32,7 @@ render = [
     # de Edge, que es justamente por lo que `rasterizador.py` tiene dos.
     # Va en un extra propio y no en `dev` para no cargarle cairo a quien solo
     # quiere correr los tests que no rasterizan.
-    "cairosvg>=2.8.2",
+    "cairosvg>=2.9.0",
     "Pillow>=12.3.0",
 ]
 web = [
