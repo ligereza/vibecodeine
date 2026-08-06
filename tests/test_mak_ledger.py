@@ -109,3 +109,29 @@ def test_tandas_cli_validate_can_write_common_ledger(tmp_path):
     row = json.loads(common.read_text(encoding="utf-8"))
     assert row["domain"] == "repo"
     assert row["source"] == "watsonx:tool_archaeology"
+
+
+def test_audit_missing_paths_quarantines_without_mutating_ledger(tmp_path):
+    ledger_path = tmp_path / "common.jsonl"
+    quarantine_path = tmp_path / "quarantine.jsonl"
+    ledger.append_item({
+        "domain": "repo", "type": "evidence", "claim": "invented file",
+        "evidence": [], "files": ["not-real/tool.py"], "confidence": "high",
+        "action": "test",
+    }, path=str(ledger_path))
+
+    found = ledger.audit_missing_paths(str(ledger_path))
+    added = ledger.write_quarantine(found, str(quarantine_path))
+
+    assert len(found) == 1
+    assert len(added) == 1
+    assert added[0]["status"] == "quarantined"
+    assert len(ledger.read_items(str(ledger_path))) == 1
+    assert len(ledger.read_items_quarantine(str(quarantine_path))) == 1
+
+
+def test_audit_deduplicates_quarantine(tmp_path):
+    quarantine_path = tmp_path / "quarantine.jsonl"
+    row = {"original_id": "abc", "missing_files": ["x.py"]}
+    assert len(ledger.write_quarantine([row], str(quarantine_path))) == 1
+    assert ledger.write_quarantine([row], str(quarantine_path)) == []
