@@ -65,6 +65,29 @@ def _print_json(payload, indent=None):
     """Print machine JSON safely on Windows cp1252 consoles."""
     print(json.dumps(payload, ensure_ascii=True, indent=indent))
 
+
+def _path_roots():
+    roots = []
+    for value in (
+            os.environ.get("MAK_REPO_ROOT", ""),
+            "/home/mak/flujo",
+            os.getcwd(),
+            os.path.join(os.path.expanduser("~"), "plataforma")):
+        if value and value not in roots:
+            roots.append(value)
+    return roots
+
+
+def _resolve_existing_path(path):
+    value = os.path.expandvars(os.path.expanduser(str(path or "")))
+    if os.path.isabs(value) and os.path.exists(value):
+        return value
+    for root in _path_roots():
+        candidate = os.path.join(root, value)
+        if os.path.exists(candidate):
+            return candidate
+    return ""
+
 AREAS = {
     "mak_quality": {
         "purpose": "audit MAK output quality and detect wrong formats or weak evidence",
@@ -231,6 +254,7 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction=""):
         "- No mezcles RD con iskvw; no conviertas curatoria en research.\n"
         "- No pidas crear una herramienta si ya existe una ruta probable.\n"
         "- Cada item debe poder sobrevivir cuando Watsonx/AWS ya no existan.\n"
+        "- Cada entrada files debe existir en el material entregado; nunca inventes nombres.\n"
         % (area, batch_id, cfg["purpose"],
            "\n".join("- " + p for p in paths),
            ", ".join(plan) if plan else "(sin proveedor preferido)",
@@ -250,17 +274,18 @@ def evidence_package(area, max_chars=60000):
     for path in AREAS[area].get("evidence_paths", []):
         if remaining <= 0:
             break
-        if not os.path.isfile(path):
+        resolved = _resolve_existing_path(path)
+        if not os.path.isfile(resolved):
             continue
         try:
-            with open(path, encoding="utf-8", errors="replace") as fh:
+            with open(resolved, encoding="utf-8", errors="replace") as fh:
                 text = fh.read()
         except OSError:
             continue
         budget = max(500, min(remaining, max_chars // 3))
         if len(text) > budget:
             text = text[:budget] + "\n... [truncated]\n"
-        block = "\n### %s\n%s\n" % (path, text)
+        block = "\n### %s\n%s\n" % (resolved, text)
         chunks.append(block)
         remaining -= len(block)
     return "".join(chunks).strip()
@@ -332,6 +357,17 @@ def validate_product_contract(payload, area):
     return not errors, errors
 
 
+def validate_evidence_paths(payload):
+    """Reject provider file claims that do not exist in known MAK roots."""
+    errors = []
+    items = payload.get("items", []) if isinstance(payload, dict) else []
+    for idx, item in enumerate(items):
+        for file_idx, path in enumerate(item.get("files", []) or []):
+            if not isinstance(path, str) or not _resolve_existing_path(path):
+                errors.append("item_%d_missing_evidence_path_%d" % (idx, file_idx))
+    return not errors, errors
+
+
 def append_common_ledger(payload, area, path=COMMON_LEDGER, source="external"):
     """Write validated external items into the shared MAK ledger."""
     if common_ledger is None:
@@ -351,6 +387,10 @@ def ingest_result(payload, area, common_path=COMMON_LEDGER, source="external",
         product_ok, product_errors = validate_product_contract(payload, area)
         if not product_ok:
             return {"ok": False, "status": "revise", "errors": product_errors,
+                    "review": None, "items": 0}
+        evidence_ok, evidence_errors = validate_evidence_paths(payload)
+        if not evidence_ok:
+            return {"ok": False, "status": "revise", "errors": evidence_errors,
                     "review": None, "items": 0}
     if isinstance(payload, str):
         payload = json.loads(payload)
