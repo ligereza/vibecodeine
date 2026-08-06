@@ -583,7 +583,7 @@ def main(argv=None):
                            help="call one external provider and ingest through local review")
     p_run.add_argument("area", choices=sorted(AREAS))
     p_run.add_argument("batch_id")
-    p_run.add_argument("--provider", choices=["watsonx", "aws"], required=True)
+    p_run.add_argument("--provider", choices=["watsonx", "aws", "cerebras", "groq", "ollama"], required=True)
     p_run.add_argument("--model", default="")
     p_run.add_argument("--path", action="append", dest="paths")
     p_run.add_argument("--out-dir", default="")
