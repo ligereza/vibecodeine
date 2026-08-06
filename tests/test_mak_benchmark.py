@@ -16,6 +16,7 @@ def test_benchmark_detects_structural_essay_failure(tmp_path):
 
     kinds = {issue["kind"] for issue in result["issues"]}
     assert "essay_structural_gaps" in kinds
+    assert result["queue"][0]["next_action"] == "review_then_repair_or_archive"
 
 
 def test_benchmark_detects_factual_topic_declared_as_essay(tmp_path):
