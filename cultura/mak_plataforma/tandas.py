@@ -175,7 +175,7 @@ def build_brief(area, batch_id, paths=None, providers=None, allow_premium=True,
             evidence=evidence_package(area, max_chars=max_evidence_chars)
             if include_evidence else "",
             instruction=instruction),
-        "result_required": list(RESULT_REQUIRED),
+        "result_required": list(RESULT_REQUIRED) + ["product"],
     }
     if discernment is not None:
         brief["local_review"] = {
@@ -226,6 +226,7 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction=""):
         "}\n\n"
         "REGLAS:\n"
         "- Si no puedes sostener un claim, usa action=reject y explica reject_reason.\n"
+        "- Cada item DEBE incluir product con todos los campos del contrato de producto.\n"
         "- No escribas informes largos; entrega hallazgos verificables.\n"
         "- No mezcles RD con iskvw; no conviertas curatoria en research.\n"
         "- No pidas crear una herramienta si ya existe una ruta probable.\n"
