@@ -51,25 +51,45 @@ DEPARTMENT_PROFILES = {
         "evidence": "primary_source",
         "judge": "source_gate",
         "formats": ("informe",),
+        "allowed_formats": ("informe",),
+        "required_evidence": "primary_source",
+        "promotion_actions": ("verify_source", "triangulate", "draft_report"),
     },
     "iskvw": {
         "destination": "iskvw",
         "evidence": "artwork_context",
         "judge": "curation_gate",
         "formats": ("curatoria",),
+        "allowed_formats": ("curatoria",),
+        "required_evidence": "artwork_context",
+        "promotion_actions": ("curate", "expose", "archive"),
     },
     "mak": {
         "destination": "mak",
         "evidence": "local_corpus",
         "judge": "quality_gate",
         "formats": ("revision", "exposicion"),
+        "allowed_formats": ("revision", "exposicion"),
+        "required_evidence": "local_corpus",
+        "promotion_actions": ("archive", "refute", "expose", "repair_queue",
+                               "review", "decide"),
     },
     "research": {
         "destination": "research",
         "evidence": "mixed_sources",
         "judge": "format_gate",
         "formats": ("ensayo", "informe"),
+        "allowed_formats": ("ensayo", "informe"),
+        "required_evidence": "mixed_sources",
+        "promotion_actions": ("draft_report",),
     },
+}
+
+
+AREA_PROFILES = {
+    "rd_evidence": "rd",
+    "iskvw_curation": "iskvw",
+    "mak_quality": "mak",
 }
 
 
@@ -78,6 +98,45 @@ def profile_for_route(route: ResearchRoute) -> dict:
     profile = DEPARTMENT_PROFILES.get(route.domain,
                                       DEPARTMENT_PROFILES["research"])
     return dict(profile)
+
+
+def profile_for_area(area: str) -> dict | None:
+    """Return the promotion profile for a batch area when one is defined."""
+    name = AREA_PROFILES.get(str(area or ""))
+    return dict(DEPARTMENT_PROFILES[name]) if name else None
+
+
+def validate_profile_result(profile: dict | None, result: dict) -> str:
+    """Return only the promotion verdict for a profile/result pair."""
+    if profile is None:
+        return "accept"
+    if not isinstance(result, dict):
+        return "reject"
+    items = result.get("items")
+    if not isinstance(items, list) or not items:
+        return "reject"
+    allowed_formats = tuple(profile.get("allowed_formats", ()))
+    required_evidence = profile.get("required_evidence")
+    allowed_actions = tuple(profile.get("promotion_actions", ()))
+    needs_revision = False
+    for item in items:
+        if not isinstance(item, dict):
+            return "reject"
+        declared_format = item.get("format")
+        if declared_format and declared_format not in allowed_formats:
+            return "reject"
+        if item.get("action") not in allowed_actions:
+            return "reject"
+        evidence = item.get("evidence") or []
+        files = item.get("files") or []
+        if not evidence and not files:
+            needs_revision = True
+        evidence_kind = item.get("evidence_kind")
+        if evidence_kind and evidence_kind != required_evidence:
+            return "reject"
+        if evidence_kind != required_evidence:
+            needs_revision = True
+    return "revise" if needs_revision else "accept"
 
 
 def _fold(text: str) -> str:
