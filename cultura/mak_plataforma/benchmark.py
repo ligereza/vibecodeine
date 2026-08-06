@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import time
 from collections import Counter
 from pathlib import Path
 
@@ -46,7 +47,7 @@ def _essay_gaps(text):
     return gaps
 
 
-def inspect_corpus(root):
+def inspect_corpus(root, since=0):
     root = Path(root)
     totals = Counter()
     issues = []
@@ -56,6 +57,11 @@ def inspect_corpus(root):
             continue
         for path in sorted(folder.glob("*.json")):
             if path.name.endswith(".conceptos.json") or path.name == "grafo_cache.json":
+                continue
+            try:
+                if path.stat().st_mtime <= since:
+                    continue
+            except OSError:
                 continue
             totals["json"] += 1
             payload = _read_json(path)
@@ -101,14 +107,18 @@ def main(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", required=True)
     parser.add_argument("--out", default="")
+    parser.add_argument("--since", type=float, default=0,
+                        help="epoch: inspect only products newer than this")
+    parser.add_argument("--check", action="store_true",
+                        help="fail when the selected corpus has structural issues")
     args = parser.parse_args(argv)
-    result = inspect_corpus(args.root)
+    result = inspect_corpus(args.root, since=args.since)
     text = json.dumps(result, ensure_ascii=True, indent=2)
     if args.out:
         Path(args.out).parent.mkdir(parents=True, exist_ok=True)
         Path(args.out).write_text(text + "\n", encoding="utf-8")
     print(text)
-    return 0
+    return 2 if args.check and result["totals"].get("issues", 0) else 0
 
 
 if __name__ == "__main__":
