@@ -83,3 +83,11 @@ def test_route_exposes_contract_for_selected_product():
         "multiplicar", "curatoria de mis obras para el archivo publico iskvw")
     assert route.required_fields == (
         "reading", "selection", "relationships", "public_status")
+
+
+def test_route_exposes_declarative_department_profile():
+    route = R.route_research_task("multiplicar", "quien organizo el evento")
+    profile = R.profile_for_route(route)
+    assert profile["destination"] == "rd"
+    assert profile["evidence"] == "primary_source"
+    assert "informe" in profile["formats"]

@@ -45,6 +45,41 @@ DEFAULT_BY_VERB = {
 }
 
 
+DEPARTMENT_PROFILES = {
+    "rd": {
+        "destination": "rd",
+        "evidence": "primary_source",
+        "judge": "source_gate",
+        "formats": ("informe",),
+    },
+    "iskvw": {
+        "destination": "iskvw",
+        "evidence": "artwork_context",
+        "judge": "curation_gate",
+        "formats": ("curatoria",),
+    },
+    "mak": {
+        "destination": "mak",
+        "evidence": "local_corpus",
+        "judge": "quality_gate",
+        "formats": ("revision", "exposicion"),
+    },
+    "research": {
+        "destination": "research",
+        "evidence": "mixed_sources",
+        "judge": "format_gate",
+        "formats": ("ensayo", "informe"),
+    },
+}
+
+
+def profile_for_route(route: ResearchRoute) -> dict:
+    """Return a copy of the declarative profile for a route."""
+    profile = DEPARTMENT_PROFILES.get(route.domain,
+                                      DEPARTMENT_PROFILES["research"])
+    return dict(profile)
+
+
 def _fold(text: str) -> str:
     text = unicodedata.normalize("NFD", str(text or "").lower())
     text = "".join(c for c in text if unicodedata.category(c) != "Mn")
