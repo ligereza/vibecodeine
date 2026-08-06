@@ -51,6 +51,15 @@ RESULT_REQUIRED = (
     "reject_reason",
 )
 
+PRODUCT_CONTRACTS = {
+    "mak_quality": ("verdict", "defect_class", "queue_action"),
+    "rd_evidence": ("primary_source", "triangulation", "uncertainty"),
+    "iskvw_curation": ("artwork_reading", "selection", "public_status"),
+    "tool_archaeology": ("existing_path", "reuse_test", "decision"),
+    "svg_pipeline": ("representation", "measurement", "next_prototype"),
+    "adobe_rescue": ("bridge", "installation_evidence", "rescue_action"),
+}
+
 
 def _print_json(payload, indent=None):
     """Print machine JSON safely on Windows cp1252 consoles."""
@@ -160,6 +169,7 @@ def build_brief(area, batch_id, paths=None, providers=None, allow_premium=True,
         "paths": selected_paths,
         "provider_plan": plan,
         "allowed_actions": cfg["actions"],
+        "product_contract": list(PRODUCT_CONTRACTS[area]),
         "prompt": _prompt(
             area, batch_id, cfg, selected_paths, plan,
             evidence=evidence_package(area, max_chars=max_evidence_chars)
@@ -199,6 +209,7 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction=""):
         "PROPOSITO: %s\n"
         "RUTAS:\n%s\n\n"
         "PLAN DE PROVEEDORES: %s\n"
+        "CONTRATO DE PRODUCTO: %s\n"
         "%s\n"
         "%s"
         "DEVUELVE SOLO JSON con esta forma:\n"
@@ -221,6 +232,7 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction=""):
         % (area, batch_id, cfg["purpose"],
            "\n".join("- " + p for p in paths),
            ", ".join(plan) if plan else "(sin proveedor preferido)",
+           ", ".join(PRODUCT_CONTRACTS[area]),
            evidence_block,
            instruction_block,
            "|".join(cfg["actions"]))
