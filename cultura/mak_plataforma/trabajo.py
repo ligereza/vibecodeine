@@ -604,6 +604,7 @@ def work_contract(verbo, tema):
             "density": route.densidad,
             "required_fields": list(route.required_fields),
             "reason": route.reason,
+            "profile": research_router.profile_for_route(route),
         }
     formato, densidad = format_for_task(verbo, tema)
     return {
