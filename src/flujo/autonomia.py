@@ -374,7 +374,7 @@ def run_on_mak(options: RunOptions) -> dict:
     area_csv = ",".join(options.areas)
     provider_csv = ",".join(options.providers)
     flags = [
-        "python3 -m flujo autonomia run",
+        "PYTHONPATH=src python3 -m flujo autonomia run",
         "--executor local",
         "--areas %s" % _sh_quote(area_csv),
         "--providers %s" % _sh_quote(provider_csv),

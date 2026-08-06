@@ -202,6 +202,25 @@ def test_run_external_batch_persists_raw_and_ingests(monkeypatch, tmp_path):
     assert batch_row["status"] == "accepted"
 
 
+def test_run_external_batch_records_provider_error_and_returns(monkeypatch, tmp_path):
+    batch = tmp_path / "external_batches.jsonl"
+
+    def failing_call(*_args, **_kwargs):
+        raise RuntimeError("boto3_unavailable")
+
+    monkeypatch.setattr(tandas.external_providers, "call", failing_call)
+    result = tandas.run_external_batch(
+        "mak_quality", "r002", "aws", out_dir=str(tmp_path),
+        batch_path=str(batch), use_ollama=False)
+
+    assert result["ok"] is False
+    assert result["status"] == "provider_error"
+    assert result["errors"] == ["boto3_unavailable"]
+    row = json.loads(batch.read_text(encoding="utf-8"))
+    assert row["provider"] == "aws"
+    assert row["status"] == "provider_error"
+
+
 def test_cli_run_reports_provider_error_without_traceback():
     env = {
         key: value for key, value in providers.os.environ.items()
