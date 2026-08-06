@@ -181,7 +181,8 @@ def _openai_compatible_chat(provider, prompt, model=None, max_tokens=2500,
     return (payload["choices"][0]["message"]["content"] or "").strip()
 
 
-def call(provider, prompt, model=None, max_tokens=2500, temperature=0.1):
+def call(provider, prompt, model=None, max_tokens=2500, temperature=0.1,
+         response_format=None):
     provider = str(provider or "").lower()
     if provider == "watsonx":
         return watsonx_chat(prompt, model=model, max_tokens=max_tokens,
@@ -200,7 +201,7 @@ def call(provider, prompt, model=None, max_tokens=2500, temperature=0.1):
             base_url=os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434"),
             model=model or os.environ.get("OLLAMA_MODEL", "gemma3:4b"),
             max_tokens=max_tokens,
-            temperature=temperature)
+            temperature=temperature, response_format=response_format)
     if provider in ("cerebras", "groq"):
         return _openai_compatible_chat(provider, prompt, model=model,
                                        max_tokens=max_tokens,

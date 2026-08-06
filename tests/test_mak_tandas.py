@@ -21,7 +21,8 @@ def test_provider_plan_survives_without_temporary_credits():
 def test_survival_provider_call_routes_to_ollama(monkeypatch):
     seen = {}
 
-    def fake_call(prompt, base_url=None, model=None, max_tokens=2500, temperature=0.1):
+    def fake_call(prompt, base_url=None, model=None, max_tokens=2500, temperature=0.1,
+                  response_format=None):
         seen.update({"prompt": prompt, "model": model, "max_tokens": max_tokens})
         return "{}"
 
@@ -120,6 +121,12 @@ def test_validate_evidence_paths_accepts_repo_files():
 
 def test_parse_provider_json_accepts_fenced_json():
     assert tandas._parse_provider_json("```json\n{\"items\": []}\n```") == {"items": []}
+
+
+def test_product_response_schema_requires_area_contract():
+    schema = tandas._product_response_schema("tool_archaeology")
+    product = schema["properties"]["items"]["items"]["properties"]["product"]
+    assert product["required"] == ["existing_path", "reuse_test", "decision"]
 
 
 def test_append_ledger_does_not_persist_secrets(tmp_path):
