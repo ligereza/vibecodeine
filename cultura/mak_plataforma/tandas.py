@@ -220,7 +220,8 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction=""):
         '    "files": ["archivo relacionado"],\n'
         '    "confidence": "high|medium|low",\n'
         '    "action": "%s",\n'
-        '    "reject_reason": ""\n'
+        '    "reject_reason": "",\n'
+        '    "product": {"campo": "valor"}\n'
         "  }]\n"
         "}\n\n"
         "REGLAS:\n"
@@ -313,6 +314,23 @@ def append_ledger(row, path=LEDGER):
     return safe
 
 
+def validate_product_contract(payload, area):
+    """Require the area-specific deliverable block for new external runs."""
+    if area not in PRODUCT_CONTRACTS:
+        return False, ["unknown_product_area"]
+    errors = []
+    items = payload.get("items", []) if isinstance(payload, dict) else []
+    for idx, item in enumerate(items):
+        product = item.get("product") if isinstance(item, dict) else None
+        if not isinstance(product, dict):
+            errors.append("item_%d_missing_product" % idx)
+            continue
+        for field in PRODUCT_CONTRACTS[area]:
+            if not str(product.get(field, "")).strip():
+                errors.append("item_%d_missing_product_%s" % (idx, field))
+    return not errors, errors
+
+
 def append_common_ledger(payload, area, path=COMMON_LEDGER, source="external"):
     """Write validated external items into the shared MAK ledger."""
     if common_ledger is None:
@@ -322,12 +340,17 @@ def append_common_ledger(payload, area, path=COMMON_LEDGER, source="external"):
 
 
 def ingest_result(payload, area, common_path=COMMON_LEDGER, source="external",
-                  reviewer=None, use_ollama=True):
+                  reviewer=None, use_ollama=True, strict_product=False):
     """Validate, locally judge, then append only accepted facts to common ledger."""
     ok, errors = validate_result(payload)
     if not ok:
         return {"ok": False, "status": "invalid", "errors": errors,
                 "review": None, "items": 0}
+    if strict_product:
+        product_ok, product_errors = validate_product_contract(payload, area)
+        if not product_ok:
+            return {"ok": False, "status": "revise", "errors": product_errors,
+                    "review": None, "items": 0}
     if isinstance(payload, str):
         payload = json.loads(payload)
     if discernment is None or common_ledger is None:
@@ -428,7 +451,7 @@ def run_external_batch(area, batch_id, provider, paths=None, model=None,
                 "errors": ["provider_output_not_json"]}
     result = ingest_result(
         payload, area, common_path=common_path, source=provider,
-        use_ollama=use_ollama)
+        use_ollama=use_ollama, strict_product=True)
     append_ledger({
         "area": area,
         "batch_id": batch_id,
