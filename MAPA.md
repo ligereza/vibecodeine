@@ -134,6 +134,9 @@ the root of the repo (there is a `.env.example` for reference).
 | `FLUJO_MAK_URL` | Address of the face on the MAK machine, the one that works on its own (for example `http://<box-ip>:8900`). The box exposes three organs: the research body on `:8890`, codex on `:8891`, and the face on `:8900`, which embeds the other two. The panel queries it **read-only**: it never orders anything | The MAK panel says it is not configured. Everything else works the same |
 | `FLUJO_MAK_COMMON_LEDGER` | Override path for the append-only MAK common ledger that feeds the hub's external batch surface | Uses `~/plataforma/common_ledger.jsonl`, the ledger path on the MAK box |
 | `FLUJO_MAK_BATCH_LEDGER` | Override path for the external batch run ledger that records Watsonx/AWS batch results for the hub | Uses `~/plataforma/external_batches.jsonl`, the batch ledger path on the MAK box |
+| `WATSONX_API_KEY`, `WATSONX_PROJECT_ID` | Watsonx credentials for MAK external batches. These belong on MAK, not in the repo | Watsonx batches are unavailable; local/director mode still works |
+| `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_PROFILE`, `AWS_CONTAINER_CREDENTIALS_RELATIVE_URI`, `AWS_WEB_IDENTITY_TOKEN_FILE` | AWS credential sources for Bedrock batches on MAK | AWS batches are unavailable; local/director mode still works |
+| `CEREBRAS_API_KEY`, `GROQ_API_KEY` | Future/free-cloud provider keys for the same batch contract after premium credits expire | Those provider lanes stay unavailable |
 | `FLUJO_EVENTOS_AUTOMATIZACION_DIR` | Folder watched by the events automation | The automation stays off until you define it |
 | `FLUJO_AIRDROP_HMAC_KEY` | Shared key for signed airdrops (VCD-09). With it set, `flujo airdrop sign` writes a SHA-256 manifest plus a detached HMAC-SHA256 signature into `_airdrop/`, `flujo airdrop verify` checks them naming the exact file that fails, and `airdrop apply` refuses unsigned or tampered payloads — the only escape is a human typing `--allow-unsigned` after reviewing the payload | Signing is off and `apply`/`dry-run` behave exactly as before this key existed |
 | `FLUJO_IMAP_AUTOAPLICAR` | Enciende aplicar airdrops recibidos por correo. Apagado por defecto desde el hallazgo VCD-09: esa via autorizaba comparando el header `From:`, que es texto falsificable, y despues aplica y pushea codigo. Encendida, ademas exige `FLUJO_AIRDROP_HMAC_KEY` configurada y firma HMAC valida del payload (`flujo airdrop sign`/`verify`); sin firma valida no aplica nada, y esa via nunca usa el override humano `--allow-unsigned` | apagado |
@@ -160,7 +163,7 @@ program says to the operator who runs it.
 
 <!-- COMANDOS:INICIO -- generado por tools/gen_mapa_comandos.py, no editar a mano -->
 
-Medido sobre el CLI real: **93 comandos** (23 sueltos + 70 dentro de 16 grupos).
+Medido sobre el CLI real: **95 comandos** (23 sueltos + 72 dentro de 17 grupos).
 
 ### Comandos sueltos
 
@@ -202,6 +205,13 @@ Medido sobre el CLI real: **93 comandos** (23 sueltos + 70 dentro de 16 grupos).
 | `py -m flujo airdrop apply` | Aplica los archivos de _airdrop/, crea backup y dispara checkpoint + push. | nada |
 | `py -m flujo airdrop rollback` | Revierte los cambios al último backup de airdrop. | nada |
 | `py -m flujo airdrop finish` | Finaliza el proceso de airdrop (estatus y sugerencias). | nada |
+
+### Grupo `autonomia` -- Orquestacion externa MAK: estado, tandas, ledger y juez local.
+
+| Comando | Que hace | Que necesita antes |
+|---|---|---|
+| `py -m flujo autonomia status` | Mide si el circuito Watsonx/AWS -> juez local -> ledger esta listo. | nada |
+| `py -m flujo autonomia run` | Ejecuta tandas controladas; por defecto corre providers/Ollama en MAK. | SSH a MAK (`mak@192.168.50.2`) para ejecucion real; `--executor local` solo para pruebas/dry-run |
 
 ### Grupo `brief` -- Operaciones sobre briefs.
 
