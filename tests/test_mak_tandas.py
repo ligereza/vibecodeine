@@ -257,6 +257,36 @@ def test_run_external_batch_persists_raw_and_ingests(monkeypatch, tmp_path):
     assert batch_row["status"] == "accepted"
 
 
+def test_run_external_batch_repairs_product_once(monkeypatch, tmp_path):
+    calls = []
+    common = tmp_path / "common.jsonl"
+    batch = tmp_path / "external_batches.jsonl"
+
+    def fake_call(provider, prompt, **kwargs):
+        calls.append(prompt)
+        item = {
+            "claim": "existing archaeology tool should be reused",
+            "evidence": ["tools/contexto_repo.py"],
+            "files": ["tools/contexto_repo.py"],
+            "confidence": "high", "action": "reuse", "reject_reason": "",
+        }
+        if len(calls) > 1:
+            item["product"] = {"existing_path": "tools/contexto_repo.py",
+                               "reuse_test": "tests/test_mak_tandas.py",
+                               "decision": "reuse"}
+        return json.dumps({"items": [item]})
+
+    monkeypatch.setattr(tandas.external_providers, "call", fake_call)
+    result = tandas.run_external_batch(
+        "tool_archaeology", "repair01", "ollama", out_dir=str(tmp_path),
+        common_path=str(common), batch_path=str(batch), use_ollama=False)
+
+    assert result["status"] == "accepted"
+    assert len(calls) == 2
+    assert "Repara SOLO" in calls[1]
+    assert result["repair_raw_path"]
+
+
 def test_run_external_batch_records_provider_error_and_returns(monkeypatch, tmp_path):
     batch = tmp_path / "external_batches.jsonl"
 
