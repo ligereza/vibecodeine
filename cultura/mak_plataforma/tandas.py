@@ -452,6 +452,23 @@ def _parse_provider_json(text):
     return json.loads(text)
 
 
+def _product_repair_prompt(area, payload):
+    fields = ", ".join(PRODUCT_CONTRACTS[area])
+    return (
+        "Repara SOLO el formato del JSON de MAK. No cambies claim, evidence, "
+        "files, confidence, action ni reject_reason. Agrega o completa el "
+        "objeto product en cada item con exactamente estos campos: %s. "
+        "No inventes rutas ni hechos. Devuelve solo JSON con items.\n\n%s"
+        % (fields, json.dumps(payload, ensure_ascii=False, indent=2)))
+
+
+def _repair_product_payload(area, payload, provider, model, max_tokens):
+    raw = external_providers.call(
+        provider, _product_repair_prompt(area, payload), model=model,
+        max_tokens=min(max_tokens, 1400), temperature=0.0)
+    return _parse_provider_json(raw), raw
+
+
 def run_external_batch(area, batch_id, provider, paths=None, model=None,
                        out_dir=None, common_path=COMMON_LEDGER,
                        batch_path=LEDGER, use_ollama=True, max_tokens=2500,
@@ -501,6 +518,35 @@ def run_external_batch(area, batch_id, provider, paths=None, model=None,
         }, path=batch_path)
         return {"ok": False, "status": "invalid", "raw_path": raw_path,
                 "errors": ["provider_output_not_json"]}
+    repair_raw_path = ""
+    product_ok, product_errors = validate_product_contract(payload, area)
+    if not product_ok:
+        try:
+            repaired, repair_raw = _repair_product_payload(
+                area, payload, provider, model, max_tokens)
+            repair_raw_path = os.path.join(
+                out_dir, "%s-%s-%s.repair.raw.txt" % (area, batch_id, provider))
+            with open(repair_raw_path, "w", encoding="utf-8") as fh:
+                fh.write(repair_raw)
+            repaired_ok, repaired_errors = validate_product_contract(repaired, area)
+        except Exception as exc:  # noqa: BLE001 - bounded repair must degrade safely
+            repaired = None
+            repaired_ok = False
+            repaired_errors = ["product_repair_error:%s" % str(exc)[:160]]
+        if repaired_ok:
+            payload = repaired
+        else:
+            errors = product_errors + repaired_errors
+            append_ledger({
+                "area": area,
+                "batch_id": batch_id,
+                "provider": provider,
+                "status": "revise",
+                "items": 0,
+                "errors": errors,
+            }, path=batch_path)
+            return {"ok": False, "status": "revise", "raw_path": raw_path,
+                    "repair_raw_path": repair_raw_path, "errors": errors}
     result = ingest_result(
         payload, area, common_path=common_path, source=provider,
         use_ollama=use_ollama, strict_product=True)
@@ -513,6 +559,8 @@ def run_external_batch(area, batch_id, provider, paths=None, model=None,
         "errors": result.get("errors", []),
     }, path=batch_path)
     result["raw_path"] = raw_path
+    if repair_raw_path:
+        result["repair_raw_path"] = repair_raw_path
     return result
 
 
