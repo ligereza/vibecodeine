@@ -18,6 +18,19 @@ def test_provider_plan_survives_without_temporary_credits():
     assert plan == ["cerebras", "groq", "ollama"]
 
 
+def test_survival_provider_call_routes_to_ollama(monkeypatch):
+    seen = {}
+
+    def fake_call(prompt, model=None, max_tokens=2500, temperature=0.1):
+        seen.update({"prompt": prompt, "model": model, "max_tokens": max_tokens})
+        return "{}"
+
+    from cultura.mak_plataforma import discernment
+    monkeypatch.setattr(discernment, "call_ollama", fake_call)
+    assert providers.call("ollama", "brief", model="local") == "{}"
+    assert seen == {"prompt": "brief", "model": "local", "max_tokens": 2500}
+
+
 def test_build_brief_is_provider_agnostic_but_structured():
     brief = tandas.build_brief(
         "mak_quality", "b001", providers=["watsonx", "ollama"])

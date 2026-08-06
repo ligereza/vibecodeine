@@ -298,10 +298,9 @@ def build_run_options(areas=None, providers=None, **kwargs) -> RunOptions:
     unknown_areas = [area for area in selected_areas if area not in tandas.AREAS]
     if unknown_areas:
         raise ValueError("unknown_area:" + ",".join(unknown_areas))
-    unknown_providers = [
-        provider for provider in selected_providers
-        if provider not in DEFAULT_PREMIUM_PROVIDERS
-    ]
+    supported_providers = DEFAULT_PREMIUM_PROVIDERS + DEFAULT_FREE_PROVIDERS
+    unknown_providers = [provider for provider in selected_providers
+                         if provider not in supported_providers]
     if unknown_providers:
         raise ValueError("unsupported_run_provider:" + ",".join(unknown_providers))
     return RunOptions(
