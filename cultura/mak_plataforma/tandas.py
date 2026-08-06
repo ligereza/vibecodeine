@@ -244,7 +244,7 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction=""):
         '    "confidence": "high|medium|low",\n'
         '    "action": "%s",\n'
         '    "reject_reason": "",\n'
-        '    "product": {"campo": "valor"}\n'
+         '    "product": %s\n'
         "  }]\n"
         "}\n\n"
         "REGLAS:\n"
@@ -259,6 +259,8 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction=""):
            "\n".join("- " + p for p in paths),
            ", ".join(plan) if plan else "(sin proveedor preferido)",
            ", ".join(PRODUCT_CONTRACTS[area]),
+           json.dumps({field: "" for field in PRODUCT_CONTRACTS[area]},
+                      ensure_ascii=False),
            evidence_block,
            instruction_block,
            "|".join(cfg["actions"]))
@@ -454,12 +456,15 @@ def _parse_provider_json(text):
 
 def _product_repair_prompt(area, payload):
     fields = ", ".join(PRODUCT_CONTRACTS[area])
+    template = json.dumps({field: "" for field in PRODUCT_CONTRACTS[area]},
+                          ensure_ascii=False)
     return (
         "Repara SOLO el formato del JSON de MAK. No cambies claim, evidence, "
         "files, confidence, action ni reject_reason. Agrega o completa el "
         "objeto product en cada item con exactamente estos campos: %s. "
-        "No inventes rutas ni hechos. Devuelve solo JSON con items.\n\n%s"
-        % (fields, json.dumps(payload, ensure_ascii=False, indent=2)))
+        "Usa este molde exacto para product: %s. No inventes rutas ni hechos. "
+        "Devuelve solo JSON con items.\n\n%s"
+        % (fields, template, json.dumps(payload, ensure_ascii=False, indent=2)))
 
 
 def _repair_product_payload(area, payload, provider, model, max_tokens):
