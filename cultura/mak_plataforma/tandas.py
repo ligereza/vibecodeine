@@ -618,7 +618,8 @@ def main(argv=None):
         raw = sys.stdin.read()
         result = ingest_result(
             raw, args.area, common_path=args.common_ledger,
-            source=args.provider, use_ollama=not args.no_ollama)
+            source=args.provider, use_ollama=not args.no_ollama,
+            strict_product=True)
         _print_json(result)
         return 0 if result["ok"] else 2
     if args.cmd == "run":
