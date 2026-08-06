@@ -116,6 +116,7 @@ def test_harvested_factual_question_does_not_use_essay_shape(monkeypatch):
     assert depto == "research"
     assert payload["formato"] == "informe"
     assert payload["densidad"] == "corto"
+    assert "sources" in payload["output_contract"]
 
 
 @pytest.mark.parametrize("pregunta", [
