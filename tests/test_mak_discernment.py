@@ -247,6 +247,7 @@ def test_cli_ingest_deterministic_mode(tmp_path):
         "confidence": "medium",
         "action": "rescue",
         "reject_reason": "",
+        "product": {"bridge": "illustrator", "installation_evidence": "docs/CONTRAPORTADAS_SUPLEMENTOS_RD.md", "rescue_action": "reuse"},
     }]}
     result = subprocess.run(
         [sys.executable, "-m", "cultura.mak_plataforma.tandas",
