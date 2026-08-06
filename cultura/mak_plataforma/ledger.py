@@ -17,6 +17,7 @@ import time
 HOME = os.path.expanduser("~")
 LEDGER = os.path.join(HOME, "plataforma/common_ledger.jsonl")
 SCHEMA_VERSION = "mak-ledger-v1"
+QUARANTINE_SCHEMA = "mak-ledger-quarantine-v1"
 
 ITEM_TYPES = ("evidence", "idea", "task", "decision", "reject", "artifact")
 DOMAINS = ("rd", "iskvw", "mak", "svg", "adobe", "repo")
@@ -137,6 +138,79 @@ def summarize(path=LEDGER, limit=50):
     }
 
 
+def _path_roots():
+    roots = []
+    for value in (
+            os.environ.get("MAK_REPO_ROOT", ""),
+            "/home/mak/flujo",
+            os.getcwd(),
+            os.path.join(os.path.expanduser("~"), "plataforma")):
+        if value and value not in roots:
+            roots.append(value)
+    return roots
+
+
+def _exists_path(path):
+    value = os.path.expandvars(os.path.expanduser(str(path or "")))
+    if os.path.isabs(value) and os.path.exists(value):
+        return True
+    return any(os.path.exists(os.path.join(root, value)) for root in _path_roots())
+
+
+def audit_missing_paths(path=LEDGER):
+    rows = []
+    for row in read_items(path):
+        if row.get("type") != "evidence":
+            continue
+        missing = [file_path for file_path in row.get("files", [])
+                   if not _exists_path(file_path)]
+        if missing:
+            rows.append({
+                "original_id": row.get("id", ""),
+                "source": row.get("source", ""),
+                "domain": row.get("domain", ""),
+                "claim": row.get("claim", ""),
+                "missing_files": missing,
+                "reason": "evidence_path_not_found",
+            })
+    return rows
+
+
+def read_items_quarantine(path):
+    rows = []
+    try:
+        with open(path, encoding="utf-8") as fh:
+            for line in fh:
+                try:
+                    row = json.loads(line)
+                except ValueError:
+                    continue
+                if isinstance(row, dict) and row.get("schema") == QUARANTINE_SCHEMA:
+                    rows.append(row)
+    except OSError:
+        pass
+    return rows
+
+
+def write_quarantine(rows, path=None):
+    path = path or os.path.join(HOME, "plataforma/common_ledger_quarantine.jsonl")
+    existing = {row.get("original_id") for row in read_items_quarantine(path)}
+    added = []
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "a", encoding="utf-8") as fh:
+        for row in rows:
+            if not row.get("original_id") or row["original_id"] in existing:
+                continue
+            safe = dict(row)
+            safe.update({"schema": QUARANTINE_SCHEMA,
+                         "status": "quarantined",
+                         "ts": time.strftime("%F %T")})
+            fh.write(json.dumps(safe, ensure_ascii=False, sort_keys=True) + "\n")
+            existing.add(row["original_id"])
+            added.append(safe)
+    return added
+
+
 def external_item_to_ledger(item, area):
     domain_by_area = {
         "rd_evidence": "rd",
@@ -212,6 +286,9 @@ def main(argv=None):
     p_sum = sub.add_parser("summary", help="summarize ledger")
     p_sum.add_argument("--ledger", default=LEDGER)
     p_sum.add_argument("--limit", type=int, default=50)
+    p_audit = sub.add_parser("audit", help="quarantine missing evidence paths")
+    p_audit.add_argument("--ledger", default=LEDGER)
+    p_audit.add_argument("--quarantine", default="")
     args = parser.parse_args(argv)
     if args.cmd == "append":
         ok, errors, row = append_item(json.loads(input()), path=args.ledger,
@@ -222,6 +299,12 @@ def main(argv=None):
     if args.cmd == "summary":
         print(json.dumps(summarize(args.ledger, args.limit),
                          ensure_ascii=False, indent=2))
+        return 0
+    if args.cmd == "audit":
+        found = audit_missing_paths(args.ledger)
+        added = write_quarantine(found, args.quarantine or None)
+        print(json.dumps({"found": len(found), "quarantined": len(added),
+                          "items": added}, ensure_ascii=False))
         return 0
     return 1
 
