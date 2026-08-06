@@ -77,6 +77,21 @@ def test_validate_result_reject_requires_reason():
     assert "item_0_reject_without_reason" in errors
 
 
+def test_validate_product_contract_requires_area_fields():
+    payload = {"items": [{"product": {"verdict": "accept"}}]}
+    ok, errors = tandas.validate_product_contract(payload, "mak_quality")
+    assert ok is False
+    assert "item_0_missing_product_defect_class" in errors
+
+
+def test_validate_product_contract_accepts_complete_area_fields():
+    payload = {"items": [{"product": {
+        "verdict": "archive", "defect_class": "wrong_format",
+        "queue_action": "quarantine",
+    }}]}
+    assert tandas.validate_product_contract(payload, "mak_quality") == (True, [])
+
+
 def test_append_ledger_does_not_persist_secrets(tmp_path):
     path = tmp_path / "external_batches.jsonl"
     saved = tandas.append_ledger({
@@ -193,6 +208,9 @@ def test_run_external_batch_persists_raw_and_ingests(monkeypatch, tmp_path):
             "confidence": "high",
             "action": "reuse",
             "reject_reason": "",
+            "product": {"existing_path": "tools/contexto_repo.py",
+                         "reuse_test": "tests/test_mak_tandas.py",
+                         "decision": "reuse"},
         }]})
 
     monkeypatch.setattr(tandas.external_providers, "call", fake_call)
