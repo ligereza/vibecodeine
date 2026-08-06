@@ -373,11 +373,31 @@ def _aplicar_resultado_job(job, r):
         job["checkpoint"] = r.get("checkpoint", "")
         job["error"] = (r.get("tail") or "").strip()[:2000]
         return
-    job["estado"] = "listo" if r.get("ok") else "FALLO"
+    contract_error = _verify_result_contract(job, r)
+    job["estado"] = "listo" if r.get("ok") and not contract_error else "FALLO"
     job["path"] = os.path.basename(r["path"]) if r.get("path") else ""
-    if not r.get("ok"):
+    if contract_error:
+        job["error"] = contract_error
+    elif not r.get("ok"):
         # log explicito: ultimas lineas reales del proceso, no solo "FALLO"
         job["error"] = (r.get("tail") or "").strip()[-2000:]
+
+
+def _verify_result_contract(job, result):
+    """Check the persisted JSON product against the dispatch receipt."""
+    contract = job.get("work_contract") or {}
+    path = result.get("path") or ""
+    if not contract or not result.get("ok") or not path:
+        return ""
+    json_path = os.path.splitext(path)[0] + ".json"
+    try:
+        with open(json_path, encoding="utf-8") as fh:
+            payload = json.load(fh)
+    except (OSError, ValueError):
+        return "work_contract_output_json_missing"
+    if payload.get("formato") != contract.get("format"):
+        return "work_contract_output_format_mismatch"
+    return ""
 
 
 def _cerrar_job(job, t0):
@@ -395,12 +415,15 @@ def _cerrar_job(job, t0):
         pass
 
 
-def _lanzar(modo, tema, n, densidad="medio", memoria=False, formato=None):
+def _lanzar(modo, tema, n, densidad="medio", memoria=False, formato=None,
+            work_contract=None):
     job = {
         "tema": tema, "modo": modo, "estado": "en cola",
         "path": "", "error": "", "t": time.strftime("%H:%M:%S"),
         "job_id": mint_job_id(),
     }
+    if work_contract:
+        job["work_contract"] = work_contract
     with JOBS_LOCK:
         JOBS.append(job)
 
@@ -3482,6 +3505,15 @@ class H(BaseHTTPRequestHandler):
             if formato not in formato_ensayo.FORMATOS:
                 formato = None
             memoria = (q.get("memoria") or ["0"])[0] in ("1", "true", "on")
+            work_contract = None
+            raw_contract = (q.get("work_contract") or [""])[0]
+            if raw_contract:
+                try:
+                    candidate = json.loads(raw_contract)
+                    if isinstance(candidate, dict):
+                        work_contract = candidate
+                except (TypeError, ValueError):
+                    work_contract = None
             try:
                 n = int((q.get("n") or [""])[0])
                 n = max(0, min(n, 10))
@@ -3490,7 +3522,8 @@ class H(BaseHTTPRequestHandler):
             if not tema and modo in MODO_SIN_TEMA:
                 tema = "corpus"  # placeholder: corpus ignora el tema
             if tema:
-                _lanzar(modo, tema, n, densidad, memoria, formato)
+                _lanzar(modo, tema, n, densidad, memoria, formato,
+                        work_contract)
                 return self._json_response({"ok": True})
             return self._json_response({"ok": False, "error": "tema vacío"}, 400)
 
