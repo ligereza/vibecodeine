@@ -47,3 +47,16 @@ def test_benchmark_accepts_complete_pair(tmp_path):
 
     assert result["totals"]["products"] == 1
     assert result["totals"]["issues"] == 0
+
+
+def test_benchmark_since_excludes_old_products(tmp_path):
+    folder = tmp_path / "informes"
+    folder.mkdir()
+    path = folder / "old.json"
+    path.write_text(json.dumps({"formato": "ensayo"}), encoding="utf-8")
+    path.with_suffix(".md").write_text("# x\n", encoding="utf-8")
+    since = path.stat().st_mtime + 1
+
+    result = inspect_corpus(tmp_path, since=since)
+
+    assert result["totals"]["products"] == 0
