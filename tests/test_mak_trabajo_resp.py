@@ -287,6 +287,31 @@ def test_repasar_reviews_pending_ledger_locally(monkeypatch, tmp_path):
     assert payload["domain"] == "svg"
 
 
+def test_repasar_reviews_benchmark_queue_locally(monkeypatch, tmp_path):
+    benchmark = tmp_path / "corpus_benchmark.json"
+    reviews = tmp_path / "idle_benchmark_reviews.jsonl"
+    monkeypatch.setattr(trabajo, "BENCHMARK", str(benchmark))
+    monkeypatch.setattr(trabajo, "IDLE_BENCHMARK_REVIEWS", str(reviews))
+    monkeypatch.setattr(trabajo, "COMMON_LEDGER", str(tmp_path / "empty.jsonl"))
+    monkeypatch.setattr(trabajo, "_has_pending_material", lambda: False)
+    monkeypatch.setattr(trabajo, "_has_pending_research_backlog", lambda: False)
+    monkeypatch.setattr(trabajo, "_has_pending_codex_backlog", lambda: False)
+    benchmark.write_text(json.dumps({"queue": [{
+        "kind": "route_format_mismatch", "path": "/tmp/a.json",
+        "next_action": "review_then_relabel_as_informe",
+    }]}), encoding="utf-8")
+
+    depto, payload = trabajo._tarea("repasar", {})
+    response = trabajo._run_local_idle(payload)
+
+    assert depto == "local"
+    assert payload["modo"] == "benchmark_review"
+    assert json.loads(response)["ok"] is True
+    row = json.loads(reviews.read_text(encoding="utf-8"))
+    assert row["schema"] == "mak-idle-benchmark-review-v1"
+    assert row["status"] == "queued_for_repair"
+
+
 def test_local_idle_ledger_review_writes_jsonl(monkeypatch, tmp_path):
     reviews = tmp_path / "idle_ledger_reviews.jsonl"
     monkeypatch.setattr(trabajo, "IDLE_LEDGER_REVIEWS", str(reviews))
