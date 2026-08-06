@@ -228,7 +228,7 @@ def test_enforce_merge_fallido_se_reporta_no_se_reintenta(monkeypatch):
 def _main_con(monkeypatch, tmp_path, argv):
     listado = json.dumps([{
         "number": 7, "headRefName": "capataz/util-1234beef", "isDraft": True,
-        "files": [{"path": "utilidades/x.py"}, {"path": "README.md"}],
+        "files": [{"path": "cultura/mak_plataforma/utilidades/x.py"}],
     }, {
         "number": 8, "headRefName": "feature/no-capataz", "isDraft": False,
         "files": [{"path": "src/otro.py"}],
@@ -285,11 +285,11 @@ def test_solo_mergea_contra_el_buzon(tmp_path, monkeypatch):
                         lambda n, b, p_, v: vistos.append(n))
     prs = [
         {"number": 1, "headRefName": "capataz/x-aaa", "baseRefName": "mak",
-         "files": [{"path": "a.py"}]},
+         "files": [{"path": "cultura/mak_plataforma/utilidades/a.py"}]},
         {"number": 2, "headRefName": "capataz/y-bbb", "baseRefName": "main",
          "files": [{"path": "b.py"}]},
         {"number": 3, "headRefName": "capataz/z-ccc",
-         "files": [{"path": "c.py"}]},
+         "files": [{"path": "cultura/mak_plataforma/utilidades/c.py"}]},
         {"number": 4, "headRefName": "feature/otra", "baseRefName": "mak",
          "files": [{"path": "d.py"}]},
     ]
@@ -305,3 +305,39 @@ def test_solo_mergea_contra_el_buzon(tmp_path, monkeypatch):
     assert 2 not in vistos, "a capataz/* PR against MAIN is left alone"
     assert 3 in vistos, "no baseRefName still reviewed: absent != different"
     assert 4 not in vistos, "a branch that is not capataz/* is none of its business"
+
+
+def test_capataz_no_puede_arrastrar_cambios_fuera_de_utilidades(tmp_path,
+                                                                monkeypatch):
+    """A capataz PR may only deliver generated utilities.
+
+    This pins the 2026-08-06 failure shape: the MAK inbox carried a valid
+    utility plus workflow and package changes from dependency branches. Reviewing
+    the .py alone would approve a mixed PR.
+    """
+    monkeypatch.setattr(revisor, "revisar_pr",
+                        lambda *args: (_ for _ in ()).throw(
+                            AssertionError("mixed PR must be vetoed first")))
+    prs = [{
+        "number": 11,
+        "headRefName": "capataz/util-abc",
+        "baseRefName": "mak",
+        "files": [
+            {"path": "cultura/mak_plataforma/utilidades/x.py"},
+            {"path": ".github/workflows/ci.yml"},
+            {"path": "web/package.json"},
+        ],
+    }]
+    monkeypatch.setattr(revisor, "sh",
+                        lambda args: (0, json.dumps(prs), ""))
+    monkeypatch.setattr(revisor, "OUT", str(tmp_path / "out.json"))
+    monkeypatch.setattr(revisor, "LOG", str(tmp_path / "r.log"))
+    monkeypatch.setattr(sys, "argv", ["revisor.py"])
+
+    assert revisor.main() == 0
+
+    rep = json.loads((tmp_path / "out.json").read_text())
+    verdict = rep["veredictos"][0]
+    assert verdict["veredicto"] == "NO-APROBADO"
+    assert verdict["gates"] == {"zona_utilidades": False}
+    assert ".github/workflows/ci.yml" in verdict["rutas_fuera_de_zona"]
