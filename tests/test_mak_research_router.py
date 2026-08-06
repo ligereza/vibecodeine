@@ -77,3 +77,9 @@ def test_unknown_topic_uses_verb_default():
     assert route.formato == "informe"
     assert route.densidad == "corto"
 
+
+def test_route_exposes_contract_for_selected_product():
+    route = R.route_research_task(
+        "multiplicar", "curatoria de mis obras para el archivo publico iskvw")
+    assert route.required_fields == (
+        "reading", "selection", "relationships", "public_status")
