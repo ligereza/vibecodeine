@@ -351,6 +351,9 @@ def _benchmark_review_payload(st):
             "benchmark_kind": issue.get("kind", ""),
             "benchmark_action": issue.get("next_action", "manual_review"),
             "benchmark_path": issue.get("path", ""),
+            "benchmark_declared": issue.get("declared", ""),
+            "benchmark_expected": issue.get("expected", ""),
+            "benchmark_topic": issue.get("topic", ""),
         }
     return None
 
@@ -391,6 +394,9 @@ def _run_local_idle(payload):
             "benchmark_key": payload.get("benchmark_key", ""),
             "kind": payload.get("benchmark_kind", ""),
             "path": payload.get("benchmark_path", ""),
+            "declared": payload.get("benchmark_declared", ""),
+            "expected": payload.get("benchmark_expected", ""),
+            "topic": payload.get("benchmark_topic", ""),
             "next_action": payload.get("benchmark_action", "manual_review"),
             "status": "queued_for_repair",
         }
