@@ -57,6 +57,22 @@ def _repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
+def _quarantine_path(common_path: str) -> str:
+    return str(Path(common_path).with_name("common_ledger_quarantine.jsonl"))
+
+
+def _quarantine_summary(path: str) -> dict:
+    rows = common_ledger.read_items_quarantine(path)
+    return {
+        "total": len(rows),
+        "by_domain": {
+            domain: sum(1 for row in rows if row.get("domain") == domain)
+            for domain in sorted({row.get("domain", "") for row in rows})
+        },
+        "last": rows[-5:],
+    }
+
+
 def _run_git(args: list[str]) -> str:
     result = subprocess.run(
         ["git", *args],
@@ -249,6 +265,11 @@ def autonomy_status(common_path: str = tandas.COMMON_LEDGER,
         blockers.append("missing_canonical_branches:" + ",".join(missing))
     if branches["extra_remote_branches"]:
         blockers.append("extra_remote_branches")
+    quarantine_path = _quarantine_path(common_path)
+    quarantine = _quarantine_summary(quarantine_path)
+    next_actions = []
+    if quarantine["total"]:
+        next_actions.append("review_quarantined_evidence")
     return {
         "schema": "flujo-autonomy-status-v1",
         "ts": time.strftime("%F %T"),
@@ -258,7 +279,9 @@ def autonomy_status(common_path: str = tandas.COMMON_LEDGER,
         "ledgers": {
             "common": common_ledger.summarize(common_path, limit=50),
             "batches": tandas.summarize_ledger(batch_path, limit=50),
+            "quarantine": quarantine,
         },
+        "next_actions": next_actions,
         "batch_contract": {
             "areas": list(DEFAULT_AREAS),
             "premium_providers": list(DEFAULT_PREMIUM_PROVIDERS),

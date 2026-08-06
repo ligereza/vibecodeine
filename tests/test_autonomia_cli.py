@@ -40,6 +40,24 @@ def test_autonomy_status_reports_clean_blockers(monkeypatch, tmp_path):
     assert status["batch_contract"]["areas"] == list(autonomia.DEFAULT_AREAS)
 
 
+def test_autonomy_status_surfaces_quarantine(tmp_path):
+    common = tmp_path / "common.jsonl"
+    quarantine = tmp_path / "common_ledger_quarantine.jsonl"
+    quarantine.write_text(json.dumps({
+        "schema": "mak-ledger-quarantine-v1",
+        "status": "quarantined",
+        "domain": "svg",
+        "original_id": "old1",
+    }) + "\n", encoding="utf-8")
+
+    status = autonomia.autonomy_status(
+        common_path=str(common), batch_path=str(tmp_path / "batches.jsonl"))
+
+    assert status["ledgers"]["quarantine"]["total"] == 1
+    assert status["ledgers"]["quarantine"]["by_domain"] == {"svg": 1}
+    assert status["next_actions"] == ["review_quarantined_evidence"]
+
+
 def test_run_autonomy_dry_run_writes_briefs(monkeypatch, tmp_path):
     monkeypatch.setattr(autonomia, "autonomy_status", lambda **_kwargs: {
         "ready": True,
