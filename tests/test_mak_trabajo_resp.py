@@ -298,6 +298,8 @@ def test_repasar_reviews_benchmark_queue_locally(monkeypatch, tmp_path):
     monkeypatch.setattr(trabajo, "_has_pending_codex_backlog", lambda: False)
     benchmark.write_text(json.dumps({"queue": [{
         "kind": "route_format_mismatch", "path": "/tmp/a.json",
+        "declared": "ensayo", "expected": "informe",
+        "topic": "Quien organizo el evento",
         "next_action": "review_then_relabel_as_informe",
     }]}), encoding="utf-8")
 
@@ -310,6 +312,7 @@ def test_repasar_reviews_benchmark_queue_locally(monkeypatch, tmp_path):
     row = json.loads(reviews.read_text(encoding="utf-8"))
     assert row["schema"] == "mak-idle-benchmark-review-v1"
     assert row["status"] == "queued_for_repair"
+    assert row["expected"] == "informe"
 
 
 def test_local_idle_ledger_review_writes_jsonl(monkeypatch, tmp_path):
