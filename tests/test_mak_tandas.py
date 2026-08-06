@@ -330,6 +330,31 @@ def test_run_external_batch_sanitizes_lone_surrogates(monkeypatch, tmp_path):
     assert "�" in raw
 
 
+def test_run_external_batch_sanitizes_escaped_surrogates_after_json_load(
+        monkeypatch, tmp_path):
+    common = tmp_path / "common.jsonl"
+    batch = tmp_path / "external_batches.jsonl"
+
+    def escaped_call(*_args, **_kwargs):
+        return json.dumps({"items": [{
+            "claim": "bad " + chr(0xDC81),
+            "evidence": ["tests/test_mak_tandas.py"],
+            "files": ["tests/test_mak_tandas.py"],
+            "confidence": "high", "action": "reuse", "reject_reason": "",
+            "product": {"existing_path": "tests/test_mak_tandas.py",
+                         "reuse_test": "tests/test_mak_tandas.py",
+                         "decision": "reuse"},
+        }]})
+
+    monkeypatch.setattr(tandas.external_providers, "call", escaped_call)
+    result = tandas.run_external_batch(
+        "tool_archaeology", "surrogate02", "ollama", out_dir=str(tmp_path),
+        common_path=str(common), batch_path=str(batch), use_ollama=False)
+
+    assert result["status"] == "accepted"
+    assert "�" in common.read_text(encoding="utf-8")
+
+
 def test_cli_run_reports_provider_error_without_traceback():
     env = {
         key: value for key, value in providers.os.environ.items()

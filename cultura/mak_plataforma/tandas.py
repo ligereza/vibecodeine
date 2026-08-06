@@ -72,6 +72,17 @@ def _safe_text(value):
                    for char in str(value or ""))
 
 
+def _safe_tree(value):
+    """Sanitize decoded JSON too; escaped surrogates appear after json.loads."""
+    if isinstance(value, str):
+        return _safe_text(value)
+    if isinstance(value, list):
+        return [_safe_tree(item) for item in value]
+    if isinstance(value, dict):
+        return {_safe_tree(key): _safe_tree(item) for key, item in value.items()}
+    return value
+
+
 def _path_roots():
     roots = []
     for value in (
@@ -545,7 +556,7 @@ def run_external_batch(area, batch_id, provider, paths=None, model=None,
     with open(raw_path, "w", encoding="utf-8") as fh:
         fh.write(raw)
     try:
-        payload = _parse_provider_json(raw)
+        payload = _safe_tree(_parse_provider_json(raw))
     except ValueError:
         append_ledger({
             "area": area,
@@ -563,6 +574,7 @@ def run_external_batch(area, batch_id, provider, paths=None, model=None,
         try:
             repaired, repair_raw = _repair_product_payload(
                 area, payload, provider, model, max_tokens)
+            repaired = _safe_tree(repaired)
             repair_raw_path = os.path.join(
                 out_dir, "%s-%s-%s.repair.raw.txt" % (area, batch_id, provider))
             with open(repair_raw_path, "w", encoding="utf-8") as fh:
