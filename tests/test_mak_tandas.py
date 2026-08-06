@@ -23,7 +23,7 @@ def test_build_brief_is_provider_agnostic_but_structured():
         "mak_quality", "b001", providers=["watsonx", "ollama"])
     assert brief["schema"] == tandas.SCHEMA_VERSION
     assert brief["provider_plan"] == ["watsonx", "ollama"]
-    assert brief["result_required"] == list(tandas.RESULT_REQUIRED)
+    assert brief["result_required"] == list(tandas.RESULT_REQUIRED) + ["product"]
     assert "Cada item debe poder sobrevivir" in brief["prompt"]
     assert "PAQUETE DE EVIDENCIA LOCAL: no incluido" in brief["prompt"]
     assert brief["product_contract"] == ["verdict", "defect_class", "queue_action"]
