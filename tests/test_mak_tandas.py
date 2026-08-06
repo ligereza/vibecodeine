@@ -1,4 +1,5 @@
 import json
+import inspect
 import subprocess
 import sys
 
@@ -166,6 +167,10 @@ def test_provider_env_aliases_normalize_ibm_names(monkeypatch, tmp_path):
     assert providers.os.environ["WATSONX_PROJECT_ID"] == "ibm-project"
     assert providers.os.environ["WATSONX_URL"] == "https://example.ibm"
     assert providers.os.environ["AWS_DEFAULT_REGION"] == "us-west-2"
+
+
+def test_provider_env_candidates_include_mak_research_directory():
+    assert "~/research/research.env" in inspect.getsource(providers.load_env)
 
 
 def test_run_external_batch_persists_raw_and_ingests(monkeypatch, tmp_path):
