@@ -313,6 +313,23 @@ def test_run_external_batch_records_provider_error_and_returns(monkeypatch, tmp_
     assert row["status"] == "provider_error"
 
 
+def test_run_external_batch_sanitizes_lone_surrogates(monkeypatch, tmp_path):
+    batch = tmp_path / "external_batches.jsonl"
+
+    def malformed_call(*_args, **_kwargs):
+        return '{"items": [{"claim": "bad ' + chr(0xDC81) + '",'
+
+    monkeypatch.setattr(tandas.external_providers, "call", malformed_call)
+    result = tandas.run_external_batch(
+        "tool_archaeology", "surrogate01", "ollama", out_dir=str(tmp_path),
+        batch_path=str(batch), use_ollama=False)
+
+    assert result["status"] == "invalid"
+    raw = (tmp_path / "tool_archaeology-surrogate01-ollama.raw.txt").read_text(
+        encoding="utf-8")
+    assert "�" in raw
+
+
 def test_cli_run_reports_provider_error_without_traceback():
     env = {
         key: value for key, value in providers.os.environ.items()
