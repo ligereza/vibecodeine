@@ -117,6 +117,18 @@ def validate_review(payload, area=None):
     return not errors, errors
 
 
+def normalize_review_domain(payload, area):
+    """Normalize an area label without weakening cross-domain validation."""
+    if not isinstance(payload, dict):
+        return payload
+    expected = AREA_DOMAINS.get(area)
+    if expected and payload.get("domain") in (area, area.replace("_", "-")):
+        normalized = dict(payload)
+        normalized["domain"] = expected
+        return normalized
+    return payload
+
+
 def extract_json(text):
     """Extract the first JSON object from a noisy local-model response."""
     if isinstance(text, dict):
@@ -231,7 +243,7 @@ def review_payload(area, payload, reviewer=None, use_ollama=True):
     prompt = build_review_prompt(area, payload)
     call = reviewer or call_ollama
     try:
-        review = extract_json(call(prompt))
+        review = normalize_review_domain(extract_json(call(prompt)), area)
         ok, errors = validate_review(review, area=area)
         if ok:
             return review, {"reviewer": "ollama", "fallback": False}
