@@ -66,6 +66,12 @@ def _print_json(payload, indent=None):
     print(json.dumps(payload, ensure_ascii=True, indent=indent))
 
 
+def _safe_text(value):
+    """Replace lone Unicode surrogates before persisting model output."""
+    return "".join("\ufffd" if 0xD800 <= ord(char) <= 0xDFFF else char
+                   for char in str(value or ""))
+
+
 def _path_roots():
     roots = []
     for value in (
@@ -517,7 +523,7 @@ def run_external_batch(area, batch_id, provider, paths=None, model=None,
             provider, prompt, model=model, max_tokens=max_tokens,
             temperature=0.1, **kwargs)
     except Exception as exc:  # noqa: BLE001 - one provider must not kill a round
-        error = str(exc).strip() or exc.__class__.__name__
+        error = _safe_text(str(exc).strip() or exc.__class__.__name__)
         row = append_ledger({
             "area": area,
             "batch_id": batch_id,
@@ -535,6 +541,7 @@ def run_external_batch(area, batch_id, provider, paths=None, model=None,
     out_dir = out_dir or os.path.join(HOME, "plataforma/tandas")
     os.makedirs(out_dir, exist_ok=True)
     raw_path = os.path.join(out_dir, "%s-%s-%s.raw.txt" % (area, batch_id, provider))
+    raw = _safe_text(raw)
     with open(raw_path, "w", encoding="utf-8") as fh:
         fh.write(raw)
     try:
@@ -559,7 +566,7 @@ def run_external_batch(area, batch_id, provider, paths=None, model=None,
             repair_raw_path = os.path.join(
                 out_dir, "%s-%s-%s.repair.raw.txt" % (area, batch_id, provider))
             with open(repair_raw_path, "w", encoding="utf-8") as fh:
-                fh.write(repair_raw)
+                fh.write(_safe_text(repair_raw))
             repaired_ok, repaired_errors = validate_product_contract(repaired, area)
         except Exception as exc:  # noqa: BLE001 - bounded repair must degrade safely
             repaired = None
