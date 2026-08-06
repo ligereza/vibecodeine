@@ -82,6 +82,7 @@ def inspect_corpus(root, since=0):
                     issues.append({"kind": "route_format_mismatch",
                                    "path": str(path), "declared": formato,
                                    "expected": route.formato,
+                                   "topic": payload.get("topic", ""),
                                    "reason": route.reason})
             markdown = path.with_suffix(".md")
             if not markdown.exists():
