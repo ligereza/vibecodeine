@@ -111,6 +111,7 @@ render_app = typer.Typer(help="Render y validación de piezas vectoriales.", no_
 airdrop_app = typer.Typer(help="Sistema de actualización profesional (airdrops).", no_args_is_help=True)
 datadrop_app = typer.Typer(help="Gestión de datadrops (fotos reales terminadas).", no_args_is_help=True)
 micelio_app = typer.Typer(help="El sobre micelio/1: semilla, fruto y nutriente entre un modelo web sin API y el organismo.", no_args_is_help=True)
+autonomia_app = typer.Typer(help="Orquestacion externa MAK: estado, tandas, ledger y juez local.", no_args_is_help=True)
 
 app.add_typer(job_app, name="job")
 app.add_typer(privacy_app, name="privacy")
@@ -123,6 +124,77 @@ app.add_typer(render_app, name="render")
 app.add_typer(airdrop_app, name="airdrop")
 app.add_typer(datadrop_app, name="datadrop")
 app.add_typer(micelio_app, name="micelio")
+app.add_typer(autonomia_app, name="autonomia")
+
+
+@autonomia_app.command("status")
+def autonomia_status(
+    common_ledger: str = typer.Option("", "--common-ledger", help="Override del ledger comun MAK."),
+    batch_ledger: str = typer.Option("", "--batch-ledger", help="Override del ledger de tandas externas."),
+    executor: str = typer.Option("local", "--executor", help="local | mak"),
+    ssh_target: str = typer.Option("", "--ssh-target", help="Destino SSH MAK."),
+):
+    """Mide si el circuito Watsonx/AWS -> juez local -> ledger esta listo."""
+    import json as _json
+    from cultura.mak_plataforma import tandas as _tandas
+    from .autonomia import MAK_SSH_TARGET, autonomy_status as _status, mak_status
+
+    if executor == "mak":
+        payload = mak_status(target=ssh_target or MAK_SSH_TARGET)
+    else:
+        payload = _status(
+            common_path=common_ledger or _tandas.COMMON_LEDGER,
+            batch_path=batch_ledger or _tandas.LEDGER,
+            include_local_providers=False,
+        )
+    print(_json.dumps(payload, ensure_ascii=False, indent=2))
+
+
+@autonomia_app.command("run")
+def autonomia_run(
+    areas: str = typer.Option("", "--areas", help="CSV de areas; default: todas."),
+    providers: str = typer.Option("watsonx,aws", "--providers", help="CSV: watsonx,aws."),
+    round_id: str = typer.Option("", "--round-id", help="Id estable de corrida."),
+    out_dir: str = typer.Option("", "--out-dir", help="Carpeta de salida; default en _logs."),
+    common_ledger: str = typer.Option("", "--common-ledger", help="Override del ledger comun MAK."),
+    batch_ledger: str = typer.Option("", "--batch-ledger", help="Override del ledger de tandas externas."),
+    max_tokens: int = typer.Option(1800, "--max-tokens", help="Tope por llamada externa."),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Solo escribir briefs; no llamar proveedores."),
+    allow_dirty: bool = typer.Option(False, "--allow-dirty", help="Permite correr aunque el repo este sucio."),
+    no_ollama: bool = typer.Option(False, "--no-ollama", help="Usar juez determinista sin Ollama."),
+    instruction: str = typer.Option("", "--instruction", help="Instruccion especifica de esta tanda."),
+    executor: str = typer.Option("mak", "--executor", help="mak ejecuta providers/Ollama; local solo para tests/dry-run."),
+    ssh_target: str = typer.Option("", "--ssh-target", help="Destino SSH MAK."),
+    mak_repo: str = typer.Option("~/flujo", "--mak-repo", help="Repo en MAK."),
+):
+    """Ejecuta tandas controladas; por defecto corre providers/Ollama en MAK."""
+    import json as _json
+    from cultura.mak_plataforma import tandas as _tandas
+    from .autonomia import MAK_SSH_TARGET, build_run_options, run_autonomy
+
+    try:
+        options = build_run_options(
+            areas=areas or None,
+            providers=providers or None,
+            round_id=round_id,
+            out_dir=out_dir,
+            common_ledger_path=common_ledger or _tandas.COMMON_LEDGER,
+            batch_ledger_path=batch_ledger or _tandas.LEDGER,
+            max_tokens=max_tokens,
+            use_ollama=not no_ollama,
+            require_clean=not allow_dirty,
+            dry_run=dry_run,
+            instruction=instruction,
+            executor=executor,
+            ssh_target=ssh_target or MAK_SSH_TARGET,
+            mak_repo=mak_repo,
+        )
+    except ValueError as exc:
+        _err(str(exc))
+    payload = run_autonomy(options)
+    print(_json.dumps(payload, ensure_ascii=False, indent=2))
+    if not payload.get("ok"):
+        raise typer.Exit(2)
 
 
 @micelio_app.command("formato")
