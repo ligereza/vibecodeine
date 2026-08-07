@@ -466,11 +466,24 @@ def validate_evidence_paths(payload, area=None, extra_paths=None):
     items = payload.get("items", []) if isinstance(payload, dict) else []
     for idx, item in enumerate(items):
         for file_idx, path in enumerate(item.get("files", []) or []):
+            if extra_paths is not None:
+                allowed = [candidate for candidate in extra_paths
+                           if os.path.basename(candidate) == os.path.basename(path)
+                           or os.path.normcase(str(candidate)) == os.path.normcase(str(path))]
+                if not allowed:
+                    errors.append("item_%d_missing_evidence_path_%d" % (idx, file_idx))
+                    continue
+                resolved = _resolve_existing_path(allowed[0])
+                if not resolved:
+                    errors.append("item_%d_missing_evidence_path_%d" % (idx, file_idx))
+                    continue
+                continue
             resolved = _resolve_existing_path(path) if isinstance(path, str) else ""
             if not resolved and area in AREAS and isinstance(path, str):
-                candidates = [candidate for candidate in (
-                    list(extra_paths or []) + AREAS[area].get(
-                        "evidence_paths", []))
+                allowed_paths = (list(extra_paths)
+                                 if extra_paths is not None else
+                                 AREAS[area].get("evidence_paths", []))
+                candidates = [candidate for candidate in allowed_paths
                     if os.path.basename(candidate) == os.path.basename(path)]
                 if len(candidates) == 1:
                     resolved = _resolve_existing_path(candidates[0])

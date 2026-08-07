@@ -184,6 +184,16 @@ def test_validate_evidence_paths_accepts_explicit_batch_files(tmp_path):
         payload, area="mak_quality", extra_paths=[str(report)]) == (True, [])
 
 
+def test_explicit_batch_cannot_escape_to_an_existing_repo_file(tmp_path):
+    report = tmp_path / "historical.md"
+    report.write_text("old report", encoding="utf-8")
+    payload = {"items": [{"files": ["context/LAST_HANDOFF.md"]}]}
+    ok, errors = tandas.validate_evidence_paths(
+        payload, area="mak_quality", extra_paths=[str(report)])
+    assert ok is False
+    assert errors == ["item_0_missing_evidence_path_0"]
+
+
 def test_parse_provider_json_accepts_fenced_json():
     assert tandas._parse_provider_json("```json\n{\"items\": []}\n```") == {"items": []}
 
