@@ -62,6 +62,7 @@ IDLE_AUDIT = os.path.join(HOME, "plataforma/idle_decisions.jsonl")
 IDLE_LEDGER_REVIEWS = os.path.join(HOME, "plataforma/idle_ledger_reviews.jsonl")
 IDLE_BENCHMARK_REVIEWS = os.path.join(HOME, "plataforma/idle_benchmark_reviews.jsonl")
 IDLE_MEMORY_AUDITS = os.path.join(HOME, "plataforma/idle_memory_audits.jsonl")
+IDLE_CURATORIA_REVIEWS = os.path.join(HOME, "plataforma/idle_curatoria_reviews.jsonl")
 BENCHMARK = os.path.join(HOME, "plataforma/corpus_benchmark.json")
 CORPUS_REVIEW_LOG = os.path.join(HOME, "plataforma/corpus_reviews.jsonl")
 COMMON_LEDGER = os.path.join(HOME, "plataforma/common_ledger.jsonl")
@@ -72,6 +73,7 @@ CODEX = "http://127.0.0.1:8891/run"
 BACKLOG_GEN = os.path.join(HOME, "plataforma/backlog.jsonl")
 INFORMES_DIRS = [os.path.join(HOME, "research", d) for d in ("informes", "cadenas", "paneles", "refutaciones", "grafos", "memoria")]
 CORPUS_REVIEW_EVERY = max(1, int(os.environ.get("MAK_CORPUS_REVIEW_EVERY", 4)))
+CURATORIA_BATCH_SIZE = max(1, int(os.environ.get("MAK_CURATORIA_BATCH_SIZE", 3)))
 # nota: dirs que no existen son saltados por cosechar
 
 
@@ -192,6 +194,78 @@ def _memory_audit_data():
 def _memory_requires_review():
     data = _memory_audit_data()
     return bool(data.get("bloquea_produccion", False))
+
+
+def _iskvw_campo_path():
+    """Return the deployed archive projection only when MAK can see it.
+
+    The Windows checkout is not MAK's source of truth. Requiring the explicit
+    box path (or the real Linux deployment path) prevents the local director
+    from silently curating a stale copy and keeps this idle lane inert in
+    repository-only tests.
+    """
+    roots = []
+    configured = os.environ.get("MAK_REPO_ROOT", "").strip()
+    if configured:
+        roots.append(configured)
+    if os.path.isdir("/home/mak/flujo"):
+        roots.append("/home/mak/flujo")
+    for root in roots:
+        path = os.path.join(root, "iskvw", "datos", "campo.json")
+        if os.path.isfile(path):
+            return path
+    return ""
+
+
+def _iskvw_curation_payload(st):
+    """Queue a small critical reading from MAK's real artwork corpus.
+
+    This is deliberately a research payload, not a publication step. The
+    selected records carry machine perception and media paths; the research
+    service must produce reading, selection, relationships and public_status.
+    A batch is marked seen only after the remote work succeeds, so a failed
+    model cannot erase a work from the queue.
+    """
+    path = _iskvw_campo_path()
+    if not path:
+        return None
+    datos = _read_json(path)
+    piezas = [p for p in (datos or {}).get("piezas", [])
+              if p.get("tipo") == "obra" and p.get("id") and p.get("archivo")]
+    if not piezas:
+        return None
+    seen = set(st.get("curatoria_seen", [])[-500:])
+    inflight = st.get("curatoria_inflight", [])
+    seleccion = [p for p in piezas
+                 if p["id"] not in seen and p["id"] not in inflight]
+    if not seleccion:
+        return None
+    seleccion = seleccion[:CURATORIA_BATCH_SIZE]
+    ids = [p["id"] for p in seleccion]
+    st["curatoria_inflight"] = ids
+    tema = ("curatoria critica local de obras propias: separar descripcion "
+            "percibida, interpretacion, debilidades y decision de archivo "
+            "sin publicar automaticamente")
+    return {
+        "modo": "curation_review",
+        "formato": "curatoria",
+        "densidad": "medio",
+        "tema": tema,
+        "source_path": path,
+        "selection": seleccion,
+        "review_ids": ids,
+        "output_contract": contract_for_task("multiplicar", tema),
+        "work_contract": work_contract("multiplicar", tema),
+    }
+
+
+def _finish_curatoria_review(st, payload, accepted):
+    ids = list(payload.get("review_ids") or [])
+    if accepted and ids:
+        seen = list(st.get("curatoria_seen", []))
+        st["curatoria_seen"] = (seen + ids)[-500:]
+    if st.get("curatoria_inflight") == ids:
+        st.pop("curatoria_inflight", None)
 
 
 def _corpus_files():
@@ -331,6 +405,9 @@ def _idle_node_payload(verbo, st):
         memory_payload = _memory_review_payload(st)
         if memory_payload:
             return memory_payload
+        curatoria_payload = _iskvw_curation_payload(st)
+        if curatoria_payload:
+            return curatoria_payload
     topics = node["temas"]
     key = "idle_%s_idx" % verbo
     i = st.get(key, 0) % len(topics)
@@ -902,11 +979,13 @@ def main():
             _audit_idle_decision(ts, online, verbo, depto, payload,
                                  "rejected", resp, err)
             _finish_corpus_review(st, payload, False)
+            _finish_curatoria_review(st, payload, False)
             _save(st)
             return
         st["count"] = st.get("count", 0) + 1
         st["last"] = now
         _finish_corpus_review(st, payload, True)
+        _finish_curatoria_review(st, payload, True)
         _save(st)
         if backlog is not None and st["count"] % 8 == 0:
             try:
@@ -921,6 +1000,7 @@ def main():
                              "accepted", resp)
     except Exception as e:  # noqa: BLE001 - el orquestador no debe morir
         _save(st)
+        _finish_curatoria_review(st, payload, False)
         log("%s [%s] %s FALLO: %s" % (ts, "on" if online else "OFF", verbo, str(e)[:120]))
         _audit_idle_decision(ts, online, verbo, depto, payload,
                              "failed", error=str(e))
