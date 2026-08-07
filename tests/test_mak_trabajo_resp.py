@@ -337,6 +337,35 @@ def test_repasar_reviews_benchmark_queue_locally(monkeypatch, tmp_path):
     assert row["expected"] == "informe"
 
 
+def test_repasar_reviews_memory_audit_before_generated_research(monkeypatch, tmp_path):
+    audit = {
+        "entradas": 448,
+        "estados": {"pendiente": 33},
+        "slugs_duplicados": ["no-se-encontro"],
+        "origenes_faltantes": ["bl-seed"],
+        "entidades_bloqueadas": [],
+        "accion": "revisar_memoria",
+    }
+    reviews = tmp_path / "idle_memory_audits.jsonl"
+    monkeypatch.setattr(trabajo, "IDLE_MEMORY_AUDITS", str(reviews))
+    monkeypatch.setattr(trabajo, "COMMON_LEDGER", str(tmp_path / "empty.jsonl"))
+    monkeypatch.setattr(trabajo, "BENCHMARK", str(tmp_path / "empty-benchmark.json"))
+    monkeypatch.setattr(trabajo, "_memory_audit_data", lambda: audit)
+    monkeypatch.setattr(trabajo, "_has_pending_material", lambda: False)
+    monkeypatch.setattr(trabajo, "_has_pending_research_backlog", lambda: True)
+    monkeypatch.setattr(trabajo, "_has_pending_codex_backlog", lambda: False)
+
+    depto, payload = trabajo._tarea("repasar", {})
+    response = trabajo._run_local_idle(payload)
+
+    assert depto == "local"
+    assert payload["modo"] == "memory_audit"
+    assert json.loads(response)["ok"] is True
+    row = json.loads(reviews.read_text(encoding="utf-8"))
+    assert row["schema"] == "mak-idle-memory-audit-v1"
+    assert row["duplicate_slugs"] == ["no-se-encontro"]
+
+
 def test_local_idle_ledger_review_writes_jsonl(monkeypatch, tmp_path):
     reviews = tmp_path / "idle_ledger_reviews.jsonl"
     monkeypatch.setattr(trabajo, "IDLE_LEDGER_REVIEWS", str(reviews))

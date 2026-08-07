@@ -78,3 +78,5 @@ def test_mak_panel_contains_external_batch_surface():
     assert "Tandas externas y juicio local" in src
     assert "Pendiente de revisión" in src
     assert "by_provider" in src
+    assert "Memoria operativa MAK" in src
+    assert "Slugs repetidos" in src

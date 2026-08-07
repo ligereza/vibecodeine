@@ -30,6 +30,10 @@ import salud  # noqa: E402
 import cuotas  # noqa: E402
 import ideas  # noqa: E402
 import contrato_archivo  # noqa: E402
+try:
+    import backlog as _backlog  # noqa: E402
+except Exception:  # noqa: BLE001 - hub must stay alive if audit is unavailable
+    _backlog = None
 
 PORT = int(os.environ.get("HUB_PORT", "8900"))
 HOME = os.path.expanduser("~")
@@ -834,11 +838,25 @@ def _salud_proveedores():
     return {"proveedores": out, "desde": desde}
 
 
+def _memoria():
+    """Expose deterministic backlog health without exposing report contents."""
+    if _backlog is None or not hasattr(_backlog, "auditar_memoria"):
+        return {"accion": "auditoria_no_disponible"}
+    dirs = [os.path.join(HOME, "research", d) for d in
+            ("informes", "cadenas", "paneles", "refutaciones", "grafos", "memoria")]
+    try:
+        return _backlog.auditar_memoria(
+            dirs, os.path.join(HOME, "plataforma", "backlog.jsonl"))
+    except Exception:  # noqa: BLE001 - health endpoint must never fail
+        return {"accion": "auditoria_no_disponible"}
+
+
 def _organismo():
     return {"salud": salud.snapshot(),
             "micelio_chunks": _micelio_chunks(),
             "actividad": _actividad(),
             "trabajo": _trabajo(),
+            "memoria": _memoria(),
             "internet": _internet(),
             "xio": _xio()}
 
