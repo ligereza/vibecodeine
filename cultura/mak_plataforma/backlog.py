@@ -193,6 +193,11 @@ _NEGACION_ENTIDAD_RE = re.compile(
     r"posible\s+falta\s+de\s+presencia)",
     re.IGNORECASE,
 )
+_EVIDENCIA_POSITIVA_RE = re.compile(
+    r"(?:organiza(?:do|da|dor)|universidad|instituci[oó]n|fundaci[oó]n|"
+    r"obra[s]?\s+creada[s]?|artista\s+(?:reconocid|documentad))",
+    re.IGNORECASE,
+)
 
 
 def _entidades_compuestas(texto):
@@ -239,13 +244,19 @@ def validar_pregunta_derivada(pregunta, documento=None):
     etiquetas = _norm(' '.join(etiquetas_fuente))
     cuerpo = ' '.join(cuerpo_evidencia)
     for entidad in entidades:
+        # Las siglas de eventos/marcas no son personas desconocidas. El caso
+        # `SFERA Experience` debe seguir siendo investigable como evento.
+        if any(palabra.isupper() for palabra in entidad.split()):
+            continue
         if _norm(entidad) in etiquetas:
             continue
         posiciones = [m.start() for m in re.finditer(
             re.escape(entidad), cuerpo, re.IGNORECASE)]
-        if posiciones and any(_NEGACION_ENTIDAD_RE.search(
-                cuerpo[max(0, pos - 100):pos + len(entidad) + 160])
-                for pos in posiciones):
+        ventanas = [cuerpo[max(0, pos - 140):pos + len(entidad) + 180]
+                    for pos in posiciones]
+        if (posiciones and any(_NEGACION_ENTIDAD_RE.search(ventana)
+                               and not _EVIDENCIA_POSITIVA_RE.search(ventana)
+                               for ventana in ventanas)):
             return False, 'entidad_no_verificada:%s' % entidad
     return True, ''
 
