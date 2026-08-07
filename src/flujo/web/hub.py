@@ -1386,6 +1386,7 @@ class HubRequestHandler(BaseHTTPRequestHandler):
                 "max": (crudo.get("trabajo") or {}).get("max"),
                 "ultimo": str((crudo.get("trabajo") or {}).get("ultimo") or ""),
             },
+            "memoria": crudo.get("memoria") or {},
             "tandas": tandas,
         }
 
