@@ -727,10 +727,15 @@ def correr(fuentes=None, estado_dir=ESTADO_DIR, abrir=None, notificar=True,
 
 def encolar_oportunidades(resultados, ledger_path):
     """Send new listings to the shared review queue, never to an LLM."""
+    for ruta in ("/home/mak/plataforma",
+                 os.path.join(os.path.dirname(BASE), "mak_plataforma")):
+        if os.path.isdir(ruta) and ruta not in sys.path:
+            sys.path.insert(0, ruta)
     try:
         from ledger import opportunity_from_vigia
-    except ImportError:
-        return {"queued": 0, "duplicates": 0, "errors": ["ledger_unavailable"]}
+    except Exception as exc:  # noqa: BLE001 - watcher must remain observable
+        return {"queued": 0, "duplicates": 0,
+                "errors": ["ledger_unavailable:%s" % type(exc).__name__]}
     queued = duplicates = 0
     errors = []
     for resultado in resultados:
