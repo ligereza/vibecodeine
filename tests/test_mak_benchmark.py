@@ -1,6 +1,9 @@
 import json
 
-from cultura.mak_plataforma.benchmark import build_rescue_queue, inspect_corpus
+from cultura.mak_plataforma.benchmark import (build_rescue_queue,
+                                              deterministic_rescue_decision,
+                                              inspect_corpus,
+                                              select_rescue_batch)
 
 
 def test_benchmark_detects_structural_essay_failure(tmp_path):
@@ -84,3 +87,15 @@ def test_benchmark_creates_non_destructive_rescue_queue(tmp_path):
     assert row["source_json"].endswith("bad.json")
     assert row["source_markdown"].endswith("bad.md")
     assert row["next_action"] == "review_then_relabel_as_informe"
+    assert row["priority"] == 0
+    assert select_rescue_batch(queue, limit=1) == [row]
+    assert row["deterministic_decision"]["action"] == "relabel_candidate"
+
+
+def test_deterministic_rescue_does_not_claim_essay_truth():
+    decision = deterministic_rescue_decision({
+        "issue": "essay_structural_gaps",
+        "expected_format": "ensayo",
+    })
+    assert decision["action"] == "critical_review"
+    assert decision["target_format"] == "ensayo"
