@@ -50,3 +50,36 @@ def test_summary_surfaces_pending_human(tmp_path):
         "url": "https://official.example/open-call",
     }, path=str(path))
     assert ledger.summarize(str(path))["pending_human"] == 1
+
+
+def test_vigia_prioritizes_artist_lanes_before_generic_jobs():
+    items = [
+        {"h": "nursing", "fuente": "empleos", "titulo": "Enfermero hospital",
+         "url": "https://jobs.example/1"},
+        {"h": "residency", "fuente": "resartis", "titulo": "Artist residency open call",
+         "url": "https://art.example/2"},
+    ]
+
+    ranked = vigia.priorizar_oportunidades(items, {
+        "direction": {"opportunities": ["artist residencies"]}
+    })
+
+    assert ranked[0]["h"] == "residency"
+    assert "practice_or_funding" in ranked[0]["priority_reasons"]
+
+
+def test_vigia_persists_priority_metadata(tmp_path):
+    path = tmp_path / "common_ledger.jsonl"
+    results = [{"id": "resartis", "nuevos": [
+        {"h": "abc", "fuente": "resartis", "titulo": "Artist residency",
+         "url": "https://official.example/call"}
+    ]}]
+
+    result = vigia.encolar_oportunidades(results, str(path), contexto={
+        "direction": {"opportunities": ["artist residencies"]}
+    })
+    row = ledger.read_items(str(path))[0]
+
+    assert result["queued"] == 1
+    assert int(row["metadata"]["priority_score"]) > 0
+    assert row["metadata"]["priority_reasons"]
