@@ -293,6 +293,8 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction="",
     )
     profile_block = ""
     item_profile_fields = ""
+    claim_example = ("lectura curatorial de la obra"
+                     if area == "iskvw_curation" else "hallazgo atomico")
     if profile:
         profile_block = (
             "\nPOLITICA DE PROMOCION:\n"
@@ -325,7 +327,7 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction="",
         "DEVUELVE SOLO JSON con esta forma:\n"
         "{\n"
         '  "items": [{\n'
-        '    "claim": "hallazgo atomico",\n'
+        '    "claim": %r,\n'
         '    "evidence": ["ruta o fuente concreta"],\n'
         '    "files": ["archivo relacionado"],\n'
         '    "confidence": "high|medium|low",\n'
@@ -354,6 +356,7 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction="",
            profile_block,
            evidence_block,
            instruction_block,
+           claim_example,
            "|".join(cfg["actions"]),
            item_profile_fields,
            curation_guard,
