@@ -183,6 +183,8 @@ def summarize(path=LEDGER, limit=50):
     return {
         "total": len(rows),
         "by_domain": dict(Counter(r.get("domain", "") for r in rows)),
+        "by_lane": dict(Counter(r.get("lane", "") for r in rows)),
+        "by_decision": dict(Counter(r.get("decision", "") for r in rows)),
         "by_type": dict(Counter(r.get("type", "") for r in rows)),
         "by_action": dict(Counter(r.get("action", "") for r in rows)),
         "pending_human": len(pending),

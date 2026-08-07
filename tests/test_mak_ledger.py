@@ -138,6 +138,23 @@ def test_summary_counts_by_domain_type_and_action(tmp_path):
     assert summary["by_action"] == {"prototype": 1, "reject": 1}
 
 
+def test_summary_counts_by_lane_and_decision(tmp_path):
+    path = tmp_path / "common_ledger.jsonl"
+    ledger.append_item({
+        "domain": "svg", "type": "artifact", "claim": "icon",
+        "evidence": ["icon.svg"], "confidence": "high", "action": "prototype",
+        "decision": "hacer",
+    }, path=str(path))
+    ledger.append_item({
+        "domain": "rd", "type": "task", "claim": "source",
+        "evidence": ["https://example.org"], "confidence": "medium",
+        "action": "verify_source", "decision": "revisar",
+    }, path=str(path))
+    summary = ledger.summarize(str(path))
+    assert summary["by_lane"] == {"obra": 1, "trabajo": 1}
+    assert summary["by_decision"] == {"hacer": 1, "revisar": 1}
+
+
 def test_tandas_cli_validate_can_write_common_ledger(tmp_path):
     common = tmp_path / "common_ledger.jsonl"
     payload = {"items": [{

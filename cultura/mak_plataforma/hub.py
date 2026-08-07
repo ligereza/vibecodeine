@@ -31,6 +31,10 @@ import cuotas  # noqa: E402
 import ideas  # noqa: E402
 import contrato_archivo  # noqa: E402
 try:
+    import ledger as _ledger  # noqa: E402
+except Exception:  # noqa: BLE001 - hub stays alive without ledger data
+    _ledger = None
+try:
     import backlog as _backlog  # noqa: E402
 except Exception:  # noqa: BLE001 - hub must stay alive if audit is unavailable
     _backlog = None
@@ -51,6 +55,7 @@ TRABAJO_STATE = os.path.join(HOME, "plataforma/.trabajo_state.json")
 RED_STATE = os.path.join(HOME, "plataforma/.red_state.json")
 RED_LOG = os.path.join(HOME, "plataforma/logs/red.jsonl")
 TRABAJO_LOG = os.path.join(HOME, "plataforma/logs/trabajo.log")
+COMMON_LEDGER = os.path.join(HOME, "plataforma/common_ledger.jsonl")
 SALUD_PROVEEDORES = os.path.join(HOME, "research/salud_proveedores.json")
 SALUD_PROVEEDORES_VENTANA = 6 * 3600
 try:
@@ -672,6 +677,22 @@ def _archivo_publico():
     return cuerpo
 
 
+def _decisiones():
+    """Expose the compact decision queue without exposing raw ledger history."""
+    if _ledger is None:
+        return {"total": 0, "by_lane": {}, "by_decision": {}, "pending_human": 0}
+    resumen = _ledger.summarize(COMMON_LEDGER, limit=200)
+    return {
+        "total": resumen["total"],
+        "by_lane": resumen["by_lane"],
+        "by_decision": resumen["by_decision"],
+        "pending_human": resumen["pending_human"],
+        "last": [{key: row.get(key, "") for key in (
+            "id", "lane", "decision", "purpose", "next_action", "owner")}
+                 for row in resumen["last"]],
+    }
+
+
 # ── departamento de render (el puente issue -> flyer) ──
 PUENTE_ESTADO = os.path.join(HOME, "plataforma/puente_issues_estado.json")
 RENDER_CONFIG = os.path.join(HOME, "plataforma/render_config.json")
@@ -1089,6 +1110,13 @@ class H(BaseHTTPRequestHandler):
             except Exception as e:  # noqa: BLE001
                 return self._json({"error": str(e)[:200],
                                    "piezas": [], "vinculos": []})
+        if p == "/api/decisiones":
+            try:
+                return self._json(_decisiones())
+            except Exception as e:  # noqa: BLE001
+                return self._json({"error": str(e)[:200], "total": 0,
+                                   "by_lane": {}, "by_decision": {},
+                                   "pending_human": 0})
         if p == "/api/eventos":
             q = urllib.parse.parse_qs(u.query)
             depto = (q.get("depto") or [""])[0]
