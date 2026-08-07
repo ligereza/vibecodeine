@@ -20,7 +20,22 @@ def test_revision_marca_decision_sin_sobrescribir(monkeypatch, tmp_path):
     result = revision.record("123_mp4", "accept", "verificado")
     assert result["ok"] is True
     assert revision.api()["pending_human"] == 0
+    assert revision.api()["rows"][0]["promotion_state"] == "candidate_curation"
     assert revision.media_path("/123.jpg") == sheets / "123.jpg"
+
+
+def test_reject_queda_excluido_de_curaduria(monkeypatch, tmp_path):
+    root = tmp_path / "review"
+    root.mkdir()
+    (root / "456_mp4").mkdir()
+    (root / "456_mp4" / "result.json").write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(revision, "ROOT", root)
+    monkeypatch.setattr(revision, "REVIEWS", root / "human_reviews.jsonl")
+
+    assert revision.record("456_mp4", "reject")["ok"] is True
+    row = revision.api()["rows"][0]
+    assert row["promotion_state"] == "excluded"
+    assert row["human"]["decision"] == "reject"
 
 
 def test_revision_rechaza_traversal_y_decision_invalida(tmp_path, monkeypatch):
