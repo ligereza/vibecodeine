@@ -647,6 +647,7 @@ def _actividad():
 
 # ── micelio (proxy cacheado del grafo semantico de research) ──
 _MIC_CACHE = {"t": 0.0, "data": {"nodes": [], "edges": []}}
+_ARCHIVO_CACHE = {"t": 0.0, "data": None}
 
 
 def _micelio():
@@ -658,6 +659,17 @@ def _micelio():
         _MIC_CACHE["data"] = g
         _MIC_CACHE["t"] = ahora
     return _MIC_CACHE["data"]
+
+
+def _archivo_publico():
+    """Cache the converted public graph instead of rebuilding it per request."""
+    ahora = time.time()
+    if ahora - _ARCHIVO_CACHE["t"] < 30 and _ARCHIVO_CACHE["data"]:
+        return _ARCHIVO_CACHE["data"]
+    cuerpo = contrato_archivo.sustrato_publico(contrato_archivo.convertir(_micelio()))
+    _ARCHIVO_CACHE["data"] = cuerpo
+    _ARCHIVO_CACHE["t"] = ahora
+    return cuerpo
 
 
 # ── departamento de render (el puente issue -> flyer) ──
@@ -1064,7 +1076,7 @@ class H(BaseHTTPRequestHandler):
             # agent never needs to know the internal node schema. Conversion
             # is shared with tools/gen_archivo_iskvw.py (contrato_archivo).
             try:
-                cuerpo = contrato_archivo.convertir(_micelio())
+                cuerpo = _archivo_publico()
                 return self._json({
                     "version": 1,
                     "fuente": "micelio",

@@ -101,6 +101,22 @@ def convertir(grafo: dict) -> dict:
     return {"piezas": piezas, "vinculos": vinculos}
 
 
+def sustrato_publico(datos: dict) -> dict:
+    """Return the public projection without historical research products.
+
+    Research reports and visual annexes remain in the source corpus and can be
+    requested explicitly. The public projection avoids loading them as signed
+    artwork and keeps every surviving relation connected to real pieces.
+    """
+    excluded = {"informe", "concepto", "pieza_grafica"}
+    piezas = [pieza for pieza in datos.get("piezas", [])
+              if pieza.get("clase") not in excluded]
+    ids = {pieza.get("id") for pieza in piezas}
+    vinculos = [vinculo for vinculo in datos.get("vinculos", [])
+                if vinculo.get("de") in ids and vinculo.get("a") in ids]
+    return {"piezas": piezas, "vinculos": vinculos}
+
+
 def desde_ensayo(ensayo: dict) -> dict:
     """An ENSAYO with its iconographic annex -> the same contract shape.
 
