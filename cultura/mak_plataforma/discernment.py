@@ -220,6 +220,12 @@ def deterministic_review(area, payload):
         if area == "opportunity_radar" and action not in (
                 "verify_source", "triangulate", "draft_report", "reject"):
             risks.append("opportunity item proposes an unapproved action")
+        if area == "opportunity_radar" and isinstance(product, dict):
+            deadline = re.sub(r"\s+", " ", str(product.get("deadline", "")).strip().lower())
+            if deadline in ("", "unknown", "tbd", "por confirmar", "varía",
+                            "varia", "varía según la convocatoria",
+                            "varia segun la convocatoria"):
+                missing.append("opportunity needs a concrete deadline or explicit deadline lookup: %s" % claim[:80])
     if risks:
         verdict = "reject"
         reason = "; ".join(risks[:2])
