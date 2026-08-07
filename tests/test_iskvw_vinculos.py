@@ -46,6 +46,13 @@ def test_los_vecinos_se_indexan_una_vez_y_no_por_frame():
     assert anidado is None, "hay un bucle de todos-contra-todos en el dibujo"
 
 
+def test_la_piel_aplica_lod_visual_sin_borrar_vinculos_del_archivo():
+    t = _fuente()
+    assert "MAX_VECINOS_VISIBLES = 12" in t
+    assert "slice(0, MAX_VECINOS_VISIBLES)" in t
+    assert "candidatos[i].sort" in t
+
+
 def test_una_punta_fuera_de_la_banda_descarta_el_vinculo():
     """Ambas puntas tienen que estar en cuadro. Dibujar una línea hacia una
     pieza que no está en el campo sería afirmar una relación sin sus dos
