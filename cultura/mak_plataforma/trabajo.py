@@ -61,6 +61,7 @@ LOG = os.path.join(HOME, "plataforma/logs/trabajo.log")
 IDLE_AUDIT = os.path.join(HOME, "plataforma/idle_decisions.jsonl")
 IDLE_LEDGER_REVIEWS = os.path.join(HOME, "plataforma/idle_ledger_reviews.jsonl")
 IDLE_BENCHMARK_REVIEWS = os.path.join(HOME, "plataforma/idle_benchmark_reviews.jsonl")
+IDLE_MEMORY_AUDITS = os.path.join(HOME, "plataforma/idle_memory_audits.jsonl")
 BENCHMARK = os.path.join(HOME, "plataforma/corpus_benchmark.json")
 CORPUS_REVIEW_LOG = os.path.join(HOME, "plataforma/corpus_reviews.jsonl")
 COMMON_LEDGER = os.path.join(HOME, "plataforma/common_ledger.jsonl")
@@ -179,6 +180,20 @@ def _pending_snapshot():
     }
 
 
+def _memory_audit_data():
+    if backlog is None or not hasattr(backlog, "auditar_memoria"):
+        return {}
+    try:
+        return backlog.auditar_memoria(INFORMES_DIRS, BACKLOG_GEN)
+    except Exception:  # noqa: BLE001 - memory audit cannot stop MAK
+        return {}
+
+
+def _memory_requires_review():
+    data = _memory_audit_data()
+    return bool(data.get("accion") == "revisar_memoria")
+
+
 def _corpus_files():
     """Return reviewable reports without duplicating the research pipeline."""
     files = []
@@ -250,7 +265,7 @@ def _idle_review_topic(st):
 
 def _idle_review_allowed():
     pending = _pending_snapshot()
-    return not any(pending.values())
+    return not any(pending.values()) or _memory_requires_review()
 
 
 def _is_idle_verbo(verbo):
@@ -313,6 +328,9 @@ def _idle_node_payload(verbo, st):
         ledger_payload = _idle_ledger_review_payload(st)
         if ledger_payload:
             return ledger_payload
+        memory_payload = _memory_review_payload(st)
+        if memory_payload:
+            return memory_payload
     topics = node["temas"]
     key = "idle_%s_idx" % verbo
     i = st.get(key, 0) % len(topics)
@@ -358,6 +376,30 @@ def _benchmark_review_payload(st):
     return None
 
 
+def _memory_review_payload(st):
+    """Queue one deterministic memory audit before more generated research."""
+    data = _memory_audit_data()
+    if data.get("accion") != "revisar_memoria":
+        return None
+    signature = "%s:%s:%s:%s" % (
+        data.get("entradas", 0), len(data.get("slugs_duplicados", [])),
+        len(data.get("origenes_faltantes", [])),
+        len(data.get("entidades_bloqueadas", [])),
+    )
+    if signature in set(st.get("memory_audit_seen", [])[-100:]):
+        return None
+    st["memory_audit_seen"] = (list(st.get("memory_audit_seen", [])) +
+                               [signature])[-100:]
+    return {
+        "modo": "memory_audit",
+        "formato": "ledger",
+        "densidad": "corto",
+        "tema": "auditoria determinista de memoria MAK",
+        "memory_signature": signature,
+        "memory_audit": data,
+    }
+
+
 def _idle_ledger_review_payload(st):
     """Pick one pending ledger item for no-cost idle introspection."""
     seen = set(st.get("idle_ledger_seen", [])[-200:])
@@ -396,6 +438,24 @@ def _idle_ledger_review_payload(st):
 
 def _run_local_idle(payload):
     """Execute a local idle unit without calling research/codex or spending LLM."""
+    if payload.get("modo") == "memory_audit":
+        data = payload.get("memory_audit", {})
+        row = {
+            "ts": time.strftime("%F %T"),
+            "schema": "mak-idle-memory-audit-v1",
+            "signature": payload.get("memory_signature", ""),
+            "action": data.get("accion", ""),
+            "entries": data.get("entradas", 0),
+            "states": data.get("estados", {}),
+            "duplicate_slugs": data.get("slugs_duplicados", []),
+            "missing_origins": data.get("origenes_faltantes", []),
+            "blocked_entities": data.get("entidades_bloqueadas", []),
+            "next_action": "classify duplicates and restore missing lineage manually",
+        }
+        _append_jsonl(IDLE_MEMORY_AUDITS, row)
+        return json.dumps({"ok": True, "local": True,
+                           "mode": "memory_audit",
+                           "signature": row["signature"]})
     if payload.get("modo") == "benchmark_review":
         row = {
             "ts": time.strftime("%F %T"),
@@ -679,6 +739,8 @@ def _tarea(verbo, st):
                              "output_contract": contract_for_task(verbo, tema),
                              "work_contract": work_contract(verbo, tema)})
     if fuente == "concepto":
+        if _memory_requires_review():
+            return None
         if verbo == "multiplicar" and _should_review_corpus(st):
             payload = _corpus_review_payload(st)
             if payload:
@@ -737,7 +799,8 @@ def _tarea(verbo, st):
         payload = _idle_node_payload(verbo, st)
         if not payload:
             return None
-        if payload.get("modo") in ("ledger_review", "benchmark_review"):
+        if payload.get("modo") in ("ledger_review", "benchmark_review",
+                                     "memory_audit"):
             return ("local", payload)
         return (v["depto"], payload)
     return None
