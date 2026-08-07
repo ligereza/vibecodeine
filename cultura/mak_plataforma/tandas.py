@@ -670,7 +670,7 @@ def _repair_product_payload(area, payload, provider, model, max_tokens):
 def run_external_batch(area, batch_id, provider, paths=None, model=None,
                        out_dir=None, common_path=COMMON_LEDGER,
                        batch_path=LEDGER, use_ollama=True, max_tokens=2500,
-                       instruction="", max_items=5):
+                       instruction="", max_items=5, image_paths=None):
     """Run one external provider, persist raw output, then ingest through the gate."""
     if external_providers is None:
         raise RuntimeError("external_providers_unavailable")
@@ -686,9 +686,12 @@ def run_external_batch(area, batch_id, provider, paths=None, model=None,
         kwargs = {}
         if provider == "ollama":
             kwargs["response_format"] = _product_response_schema(area)
+        call_kwargs = dict(kwargs)
+        if image_paths:
+            call_kwargs["image_paths"] = image_paths
         raw = external_providers.call(
             provider, prompt, model=model, max_tokens=max_tokens,
-            temperature=0.1, **kwargs)
+            temperature=0.1, **call_kwargs)
     except Exception as exc:  # noqa: BLE001 - one provider must not kill a round
         error = _safe_text(str(exc).strip() or exc.__class__.__name__)
         failure_class = _provider_failure_class(exc)
@@ -880,6 +883,8 @@ def main(argv=None):
     p_run.add_argument("--no-ollama", action="store_true")
     p_run.add_argument("--instruction", default="",
                        help="extra round-specific instruction")
+    p_run.add_argument("--image", action="append", dest="image_paths",
+                       help="image evidence for vision-capable providers")
 
     args = parser.parse_args(argv)
     if args.cmd == "areas":
@@ -955,7 +960,7 @@ def main(argv=None):
                 model=args.model or None, out_dir=args.out_dir or None,
                 common_path=args.common_ledger, batch_path=args.ledger,
                 use_ollama=not args.no_ollama, max_tokens=args.max_tokens,
-                instruction=args.instruction)
+                instruction=args.instruction, image_paths=args.image_paths)
         except Exception as exc:  # noqa: BLE001 - operator-facing CLI
             result = {"ok": False, "status": "provider_error",
                       "errors": [str(exc)[:200]]}
