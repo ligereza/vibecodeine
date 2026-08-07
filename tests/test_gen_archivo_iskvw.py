@@ -49,6 +49,18 @@ def test_snapshot_con_listas_ausentes_no_revienta(tmp_path):
     assert G.desde_micelio_snapshot(ruta) == {"piezas": [], "vinculos": []}
 
 
+def test_public_sustrato_filters_research_without_mutating_source():
+    source = {
+        "piezas": [{"id": "obra", "clase": "obra"},
+                   {"id": "informe", "clase": "informe"}],
+        "vinculos": [{"de": "obra", "a": "informe", "clase": "semantico"}],
+    }
+    public = G.contrato_archivo.sustrato_publico(source)
+    assert [pieza["id"] for pieza in public["piezas"]] == ["obra"]
+    assert public["vinculos"] == []
+    assert len(source["piezas"]) == 2
+
+
 def test_todo_cae_al_snapshot_cuando_el_micelio_en_vivo_falla(
         tmp_path, monkeypatch, capsys):
     """--fuente todo: if desde_micelio() blows up (the real CI case), main()

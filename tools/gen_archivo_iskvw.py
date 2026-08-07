@@ -454,14 +454,8 @@ def main() -> int:
 
 
 def _sustrato_publico(datos: dict) -> dict:
-    """Keep historical research products out of the default public view."""
-    excluidas = {"informe", "concepto", "pieza_grafica"}
-    piezas = [p for p in datos.get("piezas", [])
-              if p.get("clase") not in excluidas]
-    ids = {p.get("id") for p in piezas}
-    vinculos = [v for v in datos.get("vinculos", [])
-                if v.get("de") in ids and v.get("a") in ids]
-    return {"piezas": piezas, "vinculos": vinculos}
+    """Keep the generator aligned with the shared public contract."""
+    return contrato_archivo.sustrato_publico(datos)
 
 
 def _contar(filas: list[dict], campo: str) -> dict:

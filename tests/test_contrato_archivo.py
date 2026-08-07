@@ -101,5 +101,5 @@ def test_hub_sirve_el_contrato(monkeypatch):
     _Handler().do_GET()
     assert capturado["version"] == 1
     assert capturado["fuente"] == "micelio"
-    assert capturado["meta"] == {"piezas": 3, "vinculos": 1}
+    assert capturado["meta"] == {"piezas": 2, "vinculos": 0}
     assert capturado["piezas"][0]["id"].startswith("b7fd4e77b4a2")
