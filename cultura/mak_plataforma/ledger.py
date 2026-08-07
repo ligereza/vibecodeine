@@ -177,8 +177,20 @@ def read_items(path=LEDGER, limit=None):
     return rows
 
 
+def _enrich_legacy(row):
+    """Project old valid rows into the current decision view without rewriting them."""
+    view = dict(row)
+    domain = str(view.get("domain") or "").lower()
+    view["lane"] = str(view.get("lane") or LANE_BY_DOMAIN.get(domain, "sistema")).lower()
+    view["decision"] = str(view.get("decision") or _default_decision(view)).lower()
+    view["purpose"] = _safe_text(view.get("purpose"), 500)
+    view["next_action"] = _safe_text(view.get("next_action"), 500)
+    view["owner"] = _safe_text(view.get("owner"), 120) or "MAK"
+    return view
+
+
 def summarize(path=LEDGER, limit=50):
-    rows = read_items(path, limit=limit)
+    rows = [_enrich_legacy(row) for row in read_items(path, limit=limit)]
     pending = [r for r in rows if r.get("metadata", {}).get("queue_status") == "pending_human"]
     return {
         "total": len(rows),

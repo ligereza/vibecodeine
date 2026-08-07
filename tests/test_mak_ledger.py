@@ -155,6 +155,20 @@ def test_summary_counts_by_lane_and_decision(tmp_path):
     assert summary["by_decision"] == {"hacer": 1, "revisar": 1}
 
 
+def test_summary_projects_legacy_rows_without_mutating_storage(tmp_path):
+    path = tmp_path / "common_ledger.jsonl"
+    path.write_text(json.dumps({
+        "schema": ledger.SCHEMA_VERSION, "id": "legacy", "domain": "rd",
+        "type": "task", "claim": "old source", "evidence": [], "files": [],
+        "confidence": "unknown", "action": "verify_source",
+        "metadata": {"queue_status": "pending_human"},
+    }) + "\n", encoding="utf-8")
+    summary = ledger.summarize(str(path))
+    assert summary["by_lane"] == {"trabajo": 1}
+    assert summary["by_decision"] == {"hacer": 1}
+    assert summary["last"][0]["lane"] == "trabajo"
+
+
 def test_tandas_cli_validate_can_write_common_ledger(tmp_path):
     common = tmp_path / "common_ledger.jsonl"
     payload = {"items": [{
