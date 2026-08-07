@@ -725,7 +725,7 @@ def correr(fuentes=None, estado_dir=ESTADO_DIR, abrir=None, notificar=True,
     return resultados
 
 
-def encolar_oportunidades(resultados, ledger_path):
+def encolar_oportunidades(resultados, ledger_path, max_per_source=8):
     """Send new listings to the shared review queue, never to an LLM."""
     for ruta in ("/home/mak/plataforma",
                  os.path.join(os.path.dirname(BASE), "mak_plataforma")):
@@ -736,10 +736,15 @@ def encolar_oportunidades(resultados, ledger_path):
     except Exception as exc:  # noqa: BLE001 - watcher must remain observable
         return {"queued": 0, "duplicates": 0,
                 "errors": ["ledger_unavailable:%s" % type(exc).__name__]}
-    queued = duplicates = 0
+    queued = duplicates = deferred = 0
+    queued_by_source = {}
     errors = []
     for resultado in resultados:
         for item in resultado.get("nuevos", []):
+            source_id = str(resultado.get("id", ""))
+            if queued_by_source.get(source_id, 0) >= max(1, int(max_per_source)):
+                deferred += 1
+                continue
             ok, item_errors, row = opportunity_from_vigia(
                 item, source="vigia:%s" % resultado.get("id", ""),
                 path=ledger_path)
@@ -749,7 +754,9 @@ def encolar_oportunidades(resultados, ledger_path):
                 duplicates += 1
             else:
                 queued += 1
-    return {"queued": queued, "duplicates": duplicates, "errors": errors}
+                queued_by_source[source_id] = queued_by_source.get(source_id, 0) + 1
+    return {"queued": queued, "duplicates": duplicates, "deferred": deferred,
+            "errors": errors}
 
 
 def _notificar(resultados):
@@ -787,6 +794,8 @@ def main(argv=None):
     ap.add_argument("--solo", default="", help="id de una fuente")
     ap.add_argument("--ledger-oportunidades", default="",
                     help="shared ledger path for new human-review opportunities")
+    ap.add_argument("--max-oportunidades-fuente", type=int, default=8,
+                    help="maximo de nuevas oportunidades por fuente y corrida")
     ap.add_argument("--max-vistos", type=int, default=MAX_VISTOS,
                     help="registros en vistos.jsonl antes de compactar")
     ap.add_argument("--compactar", action="store_true",
@@ -814,8 +823,9 @@ def main(argv=None):
               % (marca, r["id"], r["codigo"], r["n_items"], len(r["nuevos"]),
                  r["alerta"] or r["error"]))
     if args.ledger_oportunidades:
-        print(json.dumps(encolar_oportunidades(res, args.ledger_oportunidades),
-                         ensure_ascii=False))
+        print(json.dumps(encolar_oportunidades(
+            res, args.ledger_oportunidades,
+            max_per_source=args.max_oportunidades_fuente), ensure_ascii=False))
     return 1 if roto else 0
 
 

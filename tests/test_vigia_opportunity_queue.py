@@ -22,11 +22,25 @@ def test_vigia_queues_new_listings_once(tmp_path):
     second = vigia.encolar_oportunidades(results, str(path))
     rows = ledger.read_items(str(path))
 
-    assert first == {"queued": 1, "duplicates": 0, "errors": []}
-    assert second == {"queued": 0, "duplicates": 1, "errors": []}
+    assert first == {"queued": 1, "duplicates": 0, "deferred": 0, "errors": []}
+    assert second == {"queued": 0, "duplicates": 1, "deferred": 0, "errors": []}
     assert rows[0]["type"] == "task"
     assert rows[0]["metadata"]["queue_status"] == "pending_human"
     assert rows[0]["metadata"]["safety"] == "no contact or submission"
+
+
+def test_vigia_caps_new_queue_per_source_without_deleting_listings(tmp_path):
+    path = tmp_path / "common_ledger.jsonl"
+    results = [{"id": "fondos", "nuevos": [
+        {"h": str(index), "fuente": "fondos", "titulo": "Open call %d" % index,
+         "url": "https://official.example/%d" % index}
+        for index in range(3)
+    ]}]
+
+    result = vigia.encolar_oportunidades(results, str(path), max_per_source=2)
+
+    assert result == {"queued": 2, "duplicates": 0, "deferred": 1, "errors": []}
+    assert len(ledger.read_items(str(path))) == 2
 
 
 def test_summary_surfaces_pending_human(tmp_path):
