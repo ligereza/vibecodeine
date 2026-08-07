@@ -20,6 +20,20 @@ def test_append_item_accepts_typed_domain_record(tmp_path):
     assert ok is True
     assert errors == []
     assert json.loads(path.read_text(encoding="utf-8")) == row
+    assert row["lane"] == "trabajo"
+    assert row["decision"] == "revisar"
+
+
+def test_decision_queue_rejects_unknown_lane_or_decision():
+    ok, errors, _row = ledger.validate_item({
+        "domain": "rd", "type": "task", "claim": "x",
+        "evidence": [], "files": [], "confidence": "unknown",
+        "action": "verify_source", "lane": "publico", "decision": "inventar",
+    })
+
+    assert ok is False
+    assert "bad_lane" in errors
+    assert "bad_decision" in errors
 
 
 def test_reject_requires_reason_and_valid_domain_action():

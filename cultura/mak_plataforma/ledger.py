@@ -22,6 +22,13 @@ QUARANTINE_SCHEMA = "mak-ledger-quarantine-v1"
 ITEM_TYPES = ("evidence", "idea", "task", "decision", "reject", "artifact")
 DOMAINS = ("rd", "iskvw", "mak", "svg", "adobe", "repo", "opportunities")
 CONFIDENCE = ("high", "medium", "low", "unknown")
+LANES = ("obra", "trabajo", "sistema")
+DECISIONS = ("hacer", "revisar", "refutar", "archivar", "descartar")
+LANE_BY_DOMAIN = {
+    "iskvw": "obra", "svg": "obra",
+    "rd": "trabajo", "opportunities": "trabajo",
+    "mak": "sistema", "adobe": "sistema", "repo": "sistema",
+}
 
 ACTION_BY_DOMAIN = {
     "rd": ("verify_source", "triangulate", "draft_report", "reject"),
@@ -53,6 +60,16 @@ def _safe_text(value, limit=2000):
     return text[:limit]
 
 
+def _default_decision(item):
+    if str(item.get("decision") or "").strip():
+        return str(item["decision"]).lower()
+    if str(item.get("type") or "").lower() == "reject":
+        return "descartar"
+    if str(item.get("type") or "").lower() == "task":
+        return "hacer"
+    return "revisar"
+
+
 def normalize_item(item, source="manual", ts=None):
     if not isinstance(item, dict):
         raise ValueError("item_not_object")
@@ -68,6 +85,13 @@ def normalize_item(item, source="manual", ts=None):
         "confidence": str(item.get("confidence") or "unknown").lower(),
         "action": str(item.get("action") or "").lower(),
         "reject_reason": _safe_text(item.get("reject_reason"), 800),
+        "lane": str(item.get("lane") or
+                    LANE_BY_DOMAIN.get(str(item.get("domain") or "").lower(),
+                                       "sistema")).lower(),
+        "decision": _default_decision(item),
+        "purpose": _safe_text(item.get("purpose"), 500),
+        "next_action": _safe_text(item.get("next_action"), 500),
+        "owner": _safe_text(item.get("owner"), 120) or "MAK",
     }
     metadata = item.get("metadata")
     if isinstance(metadata, dict):
@@ -94,6 +118,10 @@ def validate_item(item, source="manual"):
         errors.append("bad_type")
     if row["confidence"] not in CONFIDENCE:
         errors.append("bad_confidence")
+    if row["lane"] not in LANES:
+        errors.append("bad_lane")
+    if row["decision"] not in DECISIONS:
+        errors.append("bad_decision")
     if not row["claim"] and row["type"] != "reject":
         errors.append("missing_claim")
     if not isinstance(row["evidence"], list):
@@ -177,6 +205,11 @@ def opportunity_from_vigia(item, source="vigia", path=LEDGER):
         "files": [],
         "confidence": "unknown",
         "action": "review",
+        "lane": "trabajo",
+        "decision": "revisar",
+        "purpose": "verificar una oportunidad oficial sin contacto automatico",
+        "next_action": "verify eligibility, deadline and artistic fit",
+        "owner": "human",
         "metadata": {
             "queue_status": "pending_human",
             "source_id": item.get("fuente", ""),
@@ -308,8 +341,9 @@ def external_item_to_ledger(item, area):
         "opportunity_radar": "opportunities",
     }
     item_type = "reject" if item.get("action") == "reject" else "evidence"
+    domain = domain_by_area.get(area, "mak")
     return {
-        "domain": domain_by_area.get(area, "mak"),
+        "domain": domain,
         "type": item_type,
         "claim": item.get("claim", ""),
         "evidence": item.get("evidence", []),
@@ -317,6 +351,12 @@ def external_item_to_ledger(item, area):
         "confidence": item.get("confidence", "unknown"),
         "action": item.get("action", ""),
         "reject_reason": item.get("reject_reason", ""),
+        "lane": LANE_BY_DOMAIN.get(domain, "sistema"),
+        "decision": "descartar" if item.get("action") == "reject" else "revisar",
+        "purpose": item.get("product", {}).get("purpose", "")
+        if isinstance(item.get("product"), dict) else "",
+        "next_action": item.get("reject_reason", "revisar evidencia local"),
+        "owner": "MAK",
     }
 
 
@@ -360,6 +400,12 @@ def review_to_ledger(review, area, metadata=None):
         "confidence": "medium" if verdict == "accept" else "low",
         "action": action,
         "reject_reason": "" if item_type != "reject" else review.get("reason", ""),
+        "lane": LANE_BY_DOMAIN.get(domain, "sistema"),
+        "decision": ("hacer" if verdict == "accept" else
+                     "descartar" if verdict == "reject" else "revisar"),
+        "purpose": "juzgar salida de %s" % area,
+        "next_action": review.get("next_action", "revisar evidencia"),
+        "owner": "human" if verdict != "accept" else "MAK",
     }
     if isinstance(metadata, dict):
         row["metadata"] = metadata

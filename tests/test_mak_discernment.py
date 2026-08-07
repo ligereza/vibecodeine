@@ -14,6 +14,15 @@ def test_review_prompt_covers_all_batch_areas():
         assert discernment.SCHEMA_VERSION in prompt
 
 
+def test_ollama_timeout_is_bounded_and_configurable(monkeypatch):
+    monkeypatch.setenv("MAK_OLLAMA_TIMEOUT", "2")
+    assert discernment.ollama_timeout() == 5.0
+    monkeypatch.setenv("MAK_OLLAMA_TIMEOUT", "80")
+    assert discernment.ollama_timeout() == 80.0
+    monkeypatch.setenv("MAK_OLLAMA_TIMEOUT", "900")
+    assert discernment.ollama_timeout() == 180.0
+
+
 def test_adobe_rescue_is_separate_from_svg_and_blender():
     brief = tandas.build_brief(
         "adobe_rescue", "adobe01", providers=["watsonx", "ollama"])
