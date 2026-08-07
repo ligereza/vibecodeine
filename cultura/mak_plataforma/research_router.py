@@ -24,6 +24,19 @@ class ResearchRoute:
     def required_fields(self) -> tuple[str, ...]:
         return OUTPUT_CONTRACTS[self.formato]
 
+    @property
+    def epistemic_mode(self) -> str:
+        """Define how the output may reason without fixing its vocabulary."""
+        return {
+            "informe": "evidencia",
+            "oportunidad": "evidencia",
+            "curatoria": "interpretacion",
+            "revision": "critica",
+            "exposicion": "interpretacion",
+            "ensayo": "argumento",
+            "ledger": "decision",
+        }.get(self.formato, "exploracion")
+
 
 OUTPUT_CONTRACTS = {
     "informe": ("claim", "sources", "uncertainty", "next_action"),
