@@ -192,6 +192,46 @@ def test_opportunity_profile_requires_url_evidence_for_official_source():
     assert R.validate_profile_result(profile, result) == "revise"
 
 
+def test_opportunity_profile_accepts_only_current_official_card_shape():
+    profile = R.profile_for_area("opportunity_radar")
+    result = {"items": [{
+        "format": "oportunidad",
+        "evidence_kind": "official_source",
+        "evidence": ["https://fondosdecultura.cl/convocatoria"],
+        "files": [],
+        "action": "verify_source",
+        "product": {
+            "opportunity": "Fondart",
+            "eligibility": "artista visual residente en Chile",
+            "deadline": "2026-09-15",
+            "source": "https://fondosdecultura.cl/convocatoria",
+            "next_action": "leer bases y verificar elegibilidad",
+        },
+    }]}
+
+    assert R.validate_profile_result(profile, result) == "accept"
+
+
+def test_opportunity_profile_revises_generic_deadline_even_with_url():
+    profile = R.profile_for_area("opportunity_radar")
+    result = {"items": [{
+        "format": "oportunidad",
+        "evidence_kind": "official_source",
+        "evidence": ["https://fondosdecultura.cl/"],
+        "files": [],
+        "action": "verify_source",
+        "product": {
+            "opportunity": "Fondart",
+            "eligibility": "artista",
+            "deadline": "varía según la convocatoria",
+            "source": "https://fondosdecultura.cl/",
+            "next_action": "buscar fecha",
+        },
+    }]}
+
+    assert R.validate_profile_result(profile, result) == "revise"
+
+
 def test_breathing_cycle_keeps_five_ways_of_knowing_separate():
     cases = [
         ("atender", "quien organizo el evento", "evidencia", "informe"),

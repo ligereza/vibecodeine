@@ -170,6 +170,16 @@ def validate_profile_result(profile: dict | None, result: dict) -> str:
                                  ("http://", "https://"))]
             if not evidence_urls:
                 needs_revision = True
+            product = item.get("product") or {}
+            source = str(product.get("source") or "").strip().lower()
+            if not source.startswith(("http://", "https://")):
+                needs_revision = True
+            deadline = re.sub(r"\s+", " ", str(
+                product.get("deadline") or "").strip().lower())
+            if deadline in ("", "unknown", "tbd", "por confirmar", "varia",
+                            "varia segun la convocatoria",
+                            "varía", "varía según la convocatoria"):
+                needs_revision = True
     return "revise" if needs_revision else "accept"
 
 
