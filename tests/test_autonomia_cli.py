@@ -58,6 +58,33 @@ def test_autonomy_status_surfaces_quarantine(tmp_path):
     assert status["next_actions"] == ["review_quarantined_evidence"]
 
 
+def test_autonomy_status_derives_operational_surface(monkeypatch, tmp_path):
+    monkeypatch.setattr(autonomia, "_branch_state", lambda: {
+        "current": "mak",
+        "dirty": [],
+        "remote_branches": ["main", "mak", "rd", "iskvw"],
+        "canonical_present": {name: True for name in autonomia.CANONICAL_BRANCHES},
+        "extra_remote_branches": [],
+    })
+    monkeypatch.setattr(autonomia, "_open_prs", lambda: [{
+        "number": 507,
+        "mergeStateStatus": "BLOCKED",
+    }])
+    monkeypatch.setattr(autonomia, "_readme_svg_state", lambda: {"status": "clean"})
+
+    status = autonomia.autonomy_status(
+        common_path=str(tmp_path / "common.jsonl"),
+        batch_path=str(tmp_path / "batches.jsonl"),
+    )
+
+    assert status["operational"]["promotion"] == {
+        "open_prs": 1,
+        "blocked_prs": [507],
+    }
+    assert status["operational"]["visual_surface"] == {"readme_svg": "clean"}
+    assert "review_open_promotion_prs" in status["operational"]["next_actions"]
+
+
 def test_run_autonomy_dry_run_writes_briefs(monkeypatch, tmp_path):
     monkeypatch.setattr(autonomia, "autonomy_status", lambda **_kwargs: {
         "ready": True,
