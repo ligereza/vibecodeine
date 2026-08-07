@@ -173,3 +173,18 @@ def test_mak_executor_delegates_run_over_ssh(monkeypatch):
     assert "python3 -m flujo autonomia run" in commands[0][1]
     assert "--executor local" in commands[0][1]
     assert "--areas 'mak_quality'" in commands[0][1]
+
+
+def test_ssh_json_preserves_completed_payload_with_review_exit(monkeypatch):
+    class Result:
+        returncode = 2
+        stdout = '{"ok": false, "status": "completed", "runs": [{"status": "revise"}]}'
+        stderr = ""
+
+    monkeypatch.setattr(autonomia.subprocess, "run", lambda *args, **kwargs: Result())
+
+    payload = autonomia._ssh_json("mak@example", "remote command")
+
+    assert payload["status"] == "completed"
+    assert payload["runs"][0]["status"] == "revise"
+    assert payload["remote_exit_code"] == 2
