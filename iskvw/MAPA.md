@@ -10,8 +10,10 @@ en el mismo PR que lo detecte.
 
 ## El sitio en vivo
 
-`iskvw.cl` → GitHub Pages de este repo, publicado por
+El dominio visible → GitHub Pages de este repo, publicado por
 `.github/workflows/publicar_iskvw.yml` en cada push a `main` que toque `iskvw/`.
+Hoy el valor por defecto es `iskvw.cl`; la migración se prepara definiendo la
+variable de repositorio `PUBLIC_DOMAIN`, sin tocar la piel ni los datos.
 Sube **sólo `iskvw/`**: nada de RD, MAK ni xio. La raíz del sitio es la piel
 `campo`.
 

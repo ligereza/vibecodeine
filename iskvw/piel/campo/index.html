@@ -167,6 +167,10 @@ let W=0, H=0, DPR=1, OBRAS=[], NODOS=[], LARGO=0;
 // todavia no se dibujen: como se ven es una decision del artista, no del
 // programa, y el dato tiene que estar antes de que esa decision se pueda tomar.
 let VINCULOS=[];
+// The archive keeps every measured relation in its JSON. The skin only needs
+// the strongest local neighbours in a frame; drawing the full historical graph
+// made old noise cost every animation frame. This is visual LOD, not deletion.
+const MAX_VECINOS_VISIBLES = 12;
 // Vecinos por INDICE de nodo: [indice, peso, indice, peso, ...]. Se arma una
 // vez en `sembrar()`. Es lo que evita recorrer todos los pares en cada frame,
 // que es el defecto medido de la referencia de la que salio este campo.
@@ -525,12 +529,19 @@ function sembrar(obras){
   if (VINCULOS.length){
     const porId = new Map();
     NODOS.forEach((n, i) => porId.set(n.obra.id, i));
+    const candidatos = NODOS.map(() => []);
     for (const v of VINCULOS){
       const a = porId.get(v.de), b = porId.get(v.a);
       if (a === undefined || b === undefined || a === b) continue;
       const peso = Math.max(0, Math.min(1, Number(v.peso) || 0));
-      VECINOS[a].push(b, peso);
-      VECINOS[b].push(a, peso);
+      candidatos[a].push([b, peso]);
+      candidatos[b].push([a, peso]);
+    }
+    for (let i = 0; i < candidatos.length; i++){
+      candidatos[i].sort((a, b) => b[1] - a[1]);
+      for (const [j, peso] of candidatos[i].slice(0, MAX_VECINOS_VISIBLES)){
+        VECINOS[i].push(j, peso);
+      }
     }
   }
 }

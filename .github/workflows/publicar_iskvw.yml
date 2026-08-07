@@ -41,6 +41,11 @@ concurrency:
 jobs:
   publicar:
     runs-on: ubuntu-latest
+    env:
+      # Migration seam: set the repository variable PUBLIC_DOMAIN when the
+      # portfolio moves. Until then the historical hostname remains the
+      # default without baking it into the deployment logic.
+      PUBLIC_DOMAIN: ${{ vars.PUBLIC_DOMAIN || 'iskvw.cl' }}
     environment:
       name: github-pages
       url: ${{ steps.desplegar.outputs.page_url }}
@@ -77,7 +82,10 @@ jobs:
           # llama _indice.json. Sin esto el sitio pide un archivo que Pages no
           # publica y la consola se llena de 404.
           touch _sitio/.nojekyll
-          echo "iskvw.cl" > _sitio/CNAME
+          case "$PUBLIC_DOMAIN" in
+            *://*|*/*|.*|*.*.*.*) echo "dominio invalido: $PUBLIC_DOMAIN" >&2; exit 1 ;;
+          esac
+          printf '%s\n' "$PUBLIC_DOMAIN" > _sitio/CNAME
           # Misma regla para lo que vive DENTRO de iskvw/: el sitio aplana el
           # prefijo (la raiz ES iskvw/), pero el contrato declara rutas de
           # repo (iskvw/piel/...). Se espeja ese prefijo para que el src del
