@@ -748,20 +748,24 @@ def priorizar_oportunidades(items, contexto=None):
         title = str(item.get("titulo") or "")
         source = plegar(str(item.get("fuente") or ""))
         text = plegar(title + " " + source)
+        nursing_lane = any(word in text for word in (
+            "enfermer", "tens", "hospital", "salud", "residencia familiar"))
         score = 0
         reasons = []
-        if any(word in text for word in (
+        practice_words = (
                 "fondart", "fondo de cultura", "fondos de cultura",
-                "residencia", "residencias", "res artis", "open call",
-                "convocatoria", "artist", "artista", "beca")):
+                "res artis", "open call", "convocatoria", "artist", "artista",
+                "beca")
+        if (any(word in text for word in practice_words) or
+                (not nursing_lane and any(word in text for word in
+                                          ("residencia", "residencias")))):
             score += 5
             reasons.append("practice_or_funding")
         if any(word in text for word in ("musica", "music", "lanzamiento",
                                          "diseno", "design", "comision")):
             score += 3
             reasons.append("design_or_music")
-        if any(word in text for word in ("enfermer", "tens", "hospital",
-                                         "salud", "residencia familiar")):
+        if nursing_lane:
             reasons.append("private_nursing_lane")
             if "residencia familiar" in text:
                 score += 1
