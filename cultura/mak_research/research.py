@@ -307,6 +307,7 @@ def investigar(topic, iteraciones=3, depth="basic",
     es_revision = formato == "revision"
     es_exposicion = formato == "exposicion"
     es_curatoria = formato == "curatoria"
+    es_oportunidad = formato == "oportunidad"
     print("STATUS: Generando %s final..." % formato, flush=True)
     try:
         sistema_ensayo = guardia + formato_ensayo.SISTEMA
@@ -314,6 +315,7 @@ def investigar(topic, iteraciones=3, depth="basic",
         sistema_revision = guardia + formato_ensayo.SISTEMA_REVISION
         sistema_exposicion = guardia + formato_ensayo.SISTEMA_EXPOSICION
         sistema_curatoria = guardia + formato_ensayo.SISTEMA_CURATORIA
+        sistema_oportunidad = guardia + formato_ensayo.SISTEMA_OPORTUNIDAD
         if ev:
             # Sin fuente primaria la TAREA cambia: de sintetizar a reportar la
             # ausencia. No es un aviso al margen, es otra instruccion.
@@ -323,6 +325,7 @@ def investigar(topic, iteraciones=3, depth="basic",
             sistema_revision += extra
             sistema_exposicion += extra
             sistema_curatoria += extra
+            sistema_oportunidad += extra
         if es_ensayo:
             # El ensayo pide mas espacio que el informe: son partes narradas con
             # tabla comparativa, cronologia y cierre argumentado, no cinco
@@ -351,6 +354,13 @@ def investigar(topic, iteraciones=3, depth="basic",
                 formato_ensayo.prompt_curatoria(topic, findings, sources,
                                                 query_history),
                 escala_tok(1800, densidad),
+            )
+        elif es_oportunidad:
+            report, _ = llm.call(
+                sistema_oportunidad,
+                formato_ensayo.prompt_oportunidad(topic, findings, sources,
+                                                  query_history),
+                escala_tok(1400, densidad),
             )
         else:
             # El informe tambien tiene contrato desde el 2026-08-01. Era una

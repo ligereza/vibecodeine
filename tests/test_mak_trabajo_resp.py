@@ -288,6 +288,27 @@ def test_repasar_reviews_pending_ledger_locally(monkeypatch, tmp_path):
     assert payload["domain"] == "svg"
 
 
+def test_repasar_prioritizes_pending_opportunity(monkeypatch, tmp_path):
+    common = tmp_path / "common_ledger.jsonl"
+    monkeypatch.setattr(trabajo, "COMMON_LEDGER", str(common))
+    common.write_text(json.dumps({
+        "id": "opportunity-1",
+        "schema": "mak-ledger-v1",
+        "source": "vigia:fondos",
+        "domain": "opportunities",
+        "type": "task",
+        "claim": "New watched opportunity",
+        "action": "review",
+        "metadata": {"queue_status": "pending_human", "next_action": "verify"},
+    }) + "\n", encoding="utf-8")
+
+    _depto, payload = trabajo._tarea("repasar", {})
+
+    assert payload["ledger_id"] == "opportunity-1"
+    assert payload["domain"] == "opportunities"
+    assert payload["reason"] == "verify"
+
+
 def test_repasar_reviews_benchmark_queue_locally(monkeypatch, tmp_path):
     benchmark = tmp_path / "corpus_benchmark.json"
     reviews = tmp_path / "idle_benchmark_reviews.jsonl"

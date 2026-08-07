@@ -57,6 +57,7 @@ interface Tandas {
   accepted?: number;
   rejected_or_revise?: number;
   decisions?: number;
+  pending_human?: number;
   by_domain?: Record<string, number>;
   by_provider?: Record<string, number>;
   pending?: Array<{ domain: string; claim: string; action: string; reason: string }>;
@@ -137,6 +138,14 @@ export default function MakPanel() {
         <p className="text-sm text-neutral-400 mt-1">
           Estado leído directamente del box. Solo lectura: desde acá no se le ordena nada.
           {data.ts ? ` Medido a las ${data.ts}.` : ''}
+        </p>
+      </div>
+
+      <div>
+        <h3 className="text-sm font-semibold mb-2">Oportunidades en revisión humana</h3>
+        <p className="text-sm text-neutral-400">
+          {data.tandas?.pending_human ?? 0} listings guardados por Vigia esperan
+          verificar fuente, elegibilidad y encaje artístico. MAK no contacta ni postula.
         </p>
       </div>
 

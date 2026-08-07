@@ -7,9 +7,9 @@
 <!--
 
 The visible README is the artwork above (`arte-ascii-readme.svg`, the animated
-codeine cup). It is a finished artist piece and the SVG is never altered. This
-block is hidden on purpose: it is orientation for whoever opens the file, not
-part of the page.
+codeine cup). Its artwork shell is preserved, while its text layer is refreshed
+from this README with `py tools/update_readme_svg.py`. This keeps the piece
+recognizable without letting the public cover lie about the current system.
 
 # VIBECODEINE — operational workspace. Main program: FLUJO
 
@@ -18,7 +18,7 @@ is the system. Local-first workspace for requests, jobs, briefs, design work,
 the RD (NGO) line, the iskvw line (shows, art-research, portfolio), the
 on-device Xiaomi controller (`xio`), the web hub, and agent-delivered patches.
 
-The repo assistant is named `Cauce`. The mission is to spend the strong model
+The repo assistant is named `Faro`. The mission is to spend the strong model
 now to build a base that free/cheap agents can maintain later, off-PC and
 without a Claude account — success is measured by how little the repo needs the
 strong model once it is gone.
@@ -62,9 +62,8 @@ rd      The NGO line: Reduciendo Dano. Data, grants, supplements, events.
         a branch does not hide history, and anyone cloning it gets every
         commit including everything personal.
 
-iskvw   The artistic line: curation, archive, portfolio. Publishes to
-        iskvw.cl through .github/workflows/publicar_iskvw.yml, which uploads
-        ONLY the iskvw/ folder.
+iskvw   The artistic line: curation, archive, portfolio. Its current public
+        host is transitional; the repo must not depend on that domain forever.
 
 mak     NOT a line: it is MAK's INBOX. Nothing lives here. The box opens a PR
         against it and the only exit is a PR into main. If it ever stops

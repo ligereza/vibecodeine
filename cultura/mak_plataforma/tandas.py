@@ -29,6 +29,13 @@ except Exception:  # noqa: BLE001 - direct script deployment on MAK
     except Exception:  # noqa: BLE001 - discernment prompt is optional
         discernment = None
 try:
+    from . import research_router
+except Exception:  # noqa: BLE001 - direct script deployment on MAK
+    try:
+        import research_router
+    except Exception:  # noqa: BLE001 - profile policy is optional
+        research_router = None
+try:
     from . import providers as external_providers
 except Exception:  # noqa: BLE001 - direct script deployment on MAK
     try:
@@ -58,6 +65,8 @@ PRODUCT_CONTRACTS = {
     "tool_archaeology": ("existing_path", "reuse_test", "decision"),
     "svg_pipeline": ("representation", "measurement", "next_prototype"),
     "adobe_rescue": ("bridge", "installation_evidence", "rescue_action"),
+    "opportunity_radar": ("opportunity", "eligibility", "deadline", "source",
+                           "next_action", "risk"),
 }
 
 
@@ -169,6 +178,17 @@ AREAS = {
                            "src/flujo/export/illustrator_bridge.py"],
         "actions": ["rescue", "bridge", "reuse", "reject"],
     },
+    "opportunity_radar": {
+        "purpose": "find artist-compatible opportunities without auto-contact or submission",
+        "default_paths": ["context/artist_context.example.json",
+                           "cultura/mak_vigia/fuentes.json",
+                           "docs/becas"],
+        "evidence_paths": ["context/artist_context.example.json",
+                           "cultura/mak_vigia/fuentes.json",
+                           "docs/becas/CALENDARIO_POSTULACIONES.md",
+                           "cultura/mak_research/fuentes.py"],
+        "actions": ["verify_source", "triangulate", "draft_report", "reject"],
+    },
 }
 
 PROVIDER_LANES = {
@@ -199,6 +219,8 @@ def build_brief(area, batch_id, paths=None, providers=None, allow_premium=True,
     if area not in AREAS:
         raise ValueError("unknown area: %s" % area)
     cfg = AREAS[area]
+    profile = (research_router.profile_for_area(area)
+               if research_router is not None else None)
     selected_paths = list(paths or cfg["default_paths"])
     plan = provider_plan(providers or [], allow_premium=allow_premium)
     brief = {
@@ -214,9 +236,15 @@ def build_brief(area, batch_id, paths=None, providers=None, allow_premium=True,
             area, batch_id, cfg, selected_paths, plan,
             evidence=evidence_package(area, max_chars=max_evidence_chars)
             if include_evidence else "",
-            instruction=instruction),
+            instruction=instruction, profile=profile),
         "result_required": list(RESULT_REQUIRED) + ["product"],
     }
+    if profile:
+        brief["promotion_policy"] = {
+            "allowed_formats": list(profile["allowed_formats"]),
+            "required_evidence": profile["required_evidence"],
+            "promotion_actions": list(profile["promotion_actions"]),
+        }
     if discernment is not None:
         brief["local_review"] = {
             "provider": "ollama",
@@ -231,7 +259,8 @@ def build_brief(area, batch_id, paths=None, providers=None, allow_premium=True,
     return brief
 
 
-def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction=""):
+def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction="",
+            profile=None):
     evidence_block = (
         "\nPAQUETE DE EVIDENCIA LOCAL:\n%s\n" % evidence
         if evidence else
@@ -241,6 +270,22 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction=""):
         "\nINSTRUCCION DE ESTA RONDA:\n%s\n" % instruction.strip()
         if instruction else ""
     )
+    profile_block = ""
+    item_profile_fields = ""
+    if profile:
+        profile_block = (
+            "\nPOLITICA DE PROMOCION:\n"
+            "- formatos permitidos: %s\n"
+            "- evidencia requerida: %s\n"
+            "- acciones permitidas: %s\n"
+            % (", ".join(profile["allowed_formats"]),
+               profile["required_evidence"],
+               ", ".join(profile["promotion_actions"]))
+        )
+        item_profile_fields = (
+            '    "format": "formato permitido",\n'
+            '    "evidence_kind": "tipo de evidencia requerida",\n'
+        )
     return (
         "Eres un agente externo de MAK. Tu proveedor puede ser temporal; el "
         "contrato NO lo es. Trabaja solo con el material de esta tanda.\n\n"
@@ -250,6 +295,7 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction=""):
         "RUTAS:\n%s\n\n"
         "PLAN DE PROVEEDORES: %s\n"
         "CONTRATO DE PRODUCTO: %s\n"
+        "%s"
         "%s\n"
         "%s"
         "DEVUELVE SOLO JSON con esta forma:\n"
@@ -261,6 +307,7 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction=""):
         '    "confidence": "high|medium|low",\n'
         '    "action": "%s",\n'
         '    "reject_reason": "",\n'
+        '%s'
          '    "product": %s\n'
         "  }]\n"
         "}\n\n"
@@ -276,11 +323,13 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction=""):
            "\n".join("- " + p for p in paths),
            ", ".join(plan) if plan else "(sin proveedor preferido)",
            ", ".join(PRODUCT_CONTRACTS[area]),
-           json.dumps({field: "" for field in PRODUCT_CONTRACTS[area]},
-                      ensure_ascii=False),
+           profile_block,
            evidence_block,
            instruction_block,
-           "|".join(cfg["actions"]))
+           "|".join(cfg["actions"]),
+           item_profile_fields,
+           json.dumps({field: "" for field in PRODUCT_CONTRACTS[area]},
+                      ensure_ascii=False))
     )
 
 
@@ -423,6 +472,16 @@ def ingest_result(payload, area, common_path=COMMON_LEDGER, source="external",
     if not review_ok:
         return {"ok": False, "status": "bad_review", "errors": review_errors,
                 "review": review, "items": 0, "review_meta": meta}
+    profile_verdict = "accept"
+    if research_router is not None:
+        profile_verdict = research_router.validate_profile_result(
+            research_router.profile_for_area(area), payload)
+        if profile_verdict != "accept":
+            review = dict(review)
+            review["verdict"] = profile_verdict
+            review["reason"] = "profile policy: %s" % profile_verdict
+            review["risks"] = list(review.get("risks", [])) + [
+                "profile promotion policy failed"]
     _review_ok, review_append_errors, _review_row = common_ledger.append_review(
         review, area, path=common_path, source="local_review:%s" % source)
     if review_append_errors:
