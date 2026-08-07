@@ -129,13 +129,15 @@ def leer_export(raiz: Path) -> tuple[dict, dict]:
             continue
         entradas = _entradas(dato)
         informe["archivos_leidos"].append("%s (%d)" % (nombre, len(entradas)))
-        for pub in entradas:
+        for indice_publicacion, pub in enumerate(entradas):
             if not isinstance(pub, dict):
                 continue
             informe["publicaciones"] += 1
             titulo_pub = (pub.get("title") or "").strip()
             ts_pub = pub.get("creation_timestamp")
-            for medio in (pub.get("media") or []):
+            medios_publicacion = [m for m in (pub.get("media") or [])
+                                  if isinstance(m, dict)]
+            for indice_medio, medio in enumerate(medios_publicacion):
                 if not isinstance(medio, dict):
                     continue
                 uri = medio.get("uri") or ""
@@ -168,6 +170,10 @@ def leer_export(raiz: Path) -> tuple[dict, dict]:
                                             and not (medio.get("title") or "").strip()),
                     "encoding_sospechoso": sospechoso,
                     "uri": uri,
+                    "publicacion_id": "%s:%d" % (nombre, indice_publicacion),
+                    "publicacion_archivo": nombre,
+                    "medio_indice": indice_medio,
+                    "medio_total": len(medios_publicacion),
                 }
     return mapa, informe
 

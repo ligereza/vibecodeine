@@ -94,6 +94,10 @@ def test_a_post_title_reaches_every_media_of_the_carousel(tmp_path):
     assert mapa["a.jpg"]["texto"] == "Serie de grabados"
     assert mapa["b.jpg"]["hereda_del_post"] is True
     assert mapa["a.jpg"]["fecha"] == "2020-09-13"
+    assert mapa["a.jpg"]["publicacion_id"] == "posts_1.json:0"
+    assert mapa["a.jpg"]["medio_indice"] == 0
+    assert mapa["b.jpg"]["medio_indice"] == 1
+    assert mapa["b.jpg"]["medio_total"] == 2
 
 
 def test_a_media_title_wins_over_the_post_one(tmp_path):
