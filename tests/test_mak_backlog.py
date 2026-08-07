@@ -555,6 +555,34 @@ class TestDerivador:
         assert valida is False
         assert razon == "entidad_no_verificada:Sfera Abramović"
 
+    def test_no_bloquea_marca_de_evento_en_mayusculas(self):
+        documento = {
+            "hallazgos": [{
+                "titulo": "SFERA Experience 2024",
+                "fuente": "https://example.org/sfera",
+                "contenido": "No se encontró a una persona en el evento.",
+            }],
+        }
+        valida, razon = backlog.validar_pregunta_derivada(
+            "Quien organizo SFERA Experience", documento)
+        assert valida is True
+        assert razon == ""
+
+    def test_no_bloquea_institucion_con_evidencia_positiva(self):
+        documento = {
+            "hallazgos": [{
+                "titulo": "XI Seminario Internacional",
+                "fuente": "https://example.org/seminario",
+                "contenido": (
+                    "No se encontró la fecha exacta, pero fue organizado "
+                    "por la Universidad Francisco de Paula Santander."),
+            }],
+        }
+        valida, razon = backlog.validar_pregunta_derivada(
+            "Que eventos organizo Paula Santander", documento)
+        assert valida is True
+        assert razon == ""
+
 
 class TestPopPendiente:
     """Tests para pop_pendiente."""
