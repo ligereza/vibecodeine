@@ -183,8 +183,26 @@ def _enrich_legacy(row):
     domain = str(view.get("domain") or "").lower()
     view["lane"] = str(view.get("lane") or LANE_BY_DOMAIN.get(domain, "sistema")).lower()
     view["decision"] = str(view.get("decision") or _default_decision(view)).lower()
-    view["purpose"] = _safe_text(view.get("purpose"), 500)
-    view["next_action"] = _safe_text(view.get("next_action"), 500)
+    view["purpose"] = _safe_text(view.get("purpose"), 500) or (
+        "legacy %s record projected into the decision queue" % domain)
+    action = str(view.get("action") or "").lower()
+    fallback_actions = {
+        "verify_source": "verify source and date",
+        "triangulate": "triangulate with a second source",
+        "draft_report": "draft the contracted report",
+        "curate": "write a curation decision before exposure",
+        "expose": "human review before public exposure",
+        "archive": "archive without promoting as current truth",
+        "measure": "measure the existing pipeline before changing it",
+        "prototype": "build one bounded prototype",
+        "reuse": "reuse only after local verification",
+        "review": "human review of the queued item",
+        "refute": "record the contradiction and keep it out of truth",
+        "repair_queue": "repair the queue entry before new production",
+        "reject": "retain as rejected evidence; do not promote",
+    }
+    view["next_action"] = _safe_text(view.get("next_action"), 500) or \
+        fallback_actions.get(action, "human review of the decision")
     view["owner"] = _safe_text(view.get("owner"), 120) or "MAK"
     return view
 

@@ -167,6 +167,7 @@ def test_summary_projects_legacy_rows_without_mutating_storage(tmp_path):
     assert summary["by_lane"] == {"trabajo": 1}
     assert summary["by_decision"] == {"hacer": 1}
     assert summary["last"][0]["lane"] == "trabajo"
+    assert summary["last"][0]["next_action"] == "verify source and date"
 
 
 def test_tandas_cli_validate_can_write_common_ledger(tmp_path):
