@@ -475,6 +475,36 @@ def grafo_semantico(umbral=0.5, tope_por_nodo=4):
     return grafo
 
 
+def limitar_grafo(grafo, limite=0):
+    """Return a stable, connected projection for slow visual consumers."""
+    try:
+        limite = int(limite)
+    except (TypeError, ValueError):
+        limite = 0
+    if limite <= 0 or not isinstance(grafo, dict):
+        return grafo
+    nodes = list(grafo.get("nodes") or [])
+    if len(nodes) <= limite:
+        return grafo
+    grados = {}
+    for edge in grafo.get("edges") or []:
+        for key in (edge.get("a"), edge.get("b")):
+            grados[key] = grados.get(key, 0) + 1
+    ranked = sorted(
+        nodes,
+        key=lambda node: (-grados.get(node.get("id"), 0),
+                          -float(node.get("sustancia") or 0),
+                          str(node.get("id") or "")))
+    keep = {node.get("id") for node in ranked[:limite]}
+    return {
+        **grafo,
+        "nodes": [node for node in nodes if node.get("id") in keep],
+        "edges": [edge for edge in grafo.get("edges") or []
+                  if edge.get("a") in keep and edge.get("b") in keep],
+        "projection": {"limit": limite, "source_nodes": len(nodes)},
+    }
+
+
 def contexto(tema, k=5, max_chars=2500):
     """Bloque Markdown con los hallazgos previos relevantes, para INYECTAR
     en otro modo (grafo --memoria). '' si la memoria esta vacia."""

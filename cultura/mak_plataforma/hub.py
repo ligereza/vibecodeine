@@ -654,7 +654,7 @@ def _micelio():
     ahora = time.time()
     if ahora - _MIC_CACHE["t"] < 12 and _MIC_CACHE["data"]["nodes"]:
         return _MIC_CACHE["data"]
-    g = _http_json(RESEARCH_URL + "/api/memoria/grafo?umbral=0.5", timeout=5.0)
+    g = _http_json(RESEARCH_URL + "/api/memoria/grafo?umbral=0.5&limite=600", timeout=5.0)
     if g and "nodes" in g:
         _MIC_CACHE["data"] = g
         _MIC_CACHE["t"] = ahora
