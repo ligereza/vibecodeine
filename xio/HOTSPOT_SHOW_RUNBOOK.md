@@ -13,6 +13,12 @@ Capa 2  server xio (Flask, Termux+Shizuku)       <- control/management. Nice-to-
 Capa 3  internet 5G + LLM operador (futuro)       <- solo cuando hay señal (venue-dependiente).
 ```
 
+The show can use the server in two different ways: `foh_monitor` is passive
+observation, while `showcontrol` is active network control. This runbook's
+historical show path uses the passive monitor unless a show brief explicitly
+authorizes the active plugin. Check `xio/CAPACIDADES.md`; do not infer Xiaomi
+installation from repository files.
+
 El show robusto corre sobre la **Capa 1**. El server y el internet son capas opcionales
 encima. Si diseñás el show para depender solo de la LAN, ni el reboot ni el estar bajo
 tierra lo tumban.
@@ -43,7 +49,10 @@ Dejar el telefono en este estado; luego se sostiene solo mientras NO reboote:
 1. Shizuku armado + tcpip 5555 arriba (el setup normal; el watcher de PC lo hace).
 2. `run_server.sh` corrido -> server + shizuku_watchdog + server_supervisor + **hotspot_watch**.
 3. Confirmar hotspot `😁` encendido y con clientes (PC + tu phone del FOH).
-4. Confirmar `flujo`/`/api/plugins` responde desde tu phone en el FOH (control sin cable).
+4. Confirmar `flujo`/`/api/plugins` responde desde tu phone en el FOH
+   (observacion sin cable). Si el show usa `showcontrol`, verificar aparte el
+   plugin cargado, el token y la ruta destino; este chequeo no prueba control
+   activo.
 5. Bateria: dejar el Xiaomi en una fuente PD (power bank / dock). Ver "Energia" abajo.
 
 Una vez en ese estado, te alejas al FOH. El telefono es un appliance; no lo toques.

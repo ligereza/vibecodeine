@@ -56,7 +56,9 @@ network interface is the Xiaomi phone's hotspot.
 - The Xiaomi is the single point of internet and control
 - 32-client hotspot with no AP isolation means team members can intercept each other's traffic
 - **codex does NOT exist on this network** — all code-execution is sandboxed on MAK (Face A, offline)
-- Authentication (tokens, permits) guards dangerous endpoints, but the surface is read-only by design
+- Authentication (tokens, permits) guards dangerous endpoints. The management
+  surface is read-only by design, while `showcontrol` is an explicitly active
+  signal surface when installed, enabled and authorized.
 
 ---
 
@@ -67,7 +69,7 @@ This separation **intentionally avoids the risk of code-execution exposure on a 
 | Threat | Face A | Face B |
 |---|---|---|
 | LLM box compromise (stolen model, malicious script) | Mitigated: confined to owner's LAN (xio denies MAK unless explicitly trusted in the future) | Not applicable: codex never runs on Face B |
-| 32-client hotspot sniffing | Not applicable: only owner's trusted machines | Acceptable: only read-only data and show-control traffic; no code generation |
+| 32-client hotspot sniffing | Not applicable: only owner's trusted machines | Acceptable only for declared show-control traffic; no code generation |
 | Network isolation / client broadcast | Not applicable: private home network | Expected: a show is inherently open; team coordinates via the hotspot |
 
 **In short:** The false concern (32-client exposure to codex) cannot happen because codex is not on Face B.
@@ -113,11 +115,12 @@ show with `ip addr show wlan1` (on phone) or `dumpsys wifi` (from PC via adb).
 
 This lets us design each face independently:
 - Face A: tight integration, optional auth (owner's machines), codex + research always available.
-- Face B: read-only show control, strong perimeter guards (guarded endpoints, denylist), codex absent by architecture.
+- Face B: read-only management plus guarded active show-control traffic; codex absent by architecture.
 
 ---
 
 **See also:**
 - `xio/RUNBOOK.md` section 5 (Security -- aislar MAK) for on-phone source denylist + guarded endpoints
 - `xio/HOTSPOT_SHOW_RUNBOOK.md` for full Face B show-day architecture and self-heal loops
+- `xio/CAPACIDADES.md` for the distinction between repository capability and Xiaomi runtime verification
 - `cultura/mak_plataforma/GENESIS.md` "Las reglas de vida" rule 2 (El teléfono es sagrado) — describes Face A's relationship to MAK

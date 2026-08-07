@@ -9,6 +9,12 @@ Written 2026-07-16 by consolidating xio/**/*.md + the real scripts under xio/new
 
 **ESSENTIAL FIRST READ: [xio/FACES.md](FACES.md) — two-network architecture (studio LAN vs. show hotspot). Codex and MAK never run on the show. Read this to avoid misunderstanding the security model.**
 
+Capability boundary: this runbook covers both the passive `foh_monitor` and the
+active `showcontrol` plugin. The former observes UDP traffic; the latter can
+send or receive show-control traffic when installed, enabled and authorized.
+Repository code is not runtime proof. Use [CAPACIDADES.md](CAPACIDADES.md) as
+the status matrix before a show.
+
 ## Index
 
 1. [Variables](#1-variables) -- IPs/ports, verify per show
@@ -294,6 +300,10 @@ Source: `xio/PLAN_SERVICIOS_SIN_ROOT.md` (discovery + rationale),
 Plugin `foh_monitor` (`xio/new-plugins/foh_monitor/`): vigia PASIVO de cabina.
 Listeners UDP read-only (jamas envia): Art-Net :6454, sACN :5568, OSC :7000.
 Registra todo el show a JSONL y sirve un panel touch pa la pantalla del Xiaomi.
+
+This section does not describe `showcontrol`. That plugin is a separate active
+surface documented in `xio/new-plugins/showcontrol/README.md`, with its own
+token and live-route risk.
 
 **Panel (abrir en el Xiaomi mismo o en cualquier cliente del hotspot):**
 ```
