@@ -31,6 +31,10 @@ try:
     import fuentes
 except ImportError:          # el organo puede correr sin la compuerta
     fuentes = None
+try:
+    import backlog
+except ImportError:          # la investigacion tambien corre aislada
+    backlog = None
 from research_lib import (LLM, escala_tok, fetch_url, load_env, marco,
                           marcadores_de_plantilla, marco_solo, ntfy_publish,
                           slug, stamp, tavily_search, web_search)
@@ -465,7 +469,22 @@ def investigar(topic, iteraciones=3, depth="basic",
         bruto_q, _ = llm.call(formato_ensayo.SISTEMA_PREGUNTAS,
                               formato_ensayo.prompt_preguntas(topic, report),
                               escala_tok(600, densidad))
-        resultado["preguntas_abiertas"] = formato_ensayo.parsear_preguntas(bruto_q)
+        preguntas = formato_ensayo.parsear_preguntas(bruto_q)
+        if backlog is not None:
+            aceptadas = []
+            bloqueadas = []
+            for pregunta in preguntas:
+                valida, razon = backlog.validar_pregunta_derivada(
+                    pregunta, resultado)
+                if valida:
+                    aceptadas.append(pregunta)
+                else:
+                    bloqueadas.append({"pregunta": pregunta, "razon": razon})
+            resultado["preguntas_abiertas"] = aceptadas
+            if bloqueadas:
+                resultado["preguntas_abiertas_bloqueadas"] = bloqueadas
+        else:
+            resultado["preguntas_abiertas"] = preguntas
     except RuntimeError as e:
         # Ausente != vacio. `[]` significa "el informe no dejo nada abierto";
         # la ausencia de la clave significa "no se pudo preguntar", y quien
