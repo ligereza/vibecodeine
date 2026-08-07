@@ -425,13 +425,20 @@ def validate_product_contract(payload, area):
     return not errors, errors
 
 
-def validate_evidence_paths(payload):
-    """Reject provider file claims that do not exist in known MAK roots."""
+def validate_evidence_paths(payload, area=None):
+    """Reject unknown files, resolving evidence-pack basenames safely."""
     errors = []
     items = payload.get("items", []) if isinstance(payload, dict) else []
     for idx, item in enumerate(items):
         for file_idx, path in enumerate(item.get("files", []) or []):
-            if not isinstance(path, str) or not _resolve_existing_path(path):
+            resolved = _resolve_existing_path(path) if isinstance(path, str) else ""
+            if not resolved and area in AREAS and isinstance(path, str):
+                candidates = [candidate for candidate in AREAS[area].get(
+                    "evidence_paths", [])
+                    if os.path.basename(candidate) == os.path.basename(path)]
+                if len(candidates) == 1:
+                    resolved = _resolve_existing_path(candidates[0])
+            if not resolved:
                 errors.append("item_%d_missing_evidence_path_%d" % (idx, file_idx))
     return not errors, errors
 
@@ -456,7 +463,7 @@ def ingest_result(payload, area, common_path=COMMON_LEDGER, source="external",
         if not product_ok:
             return {"ok": False, "status": "revise", "errors": product_errors,
                     "review": None, "items": 0}
-        evidence_ok, evidence_errors = validate_evidence_paths(payload)
+        evidence_ok, evidence_errors = validate_evidence_paths(payload, area=area)
         if not evidence_ok:
             return {"ok": False, "status": "revise", "errors": evidence_errors,
                     "review": None, "items": 0}
