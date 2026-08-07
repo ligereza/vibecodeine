@@ -276,7 +276,7 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction="",
         profile_block = (
             "\nPOLITICA DE PROMOCION:\n"
             "- formatos permitidos: %s\n"
-            "- evidencia requerida: %s\n"
+            "- evidence_kind DEBE ser exactamente: %s\n"
             "- acciones permitidas: %s\n"
             % (", ".join(profile["allowed_formats"]),
                profile["required_evidence"],
@@ -314,6 +314,7 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction="",
         "REGLAS:\n"
         "- Si no puedes sostener un claim, usa action=reject y explica reject_reason.\n"
         "- Cada item DEBE incluir product con todos los campos del contrato de producto.\n"
+        "- Usa exactamente los valores de formato y evidence_kind indicados en la politica; no inventes sinonimos.\n"
         "- No escribas informes largos; entrega hallazgos verificables.\n"
         "- No mezcles RD con iskvw; no conviertas curatoria en research.\n"
         "- No pidas crear una herramienta si ya existe una ruta probable.\n"

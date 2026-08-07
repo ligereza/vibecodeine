@@ -54,6 +54,12 @@ def test_build_brief_can_include_bounded_evidence():
     assert len(brief["prompt"]) < 12000
 
 
+def test_profile_prompt_requires_exact_evidence_kind():
+    brief = tandas.build_brief("iskvw_curation", "iskvw01",
+                               providers=["watsonx"])
+    assert "evidence_kind DEBE ser exactamente: artwork_context" in brief["prompt"]
+
+
 def test_build_brief_accepts_round_instruction():
     brief = tandas.build_brief(
         "mak_quality", "r002", providers=["watsonx"],
