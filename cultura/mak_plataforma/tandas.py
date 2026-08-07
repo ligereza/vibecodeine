@@ -12,6 +12,7 @@ import json
 import os
 import time
 import argparse
+import glob
 import sys
 
 try:
@@ -234,7 +235,8 @@ def build_brief(area, batch_id, paths=None, providers=None, allow_premium=True,
         "product_contract": list(PRODUCT_CONTRACTS[area]),
         "prompt": _prompt(
             area, batch_id, cfg, selected_paths, plan,
-            evidence=evidence_package(area, max_chars=max_evidence_chars)
+            evidence=evidence_package(area, paths=paths,
+                                      max_chars=max_evidence_chars)
             if include_evidence else "",
             instruction=instruction, profile=profile),
         "result_required": list(RESULT_REQUIRED) + ["product"],
@@ -274,6 +276,11 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction="",
         "- En iskvw, public_status describe una propuesta local: nunca uses "
         "publicada, public o published sin firma humana.\n"
         if area == "iskvw_curation" else ""
+    )
+    quality_hint = (
+        "- En mak_quality no dejes campos product vacios: si no detectas un "
+        "defecto usa defect_class=sin_defecto y explica la decision en verdict.\n"
+        if area == "mak_quality" else ""
     )
     profile_block = ""
     item_profile_fields = ""
@@ -323,6 +330,7 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction="",
         "- No escribas informes largos; entrega hallazgos verificables.\n"
         "- No mezcles RD con iskvw; no conviertas curatoria en research.\n"
         "%s"
+        "%s"
         "- No pidas crear una herramienta si ya existe una ruta probable.\n"
         "- Cada item debe poder sobrevivir cuando Watsonx/AWS ya no existan.\n"
         "- Cada entrada files debe existir en el material entregado; nunca inventes nombres.\n"
@@ -336,18 +344,37 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction="",
            "|".join(cfg["actions"]),
            item_profile_fields,
            curation_guard,
+           quality_hint,
            json.dumps({field: "" for field in PRODUCT_CONTRACTS[area]},
                       ensure_ascii=False))
     )
 
 
-def evidence_package(area, max_chars=60000):
+def evidence_package(area, paths=None, max_chars=60000):
     """Return a bounded local evidence pack for external models."""
     if area not in AREAS:
         raise ValueError("unknown area: %s" % area)
     chunks = []
     remaining = int(max_chars)
-    for path in AREAS[area].get("evidence_paths", []):
+    candidates = []
+    source_paths = (list(paths) if paths is not None
+                    else AREAS[area].get("evidence_paths", []))
+    for path in source_paths:
+        if path not in candidates:
+            candidates.append(path)
+    expanded = []
+    for candidate in candidates:
+        value = os.path.expandvars(os.path.expanduser(str(candidate)))
+        matches = glob.glob(value, recursive=True) if glob.has_magic(value) else []
+        if matches:
+            expanded.extend(matches)
+            continue
+        if os.path.isdir(value):
+            expanded.extend(sorted(glob.glob(
+                os.path.join(value, "**", "*"), recursive=True)))
+            continue
+        expanded.append(candidate)
+    for path in expanded:
         if remaining <= 0:
             break
         resolved = _resolve_existing_path(path)
@@ -433,7 +460,7 @@ def validate_product_contract(payload, area):
     return not errors, errors
 
 
-def validate_evidence_paths(payload, area=None):
+def validate_evidence_paths(payload, area=None, extra_paths=None):
     """Reject unknown files, resolving evidence-pack basenames safely."""
     errors = []
     items = payload.get("items", []) if isinstance(payload, dict) else []
@@ -441,8 +468,9 @@ def validate_evidence_paths(payload, area=None):
         for file_idx, path in enumerate(item.get("files", []) or []):
             resolved = _resolve_existing_path(path) if isinstance(path, str) else ""
             if not resolved and area in AREAS and isinstance(path, str):
-                candidates = [candidate for candidate in AREAS[area].get(
-                    "evidence_paths", [])
+                candidates = [candidate for candidate in (
+                    list(extra_paths or []) + AREAS[area].get(
+                        "evidence_paths", []))
                     if os.path.basename(candidate) == os.path.basename(path)]
                 if len(candidates) == 1:
                     resolved = _resolve_existing_path(candidates[0])
@@ -460,7 +488,8 @@ def append_common_ledger(payload, area, path=COMMON_LEDGER, source="external"):
 
 
 def ingest_result(payload, area, common_path=COMMON_LEDGER, source="external",
-                  reviewer=None, use_ollama=True, strict_product=False):
+                  reviewer=None, use_ollama=True, strict_product=False,
+                  extra_paths=None):
     """Validate, locally judge, then append only accepted facts to common ledger."""
     ok, errors = validate_result(payload)
     if not ok:
@@ -471,7 +500,8 @@ def ingest_result(payload, area, common_path=COMMON_LEDGER, source="external",
         if not product_ok:
             return {"ok": False, "status": "revise", "errors": product_errors,
                     "review": None, "items": 0}
-        evidence_ok, evidence_errors = validate_evidence_paths(payload, area=area)
+        evidence_ok, evidence_errors = validate_evidence_paths(
+            payload, area=area, extra_paths=extra_paths)
         if not evidence_ok:
             return {"ok": False, "status": "revise", "errors": evidence_errors,
                     "review": None, "items": 0}
@@ -696,7 +726,7 @@ def run_external_batch(area, batch_id, provider, paths=None, model=None,
                     "repair_raw_path": repair_raw_path, "errors": errors}
     result = ingest_result(
         payload, area, common_path=common_path, source=provider,
-        use_ollama=use_ollama, strict_product=True)
+        use_ollama=use_ollama, strict_product=True, extra_paths=paths)
     append_ledger({
         "area": area,
         "batch_id": batch_id,

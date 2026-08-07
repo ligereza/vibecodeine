@@ -154,6 +154,17 @@ def test_validate_evidence_paths_accepts_repo_files():
     assert tandas.validate_evidence_paths(payload) == (True, [])
 
 
+def test_evidence_package_includes_explicit_rescue_files(tmp_path):
+    report = tmp_path / "historical.md"
+    report.write_text("contenido historico que debe ser revisado", encoding="utf-8")
+
+    evidence = tandas.evidence_package(
+        "mak_quality", paths=[str(report)], max_chars=5000)
+
+    assert str(report) in evidence
+    assert "contenido historico" in evidence
+
+
 def test_validate_evidence_paths_resolves_unique_evidence_pack_basename():
     payload = {"items": [{"files": ["database.py"]}]}
     assert tandas.validate_evidence_paths(payload, area="rd_evidence") == (True, [])
@@ -163,6 +174,14 @@ def test_validate_evidence_paths_rejects_unknown_basename():
     payload = {"items": [{"files": ["invented.py"]}]}
     assert tandas.validate_evidence_paths(payload, area="rd_evidence") == (
         False, ["item_0_missing_evidence_path_0"])
+
+
+def test_validate_evidence_paths_accepts_explicit_batch_files(tmp_path):
+    report = tmp_path / "historical.md"
+    report.write_text("old report", encoding="utf-8")
+    payload = {"items": [{"files": ["historical.md"]}]}
+    assert tandas.validate_evidence_paths(
+        payload, area="mak_quality", extra_paths=[str(report)]) == (True, [])
 
 
 def test_parse_provider_json_accepts_fenced_json():
