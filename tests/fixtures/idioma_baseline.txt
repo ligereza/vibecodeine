@@ -428,3 +428,6 @@ xio/show_kit/artnet_relay.py
 xio/show_kit/check_show.py
 xio/show_kit/cue_engine.py
 xio/show_kit/map_dref.py
+cultura/mak_plataforma/benchmark.py
+cultura/mak_plataforma/utilidades/implementar-la-reconfiguracion-de-pesos-.py
+cultura/mak_plataforma/utilidades/una-utilidad-stdlib-que-cuente-lineas-de.py
