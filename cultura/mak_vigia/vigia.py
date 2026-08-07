@@ -725,6 +725,33 @@ def correr(fuentes=None, estado_dir=ESTADO_DIR, abrir=None, notificar=True,
     return resultados
 
 
+def encolar_oportunidades(resultados, ledger_path):
+    """Send new listings to the shared review queue, never to an LLM."""
+    for ruta in ("/home/mak/plataforma",
+                 os.path.join(os.path.dirname(BASE), "mak_plataforma")):
+        if os.path.isdir(ruta) and ruta not in sys.path:
+            sys.path.insert(0, ruta)
+    try:
+        from ledger import opportunity_from_vigia
+    except Exception as exc:  # noqa: BLE001 - watcher must remain observable
+        return {"queued": 0, "duplicates": 0,
+                "errors": ["ledger_unavailable:%s" % type(exc).__name__]}
+    queued = duplicates = 0
+    errors = []
+    for resultado in resultados:
+        for item in resultado.get("nuevos", []):
+            ok, item_errors, row = opportunity_from_vigia(
+                item, source="vigia:%s" % resultado.get("id", ""),
+                path=ledger_path)
+            if not ok:
+                errors.extend(item_errors)
+            elif row is None:
+                duplicates += 1
+            else:
+                queued += 1
+    return {"queued": queued, "duplicates": duplicates, "errors": errors}
+
+
 def _notificar(resultados):
     """Batched per run, never per item: this lands on two phones and the
     budget is a few notifications a day, not one per listing."""
@@ -758,6 +785,8 @@ def main(argv=None):
                     help="dias sin items nuevos antes de declarar la fuente rota")
     ap.add_argument("--sin-notificar", action="store_true")
     ap.add_argument("--solo", default="", help="id de una fuente")
+    ap.add_argument("--ledger-oportunidades", default="",
+                    help="shared ledger path for new human-review opportunities")
     ap.add_argument("--max-vistos", type=int, default=MAX_VISTOS,
                     help="registros en vistos.jsonl antes de compactar")
     ap.add_argument("--compactar", action="store_true",
@@ -784,6 +813,9 @@ def main(argv=None):
         print("%s %-28s http=%-3s items=%-4d nuevos=%-3d %s"
               % (marca, r["id"], r["codigo"], r["n_items"], len(r["nuevos"]),
                  r["alerta"] or r["error"]))
+    if args.ledger_oportunidades:
+        print(json.dumps(encolar_oportunidades(res, args.ledger_oportunidades),
+                         ensure_ascii=False))
     return 1 if roto else 0
 
 

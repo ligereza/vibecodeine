@@ -1,5 +1,6 @@
 # Notas personales/privadas (cuentas, planes financieros) -- nunca al repo
 context/*.local.md
+context/*.local.json
 
 # Python
 __pycache__/

@@ -89,6 +89,20 @@ def test_deterministic_review_revises_missing_evidence():
     assert review["missing_evidence"]
 
 
+def test_opportunity_review_requires_evidence_and_safe_action():
+    review = discernment.deterministic_review(
+        "opportunity_radar", {"items": [{
+            "claim": "possible artist residency",
+            "evidence": [],
+            "files": [],
+            "confidence": "medium",
+            "action": "draft_report",
+            "reject_reason": "",
+        }]})
+    assert review["verdict"] == "revise"
+    assert review["missing_evidence"]
+
+
 def test_deterministic_review_rejects_redacted_or_secret_material():
     review = discernment.deterministic_review(
         "mak_quality", {"items": [{
@@ -216,6 +230,41 @@ def test_ingest_accepts_only_after_local_review(tmp_path):
     assert result["items"] == 1
     assert rows[0]["type"] == "decision"
     assert rows[1]["type"] == "evidence"
+
+
+def test_ingest_promotes_verified_opportunity_to_pending_review_ledger(tmp_path):
+    common = tmp_path / "common_ledger.jsonl"
+
+    def fake_reviewer(_prompt):
+        return json.dumps({
+            "schema": discernment.SCHEMA_VERSION,
+            "verdict": "accept",
+            "domain": "opportunities",
+            "reason": "official source and bounded next action",
+            "risks": [],
+            "missing_evidence": [],
+            "next_action": "append accepted items to ledger",
+        })
+
+    payload = {"items": [{
+        "claim": "artist opportunity requires current source check",
+        "evidence": ["official source"],
+        "files": ["cultura/mak_vigia/fuentes.json"],
+        "confidence": "high",
+        "action": "verify_source",
+        "reject_reason": "",
+        "format": "oportunidad",
+        "evidence_kind": "official_source",
+        "product": {"opportunity": "residency", "eligibility": "artist",
+                    "deadline": "unknown", "source": "official",
+                    "next_action": "verify", "risk": "unknown"},
+    }]}
+    result = tandas.ingest_result(
+        payload, "opportunity_radar", common_path=str(common),
+        source="watsonx", reviewer=fake_reviewer, strict_product=True)
+    rows = [json.loads(line) for line in common.read_text(encoding="utf-8").splitlines()]
+    assert result["status"] == "accepted"
+    assert rows[-1]["domain"] == "opportunities"
 
 
 def test_ingest_rejects_without_appending_provider_facts(tmp_path):

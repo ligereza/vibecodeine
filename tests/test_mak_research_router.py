@@ -91,3 +91,63 @@ def test_route_exposes_declarative_department_profile():
     assert profile["destination"] == "rd"
     assert profile["evidence"] == "primary_source"
     assert "informe" in profile["formats"]
+
+
+def test_profile_accepts_rd_primary_source_report():
+    profile = R.profile_for_area("rd_evidence")
+    result = {"items": [{
+        "format": "informe",
+        "evidence_kind": "primary_source",
+        "evidence": ["https://www.gob.cl/fuente"],
+        "files": ["src/flujo/rd/database.py"],
+        "action": "verify_source",
+    }]}
+    assert R.validate_profile_result(profile, result) == "accept"
+
+
+def test_profile_rejects_iskvw_report_format():
+    profile = R.profile_for_area("iskvw_curation")
+    result = {"items": [{
+        "format": "informe",
+        "evidence_kind": "artwork_context",
+        "evidence": ["obra propia"],
+        "files": ["tools/gen_archivo_iskvw.py"],
+        "action": "curate",
+    }]}
+    assert R.validate_profile_result(profile, result) == "reject"
+
+
+def test_profile_revises_mak_review_without_local_evidence():
+    profile = R.profile_for_area("mak_quality")
+    result = {"items": [{
+        "format": "revision",
+        "evidence_kind": "local_corpus",
+        "evidence": [],
+        "files": [],
+        "action": "review",
+    }]}
+    assert R.validate_profile_result(profile, result) == "revise"
+
+
+def test_research_profile_accepts_essay_without_public_promotion():
+    route = R.route_research_task(
+        "multiplicar", "genealogia cultural de la tilde")
+    profile = R.profile_for_route(route)
+    result = {"items": [{
+        "format": "ensayo",
+        "evidence_kind": "mixed_sources",
+        "evidence": ["context/LAST_HANDOFF.md"],
+        "files": ["docs/cultura/FORMATO_ENSAYO.md"],
+        "action": "draft_report",
+    }]}
+    assert R.validate_profile_result(profile, result) == "accept"
+
+
+def test_fondart_routes_to_opportunity_card_not_generic_report():
+    route = R.route_research_task(
+        "multiplicar", "Fondart convocatoria para artista visual")
+    assert route.domain == "opportunities"
+    assert route.intent == "opportunity"
+    assert route.formato == "oportunidad"
+    assert route.required_fields == (
+        "opportunity", "eligibility", "deadline", "source", "next_action")

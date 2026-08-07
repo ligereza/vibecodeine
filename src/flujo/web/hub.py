@@ -1410,11 +1410,20 @@ class HubRequestHandler(BaseHTTPRequestHandler):
         by_domain = Counter()
         by_provider = Counter()
         pending = []
+        pending_human = 0
         for row in common_rows:
             domain = str(row.get("domain") or "")
             source = str(row.get("source") or "")
             item_type = str(row.get("type") or "")
             action = str(row.get("action") or "")
+            if row.get("metadata", {}).get("queue_status") == "pending_human":
+                pending_human += 1
+                pending.append({
+                    "domain": domain,
+                    "claim": str(row.get("claim") or "")[:180],
+                    "action": action,
+                    "reason": str(row.get("metadata", {}).get("next_action") or "")[:180],
+                })
             by_domain[domain] += 1
             if ":" in source:
                 by_provider[source.split(":", 1)[0]] += 1
@@ -1438,6 +1447,7 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             "accepted": verdicts["accepted"],
             "rejected_or_revise": verdicts["rejected_or_revise"],
             "decisions": verdicts["decisions"],
+            "pending_human": pending_human,
             "by_domain": dict(by_domain),
             "by_provider": dict(by_provider),
             "pending": pending[-8:],

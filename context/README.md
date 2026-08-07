@@ -7,6 +7,10 @@ wrong:
 2. **The compiled UI of the app** — the `.html` files, which are build output
    and are never edited by hand.
 
+The public-safe artistic direction template is `artist_context.example.json`.
+The user's private profile may live in `artist_context.local.json`; it is
+ignored and must never be committed.
+
 ## The single checkpoint
 
 `LAST_HANDOFF.md` is the ONLY state file. There used to be seven competing ones

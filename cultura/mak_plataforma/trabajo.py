@@ -361,15 +361,23 @@ def _benchmark_review_payload(st):
 def _idle_ledger_review_payload(st):
     """Pick one pending ledger item for no-cost idle introspection."""
     seen = set(st.get("idle_ledger_seen", [])[-200:])
+    opportunities = []
     candidates = []
     for row in _read_jsonl(COMMON_LEDGER):
+        if row.get("metadata", {}).get("queue_status") == "pending_human":
+            row_id = row.get("id") or ""
+            if row_id and row_id not in seen:
+                opportunities.append(row)
         if row.get("type") == "reject" or row.get("confidence") == "low":
             row_id = row.get("id") or ""
             if row_id and row_id not in seen:
                 candidates.append(row)
-    if not candidates:
+    if opportunities:
+        row = opportunities[-1]
+    elif candidates:
+        row = candidates[-1]
+    else:
         return None
-    row = candidates[-1]
     row_id = row.get("id") or ""
     st["idle_ledger_seen"] = (list(seen) + [row_id])[-200:]
     return {
@@ -380,7 +388,8 @@ def _idle_ledger_review_payload(st):
         "ledger_id": row_id,
         "domain": row.get("domain", ""),
         "action": row.get("action", ""),
-        "reason": row.get("reject_reason", ""),
+        "reason": (row.get("reject_reason", "") or
+                   row.get("metadata", {}).get("next_action", "")),
         "source": row.get("source", ""),
     }
 

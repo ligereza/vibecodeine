@@ -34,6 +34,14 @@ def test_revision_is_a_first_class_format():
     assert "No rehagas investigaciones antiguas" in p
 
 
+def test_opportunity_is_a_first_class_format():
+    assert "oportunidad" in F.FORMATOS
+    p = F.prompt_oportunidad("Fondart", [{"type": "sample"}], ["file://x"])
+    assert "FICHA DE OPORTUNIDAD" in p
+    assert "FUENTE OFICIAL" in p
+    assert "aprobacion humana" in p
+
+
 def test_exposicion_is_a_first_class_format():
     assert "exposicion" in F.FORMATOS
     p = F.prompt_exposicion("cabos sueltos", [{"type": "sample"}], ["file://x"])
