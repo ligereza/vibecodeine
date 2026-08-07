@@ -1,9 +1,8 @@
-"""Prueba de curatoria sobre el corpus real, sin promoverlo por accidente.
+"""Critical curation over the real corpus without accidental promotion.
 
-El campo medido es material real del archivo del artista. La maquina puede
-describirlo y proponer relaciones, pero no puede titularlo ni convertir una
-lectura en una decision publica. La mano humana sigue entrando por
-``curaduria.json``.
+The measured field is real material from the artist's archive. The machine may
+describe it and propose relations, but it cannot title it or turn a reading
+into a public decision. Human authorship still enters through ``curaduria.json``.
 """
 from __future__ import annotations
 
