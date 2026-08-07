@@ -12,6 +12,7 @@ import json
 import os
 import time
 import argparse
+import glob
 import sys
 
 try:
@@ -174,6 +175,8 @@ AREAS = {
                            "tools/adobe_panel/README.md",
                            "tools/adobe_panel/js/main.js",
                            "tools/adobe_panel/check_install.ps1",
+                           "tools/illustrator/scripts/logo_clean_master.jsx",
+                           "tools/illustrator/scripts/logo_revector_batch.jsx",
                            "src/flujo/export/illustrator.py",
                            "src/flujo/export/illustrator_bridge.py"],
         "actions": ["rescue", "bridge", "reuse", "reject"],
@@ -234,7 +237,8 @@ def build_brief(area, batch_id, paths=None, providers=None, allow_premium=True,
         "product_contract": list(PRODUCT_CONTRACTS[area]),
         "prompt": _prompt(
             area, batch_id, cfg, selected_paths, plan,
-            evidence=evidence_package(area, max_chars=max_evidence_chars)
+            evidence=evidence_package(area, paths=paths,
+                                      max_chars=max_evidence_chars)
             if include_evidence else "",
             instruction=instruction, profile=profile),
         "result_required": list(RESULT_REQUIRED) + ["product"],
@@ -269,6 +273,16 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction="",
     instruction_block = (
         "\nINSTRUCCION DE ESTA RONDA:\n%s\n" % instruction.strip()
         if instruction else ""
+    )
+    curation_guard = (
+        "- En iskvw, public_status describe una propuesta local: nunca uses "
+        "publicada, public o published sin firma humana.\n"
+        if area == "iskvw_curation" else ""
+    )
+    quality_hint = (
+        "- En mak_quality no dejes campos product vacios: si no detectas un "
+        "defecto usa defect_class=sin_defecto y explica la decision en verdict.\n"
+        if area == "mak_quality" else ""
     )
     profile_block = ""
     item_profile_fields = ""
@@ -317,6 +331,8 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction="",
         "- Usa exactamente los valores de formato y evidence_kind indicados en la politica; no inventes sinonimos.\n"
         "- No escribas informes largos; entrega hallazgos verificables.\n"
         "- No mezcles RD con iskvw; no conviertas curatoria en research.\n"
+        "%s"
+        "%s"
         "- No pidas crear una herramienta si ya existe una ruta probable.\n"
         "- Cada item debe poder sobrevivir cuando Watsonx/AWS ya no existan.\n"
         "- Cada entrada files debe existir en el material entregado; nunca inventes nombres.\n"
@@ -329,18 +345,38 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction="",
            instruction_block,
            "|".join(cfg["actions"]),
            item_profile_fields,
+           curation_guard,
+           quality_hint,
            json.dumps({field: "" for field in PRODUCT_CONTRACTS[area]},
                       ensure_ascii=False))
     )
 
 
-def evidence_package(area, max_chars=60000):
+def evidence_package(area, paths=None, max_chars=60000):
     """Return a bounded local evidence pack for external models."""
     if area not in AREAS:
         raise ValueError("unknown area: %s" % area)
     chunks = []
     remaining = int(max_chars)
-    for path in AREAS[area].get("evidence_paths", []):
+    candidates = []
+    source_paths = (list(paths) if paths is not None
+                    else AREAS[area].get("evidence_paths", []))
+    for path in source_paths:
+        if path not in candidates:
+            candidates.append(path)
+    expanded = []
+    for candidate in candidates:
+        value = os.path.expandvars(os.path.expanduser(str(candidate)))
+        matches = glob.glob(value, recursive=True) if glob.has_magic(value) else []
+        if matches:
+            expanded.extend(matches)
+            continue
+        if os.path.isdir(value):
+            expanded.extend(sorted(glob.glob(
+                os.path.join(value, "**", "*"), recursive=True)))
+            continue
+        expanded.append(candidate)
+    for path in expanded:
         if remaining <= 0:
             break
         resolved = _resolve_existing_path(path)
@@ -403,10 +439,22 @@ def append_ledger(row, path=LEDGER):
         "items": int(row.get("items", 0) or 0),
         "errors": list(row.get("errors", []) or []),
     }
+    if row.get("failure_class"):
+        safe["failure_class"] = str(row["failure_class"])
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "a", encoding="utf-8") as f:
         f.write(json.dumps(safe, ensure_ascii=False, sort_keys=True) + "\n")
     return safe
+
+
+def _provider_failure_class(exc):
+    """Classify provider failure without treating it as evidence."""
+    text = str(exc or "").lower()
+    if "timeout" in text or "timed out" in text:
+        return "timeout"
+    if any(marker in text for marker in ("unavailable", "not installed", "connection refused")):
+        return "unavailable"
+    return "error"
 
 
 def validate_product_contract(payload, area):
@@ -426,16 +474,30 @@ def validate_product_contract(payload, area):
     return not errors, errors
 
 
-def validate_evidence_paths(payload, area=None):
+def validate_evidence_paths(payload, area=None, extra_paths=None):
     """Reject unknown files, resolving evidence-pack basenames safely."""
     errors = []
     items = payload.get("items", []) if isinstance(payload, dict) else []
     for idx, item in enumerate(items):
         for file_idx, path in enumerate(item.get("files", []) or []):
+            if extra_paths is not None:
+                allowed = [candidate for candidate in extra_paths
+                           if os.path.basename(candidate) == os.path.basename(path)
+                           or os.path.normcase(str(candidate)) == os.path.normcase(str(path))]
+                if not allowed:
+                    errors.append("item_%d_missing_evidence_path_%d" % (idx, file_idx))
+                    continue
+                resolved = _resolve_existing_path(allowed[0])
+                if not resolved:
+                    errors.append("item_%d_missing_evidence_path_%d" % (idx, file_idx))
+                    continue
+                continue
             resolved = _resolve_existing_path(path) if isinstance(path, str) else ""
             if not resolved and area in AREAS and isinstance(path, str):
-                candidates = [candidate for candidate in AREAS[area].get(
-                    "evidence_paths", [])
+                allowed_paths = (list(extra_paths)
+                                 if extra_paths is not None else
+                                 AREAS[area].get("evidence_paths", []))
+                candidates = [candidate for candidate in allowed_paths
                     if os.path.basename(candidate) == os.path.basename(path)]
                 if len(candidates) == 1:
                     resolved = _resolve_existing_path(candidates[0])
@@ -453,7 +515,8 @@ def append_common_ledger(payload, area, path=COMMON_LEDGER, source="external"):
 
 
 def ingest_result(payload, area, common_path=COMMON_LEDGER, source="external",
-                  reviewer=None, use_ollama=True, strict_product=False):
+                  reviewer=None, use_ollama=True, strict_product=False,
+                  extra_paths=None):
     """Validate, locally judge, then append only accepted facts to common ledger."""
     ok, errors = validate_result(payload)
     if not ok:
@@ -464,7 +527,8 @@ def ingest_result(payload, area, common_path=COMMON_LEDGER, source="external",
         if not product_ok:
             return {"ok": False, "status": "revise", "errors": product_errors,
                     "review": None, "items": 0}
-        evidence_ok, evidence_errors = validate_evidence_paths(payload, area=area)
+        evidence_ok, evidence_errors = validate_evidence_paths(
+            payload, area=area, extra_paths=extra_paths)
         if not evidence_ok:
             return {"ok": False, "status": "revise", "errors": evidence_errors,
                     "review": None, "items": 0}
@@ -612,6 +676,7 @@ def run_external_batch(area, batch_id, provider, paths=None, model=None,
             temperature=0.1, **kwargs)
     except Exception as exc:  # noqa: BLE001 - one provider must not kill a round
         error = _safe_text(str(exc).strip() or exc.__class__.__name__)
+        failure_class = _provider_failure_class(exc)
         row = append_ledger({
             "area": area,
             "batch_id": batch_id,
@@ -619,12 +684,14 @@ def run_external_batch(area, batch_id, provider, paths=None, model=None,
             "status": "provider_error",
             "items": 0,
             "errors": [error[:200]],
+            "failure_class": failure_class,
         }, path=batch_path)
         return {
             "ok": False,
             "status": row["status"],
             "raw_path": "",
             "errors": row["errors"],
+            "failure_class": failure_class,
         }
     out_dir = out_dir or os.path.join(HOME, "plataforma/tandas")
     os.makedirs(out_dir, exist_ok=True)
@@ -689,7 +756,7 @@ def run_external_batch(area, batch_id, provider, paths=None, model=None,
                     "repair_raw_path": repair_raw_path, "errors": errors}
     result = ingest_result(
         payload, area, common_path=common_path, source=provider,
-        use_ollama=use_ollama, strict_product=True)
+        use_ollama=use_ollama, strict_product=True, extra_paths=paths)
     append_ledger({
         "area": area,
         "batch_id": batch_id,
@@ -723,17 +790,22 @@ def summarize_ledger(path=LEDGER, limit=20):
     by_area = {}
     by_provider = {}
     by_status = {}
+    by_failure = {}
     for row in rows:
         by_area[row.get("area", "")] = by_area.get(row.get("area", ""), 0) + 1
         by_provider[row.get("provider", "")] = (
             by_provider.get(row.get("provider", ""), 0) + 1)
         by_status[row.get("status", "")] = (
             by_status.get(row.get("status", ""), 0) + 1)
+        failure = row.get("failure_class", "")
+        if failure:
+            by_failure[failure] = by_failure.get(failure, 0) + 1
     return {
         "total": len(rows),
         "by_area": by_area,
         "by_provider": by_provider,
         "by_status": by_status,
+        "by_failure": by_failure,
         "last": rows[-5:],
     }
 

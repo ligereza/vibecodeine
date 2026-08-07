@@ -231,6 +231,50 @@ def test_idle_review_uses_revision_format(monkeypatch):
     assert "revision" in payload["tema"]
 
 
+def test_idle_repasar_can_dispatch_critical_reading_of_real_artwork_batch(
+        monkeypatch):
+    monkeypatch.setattr(trabajo, "_iskvw_campo_path",
+                        lambda: "C:/mak/iskvw/datos/campo.json")
+    monkeypatch.setattr(trabajo, "_read_json", lambda _path: {
+        "piezas": [
+            {"id": "obra-a", "tipo": "obra", "archivo": "posts/a.jpg",
+             "percibido": "figura roja"},
+            {"id": "obra-b", "tipo": "obra", "archivo": "posts/b.jpg",
+             "percibido": "campo azul"},
+            {"id": "operativa", "tipo": "flyer_evento",
+             "archivo": "posts/c.jpg", "percibido": "evento"},
+        ]
+    })
+    monkeypatch.setattr(trabajo, "_has_pending_material", lambda: False)
+    monkeypatch.setattr(trabajo, "_has_pending_research_backlog", lambda: False)
+    monkeypatch.setattr(trabajo, "_has_pending_codex_backlog", lambda: False)
+    monkeypatch.setattr(trabajo, "_idle_ledger_review_payload", lambda _st: None)
+    monkeypatch.setattr(trabajo, "_memory_review_payload", lambda _st: None)
+
+    depto, payload = trabajo._tarea("repasar", {})
+
+    assert depto == "research"
+    assert payload["modo"] == "curation_review"
+    assert payload["formato"] == "curatoria"
+    assert payload["work_contract"]["domain"] == "iskvw"
+    assert [p["id"] for p in payload["selection"]] == ["obra-a", "obra-b"]
+    assert payload["work_contract"]["required_fields"] == [
+        "reading", "selection", "relationships", "public_status"]
+
+
+def test_curatoria_review_only_marks_batch_after_success():
+    state = {"curatoria_inflight": ["obra-a", "obra-b"]}
+    payload = {"review_ids": ["obra-a", "obra-b"]}
+
+    trabajo._finish_curatoria_review(state, payload, False)
+    assert "curatoria_seen" not in state
+    assert "curatoria_inflight" not in state
+
+    trabajo._finish_curatoria_review(state, payload, True)
+    assert state["curatoria_seen"] == ["obra-a", "obra-b"]
+    assert "curatoria_inflight" not in state
+
+
 @pytest.mark.parametrize(("verbo", "expected"), [
     ("repasar", {"modo": "research", "formato": "revision"}),
     ("discutir", {"modo": "panel"}),

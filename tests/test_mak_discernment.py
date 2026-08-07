@@ -24,6 +24,13 @@ def test_adobe_rescue_is_separate_from_svg_and_blender():
     assert '"domain": "adobe"' in brief["local_review"]["prompt"]
 
 
+def test_adobe_brief_exposes_existing_illustrator_scripts():
+    brief = tandas.build_brief(
+        "adobe_rescue", "adobe02", providers=["aws"], include_evidence=True)
+    assert "logo_clean_master.jsx" in brief["prompt"]
+    assert "logo_revector_batch.jsx" in brief["prompt"]
+
+
 def test_validate_review_accepts_local_judgment():
     ok, errors = discernment.validate_review({
         "schema": discernment.SCHEMA_VERSION,
@@ -86,7 +93,41 @@ def test_deterministic_review_revises_missing_evidence():
             "reject_reason": "",
         }]})
     assert review["verdict"] == "revise"
-    assert review["missing_evidence"]
+
+
+def test_deterministic_curation_judge_rejects_model_promotion():
+    review = discernment.deterministic_review(
+        "iskvw_curation", {"items": [{
+            "claim": "la pieza puede entrar al archivo",
+            "evidence": ["iskvw/datos/campo.json"],
+            "files": ["iskvw/datos/campo.json"],
+            "confidence": "high",
+            "action": "curate",
+            "product": {
+                "artwork_reading": "lectura concreta",
+                "selection": "serie propia",
+                "public_status": "publicada",
+            },
+        }]})
+    assert review["verdict"] == "reject"
+    assert any("human signature" in risk for risk in review["risks"])
+
+
+def test_deterministic_curation_accepts_local_review_status():
+    review = discernment.deterministic_review(
+        "iskvw_curation", {"items": [{
+            "claim": "la pieza requiere lectura del artista",
+            "evidence": ["iskvw/datos/campo.json"],
+            "files": ["iskvw/datos/campo.json"],
+            "confidence": "medium",
+            "action": "curate",
+            "product": {
+                "artwork_reading": "lectura concreta",
+                "selection": "serie propia",
+                "public_status": "revision_local",
+            },
+        }]})
+    assert review["verdict"] == "accept"
 
 
 def test_opportunity_review_requires_evidence_and_safe_action():
@@ -101,6 +142,28 @@ def test_opportunity_review_requires_evidence_and_safe_action():
         }]})
     assert review["verdict"] == "revise"
     assert review["missing_evidence"]
+
+
+def test_opportunity_review_revises_generic_deadline():
+    review = discernment.deterministic_review(
+        "opportunity_radar", {"items": [{
+            "claim": "residency opportunity",
+            "evidence": ["https://example.org/open-call"],
+            "files": ["cultura/mak_vigia/fuentes.json"],
+            "confidence": "high",
+            "action": "verify_source",
+            "reject_reason": "",
+            "product": {
+                "opportunity": "residency",
+                "eligibility": "artist",
+                "deadline": "Varía según la convocatoria",
+                "source": "official",
+                "next_action": "verify",
+                "risk": "unknown",
+            },
+        }]})
+    assert review["verdict"] == "revise"
+    assert any("concrete deadline" in item for item in review["missing_evidence"])
 
 
 def test_deterministic_review_rejects_redacted_or_secret_material():

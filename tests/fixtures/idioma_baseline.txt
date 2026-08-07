@@ -431,3 +431,4 @@ xio/show_kit/map_dref.py
 cultura/mak_plataforma/benchmark.py
 cultura/mak_plataforma/utilidades/implementar-la-reconfiguracion-de-pesos-.py
 cultura/mak_plataforma/utilidades/una-utilidad-stdlib-que-cuente-lineas-de.py
+tests/test_curatoria_portfolio_critica.py

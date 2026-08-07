@@ -1349,6 +1349,19 @@ class HubRequestHandler(BaseHTTPRequestHandler):
         salud = crudo.get("salud") or {}
         servicios = salud.get("servicios") or {}
         productos = salud.get("productos") or {}
+        memoria = crudo.get("memoria") or {}
+        vivos = [nombre for nombre, info in servicios.items()
+                 if isinstance(info, dict) and info.get("vivo")]
+        operacion_bloqueada = bool(memoria.get("bloquea_produccion"))
+        if operacion_bloqueada:
+            estado_operativo = "disponible_con_bloqueo"
+            proximo_paso = "resolver los bloqueos de memoria antes de producir"
+        elif servicios and len(vivos) < len(servicios):
+            estado_operativo = "disponible_con_servicios_caidos"
+            proximo_paso = "revisar los servicios caidos del box"
+        else:
+            estado_operativo = "disponible"
+            proximo_paso = "ninguno: observar la siguiente tanda"
         return {
             "disponible": True,
             "configurado": True,
@@ -1386,7 +1399,15 @@ class HubRequestHandler(BaseHTTPRequestHandler):
                 "max": (crudo.get("trabajo") or {}).get("max"),
                 "ultimo": str((crudo.get("trabajo") or {}).get("ultimo") or ""),
             },
-            "memoria": crudo.get("memoria") or {},
+            "memoria": memoria,
+            "operacion": {
+                "estado": estado_operativo,
+                "servicios_vivos": vivos,
+                "servicios_totales": len(servicios),
+                "bloquea_produccion": operacion_bloqueada,
+                "proximo_paso": proximo_paso,
+                "capacidad_declarada": sorted(productos),
+            },
             "tandas": tandas,
         }
 

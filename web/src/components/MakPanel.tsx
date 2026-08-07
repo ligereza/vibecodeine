@@ -40,6 +40,14 @@ interface Data {
   actividad?: Evento[];
   trabajo?: { hoy?: number; max?: number; ultimo?: string };
   memoria?: Memoria;
+  operacion?: {
+    estado?: string;
+    servicios_vivos?: string[];
+    servicios_totales?: number;
+    bloquea_produccion?: boolean;
+    proximo_paso?: string;
+    capacidad_declarada?: string[];
+  };
   tandas?: Tandas;
 }
 
@@ -50,6 +58,7 @@ interface Memoria {
   slugs_duplicados?: string[];
   origenes_faltantes?: string[];
   entidades_bloqueadas?: Array<{ id?: string; razon?: string; estado?: string }>;
+  bloquea_produccion?: boolean;
 }
 
 interface Evento {
@@ -206,6 +215,18 @@ export default function MakPanel() {
           </p>
         )}
       </div>
+
+      {data.operacion && (
+        <div className="rounded border border-neutral-800 bg-neutral-950/40 p-3">
+          <div className="text-sm font-semibold mb-2">Capacidad operativa real</div>
+          <div className="grid gap-2 sm:grid-cols-3 text-xs text-neutral-400">
+            <span>Estado: <b className={data.operacion.bloquea_produccion ? 'text-amber-300' : 'text-emerald-300'}>{data.operacion.estado}</b></span>
+            <span>Servicios vivos: <b className="text-neutral-200">{data.operacion.servicios_vivos?.length ?? 0}/{data.operacion.servicios_totales ?? 0}</b></span>
+            <span>Capacidades declaradas: <b className="text-neutral-200">{data.operacion.capacidad_declarada?.length ?? 0}</b></span>
+          </div>
+          <p className="text-xs text-neutral-500 mt-2">Proximo paso: {data.operacion.proximo_paso}</p>
+        </div>
+      )}
 
       <div>
         {data.memoria && data.memoria.accion !== 'auditoria_no_disponible' && (
