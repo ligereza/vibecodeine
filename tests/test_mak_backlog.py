@@ -234,6 +234,8 @@ esto no es json valido
         assert auditoria["origenes_faltantes"] == ["bl-2"]
         assert auditoria["preguntas_duplicadas"]
         assert auditoria["accion"] == "revisar_memoria"
+        assert auditoria["origenes_historicos_ausentes"] == ["bl-2"]
+        assert auditoria["bloquea_produccion"] is True
         assert backlog_path.read_text(encoding="utf-8") == antes
 
     def test_legacy_seed_is_not_user_intention_or_missing_origin(self, tmp_path):
@@ -248,6 +250,7 @@ esto no es json valido
         assert audit["intenciones_usuario"] == []
         assert audit["origenes_faltantes"] == []
         assert audit["procedencia"] == {"semilla_sistema": 1}
+        assert audit["bloquea_produccion"] is False
 
     def test_missing_provenance_is_unknown_not_user_intention(self, tmp_path):
         entry = {"id": "bl-new", "pregunta": "una pista", "linaje": []}
