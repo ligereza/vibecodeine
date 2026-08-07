@@ -299,13 +299,16 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction="",
             "- formatos permitidos: %s\n"
             "- evidence_kind DEBE ser exactamente: %s\n"
             "- acciones permitidas: %s\n"
+            "- VALORES LITERALES ASCII: format=%r; evidence_kind=%r\n"
             % (", ".join(profile["allowed_formats"]),
                profile["required_evidence"],
-               ", ".join(profile["promotion_actions"]))
+               ", ".join(profile["promotion_actions"]),
+               profile["allowed_formats"][0], profile["required_evidence"])
         )
         item_profile_fields = (
-            '    "format": "formato permitido",\n'
-            '    "evidence_kind": "tipo de evidencia requerida",\n'
+            '    "format": "%s",\n'
+            '    "evidence_kind": "%s",\n'
+            % (profile["allowed_formats"][0], profile["required_evidence"])
         )
     return (
         "Eres un agente externo de MAK. Tu proveedor puede ser temporal; el "
