@@ -101,6 +101,7 @@ AREA_PROFILES = {
     "rd_evidence": "rd",
     "iskvw_curation": "iskvw",
     "mak_quality": "mak",
+    "opportunity_radar": "opportunities",
 }
 
 

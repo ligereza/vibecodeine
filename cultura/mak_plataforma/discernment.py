@@ -27,6 +27,7 @@ AREA_DOMAINS = {
     "tool_archaeology": "repo",
     "svg_pipeline": "svg",
     "adobe_rescue": "adobe",
+    "opportunity_radar": "opportunities",
 }
 
 AREA_CRITERIA = {
@@ -53,6 +54,10 @@ AREA_CRITERIA = {
     "adobe_rescue": (
         "Does it rescue Illustrator/Adobe bridge work before proposing rebuilds?",
         "Does it distinguish Adobe bridge from Blender bridge?",
+    ),
+    "opportunity_radar": (
+        "Does it identify a concrete fit without presenting inference as fact?",
+        "Does it require a current official source before recommending action?",
     ),
 }
 
@@ -196,6 +201,9 @@ def deterministic_review(area, payload):
             risks.append("iskvw item mentions RD; domain mixed")
         if area == "tool_archaeology" and action not in ("reuse", "merge", "retire", "test", "reject"):
             risks.append("tool archaeology item does not choose a reuse/merge/retire/test action")
+        if area == "opportunity_radar" and action not in (
+                "verify_source", "triangulate", "draft_report", "reject"):
+            risks.append("opportunity item proposes an unapproved action")
     if risks:
         verdict = "reject"
         reason = "; ".join(risks[:2])

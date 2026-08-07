@@ -20,7 +20,7 @@ SCHEMA_VERSION = "mak-ledger-v1"
 QUARANTINE_SCHEMA = "mak-ledger-quarantine-v1"
 
 ITEM_TYPES = ("evidence", "idea", "task", "decision", "reject", "artifact")
-DOMAINS = ("rd", "iskvw", "mak", "svg", "adobe", "repo")
+DOMAINS = ("rd", "iskvw", "mak", "svg", "adobe", "repo", "opportunities")
 CONFIDENCE = ("high", "medium", "low", "unknown")
 
 ACTION_BY_DOMAIN = {
@@ -31,6 +31,8 @@ ACTION_BY_DOMAIN = {
     "svg": ("measure", "prototype", "reuse", "reject"),
     "adobe": ("rescue", "bridge", "reuse", "reject"),
     "repo": ("reuse", "merge", "retire", "test", "reject"),
+    "opportunities": ("verify_source", "triangulate", "draft_report",
+                       "review", "reject"),
 }
 
 SECRET_MARKERS = ("api_key", "apikey", "secret", "token", "password",
@@ -219,6 +221,7 @@ def external_item_to_ledger(item, area):
         "svg_pipeline": "svg",
         "tool_archaeology": "repo",
         "adobe_rescue": "adobe",
+        "opportunity_radar": "opportunities",
     }
     item_type = "reject" if item.get("action") == "reject" else "evidence"
     return {
@@ -260,6 +263,7 @@ def review_to_ledger(review, area):
         "svg": "reject" if verdict == "reject" else "measure",
         "adobe": "reject" if verdict == "reject" else "rescue",
         "repo": "reject" if verdict == "reject" else "test",
+        "opportunities": "reject" if verdict == "reject" else "review",
     }.get(domain, "reject")
     return {
         "domain": domain,
