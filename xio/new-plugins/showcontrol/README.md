@@ -2,6 +2,11 @@
 
 # showcontrol -- the phone as a network show-control node
 
+This is the active control surface, not the read-only `foh_monitor` or
+`mak_xio_puente/monitor.py`. Its code being present in the repository does not
+prove that the plugin is installed or enabled on the Xiaomi; verify the runtime
+state and token before using any route in a live show.
+
 Turns the on-device xio server (Termux + Shizuku) into a **VJ / lighting / show
 control** node on the LAN. Sends **OSC**, **Art-Net** and **sACN/E1.31 DMX**;
 runs a **cue engine** with timed fades; plays a show against a **timecode

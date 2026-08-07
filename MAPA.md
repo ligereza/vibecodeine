@@ -40,15 +40,16 @@ project is called Dimensiones del Orden.**
 
 ## 2. The three working lines
 
-The repo has three permanent branches and no more, plus one inbox. Any other
-branch you see is temporary and gets deleted once its work landed.
+The repo has four canonical branches and no more. `mak` is the machine inbox,
+but it is still a real branch whose work must return through a PR to `main`.
+Any other branch you see is temporary and gets deleted once its work landed.
 
 | Line | What it holds | Who touches it |
 |---|---|---|
-| **main** | **Everything, without exception.** The good and complete version. The other two lines come *down* from here. | Nobody directly. It only enters through a reviewed PR with green verification |
+| **main** | **Everything, without exception.** The good and complete version. The other three lines come *down* from here. | Nobody directly. It only enters through a reviewed PR with green verification |
 | **rd** | The NGO's work: data, promoters, grants, field material | Whoever works on RD |
 | **iskvw** | The artistic practice: shows, mapping, art-research pieces, and the portfolio | Whoever works on the artwork |
-| **mak** | Not a line: the **inbox** of the machine that works on its own. Nothing lives here; its only exit is a PR into main | Only MAK, automatically |
+| **mak** | The **inbox branch** of the machine that works on its own. Work may live here temporarily; its only exit is a reviewed PR into main | Only MAK, automatically |
 
 The two rules holding it up:
 
@@ -131,7 +132,7 @@ the root of the repo (there is a `.env.example` for reference).
 |---|---|---|
 | `FLUJO_RD_ROOT` | Where the tree of real material lives (photos, pieces, deliveries) that the indexer walks | Uses `C:\rd`, where it lived on the original machine. On any other machine you have to define it |
 | `FLUJO_WORKSPACE_ROOT` | Where the program stores and looks for jobs | Uses the repo folder |
-| `FLUJO_MAK_URL` | Address of the face on the MAK machine, the one that works on its own (for example `http://<box-ip>:8900`). The box exposes three organs: the research body on `:8890`, codex on `:8891`, and the face on `:8900`, which embeds the other two. The panel queries it **read-only**: it never orders anything | The MAK panel says it is not configured. Everything else works the same |
+| `FLUJO_MAK_URL` | Address of the face on the MAK machine, the one that works on its own (for example `http://<box-ip>:8900`). The box exposes three organs: the research body on `:8890`, codex on `:8891`, and the face on `:8900`, which embeds the other two. This face queries MAK **read-only**: it never orders anything. This is separate from the active XIO show-control server on the Xiaomi. | The MAK panel says it is not configured. Everything else works the same |
 | `FLUJO_MAK_COMMON_LEDGER` | Override path for the append-only MAK common ledger that feeds the hub's external batch surface | Uses `~/plataforma/common_ledger.jsonl`, the ledger path on the MAK box |
 | `FLUJO_MAK_BATCH_LEDGER` | Override path for the external batch run ledger that records Watsonx/AWS batch results for the hub | Uses `~/plataforma/external_batches.jsonl`, the batch ledger path on the MAK box |
 | `WATSONX_API_KEY`, `WATSONX_PROJECT_ID` | Watsonx credentials for MAK external batches. These belong on MAK, not in the repo | Watsonx batches are unavailable; local/director mode still works |

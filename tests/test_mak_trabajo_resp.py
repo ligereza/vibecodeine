@@ -343,6 +343,7 @@ def test_repasar_reviews_memory_audit_before_generated_research(monkeypatch, tmp
         "estados": {"pendiente": 33},
         "slugs_duplicados": ["no-se-encontro"],
         "origenes_faltantes": ["bl-seed"],
+        "bloquea_produccion": True,
         "entidades_bloqueadas": [],
         "accion": "revisar_memoria",
     }

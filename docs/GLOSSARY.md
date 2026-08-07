@@ -62,7 +62,10 @@ either column.
 | `micelio` | mycelium (the relation graph) | `corpus_a_micelio.py` |
 | `mineria` | mining (RD candidate extraction) | `src/flujo/rd/mineria_rd.py` |
 | `ordenes` | orders (remote whitelist handler) | `mak_curatoria/ordenes.py` |
-| `panel` | panel (read-only web view) | several |
+| `panel` | read-only web view; it observes and does not imply control of the underlying organism | several |
+| `puente` | bridge between a monitor and another service; its direction and write capability must be declared | `cultura/mak_xio_puente/` |
+| `showcontrol` | active XIO plugin for guarded OSC/Art-Net/sACN traffic; not the same as the read-only panel | `xio/new-plugins/showcontrol/` |
+| `Face A` / `Face B` | XIO network contexts: studio/development and live-show/hotspot; neither label proves runtime installation | `xio/FACES.md` |
 | `pausa` | pause (stop on error, wait for a human) | `mak_research/pausa.py` |
 | `percepcion` | perception (what the box sees) | `mak_curatoria/percepcion.py` |
 | `piel` | skin (the site's presentation layer) | `iskvw/piel/` |

@@ -1,11 +1,11 @@
 # Estado del repo
 
-Ultima actualizacion: **2026-08-06, Faro: circuito MAK verificado en MAK**.
+Ultima actualizacion: **2026-08-07, Faro: gobernanza y XIO documentados**.
 
 Este archivo se lee en dos minutos o no sirve. Llego a 1.666 lineas apiladas y
 nadie lo leia -- ni los agentes que lo editaban. La historia esta en
-`docs/handoffs/archive/HANDOFF_hasta_20260801.md`; aca queda solo lo que hoy es
-cierto.
+`docs/handoffs/archive/HANDOFF_hasta_20260801.md`; aca queda el estado vigente
+y un registro historico claramente marcado.
 
 **Como se mantiene:** se REESCRIBE, no se le agrega al final. Un hallazgo va a
 su seccion y reemplaza lo que decia antes. Si algo dejo de ser cierto, se borra
@@ -14,33 +14,30 @@ es la trampa que costo mas caro (ver "Lo que este repo aprendio", regla 1).
 
 ---
 
-## Estado vigente 2026-08-06
+## Estado vigente 2026-08-07
 
 Esta seccion manda sobre las notas historicas posteriores cuando describan un
 estado distinto.
 
 - Director operativo: **Faro**. Windows dirige y verifica; MAK ejecuta modelos.
-- Ramas remotas: solo `main`, `mak`, `rd`, `iskvw`; las cuatro apuntan al mismo
-  commit de `main`. No hay PR abiertos.
-- El circuito real de MAK ya escribio ledger persistente: 86 filas comunes y
-  35 tandas registradas. Watsonx y AWS funcionaron; los fallos de proveedor se
-  registran y no abortan la ronda.
-- El gate de evidencia detecto 21 filas historicas con rutas inexistentes y las
-  dejo en `/home/mak/plataforma/common_ledger_quarantine.jsonl`; el ledger
-  comun no se reescribe. `autonomia status` expone esa cuarentena y su proxima
-  accion.
-- La corrida de seis areas produjo evidencia aceptada en SVG, pero retuvo
-  resultados de MAK, Adobe y arqueologia cuando faltaba evidencia o habia
-  mezcla de dominios.
+- Ramas remotas canonicas: solo `main`, `mak`, `rd`, `iskvw`. `main`, `rd` e
+  `iskvw` estan en `fce4ac8`; `mak` contiene el PR #506 pendiente.
+- PR #505 ya fue mergeado a `main`. PR #506 contiene la separacion entre deuda
+  historica de memoria, bloqueos de produccion y documentacion XIO.
+- `origin/main` contiene `iskvw/datos/micelio.json`; la visibilidad del micelio
+  ya no es un pendiente de promocion.
+- MAK en vivo mide 454 entradas: 8 `semilla_sistema`, 446 informes historicos
+  cuyo archivo de origen ya no existe, 0 intenciones de usuario falsas y 0
+  fuentes desconocidas. PR #506 evita que esa deuda historica bloquee por si
+  sola la produccion nueva; aun no esta desplegado en `main`.
 - Las tandas nuevas exigen bloque `product` por area. Si falta, quedan en
-  `revise` y no entran como verdad al ledger.
-- La prueba sin Watsonx, AWS ni Ollama acepto una entrada valida mediante
-  fallback determinista y escribio ledger.
-- MAK tiene `material.jsonl`: 2.812 entradas, 0 pendientes. Tiene 46 preguntas
-  generativas pendientes y 185 informes; el loop ya ejecuto una revision real
-  y selecciona un informe antiguo cada cuatro unidades productivas.
-- `cola.py` no esta en el crontab vivo. No se debe reactivar sin demostrar un
-  consumidor; puede retirarse o convertirse en inbox explicito.
+  `revise` y no entran como verdad al ledger. El fallback determinista ya fue
+  probado sin Watsonx, AWS ni Ollama.
+- El panel MAK sigue siendo una superficie de lectura; la ejecucion se hace en
+  los servicios de la caja. `xio/CAPACIDADES.md` separa monitor, puente y
+  `showcontrol`, y no declara instalado lo que solo existe en el repo.
+- `cola.py` sigue fuera del crontab vivo. No se reactiva sin consumidor y
+  notificacion configurada.
 - Los archivos no rastreados en `/home/mak/flujo` son evidencia externa y no se
   borran automaticamente: `.claude`, `crudo_lotes`, `director_snapshot.md`,
   auditorias, `mineria_estado.json` y `turnos_flujo.jsonl` quedan en cuarentena
@@ -48,7 +45,11 @@ estado distinto.
 
 ---
 
-## 1. Lo que espera una decision TUYA
+Everything below this line is retained as dated evidence or reasoning. It is
+not a live status source. For current state, use only `Estado vigente` above
+and verify the repo/box before acting.
+
+## 1. Registro historico de decisiones pendientes
 
 Ninguna la puede tomar un agente. Estan ordenadas por lo que cuesta no tomarla.
 
@@ -63,7 +64,7 @@ Ninguna la puede tomar un agente. Estan ordenadas por lo que cuesta no tomarla.
 
 ---
 
-## 2. Muros nombrados
+## 2. Muros historicos y su medicion original
 
 Un muro nombrado es entrega valida. Estos no los resuelve mas trabajo.
 
@@ -110,7 +111,7 @@ Un muro nombrado es entrega valida. Estos no los resuelve mas trabajo.
 
 ---
 
-## 3. Que corre hoy, medido
+## 3. Mediciones historicas del sistema
 
 **El sitio.** `iskvw.cl` publica el sustrato limpio generado por
 `gen_archivo_iskvw.py --fuente todo`: medido localmente el 2026-08-05, 446
@@ -384,7 +385,10 @@ consumidor su propio test, y agregar la 46a sin mirar es como se llego a eso.
 
 El veredicto de un PR es su matriz de CI, nunca el pytest local.
 
-## 7. Current orchestration state
+## 7. Registro historico de orquestacion
+
+This section is an event log. It may mention closed PRs, old branch layouts or
+superseded plans; those mentions do not reopen work.
 
 - 2026-08-06 identity correction: the active Codex operator is now **Faro**.
   **Cauce** means the Claude-era historical operator, and **SOL** means the
