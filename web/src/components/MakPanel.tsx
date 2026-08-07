@@ -39,7 +39,17 @@ interface Data {
   micelio_chunks?: number;
   actividad?: Evento[];
   trabajo?: { hoy?: number; max?: number; ultimo?: string };
+  memoria?: Memoria;
   tandas?: Tandas;
+}
+
+interface Memoria {
+  accion?: string;
+  entradas?: number;
+  estados?: Record<string, number>;
+  slugs_duplicados?: string[];
+  origenes_faltantes?: string[];
+  entidades_bloqueadas?: Array<{ id?: string; razon?: string; estado?: string }>;
 }
 
 interface Evento {
@@ -198,6 +208,21 @@ export default function MakPanel() {
       </div>
 
       <div>
+        {data.memoria && data.memoria.accion !== 'auditoria_no_disponible' && (
+          <div className="mb-4 rounded border border-neutral-800 bg-neutral-950/40 p-3">
+            <div className="text-sm font-semibold mb-2 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4" /> Memoria operativa MAK
+            </div>
+            <div className="grid gap-2 sm:grid-cols-3 text-xs text-neutral-400">
+              <span>Entradas: <b className="text-neutral-200">{data.memoria.entradas ?? 0}</b></span>
+              <span>Slugs repetidos: <b className="text-amber-300">{data.memoria.slugs_duplicados?.length ?? 0}</b></span>
+              <span>Origenes faltantes: <b className="text-amber-300">{data.memoria.origenes_faltantes?.length ?? 0}</b></span>
+            </div>
+            <div className={data.memoria.accion === 'revisar_memoria' ? 'text-amber-300 text-xs mt-2' : 'text-emerald-400 text-xs mt-2'}>
+              {data.memoria.accion === 'revisar_memoria' ? 'MAK detiene nueva produccion generada y prioriza repasar.' : 'Memoria sin bloqueos mecanicos.'}
+            </div>
+          </div>
+        )}
         <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
           <Boxes className="w-4 h-4" /> Lo que produjo
         </h3>
