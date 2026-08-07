@@ -24,6 +24,13 @@ def test_adobe_rescue_is_separate_from_svg_and_blender():
     assert '"domain": "adobe"' in brief["local_review"]["prompt"]
 
 
+def test_adobe_brief_exposes_existing_illustrator_scripts():
+    brief = tandas.build_brief(
+        "adobe_rescue", "adobe02", providers=["aws"], include_evidence=True)
+    assert "logo_clean_master.jsx" in brief["prompt"]
+    assert "logo_revector_batch.jsx" in brief["prompt"]
+
+
 def test_validate_review_accepts_local_judgment():
     ok, errors = discernment.validate_review({
         "schema": discernment.SCHEMA_VERSION,
