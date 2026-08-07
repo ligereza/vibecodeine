@@ -439,10 +439,22 @@ def append_ledger(row, path=LEDGER):
         "items": int(row.get("items", 0) or 0),
         "errors": list(row.get("errors", []) or []),
     }
+    if row.get("failure_class"):
+        safe["failure_class"] = str(row["failure_class"])
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "a", encoding="utf-8") as f:
         f.write(json.dumps(safe, ensure_ascii=False, sort_keys=True) + "\n")
     return safe
+
+
+def _provider_failure_class(exc):
+    """Classify provider failure without treating it as evidence."""
+    text = str(exc or "").lower()
+    if "timeout" in text or "timed out" in text:
+        return "timeout"
+    if any(marker in text for marker in ("unavailable", "not installed", "connection refused")):
+        return "unavailable"
+    return "error"
 
 
 def validate_product_contract(payload, area):
@@ -664,6 +676,7 @@ def run_external_batch(area, batch_id, provider, paths=None, model=None,
             temperature=0.1, **kwargs)
     except Exception as exc:  # noqa: BLE001 - one provider must not kill a round
         error = _safe_text(str(exc).strip() or exc.__class__.__name__)
+        failure_class = _provider_failure_class(exc)
         row = append_ledger({
             "area": area,
             "batch_id": batch_id,
@@ -671,12 +684,14 @@ def run_external_batch(area, batch_id, provider, paths=None, model=None,
             "status": "provider_error",
             "items": 0,
             "errors": [error[:200]],
+            "failure_class": failure_class,
         }, path=batch_path)
         return {
             "ok": False,
             "status": row["status"],
             "raw_path": "",
             "errors": row["errors"],
+            "failure_class": failure_class,
         }
     out_dir = out_dir or os.path.join(HOME, "plataforma/tandas")
     os.makedirs(out_dir, exist_ok=True)
@@ -775,17 +790,22 @@ def summarize_ledger(path=LEDGER, limit=20):
     by_area = {}
     by_provider = {}
     by_status = {}
+    by_failure = {}
     for row in rows:
         by_area[row.get("area", "")] = by_area.get(row.get("area", ""), 0) + 1
         by_provider[row.get("provider", "")] = (
             by_provider.get(row.get("provider", ""), 0) + 1)
         by_status[row.get("status", "")] = (
             by_status.get(row.get("status", ""), 0) + 1)
+        failure = row.get("failure_class", "")
+        if failure:
+            by_failure[failure] = by_failure.get(failure, 0) + 1
     return {
         "total": len(rows),
         "by_area": by_area,
         "by_provider": by_provider,
         "by_status": by_status,
+        "by_failure": by_failure,
         "last": rows[-5:],
     }
 

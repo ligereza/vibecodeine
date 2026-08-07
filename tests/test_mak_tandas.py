@@ -416,6 +416,24 @@ def test_run_external_batch_records_provider_error_and_returns(monkeypatch, tmp_
     row = json.loads(batch.read_text(encoding="utf-8"))
     assert row["provider"] == "aws"
     assert row["status"] == "provider_error"
+    assert row["failure_class"] == "unavailable"
+
+
+def test_run_external_batch_classifies_timeout_without_promoting(monkeypatch, tmp_path):
+    batch = tmp_path / "external_batches.jsonl"
+
+    def timing_out_call(*_args, **_kwargs):
+        raise TimeoutError("timed out")
+
+    monkeypatch.setattr(tandas.external_providers, "call", timing_out_call)
+    result = tandas.run_external_batch(
+        "svg_pipeline", "timeout01", "ollama", out_dir=str(tmp_path),
+        batch_path=str(batch), use_ollama=False)
+
+    assert result["status"] == "provider_error"
+    assert result["failure_class"] == "timeout"
+    row = json.loads(batch.read_text(encoding="utf-8"))
+    assert row["failure_class"] == "timeout"
 
 
 def test_run_external_batch_sanitizes_lone_surrogates(monkeypatch, tmp_path):
