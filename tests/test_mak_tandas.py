@@ -113,6 +113,35 @@ def test_validate_product_contract_accepts_complete_area_fields():
     assert tandas.validate_product_contract(payload, "mak_quality") == (True, [])
 
 
+def test_ingest_never_promotes_public_curation_from_model_status(tmp_path):
+    common = tmp_path / "common_ledger.jsonl"
+    payload = {"items": [{
+        "claim": "la obra ya debe publicarse",
+        "evidence": ["iskvw/datos/campo.json"],
+        "files": ["iskvw/datos/campo.json"],
+        "confidence": "high",
+        "action": "curate",
+        "reject_reason": "",
+        "format": "curatoria",
+        "evidence_kind": "artwork_context",
+        "product": {
+            "artwork_reading": "lectura concreta",
+            "selection": "serie propia",
+            "public_status": "publicada",
+        },
+    }]}
+
+    result = tandas.ingest_result(
+        payload, "iskvw_curation", common_path=str(common),
+        use_ollama=False, strict_product=True)
+
+    assert result["status"] == "reject"
+    assert result["review"]["verdict"] == "reject"
+    rows = [json.loads(line) for line in common.read_text(encoding="utf-8").splitlines()]
+    assert len(rows) == 1
+    assert rows[0]["type"] == "reject"
+
+
 def test_validate_evidence_paths_rejects_invented_files():
     payload = {"items": [{"files": ["does/not/exist.py"]}]}
     ok, errors = tandas.validate_evidence_paths(payload)
@@ -125,6 +154,17 @@ def test_validate_evidence_paths_accepts_repo_files():
     assert tandas.validate_evidence_paths(payload) == (True, [])
 
 
+def test_evidence_package_includes_explicit_rescue_files(tmp_path):
+    report = tmp_path / "historical.md"
+    report.write_text("contenido historico que debe ser revisado", encoding="utf-8")
+
+    evidence = tandas.evidence_package(
+        "mak_quality", paths=[str(report)], max_chars=5000)
+
+    assert str(report) in evidence
+    assert "contenido historico" in evidence
+
+
 def test_validate_evidence_paths_resolves_unique_evidence_pack_basename():
     payload = {"items": [{"files": ["database.py"]}]}
     assert tandas.validate_evidence_paths(payload, area="rd_evidence") == (True, [])
@@ -134,6 +174,24 @@ def test_validate_evidence_paths_rejects_unknown_basename():
     payload = {"items": [{"files": ["invented.py"]}]}
     assert tandas.validate_evidence_paths(payload, area="rd_evidence") == (
         False, ["item_0_missing_evidence_path_0"])
+
+
+def test_validate_evidence_paths_accepts_explicit_batch_files(tmp_path):
+    report = tmp_path / "historical.md"
+    report.write_text("old report", encoding="utf-8")
+    payload = {"items": [{"files": ["historical.md"]}]}
+    assert tandas.validate_evidence_paths(
+        payload, area="mak_quality", extra_paths=[str(report)]) == (True, [])
+
+
+def test_explicit_batch_cannot_escape_to_an_existing_repo_file(tmp_path):
+    report = tmp_path / "historical.md"
+    report.write_text("old report", encoding="utf-8")
+    payload = {"items": [{"files": ["context/LAST_HANDOFF.md"]}]}
+    ok, errors = tandas.validate_evidence_paths(
+        payload, area="mak_quality", extra_paths=[str(report)])
+    assert ok is False
+    assert errors == ["item_0_missing_evidence_path_0"]
 
 
 def test_parse_provider_json_accepts_fenced_json():
@@ -358,6 +416,24 @@ def test_run_external_batch_records_provider_error_and_returns(monkeypatch, tmp_
     row = json.loads(batch.read_text(encoding="utf-8"))
     assert row["provider"] == "aws"
     assert row["status"] == "provider_error"
+    assert row["failure_class"] == "unavailable"
+
+
+def test_run_external_batch_classifies_timeout_without_promoting(monkeypatch, tmp_path):
+    batch = tmp_path / "external_batches.jsonl"
+
+    def timing_out_call(*_args, **_kwargs):
+        raise TimeoutError("timed out")
+
+    monkeypatch.setattr(tandas.external_providers, "call", timing_out_call)
+    result = tandas.run_external_batch(
+        "svg_pipeline", "timeout01", "ollama", out_dir=str(tmp_path),
+        batch_path=str(batch), use_ollama=False)
+
+    assert result["status"] == "provider_error"
+    assert result["failure_class"] == "timeout"
+    row = json.loads(batch.read_text(encoding="utf-8"))
+    assert row["failure_class"] == "timeout"
 
 
 def test_run_external_batch_sanitizes_lone_surrogates(monkeypatch, tmp_path):

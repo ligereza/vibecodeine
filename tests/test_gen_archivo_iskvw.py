@@ -49,6 +49,18 @@ def test_snapshot_con_listas_ausentes_no_revienta(tmp_path):
     assert G.desde_micelio_snapshot(ruta) == {"piezas": [], "vinculos": []}
 
 
+def test_public_sustrato_filters_research_without_mutating_source():
+    source = {
+        "piezas": [{"id": "obra", "clase": "obra"},
+                   {"id": "informe", "clase": "informe"}],
+        "vinculos": [{"de": "obra", "a": "informe", "clase": "semantico"}],
+    }
+    public = G.contrato_archivo.sustrato_publico(source)
+    assert [pieza["id"] for pieza in public["piezas"]] == ["obra"]
+    assert public["vinculos"] == []
+    assert len(source["piezas"]) == 2
+
+
 def test_todo_cae_al_snapshot_cuando_el_micelio_en_vivo_falla(
         tmp_path, monkeypatch, capsys):
     """--fuente todo: if desde_micelio() blows up (the real CI case), main()
@@ -63,8 +75,12 @@ def test_todo_cae_al_snapshot_cuando_el_micelio_en_vivo_falla(
             "piezas": [{"id": "snap-obra", "titulo": "", "clase": "obra",
                        "fecha": None, "resumen": None, "etiquetas": [],
                        "peso": 1, "medio": {"tipo": "texto"},
+                       "estado": "publicada", "extra": {}},
+                      {"id": "snap-obra-2", "titulo": "", "clase": "obra",
+                       "fecha": None, "resumen": None, "etiquetas": [],
+                       "peso": 1, "medio": {"tipo": "texto"},
                        "estado": "publicada", "extra": {}}],
-            "vinculos": [{"de": "snap-obra", "a": "informe-tapiz",
+            "vinculos": [{"de": "snap-obra", "a": "snap-obra-2",
                          "peso": 0.9, "clase": "semantico"}],
         }
     monkeypatch.setattr(G, "desde_micelio_snapshot", _snapshot_falso)
@@ -160,6 +176,38 @@ def test_todo_does_not_publish_essays_by_default(tmp_path, monkeypatch):
     assert G.main() == 0
     datos = json.loads(salida.read_text(encoding="utf-8"))
     assert datos["piezas"] == []
+
+
+def test_todo_excludes_historical_research_from_public_sustrato(
+        tmp_path, monkeypatch):
+    monkeypatch.setattr(G, "desde_obras", lambda: {"piezas": [], "vinculos": []})
+    monkeypatch.setattr(G, "desde_campo_curado",
+                        lambda _ruta: {"piezas": [], "vinculos": []})
+    monkeypatch.setattr(G, "desde_micelio",
+                        lambda _url, _umbral: {
+                            "piezas": [
+                                {"id": "obra", "clase": "obra"},
+                                {"id": "informe", "clase": "informe"},
+                                {"id": "icono", "clase": "pieza_grafica"},
+                            ],
+                            "vinculos": [
+                                {"de": "obra", "a": "informe", "clase": "semantico"},
+                                {"de": "obra", "a": "obra", "clase": "semantico"},
+                            ],
+                        })
+    monkeypatch.setattr(G, "desde_animadas", lambda: {"piezas": [], "vinculos": []})
+    monkeypatch.setattr(G, "desde_laser_manifiesto",
+                        lambda _campo: {"piezas": [], "vinculos": []})
+    salida = tmp_path / "archivo.json"
+    monkeypatch.setattr(sys, "argv", [
+        "gen_archivo_iskvw.py", "--fuente", "todo", "--salida", str(salida),
+        "--posiciones", str(tmp_path / "sin-campo.json"),
+    ])
+    assert G.main() == 0
+    datos = json.loads(salida.read_text(encoding="utf-8"))
+    assert [p["id"] for p in datos["piezas"]] == ["obra"]
+    assert all(v["de"] == "obra" and v["a"] == "obra"
+               for v in datos["vinculos"])
 
 
 def test_todo_can_include_essays_when_explicitly_requested(

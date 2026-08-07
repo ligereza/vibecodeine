@@ -387,6 +387,12 @@ def auditar_memoria(informes_dirs, backlog_path):
     hashes = [_hash(e.get('pregunta', '')) for e in entradas if e.get('pregunta')]
     slugs = [slug(e.get('pregunta', '')) for e in entradas
              if e.get('pregunta') and slug is not None]
+    slug_hashes = collections.defaultdict(set)
+    if slug is not None:
+        for entrada in entradas:
+            pregunta = entrada.get('pregunta')
+            if pregunta:
+                slug_hashes[slug(pregunta)].add(_hash(pregunta))
     nombres = {}
     for directorio in informes_dirs:
         try:
@@ -441,12 +447,25 @@ def auditar_memoria(informes_dirs, backlog_path):
         conteo = collections.Counter(v for v in valores if v)
         return sorted(k for k, n in conteo.items() if n > 1)
 
+    slugs_colision_prefijo = sorted(
+        s for s, hashes_del_slug in slug_hashes.items()
+        if len(hashes_del_slug) > 1
+    )
+    entidades_activas = [
+        e for e in entidades_bloqueadas if e.get('estado') != 'descartado'
+    ]
+    slugs_exactos = [
+        _hash(entrada.get('pregunta', ''))
+        for entrada in entradas if entrada.get('pregunta')
+    ]
+
     return {
         'entradas': len(entradas),
         'estados': dict(sorted(estado.items())),
         'ids_duplicados': duplicados(ids),
         'preguntas_duplicadas': duplicados(hashes),
-        'slugs_duplicados': duplicados(slugs),
+        'slugs_duplicados': duplicados(slugs_exactos),
+        'slugs_colision_prefijo': slugs_colision_prefijo,
         'origenes_faltantes': origenes_faltantes,
         'origenes_historicos_ausentes': origenes_historicos_ausentes,
         'procedencia': dict(sorted(procedencia.items())),
@@ -455,11 +474,13 @@ def auditar_memoria(informes_dirs, backlog_path):
         'fuentes_desconocidas': fuentes_desconocidas,
         'entidades_bloqueadas': entidades_bloqueadas,
         'bloquea_produccion': bool(
-            fuentes_desconocidas or entidades_bloqueadas or duplicados(slugs)
+            fuentes_desconocidas or entidades_activas or
+            duplicados(slugs_exactos)
         ),
         'accion': ('revisar_memoria' if (origenes_faltantes or
                    fuentes_desconocidas or entidades_bloqueadas or
-                   duplicados(slugs)) else 'sin_huecos'),
+                   duplicados(slugs_exactos) or slugs_colision_prefijo)
+                  else 'sin_huecos'),
     }
 
 

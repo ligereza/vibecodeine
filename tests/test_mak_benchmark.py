@@ -1,6 +1,9 @@
 import json
 
-from cultura.mak_plataforma.benchmark import inspect_corpus
+from cultura.mak_plataforma.benchmark import (build_rescue_queue,
+                                              deterministic_rescue_decision,
+                                              inspect_corpus,
+                                              select_rescue_batch)
 
 
 def test_benchmark_detects_structural_essay_failure(tmp_path):
@@ -61,3 +64,38 @@ def test_benchmark_since_excludes_old_products(tmp_path):
     result = inspect_corpus(tmp_path, since=since)
 
     assert result["totals"]["products"] == 0
+
+
+def test_benchmark_creates_non_destructive_rescue_queue(tmp_path):
+    folder = tmp_path / "informes"
+    folder.mkdir()
+    base = folder / "bad"
+    base.with_suffix(".json").write_text(json.dumps({
+        "formato": "ensayo", "topic": "Quien organizo el evento",
+    }), encoding="utf-8")
+    base.with_suffix(".md").write_text("# viejo\n", encoding="utf-8")
+
+    result = inspect_corpus(tmp_path)
+    queue = build_rescue_queue(result)
+
+    assert result["rescue_queue"] == queue
+    assert len(queue) == 2
+    row = next(item for item in queue
+               if item["issue"] == "route_format_mismatch")
+    assert row["status"] == "pending_review"
+    assert row["preserve_original"] is True
+    assert row["source_json"].endswith("bad.json")
+    assert row["source_markdown"].endswith("bad.md")
+    assert row["next_action"] == "review_then_relabel_as_informe"
+    assert row["priority"] == 0
+    assert select_rescue_batch(queue, limit=1) == [row]
+    assert row["deterministic_decision"]["action"] == "relabel_candidate"
+
+
+def test_deterministic_rescue_does_not_claim_essay_truth():
+    decision = deterministic_rescue_decision({
+        "issue": "essay_structural_gaps",
+        "expected_format": "ensayo",
+    })
+    assert decision["action"] == "critical_review"
+    assert decision["target_format"] == "ensayo"

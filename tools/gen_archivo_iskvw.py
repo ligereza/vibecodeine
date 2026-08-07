@@ -31,7 +31,9 @@ SVG annex test whether the reading can become a representative visual system
 The 2026-08-05 correction is only the publication boundary: `--fuente todo`
 previously mixed `informe` and `concepto` pieces into iskvw.cl by default, so
 curation material appeared with report shape and reports appeared as archive
-pieces. Use `--fuente ensayos` or `--incluir-ensayos` when that research view is
+pieces. The default also excludes historical `informe`, `concepto` and
+`pieza_grafica` nodes from the micelio snapshot; the source files remain intact.
+Use `--fuente ensayos` or `--incluir-ensayos` when that research view is
 deliberately requested.
 """
 from __future__ import annotations
@@ -374,6 +376,8 @@ def main() -> int:
         partes.append(desde_laser_manifiesto(args.posiciones))
 
     datos = unir(*partes)
+    if args.fuente == "todo" and not args.incluir_ensayos:
+        datos = _sustrato_publico(datos)
 
     # La posicion entra como campo OPCIONAL: la pieza que la tiene la lleva y la
     # que no, no la lleva vacia. Un campo que no conoces es un campo que
@@ -447,6 +451,11 @@ def main() -> int:
           f"({args.salida.stat().st_size / 1024:.1f} KB)")
     print("  por clase:", salida["meta"]["por_clase"])
     return 0
+
+
+def _sustrato_publico(datos: dict) -> dict:
+    """Keep the generator aligned with the shared public contract."""
+    return contrato_archivo.sustrato_publico(datos)
 
 
 def _contar(filas: list[dict], campo: str) -> dict:

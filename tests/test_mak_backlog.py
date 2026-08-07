@@ -256,6 +256,24 @@ esto no es json valido
         entry = {"id": "bl-new", "pregunta": "una pista", "linaje": []}
         assert backlog.clasificar_procedencia(entry)["origen_tipo"] == "desconocido"
 
+    def test_prefix_slug_collision_is_not_exact_duplicate(self, tmp_path):
+        informes_dir = tmp_path / "informes"
+        informes_dir.mkdir()
+        backlog_path = tmp_path / "backlog.jsonl"
+        prefijo = "La necesidad de mas estudios sobre la relacion entre "
+        pregunta_a = prefijo + "arte y lenguaje"
+        pregunta_b = prefijo + "drogas y salud"
+        backlog.guardar_append(str(backlog_path), [
+            {"id": "bl-a", "pregunta": pregunta_a,
+             "estado": "pendiente", "origen_informe": "a.md"},
+            {"id": "bl-b", "pregunta": pregunta_b,
+             "estado": "pendiente", "origen_informe": "b.md"},
+        ])
+        audit = backlog.auditar_memoria([str(informes_dir)],
+                                        str(backlog_path))
+        assert audit["slugs_colision_prefijo"]
+        assert audit["slugs_duplicados"] == []
+
 
 class TestCosechar:
     """Tests para cosechar."""

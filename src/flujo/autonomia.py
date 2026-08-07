@@ -11,6 +11,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import time
 from typing import Iterable
 
@@ -199,6 +200,65 @@ def _ollama_available() -> bool:
     return result.returncode == 0
 
 
+def _readme_svg_state() -> dict:
+    """Report whether the README SVG is synchronized without changing it."""
+    try:
+        result = subprocess.run(
+            [sys.executable, "tools/update_readme_svg.py", "--check"],
+            cwd=_repo_root(),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=20,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return {"status": "unavailable"}
+    return {"status": "clean" if result.returncode == 0 else "stale"}
+
+
+def _operational_state(branches, prs, common, batches, quarantine, readme):
+    """Derive a compact action surface from existing status contracts."""
+    blocked_prs = [
+        pr.get("number") for pr in prs
+        if str(pr.get("mergeStateStatus") or "").upper() in {"BLOCKED", "DIRTY"}
+    ]
+    actions = []
+    if branches["dirty"]:
+        actions.append("clean_repo_before_promotion")
+    if branches["extra_remote_branches"]:
+        actions.append("remove_noncanonical_remote_branches")
+    if prs:
+        actions.append("review_open_promotion_prs")
+    if blocked_prs:
+        actions.append("repair_blocked_promotion_prs")
+    if quarantine["total"]:
+        actions.append("review_quarantined_evidence")
+    if readme.get("status") == "stale":
+        actions.append("refresh_readme_svg")
+    if not actions:
+        actions.append("run_one_directed_domain_cycle")
+    return {
+        "schema": "flujo-operational-state-v1",
+        "branch_policy": {
+            "canonical": list(CANONICAL_BRANCHES),
+            "remote": branches["remote_branches"],
+            "extra_remote": branches["extra_remote_branches"],
+        },
+        "promotion": {
+            "open_prs": len(prs),
+            "blocked_prs": blocked_prs,
+        },
+        "memory": {
+            "common_rows": common.get("total", 0),
+            "batch_rows": batches.get("total", 0),
+            "quarantined_rows": quarantine.get("total", 0),
+        },
+        "visual_surface": {"readme_svg": readme.get("status", "unknown")},
+        "next_actions": actions,
+    }
+
+
 def _ssh_json(target: str, command: str, timeout: int = 900) -> dict:
     result = subprocess.run(
         ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=8", target, command],
@@ -208,20 +268,24 @@ def _ssh_json(target: str, command: str, timeout: int = 900) -> dict:
         errors="replace",
         timeout=timeout,
     )
+    try:
+        payload = json.loads(result.stdout)
+    except ValueError:
+        payload = None
+    if isinstance(payload, dict):
+        payload.setdefault("remote_exit_code", result.returncode)
+        return payload
     if result.returncode != 0:
         return {
             "ok": False,
             "status": "ssh_error",
             "errors": [(result.stderr or result.stdout or "ssh_failed")[:500]],
         }
-    try:
-        return json.loads(result.stdout)
-    except ValueError:
-        return {
-            "ok": False,
-            "status": "remote_output_not_json",
-            "errors": [result.stdout[:500]],
-        }
+    return {
+        "ok": False,
+        "status": "remote_output_not_json",
+        "errors": [result.stdout[:500]],
+    }
 
 
 def mak_status(target: str = MAK_SSH_TARGET, repo: str = MAK_REPO) -> dict:
@@ -272,6 +336,8 @@ def autonomy_status(common_path: str = tandas.COMMON_LEDGER,
     next_actions = []
     if quarantine["total"]:
         next_actions.append("review_quarantined_evidence")
+    common_summary = common_ledger.summarize(common_path, limit=50)
+    batch_summary = tandas.summarize_ledger(batch_path, limit=50)
     return {
         "schema": "flujo-autonomy-status-v1",
         "ts": time.strftime("%F %T"),
@@ -279,10 +345,14 @@ def autonomy_status(common_path: str = tandas.COMMON_LEDGER,
         "open_prs": prs,
         "providers": provider_state,
         "ledgers": {
-            "common": common_ledger.summarize(common_path, limit=50),
-            "batches": tandas.summarize_ledger(batch_path, limit=50),
+            "common": common_summary,
+            "batches": batch_summary,
             "quarantine": quarantine,
         },
+        "operational": _operational_state(
+            branches, prs, common_summary, batch_summary, quarantine,
+            _readme_svg_state(),
+        ),
         "next_actions": next_actions,
         "batch_contract": {
             "areas": list(DEFAULT_AREAS),

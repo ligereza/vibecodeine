@@ -61,6 +61,15 @@ AREA_CRITERIA = {
     ),
 }
 
+# A model may describe a public possibility, but it cannot turn that
+# possibility into a publication decision. These are affirmative values, not
+# a closed vocabulary for curation; any other human-readable status remains a
+# reviewable statement rather than an automatic promotion.
+PUBLIC_STATUS_AUTOPROMOTION = {
+    "public", "publicada", "publicado", "published", "publish",
+    "promoted", "promovida", "promovido",
+}
+
 
 def build_review_prompt(area, payload):
     if area not in AREA_DOMAINS:
@@ -175,6 +184,7 @@ def deterministic_review(area, payload):
         claim = str(item.get("claim", "") if isinstance(item, dict) else "")
         files = item.get("files", []) if isinstance(item, dict) else []
         action = item.get("action", "") if isinstance(item, dict) else ""
+        product = item.get("product", {}) if isinstance(item, dict) else {}
         if item.get("confidence") == "low":
             missing.append("low confidence for: %s" % claim[:80])
         if not evidence:
@@ -199,11 +209,23 @@ def deterministic_review(area, payload):
             risks.append("RD item mentions iskvw; domain mixed")
         if area == "iskvw_curation" and ("reduccion de dano" in folded or "harm reduction" in folded):
             risks.append("iskvw item mentions RD; domain mixed")
+        if area == "iskvw_curation" and isinstance(product, dict):
+            public_status = re.sub(
+                r"\s+", " ", str(product.get("public_status", "")).strip().lower())
+            if public_status in PUBLIC_STATUS_AUTOPROMOTION:
+                risks.append(
+                    "curation cannot promote an artwork without human signature")
         if area == "tool_archaeology" and action not in ("reuse", "merge", "retire", "test", "reject"):
             risks.append("tool archaeology item does not choose a reuse/merge/retire/test action")
         if area == "opportunity_radar" and action not in (
                 "verify_source", "triangulate", "draft_report", "reject"):
             risks.append("opportunity item proposes an unapproved action")
+        if area == "opportunity_radar" and isinstance(product, dict):
+            deadline = re.sub(r"\s+", " ", str(product.get("deadline", "")).strip().lower())
+            if deadline in ("", "unknown", "tbd", "por confirmar", "varía",
+                            "varia", "varía según la convocatoria",
+                            "varia segun la convocatoria"):
+                missing.append("opportunity needs a concrete deadline or explicit deadline lookup: %s" % claim[:80])
     if risks:
         verdict = "reject"
         reason = "; ".join(risks[:2])

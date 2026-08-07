@@ -58,6 +58,33 @@ def test_autonomy_status_surfaces_quarantine(tmp_path):
     assert status["next_actions"] == ["review_quarantined_evidence"]
 
 
+def test_autonomy_status_derives_operational_surface(monkeypatch, tmp_path):
+    monkeypatch.setattr(autonomia, "_branch_state", lambda: {
+        "current": "mak",
+        "dirty": [],
+        "remote_branches": ["main", "mak", "rd", "iskvw"],
+        "canonical_present": {name: True for name in autonomia.CANONICAL_BRANCHES},
+        "extra_remote_branches": [],
+    })
+    monkeypatch.setattr(autonomia, "_open_prs", lambda: [{
+        "number": 507,
+        "mergeStateStatus": "BLOCKED",
+    }])
+    monkeypatch.setattr(autonomia, "_readme_svg_state", lambda: {"status": "clean"})
+
+    status = autonomia.autonomy_status(
+        common_path=str(tmp_path / "common.jsonl"),
+        batch_path=str(tmp_path / "batches.jsonl"),
+    )
+
+    assert status["operational"]["promotion"] == {
+        "open_prs": 1,
+        "blocked_prs": [507],
+    }
+    assert status["operational"]["visual_surface"] == {"readme_svg": "clean"}
+    assert "review_open_promotion_prs" in status["operational"]["next_actions"]
+
+
 def test_run_autonomy_dry_run_writes_briefs(monkeypatch, tmp_path):
     monkeypatch.setattr(autonomia, "autonomy_status", lambda **_kwargs: {
         "ready": True,
@@ -146,3 +173,18 @@ def test_mak_executor_delegates_run_over_ssh(monkeypatch):
     assert "python3 -m flujo autonomia run" in commands[0][1]
     assert "--executor local" in commands[0][1]
     assert "--areas 'mak_quality'" in commands[0][1]
+
+
+def test_ssh_json_preserves_completed_payload_with_review_exit(monkeypatch):
+    class Result:
+        returncode = 2
+        stdout = '{"ok": false, "status": "completed", "runs": [{"status": "revise"}]}'
+        stderr = ""
+
+    monkeypatch.setattr(autonomia.subprocess, "run", lambda *args, **kwargs: Result())
+
+    payload = autonomia._ssh_json("mak@example", "remote command")
+
+    assert payload["status"] == "completed"
+    assert payload["runs"][0]["status"] == "revise"
+    assert payload["remote_exit_code"] == 2
