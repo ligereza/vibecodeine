@@ -135,6 +135,20 @@ def test_a_duplicate_entry_never_erases_the_text(tmp_path):
     assert mapa["x.jpg"]["texto"] == "el bueno"
 
 
+def test_stories_are_opt_in_and_keep_published_media_scope(tmp_path):
+    raiz = _export(tmp_path, {"stories.json": {"ig_stories": [{
+        "creation_timestamp": 1600000000,
+        "title": "VJ en Sala Demo",
+        "uri": "media/stories/2020/scene.mp4",
+    }]}})
+    mapa, informe = meta.leer_export(raiz)
+    assert mapa == {}
+    mapa, informe = meta.leer_export(raiz, incluir_historias=True)
+    assert mapa["scene.mp4"]["texto"] == "VJ en Sala Demo"
+    assert mapa["scene.mp4"]["tipo_contenido"] == "story"
+    assert mapa["scene.mp4"]["publicacion_archivo"] == "stories.json"
+
+
 def test_a_missing_timestamp_leaves_the_date_empty(tmp_path):
     raiz = _export(tmp_path, {"posts_1.json": [{
         "title": "sin fecha", "media": [{"uri": "media/x.jpg"}]}]})
