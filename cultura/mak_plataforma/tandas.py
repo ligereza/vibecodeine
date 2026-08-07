@@ -65,6 +65,8 @@ PRODUCT_CONTRACTS = {
     "tool_archaeology": ("existing_path", "reuse_test", "decision"),
     "svg_pipeline": ("representation", "measurement", "next_prototype"),
     "adobe_rescue": ("bridge", "installation_evidence", "rescue_action"),
+    "opportunity_radar": ("opportunity", "eligibility", "deadline", "source",
+                           "next_action", "risk"),
 }
 
 
@@ -175,6 +177,17 @@ AREAS = {
                            "src/flujo/export/illustrator.py",
                            "src/flujo/export/illustrator_bridge.py"],
         "actions": ["rescue", "bridge", "reuse", "reject"],
+    },
+    "opportunity_radar": {
+        "purpose": "find artist-compatible opportunities without auto-contact or submission",
+        "default_paths": ["context/artist_context.example.json",
+                           "cultura/mak_vigia/fuentes.json",
+                           "docs/becas"],
+        "evidence_paths": ["context/artist_context.example.json",
+                           "cultura/mak_vigia/fuentes.json",
+                           "docs/becas/CALENDARIO_POSTULACIONES.md",
+                           "cultura/mak_research/fuentes.py"],
+        "actions": ["verify_source", "triangulate", "draft_report", "reject"],
     },
 }
 
