@@ -28,3 +28,14 @@ def test_revision_rechaza_traversal_y_decision_invalida(tmp_path, monkeypatch):
     monkeypatch.setattr(revision, "SHEETS", tmp_path / "sheets")
     assert revision.media_path("/../secret.jpg") is None
     assert revision.record("123_mp4", "publicar")["ok"] is False
+
+
+def test_revision_no_duplica_doble_click(monkeypatch, tmp_path):
+    root = tmp_path / "review"
+    root.mkdir()
+    monkeypatch.setattr(revision, "ROOT", root)
+    monkeypatch.setattr(revision, "REVIEWS", root / "human_reviews.jsonl")
+    assert revision.record("123_mp4", "reject")["ok"] is True
+    result = revision.record("123_mp4", "reject")
+    assert result["duplicate"] is True
+    assert len((root / "human_reviews.jsonl").read_text().splitlines()) == 1

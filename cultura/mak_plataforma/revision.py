@@ -104,6 +104,9 @@ def record(video: str, decision: str, note: str = "") -> dict:
     decision = str(decision or "")
     if not video or decision not in DECISIONS:
         return {"ok": False, "error": "video_or_decision_invalid"}
+    previous = _review_map().get(video)
+    if previous and previous.get("decision") == decision and not note:
+        return {"ok": True, "row": previous, "duplicate": True}
     ROOT.mkdir(parents=True, exist_ok=True)
     row = {"video": video, "decision": decision,
            "note": str(note or "")[:1000],
@@ -120,10 +123,11 @@ h1{color:#9db67c}#meta{color:#9d927f;margin-bottom:18px}.grid{display:grid;grid-
 article{background:#12100d;border:1px solid #30291f;border-radius:10px;padding:12px}img{width:100%;display:block;border-radius:6px;background:#050504}
 small{color:#9d927f}.status{margin:8px 0;color:#d4a259}.buttons{display:flex;gap:7px}.buttons button{background:#201c15;color:#d0c9ba;border:1px solid #514631;border-radius:5px;padding:7px 10px;cursor:pointer}.buttons button:hover{border-color:#9db67c}
 textarea{width:100%;box-sizing:border-box;background:#0b0a08;color:#d0c9ba;border:1px solid #30291f;margin:8px 0;padding:6px}
-</style><h1>MAK / revision visual</h1><div id="meta">cargando...</div><main class="grid" id="grid"></main>
+</style><h1>MAK / revision visual</h1><div id="meta">cargando...</div><button onclick="showReviewed=!showReviewed;load()">mostrar/ocultar revisados</button><main class="grid" id="grid"></main>
 <script>
+let showReviewed=false;
 const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-async function load(){const d=await fetch('/api/revision').then(r=>r.json());document.querySelector('#meta').textContent=`${d.total} videos | ${d.pending_human} pendientes humanos`;document.querySelector('#grid').innerHTML=d.rows.map((r,i)=>`<article><img src="${r.sheet}" loading="lazy"><small>${esc(r.video)}</small><div class="status">modelo: ${esc(r.ollama_verdict)} | ${esc(r.provider_status)}</div><div>${esc(r.reason)}</div><textarea id="n${i}" placeholder="nota opcional"></textarea><div class="buttons"><button onclick="decide('${r.video}', 'accept', ${i})">aceptar</button><button onclick="decide('${r.video}', 'revise', ${i})">revisar</button><button onclick="decide('${r.video}', 'reject', ${i})">rechazar</button></div></article>`).join('')}
+async function load(){const d=await fetch('/api/revision').then(r=>r.json());const rows=showReviewed?d.rows:d.rows.filter(r=>!r.human);document.querySelector('#meta').textContent=`${d.total} videos | ${d.pending_human} pendientes humanos | mostrando ${rows.length}`;document.querySelector('#grid').innerHTML=rows.map((r,i)=>`<article><img src="${r.sheet}" loading="lazy"><small>${esc(r.video)}</small><div class="status">modelo: ${esc(r.ollama_verdict)} | ${esc(r.provider_status)}</div><div>${esc(r.reason)}</div><textarea id="n${i}" placeholder="nota opcional"></textarea><div class="buttons"><button onclick="decide('${r.video}', 'accept', ${i})">aceptar</button><button onclick="decide('${r.video}', 'revise', ${i})">revisar</button><button onclick="decide('${r.video}', 'reject', ${i})">rechazar</button></div></article>`).join('')}
 async function decide(video,decision,i){await fetch('/api/revision',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({video,decision,note:document.querySelector('#n'+i).value})});load()}
 load();
 </script>'''
