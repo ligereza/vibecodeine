@@ -27,6 +27,7 @@ DEFAULT_AREAS = (
     "tool_archaeology",
     "svg_pipeline",
     "adobe_rescue",
+    "opportunity_radar",
 )
 DEFAULT_PREMIUM_PROVIDERS = ("watsonx", "aws")
 DEFAULT_FREE_PROVIDERS = ("cerebras", "groq", "ollama")
