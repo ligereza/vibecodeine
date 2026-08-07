@@ -268,20 +268,24 @@ def _ssh_json(target: str, command: str, timeout: int = 900) -> dict:
         errors="replace",
         timeout=timeout,
     )
+    try:
+        payload = json.loads(result.stdout)
+    except ValueError:
+        payload = None
+    if isinstance(payload, dict):
+        payload.setdefault("remote_exit_code", result.returncode)
+        return payload
     if result.returncode != 0:
         return {
             "ok": False,
             "status": "ssh_error",
             "errors": [(result.stderr or result.stdout or "ssh_failed")[:500]],
         }
-    try:
-        return json.loads(result.stdout)
-    except ValueError:
-        return {
-            "ok": False,
-            "status": "remote_output_not_json",
-            "errors": [result.stdout[:500]],
-        }
+    return {
+        "ok": False,
+        "status": "remote_output_not_json",
+        "errors": [result.stdout[:500]],
+    }
 
 
 def mak_status(target: str = MAK_SSH_TARGET, repo: str = MAK_REPO) -> dict:
