@@ -137,6 +137,28 @@ def test_opportunity_review_requires_evidence_and_safe_action():
     assert review["missing_evidence"]
 
 
+def test_opportunity_review_revises_generic_deadline():
+    review = discernment.deterministic_review(
+        "opportunity_radar", {"items": [{
+            "claim": "residency opportunity",
+            "evidence": ["https://example.org/open-call"],
+            "files": ["cultura/mak_vigia/fuentes.json"],
+            "confidence": "high",
+            "action": "verify_source",
+            "reject_reason": "",
+            "product": {
+                "opportunity": "residency",
+                "eligibility": "artist",
+                "deadline": "Varía según la convocatoria",
+                "source": "official",
+                "next_action": "verify",
+                "risk": "unknown",
+            },
+        }]})
+    assert review["verdict"] == "revise"
+    assert any("concrete deadline" in item for item in review["missing_evidence"])
+
+
 def test_deterministic_review_rejects_redacted_or_secret_material():
     review = discernment.deterministic_review(
         "mak_quality", {"items": [{
