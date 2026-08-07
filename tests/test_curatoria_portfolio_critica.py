@@ -76,3 +76,22 @@ def test_lectura_critica_real_no_firma_titulos_ni_publicacion():
     assert firmada["titulo"] == "Obra firmada por el artista"
     assert firmada["extra"]["titulo_firmado"] is True
     assert firmada["extra"]["nota"]
+
+
+def test_campo_expone_proveniencia_sin_promover_fuente_ausente():
+    campo = {"piezas": [{"id": "obra-a", "tipo": "obra",
+                          "archivo": "posts/a.jpg",
+                          "percibido": "lectura de maquina"}]}
+    datos = contrato_archivo.desde_campo(campo, existe=lambda _src: False)
+    pieza = datos["piezas"][0]
+    assert pieza["extra"]["fuente_original"] == {
+        "ruta": "posts/a.jpg", "estado": "ausente", "rol": "obra_original"
+    }
+    assert pieza["medio"]["estado_fuente"] == "ausente"
+
+
+def test_campo_marca_fuente_presente():
+    campo = {"piezas": [{"id": "obra-a", "tipo": "obra",
+                          "archivo": "posts/a.jpg"}]}
+    pieza = contrato_archivo.desde_campo(campo, existe=lambda _src: True)["piezas"][0]
+    assert pieza["extra"]["fuente_original"]["estado"] == "presente"
