@@ -8,6 +8,7 @@ las huellas minimas que lo separan de un informe disfrazado.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import time
@@ -102,9 +103,40 @@ def inspect_corpus(root, since=0):
         if not any(issue.get("path") == product["path"] for issue in issues))
     for issue in issues:
         issue["next_action"] = _next_action(issue)
-    return {"schema": "mak-corpus-benchmark-v1", "root": str(root),
-            "totals": dict(totals), "products": products, "issues": issues,
-            "queue": issues}
+    result = {"schema": "mak-corpus-benchmark-v1", "root": str(root),
+              "totals": dict(totals), "products": products, "issues": issues,
+              "queue": issues}
+    result["rescue_queue"] = build_rescue_queue(result)
+    return result
+
+
+def build_rescue_queue(result):
+    """Turn structural findings into resumable work without touching reports.
+
+    The original JSON/Markdown pair remains the source artifact. Each queue
+    row only records what must be reviewed, which format was declared, and
+    which action the next MAK pass should take. A model can repair a copy or
+    archive it; it cannot overwrite the historical report through this file.
+    """
+    rows = []
+    for issue in result.get("issues", []):
+        source_json = str(issue.get("path") or "")
+        source_markdown = str(Path(source_json).with_suffix(".md"))
+        basis = "%s|%s|%s" % (issue.get("kind", ""), source_json,
+                              issue.get("declared", issue.get("format", "")))
+        rows.append({
+            "rescue_id": hashlib.sha1(basis.encode("utf-8")).hexdigest()[:12],
+            "status": "pending_review",
+            "preserve_original": True,
+            "issue": issue.get("kind", ""),
+            "source_json": source_json,
+            "source_markdown": source_markdown,
+            "declared_format": issue.get("declared", issue.get("format")),
+            "expected_format": issue.get("expected"),
+            "gaps": list(issue.get("gaps", [])),
+            "next_action": issue.get("next_action", "manual_review"),
+        })
+    return rows
 
 
 def _next_action(issue):
@@ -132,12 +164,26 @@ def main(argv=None):
                         help="epoch: inspect only products newer than this")
     parser.add_argument("--check", action="store_true",
                         help="fail when the selected corpus has structural issues")
+    parser.add_argument("--rescue-out", default="",
+                        help="write a separate non-destructive rescue queue")
     args = parser.parse_args(argv)
     result = inspect_corpus(args.root, since=args.since)
     text = json.dumps(result, ensure_ascii=True, indent=2)
     if args.out:
         Path(args.out).parent.mkdir(parents=True, exist_ok=True)
         Path(args.out).write_text(text + "\n", encoding="utf-8")
+    if args.rescue_out:
+        rescue = {
+            "schema": "mak-retro-rescue-v1",
+            "root": str(Path(args.root)),
+            "preserve_original": True,
+            "total": len(result["rescue_queue"]),
+            "entries": result["rescue_queue"],
+        }
+        Path(args.rescue_out).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.rescue_out).write_text(
+            json.dumps(rescue, ensure_ascii=True, indent=2) + "\n",
+            encoding="utf-8")
     print(text)
     return 2 if args.check and result["totals"].get("issues", 0) else 0
 
