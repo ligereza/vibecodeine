@@ -351,6 +351,8 @@ def test_repasar_prioritizes_pending_opportunity(monkeypatch, tmp_path):
     assert payload["ledger_id"] == "opportunity-1"
     assert payload["domain"] == "opportunities"
     assert payload["reason"] == "verify"
+    assert payload["lane"] == "sistema"
+    assert payload["decision"] == "revisar"
 
 
 def test_idle_review_uses_artist_priority_score(monkeypatch, tmp_path):

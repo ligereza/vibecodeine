@@ -516,6 +516,10 @@ def _idle_ledger_review_payload(st):
         "tema": "ledger pending: %s" % str(row.get("claim") or "")[:180],
         "ledger_id": row_id,
         "domain": row.get("domain", ""),
+        "lane": row.get("lane", "sistema"),
+        "decision": row.get("decision", "revisar"),
+        "purpose": row.get("purpose", ""),
+        "owner": row.get("owner", "MAK"),
         "action": row.get("action", ""),
         "reason": (row.get("reject_reason", "") or
                    row.get("metadata", {}).get("next_action", "")),
