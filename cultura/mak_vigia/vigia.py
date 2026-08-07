@@ -783,7 +783,7 @@ def priorizar_oportunidades(items, contexto=None):
         item["priority_score"] = score
         item["priority_reasons"] = reasons or ["needs_manual_fit"]
         item["priority_lane"] = (
-            "private_nursing" if nursing_lane else
+            "private_nursing" if "private_nursing_lane" in reasons else
             "artist" if any(reason in reasons for reason in
                              ("practice_or_funding", "design_or_music")) else
             "general")
