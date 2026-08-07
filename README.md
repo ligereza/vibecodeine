@@ -184,7 +184,7 @@ demands login). Do not use yt-dlp.
 
 Descriptive/cultural layer: tapiz, tilde, psicosis, precursor. Third workspace of the web hub.
 Hard limits: descriptive/cultural only, nothing generative-synthetic, psicosis never profiles real people.
-The `README.md` art (`arte-ascii-readme.svg`, the animated codeine cup) is a finished artist piece: never alter the SVG.
+The `README.md` art (`arte-ascii-readme.svg`, the animated codeine cup) is a finished artist piece: preserve its artwork shell and refresh only its generated text layer with `py tools/update_readme_svg.py`.
 
 ```bash
 py projects/tapiz/vibecode_spaces.py archivo.py -m void --svg pieza.svg
