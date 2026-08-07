@@ -20,6 +20,20 @@ import unicodedata
 from datetime import datetime
 from hashlib import sha1
 
+
+PROVENANCE_TYPES = (
+    "semilla_sistema", "informe", "intencion_usuario", "tarea_derivada",
+    "externo", "desconocido",
+)
+PROVENANCE_AUTHORITIES = (
+    "sistema", "usuario", "fuente_primaria", "modelo", "inferida",
+    "desconocida",
+)
+LEGACY_SYSTEM_SEED_IDS = frozenset({
+    "bl-60e3e922", "bl-473d8f25", "bl-ddd9491d", "bl-8e293c3b",
+    "bl-ae2937c2", "bl-52670965", "bl-e9f1deb4", "bl-d0e22120",
+})
+
 # Report files are named STAMP-slug.md by research.py, with the slug minted by
 # research_lib.slug(). Deduplicating against those files REQUIRES the exact
 # same function -- a second slug formation is how the 1004-pieces/0-positions
@@ -45,6 +59,38 @@ def _norm(texto):
     # Lowercase y colapsar whitespace
     normalizado = re.sub(r'\s+', ' ', sin_accents.lower().strip())
     return normalizado
+
+
+def clasificar_procedencia(entrada):
+    """Classify memory origin without treating absence as user intent."""
+    if not isinstance(entrada, dict):
+        return {"origen_tipo": "desconocido", "autoridad": "desconocida",
+                "activacion": "none"}
+    tipo = entrada.get("origen_tipo")
+    autoridad = entrada.get("autoridad")
+    if tipo not in PROVENANCE_TYPES:
+        if entrada.get("id") in LEGACY_SYSTEM_SEED_IDS:
+            tipo, autoridad = "semilla_sistema", "sistema"
+        elif entrada.get("origen_informe"):
+            tipo, autoridad = "informe", "modelo"
+        elif entrada.get("linaje"):
+            tipo, autoridad = "tarea_derivada", "inferida"
+        else:
+            tipo, autoridad = "desconocido", "desconocida"
+    if autoridad not in PROVENANCE_AUTHORITIES:
+        autoridad = {
+            "semilla_sistema": "sistema",
+            "informe": "modelo",
+            "tarea_derivada": "inferida",
+            "intencion_usuario": "usuario",
+            "externo": "fuente_primaria",
+        }.get(tipo, "desconocida")
+    activacion = entrada.get("activacion") or (
+        "manual" if tipo == "intencion_usuario" else
+        "backlog" if tipo in ("informe", "tarea_derivada") else "none"
+    )
+    return {"origen_tipo": tipo, "autoridad": autoridad,
+            "activacion": activacion}
 
 
 def _hash(texto):
@@ -351,12 +397,26 @@ def auditar_memoria(informes_dirs, backlog_path):
             continue
 
     origenes_faltantes = []
+    procedencia = collections.Counter()
+    semillas_sistema = []
+    intenciones_usuario = []
+    fuentes_desconocidas = []
     entidades_bloqueadas = []
     for entrada in entradas:
+        clasificacion = clasificar_procedencia(entrada)
+        tipo = clasificacion["origen_tipo"]
+        procedencia[tipo] += 1
+        if tipo == "semilla_sistema":
+            semillas_sistema.append(entrada.get('id'))
+        elif tipo == "intencion_usuario":
+            intenciones_usuario.append(entrada.get('id'))
+        elif tipo == "desconocido":
+            fuentes_desconocidas.append(entrada.get('id'))
         origen = entrada.get('origen_informe', '')
         directorio = nombres.get(origen)
         if not directorio:
-            origenes_faltantes.append(entrada.get('id'))
+            if tipo != "semilla_sistema":
+                origenes_faltantes.append(entrada.get('id'))
             continue
         documento = None
         try:
@@ -385,9 +445,14 @@ def auditar_memoria(informes_dirs, backlog_path):
         'preguntas_duplicadas': duplicados(hashes),
         'slugs_duplicados': duplicados(slugs),
         'origenes_faltantes': origenes_faltantes,
+        'procedencia': dict(sorted(procedencia.items())),
+        'semillas_sistema': semillas_sistema,
+        'intenciones_usuario': intenciones_usuario,
+        'fuentes_desconocidas': fuentes_desconocidas,
         'entidades_bloqueadas': entidades_bloqueadas,
         'accion': ('revisar_memoria' if (origenes_faltantes or
-                   entidades_bloqueadas or duplicados(slugs)) else 'sin_huecos'),
+                   fuentes_desconocidas or entidades_bloqueadas or
+                   duplicados(slugs)) else 'sin_huecos'),
     }
 
 
@@ -527,7 +592,10 @@ def cosechar(informes_dirs, backlog_path, max_por_informe=3, profundidad_max=3, 
                         'linaje': [],
                         'score': 0.0,
                         'estado': 'pendiente',
-                        'fecha': fecha_hoy
+                        'fecha': fecha_hoy,
+                        'origen_tipo': 'informe',
+                        'autoridad': 'modelo',
+                        'activacion': 'backlog',
                     }
                     nuevas_entradas.append(entrada)
                     hashes_agregadas.add(h)
@@ -588,7 +656,10 @@ def derivar(entrada_padre, pregunta):
         'linaje': nuevo_linaje,
         'score': 0.0,
         'estado': 'pendiente',
-        'fecha': fecha_hoy
+        'fecha': fecha_hoy,
+        'origen_tipo': 'tarea_derivada',
+        'autoridad': 'inferida',
+        'activacion': 'backlog',
     }
 
     return entrada

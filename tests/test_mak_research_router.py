@@ -85,6 +85,12 @@ def test_route_exposes_contract_for_selected_product():
         "reading", "selection", "relationships", "public_status")
 
 
+def test_route_exposes_reasoning_mode_without_changing_output_contract():
+    assert R.route_research_task("multiplicar", "curatoria de una obra").epistemic_mode == "interpretacion"
+    assert R.route_research_task("multiplicar", "repasar un informe").epistemic_mode == "critica"
+    assert R.route_research_task("atender", "quien organizo el evento").epistemic_mode == "evidencia"
+
+
 def test_route_exposes_declarative_department_profile():
     route = R.route_research_task("multiplicar", "quien organizo el evento")
     profile = R.profile_for_route(route)
