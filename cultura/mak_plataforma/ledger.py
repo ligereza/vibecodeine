@@ -242,6 +242,39 @@ def read_items_quarantine(path):
     return rows
 
 
+def classify_quarantine(rows, roots=None):
+    """Classify quarantined evidence without restoring or mutating memory."""
+    roots = [os.path.expanduser(str(root)) for root in (roots or _path_roots())]
+    basename_index = {}
+    for root in roots:
+        if not os.path.isdir(root):
+            continue
+        for current, directories, filenames in os.walk(root):
+            directories[:] = [name for name in directories if name != ".git"]
+            for filename in filenames:
+                basename_index.setdefault(filename, []).append(
+                    os.path.join(current, filename))
+    classified = []
+    for row in rows or []:
+        missing = [str(path) for path in row.get("missing_files", [])]
+        if any("[redacted]" in path.lower() or any(marker in path.lower()
+               for marker in SECRET_MARKERS) for path in missing):
+            disposition = "reject_secret"
+            candidates = []
+        else:
+            candidates = sorted({candidate for path in missing
+                                 for candidate in basename_index.get(
+                                     os.path.basename(path), [])})
+            disposition = (
+                "review_only_unique" if len(candidates) == 1
+                else "stale_reject")
+        item = dict(row)
+        item["disposition"] = disposition
+        item["candidate_paths"] = candidates[:8]
+        classified.append(item)
+    return classified
+
+
 def write_quarantine(rows, path=None):
     path = path or os.path.join(HOME, "plataforma/common_ledger_quarantine.jsonl")
     existing = {row.get("original_id") for row in read_items_quarantine(path)}
@@ -345,6 +378,10 @@ def main(argv=None):
     p_audit = sub.add_parser("audit", help="quarantine missing evidence paths")
     p_audit.add_argument("--ledger", default=LEDGER)
     p_audit.add_argument("--quarantine", default="")
+    p_review = sub.add_parser("review-quarantine",
+                              help="classify quarantine without restoring items")
+    p_review.add_argument("--quarantine", default="")
+    p_review.add_argument("--root", action="append", dest="roots")
     args = parser.parse_args(argv)
     if args.cmd == "append":
         ok, errors, row = append_item(json.loads(input()), path=args.ledger,
@@ -361,6 +398,13 @@ def main(argv=None):
         added = write_quarantine(found, args.quarantine or None)
         print(json.dumps({"found": len(found), "quarantined": len(added),
                           "items": added}, ensure_ascii=False))
+        return 0
+    if args.cmd == "review-quarantine":
+        path = args.quarantine or os.path.join(
+            HOME, "plataforma/common_ledger_quarantine.jsonl")
+        rows = classify_quarantine(read_items_quarantine(path), roots=args.roots)
+        print(json.dumps({"total": len(rows), "items": rows},
+                         ensure_ascii=False, indent=2))
         return 0
     return 1
 

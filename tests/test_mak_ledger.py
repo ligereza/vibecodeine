@@ -156,3 +156,21 @@ def test_audit_deduplicates_quarantine(tmp_path):
     row = {"original_id": "abc", "missing_files": ["x.py"]}
     assert len(ledger.write_quarantine([row], str(quarantine_path))) == 1
     assert ledger.write_quarantine([row], str(quarantine_path)) == []
+
+
+def test_classify_quarantine_never_restores_and_finds_unique_candidate(tmp_path):
+    candidate = tmp_path / "candidate.py"
+    candidate.write_text("pass\n", encoding="utf-8")
+    rows = [
+        {"original_id": "one", "missing_files": ["old/candidate.py"]},
+        {"original_id": "two", "missing_files": ["gone.py"]},
+        {"original_id": "three", "missing_files": ["[redacted]"]},
+    ]
+
+    classified = ledger.classify_quarantine(rows, roots=[str(tmp_path)])
+
+    assert [item["disposition"] for item in classified] == [
+        "review_only_unique", "stale_reject", "reject_secret"]
+    assert classified[0]["candidate_paths"] == [str(candidate)]
+    assert all("status" not in item or item["status"] == "quarantined"
+               for item in classified)
