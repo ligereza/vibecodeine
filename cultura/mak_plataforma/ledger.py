@@ -300,7 +300,7 @@ def append_external_result(payload, area, path=LEDGER, source="external"):
     return rows, errors
 
 
-def review_to_ledger(review, area):
+def review_to_ledger(review, area, metadata=None):
     domain = str(review.get("domain") or "").lower()
     verdict = str(review.get("verdict") or "").lower()
     item_type = "decision" if verdict == "accept" else "reject"
@@ -313,7 +313,7 @@ def review_to_ledger(review, area):
         "repo": "reject" if verdict == "reject" else "test",
         "opportunities": "reject" if verdict == "reject" else "review",
     }.get(domain, "reject")
-    return {
+    row = {
         "domain": domain,
         "type": item_type,
         "claim": "%s review for %s: %s" % (verdict, area, review.get("reason", "")),
@@ -323,10 +323,14 @@ def review_to_ledger(review, area):
         "action": action,
         "reject_reason": "" if item_type != "reject" else review.get("reason", ""),
     }
+    if isinstance(metadata, dict):
+        row["metadata"] = metadata
+    return row
 
 
-def append_review(review, area, path=LEDGER, source="local_review"):
-    return append_item(review_to_ledger(review, area), path=path, source=source)
+def append_review(review, area, path=LEDGER, source="local_review", metadata=None):
+    return append_item(review_to_ledger(review, area, metadata=metadata),
+                       path=path, source=source)
 
 
 def main(argv=None):
