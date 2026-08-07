@@ -66,7 +66,9 @@ def test_vigia_prioritizes_artist_lanes_before_generic_jobs():
 
     assert ranked[0]["h"] == "residency"
     assert "practice_or_funding" in ranked[0]["priority_reasons"]
+    assert ranked[0]["priority_lane"] == "artist"
     assert "practice_or_funding" not in ranked[1]["priority_reasons"]
+    assert ranked[1]["priority_lane"] == "private_nursing"
 
 
 def test_vigia_persists_priority_metadata(tmp_path):

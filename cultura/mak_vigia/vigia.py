@@ -782,6 +782,11 @@ def priorizar_oportunidades(items, contexto=None):
     for score, _, item, reasons in ranked:
         item["priority_score"] = score
         item["priority_reasons"] = reasons or ["needs_manual_fit"]
+        item["priority_lane"] = (
+            "private_nursing" if nursing_lane else
+            "artist" if any(reason in reasons for reason in
+                             ("practice_or_funding", "design_or_music")) else
+            "general")
         output.append(item)
     return output
 

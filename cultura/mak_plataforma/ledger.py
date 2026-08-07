@@ -184,6 +184,7 @@ def opportunity_from_vigia(item, source="vigia", path=LEDGER):
             "url": url,
             "priority_score": item.get("priority_score", 0),
             "priority_reasons": item.get("priority_reasons", ["needs_manual_fit"]),
+            "priority_lane": item.get("priority_lane", "general"),
             "next_action": "verify eligibility, deadline and artistic fit",
             "safety": "no contact or submission",
         },
