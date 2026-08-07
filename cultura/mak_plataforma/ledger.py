@@ -22,6 +22,13 @@ QUARANTINE_SCHEMA = "mak-ledger-quarantine-v1"
 ITEM_TYPES = ("evidence", "idea", "task", "decision", "reject", "artifact")
 DOMAINS = ("rd", "iskvw", "mak", "svg", "adobe", "repo", "opportunities")
 CONFIDENCE = ("high", "medium", "low", "unknown")
+LANES = ("obra", "trabajo", "sistema")
+DECISIONS = ("hacer", "revisar", "refutar", "archivar", "descartar")
+LANE_BY_DOMAIN = {
+    "iskvw": "obra", "svg": "obra",
+    "rd": "trabajo", "opportunities": "trabajo",
+    "mak": "sistema", "adobe": "sistema", "repo": "sistema",
+}
 
 ACTION_BY_DOMAIN = {
     "rd": ("verify_source", "triangulate", "draft_report", "reject"),
@@ -53,6 +60,16 @@ def _safe_text(value, limit=2000):
     return text[:limit]
 
 
+def _default_decision(item):
+    if str(item.get("decision") or "").strip():
+        return str(item["decision"]).lower()
+    if str(item.get("type") or "").lower() == "reject":
+        return "descartar"
+    if str(item.get("type") or "").lower() == "task":
+        return "hacer"
+    return "revisar"
+
+
 def normalize_item(item, source="manual", ts=None):
     if not isinstance(item, dict):
         raise ValueError("item_not_object")
@@ -68,6 +85,13 @@ def normalize_item(item, source="manual", ts=None):
         "confidence": str(item.get("confidence") or "unknown").lower(),
         "action": str(item.get("action") or "").lower(),
         "reject_reason": _safe_text(item.get("reject_reason"), 800),
+        "lane": str(item.get("lane") or
+                    LANE_BY_DOMAIN.get(str(item.get("domain") or "").lower(),
+                                       "sistema")).lower(),
+        "decision": _default_decision(item),
+        "purpose": _safe_text(item.get("purpose"), 500),
+        "next_action": _safe_text(item.get("next_action"), 500),
+        "owner": _safe_text(item.get("owner"), 120) or "MAK",
     }
     metadata = item.get("metadata")
     if isinstance(metadata, dict):
@@ -94,6 +118,10 @@ def validate_item(item, source="manual"):
         errors.append("bad_type")
     if row["confidence"] not in CONFIDENCE:
         errors.append("bad_confidence")
+    if row["lane"] not in LANES:
+        errors.append("bad_lane")
+    if row["decision"] not in DECISIONS:
+        errors.append("bad_decision")
     if not row["claim"] and row["type"] != "reject":
         errors.append("missing_claim")
     if not isinstance(row["evidence"], list):
@@ -149,12 +177,44 @@ def read_items(path=LEDGER, limit=None):
     return rows
 
 
+def _enrich_legacy(row):
+    """Project old valid rows into the current decision view without rewriting them."""
+    view = dict(row)
+    domain = str(view.get("domain") or "").lower()
+    view["lane"] = str(view.get("lane") or LANE_BY_DOMAIN.get(domain, "sistema")).lower()
+    view["decision"] = str(view.get("decision") or _default_decision(view)).lower()
+    view["purpose"] = _safe_text(view.get("purpose"), 500) or (
+        "legacy %s record projected into the decision queue" % domain)
+    action = str(view.get("action") or "").lower()
+    fallback_actions = {
+        "verify_source": "verify source and date",
+        "triangulate": "triangulate with a second source",
+        "draft_report": "draft the contracted report",
+        "curate": "write a curation decision before exposure",
+        "expose": "human review before public exposure",
+        "archive": "archive without promoting as current truth",
+        "measure": "measure the existing pipeline before changing it",
+        "prototype": "build one bounded prototype",
+        "reuse": "reuse only after local verification",
+        "review": "human review of the queued item",
+        "refute": "record the contradiction and keep it out of truth",
+        "repair_queue": "repair the queue entry before new production",
+        "reject": "retain as rejected evidence; do not promote",
+    }
+    view["next_action"] = _safe_text(view.get("next_action"), 500) or \
+        fallback_actions.get(action, "human review of the decision")
+    view["owner"] = _safe_text(view.get("owner"), 120) or "MAK"
+    return view
+
+
 def summarize(path=LEDGER, limit=50):
-    rows = read_items(path, limit=limit)
+    rows = [_enrich_legacy(row) for row in read_items(path, limit=limit)]
     pending = [r for r in rows if r.get("metadata", {}).get("queue_status") == "pending_human"]
     return {
         "total": len(rows),
         "by_domain": dict(Counter(r.get("domain", "") for r in rows)),
+        "by_lane": dict(Counter(r.get("lane", "") for r in rows)),
+        "by_decision": dict(Counter(r.get("decision", "") for r in rows)),
         "by_type": dict(Counter(r.get("type", "") for r in rows)),
         "by_action": dict(Counter(r.get("action", "") for r in rows)),
         "pending_human": len(pending),
@@ -177,11 +237,19 @@ def opportunity_from_vigia(item, source="vigia", path=LEDGER):
         "files": [],
         "confidence": "unknown",
         "action": "review",
+        "lane": "trabajo",
+        "decision": "revisar",
+        "purpose": "verificar una oportunidad oficial sin contacto automatico",
+        "next_action": "verify eligibility, deadline and artistic fit",
+        "owner": "human",
         "metadata": {
             "queue_status": "pending_human",
             "source_id": item.get("fuente", ""),
             "title": title,
             "url": url,
+            "priority_score": item.get("priority_score", 0),
+            "priority_reasons": item.get("priority_reasons", ["needs_manual_fit"]),
+            "priority_lane": item.get("priority_lane", "general"),
             "next_action": "verify eligibility, deadline and artistic fit",
             "safety": "no contact or submission",
         },
@@ -242,6 +310,39 @@ def read_items_quarantine(path):
     return rows
 
 
+def classify_quarantine(rows, roots=None):
+    """Classify quarantined evidence without restoring or mutating memory."""
+    roots = [os.path.expanduser(str(root)) for root in (roots or _path_roots())]
+    basename_index = {}
+    for root in roots:
+        if not os.path.isdir(root):
+            continue
+        for current, directories, filenames in os.walk(root):
+            directories[:] = [name for name in directories if name != ".git"]
+            for filename in filenames:
+                basename_index.setdefault(filename, []).append(
+                    os.path.join(current, filename))
+    classified = []
+    for row in rows or []:
+        missing = [str(path) for path in row.get("missing_files", [])]
+        if any("[redacted]" in path.lower() or any(marker in path.lower()
+               for marker in SECRET_MARKERS) for path in missing):
+            disposition = "reject_secret"
+            candidates = []
+        else:
+            candidates = sorted({candidate for path in missing
+                                 for candidate in basename_index.get(
+                                     os.path.basename(path), [])})
+            disposition = (
+                "review_only_unique" if len(candidates) == 1
+                else "stale_reject")
+        item = dict(row)
+        item["disposition"] = disposition
+        item["candidate_paths"] = candidates[:8]
+        classified.append(item)
+    return classified
+
+
 def write_quarantine(rows, path=None):
     path = path or os.path.join(HOME, "plataforma/common_ledger_quarantine.jsonl")
     existing = {row.get("original_id") for row in read_items_quarantine(path)}
@@ -272,8 +373,9 @@ def external_item_to_ledger(item, area):
         "opportunity_radar": "opportunities",
     }
     item_type = "reject" if item.get("action") == "reject" else "evidence"
+    domain = domain_by_area.get(area, "mak")
     return {
-        "domain": domain_by_area.get(area, "mak"),
+        "domain": domain,
         "type": item_type,
         "claim": item.get("claim", ""),
         "evidence": item.get("evidence", []),
@@ -281,6 +383,12 @@ def external_item_to_ledger(item, area):
         "confidence": item.get("confidence", "unknown"),
         "action": item.get("action", ""),
         "reject_reason": item.get("reject_reason", ""),
+        "lane": LANE_BY_DOMAIN.get(domain, "sistema"),
+        "decision": "descartar" if item.get("action") == "reject" else "revisar",
+        "purpose": item.get("product", {}).get("purpose", "")
+        if isinstance(item.get("product"), dict) else "",
+        "next_action": item.get("reject_reason", "revisar evidencia local"),
+        "owner": "MAK",
     }
 
 
@@ -317,11 +425,19 @@ def review_to_ledger(review, area, metadata=None):
         "domain": domain,
         "type": item_type,
         "claim": "%s review for %s: %s" % (verdict, area, review.get("reason", "")),
-        "evidence": review.get("missing_evidence", []) + review.get("risks", []),
+        "evidence": (review.get("evidence", []) +
+                     review.get("missing_evidence", []) +
+                     review.get("risks", [])),
         "files": [],
         "confidence": "medium" if verdict == "accept" else "low",
         "action": action,
         "reject_reason": "" if item_type != "reject" else review.get("reason", ""),
+        "lane": LANE_BY_DOMAIN.get(domain, "sistema"),
+        "decision": ("hacer" if verdict == "accept" else
+                     "descartar" if verdict == "reject" else "revisar"),
+        "purpose": "juzgar salida de %s" % area,
+        "next_action": review.get("next_action", "revisar evidencia"),
+        "owner": "human" if verdict != "accept" else "MAK",
     }
     if isinstance(metadata, dict):
         row["metadata"] = metadata
@@ -345,6 +461,10 @@ def main(argv=None):
     p_audit = sub.add_parser("audit", help="quarantine missing evidence paths")
     p_audit.add_argument("--ledger", default=LEDGER)
     p_audit.add_argument("--quarantine", default="")
+    p_review = sub.add_parser("review-quarantine",
+                              help="classify quarantine without restoring items")
+    p_review.add_argument("--quarantine", default="")
+    p_review.add_argument("--root", action="append", dest="roots")
     args = parser.parse_args(argv)
     if args.cmd == "append":
         ok, errors, row = append_item(json.loads(input()), path=args.ledger,
@@ -361,6 +481,13 @@ def main(argv=None):
         added = write_quarantine(found, args.quarantine or None)
         print(json.dumps({"found": len(found), "quarantined": len(added),
                           "items": added}, ensure_ascii=False))
+        return 0
+    if args.cmd == "review-quarantine":
+        path = args.quarantine or os.path.join(
+            HOME, "plataforma/common_ledger_quarantine.jsonl")
+        rows = classify_quarantine(read_items_quarantine(path), roots=args.roots)
+        print(json.dumps({"total": len(rows), "items": rows},
+                         ensure_ascii=False, indent=2))
         return 0
     return 1
 

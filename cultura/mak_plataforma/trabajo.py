@@ -493,7 +493,16 @@ def _idle_ledger_review_payload(st):
             if row_id and row_id not in seen:
                 candidates.append(row)
     if opportunities:
-        row = opportunities[-1]
+        def priority(row):
+            value = row.get("metadata", {}).get("priority_score", 0)
+            try:
+                value = int(value)
+            except (TypeError, ValueError):
+                value = 0
+            return value
+        row = sorted(enumerate(opportunities),
+                     key=lambda pair: (priority(pair[1]), pair[0]),
+                     reverse=True)[0][1]
     elif candidates:
         row = candidates[-1]
     else:
@@ -507,6 +516,10 @@ def _idle_ledger_review_payload(st):
         "tema": "ledger pending: %s" % str(row.get("claim") or "")[:180],
         "ledger_id": row_id,
         "domain": row.get("domain", ""),
+        "lane": row.get("lane", "sistema"),
+        "decision": row.get("decision", "revisar"),
+        "purpose": row.get("purpose", ""),
+        "owner": row.get("owner", "MAK"),
         "action": row.get("action", ""),
         "reason": (row.get("reject_reason", "") or
                    row.get("metadata", {}).get("next_action", "")),

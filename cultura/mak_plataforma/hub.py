@@ -31,6 +31,10 @@ import cuotas  # noqa: E402
 import ideas  # noqa: E402
 import contrato_archivo  # noqa: E402
 try:
+    import ledger as _ledger  # noqa: E402
+except Exception:  # noqa: BLE001 - hub stays alive without ledger data
+    _ledger = None
+try:
     import backlog as _backlog  # noqa: E402
 except Exception:  # noqa: BLE001 - hub must stay alive if audit is unavailable
     _backlog = None
@@ -51,6 +55,7 @@ TRABAJO_STATE = os.path.join(HOME, "plataforma/.trabajo_state.json")
 RED_STATE = os.path.join(HOME, "plataforma/.red_state.json")
 RED_LOG = os.path.join(HOME, "plataforma/logs/red.jsonl")
 TRABAJO_LOG = os.path.join(HOME, "plataforma/logs/trabajo.log")
+COMMON_LEDGER = os.path.join(HOME, "plataforma/common_ledger.jsonl")
 SALUD_PROVEEDORES = os.path.join(HOME, "research/salud_proveedores.json")
 SALUD_PROVEEDORES_VENTANA = 6 * 3600
 try:
@@ -140,6 +145,20 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
 #pan-render .datos .f{color:#c3bfb2;padding:2px 0}
 #pan-render .datos .f b{color:#8a8577;font-weight:400}
 #pan-render .vacio{color:#5f5b50;font-size:.74rem}
+#pan-decisiones{position:absolute;inset:0;overflow-y:auto;padding:26px 30px;display:none}
+#pan-decisiones.on{display:block}
+#pan-decisiones .intro{color:#6e6a5e;font-size:.74rem;margin-bottom:14px;max-width:680px;line-height:1.5}
+#pan-decisiones .metricas{display:flex;gap:9px;flex-wrap:wrap;max-width:820px;margin-bottom:16px}
+#pan-decisiones .metrica{border:1px solid #211f18;border-radius:7px;padding:9px 12px;background:#0c0a09;
+ min-width:112px;color:#8a8577;font-size:.68rem}
+#pan-decisiones .metrica b{display:block;color:#9db67c;font-size:1.05rem;margin-top:3px}
+#pan-decisiones .fila{border:1px solid #211f18;border-radius:8px;padding:11px 13px;margin-bottom:9px;
+ background:#0c0a09;max-width:820px;font-size:.73rem}
+#pan-decisiones .fila .cab{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
+#pan-decisiones .fila .lane{color:#d4a259}
+#pan-decisiones .fila .decision{color:#9db67c}
+#pan-decisiones .fila .owner{color:#5f5b50;margin-left:auto}
+#pan-decisiones .fila .accion{color:#c3bfb2;margin-top:6px;line-height:1.4}
 #pan-render .pend-cab{color:#d4a259;font-size:.7rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
 #pan-render .rd.pend{border-color:#4a3a26;background:#100c08}
 #pan-render .rd.pend .motivo{color:#d4a259;font-size:.75rem;margin-top:6px;line-height:1.45}
@@ -175,7 +194,8 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
    <button data-dep="research" class="on">🔬 research</button>
    <button data-dep="codex">💻 codex</button>
    <button data-dep="ideas">💡 ideas</button>
-   <button data-dep="render">🖼 render</button>
+  <button data-dep="render">🖼 render</button>
+  <button data-dep="decisiones">◈ decisiones</button>
   </div>
  </div>
  <div class="der">
@@ -207,6 +227,11 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
   <div id="r-pendientes"></div>
   <div id="r-lista">cargando…</div>
  </div>
+ <div id="pan-decisiones">
+  <div class="intro">La cola no mide actividad: muestra decisiones utilizables. Las entradas históricas se proyectan a Obra, Trabajo o Sistema sin reescribirlas. Solo lo que tiene siguiente acción puede avanzar.</div>
+  <div id="d-metricas" class="metricas">cargando…</div>
+  <div id="d-lista">cargando…</div>
+ </div>
 </div>
 <button id="toggle" onclick="toggleFranja()">▾ actividad / salud</button>
 <div id="franja">
@@ -233,11 +258,13 @@ function activarDep(dep){
  document.querySelectorAll('#centro iframe').forEach(function(f){
    f.classList.toggle('on', f.id==='ifr-'+dep);
  });
- // 'ideas' y 'render' no son editores embebidos: son paneles propios del hub.
+ // 'ideas', 'render' y 'decisiones' son paneles propios del hub.
  document.getElementById('pan-ideas').classList.toggle('on', dep==='ideas');
  document.getElementById('pan-render').classList.toggle('on', dep==='render');
+ document.getElementById('pan-decisiones').classList.toggle('on', dep==='decisiones');
  if(dep==='ideas'){cargarIdeas();return;}
  if(dep==='render'){cargarRender();return;}
+ if(dep==='decisiones'){cargarDecisiones();return;}
  var ifr=document.getElementById('ifr-'+dep);
  if(ifr && !ifr.src){ifr.src=IFR_SRC[dep];}
 }
@@ -390,6 +417,29 @@ function guardarConfigRender(){
                          : ('No se guardó: '+(d.error||''));
    cargarRender();
  }).catch(function(){av.textContent='No se pudo hablar con el hub.';});
+}
+
+function cargarDecisiones(){
+ fetch('/api/decisiones').then(function(r){return r.json();}).then(function(d){
+   if(d.error){throw new Error(d.error);}
+   var lanes=d.by_lane||{}, decs=d.by_decision||{};
+   document.getElementById('d-metricas').innerHTML=
+     '<div class="metrica">total<b>'+esc(d.total||0)+'</b></div>'+
+     '<div class="metrica">obra<b>'+esc(lanes.obra||0)+'</b></div>'+
+     '<div class="metrica">trabajo<b>'+esc(lanes.trabajo||0)+'</b></div>'+
+     '<div class="metrica">sistema<b>'+esc(lanes.sistema||0)+'</b></div>'+
+     '<div class="metrica">revisar<b>'+esc(decs.revisar||0)+'</b></div>'+
+     '<div class="metrica">humano<b>'+esc(d.pending_human||0)+'</b></div>';
+   var rows=d.last||[];
+   document.getElementById('d-lista').innerHTML=rows.length ? rows.map(function(row){
+     return '<div class="fila"><div class="cab"><span class="lane">'+esc(row.lane||'sistema')+
+       '</span><span class="decision">'+esc(row.decision||'revisar')+'</span>'+
+       '<span class="owner">'+esc(row.owner||'MAK')+'</span></div>'+
+       '<div class="accion">'+esc(row.next_action||row.purpose||'sin siguiente accion documentada')+'</div></div>';
+   }).join('') : '<div class="vacio">La cola todavía está vacía.</div>';
+ }).catch(function(){
+   document.getElementById('d-lista').innerHTML='<div class="vacio">No se pudo leer la cola de decisiones.</div>';
+ });
 }
 
 // ── franja inferior: colapsable ──
@@ -654,7 +704,7 @@ def _micelio():
     ahora = time.time()
     if ahora - _MIC_CACHE["t"] < 12 and _MIC_CACHE["data"]["nodes"]:
         return _MIC_CACHE["data"]
-    g = _http_json(RESEARCH_URL + "/api/memoria/grafo?umbral=0.5", timeout=5.0)
+    g = _http_json(RESEARCH_URL + "/api/memoria/grafo?umbral=0.5&limite=600", timeout=5.0)
     if g and "nodes" in g:
         _MIC_CACHE["data"] = g
         _MIC_CACHE["t"] = ahora
@@ -670,6 +720,22 @@ def _archivo_publico():
     _ARCHIVO_CACHE["data"] = cuerpo
     _ARCHIVO_CACHE["t"] = ahora
     return cuerpo
+
+
+def _decisiones():
+    """Expose the compact decision queue without exposing raw ledger history."""
+    if _ledger is None:
+        return {"total": 0, "by_lane": {}, "by_decision": {}, "pending_human": 0}
+    resumen = _ledger.summarize(COMMON_LEDGER, limit=200)
+    return {
+        "total": resumen["total"],
+        "by_lane": resumen["by_lane"],
+        "by_decision": resumen["by_decision"],
+        "pending_human": resumen["pending_human"],
+        "last": [{key: row.get(key, "") for key in (
+            "id", "lane", "decision", "purpose", "next_action", "owner")}
+                 for row in resumen["last"]],
+    }
 
 
 # ── departamento de render (el puente issue -> flyer) ──
@@ -1089,6 +1155,13 @@ class H(BaseHTTPRequestHandler):
             except Exception as e:  # noqa: BLE001
                 return self._json({"error": str(e)[:200],
                                    "piezas": [], "vinculos": []})
+        if p == "/api/decisiones":
+            try:
+                return self._json(_decisiones())
+            except Exception as e:  # noqa: BLE001
+                return self._json({"error": str(e)[:200], "total": 0,
+                                   "by_lane": {}, "by_decision": {},
+                                   "pending_human": 0})
         if p == "/api/eventos":
             q = urllib.parse.parse_qs(u.query)
             depto = (q.get("depto") or [""])[0]

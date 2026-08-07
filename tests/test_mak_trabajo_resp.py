@@ -351,6 +351,24 @@ def test_repasar_prioritizes_pending_opportunity(monkeypatch, tmp_path):
     assert payload["ledger_id"] == "opportunity-1"
     assert payload["domain"] == "opportunities"
     assert payload["reason"] == "verify"
+    assert payload["lane"] == "sistema"
+    assert payload["decision"] == "revisar"
+
+
+def test_idle_review_uses_artist_priority_score(monkeypatch, tmp_path):
+    monkeypatch.setattr(trabajo, "COMMON_LEDGER", str(tmp_path / "ledger.jsonl"))
+    rows = [
+        {"id": "nursing", "metadata": {"queue_status": "pending_human",
+                                           "priority_score": "1"}},
+        {"id": "artist", "metadata": {"queue_status": "pending_human",
+                                          "priority_score": "6"}},
+    ]
+    (tmp_path / "ledger.jsonl").write_text(
+        "\n".join(json.dumps(row) for row in rows) + "\n", encoding="utf-8")
+
+    payload = trabajo._idle_ledger_review_payload({})
+
+    assert payload["ledger_id"] == "artist"
 
 
 def test_repasar_reviews_benchmark_queue_locally(monkeypatch, tmp_path):

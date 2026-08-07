@@ -14,6 +14,15 @@ def test_review_prompt_covers_all_batch_areas():
         assert discernment.SCHEMA_VERSION in prompt
 
 
+def test_ollama_timeout_is_bounded_and_configurable(monkeypatch):
+    monkeypatch.setenv("MAK_OLLAMA_TIMEOUT", "2")
+    assert discernment.ollama_timeout() == 5.0
+    monkeypatch.setenv("MAK_OLLAMA_TIMEOUT", "80")
+    assert discernment.ollama_timeout() == 80.0
+    monkeypatch.setenv("MAK_OLLAMA_TIMEOUT", "900")
+    assert discernment.ollama_timeout() == 180.0
+
+
 def test_adobe_rescue_is_separate_from_svg_and_blender():
     brief = tandas.build_brief(
         "adobe_rescue", "adobe01", providers=["watsonx", "ollama"])
@@ -311,7 +320,7 @@ def test_ingest_promotes_verified_opportunity_to_pending_review_ledger(tmp_path)
 
     payload = {"items": [{
         "claim": "artist opportunity requires current source check",
-        "evidence": ["official source"],
+            "evidence": ["https://example.org/official-bases"],
         "files": ["cultura/mak_vigia/fuentes.json"],
         "confidence": "high",
         "action": "verify_source",
@@ -319,7 +328,8 @@ def test_ingest_promotes_verified_opportunity_to_pending_review_ledger(tmp_path)
         "format": "oportunidad",
         "evidence_kind": "official_source",
         "product": {"opportunity": "residency", "eligibility": "artist",
-                    "deadline": "unknown", "source": "official",
+                        "deadline": "2026-09-01",
+                        "source": "https://example.org/official-bases",
                     "next_action": "verify", "risk": "unknown"},
     }]}
     result = tandas.ingest_result(
