@@ -236,6 +236,23 @@ esto no es json valido
         assert auditoria["accion"] == "revisar_memoria"
         assert backlog_path.read_text(encoding="utf-8") == antes
 
+    def test_legacy_seed_is_not_user_intention_or_missing_origin(self, tmp_path):
+        backlog_path = tmp_path / "backlog.jsonl"
+        backlog.guardar_append(str(backlog_path), [{
+            "id": "bl-60e3e922", "pregunta": "una hipotesis heredada",
+            "estado": "pendiente", "origen_informe": "",
+        }])
+        audit = backlog.auditar_memoria([str(tmp_path / "missing")],
+                                        str(backlog_path))
+        assert audit["semillas_sistema"] == ["bl-60e3e922"]
+        assert audit["intenciones_usuario"] == []
+        assert audit["origenes_faltantes"] == []
+        assert audit["procedencia"] == {"semilla_sistema": 1}
+
+    def test_missing_provenance_is_unknown_not_user_intention(self, tmp_path):
+        entry = {"id": "bl-new", "pregunta": "una pista", "linaje": []}
+        assert backlog.clasificar_procedencia(entry)["origen_tipo"] == "desconocido"
+
 
 class TestCosechar:
     """Tests para cosechar."""
