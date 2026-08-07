@@ -332,6 +332,53 @@ class TestCosechar:
         estado_path = str(backlog_path) + ".estado.json"
         assert os.path.exists(estado_path)
 
+    def test_bloquea_entidad_no_verificada_y_conserva_traza(self, tmp_path):
+        """Una entidad negada por las fuentes no vuelve a multiplicarse."""
+        informes_dir = tmp_path / "informes"
+        informes_dir.mkdir()
+        (informes_dir / "sfera.md").write_text(
+            "## LAGUNAS DE INFORMACION\n"
+            "- Que papel jugo Sfera Abramović en el evento\n",
+            encoding="utf-8",
+        )
+        (informes_dir / "sfera.json").write_text(json.dumps({
+            "hallazgos": [{
+                "titulo": "SFERA Experience 2024",
+                "fuente": "https://example.org/sfera",
+                "contenido": "No se encontró información sobre Sfera Abramović.",
+            }],
+            "preguntas_abiertas": [
+                "Que papel jugo Sfera Abramović en el evento",
+            ],
+        }, ensure_ascii=False), encoding="utf-8")
+
+        backlog_path = tmp_path / "backlog.jsonl"
+        assert backlog.cosechar([str(informes_dir)], str(backlog_path)) == 0
+        assert backlog.cargar(str(backlog_path)) == []
+        estado = json.loads((tmp_path / "backlog.jsonl.estado.json").read_text())
+        bloqueadas = next(iter(estado.values()))["bloqueadas"]
+        assert bloqueadas[0]["razon"] == "entidad_no_verificada:Sfera Abramović"
+
+    def test_permite_pregunta_con_fuente_que_identifica_entidad(self, tmp_path):
+        """La barrera no bloquea una entidad identificada por una fuente."""
+        informes_dir = tmp_path / "informes"
+        informes_dir.mkdir()
+        (informes_dir / "artista.md").write_text(
+            "## LAGUNAS DE INFORMACION\n- Que obras creo Marina Abramović\n",
+            encoding="utf-8",
+        )
+        (informes_dir / "artista.json").write_text(json.dumps({
+            "hallazgos": [{
+                "titulo": "Marina Abramović - Museum profile",
+                "fuente": "https://example.org/marina-abramovic",
+                "contenido": "No se encontró información sobre otra persona.",
+            }],
+            "preguntas_abiertas": ["Que obras creo Marina Abramović"],
+        }, ensure_ascii=False), encoding="utf-8")
+
+        backlog_path = tmp_path / "backlog.jsonl"
+        assert backlog.cosechar([str(informes_dir)], str(backlog_path)) == 1
+
 
 class TestDedupPorSlug:
     """La cosecha no re-encola lo ya preguntado (2026-07-31).
@@ -493,6 +540,20 @@ class TestDerivador:
         # que el linaje puede tener hasta 3 elementos.
         # Entonces derivar debe retornar None si ya tiene 3.
         assert hijo is None
+
+    def test_validar_pregunta_derivada_usa_el_mismo_gate(self):
+        """El generador puede usar el gate sin duplicar reglas."""
+        documento = {
+            "hallazgos": [{
+                "titulo": "SFERA Experience 2024",
+                "fuente": "https://example.org/sfera",
+                "contenido": "No se encontró información sobre Sfera Abramović.",
+            }],
+        }
+        valida, razon = backlog.validar_pregunta_derivada(
+            "Que papel jugo Sfera Abramović", documento)
+        assert valida is False
+        assert razon == "entidad_no_verificada:Sfera Abramović"
 
 
 class TestPopPendiente:

@@ -27,6 +27,7 @@ DEFAULT_AREAS = (
     "tool_archaeology",
     "svg_pipeline",
     "adobe_rescue",
+    "opportunity_radar",
 )
 DEFAULT_PREMIUM_PROVIDERS = ("watsonx", "aws")
 DEFAULT_FREE_PROVIDERS = ("cerebras", "groq", "ollama")
@@ -44,6 +45,7 @@ class RunOptions:
     common_ledger_path: str = tandas.COMMON_LEDGER
     batch_ledger_path: str = tandas.LEDGER
     max_tokens: int = 1800
+    max_items: int = 5
     use_ollama: bool = True
     require_clean: bool = True
     dry_run: bool = False
@@ -365,6 +367,7 @@ def run_autonomy(options: RunOptions) -> dict:
                 batch_path=options.batch_ledger_path,
                 use_ollama=options.use_ollama,
                 max_tokens=options.max_tokens,
+                max_items=options.max_items,
                 instruction=options.instruction,
             )
             runs.append({
@@ -402,6 +405,7 @@ def run_on_mak(options: RunOptions) -> dict:
         "--providers %s" % _sh_quote(provider_csv),
         "--round-id %s" % _sh_quote(round_id),
         "--max-tokens %d" % int(options.max_tokens),
+        "--max-items %d" % int(options.max_items),
         "--allow-dirty",
     ]
     if options.dry_run:

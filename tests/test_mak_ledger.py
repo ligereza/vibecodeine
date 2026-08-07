@@ -72,6 +72,27 @@ def test_external_batch_items_enter_common_ledger(tmp_path):
     assert rows[0]["action"] == "archive"
 
 
+def test_review_ledger_preserves_judge_trace_metadata(tmp_path):
+    path = tmp_path / "common_ledger.jsonl"
+    review = {
+        "schema": "mak-local-review-v1",
+        "verdict": "revise",
+        "domain": "rd",
+        "reason": "missing primary source",
+        "risks": [],
+        "missing_evidence": ["official source"],
+        "next_action": "verify source",
+    }
+    ok, errors, row = ledger.append_review(
+        review, "rd_evidence", path=str(path), source="local_review:watsonx",
+        metadata={"provider": "watsonx", "reviewer": "deterministic",
+                  "fallback": True, "profile_verdict": "revise"})
+    assert ok is True
+    assert errors == []
+    assert row["metadata"]["provider"] == "watsonx"
+    assert row["metadata"]["fallback"] == "True"
+
+
 def test_summary_counts_by_domain_type_and_action(tmp_path):
     path = tmp_path / "common_ledger.jsonl"
     ledger.append_item({
