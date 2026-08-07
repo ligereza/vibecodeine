@@ -69,6 +69,13 @@ def normalize_item(item, source="manual", ts=None):
         "action": str(item.get("action") or "").lower(),
         "reject_reason": _safe_text(item.get("reject_reason"), 800),
     }
+    metadata = item.get("metadata")
+    if isinstance(metadata, dict):
+        row["metadata"] = {
+            str(key): _safe_text(value, 800)
+            for key, value in metadata.items()
+            if str(key).lower() not in SECRET_MARKERS
+        }
     row["id"] = item.get("id") or _stable_id(row)
     return row
 
@@ -111,6 +118,19 @@ def append_item(item, path=LEDGER, source="manual"):
     return True, [], row
 
 
+def append_unique(item, path=LEDGER, source="manual"):
+    """Append a valid item unless its stable id is already in the ledger."""
+    ok, errors, row = validate_item(item, source=source)
+    if not ok:
+        return False, errors, None
+    if any(existing.get("id") == row["id"] for existing in read_items(path)):
+        return True, [], None
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "a", encoding="utf-8") as fh:
+        fh.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
+    return True, [], row
+
+
 def read_items(path=LEDGER, limit=None):
     rows = []
     try:
@@ -131,13 +151,41 @@ def read_items(path=LEDGER, limit=None):
 
 def summarize(path=LEDGER, limit=50):
     rows = read_items(path, limit=limit)
+    pending = [r for r in rows if r.get("metadata", {}).get("queue_status") == "pending_human"]
     return {
         "total": len(rows),
         "by_domain": dict(Counter(r.get("domain", "") for r in rows)),
         "by_type": dict(Counter(r.get("type", "") for r in rows)),
         "by_action": dict(Counter(r.get("action", "") for r in rows)),
+        "pending_human": len(pending),
         "last": rows[-5:],
     }
+
+
+def opportunity_from_vigia(item, source="vigia", path=LEDGER):
+    """Queue one watched listing for human review without contacting anyone."""
+    title = str(item.get("titulo") or "").strip()
+    url = str(item.get("url") or "").strip()
+    if not title:
+        return False, ["missing_title"], None
+    return append_unique({
+        "id": "vigia:%s" % item.get("h", ""),
+        "domain": "opportunities",
+        "type": "task",
+        "claim": "New watched opportunity: %s" % title,
+        "evidence": [url] if url else [],
+        "files": [],
+        "confidence": "unknown",
+        "action": "review",
+        "metadata": {
+            "queue_status": "pending_human",
+            "source_id": item.get("fuente", ""),
+            "title": title,
+            "url": url,
+            "next_action": "verify eligibility, deadline and artistic fit",
+            "safety": "no contact or submission",
+        },
+    }, path=path, source=source)
 
 
 def _path_roots():

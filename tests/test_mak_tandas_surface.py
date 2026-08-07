@@ -41,6 +41,15 @@ def test_hub_exposes_mak_batch_ledger_surface(tmp_path, monkeypatch):
             "action": "reject",
             "reject_reason": "missing measurement",
         },
+        {
+            "schema": "mak-ledger-v1",
+            "source": "vigia:fondos",
+            "domain": "opportunities",
+            "type": "task",
+            "claim": "New watched opportunity",
+            "action": "review",
+            "metadata": {"queue_status": "pending_human", "next_action": "verify"},
+        },
     ])
     _write_jsonl(batch, [
         {"area": "rd_evidence", "provider": "watsonx", "status": "accepted", "items": 1},
@@ -52,14 +61,15 @@ def test_hub_exposes_mak_batch_ledger_surface(tmp_path, monkeypatch):
     fake = HubRequestHandler.__new__(HubRequestHandler)
     surface = HubRequestHandler._get_mak_tandas(fake)
 
-    assert surface["common_rows"] == 3
+    assert surface["common_rows"] == 4
     assert surface["batch_rows"] == 2
     assert surface["accepted"] == 1
     assert surface["rejected_or_revise"] == 1
     assert surface["decisions"] == 1
-    assert surface["by_domain"] == {"rd": 2, "svg": 1}
+    assert surface["by_domain"] == {"rd": 2, "svg": 1, "opportunities": 1}
     assert surface["by_provider"]["watsonx"] == 2
     assert surface["pending"][0]["reason"] == "missing measurement"
+    assert surface["pending_human"] == 1
 
 
 def test_mak_panel_contains_external_batch_surface():

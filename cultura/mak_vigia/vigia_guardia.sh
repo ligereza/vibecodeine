@@ -36,7 +36,8 @@ export VIGIA_NTFY_TOPIC="${VIGIA_NTFY_TOPIC:-${NTFY_TOPIC_OUT:-}}"
 export VIGIA_NTFY_TOPIC_ENFERMERIA="${VIGIA_NTFY_TOPIC_ENFERMERIA:-}"
 
 echo "== $(date '+%F %T') vigia =="
-python3 "$VIG/vigia.py" --estado "$VIG/estado" --fuentes "$VIG/fuentes.json"
+python3 "$VIG/vigia.py" --estado "$VIG/estado" --fuentes "$VIG/fuentes.json" \
+  --ledger-oportunidades "$HOME/plataforma/common_ledger.jsonl"
 # Exit code 1 means at least one source is broken or stale. It is already a
 # high-priority ntfy; keep it in the log too so the box's own health checks
 # can see it without parsing the notification.
