@@ -100,7 +100,7 @@ def _entradas(dato):
     return []
 
 
-def leer_export(raiz: Path) -> tuple[dict, dict]:
+def leer_export(raiz: Path, incluir_historias: bool = False) -> tuple[dict, dict]:
     """filename -> {fecha, texto, ...}, plus a report of what was measured."""
     base = raiz / "info" / "your_instagram_activity" / "media"
     if not base.is_dir():
@@ -117,7 +117,8 @@ def leer_export(raiz: Path) -> tuple[dict, dict]:
     informe = {"archivos_leidos": [], "sin_leer": [], "publicaciones": 0,
                "medios": 0, "con_texto": 0, "con_fecha": 0, "sospechosos": 0}
 
-    for nombre in ARCHIVOS:
+    archivos = ARCHIVOS + (("stories.json",) if incluir_historias else ())
+    for nombre in archivos:
         ruta = base / nombre
         if not ruta.exists():
             informe["sin_leer"].append(nombre)
@@ -137,6 +138,8 @@ def leer_export(raiz: Path) -> tuple[dict, dict]:
             ts_pub = pub.get("creation_timestamp")
             medios_publicacion = [m for m in (pub.get("media") or [])
                                   if isinstance(m, dict)]
+            if nombre == "stories.json" and not medios_publicacion and pub.get("uri"):
+                medios_publicacion = [pub]
             for indice_medio, medio in enumerate(medios_publicacion):
                 if not isinstance(medio, dict):
                     continue
@@ -174,6 +177,7 @@ def leer_export(raiz: Path) -> tuple[dict, dict]:
                     "publicacion_archivo": nombre,
                     "medio_indice": indice_medio,
                     "medio_total": len(medios_publicacion),
+                    "tipo_contenido": "story" if nombre == "stories.json" else "published_media",
                 }
     return mapa, informe
 
@@ -186,9 +190,11 @@ def main() -> int:
                    help="carpeta del export de Instagram (la que tiene info/ y media/)")
     p.add_argument("--salida", type=Path, default=None,
                    help="escribir el mapa a un JSON")
+    p.add_argument("--incluir-historias", action="store_true",
+                   help="incluir stories.json; solo metadata de historias publicadas")
     a = p.parse_args()
 
-    mapa, informe = leer_export(a.export)
+    mapa, informe = leer_export(a.export, incluir_historias=a.incluir_historias)
 
     print("archivos leidos: %s" % ", ".join(informe["archivos_leidos"]))
     if informe["sin_leer"]:
