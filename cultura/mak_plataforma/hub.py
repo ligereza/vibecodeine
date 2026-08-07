@@ -15,6 +15,7 @@ Rutas: / (cara) · /api/organismo · /api/micelio · /api/archivo · /api/ejecut
 """
 import html
 import json
+import mimetypes
 import os
 import re
 import signal
@@ -49,6 +50,8 @@ REFLEXIONES_DIR = os.path.join(HOME, "plataforma/reflexiones")
 RESEARCH_JOBS = os.path.join(HOME, "research/jobs.jsonl")
 CODEX_JOBS = os.path.join(HOME, "codex/jobs.jsonl")
 RELEVO = os.path.join(HOME, "RELEVO_MAK.md")
+PORTFOLIO_ROOT = os.path.abspath(os.environ.get(
+    "MAK_PORTFOLIO_ROOT", os.path.join(HOME, "flujo", "iskvw")))
 RESEARCH_URL = "http://127.0.0.1:8890"
 CODEX_URL = "http://127.0.0.1:8891"
 TRABAJO_STATE = os.path.join(HOME, "plataforma/.trabajo_state.json")
@@ -194,8 +197,9 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
    <button data-dep="research" class="on">🔬 research</button>
    <button data-dep="codex">💻 codex</button>
    <button data-dep="ideas">💡 ideas</button>
-  <button data-dep="render">🖼 render</button>
+   <button data-dep="render">🖼 render</button>
   <button data-dep="decisiones">◈ decisiones</button>
+  <button data-dep="portafolio">✦ portafolio</button>
   </div>
  </div>
  <div class="der">
@@ -206,6 +210,7 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
 <div id="centro">
  <iframe id="ifr-research" class="on"></iframe>
  <iframe id="ifr-codex"></iframe>
+ <iframe id="ifr-portafolio"></iframe>
  <div id="pan-ideas">
   <div class="intro">Escribí lo que estás pensando. El archivo te dice con qué se
    relaciona — tus obras van marcadas aparte de los ensayos de MAK. Si te sirve,
@@ -249,7 +254,7 @@ function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'
 
 // ── tabs de departamento: cambian el iframe visible, cargan lazy ──
 var depActual='research';
-var IFR_SRC={research:'http://'+location.hostname+':8890/', codex:'http://'+location.hostname+':8891/'};
+var IFR_SRC={research:'http://'+location.hostname+':8890/', codex:'http://'+location.hostname+':8891/', portafolio:'/portafolio/'};
 function activarDep(dep){
  depActual=dep;
  document.querySelectorAll('#tabs button').forEach(function(b){
@@ -571,6 +576,19 @@ def _http_json(url, timeout=2.0):
             return json.loads(r.read(3_000_000).decode("utf-8", "replace"))
     except Exception:  # noqa: BLE001
         return None
+
+
+def _portfolio_file(relative):
+    """Resolve one read-only portfolio asset under the iskvw root."""
+    root = os.path.realpath(PORTFOLIO_ROOT)
+    candidate = os.path.realpath(os.path.join(root, urllib.parse.unquote(relative)))
+    try:
+        inside = os.path.commonpath((root, candidate)) == root
+    except ValueError:
+        inside = False
+    if not inside or not os.path.isfile(candidate):
+        return None
+    return candidate
 
 
 # ── feed de actividad (los dos departamentos, con la guardia inline) ──
@@ -1115,6 +1133,9 @@ class H(BaseHTTPRequestHandler):
 
     def _send(self, body, ctype="text/html; charset=utf-8", code=200):
         data = body.encode("utf-8")
+        self._send_bytes(data, ctype=ctype, code=code)
+
+    def _send_bytes(self, data, ctype="application/octet-stream", code=200):
         self.send_response(code)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(data)))
@@ -1129,6 +1150,27 @@ class H(BaseHTTPRequestHandler):
     def do_GET(self):
         u = urllib.parse.urlparse(self.path)
         p = u.path
+        if p == "/portafolio":
+            self.send_response(301)
+            self.send_header("Location", "/portafolio/")
+            self.end_headers()
+            return
+        if p.startswith("/portafolio/"):
+            relative = p[len("/portafolio/"): ] or "editor.html"
+            asset = _portfolio_file(relative)
+            if asset is None:
+                return self._send("(recurso de portafolio no encontrado)",
+                                  "text/plain; charset=utf-8", 404)
+            try:
+                with open(asset, "rb") as fh:
+                    data = fh.read()
+            except OSError:
+                return self._send("(no se pudo leer el recurso)",
+                                  "text/plain; charset=utf-8", 404)
+            ctype = mimetypes.guess_type(asset)[0] or "application/octet-stream"
+            if ctype == "text/html":
+                ctype += "; charset=utf-8"
+            return self._send_bytes(data, ctype=ctype)
         if p == "/api/organismo":
             try:
                 return self._json(_organismo())
