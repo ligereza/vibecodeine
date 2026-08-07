@@ -397,6 +397,7 @@ def auditar_memoria(informes_dirs, backlog_path):
             continue
 
     origenes_faltantes = []
+    origenes_historicos_ausentes = []
     procedencia = collections.Counter()
     semillas_sistema = []
     intenciones_usuario = []
@@ -417,6 +418,8 @@ def auditar_memoria(informes_dirs, backlog_path):
         if not directorio:
             if tipo != "semilla_sistema":
                 origenes_faltantes.append(entrada.get('id'))
+                if entrada.get('origen_informe'):
+                    origenes_historicos_ausentes.append(entrada.get('id'))
             continue
         documento = None
         try:
@@ -445,11 +448,15 @@ def auditar_memoria(informes_dirs, backlog_path):
         'preguntas_duplicadas': duplicados(hashes),
         'slugs_duplicados': duplicados(slugs),
         'origenes_faltantes': origenes_faltantes,
+        'origenes_historicos_ausentes': origenes_historicos_ausentes,
         'procedencia': dict(sorted(procedencia.items())),
         'semillas_sistema': semillas_sistema,
         'intenciones_usuario': intenciones_usuario,
         'fuentes_desconocidas': fuentes_desconocidas,
         'entidades_bloqueadas': entidades_bloqueadas,
+        'bloquea_produccion': bool(
+            fuentes_desconocidas or entidades_bloqueadas or duplicados(slugs)
+        ),
         'accion': ('revisar_memoria' if (origenes_faltantes or
                    fuentes_desconocidas or entidades_bloqueadas or
                    duplicados(slugs)) else 'sin_huecos'),

@@ -191,7 +191,7 @@ def _memory_audit_data():
 
 def _memory_requires_review():
     data = _memory_audit_data()
-    return bool(data.get("accion") == "revisar_memoria")
+    return bool(data.get("bloquea_produccion", False))
 
 
 def _corpus_files():
@@ -449,8 +449,15 @@ def _run_local_idle(payload):
             "states": data.get("estados", {}),
             "duplicate_slugs": data.get("slugs_duplicados", []),
             "missing_origins": data.get("origenes_faltantes", []),
+            "historical_missing_origins": data.get(
+                "origenes_historicos_ausentes", []),
             "blocked_entities": data.get("entidades_bloqueadas", []),
-            "next_action": "classify duplicates and restore missing lineage manually",
+            "blocks_production": data.get("bloquea_produccion", False),
+            "next_action": (
+                "repair historical references without blocking production"
+                if not data.get("bloquea_produccion") else
+                "classify critical gaps before producing more research"
+            ),
         }
         _append_jsonl(IDLE_MEMORY_AUDITS, row)
         return json.dumps({"ok": True, "local": True,
