@@ -23,9 +23,11 @@ Dos salidas:
 from __future__ import annotations
 
 import json
+import os
 import re
 
-FORMATOS = ("informe", "ensayo", "revision", "exposicion", "curatoria")
+FORMATOS = ("informe", "ensayo", "revision", "exposicion", "curatoria",
+            "oportunidad")
 
 # Las siete exigencias, en el orden en que un lector las encuentra.
 EXIGENCIAS = (
@@ -69,6 +71,31 @@ SISTEMA_CURATORIA = (
     "TILDES, en Markdown. No haces un informe academico ni un ensayo: lees "
     "obra, archivo, familia visual, montaje posible y limites de publicacion. "
     "Separas descripcion, interpretacion y decision curatorial.")
+
+SISTEMA_OPORTUNIDAD = (
+    "Eres un investigador de oportunidades para un artista y disenador. "
+    "Escribes en espanol correcto CON TILDES, en Markdown. Solo presentas "
+    "oportunidades verificables, separas fuente oficial de indicios y nunca "
+    "inventas requisitos, fechas, montos o compatibilidad.")
+
+
+def _artist_context_hint() -> str:
+    """Load only local, user-approved context for opportunity prompts."""
+    path = os.environ.get(
+        "MAK_ARTIST_CONTEXT", os.path.expanduser("~/plataforma/artist_context.json"))
+    try:
+        with open(path, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, ValueError):
+        return ""
+    if not isinstance(data, dict):
+        return ""
+    public = {
+        "identity": data.get("identity", {}),
+        "direction": data.get("direction", {}),
+    }
+    return "\n\nCONTEXTO ARTISTICO LOCAL (no publicar):\n%s" % json.dumps(
+        public, ensure_ascii=False, indent=1)[:5000]
 
 # ---------------------------------------------------------------- informe
 # El otro formato. Hasta el 2026-08-01 su prompt era UNA LINEA pidiendo cinco
@@ -260,6 +287,30 @@ def prompt_curatoria(tema: str, findings, sources, consultas=None) -> str:
            if consultas else
            "\n\nCONSULTAS REALIZADAS: no se registraron.")
     )
+
+
+def prompt_oportunidad(tema: str, findings, sources, consultas=None) -> str:
+    """Prompt for an evidence-first opportunity card."""
+    import json as _json
+    return (
+        "Escribe una FICHA DE OPORTUNIDAD, no un ensayo ni una lista generica.\n\n"
+        "Secciones obligatorias:\n"
+        "1. OPORTUNIDAD: nombre y tipo (fondo, beca, residencia, cliente o colaboracion).\n"
+        "2. ENCAJE: por que podria servir a este artista, marcado como inferencia.\n"
+        "3. ELEGIBILIDAD: solo requisitos presentes en las fuentes.\n"
+        "4. FECHA Y MONTO: fecha, zona horaria y monto; si faltan, escribe no especificado.\n"
+        "5. FUENTE OFICIAL: URL primaria o declara que solo hay indicios.\n"
+        "6. SIGUIENTE ACCION: una accion concreta y verificable.\n"
+        "7. RIESGO: datos faltantes, incompatibilidad o fecha vencida.\n\n"
+        "No recomienda contactar ni postular sin aprobacion humana.\n"
+        'TEMA: "%s"\n\nHALLAZGOS:\n%s\n\nFUENTES:\n%s%s%s'
+        % (tema,
+           _json.dumps(findings, ensure_ascii=False, indent=1)[:14000],
+           "\n".join(sources),
+           ("\n\nCONSULTAS REALIZADAS:\n" +
+            "\n".join("- %s" % c for c in consultas)) if consultas else
+           "\n\nCONSULTAS REALIZADAS: no se registraron.",
+           _artist_context_hint()))
 
 
 # --------------------------------------------------- preguntas abiertas

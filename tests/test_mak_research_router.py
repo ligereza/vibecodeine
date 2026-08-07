@@ -141,3 +141,13 @@ def test_research_profile_accepts_essay_without_public_promotion():
         "action": "draft_report",
     }]}
     assert R.validate_profile_result(profile, result) == "accept"
+
+
+def test_fondart_routes_to_opportunity_card_not_generic_report():
+    route = R.route_research_task(
+        "multiplicar", "Fondart convocatoria para artista visual")
+    assert route.domain == "opportunities"
+    assert route.intent == "opportunity"
+    assert route.formato == "oportunidad"
+    assert route.required_fields == (
+        "opportunity", "eligibility", "deadline", "source", "next_action")

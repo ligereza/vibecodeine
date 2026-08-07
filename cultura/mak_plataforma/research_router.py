@@ -32,6 +32,8 @@ OUTPUT_CONTRACTS = {
     "exposicion": ("thesis", "audience", "copy", "visual_proposal"),
     "ensayo": ("thesis", "counterreading", "chronology", "argument"),
     "ledger": ("verdict", "evidence", "next_action"),
+    "oportunidad": ("opportunity", "eligibility", "deadline", "source",
+                     "next_action"),
 }
 
 
@@ -82,6 +84,15 @@ DEPARTMENT_PROFILES = {
         "allowed_formats": ("ensayo", "informe"),
         "required_evidence": "mixed_sources",
         "promotion_actions": ("draft_report",),
+    },
+    "opportunities": {
+        "destination": "mak",
+        "evidence": "official_source",
+        "judge": "source_gate",
+        "formats": ("oportunidad",),
+        "allowed_formats": ("oportunidad",),
+        "required_evidence": "official_source",
+        "promotion_actions": ("verify_source", "triangulate", "draft_report"),
     },
 }
 
@@ -178,6 +189,14 @@ ESSAY_TERMS = (
     "poetica", "paradigma", "mito", "retorica", "subcultura",
 )
 
+OPPORTUNITY_TERMS = (
+    "fondart", "fondos de cultura", "fondos concursables", "fondos del estado",
+    "postulacion", "postulaciones", "convocatoria", "convocatorias", "beca",
+    "becas", "residencia artistica", "residencias", "premio artistico",
+    "open call", "oportunidad", "financiamiento", "grant", "cliente",
+    "buscar trabajo", "oferta de trabajo", "nicho", "colaboracion",
+)
+
 
 def route_research_task(verbo: str, tema: str, factual_detector=None) -> ResearchRoute:
     """Return the stable research product route for a work item.
@@ -194,6 +213,9 @@ def route_research_task(verbo: str, tema: str, factual_detector=None) -> Researc
         except Exception:  # noqa: BLE001 - routing must degrade to local rules
             is_factual = False
 
+    if _has_any(folded, OPPORTUNITY_TERMS):
+        return ResearchRoute("opportunities", "opportunity", "oportunidad", "corto",
+                             "opportunities need eligibility, deadline and official source")
     if is_factual or _has_any(folded, RD_TERMS):
         return ResearchRoute("rd", "factual_evidence", "informe", "corto",
                              "factual/RD work needs sources before prose")
