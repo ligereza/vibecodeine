@@ -43,11 +43,15 @@ Pasó el 2026-07-24: `10.195.40.198` → `10.134.166.149`.
 Son **dos sistemas independientes**. Ninguno depende del otro; si uno muere,
 el otro sigue como si nada.
 
-### XIO (teléfono) — PASIVO
-- **Solo escucha y registra. No manda NADA al rig, jamás.**
+### XIO (teléfono) — PASIVO EN ESTE SHOW
+- **En este kit solo escucha y registra. No manda NADA al rig.**
 - Listeners Art-Net/sACN/OSC + tile TC + setlist + JSONL + panel en pantalla.
 - **Si el teléfono muere, el show sigue completo**: pierdes el monitoreo y el
   registro, nada más. Ningún clip, luz ni timecode pasa por él.
+
+Esto describe DREF CHOCOLATE, no todo XIO. El plugin `showcontrol` puede ser
+activo en otro despliegue; revisa `xio/CAPACIDADES.md` y no lo habilites sin
+token, prueba de ruta y autorizacion del show.
 
 ### LAPTOP — ACTIVO (el show en sí)
 - **Chataigne**: recibe el LTC por la M-Audio y lo convierte a OSC `/timecode`.

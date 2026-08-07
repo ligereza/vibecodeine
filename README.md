@@ -205,13 +205,20 @@ so it survives PC-off and screen-off. It turns the phone into the team's router 
 supervisor, non-root charge limiter (USB port-role), two-layer self-heal (Shizuku + server), autonomous
 reboot/hotspot recovery, and `showcontrol` (OSC + Art-Net + sACN sender for VJ/lighting). Send-only, pure stdlib.
 
+The read-only surface is not the whole XIO server: `foh_monitor` and the MAK
+bridge observe state, while `showcontrol` is an active, guarded sender/receiver
+when that plugin is installed and enabled. See `xio/CAPACIDADES.md`; repository
+presence is not proof of Xiaomi deployment.
+
 ```bash
 cd xio/new && py server.py          # off-device dev run -> http://0.0.0.0:5000
 # on-device deploy: push to /sdcard/xio_termux, then run_server.sh (see xio/new/README.md)
 ```
 
-Security note: the server binds `0.0.0.0`, so every plugin (including `showcontrol` send routes) is reachable
-by any hotspot client. Fine on a trusted crew LAN; gate with a token before exposing to untrusted devices.
+Security note: the server binds `0.0.0.0`, so every loaded plugin (including
+`showcontrol` send routes) may be reachable by hotspot clients. Use the
+show-control token and explicit source limits before exposing active routes to
+untrusted devices; a trusted crew LAN is not an authorization mechanism.
 
 ### Web hub
 
