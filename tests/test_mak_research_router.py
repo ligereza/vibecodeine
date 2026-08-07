@@ -170,6 +170,28 @@ def test_fondart_routes_to_opportunity_card_not_generic_report():
         "opportunity", "eligibility", "deadline", "source", "next_action")
 
 
+def test_opportunity_profile_requires_url_evidence_for_official_source():
+    profile = R.profile_for_area("opportunity_radar")
+    result = {
+        "items": [{
+            "format": "oportunidad",
+            "evidence_kind": "official_source",
+            "evidence": ["context/artist_context.example.json"],
+            "files": ["context/artist_context.example.json"],
+            "action": "verify_source",
+            "product": {
+                "opportunity": "Fondart",
+                "eligibility": "artist",
+                "deadline": "2026-09-01",
+                "source": "example context",
+                "next_action": "verify official bases",
+            },
+        }],
+    }
+
+    assert R.validate_profile_result(profile, result) == "revise"
+
+
 def test_breathing_cycle_keeps_five_ways_of_knowing_separate():
     cases = [
         ("atender", "quien organizo el evento", "evidencia", "informe"),

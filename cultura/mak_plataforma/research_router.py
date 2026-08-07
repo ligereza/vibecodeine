@@ -163,6 +163,13 @@ def validate_profile_result(profile: dict | None, result: dict) -> str:
             return "reject"
         if evidence_kind != required_evidence:
             needs_revision = True
+        if profile.get("destination") == "mak" and profile.get(
+                "required_evidence") == "official_source":
+            evidence_urls = [str(value).strip().lower()
+                             for value in evidence if str(value).strip().startswith(
+                                 ("http://", "https://"))]
+            if not evidence_urls:
+                needs_revision = True
     return "revise" if needs_revision else "accept"
 
 

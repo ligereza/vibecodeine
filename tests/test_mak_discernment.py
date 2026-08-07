@@ -311,7 +311,7 @@ def test_ingest_promotes_verified_opportunity_to_pending_review_ledger(tmp_path)
 
     payload = {"items": [{
         "claim": "artist opportunity requires current source check",
-        "evidence": ["official source"],
+            "evidence": ["https://example.org/official-bases"],
         "files": ["cultura/mak_vigia/fuentes.json"],
         "confidence": "high",
         "action": "verify_source",
@@ -319,7 +319,8 @@ def test_ingest_promotes_verified_opportunity_to_pending_review_ledger(tmp_path)
         "format": "oportunidad",
         "evidence_kind": "official_source",
         "product": {"opportunity": "residency", "eligibility": "artist",
-                    "deadline": "unknown", "source": "official",
+                        "deadline": "2026-09-01",
+                        "source": "https://example.org/official-bases",
                     "next_action": "verify", "risk": "unknown"},
     }]}
     result = tandas.ingest_result(
