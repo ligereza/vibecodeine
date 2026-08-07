@@ -84,12 +84,23 @@ def rows() -> list[dict]:
 
 def api() -> dict:
     data = rows()
+    counts = {
+        state: sum(1 for row in data if row["promotion_state"] == state)
+        for state in ("pending_human", "candidate_curation", "human_revision", "excluded")
+    }
     return {
         "schema": "mak-reel-review-v1",
         "total": len(data),
         "pending_human": sum(1 for row in data if not row["human"]),
+        "counts": counts,
         "rows": data,
     }
+
+
+def curation_candidates() -> list[dict]:
+    """Return accepted candidates without mutating public curation."""
+    return [row for row in rows()
+            if row["promotion_state"] == "candidate_curation"]
 
 
 def media_path(name: str) -> Path | None:
@@ -135,7 +146,7 @@ textarea{width:100%;box-sizing:border-box;background:#0b0a08;color:#d0c9ba;borde
 <script>
 let showReviewed=false;
 const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-async function load(){const d=await fetch('/api/revision').then(r=>r.json());const rows=showReviewed?d.rows:d.rows.filter(r=>!r.human);document.querySelector('#meta').textContent=`${d.total} videos | ${d.pending_human} pendientes humanos | mostrando ${rows.length}`;document.querySelector('#grid').innerHTML=rows.map((r,i)=>`<article><img src="${r.sheet}" loading="lazy"><small>${esc(r.video)}</small><div class="status">modelo: ${esc(r.ollama_verdict)} | ${esc(r.provider_status)} | destino: ${esc(r.promotion_state)}</div><div>${esc(r.reason)}</div><textarea id="n${i}" placeholder="nota opcional"></textarea><div class="buttons"><button onclick="decide('${r.video}', 'accept', ${i})">aceptar</button><button onclick="decide('${r.video}', 'revise', ${i})">revisar</button><button onclick="decide('${r.video}', 'reject', ${i})">rechazar</button></div></article>`).join('')}
+async function load(){const d=await fetch('/api/revision').then(r=>r.json());const rows=showReviewed?d.rows:d.rows.filter(r=>!r.human);const c=d.counts||{};document.querySelector('#meta').textContent=`${d.total} videos | ${c.pending_human||0} pendientes | ${c.candidate_curation||0} candidatos | ${c.human_revision||0} en revisión | ${c.excluded||0} excluidos | mostrando ${rows.length}`;document.querySelector('#grid').innerHTML=rows.map((r,i)=>`<article><img src="${r.sheet}" loading="lazy"><small>${esc(r.video)}</small><div class="status">modelo: ${esc(r.ollama_verdict)} | ${esc(r.provider_status)} | destino: ${esc(r.promotion_state)}</div><div>${esc(r.reason)}</div><textarea id="n${i}" placeholder="nota opcional"></textarea><div class="buttons"><button onclick="decide('${r.video}', 'accept', ${i})">aceptar</button><button onclick="decide('${r.video}', 'revise', ${i})">revisar</button><button onclick="decide('${r.video}', 'reject', ${i})">rechazar</button></div></article>`).join('')}
 async function decide(video,decision,i){await fetch('/api/revision',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({video,decision,note:document.querySelector('#n'+i).value})});load()}
 load();
 </script>'''

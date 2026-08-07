@@ -21,6 +21,7 @@ def test_revision_marca_decision_sin_sobrescribir(monkeypatch, tmp_path):
     assert result["ok"] is True
     assert revision.api()["pending_human"] == 0
     assert revision.api()["rows"][0]["promotion_state"] == "candidate_curation"
+    assert len(revision.curation_candidates()) == 1
     assert revision.media_path("/123.jpg") == sheets / "123.jpg"
 
 
@@ -36,6 +37,7 @@ def test_reject_queda_excluido_de_curaduria(monkeypatch, tmp_path):
     row = revision.api()["rows"][0]
     assert row["promotion_state"] == "excluded"
     assert row["human"]["decision"] == "reject"
+    assert revision.curation_candidates() == []
 
 
 def test_revision_rechaza_traversal_y_decision_invalida(tmp_path, monkeypatch):
