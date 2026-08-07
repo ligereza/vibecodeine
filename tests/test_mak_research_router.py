@@ -168,3 +168,38 @@ def test_fondart_routes_to_opportunity_card_not_generic_report():
     assert route.formato == "oportunidad"
     assert route.required_fields == (
         "opportunity", "eligibility", "deadline", "source", "next_action")
+
+
+def test_breathing_cycle_keeps_five_ways_of_knowing_separate():
+    cases = [
+        ("atender", "quien organizo el evento", "evidencia", "informe"),
+        ("multiplicar", "curatoria de una obra ambigua", "interpretacion", "curatoria"),
+        ("multiplicar", "repasar una obra y sus debilidades", "critica", "revision"),
+        ("multiplicar", "presentar una obra como post de Instagram", "interpretacion", "exposicion"),
+        ("multiplicar", "genealogia cultural de una practica", "argumento", "ensayo"),
+    ]
+    for verbo, tema, modo, formato in cases:
+        route = R.route_research_task(verbo, tema)
+        assert route.epistemic_mode == modo
+        assert route.formato == formato
+
+
+def test_breathing_cycle_promotes_only_the_right_evidence_contract():
+    cases = [
+        ("rd_evidence", "informe", "primary_source", "verify_source", "accept"),
+        ("iskvw_curation", "informe", "artwork_context", "curate", "reject"),
+        ("mak_quality", "revision", "local_corpus", "review", "revise"),
+        ("research", "ensayo", "mixed_sources", "draft_report", "accept"),
+    ]
+    for area, formato, evidence_kind, action, verdict in cases:
+        profile = R.profile_for_area(area) or R.DEPARTMENT_PROFILES["research"]
+        result = {"items": [{
+            "format": formato,
+            "evidence_kind": evidence_kind,
+            "evidence": (["local-or-primary-evidence"]
+                          if verdict == "accept" else []),
+            "files": (["local/file.md"]
+                      if verdict == "accept" else []),
+            "action": action,
+        }]}
+        assert R.validate_profile_result(profile, result) == verdict
