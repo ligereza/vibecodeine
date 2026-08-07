@@ -725,8 +725,75 @@ def correr(fuentes=None, estado_dir=ESTADO_DIR, abrir=None, notificar=True,
     return resultados
 
 
-def encolar_oportunidades(resultados, ledger_path):
-    """Send new listings to the shared review queue, never to an LLM."""
+def _cargar_contexto_artista():
+    ruta = os.environ.get("MAK_ARTIST_CONTEXT", "")
+    if not ruta:
+        ruta = os.path.expanduser("~/plataforma/artist_context.json")
+    try:
+        with open(ruta, encoding="utf-8") as fh:
+            datos = json.load(fh)
+        return datos if isinstance(datos, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def priorizar_oportunidades(items, contexto=None):
+    """Order listings by artist fit without claiming eligibility or truth."""
+    contexto = contexto or {}
+    direction = contexto.get("direction", {})
+    desired_terms = [plegar(str(value)) for value in
+                     direction.get("opportunities", []) if str(value).strip()]
+    ranked = []
+    for index, item in enumerate(items):
+        title = str(item.get("titulo") or "")
+        source = plegar(str(item.get("fuente") or ""))
+        text = plegar(title + " " + source)
+        nursing_lane = any(word in text for word in (
+            "enfermer", "tens", "hospital", "salud", "residencia familiar"))
+        score = 0
+        reasons = []
+        practice_words = (
+                "fondart", "fondo de cultura", "fondos de cultura",
+                "res artis", "open call", "convocatoria", "artist", "artista",
+                "beca")
+        if (any(word in text for word in practice_words) or
+                (not nursing_lane and any(word in text for word in
+                                          ("residencia", "residencias")))):
+            score += 5
+            reasons.append("practice_or_funding")
+        if any(word in text for word in ("musica", "music", "lanzamiento",
+                                         "diseno", "design", "comision")):
+            score += 3
+            reasons.append("design_or_music")
+        if nursing_lane:
+            reasons.append("private_nursing_lane")
+            if "residencia familiar" in text:
+                score += 1
+        desired_hits = [term for term in desired_terms if term and term in text]
+        if desired_hits:
+            score += 2
+            reasons.append("artist_context:%s" % ",".join(desired_hits[:2]))
+        if str(item.get("url") or "").startswith(("http://", "https://")):
+            score += 1
+            reasons.append("has_source_url")
+        ranked.append((score, index, dict(item), reasons))
+    ranked.sort(key=lambda value: (-value[0], value[1]))
+    output = []
+    for score, _, item, reasons in ranked:
+        item["priority_score"] = score
+        item["priority_reasons"] = reasons or ["needs_manual_fit"]
+        item["priority_lane"] = (
+            "private_nursing" if "private_nursing_lane" in reasons else
+            "artist" if any(reason in reasons for reason in
+                             ("practice_or_funding", "design_or_music")) else
+            "general")
+        output.append(item)
+    return output
+
+
+def encolar_oportunidades(resultados, ledger_path, max_per_source=8,
+                          contexto=None):
+    """Send ranked listings to the shared review queue, never to an LLM."""
     for ruta in ("/home/mak/plataforma",
                  os.path.join(os.path.dirname(BASE), "mak_plataforma")):
         if os.path.isdir(ruta) and ruta not in sys.path:
@@ -736,10 +803,19 @@ def encolar_oportunidades(resultados, ledger_path):
     except Exception as exc:  # noqa: BLE001 - watcher must remain observable
         return {"queued": 0, "duplicates": 0,
                 "errors": ["ledger_unavailable:%s" % type(exc).__name__]}
-    queued = duplicates = 0
+    queued = duplicates = deferred = 0
+    queued_by_source = {}
     errors = []
+    contexto = _cargar_contexto_artista() if contexto is None else contexto
     for resultado in resultados:
-        for item in resultado.get("nuevos", []):
+        source_items = priorizar_oportunidades(
+            [dict(item, fuente=resultado.get("id", ""))
+             for item in resultado.get("nuevos", [])], contexto)
+        for item in source_items:
+            source_id = str(resultado.get("id", ""))
+            if queued_by_source.get(source_id, 0) >= max(1, int(max_per_source)):
+                deferred += 1
+                continue
             ok, item_errors, row = opportunity_from_vigia(
                 item, source="vigia:%s" % resultado.get("id", ""),
                 path=ledger_path)
@@ -749,7 +825,9 @@ def encolar_oportunidades(resultados, ledger_path):
                 duplicates += 1
             else:
                 queued += 1
-    return {"queued": queued, "duplicates": duplicates, "errors": errors}
+                queued_by_source[source_id] = queued_by_source.get(source_id, 0) + 1
+    return {"queued": queued, "duplicates": duplicates, "deferred": deferred,
+            "errors": errors}
 
 
 def _notificar(resultados):
@@ -787,6 +865,8 @@ def main(argv=None):
     ap.add_argument("--solo", default="", help="id de una fuente")
     ap.add_argument("--ledger-oportunidades", default="",
                     help="shared ledger path for new human-review opportunities")
+    ap.add_argument("--max-oportunidades-fuente", type=int, default=8,
+                    help="maximo de nuevas oportunidades por fuente y corrida")
     ap.add_argument("--max-vistos", type=int, default=MAX_VISTOS,
                     help="registros en vistos.jsonl antes de compactar")
     ap.add_argument("--compactar", action="store_true",
@@ -814,8 +894,9 @@ def main(argv=None):
               % (marca, r["id"], r["codigo"], r["n_items"], len(r["nuevos"]),
                  r["alerta"] or r["error"]))
     if args.ledger_oportunidades:
-        print(json.dumps(encolar_oportunidades(res, args.ledger_oportunidades),
-                         ensure_ascii=False))
+        print(json.dumps(encolar_oportunidades(
+            res, args.ledger_oportunidades,
+            max_per_source=args.max_oportunidades_fuente), ensure_ascii=False))
     return 1 if roto else 0
 
 

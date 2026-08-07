@@ -3235,7 +3235,9 @@ class H(BaseHTTPRequestHandler):
                 import memoria
                 q = urllib.parse.parse_qs(u.query)
                 umbral = float((q.get("umbral") or ["0.5"])[0])
-                return self._json_response(memoria.grafo_semantico(umbral=umbral))
+                limite = (q.get("limite") or ["0"])[0]
+                grafo = memoria.grafo_semantico(umbral=umbral)
+                return self._json_response(memoria.limitar_grafo(grafo, limite))
             except Exception as e:  # noqa: BLE001 - viz es best-effort
                 return self._json_response({"nodes": [], "edges": [],
                                             "error": str(e)[:200]}, 200)

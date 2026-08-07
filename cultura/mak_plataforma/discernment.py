@@ -20,6 +20,15 @@ REQUIRED = ("schema", "verdict", "domain", "reason", "risks",
 OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
 OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "gemma3:4b")
 
+
+def ollama_timeout():
+    """Return a bounded local-judge timeout so a cheap model cannot stall MAK."""
+    try:
+        value = float(os.environ.get("MAK_OLLAMA_TIMEOUT", "45"))
+    except ValueError:
+        value = 45.0
+    return max(5.0, min(value, 180.0))
+
 AREA_DOMAINS = {
     "mak_quality": "mak",
     "rd_evidence": "rd",
@@ -246,7 +255,7 @@ def deterministic_review(area, payload):
     }
 
 
-def call_ollama(prompt, base_url=OLLAMA_BASE_URL, model=OLLAMA_MODEL, timeout=120,
+def call_ollama(prompt, base_url=OLLAMA_BASE_URL, model=OLLAMA_MODEL, timeout=None,
                 max_tokens=700, temperature=0.1, response_format=None):
     body_payload = {
         "model": model,
@@ -262,7 +271,7 @@ def call_ollama(prompt, base_url=OLLAMA_BASE_URL, model=OLLAMA_MODEL, timeout=12
         data=body,
         method="POST",
         headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=timeout) as response:
+    with urllib.request.urlopen(req, timeout=ollama_timeout() if timeout is None else timeout) as response:
         data = json.loads(response.read().decode("utf-8", "replace"))
     return data.get("response", "")
 

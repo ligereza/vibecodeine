@@ -60,6 +60,16 @@ def test_profile_prompt_requires_exact_evidence_kind():
     assert "evidence_kind DEBE ser exactamente: artwork_context" in brief["prompt"]
 
 
+def test_area_prompts_name_the_failure_conditions_for_quality_and_opportunities():
+    quality = tandas.build_brief("mak_quality", "quality01", providers=["watsonx"])
+    opportunity = tandas.build_brief("opportunity_radar", "opportunity01",
+                                     providers=["watsonx"])
+    assert "format=revision" in quality["prompt"]
+    assert "evidence_kind=local_corpus" in quality["prompt"]
+    assert "elegibilidad concreta" in opportunity["prompt"]
+    assert "source como URL oficial" in opportunity["prompt"]
+
+
 def test_build_brief_accepts_round_instruction():
     brief = tandas.build_brief(
         "mak_quality", "r002", providers=["watsonx"],

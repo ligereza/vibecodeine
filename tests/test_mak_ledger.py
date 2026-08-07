@@ -20,6 +20,20 @@ def test_append_item_accepts_typed_domain_record(tmp_path):
     assert ok is True
     assert errors == []
     assert json.loads(path.read_text(encoding="utf-8")) == row
+    assert row["lane"] == "trabajo"
+    assert row["decision"] == "revisar"
+
+
+def test_decision_queue_rejects_unknown_lane_or_decision():
+    ok, errors, _row = ledger.validate_item({
+        "domain": "rd", "type": "task", "claim": "x",
+        "evidence": [], "files": [], "confidence": "unknown",
+        "action": "verify_source", "lane": "publico", "decision": "inventar",
+    })
+
+    assert ok is False
+    assert "bad_lane" in errors
+    assert "bad_decision" in errors
 
 
 def test_reject_requires_reason_and_valid_domain_action():
@@ -93,6 +107,19 @@ def test_review_ledger_preserves_judge_trace_metadata(tmp_path):
     assert row["metadata"]["fallback"] == "True"
 
 
+def test_review_ledger_keeps_official_evidence_on_accept(tmp_path):
+    path = tmp_path / "common_ledger.jsonl"
+    ok, errors, row = ledger.append_review(
+        {"verdict": "accept", "domain": "opportunities",
+         "reason": "official page and date verified", "evidence": [
+             "https://official.example/call"], "risks": []},
+        "opportunity", path=str(path))
+
+    assert ok is True
+    assert errors == []
+    assert row["evidence"] == ["https://official.example/call"]
+
+
 def test_summary_counts_by_domain_type_and_action(tmp_path):
     path = tmp_path / "common_ledger.jsonl"
     ledger.append_item({
@@ -109,6 +136,38 @@ def test_summary_counts_by_domain_type_and_action(tmp_path):
     assert summary["by_domain"] == {"svg": 2}
     assert summary["by_type"] == {"idea": 1, "reject": 1}
     assert summary["by_action"] == {"prototype": 1, "reject": 1}
+
+
+def test_summary_counts_by_lane_and_decision(tmp_path):
+    path = tmp_path / "common_ledger.jsonl"
+    ledger.append_item({
+        "domain": "svg", "type": "artifact", "claim": "icon",
+        "evidence": ["icon.svg"], "confidence": "high", "action": "prototype",
+        "decision": "hacer",
+    }, path=str(path))
+    ledger.append_item({
+        "domain": "rd", "type": "task", "claim": "source",
+        "evidence": ["https://example.org"], "confidence": "medium",
+        "action": "verify_source", "decision": "revisar",
+    }, path=str(path))
+    summary = ledger.summarize(str(path))
+    assert summary["by_lane"] == {"obra": 1, "trabajo": 1}
+    assert summary["by_decision"] == {"hacer": 1, "revisar": 1}
+
+
+def test_summary_projects_legacy_rows_without_mutating_storage(tmp_path):
+    path = tmp_path / "common_ledger.jsonl"
+    path.write_text(json.dumps({
+        "schema": ledger.SCHEMA_VERSION, "id": "legacy", "domain": "rd",
+        "type": "task", "claim": "old source", "evidence": [], "files": [],
+        "confidence": "unknown", "action": "verify_source",
+        "metadata": {"queue_status": "pending_human"},
+    }) + "\n", encoding="utf-8")
+    summary = ledger.summarize(str(path))
+    assert summary["by_lane"] == {"trabajo": 1}
+    assert summary["by_decision"] == {"hacer": 1}
+    assert summary["last"][0]["lane"] == "trabajo"
+    assert summary["last"][0]["next_action"] == "verify source and date"
 
 
 def test_tandas_cli_validate_can_write_common_ledger(tmp_path):
@@ -156,3 +215,21 @@ def test_audit_deduplicates_quarantine(tmp_path):
     row = {"original_id": "abc", "missing_files": ["x.py"]}
     assert len(ledger.write_quarantine([row], str(quarantine_path))) == 1
     assert ledger.write_quarantine([row], str(quarantine_path)) == []
+
+
+def test_classify_quarantine_never_restores_and_finds_unique_candidate(tmp_path):
+    candidate = tmp_path / "candidate.py"
+    candidate.write_text("pass\n", encoding="utf-8")
+    rows = [
+        {"original_id": "one", "missing_files": ["old/candidate.py"]},
+        {"original_id": "two", "missing_files": ["gone.py"]},
+        {"original_id": "three", "missing_files": ["[redacted]"]},
+    ]
+
+    classified = ledger.classify_quarantine(rows, roots=[str(tmp_path)])
+
+    assert [item["disposition"] for item in classified] == [
+        "review_only_unique", "stale_reject", "reject_secret"]
+    assert classified[0]["candidate_paths"] == [str(candidate)]
+    assert all("status" not in item or item["status"] == "quarantined"
+               for item in classified)
