@@ -281,8 +281,15 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction="",
     )
     quality_hint = (
         "- En mak_quality no dejes campos product vacios: si no detectas un "
-        "defecto usa defect_class=sin_defecto y explica la decision en verdict.\n"
+        "defecto usa defect_class=sin_defecto y explica la decision en verdict. "
+        "Usa exactamente format=revision y evidence_kind=local_corpus.\n"
         if area == "mak_quality" else ""
+    )
+    opportunity_hint = (
+        "- En opportunity_radar product debe incluir una elegibilidad concreta, "
+        "una fecha verificable, source como URL oficial y next_action humana; "
+        "si falta cualquiera, no inventes el dato: usa revise/reject.\n"
+        if area == "opportunity_radar" else ""
     )
     profile_block = ""
     item_profile_fields = ""
@@ -333,6 +340,7 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction="",
         "- No mezcles RD con iskvw; no conviertas curatoria en research.\n"
         "%s"
         "%s"
+        "%s"
         "- No pidas crear una herramienta si ya existe una ruta probable.\n"
         "- Cada item debe poder sobrevivir cuando Watsonx/AWS ya no existan.\n"
         "- Cada entrada files debe existir en el material entregado; nunca inventes nombres.\n"
@@ -347,6 +355,7 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction="",
            item_profile_fields,
            curation_guard,
            quality_hint,
+           opportunity_hint,
            json.dumps({field: "" for field in PRODUCT_CONTRACTS[area]},
                       ensure_ascii=False))
     )
