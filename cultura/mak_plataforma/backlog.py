@@ -180,6 +180,75 @@ def preguntas_del_informe(dir_path, filename, contenido):
 
 _STAMP_RE = re.compile(r'^\d{8}-\d{6}-')
 
+# Una pregunta derivada no puede convertir una entidad nombrada por el modelo
+# en un hecho.  El filtro es deliberadamente conservador: solo bloquea cuando
+# el propio expediente repite que no hay evidencia y ninguna fuente consultada
+# identifica a la entidad.  No intenta resolver personas con regex.
+_NOMBRE_COMPUESTO_RE = re.compile(
+    r"\b([A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ'-]*\s+[A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ'-]*)\b"
+)
+_NEGACION_ENTIDAD_RE = re.compile(
+    r"(?:no\s+(?:se\s+)?(?:encontr[oó]|menciona|identific[oó]|proporciona)|"
+    r"sin\s+(?:informaci[oó]n|evidencia)|informaci[oó]n\s+limitada|"
+    r"posible\s+falta\s+de\s+presencia)",
+    re.IGNORECASE,
+)
+
+
+def _entidades_compuestas(texto):
+    """Extrae candidatos nominales sin afirmar que sean entidades reales."""
+    return {m.group(1).strip() for m in _NOMBRE_COMPUESTO_RE.finditer(texto or '')}
+
+
+def validar_pregunta_derivada(pregunta, documento=None):
+    """Decide si una pregunta puede volver a alimentar el backlog.
+
+    Devuelve ``(True, '')`` o ``(False, razon)``.  Si el expediente muestra
+    que un nombre compuesto no aparece en títulos/URLs de las fuentes y además
+    declara que no encontró información sobre él, se bloquea la propagación.
+    La pregunta queda registrada en el estado de cosecha, no se borra.
+    """
+    if not isinstance(documento, dict):
+        return True, ''
+
+    entidades = _entidades_compuestas(pregunta)
+    if not entidades:
+        return True, ''
+
+    hallazgos = documento.get('hallazgos')
+    if not isinstance(hallazgos, list):
+        hallazgos = documento.get('findings')
+    if not isinstance(hallazgos, list):
+        return True, ''
+
+    etiquetas_fuente = []
+    cuerpo_evidencia = []
+    for hallazgo in hallazgos:
+        if not isinstance(hallazgo, dict):
+            continue
+        for clave in ('titulo', 'title', 'fuente', 'url'):
+            valor = hallazgo.get(clave)
+            if isinstance(valor, str):
+                etiquetas_fuente.append(valor)
+        for clave in ('contenido', 'content', 'analysis'):
+            valor = hallazgo.get(clave)
+            if isinstance(valor, (str, dict, list)):
+                cuerpo_evidencia.append(json.dumps(valor, ensure_ascii=False)
+                                        if not isinstance(valor, str) else valor)
+
+    etiquetas = _norm(' '.join(etiquetas_fuente))
+    cuerpo = ' '.join(cuerpo_evidencia)
+    for entidad in entidades:
+        if _norm(entidad) in etiquetas:
+            continue
+        posiciones = [m.start() for m in re.finditer(
+            re.escape(entidad), cuerpo, re.IGNORECASE)]
+        if posiciones and any(_NEGACION_ENTIDAD_RE.search(
+                cuerpo[max(0, pos - 100):pos + len(entidad) + 160])
+                for pos in posiciones):
+            return False, 'entidad_no_verificada:%s' % entidad
+    return True, ''
+
 
 def _slug_de_informe(filename):
     """Slug de un archivo de informe: research.py los nombra STAMP-slug.md."""
@@ -341,9 +410,17 @@ def cosechar(informes_dirs, backlog_path, max_por_informe=3, profundidad_max=3, 
                     continue
 
                 preguntas = preguntas_del_informe(dir_path, filename, contenido)
+                documento = None
+                ruta_json = os.path.join(dir_path, filename[:-3] + '.json')
+                try:
+                    with open(ruta_json, 'r', encoding='utf-8') as f:
+                        documento = json.load(f)
+                except (OSError, ValueError, json.JSONDecodeError):
+                    pass
 
                 # Tomar max_por_informe, dedup
                 agregadas_esta_run = 0
+                bloqueadas_esta_run = []
                 for pregunta in preguntas:
                     if agregadas_esta_run >= max_por_informe:
                         break
@@ -356,6 +433,14 @@ def cosechar(informes_dirs, backlog_path, max_por_informe=3, profundidad_max=3, 
                     # este slug, la pregunta ya fue hecha -- no se re-encola.
                     s = slug(pregunta) if slug is not None else None
                     if s is not None and s in ocupados:
+                        continue
+
+                    valida, razon = validar_pregunta_derivada(pregunta, documento)
+                    if not valida:
+                        bloqueadas_esta_run.append({
+                            'pregunta': pregunta,
+                            'razon': razon,
+                        })
                         continue
 
                     # Nueva entrada
@@ -375,7 +460,10 @@ def cosechar(informes_dirs, backlog_path, max_por_informe=3, profundidad_max=3, 
                     agregadas_esta_run += 1
 
                 # Marcar como procesado
-                estado_proc[clave] = True
+                estado_proc[clave] = {
+                    'procesado': True,
+                    'bloqueadas': bloqueadas_esta_run,
+                }
         except OSError:
             continue
 
