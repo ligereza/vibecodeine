@@ -135,8 +135,10 @@ def validate_profile_result(profile: dict | None, result: dict) -> str:
         if not isinstance(item, dict):
             return "reject"
         declared_format = item.get("format")
-        if declared_format and declared_format not in allowed_formats:
-            return "reject"
+        if declared_format not in allowed_formats:
+            if declared_format:
+                return "reject"
+            needs_revision = True
         if item.get("action") not in allowed_actions:
             return "reject"
         evidence = item.get("evidence") or []

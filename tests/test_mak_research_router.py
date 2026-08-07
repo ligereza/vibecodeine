@@ -129,6 +129,17 @@ def test_profile_revises_mak_review_without_local_evidence():
     assert R.validate_profile_result(profile, result) == "revise"
 
 
+def test_profile_revises_missing_format_instead_of_promoting_implicitly():
+    profile = R.profile_for_area("rd_evidence")
+    result = {"items": [{
+        "evidence_kind": "primary_source",
+        "evidence": ["https://www.gob.cl/fuente"],
+        "files": ["src/flujo/rd/database.py"],
+        "action": "verify_source",
+    }]}
+    assert R.validate_profile_result(profile, result) == "revise"
+
+
 def test_research_profile_accepts_essay_without_public_promotion():
     route = R.route_research_task(
         "multiplicar", "genealogia cultural de la tilde")

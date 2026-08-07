@@ -491,7 +491,13 @@ def ingest_result(payload, area, common_path=COMMON_LEDGER, source="external",
             review["risks"] = list(review.get("risks", [])) + [
                 "profile promotion policy failed"]
     _review_ok, review_append_errors, _review_row = common_ledger.append_review(
-        review, area, path=common_path, source="local_review:%s" % source)
+        review, area, path=common_path, source="local_review:%s" % source,
+        metadata={
+            "provider": source,
+            "reviewer": meta.get("reviewer", ""),
+            "fallback": bool(meta.get("fallback", False)),
+            "profile_verdict": profile_verdict,
+        })
     if review_append_errors:
         return {"ok": False, "status": "review_ledger_error",
                 "errors": review_append_errors, "review": review,
@@ -585,14 +591,18 @@ def _repair_product_payload(area, payload, provider, model, max_tokens):
 def run_external_batch(area, batch_id, provider, paths=None, model=None,
                        out_dir=None, common_path=COMMON_LEDGER,
                        batch_path=LEDGER, use_ollama=True, max_tokens=2500,
-                       instruction=""):
+                       instruction="", max_items=5):
     """Run one external provider, persist raw output, then ingest through the gate."""
     if external_providers is None:
         raise RuntimeError("external_providers_unavailable")
     brief = build_brief(area, batch_id, paths=paths,
                         providers=[provider, "ollama"],
                         include_evidence=True, instruction=instruction)
-    prompt = brief["prompt"]
+    budget = max(1, int(max_items))
+    prompt = brief["prompt"] + (
+        "\nPRESUPUESTO DURO DE ESTA TANDA: devuelve como maximo %d items. "
+        "Si hay mas hallazgos, conserva solo los mas verificables y deja "
+        "constancia en reject_reason de lo omitido.\n" % budget)
     try:
         kwargs = {}
         if provider == "ollama":
@@ -635,6 +645,18 @@ def run_external_batch(area, batch_id, provider, paths=None, model=None,
         }, path=batch_path)
         return {"ok": False, "status": "invalid", "raw_path": raw_path,
                 "errors": ["provider_output_not_json"]}
+    if len(payload.get("items", [])) > budget:
+        error = "items_over_budget:%d>%d" % (len(payload["items"]), budget)
+        append_ledger({
+            "area": area,
+            "batch_id": batch_id,
+            "provider": provider,
+            "status": "revise",
+            "items": 0,
+            "errors": [error],
+        }, path=batch_path)
+        return {"ok": False, "status": "revise", "raw_path": raw_path,
+                "errors": [error]}
     repair_raw_path = ""
     product_ok, product_errors = validate_product_contract(payload, area)
     if not product_ok:

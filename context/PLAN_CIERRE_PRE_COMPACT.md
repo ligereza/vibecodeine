@@ -14,3 +14,20 @@ Este es el plan director vigente. No crear otra herramienta ni otra ronda extern
 10. Cerrar con tests focalizados, `flujo verify`, ledger no vacio, evidencia real de MAK y memoria final.
 
 Criterio de cierre: MAK detecta, clasifica, rechaza, conserva evidencia y deja una siguiente accion humana clara; no se considera autonomo por generar mas texto.
+
+## Integraciones de segundo nivel
+
+Estas capas se agregan al cierre, sin crear otro framework ni duplicar
+`tandas.py`, `ledger.py`, `discernment.py` o `benchmark.py`.
+
+11. **Degradacion comprobable**: ejecutar Watsonx/AWS caidos con Ollama y luego Ollama caido con el juez determinista; ningun camino puede promover hechos sin evidencia.
+12. **Presupuesto por area**: imponer limites de tokens, tamano de evidencia, timeout, reintentos y cantidad de items; registrar el motivo de cada corte.
+13. **Contratos negativos**: cada perfil debe demostrar casos `accept`, `revise` y `reject`; especialmente RD primario, iskvw publico/curatoria y oportunidades.
+14. **Trazabilidad de decision**: guardar proveedor, lote, evidencia, juez, version de politica y siguiente accion humana en la misma cadena de ledger.
+15. **Memoria activa**: detectar duplicados, contradicciones, evidencia vencida y entradas sin consumidor antes de permitir otra produccion.
+16. **Respiracion por dominio**: demostrar ciclos independientes para RD, iskvw, SVG, Adobe y radar artistico; prohibir una salida generica para todos.
+17. **Autonomia con freno**: el cron solo atiende cola real, cuarentena, reparacion o medicion; si no existe proposito, ejecuta revision ejecutiva y no inventa ensayos.
+18. **Criterio de nivel superior**: medir decisiones correctas, artefactos reutilizables, evidencia conservada y reduccion del caos; no contar informes como exito.
+
+Orden director: cerrar primero los gates 1–10; luego implementar 11–18 en bloques
+medibles, empezando por degradacion, presupuesto y contratos negativos.

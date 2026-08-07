@@ -311,6 +311,36 @@ def test_run_external_batch_repairs_product_once(monkeypatch, tmp_path):
     assert result["repair_raw_path"]
 
 
+def test_run_external_batch_rejects_items_over_budget(monkeypatch, tmp_path):
+    batch = tmp_path / "budget.jsonl"
+
+    def oversized_call(*_args, **_kwargs):
+        item = {
+            "claim": "bounded claim",
+            "evidence": ["tools/contexto_repo.py"],
+            "files": ["tools/contexto_repo.py"],
+            "confidence": "high",
+            "action": "reuse",
+            "reject_reason": "",
+            "product": {
+                "existing_path": "tools/contexto_repo.py",
+                "reuse_test": "tests/test_mak_tandas.py",
+                "decision": "reuse",
+            },
+        }
+        return json.dumps({"items": [item, item]})
+
+    monkeypatch.setattr(tandas.external_providers, "call", oversized_call)
+    result = tandas.run_external_batch(
+        "tool_archaeology", "budget01", "watsonx", out_dir=str(tmp_path),
+        batch_path=str(batch), use_ollama=False, max_items=1)
+
+    assert result["status"] == "revise"
+    assert result["errors"] == ["items_over_budget:2>1"]
+    row = json.loads(batch.read_text(encoding="utf-8"))
+    assert row["status"] == "revise"
+
+
 def test_run_external_batch_records_provider_error_and_returns(monkeypatch, tmp_path):
     batch = tmp_path / "external_batches.jsonl"
 
