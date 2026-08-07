@@ -175,6 +175,8 @@ AREAS = {
                            "tools/adobe_panel/README.md",
                            "tools/adobe_panel/js/main.js",
                            "tools/adobe_panel/check_install.ps1",
+                           "tools/illustrator/scripts/logo_clean_master.jsx",
+                           "tools/illustrator/scripts/logo_revector_batch.jsx",
                            "src/flujo/export/illustrator.py",
                            "src/flujo/export/illustrator_bridge.py"],
         "actions": ["rescue", "bridge", "reuse", "reject"],
