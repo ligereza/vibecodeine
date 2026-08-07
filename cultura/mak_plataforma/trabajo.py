@@ -381,8 +381,9 @@ def _memory_review_payload(st):
     data = _memory_audit_data()
     if data.get("accion") != "revisar_memoria":
         return None
-    signature = "%s:%s:%s:%s" % (
+    signature = "%s:%s:%s:%s:%s" % (
         data.get("entradas", 0), len(data.get("slugs_duplicados", [])),
+        len(data.get("slugs_colision_prefijo", [])),
         len(data.get("origenes_faltantes", [])),
         len(data.get("entidades_bloqueadas", [])),
     )
@@ -448,6 +449,8 @@ def _run_local_idle(payload):
             "entries": data.get("entradas", 0),
             "states": data.get("estados", {}),
             "duplicate_slugs": data.get("slugs_duplicados", []),
+            "prefix_slug_collisions": data.get(
+                "slugs_colision_prefijo", []),
             "missing_origins": data.get("origenes_faltantes", []),
             "historical_missing_origins": data.get(
                 "origenes_historicos_ausentes", []),
