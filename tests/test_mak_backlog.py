@@ -217,6 +217,25 @@ esto no es json valido
         assert "bl-1" in contenido
         assert "bl-2" in contenido
 
+    def test_auditar_memoria_mide_sin_modificar(self, tmp_path):
+        informes_dir = tmp_path / "informes"
+        informes_dir.mkdir()
+        (informes_dir / "origen.md").write_text("# informe", encoding="utf-8")
+        backlog_path = tmp_path / "backlog.jsonl"
+        backlog.guardar_append(str(backlog_path), [
+            {"id": "bl-1", "pregunta": "una pregunta", "estado": "pendiente",
+             "origen_informe": "origen.md"},
+            {"id": "bl-2", "pregunta": "una pregunta", "estado": "pendiente",
+             "origen_informe": "perdido.md"},
+        ])
+        antes = backlog_path.read_text(encoding="utf-8")
+        auditoria = backlog.auditar_memoria([str(informes_dir)], str(backlog_path))
+        assert auditoria["entradas"] == 2
+        assert auditoria["origenes_faltantes"] == ["bl-2"]
+        assert auditoria["preguntas_duplicadas"]
+        assert auditoria["accion"] == "revisar_memoria"
+        assert backlog_path.read_text(encoding="utf-8") == antes
+
 
 class TestCosechar:
     """Tests para cosechar."""

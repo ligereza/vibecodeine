@@ -12,6 +12,7 @@ entradas de backlog deduplicadas y ranqueadas. Enforza las reglas de poda:
      porque cosechar nunca miraba lo ya respondido)
 """
 import json
+import collections
 import os
 import re
 import sys
@@ -324,6 +325,70 @@ def cargar(backlog_path):
         pass
 
     return entradas
+
+
+def auditar_memoria(informes_dirs, backlog_path):
+    """Mide salud del backlog sin modificar memoria ni producir prosa.
+
+    El resultado sirve para que MAK decida si debe revisar, reparar o
+    investigar. No revive ni descarta entradas.
+    """
+    if not isinstance(informes_dirs, list):
+        informes_dirs = [informes_dirs]
+    entradas = cargar(backlog_path)
+    estado = collections.Counter(e.get('estado', 'sin_estado') for e in entradas)
+    ids = [e.get('id') for e in entradas if e.get('id')]
+    hashes = [_hash(e.get('pregunta', '')) for e in entradas if e.get('pregunta')]
+    slugs = [slug(e.get('pregunta', '')) for e in entradas
+             if e.get('pregunta') and slug is not None]
+    nombres = {}
+    for directorio in informes_dirs:
+        try:
+            for nombre in os.listdir(directorio):
+                if nombre.endswith('.md'):
+                    nombres.setdefault(nombre, directorio)
+        except OSError:
+            continue
+
+    origenes_faltantes = []
+    entidades_bloqueadas = []
+    for entrada in entradas:
+        origen = entrada.get('origen_informe', '')
+        directorio = nombres.get(origen)
+        if not directorio:
+            origenes_faltantes.append(entrada.get('id'))
+            continue
+        documento = None
+        try:
+            with open(os.path.join(directorio, origen[:-3] + '.json'),
+                      'r', encoding='utf-8') as f:
+                documento = json.load(f)
+        except (OSError, ValueError, json.JSONDecodeError):
+            pass
+        valida, razon = validar_pregunta_derivada(
+            entrada.get('pregunta', ''), documento)
+        if not valida:
+            entidades_bloqueadas.append({
+                'id': entrada.get('id'),
+                'razon': razon,
+                'estado': entrada.get('estado'),
+            })
+
+    def duplicados(valores):
+        conteo = collections.Counter(v for v in valores if v)
+        return sorted(k for k, n in conteo.items() if n > 1)
+
+    return {
+        'entradas': len(entradas),
+        'estados': dict(sorted(estado.items())),
+        'ids_duplicados': duplicados(ids),
+        'preguntas_duplicadas': duplicados(hashes),
+        'slugs_duplicados': duplicados(slugs),
+        'origenes_faltantes': origenes_faltantes,
+        'entidades_bloqueadas': entidades_bloqueadas,
+        'accion': ('revisar_memoria' if (origenes_faltantes or
+                   entidades_bloqueadas or duplicados(slugs)) else 'sin_huecos'),
+    }
 
 
 def guardar_append(backlog_path, entradas):
