@@ -39,6 +39,10 @@ try:
     import backlog as _backlog  # noqa: E402
 except Exception:  # noqa: BLE001 - hub must stay alive if audit is unavailable
     _backlog = None
+try:
+    import revision as _revision  # noqa: E402
+except Exception:  # noqa: BLE001 - visual review is optional
+    _revision = None
 
 PORT = int(os.environ.get("HUB_PORT", "8900"))
 HOME = os.path.expanduser("~")
@@ -1154,6 +1158,20 @@ class H(BaseHTTPRequestHandler):
     def do_GET(self):
         u = urllib.parse.urlparse(self.path)
         p = u.path
+        if p == "/revision":
+            self.send_response(301)
+            self.send_header("Location", "/revision/")
+            self.end_headers()
+            return
+        if p == "/revision/" and _revision is not None:
+            return self._send(_revision.PAGE)
+        if p.startswith("/revision/media/") and _revision is not None:
+            asset = _revision.media_path("/" + p[len("/revision/media/"):])
+            if asset is None:
+                return self._send("(imagen no encontrada)", "text/plain", 404)
+            return self._send_bytes(asset.read_bytes(), "image/jpeg")
+        if p == "/api/revision" and _revision is not None:
+            return self._json(_revision.api())
         if p == "/portafolio":
             self.send_response(301)
             self.send_header("Location", "/portafolio/")
@@ -1277,6 +1295,15 @@ class H(BaseHTTPRequestHandler):
 
     def do_POST(self):
         u = urllib.parse.urlparse(self.path)
+        if u.path == "/api/revision" and _revision is not None:
+            largo = min(int(self.headers.get("Content-Length") or 0), 5000)
+            try:
+                body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
+            except (ValueError, TypeError):
+                return self._json({"ok": False, "error": "json invalido"}, 400)
+            return self._json(_revision.record(body.get("video"),
+                                               body.get("decision"),
+                                               body.get("note", "")))
         if u.path == "/api/ejecutar":
             largo = min(int(self.headers.get("Content-Length") or 0), 12000)
             try:
