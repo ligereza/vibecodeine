@@ -437,10 +437,14 @@ function cargarDecisiones(){
      '<div class="metrica">humano<b>'+esc(d.pending_human||0)+'</b></div>';
    var rows=d.last||[];
    document.getElementById('d-lista').innerHTML=rows.length ? rows.map(function(row){
+     var reviewLink = row.lane==='obra'
+       ? '<a href="/portafolio/" target="_blank" rel="noreferrer" style="color:#d4a259;margin-left:8px">abrir editor</a>'
+       : '';
      return '<div class="fila"><div class="cab"><span class="lane">'+esc(row.lane||'sistema')+
        '</span><span class="decision">'+esc(row.decision||'revisar')+'</span>'+
        '<span class="owner">'+esc(row.owner||'MAK')+'</span></div>'+
-       '<div class="accion">'+esc(row.next_action||row.purpose||'sin siguiente accion documentada')+'</div></div>';
+       '<div class="accion">'+esc(row.next_action||row.purpose||'sin siguiente accion documentada')+
+       reviewLink+'</div></div>';
    }).join('') : '<div class="vacio">La cola todavía está vacía.</div>';
  }).catch(function(){
    document.getElementById('d-lista').innerHTML='<div class="vacio">No se pudo leer la cola de decisiones.</div>';
