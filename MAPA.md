@@ -40,15 +40,16 @@ project is called Dimensiones del Orden.**
 
 ## 2. The three working lines
 
-The repo has three permanent branches and no more, plus one inbox. Any other
-branch you see is temporary and gets deleted once its work landed.
+The repo has four canonical branches and no more. `mak` is the machine inbox,
+but it is still a real branch whose work must return through a PR to `main`.
+Any other branch you see is temporary and gets deleted once its work landed.
 
 | Line | What it holds | Who touches it |
 |---|---|---|
-| **main** | **Everything, without exception.** The good and complete version. The other two lines come *down* from here. | Nobody directly. It only enters through a reviewed PR with green verification |
+| **main** | **Everything, without exception.** The good and complete version. The other three lines come *down* from here. | Nobody directly. It only enters through a reviewed PR with green verification |
 | **rd** | The NGO's work: data, promoters, grants, field material | Whoever works on RD |
 | **iskvw** | The artistic practice: shows, mapping, art-research pieces, and the portfolio | Whoever works on the artwork |
-| **mak** | Not a line: the **inbox** of the machine that works on its own. Nothing lives here; its only exit is a PR into main | Only MAK, automatically |
+| **mak** | The **inbox branch** of the machine that works on its own. Work may live here temporarily; its only exit is a reviewed PR into main | Only MAK, automatically |
 
 The two rules holding it up:
 
