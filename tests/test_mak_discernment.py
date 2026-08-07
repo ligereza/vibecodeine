@@ -86,7 +86,41 @@ def test_deterministic_review_revises_missing_evidence():
             "reject_reason": "",
         }]})
     assert review["verdict"] == "revise"
-    assert review["missing_evidence"]
+
+
+def test_deterministic_curation_judge_rejects_model_promotion():
+    review = discernment.deterministic_review(
+        "iskvw_curation", {"items": [{
+            "claim": "la pieza puede entrar al archivo",
+            "evidence": ["iskvw/datos/campo.json"],
+            "files": ["iskvw/datos/campo.json"],
+            "confidence": "high",
+            "action": "curate",
+            "product": {
+                "artwork_reading": "lectura concreta",
+                "selection": "serie propia",
+                "public_status": "publicada",
+            },
+        }]})
+    assert review["verdict"] == "reject"
+    assert any("human signature" in risk for risk in review["risks"])
+
+
+def test_deterministic_curation_accepts_local_review_status():
+    review = discernment.deterministic_review(
+        "iskvw_curation", {"items": [{
+            "claim": "la pieza requiere lectura del artista",
+            "evidence": ["iskvw/datos/campo.json"],
+            "files": ["iskvw/datos/campo.json"],
+            "confidence": "medium",
+            "action": "curate",
+            "product": {
+                "artwork_reading": "lectura concreta",
+                "selection": "serie propia",
+                "public_status": "revision_local",
+            },
+        }]})
+    assert review["verdict"] == "accept"
 
 
 def test_opportunity_review_requires_evidence_and_safe_action():

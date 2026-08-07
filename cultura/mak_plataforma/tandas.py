@@ -270,6 +270,11 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction="",
         "\nINSTRUCCION DE ESTA RONDA:\n%s\n" % instruction.strip()
         if instruction else ""
     )
+    curation_guard = (
+        "- En iskvw, public_status describe una propuesta local: nunca uses "
+        "publicada, public o published sin firma humana.\n"
+        if area == "iskvw_curation" else ""
+    )
     profile_block = ""
     item_profile_fields = ""
     if profile:
@@ -317,6 +322,7 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction="",
         "- Usa exactamente los valores de formato y evidence_kind indicados en la politica; no inventes sinonimos.\n"
         "- No escribas informes largos; entrega hallazgos verificables.\n"
         "- No mezcles RD con iskvw; no conviertas curatoria en research.\n"
+        "%s"
         "- No pidas crear una herramienta si ya existe una ruta probable.\n"
         "- Cada item debe poder sobrevivir cuando Watsonx/AWS ya no existan.\n"
         "- Cada entrada files debe existir en el material entregado; nunca inventes nombres.\n"
@@ -329,6 +335,7 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction="",
            instruction_block,
            "|".join(cfg["actions"]),
            item_profile_fields,
+           curation_guard,
            json.dumps({field: "" for field in PRODUCT_CONTRACTS[area]},
                       ensure_ascii=False))
     )

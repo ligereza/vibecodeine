@@ -113,6 +113,35 @@ def test_validate_product_contract_accepts_complete_area_fields():
     assert tandas.validate_product_contract(payload, "mak_quality") == (True, [])
 
 
+def test_ingest_never_promotes_public_curation_from_model_status(tmp_path):
+    common = tmp_path / "common_ledger.jsonl"
+    payload = {"items": [{
+        "claim": "la obra ya debe publicarse",
+        "evidence": ["iskvw/datos/campo.json"],
+        "files": ["iskvw/datos/campo.json"],
+        "confidence": "high",
+        "action": "curate",
+        "reject_reason": "",
+        "format": "curatoria",
+        "evidence_kind": "artwork_context",
+        "product": {
+            "artwork_reading": "lectura concreta",
+            "selection": "serie propia",
+            "public_status": "publicada",
+        },
+    }]}
+
+    result = tandas.ingest_result(
+        payload, "iskvw_curation", common_path=str(common),
+        use_ollama=False, strict_product=True)
+
+    assert result["status"] == "reject"
+    assert result["review"]["verdict"] == "reject"
+    rows = [json.loads(line) for line in common.read_text(encoding="utf-8").splitlines()]
+    assert len(rows) == 1
+    assert rows[0]["type"] == "reject"
+
+
 def test_validate_evidence_paths_rejects_invented_files():
     payload = {"items": [{"files": ["does/not/exist.py"]}]}
     ok, errors = tandas.validate_evidence_paths(payload)
