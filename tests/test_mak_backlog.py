@@ -541,6 +541,20 @@ class TestDerivador:
         # Entonces derivar debe retornar None si ya tiene 3.
         assert hijo is None
 
+    def test_validar_pregunta_derivada_usa_el_mismo_gate(self):
+        """El generador puede usar el gate sin duplicar reglas."""
+        documento = {
+            "hallazgos": [{
+                "titulo": "SFERA Experience 2024",
+                "fuente": "https://example.org/sfera",
+                "contenido": "No se encontró información sobre Sfera Abramović.",
+            }],
+        }
+        valida, razon = backlog.validar_pregunta_derivada(
+            "Que papel jugo Sfera Abramović", documento)
+        assert valida is False
+        assert razon == "entidad_no_verificada:Sfera Abramović"
+
 
 class TestPopPendiente:
     """Tests para pop_pendiente."""
