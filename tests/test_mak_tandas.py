@@ -119,6 +119,17 @@ def test_validate_evidence_paths_accepts_repo_files():
     assert tandas.validate_evidence_paths(payload) == (True, [])
 
 
+def test_validate_evidence_paths_resolves_unique_evidence_pack_basename():
+    payload = {"items": [{"files": ["database.py"]}]}
+    assert tandas.validate_evidence_paths(payload, area="rd_evidence") == (True, [])
+
+
+def test_validate_evidence_paths_rejects_unknown_basename():
+    payload = {"items": [{"files": ["invented.py"]}]}
+    assert tandas.validate_evidence_paths(payload, area="rd_evidence") == (
+        False, ["item_0_missing_evidence_path_0"])
+
+
 def test_parse_provider_json_accepts_fenced_json():
     assert tandas._parse_provider_json("```json\n{\"items\": []}\n```") == {"items": []}
 
