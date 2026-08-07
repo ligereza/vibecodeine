@@ -352,7 +352,9 @@ def review_to_ledger(review, area, metadata=None):
         "domain": domain,
         "type": item_type,
         "claim": "%s review for %s: %s" % (verdict, area, review.get("reason", "")),
-        "evidence": review.get("missing_evidence", []) + review.get("risks", []),
+        "evidence": (review.get("evidence", []) +
+                     review.get("missing_evidence", []) +
+                     review.get("risks", [])),
         "files": [],
         "confidence": "medium" if verdict == "accept" else "low",
         "action": action,

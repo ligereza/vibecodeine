@@ -93,6 +93,19 @@ def test_review_ledger_preserves_judge_trace_metadata(tmp_path):
     assert row["metadata"]["fallback"] == "True"
 
 
+def test_review_ledger_keeps_official_evidence_on_accept(tmp_path):
+    path = tmp_path / "common_ledger.jsonl"
+    ok, errors, row = ledger.append_review(
+        {"verdict": "accept", "domain": "opportunities",
+         "reason": "official page and date verified", "evidence": [
+             "https://official.example/call"], "risks": []},
+        "opportunity", path=str(path))
+
+    assert ok is True
+    assert errors == []
+    assert row["evidence"] == ["https://official.example/call"]
+
+
 def test_summary_counts_by_domain_type_and_action(tmp_path):
     path = tmp_path / "common_ledger.jsonl"
     ledger.append_item({
