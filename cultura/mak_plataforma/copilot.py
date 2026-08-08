@@ -98,7 +98,7 @@ def media_manifest(item):
 def provider_status(environment):
     return {
         "local_deterministic": True,
-        "ollama": bool(environment.get("OLLAMA_HOST")),
+        "ollama": bool(environment.get("OLLAMA_HOST") or environment.get("OLLAMA_BASE_URL")),
         "groq": bool(environment.get("GROQ_API_KEY")),
         "cerebras": bool(environment.get("CEREBRAS_API_KEY")),
         "watsonx": bool(environment.get("WATSONX_API_KEY") or environment.get("IBM_CLOUD_APIKEY")),
