@@ -107,6 +107,46 @@
 
   #aviso{padding:10px 20px;font-size:.7rem;color:#8a857a}
   #aviso.malo{color:#d98a7a}
+  #mak-inbox{padding:14px 20px;border-bottom:1px solid #1a1916;background:#101014}
+  #mak-inbox h2{font-size:.7rem;letter-spacing:.13em;text-transform:uppercase;color:#8a857a}
+  #mak-inbox .sub{font-size:.66rem;color:#6d685f;max-width:78ch;margin:4px 0 10px}
+  #mak-inbox .barra-inbox{display:flex;flex-wrap:wrap;gap:8px;align-items:end}
+  #mak-inbox .barra-inbox input,#mak-inbox .barra-inbox select{font-size:.72rem}
+  #inbox-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;margin-top:10px}
+  .inbox-card{border:1px solid #292720;border-radius:3px;padding:8px;background:#0c0c0e}
+  .inbox-card.seleccionada{border-color:#b9b4a8;background:#15151a}
+  .inbox-card img,.inbox-card video,.inbox-sin{width:100%;height:130px;object-fit:contain;background:#08080a;display:block}
+  .inbox-sin{display:flex;align-items:center;justify-content:center;color:#4a463f;font-size:.62rem}
+  .inbox-meta{font-size:.6rem;color:#6d685f;margin-top:6px;word-break:break-all}
+  .inbox-text{font-size:.68rem;color:#b9b4a8;margin-top:5px;max-height:62px;overflow:auto;white-space:pre-wrap}
+  #inbox-asociacion{border:1px solid #3a372f;padding:9px;margin-top:10px;background:#0c0c0e;font-size:.68rem}
+  #inbox-asociacion strong{color:#e8e4da;letter-spacing:.08em;text-transform:uppercase;margin-right:10px}
+  .inbox-asociacion-ayuda{color:#6d685f;margin-left:10px}
+  #inbox-seleccionadas-lista{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+  .inbox-pin{border:1px solid #5c5749;background:#15151a;color:#b9b4a8;padding:3px 6px;cursor:pointer}
+  .inbox-membresias{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+  .inbox-tag{font-size:.56rem;color:#9db67c;border:1px solid #39432c;padding:1px 4px}
+  .inbox-sugerencia{font-size:.6rem;color:#b7936f;margin-top:5px}
+  .inbox-acciones-bandeja{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  #inbox-copiloto{border:1px solid #394b5a;padding:9px;margin-top:8px;background:#0c1014;font-size:.68rem}
+  #inbox-copiloto strong{color:#b7d5e8;letter-spacing:.08em;text-transform:uppercase}
+  .copiloto-item{border-top:1px solid #26333c;padding:7px 0;margin-top:6px}
+  .copiloto-confianza{color:#b7936f;text-transform:uppercase;font-size:.58rem}
+  .copiloto-motivo{color:#b9c5cb;margin:3px 0 5px}
+  .inbox-actions{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+  .inbox-actions button{font-size:.62rem;padding:4px 6px}
+  #inbox-triangulacion{border:1px solid #4a3c55;padding:9px;margin-top:8px;background:#100d14;font-size:.68rem}
+  #inbox-triangulacion strong{color:#d6b9e8;letter-spacing:.08em;text-transform:uppercase}
+  #inbox-rescate{border:1px solid #4a4934;padding:9px;margin-top:8px;background:#10100d;font-size:.68rem}
+  #inbox-rescate strong{color:#c8c98e;letter-spacing:.08em;text-transform:uppercase}
+  .rescate-item{border-top:1px solid #2b2a20;padding:6px 0;margin-top:5px}
+  .rescate-item b{color:#ddd9c8}.rescate-meta{color:#9d987d;margin-top:3px}
+  .tri-grupo{border-top:1px solid #33283b;padding:7px 0;margin-top:6px}
+  .tri-grupo button{font-size:.6rem;padding:3px 6px;margin-top:5px}
+  .tri-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:5px;margin-top:7px}
+  .tri-form label{font-size:.58rem;color:#8a857a}
+  .tri-form input,.tri-form select{width:100%;font:inherit;font-size:.62rem;background:#0b0a0d;color:#c9c5b9;border:1px solid #33283b;padding:4px}
+  #inbox-more{margin-top:10px}
   @media (max-width:560px){
     .pieza{grid-template-columns:52px 1fr;gap:10px}
     .miniatura{width:52px;height:52px}
@@ -134,6 +174,55 @@
     <button id="descargar">Descargar curaduria.json</button>
   </div>
 </header>
+
+<section id="mak-inbox">
+  <h2>Inbox MAK · archivo visual completo</h2>
+  <div class="sub">Material original de Instagram para seleccionar con criterio. La selección se registra sin publicar y puede enviarse a research o codex desde esta misma interfaz.</div>
+  <div class="barra-inbox">
+    <label class="campo"><span>Tipo</span><select id="inbox-tipo"><option value="">todos</option><option value="published_media">posts, reels y carruseles</option><option value="story">historias</option></select></label>
+    <label class="campo"><span>Buscar</span><input id="inbox-buscar" type="search" placeholder="artista, fecha, texto, id"></label>
+    <label class="campo fila-check"><input id="inbox-assets" type="checkbox"><span>sólo con media en MAK</span></label>
+    <label class="campo"><span>Tablero</span><select id="inbox-tablero"><option value="">todos</option></select></label>
+    <label class="campo"><span>Nuevo tablero</span><input id="inbox-nuevo-tablero" type="text" placeholder="artista Drefquila"></label>
+    <label class="campo"><span>Eje</span><select id="inbox-nuevo-faceta"><option value="general">general</option><option value="artist">artista</option><option value="event">evento</option><option value="venue">venue</option><option value="client">cliente</option><option value="collab">colab</option><option value="publication">publicación</option></select></label>
+    <label class="campo"><span>Valor del eje</span><input id="inbox-nuevo-valor" type="text" placeholder="Drefquila"></label>
+    <button id="inbox-crear-tablero" type="button">crear tablero</button>
+    <button id="inbox-anadir-tablero" type="button">añadir seleccion al tablero</button>
+    <button id="inbox-conectar" type="button">conectar 2 seleccionadas</button>
+    <span id="inbox-contador"></span>
+  </div>
+  <div id="inbox-asociacion">
+    <strong>Bandeja de asociación</strong>
+    <span id="inbox-seleccionadas">0 seleccionadas</span>
+    <span class="inbox-asociacion-ayuda">La búsqueda y el tablero visible no cambian esta bandeja.</span>
+    <div id="inbox-seleccionadas-lista"></div>
+    <div class="inbox-acciones-bandeja">
+      <button id="inbox-seleccionar-visibles" type="button">seleccionar visibles</button>
+      <button id="inbox-limpiar-bandeja" type="button">vaciar bandeja</button>
+    </div>
+    <div id="inbox-copiloto">
+      <strong>Copiloto de curaduría</strong>
+      <div id="inbox-copiloto-lista">Selecciona una pieza y pide sugerencias.</div>
+      <div class="inbox-acciones-bandeja">
+        <select id="inbox-copiloto-proveedor"><option value="watsonx">Watsonx</option><option value="aws">AWS</option><option value="ollama">Ollama</option><option value="groq">Groq</option><option value="cerebras">Cerebras</option></select>
+        <button id="inbox-copiloto-externo" type="button">pedir segunda lectura</button>
+      </div>
+      <pre id="inbox-copiloto-externo-salida" hidden></pre>
+    </div>
+    <div id="inbox-triangulacion">
+      <strong>Triangulación candidata</strong>
+      <span class="inbox-asociacion-ayuda">Watsonx agrupó por artista; no confirma obras ni eventos.</span>
+      <div id="inbox-triangulacion-lista">Cargando grupos…</div>
+    </div>
+    <div id="inbox-rescate">
+      <strong>Rescate de informes legados</strong>
+      <span class="inbox-asociacion-ayuda">Dos lecturas externas, todavía sin promoción.</span>
+      <div id="inbox-rescate-lista">Cargando decisiones de rescate…</div>
+    </div>
+  </div>
+  <div id="inbox-lista">Cargando inbox MAK…</div>
+  <button id="inbox-more" type="button">mostrar más</button>
+</section>
 
 <section id="tablero" hidden>
   <h2>Tablero de mejoras</h2>
@@ -203,6 +292,222 @@ let TABLERO = null;         // tablero.json as it was loaded (may not exist)
 const MEJORAS = new Map();  // key -> current value; seeded from the file
 const EDICIONES = new Map();  // id -> {titulo?, mostrar?, abstraccion?, svg?, regimen?}
 const FILAS = new Map();      // id -> the row element currently painted
+let INBOX = [];
+let INBOX_LIMIT = 48;
+const INBOX_SELECTED = new Set();
+let TABLEROS = [];
+let COPILOTO_SOURCE = null;
+
+function esc(value){
+  return String(value ?? "").replace(/[&<>"']/g, character => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+  }[character]));
+}
+
+async function cargarInboxMak(){
+  const box=document.getElementById("inbox-lista");
+  try{
+    const r=await fetch("/api/portfolio/inbox",{cache:"no-store"});
+    const d=await r.json();
+    INBOX=d.items||[];
+    INBOX_SELECTED.clear();
+    INBOX.filter(x=>x.selection==='seleccionar').forEach(x=>INBOX_SELECTED.add(x.id));
+    await cargarTableros();
+    await cargarTriangulacion();
+    await cargarRescate();
+    document.getElementById("inbox-contador").textContent=`${d.total} elementos · ${d.available_assets} disponibles en MAK`;
+    pintarInboxMak();
+  }catch(e){box.textContent="No se pudo cargar el archivo visual de MAK.";}
+}
+
+async function cargarRescate(){
+  const box=document.getElementById('inbox-rescate-lista');
+  try{
+    const r=await fetch('/api/research/rescue',{cache:'no-store'}), d=await r.json();
+    if(!d.items||!d.items.length){box.textContent='No hay rescates candidatos disponibles.';return;}
+    const c=d.counts||{};
+    const cab=`<div class="rescate-meta">${esc(c.total||0)} candidatos · rescatar: ${esc(c.rescue_candidate||0)} · revisar: ${esc(c.review||0)} · retirar sin borrar: ${esc(c.retire_candidate||0)}</div>`;
+    box.innerHTML=cab+d.items.slice(0,24).map(x=>`<div class="rescate-item"><b>${esc(x.work_id)}</b> · ${esc(x.canonical_decision)}<div class="rescate-meta">${esc(x.watsonx?.lane||'lane desconocido')} · ${esc(x.watsonx?.purpose||'sin propósito')} · próxima: ${esc(x.next_action||'revisar manual')}</div></div>`).join('');
+  }catch(e){box.textContent='No se pudo cargar el rescate legado.';}
+}
+
+async function cargarTriangulacion(){
+  const box=document.getElementById('inbox-triangulacion-lista');
+  try{
+    const r=await fetch('/api/portfolio/triangulation',{cache:'no-store'}), d=await r.json();
+    if(!d.groups||!d.groups.length){box.textContent='Sin grupos candidatos disponibles.';return;}
+    box.innerHTML=d.groups.map(g=>{
+      const rel=g.relations||{}, items=(g.items||[]).length;
+      const events=Array.isArray(rel.event)?rel.event.join(', '):(rel.event||'unknown');
+      const review=(d.human_resolutions||[]).filter(x=>x.group_key===g.key).slice(-1)[0]||{};
+      const key=triDomKey(g.key||'grupo');
+      return `<div class="tri-grupo"><b>${esc(g.key||'grupo sin nombre')}</b> · ${items} registros · confianza ${esc(g.confidence??'unknown')}<br><span class="inbox-asociacion-ayuda">eventos: ${esc(events)} · siguiente: ${esc(g.next_action||'revisar')}</span><div class="tri-form"><label>artista/cliente<input id="tri-artist-${key}" value="${esc(review.artist||rel.artist||'')}"></label><label>evento<input id="tri-event-${key}" value="${esc(review.event||'')}"></label><label>venue<input id="tri-venue-${key}" value="${esc(review.venue||rel.venue||'')}"></label><label>fecha<input id="tri-date-${key}" type="date" value="${esc(review.date||'')}"></label><label>tipo<select id="tri-kind-${key}"><option value="registro">registro</option><option value="obra">obra</option><option value="colab">colab</option><option value="otro">otro</option></select></label><label>certeza<select id="tri-confidence-${key}"><option value="confirmed">confirmada</option><option value="candidate">candidata</option><option value="unknown">desconocida</option></select></label></div><button type="button" onclick='guardarTriangulacion(${JSON.stringify(g.key||'')})'>guardar resolución</button> <button type="button" onclick="filtrarTriangulacion('${esc(g.key||'')}')">ver en bandeja</button></div>`;
+    }).join('');
+  }catch(e){box.textContent='No se pudo cargar la triangulación candidata.';}
+}
+
+function triDomKey(value){return String(value).replace(/[^a-z0-9]+/gi,'_');}
+
+async function guardarTriangulacion(groupKey){
+  const key=triDomKey(groupKey);
+  const body={group_key:groupKey,artist:document.getElementById(`tri-artist-${key}`).value,event:document.getElementById(`tri-event-${key}`).value,venue:document.getElementById(`tri-venue-${key}`).value,date:document.getElementById(`tri-date-${key}`).value,record_kind:document.getElementById(`tri-kind-${key}`).value,confidence:document.getElementById(`tri-confidence-${key}`).value};
+  const r=await fetch('/api/portfolio/triangulation/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}), d=await r.json();
+  if(!d.ok){alert(d.error||'No se guardó la resolución.');return;}
+  await cargarTriangulacion();
+}
+
+function filtrarTriangulacion(value){
+  document.getElementById('inbox-buscar').value=value;
+  INBOX_LIMIT=48;
+  pintarInboxMak();
+}
+
+async function cargarTableros(){
+  const r=await fetch('/api/portfolio/boards',{cache:'no-store'}), d=await r.json();
+  TABLEROS=d.boards||[];
+  const select=document.getElementById('inbox-tablero'), actual=select.value;
+  select.innerHTML='<option value="">todos</option>'+TABLEROS.map(b=>`<option value="${esc(b.id)}">${esc(b.name)} (${b.item_ids.length})</option>`).join('');
+  if(TABLEROS.some(b=>b.id===actual))select.value=actual;
+}
+
+function inboxFiltrados(){
+  const tipo=document.getElementById("inbox-tipo").value;
+  const q=document.getElementById("inbox-buscar").value.trim().toLowerCase();
+  const assets=document.getElementById("inbox-assets").checked;
+  const tablero=document.getElementById("inbox-tablero").value;
+  const board=TABLEROS.find(b=>b.id===tablero);
+  return INBOX.filter(x=>{
+    if(tipo && x.tipo_contenido!==tipo) return false;
+    if(assets && !x.asset_available) return false;
+    if(board && !board.item_ids.includes(x.id)) return false;
+    if(!q) return true;
+    return [x.id,x.fecha,x.publicacion_id,x.descripcion_original].join(" ").toLowerCase().includes(q);
+  });
+}
+
+function sugerenciaInbox(x){
+  if(x.tipo_contenido==='story') return 'Sugerencia: REGISTRO · no es obra por defecto';
+  const texto=(x.descripcion_original||'').toLowerCase();
+  if(/evento|festival|venue|sala|show|vj|lollapalooza|pampilla/.test(texto)) return 'Sugerencia: TRIANGULACIÓN · evento/venue';
+  return 'Sugerencia: OBRA · revisar curatoria';
+}
+
+function pintarInboxMak(){
+  const lista=document.getElementById("inbox-lista"), rows=inboxFiltrados(), visible=rows.slice(0,INBOX_LIMIT);
+  document.getElementById("inbox-contador").textContent=`${rows.length} encontrados · ${INBOX.filter(x=>x.asset_available).length} con media local · ${INBOX_SELECTED.size} seleccionados`;
+  pintarBandejaAsociacion();
+  lista.innerHTML=visible.map(x=>{
+    const selected=INBOX_SELECTED.has(x.id), path=x.asset_path||'', ext=path.split('?')[0].split('.').pop().toLowerCase();
+    const media=x.asset_available?(['mp4','mov','webm','m4v'].includes(ext)?`<video src="${path}" preload="metadata" controls playsinline></video>`:`<img src="${path}" loading="lazy" decoding="async" alt="">`):'<div class="inbox-sin">media no sincronizada</div>';
+    const memberships=TABLEROS.filter(b=>(b.item_ids||[]).includes(x.id)).map(b=>`<span class="inbox-tag">${esc(b.name)}</span>`).join('');
+    return `<article class="inbox-card ${selected?'seleccionada':''}"><div>${media}</div><div class="inbox-meta">${esc(x.tipo_contenido)} · ${esc(x.fecha)} · ${esc(x.publicacion_id)} · ${esc(x.id)}</div><div class="inbox-membresias">${memberships||'<span class="inbox-asociacion-ayuda">sin tablero</span>'}</div><div class="inbox-sugerencia">${esc(sugerenciaInbox(x))}</div><div class="inbox-text">${esc(x.descripcion_original||'sin descripcion')}</div><div class="inbox-actions"><button onclick="seleccionarInbox('${esc(x.id)}')">${selected?'quitar seleccion':'seleccionar'}</button><button onclick="cargarCopiloto('${esc(x.id)}')">copiloto</button><button onclick="enviarInbox('${esc(x.id)}','research')">research</button><button onclick="enviarInbox('${esc(x.id)}','codex')">codex</button></div></article>`;
+  }).join("") || '<div class="inbox-sin">No hay elementos para este filtro.</div>';
+  document.getElementById("inbox-more").style.display=rows.length>INBOX_LIMIT?'inline-block':'none';
+}
+
+function pintarBandejaAsociacion(){
+  const items=[...INBOX_SELECTED].map(id=>INBOX.find(x=>x.id===id)).filter(Boolean);
+  document.getElementById('inbox-seleccionadas').textContent=`${items.length} seleccionadas`;
+  document.getElementById('inbox-seleccionadas-lista').innerHTML=items.map(x=>`<button class="inbox-pin" onclick="quitarDeBandeja('${esc(x.id)}')">${esc(x.fecha)} · ${esc(x.tipo_contenido)} · ${esc(x.id)} ×</button>`).join('')||'<span class="inbox-asociacion-ayuda">Selecciona obras desde cualquier búsqueda.</span>';
+}
+
+async function cargarCopiloto(id){
+  COPILOTO_SOURCE=id;
+  const box=document.getElementById('inbox-copiloto-lista'); box.textContent='Comparando fecha, publicación y conceptos…';
+  const boardId=document.getElementById('inbox-tablero').value;
+  const r=await fetch('/api/portfolio/copilot/suggestions?item_id='+encodeURIComponent(id)+'&board_id='+encodeURIComponent(boardId),{cache:'no-store'}), d=await r.json();
+  if(!d.ok){box.textContent='No hay sugerencias para esta pieza.';return;}
+  if(!d.suggestions.length){box.textContent='No encontré relaciones candidatas todavía.';return;}
+  const contexto=d.context&&d.context.name?` · contexto: ${esc(d.context.name)} · ${d.suppressed_redundant||0} redundantes ocultas`:'';
+  box.innerHTML=`<div class="inbox-asociacion-ayuda">Fuente: ${esc(id)} · motor: ${esc(d.provider)}${contexto} · sugerencias no confirmadas</div>`+d.suggestions.map(s=>{const item=INBOX.find(x=>x.id===s.item_id)||{};return `<div class="copiloto-item"><b>${esc(item.fecha||'')} · ${esc(item.tipo_contenido||'')} · ${esc(s.item_id)}</b> <span class="copiloto-confianza">${esc(s.confidence)}</span><div class="copiloto-motivo">${esc(s.facet)} · ${esc(s.reasons.join(' · '))}</div><button onclick="feedbackCopiloto('${esc(s.item_id)}','accept')">aceptar relación</button><button onclick="feedbackCopiloto('${esc(s.item_id)}','reject')">rechazar</button></div>`}).join('');
+}
+
+async function pedirSegundaLectura(){
+  if(!COPILOTO_SOURCE)return alert('Primero abre el copiloto de una pieza.');
+  const provider=document.getElementById('inbox-copiloto-proveedor').value;
+  const salida=document.getElementById('inbox-copiloto-externo-salida');
+  salida.hidden=false; salida.textContent=`Consultando ${provider} con el grupo reducido…`;
+  const r=await fetch('/api/portfolio/copilot/external',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:COPILOTO_SOURCE,provider})}), d=await r.json();
+  salida.textContent=d.ok?`${d.provider}:\n${d.raw}`:`No disponible: ${d.error||'error'}${d.detail?`\n${d.detail}`:''}`;
+}
+
+async function feedbackCopiloto(target,action){
+  if(!COPILOTO_SOURCE)return;
+  const relation=action==='accept'?(prompt('Nombre de la relación:', 'relacionada')||'relacionada'):'sugerencia descartada';
+  const r=await fetch('/api/portfolio/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source_id:COPILOTO_SOURCE,target_id:target,action,relation})});
+  const d=await r.json(); if(!d.ok)return alert(d.error||'No se guardó el feedback.');
+  cargarCopiloto(COPILOTO_SOURCE);
+}
+
+function quitarDeBandeja(id){
+  INBOX_SELECTED.delete(id);
+  fetch('/api/portfolio/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:id,decision:'deseleccionar'})});
+  pintarInboxMak();
+}
+
+async function seleccionarInbox(id){
+  const decision=INBOX_SELECTED.has(id)?'deseleccionar':'seleccionar';
+  const r=await fetch('/api/portfolio/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:id,decision})});
+  if((await r.json()).ok){if(decision==='seleccionar')INBOX_SELECTED.add(id);else INBOX_SELECTED.delete(id);pintarInboxMak();}
+}
+
+async function enviarInbox(id,depto){
+  const item=INBOX.find(x=>x.id===id); if(!item)return;
+  const texto=`Revisar material de portafolio ${id}. Tipo: ${item.tipo_contenido}. Fecha: ${item.fecha}. Publicacion: ${item.publicacion_id}. Descripcion original: ${item.descripcion_original||'(sin descripcion)'}. No inventar hechos; devolver evidencia y siguiente accion.`;
+  const r=await fetch('/api/portfolio/dispatch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:id,depto,texto})});
+  const d=await r.json(); alert(d.ok?`Enviado a ${depto}.`:`No se envio: ${d.error||'error'}`);
+}
+
+async function crearTablero(){
+  const input=document.getElementById('inbox-nuevo-tablero'), name=input.value.trim();
+  if(!name)return alert('Escribe un nombre para el tablero.');
+  const facet=document.getElementById('inbox-nuevo-faceta').value;
+  const value=document.getElementById('inbox-nuevo-valor').value.trim();
+  const r=await fetch('/api/portfolio/board',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'create',name,facet,value})});
+  const d=await r.json(); if(!d.ok)return alert(d.error||'No se creo el tablero.');
+  input.value=''; document.getElementById('inbox-nuevo-valor').value=''; await cargarTableros(); pintarInboxMak();
+}
+
+async function anadirSeleccionAlTablero(){
+  const board=document.getElementById('inbox-tablero').value;
+  if(!board)return alert('Selecciona un tablero primero.');
+  if(!INBOX_SELECTED.size)return alert('Selecciona una o mas obras primero.');
+  const r=await fetch('/api/portfolio/board',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'add',board_id:board,item_ids:[...INBOX_SELECTED]})});
+  const d=await r.json(); if(!d.ok)return alert(d.error||'No se añadieron.');
+  await cargarTableros(); pintarInboxMak();
+}
+
+async function conectarSeleccionadas(){
+  const ids=[...INBOX_SELECTED];
+  if(ids.length!==2)return alert('Selecciona exactamente dos obras para conectarlas.');
+  const relation=prompt('Relacion entre ambas obras:', 'dialoga con'); if(!relation)return;
+  const r=await fetch('/api/portfolio/connect',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source_id:ids[0],target_id:ids[1],relation})});
+  const d=await r.json(); alert(d.ok?'Conexion guardada.':'No se pudo conectar: '+(d.error||'error'));
+}
+
+async function seleccionarVisibles(){
+  const visibles=inboxFiltrados().slice(0,INBOX_LIMIT).filter(x=>!INBOX_SELECTED.has(x.id));
+  await Promise.all(visibles.map(x=>fetch('/api/portfolio/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:x.id,decision:'seleccionar'})})));
+  visibles.forEach(x=>INBOX_SELECTED.add(x.id));
+  pintarInboxMak();
+}
+
+async function limpiarBandeja(){
+  const ids=[...INBOX_SELECTED];
+  if(!ids.length)return;
+  if(!confirm(`Quitar ${ids.length} elementos de la bandeja? No borra archivos ni tableros.`))return;
+  await Promise.all(ids.map(id=>fetch('/api/portfolio/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:id,decision:'deseleccionar'})})));
+  INBOX_SELECTED.clear(); pintarInboxMak();
+}
+
+['inbox-tipo','inbox-buscar','inbox-assets','inbox-tablero'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{INBOX_LIMIT=48;pintarInboxMak();}));
+document.getElementById('inbox-more').addEventListener('click',()=>{INBOX_LIMIT+=48;pintarInboxMak();});
+document.getElementById('inbox-crear-tablero').addEventListener('click',crearTablero);
+document.getElementById('inbox-anadir-tablero').addEventListener('click',anadirSeleccionAlTablero);
+document.getElementById('inbox-conectar').addEventListener('click',conectarSeleccionadas);
+document.getElementById('inbox-seleccionar-visibles').addEventListener('click',seleccionarVisibles);
+document.getElementById('inbox-limpiar-bandeja').addEventListener('click',limpiarBandeja);
+document.getElementById('inbox-copiloto-externo').addEventListener('click',pedirSegundaLectura);
 
 /* ── Loading ─────────────────────────────────────────────────────────────
    Same degradation as the campo skin: archivo.json first (the unified
@@ -262,6 +567,8 @@ async function cargar(){
   contar();
   firmaCur = JSON.stringify(construirCuraduria());
 }
+
+cargarInboxMak();
 
 /* One entry point for "this is now the loaded curaduria.json", shared by the
    initial fetch and by the import button: seeding in two places is how the
