@@ -64,3 +64,7 @@ No añadir otra base ni otro framework. Toda tarea nueva debe conservar `work_id
 La sesión avanzó de forma real: MAK dejó de producir a ciegas, Watsonx y AWS trabajaron como lectores externos, y sus resultados quedaron trazables en vez de entrar directamente como verdad. El rescate de 23 informes produjo 12 candidatos `rescue` y 11 `review`, sin borrar ni publicar nada. También quedó conectada la interfaz de portafolio con la triangulación y el rescate, separando búsqueda, asociación y promoción.
 
 Lo aprendido para mañana: no confundir una tarea externa con una decisión del usuario; las 23 adjudicaciones pueden seguir sin bloquear la curaduría visual. La higiene del repositorio también es parte del sistema: un archivo de usuario en un log puede romper CI, y una rama o tag local puede parecer trabajo vigente cuando no lo es. La próxima sesión debe revisar el resultado final del PR #511, no repetir auditorías ya cerradas, y sincronizar MAK solo después de una promoción comprobada a `main`.
+
+## Reanudación — 2026-08-08
+
+El PR #511 reveló dos fallos de higiene, no fallos del circuito: `tools/construir_mapa_visual.py` no estaba registrado en `CAPACIDADES.md`, y el runner de idioma detectó la docstring española del adjudicador. Ambos fueron corregidos en `7a98c13` y enviados a `mak`; CI debe repetir ahora la verificación. La suite focalizada de higiene tarda más de dos minutos en Windows y fue detenida para no dejar un proceso costoso colgado; la corrección se verificó por compilación y `git diff --check`.
