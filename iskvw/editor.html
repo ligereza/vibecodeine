@@ -124,6 +124,10 @@
   .inbox-asociacion-ayuda{color:#6d685f;margin-left:10px}
   #inbox-seleccionadas-lista{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
   .inbox-pin{border:1px solid #5c5749;background:#15151a;color:#b9b4a8;padding:3px 6px;cursor:pointer}
+  .inbox-membresias{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+  .inbox-tag{font-size:.56rem;color:#9db67c;border:1px solid #39432c;padding:1px 4px}
+  .inbox-sugerencia{font-size:.6rem;color:#b7936f;margin-top:5px}
+  .inbox-acciones-bandeja{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
   .inbox-actions{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
   .inbox-actions button{font-size:.62rem;padding:4px 6px}
   #inbox-more{margin-top:10px}
@@ -174,6 +178,10 @@
     <span id="inbox-seleccionadas">0 seleccionadas</span>
     <span class="inbox-asociacion-ayuda">La búsqueda y el tablero visible no cambian esta bandeja.</span>
     <div id="inbox-seleccionadas-lista"></div>
+    <div class="inbox-acciones-bandeja">
+      <button id="inbox-seleccionar-visibles" type="button">seleccionar visibles</button>
+      <button id="inbox-limpiar-bandeja" type="button">vaciar bandeja</button>
+    </div>
   </div>
   <div id="inbox-lista">Cargando inbox MAK…</div>
   <button id="inbox-more" type="button">mostrar más</button>
@@ -295,6 +303,13 @@ function inboxFiltrados(){
   });
 }
 
+function sugerenciaInbox(x){
+  if(x.tipo_contenido==='story') return 'Sugerencia: REGISTRO · no es obra por defecto';
+  const texto=(x.descripcion_original||'').toLowerCase();
+  if(/evento|festival|venue|sala|show|vj|lollapalooza|pampilla/.test(texto)) return 'Sugerencia: TRIANGULACIÓN · evento/venue';
+  return 'Sugerencia: OBRA · revisar curatoria';
+}
+
 function pintarInboxMak(){
   const lista=document.getElementById("inbox-lista"), rows=inboxFiltrados(), visible=rows.slice(0,INBOX_LIMIT);
   document.getElementById("inbox-contador").textContent=`${rows.length} encontrados · ${INBOX.filter(x=>x.asset_available).length} con media local · ${INBOX_SELECTED.size} seleccionados`;
@@ -302,7 +317,8 @@ function pintarInboxMak(){
   lista.innerHTML=visible.map(x=>{
     const selected=INBOX_SELECTED.has(x.id), path=x.asset_path||'', ext=path.split('?')[0].split('.').pop().toLowerCase();
     const media=x.asset_available?(['mp4','mov','webm','m4v'].includes(ext)?`<video src="${path}" preload="metadata" controls playsinline></video>`:`<img src="${path}" loading="lazy" decoding="async" alt="">`):'<div class="inbox-sin">media no sincronizada</div>';
-    return `<article class="inbox-card ${selected?'seleccionada':''}"><div>${media}</div><div class="inbox-meta">${esc(x.tipo_contenido)} · ${esc(x.fecha)} · ${esc(x.publicacion_id)} · ${esc(x.id)}</div><div class="inbox-text">${esc(x.descripcion_original||'sin descripcion')}</div><div class="inbox-actions"><button onclick="seleccionarInbox('${esc(x.id)}')">${selected?'quitar seleccion':'seleccionar obra'}</button><button onclick="enviarInbox('${esc(x.id)}','research')">research</button><button onclick="enviarInbox('${esc(x.id)}','codex')">codex</button></div></article>`;
+    const memberships=TABLEROS.filter(b=>(b.item_ids||[]).includes(x.id)).map(b=>`<span class="inbox-tag">${esc(b.name)}</span>`).join('');
+    return `<article class="inbox-card ${selected?'seleccionada':''}"><div>${media}</div><div class="inbox-meta">${esc(x.tipo_contenido)} · ${esc(x.fecha)} · ${esc(x.publicacion_id)} · ${esc(x.id)}</div><div class="inbox-membresias">${memberships||'<span class="inbox-asociacion-ayuda">sin tablero</span>'}</div><div class="inbox-sugerencia">${esc(sugerenciaInbox(x))}</div><div class="inbox-text">${esc(x.descripcion_original||'sin descripcion')}</div><div class="inbox-actions"><button onclick="seleccionarInbox('${esc(x.id)}')">${selected?'quitar seleccion':'seleccionar'}</button><button onclick="enviarInbox('${esc(x.id)}','research')">research</button><button onclick="enviarInbox('${esc(x.id)}','codex')">codex</button></div></article>`;
   }).join("") || '<div class="inbox-sin">No hay elementos para este filtro.</div>';
   document.getElementById("inbox-more").style.display=rows.length>INBOX_LIMIT?'inline-block':'none';
 }
@@ -357,11 +373,28 @@ async function conectarSeleccionadas(){
   const d=await r.json(); alert(d.ok?'Conexion guardada.':'No se pudo conectar: '+(d.error||'error'));
 }
 
+async function seleccionarVisibles(){
+  const visibles=inboxFiltrados().slice(0,INBOX_LIMIT).filter(x=>!INBOX_SELECTED.has(x.id));
+  await Promise.all(visibles.map(x=>fetch('/api/portfolio/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:x.id,decision:'seleccionar'})})));
+  visibles.forEach(x=>INBOX_SELECTED.add(x.id));
+  pintarInboxMak();
+}
+
+async function limpiarBandeja(){
+  const ids=[...INBOX_SELECTED];
+  if(!ids.length)return;
+  if(!confirm(`Quitar ${ids.length} elementos de la bandeja? No borra archivos ni tableros.`))return;
+  await Promise.all(ids.map(id=>fetch('/api/portfolio/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:id,decision:'deseleccionar'})})));
+  INBOX_SELECTED.clear(); pintarInboxMak();
+}
+
 ['inbox-tipo','inbox-buscar','inbox-assets','inbox-tablero'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{INBOX_LIMIT=48;pintarInboxMak();}));
 document.getElementById('inbox-more').addEventListener('click',()=>{INBOX_LIMIT+=48;pintarInboxMak();});
 document.getElementById('inbox-crear-tablero').addEventListener('click',crearTablero);
 document.getElementById('inbox-anadir-tablero').addEventListener('click',anadirSeleccionAlTablero);
 document.getElementById('inbox-conectar').addEventListener('click',conectarSeleccionadas);
+document.getElementById('inbox-seleccionar-visibles').addEventListener('click',seleccionarVisibles);
+document.getElementById('inbox-limpiar-bandeja').addEventListener('click',limpiarBandeja);
 
 /* ── Loading ─────────────────────────────────────────────────────────────
    Same degradation as the campo skin: archivo.json first (the unified
