@@ -76,6 +76,12 @@ PORTFOLIO_FEEDBACK = os.path.join(
     HOME, "plataforma/director_runs/portfolio-editor-20260808/copilot_feedback.jsonl")
 PORTFOLIO_EXTERNAL = os.path.join(
     HOME, "plataforma/director_runs/portfolio-editor-20260808/copilot_external.jsonl")
+PORTFOLIO_TRIANGULATION = os.path.join(
+    HOME, "plataforma/director_runs/instagram-triangulacion-20260807/faro-triangulation-watsonx.normalized.json")
+PORTFOLIO_TRIANGULATION_REVIEW = os.path.join(
+    HOME, "plataforma/director_runs/instagram-triangulacion-20260807/human_resolutions.jsonl")
+LEGACY_RESCUE_REVIEW = os.path.join(
+    HOME, "plataforma/director_runs/faro-report-action-queue-20260808/RESCUE_ADJUDICATED.json")
 RESEARCH_URL = "http://127.0.0.1:8890"
 CODEX_URL = "http://127.0.0.1:8891"
 TRABAJO_STATE = os.path.join(HOME, "plataforma/.trabajo_state.json")
@@ -656,6 +662,82 @@ def _portfolio_item(item_id):
                  if item.get("id") == str(item_id or "")), None)
 
 
+def _portfolio_triangulation():
+    try:
+        with open(PORTFOLIO_TRIANGULATION, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, ValueError):
+        return {"schema": "mak-triangulation-v1", "status": "unavailable",
+                "groups": [], "candidate_count": 0}
+    groups = data.get("groups") if isinstance(data, dict) else []
+    reviews = []
+    try:
+        with open(PORTFOLIO_TRIANGULATION_REVIEW, encoding="utf-8") as fh:
+            reviews = [json.loads(line) for line in fh if line.strip()]
+    except (OSError, ValueError):
+        pass
+    return {"schema": data.get("schema", "mak-triangulation-v1"),
+            "status": "candidate_only", "source": data.get("source"),
+            "candidate_count": data.get("candidate_count", 0),
+            "groups": groups if isinstance(groups, list) else [],
+            "rules": data.get("rules", []), "human_resolutions": reviews}
+
+
+def _legacy_rescue_queue():
+    try:
+        with open(LEGACY_RESCUE_REVIEW, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, ValueError):
+        return {"schema": "mak-rescue-review-v1", "status": "unavailable",
+                "items": [], "counts": {"total": 0}}
+    items = data.get("items") if isinstance(data, dict) else []
+    counts = data.get("counts") if isinstance(data, dict) else {}
+    normalized = []
+    for item in items if isinstance(items, list) else []:
+        item = dict(item)
+        item["canonical_decision"] = item.get("decision", "review")
+        item["next_action"] = {
+            "rescue": "rescatar_con_revision_humana",
+            "review": "revisar_manual",
+            "retire_without_deleting": "retirar_sin_borrar",
+        }.get(item["canonical_decision"], "revisar_manual")
+        normalized.append(item)
+    return {"schema": data.get("schema", "mak-rescue-review-v1"),
+            "status": "candidate_only", "promotion": "none",
+            "items": normalized,
+            "counts": counts if isinstance(counts, dict) else {"total": 0}}
+
+
+def _portfolio_triage_record(body):
+    group = str(body.get("group_key", "")).strip()[:120]
+    if not group:
+        return {"ok": False, "error": "grupo_vacio"}
+    known = {str(row.get("key", "")) for row in _portfolio_triangulation().get("groups", [])}
+    if group not in known:
+        return {"ok": False, "error": "grupo_no_encontrado"}
+    allowed = ("artist", "event", "venue", "date", "record_kind", "confidence")
+    row = {field: str(body.get(field, "")).strip()[:240] for field in allowed}
+    row.update({"schema": "mak-triangulation-review-v1", "group_key": group,
+                "status": "human_reviewed", "promotion": "none",
+                "ts": time.strftime("%Y-%m-%dT%H:%M:%S%z")})
+    os.makedirs(os.path.dirname(PORTFOLIO_TRIANGULATION_REVIEW), exist_ok=True)
+    with open(PORTFOLIO_TRIANGULATION_REVIEW, "a", encoding="utf-8") as fh:
+        fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+    return {"ok": True, "resolution": row}
+
+
+def _portfolio_item_context(item_id):
+    data = _portfolio_triangulation()
+    for group in data.get("groups", []):
+        if str(item_id) not in {str(value) for value in group.get("items", [])}:
+            continue
+        reviews = [row for row in data.get("human_resolutions", [])
+                   if row.get("group_key") == group.get("key")]
+        return {"triangulation_group": group,
+                "human_resolution": reviews[-1] if reviews else {}}
+    return {}
+
+
 def _portfolio_select(item_id, decision):
     if decision not in ("seleccionar", "deseleccionar"):
         return {"ok": False, "error": "decision_invalida"}
@@ -757,12 +839,14 @@ def _portfolio_suggestions(item_id, board_id=""):
         return {"ok": False, "error": "item_no_encontrado", "suggestions": []}
     board = next((b for b in _portfolio_boards().get("boards", [])
                   if b.get("id") == str(board_id)), {})
+    context = dict(board)
+    context.update(_portfolio_item_context(item_id))
     result, suppressed = copilot.build_suggestions(source, _portfolio_inbox().get("items", []),
                                        selections=_portfolio_selections(),
                                        feedback=_portfolio_feedback(),
-                                       context=board, limit=24)
+                                       context=context, limit=24)
     return {"ok": True, "schema": "faro-portfolio-copilot-v3", "source_id": source.get("id"),
-            "provider": "local_hypothesis_engine", "context": board,
+            "provider": "local_hypothesis_engine", "context": context,
             "suppressed_redundant": suppressed, "suggestions": result}
 
 
@@ -794,15 +878,17 @@ def _portfolio_external_review(body):
     source = _portfolio_item(item_id)
     if not source:
         return {"ok": False, "error": "item_no_encontrado"}
-    suggestions = _portfolio_suggestions(item_id).get("suggestions", [])
+    candidates = [item for item in _portfolio_inbox().get("items", [])
+                  if item.get("id") != item_id][:96]
+    board_id = str(body.get("board_id", ""))
+    board = next((row for row in _portfolio_boards().get("boards", [])
+                  if row.get("id") == board_id), {})
+    board = dict(board)
+    board.update(_portfolio_item_context(item_id))
     prompt = {
-        "task": "Revisar hipótesis curatoriales sin inventar hechos.",
-        "source": copilot.media_manifest(source),
-        "source_description": source.get("descripcion_original", ""),
-        "candidates": suggestions[:12],
-        "output": {"keep": "array de item_id", "reject": "array de item_id",
-                   "new_hypotheses": "array con item_id, relation_type, reason, confidence",
-                   "unknowns": "array de datos faltantes"},
+        "prompt": copilot.inference_prompt(source, candidates, context=board),
+        "source_manifest": copilot.media_manifest(source),
+        "candidate_count": len(candidates),
     }
     try:
         providers.load_env()
@@ -810,12 +896,16 @@ def _portfolio_external_review(body):
                              max_tokens=1400, temperature=0.1)
     except Exception as exc:  # noqa: BLE001
         return {"ok": False, "error": "provider_error", "detail": str(exc)[:180]}
-    row = {"item_id": item_id, "provider": provider, "raw": raw,
+    normalized = copilot.normalize_inference(
+        raw, item_id, [item.get("id") for item in candidates])
+    row = {"item_id": item_id, "provider": provider, "inference": normalized,
+           "raw": raw,
            "ts": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
     os.makedirs(os.path.dirname(PORTFOLIO_EXTERNAL), exist_ok=True)
     with open(PORTFOLIO_EXTERNAL, "a", encoding="utf-8") as fh:
         fh.write(json.dumps(row, ensure_ascii=False) + "\n")
-    return {"ok": True, "provider": provider, "raw": raw,
+    return {"ok": True, "provider": provider, "inference": normalized,
+            "raw": raw,
             "stored": PORTFOLIO_EXTERNAL}
 
 
@@ -1425,6 +1515,10 @@ class H(BaseHTTPRequestHandler):
             return self._json(_portfolio_inbox())
         if p == "/api/portfolio/boards":
             return self._json(_portfolio_boards())
+        if p == "/api/portfolio/triangulation":
+            return self._json(_portfolio_triangulation())
+        if p == "/api/research/rescue":
+            return self._json(_legacy_rescue_queue())
         if p == "/api/portfolio/copilot/suggestions":
             query = urllib.parse.parse_qs(u.query)
             item_id = (query.get("item_id") or [""])[0]
@@ -1583,7 +1677,8 @@ class H(BaseHTTPRequestHandler):
                 body.get("episodio", ""), body.get("decision", ""), body.get("note", "")))
         if u.path in ("/api/portfolio/select", "/api/portfolio/dispatch",
                       "/api/portfolio/board", "/api/portfolio/connect",
-                      "/api/portfolio/feedback", "/api/portfolio/copilot/external"):
+                      "/api/portfolio/feedback", "/api/portfolio/triangulation/review",
+                      "/api/portfolio/copilot/external"):
             largo = min(int(self.headers.get("Content-Length") or 0), 12000)
             try:
                 body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
@@ -1597,6 +1692,8 @@ class H(BaseHTTPRequestHandler):
                 return self._json(_portfolio_connect(body))
             if u.path.endswith("/feedback"):
                 return self._json(_portfolio_feedback_record(body))
+            if u.path.endswith("/triangulation/review"):
+                return self._json(_portfolio_triage_record(body))
             if u.path.endswith("/external"):
                 return self._json(_portfolio_external_review(body))
             return self._json(_portfolio_dispatch(body.get("item_id"), body.get("depto"),

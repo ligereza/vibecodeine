@@ -1,6 +1,7 @@
 """Curatorial copilot contracts independent of any model provider."""
 from __future__ import annotations
 
+import json
 import re
 import unicodedata
 
@@ -10,6 +11,12 @@ STOPWORDS = {
     "los", "las", "del", "por", "que", "obra", "sin", "tambien", "cuando",
     "donde", "hacia", "estas", "estos", "ellos", "ellas", "solo", "menos",
     "fue", "eran", "pero", "para", "tiene", "tener", "este", "esta",
+}
+
+INFERENCE_SCHEMA = "faro-curatorial-inference-v1"
+INFERENCE_FACETS = {
+    "date", "event", "venue", "artist", "client", "collab", "publication",
+    "text", "visual", "audio", "process", "period",
 }
 
 
@@ -118,3 +125,90 @@ def evaluate_feedback(rows):
     return {"counts": counts, "total": total,
             "confirmed": counts["accept"] + counts["correct"],
             "rejected": counts["reject"]}
+
+
+def inference_prompt(source, candidates, context=None):
+    """Build the provider prompt; Python transports evidence, it does not infer."""
+    context = context or {}
+    compact = []
+    for item in candidates:
+        compact.append({
+            "item_id": item.get("id"),
+            "date": item.get("fecha"),
+            "publication_id": item.get("publicacion_id"),
+            "content_type": item.get("tipo_contenido"),
+            "description_original": item.get("descripcion_original", ""),
+            "asset_available": bool(item.get("asset_available")),
+        })
+    payload = {
+        "task": "Inferir relaciones curatoriales multimodales sin inventar hechos.",
+        "rules": [
+            "Una hipótesis no es un hecho: expresa evidencia y desconocidos.",
+            "No agrupes por una palabra aislada.",
+            "Conserva la descripción original como dato, no como verdad.",
+            "Usa solo item_id presentes en candidates.",
+        ],
+        "context": context,
+        "source": {
+            "item_id": source.get("id"),
+            "date": source.get("fecha"),
+            "publication_id": source.get("publicacion_id"),
+            "content_type": source.get("tipo_contenido"),
+            "description_original": source.get("descripcion_original", ""),
+            "asset_available": bool(source.get("asset_available")),
+        },
+        "candidates": compact,
+        "output": {
+            "hypotheses": "array de {item_id, facet, relation_type, reason, evidence, confidence}",
+            "unknowns": "array de datos que faltan",
+        },
+    }
+    return json.dumps(payload, ensure_ascii=False)
+
+
+def normalize_inference(raw, source_id, candidate_ids):
+    """Validate model hypotheses without turning them into ledger truth."""
+    if isinstance(raw, str):
+        start, end = raw.find("{"), raw.rfind("}")
+        if start < 0 or end < start:
+            return {"schema": INFERENCE_SCHEMA, "source_id": source_id,
+                    "hypotheses": [], "unknowns": ["provider_output_not_json"]}
+        try:
+            raw = json.loads(raw[start:end + 1])
+        except ValueError:
+            return {"schema": INFERENCE_SCHEMA, "source_id": source_id,
+                    "hypotheses": [], "unknowns": ["provider_output_not_json"]}
+    if not isinstance(raw, dict):
+        raw = {}
+    allowed = {str(value) for value in candidate_ids}
+    hypotheses = []
+    seen = set()
+    for row in raw.get("hypotheses", raw.get("new_hypotheses", [])) or []:
+        if not isinstance(row, dict):
+            continue
+        item_id = str(row.get("item_id", ""))
+        facet = str(row.get("facet", "")).lower()
+        reason = str(row.get("reason", "")).strip()
+        if item_id not in allowed or facet not in INFERENCE_FACETS or not reason:
+            continue
+        key = (item_id, facet, str(row.get("relation_type", "related")))
+        if key in seen:
+            continue
+        seen.add(key)
+        hypotheses.append({
+            "item_id": item_id,
+            "facet": facet,
+            "relation_type": str(row.get("relation_type", "related"))[:80],
+            "reason": reason[:500],
+            "evidence": [str(value)[:300] for value in row.get("evidence", [])]
+            if isinstance(row.get("evidence", []), list) else [],
+            "confidence": str(row.get("confidence", "low")).lower()
+            if str(row.get("confidence", "low")).lower() in {"high", "medium", "low"}
+            else "low",
+            "status": "candidate",
+        })
+    unknowns = raw.get("unknowns", [])
+    return {"schema": INFERENCE_SCHEMA, "source_id": str(source_id),
+            "hypotheses": hypotheses[:48],
+            "unknowns": [str(value)[:300] for value in unknowns[:24]]
+            if isinstance(unknowns, list) else []}

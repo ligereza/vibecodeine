@@ -135,6 +135,17 @@
   .copiloto-motivo{color:#b9c5cb;margin:3px 0 5px}
   .inbox-actions{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
   .inbox-actions button{font-size:.62rem;padding:4px 6px}
+  #inbox-triangulacion{border:1px solid #4a3c55;padding:9px;margin-top:8px;background:#100d14;font-size:.68rem}
+  #inbox-triangulacion strong{color:#d6b9e8;letter-spacing:.08em;text-transform:uppercase}
+  #inbox-rescate{border:1px solid #4a4934;padding:9px;margin-top:8px;background:#10100d;font-size:.68rem}
+  #inbox-rescate strong{color:#c8c98e;letter-spacing:.08em;text-transform:uppercase}
+  .rescate-item{border-top:1px solid #2b2a20;padding:6px 0;margin-top:5px}
+  .rescate-item b{color:#ddd9c8}.rescate-meta{color:#9d987d;margin-top:3px}
+  .tri-grupo{border-top:1px solid #33283b;padding:7px 0;margin-top:6px}
+  .tri-grupo button{font-size:.6rem;padding:3px 6px;margin-top:5px}
+  .tri-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:5px;margin-top:7px}
+  .tri-form label{font-size:.58rem;color:#8a857a}
+  .tri-form input,.tri-form select{width:100%;font:inherit;font-size:.62rem;background:#0b0a0d;color:#c9c5b9;border:1px solid #33283b;padding:4px}
   #inbox-more{margin-top:10px}
   @media (max-width:560px){
     .pieza{grid-template-columns:52px 1fr;gap:10px}
@@ -197,6 +208,16 @@
         <button id="inbox-copiloto-externo" type="button">pedir segunda lectura</button>
       </div>
       <pre id="inbox-copiloto-externo-salida" hidden></pre>
+    </div>
+    <div id="inbox-triangulacion">
+      <strong>Triangulación candidata</strong>
+      <span class="inbox-asociacion-ayuda">Watsonx agrupó por artista; no confirma obras ni eventos.</span>
+      <div id="inbox-triangulacion-lista">Cargando grupos…</div>
+    </div>
+    <div id="inbox-rescate">
+      <strong>Rescate de informes legados</strong>
+      <span class="inbox-asociacion-ayuda">Dos lecturas externas, todavía sin promoción.</span>
+      <div id="inbox-rescate-lista">Cargando decisiones de rescate…</div>
     </div>
   </div>
   <div id="inbox-lista">Cargando inbox MAK…</div>
@@ -292,9 +313,53 @@ async function cargarInboxMak(){
     INBOX_SELECTED.clear();
     INBOX.filter(x=>x.selection==='seleccionar').forEach(x=>INBOX_SELECTED.add(x.id));
     await cargarTableros();
+    await cargarTriangulacion();
+    await cargarRescate();
     document.getElementById("inbox-contador").textContent=`${d.total} elementos · ${d.available_assets} disponibles en MAK`;
     pintarInboxMak();
   }catch(e){box.textContent="No se pudo cargar el archivo visual de MAK.";}
+}
+
+async function cargarRescate(){
+  const box=document.getElementById('inbox-rescate-lista');
+  try{
+    const r=await fetch('/api/research/rescue',{cache:'no-store'}), d=await r.json();
+    if(!d.items||!d.items.length){box.textContent='No hay rescates candidatos disponibles.';return;}
+    const c=d.counts||{};
+    const cab=`<div class="rescate-meta">${esc(c.total||0)} candidatos · rescatar: ${esc(c.rescue_candidate||0)} · revisar: ${esc(c.review||0)} · retirar sin borrar: ${esc(c.retire_candidate||0)}</div>`;
+    box.innerHTML=cab+d.items.slice(0,24).map(x=>`<div class="rescate-item"><b>${esc(x.work_id)}</b> · ${esc(x.canonical_decision)}<div class="rescate-meta">${esc(x.watsonx?.lane||'lane desconocido')} · ${esc(x.watsonx?.purpose||'sin propósito')} · próxima: ${esc(x.next_action||'revisar manual')}</div></div>`).join('');
+  }catch(e){box.textContent='No se pudo cargar el rescate legado.';}
+}
+
+async function cargarTriangulacion(){
+  const box=document.getElementById('inbox-triangulacion-lista');
+  try{
+    const r=await fetch('/api/portfolio/triangulation',{cache:'no-store'}), d=await r.json();
+    if(!d.groups||!d.groups.length){box.textContent='Sin grupos candidatos disponibles.';return;}
+    box.innerHTML=d.groups.map(g=>{
+      const rel=g.relations||{}, items=(g.items||[]).length;
+      const events=Array.isArray(rel.event)?rel.event.join(', '):(rel.event||'unknown');
+      const review=(d.human_resolutions||[]).filter(x=>x.group_key===g.key).slice(-1)[0]||{};
+      const key=triDomKey(g.key||'grupo');
+      return `<div class="tri-grupo"><b>${esc(g.key||'grupo sin nombre')}</b> · ${items} registros · confianza ${esc(g.confidence??'unknown')}<br><span class="inbox-asociacion-ayuda">eventos: ${esc(events)} · siguiente: ${esc(g.next_action||'revisar')}</span><div class="tri-form"><label>artista/cliente<input id="tri-artist-${key}" value="${esc(review.artist||rel.artist||'')}"></label><label>evento<input id="tri-event-${key}" value="${esc(review.event||'')}"></label><label>venue<input id="tri-venue-${key}" value="${esc(review.venue||rel.venue||'')}"></label><label>fecha<input id="tri-date-${key}" type="date" value="${esc(review.date||'')}"></label><label>tipo<select id="tri-kind-${key}"><option value="registro">registro</option><option value="obra">obra</option><option value="colab">colab</option><option value="otro">otro</option></select></label><label>certeza<select id="tri-confidence-${key}"><option value="confirmed">confirmada</option><option value="candidate">candidata</option><option value="unknown">desconocida</option></select></label></div><button type="button" onclick='guardarTriangulacion(${JSON.stringify(g.key||'')})'>guardar resolución</button> <button type="button" onclick="filtrarTriangulacion('${esc(g.key||'')}')">ver en bandeja</button></div>`;
+    }).join('');
+  }catch(e){box.textContent='No se pudo cargar la triangulación candidata.';}
+}
+
+function triDomKey(value){return String(value).replace(/[^a-z0-9]+/gi,'_');}
+
+async function guardarTriangulacion(groupKey){
+  const key=triDomKey(groupKey);
+  const body={group_key:groupKey,artist:document.getElementById(`tri-artist-${key}`).value,event:document.getElementById(`tri-event-${key}`).value,venue:document.getElementById(`tri-venue-${key}`).value,date:document.getElementById(`tri-date-${key}`).value,record_kind:document.getElementById(`tri-kind-${key}`).value,confidence:document.getElementById(`tri-confidence-${key}`).value};
+  const r=await fetch('/api/portfolio/triangulation/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}), d=await r.json();
+  if(!d.ok){alert(d.error||'No se guardó la resolución.');return;}
+  await cargarTriangulacion();
+}
+
+function filtrarTriangulacion(value){
+  document.getElementById('inbox-buscar').value=value;
+  INBOX_LIMIT=48;
+  pintarInboxMak();
 }
 
 async function cargarTableros(){
@@ -396,7 +461,7 @@ async function enviarInbox(id,depto){
 async function crearTablero(){
   const input=document.getElementById('inbox-nuevo-tablero'), name=input.value.trim();
   if(!name)return alert('Escribe un nombre para el tablero.');
-  const facet=document.getElementById('inbox-nuevo-eje').value;
+  const facet=document.getElementById('inbox-nuevo-faceta').value;
   const value=document.getElementById('inbox-nuevo-valor').value.trim();
   const r=await fetch('/api/portfolio/board',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'create',name,facet,value})});
   const d=await r.json(); if(!d.ok)return alert(d.error||'No se creo el tablero.');

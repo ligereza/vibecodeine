@@ -1,4 +1,5 @@
-from cultura.mak_plataforma.copilot import build_suggestions, evaluate_feedback, media_manifest
+from cultura.mak_plataforma.copilot import (build_suggestions, evaluate_feedback,
+                                             media_manifest, normalize_inference)
 
 
 def item(item_id, date="2026-08-08", description="", kind="story", publication=""):
@@ -44,3 +45,19 @@ def test_feedback_summary_is_a_real_measure():
     summary = evaluate_feedback([{"action": "accept"}, {"action": "reject"}])
     assert summary == {"counts": {"accept": 1, "correct": 0, "reject": 1, "ignore": 0},
                        "total": 2, "confirmed": 1, "rejected": 1}
+
+
+def test_provider_inference_is_candidate_only_and_never_fact():
+    result = normalize_inference({
+        "hypotheses": [
+            {"item_id": "b", "facet": "artist", "relation_type": "same_event",
+             "reason": "evidence needs confirmation", "evidence": ["date"],
+             "confidence": "medium"},
+            {"item_id": "outside", "facet": "artist", "reason": "hallucination"},
+            {"item_id": "b", "facet": "unknown", "reason": "invalid facet"},
+        ],
+        "unknowns": ["venue missing"],
+    }, "a", ["b"])
+    assert len(result["hypotheses"]) == 1
+    assert result["hypotheses"][0]["status"] == "candidate"
+    assert result["unknowns"] == ["venue missing"]
