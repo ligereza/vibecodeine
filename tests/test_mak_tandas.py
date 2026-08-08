@@ -45,6 +45,16 @@ def test_build_brief_is_provider_agnostic_but_structured():
     assert "CONTRATO DE PRODUCTO" in brief["prompt"]
 
 
+def test_build_brief_declares_identity_envelope():
+    brief = tandas.build_brief("rd_evidence", "identity01",
+                               providers=["watsonx"])
+    identity = brief["work"]["identity"]
+    assert identity["schema"] == "mak-identity-v1"
+    assert identity["kind"] == "report"
+    assert identity["source_id"] == "rd_evidence:identity01"
+    assert identity["entities"]["venue"] == []
+
+
 def test_build_brief_can_include_bounded_evidence():
     brief = tandas.build_brief(
         "adobe_rescue", "b001", providers=["aws"], include_evidence=True,
@@ -377,6 +387,39 @@ def test_run_external_batch_repairs_product_once(monkeypatch, tmp_path):
     assert len(calls) == 2
     assert "Repara SOLO" in calls[1]
     assert result["repair_raw_path"]
+
+
+def test_product_repair_preserves_work_identity(monkeypatch, tmp_path):
+    common = tmp_path / "common.jsonl"
+    batch = tmp_path / "batch.jsonl"
+    calls = []
+
+    def fake_call(provider, prompt, **kwargs):
+        calls.append(prompt)
+        item = {
+            "claim": "existing archaeology tool should be reused",
+            "evidence": ["tools/contexto_repo.py"],
+            "files": ["tools/contexto_repo.py"],
+            "confidence": "high", "action": "reuse", "reject_reason": "",
+        }
+        if len(calls) > 1:
+            item["product"] = {
+                "existing_path": "tools/contexto_repo.py",
+                "reuse_test": "tests/test_mak_tandas.py",
+                "decision": "reuse",
+            }
+        return json.dumps({"items": [item]})
+
+    monkeypatch.setattr(tandas.external_providers, "call", fake_call)
+    result = tandas.run_external_batch(
+        "tool_archaeology", "identity-repair", "ollama",
+        out_dir=str(tmp_path), common_path=str(common),
+        batch_path=str(batch), use_ollama=False)
+    assert result["status"] == "accepted"
+    rows = [json.loads(line) for line in common.read_text(encoding="utf-8").splitlines()]
+    assert rows[-1]["work"]["work_id"] == "tool_archaeology:identity-repair"
+    assert rows[-1]["work"]["identity"]["source_id"] == (
+        "tool_archaeology:identity-repair")
 
 
 def test_run_external_batch_rejects_items_over_budget(monkeypatch, tmp_path):

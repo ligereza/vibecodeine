@@ -50,6 +50,7 @@ COMMON_LEDGER = os.path.join(HOME, "plataforma/common_ledger.jsonl")
 
 SCHEMA_VERSION = "mak-batch-v1"
 WORK_SCHEMA_VERSION = "mak-work-v1"
+IDENTITY_SCHEMA = "mak-identity-v1"
 
 RESULT_REQUIRED = (
     "claim",
@@ -70,6 +71,31 @@ PRODUCT_CONTRACTS = {
     "opportunity_radar": ("opportunity", "eligibility", "deadline", "source",
                            "next_action", "risk"),
 }
+
+
+def _identity_for_batch(area, batch_id, provider):
+    kinds = {
+        "rd_evidence": "report",
+        "iskvw_curation": "work",
+        "mak_quality": "report",
+        "opportunity_radar": "opportunity",
+        "svg_pipeline": "work",
+        "tool_archaeology": "system",
+        "adobe_rescue": "system",
+    }
+    return {
+        "schema": IDENTITY_SCHEMA,
+        "kind": kinds.get(area, "task"),
+        "source_id": "%s:%s" % (area, batch_id),
+        "parent_id": "batch:%s" % batch_id,
+        "entities": {
+            "artist": [], "username": [], "client": [], "collab": [],
+            "event": [], "festival": [], "venue": [], "location": [],
+            "source": [provider] if provider else [],
+        },
+        "event_date": "",
+        "published_at": "",
+    }
 
 
 def _print_json(payload, indent=None):
@@ -240,6 +266,8 @@ def build_brief(area, batch_id, paths=None, providers=None, allow_premium=True,
         "provider": plan[0] if plan else "unknown",
         "sources": selected_paths,
         "status": "in_progress",
+        "identity": _identity_for_batch(area, batch_id,
+                                         plan[0] if plan else "unknown"),
     }
     brief = {
         "schema": SCHEMA_VERSION,
@@ -458,6 +486,26 @@ def validate_result(payload):
     return not errors, errors
 
 
+def validate_work_identity(work):
+    """Validate the trace envelope before a batch can enter the ledger."""
+    if not isinstance(work, dict):
+        return ["work_not_object"]
+    identity = work.get("identity")
+    if not isinstance(identity, dict):
+        return ["work_identity_missing"]
+    errors = []
+    if identity.get("schema") != IDENTITY_SCHEMA:
+        errors.append("work_identity_bad_schema")
+    kind = str(identity.get("kind") or "")
+    if not kind:
+        errors.append("work_identity_missing_kind")
+    if kind != "legacy_unknown" and not str(identity.get("source_id") or "").strip():
+        errors.append("work_identity_missing_source_id")
+    if not isinstance(identity.get("entities"), dict):
+        errors.append("work_identity_entities_not_object")
+    return errors
+
+
 def append_ledger(row, path=LEDGER):
     """Append a durable batch record. Never writes credentials."""
     safe = {
@@ -596,7 +644,20 @@ def ingest_result(payload, area, common_path=COMMON_LEDGER, source="external",
         "provider": source,
         "sources": [],
         "status": "legacy_unknown",
+        "identity": {
+            "schema": IDENTITY_SCHEMA,
+            "kind": "legacy_unknown",
+            "source_id": "",
+            "parent_id": "",
+            "entities": {},
+            "event_date": "",
+            "published_at": "",
+        },
     })
+    identity_errors = validate_work_identity(payload.get("work"))
+    if identity_errors:
+        return {"ok": False, "status": "invalid", "errors": identity_errors,
+                "review": None, "items": 0}
     if discernment is None or common_ledger is None:
         return {"ok": False, "status": "unavailable",
                 "errors": ["discernment_or_ledger_unavailable"],
@@ -808,6 +869,7 @@ def run_external_batch(area, batch_id, provider, paths=None, model=None,
             repaired_ok = False
             repaired_errors = ["product_repair_error:%s" % str(exc)[:160]]
         if repaired_ok:
+            repaired["work"] = payload.get("work", {})
             payload = repaired
         else:
             errors = product_errors + repaired_errors

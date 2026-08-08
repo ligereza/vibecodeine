@@ -760,6 +760,30 @@ def contract_for_task(verbo, tema):
     return ["claim", "sources", "uncertainty", "next_action"]
 
 
+def identity_contract(route, verbo):
+    """Return the portable identity envelope for a dispatched task."""
+    kind_by_domain = {
+        "rd": "report",
+        "iskvw": "work",
+        "mak": "report",
+        "opportunities": "opportunity",
+        "research": "work",
+    }
+    return {
+        "schema": "mak-identity-v1",
+        "kind": kind_by_domain.get(route.domain, "task"),
+        "source_id": "dispatch:%s:%s" % (route.domain, route.intent),
+        "parent_id": "verb:%s" % verbo,
+        "entities": {
+            "artist": [], "username": [], "client": [], "collab": [],
+            "event": [], "festival": [], "venue": [], "location": [],
+            "source": [],
+        },
+        "event_date": "",
+        "published_at": "",
+    }
+
+
 def work_contract(verbo, tema):
     """Build the typed receipt that travels with every research dispatch."""
     if research_router is not None:
@@ -774,6 +798,7 @@ def work_contract(verbo, tema):
             "required_fields": list(route.required_fields),
             "reason": route.reason,
             "profile": research_router.profile_for_route(route),
+            "identity": identity_contract(route, verbo),
         }
     formato, densidad = format_for_task(verbo, tema)
     return {
@@ -784,6 +809,11 @@ def work_contract(verbo, tema):
         "density": densidad,
         "required_fields": contract_for_task(verbo, tema),
         "reason": "conservative local fallback",
+        "identity": {
+            "schema": "mak-identity-v1", "kind": "task",
+            "source_id": "dispatch:research:answer", "parent_id": "verb:%s" % verbo,
+            "entities": {}, "event_date": "", "published_at": "",
+        },
     }
 
 
@@ -800,6 +830,8 @@ def validate_work_contract(verbo, payload):
             errors.append("work_contract_%s_mismatch" % field)
     if actual.get("required_fields") != expected["required_fields"]:
         errors.append("work_contract_required_fields_mismatch")
+    if actual.get("identity") != expected.get("identity"):
+        errors.append("work_contract_identity_mismatch")
     if payload.get("formato") != expected["format"]:
         errors.append("payload_format_mismatch")
     if payload.get("densidad") != expected["density"]:

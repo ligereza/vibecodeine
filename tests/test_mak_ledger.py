@@ -45,6 +45,55 @@ def test_external_batch_preserves_work_identity(tmp_path):
     assert rows[0]["work"]["parent_task"] == "brief:round-1"
 
 
+def test_typed_work_preserves_identity_entities_and_trace_status(tmp_path):
+    path = tmp_path / "common_ledger.jsonl"
+    ok, errors, row = ledger.append_item({
+        "domain": "iskvw",
+        "type": "evidence",
+        "claim": "registro asociado al evento",
+        "evidence": ["iskvw/datos/campo.json"],
+        "files": ["iskvw/datos/campo.json"],
+        "confidence": "medium",
+        "action": "curate",
+        "work": {
+            "work_id": "portfolio:post-1",
+            "parent_task": "portfolio:import-1",
+            "lane": "obra",
+            "purpose": "agrupar un registro visual",
+            "format": "curatoria",
+            "created_at": "2026-08-08T23:00:00Z",
+            "provider": "watsonx",
+            "sources": ["instagram:post-1"],
+            "status": "awaiting_review",
+            "identity": {
+                "kind": "record",
+                "source_id": "instagram:post-1",
+                "parent_id": "portfolio:import-1",
+                "entities": {"artist": ["drefquila"], "event": ["Lolla"]},
+                "event_date": "2025-03-15",
+            },
+        },
+    }, path=str(path), source="watsonx")
+    assert ok is True
+    assert errors == []
+    assert row["trace_status"] == "declared"
+    assert row["work"]["identity"]["kind"] == "record"
+    assert row["work"]["identity"]["entities"]["artist"] == ["drefquila"]
+
+
+def test_legacy_work_is_marked_without_inventing_identity(tmp_path):
+    path = tmp_path / "common_ledger.jsonl"
+    ok, errors, row = ledger.append_item({
+        "domain": "mak", "type": "evidence", "claim": "old report",
+        "evidence": [], "files": [], "confidence": "unknown",
+        "action": "archive",
+    }, path=str(path))
+    assert ok is True
+    assert errors == []
+    assert row["trace_status"] == "legacy_unknown"
+    assert row["work"]["identity"]["kind"] == "legacy_unknown"
+
+
 def test_decision_queue_rejects_unknown_lane_or_decision():
     ok, errors, _row = ledger.validate_item({
         "domain": "rd", "type": "task", "claim": "x",
