@@ -24,6 +24,15 @@ DOMAINS = ("rd", "iskvw", "mak", "svg", "adobe", "repo", "opportunities")
 CONFIDENCE = ("high", "medium", "low", "unknown")
 LANES = ("obra", "trabajo", "sistema")
 DECISIONS = ("hacer", "revisar", "refutar", "archivar", "descartar")
+IDENTITY_SCHEMA = "mak-identity-v1"
+IDENTITY_KINDS = (
+    "task", "report", "work", "record", "seed", "opportunity", "system",
+    "legacy_unknown",
+)
+ENTITY_FIELDS = (
+    "artist", "username", "client", "collab", "event", "festival", "venue",
+    "location", "source",
+)
 LANE_BY_DOMAIN = {
     "iskvw": "obra", "svg": "obra",
     "rd": "trabajo", "opportunities": "trabajo",
@@ -70,6 +79,44 @@ def _default_decision(item):
     return "revisar"
 
 
+def _normalize_identity(identity, work_id, ts):
+    """Normalize provenance without forcing old rows into a false identity."""
+    if not isinstance(identity, dict):
+        return {
+            "schema": IDENTITY_SCHEMA,
+            "kind": "legacy_unknown",
+            "source_id": "",
+            "parent_id": "",
+            "entities": {field: [] for field in ENTITY_FIELDS},
+            "event_date": "",
+            "published_at": "",
+            "created_at": ts,
+        }
+    entities = identity.get("entities")
+    if not isinstance(entities, dict):
+        entities = {}
+    normalized_entities = {}
+    for field in ENTITY_FIELDS:
+        values = entities.get(field, [])
+        if not isinstance(values, list):
+            values = [values] if values else []
+        normalized_entities[field] = [
+            _safe_text(value, 240) for value in values if str(value).strip()
+        ][:20]
+    kind = _safe_text(identity.get("kind"), 40).lower() or "legacy_unknown"
+    return {
+        "schema": IDENTITY_SCHEMA,
+        "kind": kind,
+        "source_id": _safe_text(identity.get("source_id"), 240) or (
+            "" if kind == "legacy_unknown" else _safe_text(work_id, 240)),
+        "parent_id": _safe_text(identity.get("parent_id"), 240),
+        "entities": normalized_entities,
+        "event_date": _safe_text(identity.get("event_date"), 40),
+        "published_at": _safe_text(identity.get("published_at"), 40),
+        "created_at": _safe_text(identity.get("created_at"), 40) or ts,
+    }
+
+
 def normalize_item(item, source="manual", ts=None):
     if not isinstance(item, dict):
         raise ValueError("item_not_object")
@@ -107,9 +154,14 @@ def normalize_item(item, source="manual", ts=None):
             "sources": [],
             "status": "legacy_unknown",
         }
+    work_id = _safe_text(work.get("work_id"), 240) or "legacy:unknown"
+    identity = work.get("identity")
+    if not isinstance(identity, dict):
+        identity = item.get("identity")
+    work_identity = _normalize_identity(identity, work_id, row["ts"])
     row["work"] = {
         "schema": _safe_text(work.get("schema"), 40) or "mak-work-v1",
-        "work_id": _safe_text(work.get("work_id"), 240) or "legacy:unknown",
+        "work_id": work_id,
         "parent_task": _safe_text(work.get("parent_task"), 240) or "legacy_unknown",
         "lane": _safe_text(work.get("lane"), 40) or row["lane"],
         "purpose": _safe_text(work.get("purpose"), 500),
@@ -119,7 +171,12 @@ def normalize_item(item, source="manual", ts=None):
         "sources": [_safe_text(value, 400) for value in work.get("sources", [])]
         if isinstance(work.get("sources", []), list) else [],
         "status": _safe_text(work.get("status"), 40) or "legacy_unknown",
+        "identity": work_identity,
     }
+    row["trace_status"] = (
+        "declared" if work_identity["kind"] != "legacy_unknown"
+        else "legacy_unknown"
+    )
     metadata = item.get("metadata")
     if isinstance(metadata, dict):
         row["metadata"] = {
@@ -149,6 +206,15 @@ def validate_item(item, source="manual"):
         errors.append("bad_lane")
     if row["decision"] not in DECISIONS:
         errors.append("bad_decision")
+    identity = row["work"].get("identity", {})
+    if identity.get("schema") != IDENTITY_SCHEMA:
+        errors.append("bad_identity_schema")
+    if identity.get("kind") not in IDENTITY_KINDS:
+        errors.append("bad_identity_kind")
+    if identity.get("kind") != "legacy_unknown" and not identity.get("source_id"):
+        errors.append("missing_identity_source_id")
+    if not isinstance(identity.get("entities"), dict):
+        errors.append("identity_entities_not_object")
     if not row["claim"] and row["type"] != "reject":
         errors.append("missing_claim")
     if not isinstance(row["evidence"], list):
@@ -231,6 +297,14 @@ def _enrich_legacy(row):
     view["next_action"] = _safe_text(view.get("next_action"), 500) or \
         fallback_actions.get(action, "human review of the decision")
     view["owner"] = _safe_text(view.get("owner"), 120) or "MAK"
+    identity = (view.get("work") or {}).get("identity")
+    if not isinstance(identity, dict):
+        identity = _normalize_identity(None, (view.get("work") or {}).get(
+            "work_id", "legacy:unknown"), view.get("ts", ""))
+    view["trace_status"] = view.get("trace_status") or (
+        "declared" if identity.get("kind") != "legacy_unknown"
+        else "legacy_unknown")
+    view["identity_kind"] = identity.get("kind", "legacy_unknown")
     return view
 
 
@@ -244,6 +318,8 @@ def summarize(path=LEDGER, limit=50):
         "by_decision": dict(Counter(r.get("decision", "") for r in rows)),
         "by_type": dict(Counter(r.get("type", "") for r in rows)),
         "by_action": dict(Counter(r.get("action", "") for r in rows)),
+        "by_trace_status": dict(Counter(r.get("trace_status", "") for r in rows)),
+        "by_identity_kind": dict(Counter(r.get("identity_kind", "") for r in rows)),
         "pending_human": len(pending),
         "last": rows[-5:],
     }

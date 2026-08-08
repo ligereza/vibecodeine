@@ -120,6 +120,8 @@ def test_harvested_factual_question_does_not_use_essay_shape(monkeypatch):
     assert payload["work_contract"]["schema"] == "mak-work-contract-v1"
     assert payload["work_contract"]["format"] == payload["formato"]
     assert payload["work_contract"]["profile"]["destination"] == "rd"
+    assert payload["work_contract"]["identity"]["schema"] == "mak-identity-v1"
+    assert payload["work_contract"]["identity"]["kind"] == "report"
 
 
 def test_route_contract_rejects_format_drift():
