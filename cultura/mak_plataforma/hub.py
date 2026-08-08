@@ -70,6 +70,8 @@ PORTFOLIO_BOARDS = os.path.join(
     HOME, "plataforma/director_runs/portfolio-editor-20260808/boards.json")
 PORTFOLIO_CONNECTIONS = os.path.join(
     HOME, "plataforma/director_runs/portfolio-editor-20260808/connections.jsonl")
+PORTFOLIO_FEEDBACK = os.path.join(
+    HOME, "plataforma/director_runs/portfolio-editor-20260808/copilot_feedback.jsonl")
 RESEARCH_URL = "http://127.0.0.1:8890"
 CODEX_URL = "http://127.0.0.1:8891"
 TRABAJO_STATE = os.path.join(HOME, "plataforma/.trabajo_state.json")
@@ -727,6 +729,74 @@ def _portfolio_connect(body):
     return {"ok": True, "connection": row}
 
 
+_COPILOT_STOPWORDS = {
+    "para", "como", "esta", "este", "desde", "entre", "sobre", "con", "una",
+    "los", "las", "del", "por", "que", "una", "obra", "sin", "the", "and",
+}
+
+
+def _portfolio_terms(value):
+    return {word for word in re.findall(r"[a-záéíóúñ0-9]{4,}", str(value or "").lower())
+            if word not in _COPILOT_STOPWORDS}
+
+
+def _portfolio_suggestions(item_id):
+    source = _portfolio_item(item_id)
+    if not source:
+        return {"ok": False, "error": "item_no_encontrado", "suggestions": []}
+    source_terms = _portfolio_terms(source.get("descripcion_original"))
+    source_date = source.get("fecha", "")
+    source_pub = source.get("publicacion_id", "")
+    selected = _portfolio_selections()
+    scored = []
+    for candidate in _portfolio_inbox().get("items", []):
+        if candidate.get("id") == source.get("id"):
+            continue
+        reasons = []
+        score = 0
+        if candidate.get("publicacion_id") == source_pub and source_pub:
+            score += 8
+            reasons.append("misma publicación/carrusel")
+        if candidate.get("fecha") == source_date and source_date:
+            score += 5
+            reasons.append("misma fecha")
+        shared = sorted(source_terms & _portfolio_terms(candidate.get("descripcion_original")))
+        if shared:
+            score += min(4, len(shared))
+            reasons.append("conceptos repetidos: " + ", ".join(shared[:4]))
+        if candidate.get("tipo_contenido") == source.get("tipo_contenido"):
+            score += 1
+        if not reasons:
+            continue
+        scored.append({"item_id": candidate.get("id"), "score": score,
+                       "confidence": "alta" if score >= 9 else "media" if score >= 5 else "baja",
+                       "reasons": reasons,
+                       "selection": selected.get(candidate.get("id"), {}).get("decision", "pendiente")})
+    scored.sort(key=lambda row: (-row["score"], row["item_id"]))
+    return {"ok": True, "schema": "faro-portfolio-copilot-v1", "source_id": source.get("id"),
+            "provider": "local_deterministic", "suggestions": scored[:12]}
+
+
+def _portfolio_feedback_record(body):
+    action = str(body.get("action", ""))
+    if action not in ("accept", "reject", "ignore", "correct"):
+        return {"ok": False, "error": "feedback_invalido"}
+    source = str(body.get("source_id", ""))
+    target = str(body.get("target_id", ""))
+    if not _portfolio_item(source) or not _portfolio_item(target) or source == target:
+        return {"ok": False, "error": "items_invalidos"}
+    row = {"source_id": source, "target_id": target, "action": action,
+           "relation": str(body.get("relation", "relacionada"))[:80],
+           "ts": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
+    os.makedirs(os.path.dirname(PORTFOLIO_FEEDBACK), exist_ok=True)
+    with open(PORTFOLIO_FEEDBACK, "a", encoding="utf-8") as fh:
+        fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+    if action in ("accept", "correct"):
+        _portfolio_connect({"source_id": source, "target_id": target,
+                            "relation": row["relation"]})
+    return {"ok": True, "feedback": row}
+
+
 def _portfolio_media(relative):
     value = str(relative or "").lstrip("/")
     if not value or ".." in value.split("/"):
@@ -1333,6 +1403,9 @@ class H(BaseHTTPRequestHandler):
             return self._json(_portfolio_inbox())
         if p == "/api/portfolio/boards":
             return self._json(_portfolio_boards())
+        if p == "/api/portfolio/copilot/suggestions":
+            item_id = (urllib.parse.parse_qs(u.query).get("item_id") or [""])[0]
+            return self._json(_portfolio_suggestions(item_id))
         if p.startswith("/portfolio-media/"):
             asset = _portfolio_media(p[len("/portfolio-media/"):])
             if asset is None:
@@ -1471,7 +1544,8 @@ class H(BaseHTTPRequestHandler):
             return self._json(_episode_revision.record(
                 body.get("episodio", ""), body.get("decision", ""), body.get("note", "")))
         if u.path in ("/api/portfolio/select", "/api/portfolio/dispatch",
-                      "/api/portfolio/board", "/api/portfolio/connect"):
+                      "/api/portfolio/board", "/api/portfolio/connect",
+                      "/api/portfolio/feedback"):
             largo = min(int(self.headers.get("Content-Length") or 0), 12000)
             try:
                 body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
@@ -1483,6 +1557,8 @@ class H(BaseHTTPRequestHandler):
                 return self._json(_portfolio_board_action(body))
             if u.path.endswith("/connect"):
                 return self._json(_portfolio_connect(body))
+            if u.path.endswith("/feedback"):
+                return self._json(_portfolio_feedback_record(body))
             return self._json(_portfolio_dispatch(body.get("item_id"), body.get("depto"),
                                                    body.get("texto", "")))
         if u.path == "/api/revision" and _revision is not None:
