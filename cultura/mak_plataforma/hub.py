@@ -22,6 +22,7 @@ import signal
 import sys
 import threading
 import time
+import unicodedata
 import urllib.parse
 import urllib.request
 import uuid
@@ -731,13 +732,33 @@ def _portfolio_connect(body):
 
 _COPILOT_STOPWORDS = {
     "para", "como", "esta", "este", "desde", "entre", "sobre", "con", "una",
-    "los", "las", "del", "por", "que", "una", "obra", "sin", "the", "and",
+    "los", "las", "del", "por", "que", "obra", "sin", "the", "and", "pero",
+    "tambien", "cuando", "donde", "hacia", "esta", "esto", "esas", "esos",
+    "ellos", "ellas", "solo", "solo", "muy", "mas", "menos", "fue", "eran",
 }
 
 
 def _portfolio_terms(value):
-    return {word for word in re.findall(r"[a-záéíóúñ0-9]{4,}", str(value or "").lower())
+    normalized = unicodedata.normalize("NFKD", str(value or "").lower())
+    normalized = "".join(char for char in normalized if not unicodedata.combining(char))
+    return {word for word in re.findall(r"[a-z0-9]{5,}", normalized)
             if word not in _COPILOT_STOPWORDS}
+
+
+def _portfolio_feedback():
+    rows = []
+    try:
+        with open(PORTFOLIO_FEEDBACK, encoding="utf-8") as fh:
+            for line in fh:
+                try:
+                    row = json.loads(line)
+                except ValueError:
+                    continue
+                if row.get("source_id") and row.get("target_id"):
+                    rows.append(row)
+    except OSError:
+        pass
+    return rows
 
 
 def _portfolio_suggestions(item_id):
@@ -748,6 +769,9 @@ def _portfolio_suggestions(item_id):
     source_date = source.get("fecha", "")
     source_pub = source.get("publicacion_id", "")
     selected = _portfolio_selections()
+    feedback = _portfolio_feedback()
+    learned = {(row.get("source_id"), row.get("target_id")): row
+               for row in feedback}
     scored = []
     for candidate in _portfolio_inbox().get("items", []):
         if candidate.get("id") == source.get("id"):
@@ -766,14 +790,27 @@ def _portfolio_suggestions(item_id):
             reasons.append("conceptos repetidos: " + ", ".join(shared[:4]))
         if candidate.get("tipo_contenido") == source.get("tipo_contenido"):
             score += 1
+        prior = learned.get((source.get("id"), candidate.get("id")))
+        if prior:
+            if prior.get("action") in ("accept", "correct"):
+                score += 12
+                reasons.append("relación aceptada anteriormente")
+            elif prior.get("action") == "reject":
+                score -= 12
+                reasons.append("relación rechazada anteriormente")
+        if score <= 0:
+            continue
         if not reasons:
             continue
         scored.append({"item_id": candidate.get("id"), "score": score,
-                       "confidence": "alta" if score >= 9 else "media" if score >= 5 else "baja",
+                       "confidence": "confirmada" if prior and prior.get("action") in ("accept", "correct")
+                       else "descartada" if prior and prior.get("action") == "reject"
+                       else "alta" if score >= 9 else "media" if score >= 5 else "baja",
                        "reasons": reasons,
-                       "selection": selected.get(candidate.get("id"), {}).get("decision", "pendiente")})
+                       "selection": selected.get(candidate.get("id"), {}).get("decision", "pendiente"),
+                       "feedback": prior.get("action") if prior else "pendiente"})
     scored.sort(key=lambda row: (-row["score"], row["item_id"]))
-    return {"ok": True, "schema": "faro-portfolio-copilot-v1", "source_id": source.get("id"),
+    return {"ok": True, "schema": "faro-portfolio-copilot-v2", "source_id": source.get("id"),
             "provider": "local_deterministic", "suggestions": scored[:12]}
 
 
