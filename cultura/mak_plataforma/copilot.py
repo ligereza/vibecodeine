@@ -36,9 +36,11 @@ def _confidence(score, prior):
     return "baja"
 
 
-def build_suggestions(source, items, selections=None, feedback=None, limit=24):
+def build_suggestions(source, items, selections=None, feedback=None, context=None, limit=24):
     selections = selections or {}
     learned = feedback_index(feedback or [])
+    context = context or {}
+    context_facet = str(context.get("facet", "")).lower()
     source_id = str(source.get("id", ""))
     source_terms = _terms(source.get("descripcion_original"))
     result = []
@@ -55,16 +57,16 @@ def build_suggestions(source, items, selections=None, feedback=None, limit=24):
             "feedback": prior.get("action") if prior else "pendiente",
         }
         if candidate.get("publicacion_id") == source.get("publicacion_id") and source.get("publicacion_id"):
-            result.append(dict(common, relation_type="same_carousel", score=12,
+            result.append(dict(common, facet="publication", relation_type="same_carousel", score=12,
                                reasons=["misma publicación/carrusel"]))
         if candidate.get("fecha") == source.get("fecha") and source.get("fecha"):
-            result.append(dict(common, relation_type="same_date_context", score=7,
+            result.append(dict(common, facet="date", relation_type="same_date_context", score=7,
                                reasons=["misma fecha"]))
         if shared:
-            result.append(dict(common, relation_type="shared_concept", score=min(6, len(shared)) + 2,
+            result.append(dict(common, facet="text", relation_type="shared_concept", score=min(6, len(shared)) + 2,
                                reasons=["conceptos compartidos: " + ", ".join(shared[:5])]))
         if candidate.get("tipo_contenido") == source.get("tipo_contenido"):
-            result.append(dict(common, relation_type="same_media_role", score=1,
+            result.append(dict(common, facet="format", relation_type="same_media_role", score=1,
                                reasons=["mismo tipo de medio"]))
     for row in result:
         prior = learned.get((source_id, row["item_id"]))
@@ -75,9 +77,10 @@ def build_suggestions(source, items, selections=None, feedback=None, limit=24):
             row["score"] -= 20
             row["reasons"].append("relación rechazada anteriormente")
         row["confidence"] = _confidence(row["score"], prior)
-    result = [row for row in result if row["score"] > 0]
+    suppressed = sum(1 for row in result if context_facet and row.get("facet") == context_facet)
+    result = [row for row in result if row["score"] > 0 and row.get("facet") != context_facet]
     result.sort(key=lambda row: (-row["score"], row["item_id"], row["relation_type"]))
-    return result[:limit]
+    return result[:limit], suppressed
 
 
 def media_manifest(item):
