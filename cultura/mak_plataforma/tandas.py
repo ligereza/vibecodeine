@@ -685,6 +685,7 @@ def ingest_result(payload, area, common_path=COMMON_LEDGER, source="external",
             "reviewer": meta.get("reviewer", ""),
             "fallback": bool(meta.get("fallback", False)),
             "profile_verdict": profile_verdict,
+            "work": payload.get("work", {}),
         })
     if review_append_errors:
         return {"ok": False, "status": "review_ledger_error",
