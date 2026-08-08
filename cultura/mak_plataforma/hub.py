@@ -30,6 +30,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import salud  # noqa: E402
 import copilot  # noqa: E402
+import providers  # noqa: E402
 import cuotas  # noqa: E402
 import ideas  # noqa: E402
 import contrato_archivo  # noqa: E402
@@ -73,6 +74,8 @@ PORTFOLIO_CONNECTIONS = os.path.join(
     HOME, "plataforma/director_runs/portfolio-editor-20260808/connections.jsonl")
 PORTFOLIO_FEEDBACK = os.path.join(
     HOME, "plataforma/director_runs/portfolio-editor-20260808/copilot_feedback.jsonl")
+PORTFOLIO_EXTERNAL = os.path.join(
+    HOME, "plataforma/director_runs/portfolio-editor-20260808/copilot_external.jsonl")
 RESEARCH_URL = "http://127.0.0.1:8890"
 CODEX_URL = "http://127.0.0.1:8891"
 TRABAJO_STATE = os.path.join(HOME, "plataforma/.trabajo_state.json")
@@ -777,6 +780,39 @@ def _portfolio_feedback_record(body):
     return {"ok": True, "feedback": row}
 
 
+def _portfolio_external_review(body):
+    item_id = str(body.get("item_id", ""))
+    provider = str(body.get("provider", "")).lower()
+    if provider not in ("watsonx", "aws", "ollama", "groq", "cerebras"):
+        return {"ok": False, "error": "proveedor_invalido"}
+    source = _portfolio_item(item_id)
+    if not source:
+        return {"ok": False, "error": "item_no_encontrado"}
+    suggestions = _portfolio_suggestions(item_id).get("suggestions", [])
+    prompt = {
+        "task": "Revisar hipótesis curatoriales sin inventar hechos.",
+        "source": copilot.media_manifest(source),
+        "source_description": source.get("descripcion_original", ""),
+        "candidates": suggestions[:12],
+        "output": {"keep": "array de item_id", "reject": "array de item_id",
+                   "new_hypotheses": "array con item_id, relation_type, reason, confidence",
+                   "unknowns": "array de datos faltantes"},
+    }
+    try:
+        providers.load_env()
+        raw = providers.call(provider, json.dumps(prompt, ensure_ascii=False),
+                             max_tokens=1400, temperature=0.1)
+    except Exception as exc:  # noqa: BLE001
+        return {"ok": False, "error": "provider_error", "detail": str(exc)[:180]}
+    row = {"item_id": item_id, "provider": provider, "raw": raw,
+           "ts": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
+    os.makedirs(os.path.dirname(PORTFOLIO_EXTERNAL), exist_ok=True)
+    with open(PORTFOLIO_EXTERNAL, "a", encoding="utf-8") as fh:
+        fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+    return {"ok": True, "provider": provider, "raw": raw,
+            "stored": PORTFOLIO_EXTERNAL}
+
+
 def _portfolio_media(relative):
     value = str(relative or "").lstrip("/")
     if not value or ".." in value.split("/"):
@@ -1397,6 +1433,7 @@ class H(BaseHTTPRequestHandler):
                                "source": copilot.media_manifest(item),
                                "candidates": [copilot.media_manifest(x) for x in candidates if x]})
         if p == "/api/portfolio/copilot/status":
+            providers.load_env()
             return self._json({"ok": True, "provider_status": copilot.provider_status(os.environ),
                                "active": "local_hypothesis_engine"})
         if p.startswith("/portfolio-media/"):
@@ -1538,7 +1575,7 @@ class H(BaseHTTPRequestHandler):
                 body.get("episodio", ""), body.get("decision", ""), body.get("note", "")))
         if u.path in ("/api/portfolio/select", "/api/portfolio/dispatch",
                       "/api/portfolio/board", "/api/portfolio/connect",
-                      "/api/portfolio/feedback"):
+                      "/api/portfolio/feedback", "/api/portfolio/copilot/external"):
             largo = min(int(self.headers.get("Content-Length") or 0), 12000)
             try:
                 body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
@@ -1552,6 +1589,8 @@ class H(BaseHTTPRequestHandler):
                 return self._json(_portfolio_connect(body))
             if u.path.endswith("/feedback"):
                 return self._json(_portfolio_feedback_record(body))
+            if u.path.endswith("/external"):
+                return self._json(_portfolio_external_review(body))
             return self._json(_portfolio_dispatch(body.get("item_id"), body.get("depto"),
                                                    body.get("texto", "")))
         if u.path == "/api/revision" and _revision is not None:

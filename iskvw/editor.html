@@ -190,6 +190,11 @@
     <div id="inbox-copiloto">
       <strong>Copiloto de curaduría</strong>
       <div id="inbox-copiloto-lista">Selecciona una pieza y pide sugerencias.</div>
+      <div class="inbox-acciones-bandeja">
+        <select id="inbox-copiloto-proveedor"><option value="watsonx">Watsonx</option><option value="aws">AWS</option><option value="ollama">Ollama</option><option value="groq">Groq</option><option value="cerebras">Cerebras</option></select>
+        <button id="inbox-copiloto-externo" type="button">pedir segunda lectura</button>
+      </div>
+      <pre id="inbox-copiloto-externo-salida" hidden></pre>
     </div>
   </div>
   <div id="inbox-lista">Cargando inbox MAK…</div>
@@ -348,6 +353,15 @@ async function cargarCopiloto(id){
   box.innerHTML=`<div class="inbox-asociacion-ayuda">Fuente: ${esc(id)} · motor: ${esc(d.provider)} · sugerencias no confirmadas</div>`+d.suggestions.map(s=>{const item=INBOX.find(x=>x.id===s.item_id)||{};return `<div class="copiloto-item"><b>${esc(item.fecha||'')} · ${esc(item.tipo_contenido||'')} · ${esc(s.item_id)}</b> <span class="copiloto-confianza">${esc(s.confidence)}</span><div class="copiloto-motivo">${esc(s.reasons.join(' · '))}</div><button onclick="feedbackCopiloto('${esc(s.item_id)}','accept')">aceptar relación</button><button onclick="feedbackCopiloto('${esc(s.item_id)}','reject')">rechazar</button></div>`}).join('');
 }
 
+async function pedirSegundaLectura(){
+  if(!COPILOTO_SOURCE)return alert('Primero abre el copiloto de una pieza.');
+  const provider=document.getElementById('inbox-copiloto-proveedor').value;
+  const salida=document.getElementById('inbox-copiloto-externo-salida');
+  salida.hidden=false; salida.textContent=`Consultando ${provider} con el grupo reducido…`;
+  const r=await fetch('/api/portfolio/copilot/external',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:COPILOTO_SOURCE,provider})}), d=await r.json();
+  salida.textContent=d.ok?`${d.provider}:\n${d.raw}`:`No disponible: ${d.error||'error'}${d.detail?`\n${d.detail}`:''}`;
+}
+
 async function feedbackCopiloto(target,action){
   if(!COPILOTO_SOURCE)return;
   const relation=action==='accept'?(prompt('Nombre de la relación:', 'relacionada')||'relacionada'):'sugerencia descartada';
@@ -422,6 +436,7 @@ document.getElementById('inbox-anadir-tablero').addEventListener('click',anadirS
 document.getElementById('inbox-conectar').addEventListener('click',conectarSeleccionadas);
 document.getElementById('inbox-seleccionar-visibles').addEventListener('click',seleccionarVisibles);
 document.getElementById('inbox-limpiar-bandeja').addEventListener('click',limpiarBandeja);
+document.getElementById('inbox-copiloto-externo').addEventListener('click',pedirSegundaLectura);
 
 /* ── Loading ─────────────────────────────────────────────────────────────
    Same degradation as the campo skin: archivo.json first (the unified
