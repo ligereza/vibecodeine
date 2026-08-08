@@ -172,7 +172,9 @@
     <label class="campo"><span>Buscar</span><input id="inbox-buscar" type="search" placeholder="artista, fecha, texto, id"></label>
     <label class="campo fila-check"><input id="inbox-assets" type="checkbox"><span>sólo con media en MAK</span></label>
     <label class="campo"><span>Tablero</span><select id="inbox-tablero"><option value="">todos</option></select></label>
-    <label class="campo"><span>Nuevo tablero</span><input id="inbox-nuevo-tablero" type="text" placeholder="obra VIBE-CODEINE"></label>
+    <label class="campo"><span>Nuevo tablero</span><input id="inbox-nuevo-tablero" type="text" placeholder="artista Drefquila"></label>
+    <label class="campo"><span>Eje</span><select id="inbox-nuevo-faceta"><option value="general">general</option><option value="artist">artista</option><option value="event">evento</option><option value="venue">venue</option><option value="client">cliente</option><option value="collab">colab</option><option value="publication">publicación</option></select></label>
+    <label class="campo"><span>Valor del eje</span><input id="inbox-nuevo-valor" type="text" placeholder="Drefquila"></label>
     <button id="inbox-crear-tablero" type="button">crear tablero</button>
     <button id="inbox-anadir-tablero" type="button">añadir seleccion al tablero</button>
     <button id="inbox-conectar" type="button">conectar 2 seleccionadas</button>
@@ -347,10 +349,12 @@ function pintarBandejaAsociacion(){
 async function cargarCopiloto(id){
   COPILOTO_SOURCE=id;
   const box=document.getElementById('inbox-copiloto-lista'); box.textContent='Comparando fecha, publicación y conceptos…';
-  const r=await fetch('/api/portfolio/copilot/suggestions?item_id='+encodeURIComponent(id),{cache:'no-store'}), d=await r.json();
+  const boardId=document.getElementById('inbox-tablero').value;
+  const r=await fetch('/api/portfolio/copilot/suggestions?item_id='+encodeURIComponent(id)+'&board_id='+encodeURIComponent(boardId),{cache:'no-store'}), d=await r.json();
   if(!d.ok){box.textContent='No hay sugerencias para esta pieza.';return;}
   if(!d.suggestions.length){box.textContent='No encontré relaciones candidatas todavía.';return;}
-  box.innerHTML=`<div class="inbox-asociacion-ayuda">Fuente: ${esc(id)} · motor: ${esc(d.provider)} · sugerencias no confirmadas</div>`+d.suggestions.map(s=>{const item=INBOX.find(x=>x.id===s.item_id)||{};return `<div class="copiloto-item"><b>${esc(item.fecha||'')} · ${esc(item.tipo_contenido||'')} · ${esc(s.item_id)}</b> <span class="copiloto-confianza">${esc(s.confidence)}</span><div class="copiloto-motivo">${esc(s.reasons.join(' · '))}</div><button onclick="feedbackCopiloto('${esc(s.item_id)}','accept')">aceptar relación</button><button onclick="feedbackCopiloto('${esc(s.item_id)}','reject')">rechazar</button></div>`}).join('');
+  const contexto=d.context&&d.context.name?` · contexto: ${esc(d.context.name)} · ${d.suppressed_redundant||0} redundantes ocultas`:'';
+  box.innerHTML=`<div class="inbox-asociacion-ayuda">Fuente: ${esc(id)} · motor: ${esc(d.provider)}${contexto} · sugerencias no confirmadas</div>`+d.suggestions.map(s=>{const item=INBOX.find(x=>x.id===s.item_id)||{};return `<div class="copiloto-item"><b>${esc(item.fecha||'')} · ${esc(item.tipo_contenido||'')} · ${esc(s.item_id)}</b> <span class="copiloto-confianza">${esc(s.confidence)}</span><div class="copiloto-motivo">${esc(s.facet)} · ${esc(s.reasons.join(' · '))}</div><button onclick="feedbackCopiloto('${esc(s.item_id)}','accept')">aceptar relación</button><button onclick="feedbackCopiloto('${esc(s.item_id)}','reject')">rechazar</button></div>`}).join('');
 }
 
 async function pedirSegundaLectura(){
@@ -392,9 +396,11 @@ async function enviarInbox(id,depto){
 async function crearTablero(){
   const input=document.getElementById('inbox-nuevo-tablero'), name=input.value.trim();
   if(!name)return alert('Escribe un nombre para el tablero.');
-  const r=await fetch('/api/portfolio/board',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'create',name})});
+  const facet=document.getElementById('inbox-nuevo-eje').value;
+  const value=document.getElementById('inbox-nuevo-valor').value.trim();
+  const r=await fetch('/api/portfolio/board',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'create',name,facet,value})});
   const d=await r.json(); if(!d.ok)return alert(d.error||'No se creo el tablero.');
-  input.value=''; await cargarTableros(); pintarInboxMak();
+  input.value=''; document.getElementById('inbox-nuevo-valor').value=''; await cargarTableros(); pintarInboxMak();
 }
 
 async function anadirSeleccionAlTablero(){

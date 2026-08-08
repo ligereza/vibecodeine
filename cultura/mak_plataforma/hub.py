@@ -701,6 +701,8 @@ def _portfolio_board_action(body):
             return {"ok": False, "error": "nombre_vacio"}
         board = {"id": "tablero-" + uuid.uuid4().hex[:12],
                  "name": name, "item_ids": [],
+                 "facet": str(body.get("facet", "general"))[:40],
+                 "value": str(body.get("value", ""))[:120],
                  "created": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
         boards.append(board)
     elif not board:
@@ -749,15 +751,19 @@ def _portfolio_feedback():
     return rows
 
 
-def _portfolio_suggestions(item_id):
+def _portfolio_suggestions(item_id, board_id=""):
     source = _portfolio_item(item_id)
     if not source:
         return {"ok": False, "error": "item_no_encontrado", "suggestions": []}
-    result = copilot.build_suggestions(source, _portfolio_inbox().get("items", []),
+    board = next((b for b in _portfolio_boards().get("boards", [])
+                  if b.get("id") == str(board_id)), {})
+    result, suppressed = copilot.build_suggestions(source, _portfolio_inbox().get("items", []),
                                        selections=_portfolio_selections(),
-                                       feedback=_portfolio_feedback(), limit=24)
+                                       feedback=_portfolio_feedback(),
+                                       context=board, limit=24)
     return {"ok": True, "schema": "faro-portfolio-copilot-v3", "source_id": source.get("id"),
-            "provider": "local_hypothesis_engine", "suggestions": result}
+            "provider": "local_hypothesis_engine", "context": board,
+            "suppressed_redundant": suppressed, "suggestions": result}
 
 
 def _portfolio_feedback_record(body):
@@ -1420,8 +1426,10 @@ class H(BaseHTTPRequestHandler):
         if p == "/api/portfolio/boards":
             return self._json(_portfolio_boards())
         if p == "/api/portfolio/copilot/suggestions":
-            item_id = (urllib.parse.parse_qs(u.query).get("item_id") or [""])[0]
-            return self._json(_portfolio_suggestions(item_id))
+            query = urllib.parse.parse_qs(u.query)
+            item_id = (query.get("item_id") or [""])[0]
+            board_id = (query.get("board_id") or [""])[0]
+            return self._json(_portfolio_suggestions(item_id, board_id))
         if p == "/api/portfolio/copilot/manifest":
             item_id = (urllib.parse.parse_qs(u.query).get("item_id") or [""])[0]
             item = _portfolio_item(item_id)
