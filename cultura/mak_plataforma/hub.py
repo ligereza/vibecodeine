@@ -738,7 +738,7 @@ def _portfolio_item_context(item_id):
     return {}
 
 
-def _portfolio_select(item_id, decision):
+def _portfolio_select(item_id, decision, board_id=""):
     if decision not in ("seleccionar", "deseleccionar"):
         return {"ok": False, "error": "decision_invalida"}
     item = _portfolio_item(item_id)
@@ -746,9 +746,34 @@ def _portfolio_select(item_id, decision):
         return {"ok": False, "error": "item_no_encontrado"}
     os.makedirs(os.path.dirname(PORTFOLIO_SELECTIONS), exist_ok=True)
     row = {"item_id": item["id"], "decision": decision,
+           "board_id": str(board_id or "")[:100],
+           "work": {"schema": "mak-work-v1",
+                     "work_id": "portfolio:%s" % item["id"],
+                     "parent_task": "portfolio-curation",
+                     "lane": "obra", "purpose": "human portfolio selection",
+                     "format": item.get("tipo_contenido", "media"),
+                     "created_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+                     "provider": "human", "sources": [item["id"]],
+                     "status": "human_decision"},
            "ts": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
     with open(PORTFOLIO_SELECTIONS, "a", encoding="utf-8") as fh:
         fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+    if _ledger is not None:
+        action = "curate" if decision == "seleccionar" else "archive"
+        _ledger.append_unique({
+            "id": "portfolio-selection:%s:%s:%s" % (
+                item["id"], decision, row["ts"]),
+            "domain": "iskvw", "type": "decision", "claim":
+                "%s portfolio item %s" % (decision, item["id"]),
+            "evidence": [item.get("asset_path", ""),
+                         item.get("publicacion_id", "")],
+            "confidence": "high", "action": action,
+            "decision": "hacer" if decision == "seleccionar" else "archivar",
+            "purpose": "record the artist selection without public promotion",
+            "next_action": "curate selected item" if decision == "seleccionar"
+            else "keep excluded item out of public curation",
+            "owner": "human", "work": row["work"]},
+            path=COMMON_LEDGER, source="portfolio_editor")
     return {"ok": True, "row": row}
 
 
@@ -794,7 +819,18 @@ def _portfolio_board_action(body):
         ids = [str(item_id) for item_id in ids if _portfolio_item(item_id)]
         current = list(board.get("item_ids") or [])
         if action == "add":
-            board["item_ids"] = current + [item_id for item_id in ids if item_id not in current]
+            additions = [item_id for item_id in ids if item_id not in current]
+            board["item_ids"] = current + additions
+            # Board composition is a real human signal. Record only new
+            # pairings, scoped to this board; it never publishes anything.
+            facet = str(board.get("facet") or "board").lower()
+            for existing in current:
+                for added in additions:
+                    _portfolio_feedback_record({
+                        "source_id": existing, "target_id": added,
+                        "action": "accept", "facet": facet,
+                        "relation": "same_board:%s" % board["id"],
+                        "board_id": board["id"]})
         else:
             board["item_ids"] = [item_id for item_id in current if item_id not in ids]
     else:
@@ -847,7 +883,31 @@ def _portfolio_suggestions(item_id, board_id=""):
                                        context=context, limit=24)
     return {"ok": True, "schema": "faro-portfolio-copilot-v3", "source_id": source.get("id"),
             "provider": "local_hypothesis_engine", "context": context,
+            "learning": copilot.learning_profile(_portfolio_feedback()),
             "suppressed_redundant": suppressed, "suggestions": result}
+
+
+def _portfolio_learning():
+    """Expose the learning state, not raw history, to the editor."""
+    feedback = _portfolio_feedback()
+    selections = _portfolio_selections()
+    boards = _portfolio_boards().get("boards", [])
+    return {
+        "ok": True,
+        "schema": "faro-portfolio-learning-surface-v1",
+        "profile": copilot.learning_profile(feedback),
+        "selections": {
+            "selected": sum(1 for row in selections.values()
+                            if row.get("decision") == "seleccionar"),
+            "excluded": sum(1 for row in selections.values()
+                             if row.get("decision") == "deseleccionar"),
+        },
+        "boards": [{"id": row.get("id"), "name": row.get("name"),
+                    "facet": row.get("facet", "general"),
+                    "items": len(row.get("item_ids") or [])}
+                   for row in boards],
+        "next": "seguir seleccionando; las sugerencias cambian por faceta, no por una palabra aislada",
+    }
 
 
 def _portfolio_feedback_record(body):
@@ -859,11 +919,36 @@ def _portfolio_feedback_record(body):
     if not _portfolio_item(source) or not _portfolio_item(target) or source == target:
         return {"ok": False, "error": "items_invalidos"}
     row = {"source_id": source, "target_id": target, "action": action,
+           "facet": str(body.get("facet", "unknown")).lower()[:40],
+           "board_id": str(body.get("board_id", ""))[:100],
            "relation": str(body.get("relation", "relacionada"))[:80],
+           "work": {"schema": "mak-work-v1",
+                     "work_id": "portfolio-relation:%s:%s" % (source, target),
+                     "parent_task": "portfolio-curation",
+                     "lane": "obra", "purpose": "human relation feedback",
+                     "format": "relationship", "created_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+                     "provider": "human", "sources": [source, target],
+                     "status": "candidate_feedback"},
            "ts": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
     os.makedirs(os.path.dirname(PORTFOLIO_FEEDBACK), exist_ok=True)
     with open(PORTFOLIO_FEEDBACK, "a", encoding="utf-8") as fh:
         fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+    if _ledger is not None:
+        action_name = "curate" if action in ("accept", "correct") else "reject"
+        decision = "revisar" if action in ("accept", "correct", "ignore") else "descartar"
+        _ledger.append_unique({
+            "id": "portfolio-feedback:%s:%s:%s:%s" % (
+                source, target, action, row["ts"]),
+            "domain": "iskvw", "type": "reject" if action == "reject" else "decision",
+            "claim": "portfolio relation %s -> %s" % (source, target),
+            "evidence": [source, target, row["relation"]],
+            "confidence": "high" if action in ("accept", "correct", "reject") else "medium",
+            "action": action_name, "decision": decision,
+            "purpose": "learn from human curation without promoting a fact",
+            "next_action": "retain as candidate relation for review",
+            "owner": "human", "work": row["work"],
+            "reject_reason": "artist rejected relation" if action == "reject" else ""},
+            path=COMMON_LEDGER, source="portfolio_copilot")
     if action in ("accept", "correct"):
         _portfolio_connect({"source_id": source, "target_id": target,
                             "relation": row["relation"]})
@@ -1538,6 +1623,8 @@ class H(BaseHTTPRequestHandler):
             providers.load_env()
             return self._json({"ok": True, "provider_status": copilot.provider_status(os.environ),
                                "active": "local_hypothesis_engine"})
+        if p == "/api/portfolio/copilot/learning":
+            return self._json(_portfolio_learning())
         if p.startswith("/portfolio-media/"):
             asset = _portfolio_media(p[len("/portfolio-media/"):])
             if asset is None:
@@ -1685,7 +1772,9 @@ class H(BaseHTTPRequestHandler):
             except (ValueError, TypeError):
                 return self._json({"ok": False, "error": "json invalido"}, 400)
             if u.path.endswith("/select"):
-                return self._json(_portfolio_select(body.get("item_id"), body.get("decision")))
+                return self._json(_portfolio_select(
+                    body.get("item_id"), body.get("decision"),
+                    body.get("board_id", "")))
             if u.path.endswith("/board"):
                 return self._json(_portfolio_board_action(body))
             if u.path.endswith("/connect"):
