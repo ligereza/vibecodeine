@@ -6,7 +6,7 @@ Actualizado: 2026-08-08
 
 - Director: Faro/Codex en Windows; MAK es la caja Linux y ejecuta los modelos.
 - Ramas canónicas: `main`, `mak`, `rd`, `iskvw`. No crear ni conservar ramas de trabajo remotas.
-- Rama local actual: `mak`; los cambios de esta sesión todavía deben consolidarse y publicarse.
+- Rama local actual: `mak`; cambios consolidados en `ec6cfed` y publicados en `origin/mak`.
 - No hay tags útiles declarados para este ciclo.
 - No usar Downloads como destino de artefactos.
 
@@ -41,10 +41,18 @@ Actualizado: 2026-08-08
 ## PR y limpieza pendientes
 
 - Consolidar los cambios locales en `mak`, ejecutar tests focalizados y hacer push.
-- Actualizar el PR #511 con el bloque actual; no mezclarlo con el PR #512.
+- PR #511 contiene el bloque actual; no mezclarlo con el PR #512.
 - Cerrar el PR #512 y eliminar su rama remota porque es una utilidad autogenerada sin relación con el núcleo.
 - Tras comprobar CI de #511, decidir promoción a `main`; no hacer merge automático con checks rojos.
 - Sincronizar la caja MAK con el commit publicado y verificar servicio, rama y archivos desplegados.
+
+## Limpieza 2026-08-08
+
+- Windows quedó limpio en la rama `mak`; `origin` conserva solo `main`, `mak`, `rd` e `iskvw`.
+- `/home/mak/flujo` quedó limpio en `main` y alineado con `origin/main`.
+- Los cambios locales que estaban en la caja se conservaron en
+  `/home/mak/quarantine/flujo-20260808-cleanup/`; no se eliminaron silenciosamente.
+- El despliegue operativo vive separado en `/home/mak/plataforma`; `mak-hub.service` sigue activo.
 
 ## Regla de continuidad
 
