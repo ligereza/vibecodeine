@@ -128,6 +128,11 @@
   .inbox-tag{font-size:.56rem;color:#9db67c;border:1px solid #39432c;padding:1px 4px}
   .inbox-sugerencia{font-size:.6rem;color:#b7936f;margin-top:5px}
   .inbox-acciones-bandeja{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  #inbox-copiloto{border:1px solid #394b5a;padding:9px;margin-top:8px;background:#0c1014;font-size:.68rem}
+  #inbox-copiloto strong{color:#b7d5e8;letter-spacing:.08em;text-transform:uppercase}
+  .copiloto-item{border-top:1px solid #26333c;padding:7px 0;margin-top:6px}
+  .copiloto-confianza{color:#b7936f;text-transform:uppercase;font-size:.58rem}
+  .copiloto-motivo{color:#b9c5cb;margin:3px 0 5px}
   .inbox-actions{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
   .inbox-actions button{font-size:.62rem;padding:4px 6px}
   #inbox-more{margin-top:10px}
@@ -181,6 +186,10 @@
     <div class="inbox-acciones-bandeja">
       <button id="inbox-seleccionar-visibles" type="button">seleccionar visibles</button>
       <button id="inbox-limpiar-bandeja" type="button">vaciar bandeja</button>
+    </div>
+    <div id="inbox-copiloto">
+      <strong>Copiloto de curaduría</strong>
+      <div id="inbox-copiloto-lista">Selecciona una pieza y pide sugerencias.</div>
     </div>
   </div>
   <div id="inbox-lista">Cargando inbox MAK…</div>
@@ -259,6 +268,7 @@ let INBOX = [];
 let INBOX_LIMIT = 48;
 const INBOX_SELECTED = new Set();
 let TABLEROS = [];
+let COPILOTO_SOURCE = null;
 
 function esc(value){
   return String(value ?? "").replace(/[&<>"']/g, character => ({
@@ -318,7 +328,7 @@ function pintarInboxMak(){
     const selected=INBOX_SELECTED.has(x.id), path=x.asset_path||'', ext=path.split('?')[0].split('.').pop().toLowerCase();
     const media=x.asset_available?(['mp4','mov','webm','m4v'].includes(ext)?`<video src="${path}" preload="metadata" controls playsinline></video>`:`<img src="${path}" loading="lazy" decoding="async" alt="">`):'<div class="inbox-sin">media no sincronizada</div>';
     const memberships=TABLEROS.filter(b=>(b.item_ids||[]).includes(x.id)).map(b=>`<span class="inbox-tag">${esc(b.name)}</span>`).join('');
-    return `<article class="inbox-card ${selected?'seleccionada':''}"><div>${media}</div><div class="inbox-meta">${esc(x.tipo_contenido)} · ${esc(x.fecha)} · ${esc(x.publicacion_id)} · ${esc(x.id)}</div><div class="inbox-membresias">${memberships||'<span class="inbox-asociacion-ayuda">sin tablero</span>'}</div><div class="inbox-sugerencia">${esc(sugerenciaInbox(x))}</div><div class="inbox-text">${esc(x.descripcion_original||'sin descripcion')}</div><div class="inbox-actions"><button onclick="seleccionarInbox('${esc(x.id)}')">${selected?'quitar seleccion':'seleccionar'}</button><button onclick="enviarInbox('${esc(x.id)}','research')">research</button><button onclick="enviarInbox('${esc(x.id)}','codex')">codex</button></div></article>`;
+    return `<article class="inbox-card ${selected?'seleccionada':''}"><div>${media}</div><div class="inbox-meta">${esc(x.tipo_contenido)} · ${esc(x.fecha)} · ${esc(x.publicacion_id)} · ${esc(x.id)}</div><div class="inbox-membresias">${memberships||'<span class="inbox-asociacion-ayuda">sin tablero</span>'}</div><div class="inbox-sugerencia">${esc(sugerenciaInbox(x))}</div><div class="inbox-text">${esc(x.descripcion_original||'sin descripcion')}</div><div class="inbox-actions"><button onclick="seleccionarInbox('${esc(x.id)}')">${selected?'quitar seleccion':'seleccionar'}</button><button onclick="cargarCopiloto('${esc(x.id)}')">copiloto</button><button onclick="enviarInbox('${esc(x.id)}','research')">research</button><button onclick="enviarInbox('${esc(x.id)}','codex')">codex</button></div></article>`;
   }).join("") || '<div class="inbox-sin">No hay elementos para este filtro.</div>';
   document.getElementById("inbox-more").style.display=rows.length>INBOX_LIMIT?'inline-block':'none';
 }
@@ -327,6 +337,23 @@ function pintarBandejaAsociacion(){
   const items=[...INBOX_SELECTED].map(id=>INBOX.find(x=>x.id===id)).filter(Boolean);
   document.getElementById('inbox-seleccionadas').textContent=`${items.length} seleccionadas`;
   document.getElementById('inbox-seleccionadas-lista').innerHTML=items.map(x=>`<button class="inbox-pin" onclick="quitarDeBandeja('${esc(x.id)}')">${esc(x.fecha)} · ${esc(x.tipo_contenido)} · ${esc(x.id)} ×</button>`).join('')||'<span class="inbox-asociacion-ayuda">Selecciona obras desde cualquier búsqueda.</span>';
+}
+
+async function cargarCopiloto(id){
+  COPILOTO_SOURCE=id;
+  const box=document.getElementById('inbox-copiloto-lista'); box.textContent='Comparando fecha, publicación y conceptos…';
+  const r=await fetch('/api/portfolio/copilot/suggestions?item_id='+encodeURIComponent(id),{cache:'no-store'}), d=await r.json();
+  if(!d.ok){box.textContent='No hay sugerencias para esta pieza.';return;}
+  if(!d.suggestions.length){box.textContent='No encontré relaciones candidatas todavía.';return;}
+  box.innerHTML=`<div class="inbox-asociacion-ayuda">Fuente: ${esc(id)} · motor: ${esc(d.provider)} · sugerencias no confirmadas</div>`+d.suggestions.map(s=>{const item=INBOX.find(x=>x.id===s.item_id)||{};return `<div class="copiloto-item"><b>${esc(item.fecha||'')} · ${esc(item.tipo_contenido||'')} · ${esc(s.item_id)}</b> <span class="copiloto-confianza">${esc(s.confidence)}</span><div class="copiloto-motivo">${esc(s.reasons.join(' · '))}</div><button onclick="feedbackCopiloto('${esc(s.item_id)}','accept')">aceptar relación</button><button onclick="feedbackCopiloto('${esc(s.item_id)}','reject')">rechazar</button></div>`}).join('');
+}
+
+async function feedbackCopiloto(target,action){
+  if(!COPILOTO_SOURCE)return;
+  const relation=action==='accept'?(prompt('Nombre de la relación:', 'relacionada')||'relacionada'):'sugerencia descartada';
+  const r=await fetch('/api/portfolio/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source_id:COPILOTO_SOURCE,target_id:target,action,relation})});
+  const d=await r.json(); if(!d.ok)return alert(d.error||'No se guardó el feedback.');
+  cargarCopiloto(COPILOTO_SOURCE);
 }
 
 function quitarDeBandeja(id){
