@@ -115,7 +115,7 @@
   #inbox-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;margin-top:10px}
   .inbox-card{border:1px solid #292720;border-radius:3px;padding:8px;background:#0c0c0e}
   .inbox-card.seleccionada{border-color:#b9b4a8;background:#15151a}
-  .inbox-card img,.inbox-sin{width:100%;height:130px;object-fit:contain;background:#08080a;display:block}
+  .inbox-card img,.inbox-card video,.inbox-sin{width:100%;height:130px;object-fit:contain;background:#08080a;display:block}
   .inbox-sin{display:flex;align-items:center;justify-content:center;color:#4a463f;font-size:.62rem}
   .inbox-meta{font-size:.6rem;color:#6d685f;margin-top:6px;word-break:break-all}
   .inbox-text{font-size:.68rem;color:#b9b4a8;margin-top:5px;max-height:62px;overflow:auto;white-space:pre-wrap}
@@ -241,6 +241,8 @@ async function cargarInboxMak(){
     const r=await fetch("/api/portfolio/inbox",{cache:"no-store"});
     const d=await r.json();
     INBOX=d.items||[];
+    INBOX_SELECTED.clear();
+    INBOX.filter(x=>x.selection==='seleccionar').forEach(x=>INBOX_SELECTED.add(x.id));
     document.getElementById("inbox-contador").textContent=`${d.total} elementos · ${d.available_assets} disponibles en MAK`;
     pintarInboxMak();
   }catch(e){box.textContent="No se pudo cargar el archivo visual de MAK.";}
@@ -262,7 +264,8 @@ function pintarInboxMak(){
   const lista=document.getElementById("inbox-lista"), rows=inboxFiltrados(), visible=rows.slice(0,INBOX_LIMIT);
   document.getElementById("inbox-contador").textContent=`${rows.length} encontrados · ${INBOX.filter(x=>x.asset_available).length} con media local · ${INBOX_SELECTED.size} seleccionados`;
   lista.innerHTML=visible.map(x=>{
-    const selected=INBOX_SELECTED.has(x.id), media=x.asset_available?`<img src="${x.asset_path}" loading="lazy" alt="">`:'<div class="inbox-sin">media permanece en WIN</div>';
+    const selected=INBOX_SELECTED.has(x.id), path=x.asset_path||'', ext=path.split('?')[0].split('.').pop().toLowerCase();
+    const media=x.asset_available?(['mp4','mov','webm','m4v'].includes(ext)?`<video src="${path}" preload="metadata" controls playsinline></video>`:`<img src="${path}" loading="lazy" decoding="async" alt="">`):'<div class="inbox-sin">media no sincronizada</div>';
     return `<article class="inbox-card ${selected?'seleccionada':''}"><div>${media}</div><div class="inbox-meta">${esc(x.tipo_contenido)} · ${esc(x.fecha)} · ${esc(x.publicacion_id)} · ${esc(x.id)}</div><div class="inbox-text">${esc(x.descripcion_original||'sin descripcion')}</div><div class="inbox-actions"><button onclick="seleccionarInbox('${esc(x.id)}')">${selected?'quitar seleccion':'seleccionar obra'}</button><button onclick="enviarInbox('${esc(x.id)}','research')">research</button><button onclick="enviarInbox('${esc(x.id)}','codex')">codex</button></div></article>`;
   }).join("") || '<div class="inbox-sin">No hay elementos para este filtro.</div>';
   document.getElementById("inbox-more").style.display=rows.length>INBOX_LIMIT?'inline-block':'none';
