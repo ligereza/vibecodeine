@@ -119,6 +119,11 @@
   .inbox-sin{display:flex;align-items:center;justify-content:center;color:#4a463f;font-size:.62rem}
   .inbox-meta{font-size:.6rem;color:#6d685f;margin-top:6px;word-break:break-all}
   .inbox-text{font-size:.68rem;color:#b9b4a8;margin-top:5px;max-height:62px;overflow:auto;white-space:pre-wrap}
+  #inbox-asociacion{border:1px solid #3a372f;padding:9px;margin-top:10px;background:#0c0c0e;font-size:.68rem}
+  #inbox-asociacion strong{color:#e8e4da;letter-spacing:.08em;text-transform:uppercase;margin-right:10px}
+  .inbox-asociacion-ayuda{color:#6d685f;margin-left:10px}
+  #inbox-seleccionadas-lista{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+  .inbox-pin{border:1px solid #5c5749;background:#15151a;color:#b9b4a8;padding:3px 6px;cursor:pointer}
   .inbox-actions{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
   .inbox-actions button{font-size:.62rem;padding:4px 6px}
   #inbox-more{margin-top:10px}
@@ -163,6 +168,12 @@
     <button id="inbox-anadir-tablero" type="button">añadir seleccion al tablero</button>
     <button id="inbox-conectar" type="button">conectar 2 seleccionadas</button>
     <span id="inbox-contador"></span>
+  </div>
+  <div id="inbox-asociacion">
+    <strong>Bandeja de asociación</strong>
+    <span id="inbox-seleccionadas">0 seleccionadas</span>
+    <span class="inbox-asociacion-ayuda">La búsqueda y el tablero visible no cambian esta bandeja.</span>
+    <div id="inbox-seleccionadas-lista"></div>
   </div>
   <div id="inbox-lista">Cargando inbox MAK…</div>
   <button id="inbox-more" type="button">mostrar más</button>
@@ -287,12 +298,25 @@ function inboxFiltrados(){
 function pintarInboxMak(){
   const lista=document.getElementById("inbox-lista"), rows=inboxFiltrados(), visible=rows.slice(0,INBOX_LIMIT);
   document.getElementById("inbox-contador").textContent=`${rows.length} encontrados · ${INBOX.filter(x=>x.asset_available).length} con media local · ${INBOX_SELECTED.size} seleccionados`;
+  pintarBandejaAsociacion();
   lista.innerHTML=visible.map(x=>{
     const selected=INBOX_SELECTED.has(x.id), path=x.asset_path||'', ext=path.split('?')[0].split('.').pop().toLowerCase();
     const media=x.asset_available?(['mp4','mov','webm','m4v'].includes(ext)?`<video src="${path}" preload="metadata" controls playsinline></video>`:`<img src="${path}" loading="lazy" decoding="async" alt="">`):'<div class="inbox-sin">media no sincronizada</div>';
     return `<article class="inbox-card ${selected?'seleccionada':''}"><div>${media}</div><div class="inbox-meta">${esc(x.tipo_contenido)} · ${esc(x.fecha)} · ${esc(x.publicacion_id)} · ${esc(x.id)}</div><div class="inbox-text">${esc(x.descripcion_original||'sin descripcion')}</div><div class="inbox-actions"><button onclick="seleccionarInbox('${esc(x.id)}')">${selected?'quitar seleccion':'seleccionar obra'}</button><button onclick="enviarInbox('${esc(x.id)}','research')">research</button><button onclick="enviarInbox('${esc(x.id)}','codex')">codex</button></div></article>`;
   }).join("") || '<div class="inbox-sin">No hay elementos para este filtro.</div>';
   document.getElementById("inbox-more").style.display=rows.length>INBOX_LIMIT?'inline-block':'none';
+}
+
+function pintarBandejaAsociacion(){
+  const items=[...INBOX_SELECTED].map(id=>INBOX.find(x=>x.id===id)).filter(Boolean);
+  document.getElementById('inbox-seleccionadas').textContent=`${items.length} seleccionadas`;
+  document.getElementById('inbox-seleccionadas-lista').innerHTML=items.map(x=>`<button class="inbox-pin" onclick="quitarDeBandeja('${esc(x.id)}')">${esc(x.fecha)} · ${esc(x.tipo_contenido)} · ${esc(x.id)} ×</button>`).join('')||'<span class="inbox-asociacion-ayuda">Selecciona obras desde cualquier búsqueda.</span>';
+}
+
+function quitarDeBandeja(id){
+  INBOX_SELECTED.delete(id);
+  fetch('/api/portfolio/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:id,decision:'deseleccionar'})});
+  pintarInboxMak();
 }
 
 async function seleccionarInbox(id){
@@ -313,7 +337,7 @@ async function crearTablero(){
   if(!name)return alert('Escribe un nombre para el tablero.');
   const r=await fetch('/api/portfolio/board',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'create',name})});
   const d=await r.json(); if(!d.ok)return alert(d.error||'No se creo el tablero.');
-  input.value=''; await cargarTableros(); document.getElementById('inbox-tablero').value=d.board.id; pintarInboxMak();
+  input.value=''; await cargarTableros(); pintarInboxMak();
 }
 
 async function anadirSeleccionAlTablero(){
