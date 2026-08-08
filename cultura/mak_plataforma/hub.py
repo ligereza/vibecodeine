@@ -22,7 +22,6 @@ import signal
 import sys
 import threading
 import time
-import unicodedata
 import urllib.parse
 import urllib.request
 import uuid
@@ -30,6 +29,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import salud  # noqa: E402
+import copilot  # noqa: E402
 import cuotas  # noqa: E402
 import ideas  # noqa: E402
 import contrato_archivo  # noqa: E402
@@ -730,21 +730,6 @@ def _portfolio_connect(body):
     return {"ok": True, "connection": row}
 
 
-_COPILOT_STOPWORDS = {
-    "para", "como", "esta", "este", "desde", "entre", "sobre", "con", "una",
-    "los", "las", "del", "por", "que", "obra", "sin", "the", "and", "pero",
-    "tambien", "cuando", "donde", "hacia", "esta", "esto", "esas", "esos",
-    "ellos", "ellas", "solo", "solo", "muy", "mas", "menos", "fue", "eran",
-}
-
-
-def _portfolio_terms(value):
-    normalized = unicodedata.normalize("NFKD", str(value or "").lower())
-    normalized = "".join(char for char in normalized if not unicodedata.combining(char))
-    return {word for word in re.findall(r"[a-z0-9]{5,}", normalized)
-            if word not in _COPILOT_STOPWORDS}
-
-
 def _portfolio_feedback():
     rows = []
     try:
@@ -765,53 +750,11 @@ def _portfolio_suggestions(item_id):
     source = _portfolio_item(item_id)
     if not source:
         return {"ok": False, "error": "item_no_encontrado", "suggestions": []}
-    source_terms = _portfolio_terms(source.get("descripcion_original"))
-    source_date = source.get("fecha", "")
-    source_pub = source.get("publicacion_id", "")
-    selected = _portfolio_selections()
-    feedback = _portfolio_feedback()
-    learned = {(row.get("source_id"), row.get("target_id")): row
-               for row in feedback}
-    scored = []
-    for candidate in _portfolio_inbox().get("items", []):
-        if candidate.get("id") == source.get("id"):
-            continue
-        reasons = []
-        score = 0
-        if candidate.get("publicacion_id") == source_pub and source_pub:
-            score += 8
-            reasons.append("misma publicación/carrusel")
-        if candidate.get("fecha") == source_date and source_date:
-            score += 5
-            reasons.append("misma fecha")
-        shared = sorted(source_terms & _portfolio_terms(candidate.get("descripcion_original")))
-        if shared:
-            score += min(4, len(shared))
-            reasons.append("conceptos repetidos: " + ", ".join(shared[:4]))
-        if candidate.get("tipo_contenido") == source.get("tipo_contenido"):
-            score += 1
-        prior = learned.get((source.get("id"), candidate.get("id")))
-        if prior:
-            if prior.get("action") in ("accept", "correct"):
-                score += 12
-                reasons.append("relación aceptada anteriormente")
-            elif prior.get("action") == "reject":
-                score -= 12
-                reasons.append("relación rechazada anteriormente")
-        if score <= 0:
-            continue
-        if not reasons:
-            continue
-        scored.append({"item_id": candidate.get("id"), "score": score,
-                       "confidence": "confirmada" if prior and prior.get("action") in ("accept", "correct")
-                       else "descartada" if prior and prior.get("action") == "reject"
-                       else "alta" if score >= 9 else "media" if score >= 5 else "baja",
-                       "reasons": reasons,
-                       "selection": selected.get(candidate.get("id"), {}).get("decision", "pendiente"),
-                       "feedback": prior.get("action") if prior else "pendiente"})
-    scored.sort(key=lambda row: (-row["score"], row["item_id"]))
-    return {"ok": True, "schema": "faro-portfolio-copilot-v2", "source_id": source.get("id"),
-            "provider": "local_deterministic", "suggestions": scored[:12]}
+    result = copilot.build_suggestions(source, _portfolio_inbox().get("items", []),
+                                       selections=_portfolio_selections(),
+                                       feedback=_portfolio_feedback(), limit=24)
+    return {"ok": True, "schema": "faro-portfolio-copilot-v3", "source_id": source.get("id"),
+            "provider": "local_hypothesis_engine", "suggestions": result}
 
 
 def _portfolio_feedback_record(body):
@@ -1443,6 +1386,19 @@ class H(BaseHTTPRequestHandler):
         if p == "/api/portfolio/copilot/suggestions":
             item_id = (urllib.parse.parse_qs(u.query).get("item_id") or [""])[0]
             return self._json(_portfolio_suggestions(item_id))
+        if p == "/api/portfolio/copilot/manifest":
+            item_id = (urllib.parse.parse_qs(u.query).get("item_id") or [""])[0]
+            item = _portfolio_item(item_id)
+            if not item:
+                return self._json({"ok": False, "error": "item_no_encontrado"}, 404)
+            suggestions = _portfolio_suggestions(item_id).get("suggestions", [])
+            candidates = [_portfolio_item(row["item_id"]) for row in suggestions]
+            return self._json({"ok": True, "schema": "faro-portfolio-learning-manifest-v1",
+                               "source": copilot.media_manifest(item),
+                               "candidates": [copilot.media_manifest(x) for x in candidates if x]})
+        if p == "/api/portfolio/copilot/status":
+            return self._json({"ok": True, "provider_status": copilot.provider_status(os.environ),
+                               "active": "local_hypothesis_engine"})
         if p.startswith("/portfolio-media/"):
             asset = _portfolio_media(p[len("/portfolio-media/"):])
             if asset is None:
