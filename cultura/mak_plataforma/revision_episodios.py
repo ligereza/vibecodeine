@@ -13,6 +13,7 @@ RUN = Path(os.environ.get(
 )).resolve()
 FICHAS = RUN / "FICHAS_CURATORIA_VISUAL_RONDA1.json"
 MAPA = RUN / "MAPA_VISUAL_ARTISTA_PRIMERO.json"
+XIO = RUN / "XIO_EVIDENCIA_DREF.json"
 REVIEWS = RUN / "episode_reviews.jsonl"
 DECISIONS = {"accept", "revise", "reject"}
 
@@ -96,6 +97,10 @@ def api() -> dict:
     }
 
 
+def evidence() -> dict:
+    return _read_json(XIO)
+
+
 def record(episode: str, decision: str, note: str = "") -> dict:
     episode = str(episode or "")
     decision = str(decision or "")
@@ -118,6 +123,6 @@ PAGE = r'''<!doctype html><meta charset="utf-8"><title>MAK - revision por episod
 <style>body{background:#090807;color:#d0c9ba;font:14px system-ui;margin:0;padding:24px}h1{color:#9db67c}#meta{color:#9d927f;margin-bottom:18px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px}article{background:#12100d;border:1px solid #30291f;border-radius:10px;padding:15px}h2{font-size:1.05rem;color:#d4a259}small{color:#9d927f}.reading{border-left:3px solid #9db67c;padding:8px;margin:10px 0;white-space:pre-wrap}.original{border-left:3px solid #6d6656;padding:8px;margin:10px 0;white-space:pre-wrap;max-height:180px;overflow:auto}.buttons{display:flex;gap:7px}.buttons button{background:#201c15;color:#d0c9ba;border:1px solid #514631;border-radius:5px;padding:7px 10px;cursor:pointer}.buttons button:hover{border-color:#9db67c}textarea{width:100%;box-sizing:border-box;background:#0b0a08;color:#d0c9ba;border:1px solid #30291f;margin:8px 0;padding:6px}</style><h1>MAK / revision por episodio</h1><div id="meta">cargando...</div><main class="grid" id="grid"></main>
 <script>
 const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-async function load(){const d=await fetch('/api/revision/episodios').then(r=>r.json());const ev=(d.event_candidates||[]).map(x=>x.name||x.id).join(' · ');document.querySelector('#meta').textContent=`${d.total} sujetos | ${d.pending_human} pendientes humanos${ev?' | eventos candidatos: '+ev:''}`;document.querySelector('#grid').innerHTML=d.rows.map((r,i)=>{const aws=(r.observaciones_aws||[]).map(x=>x.reading).join('\n');const original=(r.descripcion_original||[]).join('\n\n');return `<article><h2>${esc(r.episodio)}</h2><small>tipo: ${esc(r.kind||'sujeto')} | ${r.medios.length} medios | ${esc((r.publicaciones||[]).join(', '))}</small><div class="reading"><b>lectura provisional AWS:</b> ${esc(aws||'sin lectura externa')}</div><div class="original"><b>descripcion original:</b> ${esc(original||'sin descripcion')}</div><div><b>notas humanas:</b> ${esc((r.notas_humanas||[]).join(' | '))}</div><textarea id="n${i}" placeholder="confirmacion o correccion"></textarea><div class="buttons"><button onclick="decide('${esc(r.episodio)}','accept',${i})">aceptar</button><button onclick="decide('${esc(r.episodio)}','revise',${i})">revisar</button><button onclick="decide('${esc(r.episodio)}','reject',${i})">rechazar</button></div></article>`}).join('')}
+async function load(){const d=await fetch('/api/revision/episodios').then(r=>r.json());const x=await fetch('/api/revision/evidencia').then(r=>r.json());const ev=(d.event_candidates||[]).map(x=>x.name||x.id).join(' · ');document.querySelector('#meta').textContent=`${d.total} sujetos | ${d.pending_human} pendientes humanos${ev?' | eventos candidatos: '+ev:''}${x.cues? ' | XIO Dref: '+x.cues.length+' cues':''}`;document.querySelector('#grid').innerHTML=d.rows.map((r,i)=>{const aws=(r.observaciones_aws||[]).map(x=>x.reading).join('\n');const original=(r.descripcion_original||[]).join('\n\n');return `<article><h2>${esc(r.episodio)}</h2><small>tipo: ${esc(r.kind||'sujeto')} | ${r.medios.length} medios | ${esc((r.publicaciones||[]).join(', '))}</small><div class="reading"><b>lectura provisional AWS:</b> ${esc(aws||'sin lectura externa')}</div><div class="original"><b>descripcion original:</b> ${esc(original||'sin descripcion')}</div><div><b>notas humanas:</b> ${esc((r.notas_humanas||[]).join(' | '))}</div><textarea id="n${i}" placeholder="confirmacion o correccion"></textarea><div class="buttons"><button onclick="decide('${esc(r.episodio)}','accept',${i})">aceptar</button><button onclick="decide('${esc(r.episodio)}','revise',${i})">revisar</button><button onclick="decide('${esc(r.episodio)}','reject',${i})">rechazar</button></div></article>`}).join('')}
 async function decide(episodio,decision,i){await fetch('/api/revision/episodios',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({episodio,decision,note:document.querySelector('#n'+i).value})});load()}load();
 </script>'''
