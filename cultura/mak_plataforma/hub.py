@@ -43,6 +43,10 @@ try:
     import revision as _revision  # noqa: E402
 except Exception:  # noqa: BLE001 - visual review is optional
     _revision = None
+try:
+    import revision_episodios as _episode_revision  # noqa: E402
+except Exception:  # noqa: BLE001 - episode review is optional
+    _episode_revision = None
 
 PORT = int(os.environ.get("HUB_PORT", "8900"))
 HOME = os.path.expanduser("~")
@@ -56,6 +60,11 @@ CODEX_JOBS = os.path.join(HOME, "codex/jobs.jsonl")
 RELEVO = os.path.join(HOME, "RELEVO_MAK.md")
 PORTFOLIO_ROOT = os.path.abspath(os.environ.get(
     "MAK_PORTFOLIO_ROOT", os.path.join(HOME, "flujo", "iskvw")))
+PORTFOLIO_INBOX = os.path.join(
+    HOME, "plataforma/director_runs/portfolio-editor-20260808/PORTFOLIO_INBOX.json")
+PORTFOLIO_MEDIA_ROOT = os.path.join(HOME, "portfolio_media/media")
+PORTFOLIO_SELECTIONS = os.path.join(
+    HOME, "plataforma/director_runs/portfolio-editor-20260808/selections.jsonl")
 RESEARCH_URL = "http://127.0.0.1:8890"
 CODEX_URL = "http://127.0.0.1:8891"
 TRABAJO_STATE = os.path.join(HOME, "plataforma/.trabajo_state.json")
@@ -597,6 +606,80 @@ def _portfolio_file(relative):
     if not inside or not os.path.isfile(candidate):
         return None
     return candidate
+
+
+def _portfolio_selections():
+    result = {}
+    try:
+        with open(PORTFOLIO_SELECTIONS, encoding="utf-8") as fh:
+            for line in fh:
+                try:
+                    row = json.loads(line)
+                except ValueError:
+                    continue
+                if row.get("item_id"):
+                    result[row["item_id"]] = row
+    except OSError:
+        pass
+    return result
+
+
+def _portfolio_inbox():
+    try:
+        with open(PORTFOLIO_INBOX, encoding="utf-8") as fh:
+            payload = json.load(fh)
+    except (OSError, ValueError):
+        return {"schema": "faro-portfolio-inbox-v1", "total": 0,
+                "available_assets": 0, "items": [], "error": "inbox_no_disponible"}
+    selections = _portfolio_selections()
+    for item in payload.get("items", []):
+        item["selection"] = (selections.get(item.get("id")) or {}).get(
+            "decision", "pendiente")
+    payload["selected_count"] = sum(
+        1 for item in payload.get("items", []) if item["selection"] == "seleccionar")
+    return payload
+
+
+def _portfolio_item(item_id):
+    return next((item for item in _portfolio_inbox().get("items", [])
+                 if item.get("id") == str(item_id or "")), None)
+
+
+def _portfolio_select(item_id, decision):
+    if decision not in ("seleccionar", "deseleccionar"):
+        return {"ok": False, "error": "decision_invalida"}
+    item = _portfolio_item(item_id)
+    if not item:
+        return {"ok": False, "error": "item_no_encontrado"}
+    os.makedirs(os.path.dirname(PORTFOLIO_SELECTIONS), exist_ok=True)
+    row = {"item_id": item["id"], "decision": decision,
+           "ts": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
+    with open(PORTFOLIO_SELECTIONS, "a", encoding="utf-8") as fh:
+        fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+    return {"ok": True, "row": row}
+
+
+def _portfolio_media(relative):
+    value = str(relative or "").lstrip("/")
+    if not value or ".." in value.split("/"):
+        return None
+    root = os.path.realpath(PORTFOLIO_MEDIA_ROOT)
+    candidate = os.path.realpath(os.path.join(root, value))
+    try:
+        if os.path.commonpath((root, candidate)) != root:
+            return None
+    except ValueError:
+        return None
+    return candidate if os.path.isfile(candidate) else None
+
+
+def _portfolio_dispatch(item_id, depto, texto):
+    item = _portfolio_item(item_id)
+    if depto not in ("research", "codex"):
+        return {"ok": False, "error": "departamento_invalido"}
+    if not item:
+        return {"ok": False, "error": "item_no_encontrado"}
+    return _ejecutar(depto, "revision_portafolio", texto, "medio")
 
 
 # ── feed de actividad (los dos departamentos, con la guardia inline) ──
@@ -1172,6 +1255,20 @@ class H(BaseHTTPRequestHandler):
             return self._send_bytes(asset.read_bytes(), "image/jpeg")
         if p == "/api/revision" and _revision is not None:
             return self._json(_revision.api())
+        if p == "/revision/episodios" and _episode_revision is not None:
+            return self._send(_episode_revision.PAGE)
+        if p == "/api/revision/episodios" and _episode_revision is not None:
+            return self._json(_episode_revision.api())
+        if p == "/api/revision/evidencia" and _episode_revision is not None:
+            return self._json(_episode_revision.evidence())
+        if p == "/api/portfolio/inbox":
+            return self._json(_portfolio_inbox())
+        if p.startswith("/portfolio-media/"):
+            asset = _portfolio_media(p[len("/portfolio-media/"):])
+            if asset is None:
+                return self._send("(media no disponible en MAK)", "text/plain", 404)
+            return self._send_bytes(open(asset, "rb").read(),
+                                    mimetypes.guess_type(asset)[0] or "application/octet-stream")
         if p == "/portafolio":
             self.send_response(301)
             self.send_header("Location", "/portafolio/")
@@ -1295,6 +1392,24 @@ class H(BaseHTTPRequestHandler):
 
     def do_POST(self):
         u = urllib.parse.urlparse(self.path)
+        if u.path == "/api/revision/episodios" and _episode_revision is not None:
+            largo = min(int(self.headers.get("Content-Length") or 0), 12000)
+            try:
+                body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
+            except (ValueError, TypeError):
+                return self._json({"ok": False, "error": "json invalido"}, 400)
+            return self._json(_episode_revision.record(
+                body.get("episodio", ""), body.get("decision", ""), body.get("note", "")))
+        if u.path in ("/api/portfolio/select", "/api/portfolio/dispatch"):
+            largo = min(int(self.headers.get("Content-Length") or 0), 12000)
+            try:
+                body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
+            except (ValueError, TypeError):
+                return self._json({"ok": False, "error": "json invalido"}, 400)
+            if u.path.endswith("/select"):
+                return self._json(_portfolio_select(body.get("item_id"), body.get("decision")))
+            return self._json(_portfolio_dispatch(body.get("item_id"), body.get("depto"),
+                                                   body.get("texto", "")))
         if u.path == "/api/revision" and _revision is not None:
             largo = min(int(self.headers.get("Content-Length") or 0), 5000)
             try:
