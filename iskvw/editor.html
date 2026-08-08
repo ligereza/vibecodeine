@@ -107,6 +107,21 @@
 
   #aviso{padding:10px 20px;font-size:.7rem;color:#8a857a}
   #aviso.malo{color:#d98a7a}
+  #mak-inbox{padding:14px 20px;border-bottom:1px solid #1a1916;background:#101014}
+  #mak-inbox h2{font-size:.7rem;letter-spacing:.13em;text-transform:uppercase;color:#8a857a}
+  #mak-inbox .sub{font-size:.66rem;color:#6d685f;max-width:78ch;margin:4px 0 10px}
+  #mak-inbox .barra-inbox{display:flex;flex-wrap:wrap;gap:8px;align-items:end}
+  #mak-inbox .barra-inbox input,#mak-inbox .barra-inbox select{font-size:.72rem}
+  #inbox-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;margin-top:10px}
+  .inbox-card{border:1px solid #292720;border-radius:3px;padding:8px;background:#0c0c0e}
+  .inbox-card.seleccionada{border-color:#b9b4a8;background:#15151a}
+  .inbox-card img,.inbox-sin{width:100%;height:130px;object-fit:contain;background:#08080a;display:block}
+  .inbox-sin{display:flex;align-items:center;justify-content:center;color:#4a463f;font-size:.62rem}
+  .inbox-meta{font-size:.6rem;color:#6d685f;margin-top:6px;word-break:break-all}
+  .inbox-text{font-size:.68rem;color:#b9b4a8;margin-top:5px;max-height:62px;overflow:auto;white-space:pre-wrap}
+  .inbox-actions{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+  .inbox-actions button{font-size:.62rem;padding:4px 6px}
+  #inbox-more{margin-top:10px}
   @media (max-width:560px){
     .pieza{grid-template-columns:52px 1fr;gap:10px}
     .miniatura{width:52px;height:52px}
@@ -134,6 +149,19 @@
     <button id="descargar">Descargar curaduria.json</button>
   </div>
 </header>
+
+<section id="mak-inbox">
+  <h2>Inbox MAK · archivo visual completo</h2>
+  <div class="sub">Material original de Instagram para seleccionar con criterio. La selección se registra sin publicar y puede enviarse a research o codex desde esta misma interfaz.</div>
+  <div class="barra-inbox">
+    <label class="campo"><span>Tipo</span><select id="inbox-tipo"><option value="">todos</option><option value="published_media">posts, reels y carruseles</option><option value="story">historias</option></select></label>
+    <label class="campo"><span>Buscar</span><input id="inbox-buscar" type="search" placeholder="artista, fecha, texto, id"></label>
+    <label class="campo fila-check"><input id="inbox-assets" type="checkbox"><span>sólo con media en MAK</span></label>
+    <span id="inbox-contador"></span>
+  </div>
+  <div id="inbox-lista">Cargando inbox MAK…</div>
+  <button id="inbox-more" type="button">mostrar más</button>
+</section>
 
 <section id="tablero" hidden>
   <h2>Tablero de mejoras</h2>
@@ -203,6 +231,58 @@ let TABLERO = null;         // tablero.json as it was loaded (may not exist)
 const MEJORAS = new Map();  // key -> current value; seeded from the file
 const EDICIONES = new Map();  // id -> {titulo?, mostrar?, abstraccion?, svg?, regimen?}
 const FILAS = new Map();      // id -> the row element currently painted
+let INBOX = [];
+let INBOX_LIMIT = 48;
+const INBOX_SELECTED = new Set();
+
+async function cargarInboxMak(){
+  const box=document.getElementById("inbox-lista");
+  try{
+    const r=await fetch("/api/portfolio/inbox",{cache:"no-store"});
+    const d=await r.json();
+    INBOX=d.items||[];
+    document.getElementById("inbox-contador").textContent=`${d.total} elementos · ${d.available_assets} disponibles en MAK`;
+    pintarInboxMak();
+  }catch(e){box.textContent="No se pudo cargar el archivo visual de MAK.";}
+}
+
+function inboxFiltrados(){
+  const tipo=document.getElementById("inbox-tipo").value;
+  const q=document.getElementById("inbox-buscar").value.trim().toLowerCase();
+  const assets=document.getElementById("inbox-assets").checked;
+  return INBOX.filter(x=>{
+    if(tipo && x.tipo_contenido!==tipo) return false;
+    if(assets && !x.asset_available) return false;
+    if(!q) return true;
+    return [x.id,x.fecha,x.publicacion_id,x.descripcion_original].join(" ").toLowerCase().includes(q);
+  });
+}
+
+function pintarInboxMak(){
+  const lista=document.getElementById("inbox-lista"), rows=inboxFiltrados(), visible=rows.slice(0,INBOX_LIMIT);
+  document.getElementById("inbox-contador").textContent=`${rows.length} encontrados · ${INBOX.filter(x=>x.asset_available).length} con media local · ${INBOX_SELECTED.size} seleccionados`;
+  lista.innerHTML=visible.map(x=>{
+    const selected=INBOX_SELECTED.has(x.id), media=x.asset_available?`<img src="${x.asset_path}" loading="lazy" alt="">`:'<div class="inbox-sin">media permanece en WIN</div>';
+    return `<article class="inbox-card ${selected?'seleccionada':''}"><div>${media}</div><div class="inbox-meta">${esc(x.tipo_contenido)} · ${esc(x.fecha)} · ${esc(x.publicacion_id)} · ${esc(x.id)}</div><div class="inbox-text">${esc(x.descripcion_original||'sin descripcion')}</div><div class="inbox-actions"><button onclick="seleccionarInbox('${esc(x.id)}')">${selected?'quitar seleccion':'seleccionar obra'}</button><button onclick="enviarInbox('${esc(x.id)}','research')">research</button><button onclick="enviarInbox('${esc(x.id)}','codex')">codex</button></div></article>`;
+  }).join("") || '<div class="inbox-sin">No hay elementos para este filtro.</div>';
+  document.getElementById("inbox-more").style.display=rows.length>INBOX_LIMIT?'inline-block':'none';
+}
+
+async function seleccionarInbox(id){
+  const decision=INBOX_SELECTED.has(id)?'deseleccionar':'seleccionar';
+  const r=await fetch('/api/portfolio/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:id,decision})});
+  if((await r.json()).ok){if(decision==='seleccionar')INBOX_SELECTED.add(id);else INBOX_SELECTED.delete(id);pintarInboxMak();}
+}
+
+async function enviarInbox(id,depto){
+  const item=INBOX.find(x=>x.id===id); if(!item)return;
+  const texto=`Revisar material de portafolio ${id}. Tipo: ${item.tipo_contenido}. Fecha: ${item.fecha}. Publicacion: ${item.publicacion_id}. Descripcion original: ${item.descripcion_original||'(sin descripcion)'}. No inventar hechos; devolver evidencia y siguiente accion.`;
+  const r=await fetch('/api/portfolio/dispatch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:id,depto,texto})});
+  const d=await r.json(); alert(d.ok?`Enviado a ${depto}.`:`No se envio: ${d.error||'error'}`);
+}
+
+['inbox-tipo','inbox-buscar','inbox-assets'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{INBOX_LIMIT=48;pintarInboxMak();}));
+document.getElementById('inbox-more').addEventListener('click',()=>{INBOX_LIMIT+=48;pintarInboxMak();});
 
 /* ── Loading ─────────────────────────────────────────────────────────────
    Same degradation as the campo skin: archivo.json first (the unified
@@ -262,6 +342,8 @@ async function cargar(){
   contar();
   firmaCur = JSON.stringify(construirCuraduria());
 }
+
+cargarInboxMak();
 
 /* One entry point for "this is now the loaded curaduria.json", shared by the
    initial fetch and by the import button: seeding in two places is how the
