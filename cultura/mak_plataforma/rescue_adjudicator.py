@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Adjudica candidatos legados sin promover ni borrar productos."""
+"""Adjudicate legacy candidates without promoting or deleting products."""
 import json
 import os
 import sys
