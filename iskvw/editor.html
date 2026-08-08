@@ -235,6 +235,12 @@ let INBOX = [];
 let INBOX_LIMIT = 48;
 const INBOX_SELECTED = new Set();
 
+function esc(value){
+  return String(value ?? "").replace(/[&<>"']/g, character => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+  }[character]));
+}
+
 async function cargarInboxMak(){
   const box=document.getElementById("inbox-lista");
   try{
