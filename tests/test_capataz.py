@@ -78,6 +78,23 @@ def test_evaluar_riesgo_backlog_capataz_en_umbral_no_escala():
     assert razones == []
 
 
+def test_research_guard_rejects_missing_provenance(monkeypatch, tmp_path):
+    monkeypatch.setattr(capataz, "RESEARCH_LEDGER", str(tmp_path / "research.jsonl"))
+    result = capataz._research_guard("tema sin contexto", {"tema": "tema sin contexto"})
+    assert result["error"] == "research_contract_incomplete"
+    assert not (tmp_path / "research.jsonl").exists()
+
+
+def test_research_guard_blocks_duplicate_topic_without_new_evidence(monkeypatch, tmp_path):
+    ledger = tmp_path / "research.jsonl"
+    monkeypatch.setattr(capataz, "RESEARCH_LEDGER", str(ledger))
+    args = {"proposito": "verificar una fuente", "lane": "trabajo",
+            "evidencia": "brief-2026-08-08"}
+    assert capataz._research_guard("tema vigente", args) is None
+    result = capataz._research_guard("tema vigente", args)
+    assert result["error"] == "research_duplicate_cooldown"
+
+
 def test_evaluar_riesgo_proveedor_con_salud_baja():
     estado = {
         "salud_proveedores": {

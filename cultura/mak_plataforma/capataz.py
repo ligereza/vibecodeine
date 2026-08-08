@@ -35,6 +35,7 @@ codigo, corriendo en MAK (192.168.50.2), sin Claude en el loop.
 import datetime
 import json
 import os
+import re
 import subprocess
 import sys
 import urllib.parse
@@ -63,7 +64,9 @@ BITACORA = os.path.join(PLATAFORMA, "bitacora_capataz.jsonl")
 CAPATAZ_PATH = os.path.join(HOME, "flujo", "context", "CAPATAZ.md")
 AJUSTES_JUNTA = os.path.join(PLATAFORMA, "ajustes_junta.json")
 BACKLOG_CODEX_TXT = os.path.join(PLATAFORMA, "backlog_codex.txt")
+RESEARCH_LEDGER = os.path.join(PLATAFORMA, "research_intents.jsonl")
 REPO_SLUG = "ligereza/vibecodeine"
+RESEARCH_COOLDOWN_SECONDS = 7 * 24 * 60 * 60
 
 ACCIONES = ("investigar", "codificar", "entregar", "vetear",
             "mejora_libre", "reflexionar", "vigilar_proveedores", "descansar",
@@ -83,7 +86,7 @@ UMBRAL_PCT_EXITO_PROVEEDOR = 50.0
 
 MENU_TXT = (
     "ACCIONES POSIBLES (elegi UNA, exactamente como aparece en \"accion\"):\n"
-    "- investigar: args {\"tema\": str} -- dispara research nuevo (research:8890)\n"
+    "- investigar: args {\"tema\": str, \"proposito\": str, \"lane\": \"obra|trabajo|sistema\", \"evidencia\": str} -- dispara research nuevo (research:8890); nunca repetir un tema sin nueva evidencia\n"
     "- codificar: args {\"pedido\": str} -- pide una pieza de codigo nueva (codex:8891)\n"
     "- entregar: args {} -- entrega UNA pieza codex lista al repo (PR draft, entregar.py)\n"
     "- vetear: args {} -- revisa y mergea PRs capataz/ listos (revisor.py --enforce, gateado por CI)\n"
@@ -326,6 +329,51 @@ def pedido_de_operaciones(pedido):
     return None
 
 
+def _research_signature(tema):
+    """Make repeated research detectable without deciding whether a topic is true."""
+    normalized = re.sub(r"[^a-z0-9áéíóúñü ]+", " ", str(tema or "").lower())
+    return " ".join(normalized.split())
+
+
+def _research_guard(tema, args):
+    """Require provenance and block stale duplicate dispatches at the source."""
+    args = args or {}
+    purpose = str(args.get("proposito") or args.get("purpose") or "").strip()
+    lane = str(args.get("lane") or "").strip().lower()
+    evidence = str(args.get("evidencia") or args.get("evidence") or "").strip()
+    if not purpose or lane not in {"obra", "trabajo", "sistema"} or not evidence:
+        return {"ok": False, "blocked": True, "error": "research_contract_incomplete",
+                "required": ["tema", "proposito", "lane", "evidencia"]}
+    signature = _research_signature(tema)
+    now = datetime.datetime.now(datetime.timezone.utc)
+    try:
+        with open(RESEARCH_LEDGER, encoding="utf-8") as fh:
+            for line in fh:
+                try:
+                    row = json.loads(line)
+                except ValueError:
+                    continue
+                if row.get("signature") != signature:
+                    continue
+                try:
+                    started = datetime.datetime.fromisoformat(row.get("ts", ""))
+                except ValueError:
+                    continue
+                if (now - started).total_seconds() < RESEARCH_COOLDOWN_SECONDS:
+                    return {"ok": False, "blocked": True,
+                            "error": "research_duplicate_cooldown",
+                            "previous": row.get("ts"), "tema": tema}
+    except OSError:
+        pass
+    os.makedirs(os.path.dirname(RESEARCH_LEDGER), exist_ok=True)
+    row = {"ts": now.isoformat(), "signature": signature, "tema": tema,
+           "proposito": purpose, "lane": lane, "evidencia": evidence,
+           "status": "dispatched"}
+    with open(RESEARCH_LEDGER, "a", encoding="utf-8") as fh:
+        fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+    return None
+
+
 def validar(decision):
     if not isinstance(decision, dict):
         return False, "decision no es un dict"
@@ -341,8 +389,14 @@ def ejecutar(accion, args):
         tema = str(args.get("tema") or "").strip()[:300]
         if not tema:
             return {"ok": False, "error": "tema vacio"}
+        guard = _research_guard(tema, args)
+        if guard:
+            return guard
         return _http_post_form("http://127.0.0.1:8890/run",
-                                {"tema": tema, "modo": "research", "densidad": "medio"})
+                                {"tema": tema, "modo": "research", "densidad": "medio",
+                                 "proposito": args.get("proposito", ""),
+                                 "lane": args.get("lane", ""),
+                                 "evidencia": args.get("evidencia", "")})
     if accion == "codificar":
         pedido = str(args.get("pedido") or "").strip()[:2000]
         if not pedido:

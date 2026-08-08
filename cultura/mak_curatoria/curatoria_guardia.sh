@@ -19,6 +19,10 @@ set -u
 CUR="$HOME/curatoria"
 LOG="$CUR/guardia.log"
 
+if [ ! -f "$CUR/AUTONOMY_ENABLE" ]; then
+    exit 0
+fi
+
 exec 9>"$CUR/.guardia.lock" || exit 0
 flock -n 9 || exit 0
 
