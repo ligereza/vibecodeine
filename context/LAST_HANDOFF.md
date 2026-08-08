@@ -52,6 +52,7 @@ Actualizado: 2026-08-08
 - `/home/mak/flujo` quedó limpio en `main` y alineado con `origin/main`.
 - Los cambios locales que estaban en la caja se conservaron en
   `/home/mak/quarantine/flujo-20260808-cleanup/`; no se eliminaron silenciosamente.
+- Los tags locales antiguos de la caja se inventariaron en esa cuarentena y se eliminaron; `origin` no tenía tags publicados.
 - El despliegue operativo vive separado en `/home/mak/plataforma`; `mak-hub.service` sigue activo.
 
 ## Regla de continuidad
