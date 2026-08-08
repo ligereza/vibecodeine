@@ -157,6 +157,11 @@
     <label class="campo"><span>Tipo</span><select id="inbox-tipo"><option value="">todos</option><option value="published_media">posts, reels y carruseles</option><option value="story">historias</option></select></label>
     <label class="campo"><span>Buscar</span><input id="inbox-buscar" type="search" placeholder="artista, fecha, texto, id"></label>
     <label class="campo fila-check"><input id="inbox-assets" type="checkbox"><span>sólo con media en MAK</span></label>
+    <label class="campo"><span>Tablero</span><select id="inbox-tablero"><option value="">todos</option></select></label>
+    <label class="campo"><span>Nuevo tablero</span><input id="inbox-nuevo-tablero" type="text" placeholder="obra VIBE-CODEINE"></label>
+    <button id="inbox-crear-tablero" type="button">crear tablero</button>
+    <button id="inbox-anadir-tablero" type="button">añadir seleccion al tablero</button>
+    <button id="inbox-conectar" type="button">conectar 2 seleccionadas</button>
     <span id="inbox-contador"></span>
   </div>
   <div id="inbox-lista">Cargando inbox MAK…</div>
@@ -234,6 +239,7 @@ const FILAS = new Map();      // id -> the row element currently painted
 let INBOX = [];
 let INBOX_LIMIT = 48;
 const INBOX_SELECTED = new Set();
+let TABLEROS = [];
 
 function esc(value){
   return String(value ?? "").replace(/[&<>"']/g, character => ({
@@ -249,18 +255,30 @@ async function cargarInboxMak(){
     INBOX=d.items||[];
     INBOX_SELECTED.clear();
     INBOX.filter(x=>x.selection==='seleccionar').forEach(x=>INBOX_SELECTED.add(x.id));
+    await cargarTableros();
     document.getElementById("inbox-contador").textContent=`${d.total} elementos · ${d.available_assets} disponibles en MAK`;
     pintarInboxMak();
   }catch(e){box.textContent="No se pudo cargar el archivo visual de MAK.";}
+}
+
+async function cargarTableros(){
+  const r=await fetch('/api/portfolio/boards',{cache:'no-store'}), d=await r.json();
+  TABLEROS=d.boards||[];
+  const select=document.getElementById('inbox-tablero'), actual=select.value;
+  select.innerHTML='<option value="">todos</option>'+TABLEROS.map(b=>`<option value="${esc(b.id)}">${esc(b.name)} (${b.item_ids.length})</option>`).join('');
+  if(TABLEROS.some(b=>b.id===actual))select.value=actual;
 }
 
 function inboxFiltrados(){
   const tipo=document.getElementById("inbox-tipo").value;
   const q=document.getElementById("inbox-buscar").value.trim().toLowerCase();
   const assets=document.getElementById("inbox-assets").checked;
+  const tablero=document.getElementById("inbox-tablero").value;
+  const board=TABLEROS.find(b=>b.id===tablero);
   return INBOX.filter(x=>{
     if(tipo && x.tipo_contenido!==tipo) return false;
     if(assets && !x.asset_available) return false;
+    if(board && !board.item_ids.includes(x.id)) return false;
     if(!q) return true;
     return [x.id,x.fecha,x.publicacion_id,x.descripcion_original].join(" ").toLowerCase().includes(q);
   });
@@ -290,8 +308,36 @@ async function enviarInbox(id,depto){
   const d=await r.json(); alert(d.ok?`Enviado a ${depto}.`:`No se envio: ${d.error||'error'}`);
 }
 
-['inbox-tipo','inbox-buscar','inbox-assets'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{INBOX_LIMIT=48;pintarInboxMak();}));
+async function crearTablero(){
+  const input=document.getElementById('inbox-nuevo-tablero'), name=input.value.trim();
+  if(!name)return alert('Escribe un nombre para el tablero.');
+  const r=await fetch('/api/portfolio/board',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'create',name})});
+  const d=await r.json(); if(!d.ok)return alert(d.error||'No se creo el tablero.');
+  input.value=''; await cargarTableros(); document.getElementById('inbox-tablero').value=d.board.id; pintarInboxMak();
+}
+
+async function anadirSeleccionAlTablero(){
+  const board=document.getElementById('inbox-tablero').value;
+  if(!board)return alert('Selecciona un tablero primero.');
+  if(!INBOX_SELECTED.size)return alert('Selecciona una o mas obras primero.');
+  const r=await fetch('/api/portfolio/board',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'add',board_id:board,item_ids:[...INBOX_SELECTED]})});
+  const d=await r.json(); if(!d.ok)return alert(d.error||'No se añadieron.');
+  await cargarTableros(); pintarInboxMak();
+}
+
+async function conectarSeleccionadas(){
+  const ids=[...INBOX_SELECTED];
+  if(ids.length!==2)return alert('Selecciona exactamente dos obras para conectarlas.');
+  const relation=prompt('Relacion entre ambas obras:', 'dialoga con'); if(!relation)return;
+  const r=await fetch('/api/portfolio/connect',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source_id:ids[0],target_id:ids[1],relation})});
+  const d=await r.json(); alert(d.ok?'Conexion guardada.':'No se pudo conectar: '+(d.error||'error'));
+}
+
+['inbox-tipo','inbox-buscar','inbox-assets','inbox-tablero'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{INBOX_LIMIT=48;pintarInboxMak();}));
 document.getElementById('inbox-more').addEventListener('click',()=>{INBOX_LIMIT+=48;pintarInboxMak();});
+document.getElementById('inbox-crear-tablero').addEventListener('click',crearTablero);
+document.getElementById('inbox-anadir-tablero').addEventListener('click',anadirSeleccionAlTablero);
+document.getElementById('inbox-conectar').addEventListener('click',conectarSeleccionadas);
 
 /* ── Loading ─────────────────────────────────────────────────────────────
    Same degradation as the campo skin: archivo.json first (the unified

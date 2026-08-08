@@ -24,6 +24,7 @@ import threading
 import time
 import urllib.parse
 import urllib.request
+import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -65,6 +66,10 @@ PORTFOLIO_INBOX = os.path.join(
 PORTFOLIO_MEDIA_ROOT = os.path.join(HOME, "portfolio_media/media")
 PORTFOLIO_SELECTIONS = os.path.join(
     HOME, "plataforma/director_runs/portfolio-editor-20260808/selections.jsonl")
+PORTFOLIO_BOARDS = os.path.join(
+    HOME, "plataforma/director_runs/portfolio-editor-20260808/boards.json")
+PORTFOLIO_CONNECTIONS = os.path.join(
+    HOME, "plataforma/director_runs/portfolio-editor-20260808/connections.jsonl")
 RESEARCH_URL = "http://127.0.0.1:8890"
 CODEX_URL = "http://127.0.0.1:8891"
 TRABAJO_STATE = os.path.join(HOME, "plataforma/.trabajo_state.json")
@@ -657,6 +662,69 @@ def _portfolio_select(item_id, decision):
     with open(PORTFOLIO_SELECTIONS, "a", encoding="utf-8") as fh:
         fh.write(json.dumps(row, ensure_ascii=False) + "\n")
     return {"ok": True, "row": row}
+
+
+def _portfolio_boards():
+    try:
+        with open(PORTFOLIO_BOARDS, encoding="utf-8") as fh:
+            data = json.load(fh)
+        if isinstance(data, dict) and isinstance(data.get("boards"), list):
+            return data
+    except (OSError, ValueError):
+        pass
+    return {"schema": "faro-portfolio-boards-v1", "boards": []}
+
+
+def _portfolio_save_boards(data):
+    os.makedirs(os.path.dirname(PORTFOLIO_BOARDS), exist_ok=True)
+    tmp = PORTFOLIO_BOARDS + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(data, fh, ensure_ascii=False, indent=2)
+    os.replace(tmp, PORTFOLIO_BOARDS)
+
+
+def _portfolio_board_action(body):
+    action = str(body.get("action", ""))
+    data = _portfolio_boards()
+    boards = data["boards"]
+    board_id = str(body.get("board_id", ""))[:100]
+    board = next((b for b in boards if b.get("id") == board_id), None)
+    if action == "create":
+        name = str(body.get("name", "")).strip()[:120]
+        if not name:
+            return {"ok": False, "error": "nombre_vacio"}
+        board = {"id": "tablero-" + uuid.uuid4().hex[:12],
+                 "name": name, "item_ids": [],
+                 "created": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
+        boards.append(board)
+    elif not board:
+        return {"ok": False, "error": "tablero_no_encontrado"}
+    elif action in ("add", "remove"):
+        ids = body.get("item_ids") or []
+        ids = [str(item_id) for item_id in ids if _portfolio_item(item_id)]
+        current = list(board.get("item_ids") or [])
+        if action == "add":
+            board["item_ids"] = current + [item_id for item_id in ids if item_id not in current]
+        else:
+            board["item_ids"] = [item_id for item_id in current if item_id not in ids]
+    else:
+        return {"ok": False, "error": "accion_invalida"}
+    _portfolio_save_boards(data)
+    return {"ok": True, "board": board, "boards": boards}
+
+
+def _portfolio_connect(body):
+    source = str(body.get("source_id", ""))
+    target = str(body.get("target_id", ""))
+    relation = str(body.get("relation", "relacionada")).strip()[:80]
+    if source == target or not _portfolio_item(source) or not _portfolio_item(target):
+        return {"ok": False, "error": "items_invalidos"}
+    os.makedirs(os.path.dirname(PORTFOLIO_CONNECTIONS), exist_ok=True)
+    row = {"source_id": source, "target_id": target, "relation": relation,
+           "ts": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
+    with open(PORTFOLIO_CONNECTIONS, "a", encoding="utf-8") as fh:
+        fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+    return {"ok": True, "connection": row}
 
 
 def _portfolio_media(relative):
@@ -1263,6 +1331,8 @@ class H(BaseHTTPRequestHandler):
             return self._json(_episode_revision.evidence())
         if p == "/api/portfolio/inbox":
             return self._json(_portfolio_inbox())
+        if p == "/api/portfolio/boards":
+            return self._json(_portfolio_boards())
         if p.startswith("/portfolio-media/"):
             asset = _portfolio_media(p[len("/portfolio-media/"):])
             if asset is None:
@@ -1400,7 +1470,8 @@ class H(BaseHTTPRequestHandler):
                 return self._json({"ok": False, "error": "json invalido"}, 400)
             return self._json(_episode_revision.record(
                 body.get("episodio", ""), body.get("decision", ""), body.get("note", "")))
-        if u.path in ("/api/portfolio/select", "/api/portfolio/dispatch"):
+        if u.path in ("/api/portfolio/select", "/api/portfolio/dispatch",
+                      "/api/portfolio/board", "/api/portfolio/connect"):
             largo = min(int(self.headers.get("Content-Length") or 0), 12000)
             try:
                 body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
@@ -1408,6 +1479,10 @@ class H(BaseHTTPRequestHandler):
                 return self._json({"ok": False, "error": "json invalido"}, 400)
             if u.path.endswith("/select"):
                 return self._json(_portfolio_select(body.get("item_id"), body.get("decision")))
+            if u.path.endswith("/board"):
+                return self._json(_portfolio_board_action(body))
+            if u.path.endswith("/connect"):
+                return self._json(_portfolio_connect(body))
             return self._json(_portfolio_dispatch(body.get("item_id"), body.get("depto"),
                                                    body.get("texto", "")))
         if u.path == "/api/revision" and _revision is not None:
