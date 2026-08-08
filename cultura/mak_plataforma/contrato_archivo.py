@@ -214,7 +214,7 @@ def desde_ensayo(ensayo: dict) -> dict:
     return {"piezas": piezas, "vinculos": vinculos}
 
 
-def desde_campo(campo: dict) -> dict:
+def desde_campo(campo: dict, existe=None) -> dict:
     """Las obras CURADAS del campo medido, al contrato.
 
     campo.json es la proyeccion de lo que MAK percibio de las obras reales del
@@ -224,11 +224,20 @@ def desde_campo(campo: dict) -> dict:
     las obras -- un portafolio sin las obras del artista. Esta conversion las
     hace piezas de primera clase con lo que el campo si midio.
 
+    `existe` se inyecta para que una piel pueda distinguir una fuente real de
+    una ruta historica declarada pero no disponible en el despliegue actual.
+    La pieza no desaparece: conserva su referencia y queda marcada para
+    revision, evitando presentar una ausencia como si fuera una obra cargable.
+
     `titulo` va None a proposito: el artista no titulo estas piezas y el
     percibido es texto de maquina -- va a `extra.percibido`, nunca como
     titulo (regla de la VOZ). `unir()` deduplica contra el micelio por id y
     la fuente mas rica completa los campos.
     """
+    if existe is None:
+        from pathlib import Path as _P
+        raiz = _P(__file__).resolve().parents[2]
+        existe = lambda src: (raiz / src).is_file()  # noqa: E731
     piezas = []
     for c in campo.get("piezas") or []:
         cid = c.get("id")
@@ -238,6 +247,14 @@ def desde_campo(campo: dict) -> dict:
         for k in ("colores", "tipo", "estilo", "tilde", "trazo", "percibido"):
             if c.get(k):
                 extra[k] = c[k]
+        archivo = c.get("archivo")
+        fuente_estado = ("presente" if archivo and existe(archivo)
+                         else "ausente" if archivo else "no_declarada")
+        extra["fuente_original"] = {
+            "ruta": archivo,
+            "estado": fuente_estado,
+            "rol": "obra_original",
+        }
         piezas.append({
             "id": cid,
             "titulo": None,
@@ -246,8 +263,10 @@ def desde_campo(campo: dict) -> dict:
             "resumen": None,
             "etiquetas": [t for t in ("curada", c.get("tipo")) if t],
             "peso": 1,
-            "medio": ({"tipo": "imagen", "src": c["archivo"]}
-                      if c.get("archivo") else {"tipo": "imagen"}),
+            "medio": ({"tipo": "imagen", "src": archivo,
+                       "estado_fuente": fuente_estado}
+                      if archivo else {"tipo": "imagen",
+                                       "estado_fuente": fuente_estado}),
             "estado": "publicada",
             "extra": extra,
         })

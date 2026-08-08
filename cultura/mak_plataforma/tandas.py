@@ -49,6 +49,7 @@ LEDGER = os.path.join(HOME, "plataforma/external_batches.jsonl")
 COMMON_LEDGER = os.path.join(HOME, "plataforma/common_ledger.jsonl")
 
 SCHEMA_VERSION = "mak-batch-v1"
+WORK_SCHEMA_VERSION = "mak-work-v1"
 
 RESULT_REQUIRED = (
     "claim",
@@ -226,10 +227,25 @@ def build_brief(area, batch_id, paths=None, providers=None, allow_premium=True,
                if research_router is not None else None)
     selected_paths = list(paths or cfg["default_paths"])
     plan = provider_plan(providers or [], allow_premium=allow_premium)
+    lane = {"rd_evidence": "trabajo", "opportunity_radar": "trabajo",
+            "iskvw_curation": "obra", "svg_pipeline": "obra"}.get(area, "sistema")
+    work = {
+        "schema": WORK_SCHEMA_VERSION,
+        "work_id": "%s:%s" % (area, batch_id),
+        "parent_task": "batch:%s" % batch_id,
+        "lane": lane,
+        "purpose": cfg["purpose"],
+        "format": "external_batch",
+        "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "provider": plan[0] if plan else "unknown",
+        "sources": selected_paths,
+        "status": "in_progress",
+    }
     brief = {
         "schema": SCHEMA_VERSION,
         "area": area,
         "batch_id": batch_id,
+        "work": work,
         "purpose": cfg["purpose"],
         "paths": selected_paths,
         "provider_plan": plan,
@@ -293,19 +309,24 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction="",
     )
     profile_block = ""
     item_profile_fields = ""
+    claim_example = ("lectura curatorial de la obra"
+                     if area == "iskvw_curation" else "hallazgo atomico")
     if profile:
         profile_block = (
             "\nPOLITICA DE PROMOCION:\n"
             "- formatos permitidos: %s\n"
             "- evidence_kind DEBE ser exactamente: %s\n"
             "- acciones permitidas: %s\n"
+            "- VALORES LITERALES ASCII: format=%r; evidence_kind=%r\n"
             % (", ".join(profile["allowed_formats"]),
                profile["required_evidence"],
-               ", ".join(profile["promotion_actions"]))
+               ", ".join(profile["promotion_actions"]),
+               profile["allowed_formats"][0], profile["required_evidence"])
         )
         item_profile_fields = (
-            '    "format": "formato permitido",\n'
-            '    "evidence_kind": "tipo de evidencia requerida",\n'
+            '    "format": "%s",\n'
+            '    "evidence_kind": "%s",\n'
+            % (profile["allowed_formats"][0], profile["required_evidence"])
         )
     return (
         "Eres un agente externo de MAK. Tu proveedor puede ser temporal; el "
@@ -322,7 +343,7 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction="",
         "DEVUELVE SOLO JSON con esta forma:\n"
         "{\n"
         '  "items": [{\n'
-        '    "claim": "hallazgo atomico",\n'
+        '    "claim": %r,\n'
         '    "evidence": ["ruta o fuente concreta"],\n'
         '    "files": ["archivo relacionado"],\n'
         '    "confidence": "high|medium|low",\n'
@@ -351,6 +372,7 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction="",
            profile_block,
            evidence_block,
            instruction_block,
+           claim_example,
            "|".join(cfg["actions"]),
            item_profile_fields,
            curation_guard,
@@ -489,6 +511,9 @@ def validate_evidence_paths(payload, area=None, extra_paths=None):
     items = payload.get("items", []) if isinstance(payload, dict) else []
     for idx, item in enumerate(items):
         for file_idx, path in enumerate(item.get("files", []) or []):
+            if (area == "rd_evidence" and isinstance(path, str)
+                    and path.startswith(("https://", "http://"))):
+                continue
             if extra_paths is not None:
                 allowed = [candidate for candidate in extra_paths
                            if os.path.basename(candidate) == os.path.basename(path)
@@ -515,6 +540,22 @@ def validate_evidence_paths(payload, area=None, extra_paths=None):
     return not errors, errors
 
 
+def normalize_remote_evidence(payload, area=None):
+    """Treat official URLs as evidence paths for factual products."""
+    if area != "rd_evidence" or not isinstance(payload, dict):
+        return payload
+    for item in payload.get("items", []) or []:
+        if not isinstance(item, dict):
+            continue
+        files = item.get("files") or []
+        urls = [value for value in (item.get("evidence") or [])
+                if isinstance(value, str)
+                and value.startswith(("https://", "http://"))]
+        if not files and urls:
+            item["files"] = urls
+    return payload
+
+
 def append_common_ledger(payload, area, path=COMMON_LEDGER, source="external"):
     """Write validated external items into the shared MAK ledger."""
     if common_ledger is None:
@@ -527,6 +568,9 @@ def ingest_result(payload, area, common_path=COMMON_LEDGER, source="external",
                   reviewer=None, use_ollama=True, strict_product=False,
                   extra_paths=None):
     """Validate, locally judge, then append only accepted facts to common ledger."""
+    if isinstance(payload, str):
+        payload = json.loads(payload)
+    payload = normalize_remote_evidence(payload, area=area)
     ok, errors = validate_result(payload)
     if not ok:
         return {"ok": False, "status": "invalid", "errors": errors,
@@ -541,8 +585,18 @@ def ingest_result(payload, area, common_path=COMMON_LEDGER, source="external",
         if not evidence_ok:
             return {"ok": False, "status": "revise", "errors": evidence_errors,
                     "review": None, "items": 0}
-    if isinstance(payload, str):
-        payload = json.loads(payload)
+    payload.setdefault("work", {
+        "schema": WORK_SCHEMA_VERSION,
+        "work_id": "legacy:%s" % area,
+        "parent_task": "legacy_unknown",
+        "lane": "trabajo" if area in {"rd_evidence", "opportunity_radar"} else "sistema",
+        "purpose": "legacy payload without declared purpose",
+        "format": "legacy_unknown",
+        "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "provider": source,
+        "sources": [],
+        "status": "legacy_unknown",
+    })
     if discernment is None or common_ledger is None:
         return {"ok": False, "status": "unavailable",
                 "errors": ["discernment_or_ledger_unavailable"],
@@ -664,7 +718,7 @@ def _repair_product_payload(area, payload, provider, model, max_tokens):
 def run_external_batch(area, batch_id, provider, paths=None, model=None,
                        out_dir=None, common_path=COMMON_LEDGER,
                        batch_path=LEDGER, use_ollama=True, max_tokens=2500,
-                       instruction="", max_items=5):
+                       instruction="", max_items=5, image_paths=None):
     """Run one external provider, persist raw output, then ingest through the gate."""
     if external_providers is None:
         raise RuntimeError("external_providers_unavailable")
@@ -680,9 +734,12 @@ def run_external_batch(area, batch_id, provider, paths=None, model=None,
         kwargs = {}
         if provider == "ollama":
             kwargs["response_format"] = _product_response_schema(area)
+        call_kwargs = dict(kwargs)
+        if image_paths:
+            call_kwargs["image_paths"] = image_paths
         raw = external_providers.call(
             provider, prompt, model=model, max_tokens=max_tokens,
-            temperature=0.1, **kwargs)
+            temperature=0.1, **call_kwargs)
     except Exception as exc:  # noqa: BLE001 - one provider must not kill a round
         error = _safe_text(str(exc).strip() or exc.__class__.__name__)
         failure_class = _provider_failure_class(exc)
@@ -721,6 +778,7 @@ def run_external_batch(area, batch_id, provider, paths=None, model=None,
         }, path=batch_path)
         return {"ok": False, "status": "invalid", "raw_path": raw_path,
                 "errors": ["provider_output_not_json"]}
+    payload["work"] = dict(brief["work"], status="awaiting_review", provider=provider)
     if len(payload.get("items", [])) > budget:
         error = "items_over_budget:%d>%d" % (len(payload["items"]), budget)
         append_ledger({
@@ -874,6 +932,8 @@ def main(argv=None):
     p_run.add_argument("--no-ollama", action="store_true")
     p_run.add_argument("--instruction", default="",
                        help="extra round-specific instruction")
+    p_run.add_argument("--image", action="append", dest="image_paths",
+                       help="image evidence for vision-capable providers")
 
     args = parser.parse_args(argv)
     if args.cmd == "areas":
@@ -949,7 +1009,7 @@ def main(argv=None):
                 model=args.model or None, out_dir=args.out_dir or None,
                 common_path=args.common_ledger, batch_path=args.ledger,
                 use_ollama=not args.no_ollama, max_tokens=args.max_tokens,
-                instruction=args.instruction)
+                instruction=args.instruction, image_paths=args.image_paths)
         except Exception as exc:  # noqa: BLE001 - operator-facing CLI
             result = {"ok": False, "status": "provider_error",
                       "errors": [str(exc)[:200]]}

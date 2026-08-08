@@ -777,6 +777,8 @@ def vision_imagen(path: str, timeout: int = 120, fuente: str = "rd",
     if imagen_b64 is None:
         return {"error": "no_se_pudo_leer_imagen"}
 
+    vision_fallback = ""
+
     # Which engine reads the image. `ollama` by default: without the variable
     # the behaviour is byte for byte today's, so a corpus run cannot be changed
     # by accident. `watsonx` is the paid one that actually sees -- probed
@@ -805,7 +807,9 @@ def vision_imagen(path: str, timeout: int = 120, fuente: str = "rd",
             if not d.get("error"):
                 d["_motor"] = "watsonx"
                 return d
+            vision_fallback = "watsonx:%s" % d.get("error")
         except Exception as exc:                 # noqa: BLE001 - cae a ollama
+            vision_fallback = "watsonx:%s" % str(exc)[:120]
             print("aviso: watsonx no pudo, caigo a ollama (%s)" % str(exc)[:120],
                   flush=True)
 
@@ -837,6 +841,8 @@ def vision_imagen(path: str, timeout: int = 120, fuente: str = "rd",
     # significaria dos cosas a la vez -- "respondio ollama" y "nadie atribuyo"
     # -- y el campo dejaria de servir para lo unico que existe.
     d["_motor"] = "ollama"
+    if vision_fallback:
+        d["_fallback_desde"] = vision_fallback
     return d
 
 

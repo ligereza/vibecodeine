@@ -22,6 +22,27 @@ def test_append_item_accepts_typed_domain_record(tmp_path):
     assert json.loads(path.read_text(encoding="utf-8")) == row
     assert row["lane"] == "trabajo"
     assert row["decision"] == "revisar"
+    assert row["work"]["status"] == "legacy_unknown"
+
+
+def test_external_batch_preserves_work_identity(tmp_path):
+    path = tmp_path / "common_ledger.jsonl"
+    payload = {"work": {
+        "schema": "mak-work-v1", "work_id": "rd_evidence:round-1",
+        "parent_task": "brief:round-1", "lane": "trabajo",
+        "purpose": "verificar una fuente oficial", "format": "research",
+        "created_at": "2026-08-08T00:00:00Z", "provider": "watsonx",
+        "sources": ["docs/brief.md"], "status": "awaiting_review",
+    }, "items": [{
+        "claim": "source exists", "evidence": ["https://official.example"],
+        "files": [], "confidence": "high", "action": "verify_source",
+        "reject_reason": "",
+    }]}
+    rows, errors = tandas.append_common_ledger(
+        payload, "rd_evidence", path=str(path), source="watsonx")
+    assert errors == []
+    assert rows[0]["work"]["work_id"] == "rd_evidence:round-1"
+    assert rows[0]["work"]["parent_task"] == "brief:round-1"
 
 
 def test_decision_queue_rejects_unknown_lane_or_decision():

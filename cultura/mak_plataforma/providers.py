@@ -10,6 +10,8 @@ from __future__ import annotations
 import json
 import os
 import time
+import base64
+from pathlib import Path
 import urllib.parse
 import urllib.request
 
@@ -117,7 +119,8 @@ def watsonx_chat(prompt, model=None, max_tokens=2500, temperature=0.1):
     return (payload["choices"][0]["message"]["content"] or "").strip()
 
 
-def aws_bedrock_chat(prompt, model=None, max_tokens=2500, temperature=0.1):
+def aws_bedrock_chat(prompt, model=None, max_tokens=2500, temperature=0.1,
+                     image_paths=None):
     load_env()
     try:
         import boto3
@@ -126,10 +129,22 @@ def aws_bedrock_chat(prompt, model=None, max_tokens=2500, temperature=0.1):
     region = os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION", "us-east-1")
     client = boto3.client("bedrock-runtime", region_name=region)
     model_id = model or os.environ.get("AWS_BEDROCK_BATCH_MODEL", "amazon.nova-pro-v1:0")
+    content = [{"text": "Return only valid JSON. No prose.\n\n" + prompt}]
+    for image_path in image_paths or []:
+        path = Path(image_path)
+        if path.suffix.lower() not in {".jpg", ".jpeg", ".png", ".webp"}:
+            continue
+        if not path.is_file() or path.stat().st_size > 5 * 1024 * 1024:
+            continue
+        content.append({"image": {
+            "format": "jpeg" if path.suffix.lower() in {".jpg", ".jpeg"}
+            else path.suffix.lower().lstrip("."),
+            "source": {"bytes": base64.b64encode(path.read_bytes()).decode("ascii")},
+        }})
     body = {
         "messages": [{
             "role": "user",
-            "content": [{"text": "Return only valid JSON. No prose.\n\n" + prompt}],
+            "content": content,
         }],
         "inferenceConfig": {
             "maxTokens": max_tokens,
@@ -182,14 +197,15 @@ def _openai_compatible_chat(provider, prompt, model=None, max_tokens=2500,
 
 
 def call(provider, prompt, model=None, max_tokens=2500, temperature=0.1,
-         response_format=None):
+         response_format=None, image_paths=None):
     provider = str(provider or "").lower()
     if provider == "watsonx":
         return watsonx_chat(prompt, model=model, max_tokens=max_tokens,
                             temperature=temperature)
     if provider == "aws":
         return aws_bedrock_chat(prompt, model=model, max_tokens=max_tokens,
-                                temperature=temperature)
+                                temperature=temperature,
+                                image_paths=image_paths)
     if provider == "ollama":
         load_env()
         try:

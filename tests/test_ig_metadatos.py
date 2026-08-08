@@ -94,6 +94,10 @@ def test_a_post_title_reaches_every_media_of_the_carousel(tmp_path):
     assert mapa["a.jpg"]["texto"] == "Serie de grabados"
     assert mapa["b.jpg"]["hereda_del_post"] is True
     assert mapa["a.jpg"]["fecha"] == "2020-09-13"
+    assert mapa["a.jpg"]["publicacion_id"] == "posts_1.json:0"
+    assert mapa["a.jpg"]["medio_indice"] == 0
+    assert mapa["b.jpg"]["medio_indice"] == 1
+    assert mapa["b.jpg"]["medio_total"] == 2
 
 
 def test_a_media_title_wins_over_the_post_one(tmp_path):
@@ -129,6 +133,20 @@ def test_a_duplicate_entry_never_erases_the_text(tmp_path):
     })
     mapa, _ = meta.leer_export(raiz)
     assert mapa["x.jpg"]["texto"] == "el bueno"
+
+
+def test_stories_are_opt_in_and_keep_published_media_scope(tmp_path):
+    raiz = _export(tmp_path, {"stories.json": {"ig_stories": [{
+        "creation_timestamp": 1600000000,
+        "title": "VJ en Sala Demo",
+        "uri": "media/stories/2020/scene.mp4",
+    }]}})
+    mapa, informe = meta.leer_export(raiz)
+    assert mapa == {}
+    mapa, informe = meta.leer_export(raiz, incluir_historias=True)
+    assert mapa["scene.mp4"]["texto"] == "VJ en Sala Demo"
+    assert mapa["scene.mp4"]["tipo_contenido"] == "story"
+    assert mapa["scene.mp4"]["publicacion_archivo"] == "stories.json"
 
 
 def test_a_missing_timestamp_leaves_the_date_empty(tmp_path):
