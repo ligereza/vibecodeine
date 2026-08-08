@@ -546,6 +546,8 @@ def review_to_ledger(review, area, metadata=None):
     }
     if isinstance(metadata, dict):
         row["metadata"] = metadata
+        if isinstance(metadata.get("work"), dict):
+            row["work"] = metadata["work"]
     return row
 
 

@@ -170,11 +170,17 @@ def test_review_ledger_preserves_judge_trace_metadata(tmp_path):
     ok, errors, row = ledger.append_review(
         review, "rd_evidence", path=str(path), source="local_review:watsonx",
         metadata={"provider": "watsonx", "reviewer": "deterministic",
-                  "fallback": True, "profile_verdict": "revise"})
+                  "fallback": True, "profile_verdict": "revise",
+                  "work": {"work_id": "rd_evidence:review-1",
+                           "identity": {"kind": "report",
+                                        "source_id": "rd_evidence:review-1",
+                                        "entities": {}}}})
     assert ok is True
     assert errors == []
     assert row["metadata"]["provider"] == "watsonx"
     assert row["metadata"]["fallback"] == "True"
+    assert row["work"]["work_id"] == "rd_evidence:review-1"
+    assert row["work"]["identity"]["kind"] == "report"
 
 
 def test_review_ledger_keeps_official_evidence_on_accept(tmp_path):
