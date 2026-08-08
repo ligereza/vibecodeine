@@ -1,5 +1,6 @@
 from cultura.mak_plataforma.copilot import (build_suggestions, evaluate_feedback,
-                                             media_manifest, normalize_inference)
+                                             learning_profile, media_manifest,
+                                             normalize_inference)
 
 
 def item(item_id, date="2026-08-08", description="", kind="story", publication=""):
@@ -33,6 +34,26 @@ def test_context_suppresses_redundant_facet():
     assert rows
     assert all(row["facet"] != "publication" for row in rows)
     assert suppressed == 1
+
+
+def test_board_scope_does_not_mix_explicit_artist_context():
+    source = item("a", description="luz cuerpo")
+    same = dict(item("b", description="luz cuerpo"), artista="Drefquila")
+    other = dict(item("c", description="luz cuerpo"), artista="Ober")
+    rows, suppressed = build_suggestions(
+        source, [same, other], context={"facet": "artist", "value": "Drefquila"})
+    assert rows
+    assert {row["item_id"] for row in rows} == {"b"}
+    assert suppressed >= 1
+
+
+def test_learning_profile_is_bounded_and_facet_specific():
+    rows = [{"facet": "artist", "action": "accept"}] * 20
+    rows += [{"facet": "venue", "action": "reject"}] * 3
+    profile = learning_profile(rows)
+    assert profile["weights"]["artist"] == 8.0
+    assert profile["weights"]["venue"] == -4.5
+    assert profile["feedback_total"] == 23
 
 
 def test_manifest_is_provider_neutral():

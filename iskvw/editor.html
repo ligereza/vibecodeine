@@ -418,8 +418,9 @@ async function cargarCopiloto(id){
   const r=await fetch('/api/portfolio/copilot/suggestions?item_id='+encodeURIComponent(id)+'&board_id='+encodeURIComponent(boardId),{cache:'no-store'}), d=await r.json();
   if(!d.ok){box.textContent='No hay sugerencias para esta pieza.';return;}
   if(!d.suggestions.length){box.textContent='No encontré relaciones candidatas todavía.';return;}
-  const contexto=d.context&&d.context.name?` · contexto: ${esc(d.context.name)} · ${d.suppressed_redundant||0} redundantes ocultas`:'';
-  box.innerHTML=`<div class="inbox-asociacion-ayuda">Fuente: ${esc(id)} · motor: ${esc(d.provider)}${contexto} · sugerencias no confirmadas</div>`+d.suggestions.map(s=>{const item=INBOX.find(x=>x.id===s.item_id)||{};return `<div class="copiloto-item"><b>${esc(item.fecha||'')} · ${esc(item.tipo_contenido||'')} · ${esc(s.item_id)}</b> <span class="copiloto-confianza">${esc(s.confidence)}</span><div class="copiloto-motivo">${esc(s.facet)} · ${esc(s.reasons.join(' · '))}</div><button onclick="feedbackCopiloto('${esc(s.item_id)}','accept')">aceptar relación</button><button onclick="feedbackCopiloto('${esc(s.item_id)}','reject')">rechazar</button></div>`}).join('');
+  const contexto=d.context&&d.context.name?` · contexto: ${esc(d.context.name)} · ${d.suppressed_redundant||0} fuera del tablero`:'';
+  const aprendizaje=d.learning?` · aprendizaje: ${esc(d.learning.feedback_total||0)} decisiones humanas`:'';
+  box.innerHTML=`<div class="inbox-asociacion-ayuda">Fuente: ${esc(id)} · motor: ${esc(d.provider)}${contexto}${aprendizaje} · sugerencias no confirmadas</div>`+d.suggestions.map(s=>{const item=INBOX.find(x=>x.id===s.item_id)||{};return `<div class="copiloto-item"><b>${esc(item.fecha||'')} · ${esc(item.tipo_contenido||'')} · ${esc(s.item_id)}</b> <span class="copiloto-confianza">${esc(s.confidence)}</span><div class="copiloto-motivo">${esc(s.facet)} · ${esc(s.reasons.join(' · '))}</div><button onclick="feedbackCopiloto('${esc(s.item_id)}','accept','${esc(s.facet)}')">aceptar relación</button><button onclick="feedbackCopiloto('${esc(s.item_id)}','reject','${esc(s.facet)}')">rechazar</button></div>`}).join('');
 }
 
 async function pedirSegundaLectura(){
@@ -431,23 +432,24 @@ async function pedirSegundaLectura(){
   salida.textContent=d.ok?`${d.provider}:\n${d.raw}`:`No disponible: ${d.error||'error'}${d.detail?`\n${d.detail}`:''}`;
 }
 
-async function feedbackCopiloto(target,action){
+async function feedbackCopiloto(target,action,facet){
   if(!COPILOTO_SOURCE)return;
   const relation=action==='accept'?(prompt('Nombre de la relación:', 'relacionada')||'relacionada'):'sugerencia descartada';
-  const r=await fetch('/api/portfolio/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source_id:COPILOTO_SOURCE,target_id:target,action,relation})});
+  const board_id=document.getElementById('inbox-tablero').value;
+  const r=await fetch('/api/portfolio/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source_id:COPILOTO_SOURCE,target_id:target,action,facet,board_id,relation})});
   const d=await r.json(); if(!d.ok)return alert(d.error||'No se guardó el feedback.');
   cargarCopiloto(COPILOTO_SOURCE);
 }
 
 function quitarDeBandeja(id){
   INBOX_SELECTED.delete(id);
-  fetch('/api/portfolio/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:id,decision:'deseleccionar'})});
+  fetch('/api/portfolio/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:id,decision:'deseleccionar',board_id:document.getElementById('inbox-tablero').value})});
   pintarInboxMak();
 }
 
 async function seleccionarInbox(id){
   const decision=INBOX_SELECTED.has(id)?'deseleccionar':'seleccionar';
-  const r=await fetch('/api/portfolio/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:id,decision})});
+  const r=await fetch('/api/portfolio/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:id,decision,board_id:document.getElementById('inbox-tablero').value})});
   if((await r.json()).ok){if(decision==='seleccionar')INBOX_SELECTED.add(id);else INBOX_SELECTED.delete(id);pintarInboxMak();}
 }
 

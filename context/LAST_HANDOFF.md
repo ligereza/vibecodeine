@@ -68,3 +68,20 @@ Lo aprendido para mañana: no confundir una tarea externa con una decisión del 
 ## Reanudación — 2026-08-08
 
 El PR #511 reveló dos fallos de higiene, no fallos del circuito: `tools/construir_mapa_visual.py` no estaba registrado en `CAPACIDADES.md`, y el runner de idioma detectó la docstring española del adjudicador. Ambos fueron corregidos en `7a98c13` y enviados a `mak`; CI debe repetir ahora la verificación. La suite focalizada de higiene tarda más de dos minutos en Windows y fue detenida para no dejar un proceso costoso colgado; la corrección se verificó por compilación y `git diff --check`.
+
+## Autonomía combinada — 2026-08-08
+
+Se unieron las dos rutas sin crear otro framework: la columna vertebral conserva
+`mak-work-v1`, decisiones humanas y ledger append-only; el editor ahora convierte
+selecciones, exclusiones y relaciones aceptadas/rechazadas en señales trazables.
+Los tableros registran sus nuevas parejas como feedback contextual, sin publicar
+ni convertir una hipótesis en hecho. El copiloto aplica un perfil acotado por
+faceta (`artist`, `venue`, `event`, `date`, `client`, `collab`, `period`), respeta
+el alcance explícito del tablero y evita mezclar candidatos fuera de él.
+
+La superficie `/api/portfolio/copilot/learning` expone el aprendizaje resumido
+al editor. Las sugerencias siguen siendo candidatas; Watsonx/AWS pueden
+proponer hipótesis y la decisión humana modifica el ranking futuro, con pesos
+limitados para impedir que una tanda pequeña se convierta en dogma. Tests
+focalizados de copilot, Capataz y enrutamiento pasan (`46 passed`). PR #511
+seguía con Windows ejecutándose; no se mezcló este bloque con PR #512.
