@@ -93,6 +93,33 @@ def normalize_item(item, source="manual", ts=None):
         "next_action": _safe_text(item.get("next_action"), 500),
         "owner": _safe_text(item.get("owner"), 120) or "MAK",
     }
+    work = item.get("work")
+    if not isinstance(work, dict):
+        work = {
+            "schema": "mak-work-v1",
+            "work_id": "legacy:%s" % (row["domain"] or "unknown"),
+            "parent_task": "legacy_unknown",
+            "lane": row["lane"],
+            "purpose": "legacy ledger item without declared work metadata",
+            "format": "legacy_unknown",
+            "created_at": row["ts"],
+            "provider": "unknown",
+            "sources": [],
+            "status": "legacy_unknown",
+        }
+    row["work"] = {
+        "schema": _safe_text(work.get("schema"), 40) or "mak-work-v1",
+        "work_id": _safe_text(work.get("work_id"), 240) or "legacy:unknown",
+        "parent_task": _safe_text(work.get("parent_task"), 240) or "legacy_unknown",
+        "lane": _safe_text(work.get("lane"), 40) or row["lane"],
+        "purpose": _safe_text(work.get("purpose"), 500),
+        "format": _safe_text(work.get("format"), 120) or "legacy_unknown",
+        "created_at": _safe_text(work.get("created_at"), 40) or row["ts"],
+        "provider": _safe_text(work.get("provider"), 120) or "unknown",
+        "sources": [_safe_text(value, 400) for value in work.get("sources", [])]
+        if isinstance(work.get("sources", []), list) else [],
+        "status": _safe_text(work.get("status"), 40) or "legacy_unknown",
+    }
     metadata = item.get("metadata")
     if isinstance(metadata, dict):
         row["metadata"] = {
@@ -362,7 +389,7 @@ def write_quarantine(rows, path=None):
     return added
 
 
-def external_item_to_ledger(item, area):
+def external_item_to_ledger(item, area, work=None):
     domain_by_area = {
         "rd_evidence": "rd",
         "iskvw_curation": "iskvw",
@@ -374,7 +401,9 @@ def external_item_to_ledger(item, area):
     }
     item_type = "reject" if item.get("action") == "reject" else "evidence"
     domain = domain_by_area.get(area, "mak")
+    work = work if isinstance(work, dict) else {}
     return {
+        "work": work,
         "domain": domain,
         "type": item_type,
         "claim": item.get("claim", ""),
@@ -399,7 +428,7 @@ def append_external_result(payload, area, path=LEDGER, source="external"):
     errors = []
     for idx, item in enumerate(payload.get("items", []) if isinstance(payload, dict) else []):
         ok, item_errors, row = append_item(
-            external_item_to_ledger(item, area), path=path,
+            external_item_to_ledger(item, area, payload.get("work")), path=path,
             source="%s:%s" % (source, area))
         if ok:
             rows.append(row)
