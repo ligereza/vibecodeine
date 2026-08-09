@@ -343,6 +343,14 @@
   .review-aceptar{border-color:#9db67c;color:#d8e4c5}
   .review-rechazar{border-color:#9b6558;color:#e0b0a5}
   .copiloto-item{border-top:1px solid #26333c;padding:7px 0;margin-top:6px}
+  .copiloto-candidato{display:grid;grid-template-columns:92px minmax(0,1fr);gap:9px;align-items:start}
+  .copiloto-candidato-media{border:1px solid #26333c;background:#08080a;min-height:76px;overflow:hidden}
+  .copiloto-candidato-media img,.copiloto-candidato-media video{display:block;width:100%;height:76px;object-fit:contain;background:#08080a}
+  .copiloto-candidato-meta{min-width:0}
+  .copiloto-candidato-meta b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .copiloto-candidato-meta .copiloto-motivo{max-height:3.9em;overflow:hidden}
+  .copiloto-candidato-acciones{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+  .copiloto-candidato-acciones button{font-size:.58rem;padding:4px 6px}
   .copiloto-confianza{color:#b7936f;text-transform:uppercase;font-size:.58rem}
   .copiloto-motivo{color:#b9c5cb;margin:3px 0 5px}
   .inbox-actions{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
@@ -1141,7 +1149,8 @@ async function cargarCandidatosExternos(id){
       const rel=Object.entries(x.candidate_relations||{}).map(([key,values])=>`${esc(key)}: ${esc((values||[]).join(', '))}`).join(' · ');
       const context=Object.entries(x.context_fields||{}).map(([key,values])=>`${esc(key)}: ${esc((values||[]).join(', '))}`).join(' · ');
       const human=x.human_decision||'pending';
-      return `<div class="copiloto-item"><b>${esc(x.provider)}</b> · ${esc(x.verdict)} · ledger: ${esc(x.decision)} · humano: ${esc(human)}<div class="copiloto-motivo">${rel||'sin relación nominal'} · evidencia: ${esc((x.evidence_basis||[]).join(', '))}</div><div class="copiloto-motivo">contexto: ${context||'sin campos estructurados'}</div><button type="button" onclick="resolverCandidatoExterno('${esc(x.ledger_id)}','accept')">aceptar candidato</button><button type="button" onclick="resolverCandidatoExterno('${esc(x.ledger_id)}','revise')">pedir revision</button><button type="button" onclick="resolverCandidatoExterno('${esc(x.ledger_id)}','reject')">rechazar candidato</button></div>`;
+      const item=x.item||{};
+      return `<div class="copiloto-item copiloto-candidato"><div class="copiloto-candidato-media">${mediaInbox(item)}</div><div class="copiloto-candidato-meta"><b>${esc(item.fecha||'sin fecha')} · ${esc(item.tipo_contenido||'registro')} · ${esc(x.source_id||'sin id')}</b><div class="copiloto-motivo">${esc(x.provider)} · ${esc(x.verdict)} · ledger: ${esc(x.decision)} · humano: ${esc(human)}</div><div class="copiloto-motivo">${rel||'sin relación nominal'} · evidencia: ${esc((x.evidence_basis||[]).join(', '))}</div><div class="copiloto-motivo">contexto: ${context||'sin campos estructurados'}</div><div class="copiloto-candidato-acciones"><button type="button" onclick="resolverCandidatoExterno('${esc(x.ledger_id)}','accept')">aceptar candidato</button><button type="button" onclick="resolverCandidatoExterno('${esc(x.ledger_id)}','revise')">pedir revision</button><button type="button" onclick="resolverCandidatoExterno('${esc(x.ledger_id)}','reject')">rechazar candidato</button></div></div></div>`;
     }).join('');
   }catch(e){box.textContent='No se pudo cargar el candidato externo.';}
 }
