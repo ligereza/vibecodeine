@@ -1,7 +1,7 @@
 # LAST_HANDOFF - Faro
 
 Updated: 2026-08-09
-Status: session closed after a documentation and continuity pass.
+Status: published state verified; continue with the first durable vertical circuit.
 
 ## Read this first
 
@@ -43,12 +43,12 @@ instructions. Verify any statement that affects a destructive or remote action.
 ## Repository state
 
 - Windows workspace: `C:\IA\flujo`.
-- Windows branch: `mak`, aligned with `origin/mak` at `5f690fa`.
+- Windows branch: `mak`, aligned with `origin/mak` at `d12ef137`.
 - `origin/main`, `origin/mak`, `origin/rd`, and `origin/iskvw` all point to
-  `5f690fa`. No remote tags or open PRs remain.
+  `d12ef137`. No remote tags or open PRs remain.
 - The Windows worktree is clean after the explicit commit and push requested by
   the user. The promoted block is `8f1bd37`; `main` records the promotion in
-  merge commit `5f690fa`.
+  merge commit `5f690fa`; `d12ef137` records the published branch state.
 - The promoted work covers `cultura/mak_plataforma/` (ledger, identity,
   providers, decisions, Hub, batches, routing, service/watchdog),
   `iskvw/editor.html`, the README/SVG text layer, operational docs, tests, and
@@ -62,7 +62,7 @@ Fresh SSH check on 2026-08-09:
 - The extra Capataz checkout was inventoried into
   `/home/mak/quarantine/flujo-20260809-branch-reconcile/` before cleanup. Its
   local branches were removed after the unique work was preserved; the runtime
-  checkout is now clean on `mak` at `5f690fa`.
+  checkout is now clean on `mak` at `d12ef137`.
 - The MAK checkout has exactly the four local branches `main`, `mak`, `rd`, and
   `iskvw`, all aligned with their four remote counterparts.
 - The runtime Hub is healthy and is managed by the user systemd unit
