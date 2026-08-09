@@ -683,6 +683,9 @@ def external_item_to_ledger(item, area, work=None):
     }
     if area == "portfolio_record":
         metadata.update(_portfolio_record_candidate(item, work))
+    product = metadata["product"]
+    product_next_action = (str(product.get("next_action") or "").strip()
+                           if isinstance(product, dict) else "")
     return {
         "work": work,
         "domain": domain,
@@ -699,7 +702,8 @@ def external_item_to_ledger(item, area, work=None):
         if isinstance(item.get("product"), dict) else "",
         "next_action": ("triangulate" if area == "portfolio_record"
                         and item.get("action") == "triangulate"
-                        else item.get("reject_reason", "revisar evidencia local")),
+                        else item.get("reject_reason") or product_next_action
+                        or "revisar evidencia local"),
         "owner": "MAK",
         "metadata": metadata,
     }
