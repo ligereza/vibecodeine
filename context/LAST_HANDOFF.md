@@ -163,6 +163,11 @@ Fresh SSH check on 2026-08-09:
   root. The third bounded run reached the local judge and was rejected because
   Watsonx proposed unsupported `tomas.pcaa` evidence absent from the XIO file;
   no event relation was promoted.
+- The Hub review queue initially showed zero items because generic accepted
+  `portfolio_record` rows stopped at the ledger and lacked the portfolio
+  candidate projection. The ledger now bridges each record to a pending
+  candidate with its media identity, explicit unknowns, and next action
+  `triangulate`; the AWS visual pass was rerun once to exercise that surface.
 
 ## Verification already done
 
@@ -179,6 +184,8 @@ Fresh SSH check on 2026-08-09:
   ASCII-only (198 lines).
 - The focused tanda gate now passes `45` tests with
   `py -m pytest tests/test_mak_tandas.py -q`; modified MAK modules compile.
+- The combined tanda/ledger focus passes `70` tests; the Hub service was
+  restarted after the ledger bridge update.
 
 ## Current boundaries and pauses
 

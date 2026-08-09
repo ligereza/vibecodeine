@@ -83,6 +83,28 @@ def test_portfolio_candidate_from_review_stays_human_review(tmp_path):
     assert row["work"]["identity"]["entities"]["artist"] == ["ober.byg"]
 
 
+def test_external_portfolio_record_surfaces_as_pending_candidate():
+    row = ledger.external_item_to_ledger({
+        "claim": "registro audiovisual candidato",
+        "evidence": ["manifest.json"],
+        "files": ["/portfolio-media/stories/2026/record.jpg"],
+        "confidence": "high",
+        "action": "triangulate",
+        "format": "registro",
+        "product": {
+            "record_kind": "story_record",
+            "relations": "sin_relaciones_observables",
+            "unknowns": "evento_no_confirmado",
+        },
+    }, "portfolio_record", {"provider": "aws"})
+
+    candidate = row["metadata"]["portfolio_candidate"]
+    assert candidate["entity_id"] == "record.jpg"
+    assert candidate["triage"]["verdict"] == "accept"
+    assert row["decision"] == "revisar"
+    assert row["next_action"] == "triangulate"
+
+
 def test_portfolio_candidate_from_review_rejects_nonaccepted_verdict(tmp_path):
     path = tmp_path / "common_ledger.jsonl"
     ok, errors, row = ledger.portfolio_candidate_from_review({
