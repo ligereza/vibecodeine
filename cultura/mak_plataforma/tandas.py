@@ -878,6 +878,26 @@ def _conservative_portfolio_repair(payload, area):
     return repaired
 
 
+def _conservative_opportunity_repair(payload, area):
+    """Repair only a missing human next action, never opportunity facts."""
+    if area != "opportunity_radar" or not isinstance(payload, dict):
+        return None
+    repaired = _safe_tree(payload)
+    for item in repaired.get("items", []):
+        if not isinstance(item, dict) or not isinstance(item.get("product"), dict):
+            return None
+        product = item["product"]
+        required_facts = ("opportunity", "eligibility", "deadline", "source",
+                          "risk")
+        if any(not str(product.get(field) or "").strip()
+               for field in required_facts):
+            return None
+        product["next_action"] = (
+            str(product.get("next_action") or "").strip()
+            or "verificar fuente oficial, elegibilidad y fecha de cierre exacta")
+    return repaired
+
+
 def run_external_batch(area, batch_id, provider, paths=None, model=None,
                        out_dir=None, common_path=COMMON_LEDGER,
                        batch_path=LEDGER, use_ollama=True, max_tokens=2500,
@@ -985,6 +1005,8 @@ def run_external_batch(area, batch_id, provider, paths=None, model=None,
             payload = repaired
         else:
             conservative = _conservative_portfolio_repair(payload, area)
+            if conservative is None:
+                conservative = _conservative_opportunity_repair(payload, area)
             if conservative is not None:
                 conservative_ok, _conservative_errors = validate_product_contract(
                     conservative, area)
