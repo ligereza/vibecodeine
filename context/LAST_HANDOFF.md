@@ -43,12 +43,12 @@ instructions. Verify any statement that affects a destructive or remote action.
 ## Repository state
 
 - Windows workspace: `C:\IA\flujo`.
-- Windows branch: `mak`, aligned with `origin/mak` at `4997858d`.
+- Windows branch: `mak`, aligned with `origin/mak` at `5432bb81`.
 - `origin/main`, `origin/mak`, `origin/rd`, and `origin/iskvw` all point to
-  `4997858d`. No remote tags or open PRs remain.
+  `5432bb81`. No remote tags or open PRs remain.
 - The Windows worktree is clean after the explicit commit and push requested by
-  the user. `4997858d` records the portfolio review surface and is the current
-  tip of all four canonical branches.
+  the user. `5432bb81` adds visual evidence to the external review surface and
+  is the current tip of all four canonical branches.
 - The promoted work covers `cultura/mak_plataforma/` (ledger, identity,
   providers, decisions, Hub, batches, routing, service/watchdog),
   `iskvw/editor.html`, the README/SVG text layer, operational docs, tests, and
@@ -62,7 +62,7 @@ Fresh SSH check on 2026-08-09:
 - The extra Capataz checkout was inventoried into
   `/home/mak/quarantine/flujo-20260809-branch-reconcile/` before cleanup. Its
   local branches were removed after the unique work was preserved; the runtime
-  checkout is now clean on `mak` at `4997858d`.
+  checkout is now clean on `mak` at `5432bb81`.
 - The MAK checkout has exactly the four local branches `main`, `mak`, `rd`, and
   `iskvw`, all aligned with their four remote counterparts.
 - The runtime Hub is healthy and is managed by the user systemd unit
@@ -168,7 +168,10 @@ Fresh SSH check on 2026-08-09:
   candidate with its media identity, explicit unknowns, and next action
   `triangulate`. The Ollama-backed AWS retry degraded to `revise` when its
   verdict was invalid; a bounded deterministic-fallback retry accepted five
-  records and the Hub now exposes exactly five pending review items.
+  records and the Hub now exposes exactly five pending review items. The
+  external-candidate panel now renders each candidate's actual image or video
+  beside its evidence and accept/revise/reject actions; it no longer asks for a
+  prose-only decision.
 
 ## Verification already done
 
@@ -187,6 +190,9 @@ Fresh SSH check on 2026-08-09:
   `py -m pytest tests/test_mak_tandas.py -q`; modified MAK modules compile.
 - The combined tanda/ledger focus passes `70` tests; the Hub service was
   restarted after the ledger bridge update.
+- The visual review contract plus tanda/ledger focus passes `72` tests after
+  the candidate-card update; MAK serves the updated editor and the Hub remains
+  active.
 
 ## Current boundaries and pauses
 
@@ -210,7 +216,8 @@ Fresh SSH check on 2026-08-09:
 ## Next action
 
 Do not start with Git cleanup, branch deletion, a full test suite, or another
-mass audit. The first vertical circuit is complete. Continue with its
+mass audit. The first vertical circuit is complete. The immediate user-facing
+checkpoint is the five-card visual review in `/portafolio/`; continue with its
 evidence, not another blind batch:
 
 1. Inspect the five AWS candidates and their exact manifest rows; keep them as
