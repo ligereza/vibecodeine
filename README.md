@@ -1,392 +1,267 @@
 <p align="center">
   <a href="https://github.com/ligereza/vibecodeine/">
-    <img src="arte-ascii-readme.svg" alt="CODE.IN" width="936">
+    <img src="arte-ascii-readme.svg" alt="VIBE-CODEINE animated ASCII vessel" width="936">
   </a>
 </p>
 
-<!--
-
-The visible README is the artwork above (`arte-ascii-readme.svg`, the animated
-codeine cup). Its artwork shell is preserved, while its text layer is refreshed
-from this README with `py tools/update_readme_svg.py`. This keeps the piece
-recognizable without letting the public cover lie about the current system.
-
-# VIBECODEINE — operational workspace. Main program: FLUJO
-
-`vibecodeine` is the repository, `flujo` is the program, `Dimensiones del Orden`
-is the system. Local-first workspace for requests, jobs, briefs, design work,
-the RD (NGO) line, the iskvw line (shows, art-research, portfolio), the
-on-device Xiaomi controller (`xio`), the web hub, and agent-delivered patches.
-
-The repo assistant is named `Faro`. The mission is to spend the strong model
-now to build a base that free/cheap agents can maintain later, off-PC and
-without a Claude account — success is measured by how little the repo needs the
-strong model once it is gone.
-
-## Where the real documentation lives
-
-This file deliberately does NOT duplicate it. Four documents used to compete for
-"the state" and every agent rebuilt it from scratch; that was fixed on
-2026-07-26, so read these instead:
-
-```txt
-MAPA.md                  what the repo is, every command, what to configure
-CLAUDE.md                how work is done here: the one rule and the conduct
-context/LAST_HANDOFF.md  the single checkpoint: state, decisions, what is blocked
-```
-
-If there is a conflict, this order wins:
-
-```txt
-1. Direct user instruction
-2. CLAUDE.md
-3. context/LAST_HANDOFF.md
-4. Specific docs
-5. README.md
-```
-
-## The four branches, and what each one is for
-
-There are FOUR and no more. If you find a fifth, it is work in flight or
-something that should have been deleted.
-
-```txt
-main    EVERYTHING, without exception. The complete, working, verifiable
-        version. The lines come DOWN from main, never the other way around.
-        Protected with enforce_admins: NOBODY pushes directly, not the admin
-        and not an agent holding the credential. Every change is a PR with
-        green CI.
-
-rd      The NGO line: Reduciendo Dano. Data, grants, supplements, events.
-        What the RD people receive is a generated FILE, never this repo --
-        a branch does not hide history, and anyone cloning it gets every
-        commit including everything personal.
-
-iskvw   The artistic line: curation, archive, portfolio. Its current public
-        host is transitional; the repo must not depend on that domain forever.
-
-mak     NOT a line: it is MAK's INBOX. Nothing lives here. The box opens a PR
-        against it and the only exit is a PR into main. If it ever stops
-        draining, it has become a line and that is a bug, not a state.
-```
-
-To bring a line up to date: `git merge origin/main`, never a rewrite. A line is
-promoted to main by a curated PR with green CI. Work that fits no line gets
-escalated before inventing a loose branch.
-
-Why it matters, measured: a `mejoras` line was retired because it kept turning
-main into a SUBSET, and a subset cannot merge back.
-
-## Language
-
-Everything in the repo is written in English: code, docs, commits, PRs. The one
-exception is anything a human reads as a product — RD pieces and data, iskvw
-curation — which goes in correct Spanish **with diacritics**. A title reading
-"reduciendo ano" instead of "reduciendo daño" is not a typo, it reaches the
-client.
-
-## Environment
-
-```txt
-Primary user environment: Windows + Git Bash
-User-facing Python command: py
-Do not tell the user to run python
-Keep context/LAST_HANDOFF.md ASCII-only
-Do not store tokens, credentials, cookies, client secrets, or sensitive real data
-Remote repo: https://github.com/ligereza/vibecodeine/
-```
-
-## Daily commands
-
-```bash
-py -m flujo app
-py -m flujo app --desktop
-py -m flujo verify
-py -m flujo health
-py -m flujo version
-```
-
-## Core workflow
-
-```txt
-request / email / issue
-  -> intake
-  -> job
-  -> brief
-  -> design / automation / review
-  -> deliverable
-  -> handoff
-```
-
-Useful commands:
-
-```bash
-py -m flujo job new "nombre pedido" --email inbox/correo.txt
-py -m flujo job prepare jobs/<job>
-py -m flujo intake json inbox/pedido.json
-py -m flujo brief paquete-cotizacion jobs/<job>
-```
-
-## Operational areas
+# VIBECODEINE / FLUJO
+## DIMENSIONS OF ORDER
 
-### RD / Suplementos
+This repository is ligereza/vibecodeine.
 
-Institutional RD work: supplements, quotes, SVG labels/back covers, stand plans,
-rider/costs. Map of the area, in Spanish because the people who use it read
-Spanish: **[`docs/rd/MAPA_RD.md`](docs/rd/MAPA_RD.md)**.
-
-The people who do this work do not open a console. What they get are files that
-open by double-click, with no install, no server and no internet:
-
-```bash
-py tools/gen_rd_standalone.py    # bakes the database into the bundle
-cd web && npm run build:rd       # -> dist_compartir/herramientas_rd.html
-cd web && npm run build:plano    # -> dist_compartir/plano_rd.html
-```
-
-- `plano_rd.html` — the events manager builds the stand plan, exports the SVG
-  and the rider PDF, adds her own symbols (an SVG, or an image the file traces
-  by itself), and saves her layout as a preset that travels and comes back.
-- `herramientas_rd.html` — database, quote, events and order intake.
-- `docs/rd/propuesta_directiva.html` — what goes to the board.
+**VIBECODEINE** is the artistic and technical body.
+**FLUJO** is the local-first workspace.
+**DIMENSIONS OF ORDER** is the method for organizing work, evidence, tools,
+memory, and decisions.
 
-The database inside the bundle comes from the same function the app serves, with
-its privacy allowlist: field by field, contacts excluded on purpose. It is not a
-copy, because a second copy of that allowlist is how a contact field leaks.
+The system serves one artist and graphic designer. It connects artwork,
+portfolio, visual research, RD work, events, venues, VJ records, design
+operations, and software. It is not a generic SaaS product and must remain
+useful as the artist's practice changes.
 
-```bash
-py -m flujo suplementos list
-py -m flujo suplementos validate svg/suplementos_rd/09_contraportadas_dark/*.svg
-py -m flujo rd-db productora <nombre>
-py -m flujo plano projects/plano/ejemplos/evento_ejemplo.json --validate
-```
+The animated vessel above is part of the work. Its double-cup geometry, ASCII
+composition, color planes, and motion are preserved as an artwork. The text
+layer may be refreshed from this README with:
 
-### Studio / Eventos
+    py tools/update_readme_svg.py
 
-Personal/studio work: flyers, Instagram inputs, VJ/club workflow, Resolume/Chataigne automation.
+## START HERE
 
-```bash
-py -m flujo eventos flyer-auto "https://www.instagram.com/p/XXXX/"
-py -m flujo resolume automatizar jobs/<job_id>
-```
-
-Rule (corrected 2026-07-26):
+Before changing anything, read in this order:
 
-```txt
-Real download = parth-dl (pip install parth-dl), primary path in flyer_auto.py
-since 2026-07-22. curl_cffi is the secondary path on Linux: it imitates Chrome's
-TLS fingerprint, which is what gets past the login wall there.
-imginn.com is DEAD (403 Cloudflare). instaloader does not work (Instagram
-demands login). Do not use yt-dlp.
-```
-
-### Cultura (art-research)
-
-Descriptive/cultural layer: tapiz, tilde, psicosis, precursor. Third workspace of the web hub.
-Hard limits: descriptive/cultural only, nothing generative-synthetic, psicosis never profiles real people.
-The `README.md` art (`arte-ascii-readme.svg`, the animated codeine cup) is a finished artist piece: preserve its artwork shell and refresh only its generated text layer with `py tools/update_readme_svg.py`.
-
-```bash
-py projects/tapiz/vibecode_spaces.py archivo.py -m void --svg pieza.svg
-```
-
-### MAK (research + codex station)
+    AGENTS.md
+    context/LAST_HANDOFF.md
+    CAPACIDADES.md
+    MAPA.md
+    the relevant branch documents
+    the files directly related to the task
 
-MAK is a Linux box (LAN) running research (:8890) and codex (:8891) departments plus the hub (:8900).
-Source code lives loose in ~/research, ~/codex, ~/plataforma (NOT a repo clone). The repo mirrors are
-cultura/mak_research, mak_codex, mak_plataforma. Deploy = copy files + restart via systemd unit or
-watchdog. Provider chains fall back cloud -> WIN (Windows notebook ollama) -> local ollama. Provider
-health (salud_proveedores) demotes failing providers for 6h.
-
-### xio (on-device Xiaomi controller)
+Then inspect:
 
-`xio/` is a Flask controller + plugin engine that runs ON the phone (Termux + Shizuku/rish, non-root, HyperOS)
-so it survives PC-off and screen-off. It turns the phone into the team's router + a show node: connectivity
-supervisor, non-root charge limiter (USB port-role), two-layer self-heal (Shizuku + server), autonomous
-reboot/hotspot recovery, and `showcontrol` (OSC + Art-Net + sACN sender for VJ/lighting). Send-only, pure stdlib.
+    git status --short --branch
+    git branch -a
+    git log -5 --oneline
 
-The read-only surface is not the whole XIO server: `foh_monitor` and the MAK
-bridge observe state, while `showcontrol` is an active, guarded sender/receiver
-when that plugin is installed and enabled. See `xio/CAPACIDADES.md`; repository
-presence is not proof of Xiaomi deployment.
+Do not assume that an old report is true. Do not create a new tool before
+searching for an existing one. Do not treat a generated document as evidence
+by itself. The current state, measured MAK facts, unfinished work, and next
+action live in context/LAST_HANDOFF.md.
 
-```bash
-cd xio/new && py server.py          # off-device dev run -> http://0.0.0.0:5000
-# on-device deploy: push to /sdcard/xio_termux, then run_server.sh (see xio/new/README.md)
-```
+## THE FOUR CANONICAL BRANCHES
 
-Security note: the server binds `0.0.0.0`, so every loaded plugin (including
-`showcontrol` send routes) may be reachable by hotspot clients. Use the
-show-control token and explicit source limits before exposing active routes to
-untrusted devices; a trusted crew LAN is not an authorization mechanism.
+Only these four branches belong to the system:
 
-### Web hub
+    main
+    The complete and verified system. Only stable, reviewed and transferable
+    work belongs here.
 
-Source:
+    mak
+    The operational MAK inbox and laboratory. It receives work, research and
+    experiments before promotion. MAK is also the Linux box on the local network.
 
-```txt
-web/src/
-```
+    rd
+    The Reduciendo Dano institutional line. It contains RD data, supplements,
+    events, proposals, research and deliverables for the organization.
 
-Generated context HTML:
+    iskvw
+    The artistic archive and portfolio line. It contains curation, artwork, public
+    archive and portfolio surfaces. Its current domain is temporary and must not
+    become a permanent dependency.
 
-```txt
-context/flujo_hub.html
-context/plano_demo.html
-context/svg_visualizer.html
-```
+No fifth branch is part of the system. A branch found on the MAK checkout may
+be an old agent worktree; preserve unique work before reconciling or deleting
+it. Never reset a remote checkout blindly.
 
-Build:
+## REPOSITORY MAP
 
-```bash
-cd web
-npm run typecheck
-npm run build:context
-cd ..
-```
+    src/flujo/
+    Core Python package, CLI and operational workflow.
 
-## Airdrop protocol
+    web/src/
+    React/Vite hub, department navigation, editors and visual surfaces.
 
-Agents without push access must deliver a ZIP containing `_airdrop/` at the top level.
+    cultura/
+    Art research, visual experiments, SVG work and cultural tools.
 
-Correct:
-
-```txt
-_airdrop/HANDOFF_2026-06-30_description.md
-_airdrop/context/LAST_HANDOFF.md
-_airdrop/src/flujo/module.py
-_airdrop/tests/test_module.py
-_airdrop/docs/something.md
-```
-
-Incorrect:
+    cultura/mak_plataforma/
+    Ledger, batches, work identity, discernment, routing and promotion rules.
 
-```txt
-airdrop/
-_airdrop/_airdrop/
-v0.48/_airdrop/
-files outside _airdrop/
-Markdown links instead of real files
-```
-
-Every airdrop must include:
-
-```txt
-HANDOFF_*.md or HOTFIX_*.md
-context/LAST_HANDOFF.md updated
-real files in final repo paths
-verification report
-```
-
-Validate and apply:
-
-```bash
-py scripts/validate_airdrop.py
-py scripts/run_airdrop_checks.py "short message"
-```
-
-Resume if apply already happened but later checks failed:
-
-```bash
-py scripts/run_airdrop_checks.py --resume "short message"
-```
-
-If touching `src/flujo/airdrop.py`, explicit user approval is required:
-
-```bash
-py scripts/validate_airdrop.py --allow-airdrop-engine
-py scripts/run_airdrop_checks.py "short message" --allow-airdrop-engine
-```
-
-## Verification
-
-Python changes:
-
-```bash
-py -m compileall src/flujo
-py -m pytest tests/ -q
-py -m flujo verify
-```
-
-Web changes:
-
-```bash
-cd web
-npm run typecheck
-npm run build:context
-cd ..
-```
-
-Airdrop changes:
-
-```bash
-py scripts/validate_airdrop.py
-py scripts/run_airdrop_checks.py "short message"
-```
-
-Do not report success unless the relevant verification was actually run.
-
-## Cleanup
-
-Safe local cleanup:
-
-```bash
-rm -rf _airdrop
-find . -type d -name "__pycache__" -prune -exec rm -rf {} +
-rm -rf .pytest_cache
-rm -rf _logs
-git status --short
-```
-
-Do not commit or include in airdrops:
-
-```txt
-__pycache__/
-.pytest_cache/
-node_modules/
-dist/
-build/
-_airdrop/
-_airdrop_backups/
-_logs/
-*.zip
-*.db
-credentials
-heavy real assets
-```
-
-Historical docs should be archived, not deleted blindly.
-
-## Repository map
-
-```txt
-src/flujo/        core Python package and CLI
-web/              React/Vite local web hub
-context/          current handoff and generated local HTML
-tests/            pytest suite
-scripts/          validation, airdrop, maintenance scripts
-docs/             operational manuals
-tools/            helper tools and external workflow specs
-projects/         operational project folders and delegated work
-jobs/             local jobs
-schemas/          intake schemas
-.github/          CI, issue templates, repo automation
-knowledge/        versioned operational memory
-```
-
-## Closing a task
-
-THERE IS NO DELIVERABLE (2026-07-26, user's order). The mandatory closing ritual
-that used to live here — a formal verification report with a fixed format —
-pushed agents into fabricating a product, a report or a plan nobody asked for,
-and that derailed several sessions in a row. It was removed.
-
-What replaces it: if you touched code, run what that code covers and paste the
-real output, not an "OK". If you did not touch code, there is nothing to report.
-Verification exists to find out whether it works, not to decorate a closing. The
-verdict on a PR is its CI matrix, never the local pytest.
-
-## License
-
-MIT
--->
+    tools/
+    Existing maintenance, SVG, README and workflow utilities.
+
+    projects/
+    Operational projects, experiments, bridges and delegated work.
+
+    xio/
+    On-device Xiaomi controller for time, audio, event and show data.
+
+    tests/
+    Focused verification for the existing system. Read tests before inventing
+    new behavior.
+
+## MAK LINUX BOX
+
+The Linux machine is the preferred place for tedious work. Use Windows as a
+control surface and transport layer, not as the main research engine.
+
+MAK services include:
+
+    research
+    codex
+    plataforma
+    hub
+
+The Hub normally runs on :8900; research and codex are separate departments.
+The box may use Watsonx, AWS, Groq, Cerebras, or Ollama when configured.
+External models produce hypotheses, drafts, visual observations, or
+classifications. They do not create truth automatically. Every external result
+must remain traceable and must pass the local decision gate.
+
+Never copy credentials into the repository, README, logs, or Downloads. The
+provider environment belongs on MAK or the appropriate local runtime.
+
+## WORK IDENTITY
+
+Every task or product should preserve the existing mak-work-v1 envelope:
+
+    work_id
+    parent_task
+    lane
+    purpose
+    format
+    created_at
+    provider
+    sources
+    evidence
+    status
+    next_action
+    owner
+    identity
+
+The basic chain is:
+
+    request
+      -> identity
+      -> correct format
+      -> provider
+      -> evidence
+      -> criticism
+      -> decision
+      -> ledger
+      -> human review
+      -> next action
+
+A report without identity is legacy_unknown. A claim without evidence is not
+promoted. A duplicate is not new work. A rejected result remains memory, not
+truth.
+
+## THREE INITIAL LANES
+
+### OBRA
+
+VIBE-CODEINE, SVG, animation, portfolio, archive, curation, and visual
+relationships.
+
+### TRABAJO
+
+RD, grants, Fondart, clients, opportunities, events, music, design, nursing,
+and family context.
+
+### SISTEMA
+
+MAK, micelio, XIO, bridges, tools, memory, providers, continuity, and repair.
+
+Each lane may have different formats. Do not force a curation into a research
+report. Do not force an opportunity into an essay. Do not turn an audiovisual
+record into an artwork without human or evidential support.
+
+## DEPARTMENTS
+
+    MAK detects, organizes and proposes.
+    Research verifies external facts.
+    XIO contributes time, audio, event and venue traces when real data exists.
+    Faro/Codex integrates durable system changes.
+    iskvw curates and publishes artistic surfaces.
+    RD prepares institutional outputs.
+    The human artist decides final meaning, selection and release.
+
+Artist, username, client, collaborator, event, festival, venue, producer,
+location, date, and source are separate identities. A username is not
+automatically an artist. A description is not factual proof by itself.
+Stories are records by default; posts and reels may be works or records.
+
+## CURRENT TRACEABILITY BLOCK
+
+The stable system is built around the existing ledger, batches, discernment,
+identity graph, GTM projection, portfolio editor, and Hub. Do not create a
+parallel framework or database.
+
+The goal is not autonomous volume. The goal is an explainable result:
+
+    what was received
+    why it was processed
+    what evidence supports it
+    what remains uncertain
+    what decision was made
+    what must happen next
+
+Current provider roles are bounded and replaceable:
+
+    AWS      visual evidence and image observation
+    Watsonx  research, hypotheses and structured review
+    Ollama   local judging and cheap continuity
+    Fallback deterministic rules when a model fails or times out
+
+No provider can promote public material alone. Public, aesthetic, curatorial,
+and deletion decisions require a human gate.
+
+## PORTFOLIO AND ARCHIVE RULES
+
+The portfolio editor lives inside the MAK Hub, not on an unrelated temporary
+port. It separates search, association, boards, triangulation, organization,
+and promotion. Its organism and GTM surfaces are projections over the archive,
+not new sources of truth.
+
+The public iskvw archive is separate from research by default. Research essays,
+icons, and visual proposals enter the public surface only through an explicit
+opt-in path. A story record keeps format=registro; it is not silently
+converted into an artwork.
+
+The future portfolio may relate semantic vectors, event dates, venues, artists,
+clients, media, and process, but every relation must retain its evidence kind
+and uncertainty. Human selections and rejections become traceable learning
+signals; they do not erase the source file.
+
+## ARTWORK RULE
+
+arte-ascii-readme.svg is an artwork, not a disposable template. Preserve its
+double-cup geometry, ASCII composition, color planes, layer relationships, and
+intentional accidents. Refresh only its generated text layer unless the artist
+explicitly reopens the visual design.
+
+## LANGUAGE AND DATA
+
+Code and technical documentation use English where practical. Human-facing RD
+and iskvw products use correct Spanish. Machine keys, ids, slugs, paths, and
+provider fields stay ASCII-safe. Do not remove accents from human-readable
+values to satisfy a machine-key rule.
+
+## DAILY COMMANDS
+
+    py -m flujo app
+    py -m flujo app --desktop
+    py -m flujo verify
+    py -m flujo health
+    py -m flujo version
+
+Python changes should be checked with the focused tests first. Do not waste a
+session polling a long suite before the meaningful circuit is complete. At the
+end of a session, update context/LAST_HANDOFF.md with measured facts, exact
+commands, failures, user decisions, and one next action.
+
+## THE CURRENT AUTONOMY CRITERION
+
+The repository is not autonomous because it produces more. It is autonomous
+when it can locate itself, choose the right format, preserve evidence,
+criticize its own output, keep uncertainty visible, and leave a concrete next
+action for the artist.

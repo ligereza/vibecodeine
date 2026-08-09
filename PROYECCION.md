@@ -1,5 +1,8 @@
 # PROYECCIÓN — el consejo final de Fable (2026-07-28)
 
+> ARCHIVED VISION. This is a conceptual reference, not an implementation plan.
+> The operational source of truth is `context/LAST_HANDOFF.md`.
+
 Escrito a pedido del usuario en la última sesión con modelo caro. Esto no es un
 plan de trabajo (eso vive en `context/LAST_HANDOFF.md` y en los specs): es la
 visión de sistemas, la proyección ambiciosa y las ideas de largo alcance, en un

@@ -65,6 +65,7 @@ PRODUCT_CONTRACTS = {
     "mak_quality": ("verdict", "defect_class", "queue_action"),
     "rd_evidence": ("primary_source", "triangulation", "uncertainty"),
     "iskvw_curation": ("artwork_reading", "selection", "public_status"),
+    "portfolio_record": ("record_kind", "relations", "unknowns"),
     "tool_archaeology": ("existing_path", "reuse_test", "decision"),
     "svg_pipeline": ("representation", "measurement", "next_prototype"),
     "adobe_rescue": ("bridge", "installation_evidence", "rescue_action"),
@@ -77,6 +78,7 @@ def _identity_for_batch(area, batch_id, provider):
     kinds = {
         "rd_evidence": "report",
         "iskvw_curation": "work",
+        "portfolio_record": "record",
         "mak_quality": "report",
         "opportunity_radar": "opportunity",
         "svg_pipeline": "work",
@@ -173,6 +175,12 @@ AREAS = {
                            "context/LAST_HANDOFF.md"],
         "actions": ["curate", "expose", "archive", "reject"],
     },
+    "portfolio_record": {
+        "purpose": "triage audiovisual records without turning stories into works",
+        "default_paths": ["~/plataforma/director_runs/faro-story-review-queue-20260809.json"],
+        "evidence_paths": ["context/LAST_HANDOFF.md"],
+        "actions": ["triangulate", "archive", "review", "reject"],
+    },
     "tool_archaeology": {
         "purpose": "find duplicated or unused tools before creating new code",
         "default_paths": ["tools", "src/flujo", "cultura"],
@@ -230,6 +238,9 @@ PROVIDER_LANES = {
 
 def provider_plan(available, allow_premium=True):
     """Return a stable provider order from transient to permanent lanes."""
+    if external_providers is not None and hasattr(external_providers, "provider_plan"):
+        return external_providers.provider_plan(available,
+                                                allow_premium=allow_premium)
     have = {str(p).lower() for p in (available or [])}
     order = []
     lanes = ("premium_burst", "free_cloud", "local_floor")
@@ -254,21 +265,35 @@ def build_brief(area, batch_id, paths=None, providers=None, allow_premium=True,
     selected_paths = list(paths or cfg["default_paths"])
     plan = provider_plan(providers or [], allow_premium=allow_premium)
     lane = {"rd_evidence": "trabajo", "opportunity_radar": "trabajo",
-            "iskvw_curation": "obra", "svg_pipeline": "obra"}.get(area, "sistema")
-    work = {
-        "schema": WORK_SCHEMA_VERSION,
-        "work_id": "%s:%s" % (area, batch_id),
-        "parent_task": "batch:%s" % batch_id,
-        "lane": lane,
-        "purpose": cfg["purpose"],
-        "format": "external_batch",
-        "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "provider": plan[0] if plan else "unknown",
-        "sources": selected_paths,
-        "status": "in_progress",
-        "identity": _identity_for_batch(area, batch_id,
-                                         plan[0] if plan else "unknown"),
-    }
+            "iskvw_curation": "obra", "portfolio_record": "obra",
+            "svg_pipeline": "obra"}.get(area, "sistema")
+    created_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    identity = _identity_for_batch(area, batch_id,
+                                   plan[0] if plan else "unknown")
+    if common_ledger is not None and hasattr(common_ledger, "build_work_envelope"):
+        work = common_ledger.build_work_envelope(
+            "%s:%s" % (area, batch_id), "batch:%s" % batch_id, lane,
+            cfg["purpose"], "external_batch", plan[0] if plan else "unknown",
+            sources=selected_paths, status="in_progress", identity=identity,
+            owner="MAK", next_action="await_external_result",
+            evidence_required=["source_manifest", "provider_output", "local_review"],
+            allowed_decisions=(common_ledger.DECISIONS
+                               if common_ledger is not None else ()),
+            fallback_chain=plan[1:], created_at=created_at)
+    else:
+        work = {
+            "schema": WORK_SCHEMA_VERSION,
+            "work_id": "%s:%s" % (area, batch_id),
+            "parent_task": "batch:%s" % batch_id,
+            "lane": lane, "purpose": cfg["purpose"],
+            "format": "external_batch", "created_at": created_at,
+            "provider": plan[0] if plan else "unknown", "sources": selected_paths,
+            "status": "in_progress", "owner": "MAK",
+            "next_action": "await_external_result",
+            "evidence_required": ["source_manifest", "provider_output", "local_review"],
+            "allowed_decisions": ["hacer", "revisar", "refutar", "archivar", "descartar"],
+            "fallback_chain": plan[1:], "identity": identity,
+        }
     brief = {
         "schema": SCHEMA_VERSION,
         "area": area,
@@ -335,10 +360,18 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction="",
         "si falta cualquiera, no inventes el dato: usa revise/reject.\n"
         if area == "opportunity_radar" else ""
     )
+    record_hint = (
+        "- En portfolio_record una historia es un registro audiovisual: usa "
+        "record_kind=story_record, separa relations de unknowns y no la llames "
+        "obra salvo que exista una decision humana independiente.\n"
+        if area == "portfolio_record" else ""
+    )
     profile_block = ""
     item_profile_fields = ""
     claim_example = ("lectura curatorial de la obra"
-                     if area == "iskvw_curation" else "hallazgo atomico")
+                     if area == "iskvw_curation" else
+                     "registro audiovisual candidato"
+                     if area == "portfolio_record" else "hallazgo atomico")
     if profile:
         profile_block = (
             "\nPOLITICA DE PROMOCION:\n"
@@ -390,6 +423,7 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction="",
         "%s"
         "%s"
         "%s"
+        "%s"
         "- No pidas crear una herramienta si ya existe una ruta probable.\n"
         "- Cada item debe poder sobrevivir cuando Watsonx/AWS ya no existan.\n"
         "- Cada entrada files debe existir en el material entregado; nunca inventes nombres.\n"
@@ -406,6 +440,7 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction="",
            curation_guard,
            quality_hint,
            opportunity_hint,
+           record_hint,
            json.dumps({field: "" for field in PRODUCT_CONTRACTS[area]},
                       ensure_ascii=False))
     )
@@ -792,6 +827,16 @@ def run_external_batch(area, batch_id, provider, paths=None, model=None,
         "\nPRESUPUESTO DURO DE ESTA TANDA: devuelve como maximo %d items. "
         "Si hay mas hallazgos, conserva solo los mas verificables y deja "
         "constancia en reject_reason de lo omitido.\n" % budget)
+    if image_paths:
+        allowed_images = [os.path.abspath(str(path)) for path in image_paths]
+        prompt += (
+            "\nEVIDENCIA VISUAL CERRADA:\n"
+            "Solo puedes usar estas imagenes como files; copia la ruta exacta "
+            "y no uses rutas del manifiesto ni nombres inventados:\n%s\n"
+            "Para esta ronda devuelve como maximo un item por imagen y "
+            "separa obra, registro, pantalla/flyer y desconocido.\n"
+            % "\n".join("- " + path for path in allowed_images))
+        image_paths = allowed_images
     try:
         kwargs = {}
         if provider == "ollama":
@@ -886,7 +931,9 @@ def run_external_batch(area, batch_id, provider, paths=None, model=None,
                     "repair_raw_path": repair_raw_path, "errors": errors}
     result = ingest_result(
         payload, area, common_path=common_path, source=provider,
-        use_ollama=use_ollama, strict_product=True, extra_paths=paths)
+        use_ollama=use_ollama, strict_product=True,
+        extra_paths=(list(paths or []) + list(image_paths or [])
+                     if paths or image_paths else None))
     append_ledger({
         "area": area,
         "batch_id": batch_id,

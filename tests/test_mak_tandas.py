@@ -18,6 +18,14 @@ def test_provider_plan_survives_without_temporary_credits():
     assert plan == ["cerebras", "groq", "ollama"]
 
 
+def test_typed_provider_route_prefers_vision_capability_and_keeps_fallback():
+    route = providers.route_task("visual", available=["ollama", "aws"])
+    assert route["schema"] == "faro-provider-route-v1"
+    assert route["provider"] == "aws"
+    assert route["fallback_chain"] == []
+    assert providers.route_task("judge", available=["watsonx", "ollama"])["provider"] == "ollama"
+
+
 def test_survival_provider_call_routes_to_ollama(monkeypatch):
     seen = {}
 
@@ -53,6 +61,8 @@ def test_build_brief_declares_identity_envelope():
     assert identity["kind"] == "report"
     assert identity["source_id"] == "rd_evidence:identity01"
     assert identity["entities"]["venue"] == []
+    assert brief["work"]["evidence_required"] == [
+        "source_manifest", "provider_output", "local_review"]
 
 
 def test_build_brief_can_include_bounded_evidence():
@@ -68,6 +78,14 @@ def test_profile_prompt_requires_exact_evidence_kind():
     brief = tandas.build_brief("iskvw_curation", "iskvw01",
                                providers=["watsonx"])
     assert "evidence_kind DEBE ser exactamente: artwork_context" in brief["prompt"]
+
+
+def test_story_record_profile_does_not_use_artwork_contract():
+    brief = tandas.build_brief("portfolio_record", "story01",
+                               providers=["aws"])
+    assert brief["product_contract"] == ["record_kind", "relations", "unknowns"]
+    assert "record_kind=story_record" in brief["prompt"]
+    assert brief["promotion_policy"]["allowed_formats"] == ["registro"]
 
 
 def test_area_prompts_name_the_failure_conditions_for_quality_and_opportunities():
@@ -357,6 +375,42 @@ def test_run_external_batch_persists_raw_and_ingests(monkeypatch, tmp_path):
     batch_row = json.loads(batch.read_text(encoding="utf-8"))
     assert batch_row["provider"] == "watsonx"
     assert batch_row["status"] == "accepted"
+
+
+def test_run_external_batch_closes_visual_files_to_explicit_images(monkeypatch, tmp_path):
+    common = tmp_path / "common_ledger.jsonl"
+    batch = tmp_path / "external_batches.jsonl"
+    out_dir = tmp_path / "tandas"
+    image = tmp_path / "frame.jpg"
+    image.write_bytes(b"jpeg")
+    seen = {}
+
+    def fake_call(provider, prompt, model=None, max_tokens=2500, temperature=0.1,
+                  image_paths=None):
+        seen["prompt"] = prompt
+        seen["images"] = image_paths
+        return json.dumps({"items": [{
+            "claim": "lectura visual acotada",
+            "evidence": [str(image)],
+            "files": [str(image)],
+            "confidence": "medium",
+            "action": "curate",
+            "reject_reason": "",
+            "format": "curatoria",
+            "evidence_kind": "artwork_context",
+            "product": {"artwork_reading": "forma y color",
+                         "selection": "candidato local",
+                         "public_status": "revision_local"},
+        }]})
+
+    monkeypatch.setattr(tandas.external_providers, "call", fake_call)
+    result = tandas.run_external_batch(
+        "iskvw_curation", "visual01", "aws", paths=[], image_paths=[str(image)],
+        out_dir=str(out_dir), common_path=str(common), batch_path=str(batch),
+        use_ollama=False)
+    assert result["status"] == "accepted"
+    assert str(image) in seen["prompt"]
+    assert seen["images"] == [str(image)]
 
 
 def test_run_external_batch_repairs_product_once(monkeypatch, tmp_path):

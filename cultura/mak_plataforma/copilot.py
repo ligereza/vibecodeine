@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import json
+import hashlib
+import math
 import re
 import unicodedata
 
@@ -14,6 +16,7 @@ STOPWORDS = {
 }
 
 INFERENCE_SCHEMA = "faro-curatorial-inference-v1"
+VISION_SCHEMA = "faro-portfolio-vision-v1"
 INFERENCE_FACETS = {
     "date", "event", "venue", "artist", "client", "collab", "publication",
     "text", "visual", "audio", "process", "period",
@@ -28,6 +31,10 @@ FACET_FIELDS = {
     "collab": ("colaboracion", "collab", "colaboradores"),
     "period": ("periodo", "period"),
 }
+
+GTM_SCHEMA = "faro-gtm-map-v1"
+GTM_DIMENSIONS = 32
+_GTM_CACHE = {}
 
 
 def _terms(value):
@@ -93,6 +100,174 @@ def learning_profile(rows):
     return {"schema": "faro-portfolio-learning-v1", "counts": counts,
             "weights": {key: round(value, 2) for key, value in weights.items()},
             "feedback_total": sum(sum(value.values()) for value in counts.values())}
+
+
+def _map_terms(item):
+    values = [item.get("descripcion_original", ""), item.get("publicacion_id", ""),
+              item.get("fecha", ""), item.get("tipo_contenido", "")]
+    classification = item.get("classification") or {}
+    if isinstance(classification, dict):
+        values.extend(classification.values())
+    vision = item.get("vision_features") or {}
+    if isinstance(vision, dict):
+        for field in ("visual_terms", "dominant_colors", "composition",
+                      "motion_or_media"):
+            values.extend(vision.get(field) or [])
+    for facet in FACET_FIELDS:
+        values.append(_facet_value(item, facet))
+    return sorted(_terms(" ".join(str(value) for value in values)))
+
+
+def _hash_feature(token):
+    digest = hashlib.blake2b(str(token).encode("utf-8"), digest_size=8).digest()
+    return int.from_bytes(digest, "big") % GTM_DIMENSIONS
+
+
+def portfolio_vector(item):
+    """Build a dependency-free feature vector for the latent map.
+
+    The vector preserves declared metadata, time, media role and description
+    as separate evidence channels. It is not an embedding and does not turn
+    free text into fact; a future provider can replace this extractor without
+    changing the map contract.
+    """
+    vector = [0.0] * GTM_DIMENSIONS
+    terms = _map_terms(item)
+    for term in terms:
+        vector[_hash_feature("term:" + term)] += 1.0
+    structured = [
+        "content:" + str(item.get("tipo_contenido", "")),
+        "publication:" + str(item.get("publicacion_id", "")),
+        "date:" + str(item.get("fecha", "")),
+        "media:" + ("available" if item.get("asset_available") else "missing"),
+    ]
+    for value in structured:
+        vector[_hash_feature(value)] += 2.0
+    norm = math.sqrt(sum(value * value for value in vector)) or 1.0
+    return [round(value / norm, 8) for value in vector]
+
+
+def _vector_distance(left, right):
+    return math.sqrt(sum((a - b) ** 2 for a, b in zip(left, right)))
+
+
+def _grid(width, height):
+    return [(x, y) for y in range(height) for x in range(width)]
+
+
+def _map_signature(items, feedback, width, height):
+    compact = [
+        (item.get("id"), item.get("fecha"), item.get("publicacion_id"),
+         item.get("tipo_contenido"), item.get("descripcion_original", ""),
+         item.get("classification", {}), item.get("vision_features", {}))
+        for item in items
+    ]
+    feedback_compact = [(row.get("source_id"), row.get("target_id"),
+                         row.get("action"), row.get("facet"))
+                        for row in feedback or []]
+    payload = json.dumps([compact, feedback_compact, width, height],
+                         ensure_ascii=False, sort_keys=True)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def build_gtm_map(items, feedback=None, width=8, height=6):
+    """Fit a small elastic latent grid and return every item position.
+
+    This is the local, dependency-free map engine: nodes form a rectangular
+    latent topology, assignments are soft, and neighboring nodes are smoothed
+    during fitting. It is deliberately called GTM in the contract while the
+    feature extractor remains replaceable and explicitly non-semantic.
+    """
+    width = max(3, min(int(width), 16))
+    height = max(3, min(int(height), 12))
+    valid_items = [item for item in items or [] if item.get("id")]
+    feedback = feedback or []
+    signature = _map_signature(valid_items, feedback, width, height)
+    cached = _GTM_CACHE.get(signature)
+    if cached is not None:
+        return cached
+    vectors = [portfolio_vector(item) for item in valid_items]
+    vector_index = {str(item.get("id")): index
+                    for index, item in enumerate(valid_items)}
+    for row in feedback:
+        source_index = vector_index.get(str(row.get("source_id", "")))
+        target_index = vector_index.get(str(row.get("target_id", "")))
+        if source_index is None or target_index is None:
+            continue
+        action = str(row.get("action", "")).lower()
+        if action in {"accept", "correct"}:
+            strength = 0.18 if action == "accept" else 0.24
+        elif action == "reject":
+            strength = -0.12
+        else:
+            continue
+        source_vector = vectors[source_index]
+        target_vector = vectors[target_index]
+        delta = [target - source for source, target in zip(source_vector, target_vector)]
+        vectors[source_index] = [source + strength * change
+                                  for source, change in zip(source_vector, delta)]
+        vectors[target_index] = [target - strength * change
+                                 for target, change in zip(target_vector, delta)]
+    nodes = _grid(width, height)
+    codebooks = []
+    if vectors:
+        chosen = [0]
+        while len(chosen) < len(nodes):
+            next_index = max(
+                (index for index in range(len(vectors)) if index not in chosen),
+                key=lambda index: min(_vector_distance(vectors[index], vectors[other])
+                                      for other in chosen),
+                default=chosen[-1])
+            chosen.append(next_index)
+        codebooks = [list(vectors[index % len(vectors)]) for index in chosen]
+    else:
+        codebooks = [[0.0] * GTM_DIMENSIONS for _ in nodes]
+    for iteration in range(6):
+        sigma = max(0.55, max(width, height) * (0.34 - iteration * 0.045))
+        learning_rate = 0.42 - iteration * 0.045
+        accumulators = [[0.0] * GTM_DIMENSIONS for _ in nodes]
+        weights = [0.0] * len(nodes)
+        for vector in vectors:
+            bmu = min(range(len(codebooks)),
+                      key=lambda index: _vector_distance(vector, codebooks[index]))
+            bx, by = nodes[bmu]
+            for node_index, (x, y) in enumerate(nodes):
+                distance = math.sqrt((x - bx) ** 2 + (y - by) ** 2)
+                influence = math.exp(-(distance ** 2) / (2 * sigma ** 2))
+                weights[node_index] += influence
+                for dimension, value in enumerate(vector):
+                    accumulators[node_index][dimension] += influence * value
+        for node_index, codebook in enumerate(codebooks):
+            if not weights[node_index]:
+                continue
+            average = [value / weights[node_index]
+                       for value in accumulators[node_index]]
+            codebooks[node_index] = [value * (1 - learning_rate)
+                                     + average[dimension] * learning_rate
+                                     for dimension, value in enumerate(codebook)]
+    positions = []
+    for item, vector in zip(valid_items, vectors):
+        raw = [math.exp(-_vector_distance(vector, codebook) / 0.07)
+               for codebook in codebooks]
+        total = sum(raw) or 1.0
+        x = sum(weight * nodes[index][0] for index, weight in enumerate(raw)) / total
+        y = sum(weight * nodes[index][1] for index, weight in enumerate(raw)) / total
+        bmu = min(range(len(codebooks)), key=lambda index: _vector_distance(vector, codebooks[index]))
+        distance = _vector_distance(vector, codebooks[bmu])
+        positions.append({
+            "item_id": str(item.get("id")), "x": round(x / max(1, width - 1), 6),
+            "y": round(y / max(1, height - 1), 6), "bmu": list(nodes[bmu]),
+            "distance": round(distance, 6),
+            "confidence": "high" if distance < 0.28 else "medium" if distance < 0.5 else "low",
+            "features": _map_terms(item)[:12],
+        })
+    result = {"schema": GTM_SCHEMA, "engine": "elastic_latent_grid",
+        "feature_extractor": "declared_metadata_plus_hashed_terms_plus_vision",
+              "grid": {"width": width, "height": height},
+              "items": positions, "count": len(positions)}
+    _GTM_CACHE.clear()
+    _GTM_CACHE[signature] = result
+    return result
 
 
 def _confidence(score, prior):
@@ -182,6 +357,64 @@ def media_manifest(item):
         "publication_id": item.get("publicacion_id"),
         "content_type": item.get("tipo_contenido"),
         "description_present": bool(str(item.get("descripcion_original") or "").strip()),
+        "vision_features_present": bool(item.get("vision_features")),
+    }
+
+
+def normalize_vision(raw, item_id, provider, evidence=None):
+    """Keep only visual observations; entity claims never enter the map."""
+    if isinstance(raw, str):
+        start, end = raw.find("{"), raw.rfind("}")
+        if start < 0 or end < start:
+            raw = {}
+        else:
+            try:
+                raw = json.loads(raw[start:end + 1])
+            except ValueError:
+                raw = {}
+    if not isinstance(raw, dict):
+        raw = {}
+    features = raw.get("features") if isinstance(raw.get("features"), dict) else raw
+
+    def values(field, limit, size=100):
+        value = features.get(field, [])
+        if isinstance(value, str):
+            value = [value]
+        if not isinstance(value, list):
+            return []
+        result = []
+        for entry in value:
+            text = str(entry).strip()
+            if text and text not in result:
+                result.append(text[:size])
+        return result[:limit]
+
+    confidence = str(raw.get("confidence", features.get("confidence", "low"))).lower()
+    if confidence not in {"high", "medium", "low"}:
+        confidence = "low"
+    unknowns = raw.get("unknowns", [])
+    if isinstance(unknowns, str):
+        unknowns = [unknowns]
+    if not isinstance(unknowns, list):
+        unknowns = []
+    unknowns = [str(value).strip()[:180] for value in unknowns if str(value).strip()][:16]
+    if not unknowns:
+        unknowns = values("unknowns", 16, 180) or values("limitations", 16, 180)
+    return {
+        "schema": VISION_SCHEMA,
+        "item_id": str(item_id),
+        "provider": str(provider),
+        "features": {
+            "visual_terms": values("visual_terms", 16),
+            "dominant_colors": values("dominant_colors", 8, 80),
+            "composition": values("composition", 12),
+            "motion_or_media": values("motion_or_media", 12),
+        },
+        "unknowns": unknowns,
+        "confidence": confidence,
+        "status": "candidate",
+        "promotion": "none",
+        "evidence": [str(path)[:300] for path in (evidence or []) if path][:8],
     }
 
 

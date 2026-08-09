@@ -1,6 +1,7 @@
-from cultura.mak_plataforma.copilot import (build_suggestions, evaluate_feedback,
-                                             learning_profile, media_manifest,
-                                             normalize_inference)
+from cultura.mak_plataforma.copilot import (build_gtm_map, build_suggestions,
+                                             evaluate_feedback, learning_profile,
+                                             media_manifest, normalize_inference,
+                                             normalize_vision)
 
 
 def item(item_id, date="2026-08-08", description="", kind="story", publication=""):
@@ -25,6 +26,37 @@ def test_feedback_changes_confidence_and_score():
     ])[0][0]
     assert learned["score"] > base["score"]
     assert learned["confidence"] == "confirmada"
+
+
+def test_gtm_map_returns_topology_positions_and_declared_features():
+    source = item("a", date="2026-08-08", description="luz cuerpo rave",
+                  publication="p1")
+    source["classification"] = {"ownership": "client", "format": "video"}
+    candidate = item("b", date="2026-08-09", description="mar cuerpo",
+                     publication="p2", kind="published_media")
+    result = build_gtm_map([source, candidate], width=4, height=3)
+
+    assert result["schema"] == "faro-gtm-map-v1"
+    assert result["engine"] == "elastic_latent_grid"
+    assert result["grid"] == {"width": 4, "height": 3}
+    assert {row["item_id"] for row in result["items"]} == {"a", "b"}
+    assert all(0 <= row["x"] <= 1 and 0 <= row["y"] <= 1
+               for row in result["items"])
+    assert "video" in next(row for row in result["items"]
+                            if row["item_id"] == "a")["features"]
+
+
+def test_gtm_map_keeps_varied_archive_from_collapsing_to_one_point():
+    items = [item(str(index), date=f"2026-07-{index + 1:02d}",
+                  description=f"concepto-{index} venue-{index % 5} artista-{index % 7}",
+                  publication=f"publication-{index % 4}")
+             for index in range(24)]
+    result = build_gtm_map(items, width=6, height=4)
+    xs = [row["x"] for row in result["items"]]
+    ys = [row["y"] for row in result["items"]]
+
+    assert max(xs) - min(xs) > 0.05
+    assert max(ys) - min(ys) > 0.05
 
 
 def test_context_suppresses_redundant_facet():
@@ -60,6 +92,25 @@ def test_manifest_is_provider_neutral():
     manifest = media_manifest(item("a"))
     assert manifest["modality"] == "video"
     assert manifest["asset_available"] is True
+
+
+def test_visual_normalizer_keeps_observations_and_drops_entity_claims():
+    result = normalize_vision({
+        "features": {
+            "visual_terms": ["violet liquid", "violet liquid"],
+            "dominant_colors": ["#7b20d4"],
+            "composition": ["centered vessel"],
+            "motion_or_media": ["still image"],
+            "artist": "invented name",
+        },
+        "unknowns": ["event unknown"], "confidence": "medium",
+    }, "obra-a", "aws", ["posts/a.jpg"])
+
+    assert result["schema"] == "faro-portfolio-vision-v1"
+    assert result["features"]["visual_terms"] == ["violet liquid"]
+    assert "artist" not in result["features"]
+    assert result["unknowns"] == ["event unknown"]
+    assert result["promotion"] == "none"
 
 
 def test_feedback_summary_is_a_real_measure():
