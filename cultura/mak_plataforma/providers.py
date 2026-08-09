@@ -109,9 +109,11 @@ def route_task(task_kind, available=None, allow_premium=True):
     capability = TASK_CAPABILITIES.get(str(task_kind or "").lower(), "text_review")
     plan = provider_plan(available, allow_premium=allow_premium,
                          capability=capability)
+    requires_external = any(PROVIDER_TIERS.get(provider) != "local_floor"
+                            for provider in plan)
     return {"schema": "faro-provider-route-v1", "task_kind": str(task_kind),
             "capability": capability, "provider": plan[0] if plan else "local_deterministic",
-            "fallback_chain": plan[1:], "requires_external": bool(plan)}
+            "fallback_chain": plan[1:], "requires_external": requires_external}
 
 
 def load_env(path=None):

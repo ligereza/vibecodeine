@@ -24,6 +24,7 @@ def test_typed_provider_route_prefers_vision_capability_and_keeps_fallback():
     assert route["provider"] == "aws"
     assert route["fallback_chain"] == []
     assert providers.route_task("judge", available=["watsonx", "ollama"])["provider"] == "ollama"
+    assert providers.route_task("judge", available=["ollama"])["requires_external"] is False
 
 
 def test_survival_provider_call_routes_to_ollama(monkeypatch):
@@ -220,6 +221,35 @@ def test_validate_evidence_paths_accepts_explicit_batch_files(tmp_path):
     payload = {"items": [{"files": ["historical.md"]}]}
     assert tandas.validate_evidence_paths(
         payload, area="mak_quality", extra_paths=[str(report)]) == (True, [])
+
+
+def test_validate_evidence_paths_accepts_manifest_asset_paths(tmp_path):
+    asset = tmp_path / "media" / "stories" / "2026" / "record.jpg"
+    asset.parent.mkdir(parents=True)
+    asset.write_bytes(b"image")
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(json.dumps({
+        "asset_root": str(tmp_path),
+        "rows": [{"asset_path": "/portfolio-media/media/stories/2026/record.jpg"}],
+    }), encoding="utf-8")
+    payload = {"items": [{"files": ["media/stories/2026/record.jpg"]}]}
+
+    assert tandas.validate_evidence_paths(
+        payload, area="portfolio_record", extra_paths=[str(manifest)]) == (True, [])
+
+
+def test_conservative_portfolio_repair_names_unknown_relations():
+    payload = {"items": [{
+        "files": ["media/stories/2026/record.mp4"],
+        "product": {},
+    }]}
+
+    repaired = tandas._conservative_portfolio_repair(payload, "portfolio_record")
+
+    assert repaired["items"][0]["product"]["relations"] == (
+        "sin_relaciones_observables")
+    assert repaired["items"][0]["product"]["unknowns"] == (
+        "identidad_evento_venue_artista_cliente_no_confirmada")
 
 
 def test_explicit_batch_cannot_escape_to_an_existing_repo_file(tmp_path):

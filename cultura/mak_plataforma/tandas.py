@@ -144,6 +144,36 @@ def _resolve_existing_path(path):
             return candidate
     return ""
 
+
+def _manifest_asset_paths(extra_paths):
+    assets = []
+    for path in extra_paths or []:
+        resolved = _resolve_existing_path(path)
+        if not resolved or not resolved.lower().endswith(".json"):
+            continue
+        try:
+            with open(resolved, encoding="utf-8") as fh:
+                manifest = json.load(fh)
+        except (OSError, ValueError, TypeError):
+            continue
+        root = str(manifest.get("asset_root") or "").strip()
+        if not root:
+            continue
+        rows = manifest.get("rows") or manifest.get("items") or []
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            for field in ("asset_path", "uri_export"):
+                value = str(row.get(field) or "").strip()
+                for prefix in ("/portfolio-media/", "portfolio-media/"):
+                    if value.startswith(prefix):
+                        value = value[len(prefix):]
+                        break
+                candidate = os.path.realpath(os.path.join(root, value))
+                if os.path.isfile(candidate) and candidate not in assets:
+                    assets.append(candidate)
+    return assets
+
 AREAS = {
     "mak_quality": {
         "purpose": "audit MAK output quality and detect wrong formats or weak evidence",
@@ -592,6 +622,7 @@ def validate_evidence_paths(payload, area=None, extra_paths=None):
     """Reject unknown files, resolving evidence-pack basenames safely."""
     errors = []
     items = payload.get("items", []) if isinstance(payload, dict) else []
+    manifest_assets = _manifest_asset_paths(extra_paths)
     for idx, item in enumerate(items):
         for file_idx, path in enumerate(item.get("files", []) or []):
             if (area == "rd_evidence" and isinstance(path, str)
@@ -601,6 +632,11 @@ def validate_evidence_paths(payload, area=None, extra_paths=None):
                 allowed = [candidate for candidate in extra_paths
                            if os.path.basename(candidate) == os.path.basename(path)
                            or os.path.normcase(str(candidate)) == os.path.normcase(str(path))]
+                if not allowed and isinstance(path, str):
+                    normalized = path.replace("\\", "/").lstrip("/")
+                    allowed = [candidate for candidate in manifest_assets
+                               if candidate.replace("\\", "/").endswith(
+                                   "/" + normalized)]
                 if not allowed:
                     errors.append("item_%d_missing_evidence_path_%d" % (idx, file_idx))
                     continue
@@ -812,6 +848,32 @@ def _repair_product_payload(area, payload, provider, model, max_tokens):
     return _parse_provider_json(raw), raw
 
 
+def _conservative_portfolio_repair(payload, area):
+    if area != "portfolio_record" or not isinstance(payload, dict):
+        return None
+    repaired = _safe_tree(payload)
+    for item in repaired.get("items", []):
+        if not isinstance(item, dict) or not isinstance(item.get("product"), dict):
+            return None
+        product = item["product"]
+        if not str(product.get("record_kind") or "").strip():
+            file_text = " ".join(str(value).lower()
+                                  for value in item.get("files", []) or [])
+            if "/stories/" in file_text or "media/stories/" in file_text:
+                product["record_kind"] = "story_record"
+            elif any(marker in file_text for marker in
+                     ("/posts/", "media/posts/", "/igtv/", "media/igtv/",
+                      "/reels/", "media/reels/")):
+                product["record_kind"] = "published_media_record"
+            else:
+                return None
+        product["relations"] = (str(product.get("relations") or "").strip()
+                                 or "sin_relaciones_observables")
+        product["unknowns"] = (str(product.get("unknowns") or "").strip()
+                                or "identidad_evento_venue_artista_cliente_no_confirmada")
+    return repaired
+
+
 def run_external_batch(area, batch_id, provider, paths=None, model=None,
                        out_dir=None, common_path=COMMON_LEDGER,
                        batch_path=LEDGER, use_ollama=True, max_tokens=2500,
@@ -918,17 +980,26 @@ def run_external_batch(area, batch_id, provider, paths=None, model=None,
             repaired["work"] = payload.get("work", {})
             payload = repaired
         else:
-            errors = product_errors + repaired_errors
-            append_ledger({
-                "area": area,
-                "batch_id": batch_id,
-                "provider": provider,
-                "status": "revise",
-                "items": 0,
-                "errors": errors,
-            }, path=batch_path)
-            return {"ok": False, "status": "revise", "raw_path": raw_path,
-                    "repair_raw_path": repair_raw_path, "errors": errors}
+            conservative = _conservative_portfolio_repair(payload, area)
+            if conservative is not None:
+                conservative_ok, _conservative_errors = validate_product_contract(
+                    conservative, area)
+                if conservative_ok:
+                    conservative["work"] = payload.get("work", {})
+                    payload = conservative
+                    repaired_ok = True
+            if not repaired_ok:
+                errors = product_errors + repaired_errors
+                append_ledger({
+                    "area": area,
+                    "batch_id": batch_id,
+                    "provider": provider,
+                    "status": "revise",
+                    "items": 0,
+                    "errors": errors,
+                }, path=batch_path)
+                return {"ok": False, "status": "revise", "raw_path": raw_path,
+                        "repair_raw_path": repair_raw_path, "errors": errors}
     result = ingest_result(
         payload, area, common_path=common_path, source=provider,
         use_ollama=use_ollama, strict_product=True,
