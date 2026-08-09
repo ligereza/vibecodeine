@@ -4,8 +4,9 @@ Personal creative-operations repo with a unified CLI (`flujo`).
 
 ## Mandatory entry point
 
-1. Read `CLAUDE.md` (root): identity, mission, workflow and rules. It is the
-   single entry point for any agent, human or AI.
+1. Read `AGENTS.md` (root): current identity, workflow and rules. Then read
+   `context/LAST_HANDOFF.md`, the single operational checkpoint. `CLAUDE.md`
+   remains a compatibility document with historical material.
 2. Current state, decisions already closed and standing orders:
    `context/LAST_HANDOFF.md`, the single checkpoint. Read it before asking
    something that may already be answered.

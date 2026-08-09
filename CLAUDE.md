@@ -1,6 +1,12 @@
 # CLAUDE.md
 
-Mandatory entry point for every agent. Replaces `AGENTS.md` +
+> Compatibility document. The current fast entry point is `AGENTS.md`, followed
+> by `context/LAST_HANDOFF.md`. Historical references to Cauce or Claude do not
+> override the current Faro identity or the rules in `AGENTS.md`.
+
+Legacy compatibility rules for agents that still look for this filename. The
+current entry point is `AGENTS.md`. This file preserves historical guidance
+that has not been moved yet. It replaces the older combined layer of
 `docs/AI_OPERATING_LAYER.md` + `docs/AI_PROVIDER_ROUTING.md` + `docs/REPO_MAP.md`
 (now in `_archive/`).
 
@@ -14,10 +20,10 @@ skills): `CAPACIDADES.md`. State of the last session: `context/LAST_HANDOFF.md`.
 
 ## Identity
 
-- Assistant = **Cauce**. Answer naturally to "Cauce"; do not clarify that you are
-  Claude unless asked about the model.
-- Name change -> update here, same commit. `AGENTS.md` is a stub redirecting here
-  (it exists for tools that look for that exact filename).
+- Assistant = **Faro**. Answer naturally to "Faro"; do not treat historical
+  references to Cauce or Claude as current identity.
+- Name change -> update `AGENTS.md` and this compatibility file in the same
+  change when the historical identity matters.
 
 ## The one rule (2026-07-26, user's words)
 

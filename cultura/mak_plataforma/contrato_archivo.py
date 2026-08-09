@@ -29,11 +29,24 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from collections import Counter, defaultdict
 
 # 'corpus' are the artist's perceived works; the rest MAK wrote itself.
 _CLASE_POR_DIR = {"corpus": "obra", "codex": "codigo"}
 
 _EXTENSIONES = (".md", ".txt", ".json", ".jpg", ".jpeg", ".png", ".webp")
+PORTFOLIO_ENTITY_SCHEMA = "faro-portfolio-entity-v1"
+PORTFOLIO_PURPOSE = "triage audiovisual records without turning stories into works"
+OPPORTUNITY_CARD_SCHEMA = "faro-opportunity-card-v1"
+PORTFOLIO_RELATION_KEYS = (
+    "artist", "username", "client", "collab", "event", "festival", "venue",
+    "date", "audio",
+)
+IDENTITY_GRAPH_SCHEMA = "faro-identity-graph-v1"
+_GENERIC_CANDIDATE_VALUES = frozenset({
+    "", "unknown", "candidate", "none", "null", "n/a", "na",
+    "no confirmado", "sin confirmar",
+})
 
 
 def _id(texto: str) -> str:
@@ -57,6 +70,379 @@ def _id_pieza(texto: str) -> str:
             s = s[: -len(ext)]
             break
     return _id(s)
+
+
+def desde_portfolio_item(item: dict) -> dict:
+    """Derive the shared projection envelope from one portfolio inbox item.
+
+    The inbox remains the source of truth. This pure adapter gives the archive,
+    organism, gallery and editor the same identity and routing fields without
+    copying the media record or creating a second portfolio schema.
+    """
+    if not isinstance(item, dict):
+        raise TypeError("portfolio item must be an object")
+    entity_id = str(item.get("id") or "").strip()
+    if not entity_id:
+        raise ValueError("portfolio item needs an id")
+    content_type = str(item.get("tipo_contenido") or "media").strip()
+    record_kind = "story_record" if content_type == "story" else "media_candidate"
+    selection = str(item.get("selection") or "pendiente").strip()
+    next_action = {
+        "seleccionar": "triangulate",
+        "deseleccionar": "reject",
+    }.get(selection, "review")
+    source_id = str(item.get("publicacion_id") or entity_id).strip()
+    source_kind = str(item.get("source_kind") or (
+        "instagram_export" if item.get("publicacion_id") else "portfolio_inbox"
+    )).strip()
+    consent_status = str(item.get("consent_status") or "unknown").strip()
+    public_status = str(item.get("public_status") or "private_candidate").strip()
+    return {
+        "schema": PORTFOLIO_ENTITY_SCHEMA,
+        "entity_id": entity_id,
+        "source_id": source_id,
+        "lane": "obra",
+        "purpose": PORTFOLIO_PURPOSE,
+        "record_kind": record_kind,
+        "format": str(item.get("format") or (
+            "registro" if record_kind == "story_record" else "media"
+        )),
+        "evidence_kind": str(item.get("evidence_kind") or "media_metadata"),
+        "status": selection,
+        "next_action": next_action,
+        "owner": "human" if next_action == "review" else "MAK",
+        "source": {
+            "kind": source_kind,
+            "date": item.get("fecha"),
+            "asset_available": bool(item.get("asset_available")),
+        },
+        "consent": {
+            "status": consent_status,
+            "basis": str(item.get("consent_basis") or "").strip(),
+            "recorded_at": str(item.get("consent_recorded_at") or "").strip(),
+        },
+        "publication": {
+            "status": public_status,
+            "requires_human_gate": public_status != "public",
+        },
+    }
+
+
+def portfolio_identity_graph(items, connections=None, context_links=None):
+    """Project explicit metadata into a graph without resolving free text."""
+    nodes = {}
+    edges = []
+    edge_keys = set()
+    relation_fields = {
+        "artist": ("artist", "artista"), "username": ("username",),
+        "client": ("client", "cliente"), "collab": ("collab", "colaboracion", "colaboradores"),
+        "event": ("event", "evento"), "festival": ("festival",),
+        "venue": ("venue",), "producer": ("producer", "productora"),
+        "location": ("location", "ubicacion", "ciudad"),
+    }
+
+    def values(value):
+        if isinstance(value, (list, tuple, set)):
+            source = value
+        else:
+            source = [value]
+        return [str(entry).strip() for entry in source if str(entry).strip()]
+
+    def add_node(node_id, kind, label, **extra):
+        nodes.setdefault(node_id, {"id": node_id, "kind": kind,
+                                   "label": label, **extra})
+
+    def add_edge(source, target, relation, evidence_kind, confidence="medium"):
+        key = (source, target, relation)
+        if key in edge_keys:
+            return
+        edge_keys.add(key)
+        edges.append({"source": source, "target": target, "relation": relation,
+                      "evidence_kind": evidence_kind, "confidence": confidence,
+                      "status": "candidate"})
+
+    for item in items or []:
+        if not isinstance(item, dict) or not str(item.get("id") or "").strip():
+            continue
+        item_id = str(item["id"])
+        node_id = "item:" + _id(item_id)
+        add_node(node_id, "item", item_id,
+                 record_kind="story_record" if item.get("tipo_contenido") == "story" else "media_candidate",
+                 content_type=item.get("tipo_contenido"), date=item.get("fecha"),
+                 selection=item.get("selection", "pendiente"))
+        if item.get("fecha"):
+            date_id = "date:" + _id(item["fecha"])
+            add_node(date_id, "date", str(item["fecha"]))
+            add_edge(node_id, date_id, "date", "instagram_metadata", "high")
+        if item.get("publicacion_id"):
+            publication_id = "publication:" + _id(item["publicacion_id"])
+            add_node(publication_id, "publication", str(item["publicacion_id"]))
+            add_edge(node_id, publication_id, "publication", "instagram_metadata", "high")
+        declared = item.get("entities") if isinstance(item.get("entities"), dict) else {}
+        for relation, fields in relation_fields.items():
+            raw = []
+            for field in fields:
+                raw.extend(values(item.get(field)))
+                raw.extend(values(declared.get(field)))
+            for value in sorted(set(raw)):
+                entity_id = "%s:%s" % (relation, _id(value))
+                add_node(entity_id, relation, value)
+                add_edge(node_id, entity_id, relation, "declared_metadata")
+
+    for connection in connections or []:
+        if not isinstance(connection, dict):
+            continue
+        source = "item:" + _id(connection.get("source_id"))
+        target = "item:" + _id(connection.get("target_id"))
+        if source in nodes and target in nodes:
+            add_edge(source, target, str(connection.get("relation") or "related"),
+                     "human_feedback", "high")
+    for link in context_links or []:
+        if not isinstance(link, dict):
+            continue
+        source = "item:" + _id(link.get("source_id"))
+        group = str(link.get("group_key") or "").strip()
+        if source not in nodes or not group:
+            continue
+        group_id = "group:" + _id(group)
+        add_node(group_id, "group", group)
+        add_edge(source, group_id, "context_link", "human_context", "high")
+    return {
+        "schema": IDENTITY_GRAPH_SCHEMA,
+        "resolution_policy": "explicit_metadata_only",
+        "nodes": list(nodes.values()), "edges": edges,
+        "counts": {"nodes": len(nodes), "edges": len(edges)},
+    }
+
+
+def _candidate_values(value):
+    if isinstance(value, list):
+        values = value
+    else:
+        values = [value]
+    flattened = []
+    for entry in values:
+        if isinstance(entry, dict):
+            entry = entry.get("name") or entry.get("value") or ""
+        text = str(entry or "").strip()
+        if text:
+            flattened.append(text)
+    return flattened
+
+
+def _portfolio_source_item(item: dict) -> dict:
+    source = dict(item or {})
+    source.setdefault("id", source.get("item_id"))
+    source.setdefault("tipo_contenido", source.get("content_type"))
+    source.setdefault("fecha", source.get("date"))
+    source.setdefault("descripcion_original", source.get("description_original"))
+    return source
+
+
+def _candidate_matches_source(value, source_item: dict, relation: str) -> bool:
+    source_item = _portfolio_source_item(source_item)
+    text = " ".join(str(source_item.get(key) or "") for key in (
+        "descripcion_original", "description_original", "caption", "title",
+    )).casefold()
+    normalized = str(value or "").strip().casefold()
+    if relation == "date":
+        return normalized == str(source_item.get("fecha") or "").strip().casefold()
+    return bool(normalized and normalized in text)
+
+
+def _source_mentions_username(value, source_item: dict) -> bool:
+    source_item = _portfolio_source_item(source_item)
+    username = str(value or "").strip().lstrip("@").casefold()
+    text = " ".join(str(source_item.get(key) or "") for key in (
+        "descripcion_original", "description_original", "caption", "title",
+    )).casefold()
+    return bool(username and ("@" + username) in text)
+
+
+def _normalized_candidate_relations(relations: dict, source_item: dict) -> dict:
+    normalized = {}
+    for relation in PORTFOLIO_RELATION_KEYS:
+        values = [value for value in _candidate_values(relations.get(relation))
+                  if value.casefold() not in _GENERIC_CANDIDATE_VALUES]
+        if not values:
+            continue
+        target = relation
+        if relation == "artist":
+            handles = [value for value in values
+                       if _source_mentions_username(value, source_item)]
+            if handles:
+                target = "username"
+        normalized.setdefault(target, []).extend(values)
+    return {key: sorted(set(values)) for key, values in normalized.items()}
+
+
+def _candidate_evidence_basis(value, source_item: dict) -> list:
+    source_item = _portfolio_source_item(source_item)
+    allowed = {
+        "description", "description_original", "caption", "instagram_metadata",
+        "date_metadata", "asset_metadata", "visual_contact_sheet", "audio",
+    }
+    source_text = " ".join(str(source_item.get(key) or "") for key in (
+        "descripcion_original", "description_original", "caption", "title",
+    )).casefold()
+    basis = []
+    for entry in _candidate_values(value):
+        folded = entry.casefold()
+        if folded in {"description", "description_original", "caption"}:
+            basis.append("description_original")
+        elif folded in allowed:
+            basis.append(folded)
+        elif len(entry) > 20 and folded in source_text:
+            basis.append("description_original")
+    return sorted(set(basis))
+
+
+def portfolio_candidate_verdict(row: dict, source_item: dict) -> str:
+    """Return only accept, revise or reject for one external portfolio row."""
+    if not isinstance(row, dict) or not isinstance(source_item, dict):
+        return "reject"
+    source_item = _portfolio_source_item(source_item)
+    item_id = str(row.get("item_id") or "").strip()
+    source_id = str(source_item.get("id") or "").strip()
+    if not item_id or item_id != source_id:
+        return "reject"
+    expected_kind = ("story_record" if source_item.get("tipo_contenido") == "story"
+                     else "media_candidate")
+    if str(row.get("record_kind") or "").strip() != expected_kind:
+        return "reject"
+    relations = row.get("candidate_relations")
+    if not isinstance(relations, dict):
+        return "revise"
+    found = False
+    for relation in PORTFOLIO_RELATION_KEYS:
+        for value in _candidate_values(relations.get(relation)):
+            if value.casefold() in _GENERIC_CANDIDATE_VALUES:
+                continue
+            if relation != "date":
+                found = True
+            if not _candidate_matches_source(value, source_item, relation):
+                return "revise"
+    if not _candidate_evidence_basis(relations.get("evidence_basis"), source_item):
+        return "revise"
+    return "accept" if found else "revise"
+
+
+def normalize_portfolio_candidate(row: dict, source_item: dict,
+                                  provider: str = "") -> dict:
+    """Keep a traceable candidate inside the existing portfolio contract."""
+    source_item = _portfolio_source_item(source_item)
+    contract = desde_portfolio_item(source_item)
+    relations = row.get("candidate_relations") if isinstance(row, dict) else {}
+    relations = relations if isinstance(relations, dict) else {}
+    normalized = _normalized_candidate_relations(relations, source_item)
+    contract.update({
+        "status": "candidate_external",
+        "next_action": "human_review",
+        "owner": "human",
+        "triage": {
+            "provider": str(provider or "unknown").strip(),
+            "verdict": portfolio_candidate_verdict(row, source_item),
+            "candidate_relations": normalized,
+            "evidence_basis": _candidate_evidence_basis(
+                relations.get("evidence_basis"), source_item),
+            "uncertainty": relations.get("uncertainty") or "unknown",
+        },
+    })
+    return contract
+
+
+def portfolio_metadata_index(items) -> dict:
+    """Build a compact index without loading media or resolving identities."""
+    rows = [item for item in items if isinstance(item, dict)]
+    by_type = Counter()
+    by_date = Counter()
+    by_publication = defaultdict(list)
+    mentions = defaultdict(list)
+    for item in rows:
+        content_type = str(item.get("tipo_contenido") or
+                           item.get("content_type") or "media").strip()
+        item_id = str(item.get("id") or item.get("item_id") or "").strip()
+        date = str(item.get("fecha") or item.get("date") or "").strip()
+        publication = str(item.get("publicacion_id") or
+                          item.get("publication_id") or "").strip()
+        by_type[content_type] += 1
+        if date:
+            by_date[date] += 1
+        if publication:
+            by_publication[publication].append(item_id)
+        description = str(item.get("descripcion_original") or
+                          item.get("description_original") or "")
+        for username in sorted(set(re.findall(
+                r"(?<![A-Za-z0-9_])@([A-Za-z0-9._]{2,80})", description))):
+            if item_id and item_id not in mentions[username.lower()]:
+                mentions[username.lower()].append(item_id)
+    publication_sizes = list(by_publication.values())
+    return {
+        "schema": "faro-portfolio-metadata-index-v1",
+        "total": len(rows),
+        "by_content_type": dict(sorted(by_type.items())),
+        "grouping": {
+            "publication_groups": len(publication_sizes),
+            "carousel_groups": sum(1 for group in publication_sizes
+                                    if len(group) > 1),
+            "date_groups": len(by_date),
+            "story_records": by_type.get("story", 0),
+        },
+        "date_range": {
+            "first": min(by_date) if by_date else "",
+            "last": max(by_date) if by_date else "",
+        },
+        "dates": [{"date": date, "count": count}
+                  for date, count in sorted(by_date.items(), reverse=True)],
+        "user_mentions": [
+            {"username": username, "count": len(item_ids),
+             "item_ids": item_ids[:24]}
+            for username, item_ids in sorted(
+                mentions.items(), key=lambda pair: (-len(pair[1]), pair[0]))[:200]
+        ],
+        "identity_resolution": "mentions_only; no artist, client or venue inferred",
+    }
+
+
+def desde_convocatoria_seed(item: dict, captured_at: str = "") -> dict:
+    """Normalize a watched opportunity without treating it as verified."""
+    if not isinstance(item, dict):
+        raise TypeError("opportunity seed must be an object")
+    title = str(item.get("titulo") or item.get("title") or "").strip()
+    source_url = str(item.get("url") or item.get("source_url") or "").strip()
+    if not title:
+        raise ValueError("opportunity seed needs a title")
+    if not source_url.startswith(("http://", "https://")):
+        raise ValueError("opportunity seed needs an http source_url")
+    areas = item.get("areas") or ""
+    if isinstance(areas, str):
+        areas = [part.strip() for part in areas.split(",") if part.strip()]
+    elif isinstance(areas, (list, tuple)):
+        areas = [str(part).strip() for part in areas if str(part).strip()]
+    else:
+        areas = []
+    natural_person = item.get("personas_naturales")
+    eligibility = "persona natural" if natural_person is True else "no confirmado"
+    return {
+        "schema": OPPORTUNITY_CARD_SCHEMA,
+        "opportunity_id": "opportunity:%s" % _id(source_url or title),
+        "title": title,
+        "source_url": source_url,
+        "source_name": str(item.get("fuente") or "").strip(),
+        "source_kind": "candidate_source",
+        "deadline_raw": str(item.get("cierre") or item.get("deadline") or "").strip(),
+        "deadline_verified": False,
+        "eligibility": eligibility,
+        "eligibility_verified": False,
+        "amount_raw": str(item.get("monto") or "").strip(),
+        "areas": areas,
+        "captured_at": str(captured_at or item.get("detectada") or "").strip(),
+        "last_verified": "",
+        "status": "unverified",
+        "next_action": "verify official bases, eligibility and exact deadline",
+        "evidence": [source_url],
+        "raw_score": item.get("score"),
+    }
 
 
 def convertir(grafo: dict) -> dict:

@@ -15,6 +15,8 @@ import urllib.request
 
 SCHEMA_VERSION = "mak-local-review-v1"
 VERDICTS = ("accept", "revise", "reject")
+DECISION_SCHEMA = "faro-decision-v1"
+DECISION_BY_VERDICT = {"accept": "hacer", "revise": "revisar", "reject": "descartar"}
 REQUIRED = ("schema", "verdict", "domain", "reason", "risks",
             "missing_evidence", "next_action")
 OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
@@ -33,6 +35,7 @@ AREA_DOMAINS = {
     "mak_quality": "mak",
     "rd_evidence": "rd",
     "iskvw_curation": "iskvw",
+    "portfolio_record": "portfolio",
     "tool_archaeology": "repo",
     "svg_pipeline": "svg",
     "adobe_rescue": "adobe",
@@ -51,6 +54,10 @@ AREA_CRITERIA = {
     "iskvw_curation": (
         "Does it read artwork/archive without turning it into RD or academia?",
         "Does it preserve uncertainty about intention, biography and authorship?",
+    ),
+    "portfolio_record": (
+        "Does it keep a story as an audiovisual record instead of calling it an artwork?",
+        "Does it separate event, venue, artist and date hypotheses from unknowns?",
     ),
     "tool_archaeology": (
         "Does it prove a tool exists before asking to build another one?",
@@ -252,6 +259,25 @@ def deterministic_review(area, payload):
         "risks": risks,
         "missing_evidence": missing[:8],
         "next_action": "append accepted items to ledger" if verdict == "accept" else "revise provider output",
+    }
+
+
+def decision_record(area, payload, work=None, provider="local_deterministic"):
+    """Turn a review verdict into the shared decision vocabulary."""
+    review = deterministic_review(area, payload)
+    return {
+        "schema": DECISION_SCHEMA,
+        "area": area,
+        "provider": provider,
+        "verdict": review["verdict"],
+        "decision": DECISION_BY_VERDICT[review["verdict"]],
+        "reason": review["reason"],
+        "risks": review["risks"],
+        "missing_evidence": review["missing_evidence"],
+        "next_action": review["next_action"],
+        "promotion": "none",
+        "owner": "MAK" if review["verdict"] != "revise" else "human",
+        "work": work if isinstance(work, dict) else {},
     }
 
 

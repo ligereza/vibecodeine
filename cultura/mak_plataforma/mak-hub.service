@@ -11,7 +11,7 @@
 Description=MAK hub (plataforma :8900)
 [Service]
 WorkingDirectory=%h/plataforma
-ExecStart=/usr/bin/python3 %h/plataforma/hub.py
+ExecStart=%h/plataforma/.venv/bin/python %h/plataforma/hub.py
 Restart=always
 RestartSec=5
 [Install]
