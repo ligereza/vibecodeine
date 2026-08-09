@@ -43,12 +43,12 @@ instructions. Verify any statement that affects a destructive or remote action.
 ## Repository state
 
 - Windows workspace: `C:\IA\flujo`.
-- Windows branch: `mak`, aligned with `origin/mak` at `e577bc65`.
+- Windows branch: `mak`, aligned with `origin/mak` at `04afc186`.
 - `origin/main`, `origin/mak`, `origin/rd`, and `origin/iskvw` all point to
-  `e577bc65`. No remote tags or open PRs remain.
+  `04afc186`. No remote tags or open PRs remain.
 - The Windows worktree is clean after the explicit commit and push requested by
-  the user. `e577bc65` records the bounded triangulation gate result and is the
-  current tip of all four canonical branches.
+  the user. `04afc186` preserves safe opportunity next actions in the common
+  ledger and is the current tip of all four canonical branches.
 - The promoted work covers `cultura/mak_plataforma/` (ledger, identity,
   providers, decisions, Hub, batches, routing, service/watchdog),
   `iskvw/editor.html`, the README/SVG text layer, operational docs, tests, and
@@ -62,7 +62,7 @@ Fresh SSH check on 2026-08-09:
 - The extra Capataz checkout was inventoried into
   `/home/mak/quarantine/flujo-20260809-branch-reconcile/` before cleanup. Its
   local branches were removed after the unique work was preserved; the runtime
-  checkout is now clean on `mak` at `e577bc65`.
+  checkout is now clean on `mak` at `04afc186`.
 - The MAK checkout has exactly the four local branches `main`, `mak`, `rd`, and
   `iskvw`, all aligned with their four remote counterparts.
 - The runtime Hub is healthy and is managed by the user systemd unit
@@ -137,6 +137,19 @@ Fresh SSH check on 2026-08-09:
 - `story_record` uses `format=registro`, `evidence_kind=media_metadata`, and
   actions such as `triangulate`, `archive`, `review`, and `reject`.
 
+### Opportunity verification 2026-08-09
+
+- The existing Fondart/opportunity corpus contained current-looking 2026/2027
+  cards mixed with a stale 2023 report. A first Watsonx pass failed the product
+  gate because one item omitted `next_action`; no data entered the ledger.
+- The repair is now deterministic and conservative: it may add only the human
+  action `verificar bases y fecha exacta de cierre`; it never fills dates,
+  eligibility, amounts, or source facts.
+- The second bounded Watsonx pass accepted five opportunity candidates through
+  Ollama. They remain `revisar` with `next_action=verificar bases y fecha exacta
+  de cierre`; nothing was submitted or promoted. The ledger now preserves that
+  product action instead of dropping it.
+
 ### Durable vertical circuit 2026-08-09
 
 - MAK created `/home/mak/plataforma/director_runs/vertical-curation-20260809/`
@@ -198,6 +211,8 @@ Fresh SSH check on 2026-08-09:
 - The visual review contract plus tanda/ledger focus passes `72` tests after
   the candidate-card update; MAK serves the updated editor and the Hub remains
   active.
+- The opportunity repair and ledger propagation tests pass in the same focused
+  run; current focused collection is `74` tests.
 
 ## Current boundaries and pauses
 
