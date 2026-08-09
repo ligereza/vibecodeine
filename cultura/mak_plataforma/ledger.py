@@ -20,7 +20,7 @@ SCHEMA_VERSION = "mak-ledger-v1"
 QUARANTINE_SCHEMA = "mak-ledger-quarantine-v1"
 
 ITEM_TYPES = ("evidence", "idea", "task", "decision", "reject", "artifact")
-DOMAINS = ("rd", "iskvw", "mak", "svg", "adobe", "repo", "opportunities")
+DOMAINS = ("rd", "iskvw", "portfolio", "mak", "svg", "adobe", "repo", "opportunities")
 CONFIDENCE = ("high", "medium", "low", "unknown")
 LANES = ("obra", "trabajo", "sistema")
 DECISIONS = ("hacer", "revisar", "refutar", "archivar", "descartar")
@@ -34,7 +34,7 @@ ENTITY_FIELDS = (
     "location", "source",
 )
 LANE_BY_DOMAIN = {
-    "iskvw": "obra", "svg": "obra",
+    "iskvw": "obra", "portfolio": "obra", "svg": "obra",
     "rd": "trabajo", "opportunities": "trabajo",
     "mak": "sistema", "adobe": "sistema", "repo": "sistema",
 }
@@ -42,6 +42,7 @@ LANE_BY_DOMAIN = {
 ACTION_BY_DOMAIN = {
     "rd": ("verify_source", "triangulate", "draft_report", "reject"),
     "iskvw": ("curate", "expose", "archive", "reject"),
+    "portfolio": ("triangulate", "archive", "review", "reject"),
     "mak": ("archive", "refute", "expose", "repair_queue", "reject",
             "review", "decide"),
     "svg": ("measure", "prototype", "reuse", "reject"),
@@ -67,6 +68,20 @@ def _safe_text(value, limit=2000):
     if any(marker in folded for marker in SECRET_MARKERS):
         return "[redacted]"
     return text[:limit]
+
+
+def _safe_metadata(value, depth=0):
+    if depth > 3:
+        return _safe_text(value, 800)
+    if isinstance(value, dict):
+        return {
+            str(key): _safe_metadata(child, depth + 1)
+            for key, child in value.items()
+            if str(key).lower() not in SECRET_MARKERS
+        }
+    if isinstance(value, list):
+        return [_safe_metadata(child, depth + 1) for child in value[:24]]
+    return _safe_text(value, 800)
 
 
 def _default_decision(item):
@@ -117,6 +132,67 @@ def _normalize_identity(identity, work_id, ts):
     }
 
 
+def build_work_envelope(work_id, parent_task, lane, purpose, format,
+                        provider, sources=None, status="queued",
+                        identity=None, owner="MAK", next_action="review",
+                        evidence_required=None, allowed_decisions=None,
+                        fallback_chain=None, created_at=None):
+    """Create the durable work envelope shared by every department."""
+    work_id = _safe_text(work_id, 240).strip()
+    if not work_id:
+        raise ValueError("work_id_required")
+    ts = created_at or time.strftime("%F %T")
+    identity = _normalize_identity(identity, work_id, ts)
+    return {
+        "schema": "mak-work-v1",
+        "work_id": work_id,
+        "parent_task": _safe_text(parent_task, 240) or "untyped_task",
+        "lane": _safe_text(lane, 40).lower() or "sistema",
+        "purpose": _safe_text(purpose, 500),
+        "format": _safe_text(format, 120) or "unknown",
+        "created_at": _safe_text(ts, 40),
+        "provider": _safe_text(provider, 120) or "unknown",
+        "sources": [_safe_text(value, 400) for value in (sources or [])][:48],
+        "status": _safe_text(status, 40) or "queued",
+        "owner": _safe_text(owner, 120) or "MAK",
+        "next_action": _safe_text(next_action, 240) or "review",
+        "evidence_required": [_safe_text(value, 160)
+                               for value in (evidence_required or ["source"])
+                               ][:16],
+        "allowed_decisions": [_safe_text(value, 40)
+                               for value in (allowed_decisions or DECISIONS)
+                               ][:8],
+        "fallback_chain": [_safe_text(value, 80)
+                            for value in (fallback_chain or [])][:8],
+        "identity": identity,
+    }
+
+
+def validate_work_envelope(work):
+    """Validate the shared envelope without judging the work's truth."""
+    if not isinstance(work, dict):
+        return False, ["work_not_object"]
+    required = ("schema", "work_id", "parent_task", "lane", "purpose",
+                "format", "created_at", "provider", "sources", "status",
+                "owner", "next_action", "evidence_required",
+                "allowed_decisions", "fallback_chain", "identity")
+    errors = ["work_missing_%s" % key for key in required if key not in work]
+    if work.get("schema") != "mak-work-v1":
+        errors.append("work_bad_schema")
+    if not str(work.get("work_id") or "").strip():
+        errors.append("work_missing_id")
+    if work.get("lane") not in LANES:
+        errors.append("work_bad_lane")
+    for key in ("sources", "evidence_required", "allowed_decisions",
+                "fallback_chain"):
+        if not isinstance(work.get(key), list):
+            errors.append("work_%s_not_list" % key)
+    identity = work.get("identity")
+    if not isinstance(identity, dict) or identity.get("schema") != IDENTITY_SCHEMA:
+        errors.append("work_bad_identity")
+    return not errors, errors
+
+
 def normalize_item(item, source="manual", ts=None):
     if not isinstance(item, dict):
         raise ValueError("item_not_object")
@@ -159,20 +235,16 @@ def normalize_item(item, source="manual", ts=None):
     if not isinstance(identity, dict):
         identity = item.get("identity")
     work_identity = _normalize_identity(identity, work_id, row["ts"])
-    row["work"] = {
-        "schema": _safe_text(work.get("schema"), 40) or "mak-work-v1",
-        "work_id": work_id,
-        "parent_task": _safe_text(work.get("parent_task"), 240) or "legacy_unknown",
-        "lane": _safe_text(work.get("lane"), 40) or row["lane"],
-        "purpose": _safe_text(work.get("purpose"), 500),
-        "format": _safe_text(work.get("format"), 120) or "legacy_unknown",
-        "created_at": _safe_text(work.get("created_at"), 40) or row["ts"],
-        "provider": _safe_text(work.get("provider"), 120) or "unknown",
-        "sources": [_safe_text(value, 400) for value in work.get("sources", [])]
-        if isinstance(work.get("sources", []), list) else [],
-        "status": _safe_text(work.get("status"), 40) or "legacy_unknown",
-        "identity": work_identity,
-    }
+    row["work"] = build_work_envelope(
+        work_id, work.get("parent_task") or "legacy_unknown",
+        work.get("lane") or row["lane"], work.get("purpose", ""),
+        work.get("format") or "legacy_unknown", work.get("provider") or "unknown",
+        sources=work.get("sources") if isinstance(work.get("sources"), list) else [],
+        status=work.get("status") or "legacy_unknown", identity=work_identity,
+        owner=work.get("owner") or "MAK", next_action=work.get("next_action") or "review",
+        evidence_required=work.get("evidence_required"),
+        allowed_decisions=work.get("allowed_decisions"),
+        fallback_chain=work.get("fallback_chain"), created_at=work.get("created_at") or row["ts"])
     row["trace_status"] = (
         "declared" if work_identity["kind"] != "legacy_unknown"
         else "legacy_unknown"
@@ -180,7 +252,7 @@ def normalize_item(item, source="manual", ts=None):
     metadata = item.get("metadata")
     if isinstance(metadata, dict):
         row["metadata"] = {
-            str(key): _safe_text(value, 800)
+            str(key): _safe_metadata(value)
             for key, value in metadata.items()
             if str(key).lower() not in SECRET_MARKERS
         }
@@ -221,6 +293,9 @@ def validate_item(item, source="manual"):
         errors.append("evidence_not_list")
     if not isinstance(row["files"], list):
         errors.append("files_not_list")
+    work_ok, work_errors = validate_work_envelope(row["work"])
+    if not work_ok:
+        errors.extend(work_errors)
     allowed = ACTION_BY_DOMAIN.get(row["domain"], ())
     if row["action"] not in allowed:
         errors.append("bad_action_for_domain")
@@ -359,6 +434,102 @@ def opportunity_from_vigia(item, source="vigia", path=LEDGER):
     }, path=path, source=source)
 
 
+def opportunity_from_seed(card, source="convocatorias_seed", path=LEDGER):
+    """Store an unverified opportunity candidate in the existing ledger."""
+    if not isinstance(card, dict):
+        return False, ["seed_not_object"], None
+    if card.get("schema") != "faro-opportunity-card-v1":
+        return False, ["bad_opportunity_card_schema"], None
+    opportunity_id = str(card.get("opportunity_id") or "").strip()
+    title = str(card.get("title") or "").strip()
+    source_url = str(card.get("source_url") or "").strip()
+    if not opportunity_id or not title or not source_url.startswith(
+            ("http://", "https://")):
+        return False, ["incomplete_opportunity_card"], None
+    return append_unique({
+        "id": opportunity_id,
+        "domain": "opportunities",
+        "type": "evidence",
+        "claim": "Candidate opportunity: %s" % title,
+        "evidence": [source_url],
+        "files": [],
+        "confidence": "unknown",
+        "action": "review",
+        "lane": "trabajo",
+        "decision": "revisar",
+        "purpose": "preserve an unverified opportunity candidate",
+        "next_action": card.get("next_action") or
+        "verify official bases, eligibility and exact deadline",
+        "owner": "human",
+        "work": {
+            "schema": "mak-work-v1",
+            "work_id": opportunity_id,
+            "parent_task": "opportunity_radar",
+            "lane": "trabajo",
+            "purpose": "candidate opportunity awaiting source verification",
+            "format": "oportunidad",
+            "created_at": card.get("captured_at") or "",
+            "provider": "convocatorias_seed",
+            "sources": [source_url],
+            "status": "unverified",
+            "identity": {
+                "kind": "opportunity",
+                "source_id": opportunity_id,
+                "entities": {"source": [source_url]},
+            },
+        },
+        "metadata": {"opportunity_card": card},
+    }, path=path, source=source)
+
+
+def portfolio_candidate_from_review(candidate, source="portfolio_external",
+                                    path=LEDGER):
+    """Queue an accepted external candidate for human review only."""
+    if not isinstance(candidate, dict):
+        return False, ["candidate_not_object"], None
+    triage = candidate.get("triage") or {}
+    entity_id = str(candidate.get("entity_id") or "").strip()
+    if not entity_id or triage.get("verdict") != "accept":
+        return False, ["candidate_not_traceable"], None
+    relations = triage.get("candidate_relations") or {}
+    if not isinstance(relations, dict) or not any(relations.values()):
+        return False, ["candidate_without_relations"], None
+    candidate_id = "portfolio:%s:external" % entity_id
+    return append_unique({
+        "id": candidate_id,
+        "domain": "portfolio",
+        "type": "evidence",
+        "claim": "External candidate relations for %s" % entity_id,
+        "evidence": ["portfolio_inbox:%s" % entity_id],
+        "files": [],
+        "confidence": "unknown",
+        "action": "review",
+        "lane": "obra",
+        "decision": "revisar",
+        "purpose": "preserve a traceable audiovisual candidate without publication",
+        "next_action": "human_review",
+        "owner": "human",
+        "work": {
+            "schema": "mak-work-v1",
+            "work_id": candidate_id,
+            "parent_task": "portfolio_visual_triage",
+            "lane": "obra",
+            "purpose": "candidate relation awaiting human review",
+            "format": candidate.get("format") or "registro",
+            "created_at": "",
+            "provider": triage.get("provider") or source,
+            "sources": ["portfolio_inbox:%s" % entity_id],
+            "status": "candidate_external",
+            "identity": {
+                "kind": "record",
+                "source_id": entity_id,
+                "entities": relations,
+            },
+        },
+        "metadata": {"portfolio_candidate": candidate},
+    }, path=path, source=source)
+
+
 def _path_roots():
     roots = []
     for value in (
@@ -469,6 +640,7 @@ def external_item_to_ledger(item, area, work=None):
     domain_by_area = {
         "rd_evidence": "rd",
         "iskvw_curation": "iskvw",
+        "portfolio_record": "portfolio",
         "mak_quality": "mak",
         "svg_pipeline": "svg",
         "tool_archaeology": "repo",
@@ -494,6 +666,12 @@ def external_item_to_ledger(item, area, work=None):
         if isinstance(item.get("product"), dict) else "",
         "next_action": item.get("reject_reason", "revisar evidencia local"),
         "owner": "MAK",
+        "metadata": {
+            "product": item.get("product", {})
+            if isinstance(item.get("product"), dict) else {},
+            "format": item.get("format", ""),
+            "evidence_kind": item.get("evidence_kind", ""),
+        },
     }
 
 
@@ -525,6 +703,7 @@ def review_to_ledger(review, area, metadata=None):
         "adobe": "reject" if verdict == "reject" else "rescue",
         "repo": "reject" if verdict == "reject" else "test",
         "opportunities": "reject" if verdict == "reject" else "review",
+        "portfolio": "reject" if verdict == "reject" else "review",
     }.get(domain, "reject")
     row = {
         "domain": domain,

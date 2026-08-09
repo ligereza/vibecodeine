@@ -23,6 +23,96 @@ ENV_ALIASES = {
     "AWS_DEFAULT_REGION": ("AWS_REGION",),
 }
 
+PROVIDER_CAPABILITIES = {
+    "watsonx": {"research", "text_review", "hypothesis"},
+    "aws": {"vision", "text_review", "hypothesis"},
+    "cerebras": {"text_review", "hypothesis"},
+    "groq": {"text_review", "hypothesis"},
+    "ollama": {"local_judge", "text_review", "hypothesis"},
+}
+PROVIDER_TIERS = {
+    "watsonx": "premium_burst", "aws": "premium_burst",
+    "cerebras": "free_cloud", "groq": "free_cloud",
+    "ollama": "local_floor",
+}
+PROVIDER_ORDER = ("watsonx", "aws", "cerebras", "groq", "ollama")
+TASK_CAPABILITIES = {
+    "visual": "vision", "vision": "vision", "research": "research",
+    "curation": "hypothesis", "review": "text_review", "judge": "local_judge",
+}
+
+
+def _provider_configured(provider, environment):
+    if provider == "watsonx":
+        return bool(environment.get("WATSONX_API_KEY") and
+                    environment.get("WATSONX_PROJECT_ID"))
+    if provider == "aws":
+        return bool(environment.get("AWS_ACCESS_KEY_ID") or
+                    environment.get("AWS_PROFILE") or
+                    environment.get("AWS_ROLE_ARN"))
+    if provider == "groq":
+        return bool(environment.get("GROQ_API_KEY"))
+    if provider == "cerebras":
+        return bool(environment.get("CEREBRAS_API_KEY"))
+    if provider == "ollama":
+        return bool(environment.get("OLLAMA_BASE_URL") or
+                    environment.get("OLLAMA_HOST"))
+    return False
+
+
+def provider_registry(environment=None):
+    """Return capabilities and health without exposing credentials."""
+    load_env()
+    environment = environment or os.environ
+    providers = []
+    for provider in PROVIDER_ORDER:
+        configured = _provider_configured(provider, environment)
+        providers.append({
+            "id": provider,
+            "tier": PROVIDER_TIERS[provider],
+            "capabilities": sorted(PROVIDER_CAPABILITIES[provider]),
+            "configured": configured,
+            "status": "ready" if configured else "unconfigured",
+        })
+    return {"schema": "faro-provider-registry-v1", "providers": providers}
+
+
+def provider_plan(available=None, allow_premium=True, capability=None):
+    """Choose a durable order while retaining temporary-credit priority."""
+    requested = {str(value).lower() for value in (available or [])}
+    if requested:
+        configured = set(requested)
+    else:
+        registry = provider_registry()
+        configured = {row["id"] for row in registry["providers"]
+                      if row["configured"]}
+    if requested:
+        configured |= {value for value in requested if value in PROVIDER_CAPABILITIES}
+    requested_capability = str(capability or "").lower()
+    required = (requested_capability if requested_capability in {
+        value for values in PROVIDER_CAPABILITIES.values() for value in values
+    } else TASK_CAPABILITIES.get(requested_capability))
+    result = []
+    for provider in PROVIDER_ORDER:
+        if provider not in configured:
+            continue
+        if not allow_premium and PROVIDER_TIERS[provider] == "premium_burst":
+            continue
+        if required and required not in PROVIDER_CAPABILITIES[provider]:
+            continue
+        result.append(provider)
+    return result
+
+
+def route_task(task_kind, available=None, allow_premium=True):
+    """Route a typed task and expose its fallback chain to the work envelope."""
+    capability = TASK_CAPABILITIES.get(str(task_kind or "").lower(), "text_review")
+    plan = provider_plan(available, allow_premium=allow_premium,
+                         capability=capability)
+    return {"schema": "faro-provider-route-v1", "task_kind": str(task_kind),
+            "capability": capability, "provider": plan[0] if plan else "local_deterministic",
+            "fallback_chain": plan[1:], "requires_external": bool(plan)}
+
 
 def load_env(path=None):
     """Load KEY=value pairs and normalize provider aliases without exposing them."""

@@ -55,5 +55,6 @@ English, like the rest of the repo — this is an operational document, not a
 product. Anything a human reads as a product (RD pieces and data, iskvw
 curation) goes in correct Spanish with diacritics.
 
-See also: `../CLAUDE.md` (how work is done here) and `../MAPA.md` (what the repo
-is and every command).
+See also: `../AGENTS.md` (current operating contract), `../CLAUDE.md`
+(compatibility and historical rules), and `../MAPA.md` (what the repo is and
+every command).

@@ -1,8 +1,12 @@
 # CAPACIDADES.md
 
+> Current entry point: read `AGENTS.md` and `context/LAST_HANDOFF.md` first.
+> This inventory describes reusable machinery; it is not a task queue.
+
 Inventario de arranque rapido. Objetivo: empezar un proyecto nuevo (dentro o
 fuera de este repo) sin tener que leer/buscar por todo `flujo`. Verificado
-contra el repo real el 2026-07-24 (comandos ejecutados, no memoria). Si algo
+contra el repo real; the inventory baseline is 2026-08-09 (commands executed,
+not memory). If something
 de aca no calza con lo que ves, el repo cambio despues -- confia en el repo,
 no en este doc, y actualizalo en el mismo PR que lo detecte.
 
@@ -153,7 +157,7 @@ jsonschema, requests).
 
 ## 4. Como arrancar proyecto nuevo (receta)
 
-1. Leer `CLAUDE.md` + este `CAPACIDADES.md` + `context/LAST_HANDOFF.md`. Nada mas antes de empezar.
+1. Read `AGENTS.md` + `context/LAST_HANDOFF.md` + this inventory. Nothing else before starting.
 2. Clasificar la ruta destino: nucleo vivo / operacion diaria / historico / generado (ver mapa de `CLAUDE.md`) antes de tocar nada.
 3. Elegir linea de trabajo: `rd` (ONG/datos/becas), `portafolio` (curatoria/iskvw), `mejoras` (repo/MAK/infra). Nunca contra `main` directo.
 4. Si toca produccion aislada: worktree propio (`EnterWorktree`/`git worktree add`), rama desde `origin/<linea>`.
@@ -253,7 +257,7 @@ estado REAL, medido, no la recomendacion:
 | `@thi.ng/tsne` | **descartada con medicion** | no puede bajar 768 dimensiones a 2 (dim de salida = dim de entrada), asi que `tools/gen_campo_iskvw.py` sigue con sklearn. `tests/test_iskvw_librerias.py` fija el limite para que nadie lo reintente | 2026-07-27 |
 | `@thi.ng/geom-trace-bitmap` | vendorizada, sin consumidor | imagen a vector de linea. El trazador vive en Python y ya esta afinado; solo paga si trazar se mueve al navegador | 2026-07-27 |
 | `@thi.ng/distance-transform` | vendorizada, sin consumidor | campo de distancia, paso previo para engrosar/erosionar un trazo. Ninguna piel llego a ese paso | 2026-07-27 |
-| `@thi.ng/graph` + `@thi.ng/rstream-graph` | **candidata, prioridad 1** | el micelio: `cultura/mak_plataforma/contrato_archivo.py` ya entrega 1004 piezas y 3188 vinculos como funcion pura. El grafo de thi.ng NO reemplaza el almacenamiento: entra como capa de analisis en memoria sobre lo ya indexado | sin medir |
+| `@thi.ng/graph` + `@thi.ng/rstream-graph` | **no adoptada: nombre por confirmar** | el micelio ya tiene una proyeccion en memoria en `cultura/mak_plataforma/contrato_archivo.py` y el Hub ahora expone el portafolio como `block/channel/connection`; `npm view @thi.ng/graph` devolvio 404 el 2026-08-09 y MAK no tiene Node. No se instala ni se reimplementa hasta identificar el paquete real | 2026-08-09 |
 | `@thi.ng/transducers` | candidata, prioridad 2 | los pipelines de ingesta/curatoria (`mak_curatoria`, `extraccion_db`) como transformaciones composables | sin medir |
 | `@thi.ng/validate` | candidata, prioridad 3 | limite de seguridad antes de persistir: metadatos de una pieza, config de un conjunto | sin medir |
 | `@thi.ng/geom` | candidata | geometria 2D. Se solapa con las 22 figuras del vocabulario, que hoy son geometria a mano en Python | sin medir |

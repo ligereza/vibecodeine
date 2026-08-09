@@ -104,6 +104,19 @@ def test_deterministic_review_revises_missing_evidence():
     assert review["verdict"] == "revise"
 
 
+def test_decision_record_uses_shared_decision_vocabulary():
+    record = discernment.decision_record(
+        "rd_evidence", {"items": [{
+            "claim": "official source missing", "evidence": [], "files": [],
+            "confidence": "medium", "action": "verify_source",
+        }]}, provider="local_deterministic")
+
+    assert record["schema"] == "faro-decision-v1"
+    assert record["verdict"] == "revise"
+    assert record["decision"] == "revisar"
+    assert record["promotion"] == "none"
+
+
 def test_deterministic_curation_judge_rejects_model_promotion():
     review = discernment.deterministic_review(
         "iskvw_curation", {"items": [{

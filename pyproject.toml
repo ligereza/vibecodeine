@@ -16,6 +16,7 @@ dependencies = [
     "rich>=15.0.0",
     "jsonschema>=4.26.0",
     "requests>=2.34.2",
+    "boto3>=1.35.0",
 ]
 
 [project.optional-dependencies]

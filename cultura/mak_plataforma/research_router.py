@@ -79,6 +79,15 @@ DEPARTMENT_PROFILES = {
         "required_evidence": "artwork_context",
         "promotion_actions": ("curate", "expose", "archive"),
     },
+    "portfolio_records": {
+        "destination": "portfolio",
+        "evidence": "media_metadata",
+        "judge": "record_gate",
+        "formats": ("registro",),
+        "allowed_formats": ("registro",),
+        "required_evidence": "media_metadata",
+        "promotion_actions": ("triangulate", "archive", "review"),
+    },
     "mak": {
         "destination": "mak",
         "evidence": "local_corpus",
@@ -113,6 +122,7 @@ DEPARTMENT_PROFILES = {
 AREA_PROFILES = {
     "rd_evidence": "rd",
     "iskvw_curation": "iskvw",
+    "portfolio_record": "portfolio_records",
     "mak_quality": "mak",
     "opportunity_radar": "opportunities",
 }

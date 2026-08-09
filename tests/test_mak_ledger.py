@@ -6,6 +6,20 @@ from cultura.mak_plataforma import ledger
 from cultura.mak_plataforma import tandas
 
 
+def test_work_envelope_is_shared_and_validated():
+    work = ledger.build_work_envelope(
+        "portfolio_record:sample", "portfolio:sample", "obra",
+        "triangular registro audiovisual", "registro", "aws",
+        sources=["instagram:sample"], status="awaiting_review",
+        identity={"kind": "record", "source_id": "instagram:sample",
+                  "entities": {"artist": ["DrefQuila"]}},
+        fallback_chain=["ollama", "local_deterministic"])
+
+    assert ledger.validate_work_envelope(work) == (True, [])
+    assert work["identity"]["kind"] == "record"
+    assert work["fallback_chain"] == ["ollama", "local_deterministic"]
+
+
 def test_append_item_accepts_typed_domain_record(tmp_path):
     path = tmp_path / "common_ledger.jsonl"
     ok, errors, row = ledger.append_item({
@@ -43,6 +57,42 @@ def test_external_batch_preserves_work_identity(tmp_path):
     assert errors == []
     assert rows[0]["work"]["work_id"] == "rd_evidence:round-1"
     assert rows[0]["work"]["parent_task"] == "brief:round-1"
+
+
+def test_portfolio_candidate_from_review_stays_human_review(tmp_path):
+    path = tmp_path / "common_ledger.jsonl"
+    candidate = {
+        "entity_id": "post-a",
+        "format": "media",
+        "triage": {
+            "provider": "aws",
+            "verdict": "accept",
+            "candidate_relations": {"artist": ["ober.byg"]},
+        },
+    }
+
+    ok, errors, row = ledger.portfolio_candidate_from_review(
+        candidate, path=str(path))
+
+    assert ok is True
+    assert errors == []
+    assert row["domain"] == "portfolio"
+    assert row["decision"] == "revisar"
+    assert row["owner"] == "human"
+    assert row["work"]["status"] == "candidate_external"
+    assert row["work"]["identity"]["entities"]["artist"] == ["ober.byg"]
+
+
+def test_portfolio_candidate_from_review_rejects_nonaccepted_verdict(tmp_path):
+    path = tmp_path / "common_ledger.jsonl"
+    ok, errors, row = ledger.portfolio_candidate_from_review({
+        "entity_id": "post-a",
+        "triage": {"verdict": "revise", "candidate_relations": {"artist": ["x"]}},
+    }, path=str(path))
+
+    assert ok is False
+    assert errors == ["candidate_not_traceable"]
+    assert row is None
 
 
 def test_typed_work_preserves_identity_entities_and_trace_status(tmp_path):
@@ -156,6 +206,51 @@ def test_external_batch_items_enter_common_ledger(tmp_path):
     assert rows[0]["action"] == "archive"
 
 
+def test_portfolio_record_keeps_record_domain_and_triangulation_action(tmp_path):
+    path = tmp_path / "common_ledger.jsonl"
+    payload = {"work": {
+        "schema": "mak-work-v1", "work_id": "portfolio_record:story01",
+        "parent_task": "batch:story01", "lane": "obra",
+        "purpose": "triage story record", "format": "external_batch",
+        "created_at": "2026-08-09T00:00:00Z", "provider": "aws",
+        "sources": ["story-queue.json"], "status": "awaiting_review",
+        "identity": {"schema": "mak-identity-v1", "kind": "record",
+                     "source_id": "portfolio_record:story01",
+                     "parent_id": "batch:story01", "entities": {},
+                     "event_date": ""}}, "items": [{
+        "claim": "registro audiovisual candidato",
+        "evidence": ["story-contact-sheet.jpg"],
+        "files": ["story-contact-sheet.jpg"], "confidence": "medium",
+        "action": "triangulate", "reject_reason": "",
+    }]}
+    rows, errors = tandas.append_common_ledger(
+        payload, "portfolio_record", path=str(path), source="aws")
+    assert errors == []
+    assert rows[0]["domain"] == "portfolio"
+    assert rows[0]["lane"] == "obra"
+    assert rows[0]["action"] == "triangulate"
+    assert rows[0]["work"]["identity"]["kind"] == "record"
+
+
+def test_external_product_metadata_survives_in_common_ledger(tmp_path):
+    path = tmp_path / "common_ledger.jsonl"
+    payload = {"items": [{
+        "claim": "registro audiovisual candidato",
+        "evidence": ["story-contact-sheet.jpg"],
+        "files": ["story-contact-sheet.jpg"], "confidence": "medium",
+        "action": "triangulate", "reject_reason": "",
+        "format": "registro", "evidence_kind": "media_metadata",
+        "product": {"record_kind": "story_record",
+                     "relations": {"artist": "ober"},
+                     "unknowns": ["venue por confirmar"]},
+    }]}
+    rows, errors = tandas.append_common_ledger(
+        payload, "portfolio_record", path=str(path), source="aws")
+    assert errors == []
+    assert rows[0]["metadata"]["product"]["record_kind"] == "story_record"
+    assert rows[0]["metadata"]["product"]["relations"]["artist"] == "ober"
+
+
 def test_review_ledger_preserves_judge_trace_metadata(tmp_path):
     path = tmp_path / "common_ledger.jsonl"
     review = {
@@ -194,6 +289,39 @@ def test_review_ledger_keeps_official_evidence_on_accept(tmp_path):
     assert ok is True
     assert errors == []
     assert row["evidence"] == ["https://official.example/call"]
+
+
+def test_opportunity_seed_enters_ledger_as_unverified_human_review(tmp_path):
+    path = tmp_path / "common_ledger.jsonl"
+    card = {
+        "schema": "faro-opportunity-card-v1",
+        "opportunity_id": "opportunity:fondart-regional",
+        "title": "Fondart regional",
+        "source_url": "https://fondosdecultura.cl/bases.pdf",
+        "captured_at": "2026-08-06",
+        "status": "unverified",
+        "next_action": "verify official bases, eligibility and exact deadline",
+        "deadline_raw": "segunda quincena de agosto",
+    }
+
+    ok, errors, row = ledger.opportunity_from_seed(card, path=str(path))
+
+    assert ok is True
+    assert errors == []
+    assert row["id"] == "opportunity:fondart-regional"
+    assert row["decision"] == "revisar"
+    assert row["owner"] == "human"
+    assert row["work"]["identity"]["kind"] == "opportunity"
+    assert row["metadata"]["opportunity_card"]["status"] == "unverified"
+
+
+def test_opportunity_seed_does_not_accept_untyped_candidate(tmp_path):
+    ok, errors, row = ledger.opportunity_from_seed(
+        {"title": "legacy"}, path=str(tmp_path / "common.jsonl"))
+
+    assert ok is False
+    assert errors == ["bad_opportunity_card_schema"]
+    assert row is None
 
 
 def test_summary_counts_by_domain_type_and_action(tmp_path):
