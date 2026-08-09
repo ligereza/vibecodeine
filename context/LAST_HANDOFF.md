@@ -160,8 +160,9 @@ Fresh SSH check on 2026-08-09:
 - The event-triangulation manifest also exposed a second path-shape variant:
   Watsonx returned `/portfolio-media/...` and the focused manifest used
   `candidate_rows`. Both forms are now resolved against the declared asset
-  root; a third bounded triangulation run is in progress under the same MAK
-  director-run folder.
+  root. The third bounded run reached the local judge and was rejected because
+  Watsonx proposed unsupported `tomas.pcaa` evidence absent from the XIO file;
+  no event relation was promoted.
 
 ## Verification already done
 
@@ -206,16 +207,19 @@ evidence, not another blind batch:
 
 1. Inspect the five AWS candidates and their exact manifest rows; keep them as
    audiovisual records until the human or metadata resolves their context.
-2. Use Watsonx only for bounded event triangulation against declared date,
+2. Add explicit human context for known collaborations and usernames before
+   another provider call; the model cannot convert a misspelled username into
+   evidence.
+3. Use Watsonx only for bounded event triangulation against declared date,
    venue, artist, producer, and XIO/RD evidence; do not rerun the rejected
    mixed curation batch.
-3. Keep hypotheses separated by date, visual, audio, event, venue, artist,
+4. Keep hypotheses separated by date, visual, audio, event, venue, artist,
    client, and collaboration. Use XIO data only where an actual event/setlist
    source exists; do not pretend one event is a universal source.
-4. Send every result through the local judge/deterministic fallback and record
+5. Send every result through the local judge/deterministic fallback and record
    candidate, review, refutation, or archive in the common ledger. No public
    promotion.
-5. Expose only the resulting next action in the Hub. The human should review
+6. Expose only the resulting next action in the Hub. The human should review
    grouped visual candidates, not read a wall of model prose.
 
 The extra Capataz checkout has already been preserved and removed. After this
