@@ -1,4 +1,7 @@
 # PLAN ANUAL 2026→2027 — CRECIMIENTO EXPONENCIAL
+
+> HISTORICAL VISION (2026-07). Do not execute its quarterly checklist without
+> reconciling it against `context/LAST_HANDOFF.md` and a direct user order.
 ### jul-2026 → jul-2027 · `dx/dt = kx` · cada trimestre duplica al anterior
 *Regla heredada del corpus Ω: cada meta declara su condición de fracaso (Ω11) antes de empezar. Los fracasos se registran con fecha, no se reinterpretan. El descanso es un ancla, no una claudicación.*
 

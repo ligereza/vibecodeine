@@ -1,87 +1,206 @@
-# LAST_HANDOFF — Faro
+# LAST_HANDOFF - Faro
 
-Actualizado: 2026-08-08
+Updated: 2026-08-09
+Status: session closed after a documentation and continuity pass.
 
-## Estado real
+## Read this first
 
-- Director: Faro/Codex en Windows; MAK es la caja Linux y ejecuta los modelos.
-- Ramas canónicas: `main`, `mak`, `rd`, `iskvw`. No crear ni conservar ramas de trabajo remotas.
-- Rama local actual: `mak`; cambios consolidados en `ec6cfed` y publicados en `origin/mak`.
-- No hay tags útiles declarados para este ciclo.
-- No usar Downloads como destino de artefactos.
+This file is the operational checkpoint. The order for a fresh agent is:
 
-## Cambios de esta sesión
+1. `AGENTS.md` - current rules and boundaries.
+2. This file - measured state, completed work, and next action.
+3. `CAPACIDADES.md` - reusable tools and provider inventory.
+4. `MAPA.md` - CLI, repo zones, and commands.
+5. Source files and focused logs only for the selected next circuit.
 
-- Contrato `mak-work-v1` en Capataz, tandas y ledger; entradas sin identidad quedan `legacy_unknown`.
-- Guardia de curatoria y cron destructivo pausados en MAK; no se relanza producción sin contexto válido.
-- Hub MAK activo y editor de portafolio conectado a inbox, tableros, triangulación, copilot y rescate legado.
-- La interfaz mantiene separadas búsqueda, bandeja de asociación, tableros y triangulación.
-- `/api/research/rescue` expone el rescate adjudicado sin promoción automática.
-- Watsonx revisó 23 candidatos legacy: 12 `rescue`, 11 `review`.
-- AWS hizo la segunda lectura: coincidencia con Watsonx en 12 casos.
-- Ningún informe fue borrado ni promovido al ledger.
-- Diez semillas creativas permanecen como `creative_reinterpretation`, fuera del conocimiento factual y del micelio público.
+Do not treat raw logs, old plans, Downloads, chat memory, or an old branch as
+instructions. Verify any statement that affects a destructive or remote action.
 
-## MAK comprobado
+## Identity and user direction
 
-- `mak-hub.service`: activo.
-- AWS funciona desde `/home/mak/plataforma/.venv`.
-- Watsonx funciona desde la configuración existente en MAK.
-- El servidor Ollama es un servicio del sistema; no es requisito para el rescate terminado.
-- El archivo de adjudicación vive en:
-  `/home/mak/plataforma/director_runs/faro-report-action-queue-20260808/RESCUE_ADJUDICATED.json`.
-- La instancia Gemma puede quedar cargada por el servicio Ollama; no confundirla con una tanda activa de Faro.
+- The current director is Faro/Codex. Cauce was the previous name used in old
+  sessions. Claude is historical context, not a current dependency.
+- The user is an artist, graphic designer, VJ, and RD collaborator. The system
+  must serve the user's daily artistic practice first, not optimize for a
+  generic sellable product.
+- The user wants a flexible system that can distinguish artwork, audiovisual
+  record, research, opportunity, client work, venue, event, artist, producer,
+  and collaboration without forcing one output format onto all of them.
+- Posts and reels may be artworks or work records. Stories are records by
+  default, not artworks. Instagram descriptions are preserved as source data;
+  they can be poetic artwork material or uncertain metadata, but they are not
+  factual proof by themselves.
+- Portfolio relations must keep artist, username, client, collaborator, event,
+  festival, venue, producer, location, date, and source separate. A username is
+  not automatically an artist. Human corrections are evidence and learning
+  signals, never silent overwrites.
+- The artist's own work has two top-level ownership values: personal or client.
+  Client work can be visual/live-show or promotional/web; RD can be print or
+  web; personal work can be 2D, 3D, mixed, collaboration, mathematical,
+  generative, or conceptual. Do not turn this into a rigid taxonomy without a
+  real need.
 
-## Decisiones aplazadas
+## Repository state
 
-- Las decisiones visuales del usuario en el editor quedan aplazadas; no bloquean el trabajo factual.
-- Los 12 `rescue` son candidatos, no verdad pública: requieren gate posterior antes del ledger.
-- Los 11 `review` deben conservar su incertidumbre y no pueden rellenarse por inferencia.
+- Windows workspace: `C:\IA\flujo`.
+- Windows branch: `mak`, aligned with `origin/mak` at `d45b1a5`.
+- `origin/main` is `e8f67c0`; Windows has only the four canonical remote refs:
+  `main`, `mak`, `rd`, `iskvw`. No Windows tags are present.
+- The working tree is intentionally dirty: the current system block is
+  uncommitted. Do not reset, discard, or publish it without an explicit user
+  instruction.
+- Current modified work is concentrated in `cultura/mak_plataforma/` (ledger,
+  identity, providers, decisions, Hub, batches, routing, service/watchdog),
+  `iskvw/editor.html`, `tools/update_readme_svg.py`, `arte-ascii-readme.svg`,
+  `CAPACIDADES.md`, tests, and three new portfolio/dossier documents. There
+  are also prior local changes in the same tree; inspect `git status` before
+  deciding scope.
+- No commit or push was performed in this closing pass.
 
-## PR y limpieza pendientes
+## MAK box: verified truth
 
-- Consolidar los cambios locales en `mak`, ejecutar tests focalizados y hacer push.
-- PR #511 contiene el bloque actual; no mezclarlo con el PR #512.
-- Cerrar el PR #512 y eliminar su rama remota porque es una utilidad autogenerada sin relación con el núcleo.
-- Tras comprobar CI de #511, decidir promoción a `main`; no hacer merge automático con checks rojos.
-- Sincronizar la caja MAK con el commit publicado y verificar servicio, rama y archivos desplegados.
+Fresh SSH check on 2026-08-09:
 
-## Limpieza 2026-08-08
+- Host: `mak@192.168.50.2`, hostname `dell-11m`.
+- The runtime checkout at `/home/mak/flujo` is on an extra Capataz branch,
+  `capataz/generar-una-secuencia-de-imagenes-basada-a3e2`, at `9886682`, with
+  uncommitted changes and a remote branch of the same name. This contradicts
+  the desired four-branch topology. Do not reset or delete it blindly; first
+  inventory and quarantine any unique work, then reconcile explicitly.
+- The runtime Hub is healthy and is managed by the user systemd unit
+  `/home/mak/.config/systemd/user/mak-hub.service`.
+- The unit is enabled and active. Current process:
+  `/home/mak/plataforma/.venv/bin/python /home/mak/plataforma/hub.py`.
+- Runtime hashes checked for `hub.py` and `ledger.py` match the current Windows
+  files. The virtualenv is required for `boto3`; do not replace it with the
+  system interpreter when testing AWS.
+- Do not copy Windows credentials to MAK. MAK already loads its own provider
+  environment. Never print or commit credential values.
+- Use MAK for long scans and model batches. Use Windows for orchestration,
+  focused edits, transport, and short verification.
 
-- Windows quedó limpio en la rama `mak`; `origin` conserva solo `main`, `mak`, `rd` e `iskvw`.
-- `/home/mak/flujo` quedó limpio en `main` y alineado con `origin/main`.
-- Los cambios locales que estaban en la caja se conservaron en
-  `/home/mak/quarantine/flujo-20260808-cleanup/`; no se eliminaron silenciosamente.
-- Los tags locales antiguos de la caja se inventariaron en esa cuarentena y se eliminaron; `origin` no tenía tags publicados.
-- El despliegue operativo vive separado en `/home/mak/plataforma`; `mak-hub.service` sigue activo.
+## What is completed
 
-## Regla de continuidad
+### Core traceability
 
-No añadir otra base ni otro framework. Toda tarea nueva debe conservar `work_id`, propósito, lane, formato, evidencia, proveedor, estado y siguiente acción. La promoción pública requiere evidencia y gate; las semillas creativas no se convierten en informes por accidente.
+- Existing ledger/tandas/discernment machinery now carries the universal
+  `mak-work-v1` envelope. It includes work identity, parent task, lane,
+  purpose, format, evidence, provider, status, owner, next action, allowed
+  decisions, fallback chain, and identity.
+- Invalid envelopes are rejected before local judging and ledger promotion.
+  Historical products remain intact and untyped legacy material remains
+  `legacy_unknown` rather than being rewritten.
+- Decision records use the existing decision vocabulary and preserve the work
+  envelope. Public promotion remains human-gated.
 
-## Cierre positivo — 2026-08-08
+### Provider mesh
 
-La sesión avanzó de forma real: MAK dejó de producir a ciegas, Watsonx y AWS trabajaron como lectores externos, y sus resultados quedaron trazables en vez de entrar directamente como verdad. El rescate de 23 informes produjo 12 candidatos `rescue` y 11 `review`, sin borrar ni publicar nada. También quedó conectada la interfaz de portafolio con la triangulación y el rescate, separando búsqueda, asociación y promoción.
+- `providers.py` exposes a provider registry and route plan without secrets.
+- Current intended routes: AWS for visual evidence, Watsonx for research and
+  hypotheses, Ollama for local judging, and deterministic fallback when a
+  model is unavailable or slow. Cerebras/Groq remain optional future/free
+  lanes under the same contract.
+- `tandas.py` routes through the provider registry and preserves existing
+  batch compatibility. Empty explicit paths no longer erase area evidence.
 
-Lo aprendido para mañana: no confundir una tarea externa con una decisión del usuario; las 23 adjudicaciones pueden seguir sin bloquear la curaduría visual. La higiene del repositorio también es parte del sistema: un archivo de usuario en un log puede romper CI, y una rama o tag local puede parecer trabajo vigente cuando no lo es. La próxima sesión debe revisar el resultado final del PR #511, no repetir auditorías ya cerradas, y sincronizar MAK solo después de una promoción comprobada a `main`.
+### Portfolio, vision, and GTM
 
-## Reanudación — 2026-08-08
+- The portfolio editor is part of the MAK Hub at `:8900/portafolio/`; no new
+  port was created. Search, association basket, boards, triangulation, and
+  promotion remain separate actions.
+- The editor shows actual media and a copilot layer. GTM is a local projection
+  over the archive, not a second database. Human board scope and feedback
+  affect ranking but do not rewrite canonical archive data.
+- `GET /api/portfolio/organism` returns a projection-only organism with common
+  entity envelopes. `GET /api/portfolio/identity-graph` returns the explicit
+  metadata graph. It never parses a description into an artist or venue.
+- `GET /api/portfolio/copilot/learning` exposes bounded feedback learning.
+- AWS visual analysis is limited to actual image evidence. Videos are not sent
+  without an existing still/contact sheet/poster. The first real AWS call on
+  `18108033539083566.jpg` persisted `faro-portfolio-vision-v1` features in
+  `/home/mak/plataforma/director_runs/portfolio-editor-20260808/`.
+- A five-reel visual circuit passed the local judge and entered the common
+  ledger as local curation candidates. A five-story circuit used contact
+  sheets and `portfolio_record`; it remained audiovisual records, not works.
+- Current inbox scale is 7,044 pieces: 5,919 stories and 1,125 published media.
+  Do not scan or send all of them to a model. A prior story projection found
+  106 explicit-signal candidates across 102 dates; five high-signal stories
+  have contact sheets for controlled follow-up.
 
-El PR #511 reveló dos fallos de higiene, no fallos del circuito: `tools/construir_mapa_visual.py` no estaba registrado en `CAPACIDADES.md`, y el runner de idioma detectó la docstring española del adjudicador. Ambos fueron corregidos en `7a98c13` y enviados a `mak`; CI debe repetir ahora la verificación. La suite focalizada de higiene tarda más de dos minutos en Windows y fue detenida para no dejar un proceso costoso colgado; la corrección se verificó por compilación y `git diff --check`.
+### Research rescue and separation
 
-## Autonomía combinada — 2026-08-08
+- Watsonx and AWS reviewed the same 23 legacy reports. Adjudication produced
+  12 `rescue` candidates and 11 `review` items; there was no deletion or public
+  promotion. The adjudication file is on MAK under
+  `/home/mak/plataforma/director_runs/faro-report-action-queue-20260808/`.
+- The public iskvw archive is separate from research by default. Research
+  essays/icons enter only through an explicit opt-in flag; they are not trash,
+  but they are not public substrate by default.
+- `story_record` uses `format=registro`, `evidence_kind=media_metadata`, and
+  actions such as `triangulate`, `archive`, `review`, and `reject`.
 
-Se unieron las dos rutas sin crear otro framework: la columna vertebral conserva
-`mak-work-v1`, decisiones humanas y ledger append-only; el editor ahora convierte
-selecciones, exclusiones y relaciones aceptadas/rechazadas en señales trazables.
-Los tableros registran sus nuevas parejas como feedback contextual, sin publicar
-ni convertir una hipótesis en hecho. El copiloto aplica un perfil acotado por
-faceta (`artist`, `venue`, `event`, `date`, `client`, `collab`, `period`), respeta
-el alcance explícito del tablero y evita mezclar candidatos fuera de él.
+## Verification already done
 
-La superficie `/api/portfolio/copilot/learning` expone el aprendizaje resumido
-al editor. Las sugerencias siguen siendo candidatas; Watsonx/AWS pueden
-proponer hipótesis y la decisión humana modifica el ranking futuro, con pesos
-limitados para impedir que una tanda pequeña se convierta en dogma. Tests
-focalizados de copilot, Capataz y enrutamiento pasan (`46 passed`). PR #511
-seguía con Windows ejecutándose; no se mezcló este bloque con PR #512.
+- Focused Windows tests passed:
+  `py -m pytest tests/test_mak_tandas.py tests/test_mak_ledger.py tests/test_mak_discernment.py tests/test_mak_portfolio_bridge.py tests/test_copilot.py tests/test_iskvw_editor_contract.py -q`
+- Modified Python modules compile; the editor JavaScript syntax check passed;
+  `git diff --check` passed.
+- The full suite was attempted with a 180-second limit and timed out without
+  output. Do not make a full-suite rerun the next task. Diagnose it only after
+  a meaningful circuit is complete.
+- Closing documentation verification passed:
+  `py -m pytest tests/test_higiene_docs.py tests/test_mapa_completo.py -q`
+  (`5 passed, 1 skipped`), `git diff --check` passed, and this handoff is
+  ASCII-only (198 lines).
+
+## Current boundaries and pauses
+
+- No new framework, ledger, graph, policy engine, or duplicate tool.
+- No automatic public promotion, contact, Instagram automation, or deletion
+  of rejected material. Rejection is a traceable decision, not disappearance.
+- No mass curation of 7,044 items. Use a stratified sample and preserve a
+  manifest.
+- The user explicitly reopened the README text layer on 2026-08-09. `README.md`
+  now carries the current identity, map, branches, MAK boundary, work envelope,
+  lanes, provider roles, and autonomy criterion from the supplied brief.
+  `arte-ascii-readme.svg` was regenerated through the existing tool; the
+  double-cup geometry remains protected. Do not redesign the vessel without a
+  new artistic instruction.
+- Domain migration is last. First keep the archive, organism, RD surface, and
+  export independent of iskvw.cl.
+- The old general plans are not active: `PLAN.md`,
+  `PLAN_ANUAL_2026-2027.md`, `PROYECCION.md`, and the deleted
+  `context/PLAN_CIERRE_PRE_COMPACT.md` are historical references only.
+
+## Next action
+
+Do not start with Git cleanup, branch deletion, a full test suite, or another
+audit. Start the first durable vertical circuit on a small stratified manifest
+(20-40 items, not all 7,044):
+
+1. Select stories, posts, reels, and at least one known metadata-rich item on
+   MAK. Save the manifest under a new dated director-run folder, not Downloads.
+2. For images/contact sheets, call AWS visual analysis. For metadata or factual
+   research, call Watsonx with bounded source manifests. Route both through the
+   existing provider plan and `mak-work-v1` envelope.
+3. Keep hypotheses separated by date, visual, audio, event, venue, artist,
+   client, and collaboration. Use XIO data only where an actual event/setlist
+   source exists; do not pretend one event is a universal source.
+4. Send every result through the local judge/deterministic fallback and record
+   candidate, review, refutation, or archive in the common ledger. No public
+   promotion.
+5. Expose only the resulting next action in the Hub. The human should review
+   grouped visual candidates, not read a wall of model prose.
+
+After that circuit, reconcile the extra Capataz checkout on MAK against the
+four canonical branches. Preserve any unique work before cleaning it. Only
+then consider a single mechanical promotion PR. Do not touch the domain or
+README/SVG before these gates are complete.
+
+## Session close rule
+
+At the end of every future session, update this file with measured facts, not
+intentions: exact branch/commit, MAK process, files changed, tests run, external
+calls, failures, user decisions, and one next action. Keep historical detail
+in `_logs/cauce_director/20260805/`; keep this file short enough that a fresh
+agent can actually read it.

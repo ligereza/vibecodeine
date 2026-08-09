@@ -15,6 +15,7 @@ Rutas: / (cara) · /api/organismo · /api/micelio · /api/archivo · /api/ejecut
 """
 import html
 import json
+import math
 import mimetypes
 import os
 import re
@@ -31,6 +32,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import salud  # noqa: E402
 import copilot  # noqa: E402
 import providers  # noqa: E402
+import discernment  # noqa: E402
 import cuotas  # noqa: E402
 import ideas  # noqa: E402
 import contrato_archivo  # noqa: E402
@@ -68,6 +70,8 @@ PORTFOLIO_INBOX = os.path.join(
 PORTFOLIO_MEDIA_ROOT = os.path.join(HOME, "portfolio_media/media")
 PORTFOLIO_SELECTIONS = os.path.join(
     HOME, "plataforma/director_runs/portfolio-editor-20260808/selections.jsonl")
+PORTFOLIO_CLASSIFICATIONS = os.path.join(
+    HOME, "plataforma/director_runs/portfolio-editor-20260808/classifications.jsonl")
 PORTFOLIO_BOARDS = os.path.join(
     HOME, "plataforma/director_runs/portfolio-editor-20260808/boards.json")
 PORTFOLIO_CONNECTIONS = os.path.join(
@@ -76,6 +80,8 @@ PORTFOLIO_FEEDBACK = os.path.join(
     HOME, "plataforma/director_runs/portfolio-editor-20260808/copilot_feedback.jsonl")
 PORTFOLIO_EXTERNAL = os.path.join(
     HOME, "plataforma/director_runs/portfolio-editor-20260808/copilot_external.jsonl")
+PORTFOLIO_VISION = os.path.join(
+    HOME, "plataforma/director_runs/portfolio-editor-20260808/vision_features.jsonl")
 PORTFOLIO_TRIANGULATION = os.path.join(
     HOME, "plataforma/director_runs/instagram-triangulacion-20260807/faro-triangulation-watsonx.normalized.json")
 PORTFOLIO_TRIANGULATION_REVIEW = os.path.join(
@@ -641,6 +647,41 @@ def _portfolio_selections():
     return result
 
 
+def _portfolio_classifications():
+    result = {}
+    try:
+        with open(PORTFOLIO_CLASSIFICATIONS, encoding="utf-8") as fh:
+            for line in fh:
+                try:
+                    row = json.loads(line)
+                except ValueError:
+                    continue
+                item_id = str(row.get("item_id", "")).strip()
+                if item_id and isinstance(row.get("fields"), dict):
+                    result[item_id] = row
+    except OSError:
+        pass
+    return result
+
+
+def _portfolio_vision():
+    result = {}
+    try:
+        with open(PORTFOLIO_VISION, encoding="utf-8") as fh:
+            for line in fh:
+                try:
+                    row = json.loads(line)
+                except ValueError:
+                    continue
+                item_id = str(row.get("item_id", "")).strip()
+                features = row.get("features")
+                if item_id and isinstance(features, dict):
+                    result[item_id] = row
+    except OSError:
+        pass
+    return result
+
+
 def _portfolio_inbox():
     try:
         with open(PORTFOLIO_INBOX, encoding="utf-8") as fh:
@@ -649,9 +690,15 @@ def _portfolio_inbox():
         return {"schema": "faro-portfolio-inbox-v1", "total": 0,
                 "available_assets": 0, "items": [], "error": "inbox_no_disponible"}
     selections = _portfolio_selections()
+    classifications = _portfolio_classifications()
+    vision = _portfolio_vision()
     for item in payload.get("items", []):
         item["selection"] = (selections.get(item.get("id")) or {}).get(
             "decision", "pendiente")
+        item["classification"] = (classifications.get(item.get("id")) or {}).get(
+            "fields", {})
+        item["vision_features"] = (vision.get(item.get("id")) or {}).get(
+            "features", {})
     payload["selected_count"] = sum(
         1 for item in payload.get("items", []) if item["selection"] == "seleccionar")
     return payload
@@ -660,6 +707,92 @@ def _portfolio_inbox():
 def _portfolio_item(item_id):
     return next((item for item in _portfolio_inbox().get("items", [])
                  if item.get("id") == str(item_id or "")), None)
+
+
+def _portfolio_metadata_index():
+    return contrato_archivo.portfolio_metadata_index(
+        _portfolio_inbox().get("items", []))
+
+
+def _portfolio_identity_graph():
+    return contrato_archivo.portfolio_identity_graph(
+        _portfolio_inbox().get("items", []),
+        connections=_portfolio_jsonl(PORTFOLIO_CONNECTIONS),
+        context_links=_portfolio_context_link_rows())
+
+
+def _director_capabilities():
+    routes = {}
+    for task_kind in ("visual", "research", "curation", "review", "judge"):
+        routes[task_kind] = providers.route_task(task_kind)
+    return {
+        "ok": True,
+        "schema": "faro-director-capabilities-v1",
+        "work_schema": "mak-work-v1",
+        "lanes": list(_ledger.LANES) if _ledger is not None else ["obra", "trabajo", "sistema"],
+        "decisions": list(_ledger.DECISIONS) if _ledger is not None else [
+            "hacer", "revisar", "refutar", "archivar", "descartar"],
+        "providers": providers.provider_registry(),
+        "routes": routes,
+        "policy": {
+            "models_write_candidates_only": True,
+            "public_promotion_requires_human": True,
+            "free_text_is_not_identity": True,
+        },
+    }
+
+
+def _director_work(body):
+    work = body.get("work") if isinstance(body.get("work"), dict) else body
+    if _ledger is None:
+        return {"ok": False, "error": "ledger_unavailable"}
+    valid, errors = _ledger.validate_work_envelope(work)
+    if not valid:
+        return {"ok": False, "error": "work_contract_invalid", "errors": errors}
+    if not body.get("persist"):
+        return {"ok": True, "status": "validated", "work": work,
+                "persisted": False}
+    row = {
+        "id": "work:%s" % work["work_id"], "domain": "mak", "type": "task",
+        "claim": "typed work envelope %s" % work["work_id"],
+        "evidence": work.get("sources", []), "files": [], "confidence": "medium",
+        "action": "review", "decision": "revisar", "purpose": work.get("purpose"),
+        "next_action": work.get("next_action"), "owner": work.get("owner", "MAK"),
+        "work": work,
+    }
+    ok, errors, saved = _ledger.append_item(row, path=COMMON_LEDGER,
+                                            source="director_work")
+    return {"ok": ok, "status": "persisted" if ok else "rejected",
+            "errors": errors, "work": saved.get("work") if saved else work}
+
+
+def _director_decision(body):
+    area = str(body.get("area") or "").strip()
+    payload = body.get("payload") if isinstance(body.get("payload"), dict) else {}
+    record = discernment.decision_record(
+        area, payload, work=body.get("work"),
+        provider=str(body.get("provider") or "local_deterministic"))
+    if not body.get("persist") or _ledger is None:
+        return {"ok": True, "record": record, "persisted": False}
+    domain = {
+        "mak_quality": "mak", "rd_evidence": "rd", "iskvw_curation": "iskvw",
+        "portfolio_record": "portfolio", "tool_archaeology": "repo",
+        "svg_pipeline": "svg", "adobe_rescue": "adobe",
+        "opportunity_radar": "opportunities",
+    }.get(area, "mak")
+    row = {
+        "id": "decision:%s:%s" % (area, time.strftime("%Y%m%d%H%M%S")),
+        "domain": domain, "type": "reject" if record["verdict"] == "reject" else "decision",
+        "claim": record["reason"], "evidence": record["missing_evidence"], "files": [],
+        "confidence": "medium", "action": "reject" if record["verdict"] == "reject" else "review",
+        "decision": record["decision"], "reject_reason": record["reason"] if record["verdict"] == "reject" else "",
+        "next_action": record["next_action"], "owner": record["owner"],
+        "metadata": {"decision_record": record}, "work": record.get("work") or {},
+    }
+    ok, errors, saved = _ledger.append_item(row, path=COMMON_LEDGER,
+                                            source="director_decision")
+    return {"ok": ok, "record": record, "persisted": ok,
+            "errors": errors, "ledger_id": saved.get("id") if saved else ""}
 
 
 def _portfolio_triangulation():
@@ -680,7 +813,9 @@ def _portfolio_triangulation():
             "status": "candidate_only", "source": data.get("source"),
             "candidate_count": data.get("candidate_count", 0),
             "groups": groups if isinstance(groups, list) else [],
-            "rules": data.get("rules", []), "human_resolutions": reviews}
+            "rules": data.get("rules", []), "human_resolutions": reviews,
+            "human_context": _portfolio_human_context_records(),
+            "human_context_links": _portfolio_context_link_rows()}
 
 
 def _legacy_rescue_queue():
@@ -726,16 +861,107 @@ def _portfolio_triage_record(body):
     return {"ok": True, "resolution": row}
 
 
+def _portfolio_context_links():
+    links = {}
+    try:
+        with open(PORTFOLIO_TRIANGULATION_REVIEW, encoding="utf-8") as fh:
+            rows = [json.loads(line) for line in fh if line.strip()]
+    except (OSError, ValueError):
+        rows = []
+    for row in rows:
+        if not isinstance(row, dict) or row.get("schema") != "mak-triangulation-context-link-v1":
+            continue
+        source_id = str(row.get("source_id", "")).strip()
+        group_key = str(row.get("group_key", "")).strip()
+        if source_id and group_key and group_key not in links.setdefault(source_id, []):
+            links[source_id].append(group_key)
+    return links
+
+
+def _portfolio_context_link_rows():
+    links = []
+    try:
+        with open(PORTFOLIO_TRIANGULATION_REVIEW, encoding="utf-8") as fh:
+            rows = [json.loads(line) for line in fh if line.strip()]
+    except (OSError, ValueError):
+        rows = []
+    for row in rows:
+        if isinstance(row, dict) and row.get("schema") == "mak-triangulation-context-link-v1":
+            links.append(row)
+    return links
+
+
+def _portfolio_context_link(body):
+    source_id = str(body.get("source_id", "")).strip()[:240]
+    group = str(body.get("group_key", "")).strip()[:120]
+    if not source_id:
+        return {"ok": False, "error": "contexto_vacio"}
+    if not group:
+        return {"ok": False, "error": "grupo_vacio"}
+    known = {str(row.get("key", "")) for row in
+             _portfolio_triangulation().get("groups", [])}
+    if group not in known:
+        return {"ok": False, "error": "grupo_no_encontrado"}
+    context = next((row for row in _portfolio_human_context_records()
+                    if row.get("source_id") == source_id), None)
+    if not context:
+        return {"ok": False, "error": "contexto_humano_no_encontrado"}
+    for row in _portfolio_context_link_rows():
+        if row.get("source_id") == source_id and row.get("group_key") == group:
+            return {"ok": True, "resolution": row, "already_linked": True}
+    row = {
+        "schema": "mak-triangulation-context-link-v1",
+        "record_kind": "context_to_group",
+        "source_id": source_id,
+        "group_key": group,
+        "status": "human_reviewed",
+        "origin": "human_context",
+        "context_fields": context.get("context_fields", {}),
+        "human_note": context.get("human_note", ""),
+        "confidence": "human_confirmed",
+        "promotion": "none",
+        "ts": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+    }
+    os.makedirs(os.path.dirname(PORTFOLIO_TRIANGULATION_REVIEW), exist_ok=True)
+    with open(PORTFOLIO_TRIANGULATION_REVIEW, "a", encoding="utf-8") as fh:
+        fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+    return {"ok": True, "resolution": row, "already_linked": False}
+
+
 def _portfolio_item_context(item_id):
+    external = _portfolio_external_candidates(item_id)
+    accepted = [
+        {
+            "source_id": row.get("source_id", ""),
+            "provider": row.get("provider", "unknown"),
+            "candidate_relations": row.get("candidate_relations", {}),
+            "context_fields": row.get("context_fields", {}),
+            "context_state": row.get("context_state", "note_only"),
+            "evidence_basis": row.get("evidence_basis", []),
+            "human_note": row.get("human_note", ""),
+            "reviewed_at": row.get("reviewed_at", ""),
+            "status": "human_accepted_candidate",
+            "public_promotion": False,
+        }
+        for row in external.get("items", [])
+        if row.get("human_decision") == "accept"
+    ]
+    context = {"human_evidence": {
+        "schema": "faro-portfolio-human-context-v1",
+        "accepted": accepted,
+        "count": len(accepted),
+        "promotion": "none",
+    }}
     data = _portfolio_triangulation()
     for group in data.get("groups", []):
         if str(item_id) not in {str(value) for value in group.get("items", [])}:
             continue
         reviews = [row for row in data.get("human_resolutions", [])
                    if row.get("group_key") == group.get("key")]
-        return {"triangulation_group": group,
-                "human_resolution": reviews[-1] if reviews else {}}
-    return {}
+        context.update({"triangulation_group": group,
+                        "human_resolution": reviews[-1] if reviews else {}})
+        break
+    return context
 
 
 def _portfolio_select(item_id, decision, board_id=""):
@@ -775,6 +1001,45 @@ def _portfolio_select(item_id, decision, board_id=""):
             "owner": "human", "work": row["work"]},
             path=COMMON_LEDGER, source="portfolio_editor")
     return {"ok": True, "row": row}
+
+
+def _portfolio_classify(body):
+    item_id = str(body.get("item_id", "")).strip()
+    item = _portfolio_item(item_id)
+    if not item:
+        return {"ok": False, "error": "item_no_encontrado"}
+    allowed = {
+        "ownership": {"personal", "client"},
+        "purpose": {"expression", "research", "narrative", "commercial",
+                     "expositive", "editorial"},
+        "nature": {"2d", "3d", "hybrid"},
+        "format": {"video", "illustration", "print", "web"},
+    }
+    fields = body.get("fields") if isinstance(body.get("fields"), dict) else {}
+    normalized = {}
+    for key, values in allowed.items():
+        value = str(fields.get(key, "")).strip().lower()
+        if not value:
+            continue
+        if value not in values:
+            return {"ok": False, "error": "valor_de_clasificacion_invalido",
+                    "field": key}
+        normalized[key] = value
+    if not normalized:
+        return {"ok": False, "error": "clasificacion_vacia"}
+    row = {
+        "schema": "faro-portfolio-classification-v1",
+        "item_id": item["id"], "fields": normalized,
+        "status": "human_draft", "promotion": "none", "owner": "human",
+        "source": {"publicacion_id": item.get("publicacion_id", ""),
+                   "fecha": item.get("fecha", ""),
+                   "asset_path": item.get("asset_path", "")},
+        "ts": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+    }
+    os.makedirs(os.path.dirname(PORTFOLIO_CLASSIFICATIONS), exist_ok=True)
+    with open(PORTFOLIO_CLASSIFICATIONS, "a", encoding="utf-8") as fh:
+        fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+    return {"ok": True, "classification": normalized, "row": row}
 
 
 def _portfolio_boards():
@@ -869,6 +1134,145 @@ def _portfolio_feedback():
     return rows
 
 
+def _portfolio_jsonl(path):
+    rows = []
+    try:
+        with open(path, encoding="utf-8") as fh:
+            for line in fh:
+                try:
+                    row = json.loads(line)
+                except ValueError:
+                    continue
+                if isinstance(row, dict):
+                    rows.append(row)
+    except OSError:
+        pass
+    return rows
+
+
+def _portfolio_organism_projection():
+    """Project existing portfolio data as blocks, channels and connections.
+
+    This is an Are.na-like view, not a second store. The inbox remains the
+    source for blocks, boards become channels, and the existing connection
+    log becomes connections. Human feedback annotates those links without
+    turning a candidate relation into a fact.
+    """
+    inbox_items = _portfolio_inbox().get("items", [])
+    valid_items = {
+        str(item.get("id")): item for item in inbox_items
+        if item.get("id")
+    }
+    blocks = []
+    for item_id, item in valid_items.items():
+        content_type = str(item.get("tipo_contenido") or "media")
+        contract = contrato_archivo.desde_portfolio_item(item)
+        blocks.append({
+            "id": item_id,
+            "kind": "block",
+            "record_kind": contract["record_kind"],
+            "content_type": content_type,
+            "date": item.get("fecha"),
+            "publication_id": item.get("publicacion_id"),
+            "description_original": item.get("descripcion_original", ""),
+            "asset_path": item.get("asset_path"),
+            "asset_available": bool(item.get("asset_available")),
+            "selection": item.get("selection", "pendiente"),
+            "contract": contract,
+        })
+
+    channels = []
+    for board in _portfolio_boards().get("boards", []):
+        board_id = str(board.get("id") or "")
+        if not board_id:
+            continue
+        block_ids = [str(item_id) for item_id in board.get("item_ids", [])
+                     if str(item_id) in valid_items]
+        channels.append({
+            "id": board_id,
+            "kind": "channel",
+            "name": board.get("name", ""),
+            "facet": board.get("facet", "general"),
+            "value": board.get("value", ""),
+            "block_ids": block_ids,
+        })
+
+    feedback_by_pair = {}
+    for row in _portfolio_feedback():
+        key = (str(row.get("source_id")), str(row.get("target_id")))
+        if key[0] in valid_items and key[1] in valid_items and key[0] != key[1]:
+            feedback_by_pair[key] = row
+
+    connections = []
+    for row in _portfolio_jsonl(PORTFOLIO_CONNECTIONS):
+        source_id = str(row.get("source_id") or "")
+        target_id = str(row.get("target_id") or "")
+        if (source_id not in valid_items or target_id not in valid_items
+                or source_id == target_id):
+            continue
+        feedback = feedback_by_pair.get((source_id, target_id), {})
+        action = str(feedback.get("action") or "")
+        connections.append({
+            "id": "connection:%s:%s:%s" % (
+                source_id, target_id, str(row.get("relation") or "related")),
+            "kind": "connection",
+            "source_id": source_id,
+            "target_id": target_id,
+            "relation": row.get("relation", "relacionada"),
+            "origin": "human" if action in ("accept", "correct")
+            else "connection_log",
+            "decision": action or "candidate",
+            "confidence": "high" if action in ("accept", "correct") else "unknown",
+            "evidence": (["human_feedback:%s" % action] if action else []),
+            "board_id": feedback.get("board_id", ""),
+        })
+
+    decisions = []
+    for row in feedback_by_pair.values():
+        decisions.append({
+            "source_id": str(row.get("source_id")),
+            "target_id": str(row.get("target_id")),
+            "action": row.get("action", "ignore"),
+            "facet": row.get("facet", "unknown"),
+            "relation": row.get("relation", "relacionada"),
+            "board_id": row.get("board_id", ""),
+        })
+    return {
+        "ok": True,
+        "schema": "faro-portfolio-organism-v1",
+        "mode": "projection_only",
+        "source_of_truth": ["portfolio_inbox", "classifications", "vision_features",
+                             "boards", "connections", "copilot_feedback"],
+        **_portfolio_contract_surface(),
+        "blocks": blocks,
+        "channels": channels,
+        "connections": connections,
+        "decisions": decisions,
+        "counts": {
+            "blocks": len(blocks), "channels": len(channels),
+            "connections": len(connections), "decisions": len(decisions),
+        },
+    }
+
+
+def _portfolio_contract_surface():
+    """Return only the small contract envelope used by lightweight clients."""
+    return {
+        "projection_contract": {
+            "schema": contrato_archivo.PORTFOLIO_ENTITY_SCHEMA,
+            "required": ["entity_id", "source_id", "lane", "purpose", "format",
+                          "evidence_kind", "status", "next_action", "owner",
+                          "consent", "publication"],
+            "layers": {"archive": "source_of_truth", "organism": "projection_only"},
+        },
+        "publication_policy": {
+            "default_status": "private_candidate",
+            "requires_recorded_consent": True,
+            "requires_human_gate": True,
+        },
+    }
+
+
 def _portfolio_suggestions(item_id, board_id=""):
     source = _portfolio_item(item_id)
     if not source:
@@ -877,14 +1281,234 @@ def _portfolio_suggestions(item_id, board_id=""):
                   if b.get("id") == str(board_id)), {})
     context = dict(board)
     context.update(_portfolio_item_context(item_id))
-    result, suppressed = copilot.build_suggestions(source, _portfolio_inbox().get("items", []),
-                                       selections=_portfolio_selections(),
-                                       feedback=_portfolio_feedback(),
-                                       context=context, limit=24)
+    inbox_items = _portfolio_inbox().get("items", [])
+    feedback = _portfolio_feedback()
+    result, suppressed = copilot.build_suggestions(source, inbox_items,
+                                                   selections=_portfolio_selections(),
+                                                   feedback=feedback,
+                                                   context=context, limit=24)
+    map_surface = copilot.build_gtm_map(inbox_items, feedback=feedback)
+    map_by_id = {row["item_id"]: row for row in map_surface.get("items", [])}
+    source_position = map_by_id.get(str(item_id))
+    for row in result:
+        target_position = map_by_id.get(str(row.get("item_id")))
+        if not source_position or not target_position:
+            continue
+        distance = math.sqrt(
+            (source_position["x"] - target_position["x"]) ** 2
+            + (source_position["y"] - target_position["y"]) ** 2)
+        row["map_distance"] = round(distance, 6)
+        row["map_position"] = {
+            "x": target_position["x"], "y": target_position["y"]}
+        row["reasons"].append("vecindad GTM: %.3f" % distance)
+        row["score"] += max(0.0, 3.0 - (distance * 6.0))
+    result.sort(key=lambda row: (-row["score"], row["item_id"], row["relation_type"]))
     return {"ok": True, "schema": "faro-portfolio-copilot-v3", "source_id": source.get("id"),
             "provider": "local_hypothesis_engine", "context": context,
+            "map": {"schema": map_surface["schema"], "engine": map_surface["engine"],
+                    "source_position": source_position},
             "learning": copilot.learning_profile(_portfolio_feedback()),
             "suppressed_redundant": suppressed, "suggestions": result}
+
+
+def _portfolio_external_candidates(item_id=""):
+    """Expose traceable external candidates without exposing raw model output."""
+    if _ledger is None:
+        return {"ok": True, "schema": "faro-portfolio-external-candidate-surface-v1",
+                "total": 0, "items": [], "public_promotion": False}
+    requested = str(item_id or "").strip()
+    items = []
+    reviews = {}
+    rows = _ledger.read_items(COMMON_LEDGER, limit=10000)
+    for row in rows:
+        review = (row.get("metadata") or {}).get("external_candidate_review")
+        if not isinstance(review, dict):
+            continue
+        candidate_id = str(review.get("candidate_id") or "").strip()
+        if candidate_id and candidate_id not in reviews:
+            reviews[candidate_id] = review
+        elif candidate_id and str(review.get("ts") or "") >= str(
+                reviews[candidate_id].get("ts") or ""):
+            reviews[candidate_id] = review
+    for row in rows:
+        if row.get("domain") != "portfolio":
+            continue
+        candidate = (row.get("metadata") or {}).get("portfolio_candidate")
+        if not isinstance(candidate, dict):
+            continue
+        source_id = str(candidate.get("entity_id") or
+                        (row.get("work") or {}).get("identity", {}).get(
+                            "source_id", "")).strip()
+        if requested and source_id != requested:
+            continue
+        triage = candidate.get("triage") or {}
+        review = reviews.get(row.get("id"), {})
+        human_decision = review.get("decision", "pending")
+        context_fields = review.get("context_fields", {})
+        if not isinstance(context_fields, dict):
+            context_fields = {}
+        source_item = _portfolio_item(source_id) or {}
+        items.append({
+            "ledger_id": row.get("id", ""),
+            "source_id": source_id,
+            "provider": triage.get("provider", "unknown"),
+            "verdict": triage.get("verdict", "revise"),
+            "candidate_relations": triage.get("candidate_relations", {}),
+            "evidence_basis": triage.get("evidence_basis", []),
+            "decision": row.get("decision", "revisar"),
+            "next_action": row.get("next_action", "human_review"),
+            "human_decision": human_decision,
+            "review_state": "pending" if human_decision in ("pending", "revise") else human_decision,
+            "context_fields": context_fields,
+            "context_state": "structured" if context_fields else "note_only",
+            "human_note": review.get("note", ""),
+            "reviewed_at": review.get("ts", ""),
+            "item": {
+                "tipo_contenido": source_item.get("tipo_contenido", ""),
+                "fecha": source_item.get("fecha", ""),
+                "publicacion_id": source_item.get("publicacion_id", ""),
+                "descripcion_original": source_item.get("descripcion_original", ""),
+                "asset_path": source_item.get("asset_path", ""),
+                "asset_available": bool(source_item.get("asset_available")),
+            },
+            "public_promotion": False,
+        })
+    return {
+        "ok": True,
+        "schema": "faro-portfolio-external-candidate-surface-v1",
+        "total": len(items),
+        "items": items,
+        "public_promotion": False,
+        "next": "human review before board or publication",
+    }
+
+
+HUMAN_CONTEXT_FIELDS = ("artist", "client", "venue", "event", "festival",
+                        "collab", "date", "process")
+
+
+def _normalize_human_context(value):
+    if not isinstance(value, dict):
+        return {}
+    result = {}
+    for field in HUMAN_CONTEXT_FIELDS:
+        raw = value.get(field)
+        if isinstance(raw, (list, tuple, set)):
+            values = raw
+        elif raw is None:
+            values = []
+        else:
+            values = [raw]
+        clean = []
+        for part in values:
+            text = str(part or "").strip()[:240]
+            if text and text not in clean:
+                clean.append(text)
+        if clean:
+            result[field] = clean[:8]
+    return result
+
+
+def _portfolio_human_context_records():
+    surface = _portfolio_external_candidates()
+    links = _portfolio_context_links()
+    records = []
+    for row in surface.get("items", []):
+        if row.get("human_decision") != "accept":
+            continue
+        fields = row.get("context_fields") or {}
+        if not fields:
+            continue
+        records.append({
+            "source_id": row.get("source_id", ""),
+            "item": row.get("item", {}),
+            "context_fields": fields,
+            "context_state": "human_confirmed_context",
+            "candidate_relations": row.get("candidate_relations", {}),
+            "evidence_basis": row.get("evidence_basis", []),
+            "human_note": row.get("human_note", ""),
+            "reviewed_at": row.get("reviewed_at", ""),
+            "promotion": "none",
+            "next_action": "link manually to event or venue group",
+            "linked_groups": links.get(row.get("source_id", ""), []),
+        })
+    return records
+
+
+def _portfolio_review_queue(source_id=""):
+    requested = str(source_id or "").strip()
+    surface = _portfolio_external_candidates(requested)
+    items = [item for item in surface.get("items", [])
+             if item.get("review_state") == "pending"]
+    return {
+        "ok": True,
+        "schema": "faro-portfolio-review-queue-v1",
+        "status": "human_review_required",
+        "total": len(items),
+        "items": items,
+        "public_promotion": False,
+        "next": "human decision required before board or publication",
+    }
+
+
+def _portfolio_external_candidate_review(body):
+    """Record a human decision without mutating the original candidate."""
+    if _ledger is None:
+        return {"ok": False, "error": "ledger_no_disponible"}
+    ledger_id = str(body.get("ledger_id") or "").strip()
+    decision = str(body.get("decision") or "").strip().lower()
+    if decision not in ("accept", "revise", "reject"):
+        return {"ok": False, "error": "decision_invalida"}
+    ledger_rows = _ledger.read_items(COMMON_LEDGER, limit=10000)
+    source = next((row for row in ledger_rows
+                   if row.get("id") == ledger_id and row.get("domain") == "portfolio"),
+                  None)
+    if not source or not isinstance((source.get("metadata") or {}).get(
+            "portfolio_candidate"), dict):
+        return {"ok": False, "error": "candidato_no_encontrado"}
+    candidate = source["metadata"]["portfolio_candidate"]
+    prior_context = {}
+    for row in ledger_rows:
+        prior = (row.get("metadata") or {}).get("external_candidate_review")
+        if isinstance(prior, dict) and prior.get("candidate_id") == ledger_id:
+            prior_context = _normalize_human_context(prior.get("context_fields"))
+    context_fields = _normalize_human_context(body.get("context_fields")) or prior_context
+    review = {
+        "candidate_id": ledger_id,
+        "source_id": candidate.get("entity_id", ""),
+        "decision": decision,
+        "note": str(body.get("note") or "").strip()[:1000],
+        "relation": str(body.get("relation") or "").strip()[:120],
+        "context_fields": context_fields,
+        "context_state": "structured" if context_fields else "note_only",
+        "ts": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+    }
+    action = "reject" if decision == "reject" else "review"
+    ledger_decision = "descartar" if decision == "reject" else (
+        "hacer" if decision == "accept" else "revisar")
+    ok, errors, row = _ledger.append_unique({
+        "id": "portfolio-external-review:%s:%s" % (ledger_id, review["ts"]),
+        "domain": "portfolio",
+        "type": "reject" if decision == "reject" else "decision",
+        "claim": "Human review of external portfolio candidate %s" % ledger_id,
+        "evidence": [ledger_id, candidate.get("entity_id", "")],
+        "files": [],
+        "confidence": "high",
+        "action": action,
+        "reject_reason": review["note"] if decision == "reject" else "",
+        "lane": "obra",
+        "decision": ledger_decision,
+        "purpose": "human adjudication without automatic publication",
+        "next_action": "continue triangulation or add to board" if decision == "accept"
+        else "revisit candidate evidence" if decision == "revise"
+        else "retain rejected candidate without promotion",
+        "owner": "human",
+        "work": source.get("work", {}),
+        "metadata": {"external_candidate_review": review},
+    }, path=COMMON_LEDGER, source="portfolio_external_review")
+    if not ok:
+        return {"ok": False, "error": "ledger_rechazo", "details": errors}
+    return {"ok": True, "review": review, "ledger_id": row.get("id") if row else ""}
 
 
 def _portfolio_learning():
@@ -992,6 +1616,82 @@ def _portfolio_external_review(body):
     return {"ok": True, "provider": provider, "inference": normalized,
             "raw": raw,
             "stored": PORTFOLIO_EXTERNAL}
+
+
+def _portfolio_media_reference(value):
+    value = str(value or "")
+    for prefix in ("/portfolio-media/", "portfolio-media/"):
+        if value.startswith(prefix):
+            value = value[len(prefix):]
+            break
+    return _portfolio_media(value)
+
+
+def _portfolio_visual_asset(item):
+    """Resolve an existing still; never fabricate a thumbnail or read a video."""
+    candidates = []
+    for field in ("preview_path", "poster_path", "thumbnail_path", "asset_path"):
+        value = str(item.get(field) or "").strip()
+        if value:
+            candidates.append(value)
+    for value in candidates:
+        asset = _portfolio_media_reference(value)
+        if asset and os.path.splitext(asset)[1].lower() in {".jpg", ".jpeg", ".png", ".webp"}:
+            return asset, value
+    for value in candidates:
+        suffix = os.path.splitext(value.split("?", 1)[0])[1].lower()
+        if suffix not in {".mp4", ".mov", ".webm", ".m4v"}:
+            continue
+        directory, filename = value.rsplit("/", 1) if "/" in value else ("", value)
+        stem = os.path.splitext(filename)[0]
+        for extension in (".jpg", ".jpeg", ".png", ".webp"):
+            relative = "%s/%s%s" % (directory, stem, extension) if directory else stem + extension
+            asset = _portfolio_media_reference(relative)
+            if asset:
+                return asset, relative
+    return None, ""
+
+
+def _portfolio_vision_read(body):
+    item_id = str(body.get("item_id", "")).strip()
+    provider = str(body.get("provider", "aws")).lower().strip()
+    if provider != "aws":
+        return {"ok": False, "error": "vision_requiere_aws",
+                "detail": "Watsonx y los modelos de texto pueden adjudicar la lectura, pero no reciben la imagen en este puente."}
+    source = _portfolio_item(item_id)
+    if not source:
+        return {"ok": False, "error": "item_no_encontrado"}
+    asset, evidence_path = _portfolio_visual_asset(source)
+    if not asset:
+        return {"ok": False, "error": "media_visual_no_disponible",
+                "detail": "No existe un still sincronizado para esta pieza; el video no se envia sin fotograma."}
+    prompt = json.dumps({
+        "task": "Describir solo lo visible en la imagen adjunta para apoyar una curatoria.",
+        "rules": [
+            "No identifiques ni inventes artista, venue, evento, cliente o fecha.",
+            "No conviertas una semejanza visual en una entidad.",
+            "Separa observaciones de desconocidos.",
+            "Devuelve solo JSON con visual_terms, dominant_colors, composition, motion_or_media, unknowns y confidence.",
+        ],
+        "item": {"item_id": item_id, "content_type": source.get("tipo_contenido")},
+    }, ensure_ascii=False)
+    try:
+        providers.load_env()
+        raw = providers.call("aws", prompt, model=body.get("model") or None,
+                             max_tokens=900, temperature=0.1, image_paths=[asset])
+    except Exception as exc:  # noqa: BLE001
+        return {"ok": False, "error": "provider_error", "detail": str(exc)[:180]}
+    normalized = copilot.normalize_vision(raw, item_id, provider, [evidence_path])
+    row = dict(normalized)
+    row["asset_path"] = evidence_path
+    row["ts"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
+    os.makedirs(os.path.dirname(PORTFOLIO_VISION), exist_ok=True)
+    with open(PORTFOLIO_VISION, "a", encoding="utf-8") as fh:
+        fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+    return {"ok": True, "schema": copilot.VISION_SCHEMA, "provider": provider,
+            "item_id": item_id, "features": normalized["features"],
+            "unknowns": normalized["unknowns"], "confidence": normalized["confidence"],
+            "evidence": normalized["evidence"], "stored": PORTFOLIO_VISION}
 
 
 def _portfolio_media(relative):
@@ -1179,6 +1879,38 @@ def _decisiones():
         "last": [{key: row.get(key, "") for key in (
             "id", "lane", "decision", "purpose", "next_action", "owner")}
                  for row in resumen["last"]],
+    }
+
+
+def _oportunidades():
+    """Expose opportunity candidates without exposing raw ledger history."""
+    if _ledger is None:
+        return {"schema": "faro-opportunity-surface-v1", "items": [],
+                "counts": {"total": 0, "unverified": 0}}
+    items = []
+    for row in _ledger.read_items(COMMON_LEDGER, limit=5000):
+        if row.get("domain") != "opportunities":
+            continue
+        card = row.get("metadata", {}).get("opportunity_card", {})
+        if not isinstance(card, dict):
+            continue
+        item = dict(card)
+        item.update({
+            "ledger_id": row.get("id", ""),
+            "decision": row.get("decision", "revisar"),
+            "owner": row.get("owner", "human"),
+        })
+        items.append(item)
+    items.reverse()
+    return {
+        "schema": "faro-opportunity-surface-v1",
+        "source": "common_ledger",
+        "items": items,
+        "counts": {
+            "total": len(items),
+            "unverified": sum(item.get("status") == "unverified"
+                               for item in items),
+        },
     }
 
 
@@ -1576,6 +2308,10 @@ class H(BaseHTTPRequestHandler):
     def do_GET(self):
         u = urllib.parse.urlparse(self.path)
         p = u.path
+        if p == "/api/director/capabilities":
+            return self._json(_director_capabilities())
+        if p == "/api/portfolio/identity-graph":
+            return self._json(_portfolio_identity_graph())
         if p == "/revision":
             self.send_response(301)
             self.send_header("Location", "/revision/")
@@ -1598,10 +2334,31 @@ class H(BaseHTTPRequestHandler):
             return self._json(_episode_revision.evidence())
         if p == "/api/portfolio/inbox":
             return self._json(_portfolio_inbox())
+        if p == "/api/portfolio/index":
+            return self._json(_portfolio_metadata_index())
+        if p == "/api/portfolio/classifications":
+            return self._json({"ok": True,
+                               "schema": "faro-portfolio-classification-v1",
+                               "items": list(_portfolio_classifications().values())})
         if p == "/api/portfolio/boards":
             return self._json(_portfolio_boards())
         if p == "/api/portfolio/triangulation":
             return self._json(_portfolio_triangulation())
+        if p == "/api/portfolio/organism":
+            return self._json(_portfolio_organism_projection())
+        if p == "/api/portfolio/contract":
+            return self._json({
+                "schema": "faro-portfolio-contract-surface-v1",
+                "source_of_truth": ["portfolio_inbox", "classifications", "vision_features",
+                                     "boards", "connections", "copilot_feedback", "common_ledger"],
+                **_portfolio_contract_surface(),
+            })
+        if p == "/api/portfolio/review-queue":
+            item_id = (urllib.parse.parse_qs(u.query).get("source_id") or [""])[0]
+            return self._json(_portfolio_review_queue(item_id))
+        if p == "/api/portfolio/external-candidates":
+            item_id = (urllib.parse.parse_qs(u.query).get("item_id") or [""])[0]
+            return self._json(_portfolio_external_candidates(item_id))
         if p == "/api/research/rescue":
             return self._json(_legacy_rescue_queue())
         if p == "/api/portfolio/copilot/suggestions":
@@ -1609,6 +2366,29 @@ class H(BaseHTTPRequestHandler):
             item_id = (query.get("item_id") or [""])[0]
             board_id = (query.get("board_id") or [""])[0]
             return self._json(_portfolio_suggestions(item_id, board_id))
+        if p == "/api/portfolio/copilot/map":
+            query = urllib.parse.parse_qs(u.query)
+            width = (query.get("width") or [8])[0]
+            height = (query.get("height") or [6])[0]
+            try:
+                width, height = int(width), int(height)
+            except (TypeError, ValueError):
+                width, height = 8, 6
+            return self._json(copilot.build_gtm_map(
+                _portfolio_inbox().get("items", []),
+                feedback=_portfolio_feedback(), width=width, height=height))
+        if p == "/api/portfolio/copilot/vision":
+            item_id = (urllib.parse.parse_qs(u.query).get("item_id") or [""])[0]
+            item = _portfolio_item(item_id)
+            if not item:
+                return self._json({"ok": False, "error": "item_no_encontrado"}, 404)
+            record = _portfolio_vision().get(item_id)
+            return self._json({"ok": True, "schema": copilot.VISION_SCHEMA,
+                               "item_id": item_id,
+                               "features": (record or {}).get("features", {}),
+                               "unknowns": (record or {}).get("unknowns", []),
+                               "confidence": (record or {}).get("confidence", "low"),
+                               "available": bool(record)})
         if p == "/api/portfolio/copilot/manifest":
             item_id = (urllib.parse.parse_qs(u.query).get("item_id") or [""])[0]
             item = _portfolio_item(item_id)
@@ -1685,6 +2465,14 @@ class H(BaseHTTPRequestHandler):
                 return self._json({"error": str(e)[:200], "total": 0,
                                    "by_lane": {}, "by_decision": {},
                                    "pending_human": 0})
+        if p == "/api/oportunidades":
+            try:
+                return self._json(_oportunidades())
+            except Exception as e:  # noqa: BLE001
+                return self._json({"error": str(e)[:200],
+                                   "schema": "faro-opportunity-surface-v1",
+                                   "items": [],
+                                   "counts": {"total": 0, "unverified": 0}})
         if p == "/api/eventos":
             q = urllib.parse.parse_qs(u.query)
             depto = (q.get("depto") or [""])[0]
@@ -1762,19 +2550,30 @@ class H(BaseHTTPRequestHandler):
                 return self._json({"ok": False, "error": "json invalido"}, 400)
             return self._json(_episode_revision.record(
                 body.get("episodio", ""), body.get("decision", ""), body.get("note", "")))
-        if u.path in ("/api/portfolio/select", "/api/portfolio/dispatch",
+        if u.path in ("/api/director/work", "/api/director/decision",
+                      "/api/portfolio/select", "/api/portfolio/classify",
+                      "/api/portfolio/dispatch",
                       "/api/portfolio/board", "/api/portfolio/connect",
                       "/api/portfolio/feedback", "/api/portfolio/triangulation/review",
-                      "/api/portfolio/copilot/external"):
+                      "/api/portfolio/triangulation/context-link",
+                      "/api/portfolio/copilot/external",
+                      "/api/portfolio/copilot/vision",
+                      "/api/portfolio/external-candidates/review"):
             largo = min(int(self.headers.get("Content-Length") or 0), 12000)
             try:
                 body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
             except (ValueError, TypeError):
                 return self._json({"ok": False, "error": "json invalido"}, 400)
+            if u.path == "/api/director/work":
+                return self._json(_director_work(body))
+            if u.path == "/api/director/decision":
+                return self._json(_director_decision(body))
             if u.path.endswith("/select"):
                 return self._json(_portfolio_select(
                     body.get("item_id"), body.get("decision"),
                     body.get("board_id", "")))
+            if u.path.endswith("/classify"):
+                return self._json(_portfolio_classify(body))
             if u.path.endswith("/board"):
                 return self._json(_portfolio_board_action(body))
             if u.path.endswith("/connect"):
@@ -1783,8 +2582,14 @@ class H(BaseHTTPRequestHandler):
                 return self._json(_portfolio_feedback_record(body))
             if u.path.endswith("/triangulation/review"):
                 return self._json(_portfolio_triage_record(body))
+            if u.path.endswith("/triangulation/context-link"):
+                return self._json(_portfolio_context_link(body))
             if u.path.endswith("/external"):
                 return self._json(_portfolio_external_review(body))
+            if u.path.endswith("/vision"):
+                return self._json(_portfolio_vision_read(body))
+            if u.path.endswith("/external-candidates/review"):
+                return self._json(_portfolio_external_candidate_review(body))
             return self._json(_portfolio_dispatch(body.get("item_id"), body.get("depto"),
                                                    body.get("texto", "")))
         if u.path == "/api/revision" and _revision is not None:
