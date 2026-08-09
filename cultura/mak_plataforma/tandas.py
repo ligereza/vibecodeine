@@ -159,7 +159,8 @@ def _manifest_asset_paths(extra_paths):
         root = str(manifest.get("asset_root") or "").strip()
         if not root:
             continue
-        rows = manifest.get("rows") or manifest.get("items") or []
+        rows = (manifest.get("rows") or manifest.get("items") or
+                manifest.get("candidate_rows") or [])
         for row in rows:
             if not isinstance(row, dict):
                 continue
@@ -634,9 +635,12 @@ def validate_evidence_paths(payload, area=None, extra_paths=None):
                            or os.path.normcase(str(candidate)) == os.path.normcase(str(path))]
                 if not allowed and isinstance(path, str):
                     normalized = path.replace("\\", "/").lstrip("/")
+                    variants = [normalized]
+                    if normalized.startswith("portfolio-media/"):
+                        variants.append(normalized[len("portfolio-media/"):])
                     allowed = [candidate for candidate in manifest_assets
-                               if candidate.replace("\\", "/").endswith(
-                                   "/" + normalized)]
+                               if any(candidate.replace("\\", "/").endswith(
+                                   "/" + variant) for variant in variants)]
                 if not allowed:
                     errors.append("item_%d_missing_evidence_path_%d" % (idx, file_idx))
                     continue

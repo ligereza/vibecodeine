@@ -157,6 +157,11 @@ Fresh SSH check on 2026-08-09:
 - `providers.route_task("judge")` now reports `requires_external=false` when
   Ollama is the selected local judge, so the cheap fallback is represented
   honestly after premium credits disappear.
+- The event-triangulation manifest also exposed a second path-shape variant:
+  Watsonx returned `/portfolio-media/...` and the focused manifest used
+  `candidate_rows`. Both forms are now resolved against the declared asset
+  root; a third bounded triangulation run is in progress under the same MAK
+  director-run folder.
 
 ## Verification already done
 
