@@ -252,6 +252,25 @@ def test_conservative_portfolio_repair_names_unknown_relations():
         "identidad_evento_venue_artista_cliente_no_confirmada")
 
 
+def test_conservative_opportunity_repair_only_adds_safe_next_action():
+    payload = {"items": [{"product": {
+        "opportunity": "Fondart",
+        "eligibility": "persona natural",
+        "deadline": "sin fecha exacta",
+        "source": "https://fondosdecultura.cl/bases.pdf",
+        "risk": "vigencia no confirmada",
+    }}]}
+
+    repaired = tandas._conservative_opportunity_repair(payload,
+                                                       "opportunity_radar")
+
+    assert repaired["items"][0]["product"]["next_action"] == (
+        "verificar fuente oficial, elegibilidad y fecha de cierre exacta")
+    assert tandas._conservative_opportunity_repair(
+        {"items": [{"product": {"opportunity": "Fondart"}}]},
+        "opportunity_radar") is None
+
+
 def test_explicit_batch_cannot_escape_to_an_existing_repo_file(tmp_path):
     report = tmp_path / "historical.md"
     report.write_text("old report", encoding="utf-8")
