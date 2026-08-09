@@ -636,6 +636,31 @@ def write_quarantine(rows, path=None):
     return added
 
 
+def _portfolio_record_candidate(item, work):
+    files = item.get("files") or []
+    entity_id = next((os.path.basename(str(value)) for value in files
+                      if os.path.basename(str(value))), "")
+    if not entity_id:
+        return {}
+    product = item.get("product") if isinstance(item.get("product"), dict) else {}
+    return {
+        "portfolio_candidate": {
+            "entity_id": entity_id,
+            "format": item.get("format") or "registro",
+            "candidate_kind": "audiovisual_record",
+            "triage": {
+                "provider": work.get("provider") or "external",
+                "verdict": "accept",
+                "candidate_relations": {},
+                "evidence_basis": list(item.get("evidence") or []) + files,
+            },
+            "record_kind": product.get("record_kind") or "",
+            "relations": product.get("relations") or "",
+            "unknowns": product.get("unknowns") or "",
+        }
+    }
+
+
 def external_item_to_ledger(item, area, work=None):
     domain_by_area = {
         "rd_evidence": "rd",
@@ -650,6 +675,14 @@ def external_item_to_ledger(item, area, work=None):
     item_type = "reject" if item.get("action") == "reject" else "evidence"
     domain = domain_by_area.get(area, "mak")
     work = work if isinstance(work, dict) else {}
+    metadata = {
+        "product": item.get("product", {})
+        if isinstance(item.get("product"), dict) else {},
+        "format": item.get("format", ""),
+        "evidence_kind": item.get("evidence_kind", ""),
+    }
+    if area == "portfolio_record":
+        metadata.update(_portfolio_record_candidate(item, work))
     return {
         "work": work,
         "domain": domain,
@@ -664,14 +697,11 @@ def external_item_to_ledger(item, area, work=None):
         "decision": "descartar" if item.get("action") == "reject" else "revisar",
         "purpose": item.get("product", {}).get("purpose", "")
         if isinstance(item.get("product"), dict) else "",
-        "next_action": item.get("reject_reason", "revisar evidencia local"),
+        "next_action": ("triangulate" if area == "portfolio_record"
+                        and item.get("action") == "triangulate"
+                        else item.get("reject_reason", "revisar evidencia local")),
         "owner": "MAK",
-        "metadata": {
-            "product": item.get("product", {})
-            if isinstance(item.get("product"), dict) else {},
-            "format": item.get("format", ""),
-            "evidence_kind": item.get("evidence_kind", ""),
-        },
+        "metadata": metadata,
     }
 
 
