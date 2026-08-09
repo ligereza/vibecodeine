@@ -300,6 +300,27 @@ def test_review_ledger_preserves_judge_trace_metadata(tmp_path):
     assert row["work"]["identity"]["kind"] == "report"
 
 
+def test_external_opportunity_surfaces_product_next_action():
+    row = ledger.external_item_to_ledger({
+        "claim": "convocatoria candidata",
+        "evidence": ["https://fondosdecultura.cl/bases.pdf"],
+        "files": ["convocatorias.jsonl"],
+        "confidence": "high",
+        "action": "verify_source",
+        "reject_reason": "",
+        "product": {
+            "opportunity": "Fondart",
+            "eligibility": "persona natural",
+            "deadline": "10 septiembre 2026",
+            "source": "https://fondosdecultura.cl/bases.pdf",
+            "next_action": "verificar bases y fecha exacta de cierre",
+            "risk": "vigencia por confirmar",
+        },
+    }, "opportunity_radar")
+
+    assert row["next_action"] == "verificar bases y fecha exacta de cierre"
+
+
 def test_review_ledger_keeps_official_evidence_on_accept(tmp_path):
     path = tmp_path / "common_ledger.jsonl"
     ok, errors, row = ledger.append_review(
