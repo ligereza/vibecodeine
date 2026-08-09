@@ -43,33 +43,31 @@ instructions. Verify any statement that affects a destructive or remote action.
 ## Repository state
 
 - Windows workspace: `C:\IA\flujo`.
-- Windows branch: `mak`, aligned with `origin/mak` at `d45b1a5`.
-- `origin/main` is `e8f67c0`; Windows has only the four canonical remote refs:
-  `main`, `mak`, `rd`, `iskvw`. No Windows tags are present.
-- The working tree is intentionally dirty: the current system block is
-  uncommitted. Do not reset, discard, or publish it without an explicit user
-  instruction.
-- Current modified work is concentrated in `cultura/mak_plataforma/` (ledger,
-  identity, providers, decisions, Hub, batches, routing, service/watchdog),
-  `iskvw/editor.html`, `tools/update_readme_svg.py`, `arte-ascii-readme.svg`,
-  `CAPACIDADES.md`, tests, and three new portfolio/dossier documents. There
-  are also prior local changes in the same tree; inspect `git status` before
-  deciding scope.
-- No commit or push was performed in this closing pass.
+- Windows branch: `mak`, aligned with `origin/mak` at `5f690fa`.
+- `origin/main`, `origin/mak`, `origin/rd`, and `origin/iskvw` all point to
+  `5f690fa`. No remote tags or open PRs remain.
+- The Windows worktree is clean after the explicit commit and push requested by
+  the user. The promoted block is `8f1bd37`; `main` records the promotion in
+  merge commit `5f690fa`.
+- The promoted work covers `cultura/mak_plataforma/` (ledger, identity,
+  providers, decisions, Hub, batches, routing, service/watchdog),
+  `iskvw/editor.html`, the README/SVG text layer, operational docs, tests, and
+  portfolio/dossier documents.
 
 ## MAK box: verified truth
 
 Fresh SSH check on 2026-08-09:
 
 - Host: `mak@192.168.50.2`, hostname `dell-11m`.
-- The runtime checkout at `/home/mak/flujo` is on an extra Capataz branch,
-  `capataz/generar-una-secuencia-de-imagenes-basada-a3e2`, at `9886682`, with
-  uncommitted changes and a remote branch of the same name. This contradicts
-  the desired four-branch topology. Do not reset or delete it blindly; first
-  inventory and quarantine any unique work, then reconcile explicitly.
+- The extra Capataz checkout was inventoried into
+  `/home/mak/quarantine/flujo-20260809-branch-reconcile/` before cleanup. Its
+  local branches were removed after the unique work was preserved; the runtime
+  checkout is now clean on `mak` at `5f690fa`.
+- The MAK checkout has exactly the four local branches `main`, `mak`, `rd`, and
+  `iskvw`, all aligned with their four remote counterparts.
 - The runtime Hub is healthy and is managed by the user systemd unit
   `/home/mak/.config/systemd/user/mak-hub.service`.
-- The unit is enabled and active. Current process:
+- The unit is enabled and active after the synchronization. Current process:
   `/home/mak/plataforma/.venv/bin/python /home/mak/plataforma/hub.py`.
 - Runtime hashes checked for `hub.py` and `ledger.py` match the current Windows
   files. The virtualenv is required for `boto3`; do not replace it with the
@@ -192,10 +190,9 @@ audit. Start the first durable vertical circuit on a small stratified manifest
 5. Expose only the resulting next action in the Hub. The human should review
    grouped visual candidates, not read a wall of model prose.
 
-After that circuit, reconcile the extra Capataz checkout on MAK against the
-four canonical branches. Preserve any unique work before cleaning it. Only
-then consider a single mechanical promotion PR. Do not touch the domain or
-README/SVG before these gates are complete.
+The extra Capataz checkout has already been preserved and removed. After this
+circuit, make only one deliberate mechanical promotion when the evidence is
+ready; do not create small PRs for cosmetic work. The domain remains last.
 
 ## Session close rule
 
