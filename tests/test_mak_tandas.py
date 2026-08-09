@@ -229,10 +229,10 @@ def test_validate_evidence_paths_accepts_manifest_asset_paths(tmp_path):
     asset.write_bytes(b"image")
     manifest = tmp_path / "manifest.json"
     manifest.write_text(json.dumps({
-        "asset_root": str(tmp_path),
-        "rows": [{"asset_path": "/portfolio-media/media/stories/2026/record.jpg"}],
+        "asset_root": str(tmp_path / "media"),
+        "rows": [{"asset_path": "/portfolio-media/stories/2026/record.jpg"}],
     }), encoding="utf-8")
-    payload = {"items": [{"files": ["media/stories/2026/record.jpg"]}]}
+    payload = {"items": [{"files": ["/portfolio-media/stories/2026/record.jpg"]}]}
 
     assert tandas.validate_evidence_paths(
         payload, area="portfolio_record", extra_paths=[str(manifest)]) == (True, [])
