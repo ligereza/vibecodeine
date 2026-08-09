@@ -43,12 +43,12 @@ instructions. Verify any statement that affects a destructive or remote action.
 ## Repository state
 
 - Windows workspace: `C:\IA\flujo`.
-- Windows branch: `mak`, aligned with `origin/mak` at `04afc186`.
+- Windows branch: `mak`, aligned with `origin/mak` at `33f683bf`.
 - `origin/main`, `origin/mak`, `origin/rd`, and `origin/iskvw` all point to
-  `04afc186`. No remote tags or open PRs remain.
+  `33f683bf`. No remote tags or open PRs remain.
 - The Windows worktree is clean after the explicit commit and push requested by
-  the user. `04afc186` preserves safe opportunity next actions in the common
-  ledger and is the current tip of all four canonical branches.
+  the user. `33f683bf` records the opportunity gate result and is the current
+  tip of all four canonical branches.
 - The promoted work covers `cultura/mak_plataforma/` (ledger, identity,
   providers, decisions, Hub, batches, routing, service/watchdog),
   `iskvw/editor.html`, the README/SVG text layer, operational docs, tests, and
@@ -62,7 +62,7 @@ Fresh SSH check on 2026-08-09:
 - The extra Capataz checkout was inventoried into
   `/home/mak/quarantine/flujo-20260809-branch-reconcile/` before cleanup. Its
   local branches were removed after the unique work was preserved; the runtime
-  checkout is now clean on `mak` at `04afc186`.
+  checkout is now clean on `mak` at `33f683bf`.
 - The MAK checkout has exactly the four local branches `main`, `mak`, `rd`, and
   `iskvw`, all aligned with their four remote counterparts.
 - The runtime Hub is healthy and is managed by the user systemd unit
