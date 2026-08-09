@@ -43,12 +43,13 @@ instructions. Verify any statement that affects a destructive or remote action.
 ## Repository state
 
 - Windows workspace: `C:\IA\flujo`.
-- Windows branch: `mak`, aligned with `origin/mak` at `d12ef137`.
+- Windows branch: `mak`, aligned with `origin/mak` at `623b961e`.
 - `origin/main`, `origin/mak`, `origin/rd`, and `origin/iskvw` all point to
-  `d12ef137`. No remote tags or open PRs remain.
+  `623b961e`. No remote tags or open PRs remain.
 - The Windows worktree is clean after the explicit commit and push requested by
   the user. The promoted block is `8f1bd37`; `main` records the promotion in
-  merge commit `5f690fa`; `d12ef137` records the published branch state.
+  merge commit `5f690fa`; `d12ef137` records the first published branch state;
+  `623b961e` corrects this handoff after the final sync.
 - The promoted work covers `cultura/mak_plataforma/` (ledger, identity,
   providers, decisions, Hub, batches, routing, service/watchdog),
   `iskvw/editor.html`, the README/SVG text layer, operational docs, tests, and
@@ -62,7 +63,7 @@ Fresh SSH check on 2026-08-09:
 - The extra Capataz checkout was inventoried into
   `/home/mak/quarantine/flujo-20260809-branch-reconcile/` before cleanup. Its
   local branches were removed after the unique work was preserved; the runtime
-  checkout is now clean on `mak` at `d12ef137`.
+  checkout is now clean on `mak` at `623b961e`.
 - The MAK checkout has exactly the four local branches `main`, `mak`, `rd`, and
   `iskvw`, all aligned with their four remote counterparts.
 - The runtime Hub is healthy and is managed by the user systemd unit
@@ -137,6 +138,26 @@ Fresh SSH check on 2026-08-09:
 - `story_record` uses `format=registro`, `evidence_kind=media_metadata`, and
   actions such as `triangulate`, `archive`, `review`, and `reject`.
 
+### Durable vertical circuit 2026-08-09
+
+- MAK created `/home/mak/plataforma/director_runs/vertical-curation-20260809/`
+  with a 38-item stratified manifest: 18 stories and 20 published media,
+  including explicit-signal records, year spread, images, videos, and
+  description-bearing media. Promotion is `none`.
+- Watsonx first exposed a real integration defect: relative portfolio media
+  paths were rejected even when the manifest declared the asset root. The
+  batch gate now resolves manifest-declared assets without accepting invented
+  paths.
+- AWS visual pass accepted five candidates into the common ledger as
+  `revisar` records with next action `triangulate`; it did not publish them.
+  Empty provider relations are retained as explicit unknowns, not facts.
+- Watsonx passed the path and product gates on its third pass, then Ollama
+  rejected the mixed batch because two records still needed artist/context
+  clarification. This is the intended local stop, not a provider loop.
+- `providers.route_task("judge")` now reports `requires_external=false` when
+  Ollama is the selected local judge, so the cheap fallback is represented
+  honestly after premium credits disappear.
+
 ## Verification already done
 
 - Focused Windows tests passed:
@@ -150,6 +171,8 @@ Fresh SSH check on 2026-08-09:
   `py -m pytest tests/test_higiene_docs.py tests/test_mapa_completo.py -q`
   (`5 passed, 1 skipped`), `git diff --check` passed, and this handoff is
   ASCII-only (198 lines).
+- The focused tanda gate now passes `45` tests with
+  `py -m pytest tests/test_mak_tandas.py -q`; modified MAK modules compile.
 
 ## Current boundaries and pauses
 
@@ -173,14 +196,14 @@ Fresh SSH check on 2026-08-09:
 ## Next action
 
 Do not start with Git cleanup, branch deletion, a full test suite, or another
-audit. Start the first durable vertical circuit on a small stratified manifest
-(20-40 items, not all 7,044):
+mass audit. The first vertical circuit is complete. Continue with its
+evidence, not another blind batch:
 
-1. Select stories, posts, reels, and at least one known metadata-rich item on
-   MAK. Save the manifest under a new dated director-run folder, not Downloads.
-2. For images/contact sheets, call AWS visual analysis. For metadata or factual
-   research, call Watsonx with bounded source manifests. Route both through the
-   existing provider plan and `mak-work-v1` envelope.
+1. Inspect the five AWS candidates and their exact manifest rows; keep them as
+   audiovisual records until the human or metadata resolves their context.
+2. Use Watsonx only for bounded event triangulation against declared date,
+   venue, artist, producer, and XIO/RD evidence; do not rerun the rejected
+   mixed curation batch.
 3. Keep hypotheses separated by date, visual, audio, event, venue, artist,
    client, and collaboration. Use XIO data only where an actual event/setlist
    source exists; do not pretend one event is a universal source.
