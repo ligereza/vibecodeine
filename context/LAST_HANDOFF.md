@@ -172,6 +172,11 @@ Fresh SSH check on 2026-08-09:
   external-candidate panel now renders each candidate's actual image or video
   beside its evidence and accept/revise/reject actions; it no longer asks for a
   prose-only decision.
+- A fourth bounded Watsonx triangulation was run with the manifest, human
+  clarifications, and XIO evidence. It returned five `story_record` hypotheses,
+  but Ollama rejected the batch because relations and unknowns were still too
+  broad; no new ledger entries or promotions were created. Do not rerun this
+  same mixed batch: the five AWS candidates remain the controlled review set.
 
 ## Verification already done
 
@@ -220,22 +225,21 @@ mass audit. The first vertical circuit is complete. The immediate user-facing
 checkpoint is the five-card visual review in `/portafolio/`; continue with its
 evidence, not another blind batch:
 
-1. Inspect the five AWS candidates and their exact manifest rows; keep them as
+1. Review the five AWS candidates and their exact manifest rows; keep them as
    audiovisual records until the human or metadata resolves their context.
-2. Add explicit human context for known collaborations and usernames before
-   another provider call; the model cannot convert a misspelled username into
-   evidence.
-3. Use Watsonx only for bounded event triangulation against declared date,
-   venue, artist, producer, and XIO/RD evidence; do not rerun the rejected
-   mixed curation batch.
+2. Attach explicit human context to one candidate at a time; a username is not
+   an artist, and a story is not an event merely because a model names one.
+3. If one candidate gains date, venue, artist, producer, or XIO evidence, run
+   one bounded Watsonx triangulation for that candidate only. Do not rerun the
+   rejected mixed batch.
 4. Keep hypotheses separated by date, visual, audio, event, venue, artist,
-   client, and collaboration. Use XIO data only where an actual event/setlist
+   client, and collaboration. Use XIO only where an actual event/setlist
    source exists; do not pretend one event is a universal source.
 5. Send every result through the local judge/deterministic fallback and record
    candidate, review, refutation, or archive in the common ledger. No public
    promotion.
-6. Expose only the resulting next action in the Hub. The human should review
-   grouped visual candidates, not read a wall of model prose.
+6. Keep the Hub action-oriented: show the media and one next decision, not a
+   wall of model prose.
 
 The extra Capataz checkout has already been preserved and removed. After this
 circuit, make only one deliberate mechanical promotion when the evidence is
