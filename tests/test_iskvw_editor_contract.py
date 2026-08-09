@@ -40,6 +40,8 @@ def test_editor_surfaces_mak_contract_without_making_hub_required():
     assert "function pintarFoco" in source
     assert "ID exacto para enfocar" in source
     assert "resolverCandidatoExterno" in source
+    assert "copiloto-candidato-media" in source
+    assert "mediaInbox(item)" in source
     assert "no publica automaticamente" in source
     assert "consentimiento registrado antes de publicar" in source
 
