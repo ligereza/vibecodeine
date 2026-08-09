@@ -167,7 +167,9 @@ Fresh SSH check on 2026-08-09:
   `portfolio_record` rows stopped at the ledger and lacked the portfolio
   candidate projection. The ledger now bridges each record to a pending
   candidate with its media identity, explicit unknowns, and next action
-  `triangulate`; the AWS visual pass was rerun once to exercise that surface.
+  `triangulate`. The Ollama-backed AWS retry degraded to `revise` when its
+  verdict was invalid; a bounded deterministic-fallback retry accepted five
+  records and the Hub now exposes exactly five pending review items.
 
 ## Verification already done
 
