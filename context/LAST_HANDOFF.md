@@ -2155,6 +2155,17 @@ selecciones reales ya guardadas. Medir RAM de un worker y extrapolar el costo
 para 7,044 items. Solo si la precision de candidatos y el costo son utiles,
 conectar los vectores como indice derivado detras de los endpoints existentes.
 
+## Web verification 2026-08-10
+
+- The first push of the refreshed handoff had one real failure in
+  `tests/test_privacidad_repo.py`: the documentation contained the literal
+  personal path `C:\Users\issvk`, which violates the repository privacy gate.
+- The handoff now describes the `.roo/worktrees/` location without embedding a
+  Windows username. The focused privacy test passes locally (`3 passed`).
+- The repair is commit `db235527`, and all four remote branches plus MAK's
+  local branches point to it. GitHub checks for this repair were still running
+  at handoff time; do not call the web repo green until CI and security finish.
+
 ## Next action — current director checkpoint 2026-08-10
 
 The next agent must not reopen the old portfolio interface or start another
