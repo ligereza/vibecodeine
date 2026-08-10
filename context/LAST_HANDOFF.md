@@ -1941,3 +1941,14 @@ eliminar `arreglo-readme` local/remota solo cuando su trabajo sea ancestro de
 las cuatro, y comprobar que no existan tags ni ramas extra. No volver a
 consumir Watsonx hasta que IBM renueve el certificado; la siguiente tanda
 externa segura sigue siendo AWS acotado + juez local.
+
+## Auditoria de MAK antes de sincronizar 2026-08-09
+
+- `origin/mak` tenia dos commits que no estaban en la linea comun:
+  `9e18dc4f` y `500209bc`. Ambos eran drafts autogenerados por DeepSeek para
+  revisar: uno filtraba CSV por texto y el otro abria un servidor minimo en
+  8901, sin contrato `mak-work-v1`, sin Hub, sin ledger y sin pruebas del
+  circuito real.
+- No se rescatan en la rama operativa. Sus hashes y su razon de descarte
+  quedan registrados aqui; el estado canonico se sincroniza desde el main
+  probado, sin borrar la evidencia del analisis local.
