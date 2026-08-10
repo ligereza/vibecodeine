@@ -878,6 +878,85 @@ def _conservative_portfolio_repair(payload, area):
     return repaired
 
 
+def _human_portfolio_review_for_files(common_path, files):
+    targets = set()
+    for value in files or []:
+        text = str(value or "").strip()
+        if text:
+            targets.add(text.replace("\\", "/"))
+            targets.add(os.path.basename(text))
+    if not targets:
+        return {}
+    latest = {}
+    try:
+        with open(common_path, encoding="utf-8") as handle:
+            rows = handle.readlines()
+    except OSError:
+        return {}
+    for line in rows:
+        try:
+            row = json.loads(line)
+        except ValueError:
+            continue
+        review = (row.get("metadata") or {}).get("external_candidate_review")
+        if not isinstance(review, dict):
+            continue
+        source_id = str(review.get("source_id") or "").strip()
+        normalized = source_id.replace("\\", "/")
+        if normalized not in targets and os.path.basename(normalized) not in targets:
+            continue
+        latest[os.path.basename(normalized)] = review
+    return latest
+
+
+def _apply_human_portfolio_classification(payload, common_path):
+    if not isinstance(payload, dict):
+        return payload
+    for item in payload.get("items", []):
+        if not isinstance(item, dict):
+            continue
+        product = item.get("product")
+        if not isinstance(product, dict):
+            continue
+        files = item.get("files") or item.get("evidence") or []
+        reviews = _human_portfolio_review_for_files(common_path, files)
+        review = next((reviews.get(os.path.basename(str(path)))
+                       for path in files
+                       if reviews.get(os.path.basename(str(path)))), None)
+        if not review or str(review.get("decision") or "").lower() != "accept":
+            continue
+        context = review.get("context_fields")
+        if not isinstance(context, dict):
+            context = {}
+        relation = str(review.get("relation") or "").strip()
+        note = str(review.get("note") or "").strip()
+        relations = product.get("relations")
+        relation_payload = {}
+        if isinstance(relations, str) and relations.strip():
+            try:
+                parsed_relations = json.loads(relations)
+                if isinstance(parsed_relations, dict):
+                    relation_payload.update(parsed_relations)
+            except ValueError:
+                relation_payload["provider_relations"] = relations.strip()
+        relation_payload.update({
+            "classification": "obra",
+            "classification_source": "human",
+            "human_context": context,
+            "human_decision": "accept",
+        })
+        if relation:
+            relation_payload["human_relation"] = relation
+        if note:
+            relation_payload["human_note"] = note
+        product["record_kind"] = "obra"
+        product["relations"] = json.dumps(
+            relation_payload, ensure_ascii=False, sort_keys=True)
+        product["unknowns"] = (str(product.get("unknowns") or "").strip()
+                                or "identidad_artista_cliente_evento_venue_no_confirmada")
+    return payload
+
+
 def _conservative_opportunity_repair(payload, area):
     """Repair only a missing human next action, never opportunity facts."""
     if area != "opportunity_radar" or not isinstance(payload, dict):
@@ -971,6 +1050,7 @@ def run_external_batch(area, batch_id, provider, paths=None, model=None,
         }, path=batch_path)
         return {"ok": False, "status": "invalid", "raw_path": raw_path,
                 "errors": ["provider_output_not_json"]}
+    payload = _apply_human_portfolio_classification(payload, common_path)
     payload["work"] = dict(brief["work"], status="awaiting_review", provider=provider)
     if len(payload.get("items", [])) > budget:
         error = "items_over_budget:%d>%d" % (len(payload["items"]), budget)

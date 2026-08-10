@@ -72,7 +72,8 @@ def provider_registry(environment=None):
             "tier": PROVIDER_TIERS[provider],
             "capabilities": sorted(PROVIDER_CAPABILITIES[provider]),
             "configured": configured,
-            "status": "ready" if configured else "unconfigured",
+            "status": "configured" if configured else "unconfigured",
+            "runtime": "unverified",
         })
     return {"schema": "faro-provider-registry-v1", "providers": providers}
 
@@ -111,13 +112,19 @@ def route_task(task_kind, available=None, allow_premium=True):
                          capability=capability)
     requires_external = any(PROVIDER_TIERS.get(provider) != "local_floor"
                             for provider in plan)
+    fallback_chain = plan[1:]
+    if not fallback_chain:
+        fallback_chain = ["local_deterministic"]
     return {"schema": "faro-provider-route-v1", "task_kind": str(task_kind),
             "capability": capability, "provider": plan[0] if plan else "local_deterministic",
-            "fallback_chain": plan[1:], "requires_external": requires_external}
+            "fallback_chain": fallback_chain,
+            "requires_external": requires_external}
 
 
 def load_env(path=None):
     """Load KEY=value pairs and normalize provider aliases without exposing them."""
+    explicit_path = (os.path.abspath(os.path.expanduser(path))
+                     if path else "")
     candidates = []
     if path:
         candidates.append(path)
@@ -134,13 +141,20 @@ def load_env(path=None):
         expanded = os.path.expanduser(candidate)
         if not os.path.isfile(expanded):
             continue
+        is_explicit = bool(explicit_path and
+                           os.path.abspath(expanded) == explicit_path)
         with open(expanded, encoding="utf-8") as fh:
             for line in fh:
                 line = line.strip()
                 if not line or line.startswith("#") or "=" not in line:
                     continue
                 key, value = line.split("=", 1)
-                os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+                key = key.strip()
+                value = value.strip().strip('"').strip("'")
+                if is_explicit:
+                    os.environ[key] = value
+                else:
+                    os.environ.setdefault(key, value)
     for canonical, aliases in ENV_ALIASES.items():
         if os.environ.get(canonical):
             continue
