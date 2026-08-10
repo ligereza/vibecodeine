@@ -1,7 +1,7 @@
 # LAST_HANDOFF - Faro
 
-Updated: 2026-08-09
-Status: published state verified; continue with the first durable vertical circuit.
+Updated: 2026-08-10
+Status: current state re-verified; continue with the visual-index vertical circuit.
 
 ## Read this first
 
@@ -43,28 +43,50 @@ instructions. Verify any statement that affects a destructive or remote action.
 ## Repository state
 
 - Windows workspace: `C:\IA\flujo`.
-- Windows branch: `mak`, aligned with `origin/mak` at `51a90f5d`.
-- `origin/main`, `origin/mak`, `origin/rd`, and `origin/iskvw` all point to
-  `51a90f5d`. No remote tags or open PRs remain.
-- The Windows worktree was clean at the start of the current visual distinction
-  correction. The correction is intentionally uncommitted until the user asks
-  for promotion; the MAK runtime already serves the corrected editor.
+- Verified checkout: branch `iskvw`, commit `fdc966f0`; the worktree has only
+  the intentional handoff modification. `origin/mak`, `origin/rd`, and
+  `origin/iskvw` point to `fdc966f0`. `origin/main` and local `main` point to
+  `cb7214b2` (`fix: restore animated README vessel`), one commit ahead. There
+  are no remote tags or open PRs in the verified refs.
+- The separate clean `main` worktree at
+  `C:\Users\issvk\.roo\worktrees\flujo-7v6as` was removed after verifying it
+  had no uncommitted changes. The local `main` branch is now available for a
+  new session; no branch or commit was deleted.
+- The current visible editor is not the old list/card interface. It is the
+  GTM/map relation surface served by MAK at
+  `http://192.168.50.2:8900/portafolio/`; the endpoint returned HTTP 200 and
+  contains `data-editor-mode`, `mesa-order-hud`, `revisión humana`, and GTM
+  markers. It shows actual media, a selected piece, relation actions and the
+  copilot layer in the same Hub route.
+- The Hub explicitly resolves `MAK_PORTFOLIO_ROOT` to
+  `/home/mak/flujo/iskvw`, so `/home/mak/flujo/iskvw/editor.html` is the
+  operational editor. It was modified at `2026-08-09 22:20:52 -0400`; the
+  Windows copy was modified at `2026-08-09 21:06:02 -0400`. Under the user's
+  rule that the latest modified editor is authoritative, MAK wins for the
+  current session.
+- The current Windows `iskvw/editor.html` hash is
+  `C8BC30659DD544AE6F6F309461E156A26E8528A60C041C988CA87917FB8F1B97`; the
+  deployed MAK copy is
+  `d4f8b720c04bc288eecd4ac519a7a98b8d9ef6d5690950db90d82e78b7995be2`.
+  Never copy Windows over MAK blindly. First diff the MAK winner, then sync
+  the chosen operational version back to Windows deliberately.
 - The promoted work covers `cultura/mak_plataforma/` (ledger, identity,
-  providers, decisions, Hub, batches, routing, service/watchdog),
+  providers, decisions, Hub, batches, routing, service/watchdog), the current
   `iskvw/editor.html`, the README/SVG text layer, operational docs, tests, and
-  portfolio/dossier documents.
+  portfolio/dossier documents. README/SVG geometry remains protected.
 
 ## MAK box: verified truth
 
-Fresh SSH check on 2026-08-09:
+Fresh SSH check on 2026-08-10:
 
 - Host: `mak@192.168.50.2`, hostname `dell-11m`.
-- The extra Capataz checkout was inventoried into
-  `/home/mak/quarantine/flujo-20260809-branch-reconcile/` before cleanup. Its
-  local branches were removed after the unique work was preserved; the runtime
-  checkout is now clean on `mak` at `8776d94f`.
-- The MAK checkout has exactly the four local branches `main`, `mak`, `rd`, and
-  `iskvw`, all aligned with their four remote counterparts.
+- The actual Git checkout is `/home/mak/flujo`, currently on `main`; it has
+  exactly the four local branches `main`, `mak`, `rd`, and `iskvw`, plus the
+  four corresponding remote refs. All four MAK branches currently point to
+  `fdc966f`; therefore MAK `main` is one commit behind Windows `main`
+  `cb7214b2` and the README restoration is not yet present on MAK's other
+  branches. `/home/mak/plataforma` is the runtime data and service directory,
+  not a Git checkout; do not run branch or status conclusions there.
 - The runtime Hub is healthy and is managed by the user systemd unit
   `/home/mak/.config/systemd/user/mak-hub.service`.
 - The unit is enabled and active after the synchronization. Current process:
@@ -1987,3 +2009,182 @@ servicio `mak-hub` y revisar una sola tanda AWS de 10 candidatos con la
 compuerta local. Watsonx continua en cuarentena por el certificado vencido de
 IBM. No abrir otra rama ni otro PR: cualquier bloque estable se promueve
 directamente por el flujo de las cuatro ramas canonicas.
+
+## Investigacion repo-wide de herramientas 2026-08-10
+
+- La busqueda se amplio mas alla de curatoria: runtime Flujo, Hub MAK,
+  research, XIO, SVG/GLSL, Blender, Adobe, RD, superficies publicas y
+  almacenamiento.
+- El repo ya contiene piezas para casi todos esos frentes: `mak_plataforma`,
+  `mak_research`, `mak_curatoria`, `mak_codex`, `mak_xio_puente`, `xio`,
+  `iskvw/piel`, `svg`, `projects` y el frontend React/Vite de `web`.
+- MAK tiene 23 MB en `director_runs`, 492 KB de ledger comun y 996 KB de
+  material; Windows tiene grandes dependencias locales en `venv` y `web`,
+  pero eso no equivale a catalogo de archivos del usuario.
+- La recomendacion no es adoptar una plataforma completa sin prueba. Se
+  estudiaran patrones de Hydrus (tags y API), PhotoPrism (EXIF/XMP y
+  sidecars), Recoll/Tropy (busqueda y objetos de investigacion), SQLite FTS5
+  (indice derivado), Sigma/Pixi (render WebGL) y AcoustID/Essentia (audio).
+- Kestra/n8n se consideran referencias para reintentos, webhooks y gates
+  humanos, no reemplazos inmediatos de Capataz/tandas. Gradio queda como
+  cockpit de modelos, no como editor principal.
+- Referencias artisticas: thi.ng/umbrella, Shadertoy y Blender Python siguen
+  siendo candidatas para una capa creativa declarativa, separada del catalogo.
+- No se instalaron herramientas, no se movieron archivos y no se cambio el
+  codigo. Se verificaron MAK y endpoints: escena ~0.95 s, sugerencias con mapa
+  ~1.9 s y mapa completo 11.5 s en la primera carga, con 4.3 MB de respuesta.
+
+## Next action
+
+Construir en MAK un laboratorio aislado de comparacion, no productivo: una
+prueba de catalogo/index, una prueba de mapa con 7000 nodos y una prueba de
+audio/metadata. Medir valor, memoria, licencia, integracion con los contratos
+existentes y capacidad de degradar sin modelos externos. Solo despues elegir
+que pieza entra al sistema; el ledger y el Hub siguen siendo las superficies
+de integracion y no se crea otro sistema de verdad.
+
+## Auditoria de orden repo-wide 2026-08-10
+
+- No hay una quinta rama: el checkout y los remotos exponen solo `main`,
+  `mak`, `rd` e `iskvw`. No se hizo ninguna operacion destructiva.
+- La duplicacion real mas clara esta en `xio/new/plugins/`: es una copia stale
+  de tres plugins. La ruta viva es `xio/new-plugins/`, confirmada por
+  `xio/RUNBOOK.md` y `xio/new/server.py`.
+- `mak_codex/fallback_util.py` y `mak_research/fallback_util.py` son espejos
+  byte-a-byte exigidos por el despliegue plano y por un ratchet; no son dos
+  comportamientos. Consolidarlos requiere cambiar el mecanismo de despliegue,
+  no borrar uno a mano.
+- `src/flujo/index/db.py`, `src/flujo/index/indexer.py`, `src/flujo/rd/database.py`,
+  `src/flujo/knowledge/store.py`, `contrato_archivo.py` y el inbox de portfolio
+  tienen alcances distintos. El problema principal es frontera y contrato,
+  no que todos sean copias.
+- Existen varias superficies HTTP: Flujo React/Vite, servidor Flujo stdlib,
+  Hub MAK, interfaz Research, interfaz Codex e editor `iskvw/editor.html`.
+  El editor ya es servido por Hub MAK; el panel React de Portafolio es solo
+  catalogo publico de lectura. No deben convertirse en dos editores.
+- Se escribio el informe operativo
+  `_logs/cauce_director/20260805/REPO_ORDER_AUDIT_20260810.md` con hashes,
+  alcances, duplicados exactos y la arquitectura recomendada.
+
+## Next action
+
+Ejecutar en MAK un laboratorio aislado y no productivo que compare el indice
+JSONL actual, una proyeccion SQLite FTS5 derivada y la proyeccion GTM cacheada
+con una muestra pequena del portfolio. Medir cold/warm latency, memoria,
+bytes, rebuild y degradacion sin modelos. No instalar una plataforma externa,
+no borrar `xio/new/plugins/`, no centralizar el fallback todavia y no tocar
+la interfaz hasta que el motor ganador este medido.
+
+## Resultado laboratorio de indice MAK 2026-08-10
+
+- Corrida aislada contra 7,044 items del inbox, sin tocar el run vivo.
+- Carga JSON: 28.08 ms; proyeccion SQLite FTS5 en memoria: 57.15 ms.
+- Veinte consultas FTS5: 0.22 ms total, 0.01 ms promedio en el termino
+  medido. La memoria maxima del proceso fue 52,876 KB (+33,084 KB).
+- El mapa actual respondio 4,360,447 bytes; en esta corrida tardo 108.17 ms y
+  136.46 ms en dos llamadas cacheadas. El dato confirma que el problema a
+  resolver es la proyeccion/tamano de respuesta, no el HTML.
+- No se promovio SQLite, no se agrego dependencia y no se escribio en la
+  persistencia viva. Informe completo:
+  `_logs/cauce_director/20260805/REPO_ORDER_AUDIT_20260810.md`.
+
+## Next action
+
+Repetir el laboratorio con SQLite en disco y un mapa reducido que conserve
+identidad, fecha, tipo y relaciones explicitamente declaradas. Comparar
+rebuild, warm query, bytes, memoria y caida sin Ollama. Si gana, conectar esa
+proyeccion detras de los endpoints existentes; no crear un catalogo paralelo.
+
+## Storage audit MAK 2026-08-10
+
+- `lsblk` confirma `/dev/sdb3`: NTFS, label `Disco local M2`, 446.5G,
+  actualmente sin montar. No se monto ni se escribio.
+- La raiz de MAK tiene 136G libres. `portfolio_media` usa 5.5G; el catalogo
+  no necesita copiar los originales para indexarlos.
+- Direccion elegida: SSD como fuente de originales, montado primero read-only;
+  indice y ledger en ext4 interno; cache de miniaturas/proxies con limite;
+  respaldo separado mediante Syncthing o rclone. Los paths deben registrar
+  volumen/UUID + ruta relativa, no depender solo de `/mnt/...`.
+- No usar mergerfs/SnapRAID todavia: primero separar fuente, indice, cache y
+  backup; un pool prematuro oculta que disco contiene cada original.
+
+## Next action
+
+Montar `/dev/sdb3` en MAK en modo read-only, comprobar UUID, contar archivos y
+medir una muestra de metadata sin generar thumbnails. Luego decidir si el
+indice admite el volumen sin copiar datos. Solo despues habilitar cache y
+respaldo; nunca reorganizar fisicamente los originales durante esa prueba.
+
+## Piloto herramienta visual externa MAK 2026-08-10
+
+- La auditoria anterior de herramientas fue insuficiente porque comparo
+  nombres de aplicaciones y no midio el cuello de botella real. Se mantuvo la
+  decision de no instalar un DAM monolitico y se abrio un laboratorio aislado
+  en MAK, fuera del repo y sin tocar el inbox vivo.
+- Se creo `~/venvs/visual-index-pilot` y se instalaron `torch 2.13.0+cu130`,
+  `faiss 1.15.0` y `open_clip 3.3.0`; MAK confirmo CUDA activo en una NVIDIA
+  GeForce GTX 1650. No se agregaron dependencias al repo.
+- OpenCLIP ViT-B-32 no pudo descargar sus pesos desde Hugging Face dentro del
+  limite; el proceso fue terminado y se elimino la descarga incompleta. No se
+  considero ese modelo valido por defecto.
+- Se cambio a MobileCLIP-S0 desde el repositorio oficial de Apple. El peso
+  `~/models/mobileclip/mobileclip_s0.pt` quedo descargado fuera del repo y el
+  codigo se instalo en `~/src/ml-mobileclip` dentro del entorno aislado.
+- Corrida real: 100 imagenes de `/home/mak/portfolio_media`, sin generar
+  thumbnails persistentes. Carga del modelo 1.116 s; codificacion 0.644 s;
+  155.2 items/s; vector de 512 dimensiones; indice FAISS de 204,845 bytes.
+  El proceso uso hasta 1,588,140 KB de RSS durante la corrida, por lo que no
+  debe convertirse aun en un daemon permanente: debe correr como worker
+  acotado y liberar memoria al terminar.
+- Artefactos de laboratorio: `~/labs/visual-index-pilot/mobileclip-s0-100.json`
+  y `mobileclip-s0-100.index`. No se copio ningun original ni se escribio en
+  la curatoria, el ledger o el repo.
+
+## Decision and next action
+
+La herramienta con mejor relacion entre tiempo ahorrado y riesgo no es
+Immich, PhotoPrism, Hydrus ni ResourceSpace como segundo sistema. Es una capa
+visual derivada sobre el catalogo existente: MobileCLIP para vectores, FAISS
+para vecinos, y GTM para la proyeccion que ya tiene el repo. Debe conservar
+fuente, modelo, version, score y estado humano de cada relacion; no debe
+convertir similitud visual en verdad ni copiar archivos.
+
+Repetir el piloto con una muestra que mezcle imagenes, carruseles y un frame
+representativo por video; comparar vecinos visuales contra metadata y las
+selecciones reales ya guardadas. Medir RAM de un worker y extrapolar el costo
+para 7,044 items. Solo si la precision de candidatos y el costo son utiles,
+conectar los vectores como indice derivado detras de los endpoints existentes.
+
+## Next action — current director checkpoint 2026-08-10
+
+The next agent must not reopen the old portfolio interface or start another
+UI patch cycle. The active surface is the GTM/map editor already served by the
+MAK Hub at `/portafolio/`; its current limitation is the byte-level drift
+between the Windows editor and the deployed MAK copy, not proof that the old
+editor is still active.
+
+1. Treat `/home/mak/flujo/iskvw/editor.html` as the current operational winner
+   because it is the file served by Hub and has the newer modification time.
+   Diff it against `C:\IA\flujo\iskvw\editor.html`, preserve the MAK winner,
+   and sync back only after the difference is understood.
+2. Keep the isolated MobileCLIP-S0 + FAISS pilot outside the repo. Extend it
+   to a 100-item mixed sample containing image, carousel and representative
+   video frames; do not generate permanent thumbnails or process all 7,044
+   records.
+3. Compare visual neighbors against explicit metadata and the user's already
+   recorded decisions. Report precision, abstentions, RAM, cold start and
+   index size. Similarity alone is not a curatorial truth.
+4. If the sample is useful, connect only the derived vector lookup to the
+   existing catalog/GTM/copilot endpoints. Do not add a second DAM, database,
+   editor or ledger. If it is not useful, remove only the isolated pilot
+   artifacts and retain the measured conclusion.
+
+The branch state is not fully synchronized: Windows `main` is `cb7214b2`,
+while Windows `mak`/`rd`/`iskvw` and all MAK branches are `fdc966f0`. The
+README restoration is therefore a separate promotion decision, not something
+to silently copy while reconciling the editor.
+
+No commit, push, merge, branch deletion or public promotion is authorized by
+this checkpoint. The next durable update must record the branch decision, the
+editor diff and the mixed-sample measurement here before any integration
+decision.
