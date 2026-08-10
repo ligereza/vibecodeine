@@ -1912,3 +1912,32 @@ calidad mecanica de la primera: hipotesis evidenciada, faceta, fuente y
 desconocidos. Watsonx queda bloqueado por el certificado IBM expirado. No
 seguir gastando modelos para compensar un juez que acaba de demostrar que
 puede aceptar vacios; primero se mide la compuerta determinista.
+
+## Cierre de promocion y limpieza 2026-08-09
+
+- El bloque de MAK, Hub, ledger, copilot, providers, tandas y Estudio de obra
+  quedo integrado con la superficie README/SVG y el plan de mesa de montaje.
+- La rama README se reconcilio con `origin/main`; los conflictos se resolvieron
+  conservando la geometria ASCII seleccionada y el texto actualizado mediante
+  `tools/update_readme_svg.py`. El generador ahora reconoce las capas antiguas
+  y las actuales sin crear otra herramienta.
+- Las variantes SVG experimentales no referenciadas se conservaron fuera del
+  repositorio en `_logs/cauce_director/20260805/readme_experiments_20260809/`
+  con `MANIFEST.json`; no se borraron ni se dejaron como basura versionada.
+- Verificacion local completa: `py -m pytest -q` termino sin fallos; tambien
+  pasaron `node --check iskvw/mesa_montaje.js`,
+  `py tools/update_readme_svg.py --check`, `py_compile` de la plataforma y
+  `git diff --check`.
+- La prueba que fallaba por una variable GEMINI residual quedo aislada para
+  que no dependa de credenciales del entorno. El contrato documental se
+  actualizo: `AGENTS.md` es la entrada Faro actual y `CLAUDE.md` queda como
+  compatibilidad historica.
+
+## Next action
+
+Pushear el commit reconciliado a `main` y sincronizar desde ese mismo hash las
+ramas canonicas `mak`, `rd` e `iskvw`. Despues verificar los cuatro refs,
+eliminar `arreglo-readme` local/remota solo cuando su trabajo sea ancestro de
+las cuatro, y comprobar que no existan tags ni ramas extra. No volver a
+consumir Watsonx hasta que IBM renueve el certificado; la siguiente tanda
+externa segura sigue siendo AWS acotado + juez local.
