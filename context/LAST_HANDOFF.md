@@ -48,10 +48,10 @@ instructions. Verify any statement that affects a destructive or remote action.
   `origin/iskvw` point to `fdc966f0`. `origin/main` and local `main` point to
   `cb7214b2` (`fix: restore animated README vessel`), one commit ahead. There
   are no remote tags or open PRs in the verified refs.
-- The separate clean `main` worktree at
-  `C:\Users\issvk\.roo\worktrees\flujo-7v6as` was removed after verifying it
-  had no uncommitted changes. The local `main` branch is now available for a
-  new session; no branch or commit was deleted.
+- The separate clean `main` worktree under the local `.roo/worktrees/`
+  directory was removed after verifying it had no uncommitted changes. The
+  local `main` branch is now available for a new session; no branch or commit
+  was deleted.
 - The current visible editor is not the old list/card interface. It is the
   GTM/map relation surface served by MAK at
   `http://192.168.50.2:8900/portafolio/`; the endpoint returned HTTP 200 and
