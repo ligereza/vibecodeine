@@ -1942,6 +1942,19 @@ las cuatro, y comprobar que no existan tags ni ramas extra. No volver a
 consumir Watsonx hasta que IBM renueve el certificado; la siguiente tanda
 externa segura sigue siendo AWS acotado + juez local.
 
+## Verificacion de la caja MAK despues de la promocion 2026-08-09
+
+- `/home/mak/flujo` quedo limpio en `main` con el mismo hash `1352e29f` y
+  solamente las ramas locales `main`, `mak`, `rd` e `iskvw`.
+- Los cinco modulos desplegados en `/home/mak/plataforma/` coinciden por
+  SHA-256 con `cultura/mak_plataforma/` del checkout canonico. La interfaz
+  `iskvw/editor.html` y `iskvw/mesa_montaje.js` tambien estan en ese checkout.
+- El Hub responde HTTP 200 en `127.0.0.1:8900` y el proceso activo es
+  `/home/mak/plataforma/.venv/bin/python /home/mak/plataforma/hub.py` (PID
+  observado 128089). No existe una unidad `mak-hub.service` activa; no se
+  debe afirmar lo contrario. La persistencia de arranque queda como tarea
+  separada, no se inventa durante esta limpieza.
+
 ## Auditoria de MAK antes de sincronizar 2026-08-09
 
 - `origin/mak` tenia dos commits que no estaban en la linea comun:
