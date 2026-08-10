@@ -1952,3 +1952,25 @@ externa segura sigue siendo AWS acotado + juez local.
 - No se rescatan en la rama operativa. Sus hashes y su razon de descarte
   quedan registrados aqui; el estado canonico se sincroniza desde el main
   probado, sin borrar la evidencia del analisis local.
+
+## Promocion final verificada 2026-08-09
+
+- El hash publicado es `ec0e1499` en `main`, `mak`, `rd` e `iskvw`; los cuatro
+  refs remotos y locales coinciden.
+- `origin/arreglo-readme`, `origin/ligereza-patch-1` y
+  `origin/ligereza-patch-2` fueron retiradas despues de archivar sus parches
+  y hashes en `_logs/cauce_director/20260805/retired_branches_20260809/`.
+- `git ls-remote --tags origin` no devuelve tags y `gh pr list --state open`
+  devuelve `[]`. El remoto queda con exactamente las cuatro ramas canonicas.
+- El checkout Windows actual esta limpio en `iskvw`; el worktree de `main`
+  tambien quedo limpio y apunta al mismo hash. La caja MAK ya recibio el
+  bloque operativo antes de esta promocion; el siguiente chequeo remoto debe
+  validar servicio y hash, no repetir la auditoria completa.
+
+## Next action
+
+En la proxima sesion empezar por `context/LAST_HANDOFF.md`, comprobar el
+servicio `mak-hub` y revisar una sola tanda AWS de 10 candidatos con la
+compuerta local. Watsonx continua en cuarentena por el certificado vencido de
+IBM. No abrir otra rama ni otro PR: cualquier bloque estable se promueve
+directamente por el flujo de las cuatro ramas canonicas.
