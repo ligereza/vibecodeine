@@ -36,6 +36,7 @@ _CLASE_POR_DIR = {"corpus": "obra", "codex": "codigo"}
 
 _EXTENSIONES = (".md", ".txt", ".json", ".jpg", ".jpeg", ".png", ".webp")
 PORTFOLIO_ENTITY_SCHEMA = "faro-portfolio-entity-v1"
+MESA_SCENE_SCHEMA = "faro-portfolio-scene-v1"
 PORTFOLIO_PURPOSE = "triage audiovisual records without turning stories into works"
 OPPORTUNITY_CARD_SCHEMA = "faro-opportunity-card-v1"
 PORTFOLIO_RELATION_KEYS = (
@@ -141,12 +142,37 @@ def portfolio_identity_graph(items, connections=None, context_links=None):
         "location": ("location", "ubicacion", "ciudad"),
     }
 
+    def source_layer(item):
+        explicit = str(item.get("semantic_layer") or item.get("layer") or "").strip().lower()
+        classification = item.get("classification")
+        if isinstance(classification, dict):
+            explicit = str(explicit or classification.get("semantic_layer") or
+                           classification.get("layer") or "").strip().lower()
+        if explicit in {"obra", "registro", "entidad"}:
+            return explicit
+        role = str(item.get("record_kind") or (
+            classification.get("record_kind") if isinstance(classification, dict) else ""
+        ) or "").strip().lower()
+        if role in {"obra", "work", "artwork"}:
+            return "obra"
+        if role in {"story_record", "registro", "record"} or item.get("tipo_contenido") == "story":
+            return "registro"
+        return "candidate"
+
     def values(value):
         if isinstance(value, (list, tuple, set)):
             source = value
         else:
             source = [value]
-        return [str(entry).strip() for entry in source if str(entry).strip()]
+        clean = []
+        for entry in source:
+            if isinstance(entry, dict):
+                entry = entry.get("name") or entry.get("value") or ""
+            text = str(entry or "").strip()
+            if not text or text.lower() in _GENERIC_CANDIDATE_VALUES:
+                continue
+            clean.append(text)
+        return clean
 
     def add_node(node_id, kind, label, **extra):
         nodes.setdefault(node_id, {"id": node_id, "kind": kind,
@@ -158,6 +184,8 @@ def portfolio_identity_graph(items, connections=None, context_links=None):
             return
         edge_keys.add(key)
         edges.append({"source": source, "target": target, "relation": relation,
+                      "source_layer": nodes.get(source, {}).get("layer", ""),
+                      "target_layer": nodes.get(target, {}).get("layer", ""),
                       "evidence_kind": evidence_kind, "confidence": confidence,
                       "status": "candidate"})
 
@@ -166,19 +194,36 @@ def portfolio_identity_graph(items, connections=None, context_links=None):
             continue
         item_id = str(item["id"])
         node_id = "item:" + _id(item_id)
+        classification = item.get("classification")
+        declared_record_kind = item.get("record_kind") or (
+            classification.get("record_kind") if isinstance(classification, dict) else "")
         add_node(node_id, "item", item_id,
-                 record_kind="story_record" if item.get("tipo_contenido") == "story" else "media_candidate",
-                 content_type=item.get("tipo_contenido"), date=item.get("fecha"),
+                 record_kind=declared_record_kind or (
+                     "story_record" if item.get("tipo_contenido") == "story" else "media_candidate"),
+                 layer=source_layer(item), content_type=item.get("tipo_contenido"), date=item.get("fecha"),
                  selection=item.get("selection", "pendiente"))
         if item.get("fecha"):
             date_id = "date:" + _id(item["fecha"])
-            add_node(date_id, "date", str(item["fecha"]))
+            add_node(date_id, "date", str(item["fecha"]), layer="context")
             add_edge(node_id, date_id, "date", "instagram_metadata", "high")
         if item.get("publicacion_id"):
             publication_id = "publication:" + _id(item["publicacion_id"])
-            add_node(publication_id, "publication", str(item["publicacion_id"]))
+            add_node(publication_id, "publication", str(item["publicacion_id"]), layer="context")
             add_edge(node_id, publication_id, "publication", "instagram_metadata", "high")
-        declared = item.get("entities") if isinstance(item.get("entities"), dict) else {}
+        declared = {}
+        for field in ("entities", "classification", "human_context"):
+            values_by_relation = item.get(field)
+            if not isinstance(values_by_relation, dict):
+                continue
+            for relation, values_for_relation in values_by_relation.items():
+                if relation not in declared:
+                    declared[relation] = values_for_relation
+                elif isinstance(declared[relation], list):
+                    prior = declared[relation]
+                    incoming = values_for_relation if isinstance(values_for_relation, list) else [values_for_relation]
+                    declared[relation] = prior + incoming
+                else:
+                    declared[relation] = [declared[relation], values_for_relation]
         for relation, fields in relation_fields.items():
             raw = []
             for field in fields:
@@ -186,7 +231,7 @@ def portfolio_identity_graph(items, connections=None, context_links=None):
                 raw.extend(values(declared.get(field)))
             for value in sorted(set(raw)):
                 entity_id = "%s:%s" % (relation, _id(value))
-                add_node(entity_id, relation, value)
+                add_node(entity_id, relation, value, layer="entidad")
                 add_edge(node_id, entity_id, relation, "declared_metadata")
 
     for connection in connections or []:
@@ -205,13 +250,15 @@ def portfolio_identity_graph(items, connections=None, context_links=None):
         if source not in nodes or not group:
             continue
         group_id = "group:" + _id(group)
-        add_node(group_id, "group", group)
+        add_node(group_id, "group", group, layer="context")
         add_edge(source, group_id, "context_link", "human_context", "high")
+    layer_counts = Counter(node.get("layer", "") for node in nodes.values())
     return {
         "schema": IDENTITY_GRAPH_SCHEMA,
         "resolution_policy": "explicit_metadata_only",
         "nodes": list(nodes.values()), "edges": edges,
         "counts": {"nodes": len(nodes), "edges": len(edges)},
+        "layer_counts": dict(layer_counts),
     }
 
 
@@ -401,6 +448,294 @@ def portfolio_metadata_index(items) -> dict:
                 mentions.items(), key=lambda pair: (-len(pair[1]), pair[0]))[:200]
         ],
         "identity_resolution": "mentions_only; no artist, client or venue inferred",
+    }
+
+
+def mesa_scene(source: dict, records, relation_groups, limit: int = 10) -> dict:
+    """Build the single-scene projection used by the portfolio workbench.
+
+    The inbox and feedback files remain the sources of truth. This projection
+    only deduplicates visible records by id and expresses suggestions as edges
+    over those records; it never creates a second card for a relation.
+    """
+    source = dict(source or {})
+    source_id = str(source.get("id") or source.get("source_id") or "").strip()
+    if not source_id:
+        return {
+            "schema": MESA_SCENE_SCHEMA, "active_id": "", "records": [],
+            "relations": [], "window": {"limit": max(1, int(limit or 10)), "count": 0},
+        }
+    try:
+        limit = max(2, min(20, int(limit or 10)))
+    except (TypeError, ValueError):
+        limit = 10
+
+    by_id = {source_id: source}
+    groups = [row for row in relation_groups or [] if isinstance(row, dict)]
+    discarded_ids = {
+        str(record.get("id") or record.get("source_id") or "").strip()
+        for record in records or []
+        if isinstance(record, dict)
+        and str(record.get("selection") or "") == "descartar"
+    }
+    target_order = []
+    for group in groups:
+        target_id = str(group.get("item_id") or "").strip()
+        if (target_id and target_id != source_id
+                and target_id not in discarded_ids
+                and target_id not in target_order):
+            target_order.append(target_id)
+    for record in records or []:
+        if not isinstance(record, dict):
+            continue
+        record_id = str(record.get("id") or record.get("source_id") or "").strip()
+        if record_id and record_id not in discarded_ids and record_id not in by_id:
+            by_id[record_id] = dict(record)
+
+    publication_id = str(source.get("publicacion_id") or "").strip()
+    publication_groups = {}
+    publication_records = [source, *[record for record in records or []
+                                      if isinstance(record, dict)]]
+    seen_publication_members = {}
+    for record in publication_records:
+        record_id = str(record.get("id") or record.get("source_id") or "").strip()
+        current_publication = str(record.get("publicacion_id") or "").strip()
+        if (not current_publication or not record_id
+                or str(record.get("selection") or "") == "descartar"):
+            continue
+        seen = seen_publication_members.setdefault(current_publication, set())
+        if record_id in seen:
+            continue
+        seen.add(record_id)
+        publication_groups.setdefault(current_publication, []).append({
+            "source_id": record_id,
+            "asset_path": record.get("asset_path") or "",
+            "asset_available": bool(record.get("asset_available")),
+            "index": record.get("medio_indice"),
+            "total": record.get("medio_total"),
+            "selection": record.get("selection") or "pendiente",
+        })
+    for media in publication_groups.values():
+        media.sort(key=lambda row: (
+            row.get("index") is None, row.get("index") or 0, row["source_id"]))
+    publication_media = publication_groups.get(publication_id, [])
+
+    publication_representative = {}
+    for record_id, record in by_id.items():
+        publication_key = str(record.get("publicacion_id") or "").strip()
+        if publication_key and publication_key not in publication_representative:
+            publication_representative[publication_key] = record_id
+
+    visible_ids = [source_id]
+    source_publication = str(source.get("publicacion_id") or "").strip()
+    seen_units = {("publication", source_publication) if source_publication
+                  else ("item", source_id)}
+    for record_id in target_order:
+        record = by_id.get(record_id, {})
+        publication_key = str(record.get("publicacion_id") or "").strip()
+        unit_key = ("publication", publication_key) if publication_key else ("item", record_id)
+        if unit_key in seen_units:
+            continue
+        seen_units.add(unit_key)
+        visible_ids.append(publication_representative.get(publication_key, record_id)
+                           if publication_key else record_id)
+    visible_ids = visible_ids[:limit]
+
+    def canonical_record_id(record_id):
+        record = by_id.get(record_id, {})
+        publication_key = str(record.get("publicacion_id") or "").strip()
+        return publication_representative.get(publication_key, record_id)
+
+    work_parent = {record_id: record_id for record_id in visible_ids}
+
+    def work_find(record_id):
+        parent = work_parent.get(record_id, record_id)
+        while parent != work_parent.get(parent, parent):
+            parent = work_parent[parent]
+        current = record_id
+        while current in work_parent and work_parent[current] != parent:
+            next_id = work_parent[current]
+            work_parent[current] = parent
+            current = next_id
+        return parent
+
+    def work_union(left, right):
+        if left not in work_parent or right not in work_parent:
+            return
+        left_root, right_root = work_find(left), work_find(right)
+        if left_root != right_root:
+            work_parent[right_root] = left_root
+
+    def group_feedback(group):
+        channels = group.get("feedback_channels")
+        if isinstance(channels, list) and channels:
+            return [row for row in channels if isinstance(row, dict)]
+        feedback = str(group.get("feedback") or "").strip()
+        if feedback.lower() not in {"accept", "correct", "reject", "ignore"}:
+            return []
+        return [{
+            "action": feedback,
+            "facet": str(group.get("feedback_facet") or "unknown"),
+            "relation": group.get("relation_type") or "related",
+            "note": group.get("note") or "",
+        }]
+
+    def feedback_status(channels):
+        actions = {str(row.get("action") or "").lower() for row in channels}
+        if actions & {"accept", "correct"}:
+            return "accepted"
+        if actions and actions <= {"reject"}:
+            return "rejected"
+        return "candidate"
+
+    for group in groups:
+        target_id = canonical_record_id(str(group.get("item_id") or "").strip())
+        channels = group_feedback(group)
+        for feedback_row in channels:
+            feedback = str(feedback_row.get("action") or "").strip().lower()
+            feedback_facet = str(feedback_row.get("facet") or "").strip().lower()
+            if (feedback in {"accept", "correct"}
+                    and feedback_facet in {"obra", "work", "same_work"}):
+                work_union(source_id, target_id)
+
+    work_components = {}
+    for record_id in visible_ids:
+        work_components.setdefault(work_find(record_id), []).append(record_id)
+    work_groups = {}
+    for member_ids in work_components.values():
+        if len(member_ids) < 2:
+            continue
+        member_ids = sorted(member_ids)
+        group_id = "work:" + ":".join(member_ids)
+        members = [{
+            "source_id": member_id,
+            "asset_path": by_id[member_id].get("asset_path") or "",
+            "asset_available": bool(by_id[member_id].get("asset_available")),
+            "date": by_id[member_id].get("fecha") or by_id[member_id].get("date"),
+        } for member_id in member_ids if member_id in by_id]
+        group = {"id": group_id, "label": "misma obra", "count": len(members),
+                 "member_ids": member_ids, "members": members, "basis": "human_feedback"}
+        for member_id in member_ids:
+            work_groups[member_id] = group
+
+    visible = []
+    for record_id in visible_ids:
+        record = by_id[record_id]
+        record_kind = str(record.get("record_kind") or "").strip()
+        if record_kind in {"story_record", "registro", "record"}:
+            layer = "registro"
+        else:
+            layer = str(record.get("semantic_layer") or record.get("layer") or
+                        "candidate").strip() or "candidate"
+        visible.append({
+            "source_id": record_id,
+            "role": "active" if record_id == source_id else "related",
+            "semantic_layer": layer,
+            "record_kind": record_kind or ("story_record" if record.get(
+                "tipo_contenido") == "story" else "media_candidate"),
+            "content_type": record.get("tipo_contenido") or record.get("content_type"),
+            "date": record.get("fecha") or record.get("date"),
+            "publication_id": record.get("publicacion_id") or record.get("publication_id"),
+            "publication_group": ({
+                "id": record_publication,
+                "count": len(publication_groups.get(record_publication, [])),
+                "media": publication_groups.get(record_publication, []),
+            } if (record_publication := str(
+                record.get("publicacion_id") or record.get("publication_id") or ""))
+              else None),
+            "publication_index": record.get("medio_indice"),
+            "publication_total": record.get("medio_total"),
+            "work_group": work_groups.get(record_id),
+            "classification": dict(record.get("classification") or {}),
+            "description": record.get("descripcion_original") or record.get(
+                "description_original") or "",
+            "asset_path": record.get("asset_path") or "",
+            "asset_available": bool(record.get("asset_available")),
+            "selection": record.get("selection") or "pendiente",
+        })
+
+    visible_set = set(visible_ids)
+    relations = []
+    for group in groups:
+        raw_target_id = str(group.get("item_id") or "").strip()
+        target_id = canonical_record_id(raw_target_id)
+        if not target_id or target_id not in visible_set or target_id == source_id:
+            continue
+        feedback_channels = group_feedback(group)
+        status = feedback_status(feedback_channels)
+        channels = list(group.get("facets") or [])
+        feedback_facets = [str(row.get("facet") or "").strip()
+                           for row in feedback_channels]
+        feedback_facets = [facet for facet in feedback_facets if facet]
+        for feedback_facet in feedback_facets:
+            if feedback_facet not in channels:
+                channels.insert(0, feedback_facet)
+        accepted_facet = next((str(row.get("facet") or "").strip()
+                               for row in feedback_channels
+                               if row.get("action") in {"accept", "correct"}), "")
+        feedback_facet = accepted_facet or (feedback_facets[0] if feedback_facets else "")
+        decisions = [{
+            "action": row.get("action", ""),
+            "facet": row.get("facet", "unknown"),
+            "relation": row.get("relation", group.get("relation_type") or "related"),
+            "note": str(row.get("note") or "")[:1000],
+        } for row in feedback_channels]
+        relation_id = "%s->%s" % (source_id, target_id)
+        existing = next((row for row in relations
+                         if row["relation_id"] == relation_id), None)
+        if existing:
+            for channel in channels:
+                if channel not in existing["channels"]:
+                    existing["channels"].append(channel)
+            for key in ("evidence", "reasons"):
+                for value in list(group.get(key) or []):
+                    if value not in existing[key]:
+                        existing[key].append(value)
+            existing.setdefault("member_ids", []).append(raw_target_id)
+            existing.setdefault("decisions", []).extend(decisions)
+            existing["status"] = feedback_status([
+                {"action": existing["status"]},
+                *existing.get("decisions", []),
+            ])
+            continue
+        relations.append({
+            "relation_id": relation_id,
+            "source_id": source_id,
+            "target_id": target_id,
+            "channels": channels,
+            "feedback_facet": feedback_facet,
+            "relation_type": group.get("relation_type") or "related",
+            "confidence": group.get("confidence") or "baja",
+            "scope": group.get("scope") or "exploratory",
+            "space": group.get("space") or (
+                "evidence" if group.get("scope") == "declared" else "resonance"),
+            "spaces": list(group.get("spaces") or [group.get("space") or (
+                "evidence" if group.get("scope") == "declared" else "resonance")]),
+            "evidence": list(group.get("evidence") or []),
+            "reasons": list(group.get("reasons") or []),
+            "note": str(group.get("note") or "")[:1000],
+            "status": status,
+            "decisions": decisions,
+            "decision_actions": ["accept", "reject"],
+            "member_ids": [raw_target_id],
+        })
+
+    return {
+        "schema": MESA_SCENE_SCHEMA,
+        "active_id": source_id,
+        "records": visible,
+        "relations": relations,
+        "window": {"limit": limit, "count": len(visible), "source_total": len(by_id)},
+        "interaction": {
+            "camera_drag": True,
+            "node_drag": False,
+            "duplicate_targets": False,
+            "decision_surface": "map_hud",
+            "projection": "gtm",
+            "feedback_updates_topology": False,
+            "learning_surface": "live_field_over_stable_atlas",
+        },
+        "promotion": "none",
     }
 
 

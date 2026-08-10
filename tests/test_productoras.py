@@ -70,6 +70,9 @@ def test_env_fallback_parsea_sin_dotenv(tmp_path, monkeypatch):
 
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     monkeypatch.delenv("GEMINI_API_KEY_2", raising=False)
+    for nombre in list(__import__("os").environ):
+        if nombre.startswith("GEMINI_API_KEY"):
+            monkeypatch.delenv(nombre, raising=False)
     monkeypatch.setattr(productoras, "_env_fallback", fake_fallback)
     assert productoras._keys() == ["abc123", "def456"]
 

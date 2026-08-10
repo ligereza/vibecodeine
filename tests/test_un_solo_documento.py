@@ -67,22 +67,11 @@ def test_no_hay_dos_carpetas_de_archivo():
 
 
 def test_no_vuelve_un_segundo_punto_de_entrada():
-    """La entrada es CLAUDE.md. Si `AGENTS.md` vuelve porque una herramienta lo
-    necesita, que vuelva -- pero REDIRIGIENDO, no compitiendo.
-
-    Se mide la propiedad y no el tamano: que apunte a CLAUDE.md y que no traiga
-    instrucciones propias. Un stub puede ser largo y estar bien; uno corto con
-    ordenes distintas ya es un segundo contrato.
-    """
+    """AGENTS.md es el contrato actual y no debe competir con otro handoff."""
     p = REPO / "AGENTS.md"
     if not p.is_file():
         return
     texto = p.read_text(encoding="utf-8", errors="replace")
-    assert "CLAUDE.md" in texto, "si existe, tiene que apuntar a la entrada real"
-    # marcas de que esta dando ordenes en vez de redirigir
-    propias = re.findall(
-        r"^\s*(?:[-*]\s+|#{2,}\s*)(?:NO |NUNCA |SIEMPRE |Regla|Rule|Debes|Must)",
-        texto, re.M | re.I)
-    assert not propias, (
-        "AGENTS.md volvio a traer instrucciones propias: " + ", ".join(propias[:3])
-        + ". Es una redireccion a CLAUDE.md, no un contrato")
+    assert "Faro operating contract" in texto
+    assert "context/LAST_HANDOFF.md" in texto
+    assert "The current director is" in texto

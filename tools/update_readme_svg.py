@@ -14,7 +14,8 @@ ROOT = Path(__file__).resolve().parents[1]
 SVG_PATH = ROOT / "arte-ascii-readme.svg"
 README_PATH = ROOT / "README.md"
 TEXT_BLOCK_RE = re.compile(
-    r"(?P<open><text\b[^>]*class=[\"']text-container[\"'][^>]*>)"
+    r"(?P<open><text\b[^>]*class=[\"'][^\"']*"
+    r"(?:text-container|readme-source(?:-static)?)[^\"']*[\"'][^>]*>)"
     r"(?P<body>.*?)"
     r"(?P<close></text>)",
     re.DOTALL,
@@ -96,8 +97,8 @@ def expected_svg(svg: str, readme: str) -> str:
         flags=re.DOTALL,
     )
     output = re.sub(
-        r"<desc>.*?</desc>",
-        "<desc>ASCII data from the current VIBECODEINE repository and MAK runtime, carried by a preserved double cup.</desc>",
+        r"<desc\b[^>]*>.*?</desc>",
+        "<desc id=\"desc\">ASCII data from the current VIBECODEINE repository and MAK runtime, carried by a preserved double cup.</desc>",
         output,
         count=1,
         flags=re.DOTALL,

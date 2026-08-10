@@ -22,9 +22,21 @@ def test_typed_provider_route_prefers_vision_capability_and_keeps_fallback():
     route = providers.route_task("visual", available=["ollama", "aws"])
     assert route["schema"] == "faro-provider-route-v1"
     assert route["provider"] == "aws"
-    assert route["fallback_chain"] == []
+    assert route["fallback_chain"] == ["local_deterministic"]
     assert providers.route_task("judge", available=["watsonx", "ollama"])["provider"] == "ollama"
     assert providers.route_task("judge", available=["ollama"])["requires_external"] is False
+    assert providers.route_task("judge", available=["ollama"])["fallback_chain"] == ["local_deterministic"]
+
+
+def test_provider_registry_does_not_claim_runtime_health_from_env_only():
+    registry = providers.provider_registry({
+        "WATSONX_API_KEY": "configured",
+        "WATSONX_PROJECT_ID": "configured",
+    })
+    watson = next(row for row in registry["providers"] if row["id"] == "watsonx")
+    assert watson["configured"] is True
+    assert watson["status"] == "configured"
+    assert watson["runtime"] == "unverified"
 
 
 def test_survival_provider_call_routes_to_ollama(monkeypatch):
@@ -250,6 +262,39 @@ def test_conservative_portfolio_repair_names_unknown_relations():
         "sin_relaciones_observables")
     assert repaired["items"][0]["product"]["unknowns"] == (
         "identidad_evento_venue_artista_cliente_no_confirmada")
+
+
+def test_human_accepted_portfolio_work_overrides_provider_record_kind(tmp_path):
+    common = tmp_path / "common_ledger.jsonl"
+    common.write_text(json.dumps({
+        "metadata": {"external_candidate_review": {
+            "source_id": "17851384777775576.jpg",
+            "decision": "accept",
+            "relation": "obras en papel",
+            "note": "dibujo de croquera",
+            "context_fields": {"process": ["analogico"]},
+        }}
+    }) + "\n", encoding="utf-8")
+    payload = {"items": [{
+        "files": ["/media/stories/202001/17851384777775576.jpg"],
+        "format": "registro",
+        "product": {
+            "record_kind": "story_record",
+            "relations": "sin_relaciones_observables",
+            "unknowns": "",
+        },
+    }]}
+
+    result = tandas._apply_human_portfolio_classification(
+        payload, str(common))
+
+    item = result["items"][0]
+    relations = json.loads(item["product"]["relations"])
+    assert item["format"] == "registro"
+    assert item["product"]["record_kind"] == "obra"
+    assert relations["classification_source"] == "human"
+    assert relations["human_relation"] == "obras en papel"
+    assert relations["human_context"]["process"] == ["analogico"]
 
 
 def test_conservative_opportunity_repair_only_adds_safe_next_action():
