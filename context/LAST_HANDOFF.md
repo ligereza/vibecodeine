@@ -1,7 +1,7 @@
 # LAST_HANDOFF - Faro
 
-Updated: 2026-08-10
-Status: current state re-verified; continue with the visual-index vertical circuit.
+Updated: 2026-08-11
+Status: runtime ledger reconciled; continue with documentary cleanup and focused regressions only.
 
 ## Read this first
 
@@ -43,11 +43,10 @@ instructions. Verify any statement that affects a destructive or remote action.
 ## Repository state
 
 - Windows workspace: `C:\IA\flujo`.
-- Verified checkout: branch `iskvw`, commit `fdc966f0`; the worktree has only
-  the intentional handoff modification. `origin/mak`, `origin/rd`, and
-  `origin/iskvw` point to `fdc966f0`. `origin/main` and local `main` point to
-  `cb7214b2` (`fix: restore animated README vessel`), one commit ahead. There
-  are no remote tags or open PRs in the verified refs.
+- Verified checkout: branch `mak`, commit `d09327fe8d5b`; the worktree has
+  intentional modified and untracked files from the active integration work.
+  Local `main`, `mak`, `rd` and `iskvw`, together with `origin/main`,
+  `origin/mak`, `origin/rd` and `origin/iskvw`, point to `d09327fe8d5b`.
 - The separate clean `main` worktree under the local `.roo/worktrees/`
   directory was removed after verifying it had no uncommitted changes. The
   local `main` branch is now available for a new session; no branch or commit
@@ -58,18 +57,13 @@ instructions. Verify any statement that affects a destructive or remote action.
   contains `data-editor-mode`, `mesa-order-hud`, `revisión humana`, and GTM
   markers. It shows actual media, a selected piece, relation actions and the
   copilot layer in the same Hub route.
-- The Hub explicitly resolves `MAK_PORTFOLIO_ROOT` to
+- The Hub defaults `MAK_PORTFOLIO_ROOT` to
   `/home/mak/flujo/iskvw`, so `/home/mak/flujo/iskvw/editor.html` is the
-  operational editor. It was modified at `2026-08-09 22:20:52 -0400`; the
-  Windows copy was modified at `2026-08-09 21:06:02 -0400`. Under the user's
-  rule that the latest modified editor is authoritative, MAK wins for the
-  current session.
-- The current Windows `iskvw/editor.html` hash is
-  `C8BC30659DD544AE6F6F309461E156A26E8528A60C041C988CA87917FB8F1B97`; the
-  deployed MAK copy is
-  `d4f8b720c04bc288eecd4ac519a7a98b8d9ef6d5690950db90d82e78b7995be2`.
-  Never copy Windows over MAK blindly. First diff the MAK winner, then sync
-  the chosen operational version back to Windows deliberately.
+  operational editor. The current Windows and served editor both have SHA-256
+  `252d14d006d342c8e7a514801d3f35e33840bffde668ed928e638c5aea8906a1`.
+- The served `/portafolio/mesa_montaje.js?v=20260810-visual-index2` and its
+  Windows/checkout copy both have SHA-256
+  `ddf3968273935bbe8f9df1e78b67290997022a4c034857979bca4cd7eb9f50e8`.
 - The promoted work covers `cultura/mak_plataforma/` (ledger, identity,
   providers, decisions, Hub, batches, routing, service/watchdog), the current
   `iskvw/editor.html`, the README/SVG text layer, operational docs, tests, and
@@ -77,23 +71,23 @@ instructions. Verify any statement that affects a destructive or remote action.
 
 ## MAK box: verified truth
 
-Fresh SSH check on 2026-08-10:
+Fresh SSH check on 2026-08-11:
 
 - Host: `mak@192.168.50.2`, hostname `dell-11m`.
-- The actual Git checkout is `/home/mak/flujo`, currently on `main`; it has
+- The actual Git checkout is `/home/mak/flujo`, currently on `mak`; it has
   exactly the four local branches `main`, `mak`, `rd`, and `iskvw`, plus the
-  four corresponding remote refs. All four MAK branches currently point to
-  `fdc966f`; therefore MAK `main` is one commit behind Windows `main`
-  `cb7214b2` and the README restoration is not yet present on MAK's other
-  branches. `/home/mak/plataforma` is the runtime data and service directory,
-  not a Git checkout; do not run branch or status conclusions there.
+  four corresponding remote refs, all at `d09327fe8d5b`. Its active worktree
+  has modified `iskvw/editor.html`, `iskvw/mesa_montaje.js` and untracked
+  `cultura/mak_plataforma/visual_index.py`. `/home/mak/plataforma` is the
+  runtime data and service directory, not a Git checkout.
 - The runtime Hub is healthy and is managed by the user systemd unit
   `/home/mak/.config/systemd/user/mak-hub.service`.
 - The unit is enabled and active after the synchronization. Current process:
   `/home/mak/plataforma/.venv/bin/python /home/mak/plataforma/hub.py`.
-- Runtime hashes checked for `hub.py` and `ledger.py` match the current Windows
-  files. The virtualenv is required for `boto3`; do not replace it with the
-  system interpreter when testing AWS.
+- Runtime hashes checked for `hub.py`, `ledger.py`, `copilot.py` and
+  `visual_index.py` match the current deployed files. The virtualenv is
+  required for `boto3`; do not replace it with the system interpreter when
+  testing AWS.
 - Do not copy Windows credentials to MAK. MAK already loads its own provider
   environment. Never print or commit credential values.
 - Use MAK for long scans and model batches. Use Windows for orchestration,
@@ -2199,3 +2193,969 @@ No commit, push, merge, branch deletion or public promotion is authorized by
 this checkpoint. The next durable update must record the branch decision, the
 editor diff and the mixed-sample measurement here before any integration
 decision.
+
+## Implementacion visual derivada MobileCLIP/FAISS 2026-08-10
+
+- Se trabajo en la rama `mak`, sin commit ni push. Se extendio el catalogo
+  existente; no se creo otro editor, ledger, base de datos o framework.
+- Archivos del circuito: `cultura/mak_plataforma/visual_index.py`, cambios en
+  `copilot.py`, `hub.py`, `contrato_archivo.py`, `iskvw/mesa_montaje.js`,
+  `iskvw/editor.html` y pruebas focalizadas en `tests/`.
+- El worker incremental vive fuera del repo en
+  `/home/mak/plataforma/derived/visual-index/`. Guarda FAISS, vectores y
+  metadata por `work_id`, `source_id`, hash, modelo, version, fecha y
+  dimension. Los carruseles se agrupan por `publication_id`; los videos usan
+  frame temporal de `ffprobe`/`ffmpeg`; no quedan thumbnails permanentes.
+- Corrida real medida en MAK con MobileCLIP-S0 + FAISS: 100 unidades, 216
+  entradas, 34 carruseles, 38 unidades con video, 42 frames temporales,
+  512 dimensiones, 293 vecinos elegibles, 507 abstenciones, 0 fallos,
+  indice de 205,690 bytes y 19.529 s. Segunda corrida: 0 codificaciones,
+  100 reutilizaciones por hash y 6.105 s.
+- El Hub expone `visual_similarity` con score, margen, modelo, version y
+  motivo. La lente visual del editor GTM/mapa muestra la sugerencia en la
+  pieza activa y conserva el filtro contra relaciones metadata duplicadas.
+  La escena comprobada devolvio una relacion visual con evidencia y acciones
+  humanas `accept`/`reject`.
+- La persistencia accept/reject fue probada en un archivo temporal aislado:
+  dos filas con facet/evidence `visual_similarity`, `MobileCLIP-S0` y
+  `work_id`; no se escribio una decision humana ficticia en el catalogo real.
+- Fallback comprobado: indice ausente devuelve superficie vacia sin importar
+  `torch`. `mak-hub.service` siguio activo con RSS de 149320 KB y sin mappings
+  de `torch`, `mobileclip` o `faiss`.
+- Pruebas focalizadas: `102 passed` en visual index, copilot, bridge del Hub
+  y contrato del editor; tambien pasaron `py_compile`, `node --check` y
+  `git diff --check`.
+- Hub y editor desplegados de forma intencional en MAK; no se reinicio el
+  servicio despues de generar el indice. La primera corrida fallo antes de
+  ejecutar porque faltaba el worker en el checkout MAK; se copio solo ese
+  archivo y la segunda ejecucion fue correcta.
+
+## Next action — visual integration block
+
+Comparar en la muestra de 100 las sugerencias `visual_similarity` contra las
+relaciones metadata y las decisiones humanas existentes; ajustar umbrales o
+ranking solo con esa evidencia. Despues extender el contrato de feedback y
+la vista de evidencia si la precision justifica el cambio. No procesar los
+7,044 registros, no generar thumbnails, no cambiar README/SVG y no hacer
+commit o push sin instruccion explicita.
+
+## Ronda 4 — cierre de despliegue MAK 2026-08-10
+
+- Rama Windows: `mak`, commit base sin cambios de commit. El diff semantico
+  del editor es una sola linea: `mesa_montaje.js?v=20260810-visual-index1`.
+  No se normalizaron CRLF/LF porque el archivo operativo de MAK y Windows ya
+  son byte-identicos; normalizarlo habria creado ruido innecesario.
+- Hashes SHA256 Windows = runtime MAK en los seis archivos comprobados:
+  `hub.py` `e18b1a9583a5e1718dc101165a781a4b9a7a1347b431bb84dc33ae17ceba6c35`;
+  `copilot.py` `a4a23b3cc4c2a5e7e96952d1504371e06d56af49a601fee1fce28992ee1ff56d`;
+  `contrato_archivo.py` `1ea03c209c09f13f6c7a41f7942d2d7ce9423af7e23f657abbfec6283881e9fa`;
+  `visual_index.py` `2cbca673c1edaada07a1371fdc84f6a152ece623b89134b966886fc37298e184`;
+  `editor.html` `757017bf3c64beeb594034f7bef827fbfae67706cd47c47de655914e14d11d5a`;
+  `mesa_montaje.js` `379dd8104191eb24c91eb583d4259090d97fcc339733b86b503cec29eacb5643`.
+- No hubo archivos que copiar en esta ronda: los seis ya estaban desplegados
+  y coincidian. Se verifico `/home/mak/plataforma` como runtime del Hub y
+  `/home/mak/flujo/iskvw` como editor servido. El indice sigue fuera del repo
+  en `/home/mak/plataforma/derived/visual-index/`.
+- Sintaxis comprobada antes del reinicio: `py_compile` local y en MAK,
+  `node --check` local. `mak-hub.service` activo despues del reinicio,
+  PID 28909, RSS 108372 KB y sin mappings de `torch`, `mobileclip` o `faiss`.
+- Endpoints comprobados: `/api/organismo`, `/api/salud`,
+  `/api/portfolio/copilot/status`, `/api/portfolio/copilot/scene`,
+  `/api/portfolio/copilot/suggestions` y `/portafolio/`. La escena visual
+  devolvio `visual_similarity` con score, margen, modelo y evidencia; el
+  editor servido mantiene el GTM/mapa y la lente visual.
+- Carrusel comprobado como una unidad `publication:posts_1.json:403` con
+  tres medios; video comprobado con `video_representative_frame` temporal.
+  Fallback de indice ausente devolvio superficie vacia. Accept/reject produjo
+  dos filas temporales con modelo y facet visual, sin escribir ledger real.
+- Resultado de corrida real sin cambios: 100 unidades, 216 entradas, 34
+  carruseles, 38 videos, 42 frames, 293 vecinos elegibles, 507 abstenciones,
+  0 fallos; incremental posterior 0 codificaciones y 100 reutilizaciones.
+
+## Next action — precision visual
+
+No queda diferencia funcional pendiente de despliegue en esta fase. El bloque
+pendiente es comparar precision `visual_similarity` contra metadata y
+decisiones humanas en la muestra de 100 antes de cambiar ranking o umbrales.
+
+## Reorientacion — integraciones permanentes 2026-08-10
+
+- Se inspeccionaron sin escaneo masivo `C:\IA\Ascii-Motion`, `web/`,
+  `src/flujo`, `xio/`, `tools/` y las referencias vendorizadas de thi.ng.
+  `adobe/` y `blender/` no existen como directorios raíz; los bridges reales
+  están bajo `tools/`. La matriz durable queda en
+  `context/INTEGRATION_MATRIX_20260810.md`.
+- Integración visual permanente realizada: `iskvw/mesa_montaje.js` adopta el
+  patrón comprobable de Ascii-Motion de mutaciones directas coalescidas por
+  `requestAnimationFrame`. Cámara y popover comparten un scheduler por frame;
+  el editor expone fps/calidad de render y reduce transiciones/halos cuando la
+  media de frame supera 32 ms. No se creó React, servidor, base, frontend ni
+  thumbnail paralelo.
+- Integración de evidencia permanente realizada:
+  `cultura/mak_plataforma/xio_evidence.py` lee solo el show kit local
+  comprobable (setlist, cues, duración y anotación), construye `mak-work-v1`
+  con `ledger.build_work_envelope`, y expone átomos separados para evento,
+  fecha y timecode. Artista, venue y productora quedan `unknown`; no se
+  vinculan automáticamente a una pieza ni se escribe una decisión al ledger.
+  Hub y editor lo muestran como `xio_evidence` dentro de la escena existente.
+- Endpoint nuevo focalizado: `GET /api/portfolio/copilot/xio-evidence`.
+  La escena comprobada `GET /api/portfolio/copilot/scene?item_id=17991310565372795.mp4&facet=visual_similarity&surface=relate`
+  devuelve simultáneamente `visual_similarity`, carrusel agrupado y
+  `xio_evidence`. El show kit devolvió 21 setlist/cues, fecha `2026-07-24`,
+  evento `DREF CHOCOLATE` y `work_valid=true`.
+- Archivos funcionales desplegados tras comparar SHA256: `hub.py`,
+  `xio_evidence.py`, `iskvw/editor.html` y `iskvw/mesa_montaje.js`.
+  Hashes runtime MAK: `hub.py`
+  `5d20cd75ed58aabc8ecdc0444390bb73cb9ed5d74fd8c086d13e558e6fb8f382`;
+  `xio_evidence.py`
+  `4577a72645a91e41f3a86abc7ecd1f7ed89c298fde20191f7866b139ae51e541`;
+  `editor.html`
+  `d38ea83933ff7facc339f508c71dd0b263dccb03660b5cc412e4a681d7a79e72`;
+  `mesa_montaje.js`
+  `3c83ed4ad0a22a92e7bc1164cf94a371ad3cc015dce73e2c6886585292852c6a`.
+- Verificación MAK real: `systemctl --user is-active mak-hub.service` =
+  `active`; `GET /portafolio/` = HTTP 200 y sirve
+  `mesa_montaje.js?v=20260810-visual-index2`; PID 31840, RSS 106892 KB,
+  mappings de `torch|faiss|mobileclip` = 0. La comprobación inicial con
+  `systemctl is-active` fue un falso negativo por consultar el ámbito de
+  sistema; la unidad existe y opera en el ámbito de usuario.
+- Pruebas focalizadas: 74 passed en XIO, visual index, copilot, bridge y
+  contrato del editor; `py_compile` remoto/local y `node --check` pasaron.
+  La única corrección de prueba fue actualizar el sufijo cache-busting de
+  `visual-index1` a `visual-index2`.
+- Tanda externa posterior a las interfaces: 10 unidades ya abstinentes en
+  `derived/visual-index/neighbors.json`, 5 Watsonx y 5 AWS, 0 errores.
+  Salida aislada: `/home/mak/plataforma/derived/external-candidates/round-20260810-172526.jsonl`.
+  Las 10 filas conservan `work_id`, evidencia local, proveedor, confianza,
+  abstención y siguiente acción `human_review`; permanecen candidatas y no
+  fueron promovidas al ledger.
+- Fallo/limitación registrada: el endpoint no implementa HEAD (501); la ruta
+  operativa fue verificada con GET. No se procesaron los 7.044 registros, no
+  se modificó README/SVG, no hubo commit/push/merge ni ramas auxiliares.
+
+## Next action — evidencia y rendimiento
+
+Hacer una revisión humana acotada de los 10 candidatos externos y de la
+presentación `xio_evidence` en la pieza activa; solo después decidir si el
+scheduler o la confianza visual requieren ajuste. Mantener artista,
+venue/productora como desconocidos hasta una fuente declarativa y no promover
+los JSONL externos al ledger automáticamente.
+
+## Correccion de rumbo — Flow, Ascii-Motion e Instagram 2026-08-10
+
+- XIO queda fuera del circuito de cierre de esta ronda. No se hicieron nuevas
+  consultas, no se usaron sus candidatos y no se actualizo la matriz de
+  integracion.
+- Flow fue localizado en `web/`; su capacidad concreta reutilizada es el
+  patron de `web/public/mapping.html`: canvas con `translate/scale` alrededor
+  del centro y render por lotes. `iskvw/mesa_montaje.js` lo integra como una
+  capa `mesa-flow-canvas` dentro del escenario GTM existente. La capa dibuja
+  halos y nodos en lotes de 72 con `requestAnimationFrame`, expone
+  `data-flow-render` y el progreso en el readout del editor. No se creo otro
+  frontend, servidor ni superficie paralela.
+- Ascii-Motion fue usado desde `C:\\IA\\Ascii-Motion\\src\\types\\easing.ts`.
+  La implementacion permanente porta `evaluateEasing`/Bezier de
+  `interpolateBetweenKeyframes` como `asciiMotionEase` y
+  `asciiMotionInterpolate`; centra la pieza activa con `ease-out` en el mismo
+  movimiento de camara del editor. No se carga Ascii-Motion como dependencia
+  runtime.
+- `instagram_source.py` genera referencias, nunca copias, bajo el contrato
+  `mak-work-v1`. La muestra real produjo 6 archivos de metadata, 8.241 medios
+  observados, 100 unidades seleccionadas y 213 referencias; 34 unidades son
+  carruseles, 32 stories y 1 reel. Las stories son `story_record` con
+  `stories_are_not_works=true`; los carruseles conservan un unico
+  `publication_id` y sus miembros.
+- El indice canonico sigue siendo
+  `/home/mak/plataforma/derived/visual-index/`. La comprobacion remota no
+  encontro un segundo motor `visual-index2`; solo existe
+  `/home/mak/plataforma/visual_index.py` (ademas del checkout de flujo). Se
+  agrego una sola opcion `--instagram-catalog` y una sola cache/contrato.
+- Catalogo desplegado sin medios originales:
+  `/home/mak/plataforma/derived/visual-index/instagram_catalog_20260810.json`.
+  Hash `5e4059000d4bac35187365f53acaeaa39a2f5b2c296b3a48c75f3655b6742cf0`.
+- Corrida real del worker con
+  `/home/mak/venvs/visual-index-pilot/bin/python`: 100 unidades, 209 entradas,
+  34 carruseles, 22 frames temporales, 80 filas con provenance Instagram,
+  29 stories y 32 carruseles dentro de `vectors.jsonl`, 73 codificaciones,
+  27 reutilizaciones, 0 fallos, 333 vecinos elegibles y 14,287 s.
+- Tanda externa posterior a la integración: 20 casos reales del catálogo,
+  10 Watsonx y 10 AWS; 20 hipótesis candidatas, 0 errores finales, todas con
+  `work_id`, `source_id`, evidencia, proveedor, confianza, abstención,
+  `next_action=human_review` y `promotion=not_promoted`. Salida aislada en
+  `/home/mak/plataforma/derived/instagram-external/round-20260810.jsonl`.
+  El primer intento AWS con el worker visual dio `boto3_unavailable`; se
+  reejecutaron esos mismos 10 casos con `/home/mak/venv-providers`, sin
+  ampliar la muestra ni promover resultados.
+- Hashes Windows = runtime MAK para los archivos activos: `hub.py`
+  `5d20cd75ed58aabc8ecdc0444390bb73cb9ed5d74fd8c086d13e558e6fb8f382`,
+  `copilot.py`
+  `c4bcaad96d9f5c06e92efb4bd9a7d4274e9e28110b3c22d52edf2510ab5d9142`,
+  `contrato_archivo.py`
+  `1ea03c209c09f13f6c7a41f7942d2d7ce9423af7e23f657abbfec6283881e9fa`,
+  `visual_index.py`
+  `8b9ffbc866695d75416263b403803dbc3c5dfad15f11535c1f05a3ade773a96c`,
+  `instagram_source.py`
+  `239b445046c8a5f8b1318feb6633fe576a95eb04be3fd5a88a086b1f144147a4`,
+  `iskvw/editor.html`
+  `8a6fc0de4f240927ad0b949a90224045168f35a86d39e32b5d17483af9f7d302`,
+  `iskvw/mesa_montaje.js`
+  `90f3aa90a568e5df5cce032e23c49e4c7734fdbb6f09901788a4f0c92300e425`.
+- Verificacion MAK final: `systemctl --user is-active mak-hub.service` =
+  `active`, PID 37858, RSS 33.944 KB y mappings `torch|faiss|mobileclip` = 0.
+  `/portafolio/` devolvio el editor con `mesa-flow-canvas`; status reporto
+  `indexed_units=100`, `source_catalog=faro-instagram-source-v1` y 333
+  vecinos elegibles. `visual-index` y la escena existente devolvieron
+  `visual_similarity` con score, margen, modelo y provenance.
+- Verificacion focalizada final: `py_compile` local/remoto, `node --check`
+  local, `git diff --check` y tests de visual index, copilot, editor y bridge:
+  74 tests pasaron. No hubo commit, push, CI, cambios a README/SVG ni
+  movimiento de medios.
+
+## Next action — gate humano de evidencia externa
+
+Revisar únicamente las 20 filas aisladas de
+`derived/instagram-external/round-20260810.jsonl` dentro del flujo existente;
+decidir cuáles, si alguna, pueden entrar al circuito humano. Mantenerlas fuera
+del ledger hasta esa decisión y conservar XIO como adaptador opcional no
+bloqueante.
+
+## Correccion — hypotheses externas visibles en el editor 2026-08-10
+
+- Se corrigio el circuito que faltaba: la interfaz de curatoria ya no depende
+  de que una hipótesis externa haya sido ingerida previamente como candidato
+  del ledger. `hub.py` lee el JSONL aislado
+  `/home/mak/plataforma/derived/instagram-external/round-20260810.jsonl` y lo
+  proyecta en la cola existente `/api/portfolio/review-queue`.
+- La cola MAK devuelve 20 candidatos pendientes. El endpoint por pieza
+  `/api/portfolio/external-candidates?item_id=17884747708722082.jpg` devuelve
+  proveedor, hipótesis, confianza, evidencia, `story_record`/agrupación y
+  `promotion=not_promoted`.
+- Las acciones existentes del editor (`aceptar candidato`, `dejar en
+  revisión`, `rechazar candidato`) funcionan también para los IDs
+  `instagram-external:<work_id>`. La decisión se guarda como revisión humana
+  append-only en el ledger común; no muta el JSONL original, no publica y no
+  promueve automáticamente.
+- Archivos funcionales desplegados: `cultura/mak_plataforma/hub.py` y el
+  test focalizado `tests/test_mak_portfolio_bridge.py`. Pruebas finales:
+  74 pasaron; `py_compile`, `node --check` y `git diff --check` pasaron.
+  `mak-hub.service` quedó `active` después del reinicio.
+
+## Next action — usar la interfaz de curatoria
+
+Abrir `/portafolio/`, expandir `revisión humana` y revisar los 20 candidatos
+desde sus miniaturas y evidencia. La decisión debe hacerse allí; el chat no es
+la superficie de curatoria. Mantener las hipótesis como candidatas hasta que
+exista una decisión humana explícita.
+
+## Gate tecnico de evidencia externa — cierre 2026-08-10
+
+- Se contrastaron las 20 filas de
+  `/home/mak/plataforma/derived/instagram-external/round-20260810.jsonl`
+  contra el catalogo, `vectors.jsonl` y `neighbors.json`. Informe aislado:
+  `/home/mak/plataforma/derived/instagram-external/round-20260810-review.jsonl`;
+  resumen:
+  `/home/mak/plataforma/derived/instagram-external/round-20260810-review-summary.json`.
+- Resultado: 20/20 con catalogo, 20/20 con vector local, 20/20 candidatas,
+  6 `story_record`, 7 carruseles, 0 flags tecnicos y 20/20 con
+  `promotion=not_promoted`. Se agrego al JSONL aislado el marcador
+  determinista `stories_are_not_works=true` para las 6 stories.
+- Se corrigio `visual_index.py`: la muestra de 100 prioriza explicitamente
+  las unidades de `instagram_export` antes de completar con fallback del inbox,
+  y `group_portfolio_items` conserva provenance Instagram si cualquier miembro
+  de la unidad la trae. El export tiene 98 unidades unicas indexables; dos
+  referencias del catalogo son el mismo medio repetido entre archivos del
+  export y se mantienen como referencia, no como obras duplicadas.
+- Nueva corrida incremental: 100 unidades, 209 entradas, 34 carruseles, 32
+  stories, 18 codificaciones, 82 reutilizaciones, 0 fallos, 345 vecinos
+  elegibles y 6,484 s. Hash Windows/runtime de `visual_index.py`:
+  `72b05fd972bf00b08967f5b3adf772ed6207e4e020739df8a23f3d4055f67876`.
+- Tras el reinicio, `mak-hub.service` sigue `active`, PID 40444, RSS 33908 KB,
+  mappings de `torch|faiss|mobileclip` = 0. Status mantiene 100 unidades,
+  345 vecinos elegibles y `faro-instagram-source-v1`.
+- Pruebas finales: 74 tests focalizados, `py_compile` remoto, `node --check`
+  local y `git diff --check` pasaron. No hubo ledger, commit, push ni CI.
+
+## Next action — decision humana
+
+Las 20 hipótesis están técnicamente listas para revisión humana. La siguiente
+acción es decidir aceptar, rechazar o abstener cada una dentro del flujo
+existente; solo después de esa decisión se puede evaluar una promoción al
+ledger o un ajuste de ranking. XIO sigue opcional y no bloquea este circuito.
+
+## Corrección de superficie — una sola mesa operativa 2026-08-10
+
+- Se eliminó la confusión visible con la superficie antigua en `/portafolio/`:
+  el documento ahora se titula `MAK · Campo de orden · archivo vivo`; la
+  cabecera histórica y los paneles antiguos se ocultan cuando
+  `body.mesa-active` monta la mesa GTM/mapa. No se borró código histórico ni se
+  creó otra interfaz.
+- La mesa actual conserva GTM/mapa, canvas Flow, pieza activa, carruseles
+  agrupados y decisiones humanas. El HUD muestra `evidencia externa` y abre la
+  siguiente hipótesis dentro del mismo mapa; el popover de la pieza muestra
+  proveedor, confianza, hipótesis, agrupación, estado no canónico y acciones de
+  aceptar, revisar o rechazar. Las decisiones usan el endpoint existente
+  `/api/portfolio/external-candidates/review` y permanecen no publicadas.
+- Hashes desplegados y comprobados:
+  `iskvw/editor.html` Windows/MAK =
+  `c481339ed061ebad1a41f2c07492c2fae9028288025bf54e1490f1560031552f`;
+  `iskvw/mesa_montaje.js` Windows/MAK =
+  El SHA comprobado es
+  `843c38aa9a21bbb9b184e0678aea93588732821a69dedc532ea8287f0ee8246d`.
+- Comandos reales: `scp` de los dos archivos a
+  `/home/mak/flujo/iskvw/`; `systemctl --user is-active mak-hub.service` =
+  `active`; `/portafolio/`, `/api/portfolio/inbox`,
+  `/api/portfolio/external-candidates` y `/api/portfolio/copilot/scene`
+  respondieron `200`. El JS servido correcto es
+  `/portafolio/mesa_montaje.js?v=20260810-visual-index2` y contiene el HUD,
+  la revisión externa y el endpoint de decisión.
+- El endpoint vivo devolvió 27 candidatos externos combinados, 20 pendientes
+  y 16 filas aisladas `instagram-external:*`; la superficie cuenta solo los
+  pendientes. La cola antigua no se expone como panel separado.
+- Verificación: `node --check iskvw/mesa_montaje.js`,
+  `python -m py_compile cultura/mak_plataforma/hub.py`,
+  `git diff --check` y pruebas focalizadas de editor, bridge, índice visual y
+  copilot pasaron. El primer intento de pytest falló solo por `PYTHONPATH`
+  ausente; se repitió con el raíz del repo y pasó. No hubo commit, push, CI ni
+  reinicio del servicio durante esta corrección.
+
+## Next action — revisión humana en la mesa actual
+
+Abrir o recargar `/portafolio/` con `Ctrl+F5`. Usar el botón `evidencia
+externa` del HUD para centrar una hipótesis y decidirla dentro del popover de
+la pieza. No abrir ni mantener la superficie antigua como flujo de trabajo.
+
+## Corrección — frontera humana no bloquea vecinos 2026-08-10
+
+- Reporte reproducible: después de descartar varias piezas y marcar una pieza
+  semilla como `registro`, los nodos vecinos parecían inactivos.
+- Causa: `applyOrderDecision()` conservaba `humanSeedActive=true` después de
+  una decisión explícita distinta de `descartar`. `toggleOrderSelection()`
+  rechazaba entonces cualquier vecino para mantener aislada la frontera humana.
+  No era una mezcla con la superficie antigua; ocurría en el `mesa_montaje.js`
+  servido por `/portafolio/`.
+- Corrección: después de guardar `obra`, `registro` o `revisar`, la frontera se
+  libera, se limpia `humanSeedItemId` y los vecinos vuelven a ser seleccionables
+  e interactivos. `siguiente frontera` sigue iniciando otra revisión aislada.
+  El descarte continúa avanzando automáticamente a la siguiente semilla.
+- Verificación: `node --check iskvw/mesa_montaje.js`, pruebas focalizadas de
+  editor y bridge, y `git diff --check` pasaron. El hash Windows/runtime del
+  JS corregido es
+  `85e3c5b41037360a2ddf62ea3f44023aa3449a981bd7b1d5618bf11949fa0019`.
+  MAK devolvió el mismo hash, `mak-hub.service` = `active` y el JS servido por
+  `/portafolio/mesa_montaje.js?v=20260810-visual-index2` contiene el nuevo
+  desbloqueo.
+
+## Next action — comprobar la interacción vecina
+
+Recargar `/portafolio/` con `Ctrl+F5`, marcar una pieza como `registro` y luego
+hacer clic en una obra vecina. Debe volver a seleccionarse y mostrar su HUD;
+`siguiente frontera` queda como acción explícita para volver al modo aislado.
+
+## Verificación de clic — `registro` 2026-08-10
+
+- El último clic confirmado en MAK fue para `18408020584187134.jpg`, una
+  `story` de `stories.json:330`, fecha `2025-10-24`.
+- La clasificación quedó persistida en
+  `/home/mak/plataforma/director_runs/portfolio-editor-20260808/classifications.jsonl`
+  a las `2026-08-10T18:39:34-0400` como `triage=record`,
+  `status=human_draft`, `promotion=none`.
+- `/api/portfolio/inbox` devuelve para esa pieza `classification.triage=record`
+  y `selection=pendiente`. No se movió ni modificó el original, no se publicó
+  y no se escribió una verdad canónica en el ledger.
+- La respuesta corresponde al circuito de clasificación de la mesa; el JS
+  servido ya contiene la liberación de vecinos después de una decisión
+  explícita. Si la pestaña aún muestra el estado anterior, recargar con
+  `Ctrl+F5` reinicia únicamente el estado visual del cliente.
+
+## Corrección de funcionamiento — decisión semilla avanza automáticamente 2026-08-10
+
+- La regla operativa queda aclarada: una decisión `obra`, `registro` o
+  `revisar` en la frontera humana debe persistir la clasificación y cargar la
+  siguiente semilla pendiente. `descartar` ya tenía ese comportamiento.
+- Se corrigió `iskvw/mesa_montaje.js`: el branch `advanceSeed` ahora llama
+  siempre `loadHumanSeed({ refresh: false, excludeId: itemIds[0] })` después de
+  cualquier triage válido. No borra el registro anterior ni modifica el medio.
+  La salida de la semilla es la siguiente pieza, no una pantalla bloqueada.
+- Estado acumulado comprobado en MAK antes del despliegue: 75 clasificaciones
+  persistidas (`work=45`, `record=17`, `review=1`, 12 filas sin triage) y 76
+  selecciones (`descartar=54`, `seleccionar=13`, `deseleccionar=9`). No se
+  necesitó input adicional ni se usó navegador.
+- Despliegue y verificación: hash Windows/MAK del JS
+  `0d586680a941ce5f7b3dda32d8d00f2440e0dd266f5a80fac6dc0c845672122d`;
+  JS servido por `/portafolio/mesa_montaje.js?v=20260810-visual-index2`
+  responde `200` y contiene el avance automático; `mak-hub.service` sigue
+  `active`. Pasaron `node --check`, `git diff --check` y las pruebas focales
+  de editor, bridge, índice visual y copilot.
+
+## Next action — validar por contrato, no por clicks simulados
+
+La siguiente ejecución humana de `registro` debe producir una nueva llamada de
+escena para la siguiente semilla. Si se reporta otra anomalía, revisar primero
+handler, payload, respuesta y archivos persistidos antes de pedir evidencia al
+usuario.
+
+## Tanda de funcionamiento por código — cierre 2026-08-10
+
+- Auditoría estática de la mesa: handlers de selección, clasificación,
+  descarte, relación, feedback, navegación, semilla humana, evidencia externa,
+  Flow/Canvas y Ascii-Motion revisados con `rg`, `node --check` y el contrato
+  focal del editor. Las rutas usadas por la mesa tienen implementación en el
+  Hub: `inbox`, `classify`, `classify-batch`, `select`, `feedback`,
+  `copilot/learning`, `copilot/scene` y `external-candidates/review`.
+- Tanda MAK sin navegador ni clicks simulados: tres escenas reales consultadas
+  (`18408020584187134.jpg`, `18117694279761685.jpg`,
+  `17890131999386365.jpg`). Resultado: 3/3 `ok`, 30 registros, 27 relaciones
+  y mapas con 10, 9 y 8 datos respectivamente. La pieza de prueba devolvió
+  una hipótesis externa y su media respondió `200 image/jpeg`.
+- Endpoints de superficie comprobados: `/portafolio/`, JS servido,
+  `/api/portfolio/inbox`, `classifications`, `boards`, `triangulation`,
+  `contract`, `review-queue`, `external-candidates`, `copilot/suggestions`,
+  `copilot/scene`, `copilot/map`, `copilot/visual-index`, `copilot/status` y
+  `copilot/learning` respondieron con éxito. El inbox reporta 7.044 elementos,
+  pero la tanda procesó solo tres escenas acotadas.
+- Se encontró y corrigió un fallo de robustez del Hub: respuestas canceladas
+  por el cliente producían trazas `BrokenPipeError`. `_send_bytes()` ahora las
+  trata como desconexión normal. Se desplegó `hub.py`, se verificó sintaxis y
+  se reinició `mak-hub.service`; quedó `active`, sin mappings de
+  `torch|faiss|mobileclip`. RSS después de la tanda: 147076 KB.
+- Verificación final: `py_compile`, `node --check`, pruebas focales de editor,
+  bridge, índice visual y copilot, y `git diff --check` pasaron. No se abrió
+  navegador, no se tomaron capturas, no se simularon clicks, no hubo commit ni
+  push.
+
+## Next action — mantener la ronda basada en contratos
+
+Si aparece otro fallo, reproducirlo primero mediante el handler y su endpoint,
+consultar la persistencia y añadir una prueba focal antes de pedir una nueva
+acción humana. No usar la interacción del usuario como sustituto de la
+verificación del código.
+
+## Pasada de bug hunting estático — 2026-08-10
+
+- Herramientas disponibles comprobadas: `ruff` local; `semgrep`, `opengrep`,
+  `eslint`, `pyright` y `codeql` no estaban instalados. No se descargaron
+  dependencias ni se gastaron créditos IBM/AWS.
+- `ruff check` encontró 14 hallazgos iniciales: 4 accionables (variables e
+  import sin uso en `contrato_archivo.py`, `visual_index.py` y su prueba) y 10
+  semicolones heredados del render Markdown del Hub. Se corrigieron todos;
+  segunda pasada: `All checks passed!`.
+- Se verificó nuevamente `py_compile`, `node --check`, pruebas focales de
+  editor, bridge, índice visual y copilot, y `git diff --check`: todo pasó.
+- Se desplegaron y se compararon hashes de `hub.py`, `contrato_archivo.py` y
+  `visual_index.py` en `/home/mak/plataforma/`; `mak-hub.service` quedó
+  `active`. Tanda posterior sobre tres escenas reales: 3/3 `ok`, 30 registros
+  y 27 relaciones. Sin Traceback, `BrokenPipe`, `Exception` ni `ERROR` en los
+  logs recientes; el Hub sigue sin mappings `torch|faiss|mobileclip`.
+
+## Next action — analizador semántico opcional
+
+La siguiente herramienta útil sería Semgrep sobre `mesa_montaje.js` y el Hub,
+si se decide instalarla localmente. ESLint puede revisar JavaScript y CodeQL
+queda para una pasada de flujo de datos más pesada. Ninguno es necesario para
+ejecutar la interfaz ni reemplaza las pruebas y endpoints ya verificados.
+
+## ESLint — bug funcional corregido 2026-08-10
+
+- `npx eslint@9` sobre `iskvw/mesa_montaje.js` encontró una colisión de nombres:
+  la variable local `suggestionMarkup` ocultaba la función del mismo nombre
+  dentro de `showRecordPopover()`. Al abrir esa ruta, el `map()` podía resolver
+  la variable antes de inicializarla y romper el popover de relaciones.
+- Se renombró la variable a `suggestionsDrawerMarkup` y se conectó
+  explícitamente `selectRelation()` al handler de relación. ESLint quedó sin
+  errores ni warnings con reglas de variables sin uso, código inalcanzable y
+  expresiones constantes.
+- Se añadió una aserción de contrato para evitar que vuelva la colisión. Pasaron
+  `node --check`, las pruebas focales y `git diff --check`.
+- Hash Windows/MAK del JS desplegado:
+  `5eaa44d3ef1909882a473309098cc9f47aa82d503fe9f9493054f81a3ed0a335`.
+  El JS servido por `/portafolio/mesa_montaje.js?v=20260810-visual-index2`
+  devuelve `200` y contiene la corrección.
+
+## Next action — mantener lint y regresiones en la ronda de funcionamiento
+
+Continuar con los contratos de decisión y persistencia. No usar otra tanda
+IBM/AWS mientras los analizadores locales sigan encontrando y corrigiendo
+fallos reproducibles.
+
+## Semgrep — pasada estática 2026-08-10
+
+- Se instaló Semgrep localmente para esta revisión. La instalación generó
+  advertencias de compatibilidad en paquetes Python globales no relacionados
+  (`opentelemetry`, `open-interpreter`, `open-webui`); no modificó el repo ni
+  el runtime MAK.
+- Comando principal: `semgrep scan --config p/python --config p/javascript
+  --metrics=off` sobre `iskvw/mesa_montaje.js` y los módulos MAK. Resultado:
+  5 archivos, 219 reglas, 0 hallazgos.
+- `iskvw/editor.html` fue omitido por Semgrep porque es un contenedor HTML con
+  JavaScript embebido (`Nothing to scan`). No se afirmó cobertura falsa: ese
+  bloque queda cubierto por `node --check`, el contrato focal del editor y las
+  pruebas del Hub.
+- Verificación posterior: `ruff` = `All checks passed!`, `py_compile`,
+  `node --check`, pruebas focales y `git diff --check` pasaron.
+
+## Next action — revisar solo hallazgos reproducibles
+
+Semgrep no dejó hallazgos en los archivos ejecutables principales. El siguiente
+paso útil es continuar con regresiones de contratos y rutas; instalar ESLint o
+CodeQL solo si aparece un caso que Semgrep y las pruebas locales no puedan
+explicar.
+
+## Regresión de contratos y JS inline — 2026-08-10
+
+- Se extrajeron los dos bloques `<script>` de `iskvw/editor.html` y se
+  comprobaron con `vm.Script`: 2/2 sin errores de sintaxis y sin nombres de
+  función duplicados.
+- ESLint 9 sobre el JS inline, con reglas de nombres no definidos, código
+  inalcanzable, expresiones constantes, redeclaraciones, casos duplicados y
+  `finally` inseguro: 0 errores.
+  Los 50 avisos de variables no usadas corresponden a funciones invocadas por
+  atributos HTML inline o `catch` heredados; no son fallos de ejecución. El
+  JS activo de `mesa_montaje.js` ya quedó limpio en la pasada anterior.
+- Prueba MAK por endpoint, sin navegador: se repitió exactamente la
+  clasificación existente de `17934891079242401.jpg` mediante
+  `/api/portfolio/classify-batch`; respondió HTTP 200, `ok=true` y
+  `duplicate=true`, sin crear otra decisión. Un payload vacío respondió
+  `ok=false`, `error=grupo_o_clasificacion_vacios`. La escena de esa pieza
+  respondió HTTP 200, `ok=true`, 10 registros y 9 relaciones.
+- Verificación focal: 74 tests pasaron; `node --check`, `py_compile` y
+  `git diff --check` pasaron. El único aviso de diff es la conversión
+  automática LF→CRLF ya conocida de Git.
+- MAK sigue activo: `mak-hub.service=active`, PID 44548, `VmRSS=147528 kB`,
+  sin mappings `torch|faiss|mobileclip` y sin errores recientes en el journal.
+  No hubo commit, push, CI, navegador, clicks simulados ni créditos IBM/AWS.
+
+## Next action — contrato de error del bloque histórico
+
+No queda un fallo funcional reproducible en la mesa activa. Si se continúa,
+hacer una pasada pequeña para cubrir explícitamente los errores de POST del
+JS histórico embebido en `editor.html` o mantenerlo retirado de la superficie
+operativa; no usar esa parte legacy como sustituto de la mesa GTM actual.
+
+## Harness de decisiones y fallback — 2026-08-10
+
+- Se ejecutó un harness Node sobre las funciones reales de
+  `iskvw/mesa_montaje.js`, con DOM y red visual mockeados; no se abrió
+  navegador ni se simularon clicks.
+- Las cuatro decisiones de semilla pasaron: `work`, `record` y `review`
+  enviaron `/api/portfolio/classify-batch` con `fields.triage` correcto;
+  `discard` envió `/api/portfolio/select` con `decision=descartar`,
+  `decision_scope=record`, `reason_code=no_es_obra` y `target_id` correcto.
+- Las cuatro llamaron a `loadHumanSeed({refresh:false, excludeId:"seed-a"})`;
+  ninguna dejó `feedbackBusy` bloqueado ni creó relaciones. El descarte retiró
+  la pieza de la escena mockeada.
+- El mismo harness verificó el fallback real de `load()`: un HTTP 503 del inbox
+  y un fallo de escena producen `mesa-empty-state`, sin excepción no atrapada.
+- MAK volvió a responder 200 en `/portafolio/`, `copilot/status`,
+  `copilot/visual-index` y una escena acotada. No hubo mutación de decisiones,
+  commit, push, CI, navegador ni créditos IBM/AWS.
+
+## Next action — cierre técnico de esta ronda
+
+La lógica activa de decisión, avance y fallback queda cubierta por código.
+Solo queda como mantenimiento opcional endurecer el bloque legacy inline; no
+es un bloqueo de la mesa GTM/mapa operativa.
+
+## Replay de elecciones humanas — 2026-08-10
+
+- Se integró `replay_ordering_evaluation()` en el `copilot` existente como
+  superficie diagnóstica `faro-ordering-replay-v1`. Usa leave-one-out real,
+  excluye la respuesta del caso de sus vecinos, separa aciertos de abstenciones
+  y nunca muta items, ledger ni promoción.
+- Regresiones: tests de copilot, editor y bridge pasaron; Ruff y `py_compile`
+  pasaron. El runtime MAK recibió `copilot.py` tras comparar hashes:
+  `b1ffcbc7ee1b36138e4c717acc20724e448c2fb6f807aa563d4e006955272aa4`.
+  `mak-hub.service` quedó `active`, RSS 34100 kB y sin mappings
+  `torch|faiss|mobileclip`.
+- Primera muestra real acotada: 24 escenas individuales, 159 registros y 159
+  vectores. Se evaluaron 23 etiquetas: 17 `work`, 6 `record`, 0 `review`, 0
+  `discard`; cobertura 0.956522, abstención 0.043478, accuracy global
+  0.73913 y accuracy selectiva 0.772727. No se afinó el ranking porque la
+  muestra no representa las cuatro decisiones.
+- La muestra estratificada de selecciones confirmó otra limitación: la escena
+  operativa omite piezas ya descartadas. De 12 objetivos, solo 5 aparecieron y
+  el replay quedó en 4 casos evaluables (3 `work`, 1 `record`); tampoco se
+  usó para calibración.
+- Tras el reinicio, una primera escena excedió el timeout de 10 s durante el
+  calentamiento; un único reintento acotado respondió 200 en 4.682 s. No hubo
+  error persistente en el Hub.
+
+## Next action — muestra balanceada sin fuga
+
+No activar ajustes automáticos con esta muestra. El siguiente bloque debe
+exponer una lectura acotada de decisiones históricas, incluyendo descartes sin
+hacerlos pasar por la escena que los filtra, y repetir el replay con separación
+explícita entre etiquetas `triage` y selección. Solo si hay cobertura mínima
+por clase se evalúa ajustar ranking/confianza; la promoción sigue en `none`.
+
+## Separación de etiquetas del replay — 2026-08-10
+
+- `replay_ordering_evaluation()` ahora distingue `label_source=triage` de
+  `label_source=selection`, incluye `source_counts`, métricas por fuente y la
+  fuente de cada caso. Así `seleccionar` no se presenta como prueba de
+  `obra`, aunque el predictor histórico pueda usarlo como señal débil.
+- La regresión focal pasó con 74 tests; Ruff, `py_compile` y `git diff --check`
+  pasaron. Hash final desplegado de `copilot.py` en Windows y MAK:
+  `26444cddff06316a87ba3d5f8c9962bbe47915d60569da3569fae51070373050`.
+  `mak-hub.service` sigue `active`, RSS 34308 kB y sin torch/FAISS/MobileCLIP.
+- Replay real balanceado por decisiones, con 12 objetos recuperados mediante
+  búsquedas dirigidas de sus IDs: 2 etiquetas `triage` y 10 `selection` (4
+  seleccionar, 6 descartar). En `triage`: 2 evaluados, 100% abstención por
+  muestra insuficiente. En `selection`: 10 evaluados, 8 comprometidos, 20%
+  abstención y 50% de accuracy selectiva; cuatro selecciones fueron clasificadas
+  como `discard`. El resultado confirma que selección y triage no deben
+  mezclarse para calibrar el copiloto.
+- No se ajustó ranking, confianza ni ledger; `promotion=none`. La prueba sirve
+  para detectar fuga/semántica incorrecta, no para entrenar con solo 12 casos.
+
+## Next action — ampliar solo el conjunto de triage
+
+Construir una muestra acotada con suficientes etiquetas explícitas `work`,
+`record`, `review` y `discard`; mantener las selecciones como evaluación
+separada de comportamiento de mesa. No promover ni llamar IBM/AWS hasta que
+el replay tenga cobertura mínima por clase y los descartes/selecciones no se
+usen como sustituto de triage.
+
+## Corrección de descarte y triage — 2026-08-10
+
+- Causa reproducida: la mesa enviaba `descartar` a
+  `/api/portfolio/select`; ese endpoint persistía la selección y el ledger,
+  pero no escribía la clasificación explícita `triage=discard`. Por eso había
+  54 descartes operativos y cero descartes en las métricas de triage.
+- `cultura/mak_plataforma/hub.py` ahora conserva la selección y, únicamente
+  para `decision=descartar`, `decision_scope=record` y
+  `reason_code=no_es_obra`, persiste además `triage=discard` en el contrato de
+  clasificación. La evidencia queda marcada como `human_selection`, con
+  idempotencia. No se migraron silenciosamente los 54 registros históricos.
+- `tests/test_mak_portfolio_bridge.py` cubre el doble registro, la
+  idempotencia y la evidencia de origen. Pasaron las pruebas focales de
+  portfolio, copilot, editor e índice visual; también `py_compile`, Ruff y
+  `git diff --check`.
+- Hash local y runtime de `hub.py`:
+  `e0172e9f9a3f7aafbef3275315135a0cefef20c41d9cfcb5ce9e50dc16854003`.
+  Se comparó antes de copiar y MAK recibió solo este archivo.
+- Verificación MAK: `mak-hub.service=active`, `/api/portfolio/copilot/status`
+  y `/portafolio/` respondieron 200, el índice visual sigue disponible y el
+  proceso no tiene mappings `torch|faiss|mobileclip`. El primer curl tras el
+  reinicio llegó antes de abrir el puerto; el reintento acotado pasó y no hubo
+  errores del servicio desde el reinicio.
+- Estado de datos sin mutación durante la verificación: 54 filas de
+  selección `descartar`, 0 filas históricas `triage=discard`, 75 filas de
+  clasificación. El cero histórico es intencional: la nueva ruta se aplica a
+  los próximos descartes o a una llamada explícita de reparación.
+
+## Next action — usar elecciones históricas sin falsear triage
+
+Mantener los 54 descartes como señal `selection` para el replay y usar la
+nueva etiqueta `triage=discard` solo desde decisiones explícitas futuras. No
+llamar IBM/AWS ni ajustar el ranking todavía; primero reunir cobertura real
+por las cuatro clases sin pedir más clicks al usuario.
+
+## Hunting de invariantes de decisiones — 2026-08-10
+
+- Se trazó el circuito activo por código: `mesa_montaje.js` → endpoint del
+  Hub → validación → JSONL/ledger/proyección → escena → navegación. Las rutas
+  verificadas fueron `select`, `classify`, `classify-batch`, `feedback`,
+  `board`, `external-candidates/review`, `copilot/scene` y
+  `copilot/learning`.
+- El primer bug confirmado fue la divergencia ya registrada: `descartar`
+  escribía `selections.jsonl` y ledger, pero no `triage=discard`.
+- El hunting de errores parciales encontró y corrigió cuatro divergencias
+  adicionales:
+  1. selección guardada con triage fallido devolvía `ok=true`;
+  2. feedback aceptado guardado con conexión fallida devolvía `ok=true`;
+  3. `board add` ignoraba feedback fallido y guardaba el tablero;
+  4. `board add` descartaba IDs inexistentes y fingía éxito.
+- La tanda cruzada también encontró dos fallos de visibilidad de estado:
+  `classify-batch` no marcaba resultados parciales y el descarte por lote no
+  reflejaba en la escena los elementos que sí habían sido guardados cuando
+  otro elemento fallaba. Ambos quedaron corregidos; la mesa ahora informa
+  `saved`, `partial`, cantidades guardadas y triage/conexión pendientes.
+- Pruebas añadidas en `tests/test_mak_portfolio_bridge.py` cubren fallos de
+  triage, conexión, feedback de tablero, IDs desconocidos y persistencia
+  parcial. El contrato de la mesa comprueba los mensajes de degradación.
+- Comando focal: `python -m pytest -q tests/test_mak_portfolio_bridge.py
+  tests/test_iskvw_editor_contract.py tests/test_copilot.py
+  tests/test_visual_index.py`; resultado: 112 tests pasaron. También pasaron
+  `py_compile`, `node --check`, Ruff y `git diff --check`.
+- Hashes desplegados tras comparar antes de copiar:
+  `hub.py` = `84b2c0e204bfb324e490b6b62751a3329bbf43e0f04a09161c088e7a3e8de727`;
+  `mesa_montaje.js` =
+  `3d417a15f633e33e04b9172ec54c4db254680858efb6455d6be61a7a58a1ab49`.
+  El `py_compile` remoto pasó. MAK no tiene Node instalado; el `node
+  --check` se ejecutó localmente y pasó.
+- Verificación MAK sin navegador ni mutación humana: `mak-hub.service=active`,
+  `/portafolio/`, `copilot/status`, `copilot/learning` y tres escenas reales
+  respondieron 200; las tres escenas devolvieron `ok=true`, 10 registros, 9
+  relaciones y visual similarity. RSS del Hub: 138908 KB; mappings
+  `torch|faiss|mobileclip`: 0; sin errores recientes del servicio.
+- POST inválidos dirigidos (`select`, `classify-batch`, `feedback`, `board`)
+  devolvieron `ok=false` con error específico y no cambiaron la persistencia.
+  Tras la tanda: 58 selecciones efectivas, 20 feedbacks, 31 conexiones y 0
+  elementos en tableros; los conteos permanecieron iguales.
+- Semgrep y ESLint no están disponibles como comandos persistentes en este
+  entorno; no se instalaron dependencias. La cobertura ejecutable queda en
+  AST/rg, pruebas focales, `node --check` y endpoints MAK.
+
+## Next action — hunting de superficies aún no cerradas
+
+No migrar todavía los descartes históricos ni ajustar aprendizaje. El próximo
+bloque debe aplicar la misma matriz de invariantes a revisión de candidatos
+externos, caché de escenas, `board remove` y respuestas HTTP del bloque legacy,
+buscando nuevamente escrituras parciales, estados visuales obsoletos y éxitos
+falsos antes de proponer otra mejora.
+
+## Cierre de hunting cruzado — 2026-08-10
+
+- Se verificó el siguiente bloque de la matriz sin navegador ni clicks: caché de
+  escenas, superficie activa `surface=order`, revisión de candidatos externos,
+  `board remove` y handlers HTTP de la superficie legacy.
+- Bug confirmado y corregido en `iskvw/mesa_montaje.js`: una clasificación por
+  lote actualizaba objetos locales y reconstruía la escena, pero podía dejar una
+  escena copilot cacheada anterior. Ahora invalida `sceneCache` después del
+  guardado exitoso.
+- Bug confirmado y corregido en `cultura/mak_plataforma/hub.py`: la ruta activa
+  GTM/mapa `surface=order` omitía `visual_similarity` aunque el índice derivado
+  estuviera disponible. La escena operativa ahora expone el canal visual sin
+  cargar MobileCLIP, torch ni FAISS en el Hub.
+- Bug confirmado y corregido en la revisión externa: repetir el mismo payload
+  humano creaba una nueva fila por usar timestamp en el ID. El mismo candidato,
+  fuente, decisión, nota, relación y contexto devuelve `duplicate=true`; una
+  decisión o nota distinta conserva historial append-only.
+- En `iskvw/editor.html` se corrigieron degradaciones del bloque legacy: no se
+  retira una pieza de la bandeja antes de confirmar el endpoint; selecciones y
+  limpiezas masivas informan parciales; fallos HTTP de tableros, sugerencias,
+  revisión, triangulación, contrato, dispatch y feedback ya no se presentan
+  como respuesta vacía o éxito visual. `cargarTableros` falla de forma aislada
+  para que no aborte la carga del resto del archivo.
+- Regresiones focales: 113 tests pasaron (`copilot` 37, contrato/editor 2,
+  puente MAK 70, índice visual 4). También pasaron `py_compile`,
+  `node --check`, compilación de los scripts inline del editor y `git diff
+  --check` (solo advertencias conocidas de normalización LF/CRLF).
+- Hashes finales desplegados y comparados antes de copiar:
+  `editor.html` =
+  `252d14d006d342c8e7a514801d3f35e33840bffde668ed928e638c5aea8906a1`;
+  `mesa_montaje.js` =
+  `2497814250ae295f27dd5eefded43d2480fe35844b59ca8a47d98d82d33256b6`;
+  `hub.py` =
+  `8032b467a7104b284cdc4e2e4aa41d7edb30c6f684a7b07e332dbdbb85282093`.
+- MAK comprobado tras reinicio: `mak-hub.service=active`, el hash del HTML
+  servido por `/portafolio/` coincide con el editor desplegado, `/api/portfolio/
+  copilot/status`, `/api/portfolio/copilot/learning` y
+  `/api/portfolio/external-candidates` respondieron 200. Una escena real de
+  `surface=order` respondió `ok=true`, 10 registros, 9 relaciones y 5
+  relaciones `visual_similarity` con MobileCLIP-S0, score 0.783021/margen
+  0.051527 en la primera sugerencia. El proceso quedó sin mappings
+  `torch|faiss|mobileclip`; RSS tras reinicio 34.4 MB.
+- POST inválidos dirigidos volvieron a responder `ok=false` sin cambiar
+  `selections.jsonl`, `classifications.jsonl`, `copilot_feedback.jsonl`,
+  `connections.jsonl` ni `boards.json`.
+
+## Next action — cerrar informe antes de cualquier promoción
+
+No migrar los descartes históricos, no ajustar ranking y no gastar Watsonx/AWS.
+El circuito de decisiones y la superficie GTM/mapa quedan listos para una
+última comparación dirigida entre estados persistidos y escena sobre una
+muestra pequeña; si no aparecen divergencias, recién entonces se puede decidir
+si la migración histórica de descartes merece una ronda separada.
+
+## Comparación persistencia ↔ escena — 2026-08-10
+
+- Se cruzaron 11 escenas reales en MAK, elegidas desde las decisiones y
+  clasificaciones existentes: seleccionar, deseleccionar, descartar, triage
+  `work`, `record` y `review`. No se escribieron archivos ni se ejecutaron
+  clicks.
+- Resultado: 4 escenas activas conservaron `ok=true`, el elemento activo fue el
+  primer registro, las relaciones solo apuntaron a registros presentes y los
+  estados de selección coincidieron con JSONL. Dos descartes devolvieron
+  explícitamente `ok=false`, `error=item_descartado`, sin escena falsa.
+- Una muestra `triage=record` conservó esa clasificación en la pieza de escena.
+  Una muestra `seleccionar` conservó `selection=seleccionar`; una muestra
+  `deseleccionar` quedó fuera de la mesa sin borrar el historial. No apareció
+  divergencia persistencia → escena.
+- Tres feedbacks históricos fueron cruzados con la escena copilot: dos
+  relaciones mostraron `status=accepted`, `decisions=[accept]`, nota y peso
+  aprendido; el tercero no entró en el top-9 actual, pero sigue persistido y no
+  se presentó como relación confirmada. Esto es ranking acotado, no pérdida de
+  persistencia.
+- La ruta operativa `surface=order` mantiene el canal visual: una muestra real
+  devolvió 5 relaciones `visual_similarity` con MobileCLIP-S0, scores 0.783021
+  y 0.731494, márgenes 0.051527 y 0.068693. El primer cálculo GTM frío midió
+  11.896 s y los siguientes 0.022 s con caché; queda registrado como medición
+  de rendimiento, no como fallo semántico.
+- MAK sigue con `mak-hub.service=active`; HTML servido y editor coinciden en
+  hash `252d14d006d342c8e7a514801d3f35e33840bffde668ed928e638c5aea8906a1`.
+  No se cargaron mappings `torch|faiss|mobileclip` en el Hub.
+
+## Next action — decisión separada sobre rendimiento y migración
+
+La comparación de invariantes queda sin divergencias semánticas confirmadas.
+Antes de migrar descartes históricos, el siguiente bloque debe decidir si se
+acepta el calentamiento GTM de 11.9 s como coste de primera apertura o se añade
+una mejora acotada de caché/preparación; no usar IBM/AWS, no ajustar ranking y
+no migrar mientras esa decisión no esté documentada.
+
+## Optimización GTM focalizada — 2026-08-10
+
+- Se perfiló solo la construcción GTM estable sobre la ruta existente, sin
+  navegador ni carga de MobileCLIP. El cuello confirmado era
+  `_vector_distance`: millones de llamadas Python creaban una lista de pesos y
+  recorrían un generador para vectores de 32 dimensiones.
+- `cultura/mak_plataforma/copilot.py` ahora usa `math.dist` únicamente en la
+  ruta no ponderada; la ruta ponderada conserva su cálculo explícito. No cambió
+  el vector, el mapa, las etiquetas, el contrato ni el ranking.
+- Medición MAK antes/después: construcción GTM fría de 11.896 s a 4.590 s; las
+  llamadas siguientes permanecen en 0.022–0.023 s por la caché existente. La
+  escena HTTP real `surface=order` respondió 200 en 6.125 s con `ok=true`, 10
+  registros, 9 relaciones y 5 relaciones visuales MobileCLIP-S0, scores
+  0.783021 y 0.731494.
+- Regresiones focales locales después del cambio: 113 tests pasaron; también
+  `py_compile`, `node --check`, compilación del script inline y `git diff
+  --check` pasaron.
+- Despliegue controlado tras comparar hashes: `copilot.py` runtime =
+  `b24cad60210c2df852cb7bf63301e3b8c3efa4e6a43fec4b673e2d79076fe878`.
+  `editor.html`, `mesa_montaje.js` y `hub.py` mantuvieron los hashes ya
+  verificados. `mak-hub.service=active`, HTML servido coincidente, RSS 128960
+  KB/HWM 132720 KB y mappings `torch|faiss|mobileclip=0`.
+
+## Next action — conservar el circuito y no abrir otra migración aún
+
+La mejora de rendimiento queda aplicada y medida. Mantener sin migración los
+descartes históricos, sin promoción de aprendizaje y sin IBM/AWS. El siguiente
+bloque técnico solo debe añadir una regresión de rendimiento o revisar el
+calentamiento si la medición vuelve a degradarse; si permanece estable, el
+trabajo pasa a documentar la decisión sobre la migración histórica en una ronda
+separada, no a mezclarla con la superficie operativa.
+
+## Corrección de descarte parcial con red incierta — 2026-08-10
+
+- Se encontró otra violación de la cadena activa: el `Promise.all` del descarte
+  por lote podía rechazar toda la tanda ante una respuesta HTTP o JSON ausente,
+  sin reconciliar los elementos que sí habían sido guardados en MAK.
+- `iskvw/mesa_montaje.js` ahora convierte cada solicitud en un resultado explícito
+  `respuesta_no_confirmada`; los elementos confirmados se retiran de la escena,
+  los no confirmados permanecen seleccionables y el HUD ya no conserva IDs de
+  nodos que fueron retirados.
+- La regresión contractual comprueba la reconciliación de `savedIds`, el filtro
+  de `orderSelectedIds` y la degradación de respuesta incierta. Pasaron 113
+  pruebas focales, `node --check` y la compilación inline del editor.
+- Hash final servido para `mesa_montaje.js`: `edaf95e34259459862c8c610f6e9b4d9711736210e4a48318eaa3484b9158569`;
+  `/portafolio/mesa_montaje.js?v=20260810-visual-index2` coincide. MAK sigue
+  `mak-hub.service=active`; no fue necesario reiniciar el Hub porque solo cambió
+  el recurso estático.
+
+## Next action — terminar el hunting de transporte del editor activo
+
+Mantener bloqueadas migración, ranking e IBM/AWS. Revisar únicamente si quedan
+otras tandas `Promise.all` o respuestas no confirmadas en `mesa_montaje.js`; cada
+una debe preservar parciales, hacer visible el pendiente y ser idempotente antes
+de cerrar el circuito.
+
+## Transporte de descarte por lote — cierre — 2026-08-10
+
+- La revisión estática de `mesa_montaje.js` confirmó que el único `Promise.all`
+  de decisiones es el descarte por lote y ahora cada promesa tiene fallback
+  explícito `respuesta_no_confirmada`. No quedan tandas paralelas que oculten
+  fallos de transporte en la superficie activa.
+- El arreglo quedó desplegado y servido: hash de
+  `mesa_montaje.js` = `edaf95e34259459862c8c610f6e9b4d9711736210e4a48318eaa3484b9158569`;
+  `mak-hub.service=active`, sin restart porque fue un recurso estático, y el
+  Hub conserva `model_map=0`.
+- Regresiones focales: 113 tests, `node --check` y compilación inline del
+  editor pasaron. La persistencia histórica no fue alterada.
+
+## Next action — mantener cierre técnico acotado
+
+El transporte del editor activo ya tiene manejo explícito de éxito, parcial,
+duplicado y respuesta incierta. No abrir otra mejora visual ni migrar datos en
+esta línea; cualquier siguiente ronda debe ser una regresión dirigida si vuelve
+a observarse una divergencia real, o una decisión independiente sobre los
+descartes históricos.
+
+## Auditoría de discrepancias del handoff — 2026-08-10 (antes de reconciliar)
+
+- La cabecera `Repository state` quedó obsoleta: la comprobación real muestra
+  rama `mak` y HEAD `d09327fe8d5b`; `main`, `mak`, `rd` e `iskvw`, junto con sus
+  refs `origin/*`, apuntan a ese commit. El worktree de Windows tiene cambios
+  modificados y archivos no rastreados además del handoff.
+- La sección `MAK box: verified truth` también conserva hechos antiguos: el
+  checkout `/home/mak/flujo` está en `mak`, HEAD `d09327fe8d5b`, y tiene cambios
+  en `editor.html`, `mesa_montaje.js` y `visual_index.py` no reflejados en el
+  texto inicial.
+- La afirmación de que `ledger.py` runtime coincide es falsa. SHA-256 del
+  checkout/Windows: `7e7cb2ffdad7dc35750803f831edcf823631443cd36d972cb9da3ded934d11ae`;
+  runtime `/home/mak/plataforma/ledger.py`:
+  `bcbaca74fecec9e56be1084cefe7288953686161819f7f14a5ad87d3f1cadf7c`. El
+  runtime no conserva la lectura de `product.next_action` presente en el
+  checkout. No se sincronizó durante aquella auditoría; la reconciliación
+  posterior queda documentada en la sección siguiente.
+- La afirmación de que el handoff era `ASCII-only (198 lines)` es falsa:
+  comprobación local: 3.078 líneas, 178.526 bytes y 1.552 bytes no ASCII.
+- Estado actualmente confirmado: `systemctl --user is-active mak-hub.service`
+  devuelve `active`, el proceso sirve en `0.0.0.0:8900`, `/health` y
+  `/api/portfolio/copilot/status` responden 200, `/portafolio/` sirve el editor
+  SHA-256 `252d14d006d342c8e7a514801d3f35e33840bffde668ed928e638c5aea8906a1`,
+  el JS servido coincide con `edaf95e34259459862c8c610f6e9b4d9711736210e4a48318eaa3484b9158569`,
+  y la escena `surface=order` responde 200.
+- Acción resultante: reconciliar `ledger.py` runtime en una operación separada
+  y controlada, y después corregir las secciones iniciales obsoletas. Ambas
+  acciones están documentadas en las secciones posteriores.
+
+## Reconciliación de ledger runtime — 2026-08-11
+
+- Se validó sintaxis en Windows y MAK antes del despliegue. El archivo objetivo
+  fue exactamente `/home/mak/plataforma/ledger.py`; no se creó backup ni se
+  modificaron datos, ramas o commits.
+- Se copió mediante temporal controlado y verificación SHA-256. El runtime
+  ahora coincide con el checkout:
+  `7e7cb2ffdad7dc35750803f831edcf823631443cd36d972cb9da3ded934d11ae`.
+- Se reinició únicamente el servicio de usuario `mak-hub.service`. Quedó
+  `active/running`, PID `77841`, con `VmRSS=100996 kB`, `VmHWM=131764 kB` y
+  cero mappings `torch|faiss|mobileclip`.
+- Verificación posterior: `/health`, `/portafolio/`,
+  `/api/portfolio/copilot/status` y la escena `surface=order` respondieron
+  HTTP 200. El módulo cargado por Python es
+  `/home/mak/plataforma/ledger.py` y conserva `product_next_action`.
+- Siguiente acción: corregir las secciones iniciales obsoletas de este handoff
+  para que no contradigan el estado actual; no abrir una nueva integración ni
+  IBM/AWS hasta terminar esa limpieza documental.
+
+## Regresión de contrato portfolio_record — 2026-08-11
+
+- Se añadió `tests/test_mak_ledger.py::test_portfolio_record_surfaces_product_next_action_when_not_triangulating`.
+  La prueba cubre la ruta real `portfolio_record` cuando la acción es
+  `verify_source`: conserva `product.next_action` en la fila del ledger y
+  mantiene `record_kind` dentro de `portfolio_candidate`.
+- Verificación local: pruebas focales de ledger, bridge, copilot, editor,
+  índice visual y XIO pasaron; `ledger.py` compila y `node --check
+  iskvw/mesa_montaje.js` pasa. No se modificó el runtime por esta prueba.
+- Verificación MAK posterior: `mak-hub.service=active`, `/health` HTTP 200 y
+  escena `surface=order` HTTP 200; el runtime `ledger.py` conserva el hash
+  `7e7cb2ffdad7dc35750803f831edcf823631443cd36d972cb9da3ded934d11ae`.
+- Siguiente acción: mantener este circuito como regresión y elegir solo otra
+  violación reproducible de contrato antes de tocar ranking, migraciones,
+  IBM/AWS o una nueva superficie visual.
+
+## Reconciliación de clasificación parcial — 2026-08-11
+
+- Hunting del circuito `mesa_montaje.js → /api/portfolio/classify-batch`:
+  MAK podía persistir parte de una tanda y devolver `partial=true`, mientras
+  el editor descartaba toda la respuesta y conservaba seleccionados también
+  los elementos ya guardados.
+- Corrección aplicada en `iskvw/mesa_montaje.js`: el editor lee
+  `payload.results`, actualiza solo los `savedIds`, los retira de
+  `orderSelectedIds`, invalida la caché de escena y deja los pendientes
+  visibles con el mensaje de clasificación parcial.
+- Regresión contractual añadida en
+  `tests/test_iskvw_editor_contract.py`. Pasaron las pruebas focales de ledger,
+  bridge, Copilot, editor, índice visual y XIO; también `node --check` y
+  `git diff --check`.
+- Despliegue controlado al checkout operativo
+  `/home/mak/flujo/iskvw/mesa_montaje.js`: hash local, remoto y servido
+  `ddf3968273935bbe8f9df1e78b67290997022a4c034857979bca4cd7eb9f50e8`.
+  No se reinició el Hub por ser un recurso estático.
+- Verificación MAK posterior: `mak-hub.service=active`, `/health` HTTP 200,
+  escena `surface=order` HTTP 200 y el recurso servido contiene la ruta de
+  reconciliación parcial.
+- Siguiente acción: continuar con la siguiente acción del harness solo si
+  aparece otra escritura parcial reproducible; no abrir proveedores externos,
+  migraciones ni otra interfaz.

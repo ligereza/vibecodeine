@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='9' fill='%23e8e4da'/%3E%3C/svg%3E">
-<title>MAK · Estudio de obra</title>
+<title>MAK · Campo de orden · archivo vivo</title>
 <style>
   /* Same skin as iskvw/piel/campo: near-black ground, bone type, monospace.
      This page is a TOOL, not a skin: it may show text the campo would never
@@ -481,7 +481,8 @@
   }
 </style>
 <style>
-  .mesa-active #estudio-app{padding:0 30px 36px;background:#09090b}
+  body.mesa-active>header,body.mesa-active>#mak-inbox,body.mesa-active>#tablero,body.mesa-active>#filtros,body.mesa-active>#lista,body.mesa-active>#aviso{display:none}
+  body.mesa-active #estudio-app{padding:0 30px 36px;background:#09090b}
   .mesa-shell{max-width:1500px;margin:0 auto}
   .mesa-header{display:flex;justify-content:space-between;gap:24px;align-items:flex-end;margin:0 0 14px}
   .mesa-kicker{color:#b7936f;font-size:.57rem;letter-spacing:.2em;text-transform:uppercase}
@@ -502,7 +503,8 @@
   .mesa-stage{position:relative;min-height:620px;height:min(72vh,760px);overflow:hidden;border:1px solid #3b303f;background:radial-gradient(circle at 50% 47%,#1d1723 0,#0e0c12 46%,#08080a 100%);background-image:radial-gradient(circle at 50% 47%,rgba(214,185,232,.1) 0 1px,transparent 1px),radial-gradient(ellipse at 50% 50%,transparent 0 31%,rgba(183,147,111,.07) 31.2%,transparent 31.6%),radial-gradient(ellipse at 50% 50%,transparent 0 56%,rgba(183,147,111,.05) 56.2%,transparent 56.6%);background-size:34px 34px,100% 100%,100% 100%;touch-action:none;cursor:grab}
   .mesa-stage.is-panning{cursor:grabbing}
   .mesa-stage:before{content:"";position:absolute;inset:7%;border:1px solid rgba(183,147,111,.14);border-radius:50%;box-shadow:0 0 0 70px rgba(183,147,111,.025),0 0 0 145px rgba(183,147,111,.015);pointer-events:none}
-  .mesa-world{position:absolute;inset:0;transform-origin:50% 50%;will-change:transform}
+  .mesa-flow-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:0;opacity:.62;pointer-events:none}
+  .mesa-world{position:absolute;inset:0;z-index:1;transform-origin:50% 50%;will-change:transform}
   .mesa-edges{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
   .mesa-edge{fill:none;stroke-width:.32;vector-effect:non-scaling-stroke;opacity:.7;pointer-events:none}
   .mesa-edge.is-candidate{stroke-dasharray:1.2 1.2;opacity:.82}
@@ -694,6 +696,16 @@
   .mesa-suggestion-copy b{overflow:hidden;color:#e5d7c4;font-size:.5rem;font-weight:500;text-overflow:ellipsis;white-space:nowrap}
   .mesa-suggestion-copy>span{overflow:hidden;color:#9e95a1;font-size:.47rem;line-height:1.2;text-overflow:ellipsis;white-space:nowrap}
   .mesa-suggestion-open{color:#d6b9e8;font-size:.48rem;text-transform:uppercase;writing-mode:vertical-rl}
+  .mesa-xio-evidence{grid-column:1/-1;margin-top:2px;border:1px solid #405044;background:#0d1510;color:#c6d6c7;padding:8px;font-size:.49rem;line-height:1.4}
+  .mesa-xio-evidence summary{cursor:pointer;color:#a9d0ad;font-size:.51rem;letter-spacing:.08em;text-transform:uppercase}
+  .mesa-xio-evidence p{margin:7px 0;color:#9eb2a0}
+  .mesa-xio-atoms,.mesa-xio-segments{display:grid;gap:3px;margin-top:5px}
+  .mesa-xio-atoms span,.mesa-xio-segments span{display:block;padding:3px 5px;border-left:2px solid #78c78b;background:#101b13}
+  .mesa-xio-evidence small{display:block;margin-top:6px;color:#98a69a}
+  .mesa-field-readout .is-runtime{color:#9eb2a0;border-color:#405044}
+  .mesa-engine[data-render-quality="reduced"] .mesa-node{box-shadow:none;transition:left .1s ease,top .1s ease,transform .1s ease,border-color .1s ease}
+  .mesa-engine[data-render-quality="reduced"] .mesa-node[data-uncertainty="high"]:after{animation:none}
+  .mesa-engine[data-render-quality="reduced"] .mesa-field-cell{filter:none;transition:none}
   .mesa-engine .mesa-stage-help{content:"";color:#978d99}
   .mesa-order-hud{position:absolute;z-index:10;left:16px;right:16px;bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px 12px;border:1px solid #78c78b;border-radius:18px 11px 18px 11px;background:rgba(13,20,16,.94);box-shadow:0 16px 32px rgba(0,0,0,.65);color:#d5e7d6}
   .mesa-order-hud[hidden]{display:none}
@@ -762,6 +774,18 @@
   .mesa-order-compass .is-discard:hover{transform:translateY(-50%) scale(1.1)}
   .mesa-order-compass .is-region{left:15%;bottom:6%;width:54px;border-style:dashed;border-color:#8f6da1;color:#d6b9e8;background:rgba(18,12,22,.92)}
   .mesa-order-compass .is-detail{right:15%;bottom:6%;width:54px;border-color:#62566d;color:#beb0c5;background:rgba(14,12,16,.92)}
+  .mesa-external-queue{border:1px solid #8b6c41;background:rgba(24,18,10,.86);color:#e4c28d;padding:5px 8px;font:inherit;font-size:.52rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+  .mesa-external-queue:hover{border-color:#d6b06b}
+  .mesa-external-review{border:1px solid #8b6c41;background:rgba(24,18,10,.58);padding:8px;margin:8px 0;color:#e4c28d}
+  .mesa-external-review summary{cursor:pointer;letter-spacing:.08em;text-transform:uppercase;font-size:.55rem}
+  .mesa-external-review-card{border-top:1px solid rgba(183,147,111,.22);padding-top:7px;margin-top:7px;color:#c9c0b4;font-size:.58rem;line-height:1.4}
+  .mesa-external-review-card strong{color:#f0dfc6}
+  .mesa-external-review-card small{display:block;color:#9d927f;margin-top:3px}
+  .mesa-external-review-actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+  .mesa-external-review-actions button{font:inherit;font-size:.52rem;padding:4px 6px;border:1px solid #5c4a34;background:#17120d;color:#e4c28d;cursor:pointer}
+  .mesa-external-review-actions button:hover{border-color:#d6b06b}
+  .mesa-external-review-actions button[data-external-decision="reject"]{color:#d9b7c6;border-color:#765866}
+  .mesa-external-review-actions button[data-external-decision="revise"]{color:#d6b9e8;border-color:#6d5684}
   .mesa-engine .mesa-stage-help{border:0;border-left:1px solid #4c4051;background:rgba(8,8,10,.64)}
   @media(max-width:900px){.mesa-toolbar{flex-wrap:wrap}.mesa-field-switch{order:3;width:100%;justify-content:center}.mesa-field-switch button{flex:1}.mesa-field-readout span:nth-last-child(-n+2){display:none}.mesa-engine .mesa-node.is-active{width:min(220px,31vw)}}
   @media(max-width:760px){.mesa-field-readout{top:8px;right:8px}.mesa-field-readout span{width:44px;font-size:.36rem}.mesa-field-readout b{font-size:.62rem}.mesa-order-hud{width:340px;height:310px}.mesa-order-compass>button{width:54px}.mesa-order-hud-copy{top:7%;left:12%;max-width:150px}.mesa-engine .mesa-node.is-active{width:176px}.mesa-map-legend{display:none}}
@@ -770,7 +794,7 @@
 <body class="estudio-principal">
 
 <header>
-  <h1>Estudio de obra · archivo vivo</h1>
+  <h1>MAK · campo de orden</h1>
   <div class="sub">Primero explora el archivo MAK. Luego selecciona y relaciona.
     La curatoria final es otro archivo: nada se publica desde esta página.</div>
   <div class="ruta-trabajo" aria-label="Flujo de trabajo">
@@ -1130,7 +1154,10 @@ async function estudioLoadSuggestions(itemId=ESTUDIO_ACTIVE_ID){
   const grid=document.getElementById('estudio-live-suggestion-grid');if(!grid)return;
   grid.innerHTML='<span class="estudio-action-panel">consultando copiloto local…</span>';
   try{
-    const response=await fetch('/api/portfolio/copilot/suggestions?item_id='+encodeURIComponent(itemId),{cache:'no-store'});const data=await response.json();
+    const response=await fetch('/api/portfolio/copilot/suggestions?item_id='+encodeURIComponent(itemId),{cache:'no-store'});
+    if(!response.ok)throw new Error(`HTTP ${response.status}`);
+    const data=await response.json();
+    if(data.ok===false)throw new Error(data.error||'copiloto no disponible');
     const rawSuggestions=(data.suggestion_groups||data.suggestions||[]);
     const seenSuggestions=new Set();
     const suggestions=rawSuggestions.filter(suggestion=>{
@@ -1234,10 +1261,17 @@ function estudioCloseSuggestionPopover(){
 async function estudioSuggestionDecision(decision,targetId,facet,relation){
   estudioCloseSuggestionPopover();
   if(decision==='discard'){
-    const response=await fetch('/api/portfolio/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:targetId,decision:'descartar',decision_scope:'record',reason_code:'no_es_obra',target_id:targetId,session_id:ESTUDIO_SESSION_ID,pass_size:ESTUDIO_PASS_SIZE})});
-    const data=await response.json();
-    const target=ESTUDIO_ITEMS.find(item=>item.id===targetId);
-    if(data.ok&&target){target.selection='descartar';ESTUDIO_PASS_SELECTED.delete(targetId);estudioRender();}
+    const panel=document.getElementById('estudio-action-panel');
+    try{
+      const response=await fetch('/api/portfolio/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:targetId,decision:'descartar',decision_scope:'record',reason_code:'no_es_obra',target_id:targetId,session_id:ESTUDIO_SESSION_ID,pass_size:ESTUDIO_PASS_SIZE})});
+      if(!response.ok)throw new Error(`HTTP ${response.status}`);
+      const data=await response.json();
+      const target=ESTUDIO_ITEMS.find(item=>item.id===targetId);
+      if(data.ok&&target){target.selection='descartar';ESTUDIO_PASS_SELECTED.delete(targetId);estudioRender();}
+      else if(panel)panel.innerHTML=`<div class="estudio-action-title">Descarte no confirmado</div><div>${esc(data.error||'La selección o el triage quedaron pendientes; la pieza sigue visible.')}</div>`;
+    }catch(error){
+      if(panel)panel.innerHTML='<div class="estudio-action-title">Descarte no confirmado</div><div>El Hub no respondió; la pieza sigue visible y no se inventó un triage.</div>';
+    }
     return;
   }
   estudioFeedback(targetId,decision,facet,relation);
@@ -1247,7 +1281,9 @@ async function estudioLoadLearning(){
   const panel=document.getElementById('estudio-learning-summary');
   if(!panel)return;
   try{
-    const response=await fetch('/api/portfolio/copilot/learning',{cache:'no-store'});const data=await response.json();
+    const response=await fetch('/api/portfolio/copilot/learning',{cache:'no-store'});
+    if(!response.ok)throw new Error(`HTTP ${response.status}`);
+    const data=await response.json();
     const learning=data.candidate_reviews||{};const counts=learning.decision_counts||{};
     const signals=Object.entries(learning.context_signals||{}).flatMap(([field,values])=>Object.keys(values).map(value=>`${field}: ${value}`)).slice(0,3);
     const signalText=signals.length?` · señales: ${signals.map(value=>esc(value)).join(' · ')}`:'';
@@ -1262,7 +1298,9 @@ async function estudioFeedback(targetId,action,facet,relation,button=null){
   if(button){button.disabled=true;button.textContent='guardando…';}
   let data=null;
   try{
-    const response=await fetch('/api/portfolio/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source_id:ESTUDIO_ACTIVE_ID,target_id:targetId,action,facet,relation})});data=await response.json();
+    const response=await fetch('/api/portfolio/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source_id:ESTUDIO_ACTIVE_ID,target_id:targetId,action,facet,relation})});
+    if(!response.ok)throw new Error(`HTTP ${response.status}`);
+    data=await response.json();
   }catch(error){data={ok:false};}
   const panel=document.getElementById('estudio-action-panel');if(panel)panel.innerHTML=data.ok?`<div class="estudio-action-title">Feedback guardado</div><div>${action==='accept'?'La relación queda como acierto del copiloto.':'La relación queda descartada sin borrar ninguna pieza.'}</div>`:'<div class="estudio-action-title">Feedback no guardado</div><div>La sugerencia permanece candidata.</div>';
   if(data.ok)estudioLoadSuggestions();else if(button){button.disabled=false;button.textContent=action==='accept'?'aceptar':'descartar';}
@@ -1272,10 +1310,13 @@ async function estudioFeedback(targetId,action,facet,relation,button=null){
 async function estudioSelect(step,value){
   const item=ESTUDIO_ITEMS.find(candidate=>candidate.id===ESTUDIO_ACTIVE_ID);if(!item)return;
   const state=Object.assign({},ESTUDIO_DECISIONS.get(item.id)||{});state[step]=value;
-  const response=await fetch('/api/portfolio/classify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:item.id,fields:state})});
-  const data=await response.json();
-  if(!data.ok){const panel=document.getElementById('estudio-action-panel');if(panel)panel.innerHTML=`<div class="estudio-action-title">Clasificación no guardada</div><div>${esc(data.error||'error')}</div>`;return;}
-  item.classification=data.classification;ESTUDIO_DECISIONS.set(item.id,Object.assign({},data.classification));estudioRender();
+  try{
+    const response=await fetch('/api/portfolio/classify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:item.id,fields:state})});
+    if(!response.ok)throw new Error(`HTTP ${response.status}`);
+    const data=await response.json();
+    if(!data.ok)throw new Error(data.error||'error');
+    item.classification=data.classification;ESTUDIO_DECISIONS.set(item.id,Object.assign({},data.classification));estudioRender();
+  }catch(error){const panel=document.getElementById('estudio-action-panel');if(panel)panel.innerHTML=`<div class="estudio-action-title">Clasificación no guardada</div><div>${esc(error.message||'error')}</div>`;}
 }
 
 function estudioOpen(id){ESTUDIO_ACTIVE_ID=id;estudioRender();document.getElementById('estudio-app')?.scrollIntoView({behavior:'smooth',block:'start'});}
@@ -1316,12 +1357,21 @@ async function estudioLiveSelect(id){
   const members=estudioUnitMembers(item);
   const selecting=!members.length||!members.every(candidate=>candidate.selection==='seleccionar');
   const decision=selecting?'seleccionar':'deseleccionar';
-  for(const member of members){
-    const response=await fetch('/api/portfolio/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:member.id,decision,decision_scope:'publication_group',target_id:item.publicacion_id||member.id,session_id:ESTUDIO_SESSION_ID,pass_size:ESTUDIO_PASS_SIZE})});
-    const data=await response.json();
-    if(!data.ok){alert(data.error||'No se pudo guardar la seleccion del carrusel.');return;}
-    member.selection=selecting?'seleccionar':'pendiente';
-    if(selecting)ESTUDIO_PASS_SELECTED.add(member.id);else ESTUDIO_PASS_SELECTED.delete(member.id);
+  let saved=0;
+  try{
+    for(const member of members){
+      const response=await fetch('/api/portfolio/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:member.id,decision,decision_scope:'publication_group',target_id:item.publicacion_id||member.id,session_id:ESTUDIO_SESSION_ID,pass_size:ESTUDIO_PASS_SIZE})});
+      if(!response.ok)throw new Error(`HTTP ${response.status}`);
+      const data=await response.json();
+      if(!data.ok)throw new Error(data.error||'No se pudo guardar la seleccion del carrusel.');
+      member.selection=selecting?'seleccionar':'pendiente';
+      if(selecting)ESTUDIO_PASS_SELECTED.add(member.id);else ESTUDIO_PASS_SELECTED.delete(member.id);
+      saved+=1;
+    }
+  }catch(error){
+    const panel=document.getElementById('estudio-action-panel');
+    if(panel)panel.innerHTML=`<div class="estudio-action-title">Selección parcial del carrusel</div><div>${saved} de ${members.length} registros guardados. El resto sigue pendiente; no se ocultó la unidad.</div>`;
+    return;
   }
   ESTUDIO_ACTIVE_ID=id;
   estudioRender();
@@ -1353,14 +1403,24 @@ function estudioRail(action){
 async function estudioAction(action){
   const item=ESTUDIO_ITEMS.find(candidate=>candidate.id===ESTUDIO_ACTIVE_ID);const panel=document.getElementById('estudio-action-panel');if(!item||!panel)return;
   if(action==='table'){
-    const selected=item.selection==='seleccionar';const decision=selected?'deseleccionar':'seleccionar';const response=await fetch('/api/portfolio/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:item.id,decision,session_id:ESTUDIO_SESSION_ID,pass_size:ESTUDIO_PASS_SIZE})});const data=await response.json();if(data.ok){item.selection=selected?'pendiente':'seleccionar';if(!selected)ESTUDIO_PASS_SELECTED.add(item.id);estudioRender();}return;
+    const selected=item.selection==='seleccionar';const decision=selected?'deseleccionar':'seleccionar';
+    try{
+      const response=await fetch('/api/portfolio/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:item.id,decision,session_id:ESTUDIO_SESSION_ID,pass_size:ESTUDIO_PASS_SIZE})});
+      if(!response.ok)throw new Error(`HTTP ${response.status}`);
+      const data=await response.json();
+      if(!data.ok){panel.innerHTML=`<div class="estudio-action-title">Mesa no actualizada</div><div>${esc(data.error||'La decisión no se confirmó.')}</div>`;return;}
+      item.selection=selected?'pendiente':'seleccionar';if(!selected)ESTUDIO_PASS_SELECTED.add(item.id);else ESTUDIO_PASS_SELECTED.delete(item.id);estudioRender();
+    }catch(error){panel.innerHTML='<div class="estudio-action-title">Mesa no actualizada</div><div>El Hub no respondió; la pieza conserva su estado visible.</div>';}
+    return;
   }
   if(action==='classify'){panel.innerHTML='<div class="estudio-action-title">Clasificación por capas</div><div>El panel derecho separa propiedad, propósito, naturaleza y formato. Elige cada capa allí; no se mezclan con la búsqueda ni con los tableros.</div>';return;}
   if(action==='review')return estudioLoadReview(item.id);
   if(action==='vision'){
     panel.innerHTML='<div class="estudio-action-title">Lectura visual AWS</div><div>Enviando solo un still existente; no se identifican artistas, venues o eventos y el resultado queda como candidato.</div>';
     try{
-      const response=await fetch('/api/portfolio/copilot/vision',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:item.id,provider:'aws'})});const data=await response.json();
+      const response=await fetch('/api/portfolio/copilot/vision',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:item.id,provider:'aws'})});
+      if(!response.ok)throw new Error(`HTTP ${response.status}`);
+      const data=await response.json();
       if(!data.ok){panel.innerHTML=`<div class="estudio-action-title">Lectura visual no disponible</div><div>${esc(data.detail||data.error||'AWS no respondió')}</div>`;return;}
       item.vision_features=data.features||{};
       const groups=[['observaciones',data.features?.visual_terms],['paleta',data.features?.dominant_colors],['composición',data.features?.composition],['medio/movimiento',data.features?.motion_or_media]];
@@ -1385,6 +1445,7 @@ async function estudioLoadReview(sourceId){
   panel.innerHTML='<div class="estudio-action-title">Revisión humana · candidato pendiente</div><div>cargando media, origen y evidencia…</div>';
   try{
     const response=await fetch('/api/portfolio/review-queue?source_id='+encodeURIComponent(sourceId),{cache:'no-store'});
+    if(!response.ok)throw new Error(`HTTP ${response.status}`);
     const data=await response.json();
     const candidate=(data.items||[])[0];
     const source=ESTUDIO_ITEMS.find(item=>item.id===sourceId);
@@ -1403,6 +1464,7 @@ async function estudioResolveCandidate(ledgerId,decision,sourceId){
   let data;
   try{
     const response=await fetch('/api/portfolio/external-candidates/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ledger_id:ledgerId,source_id:sourceId,decision,note})});
+    if(!response.ok)throw new Error(`HTTP ${response.status}`);
     data=await response.json();
   }catch(error){data={ok:false,error:'Hub no respondió; la decisión no se confirmó.'};}
   if(!data.ok){actionButtons.forEach(button=>{button.disabled=false;});alert(data.error||'No se pudo guardar la decisión.');return;}
@@ -1414,13 +1476,13 @@ async function estudioResolveCandidate(ledgerId,decision,sourceId){
 }
 
 async function estudioLoadGroups(){
-  const panel=document.getElementById('estudio-action-panel');const item=ESTUDIO_ITEMS.find(candidate=>candidate.id===ESTUDIO_ACTIVE_ID);if(!panel||!item)return;panel.innerHTML='<div class="estudio-action-title">Triangulación candidata</div><div>consultando grupos existentes…</div>';try{const response=await fetch('/api/portfolio/triangulation',{cache:'no-store'});const data=await response.json();const groups=(data.groups||[]).filter(group=>(group.items||[]).some(candidate=>candidate.id===item.id||candidate===item.id));panel.innerHTML=`<div class="estudio-action-title">Triangulación candidata</div><div>${groups.length?groups.map(group=>`${esc(group.key||'grupo')} · confianza ${esc(group.confidence??'desconocida')}`).join('<br>'):'No hay grupo directo para esta pieza.'}</div>`;}catch(error){panel.innerHTML='<div class="estudio-action-title">Triangulación no disponible</div><div>La pieza se conserva sin inventar relación.</div>';}}
+  const panel=document.getElementById('estudio-action-panel');const item=ESTUDIO_ITEMS.find(candidate=>candidate.id===ESTUDIO_ACTIVE_ID);if(!panel||!item)return;panel.innerHTML='<div class="estudio-action-title">Triangulación candidata</div><div>consultando grupos existentes…</div>';try{const response=await fetch('/api/portfolio/triangulation',{cache:'no-store'});if(!response.ok)throw new Error(`HTTP ${response.status}`);const data=await response.json();const groups=(data.groups||[]).filter(group=>(group.items||[]).some(candidate=>candidate.id===item.id||candidate===item.id));panel.innerHTML=`<div class="estudio-action-title">Triangulación candidata</div><div>${groups.length?groups.map(group=>`${esc(group.key||'grupo')} · confianza ${esc(group.confidence??'desconocida')}`).join('<br>'):'No hay grupo directo para esta pieza.'}</div>`;}catch(error){panel.innerHTML='<div class="estudio-action-title">Triangulación no disponible</div><div>La pieza se conserva sin inventar relación.</div>';}}
 
-async function estudioSend(depto){const item=ESTUDIO_ITEMS.find(candidate=>candidate.id===ESTUDIO_ACTIVE_ID);const text=document.getElementById('estudio-send-text')?.value.trim()||'';if(!item)return;const response=await fetch('/api/portfolio/dispatch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:item.id,depto,texto:text||`Revisar pieza ${item.id} con su metadata original. No inventar hechos.`})});const data=await response.json();const panel=document.getElementById('estudio-action-panel');if(panel)panel.innerHTML=data.ok?'<div class="estudio-action-title">Pedido enviado</div><div>La pieza conserva su foco y su identidad.</div>':'<div class="estudio-action-title">No se pudo enviar</div><div>El Hub conserva la pieza sin cambios.</div>';}
+async function estudioSend(depto){const item=ESTUDIO_ITEMS.find(candidate=>candidate.id===ESTUDIO_ACTIVE_ID);const text=document.getElementById('estudio-send-text')?.value.trim()||'';if(!item)return;const panel=document.getElementById('estudio-action-panel');try{const response=await fetch('/api/portfolio/dispatch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:item.id,depto,texto:text||`Revisar pieza ${item.id} con su metadata original. No inventar hechos.`})});if(!response.ok)throw new Error(`HTTP ${response.status}`);const data=await response.json();if(panel)panel.innerHTML=data.ok?'<div class="estudio-action-title">Pedido enviado</div><div>La pieza conserva su foco y su identidad.</div>':'<div class="estudio-action-title">No se pudo enviar</div><div>El Hub conserva la pieza sin cambios.</div>';}catch(error){if(panel)panel.innerHTML='<div class="estudio-action-title">No se pudo enviar</div><div>El Hub no respondió; la pieza conserva su estado.</div>';}}
 
 async function cargarEstudioHub(){
   const app=document.getElementById('estudio-app');if(!app)return;app.hidden=false;
-  try{const response=await fetch('/api/portfolio/inbox',{cache:'no-store'});const data=await response.json();ESTUDIO_ITEMS=data.items||[];INBOX=ESTUDIO_ITEMS;await cargarPendientesRevision();ESTUDIO_ACTIVE_ID=estudioSortedItems()[0]?.id||null;estudioRender();}catch(error){app.innerHTML='<div class="estudio-loading">No se pudo cargar el archivo visual del Hub MAK.</div>';}
+  try{const response=await fetch('/api/portfolio/inbox',{cache:'no-store'});if(!response.ok)throw new Error(`HTTP ${response.status}`);const data=await response.json();ESTUDIO_ITEMS=data.items||[];INBOX=ESTUDIO_ITEMS;await cargarPendientesRevision();ESTUDIO_ACTIVE_ID=estudioSortedItems()[0]?.id||null;estudioRender();}catch(error){app.innerHTML='<div class="estudio-loading">No se pudo cargar el archivo visual del Hub MAK.</div>';}
 }
 
 async function estudioLoadMap(){
@@ -1467,6 +1529,7 @@ async function cargarInboxMak(){
   const box=document.getElementById("inbox-lista");
   try{
     const r=await fetch("/api/portfolio/inbox",{cache:"no-store"});
+    if(!r.ok)throw new Error(`HTTP ${r.status}`);
     const d=await r.json();
     INBOX=d.items||[];
     INBOX_SELECTED.clear();
@@ -1487,7 +1550,7 @@ async function cargarPendientesRevision(){
   INBOX_PENDING.clear();
   INBOX_PENDING_LEDGER.clear();
   try{
-    const r=await fetch('/api/portfolio/review-queue',{cache:'no-store'}), d=await r.json();
+    const r=await fetch('/api/portfolio/review-queue',{cache:'no-store'});if(!r.ok)throw new Error(`HTTP ${r.status}`);const d=await r.json();
     (d.items||[]).forEach(item=>{
       if(!item.source_id)return;
       INBOX_PENDING.add(item.source_id);
@@ -1501,7 +1564,7 @@ async function cargarPendientesRevision(){
 async function cargarIndicePortafolio(){
   const box=document.getElementById('inbox-indice-lista');
   try{
-    const r=await fetch('/api/portfolio/index',{cache:'no-store'}), d=await r.json();
+    const r=await fetch('/api/portfolio/index',{cache:'no-store'});if(!r.ok)throw new Error(`HTTP ${r.status}`);const d=await r.json();
     const tipos=Object.entries(d.by_content_type||{}).map(([key,value])=>`${esc(key)}: ${esc(value)}`).join(' · ');
     const agrup=d.grouping||{};
     const top=(d.user_mentions||[]).slice(0,8).map(x=>`@${esc(x.username)} (${esc(x.count)})`).join(' · ');
@@ -1512,7 +1575,7 @@ async function cargarIndicePortafolio(){
 async function cargarContratoOrganismo(){
   const box=document.getElementById('inbox-contrato-body');
   try{
-    const r=await fetch('/api/portfolio/contract',{cache:'no-store'}), d=await r.json();
+    const r=await fetch('/api/portfolio/contract',{cache:'no-store'});if(!r.ok)throw new Error(`HTTP ${r.status}`);const d=await r.json();
     const c=d.projection_contract||{}, p=d.publication_policy||{};
     if(!c.schema){box.textContent='Contrato MAK: superficie no disponible; el editor local sigue funcionando sin publicar.';return;}
     const required=(c.required||[]).join(', ');
@@ -1526,7 +1589,7 @@ async function cargarContratoOrganismo(){
 async function cargarRescate(){
   const box=document.getElementById('inbox-rescate-lista');
   try{
-    const r=await fetch('/api/research/rescue',{cache:'no-store'}), d=await r.json();
+    const r=await fetch('/api/research/rescue',{cache:'no-store'});if(!r.ok)throw new Error(`HTTP ${r.status}`);const d=await r.json();
     if(!d.items||!d.items.length){box.textContent='No hay rescates candidatos disponibles.';return;}
     const c=d.counts||{};
     const cab=`<div class="rescate-meta">${esc(c.total||0)} candidatos · rescatar: ${esc(c.rescue_candidate||0)} · revisar: ${esc(c.review||0)} · retirar sin borrar: ${esc(c.retire_candidate||0)}</div>`;
@@ -1538,7 +1601,7 @@ async function cargarTriangulacion(){
   const box=document.getElementById('inbox-triangulacion-lista');
   document.getElementById('inbox-herramientas').open=true;
   try{
-    const r=await fetch('/api/portfolio/triangulation',{cache:'no-store'}), d=await r.json();
+    const r=await fetch('/api/portfolio/triangulation',{cache:'no-store'});if(!r.ok)throw new Error(`HTTP ${r.status}`);const d=await r.json();
     const groups=Array.isArray(d.groups)?d.groups:[];
     const groupOptions=groups.map(g=>`<option value="${esc(g.key||'')}">${esc(g.key||'grupo sin nombre')}</option>`).join('');
     const human=(d.human_context||[]).map(x=>{
@@ -1565,7 +1628,12 @@ async function enlazarContexto(sourceId){
   const select=document.getElementById(`tri-link-${triDomKey(sourceId)}`);
   const group=select?.value||'';
   if(!group){alert('Selecciona un grupo de triangulacion.');return;}
-  const r=await fetch('/api/portfolio/triangulation/context-link',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source_id:sourceId,group_key:group})}), d=await r.json();
+  let d;
+  try{
+    const r=await fetch('/api/portfolio/triangulation/context-link',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source_id:sourceId,group_key:group})});
+    if(!r.ok)throw new Error(`HTTP ${r.status}`);
+    d=await r.json();
+  }catch(error){alert('El Hub no respondió; el contexto no se enlazó.');return;}
   if(!d.ok){alert(d.error||'No se enlazó el contexto.');return;}
   await cargarTriangulacion();
 }
@@ -1573,7 +1641,12 @@ async function enlazarContexto(sourceId){
 async function guardarTriangulacion(groupKey){
   const key=triDomKey(groupKey);
   const body={group_key:groupKey,artist:document.getElementById(`tri-artist-${key}`).value,event:document.getElementById(`tri-event-${key}`).value,venue:document.getElementById(`tri-venue-${key}`).value,date:document.getElementById(`tri-date-${key}`).value,record_kind:document.getElementById(`tri-kind-${key}`).value,confidence:document.getElementById(`tri-confidence-${key}`).value};
-  const r=await fetch('/api/portfolio/triangulation/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}), d=await r.json();
+  let d;
+  try{
+    const r=await fetch('/api/portfolio/triangulation/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!r.ok)throw new Error(`HTTP ${r.status}`);
+    d=await r.json();
+  }catch(error){alert('El Hub no respondió; la resolución no se guardó.');return;}
   if(!d.ok){alert(d.error||'No se guardó la resolución.');return;}
   await cargarTriangulacion();
 }
@@ -1585,11 +1658,21 @@ function filtrarTriangulacion(value){
 }
 
 async function cargarTableros(){
-  const r=await fetch('/api/portfolio/boards',{cache:'no-store'}), d=await r.json();
-  TABLEROS=d.boards||[];
-  const select=document.getElementById('inbox-tablero'), actual=select.value;
-  select.innerHTML='<option value="">todos</option>'+TABLEROS.map(b=>`<option value="${esc(b.id)}">${esc(b.name)} (${b.item_ids.length})</option>`).join('');
-  if(TABLEROS.some(b=>b.id===actual))select.value=actual;
+  try{
+    const r=await fetch('/api/portfolio/boards',{cache:'no-store'});
+    if(!r.ok)throw new Error(`HTTP ${r.status}`);
+    const d=await r.json();
+    TABLEROS=d.boards||[];
+    const select=document.getElementById('inbox-tablero'), actual=select.value;
+    select.innerHTML='<option value="">todos</option>'+TABLEROS.map(b=>`<option value="${esc(b.id)}">${esc(b.name)} (${b.item_ids.length})</option>`).join('');
+    if(TABLEROS.some(b=>b.id===actual))select.value=actual;
+  }catch(error){
+    TABLEROS=[];
+    const select=document.getElementById('inbox-tablero');
+    if(select)select.innerHTML='<option value="">tableros no disponibles</option>';
+    const counter=document.getElementById('inbox-contador');
+    if(counter)counter.textContent='Archivo cargado; tableros no disponibles temporalmente.';
+  }
 }
 
 function inboxFiltrados(){
@@ -1641,7 +1724,7 @@ async function cargarRevision(id){
   panel.open=true;
   box.textContent='Cargando evidencia del candidato…';
   try{
-    const r=await fetch('/api/portfolio/review-queue?source_id='+encodeURIComponent(id),{cache:'no-store'}), d=await r.json();
+    const r=await fetch('/api/portfolio/review-queue?source_id='+encodeURIComponent(id),{cache:'no-store'});if(!r.ok)throw new Error(`HTTP ${r.status}`);const d=await r.json();
     const candidate=(d.items||[])[0], source=INBOX.find(x=>x.id===id);
     if(!candidate||!source){box.textContent='Este candidato ya no está pendiente.';return;}
     const rel=Object.entries(candidate.candidate_relations||{}).flatMap(([key,values])=>(values||[]).map(value=>`<span class="review-relacion">${esc(key)}: ${esc(value)}</span>`)).join('');
@@ -1753,7 +1836,7 @@ async function cargarTriangulacionPieza(itemId){
   const panel=document.getElementById('foco-accion-panel');
   panel.innerHTML='<div class="foco-panel-title">Sugerencias de triangulacion</div><div class="foco-panel-help">Solo se muestran grupos que contienen esta pieza. Los marcos indican confianza candidata; no son confirmaciones.</div><div class="foco-suggest-grid" id="foco-triangulacion-grid">cargando...</div>';
   try{
-    const r=await fetch('/api/portfolio/triangulation',{cache:'no-store'}), d=await r.json();
+    const r=await fetch('/api/portfolio/triangulation',{cache:'no-store'});if(!r.ok)throw new Error(`HTTP ${r.status}`);const d=await r.json();
     const groups=(d.groups||[]).filter(group=>grupoIncluyeItem(group,itemId));
     const human=(d.human_context||[]).find(row=>row.source_id===itemId);
     const grid=document.getElementById('foco-triangulacion-grid');
@@ -1767,10 +1850,13 @@ async function enviarPiezaActiva(depto){
   const item=INBOX.find(x=>x.id===ACTIVE_ITEM_ID); if(!item)return;
   const custom=document.getElementById('foco-envio-texto')?.value.trim();
   const texto=custom||`Revisar la pieza ${item.id} con su fecha, origen y media. No inventar hechos; devolver evidencia y siguiente accion.`;
-  const r=await fetch('/api/portfolio/dispatch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:item.id,depto,texto})});
-  const d=await r.json();
   const panel=document.getElementById('foco-accion-panel');
-  panel.innerHTML=d.ok?'<div class="foco-panel-title">Pedido enviado</div><div class="foco-panel-help">La pieza sigue en esta vista y el pedido conserva su identidad.</div>':`<div class="foco-panel-title">No se envio</div><div class="foco-panel-help">${esc(d.error||'error')}</div>`;
+  try{
+    const r=await fetch('/api/portfolio/dispatch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:item.id,depto,texto})});
+    if(!r.ok)throw new Error(`HTTP ${r.status}`);
+    const d=await r.json();
+    panel.innerHTML=d.ok?'<div class="foco-panel-title">Pedido enviado</div><div class="foco-panel-help">La pieza sigue en esta vista y el pedido conserva su identidad.</div>':`<div class="foco-panel-title">No se envio</div><div class="foco-panel-help">${esc(d.error||'error')}</div>`;
+  }catch(error){panel.innerHTML='<div class="foco-panel-title">No se envio</div><div class="foco-panel-help">El Hub no respondió; la pieza no cambió.</div>';}
 }
 
 function pintarInboxMak(){
@@ -1806,20 +1892,27 @@ async function cargarCopiloto(id){
   const box=document.getElementById('inbox-copiloto-lista'); box.textContent='Comparando fecha, publicación y conceptos…';
   await cargarCandidatosExternos(id);
   const boardId=document.getElementById('inbox-tablero').value;
-  const r=await fetch('/api/portfolio/copilot/suggestions?item_id='+encodeURIComponent(id)+'&board_id='+encodeURIComponent(boardId),{cache:'no-store'}), d=await r.json();
+  try{
+    const r=await fetch('/api/portfolio/copilot/suggestions?item_id='+encodeURIComponent(id)+'&board_id='+encodeURIComponent(boardId),{cache:'no-store'});
+    if(!r.ok)throw new Error(`HTTP ${r.status}`);
+    const d=await r.json();
+    if(d.ok===false)throw new Error(d.error||'sugerencias no disponibles');
   if(!d.ok){box.textContent='No hay sugerencias para esta pieza.';return;}
   if(!d.suggestions.length){box.textContent='No encontré relaciones candidatas todavía.';return;}
   const contexto=d.context&&d.context.name?` · contexto: ${esc(d.context.name)} · ${d.suppressed_redundant||0} fuera del tablero`:'';
   const aprendizaje=d.learning?` · aprendizaje: ${esc(d.learning.feedback_total||0)} decisiones humanas`:'';
   const evidenciaHumana=d.context?.human_evidence?.count?` · evidencia humana: ${esc(d.context.human_evidence.count)}`:'';
-   const suggestionGroups=d.suggestion_groups||d.suggestions||[];box.innerHTML=`<div class="inbox-asociacion-ayuda">Fuente: ${esc(id)} · motor: ${esc(d.provider)}${contexto}${aprendizaje}${evidenciaHumana} · sugerencias no confirmadas</div>`+suggestionGroups.map(s=>{const item=INBOX.find(x=>x.id===s.item_id)||{};const evidence=(s.evidence||[]).map(row=>{const values=row.values||[row.source_value,row.candidate_value].filter(Boolean);return `${esc(row.facet||row.kind||'señal')}: ${esc(values.join(' · '))}`;}).join(' · ');const reason=evidence||(s.reasons||[]).slice(0,1).join(' · ');const scope=s.scope==='declared'?'metadato declarado':'pista exploratoria';const channels=(s.facets||[s.facet||'relación']).join(' · ');return `<div class="copiloto-item"><b>${esc(item.fecha||'')} · ${esc(item.tipo_contenido||'')} · ${esc(s.item_id)}</b> <span class="copiloto-confianza">${esc(s.confidence)}</span><div class="copiloto-motivo">${esc(channels)} · ${esc(scope)} · ${esc(s.relation_count||1)} señales<br>${esc(reason)}</div><button onclick="feedbackCopiloto('${esc(s.item_id)}','accept','${esc(s.facet)}')">aceptar relación principal</button><button onclick="feedbackCopiloto('${esc(s.item_id)}','reject','${esc(s.facet)}')">rechazar</button></div>`}).join('');
+    const suggestionGroups=d.suggestion_groups||d.suggestions||[];box.innerHTML=`<div class="inbox-asociacion-ayuda">Fuente: ${esc(id)} · motor: ${esc(d.provider)}${contexto}${aprendizaje}${evidenciaHumana} · sugerencias no confirmadas</div>`+suggestionGroups.map(s=>{const item=INBOX.find(x=>x.id===s.item_id)||{};const evidence=(s.evidence||[]).map(row=>{const values=row.values||[row.source_value,row.candidate_value].filter(Boolean);return `${esc(row.facet||row.kind||'señal')}: ${esc(values.join(' · '))}`;}).join(' · ');const reason=evidence||(s.reasons||[]).slice(0,1).join(' · ');const scope=s.scope==='declared'?'metadato declarado':'pista exploratoria';const channels=(s.facets||[s.facet||'relación']).join(' · ');return `<div class="copiloto-item"><b>${esc(item.fecha||'')} · ${esc(item.tipo_contenido||'')} · ${esc(s.item_id)}</b> <span class="copiloto-confianza">${esc(s.confidence)}</span><div class="copiloto-motivo">${esc(channels)} · ${esc(scope)} · ${esc(s.relation_count||1)} señales<br>${esc(reason)}</div><button onclick="feedbackCopiloto('${esc(s.item_id)}','accept','${esc(s.facet)}')">aceptar relación principal</button><button onclick="feedbackCopiloto('${esc(s.item_id)}','reject','${esc(s.facet)}')">rechazar</button></div>`}).join('');
+  }catch(e){box.textContent='No se pudieron cargar las sugerencias; la pieza sigue disponible.';}
 }
 
 async function cargarCandidatosExternos(id){
   const box=document.getElementById('inbox-copiloto-externos-lista');
   document.getElementById('inbox-copiloto').open=true;
   try{
-    const r=await fetch('/api/portfolio/external-candidates?item_id='+encodeURIComponent(id),{cache:'no-store'}), d=await r.json();
+    const r=await fetch('/api/portfolio/external-candidates?item_id='+encodeURIComponent(id),{cache:'no-store'});
+    if(!r.ok)throw new Error(`HTTP ${r.status}`);
+    const d=await r.json();
     if(!d.items||!d.items.length){box.textContent='Sin candidato externo trazable para esta pieza.';return;}
     box.innerHTML='<div class="inbox-asociacion-ayuda">Candidatos externos aceptados por contrato; siguen en revisión humana y no se publican.</div>'+d.items.map(x=>{
       const rel=Object.entries(x.candidate_relations||{}).map(([key,values])=>`${esc(key)}: ${esc((values||[]).join(', '))}`).join(' · ');
@@ -1834,7 +1927,12 @@ async function cargarCandidatosExternos(id){
 async function resolverCandidatoExterno(ledgerId,decision,sourceId=''){
   const note=prompt('Nota humana para esta decision (opcional):','')||'';
   sourceId=sourceId||COPILOTO_SOURCE||ACTIVE_ITEM_ID||estudioSourceId(ledgerId);
-  const r=await fetch('/api/portfolio/external-candidates/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ledger_id:ledgerId,source_id:sourceId||estudioSourceId(ledgerId),decision,note})}), d=await r.json();
+  let d;
+  try{
+    const r=await fetch('/api/portfolio/external-candidates/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ledger_id:ledgerId,source_id:sourceId||estudioSourceId(ledgerId),decision,note})});
+    if(!r.ok)throw new Error(`HTTP ${r.status}`);
+    d=await r.json();
+  }catch(error){alert('El Hub no respondió; la decisión no se confirmó.');return;}
   if(!d.ok){alert(d.error||'No se pudo guardar la decision.');return;}
   sourceId=sourceId||d.review?.source_id||estudioSourceId(ledgerId);
   await cargarPendientesRevision();
@@ -1848,36 +1946,59 @@ async function pedirSegundaLectura(){
   const provider=document.getElementById('inbox-copiloto-proveedor').value;
   const salida=document.getElementById('inbox-copiloto-externo-salida');
   salida.hidden=false; salida.textContent=`Consultando ${provider} con el grupo reducido…`;
-  const r=await fetch('/api/portfolio/copilot/external',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:COPILOTO_SOURCE,provider})}), d=await r.json();
-  salida.textContent=d.ok?`${d.provider}:\n${d.raw}`:`No disponible: ${d.error||'error'}${d.detail?`\n${d.detail}`:''}`;
+  try{
+    const r=await fetch('/api/portfolio/copilot/external',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:COPILOTO_SOURCE,provider})});
+    if(!r.ok)throw new Error(`HTTP ${r.status}`);
+    const d=await r.json();
+    salida.textContent=d.ok?`${d.provider}:\n${d.raw}`:`No disponible: ${d.error||'error'}${d.detail?`\n${d.detail}`:''}`;
+  }catch(error){salida.textContent='No disponible: el Hub no respondió y no se promovió ninguna hipótesis.';}
 }
 
 async function feedbackCopiloto(target,action,facet){
   if(!COPILOTO_SOURCE)return;
   const relation=action==='accept'?(prompt('Nombre de la relación:', 'relacionada')||'relacionada'):'sugerencia descartada';
   const board_id=document.getElementById('inbox-tablero').value;
-  const r=await fetch('/api/portfolio/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source_id:COPILOTO_SOURCE,target_id:target,action,facet,board_id,relation})});
-  const d=await r.json(); if(!d.ok)return alert(d.error||'No se guardó el feedback.');
+  try{
+    const r=await fetch('/api/portfolio/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source_id:COPILOTO_SOURCE,target_id:target,action,facet,board_id,relation})});
+    if(!r.ok)throw new Error(`HTTP ${r.status}`);
+    const d=await r.json(); if(!d.ok)return alert(d.error||'No se guardó el feedback.');
+  }catch(error){return alert('No se guardó el feedback; la sugerencia permanece candidata.');}
   cargarCopiloto(COPILOTO_SOURCE);
 }
 
-function quitarDeBandeja(id){
+async function quitarDeBandeja(id){
+  const previous=INBOX_SELECTED.has(id);
   INBOX_SELECTED.delete(id);
-  fetch('/api/portfolio/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:id,decision:'deseleccionar',board_id:document.getElementById('inbox-tablero').value})});
-  pintarInboxMak();
+  try{
+    const response=await fetch('/api/portfolio/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:id,decision:'deseleccionar',board_id:document.getElementById('inbox-tablero').value})});
+    if(!response.ok)throw new Error(`HTTP ${response.status}`);
+    const data=await response.json();
+    if(!data.ok)throw new Error(data.error||'selección no guardada');
+    pintarInboxMak();
+  }catch(error){
+    if(previous)INBOX_SELECTED.add(id);
+    pintarInboxMak();
+    alert('No se pudo quitar de la mesa; la selección visible fue restaurada.');
+  }
 }
 
 async function seleccionarInbox(id){
   const decision=INBOX_SELECTED.has(id)?'deseleccionar':'seleccionar';
   const r=await fetch('/api/portfolio/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:id,decision,board_id:document.getElementById('inbox-tablero').value})});
-  if((await r.json()).ok){if(decision==='seleccionar')INBOX_SELECTED.add(id);else INBOX_SELECTED.delete(id);pintarInboxMak();}
+  if(!r.ok)return alert('No se pudo actualizar la mesa; la pieza conserva su estado.');
+  const data=await r.json();
+  if(data.ok){if(decision==='seleccionar')INBOX_SELECTED.add(id);else INBOX_SELECTED.delete(id);pintarInboxMak();}
+  else alert(data.error||'No se pudo actualizar la mesa.');
 }
 
 async function enviarInbox(id,depto){
   const item=INBOX.find(x=>x.id===id); if(!item)return;
   const texto=`Revisar material de portafolio ${id}. Tipo: ${item.tipo_contenido}. Fecha: ${item.fecha}. Publicacion: ${item.publicacion_id}. Descripcion original: ${item.descripcion_original||'(sin descripcion)'}. No inventar hechos; devolver evidencia y siguiente accion.`;
-  const r=await fetch('/api/portfolio/dispatch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:id,depto,texto})});
-  const d=await r.json(); alert(d.ok?`Enviado a ${depto}.`:`No se envio: ${d.error||'error'}`);
+  try{
+    const r=await fetch('/api/portfolio/dispatch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:id,depto,texto})});
+    if(!r.ok)throw new Error(`HTTP ${r.status}`);
+    const d=await r.json(); alert(d.ok?`Enviado a ${depto}.`:`No se envio: ${d.error||'error'}`);
+  }catch(error){alert('No se envio: el Hub no respondió y la pieza no cambió.');}
 }
 
 async function crearTablero(){
@@ -1885,8 +2006,13 @@ async function crearTablero(){
   if(!name)return alert('Escribe un nombre para el tablero.');
   const facet=document.getElementById('inbox-nuevo-faceta').value;
   const value=document.getElementById('inbox-nuevo-valor').value.trim();
-  const r=await fetch('/api/portfolio/board',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'create',name,facet,value})});
-  const d=await r.json(); if(!d.ok)return alert(d.error||'No se creo el tablero.');
+  let d;
+  try{
+    const r=await fetch('/api/portfolio/board',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'create',name,facet,value})});
+    if(!r.ok)throw new Error(`HTTP ${r.status}`);
+    d=await r.json();
+  }catch(error){return alert('No se creo el tablero; el Hub no respondió.');}
+  if(!d.ok)return alert(d.error||'No se creo el tablero.');
   input.value=''; document.getElementById('inbox-nuevo-valor').value=''; await cargarTableros(); pintarInboxMak();
 }
 
@@ -1894,8 +2020,13 @@ async function anadirSeleccionAlTablero(){
   const board=document.getElementById('inbox-tablero').value;
   if(!board)return alert('Selecciona un tablero primero.');
   if(!INBOX_SELECTED.size)return alert('Selecciona una o mas obras primero.');
-  const r=await fetch('/api/portfolio/board',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'add',board_id:board,item_ids:[...INBOX_SELECTED]})});
-  const d=await r.json(); if(!d.ok)return alert(d.error||'No se añadieron.');
+  let d;
+  try{
+    const r=await fetch('/api/portfolio/board',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'add',board_id:board,item_ids:[...INBOX_SELECTED]})});
+    if(!r.ok)throw new Error(`HTTP ${r.status}`);
+    d=await r.json();
+  }catch(error){return alert('No se añadieron; el Hub no respondió.');}
+  if(!d.ok)return alert(d.error||'No se añadieron.');
   await cargarTableros(); pintarInboxMak();
 }
 
@@ -1903,23 +2034,43 @@ async function conectarSeleccionadas(){
   const ids=[...INBOX_SELECTED];
   if(ids.length!==2)return alert('Selecciona exactamente dos obras para conectarlas.');
   const relation=prompt('Relacion entre ambas obras:', 'dialoga con'); if(!relation)return;
-  const r=await fetch('/api/portfolio/connect',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source_id:ids[0],target_id:ids[1],relation})});
-  const d=await r.json(); alert(d.ok?'Conexion guardada.':'No se pudo conectar: '+(d.error||'error'));
+  try{
+    const r=await fetch('/api/portfolio/connect',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source_id:ids[0],target_id:ids[1],relation})});
+    if(!r.ok)throw new Error(`HTTP ${r.status}`);
+    const d=await r.json(); alert(d.ok?'Conexion guardada.':'No se pudo conectar: '+(d.error||'error'));
+  }catch(error){alert('No se pudo conectar: el Hub no respondió.');}
 }
 
 async function seleccionarVisibles(){
   const visibles=inboxFiltrados().slice(0,INBOX_LIMIT).filter(x=>!INBOX_SELECTED.has(x.id));
-  await Promise.all(visibles.map(x=>fetch('/api/portfolio/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:x.id,decision:'seleccionar'})})));
-  visibles.forEach(x=>INBOX_SELECTED.add(x.id));
+  const results=await Promise.all(visibles.map(async x=>{
+    try{
+      const response=await fetch('/api/portfolio/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:x.id,decision:'seleccionar'})});
+      if(!response.ok)return {item:x,ok:false};
+      const data=await response.json();return {item:x,ok:Boolean(data.ok)};
+    }catch(error){return {item:x,ok:false};}
+  }));
+  results.filter(result=>result.ok).forEach(result=>INBOX_SELECTED.add(result.item.id));
   pintarInboxMak();
+  const failed=results.filter(result=>!result.ok).length;
+  if(failed)alert(`Selección parcial: ${results.length-failed} guardadas, ${failed} pendientes.`);
 }
 
 async function limpiarBandeja(){
   const ids=[...INBOX_SELECTED];
   if(!ids.length)return;
   if(!confirm(`Quitar ${ids.length} elementos de la bandeja? No borra archivos ni tableros.`))return;
-  await Promise.all(ids.map(id=>fetch('/api/portfolio/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:id,decision:'deseleccionar'})})));
-  INBOX_SELECTED.clear(); pintarInboxMak();
+  const results=await Promise.all(ids.map(async id=>{
+    try{
+      const response=await fetch('/api/portfolio/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:id,decision:'deseleccionar'})});
+      if(!response.ok)return {id,ok:false};
+      const data=await response.json();return {id,ok:Boolean(data.ok)};
+    }catch(error){return {id,ok:false};}
+  }));
+  results.filter(result=>result.ok).forEach(result=>INBOX_SELECTED.delete(result.id));
+  pintarInboxMak();
+  const failed=results.filter(result=>!result.ok).length;
+  if(failed)alert(`Limpieza parcial: ${results.length-failed} quitadas, ${failed} permanecen en la mesa.`);
 }
 
 ['inbox-tipo','inbox-buscar','inbox-assets','inbox-tablero'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{INBOX_LIMIT=48;pintarInboxMak();}));
@@ -2475,6 +2626,6 @@ function medirCabecera(){
 
 cargar().then(medirCabecera);
 </script>
-<script src="mesa_montaje.js?v=20260809-review-packet4"></script>
+<script src="mesa_montaje.js?v=20260810-visual-index2"></script>
 </body>
 </html>

@@ -22,7 +22,12 @@
     suggestionMode: "copilot",
     classificationAxis: "lane",
     camera: { x: 0, y: 0, zoom: 1 },
-    cameraFrame: 0,
+    visualFrame: { queued: false, jobs: new Map(), lastTimestamp: 0, samples: [], fps: 60, quality: "full" },
+    flowCanvas: null,
+    flowContext: null,
+    flowRender: { cursor: 0, total: 0, complete: false, records: [], positions: new Map() },
+    cameraTween: 0,
+    externalCandidates: [],
     feedbackBusy: new Set(),
     classificationPending: new Map(),
     nodes: new Map(),
@@ -45,6 +50,29 @@
   const escMesa = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
   }[character]));
+
+  // Derivado de Ascii-Motion/src/types/easing.ts:
+  // interpolateBetweenKeyframes/evaluateEasing. No se carga Ascii-Motion como runtime.
+  const ASCII_MOTION_EASING = { "ease-out": [0, 0, 0.58, 1] };
+
+  function asciiMotionEase(progress, preset = "ease-out") {
+    const value = Math.max(0, Math.min(1, Number(progress) || 0));
+    const [x1, y1, x2, y2] = ASCII_MOTION_EASING[preset] || ASCII_MOTION_EASING["ease-out"];
+    const bezier = (t, a, b) => 3 * (1 - t) * (1 - t) * t * a + 3 * (1 - t) * t * t * b + t * t * t;
+    const derivative = (t, a, b) => 3 * a * (1 - t) * (1 - t) + 6 * (b - a) * (1 - t) * t + 3 * (1 - b) * t * t;
+    let t = value;
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const error = bezier(t, x1, x2) - value;
+      const slope = derivative(t, x1, x2);
+      if (Math.abs(error) < 1e-7 || Math.abs(slope) < 1e-7) break;
+      t = Math.max(0, Math.min(1, t - error / slope));
+    }
+    return Math.max(0, Math.min(1, bezier(t, y1, y2)));
+  }
+
+  function asciiMotionInterpolate(start, end, progress, preset = "ease-out") {
+    return Number(start) + (Number(end) - Number(start)) * asciiMotionEase(progress, preset);
+  }
 
   function actionGlyph(name) {
     const glyphs = {
@@ -196,7 +224,8 @@
     return {
       date: "#d4a259", publication: "#d6b9e8", event: "#8ab8d8",
       venue: "#80c6a0", artist: "#c6a2d6", client: "#d68a7a",
-      text: "#a69c88", visual: "#8d9ed6", format: "#9f9dca",
+      text: "#a69c88", visual: "#8d9ed6", visual_similarity: "#8d9ed6",
+      format: "#9f9dca",
     }[channel] || "#9e9587";
   }
 
@@ -226,7 +255,7 @@
     artist: "artista",
     client: "cliente / productora",
     collab: "colaboración",
-    text: "concepto / texto",
+    text: "concepto / texto", visual_similarity: "similitud visual",
     visual: "visual",
     audio: "audio",
     process: "proceso",
@@ -299,7 +328,7 @@
   }
 
   function relationEvidenceEntries(relation) {
-    return (relation?.evidence || []).map((evidence) => {
+    const entries = (relation?.evidence || []).map((evidence) => {
       const value = evidence.source_value || evidence.candidate_value || (evidence.values || []).join(" · ");
       if (!value) return null;
       return {
@@ -308,6 +337,14 @@
         strength: evidence.strength || "",
       };
     }).filter(Boolean);
+    const visual = relation?.visual || {};
+    if (visual.score !== undefined && visual.score !== null) {
+      entries.unshift({
+        value: `score ${(Number(visual.score) || 0).toFixed(4)} · margen ${(Number(visual.margin) || 0).toFixed(4)} · ${visual.model || "MobileCLIP-S0"}`,
+        label: "visual_similarity", strength: "medium",
+      });
+    }
+    return entries;
   }
 
   function relationHasUsefulEvidence(relation) {
@@ -347,7 +384,9 @@
   function suggestionMarkup(relation, target) {
     const evidence = relationEvidenceEntries(relation).slice(0, 2);
     const evidenceText = evidence.map((entry) => `${entry.label}: ${entry.value}`).join(" · ");
-    const relationText = (relation.channels || []).join(" · ") || relation.relation_type || "vínculo";
+    const relationText = (relation.channels || []).map((channel) => (
+      relationFacetLabels[channel] || channel
+    )).join(" · ") || relation.relation_type || "vínculo";
     return `<button type="button" class="mesa-suggestion-card" data-pop-action="relation" data-relation-id="${escMesa(relation.relation_id)}"><span class="mesa-suggestion-thumb">${mediaMarkup(target)}</span><span class="mesa-suggestion-copy"><small>${escMesa(relationText)}</small><b>${escMesa(target.source_id || relation.target_id)}</b><span>${escMesa(evidenceText || "evidencia estructurada")}</span></span><span class="mesa-suggestion-open">ver</span></button>`;
   }
 
@@ -502,7 +541,122 @@
     const distanceProfile = state.scene?.learning?.ordering?.field?.distance_profile || {};
     const metricLabel = distanceProfile.active === true ? "distancia adaptada" : distanceProfile.candidate_method ? "distancia base · candidato" : "distancia base";
     const metricSupport = distanceProfile.pair_support?.positive || distanceProfile.pair_support?.negative ? `${distanceProfile.pair_support?.positive || 0}/${distanceProfile.pair_support?.negative || 0}` : "sin pares";
-    state.fieldReadout.innerHTML = `<span><b>${uncertainty}</b>incertidumbre</span><span><b>${coverage}</b>vacío</span><span><b>${information}</b>ganancia</span><span class="is-evidence"><b>${evidenceCount}</b>evidencia</span><span class="is-resonance"><b>${resonanceCount}</b>resonancia</span><span class="is-metric"><b>${metricSupport}</b>${metricLabel}</span>`;
+    const renderFps = Math.round(state.visualFrame.fps || 60);
+    const flowProgress = state.flowRender.total
+      ? `${state.flowRender.cursor}/${state.flowRender.total}`
+      : "sin datos";
+    const externalPending = state.externalCandidates.filter(isPendingExternal).length;
+    state.fieldReadout.innerHTML = `<span><b>${uncertainty}</b>incertidumbre</span><span><b>${coverage}</b>vacío</span><span><b>${information}</b>ganancia</span><span class="is-evidence"><b>${evidenceCount}</b>evidencia</span><span class="is-resonance"><b>${resonanceCount}</b>resonancia</span><span class="is-metric"><b>${metricSupport}</b>${metricLabel}</span><span class="is-runtime"><b>${renderFps}</b>render · ${escMesa(state.visualFrame.quality)}</span><span class="is-runtime"><b>Flow</b> canvas ${escMesa(flowProgress)}</span><span class="is-runtime"><b>${externalPending}</b>ext. pendiente</span>`;
+  }
+
+  function isPendingExternal(row) {
+    const decision = String(row?.human_decision || row?.review_state || "pending").toLowerCase();
+    return decision === "pending" || decision === "revise";
+  }
+
+  function externalForSource(sourceId) {
+    return state.externalCandidates.filter((row) => String(row.source_id) === String(sourceId));
+  }
+
+  function updateExternalQueueCount() {
+    const button = document.getElementById("mesa-external-queue");
+    if (button) button.innerHTML = `evidencia externa · <b>${state.externalCandidates.filter(isPendingExternal).length}</b>`;
+    renderFieldReadout();
+  }
+
+  async function loadExternalQueue() {
+    try {
+      const response = await fetch("/api/portfolio/external-candidates", { cache: "no-store" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      state.externalCandidates = Array.isArray(data.items) ? data.items : [];
+    } catch {
+      state.externalCandidates = [];
+      setStatus("la cola externa no está disponible; la mesa continúa con evidencia local.");
+    }
+    updateExternalQueueCount();
+  }
+
+  async function openNextExternalCandidate() {
+    const candidate = state.externalCandidates.find(isPendingExternal);
+    if (!candidate) {
+      setStatus("no quedan hipótesis externas pendientes.");
+      return;
+    }
+    await centerRecord(candidate.source_id);
+    setStatus("evidencia externa centrada; revisa la hipótesis dentro de la pieza activa.");
+  }
+
+  function resizeFlowCanvas() {
+    if (!state.flowCanvas || !state.flowContext || !state.stage) return;
+    const rect = state.stage.getBoundingClientRect();
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    state.flowCanvas.width = Math.max(1, Math.round(rect.width * dpr));
+    state.flowCanvas.height = Math.max(1, Math.round(rect.height * dpr));
+    state.flowCanvas.style.width = `${Math.max(1, rect.width)}px`;
+    state.flowCanvas.style.height = `${Math.max(1, rect.height)}px`;
+    state.flowContext.setTransform(dpr, 0, 0, dpr, 0, 0);
+    queueFlowCanvas(true);
+  }
+
+  function queueFlowCanvas(reset = false) {
+    if (!state.flowCanvas || !state.flowContext || !state.scene) return;
+    if (reset) {
+      state.flowRender.cursor = 0;
+      state.flowRender.complete = false;
+      state.flowRender.records = displayRecords();
+      state.flowRender.positions = layout();
+      state.flowRender.total = state.flowRender.records.length;
+    }
+    scheduleVisualFrame("flow-canvas", drawFlowCanvas);
+  }
+
+  function drawFlowCanvas() {
+    const canvas = state.flowCanvas;
+    const ctx = state.flowContext;
+    if (!canvas || !ctx || !state.stage) return;
+    const rect = state.stage.getBoundingClientRect();
+    const width = Math.max(1, rect.width);
+    const height = Math.max(1, rect.height);
+    const records = state.flowRender.records;
+    if (state.flowRender.cursor === 0) {
+      ctx.clearRect(0, 0, width, height);
+      ctx.save();
+      ctx.strokeStyle = "rgba(214,185,232,.08)";
+      ctx.lineWidth = 1;
+      for (let x = 0; x <= width; x += 34) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke(); }
+      for (let y = 0; y <= height; y += 34) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke(); }
+      ctx.restore();
+    }
+    // Flow's mapping.html uses translate/scale around the canvas center.
+    ctx.save();
+    ctx.translate(width / 2 + state.camera.x, height / 2 + state.camera.y);
+    ctx.scale(state.camera.zoom, state.camera.zoom);
+    ctx.translate(-width / 2, -height / 2);
+    const start = state.flowRender.cursor;
+    const end = Math.min(records.length, start + 72);
+    for (let index = start; index < end; index += 1) {
+      const record = records[index];
+      const position = state.flowRender.positions.get(record.source_id);
+      if (!position) continue;
+      const mapRow = mapRowFor(record.source_id);
+      const signal = Math.max(0, Math.min(1, fieldSignal(record, mapRow)));
+      const x = width * position.x / 100;
+      const y = height * position.y / 100;
+      ctx.beginPath();
+      ctx.fillStyle = `rgba(214,185,232,${0.08 + signal * 0.20})`;
+      ctx.arc(x, y, 10 + signal * 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.fillStyle = `rgba(183,147,111,${0.18 + signal * 0.58})`;
+      ctx.arc(x, y, 1.5 + signal * 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+    state.flowRender.cursor = end;
+    state.flowRender.complete = end >= records.length;
+    if (state.root) state.root.dataset.flowRender = `${end}/${records.length}`;
+    if (!state.flowRender.complete) scheduleVisualFrame("flow-canvas", drawFlowCanvas);
   }
 
   function createNode(record) {
@@ -549,11 +703,13 @@
     if (!app) return false;
     app.hidden = false;
     document.body.classList.add("mesa-active");
-    app.innerHTML = `<div class="mesa-shell mesa-engine" data-field-mode="uncertainty"><header class="mesa-header"><div><div class="mesa-kicker">MAK · atlas vivo</div><h2>campo de orden</h2><p>La geometría permanece. Tus decisiones cambian el campo, no borran la ambigüedad.</p></div><div class="mesa-header-stats"><b id="mesa-visible-count">0</b><span>nodos</span><b id="mesa-relation-count">0</b><span>vínculos</span><span id="mesa-map-engine" class="mesa-map-engine">GTM · cargando</span></div></header><div class="mesa-toolbar"><div class="mesa-mode-switch" role="toolbar" aria-label="Modo del editor"><button type="button" class="is-active" data-editor-mode="order">ordenar</button><button type="button" data-editor-mode="relate">relacionar</button><button type="button" class="mesa-seed-control" data-learning-action="next-seed" title="llevar el caso más informativo al centro">siguiente frontera</button></div><div class="mesa-field-switch" role="toolbar" aria-label="Campo visible"><button type="button" class="is-active" data-field-mode="uncertainty">incertidumbre</button><button type="button" data-field-mode="coverage">vacíos</button><button type="button" data-field-mode="evidence">evidencia</button><button type="button" data-field-mode="resonance">resonancia</button></div><div class="mesa-camera-actions"><button type="button" data-camera="reset">mapa</button><button type="button" data-camera="zoom-out">−</button><button type="button" data-camera="zoom-in">+</button></div></div><div class="mesa-lenses" role="toolbar" aria-label="Lentes de relación"><button type="button" class="is-active" data-lens="all">copiloto</button><button type="button" data-lens="date">fecha</button><button type="button" data-lens="publication">publicación</button><button type="button" data-lens="event">evento</button><button type="button" data-lens="venue">venue</button><button type="button" data-lens="artist">artista</button><button type="button" data-lens="client">cliente</button><button type="button" data-lens="text">concepto</button></div><div class="mesa-map-legend" aria-label="Lectura del campo"><span class="is-field">halo = información pendiente</span><span class="is-evidence">línea continua = evidencia</span><span class="is-resonance">línea discontinua = resonancia</span><em id="mesa-map-fit">proyección GTM</em></div><main class="mesa-main mesa-engine-main"><div class="mesa-stage" id="mesa-stage" aria-label="Atlas GTM; arrastra el espacio para mover la cámara y selecciona piezas para ordenar"><div class="mesa-world" id="mesa-world"><svg class="mesa-field-layer" id="mesa-field-layer" viewBox="0 0 100 100" preserveAspectRatio="none"></svg><svg class="mesa-edges" id="mesa-edges" viewBox="0 0 100 100" preserveAspectRatio="none"></svg><div class="mesa-card-layer" id="mesa-card-layer"></div></div><div class="mesa-field-readout" id="mesa-field-readout" aria-live="polite"></div><div class="mesa-order-hud" id="mesa-order-hud" aria-live="polite"></div><div class="mesa-popover" id="mesa-popover" hidden></div><div class="mesa-stage-help">click: elegir · rueda: acercar · arrastra el vacío: recorrer el atlas</div></div><nav class="mesa-timeline" id="mesa-timeline" aria-label="Nodos de esta ventana"></nav><div class="mesa-live-status" id="mesa-status" aria-live="polite"></div></main></div>`;
+    app.innerHTML = `<div class="mesa-shell mesa-engine" data-field-mode="uncertainty"><header class="mesa-header"><div><div class="mesa-kicker">MAK · atlas vivo</div><h2>campo de orden</h2><p>La geometría permanece. Tus decisiones cambian el campo, no borran la ambigüedad.</p></div><div class="mesa-header-stats"><b id="mesa-visible-count">0</b><span>nodos</span><b id="mesa-relation-count">0</b><span>vínculos</span><span id="mesa-map-engine" class="mesa-map-engine">GTM · cargando</span><button type="button" id="mesa-external-queue" class="mesa-external-queue">evidencia externa · <b>0</b></button></div></header><div class="mesa-toolbar"><div class="mesa-mode-switch" role="toolbar" aria-label="Modo del editor"><button type="button" class="is-active" data-editor-mode="order">ordenar</button><button type="button" data-editor-mode="relate">relacionar</button><button type="button" class="mesa-seed-control" data-learning-action="next-seed" title="llevar el caso más informativo al centro">siguiente frontera</button></div><div class="mesa-field-switch" role="toolbar" aria-label="Campo visible"><button type="button" class="is-active" data-field-mode="uncertainty">incertidumbre</button><button type="button" data-field-mode="coverage">vacíos</button><button type="button" data-field-mode="evidence">evidencia</button><button type="button" data-field-mode="resonance">resonancia</button></div><div class="mesa-camera-actions"><button type="button" data-camera="reset">mapa</button><button type="button" data-camera="zoom-out">−</button><button type="button" data-camera="zoom-in">+</button></div></div><div class="mesa-lenses" role="toolbar" aria-label="Lentes de relación"><button type="button" class="is-active" data-lens="all">copiloto</button><button type="button" data-lens="date">fecha</button><button type="button" data-lens="publication">publicación</button><button type="button" data-lens="event">evento</button><button type="button" data-lens="venue">venue</button><button type="button" data-lens="artist">artista</button><button type="button" data-lens="client">cliente</button><button type="button" data-lens="text">concepto</button></div><div class="mesa-map-legend" aria-label="Lectura del campo"><span class="is-field">halo = información pendiente</span><span class="is-evidence">línea continua = evidencia</span><span class="is-resonance">línea discontinua = resonancia</span><em id="mesa-map-fit">proyección GTM</em></div><main class="mesa-main mesa-engine-main"><div class="mesa-stage" id="mesa-stage" data-flow-render="canvas-progressive" aria-label="Atlas GTM; arrastra el espacio para mover la cámara y selecciona piezas para ordenar"><canvas class="mesa-flow-canvas" id="mesa-flow-canvas" aria-hidden="true"></canvas><div class="mesa-world" id="mesa-world"><svg class="mesa-field-layer" id="mesa-field-layer" viewBox="0 0 100 100" preserveAspectRatio="none"></svg><svg class="mesa-edges" id="mesa-edges" viewBox="0 0 100 100" preserveAspectRatio="none"></svg><div class="mesa-card-layer" id="mesa-card-layer"></div></div><div class="mesa-field-readout" id="mesa-field-readout" aria-live="polite"></div><div class="mesa-order-hud" id="mesa-order-hud" aria-live="polite"></div><div class="mesa-popover" id="mesa-popover" hidden></div><div class="mesa-stage-help">click: elegir · rueda: acercar · arrastra el vacío: recorrer el atlas</div></div><nav class="mesa-timeline" id="mesa-timeline" aria-label="Nodos de esta ventana"></nav><div class="mesa-live-status" id="mesa-status" aria-live="polite"></div></main></div>`;
     state.root = app;
     state.root.dataset.editorMode = state.editorMode;
     state.root.dataset.fieldMode = state.fieldMode;
     state.stage = document.getElementById("mesa-stage");
+    state.flowCanvas = document.getElementById("mesa-flow-canvas");
+    state.flowContext = state.flowCanvas?.getContext("2d", { alpha: true }) || null;
     state.world = document.getElementById("mesa-world");
     state.fieldLayer = document.getElementById("mesa-field-layer");
     state.edgeLayer = document.getElementById("mesa-edges");
@@ -564,6 +720,8 @@
     state.orderHud = document.getElementById("mesa-order-hud");
     state.fieldReadout = document.getElementById("mesa-field-readout");
     wireStaticControls();
+    window.addEventListener("resize", resizeFlowCanvas, { passive: true });
+    resizeFlowCanvas();
     return true;
   }
 
@@ -578,6 +736,7 @@
     if (conceptButton) conceptButton.textContent = "concepto";
     const allButton = state.root.querySelector('[data-lens="all"]');
     if (allButton) allButton.textContent = "copiloto";
+    state.root.querySelector("#mesa-external-queue")?.addEventListener("click", openNextExternalCandidate);
     state.root.querySelectorAll("[data-editor-mode]").forEach((button) => {
       button.addEventListener("click", () => setEditorMode(button.dataset.editorMode));
     });
@@ -596,6 +755,19 @@
         });
         reloadSuggestions(mode);
       });
+    });
+    const visualLens = document.createElement("button");
+    visualLens.type = "button";
+    visualLens.dataset.lens = "visual_similarity";
+    visualLens.textContent = "visual";
+    lensBar?.appendChild(visualLens);
+    visualLens.addEventListener("click", () => {
+      state.lens = "visual_similarity";
+      state.suggestionMode = "visual_similarity";
+      state.root.querySelectorAll("[data-lens]").forEach((candidate) => {
+        candidate.classList.toggle("is-active", candidate === visualLens);
+      });
+      reloadSuggestions("visual_similarity");
     });
     state.root.querySelectorAll("[data-camera]").forEach((button) => {
       button.addEventListener("click", () => {
@@ -844,8 +1016,38 @@
           body: JSON.stringify({ item_id: itemId, decision: "descartar", decision_scope: "record", reason_code: "no_es_obra", target_id: itemId, session_id: state.sessionId, pass_size: itemIds.length }),
         }).then(async (response) => ({
           httpOk: response.ok, payload: await response.json(),
+        })).catch(() => ({
+          httpOk: false, payload: { ok: false, error: "respuesta_no_confirmada" },
         }))));
-        if (responses.some((response) => !response.httpOk || !response.payload.ok)) throw new Error("uno de los descartes no se guardó");
+        const failed = responses.filter((response) => !response.httpOk || !response.payload.ok);
+        if (failed.length) {
+          const saved = responses.length - failed.length;
+          const savedIds = itemIds.filter((_, index) => {
+            const response = responses[index];
+            return response.httpOk && response.payload.ok;
+          });
+          savedIds.forEach((itemId) => {
+            const record = byId(itemId);
+            if (record) record.selection = "descartar";
+            const item = state.items.find((candidate) => candidate.id === itemId);
+            if (item) item.selection = "descartar";
+          });
+          state.scene.records = (state.scene.records || []).filter((record) => !savedIds.includes(record.source_id));
+          state.scene.relations = (state.scene.relations || []).filter((relation) => !savedIds.includes(relation.source_id) && !savedIds.includes(relation.target_id));
+          state.orderSelectedIds = new Set(
+            [...state.orderSelectedIds].filter((itemId) => !savedIds.includes(itemId)),
+          );
+          if (savedIds.includes(state.activeId)) {
+            const pendingId = itemIds.find((itemId) => !savedIds.includes(itemId));
+            state.activeId = pendingId || state.activeId;
+            state.selectedId = pendingId || state.selectedId;
+          }
+          if (savedIds.length) {
+            invalidateSceneCache();
+            rebuildScene();
+          }
+          throw new Error(`descarte parcial: ${saved} guardados, ${failed.length} pendientes`);
+        }
         itemIds.forEach((itemId) => {
           const record = byId(itemId);
           if (record) record.selection = "descartar";
@@ -861,27 +1063,38 @@
         }).then(async (result) => ({
           httpOk: result.ok, payload: await result.json(),
         }));
-        if (!response.httpOk || !response.payload.ok) throw new Error(response.payload.error || "clasificación por lote no guardada");
-        itemIds.forEach((itemId) => {
+        const batchResults = Array.isArray(response.payload.results)
+          ? response.payload.results : [];
+        const savedIds = itemIds.filter((_, index) => Boolean(batchResults[index]?.ok));
+        savedIds.forEach((itemId) => {
           const record = byId(itemId);
           if (record) record.classification = { ...(record.classification || {}), triage: decision };
           const item = state.items.find((candidate) => candidate.id === itemId);
           if (item) item.classification = { ...(item.classification || {}), triage: decision };
         });
+        if (!response.httpOk || !response.payload.ok) {
+          if (savedIds.length) {
+            state.orderSelectedIds = new Set(
+              [...state.orderSelectedIds].filter((itemId) => !savedIds.includes(itemId)),
+            );
+            invalidateSceneCache();
+            rebuildScene();
+          }
+          const failed = itemIds.length - savedIds.length;
+          throw new Error(savedIds.length
+            ? `clasificación parcial: ${savedIds.length} guardadas, ${failed} pendientes`
+            : (response.payload.error || "clasificación por lote no guardada"));
+        }
+        // Classification changes alter the scene projection too. Do not let a
+        // cached copilot scene survive a successful batch decision.
+        invalidateSceneCache();
       }
       const advanceSeed = state.humanSeedActive
         && itemIds.length === 1
         && itemIds[0] === state.humanSeedItemId;
       state.orderSelectedIds.clear();
       if (advanceSeed) {
-        if (decision === "discard") {
-          await loadHumanSeed({ refresh: false, excludeId: itemIds[0] });
-        } else {
-          state.orderSelectedIds.add(itemIds[0]);
-          syncEditorMode();
-          rebuildScene();
-          setStatus(`clasificación ${decision} guardada; no creó relación. Completa la ficha y pulsa siguiente.`);
-        }
+        await loadHumanSeed({ refresh: false, excludeId: itemIds[0] });
       } else if (decision === "discard" && itemIds.includes(state.activeId)) {
         await advanceAfterOrderDecision(itemIds);
       } else {
@@ -1037,9 +1250,36 @@
     });
   }
 
+  function scheduleVisualFrame(key, job) {
+    state.visualFrame.jobs.set(key, job);
+    if (state.visualFrame.queued) return;
+    state.visualFrame.queued = true;
+    requestAnimationFrame((timestamp) => {
+      const frame = state.visualFrame;
+      const previous = frame.lastTimestamp;
+      if (previous) {
+        const delta = Math.max(1, timestamp - previous);
+        frame.samples.push(delta);
+        if (frame.samples.length > 12) frame.samples.shift();
+        const average = frame.samples.reduce((sum, value) => sum + value, 0) / frame.samples.length;
+        frame.fps = Math.max(1, Math.min(120, 1000 / average));
+        frame.quality = average > 32 ? "reduced" : "full";
+      }
+      frame.lastTimestamp = timestamp;
+      const jobs = [...frame.jobs.values()];
+      frame.jobs.clear();
+      frame.queued = false;
+      if (state.root) {
+        state.root.dataset.renderQuality = frame.quality;
+        state.root.dataset.renderFps = String(Math.round(frame.fps));
+      }
+      jobs.forEach((work) => work());
+      renderFieldReadout();
+    });
+  }
+
   function applyCamera() {
-    cancelAnimationFrame(state.cameraFrame);
-    state.cameraFrame = requestAnimationFrame(() => {
+    scheduleVisualFrame("camera", () => {
       if (state.world) {
         state.world.style.transform = `translate3d(${state.camera.x}px,${state.camera.y}px,0) scale(${state.camera.zoom})`;
       }
@@ -1049,6 +1289,7 @@
       if (!state.popover.hidden) placePopover();
       positionOrderHud();
     });
+    queueFlowCanvas(true);
   }
 
   function beginCameraMove(event) {
@@ -1084,11 +1325,22 @@
       if (!node || !state.stage) return;
       const stageRect = state.stage.getBoundingClientRect();
       const nodeRect = node.getBoundingClientRect();
-      state.camera.x += (stageRect.left + stageRect.width / 2)
+      const targetX = state.camera.x + (stageRect.left + stageRect.width / 2)
         - (nodeRect.left + nodeRect.width / 2);
-      state.camera.y += (stageRect.top + stageRect.height / 2)
+      const targetY = state.camera.y + (stageRect.top + stageRect.height / 2)
         - (nodeRect.top + nodeRect.height / 2);
-      applyCamera();
+      const startX = state.camera.x;
+      const startY = state.camera.y;
+      cancelAnimationFrame(state.cameraTween);
+      const started = performance.now();
+      const animate = (now) => {
+        const progress = Math.min(1, (now - started) / 220);
+        state.camera.x = asciiMotionInterpolate(startX, targetX, progress, "ease-out");
+        state.camera.y = asciiMotionInterpolate(startY, targetY, progress, "ease-out");
+        applyCamera();
+        if (progress < 1) state.cameraTween = requestAnimationFrame(animate);
+      };
+      state.cameraTween = requestAnimationFrame(animate);
     });
   }
 
@@ -1136,7 +1388,7 @@
   }
 
   function placePopover() {
-    requestAnimationFrame(positionForPopover);
+    scheduleVisualFrame("popover", positionForPopover);
   }
 
   function openPopover(content) {
@@ -1154,6 +1406,68 @@
     return relationEvidenceEntries(relation).slice(0, 3).map((evidence) => (
       `<span>${escMesa(evidence.label)}: ${escMesa(evidence.value)}</span>`
     )).join("") || "<span>sin evidencia estructurada</span>";
+  }
+
+  function xioEvidenceMarkup() {
+    const xio = state.scene?.xio_evidence;
+    if (!xio?.available) return "";
+    const atoms = (xio.evidence || []).filter((row) => row.status !== "unknown").slice(0, 5);
+    const unknowns = (xio.evidence || []).filter((row) => row.status === "unknown").map((row) => row.field);
+    const segments = (xio.segments || []).slice(0, 3);
+    const atomMarkup = atoms.map((row) => `<span><b>${escMesa(row.field)}</b> ${escMesa(row.value)} · ${escMesa(row.status)}</span>`).join("");
+    const segmentMarkup = segments.map((row) => `<span><b>${escMesa(row.timecode || "sin TC")}</b> ${escMesa(row.title || "segmento")}</span>`).join("");
+    const unknownMarkup = unknowns.length ? `<small>sin declarar: ${escMesa([...new Set(unknowns)].join(", "))}</small>` : "";
+    return `<details class="mesa-xio-evidence"><summary>XIO · evidencia separada</summary><p>Fuente disponible; no vinculada automáticamente a esta pieza.</p><div class="mesa-xio-atoms">${atomMarkup || "<span>sin átomos declarados</span>"}</div><div class="mesa-xio-segments">${segmentMarkup}</div>${unknownMarkup}<small>siguiente: ${escMesa(xio.next_action || "revisión humana")}</small></details>`;
+  }
+
+  function externalReviewMarkup(record) {
+    const candidates = externalForSource(record?.source_id);
+    if (!candidates.length) return "";
+    const cards = candidates.map((candidate) => {
+      const decision = String(candidate.human_decision || candidate.review_state || "pending").toLowerCase();
+      const grouping = candidate.grouping || {};
+      const groupingText = grouping.is_carousel
+        ? `carrusel agrupado · ${escMesa(grouping.member_count || grouping.member_ids?.length || "varios")} medios`
+        : candidate.record_kind === "story_record" ? "story · registro audiovisual" : "unidad de medio";
+      const actions = isPendingExternal(candidate)
+        ? `<div class="mesa-external-review-actions"><button type="button" data-pop-action="external-review" data-external-ledger-id="${escMesa(candidate.ledger_id)}" data-external-decision="accept">aceptar candidato</button><button type="button" data-pop-action="external-review" data-external-ledger-id="${escMesa(candidate.ledger_id)}" data-external-decision="revise">dejar en revisión</button><button type="button" data-pop-action="external-review" data-external-ledger-id="${escMesa(candidate.ledger_id)}" data-external-decision="reject">rechazar candidato</button></div>`
+        : `<small>decisión humana: ${escMesa(decision)} · historial conservado · no publicado</small>`;
+      return `<article class="mesa-external-review-card"><strong>${escMesa(candidate.provider || "proveedor desconocido")} · confianza ${escMesa(candidate.confidence ?? "sin dato")}</strong><div>${escMesa(candidate.hypothesis || candidate.candidate_relations?.visual_similarity?.[0] || "hipótesis visual sin texto")}</div><small>${escMesa(groupingText)} · ${escMesa(candidate.promotion || "not_promoted")} · no es hecho canónico</small>${actions}</article>`;
+    }).join("");
+    const note = candidates.some(isPendingExternal)
+      ? `<textarea data-external-note maxlength="1000" placeholder="nota opcional para la revisión humana…"></textarea>` : "";
+    return `<details class="mesa-external-review" open><summary>evidencia externa · ${candidates.length} hipótesis · fuente aislada</summary>${cards}${note}</details>`;
+  }
+
+  async function externalDecision(ledgerId, sourceId, decision, note = "") {
+    const busyKey = `external:${ledgerId}`;
+    if (state.feedbackBusy.has(busyKey)) return;
+    state.feedbackBusy.add(busyKey);
+    try {
+      const response = await fetch("/api/portfolio/external-candidates/review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ledger_id: ledgerId, source_id: sourceId, decision, note }),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      if (!data.ok) throw new Error(data.error || "decisión externa no guardada");
+      const candidate = state.externalCandidates.find((row) => row.ledger_id === ledgerId);
+      if (candidate) {
+        candidate.human_decision = decision;
+        candidate.review_state = decision === "revise" ? "pending" : decision;
+        candidate.human_note = note;
+      }
+      updateExternalQueueCount();
+      showRecordPopover();
+      setStatus(decision === "accept"
+        ? "hipótesis aceptada como evidencia candidata; no se publicó automáticamente."
+        : decision === "reject" ? "hipótesis rechazada; se conserva su historial." : "hipótesis queda en revisión.");
+    } catch (error) {
+      setStatus("no se guardó la decisión externa: " + error.message);
+    } finally {
+      state.feedbackBusy.delete(busyKey);
+    }
   }
 
   function showRecordPopover() {
@@ -1176,13 +1490,15 @@
     const pieceContext = `${groupNote}${workGroupNote}`;
     const identityMarkup = `<div class="mesa-popover-identity"><h3>${escMesa(record.source_id)}</h3><p class="mesa-popover-meta">${escMesa(record.date || "sin fecha")} · ${escMesa(record.content_type || "registro")}${escMesa(publicationSummary(record))}${escMesa(workGroupSummary(record))}</p></div>`;
     const descriptionMarkup = description ? `<p class="mesa-popover-description">${escMesa(description)}</p>` : "";
+    const xioMarkup = active ? xioEvidenceMarkup() : "";
+    const externalMarkup = externalReviewMarkup(record);
     const seedNextAction = state.humanSeedActive && active
       ? actionButton("next", "siguiente") : "";
     const decisionMarkup = `${classificationMarkup(record)}<div class="mesa-popover-actions" role="toolbar" aria-label="acciones de pieza">${actionButton("center", "centro", active ? "disabled" : "")}${actionButton("relate", "relacionar", active && !usefulSuggestions.length ? "disabled" : "")}${actionButton("open", "abrir")}${actionButton("discard", "retirar")}${seedNextAction}</div>${directRelation ? `<div class="mesa-popover-note">Esta pieza tiene una hipótesis con el centro. ` + `<button type="button" data-pop-action="relation" data-relation-id="${escMesa(directRelation.relation_id)}">ver sugerencia</button></div>` : ""}`;
-    const suggestionMarkup = active && usefulSuggestions.length
+    const suggestionsDrawerMarkup = active && usefulSuggestions.length
       ? `<details class="mesa-suggestion-drawer" open><summary>sugerencias · ${usefulSuggestions.length}</summary><div class="mesa-suggestion-chips">${relationChoices}</div></details>`
       : "";
-    openPopover(`<div class="mesa-popover-head"><span>${active ? "nodo activo" : "nodo seleccionado"}</span><button type="button" class="mesa-popover-close" data-pop-action="close" aria-label="cerrar">×</button></div><div class="mesa-popover-flow">${identityMarkup}${pieceContext}${descriptionMarkup}${decisionMarkup}${suggestionMarkup}</div>`);
+    openPopover(`<div class="mesa-popover-head"><span>${active ? "nodo activo" : "nodo seleccionado"}</span><button type="button" class="mesa-popover-close" data-pop-action="close" aria-label="cerrar">×</button></div><div class="mesa-popover-flow">${identityMarkup}${pieceContext}${descriptionMarkup}${xioMarkup}${externalMarkup}${decisionMarkup}${suggestionsDrawerMarkup}</div>`);
   }
 
   function selectRelation(relationId) {
@@ -1385,7 +1701,12 @@
       });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
-      if (!data.ok) throw new Error(data.error || "decisión no guardada");
+      if (!data.ok) {
+        const partial = data.selection_saved && !data.triage_saved
+          ? " selección guardada; triage pendiente."
+          : "";
+        throw new Error((data.error || "decisión no guardada") + partial);
+      }
       record.selection = "descartar";
       const item = state.items.find((candidate) => candidate.id === record.source_id);
       if (item) item.selection = "descartar";
@@ -1418,11 +1739,18 @@
           source_id: relation.source_id, target_id: relation.target_id,
           action: decision, facet: relation.feedbackFacet || relation.feedback_facet || (relation.channels || ["relation"])[0],
           relation: relation.relation_type, session_id: state.sessionId, note,
+          evidence_kind: relation.visual?.evidence_kind || "",
+          visual: relation.visual || {},
         }),
       });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
-      if (!data.ok) throw new Error(data.error || "feedback no guardado");
+      if (!data.ok) {
+        const partial = data.feedback_saved && !data.connection_saved
+          ? " feedback guardado; conexión pendiente."
+          : "";
+        throw new Error((data.error || "feedback no guardado") + partial);
+      }
       relation.status = decision === "accept" ? "accepted" : "rejected";
       relation.feedback = decision;
       relation.note = note;
@@ -1456,6 +1784,13 @@
     }
     if (action === "classify-context") return saveClassificationContext();
     if (action === "next") return advanceSeedFromPopover();
+    if (action === "external-review") {
+      const externalNote = state.popover.querySelector("[data-external-note]")?.value?.trim() || "";
+      state.popover.querySelectorAll('[data-pop-action="external-review"]').forEach((candidate) => {
+        candidate.disabled = true;
+      });
+      return externalDecision(button.dataset.externalLedgerId, record?.source_id, button.dataset.externalDecision, externalNote);
+    }
     if (action === "facet") {
       state.popover.querySelectorAll("[data-pop-action=facet]").forEach((candidate) => {
         candidate.classList.toggle("is-active", candidate === button);
@@ -1474,7 +1809,7 @@
         return;
       }
       const relation = action === "relation" ? { relation_id: button.dataset.relationId } : relationForTarget(record?.source_id);
-      return relation?.relation_id ? showRelationPopover(relation.relation_id) : setStatus("Selecciona una sugerencia visible para relacionarla.");
+      return relation?.relation_id ? selectRelation(relation.relation_id) : setStatus("Selecciona una sugerencia visible para relacionarla.");
     }
     if (action === "center") return centerRecord(button.dataset.targetId || record?.source_id);
     if (action === "open") return openRecord(button.dataset.targetId ? byId(button.dataset.targetId) : record);
@@ -1585,6 +1920,7 @@
       const inbox = await inboxResponse.json();
       if (!inbox || inbox.ok === false) throw new Error(inbox?.error || "inbox no disponible");
       state.items = inbox.items || [];
+      await loadExternalQueue();
       const first = state.items.find((item) => item.asset_available && item.selection !== "descartar");
       if (!first) throw new Error("inbox vacío");
       state.activeId = first.id;

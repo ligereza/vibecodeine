@@ -165,6 +165,12 @@ def test_hub_order_scene_uses_stable_map_without_relation_engine(monkeypatch):
         "items": [{"item_id": "source", "x": 0.2, "y": 0.3},
                   {"item_id": "target", "x": 0.3, "y": 0.35}],
     })
+    monkeypatch.setattr(hub, "_portfolio_visual_surface", lambda item_id: {
+        "available": True, "relations": [{"item_id": "target",
+                                             "evidence_kind": "visual_similarity",
+                                             "score": 0.81, "margin": 0.12}],
+        "profile": {"available": True},
+    })
 
     scene = hub._portfolio_scene("source", limit=10, surface="order")
 
@@ -173,6 +179,8 @@ def test_hub_order_scene_uses_stable_map_without_relation_engine(monkeypatch):
     assert scene["relations"][0]["relation_type"] == "map_neighbor"
     assert scene["relations"][0]["space"] == "topology"
     assert scene["relations"][0]["evidence"] == []
+    assert scene["visual_similarity"]["available"] is True
+    assert scene["visual_similarity"]["relations"][0]["evidence_kind"] == "visual_similarity"
 
 
 def test_portfolio_file_stays_inside_iskvw_root(tmp_path, monkeypatch):
@@ -215,6 +223,11 @@ def test_portfolio_selection_is_idempotent_for_repeated_same_action(tmp_path, mo
     assert first["ok"] is True
     assert second["duplicate"] is True
     assert len(selections.read_text(encoding="utf-8").splitlines()) == 1
+    classifications_rows = [json.loads(line) for line in classifications.read_text(
+        encoding="utf-8").splitlines()]
+    assert len(classifications_rows) == 1
+    assert classifications_rows[0]["fields"]["triage"] == "discard"
+    assert classifications_rows[0]["evidence"]["kind"] == "human_selection"
 
 
 def test_portfolio_classification_is_idempotent_but_preserves_new_axes(tmp_path, monkeypatch):
@@ -746,6 +759,75 @@ def test_hub_external_candidates_are_review_only(monkeypatch):
     assert surface["public_promotion"] is False
 
 
+def test_hub_surfaces_isolated_provider_hypothesis_in_existing_review_queue(monkeypatch):
+    class FakeLedger:
+        @staticmethod
+        def read_items(_path, limit=None):
+            return []
+
+    monkeypatch.setattr(hub, "_ledger", FakeLedger())
+    monkeypatch.setattr(hub, "_portfolio_isolated_external_rows", lambda: [{
+        "schema": "mak-external-evidence-v1",
+        "work_id": "instagram:stories.json:1",
+        "source_id": "story-a",
+        "provider": "watsonx",
+        "confidence": 0.8,
+        "hypothesis": "registro audiovisual con texto",
+        "evidence": {"source_ref": "instagram://stories.json#1:0",
+                     "record_kind": "story_record",
+                     "grouping": {"member_count": 1}},
+    }])
+    monkeypatch.setattr(hub, "_portfolio_item", lambda item_id: {
+        "id": item_id, "tipo_contenido": "story", "asset_available": True,
+        "asset_path": "/portfolio-media/stories/a.jpg",
+    })
+
+    surface = hub._portfolio_external_candidates("story-a")
+
+    assert surface["total"] == 1
+    item = surface["items"][0]
+    assert item["provider"] == "watsonx"
+    assert item["hypothesis"] == "registro audiovisual con texto"
+    assert item["record_kind"] == "story_record"
+    assert item["promotion"] == "not_promoted"
+    assert item["review_state"] == "pending"
+
+
+def test_hub_records_isolated_provider_review_without_promoting_candidate(monkeypatch):
+    appended = []
+
+    class FakeLedger:
+        @staticmethod
+        def read_items(_path, limit=None):
+            return []
+
+        @staticmethod
+        def append_unique(row, path=None, source=None):
+            appended.append(row)
+            return True, [], row
+
+    monkeypatch.setattr(hub, "_ledger", FakeLedger())
+    monkeypatch.setattr(hub, "_portfolio_isolated_external_rows", lambda: [{
+        "schema": "mak-external-evidence-v1",
+        "work_id": "instagram:posts.json:2",
+        "source_id": "post-a",
+        "provider": "aws",
+        "hypothesis": "formas abstractas",
+        "evidence": {"source_ref": "instagram://posts.json#2:0"},
+    }])
+
+    result = hub._portfolio_external_candidate_review({
+        "ledger_id": "instagram-external:instagram:posts.json:2",
+        "source_id": "post-a",
+        "decision": "revise",
+        "note": "requiere contexto humano",
+    })
+
+    assert result["ok"] is True
+    assert appended[0]["metadata"]["external_candidate_review"]["decision"] == "revise"
+    assert appended[0]["metadata"]["external_candidate_review"]["candidate_id"].startswith("instagram-external:")
+
+
 def test_hub_external_candidates_deduplicate_same_source_rows(monkeypatch):
     class FakeLedger:
         @staticmethod
@@ -1043,6 +1125,41 @@ def test_hub_external_candidate_human_review_is_append_only(monkeypatch):
     assert appended[0][0]["work"]["owner"] == "human"
 
 
+def test_hub_external_candidate_review_retry_is_idempotent(monkeypatch):
+    candidate_row = {
+        "id": "portfolio:story-retry:external",
+        "domain": "portfolio",
+        "work": {"identity": {"source_id": "story-retry"}},
+        "metadata": {"portfolio_candidate": {
+            "entity_id": "story-retry",
+            "triage": {"provider": "aws", "verdict": "accept"},
+        }},
+    }
+    appended = []
+
+    class FakeLedger:
+        @staticmethod
+        def read_items(_path, limit=None):
+            return [candidate_row] + [row for row, _source in appended]
+
+        @staticmethod
+        def append_unique(item, path=None, source=None):
+            appended.append((item, source))
+            return True, [], {"id": item["id"]}
+
+    monkeypatch.setattr(hub, "_ledger", FakeLedger())
+    payload = {"ledger_id": "portfolio:story-retry:external",
+               "decision": "revise", "note": "misma evidencia",
+               "relation": "visual_similarity"}
+    first = hub._portfolio_external_candidate_review(payload)
+    second = hub._portfolio_external_candidate_review(payload)
+
+    assert first["ok"] is True
+    assert second == {"ok": True, "review": first["review"],
+                      "ledger_id": first["ledger_id"], "duplicate": True}
+    assert len(appended) == 1
+
+
 def test_hub_external_candidate_review_disambiguates_duplicate_ledger_ids(
         monkeypatch):
     candidate_rows = []
@@ -1255,7 +1372,9 @@ def test_hub_selection_persists_live_pass_metadata(monkeypatch, tmp_path):
 
 def test_hub_discard_records_non_work_reason_without_deleting_media(monkeypatch, tmp_path):
     selections = tmp_path / "selections.jsonl"
+    classifications = tmp_path / "classifications.jsonl"
     monkeypatch.setattr(hub, "PORTFOLIO_SELECTIONS", str(selections))
+    monkeypatch.setattr(hub, "PORTFOLIO_CLASSIFICATIONS", str(classifications))
     monkeypatch.setattr(hub, "_portfolio_item", lambda item_id: {
         "id": item_id, "tipo_contenido": "story",
         "asset_path": "/portfolio-media/stories/a.jpg",
@@ -1274,6 +1393,26 @@ def test_hub_discard_records_non_work_reason_without_deleting_media(monkeypatch,
     assert row["decision_scope"] == "record"
     assert row["reason_code"] == "no_es_obra"
     assert row["target_id"] == "story-a"
+    classification = json.loads(classifications.read_text(encoding="utf-8"))
+    assert classification["fields"] == {"triage": "discard"}
+
+
+def test_hub_discard_surfaces_partial_selection_when_triage_write_fails(monkeypatch, tmp_path):
+    selections = tmp_path / "selections.jsonl"
+    monkeypatch.setattr(hub, "PORTFOLIO_SELECTIONS", str(selections))
+    monkeypatch.setattr(hub, "_portfolio_item", lambda item_id: {"id": item_id})
+    monkeypatch.setattr(hub, "_portfolio_classify", lambda _body: {
+        "ok": False, "error": "clasificacion_no_disponible"})
+    monkeypatch.setattr(hub, "_ledger", None)
+
+    result = hub._portfolio_select(
+        "story-a", "descartar", decision_scope="record",
+        reason_code="no_es_obra", target_id="story-a")
+
+    assert result["ok"] is False
+    assert result["selection_saved"] is True
+    assert result["triage_saved"] is False
+    assert len(selections.read_text(encoding="utf-8").splitlines()) == 1
 
 
 def test_hub_batch_ordering_persists_triage_without_creating_relations(monkeypatch, tmp_path):
@@ -1294,7 +1433,25 @@ def test_hub_batch_ordering_persists_triage_without_creating_relations(monkeypat
     assert result["ok"] is True
     assert result["schema"] == "faro-portfolio-batch-classification-v1"
     assert result["count"] == 2
+    assert result["saved"] == 2
+    assert result["partial"] is False
     assert {row["fields"]["triage"] for row in rows} == {"record"}
+
+
+def test_hub_batch_ordering_reports_partial_persistence(monkeypatch):
+    monkeypatch.setattr(hub, "_portfolio_item", lambda item_id: {"id": item_id})
+    monkeypatch.setattr(hub, "_portfolio_classify", lambda body: {
+        "ok": body["item_id"] == "obra-a",
+    })
+
+    result = hub._portfolio_classify_batch({
+        "item_ids": ["obra-a", "obra-b"],
+        "fields": {"triage": "record"},
+    })
+
+    assert result["ok"] is False
+    assert result["saved"] == 1
+    assert result["partial"] is True
 
 
 def test_relation_feedback_persists_human_note(monkeypatch, tmp_path):
@@ -1321,6 +1478,86 @@ def test_relation_feedback_persists_human_note(monkeypatch, tmp_path):
     })
     assert duplicate["duplicate"] is True
     assert len(feedback_path.read_text(encoding="utf-8").splitlines()) == 1
+
+
+def test_relation_feedback_surfaces_partial_connection_failure(monkeypatch, tmp_path):
+    feedback_path = tmp_path / "feedback.jsonl"
+    monkeypatch.setattr(hub, "PORTFOLIO_FEEDBACK", str(feedback_path))
+    monkeypatch.setattr(hub, "_portfolio_item", lambda item_id: {"id": item_id})
+    monkeypatch.setattr(hub, "_portfolio_connect", lambda _body: {
+        "ok": False, "error": "conexion_no_disponible"})
+    monkeypatch.setattr(hub, "_ledger", None)
+
+    result = hub._portfolio_feedback_record({
+        "source_id": "obra-a", "target_id": "obra-b", "action": "accept",
+        "facet": "date", "relation": "same_event",
+    })
+
+    assert result["ok"] is False
+    assert result["feedback_saved"] is True
+    assert result["connection_saved"] is False
+    assert len(feedback_path.read_text(encoding="utf-8").splitlines()) == 1
+
+
+def test_board_add_does_not_hide_feedback_failure(monkeypatch, tmp_path):
+    boards_path = tmp_path / "boards.json"
+    boards_path.write_text(json.dumps({"schema": "test", "boards": [{
+        "id": "board-a", "name": "A", "item_ids": ["a"],
+        "facet": "general",
+    }]}), encoding="utf-8")
+    monkeypatch.setattr(hub, "PORTFOLIO_BOARDS", str(boards_path))
+    monkeypatch.setattr(hub, "_portfolio_item", lambda item_id: {"id": item_id})
+    monkeypatch.setattr(hub, "_portfolio_feedback_record", lambda _body: {
+        "ok": False, "error": "feedback_fallido"})
+
+    result = hub._portfolio_board_action({
+        "action": "add", "board_id": "board-a", "item_ids": ["b"],
+    })
+
+    assert result["ok"] is False
+    assert result["board_saved"] is False
+    saved = json.loads(boards_path.read_text(encoding="utf-8"))
+    assert saved["boards"][0]["item_ids"] == ["a"]
+
+
+def test_board_add_rejects_unknown_items(monkeypatch, tmp_path):
+    boards_path = tmp_path / "boards.json"
+    boards_path.write_text(json.dumps({"schema": "test", "boards": [{
+        "id": "board-a", "name": "A", "item_ids": [],
+    }]}), encoding="utf-8")
+    monkeypatch.setattr(hub, "PORTFOLIO_BOARDS", str(boards_path))
+    monkeypatch.setattr(hub, "_portfolio_item", lambda item_id: {
+        "id": item_id} if item_id == "known" else None)
+
+    result = hub._portfolio_board_action({
+        "action": "add", "board_id": "board-a", "item_ids": ["unknown"],
+    })
+
+    assert result == {"ok": False, "error": "items_invalidos",
+                      "item_ids": ["unknown"]}
+
+
+def test_visual_relation_feedback_keeps_model_score_and_evidence_kind(monkeypatch, tmp_path):
+    feedback_path = tmp_path / "feedback.jsonl"
+    monkeypatch.setattr(hub, "PORTFOLIO_FEEDBACK", str(feedback_path))
+    monkeypatch.setattr(hub, "_portfolio_item", lambda item_id: {"id": item_id})
+    monkeypatch.setattr(hub, "_ledger", None)
+
+    result = hub._portfolio_feedback_record({
+        "source_id": "source", "target_id": "target", "action": "reject",
+        "facet": "visual_similarity", "relation": "visual_similarity",
+        "visual": {"score": .6123, "margin": .031, "model": "MobileCLIP-S0",
+                    "model_version": "mobileclip_s0.pt"},
+    })
+
+    row = json.loads(feedback_path.read_text(encoding="utf-8"))
+    assert result["ok"] is True
+    assert row["evidence_kind"] == "visual_similarity"
+    assert row["visual"] == {"score": .6123, "margin": .031,
+                               "model": "MobileCLIP-S0",
+                               "model_version": "mobileclip_s0.pt",
+                               "evidence_kind": "visual_similarity"}
+    assert row["work"]["model"] == "MobileCLIP-S0"
 
 
 def test_connection_is_idempotent(monkeypatch, tmp_path):

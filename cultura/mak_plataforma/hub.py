@@ -53,6 +53,14 @@ try:
     import revision_episodios as _episode_revision  # noqa: E402
 except Exception:  # noqa: BLE001 - episode review is optional
     _episode_revision = None
+try:
+    import visual_index as _visual_index  # noqa: E402
+except Exception:  # noqa: BLE001 - visual layer is an optional projection
+    _visual_index = None
+try:
+    import xio_evidence as _xio_evidence  # noqa: E402
+except Exception:  # noqa: BLE001 - XIO evidence remains optional
+    _xio_evidence = None
 
 PORT = int(os.environ.get("HUB_PORT", "8900"))
 HOME = os.path.expanduser("~")
@@ -90,12 +98,18 @@ PORTFOLIO_FEEDBACK = os.path.join(
     HOME, "plataforma/director_runs/portfolio-editor-20260808/copilot_feedback.jsonl")
 PORTFOLIO_EXTERNAL = os.path.join(
     HOME, "plataforma/director_runs/portfolio-editor-20260808/copilot_external.jsonl")
+PORTFOLIO_EXTERNAL_REVIEW = os.path.join(
+    HOME, "plataforma/derived/instagram-external/round-20260810.jsonl")
 PORTFOLIO_VISION = os.path.join(
     HOME, "plataforma/director_runs/portfolio-editor-20260808/vision_features.jsonl")
 PORTFOLIO_TRIANGULATION = os.path.join(
     HOME, "plataforma/director_runs/instagram-triangulacion-20260807/faro-triangulation-watsonx.normalized.json")
 PORTFOLIO_TRIANGULATION_REVIEW = os.path.join(
     HOME, "plataforma/director_runs/instagram-triangulacion-20260807/human_resolutions.jsonl")
+PORTFOLIO_VISUAL_INDEX_ROOT = os.path.abspath(os.environ.get(
+    "MAK_VISUAL_INDEX_ROOT", os.path.join(HOME, "plataforma/derived/visual-index")))
+PORTFOLIO_XIO_SHOW_ROOT = os.path.abspath(os.environ.get(
+    "MAK_XIO_SHOW_ROOT", os.path.join(HOME, "flujo", "xio", "show_kit")))
 LEGACY_RESCUE_REVIEW = os.path.join(
     HOME, "plataforma/director_runs/faro-report-action-queue-20260808/RESCUE_ADJUDICATED.json")
 LEGACY_REPORT_RUNS = os.path.join(HOME, "plataforma/director_runs")
@@ -1125,7 +1139,23 @@ def _portfolio_select(item_id, decision, board_id="", session_id="", pass_size=0
             and previous.get("reason_code", "") == reason_code
             and previous.get("target_id", "") == target_id
             and previous.get("note", "") == note):
-        return {"ok": True, "row": previous, "duplicate": True}
+        result = {"ok": True, "row": previous, "duplicate": True}
+        if (decision == "descartar" and decision_scope == "record"
+                and reason_code == "no_es_obra"):
+            triage = _portfolio_classify({
+                "item_id": item["id"],
+                "fields": {"triage": "discard"},
+                "source": {"kind": "human_selection",
+                           "decision": decision,
+                           "reason_code": reason_code},
+            })
+            result["triage"] = triage
+            result["triage_saved"] = bool(triage.get("ok"))
+            if not triage.get("ok"):
+                return {"ok": False, "error": "triage_rechazo",
+                        "selection": previous, "selection_saved": True,
+                        "triage_saved": False, "details": triage}
+        return result
     row = {"item_id": item["id"], "decision": decision,
            "board_id": str(board_id or "")[:100],
            "session_id": session_id, "pass_size": pass_size,
@@ -1169,7 +1199,24 @@ def _portfolio_select(item_id, decision, board_id="", session_id="", pass_size=0
             return {"ok": False, "error": "ledger_rechazo", "details": ledger_errors}
     with open(PORTFOLIO_SELECTIONS, "a", encoding="utf-8") as fh:
         fh.write(json.dumps(row, ensure_ascii=False) + "\n")
-    return {"ok": True, "row": row}
+    result = {"ok": True, "row": row}
+    if (decision == "descartar" and decision_scope == "record"
+            and reason_code == "no_es_obra"):
+        triage = _portfolio_classify({
+            "item_id": item["id"],
+            "fields": {"triage": "discard"},
+            "source": {"kind": "human_selection",
+                       "decision": decision,
+                       "reason_code": reason_code},
+        })
+        result["triage"] = triage
+        result["selection_saved"] = True
+        result["triage_saved"] = bool(triage.get("ok"))
+        if not triage.get("ok"):
+            return {"ok": False, "error": "triage_rechazo",
+                    "selection": row, "selection_saved": True,
+                    "triage_saved": False, "details": triage}
+    return result
 
 
 def _portfolio_classify(body):
@@ -1220,6 +1267,8 @@ def _portfolio_classify(body):
                    "asset_path": item.get("asset_path", "")},
         "ts": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
     }
+    if isinstance(body.get("source"), dict):
+        row["evidence"] = dict(body["source"])
     os.makedirs(os.path.dirname(PORTFOLIO_CLASSIFICATIONS), exist_ok=True)
     with open(PORTFOLIO_CLASSIFICATIONS, "a", encoding="utf-8") as fh:
         fh.write(json.dumps(row, ensure_ascii=False) + "\n")
@@ -1245,10 +1294,13 @@ def _portfolio_classify_batch(body):
     results = []
     for item_id in item_ids:
         results.append(_portfolio_classify({"item_id": item_id, "fields": fields}))
+    saved = sum(1 for row in results if row.get("ok"))
     return {
-        "ok": all(row.get("ok") for row in results),
+        "ok": saved == len(results),
         "schema": "faro-portfolio-batch-classification-v1",
         "count": len(results),
+        "saved": saved,
+        "partial": 0 < saved < len(results),
         "results": results,
     }
 
@@ -1291,9 +1343,12 @@ def _portfolio_board_action(body):
     elif not board:
         return {"ok": False, "error": "tablero_no_encontrado"}
     elif action in ("add", "remove"):
-        ids = body.get("item_ids") or []
-        ids = list(dict.fromkeys(str(item_id) for item_id in ids
-                                 if _portfolio_item(item_id)))
+        raw_ids = list(dict.fromkeys(str(item_id).strip() for item_id in
+                                     (body.get("item_ids") or []) if str(item_id).strip()))
+        missing = [item_id for item_id in raw_ids if not _portfolio_item(item_id)]
+        if missing:
+            return {"ok": False, "error": "items_invalidos", "item_ids": missing}
+        ids = raw_ids
         current = list(dict.fromkeys(str(item_id) for item_id in
                                      (board.get("item_ids") or [])
                                      if _portfolio_item(item_id)))
@@ -1303,13 +1358,20 @@ def _portfolio_board_action(body):
             # Board composition is a real human signal. Record only new
             # pairings, scoped to this board; it never publishes anything.
             facet = str(board.get("facet") or "board").lower()
+            feedback_results = []
             for existing in current:
                 for added in additions:
-                    _portfolio_feedback_record({
+                    feedback = _portfolio_feedback_record({
                         "source_id": existing, "target_id": added,
                         "action": "accept", "facet": facet,
                         "relation": "same_board:%s" % board["id"],
                         "board_id": board["id"]})
+                    feedback_results.append(feedback)
+                    if not feedback.get("ok"):
+                        return {"ok": False, "error": "feedback_tablero_rechazado",
+                                "board": board, "board_saved": False,
+                                "feedback_results": feedback_results,
+                                "partial": any(row.get("ok") for row in feedback_results)}
         else:
             board["item_ids"] = [item_id for item_id in current if item_id not in ids]
     else:
@@ -1518,10 +1580,12 @@ def _portfolio_suggestions(item_id, board_id="", include_map=False,
     source = next((item for item in inbox_items
                    if item.get("id") == str(item_id)), source)
     feedback = _portfolio_feedback()
+    visual_surface = _portfolio_visual_surface(item_id)
     result, suppressed = copilot.build_suggestions(
         source, inbox_items, selections=_portfolio_selections(),
         feedback=feedback, context=context, limit=24,
-        focus_facet=focus_facet, shuffle=shuffle, shuffle_seed=shuffle_seed)
+        focus_facet=focus_facet, shuffle=shuffle, shuffle_seed=shuffle_seed,
+        visual_relations=visual_surface.get("relations", []))
     map_surface = {"schema": copilot.GTM_SCHEMA,
                    "engine": "not_requested", "fit": {},
                    "source_position": None}
@@ -1574,6 +1638,8 @@ def _portfolio_suggestions(item_id, board_id="", include_map=False,
             "learning": copilot.learning_profile(_portfolio_feedback()),
             "candidate_learning": copilot.review_profile(
                 _portfolio_external_review_rows()),
+            "visual_similarity": visual_surface,
+            "xio_evidence": _portfolio_xio_evidence(),
             "suggestion_mode": "shuffle" if shuffle else focus_facet or "copilot",
             "suppressed_redundant": suppressed, "suggestions": result}
 
@@ -1654,10 +1720,14 @@ def _portfolio_scene(item_id, limit=10, focus_facet="", shuffle=False,
     if surface == "order":
         map_surface = copilot.build_gtm_map(
             inbox_items, feedback=feedback_rows, stable_topology=True)
+        visual_surface = _portfolio_visual_surface(item_id)
         suggestion_surface = {
             "provider": "gtm_order_projection",
             "learning": {"ordering": map_surface.get("ordering", {})},
             "map": map_surface,
+            # The order surface is the active editor surface; keep the
+            # derived visual channel visible there without loading the model.
+            "visual_similarity": visual_surface,
             "suggestion_groups": _portfolio_order_groups(
                 source, inbox_items, map_surface, limit=limit),
         }
@@ -1693,6 +1763,10 @@ def _portfolio_scene(item_id, limit=10, focus_facet="", shuffle=False,
     map_surface = suggestion_surface.get("map") or {}
     scene["learning"] = dict(suggestion_surface.get("learning", {}))
     scene["learning"]["ordering"] = map_surface.get("ordering", {})
+    scene["visual_similarity"] = suggestion_surface.get(
+        "visual_similarity", {"available": False, "relations": []})
+    scene["xio_evidence"] = suggestion_surface.get(
+        "xio_evidence", _portfolio_xio_evidence())
     map_by_id = {
         str(row.get("item_id")): row
         for row in map_surface.get("items", [])
@@ -1735,6 +1809,18 @@ def _portfolio_external_review_rows():
                 prior.get("ts") or ""):
             latest[key] = review
     return list(latest.values())
+
+
+def _portfolio_isolated_external_rows():
+    """Read quarantined provider hypotheses without treating them as ledger facts."""
+    rows = []
+    for row in _portfolio_jsonl(PORTFOLIO_EXTERNAL_REVIEW):
+        if row.get("schema") != "mak-external-evidence-v1":
+            continue
+        if not row.get("work_id") or not row.get("source_id"):
+            continue
+        rows.append(row)
+    return rows
 
 
 def _portfolio_apply_human_context(items):
@@ -1841,6 +1927,69 @@ def _portfolio_external_candidates(item_id=""):
             if value not in evidence:
                 evidence.append(value)
         previous["evidence_basis"] = evidence
+    for external in _portfolio_isolated_external_rows():
+        source_id = str(external.get("source_id") or "").strip()
+        if requested and source_id != requested:
+            continue
+        source_item = _portfolio_item(source_id) or {}
+        if not source_item:
+            continue
+        evidence = external.get("evidence") or {}
+        candidate_id = "instagram-external:" + str(external.get("work_id"))
+        review = reviews.get((candidate_id, source_id), {})
+        human_decision = review.get("decision", "pending")
+        hypothesis = str(external.get("hypothesis") or "").strip()
+        evidence_basis = [
+            "provider:%s" % str(external.get("provider") or "unknown"),
+            "confidence:%s" % str(external.get("confidence") or 0),
+            "source:%s" % str(evidence.get("source_ref") or "instagram_export"),
+        ]
+        candidate_item = {
+            "ledger_id": candidate_id,
+            "source_id": source_id,
+            "provider": external.get("provider", "unknown"),
+            "verdict": "hypothesis",
+            "candidate_relations": {"visual_similarity": [hypothesis]} if hypothesis else {},
+            "evidence_basis": evidence_basis,
+            "decision": "revisar",
+            "next_action": "human_review",
+            "human_decision": human_decision,
+            "review_state": "pending" if human_decision in ("pending", "revise") else human_decision,
+            "context_fields": review.get("context_fields", {}),
+            "context_state": "structured" if review.get("context_fields") else "note_only",
+            "human_note": review.get("note", ""),
+            "reviewed_at": review.get("ts", ""),
+            "review_work_id": review.get("work_id", ""),
+            "review_traceability": review.get("traceability", "isolated_provider_evidence"),
+            "hypothesis": hypothesis,
+            "explanation": str(external.get("explanation") or "").strip(),
+            "confidence": external.get("confidence", 0),
+            "record_kind": evidence.get("record_kind", "media_candidate"),
+            "grouping": evidence.get("grouping", {}),
+            "promotion": "not_promoted",
+            "item": {
+                "tipo_contenido": source_item.get("tipo_contenido", ""),
+                "fecha": source_item.get("fecha", ""),
+                "publicacion_id": source_item.get("publicacion_id", ""),
+                "descripcion_original": source_item.get("descripcion_original", ""),
+                "asset_path": source_item.get("asset_path", ""),
+                "asset_available": bool(source_item.get("asset_available")),
+            },
+            "public_promotion": False,
+            "candidate_occurrences": 1,
+        }
+        previous = unique_items.get(source_id)
+        if previous is None:
+            unique_items[source_id] = candidate_item
+            continue
+        previous["candidate_occurrences"] = int(
+            previous.get("candidate_occurrences") or 1) + 1
+        for value in evidence_basis:
+            if value not in previous.setdefault("evidence_basis", []):
+                previous["evidence_basis"].append(value)
+        if hypothesis:
+            previous.setdefault("candidate_relations", {}).setdefault(
+                "visual_similarity", []).append(hypothesis)
     items = list(unique_items.values())
     return {
         "ok": True,
@@ -1930,25 +2079,48 @@ def _portfolio_external_candidate_review(body):
         return {"ok": False, "error": "decision_invalida"}
     requested_source_id = str(body.get("source_id") or "").strip()
     ledger_rows = _ledger.read_items(COMMON_LEDGER, limit=10000)
-    matching_sources = [row for row in ledger_rows
-                        if row.get("id") == ledger_id
-                        and row.get("domain") == "portfolio"
-                        and isinstance((row.get("metadata") or {}).get(
-                            "portfolio_candidate"), dict)]
-    if requested_source_id:
-        matching_sources = [row for row in matching_sources
-                            if str(((row.get("metadata") or {}).get(
-                                "portfolio_candidate") or {}).get(
+    source = None
+    candidate = None
+    if ledger_id.startswith("instagram-external:"):
+        external = next((row for row in _portfolio_isolated_external_rows()
+                         if "instagram-external:" + str(row.get("work_id")) == ledger_id), None)
+        source_id = requested_source_id or str((external or {}).get("source_id") or "").strip()
+        if not external or not source_id or str(external.get("source_id")) != source_id:
+            return {"ok": False, "error": "candidato_no_encontrado"}
+        candidate = {
+            "entity_id": source_id,
+            "triage": {
+                "provider": external.get("provider", "unknown"),
+                "verdict": "hypothesis",
+                "candidate_relations": {"visual_similarity": [external.get("hypothesis", "")]},
+                "evidence_basis": [
+                    "source:%s" % str((external.get("evidence") or {}).get("source_ref") or "instagram_export"),
+                    "confidence:%s" % str(external.get("confidence") or 0),
+                ],
+            },
+        }
+        source = {"work": {"work_id": external.get("work_id", "")},
+                  "metadata": {"portfolio_candidate": candidate}}
+    else:
+        matching_sources = [row for row in ledger_rows
+                            if row.get("id") == ledger_id
+                            and row.get("domain") == "portfolio"
+                            and isinstance((row.get("metadata") or {}).get(
+                                "portfolio_candidate"), dict)]
+        if requested_source_id:
+            matching_sources = [row for row in matching_sources
+                                if str(((row.get("metadata") or {}).get(
+                                    "portfolio_candidate") or {}).get(
                                     "entity_id") or "").strip()
-                            == requested_source_id]
-    elif len(matching_sources) > 1:
-        return {"ok": False, "error": "source_id_requerido",
-                "details": {"ledger_id": ledger_id,
-                             "candidate_count": len(matching_sources)}}
-    source = matching_sources[0] if matching_sources else None
-    if not source:
-        return {"ok": False, "error": "candidato_no_encontrado"}
-    candidate = source["metadata"]["portfolio_candidate"]
+                                == requested_source_id]
+        elif len(matching_sources) > 1:
+            return {"ok": False, "error": "source_id_requerido",
+                    "details": {"ledger_id": ledger_id,
+                                 "candidate_count": len(matching_sources)}}
+        source = matching_sources[0] if matching_sources else None
+        if not source:
+            return {"ok": False, "error": "candidato_no_encontrado"}
+        candidate = source["metadata"]["portfolio_candidate"]
     prior_context = {}
     for row in ledger_rows:
         prior = (row.get("metadata") or {}).get("external_candidate_review")
@@ -1959,6 +2131,23 @@ def _portfolio_external_candidate_review(body):
                      == requested_source_id)):
             prior_context = _normalize_human_context(prior.get("context_fields"))
     context_fields = _normalize_human_context(body.get("context_fields")) or prior_context
+    note = str(body.get("note") or "").strip()[:1000]
+    relation = str(body.get("relation") or "").strip()[:120]
+    # A transport retry of the same human decision must not create a second
+    # history row. Different decisions or notes remain append-only history.
+    for row in ledger_rows:
+        prior = (row.get("metadata") or {}).get("external_candidate_review")
+        if (isinstance(prior, dict)
+                and prior.get("candidate_id") == ledger_id
+                and str(prior.get("source_id") or "").strip()
+                == str(candidate.get("entity_id") or "").strip()
+                and prior.get("decision") == decision
+                and str(prior.get("note") or "") == note
+                and str(prior.get("relation") or "") == relation
+                and _normalize_human_context(prior.get("context_fields"))
+                == context_fields):
+            return {"ok": True, "review": dict(prior),
+                    "ledger_id": row.get("id", ""), "duplicate": True}
     ts = time.strftime("%Y-%m-%dT%H:%M:%S%z")
     next_action = "continue triangulation or add to board" if decision == "accept" \
         else "revisit candidate evidence" if decision == "revise" \
@@ -2000,8 +2189,8 @@ def _portfolio_external_candidate_review(body):
         "candidate_id": ledger_id,
         "source_id": candidate.get("entity_id", ""),
         "decision": decision,
-        "note": str(body.get("note") or "").strip()[:1000],
-        "relation": str(body.get("relation") or "").strip()[:120],
+        "note": note,
+        "relation": relation,
         "context_fields": context_fields,
         "context_state": "structured" if context_fields else "note_only",
         "work_id": review_work["work_id"],
@@ -2097,12 +2286,24 @@ def _portfolio_learning():
     ordering["atlas"] = atlas.get("atlas", {})
     external = _portfolio_jsonl(PORTFOLIO_EXTERNAL)
     vision = list(_portfolio_vision().values())
+    visual_surface = _portfolio_visual_surface()
+    visual_feedback = [row for row in feedback
+                       if str(row.get("facet") or "").lower() == "visual_similarity"
+                       or str(row.get("relation") or "") == "visual_similarity"]
     return {
         "ok": True,
         "schema": "faro-portfolio-learning-surface-v1",
         "profile": copilot.learning_profile(feedback),
         "ordering": ordering,
         "external_evidence": copilot.external_evidence_profile(external, vision),
+        "visual_similarity": {
+            **visual_surface.get("profile", {"available": False}),
+            "feedback_total": len(visual_feedback),
+            "feedback_accept": sum(1 for row in visual_feedback
+                                    if row.get("action") in ("accept", "correct")),
+            "feedback_reject": sum(1 for row in visual_feedback
+                                    if row.get("action") == "reject"),
+        },
         "candidate_reviews": copilot.review_profile(candidate_reviews),
         "selections": {
             "selected": sum(1 for row in selections.values()
@@ -2126,28 +2327,66 @@ def _portfolio_feedback_record(body):
     target = str(body.get("target_id", ""))
     if not _portfolio_item(source) or not _portfolio_item(target) or source == target:
         return {"ok": False, "error": "items_invalidos"}
+    facet = str(body.get("facet", "unknown")).lower()[:40]
+    relation = str(body.get("relation", "relacionada"))[:80]
+    raw_visual = body.get("visual") if isinstance(body.get("visual"), dict) else {}
+    visual = {}
+    if facet == "visual_similarity" or relation == "visual_similarity":
+        try:
+            score = float(raw_visual.get("score", body.get("visual_score", 0)))
+            margin = float(raw_visual.get("margin", body.get("visual_margin", 0)))
+        except (TypeError, ValueError):
+            score, margin = 0.0, 0.0
+        if math.isfinite(score) and math.isfinite(margin):
+            visual = {
+                "score": round(max(-1.0, min(1.0, score)), 6),
+                "margin": round(max(0.0, min(1.0, margin)), 6),
+                "model": str(raw_visual.get("model") or body.get(
+                    "visual_model", "MobileCLIP-S0"))[:100],
+                "model_version": str(raw_visual.get("model_version") or body.get(
+                    "visual_version", ""))[:120],
+                "evidence_kind": "visual_similarity",
+            }
     note = str(body.get("note") or body.get("comment") or "").strip()[:1000]
     existing = next((row for row in reversed(_portfolio_feedback())
                      if str(row.get("source_id")) == source
                      and str(row.get("target_id")) == target
                      and str(row.get("action")) == action
-                     and str(row.get("facet")) == str(body.get("facet", "unknown")).lower()[:40]
-                     and str(row.get("relation")) == str(body.get("relation", "relacionada"))[:80]
+                     and str(row.get("facet")) == facet
+                     and str(row.get("relation")) == relation
+                     and (row.get("visual") or {}) == visual
                      and str(row.get("note") or "") == note), None)
     if existing:
-        return {"ok": True, "feedback": existing, "duplicate": True}
+        result = {"ok": True, "feedback": existing, "duplicate": True}
+        if action in ("accept", "correct"):
+            connection = _portfolio_connect({
+                "source_id": source, "target_id": target,
+                "relation": relation,
+            })
+            result["connection"] = connection
+            result["connection_saved"] = bool(connection.get("ok"))
+            if not connection.get("ok"):
+                return {"ok": False, "error": "conexion_no_guardada",
+                        "feedback": existing, "feedback_saved": True,
+                        "connection_saved": False, "details": connection}
+        return result
     row = {"source_id": source, "target_id": target, "action": action,
-           "facet": str(body.get("facet", "unknown")).lower()[:40],
+           "facet": facet,
            "board_id": str(body.get("board_id", ""))[:100],
-           "relation": str(body.get("relation", "relacionada"))[:80],
+           "relation": relation,
            "note": note,
+           "evidence_kind": "visual_similarity" if visual else "",
+           "visual": visual,
            "work": {"schema": "mak-work-v1",
                      "work_id": "portfolio-relation:%s:%s" % (source, target),
                      "parent_task": "portfolio-curation",
                      "lane": "obra", "purpose": "human relation feedback",
                      "format": "relationship", "created_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
                      "provider": "human", "sources": [source, target],
-                     "status": "candidate_feedback"},
+                     "status": "candidate_feedback",
+                     "evidence_kind": "visual_similarity" if visual else "",
+                     "model": visual.get("model", ""),
+                     "model_version": visual.get("model_version", "")},
            "ts": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
     if _ledger is not None:
         action_name = "curate" if action in ("accept", "correct") else "reject"
@@ -2157,7 +2396,10 @@ def _portfolio_feedback_record(body):
                 source, target, action, row["ts"]),
             "domain": "iskvw", "type": "reject" if action == "reject" else "decision",
             "claim": "portfolio relation %s -> %s" % (source, target),
-            "evidence": [source, target, row["relation"]],
+            "evidence": [source, target, row["relation"]]
+            + (["visual_score:%s" % visual["score"],
+                "visual_margin:%s" % visual["margin"],
+                "visual_model:%s" % visual["model"]] if visual else []),
             "confidence": "high" if action in ("accept", "correct", "reject") else "medium",
             "action": action_name, "decision": decision,
             "purpose": "learn from human curation without promoting a fact",
@@ -2171,10 +2413,16 @@ def _portfolio_feedback_record(body):
     os.makedirs(os.path.dirname(PORTFOLIO_FEEDBACK), exist_ok=True)
     with open(PORTFOLIO_FEEDBACK, "a", encoding="utf-8") as fh:
         fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+    connection = {"ok": True, "skipped": True}
     if action in ("accept", "correct"):
-        _portfolio_connect({"source_id": source, "target_id": target,
-                            "relation": row["relation"]})
-    return {"ok": True, "feedback": row}
+        connection = _portfolio_connect({"source_id": source, "target_id": target,
+                                         "relation": row["relation"]})
+        if not connection.get("ok"):
+            return {"ok": False, "error": "conexion_no_guardada",
+                    "feedback": row, "feedback_saved": True,
+                    "connection_saved": False, "details": connection}
+    return {"ok": True, "feedback": row, "connection": connection,
+            "feedback_saved": True, "connection_saved": bool(connection.get("ok"))}
 
 
 def _portfolio_external_review(body):
@@ -2269,6 +2517,37 @@ def _portfolio_visual_asset(item):
         relative = "/portfolio-media/_contact_sheets/%s" % sheet_name
         return sheet_path, relative
     return None, ""
+
+
+def _portfolio_visual_surface(item_id="", limit=8):
+    """Read derived neighbors without loading torch or reserving the GPU."""
+    if _visual_index is None:
+        return {"available": False, "reason": "visual_adapter_unavailable",
+                "relations": [], "profile": {"available": False}}
+    try:
+        surface = _visual_index.read_surface(PORTFOLIO_VISUAL_INDEX_ROOT)
+        profile = _visual_index.surface_profile(surface)
+        relations = _visual_index.visual_relations(item_id, surface, limit=limit)
+        return {"available": bool(surface.get("available")),
+                "reason": surface.get("reason", ""), "relations": relations,
+                "profile": profile}
+    except Exception as exc:  # noqa: BLE001 - metadata copilot must survive it
+        return {"available": False, "reason": "visual_index_error:%s" % str(exc)[:120],
+                "relations": [], "profile": {"available": False}}
+
+
+def _portfolio_xio_evidence(limit=24):
+    """Expose bounded XIO show-kit evidence without linking it to media."""
+    if _xio_evidence is None:
+        return {"ok": True, "available": False, "schema": "faro-xio-evidence-v1",
+                "source": "xio/show_kit", "reason": "xio_adapter_unavailable",
+                "evidence": [], "segments": []}
+    try:
+        return _xio_evidence.load_show_evidence(PORTFOLIO_XIO_SHOW_ROOT, limit=limit)
+    except Exception as exc:  # noqa: BLE001 - portfolio must keep serving
+        return {"ok": True, "available": False, "schema": "faro-xio-evidence-v1",
+                "source": "xio/show_kit", "reason": "xio_evidence_error:%s" % str(exc)[:120],
+                "evidence": [], "segments": []}
 
 
 def _portfolio_vision_read(body):
@@ -2827,28 +3106,38 @@ def _md_html(md):
             out[-1] = out[-1][:-5] + " " + _inline_md(line.strip()) + "</li>"
             continue
         if line.startswith("### "):
-            cerrar(); out.append("<h3>" + _inline_md(line[4:]) + "</h3>")
+            cerrar()
+            out.append("<h3>" + _inline_md(line[4:]) + "</h3>")
         elif line.startswith("## "):
-            cerrar(); out.append("<h2>" + _inline_md(line[3:]) + "</h2>")
+            cerrar()
+            out.append("<h2>" + _inline_md(line[3:]) + "</h2>")
         elif line.startswith("# "):
-            cerrar(); out.append("<h1>" + _inline_md(line[2:]) + "</h1>")
+            cerrar()
+            out.append("<h1>" + _inline_md(line[2:]) + "</h1>")
         elif line.strip() == "---":
-            cerrar(); out.append("<hr>")
+            cerrar()
+            out.append("<hr>")
         elif line.startswith("> "):
-            cerrar(); out.append("<blockquote>" + _inline_md(line[2:]) + "</blockquote>")
+            cerrar()
+            out.append("<blockquote>" + _inline_md(line[2:]) + "</blockquote>")
         else:
             m_ol = re.match(r"^(\d+)\.\s+(.*)", line)
             m_ul = re.match(r"^[-*]\s+(.*)", line)
             if m_ol:
                 if in_list != "ol":
-                    cerrar(); out.append("<ol>"); in_list = "ol"
+                    cerrar()
+                    out.append("<ol>")
+                    in_list = "ol"
                 out.append("<li>" + _inline_md(m_ol.group(2)) + "</li>")
             elif m_ul:
                 if in_list != "ul":
-                    cerrar(); out.append("<ul>"); in_list = "ul"
+                    cerrar()
+                    out.append("<ul>")
+                    in_list = "ul"
                 out.append("<li>" + _inline_md(m_ul.group(1)) + "</li>")
             else:
-                cerrar(); out.append("<p>" + _inline_md(line) + "</p>")
+                cerrar()
+                out.append("<p>" + _inline_md(line) + "</p>")
     cerrar()
     return "\n".join(out)
 
@@ -2933,7 +3222,13 @@ class H(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(data)))
         self.send_header("Cache-Control", "no-cache")
         self.end_headers()
-        self.wfile.write(data)
+        try:
+            self.wfile.write(data)
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            # A browser/client may cancel a media or JSON request after the
+            # current scene changes. This is not a Hub failure and should not
+            # pollute the service log with a traceback.
+            return
 
     def _json(self, obj, code=200):
         self._send(json.dumps(obj, ensure_ascii=False),
@@ -3060,10 +3355,21 @@ class H(BaseHTTPRequestHandler):
             return self._json({"ok": True, "schema": "faro-portfolio-learning-manifest-v1",
                                "source": copilot.media_manifest(item),
                                "candidates": [copilot.media_manifest(x) for x in candidates if x]})
+        if p == "/api/portfolio/copilot/visual-index":
+            item_id = (urllib.parse.parse_qs(u.query).get("item_id") or [""])[0]
+            surface = _portfolio_visual_surface(item_id)
+            return self._json({"ok": True, "schema": "faro-portfolio-visual-index-surface-v1",
+                               "profile": surface.get("profile", {}),
+                               "relations": surface.get("relations", []),
+                               "reason": surface.get("reason", "")})
+        if p == "/api/portfolio/copilot/xio-evidence":
+            return self._json(_portfolio_xio_evidence())
         if p == "/api/portfolio/copilot/status":
             providers.load_env()
+            visual = _portfolio_visual_surface()
             return self._json({"ok": True, "provider_status": copilot.provider_status(os.environ),
-                               "active": "local_hypothesis_engine"})
+                               "active": "local_hypothesis_engine",
+                               "visual_similarity": visual.get("profile", {})})
         if p == "/api/portfolio/copilot/learning":
             return self._json(_portfolio_learning())
         if p.startswith("/portfolio-media/"):
