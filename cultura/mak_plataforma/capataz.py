@@ -33,13 +33,20 @@ acotado + feedback), no de Claude". Este script es esa afirmacion hecha
 codigo, corriendo en MAK (192.168.50.2), sin Claude en el loop.
 """
 import datetime
+from contextlib import contextmanager
 import json
 import os
 import re
 import subprocess
 import sys
+import threading
 import urllib.parse
 import urllib.request
+
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - Windows falls back to thread lock
+    fcntl = None
 
 HOME = os.path.expanduser("~")
 sys.path.insert(0, os.path.join(HOME, "research"))
@@ -67,6 +74,23 @@ BACKLOG_CODEX_TXT = os.path.join(PLATAFORMA, "backlog_codex.txt")
 RESEARCH_LEDGER = os.path.join(PLATAFORMA, "research_intents.jsonl")
 REPO_SLUG = "ligereza/vibecodeine"
 RESEARCH_COOLDOWN_SECONDS = 7 * 24 * 60 * 60
+_CAPATAZ_WRITE_LOCK = threading.RLock()
+
+
+@contextmanager
+def _exclusive_write_lock(path):
+    """Serialize capataz read-check-write operations across cron workers."""
+    with _CAPATAZ_WRITE_LOCK:
+        lock_path = path + ".lock"
+        fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+        try:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_EX)
+            yield
+        finally:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+            os.close(fd)
 
 ACCIONES = ("investigar", "codificar", "entregar", "vetear",
             "mejora_libre", "reflexionar", "vigilar_proveedores", "descansar",
@@ -86,8 +110,8 @@ UMBRAL_PCT_EXITO_PROVEEDOR = 50.0
 
 MENU_TXT = (
     "ACCIONES POSIBLES (elegi UNA, exactamente como aparece en \"accion\"):\n"
-    "- investigar: args {\"tema\": str, \"proposito\": str, \"lane\": \"obra|trabajo|sistema\", \"evidencia\": str} -- dispara research nuevo (research:8890); nunca repetir un tema sin nueva evidencia\n"
-    "- codificar: args {\"pedido\": str} -- pide una pieza de codigo nueva (codex:8891)\n"
+    "- investigar: args {\"tema\": str, \"proposito\": str, \"lane\": \"obra|trabajo|sistema\", \"evidencia\": str} -- dispara research nuevo (servicio interno); nunca repetir un tema sin nueva evidencia\n"
+    "- codificar: args {\"pedido\": str} -- pide una pieza de codigo nueva (servicio interno Codex)\n"
     "- entregar: args {} -- entrega UNA pieza codex lista al repo (PR draft, entregar.py)\n"
     "- vetear: args {} -- revisa y mergea PRs capataz/ listos (revisor.py --enforce, gateado por CI)\n"
     "- mejora_libre: args {} -- el coder propone y codea su propia mejora (agente_libre.py)\n"
@@ -335,7 +359,12 @@ def _research_signature(tema):
     return " ".join(normalized.split())
 
 
-def _research_guard(tema, args):
+def _research_guard(topic, args):
+    with _exclusive_write_lock(RESEARCH_LEDGER):
+        return _research_guard_unlocked(topic, args)
+
+
+def _research_guard_unlocked(topic, args):
     """Require provenance and block stale duplicate dispatches at the source."""
     args = args or {}
     purpose = str(args.get("proposito") or args.get("purpose") or "").strip()
@@ -344,7 +373,7 @@ def _research_guard(tema, args):
     if not purpose or lane not in {"obra", "trabajo", "sistema"} or not evidence:
         return {"ok": False, "blocked": True, "error": "research_contract_incomplete",
                 "required": ["tema", "proposito", "lane", "evidencia"]}
-    signature = _research_signature(tema)
+    signature = _research_signature(topic)
     now = datetime.datetime.now(datetime.timezone.utc)
     try:
         with open(RESEARCH_LEDGER, encoding="utf-8") as fh:
@@ -362,15 +391,17 @@ def _research_guard(tema, args):
                 if (now - started).total_seconds() < RESEARCH_COOLDOWN_SECONDS:
                     return {"ok": False, "blocked": True,
                             "error": "research_duplicate_cooldown",
-                            "previous": row.get("ts"), "tema": tema}
+                            "previous": row.get("ts"), "tema": topic}
     except OSError:
         pass
     os.makedirs(os.path.dirname(RESEARCH_LEDGER), exist_ok=True)
-    row = {"ts": now.isoformat(), "signature": signature, "tema": tema,
+    row = {"ts": now.isoformat(), "signature": signature, "tema": topic,
            "proposito": purpose, "lane": lane, "evidencia": evidence,
            "status": "dispatched"}
     with open(RESEARCH_LEDGER, "a", encoding="utf-8") as fh:
         fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+        fh.flush()
+        os.fsync(fh.fileno())
     return None
 
 
@@ -414,8 +445,11 @@ def ejecutar(accion, args):
                              {"pedido": pedido, "modo": "generar", "densidad": "medio"})
         if not r.get("ok"):
             try:
-                with open(BACKLOG_CODEX_TXT, "a", encoding="utf-8") as f:
-                    f.write(pedido + "\n")
+                with _exclusive_write_lock(BACKLOG_CODEX_TXT):
+                    with open(BACKLOG_CODEX_TXT, "a", encoding="utf-8") as f:
+                        f.write(pedido + "\n")
+                        f.flush()
+                        os.fsync(f.fileno())
                 r["fallback"] = "http caido -- appendido a backlog_codex.txt"
             except OSError as e:
                 r["fallback_error"] = str(e)[:200]
@@ -460,8 +494,11 @@ def _resumen_resultado(resultado):
 def log_bitacora(entry):
     try:
         os.makedirs(PLATAFORMA, exist_ok=True)
-        with open(BITACORA, "a", encoding="utf-8") as f:
-            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        with _exclusive_write_lock(BITACORA):
+            with open(BITACORA, "a", encoding="utf-8") as f:
+                f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+                f.flush()
+                os.fsync(f.fileno())
     except OSError:
         pass
     if emitir_evento is not None:

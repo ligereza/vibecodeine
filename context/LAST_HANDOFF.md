@@ -1,7 +1,12 @@
 # LAST_HANDOFF - Faro
 
-Updated: 2026-08-10
-Status: current state re-verified; continue with the visual-index vertical circuit.
+Updated: 2026-08-11 - canonical branch cleanup and final validation
+Status: The Hub boundary, XIO human-link circuit, writer ownership block, and
+language slices are consolidated in the four canonical branches. Local,
+GitHub, MAK checkout, and runtime mirror are clean and synchronized; no
+auxiliary branch or worktree remains.
+This block is the current operational source. Later sections preserve dated
+historical evidence and must not be read as present state.
 
 ## Read this first
 
@@ -15,6 +20,153 @@ This file is the operational checkpoint. The order for a fresh agent is:
 
 Do not treat raw logs, old plans, Downloads, chat memory, or an old branch as
 instructions. Verify any statement that affects a destructive or remote action.
+
+## Current verified state - 2026-08-11
+
+- Windows canonical: `C:\IA\flujo`, branch `mak`, HEAD and `origin/mak`
+  `d1977e02fc803c9daf17d5bbce221b8954839048`, clean. The four canonical
+  branch heads are `main=d0c9a594`, `mak=d1977e02`, `rd=b79f1476`, and
+  `iskvw=d887771c`; README/SVG have no diff.
+- The isolated audit checkout and all auxiliary worktrees were removed after
+  normalized-content comparison proved their useful source was preserved in
+  `mak`; no unique active code was discarded. Generated audit artifacts were
+  excluded from the canonical commit.
+- MAK: `/home/mak/flujo`, branch `mak`, HEAD and `origin/mak` both at
+  `d1977e02fc803c9daf17d5bbce221b8954839048`, clean. The prior manual state is
+  preserved in stash `preserve manual MAK deployment before canonical branch
+  cleanup 2026-08-11`; the effective repo-sync line remains `# PAUSED-FARO`.
+- Runtime: `mak-hub.service` active, PID `74023`; research `interfaz.py` PID
+  `71790`; Codex `interfaz_codex.py` PID `71774`. Listeners are
+  `0.0.0.0:8900`, `127.0.0.1:8890`, and `127.0.0.1:8891`.
+  Runtime SHA-256 values are Hub
+  `5e33a22142276177b35ff0d3d714b20bd10e09245819ada71c85bd805dcca107`,
+  Research `73d488f0265c021d5ffa6ece33eb86ab99b0b037967b3442dd9ddeee90ca05fb`,
+  and Codex `154c5e702742f126c7c9cb8c3ea97af896a9f2d66c2413170614679bb7d209b6`.
+  Hub `/research/` and `/codex/` return the proxied service pages and their
+  same-origin fetch shims. Direct LAN access to `:8890` and `:8891` is
+  unreachable from Windows.
+- Operational editor: Hub serves `/portafolio/` from
+  `/home/mak/flujo/iskvw`. Current repo/served hashes: `editor.html`
+  `90e90b1ebb1d2f33db8cf60d131a5a20b109c3e61ec1879aa5cfb6064e6c324e` and
+  `mesa_montaje.js`
+  `e139ccdefec5a2d320803842645a37cd878d554bfda3bfd49b4f867ef9229109`.
+- Integrity: the 49-entry mirror check reports `49 PASS / 0 MISMATCH`, and
+  `coherence.py --strict` reports `0 different`, `0 not copied`, and
+  `0 box-only invoked`. The live Hub route matrix and service contract checks
+  passed; the common ledger fingerprint was unchanged during the GET matrix.
+- Current Atlas: `7044` records, `91` labels, `58` records with current
+  state, `automation_ready=false`; XIO is available as separate evidence,
+  and its explicit human-link endpoint/UI are live. No productive XIO link,
+  provider call, or AWS/Watson call was made in the last batch.
+
+## Audit circuit - 2026-08-11
+
+- Strategy: use a strangler migration around the existing Hub. Keep one human
+  Web surface at `:8900`, route Research/Codex through `/research/` and
+  `/codex/`, preserve existing JSON/form contracts and historical data, and
+  leave internal service ports as loopback implementation details. Curatoria
+  remains a cron/batch worker with no separate human panel.
+- Care boundary: do not create a second UI, ledger, graph, policy engine, or
+  parallel archive; preserve user-authored context and historical evidence;
+  keep human decisions append-only and public promotion gated.
+- Consolidation work in the isolated checkout includes the fixed Hub proxy,
+  Hub-based machine delegation, loopback defaults for both services, the
+  canonical Hub route in the archive generator, and current operational docs.
+  No README/SVG geometry or public archive contract was changed.
+- Language guard measured `63` changed Python files with zero new Spanish
+  identifiers and zero new Spanish comment/docstring offenders. Focused tests
+  passed with six environment skips; the full repository suite then passed
+  with no failures and only expected environment skips. Targeted
+  `py_compile`, Ruff, and `git diff --check` passed. The full suite also caught
+  and the guard confirmed the handoff contains no literal Windows username.
+- Manual transport is complete and verified: 36 reviewed source files and
+  the two active systemd units were backed up under
+  `/home/mak/rollback/atlas-hub-boundary-20260811/` before copy/restart. The
+  effective repo-sync remained paused. No README/SVG or provider data was
+  transported.
+- Canonical reconciliation is complete: `74` reviewed files reached Windows,
+  with generated `data/rd_packs.json` and `iskvw/piel/campo/piel.json`
+  intentionally excluded. The canonical full pytest suite passed 100%; the
+  mirror check reports `49 PASS / 0 MISMATCH`; strict coherence reports zero
+  drift; and the final read-only Hub route matrix returned HTTP 200 while the
+  ledger fingerprint stayed unchanged.
+- Follow-up XIO circuit is deployed: `POST /api/portfolio/copilot/xio-link`
+  validates the show work, portfolio source, and optional segment, appends to
+  the existing human-resolution JSONL, and is idempotent. The live evidence
+  route reports `available=true`, `linked_to_source_id=false`, and the UI
+  serves the explicit link action without auto-linking.
+- Writer ownership circuit is classified: `puente_issues.py` has one active
+  cron caller, a non-blocking `fcntl` process lock, and atomic state replace;
+  source/runtime hashes match. `energia_log.py` has zero active cron/systemd
+  callers and matching source/runtime hashes, so no new lock or duplicate
+  runtime path was introduced. The stale four-hour grep process was stopped by
+  exact PID; no MAK service was touched.
+- Post-transport regression passed: `25` focused tests, privacy, language
+  ratchet, operational-entrypoint checks, Python compile, Ruff, JS syntax,
+  and `git diff --check`. The change ratchet measured `63` changed or
+  untracked Python files with zero new Spanish identifiers or comment offenders.
+- AST comparison of every changed Python module found no removed public
+  function, class, or entry point; added public helpers are intentional
+  writer/cache or test helpers. The duplicate review found no duplicate active
+  module, only separate package or historical basenames.
+- The operational-entrypoint guard now asserts that active docs use the Hub
+  routes, contain no direct LAN Research/Codex URLs, and keep Curatoria's old
+  `panel.py` outside the live mirror map.
+
+## Next action - current
+
+The Hub boundary, XIO human-link circuit, writer ownership circuit, language
+guard, canonical branch cleanup, runtime reconciliation, and full validation
+are verified. Keep repo-sync paused, do not bulk-rename legacy public names,
+do not touch README/SVG, and continue the next language migration as a bounded
+compatibility slice with aliases and a new validation pass.
+
+## Bounded language migration - 2026-08-11
+
+- The first compatibility-preserving slice translated comments and docstrings
+  in active `cultura/mak_plataforma/ideas.py`, while retaining the historical
+  public functions (`cargar`, `relacionar`, `anotar`, `encargar`, `priorizar`),
+  JSON keys, routes, and Spanish product/error values.
+- The second slice translated comments and docstrings in the active cron
+  writers `cultura/mak_plataforma/latido.py` and
+  `cultura/mak_plataforma/red_watch.py`. No identifiers, cron lines, systemd
+  units, data keys, or runtime behavior changed.
+- The third slice translated comments and docstrings in the active append-only
+  writer `cultura/mak_plataforma/mutaciones.py`. Its lock, `fsync`, public API,
+  JSON keys, and audit semantics remain unchanged.
+- Measured result: the three files classify as English (`ideas.py` es=0/en=110;
+  `latido.py` es=3/en=23; `red_watch.py` es=1/en=18); the change ratchet reports
+  zero new Spanish identifiers and zero new Spanish comment offenders. The
+  four files classify as English (`mutaciones.py` es=1/en=74); the change
+  ratchet reports zero new Spanish identifiers and zero new Spanish comment
+  offenders. The bounded suites passed `104` tests for the first two slices and
+  `15` additional tests for the append-only writer; `py_compile` and
+  `git diff --check` passed.
+- The canonical full suite was rerun after the first two slices and passed 100%
+  of executable tests; the append-only writer then passed its focused suite.
+  After the privacy-fixture correction, the full suite passed again at 100%,
+  with only the known environment skips and existing deprecation warnings.
+  README/SVG protection still reports zero changed protected files.
+- The four language files are now committed in `d1977e02` and mirrored to the
+  live MAK source with a rollback copy. No service restart was needed because
+  the slice changes comments/docstrings only; coherence now reports zero drift.
+
+## Canonical branch cleanup - 2026-08-11
+
+- The useful audit block and compatibility slices were committed to `mak` as
+  `d3d31d7e`, rebased onto `origin/mak`, and pushed as `7172616d`; the privacy
+  fixture correction was then committed and pushed as `d1977e02`.
+- Local `main`, `rd`, and `iskvw` were fast-forwarded to their matching remote
+  heads. The only remaining local/remote branches are `main`, `mak`, `rd`, and
+  `iskvw`; the only worktree is `C:\IA\flujo`.
+- Removed redundant local and remote branches:
+  `agent/fix-ubuntu-path`, `codex/sync-iskvw`, `codex/sync-mak`, and
+  `codex/sync-rd`. Their patches were already present in canonical history.
+  The uncommitted `codex/atlas-audit` worktree was removed only after every
+  useful file was verified against the committed `mak` tree.
+- The MAK checkout was fast-forwarded to `d1977e02` after stashing its manual
+  deployment/backups; runtime remains active on the same listeners, and
+  `coherence.py --strict` reports zero drift in all five organs.
 
 ## Identity and user direction
 
@@ -43,11 +195,11 @@ instructions. Verify any statement that affects a destructive or remote action.
 ## Repository state
 
 - Windows workspace: `C:\IA\flujo`.
-- Verified checkout: branch `iskvw`, commit `fdc966f0`; the worktree has only
-  the intentional handoff modification. `origin/mak`, `origin/rd`, and
-  `origin/iskvw` point to `fdc966f0`. `origin/main` and local `main` point to
-  `cb7214b2` (`fix: restore animated README vessel`), one commit ahead. There
-  are no remote tags or open PRs in the verified refs.
+- Verified checkout: branch `mak`, commit
+  `d1977e02fc803c9daf17d5bbce221b8954839048`; the Windows worktree is clean
+  and matches `origin/mak`. Local and remote canonical refs are synchronized:
+  `main=d0c9a594`, `mak=d1977e02`, `rd=b79f1476`, `iskvw=d887771c`. No
+  README/SVG diff exists.
 - The separate clean `main` worktree under the local `.roo/worktrees/`
   directory was removed after verifying it had no uncommitted changes. The
   local `main` branch is now available for a new session; no branch or commit
@@ -58,18 +210,15 @@ instructions. Verify any statement that affects a destructive or remote action.
   contains `data-editor-mode`, `mesa-order-hud`, `revisión humana`, and GTM
   markers. It shows actual media, a selected piece, relation actions and the
   copilot layer in the same Hub route.
-- The Hub explicitly resolves `MAK_PORTFOLIO_ROOT` to
+- The Hub defaults `MAK_PORTFOLIO_ROOT` to
   `/home/mak/flujo/iskvw`, so `/home/mak/flujo/iskvw/editor.html` is the
-  operational editor. It was modified at `2026-08-09 22:20:52 -0400`; the
-  Windows copy was modified at `2026-08-09 21:06:02 -0400`. Under the user's
-  rule that the latest modified editor is authoritative, MAK wins for the
-  current session.
-- The current Windows `iskvw/editor.html` hash is
-  `C8BC30659DD544AE6F6F309461E156A26E8528A60C041C988CA87917FB8F1B97`; the
-  deployed MAK copy is
-  `d4f8b720c04bc288eecd4ac519a7a98b8d9ef6d5690950db90d82e78b7995be2`.
-  Never copy Windows over MAK blindly. First diff the MAK winner, then sync
-  the chosen operational version back to Windows deliberately.
+  operational editor. The canonical Windows, audit, repo, and served editor
+  share SHA-256
+  `90e90b1ebb1d2f33db8cf60d131a5a20b109c3e61ec1879aa5cfb6064e6c324e`.
+- The canonical Windows, repo, served, and runtime
+  `/portafolio/mesa_montaje.js` share SHA-256
+  `e139ccdefec5a2d320803842645a37cd878d554bfda3bfd49b4f867ef9229109`.
+  The reviewed block is committed in `mak` at `d1977e02`.
 - The promoted work covers `cultura/mak_plataforma/` (ledger, identity,
   providers, decisions, Hub, batches, routing, service/watchdog), the current
   `iskvw/editor.html`, the README/SVG text layer, operational docs, tests, and
@@ -77,23 +226,23 @@ instructions. Verify any statement that affects a destructive or remote action.
 
 ## MAK box: verified truth
 
-Fresh SSH check on 2026-08-10:
+Fresh SSH check on 2026-08-11:
 
 - Host: `mak@192.168.50.2`, hostname `dell-11m`.
-- The actual Git checkout is `/home/mak/flujo`, currently on `main`; it has
-  exactly the four local branches `main`, `mak`, `rd`, and `iskvw`, plus the
-  four corresponding remote refs. All four MAK branches currently point to
-  `fdc966f`; therefore MAK `main` is one commit behind Windows `main`
-  `cb7214b2` and the README restoration is not yet present on MAK's other
-  branches. `/home/mak/plataforma` is the runtime data and service directory,
-  not a Git checkout; do not run branch or status conclusions there.
+- The actual Git checkout is `/home/mak/flujo`, currently on `mak` at
+  `d1977e02fc803c9daf17d5bbce221b8954839048`; `origin/mak` is the same
+  commit and the worktree is clean. The previous manual deployment/backups
+  remain recoverable in the named stash recorded above.
 - The runtime Hub is healthy and is managed by the user systemd unit
-  `/home/mak/.config/systemd/user/mak-hub.service`.
-- The unit is enabled and active after the synchronization. Current process:
-  `/home/mak/plataforma/.venv/bin/python /home/mak/plataforma/hub.py`.
-- Runtime hashes checked for `hub.py` and `ledger.py` match the current Windows
-  files. The virtualenv is required for `boto3`; do not replace it with the
-  system interpreter when testing AWS.
+  `/home/mak/.config/systemd/user/mak-hub.service`, PID `74023`; research is
+  PID `71790` and Codex is PID `71774`.
+- Runtime hashes are Hub
+  `5e33a22142276177b35ff0d3d714b20bd10e09245819ada71c85bd805dcca107`,
+  Research `73d488f0265c021d5ffa6ece33eb86ab99b0b037967b3442dd9ddeee90ca05fb`,
+  and Codex `154c5e702742f126c7c9cb8c3ea97af896a9f2d66c2413170614679bb7d209b6`.
+- The listeners are `127.0.0.1:8890`, `127.0.0.1:8891`, and
+  `0.0.0.0:8900`. Hub `/research/` and `/codex/` return the proxied service
+  pages; direct LAN access to `:8890` and `:8891` is unreachable from Windows.
 - Do not copy Windows credentials to MAK. MAK already loads its own provider
   environment. Never print or commit credential values.
 - Use MAK for long scans and model batches. Use Windows for orchestration,
@@ -578,7 +727,7 @@ Fresh SSH check on 2026-08-10:
   `PLAN_ANUAL_2026-2027.md`, `PROYECCION.md`, and the deleted
   `context/PLAN_CIERRE_PRE_COMPACT.md` are historical references only.
 
-## Next action
+## Historical next action - 2026-08-09
 
 Do not start with Git cleanup, branch deletion, a full test suite, or another
 mass audit. The first vertical circuit is complete. The immediate user-facing
@@ -2199,3 +2348,2343 @@ No commit, push, merge, branch deletion or public promotion is authorized by
 this checkpoint. The next durable update must record the branch decision, the
 editor diff and the mixed-sample measurement here before any integration
 decision.
+
+## Implementacion visual derivada MobileCLIP/FAISS 2026-08-10
+
+- Se trabajo en la rama `mak`, sin commit ni push. Se extendio el catalogo
+  existente; no se creo otro editor, ledger, base de datos o framework.
+- Archivos del circuito: `cultura/mak_plataforma/visual_index.py`, cambios en
+  `copilot.py`, `hub.py`, `contrato_archivo.py`, `iskvw/mesa_montaje.js`,
+  `iskvw/editor.html` y pruebas focalizadas en `tests/`.
+- El worker incremental vive fuera del repo en
+  `/home/mak/plataforma/derived/visual-index/`. Guarda FAISS, vectores y
+  metadata por `work_id`, `source_id`, hash, modelo, version, fecha y
+  dimension. Los carruseles se agrupan por `publication_id`; los videos usan
+  frame temporal de `ffprobe`/`ffmpeg`; no quedan thumbnails permanentes.
+- Corrida real medida en MAK con MobileCLIP-S0 + FAISS: 100 unidades, 216
+  entradas, 34 carruseles, 38 unidades con video, 42 frames temporales,
+  512 dimensiones, 293 vecinos elegibles, 507 abstenciones, 0 fallos,
+  indice de 205,690 bytes y 19.529 s. Segunda corrida: 0 codificaciones,
+  100 reutilizaciones por hash y 6.105 s.
+- El Hub expone `visual_similarity` con score, margen, modelo, version y
+  motivo. La lente visual del editor GTM/mapa muestra la sugerencia en la
+  pieza activa y conserva el filtro contra relaciones metadata duplicadas.
+  La escena comprobada devolvio una relacion visual con evidencia y acciones
+  humanas `accept`/`reject`.
+- La persistencia accept/reject fue probada en un archivo temporal aislado:
+  dos filas con facet/evidence `visual_similarity`, `MobileCLIP-S0` y
+  `work_id`; no se escribio una decision humana ficticia en el catalogo real.
+- Fallback comprobado: indice ausente devuelve superficie vacia sin importar
+  `torch`. `mak-hub.service` siguio activo con RSS de 149320 KB y sin mappings
+  de `torch`, `mobileclip` o `faiss`.
+- Pruebas focalizadas: `102 passed` en visual index, copilot, bridge del Hub
+  y contrato del editor; tambien pasaron `py_compile`, `node --check` y
+  `git diff --check`.
+- Hub y editor desplegados de forma intencional en MAK; no se reinicio el
+  servicio despues de generar el indice. La primera corrida fallo antes de
+  ejecutar porque faltaba el worker en el checkout MAK; se copio solo ese
+  archivo y la segunda ejecucion fue correcta.
+
+## Next action — visual integration block
+
+Comparar en la muestra de 100 las sugerencias `visual_similarity` contra las
+relaciones metadata y las decisiones humanas existentes; ajustar umbrales o
+ranking solo con esa evidencia. Despues extender el contrato de feedback y
+la vista de evidencia si la precision justifica el cambio. No procesar los
+7,044 registros, no generar thumbnails, no cambiar README/SVG y no hacer
+commit o push sin instruccion explicita.
+
+## Ronda 4 — cierre de despliegue MAK 2026-08-10
+
+- Rama Windows: `mak`, commit base sin cambios de commit. El diff semantico
+  del editor es una sola linea: `mesa_montaje.js?v=20260810-visual-index1`.
+  No se normalizaron CRLF/LF porque el archivo operativo de MAK y Windows ya
+  son byte-identicos; normalizarlo habria creado ruido innecesario.
+- Hashes SHA256 Windows = runtime MAK en los seis archivos comprobados:
+  `hub.py` `e18b1a9583a5e1718dc101165a781a4b9a7a1347b431bb84dc33ae17ceba6c35`;
+  `copilot.py` `a4a23b3cc4c2a5e7e96952d1504371e06d56af49a601fee1fce28992ee1ff56d`;
+  `contrato_archivo.py` `1ea03c209c09f13f6c7a41f7942d2d7ce9423af7e23f657abbfec6283881e9fa`;
+  `visual_index.py` `2cbca673c1edaada07a1371fdc84f6a152ece623b89134b966886fc37298e184`;
+  `editor.html` `757017bf3c64beeb594034f7bef827fbfae67706cd47c47de655914e14d11d5a`;
+  `mesa_montaje.js` `379dd8104191eb24c91eb583d4259090d97fcc339733b86b503cec29eacb5643`.
+- No hubo archivos que copiar en esta ronda: los seis ya estaban desplegados
+  y coincidian. Se verifico `/home/mak/plataforma` como runtime del Hub y
+  `/home/mak/flujo/iskvw` como editor servido. El indice sigue fuera del repo
+  en `/home/mak/plataforma/derived/visual-index/`.
+- Sintaxis comprobada antes del reinicio: `py_compile` local y en MAK,
+  `node --check` local. `mak-hub.service` activo despues del reinicio,
+  PID 28909, RSS 108372 KB y sin mappings de `torch`, `mobileclip` o `faiss`.
+- Endpoints comprobados: `/api/organismo`, `/api/salud`,
+  `/api/portfolio/copilot/status`, `/api/portfolio/copilot/scene`,
+  `/api/portfolio/copilot/suggestions` y `/portafolio/`. La escena visual
+  devolvio `visual_similarity` con score, margen, modelo y evidencia; el
+  editor servido mantiene el GTM/mapa y la lente visual.
+- Carrusel comprobado como una unidad `publication:posts_1.json:403` con
+  tres medios; video comprobado con `video_representative_frame` temporal.
+  Fallback de indice ausente devolvio superficie vacia. Accept/reject produjo
+  dos filas temporales con modelo y facet visual, sin escribir ledger real.
+- Resultado de corrida real sin cambios: 100 unidades, 216 entradas, 34
+  carruseles, 38 videos, 42 frames, 293 vecinos elegibles, 507 abstenciones,
+  0 fallos; incremental posterior 0 codificaciones y 100 reutilizaciones.
+
+## Next action — precision visual
+
+No queda diferencia funcional pendiente de despliegue en esta fase. El bloque
+pendiente es comparar precision `visual_similarity` contra metadata y
+decisiones humanas en la muestra de 100 antes de cambiar ranking o umbrales.
+
+## Reorientacion — integraciones permanentes 2026-08-10
+
+- Se inspeccionaron sin escaneo masivo `C:\IA\Ascii-Motion`, `web/`,
+  `src/flujo`, `xio/`, `tools/` y las referencias vendorizadas de thi.ng.
+  `adobe/` y `blender/` no existen como directorios raíz; los bridges reales
+  están bajo `tools/`. La matriz durable queda en
+  `context/INTEGRATION_MATRIX_20260810.md`.
+- Integración visual permanente realizada: `iskvw/mesa_montaje.js` adopta el
+  patrón comprobable de Ascii-Motion de mutaciones directas coalescidas por
+  `requestAnimationFrame`. Cámara y popover comparten un scheduler por frame;
+  el editor expone fps/calidad de render y reduce transiciones/halos cuando la
+  media de frame supera 32 ms. No se creó React, servidor, base, frontend ni
+  thumbnail paralelo.
+- Integración de evidencia permanente realizada:
+  `cultura/mak_plataforma/xio_evidence.py` lee solo el show kit local
+  comprobable (setlist, cues, duración y anotación), construye `mak-work-v1`
+  con `ledger.build_work_envelope`, y expone átomos separados para evento,
+  fecha y timecode. Artista, venue y productora quedan `unknown`; no se
+  vinculan automáticamente a una pieza ni se escribe una decisión al ledger.
+  Hub y editor lo muestran como `xio_evidence` dentro de la escena existente.
+- Endpoint nuevo focalizado: `GET /api/portfolio/copilot/xio-evidence`.
+  La escena comprobada `GET /api/portfolio/copilot/scene?item_id=17991310565372795.mp4&facet=visual_similarity&surface=relate`
+  devuelve simultáneamente `visual_similarity`, carrusel agrupado y
+  `xio_evidence`. El show kit devolvió 21 setlist/cues, fecha `2026-07-24`,
+  evento `DREF CHOCOLATE` y `work_valid=true`.
+- Archivos funcionales desplegados tras comparar SHA256: `hub.py`,
+  `xio_evidence.py`, `iskvw/editor.html` y `iskvw/mesa_montaje.js`.
+  Hashes runtime MAK: `hub.py`
+  `5d20cd75ed58aabc8ecdc0444390bb73cb9ed5d74fd8c086d13e558e6fb8f382`;
+  `xio_evidence.py`
+  `4577a72645a91e41f3a86abc7ecd1f7ed89c298fde20191f7866b139ae51e541`;
+  `editor.html`
+  `d38ea83933ff7facc339f508c71dd0b263dccb03660b5cc412e4a681d7a79e72`;
+  `mesa_montaje.js`
+  `3c83ed4ad0a22a92e7bc1164cf94a371ad3cc015dce73e2c6886585292852c6a`.
+- Verificación MAK real: `systemctl --user is-active mak-hub.service` =
+  `active`; `GET /portafolio/` = HTTP 200 y sirve
+  `mesa_montaje.js?v=20260810-visual-index2`; PID 31840, RSS 106892 KB,
+  mappings de `torch|faiss|mobileclip` = 0. La comprobación inicial con
+  `systemctl is-active` fue un falso negativo por consultar el ámbito de
+  sistema; la unidad existe y opera en el ámbito de usuario.
+- Pruebas focalizadas: 74 passed en XIO, visual index, copilot, bridge y
+  contrato del editor; `py_compile` remoto/local y `node --check` pasaron.
+  La única corrección de prueba fue actualizar el sufijo cache-busting de
+  `visual-index1` a `visual-index2`.
+- Tanda externa posterior a las interfaces: 10 unidades ya abstinentes en
+  `derived/visual-index/neighbors.json`, 5 Watsonx y 5 AWS, 0 errores.
+  Salida aislada: `/home/mak/plataforma/derived/external-candidates/round-20260810-172526.jsonl`.
+  Las 10 filas conservan `work_id`, evidencia local, proveedor, confianza,
+  abstención y siguiente acción `human_review`; permanecen candidatas y no
+  fueron promovidas al ledger.
+- Fallo/limitación registrada: el endpoint no implementa HEAD (501); la ruta
+  operativa fue verificada con GET. No se procesaron los 7.044 registros, no
+  se modificó README/SVG, no hubo commit/push/merge ni ramas auxiliares.
+
+## Next action — evidencia y rendimiento
+
+Hacer una revisión humana acotada de los 10 candidatos externos y de la
+presentación `xio_evidence` en la pieza activa; solo después decidir si el
+scheduler o la confianza visual requieren ajuste. Mantener artista,
+venue/productora como desconocidos hasta una fuente declarativa y no promover
+los JSONL externos al ledger automáticamente.
+
+## Correccion de rumbo — Flow, Ascii-Motion e Instagram 2026-08-10
+
+- XIO queda fuera del circuito de cierre de esta ronda. No se hicieron nuevas
+  consultas, no se usaron sus candidatos y no se actualizo la matriz de
+  integracion.
+- Flow fue localizado en `web/`; su capacidad concreta reutilizada es el
+  patron de `web/public/mapping.html`: canvas con `translate/scale` alrededor
+  del centro y render por lotes. `iskvw/mesa_montaje.js` lo integra como una
+  capa `mesa-flow-canvas` dentro del escenario GTM existente. La capa dibuja
+  halos y nodos en lotes de 72 con `requestAnimationFrame`, expone
+  `data-flow-render` y el progreso en el readout del editor. No se creo otro
+  frontend, servidor ni superficie paralela.
+- Ascii-Motion fue usado desde `C:\\IA\\Ascii-Motion\\src\\types\\easing.ts`.
+  La implementacion permanente porta `evaluateEasing`/Bezier de
+  `interpolateBetweenKeyframes` como `asciiMotionEase` y
+  `asciiMotionInterpolate`; centra la pieza activa con `ease-out` en el mismo
+  movimiento de camara del editor. No se carga Ascii-Motion como dependencia
+  runtime.
+- `instagram_source.py` genera referencias, nunca copias, bajo el contrato
+  `mak-work-v1`. La muestra real produjo 6 archivos de metadata, 8.241 medios
+  observados, 100 unidades seleccionadas y 213 referencias; 34 unidades son
+  carruseles, 32 stories y 1 reel. Las stories son `story_record` con
+  `stories_are_not_works=true`; los carruseles conservan un unico
+  `publication_id` y sus miembros.
+- El indice canonico sigue siendo
+  `/home/mak/plataforma/derived/visual-index/`. La comprobacion remota no
+  encontro un segundo motor `visual-index2`; solo existe
+  `/home/mak/plataforma/visual_index.py` (ademas del checkout de flujo). Se
+  agrego una sola opcion `--instagram-catalog` y una sola cache/contrato.
+- Catalogo desplegado sin medios originales:
+  `/home/mak/plataforma/derived/visual-index/instagram_catalog_20260810.json`.
+  Hash `5e4059000d4bac35187365f53acaeaa39a2f5b2c296b3a48c75f3655b6742cf0`.
+- Corrida real del worker con
+  `/home/mak/venvs/visual-index-pilot/bin/python`: 100 unidades, 209 entradas,
+  34 carruseles, 22 frames temporales, 80 filas con provenance Instagram,
+  29 stories y 32 carruseles dentro de `vectors.jsonl`, 73 codificaciones,
+  27 reutilizaciones, 0 fallos, 333 vecinos elegibles y 14,287 s.
+- Tanda externa posterior a la integración: 20 casos reales del catálogo,
+  10 Watsonx y 10 AWS; 20 hipótesis candidatas, 0 errores finales, todas con
+  `work_id`, `source_id`, evidencia, proveedor, confianza, abstención,
+  `next_action=human_review` y `promotion=not_promoted`. Salida aislada en
+  `/home/mak/plataforma/derived/instagram-external/round-20260810.jsonl`.
+  El primer intento AWS con el worker visual dio `boto3_unavailable`; se
+  reejecutaron esos mismos 10 casos con `/home/mak/venv-providers`, sin
+  ampliar la muestra ni promover resultados.
+- Hashes Windows = runtime MAK para los archivos activos: `hub.py`
+  `5d20cd75ed58aabc8ecdc0444390bb73cb9ed5d74fd8c086d13e558e6fb8f382`,
+  `copilot.py`
+  `c4bcaad96d9f5c06e92efb4bd9a7d4274e9e28110b3c22d52edf2510ab5d9142`,
+  `contrato_archivo.py`
+  `1ea03c209c09f13f6c7a41f7942d2d7ce9423af7e23f657abbfec6283881e9fa`,
+  `visual_index.py`
+  `8b9ffbc866695d75416263b403803dbc3c5dfad15f11535c1f05a3ade773a96c`,
+  `instagram_source.py`
+  `239b445046c8a5f8b1318feb6633fe576a95eb04be3fd5a88a086b1f144147a4`,
+  `iskvw/editor.html`
+  `8a6fc0de4f240927ad0b949a90224045168f35a86d39e32b5d17483af9f7d302`,
+  `iskvw/mesa_montaje.js`
+  `90f3aa90a568e5df5cce032e23c49e4c7734fdbb6f09901788a4f0c92300e425`.
+- Verificacion MAK final: `systemctl --user is-active mak-hub.service` =
+  `active`, PID 37858, RSS 33.944 KB y mappings `torch|faiss|mobileclip` = 0.
+  `/portafolio/` devolvio el editor con `mesa-flow-canvas`; status reporto
+  `indexed_units=100`, `source_catalog=faro-instagram-source-v1` y 333
+  vecinos elegibles. `visual-index` y la escena existente devolvieron
+  `visual_similarity` con score, margen, modelo y provenance.
+- Verificacion focalizada final: `py_compile` local/remoto, `node --check`
+  local, `git diff --check` y tests de visual index, copilot, editor y bridge:
+  74 tests pasaron. No hubo commit, push, CI, cambios a README/SVG ni
+  movimiento de medios.
+
+## Next action — gate humano de evidencia externa
+
+Revisar únicamente las 20 filas aisladas de
+`derived/instagram-external/round-20260810.jsonl` dentro del flujo existente;
+decidir cuáles, si alguna, pueden entrar al circuito humano. Mantenerlas fuera
+del ledger hasta esa decisión y conservar XIO como adaptador opcional no
+bloqueante.
+
+## Correccion — hypotheses externas visibles en el editor 2026-08-10
+
+- Se corrigio el circuito que faltaba: la interfaz de curatoria ya no depende
+  de que una hipótesis externa haya sido ingerida previamente como candidato
+  del ledger. `hub.py` lee el JSONL aislado
+  `/home/mak/plataforma/derived/instagram-external/round-20260810.jsonl` y lo
+  proyecta en la cola existente `/api/portfolio/review-queue`.
+- La cola MAK devuelve 20 candidatos pendientes. El endpoint por pieza
+  `/api/portfolio/external-candidates?item_id=17884747708722082.jpg` devuelve
+  proveedor, hipótesis, confianza, evidencia, `story_record`/agrupación y
+  `promotion=not_promoted`.
+- Las acciones existentes del editor (`aceptar candidato`, `dejar en
+  revisión`, `rechazar candidato`) funcionan también para los IDs
+  `instagram-external:<work_id>`. La decisión se guarda como revisión humana
+  append-only en el ledger común; no muta el JSONL original, no publica y no
+  promueve automáticamente.
+- Archivos funcionales desplegados: `cultura/mak_plataforma/hub.py` y el
+  test focalizado `tests/test_mak_portfolio_bridge.py`. Pruebas finales:
+  74 pasaron; `py_compile`, `node --check` y `git diff --check` pasaron.
+  `mak-hub.service` quedó `active` después del reinicio.
+
+## Next action — usar la interfaz de curatoria
+
+Abrir `/portafolio/`, expandir `revisión humana` y revisar los 20 candidatos
+desde sus miniaturas y evidencia. La decisión debe hacerse allí; el chat no es
+la superficie de curatoria. Mantener las hipótesis como candidatas hasta que
+exista una decisión humana explícita.
+
+## Gate tecnico de evidencia externa — cierre 2026-08-10
+
+- Se contrastaron las 20 filas de
+  `/home/mak/plataforma/derived/instagram-external/round-20260810.jsonl`
+  contra el catalogo, `vectors.jsonl` y `neighbors.json`. Informe aislado:
+  `/home/mak/plataforma/derived/instagram-external/round-20260810-review.jsonl`;
+  resumen:
+  `/home/mak/plataforma/derived/instagram-external/round-20260810-review-summary.json`.
+- Resultado: 20/20 con catalogo, 20/20 con vector local, 20/20 candidatas,
+  6 `story_record`, 7 carruseles, 0 flags tecnicos y 20/20 con
+  `promotion=not_promoted`. Se agrego al JSONL aislado el marcador
+  determinista `stories_are_not_works=true` para las 6 stories.
+- Se corrigio `visual_index.py`: la muestra de 100 prioriza explicitamente
+  las unidades de `instagram_export` antes de completar con fallback del inbox,
+  y `group_portfolio_items` conserva provenance Instagram si cualquier miembro
+  de la unidad la trae. El export tiene 98 unidades unicas indexables; dos
+  referencias del catalogo son el mismo medio repetido entre archivos del
+  export y se mantienen como referencia, no como obras duplicadas.
+- Nueva corrida incremental: 100 unidades, 209 entradas, 34 carruseles, 32
+  stories, 18 codificaciones, 82 reutilizaciones, 0 fallos, 345 vecinos
+  elegibles y 6,484 s. Hash Windows/runtime de `visual_index.py`:
+  `72b05fd972bf00b08967f5b3adf772ed6207e4e020739df8a23f3d4055f67876`.
+- Tras el reinicio, `mak-hub.service` sigue `active`, PID 40444, RSS 33908 KB,
+  mappings de `torch|faiss|mobileclip` = 0. Status mantiene 100 unidades,
+  345 vecinos elegibles y `faro-instagram-source-v1`.
+- Pruebas finales: 74 tests focalizados, `py_compile` remoto, `node --check`
+  local y `git diff --check` pasaron. No hubo ledger, commit, push ni CI.
+
+## Next action — decision humana
+
+Las 20 hipótesis están técnicamente listas para revisión humana. La siguiente
+acción es decidir aceptar, rechazar o abstener cada una dentro del flujo
+existente; solo después de esa decisión se puede evaluar una promoción al
+ledger o un ajuste de ranking. XIO sigue opcional y no bloquea este circuito.
+
+## Corrección de superficie — una sola mesa operativa 2026-08-10
+
+- Se eliminó la confusión visible con la superficie antigua en `/portafolio/`:
+  el documento ahora se titula `MAK · Campo de orden · archivo vivo`; la
+  cabecera histórica y los paneles antiguos se ocultan cuando
+  `body.mesa-active` monta la mesa GTM/mapa. No se borró código histórico ni se
+  creó otra interfaz.
+- La mesa actual conserva GTM/mapa, canvas Flow, pieza activa, carruseles
+  agrupados y decisiones humanas. El HUD muestra `evidencia externa` y abre la
+  siguiente hipótesis dentro del mismo mapa; el popover de la pieza muestra
+  proveedor, confianza, hipótesis, agrupación, estado no canónico y acciones de
+  aceptar, revisar o rechazar. Las decisiones usan el endpoint existente
+  `/api/portfolio/external-candidates/review` y permanecen no publicadas.
+- Hashes desplegados y comprobados:
+  `iskvw/editor.html` Windows/MAK =
+  `c481339ed061ebad1a41f2c07492c2fae9028288025bf54e1490f1560031552f`;
+  `iskvw/mesa_montaje.js` Windows/MAK =
+  El SHA comprobado es
+  `843c38aa9a21bbb9b184e0678aea93588732821a69dedc532ea8287f0ee8246d`.
+- Comandos reales: `scp` de los dos archivos a
+  `/home/mak/flujo/iskvw/`; `systemctl --user is-active mak-hub.service` =
+  `active`; `/portafolio/`, `/api/portfolio/inbox`,
+  `/api/portfolio/external-candidates` y `/api/portfolio/copilot/scene`
+  respondieron `200`. El JS servido correcto es
+  `/portafolio/mesa_montaje.js?v=20260810-visual-index2` y contiene el HUD,
+  la revisión externa y el endpoint de decisión.
+- El endpoint vivo devolvió 27 candidatos externos combinados, 20 pendientes
+  y 16 filas aisladas `instagram-external:*`; la superficie cuenta solo los
+  pendientes. La cola antigua no se expone como panel separado.
+- Verificación: `node --check iskvw/mesa_montaje.js`,
+  `python -m py_compile cultura/mak_plataforma/hub.py`,
+  `git diff --check` y pruebas focalizadas de editor, bridge, índice visual y
+  copilot pasaron. El primer intento de pytest falló solo por `PYTHONPATH`
+  ausente; se repitió con el raíz del repo y pasó. No hubo commit, push, CI ni
+  reinicio del servicio durante esta corrección.
+
+## Next action — revisión humana en la mesa actual
+
+Abrir o recargar `/portafolio/` con `Ctrl+F5`. Usar el botón `evidencia
+externa` del HUD para centrar una hipótesis y decidirla dentro del popover de
+la pieza. No abrir ni mantener la superficie antigua como flujo de trabajo.
+
+## Corrección — frontera humana no bloquea vecinos 2026-08-10
+
+- Reporte reproducible: después de descartar varias piezas y marcar una pieza
+  semilla como `registro`, los nodos vecinos parecían inactivos.
+- Causa: `applyOrderDecision()` conservaba `humanSeedActive=true` después de
+  una decisión explícita distinta de `descartar`. `toggleOrderSelection()`
+  rechazaba entonces cualquier vecino para mantener aislada la frontera humana.
+  No era una mezcla con la superficie antigua; ocurría en el `mesa_montaje.js`
+  servido por `/portafolio/`.
+- Corrección: después de guardar `obra`, `registro` o `revisar`, la frontera se
+  libera, se limpia `humanSeedItemId` y los vecinos vuelven a ser seleccionables
+  e interactivos. `siguiente frontera` sigue iniciando otra revisión aislada.
+  El descarte continúa avanzando automáticamente a la siguiente semilla.
+- Verificación: `node --check iskvw/mesa_montaje.js`, pruebas focalizadas de
+  editor y bridge, y `git diff --check` pasaron. El hash Windows/runtime del
+  JS corregido es
+  `85e3c5b41037360a2ddf62ea3f44023aa3449a981bd7b1d5618bf11949fa0019`.
+  MAK devolvió el mismo hash, `mak-hub.service` = `active` y el JS servido por
+  `/portafolio/mesa_montaje.js?v=20260810-visual-index2` contiene el nuevo
+  desbloqueo.
+
+## Next action — comprobar la interacción vecina
+
+Recargar `/portafolio/` con `Ctrl+F5`, marcar una pieza como `registro` y luego
+hacer clic en una obra vecina. Debe volver a seleccionarse y mostrar su HUD;
+`siguiente frontera` queda como acción explícita para volver al modo aislado.
+
+## Verificación de clic — `registro` 2026-08-10
+
+- El último clic confirmado en MAK fue para `18408020584187134.jpg`, una
+  `story` de `stories.json:330`, fecha `2025-10-24`.
+- La clasificación quedó persistida en
+  `/home/mak/plataforma/director_runs/portfolio-editor-20260808/classifications.jsonl`
+  a las `2026-08-10T18:39:34-0400` como `triage=record`,
+  `status=human_draft`, `promotion=none`.
+- `/api/portfolio/inbox` devuelve para esa pieza `classification.triage=record`
+  y `selection=pendiente`. No se movió ni modificó el original, no se publicó
+  y no se escribió una verdad canónica en el ledger.
+- La respuesta corresponde al circuito de clasificación de la mesa; el JS
+  servido ya contiene la liberación de vecinos después de una decisión
+  explícita. Si la pestaña aún muestra el estado anterior, recargar con
+  `Ctrl+F5` reinicia únicamente el estado visual del cliente.
+
+## Corrección de funcionamiento — decisión semilla avanza automáticamente 2026-08-10
+
+- La regla operativa queda aclarada: una decisión `obra`, `registro` o
+  `revisar` en la frontera humana debe persistir la clasificación y cargar la
+  siguiente semilla pendiente. `descartar` ya tenía ese comportamiento.
+- Se corrigió `iskvw/mesa_montaje.js`: el branch `advanceSeed` ahora llama
+  siempre `loadHumanSeed({ refresh: false, excludeId: itemIds[0] })` después de
+  cualquier triage válido. No borra el registro anterior ni modifica el medio.
+  La salida de la semilla es la siguiente pieza, no una pantalla bloqueada.
+- Estado acumulado comprobado en MAK antes del despliegue: 75 clasificaciones
+  persistidas (`work=45`, `record=17`, `review=1`, 12 filas sin triage) y 76
+  selecciones (`descartar=54`, `seleccionar=13`, `deseleccionar=9`). No se
+  necesitó input adicional ni se usó navegador.
+- Despliegue y verificación: hash Windows/MAK del JS
+  `0d586680a941ce5f7b3dda32d8d00f2440e0dd266f5a80fac6dc0c845672122d`;
+  JS servido por `/portafolio/mesa_montaje.js?v=20260810-visual-index2`
+  responde `200` y contiene el avance automático; `mak-hub.service` sigue
+  `active`. Pasaron `node --check`, `git diff --check` y las pruebas focales
+  de editor, bridge, índice visual y copilot.
+
+## Next action — validar por contrato, no por clicks simulados
+
+La siguiente ejecución humana de `registro` debe producir una nueva llamada de
+escena para la siguiente semilla. Si se reporta otra anomalía, revisar primero
+handler, payload, respuesta y archivos persistidos antes de pedir evidencia al
+usuario.
+
+## Tanda de funcionamiento por código — cierre 2026-08-10
+
+- Auditoría estática de la mesa: handlers de selección, clasificación,
+  descarte, relación, feedback, navegación, semilla humana, evidencia externa,
+  Flow/Canvas y Ascii-Motion revisados con `rg`, `node --check` y el contrato
+  focal del editor. Las rutas usadas por la mesa tienen implementación en el
+  Hub: `inbox`, `classify`, `classify-batch`, `select`, `feedback`,
+  `copilot/learning`, `copilot/scene` y `external-candidates/review`.
+- Tanda MAK sin navegador ni clicks simulados: tres escenas reales consultadas
+  (`18408020584187134.jpg`, `18117694279761685.jpg`,
+  `17890131999386365.jpg`). Resultado: 3/3 `ok`, 30 registros, 27 relaciones
+  y mapas con 10, 9 y 8 datos respectivamente. La pieza de prueba devolvió
+  una hipótesis externa y su media respondió `200 image/jpeg`.
+- Endpoints de superficie comprobados: `/portafolio/`, JS servido,
+  `/api/portfolio/inbox`, `classifications`, `boards`, `triangulation`,
+  `contract`, `review-queue`, `external-candidates`, `copilot/suggestions`,
+  `copilot/scene`, `copilot/map`, `copilot/visual-index`, `copilot/status` y
+  `copilot/learning` respondieron con éxito. El inbox reporta 7.044 elementos,
+  pero la tanda procesó solo tres escenas acotadas.
+- Se encontró y corrigió un fallo de robustez del Hub: respuestas canceladas
+  por el cliente producían trazas `BrokenPipeError`. `_send_bytes()` ahora las
+  trata como desconexión normal. Se desplegó `hub.py`, se verificó sintaxis y
+  se reinició `mak-hub.service`; quedó `active`, sin mappings de
+  `torch|faiss|mobileclip`. RSS después de la tanda: 147076 KB.
+- Verificación final: `py_compile`, `node --check`, pruebas focales de editor,
+  bridge, índice visual y copilot, y `git diff --check` pasaron. No se abrió
+  navegador, no se tomaron capturas, no se simularon clicks, no hubo commit ni
+  push.
+
+## Next action — mantener la ronda basada en contratos
+
+Si aparece otro fallo, reproducirlo primero mediante el handler y su endpoint,
+consultar la persistencia y añadir una prueba focal antes de pedir una nueva
+acción humana. No usar la interacción del usuario como sustituto de la
+verificación del código.
+
+## Pasada de bug hunting estático — 2026-08-10
+
+- Herramientas disponibles comprobadas: `ruff` local; `semgrep`, `opengrep`,
+  `eslint`, `pyright` y `codeql` no estaban instalados. No se descargaron
+  dependencias ni se gastaron créditos IBM/AWS.
+- `ruff check` encontró 14 hallazgos iniciales: 4 accionables (variables e
+  import sin uso en `contrato_archivo.py`, `visual_index.py` y su prueba) y 10
+  semicolones heredados del render Markdown del Hub. Se corrigieron todos;
+  segunda pasada: `All checks passed!`.
+- Se verificó nuevamente `py_compile`, `node --check`, pruebas focales de
+  editor, bridge, índice visual y copilot, y `git diff --check`: todo pasó.
+- Se desplegaron y se compararon hashes de `hub.py`, `contrato_archivo.py` y
+  `visual_index.py` en `/home/mak/plataforma/`; `mak-hub.service` quedó
+  `active`. Tanda posterior sobre tres escenas reales: 3/3 `ok`, 30 registros
+  y 27 relaciones. Sin Traceback, `BrokenPipe`, `Exception` ni `ERROR` en los
+  logs recientes; el Hub sigue sin mappings `torch|faiss|mobileclip`.
+
+## Next action — analizador semántico opcional
+
+La siguiente herramienta útil sería Semgrep sobre `mesa_montaje.js` y el Hub,
+si se decide instalarla localmente. ESLint puede revisar JavaScript y CodeQL
+queda para una pasada de flujo de datos más pesada. Ninguno es necesario para
+ejecutar la interfaz ni reemplaza las pruebas y endpoints ya verificados.
+
+## ESLint — bug funcional corregido 2026-08-10
+
+- `npx eslint@9` sobre `iskvw/mesa_montaje.js` encontró una colisión de nombres:
+  la variable local `suggestionMarkup` ocultaba la función del mismo nombre
+  dentro de `showRecordPopover()`. Al abrir esa ruta, el `map()` podía resolver
+  la variable antes de inicializarla y romper el popover de relaciones.
+- Se renombró la variable a `suggestionsDrawerMarkup` y se conectó
+  explícitamente `selectRelation()` al handler de relación. ESLint quedó sin
+  errores ni warnings con reglas de variables sin uso, código inalcanzable y
+  expresiones constantes.
+- Se añadió una aserción de contrato para evitar que vuelva la colisión. Pasaron
+  `node --check`, las pruebas focales y `git diff --check`.
+- Hash Windows/MAK del JS desplegado:
+  `5eaa44d3ef1909882a473309098cc9f47aa82d503fe9f9493054f81a3ed0a335`.
+  El JS servido por `/portafolio/mesa_montaje.js?v=20260810-visual-index2`
+  devuelve `200` y contiene la corrección.
+
+## Next action — mantener lint y regresiones en la ronda de funcionamiento
+
+Continuar con los contratos de decisión y persistencia. No usar otra tanda
+IBM/AWS mientras los analizadores locales sigan encontrando y corrigiendo
+fallos reproducibles.
+
+## Semgrep — pasada estática 2026-08-10
+
+- Se instaló Semgrep localmente para esta revisión. La instalación generó
+  advertencias de compatibilidad en paquetes Python globales no relacionados
+  (`opentelemetry`, `open-interpreter`, `open-webui`); no modificó el repo ni
+  el runtime MAK.
+- Comando principal: `semgrep scan --config p/python --config p/javascript
+  --metrics=off` sobre `iskvw/mesa_montaje.js` y los módulos MAK. Resultado:
+  5 archivos, 219 reglas, 0 hallazgos.
+- `iskvw/editor.html` fue omitido por Semgrep porque es un contenedor HTML con
+  JavaScript embebido (`Nothing to scan`). No se afirmó cobertura falsa: ese
+  bloque queda cubierto por `node --check`, el contrato focal del editor y las
+  pruebas del Hub.
+- Verificación posterior: `ruff` = `All checks passed!`, `py_compile`,
+  `node --check`, pruebas focales y `git diff --check` pasaron.
+
+## Next action — revisar solo hallazgos reproducibles
+
+Semgrep no dejó hallazgos en los archivos ejecutables principales. El siguiente
+paso útil es continuar con regresiones de contratos y rutas; instalar ESLint o
+CodeQL solo si aparece un caso que Semgrep y las pruebas locales no puedan
+explicar.
+
+## Regresión de contratos y JS inline — 2026-08-10
+
+- Se extrajeron los dos bloques `<script>` de `iskvw/editor.html` y se
+  comprobaron con `vm.Script`: 2/2 sin errores de sintaxis y sin nombres de
+  función duplicados.
+- ESLint 9 sobre el JS inline, con reglas de nombres no definidos, código
+  inalcanzable, expresiones constantes, redeclaraciones, casos duplicados y
+  `finally` inseguro: 0 errores.
+  Los 50 avisos de variables no usadas corresponden a funciones invocadas por
+  atributos HTML inline o `catch` heredados; no son fallos de ejecución. El
+  JS activo de `mesa_montaje.js` ya quedó limpio en la pasada anterior.
+- Prueba MAK por endpoint, sin navegador: se repitió exactamente la
+  clasificación existente de `17934891079242401.jpg` mediante
+  `/api/portfolio/classify-batch`; respondió HTTP 200, `ok=true` y
+  `duplicate=true`, sin crear otra decisión. Un payload vacío respondió
+  `ok=false`, `error=grupo_o_clasificacion_vacios`. La escena de esa pieza
+  respondió HTTP 200, `ok=true`, 10 registros y 9 relaciones.
+- Verificación focal: 74 tests pasaron; `node --check`, `py_compile` y
+  `git diff --check` pasaron. El único aviso de diff es la conversión
+  automática LF→CRLF ya conocida de Git.
+- MAK sigue activo: `mak-hub.service=active`, PID 44548, `VmRSS=147528 kB`,
+  sin mappings `torch|faiss|mobileclip` y sin errores recientes en el journal.
+  No hubo commit, push, CI, navegador, clicks simulados ni créditos IBM/AWS.
+
+## Next action — contrato de error del bloque histórico
+
+No queda un fallo funcional reproducible en la mesa activa. Si se continúa,
+hacer una pasada pequeña para cubrir explícitamente los errores de POST del
+JS histórico embebido en `editor.html` o mantenerlo retirado de la superficie
+operativa; no usar esa parte legacy como sustituto de la mesa GTM actual.
+
+## Harness de decisiones y fallback — 2026-08-10
+
+- Se ejecutó un harness Node sobre las funciones reales de
+  `iskvw/mesa_montaje.js`, con DOM y red visual mockeados; no se abrió
+  navegador ni se simularon clicks.
+- Las cuatro decisiones de semilla pasaron: `work`, `record` y `review`
+  enviaron `/api/portfolio/classify-batch` con `fields.triage` correcto;
+  `discard` envió `/api/portfolio/select` con `decision=descartar`,
+  `decision_scope=record`, `reason_code=no_es_obra` y `target_id` correcto.
+- Las cuatro llamaron a `loadHumanSeed({refresh:false, excludeId:"seed-a"})`;
+  ninguna dejó `feedbackBusy` bloqueado ni creó relaciones. El descarte retiró
+  la pieza de la escena mockeada.
+- El mismo harness verificó el fallback real de `load()`: un HTTP 503 del inbox
+  y un fallo de escena producen `mesa-empty-state`, sin excepción no atrapada.
+- MAK volvió a responder 200 en `/portafolio/`, `copilot/status`,
+  `copilot/visual-index` y una escena acotada. No hubo mutación de decisiones,
+  commit, push, CI, navegador ni créditos IBM/AWS.
+
+## Next action — cierre técnico de esta ronda
+
+La lógica activa de decisión, avance y fallback queda cubierta por código.
+Solo queda como mantenimiento opcional endurecer el bloque legacy inline; no
+es un bloqueo de la mesa GTM/mapa operativa.
+
+## Replay de elecciones humanas — 2026-08-10
+
+- Se integró `replay_ordering_evaluation()` en el `copilot` existente como
+  superficie diagnóstica `faro-ordering-replay-v1`. Usa leave-one-out real,
+  excluye la respuesta del caso de sus vecinos, separa aciertos de abstenciones
+  y nunca muta items, ledger ni promoción.
+- Regresiones: tests de copilot, editor y bridge pasaron; Ruff y `py_compile`
+  pasaron. El runtime MAK recibió `copilot.py` tras comparar hashes:
+  `b1ffcbc7ee1b36138e4c717acc20724e448c2fb6f807aa563d4e006955272aa4`.
+  `mak-hub.service` quedó `active`, RSS 34100 kB y sin mappings
+  `torch|faiss|mobileclip`.
+- Primera muestra real acotada: 24 escenas individuales, 159 registros y 159
+  vectores. Se evaluaron 23 etiquetas: 17 `work`, 6 `record`, 0 `review`, 0
+  `discard`; cobertura 0.956522, abstención 0.043478, accuracy global
+  0.73913 y accuracy selectiva 0.772727. No se afinó el ranking porque la
+  muestra no representa las cuatro decisiones.
+- La muestra estratificada de selecciones confirmó otra limitación: la escena
+  operativa omite piezas ya descartadas. De 12 objetivos, solo 5 aparecieron y
+  el replay quedó en 4 casos evaluables (3 `work`, 1 `record`); tampoco se
+  usó para calibración.
+- Tras el reinicio, una primera escena excedió el timeout de 10 s durante el
+  calentamiento; un único reintento acotado respondió 200 en 4.682 s. No hubo
+  error persistente en el Hub.
+
+## Next action — muestra balanceada sin fuga
+
+No activar ajustes automáticos con esta muestra. El siguiente bloque debe
+exponer una lectura acotada de decisiones históricas, incluyendo descartes sin
+hacerlos pasar por la escena que los filtra, y repetir el replay con separación
+explícita entre etiquetas `triage` y selección. Solo si hay cobertura mínima
+por clase se evalúa ajustar ranking/confianza; la promoción sigue en `none`.
+
+## Separación de etiquetas del replay — 2026-08-10
+
+- `replay_ordering_evaluation()` ahora distingue `label_source=triage` de
+  `label_source=selection`, incluye `source_counts`, métricas por fuente y la
+  fuente de cada caso. Así `seleccionar` no se presenta como prueba de
+  `obra`, aunque el predictor histórico pueda usarlo como señal débil.
+- La regresión focal pasó con 74 tests; Ruff, `py_compile` y `git diff --check`
+  pasaron. Hash final desplegado de `copilot.py` en Windows y MAK:
+  `26444cddff06316a87ba3d5f8c9962bbe47915d60569da3569fae51070373050`.
+  `mak-hub.service` sigue `active`, RSS 34308 kB y sin torch/FAISS/MobileCLIP.
+- Replay real balanceado por decisiones, con 12 objetos recuperados mediante
+  búsquedas dirigidas de sus IDs: 2 etiquetas `triage` y 10 `selection` (4
+  seleccionar, 6 descartar). En `triage`: 2 evaluados, 100% abstención por
+  muestra insuficiente. En `selection`: 10 evaluados, 8 comprometidos, 20%
+  abstención y 50% de accuracy selectiva; cuatro selecciones fueron clasificadas
+  como `discard`. El resultado confirma que selección y triage no deben
+  mezclarse para calibrar el copiloto.
+- No se ajustó ranking, confianza ni ledger; `promotion=none`. La prueba sirve
+  para detectar fuga/semántica incorrecta, no para entrenar con solo 12 casos.
+
+## Next action — ampliar solo el conjunto de triage
+
+Construir una muestra acotada con suficientes etiquetas explícitas `work`,
+`record`, `review` y `discard`; mantener las selecciones como evaluación
+separada de comportamiento de mesa. No promover ni llamar IBM/AWS hasta que
+el replay tenga cobertura mínima por clase y los descartes/selecciones no se
+usen como sustituto de triage.
+
+## Corrección de descarte y triage — 2026-08-10
+
+- Causa reproducida: la mesa enviaba `descartar` a
+  `/api/portfolio/select`; ese endpoint persistía la selección y el ledger,
+  pero no escribía la clasificación explícita `triage=discard`. Por eso había
+  54 descartes operativos y cero descartes en las métricas de triage.
+- `cultura/mak_plataforma/hub.py` ahora conserva la selección y, únicamente
+  para `decision=descartar`, `decision_scope=record` y
+  `reason_code=no_es_obra`, persiste además `triage=discard` en el contrato de
+  clasificación. La evidencia queda marcada como `human_selection`, con
+  idempotencia. No se migraron silenciosamente los 54 registros históricos.
+- `tests/test_mak_portfolio_bridge.py` cubre el doble registro, la
+  idempotencia y la evidencia de origen. Pasaron las pruebas focales de
+  portfolio, copilot, editor e índice visual; también `py_compile`, Ruff y
+  `git diff --check`.
+- Hash local y runtime de `hub.py`:
+  `e0172e9f9a3f7aafbef3275315135a0cefef20c41d9cfcb5ce9e50dc16854003`.
+  Se comparó antes de copiar y MAK recibió solo este archivo.
+- Verificación MAK: `mak-hub.service=active`, `/api/portfolio/copilot/status`
+  y `/portafolio/` respondieron 200, el índice visual sigue disponible y el
+  proceso no tiene mappings `torch|faiss|mobileclip`. El primer curl tras el
+  reinicio llegó antes de abrir el puerto; el reintento acotado pasó y no hubo
+  errores del servicio desde el reinicio.
+- Estado de datos sin mutación durante la verificación: 54 filas de
+  selección `descartar`, 0 filas históricas `triage=discard`, 75 filas de
+  clasificación. El cero histórico es intencional: la nueva ruta se aplica a
+  los próximos descartes o a una llamada explícita de reparación.
+
+## Next action — usar elecciones históricas sin falsear triage
+
+Mantener los 54 descartes como señal `selection` para el replay y usar la
+nueva etiqueta `triage=discard` solo desde decisiones explícitas futuras. No
+llamar IBM/AWS ni ajustar el ranking todavía; primero reunir cobertura real
+por las cuatro clases sin pedir más clicks al usuario.
+
+## Hunting de invariantes de decisiones — 2026-08-10
+
+- Se trazó el circuito activo por código: `mesa_montaje.js` → endpoint del
+  Hub → validación → JSONL/ledger/proyección → escena → navegación. Las rutas
+  verificadas fueron `select`, `classify`, `classify-batch`, `feedback`,
+  `board`, `external-candidates/review`, `copilot/scene` y
+  `copilot/learning`.
+- El primer bug confirmado fue la divergencia ya registrada: `descartar`
+  escribía `selections.jsonl` y ledger, pero no `triage=discard`.
+- El hunting de errores parciales encontró y corrigió cuatro divergencias
+  adicionales:
+  1. selección guardada con triage fallido devolvía `ok=true`;
+  2. feedback aceptado guardado con conexión fallida devolvía `ok=true`;
+  3. `board add` ignoraba feedback fallido y guardaba el tablero;
+  4. `board add` descartaba IDs inexistentes y fingía éxito.
+- La tanda cruzada también encontró dos fallos de visibilidad de estado:
+  `classify-batch` no marcaba resultados parciales y el descarte por lote no
+  reflejaba en la escena los elementos que sí habían sido guardados cuando
+  otro elemento fallaba. Ambos quedaron corregidos; la mesa ahora informa
+  `saved`, `partial`, cantidades guardadas y triage/conexión pendientes.
+- Pruebas añadidas en `tests/test_mak_portfolio_bridge.py` cubren fallos de
+  triage, conexión, feedback de tablero, IDs desconocidos y persistencia
+  parcial. El contrato de la mesa comprueba los mensajes de degradación.
+- Comando focal: `python -m pytest -q tests/test_mak_portfolio_bridge.py
+  tests/test_iskvw_editor_contract.py tests/test_copilot.py
+  tests/test_visual_index.py`; resultado: 112 tests pasaron. También pasaron
+  `py_compile`, `node --check`, Ruff y `git diff --check`.
+- Hashes desplegados tras comparar antes de copiar:
+  `hub.py` = `84b2c0e204bfb324e490b6b62751a3329bbf43e0f04a09161c088e7a3e8de727`;
+  `mesa_montaje.js` =
+  `3d417a15f633e33e04b9172ec54c4db254680858efb6455d6be61a7a58a1ab49`.
+  El `py_compile` remoto pasó. MAK no tiene Node instalado; el `node
+  --check` se ejecutó localmente y pasó.
+- Verificación MAK sin navegador ni mutación humana: `mak-hub.service=active`,
+  `/portafolio/`, `copilot/status`, `copilot/learning` y tres escenas reales
+  respondieron 200; las tres escenas devolvieron `ok=true`, 10 registros, 9
+  relaciones y visual similarity. RSS del Hub: 138908 KB; mappings
+  `torch|faiss|mobileclip`: 0; sin errores recientes del servicio.
+- POST inválidos dirigidos (`select`, `classify-batch`, `feedback`, `board`)
+  devolvieron `ok=false` con error específico y no cambiaron la persistencia.
+  Tras la tanda: 58 selecciones efectivas, 20 feedbacks, 31 conexiones y 0
+  elementos en tableros; los conteos permanecieron iguales.
+- Semgrep y ESLint no están disponibles como comandos persistentes en este
+  entorno; no se instalaron dependencias. La cobertura ejecutable queda en
+  AST/rg, pruebas focales, `node --check` y endpoints MAK.
+
+## Next action — hunting de superficies aún no cerradas
+
+No migrar todavía los descartes históricos ni ajustar aprendizaje. El próximo
+bloque debe aplicar la misma matriz de invariantes a revisión de candidatos
+externos, caché de escenas, `board remove` y respuestas HTTP del bloque legacy,
+buscando nuevamente escrituras parciales, estados visuales obsoletos y éxitos
+falsos antes de proponer otra mejora.
+
+## Cierre de hunting cruzado — 2026-08-10
+
+- Se verificó el siguiente bloque de la matriz sin navegador ni clicks: caché de
+  escenas, superficie activa `surface=order`, revisión de candidatos externos,
+  `board remove` y handlers HTTP de la superficie legacy.
+- Bug confirmado y corregido en `iskvw/mesa_montaje.js`: una clasificación por
+  lote actualizaba objetos locales y reconstruía la escena, pero podía dejar una
+  escena copilot cacheada anterior. Ahora invalida `sceneCache` después del
+  guardado exitoso.
+- Bug confirmado y corregido en `cultura/mak_plataforma/hub.py`: la ruta activa
+  GTM/mapa `surface=order` omitía `visual_similarity` aunque el índice derivado
+  estuviera disponible. La escena operativa ahora expone el canal visual sin
+  cargar MobileCLIP, torch ni FAISS en el Hub.
+- Bug confirmado y corregido en la revisión externa: repetir el mismo payload
+  humano creaba una nueva fila por usar timestamp en el ID. El mismo candidato,
+  fuente, decisión, nota, relación y contexto devuelve `duplicate=true`; una
+  decisión o nota distinta conserva historial append-only.
+- En `iskvw/editor.html` se corrigieron degradaciones del bloque legacy: no se
+  retira una pieza de la bandeja antes de confirmar el endpoint; selecciones y
+  limpiezas masivas informan parciales; fallos HTTP de tableros, sugerencias,
+  revisión, triangulación, contrato, dispatch y feedback ya no se presentan
+  como respuesta vacía o éxito visual. `cargarTableros` falla de forma aislada
+  para que no aborte la carga del resto del archivo.
+- Regresiones focales: 113 tests pasaron (`copilot` 37, contrato/editor 2,
+  puente MAK 70, índice visual 4). También pasaron `py_compile`,
+  `node --check`, compilación de los scripts inline del editor y `git diff
+  --check` (solo advertencias conocidas de normalización LF/CRLF).
+- Hashes finales desplegados y comparados antes de copiar:
+  `editor.html` =
+  `252d14d006d342c8e7a514801d3f35e33840bffde668ed928e638c5aea8906a1`;
+  `mesa_montaje.js` =
+  `2497814250ae295f27dd5eefded43d2480fe35844b59ca8a47d98d82d33256b6`;
+  `hub.py` =
+  `8032b467a7104b284cdc4e2e4aa41d7edb30c6f684a7b07e332dbdbb85282093`.
+- MAK comprobado tras reinicio: `mak-hub.service=active`, el hash del HTML
+  servido por `/portafolio/` coincide con el editor desplegado, `/api/portfolio/
+  copilot/status`, `/api/portfolio/copilot/learning` y
+  `/api/portfolio/external-candidates` respondieron 200. Una escena real de
+  `surface=order` respondió `ok=true`, 10 registros, 9 relaciones y 5
+  relaciones `visual_similarity` con MobileCLIP-S0, score 0.783021/margen
+  0.051527 en la primera sugerencia. El proceso quedó sin mappings
+  `torch|faiss|mobileclip`; RSS tras reinicio 34.4 MB.
+- POST inválidos dirigidos volvieron a responder `ok=false` sin cambiar
+  `selections.jsonl`, `classifications.jsonl`, `copilot_feedback.jsonl`,
+  `connections.jsonl` ni `boards.json`.
+
+## Next action — cerrar informe antes de cualquier promoción
+
+No migrar los descartes históricos, no ajustar ranking y no gastar Watsonx/AWS.
+El circuito de decisiones y la superficie GTM/mapa quedan listos para una
+última comparación dirigida entre estados persistidos y escena sobre una
+muestra pequeña; si no aparecen divergencias, recién entonces se puede decidir
+si la migración histórica de descartes merece una ronda separada.
+
+## Comparación persistencia ↔ escena — 2026-08-10
+
+- Se cruzaron 11 escenas reales en MAK, elegidas desde las decisiones y
+  clasificaciones existentes: seleccionar, deseleccionar, descartar, triage
+  `work`, `record` y `review`. No se escribieron archivos ni se ejecutaron
+  clicks.
+- Resultado: 4 escenas activas conservaron `ok=true`, el elemento activo fue el
+  primer registro, las relaciones solo apuntaron a registros presentes y los
+  estados de selección coincidieron con JSONL. Dos descartes devolvieron
+  explícitamente `ok=false`, `error=item_descartado`, sin escena falsa.
+- Una muestra `triage=record` conservó esa clasificación en la pieza de escena.
+  Una muestra `seleccionar` conservó `selection=seleccionar`; una muestra
+  `deseleccionar` quedó fuera de la mesa sin borrar el historial. No apareció
+  divergencia persistencia → escena.
+- Tres feedbacks históricos fueron cruzados con la escena copilot: dos
+  relaciones mostraron `status=accepted`, `decisions=[accept]`, nota y peso
+  aprendido; el tercero no entró en el top-9 actual, pero sigue persistido y no
+  se presentó como relación confirmada. Esto es ranking acotado, no pérdida de
+  persistencia.
+- La ruta operativa `surface=order` mantiene el canal visual: una muestra real
+  devolvió 5 relaciones `visual_similarity` con MobileCLIP-S0, scores 0.783021
+  y 0.731494, márgenes 0.051527 y 0.068693. El primer cálculo GTM frío midió
+  11.896 s y los siguientes 0.022 s con caché; queda registrado como medición
+  de rendimiento, no como fallo semántico.
+- MAK sigue con `mak-hub.service=active`; HTML servido y editor coinciden en
+  hash `252d14d006d342c8e7a514801d3f35e33840bffde668ed928e638c5aea8906a1`.
+  No se cargaron mappings `torch|faiss|mobileclip` en el Hub.
+
+## Next action — decisión separada sobre rendimiento y migración
+
+La comparación de invariantes queda sin divergencias semánticas confirmadas.
+Antes de migrar descartes históricos, el siguiente bloque debe decidir si se
+acepta el calentamiento GTM de 11.9 s como coste de primera apertura o se añade
+una mejora acotada de caché/preparación; no usar IBM/AWS, no ajustar ranking y
+no migrar mientras esa decisión no esté documentada.
+
+## Optimización GTM focalizada — 2026-08-10
+
+- Se perfiló solo la construcción GTM estable sobre la ruta existente, sin
+  navegador ni carga de MobileCLIP. El cuello confirmado era
+  `_vector_distance`: millones de llamadas Python creaban una lista de pesos y
+  recorrían un generador para vectores de 32 dimensiones.
+- `cultura/mak_plataforma/copilot.py` ahora usa `math.dist` únicamente en la
+  ruta no ponderada; la ruta ponderada conserva su cálculo explícito. No cambió
+  el vector, el mapa, las etiquetas, el contrato ni el ranking.
+- Medición MAK antes/después: construcción GTM fría de 11.896 s a 4.590 s; las
+  llamadas siguientes permanecen en 0.022–0.023 s por la caché existente. La
+  escena HTTP real `surface=order` respondió 200 en 6.125 s con `ok=true`, 10
+  registros, 9 relaciones y 5 relaciones visuales MobileCLIP-S0, scores
+  0.783021 y 0.731494.
+- Regresiones focales locales después del cambio: 113 tests pasaron; también
+  `py_compile`, `node --check`, compilación del script inline y `git diff
+  --check` pasaron.
+- Despliegue controlado tras comparar hashes: `copilot.py` runtime =
+  `b24cad60210c2df852cb7bf63301e3b8c3efa4e6a43fec4b673e2d79076fe878`.
+  `editor.html`, `mesa_montaje.js` y `hub.py` mantuvieron los hashes ya
+  verificados. `mak-hub.service=active`, HTML servido coincidente, RSS 128960
+  KB/HWM 132720 KB y mappings `torch|faiss|mobileclip=0`.
+
+## Next action — conservar el circuito y no abrir otra migración aún
+
+La mejora de rendimiento queda aplicada y medida. Mantener sin migración los
+descartes históricos, sin promoción de aprendizaje y sin IBM/AWS. El siguiente
+bloque técnico solo debe añadir una regresión de rendimiento o revisar el
+calentamiento si la medición vuelve a degradarse; si permanece estable, el
+trabajo pasa a documentar la decisión sobre la migración histórica en una ronda
+separada, no a mezclarla con la superficie operativa.
+
+## Corrección de descarte parcial con red incierta — 2026-08-10
+
+- Se encontró otra violación de la cadena activa: el `Promise.all` del descarte
+  por lote podía rechazar toda la tanda ante una respuesta HTTP o JSON ausente,
+  sin reconciliar los elementos que sí habían sido guardados en MAK.
+- `iskvw/mesa_montaje.js` ahora convierte cada solicitud en un resultado explícito
+  `respuesta_no_confirmada`; los elementos confirmados se retiran de la escena,
+  los no confirmados permanecen seleccionables y el HUD ya no conserva IDs de
+  nodos que fueron retirados.
+- La regresión contractual comprueba la reconciliación de `savedIds`, el filtro
+  de `orderSelectedIds` y la degradación de respuesta incierta. Pasaron 113
+  pruebas focales, `node --check` y la compilación inline del editor.
+- Hash final servido para `mesa_montaje.js`: `edaf95e34259459862c8c610f6e9b4d9711736210e4a48318eaa3484b9158569`;
+  `/portafolio/mesa_montaje.js?v=20260810-visual-index2` coincide. MAK sigue
+  `mak-hub.service=active`; no fue necesario reiniciar el Hub porque solo cambió
+  el recurso estático.
+
+## Next action — terminar el hunting de transporte del editor activo
+
+Mantener bloqueadas migración, ranking e IBM/AWS. Revisar únicamente si quedan
+otras tandas `Promise.all` o respuestas no confirmadas en `mesa_montaje.js`; cada
+una debe preservar parciales, hacer visible el pendiente y ser idempotente antes
+de cerrar el circuito.
+
+## Transporte de descarte por lote — cierre — 2026-08-10
+
+- La revisión estática de `mesa_montaje.js` confirmó que el único `Promise.all`
+  de decisiones es el descarte por lote y ahora cada promesa tiene fallback
+  explícito `respuesta_no_confirmada`. No quedan tandas paralelas que oculten
+  fallos de transporte en la superficie activa.
+- El arreglo quedó desplegado y servido: hash de
+  `mesa_montaje.js` = `edaf95e34259459862c8c610f6e9b4d9711736210e4a48318eaa3484b9158569`;
+  `mak-hub.service=active`, sin restart porque fue un recurso estático, y el
+  Hub conserva `model_map=0`.
+- Regresiones focales: 113 tests, `node --check` y compilación inline del
+  editor pasaron. La persistencia histórica no fue alterada.
+
+## Next action — mantener cierre técnico acotado
+
+El transporte del editor activo ya tiene manejo explícito de éxito, parcial,
+duplicado y respuesta incierta. No abrir otra mejora visual ni migrar datos en
+esta línea; cualquier siguiente ronda debe ser una regresión dirigida si vuelve
+a observarse una divergencia real, o una decisión independiente sobre los
+descartes históricos.
+
+## Auditoría de discrepancias del handoff — 2026-08-10 (antes de reconciliar)
+
+- La cabecera `Repository state` quedó obsoleta: la comprobación real muestra
+  rama `mak` y HEAD `d09327fe8d5b`; `main`, `mak`, `rd` e `iskvw`, junto con sus
+  refs `origin/*`, apuntan a ese commit. El worktree de Windows tiene cambios
+  modificados y archivos no rastreados además del handoff.
+- La sección `MAK box: verified truth` también conserva hechos antiguos: el
+  checkout `/home/mak/flujo` está en `mak`, HEAD `d09327fe8d5b`, y tiene cambios
+  en `editor.html`, `mesa_montaje.js` y `visual_index.py` no reflejados en el
+  texto inicial.
+- La afirmación de que `ledger.py` runtime coincide es falsa. SHA-256 del
+  checkout/Windows: `7e7cb2ffdad7dc35750803f831edcf823631443cd36d972cb9da3ded934d11ae`;
+  runtime `/home/mak/plataforma/ledger.py`:
+  `bcbaca74fecec9e56be1084cefe7288953686161819f7f14a5ad87d3f1cadf7c`. El
+  runtime no conserva la lectura de `product.next_action` presente en el
+  checkout. No se sincronizó durante aquella auditoría; la reconciliación
+  posterior queda documentada en la sección siguiente.
+- La afirmación de que el handoff era `ASCII-only (198 lines)` es falsa:
+  comprobación local: 3.078 líneas, 178.526 bytes y 1.552 bytes no ASCII.
+- Estado actualmente confirmado: `systemctl --user is-active mak-hub.service`
+  devuelve `active`, el proceso sirve en `0.0.0.0:8900`, `/health` y
+  `/api/portfolio/copilot/status` responden 200, `/portafolio/` sirve el editor
+  SHA-256 `252d14d006d342c8e7a514801d3f35e33840bffde668ed928e638c5aea8906a1`,
+  el JS servido coincide con `edaf95e34259459862c8c610f6e9b4d9711736210e4a48318eaa3484b9158569`,
+  y la escena `surface=order` responde 200.
+- Acción resultante: reconciliar `ledger.py` runtime en una operación separada
+  y controlada, y después corregir las secciones iniciales obsoletas. Ambas
+  acciones están documentadas en las secciones posteriores.
+
+## Reconciliación de ledger runtime — 2026-08-11
+
+- Se validó sintaxis en Windows y MAK antes del despliegue. El archivo objetivo
+  fue exactamente `/home/mak/plataforma/ledger.py`; no se creó backup ni se
+  modificaron datos, ramas o commits.
+- Se copió mediante temporal controlado y verificación SHA-256. El runtime
+  ahora coincide con el checkout:
+  `7e7cb2ffdad7dc35750803f831edcf823631443cd36d972cb9da3ded934d11ae`.
+- Se reinició únicamente el servicio de usuario `mak-hub.service`. Quedó
+  `active/running`, PID `77841`, con `VmRSS=100996 kB`, `VmHWM=131764 kB` y
+  cero mappings `torch|faiss|mobileclip`.
+- Verificación posterior: `/health`, `/portafolio/`,
+  `/api/portfolio/copilot/status` y la escena `surface=order` respondieron
+  HTTP 200. El módulo cargado por Python es
+  `/home/mak/plataforma/ledger.py` y conserva `product_next_action`.
+- Siguiente acción: corregir las secciones iniciales obsoletas de este handoff
+  para que no contradigan el estado actual; no abrir una nueva integración ni
+  IBM/AWS hasta terminar esa limpieza documental.
+
+## Regresión de contrato portfolio_record — 2026-08-11
+
+- Se añadió `tests/test_mak_ledger.py::test_portfolio_record_surfaces_product_next_action_when_not_triangulating`.
+  La prueba cubre la ruta real `portfolio_record` cuando la acción es
+  `verify_source`: conserva `product.next_action` en la fila del ledger y
+  mantiene `record_kind` dentro de `portfolio_candidate`.
+- Verificación local: pruebas focales de ledger, bridge, copilot, editor,
+  índice visual y XIO pasaron; `ledger.py` compila y `node --check
+  iskvw/mesa_montaje.js` pasa. No se modificó el runtime por esta prueba.
+- Verificación MAK posterior: `mak-hub.service=active`, `/health` HTTP 200 y
+  escena `surface=order` HTTP 200; el runtime `ledger.py` conserva el hash
+  `7e7cb2ffdad7dc35750803f831edcf823631443cd36d972cb9da3ded934d11ae`.
+- Siguiente acción: mantener este circuito como regresión y elegir solo otra
+  violación reproducible de contrato antes de tocar ranking, migraciones,
+  IBM/AWS o una nueva superficie visual.
+
+## Reconciliación de clasificación parcial — 2026-08-11
+
+- Hunting del circuito `mesa_montaje.js → /api/portfolio/classify-batch`:
+  MAK podía persistir parte de una tanda y devolver `partial=true`, mientras
+  el editor descartaba toda la respuesta y conservaba seleccionados también
+  los elementos ya guardados.
+- Corrección aplicada en `iskvw/mesa_montaje.js`: el editor lee
+  `payload.results`, actualiza solo los `savedIds`, los retira de
+  `orderSelectedIds`, invalida la caché de escena y deja los pendientes
+  visibles con el mensaje de clasificación parcial.
+- Regresión contractual añadida en
+  `tests/test_iskvw_editor_contract.py`. Pasaron las pruebas focales de ledger,
+  bridge, Copilot, editor, índice visual y XIO; también `node --check` y
+  `git diff --check`.
+- Despliegue controlado al checkout operativo
+  `/home/mak/flujo/iskvw/mesa_montaje.js`: hash local, remoto y servido
+  `ddf3968273935bbe8f9df1e78b67290997022a4c034857979bca4cd7eb9f50e8`.
+  No se reinició el Hub por ser un recurso estático.
+- Verificación MAK posterior: `mak-hub.service=active`, `/health` HTTP 200,
+  escena `surface=order` HTTP 200 y el recurso servido contiene la ruta de
+  reconciliación parcial.
+- Siguiente acción: continuar con la siguiente acción del harness solo si
+  aparece otra escritura parcial reproducible; no abrir proveedores externos,
+  migraciones ni otra interfaz.
+
+## Cierre publicado para el siguiente agente — 2026-08-11
+
+- Commit publicado en `origin/mak`: `4bb71f2f37b7` (`integrate MAK portfolio
+  visual circuit`). No se hicieron commits ni pushes a `main`, `rd` o
+  `iskvw`; esas ramas permanecen limpias en `d09327fe8d5b`.
+- Windows `mak` y el checkout `/home/mak/flujo` están limpios en
+  `4bb71f2f37b7`. La versión anterior de `visual_index.py` que estaba sin
+  rastrear en MAK fue clasificada como stale y archivada fuera del checkout en
+  `/home/mak/plataforma/derived/visual-index/legacy/visual_index.py.pre-4bb71f2`,
+  SHA-256 `2cbca673c1edaada07a1371fdc84f6a152ece623b89134b966886fc37298e184`.
+- Verificación focal final: seis módulos Python compilan, el editor inline
+  compila, `node --check iskvw/mesa_montaje.js` pasa y las pruebas de ledger,
+  bridge, Copilot, editor, índice visual y XIO pasan.
+- La suite histórica completa (`225` archivos) agotó `184 s` sin terminar; no
+  se declara aprobada. No bloqueó el cierre focal del circuito MAK y queda como
+  limitación explícita para una ronda separada.
+- MAK posterior al push: `mak-hub.service=active`, `/portafolio/`, `/health`,
+  `/api/portfolio/copilot/status` y la escena `surface=order` respondieron
+  HTTP 200. No se reinició el Hub durante el cierre porque el cambio servido
+  fue estático, y el runtime conserva cero mappings de torch/FAISS/MobileCLIP.
+- Siguiente agente: comenzar en esta sección y ejecutar solo otra regresión
+  reproducible del harness; no reabrir la interfaz legacy ni sincronizar las
+  otras ramas sin una decisión explícita.
+
+## Cierre de suite y privacidad — 2026-08-11
+
+- La corrida completa definitiva se ejecutó con
+  `python -m pytest -q --capture=no --durations=20`: terminó con código 0 en
+  231,1 s. Los fallos iniciales no eran del circuito MAK: uno detectaba una
+  ruta personal escrita en este handoff y otro detectaba que el SVG generado
+  no conservaba un marcador verificable.
+- Se eliminó del handoff la ruta personal. Se corrigió
+  `tools/update_readme_svg.py` para conservar el marcador de capa generada
+  también en vasos SVG antiguos sin `<desc>` y para dejar `MAK` en ese
+  marcador. `arte-ascii-readme.svg` se regeneró mediante esa herramienta; no
+  se editó geometría ni se tocó `README.md`.
+- La verificación focal de privacidad y del generador pasó; `git diff --check`
+  pasó. La suite completa solo dejó warnings/deprecaciones existentes de
+  Pillow y salidas diagnósticas de pruebas.
+- Publicación y verificación completadas: Windows `mak` y
+  `/home/mak/flujo` están limpios y alineados con `origin/mak`; el checkout
+  MAK está en la misma revisión publicada. `mak-hub.service` permanece
+  `active`; `/health`, `/portafolio/` y
+  `/api/portfolio/copilot/status` responden HTTP 200.
+- Los hashes operativos siguen siendo editor
+  `1c0efe456f80ac13c90cc0a76dc44cfddf90ff2cf101c8c263c5f19d6b967a5d`, JS
+  `ddf3968273935bbe8f9df1e78b67290997022a4c034857979bca4cd7eb9f50e8` e
+  índice `31e271c90345434ac6a6b4f6fc441ec17ab03808a75c33be5f5d2634b5bf52bc`.
+  El proceso Hub sigue sin mappings `torch|faiss|mobileclip`.
+- Las referencias remotas `main`, `rd` e `iskvw` siguen en
+  `d09327fe8d5b`; solo `mak` contiene esta integración. No queda una acción
+  técnica pendiente de esta ronda; el siguiente bloque debe comenzar con una
+  nueva violación reproducible del harness.
+
+## Corrección de protección de la obra SVG — 2026-08-11
+
+- Se detectó que una regeneración anterior trató el SVG artístico como un
+  artefacto intercambiable. La versión canónica debe conservar `viewBox`, 30
+  frames, 9 s, orden de frames, máscaras, `readme-source-static` y delays.
+- `arte-ascii-readme.svg` y `tools/update_readme_svg.py` se restauraron desde
+  `d09327fe`. No se conservará ninguna variante experimental en las ramas
+  canónicas.
+- `tests/test_readme_svg.py` ahora protege la forma canónica: 150 máscaras,
+  100 `tspan`, 30 frames/9 s y ausencia de `clipPath` experimental. El test
+  ya no exige insertar un marcador modificando la obra.
+- Siguiente acción: publicar esta restauración y la regla durable en las cuatro
+  ramas; verificar métricas estructurales antes de cerrar.
+
+## Auditoría CI Ubuntu del SVG canónico — 2026-08-11
+
+- Se verificó `origin/main` en `53b5935f` y el run de CI
+  `31456257637` (`test (ubuntu-latest)`, job `93670544159`).
+- El SVG no es la causa del rojo: conserva 30 frames, 150 máscaras, 100
+  `tspan`, 9 s y cero `clipPath`; `tests/test_readme_svg.py` pasa en el run
+  actual y Windows también termina correctamente.
+- El fallo real es preexistente en
+  `tests/test_mak_portfolio_bridge.py:538`: el test exige
+  `posts\\a.jpg`, pero Ubuntu entrega `/posts/a.jpg`. El commit de restauración
+  no toca ese test ni el código de visión de portafolio.
+- Comando medido: `python -m pytest -q tests/test_readme_svg.py` y el test
+  focal de visión pasan en Windows; el log Ubuntu confirma que solo falla la
+  aserción de separador de ruta dentro de `python -m flujo verify`.
+- Siguiente acción: si se autoriza una corrección aparte, hacer la aserción
+  independiente del sistema operativo con `pathlib.Path`; no modificar el
+  SVG para intentar resolver este fallo.
+
+## Corrección de ruta del test Ubuntu — 2026-08-11
+
+- Se aplicó únicamente en `tests/test_mak_portfolio_bridge.py` la aserción
+  portable `Path(...).parts[-2:] == ("posts", "a.jpg")`; la ruta lógica queda
+  protegida en Windows y Ubuntu sin comparar separadores literales.
+- Pasaron los checks focales: el test de visión y la suite combinada de
+  `tests/test_readme_svg.py` más `tests/test_mak_portfolio_bridge.py`; también
+  pasó `git diff --check`.
+- `flujo verify` no terminó en Windows tras 364 s y fue detenido por timeout;
+  el intento anterior con `python -m fluxo verify` no aplicaba porque el
+  módulo no estaba instalado. Se instaló localmente `.[dev,render]` y el
+  ejecutable `flujo` sí inició la suite.
+- No se modificó `arte-ascii-readme.svg`, no se hizo commit ni push.
+- Siguiente acción: ejecutar CI Ubuntu con este único cambio y publicar solo
+  con autorización explícita.
+
+## Publicación de la corrección portable — 2026-08-11
+
+- La corrección se publicó en la rama `agent/fix-ubuntu-path` mediante el
+  commit `cbcd6df25d140ccc6dffe5e7b41ade84547a85b3` y PR #520:
+  `https://github.com/ligereza/vibecodeine/pull/520`.
+- El run `31484420597` pasó completo: Ubuntu terminó en 2m52s y Windows en
+  7m28s; los checks de seguridad también pasaron.
+- El PR quedó mergeado a `main` con `d0c9a5947b8ab4e6e67dd4627c92cc324b87c5a1`.
+  El cambio fusionado solo afecta la aserción portable del test; el SVG
+  canónico no fue modificado.
+- Comandos medidos: `gh pr view 520 ...` confirmó `MERGED` y
+  `git ls-remote origin refs/heads/main` confirmó el hash de `main`.
+- El checkout de trabajo `mak` conserva sus cambios locales no publicados;
+  no se mezclaron ni se limpiaron.
+- Siguiente acción: mantener protegido el SVG canónico y no reabrir
+  experimentos de geometría, máscaras o timing dentro de `main` sin una nueva
+  instrucción artística explícita.
+
+## Plan de sincronización de ramas — 2026-08-11
+
+- Estado verificado en remoto: `main`=`d0c9a594`, `mak`=`abe27c22`,
+  `rd`=`c1c92574`, `iskvw`=`fde9afc8`. Respecto de `main`, `mak` tiene
+  3 commits menos y 5 propios; `rd` e `iskvw` tienen 3 menos y 2 propios.
+- Orden de trabajo: primero auditar `mak` sin limpiar sus cambios locales;
+  luego auditar `rd`; finalmente `iskvw`. Cada rama se trabajará en un
+  worktree temporal y mediante PR independiente.
+- Regla de integración: no hacer merge completo de `main` a las ramas
+  artísticas. Solo portar correcciones compartidas verificadas, preservando
+  el SVG canónico con 30 frames/9 s, 150 máscaras, 100 `tspan` y sin
+  `clipPath` experimental.
+- Gates por rama: inventario de archivos divergentes, comparación estructural
+  del SVG, suite focal de la rama, `git diff --check` y CI Ubuntu/Windows.
+  Si una rama contiene una variante artística o histórica, se conserva y se
+  documenta en vez de sobreescribirla.
+- `mak` conserva cambios locales no publicados en `context/LAST_HANDOFF.md` y
+  `tests/test_mak_portfolio_bridge.py`; no se deben resetear ni mezclar hasta
+  revisar su intención.
+- Siguiente acción concreta: producir el inventario de divergencias de `mak`
+  y decidir qué corrección compartida se porta mediante PR.
+
+## Sincronización completa de ramas — 2026-08-11
+
+- La auditoría confirmó que `rd` e `iskvw` ya tenían las mismas protecciones
+  del SVG canónico que `main`; el único desfase compartido era la aserción de
+  ruta dependiente de Windows en `tests/test_mak_portfolio_bridge.py`.
+- Se portó esa corrección en tres worktrees aislados. En `mak` también se
+  añadió `mak` al disparador `pull_request.branches` de
+  `.github/workflows/ci.yml`, porque esa rama no recibía la matriz CI.
+- PRs fusionados: #521 a `iskvw` con `d887771c`, #522 a `rd` con
+  `b79f1476`, y #523 a `mak` con `160b94d3`. `main` permanece en
+  `d0c9a594`.
+- CI final verde en las tres ramas: Ubuntu, Windows, dependencias, secretos
+  y datos reales. La corrida de `rd` necesitó relanzarse porque el primer
+  Windows runner quedó atascado en `flujo verify`; la relanzada terminó bien.
+- Las tres ramas conservan 150 máscaras, 100 `tspan`, 30 frames, 9 s y cero
+  `clipPath` experimental. No se modificó la geometría ni el timing del SVG.
+- Comandos medidos: suites focales en los tres worktrees, `git diff --check`,
+  métricas estructurales y `gh pr view`/`git ls-remote` tras cada merge.
+- El worktree principal `mak` conserva sus cambios locales no publicados;
+  no se limpiaron ni se mezclaron. Los worktrees temporales y ramas `codex/*`
+  se conservan como evidencia de la integración.
+- Siguiente acción: ninguna sincronización pendiente; cualquier cambio nuevo
+  debe entrar por PR de la rama correspondiente y mantener la protección del
+  SVG canónico.
+
+## Inicio de revisión humana de la cola — 2026-08-11
+
+- Verificación viva por `GET http://192.168.50.2:8900/api/portfolio/review-queue`:
+  20 candidatos, 14 AWS y 6 Watsonx; 16 con `next_action=human_review`, 4
+  con `next_action=triangulate`, 19 `human_decision=pending` y 1 ya en
+  `revise`.
+- Primer bloque acotado para revisión humana: `18099450649867322.jpg`,
+  `17874296566294009.jpg`, `17913338554295932.jpg`,
+  `17884747708722082.jpg` y `18141507463300316.jpg`.
+- No se enviaron decisiones ni se escribió el ledger. La cola sigue fuera de
+  promoción pública; las decisiones deben hacerse desde `/portafolio/` y una
+  pieza a la vez.
+- Siguiente acción: revisar visualmente este primer bloque y devolver la
+  decisión explícita de cada pieza (`aceptar`, `rechazar` o `abstenerse`), con
+  contexto solo cuando corresponda.
+
+## Desglose de aprendizaje verificado — 2026-08-11
+
+- `GET /api/portfolio/copilot/learning` confirma que las 91 decisiones del
+  ajuste GTM son etiquetas de ordenamiento: `work`=27, `record`=13,
+  `review`=1 y `discard`=50.
+- No son 91 selecciones de piezas. El contador separado de selecciones es
+  `selected`=4 y `excluded`=3.
+- Otros contadores independientes: feedback de relaciones `12` (`date`=1,
+  `publication`=4, `text`=7); revisiones de candidatos `8` (`accept`=4,
+  `revise`=1, `reject`=3); feedback visual MobileCLIP `0`.
+- La evaluación deja `automation_ready=false`, con accuracy `0.549451` y
+  macro-recall `0.25`; no se debe ajustar ranking ni automatizar promoción
+  con este resultado.
+- Siguiente acción: tratar por separado selección, triage, feedback de
+  relaciones y revisión de candidatos; no pedir selecciones adicionales como
+  si fueran etiquetas de aprendizaje.
+
+## Aclaración de estados de decisión — 2026-08-11
+
+- Las 91 decisiones sí son decisiones humanas del usuario, pero el motor las
+  lee como etiquetas históricas de ordenamiento (`classification.triage` o,
+  cuando no existe, la selección que quedó registrada). No representan una
+  bandeja activa de piezas.
+- `selected=4` es el estado actual deduplicado de piezas con decisión
+  `seleccionar`; `excluded=3` es el estado actual deduplicado de piezas
+  excluidas. Deseleccionar una pieza no borra su etiqueta histórica del
+  conjunto de aprendizaje.
+- No hay contradicción entre 91 etiquetas humanas y 4 piezas actualmente en
+  mesa. No se deben solicitar más selecciones solo para aumentar el contador
+  de aprendizaje.
+
+## Atlas de decisiones verificable — 2026-08-11
+
+- Se implementó en un worktree aislado la superficie de solo lectura
+  `GET /api/portfolio/audit` con schema `faro-portfolio-audit-v1`.
+- El contrato separa explícitamente estado actual de selección, historial de
+  selecciones, historial de clasificaciones, etiquetas triage, feedback de
+  relaciones, feedback visual y revisiones externas. También declara sus
+  fuentes, promoción `none` y `read_only=true`.
+- La auditoría acepta `source_id` y devuelve la pieza, su estado vigente y una
+  línea temporal ordenada con selección, clasificación, feedback y revisión
+  externa. Las fuentes append-only no se reescriben ni se eliminan.
+- `/portafolio/` añade el botón visible `auditoría`; muestra el resumen
+  verificable y permite abrir la trazabilidad de la pieza activa sin crear
+  decisiones ni relaciones.
+- Regresión medida en el worktree `codex/atlas-audit`:
+  `python -m pytest -q tests/test_mak_portfolio_bridge.py tests/test_copilot.py
+  tests/test_iskvw_editor_contract.py tests/test_mak_ledger.py
+  tests/test_mak_tandas.py` terminó `152 passed`; también pasaron
+  `python -m py_compile cultura/mak_plataforma/hub.py cultura/mak_plataforma/copilot.py`,
+  `node --check iskvw/mesa_montaje.js` y `git diff --check`.
+- El diff no contiene `arte-ascii-readme.svg` ni `README.md`; la obra SVG
+  permanece protegida. No se hizo commit, push, despliegue ni mutación de
+  ledger durante esta implementación.
+- Siguiente acción: revisar este contrato en el worktree operativo y, con
+  autorización explícita, portarlo por PR a `mak`; luego verificar el endpoint
+  vivo y la UI servida antes de integrar otra rama.
+
+## Bug hunting posterior al Atlas — 2026-08-11
+
+- La verificación viva del circuito `mesa_montaje.js -> Hub -> /portafolio/`
+  encontró una integración incompleta: `GET /api/portfolio/audit` en el
+  runtime MAK respondió HTTP 200 con `text/html` y la portada antigua, no JSON.
+  El frontend habría intentado parsear ese HTML y fallado con un error opaco.
+- El runtime confirmado sigue en `/home/mak/plataforma/.venv/bin/python
+  /home/mak/plataforma/hub.py`, servicio `mak-hub.service=active`; el checkout
+  `/home/mak/flujo` está en `abe27c22`, mientras `origin/mak` está en
+  `160b94d3`. La UI servida no contiene `mesa-audit` y su hash JS sigue siendo
+  `ddf3968273935bbe8f9df1e78b67290997022a4c034857979bca4cd7eb9f50e8`.
+- Corrección local en `codex/atlas-audit`: la ruta nueva devuelve JSON, las
+  rutas GET `/api/*` desconocidas devuelven 404 JSON en vez de HTML 200, y el
+  frontend comprueba `Content-Type` antes de leer la auditoría. La consulta de
+  una pieza inexistente sale antes de construir el mapa GTM completo; una pieza
+  sin etiqueta ya no se atribuye falsamente al origen `selection`.
+- Se agregó una regresión HTTP con servidor efímero: `/api/portfolio/audit`
+  debe responder JSON y `/api/does-not-exist` debe responder 404 JSON. El
+  circuito frontend no tiene otra llamada API sin handler literal en el Hub.
+- Verificación medida en `codex/atlas-audit`: los contratos de portfolio,
+  Copilot, ledger, tandas, documentación y SVG pasan (`1` skip existente),
+  Python compila, `node --check` pasa y `git diff --check` pasa. El SVG no
+  aparece en el diff; sus métricas siguen 30 frames, 150 máscaras, 100
+  `tspan`, 9 s, `readme-source-static` presente y cero `clipPath`.
+- No se llamó Watsonx/AWS ni se mutó el ledger: el fallo era de transporte y
+  despliegue, no de evidencia externa. Siguiente acción: portar esta corrección
+  al checkout operativo mediante el flujo de integración autorizado, reiniciar
+  solo `mak-hub.service` si cambia Python y verificar JSON, hash servido y
+  regresión 404 antes de abrir otra tanda de proveedores.
+
+## Bug hunting continuado — rendimiento y aislamiento de proveedores — 2026-08-11
+
+- La medición viva repitió la divergencia: `/api/portfolio/audit` sigue
+  devolviendo HTTP 200 `text/html` con la portada antigua; en cambio
+  `/api/portfolio/copilot/status` devuelve JSON y marca AWS/Watsonx
+  configurados, y `/api/portfolio/external-candidates` devuelve 27 filas en
+  aproximadamente 1,64 s. El runtime aún no contiene la ruta Atlas ni la UI
+  `mesa-audit`; por eso no se debe confundir ese 200 con una integración
+  funcional.
+- Se reprodujo en código la causa de latencia: `_portfolio_external_candidates`
+  llamaba `_portfolio_item()` dentro del recorrido del ledger, releyendo el
+  inbox de 7.044 piezas y sus sidecars una vez por candidato. La corrección
+  local construye un índice `source_id -> item` una sola vez y conserva el
+  filtro de huérfanos, la deduplicación y la separación de candidatos externos.
+  Una regresión cuenta la lectura del inbox y exige una sola para varias filas.
+- `_portfolio_scene` dejó de hacer la primera búsqueda separada mediante
+  `_portfolio_item()` y usa el inbox ya cargado para resolver la pieza activa.
+  Esto elimina una lectura completa redundante antes de construir el mapa o la
+  escena.
+- Se encontró y corrigió un defecto independiente en `providers.py`:
+  `provider_registry({})` heredaba el entorno real porque un diccionario vacío
+  era tratado como falso. Ahora un entorno explícito vacío significa ningún
+  proveedor configurado; queda cubierto por una regresión. No se expusieron
+  credenciales ni se hicieron llamadas externas nuevas.
+- Verificación local en el worktree de auditoría: suite protegida de SVG,
+  Hub/bridge, Copilot, editor, ledger, tandas, higiene y mapa termina al 100%
+  con el skip existente; `ruff check` en archivos tocados, `py_compile`,
+  `node --check` y `git diff --check` pasan. El diff contiene solo Hub,
+  providers, la mesa y pruebas; no contiene `README.md` ni
+  `arte-ascii-readme.svg`.
+- Intento de comprobar el checkout MAK por SSH durante esta pasada terminó
+  por timeout de conexión; la evidencia HTTP sigue mostrando el servicio
+  activo pero desfasado. No se reinició el servicio, no se escribió el ledger,
+  no se gastaron créditos AWS/Watsonx y no se hizo commit/push.
+
+## Next action
+
+Portar el worktree de auditoría por el flujo de integración de `mak` y
+reiniciar solo `mak-hub.service` si se integra `hub.py`. Verificar después
+`/api/portfolio/audit` como JSON, el 404 JSON para una ruta API inexistente,
+los hashes servidos de `editor.html`/`mesa_montaje.js` y la latencia de
+`external-candidates`. Solo si esa ruta queda estable, abrir una tanda externa
+nueva; la cola actual continúa bajo compuerta humana y sin promoción automática.
+
+## Integración viva del Atlas y segunda regresión de rendimiento — 2026-08-11
+
+- Se verificó acceso SSH real como `mak@192.168.50.2`; el checkout estaba en
+  `mak`, `abe27c2`, limpio antes de la copia. Se respaldaron los archivos
+  funcionales bajo `rollback/atlas-audit-20260811` y
+  `rollback/atlas-audit-before-ordering-20260811`; no se eliminó ningún
+  histórico.
+- Se portaron `hub.py` y `providers.py` al runtime `/home/mak/plataforma/` y
+  a su espejo `/home/mak/flujo/cultura/mak_plataforma/`, además de
+  `editor.html` y `mesa_montaje.js` al editor operativo. El cache-buster pasó a
+  `mesa_montaje.js?v=20260811-atlas-audit`. Los hashes del runtime y del
+  worktree coinciden: Hub `73e6c7a6f9eb281c147a8a0e32256c1a4329b3dfc4a6090407a786f334352973`,
+  providers `7b550aacae993076def5b4b5abe4f2bfee09c5dc539752968a1be4990f36a03b`,
+  editor `22bf7e9ea8913916e6ae2bd2b179aec3dce54b2ae1f1d4839c652f4f0d9a8acd`
+  y JS `445cea5709711dd8420c8060b993c7923aaaefa4e0871e761292c8b43c5ea340`.
+- `mak-hub.service` fue reiniciado solo después de `py_compile` remoto y quedó
+  `active` con PID nuevo. HTTP verificó: `/api/portfolio/audit` 200 JSON con
+  schema `faro-portfolio-audit-v1`, `/api/does-not-exist` 404 JSON con
+  `ruta_api_no_encontrada`, `/portafolio/` contiene `mesa-audit` y el nuevo
+  cache-buster, y `/api/portfolio/external-candidates` 200 JSON.
+- La primera medición de auditoría tras reinicio fue `4431 ms` porque el
+  endpoint construía el mapa GTM completo. Se sustituyó esa dependencia por
+  `_portfolio_ordering_audit`, que calcula únicamente vectores estables,
+  conteos y evaluación leave-one-out. Tras el segundo despliegue: auditoría
+  fría `365 ms`; siguientes lecturas `297, 307, 299 ms`; evaluación `91`.
+- La regresión de rendimiento de candidatos quedó resuelta en vivo:
+  `external-candidates` mide `49, 68, 50 ms` después de indexar el inbox una
+  sola vez, frente a aproximadamente `1.64 s` antes. Escenas `surface=order`
+  calientes miden `162, 166 ms`; escena sin surface `552, 569, 548 ms`;
+  sugerencias `385, 413, 387 ms`.
+- La auditoría sigue siendo de solo lectura: antes y después de un GET,
+  `/home/mak/plataforma/common_ledger.jsonl` conservó exactamente inode,
+  tamaño y mtime (`1867614`, `541958`, `1786445117`). No se llamaron AWS ni
+  Watsonx y no se promovió ninguna hipótesis.
+- Verificación local posterior: suite protegida termina al 100% con el skip
+  existente; `ruff`, `py_compile`, `node --check` y `git diff --check` pasan.
+  La única latencia restante medida es el primer mapa GTM tras reinicio
+  (`2530 ms`); después queda caliente. Es un problema independiente de la
+  auditoría y de la cola externa, y queda como siguiente circuito de
+  rendimiento a decidir tras conservar esta evidencia.
+
+## Next action
+
+Revisar el primer mapa GTM frío (`/api/portfolio/copilot/map` y la primera
+escena `surface=order`) para decidir si conviene precalentar o reducir el fit
+sin alterar la geometría ni el contrato GTM. Mantener el runtime y el espejo
+con sus cambios locales respaldados; no hacer commit, push ni abrir otra tanda
+de proveedores hasta terminar esa medición.
+
+## Laboratorio SQLite FTS5 en disco — 2026-08-11
+
+- Se repitió en MAK, fuera del runtime y con base temporal en `/tmp`, la
+  integración pendiente que el handoff había dejado abierta. Se cargaron los
+  7.044 items reales del inbox en una tabla FTS5 derivada y se eliminó la base
+  temporal al terminar.
+- Medición: rebuild `49,454 ms`, veinte consultas `0,820 ms` total (`0,041 ms`
+  promedio), base temporal `1.482.752` bytes y RSS máximo `52.736 KB`.
+  La consulta de control devolvió conteos reproducibles, incluido `blender=41`
+  y `story=5.919`; no se confundió búsqueda textual con identidad curatorial.
+- El mapa GTM actual sigue respondiendo `4.360.202` bytes; FTS5 no resuelve
+  ese payload ni debe reemplazar el contrato GTM. Por eso SQLite queda como
+  candidato de proyección de búsqueda, no se conecta como segundo almacén ni
+  se añade una interfaz paralela.
+- No se escribieron datos persistentes, no se movieron medios y no se llamó a
+  proveedores externos. La integración FTS5 queda evaluada con evidencia y no
+  promovida; el circuito activo continúa siendo inbox + Hub + mesa GTM.
+
+## Proyección compacta para la mesa móvil — 2026-08-11
+
+- Se reprodujo que el editor activo descargaba el inbox completo de
+  `3.681.556` bytes aunque `mesa_montaje.js` solo necesita identidad, fecha,
+  publicación, media, selección y clasificación. Se añadió la proyección
+  existente del mismo endpoint, no un almacén nuevo:
+  `/api/portfolio/inbox?surface=mesa`.
+- La proyección conserva los ocho campos operativos y declara
+  `surface=mesa_compact`; omite descripción, visión y referencias de export que
+  no son leídas por la mesa. La respuesta real bajó a `1.922.874` bytes
+  (`47,8%` menos) y sigue entregando los `7.044` ids. El inbox completo queda
+  intacto para las superficies que sí necesitan la evidencia rica.
+- `mesa_montaje.js?v=20260811-atlas-audit` ya solicita la proyección compacta.
+  La UI servida y el endpoint fueron comprobados por HTTP; no se abrió
+  navegador ni se usaron screenshots.
+- Regresión añadida: la proyección compacta solo contiene
+  `id,tipo_contenido,fecha,publicacion_id,asset_path,asset_available,selection,classification`.
+  Suite protegida, sintaxis, Ruff y `git diff --check` siguen pasando.
+- Medición posterior al despliegue: inbox compacto `101 ms`, auditoría
+  `278 ms`, escena GTM fría `4.535 ms` por el fit inicial y escenas calientes
+  `200, 182, 158 ms`. El tamaño del inbox ya no es el cuello principal; el fit
+  GTM frío continúa separado y documentado.
+
+## Next action
+
+Medir una precarga controlada del fit GTM frente al costo de mantener el Hub
+disponible durante el reinicio. Si la precarga no mejora el circuito completo,
+conservar el comportamiento actual y no reducir la muestra de vecinos sin una
+comparación de calidad; la compresión de la mesa ya quedó integrada y
+verificada.
+
+## Precarga GTM auditada y rechazada — 2026-08-11
+
+- La precarga síncrona se probó en MAK con el Hub real. El Hub quedó marcado
+  `active` antes de abrir `:8900`: el comando de reinicio tardó `601 ms`, pero
+  las primeras solicitudes no pudieron conectar mientras el ajuste ocurría.
+  El log del servicio muestra que el socket apareció aproximadamente cinco
+  segundos después del arranque. Una escena posterior ya caliente respondió
+  `205 ms`.
+- Se probó una variante en hilo daemon para abrir el socket antes del ajuste.
+  La solicitud de escena inmediata compitió con la precarga y tardó `9205 ms`;
+  después de cinco segundos las escenas respondieron `185 ms` y `166 ms`.
+  La carrera duplicaba el trabajo frío y no es aceptable para la primera
+  interacción. La variante quedó rechazada, no se dejó activa.
+- Se restauró el Hub seguro anterior desde el respaldo fechado
+  `rollback/gtm-prewarm-20260811`; runtime y espejo quedaron en el hash
+  `91e750c147247ed4d332c6091711f1e35da85c90e542e5a040b19a863005f5e3`.
+  Tras restaurar: escena fría `4495 ms`, caliente `187 ms`, auditoría
+  `297 ms`, servicio `active`, y el 404 JSON siguió correcto. Los respaldos
+  `gtm-background-warm-20260811` y `gtm-lock-20260811` conservan las variantes
+  experimentales; no se borró evidencia.
+- Conclusión: no precalentar en `main()` ni en un hilo sin coordinación. El fit
+  frío queda como costo conocido; cualquier mejora futura debe compartir una
+  caché de forma coordinada o reducir el cálculo con comparación de calidad.
+
+## Proyección compacta sin lectura visual innecesaria — 2026-08-11
+
+- Se reprodujo que `_portfolio_inbox(compact=True)` cargaba las features
+  visuales completas para descartarlas al construir la proyección de la mesa.
+  La corrección deja la superficie completa intacta, pero omite
+  `_portfolio_vision()` en la superficie `mesa`; una regresión hace fallar el
+  test si esa lectura vuelve a ocurrir.
+- El Hub desplegado quedó en el hash
+  `819365d6c4469c10b0cf4a451d039c66e2752d11247cedca4f19cf2ac6854dd2` durante
+  esta corrección. La respuesta compacta conservó `7.044` piezas y
+  `1.922.874` bytes; las lecturas controladas fueron `131, 91, 77 ms` antes y
+  `105, 78, 80 ms` después. El inbox completo siguió en `3.681.556` bytes.
+- No se escribió el ledger: antes y después de la comprobación controlada
+  conservó `1867614:541958:1786445117`. El runtime fue respaldado bajo
+  `rollback/mesa-compact-vision-20260811`.
+
+## Soporte HEAD y regresión de transporte — 2026-08-11
+
+- La limitación documentada de `HEAD` quedó corregida en el Hub: reutiliza la
+  resolución de `GET`, conserva `Content-Type` y `Content-Length`, pero no
+  envía cuerpo. La prueba cubre una auditoría `200` y una ruta API inexistente
+  `404` sin bytes de respuesta.
+- Verificación viva: `HEAD /api/portfolio/audit` devolvió
+  `200|application/json|Content-Length=3218|body=0`; `HEAD
+  /api/does-not-exist` devolvió `404|application/json|Content-Length=79|body=0`;
+  el GET de auditoría siguió devolviendo JSON `200`. Hash runtime/espejo:
+  `bcc1d58dcd027c90c6192a3b05b58e4314ff1d45575a82e5c40c3031765ed1b8`.
+- El respaldo previo quedó bajo `rollback/transport-head-20260811` y el
+  servicio permaneció `active`. No se modificó README/SVG ni se hizo commit,
+  push o merge.
+
+## Serialización del fit GTM entre workers — 2026-08-11
+
+- Se reprodujo que dos workers del `ThreadingHTTPServer` podían ejecutar el
+  mismo fit frío al mismo tiempo y competir por la caché global. Se añadió el
+  cerrojo local `_PORTFOLIO_GTM_LOCK` alrededor de los fits solicitados por el
+  Hub; las lecturas y el render siguen fuera del cerrojo.
+- La regresión local ejecuta dos fits simultáneos y exige `max_active=1`.
+  En MAK, después del despliegue hash
+  `0b580c0433ca404a49a256e82ad47d6a2f415d87fe51febfae63befaaf8142f3`, dos
+  escenas reales concurrentes respondieron `4750` y `4762 ms`, ambas `200` y
+  con `31098` bytes; la siguiente lectura caliente respondió `182 ms`. La
+  duplicación de `~9 s` de la variante sin cerrojo desapareció.
+- La suite protegida completa pasó al `100%` con el skip existente; también
+  pasaron `py_compile`, `node --check`, Ruff y `git diff --check`. El respaldo
+  anterior quedó bajo `rollback/gtm-lock-20260811`.
+- Durante la medición reapareció una mutación externa del ledger: se añadieron
+  filas `vigia:*` del dominio `opportunities` a las `09:45:15`, hasta
+  `387` filas y `544266` bytes. No fue causada por los GET: una comprobación
+  controlada de auditoría conservó exactamente
+  `1867614:544266:1786455915` antes/después. No se revirtió ni se borró esa
+  evidencia; queda clasificada como escritura externa del proceso `vigia`.
+
+## Next action
+
+Auditar el circuito de revisión externa ya servido: comparar en código y en
+lecturas vivas `review-queue` contra `external-candidates`, comprobar que sus
+identificadores y estados no se mezclan, y verificar la idempotencia sobre un
+ledger temporal. No emitir decisiones humanas ni abrir otra tanda AWS/Watsonx;
+la cola sigue bajo compuerta humana y el SVG canónico permanece protegido.
+
+## Auditoría de cola externa y estados — 2026-08-11
+
+- La comparación viva encontró `review-queue=20` y
+  `external-candidates=27`: los 20 candidatos pendientes tienen fuente
+  compartida, no hay fuentes pendientes fuera de la cola, y los 7 restantes
+  están en estados ya aceptados o rechazados. Ambos contratos tienen fuentes
+  únicas; no hay duplicados de `source_id`.
+- Para las 20 fuentes compartidas coincidieron `ledger_id`, proveedor,
+  decisión, siguiente acción, decisión humana, estado de revisión y
+  `public_promotion`. La consulta filtrada por `source_id` devolvió una sola
+  fila correcta; una fuente inexistente devolvió `total=0` sin error. La
+  repetición de la decisión no se probó contra el ledger vivo: los tres tests
+  focales de idempotencia y desambiguación de IDs duplicados pasan sobre
+  fixtures temporales.
+- No se emitió POST, no se tomó una decisión humana y no se modificó el JSONL
+  aislado. El estado sigue bajo `human_review_required`; no se promovió nada.
+
+## Verificación XIO sin enlace automático — 2026-08-11
+
+- El adaptador y la escena viva entregan el mismo contrato
+  `faro-xio-evidence-v1`: `available=true`, `work_valid=true`, 21 cues y 21
+  segmentos, evento declarado `DREF CHOCOLATE`, fecha declarada
+  `2026-07-24`, y `artist`, `venue`, `producer` explícitamente `unknown`.
+- La escena `17991310565372795.mp4` contiene el mismo bloque XIO y mantiene
+  `visual_similarity` disponible. `linked_to_source_id=false` y
+  `next_action=link manually to portfolio source` se conservan; no se inventó
+  una relación artística ni se escribió el ledger.
+- La integración técnica está viva; el enlace XIO→pieza sigue siendo una
+  decisión semántica humana pendiente. No se añadirá un almacén paralelo ni
+  se usará `connect` automáticamente para resolverla.
+
+## Next action
+
+Inspeccionar el contrato existente de enlace humano (`connect`/
+`triangulation/context-link`) para decidir si puede representar un vínculo
+XIO→pieza sin perder la separación de evidencia, o si debe permanecer como
+acción manual documentada. Hacer primero una fixture temporal y una prueba de
+no promoción; no emitir decisiones reales ni abrir otra tanda externa.
+
+## Frontera de enlace XIO protegida — 2026-08-11
+
+- La inspección confirmó que `connect` solo acepta dos IDs presentes en el
+  inbox, mientras `triangulation/context-link` exige una resolución humana
+  aceptada y un grupo de triangulación existente. `xio:show:show_kit` no es una
+  pieza del inbox ni un contexto humano aceptado; usar cualquiera de esos
+  endpoints para enlazarlo sería una falsa relación.
+- Se añadió una regresión negativa en fixture: intentar enlazar el work_id XIO
+  no crea `connections.jsonl` ni `human_resolutions.jsonl` y devuelve los
+  errores explícitos `items_invalidos` / `contexto_humano_no_encontrado`.
+  Pasaron los tests XIO y de revisión externa focalizados (`6 passed`).
+- No se creó un almacén paralelo ni se desplegó un endpoint inventado. El
+  enlace XIO→pieza queda correctamente como acción semántica humana pendiente;
+  para implementarlo hace falta definir primero un contrato de evidencia-link
+  explícito, no reutilizar por fuerza una relación entre obras.
+
+## Next action
+
+Mantener esta frontera sin auto-enlace y pasar a la regresión final del
+worktree aislado: suite protegida completa, hashes del runtime/espejo y
+verificación de que el SVG/README no entró en ningún diff. Si más adelante se
+define el significado del vínculo XIO→pieza, extender el contrato existente
+por PR y con compuerta humana; no hacerlo implícitamente.
+
+## Bug de orden del fallback API corregido — 2026-08-11
+
+- La suite ampliada reprodujo que el fallback `ruta_api_no_encontrada` estaba
+  antes de las rutas legacy. `/api/archivo` caía en 404 JSON y no entregaba el
+  contrato público `version=1`; el test `test_hub_sirve_el_contrato` lo detectó.
+- Se movió el fallback al final del bloque de rutas GET API, después de
+  `/api/archivo`, `/api/organismo`, `/api/decisiones`, `/api/oportunidades`,
+  `/api/eventos`, `/api/actividad`, `/api/render`, `/api/salud` y `/api/cuotas`.
+  El 404 JSON para rutas realmente desconocidas se conserva.
+- La corrección se desplegó con respaldo
+  `rollback/legacy-api-order-20260811`; runtime y espejo comparten el hash
+  `59825700e146a56d27acc278ec7dfd3a8001147f436cfc9ddcd290f305a12d51`.
+  MAK confirmó `active`: `/api/archivo` volvió a `200`, `version=1`,
+  `589` piezas y `1348` vínculos; la auditoría siguió en JSON, el 404 quedó
+  `404|application/json|79 bytes` y HEAD siguió sin cuerpo.
+- La lectura controlada de estas rutas conservó el ledger exactamente en
+  `1867614:544266:1786455915`. No se modificó README/SVG ni se hizo
+  commit/push/merge.
+
+## Next action
+
+Repetir la suite protegida completa después de este arreglo de orden, comparar
+hashes finales entre worktree aislado, runtime y espejo, y cerrar la auditoría
+solo si el diff sigue excluyendo `README.md` y `arte-ascii-readme.svg`. El
+enlace XIO continúa siendo semántico/humano y no debe auto-promoverse.
+
+## Regresión final y matriz de rutas — 2026-08-11
+
+- La suite protegida ampliada terminó `100%` verde con el único skip existente,
+  incluyendo SVG, bridge/Hub, Copilot, editor, ledger, tandas, higiene, mapa,
+  XIO, índice visual, contrato de archivo y la regresión que detectó el orden
+  del fallback. También pasaron `py_compile`, `node --check`, Ruff y
+  `git diff --check`.
+- El worktree aislado solo contiene cambios en Hub/providers, editor/mesa y
+  pruebas; `git diff --name-only -- README.md arte-ascii-readme.svg` no devolvió
+  nada. El checkout primario conserva únicamente sus cambios intencionales en
+  `context/LAST_HANDOFF.md` y `tests/test_mak_portfolio_bridge.py`.
+- La matriz viva de rutas legacy respondió JSON `200` en organismo, micelio,
+  archivo, decisiones, oportunidades, eventos, actividad, ideas, render,
+  salud y cuotas. La ruta inexistente respondió `404` JSON de 79 bytes. El
+  servicio siguió `active`, el Hub runtime/espejo siguió en
+  `59825700e146a56d27acc278ec7dfd3a8001147f436cfc9ddcd290f305a12d51`, y el
+  ledger permaneció en `1867614:544266:1786455915` durante la matriz.
+
+## Next action
+
+No abrir otra tanda externa ni tocar el SVG. El siguiente trabajo debe entrar
+por PR desde el worktree aislado, después de definir con el usuario el
+significado del vínculo XIO→pieza; hasta entonces la frontera humana y los
+respaldos de runtime quedan preservados. La auditoría técnica de este bloque
+queda documentada, pero el objetivo general permanece abierto para nuevas
+regresiones reproducibles.
+
+## Carrera de persistencia en conexiones corregida — 2026-08-11
+
+- Se reprodujo una carrera real en `_portfolio_connect`: dos workers podían
+  leer `connections.jsonl` vacío antes de que cualquiera escribiera, dejando
+  dos líneas idénticas para un doble clic humano simultáneo. La prueba aislada
+  produjo `2` resultados y `2` filas antes de la corrección.
+- Se añadió `_PORTFOLIO_CONNECTION_LOCK` solo alrededor del chequeo/escritura
+  de esa relación. La validación de IDs y el render quedan fuera del cerrojo;
+  el segundo worker devuelve `duplicate=true` y no vuelve a escribir.
+- Regresión local y proceso aislado en MAK: `max_active=1`, `rows=1`,
+  `duplicates=1`, `results=2`. No se envió POST al Hub real ni se tocó el
+  ledger; el archivo temporal fue descartado al terminar.
+- Despliegue respaldado en `rollback/connection-race-20260811`; runtime y
+  espejo comparten hash
+  `dd5804d2e47f302c49786ae2a0826ebed34ba4d2e69bdda4f6914ee9d4c5dd40`, el
+  servicio está `active`, y las lecturas de auditoría, archivo y 404 siguen
+  correctas. El ledger conserva `1867614:544266:1786455915`.
+
+## Next action
+
+Repetir la suite protegida completa incluyendo esta regresión de persistencia,
+actualizar la matriz de riesgos de escrituras concurrentes y mantener el
+contrato XIO como frontera humana. No usar proveedores externos ni publicar
+los cambios sin autorización explícita.
+
+## Carreras de persistencia del editor humano corregidas — 2026-08-11
+
+- La revisión de los escritores append-only del Hub encontró cuatro ventanas
+  de lectura-comprobación-escritura: selección, clasificación, conexiones y
+  feedback. Las dos primeras ya tenían regresiones locales; se mantuvieron
+  sus candados y se comprobó que dos workers dejan `rows=1`,
+  `duplicates=1`, `results=2` y `max_active=1`.
+- El segundo bloque reprodujo y corrigió tres ventanas adicionales: dos
+  reintentos de `triangulation/context-link` podían duplicar la relación;
+  dos lecturas visuales del mismo item podían llamar AWS y persistir dos
+  veces; y dos decisiones iguales de revisión externa podían pasar la
+  comprobación previa antes de escribir el ledger. Se añadieron el cerrojo
+  de triangulación, cerrojos por `item_id` para visión, el cerrojo de revisión
+  externa y `_portfolio_ledger_append_unique` para serializar los append del
+  Hub.
+- Las pruebas locales nuevas cubren `context-link`, visión concurrente y
+  revisión externa; el bridge completo pasó `100%`. La prueba temporal en
+  MAK confirmó: context-link `max_active=1`, `rows=1`,
+  `already_linked=1`, `results=2`; visión `calls=1`, `max_active=1`,
+  `rows=1`, `duplicates=1`; selección/clasificación mantuvieron la misma
+  idempotencia. No hubo POST real, llamada AWS real ni escritura en JSONL
+  productivo durante estas pruebas.
+- Despliegue respaldado bajo `rollback/evidence-race-20260811`; runtime y
+  espejo comparten hash `031299e10544934c2a1d45906768e04fa920180e08357912ea4a7a468cbb422c`.
+  El proceso real escucha en `0.0.0.0:8900` bajo el supervisor del host; no
+  existe una unidad `mak-hub.service`, por lo que no se debe reportar como
+  systemd activo.
+- Verificación viva posterior: auditoría `200` y
+  `faro-portfolio-audit-v1` en `3218` bytes; inbox compacto `200` en
+  `1922874` bytes; XIO `200`, `available=true`, `work_valid=true`; ruta
+  desconocida `404` JSON; `HEAD` de auditoría `200`, `Content-Length=3218`,
+  cuerpo `0`. El ledger permaneció exactamente en
+  `1867614:544266:1786455915116045067`. No se tocó README/SVG ni se hizo
+  commit, push o merge.
+
+## Next action
+
+Continuar con una auditoría de los escritores restantes fuera de este circuito
+(ideas/render, colas de jobs y logs legacy), buscando la misma clase de carrera
+sin convertir lecturas en mutaciones. Verificar cada candidato con fixture
+temporal y, si corresponde, desplegarlo con backup; no usar proveedores
+externos salvo que una integración concreta lo requiera y mantener XIO bajo
+compuerta humana.
+
+## Cola de ideas y material protegida — 2026-08-11
+
+- La inspección encontró que `ideas.anotar`, `encargar` y `priorizar` hacían
+  read-modify-write sin coordinarse con el worker `trabajo.py`, que consume
+  `material.jsonl` en otro proceso. Se añadió `_IDEAS_LOCK` y se movieron las
+  mutaciones de cola a `material.encolar_al_frente` y
+  `material.reordenar_por_patron`.
+- `material.py` ahora serializa `pop_pendiente`, encolado, reordenamiento,
+  reconstrucción y degradación con lock de hilo y lock de archivo `fcntl` en
+  MAK; las escrituras siguen siendo temporales + `os.replace`. Fixtures
+  concurrentes confirmaron un solo despacho (`claimed=1`, `empty=1`) y un
+  solo encolado (`true=1`, `false=1`, `rows=1`).
+- Despliegue respaldado bajo `rollback/queue-race-20260811`. Hashes runtime y
+  espejo: `ideas.py`
+  `fa6e6c0b9418bc44d4e191e9c8e49b6521a0b4bac328bdab7be9f018a3481f89`;
+  `material.py`
+  `978a13418c00467588a48cb1583633dab02d2a529e7ff7b1d25f29dc7f00b361`.
+  El proceso del Hub siguió escuchando en `:8900` tras reinicio.
+
+## Revisiones humanas protegidas — 2026-08-11
+
+- `revision.py` y `revision_episodios.py` tenían la misma ventana de doble
+  clic: `_review_map()` podía devolver vacío a dos workers antes del append.
+  Se añadieron locks de módulo y regresiones temporales; ambos circuitos
+  confirmaron `max_active=1`, `rows=1`, `duplicates=1`, `results=2`.
+- Despliegue respaldado bajo `rollback/review-race-20260811`. Hashes runtime y
+  espejo: `revision.py`
+  `48cecebf2d9d958e8d07ba16f5a1e791d3feeeebe488b01de67de8a253801503`;
+  `revision_episodios.py`
+  `58ea66a5e0fb51f6c199b8e44b3f0dbab0adbd6757f0a786661d1a404e09a2f0`.
+- Matriz viva de solo lectura: `/api/revision` `200`, schema
+  `mak-reel-review-v1`, 40 filas; `/api/revision/episodios` `200`, schema
+  `mak-episode-review-v1`, 12 filas; `/api/ideas` `200`; auditoría y XIO
+  siguen `200`; ruta desconocida sigue `404` JSON. El ledger quedó exactamente
+  en `1867614:544266:1786455915116045067` antes/después.
+- Suite final del circuito: `100%` verde con el skip existente; pasaron
+  `py_compile`, `node --check`, Ruff y `git diff --check`. No se modificó
+  README/SVG, no hubo POST real, ni llamada AWS/Watsonx, ni commit/push/merge.
+
+## Next action
+
+Seguir con un circuito acotado de `capataz`/`mutaciones` y `revision` de
+trabajo: verificar si sus logs append-only tienen la misma ventana y si el
+contrato de atribución de mutaciones está realmente conectado a sus escritores.
+Usar fixtures y lectura de estado antes/después; no convertir el escaneo en
+una migración masiva ni tocar el SVG canónico.
+
+## Capataz, vigia y puente de issues — 2026-08-11
+
+- `capataz._research_guard` tenía una carrera de cooldown: dos cron podían
+  leer `research_intents.jsonl` antes de anexar y despachar el mismo tema. Se
+  añadió lock de hilo + lock de archivo para el read-check-write; la misma
+  protección cubre el fallback `backlog_codex.txt` y `bitacora_capataz.jsonl`.
+  Fixture local y MAK: `max_active=1`, `rows=1`, `allowed=1`, `blocked=1`.
+- `vigia.correr` podía repetir una novedad cuando dos callers compartían
+  `vistos.jsonl`; la guardia shell evitaba el cron doble, pero no protegía al
+  módulo frente a otros callers. Se añadió lock por directorio de estado,
+  también aplicado a compactación. Fixture local y MAK: `fcntl=true`,
+  `max_active=1`, `new_items=1`, `rows=1`. El cron real continúa en
+  `/home/mak/vigia/vigia_guardia.sh`.
+- `puente_issues._sin_rutas` llamaba a `_RUTA_ABS` inexistente: se reprodujo
+  como `NameError` al importar/usar esa sanitización. Se definió la regex para
+  rutas Windows/Linux sin tocar URLs y se corrigió además el import de `fcntl`
+  para que el módulo pueda cargarse en Windows; la prueba local y la
+  importación de `/home/mak/plataforma/puente_issues.py` pasan.
+- Backups y despliegues: `rollback/capataz-race-20260811`,
+  `rollback/vigia-race-20260811` y `rollback/puente-issues-20260811`.
+  Hashes runtime/espejo: capataz
+  `938ecf99a1da5804f39ca1621c6c8b7d3e0fbb5438c1940f8d9e8738826be0ac`;
+  vigia `1ef53bdefefc821e7ea170ab96cebcc9115147f555dba798dd4c74188c8a7f95`;
+  puente `29852eaa55a58477b7f3978a57bc1cdd671cf6c0a8feb3f71e1dfb203bd05bea`.
+- La suite extendida de todos los circuitos modificados terminó `100%` verde
+  con el skip existente; pasaron compilación Python, sintaxis JS, Ruff de
+  archivos modificados y `git diff --check`. La suite total del repositorio
+  se intentó con 180 s: colección `>1000` tests, no concluyó dentro del límite
+  y el runner la abortó; no se clasifica como verde ni como fallo funcional
+  localizado. El lint global aún reporta avisos preexistentes fuera de este
+  circuito (por ejemplo `_RUTA_ABS` ya corregido, variables sin uso y un
+  `puente_issues` ahora limpio); no se arreglaron cosméticos ajenos.
+- Verificación viva solo lectura después del despliegue: `/api/revision`
+  `200`/40 filas, `/api/revision/episodios` `200`/12, `/api/ideas` `200`,
+  auditoría `200`, XIO `200` con `available=true` y `work_valid=true`,
+  desconocida `404` JSON, `HEAD` de auditoría cuerpo `0`; el Hub sigue
+  escuchando en `0.0.0.0:8900`. El ledger permanece
+  `1867614:544266:1786455915`. No se hicieron POST reales, llamadas externas,
+  commit, push o merge; README/SVG siguen fuera del diff.
+
+## Next action
+
+Continuar con el siguiente circuito de escritores no cubiertos por estos
+locks: revisar `director_work/decision`, `ledger.append_item` y los logs de
+entrega para distinguir duplicado semántico de historial legítimo. Mantener
+fixtures temporales, medir estado antes/después y corregir solo bugs
+reproducibles; conservar XIO y el SVG canónico bajo sus compuertas actuales.
+
+## Director persistente y contrato de acciones del ledger — 2026-08-11
+
+- Se reprodujo que `director_work` usaba `append_item` para un ID estable
+  `work:<work_id>`: un retry podía duplicar el trabajo. Se cambió a append
+  único serializado; `director_decision` también usa el append único bajo el
+  lock de ledger, conservando historial cuando cambia el ID temporal.
+- La misma prueba descubrió que persistir un `rd_evidence` válido generaba
+  `action=review`, que el ledger RD rechaza. Se añadió el mapa de contrato
+  área→acción (`rd_evidence=verify_source`, `iskvw_curation=curate`,
+  `tool_archaeology=test`, `svg_pipeline=measure`, etc.). La fixture local y
+  MAK confirmaron `decision_ok=true`, `decision_action=verify_source`,
+  `work_duplicate=true`, `decision_duplicate=true`, `rows=2`.
+- Despliegue respaldado bajo `rollback/director-ledger-20260811`; Hub runtime
+  y espejo comparten el nuevo hash verificado durante el despliegue. La
+  matriz viva posterior devolvió auditoría `200` (`3218` bytes), archivo
+  `200` (`version=1`), desconocida `404` JSON y `HEAD` con cuerpo `0`; el
+  ledger permaneció `1867614:544266:1786455915116045067`.
+- Suite extendida de los circuitos modificados sigue `100%` verde con el skip
+  existente, más `py_compile`, `node --check`, Ruff focal y `git diff --check`.
+  La suite global ya quedó registrada como no concluyente por timeout de 180 s,
+  no como éxito. No se hicieron POST productivos, llamadas externas, commit,
+  push o merge; README/SVG permanecen fuera del diff.
+
+## Next action
+
+Continuar con los escritores de entrega/logs legacy (`entregar`,
+`revision`/`mutaciones` y cualquier append de jobs) y comprobar si sus IDs,
+locks y contratos se alinean. Mantener la regla: fixture temporal, prueba
+concurrente o de integración, lectura viva antes/después, backup de runtime y
+sin tocar SVG/README ni usar proveedores externos sin necesidad.
+
+## Entrega de jobs protegida — 2026-08-11
+
+- `entregar.main()` leía `codex_delivered.json`, elegía jobs y solo guardaba el
+  estado al final. Dos ticks solapados podían abrir dos PR draft antes de
+  marcar el job. Se añadió lock de hilo + lock de archivo alrededor de la
+  corrida completa; la fixture local y MAK confirmaron `fcntl=true`,
+  `max_active=1`, `results=[0,0]`, sin git, PR ni estado productivo.
+- Despliegue respaldado bajo `rollback/delivery-race-20260811`; runtime y
+  espejo comparten hash
+  `93ae6b589f6f31a2cef2b2d67a79368e89fc543c3ba572e76779ad4b5f598ceb`.
+- La suite extendida de los circuitos tocados pasó `100%` con el skip
+  existente; también pasaron `py_compile`, `node --check`, Ruff focal y
+  `git diff --check`. La suite global sigue marcada como no concluyente por
+  timeout de 180 s, no como verde. No hubo entrega real, POST productivo,
+  proveedor externo, commit, push ni merge; README/SVG siguen fuera del diff.
+
+## Next action
+
+Terminar la revisión de `mutaciones` y append de jobs restantes, comprobando
+si la atribución se escribe de forma atómica y si hay copias runtime que no
+coinciden con su espejo. Después repetir la matriz viva y mantener abiertos
+los circuitos que aún tengan evidencia pendiente; no declarar cierre global.
+
+## Atribución de mutaciones, salud y eventos de jobs — 2026-08-11
+
+- La revisión reprodujo dos ventanas de persistencia fuera del Hub: `mutaciones.registrar()` hacía append sin lock entre procesos, y `_salud_registrar()` hacía lectura–modificación–escritura sin coordinación; su propia documentación aceptaba incrementos perdidos. `research_lib.emitir_evento()` compartía el mismo borde para `eventos.jsonl`.
+- Se añadieron locks de hilo + `fcntl` por archivo a los tres escritores. Salud ahora escribe a un temporal del mismo directorio y hace `os.replace`, para que un lector nunca vea JSON a medio escribir. Los eventos y mutaciones hacen `flush()` antes de liberar el lock.
+- Fixtures locales focales: suite de `mutaciones`, salud, eventos y vigia `100%`; Ruff focal, `py_compile` y `git diff --check` pasan. La prueba MAK con 8 procesos conservó `8` mutaciones JSON válidas, `8` incrementos `api_errors` y `8` eventos JSON válidos; `fcntl=true`, todos los exit codes `0`.
+- Despliegue respaldado bajo `rollback/mutaciones-health-events-20260811`. Runtime y espejo comparten: `mutaciones.py` `f5ed62f00ebf009784112ecd5523263198b57651df55ef2eb8218fcbaea3022b`; `research_lib.py` `c896826c36cfb2759df33daa84c96ce057c123c6ebf82bbc99e1dfc79598c7c5`.
+- La matriz viva siguió sin mutaciones: auditoría `200`/`faro-portfolio-audit-v1`/`3218` bytes; inbox compacto `200`/`1922874` bytes; revisión `200`/`mak-reel-review-v1`; episodios `200`/`mak-episode-review-v1`; ideas `200`; XIO `200` con `available=true` y `work_valid=true`; desconocida `404` JSON; `HEAD` de auditoría cuerpo `0`. El ledger permaneció `544266:1867614:1786455915` antes y después.
+- No se usaron AWS/Watsonx, no hubo POST productivo, entrega, commit, push ni merge. El proceso de interfaz de investigación está fuera de una unidad instalada; no se reinició a ciegas. La copia runtime sí quedó reemplazada y los siguientes workers cargarán el hash nuevo; el Hub de `:8900` siguió activo bajo su supervisor del host.
+
+## Next action
+
+Revisar los append restantes de `emitir_evento` ya cubierto y de los logs/colas legacy (`backlog_codex`, `descargar`, `energia_log`, `puente`), separando los que admiten callers concurrentes de los que tienen un solo dueño. Probar cada candidato con fixture temporal, preservar el borde XIO humano y volver a medir hashes y matriz viva; mantener el objetivo abierto.
+
+## Colas legacy y destino de descargas corregidos — 2026-08-11
+
+- `backlog_codex.main()` calculaba el backlog fuera de cualquier exclusión y anexaba después. Dos cron solapados podían leer la misma cola y escribir el mismo candidato automático. Se añadió un lock de hilo + archivo alrededor del ciclo completo, incluido el re-chequeo de deduplicación.
+- `descargar.descargar()` tenía dos fallos de integración: `dest=...` no cambiaba el `MANIFEST` global, por lo que el registro terminaba en el destino por defecto; y dos descargas del mismo nombre compartían `archivo.part`. El lock por destino serializa esa ruta y el manifiesto se deriva ahora de `dest`.
+- Prueba local y focal: suite extendida `100%` con el skip existente; Ruff focal, `py_compile`, `node --check iskwv/mesa_montaje.js`, `git diff --check` y protección README/SVG pasan. No se abrió navegador ni se procesó media.
+- Despliegue respaldado bajo `rollback/backlog-download-race-20260811`. Runtime y espejo comparten: `backlog_codex.py` `d5af62745b8a654c2f4d5865b85652ddea77b9b0e66736b8f59df4668c665f9d`; `descargar.py` `d785e647c7796a05a4dde06be2a8d454262985401bb8dddd7a4667609e2c6170`.
+- Fixture MAK multiproceso: dos cron dejaron `backlog_lines=1`, `backlog_unique=1`, ambos exit codes `0`; dos descargas dejaron el archivo final íntegro, dos líneas de manifiesto JSON válidas y ambos exit codes `0`. No se usó una URL real: `urlopen` fue falso y todo quedó en `/tmp` remoto.
+
+## Next action
+
+Revisar ahora los escritores de energía y puente para decidir con evidencia si tienen un solo dueño operativo o si también necesitan lock; comprobar copias runtime/espejo de esos módulos y cualquier integración que aún consuma rutas antiguas. Mantener el circuito humano XIO, repetir la matriz viva después de cada despliegue y no declarar cierre global.
+
+## Interfaz de investigación y jobs.jsonl corregidos — 2026-08-11
+
+- La interfaz real de `:8890` es `ThreadingHTTPServer`. `JOBS_LOCK` solo protegía `JOBS` en memoria; `_cerrar_job`, el bloqueo por guardia y `reanudar/abortar` anexaban `jobs.jsonl` sin lock. Callers concurrentes podían intercalar escrituras y dejar una línea JSON ilegible para `entregar`/los lectores.
+- Se añadió lock de hilo + archivo (`fcntl`) y `_append_job_record()`; las tres rutas de escritura pasan por el mismo helper y hacen `flush()` antes de liberar la exclusión.
+- Despliegue respaldado bajo `rollback/interfaz-jobs-race-20260811`. Runtime y espejo comparten `interfaz.py` `69ea555f88d895f51f324432cd5536372c7d4df0dc86e30ee95d27332256c955`. El proceso fue reiniciado de forma controlada por el watchdog y quedó escuchando en `0.0.0.0:8890` con PID `42843`.
+- Fixture MAK multiproceso: `12/12` procesos terminaron `0`, `12` líneas JSON válidas y `12` IDs únicos. Verificación viva solo lectura: `/` `200`/`143956` bytes y `/api/jobs` `200`/`[]`; no se lanzó ningún job real.
+- En Windows la prueba que requiere `fcntl` queda marcada como skip esperado; la misma prueba se ejecutó en MAK, donde está el dueño operativo Linux. README/SVG no entraron al diff.
+
+## Next action
+
+Auditar las escrituras restantes de la interfaz (`workflow.json`, configuración/env, memoria y repair) contra sus locks existentes y separar cualquier mutación POST que todavía no tenga exclusión. Luego repetir hashes, proceso `:8890`/`:8900`, matriz GET/HEAD y ledger; mantener abierta la búsqueda de integraciones sin desarrollar.
+
+## Configuración de interfaz protegida — 2026-08-11
+
+- `/api/workflow` ya estaba protegido por `WORKFLOW_LOCK` y escritura temporal; la inspección aisló la brecha restante en `/config`: `_guardar_config()` hacía backup + lectura + reescritura de `research.env` sin exclusión.
+- Se añadió `CONFIG_FILE_LOCK` más lock de archivo y se dejó el read-modify-write en `_guardar_config_unlocked()`. La prueba MAK con 8 procesos confirmó `config_max_active=1`; no se cambió el `research.env` productivo.
+- Despliegue respaldado bajo `rollback/interfaz-config-race-20260811`. Runtime y espejo comparten `interfaz.py` `feb522577b67127bfb64f4a02c8f9326e0dc9010883d1d274e6f5aab46c3f8bd`. El watchdog reinició el proceso y `:8890` quedó activo en PID `43252`.
+- Matriz viva solo lectura: `:8890/` `200`/`143956` bytes; `:8890/api/jobs` `200`/`[]`; `:8900/api/portfolio/audit` `200`/`3218` bytes; XIO `200`/`7746` bytes; `HEAD` de auditoría `200`, `Content-Length=3218`; Hub e interfaz escuchando en `:8900` y `:8890`.
+- Ledger antes/después de la matriz: `544266:1867614:1786455915` sin cambio. No hubo POST, job real, proveedor externo, commit, push, merge ni modificación README/SVG.
+
+## Next action
+
+Revisar el contrato de memoria/repair y las integraciones de `interfaz.py` que disparan `/api/fructificacion`, `/api/fusion`, `/api/ideas/anotar` y `/api/memoria/index`: comprobar si cada mutación delegada tiene idempotencia y lock en su dueño, sin duplicar almacenes ni ejecutar acciones productivas. Después repetir la batería focal y dejar documentada cualquier frontera humana aún pendiente.
+
+## Mutaciones de research protegidas — 2026-08-11
+
+- `fructificacion.decidir()` tenía la misma carrera read-modify-write en el registro de decisiones humanas; se añadió lock de hilo + archivo, temporal único, `fsync` y `os.replace`. La prueba MAK con 8 procesos conservó 8 decisiones distintas.
+- `memoria.indexar()` tenía lock solo en el caller HTTP; una invocación standalone podía compartir `index.jsonl.tmp`. Se añadió exclusión dentro del módulo, incluyendo `fcntl`; 8 procesos MAK midieron `index_max_active=1` sin tocar el índice productivo.
+- `fusion.crear()` escribía directamente el primordio final. Se cambió a temporal único + `fsync` + `os.replace`; 8 procesos MAK convergieron en un único archivo válido para la misma fusión.
+- Despliegue respaldado bajo `rollback/research-mutations-race-20260811`. Runtime/espejo comparten: `fructificacion.py` `4fd656cf6f0836a805fcd43d48dc0e27e659ce7da760db572ac3281973084440`; `fusion.py` `c7b772b6aa821d7d3b52d3a78cf4457101c7c30635c895c3ec74e1ae33269fba`; `memoria.py` `b86fd6a01f6cd9d60195aa2f41cfcf8173e67d880fe7fffd43abf32994cd6efe`.
+- La batería focal completa pasó `100%` con los skips esperados; `py_compile`, Ruff focal, `node --check iskvw/mesa_montaje.js`, `git diff --check` y protección README/SVG pasan. No hubo POST productivo, proveedor externo ni índice real reescrito.
+- La interfaz fue reiniciada por el watchdog y quedó en `:8890` PID `44060`; el Hub sigue en `:8900` PID `37398`. Las lecturas GET/HEAD y XIO siguen sanas; el ledger no se modificó.
+
+## Next action
+
+Auditar la última capa de integraciones delegadas: `ideas_a_micelio.sincronizar`, `memoria`/grafo cache y los writers de `fructificacion`/`fusion` desde rutas HTTP y standalone. Buscar duplicación de almacenes, estados que se pierdan al reiniciar y contratos que no lleguen al ledger; mantener fixtures, backups y compuertas humanas, sin declarar cierre global.
+
+## Adaptador de ideas y regresión viva final — 2026-08-11
+
+- `ideas_a_micelio.sincronizar()` podía escribir adaptadores `.md` directamente mientras otro indexador tomaba un snapshot distinto: el último en limpiar podía retirar una idea válida, y un lector podía observar un documento incompleto. Se añadió lock de destino (`fcntl` en MAK) y temporal único + `fsync` + `os.replace` por documento.
+- Fixture MAK corregido: la primera ejecución del harness escribió el texto literal `\\n` y produjo `0` adaptadores; se repitió con saltos reales (`chr(10)`) y confirmó `8/8` procesos `0`, `idea-a.md` y `idea-b.md` presentes y válidos, `fcntl=true`. No fue un fallo del módulo.
+- Despliegue respaldado bajo `rollback/ideas-micelio-race-20260811`; runtime/espejo comparten `ideas_a_micelio.py` `93e65cfd98f98a799da9eefbd78451ca26e04d4164597292ed02cb252094ae79`.
+- La última batería focal terminó `100%` con skips esperados; Ruff, `py_compile`, `node --check iskvw/mesa_montaje.js`, `git diff --check` y exclusión de README/SVG pasan. La primera matriz final falló únicamente en el harness al tratar la lista JSON de `/api/jobs` como dict; se repitió corrigiendo el parser.
+- Matriz GET/HEAD final corregida: `:8890/` `200`/`143956`; `/api/jobs` `200`/lista vacía; auditoría `200`/`3218`; inbox compacto `200`/`1922874`; revisión `200`/`25209`; episodios `200`/`20542`; ideas `200`/`1081`; XIO `200`/`7746`, `available=true`, `work_valid=true`; `HEAD` auditoría `200`, cuerpo `0`. Los procesos quedaron `:8890` PID `44597` y `:8900` PID `37398`; runtime/espejo comparten hashes de todos los módulos desplegados.
+- Ledger antes/después: `544266:1867614:1786455915` sin cambio. No hubo proveedores externos, POST productivos, trabajos reales, commit, push, merge ni modificación del README/SVG.
+
+## Next action
+
+Mantener abierta la auditoría para la siguiente sesión: revisar contratos de estado tras reinicio, especialmente el cruce `jobs.jsonl`→`entregar`, la lectura de caches del grafo y la sincronización pausada de repo/runtime. Si aparece otra carrera reproducible, aislarla y respaldarla igual; no usar proveedores ni publicar cambios sin una integración concreta y una compuerta humana.
+
+## Caché del grafo e invalidación desde mutaciones — 2026-08-11
+
+- `memoria.grafo_semantico()` leía, calculaba y escribía con el mismo
+  `grafo_cache.json.tmp` sin exclusión. Dos requests de `ThreadingHTTPServer` o
+  dos callers standalone podían pisar el temporal o instalar un caché de otra
+  reconstrucción. Además `/api/fructificacion` borraba el archivo directamente
+  y `/api/fusion` no invalidaba el caché después de crear un primordio.
+- Se añadió lock de hilo + archivo (`fcntl`) alrededor de lectura, cálculo,
+  reemplazo e invalidación; `invalidate_grafo_cache()` es ahora la única puerta
+  para invalidar desde ambos endpoints. La suite focal pasó `9/9`; el fixture
+  MAK de dos procesos midió `graph_max_active=1`, `invalidation=true` y
+  `fcntl=true`.
+- Despliegue respaldado bajo `rollback/graph-cache-race-20260811`. Runtime y
+  espejo comparten `memoria.py`
+  `15353a6cc2296c929a1eb573213aa0d1e86bf2b9f1b37eb0bdf84063629d2dd8` e
+  `interfaz.py`
+  `a5f815038377d3f3c4f42f7dbd1df8694f53f222734182516cede9aa9496411a`.
+- Verificación viva sin UI: `/api/memoria/grafo?umbral=0.9&limite=5` devolvió
+  `200`, `5` nodos proyectados, `1` arista y `1828` nodos en meta, sin error;
+  `:8890` quedó activo en PID `45936`. El ledger de fichas permaneció
+  `2829673:6425091:1786160844` antes y después.
+- El primer harness remoto falló por transporte Base64 y por no incluir el
+  path de `research_lib`; se corrigió y la segunda ejecución fue la evidencia
+  válida. El primer intento de reinicio también fue bloqueado por mi propio
+  patrón `pgrep` dentro del comando; se repitió separado y el watchdog levantó
+  la interfaz correctamente. No se usaron proveedores ni POST productivos.
+
+## Ledger Codex compartido con el entregador — 2026-08-11
+
+- `research/jobs.jsonl` y `codex/jobs.jsonl` son colas separadas de forma
+  intencional; `entregar.py` debe consumir únicamente la cola Codex. La brecha
+  real era que `interfaz_codex.py` y `agente_libre.py` escribían sin lock, y
+  `entregar.py` podía leer mientras una línea estaba siendo anexada.
+- Se añadió el mismo sidecar `codex/jobs.jsonl.lock` a los dos productores y al
+  lector del entregador; `interfaz_codex._cargar_jobs()` también lee bajo esa
+  exclusión. Los append pasan por un helper común local y hacen `flush()`.
+- Despliegue respaldado bajo `rollback/codex-jobs-ledger-lock-20260811` y
+  `rollback/codex-jobs-ledger-lint-20260811`. Runtime/espejo comparten:
+  `interfaz_codex.py`
+  `3392e4e2d37f3caff8e0a28b7be107c727caaf3f5f1b413e3bda491ff26fd5d9`,
+  `agente_libre.py`
+  `03cd6de4ef397466d88b6fc57c0c7cba45befe42e6ef3efe69e2c7f64d212628` y
+  `entregar.py`
+  `acb4883554291811dc611ffc3909a737d9ca9b7f29c843fa48dc795589d2735c`.
+- Fixture MAK: `8` productores, `8` líneas JSONL, `8` IDs únicos y el lector
+  del entregador terminó viendo `8`; todos los procesos salieron `0`,
+  `fcntl=true`. `mak-codex.service` está activo en PID `47411`; `:8891/` y
+  `:8891/api/jobs` devolvieron `200`. No se abrió PR, no se ejecutó entrega y
+  no se modificó el ledger productivo.
+- La regresión focal completa pasó con skips Linux esperados; `py_compile`,
+  Ruff focal y `git diff --check` quedaron limpios. Ruff inicialmente marcó un
+  import muerto y una condición antigua en `interfaz_codex.py`; ambos se
+  corrigieron antes del despliegue final.
+
+## Next action
+
+Continuar con contratos de estado después de reinicio y con la sincronización
+pausada repo/runtime: comparar qué módulos desplegados todavía no tienen una
+fuente canónica o una comprobación de hash automática. Después auditar los
+lectores de caches y los logs de entrega que aún no comparten lock, usando
+fixtures temporales y una matriz GET/HEAD; mantener el objetivo abierto, sin
+declarar cierre global ni tocar README/SVG.
+
+## Coherence y archivos de rollback — 2026-08-11
+
+- `coherence.py --strict` produjo `23` drift points falsos después de preservar
+  backups: `BOX_OWNED` no conocía `rollback/` y el detector marcaba cualquier
+  `hub.py`/`entregar.py` archivado como invocado porque buscaba sólo el basename
+  en cron/systemd. Se reprodujo en el box; no se borró ningún backup.
+- Se añadió `rollback/` a `BOX_OWNED`. La diferencia real restante de
+  `rescue_adjudicator.py` era sólo una docstring en español del runtime; se
+  respaldó y se alineó con el espejo, sin cambio ejecutable. Test local,
+  `py_compile` y Ruff pasan.
+- Despliegue respaldado bajo `rollback/coherence-rollback-drift-20260811`.
+  `coherence.py` runtime/espejo comparte hash
+  `4d1e08ee7681c7eaaf60d1ce2fee9db792b26e6c41ede94ee1ae1930d0ea7675` y
+  `rescue_adjudicator.py` comparte
+  `7b6b00ba96ccf4d9def28ee727c5b5b904399951aabd0556ca87120d1c5d9bbd`.
+- La verificación MAK volvió a dar `0 different`, `0 not copied` y `0 box-only
+  invoked` para todos los órganos: `No drift: the box runs what the repo says.`
+  El checkout remoto sigue con cambios de auditoría y `rollback/` sin trackear,
+  pero esa evidencia queda fuera de los órganos ejecutables y el repo-sync
+  continúa pausado para no sobrescribir runtime manual.
+
+## Next action
+
+Auditar la frontera de sincronización pausada: listar los módulos que el
+runtime ejecuta pero que aún viven sólo como cambios sucios del checkout de
+auditoría, comprobar qué puede perder el próximo `git checkout/reset` y dejar
+un informe de reconciliación sin hacer merge automático. Después revisar los
+lectores de estado tras reinicio y los logs legacy restantes; mantener la
+compuerta humana y el objetivo abierto.
+
+## Recuperación de jobs de research después de reinicio — 2026-08-11
+
+- Se reprodujo una pérdida de proyección: `/home/mak/research/jobs.jsonl` tenía
+  `462` líneas, pero `interfaz.py` definía `_load_jobs()` y nunca la llamaba en
+  `main()`. Tras reiniciar, `/api/jobs` devolvía `[]` (`2` bytes), mientras el
+  ledger seguía intacto. Codex sí tenía su llamada equivalente.
+- `main()` ahora recarga los últimos `15` jobs al arrancar y `_load_jobs()` usa
+  el mismo sidecar lock de `jobs.jsonl`; el ledger sigue siendo append-only y
+  las líneas corruptas se omiten sin reescribirlo. Test local: conserva dos
+  jobs válidos y la línea corrupta, sin modificar el archivo.
+- Despliegue respaldado bajo `rollback/research-restart-state-20260811`.
+  Runtime/espejo comparten `interfaz.py`
+  `6d36bd9b9bdf7bff22bf7851c5ab06dcd7e1daa5320b4f7ba542b413d5fd25e4`.
+  Tras reinicio controlado, `:8890/api/jobs` devolvió `200`, `11278` bytes y
+  `15` jobs visibles; el ledger medía `183513` bytes. No se lanzó ningún job.
+- Un primer llamado combinado al watchdog no dejó el proceso visible; se
+  repitió en una llamada separada y el watchdog informó `interfaz.py no esta
+  corriendo. Lanzando...`; el proceso quedó en PID `48610`. La segunda
+  verificación es la válida y no mostró error de Python.
+
+## Next action
+
+Comparar ahora los otros estados que sobreviven en disco pero se reconstruyen
+en memoria al arrancar (`workflow`, grafo, decisiones humanas y entregas), y
+verificar que el repo-sync pausado no pueda reinstalar una versión anterior
+sin una reconciliación explícita. Mantener pruebas temporales, hashes y GETs;
+no hacer reset/merge/push ni declarar cierre global.
+
+## Estado de entregas resistente a corte — 2026-08-11
+
+- `entregar.guardar_estado()` escribía directamente
+  `codex_delivered.json`. Un corte durante `json.dump` podía dejar JSON
+  truncado; `cargar_estado()` lo interpretaba como vacío y el siguiente tick
+  podía volver a intentar una entrega ya abierta.
+- Se cambió a temporal único en el mismo directorio, `flush()`, `fsync()` y
+  `os.replace`, con limpieza del temporal si falla. La prueba local y el
+  fixture MAK confirmaron JSON válido, orden estable y `temp_left=0` sin tocar
+  el estado real.
+- Despliegue respaldado bajo `rollback/delivery-state-atomic-20260811`.
+  Runtime/espejo comparten `entregar.py`
+  `4a37c0d026bfb1f27a9e0e39906541df7e673525e04d4dc3c795e6b4769b2969`;
+  el cron real sigue siendo `0 */6 * * * ... entregar.py --limit 1`.
+
+## Next action
+
+Revisar los estados restantes que se materializan al arranque y el informe de
+reconciliación repo/runtime: workflow, caché/decisiones del grafo, estado de
+entrega y cualquier `*.json` leído sin instalación atómica. Mantener fixtures
+temporales, backups y GETs; el siguiente cambio debe estar respaldado por una
+falla reproducible y no por una suposición.
+
+## Orquestador de trabajo serializado — 2026-08-11
+
+- `trabajo.py` corre por cron cada `30` minutos y no tenía exclusión de tick ni
+  escritura atómica de `.trabajo_state.json`. Dos ejecuciones superpuestas
+  podían despachar dos unidades con el mismo estado y dejar el contador
+  perdido; un corte durante `json.dump` podía dejar el estado inválido.
+- Se añadió lock de hilo + archivo alrededor del tick completo y estado
+  temporal único + `flush()`/`fsync()`/`os.replace`. Fixture local y MAK con dos
+  ticks falsos confirmaron `count=1`, `temp_left=0` y `fcntl=true`, sin POST ni
+  llamadas a proveedores.
+- Despliegue respaldado bajo `rollback/trabajo-state-race-20260811`.
+  Runtime/espejo comparten `trabajo.py`
+  `d7e9327513ca1da7688c0a499774c243fb69536d2326283f1e4a8e2ca71b001f`;
+  el cron real sigue activo cada 30 minutos.
+
+## Next action
+
+Completar la auditoría de writers de estado de cron (`latido`, `red_watch`,
+`junta`) sólo si su duración y ownership permiten solapamiento real; después
+revisar la reconciliación pausada de repo/runtime y actualizar el circuito
+vivo. No ampliar a proveedores ni modificar datos productivos sin una
+reproducción concreta.
+
+## Reanudación humana de research serializada — 2026-08-11
+
+- Dos requests concurrentes a `/api/reanudar` sobre el mismo job `PAUSADO`
+  podían pasar la lectura del estado antes de que alguna lo cambiara, modificar
+  el checkpoint y lanzar dos workers. El lock de `JOBS` sólo protegía la
+  búsqueda, no la reclamación.
+- La ruta ahora reclama el job como `REANUDANDO` bajo `JOBS_LOCK` antes de
+  tocar el checkpoint; el segundo request recibe `400`, y los errores restauran
+  `PAUSADO`. Fixture MAK: `reanudar_requests=2`, `accepted=1`, `rejected=1`,
+  `checkpoint_actions=1`, sin ejecutar research.
+- Despliegue respaldado bajo `rollback/research-reanudar-claim-20260811`.
+  Runtime/espejo comparten `interfaz.py`
+  `dc39e7918131d310d99a50fc5c46debd95eb24a5dfa193e92312dcb278c3d15e`;
+  `:8890` quedó activo en PID `50036` y devolvió `200`/`11278` bytes en
+  `/api/jobs` tras el reinicio.
+
+## Next action
+
+Cerrar la revisión de ownership de `latido`, `red_watch` y `junta` mediante
+duraciones/cron reales y no por intuición; después volver a medir la matriz
+completa y el drift. Si aparece otro writer sin exclusión, aislarlo en un
+fixture y respaldarlo antes de tocar runtime.
+
+## Estados de cron instalados atómicamente — 2026-08-11
+
+- `latido` (cada 4 h), `red_watch` (cada 2 min) y `junta` (cada 6 h) tienen un
+  solo dueño cron y sus ventanas no justifican bloquear toda la ejecución;
+  sí escribían estados/ajustes JSON directamente. Un corte podía dejar `.state`
+  o `ajustes_junta.json` truncado y hacer perder el cupo o una transición de
+  red/decisión.
+- Se añadió helper local de temporal en el mismo directorio con `flush()` +
+  `fsync()` + `os.replace` para los estados e índices afectados. Suite local:
+  `13` tests verdes; fixture MAK: `cron_states=latido,red_watch,junta
+  atomic=true temp_left=0`. No hubo llamadas de red ni proveedor.
+- Despliegue respaldado bajo `rollback/cron-state-atomic-20260811`.
+  Hashes runtime/espejo: `latido.py`
+  `844f2a53371de477180f61091b00487e522805541bcce38b87c48068a9f7c0db`;
+  `red_watch.py`
+  `025d400d2f69182ef55ed2e2977851e44f9323123d25eb5bf93b92f0e46ba357`;
+  `junta.py`
+  `2fc45907daa161257e17c8bf5c7310c345e28a0eb99d4dace46a41c1790df1dc`.
+
+## Next action
+
+Ejecutar la matriz GET/HEAD y `coherence --strict` después de todo este bloque,
+comparar hashes del runtime y espejo una vez más y revisar el estado del
+checkout auditado. Mantener como pendientes los writers que no tengan un
+caller operativo demostrado; no declarar cierre global.
+
+## Matriz viva posterior al bloque — 2026-08-11
+
+- La regresión focal ampliada terminó `100%` verde con skips Linux esperados;
+  `py_compile`, Ruff focal, `git diff --check` y la protección README/SVG
+  también pasan. No se abrió navegador, no se usaron proveedores y no hubo
+  POST productivos.
+- `coherence --strict` devolvió `0`: `0 different`, `0 not copied` y `0
+  box-only invoked` en los cinco órganos. Quedan `948`/`5` archivos box-only
+  no invocados (estado/backups), clasificados como tales por contrato.
+- Matriz solo lectura: `:8890/` `200`/150441; research `/api/jobs`
+  `200`/11278; grafo `200`/2797; `:8891/` `200`/18744; Codex `/api/jobs`
+  `200`/8452; auditoría `200`/3218; inbox `200`/1922874; revisión
+  `200`/25032; episodios `200`/20084; ideas `200`/1081; XIO `200`/7741 con
+  `available=true`. Hub y Codex están `active`; research PID `50036`.
+- El ledger de fichas permaneció `2829673:6425091:1786160844` antes y después.
+  Runtime/espejo siguen iguales para research, Codex y trabajo; no hubo
+  commit, push, merge ni reset.
+
+## Next action
+
+Mantener abierta la auditoría en el checkout de auditoría: documentar la
+reconciliación pendiente entre esa rama sucia y el `mak` canónico sin aplicar
+reset automático; revisar cualquier writer que aparezca en el siguiente
+inventario de cron y sus contratos tras reinicio. La siguiente sesión debe
+empezar por esa frontera, no por reabrir los circuitos ya medidos.
+
+## Reconciliación del espejo y persistencia de configuración — 2026-08-11
+
+- El detector `tools/mak_ops/check_mak_mirror.py` sólo cubría ocho archivos y
+  podía leer el checkout equivocado porque usaba `Path.cwd()`. Se amplió a
+  `32` entradas en plataforma, research, Codex, vigia y curatoria, y ahora la
+  raíz se resuelve desde `Path(__file__).resolve().parents[2]`. Una prueba
+  estática evita que el comando vuelva a validar otra rama por accidente.
+- La medición del checkout de auditoría dio `32 PASS / 0 MISMATCH` contra
+  `/home/mak/flujo/cultura` y los órganos vivos. La medición independiente de
+  `C:\IA\flujo` dio `6 PASS / 26 MISMATCH`: el canónico sigue en `mak`
+  `abe27c22`, mientras GitHub `origin/mak` es `160b94d3`. El checkout remoto
+  también sigue en `abe27c22`, sucio (`29` entradas), con el repo-sync
+  pausado. No se hizo reset, merge, commit ni push.
+- La divergencia no se ocultó: quedó en
+  `_logs/cauce_director/20260805/mak_mirror_canonical_post_20260811.md` y la
+  comprobación limpia en `mak_mirror_post_interfaz_20260811.md`. El primer
+  `git ls-remote` remoto falló por ejecutarse fuera del checkout; repetido
+  dentro de `/home/mak/flujo` confirmó que el `origin` sí existe. Ese fallo es
+  del harness, no del repositorio.
+- Se reprodujo y corrigió una frontera de persistencia: `workflow.json` y
+  `research.env` tenían temporal fijo o escritura directa. Ahora usan
+  temporal único en el mismo directorio, `flush` + `fsync` + `os.replace`, y
+  limpian el temporal si la instalación falla. La batería Atlas/reanudación/
+  checkpoints/entrypoints terminó verde (`100%` de los tests ejecutables;
+  `fcntl` sólo se saltó en Windows). La prueba Linux confirmó que un fallo de
+  `replace` conserva el archivo anterior y no deja basura.
+- Se desplegó `cultura/mak_research/interfaz.py` al repo espejo y a
+  `/home/mak/research/interfaz.py`, con copias en
+  `rollback/research-config-atomic-20260811`. Tras el reinicio, el watchdog y
+  un arranque manual coincidieron durante unos segundos y crearon dos
+  procesos; se terminó únicamente el manual `53654`. La verificación final
+  dejó un solo proceso `53620`, un listener en `:8890`, `15` jobs visibles y
+  `/api/workflow` recuperado (`mode=single`, `5` conexiones).
+- Matriz viva posterior: `:8890/`, `/api/jobs` y grafo `200`; `:8891/` y
+  `/api/jobs` `200`; Hub `/api/portfolio/audit` `200` con esquema
+  `faro-portfolio-audit-v1`; inbox `200` con esquema
+  `faro-portfolio-inbox-v1`. El Atlas remoto mide `7044` registros, `91`
+  etiquetas (`work=27`, `record=13`, `review=1`, `discard=50`), y mantiene
+  `automation_ready=false`; esas cifras son proyección verificable, no una
+  promoción automática.
+- `coherence.py --strict` volvió a dar `0 different`, `0 not copied` y `0
+  box-only invoked` en los cinco órganos. La igualdad del espejo auditado no
+  elimina la brecha del checkout canónico; el próximo transporte debe
+  resolverla de forma explícita y preservando sus cambios locales.
+
+## Next action
+
+Reconciliar la rama `mak` canónica con el checkout auditado mediante una
+decisión explícita de transporte, sin reset automático; antes de eso, conservar
+los informes de `check_mak_mirror` como evidencia. Después auditar los demás
+writers de estado no incluidos en los 32 entrypoints (checkpoints de pausa,
+logs legacy y artefactos de entrega) con fixtures de corte/reinicio, y revisar
+las integraciones aún no conectadas a la superficie Atlas. Mantener la
+compuerta humana, no usar proveedores sin una tanda concreta y no tocar
+README/SVG.
+
+## Writers restantes e integraciones Atlas verificadas — 2026-08-11
+
+- La revisión de cron encontró tres writers que aún usaban temporales fijos o
+  no hacían `fsync`: checkpoints humanos (`pausa.py`), estado de ejecución del
+  worker (`worker.py`) y estado/compactación de vigia (`vigia.py`). Se añadió
+  lock sidecar para acciones de checkpoint entre procesos y temporales únicos
+  con limpieza ante fallo para los tres. La prueba local pasó y la prueba
+  remota Linux confirmó que un `replace` fallido conserva el archivo anterior
+  y deja `0` temporales.
+- Se desplegaron los tres módulos al espejo y runtime, con rollback en
+  `rollback/checkpoint-state-atomic-20260811`. Se amplió el detector de espejo
+  para incluir `pausa.py` y `worker.py`: la medición final da `34 PASS / 0
+  MISMATCH`. El checkout canónico independiente permanece en `6 PASS / 28
+  MISMATCH`; esa brecha sigue pendiente y no se resolvió con reset.
+- El reinicio de research se hizo mediante `/home/mak/research/watchdog.sh`,
+  que es su dueño real. Quedó un solo `interfaz.py` (`PID 55177`) en `:8890`;
+  no se repitió la superposición manual. `:8890`, `:8891` y `:8900` siguen con
+  un listener cada uno.
+- La regresión final ejecutable pasó completa: Atlas/bridge, reanudación,
+  pausa, vigia, concurrencia de interfaz y entrypoints; Ruff, `py_compile`,
+  `git diff --check` y la protección README/SVG también pasan. Los skips son
+  únicamente los tests Linux que requieren `fcntl` cuando corren en Windows.
+- La matriz de integración read-only confirmó los esquemas:
+  `faro-portfolio-decision-index-v1` (`58` selecciones, `20` feedback de
+  relaciones, `8` revisiones externas), `faro-portfolio-contract-surface-v1`,
+  `faro-portfolio-review-queue-v1`, `faro-portfolio-organism-v1` (`7044`
+  bloques, `7` canales, `21` conexiones, `12` decisiones) y
+  `faro-xio-evidence-v1` (`work_valid=true`, `21` setlist/cues/segmentos).
+  Una escena válida conserva XIO separado, `promotion=none` y
+  `next_action=link manually to portfolio source`; no se creó un vínculo
+  automático ni se escribió una decisión.
+- Matriz viva final sin POST: `:8890/` `200`/150441, `/api/jobs`
+  `200`/11278, grafo `200`/2797; `:8891/` `200`/18744, jobs `200`/8452;
+  auditoría Hub `200`/3218 e inbox `200`/3663485. El Atlas permanece en
+  `7044` registros, `91` etiquetas, `58` piezas con estado actual y
+  `automation_ready=false`. `coherence --strict` mantiene cero drift.
+
+## Next action
+
+Mantener abierta la reconciliación del `mak` canónico (`abe27c22` frente a
+`origin/mak=160b94d3`) y decidir el transporte preservando los cambios locales.
+Después revisar los logs append-only legacy y el vínculo humano pendiente de
+XIO con una compuerta explícita; seguir probando cortes/reinicios y cualquier
+writer nuevo que no esté cubierto por los 34 hashes. No promover predicciones,
+no activar el repo-sync y no tocar README/SVG.
+
+## Puente/minería y frontera final del espejo — 2026-08-11
+
+- Se reprodujo otra frontera de persistencia en los writers de
+  `puente_issues.py` y `mineria_rd.py`: ambos podían dejar un temporal fijo o
+  un archivo parcialmente instalado si el proceso caía durante la escritura.
+  Ahora usan temporal único en el mismo directorio, `flush` + `fsync` +
+  `os.replace`, con limpieza ante fallo. Las pruebas locales, Ruff,
+  `py_compile` y la prueba remota Linux de fallo de `replace` pasaron; el
+  archivo anterior se conserva y no quedan temporales.
+- Se desplegaron ambos módulos al repo espejo y al runtime, con rollback en
+  `rollback/bridge-mining-state-atomic-20260811`. El detector cubre ahora `36`
+  entrypoints: el checkout de auditoría da `36 PASS / 0 MISMATCH` contra repo
+  y runtime; el checkout canónico independiente da `7 PASS / 29 MISMATCH`.
+  Esta divergencia sigue siendo una frontera de transporte, no se ocultó ni se
+  resolvió con reset, merge, commit o push.
+- La batería focal ejecutable sigue verde al `100%`; Ruff, `py_compile`,
+  `git diff --check`, la matriz viva y `coherence.py --strict` también. No se
+  modificó `README.md` ni `arte-ascii-readme.svg`.
+- La verificación Atlas permanece read-only: `7044` registros, `91` etiquetas,
+  `58` piezas con estado actual, `automation_ready=false`; XIO conserva
+  `work_valid=true` pero exige vínculo manual con la fuente de portafolio. No
+  se promovieron predicciones ni se escribieron decisiones.
+
+## Next action
+
+Mantener abierta la reconciliación del `mak` canónico (`abe27c22` frente a
+`origin/mak=160b94d3`) preservando sus cambios locales. Auditar ahora los
+writers append-only legacy (`energia_log`, `puente`, `mutaciones`, `capataz`,
+`conversacion`) y su ownership real en cron/callers antes de modificar;
+después cerrar la inspección del vínculo humano XIO con una compuerta explícita.
+Conservar la cobertura de `36` hashes, seguir con pruebas de corte/reinicio y
+no activar repo-sync ni tocar README/SVG.
+
+## Writers activos y cron declarativo — 2026-08-11
+
+- `mutaciones.log` sí es un writer activo: `retencion.py` y `vigia.py` lo
+  invocan. `mutaciones.py` conserva ahora lock de archivo entre procesos,
+  `flush` + `fsync`, y la prueba remota de ocho procesos concurrentes dejó
+  ocho líneas JSON válidas. Se preservó rollback en
+  `rollback/mutaciones-fsync-20260811`.
+- `capataz.py` también es activo (`10,40 * * * *`). Su lock ya cubría la
+  carrera de intents; ahora sus tres append críticos (ledger de research,
+  backlog Codex y bitácora) fuerzan persistencia. La prueba local y la prueba
+  remota entre procesos pasaron; rollback en
+  `rollback/capataz-fsync-20260811`.
+- La copia declarativa `cultura/mak_plataforma/crontab.mak` discrepaba del
+  crontab efectivo: `MAK-REPO-SYNC` estaba activo en el archivo y pausado en
+  el box. En el checkout de auditoría quedó marcado `# PAUSED-FARO` y una
+  prueba evita reactivarlo por reaplicación accidental. El crontab efectivo no
+  se tocó.
+- Hub tenía locks de hilo pero sus JSONL de selección, clasificación,
+  relaciones, feedback, triangulación, revisión externa y visión no hacían
+  `fsync`. Se centralizó `_portfolio_append_jsonl`, se probaron sus escritores
+  y se desplegó con rollback en `rollback/hub-jsonl-fsync-20260811`; el único
+  dueño `mak-hub.service` fue reiniciado por systemd, sin duplicar procesos.
+  Hashes auditados: `36 PASS / 0 MISMATCH`; canónico independiente:
+  `7 PASS / 29 MISMATCH`.
+- Ownership legacy verificado: `puente.py` no está en cron ni tiene proceso
+  vivo; `conversacion.log` conserva solo el arranque histórico. `energia_log.py`
+  tampoco está en el cron efectivo. No se modificaron esos módulos inactivos.
+- Matriz posterior al reinicio: listeners únicos en `:8890`, `:8891` y
+  `:8900`; `/api/portfolio/audit`, decision-index, XIO evidence y organism
+  responden `200`. Atlas sigue en `7044` registros, `91` etiquetas, `58`
+  piezas con estado actual y `automation_ready=false`. XIO sigue separado y
+  requiere vínculo humano explícito; no se creó un vínculo automático.
+
+## Next action
+
+No cerrar la auditoría: resolver la frontera de transporte del `mak` canónico
+sin reset, revisar los writers de los cron activos que aún no están en los 36
+hashes y diseñar/probar el vínculo humano XIO sin convertir evidencia en hecho.
+Después ejecutar la batería focal completa y volver a medir la matriz. Mantener
+repo-sync pausado y no tocar README/SVG.
+
+## Regresión final de esta tanda — 2026-08-11
+
+- La batería focal terminó `100%` verde: `pytest` ejecutó la cobertura Atlas,
+  persistencia, Capataz, Hub, cron y entrypoints sin fallos; los únicos
+  `14` skips son los fixtures que requieren `fcntl` al correr en Windows.
+  Ruff, `py_compile` y `git diff --check` también pasaron.
+- `coherence.py --strict` en MAK volvió a medir `0 different`, `0 not copied`
+  y `0 box-only invoked` en los cinco órganos. La comprobación de espejo más
+  reciente conserva `36 PASS / 0 MISMATCH` para auditoría/repo/live y
+  `7 PASS / 29 MISMATCH` al comparar el canónico `C:\IA\flujo`.
+- Matriz de código posterior: `:8890/` `200`/151221, `/api/jobs`
+  `200`/11288, grafo `200`/2801; `:8891/` `200`/18772, jobs `200`/8506;
+  Hub auditoría `200`/3218 e inbox `200`/3681556. Quedó exactamente un
+  listener en cada puerto `8890`, `8891` y `8900`.
+- No se usaron AWS/Watson en esta tanda: no había una hipótesis que necesitara
+  inferencia externa y no se generaron decisiones de producto. No se tocó
+  README/SVG ni se hizo commit, push, merge o reset.
+
+## Next action
+
+Continuar desde dos frentes abiertos: (1) transporte explícito del checkout
+canónico, preservando sus cambios, y (2) integración humana del vínculo XIO y
+auditoría de los writers de cron aún fuera de los 36 hashes. Cualquier vínculo
+XIO debe quedar como decisión humana append-only, con fuente, identidad,
+confianza y promoción `none`; no convertir la evidencia separada en relación
+automática. Mantener el repo-sync pausado.
+
+## Cobertura completa de cron — 2026-08-11
+
+- La auditoría del inventario efectivo de cron encontró que la cobertura de
+  `36` no incluía todos los targets ejecutados. El checker se amplió a `47`
+  archivos, incorporando watchdogs, guardias, `revisor`, `vigilar_red`,
+  `retencion`, `corpus_a_micelio` y los dos scripts de lenguaje.
+- La medición completa dio `47 PASS / 0 MISMATCH` contra el checkout auditado,
+  repo MAK y live MAK. La medición del canónico Windows, sin reconciliar, dio
+  `18 PASS / 29 MISMATCH`; esa diferencia es evidencia de transporte pendiente,
+  no un motivo para resetear.
+- `tests/test_operational_entrypoints.py`, Ruff y el checker pasan. El reporte
+  está en `mak_mirror_full_cron_20260811.md`; su equivalente canónico en
+  `mak_mirror_canonical_full_cron_20260811.md`.
+
+## Next action
+
+Two circuits remain open: reconcile the canonical checkout while preserving its
+changes, and provide a verifiable human XIO link without auto-linking. Then
+test the 47 cron targets across stop/restart boundaries, starting with the
+watchdog and retention jobs, and record any real discrepancy before editing.
+Do not activate repo-sync or touch README/SVG.

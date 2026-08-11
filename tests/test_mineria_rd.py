@@ -15,6 +15,25 @@ sys.path.insert(0, str(proyecto_dir / "cultura" / "mak_plataforma"))
 import mineria_rd  # noqa: E402
 
 
+def test_replace_failure_preserves_previous_state_and_cleans_temp(
+        monkeypatch, tmp_path):
+    path = tmp_path / "estado.json"
+    path.write_text('{"old": true}', encoding="utf-8")
+    original_replace = mineria_rd.os.replace
+
+    def fail_install(source, destination):
+        if destination == str(path):
+            raise OSError("simulated replace failure")
+        return original_replace(source, destination)
+
+    monkeypatch.setattr(mineria_rd.os, "replace", fail_install)
+    with pytest.raises(OSError, match="simulated replace failure"):
+        mineria_rd._guardar_estado(str(path), {"new": True})
+
+    assert path.read_text(encoding="utf-8") == '{"old": true}'
+    assert not list(tmp_path.glob(".*.tmp"))
+
+
 # ---------------------------------------------------------------------------
 # barrer()
 # ---------------------------------------------------------------------------
