@@ -12,11 +12,58 @@ Puro stdlib, importable en Windows (sin fcntl): lo usa tambien worker.py
 """
 import json
 import os
-import time
+import tempfile
+import threading
+from contextlib import contextmanager
+
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - Windows director has no fcntl
+    fcntl = None
 
 DIR_CHECKPOINTS = os.path.join(os.path.expanduser("~"), "research", "checkpoints")
 
 MARCA = "PAUSADO: "
+_CHECKPOINT_LOCK = threading.RLock()
+
+
+@contextmanager
+def _exclusive_checkpoint_lock(path):
+    """Serialize human actions across MAK processes."""
+    with _CHECKPOINT_LOCK:
+        lock_path = os.path.abspath(path) + ".lock"
+        os.makedirs(os.path.dirname(lock_path), exist_ok=True)
+        fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+        try:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_EX)
+            yield
+        finally:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+            os.close(fd)
+
+
+def _write_json_atomic(path, data):
+    parent = os.path.dirname(os.path.abspath(path))
+    temp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+                "w", encoding="utf-8", dir=parent,
+                prefix=".%s-" % os.path.basename(path), suffix=".tmp",
+                delete=False) as f:
+            temp_path = f.name
+            json.dump(data, f, ensure_ascii=False, indent=1)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temp_path, path)
+        temp_path = None
+    finally:
+        if temp_path:
+            try:
+                os.unlink(temp_path)
+            except OSError:
+                pass
 
 
 def guardar_checkpoint(datos, base_dir=None):
@@ -26,10 +73,8 @@ def guardar_checkpoint(datos, base_dir=None):
     destino = base_dir or DIR_CHECKPOINTS
     os.makedirs(destino, exist_ok=True)
     path = os.path.abspath(os.path.join(destino, "%s.json" % job_id))
-    tmp = path + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(datos, f, ensure_ascii=False, indent=1)
-    os.replace(tmp, path)
+    with _exclusive_checkpoint_lock(path):
+        _write_json_atomic(path, datos)
     return path
 
 
@@ -47,17 +92,17 @@ def aplicar_accion(path, accion, texto=""):
         "editar"     -- datos["current"] = texto
         "saltar"     -- datos["saltar"] = True
     """
-    datos = cargar_checkpoint(path)
-    if accion == "reintentar":
-        pass
-    elif accion == "editar":
-        datos["current"] = texto
-    elif accion == "saltar":
-        datos["saltar"] = True
-    else:
-        raise ValueError("accion desconocida: %s" % accion)
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(datos, f, ensure_ascii=False, indent=1)
+    with _exclusive_checkpoint_lock(path):
+        datos = cargar_checkpoint(path)
+        if accion == "reintentar":
+            pass
+        elif accion == "editar":
+            datos["current"] = texto
+        elif accion == "saltar":
+            datos["saltar"] = True
+        else:
+            raise ValueError("accion desconocida: %s" % accion)
+        _write_json_atomic(path, datos)
     return datos
 
 

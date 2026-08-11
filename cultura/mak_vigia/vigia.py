@@ -23,15 +23,23 @@ ultimo.json (per-source conditional-GET validators + counters).
 """
 import argparse
 import hashlib
+from contextlib import contextmanager
 import json
 import os
 import re
 import sys
+import tempfile
+import threading
 import time
 import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
+
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - Windows falls back to thread lock
+    fcntl = None
 import xml.etree.ElementTree as ET
 from html.parser import HTMLParser
 
@@ -97,6 +105,24 @@ NAVEGACION = {
 }
 
 _ESPACIOS = re.compile(r"\s+")
+_VIGIA_STATE_LOCK = threading.RLock()
+
+
+@contextmanager
+def _exclusive_state_lock(state_dir):
+    """Protect one vigia state directory across threads and cron processes."""
+    with _VIGIA_STATE_LOCK:
+        os.makedirs(state_dir, exist_ok=True)
+        lock_path = _p(state_dir, ".vigia.lock")
+        fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+        try:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_EX)
+            yield
+        finally:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+            os.close(fd)
 
 
 def plegar(texto):
@@ -385,6 +411,28 @@ def _p(estado_dir, nombre):
     return os.path.join(estado_dir, nombre)
 
 
+def _write_text_atomic(path, text):
+    parent = os.path.dirname(os.path.abspath(path))
+    temp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+                "w", encoding="utf-8", dir=parent,
+                prefix=".%s-" % os.path.basename(path), suffix=".tmp",
+                delete=False) as f:
+            temp_path = f.name
+            f.write(text)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temp_path, path)
+        temp_path = None
+    finally:
+        if temp_path:
+            try:
+                os.unlink(temp_path)
+            except OSError:
+                pass
+
+
 def cargar_vistos(estado_dir):
     vistos = set()
     try:
@@ -420,10 +468,9 @@ def cargar_ultimo(estado_dir):
 
 def guardar_ultimo(estado_dir, datos):
     os.makedirs(estado_dir, exist_ok=True)
-    tmp = _p(estado_dir, ULTIMO) + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(datos, f, ensure_ascii=False, indent=1, sort_keys=True)
-    os.replace(tmp, _p(estado_dir, ULTIMO))
+    _write_text_atomic(
+        _p(estado_dir, ULTIMO),
+        json.dumps(datos, ensure_ascii=False, indent=1, sort_keys=True))
 
 
 def hashes_vigentes(ultimo):
@@ -440,82 +487,74 @@ def hashes_vigentes(ultimo):
 
 def compactar_vistos(estado_dir, ahora=None, ultimo=None,
                      dias=DIAS_COMPACTAR, max_registros=MAX_VISTOS):
-    """Retention of the vigia's own memory: keep what the diff still needs,
-    MOVE the rest to estado/archive/, never delete -- the same policy
-    retencion.py decided for the research reports (keep N, archive/, no rm).
+    with _exclusive_state_lock(estado_dir):
+        return _compact_seen_unlocked(
+            estado_dir, now=ahora, previous=ultimo, days=dias,
+            max_records=max_registros)
 
-    A record is archived only when it is older than `dias` AND its hash is no
-    longer on any watched page, so an archived hash cannot resurface by
-    itself. If a site re-lists an archived item months later, that re-listing
-    notifies again -- accepted on purpose: a call that reopens IS news.
 
-    Order of writes is crash-safe by construction: the archive copy lands
-    first, the trimmed vistos.jsonl replaces the old one after (os.replace,
-    atomic). A crash in between leaves a duplicate, never a loss.
+def _compact_seen_unlocked(state_dir, now=None, previous=None,
+                           days=DIAS_COMPACTAR, max_records=MAX_VISTOS):
+    """Archive stale seen-item records without deleting evidence.
 
-    Whoever moves state signs it (mutaciones.registrar): on 2026-07-30, 217
-    files moved into an archive/ and nobody could say who did it. The action
-    was right; the silence was not.
-
-    Returns a summary dict; {"archivados": 0} means nothing moved."""
-    ahora = time.time() if ahora is None else ahora
-    ruta = _p(estado_dir, VISTOS)
+    A record moves only after its age and current-page hash checks pass. The
+    archive is written before the compacted active file is atomically replaced,
+    so a crash can duplicate evidence but cannot lose it.
+    """
+    now = time.time() if now is None else now
+    path = _p(state_dir, VISTOS)
     try:
-        with open(ruta, encoding="utf-8") as f:
-            lineas = [ln.rstrip("\n") for ln in f if ln.strip()]
+        with open(path, encoding="utf-8") as f:
+            lines = [line.rstrip("\n") for line in f if line.strip()]
     except OSError:
         return {"total": 0, "archivados": 0, "quedan": 0, "archivo": ""}
-    resumen = {"total": len(lineas), "archivados": 0,
-               "quedan": len(lineas), "archivo": ""}
-    if len(lineas) <= max_registros:
-        return resumen
+    summary = {"total": len(lines), "archivados": 0,
+               "quedan": len(lines), "archivo": ""}
+    if len(lines) <= max_records:
+        return summary
 
-    ultimo = cargar_ultimo(estado_dir) if ultimo is None else ultimo
-    vigentes = hashes_vigentes(ultimo)
-    corte = ahora - dias * 86400.0
-    mantener, archivar = [], []
-    for linea in lineas:
+    previous = cargar_ultimo(state_dir) if previous is None else previous
+    current_hashes = hashes_vigentes(previous)
+    cutoff = now - days * 86400.0
+    keep_lines, archive_lines = [], []
+    for line_text in lines:
         try:
-            reg = json.loads(linea)
+            record = json.loads(line_text)
         except ValueError:
             # A malformed line is somebody's data we cannot date: it stays.
-            mantener.append(linea)
+            keep_lines.append(line_text)
             continue
-        ts = reg.get("ts")
-        es_viejo = isinstance(ts, (int, float)) and float(ts) < corte
-        if es_viejo and reg.get("h") not in vigentes:
-            archivar.append(linea)
+        timestamp = record.get("ts")
+        is_old = isinstance(timestamp, (int, float)) and float(timestamp) < cutoff
+        if is_old and record.get("h") not in current_hashes:
+            archive_lines.append(line_text)
         else:
-            mantener.append(linea)
-    if not archivar:
-        return resumen
+            keep_lines.append(line_text)
+    if not archive_lines:
+        return summary
 
-    arch_dir = os.path.join(estado_dir, "archive")
-    os.makedirs(arch_dir, exist_ok=True)
-    destino = os.path.join(
-        arch_dir, "vistos_%s.jsonl" % time.strftime("%Y%m%d",
-                                                    time.gmtime(ahora)))
-    with open(destino, "a", encoding="utf-8") as f:
-        for linea in archivar:
-            f.write(linea + "\n")
-    tmp = ruta + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        for linea in mantener:
-            f.write(linea + "\n")
-    os.replace(tmp, ruta)
+    archive_dir = os.path.join(state_dir, "archive")
+    os.makedirs(archive_dir, exist_ok=True)
+    archive_path = os.path.join(
+        archive_dir, "vistos_%s.jsonl" % time.strftime("%Y%m%d",
+                                                       time.gmtime(now)))
+    with open(archive_path, "a", encoding="utf-8") as f:
+        for line_text in archive_lines:
+            f.write(line_text + "\n")
+    _write_text_atomic(path, "".join(line + "\n" for line in keep_lines))
 
     if registrar_mutacion is not None:
         try:
             registrar_mutacion(
                 "vigia_compactar",
                 "%d registros -> %s (quedan %d, dias=%d)"
-                % (len(archivar), destino, len(mantener), dias),
+                % (len(archive_lines), archive_path, len(keep_lines), days),
                 origen=__file__)
         except Exception:  # noqa: BLE001 - signing must never break the move
             pass
-    resumen.update(archivados=len(archivar), quedan=len(mantener),
-                   archivo=destino)
-    return resumen
+    summary.update(archivados=len(archive_lines), quedan=len(keep_lines),
+                   archivo=archive_path)
+    return summary
 
 
 # ------------------------------------------------------------ regla de oro
@@ -697,32 +736,42 @@ def _mensaje_alerta(resultados):
 
 def correr(fuentes=None, estado_dir=ESTADO_DIR, abrir=None, notificar=True,
            ahora=None, dias=DIAS_SIN_NUEVOS, max_vistos=MAX_VISTOS):
-    ahora = time.time() if ahora is None else ahora
-    fuentes = cargar_fuentes() if fuentes is None else fuentes
-    ultimo = cargar_ultimo(estado_dir)
-    vistos = cargar_vistos(estado_dir)
+    with _exclusive_state_lock(estado_dir):
+        return _run_unlocked(
+            sources=fuentes, state_dir=estado_dir, opener=abrir,
+            notify=notificar, now=ahora, days_without_new=dias,
+            max_seen=max_vistos)
 
-    resultados = []
-    for fuente in fuentes:
-        r = revisar_fuente(fuente, ultimo.get(fuente["id"], {}), vistos,
-                           ahora, abrir=abrir, dias=dias)
-        ultimo[fuente["id"]] = r.pop("estado")
-        resultados.append(r)
 
-    registros = [n for r in resultados for n in r["nuevos"]]
-    if registros:
-        anotar_vistos(estado_dir, registros)
-    guardar_ultimo(estado_dir, ultimo)
+def _run_unlocked(sources=None, state_dir=ESTADO_DIR, opener=None,
+                  notify=True, now=None, days_without_new=DIAS_SIN_NUEVOS,
+                  max_seen=MAX_VISTOS):
+    now = time.time() if now is None else now
+    sources = cargar_fuentes() if sources is None else sources
+    previous = cargar_ultimo(state_dir)
+    seen = cargar_vistos(state_dir)
+
+    results = []
+    for source in sources:
+        result = revisar_fuente(source, previous.get(source["id"], {}), seen,
+                                now, abrir=opener, dias=days_without_new)
+        previous[source["id"]] = result.pop("estado")
+        results.append(result)
+
+    records = [item for result in results for item in result["nuevos"]]
+    if records:
+        anotar_vistos(state_dir, records)
+    guardar_ultimo(state_dir, previous)
 
     # Housekeeping INSIDE the existing hourly run -- not a new loop, not a new
     # cron. It only acts when the file crosses the cap, and it signs the move.
-    if max_vistos is not None:
-        compactar_vistos(estado_dir, ahora=ahora, ultimo=ultimo,
-                         max_registros=max_vistos)
+    if max_seen is not None:
+        _compact_seen_unlocked(state_dir, now=now, previous=previous,
+                               max_records=max_seen)
 
-    if notificar:
-        _notificar(resultados)
-    return resultados
+    if notify:
+        _notificar(results)
+    return results
 
 
 def _cargar_contexto_artista():

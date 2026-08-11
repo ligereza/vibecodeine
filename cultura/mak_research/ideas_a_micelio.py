@@ -9,10 +9,37 @@ from __future__ import annotations
 
 import json
 import os
+import tempfile
+import threading
+from contextlib import contextmanager
 from pathlib import Path
+
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - Windows director has no fcntl
+    fcntl = None
 
 IDEAS = Path(os.path.expanduser("~/plataforma/ideas.jsonl"))
 DESTINO = Path(os.path.expanduser("~/research/ideas"))
+_SYNC_LOCK = threading.RLock()
+
+
+@contextmanager
+def _exclusive_sync_lock(destination):
+    """Prevent two indexers from deleting or writing crossing adapters."""
+    with _SYNC_LOCK:
+        lock_path = os.path.abspath(str(destination)) + ".lock"
+        parent = os.path.dirname(lock_path)
+        os.makedirs(parent, exist_ok=True)
+        fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+        try:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_EX)
+            yield
+        finally:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+            os.close(fd)
 
 
 def documento(idea: dict) -> str:
@@ -35,37 +62,62 @@ def documento(idea: dict) -> str:
 
 
 def sincronizar(origen: Path = IDEAS, destino: Path = DESTINO) -> dict:
-    destino.mkdir(parents=True, exist_ok=True)
-    vigentes = set()
-    escritos = sin_cambio = 0
+    origen = Path(origen)
+    destino = Path(destino)
+    with _exclusive_sync_lock(destino):
+        return _sync_unlocked(origen, destino)
+
+
+def _sync_unlocked(source: Path, destination: Path) -> dict:
+    destination.mkdir(parents=True, exist_ok=True)
+    active_names = set()
+    written = unchanged = 0
     try:
-        lineas = origen.read_text(encoding="utf-8", errors="replace").splitlines()
+        line_texts = source.read_text(
+            encoding="utf-8", errors="replace").splitlines()
     except OSError:
-        lineas = []
-    for linea in lineas:
+        line_texts = []
+    for line_text in line_texts:
         try:
-            idea = json.loads(linea)
+            idea = json.loads(line_text)
         except ValueError:
             continue
         iid = str(idea.get("id") or "").strip()
         if not iid or not str(idea.get("texto") or "").strip():
             continue
-        nombre = "idea-%s.md" % iid
-        vigentes.add(nombre)
-        path = destino / nombre
-        nuevo = documento(idea)
-        if path.exists() and path.read_text(encoding="utf-8") == nuevo:
-            sin_cambio += 1
+        filename = "idea-%s.md" % iid
+        active_names.add(filename)
+        output_path = destination / filename
+        new_text = documento(idea)
+        if (output_path.exists()
+                and output_path.read_text(encoding="utf-8") == new_text):
+            unchanged += 1
         else:
-            path.write_text(nuevo, encoding="utf-8")
-            escritos += 1
-    retirados = 0
-    for path in destino.glob("idea-*.md"):
-        if path.name not in vigentes:
-            path.unlink()
-            retirados += 1
-    return {"ideas": len(vigentes), "escritas": escritos,
-            "sin_cambio": sin_cambio, "retiradas": retirados}
+            temp_path = None
+            try:
+                with tempfile.NamedTemporaryFile(
+                        "w", encoding="utf-8", dir=destination,
+                        prefix=".idea-", suffix=".tmp", delete=False) as f:
+                    temp_path = f.name
+                    f.write(new_text)
+                    f.flush()
+                    os.fsync(f.fileno())
+                os.replace(temp_path, output_path)
+                temp_path = None
+            finally:
+                if temp_path:
+                    try:
+                        os.unlink(temp_path)
+                    except OSError:
+                        pass
+            written += 1
+    removed = 0
+    for output_path in destination.glob("idea-*.md"):
+        if output_path.name not in active_names:
+            output_path.unlink()
+            removed += 1
+    return {"ideas": len(active_names), "escritas": written,
+            "sin_cambio": unchanged, "retiradas": removed}
 
 
 if __name__ == "__main__":
