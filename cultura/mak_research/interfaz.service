@@ -1,5 +1,8 @@
+# Compatibility unit only. The current MAK runtime starts Research through
+# watchdog/cron; this file is not installed as mak-interfaz.service. If it is
+# installed later, keep MAK_SERVICE_HOST loopback and update the mirror gate.
 [Unit]
-Description=MAK Research - Web Interface (canvas visual)
+Description=MAK Research internal service for the Hub (canvas visual)
 After=network.target
 
 [Service]
@@ -14,6 +17,7 @@ SyslogIdentifier=mak-interfaz
 
 # Environment
 Environment=PYTHONUNBUFFERED=1
+Environment=MAK_SERVICE_HOST=127.0.0.1
 EnvironmentFile=-/home/mak/n8n-local/research.env
 
 [Install]

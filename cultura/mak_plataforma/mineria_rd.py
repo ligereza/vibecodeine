@@ -24,6 +24,7 @@ import json
 import os
 import re
 import subprocess
+import tempfile
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
@@ -267,10 +268,27 @@ def _cargar_estado(estado_path: str) -> dict:
 
 
 def _guardar_estado(estado_path: str, estado: dict) -> None:
-    tmp = str(estado_path) + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(estado, f, ensure_ascii=True, indent=2)
-    os.replace(tmp, estado_path)
+    path = os.path.abspath(estado_path)
+    parent = os.path.dirname(path)
+    os.makedirs(parent, exist_ok=True)
+    temp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+                "w", encoding="utf-8", dir=parent,
+                prefix=".%s-" % os.path.basename(path), suffix=".tmp",
+                delete=False) as f:
+            temp_path = f.name
+            json.dump(estado, f, ensure_ascii=True, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temp_path, path)
+        temp_path = None
+    finally:
+        if temp_path:
+            try:
+                os.unlink(temp_path)
+            except OSError:
+                pass
 
 
 def minar(

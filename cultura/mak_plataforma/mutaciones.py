@@ -26,9 +26,35 @@ from __future__ import annotations
 import json
 import os
 import sys
+import threading
 import time
+from contextlib import contextmanager
+
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - Windows director has no fcntl
+    fcntl = None
 
 RUTA = os.path.join(os.path.expanduser("~"), "plataforma", "mutaciones.log")
+_MUTATION_LOCK = threading.RLock()
+
+
+@contextmanager
+def _exclusive_mutations_lock(destination):
+    """Serialize appends across independent processes."""
+    with _MUTATION_LOCK:
+        lock_path = os.path.abspath(destination) + ".lock"
+        parent = os.path.dirname(lock_path)
+        os.makedirs(parent, exist_ok=True)
+        fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+        try:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_EX)
+            yield
+        finally:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+            os.close(fd)
 
 
 def registrar(accion: str, detalle: str = "", origen: str | None = None,
@@ -48,9 +74,12 @@ def registrar(accion: str, detalle: str = "", origen: str | None = None,
     }
     destino = ruta or RUTA
     try:
-        os.makedirs(os.path.dirname(destino), exist_ok=True)
-        with open(destino, "a", encoding="utf-8") as f:
-            f.write(json.dumps(linea, ensure_ascii=False) + "\n")
+        with _exclusive_mutations_lock(destino):
+            os.makedirs(os.path.dirname(os.path.abspath(destino)), exist_ok=True)
+            with open(destino, "a", encoding="utf-8") as f:
+                f.write(json.dumps(linea, ensure_ascii=False) + "\n")
+                f.flush()
+                os.fsync(f.fileno())
         return True
     except OSError:
         return False
@@ -66,9 +95,9 @@ def leer(n: int = 20, ruta: str | None = None) -> list:
     except OSError:
         return []
     salida = []
-    for l in reversed(lineas):
+    for linea in reversed(lineas):
         try:
-            salida.append(json.loads(l))
+            salida.append(json.loads(linea))
         except ValueError:
             continue
     return salida

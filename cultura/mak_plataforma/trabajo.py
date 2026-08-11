@@ -7,21 +7,29 @@ La cola real manda primero; si no hay trabajo productivo, los verbos idle
 revisan, discuten, refutan o exponen en vez de fabricar mas ensayos. El ritmo
 se adapta a la red: offline (local serial y lento) se espacia mas. El fallback
 nube<->local lo maneja red_ok() dentro de las libs de cada departamento; aca
-solo se decide QUE y CUANDO, y se despacha por HTTP a research :8890 / codex
-:8891.
+ solo se decide QUE y CUANDO, y se despacha por HTTP a los servicios internos
+Research/Codex en loopback. La superficie humana y la delegacion remota pasan
+por el Hub.
 
 Apagar: quitar la linea MAK-TRABAJO del crontab.
 Ajustar ritmo/verbos/modulos/semillas: editar roles.py.
 """
 import json
 import os
-import re
+import sys
+import tempfile
+import threading
 import time
 import urllib.parse
 import urllib.request
+from contextlib import contextmanager
+
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - Windows director has no fcntl
+    fcntl = None
 
 HOME = os.path.expanduser("~")
-import sys
 sys.path.insert(0, os.path.join(HOME, "plataforma"))
 sys.path.insert(0, os.path.join(HOME, "research"))
 _DIR = os.path.dirname(os.path.abspath(__file__))
@@ -75,6 +83,24 @@ INFORMES_DIRS = [os.path.join(HOME, "research", d) for d in ("informes", "cadena
 CORPUS_REVIEW_EVERY = max(1, int(os.environ.get("MAK_CORPUS_REVIEW_EVERY", 4)))
 CURATORIA_BATCH_SIZE = max(1, int(os.environ.get("MAK_CURATORIA_BATCH_SIZE", 3)))
 # nota: dirs que no existen son saltados por cosechar
+_RUN_LOCK = threading.RLock()
+
+
+@contextmanager
+def _exclusive_run_lock():
+    """Prevent two work ticks from dispatching the same unit."""
+    with _RUN_LOCK:
+        lock_path = os.path.abspath(STATE) + ".lock"
+        os.makedirs(os.path.dirname(lock_path), exist_ok=True)
+        fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+        try:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_EX)
+            yield
+        finally:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+            os.close(fd)
 
 
 def log(m):
@@ -135,11 +161,26 @@ def _state():
 
 
 def _save(s):
+    temp_path = None
     try:
-        with open(STATE, "w") as f:
+        os.makedirs(os.path.dirname(STATE), exist_ok=True)
+        with tempfile.NamedTemporaryFile(
+                "w", encoding="utf-8", dir=os.path.dirname(STATE),
+                prefix=".trabajo-state-", suffix=".tmp", delete=False) as f:
+            temp_path = f.name
             json.dump(s, f)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temp_path, STATE)
+        temp_path = None
     except OSError:
         pass
+    finally:
+        if temp_path:
+            try:
+                os.unlink(temp_path)
+            except OSError:
+                pass
 
 
 def _lineas(path, fallback):
@@ -938,7 +979,7 @@ def _tarea(verbo, st):
     return None
 
 
-def main():
+def _main_unlocked():
     ts = time.strftime("%F %T")
     now = time.time()
     # dia anclado a las 19:00 locales (de 19:00 a 19:00), no fecha calendario
@@ -1049,6 +1090,11 @@ def main():
         log("%s [%s] %s FALLO: %s" % (ts, "on" if online else "OFF", verbo, str(e)[:120]))
         _audit_idle_decision(ts, online, verbo, depto, payload,
                              "failed", error=str(e))
+
+
+def main():
+    with _exclusive_run_lock():
+        return _main_unlocked()
 
 
 if __name__ == "__main__":

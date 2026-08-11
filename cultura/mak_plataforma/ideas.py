@@ -24,11 +24,13 @@ Archivos:
 import json
 import os
 import sys
+import threading
 import time
 from hashlib import sha1
 
 HOME = os.path.expanduser("~")
 IDEAS = os.path.join(HOME, "plataforma", "ideas.jsonl")
+_IDEAS_LOCK = threading.RLock()
 
 sys.path.insert(0, os.path.join(HOME, "research"))
 sys.path.insert(0, os.path.join(HOME, "plataforma"))
@@ -93,38 +95,49 @@ def relacionar(texto, k=6):
 
 
 def anotar(texto, k=6, origen_id=None, origen_dir=None):
-    """Registra la idea y le adjunta con que se relacionó al momento de escribirla."""
-    texto = (texto or "").strip()
-    if not texto:
+    with _IDEAS_LOCK:
+        return _note_unlocked(texto, k=k, source_id=origen_id,
+                              source_dir=origen_dir)
+
+
+def _note_unlocked(text, k=6, source_id=None, source_dir=None):
+    """Record an idea and attach the relations found at write time."""
+    text = (text or "").strip()
+    if not text:
         return {"ok": False, "error": "idea vacia"}
-    filas = cargar()
-    iid = _id(texto)
-    if any(f.get("id") == iid for f in filas):
+    records = cargar()
+    iid = _id(text)
+    if any(record.get("id") == iid for record in records):
         return {"ok": False, "error": "esa idea ya estaba anotada", "id": iid}
 
-    relacionadas = relacionar(texto, k=k)
-    fila = {
+    related = relacionar(text, k=k)
+    record = {
         "id": iid,
-        "texto": texto,
+        "texto": text,
         "ts": time.strftime("%Y-%m-%dT%H:%M:%S"),
-        "relacionadas": relacionadas,
-        "origen": ({"id": str(origen_id), "dir": str(origen_dir or "")}
-               if origen_id else None),
+        "relacionadas": related,
+        "origen": ({"id": str(source_id), "dir": str(source_dir or "")}
+               if source_id else None),
         "estado": "anotada",
     }
-    filas.append(fila)
-    _guardar(filas)
-    return {"ok": True, "idea": fila,
-            "aviso": "" if relacionadas else
+    records.append(record)
+    _guardar(records)
+    return {"ok": True, "idea": record,
+            "aviso": "" if related else
                      "No se pudo relacionar: el micelio no respondio. La idea "
                      "quedo guardada igual."}
 
 
 def encargar(idea_id, depto="research"):
-    """Convierte una idea en trabajo, al frente de la cola.
+    with _IDEAS_LOCK:
+        return _assign_unlocked(idea_id, department=depto)
 
-    Va PRIMERO a proposito: una pregunta del usuario le gana a la triangulacion
-    automatica. Sin esto, su idea entraria detras de 46 preguntas de flyers.
+
+def _assign_unlocked(idea_id, department="research"):
+    """Turn an idea into work and place it at the front of the queue.
+
+    User questions take priority over automatic triangulation so the new work
+    does not remain behind the existing generated queue.
     """
     try:
         import material
@@ -135,52 +148,51 @@ def encargar(idea_id, depto="research"):
     idea = next((f for f in filas if f.get("id") == idea_id), None)
     if not idea:
         return {"ok": False, "error": "no existe esa idea"}
-    if depto not in ("research", "codex"):
-        depto = "research"
+    if department not in ("research", "codex"):
+        department = "research"
 
-    cola = material.cargar()
     tarea = {
         "id": "idea-" + idea_id,
         "origen": "usuario",
         "ficha": None,
         "archivo": None,
-        "depto": depto,
-        "modo": "generar" if depto == "codex" else "research",
+        "depto": department,
+        "modo": "generar" if department == "codex" else "research",
         "texto": idea["texto"],
         "estado": "pendiente",
     }
-    if any(t.get("id") == tarea["id"] for t in cola):
+    if not material.enqueue_front(tarea):
         return {"ok": False, "error": "esa idea ya estaba encargada"}
-    material.guardar([tarea] + cola)   # al frente
 
     idea["estado"] = "encargada"
-    idea["depto"] = depto
+    idea["depto"] = department
     _guardar(filas)
-    return {"ok": True, "encargada": tarea["texto"][:120], "depto": depto}
+    return {"ok": True, "encargada": tarea["texto"][:120], "depto": department}
 
 
 def priorizar(patron):
-    """Sube al frente de la cola las tareas cuyo texto contiene `patron`.
+    with _IDEAS_LOCK:
+        return _prioritize_unlocked(patron)
 
-    Es la otra mitad del pedido: "cambiar el orden de las obras que le quedan
-    por analizar segun mis necesidades". No borra nada ni cambia estados: solo
-    reordena lo pendiente.
+
+def _prioritize_unlocked(pattern):
+    """Move tasks containing `pattern` to the front of the queue.
+
+    This changes ordering only; it does not delete tasks or change their
+    states.
     """
     try:
         import material
     except Exception as e:  # noqa: BLE001
         return {"ok": False, "error": "no pude abrir la cola: %s" % e}
-    patron = (patron or "").strip().lower()
-    if not patron:
+    pattern = (pattern or "").strip().lower()
+    if not pattern:
         return {"ok": False, "error": "sin patron"}
-    cola = material.cargar()
-    suben = [t for t in cola if patron in (t.get("texto") or "").lower()]
-    resto = [t for t in cola if t not in suben]
-    if not suben:
+    moved_count = material.reorder_by_pattern(pattern)
+    if not moved_count:
         return {"ok": True, "subidas": 0,
                 "aviso": "nada en la cola menciona eso"}
-    material.guardar(suben + resto)
-    return {"ok": True, "subidas": len(suben)}
+    return {"ok": True, "subidas": moved_count}
 
 
 if __name__ == "__main__":

@@ -17,10 +17,18 @@ Uso:
 El cron lo dispara periodico; --limit 1 (default) mantiene blast radius chico.
 """
 import argparse
+from contextlib import contextmanager
 import json
 import os
 import subprocess
 import sys
+import tempfile
+import threading
+
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - Windows director has no fcntl
+    fcntl = None
 
 # Topologia de ramas (CLAUDE.md): main = solo lo perfecto; MAK entrega contra
 # su propio BUZON, nunca directo a main.
@@ -40,6 +48,42 @@ REPO = os.path.join(HOME, "flujo")
 DEST_REL = os.path.join("cultura", "mak_plataforma", "utilidades")
 STATE = os.path.join(HOME, "plataforma", "codex_delivered.json")
 LOG = os.path.join(HOME, "plataforma", "logs", "entregar.log")
+_DELIVERY_LOCK = threading.RLock()
+_CODEX_JOBS_LOCK = threading.RLock()
+
+
+@contextmanager
+def _exclusive_codex_jobs_lock():
+    """Match the sidecar lock used by codex job producers."""
+    with _CODEX_JOBS_LOCK:
+        lock_path = os.path.abspath(CODEX_JOBS) + ".lock"
+        os.makedirs(os.path.dirname(lock_path), exist_ok=True)
+        fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+        try:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_EX)
+            yield
+        finally:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+            os.close(fd)
+
+
+@contextmanager
+def _exclusive_delivery_lock():
+    """Prevent overlapping cron deliveries from opening duplicate PRs."""
+    with _DELIVERY_LOCK:
+        lock_path = STATE + ".lock"
+        os.makedirs(os.path.dirname(lock_path), exist_ok=True)
+        fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+        try:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_EX)
+            yield
+        finally:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+            os.close(fd)
 
 
 def log(msg):
@@ -69,13 +113,27 @@ def cargar_estado():
 
 
 def guardar_estado(entregados, slugs):
+    temp_path = None
     try:
         os.makedirs(os.path.dirname(STATE), exist_ok=True)
-        with open(STATE, "w", encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+                "w", encoding="utf-8", dir=os.path.dirname(STATE),
+                prefix=".codex-delivered-", suffix=".tmp", delete=False) as f:
+            temp_path = f.name
             json.dump({"entregados": sorted(entregados), "slugs": sorted(slugs)},
                       f, ensure_ascii=False, indent=1)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temp_path, STATE)
+        temp_path = None
     except OSError as e:
         log("WARN no pude guardar estado: %s" % e)
+    finally:
+        if temp_path:
+            try:
+                os.unlink(temp_path)
+            except OSError:
+                pass
 
 
 def leer_smoke_meta(md_rel):
@@ -123,49 +181,50 @@ def leer_jobs_listos(bypass_smoke=False):
     se reescribe)."""
     out = []
     try:
-        with open(CODEX_JOBS, encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    j = json.loads(line)
-                except ValueError:
-                    continue
-                if j.get("estado") != "listo" or (j.get("error") or "").strip():
-                    continue
-                if not (j.get("job_id") and j.get("path")):
-                    continue
+        with _exclusive_codex_jobs_lock():
+            with open(CODEX_JOBS, encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        j = json.loads(line)
+                    except ValueError:
+                        continue
+                    if j.get("estado") != "listo" or (j.get("error") or "").strip():
+                        continue
+                    if not (j.get("job_id") and j.get("path")):
+                        continue
                 # El modo `iconos` produce un .svg, y este camino de entrega
                 # COMPILA la pieza como Python antes de abrir el PR. Se corta
                 # aca -- antes de extraer_codigo/compila -- y no mas abajo:
                 # asi ninguna pieza que no sea codigo llega a un paso que
                 # asume codigo. Exclusion por modo explicito y no lista de
                 # inclusion, porque los jobs viejos no traen 'modo'.
-                if (j.get("modo") or "") == "iconos":
-                    log("SKIP %s: modo iconos (pieza .svg), no entra al camino "
-                        "de entrega de codigo Python" % j["job_id"])
-                    continue
-                if "smoke_ok" not in j:
-                    meta = leer_smoke_meta(j["path"])
-                    if "smoke_ok" in meta:
-                        j["smoke_ok"] = meta["smoke_ok"]
-                        if meta["smoke_ok"] is False:
-                            j["smoke_stderr_tail"] = meta.get("smoke_stderr_tail", "")
-                smoke_ok = j.get("smoke_ok")
-                if smoke_ok is None:
-                    log("WARN %s: sin smoke_ok (job viejo o modo sin sandbox) -- pasa"
-                        % j["job_id"])
-                elif smoke_ok is False:
-                    if bypass_smoke:
-                        log("BYPASS --sin-smoke: %s entra pese a smoke_ok=False"
-                            % j["job_id"])
-                    else:
-                        j["estado"] = "rechazado_smoke"
-                        log("RECHAZADO_SMOKE %s: %s"
-                            % (j["job_id"], (j.get("smoke_stderr_tail") or "")[:200]))
+                    if (j.get("modo") or "") == "iconos":
+                        log("SKIP %s: modo iconos (pieza .svg), no entra al camino "
+                            "de entrega de codigo Python" % j["job_id"])
                         continue
-                out.append(j)
+                    if "smoke_ok" not in j:
+                        meta = leer_smoke_meta(j["path"])
+                        if "smoke_ok" in meta:
+                            j["smoke_ok"] = meta["smoke_ok"]
+                            if meta["smoke_ok"] is False:
+                                j["smoke_stderr_tail"] = meta.get("smoke_stderr_tail", "")
+                    smoke_ok = j.get("smoke_ok")
+                    if smoke_ok is None:
+                        log("WARN %s: sin smoke_ok (job viejo o modo sin sandbox) -- pasa"
+                            % j["job_id"])
+                    elif smoke_ok is False:
+                        if bypass_smoke:
+                            log("BYPASS --sin-smoke: %s entra pese a smoke_ok=False"
+                                % j["job_id"])
+                        else:
+                            j["estado"] = "rechazado_smoke"
+                            log("RECHAZADO_SMOKE %s: %s"
+                                % (j["job_id"], (j.get("smoke_stderr_tail") or "")[:200]))
+                            continue
+                    out.append(j)
     except OSError as e:
         log("ERROR no pude leer %s: %s" % (CODEX_JOBS, e))
     return out
@@ -280,6 +339,11 @@ def entregar_una(job, dry_run):
 
 
 def main():
+    with _exclusive_delivery_lock():
+        return _main_unlocked()
+
+
+def _main_unlocked():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--limit", type=int, default=1)

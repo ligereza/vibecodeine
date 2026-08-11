@@ -12,10 +12,35 @@ Asi el organismo tiene memoria de cuando trabajo en local vs nube.
 import json
 import os
 import socket
+import tempfile
 import time
 
 LOG = os.path.expanduser("~/plataforma/logs/red.jsonl")
 STATE = os.path.expanduser("~/plataforma/.red_state.json")
+
+
+def _atomic_write(path, text):
+    temp_path = None
+    try:
+        directory = os.path.dirname(os.path.abspath(path))
+        os.makedirs(directory, exist_ok=True)
+        with tempfile.NamedTemporaryFile(
+                "w", encoding="utf-8", dir=directory,
+                prefix=".red-state-", suffix=".tmp", delete=False) as f:
+            temp_path = f.name
+            f.write(text)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temp_path, path)
+        temp_path = None
+    except OSError:
+        pass
+    finally:
+        if temp_path:
+            try:
+                os.unlink(temp_path)
+            except OSError:
+                pass
 
 
 def internet():
@@ -51,11 +76,7 @@ def main():
             f.write(json.dumps(ev, ensure_ascii=False) + "\n")
     except OSError:
         pass
-    try:
-        with open(STATE, "w") as f:
-            json.dump({"up": up, "since": now}, f)
-    except OSError:
-        pass
+    _atomic_write(STATE, json.dumps({"up": up, "since": now}))
 
 
 if __name__ == "__main__":

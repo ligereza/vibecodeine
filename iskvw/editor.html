@@ -627,6 +627,7 @@
   .mesa-camera-actions{display:flex;gap:5px;flex-shrink:0}
   .mesa-camera-actions button{min-width:34px;min-height:32px;border:1px solid #302c28;color:#a99b8b;background:#0e0d0f;font-size:.56rem;cursor:pointer}
   .mesa-camera-actions button:hover{border-color:#d4a259;color:#f0dfc6;background:#1b1510}
+  .mesa-audit-button{border-color:#6d5684!important;color:#d6b9e8!important}
   .mesa-engine-main{display:flex;flex-direction:column;gap:8px;min-width:0}
   .mesa-engine .mesa-stage{height:min(80vh,860px);min-height:620px;cursor:grab}
   .mesa-engine .mesa-stage.is-panning{cursor:grabbing}
@@ -672,6 +673,28 @@
   .mesa-popover-evidence{display:flex;flex-direction:column;gap:4px;margin-top:9px}
   .mesa-popover-evidence span{padding:5px 6px;border-left:2px solid #8ab8d8;background:#15120f;color:#b8a77f;font-size:.51rem;line-height:1.35}
   .mesa-popover-saved-note{margin-top:8px;padding:6px 7px;border-left:2px solid #78c78b;background:#0d1a12;color:#b9e5c3;font-size:.52rem;line-height:1.4}
+  .mesa-audit{gap:11px}
+  .mesa-audit-title h3{margin-top:0;font-size:.84rem;letter-spacing:.02em}
+  .mesa-audit-section{border-top:1px solid #302a31;padding-top:8px}
+  .mesa-audit-section h4{margin:0 0 7px;color:#d6b9e8;font-size:.54rem;letter-spacing:.1em;text-transform:uppercase;font-weight:500}
+  .mesa-audit-section>small{display:block;margin-top:7px;color:#8f877b;font-size:.48rem;line-height:1.35}
+  .mesa-audit-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+  .mesa-audit-metric{display:flex;flex-direction:column;gap:2px;padding:6px;border:1px solid #34283b;background:#100d14}
+  .mesa-audit-metric b{color:#f0dfc6;font-size:.85rem;font-weight:500}
+  .mesa-audit-metric span{color:#a99b8b;font-size:.49rem;line-height:1.2}
+  .mesa-audit-metric small{color:#80776d;font-size:.45rem}
+  .mesa-audit-history,.mesa-audit-current{display:flex;flex-direction:column;gap:5px;color:#aaa095;font-size:.52rem;line-height:1.35}
+  .mesa-audit-history b,.mesa-audit-current b{color:#f0dfc6;font-weight:500}
+  .mesa-audit-status{margin:0;padding:7px;border-left:2px solid #765866;background:#171016;color:#d9b7c6;font-size:.55rem;line-height:1.35}
+  .mesa-audit-status.is-ready{border-left-color:#78c78b;background:#0d1a12;color:#b9e5c3}
+  .mesa-audit-actions{display:flex;gap:5px;flex-wrap:wrap}
+  .mesa-audit-actions button{border:1px solid #6d5684;background:#17121e;color:#d6b9e8;padding:6px 8px;font:inherit;font-size:.52rem;cursor:pointer}
+  .mesa-audit-actions button:hover{border-color:#d6b9e8;color:#f0dfc6}
+  .mesa-audit-timeline{display:flex;flex-direction:column;gap:5px;margin:0;padding:0;list-style:none}
+  .mesa-audit-timeline li{display:grid;grid-template-columns:78px 72px minmax(0,1fr);gap:5px;padding:5px;border-left:2px solid #8b6c41;background:#15120f;color:#aaa095;font-size:.48rem;line-height:1.3}
+  .mesa-audit-timeline time{color:#80776d;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mesa-audit-timeline b{color:#e4c28d;font-weight:500;overflow-wrap:anywhere}
+  .mesa-audit-timeline span{overflow-wrap:anywhere}
   .mesa-relation-facets{margin-top:10px;color:#a9957f;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase}
   .mesa-relation-facets>div{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
   .mesa-relation-facet{padding:5px 6px;border:1px solid #423846;color:#b1a3b7;background:#111012;font:inherit;font-size:.5rem;letter-spacing:0;cursor:pointer;text-transform:none}
@@ -702,6 +725,7 @@
   .mesa-xio-atoms,.mesa-xio-segments{display:grid;gap:3px;margin-top:5px}
   .mesa-xio-atoms span,.mesa-xio-segments span{display:block;padding:3px 5px;border-left:2px solid #78c78b;background:#101b13}
   .mesa-xio-evidence small{display:block;margin-top:6px;color:#98a69a}
+  .mesa-xio-action{display:flex;gap:5px;margin-top:7px}.mesa-xio-action button{border:1px solid #78c78b;background:#101b13;color:#c6d6c7;padding:4px 6px;font:inherit;font-size:.49rem;cursor:pointer}.mesa-xio-action button:hover{border-color:#d1e6d3}
   .mesa-field-readout .is-runtime{color:#9eb2a0;border-color:#405044}
   .mesa-engine[data-render-quality="reduced"] .mesa-node{box-shadow:none;transition:left .1s ease,top .1s ease,transform .1s ease,border-color .1s ease}
   .mesa-engine[data-render-quality="reduced"] .mesa-node[data-uncertainty="high"]:after{animation:none}
@@ -2626,6 +2650,6 @@ function medirCabecera(){
 
 cargar().then(medirCabecera);
 </script>
-<script src="mesa_montaje.js?v=20260810-visual-index2"></script>
+<script src="mesa_montaje.js?v=20260811-atlas-audit"></script>
 </body>
 </html>

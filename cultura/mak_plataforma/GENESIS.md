@@ -17,8 +17,9 @@ del repo**. Aquí no hay commits: hay órganos que corren y piezas que nacen.
 
 | Órgano | Puerto | Qué hace |
 |---|---|---|
-| **research** | :8890 | Investigación cultural multi-modelo: 7 modos (single, pipeline, discussion, adversarial, grafo, memoria, corpus) + micelio semántico del archivo |
-| **codex** | :8891 | FULL CODER: genera, revisa y testea código con la cadena de modelos; sandbox con límites de recursos y filtro estático; abierto en LAN privada (sin token) |
+| **research** | loopback :8890 | Servicio interno de investigación cultural multi-modelo: 7 modos (single, pipeline, discussion, adversarial, grafo, memoria, corpus) + micelio semántico del archivo |
+| **codex** | loopback :8891 | Servicio interno FULL CODER: genera, revisa y testea código con la cadena de modelos; sandbox con límites de recursos y filtro estático |
+| **curatoria** | cron/batch | Departamento de percepción y candidatos; no tiene una superficie Web humana separada ni un puerto operativo |
 | **lenguaje** | (cli/cron) | El idioma como señal: mide tildes/eñes/aperturas de cada pieza, corrige con el modelo capaz, construye el léxico vivo del corpus |
 | **plataforma** | :8900 | El esqueleto que aloja a los demás: hub, salud, guardia de recursos, descargas seguras, respaldos, watchdog |
 | **xio_puente** | (daemon) | Ojo de solo-lectura sobre el teléfono Xiaomi (router del internet): telemetría, historia, alertas ntfy |
@@ -58,11 +59,11 @@ del repo**. Aquí no hay commits: hay órganos que corren y piezas que nacen.
 # salud del organismo
 python3 ~/plataforma/salud.py
 
-# research (ya vivo)
-http://192.168.50.2:8890        # canvas + micelio
+# research (ya vivo, a traves del Hub)
+http://192.168.50.2:8900/research/  # canvas + micelio
 
-# codex
-http://192.168.50.2:8891        # abierto, sin token (LAN privada Face A)
+# codex (a traves del Hub)
+http://192.168.50.2:8900/codex/     # superficie humana unica
 python3 ~/codex/generar.py "un parser de csv a json" --densidad corto
 
 # lenguaje
@@ -71,6 +72,9 @@ python3 ~/lenguaje/corregir.py pieza.md
 
 # hub
 http://192.168.50.2:8900
+
+# curatoria
+# Solo corre como batch/cron; no existe una URL humana separada.
 
 # xio (solo lectura)
 python3 ~/xio_puente/monitor.py --una-vez

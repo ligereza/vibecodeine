@@ -9,8 +9,15 @@ import json
 import os
 import re
 import sys
+import threading
 import time
 import unicodedata
+from contextlib import contextmanager
+
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - Windows director has no fcntl
+    fcntl = None
 
 HOME = os.path.expanduser("~")
 sys.path.insert(0, os.path.join(HOME, "plataforma"))
@@ -28,6 +35,25 @@ MAX_PENDIENTES = 40
 # Retirement: when the backlog gains an explicit per-line priority.
 MAX_AUTO = 3
 MAX_HALLAZGOS = 3
+_BACKLOG_LOCK = threading.RLock()
+
+
+@contextmanager
+def _exclusive_backlog_lock(path):
+    """Serialize the complete read-candidate-deduplicate-append cycle."""
+    with _BACKLOG_LOCK:
+        lock_path = os.path.abspath(path) + ".lock"
+        parent = os.path.dirname(lock_path)
+        os.makedirs(parent, exist_ok=True)
+        fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+        try:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_EX)
+            yield
+        finally:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+            os.close(fd)
 
 _MARCADOR_RE = re.compile(r"\s*#\s*auto\s+\d{8}\s*$")
 _TODO_RE = re.compile(r"#\s*(TODO|FIXME)\b")
@@ -130,9 +156,9 @@ def _fuente_salud():
     return tareas
 
 
-def main():
+def _main_unlocked():
     existentes = _cargar_lineas(BACKLOG_TXT)
-    existentes_norm = {_norm(l) for l in existentes}
+    existing_normalized = {_norm(line_text) for line_text in existentes}
     total_actual = len(existentes)
 
     candidatos = _fuente_modulos() + _fuente_hallazgos() + _fuente_salud()
@@ -140,15 +166,16 @@ def main():
     agregadas = []
     vistos = set()
 
-    auto_actuales = sum(1 for l in existentes if _MARCADOR_RE.search(l))
+    current_auto_count = sum(1 for line_text in existentes
+                             if _MARCADOR_RE.search(line_text))
 
     for texto in candidatos:
         if total_actual + len(agregadas) >= MAX_PENDIENTES:
             break
-        if auto_actuales + len(agregadas) >= MAX_AUTO:
+        if current_auto_count + len(agregadas) >= MAX_AUTO:
             break
         n = _norm(texto)
-        if n in existentes_norm or n in vistos:
+        if n in existing_normalized or n in vistos:
             continue
         vistos.add(n)
         agregadas.append(texto + " # auto " + fecha)
@@ -166,6 +193,11 @@ def main():
     for linea in agregadas:
         print(linea)
     print("total pendientes ahora: %d" % (total_actual + len(agregadas)))
+
+
+def main():
+    with _exclusive_backlog_lock(BACKLOG_TXT):
+        return _main_unlocked()
 
 
 if __name__ == "__main__":
