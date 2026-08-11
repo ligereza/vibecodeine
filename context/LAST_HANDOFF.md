@@ -1,6 +1,6 @@
 # LAST_HANDOFF - Faro
 
-Updated: 2026-08-11 - canonical branch cleanup and final validation
+Updated: 2026-08-11 - canonical branch promotion and final validation
 Status: The Hub boundary, XIO human-link circuit, writer ownership block, and
 language slices are consolidated in the four canonical branches. Local,
 GitHub, MAK checkout, and runtime mirror are clean and synchronized; no
@@ -24,15 +24,16 @@ instructions. Verify any statement that affects a destructive or remote action.
 ## Current verified state - 2026-08-11
 
 - Windows canonical: `C:\IA\flujo`, branch `mak`, HEAD and `origin/mak`
-  `d1977e02fc803c9daf17d5bbce221b8954839048`, clean. The four canonical
-  branch heads are `main=d0c9a594`, `mak=d1977e02`, `rd=b79f1476`, and
-  `iskvw=d887771c`; README/SVG have no diff.
+  `5f7e2e09275e2b3a97f7b3c5cadea65bd5295f7e`, clean. The four canonical
+  branch heads are `main=72bd6db2`, `mak=5f7e2e09`, `rd=61ffc0db`, and
+  `iskvw=0f2cb9b9`; all four now share the same tree, and README/SVG have no
+  diff.
 - The isolated audit checkout and all auxiliary worktrees were removed after
   normalized-content comparison proved their useful source was preserved in
   `mak`; no unique active code was discarded. Generated audit artifacts were
   excluded from the canonical commit.
 - MAK: `/home/mak/flujo`, branch `mak`, HEAD and `origin/mak` both at
-  `d1977e02fc803c9daf17d5bbce221b8954839048`, clean. The prior manual state is
+  `5f7e2e09275e2b3a97f7b3c5cadea65bd5295f7e`, clean. The prior manual state is
   preserved in stash `preserve manual MAK deployment before canonical branch
   cleanup 2026-08-11`; the effective repo-sync line remains `# PAUSED-FARO`.
 - Runtime: `mak-hub.service` active, PID `74023`; research `interfaz.py` PID
@@ -58,6 +59,27 @@ instructions. Verify any statement that affects a destructive or remote action.
   state, `automation_ready=false`; XIO is available as separate evidence,
   and its explicit human-link endpoint/UI are live. No productive XIO link,
   provider call, or AWS/Watson call was made in the last batch.
+
+## Canonical branch promotion - 2026-08-11
+
+- Measured `git diff --stat` and tree hashes before promotion: `main`, `rd`,
+  and `iskvw` were byte-identical to each other but lacked the 88-file MAK
+  consolidation. The delta contained no README/SVG file.
+- Promoted `mak` into each canonical branch with `git merge --no-ff`, keeping
+  the previous branch histories. The only merge conflict was blank-line
+  context in `tests/test_readme_svg.py`; the protected geometry assertions
+  were retained unchanged.
+- Focused SVG and language tests passed after the conflict resolution. The
+  three branch pushes completed: `main=72bd6db2`, `rd=61ffc0db`, and
+  `iskvw=0f2cb9b9`; `mak` remains `5f7e2e09`.
+- A full local `python -m pytest -q` attempt was stopped by the 124-second
+  command timeout before producing a result; it is not counted as passed.
+
+## Current next action
+
+Run the final four-branch hash/tree check, remote cleanliness check, and the
+focused regression suite from `mak`. Then continue the open audit circuits in
+the prior handoff without creating another branch or touching README/SVG.
 
 ## Audit circuit - 2026-08-11
 
