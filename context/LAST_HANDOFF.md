@@ -2159,7 +2159,7 @@ conectar los vectores como indice derivado detras de los endpoints existentes.
 
 - The first push of the refreshed handoff had one real failure in
   `tests/test_privacidad_repo.py`: the documentation contained the literal
-  personal path `C:\Users\issvk`, which violates the repository privacy gate.
+  personal Windows user path, which violates the repository privacy gate.
 - The handoff now describes the `.roo/worktrees/` location without embedding a
   Windows username. The focused privacy test passes locally (`3 passed`).
 - The repair is commit `db235527`, and all four remote branches plus MAK's
