@@ -43,9 +43,31 @@ def _load_mirror_module():
 
 def test_mak_mirror_check_covers_curatoria_and_fails_on_mismatch(tmp_path, monkeypatch):
     module = _load_mirror_module()
+    assert module.ROOT == ROOT
+    assert "Path(__file__).resolve().parents[2]" in _text("tools/mak_ops/check_mak_mirror.py")
     assert "mak_curatoria" in module.FILES
     assert {"percepcion.py", "curatoria_guardia.sh", "extraccion_db.py"}.issubset(
         module.FILES["mak_curatoria"])
+    assert {"interfaz.py", "memoria.py", "research_lib.py"}.issubset(
+        module.FILES["mak_research"])
+    assert {"pausa.py", "worker.py"}.issubset(module.FILES["mak_research"])
+    assert {"interfaz_codex.py", "agente_libre.py"}.issubset(
+        module.FILES["mak_codex"])
+    assert "vigia.py" in module.FILES["mak_vigia"]
+    assert {"energia_log.py", "mineria_rd.py"}.issubset(
+        module.FILES["mak_plataforma"])
+    assert {"backup.sh", "watchdog_mak.sh", "vigilar_red.py", "revisor.py"}.issubset(
+        module.FILES["mak_plataforma"])
+    assert {"corpus_a_micelio.py", "micelio_guardia.sh", "retencion.py", "watchdog.sh"}.issubset(
+        module.FILES["mak_research"])
+    assert module.FILES["mak_lenguaje"] == ["hook_barrido.py", "cron_lexicon.sh"]
+    assert "vigia_guardia.sh" in module.FILES["mak_vigia"]
+    assert module.UNIT_FILES == {
+        "cultura/mak_plataforma/mak-hub.service":
+            "/home/mak/.config/systemd/user/mak-hub.service",
+        "cultura/mak_codex/mak-codex.service":
+            "/home/mak/.config/systemd/user/mak-codex.service",
+    }
 
     monkeypatch.chdir(ROOT)
     monkeypatch.setattr(module, "remote_hashes", lambda: ({}, 0, ""))
@@ -65,3 +87,21 @@ def test_curatoria_guard_reconciles_before_declaring_corpus_done():
     decide = guard.index("FUENTE=$(python3")
     assert reconcile < decide
     assert 'estado.get("firma") == firma_actual' in guard
+
+
+def test_single_human_hub_contract_has_no_direct_service_docs():
+    active_docs = [
+        _text("MAPA.md"),
+        _text("cultura/mak_plataforma/GENESIS.md"),
+        _text("cultura/mak_plataforma/RELEVO_MAK.md"),
+        _text("cultura/mak_research/MAK_RESEARCH.md"),
+        _text("xio/FACES.md"),
+    ]
+    joined = "\n".join(active_docs)
+    assert "192.168.50.2:8890" not in joined
+    assert "192.168.50.2:8891" not in joined
+    assert "http://192.168.50.2:8900/research/" in joined
+    assert "http://192.168.50.2:8900/codex/" in joined
+
+    mirror = _load_mirror_module()
+    assert "panel.py" not in mirror.FILES["mak_curatoria"]

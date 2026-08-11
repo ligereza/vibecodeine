@@ -1,15 +1,50 @@
 #!/usr/bin/env python3
 """Comprueba read-only que repo main -> espejo vivo MAK coincide."""
 from __future__ import annotations
-import argparse, datetime as dt, hashlib, os, subprocess
+
+import argparse
+import datetime as dt
+import hashlib
+import os
+import subprocess
 from pathlib import Path
 
 FILES = {
-    "mak_plataforma": ["trabajo.py", "guardia.py", "hub.py", "backlog.py", "roles.py"],
+    "mak_plataforma": [
+        "trabajo.py", "guardia.py", "hub.py", "backlog.py", "roles.py",
+        "backlog_codex.py", "capataz.py", "coherence.py", "descargar.py",
+        "entregar.py", "ideas.py", "junta.py", "latido.py", "material.py",
+        "mutaciones.py", "providers.py", "puente_issues.py", "red_watch.py",
+        "revision.py", "revision_episodios.py", "energia_log.py", "mineria_rd.py",
+        "backup.sh", "watchdog_mak.sh", "vigilar_red.py", "revisor.py",
+    ],
+    "mak_research": [
+        "fructificacion.py", "fusion.py", "ideas_a_micelio.py", "interfaz.py",
+        "memoria.py", "pausa.py", "research_lib.py", "worker.py",
+        "corpus_a_micelio.py", "micelio_guardia.sh", "retencion.py", "watchdog.sh",
+    ],
+    "mak_lenguaje": ["hook_barrido.py", "cron_lexicon.sh"],
+    "mak_codex": ["agente_libre.py", "interfaz_codex.py"],
+    "mak_vigia": ["vigia.py", "vigia_guardia.sh"],
     "mak_curatoria": ["percepcion.py", "curatoria_guardia.sh", "extraccion_db.py"],
 }
-LIVE_DIRS = {"mak_plataforma": "plataforma", "mak_curatoria": "curatoria"}
-ROOT = Path.cwd()
+# Service units are installed outside the component mirrors. Keep their source
+# and live destination explicit so a bind or restart contract cannot drift.
+UNIT_FILES = {
+    "cultura/mak_plataforma/mak-hub.service":
+        "/home/mak/.config/systemd/user/mak-hub.service",
+    "cultura/mak_codex/mak-codex.service":
+        "/home/mak/.config/systemd/user/mak-codex.service",
+}
+LIVE_DIRS = {
+    "mak_plataforma": "plataforma",
+    "mak_research": "research",
+    "mak_lenguaje": "lenguaje",
+    "mak_codex": "codex",
+    "mak_vigia": "vigia",
+    "mak_curatoria": "curatoria",
+}
+ROOT = Path(__file__).resolve().parents[2]
 HOST = "%s@%s" % (os.environ.get("MAK_USER", "mak"),
                   os.environ.get("MAK_HOST", "192.168.50.2"))
 
@@ -24,6 +59,7 @@ def remote_hashes() -> tuple[dict[str, str], int, str]:
         for name in names:
             paths += [f"/home/mak/flujo/cultura/{component}/{name}",
                       f"/home/mak/{LIVE_DIRS[component]}/{name}"]
+    paths.extend(UNIT_FILES.values())
     try:
         r = subprocess.run(["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=8", HOST, "sha256sum", *paths],
                            capture_output=True, text=True, timeout=30)
@@ -50,10 +86,19 @@ def main() -> int:
             live = remote.get(f"/home/mak/{LIVE_DIRS[component]}/{name}", "MISSING")
             state = "PASS" if win == repo == live and win != "MISSING" else "MISMATCH"
             rows.append((f"{component}/{name}", state, win[:12], repo[:12], live[:12]))
+    for source, live_path in UNIT_FILES.items():
+        win = sha(ROOT / source)
+        live = remote.get(live_path, "MISSING")
+        state = "PASS" if win == live and win != "MISSING" else "MISMATCH"
+        rows.append((f"{source} -> {live_path}", state,
+                     win[:12], "(not mirrored)", live[:12]))
     md = ["# MAK mirror check", "", f"Generated: `{dt.datetime.now().astimezone().isoformat(timespec='seconds')}`", "",
           f"SSH exit: `{code}`", f"SSH error: `{error or '(none)'}`", "",
           "| File | State | Windows main | MAK repo | MAK live |", "|---|---|---|---|---|"]
-    md += [f"| {f} | **{s}** | `{w}` | `{r}` | `{l}` |" for f,s,w,r,l in rows]
+    md += [
+        f"| {filename} | **{state}** | `{win_hash}` | `{repo_hash}` | `{live_hash}` |"
+        for filename, state, win_hash, repo_hash, live_hash in rows
+    ]
     Path(a.output).write_text("\n".join(md)+"\n", encoding="utf-8")
     print(f"Written: {Path(a.output).resolve()}")
     return 0 if code == 0 and all(row[1] == "PASS" for row in rows) else 1

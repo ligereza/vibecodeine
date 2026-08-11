@@ -9,6 +9,10 @@ primero), sin depender de red ni del box real.
 """
 from __future__ import annotations
 
+import json
+import threading
+import time
+
 import pytest
 
 from cultura.mak_plataforma import capataz
@@ -93,6 +97,42 @@ def test_research_guard_blocks_duplicate_topic_without_new_evidence(monkeypatch,
     assert capataz._research_guard("tema vigente", args) is None
     result = capataz._research_guard("tema vigente", args)
     assert result["error"] == "research_duplicate_cooldown"
+
+
+def test_research_guard_is_atomic_across_concurrent_workers(monkeypatch, tmp_path):
+    ledger = tmp_path / "research.jsonl"
+    monkeypatch.setattr(capataz, "RESEARCH_LEDGER", str(ledger))
+    original_signature = capataz._research_signature
+    state = {"active": 0, "max_active": 0}
+    state_lock = threading.Lock()
+
+    def slow_signature(topic):
+        with state_lock:
+            state["active"] += 1
+            state["max_active"] = max(state["max_active"], state["active"])
+        time.sleep(0.05)
+        result = original_signature(topic)
+        with state_lock:
+            state["active"] -= 1
+        return result
+
+    monkeypatch.setattr(capataz, "_research_signature", slow_signature)
+    args = {"proposito": "verificar una fuente", "lane": "trabajo",
+            "evidencia": "brief-concurrent"}
+    results = []
+    threads = [threading.Thread(target=lambda: results.append(
+        capataz._research_guard("tema concurrente", args))) for _ in range(2)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(timeout=3)
+
+    rows = [json.loads(line) for line in ledger.read_text(encoding="utf-8").splitlines()]
+    assert state["max_active"] == 1
+    assert len(rows) == 1
+    assert sum(result is None for result in results) == 1
+    assert sum(1 for result in results
+               if result and result.get("error") == "research_duplicate_cooldown") == 1
 
 
 def test_evaluar_riesgo_proveedor_con_salud_baja():

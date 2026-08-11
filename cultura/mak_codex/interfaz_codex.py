@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
-"""interfaz_codex.py -- web del departamento CODEX (puerto 8891).
+"""interfaz_codex.py -- internal Codex service for the MAK Hub (port 8891).
 
-SIN AUTH: el codex corre abierto. Vive solo en xio Face A -- la LAN privada
-de casa (MAK Linux + Windows, unidos por wifi y cable ethernet directo) --
-y nunca sale a los shows (Face B = solo el telefono). No hay red publica que
-lo alcance, asi que no hay token ni puerta. Ver xio/FACES.md.
+The service is reached through the Hub at /codex/. Set MAK_SERVICE_HOST to an
+explicit LAN address only when a legacy machine integration needs direct
+access; the default is loopback and has no public listener.
 
 Vista: canvas de nodos (topologia FIJA del pipeline, no un editor libre)
 con tab "clasico" al formulario original. Look heredado de mak_research
 interfaz.py (nodos con puertos, curvas bezier) pero repintado con la
 paleta abisal propia de codex.
 """
-import html
 import json
 import os
 import re
@@ -20,7 +18,13 @@ import sys
 import threading
 import time
 import urllib.parse
+from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - Windows director has no fcntl
+    fcntl = None
 
 BASE = "/home/mak/codex"
 sys.path.insert(0, BASE)
@@ -29,6 +33,7 @@ from worker_codex import run_pedido  # noqa: E402
 from research_lib import mint_job_id  # noqa: E402
 
 PORT = int(os.environ.get("CODEX_PORT", "8891"))
+BIND_HOST = os.environ.get("MAK_SERVICE_HOST", "127.0.0.1")
 DIRS = {"piezas": os.path.join(BASE, "piezas"),
         "revisiones": os.path.join(BASE, "revisiones")}
 JOBS_FILE = os.path.join(BASE, "jobs.jsonl")
@@ -43,6 +48,35 @@ CADENA_DEFAULT = "nim-pro,nim-flash,win,ollama"
 
 JOBS = []
 JOBS_LOCK = threading.Lock()
+JOBS_FILE_LOCK = threading.RLock()
+
+
+@contextmanager
+def _exclusive_jobs_file_lock(path=None):
+    """Shared lock for every producer/consumer of codex/jobs.jsonl."""
+    with JOBS_FILE_LOCK:
+        lock_path = os.path.abspath(path or JOBS_FILE) + ".lock"
+        os.makedirs(os.path.dirname(lock_path), exist_ok=True)
+        fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+        try:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_EX)
+            yield
+        finally:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+            os.close(fd)
+
+
+def _append_job_record(job):
+    with _exclusive_jobs_file_lock():
+        try:
+            os.makedirs(os.path.dirname(os.path.abspath(JOBS_FILE)), exist_ok=True)
+            with open(JOBS_FILE, "a", encoding="utf-8") as f:
+                f.write(json.dumps(job, ensure_ascii=False) + "\n")
+                f.flush()
+        except OSError:
+            pass
 
 PAGINA = """<!doctype html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -367,14 +401,15 @@ cargar(); setInterval(cargar,4000);
 
 def _cargar_jobs():
     try:
-        with open(JOBS_FILE, encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if line:
-                    try:
-                        JOBS.append(json.loads(line))
-                    except json.JSONDecodeError:
-                        pass
+        with _exclusive_jobs_file_lock():
+            with open(JOBS_FILE, encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line:
+                        try:
+                            JOBS.append(json.loads(line))
+                        except json.JSONDecodeError:
+                            pass
         del JOBS[:-15]
     except OSError:
         pass
@@ -439,16 +474,12 @@ def _lanzar(modo, pedido, densidad, cadena=CADENA_DEFAULT):
         # sobre archivos ya existentes -> bajo riesgo, no se filtran.
         if modo == "generar":
             g = _guardia_codex(pedido)
-            if g and not (g.get("veredicto") in ("LEGITIMO", "DESCRIPTIVO")):
+            if g and g.get("veredicto") not in ("LEGITIMO", "DESCRIPTIVO"):
                 job["estado"] = "BLOQUEADO"
                 job["error"] = "guardia de codigo: %s -- %s" % (
                     g["veredicto"], g["razon"])
                 job["ms"] = int((time.time() - t0) * 1000)
-                try:
-                    with open(JOBS_FILE, "a", encoding="utf-8") as f:
-                        f.write(json.dumps(job, ensure_ascii=False) + "\n")
-                except OSError:
-                    pass
+                _append_job_record(job)
                 return
         try:
             r = run_pedido(modo, pedido, densidad=densidad, ntfy=True,
@@ -461,11 +492,7 @@ def _lanzar(modo, pedido, densidad, cadena=CADENA_DEFAULT):
             job["estado"] = "FALLO"
             job["error"] = str(e)[:1500]
         job["ms"] = int((time.time() - t0) * 1000)
-        try:
-            with open(JOBS_FILE, "a", encoding="utf-8") as f:
-                f.write(json.dumps(job, ensure_ascii=False) + "\n")
-        except OSError:
-            pass
+        _append_job_record(job)
 
     threading.Thread(target=correr, daemon=True).start()
 
@@ -569,14 +596,14 @@ def main():
     for d in DIRS.values():
         os.makedirs(d, exist_ok=True)
     _cargar_jobs()
-    server = Servidor(("0.0.0.0", PORT), H)
+    server = Servidor((BIND_HOST, PORT), H)
 
     def apagar(signum, frame):
         threading.Thread(target=server.shutdown, daemon=True).start()
 
     signal.signal(signal.SIGTERM, apagar)
     signal.signal(signal.SIGINT, apagar)
-    print("[codex] en http://0.0.0.0:%d (abierto, sin token)" % PORT, flush=True)
+    print("[codex] internal service on %s:%d" % (BIND_HOST, PORT), flush=True)
     server.serve_forever()
     return 0
 

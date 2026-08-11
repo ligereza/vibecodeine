@@ -36,7 +36,14 @@ import py_compile
 import random
 import sys
 import tempfile
+import threading
 import time
+from contextlib import contextmanager
+
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - Windows director has no fcntl
+    fcntl = None
 
 sys.path.insert(0, "/home/mak/codex")
 from codex_lib import (PROMPT_CODER, coder_llm, coder_tok, escanear,
@@ -49,6 +56,24 @@ from research_lib import slug, stamp  # noqa: E402
 BASE = "/home/mak/codex"
 PIEZAS = os.path.join(BASE, "piezas")
 JOBS_FILE = os.path.join(BASE, "jobs.jsonl")
+_JOBS_FILE_LOCK = threading.RLock()
+
+
+@contextmanager
+def _exclusive_jobs_file_lock():
+    """Use the same sidecar lock as interfaz_codex and entregar."""
+    with _JOBS_FILE_LOCK:
+        lock_path = os.path.abspath(JOBS_FILE) + ".lock"
+        os.makedirs(os.path.dirname(lock_path), exist_ok=True)
+        fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+        try:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_EX)
+            yield
+        finally:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+            os.close(fd)
 
 # Semillas libres: utilidades stdlib, autocontenidas, genericas -- se
 # convierten en cultura/mak_plataforma/utilidades/<slug>.py via el
@@ -229,10 +254,12 @@ def apendear_job(job_id, objetivo, md_path, ok, error=""):
         "t": time.strftime("%H:%M:%S"),
         "job_id": job_id,
     }
-    linea = json.dumps(entrada, ensure_ascii=False)
-    with open(JOBS_FILE, "a", encoding="utf-8") as f:
-        f.write(linea + "\n")
-    return linea
+    line_text = json.dumps(entrada, ensure_ascii=False)
+    with _exclusive_jobs_file_lock():
+        with open(JOBS_FILE, "a", encoding="utf-8") as f:
+            f.write(line_text + "\n")
+            f.flush()
+    return line_text
 
 
 def mint_job_id_libre():

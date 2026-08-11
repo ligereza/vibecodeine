@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import tempfile
 import time
 from pathlib import Path
 
@@ -25,5 +26,21 @@ def crear(tema: str, fuentes: list[str], destino: Path = DESTINO) -> dict:
               "meta: " + json.dumps({"id": fid, "tipo": "fusion",
               "origen": "usuario", "fuentes": fuentes,
               "ts": time.strftime("%Y-%m-%dT%H:%M:%S")}, ensure_ascii=False)]
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    temp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+                "w", encoding="utf-8", dir=destino,
+                prefix=".fusion-", suffix=".tmp", delete=False) as f:
+            temp_path = f.name
+            f.write("\n".join(lines) + "\n")
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temp_path, path)
+        temp_path = None
+    finally:
+        if temp_path:
+            try:
+                os.unlink(temp_path)
+            except OSError:
+                pass
     return {"id": "fusiones/" + path.name, "path": str(path), "fuentes": fuentes}

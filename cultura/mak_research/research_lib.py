@@ -12,7 +12,10 @@ import json
 import os
 import re
 import socket
+import tempfile
+import threading
 import time
+from contextlib import contextmanager
 import unicodedata
 import urllib.error
 import urllib.request
@@ -23,6 +26,11 @@ try:
 except ImportError:
     score_provider_health = None
     parse_provider_error = None
+
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - Windows director has no fcntl
+    fcntl = None
 
 ENV_FILE = os.environ.get(
     "RESEARCH_ENV", os.path.expanduser("~/n8n-local/research.env")
@@ -65,6 +73,44 @@ MODELO_CAPAZ = "cerebras"
 # viene fallando (ej. Groq free-tier en 429). Ver orden_por_salud().
 SALUD_RUTA = os.path.join(os.path.expanduser("~"), "research", "salud_proveedores.json")
 SALUD_VENTANA = 6 * 3600
+_SALUD_LOCK = threading.RLock()
+_EVENT_LOCK = threading.RLock()
+
+
+@contextmanager
+def _exclusive_salud_lock(path):
+    """Protect provider-health read-modify-write across processes and threads."""
+    with _SALUD_LOCK:
+        lock_path = os.path.abspath(path) + ".lock"
+        parent = os.path.dirname(lock_path)
+        os.makedirs(parent, exist_ok=True)
+        fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+        try:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_EX)
+            yield
+        finally:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+            os.close(fd)
+
+
+@contextmanager
+def _exclusive_event_lock(path):
+    """Serialize event appends across independent workers."""
+    with _EVENT_LOCK:
+        lock_path = os.path.abspath(path) + ".lock"
+        parent = os.path.dirname(lock_path)
+        os.makedirs(parent, exist_ok=True)
+        fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+        try:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_EX)
+            yield
+        finally:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+            os.close(fd)
 
 # Deteccion de internet: rapida y cacheada. Sin red, los departamentos siguen
 # con ollama local en vez de esperar el timeout de cada nube. Al volver la red
@@ -114,40 +160,59 @@ def _salud_cargar(ruta=None, ahora=None):
 
 
 def _salud_registrar(proveedor, exito, tipo="other", ruta=None, ahora=None):
-    """Registra un resultado (exito/fallo) de `proveedor` en el archivo de
-    salud, con lectura-modificacion-escritura. Si la ventana vencio o el
-    archivo esta invalido, arranca de cero. Best-effort: sin lock de
-    archivo, incrementos perdidos en carrera concurrente son aceptables.
-    Nunca lanza."""
+    """Record provider health with a locked atomic read-modify-write cycle.
+
+    Invalid or expired state starts a new window. The function is best effort
+    and never raises to its caller.
+    """
     ruta = ruta or SALUD_RUTA
     ahora = ahora if ahora is not None else time.time()
-    data = None
     try:
-        with open(ruta, encoding="utf-8") as f:
-            data = json.load(f)
-    except (OSError, ValueError):
-        data = None
-    if (not isinstance(data, dict)
-            or not isinstance(data.get("desde"), (int, float))
-            or not isinstance(data.get("proveedores"), dict)
-            or ahora - data["desde"] > SALUD_VENTANA):
-        data = {"desde": ahora, "proveedores": {}}
-    proveedores = data["proveedores"]
-    contadores = proveedores.setdefault(
-        proveedor, {"successes": 0, "timeouts": 0, "api_errors": 0, "errors": 0})
-    if exito:
-        clave = "successes"
-    elif tipo == "timeout":
-        clave = "timeouts"
-    elif tipo == "api_error":
-        clave = "api_errors"
-    else:
-        clave = "errors"
-    contadores[clave] = contadores.get(clave, 0) + 1
-    try:
-        os.makedirs(os.path.dirname(ruta), exist_ok=True)
-        with open(ruta, "w", encoding="utf-8") as f:
-            json.dump(data, f)
+        with _exclusive_salud_lock(ruta):
+            data = None
+            try:
+                with open(ruta, encoding="utf-8") as f:
+                    data = json.load(f)
+            except (OSError, ValueError):
+                data = None
+            if (not isinstance(data, dict)
+                    or not isinstance(data.get("desde"), (int, float))
+                    or not isinstance(data.get("proveedores"), dict)
+                    or ahora - data["desde"] > SALUD_VENTANA):
+                data = {"desde": ahora, "proveedores": {}}
+            proveedores = data["proveedores"]
+            contadores = proveedores.setdefault(
+                proveedor,
+                {"successes": 0, "timeouts": 0,
+                 "api_errors": 0, "errors": 0})
+            if exito:
+                clave = "successes"
+            elif tipo == "timeout":
+                clave = "timeouts"
+            elif tipo == "api_error":
+                clave = "api_errors"
+            else:
+                clave = "errors"
+            contadores[clave] = contadores.get(clave, 0) + 1
+            parent = os.path.dirname(os.path.abspath(ruta))
+            os.makedirs(parent, exist_ok=True)
+            temp_path = None
+            try:
+                with tempfile.NamedTemporaryFile(
+                        "w", encoding="utf-8", dir=parent,
+                        prefix=".salud-", suffix=".tmp", delete=False) as f:
+                    temp_path = f.name
+                    json.dump(data, f)
+                    f.flush()
+                    os.fsync(f.fileno())
+                os.replace(temp_path, ruta)
+                temp_path = None
+            finally:
+                if temp_path:
+                    try:
+                        os.unlink(temp_path)
+                    except OSError:
+                        pass
     except (OSError, ValueError):
         pass
 
@@ -995,8 +1060,11 @@ def emitir_evento(depto, job_id, tipo, **campos):
     ev = {"tipo": tipo, "job_id": job_id, "ts": int(time.time())}
     ev.update(campos)
     try:
-        with open(ruta, "a", encoding="utf-8") as f:
-            f.write(json.dumps(ev, ensure_ascii=False) + "\n")
+        with _exclusive_event_lock(ruta):
+            os.makedirs(os.path.dirname(os.path.abspath(ruta)), exist_ok=True)
+            with open(ruta, "a", encoding="utf-8") as f:
+                f.write(json.dumps(ev, ensure_ascii=False) + "\n")
+                f.flush()
     except OSError:
         pass
 
