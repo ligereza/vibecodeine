@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import threading
 import time
 from pathlib import Path
 
@@ -16,6 +17,7 @@ MAPA = RUN / "MAPA_VISUAL_ARTISTA_PRIMERO.json"
 XIO = RUN / "XIO_EVIDENCIA_DREF.json"
 REVIEWS = RUN / "episode_reviews.jsonl"
 DECISIONS = {"accept", "revise", "reject"}
+_REVIEW_LOCK = threading.RLock()
 
 
 def _read_json(path: Path) -> dict:
@@ -102,6 +104,11 @@ def evidence() -> dict:
 
 
 def record(episode: str, decision: str, note: str = "") -> dict:
+    with _REVIEW_LOCK:
+        return _record_unlocked(episode, decision, note)
+
+
+def _record_unlocked(episode: str, decision: str, note: str = "") -> dict:
     episode = str(episode or "")
     decision = str(decision or "")
     valid = {row["episodio"] for row in rows()}

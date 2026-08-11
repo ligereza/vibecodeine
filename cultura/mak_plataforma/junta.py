@@ -10,6 +10,7 @@ import datetime
 import json
 import os
 import sys
+import tempfile
 
 HOME = os.path.expanduser("~")
 sys.path.insert(0, os.path.join(HOME, "research"))
@@ -41,6 +42,30 @@ CODEX_JOBS_PATH = os.path.join(HOME, "codex", "jobs.jsonl")
 RESEARCH_JOBS_PATH = os.path.join(HOME, "research", "jobs.jsonl")
 REFLEXIONES_DIR = os.path.join(HOME, "plataforma", "reflexiones")
 AJUSTES_PATH = os.path.join(HOME, "plataforma", "ajustes_junta.json")
+
+
+def _atomic_write(path, text):
+    temp_path = None
+    try:
+        directory = os.path.dirname(os.path.abspath(path))
+        os.makedirs(directory, exist_ok=True)
+        with tempfile.NamedTemporaryFile(
+                "w", encoding="utf-8", dir=directory,
+                prefix=".junta-", suffix=".tmp", delete=False) as f:
+            temp_path = f.name
+            f.write(text)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temp_path, path)
+        temp_path = None
+    except OSError:
+        pass
+    finally:
+        if temp_path:
+            try:
+                os.unlink(temp_path)
+            except OSError:
+                pass
 
 
 def _leer_json(ruta, default=None):
@@ -106,7 +131,8 @@ def backlog_pendientes():
     pendientes_research = sum(v for k, v in por_estado.items() if k != "listo" and k != "cerrado")
     try:
         with open(BACKLOG_CODEX_PATH, encoding="utf-8") as f:
-            lineas_codex = [l for l in f if l.strip() and not l.strip().startswith("#")]
+            lineas_codex = [line for line in f
+                            if line.strip() and not line.strip().startswith("#")]
     except OSError:
         lineas_codex = []
     return {
@@ -203,7 +229,7 @@ def pedir_decision(m):
     try:
         llm = LLM("azure,cerebras,groq")
         texto, prov = llm.call(system, user, 900)
-    except Exception as e:
+    except Exception:
         return None, None
     decision = _extraer_json(texto)
     if decision is None:
@@ -282,8 +308,7 @@ def escribir_reflexion(m, resultado):
         lines.append(json.dumps(resultado["decision"], ensure_ascii=False, indent=2))
         lines.append("```")
     contenido = "\n".join(lines) + "\n"
-    with open(ruta, "w", encoding="utf-8") as f:
-        f.write(contenido)
+    _atomic_write(ruta, contenido)
     return ruta
 
 
@@ -295,8 +320,7 @@ def escribir_ajustes(m, resultado):
         "nota": ("advisory unicamente -- nada lee esto automaticamente aun"
                  if resultado else "sin decision del modelo (proveedores caidos)"),
     }
-    with open(AJUSTES_PATH, "w", encoding="utf-8") as f:
-        json.dump(ajustes, f, ensure_ascii=False, indent=2)
+    _atomic_write(AJUSTES_PATH, json.dumps(ajustes, ensure_ascii=False, indent=2))
     return AJUSTES_PATH
 
 

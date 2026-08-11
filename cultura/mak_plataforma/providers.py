@@ -63,7 +63,10 @@ def _provider_configured(provider, environment):
 def provider_registry(environment=None):
     """Return capabilities and health without exposing credentials."""
     load_env()
-    environment = environment or os.environ
+    # An explicit empty mapping means "no providers configured".  Using
+    # ``environment or os.environ`` leaks the host environment into callers
+    # that intentionally pass an isolated configuration.
+    environment = os.environ if environment is None else environment
     providers = []
     for provider in PROVIDER_ORDER:
         configured = _provider_configured(provider, environment)

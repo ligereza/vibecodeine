@@ -7,7 +7,6 @@ importa fcntl (Linux-only) por eso NUNCA se importa aca a nivel de modulo;
 research.py y research_lib.py son stdlib puro y se pueden importar en
 Windows sin problema (verificado: sin fcntl en la cadena de imports).
 """
-import json
 import sys
 from pathlib import Path
 
@@ -70,9 +69,9 @@ class TestAplicarAccion:
 
     def test_reintentar_no_op(self, tmp_path):
         path = self._make(tmp_path)
-        antes = pausa.cargar_checkpoint(path)
+        previous = pausa.cargar_checkpoint(path)
         resultado = pausa.aplicar_accion(path, "reintentar")
-        assert resultado == antes
+        assert resultado == previous
 
     def test_editar_setea_current(self, tmp_path):
         path = self._make(tmp_path)
@@ -97,10 +96,28 @@ class TestAplicarAccion:
 
     def test_accion_desconocida_no_muta_disco(self, tmp_path):
         path = self._make(tmp_path)
-        antes = pausa.cargar_checkpoint(path)
+        previous = pausa.cargar_checkpoint(path)
         with pytest.raises(ValueError):
             pausa.aplicar_accion(path, "invalida")
-        assert pausa.cargar_checkpoint(path) == antes
+        assert pausa.cargar_checkpoint(path) == previous
+
+    def test_install_failure_preserves_checkpoint_and_cleans_temp(
+            self, tmp_path, monkeypatch):
+        path = self._make(tmp_path)
+        previous = pausa.cargar_checkpoint(path)
+        original_replace = pausa.os.replace
+
+        def fail_install(source, destination):
+            if destination == path:
+                raise OSError("simulated replace failure")
+            return original_replace(source, destination)
+
+        monkeypatch.setattr(pausa.os, "replace", fail_install)
+        with pytest.raises(OSError, match="simulated replace failure"):
+            pausa.aplicar_accion(path, "editar", texto="no instalado")
+
+        assert pausa.cargar_checkpoint(path) == previous
+        assert not list(tmp_path.glob(".*.tmp"))
 
 
 # ---------------------------------------------------------------------
@@ -215,7 +232,8 @@ class TestResearchResume:
 
         salida = capsys.readouterr().out
         assert pausa.MARCA in salida
-        linea_marca = next(l for l in salida.splitlines() if l.startswith(pausa.MARCA))
+        linea_marca = next(line for line in salida.splitlines()
+                           if line.startswith(pausa.MARCA))
         path, motivo = pausa.parsear_marca(linea_marca)
         assert Path(path).exists()
         ck = pausa.cargar_checkpoint(path)

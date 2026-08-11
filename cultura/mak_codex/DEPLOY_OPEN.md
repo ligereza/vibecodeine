@@ -1,4 +1,10 @@
-# Codex ABIERTO en MAK -- YA DESPLEGADO (2026-07-18)
+# Historical deployment note -- Codex direct LAN exposure (2026-07-18)
+
+> This file records a past deployment and is not the current operating
+> contract. The current contract is one human Hub on `:8900`; Research and
+> Codex listen on loopback and are reached through `/research/` and `/codex/`.
+> Keep this evidence for the migration audit; do not use its direct-port
+> commands as a current runbook.
 
 ESTADO: **HECHO Y VERIFICADO.** No hay que correr nada de nuevo salvo que se
 vuelva a caer o se toque la topologia.

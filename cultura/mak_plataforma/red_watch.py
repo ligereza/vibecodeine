@@ -1,21 +1,46 @@
 #!/usr/bin/env python3
-"""red_watch.py -- memoria de cortes de INTERNET real (no solo del gateway).
+"""red_watch.py -- memory of real INTERNET outages, not only the gateway.
 
-Cron cada 2 min. El monitor de xio ve el TELEFONO por wifi; esto ve el
-INTERNET (sonda a 1.1.1.1 / 8.8.8.8). Registra solo las TRANSICIONES en
-~/plataforma/logs/red.jsonl:
-  {"ts","epoch","estado":"caido"}                        -> se corto
-  {"ts","epoch","estado":"volvio","duracion_s":312}      -> volvio, cuanto duro
+Cron runs every two minutes. The XIO monitor sees the PHONE over Wi-Fi; this
+monitor checks the INTERNET (probes 1.1.1.1 / 8.8.8.8). It records only
+TRANSITIONS in ~/plataforma/logs/red.jsonl:
+  {"ts","epoch","estado":"caido"}                        -> outage started
+  {"ts","epoch","estado":"volvio","duracion_s":312}      -> outage ended
 
-Asi el organismo tiene memoria de cuando trabajo en local vs nube.
+This gives the organism memory of local versus cloud operation.
 """
 import json
 import os
 import socket
+import tempfile
 import time
 
 LOG = os.path.expanduser("~/plataforma/logs/red.jsonl")
 STATE = os.path.expanduser("~/plataforma/.red_state.json")
+
+
+def _atomic_write(path, text):
+    temp_path = None
+    try:
+        directory = os.path.dirname(os.path.abspath(path))
+        os.makedirs(directory, exist_ok=True)
+        with tempfile.NamedTemporaryFile(
+                "w", encoding="utf-8", dir=directory,
+                prefix=".red-state-", suffix=".tmp", delete=False) as f:
+            temp_path = f.name
+            f.write(text)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temp_path, path)
+        temp_path = None
+    except OSError:
+        pass
+    finally:
+        if temp_path:
+            try:
+                os.unlink(temp_path)
+            except OSError:
+                pass
 
 
 def internet():
@@ -39,7 +64,7 @@ def main():
     except (OSError, ValueError):
         st = {"up": True, "since": now}
     if up == st.get("up", True):
-        return  # sin cambio de estado, nada que registrar
+        return  # no state change, nothing to record
     ev = {"ts": ts, "epoch": round(now)}
     if up:
         ev["estado"] = "volvio"
@@ -51,11 +76,7 @@ def main():
             f.write(json.dumps(ev, ensure_ascii=False) + "\n")
     except OSError:
         pass
-    try:
-        with open(STATE, "w") as f:
-            json.dump({"up": up, "since": now}, f)
-    except OSError:
-        pass
+    _atomic_write(STATE, json.dumps({"up": up, "since": now}))
 
 
 if __name__ == "__main__":
