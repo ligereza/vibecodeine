@@ -9,6 +9,7 @@ leave the machine. No network is touched: every fetch is a fake opener.
 import importlib.util
 import json
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -46,6 +47,63 @@ class RespuestaFalsa:
 
     def __exit__(self, *a):
         return False
+
+
+def test_run_is_atomic_across_concurrent_crons(monkeypatch, tmp_path):
+    state_dir = tmp_path / "estado"
+    state = {"active": 0, "max_active": 0}
+    state_lock = threading.Lock()
+
+    def slow_review(source, previous, seen, now, **_kwargs):
+        with state_lock:
+            state["active"] += 1
+            state["max_active"] = max(state["max_active"], state["active"])
+        time.sleep(0.05)
+        is_new = "hash-demo" not in seen
+        with state_lock:
+            state["active"] -= 1
+        return {
+            "nombre": "demo", "error": "", "alerta": "",
+            "nuevos": ([{"h": "hash-demo", "titulo": "Aviso nuevo",
+                          "ts": now}] if is_new else []),
+            "estado": {"hashes": ["hash-demo"], "n_items": 1},
+        }
+
+    monkeypatch.setattr(vigia, "revisar_fuente", slow_review)
+    source = {"id": "demo", "nombre": "demo"}
+    results = []
+    threads = [threading.Thread(target=lambda: results.append(
+        vigia.correr([source], str(state_dir), notificar=False,
+                     ahora=1000, max_vistos=5000))) for _ in range(2)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(timeout=3)
+
+    seen_lines = (state_dir / "vistos.jsonl").read_text(encoding="utf-8").splitlines()
+    assert state["max_active"] == 1
+    assert len(seen_lines) == 1
+    assert sum(len(result[0]["nuevos"]) for result in results) == 1
+
+
+def test_save_last_replace_failure_leaves_no_temp(monkeypatch, tmp_path):
+    state_dir = tmp_path / "estado"
+    state_dir.mkdir()
+    path = state_dir / vigia.ULTIMO
+    path.write_text('{"old": true}', encoding="utf-8")
+    original_replace = vigia.os.replace
+
+    def fail_install(source, destination):
+        if destination == str(path):
+            raise OSError("simulated replace failure")
+        return original_replace(source, destination)
+
+    monkeypatch.setattr(vigia.os, "replace", fail_install)
+    with pytest.raises(OSError, match="simulated replace failure"):
+        vigia.guardar_ultimo(str(state_dir), {"new": True})
+
+    assert path.read_text(encoding="utf-8") == '{"old": true}'
+    assert not list(state_dir.glob(".*.tmp"))
 
 
 def abridor(paginas, registro=None):
@@ -381,7 +439,7 @@ def test_compactar_mueve_lo_viejo_a_archive_y_nunca_borra(monkeypatch, tmp_path)
     vigia.correr([FUENTE], str(estado), abrir=abridor({url: pagina2}),
                  notificar=False, ahora=despues, max_vistos=3)
 
-    quedan = [json.loads(l) for l in
+    quedan = [json.loads(line) for line in
               (estado / vigia.VISTOS).read_text(encoding="utf-8").splitlines()]
     titulos_quedan = {r["titulo"] for r in quedan}
     assert "Antigua residencia en La Serena todavia listada" in titulos_quedan, (
@@ -391,7 +449,7 @@ def test_compactar_mueve_lo_viejo_a_archive_y_nunca_borra(monkeypatch, tmp_path)
 
     archivos = list((estado / "archive").glob("vistos_*.jsonl"))
     assert len(archivos) == 1, "lo archivado se mueve, no se borra"
-    archivadas = [json.loads(l) for l in
+    archivadas = [json.loads(line) for line in
                   archivos[0].read_text(encoding="utf-8").splitlines()]
     assert {r["titulo"] for r in archivadas} == {
         "Antigua beca de teatro ya cerrada",

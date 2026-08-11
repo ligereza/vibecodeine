@@ -36,7 +36,11 @@ hoy lo lleno yo.
 
 - Cuerpo y vista viva: el **hub** en `http://192.168.50.2:8900`
 - Doctrina viva: `/doctrina` · Genesis: `/genesis` · Cuotas: `/cuotas`
-- Departamentos: **research** :8890 · **codex** :8891 · **plataforma** :8900
+- Superficie humana unica: **plataforma/Hub** :8900 (`/research/` y `/codex/`)
+- Servicios internos: **research** loopback :8890 · **codex** loopback :8891
+- **curatoria** es un worker batch gobernado por cron, sin panel Web operativo;
+  `cultura/mak_curatoria/panel.py` se conserva como histórico y no se sirve en
+  `:8901`.
 - Guardia de contenido: `plataforma/filtro_entrada.py` (su criterio, en `/doctrina`)
 
 ## Cuando el asiento quede libre (a completar ESE dia)

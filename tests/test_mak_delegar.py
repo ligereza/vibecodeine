@@ -10,7 +10,6 @@ All tests are mocked (no real network). Cover:
 import json
 import os
 import sys
-import tempfile
 import unittest
 from io import StringIO
 from unittest.mock import MagicMock, patch
@@ -85,6 +84,8 @@ class TestMAKDelegar(unittest.TestCase):
         mock_post.assert_called_once()
         call_args = mock_post.call_args
         data = call_args[0][1]  # Second positional arg is data dict
+        self.assertEqual(call_args[0][0], delegar.RESEARCH_RUN_PATH)
+        self.assertEqual(call_args.kwargs["port"], delegar.HUB_PORT)
         self.assertEqual(data["tema"], "test research topic")
         self.assertEqual(data["modo"], "research")
         self.assertEqual(data["densidad"], "medio")
@@ -179,6 +180,8 @@ class TestMAKDelegar(unittest.TestCase):
         self.assertEqual(result, 0)
         call_args = mock_post.call_args
         data = call_args[0][1]
+        self.assertEqual(call_args[0][0], delegar.CODEX_RUN_PATH)
+        self.assertEqual(call_args.kwargs["port"], delegar.HUB_PORT)
         self.assertEqual(data["pedido"], "write a parser")
         self.assertEqual(data["modo"], "generar")
         self.assertEqual(data["densidad"], "corto")

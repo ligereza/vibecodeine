@@ -1,13 +1,17 @@
-# MAK research -- sistema de investigacion cultural (4 APIs + local)
+# MAK research -- sistema de investigacion cultural (Hub + servicios internos)
 
 Sistema standalone en MAK (Debian 12, 192.168.50.2, GTX 1650 4GB, 16GB RAM).
 Sin n8n (camino cerrado como FALLIDO 2026-07-15, no reintentar).
-Recibe cualquier tema X por 3 interfaces y devuelve informe Markdown.
+Recibe cualquier tema X por un Hub humano o por canales de maquina y devuelve
+un informe Markdown. Research no es una interfaz publica independiente: su
+servidor escucha solo en loopback y el Hub lo expone bajo `/research/`.
 
 ## Arquitectura
 
 ```
-tema X --> [interfaz web :8890]  [ntfy iPhone]  [CLI ssh]
+tema X --> [Hub /research/]  [ntfy iPhone]  [CLI ssh]
+                    |
+              [servicio interno :8890]
                     \                 |            /
                      worker.py (lock: 1 job a la vez)
                     /                              \
@@ -35,21 +39,24 @@ Search: Tavily (1000 creditos/mes; basic=1, advanced=2).
 
 ## Interfaces
 
-1. **Web (LAN):** http://192.168.50.2:8890 -- formulario tema + modo +
-   n; lista informes. Sin auth: NO exponer fuera de la LAN.
+1. **Web humana (LAN):** http://192.168.50.2:8900/research/ -- formulario
+   tema + modo + n; lista informes. El Hub es la unica superficie Web y
+   mantiene el servicio Research interno en `127.0.0.1:8890`.
 2. **ntfy (iPhone, sin PC):** publicar a `$NTFY_TOPIC_IN` (ver
    research.env). Formatos: `tema` (research), `panel: tema`,
    `research: tema`. Respuestas por `$NTFY_TOPIC_OUT`: ack, informe
    (900 chars + ruta), fallos.
-3. **CLI:** `~/research/research.sh "tema" [iter]` o
-   `python3 ~/research/{research,panel}.py "tema"`.
+3. **CLI:** para delegacion remota usar `tools/mak/delegar.py research`, que
+   envia el trabajo al Hub; los scripts `~/research/{research,panel}.py` son
+   herramientas locales del servicio y no superficies de red.
 
 ## Operacion
 
 - Keys: `~/n8n-local/research.env` (600). Copia PC: `cultura/.dev`
   (gitignored). NUNCA commitear.
-- Servicios: `cola.py` + `interfaz.py` via nohup; cron `@reboot` los
-  levanta (crontab de mak). Logs: `~/research/{cola,interfaz}.log`.
+- Servicios: `cola.py` + `interfaz.py` via watchdog/cron; el unit
+  `interfaz.service` del repo es solo compatibilidad y no está instalado en el
+  runtime verificado. Logs: `~/research/{cola,interfaz}.log`.
 - Frugalidad (regla del usuario): defaults research 2 iteraciones,
   panel 1 replica; mas profundidad = flag explicito. Un job a la vez.
 - Marco cultural (viaja con toda pieza): capa DESCRIPTIVA (historia,

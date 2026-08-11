@@ -492,7 +492,6 @@ def mesa_scene(source: dict, records, relation_groups, limit: int = 10) -> dict:
         if record_id and record_id not in discarded_ids and record_id not in by_id:
             by_id[record_id] = dict(record)
 
-    publication_id = str(source.get("publicacion_id") or "").strip()
     publication_groups = {}
     publication_records = [source, *[record for record in records or []
                                       if isinstance(record, dict)]]
@@ -518,8 +517,6 @@ def mesa_scene(source: dict, records, relation_groups, limit: int = 10) -> dict:
     for media in publication_groups.values():
         media.sort(key=lambda row: (
             row.get("index") is None, row.get("index") or 0, row["source_id"]))
-    publication_media = publication_groups.get(publication_id, [])
-
     publication_representative = {}
     for record_id, record in by_id.items():
         publication_key = str(record.get("publicacion_id") or "").strip()
@@ -691,6 +688,9 @@ def mesa_scene(source: dict, records, relation_groups, limit: int = 10) -> dict:
                 for value in list(group.get(key) or []):
                     if value not in existing[key]:
                         existing[key].append(value)
+            for key, value in (group.get("visual") or {}).items():
+                if value not in (None, "", []):
+                    existing.setdefault("visual", {})[key] = value
             existing.setdefault("member_ids", []).append(raw_target_id)
             existing.setdefault("decisions", []).extend(decisions)
             existing["status"] = feedback_status([
@@ -713,6 +713,7 @@ def mesa_scene(source: dict, records, relation_groups, limit: int = 10) -> dict:
                 "evidence" if group.get("scope") == "declared" else "resonance")]),
             "evidence": list(group.get("evidence") or []),
             "reasons": list(group.get("reasons") or []),
+            "visual": dict(group.get("visual") or {}),
             "note": str(group.get("note") or "")[:1000],
             "status": status,
             "decisions": decisions,

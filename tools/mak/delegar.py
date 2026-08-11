@@ -3,8 +3,8 @@
 delegar.py - MAK delegation client (flujo -> MAK LAN peer).
 
 Bridges flujo (Windows) to MAK (Linux 192.168.50.2) for delegating mechanical work:
-  - research: investigation jobs to :8890
-  - codex: code generation/review/testing to :8891
+  - research: investigation jobs through Hub /research/run
+  - codex: code generation/review/testing through Hub /codex/run
   - salud: health status of :8900 hub
 
 API Contracts extracted from:
@@ -13,7 +13,8 @@ API Contracts extracted from:
   - cultura/mak_plataforma/hub.py (health endpoint)
 
 All requests have timeouts (default 10s).
-Runs on private LAN (192.168.50.2) with no authentication required.
+Runs against the Hub on the private LAN. Research and Codex ports remain
+internal service boundaries and are not contacted by this client.
 """
 import argparse
 import json
@@ -24,9 +25,13 @@ import urllib.request
 
 
 MAK_HOST = "192.168.50.2"
+# Compatibility constants for callers that still inspect service ports. New
+# delegation traffic uses the Hub paths below and does not connect directly.
 RESEARCH_PORT = 8890
 CODEX_PORT = 8891
 HUB_PORT = 8900
+RESEARCH_RUN_PATH = "/research/run"
+CODEX_RUN_PATH = "/codex/run"
 DEFAULT_TIMEOUT = 10
 
 # Research modes (from interfaz.py MODO_DIR)
@@ -181,7 +186,7 @@ def cmd_salud(args):
 
 def cmd_research(args):
     """
-    Submit research job to :8890.
+    Submit a research job through the Hub `/research/run` route.
 
     Reference: cultura/mak_research/interfaz.py line 2861-2882 (POST /run)
 
@@ -215,17 +220,17 @@ def cmd_research(args):
             n = max(0, min(n, 10))
             data["n"] = str(n)
         except (ValueError, TypeError):
-            raise MAKUsageError(f"--n must be integer 0-10")
+            raise MAKUsageError("--n must be integer 0-10")
 
     if args.memoria:
         data["memoria"] = "1"
 
     try:
         result = _http_post(
-            "/run",
+            RESEARCH_RUN_PATH,
             data,
             host=MAK_HOST,
-            port=RESEARCH_PORT,
+            port=HUB_PORT,
             timeout=args.timeout,
         )
         if result.get("ok"):
@@ -244,7 +249,7 @@ def cmd_research(args):
 
 def cmd_codex(args):
     """
-    Submit codex job to :8891.
+    Submit a Codex job through the Hub `/codex/run` route.
 
     Reference: cultura/mak_codex/interfaz_codex.py line 325-339 (POST /run)
 
@@ -271,10 +276,10 @@ def cmd_codex(args):
 
     try:
         result = _http_post(
-            "/run",
+            CODEX_RUN_PATH,
             data,
             host=MAK_HOST,
-            port=CODEX_PORT,
+            port=HUB_PORT,
             timeout=args.timeout,
         )
         if result.get("ok"):
@@ -307,7 +312,7 @@ def main():
     subparsers = parser.add_subparsers(dest="command", help="Command")
 
     # salud
-    salud_parser = subparsers.add_parser("salud", help="Check MAK hub health")
+    subparsers.add_parser("salud", help="Check MAK hub health")
 
     # research
     research_parser = subparsers.add_parser("research", help="Submit research job")

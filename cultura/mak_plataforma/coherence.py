@@ -53,7 +53,8 @@ ORGANS = {
 # drift the report becomes noise, nobody reads it, and that is exactly how the
 # real findings get lost.
 BOX_OWNED = ("piezas/", "fichas/", "jobs/", "logs/", "revisiones/", "estado",
-             "procesados", "backlog", "__pycache__/", ".git/", "memoria/")
+             "procesados", "backlog", "rollback/", "__pycache__/", ".git/",
+             "memoria/")
 
 
 def _md5(p: Path) -> str:

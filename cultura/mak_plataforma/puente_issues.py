@@ -42,7 +42,6 @@ Cron sugerido (cada 10 minutos):
       /home/mak/plataforma/logs/puente_issues.log 2>&1 # MAK-PUENTE-ISSUES
 """
 import argparse
-import fcntl
 import signal
 import json
 import os
@@ -50,8 +49,14 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
+
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - Windows director has no fcntl
+    fcntl = None
 
 HOME = Path.home()
 REPO = "ligereza/vibecodeine"
@@ -105,6 +110,10 @@ def config():
 
 
 IG_RE = re.compile(r"https://www\.instagram\.com/[^\s\)\]\"']+", re.IGNORECASE)
+_ABS_PATH_RE = re.compile(
+    r"(?:(?<![A-Za-z0-9])[A-Za-z]:[\\/][^\s\"'<>|]+|"
+    r"/(?:home|tmp|var|Users|mnt|opt|root|srv|work)[\\/][^\s\"'<>|]+)"
+)
 
 
 def _log(msg):
@@ -122,12 +131,35 @@ def _estado():
         return {"hechos": {}}
 
 
+def _write_text_atomic(path, text):
+    path = os.path.abspath(path)
+    parent = os.path.dirname(path)
+    os.makedirs(parent, exist_ok=True)
+    temp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+                "w", encoding="utf-8", dir=parent,
+                prefix=".%s-" % os.path.basename(path), suffix=".tmp",
+                delete=False) as f:
+            temp_path = f.name
+            f.write(text)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temp_path, path)
+        temp_path = None
+    finally:
+        if temp_path:
+            try:
+                os.unlink(temp_path)
+            except OSError:
+                pass
+
+
 def _guardar_estado(st):
     try:
-        ESTADO.parent.mkdir(parents=True, exist_ok=True)
-        tmp = ESTADO.with_suffix(".tmp")
-        tmp.write_text(json.dumps(st, ensure_ascii=False, indent=2), encoding="utf-8")
-        tmp.replace(ESTADO)
+        _write_text_atomic(
+            ESTADO,
+            json.dumps(st, ensure_ascii=False, indent=2))
     except OSError as e:
         _log("aviso: no pude guardar el estado (%s)" % e)
 
@@ -354,7 +386,7 @@ def _sin_rutas(texto):
     def corta(m):
         s = m.group(0)
         return ".../" + re.split(r"[\\/]", s)[-1]
-    return _RUTA_ABS.sub(corta, texto or "")
+    return _ABS_PATH_RE.sub(corta, texto or "")
 
 
 def _indice_pedido_local(url):
@@ -506,8 +538,9 @@ def main():
         LOCK.parent.mkdir(parents=True, exist_ok=True)
         fh = open(LOCK, "w")
         try:
-            fcntl.flock(fh, fcntl.LOCK_EX if args.esperar_gpu
-                        else fcntl.LOCK_EX | fcntl.LOCK_NB)
+            if fcntl is not None:
+                fcntl.flock(fh, fcntl.LOCK_EX if args.esperar_gpu
+                            else fcntl.LOCK_EX | fcntl.LOCK_NB)
         except OSError:
             _log("ya hay una pasada del puente corriendo; "
                  "reintento al proximo tick")

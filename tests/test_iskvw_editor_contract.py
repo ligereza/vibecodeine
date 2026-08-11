@@ -27,7 +27,7 @@ def test_editor_surfaces_mak_contract_without_making_hub_required():
     assert "/api/portfolio/index" in source
     assert "Usuarios mencionados, no entidades resueltas" in source
     assert 'id="inbox-foco"' in source
-    assert "Estudio de obra" in source
+    assert "MAK · campo de orden" in source
     assert "abrir en estudio" in source
     assert "function mostrarAccionPieza" in source
     assert "function cargarTriangulacionPieza" in source
@@ -80,9 +80,10 @@ def test_editor_surfaces_mak_contract_without_making_hub_required():
     assert "descartar · no es obra" in source
     assert "ESTUDIO_FEEDBACK_BUSY" in source
     assert "seleccionada'" in source
-    assert "mesa_montaje.js?v=20260809-review-packet4" in source
-    assert "<title>MAK · Estudio de obra</title>" in source
-    assert "Estudio de obra · archivo vivo" in source
+    assert "mesa_montaje.js?v=20260811-atlas-audit" in source
+    assert "/api/portfolio/inbox?surface=mesa" in mesa
+    assert "<title>MAK · Campo de orden · archivo vivo</title>" in source
+    assert "MAK · campo de orden" in source
     assert "campo de orden" in mesa
     assert "La geometría permanece" in mesa
     assert 'data-field-mode="uncertainty"' in mesa
@@ -95,13 +96,15 @@ def test_editor_surfaces_mak_contract_without_making_hub_required():
     assert "selectOrderRegion" in mesa
     assert "mesa-order-compass" in mesa
     assert "mesa-map-legend" in mesa
+    assert "visual_similarity" in mesa
+    assert "MobileCLIP-S0" in mesa
     assert "centerNodeInView" in mesa
     assert "processedHumanSeed" in mesa
     assert "fetchSceneCached" in mesa
     assert "ficha activa · la decisión no crea vínculos" in mesa
     assert "advanceSeedFromPopover" in mesa
     assert "prefetchNextHumanSeed" in mesa
-    assert "no creó relación. Completa la ficha y pulsa siguiente." in mesa
+    assert "await loadHumanSeed({ refresh: false, excludeId: itemIds[0] });" in mesa
     assert "nextAvailableRecord" in mesa
     assert 'data-editor-mode="order"' in mesa
     assert 'data-editor-mode="relate"' in mesa
@@ -123,6 +126,14 @@ def test_editor_surfaces_mak_contract_without_making_hub_required():
     assert 'const busyKey = `discard:${record.source_id}`' in mesa
     assert 'state.feedbackBusy.has(busyKey)' in mesa
     assert 'await loadHumanSeed({ refresh: false, excludeId:' in mesa
+    assert "descarte parcial: ${saved} guardados, ${failed.length} pendientes" in mesa
+    assert "state.orderSelectedIds = new Set(" in mesa
+    assert "filter((itemId) => !savedIds.includes(itemId))" in mesa
+    assert 'error: "respuesta_no_confirmada"' in mesa
+    assert "const batchResults = Array.isArray(response.payload.results)" in mesa
+    assert "clasificación parcial: ${savedIds.length} guardadas, ${failed} pendientes" in mesa
+    assert "selección guardada; triage pendiente." in mesa
+    assert "feedback guardado; conexión pendiente." in mesa
     assert "/api/portfolio/copilot/learning" in mesa
     assert "classify-batch" in mesa
     assert "toggleOrderSelection" in mesa
@@ -136,6 +147,8 @@ def test_editor_surfaces_mak_contract_without_making_hub_required():
     assert 'actionButton("center"' in mesa
     assert "selectedId" in mesa
     assert "selectRelation" in mesa
+    assert "const suggestionsDrawerMarkup = active && usefulSuggestions.length" in mesa
+    assert "return relation?.relation_id ? selectRelation(relation.relation_id)" in mesa
     assert "window.open" in mesa
     assert "requestAnimationFrame" in mesa
     assert "work_group" in mesa
@@ -175,6 +188,31 @@ def test_editor_surfaces_mak_contract_without_making_hub_required():
     assert "const description =" in mesa
     assert "note" in mesa
     assert "distancia adaptada" in mesa
+    assert 'id="mesa-external-queue"' in mesa
+    assert "loadExternalQueue" in mesa
+    assert "externalReviewMarkup" in mesa
+    assert "/api/portfolio/external-candidates/review" in mesa
+    assert 'data-pop-action="external-review"' in mesa
+    assert 'id="mesa-audit"' in mesa
+    assert "/api/portfolio/audit" in mesa
+    assert "Atlas de decisiones verificable" in mesa
+    assert "Estado actual de selección" in mesa
+    assert "Etiquetas de aprendizaje · no son piezas activas" in mesa
+    assert "Línea temporal" in mesa
+    assert "current_selection" in mesa
+    assert "triage_labels" in mesa
+    assert 'contentType.includes("application/json")' in mesa
+    assert "la auditoría aún no está desplegada" in mesa
+
+    order_decision = mesa[mesa.index("async function applyOrderDecision") : mesa.index("function nextAvailableRecord")]
+    assert "invalidateSceneCache();" in order_decision
+    assert "descarte parcial: ${saved} guardados, ${failed.length} pendientes" in mesa
+
+    assert "if(!r.ok)throw new Error(`HTTP ${r.status}`);" in source
+    assert "Selección parcial del carrusel" in source
+    assert "la selección visible fue restaurada" in source
+    assert "tableros no disponibles temporalmente" in source
+    assert "No se pudieron cargar las sugerencias; la pieza sigue disponible." in source
 
 
 def test_editor_keeps_search_board_filter_and_association_tray_separate():
