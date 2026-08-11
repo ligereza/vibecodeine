@@ -535,7 +535,8 @@ def test_portfolio_vision_persists_candidate_features_without_entity_resolution(
     assert result["evidence_kind"] == "still_image"
     assert repeated["duplicate"] is True
     assert calls[0][0] == "aws"
-    assert calls[0][1][0].endswith("posts\\a.jpg")
+    image_path = Path(calls[0][1][0])
+    assert image_path.parts[-2:] == ("posts", "a.jpg")
     assert "artist" not in result["features"]
     assert vision_path.read_text(encoding="utf-8").count("faro-portfolio-vision-v1") == 1
 
