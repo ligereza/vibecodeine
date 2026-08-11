@@ -1,7 +1,7 @@
 # LAST_HANDOFF - Faro
 
 Updated: 2026-08-11
-Status: runtime ledger reconciled; continue with documentary cleanup and focused regressions only.
+Status: MAK integration committed and pushed; continue only from the documented next action.
 
 ## Read this first
 
@@ -43,10 +43,10 @@ instructions. Verify any statement that affects a destructive or remote action.
 ## Repository state
 
 - Windows workspace: `C:\IA\flujo`.
-- Verified checkout: branch `mak`, commit `d09327fe8d5b`; the worktree has
-  intentional modified and untracked files from the active integration work.
-  Local `main`, `mak`, `rd` and `iskvw`, together with `origin/main`,
-  `origin/mak`, `origin/rd` and `origin/iskvw`, point to `d09327fe8d5b`.
+- Verified checkout: branch `mak`, commit `4bb71f2f37b7`; the Windows
+  worktree is clean. Local `mak` and `origin/mak` point to
+  `4bb71f2f37b7`; local `main`, `rd`, `iskvw` and their corresponding
+  `origin/*` refs remain at `d09327fe8d5b` by design and are clean.
 - The separate clean `main` worktree under the local `.roo/worktrees/`
   directory was removed after verifying it had no uncommitted changes. The
   local `main` branch is now available for a new session; no branch or commit
@@ -59,8 +59,11 @@ instructions. Verify any statement that affects a destructive or remote action.
   copilot layer in the same Hub route.
 - The Hub defaults `MAK_PORTFOLIO_ROOT` to
   `/home/mak/flujo/iskvw`, so `/home/mak/flujo/iskvw/editor.html` is the
-  operational editor. The current Windows and served editor both have SHA-256
-  `252d14d006d342c8e7a514801d3f35e33840bffde668ed928e638c5aea8906a1`.
+  operational editor. The current Windows working copy editor has SHA-256
+  `252d14d006d342c8e7a514801d3f35e33840bffde668ed928e638c5aea8906a1`;
+  the MAK checkout and served editor have SHA-256
+  `1c0efe456f80ac13c90cc0a76dc44cfddf90ff2cf101c8c263c5f19d6b967a5d`.
+  The difference is only CRLF/LF; `git diff --ignore-space-at-eol` is clean.
 - The served `/portafolio/mesa_montaje.js?v=20260810-visual-index2` and its
   Windows/checkout copy both have SHA-256
   `ddf3968273935bbe8f9df1e78b67290997022a4c034857979bca4cd7eb9f50e8`.
@@ -74,12 +77,10 @@ instructions. Verify any statement that affects a destructive or remote action.
 Fresh SSH check on 2026-08-11:
 
 - Host: `mak@192.168.50.2`, hostname `dell-11m`.
-- The actual Git checkout is `/home/mak/flujo`, currently on `mak`; it has
-  exactly the four local branches `main`, `mak`, `rd`, and `iskvw`, plus the
-  four corresponding remote refs, all at `d09327fe8d5b`. Its active worktree
-  has modified `iskvw/editor.html`, `iskvw/mesa_montaje.js` and untracked
-  `cultura/mak_plataforma/visual_index.py`. `/home/mak/plataforma` is the
-  runtime data and service directory, not a Git checkout.
+- The actual Git checkout is `/home/mak/flujo`, currently on `mak` at
+  `4bb71f2f37b7`; its worktree is clean. Its local `main`, `rd` and `iskvw`
+  refs remain at `d09327fe8d5b`; `/home/mak/plataforma` is the runtime data
+  and service directory, not a Git checkout.
 - The runtime Hub is healthy and is managed by the user systemd unit
   `/home/mak/.config/systemd/user/mak-hub.service`.
 - The unit is enabled and active after the synchronization. Current process:
@@ -3159,3 +3160,27 @@ descartes históricos.
 - Siguiente acción: continuar con la siguiente acción del harness solo si
   aparece otra escritura parcial reproducible; no abrir proveedores externos,
   migraciones ni otra interfaz.
+
+## Cierre publicado para el siguiente agente — 2026-08-11
+
+- Commit publicado en `origin/mak`: `4bb71f2f37b7` (`integrate MAK portfolio
+  visual circuit`). No se hicieron commits ni pushes a `main`, `rd` o
+  `iskvw`; esas ramas permanecen limpias en `d09327fe8d5b`.
+- Windows `mak` y el checkout `/home/mak/flujo` están limpios en
+  `4bb71f2f37b7`. La versión anterior de `visual_index.py` que estaba sin
+  rastrear en MAK fue clasificada como stale y archivada fuera del checkout en
+  `/home/mak/plataforma/derived/visual-index/legacy/visual_index.py.pre-4bb71f2`,
+  SHA-256 `2cbca673c1edaada07a1371fdc84f6a152ece623b89134b966886fc37298e184`.
+- Verificación focal final: seis módulos Python compilan, el editor inline
+  compila, `node --check iskvw/mesa_montaje.js` pasa y las pruebas de ledger,
+  bridge, Copilot, editor, índice visual y XIO pasan.
+- La suite histórica completa (`225` archivos) agotó `184 s` sin terminar; no
+  se declara aprobada. No bloqueó el cierre focal del circuito MAK y queda como
+  limitación explícita para una ronda separada.
+- MAK posterior al push: `mak-hub.service=active`, `/portafolio/`, `/health`,
+  `/api/portfolio/copilot/status` y la escena `surface=order` respondieron
+  HTTP 200. No se reinició el Hub durante el cierre porque el cambio servido
+  fue estático, y el runtime conserva cero mappings de torch/FAISS/MobileCLIP.
+- Siguiente agente: comenzar en esta sección y ejecutar solo otra regresión
+  reproducible del harness; no reabrir la interfaz legacy ni sincronizar las
+  otras ramas sin una decisión explícita.
