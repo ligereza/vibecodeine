@@ -12,7 +12,7 @@ detras.
 
 Uso:
     py tools/gen_archivo_iskvw.py --fuente obras
-    py tools/gen_archivo_iskvw.py --fuente micelio --url http://<caja>:8890
+    py tools/gen_archivo_iskvw.py --fuente micelio --url http://<caja>:8900/research
     py tools/gen_archivo_iskvw.py --fuente micelio_snapshot
     py tools/gen_archivo_iskvw.py --fuente ensayos
     py tools/gen_archivo_iskvw.py --fuente todo
@@ -69,7 +69,9 @@ MICELIO_SNAPSHOT = RAIZ / "iskvw" / "datos" / "micelio.json"
 
 # Por defecto el micelio se pide a la variable de entorno, no a una IP escrita
 # en el repo: este repositorio es publico.
-MICELIO_URL = os.environ.get("FLUJO_MAK_RESEARCH_URL", "http://127.0.0.1:8890")
+MICELIO_URL = os.environ.get(
+    "FLUJO_MAK_RESEARCH_URL", "http://127.0.0.1:8900/research"
+)
 
 # Dos obras con etiquetas en comun quedan unidas. Debajo de esto el vinculo es
 # ruido: una sola etiqueta generica compartida no dice que dos obras se

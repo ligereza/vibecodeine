@@ -17,20 +17,20 @@ cable between them -- a two-machine private link, no third party on the wire.
 ### Membership
 | Device | Role | Network | Notes |
 |---|---|---|---|
-| MAK Linux box | Research + code execution (research :8890, codex :8891, hub :8900) | 192.168.50.2 | Research/codex always in this network |
+| MAK Linux box | Hub humano + servicios internos Research/Codex | 192.168.50.2 | Solo el Hub :8900 es alcanzable por la LAN; Research/Codex quedan en loopback |
 | Windows PC (this repo / Cauce dev) | Repo operations, airdrop, xio PC-side tooling | 192.168.50.x | Develops, verifies, deploys to the show |
-| Xiaomi phone (docked at home) | Termux server development, hotspot testing | 192.168.50.x | Runs xio plugins; reaches codex at 192.168.50.2:8891 for testing |
+| Xiaomi phone (docked at home) | Termux server development, hotspot testing | 192.168.50.x | Runs xio plugins; reaches the Hub routes for testing |
 
 ### Services reachable
-- `research:8890` (multi-modal investigation)
-- `codex:8891` (full code generator + sandbox)
-- `plataforma:8900` (hub, backups, resource guard)
+- `plataforma:8900` (Hub humano, backups, resource guard, `/research/` and `/codex/`)
+- `research:8890` and `codex:8891` are loopback-only service ports
 - `xio:5000` (phone server, with MAK on the LAN for testing)
 
 ### Trust model
 - All devices are owner-controlled machines with no third parties present
 - Network is fully private (owner's home LAN, wifi + direct ethernet, no venue exposure)
-- codex and research run with NO token (auth deleted 2026-07-18): no hostile actors on this network, no public route reaches them
+- The internal codex and research services run without a token because they are
+  loopback-only; the LAN reaches them through the Hub boundary.
 
 ---
 
@@ -81,7 +81,8 @@ This separation **intentionally avoids the risk of code-execution exposure on a 
 At startup (`run_server.sh`), the phone's current IP (or the hotspot subnet, if visible) determines context:
 
 - **Face A indicators:** IP in range `192.168.50.x` OR the phone is connected via USB to a PC with `tcpip 5555` active.
-  - xio server allows internal requests (from MAK) on the private LAN; MAK research/codex run open (no token).
+  - xio server may call the Hub on the private LAN; direct MAK research/codex
+    ports are not part of the LAN contract.
   - Watchdogs + Shizuku run to support the studio dev loop.
   
 - **Face B indicators:** Hotspot is ON (checked with `dumpsys wifi` or `ip addr show wlan1`), IP in range `192.168.127.x` OR `192.168.198.x`.

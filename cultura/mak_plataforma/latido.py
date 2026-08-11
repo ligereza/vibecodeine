@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
-"""latido.py -- el latido del organismo: cada tanto, un concepto nuevo.
+"""latido.py -- the organism heartbeat: an occasional new concept.
 
-El cron lo gatilla (cada 3h). Con topes para no desbordar las APIs gratis:
-  - MAX_DIA latidos por dia
-  - MIN_GAP entre latidos
-  - se salta si la carga esta alta (el cuerpo ocupado)
-Lanza UN research DESCRIPTIVO (pasa la guardia) desde las semillas culturales.
-Editable: ~/plataforma/semillas_latido.txt (una idea por linea).
-Apagar: quitar la linea MAK-LATIDO del crontab.
+Cron triggers it every three hours. Limits prevent free APIs from being
+overloaded:
+  - MAX_DIA heartbeats per day
+  - MIN_GAP between heartbeats
+  - skip when system load is high
+It launches one descriptive research request through the guard from cultural
+seeds.
+Editable: ~/plataforma/semillas_latido.txt (one idea per line).
+Disable: remove the MAK-LATIDO line from crontab.
 """
 import json
 import os
+import tempfile
 import time
 import urllib.parse
 import urllib.request
@@ -22,9 +25,9 @@ STATE = os.path.join(HOME, "plataforma/.latido_state.json")
 LOG = os.path.join(HOME, "plataforma/logs/latido.log")
 RESEARCH = "http://127.0.0.1:8890/run"
 
-MAX_DIA = 5           # latidos por dia como maximo
-MIN_GAP_S = 2 * 3600  # al menos 2h entre latidos
-LOAD_MAX = 3.0        # si load1 > esto, el cuerpo esta ocupado: saltar
+MAX_DIA = 5           # maximum heartbeats per day
+MIN_GAP_S = 2 * 3600  # at least two hours between heartbeats
+LOAD_MAX = 3.0        # skip when load1 exceeds this threshold
 
 SEED_DEFAULT = [
     "genealogia cultural de la tilde y los signos diacriticos del castellano",
@@ -46,6 +49,30 @@ def log(m):
         pass
 
 
+def _atomic_write(path, text):
+    temp_path = None
+    try:
+        directory = os.path.dirname(os.path.abspath(path))
+        os.makedirs(directory, exist_ok=True)
+        with tempfile.NamedTemporaryFile(
+                "w", encoding="utf-8", dir=directory,
+                prefix=".latido-", suffix=".tmp", delete=False) as f:
+            temp_path = f.name
+            f.write(text)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temp_path, path)
+        temp_path = None
+    except OSError:
+        pass
+    finally:
+        if temp_path:
+            try:
+                os.unlink(temp_path)
+            except OSError:
+                pass
+
+
 def load1():
     try:
         return os.getloadavg()[0]
@@ -59,12 +86,10 @@ def semillas():
             s = [x.strip() for x in f if x.strip() and not x.startswith("#")]
         return s or SEED_DEFAULT
     except OSError:
-        try:
-            with open(SEMILLAS, "w", encoding="utf-8") as f:
-                f.write("# semillas del latido -- una idea por linea, edita libremente.\n")
-                f.write("\n".join(SEED_DEFAULT) + "\n")
-        except OSError:
-            pass
+        _atomic_write(
+            SEMILLAS,
+            "# semillas del latido -- una idea por linea, edita libremente.\n"
+            + "\n".join(SEED_DEFAULT) + "\n")
         return SEED_DEFAULT
 
 
@@ -75,11 +100,7 @@ def prox_idx(n):
             i = int(f.read().strip() or "0")
     except (OSError, ValueError):
         i = 0
-    try:
-        with open(IDX, "w") as f:
-            f.write(str((i + 1) % max(n, 1)))
-    except OSError:
-        pass
+    _atomic_write(IDX, str((i + 1) % max(n, 1)))
     return i % max(n, 1)
 
 
@@ -92,11 +113,7 @@ def _state():
 
 
 def _save(s):
-    try:
-        with open(STATE, "w") as f:
-            json.dump(s, f)
-    except OSError:
-        pass
+    _atomic_write(STATE, json.dumps(s, ensure_ascii=False))
 
 
 def main():

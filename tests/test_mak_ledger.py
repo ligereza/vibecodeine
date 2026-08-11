@@ -273,6 +273,25 @@ def test_external_product_metadata_survives_in_common_ledger(tmp_path):
     assert rows[0]["metadata"]["product"]["relations"]["artist"] == "ober"
 
 
+def test_portfolio_record_surfaces_product_next_action_when_not_triangulating():
+    row = ledger.external_item_to_ledger({
+        "claim": "registro audiovisual con relación pendiente",
+        "evidence": ["instagram:post-42"],
+        "files": ["/portfolio-media/reels/post-42.mp4"],
+        "confidence": "medium",
+        "action": "verify_source",
+        "format": "reel",
+        "product": {
+            "record_kind": "reel_record",
+            "next_action": "confirmar evento y fecha",
+            "unknowns": ["venue"],
+        },
+    }, "portfolio_record", {"provider": "local_deterministic"})
+
+    assert row["next_action"] == "confirmar evento y fecha"
+    assert row["metadata"]["portfolio_candidate"]["record_kind"] == "reel_record"
+
+
 def test_review_ledger_preserves_judge_trace_metadata(tmp_path):
     path = tmp_path / "common_ledger.jsonl"
     review = {

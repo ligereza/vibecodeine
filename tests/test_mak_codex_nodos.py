@@ -8,8 +8,10 @@ Sin red, sin ollama. interfaz_codex.py importa worker_codex.py -> fcntl
 (Linux-only): se gatea igual que tests/test_mak_mirror_fixes.py, para no
 saltear todo el archivo en Windows/CI sin fcntl.
 """
+import json
 import re
 import sys
+import threading
 import types
 from pathlib import Path
 
@@ -56,6 +58,42 @@ except ImportError:
 
 requiere_fcntl = pytest.mark.skipif(
     not HAY_FCNTL, reason="interfaz_codex.py importa worker_codex->fcntl (Linux-only)")
+
+
+@requiere_fcntl
+def test_codex_jobs_append_is_serialized(tmp_path, monkeypatch):
+    path = str(tmp_path / "jobs.jsonl")
+    monkeypatch.setattr(interfaz_codex, "JOBS_FILE", path)
+    barrier = threading.Barrier(10)
+
+    def write_record(index):
+        barrier.wait(timeout=3)
+        interfaz_codex._append_job_record({"job_id": "codex-%d" % index,
+                                           "estado": "listo"})
+
+    threads = [threading.Thread(target=write_record, args=(i,)) for i in range(10)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(timeout=3)
+
+    records = [json.loads(line) for line in
+               Path(path).read_text(encoding="utf-8").splitlines()]
+    assert len(records) == 10
+    assert {record["job_id"] for record in records} == {
+        "codex-%d" % index for index in range(10)}
+
+
+def test_producers_and_delivery_share_codex_ledger_lock():
+    codex = (MAK_CODEX / "interfaz_codex.py").read_text(encoding="utf-8")
+    libre = (MAK_CODEX / "agente_libre.py").read_text(encoding="utf-8")
+    delivery = (PROYECTO_DIR / "cultura" / "mak_plataforma" /
+                "entregar.py").read_text(encoding="utf-8")
+    assert "def _exclusive_jobs_file_lock" in codex
+    assert "_append_job_record(job)" in codex
+    assert "def _exclusive_jobs_file_lock" in libre
+    assert "def _exclusive_codex_jobs_lock" in delivery
+    assert "with _exclusive_codex_jobs_lock()" in delivery
 
 
 @requiere_fcntl

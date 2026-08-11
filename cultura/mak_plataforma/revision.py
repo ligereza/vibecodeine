@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import threading
 import time
 from pathlib import Path
 
@@ -19,6 +20,7 @@ SHEETS = Path(os.environ.get(
 REVIEWS = ROOT / "human_reviews.jsonl"
 SAFE_NAME = re.compile(r"^[0-9]+_mp4$")
 DECISIONS = {"accept", "revise", "reject"}
+_REVIEW_LOCK = threading.RLock()
 
 
 def _safe_video(video: str) -> str | None:
@@ -119,6 +121,11 @@ def media_path(name: str) -> Path | None:
 
 
 def record(video: str, decision: str, note: str = "") -> dict:
+    with _REVIEW_LOCK:
+        return _record_unlocked(video, decision, note)
+
+
+def _record_unlocked(video: str, decision: str, note: str = "") -> dict:
     video = _safe_video(video)
     decision = str(decision or "")
     if not video or decision not in DECISIONS:

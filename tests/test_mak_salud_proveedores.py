@@ -8,6 +8,7 @@ No network, ollama, ni system deps. Pure logic + I/O en tmp_path.
 import json
 import os
 import sys
+import threading
 
 # Add cultura/mak_research to path for imports (mismo patron que
 # tests/test_mak_fallback.py, pero apuntando a mak_research).
@@ -128,6 +129,24 @@ class TestSaludRoundTrip:
     def test_archivo_faltante_da_vacio(self, tmp_path):
         ruta = str(tmp_path / "no_existe.json")
         assert _salud_cargar(ruta=ruta) == {}
+
+    def test_concurrent_records_preserve_increments(self, tmp_path):
+        path = str(tmp_path / "salud.json")
+        barrier = threading.Barrier(8)
+
+        def record_event():
+            barrier.wait(timeout=3)
+            _salud_registrar("groq", False, "api_error",
+                             ruta=path, ahora=1000.0)
+
+        threads = [threading.Thread(target=record_event) for _ in range(8)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join(timeout=3)
+
+        proveedores = _salud_cargar(ruta=path, ahora=1000.0)
+        assert proveedores["groq"]["api_errors"] == 8
 
 
 # ---------------------------------------------------------------------------

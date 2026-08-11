@@ -269,7 +269,12 @@ def portfolio_vector(item):
 
 def _vector_distance(left, right, weights=None):
     if weights is None:
-        weights = [1.0] * min(len(left), len(right))
+        # The GTM fit calls this millions of times on 32-dimensional vectors.
+        # Keep the weighted path explicit, but use the C-level implementation
+        # for the common unweighted distance instead of allocating a weights
+        # list and walking the generator in Python.
+        return math.dist(left, right)
+    weights = weights[:min(len(left), len(right))]
     return math.sqrt(sum(weight * (a - b) ** 2
                          for a, b, weight in zip(left, right, weights)))
 
@@ -352,6 +357,16 @@ def _triage_label(item):
         "seleccionar": "work",
         "descartar": "discard",
     }.get(str(item.get("selection") or "").lower(), "")
+
+
+def _triage_label_source(item):
+    classification = item.get("classification") or {}
+    declared = classification.get("triage") if isinstance(classification, dict) else ""
+    if declared in ORDER_LABELS:
+        return declared, "triage"
+    selection = str(item.get("selection") or "").lower()
+    label = {"seleccionar": "work", "descartar": "discard"}.get(selection, "")
+    return label, "selection"
 
 
 def _sample_pair_ids(values, limit=32):
@@ -821,6 +836,105 @@ def _ordering_metric_summary(evaluation):
             for key in ("evaluated", "accuracy", "macro_recall")}
 
 
+def replay_ordering_evaluation(items, vector_by_id=None, distance_weights=None,
+                               include_cases=True, label_source="all"):
+    """Replay known human triage without letting the answer leak into itself.
+
+    This is a diagnostic surface for bounded samples.  It keeps the existing
+    leave-one-out judge, reports abstentions separately from wrong guesses, and
+    never promotes a result or mutates an item.
+    """
+    if label_source not in {"all", "triage", "selection"}:
+        raise ValueError("label_source must be all, triage or selection")
+    vector_by_id = vector_by_id or {
+        str(item.get("id")): portfolio_vector(item)
+        for item in items or [] if item.get("id")
+    }
+    labeled = []
+    for item in items or []:
+        item_id = str(item.get("id") or "")
+        label, source = _triage_label_source(item)
+        vector = vector_by_id.get(item_id)
+        if (item_id and label and vector
+                and (label_source == "all" or source == label_source)):
+            labeled.append((item_id, label, vector, source))
+    support = {label: 0 for label in ORDER_LABELS}
+    confusion = {
+        label: {candidate: 0 for candidate in (*ORDER_LABELS, "abstain")}
+        for label in ORDER_LABELS
+    }
+    cases = []
+    correct = 0
+    committed = 0
+    abstained = 0
+    source_counts = {source: 0 for source in ("triage", "selection")}
+    for item_id, actual, vector, source in labeled:
+        source_counts[source] += 1
+        peers = [row[:3] for row in labeled if row[0] != item_id]
+        peer_counts = {label: 0 for label in ORDER_LABELS}
+        for _, label, _ in peers:
+            peer_counts[label] += 1
+        prediction = _triage_prediction(
+            vector, peers, peer_counts,
+            labeled_total=len(peers), item_total=len(items or []),
+            distance_weights=distance_weights)
+        uncertainty, margin = _prediction_uncertainty(
+            prediction["probabilities"])
+        abstain = prediction["confidence"] == "baja"
+        outcome = "abstain" if abstain else prediction["recommended"]
+        support[actual] += 1
+        confusion[actual][outcome] += 1
+        if abstain:
+            abstained += 1
+        else:
+            committed += 1
+            correct += int(outcome == actual)
+        if include_cases:
+            cases.append({
+                "item_id": item_id,
+                "expected": actual,
+                "label_source": source,
+                "predicted": outcome,
+                "abstained": abstain,
+                "confidence": prediction["confidence"],
+                "uncertainty": uncertainty,
+                "margin": margin,
+                "evidence_count": prediction["evidence_count"],
+                "neighbors": prediction["neighbors"],
+            })
+    evaluated = len(labeled)
+    coverage = committed / evaluated if evaluated else 0.0
+    accuracy = correct / evaluated if evaluated else 0.0
+    selective_accuracy = correct / committed if committed else 0.0
+    result = {
+        "schema": "faro-ordering-replay-v1",
+        "method": "leave_one_out_with_confidence_gate",
+        "label_source": label_source,
+        "evaluated": evaluated,
+        "committed": committed,
+        "abstained": abstained,
+        "coverage": round(coverage, 6),
+        "abstention_rate": round(abstained / evaluated, 6) if evaluated else 0.0,
+        "accuracy": round(accuracy, 6),
+        "selective_accuracy": round(selective_accuracy, 6),
+        "support": support,
+        "source_counts": source_counts,
+        "confusion": confusion,
+        "cases": cases if include_cases else [],
+        "promotion": "none",
+        "next_action": "human_review",
+    }
+    if label_source == "all":
+        result["metrics_by_source"] = {
+            source: replay_ordering_evaluation(
+                items, vector_by_id=vector_by_id,
+                distance_weights=distance_weights, include_cases=False,
+                label_source=source)
+            for source in ("triage", "selection")
+        }
+    return result
+
+
 def _stable_ordering_surface(base_surface, items, feedback=None):
     topology_id = str((base_surface.get("atlas") or {}).get(
         "topology_id") or "unknown")
@@ -1148,7 +1262,8 @@ def _confidence(score, prior):
 
 
 def build_suggestions(source, items, selections=None, feedback=None, context=None,
-                      limit=24, focus_facet="", shuffle=False, shuffle_seed=""):
+                      limit=24, focus_facet="", shuffle=False, shuffle_seed="",
+                      visual_relations=None):
     selections = selections or {}
     feedback = feedback or []
     learned = feedback_index(feedback)
@@ -1234,6 +1349,81 @@ def build_suggestions(source, items, selections=None, feedback=None, context=Non
                                    "candidate_value": candidate.get("tipo_contenido"),
                                    "strength": "low",
                                }], reasons=["mismo tipo de medio"]))
+
+    # Visual similarity is a derived, exploratory channel.  It is appended
+    # only when the bounded FAISS worker has already supplied an eligible
+    # candidate.  A pair with an existing metadata relation keeps that one
+    # relation instead of receiving a duplicate card for the same pair.
+    metadata_targets = {str(row.get("item_id")) for row in result}
+    by_id = {str(item.get("id")): item for item in items or []
+             if isinstance(item, dict) and item.get("id")}
+    for visual in visual_relations or []:
+        candidate_id = str(visual.get("item_id") or "").strip()
+        candidate = by_id.get(candidate_id)
+        if (not candidate or candidate_id == source_id
+                or candidate_id in metadata_targets
+                or selections.get(candidate_id, {}).get("decision") == "descartar"):
+            continue
+        if (source.get("publicacion_id") and candidate.get("publicacion_id")
+                and source.get("publicacion_id") == candidate.get("publicacion_id")):
+            continue
+        score = float(visual.get("score") or 0.0)
+        margin = float(visual.get("margin") or 0.0)
+        if not math.isfinite(score) or not math.isfinite(margin):
+            continue
+        visual_score = max(-1.0, min(1.0, score))
+        visual_margin = max(0.0, min(1.0, margin))
+        visual_model = str(visual.get("model") or "MobileCLIP-S0")[:100]
+        visual_version = str(visual.get("model_version") or "")[:120]
+        visual_source_kind = str(visual.get("source_kind") or "")[:80]
+        visual_source_ref = str(visual.get("source_ref") or "")[:240]
+        visual_record_kind = str(visual.get("record_kind") or "")[:80]
+        visual_values = [
+            "score=%.4f" % visual_score,
+            "margen=%.4f" % visual_margin,
+            "modelo=%s" % visual_model,
+        ]
+        if visual_version:
+            visual_values.append("versión=%s" % visual_version)
+        if visual_source_kind:
+            visual_values.append("fuente=%s" % visual_source_kind)
+        result.append(dict(
+            {
+                "item_id": candidate_id,
+                "selection": selections.get(candidate_id, {}).get("decision", "pendiente"),
+                "feedback": "pendiente",
+                "source_role": source.get("record_kind") or source.get(
+                    "tipo_contenido") or "media_candidate",
+                "candidate_role": candidate.get("record_kind") or candidate.get(
+                    "tipo_contenido") or "media_candidate",
+            },
+            facet="visual_similarity", relation_type="visual_similarity",
+            score=round(visual_score * 10.0, 4), visual_score=round(visual_score, 6),
+            visual_margin=round(visual_margin, 6), scope="exploratory",
+            evidence=[{
+                "kind": "visual_similarity", "facet": "visual_similarity",
+                "values": visual_values, "strength": "medium",
+                "score": round(visual_score, 6),
+                "margin": round(visual_margin, 6),
+                "model": visual_model, "model_version": visual_version,
+                "source_kind": visual_source_kind,
+                "source_ref": visual_source_ref,
+                "record_kind": visual_record_kind,
+            }],
+            visual={
+                "score": round(visual_score, 6),
+                "margin": round(visual_margin, 6),
+                "model": visual_model,
+                "model_version": visual_version,
+                "source_kind": visual_source_kind,
+                "source_ref": visual_source_ref,
+                "record_kind": visual_record_kind,
+                "evidence_kind": "visual_similarity",
+            },
+            reasons=[
+                "similitud visual derivada; no establece identidad ni autoría",
+                "vecindad MobileCLIP/FAISS sobre la unidad editorial",
+            ]))
     for row in result:
         prior = learned_facets.get((source_id, row["item_id"],
                                     str(row.get("facet") or "unknown").lower()))
@@ -1261,7 +1451,7 @@ def build_suggestions(source, items, selections=None, feedback=None, context=Non
     focus_facet = str(focus_facet or "").lower().strip()
     if focus_facet == "concept":
         focus_facet = "text"
-    if focus_facet in INFERENCE_FACETS:
+    if focus_facet in INFERENCE_FACETS or focus_facet == "visual_similarity":
         result = [row for row in result if row.get("facet") == focus_facet]
     if shuffle:
         random.Random(str(shuffle_seed or source_id)).shuffle(result)
@@ -1291,6 +1481,7 @@ def group_suggestions(rows):
             "relations": [],
             "evidence": [],
             "reasons": [],
+            "visual": dict(row.get("visual") or {}),
         })
         relation_key = (row.get("facet", ""), row.get("relation_type", ""))
         if not any((relation.get("facet", ""), relation.get("relation_type", "")) == relation_key
@@ -1316,6 +1507,9 @@ def group_suggestions(rows):
         for reason in row.get("reasons", []) or []:
             if reason not in group["reasons"]:
                 group["reasons"].append(reason)
+        for key, value in (row.get("visual") or {}).items():
+            if value not in (None, "", []):
+                group.setdefault("visual", {})[key] = value
         if row.get("score", 0) > group["score"]:
             group["score"] = row["score"]
             group["confidence"] = row.get("confidence", group["confidence"])

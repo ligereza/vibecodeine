@@ -2,8 +2,9 @@
 """tests/test_gen_archivo_iskvw.py -- the micelio-snapshot fallback (2026-08-01).
 
 CI cannot reach the box: publicar_iskvw.yml runs on ubuntu-latest, and
-gen_archivo_iskvw.py's desde_micelio() defaults to http://127.0.0.1:8890,
-which is only the box's own research service when run ON the box. Measured
+gen_archivo_iskvw.py's desde_micelio() defaults to the Hub's
+http://127.0.0.1:8900/research route. The internal Research service remains
+loopback-only. Measured
 the same day: the live site published 269 vinculos and 0 of them were
 clase "semantico" -- proof the live micelio never actually reaches
 --fuente todo from CI. cultura/mak_plataforma/entregar_micelio.py closes

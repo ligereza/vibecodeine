@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""interfaz.py -- interfaz web LAN del research MAK (puerto 8890).
+"""interfaz.py -- internal Research service for the MAK Hub (port 8890).
 
 Interfaz tipo n8n con canvas visual, nodos arrastrables, conexiones SVG
 editables (dos clicks entre puertos) y 4 modelos intercambiables/editables
@@ -10,7 +10,7 @@ al output), adversarial (proponente->refutadores->juez) y grafo (custom:
 las conexiones dibujadas dirigen la ejecucion real via grafo.py). Los
 primeros cuatro regeneran su topologia como preset; grafo la respeta.
 
-    python3 interfaz.py   # http://192.168.50.2:8890
+    python3 interfaz.py   # reached through the Hub at :8900/research/
 
 Deployment Linux:
     systemctl start mak-interfaz
@@ -24,10 +24,17 @@ import shutil
 import signal
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 import urllib.parse
+from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - Windows director has no fcntl
+    fcntl = None
 
 import pausa
 import formato_ensayo
@@ -36,6 +43,7 @@ from worker import run_tema
 
 # ── configuración ──
 PORT = int(os.environ.get("INTERFAZ_PORT", "8890"))
+BIND_HOST = os.environ.get("MAK_SERVICE_HOST", "127.0.0.1")
 DIRS = {
     "informes": os.path.expanduser("~/research/informes"),
     "paneles": os.path.expanduser("~/research/paneles"),
@@ -167,7 +175,83 @@ WORKFLOW_FILE = os.path.expanduser("~/research/workflow.json")
 
 JOBS = []
 JOBS_LOCK = threading.Lock()
+JOBS_FILE_LOCK = threading.RLock()
+CONFIG_FILE_LOCK = threading.RLock()
 WORKFLOW_LOCK = threading.Lock()
+
+
+@contextmanager
+def _exclusive_jobs_file_lock(path=None):
+    """Serialize job appends across handlers and processes."""
+    path = path or JOBS_FILE
+    with JOBS_FILE_LOCK:
+        lock_path = os.path.abspath(path) + ".lock"
+        parent = os.path.dirname(lock_path)
+        os.makedirs(parent, exist_ok=True)
+        fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+        try:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_EX)
+            yield
+        finally:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+            os.close(fd)
+
+
+def _append_job_record(job):
+    try:
+        with _exclusive_jobs_file_lock():
+            os.makedirs(os.path.dirname(os.path.abspath(JOBS_FILE)), exist_ok=True)
+            with open(JOBS_FILE, "a", encoding="utf-8") as f:
+                f.write(json.dumps(job) + "\n")
+                f.flush()
+    except OSError:
+        pass
+
+
+@contextmanager
+def _exclusive_config_lock(path=None):
+    """Serialize configuration backup and read-modify-write operations."""
+    path = path or ENV_FILE
+    with CONFIG_FILE_LOCK:
+        lock_path = os.path.abspath(path) + ".lock"
+        parent = os.path.dirname(lock_path)
+        os.makedirs(parent, exist_ok=True)
+        fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+        try:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_EX)
+            yield
+        finally:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+            os.close(fd)
+
+
+def _write_text_atomic(path, text):
+    """Install complete text without exposing a truncated file."""
+    path = os.path.abspath(path)
+    parent = os.path.dirname(path)
+    os.makedirs(parent, exist_ok=True)
+    temp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+                "w", encoding="utf-8", dir=parent,
+                prefix=".%s-" % os.path.basename(path), suffix=".tmp",
+                delete=False) as f:
+            temp_path = f.name
+            f.write(text)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temp_path, path)
+        temp_path = None
+    finally:
+        if temp_path:
+            try:
+                os.unlink(temp_path)
+            except OSError:
+                pass
 
 CONFIG_FIELDS = [
     ("GROQ_MODEL", "Groq model"),
@@ -252,11 +336,9 @@ def _load_workflow():
 
 
 def _save_workflow(wf):
-    os.makedirs(os.path.dirname(WORKFLOW_FILE), exist_ok=True)
-    tmp = WORKFLOW_FILE + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(wf, f, indent=2)
-    os.replace(tmp, WORKFLOW_FILE)
+    _write_text_atomic(
+        WORKFLOW_FILE,
+        json.dumps(wf, ensure_ascii=False, indent=2) + "\n")
 
 
 # ── jobs ──
@@ -264,14 +346,15 @@ def _save_workflow(wf):
 def _load_jobs():
     global JOBS
     try:
-        with open(JOBS_FILE, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if line:
-                    try:
-                        JOBS.append(json.loads(line))
-                    except json.JSONDecodeError:
-                        pass
+        with _exclusive_jobs_file_lock():
+            with open(JOBS_FILE, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line:
+                        try:
+                            JOBS.append(json.loads(line))
+                        except json.JSONDecodeError:
+                            pass
         JOBS = JOBS[-15:]
     except OSError:
         pass
@@ -403,11 +486,7 @@ def _verify_result_contract(job, result):
 def _cerrar_job(job, t0):
     """Cierra el job: ms transcurridos, linea en JOBS_FILE, reindex best-effort."""
     job["ms"] = int((time.time() - t0) * 1000)
-    try:
-        with open(JOBS_FILE, "a", encoding="utf-8") as f:
-            f.write(json.dumps(job) + "\n")
-    except OSError:
-        pass
+    _append_job_record(job)
     # el archivo crece -> la memoria/micelio se remodela solo (incremental)
     try:
         _reindexar_async()
@@ -439,11 +518,7 @@ def _lanzar(modo, tema, n, densidad="medio", memoria=False, formato=None,
                 job["error"] = "guardia de contenido: %s -- %s" % (
                     g["veredicto"], g["razon"])
                 job["ms"] = int((time.time() - t0) * 1000)
-                try:
-                    with open(JOBS_FILE, "a", encoding="utf-8") as f:
-                        f.write(json.dumps(job) + "\n")
-                except OSError:
-                    pass
+                _append_job_record(job)
                 return
         try:
             orden = _orden_canvas() if modo in ("cadena", "refutar") else None
@@ -479,35 +554,40 @@ def _reanudar_logic(q):
 
     with JOBS_LOCK:
         job = next((j for j in JOBS if j.get("job_id") == job_id), None)
-    if job is None:
-        return 404, {"ok": False, "error": "job no encontrado"}
-    if job.get("estado") != "PAUSADO":
-        return 400, {"ok": False, "error": "job no esta PAUSADO"}
+        if job is None:
+            return 404, {"ok": False, "error": "job no encontrado"}
+        if job.get("estado") != "PAUSADO":
+            return 400, {"ok": False, "error": "job no esta PAUSADO"}
+        if accion == "abortar":
+            job["estado"] = "abortado"
+        elif accion not in ("reintentar", "editar", "saltar"):
+            return 400, {"ok": False, "error": "accion invalida"}
+        else:
+            # Claim before touching the checkpoint so two HTTP handlers cannot
+            # both relaunch the same paused job.
+            job["estado"] = "REANUDANDO"
 
     if accion == "abortar":
-        job["estado"] = "abortado"
         try:
             emitir_evento("research", job_id, "node_end", estado="abortado")
         except Exception:  # noqa: BLE001 - el evento es best-effort
             pass
-        try:
-            with open(JOBS_FILE, "a", encoding="utf-8") as f:
-                f.write(json.dumps(job) + "\n")
-        except OSError:
-            pass
+        _append_job_record(job)
         return 200, {"ok": True, "estado": "abortado"}
-
-    if accion not in ("reintentar", "editar", "saltar"):
-        return 400, {"ok": False, "error": "accion invalida"}
 
     try:
         pausa.aplicar_accion(job["checkpoint"], accion, texto)
     except ValueError:
+        with JOBS_LOCK:
+            job["estado"] = "PAUSADO"
         return 400, {"ok": False, "error": "accion invalida"}
     except OSError as e:
+        with JOBS_LOCK:
+            job["estado"] = "PAUSADO"
         return 500, {"ok": False, "error": str(e)[:300]}
 
-    job["estado"] = "corriendo"
+    with JOBS_LOCK:
+        job["estado"] = "corriendo"
 
     def relanzar():
         t0 = time.time()
@@ -533,6 +613,11 @@ def _config_actual():
 
 
 def _guardar_config(values):
+    with _exclusive_config_lock():
+        return _save_config_unlocked(values)
+
+
+def _save_config_unlocked(values):
     load_env(ENV_FILE)
     if os.path.exists(ENV_FILE):
         shutil.copy2(ENV_FILE, ENV_FILE + ".bak")
@@ -550,12 +635,13 @@ def _guardar_config(values):
             v = values[k][0] if isinstance(values[k], list) else values[k]
             existing[k] = str(v)
             os.environ[k] = str(v)
-    with open(ENV_FILE, "w", encoding="utf-8") as f:
-        for k, _ in CONFIG_FIELDS:
-            f.write(f"{k}={existing.get(k, '')}\n")
-        for k, v in sorted(existing.items()):
-            if k not in CONFIG_KEYS:
-                f.write(f"{k}={v}\n")
+    lines = []
+    for k, _ in CONFIG_FIELDS:
+        lines.append(f"{k}={existing.get(k, '')}")
+    for k, v in sorted(existing.items()):
+        if k not in CONFIG_KEYS:
+            lines.append(f"{k}={v}")
+    _write_text_atomic(ENV_FILE, "\n".join(lines) + "\n")
     return _config_actual()
 
 
@@ -3445,8 +3531,8 @@ class H(BaseHTTPRequestHandler):
           # invalidate only the graph cache so status is visible now.
           try:
             import memoria
-            os.unlink(memoria.GRAFO_CACHE)
-          except OSError:
+            memoria.invalidate_grafo_cache()
+          except Exception:  # noqa: BLE001 - cache invalidation is best-effort
             pass
           return self._json_response(result, 200 if result.get("ok") else 400)
         except Exception as e:  # noqa: BLE001
@@ -3462,6 +3548,11 @@ class H(BaseHTTPRequestHandler):
             return self._json_response({"ok": False, "error": "faltan fuentes"}, 400)
           import fusion
           primordio = fusion.crear(tema, fuentes)
+          try:
+            import memoria
+            memoria.invalidate_grafo_cache()
+          except Exception:  # noqa: BLE001 - cache invalidation is best-effort
+            pass
           _lanzar("panel", tema, 1, "medio", False)
           return self._json_response({"ok": True, "primordio": primordio})
         except Exception as e:  # noqa: BLE001
@@ -3580,12 +3671,16 @@ def main():
     for d in DIRS.values():
         os.makedirs(d, exist_ok=True)
 
+    # Recover the visible recent jobs after a process restart; the ledger is
+    # append-only and must remain the source for the in-memory projection.
+    _load_jobs()
+
     # ensure workflow file
     with WORKFLOW_LOCK:
         wf = _load_workflow()
         _save_workflow(wf)
 
-    server = ReusableTCPServer(("0.0.0.0", PORT), H)
+    server = ReusableTCPServer((BIND_HOST, PORT), H)
 
     # graceful shutdown on SIGTERM / SIGINT
     def shutdown_handler(signum, frame):
@@ -3595,7 +3690,7 @@ def main():
     signal.signal(signal.SIGTERM, shutdown_handler)
     signal.signal(signal.SIGINT, shutdown_handler)
 
-    print("[interfaz] n8n-style canvas en http://0.0.0.0:%d" % PORT, flush=True)
+    print("[interfaz] internal canvas on %s:%d" % (BIND_HOST, PORT), flush=True)
     print("[interfaz] workflow: %s" % WORKFLOW_FILE, flush=True)
     print("[interfaz] env: %s" % ENV_FILE, flush=True)
     server.serve_forever()
