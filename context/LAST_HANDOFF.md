@@ -23,17 +23,17 @@ instructions. Verify any statement that affects a destructive or remote action.
 
 ## Current verified state - 2026-08-11
 
-- Windows canonical: `C:\IA\flujo`, branch `mak`, HEAD and `origin/mak`
-  `5f7e2e09275e2b3a97f7b3c5cadea65bd5295f7e`, clean. The four canonical
-  branch heads are `main=72bd6db2`, `mak=5f7e2e09`, `rd=61ffc0db`, and
-  `iskvw=0f2cb9b9`; all four now share the same tree, and README/SVG have no
-  diff.
+- Windows canonical: `C:\IA\flujo`, branch `mak`, clean. After the final
+  promotion, the four canonical refs (`main`, `mak`, `rd`, and `iskvw`) were
+  measured with identical trees; README/SVG have no diff. Use
+  `git for-each-ref` to read their current commit ids instead of copying an
+  old id from this document.
 - The isolated audit checkout and all auxiliary worktrees were removed after
   normalized-content comparison proved their useful source was preserved in
   `mak`; no unique active code was discarded. Generated audit artifacts were
   excluded from the canonical commit.
-- MAK: `/home/mak/flujo`, branch `mak`, HEAD and `origin/mak` both at
-  `5f7e2e09275e2b3a97f7b3c5cadea65bd5295f7e`, clean. The prior manual state is
+- MAK: `/home/mak/flujo`, branch `mak`, clean and matched to `origin/mak`
+  after the final branch promotion. The prior manual state is
   preserved in stash `preserve manual MAK deployment before canonical branch
   cleanup 2026-08-11`; the effective repo-sync line remains `# PAUSED-FARO`.
 - Runtime: `mak-hub.service` active, PID `74023`; research `interfaz.py` PID
@@ -74,12 +74,16 @@ instructions. Verify any statement that affects a destructive or remote action.
   `iskvw=0f2cb9b9`; `mak` remains `5f7e2e09`.
 - A full local `python -m pytest -q` attempt was stopped by the 124-second
   command timeout before producing a result; it is not counted as passed.
+- The follow-up handoff correction was then merged into all four canonical
+  branches, so documentation and code now share one final tree as well.
 
 ## Current next action
 
-Run the final four-branch hash/tree check, remote cleanliness check, and the
-focused regression suite from `mak`. Then continue the open audit circuits in
-the prior handoff without creating another branch or touching README/SVG.
+Continue the open audit circuits in the prior handoff without creating another
+branch or touching README/SVG. The final branch hash/tree check, remote
+cleanliness check, and focused regression suite were completed after the
+promotion; the full suite timeout remains recorded as an unresolved validation
+limit, not as a pass.
 
 ## Audit circuit - 2026-08-11
 
