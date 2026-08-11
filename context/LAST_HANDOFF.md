@@ -1,10 +1,10 @@
 # LAST_HANDOFF - Faro
 
-Updated: 2026-08-11 - current verification after manual transport
-Status: Hub boundary, XIO human-link circuit, writer ownership block, and the
-audited language guard are reconciled into the canonical Windows checkout and
-deployed manually to MAK; follow-on language slices remain local, and all
-changes are uncommitted and unpushed.
+Updated: 2026-08-11 - canonical branch cleanup and runtime reconciliation
+Status: The Hub boundary, XIO human-link circuit, writer ownership block, and
+language slices are consolidated in the four canonical branches. Local,
+GitHub, MAK checkout, and runtime mirror are clean and synchronized; no
+auxiliary branch or worktree remains.
 This block is the current operational source. Later sections preserve dated
 historical evidence and must not be read as present state.
 
@@ -23,19 +23,18 @@ instructions. Verify any statement that affects a destructive or remote action.
 
 ## Current verified state - 2026-08-11
 
-- Windows canonical: `C:\IA\flujo`, branch `mak`, HEAD
-  `abe27c22dd78e99572e1c398c4b548394aabeec4`, one commit behind
-  `origin/mak=160b94d30a1f95939520e5077b1db3475a66db31`. The reviewed audit
-  block and follow-on compatibility slices are now present as uncommitted
-  local work (`76` status entries), while generated data exclusions and the
-  pre-existing portfolio-test change were preserved; README/SVG have no diff.
-- Audit checkout: `C:\Users\issvk\.roo\worktrees\flujo-atlas-audit`, branch
-  `codex/atlas-audit`, base `160b94d30a1f95939520e5077b1db3475a66db31`, with
-  uncommitted audit changes and no README/SVG changes.
+- Windows canonical: `C:\IA\flujo`, branch `mak`, HEAD and `origin/mak`
+  `7172616dc5e78b97669777157a45f89e03b67809`, clean. The four canonical
+  branch heads are `main=d0c9a594`, `mak=7172616d`, `rd=b79f1476`, and
+  `iskvw=d887771c`; README/SVG have no diff.
+- The isolated audit checkout and all auxiliary worktrees were removed after
+  normalized-content comparison proved their useful source was preserved in
+  `mak`; no unique active code was discarded. Generated audit artifacts were
+  excluded from the canonical commit.
 - MAK: `/home/mak/flujo`, branch `mak`, HEAD and `origin/mak` both at
-  `abe27c22dd78e99572e1c398c4b548394aabeec4`, dirty with `39` entries from
-  manual deployment and backups. The effective repo-sync line is commented
-  with `# PAUSED-FARO`; do not reactivate it.
+  `7172616dc5e78b97669777157a45f89e03b67809`, clean. The prior manual state is
+  preserved in stash `preserve manual MAK deployment before canonical branch
+  cleanup 2026-08-11`; the effective repo-sync line remains `# PAUSED-FARO`.
 - Runtime: `mak-hub.service` active, PID `74023`; research `interfaz.py` PID
   `71790`; Codex `interfaz_codex.py` PID `71774`. Listeners are
   `0.0.0.0:8900`, `127.0.0.1:8890`, and `127.0.0.1:8891`.
@@ -117,10 +116,10 @@ instructions. Verify any statement that affects a destructive or remote action.
 ## Next action - current
 
 The Hub boundary, XIO human-link circuit, writer ownership circuit, language
-guard, canonical reconciliation, and full validation are verified. Keep
-repo-sync paused, do not bulk-rename legacy public names, do not touch
-README/SVG, and make the next language migration a bounded compatibility slice
-with aliases and a new full validation pass.
+guard, canonical branch cleanup, runtime reconciliation, and full validation
+are verified. Keep repo-sync paused, do not bulk-rename legacy public names,
+do not touch README/SVG, and continue the next language migration as a bounded
+compatibility slice with aliases and a new validation pass.
 
 ## Bounded language migration - 2026-08-11
 
@@ -147,10 +146,25 @@ with aliases and a new full validation pass.
   of executable tests; the append-only writer then passed its focused suite,
   with only the known environment skips and existing deprecation warnings.
   README/SVG protection still reports zero changed protected files.
-- This follow-on is source-only in the canonical Windows worktree. It was not
-  transported or used to restart MAK because the slice changes no runtime
-  behavior; the next transport must include it only with the user's Git action
-  or an explicit deployment decision.
+- The four language files are now committed in `7172616d` and mirrored to the
+  live MAK source with a rollback copy. No service restart was needed because
+  the slice changes comments/docstrings only; coherence now reports zero drift.
+
+## Canonical branch cleanup - 2026-08-11
+
+- The useful audit block and compatibility slices were committed to `mak` as
+  `d3d31d7e`, rebased onto `origin/mak`, and pushed as `7172616d`.
+- Local `main`, `rd`, and `iskvw` were fast-forwarded to their matching remote
+  heads. The only remaining local/remote branches are `main`, `mak`, `rd`, and
+  `iskvw`; the only worktree is `C:\IA\flujo`.
+- Removed redundant local and remote branches:
+  `agent/fix-ubuntu-path`, `codex/sync-iskvw`, `codex/sync-mak`, and
+  `codex/sync-rd`. Their patches were already present in canonical history.
+  The uncommitted `codex/atlas-audit` worktree was removed only after every
+  useful file was verified against the committed `mak` tree.
+- The MAK checkout was fast-forwarded to `7172616d` after stashing its manual
+  deployment/backups; runtime remains active on the same listeners, and
+  `coherence.py --strict` reports zero drift in all five organs.
 
 ## Identity and user direction
 
@@ -179,13 +193,11 @@ with aliases and a new full validation pass.
 ## Repository state
 
 - Windows workspace: `C:\IA\flujo`.
-- Verified checkout: branch `mak`, commit `abe27c22dd78e99572e1c398c4b548394aabeec4`;
-  the Windows worktree contains the reviewed audit block as uncommitted local
-  changes, remains one commit behind `origin/mak`
-  (`160b94d30a1f95939520e5077b1db3475a66db31`), and has no README/SVG diff.
-  Generated data exclusions and the pre-existing portfolio-test change were
-  preserved. No commit or PR was created. Local `main`, `rd`, `iskvw` and
-  their corresponding `origin/*` refs remain historical clean branches.
+- Verified checkout: branch `mak`, commit
+  `7172616dc5e78b97669777157a45f89e03b67809`; the Windows worktree is clean
+  and matches `origin/mak`. Local and remote canonical refs are synchronized:
+  `main=d0c9a594`, `mak=7172616d`, `rd=b79f1476`, `iskvw=d887771c`. No
+  README/SVG diff exists.
 - The separate clean `main` worktree under the local `.roo/worktrees/`
   directory was removed after verifying it had no uncommitted changes. The
   local `main` branch is now available for a new session; no branch or commit
@@ -201,10 +213,10 @@ with aliases and a new full validation pass.
   operational editor. The canonical Windows, audit, repo, and served editor
   share SHA-256
   `90e90b1ebb1d2f33db8cf60d131a5a20b109c3e61ec1879aa5cfb6064e6c324e`.
-- The canonical Windows, audit, repo, and served
+- The canonical Windows, repo, served, and runtime
   `/portafolio/mesa_montaje.js` share SHA-256
   `e139ccdefec5a2d320803842645a37cd878d554bfda3bfd49b4f867ef9229109`.
-  The reviewed block remains uncommitted pending the user's Git action.
+  The reviewed block is committed in `mak` at `7172616d`.
 - The promoted work covers `cultura/mak_plataforma/` (ledger, identity,
   providers, decisions, Hub, batches, routing, service/watchdog), the current
   `iskvw/editor.html`, the README/SVG text layer, operational docs, tests, and
@@ -216,8 +228,9 @@ Fresh SSH check on 2026-08-11:
 
 - Host: `mak@192.168.50.2`, hostname `dell-11m`.
 - The actual Git checkout is `/home/mak/flujo`, currently on `mak` at
-  `abe27c22dd78e99572e1c398c4b548394aabeec4`; `origin/mak` is the same
-  commit and the worktree has `39` dirty deployment/backup entries.
+  `7172616dc5e78b97669777157a45f89e03b67809`; `origin/mak` is the same
+  commit and the worktree is clean. The previous manual deployment/backups
+  remain recoverable in the named stash recorded above.
 - The runtime Hub is healthy and is managed by the user systemd unit
   `/home/mak/.config/systemd/user/mak-hub.service`, PID `74023`; research is
   PID `71790` and Codex is PID `71774`.
