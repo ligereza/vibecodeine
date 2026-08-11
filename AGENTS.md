@@ -83,9 +83,13 @@ compare hashes, then reconcile deliberately.
   reconcile the discrepancy first; never choose an editor by filename alone.
 - README/SVG geometry is protected. The user explicitly reopened the README
   text layer on 2026-08-09; update text through the existing generator only.
-  Do not redesign the vessel without a new artistic instruction. Domain
-  migration is later than archive separation, export independence, and a
-  stable public surface.
+  The canonical `arte-ascii-readme.svg` must retain its `viewBox`, 30-frame /
+  9-second playback, frame order, masks, `readme-source-static`, and playback
+  delays. The canonical vessel currently contains 150 masks and 100 `tspan`
+  elements; any experiment involving `clipPath`, remapped frames, or altered
+  timing belongs outside `main`, `mak`, `rd`, and `iskvw`. Do not redesign the
+  vessel without a new artistic instruction. Domain migration is later than
+  archive separation, export independence, and a stable public surface.
 
 ## Required continuation
 
