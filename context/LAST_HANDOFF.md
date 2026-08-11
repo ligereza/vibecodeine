@@ -3214,3 +3214,17 @@ descartes históricos.
   `d09327fe8d5b`; solo `mak` contiene esta integración. No queda una acción
   técnica pendiente de esta ronda; el siguiente bloque debe comenzar con una
   nueva violación reproducible del harness.
+
+## Corrección de protección de la obra SVG — 2026-08-11
+
+- Se detectó que una regeneración anterior trató el SVG artístico como un
+  artefacto intercambiable. La versión canónica debe conservar `viewBox`, 30
+  frames, 9 s, orden de frames, máscaras, `readme-source-static` y delays.
+- `arte-ascii-readme.svg` y `tools/update_readme_svg.py` se restauraron desde
+  `d09327fe`. No se conservará ninguna variante experimental en las ramas
+  canónicas.
+- `tests/test_readme_svg.py` ahora protege la forma canónica: 150 máscaras,
+  100 `tspan`, 30 frames/9 s y ausencia de `clipPath` experimental. El test
+  ya no exige insertar un marcador modificando la obra.
+- Siguiente acción: publicar esta restauración y la regla durable en las cuatro
+  ramas; verificar métricas estructurales antes de cerrar.
