@@ -3,15 +3,15 @@ from cultura.mak_plataforma import puente_issues
 
 def test_path_sanitization_handles_windows_and_linux_without_breaking_urls():
     text = (
-        r"fallo C:\Users\mak\RD\AUTOMATIZACION\render.png "
-        "/home/mak/RD/AUTOMATIZACION/render.png "
+        r"fallo C:\workspace\RD\AUTOMATIZACION\render.png "
+        "/srv/mak/RD/AUTOMATIZACION/render.png "
         "https://example.org/open-call"
     )
 
     result = puente_issues._sin_rutas(text)
 
-    assert "C:\\Users\\mak" not in result
-    assert "/home/mak/RD" not in result
+    assert "C:\\workspace" not in result
+    assert "/srv/mak/RD" not in result
     assert ".../render.png" in result
     assert "https://example.org/open-call" in result
 
