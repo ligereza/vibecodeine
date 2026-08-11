@@ -2154,7 +2154,7 @@ conectar los vectores como indice derivado detras de los endpoints existentes.
 
 - The first push of the refreshed handoff had one real failure in
   `tests/test_privacidad_repo.py`: the documentation contained the literal
-  personal path `C:\Users\issvk`, which violates the repository privacy gate.
+  personal Windows user path, which violates the repository privacy gate.
 - The handoff now describes the `.roo/worktrees/` location without embedding a
   Windows username. The focused privacy test passes locally (`3 passed`).
 - The repair is commit `db235527`, and all four remote branches plus MAK's
@@ -3184,3 +3184,22 @@ descartes históricos.
 - Siguiente agente: comenzar en esta sección y ejecutar solo otra regresión
   reproducible del harness; no reabrir la interfaz legacy ni sincronizar las
   otras ramas sin una decisión explícita.
+
+## Cierre de suite y privacidad — 2026-08-11
+
+- La corrida completa definitiva se ejecutó con
+  `python -m pytest -q --capture=no --durations=20`: terminó con código 0 en
+  231,1 s. Los fallos iniciales no eran del circuito MAK: uno detectaba una
+  ruta personal escrita en este handoff y otro detectaba que el SVG generado
+  no conservaba un marcador verificable.
+- Se eliminó del handoff la ruta personal. Se corrigió
+  `tools/update_readme_svg.py` para conservar el marcador de capa generada
+  también en vasos SVG antiguos sin `<desc>` y para dejar `MAK` en ese
+  marcador. `arte-ascii-readme.svg` se regeneró mediante esa herramienta; no
+  se editó geometría ni se tocó `README.md`.
+- La verificación focal de privacidad y del generador pasó; `git diff --check`
+  pasó. La suite completa solo dejó warnings/deprecaciones existentes de
+  Pillow y salidas diagnósticas de pruebas.
+- Siguiente acción: publicar este cierre en `origin/mak`, verificar hashes del
+  checkout MAK, servicio y las cuatro ramas canónicas; no abrir otro circuito
+  hasta que esa verificación quede registrada.
