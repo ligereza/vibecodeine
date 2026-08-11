@@ -10,10 +10,37 @@ from __future__ import annotations
 
 import json
 import os
+import tempfile
+import threading
 import time
+from contextlib import contextmanager
 from pathlib import Path
 
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - Windows director has no fcntl
+    fcntl = None
+
 REGISTRO = Path(os.path.expanduser("~/plataforma/fructificaciones.json"))
+_RECORD_LOCK = threading.RLock()
+
+
+@contextmanager
+def _exclusive_record_lock(path):
+    """Serialize human decision records across requests and processes."""
+    with _RECORD_LOCK:
+        lock_path = os.path.abspath(str(path)) + ".lock"
+        parent = os.path.dirname(lock_path)
+        os.makedirs(parent, exist_ok=True)
+        fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+        try:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_EX)
+            yield
+        finally:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+            os.close(fd)
 
 
 def cargar(path: Path = REGISTRO) -> dict:
@@ -26,23 +53,44 @@ def cargar(path: Path = REGISTRO) -> dict:
 
 def decidir(node_id: str, accion: str, nota: str = "",
             path: Path = REGISTRO) -> dict:
+    path = Path(path)
+    with _exclusive_record_lock(path):
+        return _decide_unlocked(node_id, accion, nota, path)
+
+
+def _decide_unlocked(node_id: str, action: str, note: str,
+                     path: Path) -> dict:
     node_id = str(node_id or "").strip()
     if not node_id or ".." in node_id:
         return {"ok": False, "error": "id invalido"}
-    if accion not in ("fructificar", "devolver"):
+    if action not in ("fructificar", "devolver"):
         return {"ok": False, "error": "accion invalida"}
     data = cargar(path)
     data[node_id] = {
-        "estatuto": "fructifero" if accion == "fructificar" else "sustrato",
-        "nota": str(nota or "")[:500],
+        "estatuto": "fructifero" if action == "fructificar" else "sustrato",
+        "nota": str(note or "")[:500],
         "ts": time.strftime("%Y-%m-%dT%H:%M:%S"),
         "por": "usuario",
     }
     path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(".json.tmp")
-    tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n",
-                   encoding="utf-8")
-    os.replace(tmp, path)
+    temp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+                "w", encoding="utf-8", dir=path.parent,
+                prefix=".fructificaciones-", suffix=".tmp", delete=False) as f:
+            temp_path = f.name
+            json.dump(data, f, ensure_ascii=False, indent=2)
+            f.write("\n")
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temp_path, path)
+        temp_path = None
+    finally:
+        if temp_path:
+            try:
+                os.unlink(temp_path)
+            except OSError:
+                pass
     return {"ok": True, "id": node_id, **data[node_id]}
 
 

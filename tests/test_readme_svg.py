@@ -3,6 +3,8 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
 def test_readme_svg_preserves_canonical_animation_shape():
     svg = (ROOT / "arte-ascii-readme.svg").read_text(encoding="utf-8")
     assert 'viewBox="0 0 936 720"' in svg

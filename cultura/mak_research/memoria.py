@@ -21,7 +21,14 @@ import json
 import math
 import os
 import sys
+import threading
 import time
+from contextlib import contextmanager
+
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - Windows director has no fcntl
+    fcntl = None
 
 from research_lib import (LLM, MODELO_CAPAZ, _http_json, escala_tok, load_env,
                           marco, ntfy_publish, slug, stamp)
@@ -41,6 +48,24 @@ OLLAMA = os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
 
 CHUNK = 900      # chars por fragmento
 SOLAPE = 150     # overlap entre fragmentos
+_INDEX_LOCK = threading.RLock()
+
+
+@contextmanager
+def _exclusive_index_lock():
+    """Prevent two indexers from sharing `index.jsonl.tmp`."""
+    with _INDEX_LOCK:
+        lock_path = os.path.abspath(INDEX_FILE) + ".lock"
+        os.makedirs(os.path.dirname(lock_path), exist_ok=True)
+        fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+        try:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_EX)
+            yield
+        finally:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+            os.close(fd)
 
 
 def _embed(texto):
@@ -189,6 +214,11 @@ def util_para_micelio(texto, carpeta=None):
 
 
 def indexar(rebuild=False, log=lambda s: None):
+    with _exclusive_index_lock():
+        return _index_unlocked(rebuild=rebuild, log=log)
+
+
+def _index_unlocked(rebuild=False, log=lambda s: None):
     """Indexa los .md de las carpetas de productos. Incremental: salta los
     archivos ya indexados con el mismo mtime; re-indexa los que cambiaron.
     Devuelve {archivos, chunks, nuevos}."""
@@ -329,6 +359,36 @@ def _vectores_por_producto():
 
 GRAFO_CACHE = os.path.join(MEM_DIR, "grafo_cache.json")
 GRAFO_SCHEMA_VERSION = 2
+_GRAFO_LOCK = threading.RLock()
+
+
+@contextmanager
+def _exclusive_grafo_lock():
+    """Serialize graph read, build, and installation operations."""
+    with _GRAFO_LOCK:
+        lock_path = os.path.abspath(GRAFO_CACHE) + ".lock"
+        os.makedirs(os.path.dirname(lock_path), exist_ok=True)
+        fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+        try:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_EX)
+            yield
+        finally:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+            os.close(fd)
+
+
+def invalidate_grafo_cache():
+    """Invalidate the graph without racing a concurrent graph request."""
+    with _exclusive_grafo_lock():
+        try:
+            os.unlink(GRAFO_CACHE)
+        except FileNotFoundError:
+            return False
+        except OSError:
+            return False
+        return True
 
 
 def _node_id(path, meta):
@@ -385,15 +445,10 @@ def _firma_index():
         return ""
 
 
-def grafo_semantico(umbral=0.5, tope_por_nodo=4):
-    """Grafo de CONEXIONES SEMANTICAS entre productos del departamento:
-    nodo = producto, arista = similitud coseno entre sus embeddings (top-k
-    por nodo por encima del umbral). El peso de la arista = que tan
-    relacionados estan dos hallazgos. Es el mapa de lo que el depto sabe.
-
-    Se cachea en disco contra la firma del indice: el grafo solo cambia cuando
-    cambia lo indexado, y reindexar es un evento de cada 20 minutos como mucho.
-    """
+def _semantic_graph_unlocked(threshold=0.5, max_per_node=4):
+    """Build the semantic product graph and reuse its indexed cache."""
+    umbral = threshold
+    tope_por_nodo = max_per_node
     firma = "v%s|%s|%s|%s" % (
         GRAFO_SCHEMA_VERSION, _firma_index(), umbral, tope_por_nodo)
     try:
@@ -473,6 +528,13 @@ def grafo_semantico(umbral=0.5, tope_por_nodo=4):
     except OSError:
         pass
     return grafo
+
+
+def grafo_semantico(umbral=0.5, tope_por_nodo=4):
+    """Read or rebuild the graph under the same lock used for invalidation."""
+    with _exclusive_grafo_lock():
+        return _semantic_graph_unlocked(threshold=umbral,
+                                        max_per_node=tope_por_nodo)
 
 
 def limitar_grafo(grafo, limite=0):
@@ -604,7 +666,8 @@ def main():
     if args.cmd == "buscar":
         tema = args.tema or ""
         if not tema:
-            print("falta el tema"); return 2
+            print("falta el tema")
+            return 2
         for h in buscar(tema, args.k):
             print("%.3f  [%s] %s" % (h["score"], h["dir"], h["titulo"]))
         return 0

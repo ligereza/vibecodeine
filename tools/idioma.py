@@ -10,12 +10,15 @@ systemd units that invoke the old names).
 
 What is measured -- and, just as important, what is NOT:
 
-- ONLY comments (# ...) and docstrings are classified. Identifiers are left
-  alone (they are the GLOSSARY's problem, reported as a soft FYI below), and
-  ordinary string literals are left alone too, because product text is
-  legitimately Spanish with diacritics and must never be accused.
-- Only files listed by `git ls-files -- '*.py'` are measured. Reading the disk
-  would let uncommitted scratch files distort the count.
+- The full tree measurement classifies comments (# ...) and docstrings.
+  Identifiers remain a soft FYI for the historical tree.
+- A change ratchet also inspects newly declared identifiers in changed or
+  untracked Python files. Existing public names are compared with HEAD and
+  remain allowed for compatibility; new declarations must use English ASCII.
+- Ordinary string literals are left alone because product text is legitimately
+  Spanish with diacritics and must never be accused.
+- The full measurement uses `git ls-files -- '*.py'`. The change ratchet also
+  reads untracked Python files deliberately, so new work cannot hide from it.
 - Files under DEAD_ZONE (archives) and FOREIGN_ZONE (vendorized, third-party)
   are excluded: the instrument must earn the right to accuse a file, and we
   did not write those. Same convention as tests/test_higiene_docs.py.
@@ -55,10 +58,10 @@ CLI:
                                         # line, ready to redirect into
                                         # tests/fixtures/idioma_baseline.txt
 
-Soft FYI (never enforced): Spanish identifier stems used across many files that
-docs/GLOSSARY.md does not mention. Detection is high-precision on purpose
-(curated stem list + "cion" endings + diacritics); it will miss Spanish words
-it does not know, and that is fine for an FYI.
+Soft FYI for the historical tree: Spanish identifier stems used across many
+files that docs/GLOSSARY.md does not mention. Detection is high-precision on
+purpose (curated stem list + "cion" endings + diacritics). The change ratchet
+uses the same detector only for newly declared names.
 """
 
 from __future__ import annotations
@@ -74,7 +77,7 @@ import tokenize
 import warnings
 from collections import Counter
 from pathlib import Path
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -224,6 +227,98 @@ def tracked_python_files(root: Path = ROOT) -> List[str]:
     ]
 
 
+def changed_python_files(root: Path = ROOT) -> List[str]:
+    """Return tracked changes plus untracked Python files in the worktree.
+
+    This is intentionally narrower than a disk walk: only files Git considers
+    project work are included, while untracked Python files are included so a
+    new test or module cannot evade the change ratchet before staging.
+    """
+    changed = subprocess.run(
+        ["git", "diff", "HEAD", "--name-only", "--diff-filter=ACMR", "--", "*.py"],
+        cwd=root, capture_output=True, text=True, encoding="utf-8",
+    )
+    if changed.returncode != 0:
+        raise RuntimeError("not a usable git checkout: " + changed.stderr.strip())
+    untracked = subprocess.run(
+        ["git", "ls-files", "--others", "--exclude-standard", "--", "*.py"],
+        cwd=root, capture_output=True, text=True, encoding="utf-8",
+    )
+    if untracked.returncode != 0:
+        raise RuntimeError("could not list untracked Python files: " +
+                           untracked.stderr.strip())
+    files = set(changed.stdout.splitlines())
+    files.update(untracked.stdout.splitlines())
+    return sorted(
+        f for f in files if f and not f.startswith(DEAD_ZONE)
+        and not f.startswith(FOREIGN_ZONE)
+    )
+
+
+def _source_at_head(root: Path, relative: str) -> Optional[str]:
+    """Read a tracked file at HEAD, or return None for a new file."""
+    result = subprocess.run(
+        ["git", "show", "HEAD:" + relative], cwd=root, capture_output=True,
+        text=True, encoding="utf-8",
+    )
+    if result.returncode != 0:
+        return None
+    return result.stdout
+
+
+def declared_identifiers(source: str) -> set[str]:
+    """Return names declared by Python syntax, not ordinary references."""
+    try:
+        tree = ast.parse(source)
+    except (SyntaxError, ValueError):
+        return set()
+    names = set()
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef,
+                             ast.ClassDef)):
+            names.add(node.name)
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                args = (list(node.args.posonlyargs) + list(node.args.args) +
+                        list(node.args.kwonlyargs))
+                names.update(arg.arg for arg in args)
+        elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
+            names.add(node.id)
+    return names
+
+
+def new_spanish_identifiers(root: Path = ROOT) -> List[Tuple[str, str]]:
+    """Return newly declared Spanish-looking names in changed Python files."""
+    offenders = []
+    for relative in changed_python_files(root):
+        current = _read_text(root / relative)
+        previous = _source_at_head(root, relative)
+        old_names = declared_identifiers(previous or "")
+        for name in sorted(declared_identifiers(current) - old_names):
+            if _looks_spanish_identifier(name):
+                offenders.append((relative, name))
+    return offenders
+
+
+def new_spanish_comment_files(root: Path = ROOT) -> List[str]:
+    """Return changed files that newly become Spanish-comment offenders."""
+    offenders = []
+    for relative in changed_python_files(root):
+        current = _read_text(root / relative)
+        current_es, current_en = score_text(comment_and_docstring_text(current))
+        current_verdict = classify(current_es, current_en)
+        if current_verdict not in ("es", "mixed"):
+            continue
+        previous = _source_at_head(root, relative)
+        if previous is None:
+            offenders.append(relative)
+            continue
+        old_es, old_en = score_text(comment_and_docstring_text(previous))
+        old_verdict = classify(old_es, old_en)
+        if old_verdict not in ("es", "mixed"):
+            offenders.append(relative)
+    return offenders
+
+
 def measure(root: Path = ROOT) -> Dict:
     """Full measurement. Returns a dict the test and the CLI both consume."""
     per_file: Dict[str, Dict] = {}
@@ -258,7 +353,10 @@ herramientas idioma informe informes lee leer linea lineas listar llave llaves
 medida medido medir muestra mostrar nombre numero obra obras ofensa ofensas
 palabra palabras pieza piezas plantilla prueba pruebas registro resumen ruta
 rutas sala salida salidas tabla tablas tamano texto valor valores vinculo
-vinculos zona zonas
+vinculos zona zonas accion acciones activo activa barrera contenido detalle
+destino decidir estado estados fuente guardia indice instalar limpiar
+nota parcial resultado resultados reconstruir serializa serializar tocar
+trabajo
 """.split())
 
 
