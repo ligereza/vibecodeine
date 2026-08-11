@@ -29,14 +29,38 @@ Uso:
     python3 material.py --degradar-ocurrencias [--aplicar]
 """
 import hashlib
+from contextlib import contextmanager
 import re
+import threading
 import unicodedata
 import json
 import os
 import sys
 
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - Windows falls back to thread lock
+    fcntl = None
+
 FICHAS = os.path.expanduser("~/curatoria/fichas/fichas.jsonl")
 COLA = os.path.expanduser("~/plataforma/material.jsonl")
+_QUEUE_LOCK = threading.RLock()
+
+
+@contextmanager
+def _queue_exclusive():
+    """Protect queue read-modify-write across Hub threads and MAK processes."""
+    with _QUEUE_LOCK:
+        lock_path = COLA + ".lock"
+        fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+        try:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_EX)
+            yield
+        finally:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+            os.close(fd)
 
 
 # Palabras que aparecen en un cartel y no son el nombre de nadie. Sale de mirar
@@ -310,10 +334,15 @@ def cargar():
 
 
 def guardar(filas):
+    with _queue_exclusive():
+        _save_unlocked(filas)
+
+
+def _save_unlocked(records):
     tmp = COLA + ".tmp"
     with open(tmp, "w", encoding="utf-8") as fh:
-        for r in filas:
-            fh.write(json.dumps(r, ensure_ascii=False) + "\n")
+        for record in records:
+            fh.write(json.dumps(record, ensure_ascii=False) + "\n")
     os.replace(tmp, COLA)
 
 
@@ -330,28 +359,56 @@ def pop_pendiente():
     tambien; el circuito no cerraba por el ORDEN. Una intencion escrita a mano
     no compite en igualdad con 2.733 tareas que el propio sistema se genero.
     """
-    filas = cargar()
-    pendientes = [r for r in filas if r.get("estado") == "pendiente"]
-    if not pendientes:
-        return None
-    elegida = next((r for r in pendientes if r.get("origen") == "micelio"),
-                   pendientes[0])
-    elegida["estado"] = "despachada"
-    guardar(filas)
-    return elegida
+    with _queue_exclusive():
+        filas = cargar()
+        pendientes = [r for r in filas if r.get("estado") == "pendiente"]
+        if not pendientes:
+            return None
+        elegida = next((r for r in pendientes if r.get("origen") == "micelio"),
+                       pendientes[0])
+        elegida["estado"] = "despachada"
+        _save_unlocked(filas)
+        return elegida
+
+
+def enqueue_front(task):
+    """Insert one task atomically unless its id is already queued."""
+    with _queue_exclusive():
+        filas = cargar()
+        if any(row.get("id") == task.get("id") for row in filas):
+            return False
+        _save_unlocked([task] + filas)
+        return True
+
+
+def reorder_by_pattern(pattern):
+    """Move matching tasks to the front as one queue transaction."""
+    pattern = (pattern or "").strip().lower()
+    if not pattern:
+        return 0
+    with _queue_exclusive():
+        filas = cargar()
+        matching_tasks = [t for t in filas
+                          if pattern in (t.get("texto") or "").lower()]
+        if not matching_tasks:
+            return 0
+        remaining_tasks = [t for t in filas if t not in matching_tasks]
+        _save_unlocked(matching_tasks + remaining_tasks)
+        return len(matching_tasks)
 
 
 def reconstruir():
-    previas = {r.get("id"): r for r in cargar()}
-    nuevas = tareas_desde_fichas()
-    salida = []
-    for t in nuevas:
-        # No revivir lo ya despachado: la cola no se repite sola.
-        anterior = previas.get(t["id"])
-        salida.append(anterior if anterior else t)
-    guardar(salida)
-    pend = sum(1 for r in salida if r.get("estado") == "pendiente")
-    return len(salida), pend
+    with _queue_exclusive():
+        previas = {r.get("id"): r for r in cargar()}
+        nuevas = tareas_desde_fichas()
+        salida = []
+        for t in nuevas:
+            # No revivir lo ya despachado: la cola no se repite sola.
+            anterior = previas.get(t["id"])
+            salida.append(anterior if anterior else t)
+        _save_unlocked(salida)
+        pend = sum(1 for r in salida if r.get("estado") == "pendiente")
+        return len(salida), pend
 
 
 def degradar_ocurrencias(aplicar=False):
@@ -365,15 +422,16 @@ def degradar_ocurrencias(aplicar=False):
     Lo DESPACHADO no se toca: ya se trabajo, y volverlo atras seria reescribir
     lo que paso. Solo cambia lo que todavia no salio.
     """
-    filas = cargar()
-    afectadas = [r for r in filas
-                 if r.get("origen") == "ig" and r.get("estado") == "pendiente"]
-    if aplicar:
-        for r in afectadas:
-            r["estado"] = "propuesta"
-        if afectadas:
-            guardar(filas)
-    return len(afectadas), len(filas)
+    with _queue_exclusive():
+        filas = cargar()
+        afectadas = [r for r in filas
+                     if r.get("origen") == "ig" and r.get("estado") == "pendiente"]
+        if aplicar:
+            for r in afectadas:
+                r["estado"] = "propuesta"
+            if afectadas:
+                _save_unlocked(filas)
+        return len(afectadas), len(filas)
 
 
 def main():

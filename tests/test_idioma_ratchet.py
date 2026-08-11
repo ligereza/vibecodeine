@@ -13,6 +13,8 @@ What this ratchet does:
 - `tools/idioma.py` classifies the COMMENTS AND DOCSTRINGS of every tracked
   Python file (never identifiers, never product strings) as es/en/mixed/none
   with a transparent offline heuristic (documented in that module's docstring).
+- The change ratchet also checks newly declared identifiers in changed and
+  untracked Python files against HEAD. Existing declarations remain compatible.
 - `tests/fixtures/idioma_baseline.txt` pins the measured set of files carrying
   Spanish (verdict es or mixed) at the moment the ratchet was born:
   426 files (388 es + 38 mixed), against 96 English, on 2026-07-31.
@@ -84,6 +86,30 @@ def test_no_new_file_carries_spanish_comments():
         "  python3 tools/idioma.py --baseline > tests/fixtures/idioma_baseline.txt\n"
         "New offenders:\n  " + "\n  ".join(new_offenders)
     )
+    assert not idioma.new_spanish_comment_files(_REPO)
+    assert not idioma.new_spanish_identifiers(_REPO)
+
+
+def test_change_ratchet_detects_new_declared_spanish_identifier(monkeypatch):
+    source = "def calcular_ruta():\n    return 1\n"
+    monkeypatch.setattr(idioma, "changed_python_files",
+                        lambda _root: ["probe.py"])
+    monkeypatch.setattr(idioma, "_read_text", lambda _path: source)
+    monkeypatch.setattr(idioma, "_source_at_head", lambda *_args: None)
+    assert idioma.new_spanish_identifiers(_REPO) == [
+        ("probe.py", "calcular_ruta")]
+
+
+def test_change_ratchet_allows_legacy_names_and_product_strings(monkeypatch):
+    source = (
+        'MESSAGE = "Genera la cotizacion para el cliente"\n'
+        "def registrar():\n    return MESSAGE\n"
+    )
+    monkeypatch.setattr(idioma, "changed_python_files",
+                        lambda _root: ["legacy.py"])
+    monkeypatch.setattr(idioma, "_read_text", lambda _path: source)
+    monkeypatch.setattr(idioma, "_source_at_head", lambda *_args: source)
+    assert idioma.new_spanish_identifiers(_REPO) == []
 
 
 def test_shrinking_is_not_punished():

@@ -10,6 +10,7 @@ from cultura.mak_plataforma.copilot import (active_ordering_seed,
                                              inference_quality,
                                              normalize_vision,
                                              ordering_distance_profile,
+                                             replay_ordering_evaluation,
                                              _vector_distance)
 
 import json
@@ -71,6 +72,26 @@ def test_discarded_or_rejected_candidates_leave_the_active_suggestion_set():
         feedback=[{"source_id": "a", "target_id": "c", "action": "reject"}],
     )
     assert rows == []
+
+
+def test_visual_similarity_is_a_derived_channel_and_metadata_does_not_duplicate_it():
+    source = item("a", description="luz cuerpo")
+    visual_only = item("b", date="2026-08-07", description="otra cosa", kind="published_media")
+    rows, _ = build_suggestions(source, [visual_only], visual_relations=[{
+        "item_id": "b", "score": .61, "margin": .03, "eligible": True,
+        "model": "MobileCLIP-S0", "model_version": "mobileclip_s0.pt",
+    }])
+    visual = next(row for row in rows if row["facet"] == "visual_similarity")
+    assert visual["relation_type"] == "visual_similarity"
+    assert visual["scope"] == "exploratory"
+    assert visual["visual_score"] == .61
+    assert visual["evidence"][0]["model"] == "MobileCLIP-S0"
+
+    metadata = item("c", description="luz cuerpo")
+    rows, _ = build_suggestions(source, [metadata], visual_relations=[{
+        "item_id": "c", "score": .91, "margin": .1, "eligible": True,
+    }])
+    assert not any(row["facet"] == "visual_similarity" for row in rows)
 
 
 def test_rejected_text_channel_does_not_hide_date_channel_for_same_pair():
@@ -290,6 +311,58 @@ def test_ordering_evaluation_separates_active_learning_from_automation():
     assert evaluation["automation_ready"] is False
     assert evaluation["missing_classes"] == ["review", "discard"]
     assert evaluation["automation_gate"]["minimum_labels"] == 100
+
+
+def test_replay_ordering_evaluation_holds_out_each_human_answer_and_abstains():
+    items = [item(str(index), description=f"grupo {index // 2}")
+             for index in range(8)]
+    labels = ["work", "work", "record", "record",
+              "review", "review", "discard", "discard"]
+    vectors = {}
+    for index, (current, label) in enumerate(zip(items, labels)):
+        current["classification"] = {"triage": label}
+        vectors[current["id"]] = [float(index // 2), float(index % 2)]
+
+    replay = replay_ordering_evaluation(items, vector_by_id=vectors)
+
+    assert replay["schema"] == "faro-ordering-replay-v1"
+    assert replay["evaluated"] == 8
+    assert replay["committed"] + replay["abstained"] == 8
+    assert replay["support"] == {
+        "work": 2, "record": 2, "review": 2, "discard": 2,
+    }
+    assert replay["source_counts"] == {"triage": 8, "selection": 0}
+    assert replay["metrics_by_source"]["selection"]["evaluated"] == 0
+    assert replay["promotion"] == "none"
+    assert all(case["item_id"] not in case["neighbors"]
+               for case in replay["cases"])
+
+
+def test_replay_ordering_evaluation_can_return_metrics_without_case_payload():
+    items = [item("a"), item("b"), item("c")]
+    for current, label in zip(items, ("work", "record", "review")):
+        current["classification"] = {"triage": label}
+
+    replay = replay_ordering_evaluation(items, include_cases=False)
+
+    assert replay["cases"] == []
+    assert replay["evaluated"] == 3
+    assert 0.0 <= replay["abstention_rate"] <= 1.0
+
+
+def test_replay_ordering_evaluation_keeps_selection_separate_from_triage():
+    items = [item("triage"), item("selected"), item("discarded")]
+    items[0]["classification"] = {"triage": "record"}
+    items[1]["selection"] = "seleccionar"
+    items[2]["selection"] = "descartar"
+
+    replay = replay_ordering_evaluation(items)
+
+    assert replay["source_counts"] == {"triage": 1, "selection": 2}
+    assert replay["metrics_by_source"]["triage"]["evaluated"] == 1
+    assert replay["metrics_by_source"]["selection"]["support"] == {
+        "work": 1, "record": 0, "review": 0, "discard": 1,
+    }
 
 
 def test_external_evidence_profile_counts_yield_without_promotion():

@@ -39,6 +39,12 @@ def test_provider_registry_does_not_claim_runtime_health_from_env_only():
     assert watson["runtime"] == "unverified"
 
 
+def test_provider_registry_respects_explicit_empty_environment():
+    registry = providers.provider_registry({})
+
+    assert all(row["configured"] is False for row in registry["providers"])
+
+
 def test_survival_provider_call_routes_to_ollama(monkeypatch):
     seen = {}
 
