@@ -1,6 +1,6 @@
 # LAST_HANDOFF - Faro
 
-Updated: 2026-08-11 - canonical branch cleanup and runtime reconciliation
+Updated: 2026-08-11 - canonical branch cleanup and final validation
 Status: The Hub boundary, XIO human-link circuit, writer ownership block, and
 language slices are consolidated in the four canonical branches. Local,
 GitHub, MAK checkout, and runtime mirror are clean and synchronized; no
@@ -24,15 +24,15 @@ instructions. Verify any statement that affects a destructive or remote action.
 ## Current verified state - 2026-08-11
 
 - Windows canonical: `C:\IA\flujo`, branch `mak`, HEAD and `origin/mak`
-  `7172616dc5e78b97669777157a45f89e03b67809`, clean. The four canonical
-  branch heads are `main=d0c9a594`, `mak=7172616d`, `rd=b79f1476`, and
+  `d1977e02fc803c9daf17d5bbce221b8954839048`, clean. The four canonical
+  branch heads are `main=d0c9a594`, `mak=d1977e02`, `rd=b79f1476`, and
   `iskvw=d887771c`; README/SVG have no diff.
 - The isolated audit checkout and all auxiliary worktrees were removed after
   normalized-content comparison proved their useful source was preserved in
   `mak`; no unique active code was discarded. Generated audit artifacts were
   excluded from the canonical commit.
 - MAK: `/home/mak/flujo`, branch `mak`, HEAD and `origin/mak` both at
-  `7172616dc5e78b97669777157a45f89e03b67809`, clean. The prior manual state is
+  `d1977e02fc803c9daf17d5bbce221b8954839048`, clean. The prior manual state is
   preserved in stash `preserve manual MAK deployment before canonical branch
   cleanup 2026-08-11`; the effective repo-sync line remains `# PAUSED-FARO`.
 - Runtime: `mak-hub.service` active, PID `74023`; research `interfaz.py` PID
@@ -143,17 +143,19 @@ compatibility slice with aliases and a new validation pass.
   `15` additional tests for the append-only writer; `py_compile` and
   `git diff --check` passed.
 - The canonical full suite was rerun after the first two slices and passed 100%
-  of executable tests; the append-only writer then passed its focused suite,
+  of executable tests; the append-only writer then passed its focused suite.
+  After the privacy-fixture correction, the full suite passed again at 100%,
   with only the known environment skips and existing deprecation warnings.
   README/SVG protection still reports zero changed protected files.
-- The four language files are now committed in `7172616d` and mirrored to the
+- The four language files are now committed in `d1977e02` and mirrored to the
   live MAK source with a rollback copy. No service restart was needed because
   the slice changes comments/docstrings only; coherence now reports zero drift.
 
 ## Canonical branch cleanup - 2026-08-11
 
 - The useful audit block and compatibility slices were committed to `mak` as
-  `d3d31d7e`, rebased onto `origin/mak`, and pushed as `7172616d`.
+  `d3d31d7e`, rebased onto `origin/mak`, and pushed as `7172616d`; the privacy
+  fixture correction was then committed and pushed as `d1977e02`.
 - Local `main`, `rd`, and `iskvw` were fast-forwarded to their matching remote
   heads. The only remaining local/remote branches are `main`, `mak`, `rd`, and
   `iskvw`; the only worktree is `C:\IA\flujo`.
@@ -162,7 +164,7 @@ compatibility slice with aliases and a new validation pass.
   `codex/sync-rd`. Their patches were already present in canonical history.
   The uncommitted `codex/atlas-audit` worktree was removed only after every
   useful file was verified against the committed `mak` tree.
-- The MAK checkout was fast-forwarded to `7172616d` after stashing its manual
+- The MAK checkout was fast-forwarded to `d1977e02` after stashing its manual
   deployment/backups; runtime remains active on the same listeners, and
   `coherence.py --strict` reports zero drift in all five organs.
 
@@ -194,9 +196,9 @@ compatibility slice with aliases and a new validation pass.
 
 - Windows workspace: `C:\IA\flujo`.
 - Verified checkout: branch `mak`, commit
-  `7172616dc5e78b97669777157a45f89e03b67809`; the Windows worktree is clean
+  `d1977e02fc803c9daf17d5bbce221b8954839048`; the Windows worktree is clean
   and matches `origin/mak`. Local and remote canonical refs are synchronized:
-  `main=d0c9a594`, `mak=7172616d`, `rd=b79f1476`, `iskvw=d887771c`. No
+  `main=d0c9a594`, `mak=d1977e02`, `rd=b79f1476`, `iskvw=d887771c`. No
   README/SVG diff exists.
 - The separate clean `main` worktree under the local `.roo/worktrees/`
   directory was removed after verifying it had no uncommitted changes. The
@@ -216,7 +218,7 @@ compatibility slice with aliases and a new validation pass.
 - The canonical Windows, repo, served, and runtime
   `/portafolio/mesa_montaje.js` share SHA-256
   `e139ccdefec5a2d320803842645a37cd878d554bfda3bfd49b4f867ef9229109`.
-  The reviewed block is committed in `mak` at `7172616d`.
+  The reviewed block is committed in `mak` at `d1977e02`.
 - The promoted work covers `cultura/mak_plataforma/` (ledger, identity,
   providers, decisions, Hub, batches, routing, service/watchdog), the current
   `iskvw/editor.html`, the README/SVG text layer, operational docs, tests, and
@@ -228,7 +230,7 @@ Fresh SSH check on 2026-08-11:
 
 - Host: `mak@192.168.50.2`, hostname `dell-11m`.
 - The actual Git checkout is `/home/mak/flujo`, currently on `mak` at
-  `7172616dc5e78b97669777157a45f89e03b67809`; `origin/mak` is the same
+  `d1977e02fc803c9daf17d5bbce221b8954839048`; `origin/mak` is the same
   commit and the worktree is clean. The previous manual deployment/backups
   remain recoverable in the named stash recorded above.
 - The runtime Hub is healthy and is managed by the user systemd unit
