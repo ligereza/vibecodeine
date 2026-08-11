@@ -3200,6 +3200,17 @@ descartes históricos.
 - La verificación focal de privacidad y del generador pasó; `git diff --check`
   pasó. La suite completa solo dejó warnings/deprecaciones existentes de
   Pillow y salidas diagnósticas de pruebas.
-- Siguiente acción: publicar este cierre en `origin/mak`, verificar hashes del
-  checkout MAK, servicio y las cuatro ramas canónicas; no abrir otro circuito
-  hasta que esa verificación quede registrada.
+- Publicación y verificación completadas: Windows `mak` y
+  `/home/mak/flujo` están limpios y alineados con `origin/mak`; el checkout
+  MAK está en la misma revisión publicada. `mak-hub.service` permanece
+  `active`; `/health`, `/portafolio/` y
+  `/api/portfolio/copilot/status` responden HTTP 200.
+- Los hashes operativos siguen siendo editor
+  `1c0efe456f80ac13c90cc0a76dc44cfddf90ff2cf101c8c263c5f19d6b967a5d`, JS
+  `ddf3968273935bbe8f9df1e78b67290997022a4c034857979bca4cd7eb9f50e8` e
+  índice `31e271c90345434ac6a6b4f6fc441ec17ab03808a75c33be5f5d2634b5bf52bc`.
+  El proceso Hub sigue sin mappings `torch|faiss|mobileclip`.
+- Las referencias remotas `main`, `rd` e `iskvw` siguen en
+  `d09327fe8d5b`; solo `mak` contiene esta integración. No queda una acción
+  técnica pendiente de esta ronda; el siguiente bloque debe comenzar con una
+  nueva violación reproducible del harness.
