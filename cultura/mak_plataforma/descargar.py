@@ -10,9 +10,16 @@ import hashlib
 import json
 import os
 import sys
+import threading
 import time
 import urllib.parse
 import urllib.request
+from contextlib import contextmanager
+
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - Windows director has no fcntl
+    fcntl = None
 
 ALLOW = {
     "github.com", "raw.githubusercontent.com", "objects.githubusercontent.com",
@@ -23,6 +30,25 @@ ALLOW = {
 MAX_BYTES = 2 * 1024 ** 3
 DEST_DEFAULT = os.path.expanduser("~/descargas")
 MANIFEST = os.path.join(DEST_DEFAULT, "manifest.jsonl")
+_DOWNLOAD_LOCK = threading.RLock()
+
+
+@contextmanager
+def _exclusive_download_lock(destination):
+    """Prevent two workers from sharing the same .part file."""
+    with _DOWNLOAD_LOCK:
+        lock_path = os.path.abspath(destination) + ".lock"
+        parent = os.path.dirname(lock_path)
+        os.makedirs(parent, exist_ok=True)
+        fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+        try:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_EX)
+            yield
+        finally:
+            if fcntl is not None:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+            os.close(fd)
 
 
 def dominio_permitido(host):
@@ -40,32 +66,37 @@ def descargar(url, sha256=None, dest=DEST_DEFAULT):
     os.makedirs(dest, exist_ok=True)
     nombre = os.path.basename(u.path) or "descarga.bin"
     destino = os.path.join(dest, nombre)
-    parcial = destino + ".part"
-    req = urllib.request.Request(url, headers={"User-Agent": "mak-organismo/1.0"})
-    h = hashlib.sha256()
-    total = 0
-    with urllib.request.urlopen(req, timeout=60) as r, open(parcial, "wb") as f:
-        while True:
-            chunk = r.read(1 << 16)
-            if not chunk:
-                break
-            total += len(chunk)
-            if total > MAX_BYTES:
-                f.close()
-                os.unlink(parcial)
-                raise SystemExit("supera el maximo de 2GB, abortado")
-            h.update(chunk)
-            f.write(chunk)
-    digest = h.hexdigest()
-    if sha256 and digest.lower() != sha256.lower():
-        os.unlink(parcial)
-        raise SystemExit("sha256 NO coincide (esperado %s, real %s); archivo borrado"
-                         % (sha256, digest))
-    os.replace(parcial, destino)
-    reg = {"url": url, "archivo": destino, "bytes": total,
-           "sha256": digest, "fecha": time.strftime("%Y-%m-%d %H:%M:%S")}
-    with open(MANIFEST, "a", encoding="utf-8") as f:
-        f.write(json.dumps(reg, ensure_ascii=False) + "\n")
+    with _exclusive_download_lock(destino):
+        partial_path = destino + ".part"
+        req = urllib.request.Request(
+            url, headers={"User-Agent": "mak-organismo/1.0"})
+        h = hashlib.sha256()
+        total = 0
+        with urllib.request.urlopen(req, timeout=60) as r, open(partial_path, "wb") as f:
+            while True:
+                chunk = r.read(1 << 16)
+                if not chunk:
+                    break
+                total += len(chunk)
+                if total > MAX_BYTES:
+                    f.close()
+                    os.unlink(partial_path)
+                    raise SystemExit("exceeds the 2GB limit; aborted")
+                h.update(chunk)
+                f.write(chunk)
+        digest = h.hexdigest()
+        if sha256 and digest.lower() != sha256.lower():
+            os.unlink(partial_path)
+            raise SystemExit(
+                "sha256 mismatch (expected %s, got %s); file removed"
+                % (sha256, digest))
+        os.replace(partial_path, destino)
+        reg = {"url": url, "archivo": destino, "bytes": total,
+               "sha256": digest, "fecha": time.strftime("%Y-%m-%d %H:%M:%S")}
+        manifest = os.path.join(dest, "manifest.jsonl")
+        with open(manifest, "a", encoding="utf-8") as f:
+            f.write(json.dumps(reg, ensure_ascii=False) + "\n")
+            f.flush()
     print("descargado: %s (%d bytes)\nsha256: %s" % (destino, total, digest))
     return destino
 

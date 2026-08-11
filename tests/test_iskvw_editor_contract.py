@@ -80,7 +80,8 @@ def test_editor_surfaces_mak_contract_without_making_hub_required():
     assert "descartar · no es obra" in source
     assert "ESTUDIO_FEEDBACK_BUSY" in source
     assert "seleccionada'" in source
-    assert "mesa_montaje.js?v=20260810-visual-index2" in source
+    assert "mesa_montaje.js?v=20260811-atlas-audit" in source
+    assert "/api/portfolio/inbox?surface=mesa" in mesa
     assert "<title>MAK · Campo de orden · archivo vivo</title>" in source
     assert "MAK · campo de orden" in source
     assert "campo de orden" in mesa
@@ -192,6 +193,16 @@ def test_editor_surfaces_mak_contract_without_making_hub_required():
     assert "externalReviewMarkup" in mesa
     assert "/api/portfolio/external-candidates/review" in mesa
     assert 'data-pop-action="external-review"' in mesa
+    assert 'id="mesa-audit"' in mesa
+    assert "/api/portfolio/audit" in mesa
+    assert "Atlas de decisiones verificable" in mesa
+    assert "Estado actual de selección" in mesa
+    assert "Etiquetas de aprendizaje · no son piezas activas" in mesa
+    assert "Línea temporal" in mesa
+    assert "current_selection" in mesa
+    assert "triage_labels" in mesa
+    assert 'contentType.includes("application/json")' in mesa
+    assert "la auditoría aún no está desplegada" in mesa
 
     order_decision = mesa[mesa.index("async function applyOrderDecision") : mesa.index("function nextAvailableRecord")]
     assert "invalidateSceneCache();" in order_decision

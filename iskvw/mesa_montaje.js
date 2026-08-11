@@ -703,7 +703,7 @@
     if (!app) return false;
     app.hidden = false;
     document.body.classList.add("mesa-active");
-    app.innerHTML = `<div class="mesa-shell mesa-engine" data-field-mode="uncertainty"><header class="mesa-header"><div><div class="mesa-kicker">MAK · atlas vivo</div><h2>campo de orden</h2><p>La geometría permanece. Tus decisiones cambian el campo, no borran la ambigüedad.</p></div><div class="mesa-header-stats"><b id="mesa-visible-count">0</b><span>nodos</span><b id="mesa-relation-count">0</b><span>vínculos</span><span id="mesa-map-engine" class="mesa-map-engine">GTM · cargando</span><button type="button" id="mesa-external-queue" class="mesa-external-queue">evidencia externa · <b>0</b></button></div></header><div class="mesa-toolbar"><div class="mesa-mode-switch" role="toolbar" aria-label="Modo del editor"><button type="button" class="is-active" data-editor-mode="order">ordenar</button><button type="button" data-editor-mode="relate">relacionar</button><button type="button" class="mesa-seed-control" data-learning-action="next-seed" title="llevar el caso más informativo al centro">siguiente frontera</button></div><div class="mesa-field-switch" role="toolbar" aria-label="Campo visible"><button type="button" class="is-active" data-field-mode="uncertainty">incertidumbre</button><button type="button" data-field-mode="coverage">vacíos</button><button type="button" data-field-mode="evidence">evidencia</button><button type="button" data-field-mode="resonance">resonancia</button></div><div class="mesa-camera-actions"><button type="button" data-camera="reset">mapa</button><button type="button" data-camera="zoom-out">−</button><button type="button" data-camera="zoom-in">+</button></div></div><div class="mesa-lenses" role="toolbar" aria-label="Lentes de relación"><button type="button" class="is-active" data-lens="all">copiloto</button><button type="button" data-lens="date">fecha</button><button type="button" data-lens="publication">publicación</button><button type="button" data-lens="event">evento</button><button type="button" data-lens="venue">venue</button><button type="button" data-lens="artist">artista</button><button type="button" data-lens="client">cliente</button><button type="button" data-lens="text">concepto</button></div><div class="mesa-map-legend" aria-label="Lectura del campo"><span class="is-field">halo = información pendiente</span><span class="is-evidence">línea continua = evidencia</span><span class="is-resonance">línea discontinua = resonancia</span><em id="mesa-map-fit">proyección GTM</em></div><main class="mesa-main mesa-engine-main"><div class="mesa-stage" id="mesa-stage" data-flow-render="canvas-progressive" aria-label="Atlas GTM; arrastra el espacio para mover la cámara y selecciona piezas para ordenar"><canvas class="mesa-flow-canvas" id="mesa-flow-canvas" aria-hidden="true"></canvas><div class="mesa-world" id="mesa-world"><svg class="mesa-field-layer" id="mesa-field-layer" viewBox="0 0 100 100" preserveAspectRatio="none"></svg><svg class="mesa-edges" id="mesa-edges" viewBox="0 0 100 100" preserveAspectRatio="none"></svg><div class="mesa-card-layer" id="mesa-card-layer"></div></div><div class="mesa-field-readout" id="mesa-field-readout" aria-live="polite"></div><div class="mesa-order-hud" id="mesa-order-hud" aria-live="polite"></div><div class="mesa-popover" id="mesa-popover" hidden></div><div class="mesa-stage-help">click: elegir · rueda: acercar · arrastra el vacío: recorrer el atlas</div></div><nav class="mesa-timeline" id="mesa-timeline" aria-label="Nodos de esta ventana"></nav><div class="mesa-live-status" id="mesa-status" aria-live="polite"></div></main></div>`;
+    app.innerHTML = `<div class="mesa-shell mesa-engine" data-field-mode="uncertainty"><header class="mesa-header"><div><div class="mesa-kicker">MAK · atlas vivo</div><h2>campo de orden</h2><p>La geometría permanece. Tus decisiones cambian el campo, no borran la ambigüedad.</p></div><div class="mesa-header-stats"><b id="mesa-visible-count">0</b><span>nodos</span><b id="mesa-relation-count">0</b><span>vínculos</span><span id="mesa-map-engine" class="mesa-map-engine">GTM · cargando</span><button type="button" id="mesa-external-queue" class="mesa-external-queue">evidencia externa · <b>0</b></button></div></header><div class="mesa-toolbar"><div class="mesa-mode-switch" role="toolbar" aria-label="Modo del editor"><button type="button" class="is-active" data-editor-mode="order">ordenar</button><button type="button" data-editor-mode="relate">relacionar</button><button type="button" class="mesa-seed-control" data-learning-action="next-seed" title="llevar el caso más informativo al centro">siguiente frontera</button></div><div class="mesa-field-switch" role="toolbar" aria-label="Campo visible"><button type="button" class="is-active" data-field-mode="uncertainty">incertidumbre</button><button type="button" data-field-mode="coverage">vacíos</button><button type="button" data-field-mode="evidence">evidencia</button><button type="button" data-field-mode="resonance">resonancia</button></div><div class="mesa-camera-actions"><button type="button" data-camera="reset">mapa</button><button type="button" data-camera="zoom-out">−</button><button type="button" data-camera="zoom-in">+</button><button type="button" id="mesa-audit" class="mesa-audit-button">auditoría</button></div></div><div class="mesa-lenses" role="toolbar" aria-label="Lentes de relación"><button type="button" class="is-active" data-lens="all">copiloto</button><button type="button" data-lens="date">fecha</button><button type="button" data-lens="publication">publicación</button><button type="button" data-lens="event">evento</button><button type="button" data-lens="venue">venue</button><button type="button" data-lens="artist">artista</button><button type="button" data-lens="client">cliente</button><button type="button" data-lens="text">concepto</button></div><div class="mesa-map-legend" aria-label="Lectura del campo"><span class="is-field">halo = información pendiente</span><span class="is-evidence">línea continua = evidencia</span><span class="is-resonance">línea discontinua = resonancia</span><em id="mesa-map-fit">proyección GTM</em></div><main class="mesa-main mesa-engine-main"><div class="mesa-stage" id="mesa-stage" data-flow-render="canvas-progressive" aria-label="Atlas GTM; arrastra el espacio para mover la cámara y selecciona piezas para ordenar"><canvas class="mesa-flow-canvas" id="mesa-flow-canvas" aria-hidden="true"></canvas><div class="mesa-world" id="mesa-world"><svg class="mesa-field-layer" id="mesa-field-layer" viewBox="0 0 100 100" preserveAspectRatio="none"></svg><svg class="mesa-edges" id="mesa-edges" viewBox="0 0 100 100" preserveAspectRatio="none"></svg><div class="mesa-card-layer" id="mesa-card-layer"></div></div><div class="mesa-field-readout" id="mesa-field-readout" aria-live="polite"></div><div class="mesa-order-hud" id="mesa-order-hud" aria-live="polite"></div><div class="mesa-popover" id="mesa-popover" hidden></div><div class="mesa-stage-help">click: elegir · rueda: acercar · arrastra el vacío: recorrer el atlas</div></div><nav class="mesa-timeline" id="mesa-timeline" aria-label="Nodos de esta ventana"></nav><div class="mesa-live-status" id="mesa-status" aria-live="polite"></div></main></div>`;
     state.root = app;
     state.root.dataset.editorMode = state.editorMode;
     state.root.dataset.fieldMode = state.fieldMode;
@@ -737,6 +737,7 @@
     const allButton = state.root.querySelector('[data-lens="all"]');
     if (allButton) allButton.textContent = "copiloto";
     state.root.querySelector("#mesa-external-queue")?.addEventListener("click", openNextExternalCandidate);
+    state.root.querySelector("#mesa-audit")?.addEventListener("click", () => loadAuditSummary());
     state.root.querySelectorAll("[data-editor-mode]").forEach((button) => {
       button.addEventListener("click", () => setEditorMode(button.dataset.editorMode));
     });
@@ -1402,6 +1403,75 @@
     state.popover.hidden = true;
   }
 
+  function auditMetric(label, value, note = "") {
+    return `<div class="mesa-audit-metric"><b>${escMesa(value)}</b><span>${escMesa(label)}</span>${note ? `<small>${escMesa(note)}</small>` : ""}</div>`;
+  }
+
+  function auditSummaryMarkup(audit) {
+    const counts = audit.counts || {};
+    const current = counts.current_selection || {};
+    const labels = counts.triage_labels || {};
+    const feedback = counts.relation_feedback || {};
+    const reviews = counts.candidate_reviews || {};
+    const visual = counts.visual_feedback || {};
+    const model = counts.ordering_model || {};
+    const evaluation = model.evaluation || {};
+    const byLabel = labels.by_label || {};
+    const currentGrid = [
+      auditMetric("seleccionadas ahora", current.selected || 0),
+      auditMetric("deseleccionadas ahora", current.deselected || 0),
+      auditMetric("descartadas ahora", current.discarded || 0),
+      auditMetric("sin decisión de selección", current.pending || 0),
+    ].join("");
+    const labelGrid = [
+      auditMetric("obra · work", byLabel.work || 0),
+      auditMetric("registro · record", byLabel.record || 0),
+      auditMetric("revisión · review", byLabel.review || 0),
+      auditMetric("descartar · discard", byLabel.discard || 0),
+    ].join("");
+    const modelState = model.automation_ready ? "lista para evaluar" : "no automatizar";
+    return `<div class="mesa-popover-head"><span>auditoría de solo lectura</span><button type="button" class="mesa-popover-close" data-pop-action="close" aria-label="cerrar">×</button></div><div class="mesa-popover-flow mesa-audit"><div class="mesa-audit-title"><h3>Atlas de decisiones verificable</h3><p class="mesa-popover-meta">estado actual, historial conservado y aprendizaje separados</p></div><section class="mesa-audit-section"><h4>Estado actual de selección</h4><div class="mesa-audit-grid">${currentGrid}</div><small>${escMesa(current.labeled || 0)} piezas con estado actual · ${escMesa(current.unmatched_history_rows || 0)} filas históricas sin pieza vigente</small></section><section class="mesa-audit-section"><h4>Etiquetas de aprendizaje · no son piezas activas</h4><div class="mesa-audit-grid">${labelGrid}</div><small>${escMesa(labels.total || 0)} etiquetas · origen: ${escMesa(JSON.stringify(labels.by_source || {}))}</small></section><section class="mesa-audit-section"><h4>Historial verificable</h4><div class="mesa-audit-history"><span>selecciones: <b>${escMesa(counts.selection_history?.total || 0)}</b></span><span>clasificaciones: <b>${escMesa(counts.classification_history?.total || 0)}</b></span><span>feedback: <b>${escMesa(feedback.history_total || 0)}</b> · learning ${escMesa(feedback.learning_total || 0)}</span><span>revisiones externas: <b>${escMesa(reviews.history_total || 0)}</b> · actuales ${escMesa(reviews.current_total || 0)}</span><span>feedback visual: <b>${escMesa(visual.history_total || 0)}</b></span></div></section><section class="mesa-audit-section"><h4>Estado del modelo</h4><p class="mesa-audit-status ${model.automation_ready ? "is-ready" : "is-blocked"}">${escMesa(modelState)} · accuracy ${escMesa(evaluation.accuracy ?? "sin evaluación")} · macro-recall ${escMesa(evaluation.macro_recall ?? "sin evaluación")} · promoción: ${escMesa(model.promotion || "none")}</p></section><div class="mesa-audit-actions"><button type="button" data-pop-action="audit-item" data-audit-item="${escMesa(state.selectedId)}">auditar pieza activa</button></div></div>`;
+  }
+
+  function auditItemMarkup(audit) {
+    const item = audit.item || {};
+    const current = item.current || {};
+    const timeline = Array.isArray(item.timeline) ? item.timeline : [];
+    const timelineMarkup = timeline.length
+      ? timeline.map((event) => {
+        const detail = event.kind === "selection"
+          ? `${event.decision || "sin decisión"}`
+          : event.kind === "classification"
+            ? `clasificación ${JSON.stringify(event.fields || {})}`
+            : event.kind === "candidate_review"
+              ? `candidato ${event.decision || "sin decisión"}`
+              : `${event.action || "sin acción"} · ${event.facet || "sin faceta"}`;
+        return `<li><time>${escMesa(event.ts || "sin fecha")}</time><b>${escMesa(event.kind)}</b><span>${escMesa(detail)}</span></li>`;
+      }).join("")
+      : "<li>sin eventos registrados</li>";
+    return `<div class="mesa-popover-head"><span>pieza auditada</span><button type="button" class="mesa-popover-close" data-pop-action="close" aria-label="cerrar">×</button></div><div class="mesa-popover-flow mesa-audit"><div class="mesa-audit-title"><h3>${escMesa(item.source_id || "pieza")}</h3><p class="mesa-popover-meta">${escMesa(item.date || "sin fecha")} · ${escMesa(item.content_type || "registro")}</p></div><section class="mesa-audit-section"><h4>Estado actual</h4><div class="mesa-audit-current"><span>selección: <b>${escMesa(current.selection || "pendiente")}</b></span><span>triage: <b>${escMesa(current.triage_label || "unlabeled")}</b> · ${escMesa(current.triage_source || "sin origen")}</span><span>clasificación: <b>${escMesa(JSON.stringify(current.classification || {}))}</b></span></div></section><section class="mesa-audit-section"><h4>Línea temporal · ${escMesa(item.timeline_total || 0)} eventos</h4><ol class="mesa-audit-timeline">${timelineMarkup}</ol></section><div class="mesa-audit-actions"><button type="button" data-pop-action="audit-summary">volver al resumen</button></div></div>`;
+  }
+
+  async function loadAuditSummary(sourceId = "") {
+    const requested = String(sourceId || "").trim();
+    setStatus(requested ? "cargando la trazabilidad de la pieza…" : "cargando el atlas verificable…");
+    try {
+      const query = requested ? `?source_id=${encodeURIComponent(requested)}` : "";
+      const response = await fetch(`/api/portfolio/audit${query}`, { cache: "no-store" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        throw new Error("el Hub devolvió HTML; la auditoría aún no está desplegada");
+      }
+      const audit = await response.json();
+      if (!audit.ok) throw new Error(audit.error || "auditoría no disponible");
+      openPopover(requested ? auditItemMarkup(audit) : auditSummaryMarkup(audit));
+      setStatus(requested ? "trazabilidad de pieza cargada." : "atlas verificable cargado; no se modificó ninguna decisión.");
+    } catch (error) {
+      setStatus("No se pudo cargar la auditoría: " + error.message);
+    }
+  }
+
   function relationEvidence(relation) {
     return relationEvidenceEntries(relation).slice(0, 3).map((evidence) => (
       `<span>${escMesa(evidence.label)}: ${escMesa(evidence.value)}</span>`
@@ -1417,7 +1487,43 @@
     const atomMarkup = atoms.map((row) => `<span><b>${escMesa(row.field)}</b> ${escMesa(row.value)} · ${escMesa(row.status)}</span>`).join("");
     const segmentMarkup = segments.map((row) => `<span><b>${escMesa(row.timecode || "sin TC")}</b> ${escMesa(row.title || "segmento")}</span>`).join("");
     const unknownMarkup = unknowns.length ? `<small>sin declarar: ${escMesa([...new Set(unknowns)].join(", "))}</small>` : "";
-    return `<details class="mesa-xio-evidence"><summary>XIO · evidencia separada</summary><p>Fuente disponible; no vinculada automáticamente a esta pieza.</p><div class="mesa-xio-atoms">${atomMarkup || "<span>sin átomos declarados</span>"}</div><div class="mesa-xio-segments">${segmentMarkup}</div>${unknownMarkup}<small>siguiente: ${escMesa(xio.next_action || "revisión humana")}</small></details>`;
+    const linked = (xio.linked_source_ids || []).map(String);
+    const currentLinked = linked.includes(String(state.activeId));
+    const linkedMarkup = linked.length
+      ? `<small>enlace humano: ${escMesa(linked.join(", "))}</small>`
+      : "";
+    const actionMarkup = currentLinked
+      ? `<small>esta pieza ya está enlazada; no se publicó automáticamente.</small>`
+      : `<button type="button" data-pop-action="xio-link" data-xio-work-id="${escMesa(xio.work?.work_id || "")}">vincular esta pieza como fuente humana</button>`;
+    return `<details class="mesa-xio-evidence"><summary>XIO · evidencia separada</summary><p>Fuente disponible; el enlace requiere decisión humana explícita.</p><div class="mesa-xio-atoms">${atomMarkup || "<span>sin átomos declarados</span>"}</div><div class="mesa-xio-segments">${segmentMarkup}</div>${unknownMarkup}${linkedMarkup}<small>siguiente: ${escMesa(xio.next_action || "revisión humana")}</small><div class="mesa-xio-action">${actionMarkup}</div></details>`;
+  }
+
+  async function linkXioToRecord(workId, sourceId) {
+    const busyKey = `xio-link:${workId}:${sourceId}`;
+    if (!workId || !sourceId || state.feedbackBusy.has(busyKey)) return;
+    state.feedbackBusy.add(busyKey);
+    try {
+      const response = await fetch("/api/portfolio/copilot/xio-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ work_id: workId, source_id: sourceId }),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      if (!data.ok) throw new Error(data.error || "enlace XIO no guardado");
+      state.scene.xio_evidence.linked_source_ids = data.linked_source_ids || [sourceId];
+      state.scene.xio_evidence.linked_to_source_id = true;
+      state.scene.xio_evidence.next_action = "none";
+      invalidateSceneCache();
+      showRecordPopover();
+      setStatus(data.already_linked
+        ? "el enlace XIO ya existía; se conservó el historial."
+        : "enlace XIO guardado como decisión humana; no se publicó automáticamente.");
+    } catch (error) {
+      setStatus("no se guardó el enlace XIO: " + error.message);
+    } finally {
+      state.feedbackBusy.delete(busyKey);
+    }
   }
 
   function externalReviewMarkup(record) {
@@ -1774,6 +1880,8 @@
     const record = byId(state.selectedId);
     const note = state.popover.querySelector("[data-pop-note]")?.value?.trim() || "";
     if (action === "close") return closePopover();
+    if (action === "audit-summary") return loadAuditSummary();
+    if (action === "audit-item") return loadAuditSummary(button.dataset.auditItem || state.selectedId);
     if (action === "back") return showRecordPopover();
     if (action === "classify-axis") {
       state.classificationAxis = button.dataset.classAxis || "lane";
@@ -1784,6 +1892,10 @@
     }
     if (action === "classify-context") return saveClassificationContext();
     if (action === "next") return advanceSeedFromPopover();
+    if (action === "xio-link") {
+      button.disabled = true;
+      return linkXioToRecord(button.dataset.xioWorkId, record?.source_id);
+    }
     if (action === "external-review") {
       const externalNote = state.popover.querySelector("[data-external-note]")?.value?.trim() || "";
       state.popover.querySelectorAll('[data-pop-action="external-review"]').forEach((candidate) => {
@@ -1915,7 +2027,7 @@
     if (!mount()) return;
     setStatus("cargando la mesa…");
     try {
-      const inboxResponse = await fetch("/api/portfolio/inbox", { cache: "no-store" });
+      const inboxResponse = await fetch("/api/portfolio/inbox?surface=mesa", { cache: "no-store" });
       if (!inboxResponse.ok) throw new Error(`HTTP ${inboxResponse.status}`);
       const inbox = await inboxResponse.json();
       if (!inbox || inbox.ok === false) throw new Error(inbox?.error || "inbox no disponible");

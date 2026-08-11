@@ -9,6 +9,7 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 import urllib.parse
@@ -26,13 +27,28 @@ AUTO_ICONOS_MAX = int(os.environ.get("MAK_AUTO_ICONOS_MAX", "6"))
 
 
 def _set_status(msg, pid):
-    tmp = STATUS_FILE + ".tmp"
+    temp_path = None
     try:
-        with open(tmp, "w", encoding="utf-8") as f:
+        parent = os.path.dirname(os.path.abspath(STATUS_FILE))
+        os.makedirs(parent, exist_ok=True)
+        with tempfile.NamedTemporaryFile(
+                "w", encoding="utf-8", dir=parent,
+                prefix=".%s-" % os.path.basename(STATUS_FILE),
+                suffix=".tmp", delete=False) as f:
+            temp_path = f.name
             json.dump({"status": msg, "pid": pid, "time": time.time()}, f)
-        os.replace(tmp, STATUS_FILE)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temp_path, STATUS_FILE)
+        temp_path = None
     except OSError:
         pass
+    finally:
+        if temp_path:
+            try:
+                os.unlink(temp_path)
+            except OSError:
+                pass
 
 
 def _clear_status():

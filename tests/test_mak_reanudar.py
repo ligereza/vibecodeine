@@ -4,6 +4,8 @@ UI). interfaz.py importa worker.py -> fcntl (Linux-only): las clases que
 requieren importarlo se gatean con pytest.importorskip("fcntl") para que
 corran en CI (ubuntu) y se salteen limpio en Windows."""
 import sys
+import threading
+import time
 from pathlib import Path
 
 import pytest
@@ -261,6 +263,37 @@ class TestReanudarLogic:
         code, payload = interfaz._reanudar_logic({"job_id": ["j1"], "accion": ["saltar"]})
         assert code == 400
         assert payload["ok"] is False
+
+    def test_two_concurrent_resumes_claim_one_job(
+            self, monkeypatch, tmp_path):
+        job = {"job_id": "j-race", "estado": "PAUSADO", "modo": "research",
+               "tema": "x", "checkpoint": str(tmp_path / "c.json")}
+        monkeypatch.setattr(interfaz, "JOBS", [job])
+        calls = []
+
+        def action_handler(*_args, **_kwargs):
+            calls.append(True)
+            time.sleep(0.05)
+
+        self._fake_thread(monkeypatch)
+        monkeypatch.setattr(interfaz.pausa, "aplicar_accion", action_handler)
+        monkeypatch.setattr(interfaz, "run_tema",
+                            lambda *args, **kwargs: {"ok": False, "path": "",
+                                                     "tail": "no-op"})
+        monkeypatch.setattr(interfaz, "_cerrar_job", lambda *args: None)
+        results = []
+        threads = [threading.Thread(
+            target=lambda: results.append(interfaz._reanudar_logic(
+                {"job_id": ["j-race"], "accion": ["reintentar"]}))
+        ) for _ in range(2)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join(timeout=3)
+
+        assert sum(code == 200 for code, _payload in results) == 1
+        assert sum(code == 400 for code, _payload in results) == 1
+        assert len(calls) == 1
 
     def test_relanzamiento_pausa_de_nuevo(self, monkeypatch, tmp_path):
         """Si run_tema vuelve a pausar (segundo checkpoint), el job queda

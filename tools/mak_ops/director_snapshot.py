@@ -5,7 +5,7 @@ Uso en Windows, desde la raiz del repo:
     py tools/mak/director_snapshot.py --output director_snapshot.md
 
 No modifica MAK, GitHub, cron, servicios, red, archivos ni datos. Solo hace:
-- HTTP GET a research/codex/hub en la LAN privada;
+- HTTP GET a Research/Codex through the Hub and to Hub health on the private LAN;
 - un SSH de solo lectura a mak@192.168.50.2;
 - lee el estado del checkout local (Windows).
 
@@ -20,7 +20,6 @@ import json
 import os
 import re
 import subprocess
-import sys
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -28,6 +27,7 @@ from typing import Any
 
 MAK_HOST = os.environ.get("MAK_HOST", "192.168.50.2")
 MAK_USER = os.environ.get("MAK_USER", "mak")
+HUB_PORT = 8900
 SSH_TARGET = f"{MAK_USER}@{MAK_HOST}"
 def _find_repo_root() -> Path:
     """Funciona tanto dentro de tools/mak/ como si el archivo se copia a la raiz."""
@@ -199,9 +199,9 @@ def main() -> int:
     parser.add_argument("--output", default="director_snapshot.md", help="Markdown de salida")
     args = parser.parse_args()
     probes = [
-        http_probe("research :8890", f"http://{MAK_HOST}:8890/"),
-        http_probe("codex :8891", f"http://{MAK_HOST}:8891/"),
-        http_probe("hub :8900", f"http://{MAK_HOST}:8900/api/salud"),
+        http_probe("research via hub", f"http://{MAK_HOST}:{HUB_PORT}/research/"),
+        http_probe("codex via hub", f"http://{MAK_HOST}:{HUB_PORT}/codex/"),
+        http_probe("hub health", f"http://{MAK_HOST}:{HUB_PORT}/api/salud"),
     ]
     ssh_state, ssh_text = ssh_snapshot()
     output = Path(args.output)
