@@ -50,7 +50,18 @@ import time
 
 sys.path.insert(0, "/home/mak/research")
 from research_lib import (LLM, MODELO_CAPAZ, _http_json, escala_tok,  # noqa: E402
-                          load_env, red_ok, slug, stamp, watsonx_chat)
+                          load_env, red_ok, slug, stamp)
+try:
+    from research_lib import watsonx_chat  # noqa: E402
+except ImportError:  # pragma: no cover - test stubs may omit cloud providers
+    def watsonx_chat(*args, **kwargs):
+        raise RuntimeError("watsonx_chat unavailable")
+try:
+    from research_lib import ollama_gpu_slot  # noqa: E402
+except ImportError:  # pragma: no cover - portable unit-test stub
+    from contextlib import nullcontext
+    def ollama_gpu_slot(*args, **kwargs):
+        return nullcontext()
 
 # fallback_util vive junto a este archivo (deploy plano en ~/codex). Si falta
 # en la caja viva, fallback_util queda en None y el mensaje de error de
@@ -176,11 +187,19 @@ class CoderLLM:
 
     def _ollama_chat(self, base_url, system, user, max_tok, model):
         base = base_url.rstrip("/")
-        r = _http_json(
-            base + "/api/chat",
-            {"model": model, "messages": _msgs(system, user), "stream": False,
-             "options": {"temperature": 0.1, "num_predict": max_tok}},
-            timeout=300)
+        local = base.startswith("http://127.0.0.1") or base.startswith(
+            "http://localhost")
+        context = (ollama_gpu_slot(
+            model, caller="mak-codex.codex_lib", queue="codex.chat",
+            department="codex", trigger=os.environ.get("MAK_TRIGGER", "api:codex"),
+            job_id=os.environ.get("MAK_JOB_ID", "")) if local else
+            __import__("contextlib").nullcontext())
+        with context:
+            r = _http_json(
+                base + "/api/chat",
+                {"model": model, "messages": _msgs(system, user), "stream": False,
+                 "options": {"temperature": 0.1, "num_predict": max_tok}},
+                timeout=300)
         return (r.get("message", {}).get("content") or "").strip()
 
     def _ollama(self, system, user, max_tok, model):
@@ -212,9 +231,29 @@ class CoderLLM:
         intentos = []  # todos los intentos fallidos, no solo el ultimo
         for prov, model in cadena:
             try:
+                from research_lib import _record_activity
+                _record_activity("model", "started", caller="mak-codex.CoderLLM",
+                                 queue="codex.llm", department="codex",
+                                 trigger=os.environ.get("MAK_TRIGGER", "api:codex"),
+                                 job_id=os.environ.get("MAK_JOB_ID", ""),
+                                 provider=prov, model=model,
+                                 resource="ollama" if prov == "ollama" else "cloud")
+            except ImportError:
+                pass
+            try:
                 text = fns[prov](system, user, max_tok, model)
                 if text and text.strip():
                     self.stats[model] = self.stats.get(model, 0) + 1
+                    try:
+                        from research_lib import _record_activity
+                        _record_activity("model", "finished", caller="mak-codex.CoderLLM",
+                                         queue="codex.llm", department="codex",
+                                         trigger=os.environ.get("MAK_TRIGGER", "api:codex"),
+                                         job_id=os.environ.get("MAK_JOB_ID", ""),
+                                         provider=prov, model=model,
+                                         resource="ollama" if prov == "ollama" else "cloud")
+                    except ImportError:
+                        pass
                     return text, model
                 last = model + " devolvio vacio"
                 if fallback_util is not None:
@@ -223,6 +262,17 @@ class CoderLLM:
             except Exception as e:  # noqa: BLE001 - fallback multi-coder
                 last = model + ": " + str(e)[:140]
                 self.errors.append(last)
+                try:
+                    from research_lib import _record_activity
+                    _record_activity("model", "failed", caller="mak-codex.CoderLLM",
+                                     queue="codex.llm", department="codex",
+                                     trigger=os.environ.get("MAK_TRIGGER", "api:codex"),
+                                     job_id=os.environ.get("MAK_JOB_ID", ""),
+                                     provider=prov, model=model,
+                                     resource="ollama" if prov == "ollama" else "cloud",
+                                     error=str(e))
+                except ImportError:
+                    pass
                 if fallback_util is not None:
                     intentos.append(fallback_util.parse_provider_error(
                         e, prov, model, timeout_sec=_PROV_TIMEOUT.get(prov)))

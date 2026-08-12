@@ -31,7 +31,7 @@ except ImportError:  # pragma: no cover - Windows director has no fcntl
     fcntl = None
 
 from research_lib import (LLM, MODELO_CAPAZ, _http_json, escala_tok, load_env,
-                          marco, ntfy_publish, slug, stamp)
+                          marco, ntfy_publish, slug, stamp, ollama_gpu_slot)
 
 RESEARCH = os.path.expanduser("~/research")
 MEM_DIR = os.path.join(RESEARCH, "memoria")
@@ -71,9 +71,13 @@ def _exclusive_index_lock():
 def _embed(texto):
     """Vector de un texto via ollama (local, gratis). [] si falla."""
     try:
-        r = _http_json(OLLAMA.rstrip("/") + "/api/embeddings",
-                       {"model": EMBED_MODEL, "prompt": texto[:8000]},
-                       timeout=60)
+        with ollama_gpu_slot(
+                EMBED_MODEL, caller="mak-research.memoria", queue="micelio.embed",
+                department="research", trigger="cron:MAK-MICELIO",
+                job_id=os.environ.get("MAK_JOB_ID", "")):
+            r = _http_json(OLLAMA.rstrip("/") + "/api/embeddings",
+                           {"model": EMBED_MODEL, "prompt": texto[:8000]},
+                           timeout=60)
         return r.get("embedding") or []
     except Exception:  # noqa: BLE001 - un embed fallido no mata el index
         return []

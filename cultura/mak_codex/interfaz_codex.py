@@ -461,7 +461,8 @@ def _validar_cadena(csv_value):
     return ",".join(limpio)
 
 
-def _lanzar(modo, pedido, densidad, cadena=CADENA_DEFAULT):
+def _lanzar(modo, pedido, densidad, cadena=CADENA_DEFAULT,
+            trigger="api:codex"):
     job = {"pedido": pedido, "modo": modo, "estado": "en cola", "path": "",
            "error": "", "t": time.strftime("%H:%M:%S"), "job_id": mint_job_id()}
     with JOBS_LOCK:
@@ -483,7 +484,7 @@ def _lanzar(modo, pedido, densidad, cadena=CADENA_DEFAULT):
                 return
         try:
             r = run_pedido(modo, pedido, densidad=densidad, ntfy=True,
-                          job_id=job["job_id"], cadena=cadena)
+                          job_id=job["job_id"], cadena=cadena, trigger=trigger)
             job["estado"] = "listo" if r["ok"] else "FALLO"
             job["path"] = os.path.basename(r["path"]) if r["path"] else ""
             if not r["ok"]:
@@ -577,6 +578,7 @@ class H(BaseHTTPRequestHandler):
             modo = (q.get("modo") or ["generar"])[0]
             densidad = (q.get("densidad") or ["medio"])[0]
             cadena = _validar_cadena((q.get("cadena") or [""])[0])
+            trigger = (q.get("trigger") or ["api:codex"])[0].strip()[:120]
             if modo not in ("generar", "revisar", "testear", "debug",
                             "iconos"):
                 modo = "generar"
@@ -585,7 +587,7 @@ class H(BaseHTTPRequestHandler):
             if not pedido:
                 return self._send('{"ok":false,"error":"pedido vacio"}', 400,
                                   "application/json")
-            _lanzar(modo, pedido, densidad, cadena=cadena)
+            _lanzar(modo, pedido, densidad, cadena=cadena, trigger=trigger)
             return self._send('{"ok":true}', 200, "application/json")
         if urllib.parse.urlparse(self.path).path.startswith("/api/"):
             return self._send(json.dumps(

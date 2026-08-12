@@ -37,6 +37,14 @@ import cuotas  # noqa: E402
 import ideas  # noqa: E402
 import contrato_archivo  # noqa: E402
 try:
+    import actividad as _actividad_inventory  # noqa: E402
+except Exception:  # noqa: BLE001 - inventory is an additive observability surface
+    _actividad_inventory = None
+try:
+    import gpu_guard as _gpu_guard  # noqa: E402
+except Exception:  # noqa: BLE001 - GPU state is optional outside MAK Linux
+    _gpu_guard = None
+try:
     import ledger as _ledger  # noqa: E402
 except Exception:  # noqa: BLE001 - hub stays alive without ledger data
     _ledger = None
@@ -4312,6 +4320,19 @@ class H(BaseHTTPRequestHandler):
                 return self._json(_actividad())
             except Exception as e:  # noqa: BLE001
                 return self._json({"error": str(e)[:200], "eventos": [], "guardia": {}})
+        if p == "/api/actividad-inventario":
+            try:
+                inventory = (_actividad_inventory.inventory(300)
+                             if _actividad_inventory else {
+                                 "schema": "mak-activity-inventory-v1",
+                                 "rows": 0, "groups": []})
+                return self._json({"inventory": inventory,
+                                   "gpu": (_gpu_guard.current_state()
+                                           if _gpu_guard else {})})
+            except Exception as e:  # noqa: BLE001 - observability never takes hub down
+                return self._json({"error": str(e)[:200], "inventory": {
+                    "schema": "mak-activity-inventory-v1", "rows": 0,
+                    "groups": []}, "gpu": {}})
         if p == "/api/ideas":
             try:
                 return self._json({"ideas": list(reversed(ideas.cargar()))})

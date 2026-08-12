@@ -486,22 +486,29 @@ def _verify_result_contract(job, result):
 
 
 def _cerrar_job(job, t0):
-    """Cierra el job: ms transcurridos, linea en JOBS_FILE, reindex best-effort."""
+    """Cierra el job without silently scheduling a second GPU workload.
+
+    Reindexing remains available through its explicit endpoint and the
+    MAK-MICELIO cron. Set MAK_REINDEX_AFTER_JOB=1 only for a deliberate
+    compatibility run; the default is off.
+    """
     job["ms"] = int((time.time() - t0) * 1000)
     _append_job_record(job)
     # el archivo crece -> la memoria/micelio se remodela solo (incremental)
-    try:
-        _reindexar_async()
-    except Exception:  # noqa: BLE001 - el reindex es best-effort
-        pass
+    if os.environ.get("MAK_REINDEX_AFTER_JOB", "0").lower() in (
+            "1", "true", "yes", "on"):
+        try:
+            _reindexar_async()
+        except Exception:  # noqa: BLE001 - reindex is best-effort
+            pass
 
 
 def _lanzar(modo, tema, n, densidad="medio", memoria=False, formato=None,
-            work_contract=None):
+            work_contract=None, trigger="api:research"):
     job = {
         "tema": tema, "modo": modo, "estado": "en cola",
         "path": "", "error": "", "t": time.strftime("%H:%M:%S"),
-        "job_id": mint_job_id(),
+        "job_id": mint_job_id(), "trigger": trigger or "api:research",
     }
     if work_contract:
         job["work_contract"] = work_contract
@@ -532,7 +539,7 @@ def _lanzar(modo, tema, n, densidad="medio", memoria=False, formato=None,
             extra = ["--formato", formato] if formato else None
             r = run_tema(modo, tema, n=n, ntfy=True, densidad=densidad,
                         orden=orden, memoria=memoria, job_id=job["job_id"],
-                        extra=extra)
+                        extra=extra, trigger=trigger)
             _aplicar_resultado_job(job, r)
         except Exception as e:
             job["estado"] = "FALLO"
@@ -595,7 +602,8 @@ def _reanudar_logic(q):
         t0 = time.time()
         try:
             r = run_tema(job["modo"], job["tema"], ntfy=True, job_id=job["job_id"],
-                        extra=["--resume", job["checkpoint"]])
+                        extra=["--resume", job["checkpoint"]],
+                        trigger=job.get("trigger", "api:research"))
             _aplicar_resultado_job(job, r)
         except Exception as e:
             job["estado"] = "FALLO"
@@ -3652,7 +3660,7 @@ class H(BaseHTTPRequestHandler):
                 tema = "corpus"  # placeholder: corpus ignora el tema
             if tema:
                 _lanzar(modo, tema, n, densidad, memoria, formato,
-                        work_contract)
+                        work_contract, (q.get("trigger") or ["api:research"])[0])
                 return self._json_response({"ok": True})
             return self._json_response({"ok": False, "error": "tema vacío"}, 400)
 

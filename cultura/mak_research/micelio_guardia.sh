@@ -40,5 +40,5 @@ fi
 
 cd "$RES" || exit 0
 echo "== $(date '+%F %T') reindexando micelio =="
-python3 ideas_a_micelio.py
-python3 -c 'import sys; sys.path.insert(0, "."); import memoria; print(memoria.indexar())'
+MAK_TRIGGER="cron:MAK-MICELIO" python3 ideas_a_micelio.py
+MAK_TRIGGER="cron:MAK-MICELIO" python3 -c 'import sys; sys.path.insert(0, "."); import memoria; print(memoria.indexar())'

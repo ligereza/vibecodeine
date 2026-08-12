@@ -3,8 +3,9 @@ Tests de la base de datos RD (src/flujo/rd/database.py).
 
 La DB es una proyeccion regenerable de fuentes canonicas: estos tests fijan que
 build_rd_db es idempotente/deterministico, que las 6 tablas cargan datos reales,
-que las queries cruzan bien (reactivo x familia, evento -> pack por voluntarios)
-y que el disclaimer presuntivo viaja con los datos.
+que las queries cruzan bien (reactivo x familia, evento -> pack por voluntarios),
+that the presumptive disclaimer travels with the data and historical evidence
+stays isolated, traceable, and pending review.
 """
 from __future__ import annotations
 
@@ -43,6 +44,51 @@ def test_build_crea_las_6_tablas_con_datos(rd_db: Path):
     # checkout limpio/CI); el piso garantizado es el ejemplo TRACKED de plano.
     assert n["eventos"] >= 1
     assert n["meta"] == 1              # disclaimer
+
+
+def test_testing_evidence_is_isolated_and_traceable(rd_db: Path):
+    conn = db.connect(rd_db)
+    try:
+        tables = {
+            row[0]
+            for row in conn.execute("SELECT name FROM sqlite_master WHERE type = 'table'")
+        }
+        expected = {
+            "testeo_fuentes",
+            "testeo_hojas",
+            "testeo_eventos_fuente",
+            "testeo_filas_fuente",
+            "testeo_observaciones_fuente",
+            "testeo_mapa_sustancias",
+            "testeo_mapa_reactivos",
+            "testeo_enlaces_revision",
+        }
+        assert expected <= tables
+        assert "registros_testeo" not in tables
+    finally:
+        conn.close()
+
+    summary = db.testing_evidence_summary(rd_db)
+    assert summary["available"] is True
+    assert summary["status"] == "candidate_evidence_pending_human_review"
+    assert summary["counts"] == {
+        "source_sheets": 42,
+        "events": 42,
+        "test_rows": 1831,
+        "observations": 5394,
+        "pending_links": 84,
+        "exact_duplicate_rows_excluded_from_aggregate": 3,
+        "unresolved_substances": 2,
+        "unresolved_reagents": 1,
+    }
+    assert summary["public_claims_allowed"] is False
+
+
+def test_testing_observations_filter_preserves_source(rd_db: Path):
+    rows = db.testing_observations(reagent_id="marquis", db_path=rd_db)
+    assert rows
+    assert all(row["reagent_normalized_candidate"] == "marquis" for row in rows)
+    assert all("interpretation_policy" in row for row in rows)
 
 
 def test_build_es_idempotente(tmp_path: Path):
@@ -145,6 +191,82 @@ def test_connect_autoconstruye_si_no_existe(tmp_path: Path):
     finally:
         conn.close()
     assert p.exists()
+
+
+def test_testing_projection_separates_obvious_column_errors(rd_db: Path):
+    conn = db.connect(rd_db)
+    try:
+        header = conn.execute(
+            "SELECT row_status, substance_map_status FROM testeo_filas_fuente "
+            "WHERE source_sheet_name = 'Explícito 30082025' ORDER BY source_row LIMIT 1"
+        ).fetchone()
+        assert dict(header) == {
+            "row_status": "repeated_header",
+            "substance_map_status": "repeated_header",
+        }
+        labels = {
+            row["raw_label"]: dict(row)
+            for row in conn.execute(
+                "SELECT raw_label, normalized_id, mapping_status "
+                "FROM testeo_mapa_reactivos WHERE raw_label IN "
+                "('Cannabis', 'Fentanilo', 'Mireia', 'Sin reaccion')"
+            ).fetchall()
+        }
+        assert labels["Cannabis"]["normalized_id"] == "cbd_thc"
+        assert labels["Fentanilo"]["mapping_status"] == "non_colorimetric_test"
+        assert labels["Mireia"]["mapping_status"] == "possible_typo_candidate"
+        assert labels["Sin reaccion"]["mapping_status"] == "result_in_reagent_column"
+
+        substance = conn.execute(
+            "SELECT normalized_id, mapping_status FROM testeo_mapa_sustancias "
+            "WHERE raw_label = 'Ketamina+M'"
+        ).fetchone()
+        assert dict(substance) == {
+            "normalized_id": "ketamine_plus_unspecified_m",
+            "mapping_status": "mixture_candidate",
+        }
+    finally:
+        conn.close()
+
+
+def test_testing_projection_resolves_compact_dates_without_moving_years(rd_db: Path):
+    conn = db.connect(rd_db)
+    try:
+        rows = {
+            row["source_sheet_name"]: dict(row)
+            for row in conn.execute(
+                "SELECT source_sheet_name, date_iso_candidate, date_status, "
+                "outside_filename_period_candidate FROM testeo_eventos_fuente "
+                "WHERE source_sheet_name IN ('Technoyouth 51225', 'Technoyouth 2825', 'Nebula 2612')"
+            ).fetchall()
+        }
+        assert rows["Technoyouth 51225"]["date_iso_candidate"] == "2025-12-05"
+        assert rows["Nebula 2612"]["date_iso_candidate"] == "2025-12-26"
+        assert rows["Technoyouth 2825"]["date_iso_candidate"] == "2025-02-28"
+        assert rows["Technoyouth 2825"]["outside_filename_period_candidate"] == 0
+    finally:
+        conn.close()
+
+
+def test_testing_projection_keeps_duplicate_rows_but_marks_aggregate_exclusions(rd_db: Path):
+    conn = db.connect(rd_db)
+    try:
+        rows = {
+            row["source_sheet_name"]: dict(row)
+            for row in conn.execute(
+                "SELECT source_sheet_name, duplicate_canonical_sheet_candidate, "
+                "is_source_copy_candidate FROM testeo_eventos_fuente "
+                "WHERE duplicate_group_size > 1"
+            ).fetchall()
+        }
+        assert rows["DAME 0911 A"]["duplicate_canonical_sheet_candidate"] == "DAME 0911 A"
+        assert rows["Copy of Copy of DAME 0911 A"]["is_source_copy_candidate"] == 1
+        assert rows["Sheet51"]["duplicate_canonical_sheet_candidate"] == "Sheet51"
+        assert db.testing_evidence_summary(rd_db)["counts"][
+            "exact_duplicate_rows_excluded_from_aggregate"
+        ] == 3
+    finally:
+        conn.close()
 
 
 # --- Perfil de productora: logos + venues + tipos de fecha (vocab controlado) ---

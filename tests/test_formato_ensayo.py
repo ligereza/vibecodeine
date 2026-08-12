@@ -237,6 +237,25 @@ def test_un_ensayo_completo_no_incumple_nada():
     assert F.exigencias_incumplidas(_ENSAYO_QUE_CUMPLE) == []
 
 
+def test_partes_planas_se_reconocen_y_subsecciones_no_se_hacen_partes():
+    texto = """# Informe\n\nPARTE I: origen\ntexto\n\nPARTE II: ruptura\ntexto\n\nPARTE III: cierre\ntexto\n\n| a | b |\n|---|---|\n| x | y |\n\n1492 y 1815. https://example.test"""
+    assert F.exigencias_incumplidas(texto) == []
+    solo_subsecciones = texto.replace("PARTE I: origen", "## 1. origen") \
+        .replace("PARTE II: ruptura", "## 2. ruptura") \
+        .replace("PARTE III: cierre", "## 3. cierre")
+    assert any(x.startswith("PARTES NARRADAS")
+               for x in F.exigencias_incumplidas(solo_subsecciones))
+
+
+def test_ancla_plana_de_parte_se_conserva():
+    documento = "PARTE I: El origen\ntexto"
+    crudos = [{"titulo": "Origen", "descripcion": "d", "brief": "b",
+               "ancla": "PARTE I: El origen"}]
+    conceptos, problemas = F.parsear_conceptos(json.dumps(crudos), documento)
+    assert conceptos[0]["ancla"] == "PARTE I: El origen"
+    assert not any("no es un titulo" in p for p in problemas)
+
+
 def test_un_informe_disfrazado_de_ensayo_se_detecta():
     """Lo que el verificador existe para atrapar.
 

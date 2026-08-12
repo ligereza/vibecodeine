@@ -164,7 +164,7 @@ program says to the operator who runs it.
 
 <!-- COMANDOS:INICIO -- generado por tools/gen_mapa_comandos.py, no editar a mano -->
 
-Medido sobre el CLI real: **95 comandos** (23 sueltos + 72 dentro de 17 grupos).
+Medido sobre el CLI real: **96 comandos** (23 sueltos + 73 dentro de 17 grupos).
 
 ### Comandos sueltos
 
@@ -320,6 +320,7 @@ Medido sobre el CLI real: **95 comandos** (23 sueltos + 72 dentro de 17 grupos).
 | `py -m flujo rd-db reactivo` | Consulta la colorimetria presuntiva. El test es PRESUNTIVO: indica familia posible, no identifica ni mide pureza. | nada |
 | `py -m flujo rd-db packs` | Lista los packs de servicio con precio e inclusiones. | nada |
 | `py -m flujo rd-db eventos` | Lista los eventos registrados con su pack sugerido. | nada |
+| `py -m flujo rd-db testeos` | Show only the internal summary of imported testing evidence. | nada |
 | `py -m flujo rd-db productora` | Perfil completo: instagram, aliases, tipos de fecha, venues (preferido marcado) y logos. | nada |
 | `py -m flujo rd-db venues` | Venues canonicos con preset recomendado y voluntarios minimos. | nada |
 | `py -m flujo rd-db por-tipo` | Que productoras hacen fechas de un tipo dado. | nada |
