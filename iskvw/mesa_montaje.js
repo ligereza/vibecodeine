@@ -30,6 +30,8 @@
     externalCandidates: [],
     feedbackBusy: new Set(),
     classificationPending: new Map(),
+    drafts: new Map(),
+    draftDirty: new Set(),
     nodes: new Map(),
     lines: new Map(),
     sessionId: "mesa-" + Date.now().toString(36),
@@ -88,6 +90,8 @@
       region: '<circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8" stroke-dasharray="2 3"/>',
       detail: '<circle cx="11" cy="11" r="6"/><path d="m16 16 4 4"/>',
       next: '<path d="M4 12h14"/><path d="m13 5 7 7-7 7"/>',
+      undo: '<path d="M9 7 4 12l5 5"/><path d="M4 12h10a5 5 0 1 1 0 10h-2"/>',
+      "undo-relation": '<path d="M9 7 4 12l5 5"/><path d="M4 12h10a5 5 0 1 1 0 10h-2"/>',
     };
     return `<svg class="mesa-action-icon" viewBox="0 0 24 24" aria-hidden="true">${glyphs[name] || glyphs.open}</svg>`;
   }
@@ -282,12 +286,82 @@
       ["client", "cliente"], ["collab", "colaboración"], ["record", "registro"]],
   };
 
+  function draftFor(record) {
+    const itemId = String(record?.source_id || record?.id || "");
+    const stored = state.drafts.get(itemId) || record?.decision_draft || {};
+    const storedStatus = String(stored.status || "");
+    const hasDraft = state.draftDirty.has(itemId)
+      || ["local_draft", "saved", "partial"].includes(storedStatus);
+    const draftFields = hasDraft ? (stored.fields || {}) : {};
+    const fields = { ...(record?.classification || {}), ...draftFields };
+    const clearFields = hasDraft && Array.isArray(stored.clear_fields)
+      ? stored.clear_fields : [];
+    clearFields.forEach((field) => delete fields[field]);
+    return {
+      item_id: itemId,
+      action: String(stored.action || ""),
+      fields,
+      clear_fields: [...clearFields],
+      context_fields: hasDraft ? { ...(stored.context_fields || {}) } : {},
+      relations: hasDraft && Array.isArray(stored.relations)
+        ? stored.relations.map((row) => ({ ...row })) : [],
+      note: hasDraft ? String(stored.note || "") : "",
+      status: storedStatus,
+      draft_id: String(stored.draft_id || ""),
+      session_id: String(stored.session_id || state.sessionId),
+      hasDraft,
+    };
+  }
+
+  function draftIsPending(record) {
+    return draftFor(record).hasDraft;
+  }
+
+  function draftHasContent(draft) {
+    return Boolean(draft?.hasDraft && (draft.action
+      || Object.keys(draft.fields || {}).length
+      || (draft.clear_fields || []).length
+      || Object.keys(draft.context_fields || {}).length
+      || (draft.relations || []).length || draft.note));
+  }
+
+  function recordCanUndo(record) {
+    const stored = state.drafts.get(String(record?.source_id || ""))
+      || record?.decision_draft || {};
+    const storedStatus = String(stored.status || "");
+    if (storedStatus === "undone") return false;
+    return !draftIsPending(record) && (storedStatus === "committed"
+      || record?.selection !== "pendiente"
+      || Object.keys(record?.classification || {}).length > 0);
+  }
+
+  function updateDraft(record, changes = {}) {
+    const current = draftFor(record);
+    const next = {
+      ...current,
+      ...changes,
+      fields: changes.fields ? { ...changes.fields } : { ...current.fields },
+      clear_fields: Array.isArray(changes.clear_fields)
+        ? [...new Set(changes.clear_fields)] : [...current.clear_fields],
+      context_fields: changes.context_fields
+        ? { ...changes.context_fields } : { ...current.context_fields },
+      relations: Array.isArray(changes.relations)
+        ? changes.relations.map((row) => ({ ...row })) : current.relations,
+      status: "local_draft",
+      session_id: state.sessionId,
+    };
+    state.drafts.set(next.item_id, next);
+    state.draftDirty.add(next.item_id);
+    if (record) record.decision_draft = next;
+    return next;
+  }
+
   function classificationOptionLabel(field, value) {
     return (classificationOptions[field] || []).find((option) => option[0] === value)?.[1] || value;
   }
 
   function classificationAxisPanel(record, axis) {
-    const classification = record.classification || {};
+    const classification = draftFor(record).fields;
     if (axis === "context_kind") {
       const contextValue = classification.context_value || "";
       return `<div class="mesa-classification-section"><span>elige el tipo y nómbralo</span><div class="mesa-classification-toggles">${classificationOptions.context_kind.map(([value, label]) => (
@@ -301,7 +375,8 @@
   }
 
   function classificationMarkup(record) {
-    const classification = record.classification || {};
+    const classification = draftFor(record).fields;
+    const draft = draftFor(record);
     const axes = Object.keys(classificationOptions);
     const activeAxis = axes.includes(state.classificationAxis) ? state.classificationAxis : "lane";
     const marks = axes.filter((axis) => classification[axis]).map((axis) => (
@@ -310,7 +385,20 @@
     const axisButtons = axes.map((axis) => (
       `<button type="button" class="mesa-classification-axis${axis === activeAxis ? " is-active" : ""}${classification[axis] ? " has-value" : ""}" data-pop-action="classify-axis" data-class-axis="${escMesa(axis)}"><b>${escMesa(classificationLabels[axis])}</b><small>${escMesa(classification[axis] ? classificationOptionLabel(axis, classification[axis]) : "sin marcar")}</small></button>`
     )).join("");
-    return `<section class="mesa-classification"><div class="mesa-classification-head"><span>clasificación</span><small>opcional</small></div><div class="mesa-classification-summary">${marks || "<span>sin marcas</span>"}</div><div class="mesa-classification-axes">${axisButtons}</div><div class="mesa-classification-panel">${classificationAxisPanel(record, activeAxis)}</div><div class="mesa-classification-status" data-classification-status>${Object.keys(classification).length ? "guardada · puedes cambiarla" : ""}</div></section>`;
+    const hasDraft = draftHasContent(draft);
+    const canUndo = recordCanUndo(record);
+    const status = draftIsPending(record)
+      ? "borrador pendiente · todavía no ejecutado"
+      : canUndo ? "última acción confirmada · historial conservado"
+        : Object.keys(classification).length ? "sin cambios pendientes" : "";
+    const draftControls = `<div class="mesa-draft-controls" data-draft-controls="${escMesa(record.source_id)}">`+
+      `<span class="mesa-draft-status">${escMesa(status)}</span>`+
+      `${hasDraft ? actionButton("save-draft", "guardar borrador") : ""}`+
+      `${hasDraft ? actionButton("commit-draft", "efectuar acción") : ""}`+
+      `${draftIsPending(record) ? actionButton("cancel-draft", "volver sin aplicar") : ""}`+
+      `${canUndo ? actionButton("undo", "deshacer última") : ""}`+
+      `</div>`;
+    return `<section class="mesa-classification"><div class="mesa-classification-head"><span>clasificación</span><small>se prepara en borrador</small></div><div class="mesa-classification-summary">${marks || "<span>sin marcas</span>"}</div><div class="mesa-classification-axes">${axisButtons}</div><div class="mesa-classification-panel">${classificationAxisPanel(record, activeAxis)}</div><div class="mesa-classification-status" data-classification-status>${escMesa(status)}</div>${draftControls}</section>`;
   }
 
   function relationFacetOptions(relation, target) {
@@ -809,6 +897,19 @@
         }
         return;
       }
+      const records = [...state.orderSelectedIds].map(byId).filter(Boolean);
+      if (action === "save-draft-all") {
+        saveDraftBatch(records);
+        return;
+      }
+      if (action === "commit-draft-all") {
+        commitDraftBatch(records);
+        return;
+      }
+      if (action === "cancel-draft-all") {
+        cancelDraftBatch(records);
+        return;
+      }
       applyOrderDecision(action);
     });
   }
@@ -946,7 +1047,12 @@
     const copy = state.humanSeedActive
       ? "ficha activa · la decisión no crea vínculos"
       : ids.length > 1 ? "clasificación común · no crea vínculos" : "clasificación individual";
-    state.orderHud.innerHTML = `<div class="mesa-order-compass" role="toolbar" aria-label="Destino de orden"><div class="mesa-order-hud-copy"><b>${ids.length}</b><span>${copy}</span></div><button type="button" class="is-work" data-order-action="work" aria-label="marcar como obra">${actionGlyph("work")}<span>obra</span></button><button type="button" class="is-record" data-order-action="record" aria-label="marcar como registro">${actionGlyph("record")}<span>registro</span></button><button type="button" class="is-review" data-order-action="review" aria-label="dejar para revisar">${actionGlyph("review")}<span>revisar</span></button><button type="button" class="is-discard" data-order-action="discard" aria-label="descartar; no es obra">${actionGlyph("discard")}<span>descartar</span></button><button type="button" class="is-region" data-order-action="region" aria-label="comparar región">${actionGlyph("region")}<span>${ids.length > 1 ? "una pieza" : "región"}</span></button><button type="button" class="is-detail" data-order-action="detail" aria-label="abrir detalle">${actionGlyph("detail")}<span>detalle</span></button></div>`;
+    const pending = ids.filter((id) => draftIsPending(byId(id))).length;
+    const targetSummary = ids.length <= 3
+      ? ids.map((id) => escMesa(String(id))).join(" · ")
+      : `${ids.slice(0, 3).map((id) => escMesa(String(id))).join(" · ")} · +${ids.length - 3}`;
+    const draftActions = pending ? `<div class="mesa-order-actions"><button type="button" data-order-action="save-draft-all">guardar ${pending} borrador(es)</button><button type="button" data-order-action="commit-draft-all">efectuar ${pending} acción(es)</button><button type="button" data-order-action="cancel-draft-all">volver sin aplicar</button></div>` : "";
+    state.orderHud.innerHTML = `<div class="mesa-order-compass" role="toolbar" aria-label="Destino de orden"><div class="mesa-order-hud-copy"><b>${ids.length}</b><span>${copy}${pending ? ` · ${pending} pendiente(s)` : ""}</span><small class="mesa-order-targets">objetivos: ${targetSummary}</small></div><button type="button" class="is-work" data-order-action="work" aria-label="preparar como obra">${actionGlyph("work")}<span>obra</span></button><button type="button" class="is-record" data-order-action="record" aria-label="preparar como registro">${actionGlyph("record")}<span>registro</span></button><button type="button" class="is-review" data-order-action="review" aria-label="dejar para revisar">${actionGlyph("review")}<span>revisar</span></button><button type="button" class="is-discard" data-order-action="discard" aria-label="preparar descarte; no es obra">${actionGlyph("discard")}<span>descarte</span></button><button type="button" class="is-region" data-order-action="region" aria-label="comparar región">${actionGlyph("region")}<span>${ids.length > 1 ? "una pieza" : "región"}</span></button><button type="button" class="is-detail" data-order-action="detail" aria-label="abrir detalle">${actionGlyph("detail")}<span>detalle</span></button>${draftActions}</div>`;
     positionOrderHud();
   }
 
@@ -1002,146 +1108,25 @@
     });
   }
 
-  async function applyOrderDecision(decision) {
+  function applyOrderDecision(decision) {
     const itemIds = state.humanSeedActive
       ? [state.humanSeedItemId || state.activeId]
       : [...state.orderSelectedIds];
-    if (!itemIds.length || state.feedbackBusy.has("order-batch")) return;
-    const recordActionKeys = acquireRecordActions(itemIds);
-    if (!recordActionKeys) return;
-    state.feedbackBusy.add("order-batch");
-    try {
-      if (decision === "discard") {
-        const responses = await Promise.all(itemIds.map((itemId) => fetch("/api/portfolio/select", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ item_id: itemId, decision: "descartar", decision_scope: "record", reason_code: "no_es_obra", target_id: itemId, session_id: state.sessionId, pass_size: itemIds.length }),
-        }).then(async (response) => ({
-          httpOk: response.ok, payload: await response.json(),
-        })).catch(() => ({
-          httpOk: false, payload: { ok: false, error: "respuesta_no_confirmada" },
-        }))));
-        const failed = responses.filter((response) => !response.httpOk || !response.payload.ok);
-        if (failed.length) {
-          const saved = responses.length - failed.length;
-          const savedIds = itemIds.filter((_, index) => {
-            const response = responses[index];
-            return response.httpOk && response.payload.ok;
-          });
-          savedIds.forEach((itemId) => {
-            const record = byId(itemId);
-            if (record) record.selection = "descartar";
-            const item = state.items.find((candidate) => candidate.id === itemId);
-            if (item) item.selection = "descartar";
-          });
-          state.scene.records = (state.scene.records || []).filter((record) => !savedIds.includes(record.source_id));
-          state.scene.relations = (state.scene.relations || []).filter((relation) => !savedIds.includes(relation.source_id) && !savedIds.includes(relation.target_id));
-          state.orderSelectedIds = new Set(
-            [...state.orderSelectedIds].filter((itemId) => !savedIds.includes(itemId)),
-          );
-          if (savedIds.includes(state.activeId)) {
-            const pendingId = itemIds.find((itemId) => !savedIds.includes(itemId));
-            state.activeId = pendingId || state.activeId;
-            state.selectedId = pendingId || state.selectedId;
-          }
-          if (savedIds.length) {
-            invalidateSceneCache();
-            rebuildScene();
-          }
-          throw new Error(`descarte parcial: ${saved} guardados, ${failed.length} pendientes`);
-        }
-        itemIds.forEach((itemId) => {
-          const record = byId(itemId);
-          if (record) record.selection = "descartar";
-          const item = state.items.find((candidate) => candidate.id === itemId);
-          if (item) item.selection = "descartar";
-        });
-        state.scene.records = (state.scene.records || []).filter((record) => !itemIds.includes(record.source_id));
-        state.scene.relations = (state.scene.relations || []).filter((relation) => !itemIds.includes(relation.source_id) && !itemIds.includes(relation.target_id));
-      } else {
-        const response = await fetch("/api/portfolio/classify-batch", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ item_ids: itemIds, fields: { triage: decision } }),
-        }).then(async (result) => ({
-          httpOk: result.ok, payload: await result.json(),
-        }));
-        const batchResults = Array.isArray(response.payload.results)
-          ? response.payload.results : [];
-        const savedIds = itemIds.filter((_, index) => Boolean(batchResults[index]?.ok));
-        savedIds.forEach((itemId) => {
-          const record = byId(itemId);
-          if (record) record.classification = { ...(record.classification || {}), triage: decision };
-          const item = state.items.find((candidate) => candidate.id === itemId);
-          if (item) item.classification = { ...(item.classification || {}), triage: decision };
-        });
-        if (!response.httpOk || !response.payload.ok) {
-          if (savedIds.length) {
-            state.orderSelectedIds = new Set(
-              [...state.orderSelectedIds].filter((itemId) => !savedIds.includes(itemId)),
-            );
-            invalidateSceneCache();
-            rebuildScene();
-          }
-          const failed = itemIds.length - savedIds.length;
-          throw new Error(savedIds.length
-            ? `clasificación parcial: ${savedIds.length} guardadas, ${failed} pendientes`
-            : (response.payload.error || "clasificación por lote no guardada"));
-        }
-        // Classification changes alter the scene projection too. Do not let a
-        // cached copilot scene survive a successful batch decision.
-        invalidateSceneCache();
-      }
-      const advanceSeed = state.humanSeedActive
-        && itemIds.length === 1
-        && itemIds[0] === state.humanSeedItemId;
-      state.orderSelectedIds.clear();
-      if (advanceSeed) {
-        await loadHumanSeed({ refresh: false, excludeId: itemIds[0] });
-      } else if (decision === "discard" && itemIds.includes(state.activeId)) {
-        await advanceAfterOrderDecision(itemIds);
-      } else {
-        state.humanSeedItemId = "";
-        state.humanSeedActive = false;
-        syncEditorMode();
-        rebuildScene();
-        setStatus(`${itemIds.length} nodos marcados como ${decision}; el aprendizaje queda registrado sin crear relaciones.`);
-      }
-    } catch (error) {
-      setStatus("No se pudo ordenar el grupo: " + error.message);
-    } finally {
-      state.feedbackBusy.delete("order-batch");
-      releaseRecordActions(recordActionKeys);
-      renderOrderHud();
-    }
-  }
-
-  function nextAvailableRecord(excludedIds = []) {
-    const excluded = new Set(excludedIds.map((id) => String(id)));
-    const decidedPublications = new Set([...(state.scene?.records || []), ...state.items]
-      .filter((record) => record && isDecidedRecord(record) && record.publicacion_id)
-      .map((record) => String(record.publicacion_id)));
-    const candidates = [...(state.scene?.records || []), ...state.items]
-      .filter((record) => record && !excluded.has(String(record.source_id || record.id))
-        && String(record.source_id || record.id) !== String(state.activeId)
-        && record.selection !== "descartar" && record.asset_available
-        && (!record.publicacion_id
-          || !decidedPublications.has(String(record.publicacion_id))))
-      .map((record) => ({ ...record, source_id: record.source_id || record.id }));
-    return candidates.find((record) => !isDecidedRecord(record)) || null;
-  }
-
-  async function advanceAfterOrderDecision(excludedIds) {
-    const next = nextAvailableRecord(excludedIds);
-    if (!next) {
-      state.activeId = "";
-      state.selectedId = "";
-      state.scene.records = [];
-      state.scene.relations = [];
-      rebuildScene();
-      closePopover();
-      setStatus("no quedan piezas disponibles en esta ventana.");
-      return;
-    }
-    await centerRecord(next.source_id);
+    if (!itemIds.length) return;
+    let staged = 0;
+    itemIds.forEach((itemId) => {
+      const record = byId(itemId);
+      if (!record) return;
+      const draft = draftFor(record);
+      const fields = { ...draft.fields, triage: decision };
+      updateDraft(record, { action: decision, fields });
+      staged += 1;
+    });
+    if (!staged) return;
+    state.selectedId = itemIds.length === 1 ? itemIds[0] : state.activeId;
+    rebuildScene();
+    if (itemIds.length === 1) showRecordPopover();
+    setStatus(`${staged} borrador(es) preparado(s) como ${decision}; revisa y efectúa la acción explícitamente.`);
   }
 
   function rebuildScene() {
@@ -1621,16 +1606,28 @@
     const facets = relationFacetOptions(relation, target);
     const selectedFacet = relation.feedbackFacet || relation.feedback_facet || facets[0] || "text";
     const facetChoices = facets.map((facet) => `<button type="button" class="mesa-relation-facet${facet === selectedFacet ? " is-active" : ""}" data-pop-action="facet" data-facet="${escMesa(facet)}">${escMesa(relationFacetLabels[facet])}</button>`).join("");
-    const decisions = relation.status === "accepted"
-      ? `<span class="mesa-relation-accepted">relación aceptada · ${escMesa(relationFacetLabels[selectedFacet] || selectedFacet)}</span>`
-      : `${actionButton("accept", "aceptar", `data-relation-id="${escMesa(relation.relation_id)}"`)}${actionButton("reject", "rechazar", `data-relation-id="${escMesa(relation.relation_id)}"`)}`;
+    const anchor = byId(relation.source_id) || byId(state.activeId);
+    const relationDraft = anchor ? draftFor(anchor).relations.find((row) => (
+      String(row.target_id) === String(relation.target_id)
+      && String(row.relation || "") === String(relation.relation_type || "related")
+    )) : null;
+    const pendingRelation = Boolean(relationDraft);
+    const relationUndoAvailable = !pendingRelation
+      && ["accepted", "rejected"].includes(String(relation.status || ""));
+    const decisions = pendingRelation
+      ? `<span class="mesa-relation-pending">borrador de vínculo: ${escMesa(relationDraft.decision)} · todavía no ejecutado</span>${actionButton("save-draft", "guardar borrador")}${actionButton("commit-draft", "efectuar vínculo")}${actionButton("cancel-draft", "volver sin aplicar")}`
+      : relation.status === "accepted"
+        ? `<span class="mesa-relation-accepted">relación aceptada · ${escMesa(relationFacetLabels[selectedFacet] || selectedFacet)}</span>${relationUndoAvailable ? actionButton("undo-relation", "deshacer vínculo", `data-relation-id="${escMesa(relation.relation_id)}"`) : ""}`
+        : relation.status === "rejected"
+          ? `<span class="mesa-relation-rejected">relación rechazada · historial conservado</span>${relationUndoAvailable ? actionButton("undo-relation", "deshacer vínculo", `data-relation-id="${escMesa(relation.relation_id)}"`) : ""}`
+          : `${actionButton("accept", "aceptar", `data-relation-id="${escMesa(relation.relation_id)}"`)}${actionButton("reject", "rechazar", `data-relation-id="${escMesa(relation.relation_id)}"`)}`;
     openPopover(`<div class="mesa-popover-head"><span style="color:${relationColor(relation)}">copiloto · sugerencia</span><button type="button" class="mesa-popover-close" data-pop-action="close" aria-label="cerrar">×</button></div><div class="mesa-popover-flow"><div class="mesa-relation-target"><div class="mesa-relation-target-media">${workGroupMedia(target)}</div><div><h3>${escMesa((relation.channels || []).join(" · ") || relation.relation_type)}</h3><p class="mesa-popover-meta">destino · ${escMesa(target.source_id)} · ${escMesa(target.date || "sin fecha")} · confianza ${escMesa(relation.confidence || "sin dato")}</p></div></div><div class="mesa-popover-evidence">${relationEvidence(relation)}</div><div class="mesa-relation-facets"><span>qué tipo de vínculo estás confirmando</span><div>${facetChoices}</div></div><details class="mesa-decision-note"><summary>añadir comentario opcional</summary><textarea data-pop-note maxlength="1000" placeholder="solo si necesitas dejar memoria para MAK…"></textarea></details><div class="mesa-popover-actions mesa-popover-relation-actions">${actionButton("center", "centro", `data-target-id="${escMesa(target.source_id)}"`)}${actionButton("open", "abrir", `data-target-id="${escMesa(target.source_id)}"`)}${decisions}</div></div><button type="button" class="mesa-popover-back" data-pop-action="back">volver a la pieza</button>`);
     const noteField = state.popover.querySelector("[data-pop-note]");
-    if (noteField) noteField.value = relation.note || "";
-    if (relation.note) {
+    if (noteField) noteField.value = relationDraft?.note || relation.note || "";
+    if (relationDraft?.note || relation.note) {
       const savedNote = document.createElement("div");
       savedNote.className = "mesa-popover-saved-note";
-      savedNote.textContent = "comentario guardado: " + relation.note;
+      savedNote.textContent = "comentario guardado: " + (relationDraft?.note || relation.note);
       noteField?.parentElement?.before(savedNote);
     }
   }
@@ -1671,93 +1668,49 @@
     }
   }
 
-  async function advanceAfterDiscard(discardedId) {
-    if (state.humanSeedActive && discardedId === state.humanSeedItemId) {
-      await loadHumanSeed({ refresh: false, excludeId: discardedId });
-      return;
-    }
-    const next = nextAvailableRecord([discardedId]);
-    if (!next) {
-      state.activeId = "";
-      state.selectedId = "";
-      state.scene.records = [];
-      state.scene.relations = [];
-      rebuildScene();
-      closePopover();
-      setStatus("No quedan piezas disponibles en esta pasada.");
-      return;
-    }
-    await centerRecord(next.source_id || next.id);
-  }
-
-  async function saveClassification(record, fields, clearFields = []) {
-    if (!record) return;
-    const busyKey = `classification:${record.source_id}`;
-    const pending = { record, fields: { ...fields }, clearFields: [...clearFields] };
-    if (state.feedbackBusy.has(busyKey)) {
-      state.classificationPending.set(busyKey, pending);
-      setStatus("clasificación en cola; se guardará después de la anterior.");
-      return;
-    }
-    state.feedbackBusy.add(busyKey);
-    let saved = false;
-    try {
-      const response = await fetch("/api/portfolio/classify", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ item_id: record.source_id, fields, clear_fields: clearFields }),
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const data = await response.json();
-      if (!data.ok) throw new Error(data.error || "clasificación no guardada");
-      record.classification = data.classification || {};
-      const item = state.items.find((candidate) => candidate.id === record.source_id);
-      if (item) item.classification = record.classification;
-      invalidateSceneCache();
-      rebuildScene();
-      showRecordPopover();
-      setStatus("clasificación individual guardada; no se creó ninguna relación.");
-      saved = true;
-    } catch (error) {
-      setStatus("No se guardó la clasificación: " + error.message);
-    } finally {
-      state.feedbackBusy.delete(busyKey);
-      const next = state.classificationPending.get(busyKey);
-      if (next) {
-        state.classificationPending.delete(busyKey);
-        if (saved) saveClassification(next.record, next.fields, next.clearFields);
-        else state.classificationPending.set(busyKey, next);
-      }
-    }
-  }
-
   function toggleClassification(field, value) {
     const record = byId(state.selectedId);
     if (!record) return;
     state.classificationAxis = field === "context_kind" ? "context_kind" : field;
-    const queued = state.classificationPending.get(`classification:${record.source_id}`);
-    const fields = { ...(queued?.fields || record.classification || {}) };
-    const clearFields = [];
+    const draft = draftFor(record);
+    const fields = { ...draft.fields };
+    const clearFields = [...draft.clear_fields];
+    const contextFields = { ...draft.context_fields };
+    const previousContextKind = String(draft.fields.context_kind || "");
+    if (field === "context_kind" && previousContextKind
+        && previousContextKind !== value) {
+      delete contextFields[previousContextKind];
+    }
     if (fields[field] === value) {
       delete fields[field];
-      clearFields.push(field);
+      if (!clearFields.includes(field)) clearFields.push(field);
       if (field === "context_kind") {
         delete fields.context_value;
-        clearFields.push("context_value");
+        delete contextFields[value];
+        if (!clearFields.includes("context_value")) clearFields.push("context_value");
       }
     } else {
       if (field === "context_kind" && fields.context_kind !== value) {
         delete fields.context_value;
-        clearFields.push("context_value");
+        if (!clearFields.includes("context_value")) clearFields.push("context_value");
       }
       fields[field] = value;
+      const clearIndex = clearFields.indexOf(field);
+      if (clearIndex >= 0) clearFields.splice(clearIndex, 1);
     }
-    saveClassification(record, fields, clearFields);
+    updateDraft(record, {
+      fields, clear_fields: clearFields, context_fields: contextFields,
+    });
+    rebuildScene();
+    showRecordPopover();
+    setStatus("clasificación preparada en el borrador; todavía no se ejecutó.");
   }
 
   function saveClassificationContext() {
     const record = byId(state.selectedId);
     state.classificationAxis = "context_kind";
-    const kind = record?.classification?.context_kind
+    const draft = record ? draftFor(record) : null;
+    const kind = draft?.fields?.context_kind
       || state.popover.querySelector('[data-class-field="context_kind"].is-active')?.dataset.classValue
       || "";
     const value = state.popover.querySelector("[data-class-context-value]")?.value.trim() || "";
@@ -1765,17 +1718,33 @@
       setStatus("El contexto necesita tipo y nombre; no se guardó todavía.");
       return;
     }
-    const queued = state.classificationPending.get(`classification:${record.source_id}`);
-    const fields = { ...(queued?.fields || record.classification || {}), context_kind: kind, context_value: value };
-    saveClassification(record, fields);
+    const fields = { ...draft.fields, context_kind: kind, context_value: value };
+    const clearFields = draft.clear_fields.filter((field) => (
+      field !== "context_kind" && field !== "context_value"
+    ));
+    const contextFields = {
+      ...draft.context_fields,
+      [kind]: [value],
+    };
+    updateDraft(record, {
+      fields, clear_fields: clearFields, context_fields: contextFields,
+    });
+    rebuildScene();
+    showRecordPopover();
+    setStatus("contexto preparado en el borrador; todavía no se ejecutó.");
   }
 
   async function advanceSeedFromPopover() {
     const record = byId(state.selectedId);
-    const triage = record?.classification?.triage;
+    const draft = record ? draftFor(record) : null;
+    const triage = draft?.fields?.triage || record?.classification?.triage;
     if (!record || record.source_id !== state.humanSeedItemId) return;
     if (!triage) {
       setStatus("elige obra, registro, revisar o descartar antes de seguir.");
+      return;
+    }
+    if (draftIsPending(record)) {
+      setStatus("efectúa o cancela el borrador antes de avanzar.");
       return;
     }
     if (state.feedbackBusy.has("advance-seed")) return;
@@ -1789,87 +1758,261 @@
     }
   }
 
-  async function discardRecord(record, note = "") {
-    if (!record) return;
-    const busyKey = `discard:${record.source_id}`;
-    if (state.feedbackBusy.has(busyKey)) return;
-    const recordActionKeys = acquireRecordActions([record.source_id]);
-    if (!recordActionKeys) return;
-    state.feedbackBusy.add(busyKey);
-    try {
-      const response = await fetch("/api/portfolio/select", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          item_id: record.source_id, decision: "descartar", decision_scope: "record",
-          reason_code: "no_es_obra", target_id: record.source_id,
-          session_id: state.sessionId, pass_size: state.scene.window.limit, note,
-        }),
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const data = await response.json();
-      if (!data.ok) {
-        const partial = data.selection_saved && !data.triage_saved
-          ? " selección guardada; triage pendiente."
-          : "";
-        throw new Error((data.error || "decisión no guardada") + partial);
-      }
-      record.selection = "descartar";
-      const item = state.items.find((candidate) => candidate.id === record.source_id);
-      if (item) item.selection = "descartar";
-      state.scene.records = (state.scene.records || []).filter((candidate) => (
-        candidate.source_id !== record.source_id
-      ));
-      state.scene.relations = (state.scene.relations || []).filter((relation) => (
-        relation.source_id !== record.source_id && relation.target_id !== record.source_id
-      ));
-      invalidateSceneCache();
-      rebuildScene();
-      setStatus("Registro conservado fuera de la curatoria; cargando la siguiente pieza…");
-      await advanceAfterDiscard(record.source_id);
-    } catch (error) {
-      setStatus("No se guardó el descarte: " + error.message);
-    } finally {
-      state.feedbackBusy.delete(busyKey);
-      releaseRecordActions(recordActionKeys);
+  async function portfolioPost(path, payload) {
+    const response = await fetch(path, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    let data = {};
+    try { data = await response.json(); } catch { /* preserve the HTTP failure */ }
+    if (!response.ok || !data.ok) {
+      throw new Error(data.error || `HTTP ${response.status}`);
+    }
+    return data;
+  }
+
+  function syncRecordFromItem(record, item) {
+    if (!record || !item) return;
+    if (item.classification) record.classification = { ...item.classification };
+    if (item.selection) record.selection = item.selection;
+    const mirror = state.items.find((candidate) => candidate.id === record.source_id);
+    if (mirror) {
+      if (item.classification) mirror.classification = { ...item.classification };
+      if (item.selection) mirror.selection = item.selection;
+      if (item.decision_draft) mirror.decision_draft = { ...item.decision_draft };
     }
   }
 
-  async function relationDecision(decision, relationId, note = "") {
-    const relation = (state.scene?.relations || []).find((row) => row.relation_id === relationId);
-    if (!relation || state.feedbackBusy.has(relationId)) return;
-    state.feedbackBusy.add(relationId);
-    try {
-      const response = await fetch("/api/portfolio/feedback", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          source_id: relation.source_id, target_id: relation.target_id,
-          action: decision, facet: relation.feedbackFacet || relation.feedback_facet || (relation.channels || ["relation"])[0],
-          relation: relation.relation_type, session_id: state.sessionId, note,
-          evidence_kind: relation.visual?.evidence_kind || "",
-          visual: relation.visual || {},
-        }),
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const data = await response.json();
-      if (!data.ok) {
-        const partial = data.feedback_saved && !data.connection_saved
-          ? " feedback guardado; conexión pendiente."
-          : "";
-        throw new Error((data.error || "feedback no guardado") + partial);
-      }
-      relation.status = decision === "accept" ? "accepted" : "rejected";
-      relation.feedback = decision;
-      relation.note = note;
-      relation.feedbackFacet = relation.feedbackFacet || relation.feedback_facet || (relation.channels || [])[0] || "";
-      invalidateSceneCache();
-      rebuildScene();
-      showRelationPopover(relationId);
-      setStatus(decision === "accept" ? "Vínculo guardado como acierto." : "Vínculo rechazado; no se borró ningún registro.");
-    } catch (error) {
-      setStatus("No se guardó la decisión: " + error.message);
-    } finally {
-      state.feedbackBusy.delete(relationId);
+  function clearDraftState(record, terminal = {}) {
+    if (!record) return;
+    state.drafts.delete(record.source_id);
+    state.draftDirty.delete(record.source_id);
+    record.decision_draft = terminal;
+  }
+
+  async function refreshActiveScene() {
+    if (!state.activeId) return;
+    const surface = state.editorMode === "order" ? "order" : "";
+    const scene = await fetchScene(state.activeId, state.suggestionMode, surface);
+    state.scene = scene;
+    state.selectedId = state.activeId;
+    state.selectedRelationId = "";
+    rebuildScene();
+  }
+
+  async function saveDraft(record, options = {}) {
+    if (!record) return false;
+    const draft = draftFor(record);
+    if (!draftHasContent(draft)) {
+      if (!options.silent) setStatus("no hay cambios para guardar en el borrador.");
+      return false;
     }
+    try {
+      const data = await portfolioPost("/api/portfolio/draft", {
+        ...draft, status: "saved", session_id: state.sessionId,
+      });
+      const saved = data.draft || { ...draft, status: "saved" };
+      state.drafts.set(record.source_id, saved);
+      state.draftDirty.delete(record.source_id);
+      record.decision_draft = saved;
+      if (!options.silent) {
+        rebuildScene();
+        showRecordPopover();
+        setStatus("borrador guardado; ninguna acción fue ejecutada.");
+      }
+      return true;
+    } catch (error) {
+      if (!options.silent) setStatus("no se guardó el borrador: " + error.message);
+      return false;
+    }
+  }
+
+  async function commitDraft(record, options = {}) {
+    if (!record) return false;
+    const draft = draftFor(record);
+    if (!draftHasContent(draft)) {
+      if (!options.silent) setStatus("no hay un borrador pendiente para efectuar.");
+      return false;
+    }
+    if (!options.confirmed && !window.confirm(
+      `Confirmar acción para ${record.source_id}? Se conservará el historial.`)) {
+      return false;
+    }
+    try {
+      const data = await portfolioPost("/api/portfolio/commit", {
+        ...draft, confirmed: true, session_id: state.sessionId,
+      });
+      syncRecordFromItem(record, data.item);
+      clearDraftState(record, data.draft || { status: "committed" });
+      invalidateSceneCache();
+      if (!options.skipRefresh && record.source_id === state.activeId
+          && draft.action !== "discard") {
+        await refreshActiveScene();
+      } else {
+        rebuildScene();
+      }
+      if (!options.silent) {
+        showRecordPopover();
+        setStatus("acción confirmada; la pieza permanece en foco y su historial puede deshacerse.");
+      }
+      return true;
+    } catch (error) {
+      if (!options.silent) setStatus("no se ejecutó la acción: " + error.message);
+      return false;
+    }
+  }
+
+  async function saveDraftBatch(records) {
+    let saved = 0;
+    for (const record of records) {
+      if (await saveDraft(record, { silent: true })) saved += 1;
+    }
+    renderOrderHud();
+    rebuildScene();
+    showRecordPopover();
+    setStatus(`${saved} borrador(es) guardado(s); ninguna acción fue ejecutada.`);
+  }
+
+  async function commitDraftBatch(records) {
+    const pending = records.filter((record) => draftHasContent(draftFor(record)));
+    if (!pending.length) return setStatus("no hay borradores pendientes para efectuar.");
+    const ids = pending.map((record) => record.source_id).join(", ");
+    if (!window.confirm(`Confirmar ${pending.length} acción(es) para ${ids}? Se conservará el historial.`)) return;
+    let committed = 0;
+    for (const record of pending) {
+      if (await commitDraft(record, { confirmed: true, silent: true, skipRefresh: true })) committed += 1;
+    }
+    invalidateSceneCache();
+    const active = pending.find((record) => record.source_id === state.activeId);
+    if (active && draftFor(active).action !== "discard") {
+      try { await refreshActiveScene(); } catch { rebuildScene(); }
+    } else {
+      rebuildScene();
+    }
+    renderOrderHud();
+    showRecordPopover();
+    setStatus(`${committed}/${pending.length} acción(es) confirmada(s); ninguna pieza fue autoavanzada.`);
+  }
+
+  async function cancelDraft(record, options = {}) {
+    if (!record || !draftIsPending(record)) return false;
+    const draft = draftFor(record);
+    try {
+      if (["saved", "partial"].includes(draft.status)) {
+        await portfolioPost("/api/portfolio/draft", {
+          ...draft, cancel: true, session_id: state.sessionId,
+        });
+      }
+      clearDraftState(record, { status: "cancelled" });
+      if (!options.silent) {
+        rebuildScene();
+        showRecordPopover();
+        setStatus("borrador cancelado; el historial previo no fue alterado.");
+      }
+      return true;
+    } catch (error) {
+      if (!options.silent) setStatus("no se canceló el borrador: " + error.message);
+      return false;
+    }
+  }
+
+  async function cancelDraftBatch(records) {
+    let cancelled = 0;
+    for (const record of records) {
+      if (await cancelDraft(record, { silent: true })) cancelled += 1;
+    }
+    renderOrderHud();
+    rebuildScene();
+    showRecordPopover();
+    setStatus(`${cancelled} borrador(es) cancelado(s); nada fue ejecutado.`);
+  }
+
+  async function undoLastAction(record, options = {}) {
+    if (!record) return false;
+    if (!options.confirmed && !window.confirm(
+      `Deshacer la última acción de ${record.source_id}? El historial se conservará.`)) return false;
+    try {
+      const data = await portfolioPost("/api/portfolio/undo", {
+        item_id: record.source_id, scope: "all", confirmed: true,
+        session_id: state.sessionId,
+      });
+      syncRecordFromItem(record, data.item);
+      clearDraftState(record, data.item?.decision_draft || { status: "undone" });
+      invalidateSceneCache();
+      if (record.source_id === state.activeId && record.selection !== "descartar") {
+        await refreshActiveScene();
+      } else {
+        rebuildScene();
+      }
+      showRecordPopover();
+      setStatus("acción deshecha mediante un evento append-only; el historial permanece.");
+      return true;
+    } catch (error) {
+      setStatus("no se deshizo la acción: " + error.message);
+      return false;
+    }
+  }
+
+  async function undoRelationDecision(relationId) {
+    const relation = (state.scene?.relations || []).find((row) => row.relation_id === relationId);
+    if (!relation) return false;
+    if (!window.confirm(`Deshacer el vínculo con ${relation.target_id}? El historial se conservará.`)) return false;
+    try {
+      const data = await portfolioPost("/api/portfolio/undo", {
+        item_id: relation.source_id, target_id: relation.target_id,
+        facet: relation.feedbackFacet || relation.feedback_facet || (relation.channels || ["relation"])[0],
+        relation: relation.relation_type, scope: "relation", confirmed: true,
+        session_id: state.sessionId,
+      });
+      const anchor = byId(relation.source_id);
+      syncRecordFromItem(anchor, data.item);
+      clearDraftState(anchor, data.item?.decision_draft || { status: "undone" });
+      invalidateSceneCache();
+      await refreshActiveScene();
+      showRelationPopover(relationId);
+      setStatus("vínculo deshecho mediante un evento append-only; sus decisiones previas permanecen.");
+      return true;
+    } catch (error) {
+      setStatus("no se deshizo el vínculo: " + error.message);
+      return false;
+    }
+  }
+
+  function discardRecord(record, note = "") {
+    if (!record) return;
+    const draft = draftFor(record);
+    const fields = { ...draft.fields, triage: "discard" };
+    const clearFields = draft.clear_fields.filter((field) => field !== "triage");
+    updateDraft(record, { action: "discard", fields, clear_fields: clearFields, note });
+    rebuildScene();
+    showRecordPopover();
+    setStatus("descarte preparado en el borrador; la pieza sigue visible y no se avanzó.");
+  }
+
+  function relationDecision(decision, relationId, note = "") {
+    const relation = (state.scene?.relations || []).find((row) => row.relation_id === relationId);
+    const anchor = relation ? byId(relation.source_id) : null;
+    if (!relation || !anchor || !["accept", "reject"].includes(decision)) return;
+    const facet = relation.feedbackFacet || relation.feedback_facet
+      || (relation.channels || ["relation"])[0];
+    const draft = draftFor(anchor);
+    const relations = draft.relations.filter((row) => !(
+      String(row.target_id) === String(relation.target_id)
+      && String(row.facet || "") === String(facet || "")
+      && String(row.relation || "") === String(relation.relation_type || "related")
+    ));
+    relations.push({
+      target_id: relation.target_id, decision, facet,
+      relation: relation.relation_type || "related", note,
+      visual: relation.visual || {},
+    });
+    updateDraft(anchor, { relations });
+    relation.draft_decision = decision;
+    relation.feedbackFacet = facet;
+    relation.note = note;
+    rebuildScene();
+    showRelationPopover(relationId);
+    setStatus("vínculo preparado en el borrador; todavía no se ejecutó.");
   }
 
   function handlePopoverAction(event) {
@@ -1891,6 +2034,11 @@
       return toggleClassification(button.dataset.classField, button.dataset.classValue);
     }
     if (action === "classify-context") return saveClassificationContext();
+    if (action === "save-draft") return saveDraft(record);
+    if (action === "commit-draft") return commitDraft(record);
+    if (action === "cancel-draft") return cancelDraft(record);
+    if (action === "undo") return undoLastAction(record);
+    if (action === "undo-relation") return undoRelationDecision(button.dataset.relationId);
     if (action === "next") return advanceSeedFromPopover();
     if (action === "xio-link") {
       button.disabled = true;
@@ -2032,6 +2180,14 @@
       const inbox = await inboxResponse.json();
       if (!inbox || inbox.ok === false) throw new Error(inbox?.error || "inbox no disponible");
       state.items = inbox.items || [];
+      state.drafts.clear();
+      state.draftDirty.clear();
+      state.items.forEach((item) => {
+        const draft = item?.decision_draft;
+        if (draft && ["saved", "partial", "local_draft"].includes(String(draft.status || ""))) {
+          state.drafts.set(String(item.id), { ...draft, item_id: String(item.id) });
+        }
+      });
       await loadExternalQueue();
       const first = state.items.find((item) => item.asset_available && item.selection !== "descartar");
       if (!first) throw new Error("inbox vacío");

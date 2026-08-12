@@ -19,5 +19,7 @@ Environment=MAK_SERVICE_HOST=127.0.0.1
 ExecStart=/usr/bin/python3 %h/codex/interfaz_codex.py
 Restart=always
 RestartSec=5
+TimeoutStopSec=15
+KillMode=control-group
 [Install]
 WantedBy=default.target
