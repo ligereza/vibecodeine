@@ -1,14 +1,51 @@
 # LAST_HANDOFF - Faro
 
-Updated: 2026-08-11 - Atlas release and MAK supervision verified
-Status: The Hub boundary, XIO human-link circuit, writer ownership block,
-language slices, Atlas decision-draft gate, and process supervision are
-consolidated in the four canonical branches. The Atlas backend and served
-portfolio surface are deployed to MAK with rollback snapshots. The release
-is committed and pushed; the four canonical branches contain the tested MAK
-commit. README/SVG files were not changed.
+Updated: 2026-08-12 - MAK runtime recovered after mixed Claude-session import
+Status: The canonical MAK checkout and live runtime are restored to
+`306f320b` (`origin/mak`). The mixed RD import and unfinished MAK experiments
+were preserved, not deleted. Four managed user services are active, the
+optional research queue is inactive, and the Hub health, research, Codex, and
+portfolio routes return HTTP 200. README/SVG files were not changed.
 This block is the current operational source. Later sections preserve dated
 historical evidence and must not be read as present state.
+
+## Recovery after mixed Claude environment - 2026-08-12
+
+- The Windows `mak` checkout was clean at `306f320b` after preserving the
+  mixed uncommitted tree in `stash@{0}`:
+  `recovery-claude-environment-and-mak-pending-2026-08-12`. That stash contains
+  recovered RD evidence and unfinished MAK quality-gate experiments; do not
+  apply it as one block.
+- The MAK checkout had local changes at `b4f5b2a`. They were preserved in the
+  remote stash `recovery-remote-mak-dirty-20260812-031632`, then MAK was
+  fast-forwarded to `origin/mak` at `306f320b`. No reset, branch deletion,
+  commit, or push was performed.
+- A pre-recovery audit found 15 live mirror mismatches. A rollback snapshot is
+  preserved at `/home/mak/rollback/faro-recovery-20260812-032015`. Canonical
+  source files and five user units were restored to the live mirrors, systemd
+  was reloaded, and `mak-hub`, `mak-codex`, `mak-research`, and `mak-xio` were
+  restarted. The optional `mak-research-queue` remains inactive.
+- The experimental live-only modules `actividad.py`, `gpu_guard.py`, and
+  `motor_semantico/calidad_svg.py` were moved into the rollback snapshot and
+  are not active. They remain available for separate review.
+- Verification: `/home/mak/flujo` is clean at `306f320b`; the four managed
+  services are active; no icon/research child worker is running; `ollama ps`
+  is empty; and `GET /api/salud`, `/research/`, `/codex/`, and `/portafolio/`
+  each returned HTTP 200 on `192.168.50.2:8900`.
+- The existing mirror checker reported five unit mismatches only because it
+  hashes Windows checkout files with CRLF and installed Linux units with LF.
+  A byte comparison between the MAK checkout and installed units passed for
+  all five units. Treat this as a checker normalization defect, not runtime
+  drift. The next maintenance action is to normalize line endings in the
+  checker or compare normalized content before relying on its exit code.
+
+## Next action
+
+Review the preserved Windows and remote stashes separately. Selectively
+reintroduce only RD changes that have tests and durable paths; keep the MAK
+quality-gate experiments out of the canonical branches until their validator,
+worker failure propagation, GPU lock behavior, and activity accounting pass a
+focused test circuit. Do not touch README/SVG geometry.
 
 ## Release and MAK runtime verification - 2026-08-11
 
