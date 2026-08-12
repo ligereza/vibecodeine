@@ -5021,3 +5021,94 @@ changes, and provide a verifiable human XIO link without auto-linking. Then
 test the 47 cron targets across stop/restart boundaries, starting with the
 watchdog and retention jobs, and record any real discrepancy before editing.
 Do not activate repo-sync or touch README/SVG.
+
+## Gemini retirement and flyer path cleanup - 2026-08-11
+
+- Verified checkout: `mak` at `32688c8e`, clean before this change, tracking
+  `origin/mak`. No README/SVG files were touched.
+- The only active Gemini runtime path was the optional vision call inside
+  `src/flujo/eventos/flyer_auto.py`. It loaded `GEMINI_API_KEY*`, called the
+  Google Generative Language API, and ran during flyer tests without a mock.
+- Removed that active path, its `EventFlyerResult.productora` field, the CLI
+  output branch, `src/flujo/eventos/productoras.py`, and its Gemini-only test.
+  The local RD database at `data/productoras` and RD productora commands stay
+  active and were not changed.
+- Removed the artificial `sleep_seconds=2.0` delay from flyer automation. The
+  existing file-polling timing remains because it protects external render
+  handoff completion.
+- Removed Gemini variables from `.env.example`. The ignored local `.env` was
+  not rewritten; no active code reads those keys now, and secret values were
+  not exposed. Historical Gemini mentions remain in changelogs, security
+  fixtures, and archived evidence by design.
+- Focused verification: `python -m pytest tests/test_eventos_flyer_auto.py
+  tests/test_cli_smoke.py -q --durations=15` -> 13 passed in 7.9s. The two
+  flyer calls were about 3.14s and 3.02s; before cleanup one measured 28.58s
+  in isolation and the full suite measured 306.3s.
+- Full regression: `python -m pytest tests -q --durations=25` -> 944 passed,
+  28 skipped, 0 failed in 241.0s. Remaining slow coverage is manifest
+  generation (13.42s), SVG/icon rendering (about 4-7.6s each), and two energy
+  sensor tests with intentional 5s sampling intervals. No safe deletion was
+  made from those areas.
+- Working tree has intentional uncommitted changes on `mak`; no commit/push was
+  made because the user did not request publication in this turn.
+
+## Next action
+
+Run `python -m flujo verify` on this checkout, including hub smoke, then review
+the diff and branch status. If green, ask whether to commit/push the Gemini
+retirement. Do not edit README/SVG, delete `data/productoras`, or restore the
+retired provider from historical references.
+
+## SVG example report removed from CI dependency - 2026-08-11
+
+- The 16 curated SVGs under `docs/cultura/ensayos/rave/iconos/` were preserved
+  byte-for-byte; no SVG path is modified or deleted.
+- Removed the report-specific `tests/test_ensayo_rave.py` dependency and the
+  16-browser-frame animation integration from `tests/test_iconos_conjunto.py`.
+  The generic validator and gallery builder now use a synthetic SVG fixture,
+  while perceptual animation measurement remains available on demand through
+  `py tools/iconos_conjunto.py animar`.
+- Removed the two real-rave checks from `tests/test_archivo_ensayos.py` and
+  converted its contract fixture to a synthetic `demo` essay. This keeps the
+  contract and validator coverage focused on code behavior rather than one
+  example report.
+- Updated `docs/cultura/ensayos/rave/LEEME.md` to distinguish the historical
+  integration measurement from automatic CI coverage. The report remains
+  available as a visual/reference artifact.
+- Targeted regression: 41 tests passed. Full regression: 944 passed, 28
+  skipped, 0 failed in 152.3s. Full `python -m flujo verify` passed in 158.6s
+  including compileall, health, version, and Hub smoke. Previous full test
+  measurement was 241.0s after Gemini removal; this cleanup saved 88.7s
+  (36.8%).
+- Remaining slow tests are legitimate production/tool coverage: manifest CLI
+  subprocess (about 14.7s), one rasterizer animation test (about 7.2s), two
+  energy sampling tests with intentional 5s intervals, and several MAK/skin
+  render or subprocess checks. No SVG production file was used as a CI fixture.
+
+## Next action
+
+Review the complete uncommitted diff on `mak`, then decide whether to commit
+and publish the Gemini retirement plus CI fixture separation. Do not restore
+the report-specific tests or alter the preserved SVGs unless a new artistic or
+integration requirement explicitly reopens them.
+
+## Energy sampling tests made deterministic - 2026-08-11
+
+- `cultura/mak_plataforma/energia_log.py` was not changed: production still
+  waits `intervalo_s` between CPU energy reads because that interval is part of
+  the measurement itself.
+- `tests/test_energia_log.py` now patches `time.sleep` only inside the two
+  mocked-sensor tests and asserts that production requested `5` seconds. The
+  tests keep the interval contract without burning wall-clock time.
+- Focused result: `18 passed` in `1.6s`; those two tests previously consumed
+  `5.0s` each. Full regression after the change: `944 passed`, `28 skipped`,
+  `0 failed` in `159.9s`. The energy tests no longer appear in the slowest
+  list; total suite wall time remains variable across runs because renderer,
+  subprocess, and filesystem tests dominate it.
+- No README/SVG or production energy code changed.
+
+## Next action
+
+Keep the real `energia_log` sampling interval intact. The next safe timing
+target is the manifest check subprocess chain (about 14.6s); optimize only if
+the same CLI truth can be checked without weakening its stale-manifest guard.

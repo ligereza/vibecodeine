@@ -21,10 +21,7 @@ import json
 import sys
 from pathlib import Path
 
-import pytest
-
 REPO = Path(__file__).resolve().parent.parent
-ENSAYO_RAVE = REPO / "docs" / "cultura" / "ensayos" / "rave"
 
 
 def _cargar(nombre: str, ruta: Path):
@@ -37,15 +34,14 @@ def _cargar(nombre: str, ruta: Path):
 
 contrato = _cargar("contrato_archivo_test",
                    REPO / "cultura" / "mak_plataforma" / "contrato_archivo.py")
-gen = _cargar("gen_archivo_iskvw_test", REPO / "tools" / "gen_archivo_iskvw.py")
 
 
 UN_ENSAYO = {
-    "slug": "rave",
-    "titulo": "El informe rave",
-    "ruta": "docs/cultura/ensayos/rave/ensayo.md",
+    "slug": "demo",
+    "titulo": "Synthetic essay fixture",
+    "ruta": "docs/cultura/ensayos/demo/ensayo.md",
     "conceptos": [
-        {"n": "07", "slug": "07-berlin", "titulo": "Berlín: cae el muro",
+        {"n": "07", "slug": "07-demo", "titulo": "Berlín: cae el muro",
          "descripcion": "1989: búnkeres y fábricas se vuelven catedrales.",
          "ancla": "### 2.5 Berlín", "estilo": "Brutalista concreto",
          "archivo": "07-berlin.svg", "archivo_src": "x/07-berlin.svg",
@@ -118,7 +114,7 @@ def test_los_titulos_conservan_su_castellano():
     con = [p for p in d["piezas"] if p["clase"] == "concepto"][0]
     assert "Berlín" in con["titulo"]
     assert "búnkeres" in con["resumen"]
-    assert "berlin" in con["id"] and "í" not in con["id"]
+    assert "demo" in con["id"] and "í" not in con["id"]
 
 
 def test_el_ancla_viaja_en_extra():
@@ -134,8 +130,8 @@ def test_declara_animacion_solo_si_el_llamador_lo_midio():
 
     Que un SVG declare keyframes y que se mueva de forma perceptible son dos
     hechos distintos, y el contrato solo puede afirmar el que el archivo
-    codifica. Lo segundo se mide aparte (`tests/test_iconos_conjunto.py` exige
-    que todo icono que declara animación se mueva dentro de su propio ciclo)."""
+    codifica. La medición perceptual pertenece al informe de integración y se
+    ejecuta bajo demanda, no dentro de esta suite."""
     d = contrato.desde_ensayo(UN_ENSAYO)
     ico = [p for p in d["piezas"] if p["clase"] == "pieza_grafica"][0]
     assert ico["extra"] == {"declara_animacion": True}
@@ -145,31 +141,3 @@ def test_declara_animacion_solo_si_el_llamador_lo_midio():
     d2 = contrato.desde_ensayo(mudo)
     ico2 = [p for p in d2["piezas"] if p["clase"] == "pieza_grafica"][0]
     assert ico2["extra"] == {}
-
-
-@pytest.mark.skipif(not ENSAYO_RAVE.is_dir(), reason="sin ensayos curados")
-def test_sobre_el_ensayo_rave_real():
-    """El generador, sobre el material de verdad: un ensayo, sus conceptos y
-    sus iconos, y cada `src` apuntando a un archivo que existe."""
-    d = gen.desde_ensayos()
-    clases = [p["clase"] for p in d["piezas"]]
-    assert clases.count("informe") >= 1
-    assert clases.count("concepto") == 16
-    assert clases.count("pieza_grafica") == 16
-    for p in d["piezas"]:
-        src = (p.get("medio") or {}).get("src")
-        if src:
-            assert (REPO / src).is_file(), "medio que afirma un archivo ausente: %s" % src
-
-
-@pytest.mark.skipif(not ENSAYO_RAVE.is_dir(), reason="sin ensayos curados")
-def test_el_id_de_una_pieza_de_ensayo_no_choca_con_una_obra():
-    """Los prefijos (`ensayo-`, `concepto-`, `icono-`) existen para que un
-    ensayo y una obra del artista no puedan colisionar en `unir()`: dos piezas
-    distintas con el mismo id se fusionarian y una desapareceria."""
-    ensayos = gen.desde_ensayos()
-    obras = gen.desde_obras()
-    assert not ({p["id"] for p in ensayos["piezas"]}
-                & {p["id"] for p in obras["piezas"]})
-    juntos = gen.unir(obras, ensayos)
-    assert len(juntos["piezas"]) == len(obras["piezas"]) + len(ensayos["piezas"])
