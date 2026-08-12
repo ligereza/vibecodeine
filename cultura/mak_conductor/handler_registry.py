@@ -346,6 +346,22 @@ def _annex_icons(job):
     return {"validated": isinstance(result, dict), **result}
 
 
+def _post_package(job):
+    """Validate one source-preserving POST package candidate."""
+    from cultura.mak_post import build_post_package
+    payload = payload_of(job)
+    spec = payload.get("spec") if isinstance(payload.get("spec"), dict) else payload
+    result = build_post_package(spec)
+    return {
+        "validated": result.get("status") == "candidate",
+        "result": result,
+        "artifacts": [{
+            "kind": "post_package_validation",
+            "content": json.dumps(result, ensure_ascii=True, sort_keys=True),
+        }],
+    }
+
+
 def _legacy_material_task(job):
     """Execute one imported material row through its existing department."""
     from cultura.mak_codex.worker_codex import run_pedido
@@ -394,6 +410,7 @@ HANDLERS: dict[str, Handler] = {
     "material_rebuild": _material, "codex_backlog": _backlog,
     "corpus_projection": _corpus, "retention": _retention,
     "anexo_svg": _annex_icons,
+    "post_package": _post_package,
     "legacy_material_task": _legacy_material_task,
     "legacy_codex_task": _legacy_codex_task,
     "legacy_research_task": _legacy_research_task,

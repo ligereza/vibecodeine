@@ -55,7 +55,7 @@ def _clear_status():
 
 
 def run_pedido(modo, texto, densidad=None, ntfy=True, timeout=900, job_id=None,
-               cadena=None):
+               cadena=None, trigger="api:codex"):
     """Devuelve {ok, path, tail}. Bloquea hasta tomar el lock propio. job_id:
     para ~/codex/eventos.jsonl; si no llega, se acuna uno (uso standalone).
     cadena: CSV opcional de claves de coder (ver codex_lib._CODER_CHAIN_MAP)
@@ -104,9 +104,10 @@ def run_pedido(modo, texto, densidad=None, ntfy=True, timeout=900, job_id=None,
     if ntfy:
         cmd.append("--ntfy")
 
-    env = None
+    env = dict(os.environ)
+    env["MAK_JOB_ID"] = job_id
+    env["MAK_TRIGGER"] = trigger or "api:codex"
     if cadena:
-        env = dict(os.environ)
         env["CODER_CHAIN"] = cadena
 
     with open(LOCK, "w") as lk:

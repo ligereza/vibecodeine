@@ -1061,6 +1061,11 @@ def _main_unlocked():
         return
 
     depto, payload = tarea
+    # The autonomous scheduler is the source of this trigger. It travels with
+    # the request so activity inventory can distinguish cron work from a human
+    # API call all the way down to the model/resource boundary.
+    payload = dict(payload)
+    payload.setdefault("trigger", "cron:MAK-TRABAJO")
     url = RESEARCH
     if depto == "codex":
         url = CODEX

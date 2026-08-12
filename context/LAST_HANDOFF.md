@@ -1,15 +1,46 @@
 # LAST_HANDOFF - Faro
 
-Updated: 2026-08-12 - MAK conductor shadow contract, crash recovery, and activation boundary verified
-Status: The local Windows `mak` checkout is intentionally uncommitted and
-contains the reversible conductor integration, producer catalog, artifact
-traceability, and active-gated legacy entrypoints. The canonical README/SVG
-geometry is unchanged. The support was transported to `/home/mak/flujo` and
-the affected live mirrors after a rollback backup; no service was restarted,
-no conductor database was created, and all `MAK_CONDUCTOR_*` flags remain
-unset. Four managed MAK user services remain active. This block is the current
-operational source. Later sections preserve dated historical evidence and must
-not be read as present state.
+Updated: 2026-08-12 - recovered session integration staged on `mak-svg`
+Status: The recovered agent work is now present in the repository staging area,
+not only in the MAK runtime mirror. The integration includes the durable
+conductor extension, activity/GPU compatibility utilities, SVG quality checks,
+RD testing evidence projections, the source-preserving POST boundary, and a
+hash-manifested archive of the non-environment material from
+`C:\Users\issvk\claude_sesiones_recuperadas`. The canonical README/SVG geometry
+is unchanged. No service was restarted, no conductor database was created,
+and all `MAK_CONDUCTOR_*` flags remain unset. The current branch is the
+non-canonical experimental `mak-svg`; the four canonical branches are still
+unchanged until the integration commit is verified and explicitly propagated.
+This block is the current operational source. Later sections preserve dated
+historical evidence and must not be read as present state.
+
+## Recovered session integration - 2026-08-12
+
+- The earlier agent integrated five operational points into the `/home/mak`
+  runtime mirror but did not commit the repository work. The exact repository
+  source was preserved in `stash@{0}` and has now been applied and merged with
+  the conductor changes. The previous claim of repository integration was
+  therefore incomplete.
+- `docs/recovered/claude_sessions_2026-08-12/raw/MANIFEST.json` contains 76
+  imported files and SHA-256 values. It excludes `.venv`, Python caches,
+  credential-shaped files, and the private web-export directory; the manifest
+  records 21,223 excluded files and their reasons. The raw corpus is evidence
+  and candidate material, not operational instructions.
+- RD evidence is projected under `data/rd_fuentes/` into isolated `testeo_*`
+  tables by `src/flujo/rd/database.py`. Productora, venue, event, substance,
+  reagent, and test observations remain separate identities and human-gated.
+- POST is a registered conductor stage at
+  `post.pipeline.build_post_package` / `post_package`. It validates preserved
+  source order and text blocks, emits a candidate with `public_gate` set to
+  `human_required`, and does not publish or invent scientific relations.
+  The recovered Chemsex specification passes this validator.
+- The recovered SVG prototype remains under the isolated archive/prototype
+  paths. `cultura/mak_codex/motor_semantico/calidad_svg.py` only validates
+  actual rasterization when a backend exists and reports `unverified` when it
+  does not; it never promotes a candidate automatically.
+- A single conductor GPU lease is authoritative when the conductor package is
+  available. The legacy `gpu_guard`/`ollama_gpu_slot` path is compatibility
+  fallback only, so research, Codex, and curatoria do not acquire nested locks.
 
 ## Current MAK conductor convergence - 2026-08-12
 
@@ -203,6 +234,39 @@ explicit approval.
   compare producer inputs, output hashes, retries, and GPU wait events, then
   decide whether to migrate `enqueue_annex_icons`, `_reindexar_async`, and
   cron producers behind a reversible feature flag.
+
+## Uncatalogued nested MAK activity - 2026-08-11
+
+- Two automatic chains were verified after the process-supervision audit. They
+  were not orphan processes, but they were missing from the activity picture:
+  (1) the 23:30 `MAK-TRABAJO` research cycle completed job
+  `20260811-233001-ad3d`, extracted nine concepts, and
+  `cultura/mak_research/worker.py` automatically called
+  `enqueue_annex_icons`, creating six Codex icon jobs; (2) the 23:40 cron
+  entry `*/20 * * * * /home/mak/research/micelio_guardia.sh` ran
+  `ideas_a_micelio.py` and `memoria.indexar()`, producing `90` new embedding
+  chunks through `nomic-embed-text`.
+- The first chain runs icon generation as children of `mak-codex.service`;
+  the second runs the embedding server as a child of the global
+  `ollama.service`. The process guard and service checks therefore reported a
+  healthy system while the GPU was busy. Stopping the model only stopped the
+  current work; it did not disable either caller.
+- The six icon SVG/Markdown pairs created between 23:33 and 23:37 are
+  preserved. No new icon artifact appeared after 23:37. The base research
+  report and its JSON/concepts files were created at 23:32. No Watson or AWS
+  process was involved.
+- This exposes a supervision gap: current checks cover service liveness,
+  detached scans, listeners, and stale workers, but not nested queue activity,
+  cron-triggered provider/model calls, or resource ownership inside a healthy
+  service.
+
+## Next action
+
+Add a read-only activity inventory for cron -> caller -> queue -> model and a
+resource budget/gate for nested generation before changing any provider or
+icon automation. Decide separately whether research may auto-enqueue visual
+annexes and whether micelio reindexing may use the GPU on its fixed 20-minute
+schedule. Keep both current chains stopped when idle; do not touch README/SVG.
 
 ## Release and MAK runtime verification - 2026-08-11
 
@@ -5330,3 +5394,104 @@ the same CLI truth can be checked without weakening its stale-manifest guard.
 Use the synchronized canonical branches as the baseline. The next measured
 performance target is the manifest check subprocess chain; do not reopen the
 retired Gemini path or restore report-specific SVG tests without a new reason.
+
+## RD evidence bridge integrated on mak - 2026-08-12
+
+- Imported the normalized 2025 testing evidence into
+  `data/rd_fuentes/testeo_eventos_2025_evidence.json`. The original workbook
+  remains outside the repository; the source filename, SHA-256, source rows,
+  duplicate candidates, unresolved labels, and review queue are preserved.
+- Added the candidate reagent, entity, relation graph, and relation index files
+  under `data/rd_fuentes/candidates/`. They remain candidate material and are
+  not promoted into canonical claims.
+- Extended the existing regenerable `src/flujo/rd/database.py` projection with
+  isolated `testeo_*` tables. It loads 1 source, 42 sheets, 42 events, 1,831
+  source rows, 5,394 observations, 30 substance labels, 50 reagent labels,
+  and 84 pending venue/producer links. It does not touch `rd_datos.db`, demo
+  CSV data, the public RD panel, or `/portafolio/`.
+- Added `flujo rd-db testeos`, which exposes only an internal evidence summary;
+  it explicitly reports that automatic public claims are disabled. Python
+  identifiers and operational docs use English/ASCII; human-facing RD report
+  text remains Spanish.
+- Preserved the isolated POST, matrix, reagent, and relation artifacts under
+  `docs/rd/prototypes/2026-08-11/` with a README marking them non-operational.
+  No prototype was mounted as a second UI or production route.
+- Verification: focused RD/database, manifest, map, and language tests passed;
+  full `python -m pytest -q` passed with 944 tests and 28 skips; `python -m
+  flujo verify` passed compileall, full tests, health, version, and Hub smoke.
+  `git diff --check` is clean.
+- No commit, push, merge, remote deployment, README/SVG edit, or destructive
+  operation was performed. Existing `context/LAST_HANDOFF.md` user changes
+  were preserved.
+
+## RD evidence classification correction - 2026-08-12
+
+- The source evidence remains unchanged; only the regenerable SQLite projection
+  and its test contract were refined.
+- Header spillover is now classified as `repeated_header`, not an unknown
+  substance or reagent. Format labels in the substance column are marked as
+  `misplaced_format_label`; `Ketamina+M` remains a mixture candidate instead
+  of being silently mapped to ketamine.
+- `Cannabis` in a reagent column maps to the catalog test candidate `cbd_thc`;
+  `Fentanilo` maps to the non-colorimetric strip candidate; `Sin reaccion` in a
+  reagent column is marked as result spillover; `Mireia` remains the only
+  unresolved reagent candidate.
+- Compact date tokens are projected against the workbook period with low
+  confidence. Four explicit 2026 dates remain outside the 2025 period; two
+  sheets remain date-less. No date is a public claim.
+- Rebuilt projection summary: 42 sheets, 42 events, 1,831 rows, 5,394
+  observations, 84 pending event links, 2 unresolved substance labels, and 1
+  unresolved reagent label. The public-claims gate remains disabled.
+- Focused database tests pass: 26 passed. `git diff --check` is clean.
+
+## Next action
+
+Review the two genuinely unresolved substance labels, the one reagent typo
+candidate, four explicit 2026 dates, and two date-less sheets. Then classify
+exact duplicate groups as preserved source rows but excluded from public
+aggregates. Keep event-to-venue/producer links candidate-only until external
+evidence is attached; do not infer a public relation from a sheet name.
+
+## RD evidence bridge verified after classification correction - 2026-08-12
+
+- Rebuilt the local regenerable database with `python -m flujo rd-db build` so
+  the operational CLI no longer read the pre-correction SQLite file.
+- Measured `python -m flujo rd-db testeos`: 42 sheets, 42 events, 1,831 test
+  rows, 5,394 observations, 84 pending links, 3 exact duplicate rows excluded
+  from aggregation, 2 unresolved substance labels, and 1 unresolved reagent.
+  Automatic publication remains disabled.
+- Measured `python -m flujo verify`: compileall, full regression (944 passed,
+  28 skipped), health, version, and Hub smoke all passed. `git diff --check`
+  passed.
+- Added the external triangulation note at
+  `docs/rd/TRIANGULACION_TESTEOS_EVENTOS_2025.md`. Strong and partial matches
+  remain candidates and do not alter source rows or public links.
+
+## Next action
+
+Use the corrected evidence summary as the baseline. The only substantive
+review items are the two unresolvable substance labels, `Mireia`, four explicit
+2026 dates, two date-less sheets, and evidence-backed event links. Do not ask
+for clarification about header spillover, misplaced format labels, duplicate
+aggregation, or the fentanilo strip classification: those are now deterministic
+projection rules.
+## Five-point MAK quality gate (2026-08-12)
+
+Implemented and deployed to the live MAK mirror. Backup: `/home/mak/rollback/faro-five-points-20260812`.
+
+- Automatic research-to-Codex icon enqueue is opt-in. The default is `MAK_AUTO_ICONOS=0`; an explicit `MAK_AUTO_ICONOS=1` remains required. Queue results now expose `concepts`, `queued`, `dropped`, `invalid`, and `not_queued`, and research emits an explicit event when concepts remain unprocessed.
+- `plataforma/actividad.py` records trigger, caller, queue, provider/model, resource, department, and job. `GET /api/actividad-inventario` exposes grouped inventory plus current GPU state. `cron:MAK-TRABAJO` is propagated in scheduled requests.
+- `plataforma/gpu_guard.py` is the common Linux cross-process GPU lock at `~/plataforma/.gpu.lock`; local Ollama research, embeddings, Codex, curatoria vision, and Blender render use it. Reindex-after-job is disabled by default; `MAK-MICELIO` remains the scheduled reindex path. The explicit endpoint remains available.
+- Essay validation recognizes flat `PARTE I:` / `PARTE 1:` lines as narrative parts without counting arbitrary numbered subsections. Concept truncation and malformed annex entries remain visible as counts.
+- Codex SVG output now preserves candidates but marks them `validated`, `unverified`, or duplicate. Exact SHA-256 and perceptual duplicate checks run before `smoke_ok`. Visual acceptance requires an animation-capable raster backend. Windows Edge validated a local SVG with score 100; MAK currently reports `unverified` because no browser backend is installed there. Existing live SVGs therefore remain evidence, not accepted visual deliverables.
+
+Measured verification:
+
+- Local focused tests: `33 passed` (research queue, activity/GPU seam, SVG generation, essay validator, reanudar, micelio ideas).
+- Local SVG validation: Edge backend, `status=validated`, perceptual score `100`.
+- Remote Linux: all changed Python files compiled; SHA-256 of every deployed file matches the Windows source; `mak-research.service`, `mak-codex.service`, and `mak-hub.service` are active; Hub root returned HTTP 200.
+- Remote opt-in test: unset `MAK_AUTO_ICONOS` produced `queued=0`, `concepts=2`, `not_queued=2`, `disabled=true`.
+- Remote lock contention test: contender received `GPUSlotBusy` (`CONTENTION_OK`). The inventory endpoint returned schema `mak-activity-inventory-v1` and recorded the lock events.
+- Remote visual check: `backend=None`; recent SVGs are honestly `unverified` with the reason that no browser backend is installed. No visual acceptance was fabricated.
+
+Next action: install or expose a supported animation-capable renderer on MAK, then run the existing recent SVG set through `calidad_svg.validate`; only after that should `smoke_ok` be used as a visual delivery gate. Do not enable automatic icons until that gate is available and a human accepts the output.

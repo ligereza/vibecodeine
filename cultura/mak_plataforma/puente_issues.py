@@ -294,8 +294,18 @@ def renderizar(url):
     cmd = [sys.executable, "-m", "flujo", "eventos", "flyer-auto", url,
            "--render-blender", "--yes", "--blender-exe", str(BLENDER)]
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True,
-                           timeout=3600, env=entorno, cwd=str(HOME / "flujo"))
+        try:
+            from gpu_guard import slot as gpu_slot
+            contexto = gpu_slot(caller="mak-plataforma.puente_issues",
+                                queue="render.blender", department="render",
+                                trigger="cron:MAK-PUENTE-ISSUES",
+                                resource="blender", model="")
+        except (ImportError, OSError, TypeError):
+            from contextlib import nullcontext
+            contexto = nullcontext()
+        with contexto:
+            r = subprocess.run(cmd, capture_output=True, text=True,
+                               timeout=3600, env=entorno, cwd=str(HOME / "flujo"))
     except subprocess.TimeoutExpired:
         return False, "el render paso de una hora y se corto", None
     salida = (r.stdout or "") + (r.stderr or "")
@@ -595,8 +605,8 @@ def main():
                          "reintenta en el proximo tick del cron)")
     args = ap.parse_args()
 
-    # El lock protege la GPU, y --dry-run no la toca: pedirselo ahi solo
-    # impediria mirar que haria el puente mientras la percepcion trabaja.
+    # The local render takes the common GPU slot inside renderizar(). This
+    # private lock only prevents two bridge runs from duplicating work.
     if not args.dry_run:
         LOCK.parent.mkdir(parents=True, exist_ok=True)
         fh = open(LOCK, "w")
