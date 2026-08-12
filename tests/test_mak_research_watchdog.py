@@ -14,7 +14,7 @@ def test_cola_requires_ntfy_inbox_before_watchdog_starts_it():
     source = WATCHDOG.read_text(encoding="utf-8")
     assert "NTFY_TOPIC_IN" in source
     assert "grep -Eq '^[[:space:]]*NTFY_TOPIC_IN=.+$'" in source
-    assert source.index("NTFY_TOPIC_IN") < source.index('nohup python3 "$BASE/cola.py"')
+    assert source.index("NTFY_TOPIC_IN") < source.index('ensure_unit "$QUEUE_UNIT"')
 
 
 def test_missing_ntfy_inbox_is_reported_once_not_every_cron_tick():
@@ -22,4 +22,17 @@ def test_missing_ntfy_inbox_is_reported_once_not_every_cron_tick():
     assert 'COLA_DISABLED="$BASE/.cola.disabled.missing_ntfy"' in source
     assert 'if [ ! -f "$COLA_DISABLED" ]; then' in source
     assert ': > "$COLA_DISABLED"' in source
-    assert "cola.py desactivada: falta NTFY_TOPIC_IN" in source
+    assert "cola.py disabled: NTFY_TOPIC_IN is missing" in source
+
+
+def test_research_watchdog_never_launches_detached_processes():
+    source = WATCHDOG.read_text(encoding="utf-8")
+    assert "systemctl --user" in source
+    assert "ensure_unit \"$RESEARCH_UNIT\"" in source
+    assert 'XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$mak_user_id}"' in source
+    assert 'DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=$XDG_RUNTIME_DIR/bus}"' in source
+    assert "user systemd bus unavailable: supervision deferred" in source
+    assert "supervision check passed" in source
+    assert "nohup" not in source
+    assert "setsid" not in source
+    assert "pgrep" not in source
