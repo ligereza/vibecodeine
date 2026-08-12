@@ -510,6 +510,26 @@ def rd_eventos():
         console.print(f"  {e['nombre']}  |  {e['voluntarios']} vol -> {pack}  |  {e['fuente']}")
 
 
+@rd_app.command("testeos")
+def rd_testing():
+    """Show only the internal summary of imported testing evidence.
+
+    It exposes no observations and does not turn colors into public claims.
+    """
+    from .rd import testing_evidence_summary
+
+    res = testing_evidence_summary()
+    _section("flujo · rd · evidencia de testeos")
+    if not res.get("available"):
+        _warn("No hay evidencia de testeos importada")
+        return
+    source = res["source"]
+    console.print(f"  Fuente: {source['file_name']}  | SHA-256: {source['sha256']}")
+    for key, value in res["counts"].items():
+        console.print(f"  {key}: {value}")
+    console.print(f"\n[dim]Estado: {res['status']}; publicación automática: no.[/]")
+
+
 @rd_app.command("productora")
 def rd_productora(slug: str = typer.Argument(..., help="Slug de la productora, ej. thegrid")):
     """Perfil completo: instagram, aliases, tipos de fecha, venues (preferido
