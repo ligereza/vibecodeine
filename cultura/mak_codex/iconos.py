@@ -31,11 +31,11 @@ import re
 import sys
 import time
 
-from codex_lib import (guardar_pieza_generica, guardia_espera, planner_llm,
-                       tiempo_ms)
+from codex_lib import (PIEZAS, guardar_pieza_generica, guardia_espera,
+                       planner_llm, tiempo_ms)
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from motor_semantico import compilador, critico, esquema  # noqa: E402
+from motor_semantico import compilador, critico, esquema, calidad_svg  # noqa: E402
 from motor_semantico.compilador import ErrorSemantico  # noqa: E402
 
 sys.path.insert(0, "/home/mak/research")
@@ -138,16 +138,22 @@ def generar_icono(pedido, densidad="medio", tono=None):
     except ErrorSemantico as e:
         svg, avisos, error_compilador = "", [], str(e)
 
-    # El critico perceptual es OPCIONAL y se dice cuando no corrio: mide sobre
-    # pixeles y esta maquina puede no tener con que rasterizar. Sus alertas NO
-    # bloquean -- premia lo convencional, y un icono expresivo puntua peor.
-    veredicto = critico.analizar(svg, spec.get("slug", "icono")) if svg else {}
-    if veredicto.get("error"):
-        avisos = list(avisos) + ["sin analisis perceptual: %s" % veredicto["error"]]
+    visual = (calidad_svg.validate(svg, spec.get("slug", "icono"))
+              if svg else {"ok": False, "status": "invalid",
+                           "reason": "compiler produced no SVG"})
+    dedupe = (calidad_svg.find_duplicate(svg, PIEZAS)
+              if svg else {"status": "unique", "method": "none"})
+    veredicto = visual.get("metrics") or {}
+    if not visual.get("ok"):
+        avisos = list(avisos) + ["visual validation: %s" % visual.get("reason", "unknown")]
+    if dedupe.get("status") == "duplicate":
+        avisos = list(avisos) + ["duplicate visual: %s" % dedupe.get("duplicate_of", "?")]
 
-    smoke_ok = bool(svg) and not error_compilador
+    smoke_ok = (bool(svg) and not error_compilador and visual.get("ok") and
+                dedupe.get("status") != "duplicate")
     meta = {"pedido": pedido, "modo": "iconos", "spec_por": real, "spec": spec,
             "avisos": list(avisos), "problemas": problemas,
+            "visual_validation": visual, "dedupe": dedupe,
             "critico": {k: v for k, v in veredicto.items()
                         if k in ("puntaje", "alertas", "notas", "error")},
             "smoke_ok": smoke_ok,
@@ -163,6 +169,12 @@ def generar_icono(pedido, densidad="medio", tono=None):
             "```json", json.dumps(spec, ensure_ascii=False, indent=1), "```"]
     if avisos:
         nota += ["", "Avisos del compilador:", ""] + ["- " + a for a in avisos]
+    if visual:
+        nota += ["", "Visual validation:", "```json",
+                 json.dumps(visual, ensure_ascii=False, indent=1), "```"]
+    if dedupe.get("status") == "duplicate":
+        nota += ["", "Duplicate candidate preserved for audit: " +
+                 str(dedupe.get("duplicate_of", "?"))]
     if veredicto.get("puntaje") is not None:
         nota += ["", "Critico perceptual: %s/100%s"
                  % (veredicto["puntaje"],
