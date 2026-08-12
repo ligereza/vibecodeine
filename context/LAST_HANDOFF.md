@@ -1,12 +1,302 @@
 # LAST_HANDOFF - Faro
 
-Updated: 2026-08-11 - canonical branch promotion and final validation
-Status: The Hub boundary, XIO human-link circuit, writer ownership block, and
-language slices are consolidated in the four canonical branches. Local,
-GitHub, MAK checkout, and runtime mirror are clean and synchronized; no
-auxiliary branch or worktree remains.
+Updated: 2026-08-11 - Atlas release and MAK supervision verified
+Status: The Hub boundary, XIO human-link circuit, writer ownership block,
+language slices, Atlas decision-draft gate, and process supervision are
+consolidated in the four canonical branches. The Atlas backend and served
+portfolio surface are deployed to MAK with rollback snapshots. The release
+is committed and pushed; the four canonical branches contain the tested MAK
+commit. README/SVG files were not changed.
 This block is the current operational source. Later sections preserve dated
 historical evidence and must not be read as present state.
+
+## Uncatalogued nested MAK activity - 2026-08-11
+
+- Two automatic chains were verified after the process-supervision audit. They
+  were not orphan processes, but they were missing from the activity picture:
+  (1) the 23:30 `MAK-TRABAJO` research cycle completed job
+  `20260811-233001-ad3d`, extracted nine concepts, and
+  `cultura/mak_research/worker.py` automatically called
+  `enqueue_annex_icons`, creating six Codex icon jobs; (2) the 23:40 cron
+  entry `*/20 * * * * /home/mak/research/micelio_guardia.sh` ran
+  `ideas_a_micelio.py` and `memoria.indexar()`, producing `90` new embedding
+  chunks through `nomic-embed-text`.
+- The first chain runs icon generation as children of `mak-codex.service`;
+  the second runs the embedding server as a child of the global
+  `ollama.service`. The process guard and service checks therefore reported a
+  healthy system while the GPU was busy. Stopping the model only stopped the
+  current work; it did not disable either caller.
+- The six icon SVG/Markdown pairs created between 23:33 and 23:37 are
+  preserved. No new icon artifact appeared after 23:37. The base research
+  report and its JSON/concepts files were created at 23:32. No Watson or AWS
+  process was involved.
+- This exposes a supervision gap: current checks cover service liveness,
+  detached scans, listeners, and stale workers, but not nested queue activity,
+  cron-triggered provider/model calls, or resource ownership inside a healthy
+  service.
+
+## Next action
+
+Add a read-only activity inventory for cron -> caller -> queue -> model and a
+resource budget/gate for nested generation before changing any provider or
+icon automation. Decide separately whether research may auto-enqueue visual
+annexes and whether micelio reindexing may use the GPU on its fixed 20-minute
+schedule. Keep both current chains stopped when idle; do not touch README/SVG.
+
+## Release and MAK runtime verification - 2026-08-11
+
+- MAK release commit `f7e268a3` (`fix Linux resume concurrency test double`)
+  fixes the Ubuntu concurrency regression by replacing the shared
+  `threading.Thread` module reference in the test with a private fake module.
+  The preceding Atlas/process-supervision commit is `ebc8b6a7`.
+- PR `#524` was merged into `main` as `0c08f559` after all five required
+  checks passed: Ubuntu, Windows, dependencies, secrets, and real-data
+  safety. The initial Ubuntu failure was reproduced and fixed; the initial
+  secrets failure was runner-side GitHub API certificate noise and passed on
+  the next run without a workflow change.
+- Baseline remote refs at PR promotion were `main=0c08f559`,
+  `mak=f7e268a3`, `rd=3d262ece`, and `iskvw=bb7c8094`. The MAK release
+  commit is an ancestor of all three promoted branches; later handoff-only
+  propagation commits were merged into each branch. Read current refs with
+  `git ls-remote origin`; no branch was deleted or reset.
+  The post-merge `main` CI run `31552175108` is green on Ubuntu and Windows;
+  security run `31552175202` is green on dependencies, secrets, and real-data
+  safety.
+- Live MAK verification at `2026-08-11 21:10 -04`: platform watchdog exit `0`,
+  research watchdog exit `0`, `resources_ok=True`, and no pytest process.
+  `mak-hub.service`, `mak-codex.service`, `mak-research.service`, and
+  `mak-xio.service` are active, with one listener each on `8900`, `8890`, and
+  `8891`. The only failed user unit remains the unrelated OAuth
+  `onedrive.service`; do not repair it as part of MAK supervision.
+- Remaining work is integration evidence, not a failed release: execute one
+  human-controlled draft -> commit -> undo cycle on a test-safe portfolio
+  record, then audit the explicit XIO human link and any writer outside the
+  covered cron/process contracts. Do not activate Watson/AWS without a bounded
+  human-selected batch. Do not touch README/SVG.
+
+## Next action
+
+Run the live test-safe Atlas draft -> commit -> undo exercise without changing
+production decisions; record the audit event and rollback result. Then inspect
+the XIO human-link boundary and uncovered writers only when a concrete caller
+or reproducible failure is identified. Keep repo-sync paused and preserve the
+MAK rollback snapshots.
+
+## Atlas decision-draft circuit - 2026-08-11
+
+- The operational `/portafolio/` surface now keeps a complete per-piece draft
+  for selection, triage, classification context, and relation decisions. Save
+  records intent only; commit is the explicit human action. Cancel restores the
+  prior view without applying the draft.
+- The commit path is serialized and idempotent by source draft. Repeated
+  submits do not duplicate selection, classification, relation feedback, or
+  draft history. Undo is append-only, restores the prior projection, and keeps
+  the committed event in the audit timeline. Relation undo has its own scope.
+- The order view keeps exact selected targets visible and no longer advances
+  automatically after a decision. The seed flow refuses to advance while a
+  draft is pending and reads the staged triage before the committed projection.
+  The legacy select/classify/feedback endpoints remain integration surfaces;
+  the operational UI writes only through draft, commit, and undo routes.
+- Relation undo now refreshes the returned item and clears the local committed
+  draft before rebuilding the scene, so a reverted relation cannot remain
+  visible as a stale pending draft. The asset cache query is
+  `atlas-context-map`.
+- A partial commit is retryable. Only a fully committed source draft is
+  idempotent; retrying a partial draft reuses existing selection and
+  classification rows while attempting the missing relation or channel.
+  This keeps append-only history without making a transient failure permanent.
+- `copilot.dedupe_feedback` now collapses repeated events by their latest
+  indexed signal instead of Python object identity. History remains intact;
+  learning sees one current signal per channel and respects undo barriers.
+- Deployment backup: `/home/mak/rollback/atlas-drafts-undo-20260811/`.
+  Local and MAK hashes match for `hub.py`, `contrato_archivo.py`,
+  `copilot.py`, `editor.html`, and `mesa_montaje.js`. Only `mak-hub.service`
+  was restarted; all four managed MAK units are active in their systemd
+  control groups.
+- Follow-up backups are `/home/mak/rollback/atlas-relation-undo-20260811/`
+  and `/home/mak/rollback/atlas-partial-retry-20260811/`. The latest Hub
+  runtime and source mirror hashes match, and the served JavaScript query is
+  `mesa_montaje.js?v=20260811-atlas-context-map`. The latest static backup is
+  `/home/mak/rollback/atlas-context-map-20260811/`.
+- Validation: focused Atlas, bridge, durable-writer, copilot, archive,
+  editor-contract, process-guard, watchdog, entrypoint, Python compilation,
+  JavaScript syntax, and diff checks pass. Live GET checks confirm the Atlas
+  contract, audit surface, and served asset query. Cron-equivalent watchdog
+  runs return zero and report no detached process.
+- The Atlas fixture suite now covers both central and related pieces, complete
+  category/context/relation drafts, explicit confirmation rejection, terminal
+  cancel without mutation, append-only undo, relation undo, and retry after a
+  partial commit. It also exercises the real Hub HTTP routes against a
+  temporary fixture, including the audit response, without mutating MAK data.
+- Final MAK check after the partial-retry deployment: both watchdogs returned
+  zero at `20:09 -04`, all four units were active, the guard returned empty,
+  and listeners `8890`, `8891`, and `8900` belonged to the declared service
+  control groups rather than detached sessions.
+- A full repository pytest run exceeded the bounded 120-second local command
+  window without an assertion result. Its exact Python runner was identified
+  and terminated; no test process remained. Full-suite coverage is therefore
+  not claimed by this handoff.
+
+## Cron watchdog bus fix - 2026-08-11
+
+- The previous supervision patch had a real cron-only defect: cron provided no
+  `DBUS_SESSION_BUS_ADDRESS`, so `systemctl --user` returned `No medium found`.
+  From `19:10` through `19:30`, the logs falsely reported every managed unit as
+  inactive and every recovery request as failed, even though the units stayed
+  alive. The watchdog was present but could not supervise from cron.
+- Both watchdogs now derive `XDG_RUNTIME_DIR` and
+  `DBUS_SESSION_BUS_ADDRESS` from the current user before using `systemctl
+  --user`. If the user bus socket is absent, they record
+  `supervision deferred` and never launch a replacement process. The platform
+  watchdog also records `supervision check passed` or `incomplete` each tick.
+- Deployment was backed up at
+  `/home/mak/rollback/process-supervision-20260811-bus/` and
+  `/home/mak/rollback/process-supervision-20260811-bus-final/`. Runtime and
+  `/home/mak/flujo` mirror hashes match for both watchdogs.
+- Validation: local focused process/watchdog tests pass `9/9`, shell syntax and
+  diff checks pass, and an `env -i` cron-equivalent run returned `0` for both
+  watchdogs. All four managed units were `active`; the guard reported no stale
+  detached scans. The live `iconos.py` worker is a child of `mak-codex.service`
+  and therefore belongs to its systemd control group; it is not an orphan.
+- Separate finding unchanged: the user manager remains `degraded` because of
+  the failed `onedrive.service`; the independent rclone mounts and MAK units
+  are healthy. Do not repair that unrelated OAuth service without a separate
+  instruction.
+
+## MAK process supervision hardening - 2026-08-11
+
+- Root cause verified: Hub, Codex, and XIO were supervised by user `systemd`,
+  but Research was repeatedly launched by `watchdog.sh` with a detached shell.
+  The live `python3 interfaz.py` process was PID `88249`, parent PID `1`, and
+  lived in `session-1738.scope`; the cron watchdog could see it with `pgrep`
+  but could not restart or account for it as a service. This is the process
+  leak that made the previous watchdog appear healthy while leaving an orphan.
+- `watchdog_mak.sh` no longer uses `pgrep`, `setsid`, or detached launches. It
+  serializes with `flock`, runs the narrow stale-scan/resource guard with a
+  timeout, starts only declared units through `systemctl --user`, and retries
+  HTTP health checks before requesting a restart. Research `watchdog.sh` now
+  follows the same contract for `mak-research.service` and the optional
+  `mak-research-queue.service`.
+- Research now has a real user unit with `Restart=always`, `TimeoutStopSec=15`,
+  and `KillMode=control-group`; Hub, Codex, and XIO received the same child
+  cleanup settings. The queue unit is installed but not enabled at boot and
+  is started only when `NTFY_TOPIC_IN` is configured. The four daemon units
+  are enabled; the queue is inactive by design.
+- Deployment was backed up at
+  `/home/mak/rollback/process-supervision-20260811/`. Local source, MAK
+  mirror, runtime scripts, and installed units match by SHA-256 for the
+  changed supervision files. The old Research PID was terminated only after
+  verifying its exact command and `/home/mak/research` working directory.
+- Evidence: a controlled stop of Research was recovered by the platform
+  watchdog (`117520 -> 118477` and a second run `120068 -> 120215`), with one
+  listener on each `8890`, `8891`, and `8900`. The cron-like `env -i` execution
+  succeeded; the guard reported no stale detached scans and
+  `resources_ok=True`. Focused process, Research watchdog, entrypoint, and
+  maintenance tests passed; the paused Curatoria guard was also converted to
+  foreground execution and deployed. Shell syntax, Python compilation, and
+  diff checks passed.
+- Separate finding preserved, not changed: `onedrive.service` is failed after
+  an interactive OAuth error (`status=3`) while an independent `rclone`
+  mount remains alive. It makes the user manager report `degraded`, but it is
+  not a MAK daemon and must not be restarted or repaired without a separate
+  instruction.
+
+## Next action
+
+Run the remaining bounded test batches with process-group cleanup, then use
+the live Atlas surface for one human-controlled draft -> commit -> undo
+exercise on a selected test-safe record. Keep the process-supervision and
+Atlas rollback snapshots. Do not touch README/SVG or activate Watson/AWS.
+
+## Human curation action audit - 2026-08-11
+
+- Read-only verification against the live Hub at `192.168.50.2:8900` and the
+  MAK append-only files found `84` selection-history rows: `62` discard,
+  `9` deselect, and `13` select. The current projection is `66` labeled items:
+  `59` discard, `3` deselect, and `4` select. The inbox remains `7044` items;
+  its mtime predates this session, so the media source was not deleted.
+- The latest selection session is `mesa-msp7r75z` with eight individual
+  record-scope discards. The penultimate selection was
+  `17888311772541385.mp4` at `2026-08-11T18:12:30-04:00`; the last was
+  `17940588713470819.mp4` at `2026-08-11T18:13:23-04:00`. Both have matching
+  `triage=discard` classification rows and two-event item timelines. Both
+  requests used `pass_size=0`; no batch discard or item-id substitution is
+  present in the ledger.
+- The interface behavior explains the visual report: `mesa_montaje.js` removes
+  the confirmed record from the current scene, then `advanceAfterDiscard()`
+  centers a new candidate and reloads the scene. The surrounding nodes can
+  therefore disappear or move even though no second record was persisted as
+  discarded. The source does not record the screen's active/selected id at
+  click time, so it cannot prove which visual node the user perceived as
+  central after the scene changed.
+- Human follow-up confirms that both latest discards were intended, but the
+  penultimate item had not been visibly reviewed and appeared as a related
+  node while the central work stayed in place. This matches the order-mode
+  path: `applyOrderDecision()` acts on `orderSelectedIds`, while its automatic
+  advance only runs when that set contains `activeId`; a selected related node
+  can therefore disappear while the center remains. This is a UI target
+  ambiguity, not a ledger identity rewrite.
+- Measured commands: live `GET /api/portfolio/audit`, live `GET
+  /api/portfolio/inbox?compact=1`, live `GET /api/portfolio/decision-index`,
+  remote `cat .../selections.jsonl`, and per-item audit for both latest ids.
+  No POST, provider call, browser interaction, commit, push, or data repair
+  was performed.
+- Next action: add an explicit target badge/thumbnail and confirmation for
+  discard, showing `activeId`, `selectedId`, and the exact target; preserve a
+  related node unless its target is explicitly confirmed. Do not alter
+  historical selections without an explicit human correction.
+
+## MAK runtime load audit - 2026-08-11
+
+- A live process check found and stopped the stale audit shell/`grep -R`
+  pair (`54682`/`54695`) that had been consuming about `72%` CPU for over
+  four hours. It was an orphaned inspection process, not a product worker.
+- The remaining load is an automatic Codex icon job: `iconos.py` is generating
+  an SVG for the Shannon entropy concept through local Ollama `gemma3:4b`.
+  At the check, `llama-server` used about `98%` GPU on the GTX 1650 at `60 C`.
+  Hub, Research, Codex, and XIO services remain active; Curatoria remains
+  paused. No Watson or AWS process, request, or provider job is active.
+- Provider work remains intentionally gated. First complete the staged human
+  curation interaction and stop unrequested background generation; then run a
+  bounded Watson research/triangulation batch and an AWS visual-evidence batch
+  on an explicitly selected small set, with local validation and human review.
+
+## MAK orphan-process guard - 2026-08-11
+
+- Root cause verified: the existing cron watchdog only revived missing services;
+  it did not serialize overlapping runs or inspect detached session children.
+  The stale `grep -R` pair (`54682`/`54695`) came from a remote audit shell
+  whose PowerShell quoting left the scan alive after the inspection ended.
+- `cultura/mak_plataforma/guardia.py` now reads `/proc` directly and terminates
+  only scans older than 15 minutes that use `grep -R`, `rg`, or `find` against
+  `/home/mak` or `/etc/systemd` and are detached under PID 1 or a shell `-c`.
+  Managed Python workers, Ollama, and MAK services are outside this filter.
+  `watchdog_mak.sh` now holds `watchdog.lock` with `flock` and runs this guard
+  every existing five-minute cron tick, logging to `guardia.log`.
+- Local validation passed `14/14` focused tests, `py_compile`, Ruff, and
+  `git diff --check`. Remote validation passed shell syntax, Python import,
+  managed-worker protection, recursive-scan filtering, and a live dry run with
+  `PROCESS_GUARD: no stale detached scans`.
+- Deployment was backed up at `/home/mak/rollback/process-guard-20260811/`,
+  including the old runtime and mirror copies. The `/home/mak/flujo` mirror
+  and live runtime hashes now match the local source: `guardia.py`
+  `9dac2ea6bc3a17096d62d39f0e9edf5c8209b5d47db7e35f6ff4065c47dda484` and
+  `watchdog_mak.sh`
+  `92340266cc8e6085dece1f3fbd860310c5084b5d93f46e94372ff01e37e204eb`.
+  The first backup command was rejected before SSH execution because
+  PowerShell expanded the remote `$d`; it created no directory or process and
+  was immediately repeated with single-quoted remote input.
+- Post-deploy watchdog execution did not restart or duplicate services. MAK
+  reports `mak-hub.service`, `mak-codex.service`, and `mak-xio.service` active,
+  with one listener each on `8900`, `8890`, and `8891`.
+
+## Next action
+
+Observe the next normal cron ticks through `guardia.log` and keep the guard
+scope narrow. Any new process class must first be reproduced, named, and added
+with a fixture; do not turn this into a broad CPU killer. Keep the automatic
+Codex icon worker separate from orphan cleanup and do not activate Watson/AWS
+without a bounded human-selected batch.
 
 ## Read this first
 
@@ -21,7 +311,57 @@ This file is the operational checkpoint. The order for a fresh agent is:
 Do not treat raw logs, old plans, Downloads, chat memory, or an old branch as
 instructions. Verify any statement that affects a destructive or remote action.
 
-## Current verified state - 2026-08-11
+## Current verified state - 2026-08-11 audit continuation
+
+- Canonical refs are unchanged and still share tree
+  `629ba38268f3137260bfb1c5e3aacf6f6068a250`: `main=559fa607`,
+  `mak=b4f5b2ad`, `rd=338ec99c`, and `iskvw=66b6b470`; each matches its
+  origin ref. The Windows checkout is on `mak` with nine modified paths (the
+  handoff plus four source files and four regression-test files); the source
+  patch is intentionally uncommitted. No README/SVG path is modified. Reverse
+  patch check passed with `git diff --binary | git apply --reverse --check`.
+- MAK deployment completed from the four source files after a backup at
+  `/home/mak/rollback/faro-synthetic-audit-20260811/`. The remote checkout and
+  live mirrors now match the patch; its four canonical local refs (`main`,
+  `mak`, `rd`, `iskvw`) were reconciled to their fetched origin refs without
+  changing the active `mak` worktree. `mak-hub.service` and
+  `mak-codex.service` are active; Research is supervised by its watchdog.
+  Current listeners are `0.0.0.0:8900`, `127.0.0.1:8890`, and `127.0.0.1:8891`.
+- Real route findings and local fixes: Research and Codex unknown `/api/*`
+  routes now return JSON 404 instead of HTML 200; malformed JSON in Research
+  fructificacion/fusion now returns 400 instead of 500; Research bridges now
+  preserve an upstream 400 instead of relabeling it 502; and both internal
+  services implement HEAD without a response body. Hub proxies HEAD to the
+  internal service instead of performing a GET. Focused tests and an isolated
+  post-fix MAK service run covered these paths.
+- Real writer finding and local fix: `trabajo.py` built corpus-review payloads
+  with the `repasar` identity while validating them as `multiplicar`, causing
+  repeated `work_contract_identity_mismatch` rejections and a stale
+  `corpus_review_inflight`. The payload now receives the active rotation verb,
+  and contract rejection clears review inflight state. The last old log entry
+  is pre-deployment; a post-fix MAK-side simulation against the live source
+  returned `contract_errors=[]` for the corpus-review shape. The first real
+  cron tick after deployment at `18:00:01` completed review job
+  `20260811-180001-e7b9` as `listo`, recorded `parent_id=verb:multiplicar`,
+  advanced the count to `5`, and removed `corpus_review_inflight`.
+- Curatoria is intentionally disabled (`AUTONOMY_ENABLE` absent) and no
+  perception process is running. Read-only state: `total_trabajo=7300`,
+  `procesados=3370`, `cuarentena=9`, `errores_totales=81`, and
+  `errores_seguidos=0`; the last errors are historical media/JSON evidence,
+  not a new loop. All four runtime lock sidecars were available, so no writer
+  was holding a lock after the matrix. Invalid synthetic requests left the
+  render config, Research jobs, and Codex jobs SHA-256 fingerprints unchanged.
+- Validation: the focused Hub/Research/Codex/Curatoria/writer/language
+  circuits passed; local AST parsing covered `8358` Python files with zero
+  failures; remote runtime AST parsing covered the four deployed targets and
+  found a pre-existing box-only `panel_directivo.py` syntax error. That file is
+  not in the repo, not invoked by cron/systemd, and was preserved rather than
+  folded into the canonical system. The remote box has no pytest module, so
+  Linux-only pytest execution was unavailable; direct runtime contracts and
+  local focused suites passed. The full local suite remains unresolved because
+  the `240s` run timed out without a test result; it is not counted as pass.
+
+## Pre-audit verified state - 2026-08-11
 
 - Windows canonical: `C:\IA\flujo`, branch `mak`, clean. After the final
   promotion, the four canonical refs (`main`, `mak`, `rd`, and `iskvw`) were
@@ -79,11 +419,11 @@ instructions. Verify any statement that affects a destructive or remote action.
 
 ## Current next action
 
-Continue the open audit circuits in the prior handoff without creating another
-branch or touching README/SVG. The final branch hash/tree check, remote
-cleanliness check, and focused regression suite were completed after the
-promotion; the full suite timeout remains recorded as an unresolved validation
-limit, not as a pass.
+No required runtime repair remains. Keep the rollback snapshot until the next
+release decision, and optionally split the full pytest suite to locate its
+240-second timeout. Do not touch README/SVG or the non-invoked box-only
+`panel_directivo.py` artifact, and do not commit or push without a separate
+instruction.
 
 ## Audit circuit - 2026-08-11
 
@@ -139,7 +479,7 @@ limit, not as a pass.
   routes, contain no direct LAN Research/Codex URLs, and keep Curatoria's old
   `panel.py` outside the live mirror map.
 
-## Next action - current
+## Historical next action before synthetic audit
 
 The Hub boundary, XIO human-link circuit, writer ownership circuit, language
 guard, canonical branch cleanup, runtime reconciliation, and full validation
@@ -4714,3 +5054,219 @@ changes, and provide a verifiable human XIO link without auto-linking. Then
 test the 47 cron targets across stop/restart boundaries, starting with the
 watchdog and retention jobs, and record any real discrepancy before editing.
 Do not activate repo-sync or touch README/SVG.
+
+## Gemini retirement and flyer path cleanup - 2026-08-11
+
+- Verified checkout: `mak` at `32688c8e`, clean before this change, tracking
+  `origin/mak`. No README/SVG files were touched.
+- The only active Gemini runtime path was the optional vision call inside
+  `src/flujo/eventos/flyer_auto.py`. It loaded `GEMINI_API_KEY*`, called the
+  Google Generative Language API, and ran during flyer tests without a mock.
+- Removed that active path, its `EventFlyerResult.productora` field, the CLI
+  output branch, `src/flujo/eventos/productoras.py`, and its Gemini-only test.
+  The local RD database at `data/productoras` and RD productora commands stay
+  active and were not changed.
+- Removed the artificial `sleep_seconds=2.0` delay from flyer automation. The
+  existing file-polling timing remains because it protects external render
+  handoff completion.
+- Removed Gemini variables from `.env.example`. The ignored local `.env` was
+  not rewritten; no active code reads those keys now, and secret values were
+  not exposed. Historical Gemini mentions remain in changelogs, security
+  fixtures, and archived evidence by design.
+- Focused verification: `python -m pytest tests/test_eventos_flyer_auto.py
+  tests/test_cli_smoke.py -q --durations=15` -> 13 passed in 7.9s. The two
+  flyer calls were about 3.14s and 3.02s; before cleanup one measured 28.58s
+  in isolation and the full suite measured 306.3s.
+- Full regression: `python -m pytest tests -q --durations=25` -> 944 passed,
+  28 skipped, 0 failed in 241.0s. Remaining slow coverage is manifest
+  generation (13.42s), SVG/icon rendering (about 4-7.6s each), and two energy
+  sensor tests with intentional 5s sampling intervals. No safe deletion was
+  made from those areas.
+- Working tree has intentional uncommitted changes on `mak`; no commit/push was
+  made because the user did not request publication in this turn.
+
+## Next action
+
+Run `python -m flujo verify` on this checkout, including hub smoke, then review
+the diff and branch status. If green, ask whether to commit/push the Gemini
+retirement. Do not edit README/SVG, delete `data/productoras`, or restore the
+retired provider from historical references.
+
+## SVG example report removed from CI dependency - 2026-08-11
+
+- The 16 curated SVGs under `docs/cultura/ensayos/rave/iconos/` were preserved
+  byte-for-byte; no SVG path is modified or deleted.
+- Removed the report-specific `tests/test_ensayo_rave.py` dependency and the
+  16-browser-frame animation integration from `tests/test_iconos_conjunto.py`.
+  The generic validator and gallery builder now use a synthetic SVG fixture,
+  while perceptual animation measurement remains available on demand through
+  `py tools/iconos_conjunto.py animar`.
+- Removed the two real-rave checks from `tests/test_archivo_ensayos.py` and
+  converted its contract fixture to a synthetic `demo` essay. This keeps the
+  contract and validator coverage focused on code behavior rather than one
+  example report.
+- Updated `docs/cultura/ensayos/rave/LEEME.md` to distinguish the historical
+  integration measurement from automatic CI coverage. The report remains
+  available as a visual/reference artifact.
+- Targeted regression: 41 tests passed. Full regression: 944 passed, 28
+  skipped, 0 failed in 152.3s. Full `python -m flujo verify` passed in 158.6s
+  including compileall, health, version, and Hub smoke. Previous full test
+  measurement was 241.0s after Gemini removal; this cleanup saved 88.7s
+  (36.8%).
+- Remaining slow tests are legitimate production/tool coverage: manifest CLI
+  subprocess (about 14.7s), one rasterizer animation test (about 7.2s), two
+  energy sampling tests with intentional 5s intervals, and several MAK/skin
+  render or subprocess checks. No SVG production file was used as a CI fixture.
+
+## Next action
+
+Review the complete uncommitted diff on `mak`, then decide whether to commit
+and publish the Gemini retirement plus CI fixture separation. Do not restore
+the report-specific tests or alter the preserved SVGs unless a new artistic or
+integration requirement explicitly reopens them.
+
+## Energy sampling tests made deterministic - 2026-08-11
+
+- `cultura/mak_plataforma/energia_log.py` was not changed: production still
+  waits `intervalo_s` between CPU energy reads because that interval is part of
+  the measurement itself.
+- `tests/test_energia_log.py` now patches `time.sleep` only inside the two
+  mocked-sensor tests and asserts that production requested `5` seconds. The
+  tests keep the interval contract without burning wall-clock time.
+- Focused result: `18 passed` in `1.6s`; those two tests previously consumed
+  `5.0s` each. Full regression after the change: `944 passed`, `28 skipped`,
+  `0 failed` in `159.9s`. The energy tests no longer appear in the slowest
+  list; total suite wall time remains variable across runs because renderer,
+  subprocess, and filesystem tests dominate it.
+- No README/SVG or production energy code changed.
+
+## Next action
+
+Keep the real `energia_log` sampling interval intact. The next safe timing
+target is the manifest check subprocess chain (about 14.6s); optimize only if
+the same CLI truth can be checked without weakening its stale-manifest guard.
+
+## Canonical branches synchronized - 2026-08-11
+
+- Published cleanup commit `9e9abb6e` on `mak`:
+  `retire obsolete Gemini paths and slow fixture tests`.
+- Propagated it with explicit non-rewriting merges because the canonical
+  branches had independent synchronization commits:
+  - `main` -> `93743ac5`
+  - `rd` -> `a2eeaa68`
+  - `iskvw` -> `22c52722`
+- All four local branches track their matching origin refs with `ahead=0` and
+  `behind=0`. Their remote tree IDs are identical:
+  `154c01f0874f7797ab62e864a0e61fc9c2983afb`.
+- Final `python -m flujo verify` on `mak` passed: compileall, `944` tests,
+  `28` skips, health, version, and Hub smoke; total wall time `165.4s`.
+- Worktree is clean. No README/SVG file changed, and all `16` curated rave
+  SVGs remain preserved. No PR was opened because the requested operation was
+  direct synchronization of the four canonical branches.
+
+## Next action
+
+Use the synchronized canonical branches as the baseline. The next measured
+performance target is the manifest check subprocess chain; do not reopen the
+retired Gemini path or restore report-specific SVG tests without a new reason.
+
+## RD evidence bridge integrated on mak - 2026-08-12
+
+- Imported the normalized 2025 testing evidence into
+  `data/rd_fuentes/testeo_eventos_2025_evidence.json`. The original workbook
+  remains outside the repository; the source filename, SHA-256, source rows,
+  duplicate candidates, unresolved labels, and review queue are preserved.
+- Added the candidate reagent, entity, relation graph, and relation index files
+  under `data/rd_fuentes/candidates/`. They remain candidate material and are
+  not promoted into canonical claims.
+- Extended the existing regenerable `src/flujo/rd/database.py` projection with
+  isolated `testeo_*` tables. It loads 1 source, 42 sheets, 42 events, 1,831
+  source rows, 5,394 observations, 30 substance labels, 50 reagent labels,
+  and 84 pending venue/producer links. It does not touch `rd_datos.db`, demo
+  CSV data, the public RD panel, or `/portafolio/`.
+- Added `flujo rd-db testeos`, which exposes only an internal evidence summary;
+  it explicitly reports that automatic public claims are disabled. Python
+  identifiers and operational docs use English/ASCII; human-facing RD report
+  text remains Spanish.
+- Preserved the isolated POST, matrix, reagent, and relation artifacts under
+  `docs/rd/prototypes/2026-08-11/` with a README marking them non-operational.
+  No prototype was mounted as a second UI or production route.
+- Verification: focused RD/database, manifest, map, and language tests passed;
+  full `python -m pytest -q` passed with 944 tests and 28 skips; `python -m
+  flujo verify` passed compileall, full tests, health, version, and Hub smoke.
+  `git diff --check` is clean.
+- No commit, push, merge, remote deployment, README/SVG edit, or destructive
+  operation was performed. Existing `context/LAST_HANDOFF.md` user changes
+  were preserved.
+
+## RD evidence classification correction - 2026-08-12
+
+- The source evidence remains unchanged; only the regenerable SQLite projection
+  and its test contract were refined.
+- Header spillover is now classified as `repeated_header`, not an unknown
+  substance or reagent. Format labels in the substance column are marked as
+  `misplaced_format_label`; `Ketamina+M` remains a mixture candidate instead
+  of being silently mapped to ketamine.
+- `Cannabis` in a reagent column maps to the catalog test candidate `cbd_thc`;
+  `Fentanilo` maps to the non-colorimetric strip candidate; `Sin reaccion` in a
+  reagent column is marked as result spillover; `Mireia` remains the only
+  unresolved reagent candidate.
+- Compact date tokens are projected against the workbook period with low
+  confidence. Four explicit 2026 dates remain outside the 2025 period; two
+  sheets remain date-less. No date is a public claim.
+- Rebuilt projection summary: 42 sheets, 42 events, 1,831 rows, 5,394
+  observations, 84 pending event links, 2 unresolved substance labels, and 1
+  unresolved reagent label. The public-claims gate remains disabled.
+- Focused database tests pass: 26 passed. `git diff --check` is clean.
+
+## Next action
+
+Review the two genuinely unresolved substance labels, the one reagent typo
+candidate, four explicit 2026 dates, and two date-less sheets. Then classify
+exact duplicate groups as preserved source rows but excluded from public
+aggregates. Keep event-to-venue/producer links candidate-only until external
+evidence is attached; do not infer a public relation from a sheet name.
+
+## RD evidence bridge verified after classification correction - 2026-08-12
+
+- Rebuilt the local regenerable database with `python -m flujo rd-db build` so
+  the operational CLI no longer read the pre-correction SQLite file.
+- Measured `python -m flujo rd-db testeos`: 42 sheets, 42 events, 1,831 test
+  rows, 5,394 observations, 84 pending links, 3 exact duplicate rows excluded
+  from aggregation, 2 unresolved substance labels, and 1 unresolved reagent.
+  Automatic publication remains disabled.
+- Measured `python -m flujo verify`: compileall, full regression (944 passed,
+  28 skipped), health, version, and Hub smoke all passed. `git diff --check`
+  passed.
+- Added the external triangulation note at
+  `docs/rd/TRIANGULACION_TESTEOS_EVENTOS_2025.md`. Strong and partial matches
+  remain candidates and do not alter source rows or public links.
+
+## Next action
+
+Use the corrected evidence summary as the baseline. The only substantive
+review items are the two unresolvable substance labels, `Mireia`, four explicit
+2026 dates, two date-less sheets, and evidence-backed event links. Do not ask
+for clarification about header spillover, misplaced format labels, duplicate
+aggregation, or the fentanilo strip classification: those are now deterministic
+projection rules.
+## Five-point MAK quality gate (2026-08-12)
+
+Implemented and deployed to the live MAK mirror. Backup: `/home/mak/rollback/faro-five-points-20260812`.
+
+- Automatic research-to-Codex icon enqueue is opt-in. The default is `MAK_AUTO_ICONOS=0`; an explicit `MAK_AUTO_ICONOS=1` remains required. Queue results now expose `concepts`, `queued`, `dropped`, `invalid`, and `not_queued`, and research emits an explicit event when concepts remain unprocessed.
+- `plataforma/actividad.py` records trigger, caller, queue, provider/model, resource, department, and job. `GET /api/actividad-inventario` exposes grouped inventory plus current GPU state. `cron:MAK-TRABAJO` is propagated in scheduled requests.
+- `plataforma/gpu_guard.py` is the common Linux cross-process GPU lock at `~/plataforma/.gpu.lock`; local Ollama research, embeddings, Codex, curatoria vision, and Blender render use it. Reindex-after-job is disabled by default; `MAK-MICELIO` remains the scheduled reindex path. The explicit endpoint remains available.
+- Essay validation recognizes flat `PARTE I:` / `PARTE 1:` lines as narrative parts without counting arbitrary numbered subsections. Concept truncation and malformed annex entries remain visible as counts.
+- Codex SVG output now preserves candidates but marks them `validated`, `unverified`, or duplicate. Exact SHA-256 and perceptual duplicate checks run before `smoke_ok`. Visual acceptance requires an animation-capable raster backend. Windows Edge validated a local SVG with score 100; MAK currently reports `unverified` because no browser backend is installed there. Existing live SVGs therefore remain evidence, not accepted visual deliverables.
+
+Measured verification:
+
+- Local focused tests: `33 passed` (research queue, activity/GPU seam, SVG generation, essay validator, reanudar, micelio ideas).
+- Local SVG validation: Edge backend, `status=validated`, perceptual score `100`.
+- Remote Linux: all changed Python files compiled; SHA-256 of every deployed file matches the Windows source; `mak-research.service`, `mak-codex.service`, and `mak-hub.service` are active; Hub root returned HTTP 200.
+- Remote opt-in test: unset `MAK_AUTO_ICONOS` produced `queued=0`, `concepts=2`, `not_queued=2`, `disabled=true`.
+- Remote lock contention test: contender received `GPUSlotBusy` (`CONTENTION_OK`). The inventory endpoint returned schema `mak-activity-inventory-v1` and recorded the lock events.
+- Remote visual check: `backend=None`; recent SVGs are honestly `unverified` with the reason that no browser backend is installed. No visual acceptance was fabricated.
+
+Next action: install or expose a supported animation-capable renderer on MAK, then run the existing recent SVG set through `calidad_svg.validate`; only after that should `smoke_ok` be used as a visual delivery gate. Do not enable automatic icons until that gate is available and a human accepts the output.

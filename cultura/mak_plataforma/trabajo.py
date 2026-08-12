@@ -334,7 +334,7 @@ def _corpus_review_id(path):
         return path
 
 
-def _corpus_review_payload(st):
+def _corpus_review_payload(st, verbo="multiplicar"):
     """Select one old report for review, retaining retryability on failure."""
     seen = set(st.get("corpus_review_seen", [])[-500:])
     inflight = st.get("corpus_review_inflight", "")
@@ -351,8 +351,8 @@ def _corpus_review_payload(st):
             "tema": topic,
             "source_path": path,
             "review_id": review_id,
-            "output_contract": contract_for_task("repasar", topic),
-            "work_contract": work_contract("repasar", topic),
+            "output_contract": contract_for_task(verbo, topic),
+            "work_contract": work_contract(verbo, topic),
         }
     return None
 
@@ -915,7 +915,7 @@ def _tarea(verbo, st):
         if _memory_requires_review():
             return None
         if verbo == "multiplicar" and _should_review_corpus(st):
-            payload = _corpus_review_payload(st)
+            payload = _corpus_review_payload(st, verbo)
             if payload:
                 return ("research", payload)
         if backlog is not None:
@@ -1052,6 +1052,8 @@ def _main_unlocked():
     if contract_errors:
         error = ",".join(contract_errors)
         log("%s RECHAZO local de contrato: %s" % (ts, error))
+        _finish_corpus_review(st, payload, False)
+        _finish_curatoria_review(st, payload, False)
         _audit_idle_decision(ts, online, verbo, depto, payload,
                              "rejected", error=error)
         _save(st)

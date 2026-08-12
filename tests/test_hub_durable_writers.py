@@ -58,6 +58,7 @@ def test_service_entrypoints_default_to_loopback():
 def test_service_proxy_forwards_html_and_post_contract(monkeypatch):
     class UpstreamHandler(BaseHTTPRequestHandler):
         post_body = b""
+        head_count = 0
 
         def do_GET(self):
             body = b"<html><head></head><body>research</body></html>"
@@ -77,6 +78,14 @@ def test_service_proxy_forwards_html_and_post_contract(monkeypatch):
             self.end_headers()
             self.wfile.write(body)
 
+        def do_HEAD(self):
+            type(self).head_count += 1
+            body = b"head"
+            self.send_response(204)
+            self.send_header("Content-Type", "text/plain")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+
         def log_message(self, *_args):
             return
 
@@ -95,6 +104,13 @@ def test_service_proxy_forwards_html_and_post_contract(monkeypatch):
         with urllib.request.urlopen(root + "/research/", timeout=3) as response:
             html = response.read().decode("utf-8")
         assert "var p='/research'" in html
+
+        head_request = urllib.request.Request(
+            root + "/research/api/jobs", method="HEAD")
+        with urllib.request.urlopen(head_request, timeout=3) as response:
+            assert response.status == 204
+            assert response.read() == b""
+        assert UpstreamHandler.head_count == 1
 
         payload = urllib.parse.urlencode({"pedido": "probe"}).encode("utf-8")
         request = urllib.request.Request(

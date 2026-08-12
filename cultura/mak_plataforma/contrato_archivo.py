@@ -568,7 +568,7 @@ def mesa_scene(source: dict, records, relation_groups, limit: int = 10) -> dict:
         if isinstance(channels, list) and channels:
             return [row for row in channels if isinstance(row, dict)]
         feedback = str(group.get("feedback") or "").strip()
-        if feedback.lower() not in {"accept", "correct", "reject", "ignore"}:
+        if feedback.lower() not in {"accept", "correct", "reject", "ignore", "undo"}:
             return []
         return [{
             "action": feedback,
@@ -577,8 +577,27 @@ def mesa_scene(source: dict, records, relation_groups, limit: int = 10) -> dict:
             "note": group.get("note") or "",
         }]
 
+    def effective_feedback(channels):
+        """Return the latest action per relation facet after undo barriers."""
+        current = {}
+        order = []
+        for row in channels:
+            facet = str(row.get("facet") or "unknown").lower()
+            relation = str(row.get("relation") or "related")
+            key = (facet, relation)
+            if str(row.get("action") or "").lower() == "undo":
+                current.pop(key, None)
+                if key in order:
+                    order.remove(key)
+                continue
+            current[key] = row
+            if key not in order:
+                order.append(key)
+        return [current[key] for key in order if key in current]
+
     def feedback_status(channels):
-        actions = {str(row.get("action") or "").lower() for row in channels}
+        actions = {str(row.get("action") or "").lower()
+                   for row in effective_feedback(channels)}
         if actions & {"accept", "correct"}:
             return "accepted"
         if actions and actions <= {"reject"}:
@@ -587,7 +606,7 @@ def mesa_scene(source: dict, records, relation_groups, limit: int = 10) -> dict:
 
     for group in groups:
         target_id = canonical_record_id(str(group.get("item_id") or "").strip())
-        channels = group_feedback(group)
+        channels = effective_feedback(group_feedback(group))
         for feedback_row in channels:
             feedback = str(feedback_row.get("action") or "").strip().lower()
             feedback_facet = str(feedback_row.get("facet") or "").strip().lower()
@@ -644,6 +663,7 @@ def mesa_scene(source: dict, records, relation_groups, limit: int = 10) -> dict:
             "publication_total": record.get("medio_total"),
             "work_group": work_groups.get(record_id),
             "classification": dict(record.get("classification") or {}),
+            "decision_draft": dict(record.get("decision_draft") or {}),
             "description": record.get("descripcion_original") or record.get(
                 "description_original") or "",
             "asset_path": record.get("asset_path") or "",
@@ -667,8 +687,9 @@ def mesa_scene(source: dict, records, relation_groups, limit: int = 10) -> dict:
         for feedback_facet in feedback_facets:
             if feedback_facet not in channels:
                 channels.insert(0, feedback_facet)
+        effective_channels = effective_feedback(feedback_channels)
         accepted_facet = next((str(row.get("facet") or "").strip()
-                               for row in feedback_channels
+                               for row in effective_channels
                                if row.get("action") in {"accept", "correct"}), "")
         feedback_facet = accepted_facet or (feedback_facets[0] if feedback_facets else "")
         decisions = [{
@@ -693,10 +714,7 @@ def mesa_scene(source: dict, records, relation_groups, limit: int = 10) -> dict:
                     existing.setdefault("visual", {})[key] = value
             existing.setdefault("member_ids", []).append(raw_target_id)
             existing.setdefault("decisions", []).extend(decisions)
-            existing["status"] = feedback_status([
-                {"action": existing["status"]},
-                *existing.get("decisions", []),
-            ])
+            existing["status"] = feedback_status(existing.get("decisions", []))
             continue
         relations.append({
             "relation_id": relation_id,

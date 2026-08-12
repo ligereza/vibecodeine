@@ -13,5 +13,7 @@ WorkingDirectory=%h/xio_puente
 ExecStart=/usr/bin/python3 %h/xio_puente/monitor.py
 Restart=always
 RestartSec=10
+TimeoutStopSec=15
+KillMode=control-group
 [Install]
 WantedBy=default.target
