@@ -89,15 +89,20 @@ PORTFOLIO_SELECTIONS = os.path.join(
     HOME, "plataforma/director_runs/portfolio-editor-20260808/selections.jsonl")
 PORTFOLIO_CLASSIFICATIONS = os.path.join(
     HOME, "plataforma/director_runs/portfolio-editor-20260808/classifications.jsonl")
+PORTFOLIO_DRAFTS = os.path.join(
+    HOME, "plataforma/director_runs/portfolio-editor-20260808/decision_drafts.jsonl")
 MESA_INBOX_FIELDS = (
     "id", "tipo_contenido", "fecha", "publicacion_id", "asset_path",
-    "asset_available", "selection", "classification",
+    "asset_available", "selection", "classification", "decision_draft",
 )
 _PORTFOLIO_GTM_LOCK = threading.Lock()
 _PORTFOLIO_CONNECTION_LOCK = threading.Lock()
 _PORTFOLIO_FEEDBACK_LOCK = threading.Lock()
 _PORTFOLIO_SELECTION_LOCK = threading.Lock()
 _PORTFOLIO_CLASSIFICATION_LOCK = threading.Lock()
+_PORTFOLIO_DRAFT_LOCK = threading.Lock()
+_PORTFOLIO_COMMIT_LOCK = threading.Lock()
+_PORTFOLIO_UNDO_LOCK = threading.Lock()
 _PORTFOLIO_TRIANGULATION_LOCK = threading.Lock()
 _PORTFOLIO_EXTERNAL_REVIEW_LOCK = threading.Lock()
 _PORTFOLIO_LEDGER_LOCK = threading.Lock()
@@ -753,6 +758,23 @@ def _portfolio_classifications():
     return result
 
 
+def _portfolio_draft_history(item_id=""):
+    requested = str(item_id or "").strip()
+    return [row for row in _portfolio_jsonl(PORTFOLIO_DRAFTS)
+            if row.get("item_id")
+            and (not requested or str(row.get("item_id")) == requested)]
+
+
+def _portfolio_drafts():
+    """Return the latest durable draft for each item without mutating state."""
+    current = {}
+    for row in _portfolio_draft_history():
+        item_id = str(row.get("item_id") or "").strip()
+        if item_id:
+            current[item_id] = row
+    return current
+
+
 def _portfolio_selection_history(item_id=""):
     requested = str(item_id or "").strip()
     return [row for row in _portfolio_jsonl(PORTFOLIO_SELECTIONS)
@@ -811,12 +833,14 @@ def _portfolio_inbox(compact=False):
     payload["items"] = items
     selections = _portfolio_selections()
     classifications = _portfolio_classifications()
+    drafts = _portfolio_drafts()
     vision = {} if compact else _portfolio_vision()
     for item in payload.get("items", []):
         item["selection"] = (selections.get(item.get("id")) or {}).get(
             "decision", "pendiente")
         item["classification"] = (classifications.get(item.get("id")) or {}).get(
             "fields", {})
+        item["decision_draft"] = drafts.get(item.get("id"), {})
         if not compact:
             item["vision_features"] = (vision.get(item.get("id")) or {}).get(
                 "features", {})
@@ -1203,16 +1227,16 @@ def _portfolio_item_context(item_id):
 
 def _portfolio_select(item_id, decision, board_id="", session_id="", pass_size=0,
                       decision_scope="selection", reason_code="", target_id="",
-                      note=""):
+                      note="", status="human_draft"):
     with _PORTFOLIO_SELECTION_LOCK:
         return _portfolio_select_unlocked(
             item_id, decision, board_id, session_id, pass_size,
-            decision_scope, reason_code, target_id, note)
+            decision_scope, reason_code, target_id, note, status)
 
 
 def _portfolio_select_unlocked(item_id, decision, board_id="", session_id="", pass_size=0,
                       decision_scope="selection", reason_code="", target_id="",
-                      note=""):
+                      note="", status="human_draft"):
     if decision not in ("seleccionar", "deseleccionar", "descartar"):
         return {"ok": False, "error": "decision_invalida"}
     item = _portfolio_item(item_id)
@@ -1245,6 +1269,7 @@ def _portfolio_select_unlocked(item_id, decision, board_id="", session_id="", pa
                 "source": {"kind": "human_selection",
                            "decision": decision,
                            "reason_code": reason_code},
+                "status": status,
             })
             result["triage"] = triage
             result["triage_saved"] = bool(triage.get("ok"))
@@ -1304,6 +1329,7 @@ def _portfolio_select_unlocked(item_id, decision, board_id="", session_id="", pa
             "source": {"kind": "human_selection",
                        "decision": decision,
                        "reason_code": reason_code},
+            "status": status,
         })
         result["triage"] = triage
         result["selection_saved"] = True
@@ -1320,16 +1346,17 @@ def _portfolio_classify(body):
         return _portfolio_classify_unlocked(body)
 
 
-def _portfolio_classify_unlocked(body):
-    item_id = str(body.get("item_id", "")).strip()
+def _portfolio_normalize_classification(item_id, fields, clear_fields=None,
+                                        allow_empty=False):
     item = _portfolio_item(item_id)
     if not item:
         return {"ok": False, "error": "item_no_encontrado"}
     allowed = PORTFOLIO_CLASSIFICATION_ALLOWED
-    fields = body.get("fields") if isinstance(body.get("fields"), dict) else {}
-    previous = (_portfolio_classifications().get(item["id"]) or {}).get("fields", {})
-    normalized = dict(previous) if isinstance(previous, dict) else {}
-    clear_fields = body.get("clear_fields")
+    fields = fields if isinstance(fields, dict) else {}
+    previous = (_portfolio_classifications().get(item["id"]) or {}).get(
+        "fields", {})
+    previous = dict(previous) if isinstance(previous, dict) else {}
+    normalized = dict(previous)
     clear_fields = clear_fields if isinstance(clear_fields, list) else []
     for key in clear_fields:
         if str(key) in allowed or str(key) == "context_value":
@@ -1352,8 +1379,23 @@ def _portfolio_classify_unlocked(body):
     context_value = str(fields.get("context_value", "")).strip()[:120]
     if context_value:
         normalized["context_value"] = context_value
-    if not normalized:
+    if not normalized and not allow_empty:
         return {"ok": False, "error": "clasificacion_vacia"}
+    return {"ok": True, "item": item, "fields": normalized,
+            "previous": previous}
+
+
+def _portfolio_classify_unlocked(body):
+    item_id = str(body.get("item_id", "")).strip()
+    fields = body.get("fields") if isinstance(body.get("fields"), dict) else {}
+    clear_fields = body.get("clear_fields")
+    normalized_result = _portfolio_normalize_classification(
+        item_id, fields, clear_fields,
+        allow_empty=bool(body.get("_allow_empty")))
+    if not normalized_result.get("ok"):
+        return normalized_result
+    item = normalized_result["item"]
+    normalized = normalized_result["fields"]
     previous_row = _portfolio_classifications().get(item["id"])
     previous_fields = (previous_row or {}).get("fields", {})
     if previous_fields == normalized:
@@ -1362,7 +1404,11 @@ def _portfolio_classify_unlocked(body):
     row = {
         "schema": "faro-portfolio-classification-v1",
         "item_id": item["id"], "fields": normalized,
-        "status": "human_draft", "promotion": "none", "owner": "human",
+        "status": (str(body.get("status") or "human_draft")
+                   if str(body.get("status") or "human_draft") in {
+                       "human_draft", "human_confirmed", "human_undo"
+                   } else "human_draft"),
+        "promotion": "none", "owner": "human",
         "source": {"publicacion_id": item.get("publicacion_id", ""),
                    "fecha": item.get("fecha", ""),
                    "asset_path": item.get("asset_path", "")},
@@ -1370,6 +1416,9 @@ def _portfolio_classify_unlocked(body):
     }
     if isinstance(body.get("source"), dict):
         row["evidence"] = dict(body["source"])
+    if isinstance(body.get("context_fields"), dict):
+        row["context_fields"] = _normalize_human_context(
+            body.get("context_fields"))
     _portfolio_append_jsonl(PORTFOLIO_CLASSIFICATIONS, row)
     return {"ok": True, "classification": normalized, "row": row}
 
@@ -1402,6 +1451,239 @@ def _portfolio_classify_batch(body):
         "partial": 0 < saved < len(results),
         "results": results,
     }
+
+
+def _portfolio_prepare_draft(body, status="saved"):
+    """Validate a complete human draft without changing current state."""
+    item_id = str(body.get("item_id") or "").strip()[:160]
+    normalized = _portfolio_normalize_classification(
+        item_id,
+        body.get("fields") if isinstance(body.get("fields"), dict) else {},
+        body.get("clear_fields"),
+        allow_empty=True)
+    if not normalized.get("ok"):
+        return normalized
+    action = str(body.get("action") or "").strip().lower()
+    if action not in {"", "work", "record", "review", "discard"}:
+        return {"ok": False, "error": "draft_action_invalid"}
+    context_fields = body.get("context_fields")
+    if not isinstance(context_fields, dict):
+        context_fields = body.get("context")
+    context_fields = _normalize_human_context(context_fields)
+    raw_relations = body.get("relations")
+    raw_relations = raw_relations if isinstance(raw_relations, list) else []
+    relations = []
+    for raw in raw_relations[:40]:
+        if not isinstance(raw, dict):
+            continue
+        target_id = str(raw.get("target_id") or "").strip()[:160]
+        if not target_id or target_id == item_id:
+            return {"ok": False, "error": "draft_relation_target_invalid"}
+        if not _portfolio_item(target_id):
+            return {"ok": False, "error": "draft_relation_item_missing",
+                    "target_id": target_id}
+        decision = str(raw.get("decision") or "accept").strip().lower()
+        if decision not in {"accept", "reject"}:
+            return {"ok": False, "error": "draft_relation_decision_invalid"}
+        relations.append({
+            "target_id": target_id,
+            "decision": decision,
+            "facet": str(raw.get("facet") or "relation").strip()[:80],
+            "relation": str(raw.get("relation") or "related").strip()[:120],
+            "note": str(raw.get("note") or "").strip()[:1000],
+            "visual": dict(raw.get("visual") or {})
+            if isinstance(raw.get("visual"), dict) else {},
+        })
+    note = str(body.get("note") or "").strip()[:1000]
+    fields = normalized["fields"]
+    if not action and not fields and not context_fields and not relations and status != "cancelled":
+        return {"ok": False, "error": "draft_empty"}
+    ts = time.strftime("%Y-%m-%dT%H:%M:%S%z")
+    row = {
+        "schema": "faro-portfolio-draft-v1",
+        "draft_id": "portfolio-draft:%s:%s" % (
+            item_id, uuid.uuid4().hex[:16]),
+        "item_id": item_id,
+        "session_id": str(body.get("session_id") or "").strip()[:120],
+        "action": action,
+        "fields": fields,
+        "context_fields": context_fields,
+        "relations": relations,
+        "note": note,
+        "status": status,
+        "promotion": "none",
+        "owner": "human",
+        "ts": ts,
+    }
+    return {"ok": True, "row": row}
+
+
+def _portfolio_draft(body):
+    with _PORTFOLIO_DRAFT_LOCK:
+        requested_status = "cancelled" if body.get("cancel") else "saved"
+        prepared = _portfolio_prepare_draft(body, status=requested_status)
+        if not prepared.get("ok"):
+            return prepared
+        row = prepared["row"]
+        previous = _portfolio_drafts().get(row["item_id"])
+        comparable = ("action", "fields", "context_fields", "relations", "note")
+        if (requested_status == "saved" and previous
+                and previous.get("status") in {"saved", "partial"}
+                and all(previous.get(key) == row.get(key) for key in comparable)):
+            return {"ok": True, "draft": previous, "duplicate": True}
+        _portfolio_append_jsonl(PORTFOLIO_DRAFTS, row)
+        return {"ok": True, "draft": row, "duplicate": False}
+
+
+def _portfolio_commit(body):
+    """Apply one complete draft only after an explicit human confirmation."""
+    if body.get("confirmed") is not True:
+        return {"ok": False, "error": "human_confirmation_required"}
+    with _PORTFOLIO_COMMIT_LOCK:
+        prepared = _portfolio_prepare_draft(body, status="committed")
+        if not prepared.get("ok"):
+            return prepared
+        row = prepared["row"]
+        source_draft_id = str(body.get("draft_id") or "").strip()[:180]
+        latest = _portfolio_drafts().get(row["item_id"])
+        if (latest and latest.get("status") == "committed"
+                and source_draft_id
+                and source_draft_id in {
+                    str(latest.get("draft_id") or ""),
+                    str(latest.get("source_draft_id") or ""),
+                }):
+            current = _portfolio_item(row["item_id"]) or {"id": row["item_id"]}
+            return {"ok": True, "draft": latest, "item": current,
+                    "results": latest.get("commit_results", []),
+                    "partial": latest.get("status") == "partial",
+                    "duplicate": True}
+        row["source_draft_id"] = source_draft_id
+        action = row["action"]
+        results = []
+        fields = dict(row["fields"])
+        if action == "discard":
+            results.append(_portfolio_select(
+                row["item_id"], "descartar", session_id=row["session_id"],
+                decision_scope="record", reason_code="no_es_obra",
+                target_id=row["item_id"], note=row["note"],
+                status="human_confirmed"))
+        if action in {"work", "record", "review", "discard"}:
+            fields["triage"] = action
+        if fields:
+            results.append(_portfolio_classify({
+                "item_id": row["item_id"], "fields": fields,
+                "status": "human_confirmed",
+                "context_fields": row["context_fields"],
+                "source": {"kind": "human_confirmation",
+                           "draft_id": row["draft_id"]},
+            }))
+        for relation in row["relations"]:
+            results.append(_portfolio_feedback_record({
+                "source_id": row["item_id"],
+                "target_id": relation["target_id"],
+                "action": relation["decision"],
+                "facet": relation["facet"],
+                "relation": relation["relation"],
+                "note": relation["note"] or row["note"],
+                "session_id": row["session_id"],
+                "visual": relation["visual"],
+            }))
+        failed = [result for result in results if not result.get("ok")]
+        row["status"] = "partial" if failed else "committed"
+        row["commit_results"] = results
+        with _PORTFOLIO_DRAFT_LOCK:
+            _portfolio_append_jsonl(PORTFOLIO_DRAFTS, row)
+        current = _portfolio_item(row["item_id"]) or {"id": row["item_id"]}
+        return {"ok": not failed, "draft": row, "results": results,
+                "item": current, "partial": bool(failed)}
+
+
+def _portfolio_undo(body):
+    """Restore the preceding state by appending a human undo event."""
+    if body.get("confirmed") is not True:
+        return {"ok": False, "error": "human_confirmation_required"}
+    item_id = str(body.get("item_id") or "").strip()
+    if not _portfolio_item(item_id):
+        return {"ok": False, "error": "item_no_encontrado"}
+    scope = str(body.get("scope") or "all").strip().lower()
+    if scope not in {"all", "selection", "classification", "relation"}:
+        return {"ok": False, "error": "undo_scope_invalid"}
+    results = {}
+    with _PORTFOLIO_UNDO_LOCK:
+        if scope in {"all", "selection"}:
+            history = _portfolio_selection_history(item_id)
+            if history and history[-1].get("decision_scope", "selection") != "undo":
+                prior = history[-2] if len(history) > 1 else None
+                restore = prior.get("decision") if prior else "deseleccionar"
+                results["selection"] = _portfolio_select(
+                    item_id, restore, session_id=str(body.get("session_id") or ""),
+                    decision_scope="undo", reason_code="human_undo",
+                    target_id=item_id, note=str(body.get("note") or "")[:1000],
+                    status="human_undo")
+        if scope in {"all", "classification"}:
+            history = _portfolio_classification_history(item_id)
+            if history and history[-1].get("status") != "human_undo":
+                current = history[-1]
+                if scope == "all" and "selection" in results:
+                    restorable = [
+                        row for row in history
+                        if (row.get("evidence") or {}).get("kind")
+                        != "human_selection"
+                    ]
+                    if (current.get("evidence") or {}).get("kind") == "human_selection":
+                        prior = restorable[-1] if restorable else None
+                    else:
+                        prior = restorable[-2] if len(restorable) > 1 else None
+                else:
+                    prior = history[-2] if len(history) > 1 else None
+                current_fields = current.get("fields") or {}
+                prior_fields = (prior or {}).get("fields") or {}
+                results["classification"] = _portfolio_classify({
+                    "item_id": item_id, "fields": prior_fields,
+                    "clear_fields": list(current_fields),
+                    "_allow_empty": True, "status": "human_undo",
+                    "source": {"kind": "human_undo",
+                               "restored_from": (prior or {}).get("ts", "")},
+                })
+        if scope in {"all", "relation"} and body.get("target_id"):
+            target_id = str(body.get("target_id") or "").strip()[:160]
+            facet = str(body.get("facet") or "").strip().lower()[:40]
+            relation = str(body.get("relation") or "").strip()[:80]
+            history = [row for row in _portfolio_feedback()
+                       if str(row.get("source_id")) == item_id
+                       and str(row.get("target_id")) == target_id
+                       and (not facet or str(row.get("facet") or "").lower() == facet)
+                       and (not relation or str(row.get("relation") or "") == relation)]
+            if history and str(history[-1].get("action") or "") != "undo":
+                current = history[-1]
+                results["relation"] = _portfolio_feedback_record({
+                    "source_id": item_id,
+                    "target_id": target_id,
+                    "action": "undo",
+                    "facet": current.get("facet", facet or "unknown"),
+                    "relation": current.get("relation", relation or "related"),
+                    "note": str(body.get("note") or "")[:1000],
+                    "session_id": str(body.get("session_id") or "")[:120],
+                    "visual": current.get("visual") or {},
+                    "_human_undo": True,
+                }, internal=True)
+    if not results:
+        return {"ok": False, "error": "nothing_to_undo"}
+    failed = [result for result in results.values() if not result.get("ok")]
+    current_draft = _portfolio_drafts().get(item_id)
+    if (not failed and current_draft
+            and current_draft.get("status") in {"committed", "partial"}):
+        undone = dict(current_draft)
+        undone["draft_id"] = "portfolio-draft:%s:%s" % (
+            item_id, uuid.uuid4().hex[:16])
+        undone["status"] = "undone"
+        undone["undo_of"] = current_draft.get("draft_id", "")
+        undone["undo_scope"] = scope
+        undone["ts"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
+        with _PORTFOLIO_DRAFT_LOCK:
+            _portfolio_append_jsonl(PORTFOLIO_DRAFTS, undone)
+    return {"ok": not failed, "results": results, "partial": bool(failed),
+            "item": _portfolio_item(item_id) or {"id": item_id}}
 
 
 def _portfolio_boards():
@@ -1601,7 +1883,7 @@ def _portfolio_organism_projection():
                         or feedback_by_pair.get((target_id, source_id), {}))
         feedback = feedback or {}
         action = str(feedback.get("action") or "")
-        if action == "reject":
+        if action in {"reject", "undo"}:
             continue
         connections.append({
             "id": "connection:%s:%s:%s" % (
@@ -1633,7 +1915,8 @@ def _portfolio_organism_projection():
         "schema": "faro-portfolio-organism-v1",
         "mode": "projection_only",
         "source_of_truth": ["portfolio_inbox", "classifications", "vision_features",
-                             "boards", "connections", "copilot_feedback"],
+                             "boards", "connections", "copilot_feedback",
+                             "portfolio_decision_drafts"],
         **_portfolio_contract_surface(),
         "blocks": blocks,
         "channels": channels,
@@ -1984,6 +2267,8 @@ def _portfolio_audit(source_id=""):
         return {"ok": False, "error": "item_no_encontrado", "source_id": requested}
     selections = _portfolio_selections()
     classifications = _portfolio_classifications()
+    draft_history = _portfolio_draft_history()
+    drafts = _portfolio_drafts()
     selection_history = _portfolio_selection_history()
     classification_history = _portfolio_classification_history()
     feedback_history = _portfolio_feedback()
@@ -2034,6 +2319,7 @@ def _portfolio_audit(source_id=""):
             "portfolio_inbox",
             "portfolio_selections",
             "portfolio_classifications",
+            "portfolio_decision_drafts",
             "copilot_feedback",
             "common_ledger.external_candidate_review",
         ],
@@ -2062,6 +2348,12 @@ def _portfolio_audit(source_id=""):
                 "by_triage": _portfolio_value_counts(
                     [row.get("fields", {}) for row in classification_history
                      if isinstance(row.get("fields"), dict)], "triage"),
+            },
+            "draft_history": {
+                "total": len(draft_history),
+                "current": sum(1 for row in drafts.values()
+                                if row.get("status") in {"saved", "partial"}),
+                "by_status": _portfolio_value_counts(draft_history, "status"),
             },
             "triage_labels": {
                 "total": ordering.get("labeled", 0),
@@ -2102,6 +2394,7 @@ def _portfolio_audit(source_id=""):
     item = requested_item
     current_selection = selections.get(requested) or {}
     current_classification = classifications.get(requested) or {}
+    current_draft = drafts.get(requested) or {}
     timeline = []
     for row in _portfolio_selection_history(requested):
         timeline.append({
@@ -2116,6 +2409,15 @@ def _portfolio_audit(source_id=""):
             "fields": row.get("fields", {}),
             "status": row.get("status", ""),
             "work_id": (row.get("work") or {}).get("work_id", ""),
+        })
+    for row in _portfolio_draft_history(requested):
+        timeline.append({
+            "kind": "draft", "ts": row.get("ts", ""),
+            "status": row.get("status", ""),
+            "action": row.get("action", ""),
+            "fields": row.get("fields", {}),
+            "context_fields": row.get("context_fields", {}),
+            "relations": row.get("relations", []),
         })
     for row in feedback_history:
         if requested not in (str(row.get("source_id")), str(row.get("target_id"))):
@@ -2149,6 +2451,7 @@ def _portfolio_audit(source_id=""):
         "current": {
             "selection": current_selection.get("decision", "pendiente"),
             "classification": current_classification.get("fields", {}),
+            "decision_draft": current_draft,
             "triage_label": triage_label or "unlabeled",
             "triage_source": triage_source if triage_label else "none",
         },
@@ -2678,15 +2981,17 @@ def _portfolio_learning():
     }
 
 
-def _portfolio_feedback_record(body):
+def _portfolio_feedback_record(body, internal=False):
     with _PORTFOLIO_FEEDBACK_LOCK:
-        return _portfolio_feedback_record_unlocked(body)
+        return _portfolio_feedback_record_unlocked(body, internal=internal)
 
 
-def _portfolio_feedback_record_unlocked(body):
+def _portfolio_feedback_record_unlocked(body, internal=False):
     action = str(body.get("action", ""))
-    if action not in ("accept", "reject", "ignore", "correct"):
+    if action not in ("accept", "reject", "ignore", "correct", "undo"):
         return {"ok": False, "error": "feedback_invalido"}
+    if action == "undo" and not internal:
+        return {"ok": False, "error": "human_confirmation_required"}
     source = str(body.get("source_id", ""))
     target = str(body.get("target_id", ""))
     if not _portfolio_item(source) or not _portfolio_item(target) or source == target:
@@ -2753,8 +3058,11 @@ def _portfolio_feedback_record_unlocked(body):
                      "model_version": visual.get("model_version", "")},
            "ts": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
     if _ledger is not None:
-        action_name = "curate" if action in ("accept", "correct") else "reject"
-        decision = "revisar" if action in ("accept", "correct", "ignore") else "descartar"
+        action_name = ("curate" if action in ("accept", "correct")
+                       else "review" if action in ("ignore", "undo")
+                       else "reject")
+        decision = ("revisar" if action in ("accept", "correct", "ignore", "undo")
+                    else "descartar")
         ledger_ok, ledger_errors, _ledger_row = _portfolio_ledger_append_unique({
             "id": "portfolio-feedback:%s:%s:%s:%s" % (
                 source, target, action, row["ts"]),
@@ -2767,7 +3075,9 @@ def _portfolio_feedback_record_unlocked(body):
             "confidence": "high" if action in ("accept", "correct", "reject") else "medium",
             "action": action_name, "decision": decision,
             "purpose": "learn from human curation without promoting a fact",
-            "next_action": "retain as candidate relation for review",
+            "next_action": ("restore relation to candidate state"
+                            if action == "undo" else
+                            "retain as candidate relation for review"),
             "owner": "human", "work": row["work"],
             "reject_reason": "artist rejected relation" if action == "reject" else "",
             "note": note},
@@ -3755,6 +4065,15 @@ class H(BaseHTTPRequestHandler):
             return True
 
     def do_HEAD(self):
+        p = urllib.parse.urlparse(self.path).path
+        for prefix in SERVICE_PROXY_PREFIXES:
+            if p == "/" + prefix:
+                self.send_response(301)
+                self.send_header("Location", "/" + prefix + "/")
+                self.end_headers()
+                return
+            if p.startswith("/" + prefix + "/"):
+                return self._proxy_service(prefix, "HEAD")
         return self.do_GET()
 
     def do_GET(self):
@@ -3818,8 +4137,9 @@ class H(BaseHTTPRequestHandler):
         if p == "/api/portfolio/contract":
             return self._json({
                 "schema": "faro-portfolio-contract-surface-v1",
-                "source_of_truth": ["portfolio_inbox", "classifications", "vision_features",
-                                     "boards", "connections", "copilot_feedback", "common_ledger"],
+        "source_of_truth": ["portfolio_inbox", "classifications", "vision_features",
+                                     "boards", "connections", "copilot_feedback",
+                                     "portfolio_decision_drafts", "common_ledger"],
                 **_portfolio_contract_surface(),
             })
         if p == "/api/portfolio/review-queue":
@@ -4067,6 +4387,8 @@ class H(BaseHTTPRequestHandler):
         if u.path in ("/api/director/work", "/api/director/decision",
                       "/api/portfolio/select", "/api/portfolio/classify",
                       "/api/portfolio/classify-batch",
+                      "/api/portfolio/draft", "/api/portfolio/commit",
+                      "/api/portfolio/undo",
                       "/api/portfolio/dispatch",
                       "/api/portfolio/board", "/api/portfolio/connect",
                       "/api/portfolio/feedback", "/api/portfolio/triangulation/review",
@@ -4084,6 +4406,12 @@ class H(BaseHTTPRequestHandler):
                 return self._json(_director_work(body))
             if u.path == "/api/director/decision":
                 return self._json(_director_decision(body))
+            if u.path.endswith("/draft"):
+                return self._json(_portfolio_draft(body))
+            if u.path.endswith("/commit"):
+                return self._json(_portfolio_commit(body))
+            if u.path.endswith("/undo"):
+                return self._json(_portfolio_undo(body))
             if u.path.endswith("/select"):
                 return self._json(_portfolio_select(
                     body.get("item_id"), body.get("decision"),

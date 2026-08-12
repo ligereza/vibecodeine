@@ -123,9 +123,11 @@ else
     RAIZ_FLAG=(--raiz-ig "$HOME/portfolio_media/media")
 fi
 
-setsid nohup python3 percepcion.py correr \
+# Keep the worker attached to this cron invocation. The lock remains held for
+# the whole run, so the next tick skips it instead of creating a child orphan.
+python3 percepcion.py correr \
     "${RAIZ_FLAG[@]}" \
     --out "$CUR" \
     --solo-fuente "$FUENTE" \
     --timeout-archivo 120 \
-    < /dev/null >> "$CUR/repercepcion_${FUENTE}.log" 2>&1 &
+    < /dev/null >> "$CUR/repercepcion_${FUENTE}.log" 2>&1

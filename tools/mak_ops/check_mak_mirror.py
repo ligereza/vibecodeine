@@ -35,6 +35,12 @@ UNIT_FILES = {
         "/home/mak/.config/systemd/user/mak-hub.service",
     "cultura/mak_codex/mak-codex.service":
         "/home/mak/.config/systemd/user/mak-codex.service",
+    "cultura/mak_plataforma/mak-xio.service":
+        "/home/mak/.config/systemd/user/mak-xio.service",
+    "cultura/mak_research/interfaz.service":
+        "/home/mak/.config/systemd/user/mak-research.service",
+    "cultura/mak_research/cola.service":
+        "/home/mak/.config/systemd/user/mak-research-queue.service",
 }
 LIVE_DIRS = {
     "mak_plataforma": "plataforma",

@@ -531,7 +531,8 @@ class H(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(data)))
         self.send_header("Cache-Control", "no-cache")
         self.end_headers()
-        self.wfile.write(data)
+        if self.command != "HEAD":
+            self.wfile.write(data)
 
     def do_GET(self):
         u = urllib.parse.urlparse(self.path)
@@ -561,6 +562,11 @@ class H(BaseHTTPRequestHandler):
             self.send_response(204)
             self.end_headers()
             return
+        if u.path.startswith("/api/"):
+            return self._send(json.dumps(
+                {"ok": False, "error": "ruta_api_no_encontrada",
+                 "path": u.path}, ensure_ascii=False),
+                404, "application/json; charset=utf-8")
         return self._send(PAGINA)
 
     def do_POST(self):
@@ -581,7 +587,15 @@ class H(BaseHTTPRequestHandler):
                                   "application/json")
             _lanzar(modo, pedido, densidad, cadena=cadena)
             return self._send('{"ok":true}', 200, "application/json")
+        if urllib.parse.urlparse(self.path).path.startswith("/api/"):
+            return self._send(json.dumps(
+                {"ok": False, "error": "ruta_api_no_encontrada",
+                 "path": urllib.parse.urlparse(self.path).path},
+                ensure_ascii=False), 404, "application/json; charset=utf-8")
         return self._send("no", 404, "text/plain")
+
+    def do_HEAD(self):
+        return self.do_GET()
 
     def log_message(self, fmt, *args):
         pass
