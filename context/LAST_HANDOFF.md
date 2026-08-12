@@ -1,13 +1,51 @@
 # LAST_HANDOFF - Faro
 
-Updated: 2026-08-11 - Atlas draft gate and process supervision verified
+Updated: 2026-08-11 - Atlas release and MAK supervision verified
 Status: The Hub boundary, XIO human-link circuit, writer ownership block,
-language slices, Atlas decision-draft gate, and process supervision remain
+language slices, Atlas decision-draft gate, and process supervision are
 consolidated in the four canonical branches. The Atlas backend and served
-portfolio surface are deployed to MAK with a rollback snapshot. Source and
-tests remain uncommitted and unpushed.
+portfolio surface are deployed to MAK with rollback snapshots. The release
+is committed and pushed; the four canonical branches contain the tested MAK
+commit. README/SVG files were not changed.
 This block is the current operational source. Later sections preserve dated
 historical evidence and must not be read as present state.
+
+## Release and MAK runtime verification - 2026-08-11
+
+- MAK release commit `f7e268a3` (`fix Linux resume concurrency test double`)
+  fixes the Ubuntu concurrency regression by replacing the shared
+  `threading.Thread` module reference in the test with a private fake module.
+  The preceding Atlas/process-supervision commit is `ebc8b6a7`.
+- PR `#524` was merged into `main` as `0c08f559` after all five required
+  checks passed: Ubuntu, Windows, dependencies, secrets, and real-data
+  safety. The initial Ubuntu failure was reproduced and fixed; the initial
+  secrets failure was runner-side GitHub API certificate noise and passed on
+  the next run without a workflow change.
+- Canonical remote refs after promotion: `main=0c08f559`,
+  `mak=f7e268a3`, `rd=3d262ece`, `iskvw=bb7c8094`. The MAK commit is an
+  ancestor of all three promoted branches; no branch was deleted or reset.
+  The post-merge `main` CI run `31552175108` is green on Ubuntu and Windows;
+  security run `31552175202` is green on dependencies, secrets, and real-data
+  safety.
+- Live MAK verification at `2026-08-11 21:10 -04`: platform watchdog exit `0`,
+  research watchdog exit `0`, `resources_ok=True`, and no pytest process.
+  `mak-hub.service`, `mak-codex.service`, `mak-research.service`, and
+  `mak-xio.service` are active, with one listener each on `8900`, `8890`, and
+  `8891`. The only failed user unit remains the unrelated OAuth
+  `onedrive.service`; do not repair it as part of MAK supervision.
+- Remaining work is integration evidence, not a failed release: execute one
+  human-controlled draft -> commit -> undo cycle on a test-safe portfolio
+  record, then audit the explicit XIO human link and any writer outside the
+  covered cron/process contracts. Do not activate Watson/AWS without a bounded
+  human-selected batch. Do not touch README/SVG.
+
+## Next action
+
+Run the live test-safe Atlas draft -> commit -> undo exercise without changing
+production decisions; record the audit event and rollback result. Then inspect
+the XIO human-link boundary and uncovered writers only when a concrete caller
+or reproducible failure is identified. Keep repo-sync paused and preserve the
+MAK rollback snapshots.
 
 ## Atlas decision-draft circuit - 2026-08-11
 
