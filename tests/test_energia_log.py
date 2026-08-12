@@ -102,10 +102,12 @@ class TestMuestrear:
             mock_iso.isoformat.return_value = "2026-07-22T12:00:00"
             mock_dt.utcnow.return_value = mock_iso
 
-            resultado = energia_log.muestrear(intervalo_s=5)
+            with patch("time.sleep") as mock_sleep:
+                resultado = energia_log.muestrear(intervalo_s=5)
 
             assert resultado["gpu_w"] == 50.0
             assert "ts" in resultado
+            mock_sleep.assert_called_once_with(5)
             # Nota: el cpu_w es calculado pero no testeamos el valor exacto
             # porque requiere mas setup de mocking
 
@@ -122,10 +124,12 @@ class TestMuestrear:
             mock_iso.isoformat.return_value = "2026-07-22T12:00:00"
             mock_dt.utcnow.return_value = mock_iso
 
-            resultado = energia_log.muestrear()
+            with patch("time.sleep") as mock_sleep:
+                resultado = energia_log.muestrear()
 
             assert resultado["gpu_w"] is None
             assert "ts" in resultado
+            mock_sleep.assert_called_once_with(5)
 
 
 class TestAcumular:

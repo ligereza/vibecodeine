@@ -41,7 +41,6 @@ class EventFlyerResult:
     droplet_started: bool = False
     blender_started: bool = False
     blender_rendered: bool = False
-    productora: dict | None = None  # resultado de productoras.identify()
     error: str = ""
 
 
@@ -495,7 +494,6 @@ def run_eventos_flyer_auto(
     render_blender: bool = False,
     blender_exe: str = "blender",
     keep_temp: bool = False,
-    sleep_seconds: float = 2.0,
 ) -> EventFlyerResult:
     """Download Instagram flyer and optionally launch Blender (y legado Photoshop).
 
@@ -554,18 +552,6 @@ def run_eventos_flyer_auto(
         _extract_palette(input_img, palette_png, palette_json)
         # RD.blend linkea RESULTADOS/color_predominante.png como material
         _write_predominant_color(input_img, base / "RESULTADOS" / "color_predominante.png")
-
-        # identificacion de productora (wire-in opcion B, confirmado por el
-        # usuario): 1 llamada Gemini vision para lo semantico. NUNCA fatal:
-        # si Gemini esta caido/sin quota, el render sigue igual.
-        productora_res: dict | None = None
-        try:
-            from .productoras import identify as _identificar_productora
-            data_dir = Path(__file__).resolve().parents[3] / "data" / "productoras"
-            productora_res = _identificar_productora(input_img, data_dir)
-        except Exception as exc:  # noqa: BLE001 -- aviso, no bloqueo
-            print(f"[aviso] identificacion de productora omitida: {exc}")
-        time.sleep(max(0.0, sleep_seconds))
 
         started_droplet = False
         droplet_launch_time = 0.0
@@ -650,7 +636,6 @@ def run_eventos_flyer_auto(
             droplet_started=started_droplet,
             blender_started=started_blender,
             blender_rendered=rendered_blender,
-            productora=productora_res,
         )
     except Exception as exc:
         if not keep_temp:
