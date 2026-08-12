@@ -21,9 +21,11 @@ historical evidence and must not be read as present state.
   safety. The initial Ubuntu failure was reproduced and fixed; the initial
   secrets failure was runner-side GitHub API certificate noise and passed on
   the next run without a workflow change.
-- Canonical remote refs after promotion: `main=0c08f559`,
-  `mak=f7e268a3`, `rd=3d262ece`, `iskvw=bb7c8094`. The MAK commit is an
-  ancestor of all three promoted branches; no branch was deleted or reset.
+- Baseline remote refs at PR promotion were `main=0c08f559`,
+  `mak=f7e268a3`, `rd=3d262ece`, and `iskvw=bb7c8094`. The MAK release
+  commit is an ancestor of all three promoted branches; later handoff-only
+  propagation commits were merged into each branch. Read current refs with
+  `git ls-remote origin`; no branch was deleted or reset.
   The post-merge `main` CI run `31552175108` is green on Ubuntu and Windows;
   security run `31552175202` is green on dependencies, secrets, and real-data
   safety.

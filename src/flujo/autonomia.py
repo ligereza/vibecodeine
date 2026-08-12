@@ -102,7 +102,7 @@ def _run_gh(args: list[str]) -> str:
             errors="replace",
             timeout=30,
         )
-    except OSError:
+    except (OSError, subprocess.TimeoutExpired):
         return ""
     if result.returncode != 0:
         return ""
