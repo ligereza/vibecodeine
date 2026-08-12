@@ -54,6 +54,25 @@ import time
 from pathlib import Path
 
 try:
+    from cultura.mak_conductor.runtime import (active_enabled, dispatch_sync,
+                                                enqueue_shadow, observe_shadow,
+                                                shared_gpu_lease)
+except ImportError:
+    sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH",
+                                     "/home/mak/flujo/cultura"))
+    try:
+        from mak_conductor.runtime import (active_enabled, dispatch_sync,
+                                           enqueue_shadow, observe_shadow,
+                                           shared_gpu_lease)
+    except ImportError:
+        from contextlib import nullcontext
+        def active_enabled():
+            return False
+        enqueue_shadow = observe_shadow = dispatch_sync = None
+        def shared_gpu_lease(**_kwargs):
+            return nullcontext()
+
+try:
     import fcntl
 except ImportError:  # pragma: no cover - Windows director has no fcntl
     fcntl = None
@@ -247,11 +266,13 @@ class PercepcionEnPausa:
         # 0% de uso. Con la percepcion detenida y el modelo cargado, el render
         # salia a competir por la memoria y esa es exactamente la condicion del
         # OOM que este bloque existe para evitar.
-        subprocess.run(
-            ["curl", "-s", "http://127.0.0.1:11434/api/generate",
-             "-d", '{"model":"gemma3:4b","keep_alive":0}'],
-            capture_output=True, timeout=30)
-        time.sleep(4)
+        with shared_gpu_lease(job_id="issue-render-%s" % os.getpid(),
+                              estimated_vram_mb=3500):
+            subprocess.run(
+                ["curl", "-s", "http://127.0.0.1:11434/api/generate",
+                 "-d", '{"model":"gemma3:4b","keep_alive":0}'],
+                capture_output=True, timeout=30)
+            time.sleep(4)
         return self
 
     def __exit__(self, *exc):
@@ -425,15 +446,48 @@ def _motivo_pendiente(url, salida):
 
 
 def una_pasada(dry_run=False, solo=None):
+    if active_enabled():
+        payload = {"dry_run": bool(dry_run),
+                   "issue": int(solo) if solo is not None else None}
+
+        def handle(_job):
+            result = una_pasada(dry_run=dry_run, solo=solo)
+            return {"validated": isinstance(result, int), "result": result}
+
+        queued = dispatch_sync(
+            "issue_render", payload, producer="platform.puente_issues.una_pasada",
+            handler=handle, estimated_vram_mb=3500,
+            template_version="issue-render-v2")
+        if queued and queued.get("queue_status") == "COMPLETED":
+            return int(queued.get("result", 0))
+        return 0
+
+    started = time.time()
+    shadow_job = (enqueue_shadow(
+        "issue_render", {"dry_run": bool(dry_run),
+                          "issue": int(solo) if solo is not None else None},
+        producer="platform.puente_issues.una_pasada",
+        estimated_vram_mb=3500, template_version="issue-render-v1")
+        if enqueue_shadow is not None else None)
     cfg = config()
     if not cfg.get("activo", True) and solo is None:
         _log("el departamento de render esta apagado en la configuracion")
+        if observe_shadow is not None:
+            observe_shadow(
+                shadow_job, producer="platform.puente_issues.una_pasada",
+                result_status="READY", validated=True,
+                payload={"issues": 0}, started_at=started, owner_pid=os.getpid())
         return 0
     issues = issues_abiertos(cfg["etiqueta"])
     if solo is not None:
         issues = [i for i in issues if i.get("number") == solo]
     if not issues:
         _log("sin issues de flyer pendientes")
+        if observe_shadow is not None:
+            observe_shadow(
+                shadow_job, producer="platform.puente_issues.una_pasada",
+                result_status="READY", validated=True,
+                payload={"issues": 0}, started_at=started, owner_pid=os.getpid())
         return 0
 
     st = _estado()
@@ -487,11 +541,14 @@ def una_pasada(dry_run=False, solo=None):
                 ok, salida, png = True, "", hecho
             else:
                 _log("  renderizando %s (imagen %d)" % (code, idx))
-                if cfg.get("pausar_percepcion", True):
-                    with PercepcionEnPausa():
+                with shared_gpu_lease(
+                        job_id="issue-render-%s" % os.getpid(),
+                        estimated_vram_mb=3500):
+                    if cfg.get("pausar_percepcion", True):
+                        with PercepcionEnPausa():
+                            ok, salida, png = renderizar(url)
+                    else:
                         ok, salida, png = renderizar(url)
-                else:
-                    ok, salida, png = renderizar(url)
                 if ok:
                     # El CLI escribe siempre en la misma ruta: se copia con
                     # nombre propio ANTES de intentar la entrega, que es lo que
@@ -520,6 +577,12 @@ def una_pasada(dry_run=False, solo=None):
         _log("#%d %s (%d/%d piezas)"
              % (numero, "cerrado" if completo else "queda abierto",
                 sum(1 for p in piezas if p["ok"]), len(piezas)))
+    if observe_shadow is not None:
+        observe_shadow(
+            shadow_job, producer="platform.puente_issues.una_pasada",
+            result_status="READY", validated=True,
+            payload={"issues_processed": hechos},
+            started_at=started, owner_pid=os.getpid())
     return hechos
 
 
