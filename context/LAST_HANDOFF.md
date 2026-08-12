@@ -5112,3 +5112,27 @@ integration requirement explicitly reopens them.
 Keep the real `energia_log` sampling interval intact. The next safe timing
 target is the manifest check subprocess chain (about 14.6s); optimize only if
 the same CLI truth can be checked without weakening its stale-manifest guard.
+
+## Canonical branches synchronized - 2026-08-11
+
+- Published cleanup commit `9e9abb6e` on `mak`:
+  `retire obsolete Gemini paths and slow fixture tests`.
+- Propagated it with explicit non-rewriting merges because the canonical
+  branches had independent synchronization commits:
+  - `main` -> `93743ac5`
+  - `rd` -> `a2eeaa68`
+  - `iskvw` -> `22c52722`
+- All four local branches track their matching origin refs with `ahead=0` and
+  `behind=0`. Their remote tree IDs are identical:
+  `154c01f0874f7797ab62e864a0e61fc9c2983afb`.
+- Final `python -m flujo verify` on `mak` passed: compileall, `944` tests,
+  `28` skips, health, version, and Hub smoke; total wall time `165.4s`.
+- Worktree is clean. No README/SVG file changed, and all `16` curated rave
+  SVGs remain preserved. No PR was opened because the requested operation was
+  direct synchronization of the four canonical branches.
+
+## Next action
+
+Use the synchronized canonical branches as the baseline. The next measured
+performance target is the manifest check subprocess chain; do not reopen the
+retired Gemini path or restore report-specific SVG tests without a new reason.
