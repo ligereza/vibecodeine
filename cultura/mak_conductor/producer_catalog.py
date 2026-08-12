@@ -17,6 +17,8 @@ PRODUCER_CATALOG: Final[tuple[dict[str, object], ...]] = (
      "kind": "work", "coverage": "active_and_shadow"},
     {"producer": "research.enqueue_annex_icons", "stage": "anexo_svg",
      "kind": "work", "coverage": "shadow_child"},
+    {"producer": "post.pipeline.build_post_package", "stage": "post_package",
+     "kind": "public_output", "coverage": "active_and_shadow"},
     {"producer": "research.LLM.call", "stage": "llm_call",
      "kind": "provider", "coverage": "active_and_shadow"},
     {"producer": "codex.worker_codex.run_pedido", "stage": "codex",

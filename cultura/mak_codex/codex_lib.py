@@ -52,7 +52,6 @@ import time
 sys.path.insert(0, "/home/mak/research")
 from research_lib import (LLM, MODELO_CAPAZ, _http_json, escala_tok,  # noqa: E402
                           load_env, red_ok, slug, stamp)
-
 try:
     from research_lib import watsonx_chat  # noqa: E402
 except ImportError:  # optional provider boundary; fail only if selected
@@ -256,11 +255,22 @@ class CoderLLM:
         for prov, model in cadena:
             try:
                 fn = fns[prov]
+                try:
+                    from research_lib import _record_activity
+                    _record_activity(
+                        "model", "started", caller="mak-codex.CoderLLM",
+                        queue="codex.llm", department="codex",
+                        trigger=os.environ.get("MAK_TRIGGER", "api:codex"),
+                        job_id=os.environ.get("MAK_JOB_ID", ""), provider=prov,
+                        model=model,
+                        resource="ollama" if prov == "ollama" else "cloud")
+                except ImportError:
+                    pass
                 if dispatch_sync is not None and active_enabled():
-                    def handle(job, _fn=fn, _model=model):
+                    def handle(job, _fn=fn, _model=model, _provider=prov):
                         value = _fn(system, user, max_tok, _model)
                         return {"validated": bool(str(value or "").strip()),
-                                "provider": prov, "model": _model,
+                                "provider": _provider, "model": _model,
                                 "text": value}
                     queued = dispatch_sync(
                         "codex_llm_call", {
@@ -309,6 +319,16 @@ class CoderLLM:
                             started_at=shadow_started, owner_pid=os.getpid())
                 if text and text.strip():
                     self.stats[model] = self.stats.get(model, 0) + 1
+                    try:
+                        from research_lib import _record_activity
+                        _record_activity("model", "finished", caller="mak-codex.CoderLLM",
+                                         queue="codex.llm", department="codex",
+                                         trigger=os.environ.get("MAK_TRIGGER", "api:codex"),
+                                         job_id=os.environ.get("MAK_JOB_ID", ""),
+                                         provider=prov, model=model,
+                                         resource="ollama" if prov == "ollama" else "cloud")
+                    except ImportError:
+                        pass
                     return text, model
                 last = model + " devolvio vacio"
                 if fallback_util is not None:
@@ -317,6 +337,17 @@ class CoderLLM:
             except Exception as e:  # noqa: BLE001 - fallback multi-coder
                 last = model + ": " + str(e)[:140]
                 self.errors.append(last)
+                try:
+                    from research_lib import _record_activity
+                    _record_activity("model", "failed", caller="mak-codex.CoderLLM",
+                                     queue="codex.llm", department="codex",
+                                     trigger=os.environ.get("MAK_TRIGGER", "api:codex"),
+                                     job_id=os.environ.get("MAK_JOB_ID", ""),
+                                     provider=prov, model=model,
+                                     resource="ollama" if prov == "ollama" else "cloud",
+                                     error=str(e))
+                except ImportError:
+                    pass
                 if fallback_util is not None:
                     intentos.append(fallback_util.parse_provider_error(
                         e, prov, model, timeout_sec=_PROV_TIMEOUT.get(prov)))

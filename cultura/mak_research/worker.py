@@ -128,6 +128,7 @@ def _post_codex_icon(prompt, densidad):
         "modo": "iconos",
         "pedido": prompt,
         "densidad": densidad or "medio",
+        "trigger": os.environ.get("MAK_TRIGGER", "research:annex"),
     }).encode()
     req = urllib.request.Request(
         CODEX_RUN_URL, data=data, method="POST",
@@ -148,21 +149,40 @@ def enqueue_annex_icons(annex_path, densidad="medio", max_icons=AUTO_ICONOS_MAX)
     because the visual department is down; the failure is returned to the caller
     as metadata and can be logged as a department-health problem.
     """
-    if os.environ.get("MAK_AUTO_ICONOS", "1").lower() in ("0", "false", "no"):
-        return {"queued": 0, "errors": ["MAK_AUTO_ICONOS disabled"]}
     try:
         with open(annex_path, encoding="utf-8") as f:
             concepts = json.load(f)
     except (OSError, ValueError) as e:
-        return {"queued": 0, "errors": [str(e)[:200]]}
+        return {"queued": 0, "errors": [str(e)[:200], "annex read failed"],
+                "dropped": 0, "concepts": 0}
     if not isinstance(concepts, list):
-        return {"queued": 0, "errors": ["annex is not a list"]}
+        return {"queued": 0, "errors": ["annex is not a list"],
+                "dropped": 0, "concepts": 0}
+
+    if os.environ.get("MAK_AUTO_ICONOS", "0").lower() in ("0", "false", "no"):
+        return {"queued": 0, "errors": ["MAK_AUTO_ICONOS disabled"],
+                "dropped": 0, "concepts": len(concepts),
+                "not_queued": len(concepts), "disabled": True}
 
     queued = 0
     errors = []
-    for concept in concepts[:max(0, int(max_icons))]:
-        if not isinstance(concept, dict):
-            continue
+    limit = max(0, int(max_icons))
+    valid = [concept for concept in concepts if isinstance(concept, dict)]
+    invalid = len(concepts) - len(valid)
+    dropped = max(0, len(valid) - limit)
+    try:
+        sys.path.insert(0, os.path.expanduser("~/plataforma"))
+        from actividad import record
+        record("queue", "queued", trigger=os.environ.get(
+            "MAK_TRIGGER", "research:annex"), caller="mak-research.worker",
+            queue="research.annex->codex.iconos", department="research",
+            job_id=os.environ.get("MAK_JOB_ID", ""), extra={
+                "annex_path": annex_path, "concepts": len(concepts),
+                "valid": len(valid), "invalid": invalid, "limit": limit,
+            })
+    except (ImportError, OSError):
+        pass
+    for concept in valid[:limit]:
         prompt = _icon_prompt(concept, annex_path)
         shadow_job = enqueue_shadow(
             "anexo_svg", {"text": prompt, "annex_path": annex_path,
@@ -191,11 +211,27 @@ def enqueue_annex_icons(annex_path, densidad="medio", max_icons=AUTO_ICONOS_MAX)
                 result_status="ERROR", payload={"error": str(e)[:200]},
             )
             break
-    return {"queued": queued, "errors": errors[:5]}
+    try:
+        sys.path.insert(0, os.path.expanduser("~/plataforma"))
+        from actividad import record
+        record("queue", "finished", trigger=os.environ.get(
+            "MAK_TRIGGER", "research:annex"), caller="mak-research.worker",
+            queue="research.annex->codex.iconos", department="research",
+            job_id=os.environ.get("MAK_JOB_ID", ""), extra={
+                "annex_path": annex_path, "concepts": len(concepts),
+                "valid": len(valid), "invalid": invalid, "queued": queued,
+                "dropped": dropped,
+            })
+    except (ImportError, OSError):
+        pass
+    return {"queued": queued, "errors": errors[:5], "dropped": dropped,
+            "invalid": invalid, "concepts": len(concepts),
+            "not_queued": max(0, len(concepts) - queued)}
 
 
 def run_tema(modo, tema, n=None, ntfy=True, sin_marco=False, densidad=None,
-            orden=None, memoria=False, timeout=1800, job_id=None, extra=None):
+            orden=None, memoria=False, timeout=1800, job_id=None, extra=None,
+            trigger="api:research"):
     """modo: research/panel/cadena/refutar/grafo/memoria. n = iteraciones o
     replicas (solo research/panel). orden = CSV de proveedores (cadena/refutar
     respetan el orden de nodos del canvas). memoria=True inyecta los hallazgos
@@ -263,7 +299,9 @@ def run_tema(modo, tema, n=None, ntfy=True, sin_marco=False, densidad=None,
           try:
             p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                                  stderr=subprocess.STDOUT, text=True, cwd=BASE,
-                                 env=dict(os.environ, MAK_JOB_ID=job_id))
+                                 env=dict(os.environ, MAK_JOB_ID=job_id,
+                                          MAK_TRIGGER=trigger or os.environ.get(
+                                              "MAK_TRIGGER", "api:research")))
             _set_status("Iniciando...", p.pid)
 
             out_lines = []
@@ -336,15 +374,27 @@ def run_tema(modo, tema, n=None, ntfy=True, sin_marco=False, densidad=None,
     if ok:
         emitir_evento("research", job_id, "node_end", estado="listo",
                       ruta_completa=path)
-        visual = {"queued": 0, "errors": []}
+        visual = {"queued": 0, "errors": [], "dropped": 0, "invalid": 0,
+                  "not_queued": 0, "concepts": 0}
         for annex_path in _annex_paths_from_output(out):
             r = enqueue_annex_icons(annex_path, densidad=densidad or "medio")
             visual["queued"] += r.get("queued", 0)
             visual["errors"].extend(r.get("errors", []))
+            visual["dropped"] += r.get("dropped", 0)
+            visual["invalid"] += r.get("invalid", 0)
+            visual["not_queued"] += r.get("not_queued", 0)
+            visual["concepts"] += r.get("concepts", 0)
         if visual["queued"]:
             emitir_evento("research", job_id, "llm_result", fase="iconos",
                          resumen="%d iconos SVG encolados en Codex"
                          % visual["queued"])
+        if visual["not_queued"]:
+            emitir_evento("research", job_id, "error", fase="iconos",
+                          tipo_error="conceptos_no_procesados",
+                          contexto="%d de %d conceptos no se encolaron; limite=%d invalidos=%d errores=%d"
+                          % (visual["not_queued"], visual["concepts"],
+                             visual["dropped"], visual["invalid"],
+                             len(visual["errors"])))
     else:
         emitir_evento("research", job_id, "error", tipo_error="fallo_proceso",
                       contexto=out[-300:].strip())
@@ -357,4 +407,8 @@ def run_tema(modo, tema, n=None, ntfy=True, sin_marco=False, densidad=None,
     )
     return {"ok": ok, "path": path, "tail": out[-800:],
             "iconos_enviados": visual["queued"] if ok else 0,
+            "iconos_descartados": visual.get("dropped", 0) if ok else 0,
+            "iconos_invalidos": visual.get("invalid", 0) if ok else 0,
+            "iconos_no_procesados": visual.get("not_queued", 0) if ok else 0,
+            "iconos_conceptos": visual.get("concepts", 0) if ok else 0,
             "iconos_errores": visual["errors"] if ok else []}
