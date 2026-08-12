@@ -50,6 +50,17 @@ LIVE_DIRS = {
     "mak_vigia": "vigia",
     "mak_curatoria": "curatoria",
 }
+CONDUCTOR_FILES = [
+    "__init__.py", "conductor.py", "gpu_arbiter.py", "idempotency.py",
+    "handler_registry.py", "producer_catalog.py", "queue_store.py",
+    "queue_worker.py", "runtime.py", "source_bridge.py",
+    "README.md",
+]
+CONDUCTOR_TOOL_FILES = [
+    "run_conductor_worker.py", "run_conductor_shadow_probe.py",
+    "run_conductor_source_probe.py", "mak-conductor-shadow.service",
+    "mak-conductor-shadow.timer",
+]
 ROOT = Path(__file__).resolve().parents[2]
 HOST = "%s@%s" % (os.environ.get("MAK_USER", "mak"),
                   os.environ.get("MAK_HOST", "192.168.50.2"))
@@ -66,6 +77,10 @@ def remote_hashes() -> tuple[dict[str, str], int, str]:
             paths += [f"/home/mak/flujo/cultura/{component}/{name}",
                       f"/home/mak/{LIVE_DIRS[component]}/{name}"]
     paths.extend(UNIT_FILES.values())
+    paths.extend(f"/home/mak/flujo/cultura/mak_conductor/{name}"
+                 for name in CONDUCTOR_FILES)
+    paths.extend(f"/home/mak/flujo/tools/mak_ops/{name}"
+                 for name in CONDUCTOR_TOOL_FILES)
     try:
         r = subprocess.run(["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=8", HOST, "sha256sum", *paths],
                            capture_output=True, text=True, timeout=30)
@@ -98,6 +113,22 @@ def main() -> int:
         state = "PASS" if win == live and win != "MISSING" else "MISMATCH"
         rows.append((f"{source} -> {live_path}", state,
                      win[:12], "(not mirrored)", live[:12]))
+    for name in CONDUCTOR_FILES:
+        local_path = ROOT / "cultura" / "mak_conductor" / name
+        remote_path = f"/home/mak/flujo/cultura/mak_conductor/{name}"
+        win = sha(local_path)
+        repo = remote.get(remote_path, "MISSING")
+        state = "PASS" if win == repo and win != "MISSING" else "MISMATCH"
+        rows.append((f"cultura/mak_conductor/{name}", state,
+                     win[:12], repo[:12], "(repo package)"))
+    for name in CONDUCTOR_TOOL_FILES:
+        local_path = ROOT / "tools" / "mak_ops" / name
+        remote_path = f"/home/mak/flujo/tools/mak_ops/{name}"
+        win = sha(local_path)
+        repo = remote.get(remote_path, "MISSING")
+        state = "PASS" if win == repo and win != "MISSING" else "MISMATCH"
+        rows.append((f"tools/mak_ops/{name}", state,
+                     win[:12], repo[:12], "(repo tool)"))
     md = ["# MAK mirror check", "", f"Generated: `{dt.datetime.now().astimezone().isoformat(timespec='seconds')}`", "",
           f"SSH exit: `{code}`", f"SSH error: `{error or '(none)'}`", "",
           "| File | State | Windows main | MAK repo | MAK live |", "|---|---|---|---|---|"]

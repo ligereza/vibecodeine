@@ -1,0 +1,1058 @@
+{
+  "schema_version": "rd-source-catalog-v0.1",
+  "generated_at": "2026-08-11",
+  "language": "en",
+  "status": "candidate_catalog_pending_source_review",
+  "principle": "A URL is a source pointer; its presence does not promote the page content to scientific certainty.",
+  "source_type_values": [
+    "substance_sheet",
+    "testing_guide",
+    "product_or_test_resource",
+    "research_or_editorial",
+    "general_source"
+  ],
+  "records": [
+    {
+      "url": "https://dancesafe.org/important-reagent-reaction-updates/",
+      "source_type": "general_source",
+      "source_refs": [
+        "amphetamine",
+        "mda",
+        "mdma",
+        "reagent:robadope",
+        "reagent:simons",
+        "rel-robadope-amphetamine-signal",
+        "rel-robadope-mda-test",
+        "rel-robadope-two-c-b-signal",
+        "rel-simons-mdma-test",
+        "tropacocaine_and_related_impurities",
+        "two_c_b"
+      ],
+      "source_kinds": [
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://dancesafe.org/wp-content/uploads/2024/05/DS_Instructions_Reagents_v17Spring24.pdf",
+      "source_type": "general_source",
+      "source_refs": [
+        "amphetamine",
+        "benzodiazepines",
+        "dox_family",
+        "fentanyl",
+        "ghb_gbl",
+        "heroin",
+        "mdma",
+        "method:colorimetric_reagent",
+        "nbome_family",
+        "pcp_derivatives",
+        "reagent:ehrlich",
+        "reagent:froehde",
+        "reagent:marquis",
+        "reagent:mecke",
+        "reagent:simons",
+        "reagent:zimmermann",
+        "rel-colorimetric-fentanyl-limit",
+        "rel-colorimetric-ghb-limit",
+        "rel-ehrlich-dox-limit",
+        "rel-ehrlich-nbome-test-limit",
+        "rel-froehde-amphetamine-signal",
+        "rel-marquis-amphetamine-signal",
+        "rel-marquis-mdma-test",
+        "rel-marquis-two-c-b-signal",
+        "rel-mecke-heroin-signal",
+        "rel-simons-amphetamine-signal",
+        "rel-zimmermann-benzodiazepine-conflict",
+        "two_c_b"
+      ],
+      "source_kinds": [
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/alcohol-despues-del-trabajo-cultura-laboral-estres-y-reduccion-de-danos/",
+      "source_type": "general_source",
+      "source_refs": [
+        "alcohol"
+      ],
+      "source_kinds": [
+        "registry"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/cafeina-estimulantes-mdma-cocaina-interacciones/",
+      "source_type": "general_source",
+      "source_refs": [
+        "caffeine"
+      ],
+      "source_kinds": [
+        "registry"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/cafeina-la-psicoactiva-legal/",
+      "source_type": "general_source",
+      "source_refs": [
+        "caffeine"
+      ],
+      "source_kinds": [
+        "registry"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/chemsex-reduccion-de-danos/",
+      "source_type": "research_or_editorial",
+      "source_refs": [
+        "alcohol",
+        "alkyl_nitrites",
+        "ghb_gbl",
+        "prep_pep_doxypep",
+        "ritonavir_cobicistat"
+      ],
+      "source_kinds": [
+        "registry"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/chemsex/",
+      "source_type": "research_or_editorial",
+      "source_refs": [
+        "alcohol",
+        "alkyl_nitrites",
+        "erectile_dysfunction_medications",
+        "ghb_gbl",
+        "ketamine",
+        "rel-ghb-alcohol-interaction",
+        "rel-ghb-ketamine-interaction",
+        "rel-poppers-erectile-medications"
+      ],
+      "source_kinds": [
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/cocaina-y-cafeina/",
+      "source_type": "research_or_editorial",
+      "source_refs": [
+        "caffeine",
+        "cocaine",
+        "rel-cocaine-caffeine-context"
+      ],
+      "source_kinds": [
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/como-testear-2cb/",
+      "source_type": "testing_guide",
+      "source_refs": [
+        "nbome_family",
+        "reagent:marquis",
+        "reagent:robadope",
+        "rel-marquis-two-c-b-signal",
+        "rel-robadope-two-c-b-signal",
+        "two_c_b"
+      ],
+      "source_kinds": [
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/como-testear-anfetaminas/",
+      "source_type": "testing_guide",
+      "source_refs": [
+        "amphetamine",
+        "reagent:marquis",
+        "reagent:simons",
+        "rel-marquis-amphetamine-signal",
+        "rel-simons-amphetamine-signal"
+      ],
+      "source_kinds": [
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/como-testear-cocaina-con-el-reactivo-de-morris/",
+      "source_type": "testing_guide",
+      "source_refs": [
+        "cocaine",
+        "ketamine",
+        "reagent:morris",
+        "rel-cocaine-ketamine-comparison",
+        "rel-morris-cocaine-test"
+      ],
+      "source_kinds": [
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/como-testear-cocaina-reactivo-liebermann-paso-a-paso/",
+      "source_type": "testing_guide",
+      "source_refs": [
+        "cocaine",
+        "levamisole",
+        "lidocaine",
+        "reagent:liebermann",
+        "tropacocaine_and_related_impurities"
+      ],
+      "source_kinds": [
+        "reagent_library",
+        "registry"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/como-testear-cocaina/",
+      "source_type": "testing_guide",
+      "source_refs": [
+        "cocaine",
+        "levamisole",
+        "rel-levamisole-cocaine-adulterant"
+      ],
+      "source_kinds": [
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/como-testear-hongos-psilocibios/",
+      "source_type": "testing_guide",
+      "source_refs": [
+        "psilocybin",
+        "reagent:ehrlich",
+        "rel-ehrlich-psilocybin-test"
+      ],
+      "source_kinds": [
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/como-testear-ketamina-con-el-reactivo-de-morris/",
+      "source_type": "testing_guide",
+      "source_refs": [
+        "cocaine",
+        "ketamine",
+        "reagent:morris",
+        "rel-cocaine-ketamine-comparison",
+        "rel-morris-ketamine-test"
+      ],
+      "source_kinds": [
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/como-testear-ketamina-reactivo-morris/",
+      "source_type": "testing_guide",
+      "source_refs": [
+        "ketamine",
+        "reagent:morris"
+      ],
+      "source_kinds": [
+        "reagent_library",
+        "registry"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/como-testear-metanfetamina/",
+      "source_type": "testing_guide",
+      "source_refs": [
+        "methamphetamine"
+      ],
+      "source_kinds": [
+        "registry"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/como-testear-tusi/",
+      "source_type": "testing_guide",
+      "source_refs": [
+        "cocaine",
+        "ketamine",
+        "mdma",
+        "rel-tusi-cocaine-variable-mixture",
+        "rel-tusi-mdma-variable-mixture",
+        "rel-tusi-variable-mixture",
+        "tusi"
+      ],
+      "source_kinds": [
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/kit-mdma-vs-testear-solo-con-marquis-cuando-necesitas-los-tres-reactivos/",
+      "source_type": "testing_guide",
+      "source_refs": [
+        "mda",
+        "mdma",
+        "reagent:robadope",
+        "reagent:simons",
+        "rel-mdma-mda-comparison",
+        "rel-robadope-mda-test",
+        "rel-simons-mdma-test"
+      ],
+      "source_kinds": [
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/lsd-y-alucinogenos-como-usar-el-reactivo-ehrlich/",
+      "source_type": "testing_guide",
+      "source_refs": [
+        "dmt",
+        "dox_family",
+        "five_meo_dmt",
+        "lsd",
+        "nbome_family",
+        "reagent:ehrlich",
+        "rel-ehrlich-dox-limit",
+        "rel-ehrlich-five-meo-dmt-candidate",
+        "rel-ehrlich-lsd-test",
+        "rel-ehrlich-nbome-test-limit",
+        "rel-ehrlich-tryptamines-test"
+      ],
+      "source_kinds": [
+        "reagent_library",
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/mdma-y-cafeina/",
+      "source_type": "research_or_editorial",
+      "source_refs": [
+        "caffeine",
+        "mdma",
+        "rel-mdma-caffeine-context"
+      ],
+      "source_kinds": [
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/poppers-lo-que-hay-que-saber/",
+      "source_type": "general_source",
+      "source_refs": [
+        "alkyl_nitrites",
+        "erectile_dysfunction_medications"
+      ],
+      "source_kinds": [
+        "registry"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/sustancias/2cb/",
+      "source_type": "substance_sheet",
+      "source_refs": [
+        "reagent:marquis",
+        "rel-marquis-two-c-b-signal",
+        "two_c_b"
+      ],
+      "source_kinds": [
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/sustancias/anfetaminas/",
+      "source_type": "substance_sheet",
+      "source_refs": [
+        "amphetamine",
+        "reagent:marquis",
+        "rel-marquis-amphetamine-signal"
+      ],
+      "source_kinds": [
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/sustancias/benzodiazepinas/",
+      "source_type": "substance_sheet",
+      "source_refs": [
+        "benzodiazepines",
+        "rel-benzodiazepine-strip-signal",
+        "specific_strip:benzodiazepines"
+      ],
+      "source_kinds": [
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/sustancias/cannabis/",
+      "source_type": "substance_sheet",
+      "source_refs": [
+        "cannabis",
+        "reagent:cbd_thc",
+        "rel-cannabis-cbd-thc-signal"
+      ],
+      "source_kinds": [
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/sustancias/catinonas/",
+      "source_type": "substance_sheet",
+      "source_refs": [
+        "cathinones",
+        "mephedrone",
+        "rel-cathinones-mephedrone-family"
+      ],
+      "source_kinds": [
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/sustancias/cocaina/",
+      "source_type": "substance_sheet",
+      "source_refs": [
+        "cocaine",
+        "fentanyl",
+        "levamisole",
+        "lidocaine",
+        "rel-fentanyl-cocaine-contamination",
+        "rel-levamisole-cocaine-adulterant",
+        "rel-lidocaine-cocaine-adulterant"
+      ],
+      "source_kinds": [
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/sustancias/fentanilo/",
+      "source_type": "substance_sheet",
+      "source_refs": [
+        "fentanyl",
+        "opioids",
+        "rel-fentanyl-opioids-context"
+      ],
+      "source_kinds": [
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/sustancias/ghb/",
+      "source_type": "substance_sheet",
+      "source_refs": [
+        "alcohol",
+        "ghb_gbl",
+        "ketamine",
+        "rel-ghb-alcohol-interaction",
+        "rel-ghb-ketamine-interaction"
+      ],
+      "source_kinds": [
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/sustancias/heroina/",
+      "source_type": "substance_sheet",
+      "source_refs": [
+        "heroin",
+        "opioids"
+      ],
+      "source_kinds": [
+        "registry"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/sustancias/ketamina/",
+      "source_type": "substance_sheet",
+      "source_refs": [
+        "dissociative_derivatives",
+        "ketamine",
+        "rel-dissociatives-ketamine-derivative"
+      ],
+      "source_kinds": [
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/sustancias/lsd/",
+      "source_type": "substance_sheet",
+      "source_refs": [
+        "lsd"
+      ],
+      "source_kinds": [
+        "registry"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/sustancias/mda/",
+      "source_type": "substance_sheet",
+      "source_refs": [
+        "mda",
+        "mdma",
+        "rel-mdma-mda-comparison"
+      ],
+      "source_kinds": [
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/sustancias/mdma/",
+      "source_type": "substance_sheet",
+      "source_refs": [
+        "mda",
+        "mdma",
+        "pma",
+        "pmma",
+        "rel-mdma-mda-comparison",
+        "rel-pma-mdma-adulterant",
+        "rel-pmma-mdma-adulterant"
+      ],
+      "source_kinds": [
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/sustancias/mefedrona/",
+      "source_type": "substance_sheet",
+      "source_refs": [
+        "cathinones",
+        "mephedrone",
+        "rel-cathinones-mephedrone-family"
+      ],
+      "source_kinds": [
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/sustancias/metanfetamina/",
+      "source_type": "substance_sheet",
+      "source_refs": [
+        "methamphetamine",
+        "phenacetin",
+        "rel-phenacetin-methamphetamine-adulterant"
+      ],
+      "source_kinds": [
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/sustancias/pma/",
+      "source_type": "substance_sheet",
+      "source_refs": [
+        "mdma",
+        "pma",
+        "rel-pma-mdma-adulterant"
+      ],
+      "source_kinds": [
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/sustancias/pmma/",
+      "source_type": "substance_sheet",
+      "source_refs": [
+        "mdma",
+        "pmma",
+        "rel-pmma-mdma-adulterant"
+      ],
+      "source_kinds": [
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/sustancias/poppers/",
+      "source_type": "substance_sheet",
+      "source_refs": [
+        "alkyl_nitrites",
+        "erectile_dysfunction_medications",
+        "rel-poppers-erectile-medications"
+      ],
+      "source_kinds": [
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/sustancias/psilocibina/",
+      "source_type": "substance_sheet",
+      "source_refs": [
+        "psilocybin"
+      ],
+      "source_kinds": [
+        "registry"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/sustancias/tusi/",
+      "source_type": "substance_sheet",
+      "source_refs": [
+        "cocaine",
+        "ketamine",
+        "mdma",
+        "rel-tusi-cocaine-variable-mixture",
+        "rel-tusi-mdma-variable-mixture",
+        "rel-tusi-variable-mixture",
+        "tusi"
+      ],
+      "source_kinds": [
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/tienda/cannabis/",
+      "source_type": "product_or_test_resource",
+      "source_refs": [
+        "cannabis",
+        "reagent:cbd_thc",
+        "rel-cannabis-cbd-thc-signal"
+      ],
+      "source_kinds": [
+        "reagent_library",
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/tienda/ehrlich/",
+      "source_type": "product_or_test_resource",
+      "source_refs": [
+        "dmt",
+        "five_meo_dmt",
+        "reagent:ehrlich",
+        "rel-ehrlich-five-meo-dmt-candidate"
+      ],
+      "source_kinds": [
+        "reagent_library",
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/tienda/froehde/",
+      "source_type": "product_or_test_resource",
+      "source_refs": [
+        "amphetamine",
+        "benzofurans",
+        "codeine",
+        "reagent:froehde",
+        "rel-froehde-amphetamine-signal",
+        "rel-froehde-benzofuran-signal"
+      ],
+      "source_kinds": [
+        "reagent_library",
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/tienda/hofmann/",
+      "source_type": "product_or_test_resource",
+      "source_refs": [
+        "dmt",
+        "five_meo_dmt",
+        "harmala_compounds",
+        "reagent:hofmann",
+        "rel-hofmann-five-meo-dmt-candidate",
+        "rel-hofmann-harmala-signal"
+      ],
+      "source_kinds": [
+        "reagent_library",
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/tienda/kit-anfetaminas/",
+      "source_type": "product_or_test_resource",
+      "source_refs": [
+        "amphetamine"
+      ],
+      "source_kinds": [
+        "registry"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/tienda/kit-de-testeo-para-2c-b/",
+      "source_type": "product_or_test_resource",
+      "source_refs": [
+        "two_c_b"
+      ],
+      "source_kinds": [
+        "registry"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/tienda/kit-de-testeo-para-benzodiacepinas/",
+      "source_type": "product_or_test_resource",
+      "source_refs": [
+        "benzodiazepines",
+        "rel-benzodiazepine-strip-signal",
+        "specific_strip:benzodiazepines"
+      ],
+      "source_kinds": [
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/tienda/kit-de-testeo-para-cocaina/",
+      "source_type": "product_or_test_resource",
+      "source_refs": [
+        "cocaine",
+        "ketamine",
+        "rel-cocaine-ketamine-comparison",
+        "xylazine"
+      ],
+      "source_kinds": [
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/tienda/kit-de-testeo-para-dmt/",
+      "source_type": "product_or_test_resource",
+      "source_refs": [
+        "det",
+        "dmt",
+        "escopolamina",
+        "five_meo_dmt",
+        "four_ho_substances",
+        "harmala_compounds",
+        "nbome_family",
+        "reagent:ehrlich",
+        "reagent:hofmann",
+        "rel-ehrlich-five-meo-dmt-candidate",
+        "rel-hofmann-five-meo-dmt-candidate",
+        "rel-hofmann-harmala-signal"
+      ],
+      "source_kinds": [
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/tienda/kit-de-testeo-para-ketamina/",
+      "source_type": "product_or_test_resource",
+      "source_refs": [
+        "dissociative_derivatives",
+        "ketamine"
+      ],
+      "source_kinds": [
+        "registry"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/tienda/kit-de-testeo-para-lsd/",
+      "source_type": "product_or_test_resource",
+      "source_refs": [
+        "dox_family",
+        "lsd",
+        "nbome_family"
+      ],
+      "source_kinds": [
+        "registry"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/tienda/kit-de-testeo-para-mdma/",
+      "source_type": "product_or_test_resource",
+      "source_refs": [
+        "mdma",
+        "reagent:marquis",
+        "rel-marquis-mdma-test"
+      ],
+      "source_kinds": [
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/tienda/kit-de-testeo-para-mefedrona/",
+      "source_type": "product_or_test_resource",
+      "source_refs": [
+        "a_pvp",
+        "benzofurans",
+        "cathinones",
+        "mdpv",
+        "mephedrone",
+        "reagent:froehde",
+        "rel-a-pvp-cathinone-context",
+        "rel-froehde-benzofuran-signal",
+        "rel-mdpv-cathinone-context"
+      ],
+      "source_kinds": [
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/tienda/kit-de-testeo-para-metanfetamina/",
+      "source_type": "product_or_test_resource",
+      "source_refs": [
+        "methamphetamine"
+      ],
+      "source_kinds": [
+        "registry"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/tienda/kit-de-testeo-para-opioides/",
+      "source_type": "product_or_test_resource",
+      "source_refs": [
+        "codeine",
+        "heroin",
+        "morphine",
+        "opioids",
+        "oxycodone",
+        "reagent:mecke",
+        "rel-mecke-codeine-signal",
+        "rel-mecke-heroin-signal",
+        "rel-mecke-morphine-signal"
+      ],
+      "source_kinds": [
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/tienda/kit-de-testeo-para-thc-cbd/",
+      "source_type": "product_or_test_resource",
+      "source_refs": [
+        "cannabis",
+        "reagent:cbd_thc",
+        "rel-cannabis-cbd-thc-signal"
+      ],
+      "source_kinds": [
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/tienda/kit-de-testeo-para-tusi/",
+      "source_type": "product_or_test_resource",
+      "source_refs": [
+        "tusi"
+      ],
+      "source_kinds": [
+        "registry"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/tienda/liebermann/",
+      "source_type": "product_or_test_resource",
+      "source_refs": [
+        "reagent:liebermann"
+      ],
+      "source_kinds": [
+        "reagent_library"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/tienda/marquis/",
+      "source_type": "product_or_test_resource",
+      "source_refs": [
+        "reagent:marquis"
+      ],
+      "source_kinds": [
+        "reagent_library"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/tienda/mecke/",
+      "source_type": "product_or_test_resource",
+      "source_refs": [
+        "caffeine",
+        "codeine",
+        "dxm",
+        "heroin",
+        "morphine",
+        "reagent:mecke",
+        "rel-mecke-codeine-signal",
+        "rel-mecke-dxm-signal",
+        "rel-mecke-heroin-signal",
+        "rel-mecke-morphine-signal"
+      ],
+      "source_kinds": [
+        "reagent_library",
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/tienda/morris/",
+      "source_type": "product_or_test_resource",
+      "source_refs": [
+        "reagent:morris"
+      ],
+      "source_kinds": [
+        "reagent_library"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/tienda/robadope/",
+      "source_type": "product_or_test_resource",
+      "source_refs": [
+        "amphetamine",
+        "mda",
+        "reagent:robadope",
+        "rel-robadope-amphetamine-signal"
+      ],
+      "source_kinds": [
+        "reagent_library",
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/tienda/simons/",
+      "source_type": "product_or_test_resource",
+      "source_refs": [
+        "mda",
+        "reagent:simons"
+      ],
+      "source_kinds": [
+        "reagent_library",
+        "registry"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/tienda/test-de-deteccion-de-ghb-en-bebidas/",
+      "source_type": "product_or_test_resource",
+      "source_refs": [
+        "ghb_gbl"
+      ],
+      "source_kinds": [
+        "registry"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/tienda/test-de-mandelin/",
+      "source_type": "product_or_test_resource",
+      "source_refs": [
+        "pma",
+        "pmma",
+        "reagent:mandelin"
+      ],
+      "source_kinds": [
+        "reagent_library",
+        "registry"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/tienda/tira-de-xylazina/",
+      "source_type": "product_or_test_resource",
+      "source_refs": [
+        "xylazine"
+      ],
+      "source_kinds": [
+        "registry"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/tienda/tira-reactiva-de-benzodiacepinas/",
+      "source_type": "product_or_test_resource",
+      "source_refs": [
+        "benzodiazepines",
+        "rel-benzodiazepine-strip-signal",
+        "specific_strip:benzodiazepines"
+      ],
+      "source_kinds": [
+        "registry",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/tienda/tira-reactiva-de-fentanilo/",
+      "source_type": "product_or_test_resource",
+      "source_refs": [
+        "fentanyl"
+      ],
+      "source_kinds": [
+        "registry"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/tienda/tiras-de-testeo-fentanilo/",
+      "source_type": "product_or_test_resource",
+      "source_refs": [
+        "cocaine",
+        "fentanyl",
+        "method:colorimetric_reagent",
+        "opioids",
+        "rel-colorimetric-fentanyl-limit",
+        "rel-fentanyl-cocaine-contamination",
+        "rel-fentanyl-opioids-context"
+      ],
+      "source_kinds": [
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/tienda/tiras-de-testeo-xilacina/",
+      "source_type": "product_or_test_resource",
+      "source_refs": [
+        "cocaine",
+        "method:colorimetric_reagent",
+        "rel-colorimetric-xylazine-limit",
+        "rel-xylazine-cocaine-contamination",
+        "xylazine"
+      ],
+      "source_kinds": [
+        "relation"
+      ]
+    },
+    {
+      "url": "https://reduciendodano.cl/tienda/zimmermann/",
+      "source_type": "product_or_test_resource",
+      "source_refs": [
+        "benzodiazepines",
+        "reagent:zimmermann",
+        "rel-zimmermann-benzodiazepine-conflict"
+      ],
+      "source_kinds": [
+        "reagent_library",
+        "relation"
+      ]
+    },
+    {
+      "url": "https://testkits.nuaa.org.au/pages/charts",
+      "source_type": "general_source",
+      "source_refs": [
+        "cocaine",
+        "dmt",
+        "ghb_gbl",
+        "ketamine",
+        "lsd",
+        "method:colorimetric_reagent",
+        "psilocybin",
+        "reagent:ehrlich",
+        "reagent:morris",
+        "rel-colorimetric-ghb-limit",
+        "rel-ehrlich-lsd-test",
+        "rel-ehrlich-psilocybin-test",
+        "rel-ehrlich-tryptamines-test",
+        "rel-morris-cocaine-test",
+        "rel-morris-ketamine-test"
+      ],
+      "source_kinds": [
+        "relation"
+      ]
+    }
+  ],
+  "integration_contract": {
+    "registry": "A source may define or describe an entity.",
+    "relation": "A source may support a relation, but the relation still carries its own status and scope limit.",
+    "product": "A product URL is a resource pointer, not an automatic purchase recommendation.",
+    "testing": "A guide or reagent URL describes a testing pathway; it does not establish complete sample composition.",
+    "public_content": "Research and posts can be linked to a relation without becoming the relation itself."
+  }
+}

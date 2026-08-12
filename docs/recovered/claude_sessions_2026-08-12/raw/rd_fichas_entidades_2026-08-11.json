@@ -1,0 +1,4129 @@
+{
+  "schema_version": "rd-entity-profile-index-v0.1",
+  "generated_at": "2026-08-11",
+  "language": "en",
+  "status": "derived_profile_index_pending_public_wording_review",
+  "source_registry": "rd_universo_entidades_2026-08-11.json",
+  "source_graph": "rd_grafo_relaciones_2026-08-11.json",
+  "source_catalog": "rd_fuentes_catalogo_2026-08-11.json",
+  "source_integration_index": "rd_indice_integracion_relaciones_2026-08-11.json",
+  "principles": [
+    "Profiles are derived views, not a second source of truth.",
+    "An entity may remain present without a relation or test.",
+    "A test signal does not become a complete sample identity.",
+    "Source groups preserve the distinction between RD pages, guides, products, research, and scientific sources."
+  ],
+  "coverage": {
+    "entity_count": 48,
+    "connected_count": 40,
+    "unconnected_count": 8
+  },
+  "profiles": [
+    {
+      "id": "cannabis",
+      "display_name": "Cannabis / Marihuana",
+      "aliases": [
+        "THC",
+        "CBD"
+      ],
+      "entity_kind": "substance",
+      "matrix": true,
+      "source_status": "direct_sheet_and_product",
+      "test_status": "colorimetric_reagent",
+      "coverage_state": "connected",
+      "relation_count": 1,
+      "relation_types": {
+        "presumptive_presence_signal_for": 1
+      },
+      "relation_statuses": {
+        "supported_with_scope_limit": 1
+      },
+      "source_count": 3,
+      "source_groups": {
+        "substance_sheets": [
+          "https://reduciendodano.cl/sustancias/cannabis/"
+        ],
+        "testing_guides": [],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/cannabis/",
+          "https://reduciendodano.cl/tienda/kit-de-testeo-para-thc-cbd/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "presumptive_presence_only",
+        "allowed": [
+          "Resultado compatible con presencia presumible de Cannabis / Marihuana.",
+          "La muestra puede contener Cannabis / Marihuana; el test no determina cantidad, pureza ni composicion completa."
+        ],
+        "not_inferred": [
+          "quantity",
+          "purity",
+          "potency",
+          "safety",
+          "complete_sample_composition"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-cannabis-cbd-thc-signal",
+          "direction": "incoming",
+          "other_ref": "reagent:cbd_thc",
+          "other_label": "CBD:THC",
+          "relation_type": "presumptive_presence_signal_for",
+          "status": "supported_with_scope_limit",
+          "confidence": "medium",
+          "matrix_relevance": "existing_matrix",
+          "evidence_contract": "presumptive_presence_only",
+          "notes": "The CBD:THC resource is a cannabinoid signal pathway. It does not determine an exact ratio, purity, potency, or complete sample composition.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/cannabis/"
+            ],
+            "testing_guides": [],
+            "product_resources": [
+              "https://reduciendodano.cl/tienda/cannabis/",
+              "https://reduciendodano.cl/tienda/kit-de-testeo-para-thc-cbd/"
+            ],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "lsd",
+      "display_name": "LSD",
+      "aliases": [
+        "acid",
+        "dietilamida del acido lisergico"
+      ],
+      "entity_kind": "substance",
+      "matrix": true,
+      "source_status": "direct_sheet_and_testing_guides",
+      "test_status": "colorimetric_reagent",
+      "coverage_state": "connected",
+      "relation_count": 1,
+      "relation_types": {
+        "presumptive_presence_signal_for": 1
+      },
+      "relation_statuses": {
+        "supported_with_scope_limit": 1
+      },
+      "source_count": 4,
+      "source_groups": {
+        "substance_sheets": [
+          "https://reduciendodano.cl/sustancias/lsd/"
+        ],
+        "testing_guides": [
+          "https://reduciendodano.cl/lsd-y-alucinogenos-como-usar-el-reactivo-ehrlich/"
+        ],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/kit-de-testeo-para-lsd/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [
+          "https://testkits.nuaa.org.au/pages/charts"
+        ],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "presumptive_presence_only",
+        "allowed": [
+          "Resultado compatible con presencia presumible de LSD.",
+          "La muestra puede contener LSD; el test no determina cantidad, pureza ni composicion completa."
+        ],
+        "not_inferred": [
+          "quantity",
+          "purity",
+          "potency",
+          "safety",
+          "complete_sample_composition"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-ehrlich-lsd-test",
+          "direction": "incoming",
+          "other_ref": "reagent:ehrlich",
+          "other_label": "Ehrlich",
+          "relation_type": "presumptive_presence_signal_for",
+          "status": "supported_with_scope_limit",
+          "confidence": "high",
+          "matrix_relevance": "existing_matrix",
+          "evidence_contract": "presumptive_presence_only",
+          "notes": "Presumptive reagent relation. It does not prove purity, dose, or absence of another substance.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [
+              "https://reduciendodano.cl/lsd-y-alucinogenos-como-usar-el-reactivo-ehrlich/"
+            ],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [
+              "https://testkits.nuaa.org.au/pages/charts"
+            ],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "psilocybin",
+      "display_name": "Psilocibina / Hongos",
+      "aliases": [
+        "psilocina",
+        "hongos psilocibios"
+      ],
+      "entity_kind": "substance_family",
+      "matrix": true,
+      "source_status": "direct_sheet_and_testing_guide",
+      "test_status": "colorimetric_reagent",
+      "coverage_state": "connected",
+      "relation_count": 1,
+      "relation_types": {
+        "presumptive_presence_signal_for": 1
+      },
+      "relation_statuses": {
+        "supported_with_scope_limit": 1
+      },
+      "source_count": 3,
+      "source_groups": {
+        "substance_sheets": [
+          "https://reduciendodano.cl/sustancias/psilocibina/"
+        ],
+        "testing_guides": [
+          "https://reduciendodano.cl/como-testear-hongos-psilocibios/"
+        ],
+        "product_resources": [],
+        "research_posts": [],
+        "scientific_sources": [
+          "https://testkits.nuaa.org.au/pages/charts"
+        ],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "presumptive_presence_only",
+        "allowed": [
+          "Resultado compatible con presencia presumible de Psilocibina / Hongos.",
+          "La muestra puede contener Psilocibina / Hongos; el test no determina cantidad, pureza ni composicion completa."
+        ],
+        "not_inferred": [
+          "quantity",
+          "purity",
+          "potency",
+          "safety",
+          "complete_sample_composition"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-ehrlich-psilocybin-test",
+          "direction": "incoming",
+          "other_ref": "reagent:ehrlich",
+          "other_label": "Ehrlich",
+          "relation_type": "presumptive_presence_signal_for",
+          "status": "supported_with_scope_limit",
+          "confidence": "medium",
+          "matrix_relevance": "existing_matrix",
+          "evidence_contract": "presumptive_presence_only",
+          "notes": "The graph should keep mushroom identity and reagent response as separate dimensions.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [
+              "https://reduciendodano.cl/como-testear-hongos-psilocibios/"
+            ],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [
+              "https://testkits.nuaa.org.au/pages/charts"
+            ],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "mdma",
+      "display_name": "MDMA / \u00c9xtasis",
+      "aliases": [
+        "molly",
+        "ecstasy",
+        "pasti",
+        "pila"
+      ],
+      "entity_kind": "substance",
+      "matrix": true,
+      "source_status": "direct_sheet_and_testing_guides",
+      "test_status": "colorimetric_reagent",
+      "coverage_state": "connected",
+      "relation_count": 7,
+      "relation_types": {
+        "adulterant_of": 2,
+        "comparison": 1,
+        "contextual_relation": 1,
+        "interaction": 1,
+        "presumptive_presence_signal_for": 2
+      },
+      "relation_statuses": {
+        "context_only": 2,
+        "supported_candidate": 1,
+        "supported_with_scope_limit": 4
+      },
+      "source_count": 11,
+      "source_groups": {
+        "substance_sheets": [
+          "https://reduciendodano.cl/sustancias/mda/",
+          "https://reduciendodano.cl/sustancias/mdma/",
+          "https://reduciendodano.cl/sustancias/pma/",
+          "https://reduciendodano.cl/sustancias/pmma/",
+          "https://reduciendodano.cl/sustancias/tusi/"
+        ],
+        "testing_guides": [
+          "https://reduciendodano.cl/como-testear-tusi/",
+          "https://reduciendodano.cl/kit-mdma-vs-testear-solo-con-marquis-cuando-necesitas-los-tres-reactivos/"
+        ],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/kit-de-testeo-para-mdma/"
+        ],
+        "research_posts": [
+          "https://reduciendodano.cl/mdma-y-cafeina/"
+        ],
+        "scientific_sources": [
+          "https://dancesafe.org/important-reagent-reaction-updates/",
+          "https://dancesafe.org/wp-content/uploads/2024/05/DS_Instructions_Reagents_v17Spring24.pdf"
+        ],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "presumptive_presence_only",
+        "allowed": [
+          "Resultado compatible con presencia presumible de MDMA / \u00c9xtasis.",
+          "La muestra puede contener MDMA / \u00c9xtasis; el test no determina cantidad, pureza ni composicion completa."
+        ],
+        "not_inferred": [
+          "quantity",
+          "purity",
+          "potency",
+          "safety",
+          "complete_sample_composition"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-mdma-caffeine-context",
+          "direction": "outgoing",
+          "other_ref": "caffeine",
+          "other_label": "Cafe\u00edna",
+          "relation_type": "interaction",
+          "status": "context_only",
+          "confidence": "medium",
+          "matrix_relevance": "outside_initial_matrix",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Keep outside the original matrix but retain in the universal graph because the relation appears in RD educational content.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [],
+            "product_resources": [],
+            "research_posts": [
+              "https://reduciendodano.cl/mdma-y-cafeina/"
+            ],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-mdma-mda-comparison",
+          "direction": "outgoing",
+          "other_ref": "mda",
+          "other_label": "MDA",
+          "relation_type": "comparison",
+          "status": "supported_candidate",
+          "confidence": "medium",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "RD presents MDMA and MDA as a comparison problem. A multi-reagent pattern is more informative than a single color; preserve uncertainty and do not infer identity from one reaction.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/mda/",
+              "https://reduciendodano.cl/sustancias/mdma/"
+            ],
+            "testing_guides": [
+              "https://reduciendodano.cl/kit-mdma-vs-testear-solo-con-marquis-cuando-necesitas-los-tres-reactivos/"
+            ],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-marquis-mdma-test",
+          "direction": "incoming",
+          "other_ref": "reagent:marquis",
+          "other_label": "Marquis",
+          "relation_type": "presumptive_presence_signal_for",
+          "status": "supported_with_scope_limit",
+          "confidence": "high",
+          "matrix_relevance": "existing_matrix",
+          "evidence_contract": "presumptive_presence_only",
+          "notes": "Use as one signal in a reagent panel, especially for MDMA versus MDA.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [],
+            "product_resources": [
+              "https://reduciendodano.cl/tienda/kit-de-testeo-para-mdma/"
+            ],
+            "research_posts": [],
+            "scientific_sources": [
+              "https://dancesafe.org/wp-content/uploads/2024/05/DS_Instructions_Reagents_v17Spring24.pdf"
+            ],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-pma-mdma-adulterant",
+          "direction": "incoming",
+          "other_ref": "pma",
+          "other_label": "PMA",
+          "relation_type": "adulterant_of",
+          "status": "supported_with_scope_limit",
+          "confidence": "medium",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Use as a documented adulteration/analogue context, not as a claim that every MDMA sample contains PMA.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/mdma/",
+              "https://reduciendodano.cl/sustancias/pma/"
+            ],
+            "testing_guides": [],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-pmma-mdma-adulterant",
+          "direction": "incoming",
+          "other_ref": "pmma",
+          "other_label": "PMMA",
+          "relation_type": "adulterant_of",
+          "status": "supported_with_scope_limit",
+          "confidence": "medium",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Keep separate from MDMA as an entity and retain the uncertainty of field testing.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/mdma/",
+              "https://reduciendodano.cl/sustancias/pmma/"
+            ],
+            "testing_guides": [],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-simons-mdma-test",
+          "direction": "incoming",
+          "other_ref": "reagent:simons",
+          "other_label": "Simon's",
+          "relation_type": "presumptive_presence_signal_for",
+          "status": "supported_with_scope_limit",
+          "confidence": "medium",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "presumptive_presence_only",
+          "notes": "Panel component. Do not publish a color as a deterministic identity label.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [
+              "https://reduciendodano.cl/kit-mdma-vs-testear-solo-con-marquis-cuando-necesitas-los-tres-reactivos/"
+            ],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [
+              "https://dancesafe.org/important-reagent-reaction-updates/"
+            ],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-tusi-mdma-variable-mixture",
+          "direction": "incoming",
+          "other_ref": "tusi",
+          "other_label": "Tusi",
+          "relation_type": "contextual_relation",
+          "status": "context_only",
+          "confidence": "high",
+          "matrix_relevance": "existing_matrix",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Do not display as tusi equals MDMA. Preserve the variable-mixture warning in every view.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/tusi/"
+            ],
+            "testing_guides": [
+              "https://reduciendodano.cl/como-testear-tusi/"
+            ],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "ketamine",
+      "display_name": "Ketamina",
+      "aliases": [
+        "K",
+        "ket"
+      ],
+      "entity_kind": "substance",
+      "matrix": true,
+      "source_status": "direct_sheet_and_testing_guides",
+      "test_status": "colorimetric_reagent",
+      "coverage_state": "connected",
+      "relation_count": 5,
+      "relation_types": {
+        "comparison": 1,
+        "contextual_relation": 1,
+        "derivative_of": 1,
+        "interaction": 1,
+        "presumptive_presence_signal_for": 1
+      },
+      "relation_statuses": {
+        "context_only": 2,
+        "supported_candidate": 2,
+        "supported_with_scope_limit": 1
+      },
+      "source_count": 11,
+      "source_groups": {
+        "substance_sheets": [
+          "https://reduciendodano.cl/sustancias/ghb/",
+          "https://reduciendodano.cl/sustancias/ketamina/",
+          "https://reduciendodano.cl/sustancias/tusi/"
+        ],
+        "testing_guides": [
+          "https://reduciendodano.cl/como-testear-cocaina-con-el-reactivo-de-morris/",
+          "https://reduciendodano.cl/como-testear-ketamina-con-el-reactivo-de-morris/",
+          "https://reduciendodano.cl/como-testear-ketamina-reactivo-morris/",
+          "https://reduciendodano.cl/como-testear-tusi/"
+        ],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/kit-de-testeo-para-cocaina/",
+          "https://reduciendodano.cl/tienda/kit-de-testeo-para-ketamina/"
+        ],
+        "research_posts": [
+          "https://reduciendodano.cl/chemsex/"
+        ],
+        "scientific_sources": [
+          "https://testkits.nuaa.org.au/pages/charts"
+        ],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "presumptive_presence_only",
+        "allowed": [
+          "Resultado compatible con presencia presumible de Ketamina.",
+          "La muestra puede contener Ketamina; el test no determina cantidad, pureza ni composicion completa."
+        ],
+        "not_inferred": [
+          "quantity",
+          "purity",
+          "potency",
+          "safety",
+          "complete_sample_composition"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-cocaine-ketamine-comparison",
+          "direction": "incoming",
+          "other_ref": "cocaine",
+          "other_label": "Coca\u00edna",
+          "relation_type": "comparison",
+          "status": "supported_candidate",
+          "confidence": "medium",
+          "matrix_relevance": "existing_matrix",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "The relation is useful for separating two test narratives, not for treating reagent color as a universal identification.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [
+              "https://reduciendodano.cl/como-testear-cocaina-con-el-reactivo-de-morris/",
+              "https://reduciendodano.cl/como-testear-ketamina-con-el-reactivo-de-morris/"
+            ],
+            "product_resources": [
+              "https://reduciendodano.cl/tienda/kit-de-testeo-para-cocaina/"
+            ],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-dissociatives-ketamine-derivative",
+          "direction": "incoming",
+          "other_ref": "dissociative_derivatives",
+          "other_label": "DCK / 2-FDCK / 2-Oxo-PCE / O-PCE / MXE / MXPr",
+          "relation_type": "derivative_of",
+          "status": "context_only",
+          "confidence": "medium",
+          "matrix_relevance": "outside_initial_matrix",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Family relation for navigation only; a class label does not establish that an unknown sample is ketamine.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/ketamina/"
+            ],
+            "testing_guides": [],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-ghb-ketamine-interaction",
+          "direction": "incoming",
+          "other_ref": "ghb_gbl",
+          "other_label": "GHB / GBL",
+          "relation_type": "interaction",
+          "status": "supported_candidate",
+          "confidence": "medium",
+          "matrix_relevance": "existing_matrix",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Represent as a caution relation only; do not imply a deterministic outcome for every person or sample.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/ghb/"
+            ],
+            "testing_guides": [],
+            "product_resources": [],
+            "research_posts": [
+              "https://reduciendodano.cl/chemsex/"
+            ],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-morris-ketamine-test",
+          "direction": "incoming",
+          "other_ref": "reagent:morris",
+          "other_label": "Morris",
+          "relation_type": "presumptive_presence_signal_for",
+          "status": "supported_with_scope_limit",
+          "confidence": "medium",
+          "matrix_relevance": "existing_matrix",
+          "evidence_contract": "presumptive_presence_only",
+          "notes": "Keep the same reagent node linked to both narratives; the matrix is a view of relations, not a standalone database.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [
+              "https://reduciendodano.cl/como-testear-ketamina-con-el-reactivo-de-morris/"
+            ],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [
+              "https://testkits.nuaa.org.au/pages/charts"
+            ],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-tusi-variable-mixture",
+          "direction": "incoming",
+          "other_ref": "tusi",
+          "other_label": "Tusi",
+          "relation_type": "contextual_relation",
+          "status": "context_only",
+          "confidence": "high",
+          "matrix_relevance": "existing_matrix",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "This is not a fixed composition relation. The name refers to a variable market mixture; ketamine is one possible contextual component, not a definition.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/tusi/"
+            ],
+            "testing_guides": [
+              "https://reduciendodano.cl/como-testear-tusi/"
+            ],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "tusi",
+      "display_name": "Tusi",
+      "aliases": [
+        "coca\u00edna rosada",
+        "pink cocaine"
+      ],
+      "entity_kind": "market_name_or_mixture",
+      "matrix": true,
+      "source_status": "direct_sheet_and_testing_guide",
+      "test_status": "colorimetric_reagent",
+      "coverage_state": "connected",
+      "relation_count": 3,
+      "relation_types": {
+        "contextual_relation": 3
+      },
+      "relation_statuses": {
+        "context_only": 3
+      },
+      "source_count": 3,
+      "source_groups": {
+        "substance_sheets": [
+          "https://reduciendodano.cl/sustancias/tusi/"
+        ],
+        "testing_guides": [
+          "https://reduciendodano.cl/como-testear-tusi/"
+        ],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/kit-de-testeo-para-tusi/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "presumptive_presence_only",
+        "allowed": [
+          "Resultado compatible con presencia presumible de Tusi.",
+          "La muestra puede contener Tusi; el test no determina cantidad, pureza ni composicion completa."
+        ],
+        "not_inferred": [
+          "quantity",
+          "purity",
+          "potency",
+          "safety",
+          "complete_sample_composition"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-tusi-cocaine-variable-mixture",
+          "direction": "outgoing",
+          "other_ref": "cocaine",
+          "other_label": "Coca\u00edna",
+          "relation_type": "contextual_relation",
+          "status": "context_only",
+          "confidence": "high",
+          "matrix_relevance": "existing_matrix",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Context relation only. No fixed formula should be drawn from the commercial name.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/tusi/"
+            ],
+            "testing_guides": [
+              "https://reduciendodano.cl/como-testear-tusi/"
+            ],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-tusi-variable-mixture",
+          "direction": "outgoing",
+          "other_ref": "ketamine",
+          "other_label": "Ketamina",
+          "relation_type": "contextual_relation",
+          "status": "context_only",
+          "confidence": "high",
+          "matrix_relevance": "existing_matrix",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "This is not a fixed composition relation. The name refers to a variable market mixture; ketamine is one possible contextual component, not a definition.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/tusi/"
+            ],
+            "testing_guides": [
+              "https://reduciendodano.cl/como-testear-tusi/"
+            ],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-tusi-mdma-variable-mixture",
+          "direction": "outgoing",
+          "other_ref": "mdma",
+          "other_label": "MDMA / \u00c9xtasis",
+          "relation_type": "contextual_relation",
+          "status": "context_only",
+          "confidence": "high",
+          "matrix_relevance": "existing_matrix",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Do not display as tusi equals MDMA. Preserve the variable-mixture warning in every view.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/tusi/"
+            ],
+            "testing_guides": [
+              "https://reduciendodano.cl/como-testear-tusi/"
+            ],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "alcohol",
+      "display_name": "Alcohol / Etanol",
+      "aliases": [
+        "alcohol et\u00edlico"
+      ],
+      "entity_kind": "contextual_substance",
+      "matrix": true,
+      "source_status": "direct_articles_and_interactions",
+      "test_status": "not_reviewed",
+      "coverage_state": "connected",
+      "relation_count": 1,
+      "relation_types": {
+        "interaction": 1
+      },
+      "relation_statuses": {
+        "supported_candidate": 1
+      },
+      "source_count": 4,
+      "source_groups": {
+        "substance_sheets": [
+          "https://reduciendodano.cl/sustancias/ghb/"
+        ],
+        "testing_guides": [],
+        "product_resources": [],
+        "research_posts": [
+          "https://reduciendodano.cl/chemsex-reduccion-de-danos/",
+          "https://reduciendodano.cl/chemsex/"
+        ],
+        "scientific_sources": [],
+        "other_sources": [
+          "https://reduciendodano.cl/alcohol-despues-del-trabajo-cultura-laboral-estres-y-reduccion-de-danos/"
+        ]
+      },
+      "public_contract": {
+        "claim_mode": "not_reviewed",
+        "allowed": [
+          "Alcohol / Etanol permanece en el universo, pendiente de una relacion o fuente especifica."
+        ],
+        "not_inferred": [
+          "presence",
+          "absence",
+          "quantity",
+          "purity",
+          "potency",
+          "safety"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-ghb-alcohol-interaction",
+          "direction": "incoming",
+          "other_ref": "ghb_gbl",
+          "other_label": "GHB / GBL",
+          "relation_type": "interaction",
+          "status": "supported_candidate",
+          "confidence": "high",
+          "matrix_relevance": "existing_matrix",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Keep as an interaction relation in the harm-reduction context. It must not be rendered as a dosage or clinical instruction.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/ghb/"
+            ],
+            "testing_guides": [],
+            "product_resources": [],
+            "research_posts": [
+              "https://reduciendodano.cl/chemsex/"
+            ],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "ghb_gbl",
+      "display_name": "GHB / GBL",
+      "aliases": [
+        "GHB",
+        "GBL"
+      ],
+      "entity_kind": "substance_family",
+      "matrix": true,
+      "source_status": "direct_sheet_and_chemsex_guide",
+      "test_status": "specific_non_colorimetric_test",
+      "coverage_state": "connected",
+      "relation_count": 3,
+      "relation_types": {
+        "interaction": 2,
+        "test_limit_of": 1
+      },
+      "relation_statuses": {
+        "supported_candidate": 2,
+        "supported_with_scope_limit": 1
+      },
+      "source_count": 6,
+      "source_groups": {
+        "substance_sheets": [
+          "https://reduciendodano.cl/sustancias/ghb/"
+        ],
+        "testing_guides": [],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/test-de-deteccion-de-ghb-en-bebidas/"
+        ],
+        "research_posts": [
+          "https://reduciendodano.cl/chemsex-reduccion-de-danos/",
+          "https://reduciendodano.cl/chemsex/"
+        ],
+        "scientific_sources": [
+          "https://dancesafe.org/wp-content/uploads/2024/05/DS_Instructions_Reagents_v17Spring24.pdf",
+          "https://testkits.nuaa.org.au/pages/charts"
+        ],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "presumptive_presence_only",
+        "allowed": [
+          "Resultado compatible con presencia presumible de GHB / GBL.",
+          "La muestra puede contener GHB / GBL; el test no determina cantidad, pureza ni composicion completa."
+        ],
+        "not_inferred": [
+          "quantity",
+          "purity",
+          "potency",
+          "safety",
+          "complete_sample_composition"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-ghb-alcohol-interaction",
+          "direction": "outgoing",
+          "other_ref": "alcohol",
+          "other_label": "Alcohol / Etanol",
+          "relation_type": "interaction",
+          "status": "supported_candidate",
+          "confidence": "high",
+          "matrix_relevance": "existing_matrix",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Keep as an interaction relation in the harm-reduction context. It must not be rendered as a dosage or clinical instruction.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/ghb/"
+            ],
+            "testing_guides": [],
+            "product_resources": [],
+            "research_posts": [
+              "https://reduciendodano.cl/chemsex/"
+            ],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-ghb-ketamine-interaction",
+          "direction": "outgoing",
+          "other_ref": "ketamine",
+          "other_label": "Ketamina",
+          "relation_type": "interaction",
+          "status": "supported_candidate",
+          "confidence": "medium",
+          "matrix_relevance": "existing_matrix",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Represent as a caution relation only; do not imply a deterministic outcome for every person or sample.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/ghb/"
+            ],
+            "testing_guides": [],
+            "product_resources": [],
+            "research_posts": [
+              "https://reduciendodano.cl/chemsex/"
+            ],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-colorimetric-ghb-limit",
+          "direction": "incoming",
+          "other_ref": "method:colorimetric_reagent",
+          "other_label": "Method: colorimetric_reagent",
+          "relation_type": "test_limit_of",
+          "status": "supported_with_scope_limit",
+          "confidence": "high",
+          "matrix_relevance": "existing_matrix",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "No ordinary colorimetric reagent relation should be rendered as a universal GHB/GBL test. Route to a separate test-status state.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [
+              "https://dancesafe.org/wp-content/uploads/2024/05/DS_Instructions_Reagents_v17Spring24.pdf",
+              "https://testkits.nuaa.org.au/pages/charts"
+            ],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "cocaine",
+      "display_name": "Coca\u00edna",
+      "aliases": [
+        "coca"
+      ],
+      "entity_kind": "substance",
+      "matrix": true,
+      "source_status": "direct_sheet_and_testing_guides",
+      "test_status": "colorimetric_reagent",
+      "coverage_state": "connected",
+      "relation_count": 8,
+      "relation_types": {
+        "adulterant_of": 4,
+        "comparison": 1,
+        "contextual_relation": 1,
+        "interaction": 1,
+        "presumptive_presence_signal_for": 1
+      },
+      "relation_statuses": {
+        "context_only": 3,
+        "supported_candidate": 3,
+        "supported_with_scope_limit": 2
+      },
+      "source_count": 12,
+      "source_groups": {
+        "substance_sheets": [
+          "https://reduciendodano.cl/sustancias/cocaina/",
+          "https://reduciendodano.cl/sustancias/tusi/"
+        ],
+        "testing_guides": [
+          "https://reduciendodano.cl/como-testear-cocaina-con-el-reactivo-de-morris/",
+          "https://reduciendodano.cl/como-testear-cocaina-reactivo-liebermann-paso-a-paso/",
+          "https://reduciendodano.cl/como-testear-cocaina/",
+          "https://reduciendodano.cl/como-testear-ketamina-con-el-reactivo-de-morris/",
+          "https://reduciendodano.cl/como-testear-tusi/"
+        ],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/kit-de-testeo-para-cocaina/",
+          "https://reduciendodano.cl/tienda/tiras-de-testeo-fentanilo/",
+          "https://reduciendodano.cl/tienda/tiras-de-testeo-xilacina/"
+        ],
+        "research_posts": [
+          "https://reduciendodano.cl/cocaina-y-cafeina/"
+        ],
+        "scientific_sources": [
+          "https://testkits.nuaa.org.au/pages/charts"
+        ],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "presumptive_presence_only",
+        "allowed": [
+          "Resultado compatible con presencia presumible de Coca\u00edna.",
+          "La muestra puede contener Coca\u00edna; el test no determina cantidad, pureza ni composicion completa."
+        ],
+        "not_inferred": [
+          "quantity",
+          "purity",
+          "potency",
+          "safety",
+          "complete_sample_composition"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-cocaine-caffeine-context",
+          "direction": "outgoing",
+          "other_ref": "caffeine",
+          "other_label": "Cafe\u00edna",
+          "relation_type": "interaction",
+          "status": "context_only",
+          "confidence": "medium",
+          "matrix_relevance": "outside_initial_matrix",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Educational context only; retain the distinction between a content relation and a quantified risk estimate.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [],
+            "product_resources": [],
+            "research_posts": [
+              "https://reduciendodano.cl/cocaina-y-cafeina/"
+            ],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-fentanyl-cocaine-contamination",
+          "direction": "incoming",
+          "other_ref": "fentanyl",
+          "other_label": "Fentanilo",
+          "relation_type": "adulterant_of",
+          "status": "supported_with_scope_limit",
+          "confidence": "medium",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Use contamination/adulteration language, not inevitability. A specific strip is not interchangeable with a colorimetric reagent.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/cocaina/"
+            ],
+            "testing_guides": [],
+            "product_resources": [
+              "https://reduciendodano.cl/tienda/tiras-de-testeo-fentanilo/"
+            ],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-cocaine-ketamine-comparison",
+          "direction": "outgoing",
+          "other_ref": "ketamine",
+          "other_label": "Ketamina",
+          "relation_type": "comparison",
+          "status": "supported_candidate",
+          "confidence": "medium",
+          "matrix_relevance": "existing_matrix",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "The relation is useful for separating two test narratives, not for treating reagent color as a universal identification.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [
+              "https://reduciendodano.cl/como-testear-cocaina-con-el-reactivo-de-morris/",
+              "https://reduciendodano.cl/como-testear-ketamina-con-el-reactivo-de-morris/"
+            ],
+            "product_resources": [
+              "https://reduciendodano.cl/tienda/kit-de-testeo-para-cocaina/"
+            ],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-levamisole-cocaine-adulterant",
+          "direction": "incoming",
+          "other_ref": "levamisole",
+          "other_label": "Levamisol",
+          "relation_type": "adulterant_of",
+          "status": "supported_candidate",
+          "confidence": "medium",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Known adulterant context in RD material; not a prevalence estimate for all samples.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/cocaina/"
+            ],
+            "testing_guides": [
+              "https://reduciendodano.cl/como-testear-cocaina/"
+            ],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-lidocaine-cocaine-adulterant",
+          "direction": "incoming",
+          "other_ref": "lidocaine",
+          "other_label": "Lidoca\u00edna",
+          "relation_type": "adulterant_of",
+          "status": "supported_candidate",
+          "confidence": "medium",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Adulterant context only; do not use the relation as an identification rule.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/cocaina/"
+            ],
+            "testing_guides": [],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-morris-cocaine-test",
+          "direction": "incoming",
+          "other_ref": "reagent:morris",
+          "other_label": "Morris",
+          "relation_type": "presumptive_presence_signal_for",
+          "status": "supported_with_scope_limit",
+          "confidence": "medium",
+          "matrix_relevance": "existing_matrix",
+          "evidence_contract": "presumptive_presence_only",
+          "notes": "Presumptive relation for the RD cocaine testing workflow.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [
+              "https://reduciendodano.cl/como-testear-cocaina-con-el-reactivo-de-morris/"
+            ],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [
+              "https://testkits.nuaa.org.au/pages/charts"
+            ],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-tusi-cocaine-variable-mixture",
+          "direction": "incoming",
+          "other_ref": "tusi",
+          "other_label": "Tusi",
+          "relation_type": "contextual_relation",
+          "status": "context_only",
+          "confidence": "high",
+          "matrix_relevance": "existing_matrix",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Context relation only. No fixed formula should be drawn from the commercial name.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/tusi/"
+            ],
+            "testing_guides": [
+              "https://reduciendodano.cl/como-testear-tusi/"
+            ],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-xylazine-cocaine-contamination",
+          "direction": "incoming",
+          "other_ref": "xylazine",
+          "other_label": "Xilazina",
+          "relation_type": "adulterant_of",
+          "status": "context_only",
+          "confidence": "low",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Candidate contamination relation. Keep separate from fentanyl and require a source-specific review before publication.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [],
+            "product_resources": [
+              "https://reduciendodano.cl/tienda/tiras-de-testeo-xilacina/"
+            ],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "alkyl_nitrites",
+      "display_name": "Poppers / Nitritos de alquilo",
+      "aliases": [
+        "nitrito de amilo",
+        "nitrito de butilo",
+        "nitrito de pentilo",
+        "nitrito de isopropilo"
+      ],
+      "entity_kind": "substance_family",
+      "matrix": true,
+      "source_status": "direct_article_ficha_pending",
+      "test_status": "no_known_test_in_scope",
+      "coverage_state": "connected",
+      "relation_count": 1,
+      "relation_types": {
+        "medication_interaction": 1
+      },
+      "relation_statuses": {
+        "supported_with_scope_limit": 1
+      },
+      "source_count": 4,
+      "source_groups": {
+        "substance_sheets": [
+          "https://reduciendodano.cl/sustancias/poppers/"
+        ],
+        "testing_guides": [],
+        "product_resources": [],
+        "research_posts": [
+          "https://reduciendodano.cl/chemsex-reduccion-de-danos/",
+          "https://reduciendodano.cl/chemsex/"
+        ],
+        "scientific_sources": [],
+        "other_sources": [
+          "https://reduciendodano.cl/poppers-lo-que-hay-que-saber/"
+        ]
+      },
+      "public_contract": {
+        "claim_mode": "no_known_test_in_scope",
+        "allowed": [
+          "No hay un test documentado en el alcance actual para Poppers / Nitritos de alquilo."
+        ],
+        "not_inferred": [
+          "presence",
+          "absence",
+          "quantity",
+          "purity",
+          "potency",
+          "safety"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-poppers-erectile-medications",
+          "direction": "outgoing",
+          "other_ref": "erectile_dysfunction_medications",
+          "other_label": "Medicamentos para la disfunci\u00f3n er\u00e9ctil",
+          "relation_type": "medication_interaction",
+          "status": "supported_with_scope_limit",
+          "confidence": "high",
+          "matrix_relevance": "existing_matrix",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "The graph may flag the relation, but public output needs a qualified medical-information boundary and must not become personalized advice.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/poppers/"
+            ],
+            "testing_guides": [],
+            "product_resources": [],
+            "research_posts": [
+              "https://reduciendodano.cl/chemsex/"
+            ],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "erectile_dysfunction_medications",
+      "display_name": "Medicamentos para la disfunci\u00f3n er\u00e9ctil",
+      "aliases": [
+        "Viagra",
+        "sildenafil",
+        "tadalafil",
+        "vardenafil"
+      ],
+      "entity_kind": "medication",
+      "matrix": true,
+      "source_status": "direct_interaction_article",
+      "test_status": "not_reviewed",
+      "coverage_state": "connected",
+      "relation_count": 1,
+      "relation_types": {
+        "medication_interaction": 1
+      },
+      "relation_statuses": {
+        "supported_with_scope_limit": 1
+      },
+      "source_count": 3,
+      "source_groups": {
+        "substance_sheets": [
+          "https://reduciendodano.cl/sustancias/poppers/"
+        ],
+        "testing_guides": [],
+        "product_resources": [],
+        "research_posts": [
+          "https://reduciendodano.cl/chemsex/"
+        ],
+        "scientific_sources": [],
+        "other_sources": [
+          "https://reduciendodano.cl/poppers-lo-que-hay-que-saber/"
+        ]
+      },
+      "public_contract": {
+        "claim_mode": "not_reviewed",
+        "allowed": [
+          "Medicamentos para la disfunci\u00f3n er\u00e9ctil permanece en el universo, pendiente de una relacion o fuente especifica."
+        ],
+        "not_inferred": [
+          "presence",
+          "absence",
+          "quantity",
+          "purity",
+          "potency",
+          "safety"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-poppers-erectile-medications",
+          "direction": "incoming",
+          "other_ref": "alkyl_nitrites",
+          "other_label": "Poppers / Nitritos de alquilo",
+          "relation_type": "medication_interaction",
+          "status": "supported_with_scope_limit",
+          "confidence": "high",
+          "matrix_relevance": "existing_matrix",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "The graph may flag the relation, but public output needs a qualified medical-information boundary and must not become personalized advice.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/poppers/"
+            ],
+            "testing_guides": [],
+            "product_resources": [],
+            "research_posts": [
+              "https://reduciendodano.cl/chemsex/"
+            ],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "benzodiazepines",
+      "display_name": "Benzodiacepinas",
+      "aliases": [
+        "benzos",
+        "Xanax"
+      ],
+      "entity_kind": "substance_family",
+      "matrix": true,
+      "source_status": "direct_sheet_and_product",
+      "test_status": "specific_strip",
+      "coverage_state": "connected",
+      "relation_count": 2,
+      "relation_types": {
+        "presumptive_presence_signal_for": 2
+      },
+      "relation_statuses": {
+        "conflicting_candidate": 1,
+        "supported_with_scope_limit": 1
+      },
+      "source_count": 5,
+      "source_groups": {
+        "substance_sheets": [
+          "https://reduciendodano.cl/sustancias/benzodiazepinas/"
+        ],
+        "testing_guides": [],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/kit-de-testeo-para-benzodiacepinas/",
+          "https://reduciendodano.cl/tienda/tira-reactiva-de-benzodiacepinas/",
+          "https://reduciendodano.cl/tienda/zimmermann/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [
+          "https://dancesafe.org/wp-content/uploads/2024/05/DS_Instructions_Reagents_v17Spring24.pdf"
+        ],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "presumptive_presence_only",
+        "allowed": [
+          "Resultado compatible con presencia presumible de Benzodiacepinas.",
+          "La muestra puede contener Benzodiacepinas; el test no determina cantidad, pureza ni composicion completa."
+        ],
+        "not_inferred": [
+          "quantity",
+          "purity",
+          "potency",
+          "safety",
+          "complete_sample_composition"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-benzodiazepine-strip-signal",
+          "direction": "incoming",
+          "other_ref": "specific_strip:benzodiazepines",
+          "other_label": "Specific strip: benzodiazepines",
+          "relation_type": "presumptive_presence_signal_for",
+          "status": "supported_with_scope_limit",
+          "confidence": "medium",
+          "matrix_relevance": "existing_matrix",
+          "evidence_contract": "presumptive_presence_only",
+          "notes": "A specific strip pathway must remain separate from colorimetric reagent logic and does not identify every compound in the sample.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/benzodiazepinas/"
+            ],
+            "testing_guides": [],
+            "product_resources": [
+              "https://reduciendodano.cl/tienda/kit-de-testeo-para-benzodiacepinas/",
+              "https://reduciendodano.cl/tienda/tira-reactiva-de-benzodiacepinas/"
+            ],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-zimmermann-benzodiazepine-conflict",
+          "direction": "incoming",
+          "other_ref": "reagent:zimmermann",
+          "other_label": "Zimmermann",
+          "relation_type": "presumptive_presence_signal_for",
+          "status": "conflicting_candidate",
+          "confidence": "low",
+          "matrix_relevance": "existing_matrix",
+          "evidence_contract": "presumptive_presence_only",
+          "notes": "RD material describes a Zimmermann pathway, while the external DanceSafe chart says common benzodiazepines are not known to react with its ordinary reagents. Preserve the conflict instead of presenting a universal colorimetric claim.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [],
+            "product_resources": [
+              "https://reduciendodano.cl/tienda/zimmermann/"
+            ],
+            "research_posts": [],
+            "scientific_sources": [
+              "https://dancesafe.org/wp-content/uploads/2024/05/DS_Instructions_Reagents_v17Spring24.pdf"
+            ],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "amphetamine",
+      "display_name": "Anfetamina",
+      "aliases": [
+        "speed"
+      ],
+      "entity_kind": "substance",
+      "matrix": true,
+      "source_status": "direct_sheet_and_testing_guide",
+      "test_status": "colorimetric_reagent",
+      "coverage_state": "connected",
+      "relation_count": 4,
+      "relation_types": {
+        "presumptive_presence_signal_for": 4
+      },
+      "relation_statuses": {
+        "supported_with_scope_limit": 4
+      },
+      "source_count": 7,
+      "source_groups": {
+        "substance_sheets": [
+          "https://reduciendodano.cl/sustancias/anfetaminas/"
+        ],
+        "testing_guides": [
+          "https://reduciendodano.cl/como-testear-anfetaminas/"
+        ],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/froehde/",
+          "https://reduciendodano.cl/tienda/kit-anfetaminas/",
+          "https://reduciendodano.cl/tienda/robadope/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [
+          "https://dancesafe.org/important-reagent-reaction-updates/",
+          "https://dancesafe.org/wp-content/uploads/2024/05/DS_Instructions_Reagents_v17Spring24.pdf"
+        ],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "presumptive_presence_only",
+        "allowed": [
+          "Resultado compatible con presencia presumible de Anfetamina.",
+          "La muestra puede contener Anfetamina; el test no determina cantidad, pureza ni composicion completa."
+        ],
+        "not_inferred": [
+          "quantity",
+          "purity",
+          "potency",
+          "safety",
+          "complete_sample_composition"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-froehde-amphetamine-signal",
+          "direction": "incoming",
+          "other_ref": "reagent:froehde",
+          "other_label": "Froehde",
+          "relation_type": "presumptive_presence_signal_for",
+          "status": "supported_with_scope_limit",
+          "confidence": "medium",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "presumptive_presence_only",
+          "notes": "Optional complementary signal in the amphetamine/methamphetamine pathway.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [],
+            "product_resources": [
+              "https://reduciendodano.cl/tienda/froehde/"
+            ],
+            "research_posts": [],
+            "scientific_sources": [
+              "https://dancesafe.org/wp-content/uploads/2024/05/DS_Instructions_Reagents_v17Spring24.pdf"
+            ],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-marquis-amphetamine-signal",
+          "direction": "incoming",
+          "other_ref": "reagent:marquis",
+          "other_label": "Marquis",
+          "relation_type": "presumptive_presence_signal_for",
+          "status": "supported_with_scope_limit",
+          "confidence": "high",
+          "matrix_relevance": "existing_matrix",
+          "evidence_contract": "presumptive_presence_only",
+          "notes": "Marquis is one signal in the amphetamine/methamphetamine comparison; Simon's is needed for the distinction and no test result establishes purity or potency.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/anfetaminas/"
+            ],
+            "testing_guides": [
+              "https://reduciendodano.cl/como-testear-anfetaminas/"
+            ],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [
+              "https://dancesafe.org/wp-content/uploads/2024/05/DS_Instructions_Reagents_v17Spring24.pdf"
+            ],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-robadope-amphetamine-signal",
+          "direction": "incoming",
+          "other_ref": "reagent:robadope",
+          "other_label": "Robadope",
+          "relation_type": "presumptive_presence_signal_for",
+          "status": "supported_with_scope_limit",
+          "confidence": "medium",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "presumptive_presence_only",
+          "notes": "Primary-amine signal only; interpret with Marquis or another complementary reagent.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [],
+            "product_resources": [
+              "https://reduciendodano.cl/tienda/robadope/"
+            ],
+            "research_posts": [],
+            "scientific_sources": [
+              "https://dancesafe.org/important-reagent-reaction-updates/"
+            ],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-simons-amphetamine-signal",
+          "direction": "incoming",
+          "other_ref": "reagent:simons",
+          "other_label": "Simon's",
+          "relation_type": "presumptive_presence_signal_for",
+          "status": "supported_with_scope_limit",
+          "confidence": "high",
+          "matrix_relevance": "existing_matrix",
+          "evidence_contract": "presumptive_presence_only",
+          "notes": "The useful information is the comparative pattern with methamphetamine, not an isolated identity claim.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [
+              "https://reduciendodano.cl/como-testear-anfetaminas/"
+            ],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [
+              "https://dancesafe.org/wp-content/uploads/2024/05/DS_Instructions_Reagents_v17Spring24.pdf"
+            ],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "methamphetamine",
+      "display_name": "Metanfetamina",
+      "aliases": [
+        "cristal",
+        "meth"
+      ],
+      "entity_kind": "substance",
+      "matrix": true,
+      "source_status": "direct_sheet_and_testing_guide",
+      "test_status": "colorimetric_reagent",
+      "coverage_state": "connected",
+      "relation_count": 1,
+      "relation_types": {
+        "adulterant_of": 1
+      },
+      "relation_statuses": {
+        "context_only": 1
+      },
+      "source_count": 3,
+      "source_groups": {
+        "substance_sheets": [
+          "https://reduciendodano.cl/sustancias/metanfetamina/"
+        ],
+        "testing_guides": [
+          "https://reduciendodano.cl/como-testear-metanfetamina/"
+        ],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/kit-de-testeo-para-metanfetamina/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "presumptive_presence_only",
+        "allowed": [
+          "Resultado compatible con presencia presumible de Metanfetamina.",
+          "La muestra puede contener Metanfetamina; el test no determina cantidad, pureza ni composicion completa."
+        ],
+        "not_inferred": [
+          "quantity",
+          "purity",
+          "potency",
+          "safety",
+          "complete_sample_composition"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-phenacetin-methamphetamine-adulterant",
+          "direction": "incoming",
+          "other_ref": "phenacetin",
+          "other_label": "Fenacetina",
+          "relation_type": "adulterant_of",
+          "status": "context_only",
+          "confidence": "low",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Retain as an unverified candidate until a specific primary source or laboratory reference is attached.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/metanfetamina/"
+            ],
+            "testing_guides": [],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "mda",
+      "display_name": "MDA",
+      "aliases": [
+        "sass"
+      ],
+      "entity_kind": "substance",
+      "matrix": false,
+      "source_status": "direct_sheet_and_comparison_content",
+      "test_status": "colorimetric_reagent",
+      "coverage_state": "connected",
+      "relation_count": 2,
+      "relation_types": {
+        "comparison": 1,
+        "presumptive_presence_signal_for": 1
+      },
+      "relation_statuses": {
+        "supported_candidate": 1,
+        "supported_with_scope_limit": 1
+      },
+      "source_count": 6,
+      "source_groups": {
+        "substance_sheets": [
+          "https://reduciendodano.cl/sustancias/mda/",
+          "https://reduciendodano.cl/sustancias/mdma/"
+        ],
+        "testing_guides": [
+          "https://reduciendodano.cl/kit-mdma-vs-testear-solo-con-marquis-cuando-necesitas-los-tres-reactivos/"
+        ],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/robadope/",
+          "https://reduciendodano.cl/tienda/simons/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [
+          "https://dancesafe.org/important-reagent-reaction-updates/"
+        ],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "presumptive_presence_only",
+        "allowed": [
+          "Resultado compatible con presencia presumible de MDA.",
+          "La muestra puede contener MDA; el test no determina cantidad, pureza ni composicion completa."
+        ],
+        "not_inferred": [
+          "quantity",
+          "purity",
+          "potency",
+          "safety",
+          "complete_sample_composition"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-mdma-mda-comparison",
+          "direction": "incoming",
+          "other_ref": "mdma",
+          "other_label": "MDMA / \u00c9xtasis",
+          "relation_type": "comparison",
+          "status": "supported_candidate",
+          "confidence": "medium",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "RD presents MDMA and MDA as a comparison problem. A multi-reagent pattern is more informative than a single color; preserve uncertainty and do not infer identity from one reaction.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/mda/",
+              "https://reduciendodano.cl/sustancias/mdma/"
+            ],
+            "testing_guides": [
+              "https://reduciendodano.cl/kit-mdma-vs-testear-solo-con-marquis-cuando-necesitas-los-tres-reactivos/"
+            ],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-robadope-mda-test",
+          "direction": "incoming",
+          "other_ref": "reagent:robadope",
+          "other_label": "Robadope",
+          "relation_type": "presumptive_presence_signal_for",
+          "status": "supported_with_scope_limit",
+          "confidence": "medium",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "presumptive_presence_only",
+          "notes": "Panel component; preserve reagent limits and the possibility of mixtures.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [
+              "https://reduciendodano.cl/kit-mdma-vs-testear-solo-con-marquis-cuando-necesitas-los-tres-reactivos/"
+            ],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [
+              "https://dancesafe.org/important-reagent-reaction-updates/"
+            ],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "dmt",
+      "display_name": "DMT",
+      "aliases": [
+        "dimetiltriptamina"
+      ],
+      "entity_kind": "substance",
+      "matrix": false,
+      "source_status": "direct_product_and_reagent_guidance",
+      "test_status": "colorimetric_reagent",
+      "coverage_state": "connected",
+      "relation_count": 1,
+      "relation_types": {
+        "presumptive_presence_signal_for": 1
+      },
+      "relation_statuses": {
+        "supported_with_scope_limit": 1
+      },
+      "source_count": 5,
+      "source_groups": {
+        "substance_sheets": [],
+        "testing_guides": [
+          "https://reduciendodano.cl/lsd-y-alucinogenos-como-usar-el-reactivo-ehrlich/"
+        ],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/ehrlich/",
+          "https://reduciendodano.cl/tienda/hofmann/",
+          "https://reduciendodano.cl/tienda/kit-de-testeo-para-dmt/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [
+          "https://testkits.nuaa.org.au/pages/charts"
+        ],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "presumptive_presence_only",
+        "allowed": [
+          "Resultado compatible con presencia presumible de DMT.",
+          "La muestra puede contener DMT; el test no determina cantidad, pureza ni composicion completa."
+        ],
+        "not_inferred": [
+          "quantity",
+          "purity",
+          "potency",
+          "safety",
+          "complete_sample_composition"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-ehrlich-tryptamines-test",
+          "direction": "incoming",
+          "other_ref": "reagent:ehrlich",
+          "other_label": "Ehrlich",
+          "relation_type": "presumptive_presence_signal_for",
+          "status": "supported_with_scope_limit",
+          "confidence": "medium",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "presumptive_presence_only",
+          "notes": "Use as a tryptamine-family signal, not a unique identification.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [
+              "https://reduciendodano.cl/lsd-y-alucinogenos-como-usar-el-reactivo-ehrlich/"
+            ],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [
+              "https://testkits.nuaa.org.au/pages/charts"
+            ],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "five_meo_dmt",
+      "display_name": "5-MeO-DMT",
+      "aliases": [],
+      "entity_kind": "substance",
+      "matrix": false,
+      "source_status": "direct_product_and_reagent_guidance",
+      "test_status": "colorimetric_reagent",
+      "coverage_state": "connected",
+      "relation_count": 2,
+      "relation_types": {
+        "presumptive_presence_signal_for": 2
+      },
+      "relation_statuses": {
+        "insufficient_evidence": 2
+      },
+      "source_count": 4,
+      "source_groups": {
+        "substance_sheets": [],
+        "testing_guides": [
+          "https://reduciendodano.cl/lsd-y-alucinogenos-como-usar-el-reactivo-ehrlich/"
+        ],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/ehrlich/",
+          "https://reduciendodano.cl/tienda/hofmann/",
+          "https://reduciendodano.cl/tienda/kit-de-testeo-para-dmt/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "presumptive_presence_only",
+        "allowed": [
+          "Resultado compatible con presencia presumible de 5-MeO-DMT.",
+          "La muestra puede contener 5-MeO-DMT; el test no determina cantidad, pureza ni composicion completa."
+        ],
+        "not_inferred": [
+          "quantity",
+          "purity",
+          "potency",
+          "safety",
+          "complete_sample_composition"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-ehrlich-five-meo-dmt-candidate",
+          "direction": "incoming",
+          "other_ref": "reagent:ehrlich",
+          "other_label": "Ehrlich",
+          "relation_type": "presumptive_presence_signal_for",
+          "status": "insufficient_evidence",
+          "confidence": "low",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "presumptive_presence_only",
+          "notes": "Retain as a candidate because RD material includes the target, but do not publish it as a uniquely validated compound signal.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [
+              "https://reduciendodano.cl/lsd-y-alucinogenos-como-usar-el-reactivo-ehrlich/"
+            ],
+            "product_resources": [
+              "https://reduciendodano.cl/tienda/ehrlich/",
+              "https://reduciendodano.cl/tienda/kit-de-testeo-para-dmt/"
+            ],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-hofmann-five-meo-dmt-candidate",
+          "direction": "incoming",
+          "other_ref": "reagent:hofmann",
+          "other_label": "Hofmann",
+          "relation_type": "presumptive_presence_signal_for",
+          "status": "insufficient_evidence",
+          "confidence": "low",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "presumptive_presence_only",
+          "notes": "Candidate pathway only; keep the external verification state visible.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [],
+            "product_resources": [
+              "https://reduciendodano.cl/tienda/hofmann/",
+              "https://reduciendodano.cl/tienda/kit-de-testeo-para-dmt/"
+            ],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "det",
+      "display_name": "DET",
+      "aliases": [],
+      "entity_kind": "substance",
+      "matrix": false,
+      "source_status": "direct_product_mention",
+      "test_status": "not_reviewed",
+      "coverage_state": "unconnected_in_current_batch",
+      "relation_count": 0,
+      "relation_types": {},
+      "relation_statuses": {},
+      "source_count": 1,
+      "source_groups": {
+        "substance_sheets": [],
+        "testing_guides": [],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/kit-de-testeo-para-dmt/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "not_reviewed",
+        "allowed": [
+          "DET permanece en el universo, pendiente de una relacion o fuente especifica."
+        ],
+        "not_inferred": [
+          "presence",
+          "absence",
+          "quantity",
+          "purity",
+          "potency",
+          "safety"
+        ]
+      },
+      "relations": []
+    },
+    {
+      "id": "four_ho_substances",
+      "display_name": "4-HO-xxx / triptaminas 4-HO",
+      "aliases": [],
+      "entity_kind": "substance_family",
+      "matrix": false,
+      "source_status": "direct_product_mention",
+      "test_status": "not_reviewed",
+      "coverage_state": "unconnected_in_current_batch",
+      "relation_count": 0,
+      "relation_types": {},
+      "relation_statuses": {},
+      "source_count": 1,
+      "source_groups": {
+        "substance_sheets": [],
+        "testing_guides": [],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/kit-de-testeo-para-dmt/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "not_reviewed",
+        "allowed": [
+          "4-HO-xxx / triptaminas 4-HO permanece en el universo, pendiente de una relacion o fuente especifica."
+        ],
+        "not_inferred": [
+          "presence",
+          "absence",
+          "quantity",
+          "purity",
+          "potency",
+          "safety"
+        ]
+      },
+      "relations": []
+    },
+    {
+      "id": "harmala_compounds",
+      "display_name": "Harmalina / Harmina / Gramina",
+      "aliases": [
+        "harmalas"
+      ],
+      "entity_kind": "substance_family",
+      "matrix": false,
+      "source_status": "direct_product_mention_and_reagent_guidance",
+      "test_status": "colorimetric_reagent",
+      "coverage_state": "connected",
+      "relation_count": 1,
+      "relation_types": {
+        "presumptive_presence_signal_for": 1
+      },
+      "relation_statuses": {
+        "supported_with_scope_limit": 1
+      },
+      "source_count": 2,
+      "source_groups": {
+        "substance_sheets": [],
+        "testing_guides": [],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/hofmann/",
+          "https://reduciendodano.cl/tienda/kit-de-testeo-para-dmt/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "presumptive_presence_only",
+        "allowed": [
+          "Resultado compatible con presencia presumible de Harmalina / Harmina / Gramina.",
+          "La muestra puede contener Harmalina / Harmina / Gramina; el test no determina cantidad, pureza ni composicion completa."
+        ],
+        "not_inferred": [
+          "quantity",
+          "purity",
+          "potency",
+          "safety",
+          "complete_sample_composition"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-hofmann-harmala-signal",
+          "direction": "incoming",
+          "other_ref": "reagent:hofmann",
+          "other_label": "Hofmann",
+          "relation_type": "presumptive_presence_signal_for",
+          "status": "supported_with_scope_limit",
+          "confidence": "medium",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "presumptive_presence_only",
+          "notes": "Family-level signal only; it does not distinguish every harmala compound or establish the complete sample composition.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [],
+            "product_resources": [
+              "https://reduciendodano.cl/tienda/hofmann/",
+              "https://reduciendodano.cl/tienda/kit-de-testeo-para-dmt/"
+            ],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "escopolamina",
+      "display_name": "Escopolamina",
+      "aliases": [],
+      "entity_kind": "medication",
+      "matrix": false,
+      "source_status": "direct_product_mention",
+      "test_status": "not_reviewed",
+      "coverage_state": "unconnected_in_current_batch",
+      "relation_count": 0,
+      "relation_types": {},
+      "relation_statuses": {},
+      "source_count": 1,
+      "source_groups": {
+        "substance_sheets": [],
+        "testing_guides": [],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/kit-de-testeo-para-dmt/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "not_reviewed",
+        "allowed": [
+          "Escopolamina permanece en el universo, pendiente de una relacion o fuente especifica."
+        ],
+        "not_inferred": [
+          "presence",
+          "absence",
+          "quantity",
+          "purity",
+          "potency",
+          "safety"
+        ]
+      },
+      "relations": []
+    },
+    {
+      "id": "two_c_b",
+      "display_name": "2C-B",
+      "aliases": [
+        "2C-B rosado"
+      ],
+      "entity_kind": "substance",
+      "matrix": false,
+      "source_status": "direct_sheet_and_testing_guide",
+      "test_status": "colorimetric_reagent",
+      "coverage_state": "connected",
+      "relation_count": 2,
+      "relation_types": {
+        "presumptive_presence_signal_for": 2
+      },
+      "relation_statuses": {
+        "supported_with_scope_limit": 2
+      },
+      "source_count": 5,
+      "source_groups": {
+        "substance_sheets": [
+          "https://reduciendodano.cl/sustancias/2cb/"
+        ],
+        "testing_guides": [
+          "https://reduciendodano.cl/como-testear-2cb/"
+        ],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/kit-de-testeo-para-2c-b/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [
+          "https://dancesafe.org/important-reagent-reaction-updates/",
+          "https://dancesafe.org/wp-content/uploads/2024/05/DS_Instructions_Reagents_v17Spring24.pdf"
+        ],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "presumptive_presence_only",
+        "allowed": [
+          "Resultado compatible con presencia presumible de 2C-B.",
+          "La muestra puede contener 2C-B; el test no determina cantidad, pureza ni composicion completa."
+        ],
+        "not_inferred": [
+          "quantity",
+          "purity",
+          "potency",
+          "safety",
+          "complete_sample_composition"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-marquis-two-c-b-signal",
+          "direction": "incoming",
+          "other_ref": "reagent:marquis",
+          "other_label": "Marquis",
+          "relation_type": "presumptive_presence_signal_for",
+          "status": "supported_with_scope_limit",
+          "confidence": "medium",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "presumptive_presence_only",
+          "notes": "Phenethylamine-family signal; not a unique identification of 2C-B.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/2cb/"
+            ],
+            "testing_guides": [
+              "https://reduciendodano.cl/como-testear-2cb/"
+            ],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [
+              "https://dancesafe.org/wp-content/uploads/2024/05/DS_Instructions_Reagents_v17Spring24.pdf"
+            ],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-robadope-two-c-b-signal",
+          "direction": "incoming",
+          "other_ref": "reagent:robadope",
+          "other_label": "Robadope",
+          "relation_type": "presumptive_presence_signal_for",
+          "status": "supported_with_scope_limit",
+          "confidence": "medium",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "presumptive_presence_only",
+          "notes": "Primary-amine signal; interpret with a complementary reagent and preserve mixture uncertainty.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [
+              "https://reduciendodano.cl/como-testear-2cb/"
+            ],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [
+              "https://dancesafe.org/important-reagent-reaction-updates/"
+            ],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "nbome_family",
+      "display_name": "NBOMe / N3OMe / NBOH / NBF",
+      "aliases": [
+        "NBOMe"
+      ],
+      "entity_kind": "substance_family",
+      "matrix": false,
+      "source_status": "direct_guide_and_product_mention",
+      "test_status": "not_reviewed",
+      "coverage_state": "connected",
+      "relation_count": 1,
+      "relation_types": {
+        "test_limit_of": 1
+      },
+      "relation_statuses": {
+        "supported_with_scope_limit": 1
+      },
+      "source_count": 5,
+      "source_groups": {
+        "substance_sheets": [],
+        "testing_guides": [
+          "https://reduciendodano.cl/como-testear-2cb/",
+          "https://reduciendodano.cl/lsd-y-alucinogenos-como-usar-el-reactivo-ehrlich/"
+        ],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/kit-de-testeo-para-dmt/",
+          "https://reduciendodano.cl/tienda/kit-de-testeo-para-lsd/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [
+          "https://dancesafe.org/wp-content/uploads/2024/05/DS_Instructions_Reagents_v17Spring24.pdf"
+        ],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "not_reviewed",
+        "allowed": [
+          "NBOMe / N3OMe / NBOH / NBF permanece en el universo, pendiente de una relacion o fuente especifica."
+        ],
+        "not_inferred": [
+          "presence",
+          "absence",
+          "quantity",
+          "purity",
+          "potency",
+          "safety"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-ehrlich-nbome-test-limit",
+          "direction": "incoming",
+          "other_ref": "reagent:ehrlich",
+          "other_label": "Ehrlich",
+          "relation_type": "test_limit_of",
+          "status": "supported_with_scope_limit",
+          "confidence": "medium",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Negative or unexpected reaction is a limit signal, not proof of safety.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [
+              "https://reduciendodano.cl/lsd-y-alucinogenos-como-usar-el-reactivo-ehrlich/"
+            ],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [
+              "https://dancesafe.org/wp-content/uploads/2024/05/DS_Instructions_Reagents_v17Spring24.pdf"
+            ],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "dox_family",
+      "display_name": "DOx",
+      "aliases": [
+        "DOC",
+        "DOB",
+        "DOM"
+      ],
+      "entity_kind": "substance_family",
+      "matrix": false,
+      "source_status": "direct_guide_and_product_mention",
+      "test_status": "not_reviewed",
+      "coverage_state": "connected",
+      "relation_count": 1,
+      "relation_types": {
+        "test_limit_of": 1
+      },
+      "relation_statuses": {
+        "supported_with_scope_limit": 1
+      },
+      "source_count": 3,
+      "source_groups": {
+        "substance_sheets": [],
+        "testing_guides": [
+          "https://reduciendodano.cl/lsd-y-alucinogenos-como-usar-el-reactivo-ehrlich/"
+        ],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/kit-de-testeo-para-lsd/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [
+          "https://dancesafe.org/wp-content/uploads/2024/05/DS_Instructions_Reagents_v17Spring24.pdf"
+        ],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "not_reviewed",
+        "allowed": [
+          "DOx permanece en el universo, pendiente de una relacion o fuente especifica."
+        ],
+        "not_inferred": [
+          "presence",
+          "absence",
+          "quantity",
+          "purity",
+          "potency",
+          "safety"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-ehrlich-dox-limit",
+          "direction": "incoming",
+          "other_ref": "reagent:ehrlich",
+          "other_label": "Ehrlich",
+          "relation_type": "test_limit_of",
+          "status": "supported_with_scope_limit",
+          "confidence": "medium",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "A non-reaction or lack of coverage is a test limitation, not evidence that the sample is safe or empty.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [
+              "https://reduciendodano.cl/lsd-y-alucinogenos-como-usar-el-reactivo-ehrlich/"
+            ],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [
+              "https://dancesafe.org/wp-content/uploads/2024/05/DS_Instructions_Reagents_v17Spring24.pdf"
+            ],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "cathinones",
+      "display_name": "Catinonas",
+      "aliases": [
+        "sales de ba\u00f1o"
+      ],
+      "entity_kind": "substance_family",
+      "matrix": false,
+      "source_status": "direct_guide_and_product",
+      "test_status": "colorimetric_reagent",
+      "coverage_state": "connected",
+      "relation_count": 3,
+      "relation_types": {
+        "contextual_relation": 2,
+        "derivative_of": 1
+      },
+      "relation_statuses": {
+        "context_only": 2,
+        "supported_candidate": 1
+      },
+      "source_count": 3,
+      "source_groups": {
+        "substance_sheets": [
+          "https://reduciendodano.cl/sustancias/catinonas/",
+          "https://reduciendodano.cl/sustancias/mefedrona/"
+        ],
+        "testing_guides": [],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/kit-de-testeo-para-mefedrona/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "presumptive_presence_only",
+        "allowed": [
+          "Resultado compatible con presencia presumible de Catinonas.",
+          "La muestra puede contener Catinonas; el test no determina cantidad, pureza ni composicion completa."
+        ],
+        "not_inferred": [
+          "quantity",
+          "purity",
+          "potency",
+          "safety",
+          "complete_sample_composition"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-mdpv-cathinone-context",
+          "direction": "incoming",
+          "other_ref": "mdpv",
+          "other_label": "MDPV",
+          "relation_type": "contextual_relation",
+          "status": "context_only",
+          "confidence": "low",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Retained as a market/library context relation only; a primary source is still needed before using it as a public chemical classification.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [],
+            "product_resources": [
+              "https://reduciendodano.cl/tienda/kit-de-testeo-para-mefedrona/"
+            ],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-cathinones-mephedrone-family",
+          "direction": "incoming",
+          "other_ref": "mephedrone",
+          "other_label": "Mefedrona / 4-MMC",
+          "relation_type": "derivative_of",
+          "status": "supported_candidate",
+          "confidence": "high",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Taxonomic family relation. Do not collapse every cathinone into mephedrone.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/catinonas/",
+              "https://reduciendodano.cl/sustancias/mefedrona/"
+            ],
+            "testing_guides": [],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-a-pvp-cathinone-context",
+          "direction": "incoming",
+          "other_ref": "a_pvp",
+          "other_label": "a-PVP",
+          "relation_type": "contextual_relation",
+          "status": "context_only",
+          "confidence": "low",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Retained as a market/library context relation only; do not render it as a test result or composition claim.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [],
+            "product_resources": [
+              "https://reduciendodano.cl/tienda/kit-de-testeo-para-mefedrona/"
+            ],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "mephedrone",
+      "display_name": "Mefedrona / 4-MMC",
+      "aliases": [
+        "4-MMC"
+      ],
+      "entity_kind": "substance",
+      "matrix": false,
+      "source_status": "direct_guide_and_product",
+      "test_status": "colorimetric_reagent",
+      "coverage_state": "connected",
+      "relation_count": 1,
+      "relation_types": {
+        "derivative_of": 1
+      },
+      "relation_statuses": {
+        "supported_candidate": 1
+      },
+      "source_count": 3,
+      "source_groups": {
+        "substance_sheets": [
+          "https://reduciendodano.cl/sustancias/catinonas/",
+          "https://reduciendodano.cl/sustancias/mefedrona/"
+        ],
+        "testing_guides": [],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/kit-de-testeo-para-mefedrona/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "presumptive_presence_only",
+        "allowed": [
+          "Resultado compatible con presencia presumible de Mefedrona / 4-MMC.",
+          "La muestra puede contener Mefedrona / 4-MMC; el test no determina cantidad, pureza ni composicion completa."
+        ],
+        "not_inferred": [
+          "quantity",
+          "purity",
+          "potency",
+          "safety",
+          "complete_sample_composition"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-cathinones-mephedrone-family",
+          "direction": "outgoing",
+          "other_ref": "cathinones",
+          "other_label": "Catinonas",
+          "relation_type": "derivative_of",
+          "status": "supported_candidate",
+          "confidence": "high",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Taxonomic family relation. Do not collapse every cathinone into mephedrone.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/catinonas/",
+              "https://reduciendodano.cl/sustancias/mefedrona/"
+            ],
+            "testing_guides": [],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "mdpv",
+      "display_name": "MDPV",
+      "aliases": [],
+      "entity_kind": "substance",
+      "matrix": false,
+      "source_status": "direct_product_mention",
+      "test_status": "not_reviewed",
+      "coverage_state": "connected",
+      "relation_count": 1,
+      "relation_types": {
+        "contextual_relation": 1
+      },
+      "relation_statuses": {
+        "context_only": 1
+      },
+      "source_count": 1,
+      "source_groups": {
+        "substance_sheets": [],
+        "testing_guides": [],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/kit-de-testeo-para-mefedrona/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "not_reviewed",
+        "allowed": [
+          "MDPV permanece en el universo, pendiente de una relacion o fuente especifica."
+        ],
+        "not_inferred": [
+          "presence",
+          "absence",
+          "quantity",
+          "purity",
+          "potency",
+          "safety"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-mdpv-cathinone-context",
+          "direction": "outgoing",
+          "other_ref": "cathinones",
+          "other_label": "Catinonas",
+          "relation_type": "contextual_relation",
+          "status": "context_only",
+          "confidence": "low",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Retained as a market/library context relation only; a primary source is still needed before using it as a public chemical classification.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [],
+            "product_resources": [
+              "https://reduciendodano.cl/tienda/kit-de-testeo-para-mefedrona/"
+            ],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "a_pvp",
+      "display_name": "a-PVP",
+      "aliases": [],
+      "entity_kind": "substance",
+      "matrix": false,
+      "source_status": "direct_product_mention",
+      "test_status": "not_reviewed",
+      "coverage_state": "connected",
+      "relation_count": 1,
+      "relation_types": {
+        "contextual_relation": 1
+      },
+      "relation_statuses": {
+        "context_only": 1
+      },
+      "source_count": 1,
+      "source_groups": {
+        "substance_sheets": [],
+        "testing_guides": [],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/kit-de-testeo-para-mefedrona/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "not_reviewed",
+        "allowed": [
+          "a-PVP permanece en el universo, pendiente de una relacion o fuente especifica."
+        ],
+        "not_inferred": [
+          "presence",
+          "absence",
+          "quantity",
+          "purity",
+          "potency",
+          "safety"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-a-pvp-cathinone-context",
+          "direction": "outgoing",
+          "other_ref": "cathinones",
+          "other_label": "Catinonas",
+          "relation_type": "contextual_relation",
+          "status": "context_only",
+          "confidence": "low",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Retained as a market/library context relation only; do not render it as a test result or composition claim.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [],
+            "product_resources": [
+              "https://reduciendodano.cl/tienda/kit-de-testeo-para-mefedrona/"
+            ],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "benzofurans",
+      "display_name": "5-APB / 6-APB",
+      "aliases": [
+        "benzofuranos"
+      ],
+      "entity_kind": "substance_family",
+      "matrix": false,
+      "source_status": "direct_reagent_page_and_product_guidance",
+      "test_status": "colorimetric_reagent",
+      "coverage_state": "connected",
+      "relation_count": 1,
+      "relation_types": {
+        "presumptive_presence_signal_for": 1
+      },
+      "relation_statuses": {
+        "supported_with_scope_limit": 1
+      },
+      "source_count": 2,
+      "source_groups": {
+        "substance_sheets": [],
+        "testing_guides": [],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/froehde/",
+          "https://reduciendodano.cl/tienda/kit-de-testeo-para-mefedrona/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "presumptive_presence_only",
+        "allowed": [
+          "Resultado compatible con presencia presumible de 5-APB / 6-APB.",
+          "La muestra puede contener 5-APB / 6-APB; el test no determina cantidad, pureza ni composicion completa."
+        ],
+        "not_inferred": [
+          "quantity",
+          "purity",
+          "potency",
+          "safety",
+          "complete_sample_composition"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-froehde-benzofuran-signal",
+          "direction": "incoming",
+          "other_ref": "reagent:froehde",
+          "other_label": "Froehde",
+          "relation_type": "presumptive_presence_signal_for",
+          "status": "supported_with_scope_limit",
+          "confidence": "medium",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "presumptive_presence_only",
+          "notes": "Family-level benzofuran signal; it does not identify 5-APB or 6-APB separately.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [],
+            "product_resources": [
+              "https://reduciendodano.cl/tienda/froehde/",
+              "https://reduciendodano.cl/tienda/kit-de-testeo-para-mefedrona/"
+            ],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "dissociative_derivatives",
+      "display_name": "DCK / 2-FDCK / 2-Oxo-PCE / O-PCE / MXE / MXPr",
+      "aliases": [
+        "disociativos derivados de ketamina"
+      ],
+      "entity_kind": "substance_family",
+      "matrix": false,
+      "source_status": "direct_product_and_external_testing_mentions",
+      "test_status": "not_reviewed",
+      "coverage_state": "connected",
+      "relation_count": 1,
+      "relation_types": {
+        "derivative_of": 1
+      },
+      "relation_statuses": {
+        "context_only": 1
+      },
+      "source_count": 2,
+      "source_groups": {
+        "substance_sheets": [
+          "https://reduciendodano.cl/sustancias/ketamina/"
+        ],
+        "testing_guides": [],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/kit-de-testeo-para-ketamina/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "not_reviewed",
+        "allowed": [
+          "DCK / 2-FDCK / 2-Oxo-PCE / O-PCE / MXE / MXPr permanece en el universo, pendiente de una relacion o fuente especifica."
+        ],
+        "not_inferred": [
+          "presence",
+          "absence",
+          "quantity",
+          "purity",
+          "potency",
+          "safety"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-dissociatives-ketamine-derivative",
+          "direction": "outgoing",
+          "other_ref": "ketamine",
+          "other_label": "Ketamina",
+          "relation_type": "derivative_of",
+          "status": "context_only",
+          "confidence": "medium",
+          "matrix_relevance": "outside_initial_matrix",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Family relation for navigation only; a class label does not establish that an unknown sample is ketamine.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/ketamina/"
+            ],
+            "testing_guides": [],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "pcp_derivatives",
+      "display_name": "PCP / 3-MeO-PCP / 3-Cl-PCP / 3-MeO-PCE",
+      "aliases": [],
+      "entity_kind": "substance_family",
+      "matrix": false,
+      "source_status": "external_audit_context",
+      "test_status": "not_reviewed",
+      "coverage_state": "unconnected_in_current_batch",
+      "relation_count": 0,
+      "relation_types": {},
+      "relation_statuses": {},
+      "source_count": 1,
+      "source_groups": {
+        "substance_sheets": [],
+        "testing_guides": [],
+        "product_resources": [],
+        "research_posts": [],
+        "scientific_sources": [
+          "https://dancesafe.org/wp-content/uploads/2024/05/DS_Instructions_Reagents_v17Spring24.pdf"
+        ],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "not_reviewed",
+        "allowed": [
+          "PCP / 3-MeO-PCP / 3-Cl-PCP / 3-MeO-PCE permanece en el universo, pendiente de una relacion o fuente especifica."
+        ],
+        "not_inferred": [
+          "presence",
+          "absence",
+          "quantity",
+          "purity",
+          "potency",
+          "safety"
+        ]
+      },
+      "relations": []
+    },
+    {
+      "id": "opioids",
+      "display_name": "Opioides",
+      "aliases": [
+        "opi\u00e1ceos"
+      ],
+      "entity_kind": "substance_family",
+      "matrix": false,
+      "source_status": "direct_sheet_and_product",
+      "test_status": "colorimetric_reagent",
+      "coverage_state": "connected",
+      "relation_count": 1,
+      "relation_types": {
+        "contextual_relation": 1
+      },
+      "relation_statuses": {
+        "supported_candidate": 1
+      },
+      "source_count": 4,
+      "source_groups": {
+        "substance_sheets": [
+          "https://reduciendodano.cl/sustancias/fentanilo/",
+          "https://reduciendodano.cl/sustancias/heroina/"
+        ],
+        "testing_guides": [],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/kit-de-testeo-para-opioides/",
+          "https://reduciendodano.cl/tienda/tiras-de-testeo-fentanilo/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "presumptive_presence_only",
+        "allowed": [
+          "Resultado compatible con presencia presumible de Opioides.",
+          "La muestra puede contener Opioides; el test no determina cantidad, pureza ni composicion completa."
+        ],
+        "not_inferred": [
+          "quantity",
+          "purity",
+          "potency",
+          "safety",
+          "complete_sample_composition"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-fentanyl-opioids-context",
+          "direction": "incoming",
+          "other_ref": "fentanyl",
+          "other_label": "Fentanilo",
+          "relation_type": "contextual_relation",
+          "status": "supported_candidate",
+          "confidence": "high",
+          "matrix_relevance": "outside_initial_matrix",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Class/context link. Keep fentanyl as its own node, not merely as a subtype of the generic opioid node.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/fentanilo/"
+            ],
+            "testing_guides": [],
+            "product_resources": [
+              "https://reduciendodano.cl/tienda/tiras-de-testeo-fentanilo/"
+            ],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "heroin",
+      "display_name": "Hero\u00edna",
+      "aliases": [],
+      "entity_kind": "substance",
+      "matrix": false,
+      "source_status": "direct_opioid_sheet_and_product",
+      "test_status": "colorimetric_reagent",
+      "coverage_state": "connected",
+      "relation_count": 1,
+      "relation_types": {
+        "presumptive_presence_signal_for": 1
+      },
+      "relation_statuses": {
+        "supported_with_scope_limit": 1
+      },
+      "source_count": 4,
+      "source_groups": {
+        "substance_sheets": [
+          "https://reduciendodano.cl/sustancias/heroina/"
+        ],
+        "testing_guides": [],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/kit-de-testeo-para-opioides/",
+          "https://reduciendodano.cl/tienda/mecke/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [
+          "https://dancesafe.org/wp-content/uploads/2024/05/DS_Instructions_Reagents_v17Spring24.pdf"
+        ],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "presumptive_presence_only",
+        "allowed": [
+          "Resultado compatible con presencia presumible de Hero\u00edna.",
+          "La muestra puede contener Hero\u00edna; el test no determina cantidad, pureza ni composicion completa."
+        ],
+        "not_inferred": [
+          "quantity",
+          "purity",
+          "potency",
+          "safety",
+          "complete_sample_composition"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-mecke-heroin-signal",
+          "direction": "incoming",
+          "other_ref": "reagent:mecke",
+          "other_label": "Mecke",
+          "relation_type": "presumptive_presence_signal_for",
+          "status": "supported_with_scope_limit",
+          "confidence": "medium",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "presumptive_presence_only",
+          "notes": "Opioid-family signal; not proof that a sample is heroin or free from other substances.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [],
+            "product_resources": [
+              "https://reduciendodano.cl/tienda/kit-de-testeo-para-opioides/",
+              "https://reduciendodano.cl/tienda/mecke/"
+            ],
+            "research_posts": [],
+            "scientific_sources": [
+              "https://dancesafe.org/wp-content/uploads/2024/05/DS_Instructions_Reagents_v17Spring24.pdf"
+            ],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "morphine",
+      "display_name": "Morfina",
+      "aliases": [],
+      "entity_kind": "substance",
+      "matrix": false,
+      "source_status": "direct_product_mention",
+      "test_status": "colorimetric_reagent",
+      "coverage_state": "connected",
+      "relation_count": 1,
+      "relation_types": {
+        "presumptive_presence_signal_for": 1
+      },
+      "relation_statuses": {
+        "supported_with_scope_limit": 1
+      },
+      "source_count": 2,
+      "source_groups": {
+        "substance_sheets": [],
+        "testing_guides": [],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/kit-de-testeo-para-opioides/",
+          "https://reduciendodano.cl/tienda/mecke/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "presumptive_presence_only",
+        "allowed": [
+          "Resultado compatible con presencia presumible de Morfina.",
+          "La muestra puede contener Morfina; el test no determina cantidad, pureza ni composicion completa."
+        ],
+        "not_inferred": [
+          "quantity",
+          "purity",
+          "potency",
+          "safety",
+          "complete_sample_composition"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-mecke-morphine-signal",
+          "direction": "incoming",
+          "other_ref": "reagent:mecke",
+          "other_label": "Mecke",
+          "relation_type": "presumptive_presence_signal_for",
+          "status": "supported_with_scope_limit",
+          "confidence": "medium",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "presumptive_presence_only",
+          "notes": "Opioid-family signal; retain the distinction between the compound and the whole sample.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [],
+            "product_resources": [
+              "https://reduciendodano.cl/tienda/kit-de-testeo-para-opioides/",
+              "https://reduciendodano.cl/tienda/mecke/"
+            ],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "codeine",
+      "display_name": "Code\u00edna",
+      "aliases": [],
+      "entity_kind": "medication",
+      "matrix": false,
+      "source_status": "direct_product_mention",
+      "test_status": "colorimetric_reagent",
+      "coverage_state": "connected",
+      "relation_count": 1,
+      "relation_types": {
+        "presumptive_presence_signal_for": 1
+      },
+      "relation_statuses": {
+        "supported_with_scope_limit": 1
+      },
+      "source_count": 3,
+      "source_groups": {
+        "substance_sheets": [],
+        "testing_guides": [],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/froehde/",
+          "https://reduciendodano.cl/tienda/kit-de-testeo-para-opioides/",
+          "https://reduciendodano.cl/tienda/mecke/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "presumptive_presence_only",
+        "allowed": [
+          "Resultado compatible con presencia presumible de Code\u00edna.",
+          "La muestra puede contener Code\u00edna; el test no determina cantidad, pureza ni composicion completa."
+        ],
+        "not_inferred": [
+          "quantity",
+          "purity",
+          "potency",
+          "safety",
+          "complete_sample_composition"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-mecke-codeine-signal",
+          "direction": "incoming",
+          "other_ref": "reagent:mecke",
+          "other_label": "Mecke",
+          "relation_type": "presumptive_presence_signal_for",
+          "status": "supported_with_scope_limit",
+          "confidence": "medium",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "presumptive_presence_only",
+          "notes": "Family-level opioid signal; no amount or purity inference.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [],
+            "product_resources": [
+              "https://reduciendodano.cl/tienda/kit-de-testeo-para-opioides/",
+              "https://reduciendodano.cl/tienda/mecke/"
+            ],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "oxycodone",
+      "display_name": "Oxicodona",
+      "aliases": [],
+      "entity_kind": "medication",
+      "matrix": false,
+      "source_status": "direct_product_mention",
+      "test_status": "not_reviewed",
+      "coverage_state": "unconnected_in_current_batch",
+      "relation_count": 0,
+      "relation_types": {},
+      "relation_statuses": {},
+      "source_count": 1,
+      "source_groups": {
+        "substance_sheets": [],
+        "testing_guides": [],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/kit-de-testeo-para-opioides/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "not_reviewed",
+        "allowed": [
+          "Oxicodona permanece en el universo, pendiente de una relacion o fuente especifica."
+        ],
+        "not_inferred": [
+          "presence",
+          "absence",
+          "quantity",
+          "purity",
+          "potency",
+          "safety"
+        ]
+      },
+      "relations": []
+    },
+    {
+      "id": "fentanyl",
+      "display_name": "Fentanilo",
+      "aliases": [],
+      "entity_kind": "substance",
+      "matrix": false,
+      "source_status": "direct_sheet_and_strip_product",
+      "test_status": "specific_strip",
+      "coverage_state": "connected",
+      "relation_count": 3,
+      "relation_types": {
+        "adulterant_of": 1,
+        "contextual_relation": 1,
+        "test_limit_of": 1
+      },
+      "relation_statuses": {
+        "supported_candidate": 1,
+        "supported_with_scope_limit": 2
+      },
+      "source_count": 5,
+      "source_groups": {
+        "substance_sheets": [
+          "https://reduciendodano.cl/sustancias/cocaina/",
+          "https://reduciendodano.cl/sustancias/fentanilo/"
+        ],
+        "testing_guides": [],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/tira-reactiva-de-fentanilo/",
+          "https://reduciendodano.cl/tienda/tiras-de-testeo-fentanilo/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [
+          "https://dancesafe.org/wp-content/uploads/2024/05/DS_Instructions_Reagents_v17Spring24.pdf"
+        ],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "presumptive_presence_only",
+        "allowed": [
+          "Resultado compatible con presencia presumible de Fentanilo.",
+          "La muestra puede contener Fentanilo; el test no determina cantidad, pureza ni composicion completa."
+        ],
+        "not_inferred": [
+          "quantity",
+          "purity",
+          "potency",
+          "safety",
+          "complete_sample_composition"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-fentanyl-cocaine-contamination",
+          "direction": "outgoing",
+          "other_ref": "cocaine",
+          "other_label": "Coca\u00edna",
+          "relation_type": "adulterant_of",
+          "status": "supported_with_scope_limit",
+          "confidence": "medium",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Use contamination/adulteration language, not inevitability. A specific strip is not interchangeable with a colorimetric reagent.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/cocaina/"
+            ],
+            "testing_guides": [],
+            "product_resources": [
+              "https://reduciendodano.cl/tienda/tiras-de-testeo-fentanilo/"
+            ],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-colorimetric-fentanyl-limit",
+          "direction": "incoming",
+          "other_ref": "method:colorimetric_reagent",
+          "other_label": "Method: colorimetric_reagent",
+          "relation_type": "test_limit_of",
+          "status": "supported_with_scope_limit",
+          "confidence": "high",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Fentanyl needs its own specific-strip pathway; do not represent a colorimetric result as equivalent.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [],
+            "product_resources": [
+              "https://reduciendodano.cl/tienda/tiras-de-testeo-fentanilo/"
+            ],
+            "research_posts": [],
+            "scientific_sources": [
+              "https://dancesafe.org/wp-content/uploads/2024/05/DS_Instructions_Reagents_v17Spring24.pdf"
+            ],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-fentanyl-opioids-context",
+          "direction": "outgoing",
+          "other_ref": "opioids",
+          "other_label": "Opioides",
+          "relation_type": "contextual_relation",
+          "status": "supported_candidate",
+          "confidence": "high",
+          "matrix_relevance": "outside_initial_matrix",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Class/context link. Keep fentanyl as its own node, not merely as a subtype of the generic opioid node.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/fentanilo/"
+            ],
+            "testing_guides": [],
+            "product_resources": [
+              "https://reduciendodano.cl/tienda/tiras-de-testeo-fentanilo/"
+            ],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "xylazine",
+      "display_name": "Xilazina",
+      "aliases": [],
+      "entity_kind": "adulterant_or_contaminant",
+      "matrix": false,
+      "source_status": "direct_strip_product_and_substance_mentions",
+      "test_status": "specific_strip",
+      "coverage_state": "connected",
+      "relation_count": 2,
+      "relation_types": {
+        "adulterant_of": 1,
+        "test_limit_of": 1
+      },
+      "relation_statuses": {
+        "context_only": 1,
+        "supported_with_scope_limit": 1
+      },
+      "source_count": 3,
+      "source_groups": {
+        "substance_sheets": [],
+        "testing_guides": [],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/kit-de-testeo-para-cocaina/",
+          "https://reduciendodano.cl/tienda/tira-de-xylazina/",
+          "https://reduciendodano.cl/tienda/tiras-de-testeo-xilacina/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "presumptive_presence_only",
+        "allowed": [
+          "Resultado compatible con presencia presumible de Xilazina.",
+          "La muestra puede contener Xilazina; el test no determina cantidad, pureza ni composicion completa."
+        ],
+        "not_inferred": [
+          "quantity",
+          "purity",
+          "potency",
+          "safety",
+          "complete_sample_composition"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-xylazine-cocaine-contamination",
+          "direction": "outgoing",
+          "other_ref": "cocaine",
+          "other_label": "Coca\u00edna",
+          "relation_type": "adulterant_of",
+          "status": "context_only",
+          "confidence": "low",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Candidate contamination relation. Keep separate from fentanyl and require a source-specific review before publication.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [],
+            "product_resources": [
+              "https://reduciendodano.cl/tienda/tiras-de-testeo-xilacina/"
+            ],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-colorimetric-xylazine-limit",
+          "direction": "incoming",
+          "other_ref": "method:colorimetric_reagent",
+          "other_label": "Method: colorimetric_reagent",
+          "relation_type": "test_limit_of",
+          "status": "supported_with_scope_limit",
+          "confidence": "high",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Keep xylazine on the specific-strip route and out of generic reagent-color logic.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [],
+            "product_resources": [
+              "https://reduciendodano.cl/tienda/tiras-de-testeo-xilacina/"
+            ],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "pma",
+      "display_name": "PMA",
+      "aliases": [
+        "para-metoxi-anfetamina"
+      ],
+      "entity_kind": "adulterant_or_contaminant",
+      "matrix": false,
+      "source_status": "direct_mdma_testing_mention",
+      "test_status": "colorimetric_reagent",
+      "coverage_state": "connected",
+      "relation_count": 1,
+      "relation_types": {
+        "adulterant_of": 1
+      },
+      "relation_statuses": {
+        "supported_with_scope_limit": 1
+      },
+      "source_count": 3,
+      "source_groups": {
+        "substance_sheets": [
+          "https://reduciendodano.cl/sustancias/mdma/",
+          "https://reduciendodano.cl/sustancias/pma/"
+        ],
+        "testing_guides": [],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/test-de-mandelin/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "presumptive_presence_only",
+        "allowed": [
+          "Resultado compatible con presencia presumible de PMA.",
+          "La muestra puede contener PMA; el test no determina cantidad, pureza ni composicion completa."
+        ],
+        "not_inferred": [
+          "quantity",
+          "purity",
+          "potency",
+          "safety",
+          "complete_sample_composition"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-pma-mdma-adulterant",
+          "direction": "outgoing",
+          "other_ref": "mdma",
+          "other_label": "MDMA / \u00c9xtasis",
+          "relation_type": "adulterant_of",
+          "status": "supported_with_scope_limit",
+          "confidence": "medium",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Use as a documented adulteration/analogue context, not as a claim that every MDMA sample contains PMA.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/mdma/",
+              "https://reduciendodano.cl/sustancias/pma/"
+            ],
+            "testing_guides": [],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "pmma",
+      "display_name": "PMMA",
+      "aliases": [
+        "para-metoxi-metanfetamina"
+      ],
+      "entity_kind": "adulterant_or_contaminant",
+      "matrix": false,
+      "source_status": "direct_mdma_testing_mention",
+      "test_status": "colorimetric_reagent",
+      "coverage_state": "connected",
+      "relation_count": 1,
+      "relation_types": {
+        "adulterant_of": 1
+      },
+      "relation_statuses": {
+        "supported_with_scope_limit": 1
+      },
+      "source_count": 3,
+      "source_groups": {
+        "substance_sheets": [
+          "https://reduciendodano.cl/sustancias/mdma/",
+          "https://reduciendodano.cl/sustancias/pmma/"
+        ],
+        "testing_guides": [],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/test-de-mandelin/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "presumptive_presence_only",
+        "allowed": [
+          "Resultado compatible con presencia presumible de PMMA.",
+          "La muestra puede contener PMMA; el test no determina cantidad, pureza ni composicion completa."
+        ],
+        "not_inferred": [
+          "quantity",
+          "purity",
+          "potency",
+          "safety",
+          "complete_sample_composition"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-pmma-mdma-adulterant",
+          "direction": "outgoing",
+          "other_ref": "mdma",
+          "other_label": "MDMA / \u00c9xtasis",
+          "relation_type": "adulterant_of",
+          "status": "supported_with_scope_limit",
+          "confidence": "medium",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Keep separate from MDMA as an entity and retain the uncertainty of field testing.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/mdma/",
+              "https://reduciendodano.cl/sustancias/pmma/"
+            ],
+            "testing_guides": [],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "dxm",
+      "display_name": "DXM",
+      "aliases": [
+        "dextrometorfano"
+      ],
+      "entity_kind": "medication",
+      "matrix": false,
+      "source_status": "direct_reagent_page_mention",
+      "test_status": "colorimetric_reagent",
+      "coverage_state": "connected",
+      "relation_count": 1,
+      "relation_types": {
+        "presumptive_presence_signal_for": 1
+      },
+      "relation_statuses": {
+        "supported_with_scope_limit": 1
+      },
+      "source_count": 1,
+      "source_groups": {
+        "substance_sheets": [],
+        "testing_guides": [],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/mecke/"
+        ],
+        "research_posts": [],
+        "scientific_sources": [],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "presumptive_presence_only",
+        "allowed": [
+          "Resultado compatible con presencia presumible de DXM.",
+          "La muestra puede contener DXM; el test no determina cantidad, pureza ni composicion completa."
+        ],
+        "not_inferred": [
+          "quantity",
+          "purity",
+          "potency",
+          "safety",
+          "complete_sample_composition"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-mecke-dxm-signal",
+          "direction": "incoming",
+          "other_ref": "reagent:mecke",
+          "other_label": "Mecke",
+          "relation_type": "presumptive_presence_signal_for",
+          "status": "supported_with_scope_limit",
+          "confidence": "medium",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "presumptive_presence_only",
+          "notes": "Presumptive signal only; preserve the medication/entity distinction and full-sample uncertainty.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [],
+            "product_resources": [
+              "https://reduciendodano.cl/tienda/mecke/"
+            ],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "levamisole",
+      "display_name": "Levamisol",
+      "aliases": [],
+      "entity_kind": "adulterant_or_contaminant",
+      "matrix": false,
+      "source_status": "direct_cocaine_content",
+      "test_status": "colorimetric_reagent",
+      "coverage_state": "connected",
+      "relation_count": 1,
+      "relation_types": {
+        "adulterant_of": 1
+      },
+      "relation_statuses": {
+        "supported_candidate": 1
+      },
+      "source_count": 3,
+      "source_groups": {
+        "substance_sheets": [
+          "https://reduciendodano.cl/sustancias/cocaina/"
+        ],
+        "testing_guides": [
+          "https://reduciendodano.cl/como-testear-cocaina-reactivo-liebermann-paso-a-paso/",
+          "https://reduciendodano.cl/como-testear-cocaina/"
+        ],
+        "product_resources": [],
+        "research_posts": [],
+        "scientific_sources": [],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "presumptive_presence_only",
+        "allowed": [
+          "Resultado compatible con presencia presumible de Levamisol.",
+          "La muestra puede contener Levamisol; el test no determina cantidad, pureza ni composicion completa."
+        ],
+        "not_inferred": [
+          "quantity",
+          "purity",
+          "potency",
+          "safety",
+          "complete_sample_composition"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-levamisole-cocaine-adulterant",
+          "direction": "outgoing",
+          "other_ref": "cocaine",
+          "other_label": "Coca\u00edna",
+          "relation_type": "adulterant_of",
+          "status": "supported_candidate",
+          "confidence": "medium",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Known adulterant context in RD material; not a prevalence estimate for all samples.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/cocaina/"
+            ],
+            "testing_guides": [
+              "https://reduciendodano.cl/como-testear-cocaina/"
+            ],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "lidocaine",
+      "display_name": "Lidoca\u00edna",
+      "aliases": [],
+      "entity_kind": "adulterant_or_contaminant",
+      "matrix": false,
+      "source_status": "direct_cocaine_content",
+      "test_status": "colorimetric_reagent",
+      "coverage_state": "connected",
+      "relation_count": 1,
+      "relation_types": {
+        "adulterant_of": 1
+      },
+      "relation_statuses": {
+        "supported_candidate": 1
+      },
+      "source_count": 2,
+      "source_groups": {
+        "substance_sheets": [
+          "https://reduciendodano.cl/sustancias/cocaina/"
+        ],
+        "testing_guides": [
+          "https://reduciendodano.cl/como-testear-cocaina-reactivo-liebermann-paso-a-paso/"
+        ],
+        "product_resources": [],
+        "research_posts": [],
+        "scientific_sources": [],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "presumptive_presence_only",
+        "allowed": [
+          "Resultado compatible con presencia presumible de Lidoca\u00edna.",
+          "La muestra puede contener Lidoca\u00edna; el test no determina cantidad, pureza ni composicion completa."
+        ],
+        "not_inferred": [
+          "quantity",
+          "purity",
+          "potency",
+          "safety",
+          "complete_sample_composition"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-lidocaine-cocaine-adulterant",
+          "direction": "outgoing",
+          "other_ref": "cocaine",
+          "other_label": "Coca\u00edna",
+          "relation_type": "adulterant_of",
+          "status": "supported_candidate",
+          "confidence": "medium",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Adulterant context only; do not use the relation as an identification rule.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/cocaina/"
+            ],
+            "testing_guides": [],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "phenacetin",
+      "display_name": "Fenacetina",
+      "aliases": [],
+      "entity_kind": "adulterant_or_contaminant",
+      "matrix": false,
+      "source_status": "direct_methamphetamine_content",
+      "test_status": "not_reviewed",
+      "coverage_state": "connected",
+      "relation_count": 1,
+      "relation_types": {
+        "adulterant_of": 1
+      },
+      "relation_statuses": {
+        "context_only": 1
+      },
+      "source_count": 1,
+      "source_groups": {
+        "substance_sheets": [
+          "https://reduciendodano.cl/sustancias/metanfetamina/"
+        ],
+        "testing_guides": [],
+        "product_resources": [],
+        "research_posts": [],
+        "scientific_sources": [],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "not_reviewed",
+        "allowed": [
+          "Fenacetina permanece en el universo, pendiente de una relacion o fuente especifica."
+        ],
+        "not_inferred": [
+          "presence",
+          "absence",
+          "quantity",
+          "purity",
+          "potency",
+          "safety"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-phenacetin-methamphetamine-adulterant",
+          "direction": "outgoing",
+          "other_ref": "methamphetamine",
+          "other_label": "Metanfetamina",
+          "relation_type": "adulterant_of",
+          "status": "context_only",
+          "confidence": "low",
+          "matrix_relevance": "matrix_candidate",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Retain as an unverified candidate until a specific primary source or laboratory reference is attached.",
+          "source_groups": {
+            "rd_pages": [
+              "https://reduciendodano.cl/sustancias/metanfetamina/"
+            ],
+            "testing_guides": [],
+            "product_resources": [],
+            "research_posts": [],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "caffeine",
+      "display_name": "Cafe\u00edna",
+      "aliases": [],
+      "entity_kind": "contextual_substance",
+      "matrix": false,
+      "source_status": "direct_articles_and_interaction_research",
+      "test_status": "colorimetric_reagent",
+      "coverage_state": "connected",
+      "relation_count": 2,
+      "relation_types": {
+        "interaction": 2
+      },
+      "relation_statuses": {
+        "context_only": 2
+      },
+      "source_count": 5,
+      "source_groups": {
+        "substance_sheets": [],
+        "testing_guides": [],
+        "product_resources": [
+          "https://reduciendodano.cl/tienda/mecke/"
+        ],
+        "research_posts": [
+          "https://reduciendodano.cl/cocaina-y-cafeina/",
+          "https://reduciendodano.cl/mdma-y-cafeina/"
+        ],
+        "scientific_sources": [],
+        "other_sources": [
+          "https://reduciendodano.cl/cafeina-estimulantes-mdma-cocaina-interacciones/",
+          "https://reduciendodano.cl/cafeina-la-psicoactiva-legal/"
+        ]
+      },
+      "public_contract": {
+        "claim_mode": "presumptive_presence_only",
+        "allowed": [
+          "Resultado compatible con presencia presumible de Cafe\u00edna.",
+          "La muestra puede contener Cafe\u00edna; el test no determina cantidad, pureza ni composicion completa."
+        ],
+        "not_inferred": [
+          "quantity",
+          "purity",
+          "potency",
+          "safety",
+          "complete_sample_composition"
+        ]
+      },
+      "relations": [
+        {
+          "relation_id": "rel-cocaine-caffeine-context",
+          "direction": "incoming",
+          "other_ref": "cocaine",
+          "other_label": "Coca\u00edna",
+          "relation_type": "interaction",
+          "status": "context_only",
+          "confidence": "medium",
+          "matrix_relevance": "outside_initial_matrix",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Educational context only; retain the distinction between a content relation and a quantified risk estimate.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [],
+            "product_resources": [],
+            "research_posts": [
+              "https://reduciendodano.cl/cocaina-y-cafeina/"
+            ],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        },
+        {
+          "relation_id": "rel-mdma-caffeine-context",
+          "direction": "incoming",
+          "other_ref": "mdma",
+          "other_label": "MDMA / \u00c9xtasis",
+          "relation_type": "interaction",
+          "status": "context_only",
+          "confidence": "medium",
+          "matrix_relevance": "outside_initial_matrix",
+          "evidence_contract": "context_or_relation_only",
+          "notes": "Keep outside the original matrix but retain in the universal graph because the relation appears in RD educational content.",
+          "source_groups": {
+            "rd_pages": [],
+            "testing_guides": [],
+            "product_resources": [],
+            "research_posts": [
+              "https://reduciendodano.cl/mdma-y-cafeina/"
+            ],
+            "scientific_sources": [],
+            "other_sources": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "tropacocaine_and_related_impurities",
+      "display_name": "Tropacoca\u00edna y otras impurezas relacionadas",
+      "aliases": [
+        "benzoylecgonine",
+        "methylecgonidine"
+      ],
+      "entity_kind": "metabolite_or_precursor",
+      "matrix": false,
+      "source_status": "external_audit_and_cocaine_research_context",
+      "test_status": "not_reviewed",
+      "coverage_state": "unconnected_in_current_batch",
+      "relation_count": 0,
+      "relation_types": {},
+      "relation_statuses": {},
+      "source_count": 2,
+      "source_groups": {
+        "substance_sheets": [],
+        "testing_guides": [
+          "https://reduciendodano.cl/como-testear-cocaina-reactivo-liebermann-paso-a-paso/"
+        ],
+        "product_resources": [],
+        "research_posts": [],
+        "scientific_sources": [
+          "https://dancesafe.org/important-reagent-reaction-updates/"
+        ],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "not_reviewed",
+        "allowed": [
+          "Tropacoca\u00edna y otras impurezas relacionadas permanece en el universo, pendiente de una relacion o fuente especifica."
+        ],
+        "not_inferred": [
+          "presence",
+          "absence",
+          "quantity",
+          "purity",
+          "potency",
+          "safety"
+        ]
+      },
+      "relations": []
+    },
+    {
+      "id": "ritonavir_cobicistat",
+      "display_name": "Ritonavir / Cobicistat",
+      "aliases": [
+        "terapia antirretroviral"
+      ],
+      "entity_kind": "medication",
+      "matrix": false,
+      "source_status": "direct_chemsex_content",
+      "test_status": "laboratory_only",
+      "coverage_state": "unconnected_in_current_batch",
+      "relation_count": 0,
+      "relation_types": {},
+      "relation_statuses": {},
+      "source_count": 1,
+      "source_groups": {
+        "substance_sheets": [],
+        "testing_guides": [],
+        "product_resources": [],
+        "research_posts": [
+          "https://reduciendodano.cl/chemsex-reduccion-de-danos/"
+        ],
+        "scientific_sources": [],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "laboratory_only_in_scope",
+        "allowed": [
+          "Esta entidad queda fuera de una confirmacion de campo: Ritonavir / Cobicistat."
+        ],
+        "not_inferred": [
+          "field_presence",
+          "quantity",
+          "purity",
+          "potency",
+          "safety"
+        ]
+      },
+      "relations": []
+    },
+    {
+      "id": "prep_pep_doxypep",
+      "display_name": "PrEP / PEP / doxyPEP",
+      "aliases": [],
+      "entity_kind": "medication",
+      "matrix": false,
+      "source_status": "direct_chemsex_content",
+      "test_status": "not_reviewed",
+      "coverage_state": "unconnected_in_current_batch",
+      "relation_count": 0,
+      "relation_types": {},
+      "relation_statuses": {},
+      "source_count": 1,
+      "source_groups": {
+        "substance_sheets": [],
+        "testing_guides": [],
+        "product_resources": [],
+        "research_posts": [
+          "https://reduciendodano.cl/chemsex-reduccion-de-danos/"
+        ],
+        "scientific_sources": [],
+        "other_sources": []
+      },
+      "public_contract": {
+        "claim_mode": "not_reviewed",
+        "allowed": [
+          "PrEP / PEP / doxyPEP permanece en el universo, pendiente de una relacion o fuente especifica."
+        ],
+        "not_inferred": [
+          "presence",
+          "absence",
+          "quantity",
+          "purity",
+          "potency",
+          "safety"
+        ]
+      },
+      "relations": []
+    }
+  ]
+}

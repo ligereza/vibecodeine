@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sin referencia</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden;background:#000;color:#e6e6e6;
+    font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+  #app{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  .scene{display:none;width:100%;height:100%;position:absolute;inset:0;
+    align-items:center;justify-content:center;flex-direction:column;padding:5vh 6vw}
+  .scene.on{display:flex}
+  .mv{position:fixed;top:22px;left:26px;font-size:10px;letter-spacing:.34em;
+      color:#4a4a52;text-transform:uppercase;z-index:50}
+  .txt{max-width:56ch;text-align:center;line-height:1.75;font-size:14px;color:#b8b8bd}
+  .txt strong{color:#fff;font-weight:400}
+  h1{font-size:clamp(28px,7vw,64px);font-weight:400;letter-spacing:.16em;margin-bottom:26px}
+  h3{font-size:12px;letter-spacing:.3em;color:#6a6a72;text-transform:uppercase;
+     margin-bottom:22px;font-weight:400}
+  button{background:transparent;border:1px solid #33333b;color:#e6e6e6;
+    font-family:inherit;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    padding:13px 26px;cursor:pointer;margin-top:30px;transition:.2s}
+  button:hover{border-color:#fff;color:#fff}
+  button.ghost{border-color:#222;color:#5a5a62;padding:9px 16px;font-size:10px;margin-top:14px}
+  input[type=range]{width:min(440px,74vw);accent-color:#fff;background:transparent}
+  .num{font-size:clamp(44px,13vw,110px);letter-spacing:.03em;line-height:1}
+  .lbl{font-size:10px;letter-spacing:.3em;color:#5a5a62;text-transform:uppercase;margin-bottom:10px}
+  canvas{display:block;max-width:100%;touch-action:none}
+  .fill{position:absolute;inset:0;width:100%;height:100%}
+  .prog{position:fixed;bottom:0;left:0;height:1px;background:#3a3a44;width:0;z-index:60;transition:width .4s linear}
+  .hint{position:fixed;bottom:26px;left:0;right:0;text-align:center;font-size:11px;
+        color:#4a4a52;letter-spacing:.1em;z-index:55}
+  .row{display:flex;gap:16px;align-items:center;flex-wrap:wrap;justify-content:center}
+  #cardBox{border:1px solid #fff;background:#111;position:relative}
+  #cardBox::after{content:'85.60 × 53.98 mm';position:absolute;bottom:7px;right:9px;
+    font-size:9px;color:#555;letter-spacing:.08em}
+  .fanwrap{position:relative}
+  .deltabox{border:1px solid #2a2a32;padding:20px 26px;margin-top:26px;text-align:center}
+  input[type=number]{background:#0b0b0d;border:1px solid #2a2a32;color:#fff;
+    font-family:inherit;font-size:14px;padding:8px 10px;width:90px;text-align:center}
+</style>
+</head>
+<body>
+<div class="mv" id="mv"></div>
+<div class="prog" id="prog"></div>
+<div id="app">
+
+<!-- ══ PORTADA ══ -->
+<div class="scene on" id="s0">
+  <h1>SIN REFERENCIA</h1>
+  <div class="txt">
+    Un niño con astigmatismo no se queja: no tiene con qué comparar.
+    Calibra sobre la distorsión, y eso, para él, es el mundo.<br><br>
+    Esta pieza no te corrige. Te devuelve tu número.
+  </div>
+  <button onclick="go(1)">Empezar</button>
+  <div class="hint">Pantalla completa. Sin lentes de sol. A oscuras si puedes.</div>
+</div>
+
+<!-- ══ 0 · CALIBRACIÓN ══ -->
+<div class="scene" id="s1">
+  <h3>Movimiento cero — calibración</h3>
+  <div class="txt" style="margin-bottom:26px">
+    La pieza necesita saber el tamaño real de tu pantalla.<br>
+    Saca una <strong>tarjeta</strong> del bolsillo —cualquiera, todas miden lo mismo—
+    y apóyala contra el rectángulo hasta que calce.
+  </div>
+  <div id="cardBox"></div>
+  <input type="range" id="cardSize" min="150" max="900" value="360" style="margin-top:30px">
+  <div class="txt" style="margin-top:14px;font-size:12px" id="cardRead"></div>
+  <button onclick="go(2)">Calza</button>
+</div>
+
+<!-- ══ I · MEDICIÓN ══ -->
+<div class="scene" id="s2">
+  <h3>Movimiento uno — medición</h3>
+  <div class="txt" style="margin-bottom:20px">
+    <strong>Sácate los lentes.</strong> Tapa un ojo. Aléjate cuanto puedas de la pantalla.<br>
+    Uno de estos radios se ve más negro y más definido que el resto.
+    Haz clic en ese.
+  </div>
+  <div class="fanwrap"><canvas id="fan" width="520" height="520"></canvas></div>
+  <div class="txt" style="margin-top:16px;font-size:12px;color:#5a5a62" id="fanState">
+    Ojo derecho — tapa el izquierdo
+  </div>
+  <button class="ghost" onclick="skipFan()">No distingo ninguno · saltar</button>
+</div>
+
+<!-- ══ II · ADAPTACIÓN ══ -->
+<div class="scene" id="s3">
+  <h3>Movimiento dos — adaptación</h3>
+  <div class="txt" style="margin-bottom:22px">
+    Mira el centro. No apartes la vista.<br>
+    <span style="color:#5a5a62;font-size:12px">No va a pasar nada. Ese es el punto.</span>
+  </div>
+  <canvas id="adapt" width="720" height="470"></canvas>
+  <div class="row" style="margin-top:22px">
+    <button class="ghost" onclick="startAdapt(90)">Modo corto · 90 s</button>
+    <button class="ghost" onclick="startAdapt(240)">Completo · 4 min</button>
+  </div>
+  <div class="hint" id="adaptHint"></div>
+</div>
+
+<!-- ══ II.b · EL RETORNO ══ -->
+<div class="scene" id="s4">
+  <h3>Movimiento dos — el retorno</h3>
+  <div class="txt" style="margin-bottom:22px">
+    Esta imagen está <strong>exactamente vertical</strong>. Sin ninguna deformación.<br>
+    Ajusta hasta que <em>a ti</em> te parezca derecha.
+  </div>
+  <canvas id="post" width="720" height="400"></canvas>
+  <input type="range" id="postAdj" min="-800" max="800" value="0" style="margin-top:26px">
+  <div class="txt" style="margin-top:12px;font-size:12px;color:#5a5a62" id="postRead">0.00°</div>
+  <button onclick="finishAdapt()">Así se ve derecha</button>
+</div>
+
+<!-- ══ III · SUSTRACCIÓN ══ -->
+<div class="scene" id="s5">
+  <h3>Movimiento tres — sustracción</h3>
+  <div class="txt" style="margin-bottom:24px">
+    Ahora la pantalla se va a poner azul.<br>
+    Mírala sin fijar nada en particular. Espera. Entre veinte y cuarenta segundos.<br><br>
+    <span style="color:#5a5a62;font-size:12px">
+    Van a aparecer puntos diminutos moviéndose en trayectorias curvas.
+    No están en la pantalla.</span>
+  </div>
+  <button onclick="blueField()">Empezar</button>
+</div>
+<div class="scene" id="s5b"><canvas id="blue" class="fill"></canvas>
+  <div class="hint" style="color:rgba(255,255,255,.55)" id="blueHint"></div></div>
+
+<!-- ══ III.b · LA REVELACIÓN ══ -->
+<div class="scene" id="s6">
+  <div class="txt">
+    Eran tus <strong>glóbulos blancos</strong>, moviéndose por los capilares
+    de tu propia retina.<br><br>
+    Siempre estuvieron ahí. Tu retina los cancela todos los días de tu vida
+    porque no aportan información.<br><br>
+    <strong>Ver normal no es recibir más. Es suprimir más</strong> —
+    y suprimir según un consenso que nadie te consultó.
+  </div>
+  <button onclick="go(7)">Continuar</button>
+</div>
+
+<!-- ══ CODA ══ -->
+<div class="scene" id="s7">
+  <h3>Coda</h3>
+  <div class="lbl">Tu eje</div>
+  <div class="num" id="axOut">—</div>
+  <div class="txt" style="margin-top:26px;max-width:50ch" id="codaTxt"></div>
+
+  <div class="deltabox">
+    <div class="lbl">Grados de desacuerdo</div>
+    <div class="txt" style="font-size:12px;margin-bottom:14px">
+      Si tienes el eje de una obra —medido con AX— pégalo acá.
+    </div>
+    <div class="row">
+      <input type="number" id="workAx" min="0" max="180" step="0.1" placeholder="eje">
+      <span style="color:#4a4a52">°</span>
+      <button style="margin-top:0" onclick="calcDelta()">Restar</button>
+    </div>
+    <div class="txt" style="margin-top:16px" id="deltaOut"></div>
+  </div>
+
+  <div class="txt" style="margin-top:34px;font-size:11px;color:#3f3f47;max-width:60ch">
+    Esta pieza no tiene versión canónica. Lo que viste no existe fuera de tu ojo.
+    Si la compartes, quien la reciba verá su propia versión — y esta pieza
+    también trata de eso.
+  </div>
+  <button class="ghost" onclick="location.reload()">Volver a empezar</button>
+</div>
+
+</div>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const D={pxPerMm:null, axisR:null, axisL:null, aftereffect:null};
+let cur=0;
+
+const TITLES=['','Calibración','Medición','Adaptación','Retorno','Sustracción','','Coda','',''];
+function go(n){
+  document.querySelectorAll('.scene').forEach(s=>s.classList.remove('on'));
+  $('s'+n).classList.add('on'); cur=n;
+  $('mv').textContent = TITLES[n]||'';
+  $('prog').style.width = (n/7*100)+'%';
+  if(n===2) drawFan();
+  if(n===7) renderCoda();
+}
+
+/* ─────────── 0 · CALIBRACIÓN ─────────── */
+const CARD_W=85.60, CARD_H=53.98;
+function updCard(){
+  const w=+$('cardSize').value, h=w*CARD_H/CARD_W;
+  $('cardBox').style.width=w+'px'; $('cardBox').style.height=h+'px';
+  D.pxPerMm = w/CARD_W;
+  $('cardRead').textContent = `${D.pxPerMm.toFixed(2)} px por milímetro · tu pantalla mide ${(screen.width/D.pxPerMm/10).toFixed(1)} cm de ancho`;
+}
+$('cardSize').oninput=updCard; updCard();
+
+/* ─────────── I · ABANICO ASTIGMÁTICO ─────────── */
+let fanEye='R';
+function drawFan(){
+  const c=$('fan'), x=c.getContext('2d'), S=c.width, cx=S/2, cy=S/2, R=S/2-14;
+  x.fillStyle='#fff'; x.fillRect(0,0,S,S);
+  x.strokeStyle='#000';
+  for(let a=0;a<180;a+=10){
+    const r=a*Math.PI/180;
+    x.lineWidth = 3;
+    x.beginPath();
+    x.moveTo(cx-R*Math.cos(r), cy+R*Math.sin(r));
+    x.lineTo(cx+R*Math.cos(r), cy-R*Math.sin(r));
+    x.stroke();
+  }
+  x.fillStyle='#fff'; x.beginPath(); x.arc(cx,cy,26,0,7); x.fill();
+  x.strokeStyle='#000'; x.lineWidth=1; x.beginPath(); x.arc(cx,cy,26,0,7); x.stroke();
+  x.fillStyle='#000'; x.font='11px monospace'; x.textAlign='center';
+  x.fillText('0°', S-16, cy+18);
+  x.fillText('90°', cx, 16);
+}
+$('fan').onclick=e=>{
+  const r=$('fan').getBoundingClientRect();
+  const cx=r.width/2, cy=r.height/2;
+  const dx=e.clientX-r.left-cx, dy=-(e.clientY-r.top-cy);
+  if(Math.hypot(dx,dy)<20) return;
+  let a=Math.atan2(dy,dx)*180/Math.PI; a=((a%180)+180)%180;
+  a=Math.round(a/10)*10%180;
+  if(fanEye==='R'){
+    D.axisR=a; fanEye='L';
+    $('fanState').innerHTML='Ojo izquierdo — tapa el derecho';
+    $('fanState').style.color='#fff';
+    setTimeout(()=>$('fanState').style.color='#5a5a62',900);
+  } else {
+    D.axisL=a; go(3);
+  }
+};
+function skipFan(){
+  if(fanEye==='R'){ fanEye='L'; $('fanState').innerHTML='Ojo izquierdo — tapa el derecho'; }
+  else go(3);
+}
+
+/* ─────────── II · CIZALLA SUBUMBRAL ─────────── */
+let adaptRAF=null, adaptT0=null, adaptDur=240, shear=0;
+const MAX_TILT_DEG = 5.2;   // magnitud final. Ritmo: ~0.02°/s. Indetectable.
+
+function drawScene(ctx, W, H, tiltDeg){
+  ctx.fillStyle='#0a0a0c'; ctx.fillRect(0,0,W,H);
+  const k=Math.tan(tiltDeg*Math.PI/180);
+  ctx.save();
+  // cizalla: desplaza x en función de y → inclina las verticales
+  ctx.setTransform(1,0,-k,1, k*H/2, 0);
+  ctx.strokeStyle='#5c5c68'; ctx.lineWidth=1.15;
+  for(let x=-40;x<=W+40;x+=44){
+    ctx.beginPath(); ctx.moveTo(x,-20); ctx.lineTo(x,H+20); ctx.stroke();
+  }
+  ctx.strokeStyle='#26262e';
+  for(let y=0;y<=H;y+=44){
+    ctx.beginPath(); ctx.moveTo(-60,y); ctx.lineTo(W+60,y); ctx.stroke();
+  }
+  ctx.restore();
+  ctx.fillStyle='#d0d0d8';
+  ctx.beginPath(); ctx.arc(W/2,H/2,2.6,0,7); ctx.fill();
+}
+
+function startAdapt(dur){
+  adaptDur=dur; adaptT0=performance.now();
+  const c=$('adapt'), x=c.getContext('2d');
+  document.querySelectorAll('#s3 .ghost').forEach(b=>b.style.display='none');
+  (function loop(t){
+    const e=(t-adaptT0)/1000;
+    const p=Math.min(1,e/adaptDur);
+    shear = MAX_TILT_DEG*p;
+    drawScene(x,c.width,c.height,shear);
+    const left=Math.max(0,adaptDur-e);
+    $('adaptHint').textContent = left>0
+      ? `${Math.ceil(left)} s` : '';
+    if(e<adaptDur+8) adaptRAF=requestAnimationFrame(loop);
+    else { cancelAnimationFrame(adaptRAF); go(4); initPost(); }
+  })(performance.now());
+}
+
+function initPost(){
+  const c=$('post'), x=c.getContext('2d');
+  const redraw=()=>{
+    const adj=+$('postAdj').value/100;   // grados
+    drawScene(x,c.width,c.height,adj);
+    $('postRead').textContent = adj.toFixed(2)+'°';
+  };
+  $('postAdj').oninput=redraw; redraw();
+}
+function finishAdapt(){
+  D.aftereffect = +$('postAdj').value/100;
+  go(5);
+}
+
+/* ─────────── III · CAMPO AZUL ENTÓPTICO ─────────── */
+function blueField(){
+  document.querySelectorAll('.scene').forEach(s=>s.classList.remove('on'));
+  $('s5b').classList.add('on'); $('mv').textContent='Sustracción';
+  $('prog').style.width='71%';
+  const c=$('blue'), x=c.getContext('2d');
+  const fit=()=>{c.width=innerWidth;c.height=innerHeight;};
+  fit(); addEventListener('resize',fit);
+  const t0=performance.now();
+  (function loop(t){
+    const e=(t-t0)/1000;
+    // azul saturado con modulación lenta: favorece el fenómeno entóptico
+    const m = 0.86 + 0.14*Math.sin(e*2*Math.PI*0.9);
+    x.fillStyle=`rgb(0, ${Math.round(28*m)}, ${Math.round(255*m)})`;
+    x.fillRect(0,0,c.width,c.height);
+    $('blueHint').textContent = e<12 ? 'espera…'
+      : e<48 ? 'mira sin fijar nada' : 'toca para continuar';
+    if(e<75) requestAnimationFrame(loop); else go(6);
+  })(performance.now());
+  $('s5b').onclick=()=>go(6);
+}
+
+/* ─────────── CODA ─────────── */
+function renderCoda(){
+  const axes=[D.axisR,D.axisL].filter(v=>v!==null);
+  $('axOut').textContent = axes.length ? axes.map(a=>a+'°').join(' / ') : '—';
+  let t='';
+  if(axes.length===2 && D.axisR!==D.axisL){
+    let d=Math.abs(D.axisR-D.axisL)%180; if(d>90)d=180-d;
+    t+=`Tus dos ojos no coinciden: hay <strong>${d}°</strong> entre ellos.
+        Cada uno deforma el mundo en una diagonal distinta y tu corteza fusiona las dos. `;
+  }
+  if(D.aftereffect!==null){
+    const a=Math.abs(D.aftereffect);
+    t+=`<br><br>Y necesitaste <strong>${a.toFixed(2)}°</strong> de corrección
+        para que una imagen perfectamente vertical te pareciera vertical.
+        ${a>0.3
+          ? 'Eso es lo que tu sistema se movió en los minutos anteriores, sin que lo notaras. Tu sentido de la vertical no es una propiedad tuya: es un promedio móvil de lo último que estuviste mirando.'
+          : 'Casi nada — o resististe la adaptación, o el tiempo fue corto. Prueba el modo completo.'}`;
+  }
+  $('codaTxt').innerHTML = t || 'No completaste la medición.';
+}
+/* diferencia mínima entre orientaciones (0–90) */
+function od(a,b){ let d=Math.abs(a-b)%180; return d>90?180-d:d; }
+
+/* media circular en ángulo duplicado — la media aritmética es inválida
+   para orientaciones: el promedio de 30° y 150° no es 90°, es 0°. */
+function orientMean(list){
+  let C=0,S=0;
+  list.forEach(a=>{ const r=a*Math.PI/90; C+=Math.cos(r); S+=Math.sin(r); });
+  const R=Math.hypot(C,S)/list.length;
+  let m=0.5*Math.atan2(S,C)*180/Math.PI;
+  return {axis:((m%180)+180)%180, R};
+}
+
+function calcDelta(){
+  const w=parseFloat($('workAx').value);
+  const eyes=[['OD',D.axisR],['OI',D.axisL]].filter(e=>e[1]!==null);
+  if(isNaN(w)||!eyes.length){ $('deltaOut').textContent='Faltan datos.'; return; }
+
+  const m=orientMean(eyes.map(e=>e[1]));
+  const spread = eyes.length===2 ? od(eyes[0][1],eyes[1][1]) : 0;
+
+  // si los dos ojos discrepan mucho, una cifra única miente: se informa por ojo
+  if(spread>25){
+    const rows=eyes.map(e=>
+      `<div style="margin:5px 0">${e[0]} ${e[1]}° &nbsp;→&nbsp;
+        <span style="font-size:24px;color:#fff">${od(w,e[1]).toFixed(1)}°</span></div>`).join('');
+    $('deltaOut').innerHTML=
+      `Esa obra fue hecha a <strong>${w.toFixed(1)}°</strong>.<br>
+       Tus ojos están a ${spread}° entre sí, así que no hay una sola cifra:<br><br>
+       ${rows}
+       <span style="font-size:11px;color:#5a5a62;letter-spacing:.2em">GRADOS DE DESACUERDO, POR OJO</span>
+       <div style="font-size:11px;color:#3f3f47;margin-top:14px;max-width:44ch;margin-inline:auto">
+         Estás mirando esa obra con dos desacuerdos distintos a la vez.</div>`;
+    return;
+  }
+  $('deltaOut').innerHTML =
+    `Esa obra fue hecha a <strong>${w.toFixed(1)}°</strong>.<br>
+     Tú la estás mirando a <strong>${m.axis.toFixed(1)}°</strong>.<br><br>
+     <span style="font-size:34px;color:#fff">${od(w,m.axis).toFixed(1)}°</span><br>
+     <span style="font-size:11px;color:#5a5a62;letter-spacing:.2em">GRADOS DE DESACUERDO</span>`;
+}
+
+addEventListener('keydown',e=>{ if(e.key==='Escape') location.reload(); });
+</script>
+</body>
+</html>
