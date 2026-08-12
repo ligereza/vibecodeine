@@ -1,18 +1,40 @@
 # LAST_HANDOFF - Faro
 
-Updated: 2026-08-12 - recovered session integration staged on `mak-svg`
-Status: The recovered agent work is now present in the repository staging area,
-not only in the MAK runtime mirror. The integration includes the durable
+Updated: 2026-08-12 - recovered session integration committed and propagated
+Status: The recovered agent work is now present in the repository and no longer
+only in the MAK runtime mirror. The integration includes the durable
 conductor extension, activity/GPU compatibility utilities, SVG quality checks,
 RD testing evidence projections, the source-preserving POST boundary, and a
 hash-manifested archive of the non-environment material from
 `C:\Users\issvk\claude_sesiones_recuperadas`. The canonical README/SVG geometry
 is unchanged. No service was restarted, no conductor database was created,
-and all `MAK_CONDUCTOR_*` flags remain unset. The current branch is the
-non-canonical experimental `mak-svg`; the four canonical branches are still
-unchanged until the integration commit is verified and explicitly propagated.
+and all `MAK_CONDUCTOR_*` flags remain unset. Commit `cd5ab70c` is on
+`mak-svg` and `mak`; merge commits `bba8ba83`, `ab19862b`, and `58e4daff`
+propagate it to `main`, `rd`, and `iskvw`. All five refs are pushed to origin.
 This block is the current operational source. Later sections preserve dated
 historical evidence and must not be read as present state.
+
+Current MAK transport state after the recovered integration:
+
+- `/home/mak/flujo` is on branch `mak`, clean, and exactly aligned with
+  `origin/mak` at `5bd5de16d6b0e6f87dfd49af9d38d4fc9ccb2524`.
+- The live mirrors now contain the recovered operational files in
+  `/home/mak/plataforma`, `/home/mak/research`, `/home/mak/codex`, and
+  `/home/mak/curatoria`; the new POST boundary is mirrored at
+  `/home/mak/post`. The copied files were compiled remotely and their hashes
+  match the Git checkout.
+- A recoverable pre-copy backup is at
+  `/home/mak/rollback/faro-live-before-recovered-20260812/`. The previous
+  agent's dirty checkout work remains preserved in
+  `stash@{0}: pre-faro-origin-mak-sync-20260812`; no reset or destructive
+  cleanup was used.
+- `mak-hub.service`, `mak-codex.service`, and `mak-research.service` remained
+  active. No service restart, conductor activation, database cutover, or
+  `MAK_CONDUCTOR_*` flag change was performed.
+
+Next action: install or expose an animation-capable renderer on MAK, then run
+the existing recent SVG set through `calidad_svg.validate`; keep visual
+results `unverified` until that backend exists and a human accepts the output.
 
 ## Recovered session integration - 2026-08-12
 
