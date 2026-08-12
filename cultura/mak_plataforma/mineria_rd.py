@@ -20,6 +20,7 @@ como utf-8 sin problema.
 
 import argparse
 import base64
+import hashlib
 import json
 import os
 import re
@@ -27,8 +28,29 @@ import subprocess
 import tempfile
 import urllib.error
 import urllib.request
+import time
 from datetime import datetime, timezone
 from pathlib import Path
+
+try:
+    from cultura.mak_conductor.runtime import (active_enabled, dispatch_sync,
+                                                enqueue_shadow, observe_shadow,
+                                                shared_gpu_lease)
+except ImportError:
+    import sys
+    sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH",
+                                     "/home/mak/flujo/cultura"))
+    try:
+        from mak_conductor.runtime import (active_enabled, dispatch_sync,
+                                           enqueue_shadow, observe_shadow,
+                                           shared_gpu_lease)
+    except ImportError:
+        from contextlib import nullcontext
+        enqueue_shadow = observe_shadow = dispatch_sync = None
+        def active_enabled():
+            return False
+        def shared_gpu_lease(**_kwargs):
+            return nullcontext()
 
 # cultura/mak_plataforma/mineria_rd.py -> parents[2] = raiz del repo
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -213,10 +235,42 @@ def vision_flyer(path: str, timeout: int = 300) -> dict:
     dict con clave "error" en vez de lanzar excepcion (el llamador decide
     que hacer con un fallo puntual sin frenar el resto de la mineria).
     """
+    if active_enabled():
+        def handle(_job):
+            result = vision_flyer(path, timeout=timeout)
+            return {"validated": not bool(result.get("error")), **result}
+
+        queued = dispatch_sync(
+            "mineria_vision", {"path": str(path), "timeout": int(timeout),
+                                "model": OLLAMA_MODEL},
+            producer="platform.mineria_rd.vision_flyer", handler=handle,
+            estimated_vram_mb=3000, model=OLLAMA_MODEL,
+            template_version="mineria-vision-v2")
+        if queued and queued.get("queue_status") == "COMPLETED":
+            return {key: value for key, value in queued.items()
+                    if key not in {"job_id", "status", "queue_status",
+                                   "validated"}}
+        return {"error": "queued_mineria_vision_failed",
+                "queue": queued or {"status": "unavailable"}}
+
+    started = time.time()
+    shadow_job = (enqueue_shadow(
+        "mineria_vision", {
+            "path": str(path), "timeout": int(timeout), "model": OLLAMA_MODEL,
+        }, producer="platform.mineria_rd.vision_flyer",
+        estimated_vram_mb=3000, model=OLLAMA_MODEL,
+        template_version="mineria-vision-v1")
+        if enqueue_shadow is not None else None)
     try:
         with open(path, "rb") as f:
             datos_binarios = f.read()
     except OSError as exc:
+        if observe_shadow is not None:
+            observe_shadow(shadow_job,
+                           producer="platform.mineria_rd.vision_flyer",
+                           result_status="FAILED",
+                           payload={"error": str(exc)[:2000]},
+                           started_at=started, owner_pid=os.getpid())
         return {"error": "no_se_pudo_leer_archivo: %s" % exc, "raw": ""}
 
     imagen_b64 = base64.b64encode(datos_binarios).decode("ascii")
@@ -232,18 +286,42 @@ def vision_flyer(path: str, timeout: int = 300) -> dict:
         headers={"Content-Type": "application/json"}, method="POST",
     )
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            cuerpo = resp.read().decode("utf-8")
+        with shared_gpu_lease(job_id="mineria-rd-%s" % os.getpid(),
+                              estimated_vram_mb=3000):
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                cuerpo = resp.read().decode("utf-8")
     except (urllib.error.URLError, OSError, TimeoutError) as exc:
+        if observe_shadow is not None:
+            observe_shadow(shadow_job,
+                           producer="platform.mineria_rd.vision_flyer",
+                           result_status="FAILED",
+                           payload={"error": str(exc)[:2000]},
+                           started_at=started, owner_pid=os.getpid())
         return {"error": "ollama_no_disponible: %s" % exc, "raw": ""}
 
     try:
         sobre = json.loads(cuerpo)
     except json.JSONDecodeError:
+        if observe_shadow is not None:
+            observe_shadow(shadow_job,
+                           producer="platform.mineria_rd.vision_flyer",
+                           result_status="FAILED",
+                           payload={"error": "respuesta_no_json"},
+                           started_at=started, owner_pid=os.getpid())
         return {"error": "respuesta_no_json", "raw": cuerpo[:500]}
 
     texto_modelo = sobre.get("response", "") if isinstance(sobre, dict) else ""
-    return _parsear_json_tolerante(texto_modelo)
+    result = _parsear_json_tolerante(texto_modelo)
+    if observe_shadow is not None:
+        observe_shadow(
+            shadow_job, producer="platform.mineria_rd.vision_flyer",
+            result_status="FAILED" if result.get("error") else "READY",
+            validated=not bool(result.get("error")),
+            payload={"model": OLLAMA_MODEL}, started_at=started,
+            owner_pid=os.getpid(),
+            output_hash=hashlib.sha256(
+                json.dumps(result, sort_keys=True).encode("utf-8")).hexdigest())
+    return result
 
 
 # ---------------------------------------------------------------------------

@@ -8,6 +8,8 @@ Fuentes canonicas (unica verdad; la DB es su proyeccion):
 - data/productoras/*.json                    -> tabla `productoras` (promotoras conocidas)
 - jobs/**/evento*.json + projects/plano/ejemplos/evento*.json
                                              -> tabla `eventos` (con pack sugerido por voluntarios)
+- data/rd_fuentes/testeo_eventos_2025_evidence.json
+                                             -> `testeo_*` tables (source evidence, not a public claim)
 
 Regenerar: `build_rd_db()` borra y reescribe todo desde las fuentes. Nunca se
 edita la DB a mano; si un dato cambia, se cambia la fuente y se reconstruye.
@@ -23,6 +25,9 @@ import json
 import importlib.util
 import re
 import sqlite3
+import unicodedata
+from collections import Counter
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -36,6 +41,7 @@ _SUPLEMENTOS_JSON = (
     / "01_contenido" / "contenido_suplementos_rd.json"
 )
 _PRODUCTORAS_DIR = _REPO / "data" / "productoras"
+_TESTING_EVIDENCE_JSON = _REPO / "data" / "rd_fuentes" / "testeo_eventos_2025_evidence.json"
 _FUENTES_PY = _REPO / "cultura" / "mak_research" / "fuentes.py"
 _VENUES_DIR = _REPO / "knowledge" / "venues"     # *.yaml canonicos
 _LOGOS_DIR = _REPO / "knowledge" / "logos"       # *.yaml canonicos
@@ -170,6 +176,130 @@ CREATE TABLE productora_eventos (
     sin_fuente_primaria INTEGER NOT NULL DEFAULT 1
 );
 CREATE INDEX idx_prodeventos_slug ON productora_eventos(productora_slug);
+
+-- Historical testing evidence imported from a workbook. These tables are an
+-- evidence projection: they do not turn a color observation into identity,
+-- purity, dose, or safety, and they do not authorize automatic publication.
+CREATE TABLE testeo_fuentes (
+    id             TEXT PRIMARY KEY,
+    archivo        TEXT NOT NULL,
+    sha256         TEXT NOT NULL,
+    periodo        TEXT,
+    formula_count  INTEGER NOT NULL DEFAULT 0,
+    generated_at   TEXT,
+    status         TEXT NOT NULL,
+    principios     TEXT NOT NULL
+);
+CREATE TABLE testeo_hojas (
+    source_sheet_index INTEGER PRIMARY KEY,
+    source_sheet_name  TEXT NOT NULL,
+    data_row_count     INTEGER NOT NULL,
+    source_sheet_hash  TEXT NOT NULL,
+    duplicate_group_id TEXT,
+    duplicate_group_size INTEGER,
+    duplicate_status   TEXT
+);
+CREATE INDEX idx_testeo_hojas_duplicate ON testeo_hojas(duplicate_group_id);
+CREATE TABLE testeo_eventos_fuente (
+    event_id                       TEXT PRIMARY KEY,
+    source_sheet_index             INTEGER NOT NULL REFERENCES testeo_hojas(source_sheet_index),
+    source_sheet_name              TEXT NOT NULL,
+    event_label_candidate          TEXT,
+    event_label_status             TEXT,
+    source_period_label            TEXT,
+    date_raw_token                 TEXT,
+    date_iso_candidate             TEXT,
+    date_status                    TEXT,
+    date_parse_style               TEXT,
+    date_confidence                TEXT,
+    outside_filename_period_candidate INTEGER NOT NULL DEFAULT 0,
+    is_source_copy_candidate       INTEGER NOT NULL DEFAULT 0,
+    duplicate_group_id             TEXT,
+    duplicate_group_size           INTEGER,
+    duplicate_status               TEXT,
+    duplicate_canonical_sheet_candidate TEXT,
+    venue_id_candidate             TEXT,
+    venue_name_candidate           TEXT,
+    producer_id_candidate          TEXT,
+    producer_name_candidate        TEXT,
+    link_status                    TEXT,
+    link_evidence_ref              TEXT,
+    link_confidence                TEXT,
+    link_review_status             TEXT
+);
+CREATE INDEX idx_testeo_eventos_fuente_sheet ON testeo_eventos_fuente(source_sheet_index);
+CREATE TABLE testeo_filas_fuente (
+    test_id                         TEXT PRIMARY KEY,
+    event_id                        TEXT NOT NULL REFERENCES testeo_eventos_fuente(event_id),
+    source_sheet_name               TEXT NOT NULL,
+    source_row                      INTEGER NOT NULL,
+    row_status                      TEXT,
+    substance_raw                   TEXT,
+    substance_normalized_candidate  TEXT,
+    substance_map_status            TEXT,
+    format_raw                      TEXT,
+    test_1_raw                      TEXT,
+    result_1_raw                    TEXT,
+    test_2_raw                      TEXT,
+    result_2_raw                    TEXT,
+    test_3_raw                      TEXT,
+    result_3_raw                    TEXT,
+    test_4_raw                      TEXT,
+    result_4_raw                    TEXT,
+    extra_1_raw                     TEXT,
+    source_duplicate_group_id       TEXT,
+    source_duplicate_status         TEXT,
+    interpretation_policy           TEXT
+);
+CREATE INDEX idx_testeo_filas_event ON testeo_filas_fuente(event_id);
+CREATE TABLE testeo_observaciones_fuente (
+    observation_id                  TEXT PRIMARY KEY,
+    test_id                         TEXT NOT NULL REFERENCES testeo_filas_fuente(test_id),
+    event_id                        TEXT NOT NULL REFERENCES testeo_eventos_fuente(event_id),
+    source_sheet_name               TEXT NOT NULL,
+    source_row                      INTEGER NOT NULL,
+    observation_ordinal             INTEGER NOT NULL,
+    substance_raw                   TEXT,
+    substance_normalized_candidate  TEXT,
+    reagent_raw                     TEXT,
+    reagent_normalized_candidate    TEXT,
+    reagent_map_status               TEXT,
+    result_raw                      TEXT,
+    result_normalized_candidate     TEXT,
+    result_map_status               TEXT,
+    observation_status              TEXT,
+    interpretation_policy           TEXT
+);
+CREATE INDEX idx_testeo_obs_event ON testeo_observaciones_fuente(event_id);
+CREATE INDEX idx_testeo_obs_reagent ON testeo_observaciones_fuente(reagent_normalized_candidate);
+CREATE TABLE testeo_mapa_sustancias (
+    raw_label       TEXT PRIMARY KEY,
+    count           INTEGER NOT NULL,
+    normalized_id   TEXT,
+    mapping_status  TEXT NOT NULL
+);
+CREATE TABLE testeo_mapa_reactivos (
+    raw_label       TEXT PRIMARY KEY,
+    count           INTEGER NOT NULL,
+    normalized_id   TEXT,
+    mapping_status  TEXT NOT NULL
+);
+CREATE TABLE testeo_enlaces_revision (
+    link_id                 TEXT PRIMARY KEY,
+    event_id                TEXT NOT NULL REFERENCES testeo_eventos_fuente(event_id),
+    source_sheet_name       TEXT NOT NULL,
+    target_kind             TEXT NOT NULL,
+    target_id               TEXT,
+    target_name             TEXT,
+    relation_type           TEXT NOT NULL,
+    evidence_ref            TEXT,
+    confidence              TEXT,
+    status                  TEXT NOT NULL,
+    review_status           TEXT NOT NULL,
+    not_inferred_from_sheet_name INTEGER NOT NULL DEFAULT 1
+);
+CREATE INDEX idx_testeo_links_event ON testeo_enlaces_revision(event_id);
+CREATE INDEX idx_testeo_links_review ON testeo_enlaces_revision(review_status);
 """
 
 
@@ -269,6 +399,460 @@ def _iter_evento_sources() -> list[tuple[str, dict[str, Any]]]:
                 continue
             encontrados.append((f.relative_to(_REPO).as_posix(), d))
     return encontrados
+
+
+def _load_testing_evidence(path: Path | None = None) -> dict[str, Any] | None:
+    """Load testing evidence without turning it into a public claim.
+
+    The file is optional so a checkout without the controlled registry can
+    still build the base projection. Its schema is checked by integration
+    tests; this loader only accepts a JSON document with the expected
+    collections and ignores unrecognized rows rather than inventing them.
+    """
+    source_path = path if path is not None else _TESTING_EVIDENCE_JSON
+    if not source_path.exists():
+        return None
+    try:
+        doc = json.loads(source_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if not isinstance(doc, dict) or not isinstance(doc.get("source"), dict):
+        return None
+    if not isinstance(doc.get("events"), list) or not isinstance(doc.get("observations"), list):
+        return None
+    return doc
+
+
+def _fold_source_label(value: Any) -> str:
+    text = "" if value is None else str(value)
+    text = unicodedata.normalize("NFKD", text)
+    text = "".join(ch for ch in text if not unicodedata.combining(ch))
+    return re.sub(r"\s+", " ", text.strip().casefold())
+
+
+def _project_substance_label(
+    raw: Any, candidate: Any, status: Any, *, header_row: bool = False
+) -> tuple[Any, str]:
+    """Refine obvious source-column errors without guessing identity."""
+    key = _fold_source_label(raw)
+    if header_row or key in {"sustancia", "column 1"}:
+        return None, "repeated_header"
+    if key in {"freedom explicito", "lamborghini dorada"}:
+        return None, "misplaced_format_label"
+    if key == "ketamina+m":
+        return "ketamine_plus_unspecified_m", "mixture_candidate"
+    if key == "polvo blanco":
+        return "unknown", "substance_or_format_unresolved"
+    return candidate, str(status or "")
+
+
+def _is_testing_header_row(row: dict[str, Any]) -> bool:
+    """Recognize a header copied into a data row by its column vocabulary."""
+    if str(row.get("row_status") or "") == "repeated_header":
+        return True
+    values = [
+        row.get("substance_raw"),
+        row.get("format_raw"),
+        row.get("test_1_raw"),
+        row.get("result_1_raw"),
+        row.get("test_2_raw"),
+        row.get("result_2_raw"),
+        row.get("test_3_raw"),
+        row.get("result_3_raw"),
+        row.get("test_4_raw"),
+        row.get("result_4_raw"),
+    ]
+    keys = [_fold_source_label(value) for value in values if _fold_source_label(value)]
+    if not keys or keys[0] != "column 1":
+        return False
+    return all(
+        re.fullmatch(r"column \d+", key) is not None
+        for key in keys
+    )
+
+
+def _project_reagent_label(
+    raw: Any, candidate: Any, status: Any, *, header_row: bool = False
+) -> tuple[Any, str]:
+    """Separate test names, result spillover, and actual reagent candidates."""
+    key = _fold_source_label(raw)
+    if header_row or re.fullmatch(r"column [3579]", key):
+        return None, "repeated_header"
+    if key == "cannabis":
+        return "cbd_thc", "candidate_catalog_test"
+    if key == "fentanilo":
+        return "fentanyl_strip", "non_colorimetric_test"
+    if key == "sin reaccion":
+        return None, "result_in_reagent_column"
+    if key == "mireia":
+        return None, "possible_typo_candidate"
+    return candidate, str(status or "")
+
+
+def _project_event_date(row: dict[str, Any]) -> tuple[Any, str, str]:
+    """Resolve date-only sheet labels against the workbook period when safe."""
+    existing = row.get("date_iso_candidate")
+    if existing:
+        return existing, str(row.get("date_status") or "parsed_candidate"), str(
+            row.get("date_confidence") or "medium"
+        )
+    period = str(row.get("source_period_label") or "")
+    if not re.fullmatch(r"\d{4}", period):
+        return None, str(row.get("date_status") or "not_found"), str(
+            row.get("date_confidence") or "none"
+        )
+    token = str(row.get("date_raw_token") or "")
+    if not token:
+        token_match = re.search(
+            r"(?<!\d)(\d{1,2}[-/.]\d{1,2}|\d{2,8})(?!\d)",
+            str(row.get("source_sheet_name") or ""),
+        )
+        token = token_match.group(0) if token_match else ""
+    day = month = year = None
+    separated = re.fullmatch(r"(\d{1,2})[-/.](\d{1,2})", token)
+    if separated:
+        day, month, year = int(separated.group(1)), int(separated.group(2)), int(period)
+    elif token.isdigit() and len(token) == 4:
+        # Prefer DDMM when valid; otherwise accept D(M)YY / DD(M)YY.
+        candidates = []
+        dd, mm = int(token[:2]), int(token[2:])
+        if 1 <= dd <= 31 and 1 <= mm <= 12:
+            candidates.append((dd, mm, int(period)))
+        if token.endswith("25"):
+            dd, m = int(token[:2]), int(token[2])
+            if 1 <= dd <= 31 and 1 <= m <= 12:
+                candidates.append((dd, m, 2025))
+            d, m = int(token[0]), int(token[1])
+            if 1 <= d <= 31 and 1 <= m <= 12:
+                candidates.append((d, m, 2025))
+        if candidates:
+            day, month, year = candidates[0]
+    elif token.isdigit() and len(token) == 5:
+        # Compact names use either DMMYY or DDMYY (for example 51225, 18125).
+        candidates = []
+        d, m = int(token[0]), int(token[1:3])
+        if 1 <= d <= 31 and 1 <= m <= 12:
+            candidates.append((d, m, 2000 + int(token[3:])))
+        dd, m = int(token[:2]), int(token[2])
+        if 1 <= dd <= 31 and 1 <= m <= 12:
+            candidates.append((dd, m, 2000 + int(token[3:])))
+        if candidates:
+            day, month, year = candidates[0]
+    elif token.isdigit() and len(token) == 3:
+        # Short forms in the workbook: D MM or DD M, always in the source period.
+        candidates = [(int(token[0]), int(token[1:]), int(period)),
+                      (int(token[:2]), int(token[2]), int(period))]
+        for candidate_day, candidate_month, candidate_year in candidates:
+            if 1 <= candidate_day <= 31 and 1 <= candidate_month <= 12:
+                day, month, year = candidate_day, candidate_month, candidate_year
+                break
+    elif token.isdigit() and len(token) == 2:
+        day, month, year = int(token[0]), int(token[1]), int(period)
+    if day is None or month is None or year is None:
+        return None, str(row.get("date_status") or "not_found"), str(
+            row.get("date_confidence") or "none"
+        )
+    try:
+        parsed = date(year, month, day).isoformat()
+    except ValueError:
+        return None, str(row.get("date_status") or "not_found"), str(
+            row.get("date_confidence") or "none"
+        )
+    return parsed, "resolved_from_source_period" if year == int(period) else "parsed_candidate", "low"
+
+
+def _project_duplicate_events(events: list[Any]) -> dict[str, tuple[str | None, bool]]:
+    """Choose an aggregate representative while preserving every source row."""
+    groups: dict[str, list[dict[str, Any]]] = {}
+    for row in events:
+        if not isinstance(row, dict):
+            continue
+        group_id = row.get("duplicate_group_id")
+        if group_id and int(row.get("duplicate_group_size") or 1) > 1:
+            groups.setdefault(str(group_id), []).append(row)
+    projected: dict[str, tuple[str | None, bool]] = {}
+    for rows in groups.values():
+        non_copy = [row for row in rows if not bool(row.get("is_source_copy_candidate"))]
+        candidates = non_copy or rows
+        canonical = min(
+            candidates,
+            key=lambda row: int(row.get("source_sheet_index") or 0),
+        )
+        canonical_name = str(canonical.get("source_sheet_name", ""))
+        for row in rows:
+            event_id = str(row.get("event_id", ""))
+            projected[event_id] = (canonical_name, event_id != str(canonical.get("event_id", "")))
+    return projected
+
+
+def _insert_testing_evidence(conn: sqlite3.Connection, doc: dict[str, Any]) -> None:
+    """Project the evidence document into isolated, traceable tables."""
+    source = doc["source"]
+    source_id = "testeo-" + str(source.get("sha256", "unknown"))[:16]
+    conn.execute(
+        "INSERT INTO testeo_fuentes(id, archivo, sha256, periodo, formula_count, "
+        "generated_at, status, principios) VALUES (?,?,?,?,?,?,?,?)",
+        (
+            source_id,
+            str(source.get("file_name", "")),
+            str(source.get("sha256", "")),
+            source.get("filename_period_label"),
+            int(source.get("formula_count") or 0),
+            doc.get("generated_at"),
+            str(doc.get("status", "candidate_evidence_pending_human_review")),
+            json.dumps(doc.get("principles", []), ensure_ascii=False),
+        ),
+    )
+
+    projected_events: dict[str, tuple[Any, str, str]] = {}
+    for row in doc.get("events", []):
+        if isinstance(row, dict) and row.get("event_id"):
+            projected_events[str(row["event_id"])] = _project_event_date(row)
+    projected_duplicates = _project_duplicate_events(doc.get("events", []))
+
+    projected_rows: dict[str, tuple[Any, str, bool]] = {}
+    substance_counts: Counter[tuple[str, Any, str]] = Counter()
+    for row in doc.get("test_rows", []):
+        if not isinstance(row, dict):
+            continue
+        header_row = _is_testing_header_row(row)
+        normalized, mapping_status = _project_substance_label(
+            row.get("substance_raw"),
+            row.get("substance_normalized_candidate"),
+            row.get("substance_map_status"),
+            header_row=header_row,
+        )
+        row_status = "repeated_header" if header_row else row.get("row_status")
+        if row.get("substance_raw") not in (None, ""):
+            substance_counts[(str(row.get("substance_raw")), normalized, mapping_status)] += 1
+        if row.get("test_id"):
+            projected_rows[str(row["test_id"])] = (normalized, mapping_status, header_row)
+
+    reagent_counts: Counter[tuple[str, Any, str]] = Counter()
+    for row in doc.get("observations", []):
+        if not isinstance(row, dict) or row.get("reagent_raw") in (None, ""):
+            continue
+        header_row = projected_rows.get(str(row.get("test_id")), (None, "", False))[2]
+        normalized, mapping_status = _project_reagent_label(
+            row.get("reagent_raw"),
+            row.get("reagent_normalized_candidate"),
+            row.get("reagent_map_status"),
+            header_row=header_row,
+        )
+        reagent_counts[(str(row.get("reagent_raw")), normalized, mapping_status)] += 1
+
+    for row in doc.get("source_sheets", []):
+        if not isinstance(row, dict):
+            continue
+        conn.execute(
+            "INSERT INTO testeo_hojas(source_sheet_index, source_sheet_name, "
+            "data_row_count, source_sheet_hash, duplicate_group_id, "
+            "duplicate_group_size, duplicate_status) VALUES (?,?,?,?,?,?,?)",
+            (
+                row.get("source_sheet_index"),
+                str(row.get("source_sheet_name", "")),
+                int(row.get("data_row_count_including_anomalies") or 0),
+                str(row.get("source_sheet_hash", "")),
+                row.get("duplicate_group_id"),
+                row.get("duplicate_group_size"),
+                row.get("duplicate_status"),
+            ),
+        )
+
+    for row in doc.get("events", []):
+        if not isinstance(row, dict):
+            continue
+        conn.execute(
+            "INSERT INTO testeo_eventos_fuente("
+            "event_id, source_sheet_index, source_sheet_name, event_label_candidate, "
+            "event_label_status, source_period_label, date_raw_token, date_iso_candidate, "
+            "date_status, date_parse_style, date_confidence, outside_filename_period_candidate, "
+            "is_source_copy_candidate, duplicate_group_id, duplicate_group_size, duplicate_status, "
+            "duplicate_canonical_sheet_candidate, venue_id_candidate, venue_name_candidate, "
+            "producer_id_candidate, producer_name_candidate, link_status, link_evidence_ref, "
+            "link_confidence, link_review_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                row.get("event_id"),
+                row.get("source_sheet_index"),
+                str(row.get("source_sheet_name", "")),
+                row.get("event_label_candidate"),
+                row.get("event_label_status"),
+                row.get("source_period_label"),
+                row.get("date_raw_token"),
+                projected_events.get(str(row.get("event_id")), (None, row.get("date_status"), row.get("date_confidence")))[0],
+                projected_events.get(str(row.get("event_id")), (None, row.get("date_status"), row.get("date_confidence")))[1],
+                row.get("date_parse_style"),
+                projected_events.get(str(row.get("event_id")), (None, row.get("date_status"), row.get("date_confidence")))[2],
+                int(bool(row.get("outside_filename_period_candidate")))
+                or int(
+                    bool(
+                        projected_events.get(
+                            str(row.get("event_id")), (None, None, None)
+                        )[0]
+                        and str(
+                            projected_events[str(row.get("event_id"))][0]
+                        )[:4]
+                        != str(row.get("source_period_label") or "")
+                    )
+                ),
+                int(
+                    projected_duplicates.get(
+                        str(row.get("event_id")),
+                        (row.get("duplicate_canonical_sheet_candidate"), bool(row.get("is_source_copy_candidate"))),
+                    )[1]
+                ),
+                row.get("duplicate_group_id"),
+                row.get("duplicate_group_size"),
+                row.get("duplicate_status"),
+                projected_duplicates.get(
+                    str(row.get("event_id")),
+                    (row.get("duplicate_canonical_sheet_candidate"), bool(row.get("is_source_copy_candidate"))),
+                )[0],
+                row.get("venue_id"),
+                row.get("venue_name"),
+                row.get("producer_id"),
+                row.get("producer_name"),
+                row.get("link_status"),
+                row.get("link_evidence_ref"),
+                row.get("link_confidence"),
+                row.get("link_review_status"),
+            ),
+        )
+
+    for row in doc.get("test_rows", []):
+        if not isinstance(row, dict):
+            continue
+        header_row = _is_testing_header_row(row)
+        normalized, mapping_status = _project_substance_label(
+            row.get("substance_raw"),
+            row.get("substance_normalized_candidate"),
+            row.get("substance_map_status"),
+            header_row=header_row,
+        )
+        row_status = "repeated_header" if header_row else row.get("row_status")
+        conn.execute(
+            "INSERT INTO testeo_filas_fuente("
+            "test_id, event_id, source_sheet_name, source_row, row_status, substance_raw, "
+            "substance_normalized_candidate, substance_map_status, format_raw, test_1_raw, "
+            "result_1_raw, test_2_raw, result_2_raw, test_3_raw, result_3_raw, test_4_raw, "
+            "result_4_raw, extra_1_raw, source_duplicate_group_id, source_duplicate_status, "
+            "interpretation_policy) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                row.get("test_id"),
+                row.get("event_id"),
+                str(row.get("source_sheet_name", "")),
+                int(row.get("source_row") or 0),
+                row_status,
+                row.get("substance_raw"),
+                normalized,
+                mapping_status,
+                row.get("format_raw"),
+                row.get("test_1_raw"),
+                row.get("result_1_raw"),
+                row.get("test_2_raw"),
+                row.get("result_2_raw"),
+                row.get("test_3_raw"),
+                row.get("result_3_raw"),
+                row.get("test_4_raw"),
+                row.get("result_4_raw"),
+                row.get("extra_1_raw"),
+                row.get("source_duplicate_group_id"),
+                row.get("source_duplicate_status"),
+                row.get("interpretation_policy"),
+            ),
+        )
+
+    for row in doc.get("observations", []):
+        if not isinstance(row, dict):
+            continue
+        conn.execute(
+            "INSERT INTO testeo_observaciones_fuente("
+            "observation_id, test_id, event_id, source_sheet_name, source_row, "
+            "observation_ordinal, substance_raw, substance_normalized_candidate, reagent_raw, "
+            "reagent_normalized_candidate, reagent_map_status, result_raw, "
+            "result_normalized_candidate, result_map_status, observation_status, "
+            "interpretation_policy) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                row.get("observation_id"),
+                row.get("test_id"),
+                row.get("event_id"),
+                str(row.get("source_sheet_name", "")),
+                int(row.get("source_row") or 0),
+                int(row.get("observation_ordinal") or 0),
+                row.get("substance_raw"),
+                projected_rows.get(str(row.get("test_id")), (row.get("substance_normalized_candidate"), row.get("substance_map_status"), False))[0],
+                row.get("reagent_raw"),
+                _project_reagent_label(
+                    row.get("reagent_raw"),
+                    row.get("reagent_normalized_candidate"),
+                    row.get("reagent_map_status"),
+                    header_row=projected_rows.get(str(row.get("test_id")), (None, "", False))[2],
+                )[0],
+                _project_reagent_label(
+                    row.get("reagent_raw"),
+                    row.get("reagent_normalized_candidate"),
+                    row.get("reagent_map_status"),
+                    header_row=projected_rows.get(str(row.get("test_id")), (None, "", False))[2],
+                )[1],
+                row.get("result_raw"),
+                row.get("result_normalized_candidate"),
+                row.get("result_map_status"),
+                row.get("observation_status"),
+                row.get("interpretation_policy"),
+            ),
+        )
+
+    for (raw_label, normalized_id, mapping_status), count in sorted(
+        substance_counts.items(), key=lambda item: item[0][0]
+    ):
+        conn.execute(
+            "INSERT INTO testeo_mapa_sustancias(raw_label, count, normalized_id, mapping_status) "
+            "VALUES (?,?,?,?)",
+            (
+                raw_label,
+                count,
+                normalized_id,
+                mapping_status,
+            ),
+        )
+
+    for (raw_label, normalized_id, mapping_status), count in sorted(
+        reagent_counts.items(), key=lambda item: item[0][0]
+    ):
+        conn.execute(
+            "INSERT INTO testeo_mapa_reactivos(raw_label, count, normalized_id, mapping_status) "
+            "VALUES (?,?,?,?)",
+            (
+                raw_label,
+                count,
+                normalized_id,
+                mapping_status,
+            ),
+        )
+
+    for row in doc.get("link_queue", []):
+        if not isinstance(row, dict):
+            continue
+        conn.execute(
+            "INSERT INTO testeo_enlaces_revision("
+            "link_id, event_id, source_sheet_name, target_kind, target_id, target_name, "
+            "relation_type, evidence_ref, confidence, status, review_status, "
+            "not_inferred_from_sheet_name) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                row.get("link_id"),
+                row.get("event_id"),
+                str(row.get("source_sheet_name", "")),
+                str(row.get("target_kind", "")),
+                row.get("target_id"),
+                row.get("target_name"),
+                str(row.get("relation_type", "")),
+                row.get("evidence_ref"),
+                row.get("confidence"),
+                str(row.get("status", "unlinked")),
+                str(row.get("review_status", "pending_human_link")),
+                int(bool(row.get("not_inferred_from_sheet_name", True))),
+            ),
+        )
 
 
 def build_rd_db(
@@ -466,6 +1050,12 @@ def build_rd_db(
                     d.get("notas"),
                 ),
             )
+
+        # Imported historical testing evidence stays separate from canonical
+        # tables and is marked for human review.
+        testing_doc = _load_testing_evidence()
+        if testing_doc is not None:
+            _insert_testing_evidence(conn, testing_doc)
         conn.commit()
     finally:
         conn.close()
@@ -634,6 +1224,85 @@ def disclaimer(db_path: str | Path | None = None) -> str:
     try:
         row = conn.execute("SELECT valor FROM meta WHERE clave = 'reactivos_disclaimer'").fetchone()
         return row["valor"] if row else ""
+    finally:
+        conn.close()
+
+
+def testing_evidence_summary(db_path: str | Path | None = None) -> dict[str, Any]:
+    """Summarize historical evidence without exposing rows in the public panel.
+
+    Counts are descriptive. Observations preserve source wording, but this
+    query does not claim identity, purity, dose, or safety.
+    """
+    conn = connect(db_path)
+    try:
+        source = conn.execute("SELECT * FROM testeo_fuentes ORDER BY id LIMIT 1").fetchone()
+        if source is None:
+            return {"available": False, "reason": "no_testing_evidence"}
+        counts = {
+            "source_sheets": conn.execute("SELECT COUNT(*) FROM testeo_hojas").fetchone()[0],
+            "events": conn.execute("SELECT COUNT(*) FROM testeo_eventos_fuente").fetchone()[0],
+            "test_rows": conn.execute("SELECT COUNT(*) FROM testeo_filas_fuente").fetchone()[0],
+            "observations": conn.execute("SELECT COUNT(*) FROM testeo_observaciones_fuente").fetchone()[0],
+            "pending_links": conn.execute(
+                "SELECT COUNT(*) FROM testeo_enlaces_revision "
+                "WHERE review_status = 'pending_human_link'"
+            ).fetchone()[0],
+            "exact_duplicate_rows_excluded_from_aggregate": conn.execute(
+                "SELECT COUNT(*) FROM testeo_eventos_fuente "
+                "WHERE is_source_copy_candidate = 1 AND duplicate_group_size > 1"
+            ).fetchone()[0],
+            "unresolved_substances": conn.execute(
+                "SELECT COUNT(*) FROM testeo_mapa_sustancias "
+                "WHERE mapping_status IN ("
+                "'unresolved_candidate', 'misplaced_or_unresolved_candidate', "
+                "'substance_or_format_unresolved', 'explicit_unknown')"
+            ).fetchone()[0],
+            "unresolved_reagents": conn.execute(
+                "SELECT COUNT(*) FROM testeo_mapa_reactivos "
+                "WHERE mapping_status IN ('unresolved_candidate', 'possible_typo_candidate')"
+            ).fetchone()[0],
+        }
+        return {
+            "available": True,
+            "status": source["status"],
+            "source": {
+                "file_name": source["archivo"],
+                "sha256": source["sha256"],
+                "period": source["periodo"],
+                "formula_count": source["formula_count"],
+            },
+            "counts": counts,
+            "public_claims_allowed": False,
+        }
+    finally:
+        conn.close()
+
+
+def testing_observations(
+    *,
+    event_id: str | None = None,
+    reagent_id: str | None = None,
+    db_path: str | Path | None = None,
+) -> list[dict[str, Any]]:
+    """Return observation rows for internal review without inferring links."""
+    conn = connect(db_path)
+    try:
+        clauses: list[str] = []
+        params: list[str] = []
+        if event_id:
+            clauses.append("event_id = ?")
+            params.append(event_id)
+        if reagent_id:
+            clauses.append("reagent_normalized_candidate = ?")
+            params.append(reagent_id)
+        where = " WHERE " + " AND ".join(clauses) if clauses else ""
+        rows = conn.execute(
+            "SELECT * FROM testeo_observaciones_fuente" + where
+            + " ORDER BY event_id, source_row, observation_ordinal",
+            params,
+        ).fetchall()
+        return [dict(row) for row in rows]
     finally:
         conn.close()
 

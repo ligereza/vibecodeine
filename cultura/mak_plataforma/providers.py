@@ -8,12 +8,45 @@ without rewriting the ledger or local review gate.
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import time
 import base64
 from pathlib import Path
 import urllib.parse
 import urllib.request
+import sys
+
+
+def _reserve_bounded_external(provider):
+    """Reserve paid-provider capacity only when the conductor is enabled."""
+    try:
+        from cultura.mak_conductor.runtime import (external_budget_limit,
+                                                    reserve_external_call)
+    except ImportError:
+        sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH",
+                                         "/home/mak/flujo/cultura"))
+        try:
+            from mak_conductor.runtime import (external_budget_limit,
+                                               reserve_external_call)
+        except ImportError:
+            return True
+    return reserve_external_call(
+        provider, limit_count=external_budget_limit(provider))
+
+
+def _shared_local_gpu(job_id, estimated_vram_mb):
+    try:
+        from cultura.mak_conductor.runtime import shared_gpu_lease
+    except ImportError:
+        sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH",
+                                         "/home/mak/flujo/cultura"))
+        try:
+            from mak_conductor.runtime import shared_gpu_lease
+        except ImportError:
+            from contextlib import nullcontext
+            return nullcontext()
+    return shared_gpu_lease(job_id=job_id, estimated_vram_mb=estimated_vram_mb)
 
 
 ENV_ALIASES = {
@@ -305,9 +338,12 @@ def _openai_compatible_chat(provider, prompt, model=None, max_tokens=2500,
     return (payload["choices"][0]["message"]["content"] or "").strip()
 
 
-def call(provider, prompt, model=None, max_tokens=2500, temperature=0.1,
-         response_format=None, image_paths=None):
+def _call_unobserved(provider, prompt, model=None, max_tokens=2500,
+                     temperature=0.1, response_format=None, image_paths=None,
+                     parent_job_id=None):
     provider = str(provider or "").lower()
+    if provider in ("watsonx", "aws", "cerebras", "groq") and not _reserve_bounded_external(provider):
+        raise RuntimeError("external_budget_exceeded:%s" % provider)
     if provider == "watsonx":
         return watsonx_chat(prompt, model=model, max_tokens=max_tokens,
                             temperature=temperature)
@@ -321,14 +357,110 @@ def call(provider, prompt, model=None, max_tokens=2500, temperature=0.1,
             from . import discernment
         except ImportError:
             import discernment
-        return discernment.call_ollama(
-            prompt,
-            base_url=os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434"),
-            model=model or os.environ.get("OLLAMA_MODEL", "gemma3:4b"),
-            max_tokens=max_tokens,
-            temperature=temperature, response_format=response_format)
+        ollama_kwargs = {
+            "base_url": os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434"),
+            "model": model or os.environ.get("OLLAMA_MODEL", "gemma3:4b"),
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+            "response_format": response_format,
+        }
+        if parent_job_id is not None:
+            ollama_kwargs["parent_job_id"] = parent_job_id
+        with _shared_local_gpu("providers-ollama-%s" % os.getpid(), 2500):
+            return discernment.call_ollama(prompt, **ollama_kwargs)
     if provider in ("cerebras", "groq"):
         return _openai_compatible_chat(provider, prompt, model=model,
                                        max_tokens=max_tokens,
                                        temperature=temperature)
     raise ValueError("unknown_provider:%s" % provider)
+
+
+def call(provider, prompt, model=None, max_tokens=2500, temperature=0.1,
+         response_format=None, image_paths=None):
+    """Call one provider and attach bounded shadow evidence when enabled."""
+    try:
+        from cultura.mak_conductor.runtime import active_enabled
+    except ImportError:
+        sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH",
+                                         "/home/mak/flujo/cultura"))
+        from mak_conductor.runtime import active_enabled
+    if active_enabled():
+        try:
+            from cultura.mak_conductor.runtime import dispatch_sync
+        except ImportError:
+            sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH",
+                                             "/home/mak/flujo/cultura"))
+            from mak_conductor.runtime import dispatch_sync
+        prompt_hash = hashlib.sha256(str(prompt).encode("utf-8")).hexdigest()
+
+        def handle(job):
+            result = _call_unobserved(
+                provider, prompt, model=model, max_tokens=max_tokens,
+                temperature=temperature, response_format=response_format,
+                image_paths=image_paths,
+                parent_job_id=job["job_id"])
+            return {"validated": bool(str(result or "").strip()),
+                    "provider": provider, "text": result}
+
+        queued = dispatch_sync(
+            "external_call", {
+                "provider": provider, "prompt": str(prompt),
+                "prompt_hash": prompt_hash,
+                "prompt_length": len(str(prompt)), "model": model or "",
+                "max_tokens": max_tokens,
+                "temperature": float(temperature),
+                "response_format": response_format or "",
+                "image_paths": list(image_paths or []),
+            }, producer="platform.providers.call",
+            handler=handle,
+            estimated_vram_mb=2500 if provider == "ollama" else 0,
+            model=model or provider, template_version="provider-call-v2")
+        if queued and queued.get("queue_status") == "COMPLETED":
+            return queued.get("text", "")
+        if queued and queued.get("status") == "COMPLETED":
+            return queued.get("text", "")
+        raise RuntimeError("queued provider call failed: %s" %
+                           (queued or {}).get("error", "not executed"))
+    try:
+        from cultura.mak_conductor.runtime import (enqueue_shadow,
+                                                    observe_shadow)
+    except ImportError:
+        sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH",
+                                         "/home/mak/flujo/cultura"))
+        try:
+            from mak_conductor.runtime import (enqueue_shadow,
+                                               observe_shadow)
+        except ImportError:
+            enqueue_shadow = observe_shadow = None
+    started = time.time()
+    shadow_job = (enqueue_shadow(
+        "external_call", {"provider": provider,
+                           "prompt_hash": hashlib.sha256(
+                               str(prompt).encode("utf-8")).hexdigest(),
+                           "prompt_preview": str(prompt)[:256],
+                           "model": model or "", "max_tokens": max_tokens},
+        producer="platform.providers.call", estimated_vram_mb=(
+            2500 if provider == "ollama" else 0),
+        model=model or provider, template_version="provider-call-v1")
+        if enqueue_shadow is not None else None)
+    try:
+        result = _call_unobserved(
+            provider, prompt, model=model, max_tokens=max_tokens,
+            temperature=temperature, response_format=response_format,
+            image_paths=image_paths,
+            parent_job_id=(shadow_job or {}).get("job_id"))
+    except Exception as exc:
+        if observe_shadow is not None:
+            observe_shadow(
+                shadow_job, producer="platform.providers.call",
+                result_status="FAILED", payload={"provider": provider,
+                                                  "error": str(exc)[:2000]},
+                started_at=started, owner_pid=os.getpid())
+        raise
+    if observe_shadow is not None:
+        observe_shadow(
+            shadow_job, producer="platform.providers.call",
+            result_status="READY", validated=bool(str(result or "").strip()),
+            payload={"provider": provider}, started_at=started,
+            owner_pid=os.getpid())
+    return result
