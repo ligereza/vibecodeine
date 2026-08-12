@@ -15,6 +15,20 @@ import time
 import urllib.parse
 import urllib.request
 
+try:
+    from cultura.mak_conductor.runtime import (enqueue_shadow,
+                                                active_enabled,
+                                                dispatch_sync,
+                                                file_content_hash,
+                                                observe_shadow,
+                                                shared_gpu_lease)
+except ImportError:  # mirrored MAK runtime imports from the repo's cultura dir
+    sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH",
+                                     "/home/mak/flujo/cultura"))
+    from mak_conductor.runtime import (enqueue_shadow, file_content_hash,
+                                       active_enabled, dispatch_sync,
+                                       observe_shadow, shared_gpu_lease)
+
 BASE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BASE)
 import pausa  # noqa: E402 -- puro stdlib, safe (sin fcntl)
@@ -150,13 +164,32 @@ def enqueue_annex_icons(annex_path, densidad="medio", max_icons=AUTO_ICONOS_MAX)
         if not isinstance(concept, dict):
             continue
         prompt = _icon_prompt(concept, annex_path)
+        shadow_job = enqueue_shadow(
+            "anexo_svg", {"text": prompt, "annex_path": annex_path,
+                          "concept": concept.get("titulo") or concept.get("slug")},
+            producer="research.enqueue_annex_icons", estimated_vram_mb=3000,
+            model=os.environ.get("CODER_CHAIN", ""),
+            template_version="icon-prompt-v1",
+        )
         try:
             if _post_codex_icon(prompt, densidad):
                 queued += 1
+                observe_shadow(
+                    shadow_job, producer="research.enqueue_annex_icons",
+                    result_status="QUEUED", payload={"density": densidad},
+                )
             else:
                 errors.append("codex rejected %r" % concept.get("titulo"))
+                observe_shadow(
+                    shadow_job, producer="research.enqueue_annex_icons",
+                    result_status="REJECTED", payload={"density": densidad},
+                )
         except Exception as e:  # noqa: BLE001 - visual queue must not break research
             errors.append(str(e)[:200])
+            observe_shadow(
+                shadow_job, producer="research.enqueue_annex_icons",
+                result_status="ERROR", payload={"error": str(e)[:200]},
+            )
             break
     return {"queued": queued, "errors": errors[:5]}
 
@@ -172,7 +205,38 @@ def run_tema(modo, tema, n=None, ntfy=True, sin_marco=False, densidad=None,
     (ej. ["--resume", path] para reanudar un checkpoint pausado).
     Devuelve {ok, path, tail} (o {ok: False, pausado: True, checkpoint, path,
     tail} si el proceso se pauso por pausa.py). Bloquea hasta tomar el lock."""
+    if active_enabled():
+        payload = {"mode": modo, "topic": tema, "n": n,
+                   "notify": bool(ntfy), "no_frame": bool(sin_marco),
+                   "density": densidad or "medio", "order": orden or "",
+                   "memory": bool(memoria), "timeout": int(timeout),
+                   "extra": list(extra or [])}
+
+        def handle(_job):
+            result = run_tema(
+                modo, tema, n=n, ntfy=ntfy, sin_marco=sin_marco,
+                densidad=densidad, orden=orden, memoria=memoria,
+                timeout=timeout, job_id=job_id, extra=extra)
+            return {"validated": bool(result.get("ok") or
+                                      result.get("pausado")), **result}
+
+        queued = dispatch_sync(
+            "investigacion", payload, producer="research.worker.run_tema",
+            handler=handle, estimated_vram_mb=2500,
+            model=os.environ.get("CODER_CHAIN", ""),
+            template_version="research-worker-v2")
+        if queued and "ok" not in queued:
+            queued["ok"] = queued.get("queue_status") == "COMPLETED"
+        return queued or {"ok": False, "tail": "queue dispatch unavailable"}
     job_id = job_id or mint_job_id()
+    shadow_job = enqueue_shadow(
+        "investigacion", {"text": tema, "mode": modo, "n": n,
+                           "density": densidad or "medio"},
+        producer="research.worker", estimated_vram_mb=2500,
+        model=os.environ.get("CODER_CHAIN", ""),
+        template_version="research-worker-v1",
+    )
+    shadow_started = time.time()
     script = SCRIPTS.get(modo, "research.py")
     cmd = [sys.executable, os.path.join(BASE, script)]
     if modo not in SIN_TEMA:
@@ -195,7 +259,8 @@ def run_tema(modo, tema, n=None, ntfy=True, sin_marco=False, densidad=None,
     os.makedirs(os.path.dirname(LOCK), exist_ok=True)
     with open(LOCK, "w") as lk:
         fcntl.flock(lk, fcntl.LOCK_EX)  # cola implicita: espera su turno
-        try:
+        with shared_gpu_lease(job_id=job_id, estimated_vram_mb=2500):
+          try:
             p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                                  stderr=subprocess.STDOUT, text=True, cwd=BASE,
                                  env=dict(os.environ, MAK_JOB_ID=job_id))
@@ -242,17 +307,30 @@ def run_tema(modo, tema, n=None, ntfy=True, sin_marco=False, densidad=None,
                 emitir_evento("research", job_id, "error",
                              tipo_error="timeout", contexto="timeout %ds" % timeout)
                 emitir_evento("research", job_id, "node_end", estado="FALLO")
-                return {"ok": False, "path": "", "tail": "timeout %ds" % timeout}
-        finally:
-            _clear_status()
+                result = {"ok": False, "path": "",
+                          "tail": "timeout %ds" % timeout}
+                observe_shadow(
+                    shadow_job, producer="research.worker",
+                    result_status="TIMEOUT", payload={"mode": modo},
+                    started_at=shadow_started, owner_pid=os.getpid(),
+                )
+                return result
+          finally:
+              _clear_status()
 
     out = "".join(out_lines)
     if pausado[0]:
         checkpoint_path, motivo = pausado[0]
         emitir_evento("research", job_id, "human_gate", resumen=motivo[:140],
                      ruta_checkpoint=checkpoint_path)
-        return {"ok": False, "pausado": True, "checkpoint": checkpoint_path,
-               "path": "", "tail": motivo[:800]}
+        result = {"ok": False, "pausado": True, "checkpoint": checkpoint_path,
+                  "path": "", "tail": motivo[:800]}
+        observe_shadow(
+            shadow_job, producer="research.worker", result_status="PAUSED",
+            payload={"mode": modo}, started_at=shadow_started,
+            owner_pid=os.getpid(),
+        )
+        return result
 
     ok = p.returncode == 0 and bool(path)
     if ok:
@@ -271,6 +349,12 @@ def run_tema(modo, tema, n=None, ntfy=True, sin_marco=False, densidad=None,
         emitir_evento("research", job_id, "error", tipo_error="fallo_proceso",
                       contexto=out[-300:].strip())
         emitir_evento("research", job_id, "node_end", estado="FALLO")
+    observe_shadow(
+        shadow_job, producer="research.worker",
+        result_status="READY" if ok else "FAILED", validated=bool(ok),
+        payload={"mode": modo, "path": path}, started_at=shadow_started,
+        owner_pid=os.getpid(), output_hash=file_content_hash(path) if ok else None,
+    )
     return {"ok": ok, "path": path, "tail": out[-800:],
             "iconos_enviados": visual["queued"] if ok else 0,
             "iconos_errores": visual["errors"] if ok else []}

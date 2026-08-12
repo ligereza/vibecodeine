@@ -1,13 +1,143 @@
 # LAST_HANDOFF - Faro
 
-Updated: 2026-08-12 - MAK runtime recovered after mixed Claude-session import
-Status: The canonical MAK checkout and live runtime are restored to
-`306f320b` (`origin/mak`). The mixed RD import and unfinished MAK experiments
-were preserved, not deleted. Four managed user services are active, the
-optional research queue is inactive, and the Hub health, research, Codex, and
-portfolio routes return HTTP 200. README/SVG files were not changed.
-This block is the current operational source. Later sections preserve dated
-historical evidence and must not be read as present state.
+Updated: 2026-08-12 - MAK conductor shadow contract, crash recovery, and activation boundary verified
+Status: The local Windows `mak` checkout is intentionally uncommitted and
+contains the reversible conductor integration, producer catalog, artifact
+traceability, and active-gated legacy entrypoints. The canonical README/SVG
+geometry is unchanged. The support was transported to `/home/mak/flujo` and
+the affected live mirrors after a rollback backup; no service was restarted,
+no conductor database was created, and all `MAK_CONDUCTOR_*` flags remain
+unset. Four managed MAK user services remain active. This block is the current
+operational source. Later sections preserve dated historical evidence and must
+not be read as present state.
+
+## Current MAK conductor convergence - 2026-08-12
+
+- `cultura/mak_conductor/producer_catalog.py` is the executable inventory for
+  work, provider, maintenance, publication, and control boundaries. It checks
+  the versioned crontab hints so a new cron producer cannot be silently added.
+  Current coverage separates active/shadow, child-boundary, pending legacy
+  stores, human-gated publication, and excluded watchdog/control paths.
+- `handler_registry.py` is now the canonical lazy stage-to-handler registry;
+  `QueueWorker.canonical()` rebuilds it in a fresh process, including the
+  free Codex route. The bounded worker entrypoint exists, but remains
+  inactive until a separate service/cutover gate is approved.
+- `source_bridge.py` imports pending rows from `material.jsonl`, the generated
+  Codex backlog, and the research backlog into SQLite read-only. Stable source
+  identities and row revisions make repeated reads idempotent; terminal jobs
+  are not returned to the drain, so completed rows cannot starve later work.
+- `compare_imported_jobs()` reconstructs the exact legacy execution contract
+  from each untouched source line and compares it with the durable projection.
+  It records one SHA-256 comparison artifact and event per job, and detects a
+  source mutation after import as a mismatch.
+- `run_conductor_source_probe.py --execute-contract-shadow` exercises only a
+  deterministic contract handler. It does not call Codex, Watsonx, AWS,
+  Ollama, or any network provider. The bounded worker also has
+  `--observe-only`, which imports and compares but never claims a job.
+  Observe-only now requires both an explicit sentinel file and an explicit
+  isolated `--db` path (or `MAK_DB_PATH`); it refuses to fall back to the
+  production database.
+- Queue artifact evidence accepts inline bounded content, an existing hash, or
+  a file path hashed by streaming SHA-256. Publication, PR merge, and other
+  protected jobs cannot reach `COMPLETED` without a linked artifact and
+  validation. Retriable validation failures re-enter the queue until the retry
+  limit; terminal validation failures stay failed/dead.
+- Active mode now wraps `platform.entregar.main`,
+  `platform.revisor.enforce_pr`, `platform.tandas.run_external_batch`,
+  `platform.capataz.main`, `platform.junta.main`, `platform.latido.main`,
+  `platform.material.main`, `platform.backlog_codex.main`, and the corpus and
+  retention maintenance entrypoints. Active delivery/merge/retention/capataz
+  paths require a human gate; dry-run/read-only paths preserve their old
+  behavior. Queue-owned handlers run under legacy execution context to prevent
+  recursive jobs.
+- Local focused regression and the existing affected-producer battery pass;
+  the complete local suite exceeded the bounded 120-second command window
+  without an assertion result, so full-suite green is not claimed. Local
+  compileall and `git diff --check` pass.
+- MAK transport evidence: `python3 -m compileall` on the remote checkout,
+  the provider-free `run_conductor_shadow_probe.py --producer-matrix`, and
+  `run_conductor_source_probe.py` against the real MAK backlog paths pass.
+  The contract shadow probe created three Codex and three research jobs,
+  compared 6/6 legacy/durable hashes, recorded six comparison artifacts,
+  deduplicated all six on the second read, then completed all six with an
+  artifact, validation, and `COMPLETED` transition. No JSONL source was
+  modified and no provider was called. The remote matrix observed 11 producer
+  records (including
+  `codex.CoderLLM.call`), recovered one expired lease, and found no missing
+  adapted producer. Its GPU contention circuit rejected an over-budget request,
+  rejected a concurrent second lease, and observed max concurrency 1. No
+  model, network provider, or cloud credit was used; only the source probe read
+  real backlog files.
+- Rollback backup for this extension:
+  `/home/mak/rollback/faro-conductor-source-20260812-072924/`.
+  Mirror hashes pass for all changed component files, the conductor package,
+  and live mirrors. The mirror checker still reports only the five historical
+  installed systemd unit mismatches caused by line-ending/content comparison;
+  no unit file was changed.
+- The hardened local regression battery passes `50 passed`; compileall and
+  `git diff --check` pass, and the changed-file check reports zero README/SVG
+  paths. The remote crash circuit passes after transport: the child exits 17,
+  one expired lease is recovered to `ENQUEUED`, GPU budget and concurrent
+  claims are rejected correctly, and the producer matrix has no missing
+  producers. The remote no-sentinel invocation returns `sentinel_required`.
+  The latest worker backup is
+  `/home/mak/rollback/faro-conductor-worker-20260812-080637/`.
+- Verified after transport: the four managed services are active; no
+  `MAK_CONDUCTOR_*` variables are set; `/home/mak/state/mak.db` is absent; and
+  no conductor or probe process remains. No commit, push, merge, branch
+  mutation, README edit, or SVG edit was performed.
+- The disabled-by-default preparation is present only under
+  `tools/mak_ops/mak-conductor-shadow.service` and
+  `mak-conductor-shadow.timer`. The service is explicitly `observe-only`,
+  imports at most one row per source, and does not claim or execute jobs. It
+  was copied to `/home/mak/flujo/tools/mak_ops/` for review but was not copied
+  into `~/.config/systemd/user`, enabled, daemon-reloaded, or started. A MAK
+  observe-only run left two jobs `ENQUEUED`, matched 2/2, and recorded zero
+  execution observations. The unit and timer remain disabled by design, and
+  no sentinel file was created.
+- Known incomplete convergence: `material.jsonl` and the generated Codex
+  backlog remain legacy task stores, and the canonical worker/handler registry
+  is not deployed as a systemd/cron producer. They are now cataloged, bridged,
+  compared, and exercised in provider-free shadow mode, but the final cutover
+  to one live queue has not been approved or performed. Do not claim the whole
+  system is consolidated yet.
+- Shadow-safety correction: the legacy `trabajo.main` path no longer imports
+  source rows into SQLite while it also consumes JSONL. Source import is
+  explicit or owned by the active canonical `cron_tick` handler, which first
+  drains the durable source job and only falls back to legacy execution when
+  no importable source row exists.
+
+## Current MAK conductor integration - 2026-08-12
+
+- The durable `cultura/mak_conductor/` package now has SQLite WAL storage,
+  idempotent semantic keys, atomic claims, expiring leases, recoverable
+  retries, append-only events, artifact hashes, human gates, bounded external
+  budgets, and one cross-process GPU arbiter. Active dispatch is synchronous
+  and remains opt-in; the package is not a new human-facing interface.
+- Existing producer routes are adapted without parallel stores or new UI:
+  Research and Codex workers/LLM calls, providers, local discernment, visual
+  perception, RD mining, memory indexing, visual index, issue bridge, and cron
+  tick. Queue-owned handlers enter a legacy execution context so nested calls
+  cannot enqueue or reserve a second job for the same work.
+- A provider-free local shadow matrix passed with ten producer boundaries and
+  the generic race/orphan circuit: ten observed producer records, one
+  deduplicated concurrent probe job, and one expired lease recovered. The
+  Codex boundary passed separately on MAK Linux because Windows lacks the
+  `resource` module used by that runtime.
+- The same complete matrix passed from the transported MAK checkout with all
+  ten producer boundaries, including `codex.CoderLLM.call`; no network, model,
+  cloud credit, or real portfolio input was used. Probe output used temporary
+  paths only.
+- Local focused regression passed with `208 passed, 16 skipped`; Python
+  compilation and `git diff --check` passed. The mirror checker found all
+  changed component files equal in checkout and live mirrors. Its only five
+  mismatches are the pre-existing installed systemd unit line-ending/content
+  differences; no unit file was changed in this integration.
+- MAK rollback backup: `/home/mak/rollback/faro-conductor-shadow-20260812-0626/`.
+  The live DB is intentionally absent at `/home/mak/state/mak.db`; activation
+  therefore has not begun. No active Python probe or conductor process remains.
+- Local changed files are uncommitted on branch `mak`; no commit, push, merge,
+  branch mutation, README edit, or SVG edit was performed.
 
 ## Recovery after mixed Claude environment - 2026-08-12
 
@@ -41,11 +171,38 @@ historical evidence and must not be read as present state.
 
 ## Next action
 
-Review the preserved Windows and remote stashes separately. Selectively
-reintroduce only RD changes that have tests and durable paths; keep the MAK
-quality-gate experiments out of the canonical branches until their validator,
-worker failure propagation, GPU lock behavior, and activity accounting pass a
-focused test circuit. Do not touch README/SVG geometry.
+Review the uncommitted diff and decide whether to commit it on `mak`. The
+provider-free real-source shadow evidence and crash-recovery evidence are
+complete. The next operational step is a separate human gate to install the
+observe-only timer, monitor one bounded interval, and inspect its isolated
+SQLite evidence; only after that may a second gate authorize a live worker
+that claims jobs and replaces the legacy cron consumers. Keep cloud
+providers, branch mutation, service restarts, and README/SVG changes behind
+explicit approval.
+
+## Conductor shadow phase - 2026-08-12
+
+- Added the isolated `cultura/mak_conductor/` package and
+  `tests/test_mak_conductor.py`. It is not wired to cron, systemd, Ollama, or
+  any human-facing route. No existing MAK producer was modified.
+- The package provides SQLite WAL jobs with atomic claims, expiring leases,
+  deterministic idempotency keys, byte-level artifact hashes, artifact
+  relations, append-only transition events, and a cross-process GPU lease
+  with a 4096 MB ceiling. A job cannot become `COMPLETED` without an explicit
+  validation transition and linked artifact IDs.
+- Read-only live evidence confirmed the immediate diagnosis: the
+  `20260812-023154` research annex dispatched six consecutive Codex icon jobs
+  (`20260812-023155-*`) and the current worker slices concepts with
+  `concepts[:max_icons]`, default six. The six-output observation is therefore
+  explained by the hard per-annex cap; semantic deduplication has not yet
+  been demonstrated.
+- Validation: conductor tests pass (`7 passed`); MAK regression circuit
+  passes (`51 passed, 6 skipped`); `git diff --check` passes. The changes are
+  currently uncommitted and remain local on `mak` until reviewed.
+- Do not activate a conductor service yet. First run one bounded shadow batch,
+  compare producer inputs, output hashes, retries, and GPU wait events, then
+  decide whether to migrate `enqueue_annex_icons`, `_reindexar_async`, and
+  cron producers behind a reversible feature flag.
 
 ## Release and MAK runtime verification - 2026-08-11
 

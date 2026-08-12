@@ -40,6 +40,7 @@ para la salida, red apagada, seccomp, sin capabilities.
 Retiro de esta nota: cuando la ejecucion pase por esa frontera.
 """
 import json
+import hashlib
 import os
 import re
 import resource
@@ -50,7 +51,41 @@ import time
 
 sys.path.insert(0, "/home/mak/research")
 from research_lib import (LLM, MODELO_CAPAZ, _http_json, escala_tok,  # noqa: E402
-                          load_env, red_ok, slug, stamp, watsonx_chat)
+                          load_env, red_ok, slug, stamp)
+
+try:
+    from research_lib import watsonx_chat  # noqa: E402
+except ImportError:  # optional provider boundary; fail only if selected
+    def watsonx_chat(*args, **kwargs):
+        raise RuntimeError("watsonx_chat is unavailable in this runtime")
+
+try:
+    from cultura.mak_conductor.runtime import (external_budget_limit,
+                                                reserve_external_call,
+                                                shared_gpu_lease,
+                                                dispatch_sync, active_enabled,
+                                                enqueue_shadow, observe_shadow)
+except ImportError:  # standalone Linux codex checkout
+    sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH",
+                                     "/home/mak/flujo/cultura"))
+    try:
+        from mak_conductor.runtime import (external_budget_limit,
+                                           reserve_external_call,
+                                           shared_gpu_lease,
+                                           dispatch_sync, active_enabled,
+                                           enqueue_shadow, observe_shadow)
+    except ImportError:
+        from contextlib import nullcontext
+        def external_budget_limit(_provider, default=20):
+            return default
+        def reserve_external_call(_provider, *, limit_count, window="hour"):
+            return True
+        def shared_gpu_lease(**_kwargs):
+            return nullcontext()
+        dispatch_sync = None
+        enqueue_shadow = observe_shadow = None
+        def active_enabled():
+            return False
 
 # fallback_util vive junto a este archivo (deploy plano en ~/codex). Si falta
 # en la caja viva, fallback_util queda en None y el mensaje de error de
@@ -167,6 +202,9 @@ class CoderLLM:
         key = os.environ.get("NVIDIA_API_KEY")
         if not key:
             raise RuntimeError("falta NVIDIA_API_KEY")
+        if not reserve_external_call(
+                "nvidia", limit_count=external_budget_limit("nvidia")):
+            raise RuntimeError("external_budget_exceeded:nvidia")
         r = _http_json(
             NIM_URL,
             {"model": model, "messages": _msgs(system, user),
@@ -185,7 +223,9 @@ class CoderLLM:
 
     def _ollama(self, system, user, max_tok, model):
         base = os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
-        return self._ollama_chat(base, system, user, max_tok, model)
+        with shared_gpu_lease(job_id="codex-ollama-%s" % os.getpid(),
+                              estimated_vram_mb=3000):
+            return self._ollama_chat(base, system, user, max_tok, model)
 
     def _win(self, system, user, max_tok, model):
         return self._ollama_chat(WIN_BASE_URL, system, user, max_tok, model)
@@ -195,6 +235,9 @@ class CoderLLM:
         temperatura SI cambia -- 0.1 en vez de 0.3 -- porque un coder tibio
         inventa APIs que no existen, y eso es la mitad de los archivos inertes
         que este departamento produjo."""
+        if not reserve_external_call(
+                "watsonx", limit_count=external_budget_limit("watsonx")):
+            raise RuntimeError("external_budget_exceeded:watsonx")
         return watsonx_chat(system, user, max_tok, model, temperatura=0.1)
 
     def call(self, system, user, max_tok=1200):
@@ -212,7 +255,58 @@ class CoderLLM:
         intentos = []  # todos los intentos fallidos, no solo el ultimo
         for prov, model in cadena:
             try:
-                text = fns[prov](system, user, max_tok, model)
+                fn = fns[prov]
+                if dispatch_sync is not None and active_enabled():
+                    def handle(job, _fn=fn, _model=model):
+                        value = _fn(system, user, max_tok, _model)
+                        return {"validated": bool(str(value or "").strip()),
+                                "provider": prov, "model": _model,
+                                "text": value}
+                    queued = dispatch_sync(
+                        "codex_llm_call", {
+                            "provider": prov, "model": model,
+                            "system": str(system), "user": str(user),
+                            "prompt_hash": hashlib.sha256(
+                                (str(system) + "\n" + str(user)).encode(
+                                    "utf-8")).hexdigest(),
+                            "prompt_length": len(str(system)) + len(str(user)),
+                            "max_tokens": max_tok,
+                        }, producer="codex.CoderLLM.call", handler=handle,
+                        estimated_vram_mb=3000 if prov == "ollama" else 0,
+                        model=model, template_version="codex-llm-v1")
+                    text = (queued or {}).get("text", "")
+                else:
+                    shadow_job = (enqueue_shadow(
+                        "codex_llm_call", {
+                            "provider": prov, "model": model,
+                            "prompt_hash": hashlib.sha256(
+                                (str(system) + "\n" + str(user)).encode(
+                                    "utf-8")).hexdigest(),
+                            "prompt_length": len(str(system)) + len(str(user)),
+                            "max_tokens": max_tok,
+                        }, producer="codex.CoderLLM.call",
+                        estimated_vram_mb=3000 if prov == "ollama" else 0,
+                        model=model, template_version="codex-llm-v1")
+                        if enqueue_shadow is not None else None)
+                    shadow_started = time.time()
+                    try:
+                        text = fn(system, user, max_tok, model)
+                    except Exception as exc:
+                        if observe_shadow is not None:
+                            observe_shadow(
+                                shadow_job, producer="codex.CoderLLM.call",
+                                result_status="FAILED",
+                                payload={"provider": prov, "model": model,
+                                         "error": str(exc)[:2000]},
+                                started_at=shadow_started, owner_pid=os.getpid())
+                        raise
+                    if observe_shadow is not None:
+                        observe_shadow(
+                            shadow_job, producer="codex.CoderLLM.call",
+                            result_status="READY" if text else "EMPTY",
+                            validated=bool(str(text or "").strip()),
+                            payload={"provider": prov, "model": model},
+                            started_at=shadow_started, owner_pid=os.getpid())
                 if text and text.strip():
                     self.stats[model] = self.stats.get(model, 0) + 1
                     return text, model
