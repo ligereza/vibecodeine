@@ -171,7 +171,9 @@ class TestReanudarLogic:
             def start(self):
                 self._target()
 
-        monkeypatch.setattr(interfaz.threading, "Thread", HiloFalso)
+        # Replace the module reference, not the shared threading module.
+        fake_threading = type("FakeThreading", (), {"Thread": HiloFalso})()
+        monkeypatch.setattr(interfaz, "threading", fake_threading)
 
     def _job_pausado(self, monkeypatch, checkpoint="/tmp/cp.json"):
         job = {"job_id": "j1", "estado": "PAUSADO", "modo": "research",

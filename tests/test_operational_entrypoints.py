@@ -67,6 +67,12 @@ def test_mak_mirror_check_covers_curatoria_and_fails_on_mismatch(tmp_path, monke
             "/home/mak/.config/systemd/user/mak-hub.service",
         "cultura/mak_codex/mak-codex.service":
             "/home/mak/.config/systemd/user/mak-codex.service",
+        "cultura/mak_plataforma/mak-xio.service":
+            "/home/mak/.config/systemd/user/mak-xio.service",
+        "cultura/mak_research/interfaz.service":
+            "/home/mak/.config/systemd/user/mak-research.service",
+        "cultura/mak_research/cola.service":
+            "/home/mak/.config/systemd/user/mak-research-queue.service",
     }
 
     monkeypatch.chdir(ROOT)

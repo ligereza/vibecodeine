@@ -1,12 +1,229 @@
 # LAST_HANDOFF - Faro
 
-Updated: 2026-08-11 - canonical branch promotion and final validation
-Status: The Hub boundary, XIO human-link circuit, writer ownership block, and
-language slices are consolidated in the four canonical branches. Local,
-GitHub, MAK checkout, and runtime mirror are clean and synchronized; no
-auxiliary branch or worktree remains.
+Updated: 2026-08-11 - Atlas draft gate and process supervision verified
+Status: The Hub boundary, XIO human-link circuit, writer ownership block,
+language slices, Atlas decision-draft gate, and process supervision remain
+consolidated in the four canonical branches. The Atlas backend and served
+portfolio surface are deployed to MAK with a rollback snapshot. Source and
+tests remain uncommitted and unpushed.
 This block is the current operational source. Later sections preserve dated
 historical evidence and must not be read as present state.
+
+## Atlas decision-draft circuit - 2026-08-11
+
+- The operational `/portafolio/` surface now keeps a complete per-piece draft
+  for selection, triage, classification context, and relation decisions. Save
+  records intent only; commit is the explicit human action. Cancel restores the
+  prior view without applying the draft.
+- The commit path is serialized and idempotent by source draft. Repeated
+  submits do not duplicate selection, classification, relation feedback, or
+  draft history. Undo is append-only, restores the prior projection, and keeps
+  the committed event in the audit timeline. Relation undo has its own scope.
+- The order view keeps exact selected targets visible and no longer advances
+  automatically after a decision. The seed flow refuses to advance while a
+  draft is pending and reads the staged triage before the committed projection.
+  The legacy select/classify/feedback endpoints remain integration surfaces;
+  the operational UI writes only through draft, commit, and undo routes.
+- Relation undo now refreshes the returned item and clears the local committed
+  draft before rebuilding the scene, so a reverted relation cannot remain
+  visible as a stale pending draft. The asset cache query is
+  `atlas-context-map`.
+- A partial commit is retryable. Only a fully committed source draft is
+  idempotent; retrying a partial draft reuses existing selection and
+  classification rows while attempting the missing relation or channel.
+  This keeps append-only history without making a transient failure permanent.
+- `copilot.dedupe_feedback` now collapses repeated events by their latest
+  indexed signal instead of Python object identity. History remains intact;
+  learning sees one current signal per channel and respects undo barriers.
+- Deployment backup: `/home/mak/rollback/atlas-drafts-undo-20260811/`.
+  Local and MAK hashes match for `hub.py`, `contrato_archivo.py`,
+  `copilot.py`, `editor.html`, and `mesa_montaje.js`. Only `mak-hub.service`
+  was restarted; all four managed MAK units are active in their systemd
+  control groups.
+- Follow-up backups are `/home/mak/rollback/atlas-relation-undo-20260811/`
+  and `/home/mak/rollback/atlas-partial-retry-20260811/`. The latest Hub
+  runtime and source mirror hashes match, and the served JavaScript query is
+  `mesa_montaje.js?v=20260811-atlas-context-map`. The latest static backup is
+  `/home/mak/rollback/atlas-context-map-20260811/`.
+- Validation: focused Atlas, bridge, durable-writer, copilot, archive,
+  editor-contract, process-guard, watchdog, entrypoint, Python compilation,
+  JavaScript syntax, and diff checks pass. Live GET checks confirm the Atlas
+  contract, audit surface, and served asset query. Cron-equivalent watchdog
+  runs return zero and report no detached process.
+- The Atlas fixture suite now covers both central and related pieces, complete
+  category/context/relation drafts, explicit confirmation rejection, terminal
+  cancel without mutation, append-only undo, relation undo, and retry after a
+  partial commit. It also exercises the real Hub HTTP routes against a
+  temporary fixture, including the audit response, without mutating MAK data.
+- Final MAK check after the partial-retry deployment: both watchdogs returned
+  zero at `20:09 -04`, all four units were active, the guard returned empty,
+  and listeners `8890`, `8891`, and `8900` belonged to the declared service
+  control groups rather than detached sessions.
+- A full repository pytest run exceeded the bounded 120-second local command
+  window without an assertion result. Its exact Python runner was identified
+  and terminated; no test process remained. Full-suite coverage is therefore
+  not claimed by this handoff.
+
+## Cron watchdog bus fix - 2026-08-11
+
+- The previous supervision patch had a real cron-only defect: cron provided no
+  `DBUS_SESSION_BUS_ADDRESS`, so `systemctl --user` returned `No medium found`.
+  From `19:10` through `19:30`, the logs falsely reported every managed unit as
+  inactive and every recovery request as failed, even though the units stayed
+  alive. The watchdog was present but could not supervise from cron.
+- Both watchdogs now derive `XDG_RUNTIME_DIR` and
+  `DBUS_SESSION_BUS_ADDRESS` from the current user before using `systemctl
+  --user`. If the user bus socket is absent, they record
+  `supervision deferred` and never launch a replacement process. The platform
+  watchdog also records `supervision check passed` or `incomplete` each tick.
+- Deployment was backed up at
+  `/home/mak/rollback/process-supervision-20260811-bus/` and
+  `/home/mak/rollback/process-supervision-20260811-bus-final/`. Runtime and
+  `/home/mak/flujo` mirror hashes match for both watchdogs.
+- Validation: local focused process/watchdog tests pass `9/9`, shell syntax and
+  diff checks pass, and an `env -i` cron-equivalent run returned `0` for both
+  watchdogs. All four managed units were `active`; the guard reported no stale
+  detached scans. The live `iconos.py` worker is a child of `mak-codex.service`
+  and therefore belongs to its systemd control group; it is not an orphan.
+- Separate finding unchanged: the user manager remains `degraded` because of
+  the failed `onedrive.service`; the independent rclone mounts and MAK units
+  are healthy. Do not repair that unrelated OAuth service without a separate
+  instruction.
+
+## MAK process supervision hardening - 2026-08-11
+
+- Root cause verified: Hub, Codex, and XIO were supervised by user `systemd`,
+  but Research was repeatedly launched by `watchdog.sh` with a detached shell.
+  The live `python3 interfaz.py` process was PID `88249`, parent PID `1`, and
+  lived in `session-1738.scope`; the cron watchdog could see it with `pgrep`
+  but could not restart or account for it as a service. This is the process
+  leak that made the previous watchdog appear healthy while leaving an orphan.
+- `watchdog_mak.sh` no longer uses `pgrep`, `setsid`, or detached launches. It
+  serializes with `flock`, runs the narrow stale-scan/resource guard with a
+  timeout, starts only declared units through `systemctl --user`, and retries
+  HTTP health checks before requesting a restart. Research `watchdog.sh` now
+  follows the same contract for `mak-research.service` and the optional
+  `mak-research-queue.service`.
+- Research now has a real user unit with `Restart=always`, `TimeoutStopSec=15`,
+  and `KillMode=control-group`; Hub, Codex, and XIO received the same child
+  cleanup settings. The queue unit is installed but not enabled at boot and
+  is started only when `NTFY_TOPIC_IN` is configured. The four daemon units
+  are enabled; the queue is inactive by design.
+- Deployment was backed up at
+  `/home/mak/rollback/process-supervision-20260811/`. Local source, MAK
+  mirror, runtime scripts, and installed units match by SHA-256 for the
+  changed supervision files. The old Research PID was terminated only after
+  verifying its exact command and `/home/mak/research` working directory.
+- Evidence: a controlled stop of Research was recovered by the platform
+  watchdog (`117520 -> 118477` and a second run `120068 -> 120215`), with one
+  listener on each `8890`, `8891`, and `8900`. The cron-like `env -i` execution
+  succeeded; the guard reported no stale detached scans and
+  `resources_ok=True`. Focused process, Research watchdog, entrypoint, and
+  maintenance tests passed; the paused Curatoria guard was also converted to
+  foreground execution and deployed. Shell syntax, Python compilation, and
+  diff checks passed.
+- Separate finding preserved, not changed: `onedrive.service` is failed after
+  an interactive OAuth error (`status=3`) while an independent `rclone`
+  mount remains alive. It makes the user manager report `degraded`, but it is
+  not a MAK daemon and must not be restarted or repaired without a separate
+  instruction.
+
+## Next action
+
+Run the remaining bounded test batches with process-group cleanup, then use
+the live Atlas surface for one human-controlled draft -> commit -> undo
+exercise on a selected test-safe record. Keep the process-supervision and
+Atlas rollback snapshots. Do not touch README/SVG or activate Watson/AWS.
+
+## Human curation action audit - 2026-08-11
+
+- Read-only verification against the live Hub at `192.168.50.2:8900` and the
+  MAK append-only files found `84` selection-history rows: `62` discard,
+  `9` deselect, and `13` select. The current projection is `66` labeled items:
+  `59` discard, `3` deselect, and `4` select. The inbox remains `7044` items;
+  its mtime predates this session, so the media source was not deleted.
+- The latest selection session is `mesa-msp7r75z` with eight individual
+  record-scope discards. The penultimate selection was
+  `17888311772541385.mp4` at `2026-08-11T18:12:30-04:00`; the last was
+  `17940588713470819.mp4` at `2026-08-11T18:13:23-04:00`. Both have matching
+  `triage=discard` classification rows and two-event item timelines. Both
+  requests used `pass_size=0`; no batch discard or item-id substitution is
+  present in the ledger.
+- The interface behavior explains the visual report: `mesa_montaje.js` removes
+  the confirmed record from the current scene, then `advanceAfterDiscard()`
+  centers a new candidate and reloads the scene. The surrounding nodes can
+  therefore disappear or move even though no second record was persisted as
+  discarded. The source does not record the screen's active/selected id at
+  click time, so it cannot prove which visual node the user perceived as
+  central after the scene changed.
+- Human follow-up confirms that both latest discards were intended, but the
+  penultimate item had not been visibly reviewed and appeared as a related
+  node while the central work stayed in place. This matches the order-mode
+  path: `applyOrderDecision()` acts on `orderSelectedIds`, while its automatic
+  advance only runs when that set contains `activeId`; a selected related node
+  can therefore disappear while the center remains. This is a UI target
+  ambiguity, not a ledger identity rewrite.
+- Measured commands: live `GET /api/portfolio/audit`, live `GET
+  /api/portfolio/inbox?compact=1`, live `GET /api/portfolio/decision-index`,
+  remote `cat .../selections.jsonl`, and per-item audit for both latest ids.
+  No POST, provider call, browser interaction, commit, push, or data repair
+  was performed.
+- Next action: add an explicit target badge/thumbnail and confirmation for
+  discard, showing `activeId`, `selectedId`, and the exact target; preserve a
+  related node unless its target is explicitly confirmed. Do not alter
+  historical selections without an explicit human correction.
+
+## MAK runtime load audit - 2026-08-11
+
+- A live process check found and stopped the stale audit shell/`grep -R`
+  pair (`54682`/`54695`) that had been consuming about `72%` CPU for over
+  four hours. It was an orphaned inspection process, not a product worker.
+- The remaining load is an automatic Codex icon job: `iconos.py` is generating
+  an SVG for the Shannon entropy concept through local Ollama `gemma3:4b`.
+  At the check, `llama-server` used about `98%` GPU on the GTX 1650 at `60 C`.
+  Hub, Research, Codex, and XIO services remain active; Curatoria remains
+  paused. No Watson or AWS process, request, or provider job is active.
+- Provider work remains intentionally gated. First complete the staged human
+  curation interaction and stop unrequested background generation; then run a
+  bounded Watson research/triangulation batch and an AWS visual-evidence batch
+  on an explicitly selected small set, with local validation and human review.
+
+## MAK orphan-process guard - 2026-08-11
+
+- Root cause verified: the existing cron watchdog only revived missing services;
+  it did not serialize overlapping runs or inspect detached session children.
+  The stale `grep -R` pair (`54682`/`54695`) came from a remote audit shell
+  whose PowerShell quoting left the scan alive after the inspection ended.
+- `cultura/mak_plataforma/guardia.py` now reads `/proc` directly and terminates
+  only scans older than 15 minutes that use `grep -R`, `rg`, or `find` against
+  `/home/mak` or `/etc/systemd` and are detached under PID 1 or a shell `-c`.
+  Managed Python workers, Ollama, and MAK services are outside this filter.
+  `watchdog_mak.sh` now holds `watchdog.lock` with `flock` and runs this guard
+  every existing five-minute cron tick, logging to `guardia.log`.
+- Local validation passed `14/14` focused tests, `py_compile`, Ruff, and
+  `git diff --check`. Remote validation passed shell syntax, Python import,
+  managed-worker protection, recursive-scan filtering, and a live dry run with
+  `PROCESS_GUARD: no stale detached scans`.
+- Deployment was backed up at `/home/mak/rollback/process-guard-20260811/`,
+  including the old runtime and mirror copies. The `/home/mak/flujo` mirror
+  and live runtime hashes now match the local source: `guardia.py`
+  `9dac2ea6bc3a17096d62d39f0e9edf5c8209b5d47db7e35f6ff4065c47dda484` and
+  `watchdog_mak.sh`
+  `92340266cc8e6085dece1f3fbd860310c5084b5d93f46e94372ff01e37e204eb`.
+  The first backup command was rejected before SSH execution because
+  PowerShell expanded the remote `$d`; it created no directory or process and
+  was immediately repeated with single-quoted remote input.
+- Post-deploy watchdog execution did not restart or duplicate services. MAK
+  reports `mak-hub.service`, `mak-codex.service`, and `mak-xio.service` active,
+  with one listener each on `8900`, `8890`, and `8891`.
+
+## Next action
+
+Observe the next normal cron ticks through `guardia.log` and keep the guard
+scope narrow. Any new process class must first be reproduced, named, and added
+with a fixture; do not turn this into a broad CPU killer. Keep the automatic
+Codex icon worker separate from orphan cleanup and do not activate Watson/AWS
+without a bounded human-selected batch.
 
 ## Read this first
 
@@ -21,7 +238,57 @@ This file is the operational checkpoint. The order for a fresh agent is:
 Do not treat raw logs, old plans, Downloads, chat memory, or an old branch as
 instructions. Verify any statement that affects a destructive or remote action.
 
-## Current verified state - 2026-08-11
+## Current verified state - 2026-08-11 audit continuation
+
+- Canonical refs are unchanged and still share tree
+  `629ba38268f3137260bfb1c5e3aacf6f6068a250`: `main=559fa607`,
+  `mak=b4f5b2ad`, `rd=338ec99c`, and `iskvw=66b6b470`; each matches its
+  origin ref. The Windows checkout is on `mak` with nine modified paths (the
+  handoff plus four source files and four regression-test files); the source
+  patch is intentionally uncommitted. No README/SVG path is modified. Reverse
+  patch check passed with `git diff --binary | git apply --reverse --check`.
+- MAK deployment completed from the four source files after a backup at
+  `/home/mak/rollback/faro-synthetic-audit-20260811/`. The remote checkout and
+  live mirrors now match the patch; its four canonical local refs (`main`,
+  `mak`, `rd`, `iskvw`) were reconciled to their fetched origin refs without
+  changing the active `mak` worktree. `mak-hub.service` and
+  `mak-codex.service` are active; Research is supervised by its watchdog.
+  Current listeners are `0.0.0.0:8900`, `127.0.0.1:8890`, and `127.0.0.1:8891`.
+- Real route findings and local fixes: Research and Codex unknown `/api/*`
+  routes now return JSON 404 instead of HTML 200; malformed JSON in Research
+  fructificacion/fusion now returns 400 instead of 500; Research bridges now
+  preserve an upstream 400 instead of relabeling it 502; and both internal
+  services implement HEAD without a response body. Hub proxies HEAD to the
+  internal service instead of performing a GET. Focused tests and an isolated
+  post-fix MAK service run covered these paths.
+- Real writer finding and local fix: `trabajo.py` built corpus-review payloads
+  with the `repasar` identity while validating them as `multiplicar`, causing
+  repeated `work_contract_identity_mismatch` rejections and a stale
+  `corpus_review_inflight`. The payload now receives the active rotation verb,
+  and contract rejection clears review inflight state. The last old log entry
+  is pre-deployment; a post-fix MAK-side simulation against the live source
+  returned `contract_errors=[]` for the corpus-review shape. The first real
+  cron tick after deployment at `18:00:01` completed review job
+  `20260811-180001-e7b9` as `listo`, recorded `parent_id=verb:multiplicar`,
+  advanced the count to `5`, and removed `corpus_review_inflight`.
+- Curatoria is intentionally disabled (`AUTONOMY_ENABLE` absent) and no
+  perception process is running. Read-only state: `total_trabajo=7300`,
+  `procesados=3370`, `cuarentena=9`, `errores_totales=81`, and
+  `errores_seguidos=0`; the last errors are historical media/JSON evidence,
+  not a new loop. All four runtime lock sidecars were available, so no writer
+  was holding a lock after the matrix. Invalid synthetic requests left the
+  render config, Research jobs, and Codex jobs SHA-256 fingerprints unchanged.
+- Validation: the focused Hub/Research/Codex/Curatoria/writer/language
+  circuits passed; local AST parsing covered `8358` Python files with zero
+  failures; remote runtime AST parsing covered the four deployed targets and
+  found a pre-existing box-only `panel_directivo.py` syntax error. That file is
+  not in the repo, not invoked by cron/systemd, and was preserved rather than
+  folded into the canonical system. The remote box has no pytest module, so
+  Linux-only pytest execution was unavailable; direct runtime contracts and
+  local focused suites passed. The full local suite remains unresolved because
+  the `240s` run timed out without a test result; it is not counted as pass.
+
+## Pre-audit verified state - 2026-08-11
 
 - Windows canonical: `C:\IA\flujo`, branch `mak`, clean. After the final
   promotion, the four canonical refs (`main`, `mak`, `rd`, and `iskvw`) were
@@ -79,11 +346,11 @@ instructions. Verify any statement that affects a destructive or remote action.
 
 ## Current next action
 
-Continue the open audit circuits in the prior handoff without creating another
-branch or touching README/SVG. The final branch hash/tree check, remote
-cleanliness check, and focused regression suite were completed after the
-promotion; the full suite timeout remains recorded as an unresolved validation
-limit, not as a pass.
+No required runtime repair remains. Keep the rollback snapshot until the next
+release decision, and optionally split the full pytest suite to locate its
+240-second timeout. Do not touch README/SVG or the non-invoked box-only
+`panel_directivo.py` artifact, and do not commit or push without a separate
+instruction.
 
 ## Audit circuit - 2026-08-11
 
@@ -139,7 +406,7 @@ limit, not as a pass.
   routes, contain no direct LAN Research/Codex URLs, and keep Curatoria's old
   `panel.py` outside the live mirror map.
 
-## Next action - current
+## Historical next action before synthetic audit
 
 The Hub boundary, XIO human-link circuit, writer ownership circuit, language
 guard, canonical branch cleanup, runtime reconciliation, and full validation
