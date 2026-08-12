@@ -192,6 +192,7 @@ def test_multiplicar_periodically_reviews_corpus_before_new_backlog(monkeypatch,
     assert payload["formato"] == "revision"
     assert payload["source_path"] == str(report)
     assert payload["output_contract"]
+    assert trabajo.validate_work_contract("multiplicar", payload) == []
 
 
 def test_corpus_review_retries_after_rejection(monkeypatch, tmp_path):
