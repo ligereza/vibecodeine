@@ -14,5 +14,7 @@ WorkingDirectory=%h/plataforma
 ExecStart=%h/plataforma/.venv/bin/python %h/plataforma/hub.py
 Restart=always
 RestartSec=5
+TimeoutStopSec=15
+KillMode=control-group
 [Install]
 WantedBy=default.target
