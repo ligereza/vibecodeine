@@ -9,6 +9,7 @@ Sin red, sin ollama. interfaz_codex.py importa worker_codex.py -> fcntl
 saltear todo el archivo en Windows/CI sin fcntl.
 """
 import json
+import http.client
 import re
 import sys
 import threading
@@ -94,6 +95,42 @@ def test_producers_and_delivery_share_codex_ledger_lock():
     assert "def _exclusive_jobs_file_lock" in libre
     assert "def _exclusive_codex_jobs_lock" in delivery
     assert "with _exclusive_codex_jobs_lock()" in delivery
+
+
+@requiere_fcntl
+def test_codex_api_unknown_and_head_contract():
+    server = interfaz_codex.Servidor(("127.0.0.1", 0), interfaz_codex.H)
+    thread = threading.Thread(target=server.serve_forever)
+    thread.start()
+    try:
+        connection = http.client.HTTPConnection(
+            "127.0.0.1", server.server_port, timeout=3)
+        connection.request("GET", "/api/unknown")
+        response = connection.getresponse()
+        assert response.status == 404
+        assert json.loads(response.read())["error"] == "ruta_api_no_encontrada"
+        connection.close()
+
+        connection = http.client.HTTPConnection(
+            "127.0.0.1", server.server_port, timeout=3)
+        connection.request("POST", "/api/unknown", body=b"{}",
+                           headers={"Content-Length": "2"})
+        response = connection.getresponse()
+        assert response.status == 404
+        assert json.loads(response.read())["error"] == "ruta_api_no_encontrada"
+        connection.close()
+
+        connection = http.client.HTTPConnection(
+            "127.0.0.1", server.server_port, timeout=3)
+        connection.request("HEAD", "/api/jobs")
+        response = connection.getresponse()
+        assert response.status == 200
+        assert response.read() == b""
+        connection.close()
+    finally:
+        server.shutdown()
+        thread.join(timeout=3)
+        server.server_close()
 
 
 @requiere_fcntl

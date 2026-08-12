@@ -27,7 +27,9 @@ import sys
 import tempfile
 import threading
 import time
+import urllib.error
 import urllib.parse
+import urllib.request
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -3278,7 +3280,8 @@ class H(BaseHTTPRequestHandler):
         self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
         self.send_header("Pragma", "no-cache")
         self.end_headers()
-        self.wfile.write(data)
+        if self.command != "HEAD":
+            self.wfile.write(data)
 
     def _json_response(self, obj, code=200):
         data = json.dumps(obj, ensure_ascii=False).encode("utf-8")
@@ -3286,7 +3289,18 @@ class H(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()
-        self.wfile.write(data)
+        if self.command != "HEAD":
+            self.wfile.write(data)
+
+    def _upstream_error(self, error):
+        """Preserve an internal service error instead of relabeling it 502."""
+        raw = error.read(20000)
+        try:
+            payload = json.loads(raw.decode("utf-8", "replace"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            payload = {"ok": False,
+                       "error": raw.decode("utf-8", "replace")[:500]}
+        return self._json_response(payload, error.code)
 
     def do_GET(self):
         u = urllib.parse.urlparse(self.path)
@@ -3328,6 +3342,11 @@ class H(BaseHTTPRequestHandler):
                 return self._json_response({"nodes": [], "edges": [],
                                             "error": str(e)[:200]}, 200)
 
+        if u.path.startswith("/api/"):
+            return self._json_response({"ok": False,
+                                        "error": "ruta_api_no_encontrada",
+                                        "path": u.path}, 404)
+
         # status
         if u.path == "/status":
             try:
@@ -3358,7 +3377,8 @@ class H(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "text/plain; charset=utf-8")
             self.send_header("Content-Length", str(len(data)))
             self.end_headers()
-            self.wfile.write(data)
+            if self.command != "HEAD":
+                self.wfile.write(data)
             return
 
         # ── main page ──
@@ -3504,6 +3524,8 @@ class H(BaseHTTPRequestHandler):
           with urllib.request.urlopen(req, timeout=8) as r:
             payload = json.loads(r.read(20000).decode("utf-8", "replace"))
           return self._json_response(payload)
+        except urllib.error.HTTPError as e:
+          return self._upstream_error(e)
         except Exception as e:  # noqa: BLE001
           return self._json_response({"ok": False, "error": str(e)[:200]}, 502)
 
@@ -3517,6 +3539,8 @@ class H(BaseHTTPRequestHandler):
           with urllib.request.urlopen(req, timeout=8) as r:
             payload = json.loads(r.read(20000).decode("utf-8", "replace"))
           return self._json_response(payload)
+        except urllib.error.HTTPError as e:
+          return self._upstream_error(e)
         except Exception as e:  # noqa: BLE001
           return self._json_response({"ok": False, "error": str(e)[:200]}, 502)
 
@@ -3524,6 +3548,12 @@ class H(BaseHTTPRequestHandler):
         largo = min(int(self.headers.get("Content-Length") or 0), 4000)
         try:
           body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
+        except (json.JSONDecodeError, TypeError):
+          return self._json_response({"ok": False, "error": "json invalido"}, 400)
+        if not isinstance(body, dict):
+          return self._json_response({"ok": False,
+                                      "error": "se esperaba un objeto JSON"}, 400)
+        try:
           import fructificacion
           result = fructificacion.decidir(
             body.get("id"), body.get("accion"), body.get("nota", ""))
@@ -3542,6 +3572,12 @@ class H(BaseHTTPRequestHandler):
         largo = min(int(self.headers.get("Content-Length") or 0), 12000)
         try:
           body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
+        except (json.JSONDecodeError, TypeError):
+          return self._json_response({"ok": False, "error": "json invalido"}, 400)
+        if not isinstance(body, dict):
+          return self._json_response({"ok": False,
+                                      "error": "se esperaba un objeto JSON"}, 400)
+        try:
           fuentes = [str(x)[:240] for x in body.get("fuentes", []) if x]
           tema = str(body.get("tema") or "")[:3000]
           if len(fuentes) < 2 or not tema:
@@ -3647,7 +3683,14 @@ class H(BaseHTTPRequestHandler):
             code, payload = _reanudar_logic(q)
             return self._json_response(payload, code)
 
+      if self.path.startswith("/api/"):
+            return self._json_response({"ok": False,
+                                        "error": "ruta_api_no_encontrada",
+                                        "path": self.path}, 404)
       return self._html("no", 404)
+
+    def do_HEAD(self):
+        return self.do_GET()
 
     def log_message(self, fmt, *args):
         # silence request logs: worker.log handles operational logging
