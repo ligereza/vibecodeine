@@ -825,8 +825,21 @@ def vision_imagen(path: str, timeout: int = 120, fuente: str = "rd",
         headers={"Content-Type": "application/json"}, method="POST",
     )
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            cuerpo = resp.read().decode("utf-8")
+        try:
+            sys.path.insert(0, os.path.expanduser("~/plataforma"))
+            from gpu_guard import slot as gpu_slot
+            contexto = gpu_slot(caller="mak-curatoria.percepcion",
+                                queue="curatoria.vision", department="curatoria",
+                                trigger=os.environ.get("MAK_TRIGGER", "cron:MAK-CURATORIA"),
+                                job_id=os.environ.get("MAK_JOB_ID", ""),
+                                model=OLLAMA_MODEL, resource="ollama",
+                                timeout=timeout)
+        except (ImportError, OSError, TypeError):
+            from contextlib import nullcontext
+            contexto = nullcontext()
+        with contexto:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                cuerpo = resp.read().decode("utf-8")
     except (urllib.error.URLError, OSError, TimeoutError) as exc:
         return {"error": "ollama_no_disponible: %s" % exc}
 

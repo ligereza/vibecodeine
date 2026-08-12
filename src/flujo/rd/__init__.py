@@ -23,6 +23,8 @@ from .database import (
     reactivos_por_familia,
     reactivos_por_reactivo,
     suplementos,
+    testing_evidence_summary,
+    testing_observations,
     venues,
 )
 
@@ -40,5 +42,7 @@ __all__ = [
     "reactivos_por_familia",
     "reactivos_por_reactivo",
     "suplementos",
+    "testing_evidence_summary",
+    "testing_observations",
     "venues",
 ]

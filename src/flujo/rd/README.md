@@ -16,6 +16,15 @@ canonicos y se puede reconstruir cuando quieras sin desincronizarse.
 | `productoras` (+ `productora_tipos`/`productora_venues`/`productora_logos`) | `data/productoras/*.json` |
 | `venues` | `knowledge/venues/*.yaml` |
 | `eventos` | `jobs/**/evento*.json` + `projects/plano/ejemplos/evento*.json` |
+| `testeo_*` | `data/rd_fuentes/testeo_eventos_2025_evidence.json` (evidence pending review) |
+
+The 2025 evidence is imported into separate tables
+(`testeo_eventos_fuente`, `testeo_filas_fuente`,
+`testeo_observaciones_fuente`, and mapping/link queues). It preserves repeated
+sheets, unresolved labels, and the workbook hash. It is not mixed with
+`registros_testeo` in the accumulative database and does not enable automatic
+public claims: a color is a presumptive presence signal, not identity, purity,
+dose, or safety.
 
 **Perfil de productora** (`data/productoras/<slug>.json`): ademas de
 name/aliases/instagram, cada productora puede traer:
@@ -44,6 +53,7 @@ py -m flujo rd-db reactivo --familia MDMA
 py -m flujo rd-db reactivo --reactivo Marquis
 py -m flujo rd-db packs
 py -m flujo rd-db eventos
+py -m flujo rd-db testeos              # resumen interno de evidencia importada
 py -m flujo rd-db lookup MDMA         # operador en terreno: reactivos + packs con testeo
 py -m flujo rd-db productora thegrid  # perfil: tipos de fecha, venues, logos
 py -m flujo rd-db venues              # venues canonicos (preset, vol_min)
@@ -59,6 +69,18 @@ from flujo.rd import build_rd_db, reactivos_por_familia, packs, eventos, product
 build_rd_db()
 reactivos_por_familia("MDMA")   # las reacciones cruzadas de cada reactivo
 ```
+
+Para inspeccion interna de la evidencia importada:
+
+```python
+from flujo.rd import testing_evidence_summary, testing_observations
+testing_evidence_summary()
+testing_observations(reagent_id="marquis")
+```
+
+The original workbook remains outside the repository. The versioned record
+contains normalized evidence and the source SHA-256 hash; any venue/producer
+link and any public interpretation require explicit human review.
 
 ## Seguridad del dominio
 
