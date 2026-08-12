@@ -251,7 +251,6 @@ tests/test_curatoria_percepcion.py
 tests/test_dashboard.py
 tests/test_empaquetar_assets.py
 tests/test_energia_log.py
-tests/test_ensayo_rave.py
 tests/test_entregar_iconos_guard.py
 tests/test_entregar_smoke_gate.py
 tests/test_extraccion_db.py
