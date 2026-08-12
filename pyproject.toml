@@ -12,11 +12,11 @@ dependencies = [
     "matplotlib>=3.10.9",
     "pyyaml>=6.0.3",
     "pydantic>=2.13.4",
-    "typer>=0.27.0",
+    "typer>=0.27.1",
     "rich>=15.0.0",
     "jsonschema>=4.26.0",
     "requests>=2.34.2",
-    "boto3>=1.35.0",
+    "boto3>=1.43.67",
 ]
 
 [project.optional-dependencies]
@@ -44,14 +44,14 @@ desktop-extras = [
     "Pillow>=12.3.0",      # for tray image gen (free)
 ]
 build = [
-    "pyinstaller>=6.21.0",  # free packaging to .exe; 'flujo package'. Not runtime dep.
+    "pyinstaller>=6.22.0",  # free packaging to .exe; 'flujo package'. Not runtime dep.
 ]
 
 [project.scripts]
 flujo = "flujo.cli:app"
 
 [build-system]
-requires = ["setuptools>=83.0.0", "wheel"]
+requires = ["setuptools>=84.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
