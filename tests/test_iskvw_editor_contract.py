@@ -80,7 +80,7 @@ def test_editor_surfaces_mak_contract_without_making_hub_required():
     assert "descartar · no es obra" in source
     assert "ESTUDIO_FEEDBACK_BUSY" in source
     assert "seleccionada'" in source
-    assert "mesa_montaje.js?v=20260811-atlas-audit" in source
+    assert "mesa_montaje.js?v=20260811-atlas-context-map" in source
     assert "/api/portfolio/inbox?surface=mesa" in mesa
     assert "<title>MAK · Campo de orden · archivo vivo</title>" in source
     assert "MAK · campo de orden" in source
@@ -104,8 +104,9 @@ def test_editor_surfaces_mak_contract_without_making_hub_required():
     assert "ficha activa · la decisión no crea vínculos" in mesa
     assert "advanceSeedFromPopover" in mesa
     assert "prefetchNextHumanSeed" in mesa
-    assert "await loadHumanSeed({ refresh: false, excludeId: itemIds[0] });" in mesa
-    assert "nextAvailableRecord" in mesa
+    assert "await loadHumanSeed({ refresh: false, excludeId: record.source_id });" in mesa
+    assert "advanceAfterOrderDecision" not in mesa
+    assert "nextAvailableRecord" not in mesa
     assert 'data-editor-mode="order"' in mesa
     assert 'data-editor-mode="relate"' in mesa
     assert 'data-learning-action="next-seed"' in mesa
@@ -120,24 +121,26 @@ def test_editor_surfaces_mak_contract_without_making_hub_required():
     assert 'fetchScene(first.id, "copilot", "order")' in mesa
     assert 'const surface = state.editorMode === "order" ? "order" : "";' in mesa
     assert "ficha activa · la decisión no crea vínculos" in mesa
-    assert "const advanceSeed = state.humanSeedActive" in mesa
     assert 'state.feedbackBusy.has("advance-seed")' in mesa
     assert 'state.feedbackBusy.add("advance-seed")' in mesa
-    assert 'const busyKey = `discard:${record.source_id}`' in mesa
-    assert 'state.feedbackBusy.has(busyKey)' in mesa
     assert 'await loadHumanSeed({ refresh: false, excludeId:' in mesa
-    assert "descarte parcial: ${saved} guardados, ${failed.length} pendientes" in mesa
     assert "state.orderSelectedIds = new Set(" in mesa
-    assert "filter((itemId) => !savedIds.includes(itemId))" in mesa
-    assert 'error: "respuesta_no_confirmada"' in mesa
-    assert "const batchResults = Array.isArray(response.payload.results)" in mesa
-    assert "clasificación parcial: ${savedIds.length} guardadas, ${failed} pendientes" in mesa
-    assert "selección guardada; triage pendiente." in mesa
-    assert "feedback guardado; conexión pendiente." in mesa
     assert "/api/portfolio/copilot/learning" in mesa
-    assert "classify-batch" in mesa
     assert "toggleOrderSelection" in mesa
-    assert "el aprendizaje queda registrado sin crear relaciones" in mesa
+    assert "draftFor" in mesa
+    assert "draftHasContent" in mesa
+    assert "saveDraft" in mesa
+    assert "commitDraft" in mesa
+    assert "cancelDraft" in mesa
+    assert "undoLastAction" in mesa
+    assert "undoRelationDecision" in mesa
+    assert "syncRecordFromItem(anchor, data.item)" in mesa
+    assert "clearDraftState(anchor, data.item?.decision_draft" in mesa
+    assert 'portfolioPost("/api/portfolio/draft"' in mesa
+    assert 'portfolioPost("/api/portfolio/commit"' in mesa
+    assert 'portfolioPost("/api/portfolio/undo"' in mesa
+    assert "window.confirm" in mesa
+    assert "advanceAfterOrderDecision" not in mesa
     assert "una pieza, sus relaciones, ninguna copia" not in mesa
     assert "arrastra el vacío: recorrer el atlas" in mesa
     assert 'actionButton("relate"' in mesa
@@ -159,6 +162,8 @@ def test_editor_surfaces_mak_contract_without_making_hub_required():
     assert "classify-toggle" in mesa
     assert '[data-class-field="context_kind"].is-active' in mesa
     assert 'clearFields.push("context_value")' in mesa
+    assert "context_fields: contextFields" in mesa
+    assert "const contextFields = {" in mesa
     assert 'const pieceContext = `${groupNote}${workGroupNote}`' in mesa
     assert "viewRequestId" in mesa
     assert "if (requestId !== state.viewRequestId) return;" in mesa
@@ -168,13 +173,15 @@ def test_editor_surfaces_mak_contract_without_making_hub_required():
     assert "classificationPending" in mesa
     assert "const normalizedMode = mode === \"all\" ? \"copilot\" : mode" in mesa
     assert "const excluded = new Set(state.processedHumanSeed)" in mesa
-    assert "return candidates.find((record) => !isDecidedRecord(record)) || null" in mesa
+    assert "return candidates.find((record) => !isDecidedRecord(record)) || null" not in mesa
     assert "state.editorMode === \"order\" && record.source_id !== state.activeId" in mesa
     assert "acquireRecordActions" in mesa
     assert 'field === "context_kind" && fields.context_kind !== value' in mesa
     assert "relationCounterpartId" in mesa
     assert "linkedIds.add(relation.source_id)" in mesa
-    assert "/api/portfolio/classify" in mesa
+    assert 'fetch("/api/portfolio/select"' not in mesa
+    assert 'fetch("/api/portfolio/classify"' not in mesa
+    assert 'fetch("/api/portfolio/feedback"' not in mesa
     assert "replaceChildren" in mesa
     assert "data-pop-note" in mesa
     assert "mesa-suggestion-card" in mesa
@@ -204,15 +211,33 @@ def test_editor_surfaces_mak_contract_without_making_hub_required():
     assert 'contentType.includes("application/json")' in mesa
     assert "la auditoría aún no está desplegada" in mesa
 
-    order_decision = mesa[mesa.index("async function applyOrderDecision") : mesa.index("function nextAvailableRecord")]
-    assert "invalidateSceneCache();" in order_decision
-    assert "descarte parcial: ${saved} guardados, ${failed.length} pendientes" in mesa
+    order_decision = mesa[mesa.index("function applyOrderDecision") : mesa.index("function rebuildScene")]
+    assert "updateDraft(record" in order_decision
+    assert "revisa y efectúa la acción explícitamente" in order_decision
 
     assert "if(!r.ok)throw new Error(`HTTP ${r.status}`);" in source
     assert "Selección parcial del carrusel" in source
     assert "la selección visible fue restaurada" in source
     assert "tableros no disponibles temporalmente" in source
     assert "No se pudieron cargar las sugerencias; la pieza sigue disponible." in source
+
+
+def test_mesa_uses_explicit_draft_gate_and_keeps_targets_visible():
+    mesa = MESA.read_text(encoding="utf-8")
+
+    assert 'data-order-action="save-draft-all"' in mesa
+    assert 'data-order-action="commit-draft-all"' in mesa
+    assert 'data-order-action="cancel-draft-all"' in mesa
+    assert 'actionButton("save-draft"' in mesa
+    assert 'actionButton("commit-draft"' in mesa
+    assert 'actionButton("cancel-draft"' in mesa
+    assert 'actionButton("undo"' in mesa
+    assert 'actionButton("undo-relation"' in mesa
+    assert "mesa-relation-pending" in mesa
+    assert "mesa-order-targets" in mesa
+    assert "state.selectedId = itemIds.length === 1 ? itemIds[0] : state.activeId" in mesa
+    assert "window.confirm" in mesa
+    assert "advanceAfterOrderDecision" not in mesa
 
 
 def test_editor_keeps_search_board_filter_and_association_tray_separate():
