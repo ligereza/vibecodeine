@@ -111,3 +111,5 @@ def test_single_human_hub_contract_has_no_direct_service_docs():
 
     mirror = _load_mirror_module()
     assert "panel.py" not in mirror.FILES["mak_curatoria"]
+    assert "queue_store.py" in mirror.CONDUCTOR_FILES
+    assert "queue_worker.py" in mirror.CONDUCTOR_FILES

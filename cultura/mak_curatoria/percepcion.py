@@ -43,6 +43,27 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 try:
+    from cultura.mak_conductor.runtime import (enqueue_shadow,
+                                                active_enabled,
+                                                dispatch_sync,
+                                                observe_shadow,
+                                                shared_gpu_lease)
+except ImportError:  # mirrored MAK runtime imports from the repo's cultura dir
+    sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH",
+                                     "/home/mak/flujo/cultura"))
+    try:
+        from mak_conductor.runtime import (enqueue_shadow, active_enabled,
+                                           dispatch_sync, observe_shadow,
+                                           shared_gpu_lease)
+    except ImportError:
+        enqueue_shadow = observe_shadow = dispatch_sync = None
+        def active_enabled():
+            return False
+        from contextlib import nullcontext
+        def shared_gpu_lease(**_kwargs):
+            return nullcontext()
+
+try:
     from PIL import Image
 except ImportError:
     Image = None
@@ -773,8 +794,43 @@ def vision_imagen(path: str, timeout: int = 120, fuente: str = "rd",
     y devuelve el JSON de vision parseado de forma tolerante. Cualquier
     fallo de lectura/red/parseo devuelve {"error": ...} sin lanzar
     excepcion, para que un archivo puntual nunca tumbe el loop."""
+    if active_enabled():
+        payload = {"path": str(path), "timeout": int(timeout),
+                   "source": fuente, "author_text": str(texto_autor)[:500],
+                   "date": str(fecha)}
+
+        def handle(_job):
+            result = vision_imagen(path, timeout=timeout, fuente=fuente,
+                                   texto_autor=texto_autor, fecha=fecha)
+            return {"validated": not bool(result.get("error")), **result}
+
+        queued = dispatch_sync(
+            "curatoria_vision", payload,
+            producer="curatoria.percepcion.vision_imagen", handler=handle,
+            estimated_vram_mb=3000, model=OLLAMA_MODEL,
+            template_version="curatoria-vision-v2")
+        if queued and queued.get("queue_status") == "COMPLETED":
+            return {key: value for key, value in queued.items()
+                    if key not in {"job_id", "status", "queue_status",
+                                   "validated"}}
+        return {"error": "queued_vision_failed",
+                "queue": queued or {"status": "unavailable"}}
+
+    shadow_job = (enqueue_shadow(
+        "curatoria_vision", {"path": path, "source": fuente},
+        producer="curatoria.percepcion.vision_imagen",
+        estimated_vram_mb=3000, model=OLLAMA_MODEL,
+        template_version="curatoria-vision-v1")
+        if enqueue_shadow is not None else None)
+    shadow_started = time.time()
     imagen_b64 = _imagen_a_b64(path)
     if imagen_b64 is None:
+        if observe_shadow is not None:
+            observe_shadow(shadow_job,
+                           producer="curatoria.percepcion.vision_imagen",
+                           result_status="FAILED",
+                           payload={"error": "no_se_pudo_leer_imagen"},
+                           started_at=shadow_started, owner_pid=os.getpid())
         return {"error": "no_se_pudo_leer_imagen"}
 
     vision_fallback = ""
@@ -806,6 +862,13 @@ def vision_imagen(path: str, timeout: int = 120, fuente: str = "rd",
             d = _parsear_json_vision(texto, fuente)
             if not d.get("error"):
                 d["_motor"] = "watsonx"
+                if observe_shadow is not None:
+                    observe_shadow(shadow_job,
+                                   producer="curatoria.percepcion.vision_imagen",
+                                   result_status="READY", validated=True,
+                                   payload={"engine": "watsonx", "path": path},
+                                   started_at=shadow_started,
+                                   owner_pid=os.getpid())
                 return d
             vision_fallback = "watsonx:%s" % d.get("error")
         except Exception as exc:                 # noqa: BLE001 - cae a ollama
@@ -825,14 +888,29 @@ def vision_imagen(path: str, timeout: int = 120, fuente: str = "rd",
         headers={"Content-Type": "application/json"}, method="POST",
     )
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            cuerpo = resp.read().decode("utf-8")
-    except (urllib.error.URLError, OSError, TimeoutError) as exc:
+        with shared_gpu_lease(job_id=(shadow_job or {}).get("job_id") or
+                              "vision-%s" % os.getpid(),
+                              estimated_vram_mb=3000):
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                cuerpo = resp.read().decode("utf-8")
+    except Exception as exc:  # GPU lease and transport failures are per-file
+        if observe_shadow is not None:
+            observe_shadow(shadow_job,
+                           producer="curatoria.percepcion.vision_imagen",
+                           result_status="FAILED",
+                           payload={"error": str(exc)[:2000]},
+                           started_at=shadow_started, owner_pid=os.getpid())
         return {"error": "ollama_no_disponible: %s" % exc}
 
     try:
         sobre = json.loads(cuerpo)
     except json.JSONDecodeError:
+        if observe_shadow is not None:
+            observe_shadow(shadow_job,
+                           producer="curatoria.percepcion.vision_imagen",
+                           result_status="FAILED",
+                           payload={"error": "respuesta_no_json"},
+                           started_at=shadow_started, owner_pid=os.getpid())
         return {"error": "respuesta_no_json"}
 
     texto_modelo = sobre.get("response", "") if isinstance(sobre, dict) else ""
@@ -843,6 +921,14 @@ def vision_imagen(path: str, timeout: int = 120, fuente: str = "rd",
     d["_motor"] = "ollama"
     if vision_fallback:
         d["_fallback_desde"] = vision_fallback
+    if observe_shadow is not None:
+        observe_shadow(shadow_job,
+                       producer="curatoria.percepcion.vision_imagen",
+                       result_status="FAILED" if d.get("error") else "READY",
+                       validated=not bool(d.get("error")),
+                       payload={"engine": "ollama", "path": path,
+                                "fallback": vision_fallback},
+                       started_at=shadow_started, owner_pid=os.getpid())
     return d
 
 

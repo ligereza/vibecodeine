@@ -31,6 +31,7 @@ Uso:
 """
 import argparse
 import ast
+import json
 import os
 import py_compile
 import random
@@ -39,6 +40,16 @@ import tempfile
 import threading
 import time
 from contextlib import contextmanager
+
+try:
+    from cultura.mak_conductor.runtime import active_enabled, dispatch_sync
+except ImportError:  # pragma: no cover - direct MAK deployment
+    sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH", "/home/mak/flujo/cultura"))
+    try:
+        from mak_conductor.runtime import active_enabled, dispatch_sync
+    except ImportError:
+        active_enabled = lambda: False
+        dispatch_sync = None
 
 try:
     import fcntl
@@ -266,7 +277,7 @@ def mint_job_id_libre():
     return "%s-%s" % (stamp(), os.urandom(2).hex())
 
 
-def correr(objetivo_forzado=None, densidad="medio"):
+def _correr_unlocked(objetivo_forzado=None, densidad="medio"):
     t0 = time.time()
     objetivo = elegir_objetivo(objetivo_forzado)
     job_id = mint_job_id_libre()
@@ -314,6 +325,29 @@ def correr(objetivo_forzado=None, densidad="medio"):
           % (real_plan, real_coder, tiempo_ms(t0)))
     print("INFORME: " + md_path)
     return 0
+
+
+def correr(objetivo_forzado=None, densidad="medio"):
+    if active_enabled() and dispatch_sync is not None:
+        payload = {"objective": objetivo_forzado or "",
+                   "density": densidad, "bucket": int(time.time() // 43200)}
+
+        def handle(_job):
+            result = _correr_unlocked(objetivo_forzado, densidad)
+            return {"validated": result == 0, "result_code": result,
+                    "artifacts": [{
+                        "kind": "free_coder_manifest",
+                        "content": json.dumps(payload, sort_keys=True),
+                    }]}
+
+        result = dispatch_sync(
+            "codex_free", payload, producer="codex.agente_libre.correr",
+            handler=handle, estimated_vram_mb=3000,
+            model=os.environ.get("CODER_CHAIN", ""),
+            template_version="codex-free-v1",
+        )
+        return int((result or {}).get("result_code", 2))
+    return _correr_unlocked(objetivo_forzado, densidad)
 
 
 def main():
