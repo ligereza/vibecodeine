@@ -1,16 +1,16 @@
 # LAST_HANDOFF - Faro
 
-Updated: 2026-08-12 - recovered session integration staged on `mak-svg`
-Status: The recovered agent work is now present in the repository staging area,
-not only in the MAK runtime mirror. The integration includes the durable
+Updated: 2026-08-12 - recovered session integration committed and propagated
+Status: The recovered agent work is now present in the repository and no longer
+only in the MAK runtime mirror. The integration includes the durable
 conductor extension, activity/GPU compatibility utilities, SVG quality checks,
 RD testing evidence projections, the source-preserving POST boundary, and a
 hash-manifested archive of the non-environment material from
 `C:\Users\issvk\claude_sesiones_recuperadas`. The canonical README/SVG geometry
 is unchanged. No service was restarted, no conductor database was created,
-and all `MAK_CONDUCTOR_*` flags remain unset. The current branch is the
-non-canonical experimental `mak-svg`; the four canonical branches are still
-unchanged until the integration commit is verified and explicitly propagated.
+and all `MAK_CONDUCTOR_*` flags remain unset. Commit `cd5ab70c` is on
+`mak-svg` and `mak`; merge commits `bba8ba83`, `ab19862b`, and `58e4daff`
+propagate it to `main`, `rd`, and `iskvw`. All five refs are pushed to origin.
 This block is the current operational source. Later sections preserve dated
 historical evidence and must not be read as present state.
 
