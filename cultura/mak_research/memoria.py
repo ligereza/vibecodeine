@@ -33,6 +33,27 @@ except ImportError:  # pragma: no cover - Windows director has no fcntl
 from research_lib import (LLM, MODELO_CAPAZ, _http_json, escala_tok, load_env,
                           marco, ntfy_publish, slug, stamp)
 
+try:
+    from cultura.mak_conductor.runtime import (enqueue_shadow,
+                                                active_enabled,
+                                                dispatch_sync,
+                                                observe_shadow,
+                                                shared_gpu_lease)
+except ImportError:  # mirrored MAK runtime imports from the repo's cultura dir
+    sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH",
+                                     "/home/mak/flujo/cultura"))
+    try:
+        from mak_conductor.runtime import (enqueue_shadow, active_enabled,
+                                           dispatch_sync, observe_shadow,
+                                           shared_gpu_lease)
+    except ImportError:
+        from contextlib import nullcontext
+        enqueue_shadow = observe_shadow = dispatch_sync = None
+        def active_enabled():
+            return False
+        def shared_gpu_lease(**_kwargs):
+            return nullcontext()
+
 RESEARCH = os.path.expanduser("~/research")
 MEM_DIR = os.path.join(RESEARCH, "memoria")
 INDEX_FILE = os.path.join(MEM_DIR, "index.jsonl")
@@ -71,9 +92,12 @@ def _exclusive_index_lock():
 def _embed(texto):
     """Vector de un texto via ollama (local, gratis). [] si falla."""
     try:
-        r = _http_json(OLLAMA.rstrip("/") + "/api/embeddings",
-                       {"model": EMBED_MODEL, "prompt": texto[:8000]},
-                       timeout=60)
+        with shared_gpu_lease(
+                job_id="embedding-%s-%s" % (os.getpid(), hash(texto[:120])),
+                estimated_vram_mb=900):
+            r = _http_json(OLLAMA.rstrip("/") + "/api/embeddings",
+                           {"model": EMBED_MODEL, "prompt": texto[:8000]},
+                           timeout=60)
         return r.get("embedding") or []
     except Exception:  # noqa: BLE001 - un embed fallido no mata el index
         return []
@@ -214,8 +238,52 @@ def util_para_micelio(texto, carpeta=None):
 
 
 def indexar(rebuild=False, log=lambda s: None):
-    with _exclusive_index_lock():
-        return _index_unlocked(rebuild=rebuild, log=log)
+    if active_enabled():
+        def handle(_job):
+            result = indexar(rebuild=rebuild, log=log)
+            return {"validated": isinstance(result, dict), **result}
+
+        queued = dispatch_sync(
+            "memoria_embedding", {"rebuild": bool(rebuild)},
+            producer="research.memoria.indexar", handler=handle,
+            estimated_vram_mb=900, model=EMBED_MODEL,
+            template_version="memory-index-v2")
+        if queued and queued.get("queue_status") == "COMPLETED":
+            return {key: value for key, value in queued.items()
+                    if key not in {"job_id", "status", "queue_status",
+                                   "validated"}}
+        return {"error": "queued_memory_index_failed",
+                "queue": queued or {"status": "unavailable"}}
+
+    shadow_job = (enqueue_shadow(
+        "memoria_embedding", {"rebuild": bool(rebuild)},
+        producer="research.memoria.indexar",
+        estimated_vram_mb=900, model=EMBED_MODEL,
+        template_version="memory-index-v1")
+        if enqueue_shadow is not None else None)
+    started = time.time()
+    try:
+        with shared_gpu_lease(
+                job_id=(shadow_job or {}).get("job_id") or
+                       "memory-index-%s" % os.getpid(),
+                estimated_vram_mb=900):
+            with _exclusive_index_lock():
+                result = _index_unlocked(rebuild=rebuild, log=log)
+        if observe_shadow is not None:
+            observe_shadow(
+                shadow_job, producer="research.memoria.indexar",
+                result_status="READY", validated=True, payload=result,
+                started_at=started, owner_pid=os.getpid(),
+            )
+        return result
+    except Exception as exc:
+        if observe_shadow is not None:
+            observe_shadow(
+                shadow_job, producer="research.memoria.indexar",
+                result_status="FAILED", payload={"error": str(exc)[:2000]},
+                started_at=started, owner_pid=os.getpid(),
+            )
+        raise
 
 
 def _index_unlocked(rebuild=False, log=lambda s: None):

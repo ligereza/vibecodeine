@@ -44,6 +44,16 @@ import urllib.parse
 import urllib.request
 
 try:
+    from cultura.mak_conductor.runtime import active_enabled, dispatch_sync
+except ImportError:  # pragma: no cover - direct MAK deployment
+    sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH", "/home/mak/flujo/cultura"))
+    try:
+        from mak_conductor.runtime import active_enabled, dispatch_sync
+    except ImportError:
+        active_enabled = lambda: False
+        dispatch_sync = None
+
+try:
     import fcntl
 except ImportError:  # pragma: no cover - Windows falls back to thread lock
     fcntl = None
@@ -560,8 +570,30 @@ def ciclo():
 
 
 def main():
+    if active_enabled() and dispatch_sync is not None:
+        payload = {"bucket": int(datetime.datetime.now().timestamp() // 600),
+                   "requires_human": True}
+
+        def handle(_job):
+            result = _main_unlocked()
+            return {"validated": isinstance(result, dict), "result": result,
+                    "artifacts": [{
+                        "kind": "capataz_cycle_manifest",
+                        "content": json.dumps(result, sort_keys=True),
+                        "staging_path": BITACORA,
+                    }]}
+
+        return dispatch_sync(
+            "capataz_cycle", payload, producer="platform.capataz.main",
+            handler=handle, template_version="capataz-cycle-v1",
+        )
+    return _main_unlocked()
+
+
+def _main_unlocked():
     entry = ciclo()
     print(json.dumps(entry, ensure_ascii=False, indent=2))
+    return entry
 
 
 if __name__ == "__main__":

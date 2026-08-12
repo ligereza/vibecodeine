@@ -1,6 +1,6 @@
 {
  "formato": "comandos/1",
- "total": 95,
+ "total": 96,
  "grupos": [
   "airdrop",
   "autonomia",
@@ -737,6 +737,15 @@
    "invocacion": "py -m flujo rd-db eventos",
    "grupo": "rd-db",
    "desc": "Lista los eventos registrados con su pack sugerido.",
+   "requiere": "",
+   "estado": "listo",
+   "destructivo": null
+  },
+  {
+   "cmd": "rd-db testeos",
+   "invocacion": "py -m flujo rd-db testeos",
+   "grupo": "rd-db",
+   "desc": "Show only the internal summary of imported testing evidence.",
    "requiere": "",
    "estado": "listo",
    "destructivo": null

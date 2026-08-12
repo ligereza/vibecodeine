@@ -84,6 +84,19 @@ def test_visual_queue_can_be_disabled(tmp_path, monkeypatch):
 
     assert result["queued"] == 0
     assert "disabled" in result["errors"][0]
+    assert result["concepts"] == 2
+    assert result["not_queued"] == 2
+
+
+def test_visual_queue_is_opt_in_by_default(tmp_path, monkeypatch):
+    annex = _annex(tmp_path)
+    monkeypatch.delenv("MAK_AUTO_ICONOS", raising=False)
+
+    result = worker.enqueue_annex_icons(str(annex))
+
+    assert result["queued"] == 0
+    assert result["disabled"] is True
+    assert result["not_queued"] == 2
 
 
 def test_visual_queue_respects_icon_limit(tmp_path, monkeypatch):
@@ -96,3 +109,5 @@ def test_visual_queue_respects_icon_limit(tmp_path, monkeypatch):
 
     assert result["queued"] == 1
     assert len(prompts) == 1
+    assert result["dropped"] == 1
+    assert result["not_queued"] == 1
