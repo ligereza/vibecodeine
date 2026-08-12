@@ -58,6 +58,15 @@ def test_autonomy_status_surfaces_quarantine(tmp_path):
     assert status["next_actions"] == ["review_quarantined_evidence"]
 
 
+def test_open_prs_treats_gh_timeout_as_unavailable(monkeypatch):
+    def timed_out(*_args, **_kwargs):
+        raise autonomia.subprocess.TimeoutExpired("gh", 30)
+
+    monkeypatch.setattr(autonomia.subprocess, "run", timed_out)
+
+    assert autonomia._open_prs() == []
+
+
 def test_autonomy_status_derives_operational_surface(monkeypatch, tmp_path):
     monkeypatch.setattr(autonomia, "_branch_state", lambda: {
         "current": "mak",
