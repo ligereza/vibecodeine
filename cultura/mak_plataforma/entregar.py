@@ -24,6 +24,17 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
+
+try:
+    from cultura.mak_conductor.runtime import active_enabled, dispatch_sync
+except ImportError:  # pragma: no cover - direct MAK deployment
+    sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH", "/home/mak/flujo/cultura"))
+    try:
+        from mak_conductor.runtime import active_enabled, dispatch_sync
+    except ImportError:
+        active_enabled = lambda: False
+        dispatch_sync = None
 
 try:
     import fcntl
@@ -339,6 +350,30 @@ def entregar_una(job, dry_run):
 
 
 def main():
+    if (active_enabled() and dispatch_sync is not None and
+            "--dry-run" not in sys.argv[1:]):
+        payload = {"argv": sys.argv[1:], "bucket": int(time.time() // 21600),
+                   "requires_human": True}
+
+        def queued_delivery(_job):
+            with _exclusive_delivery_lock():
+                result_code = _main_unlocked()
+            return {
+                "validated": result_code == 0,
+                "result_code": result_code,
+                "artifacts": [{
+                    "kind": "repo_delivery_manifest",
+                    "content": json.dumps(
+                        dict(payload, result_code=result_code), sort_keys=True),
+                    "staging_path": STATE,
+                }],
+            }
+
+        result = dispatch_sync(
+            "repo_delivery", payload, producer="platform.entregar.main",
+            handler=queued_delivery, template_version="repo-delivery-v1",
+        )
+        return int((result or {}).get("result_code", 2))
     with _exclusive_delivery_lock():
         return _main_unlocked()
 

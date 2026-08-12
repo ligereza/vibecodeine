@@ -8,10 +8,12 @@ research.py / panel.py / cola.py. Stdlib-only (urllib), Python 3.11.
 Keys: ~/n8n-local/research.env (chmod 600) o el archivo que diga
 la variable de entorno RESEARCH_ENV. NUNCA hardcodear keys aca.
 """
+import hashlib
 import json
 import os
 import re
 import socket
+import sys
 import tempfile
 import threading
 import time
@@ -26,6 +28,32 @@ try:
 except ImportError:
     score_provider_health = None
     parse_provider_error = None
+
+try:
+    from cultura.mak_conductor.runtime import (external_budget_limit,
+                                                reserve_external_call,
+                                                shared_gpu_lease,
+                                                dispatch_sync, active_enabled,
+                                                enqueue_shadow, observe_shadow)
+except ImportError:  # mirrored MAK runtime imports from the repo's cultura dir
+    sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH",
+                                     "/home/mak/flujo/cultura"))
+    try:
+        from mak_conductor.runtime import (external_budget_limit,
+                                           reserve_external_call,
+                                           shared_gpu_lease,
+                                           dispatch_sync, active_enabled,
+                                           enqueue_shadow, observe_shadow)
+    except ImportError:  # standalone legacy research checkout
+        external_budget_limit = None
+        reserve_external_call = None
+        from contextlib import nullcontext
+        def shared_gpu_lease(**_kwargs):
+            return nullcontext()
+        dispatch_sync = None
+        enqueue_shadow = observe_shadow = None
+        def active_enabled():
+            return False
 
 try:
     import fcntl
@@ -634,6 +662,10 @@ def watsonx_vision(prompt, imagen_b64, model=None, max_tok=700, temperatura=0.1,
     Temperatura baja por lo mismo: un modelo tibio rellena `productora` con algo
     plausible. Un campo vacio es una respuesta correcta; uno inventado no.
     """
+    if (reserve_external_call is not None and
+            not reserve_external_call(
+                "watsonx", limit_count=external_budget_limit("watsonx"))):
+        raise RuntimeError("external_budget_exceeded:watsonx")
     return _watsonx_llamar(
         [{"role": "user", "content": [
             {"type": "text", "text": prompt},
@@ -768,8 +800,11 @@ class LLM:
         return (r.get("response") or "").strip()
 
     def _ollama(self, system, user, max_tok):
-        return self._ollama_like(os.environ["OLLAMA_BASE_URL"],
-                                 os.environ["OLLAMA_MODEL"], system, user, max_tok)
+        with shared_gpu_lease(job_id="research-ollama-%s" % os.getpid(),
+                              estimated_vram_mb=2500):
+            return self._ollama_like(os.environ["OLLAMA_BASE_URL"],
+                                     os.environ["OLLAMA_MODEL"], system, user,
+                                     max_tok)
 
     def _win(self, system, user, max_tok):
         """WIN: la RTX 4070 del notebook, alcanzable solo por el cable directo.
@@ -815,9 +850,76 @@ class LLM:
             if name not in fns or not self._has_key(name):
                 continue
             try:
-                text = (fns[name](system, user, max_tok, model)
-                        if model and name in PROVIDERS_CON_MODELO
-                        else fns[name](system, user, max_tok))
+                if (name in ("watsonx", "groq", "cerebras", "azure") and
+                        reserve_external_call is not None and
+                        not active_enabled() and
+                        not reserve_external_call(
+                            name, limit_count=external_budget_limit(name))):
+                        last = name + " presupuesto acotado agotado"
+                        self.errors.append(last)
+                        continue
+                fn = fns[name]
+                if dispatch_sync is not None and active_enabled():
+                    def handle(job, _fn=fn, _provider=name):
+                        if (_provider in ("watsonx", "groq", "cerebras", "azure")
+                                and reserve_external_call is not None
+                                and not reserve_external_call(
+                                    _provider,
+                                    limit_count=external_budget_limit(_provider))):
+                            raise RuntimeError(
+                                "external_budget_exceeded:%s" % _provider)
+                        value = (_fn(system, user, max_tok, model)
+                                 if model and _provider in PROVIDERS_CON_MODELO
+                                 else _fn(system, user, max_tok))
+                        return {"validated": bool(str(value or "").strip()),
+                                "provider": _provider, "text": value}
+                    queued = dispatch_sync(
+                        "llm_call", {
+                            "provider": name, "model": model or "",
+                            "system": str(system), "user": str(user),
+                            "prompt_hash": hashlib.sha256(
+                                (str(system) + "\n" + str(user)).encode(
+                                    "utf-8")).hexdigest(),
+                            "prompt_length": len(str(system)) + len(str(user)),
+                            "max_tokens": max_tok,
+                        }, producer="research.LLM.call", handler=handle,
+                        estimated_vram_mb=2500 if name == "ollama" else 0,
+                        model=model or name, template_version="llm-call-v1")
+                    text = (queued or {}).get("text", "")
+                else:
+                    shadow_job = (enqueue_shadow(
+                        "llm_call", {
+                            "provider": name, "model": model or "",
+                            "prompt_hash": hashlib.sha256(
+                                (str(system) + "\n" + str(user)).encode(
+                                    "utf-8")).hexdigest(),
+                            "prompt_length": len(str(system)) + len(str(user)),
+                            "max_tokens": max_tok,
+                        }, producer="research.LLM.call", estimated_vram_mb=(
+                            2500 if name == "ollama" else 0),
+                        model=model or name, template_version="llm-call-v1")
+                        if enqueue_shadow is not None else None)
+                    shadow_started = time.time()
+                    try:
+                        text = (fn(system, user, max_tok, model)
+                                if model and name in PROVIDERS_CON_MODELO
+                                else fn(system, user, max_tok))
+                    except Exception as exc:
+                        if observe_shadow is not None:
+                            observe_shadow(
+                                shadow_job, producer="research.LLM.call",
+                                result_status="FAILED",
+                                payload={"provider": name,
+                                         "error": str(exc)[:2000]},
+                                started_at=shadow_started, owner_pid=os.getpid())
+                        raise
+                    if observe_shadow is not None:
+                        observe_shadow(
+                            shadow_job, producer="research.LLM.call",
+                            result_status="READY" if text else "EMPTY",
+                            validated=bool(str(text or "").strip()),
+                            payload={"provider": name},
+                            started_at=shadow_started, owner_pid=os.getpid())
                 if text:
                     self.stats[name] = self.stats.get(name, 0) + 1
                     try:
@@ -883,6 +985,13 @@ def consulta_de(tema, tope=TOPE_CONSULTA):
 def tavily_search(query, depth="basic", max_results=5, errors=None):
     """basic = 1 credito, advanced = 2. 1000/mes gratis."""
     load_env()
+    if (reserve_external_call is not None and
+            not reserve_external_call(
+                "tavily", limit_count=external_budget_limit("tavily"))):
+        error = "external_budget_exceeded:tavily"
+        if errors is not None:
+            errors.append(error)
+        return {"results": [], "answer": None, "error": error}
     try:
         _r_tavily = _http_json(
             "https://api.tavily.com/search",
