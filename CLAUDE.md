@@ -109,48 +109,28 @@ then applied to everyone. They are separated like this:
 | Software tests | runs them when touching the code they cover | same |
 | Verdict | the CI matrix, for both | same |
 
-MAK is a third case: it is not an agent that edits the repo, it is a box running
-research/codex/plataforma. Its doctrine lives in
+MAK is the computational organism; the MAK Linux computer is its physical
+runtime node. The node runs research/codex/plataforma, but neither the node nor
+the organism is reducible to the Git checkout. Its doctrine lives in
 `cultura/mak_plataforma/doctrina/`, NOT in `context/` -- it was written for the
 box's local model and the Claudes kept reading it as their own.
 
-**MAK's code lives HERE, not on the box** (2026-07-26): a cron `MAK-REPO-SYNC`
-pulls `origin/main` every 10 minutes and copies `cultura/mak_plataforma`,
-`cultura/mak_research` and `cultura/mak_codex` over the running code. Editing
-the box over SSH does not stick -- the sync reverts it, measured the same day: a
-change applied at 21:49 was gone at 21:50. To change MAK, edit the mirror here
-and merge to main. Cause of this note: `RELEVO_MAK.md` said the opposite ("el
-organismo vive fuera del repo") and a whole session was worked against that
-premise. Retirement: if the sync is ever removed.
+**Historical sync note (measured 2026-07-26 to 2026-08-01):** a cron named
+`MAK-REPO-SYNC` was observed copying selected MAK code from `origin/main` into
+runtime mirrors, including `mak_plataforma`, `mak_research`, `mak_codex`, and
+`mak_curatoria`. The copy could overwrite a local mirror edit on its next run.
+Those measurements describe a transport mechanism at that time; they do not
+define system authority. The current contract is that Windows and MAK local
+surfaces are authoritative for material existence and current state. Any sync
+direction must be verified at runtime and represented by an explicit manifest
+before it is trusted or used for promotion. Git is a reviewed projection, not
+the complete MAK runtime inventory.
 
-**The sync DOES cover `cultura/mak_curatoria` since some point before
-2026-07-30** -- measured that day by reading the box's crontab: the `MAK-REPO-SYNC`
-line copies `mak_plataforma`, `mak_research`, `mak_codex` AND `mak_curatoria`.
-The note that used to live here said the opposite and was stale.
-
-**The direction of the copy is CLOSED, and the repo wins.** Measured
-2026-08-01 by reading the box's crontab and diffing the files: the sync line is
-`cp -r` -- no `-u` -- so it overwrites every run regardless of timestamps.
-Compared file by file that day: **75 python files under `~/plataforma`,
-`~/research`, `~/codex` and `~/curatoria`, 0 different from `origin/main`, 0
-missing.** An edit made on the box lasts at most ten minutes; to change MAK you
-edit the mirror here and merge to main.
-
-This paragraph said the opposite until that day, and the cost was not
-cosmetic: it claimed the sync was `cp -ru` and that "a single edit made on the
-box freezes that file forever", which reads as *MAK cannot be fixed from the
-repo* -- and that is the one thing anybody arriving here needs to know is
-false. It also cited `revisor.py` as 165 lines in the repo against 216 on the
-box, with `enforce_pr()` living only on one disk. Measured the same day: **216
-and 216, identical.** That drift was closed at some point and nobody updated
-the rule, so the rule kept sending people away from the fix.
-
-Same defect shape as the `mak`-branch wall in `context/LAST_HANDOFF.md`, found
-the same day: a sentence that described a real state once, kept being read as a
-measurement after it stopped being true. `cultura/mak_plataforma/coherencia.py`
-measures the drift in both directions; run it on the box before trusting this
-paragraph again. Retirement: when that detector runs on its own and this
-paragraph becomes a duplicate of it.
+The old comparison of 75 Python files and the old `revisor.py` line counts are
+historical evidence only. They do not establish that Git contains the complete
+runtime or that the repository wins over a local surface. Verify current drift
+with `cultura/mak_plataforma/coherencia.py` and the transport manifest before
+acting; retire this note when that detector and manifest are authoritative.
 
 ## Mission
 
@@ -285,27 +265,43 @@ CI. Squash merges keep the PR author as the author (a merge of a MAK PR shows up
 in `git log` as a miskirabit commit: that is normal, it went through the gate, it
 is not a direct push).
 
-Branch topology (2026-07-25, user's order; replaces the 07-23 one that declared 4
-lines): the repo has THREE lines and no more.
+Repository topology (2026-08-13): within Git, `main` is the only canonical
+reviewed history. It is a reproducibility and publication checkpoint, not the
+complete organism and not the authority over local material.
 
-- `main` = EVERYTHING, without exception. It is the complete version; the lines
-  come DOWN from main.
-- `rd` = NGO / data / grants.
-- `iskvw` = curation / artistic / artwork (formerly `portafolio`, renamed 07-23).
+- Physical Windows and MAK Linux surfaces are authoritative for files,
+  databases, memories, services, mounted storage, and generated outputs.
+- The transversal catalog records IDs, locations, hashes, provenance,
+  relations, owners, statuses, and transport eligibility without replacing
+  the unified knowledge database or raw material evidence.
+- MAK, RD / Reduciendo Dano, and Portfolio / ISKVW are sovereign organisms.
+  Windows and MAK Linux are physical nodes; Data, Capabilities, Products,
+  Operations, and Tests are system boundaries that may be distributed across
+  those nodes and Git projections.
+- New work uses a temporary `codex/*` worktree from `origin/main` and returns
+  through a reviewed PR to `main`.
+- `dependabot/*` branches are temporary automated updates and use the same
+  review gate.
+- `mak`, `rd`, `iskvw`, `mejoras`, and `mak-svg` are transition/history refs.
+  Preserve and reconcile them deliberately; do not create new work there.
 
-`mejoras` was folded into main and retired: a separate infra line kept turning
-main into a subset, which is the problem this topology fixes. Repo/infra work is
-born from main and returns to main.
+MAK remains the computational producer, curator, researcher, and coordinator;
+RD retains NGO sanitary, ethical, legal, and publication governance; Portfolio
+retains authorial and human governance. The target data architecture is one
+logical knowledge database with bounded schemas for core, MAK, RD, Portfolio,
+typed relations, products, and audit. Shared storage does not collapse
+ownership or publication authority. Assertions retain evidence, producer,
+owner, confidence/status, visibility, and version.
 
-There is a fourth branch, `mak`, and it is NOT a line: it is MAK's INBOX. Nothing
-lives there; its only exit is a PR into main. If it ever stops draining, it has
-become a line and must be corrected.
-
-MAK and agents push or open PRs against THEIR line, never against main. New
-feature: born in its line and returns to its line. Line -> main promotion = a PR
-curated by the director, green CI mandatory. To bring a line up to date:
-`git merge origin/main` (never rewrite history). Work that does not fit a line:
-escalate before inventing a loose branch.
+Current SQLite files are physical migration inputs or projections, not
+independent authorities: the Windows enriched RD file is a read-only
+`CANDIDATE_AUTHORITY` migration candidate and the MAK reduced file is a
+read-only `LEGACY_PROJECTION`; Portfolio DB is `NOT_CONFIGURED` as a separate
+DB because it belongs in the target Portfolio schema. One primary writer and
+versioned sync direction are future reconciliation outputs; bidirectional
+writes are forbidden meanwhile. Runtime mirrors, memories, raw material, and
+generated products keep provenance and move only through explicit manifests.
+No mass folder move or database migration is implied by this contract.
 
 ## How to work
 

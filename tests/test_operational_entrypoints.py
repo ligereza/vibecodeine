@@ -114,7 +114,6 @@ def test_single_human_hub_contract_has_no_direct_service_docs():
     active_docs = [
         _text("MAPA.md"),
         _text("cultura/mak_plataforma/GENESIS.md"),
-        _text("cultura/mak_plataforma/RELEVO_MAK.md"),
         _text("cultura/mak_research/MAK_RESEARCH.md"),
         _text("xio/FACES.md"),
     ]

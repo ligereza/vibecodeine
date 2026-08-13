@@ -15,6 +15,7 @@ on:
       - 'scripts/piezas_*.py'
       - '.github/workflows/render_piezas_vectoriales.yml'
   pull_request:
+    branches: [main]
     paths:
       - 'projects/piezas_vectoriales/**'
       - 'tools/piezas_vectoriales/**'

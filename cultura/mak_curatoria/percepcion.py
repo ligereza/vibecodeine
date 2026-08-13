@@ -846,11 +846,7 @@ def vision_imagen(path: str, timeout: int = 120, fuente: str = "rd",
     # corpus run must not die because the cloud did.
     if os.environ.get("PERCEPCION_VISION", "ollama").lower() == "watsonx":
         try:
-            # Se busca por el sys.path normal PRIMERO. La version anterior
-            # insertaba `~/research` en la posicion 0, o sea una ruta absoluta
-            # del home ganandole a todo: imposible correr una copia parchada
-            # para probar, e imposible fuera de la caja. El home queda como
-            # ULTIMO recurso, que es lo que de verdad es.
+            # The local checkout wins; the MAK home is only the last fallback.
             try:
                 from research_lib import watsonx_vision
             except ImportError:
@@ -873,7 +869,7 @@ def vision_imagen(path: str, timeout: int = 120, fuente: str = "rd",
             vision_fallback = "watsonx:%s" % d.get("error")
         except Exception as exc:                 # noqa: BLE001 - cae a ollama
             vision_fallback = "watsonx:%s" % str(exc)[:120]
-            print("aviso: watsonx no pudo, caigo a ollama (%s)" % str(exc)[:120],
+            print("watsonx fallo; caigo a ollama (%s)" % str(exc)[:120],
                   flush=True)
 
     payload = json.dumps({

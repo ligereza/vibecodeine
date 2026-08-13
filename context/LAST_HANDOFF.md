@@ -1,76 +1,57 @@
 # LAST_HANDOFF - Faro
 
 Updated: 2026-08-13
-Status: local checkpoint pushed. Windows and MAK local surfaces determine
-what exists and what is current. Git is a reviewed transport projection.
+Status: local reconciliation is complete for the selected code scope. Windows
+and MAK local surfaces determine material truth; Git is transport and review
+projection only.
 
-## Authority
+## Authority and topology
 
-- Local Win and MAK surfaces decide what exists and what is current.
-- Win and MAK have different physical structures. Do not force symmetry.
-- Contradictory reports are preserved and classified; work is not undone.
-- Machine-readable code and operational metadata use English ASCII where
-  practical. Existing Spanish identifiers remain for compatibility. Human RD
-  and Portfolio products keep proper Spanish.
-- Git is transport and review projection only after local validation.
-
-## Three-plane implementation
-
-- Git is a small reproducible transport projection.
 - Windows is the director and creative production node.
 - MAK is the operational and structured-knowledge node.
-- Win implementation:
-  src/flujo/knowledge/three_plane.py
-  src/flujo/knowledge/__main__.py
-  schemas/knowledge/three_plane_manifest.schema.json
-  docs/THREE_PLANE_CONTRACT.md
-  tests/test_three_plane_manifest.py
-- Win focused plane, migration, autonomy, README/SVG, and reconciliation
-  tests passed. py_compile passed.
-- DuckDB 1.5.5 is installed on Win; local requirements declare duckdb>=1.5.0.
-- git diff --check passes. Remaining CRLF messages are existing normalization
-  warnings in historical files, not errors.
+- MAK, RD, and Portfolio are sovereign organisms with separate ownership and
+  publication gates. They share one logical knowledge database target.
+- Git `main` is the canonical reviewed history. `codex/*` and `dependabot/*`
+  are temporary work. `mak`, `rd`, `iskvw`, `mejoras`, and `mak-svg` are
+  transition/history refs; no new work starts there.
+- No bidirectional sync is active. Runtime mirrors, databases, indexes, raw
+  media, memories, and credentials remain on their owning local surface.
 
-## MAK state
+## Reconciliation completed
 
-- NUDO checkout remains dirty and preserved:
-  /home/mak/flujo, branch codex/nudo-rd-evidence,
-  HEAD 4b8453cbf17b25431e091a4a6fe3f09a819a0ffb.
-- Do not reset, clean, checkout, pull, merge, stash, commit, or push NUDO
-  until the final scope audit explicitly authorizes transport.
-- NUDO local fix adds sanitize_text, public_bytes, and Windows-root handling
-  to tools/recovered/import_claude_sessions.py. Its focused test passes.
-- MAK consolidation outputs remain outside the checkout under
-  /home/mak/indexes/mak-consolidation-20260813/.
-- The debug report has 8 atomic evaluations: 3 resolved, 4 unresolved, and
-  1 review_required. Original manifests remain unchanged.
-- MAK installed DuckDB 1.5.5 in /home/mak/vibecodeine/.venv.
+- NUDO code and tests were copied from MAK branch `codex/nudo-rd-evidence`
+  into the active MAK checkout and the Win transport surface.
+- Three-plane contract, unified-knowledge reconciliation/migration code,
+  branch policy, workflows, and operational gates are present on both nodes.
+- The obsolete `cultura/mak_plataforma/RELEVO_MAK.md` was removed from both
+  active checkouts and preserved in the local rollback snapshot.
+- MAK rollback snapshot:
+  `/home/mak/rollback/local-reconciliation-20260813/`.
+- Post-NUDO local index:
+  `/home/mak/indexes/mak-consolidation-20260813/mak_local_reality_index_post_nudo.json`.
+  It validates 10 roots and 24 selected artifacts with no missing artifacts.
+- No raw media, README/SVG, databases, indexes, or private recovered exports
+  were promoted to Git.
 
-## Test phase
+## Evidence
 
-- Full focused MAK department suite passed after DuckDB installation,
-  including recovered import and inferential archaeology.
-- No code, source media, service, provider, or database bug remains in the
-  tested scopes.
-- Unresolved/review_required manifest findings are data review items, not
-  test failures.
+- Win focused suite passed, including three-plane, migration, NUDO, sync,
+  README/SVG, and department tests.
+- MAK focused suite passed in `/home/mak/vibecodeine/.venv`, including the
+  same reconciliation and NUDO scopes.
+- DuckDB `1.5.5` is installed in the tested Win and MAK environments.
+- Real RD SQLite reconciliation was read-only: 20 tables, 11 identical,
+  1 conflict, 8 candidate-only, 0 legacy-only; writes were false and
+  promotion remains `human_review_required`.
+- Source hashes after reconciliation remain unchanged: Win `rd.db` is
+  `c3ddea0c...`, MAK `rd.db` is `30aead4c...`; physical divergence is kept.
+- Optional missing tools are represented as deferred capability states;
+  ZIP structure uses the standard-library fallback.
 
-## Transport status
+## Safety and next action
 
-- Win checkpoint pushed to origin/codex/three-plane-consolidation.
-- Commit: 307631a feat: establish local three-plane knowledge transport.
-- Unrelated dirty Win files remain local and were not included in the push.
-- MAK NUDO checkpoint is separate on origin/codex/nudo-rd-evidence.
-- Operational manifests, DuckDB environment state, and raw material remain
-  local by design.
-
-## Next action
-
-Human review of the two pushed checkpoints, followed by deliberate PR review
-or merge. Do not promote unrelated dirty Win files or local operational
-outputs without a new scoped audit.
-
-## Safety
-
-- No mass folder move, provider call, raw media scan, or README/SVG edit.
-- Preserve local department work and NUDO evidence.
+- Protected SVG and recovered raw material remain local and unpromoted.
+- Do not choose a database writer, merge main, or delete transition refs from
+  this handoff alone.
+- Stage only the reviewed structural and NUDO/Research scope, run the final
+  tests and whitespace checks, then push the scoped checkpoint branches.

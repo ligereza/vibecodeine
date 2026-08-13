@@ -42,19 +42,77 @@ accents from human-readable values merely to make machine data ASCII.
 - Do not commit, push, merge, delete branches, delete tags, or reset a checkout
   unless the user explicitly requests that operation in the current session.
 
-## Repository topology
+## Authority, organisms, nodes, and Git transport
 
-Only these four branches are canonical:
+The authority hierarchy is explicit:
 
-- `main`: complete, reviewed system.
-- `mak`: machine/inbox integration line.
-- `rd`: Reduciendo Dano work.
-- `iskvw`: artistic archive and public surface.
+1. Physical/local material surfaces on Windows and the MAK Linux computer:
+   files, databases, memories, services, mounted storage, and generated
+   outputs. These surfaces determine what exists and what is current.
+2. The transversal catalog and coordination layer: it indexes material where
+   it lives and records IDs, locations, hashes, provenance, relations, owner,
+   status, and transport eligibility. It references sovereign data; it does
+   not absorb or replace it.
+3. Git: a reviewed reproducibility and publication projection. Git history is
+   useful transport evidence, but it never decides what exists in Windows or
+   MAK and is not the complete runtime inventory.
 
-Do not treat a fifth branch as canonical. Verify the checkout before editing;
-the Linux box may have an old Capataz branch even when Windows has the correct
-four remote refs. Do not reset or clean that box blindly: preserve its work,
-compare hashes, then reconcile deliberately.
+There are three sovereign organisms:
+
+- `MAK`: computational producer, curator, researcher, and coordinator.
+- `RD` / Reduciendo Dano: NGO with its own sanitary, ethical, legal, and
+  publication governance.
+- `Portfolio` / ISKVW: the artist's archive with its own authorial and human
+  governance.
+
+Windows and the MAK computer are physical nodes, not organisms or domains.
+Either node may host material belonging to any organism. Capabilities are
+replaceable tools; products are derived outputs; transport manifests describe
+how selected material moves between surfaces. MAK may produce research or
+curation for itself, RD, Portfolio, or a transversal relation. Producer,
+owner, subject domain, final authority, status, visibility, and evidence must
+remain separate.
+
+The target data architecture is one logical knowledge database, not one
+undifferentiated table. Its bounded schemas are `core` (identity, context,
+provenance), `mak` (operations, research, curation), `rd` (scientific, field,
+safety), `portfolio` (works, records, authorial curation), `relations` (typed
+cross-domain links), `products` (publication projections), and `audit`.
+Every assertion and relationship carries source/evidence, producer, owner,
+confidence/status, visibility, and timestamp/version. Raw and binary material
+remains on Windows, MAK, or mounted storage; the knowledge database stores
+its URI and hash.
+
+This is a target architecture, not the current physical state. The measured
+Windows enriched RD SQLite is a read-only `CANDIDATE_AUTHORITY` migration
+input, not an established system of record; the measured MAK reduced SQLite
+is a read-only `LEGACY_PROJECTION`. Portfolio has no separate configured DB
+and remains `NOT_CONFIGURED` as a standalone database because Portfolio will
+be a schema in the logical database. Local SQLite files are migration inputs,
+caches, or projections. A single primary writer is the intended end state;
+bidirectional writes are prohibited until reconciliation defines a writer and
+versioned sync direction. Search and vector indexes are derived and
+rebuildable, never knowledge authority.
+
+Within Git only, `main` is the canonical reviewed history:
+
+- `main`: selected, reproducible code, contracts, tests, migrations, and
+  approved projections. It is not the complete organism.
+- `codex/*`: temporary worktree branches for bounded changes; they return
+  through a reviewed PR to `main`.
+- `dependabot/*`: temporary automated dependency-update branches using the
+  same gate.
+
+The old refs `mak`, `rd`, `iskvw`, `mejoras`, and `mak-svg` are
+transition/history refs. Preserve them until their contents are reconciled and
+a separate cleanup decision is made; do not create new work there. `mak-svg`
+is a historical SVG experiment, not a permanent artistic line. No mass folder
+move is implied: logical indexing and an explicit transport manifest precede
+any physical migration or Git promotion.
+
+Verify the checkout before editing. The Linux box may have an old branch even
+when Windows has the correct `main` ref. Do not reset or clean that box
+blindly: preserve its work, compare hashes, then reconcile deliberately.
 
 ## System boundaries
 
@@ -87,7 +145,8 @@ compare hashes, then reconcile deliberately.
   9-second playback, frame order, masks, `readme-source-static`, and playback
   delays. The canonical vessel currently contains 150 masks and 100 `tspan`
   elements; any experiment involving `clipPath`, remapped frames, or altered
-  timing belongs outside `main`, `mak`, `rd`, and `iskvw`. Do not redesign the
+  timing belongs outside `main`; use a temporary `codex/*` worktree for
+  experiments. Do not redesign the
   vessel without a new artistic instruction. Domain migration is later than
   archive separation, export independence, and a stable public surface.
 
