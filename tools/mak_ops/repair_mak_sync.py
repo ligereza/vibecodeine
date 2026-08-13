@@ -1,21 +1,10 @@
 #!/usr/bin/env python3
-"""Repara de forma conservadora el sync GitHub -> MAK.
+"""Install the non-destructive MAK deploy path.
 
-Uso desde Windows:
-  py repair_mak_sync.py --apply --output mak_sync_repair.md
-
-Hace SOLO lo siguiente en MAK:
-1. detiene si el checkout tiene cambios sin commit;
-2. crea una rama backup/rescue apuntando al HEAD actual;
-3. respalda el crontab actual en ~/plataforma/backups/;
-4. corrige MAK-REPO-SYNC para actualizar refs/remotes/origin/main;
-5. sincroniza una vez el checkout a origin/main;
-6. copia los cuatro espejos a los directorios vivos con el mismo cp -ru ya
-   usado por el cron;
-7. verifica branch, hashes, cron y APIs.
-
-No toca secretos, datos RD, servicios, red, XIO, modelos ni GitHub. No borra
-el commit previo: queda anclado en la rama backup/rescue creada antes del reset.
+The human checkout at ``/home/mak/flujo`` is never reset, checked out, or used
+as the deployment worktree. The deploy worktree is disposable and the live
+mirror receives only a clean ``origin/main`` commit through
+``sync_mak_safe.py``.
 """
 from __future__ import annotations
 
@@ -27,95 +16,99 @@ from pathlib import Path
 
 HOST = "%s@%s" % (os.environ.get("MAK_USER", "mak"),
                   os.environ.get("MAK_HOST", "192.168.50.2"))
+SAFE_SCRIPT = Path(__file__).with_name("sync_mak_safe.py")
 REMOTE = r'''set -eu
 STAMP=$(date +%Y%m%d_%H%M%S)
 REPO="$HOME/flujo"
-PLAT="$HOME/plataforma"
-BACKUPS="$PLAT/backups"
-SYNC='*/10 * * * * git -C /home/mak/flujo fetch -q origin +refs/heads/main:refs/remotes/origin/main && git -C /home/mak/flujo checkout -q -B main origin/main && git -C /home/mak/flujo reset -q --hard origin/main && cp -ru /home/mak/flujo/cultura/mak_plataforma/. /home/mak/plataforma/ && cp -ru /home/mak/flujo/cultura/mak_research/. /home/mak/research/ && cp -ru /home/mak/flujo/cultura/mak_codex/. /home/mak/codex/ && cp -ru /home/mak/flujo/cultura/mak_curatoria/. /home/mak/curatoria/ # MAK-REPO-SYNC'
-
+DEPLOY="$HOME/flujo-deploy"
+BACKUPS="$HOME/plataforma/backups"
 say() { printf '\n@@ %s @@\n' "$1"; }
 fail() { say BLOCKED; printf '%s\n' "$1"; exit 20; }
 
-[ -d "$REPO/.git" ] || fail "No existe checkout Git en $REPO"
-
-say BEFORE
-printf 'branch='; git -C "$REPO" branch --show-current
-printf 'head='; git -C "$REPO" rev-parse HEAD
-printf 'status='; git -C "$REPO" status --porcelain
-
-# Nunca resetear un trabajo sin commit: no hay forma segura de reconstruirlo.
+[ -d "$REPO/.git" ] || fail "No existe checkout humano en $REPO"
 if [ -n "$(git -C "$REPO" status --porcelain)" ]; then
-  fail "El checkout tiene cambios sin commit. No se modifico nada. Commit/stash humano requerido."
+  fail "El checkout humano tiene cambios sin commit. No se modifico nada."
+fi
+
+if [ ! -d "$DEPLOY/.git" ]; then
+  git -C "$REPO" worktree add --detach "$DEPLOY" origin/main
+else
+  [ -z "$(git -C "$DEPLOY" status --porcelain)" ] ||
+    fail "El deploy worktree tiene cambios sin commit."
 fi
 
 mkdir -p "$BACKUPS"
-BACKUP_BRANCH="backup/pre-sync-$STAMP"
-git -C "$REPO" branch "$BACKUP_BRANCH" HEAD
-crontab -l > "$BACKUPS/crontab_pre_sync_$STAMP.txt"
-
-# Reemplaza SOLO la linea marcada. Si no existe, agrega exactamente una.
-TMP=$(mktemp)
-(crontab -l | grep -v 'MAK-REPO-SYNC' || true) > "$TMP"
-printf '%s\n' "$SYNC" >> "$TMP"
-crontab "$TMP"
-rm -f "$TMP"
-
+crontab -l > "$BACKUPS/crontab_pre_safe_sync_$STAMP.txt"
 say BACKUP
-printf 'backup_branch=%s\n' "$BACKUP_BRANCH"
-printf 'crontab_backup=%s\n' "$BACKUPS/crontab_pre_sync_$STAMP.txt"
-
-say SYNC
-# El refspec explicito arregla el bug: `git fetch origin main` solo deja FETCH_HEAD.
-git -C "$REPO" fetch -q origin +refs/heads/main:refs/remotes/origin/main
-git -C "$REPO" checkout -q -B main origin/main
-git -C "$REPO" reset -q --hard origin/main
-cp -ru "$REPO/cultura/mak_plataforma/." "$HOME/plataforma/"
-cp -ru "$REPO/cultura/mak_research/." "$HOME/research/"
-cp -ru "$REPO/cultura/mak_codex/." "$HOME/codex/"
-cp -ru "$REPO/cultura/mak_curatoria/." "$HOME/curatoria/"
-
-say AFTER
-printf 'branch='; git -C "$REPO" branch --show-current
-printf 'head='; git -C "$REPO" rev-parse HEAD
-printf 'origin_main='; git -C "$REPO" rev-parse origin/main
-printf 'status='; git -C "$REPO" status --porcelain
-printf 'cron='; crontab -l | grep 'MAK-REPO-SYNC' || true
-
-say APIS
-for url in http://127.0.0.1:8890/ http://127.0.0.1:8891/ http://127.0.0.1:8900/api/salud; do
-  printf '%s ' "$url"
-  curl -sS -m 5 -o /dev/null -w 'HTTP=%{http_code}\n' "$url" || true
-done
+printf 'crontab_backup=%s\n' "$BACKUPS/crontab_pre_safe_sync_$STAMP.txt"
+say READY
+printf 'human_checkout=%s\n' "$REPO"
+printf 'deploy_worktree=%s\n' "$DEPLOY"
+printf 'safe_script=/home/mak/bin/mak_sync_safe.py\n'
 '''
 
 
-def run_remote() -> tuple[int, str, str]:
+def run_ssh(script: str) -> tuple[int, str, str]:
     try:
-        r = subprocess.run(
-            ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10", HOST, "bash", "-s"],
-            input=REMOTE.encode(), capture_output=True, text=False, timeout=90, check=False,
+        result = subprocess.run(
+            ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10", HOST,
+             "bash", "-s"],
+            input=script.encode(), capture_output=True, text=False, timeout=90,
+            check=False,
         )
-        return r.returncode, r.stdout.decode("utf-8", "replace"), r.stderr.decode("utf-8", "replace")
+        return (result.returncode, result.stdout.decode("utf-8", "replace"),
+                result.stderr.decode("utf-8", "replace"))
     except FileNotFoundError:
         return 127, "", "No se encontro ssh en Windows."
     except subprocess.TimeoutExpired:
-        return 124, "", "La reparacion excedio 90 segundos. No reintentes sin revisar el estado remoto."
+        return 124, "", "La provision excedio 90 segundos."
+
+
+def install_script() -> tuple[int, str, str]:
+    try:
+        result = subprocess.run(
+            ["scp", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10",
+             str(SAFE_SCRIPT), f"{HOST}:/tmp/mak_sync_safe.py"],
+            capture_output=True, text=True, timeout=30, check=False,
+        )
+        if result.returncode != 0:
+            return result.returncode, result.stdout, result.stderr
+    except FileNotFoundError:
+        return 127, "", "No se encontro scp en Windows."
+    install = """set -eu
+mkdir -p /home/mak/bin
+install -m 0755 /tmp/mak_sync_safe.py /home/mak/bin/mak_sync_safe.py
+rm -f /tmp/mak_sync_safe.py
+"""
+    return run_ssh(install)
 
 
 def main() -> int:
-    p = argparse.ArgumentParser(description="Reparacion conservadora de MAK-REPO-SYNC")
-    p.add_argument("--apply", action="store_true", help="requerido: confirma backup + cambio cron + sync")
-    p.add_argument("--output", default="mak_sync_repair.md")
-    a = p.parse_args()
-    if not a.apply:
-        print("No se hizo nada. Reejecuta con --apply tras revisar el proposito con --help.")
+    parser = argparse.ArgumentParser(description="Provision the safe MAK deploy path")
+    parser.add_argument("--apply", action="store_true",
+                        help="install the script and provision the disposable worktree")
+    parser.add_argument("--output", default="mak_sync_repair.md")
+    args = parser.parse_args()
+    if not args.apply:
+        print("No se hizo nada. Usa --apply despues de revisar el alcance.")
         return 2
-    code, out, err = run_remote()
+
+    code, out, err = install_script()
+    if code == 0:
+        code, provision_out, provision_err = run_ssh(REMOTE)
+        out = out + provision_out
+        err = err + provision_err
     now = dt.datetime.now().astimezone().isoformat(timespec="seconds")
-    report = f"# Reparacion MAK-REPO-SYNC\n\nFecha: `{now}`\nExit code: `{code}`\n\n## Salida remota\n\n```text\n{out.strip()}\n```\n\n## STDERR\n\n```text\n{err.strip() or '(vacio)'}\n```\n\n## Interpretacion\n\n- Exit `0` y `branch=main` con `head == origin_main`: sync reparado.\n- `@@ BLOCKED @@`: no se modifico checkout ni cron; hay cambios sin commit.\n- Otro exit code: no repetir a ciegas; adjunta este reporte al agente.\n"
-    Path(a.output).write_text(report, encoding="utf-8")
-    print(f"Reporte escrito: {Path(a.output).resolve()} (exit={code})")
+    report = (
+        "# Provision MAK safe sync\n\n"
+        f"Fecha: `{now}`\nExit code: `{code}`\n\n"
+        "## Salida remota\n\n```text\n"
+        f"{out.strip()}\n```\n\n## STDERR\n\n```text\n"
+        f"{err.strip() or '(vacio)'}\n```\n\n"
+        "La provision no resetea el checkout humano ni activa el cron por si sola.\n"
+    )
+    Path(args.output).write_text(report, encoding="utf-8")
+    print(f"Reporte escrito: {Path(args.output).resolve()} (exit={code})")
     return code
 
 
