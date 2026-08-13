@@ -458,6 +458,11 @@ def _aplicar_resultado_job(job, r):
         job["checkpoint"] = r.get("checkpoint", "")
         job["error"] = (r.get("tail") or "").strip()[:2000]
         return
+    if r.get("review"):
+        job["estado"] = "REVISAR"
+        job["path"] = os.path.basename(r["path"]) if r.get("path") else ""
+        job["error"] = (r.get("tail") or "quality gate requires review")[:2000]
+        return
     contract_error = _verify_result_contract(job, r)
     job["estado"] = "listo" if r.get("ok") and not contract_error else "FALLO"
     job["path"] = os.path.basename(r["path"]) if r.get("path") else ""

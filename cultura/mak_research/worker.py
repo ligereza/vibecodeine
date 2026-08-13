@@ -307,6 +307,7 @@ def run_tema(modo, tema, n=None, ntfy=True, sin_marco=False, densidad=None,
             out_lines = []
             path = ""
             pausado = [None]  # [(checkpoint_path, motivo)] o [None]
+            review_required = [False]
 
             def reader():
                 nonlocal path
@@ -322,6 +323,8 @@ def run_tema(modo, tema, n=None, ntfy=True, sin_marco=False, densidad=None,
                                      fase=modo, resumen=line[len("HALLAZGO: "):].strip()[:140])
                     elif line.startswith("INFORME: "):
                         path = line[len("INFORME: "):].strip()
+                    elif line.startswith("QUALITY: review_required"):
+                        review_required[0] = True
                     else:
                         marca = pausa.parsear_marca(line)
                         if marca:
@@ -369,6 +372,18 @@ def run_tema(modo, tema, n=None, ntfy=True, sin_marco=False, densidad=None,
             owner_pid=os.getpid(),
         )
         return result
+
+    if review_required[0]:
+        emitir_evento("research", job_id, "human_gate",
+                     resumen="source corpus requires review before promotion")
+        observe_shadow(
+            shadow_job, producer="research.worker", result_status="REVIEW_REQUIRED",
+            validated=False, payload={"mode": modo, "path": path},
+            started_at=shadow_started, owner_pid=os.getpid(),
+            output_hash=file_content_hash(path) if path else None,
+        )
+        return {"ok": False, "review": True, "path": path,
+                "tail": "source corpus quality gate: review_required"}
 
     ok = p.returncode == 0 and bool(path)
     if ok:
