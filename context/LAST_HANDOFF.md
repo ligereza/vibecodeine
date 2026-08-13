@@ -1,8 +1,8 @@
 # LAST_HANDOFF - MAK
 
 Updated: 2026-08-13
-Status: MAK archive and runtime reconciliation are verified for the measured
-state; MAK-originated Git projection remains pending.
+Status: MAK archive and runtime reconciliation are verified; the MAK-originated
+checkpoint is committed and pushed for review.
 
 ## Authority and topology
 
@@ -79,8 +79,7 @@ state; MAK-originated Git projection remains pending.
   is codex/three-plane-consolidation at f588ecf. NUDO source remains at
   codex/nudo-rd-evidence. No checkpoint is merged to main.
 - This handoff is the only current handoff in the MAK checkout context.
-- Before completion, capture the final Windows handoff version in an append-only
-  WIN reconciliation, then create the MAK-originated temporary Git checkpoint
-  containing only reviewed code, contracts, tests, and guides, run the final
-  gate, and publish from MAK. Do not reset, clean, merge, delete history, or
-  start a sync job.
+- The published checkpoint contains only the reviewed MAK handoff; the WIN
+  archive, databases, raw media, derived indexes, and runtime candidates stay
+  outside Git. Human review may decide whether to merge it to main.
+- Do not reset, clean, merge, delete history, or start a sync job.
