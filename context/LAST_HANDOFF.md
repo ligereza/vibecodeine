@@ -1,9 +1,8 @@
 # LAST_HANDOFF - Faro
 
 Updated: 2026-08-13
-Status: current local checkpoint. Windows and MAK local surfaces determine
-what exists and what is current. Git is stale transport evidence until the
-final reviewed push.
+Status: local checkpoint pushed. Windows and MAK local surfaces determine
+what exists and what is current. Git is a reviewed transport projection.
 
 ## Authority
 
@@ -56,11 +55,20 @@ final reviewed push.
 - Unresolved/review_required manifest findings are data review items, not
   test failures.
 
+## Transport status
+
+- Win checkpoint pushed to origin/codex/three-plane-consolidation.
+- Commit: 307631a feat: establish local three-plane knowledge transport.
+- Unrelated dirty Win files remain local and were not included in the push.
+- MAK NUDO checkpoint is separate on origin/codex/nudo-rd-evidence.
+- Operational manifests, DuckDB environment state, and raw material remain
+  local by design.
+
 ## Next action
 
-Perform a final local diff/scope audit on Win and NUDO. Separate code eligible
-for a reviewed Git checkpoint from operational outputs and unrelated dirty
-files. Push only the reviewed scope after that audit.
+Human review of the two pushed checkpoints, followed by deliberate PR review
+or merge. Do not promote unrelated dirty Win files or local operational
+outputs without a new scoped audit.
 
 ## Safety
 
