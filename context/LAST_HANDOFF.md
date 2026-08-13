@@ -38,14 +38,20 @@ checkpoint is committed and pushed for review.
 - Base flujo capture: 23,546 files / 1,003,789,128 bytes; base
   claude_sesiones capture: 21,298 files / 769,263,561 bytes. Both aggregate
   hashes match their Windows sources.
-- Base Codex capture: 8,210 files / 6,420,220,106 bytes. Its manifest records
-  a valid time-bounded snapshot because Codex writes SQLite/log/session state.
+- Codex transfer capture was 8,210 files / 6,420,220,106 bytes. After
+  verification, one archived file containing a real HF_TOKEN value was removed;
+  the current sanitized archive is 8,209 files / 6,420,219,944 bytes. The
+  Windows source was not touched. Live Codex drift remains documented
+  separately because the application writes during capture.
 - The post-archive Windows reconciliation measured 35 worktree entries:
   14 content changes and 21 metadata-only entries, zero hash errors. The 14
   content versions are under
   /home/mak/WIN/updates-20260813/flujo-working-tree/; the base was preserved.
 - Reconciled archive index:
   /home/mak/indexes/win-archive-20260813/win_archive_reconciliation_index.json.
+  Its report proves 53,053 base documents plus 14 versioned content objects.
+- Secret sanitation manifest:
+  /home/mak/WIN/manifests/codex-secret-sanitization-20260813.json.
 - Current live Codex observation is recorded at
   /home/mak/WIN/manifests/codex-live-observation-20260813.json: 8,211 files
   / 6,425,014,662 bytes. It is recorded live drift, not a claim of
