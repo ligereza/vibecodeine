@@ -17,6 +17,7 @@ dependencies = [
     "jsonschema>=4.26.0",
     "requests>=2.34.2",
     "boto3>=1.35.0",
+    "duckdb>=1.5.0",
 ]
 
 [project.optional-dependencies]
@@ -42,6 +43,16 @@ web = [
 desktop-extras = [
     "pystray>=0.19.5",   # optional tray icon for --desktop (free)
     "Pillow>=12.3.0",      # for tray image gen (free)
+]
+research-crawl = [
+    # Optional browser-backed extractor. The source pipeline detects it at
+    # runtime and preserves an explicit urllib/PDF fallback when absent.
+    "crawl4ai>=0.8.6",
+]
+research-pdf = [
+    # Table-aware extraction for machine-generated public result PDFs.
+    "pdfplumber>=0.11,<0.12",
+    "pypdf>=5.0",
 ]
 build = [
     "pyinstaller>=6.21.0",  # free packaging to .exe; 'flujo package'. Not runtime dep.

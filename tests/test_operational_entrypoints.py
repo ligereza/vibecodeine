@@ -83,8 +83,23 @@ def test_mak_mirror_check_covers_curatoria_and_fails_on_mismatch(tmp_path, monke
 
 def test_repair_script_installs_fourth_mirror():
     repair = _text("tools/mak_ops/repair_mak_sync.py")
-    assert "cultura/mak_curatoria/." in repair
-    assert '"$HOME/curatoria/"' in repair
+    safe = _text("tools/mak_ops/sync_mak_safe.py")
+    assert "cultura/mak_curatoria" in safe
+    assert "$HOME/flujo-deploy" in repair
+    assert "reset -q --hard origin/main" not in repair
+    assert "checkout -q -B main origin/main" not in repair
+
+
+def test_safe_sync_separates_human_checkout_and_records_deploy_provenance():
+    safe = _text("tools/mak_ops/sync_mak_safe.py")
+    assert "DEPLOY_REPO" in safe
+    assert "/home/mak/flujo-deploy" in safe
+    assert "USER_REPO" in safe
+    assert "deploy worktree must not be the human checkout" in safe
+    assert "flock" in safe
+    assert '"schema": "mak-deploy-v1"' in safe
+    assert '"status": status' in safe
+    assert "backup_live_drift" in safe
 
 
 def test_curatoria_guard_reconciles_before_declaring_corpus_done():

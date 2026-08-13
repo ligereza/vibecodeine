@@ -47,3 +47,5 @@ def test_repo_sync_versioning_remains_paused():
     lines = [line for line in cron.splitlines() if "MAK-REPO-SYNC" in line]
     assert len(lines) == 1
     assert lines[0].lstrip().startswith("# PAUSED-FARO")
+    assert "/home/mak/bin/mak_sync_safe.py" in lines[0]
+    assert "reset -q --hard origin/main" not in lines[0]
