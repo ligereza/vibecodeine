@@ -1,56 +1,86 @@
 # LAST_HANDOFF - MAK
 
 Updated: 2026-08-13
-Status: local reconciliation is complete for the selected MAK and structure
-scope. This checkout is a local authority surface; Git is transport only.
+Status: MAK archive and runtime reconciliation are verified for the measured
+state; MAK-originated Git projection remains pending.
 
-## Authority
+## Authority and topology
 
-- MAK is the operational producer, curator, researcher, and coordinator.
+- MAK is the physical operational producer, curator, researcher, and
+  coordinator. Windows is a separate director and archive node.
 - RD and Portfolio retain separate ownership, safety, authorial, and
   publication gates. They share one logical knowledge database target.
-- Windows and MAK have different physical structures. Do not force symmetry.
-- Raw material, databases, indexes, memories, services, and credentials stay
-  on their owning local surface. No bidirectional sync is active.
+- Local physical surfaces determine material truth. Git is reviewed transport
+  only; no bidirectional sync is active.
 - Machine-facing code and operational metadata use English ASCII where
-  practical; human RD and Portfolio products keep correct Spanish.
+  practical. Human RD and Portfolio products retain correct Spanish.
+- Do not confuse the MAK computer, /home/mak paths, the mak Git branch, or the
+  historical archive under /home/mak/WIN.
 
-## Active checkout and NUDO
+## Active checkout and local structure
 
-- Checkout: /home/mak/flujo, branch `mak`, local work is the MAK projection.
-- NUDO source remains preserved at branch `codex/nudo-rd-evidence`.
-- NUDO code and tests were projected into this active checkout without reset,
-  checkout, merge, or deletion of the source branch.
-- Three-plane contract and unified-knowledge migration/reconciliation code
-  were projected from the Win transport surface.
-- Obsolete `cultura/mak_plataforma/RELEVO_MAK.md` was removed from the active
-  checkout and preserved at
-  `/home/mak/rollback/local-reconciliation-20260813/`.
+- Active checkout: /home/mak/flujo, branch mak.
+- Active services use /home/mak/research, /home/mak/plataforma,
+  /home/mak/codex, and /home/mak/xio_puente. They do not execute from WIN.
+- NUDO code/tests, the three-plane contract, unified-knowledge migration and
+  reconciliation code, branch policy, and operational gates are present in
+  the selected checkpoints.
+- Old refs mak, rd, iskvw, mejoras, and mak-svg remain transition history.
+  New work uses temporary codex/* branches and returns through review.
+- The obsolete RELEVO_MAK.md remains only in the rollback snapshot.
+- PostgreSQL mak_knowledge is a prepared target, not current authority.
+  RD SQLite remains physically divergent; no writer was selected.
 
-## Local catalog and databases
+## Windows historical archive
 
-- Post-NUDO index:
-  `/home/mak/indexes/mak-consolidation-20260813/mak_local_reality_index_post_nudo.json`.
-- The index validates 10 local roots and 24 selected artifacts; none are
-  missing. Earlier consolidation reports are superseded evidence, not rules.
-- PostgreSQL `mak_knowledge` remains a prepared target, not current authority.
-- RD SQLite remains physically divergent from Windows. The read-only plan
-  found 20 tables: 11 identical, 1 conflict, 8 candidate-only, 0 legacy-only;
-  no writes were performed and no writer was selected.
-- DuckDB `1.5.5` is installed in `/home/mak/vibecodeine/.venv`.
+- /home/mak/WIN is an append-only historical archive, not a checkout,
+  runtime input, database authority, or Git source.
+- Base flujo capture: 23,546 files / 1,003,789,128 bytes; base
+  claude_sesiones capture: 21,298 files / 769,263,561 bytes. Both aggregate
+  hashes match their Windows sources.
+- Base Codex capture: 8,210 files / 6,420,220,106 bytes. Its manifest records
+  a valid time-bounded snapshot because Codex writes SQLite/log/session state.
+- The post-archive Windows reconciliation measured 35 worktree entries:
+  14 content changes and 21 metadata-only entries, zero hash errors. The 14
+  content versions are under
+  /home/mak/WIN/updates-20260813/flujo-working-tree/; the base was preserved.
+- Reconciled archive index:
+  /home/mak/indexes/win-archive-20260813/win_archive_reconciliation_index.json.
+- Current live Codex observation is recorded at
+  /home/mak/WIN/manifests/codex-live-observation-20260813.json: 8,211 files
+  / 6,425,014,662 bytes. It is recorded live drift, not a claim of
+  instantaneous archive equality.
+- Transfer manifests and origin contract are under /home/mak/WIN/manifests/
+  and /home/mak/WIN/README_ORIGIN.md. Credentials were excluded.
 
-## Verification
+## Runtime evidence
 
-- The focused MAK suite passed in `/home/mak/vibecodeine/.venv`, including
-  three-plane, migration, NUDO, sync, and department tests.
-- Win passed the corresponding focused suite. Optional unavailable tools are
-  deferred explicitly; ZIP metadata uses the standard-library fallback.
-- `MAK-REPO-SYNC` remains paused. No active sync may overwrite local work.
+- Validation report:
+  /home/mak/indexes/mak-runtime-validation-20260813.json.
+- Focused MAK tests passed with exit 0 in /home/mak/vibecodeine/.venv,
+  covering reconciliation, NUDO, RD, research, sync, operational entrypoints,
+  and resume scopes.
+- In-memory compilation with real service interpreters passed: Research 35,
+  Platform 51, Codex 18, XIO 3; 107 active-scoped entrypoints total.
+- The only excluded syntax error is the unreferenced legacy prototype
+  /home/mak/plataforma/panel_directivo.py. It ends inside a try, has no active
+  systemd or cron reference, and remains preserved broken evidence.
+- mak-research.service, mak-hub.service, mak-codex.service, and mak-xio.service
+  are active. Health endpoints on 8890, 8891, and 8900 returned HTTP 200.
+- There are 22 active cron lines; MAK-REPO-SYNC remains paused.
+- Full runtime comparison:
+  /home/mak/indexes/mak-runtime-reconciliation-20260813.json.
+  Rollbacks, generated pieces, utilities, revisions, and unrouted legacy files
+  remain classified outside active runtime and Git projection.
 
-## Safety and next action
+## Transport and next action
 
-- Do not touch README/SVG, raw media, private recovered exports, databases,
-  or indexes during Git transport.
-- Do not choose a primary database writer or merge main from this handoff.
-- Stage only the reviewed structural and NUDO/Research scope, run final
-  checks, and push the scoped checkpoint branch.
+- MAK source checkpoint is based on mak at 814b74c; current publishing branch is codex/mak-local-authority-reconciliation-20260813. Windows checkpoint
+  is codex/three-plane-consolidation at f588ecf. NUDO source remains at
+  codex/nudo-rd-evidence. No checkpoint is merged to main.
+- This handoff is the only current handoff in the MAK checkout context.
+- Before completion, capture the final Windows handoff version in an append-only
+  WIN reconciliation, then create the MAK-originated temporary Git checkpoint
+  containing only reviewed code, contracts, tests, and guides, run the final
+  gate, and publish from MAK. Do not reset, clean, merge, delete history, or
+  start a sync job.
