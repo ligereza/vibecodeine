@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import shutil
 from pathlib import Path
 
@@ -17,6 +18,21 @@ from pathlib import Path
 EXCLUDED_DIRS = {".venv", "__pycache__", "claude_web_export_2026-08-11"}
 EXCLUDED_NAMES = {".env"}
 EXCLUDED_SUFFIXES = {".pem", ".key", ".p12", ".pfx"}
+WINDOWS_USER_ROOT = re.compile(r"[A-Za-z]:[\\/]Users[\\/]+[^\\/\s]+", re.IGNORECASE)
+
+
+def sanitize_text(text: str) -> str:
+    return WINDOWS_USER_ROOT.sub("<local-user-home>", text)
+
+
+def public_bytes(path: Path) -> tuple[bytes, bool]:
+    content = path.read_bytes()
+    try:
+        text = content.decode("utf-8")
+    except UnicodeDecodeError:
+        return content, False
+    sanitized = sanitize_text(text)
+    return sanitized.encode("utf-8"), sanitized != text
 
 
 def sha256(path: Path) -> str:

@@ -7,8 +7,10 @@
 # Actions de GitHub, que se abre igual desde un telefono.
 #
 # Seguridad: NO borra nada que no este completamente contenido en main. Si una
-# rama tiene aunque sea un commit que main no tiene, la salta y lo dice. Corre
-# en seco por defecto: hay que pedir explicitamente que borre.
+# rama tiene aunque sea un commit que main no tiene, la salta y lo dice. Las
+# refs historicas mak/rd/iskvw/mejoras/mak-svg se preservan durante la
+# transicion aunque ya no sean canonicas. Corre en seco por defecto: hay que
+# pedir explicitamente que borre.
 #
 # Retiro: cuando el repo tenga limpieza automatica de ramas al mergear un PR.
 
@@ -46,7 +48,7 @@ jobs:
           set -euo pipefail
           git fetch --prune origin '+refs/heads/*:refs/remotes/origin/*'
 
-          PROTEGIDAS="main rd iskvw"
+          PROTEGIDAS="main mak rd iskvw mejoras mak-svg"
 
           if [ -n "${RAMAS// /}" ]; then
             CANDIDATAS="$RAMAS"
@@ -59,7 +61,7 @@ jobs:
           echo "== Revision =="
           for b in $CANDIDATAS; do
             case " $PROTEGIDAS " in
-              *" $b "*) echo "PROTEGIDA   $b -- linea permanente, no se toca"; continue ;;
+              *" $b "*) echo "PROTEGIDA   $b -- ref canonica o historica en transicion"; continue ;;
             esac
             if ! git rev-parse --verify --quiet "origin/$b" >/dev/null; then
               echo "NO EXISTE   $b"
