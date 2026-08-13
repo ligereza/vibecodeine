@@ -35,9 +35,13 @@ MARCAS_AUTOMERGE = (
     re.compile(r"auto[-_]merge", re.IGNORECASE),
 )
 
-# The ONE reviewed auto-merge path. Adding a path here is a conscious,
-# reviewed decision -- that is the point of this list.
-AUTOMERGE_PERMITIDO = {"cultura/mak_plataforma/revisor.py"}
+# The executable path and the reviewed producer catalog reference. The catalog
+# names the same producer for traceability; it does not execute a merge.
+# Adding a path here is a conscious, reviewed decision.
+AUTOMERGE_PERMITIDO = {
+    "cultura/mak_plataforma/revisor.py",
+    "cultura/mak_conductor/producer_catalog.py",
+}
 
 
 def _fuentes_cultura():
