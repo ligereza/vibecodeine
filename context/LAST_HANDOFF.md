@@ -16,13 +16,18 @@ otherwise rewritten.
   `fix(tests): close archived contract gap`.
 - Final handoff metadata commit: `830c7babc19b8e636c0846008b1e8382e68bd99e`,
   subject `docs(hand): record final validation head`.
-- Remote ref verification: `git ls-remote origin
-  refs/heads/codex/mak-web-restructure-20260813` returned final commit
-  `830c7babc19b8e636c0846008b1e8382e68bd99e`.
+- Remote ref verification immediately before the latest handoff-only edit:
+  `git ls-remote origin refs/heads/codex/mak-web-restructure-20260813`
+  returned `830c7babc19b8e636c0846008b1e8382e68bd99e`.
 - Draft PR: #531,
   `https://github.com/ligereza/vibecodeine/pull/531`, base `main`, head
-  `codex/mak-web-restructure-20260813`, head SHA
-  `830c7babc19b8e636c0846008b1e8382e68bd99e` exact.
+  `codex/mak-web-restructure-20260813`; it was open and draft at that exact
+  measurement.
+- Handoff-only edits advance the proposal ref without changing the verified
+  runtime scope. On resume, rerun `git status --short --branch`,
+  `git rev-parse HEAD`, `git ls-remote origin
+  refs/heads/codex/mak-web-restructure-20260813`, and `gh pr view 531` before
+  any further action.
 - GitHub connector creation returned 403; the authenticated `gh` fallback
   created the draft PR successfully. No browser was used.
 - `gh pr checks 531 --repo ligereza/vibecodeine` reported no checks for the
