@@ -75,11 +75,6 @@ DEFAULTS = {
     "RESEARCH_AZURE_ENABLED": "0",
     "OLLAMA_BASE_URL": "http://127.0.0.1:11434",
     "OLLAMA_MODEL": "gemma3:4b",
-    # WIN: notebook Windows con RTX 4070 (8GB VRAM), alcanzable SOLO por el
-    # cable ethernet directo (192.168.50.x). Motor local mas fuerte que el
-    # de MAK; se prueba antes que el gemma3:4b local como ultimo recurso.
-    "WIN_BASE_URL": "http://192.168.50.1:11434",
-    "WIN_MODEL": "llama3.1:8b",
     # SearXNG propio (LAN, Docker): busqueda sin API key ni tope de
     # creditos. Reemplaza/complementa Tavily. Ver PLAN.md seccion 2.
     "SEARXNG_BASE_URL": "http://127.0.0.1:8888",
@@ -112,9 +107,8 @@ def ollama_gpu_slot(model, *, caller, queue, department, trigger="manual",
                     job_id=""):
     """Return the shared MAK GPU slot for local Ollama calls.
 
-    Cloud and remote-Windows providers do not use MAK's local GPU and therefore
-    must not consume this slot. The import stays lazy so Windows unit tests and
-    standalone research utilities keep working without the platform mirror.
+    Cloud providers do not use MAK's local GPU and therefore must not consume
+    this slot. The import stays lazy for standalone research utilities.
     """
     if not str(model or "") or _CONDUCTOR_RUNTIME_AVAILABLE:
         return nullcontext()
@@ -459,7 +453,7 @@ MARCO_CULTURA = (
 )
 # Marco neutro: mismo nucleo (descriptivo, no perfilar personas reales) SIN
 # las frases de negacion especificas de sustancias. Bug probado en vivo:
-# modelos locales chicos (llama3.1:8b via win) leen "nada de sintesis
+# modelos locales chicos leen "nada de sintesis
 # quimica ni cultivo" en CUALQUIER tema y patron-matchean hacia el rechazo,
 # incluso en ingenieria benigna sin relacion con sustancias.
 MARCO_CULTURA_NEUTRO = (
@@ -565,8 +559,8 @@ def _msgs(system, user):
 
 # The provider roster, in ONE place. It used to be written out by hand in every
 # tool that accepted a provider list, and those copies went stale silently:
-# `refutar.py` filtered its `--orden` against a literal
-# ("groq", "cerebras", "azure", "ollama") that predates `watsonx` and `win`, so
+# refutar.py filtered its --orden against a literal
+# ("groq", "cerebras", "azure", "ollama") that predates watsonx, so
 # `--orden watsonx` was dropped without a word, the list came out empty, the
 # default chain took over and every one of its providers was skipped for having
 # no key. The tool died with "Todos los proveedores fallaron. Ultimo: None" --
@@ -579,7 +573,6 @@ PROVIDER_ENV_KEY = {
     "groq": "GROQ_API_KEY",
     "cerebras": "CEREBRAS_API_KEY",
     "azure": "AZURE_API_KEY",
-    "win": "WIN_BASE_URL",
     "ollama": "OLLAMA_BASE_URL",
 }
 PROVIDERS = tuple(PROVIDER_ENV_KEY)
@@ -743,14 +736,7 @@ class LLM:
     Code node probado 2026-07-15: cerebras/azure son razonadores, llevan
     margen extra de max_completion_tokens; azure NO acepta temperature)."""
 
-    # `win` SALIO del orden por defecto (2026-07-30). Es un notebook Windows que
-    # el usuario retiro a proposito -- todo corre en MAK -- y seguia primero en
-    # la cadena costando hasta 300 s por intento: `_win` delega en
-    # `_ollama_like`, cuyo timeout es 300, mientras su propio docstring promete
-    # "timeout corto... cae rapido al fallback siguiente". Medido el 2026-07-30
-    # en salud_proveedores.json: win 0 exitos / 3 timeouts en una sola ventana.
-    # Sigue en la lista blanca del filtro de abajo: se puede pedir explicito con
-    # LLM(order="win") si algun dia esa maquina vuelve a servir modelos.
+    # La cadena activa usa solo proveedores disponibles en MAK.
     # `watsonx` ENTRO al orden por defecto y va PRIMERO (2026-07-30). Entro por
     # donde entra todo proveedor nuevo aca: salud medida, no confianza. Lote real
     # de 8 informes cortos con `--providers watsonx` sobre temas cientificos de
@@ -769,7 +755,7 @@ class LLM:
         # La lista blanca dice QUIENES pueden participar; el `order` de la firma
         # dice en que posicion arrancan y la salud medida decide el resto.
         base = [p.strip() for p in order.split(",")
-                if p.strip() in ("groq", "cerebras", "azure", "win", "ollama",
+                if p.strip() in ("groq", "cerebras", "azure", "ollama",
                                  "watsonx")]
         if not self._azure_enabled():
             base = [provider for provider in base if provider != "azure"]
@@ -859,13 +845,6 @@ class LLM:
                                      os.environ["OLLAMA_MODEL"], system, user,
                                      max_tok)
 
-    def _win(self, system, user, max_tok):
-        """WIN: la RTX 4070 del notebook, alcanzable solo por el cable directo.
-        Mismo protocolo que ollama local; timeout corto en la conexion (si WIN
-        esta apagada/dormida, cae rapido al fallback siguiente)."""
-        return self._ollama_like(os.environ["WIN_BASE_URL"],
-                                 os.environ["WIN_MODEL"], system, user, max_tok)
-
     def _has_key(self, name):
         return bool(os.environ.get(PROVIDER_ENV_KEY[name]))
 
@@ -888,11 +867,9 @@ class LLM:
         orden = list(order or self.order)
         if not self._azure_enabled():
             orden = [provider for provider in orden if provider != "azure"]
-        # sin internet: win/ollama primero (LAN directa, no depende de internet;
-        # no esperar los timeouts de la nube). WIN (RTX 4070) antes que el
-        # gemma3 local de MAK -- mas fuerte, mismo cable.
+        # sin internet: ollama local primero; no esperar timeouts de nubes.
         if not red_ok():
-            frente = [p for p in ("win", "ollama") if p in orden]
+            frente = [p for p in ("ollama",) if p in orden]
             orden = frente + [x for x in orden if x not in frente]
         try:
             orden = orden_por_salud(orden, _salud_cargar())

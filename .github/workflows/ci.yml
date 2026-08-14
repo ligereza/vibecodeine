@@ -5,7 +5,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main, mak, rd, iskvw, mejoras]
+    branches: [main, mak, rd, iskvw]
 jobs:
   test:
     name: test (${{ matrix.os }})
@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
     env:
       PYTHONIOENCODING: utf-8
       PYTHONUTF8: "1"

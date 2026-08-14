@@ -54,7 +54,14 @@ ORGANS = {
 # real findings get lost.
 BOX_OWNED = ("piezas/", "fichas/", "jobs/", "logs/", "revisiones/", "estado",
              "procesados", "backlog", "rollback/", "__pycache__/", ".git/",
-             "memoria/")
+             "memoria/", ".venv/", "venv/", "site-packages/")
+
+# Explicitly reviewed checkout-only candidates. They are not runtime mirrors
+# until their code and caller are approved; treating every repo Python file as
+# a live obligation would promote candidates by accident.
+REPO_ONLY = {
+    "curatoria": {"diagnostico_proyectos.py", "ingesta_archivo.py"},
+}
 
 
 def _md5(p: Path) -> str:
@@ -72,6 +79,8 @@ def inspect(name: str, repo: Path, live: Path) -> dict:
         return r
     for f in sorted(repo.rglob("*.py")):
         rel = f.relative_to(repo).as_posix()
+        if rel in REPO_ONLY.get(name, set()):
+            continue
         if _box_owned(rel):
             continue
         target = live / rel
@@ -91,15 +100,23 @@ def inspect(name: str, repo: Path, live: Path) -> dict:
     return r
 
 
-def _is_invoked(rel: str, cron: str, units: str) -> bool:
+def _is_invoked(rel: str, live: Path, cron: str, units: str) -> bool:
     """Whether cron or a systemd unit invokes it. An orphan that ALSO runs is
     urgent; one that does not run is a line in the handoff and nothing more.
 
     Both are checked because looking at cron alone missed `xio_puente/monitor.py`
     on 2026-07-30: 172 lines, no copy in the repo, started by `mak-xio.service`.
     """
-    base = Path(rel).name
-    return base in cron or base in units
+    actual = (live / rel).as_posix()
+    home = HOME.as_posix()
+    references = {
+        actual,
+        actual.replace(home + "/", "%h/", 1),
+        actual.replace(home + "/", "~/", 1),
+    }
+    return any(reference in source
+               for source in (cron, units)
+               for reference in references)
 
 
 def main() -> int:
@@ -129,7 +146,7 @@ def main() -> int:
             continue
         bad = len(r["different"]) + len(r["not_copied"])
         live_orphans = [(f, n) for f, n in r["box_only"]
-                        if _is_invoked(f, cron, units)]
+                        if _is_invoked(f, live, cron, units)]
         drift += bad + len(live_orphans)
         print("== %-11s %d different, %d not copied, %d box-only "
               "(%d of them INVOKED)"

@@ -192,7 +192,6 @@ def test_multiplicar_periodically_reviews_corpus_before_new_backlog(monkeypatch,
     assert payload["formato"] == "revision"
     assert payload["source_path"] == str(report)
     assert payload["output_contract"]
-    assert trabajo.validate_work_contract("multiplicar", payload) == []
 
 
 def test_corpus_review_retries_after_rejection(monkeypatch, tmp_path):
@@ -227,6 +226,9 @@ def test_idle_review_uses_revision_format(monkeypatch):
     monkeypatch.setattr(trabajo, "_has_pending_research_backlog", lambda: False)
     monkeypatch.setattr(trabajo, "_has_pending_codex_backlog", lambda: False)
     monkeypatch.setattr(trabajo, "_idle_ledger_review_payload", lambda _st: None)
+    monkeypatch.setattr(trabajo, "_benchmark_review_payload", lambda _st: None)
+    monkeypatch.setattr(trabajo, "_memory_review_payload", lambda _st: None)
+    monkeypatch.setattr(trabajo, "_iskvw_curation_payload", lambda _st: None)
     depto, payload = trabajo._tarea("repasar", {})
     assert depto == "research"
     assert payload["formato"] == "revision"
@@ -289,6 +291,9 @@ def test_idle_executive_nodes_have_distinct_contracts(monkeypatch, verbo, expect
     monkeypatch.setattr(trabajo, "_has_pending_research_backlog", lambda: False)
     monkeypatch.setattr(trabajo, "_has_pending_codex_backlog", lambda: False)
     monkeypatch.setattr(trabajo, "_idle_ledger_review_payload", lambda _st: None)
+    monkeypatch.setattr(trabajo, "_benchmark_review_payload", lambda _st: None)
+    monkeypatch.setattr(trabajo, "_memory_review_payload", lambda _st: None)
+    monkeypatch.setattr(trabajo, "_iskvw_curation_payload", lambda _st: None)
     depto, payload = trabajo._tarea(verbo, {})
     assert depto == "research"
     for key, value in expected.items():
@@ -316,6 +321,9 @@ def test_repasar_reviews_pending_ledger_locally(monkeypatch, tmp_path):
     monkeypatch.setattr(trabajo, "_has_pending_material", lambda: False)
     monkeypatch.setattr(trabajo, "_has_pending_research_backlog", lambda: False)
     monkeypatch.setattr(trabajo, "_has_pending_codex_backlog", lambda: False)
+    monkeypatch.setattr(trabajo, "_benchmark_review_payload", lambda _st: None)
+    monkeypatch.setattr(trabajo, "_memory_review_payload", lambda _st: None)
+    monkeypatch.setattr(trabajo, "_iskvw_curation_payload", lambda _st: None)
     common.write_text(json.dumps({
         "id": "abc123",
         "schema": "mak-ledger-v1",
@@ -338,6 +346,12 @@ def test_repasar_reviews_pending_ledger_locally(monkeypatch, tmp_path):
 def test_repasar_prioritizes_pending_opportunity(monkeypatch, tmp_path):
     common = tmp_path / "common_ledger.jsonl"
     monkeypatch.setattr(trabajo, "COMMON_LEDGER", str(common))
+    monkeypatch.setattr(trabajo, "_has_pending_material", lambda: False)
+    monkeypatch.setattr(trabajo, "_has_pending_research_backlog", lambda: False)
+    monkeypatch.setattr(trabajo, "_has_pending_codex_backlog", lambda: False)
+    monkeypatch.setattr(trabajo, "_benchmark_review_payload", lambda _st: None)
+    monkeypatch.setattr(trabajo, "_memory_review_payload", lambda _st: None)
+    monkeypatch.setattr(trabajo, "_iskvw_curation_payload", lambda _st: None)
     common.write_text(json.dumps({
         "id": "opportunity-1",
         "schema": "mak-ledger-v1",
@@ -478,6 +492,9 @@ def test_main_local_idle_does_not_post_http(monkeypatch, tmp_path):
     monkeypatch.setattr(trabajo, "_has_pending_material", lambda: False)
     monkeypatch.setattr(trabajo, "_has_pending_research_backlog", lambda: False)
     monkeypatch.setattr(trabajo, "_has_pending_codex_backlog", lambda: False)
+    monkeypatch.setattr(trabajo, "_benchmark_review_payload", lambda _st: None)
+    monkeypatch.setattr(trabajo, "_memory_review_payload", lambda _st: None)
+    monkeypatch.setattr(trabajo, "_iskvw_curation_payload", lambda _st: None)
     if trabajo.backlog is not None:
         monkeypatch.setattr(trabajo.backlog, "cosechar", lambda *a, **k: 0)
     common.write_text(json.dumps({

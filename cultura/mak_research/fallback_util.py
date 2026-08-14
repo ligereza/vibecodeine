@@ -13,7 +13,7 @@ def parse_provider_error(exception, provider_type, model, timeout_sec=None):
 
     Args:
         exception: The exception or error message (str or Exception)
-        provider_type: "nim", "win", "ollama"
+        provider_type: "nim", "ollama"
         model: model name (str)
         timeout_sec: timeout value if known (int or None)
 
@@ -60,7 +60,7 @@ def aggregate_failures(attempts_list):
 
     Args:
         attempts_list: list of dicts with keys:
-            - provider: str ("nim", "win", "ollama")
+            - provider: str ("nim", "ollama")
             - model: str (model name)
             - error_type: str (from parse_provider_error)
             - reason: str (error description)
@@ -109,7 +109,6 @@ def score_provider_health(stats_dict):
             Example:
             {
                 "nim": {"successes": 5, "timeouts": 2, "api_errors": 1},
-                "win": {"successes": 8, "timeouts": 0, "errors": 0},
                 "ollama": {"successes": 3, "timeouts": 1, "errors": 0},
             }
 

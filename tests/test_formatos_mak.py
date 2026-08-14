@@ -195,7 +195,8 @@ def test_the_watsonx_vision_path_falls_back_instead_of_dying():
     fuente = (RAIZ / "cultura" / "mak_curatoria" / "percepcion.py").read_text(
         encoding="utf-8")
     i = fuente.index('PERCEPCION_VISION')
-    bloque = fuente[i:i + 1400]
+    fin = fuente.index("\n    payload =", i)
+    bloque = fuente[i:fin]
     assert "except Exception" in bloque, "sin captura, la nube tumba la corrida"
     assert "caigo a ollama" in bloque, "y tiene que DECIR que cayo"
 

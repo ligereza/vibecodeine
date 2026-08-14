@@ -33,6 +33,7 @@ def sin_llave(monkeypatch):
     """The box has no Tavily key. Tests must not depend on the machine running
     them having one."""
     monkeypatch.delenv("TAVILY_API_KEY", raising=False)
+    monkeypatch.setattr(research_lib, "load_env", lambda *a, **k: None)
 
 
 def _respuesta(monkeypatch, payload):

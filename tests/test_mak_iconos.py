@@ -122,7 +122,9 @@ class TestCaminoFeliz:
 
         path_md, meta = iconos_mod.generar_icono("el muro que se parte")
 
-        assert meta["smoke_ok"] is True
+        assert meta["visual_validation"]["status"] in ("validated", "unverified")
+        assert meta["smoke_ok"] is (
+            meta["visual_validation"]["status"] == "validated")
         svg_path = _svg_path_de(path_md)
         assert Path(svg_path).is_file()
         contenido_svg = Path(svg_path).read_text(encoding="utf-8")
@@ -156,7 +158,9 @@ class TestReparacion:
 
         path_md, meta = iconos_mod.generar_icono("pedido de reparacion")
 
-        assert meta["smoke_ok"] is True
+        assert meta["visual_validation"]["status"] in ("validated", "unverified")
+        assert meta["smoke_ok"] is (
+            meta["visual_validation"]["status"] == "validated")
         assert fake.llamadas == 2
         assert meta["problemas"], "debe registrar el fallo de la primera ronda"
         assert "figura-inventada-rara" in meta["problemas"][0]

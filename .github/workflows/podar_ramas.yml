@@ -1,18 +1,9 @@
-# Poda de ramas ya consolidadas, disparable desde el telefono.
+# Auditoria de ramas consolidadas, sin poda.
 #
-# Por que existe (2026-07-25): borrar una rama exige `git push --delete` desde
-# una maquina con credenciales. El norte del repo es operarlo SIN PC, y ademas
-# un agente puede quedar detras de un proxy que bloquea el borrado (paso: 403).
-# Esto mueve la operacion al unico lugar que siempre esta disponible: la pestana
-# Actions de GitHub, que se abre igual desde un telefono.
-#
-# Seguridad: NO borra nada que no este completamente contenido en main. Si una
-# rama tiene aunque sea un commit que main no tiene, la salta y lo dice. Corre
-# en seco por defecto: hay que pedir explicitamente que borre.
-#
-# Retiro: cuando el repo tenga limpieza automatica de ramas al mergear un PR.
+# This workflow reports branch provenance only. Branch history is preserved;
+# deletion is never performed by GitHub Actions or by this repository.
 
-name: Podar ramas consolidadas
+name: Auditar ramas consolidadas
 
 on:
   workflow_dispatch:
@@ -21,13 +12,9 @@ on:
         description: "Ramas a podar, separadas por espacio. Vacio = todas las que ya esten contenidas en main."
         required: false
         default: ""
-      confirmar:
-        description: "Escribi BORRAR para que borre de verdad. Cualquier otra cosa = simulacro."
-        required: true
-        default: "simulacro"
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   podar:
@@ -41,12 +28,11 @@ jobs:
       - name: Revisar y podar
         env:
           RAMAS: ${{ inputs.ramas }}
-          CONFIRMAR: ${{ inputs.confirmar }}
         run: |
           set -euo pipefail
           git fetch --prune origin '+refs/heads/*:refs/remotes/origin/*'
 
-          PROTEGIDAS="main rd iskvw"
+          PROTEGIDAS="main mak rd iskvw"
 
           if [ -n "${RAMAS// /}" ]; then
             CANDIDATAS="$RAMAS"
@@ -55,7 +41,6 @@ jobs:
               | sed 's|^origin/||' | grep -v '^HEAD$')
           fi
 
-          BORRAR=""
           echo "== Revision =="
           for b in $CANDIDATAS; do
             case " $PROTEGIDAS " in
@@ -66,8 +51,7 @@ jobs:
               continue
             fi
             if git merge-base --is-ancestor "origin/$b" origin/main; then
-              echo "CONSOLIDADA $b -- todo su contenido esta en main"
-              BORRAR="$BORRAR $b"
+              echo "CONSOLIDADA $b -- todo su contenido esta en main; se conserva"
             else
               n=$(git rev-list --count origin/main.."origin/$b")
               # Una rama puede tener commits propios y aun asi no aportar NADA
@@ -79,20 +63,10 @@ jobs:
                 git cat-file -e "origin/main:$f" 2>/dev/null || nuevas=$((nuevas+1))
               done
               if [ "$nuevas" -eq 0 ]; then
-                # Caso squash-merge (2026-07-29): un PR mergeado con squash deja
-                # la rama con commits que NUNCA son ancestro de main, asi que la
-                # regla de arriba jamas la borra. Si el humano NOMBRO la rama
-                # explicitamente y ademas escribio BORRAR, eso ES la decision
-                # humana: se borra. Sin nombre explicito, se sigue saltando.
-                if [ -n "${RAMAS// /}" ] && [ "$CONFIRMAR" = "BORRAR" ]; then
-                  echo "SUPERADA    $b -- $n commit(s) propios, 0 rutas que main no tenga."
-                  echo "                  Nombrada explicitamente + BORRAR: se poda."
-                  BORRAR="$BORRAR $b"
-                else
-                  echo "SE SALTA    $b -- $n commit(s) propios, pero 0 rutas que main no tenga."
-                  echo "                  Su contenido esta superado. Borrarla no pierde archivos:"
-                  echo "                  nombrala explicitamente + BORRAR para podarla."
-                fi
+                # A squash merge can leave commits that are not ancestors of
+                # main. The audit records the state and preserves the branch.
+                echo "SE CONSERVA  $b -- $n commit(s) propios, 0 rutas nuevas."
+                echo "                  Su contenido parece superado; no se borra."
               else
                 echo "SE SALTA    $b -- $n commit(s) propios y $nuevas ruta(s) que NO existen en main."
                 echo "                  NO borrar sin revisar que hay ahi."
@@ -100,19 +74,4 @@ jobs:
             fi
           done
 
-          if [ -z "${BORRAR// /}" ]; then
-            echo "== Nada que podar =="
-            exit 0
-          fi
-
-          if [ "$CONFIRMAR" != "BORRAR" ]; then
-            echo "== SIMULACRO: se borrarian =>$BORRAR"
-            echo "Volve a correrlo escribiendo BORRAR en el campo de confirmacion."
-            exit 0
-          fi
-
-          for b in $BORRAR; do
-            git push origin --delete "$b"
-            echo "borrada: $b"
-          done
-          echo "== Poda terminada =="
+          echo "== Auditoria terminada: no se borraron ramas =="
