@@ -5,6 +5,7 @@ Authority: physical Linux MAK under /home/mak
 Checkout: /tmp/mak-clean-worktree (isolated validation worktree)
 Base: origin/main at 486179789f67f2f6e5767d1b7bc7dd6575cd6aee
 Proposal branch: codex/mak-web-restructure-20260814
+Local transport commit: 9e92d4d0a1f1f711802e90443aeba415006b71a2
 
 ## Resume contract
 
@@ -57,13 +58,9 @@ Runtime hash audit against /home/mak:
 
 ## Next action
 
-1. Update the current top of context/LAST_HANDOFF.md with the clean proposal
-   SHA and validation results.
-2. Run git diff --cached --check, secret/path/history checks, and reverify the
-   physical runtime hashes from this worktree.
-3. Commit the clean scope on codex/mak-web-restructure-20260814.
-4. Push this new branch and create a new draft PR against current main.
-5. Keep PR #531 stale and unmerged. Do not merge any canonical branch.
+1. Reverify the clean tree, remote base, and physical runtime hashes.
+2. Push this new branch and create a new draft PR against current main.
+3. Keep PR #531 stale and unmerged. Do not merge any canonical branch.
 
 If a fact cannot be resolved locally, record the exact escalation block in
 LAST_HANDOFF and the response:
