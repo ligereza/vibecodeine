@@ -12,10 +12,11 @@ def test_coherence_excludes_virtualenv_code_from_runtime_drift():
 
 def test_coherence_matches_the_invoked_absolute_path_not_a_basename():
     units = "ExecStart=%h/research/interfaz.py"
+    home = Path.home()
     assert not coherence._is_invoked(
-        "interfaz.py", Path("/home/mak/plataforma"), "", units)
+        "interfaz.py", home / "plataforma", "", units)
     assert coherence._is_invoked(
-        "interfaz.py", Path("/home/mak/research"), "", units)
+        "interfaz.py", home / "research", "", units)
 
 
 def test_coherence_keeps_unapproved_curatoria_candidates_out_of_live_scope():
