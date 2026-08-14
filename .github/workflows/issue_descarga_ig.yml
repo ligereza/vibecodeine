@@ -12,7 +12,8 @@ name: issue-descarga-ig
 # blender_nodes.py real). Se retiran del flujo activo los pasos de render
 # (gate `if: false`, codigo intacto para retomar) y el cierre del issue YA
 # NO depende del render. Tras descargar: comentario "media descargado,
-# render pendiente en WIN" + label estado/revision, issue queda ABIERTO.
+# render pendiente sin etapa automatica + label estado/revision, issue queda
+# ABIERTO.
 # Retiro de esta meta-regla: cuando el render en MAK pase verificacion de
 # varianza contra un flyer real (ver tools/render_flyer_mak.py).
 #
@@ -122,7 +123,7 @@ jobs:
         if: github.event_name == 'issues' && steps.guard.outputs.skip != 'true'
         run: |
           gh issue comment "$ISSUE_NUM" -R "$GITHUB_REPOSITORY" \
-            -b "runner MAK: descarga OK (v2 evento-driven). Imagen como artifact \`ig-issue-$ISSUE_NUM\` en este run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID -- media descargado, render pendiente en WIN (render Blender en MAK desactivado, ver nota en el workflow)."
+            -b "runner MAK: descarga OK (v2 evento-driven). Imagen como artifact \`ig-issue-$ISSUE_NUM\` en este run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID -- media descargado, render pendiente sin etapa automatica (render Blender en MAK desactivado, ver nota en el workflow)."
           gh issue edit "$ISSUE_NUM" -R "$GITHUB_REPOSITORY" --add-label "estado/revision" || true
 
       - name: comentar fallo
@@ -265,7 +266,7 @@ jobs:
               fi
             fi
             gh issue comment "$n" -R "$GITHUB_REPOSITORY" \
-              -b "runner MAK (barrido): descarga OK. Imagen en artifact \`render-barrido-$GITHUB_RUN_ID\` (carpeta issue_$n) de este run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID -- media descargado, render pendiente en WIN (render Blender en MAK desactivado, ver nota en el workflow). Issue sigue abierto."
+              -b "runner MAK (barrido): descarga OK. Imagen en artifact \`render-barrido-$GITHUB_RUN_ID\` (carpeta issue_$n) de este run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID -- media descargado, render pendiente sin etapa automatica (render Blender en MAK desactivado, ver nota en el workflow). Issue sigue abierto."
             gh issue edit "$n" -R "$GITHUB_REPOSITORY" --add-label "estado/revision" || true
           done
           echo "dir=$barrido_dir" >> "$GITHUB_OUTPUT"

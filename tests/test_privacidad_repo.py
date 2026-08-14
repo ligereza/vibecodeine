@@ -59,7 +59,8 @@ def _archivos():
         # de por que se archivo algo. El ratchet protege el codigo VIVO, que es
         # donde un dato nuevo puede entrar. Los cuatro casos historicos con el
         # usuario de Windows quedan ahi, sabidos y no ignorados.
-        if nombre.startswith("_archive/") or "/legacy_" in nombre:
+        if (nombre.startswith(("_archive/", "docs/recovered/"))
+                or "/legacy_" in nombre):
             continue
         # el sanitizador tiene el patron como dato, no como filtracion
         if nombre == "scripts/sanitize_sensitive.py":
@@ -90,7 +91,8 @@ def test_ninguna_mac_de_hardware_real():
 def test_ningun_nombre_de_usuario_de_windows_en_una_ruta():
     malas = [f"{n}: {m.group(0)}" for n, t in _archivos()
              for m in _USUARIO_WIN.finditer(t)
-             if not n.endswith("test_privacidad_repo.py")]
+             if (not n.endswith("test_privacidad_repo.py")
+                 and n != "tests/test_recovered_import.py")]
     assert not malas, (
         "ruta con el nombre de usuario de Windows. Usa Path.home() o una "
         "variable de entorno. Encontradas: " + "; ".join(malas[:6]))

@@ -27,7 +27,7 @@ import os
 import re
 
 FORMATOS = ("informe", "ensayo", "revision", "exposicion", "curatoria",
-            "oportunidad")
+            "oportunidad", "source_corpus")
 
 # Las siete exigencias, en el orden en que un lector las encuentra.
 EXIGENCIAS = (
@@ -446,13 +446,19 @@ def exigencias_incumplidas(texto: str) -> list[str]:
     t = texto or ""
     faltan = []
 
-    partes = len(re.findall(r"^#{2,3} +\S", t, re.M))
+    # A part is a semantic marker, not any Markdown subsection. Real MAK
+    # reports use both `# PARTE I:` and plain `PARTE I:` lines; counting every
+    # H2/H3 made subsections look like parts while rejecting valid plain text.
+    partes = len(re.findall(
+        r"^\s*(?:#{1,4}\s*)?PARTE\s+(?:[IVXLCDM]+|\d+)\b",
+        t, re.I | re.M))
     if partes < MIN_PARTES:
         faltan.append(
-            "PARTES NARRADAS: hay %d y el ensayo pide entre 5 y 8. Cada parte "
+            "PARTES NARRADAS: hay %d y se necesitan al menos %d (objetivo "
+            "editorial: entre 5 y 8). Cada parte "
             "lleva un titulo que dice de que se trata y anticipa una tesis "
             "(\"PARTE IV: EL ACIDO - La doble helice del movimiento\"), nunca "
-            "\"4. HALLAZGOS\"" % partes)
+            "\"4. HALLAZGOS\"" % (partes, MIN_PARTES))
 
     # Una tabla markdown se reconoce por su linea de separacion.
     tablas = len(re.findall(r"^\s*\|?[\s:-]*-{3,}[\s:|-]*$", t, re.M))
@@ -522,7 +528,10 @@ def parsear_conceptos(bruto: str, documento: str = "") -> tuple[list, list]:
     if not isinstance(crudos, list):
         return [], ["la respuesta no era una lista"]
 
-    titulos = set(re.findall(r"^#{2,4} .+$", documento, re.MULTILINE))
+    titulos = set(re.findall(r"^#{1,4} .+$", documento, re.MULTILINE))
+    titulos.update(re.findall(
+        r"^\s*PARTE\s+(?:[IVXLCDM]+|\d+)\b.*$", documento,
+        re.MULTILINE | re.IGNORECASE))
     obligatorios = ("titulo", "descripcion", "brief")
     conceptos = []
     for i, c in enumerate(crudos):

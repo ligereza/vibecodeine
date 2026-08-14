@@ -40,6 +40,7 @@ para la salida, red apagada, seccomp, sin capabilities.
 Retiro de esta nota: cuando la ejecucion pase por esa frontera.
 """
 import json
+import hashlib
 import os
 import re
 import resource
@@ -50,7 +51,40 @@ import time
 
 sys.path.insert(0, "/home/mak/research")
 from research_lib import (LLM, MODELO_CAPAZ, _http_json, escala_tok,  # noqa: E402
-                          load_env, red_ok, slug, stamp, watsonx_chat)
+                          load_env, red_ok, slug, stamp)
+try:
+    from research_lib import watsonx_chat  # noqa: E402
+except ImportError:  # optional provider boundary; fail only if selected
+    def watsonx_chat(*args, **kwargs):
+        raise RuntimeError("watsonx_chat is unavailable in this runtime")
+
+try:
+    from cultura.mak_conductor.runtime import (external_budget_limit,
+                                                reserve_external_call,
+                                                shared_gpu_lease,
+                                                dispatch_sync, active_enabled,
+                                                enqueue_shadow, observe_shadow)
+except ImportError:  # standalone Linux codex checkout
+    sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH",
+                                     "/home/mak/flujo/cultura"))
+    try:
+        from mak_conductor.runtime import (external_budget_limit,
+                                           reserve_external_call,
+                                           shared_gpu_lease,
+                                           dispatch_sync, active_enabled,
+                                           enqueue_shadow, observe_shadow)
+    except ImportError:
+        from contextlib import nullcontext
+        def external_budget_limit(_provider, default=20):
+            return default
+        def reserve_external_call(_provider, *, limit_count, window="hour"):
+            return True
+        def shared_gpu_lease(**_kwargs):
+            return nullcontext()
+        dispatch_sync = None
+        enqueue_shadow = observe_shadow = None
+        def active_enabled():
+            return False
 
 # fallback_util vive junto a este archivo (deploy plano en ~/codex). Si falta
 # en la caja viva, fallback_util queda en None y el mensaje de error de
@@ -65,31 +99,18 @@ PIEZAS = os.path.join(BASE, "piezas")
 REVISIONES = os.path.join(BASE, "revisiones")
 
 # Cadena de CODERS (orden de fallback). NIM hosted primero (fuerte), local
-# despues (offline, sobrevive 429). Sin Qwen por decision del usuario.
+# despues (offline, sobrevive 429). Sin Qwen ni proveedores retirados.
 NIM_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
-# WIN: notebook con RTX 4070 (8GB), alcanzable solo por el cable directo
-# (192.168.50.1). Coder mas fuerte que el local de MAK; antes que el
-# deepseek-coder:6.7b como ultimo recurso.
-WIN_BASE_URL = "http://192.168.50.1:11434"
-WIN_CODE_MODEL = "deepseek-coder-v2:16b-lite-instruct-q4_K_M"
 # mapa clave-corta -> (proveedor, modelo); CODER_CHAIN se arma a partir de
 # esto para poder reordenar/recortar la cadena por env var sin tocar codigo
-# (ej. CODER_CHAIN=win,ollama si NIM esta 429 esa sesion).
+# (ej. CODER_CHAIN=nim-flash,ollama si NIM esta 429 esa sesion).
 _CODER_CHAIN_MAP = {
     "wx-llama": ("watsonx", "meta-llama/llama-3-3-70b-instruct"),
     "wx-granite": ("watsonx", "ibm/granite-4-h-small"),
     "nim-pro": ("nim", "deepseek-ai/deepseek-v4-pro"),
     "nim-flash": ("nim", "deepseek-ai/deepseek-v4-flash"),
-    "win": ("win", WIN_CODE_MODEL),
     "ollama": ("ollama", "deepseek-coder:6.7b"),
 }
-# watsonx encabeza, y `win` SALE del default. No es preferencia: `win` es la
-# notebook que el usuario retiro, sondeada el 2026-07-31 desde la caja -- no
-# responde -- y sin embargo iba PRIMERA en la cadena viva
-# (CODER_CHAIN=win,nim-pro,nim-flash,ollama). De los 109 trabajos en FALLO, 22
-# son literalmente `timeout 900s`: la cadena empezaba esperando a una maquina
-# apagada. Sigue en el mapa porque la notebook puede volver; deja de ser lo
-# primero que se intenta por defecto.
 #
 # La eleccion de modelo esta MEDIDA, no elegida por su nombre
 # (`tools/watsonx_coder_bench.py`, 2026-07-31, cuenta real, dos corridas): una
@@ -124,7 +145,7 @@ CODER_CHAIN = _parse_coder_chain(os.environ.get("CODER_CHAIN"))
 
 # Timeouts por proveedor (segundos), espejo de los valores hardcodeados en
 # _nim (120) y _ollama_chat (300). Solo informativo para el reporte de fallos.
-_PROV_TIMEOUT = {"nim": 120, "win": 300, "ollama": 300}
+_PROV_TIMEOUT = {"nim": 120, "ollama": 300}
 
 PROMPT_CODER = (
     "Eres un ingeniero de software senior del departamento Codex de MAK. "
@@ -167,6 +188,9 @@ class CoderLLM:
         key = os.environ.get("NVIDIA_API_KEY")
         if not key:
             raise RuntimeError("falta NVIDIA_API_KEY")
+        if not reserve_external_call(
+                "nvidia", limit_count=external_budget_limit("nvidia")):
+            raise RuntimeError("external_budget_exceeded:nvidia")
         r = _http_json(
             NIM_URL,
             {"model": model, "messages": _msgs(system, user),
@@ -185,24 +209,25 @@ class CoderLLM:
 
     def _ollama(self, system, user, max_tok, model):
         base = os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
-        return self._ollama_chat(base, system, user, max_tok, model)
-
-    def _win(self, system, user, max_tok, model):
-        return self._ollama_chat(WIN_BASE_URL, system, user, max_tok, model)
+        with shared_gpu_lease(job_id="codex-ollama-%s" % os.getpid(),
+                              estimated_vram_mb=3000):
+            return self._ollama_chat(base, system, user, max_tok, model)
 
     def _watsonx(self, system, user, max_tok, model):
         """El endpoint no se reimplementa aca: se comparte con research. La
         temperatura SI cambia -- 0.1 en vez de 0.3 -- porque un coder tibio
         inventa APIs que no existen, y eso es la mitad de los archivos inertes
         que este departamento produjo."""
+        if not reserve_external_call(
+                "watsonx", limit_count=external_budget_limit("watsonx")):
+            raise RuntimeError("external_budget_exceeded:watsonx")
         return watsonx_chat(system, user, max_tok, model, temperatura=0.1)
 
     def call(self, system, user, max_tok=1200):
         cadena = list(self.chain)
-        # sin internet: win/ollama primero (LAN directa, no depende de
-        # internet). WIN (RTX 4070) antes que el local de MAK -- mas fuerte.
+        # sin internet: ollama local primero; no esperar timeouts de nubes.
         if not red_ok():
-            frente = [c for c in cadena if c[0] in ("win", "ollama")]
+            frente = [c for c in cadena if c[0] == "ollama"]
             cadena = frente + [c for c in cadena if c not in frente]
         # Se deriva del mapa de la cadena: mantener aca una segunda lista de
         # proveedores es como `refutar.py` quedo sin poder llamar a watsonx.
@@ -212,9 +237,81 @@ class CoderLLM:
         intentos = []  # todos los intentos fallidos, no solo el ultimo
         for prov, model in cadena:
             try:
-                text = fns[prov](system, user, max_tok, model)
+                fn = fns[prov]
+                try:
+                    from research_lib import _record_activity
+                    _record_activity(
+                        "model", "started", caller="mak-codex.CoderLLM",
+                        queue="codex.llm", department="codex",
+                        trigger=os.environ.get("MAK_TRIGGER", "api:codex"),
+                        job_id=os.environ.get("MAK_JOB_ID", ""), provider=prov,
+                        model=model,
+                        resource="ollama" if prov == "ollama" else "cloud")
+                except ImportError:
+                    pass
+                if dispatch_sync is not None and active_enabled():
+                    def handle(job, _fn=fn, _model=model, _provider=prov):
+                        value = _fn(system, user, max_tok, _model)
+                        return {"validated": bool(str(value or "").strip()),
+                                "provider": _provider, "model": _model,
+                                "text": value}
+                    queued = dispatch_sync(
+                        "codex_llm_call", {
+                            "provider": prov, "model": model,
+                            "system": str(system), "user": str(user),
+                            "prompt_hash": hashlib.sha256(
+                                (str(system) + "\n" + str(user)).encode(
+                                    "utf-8")).hexdigest(),
+                            "prompt_length": len(str(system)) + len(str(user)),
+                            "max_tokens": max_tok,
+                        }, producer="codex.CoderLLM.call", handler=handle,
+                        estimated_vram_mb=3000 if prov == "ollama" else 0,
+                        model=model, template_version="codex-llm-v1")
+                    text = (queued or {}).get("text", "")
+                else:
+                    shadow_job = (enqueue_shadow(
+                        "codex_llm_call", {
+                            "provider": prov, "model": model,
+                            "prompt_hash": hashlib.sha256(
+                                (str(system) + "\n" + str(user)).encode(
+                                    "utf-8")).hexdigest(),
+                            "prompt_length": len(str(system)) + len(str(user)),
+                            "max_tokens": max_tok,
+                        }, producer="codex.CoderLLM.call",
+                        estimated_vram_mb=3000 if prov == "ollama" else 0,
+                        model=model, template_version="codex-llm-v1")
+                        if enqueue_shadow is not None else None)
+                    shadow_started = time.time()
+                    try:
+                        text = fn(system, user, max_tok, model)
+                    except Exception as exc:
+                        if observe_shadow is not None:
+                            observe_shadow(
+                                shadow_job, producer="codex.CoderLLM.call",
+                                result_status="FAILED",
+                                payload={"provider": prov, "model": model,
+                                         "error": str(exc)[:2000]},
+                                started_at=shadow_started, owner_pid=os.getpid())
+                        raise
+                    if observe_shadow is not None:
+                        observe_shadow(
+                            shadow_job, producer="codex.CoderLLM.call",
+                            result_status="READY" if text else "EMPTY",
+                            validated=bool(str(text or "").strip()),
+                            payload={"provider": prov, "model": model},
+                            started_at=shadow_started, owner_pid=os.getpid())
                 if text and text.strip():
                     self.stats[model] = self.stats.get(model, 0) + 1
+                    try:
+                        from research_lib import _record_activity
+                        _record_activity("model", "finished", caller="mak-codex.CoderLLM",
+                                         queue="codex.llm", department="codex",
+                                         trigger=os.environ.get("MAK_TRIGGER", "api:codex"),
+                                         job_id=os.environ.get("MAK_JOB_ID", ""),
+                                         provider=prov, model=model,
+                                         resource="ollama" if prov == "ollama" else "cloud")
+                    except ImportError:
+                        pass
                     return text, model
                 last = model + " devolvio vacio"
                 if fallback_util is not None:
@@ -223,6 +320,17 @@ class CoderLLM:
             except Exception as e:  # noqa: BLE001 - fallback multi-coder
                 last = model + ": " + str(e)[:140]
                 self.errors.append(last)
+                try:
+                    from research_lib import _record_activity
+                    _record_activity("model", "failed", caller="mak-codex.CoderLLM",
+                                     queue="codex.llm", department="codex",
+                                     trigger=os.environ.get("MAK_TRIGGER", "api:codex"),
+                                     job_id=os.environ.get("MAK_JOB_ID", ""),
+                                     provider=prov, model=model,
+                                     resource="ollama" if prov == "ollama" else "cloud",
+                                     error=str(e))
+                except ImportError:
+                    pass
                 if fallback_util is not None:
                     intentos.append(fallback_util.parse_provider_error(
                         e, prov, model, timeout_sec=_PROV_TIMEOUT.get(prov)))

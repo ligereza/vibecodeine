@@ -20,6 +20,12 @@ sys.path.insert(0, str(MAK_RESEARCH))
 import worker  # noqa: E402
 
 
+@pytest.fixture(autouse=True)
+def enable_auto_icon_queue(monkeypatch):
+    """Enabled tests exercise the opt-in path; the disable test overrides it."""
+    monkeypatch.setenv("MAK_AUTO_ICONOS", "1")
+
+
 def _annex(tmp_path):
     path = tmp_path / "ensayo.conceptos.json"
     path.write_text(json.dumps([
@@ -55,7 +61,12 @@ def test_annex_concepts_are_queued_as_icon_jobs(tmp_path, monkeypatch):
 
     result = worker.enqueue_annex_icons(str(annex), densidad="medio")
 
-    assert result == {"queued": 2, "errors": []}
+    assert result["queued"] == 2
+    assert result["errors"] == []
+    assert result["concepts"] == 2
+    assert result["invalid"] == 0
+    assert result["dropped"] == 0
+    assert result["not_queued"] == 0
     assert all(densidad == "medio" for _, densidad in prompts)
     assert "Berlín: cae el muro" in prompts[0][0]
     assert "Brutalista concreto" in prompts[0][0]

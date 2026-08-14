@@ -28,10 +28,12 @@ USO:
 """
 import os
 import pathlib
+import re
 import shutil
 import subprocess
 import sys
 import tempfile
+import xml.etree.ElementTree as ET
 
 TAM = 256
 
@@ -39,11 +41,6 @@ TAM = 256
 # Chrome/Chromium, que es lo que hay en un runner de Linux y en la caja. Se
 # prueba por ejecucion, no por existencia.
 NAVEGADOR_CANDS = [
-    r"C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
-    r"C:/Program Files/Microsoft/Edge/Application/msedge.exe",
-    "/usr/bin/microsoft-edge",
-    "/usr/bin/microsoft-edge-stable",
-    "/opt/microsoft/msedge/msedge",
     "/usr/bin/google-chrome",
     "/usr/bin/google-chrome-stable",
     "/usr/bin/chromium",
@@ -170,11 +167,9 @@ def _binarios():
 
     En Windows Edge va primero, que es lo que ya estaba sano.
     """
-    orden = NAVEGADOR_CANDS if os.name == "nt" else (
-        [c for c in NAVEGADOR_CANDS if "chrom" in c.lower()]
-        + [c for c in NAVEGADOR_CANDS if "chrom" not in c.lower()])
+    orden = list(NAVEGADOR_CANDS)
     hallados = [c for c in orden if os.path.exists(c)]
-    for nombre in ("google-chrome", "chromium", "microsoft-edge", "msedge"):
+    for nombre in ("google-chrome", "chromium"):
         ruta = shutil.which(nombre)
         if ruta and ruta not in hallados:
             hallados.append(ruta)
@@ -275,6 +270,297 @@ def _dibujo_vivo(png):
 _COLORES_SONDA = ((0x33, 0x55, 0xcc), (0xee, 0x22, 0x44))
 
 
+# CairoSVG does not execute CSS animations. MAK still needs a Linux-only,
+# deterministic validation path when browser execution is forbidden, so this
+# adapter evaluates the small CSS animation vocabulary emitted by the semantic
+# compiler and hands each static frame back to CairoSVG. It is intentionally a
+# validator for compiler output, not a general CSS engine.
+_CSS_ANIMATION_BACKEND = "cairosvg-css-animation"
+_SVG_NS = "http://www.w3.org/2000/svg"
+ET.register_namespace("", _SVG_NS)
+
+
+def _balanced_css_blocks(css, marker="@keyframes"):
+    """Return (name, body) blocks for a CSS at-rule with balanced braces."""
+    found = []
+    for match in re.finditer(r"%s\s+([\w-]+)\s*\{" % re.escape(marker), css):
+        depth = 1
+        pos = match.end()
+        while pos < len(css) and depth:
+            if css[pos] == "{":
+                depth += 1
+            elif css[pos] == "}":
+                depth -= 1
+            pos += 1
+        if depth == 0:
+            found.append((match.group(1), css[match.end():pos - 1]))
+    return found
+
+
+def _css_properties(text):
+    return {name.strip(): value.strip()
+            for name, value in re.findall(r"([\w-]+)\s*:\s*([^;]+)", text)}
+
+
+def _css_rules(css):
+    """Parse flat rules after removing keyframe blocks."""
+    plain = css
+    for match in re.finditer(r"@keyframes\s+[\w-]+\s*\{", css):
+        depth = 1
+        pos = match.end()
+        while pos < len(css) and depth:
+            if css[pos] == "{":
+                depth += 1
+            elif css[pos] == "}":
+                depth -= 1
+            pos += 1
+        if depth == 0:
+            plain = plain.replace(css[match.start():pos], "")
+    return [(selector.strip(), _css_properties(body))
+            for selector, body in re.findall(r"([^{}]+)\{([^{}]*)\}", plain)
+            if selector.strip()]
+
+
+def _resolve_css_vars(value, variables):
+    for _ in range(8):
+        changed = False
+
+        def replace(match):
+            nonlocal changed
+            key = match.group(1)
+            fallback = match.group(2)
+            if key in variables:
+                changed = True
+                return variables[key]
+            if fallback is not None:
+                changed = True
+                return fallback.strip()
+            return match.group(0)
+
+        new_value = re.sub(r"var\((--[\w-]+)(?:\s*,\s*([^)]*))?\)",
+                           replace, value)
+        value = new_value
+        if not changed:
+            break
+    return value
+
+
+def _parse_css_time(value, default=0.0):
+    match = re.search(r"(-?[\d.]+)\s*(ms|s)?", value or "")
+    if not match:
+        return default
+    number = float(match.group(1))
+    return number * (1000.0 if match.group(2) == "s" else 1.0)
+
+
+def _parse_keyframes(css):
+    result = {}
+    for name, body in _balanced_css_blocks(css):
+        stops = []
+        for selector, declarations in re.findall(r"([^{}]+)\{([^{}]*)\}", body):
+            props = _css_properties(declarations)
+            for token in selector.split(","):
+                token = token.strip().lower()
+                if token == "from":
+                    position = 0.0
+                elif token == "to":
+                    position = 1.0
+                else:
+                    try:
+                        position = float(token.rstrip("%")) / 100.0
+                    except ValueError:
+                        continue
+                stops.append((position, props))
+        if stops:
+            result[name] = sorted(stops, key=lambda item: item[0])
+    return result
+
+
+def _css_class_names(selector):
+    return re.findall(r"\.([\w-]+)", selector)
+
+
+def _neutral_transform(value):
+    """Build the identity form of a transform function sequence."""
+    pattern = r"([A-Za-z][\w-]*)\(([^)]*)\)"
+
+    def replace(match):
+        name = match.group(1)
+        neutral = "1" if name.lower().startswith("scale") else "0"
+        args = re.sub(r"-?(?:\d+(?:\.\d+)?|\.\d+)([A-Za-z%]*)",
+                      lambda number: neutral + number.group(1),
+                      match.group(2))
+        return "%s(%s)" % (name, args)
+
+    return re.sub(pattern, replace, value) or "none"
+
+
+def _css_transform_to_svg(value):
+    """Convert the CSS transform forms emitted by the compiler to SVG syntax."""
+    value = re.sub(r"translateX\(([^)]*)\)",
+                   lambda match: "translate(%s,0)" % match.group(1), value)
+    value = re.sub(r"translateY\(([^)]*)\)",
+                   lambda match: "translate(0,%s)" % match.group(1), value)
+    value = re.sub(r"rotate\(([-+]?\d+(?:\.\d+)?|[-+]?\.\d+)deg\)",
+                   lambda match: "rotate(%s)" % match.group(1), value)
+    return value
+
+
+def _lerp_css_value(left, right, amount):
+    """Interpolate common numeric SVG values, preserving CSS function shape."""
+    if left.strip() == "none" and right.strip() != "none":
+        left = _neutral_transform(right)
+    left_hex = re.fullmatch(r"#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6,8})", left.strip())
+    right_hex = re.fullmatch(r"#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6,8})", right.strip())
+    if left_hex and right_hex and len(left_hex.group(1)) == len(right_hex.group(1)):
+        digits = left_hex.group(1)
+        other = right_hex.group(1)
+        if len(digits) in (3, 4):
+            digits = "".join(char * 2 for char in digits)
+            other = "".join(char * 2 for char in other)
+            short = True
+        else:
+            short = False
+        channels = [round(int(digits[index:index + 2], 16)
+                          + (int(other[index:index + 2], 16)
+                             - int(digits[index:index + 2], 16)) * amount)
+                    for index in range(0, len(digits), 2)]
+        value = "#" + "".join("%02x" % channel for channel in channels)
+        if short:
+            value = "#" + "".join(value[index] for index in range(1, 8, 2))
+        return value
+    number = r"-?(?:\d+(?:\.\d+)?|\.\d+)"
+    left_numbers = [float(x) for x in re.findall(number, left)]
+    right_numbers = [float(x) for x in re.findall(number, right)]
+    if len(left_numbers) != len(right_numbers) or not left_numbers:
+        return left if amount < 0.5 else right
+    index = 0
+
+    def replace(_match):
+        nonlocal index
+        value = left_numbers[index] + (right_numbers[index] - left_numbers[index]) * amount
+        index += 1
+        return "%.6g" % value
+
+    return re.sub(number, replace, left)
+
+
+def _default_css_value(property_name):
+    """Return a neutral value for a property omitted at a keyframe edge."""
+    return {"transform": "none", "opacity": "1"}.get(property_name, "")
+
+
+def _frame_properties(stops, progress):
+    if not stops:
+        return {}
+    effective = list(stops)
+    if effective[0][0] > 0:
+        effective.insert(0, (0.0, {}))
+    if effective[-1][0] < 1:
+        effective.append((1.0, {}))
+    if progress <= effective[0][0]:
+        return dict(effective[0][1])
+    if progress >= effective[-1][0]:
+        return dict(effective[-1][1])
+    for (left_pos, left_props), (right_pos, right_props) in zip(
+            effective, effective[1:]):
+        if progress <= right_pos:
+            span = right_pos - left_pos or 1.0
+            amount = (progress - left_pos) / span
+            props = {}
+            for key in set(left_props) | set(right_props):
+                left = left_props.get(key, _default_css_value(key))
+                right = right_props.get(key, left)
+                props[key] = _lerp_css_value(left, right, amount)
+            return props
+    return dict(effective[-1][1])
+
+
+def _animation_config(properties, variables):
+    shorthand = _resolve_css_vars(properties.get("animation", ""), variables)
+    if not shorthand:
+        return None
+    parts = shorthand.split()
+    if not parts:
+        return None
+    name = parts[0]
+    duration = next((part for part in parts if re.search(r"(?:ms|s)$", part)), "1s")
+    delay = _resolve_css_vars(properties.get("animation-delay", "0s"), variables)
+    direction = properties.get("animation-direction", "normal")
+    if "reverse" in parts:
+        direction = "reverse"
+    if "alternate" in parts:
+        direction = "alternate"
+    if "alternate-reverse" in parts:
+        direction = "alternate-reverse"
+    return (_parse_css_time(duration, 1000.0), _parse_css_time(delay), direction, name)
+
+
+def _selector_properties(element, rules):
+    classes = set((element.get("class") or "").split())
+    properties = {}
+    for selector, rule_properties in rules:
+        selector_classes = set(_css_class_names(selector))
+        if selector_classes and not selector_classes.issubset(classes):
+            continue
+        if not selector_classes and selector.strip() not in ("*", "svg"):
+            continue
+        properties.update(rule_properties)
+    return properties
+
+
+def _rasterizar_css_animation(svg_txt, tam, avance_ms=0):
+    """Render one CSS animation frame through CairoSVG without a browser."""
+    cairo = _cairosvg()
+    if cairo is None:
+        raise RasterizadorNoDisponibleError("CairoSVG is unavailable")
+    root = ET.fromstring(svg_txt)
+    style = "\n".join(element.text or "" for element in root.iter()
+                       if element.tag.rsplit("}", 1)[-1] == "style")
+    variables = {}
+    for selector, properties in _css_rules(style):
+        if selector.strip() == "svg":
+            variables.update({key: value for key, value in properties.items()
+                              if key.startswith("--")})
+    rules = _css_rules(style)
+    keyframes = _parse_keyframes(style)
+    for element in root.iter():
+        properties = _selector_properties(element, rules)
+        config = _animation_config(properties, variables)
+        if config is None:
+            continue
+        duration, delay, direction, name = config
+        stops = keyframes.get(name)
+        if not stops or duration <= 0:
+            continue
+        phase = max(0.0, (float(avance_ms) - delay) / duration)
+        iteration = int(phase)
+        progress = phase - iteration
+        if direction in ("reverse", "alternate-reverse"):
+            progress = 1.0 - progress
+        if direction in ("alternate", "alternate-reverse") and iteration % 2:
+            progress = 1.0 - progress
+        frame = _frame_properties(stops, progress)
+        inline = element.get("style", "")
+        # CairoSVG handles presentation attributes but does not apply SVG CSS
+        # transform properties consistently. Keep the evaluated frame in the
+        # native attributes so the static renderer sees the same geometry.
+        # The same path also makes opacity and dash offsets deterministic.
+        native = {"transform", "opacity", "fill", "stroke", "stroke-width",
+                  "stroke-dasharray", "stroke-dashoffset", "visibility"}
+        additions = ";".join("%s:%s" % (key, value)
+                              for key, value in frame.items()
+                              if key not in native and value)
+        for key, value in frame.items():
+            if key in native and value and value != "none":
+                element.set(key, (_css_transform_to_svg(value)
+                                  if key == "transform" else value))
+        element.set("style", (inline + ";" if inline else "") + additions)
+    rendered = ET.tostring(root, encoding="unicode")
+    return cairo.svg2png(bytestring=rendered.encode("utf-8"),
+                         output_width=tam, output_height=tam)
+
+
 def _tiene_colores(png, esperados, tolerancia=40):
     try:
         from PIL import Image
@@ -302,14 +588,26 @@ def _mide_movimiento(rasterizar_fn):
             and quieto != movido)
 
 
+def _mide_css_animation():
+    """Measure the deterministic CSS adapter at two explicit timeline points."""
+    quieto = _rasterizar_css_animation(_SONDA_ANIMA, _TAM_SONDA, avance_ms=0)
+    movido = _rasterizar_css_animation(_SONDA_ANIMA, _TAM_SONDA, avance_ms=500)
+    return (_dibujo_vivo(quieto) and _tiene_colores(quieto, _COLORES_SONDA)
+            and _dibujo_vivo(movido)
+            and _tiene_colores(movido, _COLORES_SONDA)
+            and quieto != movido)
+
+
 def _anima(backend):
     """Si ESE backend dibuja Y mueve. Medido con la sonda representativa,
     cacheado por identidad del backend."""
-    clave = backend if backend == "cairosvg" else (_edge() or "?")
+    clave = backend if backend in ("cairosvg", _CSS_ANIMATION_BACKEND) else (_edge() or "?")
     if clave not in _ANIMADORES:
         try:
             if backend == "edge":
                 _ANIMADORES[clave] = _perfil_navegador() is not None
+            elif backend == _CSS_ANIMATION_BACKEND:
+                _ANIMADORES[clave] = _mide_css_animation()
             else:
                 _ANIMADORES[clave] = _mide_movimiento(
                     lambda t: _rasterizar_con(backend, t, _TAM_SONDA))
@@ -387,7 +685,7 @@ def por_que_no_hay_navegador(anima=True):
 
 
 def backend_disponible(anima=False):
-    """'cairosvg', 'edge' o None; el backend se sondea una vez con un SVG 8x8.
+    """Return 'cairosvg', a browser, or the local CSS adapter.
 
     Con `anima=True` la pregunta es otra y mas estrecha: cual sirve para MEDIR
     movimiento. cairosvg rasteriza impecable y no ejecuta ni una animacion CSS,
@@ -402,6 +700,8 @@ def backend_disponible(anima=False):
                 continue
             if _anima(backend):
                 return backend
+        if _cairosvg() is not None and _anima(_CSS_ANIMATION_BACKEND):
+            return _CSS_ANIMATION_BACKEND
         return None
     if _cairosvg() is not None:
         return "cairosvg"
@@ -409,6 +709,8 @@ def backend_disponible(anima=False):
 
 
 def _rasterizar_con(backend, txt, tam, anima=False):
+    if backend == _CSS_ANIMATION_BACKEND:
+        return _rasterizar_css_animation(txt, tam, avance_ms=0)
     if backend == "cairosvg":
         return _cairosvg().svg2png(bytestring=txt.encode("utf-8"),
                                    output_width=tam, output_height=tam)
@@ -434,6 +736,9 @@ def rasterizar(svg_txt, tam=TAM, avance_ms=None, backend=None, anima=False):
     navegador que los demas. Deducirlo lo haria salir de otro, y comparar dos
     cuadros producidos por instrumentos distintos no mide nada.
     """
+    if backend == _CSS_ANIMATION_BACKEND:
+        return _rasterizar_css_animation(svg_txt, tam,
+                                         avance_ms=avance_ms or 0)
     txt = svg_txt
     if avance_ms:
         txt = _adelantar(txt, avance_ms)

@@ -37,6 +37,22 @@ for _cand in (os.path.join(_DIR, "..", "mak_research"),
               os.path.join(_DIR, "..", "research")):
     if os.path.isdir(_cand) and _cand not in sys.path:
         sys.path.insert(0, _cand)
+try:
+    from cultura.mak_conductor.runtime import (active_enabled, dispatch_sync,
+                                                enqueue_shadow,
+                                                observe_shadow)
+except ImportError:
+    sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH",
+                                     "/home/mak/flujo/cultura"))
+    try:
+        from mak_conductor.runtime import (active_enabled, dispatch_sync,
+                                           enqueue_shadow,
+                                           observe_shadow)
+    except ImportError:
+        enqueue_shadow = dispatch_sync = None
+        def active_enabled():
+            return False
+        observe_shadow = None
 import roles  # noqa: E402
 try:
     import research_router  # noqa: E402
@@ -334,7 +350,7 @@ def _corpus_review_id(path):
         return path
 
 
-def _corpus_review_payload(st):
+def _corpus_review_payload(st, verbo="multiplicar"):
     """Select one old report for review, retaining retryability on failure."""
     seen = set(st.get("corpus_review_seen", [])[-500:])
     inflight = st.get("corpus_review_inflight", "")
@@ -351,8 +367,8 @@ def _corpus_review_payload(st):
             "tema": topic,
             "source_path": path,
             "review_id": review_id,
-            "output_contract": contract_for_task("repasar", topic),
-            "work_contract": work_contract("repasar", topic),
+            "output_contract": contract_for_task(verbo, topic),
+            "work_contract": work_contract(verbo, topic),
         }
     return None
 
@@ -680,6 +696,21 @@ def _resp_ok(resp):
     return (True, "")
 
 
+def _shadow_dispatch(depto, verbo, payload):
+    if enqueue_shadow is None:
+        return None
+    stage = "cron_dispatch"
+    body = {"department": depto, "verb": verbo,
+            "mode": payload.get("modo", ""),
+            "topic": payload.get("tema", ""),
+            "density": payload.get("densidad", "medio")}
+    return enqueue_shadow(
+        stage, body, producer="platform.trabajo",
+        estimated_vram_mb=3000 if depto in ("research", "codex") else 0,
+        template_version="cron-dispatch-v1",
+    )
+
+
 # Un tema que es el TEXTO DE UN FALLO no es un tema. Medido el 2026-08-01: el
 # organismo estaba investigando "**Detalles del Evento:** No se encontraron
 # detalles especificos", con los asteriscos de Markdown adentro. Eso no salio
@@ -915,7 +946,7 @@ def _tarea(verbo, st):
         if _memory_requires_review():
             return None
         if verbo == "multiplicar" and _should_review_corpus(st):
-            payload = _corpus_review_payload(st)
+            payload = _corpus_review_payload(st, verbo)
             if payload:
                 return ("research", payload)
         if backlog is not None:
@@ -1030,6 +1061,11 @@ def _main_unlocked():
         return
 
     depto, payload = tarea
+    # The autonomous scheduler is the source of this trigger. It travels with
+    # the request so activity inventory can distinguish cron work from a human
+    # API call all the way down to the model/resource boundary.
+    payload = dict(payload)
+    payload.setdefault("trigger", "cron:MAK-TRABAJO")
     url = RESEARCH
     if depto == "codex":
         url = CODEX
@@ -1052,13 +1088,24 @@ def _main_unlocked():
     if contract_errors:
         error = ",".join(contract_errors)
         log("%s RECHAZO local de contrato: %s" % (ts, error))
+        _finish_corpus_review(st, payload, False)
+        _finish_curatoria_review(st, payload, False)
         _audit_idle_decision(ts, online, verbo, depto, payload,
                              "rejected", error=error)
         _save(st)
         return
     try:
+        shadow_job = _shadow_dispatch(depto, verbo, payload)
         resp = _post(url, payload)
         ok, err = _resp_ok(resp)
+        if observe_shadow is not None:
+            observe_shadow(
+                shadow_job, producer="platform.trabajo",
+                result_status="ACCEPTED" if ok else "REJECTED",
+                payload={"department": depto, "verb": verbo,
+                         "error": err} if err else
+                        {"department": depto, "verb": verbo},
+            )
         if not ok:
             log("%s [%s] %s RECHAZADO: %s"
                 % (ts, "on" if online else "OFF", verbo, err))
@@ -1085,6 +1132,13 @@ def _main_unlocked():
         _audit_idle_decision(ts, online, verbo, depto, payload,
                              "accepted", resp)
     except Exception as e:  # noqa: BLE001 - el orquestador no debe morir
+        if observe_shadow is not None:
+            observe_shadow(
+                shadow_job, producer="platform.trabajo",
+                result_status="FAILED", payload={
+                    "department": depto, "verb": verbo,
+                    "error": str(e)[:2000]},
+            )
         _save(st)
         _finish_curatoria_review(st, payload, False)
         log("%s [%s] %s FALLO: %s" % (ts, "on" if online else "OFF", verbo, str(e)[:120]))
@@ -1093,8 +1147,41 @@ def _main_unlocked():
 
 
 def main():
+    if active_enabled():
+        payload = {"tick_bucket": int(time.time() // 60)}
+
+        def handle(_job):
+            result = _main_unlocked()
+            return {"validated": True, "result": result}
+
+        queued = dispatch_sync(
+            "cron_tick", payload, producer="platform.trabajo.main",
+            handler=handle, template_version="cron-tick-v2")
+        return queued
+    shadow_job = (enqueue_shadow(
+        "cron_tick", {"tick_bucket": int(time.time() // 60)},
+        producer="platform.trabajo.main", template_version="cron-tick-v1")
+        if enqueue_shadow is not None else None)
+    started = time.time()
     with _exclusive_run_lock():
-        return _main_unlocked()
+        try:
+            result = _main_unlocked()
+        except Exception as exc:
+            if observe_shadow is not None:
+                observe_shadow(
+                    shadow_job, producer="platform.trabajo.main",
+                    result_status="FAILED", payload={
+                        "error": str(exc)[:2000],
+                        },
+                    started_at=started, owner_pid=os.getpid())
+            raise
+    if observe_shadow is not None:
+        observe_shadow(
+            shadow_job, producer="platform.trabajo.main",
+            result_status="READY", validated=True,
+            payload={"tick_bucket": int(started // 60)},
+            started_at=started, owner_pid=os.getpid())
+    return result
 
 
 if __name__ == "__main__":

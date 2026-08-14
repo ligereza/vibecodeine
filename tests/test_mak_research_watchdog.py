@@ -14,7 +14,7 @@ def test_cola_requires_ntfy_inbox_before_watchdog_starts_it():
     source = WATCHDOG.read_text(encoding="utf-8")
     assert "NTFY_TOPIC_IN" in source
     assert "grep -Eq '^[[:space:]]*NTFY_TOPIC_IN=.+$'" in source
-    assert source.index("NTFY_TOPIC_IN") < source.index('nohup python3 "$BASE/cola.py"')
+    assert source.index("NTFY_TOPIC_IN") < source.index('ensure_unit "$QUEUE_UNIT"')
 
 
 def test_missing_ntfy_inbox_is_reported_once_not_every_cron_tick():
@@ -22,4 +22,4 @@ def test_missing_ntfy_inbox_is_reported_once_not_every_cron_tick():
     assert 'COLA_DISABLED="$BASE/.cola.disabled.missing_ntfy"' in source
     assert 'if [ ! -f "$COLA_DISABLED" ]; then' in source
     assert ': > "$COLA_DISABLED"' in source
-    assert "cola.py desactivada: falta NTFY_TOPIC_IN" in source
+    assert "cola.py disabled: NTFY_TOPIC_IN is missing" in source

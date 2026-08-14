@@ -1,5 +1,574 @@
 # LAST_HANDOFF - Faro
 
+## CURRENT PHYSICAL MAK HANDOFF - 2026-08-13 FINAL AUDIT (REVALIDATED 22:34)
+
+Authority is the measured Linux body under `/home/mak`. The checkout is
+`/home/mak/flujo`, physical audit branch `main`, HEAD
+`559fa6075e1cfb7a51be380c6d354d2af90dffb2`. Git was read only during the
+physical audit; the later proposal branch is local-only and has not been
+committed or published. `/home/mak/WIN`
+was used as provenance/evidence only; no WIN file was executed and no Windows
+provider, endpoint, command, or library is part of active MAK runtime.
+
+### Inventory and classification
+
+The deterministic inventory command classified every physical file in the
+requested roots. The path/extension rules assign each file to exactly one of
+`runtime_active`, `shared_code`, `tool`, `candidate`, `generated`, `historical`,
+`memory`, `operational_state`, `product`, or `credential`; the explicit
+review queue is `candidate`, so unclassified count is zero. Counts:
+
+- `/home/mak/flujo`: 15195 files; candidate 273, credential 3, generated
+  12731, historical 10, memory 21, operational_state 22, product 1089,
+  runtime_active 14, shared_code 835, tool 197.
+- `/home/mak/research`: 17598; candidate 143, credential 2, generated
+  14525, historical 1047, operational_state 11, product 1678,
+  runtime_active 4, shared_code 188.
+- `/home/mak/plataforma`: 5023; candidate 244, credential 3, generated 4035,
+  historical 73, memory 2, operational_state 246, product 120,
+  runtime_active 5, shared_code 295.
+- `/home/mak/codex`: 616; candidate 2, generated 124, historical 463,
+  operational_state 5, product 2, runtime_active 3, shared_code 17.
+- `/home/mak/xio_puente`: 12; candidate 1, credential 1, generated 3,
+  memory 0, operational_state 1, product 1, runtime_active 1, shared_code 4.
+- `/home/mak/WIN/codex`: 8212; credential 6, historical 8206. WIN remains
+  archive and never runtime.
+
+Duplicate audit covered the physical source/config/product scope after
+excluding generated, rollback, historical, venv, node_modules, and lock
+material. The repeat bug-hunt now finds 245 same-hash groups (643 files),
+including 197 groups (413 files) touching the checkout. One authorized group
+was added when the verified rasterizer was promoted to the live Codex mirror;
+the earlier pre-promotion count was 244 groups (641 files). The earlier wider
+audit found 299 groups (747 files); the remaining difference is the documented
+exclusion scope, not a merge or deletion. Representative exact groups are
+`fallback_util.py` hash `011560a85400dc82738cc4b595c4c8ddde6777433ee0f8aebe307a10ca290aba`,
+`research_lib.py` hash
+`020069a00000fe6492a6b5bd3ce4e6dde3792a47cf544f2221c9a35b5702e989`, and
+`calidad_svg.py` hash
+`0363f61a6841010e2dd6f92192162e182e04613baa2f0120b3f19d8e95cd1539`.
+They are runtime/source mirrors or generated/history duplicates with no
+proven authority for consolidation. No duplicate was moved, deleted, or
+overwritten.
+
+### Dependency, compile, import, and test evidence
+
+- `/home/mak/research/.venv/bin/python -m pip check` and
+  `/home/mak/plataforma/.venv/bin/python -m pip check`: both `No broken
+  requirements found`.
+- Existing Research venv now has Flask 3.1.3, CairoSVG 2.9.0, vpype 1.15.0,
+  pyflakes 3.4.0, pytest-cov 7.1.0, pre-commit 4.6.2, and pytest 9.1.1.
+  The Codex system interpreter now has Debian `python3-cairosvg` 2.5.2 and
+  Pillow 12.3.0. No new venv, provider, browser, or framework was created.
+  System Node is 18.20.4 and npm is 9.2.0. `npm run typecheck` in
+  `/home/mak/flujo/web` passes.
+- Active Python source excluding explicit rollback/piezas/history and the
+  known candidate `/home/mak/plataforma/panel_directivo.py` compiles with
+  `python3 -m py_compile`; active shell files pass `bash -n`. Runtime import
+  smoke passes for platform Hub/providers/energia, Research interfaz/
+  research_lib/worker, Codex calidad_svg/iconos, and XIO monitor.
+- Full regression command, with the real venv executable on PATH, exited 0 on
+  the final rerun:
+  `PATH=/home/mak/research/.venv/bin:$PATH PYTHONPATH=/home/mak/flujo/src:/home/mak/flujo/cultura:/home/mak/flujo/cultura/mak_codex:/home/mak/flujo/cultura/mak_research:/home/mak/flujo/cultura/mak_plataforma /home/mak/research/.venv/bin/python -m pytest -q -rs --tb=short`.
+  Every executed test passed. The only skip is 1 missing
+  `DIRECTOR_CONTRACT.md`; all 17 SVG animation tests now execute through the
+  deterministic CairoSVG CSS adapter and pass. vpype is installed and no
+  longer skipped.
+- After this handoff was reread, a redundant full-suite attempt was stopped at
+  21% rather than rerun against the already recorded result. It raised
+  `KeyboardInterrupt` in `energia_log.py`, made no file or runtime-data change,
+  and is not reported as a test result. The current focused regression then
+  passed every selected executable test with exactly the one authorized
+  documentation skip.
+
+### Runtime, routes, services, and sync
+
+All four user units are `active` and `enabled`, after `systemctl --user
+daemon-reload` and restart. There is exactly one process/listener for each:
+
+- Hub PID 111669: `/home/mak/plataforma/.venv/bin/python /home/mak/plataforma/hub.py`,
+  `0.0.0.0:8900`.
+- Research PID 72229: `/home/mak/research/.venv/bin/python
+  /home/mak/research/interfaz.py`, `127.0.0.1:8890`.
+- Codex PID 96805: `/usr/bin/python3 /home/mak/codex/interfaz_codex.py`,
+  `127.0.0.1:8891`.
+- XIO PID 72225: `/usr/bin/python3 /home/mak/xio_puente/monitor.py`,
+  GET-only monitor with no listener.
+
+The desktop input bridges are intentionally outside the MAK department
+runtime: `clip-bridge.service` is active for the shared clipboard and
+`barrier-server.service` is active on MAK at `192.168.50.2:24800` for the
+shared mouse/keyboard. `barrier-client.service`, which would connect to the
+separate WIN host at `192.168.50.1`, is inactive. These human-interface
+bridges are not Codex, Research, Hub, or XIO dependencies and are not used as
+runtime evidence for those departments.
+
+Department endpoint probes used MAK loopback (`127.0.0.1`) for Research and
+Codex. Hub is bound to `0.0.0.0:8900` on MAK, meaning all MAK interfaces; it
+does not mean the service runs on WIN. `findmnt -T /home/mak/WIN` resolves to
+MAK's root filesystem (`/dev/sda2`), so WIN is a local archive directory, not
+an attached runtime mount.
+
+Canonical source mirrors and live units are byte-identical by hash:
+
+- Hub unit `e491c5b938f0007bcf4cbffc4ec7f839fd0f7ba5c868ed7b8c77df049201135c`.
+- Research unit `da1e992a255b727a115f92718fc326e5ba629158f1fe76ed89bf3317b6b0ab37`.
+- Codex unit `4603a6382f28062e73188d496dd345730a737c07f934b8a754f5d38689c6b580`.
+- XIO unit `e28791f8645536dbf66b39017485e3677858fd432431ca9f9bdcb019b06d585d`.
+
+Active runtime/source code hashes also match: Hub
+`9a8b861d6065606fcef3c9c4ba13350cfe94f6e8c806ad07df7cfccdb96b0255`,
+Research `c7cf09854729ee4e83e50a62d5557dd5815d0e805d50ed1d14a471bf33458114`,
+Codex `b5c551fa228be777253a1ea7bd2e8918ff35799d81cff7802168e43e0b57cc25`,
+XIO `633695ea015384ea5c8066fc42d9398e50522e157113361a5bd5e2d384bb24d0`,
+providers `e344564b3ae0f2640e369e52801e1d6ab5be900cdc05b22675a9537e36ec6153`,
+energia `61890334893d2fdab6c062a27cc94ae2a669acb749a2480abf84bbf9c51a4ff9`,
+and calidad_svg `0363f61a6841010e2dd6f92192162e182e04613baa2f0120b3f19d8e95cd1539`.
+The live and checkout Codex rasterizer both hash to
+`bb82b8af96a3fe4e728d6afd5e4a07a09412cdb84ccc848263bf1ded6a20cb27`.
+The live and checkout Hub health route now hash to the same Hub source above;
+GET and HEAD `/health` return `application/json` under schema
+`mak-hub-health-v1`, so the watchdog no longer mistakes the Hub HTML page for
+a healthy API response.
+The live and checkout coherence checker hash to
+`f62abba0e20d5de72f1e672460cb066305ba859a590f587a142184a76ef05269`.
+The live and checkout curatoria perception hash to
+`f3589397262e37651b81f688beaf5a5e4e72b066152679513a335365b4857081`.
+
+GET matrix returned HTTP 200 for Hub `/`, `/health`, `/portafolio/`,
+`/research/`, `/codex/`; Research `/`, `/api/jobs`, `/api/workflow`, and
+`/api/memoria/grafo?umbral=0.35`; and Codex `/` and `/api/jobs`.
+Codex `/api/graph` returned the expected 404 because it is not a declared
+route. `MAK_PORTFOLIO_ROOT` is unset and resolves to `/home/mak/flujo/iskvw`.
+The served hashes equal the checkout hashes for `editor.html`
+`81f3e9589184a1a15b99532ed6833d03ad79da1c5bfa0b1e2ae623cd05c4ac7f` and
+`mesa_montaje.js` `6b87410c20005d0e4818cb176e6d14364c265472d04ac4e01bf762f53121ab82`.
+
+`cultura/mak_plataforma/crontab.mak` and `/home/mak/plataforma/crontab.mak`
+match at `c7c7c045ec5e2727f7bb62a753c20210c975d8acf67624ceb39147ea5dbb5122`.
+The effective crontab has zero active sync lines and one `# PAUSED-FARO`
+repo-sync line. `systemctl --user list-timers --all` reports zero timers.
+No fetch, pull, merge, reset, clean, checkout, browser, or automatic sync was
+run. The historical duplicate `cultura/mak_plataforma/mak-xio.service` was
+marked non-canonical with current hash
+`ce4a11343d3b1b06c4ccd3cb724bb12ce5b5afbd8bce4f3c35d949dea0da7a33`; the
+canonical XIO source is `cultura/mak_xio_puente/mak-xio.service`.
+
+### Provenance and safety changes
+
+- The stale service mirrors were reconciled from the measured live units into
+  `cultura/mak_plataforma/mak-hub.service`, `cultura/mak_research/interfaz.service`,
+  `cultura/mak_codex/mak-codex.service`, and the new canonical
+  `cultura/mak_xio_puente/mak-xio.service`. Source and live destination hashes
+  are recorded above; the previous files remain recoverable in the worktree
+  diff and no runtime code was replaced by a WIN file.
+- ESM metadata was added at `docs/cultura/lib/package.json` and
+  `iskvw/piel/lib/package.json` with `{ "type": "module" }`. This repaired
+  Node module-boundary failures without adding a framework; the 13 previously
+  failing Node tests now pass.
+- Windows WoL fields were removed from live and mirror `energia.py`; source
+  HEAD hash was `6102c89091ad41251f48938a6d4fb18ae74dd3b7bbd1b955d01987f7f34d7c11`,
+  current live/mirror hash is recorded above. The old Windows field is not an
+  active dependency.
+- `cultura/mak_curatoria/ingesta_archivo.py` was renamed only at identifier
+  level to English ASCII after its archived/source hash
+  `6e68de9e4033864c217d2a90ff3a12a9f5e6cf54810a73a6c34d0dbbf2d298be`; current
+  checkout hash is `73c83c70783df5a5716eaf600ec80a4959c5b3325c1871396ab83aa467818c1b`.
+  Its archive copy was not overwritten.
+- The ignored credential file `cultura/.dev` had old hash
+  `01347186de8b1335cfffd73fd9418e2216217f75143ec09208d011fcc3ae12dc` and
+  was relocated to `/home/mak/.config/mak/flujo.dev` with mode 600 and that
+  same hash. The checkout path is now a no-secret ASCII template with hash
+  `0b5098b8b4f057a55f509fa4e361edc5810c00ec8de0fa90b5e797060a6ea29c`.
+  No credential value was printed or promoted. No credential pattern was
+  found in promoted source; existing runtime env files remain external and
+  mode 600.
+
+### Final bug hunt and boundary verification
+
+- The focused regression found and covered a false-positive Hub health route:
+  `/health` previously fell through to portfolio HTML with HTTP 200. The
+  route was added, deployed with a rollback copy, restarted only for
+  `mak-hub.service`, and verified with GET and HEAD. The focused route test
+  passes.
+- The coherence checker previously matched basenames across departments and
+  scanned venv site-packages as live code. It now matches absolute runtime
+  paths, excludes environment packages, and records the two reviewed
+  curatoria candidates as repo-only. `python3
+  cultura/mak_plataforma/coherence.py --strict` exits 0: all five organs have
+  zero different and zero not-copied files, with zero invoked box-only files.
+- Live `/home/mak/curatoria/percepcion.py` contained an opt-in conductor/GPU
+  integration absent from checkout. That physical runtime code was reconciled
+  into the checkout by measured patch; source/live hashes now match. The
+  curatoria guardia remains paused and no new service or framework was added.
+- The read-only mirror checker could not read through SSH because host-key
+  verification failed before file access for both loopback and MAK-address
+  attempts. This is a transport limitation, not an unexplained source drift;
+  local source/live SHA-256 checks and `coherence --strict` are the accepted
+  evidence for this pass. Known-host policy was not weakened.
+- The former static-only rasterizer path was tested against the real compiled
+  SVG and the 16 hand-authored RAVE icons. CairoSVG now evaluates the bounded
+  CSS vocabulary emitted by MAK, translates CSS transforms to native SVG
+  attributes, and measured 4 distinct frames for the live RAVE smoke. The
+  adapter is not a general browser or a second framework.
+- `/usr/bin/python3` imports `cairosvg` and `PIL`; live Codex reports
+  `backend_disponible() == cairosvg` and
+  `backend_disponible(anima=True) == cairosvg-css-animation`. The earlier
+  failed smoke used an unresolved `var()` SVG; the resolver-backed smoke then
+  passed 4/4 distinct frames.
+- Final checks: `git diff --check`, Python compilation, platform/research/
+  Codex/XIO import smoke, both `pip check` commands, web TypeScript check,
+  endpoint matrix, and active-service process count all pass. One process is
+  present for each service; no user timers exist and effective active sync
+  lines remain zero.
+- A deliberately broad live-tree compile also exposed two non-runtime
+  classified artifacts: `/home/mak/plataforma/panel_directivo.py` fails at line
+  145 and one prose response under `/home/mak/codex/piezas/` is not Python.
+  The first remains a candidate and is not referenced by systemd/cron; the
+  second remains historical generated material. The corrected active compile,
+  excluding those classified areas, passes for live and checkout Python.
+- A repeat source scan found no active runtime entrypoint containing Windows
+  commands, providers, endpoints, or libraries. One historical/documentation
+  reference remains inside the rasterizer module comments; it is not an
+  executable path or dependency. The only true secret-pattern match is the
+  external `/home/mak/research/research.env`, not promoted source.
+- Mirror/service discrepancies are classified, not unexplained: the active
+  user units match canonical checkout sources (Hub
+  `e491c5b938f0007bcf4cbffc4ec7f839fd0f7ba5c868ed7b8c77df049201135c`,
+  Research `da1e992a255b727a115f92718fc326e5ba629158f1fe76ed89bf3317b6b0ab37`,
+  Codex `4603a6382f28062e73188d496dd345730a737c07f934b8a754f5d38689c6b580`,
+  XIO `e28791f8645536dbf66b39017485e3677858fd432431ca9f9bdcb019b06d585d`).
+  The stale non-runtime files `/home/mak/codex/mak-codex.service`
+  (`bddea798647e3e239935a4808614a3319b27ffe460a3dc3398d6dac44e63d6fb`),
+  `/home/mak/research/interfaz.service`
+  (`dbf7fb7f6e4e4fd6fdf7745ea724c0bb0496dfd80b3c40c65103a02e1347567d`),
+  and `/home/mak/plataforma/mak-hub.service`
+  (`64aa7c58a8c6884066303b539f12ef8d0d83d55c7eda907c5b2f371fb20792bd`)
+  retain old installer text/defaults. `/home/mak/plataforma/mak-xio.service`
+  (`d7701b21a9a29ec5fcf1f477be4b3c28349fd33155b1381734906b7672cebae4`) is
+  the preserved historical duplicate; canonical XIO is
+  `cultura/mak_xio_puente/mak-xio.service`
+  (`e28791f8645536dbf66b39017485e3677858fd432431ca9f9bdcb019b06d585d`).
+  None was moved, overwritten, or installed; all remain reversible in their
+  original paths.
+- The optional static `mak-research-queue.service` is inactive and has no boot
+  enablement; its live and checkout `cola.py` hashes both equal
+  `c9cb650c73b1cc8d40c2013cad3379e4e9c81852de0670e9ff35f8742b5832ca`. The
+  active watchdog only asks systemd to start declared units
+  and does not launch detached duplicate processes.
+- No writer was found that can auto-sync, pull, fetch, merge, reset, clean, or
+  overwrite the human checkout from WIN. The external helper
+  `/home/mak/bin/mak_sync_safe.py` (mode 755, hash
+  `4f8284ccc793eee277ccf205e5ddcbeb6593b40d467fcc8ec0f4192489018e55`) is
+  manual-only, has no systemd/cron reference or live process, requires the
+  separate `/home/mak/flujo-deploy` worktree, and resets only that disposable
+  worktree before copying; the effective cron line for it is paused. The
+  checkout candidate `tools/mak_ops/repair_mak_sync.py` contains legacy remote
+  sync/reset commands and Windows SSH text, but has no caller and was never
+  run. Both are classified non-runtime; no duplicate was consolidated.
+- Stale prose in `CLAUDE.md`, `RELEVO_MAK.md`, and related historical docs still
+  describes the former active repo-sync policy. It is not an executable path;
+  current physical crontab and systemd evidence above supersede it. No old doc
+  was rewritten because the requested metadata update is limited to this
+  current handoff.
+- Third consecutive blocker audit at `2026-08-13T21:40:34-04:00`: the focused
+  hygiene test still skips at `tests/test_higiene_docs.py:134`, the complete
+  local search still finds zero contract files, all four endpoint probes return
+  HTTP 200, all four runtime services are active, process count is four, user
+  timer count is zero, and the four `pip check`/mirror hash checks remain
+  green. No external-state change occurred that could resolve the contract.
+
+### Status and escalation
+
+STATUS: OPERATIONAL_WITH_DOCUMENTATION_WAIVER
+AREA: Physical MAK runtime, checkout boundary, and regression bug hunt
+OBSERVED: Inventory is fully classified; dependencies, imports, compilation,
+  focused regression, services, routes, hashes, cron ownership, credentials,
+  and active-runtime boundary checks pass. The only omitted test is the
+  documentation hygiene assertion for absent `DIRECTOR_CONTRACT.md`.
+EVIDENCE: The director explicitly authorized the waiver for
+  `test_el_rango_de_invariantes_citado_coincide_con_el_contrato`; the current
+  focused suite passes all executable tests with exactly one authorized skip;
+  `/portafolio/` and portfolio APIs return 200; all four MAK user services are
+  active with one process each; `coherence --strict` exits 0; pip checks are
+  clean; and checkout/live hashes match for the reconciled runtime files.
+CONFLICT: The missing contract remains a documentation-only omission and is
+  explicitly waived. No runtime, WIN-boundary, credential, or provenance gate
+  is waived.
+OPTIONS: Continue with Git web restructuring after this physical MAK audit,
+  or keep the verified checkout unchanged for a later human contract addition.
+RECOMMENDATION: Start Git web restructuring only from this verified MAK scope;
+  preserve the current local worktree and keep repo-sync paused.
+EXACT DECISION NEEDED: None for the physical MAK audit; the documentation test
+  waiver is already authorized by the director.
+COMMANDS_NOT_RUN: Git transport or remote synchronization; browser-based
+  validation; destructive cleanup; a second full-suite rerun after the
+  handoff. The one redundant full-suite attempt was interrupted at 21% and
+  made no changes.
+FILES_NOT_MODIFIED: `/home/mak/WIN`, protected README/SVG geometry,
+  `panel_directivo.py`, active runtime env values, and historical source.
+
+### Git web proposal state
+
+The verified physical scope is staged locally on
+`codex/mak-web-restructure-20260813` from the audited checkout tree. The
+staging contains 97 approved code, service, workflow, test, metadata, handoff,
+and standby files. GitHub CI now runs only on `ubuntu-latest`, and pull
+requests target only the four canonical branches. The branch audit is
+read-only and protects `mak` alongside `main`, `rd`, and `iskvw`. The airdrop
+gate no longer creates a branch or PR, and the historical Claude workflow is
+manual-disabled with read-only permissions. Pages publication is now
+workflow-dispatch-only. The two curatoria intake files were reviewed and
+staged: `diagnostico_proyectos.py` is byte-identical to `mak`;
+`ingesta_archivo.py` is the reviewed ASCII identifier/API delta used by the
+staged conductor. No
+generated data, credentials, WIN material, protected media, reset, clean,
+merge, fetch, push, or commit was performed. The canonical branches remain
+`main`, `mak`, `rd`, and `iskvw`; this `codex/` branch is a reversible proposal,
+not a fifth canonical branch.
+
+### Git transport provenance audit - 2026-08-13 23:02 - REVALIDATED
+
+- The current proposal HEAD and `main`/`origin/main` are
+  `559fa6075e1cfb7a51be380c6d354d2af90dffb2`. `mak`/`origin/mak` are
+  `814b74c1f5335170bf5ed1ee8c054565d6e3fc3e`. Read-only
+  `git rev-list --left-right --count main...mak` reports `6 12`; the two
+  canonical lines diverge and were not merged or rebased.
+- `git diff --name-only main..mak` reports 247 tree paths. The staged proposal
+  contains 97 paths, all present in `mak`; 44 staged blobs are byte-identical
+  to `mak` and 53 differ. The 53 differences are explicit proposal/runtime
+  scope: 6 workflows, 5 Codex, 1 conductor registry, 1 curatoria API source,
+  9 platform, 6 Research, 1 XIO unit, 17 tests, 1 docs metadata, 1 portfolio
+  metadata, 1 tool, 2 dependency metadata files, and the handoff/standby
+  records. No staged path was silently taken from a missing branch path.
+- The proposal has zero staged deletions. Staged path exclusion scan found
+  zero credentials, generated/data trees, protected media, virtualenvs,
+  database files, and zero blobs over 1 MiB. `git status` reports zero
+  unstaged and zero untracked paths.
+- All 11 workflow YAML files parse successfully. A read-only scan found zero
+  `git push`, PR creation, branch deletion, write permission, Windows runner,
+  PowerShell, `cmd.exe`, or uppercase `WIN` references under `.github`.
+- Revalidation at `2026-08-13T23:02:15-04:00`: the focused regression passed
+  49 tests with one authorized skip at
+  `tests/test_higiene_docs.py:134`; Python compilation and staged diff
+  checks passed. `mak-hub.service`, `mak-research.service`,
+  `mak-codex.service`, and `mak-xio.service` are active with one matching
+  process each; listeners remain `8900`, `8890`, and `8891`; the four tested
+  endpoints returned HTTP 200. Effective sync cron entries and user timers
+  remain zero.
+- `rg` was unavailable in this shell during one first pass; that pass was
+  discarded. The static scan was rerun with `grep` and produced the zero
+  counts above. No remote or runtime state changed during this audit.
+- The staged conductor initially exposed an API mismatch against the `mak`
+  base: `ingesta_archivo.py` accepted `fuente`, while the reviewed ASCII
+  contract uses `source_name`. The local candidate was reviewed as a
+  deterministic identifier-only delta, staged, and guarded by
+  `test_organism_ingest_contract_uses_ascii_keyword`; the mismatch now passes
+  in the `mak` validation tree.
+- Existing development tests required DuckDB without declaring it. The
+  existing Research venv now has `duckdb 1.5.5`; `pyproject.toml` and
+  `requirements-dev.txt` declare `duckdb>=1.4.0`, and `pip check` is clean.
+- The complete `mak` validation tree, with all 97 staged blobs overlaid on
+  `mak` at detached HEAD `814b74c1f5335170bf5ed1ee8c054565d6e3fc3e`, ran
+  2,855 tests with zero failures and one authorized documentation skip. The
+  validation tree is local-only; no canonical ref or remote changed.
+- At `2026-08-13T23:05:50-04:00`, SHA-256 comparison of every staged blob
+  against the validation files at `/tmp/mak-transport-validation-9IeG4b`
+  reported 97 files and zero mismatches.
+- The Watsonx fallback test now inspects the actual branch instead of a
+  brittle 1,400-character slice. The privacy ratchet excludes only
+  `docs/recovered/` provenance exports and the explicit sanitizer fixture
+  `tests/test_recovered_import.py`; raw historical evidence was not rewritten
+  or deleted.
+
+STATUS: DECISION_REQUIRED
+AREA: Git transport of the verified MAK scope
+OBSERVED: The local proposal is complete and staged, but the current rules do
+  not authorize a commit or remote publication from this session.
+EVIDENCE: Branch `codex/mak-web-restructure-20260813` has 97 staged files;
+  staged diff check, secret scan, generated/media exclusion checks, the full
+  `mak` validation suite (2,855/2,855 with one authorized skip), and
+  `tests/test_git_web_contract.py` are clean. The issue-download workflow no
+  longer describes WIN as a render runtime.
+CONFLICT: Publishing now would create external Git state without an explicit
+  commit/push decision and would choose a remote target while `main` and `mak`
+  are divergent canonical lines.
+OPTIONS: Authorize a local commit only; authorize commit plus push of this
+  proposal branch; or keep the reviewed staging unchanged.
+RECOMMENDATION: Keep staging unchanged until the director explicitly chooses
+  the commit and publication target.
+EXACT DECISION NEEDED: May MAK commit this staged proposal, and if yes, should
+  it push `codex/mak-web-restructure-20260813` to `origin`?
+COMMANDS_NOT_RUN: `git commit`, `git push`, remote fetch/sync, merge, reset,
+  clean, branch deletion, and browser validation.
+FILES_NOT_MODIFIED: Remote refs, canonical branch tips, WIN archive, active
+  runtime env values, generated data, credentials, protected media, and
+  rollback material.
+
+### Next action
+
+The physical MAK audit is complete under the authorized documentation waiver.
+Keep WIN archival and repo-sync paused. Review the staged proposal scope before
+any commit or publish; transport only approved code, contracts, migrations,
+tests, and products whose current local evidence remains green.
+
+## Historical physical MAK handoff superseded by final audit - 2026-08-13
+
+Authority is the live Linux body under /home/mak. Git and old handoffs are
+transport/evidence only. /home/mak/WIN is archive and provenance; no file from
+WIN was executed. MAK runtime uses Linux Python and local Ollama/NIM/Watson
+paths only.
+
+### Measured inventory and classification
+
+- /home/mak/flujo: 14905 files: shared_code 564, tool 439, generated 12399,
+  memory 1261, product 155, operational_state 84, credential 3.
+- /home/mak/research: 5420 files: runtime_active 40, candidate 2990,
+  generated 2324, historical 14, memory 17, operational_state 34,
+  credential 1.
+- /home/mak/plataforma: 4907 files: runtime_active 89, candidate 743,
+  generated 3894, historical 105, memory 36, operational_state 39,
+  credential 1.
+- /home/mak/codex: 504 files: runtime_active 19, candidate 427, generated
+  12, historical 37, memory 2, operational_state 6, credential 1.
+- /home/mak/xio_puente: 9 files: runtime_active 1, tool 2, historical 1,
+  memory 2, operational_state 2, credential 1.
+- /home/mak/WIN/codex: 8212 files: tool 64, generated 8008, historical 140.
+- The physical classifier produced zero unclassified files. Duplicate is a
+  separate evidence overlay, not a replacement class. Hash audit found 17
+  same-hash groups in the checkout; generated research corpora and rollback
+  copies remain separate because no authority was proven. No duplicate was
+  moved or overwritten.
+
+### Dependency and code checks
+
+- Python is 3.11.2. Research and platform venvs both report pip check:
+  No broken requirements found. Codex and XIO use /usr/bin/python3.
+- Pytest was installed only into the existing research venv from the already
+  declared test dependency. No runtime provider or framework was added. The
+  full suite was started with the checkout PYTHONPATH but was interrupted;
+  it is not reported as passed.
+- AST parse: 142 live Python files, 141 pass and one candidate fails:
+  /home/mak/plataforma/panel_directivo.py:145, expected except/finally. No
+  systemd or cron caller references this file; it remains candidate/failed,
+  not promoted.
+- Checkout source AST parse: 122 files, 0 failures. Import smoke passed for
+  mak_conductor, runtime, queue_store, handler_registry, mak_research.worker,
+  mak_codex.worker_codex, mak_codex.interfaz_codex, research_lib, and
+  codex_lib.
+- Manual isolated conductor smoke passed: idempotent enqueue, claim, start,
+  validation, completion, and COMPLETED state. Provider filter smoke passed:
+  input win,ollama resolves only to ollama.
+- git diff --check passed. No credentials were found in promoted source
+  patterns. Credential-bearing environment files remain external state:
+  /home/mak/flujo/.env, /home/mak/research/research.env, and
+  /home/mak/xio_puente/.env. Values were not printed. Their modes are now
+  600; /home/mak/flujo/.env was 644 and was changed to 600.
+
+### Runtime and service evidence
+
+- After daemon-reload and restart, exactly one process/listener exists for
+  each active service: Hub PID 400243 on 0.0.0.0:8900, Research PID 400240
+  on 127.0.0.1:8890, Codex PID 400242 on 127.0.0.1:8891, and XIO remains
+  GET-only under mak-xio.service.
+- GET checks returned 200 for Hub /health and /, Research / and /api/jobs,
+  Codex / and /api/jobs. Research /api/workflow and
+  /api/memoria/grafo?umbral=0.35 returned 200. /api/graph returned 404
+  because it is not a declared route; UI and handler code use workflow/grafo.
+- Hub route authority is measured: MAK_PORTFOLIO_ROOT is unset and therefore
+  resolves to /home/mak/flujo/iskvw; /portafolio/ serves that root and
+  mesa_montaje.js?v=20260811-atlas-audit. Current hashes:
+  editor.html 81f3e9589184a1a15b99532ed6833d03ad79da1c5bfa0b1e2ae623cd05c4ac7f;
+  mesa_montaje.js 6b87410c20005d0e4818cb176e6d14364c265472d04ac4e01bf762f53121ab82.
+- Codex live unit now has Environment=CODER_CHAIN=nim-pro,nim-flash,ollama
+  and MAK_SERVICE_HOST=127.0.0.1. New live unit hash is
+  4bce553a4529bcab0b5a58de1185d858188ebc745cb301c3ee47844bb3d3b9e7;
+  previous live hash was 3d9800606edc1178918d359fe2b9d1d38e1662dc085d9086beec3f8d60ed5407.
+- Active source no longer contains WIN_BASE_URL, WIN_MODEL, the remote
+  192.168.50.1 endpoint, or a win provider route. Historical rollback and WIN
+  archive references are retained as evidence only.
+
+### Sync and provenance changes
+
+- The dangerous live declarative repo-sync line was paused in
+  /home/mak/plataforma/crontab.mak. New hash is
+  c7c7c045ec5e2727f7bb62a753c20210c975d8acf67624ceb39147ea5dbb5122,
+  equal to the paused checkout mirror. Effective crontab and systemd timers
+  contain no active repo-sync. No fetch, checkout, reset, pull, merge, clean,
+  or automatic synchronization was run.
+- The existing mak_conductor package was restored into the checkout from
+  /home/mak/WIN/flujo/cultura/mak_conductor because its ten archived source
+  files matched the live pyc code-object signatures exactly. Destination
+  source hashes matched each archive source hash. The package remains
+  untracked and its two archived tests are untracked; it is not wired into
+  cron or active service execution.
+- Runtime provider files and their checkout mirrors were reconciled in
+  measured per-file patches. Active entrypoints and shared executable modules
+  now match by hash; remaining differences are documentation or operational
+  state and are recorded below. No broad copy was performed.
+
+### Unresolved discrepancies
+
+- Functional runtime/source hash differences for the reconciled service
+  entrypoints are closed. Remaining intentional documentation/state pairs
+  differ and were not copied: `DEPLOY_OPEN.md` runtime
+  `83842d3492b6292cf19feb2565426e2df50b664f06c016b1959a63101a75fb55` vs
+  mirror `783c34819700b05e6be316a06a1b85355bbeb2bfc9582379f0db524a5f588784`;
+  `MAK_RESEARCH.md` `cfc12a2c4d3846ec965d3243a12590f00fefd1280b0aa42dcccbac5207dcd1a9`
+  vs `ffb9854cf2b90fd20f5d33c633b1d3824802d7fd8eb06d1a1335c57fecbe9e80`;
+  `RELEVO_MAK.md` `7cf5a789ea9e34391d58819b31b1fcd60fbda9c97cf7b5f81908e2fd649151da`
+  vs `0b1d271846b965d724fa24b1f9e6621aac50c49cbd41e5e93bf5c45fd5aeecda`;
+  `GENESIS.md` `fc4ef87d1a4bee6cbedb9224fedefb1485c2f73faa3eb952264137bbfb626285`
+  vs `1444b907919e4993ee69f495d3ee6ecfdf4557c8b68167c6c955140ccfe10ec2`;
+  and `backlog_codex.txt`
+  `02ac722c8ff1a48666bb8111efeb8e313a845a73ee65e2736fd319600b7eb92a`
+  vs `99893cb7ccd15fac38d3f360950e08cfce2aaacad51dd5b914de0a15d1620f0c`.
+  These are memory or operational-state authority conflicts, not executable
+  runtime drift; do not overwrite them without a separate provenance record.
+- Focused conductor, provider, and Codex tests pass. Two icon tests remain
+  blocked because no local Linux backend can rasterize and animate SVG. The
+  production result is explicitly `visual_validation.status=unverified` and
+  `smoke_ok=false`; do not install a browser or Windows dependency to bypass
+  this evidence gap.
+- The full pytest run reached 24 percent and showed three visible failures
+  before SIGINT. Its result is incomplete and must be rerun with the real
+  checkout PYTHONPATH.
+
+STATUS: BLOCKED
+AREA: SVG perceptual validation and incomplete regression suite
+OBSERVED: MAK services and reconciled entrypoints are healthy, but the real
+  Linux host has no animation-capable SVG rasterizer and the full pytest run
+  was interrupted after visible failures.
+EVIDENCE: focused conductor tests 16/16; pip check green; AST 122/122 source
+  files pass; `backend_disponible(anima=True)` returns None; full pytest was
+  stopped with SIGINT at PID 407024; no pytest process remains.
+CONFLICT: `smoke_ok=true` would promote an SVG whose animation was not
+  measured. Installing a browser or Windows dependency would violate the
+  MAK-only runtime boundary.
+OPTIONS:
+  1. Keep icon output unverified and blocked until an approved Linux backend
+     exists, then rerun visual tests.
+  2. Decide that deterministic compile-only output is sufficient for this
+     candidate lane and explicitly change the promotion contract.
+RECOMMENDATION: Option 1. Keep the safety gate closed and complete the full
+  suite and remaining bug hunt first.
+EXACT DECISION NEEDED: If no approved Linux rasterizer is available, decide
+  whether icon candidates remain blocked or compile-only output may be
+  promoted with `visual_validation.status=unverified`.
+COMMANDS_NOT_RUN: complete full pytest result; final endpoint/hash/cron
+  regression pass after the standby pause.
+FILES_NOT_MODIFIED: panel_directivo.py; rollback files; WIN archive; runtime
+  env values; README/SVG protected geometry.
+
+### Next action
+
+Read `STANDBY.md`, verify the physical state, rerun the complete pytest suite,
+resolve every non-environment failure, then repeat the final service,
+dependency, hash, duplicate, cron, watchdog, and active-WIN scans. Keep
+repo-sync paused, keep WIN archival, and do not declare success until no
+missing dependency, unexplained hash difference, broken candidate route,
+omitted test, or process duplication remains.
+
 Updated: 2026-08-11 - canonical branch promotion and final validation
 Status: The Hub boundary, XIO human-link circuit, writer ownership block, and
 language slices are consolidated in the four canonical branches. Local,
