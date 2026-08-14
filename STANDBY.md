@@ -6,6 +6,8 @@ Checkout: /tmp/mak-clean-worktree (isolated validation worktree)
 Base: origin/main at 486179789f67f2f6e5767d1b7bc7dd6575cd6aee
 Proposal branch: codex/mak-web-restructure-20260814
 Local transport commit: 9e92d4d0a1f1f711802e90443aeba415006b71a2
+Publication metadata commit: daaa292070bdfddb448611a02ef12d3bbe7c1a43
+Clean draft PR: https://github.com/ligereza/vibecodeine/pull/532
 
 ## Resume contract
 
@@ -59,7 +61,7 @@ Runtime hash audit against /home/mak:
 ## Next action
 
 1. Reverify the clean tree, remote base, and physical runtime hashes.
-2. Push this new branch and create a new draft PR against current main.
+2. Check PR #532 CI and security jobs; they were pending at publication.
 3. Keep PR #531 stale and unmerged. Do not merge any canonical branch.
 
 If a fact cannot be resolved locally, record the exact escalation block in

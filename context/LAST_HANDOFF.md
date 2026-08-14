@@ -13,6 +13,8 @@ current main history intact.
   `/tmp/mak-clean-worktree`.
 - Local transport commit: `9e92d4d0a1f1f711802e90443aeba415006b71a2`, subject
   `feat(mak): align runtime with current main`.
+- Publication metadata commit: `daaa292070bdfddb448611a02ef12d3bbe7c1a43`,
+  subject `docs(hand): mark clean transport`.
 - Staged scope: 60 paths, 0 staged deletions. Scope-name SHA-256:
   `b030c7564dfc4196b0372902ca82cad857a38ee1c66fcb7eac033a57d0476727`.
 - The scope carries only selected positive or modified runtime, service,
@@ -22,6 +24,11 @@ current main history intact.
   `559fa6075e1cfb7a51be380c6d354d2af90dffb2`; GitHub measured it 18 commits
   behind and 6 ahead, `mergeable=false`, `dirty`, with no checks. Do not merge
   it or use it as the clean transport.
+- Clean draft PR #532: `https://github.com/ligereza/vibecodeine/pull/532`,
+  base `main`, head `codex/mak-web-restructure-20260814`, head SHA
+  `daaa292070bdfddb448611a02ef12d3bbe7c1a43` at creation. GitHub measured
+  `mergeable=true`, `mergeStateStatus=UNSTABLE`; CI and security checks were
+  in progress.
 
 ### Clean proposal evidence
 
@@ -39,10 +46,13 @@ current main history intact.
 
 ### Next action
 
-The clean scope is committed locally as `9e92d4d`. Reverify the clean tree,
-push `codex/mak-web-restructure-20260814`, and create a new draft PR against
-the current `main`. Keep PR #531 unmerged. Do not reset, clean, pull, merge,
-delete branches, restart services, or enable synchronization.
+The clean scope is committed and published in PR #532. Reverify the clean
+tree and check the four GitHub jobs before any further action. The next handoff
+metadata edit will advance the proposal ref without changing runtime scope;
+rerun `git rev-parse HEAD`, `git ls-remote origin
+refs/heads/codex/mak-web-restructure-20260814`, and `gh pr view 532` when
+resuming. Keep PR #531 unmerged. Do not reset, clean, pull, merge, delete
+branches, restart services, or enable synchronization.
 
 Updated: 2026-08-12 - recovered session integration committed and propagated
 Status: The recovered agent work is now present in the repository and no longer
