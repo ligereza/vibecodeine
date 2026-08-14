@@ -69,6 +69,15 @@ existing Flask and vpype test dependencies in both `pyproject.toml` and
 were absent; the local full suite after this repair is 100 percent, zero
 failures, zero skips. The push restarted PR #532 checks at the new head.
 
+### Final remote verification before handoff metadata - 2026-08-14
+
+At head `3dd8c7509456817680f9dcee70f9738149d48997`, GitHub run
+`31768072430` passed `test (ubuntu-latest)` in 2m09s. Security run
+`31768072423` passed `dependencias`, `secretos`, and `datos_reales`. The local
+full suite also completed with zero failures and zero skips. This final
+metadata-only update advances the proposal ref and triggers a fresh
+equivalent check run; verify the new head before merge.
+
 ### Next action
 
 The clean scope is committed and published in PR #532. Reverify the clean
