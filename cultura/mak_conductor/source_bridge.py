@@ -331,9 +331,26 @@ def import_legacy_sources(store: QueueStore, *, material_path: str | Path,
                           research_path: str | Path | None = None,
                           limit: int = 20
                           ) -> dict[str, Any]:
+    """Import the explicitly selected legacy source files, read-only.
+
+    ``research_path`` is intentionally opt-in.  Older code silently fell back
+    to ``~/plataforma/backlog.jsonl`` when the caller omitted it; that made a
+    test or an isolated checkout ingest the live deployment backlog and made
+    the result depend on the machine's home directory.  Production entry
+    points pass ``MAK_RESEARCH_BACKLOG_PATH`` explicitly (see the cron and
+    shadow runtime callers), while isolated callers receive a durable
+    ``NOT_CONFIGURED`` result until they provide a source.
+    """
+    research = (import_research_backlog(research_path, store, limit=limit)
+                if research_path is not None else {
+                    "source": "research-backlog", "created": 0,
+                    "deduplicated": 0, "terminal": 0, "seen": 0,
+                    "invalid": 0, "jobs": [],
+                    "status": "NOT_CONFIGURED",
+                    "reason": "research_path_not_provided",
+                })
     return {
         "material": import_material(material_path, store, limit=limit),
         "codex": import_codex_backlog(backlog_path, store, limit=limit),
-        "research": import_research_backlog(
-            research_path or "~/plataforma/backlog.jsonl", store, limit=limit),
+        "research": research,
     }

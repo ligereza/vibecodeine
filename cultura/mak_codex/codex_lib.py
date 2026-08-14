@@ -99,31 +99,18 @@ PIEZAS = os.path.join(BASE, "piezas")
 REVISIONES = os.path.join(BASE, "revisiones")
 
 # Cadena de CODERS (orden de fallback). NIM hosted primero (fuerte), local
-# despues (offline, sobrevive 429). Sin Qwen por decision del usuario.
+# despues (offline, sobrevive 429). Sin Qwen ni proveedores retirados.
 NIM_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
-# WIN: notebook con RTX 4070 (8GB), alcanzable solo por el cable directo
-# (192.168.50.1). Coder mas fuerte que el local de MAK; antes que el
-# deepseek-coder:6.7b como ultimo recurso.
-WIN_BASE_URL = "http://192.168.50.1:11434"
-WIN_CODE_MODEL = "deepseek-coder-v2:16b-lite-instruct-q4_K_M"
 # mapa clave-corta -> (proveedor, modelo); CODER_CHAIN se arma a partir de
 # esto para poder reordenar/recortar la cadena por env var sin tocar codigo
-# (ej. CODER_CHAIN=win,ollama si NIM esta 429 esa sesion).
+# (ej. CODER_CHAIN=nim-flash,ollama si NIM esta 429 esa sesion).
 _CODER_CHAIN_MAP = {
     "wx-llama": ("watsonx", "meta-llama/llama-3-3-70b-instruct"),
     "wx-granite": ("watsonx", "ibm/granite-4-h-small"),
     "nim-pro": ("nim", "deepseek-ai/deepseek-v4-pro"),
     "nim-flash": ("nim", "deepseek-ai/deepseek-v4-flash"),
-    "win": ("win", WIN_CODE_MODEL),
     "ollama": ("ollama", "deepseek-coder:6.7b"),
 }
-# watsonx encabeza, y `win` SALE del default. No es preferencia: `win` es la
-# notebook que el usuario retiro, sondeada el 2026-07-31 desde la caja -- no
-# responde -- y sin embargo iba PRIMERA en la cadena viva
-# (CODER_CHAIN=win,nim-pro,nim-flash,ollama). De los 109 trabajos en FALLO, 22
-# son literalmente `timeout 900s`: la cadena empezaba esperando a una maquina
-# apagada. Sigue en el mapa porque la notebook puede volver; deja de ser lo
-# primero que se intenta por defecto.
 #
 # La eleccion de modelo esta MEDIDA, no elegida por su nombre
 # (`tools/watsonx_coder_bench.py`, 2026-07-31, cuenta real, dos corridas): una
@@ -158,7 +145,7 @@ CODER_CHAIN = _parse_coder_chain(os.environ.get("CODER_CHAIN"))
 
 # Timeouts por proveedor (segundos), espejo de los valores hardcodeados en
 # _nim (120) y _ollama_chat (300). Solo informativo para el reporte de fallos.
-_PROV_TIMEOUT = {"nim": 120, "win": 300, "ollama": 300}
+_PROV_TIMEOUT = {"nim": 120, "ollama": 300}
 
 PROMPT_CODER = (
     "Eres un ingeniero de software senior del departamento Codex de MAK. "
@@ -226,9 +213,6 @@ class CoderLLM:
                               estimated_vram_mb=3000):
             return self._ollama_chat(base, system, user, max_tok, model)
 
-    def _win(self, system, user, max_tok, model):
-        return self._ollama_chat(WIN_BASE_URL, system, user, max_tok, model)
-
     def _watsonx(self, system, user, max_tok, model):
         """El endpoint no se reimplementa aca: se comparte con research. La
         temperatura SI cambia -- 0.1 en vez de 0.3 -- porque un coder tibio
@@ -241,10 +225,9 @@ class CoderLLM:
 
     def call(self, system, user, max_tok=1200):
         cadena = list(self.chain)
-        # sin internet: win/ollama primero (LAN directa, no depende de
-        # internet). WIN (RTX 4070) antes que el local de MAK -- mas fuerte.
+        # sin internet: ollama local primero; no esperar timeouts de nubes.
         if not red_ok():
-            frente = [c for c in cadena if c[0] in ("win", "ollama")]
+            frente = [c for c in cadena if c[0] == "ollama"]
             cadena = frente + [c for c in cadena if c not in frente]
         # Se deriva del mapa de la cadena: mantener aca una segunda lista de
         # proveedores es como `refutar.py` quedo sin poder llamar a watsonx.

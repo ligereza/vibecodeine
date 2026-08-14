@@ -308,7 +308,7 @@ def call_ollama(prompt, base_url=OLLAMA_BASE_URL, model=OLLAMA_MODEL, timeout=No
                 parent_job_id=None):
     if active_enabled():
         payload = {"prompt_hash": hashlib.sha256(str(prompt).encode("utf-8")).hexdigest(),
-                   "prompt": str(prompt), "prompt_length": len(str(prompt)), "model": model,
+                   "prompt_length": len(str(prompt)), "model": model,
                    "max_tokens": int(max_tokens), "temperature": float(temperature),
                    "response_format": response_format or ""}
 

@@ -94,10 +94,17 @@ def read_commits(limit: int | None, all_refs: bool) -> list[dict]:
         cmd, cwd=str(_REPO_ROOT), capture_output=True, text=True, encoding="utf-8"
     )
     if out.returncode != 0:
-        # Repo sin commits: git log sale 128 con "does not have any commits".
-        # Devolvemos [] para que main() pueda reportar "sin commits" limpio
-        # en vez de reventar con RuntimeError.
-        if "does not have any commits" in out.stderr:
+        # An empty repository has no HEAD and no refs.  Check that state
+        # directly instead of matching Git's localized diagnostic text.
+        head = subprocess.run(
+            ["git", "rev-parse", "--verify", "HEAD"], cwd=str(_REPO_ROOT),
+            capture_output=True, text=True, encoding="utf-8",
+        )
+        refs = subprocess.run(
+            ["git", "show-ref"], cwd=str(_REPO_ROOT),
+            capture_output=True, text=True, encoding="utf-8",
+        )
+        if head.returncode != 0 and not refs.stdout.strip():
             return []
         raise RuntimeError(f"git log fallo: {out.stderr.strip()}")
     commits = []

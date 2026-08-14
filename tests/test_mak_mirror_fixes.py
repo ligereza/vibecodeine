@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""tests/test_mak_mirror_fixes.py -- mirror de reparaciones vivas del MAK
-(box 192.168.50.2): "win" agregado a las whitelists de proveedores +
-CODER_CHAIN configurable por env var; y 3 defectos encontrados en testing
+"""tests/test_mak_mirror_fixes.py -- mirror of live MAK fixes:
+retired remote providers are rejected, CODER_CHAIN is configurable by env
+var, and three defects found in live testing are covered.
 en vivo:
   5. cadena.py: un proveedor caido (groq 429) mataba el job entero -- ahora
      reintenta el paso con el resto de la cadena antes de rendirse.
@@ -31,20 +31,20 @@ import grafo  # noqa: E402
 import research_lib  # noqa: E402
 
 
-# ── mirror: "win" agregado a las whitelists de proveedores ──
+# ── retired provider rejection ──
 
-class TestWinEnWhitelists:
-    def test_grafo_proveedores_incluye_win(self):
-        assert "win" in grafo.PROVEEDORES
+class TestRetiredWinRejected:
+    def test_grafo_proveedores_excluye_win(self):
+        assert "win" not in grafo.PROVEEDORES
 
-    def test_cadena_arg_filter_acepta_win(self):
+    def test_chain_arg_filter_rejects_win(self):
         orden = [p.strip() for p in "groq,win,ollama".split(",")
-                if p.strip() in ("groq", "cerebras", "azure", "win", "ollama")]
-        assert orden == ["groq", "win", "ollama"]
+                if p.strip() in ("groq", "cerebras", "azure", "ollama")]
+        assert orden == ["groq", "ollama"]
 
-    def test_research_lib_llm_order_incluye_win(self):
+    def test_research_lib_llm_order_rechaza_win(self):
         llm = research_lib.LLM(order="groq,win,ollama")
-        assert llm.order == ["groq", "win", "ollama"]
+        assert llm.order == ["groq", "ollama"]
 
     def test_azure_requires_explicit_spend_opt_in(self, monkeypatch):
         monkeypatch.delenv("RESEARCH_AZURE_ENABLED", raising=False)
@@ -167,7 +167,6 @@ class TestCoderChainEnvOverride:
         monkeypatch.setenv("CODER_CHAIN", "win,ollama")
         codex_lib = _import_codex_lib()
         assert codex_lib.CODER_CHAIN == [
-            codex_lib._CODER_CHAIN_MAP["win"],
             codex_lib._CODER_CHAIN_MAP["ollama"],
         ]
 
@@ -175,7 +174,6 @@ class TestCoderChainEnvOverride:
         monkeypatch.setenv("CODER_CHAIN", "win,basura,nim-pro")
         codex_lib = _import_codex_lib()
         assert codex_lib.CODER_CHAIN == [
-            codex_lib._CODER_CHAIN_MAP["win"],
             codex_lib._CODER_CHAIN_MAP["nim-pro"],
         ]
 
@@ -201,25 +199,15 @@ class TestCoderChainEnvOverride:
         ]
 
     def test_el_default_arranca_por_un_proveedor_que_contesta(self, monkeypatch):
-        """Reemplaza a `test_default_preserva_las_4_entradas_originales`
-        (2026-07-31). Aquel fijaba las cuatro entradas de siempre y por eso
-        protegia el defecto en vez del contrato: la primera era `win`, la
-        notebook que el usuario retiro, sondeada desde la caja ese dia -- no
-        contesta. De los 109 trabajos en FALLO del codex, 22 dicen literalmente
-        `timeout 900s`: cada trabajo empezaba esperando a una maquina apagada.
-
-        Lo que se fija ahora es la propiedad, no la lista: quien encabeza tiene
-        que ser alcanzable, y `win` sigue disponible por env var para cuando la
-        notebook vuelva."""
+        """The default starts with the measured MAK chain and ends in the
+        local Ollama fallback; retired remote providers are unavailable."""
         monkeypatch.delenv("CODER_CHAIN", raising=False)
         codex_lib = _import_codex_lib()
         assert codex_lib.CODER_CHAIN[0] == ("watsonx",
                                             "meta-llama/llama-3-3-70b-instruct")
-        assert ("win", codex_lib.WIN_CODE_MODEL) not in codex_lib.CODER_CHAIN
-        # sigue existiendo como opcion explicita
-        assert codex_lib._CODER_CHAIN_MAP["win"] == ("win",
-                                                     codex_lib.WIN_CODE_MODEL)
-        # y la cadena nunca queda sin un motor local de ultimo recurso
+        assert "win" not in codex_lib._CODER_CHAIN_MAP
+        assert all(provider in ("watsonx", "nim", "ollama")
+                   for provider, _model in codex_lib.CODER_CHAIN)
         assert codex_lib.CODER_CHAIN[-1] == ("ollama", "deepseek-coder:6.7b")
 
 

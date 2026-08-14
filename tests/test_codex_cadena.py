@@ -45,12 +45,11 @@ def test_the_default_chain_leads_with_watsonx():
 
 
 def test_the_retired_notebook_is_not_in_the_default_chain():
-    """`win` stays in the MAP -- the notebook can come back -- but it is no
-    longer the first thing every job waits on."""
+    """The retired notebook is absent from the active MAK provider map."""
     defecto = _bloque(CODEX, "_CODER_CHAIN_DEFAULT = [")
     assert '"win"' not in defecto, "win is back at the head of the queue"
     mapa = _bloque(CODEX, "_CODER_CHAIN_MAP = {")
-    assert '"win":' in mapa, "win must remain available by CODER_CHAIN"
+    assert '"win":' not in mapa, "retired WIN provider must stay absent"
 
 
 def test_every_provider_in_the_map_can_actually_be_called():
