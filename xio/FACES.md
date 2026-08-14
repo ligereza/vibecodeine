@@ -17,7 +17,7 @@ cable between them -- a two-machine private link, no third party on the wire.
 ### Membership
 | Device | Role | Network | Notes |
 |---|---|---|---|
-| MAK Linux box | Hub humano + servicios internos Research/Codex | 192.168.50.2 | Solo el Hub :8900 es alcanzable por la LAN; Research/Codex quedan en loopback |
+| MAK Linux box | Hub humano + servicios internos Research/Codex | 127.0.0.1 | Hub, Research y Codex quedan en loopback local |
 | Windows PC (this repo / Cauce dev) | Repo operations, airdrop, xio PC-side tooling | 192.168.50.x | Develops, verifies, deploys to the show |
 | Xiaomi phone (docked at home) | Termux server development, hotspot testing | 192.168.50.x | Runs xio plugins; reaches the Hub routes for testing |
 

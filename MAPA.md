@@ -212,7 +212,7 @@ Medido sobre el CLI real: **96 comandos** (23 sueltos + 73 dentro de 17 grupos).
 | Comando | Que hace | Que necesita antes |
 |---|---|---|
 | `py -m flujo autonomia status` | Mide si el circuito Watsonx/AWS -> juez local -> ledger esta listo. | nada |
-| `py -m flujo autonomia run` | Ejecuta tandas controladas; por defecto corre providers/Ollama en MAK. | SSH a MAK (`mak@192.168.50.2`) para ejecucion real; `--executor local` solo para pruebas/dry-run |
+| `py -m flujo autonomia run` | Ejecuta tandas controladas; por defecto corre providers/Ollama en MAK. | Ejecutar localmente en MAK; `--executor local` queda para pruebas/dry-run |
 
 ### Grupo `brief` -- Operaciones sobre briefs.
 

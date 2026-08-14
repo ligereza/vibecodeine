@@ -26,9 +26,13 @@ try:
 except ImportError:  # pragma: no cover - Windows director has no fcntl
     fcntl = None
 
-BASE = "/home/mak/codex"
-sys.path.insert(0, BASE)
-sys.path.insert(0, "/home/mak/research")
+CODE_ROOT = os.path.abspath(os.environ.get(
+    "MAK_CODEX_CODE_ROOT", os.path.dirname(os.path.abspath(__file__))))
+BASE = os.path.abspath(os.environ.get("MAK_CODEX_STATE_ROOT", "/home/mak/codex"))
+RESEARCH_CODE_ROOT = os.path.abspath(os.environ.get(
+    "MAK_RESEARCH_CODE_ROOT", "/home/mak/research"))
+sys.path.insert(0, CODE_ROOT)
+sys.path.insert(0, RESEARCH_CODE_ROOT)
 from worker_codex import run_pedido  # noqa: E402
 from research_lib import mint_job_id  # noqa: E402
 
@@ -429,7 +433,9 @@ def _guardia_codex(pedido):
     y queda escrito en el log.
     """
     try:
-        sys.path.insert(0, "/home/mak/plataforma")
+        platform_root = os.environ.get(
+            "MAK_PLATFORM_CODE_ROOT", "/home/mak/plataforma")
+        sys.path.insert(0, platform_root)
         import filtro_entrada
         return filtro_entrada.clasificar(pedido, contexto="codex")
     except Exception as e:  # noqa: BLE001

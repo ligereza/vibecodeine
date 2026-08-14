@@ -16,11 +16,15 @@ import time
 import urllib.error
 import urllib.request
 
-sys.path.insert(0, "/home/mak/research")
+RESEARCH_CODE_ROOT = os.path.abspath(os.environ.get(
+    "MAK_RESEARCH_CODE_ROOT", "/home/mak/research"))
+sys.path.insert(0, RESEARCH_CODE_ROOT)
 from research_lib import load_env, ntfy_publish  # noqa: E402
 
-BASE_DIR = "/home/mak/xio_puente"
-XIO_BASE = os.environ.get("XIO_BASE", "http://192.168.95.203:5000")
+BASE_DIR = os.path.abspath(os.environ.get("MAK_XIO_STATE_ROOT", "/home/mak/xio_puente"))
+# XIO is an optional external bridge, never a MAK runtime dependency.  A
+# remote endpoint must be supplied explicitly; an unset value is fail-closed.
+XIO_BASE = os.environ.get("XIO_BASE", "").strip()
 RUTAS_LECTURA = ("/status", "/obs", "/battery/status", "/connectivity/status")
 HISTORIA = os.path.join(BASE_DIR, "historia.jsonl")
 ESTADO = os.path.join(BASE_DIR, "estado.json")
@@ -30,6 +34,8 @@ ANTISPAM_S = 1800
 
 
 def _get(ruta):
+    if not XIO_BASE:
+        return 0, None
     url = XIO_BASE.rstrip("/") + ruta
     headers = {"User-Agent": "mak-xio-puente/1.0"}
     token = os.environ.get("XIO_TOKEN")

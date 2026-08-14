@@ -1,10 +1,12 @@
 # Canonical MAK Linux user unit.
-# Runtime source: /home/mak/plataforma/hub.py.
+# Runtime source: %h/flujo/cultura/mak_plataforma/hub.py.
 [Unit]
 Description=MAK hub (plataforma :8900)
 [Service]
-WorkingDirectory=%h/plataforma
-ExecStart=%h/plataforma/.venv/bin/python %h/plataforma/hub.py
+WorkingDirectory=%h/flujo/cultura/mak_plataforma
+Environment=MAK_PLATFORM_CODE_ROOT=%h/flujo/cultura/mak_plataforma
+Environment=MAK_CURATORIA_CODE_ROOT=%h/flujo/cultura/mak_curatoria
+ExecStart=%h/research/.venv/bin/python %h/flujo/cultura/mak_plataforma/hub.py
 Restart=always
 RestartSec=5
 TimeoutStopSec=15

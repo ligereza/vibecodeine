@@ -71,8 +71,12 @@ except Exception:  # noqa: BLE001 - XIO evidence remains optional
 
 PORT = int(os.environ.get("HUB_PORT", "8900"))
 HOME = os.path.expanduser("~")
+PLATFORM_CODE_ROOT = os.path.abspath(os.environ.get(
+    "MAK_PLATFORM_CODE_ROOT", os.path.dirname(os.path.abspath(__file__))))
+CURATORIA_CODE_ROOT = os.path.abspath(os.environ.get(
+    "MAK_CURATORIA_CODE_ROOT", os.path.join(HOME, "flujo", "cultura", "mak_curatoria")))
 _percepcion = None
-_percepcion_root = os.path.join(HOME, "flujo", "cultura", "mak_curatoria")
+_percepcion_root = CURATORIA_CODE_ROOT
 if os.path.isdir(_percepcion_root):
     try:
         sys.path.insert(0, _percepcion_root)
@@ -81,12 +85,12 @@ if os.path.isdir(_percepcion_root):
         _percepcion = None
 INDEX_MICELIO = os.path.join(HOME, "research/memoria/index.jsonl")
 ESTADO_XIO = os.path.join(HOME, "xio_puente/estado.json")
-GENESIS = os.path.join(HOME, "GENESIS.md")
-DOCTRINA_DIR = os.path.join(HOME, "plataforma/doctrina")
-REFLEXIONES_DIR = os.path.join(HOME, "plataforma/reflexiones")
+GENESIS = os.path.join(PLATFORM_CODE_ROOT, "GENESIS.md")
+DOCTRINA_DIR = os.path.join(PLATFORM_CODE_ROOT, "doctrina")
+REFLEXIONES_DIR = os.path.join(PLATFORM_CODE_ROOT, "reflexiones")
 RESEARCH_JOBS = os.path.join(HOME, "research/jobs.jsonl")
 CODEX_JOBS = os.path.join(HOME, "codex/jobs.jsonl")
-RELEVO = os.path.join(HOME, "RELEVO_MAK.md")
+RELEVO = os.path.join(PLATFORM_CODE_ROOT, "RELEVO_MAK.md")
 PORTFOLIO_ROOT = os.path.abspath(os.environ.get(
     "MAK_PORTFOLIO_ROOT", os.path.join(HOME, "flujo", "iskvw")))
 PORTFOLIO_INBOX = os.path.join(
@@ -4536,14 +4540,15 @@ class Servidor(ThreadingHTTPServer):
 
 
 def main():
-    server = Servidor(("0.0.0.0", PORT), H)
+    bind_host = "127.0.0.1"
+    server = Servidor((bind_host, PORT), H)
 
     def apagar(signum, frame):
         threading.Thread(target=server.shutdown, daemon=True).start()
 
     signal.signal(signal.SIGTERM, apagar)
     signal.signal(signal.SIGINT, apagar)
-    print("[hub] la cara del organismo en http://0.0.0.0:%d" % PORT, flush=True)
+    print("[hub] local MAK runtime at http://%s:%d" % (bind_host, PORT), flush=True)
     server.serve_forever()
 
 

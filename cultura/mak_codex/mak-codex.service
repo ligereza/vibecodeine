@@ -1,12 +1,16 @@
 # Canonical MAK Linux user unit.
-# Runtime source: /home/mak/codex/interfaz_codex.py.
+# Runtime source: %h/flujo/cultura/mak_codex/interfaz_codex.py.
 [Unit]
 Description=MAK Codex internal service for the Hub
 [Service]
-WorkingDirectory=%h/codex
+WorkingDirectory=%h/flujo/cultura/mak_codex
+Environment=MAK_CODEX_CODE_ROOT=%h/flujo/cultura/mak_codex
+Environment=MAK_CODEX_STATE_ROOT=%h/codex
+Environment=MAK_RESEARCH_CODE_ROOT=%h/flujo/cultura/mak_research
+Environment=MAK_PLATFORM_CODE_ROOT=%h/flujo/cultura/mak_plataforma
 Environment=CODER_CHAIN=nim-pro,nim-flash,ollama
 Environment=MAK_SERVICE_HOST=127.0.0.1
-ExecStart=/usr/bin/python3 %h/codex/interfaz_codex.py
+ExecStart=/usr/bin/python3 %h/flujo/cultura/mak_codex/interfaz_codex.py
 Restart=always
 RestartSec=5
 TimeoutStopSec=15

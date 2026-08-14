@@ -180,6 +180,7 @@ logo3d*/
 *.db-journal
 *.sqlite
 *.sqlite3
+*.duckdb
 # Logs locales de validación/airdrops
 _logs/
 airdrop_*_apply_log.txt
