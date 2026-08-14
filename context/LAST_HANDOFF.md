@@ -11,6 +11,8 @@ current main history intact.
   `486179789f67f2f6e5767d1b7bc7dd6575cd6aee`.
 - Branch: `codex/mak-web-restructure-20260814` in
   `/tmp/mak-clean-worktree`.
+- Local transport commit: `9e92d4d0a1f1f711802e90443aeba415006b71a2`, subject
+  `feat(mak): align runtime with current main`.
 - Staged scope: 60 paths, 0 staged deletions. Scope-name SHA-256:
   `b030c7564dfc4196b0372902ca82cad857a38ee1c66fcb7eac033a57d0476727`.
 - The scope carries only selected positive or modified runtime, service,
@@ -37,10 +39,10 @@ current main history intact.
 
 ### Next action
 
-Run the final staged secret/path/hash checks, commit this clean scope, push
-`codex/mak-web-restructure-20260814`, and create a new draft PR against the
-current `main`. Keep PR #531 unmerged. Do not reset, clean, pull, merge, delete
-branches, restart services, or enable synchronization.
+The clean scope is committed locally as `9e92d4d`. Reverify the clean tree,
+push `codex/mak-web-restructure-20260814`, and create a new draft PR against
+the current `main`. Keep PR #531 unmerged. Do not reset, clean, pull, merge,
+delete branches, restart services, or enable synchronization.
 
 Updated: 2026-08-12 - recovered session integration committed and propagated
 Status: The recovered agent work is now present in the repository and no longer
