@@ -193,7 +193,7 @@ class TestLeerJobsListosSmokeGate:
 
 
 class TestRamaBase:
-    """Topologia de ramas (CLAUDE.md): MAK entrega PRs contra su BUZON,
+    """Topologia de ramas: MAK entrega PRs contra su BUZON,
     nunca contra main. entregar_una() debe usar RAMA_BASE, no un literal
     'main', tanto para el checkout como para gh pr create --base.
 

@@ -27,7 +27,7 @@ Esta pieza PIERDE si:
 3. el registro queda solo con casos hipoteticos: sin bordes reales, fechados,
    de sistemas concretos.
 
-## Limites duros (heredados de CLAUDE.md, no negociables)
+## Limites duros de esta pieza (no negociables)
 
 - DESCRIPTIVO: se registra el borde, NUNCA se cruza ni se documenta como
   cruzarlo. Este mapa no es una guia de evasion; si una entrada pudiera leerse

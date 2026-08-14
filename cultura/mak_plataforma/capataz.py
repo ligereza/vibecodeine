@@ -28,7 +28,7 @@ seguridad de la nube. Umbrales de evaluar_riesgo() son de primera pasada
 de exito de ollama respondiendo primero) -- ajustar con
 METRICAS_CAPATAZ.md en cuanto haya bitacora real bajo este orden.
 
-Ver CLAUDE.md (flujo): "el director emerge de (modelo capaz + loop
+Regla de flujo: "el director emerge de (modelo capaz + loop
 acotado + feedback), no de Claude". Este script es esa afirmacion hecha
 codigo, corriendo en MAK (192.168.50.2), sin Claude en el loop.
 """

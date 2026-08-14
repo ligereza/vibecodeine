@@ -216,7 +216,7 @@ def test_borradores_calcan_schema_y_quedan_en_outdir(tmp_path):
 
 
 def test_el_nombre_del_venue_conserva_la_tilde(tmp_path):
-    # regla 2026-07-29 (CLAUDE.md, "the machine/human cut"): el id es clave
+    # Regla de datos 2026-07-29 (the machine/human cut): el id es clave
     # de maquina (ascii), el name lo lee un humano -- "Teatro Caupolican"
     # sin tilde en el borrador es la misma clase de defecto que
     # "reduciendo ano". Medido en el primer run real.

@@ -241,10 +241,9 @@ class TestLiveTelemetry:
         (tmp_path / "datadrops" / ".env").write_text("SECRET=1")
         (tmp_path / "datadrops" / "api_key.txt").write_text("k")
         (tmp_path / "datadrops" / "drop_notes.txt").write_text("ok")
-        archive = tmp_path / "docs" / "handoffs" / "archive"
+        archive = tmp_path / "docs" / "historical"
         archive.mkdir(parents=True)
         (archive / "credentials_backup.md").write_text("x")
-        (archive / "handoff_01.md").write_text("x")
 
         state = tt.build_live_ecosystem(tmp_path)
         assets = list(state.active_assets.values()) + list(state.decaying_assets.values())
@@ -253,7 +252,7 @@ class TestLiveTelemetry:
         for needle in (".env", "api_key", "credentials_backup", "secret="):
             assert needle not in blob, "leaked: %s" % needle
         # sanity: allowed names DO surface, so exclusion is not vacuous
-        assert "drop_notes" in blob or "handoff_01" in blob
+        assert "drop_notes" in blob
 
     def test_real_repo_content_has_no_private_markers(self):
         import tapiz_telemetry as tt

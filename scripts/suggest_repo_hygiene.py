@@ -13,7 +13,7 @@ Two parts:
    proxy for "how tested" -- see .claude/skills/godspeed/SKILL.md point 6.
 
 This only prints recommendations. It never deletes, moves, or edits files.
-See docs/HIGIENE_REPO.md and CLAUDE.md for policy.
+See the current checkout and its automated tests for policy.
 
 Invoked by hand only -- no cron, Makefile target, or workflow calls this
 (verified 2026-07-30). It stays in scripts/ as a manual coverage signal, not
@@ -35,7 +35,7 @@ SUGGESTIONS = [
     "Review docs/ for duplicates: many AGENT_*, CLEANUP, HIGIENE, MANTENIMIENTO files overlap.",
     "projects/*/salida_generada/ and working/ should stay ignored.",
     "context/DAILY.md and dashboard.html are ignored — use flujo_hub.html + visualizers instead.",
-    "For agents: always start with CLAUDE.md (entrada obligatoria) -- it replaces AGENTS.md/AI_OPERATING_LAYER.md/REPO_MAP.md.",
+    "Verify the current checkout and runtime before acting; do not infer authority from archived notes.",
     "Add deprecation notes to legacy scripts in scripts/ and reference_old/.",
     "Test count is not a quality signal: a test mocking a module the source no longer imports is false coverage (real case: instaloader in ig/download.py, fixed 2026-07-20). Prune those when found, don't just add more beside them.",
 ]
@@ -55,7 +55,7 @@ STALE_PATTERNS = [
 def scan_outdated_refs():
     outdated = {}
     for root, _, files in os.walk(ROOT):
-        if any(x in root for x in ["_archive", ".archive", "checkpoints", ".git", "node_modules", "docs/handoffs/archive"]):
+        if any(x in root for x in ["_archive", ".archive", "checkpoints", ".git", "node_modules"]):
             continue
         for f in files:
             if f.endswith((".md", ".txt", ".py")):
@@ -122,7 +122,7 @@ def main():
         print("Found files still mentioning dead docs/commands:")
         for path, hits in sorted(bad.items()):
             print(f"  - {path}: {', '.join(hits)}")
-        print("Suggestion: point these at CLAUDE.md instead, or remove the reference.")
+        print("Suggestion: remove or replace each dead reference with a measured source.")
     else:
         print("No stale references found in active files.")
 
@@ -139,7 +139,7 @@ def main():
         else:
             print("  No file under threshold.")
 
-    print("\nRun 'py -m flujo health' and review docs/HIGIENE_REPO.md for more.")
+    print("\nRun 'python -m fluxo health' and review the measured output.")
     print("To actually clean, use existing scripts/cleanup_* with --dry-run first.")
 
 

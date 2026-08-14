@@ -31,7 +31,7 @@ uses como referencia de código vivo.
 `cleanup_ig_temp_folders.sh` se retiraron con `git rm` el 2026-07-30: verificado
 que ningún `Makefile`/`.github/workflows/*.yml`/cron los invocaba, solo
 aparecían mencionados en esta misma documentación. Detalle en
-`docs/HIGIENE_REPO.md`.
+the repository hygiene tests.
 
 ## Wrappers/compatibilidad CLI (vigentes)
 
@@ -53,7 +53,7 @@ Cuando exista equivalente `flujo ...`, preferir la CLI; estos scripts siguen pre
 
 - `apply_airdrop.sh`, `finish_airdrop.sh`, `validate_airdrop.py`, `run_airdrop_checks.py`
 - `limpiar_basura.sh` (usado por `make clean`)
-- `suggest_repo_hygiene.py` (solo sugiere, no borra ni mueve nada; se invoca a mano, ningún cron/workflow lo llama; ver `docs/HIGIENE_REPO.md`)
+- `suggest_repo_hygiene.py` (solo sugiere, no borra ni mueve nada; se invoca a mano, ningún cron/workflow lo llama)
 - `sanitize_sensitive.py` (reemplaza credenciales/secrets por placeholders en texto)
 - `find_duplicates.py` (detecta archivos duplicados por hash de contenido)
 - `github_setup_labels.py` (crea/actualiza labels de GitHub; requiere `GITHUB_TOKEN`)

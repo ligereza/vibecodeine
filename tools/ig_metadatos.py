@@ -19,7 +19,7 @@ TWO THINGS THIS FILE REFUSES TO DO, and both matter more than the feature:
    messages, likes and story interactions. Only `your_instagram_activity/media/`
    is read -- the artist's own published work, which is a PRODUCT and already
    passed that filter. Any other directory is rejected by name, out loud. The
-   repo rule (CLAUDE.md, 2026-07-31): new input with personal data does not
+   repository privacy rule (2026-07-31): new input with personal data does not
    enter; what is already a product can be reviewed.
 
 2. **It does not pass along mangled text.** Instagram writes UTF-8 bytes and

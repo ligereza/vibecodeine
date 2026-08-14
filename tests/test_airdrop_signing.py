@@ -37,8 +37,8 @@ def _payload(root):
     """A minimal valid-looking payload with two files."""
     base = root / "_airdrop"
     (base / "docs").mkdir(parents=True)
-    (base / "HANDOFF_2026-07-31_firma.md").write_text("handoff", encoding="utf-8")
     (base / "docs" / "nota.md").write_text("contenido original", encoding="utf-8")
+    (base / "docs" / "registro.txt").write_text("contenido de prueba", encoding="utf-8")
     return base
 
 
@@ -166,7 +166,7 @@ def test_missing_manifest_without_key_applies_like_today(tmp_path, monkeypatch):
 
     changes = airdrop.apply_airdrop()
     assert {c["rel"] for c in changes} == {
-        "HANDOFF_2026-07-31_firma.md", "docs/nota.md",
+        "docs/nota.md", "docs/registro.txt",
     }
     assert (tmp_path / "docs" / "nota.md").read_text(encoding="utf-8") == "contenido original"
 

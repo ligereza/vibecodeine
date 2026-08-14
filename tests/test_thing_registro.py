@@ -159,9 +159,8 @@ class TestFilasEnUsoNombranConsumidorReal:
             e["paquete"]: e["nombre"]
             for libs in manifiestos.values() for e in libs
         }
-        # CLAUDE.md existe pero no importa ninguna libreria de thi.ng
-        contenido_falso = (REPO / "CLAUDE.md").read_text(
-            encoding="utf-8", errors="replace")
+        # Un documento de texto corriente no importa ninguna libreria de thi.ng.
+        contenido_falso = "documento sin imports de bundles\n"
         algun_nombre = next(iter(paquete_a_nombre.values()))
         assert (algun_nombre + ".js") not in contenido_falso
 

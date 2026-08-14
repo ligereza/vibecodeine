@@ -42,7 +42,7 @@ Cuando una IA reciba el repo, debe empezar por `flujo app` + hub + este archivo 
    - `README.md` (idea + arquitectura + estado)
    - Estructura clara (ejemplos/, src/ o engine/, assets/)
 3. Actualizar este `README.md`
-4. Actualizar seccion "Mapa del repo" en `CLAUDE.md`
+4. Actualizar la documentación de arquitectura vigente si cambia el mapa del repo
 5. (Ideal) Crear referencia en `flujo/` si afecta identidad visual.
 
 **Export a tus herramientas:**
@@ -51,7 +51,7 @@ Los archivos salen listos para abrir en AI, PS o Blender (con flujo aplicado).
 
 Workflow en hub (`flujo app`): jobs lifecycle (draft → ... → entregado), render integrado, visualizadores embebidos. Teasers de piezas SVG + botones directos al **Visualizador SVG** (`context/svg_visualizer.html`) con previews embebidos por grupo (Eventos / Suplementos) y acciones "Usar como base". Plano demo + datadrop tools también desde hub.
 
-El hub es el centro (workflow jobs+render + parallel delegation). Ver `context/flujo_hub.html` (vía `flujo app`), `context/svg_visualizer.html`, `context/plano_demo.html`, `CLAUDE.md`.
+El hub es el centro (workflow jobs+render + parallel delegation). Ver `context/flujo_hub.html` (vía `flujo app`), `context/svg_visualizer.html` y `context/plano_demo.html`.
 
 ## Para IAs externas que reciban el repo completo
 

@@ -7,7 +7,7 @@ backlog fijo), lo planifica y codea, y lo entrega SIN EJECUTARLO --
 solo estatico (py_compile + AST stdlib-only). Nunca corre el codigo
 generado (a diferencia de generar.py que sandboxea).
 
-CONFINAMIENTO DURO (P1-1, ver CLAUDE.md seguridad):
+CONFINAMIENTO DURO (P1-1, política de seguridad del runtime):
   - Este script NUNCA toca el repo ~/flujo directamente. Solo escribe
     en ~/codex/piezas/ (igual que guardar_pieza de codex_lib) y
     apendea a ~/codex/jobs.jsonl en el MISMO formato que usa
@@ -199,7 +199,7 @@ def check_codigo(codigo):
     return True, ""
 
 
-# -- pipeline plan -> codigo -> check -> handoff -----------------------
+# -- pipeline plan -> codigo -> check -> entrega ------------------------
 
 def planificar(objetivo, planner, densidad="medio"):
     print("STATUS: Planificando (modelo capaz)...", flush=True)

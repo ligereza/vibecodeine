@@ -187,7 +187,7 @@ status={local['status'] or '(limpio)'}
 Usa exclusivamente este snapshot y las fuentes versionadas del repo. Responde en maximo 500 palabras:
 
 1. Separa hechos observados, documentacion historica y datos desconocidos.
-2. Enumera contradicciones relevantes con `context/LAST_HANDOFF.md`, `cultura/mak_plataforma/GENESIS.md`, `tools/mak/delegar.py` y `cultura/mak_plataforma/trabajo.py`.
+2. Enumera contradicciones relevantes con `cultura/mak_plataforma/GENESIS.md`, `tools/mak/delegar.py` y `cultura/mak_plataforma/trabajo.py`.
 3. Elige UNA siguiente observacion de solo lectura que reduzca mas incertidumbre.
 4. Indica explicitamente si corresponde o no crear un airdrop. Por defecto: NO.
 5. No propongas cambios de red, cron, servicios, credenciales, XIO, datos RD, modelos, instalaciones ni merges.

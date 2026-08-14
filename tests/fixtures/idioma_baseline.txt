@@ -351,7 +351,6 @@ tools/becas_calendario.py
 tools/blender/bridge_blender.py
 tools/bridge_issue_render.py
 tools/context_pack.py
-tools/contexto_repo.py
 tools/cron_nocturno/nocturno.py
 tools/enviar_a_mak.py
 tools/gen_animadas_obras.py
@@ -363,10 +362,8 @@ tools/gen_mapa_comandos.py
 tools/gen_presentacion_db.py
 tools/gen_rd_standalone.py
 tools/gen_vocabulario_motor.py
-tools/handoff.py
 tools/iconos_conjunto.py
 tools/instalar_enviar_a_mak.py
-tools/mak_ops/build_director_context.py
 tools/mak_ops/check_mak_mirror.py
 tools/mak_ops/check_mak_trabajo.py
 tools/mak_ops/diagnose_instagram_mirror.py

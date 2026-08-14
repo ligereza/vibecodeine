@@ -4,7 +4,7 @@
 
 The Instagram export is one folder with two very different things in it: the
 artist's published work, which is a PRODUCT, and private messages, likes and
-story interactions, which are personal data. The repo rule (CLAUDE.md,
+story interactions, which are personal data. The repository privacy rule,
 2026-07-31, the user's own correction): new input carrying personal data does
 not enter; what is already a product can be reviewed.
 

@@ -877,22 +877,8 @@ def airdrop_apply(
         else:
             _warn("No se pudo realizar el auto-checkpoint. Por favor, hazlo manualmente.")
 
-        # Mejora para continuidad de tokens: recordar/actualizar LAST_HANDOFF
-        if message:
-            try:
-                from datetime import datetime
-                from .paths import context_dir
-                lh = context_dir() / "LAST_HANDOFF.md"
-                if lh.exists():
-                    content = lh.read_text(encoding="utf-8")
-                    append = f"\n\n**Post-airdrop {datetime.now().strftime('%Y-%m-%d %H:%M')}**: {message}\n(Actualiza manualmente las secciones 'Estado' y 'Próximas acciones'.)"
-                    lh.write_text(content.rstrip() + _ascii(append), encoding="utf-8")
-                    _ok("LAST_HANDOFF.md actualizado automáticamente con el mensaje del airdrop.")
-            except Exception:
-                _warn("No se pudo auto-actualizar LAST_HANDOFF.md (hazlo manualmente con 'flujo handoff create').")
-
         _section("Proceso Completado")
-        console.print("[bold green]Airdrop está activo y sincronizado.[/]\n[cyan]Recuerda: 'flujo handoff' para que la próxima IA continúe con pocos tokens.[/]")
+        console.print("[bold green]Airdrop está activo y sincronizado.[/]")
 
     except Exception as e:
         _err(str(e))
@@ -1188,51 +1174,10 @@ def version():
             console.print(f"  · {h}")
 
 
-@app.command("handoff")
-def handoff(action: str = typer.Argument("last", help="last | create"),
-            message: str = typer.Option("", "--message", "-m", help="Resumen corto para create")):
-    """Gestiona el archivo de continuidad de baja token para otras IAs.
-
-    Ejemplos:
-      flujo handoff last
-      flujo handoff create -m "Añadido soporte grid_2x a planos + LAST_HANDOFF"
-    """
-    from datetime import datetime
-    from .paths import context_dir
-
-    p = context_dir() / "LAST_HANDOFF.md"
-
-    if action == "last" or action == "show":
-        if p.exists():
-            console.print(p.read_text(encoding="utf-8"))
-        else:
-            _warn("context/LAST_HANDOFF.md no existe. Crea uno con 'flujo handoff create'.")
-        return
-
-    if action == "create":
-        if not p.exists():
-            _warn("LAST_HANDOFF.md no existe, créalo primero con la plantilla básica.")
-            return
-        if not message:
-            _warn("Usa -m 'resumen corto de lo hecho y siguiente paso'")
-            return
-        now = datetime.now().strftime("%Y-%m-%d %H:%M")
-        content = p.read_text(encoding="utf-8")
-        # Append a compact update section at the end (keeps file small)
-        update = f"\n\n---\n\n**Actualizacion {now}**\n\n{message}\n\nActualiza la seccion 'Proximas acciones' manualmente si es necesario."
-        p.write_text(content.rstrip() + _ascii(update), encoding="utf-8")
-        _ok(f"LAST_HANDOFF.md actualizado con: {message}")
-        console.print("Recuerda: agrega tareas simples claras + nota Windows (py) / Linux. Español primero.")
-        return
-
-    _warn("Acción desconocida. Usa 'last' o 'create -m ...'")
-
-
 @app.command("delegate")
 def delegate(
     role: str = typer.Argument(..., help="creative-director | visual-polish | pipeline | brand | future | packaging"),
     task: str = typer.Argument(..., help="Descripción precisa de la tarea a delegar"),
-    log: bool = typer.Option(False, "--log", help="sugerir append a LAST_HANDOFF"),
 ):
     """Genera prompt preciso para delegar a agente especializado (5 roles; soporta paralelo via hub o clones).
     Salida lista para copiar a otra sesión IA. Ideal para multi-agente workflow.
@@ -1247,15 +1192,13 @@ def delegate(
         # Instantiate minimally for _handle_delegate
         h = HubRequestHandler.__new__(HubRequestHandler)
         h.root = None  # not needed
-        result = h._handle_delegate({"role_id": role, "task": task, "log_to_handoff": log})
+        result = h._handle_delegate({"role_id": role, "task": task})
         role_info = result["role"]
         console.print(Panel(f"[bold]{role_info['name']}[/]", border_style="cyan"))
         console.print(f"[dim]Task:[/] {result['task']}")
         console.print("\n[bold green]Prompt listo para pegar en sub-agente:[/]\n")
         console.print(result["full_prompt"])
-        if result.get("log_cmd_suggested"):
-            console.print(f"\n[yellow]Sugerido:[/] {result['log_cmd_suggested']}")
-        console.print("\n[dim]Lanza sub-agentes en clones paralelos. Actualiza LAST_HANDOFF al final de cada entrega.[/dim]")
+        console.print("\n[dim]Lanza el trabajo en un entorno aislado y verifica el resultado antes de integrarlo.[/dim]")
     except Exception as e:
         _err(f"No se pudo generar delegación: {e}")
 
@@ -2962,11 +2905,6 @@ def init(
                 _ok(f"Índice reconstruido: {res.get('indexed', 0)} flyers")
             except Exception as e:
                 _warn(f"No se pudo reconstruir índice: {e}")
-        lh = root / "context" / "LAST_HANDOFF.md"
-        if lh.exists():
-            _ok(f"LAST_HANDOFF presente: {lh}")
-        else:
-            _warn("No existe context/LAST_HANDOFF.md")
         console.print("Siguiente recomendado: [cyan]flujo doctor[/] y luego [cyan]flujo app[/]")
 
 

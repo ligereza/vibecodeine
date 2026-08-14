@@ -60,7 +60,6 @@ def _archivos():
         # donde un dato nuevo puede entrar. Los cuatro casos historicos con el
         # usuario de Windows quedan ahi, sabidos y no ignorados.
         if (nombre.startswith(("_archive/", "docs/recovered/"))
-                or nombre == "context/LAST_HANDOFF.md"
                 or "/legacy_" in nombre):
             continue
         # el sanitizador tiene el patron como dato, no como filtracion
