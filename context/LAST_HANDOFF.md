@@ -57,6 +57,18 @@ metadata churn was removed. Local `npm audit --package-lock-only
 Pushing this repair restarted the PR checks at the new head; reverify them
 before any human merge decision.
 
+### CI Linux portability repair - 2026-08-14
+
+The first Ubuntu CI run failed only in
+`tests/test_coherence_boundaries.py`: the fixture hardcoded `/home/mak`, while
+GitHub runs under `/home/runner`. Commit
+`e4e0432889967cca38f2997cf10ef3c0591cd9a8`, subject
+`fix(ci): close Linux validation gaps`, uses `Path.home()` and declares the
+existing Flask and vpype test dependencies in both `pyproject.toml` and
+`requirements-dev.txt`. The same CI run had four skips because those packages
+were absent; the local full suite after this repair is 100 percent, zero
+failures, zero skips. The push restarted PR #532 checks at the new head.
+
 ### Next action
 
 The clean scope is committed and published in PR #532. Reverify the clean
