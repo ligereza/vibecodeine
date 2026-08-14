@@ -9,6 +9,7 @@ Local transport commit: 9e92d4d0a1f1f711802e90443aeba415006b71a2
 Publication metadata commit: daaa292070bdfddb448611a02ef12d3bbe7c1a43
 Clean draft PR: https://github.com/ligereza/vibecodeine/pull/532
 Latest security repair: b76e8f1f71ee95d70fddcad936bd68cd5f51e2a0
+Latest CI portability repair: e4e0432889967cca38f2997cf10ef3c0591cd9a8
 
 ## Resume contract
 
@@ -61,6 +62,9 @@ Runtime hash audit against /home/mak:
 - GitHub dependency audit found high-severity nanoid 3.3.17. The lock and
   override now use 3.3.18. Local npm audit reports 0 vulnerabilities and
   tsc --noEmit passes. The repair is pushed and CI restarted.
+- Ubuntu CI also exposed a hardcoded `/home/mak` test fixture and four missing
+  Flask/vpype imports. `Path.home()` and declared dev dependencies fix this;
+  the local full suite now has 0 failures and 0 skips.
 
 ## Next action
 
