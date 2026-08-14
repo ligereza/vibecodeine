@@ -1,7 +1,7 @@
 # Disparador sin-PC (T-F4 MASTER_PLAN): un release con tag airdrop-* y un ZIP
-# adjunto corre el gate completo (validate + apply + suite) y, si queda verde,
-# abre un PR con los cambios aplicados. El release lo puede crear el Xiaomi
-# via Termux (xio/new/airdrop_push.sh) o cualquier navegador (fallback).
+# adjunto corre el gate completo (validate + apply + suite) como evidencia
+# local del runner. El gate no crea ramas, PRs ni publicaciones: MAK sigue
+# siendo el unico publicador.
 # SIN Claude API (regla del repo). El ZIP debe traer _airdrop/ en la raiz.
 name: airdrop-gate
 
@@ -10,8 +10,7 @@ on:
     types: [published]
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 concurrency:
   group: airdrop-gate
@@ -70,16 +69,10 @@ jobs:
           git config user.email "airdrop-gate@users.noreply.github.com"
           python scripts/run_airdrop_checks.py --skip-push "airdrop gate: $TAG"
 
-      - name: Abrir PR con los cambios aplicados
+      - name: Registrar gate verde sin publicar
         run: |
-          BR="airdrop/$TAG"
-          git push origin "HEAD:refs/heads/$BR"
-          gh pr create --base main --head "$BR" \
-            --title "airdrop gate: $TAG (verde, aplicado por Actions)" \
-            --body "ZIP del release [$TAG](${{ github.event.release.html_url }}) validado y aplicado por el gate sin-PC (validate_airdrop + run_airdrop_checks + suite completa en este run). Revisar el diff y mergear desde el telefono. Log completo en el run de Actions." \
-            || echo "PR ya existia o sin cambios"
-          echo "## airdrop-gate: VERDE" >> "$GITHUB_STEP_SUMMARY"
-          echo "PR: rama $BR contra main" >> "$GITHUB_STEP_SUMMARY"
+          echo "## airdrop-gate: VERDE, sin commit remoto ni PR" >> "$GITHUB_STEP_SUMMARY"
+          echo "El resultado queda como evidencia del runner; MAK debe publicar cualquier alcance aprobado." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Resumen en rojo
         if: failure()

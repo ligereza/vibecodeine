@@ -8,9 +8,31 @@ Ollama-compatible endpoint when MAK has one available.
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import re
+import time
 import urllib.request
+import sys
+
+try:
+    from cultura.mak_conductor.runtime import (active_enabled, dispatch_sync,
+                                                enqueue_shadow, observe_shadow,
+                                                shared_gpu_lease)
+except ImportError:
+    sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH",
+                                     "/home/mak/flujo/cultura"))
+    try:
+        from mak_conductor.runtime import (active_enabled, dispatch_sync,
+                                           enqueue_shadow, observe_shadow,
+                                           shared_gpu_lease)
+    except ImportError:
+        from contextlib import nullcontext
+        enqueue_shadow = observe_shadow = dispatch_sync = None
+        def active_enabled():
+            return False
+        def shared_gpu_lease(**_kwargs):
+            return nullcontext()
 
 
 SCHEMA_VERSION = "mak-local-review-v1"
@@ -282,7 +304,39 @@ def decision_record(area, payload, work=None, provider="local_deterministic"):
 
 
 def call_ollama(prompt, base_url=OLLAMA_BASE_URL, model=OLLAMA_MODEL, timeout=None,
-                max_tokens=700, temperature=0.1, response_format=None):
+                max_tokens=700, temperature=0.1, response_format=None,
+                parent_job_id=None):
+    if active_enabled():
+        payload = {"prompt_hash": hashlib.sha256(str(prompt).encode("utf-8")).hexdigest(),
+                   "prompt_length": len(str(prompt)), "model": model,
+                   "max_tokens": int(max_tokens), "temperature": float(temperature),
+                   "response_format": response_format or ""}
+
+        def handle(_job):
+            result = call_ollama(
+                prompt, base_url=base_url, model=model, timeout=timeout,
+                max_tokens=max_tokens, temperature=temperature,
+                response_format=response_format, parent_job_id=parent_job_id)
+            return {"validated": bool(str(result).strip()), "text": result}
+
+        queued = dispatch_sync(
+            "ollama_judge", payload, producer="platform.discernment.call_ollama",
+            handler=handle, estimated_vram_mb=2500, model=model,
+            template_version="ollama-judge-v2", parent_job_id=parent_job_id)
+        if queued and queued.get("queue_status") == "COMPLETED":
+            return queued.get("text", "")
+        raise RuntimeError("queued ollama judge failed: %s" %
+                           ((queued or {}).get("error", "not executed")))
+
+    started = time.time()
+    shadow_job = (enqueue_shadow(
+        "ollama_judge", {
+            "prompt_hash": hashlib.sha256(str(prompt).encode("utf-8")).hexdigest(),
+            "model": model, "max_tokens": max_tokens,
+        }, producer="platform.discernment.call_ollama",
+        parent_job_id=parent_job_id, estimated_vram_mb=2500,
+        model=model, template_version="ollama-judge-v1")
+        if enqueue_shadow is not None else None)
     body_payload = {
         "model": model,
         "prompt": prompt,
@@ -297,9 +351,29 @@ def call_ollama(prompt, base_url=OLLAMA_BASE_URL, model=OLLAMA_MODEL, timeout=No
         data=body,
         method="POST",
         headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=ollama_timeout() if timeout is None else timeout) as response:
-        data = json.loads(response.read().decode("utf-8", "replace"))
-    return data.get("response", "")
+    try:
+        with shared_gpu_lease(job_id=(shadow_job or {}).get("job_id") or
+                              "local-judge-%s" % os.getpid(),
+                              estimated_vram_mb=2500):
+            with urllib.request.urlopen(
+                    req, timeout=ollama_timeout() if timeout is None else timeout) as response:
+                data = json.loads(response.read().decode("utf-8", "replace"))
+        result = data.get("response", "")
+        if observe_shadow is not None:
+            observe_shadow(
+                shadow_job, producer="platform.discernment.call_ollama",
+                result_status="READY", validated=bool(str(result).strip()),
+                payload={"model": model}, started_at=started,
+                owner_pid=os.getpid())
+        return result
+    except Exception as exc:
+        if observe_shadow is not None:
+            observe_shadow(
+                shadow_job, producer="platform.discernment.call_ollama",
+                result_status="FAILED", payload={"model": model,
+                                                   "error": str(exc)[:2000]},
+                started_at=started, owner_pid=os.getpid())
+        raise
 
 
 def review_payload(area, payload, reviewer=None, use_ollama=True):

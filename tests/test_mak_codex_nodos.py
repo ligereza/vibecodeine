@@ -101,12 +101,12 @@ class TestValidarCadena:
     """_validar_cadena: CSV de claves de coder -> CSV validado (filtrado a
     proveedores conocidos, invalido -> default, vacio -> default)."""
 
-    def test_csv_valido_se_preserva_en_orden(self):
-        assert interfaz_codex._validar_cadena("win,ollama") == "win,ollama"
+    def test_csv_valido_descarta_proveedor_retirado(self):
+        assert interfaz_codex._validar_cadena("win,ollama") == "ollama"
 
     def test_csv_con_claves_invalidas_se_filtran(self):
         assert interfaz_codex._validar_cadena(
-            "win,basura,nim-pro") == "win,nim-pro"
+            "win,basura,nim-pro") == "nim-pro"
 
     def test_csv_todo_invalido_cae_a_default(self):
         assert interfaz_codex._validar_cadena(
@@ -120,9 +120,9 @@ class TestValidarCadena:
 
     def test_claves_duplicadas_se_deduplican_preservando_primera_aparicion(self):
         assert interfaz_codex._validar_cadena(
-            "win,win,ollama,win") == "win,ollama"
+            "win,win,ollama,win") == "ollama"
 
-    def test_default_incluye_los_4_proveedores(self):
+    def test_default_incluye_los_proveedores_activos(self):
         assert set(interfaz_codex.CADENA_DEFAULT.split(",")) == set(
             interfaz_codex.CADENA_CLAVES)
 
@@ -137,10 +137,10 @@ class TestPaginaCanvasDeNodos:
                     "nodo-mood", "nodo-output"):
             assert 'id="%s"' % nid in interfaz_codex.PAGINA
 
-    def test_contiene_la_cadena_de_fallback_win_y_nim(self):
+    def test_contains_the_active_local_and_nim_fallback_chain(self):
         assert "nim-pro" in interfaz_codex.PAGINA
-        assert "'win'" in interfaz_codex.PAGINA
         assert "'ollama'" in interfaz_codex.PAGINA
+        assert "'win'" not in interfaz_codex.PAGINA
 
     def test_conserva_el_formulario_clasico_en_su_propio_tab(self):
         assert 'id="tab-clasico"' in interfaz_codex.PAGINA

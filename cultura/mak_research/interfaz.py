@@ -27,7 +27,9 @@ import sys
 import tempfile
 import threading
 import time
+import urllib.error
 import urllib.parse
+import urllib.request
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -429,7 +431,7 @@ def _orden_canvas():
     realmente cambie el orden de ejecucion, no solo el dibujo."""
     with WORKFLOW_LOCK:
         wf = _load_workflow()
-    provs = [k for k in ("groq", "cerebras", "azure", "win", "ollama")
+    provs = [k for k in ("groq", "cerebras", "azure", "ollama")
             if wf.get("nodes", {}).get(k, {}).get("active", True)]
     provs.sort(key=lambda k: wf["nodes"].get(k, {}).get("priority", 99))
     return ",".join(provs) if provs else None
@@ -455,6 +457,11 @@ def _aplicar_resultado_job(job, r):
         job["estado"] = "PAUSADO"
         job["checkpoint"] = r.get("checkpoint", "")
         job["error"] = (r.get("tail") or "").strip()[:2000]
+        return
+    if r.get("review"):
+        job["estado"] = "REVISAR"
+        job["path"] = os.path.basename(r["path"]) if r.get("path") else ""
+        job["error"] = (r.get("tail") or "quality gate requires review")[:2000]
         return
     contract_error = _verify_result_contract(job, r)
     job["estado"] = "listo" if r.get("ok") and not contract_error else "FALLO"
@@ -484,22 +491,29 @@ def _verify_result_contract(job, result):
 
 
 def _cerrar_job(job, t0):
-    """Cierra el job: ms transcurridos, linea en JOBS_FILE, reindex best-effort."""
+    """Cierra el job without silently scheduling a second GPU workload.
+
+    Reindexing remains available through its explicit endpoint and the
+    MAK-MICELIO cron. Set MAK_REINDEX_AFTER_JOB=1 only for a deliberate
+    compatibility run; the default is off.
+    """
     job["ms"] = int((time.time() - t0) * 1000)
     _append_job_record(job)
     # el archivo crece -> la memoria/micelio se remodela solo (incremental)
-    try:
-        _reindexar_async()
-    except Exception:  # noqa: BLE001 - el reindex es best-effort
-        pass
+    if os.environ.get("MAK_REINDEX_AFTER_JOB", "0").lower() in (
+            "1", "true", "yes", "on"):
+        try:
+            _reindexar_async()
+        except Exception:  # noqa: BLE001 - reindex is best-effort
+            pass
 
 
 def _lanzar(modo, tema, n, densidad="medio", memoria=False, formato=None,
-            work_contract=None):
+            work_contract=None, trigger="api:research"):
     job = {
         "tema": tema, "modo": modo, "estado": "en cola",
         "path": "", "error": "", "t": time.strftime("%H:%M:%S"),
-        "job_id": mint_job_id(),
+        "job_id": mint_job_id(), "trigger": trigger or "api:research",
     }
     if work_contract:
         job["work_contract"] = work_contract
@@ -530,7 +544,7 @@ def _lanzar(modo, tema, n, densidad="medio", memoria=False, formato=None,
             extra = ["--formato", formato] if formato else None
             r = run_tema(modo, tema, n=n, ntfy=True, densidad=densidad,
                         orden=orden, memoria=memoria, job_id=job["job_id"],
-                        extra=extra)
+                        extra=extra, trigger=trigger)
             _aplicar_resultado_job(job, r)
         except Exception as e:
             job["estado"] = "FALLO"
@@ -593,7 +607,8 @@ def _reanudar_logic(q):
         t0 = time.time()
         try:
             r = run_tema(job["modo"], job["tema"], ntfy=True, job_id=job["job_id"],
-                        extra=["--resume", job["checkpoint"]])
+                        extra=["--resume", job["checkpoint"]],
+                        trigger=job.get("trigger", "api:research"))
             _aplicar_resultado_job(job, r)
         except Exception as e:
             job["estado"] = "FALLO"
@@ -3278,7 +3293,8 @@ class H(BaseHTTPRequestHandler):
         self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
         self.send_header("Pragma", "no-cache")
         self.end_headers()
-        self.wfile.write(data)
+        if self.command != "HEAD":
+            self.wfile.write(data)
 
     def _json_response(self, obj, code=200):
         data = json.dumps(obj, ensure_ascii=False).encode("utf-8")
@@ -3286,7 +3302,18 @@ class H(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()
-        self.wfile.write(data)
+        if self.command != "HEAD":
+            self.wfile.write(data)
+
+    def _upstream_error(self, error):
+        """Preserve an internal service error instead of relabeling it 502."""
+        raw = error.read(20000)
+        try:
+            payload = json.loads(raw.decode("utf-8", "replace"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            payload = {"ok": False,
+                       "error": raw.decode("utf-8", "replace")[:500]}
+        return self._json_response(payload, error.code)
 
     def do_GET(self):
         u = urllib.parse.urlparse(self.path)
@@ -3328,6 +3355,11 @@ class H(BaseHTTPRequestHandler):
                 return self._json_response({"nodes": [], "edges": [],
                                             "error": str(e)[:200]}, 200)
 
+        if u.path.startswith("/api/"):
+            return self._json_response({"ok": False,
+                                        "error": "ruta_api_no_encontrada",
+                                        "path": u.path}, 404)
+
         # status
         if u.path == "/status":
             try:
@@ -3358,7 +3390,8 @@ class H(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "text/plain; charset=utf-8")
             self.send_header("Content-Length", str(len(data)))
             self.end_headers()
-            self.wfile.write(data)
+            if self.command != "HEAD":
+                self.wfile.write(data)
             return
 
         # ── main page ──
@@ -3504,6 +3537,8 @@ class H(BaseHTTPRequestHandler):
           with urllib.request.urlopen(req, timeout=8) as r:
             payload = json.loads(r.read(20000).decode("utf-8", "replace"))
           return self._json_response(payload)
+        except urllib.error.HTTPError as e:
+          return self._upstream_error(e)
         except Exception as e:  # noqa: BLE001
           return self._json_response({"ok": False, "error": str(e)[:200]}, 502)
 
@@ -3517,6 +3552,8 @@ class H(BaseHTTPRequestHandler):
           with urllib.request.urlopen(req, timeout=8) as r:
             payload = json.loads(r.read(20000).decode("utf-8", "replace"))
           return self._json_response(payload)
+        except urllib.error.HTTPError as e:
+          return self._upstream_error(e)
         except Exception as e:  # noqa: BLE001
           return self._json_response({"ok": False, "error": str(e)[:200]}, 502)
 
@@ -3524,6 +3561,12 @@ class H(BaseHTTPRequestHandler):
         largo = min(int(self.headers.get("Content-Length") or 0), 4000)
         try:
           body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
+        except (json.JSONDecodeError, TypeError):
+          return self._json_response({"ok": False, "error": "json invalido"}, 400)
+        if not isinstance(body, dict):
+          return self._json_response({"ok": False,
+                                      "error": "se esperaba un objeto JSON"}, 400)
+        try:
           import fructificacion
           result = fructificacion.decidir(
             body.get("id"), body.get("accion"), body.get("nota", ""))
@@ -3542,6 +3585,12 @@ class H(BaseHTTPRequestHandler):
         largo = min(int(self.headers.get("Content-Length") or 0), 12000)
         try:
           body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
+        except (json.JSONDecodeError, TypeError):
+          return self._json_response({"ok": False, "error": "json invalido"}, 400)
+        if not isinstance(body, dict):
+          return self._json_response({"ok": False,
+                                      "error": "se esperaba un objeto JSON"}, 400)
+        try:
           fuentes = [str(x)[:240] for x in body.get("fuentes", []) if x]
           tema = str(body.get("tema") or "")[:3000]
           if len(fuentes) < 2 or not tema:
@@ -3616,7 +3665,7 @@ class H(BaseHTTPRequestHandler):
                 tema = "corpus"  # placeholder: corpus ignora el tema
             if tema:
                 _lanzar(modo, tema, n, densidad, memoria, formato,
-                        work_contract)
+                        work_contract, (q.get("trigger") or ["api:research"])[0])
                 return self._json_response({"ok": True})
             return self._json_response({"ok": False, "error": "tema vacío"}, 400)
 
@@ -3647,7 +3696,14 @@ class H(BaseHTTPRequestHandler):
             code, payload = _reanudar_logic(q)
             return self._json_response(payload, code)
 
+      if self.path.startswith("/api/"):
+            return self._json_response({"ok": False,
+                                        "error": "ruta_api_no_encontrada",
+                                        "path": self.path}, 404)
       return self._html("no", 404)
+
+    def do_HEAD(self):
+        return self.do_GET()
 
     def log_message(self, fmt, *args):
         # silence request logs: worker.log handles operational logging

@@ -157,6 +157,8 @@ def investigar(topic, iteraciones=3, depth="basic",
                providers="watsonx,groq,cerebras,azure,ollama", densidad="medio",
                sin_marco=False, reanudar=None, formato="informe"):
     t0 = time.time()
+    if formato == "source_corpus":
+        return investigar_corpus(topic, t0=t0)
     llm = LLM(providers)
     iteraciones = min(max(iteraciones, 1), 10)
     # El encuadre de seguridad va al MODELO, nunca al buscador. Pegarselo al
@@ -520,6 +522,61 @@ def investigar(topic, iteraciones=3, depth="basic",
     return resultado
 
 
+def investigar_corpus(topic, *, t0=None):
+    """Run an evidence project without asking an LLM to invent source rows."""
+    from fondart_corpus import build_fondart_corpus
+
+    started = time.time() if t0 is None else t0
+    root = os.environ.get(
+        "MAK_FONDART_CORPUS_ROOT",
+        os.path.expanduser("~/research/corpus/fondart_historical_selected"),
+    )
+    print("STATUS: Descubriendo fuentes oficiales para corpus...", flush=True)
+    max_documents = min(24, max(1, int(os.environ.get("MAK_FONDART_CORPUS_MAX_DOCUMENTS", "12"))))
+    project = build_fondart_corpus(root, max_documents=max_documents)
+    captures = project.get("captures") or []
+    sources = [row["url"] for row in captures if row.get("status") == "captured"]
+    findings = [{
+        "type": "source_capture",
+        "url": row.get("url"),
+        "backend": row.get("backend"),
+        "capture_id": row.get("capture_id"),
+        "status": row.get("status"),
+    } for row in captures]
+    summary = project.get("summary") or {}
+    quality = project.get("quality") or {"status": "review_required"}
+    report = project.get("report") or "Corpus source acquisition did not return a report."
+    return {
+        "topic": topic,
+        "report": report,
+        "formato": "source_corpus",
+        "meta": {
+            "iterations": 0,
+            "findingsCount": len(findings),
+            "sources": sources,
+            "llmCalls": {},
+            "providerOrder": "deterministic-source-pipeline",
+            "errors": [row.get("error") for row in quality.get("source_errors", [])
+                       if row.get("error")],
+            "ms": int((time.time() - started) * 1000),
+            "dominio": "cl_fondos",
+            "fuentes_primarias": sources,
+            "source_manifest": project.get("database"),
+        },
+        "findings": findings,
+        "project": project,
+        "quality": quality,
+        "product": {
+            "source_manifest": project.get("database"),
+            "records": summary.get("applications", 0),
+            "coverage": quality.get("reported_years", []),
+            "next_action": ("review missing years and partial source rows"
+                            if quality.get("status") != "ready"
+                            else "triangulate comparable selected applications"),
+        },
+    }
+
+
 def main():
     ap = argparse.ArgumentParser(description="Research cultural standalone (MAK)")
     ap.add_argument("tema", nargs="?", help="tema a investigar (opcional con --resume)")
@@ -603,11 +660,14 @@ def main():
              m["llmCalls"]))
     if m["errors"]:
         print("errores no fatales: %d (ver meta en el .json)" % len(m["errors"]))
-    if args.ntfy:
+    if args.ntfy and result.get("quality", {}).get("status") != "review_required":
         ntfy_publish(os.environ.get("NTFY_TOPIC_OUT", ""),
                      result["report"][:900] + "\n\n" + base + ".md",
                      title="informe listo: " + tema_para_slug[:80])
     print("INFORME: " + base + ".md")
+    if result.get("quality", {}).get("status") == "review_required":
+        print("QUALITY: review_required", flush=True)
+        return 2
     return 0
 
 

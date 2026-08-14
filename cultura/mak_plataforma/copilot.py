@@ -53,17 +53,33 @@ def dedupe_feedback(rows):
     """Collapse repeated human actions for learning without deleting history."""
     latest = {}
     passthrough = []
+    undo_barriers = {}
+    indexed = []
     for row in rows or []:
         source = str(row.get("source_id") or "").strip()
         target = str(row.get("target_id") or "").strip()
         if not source or not target:
             passthrough.append(row)
             continue
+        signal_key = (source, target, str(row.get("facet") or "unknown").lower(),
+                      str(row.get("relation") or "related"))
+        indexed.append((signal_key, row))
+        if str(row.get("action") or "").lower() == "undo":
+            undo_barriers[signal_key] = len(indexed) - 1
+            continue
         key = (source, target, str(row.get("action") or "").lower(),
                str(row.get("facet") or "unknown").lower(),
                str(row.get("relation") or "related"))
-        latest[key] = row
-    return [*passthrough, *latest.values()]
+        latest[key] = len(indexed) - 1
+    return [
+        *passthrough,
+        *[row for index, (signal_key, row) in enumerate(indexed)
+          if str(row.get("action") or "").lower() != "undo"
+          and index > undo_barriers.get(signal_key, -1)
+          and latest.get((signal_key[0], signal_key[1],
+                         str(row.get("action") or "").lower(),
+                         signal_key[2], signal_key[3])) == index],
+    ]
 
 
 def feedback_index(rows):

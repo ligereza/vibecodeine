@@ -69,7 +69,7 @@ class LeerBitacora(BaseTool):
 def main():
     import sys
     modelo = sys.argv[1] if len(sys.argv) > 1 else "llama3.1:8b"
-    llm_cfg = {'model': modelo, 'model_server': 'http://192.168.50.1:11434/v1', 'api_key': 'ollama'}
+    llm_cfg = {'model': modelo, 'model_server': 'http://127.0.0.1:11434/v1', 'api_key': 'ollama'}
     bot = Assistant(llm=llm_cfg, function_list=['leer_estado', 'vetear', 'entregar', 'leer_bitacora'],
                      system_message="Sos el capataz de MAK, conversas con el usuario en espanol. "
                                      "Usa las herramientas cuando haga falta info real o una accion.")

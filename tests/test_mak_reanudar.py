@@ -171,6 +171,9 @@ class TestReanudarLogic:
             def start(self):
                 self._target()
 
+            def join(self, timeout=None):
+                return None
+
         monkeypatch.setattr(interfaz.threading, "Thread", HiloFalso)
 
     def _job_pausado(self, monkeypatch, checkpoint="/tmp/cp.json"):
@@ -222,7 +225,8 @@ class TestReanudarLogic:
                             lambda path, accion, texto="": aplicado.setdefault("ok", (path, accion, texto)))
 
         llamado = {}
-        def fake_run_tema(modo, tema, ntfy=True, job_id=None, extra=None):
+        def fake_run_tema(modo, tema, ntfy=True, job_id=None, extra=None,
+                          **_kwargs):
             llamado["args"] = (modo, tema, ntfy, job_id, extra)
             return {"ok": True, "path": "/x/out.md"}
         monkeypatch.setattr(interfaz, "run_tema", fake_run_tema)

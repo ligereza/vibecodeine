@@ -586,6 +586,21 @@ def test_hub_api_routes_never_fall_back_to_portfolio_html(monkeypatch):
     thread.start()
     base = "http://127.0.0.1:%d" % server.server_address[1]
     try:
+        with urllib.request.urlopen(base + "/health", timeout=5) as response:
+            assert response.headers["Content-Type"].startswith("application/json")
+            health = json.load(response)
+            assert health == {
+                "ok": True,
+                "schema": "mak-hub-health-v1",
+                "service": "mak-hub",
+                "runtime": "mak",
+            }
+        request = urllib.request.Request(base + "/health", method="HEAD")
+        with urllib.request.urlopen(request, timeout=5) as response:
+            assert response.status == 200
+            assert response.headers["Content-Type"].startswith("application/json")
+            assert response.headers["Content-Length"]
+            assert response.read() == b""
         with urllib.request.urlopen(base + "/api/portfolio/audit", timeout=5) as response:
             assert response.headers["Content-Type"].startswith("application/json")
             assert json.load(response)["schema"] == "faro-portfolio-audit-v1"

@@ -43,8 +43,8 @@ FECHA_RE = re.compile(r"^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})-(.+)\.(md|p
 # Claves validas de coder (espejo de codex_lib._CODER_CHAIN_MAP, sin
 # importar codex_lib aca para no acoplar el server web al motor). El orden
 # que llega en el CSV importa: define la cadena de fallback real.
-CADENA_CLAVES = ("nim-pro", "nim-flash", "win", "ollama")
-CADENA_DEFAULT = "nim-pro,nim-flash,win,ollama"
+CADENA_CLAVES = ("nim-pro", "nim-flash", "ollama")
+CADENA_DEFAULT = "nim-pro,nim-flash,ollama"
 
 JOBS = []
 JOBS_LOCK = threading.Lock()
@@ -347,8 +347,8 @@ function syncDensidad(){
 function toggleMood(){} // el propio nodo ya expone los selects en su cuerpo
 
 // -- nodo Coder: cadena de fallback visible + reordenable --
-var CADENA=['nim-pro','nim-flash','win','ollama'];
-var CADENA_ETQ={'nim-pro':'nim deepseek-pro','nim-flash':'nim deepseek-flash','win':'win rtx4070','ollama':'ollama local'};
+var CADENA=['nim-pro','nim-flash','ollama'];
+var CADENA_ETQ={'nim-pro':'nim deepseek-pro','nim-flash':'nim deepseek-flash','ollama':'ollama local'};
 function pintaCadena(){
   document.getElementById('cadena-vista').innerHTML=CADENA.map(function(c,i){
     return '<div class="sub-item'+(i===0?' primero':'')+'">'+(i===0?'&#9654; ':'<span class="flecha">&#8627;</span> ')+esc(CADENA_ETQ[c]||c)+'</div>';
@@ -461,7 +461,8 @@ def _validar_cadena(csv_value):
     return ",".join(limpio)
 
 
-def _lanzar(modo, pedido, densidad, cadena=CADENA_DEFAULT):
+def _lanzar(modo, pedido, densidad, cadena=CADENA_DEFAULT,
+            trigger="api:codex"):
     job = {"pedido": pedido, "modo": modo, "estado": "en cola", "path": "",
            "error": "", "t": time.strftime("%H:%M:%S"), "job_id": mint_job_id()}
     with JOBS_LOCK:
@@ -483,7 +484,7 @@ def _lanzar(modo, pedido, densidad, cadena=CADENA_DEFAULT):
                 return
         try:
             r = run_pedido(modo, pedido, densidad=densidad, ntfy=True,
-                          job_id=job["job_id"], cadena=cadena)
+                          job_id=job["job_id"], cadena=cadena, trigger=trigger)
             job["estado"] = "listo" if r["ok"] else "FALLO"
             job["path"] = os.path.basename(r["path"]) if r["path"] else ""
             if not r["ok"]:
@@ -531,7 +532,8 @@ class H(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(data)))
         self.send_header("Cache-Control", "no-cache")
         self.end_headers()
-        self.wfile.write(data)
+        if self.command != "HEAD":
+            self.wfile.write(data)
 
     def do_GET(self):
         u = urllib.parse.urlparse(self.path)
@@ -561,6 +563,11 @@ class H(BaseHTTPRequestHandler):
             self.send_response(204)
             self.end_headers()
             return
+        if u.path.startswith("/api/"):
+            return self._send(json.dumps(
+                {"ok": False, "error": "ruta_api_no_encontrada",
+                 "path": u.path}, ensure_ascii=False),
+                404, "application/json; charset=utf-8")
         return self._send(PAGINA)
 
     def do_POST(self):
@@ -571,6 +578,7 @@ class H(BaseHTTPRequestHandler):
             modo = (q.get("modo") or ["generar"])[0]
             densidad = (q.get("densidad") or ["medio"])[0]
             cadena = _validar_cadena((q.get("cadena") or [""])[0])
+            trigger = (q.get("trigger") or ["api:codex"])[0].strip()[:120]
             if modo not in ("generar", "revisar", "testear", "debug",
                             "iconos"):
                 modo = "generar"
@@ -579,9 +587,17 @@ class H(BaseHTTPRequestHandler):
             if not pedido:
                 return self._send('{"ok":false,"error":"pedido vacio"}', 400,
                                   "application/json")
-            _lanzar(modo, pedido, densidad, cadena=cadena)
+            _lanzar(modo, pedido, densidad, cadena=cadena, trigger=trigger)
             return self._send('{"ok":true}', 200, "application/json")
+        if urllib.parse.urlparse(self.path).path.startswith("/api/"):
+            return self._send(json.dumps(
+                {"ok": False, "error": "ruta_api_no_encontrada",
+                 "path": urllib.parse.urlparse(self.path).path},
+                ensure_ascii=False), 404, "application/json; charset=utf-8")
         return self._send("no", 404, "text/plain")
+
+    def do_HEAD(self):
+        return self.do_GET()
 
     def log_message(self, fmt, *args):
         pass

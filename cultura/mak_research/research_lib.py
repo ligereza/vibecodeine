@@ -8,14 +8,16 @@ research.py / panel.py / cola.py. Stdlib-only (urllib), Python 3.11.
 Keys: ~/n8n-local/research.env (chmod 600) o el archivo que diga
 la variable de entorno RESEARCH_ENV. NUNCA hardcodear keys aca.
 """
+import hashlib
 import json
 import os
 import re
 import socket
+import sys
 import tempfile
 import threading
 import time
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 import unicodedata
 import urllib.error
 import urllib.request
@@ -26,6 +28,35 @@ try:
 except ImportError:
     score_provider_health = None
     parse_provider_error = None
+
+try:
+    from cultura.mak_conductor.runtime import (external_budget_limit,
+                                                reserve_external_call,
+                                                shared_gpu_lease,
+                                                dispatch_sync, active_enabled,
+                                                enqueue_shadow, observe_shadow)
+    _CONDUCTOR_RUNTIME_AVAILABLE = True
+except ImportError:  # mirrored MAK runtime imports from the repo's cultura dir
+    sys.path.insert(0, os.environ.get("MAK_CONDUCTOR_PATH",
+                                     "/home/mak/flujo/cultura"))
+    try:
+        from mak_conductor.runtime import (external_budget_limit,
+                                           reserve_external_call,
+                                           shared_gpu_lease,
+                                           dispatch_sync, active_enabled,
+                                           enqueue_shadow, observe_shadow)
+        _CONDUCTOR_RUNTIME_AVAILABLE = True
+    except ImportError:  # standalone legacy research checkout
+        _CONDUCTOR_RUNTIME_AVAILABLE = False
+        external_budget_limit = None
+        reserve_external_call = None
+        from contextlib import nullcontext
+        def shared_gpu_lease(**_kwargs):
+            return nullcontext()
+        dispatch_sync = None
+        enqueue_shadow = observe_shadow = None
+        def active_enabled():
+            return False
 
 try:
     import fcntl
@@ -44,11 +75,6 @@ DEFAULTS = {
     "RESEARCH_AZURE_ENABLED": "0",
     "OLLAMA_BASE_URL": "http://127.0.0.1:11434",
     "OLLAMA_MODEL": "gemma3:4b",
-    # WIN: notebook Windows con RTX 4070 (8GB VRAM), alcanzable SOLO por el
-    # cable ethernet directo (192.168.50.x). Motor local mas fuerte que el
-    # de MAK; se prueba antes que el gemma3:4b local como ultimo recurso.
-    "WIN_BASE_URL": "http://192.168.50.1:11434",
-    "WIN_MODEL": "llama3.1:8b",
     # SearXNG propio (LAN, Docker): busqueda sin API key ni tope de
     # creditos. Reemplaza/complementa Tavily. Ver PLAN.md seccion 2.
     "SEARXNG_BASE_URL": "http://127.0.0.1:8888",
@@ -75,6 +101,48 @@ SALUD_RUTA = os.path.join(os.path.expanduser("~"), "research", "salud_proveedore
 SALUD_VENTANA = 6 * 3600
 _SALUD_LOCK = threading.RLock()
 _EVENT_LOCK = threading.RLock()
+
+
+def ollama_gpu_slot(model, *, caller, queue, department, trigger="manual",
+                    job_id=""):
+    """Return the shared MAK GPU slot for local Ollama calls.
+
+    Cloud providers do not use MAK's local GPU and therefore must not consume
+    this slot. The import stays lazy for standalone research utilities.
+    """
+    if not str(model or "") or _CONDUCTOR_RUNTIME_AVAILABLE:
+        return nullcontext()
+    try:
+        base = os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
+        if not (base.startswith("http://127.0.0.1") or
+                base.startswith("http://localhost")):
+            return nullcontext()
+        platform = os.path.expanduser("~/plataforma")
+        if platform not in sys.path:
+            sys.path.insert(0, platform)
+        from gpu_guard import slot
+        return slot(caller=caller, queue=queue, model=model,
+                    department=department, trigger=trigger, job_id=job_id,
+                    resource="ollama")
+    except (ImportError, OSError, TypeError):
+        return nullcontext()
+
+
+def _record_activity(kind, status, *, caller, queue, department, trigger,
+                     job_id, provider="", model="", resource="", error="",
+                     extra=None):
+    """Best-effort activity event; provider failure must remain visible."""
+    try:
+        platform = os.path.expanduser("~/plataforma")
+        if platform not in sys.path:
+            sys.path.insert(0, platform)
+        from actividad import record
+        return record(kind, status, caller=caller, queue=queue,
+                      department=department, trigger=trigger, job_id=job_id,
+                      provider=provider, model=model, resource=resource,
+                      error=error, extra=extra)
+    except (ImportError, OSError, TypeError):
+        return ""
 
 
 @contextmanager
@@ -385,7 +453,7 @@ MARCO_CULTURA = (
 )
 # Marco neutro: mismo nucleo (descriptivo, no perfilar personas reales) SIN
 # las frases de negacion especificas de sustancias. Bug probado en vivo:
-# modelos locales chicos (llama3.1:8b via win) leen "nada de sintesis
+# modelos locales chicos leen "nada de sintesis
 # quimica ni cultivo" en CUALQUIER tema y patron-matchean hacia el rechazo,
 # incluso en ingenieria benigna sin relacion con sustancias.
 MARCO_CULTURA_NEUTRO = (
@@ -491,8 +559,8 @@ def _msgs(system, user):
 
 # The provider roster, in ONE place. It used to be written out by hand in every
 # tool that accepted a provider list, and those copies went stale silently:
-# `refutar.py` filtered its `--orden` against a literal
-# ("groq", "cerebras", "azure", "ollama") that predates `watsonx` and `win`, so
+# refutar.py filtered its --orden against a literal
+# ("groq", "cerebras", "azure", "ollama") that predates watsonx, so
 # `--orden watsonx` was dropped without a word, the list came out empty, the
 # default chain took over and every one of its providers was skipped for having
 # no key. The tool died with "Todos los proveedores fallaron. Ultimo: None" --
@@ -505,7 +573,6 @@ PROVIDER_ENV_KEY = {
     "groq": "GROQ_API_KEY",
     "cerebras": "CEREBRAS_API_KEY",
     "azure": "AZURE_API_KEY",
-    "win": "WIN_BASE_URL",
     "ollama": "OLLAMA_BASE_URL",
 }
 PROVIDERS = tuple(PROVIDER_ENV_KEY)
@@ -634,6 +701,10 @@ def watsonx_vision(prompt, imagen_b64, model=None, max_tok=700, temperatura=0.1,
     Temperatura baja por lo mismo: un modelo tibio rellena `productora` con algo
     plausible. Un campo vacio es una respuesta correcta; uno inventado no.
     """
+    if (reserve_external_call is not None and
+            not reserve_external_call(
+                "watsonx", limit_count=external_budget_limit("watsonx"))):
+        raise RuntimeError("external_budget_exceeded:watsonx")
     return _watsonx_llamar(
         [{"role": "user", "content": [
             {"type": "text", "text": prompt},
@@ -665,14 +736,7 @@ class LLM:
     Code node probado 2026-07-15: cerebras/azure son razonadores, llevan
     margen extra de max_completion_tokens; azure NO acepta temperature)."""
 
-    # `win` SALIO del orden por defecto (2026-07-30). Es un notebook Windows que
-    # el usuario retiro a proposito -- todo corre en MAK -- y seguia primero en
-    # la cadena costando hasta 300 s por intento: `_win` delega en
-    # `_ollama_like`, cuyo timeout es 300, mientras su propio docstring promete
-    # "timeout corto... cae rapido al fallback siguiente". Medido el 2026-07-30
-    # en salud_proveedores.json: win 0 exitos / 3 timeouts en una sola ventana.
-    # Sigue en la lista blanca del filtro de abajo: se puede pedir explicito con
-    # LLM(order="win") si algun dia esa maquina vuelve a servir modelos.
+    # La cadena activa usa solo proveedores disponibles en MAK.
     # `watsonx` ENTRO al orden por defecto y va PRIMERO (2026-07-30). Entro por
     # donde entra todo proveedor nuevo aca: salud medida, no confianza. Lote real
     # de 8 informes cortos con `--providers watsonx` sobre temas cientificos de
@@ -691,7 +755,7 @@ class LLM:
         # La lista blanca dice QUIENES pueden participar; el `order` de la firma
         # dice en que posicion arrancan y la salud medida decide el resto.
         base = [p.strip() for p in order.split(",")
-                if p.strip() in ("groq", "cerebras", "azure", "win", "ollama",
+                if p.strip() in ("groq", "cerebras", "azure", "ollama",
                                  "watsonx")]
         if not self._azure_enabled():
             base = [provider for provider in base if provider != "azure"]
@@ -754,13 +818,20 @@ class LLM:
     def _ollama_like(self, base_url, model, system, user, max_tok):
         base = base_url.rstrip("/")
         prompt = (system + "\n\n" + user) if system else user
-        r = _http_json(
-            base + "/api/generate",
-            {"model": model, "prompt": prompt,
-             "stream": False,
-             "options": {"temperature": 0.3, "num_predict": max_tok}},
-            timeout=300,
-        )
+        local = base.startswith("http://127.0.0.1") or base.startswith(
+            "http://localhost")
+        context = (ollama_gpu_slot(
+            model, caller="mak-research.research_lib", queue="ollama.generate",
+            department="research", trigger=os.environ.get("MAK_TRIGGER", "manual"),
+            job_id=os.environ.get("MAK_JOB_ID", "")) if local else nullcontext())
+        with context:
+            r = _http_json(
+                base + "/api/generate",
+                {"model": model, "prompt": prompt,
+                 "stream": False,
+                 "options": {"temperature": 0.3, "num_predict": max_tok}},
+                timeout=300,
+            )
         # no tragar el error: si ollama devuelve {"error": ...} propagarlo
         # para que call() lo registre en self.errors (antes se perdia como "")
         if isinstance(r, dict) and r.get("error"):
@@ -768,15 +839,11 @@ class LLM:
         return (r.get("response") or "").strip()
 
     def _ollama(self, system, user, max_tok):
-        return self._ollama_like(os.environ["OLLAMA_BASE_URL"],
-                                 os.environ["OLLAMA_MODEL"], system, user, max_tok)
-
-    def _win(self, system, user, max_tok):
-        """WIN: la RTX 4070 del notebook, alcanzable solo por el cable directo.
-        Mismo protocolo que ollama local; timeout corto en la conexion (si WIN
-        esta apagada/dormida, cae rapido al fallback siguiente)."""
-        return self._ollama_like(os.environ["WIN_BASE_URL"],
-                                 os.environ["WIN_MODEL"], system, user, max_tok)
+        with shared_gpu_lease(job_id="research-ollama-%s" % os.getpid(),
+                              estimated_vram_mb=2500):
+            return self._ollama_like(os.environ["OLLAMA_BASE_URL"],
+                                     os.environ["OLLAMA_MODEL"], system, user,
+                                     max_tok)
 
     def _has_key(self, name):
         return bool(os.environ.get(PROVIDER_ENV_KEY[name]))
@@ -800,11 +867,9 @@ class LLM:
         orden = list(order or self.order)
         if not self._azure_enabled():
             orden = [provider for provider in orden if provider != "azure"]
-        # sin internet: win/ollama primero (LAN directa, no depende de internet;
-        # no esperar los timeouts de la nube). WIN (RTX 4070) antes que el
-        # gemma3 local de MAK -- mas fuerte, mismo cable.
+        # sin internet: ollama local primero; no esperar timeouts de nubes.
         if not red_ok():
-            frente = [p for p in ("win", "ollama") if p in orden]
+            frente = [p for p in ("ollama",) if p in orden]
             orden = frente + [x for x in orden if x not in frente]
         try:
             orden = orden_por_salud(orden, _salud_cargar())
@@ -814,18 +879,106 @@ class LLM:
         for name in orden:
             if name not in fns or not self._has_key(name):
                 continue
+            selected_model = model if name in PROVIDERS_CON_MODELO and model else os.environ.get(
+                name.upper() + "_MODEL", "")
+            _record_activity("model", "started", caller="mak-research.LLM",
+                             queue="research.llm", department="research",
+                             trigger=os.environ.get("MAK_TRIGGER", "api:research"),
+                             job_id=os.environ.get("MAK_JOB_ID", ""),
+                             provider=name, model=selected_model,
+                             resource="ollama" if name == "ollama" else "cloud")
             try:
-                text = (fns[name](system, user, max_tok, model)
-                        if model and name in PROVIDERS_CON_MODELO
-                        else fns[name](system, user, max_tok))
+                if (name in ("watsonx", "groq", "cerebras", "azure") and
+                        reserve_external_call is not None and
+                        not active_enabled() and
+                        not reserve_external_call(
+                            name, limit_count=external_budget_limit(name))):
+                        last = name + " presupuesto acotado agotado"
+                        self.errors.append(last)
+                        continue
+                fn = fns[name]
+                if dispatch_sync is not None and active_enabled():
+                    def handle(job, _fn=fn, _provider=name):
+                        if (_provider in ("watsonx", "groq", "cerebras", "azure")
+                                and reserve_external_call is not None
+                                and not reserve_external_call(
+                                    _provider,
+                                    limit_count=external_budget_limit(_provider))):
+                            raise RuntimeError(
+                                "external_budget_exceeded:%s" % _provider)
+                        value = (_fn(system, user, max_tok, model)
+                                 if model and _provider in PROVIDERS_CON_MODELO
+                                 else _fn(system, user, max_tok))
+                        return {"validated": bool(str(value or "").strip()),
+                                "provider": _provider, "text": value}
+                    queued = dispatch_sync(
+                        "llm_call", {
+                            "provider": name, "model": model or "",
+                            "system": str(system), "user": str(user),
+                            "prompt_hash": hashlib.sha256(
+                                (str(system) + "\n" + str(user)).encode(
+                                    "utf-8")).hexdigest(),
+                            "prompt_length": len(str(system)) + len(str(user)),
+                            "max_tokens": max_tok,
+                        }, producer="research.LLM.call", handler=handle,
+                        estimated_vram_mb=2500 if name == "ollama" else 0,
+                        model=model or name, template_version="llm-call-v1")
+                    text = (queued or {}).get("text", "")
+                else:
+                    shadow_job = (enqueue_shadow(
+                        "llm_call", {
+                            "provider": name, "model": model or "",
+                            "prompt_hash": hashlib.sha256(
+                                (str(system) + "\n" + str(user)).encode(
+                                    "utf-8")).hexdigest(),
+                            "prompt_length": len(str(system)) + len(str(user)),
+                            "max_tokens": max_tok,
+                        }, producer="research.LLM.call", estimated_vram_mb=(
+                            2500 if name == "ollama" else 0),
+                        model=model or name, template_version="llm-call-v1")
+                        if enqueue_shadow is not None else None)
+                    shadow_started = time.time()
+                    try:
+                        text = (fn(system, user, max_tok, model)
+                                if model and name in PROVIDERS_CON_MODELO
+                                else fn(system, user, max_tok))
+                    except Exception as exc:
+                        if observe_shadow is not None:
+                            observe_shadow(
+                                shadow_job, producer="research.LLM.call",
+                                result_status="FAILED",
+                                payload={"provider": name,
+                                         "error": str(exc)[:2000]},
+                                started_at=shadow_started, owner_pid=os.getpid())
+                        raise
+                    if observe_shadow is not None:
+                        observe_shadow(
+                            shadow_job, producer="research.LLM.call",
+                            result_status="READY" if text else "EMPTY",
+                            validated=bool(str(text or "").strip()),
+                            payload={"provider": name},
+                            started_at=shadow_started, owner_pid=os.getpid())
                 if text:
                     self.stats[name] = self.stats.get(name, 0) + 1
                     try:
                         _salud_registrar(name, True)
                     except Exception:
                         pass
+                    _record_activity("model", "finished", caller="mak-research.LLM",
+                                     queue="research.llm", department="research",
+                                     trigger=os.environ.get("MAK_TRIGGER", "api:research"),
+                                     job_id=os.environ.get("MAK_JOB_ID", ""),
+                                     provider=name, model=selected_model,
+                                     resource="ollama" if name == "ollama" else "cloud")
                     return text, name
                 last = name + " devolvio vacio"
+                _record_activity("model", "failed", caller="mak-research.LLM",
+                                 queue="research.llm", department="research",
+                                 trigger=os.environ.get("MAK_TRIGGER", "api:research"),
+                                 job_id=os.environ.get("MAK_JOB_ID", ""),
+                                 provider=name, model=selected_model,
+                                 resource="ollama" if name == "ollama" else "cloud",
+                                 error="empty")
                 try:
                     _salud_registrar(name, False, "empty")
                 except Exception:
@@ -833,6 +986,13 @@ class LLM:
             except Exception as e:  # noqa: BLE001 - fallback multi-proveedor
                 last = name + ": " + _err_str(e)
                 self.errors.append(last)
+                _record_activity("model", "failed", caller="mak-research.LLM",
+                                 queue="research.llm", department="research",
+                                 trigger=os.environ.get("MAK_TRIGGER", "api:research"),
+                                 job_id=os.environ.get("MAK_JOB_ID", ""),
+                                 provider=name, model=selected_model,
+                                 resource="ollama" if name == "ollama" else "cloud",
+                                 error=_err_str(e))
                 try:
                     tipo = (parse_provider_error(e, name, "?").get("error_type", "other")
                             if parse_provider_error else "other")
@@ -883,6 +1043,13 @@ def consulta_de(tema, tope=TOPE_CONSULTA):
 def tavily_search(query, depth="basic", max_results=5, errors=None):
     """basic = 1 credito, advanced = 2. 1000/mes gratis."""
     load_env()
+    if (reserve_external_call is not None and
+            not reserve_external_call(
+                "tavily", limit_count=external_budget_limit("tavily"))):
+        error = "external_budget_exceeded:tavily"
+        if errors is not None:
+            errors.append(error)
+        return {"results": [], "answer": None, "error": error}
     try:
         _r_tavily = _http_json(
             "https://api.tavily.com/search",

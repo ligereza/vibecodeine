@@ -1,13 +1,8 @@
-; Espejo del unit vivo en el box: ~/.config/systemd/user/mak-xio.service
-; (2026-07-18: unit existia pero DISABLED -- el monitor solo vivia por
-; watchdog/manual; fix: WorkingDirectory pineado + enable --now.)
-;
-; Instalar en el box:
-;   cp mak-xio.service ~/.config/systemd/user/mak-xio.service
-;   systemctl --user daemon-reload
-;   systemctl --user enable --now mak-xio.service
+# HISTORICAL DUPLICATE: not canonical and never installed.
+# Canonical source: cultura/mak_xio_puente/mak-xio.service.
+# Preserved to retain provenance of the former plataforma mirror.
 [Unit]
-Description=MAK xio puente (monitor GET-only)
+Description=Historical MAK xio bridge duplicate (not installed)
 [Service]
 WorkingDirectory=%h/xio_puente
 ExecStart=/usr/bin/python3 %h/xio_puente/monitor.py

@@ -110,7 +110,7 @@ def main():
 
     load_env()
     orden = [p.strip() for p in args.orden.split(",")
-            if p.strip() in ("groq", "cerebras", "azure", "win", "ollama")]
+            if p.strip() in ("groq", "cerebras", "azure", "ollama")]
     if not orden:
         orden = ["groq", "cerebras", "azure", "ollama"]
     tema = marco(args.tema, activo=not args.sin_marco)
