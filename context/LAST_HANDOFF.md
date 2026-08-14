@@ -14,13 +14,15 @@ otherwise rewritten.
   subject `docs(hand): record Git web publication`.
 - Final bug-hunt commit: `7926d20daeaf9b04d8f624f2b2e68ebfdac87eba`, subject
   `fix(tests): close archived contract gap`.
+- Final handoff metadata commit: `830c7babc19b8e636c0846008b1e8382e68bd99e`,
+  subject `docs(hand): record final validation head`.
 - Remote ref verification: `git ls-remote origin
   refs/heads/codex/mak-web-restructure-20260813` returned final commit
-  `7926d20daeaf9b04d8f624f2b2e68ebfdac87eba`.
+  `830c7babc19b8e636c0846008b1e8382e68bd99e`.
 - Draft PR: #531,
   `https://github.com/ligereza/vibecodeine/pull/531`, base `main`, head
   `codex/mak-web-restructure-20260813`, head SHA
-  `7926d20daeaf9b04d8f624f2b2e68ebfdac87eba` exact.
+  `830c7babc19b8e636c0846008b1e8382e68bd99e` exact.
 - GitHub connector creation returned 403; the authenticated `gh` fallback
   created the draft PR successfully. No browser was used.
 - `gh pr checks 531 --repo ligereza/vibecodeine` reported no checks for the
