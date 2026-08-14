@@ -23,6 +23,27 @@ otherwise rewritten.
 - Next action: human review of PR #531; do not merge into `main`, `mak`, `rd`,
   or `iskvw` without explicit review of the verified scope.
 
+## BUG HUNT AND TEST CLOSURE - 2026-08-13 23:18 LOCAL
+
+The only prior suite skip was traced to stale test logic, not a missing runtime
+dependency or contract. Commit `1fc8871` intentionally archived
+`context/DIRECTOR_CONTRACT.md`; the active repo has no such file and no live
+documentation cites its `I1-IN` range. `tests/test_higiene_docs.py` previously
+skipped this condition. It now asserts the archive boundary and fails if an
+active document resurrects those citations. No historical contract was
+restored and no WIN material was imported.
+
+- Full regression command: `PATH=/home/mak/research/.venv/bin:$PATH
+  PYTHONPATH=/home/mak/flujo/src:/home/mak/flujo/cultura:/home/mak/flujo/cultura/mak_codex:/home/mak/flujo/cultura/mak_research:/home/mak/flujo/cultura/mak_plataforma
+  /home/mak/research/.venv/bin/python -m pytest -q -rs --tb=short`.
+- Result: collection previously measured at 2,855 tests; 100% completed,
+  exit 0, zero failures, zero skips. Only existing Pillow deprecation
+  warnings were emitted.
+- Focused hygiene command: `... -m pytest -q -rs --tb=short
+  tests/test_higiene_docs.py`; result `3 passed`, zero skips.
+- The test change is staged for the next commit and will update PR #531 after
+  the final hash is measured.
+
 ## CURRENT PHYSICAL MAK HANDOFF - 2026-08-13 FINAL AUDIT (REVALIDATED 22:34)
 
 Authority is the measured Linux body under `/home/mak`. The checkout is
