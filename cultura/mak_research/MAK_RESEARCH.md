@@ -1,6 +1,6 @@
 # MAK research -- sistema de investigacion cultural (Hub + servicios internos)
 
-Sistema standalone en MAK (Debian 12, 192.168.50.2, GTX 1650 4GB, 16GB RAM).
+Sistema standalone en MAK (Debian 12, loopback local, GTX 1650 4GB, 16GB RAM).
 Sin n8n (camino cerrado como FALLIDO 2026-07-15, no reintentar).
 Recibe cualquier tema X por un Hub humano o por canales de maquina y devuelve
 un informe Markdown. Research no es una interfaz publica independiente: su
@@ -39,7 +39,7 @@ Search: Tavily (1000 creditos/mes; basic=1, advanced=2).
 
 ## Interfaces
 
-1. **Web humana (LAN):** http://192.168.50.2:8900/research/ -- formulario
+1. **Web humana (local):** http://127.0.0.1:8900/research/ -- formulario
    tema + modo + n; lista informes. El Hub es la unica superficie Web y
    mantiene el servicio Research interno en `127.0.0.1:8890`.
 2. **ntfy (iPhone, sin PC):** publicar a `$NTFY_TOPIC_IN` (ver

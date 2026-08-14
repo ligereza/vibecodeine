@@ -1,3 +1,124 @@
+# CURRENT MAK LINUX-ONLY RESTRUCTURE - 2026-08-14 16:20 UTC
+
+The NUDO branch was audited against the physical MAK checkout and the active
+Linux services. This section is the current continuation point; older sections
+below are historical evidence and are not an active checklist.
+
+## Measured base and scope
+
+- Worktree: `/tmp/mak-linux-only`.
+- Branch: `codex/mak-linux-only`.
+- Base commit: `1b86a58ea2d4a38b91e233213f3af607c41d797f`.
+- NUDO evidence branch: `origin/codex/nudo-rd-evidence` at
+  `0bb5abe2dd9140807da837c042fa3297464841d7`.
+- NUDO checkpoint under audit: `8219341`; its focused tests and compile checks
+  passed in `/home/mak/research/.venv`.
+- No live service was restarted and no mirror was overwritten.
+
+## NUDO tool decisions
+
+- `cultura/mak_research/source_pipeline.py` and
+  `cultura/mak_research/fondart_corpus.py` are promoted only as bounded,
+  source-preserving research candidates. They retain URL, backend, capture,
+  error, hash, and quality evidence. Official Fondart input stays candidate
+  data and never becomes an RD product automatically.
+- `tools/inferential_archaeology.py` is an offline evidence index only. It
+  reads explicitly selected session, memory, activity, and Git sources and
+  writes SQLite, or optional DuckDB, projections under ignored output paths.
+  It does not call a model, alter sources, or enter MAK runtime.
+- Existing NUDO archive ingest and project diagnostics remain candidate-only
+  and are excluded from live mirrors. The conductor registry remains
+  shadow/observe-only; no worker or database cutover was enabled.
+- `tools/mak_ops/sync_mak_safe.py` is rejected as runtime. It fetches, uses
+  `reset --hard`, and copies over live directories; that is incompatible with
+  local-authority and no-overwrite policy. It was not added to this branch.
+
+## Implemented first block
+
+- Services now have source units that execute the checkout under
+  `%h/flujo/cultura/...` while keeping operational state under
+  `%h/{plataforma,research,codex,xio_puente}` through explicit environment
+  roots. The historical duplicate XIO unit under `mak_plataforma` is no longer
+  treated as canonical by the mirror auditor.
+- Hub binds to `127.0.0.1` only. XIO is fail-closed unless `XIO_BASE` is
+  explicitly provided; it is not a MAK runtime dependency.
+- `vigilar_red.py` no longer contains a fixed gateway, LAN prefix, or peer.
+  It derives local IPv4 networks from Linux interface state or the explicit
+  `MAK_NETWORK_CIDRS` override.
+- `tools/mak_ops/check_mak_mirror.py` audits local checkout/live hashes by
+  default. SSH is an explicit `--ssh-host` exception, not a default runtime
+  path.
+- NUDO's DuckDB requirement was already present in the development extra;
+  generated `*.duckdb` files are now ignored. The real research venv reports
+  DuckDB `1.5.5` and vpype `1.15.0`.
+- `tools/gen_mapa_comandos.py`, `MAPA.md`, and `context/comandos.json` now say
+  that autonomy runs locally on MAK; no fixed remote MAK address is used.
+
+## Verification evidence
+
+Commands executed in this branch:
+
+```text
+/home/mak/research/.venv/bin/python -m pip check
+No broken requirements found.
+
+PATH=/home/mak/research/.venv/bin:$PATH PYTHONPATH=src \
+  /home/mak/research/.venv/bin/python -m pytest -q --tb=short -rs
+100 percent passed, 0 failures, 0 skips; existing deprecation warnings only.
+
+/home/mak/research/.venv/bin/python -m compileall -q \
+  tools/inferential_archaeology.py cultura/mak_research/source_pipeline.py \
+  cultura/mak_research/fondart_corpus.py cultura/mak_plataforma/hub.py \
+  cultura/mak_xio_puente/monitor.py
+exit 0
+
+systemd-analyze verify \
+  cultura/mak_plataforma/mak-hub.service \
+  cultura/mak_research/interfaz.service \
+  cultura/mak_codex/mak-codex.service \
+  cultura/mak_xio_puente/mak-xio.service
+exit 0
+
+PYTHONPATH=cultura/mak_research /home/mak/research/.venv/bin/python -c \
+  'import source_pipeline, fondart_corpus; print(source_pipeline.available_backends({}))'
+{'firecrawl': False, 'crawl4ai': False, 'urllib': True}
+
+sha256sum checkout/live:
+hub checkout=45ceb2a7b4b4 live=9a8b861d6065
+xio checkout=1820e3e05fff live=633695ea0153
+vigilar_red checkout=b494416ce19f live=8487f0953f0c
+```
+
+## Discrepancy still open
+
+The active user services were measured as `active/running`, but their current
+`ExecStart` values still point to `/home/mak/plataforma`,
+`/home/mak/research`, `/home/mak/codex`, and `/home/mak/xio_puente`. Their
+live hashes differ from the branch hashes above. This is an intentional
+unpublished boundary: the branch has the replacement units, but no unit was
+installed or restarted. The next action is a manual, hash-recorded MAK
+publication of the approved unit files and entrypoints, followed by endpoint,
+process, and service hash verification. Do not use `sync_mak_safe.py`, reset,
+clean, pull, or automatic synchronization.
+
+Other Windows/IP strings remain in historical docs, staged tools, and legacy
+transport helpers. They are not promoted by this block and must be classified
+before any later cleanup. `red_watch.py` still probes public connectivity;
+decide separately whether that operational signal belongs in the Linux-only
+runtime or should become opt-in.
+
+### Next action
+
+Review the branch diff and publish only this first block to MAK using the
+existing manual publisher contract. Before any restart, record each source
+path, destination, pre/post SHA-256, unit hash, process command line, and
+endpoint response. After restart, rerun the full suite, `pip check`, compile
+checks, and the read-only mirror audit. Do not claim the restructure complete
+until live services execute these hashes and the remaining legacy references
+are classified.
+
+---
+
 # LAST_HANDOFF - Faro
 
 ## CURRENT MAK CLEAN TRANSPORT - 2026-08-14 03:44 UTC

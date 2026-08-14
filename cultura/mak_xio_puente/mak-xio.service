@@ -1,10 +1,12 @@
 # Canonical MAK Linux user unit.
-# Runtime source: /home/mak/xio_puente/monitor.py.
+# Runtime source: %h/flujo/cultura/mak_xio_puente/monitor.py.
 [Unit]
 Description=MAK xio bridge (GET-only monitor)
 [Service]
-WorkingDirectory=%h/xio_puente
-ExecStart=/usr/bin/python3 %h/xio_puente/monitor.py
+WorkingDirectory=%h/flujo/cultura/mak_xio_puente
+Environment=MAK_RESEARCH_CODE_ROOT=%h/flujo/cultura/mak_research
+Environment=MAK_XIO_STATE_ROOT=%h/xio_puente
+ExecStart=/usr/bin/python3 %h/flujo/cultura/mak_xio_puente/monitor.py
 Restart=always
 RestartSec=10
 TimeoutStopSec=15

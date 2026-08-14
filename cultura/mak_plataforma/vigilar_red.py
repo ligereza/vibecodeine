@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-"""vigilar_red.py -- vigilancia de egreso de MAK (mitigacion del dossier).
+"""Read-only egress guard for the active MAK Linux runtime.
 
-Muestrea las conexiones establecidas y alerta por ntfy si MAK se comporta
-como un escaner: muchas IPs distintas de la LAN/hotspot contactadas en poco
-tiempo (firma del vector (e) del dossier). Solo lectura, sin sudo. Cron */5.
+The guard samples established TCP connections and alerts when MAK contacts
+many peers on a locally detected network in a short interval. Network ranges
+come from the local Linux interface table or an explicit environment override;
+there is no fixed gateway, peer, or remote runtime address here.
 """
+import ipaddress
 import json
 import os
-import re
 import subprocess
 import sys
 import time
@@ -16,13 +17,44 @@ sys.path.insert(0, "/home/mak/research")
 from research_lib import load_env, ntfy_publish  # noqa: E402
 
 ESTADO = "/home/mak/plataforma/logs/vigilar_red.json"
-GATEWAY = "192.168.95.203"
-# destinos "normales": el gateway (routing) y el PC Windows. Un barrido a
-# MUCHAS IPs distintas de estos rangos es la senal de alarma.
-RANGOS_LAN = ("192.168.50.", "192.168.95.")
 UMBRAL_HOSTS = 8          # >8 hosts LAN distintos = posible escaneo
 ANTISPAM_S = 1800
-IP_RE = re.compile(r"(\d+\.\d+\.\d+\.\d+):(\d+)")
+
+
+def _local_networks():
+    """Return local IPv4 networks and addresses without a fixed IP policy."""
+    override = os.environ.get("MAK_NETWORK_CIDRS", "").strip()
+    if override:
+        networks = []
+        for value in override.split(","):
+            try:
+                networks.append(ipaddress.ip_network(value.strip(), strict=False))
+            except ValueError:
+                continue
+        return networks, set()
+
+    try:
+        out = subprocess.run(
+            ["ip", "-o", "-4", "addr", "show", "scope", "global"],
+            capture_output=True, text=True, timeout=8,
+        ).stdout
+    except (OSError, subprocess.TimeoutExpired):
+        return [], set()
+
+    networks = []
+    addresses = set()
+    for line in out.splitlines():
+        for column in line.split():
+            if "/" not in column:
+                continue
+            try:
+                interface = ipaddress.ip_interface(column)
+            except ValueError:
+                continue
+            networks.append(interface.network)
+            addresses.add(str(interface.ip))
+            break
+    return networks, addresses
 
 
 def _conexiones():
@@ -33,24 +65,28 @@ def _conexiones():
     except (OSError, subprocess.TimeoutExpired):
         return []
     dests = []
-    for line in out.splitlines()[1:]:
+    for line in out.splitlines():
         cols = line.split()
         if len(cols) >= 4:
-            m = IP_RE.search(cols[-1])  # peer address:port
-            if m:
-                dests.append(m.group(1))
+            peer = cols[-1].rsplit(":", 1)[0].strip("[]")
+            try:
+                ipaddress.ip_address(peer)
+            except ValueError:
+                continue
+            dests.append(peer)
     return dests
 
 
 def revisar():
     dests = _conexiones()
-    lan_hosts = sorted({ip for ip in dests
-                        if any(ip.startswith(r) for r in RANGOS_LAN)
-                        and ip != GATEWAY})
+    networks, local_addresses = _local_networks()
+    lan_hosts = sorted({ip for ip in dests if ip not in local_addresses and any(
+        ipaddress.ip_address(ip) in network for network in networks)})
     snapshot = {"ts": time.strftime("%Y-%m-%d %H:%M:%S"),
                 "conexiones": len(dests),
                 "hosts_lan_distintos": len(lan_hosts),
-                "muestra": lan_hosts[:15]}
+                "muestra": lan_hosts[:15],
+                "redes_locales": [str(network) for network in networks]}
     os.makedirs(os.path.dirname(ESTADO), exist_ok=True)
     tmp = ESTADO + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
@@ -58,8 +94,8 @@ def revisar():
     os.replace(tmp, ESTADO)
 
     if len(lan_hosts) > UMBRAL_HOSTS:
-        _alerta("MAK contacto %d hosts distintos de la LAN/hotspot en un "
-                "instante (posible escaneo). Muestra: %s"
+        _alerta("MAK contacted %d distinct local-network peers in one "
+                "sample (possible scan). Sample: %s"
                 % (len(lan_hosts), ", ".join(lan_hosts[:8])))
     return snapshot
 
@@ -73,7 +109,7 @@ def _alerta(mensaje):
         pass
     load_env()
     ntfy_publish(os.environ.get("NTFY_TOPIC_OUT", ""), mensaje,
-                 title="MAK vigilancia de red", priority="high")
+                 title="MAK network guard", priority="high")
     try:
         open(marca, "w").close()
     except OSError:

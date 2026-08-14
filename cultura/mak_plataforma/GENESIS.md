@@ -60,10 +60,10 @@ del repo**. Aquí no hay commits: hay órganos que corren y piezas que nacen.
 python3 ~/plataforma/salud.py
 
 # research (ya vivo, a traves del Hub)
-http://192.168.50.2:8900/research/  # canvas + micelio
+http://127.0.0.1:8900/research/  # canvas + micelio
 
 # codex (a traves del Hub)
-http://192.168.50.2:8900/codex/     # superficie humana unica
+http://127.0.0.1:8900/codex/     # superficie humana unica
 python3 ~/codex/generar.py "un parser de csv a json" --densidad corto
 
 # lenguaje
@@ -71,7 +71,7 @@ python3 ~/lenguaje/medir.py ~/research/informes/ULTIMA.md
 python3 ~/lenguaje/corregir.py pieza.md
 
 # hub
-http://192.168.50.2:8900
+http://127.0.0.1:8900
 
 # curatoria
 # Solo corre como batch/cron; no existe una URL humana separada.

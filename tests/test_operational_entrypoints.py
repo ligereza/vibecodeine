@@ -1,4 +1,4 @@
-"""Static ratchets for the Windows launchers and MAK mirror tooling."""
+"""Static ratchets for MAK Linux entrypoints and mirror tooling."""
 from __future__ import annotations
 
 import importlib.util
@@ -67,7 +67,7 @@ def test_mak_mirror_check_covers_curatoria_and_fails_on_mismatch(tmp_path, monke
             "/home/mak/.config/systemd/user/mak-hub.service",
         "cultura/mak_codex/mak-codex.service":
             "/home/mak/.config/systemd/user/mak-codex.service",
-        "cultura/mak_plataforma/mak-xio.service":
+        "cultura/mak_xio_puente/mak-xio.service":
             "/home/mak/.config/systemd/user/mak-xio.service",
         "cultura/mak_research/interfaz.service":
             "/home/mak/.config/systemd/user/mak-research.service",
@@ -106,10 +106,42 @@ def test_single_human_hub_contract_has_no_direct_service_docs():
     joined = "\n".join(active_docs)
     assert "192.168.50.2:8890" not in joined
     assert "192.168.50.2:8891" not in joined
-    assert "http://192.168.50.2:8900/research/" in joined
-    assert "http://192.168.50.2:8900/codex/" in joined
+    assert "http://127.0.0.1:8900/research/" in joined
+    assert "http://127.0.0.1:8900/codex/" in joined
 
     mirror = _load_mirror_module()
     assert "panel.py" not in mirror.FILES["mak_curatoria"]
     assert "queue_store.py" in mirror.CONDUCTOR_FILES
     assert "queue_worker.py" in mirror.CONDUCTOR_FILES
+
+
+def test_hub_binds_only_to_mak_loopback():
+    source = _text("cultura/mak_plataforma/hub.py")
+    assert 'bind_host = "127.0.0.1"' in source
+    assert 'Servidor((bind_host, PORT), H)' in source
+    assert 'Servidor(("0.0.0.0", PORT), H)' not in source
+
+
+def test_xio_bridge_is_disabled_without_explicit_external_endpoint():
+    source = _text("cultura/mak_xio_puente/monitor.py")
+    assert 'os.environ.get("XIO_BASE", "").strip()' in source
+    assert 'if not XIO_BASE:' in source
+
+
+def test_services_execute_checkout_code_and_keep_state_outside_checkout():
+    units = {
+        "cultura/mak_plataforma/mak-hub.service": "cultura/mak_plataforma/hub.py",
+        "cultura/mak_research/interfaz.service": "cultura/mak_research/interfaz.py",
+        "cultura/mak_codex/mak-codex.service": "cultura/mak_codex/interfaz_codex.py",
+        "cultura/mak_xio_puente/mak-xio.service": "cultura/mak_xio_puente/monitor.py",
+    }
+    for unit, entrypoint in units.items():
+        source = _text(unit)
+        assert "%h/flujo/" + entrypoint in source
+        assert "ExecStart=%h/" + entrypoint.split("/", 2)[1] not in source
+
+    codex = _text("cultura/mak_codex/mak-codex.service")
+    assert "MAK_CODEX_STATE_ROOT=%h/codex" in codex
+    assert "MAK_CODEX_CODE_ROOT=%h/flujo/cultura/mak_codex" in codex
+    xio = _text("cultura/mak_xio_puente/mak-xio.service")
+    assert "MAK_XIO_STATE_ROOT=%h/xio_puente" in xio

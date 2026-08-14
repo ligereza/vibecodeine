@@ -34,7 +34,7 @@ hoy lo lleno yo.
 
 ## Punteros minimos (el asiento no esta vacio)
 
-- Cuerpo y vista viva: el **hub** en `http://192.168.50.2:8900`
+- Cuerpo y vista viva: el **hub** en `http://127.0.0.1:8900`
 - Doctrina viva: `/doctrina` · Genesis: `/genesis` · Cuotas: `/cuotas`
 - Superficie humana unica: **plataforma/Hub** :8900 (`/research/` y `/codex/`)
 - Servicios internos: **research** loopback :8890 · **codex** loopback :8891

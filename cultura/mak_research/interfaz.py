@@ -442,7 +442,9 @@ def _guardia_contenido(tema):
     del veredicto o None si el filtro no esta (fail-open: no bloquear research
     legitimo por falta del modulo)."""
     try:
-        sys.path.insert(0, "/home/mak/plataforma")
+        platform_root = os.environ.get(
+            "MAK_PLATFORM_CODE_ROOT", "/home/mak/plataforma")
+        sys.path.insert(0, platform_root)
         import filtro_entrada
         return filtro_entrada.clasificar(tema)
     except Exception:  # noqa: BLE001 - sin guardia = sigue (fail-open)
