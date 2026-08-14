@@ -1,12 +1,35 @@
 # LAST_HANDOFF - Faro
 
+## CURRENT GIT WEB TRANSPORT - 2026-08-13 23:06 LOCAL
+
+The verified MAK scope is now committed and published as a draft pull request.
+The Linux physical state remains the authority; Git transports only this
+verified scope. No canonical branch was merged, reset, cleaned, deleted, or
+otherwise rewritten.
+
+- Proposal branch: `codex/mak-web-restructure-20260813`.
+- Commit: `dc082c5962c4be5d1cfc2f2fdb06b70771f0ca23`, subject
+  `feat(mak): reconcile runtime and Git web`.
+- Remote ref verification: `git ls-remote origin
+  refs/heads/codex/mak-web-restructure-20260813` returned the exact commit
+  above.
+- Draft PR: #531,
+  `https://github.com/ligereza/vibecodeine/pull/531`, base `main`, head
+  `codex/mak-web-restructure-20260813`, head SHA exact.
+- GitHub connector creation returned 403; the authenticated `gh` fallback
+  created the draft PR successfully. No browser was used.
+- `gh pr checks 531 --repo ligereza/vibecodeine` reported no checks for the
+  branch at publication time.
+- Next action: human review of PR #531; do not merge into `main`, `mak`, `rd`,
+  or `iskvw` without explicit review of the verified scope.
+
 ## CURRENT PHYSICAL MAK HANDOFF - 2026-08-13 FINAL AUDIT (REVALIDATED 22:34)
 
 Authority is the measured Linux body under `/home/mak`. The checkout is
 `/home/mak/flujo`, physical audit branch `main`, HEAD
-`559fa6075e1cfb7a51be380c6d354d2af90dffb2`. Git was read only during the
-physical audit; the later proposal branch is local-only and has not been
-committed or published. `/home/mak/WIN`
+`559fa6075e1cfb7a51be380c6d354d2af90dffb2` at audit time. Git was read only
+during that physical audit; the later verified proposal is recorded in the
+current Git web transport section above. `/home/mak/WIN`
 was used as provenance/evidence only; no WIN file was executed and no Windows
 provider, endpoint, command, or library is part of active MAK runtime.
 
