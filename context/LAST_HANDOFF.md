@@ -44,6 +44,19 @@ current main history intact.
   empty-git handling, ESM package metadata, episode/work fixtures, and
   historical handoff privacy scanning. No historical evidence was deleted.
 
+### CI dependency bug hunt - 2026-08-14
+
+PR #532 security job `dependencias` first failed because `web/package-lock.json`
+resolved `nanoid 3.3.17`, which GitHub audit reported as high severity and
+fixed in `3.3.18`. The exact repair is commit
+`b76e8f1f71ee95d70fddcad936bd68cd5f51e2a0`, subject
+`fix(web): update nanoid security override`. The lockfile diff is limited to
+the nanoid version/integrity and matching package override; unrelated npm
+metadata churn was removed. Local `npm audit --package-lock-only
+--audit-level=high` reports 0 vulnerabilities and `npm run typecheck` exits 0.
+Pushing this repair restarted the PR checks at the new head; reverify them
+before any human merge decision.
+
 ### Next action
 
 The clean scope is committed and published in PR #532. Reverify the clean
