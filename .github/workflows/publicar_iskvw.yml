@@ -1,4 +1,4 @@
-# Publica iskvw en GitHub Pages (iskvw.cl).
+# Publishes iskvw to GitHub Pages (iskvw.cl) only after explicit dispatch.
 #
 # Por que existe. El dominio estaba configurado con certificado HTTPS valido y
 # devolvia 404 en TODO, medido el 2026-07-27: Pages esta en modo `workflow` y no
@@ -18,22 +18,15 @@
 name: publicar iskvw
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'iskvw/**'
-      - 'tools/gen_archivo_iskvw.py'
-      - 'cultura/mak_plataforma/contrato_archivo.py'
-      - '.github/workflows/publicar_iskvw.yml'
-  workflow_dispatch:
+  workflow_dispatch: {}
 
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Un despliegue a la vez. `cancel-in-progress: false` a proposito: cancelar un
-# deploy a medias puede dejar el sitio en un estado que nadie eligio.
+# One deployment at a time. Publication is explicit and never follows a push.
+# `cancel-in-progress: false` avoids leaving a half-deployed site.
 concurrency:
   group: pages
   cancel-in-progress: false

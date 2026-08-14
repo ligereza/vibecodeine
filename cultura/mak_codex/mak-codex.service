@@ -1,20 +1,10 @@
-; Espejo del unit vivo en el box: ~/.config/systemd/user/mak-codex.service
-; (reparado 2026-07-18: el unit original tenia EnvironmentFile=%h/codex/.token
-; SIN el guion de opcional; ese archivo se borro con el auth-delete de PR #71 y
-; el unit fallaba con "Failed to load environment files" en cada start -- el
-; codex vivo solo sobrevivia por watchdog/lanzamientos manuales. Fix: linea
-; eliminada + WorkingDirectory pineado (los launches manuales siempre corrian
-; desde ~/codex, jobs.jsonl y revisiones/ son rutas relativas) + unit ENABLED.)
-;
-; Instalar en el box:
-;   cp mak-codex.service ~/.config/systemd/user/mak-codex.service
-;   systemctl --user daemon-reload
-;   systemctl --user enable --now mak-codex.service
+# Canonical MAK Linux user unit.
+# Runtime source: /home/mak/codex/interfaz_codex.py.
 [Unit]
-Description=MAK Codex internal service for the Hub (CODER_CHAIN win-first)
+Description=MAK Codex internal service for the Hub
 [Service]
 WorkingDirectory=%h/codex
-Environment=CODER_CHAIN=win,nim-pro,nim-flash,ollama
+Environment=CODER_CHAIN=nim-pro,nim-flash,ollama
 Environment=MAK_SERVICE_HOST=127.0.0.1
 ExecStart=/usr/bin/python3 %h/codex/interfaz_codex.py
 Restart=always

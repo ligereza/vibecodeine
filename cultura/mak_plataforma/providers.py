@@ -161,16 +161,19 @@ def load_env(path=None):
     """Load KEY=value pairs and normalize provider aliases without exposing them."""
     explicit_path = (os.path.abspath(os.path.expanduser(path))
                      if path else "")
-    candidates = []
     if path:
-        candidates.append(path)
-    candidates.extend([
-        os.environ.get("RESEARCH_ENV", ""),
-        os.path.join(os.getcwd(), ".env"),
-        os.path.expanduser("~/n8n-local/research.env"),
-        os.path.expanduser("~/research/research.env"),
-        os.path.expanduser("~/research.env"),
-    ])
+        # An explicit environment file is an isolated configuration boundary.
+        # Do not merge host credentials from fallback locations into a test,
+        # batch, or service that named its source deliberately.
+        candidates = [path]
+    else:
+        candidates = [
+            os.environ.get("RESEARCH_ENV", ""),
+            os.path.join(os.getcwd(), ".env"),
+            os.path.expanduser("~/n8n-local/research.env"),
+            os.path.expanduser("~/research/research.env"),
+            os.path.expanduser("~/research.env"),
+        ]
     for candidate in candidates:
         if not candidate:
             continue

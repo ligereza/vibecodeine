@@ -7,7 +7,7 @@ research and codex services through same-origin /research/ and /codex/ paths.
 The services keep their existing routes and contracts; their ports remain
 internal runtime boundaries.
 
-Rutas: / (cara) · /api/organismo · /api/micelio · /api/archivo · /api/ejecutar (POST) ·
+Rutas: / (cara) · /health · /api/organismo · /api/micelio · /api/archivo · /api/ejecutar (POST) ·
 /api/ideas (GET+POST) · /pieza · /api/salud · /api/actividad · /cuotas ·
 /doctrina · /reflexiones · /relevo · /genesis
 """
@@ -4095,6 +4095,13 @@ class H(BaseHTTPRequestHandler):
                 return
             if p.startswith("/" + prefix + "/"):
                 return self._proxy_service(prefix, "GET")
+        if p == "/health":
+            return self._json({
+                "ok": True,
+                "schema": "mak-hub-health-v1",
+                "service": "mak-hub",
+                "runtime": "mak",
+            })
         if p == "/api/director/capabilities":
             return self._json(_director_capabilities())
         if p == "/api/portfolio/identity-graph":

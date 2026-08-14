@@ -131,7 +131,18 @@ def test_ningun_doc_vivo_afirma_el_total_de_la_suite():
 def test_el_rango_de_invariantes_citado_coincide_con_el_contrato():
     contrato = RAIZ / "context" / "DIRECTOR_CONTRACT.md"
     if not contrato.exists():
-        pytest.skip("no hay DIRECTOR_CONTRACT.md")
+        ofensas = []
+        for p in _docs_vivos():
+            for n, linea in _lineas(p):
+                if RANGO_INVARIANTES.search(linea):
+                    ofensas.append(
+                        f"{_rel(p)}:{n}: cita invariantes de un contrato archivado"
+                    )
+        assert not ofensas, (
+            "El contrato del director fue archivado; ninguna doc viva puede "
+            "seguir citando su rango de invariantes.\n" + "\n".join(ofensas)
+        )
+        return
     ids = [int(x) for x in INVARIANTE_CONTRATO.findall(contrato.read_text(encoding="utf-8"))]
     assert ids, "DIRECTOR_CONTRACT.md no lista invariantes con el formato '- IN '"
     maximo = max(ids)

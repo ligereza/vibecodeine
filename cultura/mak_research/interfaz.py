@@ -431,7 +431,7 @@ def _orden_canvas():
     realmente cambie el orden de ejecucion, no solo el dibujo."""
     with WORKFLOW_LOCK:
         wf = _load_workflow()
-    provs = [k for k in ("groq", "cerebras", "azure", "win", "ollama")
+    provs = [k for k in ("groq", "cerebras", "azure", "ollama")
             if wf.get("nodes", {}).get(k, {}).get("active", True)]
     provs.sort(key=lambda k: wf["nodes"].get(k, {}).get("priority", 99))
     return ",".join(provs) if provs else None
@@ -457,6 +457,11 @@ def _aplicar_resultado_job(job, r):
         job["estado"] = "PAUSADO"
         job["checkpoint"] = r.get("checkpoint", "")
         job["error"] = (r.get("tail") or "").strip()[:2000]
+        return
+    if r.get("review"):
+        job["estado"] = "REVISAR"
+        job["path"] = os.path.basename(r["path"]) if r.get("path") else ""
+        job["error"] = (r.get("tail") or "quality gate requires review")[:2000]
         return
     contract_error = _verify_result_contract(job, r)
     job["estado"] = "listo" if r.get("ok") and not contract_error else "FALLO"

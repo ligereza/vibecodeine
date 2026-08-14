@@ -1144,9 +1144,6 @@ def run_external_batch(area, batch_id, provider, paths=None, model=None,
         payload = {
             "area": area, "batch_id": batch_id, "provider": provider,
             "paths": list(paths or []), "model": model or "",
-            "out_dir": out_dir or "", "common_path": common_path or "",
-            "batch_path": batch_path or "", "instruction": instruction,
-            "image_paths": list(image_paths or []),
             "max_tokens": int(max_tokens), "max_items": int(max_items),
             "use_ollama": bool(use_ollama),
         }

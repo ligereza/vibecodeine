@@ -30,6 +30,7 @@ class ResearchRoute:
         return {
             "informe": "evidencia",
             "oportunidad": "evidencia",
+            "source_corpus": "evidencia",
             "curatoria": "interpretacion",
             "revision": "critica",
             "exposicion": "interpretacion",
@@ -47,6 +48,7 @@ OUTPUT_CONTRACTS = {
     "ledger": ("verdict", "evidence", "next_action"),
     "oportunidad": ("opportunity", "eligibility", "deadline", "source",
                      "next_action"),
+    "source_corpus": ("source_manifest", "records", "coverage", "next_action"),
 }
 
 
@@ -107,6 +109,15 @@ DEPARTMENT_PROFILES = {
         "required_evidence": "mixed_sources",
         "promotion_actions": ("draft_report",),
     },
+    "research_corpus": {
+        "destination": "research",
+        "evidence": "source_manifest",
+        "judge": "corpus_gate",
+        "formats": ("source_corpus",),
+        "allowed_formats": ("source_corpus",),
+        "required_evidence": "source_manifest",
+        "promotion_actions": ("triangulate", "draft_report", "review"),
+    },
     "opportunities": {
         "destination": "mak",
         "evidence": "official_source",
@@ -125,6 +136,7 @@ AREA_PROFILES = {
     "portfolio_record": "portfolio_records",
     "mak_quality": "mak",
     "opportunity_radar": "opportunities",
+    "research_corpus": "research_corpus",
 }
 
 
@@ -240,6 +252,12 @@ OPPORTUNITY_TERMS = (
     "buscar trabajo", "oferta de trabajo", "nicho", "colaboracion",
 )
 
+CORPUS_TERMS = (
+    "corpus historico", "resultados historicos", "proyectos adjudicados",
+    "postulaciones coincidentes", "base de datos de postulaciones",
+    "proyecto investigativo", "historical corpus", "selected projects",
+)
+
 
 def route_research_task(verbo: str, tema: str, factual_detector=None) -> ResearchRoute:
     """Return the stable research product route for a work item.
@@ -256,6 +274,9 @@ def route_research_task(verbo: str, tema: str, factual_detector=None) -> Researc
         except Exception:  # noqa: BLE001 - routing must degrade to local rules
             is_factual = False
 
+    if _has_any(folded, CORPUS_TERMS):
+        return ResearchRoute("research_corpus", "historical_corpus", "source_corpus", "largo",
+                             "historical records need discovered sources, captures, and rows")
     if _has_any(folded, OPPORTUNITY_TERMS):
         return ResearchRoute("opportunities", "opportunity", "oportunidad", "corto",
                              "opportunities need eligibility, deadline and official source")
