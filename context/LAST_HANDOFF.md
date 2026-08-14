@@ -101,6 +101,16 @@ publication of the approved unit files and entrypoints, followed by endpoint,
 process, and service hash verification. Do not use `sync_mak_safe.py`, reset,
 clean, pull, or automatic synchronization.
 
+### Live endpoint measurement - 2026-08-14
+
+Read-only `curl -m 8` returned HTTP 200 for `/api/salud`, `/research/`, and
+`/codex/` through `127.0.0.1:8900`, and for direct ports `8890` and `8891`.
+`ss -ltnp` measured `127.0.0.1:8890`, `127.0.0.1:8891`, but
+`0.0.0.0:8900`; one process matched each of the four live entrypoints. The
+responses prove availability only. They do not prove the branch code is live:
+the Hub is still publicly bound on all local interfaces until the replacement
+unit is manually published and restarted.
+
 Other Windows/IP strings remain in historical docs, staged tools, and legacy
 transport helpers. They are not promoted by this block and must be classified
 before any later cleanup. `red_watch.py` still probes public connectivity;
