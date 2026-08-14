@@ -1,5 +1,34 @@
 # LAST_HANDOFF - Faro
 
+## POST-MERGE VERIFICATION - 2026-08-14
+
+The clean MAK transport was merged into `main` after explicit continuation
+authorization. PR #532 was squashed at head
+`1b86a58ea2d4a38b91e233213f3af607c41d797f`; the resulting `origin/main`
+commit is `900f53541317db0f9da860fdc09f01654d92cde6`, measured at
+2026-08-14T15:35:09Z. The transport branch remains present at its verified
+head; no branch was deleted.
+
+- Post-merge CI run `31815223349` passed the Ubuntu test workflow.
+- Post-merge security run `31815223338` passed `dependencias`,
+  `secretos`, and `datos_reales`.
+- PR #531 remains an open stale draft with dirty merge state and is not part
+  of `main`; it remains preserved as evidence and was not merged or deleted.
+- No reset, clean, pull, automatic sync, or runtime overwrite was performed.
+  The Git merge does not auto-deploy or change the physical MAK runtime.
+- This completes the verified Git transport. Remaining gates are outside this
+  merge: expose an animation-capable renderer on MAK before visual SVG
+  acceptance, and keep unresolved RD evidence and human publication decisions
+  candidate-only until reviewed.
+
+### Next action
+
+Treat `main` at `900f53541317db0f9da860fdc09f01654d92cde6` as the integrated
+Git baseline. Keep MAK as the sole publisher, preserve the stale PR evidence,
+and do not activate automatic synchronization. Any runtime deployment must be
+a separately measured MAK operation with service, hash, endpoint, and rollback
+verification.
+
 ## CURRENT MAK CLEAN TRANSPORT - 2026-08-14 03:44 UTC
 
 The physical Linux MAK state remains authoritative. A stale proposal was
