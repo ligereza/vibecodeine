@@ -8,6 +8,7 @@ Proposal branch: codex/mak-web-restructure-20260814
 Local transport commit: 9e92d4d0a1f1f711802e90443aeba415006b71a2
 Publication metadata commit: daaa292070bdfddb448611a02ef12d3bbe7c1a43
 Clean draft PR: https://github.com/ligereza/vibecodeine/pull/532
+Latest security repair: b76e8f1f71ee95d70fddcad936bd68cd5f51e2a0
 
 ## Resume contract
 
@@ -57,11 +58,15 @@ Runtime hash audit against /home/mak:
 - The bug hunt fixed stale provider-chain expectations, isolated env loading,
   empty-git handling, ESM package metadata, episode/work idle fixtures, and
   historical handoff privacy scanning. No historical evidence was deleted.
+- GitHub dependency audit found high-severity nanoid 3.3.17. The lock and
+  override now use 3.3.18. Local npm audit reports 0 vulnerabilities and
+  tsc --noEmit passes. The repair is pushed and CI restarted.
 
 ## Next action
 
 1. Reverify the clean tree, remote base, and physical runtime hashes.
-2. Check PR #532 CI and security jobs; they were pending at publication.
+2. Check PR #532 CI and security jobs after the nanoid repair; they were
+   restarted and pending at the last handoff.
 3. Keep PR #531 stale and unmerged. Do not merge any canonical branch.
 
 If a fact cannot be resolved locally, record the exact escalation block in
