@@ -8,14 +8,19 @@ verified scope. No canonical branch was merged, reset, cleaned, deleted, or
 otherwise rewritten.
 
 - Proposal branch: `codex/mak-web-restructure-20260813`.
-- Commit: `dc082c5962c4be5d1cfc2f2fdb06b70771f0ca23`, subject
-  `feat(mak): reconcile runtime and Git web`.
+- Runtime reconciliation commit: `dc082c5962c4be5d1cfc2f2fdb06b70771f0ca23`,
+  subject `feat(mak): reconcile runtime and Git web`.
+- Publication handoff commit: `d11261dc7d6ce09f0b8579747625c9330187e427`,
+  subject `docs(hand): record Git web publication`.
+- Final bug-hunt commit: `7926d20daeaf9b04d8f624f2b2e68ebfdac87eba`, subject
+  `fix(tests): close archived contract gap`.
 - Remote ref verification: `git ls-remote origin
-  refs/heads/codex/mak-web-restructure-20260813` returned the exact commit
-  above.
+  refs/heads/codex/mak-web-restructure-20260813` returned final commit
+  `7926d20daeaf9b04d8f624f2b2e68ebfdac87eba`.
 - Draft PR: #531,
   `https://github.com/ligereza/vibecodeine/pull/531`, base `main`, head
-  `codex/mak-web-restructure-20260813`, head SHA exact.
+  `codex/mak-web-restructure-20260813`, head SHA
+  `7926d20daeaf9b04d8f624f2b2e68ebfdac87eba` exact.
 - GitHub connector creation returned 403; the authenticated `gh` fallback
   created the draft PR successfully. No browser was used.
 - `gh pr checks 531 --repo ligereza/vibecodeine` reported no checks for the
@@ -41,8 +46,8 @@ restored and no WIN material was imported.
   warnings were emitted.
 - Focused hygiene command: `... -m pytest -q -rs --tb=short
   tests/test_higiene_docs.py`; result `3 passed`, zero skips.
-- The test change is staged for the next commit and will update PR #531 after
-  the final hash is measured.
+- The test change is committed in `7926d20` and pushed to PR #531 after the
+  final full-suite measurement.
 
 ## CURRENT PHYSICAL MAK HANDOFF - 2026-08-13 FINAL AUDIT (REVALIDATED 22:34)
 
