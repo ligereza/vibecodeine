@@ -2,4 +2,6 @@
 -r requirements.txt
 pytest>=9.1.1
 duckdb>=1.4.0
+Flask>=3.1.0
+vpype>=1.15.0
 pre-commit>=4.6.1
