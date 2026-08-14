@@ -154,7 +154,7 @@ def main():
     scene.frame_end = frame_end
     if args["fps"]:
         scene.render.fps = int(args["fps"])
-    # Politica video (LAST_HANDOFF): 128 samples adaptive, SIN denoise.
+    # Política de video: 128 samples adaptive, SIN denoise.
     scene.cycles.samples = 128
     scene.cycles.use_denoising = False
 

@@ -57,7 +57,7 @@ def test_nada_con_metacaracteres_de_shell():
 
 def test_lo_legitimo_sigue_funcionando():
     for bueno in ("flujo version", "flujo health", "flujo daily",
-                  "flujo handoff last", "py -m flujo version",
+                  "py -m flujo version",
                   "flujo job new", "flujo datadrop scan", "flujo job new --json"):
         assert _seguro(bueno), bueno
 

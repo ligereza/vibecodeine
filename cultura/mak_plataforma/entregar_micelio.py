@@ -22,11 +22,11 @@ fact. `publicar_iskvw.yml` targets `ubuntu-latest` regardless of that
 runner's health, so reviving it would not close this gap by itself.
 
 The fix pulls from the half of the pipe that already works
-(CLAUDE.md's MAK-REPO-SYNC cron mirrors this very file to the box every
+(the MAK-REPO-SYNC cron mirrors this very file to the box every
 10 minutes) and pushes the other way, following the exact git/gh pattern
 `entregar.py` already proves in production (git checkout -B / commit /
 push / gh pr create --draft), including its base branch: 'mak' is MAK's
-inbox, PRs never target main directly (CLAUDE.md branch topology).
+inbox, PRs never target main directly (branch topology).
 
 Hard rule, non-negotiable: an absence never becomes a plausible-looking
 zero. If the micelio does not answer, or answers with zero links, this
@@ -49,7 +49,7 @@ from datetime import datetime, timezone
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import contrato_archivo  # noqa: E402 -- same conversion tools/gen_archivo_iskvw.py uses
 
-# Same inbox topology entregar.py uses (CLAUDE.md): MAK never opens a PR
+# Same inbox topology entregar.py uses: MAK never opens a PR
 # against main directly, only against its own branch 'mak'.
 RAMA_BASE = "mak"
 

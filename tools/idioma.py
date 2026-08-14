@@ -1,6 +1,6 @@
 """Language meter for Python comments and docstrings, offline and deterministic.
 
-Why this exists (2026-07-31): CLAUDE.md rules that code is written in English,
+Why this exists (2026-07-31): the repository language policy says code is written in English,
 but the tree was measured at ~236 Python files with Spanish comments against
 ~36 in English (2026-07-30), and nothing measured it continuously -- the number
 rots the day after it is written. This tool re-measures on demand and feeds the
@@ -87,7 +87,6 @@ ROOT = Path(__file__).resolve().parents[1]
 DEAD_ZONE = (
     ".archive/",
     "_archive/",
-    "docs/handoffs/archive/",
     "projects/cultura/corpus_olvido/",
 )
 FOREIGN_ZONE = (

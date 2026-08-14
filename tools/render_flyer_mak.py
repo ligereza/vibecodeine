@@ -184,7 +184,7 @@ def build_blender_script(
         "    raise SystemExit('NO_CUDA_DEVICE')\n"
         "scene.cycles.device = 'GPU'\n"
         "scene.cycles.samples = 512\n"
-        # anti-OOM GPU 1650 4GB (CLAUDE.md): simplify + texture limit render
+        # anti-OOM GPU 1650 4GB: simplify + texture limit render
         # 2048 + auto tile 512 + sin persistent data.
         "scene.render.use_simplify = True\n"
         "scene.cycles.texture_limit_render = '2048'\n"

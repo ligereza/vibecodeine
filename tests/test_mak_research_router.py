@@ -153,7 +153,7 @@ def test_research_profile_accepts_essay_without_public_promotion():
     result = {"items": [{
         "format": "ensayo",
         "evidence_kind": "mixed_sources",
-        "evidence": ["context/LAST_HANDOFF.md"],
+        "evidence": ["cultura/mak_plataforma/trabajo.py"],
         "files": ["docs/cultura/FORMATO_ENSAYO.md"],
         "action": "draft_report",
     }]}

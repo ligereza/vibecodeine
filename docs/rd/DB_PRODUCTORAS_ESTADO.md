@@ -108,7 +108,7 @@ oficial + ticketeras chilenas (puntoticket, passline, ticketmaster) + prensa.
 ## Nota de alcance
 
 La regla ASCII-only del repo aplica solo a `context/` operativo
-(CLAUDE.md, context/LAST_HANDOFF.md, context/SESSION_STATE.json). Los
+(la documentación operativa histórica y los estados de sesión). Los
 entregables -- como este documento, los json de productoras y el backlog
 de research -- van en español real, UTF-8 sin BOM.
 

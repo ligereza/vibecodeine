@@ -133,7 +133,7 @@ Mismos selectores, mismas duraciones 14s alternate both. El diferencial
 
 ```bash
 py projects/cultura/doublecup/telar_vaso.py --v1 arte-ascii-readme.svg \
-   --texto CLAUDE.md --salida bloque_nuevo.svg
+   --texto README.md --salida bloque_nuevo.svg
 ```
 
 Hoy emite talla v1 (una capa). Para montarlo en ESTA talla 3D: tomar sus 72

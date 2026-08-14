@@ -121,7 +121,7 @@ def a_ascii(valor) -> str:
     quede no-ascii. Es una conversion CON PERDIDA, asi que solo es legal
     para claves de maquina y para el informe operativo interno
     (INFORME_CANDIDATOS.md) -- nunca para un valor que un humano lee como
-    producto (regla 2026-07-29 en CLAUDE.md, "the machine/human cut").
+    producto (regla de datos 2026-07-29, "the machine/human cut").
     Los nombres canonicos CON tildes viven en candidatos_db.jsonl, que
     escapa unicode sin perdida via json.dumps(ensure_ascii=True)."""
     texto = "" if valor is None else str(valor)

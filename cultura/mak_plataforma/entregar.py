@@ -6,7 +6,7 @@ estado 'listo', valida que COMPILAN, y las lleva al repo flujo como PR draft
 (gated por CI + branch protection). No toca main. Idempotente via un archivo de
 estado (codex_delivered.json): un job_id ya entregado no se re-procesa.
 
-Filosofia (ver context/CAPATAZ.md + DOCTRINA_CLAUDE.md): MAK piensa Y entrega,
+Filosofia: MAK piensa Y entrega,
 sin Claude. El gate es el revisor; el humano mergea el draft. Codigo que no
 compila NO se entrega (nada a medias).
 
@@ -41,7 +41,7 @@ try:
 except ImportError:  # pragma: no cover - Windows director has no fcntl
     fcntl = None
 
-# Topologia de ramas (CLAUDE.md): main = solo lo perfecto; MAK entrega contra
+# Topologia de ramas: main = solo lo perfecto; MAK entrega contra
 # su propio BUZON, nunca directo a main.
 #
 # 2026-07-26: era "mejoras", que se retiro como linea (una linea de infra

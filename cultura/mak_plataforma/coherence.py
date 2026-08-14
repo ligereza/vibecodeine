@@ -23,7 +23,7 @@ forced every 10 minutes, box -> repo never happens.
 
 Exits 0 when everything matches. Writes nothing: it only looks.
 
-Language note: names and comments here are ENGLISH, per CLAUDE.md. The organs
+Language note: names and comments here are ENGLISH, per repository policy. The organs
 around it are Spanish-named for historical reasons (`entregar.py`, `revisor.py`,
 `capataz.py`), and `docs/GLOSSARY.md` maps both sides so that a search in either
 language finds the code instead of concluding it does not exist.
@@ -102,7 +102,7 @@ def inspect(name: str, repo: Path, live: Path) -> dict:
 
 def _is_invoked(rel: str, live: Path, cron: str, units: str) -> bool:
     """Whether cron or a systemd unit invokes it. An orphan that ALSO runs is
-    urgent; one that does not run is a line in the handoff and nothing more.
+    urgent; one that does not run is a line in the report and nothing more.
 
     Both are checked because looking at cron alone missed `xio_puente/monitor.py`
     on 2026-07-30: 172 lines, no copy in the repo, started by `mak-xio.service`.

@@ -1,6 +1,6 @@
 # GLOSSARY — Spanish code, English rule
 
-> **Why this file exists.** `CLAUDE.md` says everything except human-facing
+> **Why this file exists.** The repository language policy says everything except human-facing
 > product is written in English. The tree says otherwise, measured 2026-07-30:
 > **236 Python files carry Spanish comments against 36 in English.** So an agent
 > reads the rule, searches in English, finds nothing, and concludes the thing

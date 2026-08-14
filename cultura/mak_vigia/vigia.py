@@ -128,7 +128,7 @@ def _exclusive_state_lock(state_dir):
 def plegar(texto):
     """ASCII fold, lowercase. Only ever applied to MACHINE KEYS (hashes,
     filter matching). The title a human reads keeps its diacritics: see the
-    machine/human cut in CLAUDE.md."""
+    machine/human cut in the repository data policy."""
     n = unicodedata.normalize("NFKD", texto or "")
     return "".join(c for c in n if not unicodedata.combining(c)).lower()
 

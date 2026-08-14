@@ -8,7 +8,7 @@ build_live_ecosystem(repo_root=None) -> compete_engine.EcosystemState
 Paints the ecosystem from REAL repo state using only cheap signals:
 file names, byte sizes, counts, mtimes and short-timeout git plumbing.
 The only file bodies ever sampled are the first line of
-src/flujo/__init__.py and version/date tokens from context/ headers.
+src/flujo/__init__.py and version/date tokens from versioned metadata.
 Exported (decaying) asset content must stay names/sizes/counts/dates
 only -- keep that invariant when adding builders.
 
@@ -73,7 +73,6 @@ EXCLUDE_PATTERNS = [
 GIT_TIMEOUT = 1.5        # seconds per git plumbing call
 SCAN_CAP = 4000          # max directory entries walked per fat zone
 NAME_SAMPLE_MAX = 6      # max file/dir names quoted inside one asset
-SPORE_MAX = 12           # max handoff-archive spore assets
 FILLER_CAP = 160_000     # cap on synthetic magnitude filler (chars)
 FIRST_LINE_MAX = 120     # max chars kept from a first-line sample
 SESSIONS_ROOT = Path.home() / ".claude" / "projects"
@@ -275,37 +274,6 @@ def _build_fungi_zones(state, root, now):
         state.decaying_assets[asset.asset_id] = asset
 
 
-def _build_handoff_spores(state, root, now):
-    archive = root / "docs" / "handoffs" / "archive"
-    if not archive.is_dir():
-        return
-    entries = []
-    try:
-        for entry in sorted(archive.iterdir()):
-            if not entry.is_file() or _is_excluded(entry.name):
-                continue
-            try:
-                st = entry.stat()
-            except OSError:
-                continue
-            entries.append((entry.name, st.st_size, st.st_mtime))
-            if len(entries) >= SPORE_MAX:
-                break
-    except OSError:
-        return
-    for i, (fname, size, mtime) in enumerate(entries):
-        aid = "FUN-2%02d" % i
-        asset = ce.ArtAsset(
-            aid, "Handoff-%02d" % i,
-            "docs/handoffs/archive/%s (%d bytes, %s)" % (
-                fname, size, _fmt_date(mtime)),
-            ce.MetadataLayer("Archived handoff spore, never purged",
-                             ["fungi", "spore", "handoff"], True),
-            ce.EntityState.DECAYING, mtime,
-        )
-        state.decaying_assets[asset.asset_id] = asset
-
-
 def _build_tapiz_core(state, root, now):
     init = root / "src" / "flujo" / "__init__.py"
     line = _first_line(init)
@@ -489,34 +457,8 @@ def _build_repo_vitals(state, root, now):
         "session_jsonl": ses_count,
         "session_bytes": ses_bytes,
     })
-    handoff = root / "context" / "LAST_HANDOFF.md"
-    if handoff.is_file():
-        date, version = None, None
-        try:
-            with open(handoff, "r", encoding="utf-8", errors="replace") as f:
-                for _ in range(12):
-                    line = f.readline()
-                    if not line:
-                        break
-                    m = re.match(r"^\s*(date|version):\s*(\S+)", line)
-                    if m:
-                        if m.group(1) == "date":
-                            date = m.group(2)
-                        else:
-                            version = m.group(2)
-        except OSError:
-            pass
-        state.event_log.append({
-            "event": "last_handoff",
-            "timestamp": now,
-            "date": date,
-            "version": version,
-        })
-
-
 _BUILDERS = [
     _build_fungi_zones,
-    _build_handoff_spores,
     _build_tapiz_core,
     _build_tapiz_tooling,
     _build_token_pressure,

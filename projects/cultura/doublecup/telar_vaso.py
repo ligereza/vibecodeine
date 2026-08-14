@@ -21,7 +21,7 @@ Este instrumento respeta esa separacion:
 Uso:
     py projects/cultura/doublecup/telar_vaso.py \
         --v1 arte-ascii-readme.svg \
-        --texto CLAUDE.md \
+        --texto README.md \
         --salida projects/cultura/doublecup/doublecup_v2.svg
 
 La obra original arte-ascii-readme.svg NUNCA se modifica: es solo lectura,

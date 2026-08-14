@@ -1517,43 +1517,43 @@ class HubRequestHandler(BaseHTTPRequestHandler):
                     "name": "Creative Director",
                     "short": "Estrategia + dirección creativa",
                     "focus": "visión de marca, lanzamiento, narrativa visual y coordinación de especialistas",
-                    "prompt_template": "Tu rol: Creative Director.\n\nSigue docs/AGENT_OPERATING_MANUAL.md (dos flujos + modelo de delegación multi-agente) y las reglas.\n\nPunto de entrada OBLIGATORIO: ejecuta `flujo app` (o `flujo app --desktop`). Abre el hub pro. Lee context/LAST_HANDOFF.md + este manual primero (bajo token).\n\n[Tarea específica: {task}]\n\nDefine la Estrategia de lanzamiento, prioriza la narrativa visual y el impacto premium, y organiza la ejecución para que los subagentes trabajen con coherencia. Revisar outputs de otros agentes, proponer mejoras, revisar los entregables finales y dejar una decisión clara para la entrega final."
+                    "prompt_template": "Tu rol: Creative Director.\n\nTrabaja sobre el checkout actual y verifica el estado real antes de actuar.\n\n[Tarea específica: {task}]\n\nDefine la Estrategia de lanzamiento, prioriza la narrativa visual y el impacto premium, y organiza la ejecución para que los subagentes trabajen con coherencia. Revisa los outputs, propone mejoras y deja una decisión clara para la entrega final."
                 },
                 {
                     "id": "visual-polish",
                     "name": "Visual Polish Agent",
                     "short": "Pulido visual y consistencia estética",
                     "focus": "pulido visual, previews, HTMLs, SVGs, consistencia estética",
-                    "prompt_template": "Tu rol: Visual Polish Agent.\n\nSigue docs/AGENT_OPERATING_MANUAL.md (dos flujos + modelo de delegación multi-agente) y las reglas.\n\nPunto de entrada OBLIGATORIO: ejecuta `flujo app` (o `flujo app --desktop`). Abre el hub pro. Lee context/LAST_HANDOFF.md + este manual primero (bajo token).\n\n[Tarea específica: {task}]\n\nTrabaja en tu clon separado. Entrega SOLO vía airdrop (incluye handoff actualizado + docs relevantes). Al final, actualiza LAST_HANDOFF con tareas pendientes. Usa siempre el flujo y mantén coherencia visual. Revisa outputs de otros si aplica."
+                    "prompt_template": "Tu rol: Visual Polish Agent.\n\nTrabaja sobre el checkout actual y verifica el estado real antes de actuar.\n\n[Tarea específica: {task}]\n\nTrabaja en un clon separado. Entrega solo cambios verificables con sus pruebas y conserva la coherencia visual. Revisa outputs de otros si aplica."
                 },
                 {
                     "id": "pipeline",
                     "name": "Pipeline & Integration Agent",
                     "short": "CLI, backend, jobs, packaging",
                     "focus": "Typer CLI, web/hub, jobs lifecycle, render/export, airdrop, tests, packaging",
-                    "prompt_template": "Tu rol: Pipeline & Integration Agent.\n\nSigue docs/AGENT_OPERATING_MANUAL.md (dos flujos + modelo de delegación multi-agente) y las reglas.\n\nPunto de entrada OBLIGATORIO: ejecuta `flujo app`. Lee context/LAST_HANDOFF.md + este manual primero.\n\n[Tarea específica: {task}]\n\nUsa py en Windows. Prueba siempre: compileall, pytest -q, comandos manuales. Trabaja en clon. Entrega vía airdrop actualizando handoff, version.py si aplica y docs. Coordina con la línea editorial si tocas UI o identidad visual."
+                    "prompt_template": "Tu rol: Pipeline & Integration Agent.\n\nTrabaja sobre el checkout actual y verifica el estado real antes de actuar.\n\n[Tarea específica: {task}]\n\nVerifica compileall, pytest y comandos manuales pertinentes. Trabaja en un clon y entrega cambios verificables. Coordina con la línea editorial si tocas UI o identidad visual."
                 },
                 {
                     "id": "future",
                     "name": "Future/Modern Agent",
                     "short": "Nuevas integraciones tech",
                     "focus": "WebSockets, PWA, real-time, IMAP/webhooks, schemas, packaging futuro, arquitecturas",
-                    "prompt_template": "Tu rol: Future/Modern Agent.\n\nSigue docs/AGENT_OPERATING_MANUAL.md (dos flujos + modelo de delegación multi-agente) y las reglas.\n\nPunto de entrada OBLIGATORIO: ejecuta `flujo app`. Lee context/LAST_HANDOFF.md + este manual primero.\n\n[Tarea específica: {task}]\n\nCoordina explícitamente: menciona en handoff qué revisó Brand/Pipeline. Entrega airdrop con prototipo + recomendaciones. Prioriza gratis y compatible con Python core. NO toques core sin revisión explícita."
+                    "prompt_template": "Tu rol: Future/Modern Agent.\n\nTrabaja sobre el checkout actual y verifica el estado real antes de actuar.\n\n[Tarea específica: {task}]\n\nCoordina explícitamente qué revisaron Brand y Pipeline. Entrega un prototipo verificable y recomendaciones. Prioriza soluciones gratuitas y compatibles con Python core. NO toques core sin revisión explícita."
                 },
                 {
                     "id": "packaging",
                     "name": "Packaging & Distribution Agent",
                     "short": "Empaquetado desktop gratis (.exe, pywebview, PyInstaller, Inno)",
                     "focus": "flujo package, launcher desktop, paths frozen, assets bundle (context/svg/brand), workspace persistente, onefile/onedir, icon, tray, instalador free",
-                    "prompt_template": "Tu rol: Packaging & Distribution Agent.\n\nSigue docs/AGENT_OPERATING_MANUAL.md (dos flujos + modelo de delegación multi-agente) y las reglas.\n\nPunto de entrada OBLIGATORIO: ejecuta `flujo app` (o `flujo app --desktop`). Lee context/LAST_HANDOFF.md + este manual primero.\n\n[Tarea específica: {task}]\n\nUsa PyInstaller (gratis) + pywebview. Nunca rompas paths o assets bundled. Trabaja en clon. Entrega airdrop con pruebas de build simulado + nota de UX desktop. Coordina con Pipeline (core) + Brand (icon/identidad en exe). Prioriza gratis y Windows-first. Actualiza LAST_HANDOFF."
+                    "prompt_template": "Tu rol: Packaging & Distribution Agent.\n\nTrabaja sobre el checkout actual y verifica el estado real antes de actuar.\n\n[Tarea específica: {task}]\n\nUsa PyInstaller (gratis) + pywebview. Nunca rompas paths o assets bundled. Trabaja en un clon y entrega pruebas de build simulado + nota de UX desktop. Coordina con Pipeline (core) + Brand (icon/identidad en exe). Prioriza gratis y Windows-first."
                 }
             ],
-            "note": "Agentes operan en paralelo en clones separados del workspace. Siempre incluye 'Abre flujo app + lee LAST_HANDOFF'. Actualiza LAST_HANDOFF al entregar."
+            "note": "Los agentes operan en paralelo en clones separados del workspace. Cada tarea debe declarar su fuente, verificación y resultado."
         }
 
     def _handle_delegate(self, data: dict) -> dict:
         """Core of delegation system. Accepts role_id + task, returns precise prompt.
-        Optionally can 'log' by suggesting handoff update or running safe cmd.
+        Optionally can return a safe command suggestion.
         Supports simultaneous by handling batch or single.
 
         No es un endpoint web (el /api/delegate HTTP se retiro 2026-07-25:
@@ -1569,22 +1569,16 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             role = roles_data[0]  # default visual
 
         prompt = role["prompt_template"].format(task=task)
-        full_context = f"Contexto base: Ejecuta `flujo app`. Lee CLAUDE.md + LAST_HANDOFF antes de empezar.\n\n{prompt}"
+        full_context = f"Contexto base: verifica el checkout actual y usa solo las fuentes necesarias para esta tarea.\n\n{prompt}"
 
-        # Log delegation attempt (to server stdout for traceability). Optional: could append to LAST_HANDOFF via handoff but keep read-only safe.
+        # Log delegation attempt to server stdout for traceability.
         print(f"[DELEGATE] {role['name']} <- {task[:80]}")
-
-        # If client asks to log, suggest command
-        log_cmd = None
-        if data.get("log_to_handoff"):
-            log_cmd = f"flujo handoff create -m \"Delegated to {role['name']}: {task[:50]}\""
 
         return {
             "role": role,
             "task": task,
             "prompt": prompt,
             "full_prompt": full_context,
-            "log_cmd_suggested": log_cmd,
             "delegated_at": time.time(),
             "connected": True,
             "simultaneous_note": "Puedes delegar a múltiples roles en paralelo abriendo sesiones separadas."
@@ -1900,7 +1894,7 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => n
         "flujo version", "flujo health", "flujo daily",
         "flujo job list", "flujo job next",
         "flujo job-status", "flujo plano", "flujo render formats",
-        "flujo privacy", "flujo handoff last", "flujo delegate",
+        "flujo privacy", "flujo delegate",
         "flujo job prepare", "flujo job new", "flujo render run",
         "flujo cotizaciones",
         "flujo datadrop",

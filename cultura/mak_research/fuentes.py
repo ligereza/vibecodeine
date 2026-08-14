@@ -138,7 +138,7 @@ DOMINIOS: dict[str, dict] = {
     # El dominio de lo que el organismo investiga de VERDAD. Medido el
     # 2026-08-01 sobre los ultimos 55 informes: 54 salieron con
     # `dominio: None`, o sea la compuerta de fuentes primarias NUNCA corrio, y
-    # el handoff lo leia como "produce cero fuentes primarias" -- como si
+    # el estado anterior lo leia como "produce cero fuentes primarias" -- como si
     # fallara buscandolas. No fallaba: nadie le habia dicho cuales son. Los
     # tres dominios que existian son institucionales chilenos y el 98% de los
     # temas de MAK son eventos y productoras.

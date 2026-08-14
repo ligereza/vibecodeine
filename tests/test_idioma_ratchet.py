@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Ratchet: the language rule finally gets a measurement that does not rot.
 
-Rule (2026-07-31). Concrete cause: CLAUDE.md rules that code and comments are
+Rule (2026-07-31). Concrete cause: the repository language policy said code and comments are
 written in English, but the tree was measured 2026-07-30 at hundreds of Python
 files carrying Spanish comments -- and NOTHING re-measured it, so the number
 was already stale the day after. That gap is operational, not cosmetic: an
@@ -76,7 +76,7 @@ def test_no_new_file_carries_spanish_comments():
     new_offenders = sorted(measured - baseline)
     assert not new_offenders, (
         "New file(s) carrying Spanish comments or docstrings. The rule "
-        "(CLAUDE.md, docs/GLOSSARY.md): NEW code is written in English -- "
+        "(docs/GLOSSARY.md): NEW code is written in English -- "
         "comments and docstrings included -- because a Spanish term inside an "
         "English system becomes unsearchable. Product strings a human reads "
         "stay in correct Spanish with diacritics; this ratchet never counts "

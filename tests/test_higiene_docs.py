@@ -1,14 +1,14 @@
 """Ratchet de higiene documental: cifras de la doc vs cifras medidas.
 
-Regla (2026-07-25). Causa concreta: `context/WALKTHROUGH.md` es la puerta de
-entrada que `CLAUDE.md` manda leer primero, y afirmaba "394 tests", "I1-I8" y
+Regla (2026-07-25). Causa concreta: `context/WALKTHROUGH.md` era una puerta de
+entrada operativa y afirmaba "394 tests", "I1-I8" y
 "v0.52.0 live" cuando lo real era 1156 tests, I1-I10 y 0.56.1. Las tres cifras
 SUBESTIMAN el repo, e inducen a un agente nuevo a reimplementar lo que ya
 existe (viola el invariante I3). El mismo drift estaba en PLAN_SEMANAL_OPUS.md
 (950) y PLAN_SIGUIENTE_AGENTE.md (899): tres valores distintos, ninguno cierto.
 
-`CLAUDE.md` ya pide "ninguna cifra en prosa", pero nadie la hacia cumplir. Esto
-la convierte en gate: la doc no puede afirmar un total de tests, un rango de
+La política documental ya pide "ninguna cifra en prosa", pero nadie la hacia
+cumplir. Esto la convierte en gate: la doc no puede afirmar un total de tests, un rango de
 invariantes ni una version que contradiga lo medido.
 
 Alcance deliberadamente chico: se prohibe afirmar el TOTAL de la suite, no
@@ -32,7 +32,6 @@ RAIZ = Path(__file__).resolve().parent.parent
 ZONA_MUERTA = (
     ".archive/",
     "_archive/",
-    "docs/handoffs/archive/",
     "projects/cultura/corpus_olvido/",
 )
 

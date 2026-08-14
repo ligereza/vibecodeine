@@ -114,7 +114,7 @@ cultura/mak_vigia/.vigia.lock
 tools/cron_nocturno/salidas/
 
 # Higiene de repo (no commitear ruído histórico)
-# Ver docs/HIGIENE_REPO.md y context/README.md
+# Keep generated caches and local state out of the repository.
 # _airdrop_backups/, checkpoints/, _archive/ y reference_old/ son legacy y deben mantenerse mínimos en root.
 
 # Carpetas de descarga de Instagram con ruta de Windows (no commitear)

@@ -47,7 +47,7 @@ METODO
      E, P y el campo de motor.py son superponibles pixel a pixel.
 
 LIMITE HONESTO
-  El vocabulario sale de README/CLAUDE/LAST_HANDOFF, no de los mensajes de
+  El vocabulario sale de README y documentación vigente, no de los mensajes de
   commit. Muchos commits no contienen NINGUN termino del vocabulario: esos
   commits existieron pero no tienen donde depositar masa. La cobertura real
   se imprime en __main__. Es una perdida conocida, no un descuido: el mapa

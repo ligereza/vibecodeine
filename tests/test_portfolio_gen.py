@@ -32,7 +32,7 @@ def test_es_publicable_acepta_normales():
     for ruta in [
         "src/flujo/eventos/flyer_auto.py", "docs/viejo.md",
         "svg/suplementos_rd/pieza.svg", "tools/keyboard_map.txt",
-        "context/LAST_HANDOFF.md",
+        "docs/CLI.md",
     ]:
         assert gp.es_publicable(ruta), ruta
 

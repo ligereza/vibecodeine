@@ -60,6 +60,6 @@ py scripts/run_airdrop_checks.py "fix: integrar hub addons"
 Reglas del repo:
 
 - Windows + `py`.
-- `context/LAST_HANDOFF.md` ASCII-only.
+- Los resultados deben quedar verificables en el checkout actual.
 - No tokens ni datos sensibles.
 - No caches, builds ni binarios pesados en airdrops.

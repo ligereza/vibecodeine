@@ -1,19 +1,17 @@
-# flujo · CLI Reference (v0.52.0)
+# flujo · CLI Reference (v0.56.1)
 
 **Entrada diaria del usuario:** `flujo app` (o `flujo app --desktop`) — lanza servidor + hub pro workspace.
-**Entrada obligatoria para agentes de IA:** `CLAUDE.md` (raiz), no este doc.
-
-La CLI `flujo` (Typer, `src/flujo/cli.py`) es la entrada principal al sistema. La mayoria de los scripts sueltos historicos de `scripts/` fueron archivados en `_archive/legacy_*/` por estar superados por comandos `flujo ...` (ver `docs/HIGIENE_REPO.md`).
+La CLI `flujo` (Typer, `src/flujo/cli.py`) es la entrada principal al sistema. La mayoria de los scripts sueltos historicos de `scripts/` fueron archivados por estar superados por comandos `flujo ...`.
 
 Este documento es la unica referencia de comandos que hace falta leer. `docs/INTEGRACION_CLI.md` es un doc aparte (arquitectura interna de como se registra el namespace `flujo hub ...`), no un duplicado de este.
 
 ## Instalacion
 
 ```bash
-py -m pip install -e ".[dev]"
+python -m pip install -e ".[dev]"
 ```
 
-En Linux/macOS puedes usar `python3` o `python`.
+En Windows también puedes usar `py` en lugar de `python`.
 
 ## Ayuda general
 
@@ -21,7 +19,7 @@ En Linux/macOS puedes usar `python3` o `python`.
 flujo --help
 flujo <grupo> --help
 flujo <comando> --help
-py -m flujo --help
+python -m fluxo --help
 ```
 
 ## Verificacion del repo
@@ -35,10 +33,10 @@ py -m flujo doctor
 py -m flujo version
 ```
 
-## Grupos y comandos (fuente: `src/flujo/cli.py`, verificado v0.52.0 (2026-07-16))
+## Grupos y comandos (fuente: `src/flujo/cli.py`, verificado v0.56.1)
 
 ```txt
-salud/info      health, version, doctor, verify, ai-prompt, github-sync, handoff, delegate
+salud/info      health, version, doctor, verify, ai-prompt, github-sync, delegate
 intake/flyers   intake json, flyer-import, ig-redownload, analyze, export
 index/db        index, flyer-list
 job             job new, prepare, list, status, next, activate, report

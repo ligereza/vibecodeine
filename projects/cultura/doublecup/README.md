@@ -31,10 +31,10 @@ Con esa máscara + cualquier texto se regenera la obra. Eso hace `telar_vaso.py`
 
 - `telar_vaso.py` — instrumento en 2 etapas (compositor / formador). Extrae la
   máscara de forma de v1 y teje cualquier texto nuevo sobre ella. Verificado:
-  72 filas, 621 runs; re-tejió CLAUDE.md (16.195 chars) sin error.
+  72 filas, 621 runs; re-tejió un texto de prueba sin error.
   ```bash
   py projects/cultura/doublecup/telar_vaso.py \
-      --v1 arte-ascii-readme.svg --texto CLAUDE.md \
+      --v1 arte-ascii-readme.svg --texto README.md \
       --salida projects/cultura/doublecup/retejido.svg
   ```
 - `doublecup_v2_3d.svg` — MAQUETA del stack 3D "parallax completo" (elegido por

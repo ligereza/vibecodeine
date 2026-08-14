@@ -145,4 +145,4 @@ py -m pytest tests/test_psicosis_agente.py -q
 Sin generador ejecutable propio: la pieza es el dossier + la partitura de
 dialogo + el test que amarra ambos. No hay sintesis de contenido nuevo mas
 alla de lo citado literalmente del registro de la sesion -- coherente con el
-limite "cero generativo-sintetico" de cultura en `CLAUDE.md`.
+limite "cero generativo-sintetico" declarado para la linea cultura.

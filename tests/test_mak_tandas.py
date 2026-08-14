@@ -325,7 +325,7 @@ def test_conservative_opportunity_repair_only_adds_safe_next_action():
 def test_explicit_batch_cannot_escape_to_an_existing_repo_file(tmp_path):
     report = tmp_path / "historical.md"
     report.write_text("old report", encoding="utf-8")
-    payload = {"items": [{"files": ["context/LAST_HANDOFF.md"]}]}
+    payload = {"items": [{"files": ["context/removed_state.md"]}]}
     ok, errors = tandas.validate_evidence_paths(
         payload, area="mak_quality", extra_paths=[str(report)])
     assert ok is False

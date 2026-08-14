@@ -63,7 +63,7 @@ class Params:
     u_vidrio: float = 0.30      # UMBRAL ABSOLUTO (no cuantil): el area respira
     u_liquido: float = 0.62
     ciclo: float = 24.0         # s del recorrido historico
-    fuentes: tuple = ("README.md", "CLAUDE.md", "context/LAST_HANDOFF.md")
+    fuentes: tuple = ("README.md", "docs/CLI.md")
 
 
 PAL = {

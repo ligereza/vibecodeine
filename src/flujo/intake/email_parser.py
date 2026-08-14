@@ -189,5 +189,5 @@ def parse_pedido_text(text: str) -> dict:
         except Exception:
             pass
     if not formato:
-        data['sugerencia'] = 'NO MATCH - proponer en projects/flujo/ o LAST_HANDOFF'
+        data['sugerencia'] = 'NO MATCH - proponer en projects/flujo/ o documentar el pedido en el job'
     return data
