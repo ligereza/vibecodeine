@@ -10,6 +10,7 @@ Publication metadata commit: daaa292070bdfddb448611a02ef12d3bbe7c1a43
 Clean draft PR: https://github.com/ligereza/vibecodeine/pull/532
 Latest security repair: b76e8f1f71ee95d70fddcad936bd68cd5f51e2a0
 Latest CI portability repair: e4e0432889967cca38f2997cf10ef3c0591cd9a8
+Last remote green head: 3dd8c7509456817680f9dcee70f9738149d48997
 
 ## Resume contract
 
@@ -65,6 +66,9 @@ Runtime hash audit against /home/mak:
 - Ubuntu CI also exposed a hardcoded `/home/mak` test fixture and four missing
   Flask/vpype imports. `Path.home()` and declared dev dependencies fix this;
   the local full suite now has 0 failures and 0 skips.
+- GitHub run 31768072430 passed Ubuntu CI in 2m09s; security run 31768072423
+  passed dependencies, secrets, and real-data checks. A metadata-only push
+  may restart equivalent checks; verify the new head before merge.
 
 ## Next action
 
