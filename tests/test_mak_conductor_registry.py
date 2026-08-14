@@ -24,8 +24,125 @@ def test_canonical_registry_contains_every_operational_stage():
         "material_rebuild", "codex_backlog", "corpus_projection", "retention",
         "anexo_svg", "legacy_material_task", "legacy_codex_task",
         "legacy_research_task",
+        "organism_family_plan",
+        "organism_family_execute",
     ):
         assert callable(handlers[stage])
+
+
+def test_organism_ingest_contract_uses_ascii_keyword():
+    import inspect
+
+    from cultura.mak_curatoria import ingesta_archivo
+
+    for name in ("run_perception", "project_candidates"):
+        parameters = inspect.signature(getattr(ingesta_archivo, name)).parameters
+        assert "source_name" in parameters
+
+
+def test_organism_execute_is_plan_only_without_explicit_isolated_mode():
+    from cultura.mak_conductor.handler_registry import _organism_family_execute
+    from cultura.mak_curatoria.diagnostico_proyectos import organism_plan
+
+    plan = organism_plan({
+        "family_id": "family-test", "project_id": "project-test",
+        "family_kind": "asset_family", "strategy": "sample_visuals",
+        "representative_asset_id": "asset-test",
+        "representative_reason": "representative_visual",
+    }, "render.png")
+    result = _organism_family_execute({
+        "payload_json": json.dumps({"plan": plan}),
+    })
+    assert result["validated"] is True
+    assert result["status"] == "PLAN_ONLY"
+    assert result["provider_calls"] == 0
+    assert result["promotion"] == "none"
+
+
+def test_organism_triangular_branch_emits_candidates_without_identity_promotion(
+        tmp_path):
+    from cultura.mak_conductor.handler_registry import _organism_triangular_branch
+
+    records_path = tmp_path / "fichas.jsonl"
+    records_path.write_text(json.dumps({
+        "id": "ficha-1", "ruta_rel": "flyers/evento.png",
+        "categoria": "flyer_evento", "mtime": "2026-08-13",
+        "ocr_texto": "HEADLINER\n12/08/2026\nESPACIO RIESGO",
+        "vision": {"descripcion": "evento"},
+        "datos_evento": {"fecha": "12/08/2026", "venue": "Espacio Riesco",
+                          "productora": "Productora Demo"},
+    }, ensure_ascii=False) + "\n", encoding="utf-8")
+    result = _organism_triangular_branch(records_path, tmp_path / "derived")
+
+    assert result["status"] == "CANDIDATES"
+    assert result["signals"] == 1
+    assert result["event_candidates"]
+    assert result["producer_candidates"]
+    assert result["promotion"] == "none"
+
+
+def test_organism_structure_branch_is_deterministic_and_degrades_explicitly(
+        tmp_path):
+    from cultura.mak_conductor.handler_registry import _organism_structure_branch
+
+    image = tmp_path / "sample.png"
+    image.write_bytes(bytes.fromhex(
+        "89504e470d0a1a0a0000000d4948445200000001000000010806000000"
+        "1f15c4890000000d49444154789c6360f8cf00000004000101"
+        "000018dd8db40000000049454e44ae426082"))
+    observed = _organism_structure_branch(
+        image, "sample.png", ".png", "image", tmp_path / "out")
+    assert observed["status"] == "OBSERVED"
+    assert observed["metadata"]["width"] == 1
+    assert observed["promotion"] == "none"
+
+    blend = tmp_path / "scene.blend"
+    blend.write_bytes(b"BLENDER")
+    deferred = _organism_structure_branch(
+        blend, "scene.blend", ".blend", "other", tmp_path / "out-blend")
+    assert deferred["status"] == "DEFERRED_TOOL"
+    assert deferred["reason"] == "blender_unavailable"
+    assert deferred["promotion"] == "none"
+
+
+def test_organism_structure_branch_exposes_deeper_metadata_without_identity(
+        tmp_path):
+    from cultura.mak_conductor.handler_registry import _organism_structure_branch
+
+    adobe = tmp_path / "autosave.psd"
+    adobe.write_bytes(
+        b"<xmp:CreatorTool>Adobe After Effects 2024</xmp:CreatorTool>"
+        b"<xmp:CreateDate>2025-01-02T03:04:05-03:00</xmp:CreateDate>"
+        b"<xmpMM:DocumentID>xmp.did:test</xmpMM:DocumentID>"
+        b"<stEvt:action>saved</stEvt:action>"
+    )
+    xmp = _organism_structure_branch(
+        adobe, "autosave.psd", ".psd", "structural", tmp_path / "xmp")
+    assert xmp["status"] == "OBSERVED"
+    assert xmp["metadata"]["document_id"] == ["xmp.did:test"]
+    assert xmp["policy"] == "metadata_candidate_not_identity"
+
+    import zipfile
+    archive = tmp_path / "bundle.zip"
+    with zipfile.ZipFile(archive, "w") as handle:
+        handle.writestr("scene/0001.png", b"frame")
+    manifest = _organism_structure_branch(
+        archive, "bundle.zip", ".zip", "other", tmp_path / "archive")
+    assert manifest["status"] == "OBSERVED"
+    assert manifest["metadata"]["entry_count"] == 1
+    assert manifest["metadata"]["policy"].endswith("current_mtime")
+
+    show = tmp_path / "show.xml"
+    show.write_text(
+        '<MidiShortcutPreset><Shortcut uniqueId="1729388476817">'
+        '<Value name="InputPath" path="/composition/layers/1"/>'
+        "</Shortcut></MidiShortcutPreset>", encoding="utf-8")
+    resolume = _organism_structure_branch(
+        show, "show.xml", ".xml", "other", tmp_path / "xml")
+    assert resolume["status"] == "OBSERVED"
+    assert resolume["metadata"]["recognized_resolume_shape"] is True
+    assert resolume["metadata"]["epoch_id_candidates"]
+    assert resolume["metadata"]["policy"].endswith("venue_identity")
 
 
 def test_canonical_worker_can_resume_durable_job_after_new_instance(tmp_path,

@@ -1,12 +1,5 @@
-; Espejo del unit vivo en el box: ~/.config/systemd/user/mak-hub.service
-; (2026-07-18: unit existia pero DISABLED -- el hub solo vivia por watchdog;
-; fix: WorkingDirectory pineado + enable --now. Misma clase de fragilidad
-; de reboot que tenia mak-codex.)
-;
-; Instalar en el box:
-;   cp mak-hub.service ~/.config/systemd/user/mak-hub.service
-;   systemctl --user daemon-reload
-;   systemctl --user enable --now mak-hub.service
+# Canonical MAK Linux user unit.
+# Runtime source: /home/mak/plataforma/hub.py.
 [Unit]
 Description=MAK hub (plataforma :8900)
 [Service]

@@ -11,10 +11,8 @@ import json
 import subprocess
 import sys
 
-# Las MAC de las interfaces de esta caja. Estaban escritas aca y este repo es
-# PUBLICO: una MAC identifica hardware y sirve para reconocimiento dirigido
-# (hallazgo VCD-08 del diagnostico de seguridad, 2026-07-27). Ahora se leen del
-# entorno o del propio sistema, que es donde viven de verdad.
+# La MAC de la interfaz Wi-Fi de esta caja se lee del entorno o del propio
+# sistema; el repositorio no contiene una identidad de hardware.
 #
 # Se resuelven en este orden: MAK_MAC_ETH / MAK_MAC_WIFI del entorno, y si no,
 # lo que diga /sys para esa interfaz. Si no hay ninguna, quedan vacias y el
@@ -31,9 +29,7 @@ def _mac_de(iface: str, var: str) -> str:
         return ""
 
 
-MAC_ETH = _mac_de("enp3s0", "MAK_MAC_ETH")    # enlace al PC Windows
 MAC_WIFI = _mac_de("wlp0s20f3", "MAK_MAC_WIFI")  # red del telefono Xiaomi
-CON_ETH = "lan-kvm"
 
 
 def _run(cmd, timeout=6):
@@ -45,18 +41,13 @@ def _run(cmd, timeout=6):
 
 
 def estado():
-    nm = _run(["nmcli", "-t", "-f", "802-3-ethernet.wake-on-lan",
-               "con", "show", CON_ETH])
     suspend = _run(["systemctl", "is-enabled", "suspend.target"]) or "?"
     wowlan = _run(["iw", "phy0", "wowlan", "show"]) or "(requiere root o no armado)"
     return {
-        "mac_eth": MAC_ETH,
         "mac_wifi": MAC_WIFI,
-        "wol_eth_nm": nm or "(no configurado)",
         "suspend_target": suspend,
         "wowlan": wowlan.replace("\n", " ")[:120],
         "despertar_desde_telefono": "magic packet UDP a %s (puerto 9)" % MAC_WIFI,
-        "despertar_desde_windows": "magic packet a %s (ethernet)" % MAC_ETH,
     }
 
 

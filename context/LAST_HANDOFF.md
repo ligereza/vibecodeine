@@ -1,5 +1,47 @@
 # LAST_HANDOFF - Faro
 
+## CURRENT MAK CLEAN TRANSPORT - 2026-08-14 03:44 UTC
+
+The physical Linux MAK state remains authoritative. A stale proposal was
+rejected as a transport base because GitHub measured it as diverged from the
+current main. The clean proposal is isolated in a separate worktree and keeps
+current main history intact.
+
+- Base: `origin/main` at
+  `486179789f67f2f6e5767d1b7bc7dd6575cd6aee`.
+- Branch: `codex/mak-web-restructure-20260814` in
+  `/tmp/mak-clean-worktree`.
+- Staged scope: 60 paths, 0 staged deletions. Scope-name SHA-256:
+  `b030c7564dfc4196b0372902ca82cad857a38ee1c66fcb7eac033a57d0476727`.
+- The scope carries only selected positive or modified runtime, service,
+  workflow, dependency, test, candidate, and checkpoint paths. Historical
+  recovered data and stale-proposal deletions were excluded.
+- PR #531 remains stale evidence only: its base was old `main` at
+  `559fa6075e1cfb7a51be380c6d354d2af90dffb2`; GitHub measured it 18 commits
+  behind and 6 ahead, `mergeable=false`, `dirty`, with no checks. Do not merge
+  it or use it as the clean transport.
+
+### Clean proposal evidence
+
+- Runtime Python mirror comparison against `/home/mak`: Codex 18/18,
+  Platform 48/48, Research 28/28, XIO 3/3, Curatoria 7/7; all 0 different and
+  0 missing. Curatoria candidates are explicitly isolated from live drift.
+- Canonical systemd unit hashes match: Codex, Hub, Research, and XIO.
+- Focused contracts pass. Both active venvs report `No broken requirements
+  found`; compileall passes.
+- Full pytest on this clean worktree completed at 100 percent with exit 0,
+  zero failures, and zero skips. Only existing deprecation warnings remain.
+- Bug hunt corrected stale provider-chain expectations, environment loading,
+  empty-git handling, ESM package metadata, episode/work fixtures, and
+  historical handoff privacy scanning. No historical evidence was deleted.
+
+### Next action
+
+Run the final staged secret/path/hash checks, commit this clean scope, push
+`codex/mak-web-restructure-20260814`, and create a new draft PR against the
+current `main`. Keep PR #531 unmerged. Do not reset, clean, pull, merge, delete
+branches, restart services, or enable synchronization.
+
 Updated: 2026-08-12 - recovered session integration committed and propagated
 Status: The recovered agent work is now present in the repository and no longer
 only in the MAK runtime mirror. The integration includes the durable

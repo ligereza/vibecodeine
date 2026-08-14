@@ -43,8 +43,8 @@ FECHA_RE = re.compile(r"^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})-(.+)\.(md|p
 # Claves validas de coder (espejo de codex_lib._CODER_CHAIN_MAP, sin
 # importar codex_lib aca para no acoplar el server web al motor). El orden
 # que llega en el CSV importa: define la cadena de fallback real.
-CADENA_CLAVES = ("nim-pro", "nim-flash", "win", "ollama")
-CADENA_DEFAULT = "nim-pro,nim-flash,win,ollama"
+CADENA_CLAVES = ("nim-pro", "nim-flash", "ollama")
+CADENA_DEFAULT = "nim-pro,nim-flash,ollama"
 
 JOBS = []
 JOBS_LOCK = threading.Lock()
@@ -347,8 +347,8 @@ function syncDensidad(){
 function toggleMood(){} // el propio nodo ya expone los selects en su cuerpo
 
 // -- nodo Coder: cadena de fallback visible + reordenable --
-var CADENA=['nim-pro','nim-flash','win','ollama'];
-var CADENA_ETQ={'nim-pro':'nim deepseek-pro','nim-flash':'nim deepseek-flash','win':'win rtx4070','ollama':'ollama local'};
+var CADENA=['nim-pro','nim-flash','ollama'];
+var CADENA_ETQ={'nim-pro':'nim deepseek-pro','nim-flash':'nim deepseek-flash','ollama':'ollama local'};
 function pintaCadena(){
   document.getElementById('cadena-vista').innerHTML=CADENA.map(function(c,i){
     return '<div class="sub-item'+(i===0?' primero':'')+'">'+(i===0?'&#9654; ':'<span class="flecha">&#8627;</span> ')+esc(CADENA_ETQ[c]||c)+'</div>';

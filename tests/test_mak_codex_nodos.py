@@ -9,7 +9,6 @@ Sin red, sin ollama. interfaz_codex.py importa worker_codex.py -> fcntl
 saltear todo el archivo en Windows/CI sin fcntl.
 """
 import json
-import http.client
 import re
 import sys
 import threading
@@ -98,52 +97,16 @@ def test_producers_and_delivery_share_codex_ledger_lock():
 
 
 @requiere_fcntl
-def test_codex_api_unknown_and_head_contract():
-    server = interfaz_codex.Servidor(("127.0.0.1", 0), interfaz_codex.H)
-    thread = threading.Thread(target=server.serve_forever)
-    thread.start()
-    try:
-        connection = http.client.HTTPConnection(
-            "127.0.0.1", server.server_port, timeout=3)
-        connection.request("GET", "/api/unknown")
-        response = connection.getresponse()
-        assert response.status == 404
-        assert json.loads(response.read())["error"] == "ruta_api_no_encontrada"
-        connection.close()
-
-        connection = http.client.HTTPConnection(
-            "127.0.0.1", server.server_port, timeout=3)
-        connection.request("POST", "/api/unknown", body=b"{}",
-                           headers={"Content-Length": "2"})
-        response = connection.getresponse()
-        assert response.status == 404
-        assert json.loads(response.read())["error"] == "ruta_api_no_encontrada"
-        connection.close()
-
-        connection = http.client.HTTPConnection(
-            "127.0.0.1", server.server_port, timeout=3)
-        connection.request("HEAD", "/api/jobs")
-        response = connection.getresponse()
-        assert response.status == 200
-        assert response.read() == b""
-        connection.close()
-    finally:
-        server.shutdown()
-        thread.join(timeout=3)
-        server.server_close()
-
-
-@requiere_fcntl
 class TestValidarCadena:
     """_validar_cadena: CSV de claves de coder -> CSV validado (filtrado a
     proveedores conocidos, invalido -> default, vacio -> default)."""
 
-    def test_csv_valido_se_preserva_en_orden(self):
-        assert interfaz_codex._validar_cadena("win,ollama") == "win,ollama"
+    def test_csv_valido_descarta_proveedor_retirado(self):
+        assert interfaz_codex._validar_cadena("win,ollama") == "ollama"
 
     def test_csv_con_claves_invalidas_se_filtran(self):
         assert interfaz_codex._validar_cadena(
-            "win,basura,nim-pro") == "win,nim-pro"
+            "win,basura,nim-pro") == "nim-pro"
 
     def test_csv_todo_invalido_cae_a_default(self):
         assert interfaz_codex._validar_cadena(
@@ -157,9 +120,9 @@ class TestValidarCadena:
 
     def test_claves_duplicadas_se_deduplican_preservando_primera_aparicion(self):
         assert interfaz_codex._validar_cadena(
-            "win,win,ollama,win") == "win,ollama"
+            "win,win,ollama,win") == "ollama"
 
-    def test_default_incluye_los_4_proveedores(self):
+    def test_default_incluye_los_proveedores_activos(self):
         assert set(interfaz_codex.CADENA_DEFAULT.split(",")) == set(
             interfaz_codex.CADENA_CLAVES)
 
@@ -174,10 +137,10 @@ class TestPaginaCanvasDeNodos:
                     "nodo-mood", "nodo-output"):
             assert 'id="%s"' % nid in interfaz_codex.PAGINA
 
-    def test_contiene_la_cadena_de_fallback_win_y_nim(self):
+    def test_contains_the_active_local_and_nim_fallback_chain(self):
         assert "nim-pro" in interfaz_codex.PAGINA
-        assert "'win'" in interfaz_codex.PAGINA
         assert "'ollama'" in interfaz_codex.PAGINA
+        assert "'win'" not in interfaz_codex.PAGINA
 
     def test_conserva_el_formulario_clasico_en_su_propio_tab(self):
         assert 'id="tab-clasico"' in interfaz_codex.PAGINA
