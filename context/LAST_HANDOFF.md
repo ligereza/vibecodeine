@@ -10134,3 +10134,67 @@ repaired.
 Last verified: 2026-08-15 America/Santiago — main `99bbd88` published; nine
 source copies exact; one remote preservation tag; no stale active topology
 references remain in MAPA, HUB_PERFILES or the standalone producer adapter.
+
+## Phase 491 — OpenKlub role corrected without rebuilding away local events
+
+The physical read-only gate showed the active MAK catalog has one canonical
+venue (`espacio_riesco`), while the old WIN database still contains the
+historical conflations `openklub` and `paralelo_89`. The active source
+`data/productoras/openklub.json` still said that OpenKlub might itself be a
+venue. That ambiguity was corrected in the source: OpenKlub is a
+producer/brand; `Central Cultural` remains only a raw, unconfirmed venue
+candidate and is not assigned as OpenKlub's identity.
+
+The active `data/rd.db` was not rebuilt wholesale. A full rebuild with the
+correct FLUJO venv would produce the right one-venue catalog but would reduce
+the local `eventos` projection from 7 source-linked rows to 2 because local
+`jobs/` inputs are intentionally outside the tracked source set. The system
+Python was also rejected: its missing PyYAML produced a temporary database with
+zero venues. Instead, a single-row, transactional update was applied to
+`productoras.slug=openklub`, after creating the recoverable backup
+`data/rd.db.pre-openklub-correction-20260815`.
+
+Foreground evidence:
+
+    PYTHONDONTWRITEBYTECODE=1 /home/mak/vibecodeine/.venv/bin/python <one-row SQLite update>
+    PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src /home/mak/vibecodeine/.venv/bin/python tools/gen_rd_standalone.py
+    PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:. /home/mak/vibecodeine/.venv/bin/pytest -q tests/test_entity_crosswalk.py tests/test_rd_database.py tests/test_rd_db_logos.py tests/test_rd_eventos.py tests/test_venue.py tests/test_venue3d_smoke.py
+    PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src /home/mak/vibecodeine/.venv/bin/python tools/venue.py validar
+
+Results: targeted DB update exit 0; source note equals projected row; active
+counts remained `venues=1`, `productoras=20`, `productora_venues=8`,
+`productora_eventos=7`, `eventos=2`; `rd_datos.db` stayed at SHA-256
+`70feaf43b5269b6c0341d1ba3debdac60e40fb902cc4bedb41254fdc84d1f703`; backup
+hash equals the pre-update active DB hash
+`91b748f5661ed9484da6603d474468622e93846b5935f70446e55f62ba21f32e`; the
+new active DB hash is
+`e8c5a86c4047cf1c99e8157044c9c3772c068abd3939fcbc7ffd7c312211a337`.
+The standalone generator exited 0 with unchanged projection hash
+`9f5e56cbae5cb9ff34bd8433d4b49069e3a52de947f56055d19a37c115b53c04` because
+the web allowlist does not expose the internal producer note. All focused RD,
+venue and SCD smoke tests exited 0; `venue.py validar` reported 3 technical
+venues, 0 errors and 0 warnings.
+
+`context/PHASE412_VENUE_CROSSWALK.md` and
+`context/PHASE427_VENUE_ROLE_CORRECTION_CROSSWALK.md` were corrected in place
+so they no longer present `paralelo_89` as an active venue or OpenKlub as one.
+No WIN file, `rd_datos.db`, technical venue JSON, portfolio file, service or
+external provider changed.
+
+Disposition:
+OPENKLUB_PRODUCER_ROLE_CURRENT; CENTRAL_CULTURAL_REVIEW_ONLY;
+ACTIVE_RD_PROJECTION_TARGETED_UPDATE; LOCAL_EVENTS_PRESERVED;
+PARALELO89_NOT_ACTIVE; RD_VENUE_AND_SCD_GATES_GREEN.
+
+## Next concrete action
+
+Commit and publish the OpenKlub source correction and current handoff, then
+run the next read-only venue/entity consumer gate across `web/venues`,
+`iskvw/piel/venue`, the SCD JSON and the review-only crosswalk. Keep the active
+RD catalog and VJ technical registry logically linked by explicit IDs and
+provenance; do not merge their databases or expose unconfirmed venues in the
+portfolio. Preserve the one-file DB backup until the next checkpoint.
+
+Last verified: 2026-08-15 America/Santiago — OpenKlub source and active
+projection agree; FRVR remains artist/DJ with raw `Sala Metronomo`; no active
+source names `paralelo_89` as a venue.

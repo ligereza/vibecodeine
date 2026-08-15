@@ -29,7 +29,7 @@
   ],
   "confirmed": "",
   "fuente_datos": "nombres de archivo del archivo de entregas (ENTREGA/FEBRERO), mapeo 2026-07-17; sin confirmar por humano. Complementado con PR #210 (candidatos_db.jsonl match_ratio=1.0, obra_7879d3d141, productora_cruda='OPEN KLUB').",
-  "notes": "Nombre klub -> tipo CLUB. Posible venue también; confirmar si es promotora o sede. Fuente: archivo de entregas (FEBRERO) + curatoría PR #210. Relación declarada por el usuario 2026-07-23: OPENKLUB es impulsado por TECHNOYOUTH y PANAL RECORDS.",
+  "notes": "OpenKlub es una productora/brand. Central Cultural permanece como venue raw candidato sin confirmar y no se usa como identidad de OpenKlub. Fuente: archivo de entregas (FEBRERO) + curatoría PR #210. Relación declarada por el usuario 2026-07-23: OPENKLUB es impulsado por TECHNOYOUTH y PANAL RECORDS.",
   "relaciones": [
     {
       "tipo": "impulsado_por",
