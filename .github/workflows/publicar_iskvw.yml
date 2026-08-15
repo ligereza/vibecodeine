@@ -6,15 +6,15 @@
 # el PR #341 porque publicaban al repo `portfolio-auto`, que quedo descartado.
 # Un dominio configurado que responde un error es peor que un dominio sin sitio.
 #
-# Que sube. SOLO `iskvw/`, no el repo entero: la piel, sus librerias, los datos
-# del campo y los 649 trazos vectoriales. Nada de RD, nada de MAK, nada de xio.
-# Las imagenes originales del archivo NO viajan (1,6 GB); lo que viaja es el
-# trazo, que es exactamente para lo que se hizo: 4,9 MB para 649 obras, y el
-# visitante baja solo la obra donde freno.
+# Que sube. SOLO `iskvw/`, no el repo entero: la piel, sus librerias, el campo
+# y los recursos vectoriales permitidos por sus manifiestos. Nada de RD, nada
+# de MAK, nada de xio. Las imagenes originales del archivo NO viajan; la
+# publicacion sirve solo los recursos que la compuerta de coherencia encuentra
+# en el arbol del portfolio.
 #
-# Verificado antes de existir: la piel corre a 60 fps con 697 nodos en telefono
-# parado, acostado, chico, tablet y escritorio, con CPU estrangulada y densidad
-# 3, cero errores de consola en los cinco.
+# La piel se verifica con smoke y medicion deterministas antes de publicar. La
+# tasa de cuadros de un telefono real no se afirma aqui: debe medirse en el
+# aparato, no heredarse de un snapshot antiguo.
 name: publicar iskvw
 
 on:
@@ -105,13 +105,10 @@ jobs:
           test -f _sitio/.nojekyll || { echo "FALTA: .nojekyll"; exit 1; }
           # `find`, no `ls` con glob: el glob no distingue "no hay archivos" de
           # "no pude expandir la ruta".
-          # COHERENCIA, no cantidad. El umbral que habia aca -- "mas de 600
-          # trazos" -- codificaba el tamano que el archivo tenia ese dia, y
-          # cuando el usuario lo restringio a `posts` quedaron 208: la guarda
-          # bloqueo la publicacion CORRECTA y dejo viva la anterior, que
-          # justamente traia el material que se habia sacado por privacidad.
-          # Un umbral absoluto convierte un cambio legitimo de alcance en un
-          # despliegue fallido, y encima falla del lado inseguro.
+          # COHERENCIA, no cantidad. Un umbral absoluto de trazos codifica el
+          # tamano que el archivo tenia un dia concreto y puede bloquear una
+          # publicacion correcta cuando cambia el filtro. La guarda compara el
+          # indice, el disco y el campo actual, no un numero historico.
           n=$(find _sitio/piel/trazos -name '*.svg' | wc -l)
           test "$n" -gt 0 || { echo "no hay ningun trazo"; exit 1; }
           # lo que de verdad importa: el indice y el disco dicen lo mismo, y

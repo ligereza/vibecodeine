@@ -39,13 +39,9 @@ jobs:
       - run: npm run build:context
         working-directory: web
       # El sustrato, ANTES de los tests. `archivo.json` esta gitignoreado y
-      # solo lo generaba el workflow de publicacion, asi que la suite media un
-      # mundo de UNA fuente (campo.json) mientras el sitio servia otro. Medido
-      # el 2026-07-31: con el sustrato presente la piel dibujaba 203 marcas por
-      # cuadro en vez de 7647 y el patch de efectos quedaba inerte, con la
-      # suite entera en verde. Un instrumento que solo mide la condicion facil
-      # no puede acusar a nadie. El generador avisa que no alcanza el micelio
-      # (la caja no es visible desde CI) y sigue con el material del repo: eso
-      # es lo esperado, no un error.
+      # debe generarse en CI igual que en Pages; de lo contrario la suite
+      # mediria solo el fallback `campo.json` mientras el sitio serviria otra
+      # proyeccion. El generador avisa si no alcanza el micelio privado y usa
+      # el snapshot versionado: eso es lo esperado, no un error.
       - run: python tools/gen_archivo_iskvw.py --fuente todo
       - run: python -m flujo verify
