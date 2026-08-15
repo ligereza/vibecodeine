@@ -10777,3 +10777,41 @@ without explicit provenance, confidence and publication status.
 
 Last verified: 2026-08-15 America/Santiago — crosswalk branch committed and
 validated; root handoff promotion prepared; no external publication performed.
+
+## Phase 505 — ISKVW publication scope gate integrated
+
+Created short-lived branch `iskvw/publication-gate` from synchronized `main`
+at `e0ff6a1`, owned by `LUNA-505`, with an exclusive contract and handoff.
+The branch changed only `tests/test_git_web_contract.py` plus the temporary
+branch contract files.
+
+The publication boundary is now executable: the Pages workflow remains manual
+dispatch only, stages `iskvw/.` and explicitly excludes RD databases,
+`data/venues`, Cultura, MAK and WIN. The generator's public `--fuente todo`
+filter continues to exclude research essays unless explicitly requested.
+
+Validation:
+
+    /home/mak/vibecodeine/.venv/bin/python -m pytest -q tests/test_git_web_contract.py tests/test_gen_archivo_iskvw.py
+    /home/mak/vibecodeine/.venv/bin/python -m py_compile tools/gen_archivo_iskvw.py tests/test_git_web_contract.py
+    git diff --check
+
+Results: `17 passed`; compilation and whitespace checks exit 0; no deploy,
+network call, Cloudflare change or generated public artifact was performed.
+
+The branch commit is `ad7368a` (`test(web): guard iskvw publication scope`).
+Its temporary contract and handoff are removed during closeout; durable facts
+are recorded here.
+
+Disposition: `ISKVW_PUBLIC_SCOPE_GREEN; RD_VENUE_EXCLUDED;
+MANUAL_DEPLOY_PRESERVED; BRANCH_CLOSED_PENDING_FAST_FORWARD`.
+
+## Next concrete action
+
+Fast-forward `main` with the publication scope gate, delete the short-lived
+branch and push the result. Then run a broad read-only health matrix across
+FLUJO APP and MAK hub endpoints, ensuring the current local services remain
+available without adding ports or changing the single-interface model.
+
+Last verified: 2026-08-15 America/Santiago — publication branch committed and
+validated; root handoff promotion prepared; no external publication performed.
