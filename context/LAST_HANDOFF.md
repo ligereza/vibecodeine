@@ -9714,3 +9714,37 @@ considered.
 
 Last verified: 2026-08-15 America/Santiago — `main` at `33bbe3a`; Fondart
 source-preserving slice published and validated.
+
+## Phase 480 — three-plane and RD reconciliation integrated
+
+The next useful archive candidate was validated and integrated without a
+database writer. The manifest, read-only reconciliation module, two schemas
+and two test files now live in `main`. Combined Fondart/reconciliation tests:
+40 passed, exit 0. Python compilation and manifest JSON Schema validation both
+returned exit 0.
+
+A real foreground read-only comparison of `/home/mak/flujo/data/rd.db` and
+`/home/mak/flujo/data/rd_datos.db` produced a temporary
+`mak-unified-knowledge-reconciliation-v1` plan with 23 table comparisons,
+`migration.writes_performed=false` and 202,731 output bytes. SHA-256 hashes of
+both source DBs were unchanged before/after. No Postgres runtime, network
+provider, source mutation or public output was invoked. The gate is documented
+in `context/PHASE480_KNOWLEDGE_RECONCILIATION_GATE.md`.
+
+The slice was staged only from the preserved candidate code and is ready to
+publish as the next `main` checkpoint; `sync_mak_safe.py` remains archived due
+to its explicit apply/mutator path.
+
+Disposition:
+`THREE_PLANE_INTEGRATED; RD_READ_ONLY_RECONCILIATION_GREEN;
+NO_DATABASE_WRITE; POSTGRES_DEFERRED; MUTATOR_DEFERRED`.
+
+## Next concrete action
+
+Gate `tools/inferential_archaeology.py` against temporary evidence fixtures,
+without scanning or modifying session stores. Then decide whether it is a
+reusable read-only tool or remains archived. Keep `sync_mak_safe.py` out until
+its authority boundary is separately proven.
+
+Last verified: 2026-08-15 America/Santiago — three-plane and RD reconciliation
+slice validated locally; source databases unchanged.
