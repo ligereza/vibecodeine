@@ -11,6 +11,7 @@ _REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_REPO / "tools" / "portfolio"))
 
 import generar_portfolio as gp  # noqa: E402
+from catalog_contract import CatalogContractError, load_catalog  # noqa: E402
 
 
 def test_es_publicable_filtra_sensibles():
@@ -55,6 +56,31 @@ def test_proyectos_curados_validos():
     for p in curado["proyectos"]:
         for campo in ("id", "nombre", "linea", "estado", "descripcion"):
             assert p.get(campo), f"{p.get('id')}: falta {campo}"
+
+
+def test_catalog_contract_distinguishes_visual_works():
+    catalog = load_catalog(gp._CURADO)
+    assert catalog["contract"]["name"] == "portfolio_project_catalog"
+    assert catalog["contract"]["visual_works_source"] == "iskvw/datos/obras.json"
+
+
+def test_catalog_contract_rejects_duplicate_or_non_ascii_ids(tmp_path):
+    path = tmp_path / "catalog.json"
+    path.write_text(
+        json.dumps({
+            "proyectos": [
+                {"id": "ok-id", "nombre": "A", "linea": "cultura",
+                 "estado": "activo", "descripcion": "x"},
+                {"id": "ok-id", "nombre": "B", "linea": "cultura",
+                 "estado": "activo", "descripcion": "y"},
+            ]
+        }), encoding="utf-8")
+    try:
+        load_catalog(path)
+    except CatalogContractError as exc:
+        assert "duplicate project id" in str(exc)
+    else:
+        raise AssertionError("duplicate ids must fail the catalogue contract")
 
 
 def test_construir_proyectos_agrega_metadata():

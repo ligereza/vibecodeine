@@ -24,6 +24,8 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+from catalog_contract import load_catalog
+
 _REPO = Path(__file__).resolve().parents[2]
 _CURADO = Path(__file__).resolve().parent / "proyectos.json"
 
@@ -104,11 +106,12 @@ def leer_version() -> str:
 
 
 def construir_proyectos() -> dict:
-    curado = json.loads(_CURADO.read_text(encoding="utf-8"))
+    curado = load_catalog(_CURADO, source_label="tools/portfolio/proyectos.json")
     return {
         "titulo": curado.get("titulo", "flujo"),
         "generado": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
         "version_flujo": leer_version(),
+        "contrato": curado["contract"],
         "proyectos": curado["proyectos"],
     }
 
