@@ -35,6 +35,7 @@ class EntityCrosswalk:
     contract: str
     version: int
     status: str
+    source_databases: tuple[str, ...]
     entities: tuple[EntityLink, ...]
 
     def by_id(self, canonical_id: str) -> EntityLink | None:
@@ -58,6 +59,26 @@ def load_crosswalk(path: Path = DEFAULT_PATH) -> EntityCrosswalk:
         raise CrosswalkError("unexpected crosswalk contract")
     if data.get("version") != 1 or data.get("status") != "review_only":
         raise CrosswalkError("crosswalk must remain version 1 and review_only")
+    raw_sources = data.get("source_databases")
+    if not isinstance(raw_sources, list) or not raw_sources:
+        raise CrosswalkError("crosswalk source_databases must be a non-empty list")
+    source_databases: list[str] = []
+    for index, raw_source in enumerate(raw_sources):
+        if not isinstance(raw_source, str) or not raw_source.strip():
+            raise CrosswalkError(f"source_database[{index}] must be a relative path")
+        source = raw_source.strip().replace("\\", "/")
+        parts = source.split("/")
+        if (
+            source.startswith("/")
+            or (len(source) > 1 and source[1] == ":")
+            or any(part in ("", "..") for part in parts)
+        ):
+            raise CrosswalkError(
+                f"source_database[{index}] must stay a normalized relative path"
+            )
+        if source in source_databases:
+            raise CrosswalkError(f"duplicate source_database: {source}")
+        source_databases.append(source)
     raw_entities = data.get("entities")
     if not isinstance(raw_entities, list) or not raw_entities:
         raise CrosswalkError("crosswalk entities must be a non-empty list")
@@ -91,5 +112,6 @@ def load_crosswalk(path: Path = DEFAULT_PATH) -> EntityCrosswalk:
         contract=data["contract"],
         version=data["version"],
         status=data["status"],
+        source_databases=tuple(source_databases),
         entities=tuple(entities),
     )
