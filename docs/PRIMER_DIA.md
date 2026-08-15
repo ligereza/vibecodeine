@@ -5,8 +5,7 @@ Este documento resume el flujo diario recomendado para usar el repo con la ONG.
 ## Instalación inicial (una sola vez)
 
 ```bash
-py -m pip install -r requirements.txt
-py -m pip install -r requirements-dev.txt
+py -m pip install -e ".[dev,render]"
 py -m pre_commit install
 ```
 

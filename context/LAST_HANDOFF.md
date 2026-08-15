@@ -10455,3 +10455,192 @@ an explicit job-processing decision.
 
 Last verified: 2026-08-15 America/Santiago — both FLUJO entrypoints started,
 served the real backend, passed GET smoke checks and were stopped cleanly.
+
+## Phase 497 — MAK hub restricted to local-only access
+
+The user clarified that MAK no longer serves a second Windows computer and
+must not expose a LAN interface. The canonical Hub now reads `HUB_HOST` with a
+safe default of `127.0.0.1`; the deployed user unit sets the same value
+explicitly. Research and Codex were already loopback-only. Active files were
+updated in `cultura/mak_plataforma/hub.py`,
+`cultura/mak_plataforma/mak-hub.service`,
+`cultura/mak_plataforma/GENESIS.md`,
+`cultura/mak_research/MAK_RESEARCH.md`,
+`tests/test_operational_entrypoints.py`,
+`/home/mak/plataforma/GENESIS.md`,
+`/home/mak/plataforma/RELEVO_MAK.md` and
+`/home/mak/.config/systemd/user/mak-hub.service`.
+
+Foreground validation:
+
+    systemctl --user daemon-reload && systemctl --user restart mak-hub.service
+    ss -ltnp | grep -E ':(8890|8891|8900)\\b'
+    curl http://127.0.0.1:8900/health
+    curl http://192.168.50.2:8900/health
+
+The unit was active, local health returned HTTP 200 with the MAK schema, and
+the LAN request failed with curl exit 7 / HTTP 000. No external provider,
+database or WIN file changed. The Hub remains viewable locally at port 8900;
+LAN access is now an explicit future decision rather than the default.
+
+Disposition: `MAK_LOCAL_ONLY; LAN_BIND_REJECTED; NO_WIN_OR_DATABASE_MUTATION`.
+
+## Phase 498 — portable branch contract and dependency source established
+
+The repository already had the RD/ISKVW/Cultura tool division; no tool tree or
+README artwork was moved. The global `/home/mak/flujo/agents.md` now defines
+short-lived branch contracts and exclusive branch handoffs. Added templates:
+`contracts/BRANCH_AGENTS_TEMPLATE.md` and
+`context/BRANCH_HANDOFF_TEMPLATE.md`. `MAPA.md` records the lifecycle: a topic
+branch carries `contracts/branches/<branch-id>/agents.md` and
+`context/handoffs/<branch-id>.md`, promotes durable facts to
+`context/LAST_HANDOFF.md`, then disappears with its temporary documents after
+merge.
+
+The dependency audit found that `pyproject.toml` was already the correct
+source of truth, while setup, render CI, security CI and the first-day guide
+still installed or audited duplicate requirements files. They now use
+`python -m pip install -e ".[dev,render]"`. Added
+`docs/DEPENDENCIES.md`; `requirements.txt` and `requirements-dev.txt` are
+explicitly compatibility inputs, not branch contracts or CI authorities.
+
+Validation:
+
+    bash -n scripts/setup.sh
+    /home/mak/vibecodeine/.venv/bin/python -m pytest -q tests/test_git_web_contract.py tests/test_operational_entrypoints.py
+    /home/mak/vibecodeine/.venv/bin/python -m pip check
+    /home/mak/vibecodeine/.venv/bin/python -m pip install --dry-run --ignore-installed --no-deps -e ".[dev,render]"
+    git diff --check
+    git diff --quiet -- README.md
+
+Results: setup syntax exit 0; focused tests `12 passed`; pip check reported
+`No broken requirements found`; editable metadata dry-run reported
+`Would install flujo-0.56.1` with exit 0; diff check exit 0; README diff exit
+0. No source tool, database, generated artwork or historical evidence was
+changed by this phase.
+
+Open risk: the repository has no committed lock file yet, and the full
+dependency resolution still needs an isolated fresh-environment gate. Do not
+create a domain branch until that gate and a real bounded improvement are
+selected. Do not create one requirements file per branch; update the project
+contract and the branch-scoped handoff together.
+
+Disposition: `BRANCH_CONTRACTS_ESTABLISHED; PYPROJECT_CANONICAL;
+FOCUSED_PORTABILITY_GREEN; README_PRESERVED`.
+
+## Next concrete action
+
+Run an isolated fresh-environment install from `/home/mak/flujo` using the
+canonical project extras, capture the resolver result and `pip check`, then
+choose the first real bounded improvement (RD, ISKVW, Cultura or tools) before
+creating a short-lived topic branch with its exclusive contract and handoff.
+
+Last verified: 2026-08-15 America/Santiago — branch contract templates and
+canonical dependency installation metadata pass focused validation; no lock
+file or topic branch has been created yet.
+
+## Phase 499 — isolated portability gate passed
+
+The canonical install was tested in a fresh temporary virtual environment,
+without changing the active MAK environment. The command was:
+
+    portable_dir=$(mktemp -d /tmp/flujo-portable.XXXXXX)
+    python3 -m venv "$portable_dir/venv"
+    "$portable_dir/venv/bin/python" -m pip install -e ".[dev,render]"
+    "$portable_dir/venv/bin/python" -m pip check
+    "$portable_dir/venv/bin/python" -c 'import flujo, flujo.cli'
+
+The installation built editable `flujo-0.56.1` and exited 0; `pip check`
+reported `No broken requirements found`; the import exited 0. In that same
+clean environment:
+
+    /tmp/flujo-portable.fquPM8/venv/bin/python -m pytest -q tests/test_git_web_contract.py tests/test_operational_entrypoints.py
+    /tmp/flujo-portable.fquPM8/venv/bin/python -m flujo --help
+
+Both commands exited 0; the focused suite returned `12 passed` and the CLI
+listed the real command surface. The temporary environment is isolated under
+`/tmp`; no MAK runtime, database, WIN file, README or generated artifact was
+changed.
+
+The portability foundation is therefore green for the declared extras. An
+exact lock file is still intentionally open; the repository currently relies
+on lower-bound project constraints and should choose one lock mechanism before
+claiming byte-for-byte reproducibility.
+
+Disposition: `FRESH_INSTALL_GREEN; CLEAN_IMPORT_GREEN; CLEAN_FOCUSED_TESTS_GREEN;
+NO_ACTIVE_ENV_MUTATION`.
+
+## Next concrete action
+
+Choose the first real bounded improvement from the existing FLUJO tools (RD,
+ISKVW, Cultura or tools). Create its short-lived topic branch from the clean
+main baseline, copy the branch contract and handoff templates into that branch,
+and include only that consumer's code, tests and dependency changes. Do not
+move the existing tools or touch the README artwork.
+
+Last verified: 2026-08-15 America/Santiago — a fresh Debian-compatible Python
+environment installs the declared project extras, imports FLUJO and passes the
+focused Git/entrypoint suite; no topic branch or lock file exists yet.
+
+## Phase 500 — worktree baseline rechecked before first topic branch
+
+The repository is on `main` at `f277094` (`docs: record flujo app smoke test`).
+The portability/contract changes remain local and intentionally uncommitted;
+the worktree also contains many pre-existing historical `context/PHASE*`
+reports, fixtures, quarantine evidence, database backups and unrelated edits.
+Those surfaces are excluded from the first branch write set and must not be
+bulk-staged.
+
+Validation run:
+
+    git branch --show-current
+    git diff --check
+    git log -1 --oneline
+
+Results: current branch `main`; diff check exit 0; latest commit `f277094`.
+README remains unchanged. No branch, commit, push, service or database
+mutation was performed in this check.
+
+Disposition: `MAIN_BASELINE_RECHECKED; HISTORICAL_EVIDENCE_EXCLUDED;
+NO_BULK_STAGE`.
+
+## Next concrete action
+
+Select one real bounded improvement from the existing consumers (RD, ISKVW,
+Cultura or tools), then isolate the current contract/dependency changes from
+pre-existing evidence before creating the short-lived topic branch. The first
+branch must carry only its scoped code, tests, dependency metadata and its
+exclusive `agents.md`/handoff contract; do not move tools or touch the README.
+
+Last verified: 2026-08-15 America/Santiago — main baseline and dirty-surface
+boundaries rechecked; no bulk staging or external publication performed.
+
+## Phase 501 — continuous-work objective locked
+
+The continuous objective is now explicit: complete the operational and
+portable restructuring of `/home/mak/flujo` without losing useful work;
+preserve the current SVG README and `WIN` as historical evidence; keep one
+green synchronized `main`; use short-lived consumer branches only for real
+changes; give each active branch an exclusive agent contract and handoff;
+keep `pyproject.toml` as the dependency source; keep FLUJO APP and MAK
+working locally with their current interfaces; integrate only tools with a
+real consumer and evidence of operation; and separate or retire only verified
+duplicates/obsolete artifacts. Every change must pass the appropriate tests,
+imports, CLI and foreground smoke checks before merge/publication.
+
+Every turn must record commands, exit codes, changed files, risks and the
+next action here. Prohibited shortcuts remain: no deletion of historical
+evidence, no README edits, no SSH, no permanent services, no divergent
+requirements files or branches, and no waiting for confirmation while safe
+work remains executable.
+
+Disposition: `CONTINUOUS_OBJECTIVE_LOCKED`.
+
+## Next concrete action
+
+Isolate the current intentional portability/contract changes from the
+pre-existing historical evidence, then prepare the first real consumer slice
+for a short-lived branch without bulk-staging the worktree.
+
+Last verified: 2026-08-15 America/Santiago — objective stored in the task goal
+and in this handoff; no branch, commit or external publication performed.

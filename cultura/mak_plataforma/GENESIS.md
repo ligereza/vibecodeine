@@ -21,7 +21,7 @@ del repo**. Aquí no hay commits: hay órganos que corren y piezas que nacen.
 | **codex** | loopback :8891 | Servicio interno FULL CODER: genera, revisa y testea código con la cadena de modelos; sandbox con límites de recursos y filtro estático |
 | **curatoria** | cron/batch | Departamento de percepción y candidatos; no tiene una superficie Web humana separada ni un puerto operativo |
 | **lenguaje** | (cli/cron) | El idioma como señal: mide tildes/eñes/aperturas de cada pieza, corrige con el modelo capaz, construye el léxico vivo del corpus |
-| **plataforma** | :8900 | El esqueleto que aloja a los demás: hub, salud, guardia de recursos, descargas seguras, respaldos, watchdog |
+| **plataforma** | loopback :8900 | El esqueleto que aloja a los demás: hub, salud, guardia de recursos, descargas seguras, respaldos, watchdog |
 | **xio_puente** | (daemon) | Ojo de solo-lectura sobre el teléfono Xiaomi (router del internet): telemetría, historia, alertas ntfy |
 
 ## El sistema circulatorio
@@ -60,10 +60,10 @@ del repo**. Aquí no hay commits: hay órganos que corren y piezas que nacen.
 python3 ~/plataforma/salud.py
 
 # research (ya vivo, a traves del Hub)
-http://192.168.50.2:8900/research/  # canvas + micelio
+http://127.0.0.1:8900/research/  # canvas + micelio
 
 # codex (a traves del Hub)
-http://192.168.50.2:8900/codex/     # superficie humana unica
+http://127.0.0.1:8900/codex/     # superficie humana unica
 python3 ~/codex/generar.py "un parser de csv a json" --densidad corto
 
 # lenguaje
@@ -71,7 +71,7 @@ python3 ~/lenguaje/medir.py ~/research/informes/ULTIMA.md
 python3 ~/lenguaje/corregir.py pieza.md
 
 # hub
-http://192.168.50.2:8900
+http://127.0.0.1:8900
 
 # curatoria
 # Solo corre como batch/cron; no existe una URL humana separada.

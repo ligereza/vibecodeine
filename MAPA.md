@@ -36,6 +36,16 @@ branch refs must contain only `main`, and the preservation tag must exist.
 Domain separation lives in the physical owner/consumer boundaries above, not
 in parallel Git trunks.
 
+Every active topic branch must carry its own scoped contract and handoff,
+created from `contracts/BRANCH_AGENTS_TEMPLATE.md` and
+`context/BRANCH_HANDOFF_TEMPLATE.md`. The branch contract narrows the global
+`agents.md` rules to one consumer and write set; the branch handoff records
+only that branch's commands, files, risks and next action. The root
+`context/LAST_HANDOFF.md` remains the main continuity record. When a topic is
+merged and deleted, durable facts are promoted there and the temporary branch
+documents disappear with the branch, so stale branch state cannot become a
+new operational map.
+
 Ignored `web/dist*` and `dist_compartir/` files are generated delivery artifacts,
 not sources of truth. If they contain an older snapshot, use the tracked source
 and regenerate them only after the documented Node/Rollup build gate is repaired.
