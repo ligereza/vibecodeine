@@ -10198,3 +10198,52 @@ portfolio. Preserve the one-file DB backup until the next checkpoint.
 Last verified: 2026-08-15 America/Santiago — OpenKlub source and active
 projection agree; FRVR remains artist/DJ with raw `Sala Metronomo`; no active
 source names `paralelo_89` as a venue.
+
+## Phase 492 — current venue/entity crosswalk and map authority repaired
+
+The active cross-domain review file `data/rd_fuentes/candidates/rd_portfolio_entity_crosswalk.json`
+contained two stale references: a nonexistent `knowledge/venues/openklub.yaml`
+and an unresolvable free-text evidence token for the FRVR correction. It now
+points only to existing sources and labels `espacio_riesco` as the active RD
+canonical venue. OpenKlub remains `producer_or_brand`; `Central Cultural` stays
+only as a raw `candidate_unconfirmed` claim. FRVR remains
+`artist_dj_headliner`, with `Sala Metronomo` raw and no `paralelo_89` venue.
+
+Foreground validation:
+
+    python3 <crosswalk JSON/evidence-path assertion>
+    PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:. /home/mak/vibecodeine/.venv/bin/pytest -q tests/test_entity_crosswalk.py tests/test_rd_database.py tests/test_venue.py tests/test_venue3d_smoke.py
+    PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src /home/mak/vibecodeine/.venv/bin/python tools/venue.py validar
+    /home/mak/vibecodeine/.venv/bin/python <read-only rd.db count/relation query>
+
+Results: JSON and all referenced paths passed with exit 0; focused tests passed
+with exit 0; `venue.py validar` passed with exit 0 (`3 venues · 0 errores · 0
+avisos`); the active RD database remains `1` canonical venue and `20`
+productoras; OpenKlub's only relation remains `Central Cultural`,
+`venue_id=NULL`, `candidato_sin_confirmar`. The technical venue registry is a
+separate VJ/3D surface and remains at three public records. No database, WIN
+file, service, or generated build was changed.
+
+`MAPA.md` now explicitly declares itself the only operational map for this
+worktree, points continuity to `LAST_HANDOFF.md`, and warns that `/home/mak/vibecodeine`
+and `/home/mak/WIN` maps are not current instructions. Ignored `web/dist*` and
+`dist_compartir/` artifacts may retain an older build snapshot; they are not
+authority and must only be regenerated after the Node/Rollup environment gate
+is repaired.
+
+Disposition:
+VENUE_ENTITY_CROSSWALK_CURRENT; MAP_AUTHORITY_EXPLICIT;
+RD_VENUE_AND_TECHNICAL_VENUE_BOUNDARIES_PRESERVED; NO_STALE_SOURCE_REFERENCE;
+NO_DATABASE_OR_WIN_MUTATION.
+
+## Next concrete action
+
+Inspect the portfolio/ISKVW projection boundary from `/home/mak/*`, starting
+with the tracked source and its consumer tests. Reconcile only a concrete stale
+source or missing consumer; do not promote ignored builds, merge `source/rd`,
+create another map, or install Node/Rollup. Keep current truth in `MAPA.md` and
+this handoff only.
+
+Last verified: 2026-08-15 America/Santiago — `main` includes `e61975e`; the
+crosswalk has no missing evidence paths; the active RD and technical venue
+surfaces are separated and validated.

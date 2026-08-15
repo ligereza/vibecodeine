@@ -13,7 +13,7 @@
     {
       "canonical_id": "espacio_riesco",
       "role": "venue",
-      "rd_status": "example_or_candidate",
+      "rd_status": "active_canonical_venue",
       "portfolio_technical_record": null,
       "aliases": ["Espacio Riesco"],
       "evidence": ["data/rd.db:venues", "data/rd.db:productora_venues", "knowledge/venues/espacio_riesco.yaml"],
@@ -27,7 +27,7 @@
       "portfolio_technical_record": null,
       "aliases": ["OpenKlub", "Open Klub", "OPENKLUB"],
       "venue_claims": [{"raw_name": "Central Cultural", "status": "candidate_unconfirmed", "evidence": "data/rd.db:productora_venues"}],
-      "evidence": ["data/rd.db:productoras", "data/productoras/openklub.json", "knowledge/venues/openklub.yaml"],
+      "evidence": ["data/rd.db:productoras", "data/rd.db:productora_venues", "data/productoras/openklub.json"],
       "confidence": "high_for_producer_low_for_venue",
       "publication": "gated"
     },
@@ -39,7 +39,7 @@
       "raw_venue": "Sala Metronomo",
       "lineup_token": "Paralelo 86",
       "aliases": ["FRVR"],
-      "evidence": ["data/rd.db:productoras", "data/rd.db:productora_venues", "data/productoras/frvr.json", "user_correction_2026-08-15"],
+      "evidence": ["data/rd.db:productoras", "data/rd.db:productora_venues", "data/productoras/frvr.json", "context/LAST_HANDOFF.md:Phase 491"],
       "confidence": "high_for_headliner_role_low_for_producer_and_venue",
       "publication": "review_only"
     },
