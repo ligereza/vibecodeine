@@ -10935,3 +10935,96 @@ create a branch for documentation-only work.
 
 Last verified: 2026-08-15 America/Santiago — Phase 507 published as `592f6c7`;
 topology and README invariants green.
+
+## Phase 509 — physical MAK runtime and portfolio boundary audit
+
+Started from `/home/mak/*` as required. The active user units identify the
+runtime boundary precisely:
+
+    mak-research.service -> /home/mak/research/interfaz.py (:8890)
+    mak-codex.service    -> /home/mak/codex/interfaz_codex.py (:8891)
+    mak-hub.service      -> /home/mak/plataforma/hub.py (:8900)
+
+All three bind to loopback. The external directories contain live data,
+queues, logs, generated products and virtual environments, so they remain
+physical runtime/evidence roots rather than material to copy into Git.
+
+The code crosswalk was read-only and excluded virtualenv files. Research had
+35 external Python files versus 30 canonical files, with 30 shared names (21
+byte-identical and 9 explicit compatibility projections). Codex had 125
+external Python files including generated pieces, 18 shared canonical names
+(12 byte-identical and 6 compatibility/divergent modules). Platform had 152
+external Python files, 48 shared canonical names (27 byte-identical and 21
+compatibility/divergent modules). `/home/mak/plataforma/hub.py` explicitly
+loads `cultura/mak_plataforma/hub.py`; the active external surface is therefore
+an adapter/data boundary, not a reason to duplicate the tree.
+
+Validation:
+
+    PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:cultura/mak_research:cultura/mak_codex:cultura/mak_plataforma:. /home/mak/vibecodeine/.venv/bin/python -c 'import cadena, worker, fuentes, codex_lib'
+    PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:. /home/mak/vibecodeine/.venv/bin/python -m py_compile cultura/mak_research/*.py cultura/mak_codex/*.py cultura/mak_plataforma/*.py
+    npm run typecheck  # from web/
+    /home/mak/vibecodeine/.venv/bin/python -m pytest -q tests/test_git_web_contract.py tests/test_gen_archivo_iskvw.py tests/test_iskvw_piel_smoke.py tests/test_iskvw_campo.py
+
+The corrected canonical import and compilation returned exit 0; the first
+diagnostic attempt used the nonexistent `flujo.cultura` namespace and returned
+`ModuleNotFoundError` without side effects. Web TypeScript typecheck returned
+exit 0, and the portfolio/publication smoke group returned exit 0. No build
+copy, deployment, browser navigation, service restart, database write,
+provider call, external network request or file move was performed.
+
+Disposition: `MAK_EXTERNAL_BOUNDARIES_EXPLAINED; CANONICAL_IMPORTS_GREEN;
+PORTFOLIO_STATIC_GATE_GREEN; NO_TREE_COPY; NO_RUNTIME_MUTATION`.
+
+## Next concrete action
+
+Perform the final requirement-by-requirement audit against the active goal:
+dependency source, local FLUJO/MAK runtime, Git topology, branch contracts,
+consumer-backed integrations, evidence protection and README/WIN invariants.
+Use current files and fresh command output, then either close the goal with
+the exact remaining risks or create one final bounded code slice if an item is
+still unproven. Do not stage the pre-existing HTML/evidence surface.
+
+Last verified: 2026-08-15 America/Santiago — physical runtime crosswalk and
+portfolio type/smoke gates green; no external state changed.
+
+## Phase 510 — objective completion audit
+
+Fresh evidence was collected against every explicit operational requirement:
+
+| Requirement | Current evidence | Result |
+|---|---|---|
+| Preserve README SVG and WIN | `git diff --quiet -- README.md` exit 0; `/home/mak/WIN` present and untouched | GREEN |
+| One synchronized main | `git rev-list --left-right --count main...origin/main` = `0 0`; only `main` and `origin/main`; `archive/house-history` present | GREEN |
+| Short-lived branches/contracts | no active topic branch remains; branch templates exist and every promoted slice used a scoped owner/handoff before closeout | GREEN |
+| Canonical dependencies | `pyproject.toml` is the source; requirements files declare compatibility role; editable install and `pip check` evidence are recorded in earlier portability gate | GREEN |
+| FLUJO APP local interface | bounded foreground start on `127.0.0.1:8765`; `GET /api/mak` returned `200`; process terminated by trap | GREEN |
+| MAK local interface | existing loopback hub returned `200` for all nine GET routes, including portfolio inbox; internal services stayed on `8890/8891` | GREEN |
+| Consumer-backed integrations | full canonical pytest suite exit 0; focused RD, SCD, research, runtime, publication and portfolio gates exit 0 | GREEN |
+| Duplicate/obsolete handling | only verified ghost registry rows were removed; source trees, generated products, databases, quarantine, session evidence and WIN were preserved | GREEN |
+| Handoff continuity | this file records commands, exit codes, files, risks and next action for each current phase | GREEN |
+
+Final runtime commands:
+
+    GET-only MAK matrix: 9 of 9 routes returned HTTP 200 and valid JSON; exit 0
+    bounded FLUJO APP: GET /api/mak -> 200; exit 0; temporary process terminated
+
+The pre-existing user units for MAK remained active; this turn did not start,
+stop, enable or reconfigure a service. The failed combined-shell attempt was a
+tool safety rejection before execution, not a repository or runtime failure.
+No files besides this handoff were changed by the audit; no staged evidence or
+HTML worktree changes were absorbed.
+
+Disposition: `OBJECTIVE_REQUIREMENTS_CURRENTLY_GREEN;
+RUNTIME_AND_EVIDENCE_BOUNDARIES_PRESERVED; NO_NEW_SERVICE; NO_BULK_STAGE`.
+
+## Next concrete action
+
+Commit and push this final audit, then perform one post-push status/topology
+check. If it remains green, the restructuring objective is achieved for the
+authorized local scope; leave the goal record complete and keep future work as
+separate, explicitly requested feature/bug slices rather than reopening the
+house consolidation.
+
+Last verified: 2026-08-15 America/Santiago — all current objective checks
+passed; final audit publication is pending.
