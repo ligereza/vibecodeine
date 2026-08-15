@@ -9914,3 +9914,46 @@ any copied branch during the copy gate.
 
 Last verified: 2026-08-15 America/Santiago — tag b9f9a472 and main 3e0da4e
 verified; exact source-branch copy gate is next.
+
+## Phase 486 — MAK branch topology consumer slice
+
+The exact source/mak copy was triangulated against the active branch contract.
+Its useful branch-state change was isolated into work/mak-ownership rather than
+copying the historical branch wholesale:
+
+- main is the only canonical branch;
+- source/* is classified as source_copy;
+- work/*, integration/*, codex/* and dependabot/* are temporary_work;
+- mak, rd, iskvw, mejoras and mak-svg are legacy_transition;
+- unknown refs are reported and block autonomy status instead of being silently
+  accepted.
+
+The active slice changed only the autonomy branch classifier, its focused tests,
+the branch-related workflow guards, the README SVG refresh source string, and
+the already-present disabled Claude workflow. No runtime database, WIN source,
+provider, SSH call or service was touched. The disabled workflow has manual
+dispatch only, no permissions, and an always-false job.
+
+Foreground command:
+
+    PYTHONPATH=src:. /home/mak/vibecodeine/.venv/bin/pytest -q tests/test_autonomia_cli.py tests/test_git_web_contract.py tests/test_readme_svg.py
+    python3 -m py_compile src/flujo/autonomia.py tools/update_readme_svg.py
+
+Result: 19 tests passed, exit 0; compilation exit 0.
+
+The nine source/* copies remain byte-exact at their historical tips. This
+slice updates the first target work branch from current main while preserving
+each source copy as a clean triangulation input.
+
+Disposition:
+BRANCH_POLICY_CURRENT; SOURCE_COPIES_EXACT; MAK_SLICE_GREEN;
+UNKNOWN_REFS_BLOCKED; NO_RUNTIME_MUTATION.
+
+## Next concrete action
+
+Commit and publish the bounded work/mak-ownership slice, merge it into main,
+then triangulate source/rd and source/iskvw against their physical consumers.
+Do not promote broad historical diffs or stale branch metadata.
+
+Last verified: 2026-08-15 America/Santiago — work/mak-ownership branch
+topology slice passes focused tests; publication and main merge are next.

@@ -16,14 +16,14 @@ def test_ci_targets_linux_and_canonical_branches_only():
 
     assert "windows-latest" not in text
     assert "os: [ubuntu-latest]" in text
-    assert "branches: [main, mak, rd, iskvw]" in text
+    assert "branches: [main]" in text
     assert "mejoras" not in text
 
 
 def test_branch_audit_preserves_all_canonical_lines():
     text = _workflow("podar_ramas.yml")
 
-    assert 'PROTEGIDAS="main mak rd iskvw"' in text
+    assert 'PROTEGIDAS="main"' in text
     assert "contents: write" not in text
     assert "git push" not in text
     assert "--delete" not in text
