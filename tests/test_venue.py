@@ -326,6 +326,16 @@ def test_la_sala_demo_se_regenera_igual():
     )
 
 
+def test_el_check_de_scd_no_escribe_el_json_canonico():
+    """CI can verify the demo without invoking the default writer."""
+    sys.path.insert(0, str(REPO / "tools"))
+    import venue_geometria_scd
+
+    antes = DEMO.read_bytes()
+    assert venue_geometria_scd.main(["venue_geometria_scd.py", "--check"]) == 0
+    assert DEMO.read_bytes() == antes
+
+
 def test_la_sala_demo_mide_limpio():
     """The demo passes its own numeric bar: the counts the PR declared, zero
     zero-length segments, and a drawn stage that matches the declared measure

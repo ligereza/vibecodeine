@@ -19,6 +19,7 @@ entero y el visor no se entera.
 Uso:
     py tools/venue_geometria_scd.py            # escribe data/venues/scd-plaza-egana.json
     py tools/venue_geometria_scd.py --stdout   # lo imprime, no escribe
+    py tools/venue_geometria_scd.py --check    # verifica el JSON, no escribe
 """
 from __future__ import annotations
 
@@ -278,6 +279,20 @@ def documento() -> dict:
 def main(argv: list[str]) -> int:
     doc = documento()
     texto = json.dumps(doc, ensure_ascii=False, indent=1) + "\n"
+    if "--check" in argv and "--stdout" in argv:
+        print("use only one of --check or --stdout", file=sys.stderr)
+        return 2
+    if "--check" in argv:
+        try:
+            existente = json.loads(DESTINO.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            print(f"cannot read canonical venue JSON: {exc}", file=sys.stderr)
+            return 2
+        if existente != doc:
+            print(f"out of date: {DESTINO.relative_to(REPO)}", file=sys.stderr)
+            return 1
+        print(f"OK {DESTINO.relative_to(REPO)} matches generator")
+        return 0
     if "--stdout" in argv:
         print(texto)
         return 0
