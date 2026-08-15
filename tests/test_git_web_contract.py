@@ -20,14 +20,14 @@ def test_ci_targets_linux_and_canonical_branches_only():
     assert "mejoras" not in text
 
 
-def test_branch_audit_preserves_all_canonical_lines():
-    text = _workflow("podar_ramas.yml")
+def test_git_topology_guard_requires_one_trunk_and_archive_tag():
+    text = _workflow("git-topology.yml")
 
-    assert 'PROTEGIDAS="main"' in text
+    assert "branches: [main]" in text
+    assert "archive/house-history" in text
+    assert "Unexpected permanent remote branch refs" in text
     assert "contents: write" not in text
     assert "git push" not in text
-    assert "--delete" not in text
-    assert "no se borraron ramas" in text
 
 
 def test_automated_gates_cannot_publish_repo_changes():
