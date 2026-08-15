@@ -17,7 +17,10 @@ Machine-facing identifiers and contracts use English ASCII. Human-facing
 products may use correct Spanish. Run `python3 -m flujo --help` for the current
 CLI contract and `python3 -m flujo doctor` for local diagnostics.
 
-Git topology is intentionally small: `main` is the reviewed trunk;
-`integration/house-restructure` is the current promotion lane; `portfolio/web`,
-`rd/runtime` and `mak/ownership` are bounded domain lanes. Domain lanes are
-temporary delivery surfaces, not permanent silos or competing applications.
+Git topology is intentionally small: `main` is the only canonical trunk.
+`source/*` contains the exact preserved copies of the historical local branch
+tips and is not an active runtime source. `work/*` is temporary delivery
+space; the currently published `work/mak-ownership` slice is retained for
+traceability until its promotion lifecycle closes. No permanent portfolio,
+RD or MAK domain branches exist, and no old branch name is an active source of
+truth.
