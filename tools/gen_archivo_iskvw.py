@@ -2,9 +2,9 @@
 """Las dos fuentes de iskvw, en la forma que lee cualquier piel.
 
 Antes de esto, las obras del artista y el micelio de MAK no se podian mirar
-juntos: las obras traen datos ricos y NINGUN vinculo explicito, y el micelio
-trae 3141 vinculos medidos y casi ningun dato por nodo. Cada piel escribia su
-propio lector y servia para una sola fuente.
+juntos: cada fuente tenia su forma y cada piel escribia su propio lector. Esta
+capa las entrega como piezas y vinculos sin que la piel tenga que conocer el
+origen.
 
 Aca las dos salen en la misma forma -- piezas y vinculos -- descrita en
 `iskvw/ESQUEMA_ARCHIVO.md`. Una piel pide eso y no necesita saber que hay
@@ -18,11 +18,10 @@ Uso:
     py tools/gen_archivo_iskvw.py --fuente todo
     py tools/gen_archivo_iskvw.py --fuente todo --incluir-ensayos
 
-`--fuente todo` intenta el micelio EN VIVO y, si no responde (el caso de CI:
-publicar_iskvw.yml corre en ubuntu-latest y no alcanza la caja, LAN privada),
-cae al snapshot versionado en iskvw/datos/micelio.json -- escrito por la caja
-misma via cultura/mak_plataforma/entregar_micelio.py, porque solo ella puede
-alcanzarse a si misma.
+`--fuente todo` intenta el micelio EN VIVO y, si no responde (por ejemplo, CI
+no alcanza la LAN privada de la caja), cae al snapshot versionado en
+`iskvw/datos/micelio.json`. La promoción de ese snapshot se revisa en `main`;
+las puntas `source/*` son preservación histórica, no runtime.
 
 Essays are explicit opt-in. Their iconographic annex is not junk: it is a
 research guarantee lane. If MAK claims to understand a topic, the concepts and
@@ -59,12 +58,10 @@ ENSAYOS = RAIZ / "docs" / "cultura" / "ensayos"
 ANIMADAS = RAIZ / "iskvw" / "datos" / "animadas.json"
 LASER = RAIZ / "iskvw" / "datos" / "laser.json"
 CURADURIA = RAIZ / "iskvw" / "datos" / "curaduria.json"
-# Snapshot committed by cultura/mak_plataforma/entregar_micelio.py, running
-# ON the box (2026-08-01): publicar_iskvw.yml runs on ubuntu-latest, which
-# was never going to reach the box's private-LAN address -- confirmed the
-# same day by fetching the live archivo.json and finding 0 of 269 published
-# vinculos were clase "semantico". Same committed-snapshot shape campo.json
-# already uses for obra positions; this covers the micelio's measured links.
+# Snapshot committed from the MAK box: the Pages runner cannot assume access to
+# the private LAN, so the checked-in snapshot is the deterministic fallback.
+# It uses the same reproducible-snapshot principle as campo.json positions and
+# carries the micelio's measured links without opening a service.
 MICELIO_SNAPSHOT = RAIZ / "iskvw" / "datos" / "micelio.json"
 
 # Por defecto el micelio se pide a la variable de entorno, no a una IP escrita
@@ -354,11 +351,10 @@ def main() -> int:
                   file=sys.stderr)
             if args.fuente == "micelio":
                 return 1
-            # CI no puede alcanzar la caja (LAN privada, publicar_iskvw.yml
-            # corre en ubuntu-latest) -- no es una falla del snapshot, es el
-            # motivo por el que existe. Sin el, "todo" seguia sin ningun
-            # vinculo semantico (0 de 269, medido 2026-08-01); con el, lleva
-            # lo ultimo que la caja pudo empujar.
+            # CI no puede asumir acceso a la caja (LAN privada, workflow en
+            # ubuntu-latest); no es una falla del snapshot, es el motivo por
+            # el que existe. Con él, "todo" lleva lo último promovido desde
+            # MAK en vez de degradar silenciosamente a una sola fuente.
             snap = desde_micelio_snapshot()
             if snap["piezas"] or snap["vinculos"]:
                 print(f"aviso: uso el snapshot versionado en su lugar "

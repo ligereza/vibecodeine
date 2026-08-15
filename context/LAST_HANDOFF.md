@@ -10305,3 +10305,44 @@ Rollup without explicit authorization. Keep current operational truth in
 Last verified: 2026-08-15 America/Santiago — local portfolio projection is
 current against the available MAK snapshot; the only remaining question is the
 tracked publication path, not the archive schema or skin runtime.
+
+## Phase 494 — portfolio publication path proven and stale workflow notes removed
+
+The tracked publication path is coherent: `.github/workflows/publicar_iskvw.yml`
+regenerates `iskvw/datos/archivo.json` with `--fuente todo` before copying
+`iskvw/` into the Pages staging directory; `.github/workflows/ci.yml` performs
+the same regeneration before verification. The generated JSON is therefore a
+build input, not a versioned source. The workflow remains explicit-dispatch
+only and does not start a local service.
+
+The local Pages staging recipe was run in a temporary directory (no deploy):
+
+    cp -r iskvw/. <tmp>/_sitio/
+    cp iskvw/piel/campo/index.html <tmp>/_sitio/index.html
+    sed -i '<relative-path rewrite>' <tmp>/_sitio/index.html
+    <required-file and index/disk coherence assertions>
+
+Exit 0: `pages_staging=OK`; the staged projection had 1,690 pieces and 4,729
+links, 208 traces, 219 measured field records, zero missing trace IDs, and zero
+zero-byte SVGs; the staging payload was 6.2 MB. No service, external provider,
+database, WIN file or published site changed.
+
+Comments in the tracked workflow and generator files were also corrected to
+remove stale fixed counts and the historical `mak` branch reference. The
+runtime commands were unchanged; only operational guidance was refreshed.
+
+Disposition:
+PORTFOLIO_PAGES_INPUTS_CURRENT; PAGES_STAGING_GREEN;
+WORKFLOW_GENERATES_IGNORED_PROJECTION; NO_STALE_BRANCH_GUIDANCE;
+NO_DATABASE_OR_WIN_MUTATION.
+
+## Next concrete action
+
+Run a final read-only synchronization audit from `/home/mak/*`: verify
+`main=origin/main`, the one preservation tag, the nine exact `source/*` tips,
+and the retained worktree branch; then choose the next active consumer from the
+MAK surface. Do not stage unrelated evidence, commit ignored generated JSON,
+delete the open worktree, or create another operational map.
+
+Last verified: 2026-08-15 America/Santiago — portfolio source, generated
+projection, Pages workflow and CI agree; publication staging passed locally.
