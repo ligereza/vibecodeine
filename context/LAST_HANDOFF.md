@@ -9748,3 +9748,47 @@ its authority boundary is separately proven.
 
 Last verified: 2026-08-15 America/Santiago — three-plane and RD reconciliation
 slice validated locally; source databases unchanged.
+
+## Phase 481 — inferential archaeology useful-code gate
+
+The physical candidate /home/mak/WIN/flujo/tools/inferential_archaeology.py and
+its focused suite /home/mak/WIN/flujo/tests/test_inferential_archaeology.py
+were first run against temporary test fixtures only. The suite passed 27 tests,
+exit 0. The source and test files were then added to the active MAK authoring
+tree with byte-identical SHA-256 values:
+
+- tools/inferential_archaeology.py:
+  806ac9116f27a754cfd547d7047de9abfb1e74bcdd29db3a09dc7f45ebf5d08c
+- tests/test_inferential_archaeology.py:
+  c21d48d12ddd4449bb5633194dfafcee30c4419d2502306761a9845b4f0737a8
+
+Foreground validation from the active tree:
+PYTHONPATH=src:. /home/mak/vibecodeine/.venv/bin/pytest -q
+tests/test_inferential_archaeology.py tests/test_source_pipeline.py
+tests/test_three_plane_manifest.py tests/test_knowledge_reconciliation.py
+returned 67 passed, exit 0. Python compilation of the new tool and the
+already-integrated research/knowledge modules returned exit 0.
+
+This is useful local progress: it builds a deterministic evidence index across
+Codex/Claude/VS Code/MAK sources, SQLite FTS evidence, and optional relational
+events without changing those sources. Its CLI defaults point at real session
+roots, so those defaults remain prohibited during integration; future use must
+pass explicit reviewed roots and a temporary output directory. No session
+store, database, provider, network source, or generated runtime output was
+touched.
+
+Disposition:
+INFERENTIAL_ARCHAEOLOGY_INTEGRATED_READ_ONLY; OFFLINE_GATE_GREEN;
+REAL_SESSION_SCAN_DEFERRED; NO_SOURCE_MUTATION.
+
+## Next concrete action
+
+Stage only the two archaeology files and their Phase 481 evidence, commit the
+bounded slice on mak/ownership, merge it into detached main, publish main and
+its archive tag, then verify that GitHub still exposes exactly one head and
+that all preserved remote tags resolve. Keep sync_mak_safe.py and the
+postgres_* candidates archived; they are not required for the local read-only
+objective and have unsafe or unproven runtime boundaries.
+
+Last verified: 2026-08-15 America/Santiago — archaeology candidate passed
+offline fixtures and active-tree validation; publication remains pending.
