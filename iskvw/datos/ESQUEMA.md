@@ -1,5 +1,9 @@
 # Qué hay dentro de `obras.json`
 
+> Este archivo describe el catálogo manual de 8 herramientas/obras declaradas.
+> No es el archivo público completo. Para la proyección que consume la piel,
+> usa `../ESQUEMA_ARCHIVO.md` y `archivo.json`.
+
 Es una lista de obras. Cada obra es un objeto con estos campos.
 
 Lo importante para quien dibuja: **algunos campos pueden venir vacíos o en

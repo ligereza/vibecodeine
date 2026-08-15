@@ -1,27 +1,30 @@
 # iskvw · la cara visible
 
-El portafolio cambia seguido. Esta carpeta existe para que **cambiar el estilo
-no signifique rehacer el sitio**.
+El portafolio cambia seguido. Esta carpeta separa fuentes, contrato y pieles:
+**cambiar el estilo no significa rehacer el sitio ni reescribir los datos**.
 
 ```
-  datos/obras.json     el contenido            <- no se toca al cambiar de estilo
-  datos/ESQUEMA.md     qué hay en ese archivo
-  CONTRATO.md          qué debe cumplir cualquier piel
-  PROMPT_ESTETICA.md   lo que se le pasa a un agente para pedir una estética nueva
-  piel/                cada estilo, en su propia carpeta. Se despegan y se cambian
+  datos/obras.json     catálogo pequeño de herramientas/obras declaradas a mano
+  datos/micelio.json   snapshot de relaciones que MAK produjo
+  datos/campo.json     posiciones medidas y capas del archivo
+  datos/archivo.json   proyección regenerable que consume una piel (no versionada)
+  ESQUEMA_ARCHIVO.md   contrato de forma y reglas de la proyección
+  cultura/mak_plataforma/contrato_archivo.py  conversión pura compartida
+  PROMPT_ESTETICA.md   instrucciones para pedir una piel nueva
+  piel/                cada estilo, en su propia carpeta
 ```
 
 ## Para pedir un estilo nuevo
 
-Pasale a un agente —Arena, Google AI Studio, el que sea— estos tres archivos:
+Pasale a un agente —Arena, Google AI Studio, el que sea— estos recursos:
 
     PROMPT_ESTETICA.md
-    CONTRATO.md
+    cultura/mak_plataforma/contrato_archivo.py
     datos/ESQUEMA.md
 
 Lo que devuelva va a `piel/<nombre>/`. No tiene que tocar `datos/` ni nada más.
-Si para que funcione hay que editar el contenido, la propuesta no cumple el
-contrato.
+Si para que funcione hay que editar el contenido o inventar campos, la
+propuesta no cumple el contrato.
 
 ## Por qué así
 

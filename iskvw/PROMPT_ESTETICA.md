@@ -1,15 +1,15 @@
 # Prompt para pedir una estética nueva
 
 Copiá todo lo que está bajo la línea y pegalo en Arena, en Google AI Studio o en
-el agente que uses, **junto con** `CONTRATO.md` y `ESQUEMA_ARCHIVO.md`.
+el agente que uses, **junto con** `cultura/mak_plataforma/contrato_archivo.py`
+y `ESQUEMA_ARCHIVO.md`. Ese módulo es el contrato ejecutable compartido; no
+existe un `CONTRATO.md` separado en este repo.
 
-Los tres archivos tienen que decir lo MISMO. El 2026-08-01 no lo decían: este
-prompt mandaba leer `archivo.json` y entregar contra `obras.json`, declaraba
-993 piezas donde había 479, y la línea de arriba pedía adjuntar `datos/ESQUEMA.md`,
-que documenta otro archivo. El 2026-08-05 se corrigió otra mezcla: los ensayos
-ilustrados de research no son el archivo público por defecto. Un modelo web que reciba instrucciones que se
-contradicen escribe una piel para datos que no existen, y eso no se descubre
-hasta publicarla.
+Los tres recursos tienen que decir lo MISMO. Esta versión separa el catálogo
+manual `obras.json`, la proyección `archivo.json` y el contrato ejecutable; los
+ensayos ilustrados de research tampoco entran al archivo público por defecto.
+Un modelo web que reciba instrucciones contradictorias escribe una piel para
+datos que no existen, y eso no se descubre hasta publicarla.
 
 Lo que devuelva va a `piel/<nombre>/` y no toca nada más.
 
@@ -19,9 +19,9 @@ Necesito la **cara visible** de un archivo de obra digital. Se llama **ISKVW**.
 No es un portafolio de agencia ni un currículum: es el archivo de un artista, y
 lo que importa es dejar ver la obra, no venderla.
 
-**Leé primero los archivos que te paso**: `CONTRATO.md` dice qué tiene que
-cumplir cualquier propuesta, y `ESQUEMA_ARCHIVO.md` dice exactamente qué datos
-vas a recibir. Todo lo que muestres tiene que salir de ahí.
+**Leé primero los recursos que te paso**: `cultura/mak_plataforma/contrato_archivo.py`
+define la conversión compartida, y `ESQUEMA_ARCHIVO.md` define exactamente qué
+datos vas a recibir. Todo lo que muestres tiene que salir de ahí.
 
 Lo que recibís es **un solo archivo**, `datos/archivo.json`, con dos listas:
 **piezas** y **vínculos entre piezas**. No importa qué hay detrás — obras del
@@ -30,14 +30,16 @@ forma. Los informes y conceptos de research existen como vista explícita, pero
 no entran al archivo público por defecto. Eso es a propósito: tu piel no tiene que saber de dónde salió, y el día
 que aparezca un tipo de pieza nuevo, tu piel sigue funcionando sin tocarla.
 
-Hoy son **446 piezas y 237 vínculos**, medidos sobre el archivo que el sitio
-publica (2026-08-05). Las piezas se reparten en 219 `pieza_grafica` y 227
-`obra`. Los vínculos son 219 `manual` y 18 `etiqueta`.
+En la proyección local actual son **1.690 piezas y 4.729 vínculos** (snapshot
+MAK, 2026-08-15). Se reparten en 104 `codigo` y 1.586 `obra`; los vínculos son
+4.711 `semantico` y 18 `etiqueta`. Estas cifras son una medición del snapshot,
+no un contrato fijo: al cambiar la fuente, el contador debe regenerarse.
 
 Cada pieza trae: `id`, `titulo`, `clase`, `fecha`, `resumen`, `etiquetas`,
 `peso`, `medio`, `estado` y `extra`. Cada vínculo trae `de`, `a`, `peso` y
-`clase`. **Ninguna pieza trae coordenadas**: si tu propuesta necesita
-posiciones, las calcula ella.
+`clase`. La proyección actual añade `posicion` solo a las 219 piezas con
+coordenadas medidas en `campo.json`; una piel debe tolerar que falte y nunca
+inventarla.
 
 Los vínculos traen **peso**, y su `clase` dice de qué están hechos: `manual` es
 una relación declarada, `etiqueta` sólo dice que dos piezas comparten una
@@ -94,10 +96,10 @@ Una carpeta autocontenida con un `index.html` que lea **`datos/archivo.json`**
 —el mismo que se describe arriba— con rutas relativas desde `piel/<nombre>/`, o
 sea `../../datos/archivo.json`. Si usás librerías, que viajen adentro.
 
-Este párrafo decía `datos/obras.json` y se contradecía con el resto del
-documento: `obras.json` son 8 entradas y son HERRAMIENTAS del repo, no obras.
-Una piel escrita contra ese archivo muestra 8 cosas donde hay 446, y el error
-no se ve hasta que se publica.
+`datos/obras.json` contiene 8 entradas y son HERRAMIENTAS del repo, no el
+archivo público completo. Una piel escrita contra ese archivo mostraría 8 cosas
+en lugar de la proyección actual; por eso la entrada obligatoria es
+`datos/archivo.json`.
 
 Y aparte, en tu respuesta: **tres o cuatro líneas explicando cuál es la idea**.
 Qué es esto, por qué esta forma y no otra, y qué hace el visitante. Si no podés

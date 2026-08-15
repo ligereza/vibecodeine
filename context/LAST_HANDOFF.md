@@ -10247,3 +10247,61 @@ this handoff only.
 Last verified: 2026-08-15 America/Santiago — `main` includes `e61975e`; the
 crosswalk has no missing evidence paths; the active RD and technical venue
 surfaces are separated and validated.
+
+## Phase 493 — portfolio projection refreshed from current MAK snapshot
+
+The portfolio boundary was using an ignored generated `iskvw/datos/archivo.json`
+from 2026-07-31 (479 pieces, 269 links), while the declared generator and
+current MAK snapshot had advanced. The old generated artifact was preserved at
+`context/quarantine/phase493_portfolio_projection/archivo.pre-refresh-20260815.json`
+with SHA-256
+`7c11268b0457bf6ee2e4885150c62ab06e7264f09ccbc1dd4c3435b22980b925`.
+
+The declared command was run in the foreground:
+
+    PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src /home/mak/vibecodeine/.venv/bin/python tools/gen_archivo_iskvw.py --fuente todo --salida iskvw/datos/archivo.json --posiciones iskvw/datos/campo.json
+
+The live micelio request was refused, so the generator used the local
+`iskvw/datos/micelio.json` snapshot (1,530 pieces, 4,921 links) and produced
+`iskvw/datos/archivo.json` with 1,690 pieces, 4,729 links, 104 `codigo`, 1,586
+`obra`, 4,711 `semantico`, 18 `etiqueta`, and 219 measured positions. The new
+artifact SHA-256 is
+`55badebf0b0d1b524f3d4a0f52198b3da088f431c6a7c72f9523fcf119d0fe7c`.
+
+Foreground validation:
+
+    PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src /home/mak/vibocodeine/.venv/bin/python tools/validar_curaduria.py
+    PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:. /home/mak/vibecodeine/.venv/bin/pytest -q tests/test_contrato_archivo.py tests/test_gen_archivo_iskvw.py tests/test_archivo_iskvw_posicion.py tests/test_curaduria.py tests/test_validar_curaduria.py tests/test_iskvw_vinculos.py tests/test_iskvw_piel_smoke.py tests/test_iskvw_piel_medir.py
+    node tools/iskvw_piel_medir.mjs
+
+Results: curatoría exited 0 with `0 errores, 0 avisos`; the focused portfolio
+suite exited 0; the Node measurement exited 0 with a worst case of 2,098
+segments/frame, below the tested 6,000 ceiling. No source code, database, WIN
+file, external provider or service changed. The generated artifact is ignored
+by Git by design; its source and command are now explicit, and the previous
+artifact is quarantined rather than active.
+
+The stale ISKVW instructions were corrected in the existing files
+`iskvw/README.md`, `iskvw/ESQUEMA_ARCHIVO.md`, `iskvw/PROMPT_ESTETICA.md` and
+`iskvw/datos/ESQUEMA.md`: they now distinguish the eight-entry `obras.json`
+catalog from the generated archive and point to the real executable contract
+`cultura/mak_plataforma/contrato_archivo.py`; no `CONTRATO.md` is claimed to
+exist.
+
+Disposition:
+PORTFOLIO_PROJECTION_CURRENT_LOCAL; OLD_GENERATED_ARTIFACT_QUARANTINED;
+PORTFOLIO_SKIN_GREEN; STALE_ISKVW_INSTRUCTIONS_REMOVED;
+NO_DATABASE_OR_WIN_MUTATION.
+
+## Next concrete action
+
+Audit the tracked portfolio publication workflow and deployment inputs from
+`/home/mak/*`: prove that it regenerates `iskvw/datos/archivo.json` from the
+current source or intentionally publishes a documented fallback. Do not commit
+the ignored generated JSON, do not promote `web/dist*`, and do not repair Node /
+Rollup without explicit authorization. Keep current operational truth in
+`MAPA.md` and this handoff.
+
+Last verified: 2026-08-15 America/Santiago — local portfolio projection is
+current against the available MAK snapshot; the only remaining question is the
+tracked publication path, not the archive schema or skin runtime.
