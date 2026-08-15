@@ -12,24 +12,11 @@
 
 import { useEffect, useState } from 'react';
 import { Layers, CircleDot, FileText, AlertTriangle } from 'lucide-react';
-
-interface Proyecto {
-  id: string;
-  nombre: string;
-  linea: string;
-  estado: string;
-  descripcion: string;
-  tags: string[];
-  ruta?: string;
-  url?: string;
-}
-interface Data {
-  titulo?: string;
-  proyectos: Proyecto[];
-  prototipo_generado?: boolean;
-  prototipo_ruta?: string;
-  error?: string;
-}
+import {
+  fetchPortfolioCatalog,
+  type PortfolioCatalog,
+  type PortfolioProject,
+} from '../data/portfolio';
 
 const COLOR_ESTADO: Record<string, string> = {
   activo: 'border-emerald-700 text-emerald-300',
@@ -39,33 +26,33 @@ const COLOR_ESTADO: Record<string, string> = {
 };
 
 export default function PortafolioPanel() {
-  const [data, setData] = useState<Data | null>(null);
+  const [data, setData] = useState<PortfolioCatalog | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
   const [linea, setLinea] = useState<string>('todas');
 
   useEffect(() => {
-    fetch('/api/portafolio')
-      .then(r => r.json())
+    fetchPortfolioCatalog()
       .then(setData)
-      .catch(e => setData({ proyectos: [], error: String(e) }))
+      .catch(e => setError(String(e)))
       .finally(() => setCargando(false));
   }, []);
 
   if (cargando) return <div className="p-6 text-sm text-neutral-400">Leyendo el catálogo…</div>;
 
-  if (data?.error) {
+  if (error) {
     return (
       <div className="p-6">
         <div className="flex items-center gap-2 mb-2">
           <AlertTriangle className="w-5 h-5 text-amber-400" />
           <h2 className="text-lg font-semibold">No se pudo leer el catálogo</h2>
         </div>
-        <pre className="text-xs text-neutral-500 whitespace-pre-wrap">{data.error}</pre>
+        <pre className="text-xs text-neutral-500 whitespace-pre-wrap">{error}</pre>
       </div>
     );
   }
 
-  const proyectos = data?.proyectos ?? [];
+  const proyectos: PortfolioProject[] = data?.proyectos ?? [];
   const lineas = ['todas', ...Array.from(new Set(proyectos.map(p => p.linea)))];
   const visibles = linea === 'todas' ? proyectos : proyectos.filter(p => p.linea === linea);
   const activos = proyectos.filter(p => p.estado === 'activo').length;
