@@ -14,13 +14,11 @@ def test_autonomy_status_reports_clean_blockers(monkeypatch, tmp_path):
         "current": "codex/test",
         "dirty": [" M src/x.py"],
         "remote_branches": ["main", "mak", "rd", "iskvw"],
-        "canonical_present": {
-            "main": True,
-            "mak": True,
-            "rd": True,
-            "iskvw": True,
-        },
-        "extra_remote_branches": [],
+        "canonical_present": {"main": True},
+        "legacy_transition_branches": ["iskvw", "mak", "rd"],
+        "source_copy_branches": [],
+        "temporary_work_branches": [],
+        "unclassified_remote_branches": [],
     })
     monkeypatch.setattr(autonomia, "_open_prs", lambda: [])
     monkeypatch.setattr(autonomia, "_provider_state", lambda: {
@@ -72,8 +70,11 @@ def test_autonomy_status_derives_operational_surface(monkeypatch, tmp_path):
         "current": "mak",
         "dirty": [],
         "remote_branches": ["main", "mak", "rd", "iskvw"],
-        "canonical_present": {name: True for name in autonomia.CANONICAL_BRANCHES},
-        "extra_remote_branches": [],
+        "canonical_present": {"main": True},
+        "legacy_transition_branches": ["iskvw", "mak", "rd"],
+        "source_copy_branches": [],
+        "temporary_work_branches": [],
+        "unclassified_remote_branches": [],
     })
     monkeypatch.setattr(autonomia, "_open_prs", lambda: [{
         "number": 507,
@@ -92,6 +93,63 @@ def test_autonomy_status_derives_operational_surface(monkeypatch, tmp_path):
     }
     assert status["operational"]["visual_surface"] == {"readme_svg": "clean"}
     assert "review_open_promotion_prs" in status["operational"]["next_actions"]
+
+
+def test_branch_classifier_separates_current_and_historical_refs():
+    assert autonomia._classify_branch("main") == "canonical"
+    assert autonomia._classify_branch("mak-svg") == "legacy_transition"
+    assert autonomia._classify_branch("source/iskvw") == "source_copy"
+    assert autonomia._classify_branch("work/portfolio-rebuild") == "temporary_work"
+    assert autonomia._classify_branch("dependabot/pip/pytest") == "temporary_work"
+    assert autonomia._classify_branch("feature/unknown") == "unclassified"
+
+
+def test_branch_state_reports_source_copies_without_blocking_them(monkeypatch):
+    outputs = {
+        ("branch", "--show-current"): "work/portfolio-rebuild",
+        ("status", "--porcelain"): "",
+        ("for-each-ref", "--format=%(refname:short)",
+         "refs/remotes/origin"): "\n".join([
+             "origin/HEAD", "origin/main", "origin/source/iskvw",
+             "origin/source/rd", "origin/work/portfolio-rebuild",
+             "origin/feature/unknown",
+         ]),
+    }
+    monkeypatch.setattr(
+        autonomia, "_run_git",
+        lambda args: outputs.get(tuple(args), ""),
+    )
+
+    state = autonomia._branch_state()
+
+    assert state["current_classification"] == "temporary_work"
+    assert state["canonical_present"] == {"main": True}
+    assert state["source_copy_branches"] == ["source/iskvw", "source/rd"]
+    assert state["temporary_work_branches"] == ["work/portfolio-rebuild"]
+    assert state["unclassified_remote_branches"] == ["feature/unknown"]
+
+
+def test_missing_main_blocks_but_source_copies_do_not(monkeypatch, tmp_path):
+    monkeypatch.setattr(autonomia, "_branch_state", lambda: {
+        "current": "source/rd",
+        "dirty": [],
+        "remote_branches": ["source/rd"],
+        "canonical_present": {"main": False},
+        "legacy_transition_branches": [],
+        "source_copy_branches": ["source/rd"],
+        "temporary_work_branches": [],
+        "unclassified_remote_branches": [],
+    })
+    monkeypatch.setattr(autonomia, "_open_prs", lambda: [])
+    monkeypatch.setattr(autonomia, "_readme_svg_state", lambda: {"status": "clean"})
+
+    status = autonomia.autonomy_status(
+        common_path=str(tmp_path / "common.jsonl"),
+        batch_path=str(tmp_path / "batches.jsonl"),
+    )
+
+    assert status["ready"] is False
+    assert status["blockers"] == ["missing_canonical_branches:main"]
 
 
 def test_run_autonomy_dry_run_writes_briefs(monkeypatch, tmp_path):
