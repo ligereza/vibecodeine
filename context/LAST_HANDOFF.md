@@ -9648,3 +9648,38 @@ provider; keep n8n discarded and XIO out of scope.
 
 Last verified: 2026-08-15 America/Santiago — GitHub has one branch, `main`;
 remote historical heads are recoverable tags.
+
+## Phase 478 — useful historical code audit
+
+The user asked whether branch cleanup lost useful local progress. The answer is
+no for preservation, but yes for current integration: some useful candidates
+are only in the archive tags and physical MAK/WIN surfaces. The strongest
+confirmed pair is `fondart_corpus.py` plus `source_pipeline.py`: their Git blob
+IDs exactly match `/home/mak/research/` and `/home/mak/WIN/flujo/`, while both
+are absent from current `main`. They implement source-preserving Fondart
+corpus work, explicit URL capture/provenance, and optional Firecrawl/Crawl4AI
+backends with a recorded stdlib fallback.
+
+The same archive contains a three-plane manifest, read-only SQLite
+reconciliation, inferential archaeology and a guarded transport planner. These
+remain candidates, not active runtime. The old portfolio variants and venue
+files are not restored because current `main` contains newer user corrections.
+The complete audit is in `context/PHASE478_REMOTE_CANDIDATE_AUDIT.md`.
+
+No candidate was deleted or executed against external providers. Remote branch
+heads are now tags; GitHub has only `main`.
+
+Disposition:
+`REMOTE_HISTORY_SAFE; USEFUL_FONDART_CODE_FOUND;
+MAIN_INTEGRATION_STILL_PENDING; NO_EXTERNAL_PROVIDER_CALL`.
+
+## Next concrete action
+
+Run an offline static/import/fixture gate on the physical Fondart/source
+pipeline pair using temporary outputs only. If its contracts pass, promote
+that bounded research slice to `main`; if not, keep the exact tag and document
+the failing dependency. Do not run a live crawl, write research state or
+restore the old branch.
+
+Last verified: 2026-08-15 America/Santiago — useful Fondart/source code is
+preserved in archive tags and physical MAK/WIN, not yet integrated in `main`.
