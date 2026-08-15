@@ -22,13 +22,19 @@ Machine-facing identifiers and contracts use English ASCII. Human-facing
 products may use correct Spanish. Run `python3 -m flujo --help` for the current
 CLI contract and `python3 -m flujo doctor` for local diagnostics.
 
-Git topology is intentionally small: `main` is the only canonical trunk.
-`source/*` contains the exact preserved copies of the historical local branch
-tips and is not an active runtime source. `work/*` is temporary delivery
-space; the currently published `work/mak-ownership` slice is retained for
-traceability until its promotion lifecycle closes. No permanent portfolio,
-RD or MAK domain branches exist, and no old branch name is an active source of
-truth.
+Git topology is intentionally small: `main` is the only permanent branch and
+the only deployment trunk. The annotated tag `archive/house-history` is the
+single preservation point; it reaches the historical branch tips without
+keeping those names as live branches. Topic branches are optional and
+short-lived only while a bounded slice is being reviewed (`rd/*`,
+`portfolio/*`, `mak/*`, `tools/*` or `cleanup/*`); they merge directly to
+`main` and are deleted after promotion. There are no permanent domain,
+`source/*`, `work/*`, `develop`, `staging` or release branches.
+
+`.github/workflows/git-topology.yml` guards this invariant on `main`: remote
+branch refs must contain only `main`, and the preservation tag must exist.
+Domain separation lives in the physical owner/consumer boundaries above, not
+in parallel Git trunks.
 
 Ignored `web/dist*` and `dist_compartir/` files are generated delivery artifacts,
 not sources of truth. If they contain an older snapshot, use the tracked source

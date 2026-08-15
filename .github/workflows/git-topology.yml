@@ -1,0 +1,42 @@
+name: Git topology guard
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout complete history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Verify permanent trunk and archive point
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --prune origin '+refs/heads/*:refs/remotes/origin/*'
+
+          branches=$(git for-each-ref --format='%(refname:short)' refs/remotes/origin \
+            | sed 's|^origin/||' \
+            | grep -v '^HEAD$' \
+            | sort)
+          expected='main'
+          if [[ "${branches}" != "${expected}" ]]; then
+            echo 'Unexpected permanent remote branch refs:' >&2
+            printf '%s\n' "${branches}" >&2
+            exit 1
+          fi
+
+          git show-ref --verify --quiet refs/tags/archive/house-history
+          test "$(git cat-file -t archive/house-history)" = tag
+          archive_commit=$(git rev-parse 'archive/house-history^{}')
+          test "$(git cat-file -t "${archive_commit}")" = commit
+          echo "topology=main-only"
+          echo "archive_commit=${archive_commit}"
