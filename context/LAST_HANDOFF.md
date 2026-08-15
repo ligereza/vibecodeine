@@ -1,9 +1,33 @@
 # Operational Handoff
 
-## CURRENT AUTHORITATIVE CHECKPOINT — Phase 437
+## CURRENT AUTHORITATIVE CHECKPOINT — Phase 495
 
 Read this block first after compaction. Later phase notes are historical
 evidence unless they are superseded by this checkpoint or a newer checkpoint.
+
+- The active Git baseline is `/home/mak/flujo` on `main`; `origin/main` is
+  identical. The topology-policy commit and this continuity record are
+  identified in Phase 495 and by the current `HEAD`, respectively.
+- The repository now has exactly one local branch and one remote branch:
+  `main`. The only tag is the annotated `archive/house-history`, whose peeled
+  commit is `b9f9a472deaeee6002a96fc8236d75b06bfe24c4`.
+- The nine historical branch tips are preserved and reachable from that tag:
+  `source/ddbase` `4b8453c`, `source/iskvw` `66b6b47`, `source/mak`
+  `814b74c`, `source/mak-authority` `1d0b877`, `source/mak-linux` `5b7c54f`,
+  `source/rd` `338ec99`, `source/rd-evidence` `0bb5abe`,
+  `source/web-20260813` `69ec8c8` and `source/web-20260814` `1b86a58`.
+  `work/mak-ownership` was already an ancestor of `main` before its ref was
+  removed; no useful commit was lost.
+- `.github/workflows/git-topology.yml` now guards the final topology. CI runs
+  from `main`; Pages remains explicit-dispatch; domain separation is physical
+  ownership and consumer paths, not permanent Git branches.
+- This Git operation did not modify `WIN`, databases, generated portfolio
+  data, runtime source, credentials or the dirty deploy worktree. The remaining
+  broader house gates are recorded below and must not be confused with branch
+  restructuring: local Node/Rollup build parity, RD field/live mutation and
+  external-provider authority, and physical cleanup decisions.
+
+## Historical continuity before Phase 495
 
 - Latest continuation: Phases 347–359 verified the asset index/duplicate,
   SVG, ZIP export, intake guards, bilingual parser, JSON schema, job
@@ -10346,3 +10370,54 @@ delete the open worktree, or create another operational map.
 
 Last verified: 2026-08-15 America/Santiago — portfolio source, generated
 projection, Pages workflow and CI agree; publication staging passed locally.
+
+## Phase 495 — main-only topology promoted without losing historical work
+
+The old branch refs were audited before removal. The nine exact `source/*`
+tips were each proven reachable from `archive/house-history^{commit}`; the
+temporary `work/mak-ownership` tip `5b20e2251846ea033ae8fc089b2223fbaf031433`
+was proven an ancestor of `main`. Its work was therefore already promoted.
+
+The tracked topology contract was promoted first in commit
+`1f5dea8bc1feba371b663b62518ee184bfb33b08`:
+
+- `MAPA.md` now declares one permanent `main`, one archive tag and only
+  short-lived topic branches during active review.
+- `.github/workflows/podar_ramas.yml` was removed because it described a
+  non-mutating pruning workflow that no longer matched the desired state.
+- `.github/workflows/git-topology.yml` now requires remote `main` only and an
+  annotated `archive/house-history` tag.
+- `tests/test_git_web_contract.py` was updated for that contract; `6 passed`
+  with exit 0 and `git diff --check` passed.
+
+The remote update published `main` and deleted exactly these ten remote refs:
+the nine `source/*` copies and `work/mak-ownership`. Local branch refs were
+then removed with the same verified preservation gate. The final foreground
+sync returned:
+
+    local_branch_count=1
+    remote_branch_count=1
+    main_local=main_remote
+    remote_heads=refs/heads/main
+    remote_tags=refs/tags/archive/house-history
+
+The clean temporary worktree `/tmp/mak-branch-topology` was removed. Dirty
+worktrees, `/home/mak/flujo-deploy`, `/home/mak/WIN`, databases, credentials,
+portfolio projections and unrelated context evidence were not removed or
+staged. This is a branch/reference cleanup, not a physical-tree cleanup.
+
+Disposition:
+MAIN_ONLY_TOPOLOGY_CURRENT; HISTORICAL_TIPS_TAG_PRESERVED;
+REMOTE_LOCAL_SYNC_GREEN; NO_USEFUL_COMMIT_LOST; NO_RUNTIME_OR_WIN_MUTATION.
+
+## Next concrete action
+
+Run the final local topology assertion and a no-service repository health
+check from `/home/mak/flujo`; then continue only with the explicitly open
+physical/runtime gates above. Do not recreate `source/*`, `work/*`, domain
+branches or another operational map. Any future topic branch must be
+short-lived, target `main` directly, pass its consumer gate and be deleted
+after promotion.
+
+Last verified: 2026-08-15 America/Santiago — GitHub and local Git expose one
+branch (`main`) and one annotated preservation tag.
