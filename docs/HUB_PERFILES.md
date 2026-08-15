@@ -167,15 +167,15 @@ nunca la llama, asi que los precios de codigo quedan intactos ahi.
 
 ### Productoras RD embebidas
 
-Fuente real: `data/productoras/*.json` (15 archivos, versionados en el repo,
+Fuente real: `data/productoras/*.json` (20 archivos, versionados en el repo,
 NO gitignored -- `data/rd.db` si lo esta, es una proyeccion regenerable de
 esos mismos JSON via `src/flujo/rd/database.py`). El slug de cada productora
 es el nombre de archivo sin extension; el nombre viene del campo `"name"`.
-Se revisaron los 15 archivos a mano (2026-07-25): no tienen datos sensibles
-(instagram vacio o publico, notas editoriales, sin contactos/telefonos/
-emails), asi que se embebio un snapshot minimo `{slug, name}` en
-`web/src/data/productoras.ts`. Es solo de referencia visual en este bundle
--- todavia no se puede asociar un preset de layout a una productora (ver
+El snapshot entregable se regenera con `tools/gen_rd_standalone.py` desde la
+misma allowlist que usa el hub y queda en `web/src/data/rdDbEmbebida.json`.
+`web/src/data/productoras.ts` solo adapta esa proyeccion para Plano/Rider; no
+mantiene otra lista manual. Es solo de referencia visual en este bundle --
+todavia no se puede asociar un preset de layout a una productora (ver
 "Que NO puede hacer" arriba).
 
 ## 3. Archivos involucrados
@@ -185,7 +185,7 @@ emails), asi que se embebio un snapshot minimo `{slug, name}` en
 | `web/src/data/profiles.ts` | Perfiles del hub (Parte 1-2) |
 | `web/src/components/AppShell.tsx` | Shell que consume `profiles.ts`, sin ternarios de modo |
 | `web/src/data/planoConfig.ts` | Config versionada del bundle standalone (precios, placeholders de iconos/presets) |
-| `web/src/data/productoras.ts` | Snapshot `{slug, name}` de `data/productoras/*.json` |
+| `web/src/data/productoras.ts` | Adaptador `{slug, name}` de `rdDbEmbebida.json` |
 | `web/src/rdBrand.ts` | `applyPackPriceOverrides` / `resetPackPrices` / `PACKS_DEFAULT_PRICES` |
 | `web/src/components/PlanoStandalone.tsx` | Panel de configuracion + `<PlanoTool/>`, sin tocar `PlanoTool.tsx` |
 | `web/src/mainPlano.tsx` | Entry point separado (tree-shaking deja afuera el resto del hub) |
