@@ -1,6 +1,6 @@
 # LASER TOOLKIT — ÍNDICE
 
-Documento de enrutado para `laser-toolkit.html`. Léeme primero; abre el HTML solo
+Documento de enrutado para `docs/laser/toolkit.html`. Léeme primero; abre el HTML solo
 si necesitas el detalle de una sección concreta.
 
 ---

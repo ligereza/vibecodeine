@@ -19,7 +19,7 @@ En Windows también puedes usar `py` en lugar de `python`.
 flujo --help
 flujo <grupo> --help
 flujo <comando> --help
-python -m fluxo --help
+python -m flujo --help
 ```
 
 ## Verificacion del repo
@@ -50,8 +50,7 @@ airdrop         airdrop list, dry-run, apply, rollback, status, finish
 datadrop        datadrop scan, list, ingest, prepare
 knowledge       knowledge list, show, classify, ingest-example, logo-source, logo-lab
 hub (addon)     hub serve, index, route  (registrado via cli_addons.py, ver INTEGRACION_CLI.md)
-brand           [LEGACY] usar knowledge/logos en su lugar
-diario/portal   daily, portal, cotizaciones
+diario          daily, cotizaciones
 web             app, serve, package (build .exe desktop)
 varios          plano, clean, init
 ```
@@ -126,9 +125,8 @@ flujo knowledge list productoras
 flujo knowledge show <id>
 flujo knowledge classify "texto del correo"
 
-# Dashboard / portal / cotizaciones / web + delegacion
+# Dashboard / cotizaciones / web + delegacion
 flujo daily
-flujo portal --repo-url https://github.com/ligereza/vibecodeine  # HTML visual para jefatura
 flujo cotizaciones projects/plano/ejemplos/evento_ejemplo.json --para productora
 flujo app                   # ENTRADA DIARIA: app + hub pro (recomendado)
 flujo app --desktop         # ventana nativa (pywebview)
