@@ -9580,3 +9580,31 @@ read-only comparison or an explicitly approved migration slice.
 
 Last verified: 2026-08-15 America/Santiago — `main` promoted to `61a6eea`;
 physical RD authority documented without mutation.
+
+## Phase 476 — final closeout validation
+
+Clean detached `main` and the `main` ref both resolve to `6b14492`; the
+worktree has zero status entries. Final foreground checks passed:
+
+- targeted pytest: 63 passed, exit 0;
+- Python compilation: exit 0;
+- TypeScript: exit 0;
+- Vite build with bundled Node `v24.19.0`: exit 0, 1,829 modules transformed.
+
+The five-branch proposal has therefore collapsed to one permanent trunk plus
+one explicitly retained evidence lane: `main` and `mak/ownership`. Nine
+`archive/integrated/*` tags preserve the integrated milestones. `/home/mak/WIN`
+is present and remains historical read-only material. No service, cron, SSH,
+database writer or destructive cleanup was run.
+
+Disposition:
+`RESTRUCTURE_CLOSEOUT_GREEN; MAIN_ONLY_PERMANENT; EVIDENCE_LANE_EXPLICIT;
+WIN_PRESERVED; VALIDATION_COMPLETE`.
+
+## Next concrete action
+
+No further restructuring action is required. Any future work starts from
+`main` as a bounded consumer-specific slice; database reconciliation or a
+physical folder move requires its own authorization and rollback evidence.
+
+Last verified: 2026-08-15 America/Santiago — final closeout at `6b14492`.
