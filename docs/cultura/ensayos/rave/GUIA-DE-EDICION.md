@@ -7,27 +7,25 @@ Respuesta corta a tus tres preguntas:
    Cambiarlos **no puede** romper la animación.
 2. **¿Qué se puede editar?** → Prácticamente todo, en 4 niveles de riesgo (abajo).
 3. **¿Con qué tener cuidado?** → Con 6 cosas concretas, todas detectables
-   corriendo `python3 herramientas/validar.py` antes de publicar.
+   corriendo `python3 tools/iconos_conjunto.py validar --raiz docs/cultura/ensayos/rave` antes de publicar.
 
 ---
 
 ## 📁 Estructura
 
 ```
-informe-rave/
+docs/cultura/ensayos/rave/
 ├── iconos/                    ← AQUÍ EDITAS TÚ (16 archivos .svg)
 │   ├── 01-paradise-garage.svg
 │   ├── 02-warehouse-house-chicago.svg
 │   └── ... (hasta 16)
-├── datos/
-│   └── iconos.json            ← títulos y descripciones de las tarjetas
-├── herramientas/
-│   ├── validar.py             ← revisa que no rompiste nada
-│   ├── construir.py           ← regenera galeria.html desde /iconos
-│   └── extraer.py             ← (ya se usó; no hace falta volver a correrlo)
-├── exportados/                ← PNG que generes
+├── iconos.json                ← títulos, descripciones y anclas del ensayo
 ├── galeria.html               ← GENERADO. No lo edites a mano.
 └── GUIA-DE-EDICION.md
+
+El motor común vive en `tools/iconos_conjunto.py`; no hay una copia local de
+`validar.py`, `construir.py` ni `extraer.py`. Así los conjuntos de íconos no
+divergen entre ensayos.
 ```
 
 ### El ciclo de trabajo
@@ -35,9 +33,9 @@ informe-rave/
 ```bash
 # 1. edita los .svg que quieras en /iconos (cualquier editor de texto)
 # 2. revisa que todo esté sano
-python3 herramientas/validar.py
+python3 tools/iconos_conjunto.py validar --raiz docs/cultura/ensayos/rave
 # 3. regenera la galería
-python3 herramientas/construir.py
+python3 tools/iconos_conjunto.py construir --raiz docs/cultura/ensayos/rave --titulo "EL INFORME RAVE"
 # 4. abre galeria.html en el navegador
 ```
 
@@ -168,7 +166,7 @@ Estas son las **6 cosas que hay que cuidar**:
 ### El seguro contra todo esto
 
 ```bash
-python3 herramientas/validar.py
+python3 tools/iconos_conjunto.py validar --raiz docs/cultura/ensayos/rave
 ```
 
 Te dice exactamente qué está mal y en qué archivo:
@@ -193,7 +191,7 @@ keyframes inexistentes, clases descolgadas, ids duplicados y `url(#…)` rotos.
 cp iconos/05-shoom-smiley-acid-house.svg iconos/17-mi-version.svg
 ```
 
-Luego agrégalo a `datos/iconos.json` para que aparezca en la galería:
+Luego agrégalo a `iconos.json` para que aparezca en la galería:
 
 ```json
 {
@@ -206,22 +204,23 @@ Luego agrégalo a `datos/iconos.json` para que aparezca en la galería:
 }
 ```
 
-Y corre `construir.py`. Si el ícono copiado tenía `<defs>` con gradientes
+Y corre `tools/iconos_conjunto.py construir`. Si el ícono copiado tenía `<defs>` con gradientes
 (el 04, 09, 14 y 16 los tienen), **renombra sus ids** para que no choquen:
 `id="g4s"` → `id="g17s"`, y también `fill="url(#g4s)"` → `fill="url(#g17s)"`.
 
 ---
 
-## 🖼 Exportar a PNG
+## 🖼 Rasterizado
+
+Este conjunto no mantiene un exportador PNG duplicado. La galería y los SVG
+son los entregables; la medición de movimiento usa el comando común:
 
 ```bash
-pip install cairosvg pillow
-python3 herramientas/exportar_png.py           # 512 px por defecto
-python3 herramientas/exportar_png.py 1024      # tamaño a gusto
+python3 tools/iconos_conjunto.py animar --raiz docs/cultura/ensayos/rave --salida <scratchpad>
 ```
 
-Los PNG salen en `/exportados`. Nota: el PNG es una **foto fija** del primer
-fotograma; la animación solo vive en el SVG y en el HTML.
+El scratchpad queda fuera del repositorio. El PNG no representa la animación;
+si se necesita rasterizar, se usa el órgano común `cultura/mak_codex/motor_semantico/rasterizador.py`.
 
 ---
 

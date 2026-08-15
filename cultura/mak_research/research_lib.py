@@ -5,7 +5,7 @@ Proveedores LLM gratis/locales con fallback (cerebras -> groq -> ollama),
 busqueda Tavily, fetch de paginas y utilidades comunes que usan
 research.py / panel.py / cola.py. Stdlib-only (urllib), Python 3.11.
 
-Keys: ~/n8n-local/research.env (chmod 600) o el archivo que diga
+Keys: ~/research/research.env (chmod 600) o el archivo que diga
 la variable de entorno RESEARCH_ENV. NUNCA hardcodear keys aca.
 """
 import hashlib
@@ -64,7 +64,7 @@ except ImportError:  # pragma: no cover - Windows director has no fcntl
     fcntl = None
 
 ENV_FILE = os.environ.get(
-    "RESEARCH_ENV", os.path.expanduser("~/n8n-local/research.env")
+    "RESEARCH_ENV", os.path.expanduser("~/research/research.env")
 )
 
 DEFAULTS = {

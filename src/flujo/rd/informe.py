@@ -12,6 +12,7 @@ lo deja explicito en cada informe y en el resumen JSON del hub.
 from __future__ import annotations
 
 import csv
+import sqlite3
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -120,11 +121,16 @@ def resumen_json(db_path: str | Path | None = None) -> dict[str, Any]:
     `{"disponible": False, "error": ...}` en vez de propagar (el hub NUNCA
     debe devolver 500 por este endpoint)."""
     path = Path(db_path) if db_path is not None else DEFAULT_DB_PATH
-    if not path.exists():
+    # A GET summary must never create the field-data database as a side effect.
+    # `conectar()` is intentionally schema-creating for ingestion, so this
+    # reader opens an existing, non-empty SQLite file in URI read-only mode.
+    if not path.exists() or path.stat().st_size == 0:
         return {"disponible": False}
 
     try:
-        conn = conectar(path)
+        conn = sqlite3.connect(
+            "file:" + str(path.resolve()) + "?mode=ro", uri=True
+        )
         try:
             total_testeos = conn.execute(
                 "SELECT COUNT(*) FROM registros_testeo"

@@ -11,14 +11,17 @@ Problema que resuelve:
   leyendo un indice (rutas_rd.json) sobre la estructura REAL existente.
 
 Uso como herramienta del repo:
-    py -m flujo route where --area eventos --pieza flyer
-    py -m flujo route where --area suplementos --pieza etiqueta --que entregar
-    py -m flujo route where --pieza logo            # transversal, sin area
-    py -m flujo route cuna                           # muestra el pipeline AUTOMATIZACION
-    py -m flujo route doctor                         # verifica que las rutas existan
+    py -m flujo hub route where --area eventos --pieza flyer
+    py -m flujo hub route where --area suplementos --pieza etiqueta --que entregar
+    py -m flujo hub route where --pieza logo            # transversal, sin area
+    py -m flujo hub route cuna                           # muestra el pipeline AUTOMATIZACION
+    py -m flujo hub route doctor                         # verifica que las rutas existan
 
 Tambien corre suelto:
     py resolver.py where --area eventos --pieza flyer
+
+En Linux, `FLUJO_RD_ROOT` o `--base-dir` adapta la raiz historica `C:\\rd`
+al arbol local sin modificar el indice ni mover archivos.
 
 Reglas (del repo): Windows + py, ASCII-only, no mueve archivos, no borra.
 """
@@ -46,7 +49,37 @@ def _match_pieza(piezas_dict, pieza):
     return None
 
 
-def resolver_ruta(idx, area=None, pieza=None, que="trabajar"):
+def _adapt_path(path, base_dir, source_base=None):
+    """Translate the historical Windows root without touching the index."""
+    if not path or not base_dir or not source_base:
+        return path
+    raw = str(path)
+    prefix = str(source_base).replace("/", "\\").rstrip("\\")
+    candidate = raw.replace("/", "\\")
+    if candidate.lower() == prefix.lower():
+        suffix = ""
+    elif candidate.lower().startswith(prefix.lower() + "\\"):
+        suffix = candidate[len(prefix) + 1:]
+    else:
+        return path
+    return os.path.join(str(base_dir), *suffix.split("\\")) if suffix else str(base_dir)
+
+
+def _adapt_result(result, base_dir, source_base):
+    """Return a copy with configured local paths; the JSON index stays intact."""
+    if not base_dir or "error" in result:
+        return result
+    adapted = dict(result)
+    for key in ("buscar_en",):
+        adapted[key] = [_adapt_path(p, base_dir, source_base)
+                        for p in result.get(key, [])]
+    for key in ("trabajar_en", "entregar_en", "cuna"):
+        if result.get(key):
+            adapted[key] = _adapt_path(result[key], base_dir, source_base)
+    return adapted
+
+
+def resolver_ruta(idx, area=None, pieza=None, que="trabajar", base_dir=None):
     """
     Devuelve dict con la resolucion. NO toca el disco.
     que: 'buscar' | 'trabajar' | 'entregar'
@@ -54,14 +87,14 @@ def resolver_ruta(idx, area=None, pieza=None, que="trabajar"):
     # 1) transversal (logo/paleta/textura/propuesta) - no necesita area
     for tkey, tv in idx["transversales"].items():
         if _match_pieza({k: 1 for k in tv["piezas"]}, pieza):
-            return {
+            return _adapt_result({
                 "ambito": "transversal",
                 "grupo": tkey,
                 "buscar_en": tv.get("buscar_en", []),
                 "trabajar_en": tv.get("trabajar_en"),
                 "entregar_en": tv.get("trabajar_en"),
                 "nota": "Pieza transversal (sirve a EVENTOS y SUPLEMENTOS).",
-            }
+            }, base_dir, idx.get("_meta", {}).get("base"))
 
     # 2) area de negocio
     if not area:
@@ -78,7 +111,7 @@ def resolver_ruta(idx, area=None, pieza=None, que="trabajar"):
                          % (pieza, a, ", ".join(sorted(piezas.keys())))}
 
     info = piezas[clave]
-    return {
+    return _adapt_result({
         "ambito": "area",
         "area": a,
         "pieza": clave,
@@ -86,7 +119,7 @@ def resolver_ruta(idx, area=None, pieza=None, que="trabajar"):
         "trabajar_en": info.get("trabajar_en"),
         "entregar_en": info.get("entregar_en"),
         "cuna": idx["cuna"]["ruta"],
-    }
+    }, base_dir, idx.get("_meta", {}).get("base"))
 
 
 # ----------------------- CLI -----------------------
@@ -118,7 +151,9 @@ def _print_resol(r, que):
 
 def cmd_where(args):
     idx = cargar_indice(args.indice)
-    r = resolver_ruta(idx, area=args.area, pieza=args.pieza, que=args.que)
+    base_dir = args.base_dir or os.environ.get("FLUJO_RD_ROOT")
+    r = resolver_ruta(idx, area=args.area, pieza=args.pieza, que=args.que,
+                      base_dir=base_dir)
     rc = _print_resol(r, args.que)
     if args.json:
         print("\nJSON:")
@@ -140,21 +175,24 @@ def cmd_cuna(args):
 def cmd_doctor(args):
     """Verifica si las rutas del indice existen en disco (solo lectura)."""
     idx = cargar_indice(args.indice)
-    base = idx["_meta"]["base"]
+    base = args.base_dir or os.environ.get("FLUJO_RD_ROOT") or idx["_meta"]["base"]
+    source_base = idx["_meta"].get("base")
     rutas = set()
-    rutas.add(idx["cuna"]["ruta"])
+    rutas.add(_adapt_path(idx["cuna"]["ruta"], args.base_dir or os.environ.get("FLUJO_RD_ROOT"), source_base))
     for v in idx["cuna"]["archivos_pipeline"].values():
-        rutas.add(v)
+        rutas.add(_adapt_path(v, args.base_dir or os.environ.get("FLUJO_RD_ROOT"), source_base))
     for area in idx["areas"].values():
         for info in area["piezas"].values():
-            rutas.update(info.get("buscar_en", []))
+            rutas.update(_adapt_path(p, args.base_dir or os.environ.get("FLUJO_RD_ROOT"), source_base)
+                         for p in info.get("buscar_en", []))
             for k in ("trabajar_en", "entregar_en"):
                 if info.get(k):
-                    rutas.add(info[k])
+                    rutas.add(_adapt_path(info[k], args.base_dir or os.environ.get("FLUJO_RD_ROOT"), source_base))
     for tv in idx["transversales"].values():
-        rutas.update(tv.get("buscar_en", []))
+        rutas.update(_adapt_path(p, args.base_dir or os.environ.get("FLUJO_RD_ROOT"), source_base)
+                     for p in tv.get("buscar_en", []))
         if tv.get("trabajar_en"):
-            rutas.add(tv["trabajar_en"])
+            rutas.add(_adapt_path(tv["trabajar_en"], args.base_dir or os.environ.get("FLUJO_RD_ROOT"), source_base))
 
     print("DOCTOR - verificando", len(rutas), "rutas bajo", base)
     print("(solo lectura, no se toca nada)\n")
@@ -183,12 +221,14 @@ def main(argv=None):
     w.add_argument("--que", choices=["buscar", "trabajar", "entregar"],
                    default="trabajar", help="que ruta quieres")
     w.add_argument("--json", action="store_true", help="imprimir tambien el JSON")
+    w.add_argument("--base-dir", default="", help="raiz local que reemplaza la raiz historica (o FLUJO_RD_ROOT)")
     w.set_defaults(func=cmd_where)
 
     c = sub.add_parser("cuna", help="mostrar AUTOMATIZACION (cuna) y su pipeline")
     c.set_defaults(func=cmd_cuna)
 
     d = sub.add_parser("doctor", help="verificar que las rutas existan (solo lectura)")
+    d.add_argument("--base-dir", default="", help="raiz local que reemplaza la raiz historica (o FLUJO_RD_ROOT)")
     d.set_defaults(func=cmd_doctor)
 
     args = ap.parse_args(argv)

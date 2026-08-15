@@ -18,9 +18,9 @@ Comandos disponibles (ejecutar `flujo --help`):
   jobs
     job-new                     Crear job desde texto/correo
     job prepare                 Pipeline: privacidad → brief → estado
-    job-list                    Listar jobs y estados
+    job list                    Listar jobs y estados
     job-status <path>           Estado de un job específico
-    job-next                    Próximas acciones sugeridas por job
+    job next                    Próximas acciones sugeridas por job
     job activate                brief → proyecto en projects/piezas_vectoriales/
     job-report <path>           Reporte detallado de un job
   privacy
@@ -55,6 +55,16 @@ import sys
 import unicodedata
 from pathlib import Path
 from typing import Optional
+
+
+def _expose_repo_namespace() -> None:
+    """Make repo-level namespace packages available to the installed CLI."""
+    repo = Path(__file__).resolve().parents[2]
+    if (repo / "cultura").is_dir() and str(repo) not in sys.path:
+        sys.path.insert(0, str(repo))
+
+
+_expose_repo_namespace()
 
 
 def _configure_windows_stdio() -> None:
@@ -1216,7 +1226,10 @@ def _get_version() -> str:
 def datadrop_list():
     """Lista datadrops (fotos reales de entregados) desde workspace/datadrops/."""
     from .paths import datadrops_dir
-    dd = datadrops_dir()
+    dd = datadrops_dir(create=False)
+    if not dd.exists():
+        _warn("No hay datadrops todavía. Usa el hub (`flujo app`) → sección Datadrop para subir fotos terminadas.")
+        return
     drops = [p for p in sorted(dd.iterdir()) if p.is_dir() if p.name != "incoming" and not p.name.startswith(".")]
     if not drops:
         _warn("No hay datadrops todavía. Usa el hub (`flujo app`) → sección Datadrop para subir fotos terminadas.")
@@ -1583,10 +1596,25 @@ def job_status_cmd(
     console.print(f"  proyecto:      {brief.proyecto or '-'}")
     console.print(f"  tipo_pieza:    {brief.tipo_pieza or '-'}")
     console.print(f"  medida:        {brief.medidas.ancho_cm or '?'}x{brief.medidas.alto_cm or '?'} cm")
-    console.print(f"  productos:     {', '.join(brief.productos) or '-'}")
+    productos_txt = []
+    for producto in brief.productos:
+        if isinstance(producto, dict):
+            nombre = producto.get("nombre") or producto.get("name") or producto.get("id")
+            if nombre is None:
+                nombre = str(producto)
+            amount = producto.get("valor_dia_clp")
+            if amount is not None:
+                nombre = f"{nombre} (${amount:,} CLP)"
+            productos_txt.append(str(nombre))
+        else:
+            productos_txt.append(str(producto))
+    console.print(f"  productos:     {', '.join(productos_txt) or '-'}")
     console.print(f"  texto_aprobado: {brief.contenido.texto_aprobado}")
     console.print(f"  pendientes:    {len(brief.pendientes)}")
     for p in brief.pendientes:
+        if isinstance(p, dict) and len(p) == 1:
+            key, amount = next(iter(p.items()))
+            p = f"{key}: {amount}"
         console.print(f"    · {p}")
     console.print(f"  próxima:       {suggest_next_action(brief)}")
 

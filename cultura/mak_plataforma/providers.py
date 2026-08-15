@@ -170,7 +170,6 @@ def load_env(path=None):
         candidates = [
             os.environ.get("RESEARCH_ENV", ""),
             os.path.join(os.getcwd(), ".env"),
-            os.path.expanduser("~/n8n-local/research.env"),
             os.path.expanduser("~/research/research.env"),
             os.path.expanduser("~/research.env"),
         ]

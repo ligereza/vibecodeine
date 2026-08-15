@@ -12,4 +12,5 @@ def test_delegate_creative_director_prompt_includes_strategy_and_review():
     assert result.exit_code == 0, result.output
     assert "Creative Director" in result.output
     assert "Estrategia de lanzamiento" in result.output
-    assert "revisar outputs" in result.output.lower()
+    output = result.output.lower()
+    assert "revisar outputs" in output or "revisa los outputs" in output

@@ -3,6 +3,7 @@
 
 matplotlib>=3.10.9
 pyyaml>=6.0.3
+Pillow>=12.3.0
 pydantic>=2.13.4
 typer>=0.27.0
 rich>=15.0.0

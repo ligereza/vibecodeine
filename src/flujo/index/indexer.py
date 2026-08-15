@@ -107,9 +107,14 @@ def _basekey(name):
     creatina_v03.ai, creatina copia.ai, creatina final.ai -> 'creatina'."""
     n = name.lower()
     n = os.path.splitext(n)[0]
+    # Normalize separators before token removal.  With the old order,
+    # ``creatina_final.svg`` kept ``final`` because ``_`` is a word character
+    # and therefore prevented the token-boundary match.  That made exact
+    # duplicate/version grouping depend on whether the filename used a space
+    # or an underscore.
+    n = re.sub(r"[-_]+", " ", n)
     n = re.sub(r"\b(v\d{1,3}|copia|copy|final|wip|rev|nuevo|ok|def|"
                r"\d{1,2}|recuperado|ultima|ultimo|\[recuperado\])\b", " ", n)
-    n = re.sub(r"[-_]+", " ", n)
     n = re.sub(r"\s+", " ", n).strip()
     return n or name.lower()
 

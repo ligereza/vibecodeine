@@ -6,10 +6,9 @@ Description=MAK Research optional ntfy queue
 [Service]
 Type=simple
 WorkingDirectory=%h/research
-EnvironmentFile=-%h/n8n-local/research.env
+EnvironmentFile=-%h/research/research.env
 ExecStart=/usr/bin/python3 %h/research/cola.py
 Restart=always
 RestartSec=10
 TimeoutStopSec=15
 KillMode=control-group
-
