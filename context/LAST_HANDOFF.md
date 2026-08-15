@@ -4700,8 +4700,8 @@ validated; no persistent process.
 The active documentation projections and two stale test contracts were repaired
 without changing runtime behavior. Two documents were selected individually
 from WIN; stale SSH wording was removed from active projections while WIN was
-preserved. The targeted contract set passed 28 tests. The conservative safe
-suite collected 754 tests across 93 files and passed with exit 0. Evidence:
+preserved. The targeted contract set passed its checks. The conservative safe
+suite completed with exit 0. Evidence:
 `context/PHASE251_ACTIVE_DOCS_SAFE_SUITE.md`.
 
 ## Next concrete action
@@ -5086,7 +5086,7 @@ semantic projections. A safe fusion is not a deletion: the root projection
 stays in place until a path-injection migration exists. Three Python files and
 two shell files parsed successfully; five relevant units were inactive, the
 installed crontab had zero active entries, and the focused language/mirror/
-organ/entrypoint suite passed 47 tests with code 0. Evidence:
+organ/entrypoint suite passed with code 0. Evidence:
 `context/PHASE273_LANGUAGE_CONSUMER_GATE.md`.
 
 The language ratchet was corrected to exclude reversible quarantine evidence;
@@ -5112,7 +5112,7 @@ occur in the root corpus, but the root also contains 429 additional paths and
 29 duplicate-hash groups. Active code consumes the published projection and
 index, not the root path directly. The source corpus therefore remains
 protected creative/evidence material; no hash-based deletion or merge is safe.
-The focused ISKVW/SVG/plano projection suite passed 39 tests with code 0.
+The focused ISKVW/SVG/plano projection suite passed with code 0.
 Evidence: `context/PHASE274_TRAZOS_SOURCE_PROJECTION_GATE.md`.
 
 ## Next concrete action
@@ -5518,7 +5518,7 @@ passed; no persistent process.
 The `research_router.py` family is now fused by owner: the canonical
 deterministic router remains in `flujo/cultura/mak_plataforma` and
 `/home/mak/plataforma/research_router.py` is a 1,013-byte compatibility
-projection. The route suite passed 21 tests, and direct root-path import plus
+projection. The route suite passed, and direct root-path import plus
 an RD factual-event contract passed. The first shim attempt exposed and fixed
 a `dataclass` loader registration issue; no data or runtime state changed.
 Evidence: `context/PHASE295_RESEARCH_ROUTER_OWNER_GATE.md`.
@@ -7441,8 +7441,8 @@ refreshed; no running MAK service observed.
 
 ## Phase 395 — latest authoritative update
 
-The current conservative safe suite passed 68 files and 485 test items with
-exit 0 in `/home/mak/research/.venv`. It excludes the 177-file risk surface
+The current conservative safe suite completed with exit 0 in
+`/home/mak/research/.venv`. It excludes the 177-file risk surface
 and therefore expands local evidence without claiming full MAK coverage.
 No external or durable state changed. Evidence:
 `context/PHASE395_SAFE_LOCAL_TEST_SUITE.md/.csv`.
@@ -9963,7 +9963,7 @@ Foreground command:
     PYTHONPATH=src:. /home/mak/vibecodeine/.venv/bin/pytest -q tests/test_autonomia_cli.py tests/test_git_web_contract.py tests/test_readme_svg.py
     python3 -m py_compile src/flujo/autonomia.py tools/update_readme_svg.py
 
-Result: 19 tests passed, exit 0; compilation exit 0.
+Result: focused validation exit 0; compilation exit 0.
 
 The nine source/* copies remain byte-exact at their historical tips. This
 slice updates the first target work branch from current main while preserving
@@ -9995,7 +9995,7 @@ Post-merge foreground validation:
     PYTHONPATH=src:. /home/mak/vibecodeine/.venv/bin/pytest -q tests/test_autonomia_cli.py tests/test_git_web_contract.py tests/test_readme_svg.py
     python3 -m py_compile src/flujo/autonomia.py tools/update_readme_svg.py
 
-Result: 19 tests passed, exit 0; compilation exit 0. The untracked local
+Result: focused validation exit 0; compilation exit 0. The untracked local
 claude.yml was byte-identical to the promoted workflow before its duplicate
 was moved to trash, so no local content was lost.
 
@@ -10086,7 +10086,7 @@ Foreground validation:
 
 Results: generator exit 0 and output hash stayed
 `9f5e56cbae5cb9ff34bd8433d4b49069e3a52de947f56055d19a37c115b53c04`;
-typecheck exit 0; focused RD suite exit 0 with 52 tests passed. The first
+typecheck exit 0; focused RD suite exit 0. The first
 `npm run build:plano` and `npm run build:rd` attempts returned exit 127 because
 `web/node_modules/.bin/vite` is mode 0644. Direct Node invocation returned
 exit 1 because the available system Node is 18.20.4 while Vite requires
@@ -10815,3 +10815,101 @@ available without adding ports or changing the single-interface model.
 
 Last verified: 2026-08-15 America/Santiago — publication branch committed and
 validated; root handoff promotion prepared; no external publication performed.
+
+## Phase 506 — local health matrix and bounded FLUJO APP startup
+
+Verified the physical runtime state before changing anything. `ss -ltnp`
+showed the existing MAK loopback services on `127.0.0.1:8890`,
+`127.0.0.1:8891` and `127.0.0.1:8900`; no process was listening on
+`127.0.0.1:8765`. The user services `mak-research.service`,
+`mak-codex.service` and `mak-hub.service` remained active. No service was
+started or reconfigured by the matrix.
+
+The first matrix command used `python` and returned shell exit 127 because
+Debian does not provide that alias in this environment; it made no request
+and changed no file. The identical GET-only matrix with the canonical
+interpreter `/home/mak/vibecodeine/.venv/bin/python` returned HTTP 200 for
+the nine MAK routes: `/health`, `/api/organismo`, `/api/micelio`,
+`/api/archivo`, `/api/oportunidades`, `/api/eventos`, `/api/actividad`,
+`/api/salud` and `/api/portfolio/inbox`. Result: `ok=9 fail=0`. All responses
+were JSON objects; no POST, upload, database write or external network call
+was made.
+
+Because FLUJO APP was stopped rather than failing, it was started only for a
+bounded foreground check with:
+
+    FLUJO_MAK_URL=http://127.0.0.1:8900 PYTHONDONTWRITEBYTECODE=1 timeout 20s /home/mak/vibecodeine/.venv/bin/python -m flujo app --no-abrir --host 127.0.0.1 --port 8765
+
+The temporary process reached `GET /api/mak -> 200`, printed the expected
+workspace banner, and was terminated by the check trap. It was not left as a
+permanent process. No source, database, generated artifact, README, WIN or
+service state changed; the only intended file update in this phase is this
+handoff entry.
+
+Disposition: `MAK_HEALTH_9_OF_9_GREEN; FLUJO_APP_STARTUP_GREEN;
+NO_PERMANENT_APP_PROCESS; LOOPBACK_ONLY_PRESERVED`.
+
+## Next concrete action
+
+Run the complete non-mutating local verification from the canonical editable
+environment (imports, CLI help, focused regression suites and the existing
+MAK/FLUJO smoke paths), then record any real failure as a bounded fix target.
+Keep FLUJO APP as an offline/temporary interface unless the user explicitly
+requests a managed local launcher; do not add a second public port or turn the
+bounded check into a permanent service. Reconcile only intentional source
+changes, leaving the large `context/PHASE*` evidence surface un-staged.
+
+Last verified: 2026-08-15 America/Santiago — MAK GET matrix and bounded FLUJO
+startup passed; no persistent process or external publication performed.
+
+## Phase 507 — portable CLI map and documentation hygiene gate
+
+The complete canonical suite initially returned exit 1 with six documentation
+failures. The runtime failures were not tool failures: `MAPA.md` lacked the
+generator markers and current CLI table; `context/comandos.json` still had a
+retired `handoff` row; `CAPACIDADES.md` declared absent `contexto_repo.py` and
+`handoff.py`; and the documentation ratchet rejected several undifferentiated
+historical suite totals in this handoff.
+
+The generator also exposed a portability defect: its subprocess inherited the
+environment's installed package, which was the historical `/home/mak/vibecodeine`
+copy, instead of necessarily interrogating this checkout. `tools/gen_mapa_comandos.py`
+now prepends `/home/mak/flujo/src` (computed from `RAIZ`) to `PYTHONPATH` before
+asking the CLI for help. This keeps the manifest and Markdown map tied to the
+editable checkout that is being tested.
+
+Changes were limited to `tools/gen_mapa_comandos.py`, regenerated
+`MAPA.md`/`context/comandos.json`, removal of the two ghost capability rows in
+`CAPACIDADES.md`, and this handoff. The generated map now measures 95 current
+commands, including `autonomia` and `rd-db testeos`, and documents all runtime
+environment variables detected by the repository tests without adding secrets.
+Historical test counts in this handoff were rewritten as dated outcomes or
+commands, not as claims about the current suite total.
+
+Validation:
+
+    /home/mak/vibecodeine/.venv/bin/python tools/gen_mapa_comandos.py
+    /home/mak/vibecodeine/.venv/bin/python tools/gen_mapa_comandos.py --check
+    /home/mak/vibecodeine/.venv/bin/python -m py_compile tools/gen_mapa_comandos.py
+    /home/mak/vibecodeine/.venv/bin/python -m pytest -q
+    git diff --check
+
+The focused hygiene group passed with exit 0, the regenerated map check passed,
+and the complete suite passed with exit 0. Only known Pillow deprecation
+warnings were emitted. No database, service, provider, network, README SVG,
+WIN evidence or `context/PHASE*` evidence was changed or staged.
+
+Disposition: `FULL_LOCAL_SUITE_GREEN; CLI_MAP_CURRENT; GHOST_ROWS_REMOVED;
+CHECKOUT_PYTHONPATH_PINNED; EVIDENCE_UNSTAGED`.
+
+## Next concrete action
+
+Review the explicit five-file diff, commit it on `main`, push to `origin/main`,
+and re-run the branch/tag/status invariants without staging any pre-existing
+HTML, database backups, probe scripts or phase evidence. After publication,
+continue the objective audit from the remaining physical consumer surface;
+only introduce a short-lived named topic branch if a new bounded code change
+is actually found.
+
+Last verified: 2026-08-15 America/Santiago — full canonical suite green after
+portable map repair; publication of Phase 507 remains pending.

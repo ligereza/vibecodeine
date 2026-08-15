@@ -1,6 +1,6 @@
 {
  "formato": "comandos/1",
- "total": 96,
+ "total": 95,
  "grupos": [
   "airdrop",
   "autonomia",
@@ -80,15 +80,6 @@
    "invocacion": "py -m flujo version",
    "grupo": "",
    "desc": "Muestra versión y changelog.",
-   "requiere": "",
-   "estado": "listo",
-   "destructivo": null
-  },
-  {
-   "cmd": "handoff",
-   "invocacion": "py -m flujo handoff",
-   "grupo": "",
-   "desc": "Gestiona el archivo de continuidad de baja token para otras IAs.",
    "requiere": "",
    "estado": "listo",
    "destructivo": null
@@ -665,8 +656,8 @@
    "invocacion": "py -m flujo autonomia run",
    "grupo": "autonomia",
    "desc": "Ejecuta tandas controladas; por defecto corre providers/Ollama en MAK.",
-   "requiere": "SSH a MAK (`mak@192.168.50.2`) para ejecucion real; `--executor local` solo para pruebas/dry-run",
-   "estado": "falta: SSH a MAK (`mak@192.168.50.2`) para ejecucion real; `--executor local` solo para pruebas/dry-run",
+   "requiere": "La ejecucion remota esta fuera de este entorno; `--executor local` solo para pruebas/dry-run con autoridad explicita",
+   "estado": "falta: La ejecucion remota esta fuera de este entorno; `--executor local` solo para pruebas/dry-run con autoridad explicita",
    "destructivo": null
   },
   {
