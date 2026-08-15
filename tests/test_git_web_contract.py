@@ -53,6 +53,19 @@ def test_pages_publication_requires_explicit_dispatch():
     assert "\n  push:" not in text
 
 
+def test_pages_publication_scope_excludes_rd_venue_mak_and_win():
+    """The public portfolio must not become a dump of MAK's local box."""
+    text = _workflow("publicar_iskvw.yml")
+
+    assert "cp -r iskvw/. _sitio/" in text
+    assert "data/rd.db" not in text
+    assert "data/rd_datos.db" not in text
+    assert "data/venues" not in text
+    assert "cultura/" not in text
+    assert "WIN/" not in text
+    assert "cp -r . _sitio/" not in text
+
+
 def test_workflows_do_not_treat_win_as_runtime():
     for path in WORKFLOWS.glob("*.yml"):
         text = path.read_text(encoding="utf-8")
