@@ -9838,3 +9838,43 @@ activate sync_mak_safe.py or postgres_* without a separate authority gate.
 
 Last verified: 2026-08-15 America/Santiago — main c99b61b published; one remote
 branch and nine historical remote archive tags verified.
+
+## Phase 483 — single-tag synchronized Git topology
+
+The previous archive-tag set was consolidated into one annotated tag:
+archive/house-history -> preservation commit
+7a3d27cb5b9084d324c61e25f2716d0295397ba6. That preservation commit has 35
+historical parents covering the previous main, local branch and archive-tag
+tips. Its tree is byte-identical to main:
+6dc1a19f84aa6e2e696b0874d442eb1c817ecfc3.
+
+Before deleting redundant refs, 40 local heads/tags were checked for
+reachability from archive/house-history; all passed. The redundant 38 local
+tags and 14 remote tags were then removed only after the single preservation
+tag had been pushed and verified. Current synchronization:
+
+- local branches: main only;
+- remote branches: main only;
+- local tags: archive/house-history only;
+- remote tags: archive/house-history only;
+- main and origin/main before this documentation checkpoint: 229852d.
+
+The active worktree was moved from mak/ownership to main without discarding
+uncommitted material. The only path collision was an untracked MAPA.md with
+different content from the tracked main MAPA.md; it was preserved byte-for-byte
+at context/quarantine/MAPA_UNTRACKED_AUTHORING.md. Existing modified and
+untracked evidence remains in the worktree and was not cleaned.
+
+Disposition:
+SINGLE_TAG_PRESERVATION_GREEN; MAIN_ONLY_LOCAL; MAIN_ONLY_REMOTE;
+HISTORY_REACHABILITY_VERIFIED; UNCOMMITTED_EVIDENCE_PRESERVED.
+
+## Next concrete action
+
+Run the focused regression on the active /home/mak/flujo main worktree, push
+this handoff checkpoint, and then resume physical MAK integration. Future
+development may create one short-lived bounded branch from main, but no branch
+or tag is created merely for historical storage.
+
+Last verified: 2026-08-15 America/Santiago — one local/remote main and one
+local/remote archive tag; old refs reachable through archive/house-history.
