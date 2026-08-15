@@ -3,7 +3,7 @@
 # systemd owns persistent processes; this script never creates detached launches.
 
 BASE="$HOME/research"
-ENV_FILE="${RESEARCH_ENV:-$HOME/n8n-local/research.env}"
+ENV_FILE="${RESEARCH_ENV:-$HOME/research/research.env}"
 COLA_DISABLED="$BASE/.cola.disabled.missing_ntfy"
 RESEARCH_UNIT="mak-research.service"
 QUEUE_UNIT="mak-research-queue.service"

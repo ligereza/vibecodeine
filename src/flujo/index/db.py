@@ -6,12 +6,20 @@ from ..paths import repo_root
 
 def db_path() -> Path:
     p = repo_root() / "data" / "flujo.db"
-    p.parent.mkdir(parents=True, exist_ok=True)
     return p
+
+
+def _readonly_connection(path: Path):
+    """Open an existing index without creating files, tables or indexes."""
+    if not path.exists():
+        return None
+    uri = "file:%s?mode=ro" % path.resolve().as_posix()
+    return sqlite3.connect(uri, uri=True)
 
 def init_db(conn=None):
     close = False
     if conn is None:
+        db_path().parent.mkdir(parents=True, exist_ok=True)
         conn = sqlite3.connect(db_path())
         close = True
     conn.execute("""
@@ -38,6 +46,7 @@ def init_db(conn=None):
 def rebuild_index() -> dict:
     from ..paths import flyer_base
     base = flyer_base()
+    db_path().parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(db_path())
     init_db(conn)
     conn.execute("DELETE FROM flyers")
@@ -72,8 +81,9 @@ def rebuild_index() -> dict:
     return {"indexed": n, "db": str(db_path())}
 
 def list_flyers(status: str | None = None, limit: int = 100):
-    conn = sqlite3.connect(db_path())
-    init_db(conn)
+    conn = _readonly_connection(db_path())
+    if conn is None:
+        return []
     conn.row_factory = sqlite3.Row
     if status:
         rows = conn.execute("SELECT * FROM flyers WHERE status = ? ORDER BY date_utc DESC LIMIT ?", (status, limit)).fetchall()
@@ -83,8 +93,9 @@ def list_flyers(status: str | None = None, limit: int = 100):
     return [dict(r) for r in rows]
 
 def find_duplicates():
-    conn = sqlite3.connect(db_path())
-    init_db(conn)
+    conn = _readonly_connection(db_path())
+    if conn is None:
+        return []
     conn.row_factory = sqlite3.Row
     rows = conn.execute("""
         SELECT shortcode, COUNT(*) as c, GROUP_CONCAT(project_path, '|') as paths

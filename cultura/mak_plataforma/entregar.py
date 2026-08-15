@@ -339,7 +339,7 @@ def entregar_una(job, dry_run):
                     "entregador MAK (job %s).\n\n**Pedido:** %s\n\n"
                     "Compila OK. Draft: revision humana antes de merge. "
                     "CI dual-OS decide.\n\nParte del loop autonomo MAK->repo "
-                    "(ver context/CAPATAZ.md)." % (job_id, pedido))],
+                    "con gate de revision y CI." % (job_id, pedido))],
         cwd=REPO, capture_output=True, text=True)
     url = (pr.stdout or pr.stderr).strip().splitlines()[-1] if (pr.stdout or pr.stderr) else "?"
     if pr.returncode != 0:

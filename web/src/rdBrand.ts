@@ -1,3 +1,5 @@
+import tariffData from '../../data/rd_packs.json';
+
 // rdBrand.ts — marca RD unica para el export del PlanoTool (dark/white).
 // Fuente de verdad: linea_editorial/v4.1.md (paleta) + assets/logo/*.svg (logo
 // vectorial) + valores comerciales RD (packs de servicio, precio plano).
@@ -103,12 +105,10 @@ export const RD_LOGO: Record<ExportTheme, string> = {
 };
 
 // ── Packs de servicio RD: precio plano CLP/dia, voluntarios fijos ───────
-// (reemplaza el modelo de costos calculados; fuente: valores comerciales RD)
-//
+// Fuente unica: data/rd_packs.json, compartida con Python/rider/cotizacion.
 // `precio` es el UNICO valor absoluto editable por pack. Todo lo demas que
 // depende de el ($/voluntario, montos del desglose de COMPLETO) se calcula
-// como proporcion (division / porcentaje) en vez de guardarse como numero
-// aparte -- asi no puede quedar desincronizado si el precio cambia.
+// como proporcion en vez de guardarse como numero aparte.
 export interface PackProportion { label: string; pct: number }
 
 export interface Pack {
@@ -124,69 +124,20 @@ export interface Pack {
   proporciones?: PackProportion[];
 }
 
-export const PACKS: Record<PackId, Pack> = {
-  INFO: {
-    id: 'INFO',
-    nombre: 'Informativo',
-    label: 'Pack 1 · Informativo',
-    desc: '6 voluntarios · 1 stand 3×3 (9 m²)',
-    precio: 250000,
-    voluntarios: 6,
-    m2: 9,
-    stands: 1,
-    inclusiones: [
-      'Stand informativo atendido',
-      'Material educativo + insumos preventivos',
-      'Protectores auditivos, abanicos, suplementos',
-      'Tests de un solo uso (opcional)',
-    ],
-  },
-  TESTEO: {
-    id: 'TESTEO',
-    nombre: 'Testeo y Informativo (ambos)',
-    label: 'Pack 2 · Testeo y Informativo',
-    desc: '6 voluntarios · 2 stands 3×3 (18 m²)',
-    precio: 300000,
-    voluntarios: 6,
-    m2: 18,
-    stands: 2,
-    inclusiones: [
-      'Stand informativo y stand de testeo, ambos atendidos',
-      'Módulo de testeo de sustancias',
-      'Análisis colorimétrico gratuito',
-      'Reactivos incluidos',
-    ],
-  },
-  COMPLETO: {
-    id: 'COMPLETO',
-    nombre: 'Servicio Completo (masivo)',
-    label: 'Pack 3 · Servicio Completo',
-    desc: '15 voluntarios · 2 stands + zona (~27 m²)',
-    precio: 500000,
-    voluntarios: 15,
-    m2: 27,
-    stands: 2,
-    inclusiones: [
-      'Informativo + testeo',
-      'Intervención y contención psicológica',
-      'Zona de descanso baja estimulación',
-      'Coordinación operativa en terreno',
-    ],
-    proporciones: [
-      { label: 'Equipo en terreno', pct: 60 },
-      { label: 'Módulo de testeo', pct: 14 },
-      { label: 'Stand informativo', pct: 10 },
-      { label: 'Intervención y contención', pct: 9 },
-      { label: 'Coordinación operativa', pct: 7 },
-    ],
-  },
+type TariffData = {
+  packs: Record<PackId, Pack>;
+  orden: PackId[];
+  default_pack: PackId;
 };
+
+const TARIFF = tariffData as TariffData;
+export const PACKS: Record<PackId, Pack> = TARIFF.packs;
 
 export function calcCostos(packId: PackId): Pack {
   return PACKS[packId];
 }
 
-export const ALL_PACKS: PackId[] = ['INFO', 'TESTEO', 'COMPLETO'];
+export const ALL_PACKS: PackId[] = TARIFF.orden;
 
 // NO existe "$ por voluntario": los voluntarios no son remunerados; ese numero
 // contradecia la tabla de proporciones y no aporta al rider ni a la cotizacion.

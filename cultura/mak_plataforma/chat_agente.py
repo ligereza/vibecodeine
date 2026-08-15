@@ -9,8 +9,21 @@ import os
 import subprocess
 import sys
 
-from qwen_agent.agents import Assistant
-from qwen_agent.tools.base import BaseTool, register_tool
+try:
+    from qwen_agent.agents import Assistant
+    from qwen_agent.tools.base import BaseTool, register_tool
+    QWEN_IMPORT_ERROR = None
+except ImportError as exc:  # optional local-agent runtime; no install at import time
+    Assistant = None
+    QWEN_IMPORT_ERROR = exc
+
+    class BaseTool:  # minimal declaration surface so status/import checks still work
+        pass
+
+    def register_tool(_name):
+        def decorate(cls):
+            return cls
+        return decorate
 
 HOME = os.path.expanduser("~")
 sys.path.insert(0, os.path.join(HOME, "plataforma"))
@@ -67,7 +80,10 @@ class LeerBitacora(BaseTool):
 
 
 def main():
-    import sys
+    if QWEN_IMPORT_ERROR is not None:
+        print("ERROR: falta la dependencia opcional qwen-agent; no se instalo automaticamente.",
+              file=sys.stderr)
+        return 2
     modelo = sys.argv[1] if len(sys.argv) > 1 else "llama3.1:8b"
     llm_cfg = {'model': modelo, 'model_server': 'http://127.0.0.1:11434/v1', 'api_key': 'ollama'}
     bot = Assistant(llm=llm_cfg, function_list=['leer_estado', 'vetear', 'entregar', 'leer_bitacora'],

@@ -15,6 +15,6 @@ TimeoutStopSec=15
 KillMode=control-group
 Environment=PYTHONUNBUFFERED=1
 Environment=MAK_SERVICE_HOST=127.0.0.1
-EnvironmentFile=-%h/n8n-local/research.env
+EnvironmentFile=-%h/research/research.env
 [Install]
 WantedBy=default.target
