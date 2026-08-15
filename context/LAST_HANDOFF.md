@@ -9860,10 +9860,12 @@ tag had been pushed and verified. Current synchronization:
 - main and origin/main before this documentation checkpoint: 229852d.
 
 The active worktree was moved from mak/ownership to main without discarding
-uncommitted material. The only path collision was an untracked MAPA.md with
-different content from the tracked main MAPA.md; it was preserved byte-for-byte
-at context/quarantine/MAPA_UNTRACKED_AUTHORING.md. Existing modified and
-untracked evidence remains in the worktree and was not cleaned.
+the relevant uncommitted evidence. The only path collision was an untracked
+MAPA.md with different content from the tracked main MAPA.md. That copy was
+confirmed stale and moved to the desktop trash before this checkpoint; it is
+not present in the repository or active search surface. The tracked main
+MAPA.md remains the sole active map. Other modified and untracked evidence
+remains in the worktree and was not cleaned.
 
 Disposition:
 SINGLE_TAG_PRESERVATION_GREEN; MAIN_ONLY_LOCAL; MAIN_ONLY_REMOTE;
@@ -9877,4 +9879,4 @@ development may create one short-lived bounded branch from main, but no branch
 or tag is created merely for historical storage.
 
 Last verified: 2026-08-15 America/Santiago — one local/remote main and one
-local/remote archive tag; old refs reachable through archive/house-history.
+local/remote archive tag; stale MAPA copy removed from the active tree.
