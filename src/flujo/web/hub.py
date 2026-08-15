@@ -956,10 +956,22 @@ class HubRequestHandler(BaseHTTPRequestHandler):
         args = [str(a) for a in args]
 
         orden = [sys.executable, "-m", "flujo"] + cmd.split(" ") + args
+        # Source checkouts keep the package under src/; pytest can import it
+        # because its runner adds that path, but this child process cannot.
+        # Preserve the caller environment and add only this repo's src path
+        # when it exists. Installed/package deployments keep their normal
+        # environment unchanged.
+        entorno = os.environ.copy()
+        src_dir = self.root / "src"
+        if src_dir.is_dir():
+            anterior = entorno.get("PYTHONPATH", "")
+            entorno["PYTHONPATH"] = os.pathsep.join(
+                parte for parte in (str(src_dir), anterior) if parte
+            )
         try:
             r = subprocess.run(orden, capture_output=True, text=True,
                                encoding="utf-8", errors="replace",
-                               cwd=str(self.root), timeout=600)
+                               cwd=str(self.root), env=entorno, timeout=600)
         except subprocess.TimeoutExpired:
             return {"error": "el comando paso los 600 s y se corto",
                     "cmd": cmd, "_http": 504}
@@ -2097,18 +2109,21 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => n
         desc = (data.get("description") or "").strip()[:500]
         ptype = (data.get("piece_type") or "flyer").strip()
         linked = data.get("linked_job") or ""
-        ts = datetime.now().strftime("%Y-%m-%d_%H%M%S")
-        slug_src = (desc[:18] or safe_name.split(".")[0]).replace(" ", "-").lower()
-        drop_dir = datadrops_dir() / f"{ts}_{slug_src}"
-        drop_dir.mkdir(parents=True, exist_ok=True)
         # decode (data: prefix or raw)
         b64s = data["b64"]
         if "," in b64s:
             b64s = b64s.split(",", 1)[1]
         try:
-            raw = base64.b64decode(b64s)
+            raw = base64.b64decode(b64s, validate=True)
         except Exception as e:
             return {"error": f"bad base64: {e}"}
+        if not raw:
+            return {"error": "empty image"}
+        # Do not create an output directory until the payload is valid.
+        ts = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+        slug_src = (desc[:18] or safe_name.split(".")[0]).replace(" ", "-").lower()
+        drop_dir = datadrops_dir() / f"{ts}_{slug_src}"
+        drop_dir.mkdir(parents=True, exist_ok=True)
         img_path = drop_dir / safe_name
         img_path.write_bytes(raw)
         # extract metadata using existing analysis (local, privacy safe)

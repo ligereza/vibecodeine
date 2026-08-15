@@ -172,7 +172,7 @@ DIR_CHIP = {"informes": "informe", "paneles": "panel", "cadenas": "cadena",
             "refutaciones": "refutacion", "correlaciones": "correlacion",
             "grafos": "grafo", "memoria": "memoria"}
 JOBS_FILE = os.path.expanduser("~/research/jobs.jsonl")
-ENV_FILE = os.environ.get("RESEARCH_ENV", os.path.expanduser("~/n8n-local/research.env"))
+ENV_FILE = os.environ.get("RESEARCH_ENV", os.path.expanduser("~/research/research.env"))
 WORKFLOW_FILE = os.path.expanduser("~/research/workflow.json")
 
 JOBS = []

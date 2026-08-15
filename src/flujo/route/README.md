@@ -1,4 +1,4 @@
-# flujo route — Router de rutas de RD (no mueve archivos)
+# flujo hub route — Router de rutas de RD (no mueve archivos)
 
 Herramienta del repo que resuelve **donde esta / donde trabajar / donde entregar**
 cada pieza dentro de `C:\rd`, **sin mover ni renombrar nada** (para no romper
@@ -15,15 +15,18 @@ estructura real existente.
 ## Comandos
 
 ```
-py -m flujo route where --area eventos --pieza flyer
-py -m flujo route where --area suplementos --pieza etiqueta --que entregar
-py -m flujo route where --pieza logo            # transversal (sin area)
-py -m flujo route where --area eventos --pieza flyer --json
-py -m flujo route cuna                           # pipeline AUTOMATIZACION
-py -m flujo route doctor                         # verifica rutas (solo lectura)
+py -m flujo hub route where --area eventos --pieza flyer
+py -m flujo hub route where --area suplementos --pieza etiqueta --que entregar
+py -m flujo hub route where --pieza logo            # transversal (sin area)
+py -m flujo hub route where --area eventos --pieza flyer --json
+py -m flujo hub route cuna                           # pipeline AUTOMATIZACION
+py -m flujo hub route doctor                         # verifica rutas (solo lectura)
 ```
 
 `--que` puede ser `buscar` | `trabajar` | `entregar`.
+
+En Linux, define `FLUJO_RD_ROOT=/home/mak/RD` o pasa `--base-dir /home/mak/RD`
+para adaptar la raiz historica `C:\rd` al arbol local. El indice no se modifica.
 
 ## Que NO hace
 

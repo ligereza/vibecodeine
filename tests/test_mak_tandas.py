@@ -444,6 +444,8 @@ def test_run_external_batch_persists_raw_and_ingests(monkeypatch, tmp_path):
     common = tmp_path / "common_ledger.jsonl"
     batch = tmp_path / "external_batches.jsonl"
     out_dir = tmp_path / "tandas"
+    evidence = tmp_path / "contexto_repo.py"
+    evidence.write_text("# temporary evidence fixture\n", encoding="utf-8")
 
     def fake_call(provider, prompt, model=None, max_tokens=2500, temperature=0.1):
         assert provider == "watsonx"
@@ -466,7 +468,8 @@ def test_run_external_batch_persists_raw_and_ingests(monkeypatch, tmp_path):
     monkeypatch.setattr(tandas.external_providers, "call", fake_call)
     result = tandas.run_external_batch(
         "tool_archaeology", "r001", "watsonx", model="fake-model",
-        out_dir=str(out_dir), common_path=str(common), batch_path=str(batch),
+        paths=[str(evidence)], out_dir=str(out_dir),
+        common_path=str(common), batch_path=str(batch),
         use_ollama=False, max_tokens=123, instruction="Find omissions")
     assert result["status"] == "accepted"
     assert (out_dir / "tool_archaeology-r001-watsonx.raw.txt").is_file()
@@ -517,6 +520,8 @@ def test_run_external_batch_repairs_product_once(monkeypatch, tmp_path):
     calls = []
     common = tmp_path / "common.jsonl"
     batch = tmp_path / "external_batches.jsonl"
+    evidence = tmp_path / "contexto_repo.py"
+    evidence.write_text("# temporary evidence fixture\n", encoding="utf-8")
 
     def fake_call(provider, prompt, **kwargs):
         calls.append(prompt)
@@ -535,7 +540,8 @@ def test_run_external_batch_repairs_product_once(monkeypatch, tmp_path):
     monkeypatch.setattr(tandas.external_providers, "call", fake_call)
     result = tandas.run_external_batch(
         "tool_archaeology", "repair01", "ollama", out_dir=str(tmp_path),
-        common_path=str(common), batch_path=str(batch), use_ollama=False)
+        paths=[str(evidence)], common_path=str(common),
+        batch_path=str(batch), use_ollama=False)
 
     assert result["status"] == "accepted"
     assert len(calls) == 2
@@ -547,6 +553,8 @@ def test_product_repair_preserves_work_identity(monkeypatch, tmp_path):
     common = tmp_path / "common.jsonl"
     batch = tmp_path / "batch.jsonl"
     calls = []
+    evidence = tmp_path / "contexto_repo.py"
+    evidence.write_text("# temporary evidence fixture\n", encoding="utf-8")
 
     def fake_call(provider, prompt, **kwargs):
         calls.append(prompt)
@@ -567,7 +575,8 @@ def test_product_repair_preserves_work_identity(monkeypatch, tmp_path):
     monkeypatch.setattr(tandas.external_providers, "call", fake_call)
     result = tandas.run_external_batch(
         "tool_archaeology", "identity-repair", "ollama",
-        out_dir=str(tmp_path), common_path=str(common),
+        paths=[str(evidence)], out_dir=str(tmp_path),
+        common_path=str(common),
         batch_path=str(batch), use_ollama=False)
     assert result["status"] == "accepted"
     rows = [json.loads(line) for line in common.read_text(encoding="utf-8").splitlines()]
