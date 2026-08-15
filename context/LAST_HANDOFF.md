@@ -10690,3 +10690,47 @@ do not call providers or alter RD databases.
 
 Last verified: 2026-08-15 America/Santiago — archaeology branch committed and
 validated; root handoff promotion prepared; no external publication performed.
+
+## Phase 503 — SCD venue regeneration check integrated
+
+Created short-lived branch `tools/venue-scd` from the synchronized `main` at
+`da8ab50`, owned by `LUNA-503`, with an exclusive contract and handoff. The
+branch changed only `tools/venue_geometria_scd.py` and its focused test, plus
+the temporary branch contract files.
+
+The SCD geometry generator now supports `--check`: it compares the
+deterministic generated document with `data/venues/scd-plaza-egana.json`,
+returns exit 1 on drift, exit 2 for invalid option combination or unreadable
+canonical data, and never writes in check mode. `--stdout` remains the safe
+JSON export path; the default writer is unchanged.
+
+Validation:
+
+    /home/mak/vibecodeine/.venv/bin/python -m py_compile tools/venue_geometria_scd.py tests/test_venue.py
+    /home/mak/vibecodeine/.venv/bin/python -m pytest -q tests/test_venue.py tests/test_venue3d_smoke.py
+    /home/mak/vibecodeine/.venv/bin/python tools/venue_geometria_scd.py --check
+    /home/mak/vibecodeine/.venv/bin/python tools/venue_geometria_scd.py --stdout | /home/mak/vibecodeine/.venv/bin/python -m json.tool
+    git diff --check
+
+Results: compile exit 0; focused suite `46 passed`; check and JSON parse exit 0;
+the canonical SCD JSON and README SHA-256 hashes stayed unchanged. The venue
+demo remains 56 polylines, 503 edges and zero degenerate segments. No RD
+database, venue source, generated site, WIN, README, service or provider state
+changed.
+
+The branch commit is `714b5cd` (`test(venue): add non-mutating SCD check`). Its
+temporary contract and handoff are removed during closeout; durable facts are
+recorded here.
+
+Disposition: `SCD_REGENERATION_CHECK_GREEN; OFFLINE_JSON_GREEN;
+SOURCE_HASHES_GREEN; BRANCH_CLOSED_PENDING_FAST_FORWARD`.
+
+## Next concrete action
+
+Fast-forward `main` with the SCD check, delete the short-lived branch and push
+the result. Then audit the next real consumer slice, prioritizing the
+read-only RD/venue crosswalk against `data/rd.db` and `data/venues/*.json`;
+do not merge databases or insert venue relations automatically.
+
+Last verified: 2026-08-15 America/Santiago — SCD branch committed and
+validated; root handoff promotion prepared; no external publication performed.
