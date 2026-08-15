@@ -10421,3 +10421,37 @@ after promotion.
 
 Last verified: 2026-08-15 America/Santiago — GitHub and local Git expose one
 branch (`main`) and one annotated preservation tag.
+
+## Phase 496 — FLUJO APP foreground smoke passed
+
+The live local entrypoints were checked without opening a browser, processing
+pending jobs or calling mutating POST routes:
+
+    PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src /home/mak/vibecodeine/.venv/bin/python -m flujo serve --no-abrir --host 127.0.0.1 --port 8765
+    PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src /home/mak/vibecodeine/.venv/bin/python -m flujo app --no-abrir --host 127.0.0.1 --port 8766
+
+Both processes started with exit-bound foreground sessions and printed the
+real workspace/hub contract. GET-only checks returned HTTP 200 and valid JSON
+for `/api/ping`, `/manifest.json`, `/api/list-svg-works` and `/api/list-jobs`;
+the HTML routes `/`, `/flujo_hub.html`, `/svg_visualizer.html` and
+`/plano_demo.html` also returned 200. The alias ping reported version `0.56.1`,
+workspace `flujo`, status `ok` and mode `http-server`. The three HTML files
+are intentionally one React single-file build; `web/src/App.tsx` selects the
+view from the pathname, as documented in `web/README.md`.
+
+Both temporary servers were stopped with Ctrl-C. No POST, job processing,
+database write, external provider, browser, service unit or persistent process
+was used. The local working tree remains unchanged apart from the pre-existing
+unrelated dirty/context evidence listed by `git status`.
+
+Disposition: `FLUJO_SERVE_GREEN; FLUJO_APP_ALIAS_GREEN; GET_ONLY; NO_DURABLE_STATE_CHANGE`.
+
+## Next concrete action
+
+When continuing the house work, use `flujo app --no-abrir` for bounded checks
+and the existing CI/Pages workflow for deployment validation. Keep runtime
+tests foreground and temporary; do not enable `--procesar-pendientes` without
+an explicit job-processing decision.
+
+Last verified: 2026-08-15 America/Santiago — both FLUJO entrypoints started,
+served the real backend, passed GET smoke checks and were stopped cleanly.
