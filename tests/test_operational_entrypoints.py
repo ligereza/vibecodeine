@@ -81,10 +81,12 @@ def test_mak_mirror_check_covers_curatoria_and_fails_on_mismatch(tmp_path, monke
     assert module.main() == 1
 
 
-def test_repair_script_installs_fourth_mirror():
-    repair = _text("tools/mak_ops/repair_mak_sync.py")
-    assert "cultura/mak_curatoria/." in repair
-    assert '"$HOME/curatoria/"' in repair
+def test_legacy_repair_script_is_not_an_active_entrypoint():
+    # The historical repair script performed SSH, Git reset/checkout, cron and
+    # mirror-copy operations without an active consumer. It is quarantined as
+    # evidence; keeping a test that requires it would resurrect a dangerous
+    # mutator by treating its absence as a regression.
+    assert not (ROOT / "tools" / "mak_ops" / "repair_mak_sync.py").exists()
 
 
 def test_curatoria_guard_reconciles_before_declaring_corpus_done():
@@ -99,10 +101,15 @@ def test_single_human_hub_contract_has_no_direct_service_docs():
     active_docs = [
         _text("MAPA.md"),
         _text("cultura/mak_plataforma/GENESIS.md"),
-        _text("cultura/mak_plataforma/RELEVO_MAK.md"),
         _text("cultura/mak_research/MAK_RESEARCH.md"),
         _text("xio/FACES.md"),
     ]
+    # RELEVO_MAK.md is a box-level projection, not part of this repo's
+    # canonical source tree. Do not manufacture a stale copy just to satisfy
+    # an inventory test; include it when a future active projection exists.
+    relevo = ROOT / "cultura" / "mak_plataforma" / "RELEVO_MAK.md"
+    if relevo.exists():
+        active_docs.append(relevo.read_text(encoding="utf-8"))
     joined = "\n".join(active_docs)
     assert "192.168.50.2:8890" not in joined
     assert "192.168.50.2:8891" not in joined

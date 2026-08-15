@@ -1,15 +1,15 @@
 # QA operativo EVENTOS/SUPLEMENTOS
 
-Comandos Windows-first para revisar piezas antes de exportar o imprimir.
+Comandos desde la raiz de MAK para revisar piezas antes de exportar o imprimir.
 
 ## EVENTOS: validar rider/plano
 
 Antes de imprimir rider o exportar plano SVG:
 
 ```bash
-py -m flujo plano projects/plano/ejemplos/evento_ejemplo.json --validate
-py -m flujo plano projects/plano/ejemplos/evento_ejemplo.json --validate --rider
-py -m flujo plano projects/plano/ejemplos/evento_ejemplo.json --validate -o exports/plano_evento.svg
+PYTHONPATH=src python3 -m flujo plano projects/plano/ejemplos/evento_ejemplo.json --validate
+PYTHONPATH=src python3 -m flujo plano projects/plano/ejemplos/evento_ejemplo.json --validate --rider
+PYTHONPATH=src python3 -m flujo plano projects/plano/ejemplos/evento_ejemplo.json --validate -o exports/plano_evento.svg
 ```
 
 La validacion revisa:
@@ -26,14 +26,14 @@ Las advertencias no bloquean, pero deben revisarse con produccion.
 Despues de generar una contraportada:
 
 ```bash
-py -m flujo suplementos contraportada "Impulso" --output exports/impulso_contraportada.svg
-py -m flujo suplementos validate exports/impulso_contraportada.svg
+PYTHONPATH=src python3 -m flujo suplementos contraportada "Impulso" --output exports/impulso_contraportada.svg
+PYTHONPATH=src python3 -m flujo suplementos validate exports/impulso_contraportada.svg
 ```
 
 Para varios archivos:
 
 ```bash
-py -m flujo suplementos validate exports/*.svg
+PYTHONPATH=src python3 -m flujo suplementos validate exports/*.svg
 ```
 
 La validacion revisa:
@@ -46,7 +46,7 @@ La validacion revisa:
 Para SVGs genericos no contraportada:
 
 ```bash
-py -m flujo suplementos validate pieza.svg --generic
+PYTHONPATH=src python3 -m flujo suplementos validate pieza.svg --generic
 ```
 
 ## Nota

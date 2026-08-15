@@ -52,9 +52,18 @@ def testear(path, densidad="medio"):
                       encoding="utf-8") as f:
                 f.write(tests)
             try:
+                # `-I` removes the current directory from sys.path.  The
+                # generated test must import the copied module from this
+                # temporary directory, so add that path explicitly inside a
+                # tiny isolated runner instead of dropping isolation.
+                runner = (
+                    "import sys, unittest; "
+                    "sys.path.insert(0, sys.argv[1]); "
+                    "sys.argv = ['test_pieza', '-v']; "
+                    "unittest.main(module='test_pieza')"
+                )
                 p = subprocess.run(
-                    [sys.executable, "-I", "-m", "unittest", "-v",
-                     "test_pieza"],
+                    [sys.executable, "-I", "-c", runner, tmp],
                     cwd=tmp, capture_output=True, text=True, timeout=60,
                     preexec_fn=_limites,
                     env={"PATH": "/usr/bin:/bin", "HOME": tmp,

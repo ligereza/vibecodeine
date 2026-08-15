@@ -19,9 +19,10 @@ What is measured -- and, just as important, what is NOT:
   Spanish with diacritics and must never be accused.
 - The full measurement uses `git ls-files -- '*.py'`. The change ratchet also
   reads untracked Python files deliberately, so new work cannot hide from it.
-- Files under DEAD_ZONE (archives) and FOREIGN_ZONE (vendorized, third-party)
-  are excluded: the instrument must earn the right to accuse a file, and we
-  did not write those. Same convention as tests/test_higiene_docs.py.
+- Files under DEAD_ZONE (archives), FOREIGN_ZONE (vendorized, third-party) and
+  QUARANTINE_ZONE (reversible evidence) are excluded: the instrument must
+  earn the right to accuse a file, and quarantine is not active code. Same
+  convention as tests/test_higiene_docs.py.
 
 The heuristic, in full (it is deliberately transparent -- no model, no network):
 
@@ -92,6 +93,9 @@ DEAD_ZONE = (
 FOREIGN_ZONE = (
     "docs/cultura/lib/",
     "iskvw/piel/lib/",
+)
+QUARANTINE_ZONE = (
+    "context/quarantine/",
 )
 
 # Unambiguous Spanish function words. Deliberately absent: "no" and "a"
@@ -222,7 +226,9 @@ def tracked_python_files(root: Path = ROOT) -> List[str]:
     files = [f for f in r.stdout.splitlines() if f]
     return [
         f for f in files
-        if not f.startswith(DEAD_ZONE) and not f.startswith(FOREIGN_ZONE)
+        if not f.startswith(DEAD_ZONE)
+        and not f.startswith(FOREIGN_ZONE)
+        and not f.startswith(QUARANTINE_ZONE)
     ]
 
 
@@ -251,6 +257,7 @@ def changed_python_files(root: Path = ROOT) -> List[str]:
     return sorted(
         f for f in files if f and not f.startswith(DEAD_ZONE)
         and not f.startswith(FOREIGN_ZONE)
+        and not f.startswith(QUARANTINE_ZONE)
     )
 
 

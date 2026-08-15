@@ -70,7 +70,7 @@ def asset_root() -> Path:
     return repo_root()
 
 
-def workspace_root() -> Path:
+def workspace_root(create: bool = True) -> Path:
     """Writable root for user data (jobs/, data/, inbox etc).
     In packaged .exe: always next to the .exe (flujo_workspace sibling) so it survives onefile extracts.
     Dev: falls back to repo root.
@@ -79,11 +79,13 @@ def workspace_root() -> Path:
     env = os.getenv("FLUJO_WORKSPACE_ROOT")
     if env:
         p = Path(env).resolve()
-        p.mkdir(parents=True, exist_ok=True)
+        if create:
+            p.mkdir(parents=True, exist_ok=True)
         return p
     if _is_frozen():
         p = _exe_dir() / "flujo_workspace"
-        p.mkdir(parents=True, exist_ok=True)
+        if create:
+            p.mkdir(parents=True, exist_ok=True)
         return p
     return repo_root()
 
@@ -127,10 +129,11 @@ def data_dir() -> Path:
     return p
 
 
-def datadrops_dir() -> Path:
+def datadrops_dir(create: bool = True) -> Path:
     """Writable user dir for datadrops (inverse airdrop): uploaded real photos of finished work.
     Date-subdir structure inside. Used by hub UI + future AI review for styles/patterns.
     """
-    p = workspace_root() / "datadrops"
-    p.mkdir(parents=True, exist_ok=True)
+    p = workspace_root(create=create) / "datadrops"
+    if create:
+        p.mkdir(parents=True, exist_ok=True)
     return p

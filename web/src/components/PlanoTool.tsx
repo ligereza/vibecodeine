@@ -2112,7 +2112,6 @@ export default function PlanoTool() {
                   {[
                     'py -m flujo app',
                     'py -m flujo health',
-                    `py -m flujo portal --repo-url https://github.com/ligereza/vibecodeine`,
                   ].map(cmd => (
                     <code key={cmd} className="block rounded-lg bg-black/40 px-3 py-2 text-[10px] text-zinc-400 break-all">
                       {cmd}
