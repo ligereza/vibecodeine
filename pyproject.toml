@@ -11,6 +11,7 @@ license = {text = "MIT"}
 dependencies = [
     "matplotlib>=3.10.9",
     "pyyaml>=6.0.3",
+    "Pillow>=12.3.0",
     "pydantic>=2.13.4",
     "typer>=0.27.0",
     "rich>=15.0.0",
@@ -37,14 +38,12 @@ render = [
     # Va en un extra propio y no en `dev` para no cargarle cairo a quien solo
     # quiere correr los tests que no rasterizan.
     "cairosvg>=2.9.0",
-    "Pillow>=12.3.0",
 ]
 web = [
     "pywebview>=6.2.1",  # desktop window (BSD free); pip install pywebview
 ]
 desktop-extras = [
     "pystray>=0.19.5",   # optional tray icon for --desktop (free)
-    "Pillow>=12.3.0",      # for tray image gen (free)
 ]
 build = [
     "pyinstaller>=6.21.0",  # free packaging to .exe; 'flujo package'. Not runtime dep.

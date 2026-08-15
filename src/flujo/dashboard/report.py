@@ -57,7 +57,7 @@ def render_markdown(items: List[ItemScore]) -> str:
         "",
         "```bash",
         "flujo health",
-        "flujo job-list",
+        "flujo job list",
         "flujo daily",
         "```",
     ])

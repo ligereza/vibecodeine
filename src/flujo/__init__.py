@@ -6,4 +6,4 @@ Subpaquetes incluidos en este airdrop:
   flujo.serve   servidor local del hub + endpoints /api (stdlib)
   flujo.hub     utilidades del hub
 """
-__version__ = "0.40-airdrop"
+from .version import __version__
