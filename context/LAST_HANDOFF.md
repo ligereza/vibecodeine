@@ -10911,5 +10911,27 @@ continue the objective audit from the remaining physical consumer surface;
 only introduce a short-lived named topic branch if a new bounded code change
 is actually found.
 
-Last verified: 2026-08-15 America/Santiago — full canonical suite green after
-portable map repair; publication of Phase 507 remains pending.
+## Phase 508 — map repair published and topology rechecked
+
+The five-file Phase 507 slice was committed on `main` as `592f6c7`
+(`fix: pin map generation to checkout`) and pushed successfully to
+`origin/main`. Post-push invariants returned `main...origin/main = 0 0`, only
+local `main` plus `origin/main` remained as branches, and the sole preservation
+tag remained `archive/house-history`. `README.md` is byte-clean in the working
+diff and the index is empty. The unrelated modified HTML/evidence surface
+remains unstaged and untouched.
+
+Disposition: `PHASE507_PUBLISHED; MAIN_SYNCHRONIZED; ONE_ARCHIVE_TAG;
+README_UNCHANGED; EVIDENCE_UNSTAGED`.
+
+## Next concrete action
+
+Continue the physical consumer audit from `/home/mak/*`, using the current
+`MAPA.md` and root handoff as navigation. Select the next bounded local slice
+only if it has a real consumer, an observable input/output contract and a
+non-mutating validation path. Preserve `WIN`, generated products, databases,
+quarantine and session evidence; do not stage the existing evidence backlog or
+create a branch for documentation-only work.
+
+Last verified: 2026-08-15 America/Santiago — Phase 507 published as `592f6c7`;
+topology and README invariants green.
