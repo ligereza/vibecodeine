@@ -1,0 +1,17 @@
+name: Vibo (Claude) — disabled contract
+
+# Historical Windows automation is intentionally not promoted to MAK. This
+# file keeps the boundary explicit: no issue/PR trigger, no external action,
+# and no repository write permission. Activation requires a separate,
+# explicitly authorized integration decision.
+on:
+  workflow_dispatch: {}
+
+permissions: {}
+
+jobs:
+  vibo:
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Claude automation is disabled in MAK"
