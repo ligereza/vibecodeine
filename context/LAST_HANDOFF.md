@@ -10734,3 +10734,46 @@ do not merge databases or insert venue relations automatically.
 
 Last verified: 2026-08-15 America/Santiago — SCD branch committed and
 validated; root handoff promotion prepared; no external publication performed.
+
+## Phase 504 — RD/venue crosswalk provenance integrated
+
+Created short-lived branch `rd/venue-crosswalk` from synchronized `main` at
+`2431b26`, owned by `LUNA-504`, with an exclusive contract and handoff. The
+branch changed only `src/flujo/rd/entity_crosswalk.py` and its focused test,
+plus the temporary branch contract files.
+
+`EntityCrosswalk` now preserves and validates the declared relative source
+database list. It exposes `('data/rd.db', 'data/rd_datos.db')` while rejecting
+absolute paths, Windows-drive paths, empty path segments and `..` traversal.
+The adapter remains JSON-only and review-only; it does not open, merge,
+rebuild or write either SQLite source.
+
+Validation:
+
+    /home/mak/vibecodeine/.venv/bin/python -m py_compile src/flujo/rd/entity_crosswalk.py tests/test_entity_crosswalk.py
+    /home/mak/vibecodeine/.venv/bin/python -m pytest -q tests/test_entity_crosswalk.py tests/test_rd_database.py tests/test_venue.py
+    PYTHONPATH=src /home/mak/vibecodeine/.venv/bin/python -c 'from flujo.rd.entity_crosswalk import load_crosswalk; c=load_crosswalk(); print(c.source_databases)'
+    git diff --check
+
+Results: compile and combined suite exit 0; crosswalk status `review_only`,
+four entities and two declared source databases; unsafe path test rejects
+without writing; SHA-256 hashes for `data/rd.db` and `data/rd_datos.db` stayed
+unchanged. No database, venue JSON, portfolio artifact, README, WIN, service
+or provider state changed.
+
+The branch commit is `f742844` (`fix(rd): preserve crosswalk source
+provenance`). Its temporary contract and handoff are removed during closeout;
+durable facts are recorded here.
+
+Disposition: `RD_VENUE_PROVENANCE_GREEN; NO_DATABASE_MERGE;
+REVIEW_ONLY_PRESERVED; SOURCE_HASHES_GREEN; BRANCH_CLOSED_PENDING_FAST_FORWARD`.
+
+## Next concrete action
+
+Fast-forward `main` with the crosswalk provenance slice, delete the short-lived
+branch and push the result. Then audit the next bounded consumer, prioritizing
+the read-only portfolio/venue publication gate; no public exposure is allowed
+without explicit provenance, confidence and publication status.
+
+Last verified: 2026-08-15 America/Santiago — crosswalk branch committed and
+validated; root handoff promotion prepared; no external publication performed.
