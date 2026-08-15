@@ -20,7 +20,10 @@ from cultura.mak_plataforma import providers as external_providers
 from cultura.mak_plataforma import tandas
 
 
-CANONICAL_BRANCHES = ("main", "mak", "rd", "iskvw")
+CANONICAL_BRANCHES = ("main",)
+LEGACY_TRANSITION_BRANCHES = ("mak", "rd", "iskvw", "mejoras", "mak-svg")
+SOURCE_COPY_PREFIX = "source/"
+TEMPORARY_BRANCH_PREFIXES = ("work/", "integration/", "codex/", "dependabot/")
 DEFAULT_AREAS = (
     "mak_quality",
     "rd_evidence",
@@ -119,6 +122,19 @@ def _csv(values: str | Iterable[str] | None, default: tuple[str, ...]) -> tuple[
     return tuple(items or default)
 
 
+def _classify_branch(branch: str) -> str:
+    """Classify a ref without treating a department name as Git authority."""
+    if branch in CANONICAL_BRANCHES:
+        return "canonical"
+    if branch in LEGACY_TRANSITION_BRANCHES:
+        return "legacy_transition"
+    if branch.startswith(SOURCE_COPY_PREFIX):
+        return "source_copy"
+    if branch.startswith(TEMPORARY_BRANCH_PREFIXES):
+        return "temporary_work"
+    return "unclassified"
+
+
 def _branch_state() -> dict:
     current = _run_git(["branch", "--show-current"])
     dirty = _run_git(["status", "--porcelain"]).splitlines()
@@ -132,18 +148,37 @@ def _branch_state() -> dict:
         for ref in raw_remote
         if ref.startswith("origin/") and ref != "origin/HEAD"
     )
-    extra_remote = sorted(
-        ref for ref in remote_branches if ref not in CANONICAL_BRANCHES
-    )
     canonical_present = {
         branch: branch in remote_branches for branch in CANONICAL_BRANCHES
     }
+    classified = {
+        "legacy_transition": sorted(
+            ref for ref in remote_branches
+            if _classify_branch(ref) == "legacy_transition"
+        ),
+        "source_copy": sorted(
+            ref for ref in remote_branches
+            if _classify_branch(ref) == "source_copy"
+        ),
+        "temporary_work": sorted(
+            ref for ref in remote_branches
+            if _classify_branch(ref) == "temporary_work"
+        ),
+        "unclassified": sorted(
+            ref for ref in remote_branches
+            if _classify_branch(ref) == "unclassified"
+        ),
+    }
     return {
         "current": current,
+        "current_classification": _classify_branch(current) if current else "unknown",
         "dirty": dirty,
         "remote_branches": remote_branches,
         "canonical_present": canonical_present,
-        "extra_remote_branches": extra_remote,
+        "legacy_transition_branches": classified["legacy_transition"],
+        "source_copy_branches": classified["source_copy"],
+        "temporary_work_branches": classified["temporary_work"],
+        "unclassified_remote_branches": classified["unclassified"],
     }
 
 
@@ -226,8 +261,8 @@ def _operational_state(branches, prs, common, batches, quarantine, readme):
     actions = []
     if branches["dirty"]:
         actions.append("clean_repo_before_promotion")
-    if branches["extra_remote_branches"]:
-        actions.append("remove_noncanonical_remote_branches")
+    if branches["unclassified_remote_branches"]:
+        actions.append("review_unclassified_remote_branches")
     if prs:
         actions.append("review_open_promotion_prs")
     if blocked_prs:
@@ -243,7 +278,10 @@ def _operational_state(branches, prs, common, batches, quarantine, readme):
         "branch_policy": {
             "canonical": list(CANONICAL_BRANCHES),
             "remote": branches["remote_branches"],
-            "extra_remote": branches["extra_remote_branches"],
+            "legacy_transition": branches["legacy_transition_branches"],
+            "source_copy": branches["source_copy_branches"],
+            "temporary_work": branches["temporary_work_branches"],
+            "unclassified": branches["unclassified_remote_branches"],
         },
         "promotion": {
             "open_prs": len(prs),
@@ -329,8 +367,8 @@ def autonomy_status(common_path: str = tandas.COMMON_LEDGER,
     ]
     if missing:
         blockers.append("missing_canonical_branches:" + ",".join(missing))
-    if branches["extra_remote_branches"]:
-        blockers.append("extra_remote_branches")
+    if branches["unclassified_remote_branches"]:
+        blockers.append("unclassified_remote_branches")
     quarantine_path = _quarantine_path(common_path)
     quarantine = _quarantine_summary(quarantine_path)
     next_actions = []
