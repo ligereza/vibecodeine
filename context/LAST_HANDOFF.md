@@ -9519,3 +9519,39 @@ detached and archived, leaving only `main`.
 
 Last verified: 2026-08-15 America/Santiago — clean `main` at `9bbec3c`, two
 branch refs remain (`main`, local evidence lane `mak/ownership`).
+
+## Phase 473 — continuity promoted to main
+
+The six authoritative continuity documents were reviewed individually and
+committed on the evidence lane as `f3ecfed docs: preserve MAK operating
+continuity`: `agents.md`, `CAPACIDADES.md`, `context/LAST_HANDOFF.md`,
+`context/MD_CONTEXT_MASTER.md`, `context/GIT_HISTORY_STRATEGIC_REVIEW.md` and
+`projects/cultura/MD_IDEAS_MASTER.md`. The 746 historical phase reports,
+disabled workflow, database backup, probe scripts and generated full MAPA copy
+were not staged.
+
+That continuity commit was merged into `main` as `3b991e3 docs: integrate MAK
+continuity records` and preserved by
+`archive/integrated/mak-continuity-f3ecfed`. A clean detached checkout of
+`main` resolves exactly to `3b991e3` and has no status changes. Revalidation
+passed: targeted pytest 63/63, Python compilation exit 0, TypeScript exit 0.
+
+The remaining `mak/ownership` worktree is still intentionally not archived:
+it carries the unreviewed context/evidence surface and must not be force-reset
+or cleaned. Its functional commits are already represented in `main` and by
+archive tags.
+
+Disposition:
+`CONTINUITY_DOCS_PROMOTED; MAIN_3B991E3_GREEN; BULK_EVIDENCE_UNSTAGED;
+NO_FORCE_CLEANUP`.
+
+## Next concrete action
+
+Perform the final branch/reference audit and produce the physical-vs-Git
+architecture report: confirm `main` is the only permanent trunk, list archive
+tags and the remaining evidence lane, and identify any target-tree folders
+that are intentionally conceptual rather than safe mass moves. Do not create
+another branch or move the active source tree without a consumer-specific gate.
+
+Last verified: 2026-08-15 America/Santiago — `main` at `3b991e3`, clean and
+validated; `mak/ownership` retained solely for local evidence continuity.
