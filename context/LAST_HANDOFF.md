@@ -9792,3 +9792,49 @@ objective and have unsafe or unproven runtime boundaries.
 
 Last verified: 2026-08-15 America/Santiago — archaeology candidate passed
 offline fixtures and active-tree validation; publication remains pending.
+
+## Phase 482 — useful-code preservation and publication verified
+
+The archaeology slice was committed on mak/ownership as ccd8b44, merged into
+main as c99b61b, and pushed to origin. The active remote now has exactly one
+head:
+
+    c99b61b0d6376cf7092a5edbc9796ca379f4af85 refs/heads/main
+
+The new integrated archive tag
+archive/integrated/inferential-archaeology-ccd8b44 resolves on GitHub. The
+nine historical remote heads deleted during restructuring still resolve as
+archive/remote/* tags. Therefore useful branch work was not discarded as an
+unrecoverable ref: integrated useful slices are in main, and the historical
+heads remain recoverable tags.
+
+Confirmed useful slices now in main:
+
+1. Fondart source-preserving corpus and source pipeline with offline tests.
+2. Three-plane knowledge manifest and read-only RD SQLite reconciliation.
+3. Inferential archaeology evidence index with offline fixtures and tests.
+
+Explicitly preserved but not promoted:
+
+1. sync_mak_safe.py, because it exposes an apply/transport mutator path.
+2. postgres_* candidates, because the verified MAK authority is SQLite and no
+   Postgres writer/runtime was authorized.
+
+Neither exclusion deletes the source. Both remain in WIN and/or archived Git
+objects. No runtime database, session store, provider, network source or
+historical evidence was modified.
+
+Disposition:
+USEFUL_PROGRESS_PRESERVED; THREE_USEFUL_SLICES_IN_MAIN;
+REMOTE_HEADS_ONE; HISTORICAL_HEADS_TAGGED; MUTATORS_DEFERRED.
+
+## Next concrete action
+
+Leave Git restructuring closed. Resume the physical MAK-wide integration from
+/home/mak/* with one bounded consumer at a time. The next safe candidate is a
+read-only physical consumer audit for the remaining research/curatoria
+surfaces; do not scan live session roots with archaeology defaults and do not
+activate sync_mak_safe.py or postgres_* without a separate authority gate.
+
+Last verified: 2026-08-15 America/Santiago — main c99b61b published; one remote
+branch and nine historical remote archive tags verified.
