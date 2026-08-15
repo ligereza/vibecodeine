@@ -70,6 +70,7 @@ except Exception:  # noqa: BLE001 - XIO evidence remains optional
     _xio_evidence = None
 
 PORT = int(os.environ.get("HUB_PORT", "8900"))
+HUB_HOST = os.environ.get("HUB_HOST", "127.0.0.1")
 HOME = os.path.expanduser("~")
 _percepcion = None
 _percepcion_root = os.path.join(HOME, "flujo", "cultura", "mak_curatoria")
@@ -4536,14 +4537,14 @@ class Servidor(ThreadingHTTPServer):
 
 
 def main():
-    server = Servidor(("0.0.0.0", PORT), H)
+    server = Servidor((HUB_HOST, PORT), H)
 
     def apagar(signum, frame):
         threading.Thread(target=server.shutdown, daemon=True).start()
 
     signal.signal(signal.SIGTERM, apagar)
     signal.signal(signal.SIGINT, apagar)
-    print("[hub] la cara del organismo en http://0.0.0.0:%d" % PORT, flush=True)
+    print("[hub] la cara del organismo en http://%s:%d" % (HUB_HOST, PORT), flush=True)
     server.serve_forever()
 
 

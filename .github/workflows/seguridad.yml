@@ -39,13 +39,16 @@ jobs:
         with:
           node-version: "20"
 
+      - name: Instalar contrato Python del repo
+        run: python -m pip install -e ".[dev,render]"
+
       - name: pip-audit
         run: |
           python -m pip install --quiet pip-audit
           # `|| true` NO: si hay una CVE conocida en una dependencia, el PR se
           # entera. Lo que no tiene arreglo se ignora con --ignore-vuln y queda
           # escrito aca, que es mejor que un job verde que no mira.
-          pip-audit -r requirements.txt --strict
+          pip-audit --strict
           if [ -f xio/new/requirements.txt ]; then
             pip-audit -r xio/new/requirements.txt --strict
           fi

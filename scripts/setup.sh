@@ -18,8 +18,7 @@ if [ -z "$PYTHON_BIN" ]; then
 fi
 
 echo "Python: $PYTHON_BIN"
-"$PYTHON_BIN" -m pip install -r requirements.txt
-"$PYTHON_BIN" -m pip install -r requirements-dev.txt
+"$PYTHON_BIN" -m pip install -e ".[dev,render]"
 "$PYTHON_BIN" -m pre_commit install
 
 echo ""

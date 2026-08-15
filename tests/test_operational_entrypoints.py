@@ -113,8 +113,8 @@ def test_single_human_hub_contract_has_no_direct_service_docs():
     joined = "\n".join(active_docs)
     assert "192.168.50.2:8890" not in joined
     assert "192.168.50.2:8891" not in joined
-    assert "http://192.168.50.2:8900/research/" in joined
-    assert "http://192.168.50.2:8900/codex/" in joined
+    assert "http://127.0.0.1:8900/research/" in joined
+    assert "http://127.0.0.1:8900/codex/" in joined
 
     mirror = _load_mirror_module()
     assert "panel.py" not in mirror.FILES["mak_curatoria"]

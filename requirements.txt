@@ -1,5 +1,6 @@
-# Dependencias de flujo
-# Instalar con: python -m pip install -r requirements.txt
+# Compatibilidad heredada para consumidores que aun exigen requirements.txt.
+# Fuente unica y actual: pyproject.toml.
+# Instalacion recomendada: python -m pip install -e "."
 
 matplotlib>=3.10.9
 pyyaml>=6.0.3

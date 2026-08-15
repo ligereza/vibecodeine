@@ -143,6 +143,24 @@ exists. After reporting progress, continue with `Next concrete action` in the
 same task. If the context is compacted, read this handoff and resume from its
 open item instead of restarting or improvising.
 
+## Short-lived branch contract
+
+The root `agents.md` is global and applies to every branch. A short-lived topic
+branch must additionally carry a scoped `agents.md` copied from
+`contracts/BRANCH_AGENTS_TEMPLATE.md` under
+`contracts/branches/<branch-id>/agents.md`. It must name the branch, owner,
+consumer, allowed write set, dependency group, validation commands and rollback.
+
+The same branch must carry a private continuity file copied from
+`context/BRANCH_HANDOFF_TEMPLATE.md` under
+`context/handoffs/<branch-id>.md`. This file is not a second global handoff:
+it is the branch's bounded execution record. Before the branch is merged, its
+durable facts must be promoted to `context/LAST_HANDOFF.md`; after promotion,
+the topic branch and its temporary contract/handoff are deleted together.
+
+The root README and its current SVG artwork are protected assets. A topic
+branch may not rewrite, reformat or replace them as collateral work.
+
 If a real blocker exists, record the exact path, command, exit code, error and
 smallest recovery action. A generic statement such as "not authorized",
 "needs review" or "phase incomplete" is not a blocker without that evidence.
