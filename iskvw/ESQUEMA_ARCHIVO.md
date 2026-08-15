@@ -1,23 +1,23 @@
 # El archivo, en una sola forma
 
-> **PROPUESTA, no contrato cerrado (2026-07-27).** Está probada contra las dos
-> fuentes reales —993 piezas y 3157 vínculos salieron bien— pero **no se congeló
-> el archivo generado a propósito**. MAK está percibiendo el archivo del artista
-> ahora mismo, y cuando termine cada obra va a traer conceptos, técnica y
-> vínculos medidos. Fijar la forma antes de ver eso sería delimitar con lo que
-> hay hoy, que es lo más pobre que va a haber.
+> **Forma operativa, con contenido regenerable (verificada 2026-08-15).** La
+> proyección local actual, construida con el snapshot MAK disponible, tiene
+> 1.690 piezas y 4.729 vínculos. Esas cifras cambian cuando avanza el snapshot;
+> no son parte del contrato y no deben copiarse a una piel como constantes.
 >
-> Se genera cuando se necesita. `iskvw/datos/archivo.json` NO se versiona.
+> Se genera cuando se necesita. `iskvw/datos/archivo.json` NO se versiona; es
+> un artefacto de runtime y su fuente es `obras.json` + micelio (live o
+> snapshot), según la opción del generador.
 
 Este documento es **el conector**. Define qué recibe una piel, sea lo que sea que
 haya detrás.
 
-Hoy detrás hay dos cosas que no se parecen en nada:
+Detrás hay dos familias que no se parecen en nada:
 
 - **Las obras del artista**: pocas, con datos ricos —título, año, técnica,
   descripción— y **ninguna relación explícita**. Sólo etiquetas.
-- **El micelio de MAK**: casi mil nodos con **3141 relaciones medidas** entre sí,
-  pero apenas un título por nodo.
+- **El micelio de MAK**: nodos de investigación y código con relaciones
+  semánticas medidas; en el snapshot local son 1.530 piezas y 4.921 vínculos.
 
 Una tenía que ver la otra y no podía. Cada piel terminaba escribiendo su propio
 lector, y una piel nueva servía para una sola fuente. Con esta forma, una piel
@@ -33,7 +33,7 @@ pide *"dame las piezas y sus vínculos"* y siempre recibe lo mismo.
 {
   "version": 1,
   "fuente": "obras",
-  "generado": "2026-07-27T05:00:00",
+  "generado": "timestamp de generación",
   "piezas": [ ... ],
   "vinculos": [ ... ],
   "meta": { }
@@ -117,28 +117,24 @@ py tools/gen_archivo_iskvw.py --fuente todo               # archivo público, si
 py tools/gen_archivo_iskvw.py --fuente todo --incluir-ensayos
 ```
 
-**El micelio en vivo no es alcanzable desde CI** (2026-08-01, medido): el
-workflow que publica el sitio corre en `ubuntu-latest`, una máquina en la nube
-que nunca pudo llegar a la LAN privada de la caja MAK -- no es una caída, el
-propio workflow lo declara esperado. Medido el mismo día sobre lo publicado en
-producción: 269 vínculos, 0 de clase `semantico`. `--fuente todo` intenta el
-micelio en vivo primero y, si no responde, cae a `iskvw/datos/micelio.json`
--- un snapshot ya convertido que **la caja misma escribe y entrega por PR**
-(`cultura/mak_plataforma/entregar_micelio.py`, mismo patrón de
-`entregar.py`: git + `gh pr create` contra la rama `mak`), porque sólo ella
-puede alcanzarse a sí misma. Mismo mecanismo que ya usa `campo.json` para las
-posiciones: un snapshot versionado, no en vivo, que avanza cuando alguien lo
-vuelve a empujar.
+En esta verificación el micelio en vivo no fue alcanzable desde MAK (conexión
+rechazada), por lo que `--fuente todo` cayó correctamente al snapshot
+`iskvw/datos/micelio.json` —1.530 piezas y 4.921 vínculos— y produjo localmente
+1.690 piezas y 4.729 vínculos. La promoción de cambios se revisa en `main`;
+`source/*` conserva puntas históricas exactas y no es una fuente de runtime.
+El mismo principio usa `campo.json` para las posiciones: snapshot regenerable,
+no una promesa de conexión en vivo.
 
 Sale a `iskvw/datos/archivo.json`. Una piel lee ESE archivo y nada más.
 
 **La fuente `obras`** deriva los vínculos de las etiquetas compartidas: dos obras
-con etiquetas en común quedan unidas, con peso según cuántas comparten. Es lo
-único que hay hoy, y se dice: esos vínculos son `clase: "etiqueta"`, no
-`semantico`, porque nadie midió que se parezcan — comparten una palabra.
+con etiquetas en común quedan unidas, con peso según cuántas comparten. Esos
+vínculos son `clase: "etiqueta"`, no `semantico`, porque nadie midió que se
+parezcan — comparten una palabra.
 
 **La fuente `micelio`** trae los vínculos que MAK midió de verdad, por cercanía
-entre los textos. Ahí `clase` sí es `semantico`.
+entre los textos. Ahí `clase` sí es `semantico`; el snapshot actual aporta la
+mayor parte del grafo público.
 
 **La fuente `ensayos`** (2026-07-30) trae los ensayos curados de
 `docs/cultura/ensayos/` con su anexo iconográfico: el ensayo entra como una
