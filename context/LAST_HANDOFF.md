@@ -9957,3 +9957,39 @@ Do not promote broad historical diffs or stale branch metadata.
 
 Last verified: 2026-08-15 America/Santiago — work/mak-ownership branch
 topology slice passes focused tests; publication and main merge are next.
+
+## Phase 487 — branch topology slice published
+
+The bounded topology slice was committed on work/mak-ownership as 5b20e22,
+published as origin/work/mak-ownership, merged into main as 8e5f689, and
+published as origin/main. The active /home/mak/flujo worktree fast-forwarded
+to that same main commit without cleaning its unrelated modified or
+untracked evidence.
+
+Post-merge foreground validation:
+
+    PYTHONPATH=src:. /home/mak/vibecodeine/.venv/bin/pytest -q tests/test_autonomia_cli.py tests/test_git_web_contract.py tests/test_readme_svg.py
+    python3 -m py_compile src/flujo/autonomia.py tools/update_readme_svg.py
+
+Result: 19 tests passed, exit 0; compilation exit 0. The untracked local
+claude.yml was byte-identical to the promoted workflow before its duplicate
+was moved to trash, so no local content was lost.
+
+Current remote branch classes are now explicit: main is canonical,
+source/* are exact source copies, and work/mak-ownership is the first updated
+consumer branch. The source copies remain at their original hashes until
+their own triangulation gate.
+
+Disposition:
+MAK_BRANCH_SLICE_PUBLISHED; MAIN_SYNCED; FOCUSED_GATE_GREEN;
+SOURCE_COPIES_UNCHANGED.
+
+## Next concrete action
+
+Triangulate source/rd against /home/mak/* RD consumers and the current RD
+database/venue/plano contracts. Select one bounded RD slice, update its work
+branch only, validate it in the foreground, and merge only that slice to main.
+Do not copy the broad source/rd tree or promote stale metadata.
+
+Last verified: 2026-08-15 America/Santiago — main 8e5f689 and
+work/mak-ownership 5b20e22 published; 19 focused tests green.
