@@ -9555,3 +9555,28 @@ another branch or move the active source tree without a consumer-specific gate.
 
 Last verified: 2026-08-15 America/Santiago — `main` at `3b991e3`, clean and
 validated; `mak/ownership` retained solely for local evidence continuity.
+
+## Phase 475 — RD database authority recorded
+
+Read-only physical inspection found the actual RD databases under `/home/mak`:
+`/home/mak/flujo/data/rd.db` is 2,740,224 bytes with 20 tables and differs by
+SHA-256 from both `/home/mak/WIN/flujo/data/rd.db` and
+`/home/mak/state/windows-director-20260813/rd/rd.db`, which match each other.
+`/home/mak/flujo/data/rd_datos.db` is 20,480 bytes with only four operational
+tables. They are not merged or overwritten. The result is documented in
+`context/PHASE475_RD_DATABASE_PHYSICAL_AUTHORITY.md` and committed as
+`23d5936`, then published to `main` as merge `61a6eea`.
+
+Disposition:
+`PHYSICAL_RD_SOURCE_CONFIRMED; WIN_SOURCE_PRESERVED; HASH_DIFFERENCE_RECORDED;
+RD_DATOS_NOT_ENRICHED_CATALOG; NO_WRITE_MODE; NO_DESTRUCTIVE_MERGE`.
+
+## Next concrete action
+
+Run one final clean-main validation after Phase 475, audit that all archive
+tags resolve and that only `main` is permanent, then stop the restructuring
+phase. Any later database reconciliation must be a separately authorized
+read-only comparison or an explicitly approved migration slice.
+
+Last verified: 2026-08-15 America/Santiago — `main` promoted to `61a6eea`;
+physical RD authority documented without mutation.
