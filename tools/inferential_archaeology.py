@@ -1369,6 +1369,31 @@ def build_idea_followups(turns: list[dict], candidates: list[dict],
     return rows
 
 
+def safe_artifact_path(repo: Path, raw_path: str | Path, label: str) -> Path:
+    """Resolve a generated artifact path without allowing source overwrite.
+
+    Artifacts may be written outside the repository (normally under ``/tmp``)
+    or under the ignored ``repo/out`` projection tree. A path anywhere else
+    inside the repository is a source surface and is rejected before any
+    history or session input is loaded. Resolving symlinks first also prevents
+    an apparently safe path from redirecting into ``data`` or ``context``.
+    """
+    root = repo.resolve()
+    path = Path(raw_path).expanduser().resolve()
+    try:
+        path.relative_to(root)
+    except ValueError:
+        return path
+    try:
+        path.relative_to((root / "out").resolve())
+    except ValueError as exc:
+        raise RuntimeError(
+            "%s must be outside the repository or under repo/out: %s"
+            % (label, path)
+        ) from exc
+    return path
+
+
 def _proposal_action_rows(turn: dict, vscode_actions: list[dict] | None,
                           repo: Path | None,
                           claude_actions: list[dict] | None = None,
@@ -1881,6 +1906,15 @@ def write_duckdb(path: Path, sqlite_path: Path) -> None:
 
 def build(args: argparse.Namespace) -> dict:
     repo = Path(args.repo).resolve()
+    output = safe_artifact_path(repo, args.output, "sqlite output")
+    duckdb_path = (
+        safe_artifact_path(repo, args.duckdb, "duckdb output")
+        if args.duckdb else None
+    )
+    summary_path = (
+        safe_artifact_path(repo, args.summary, "summary output")
+        if args.summary else None
+    )
     claude_root = Path(args.claude_root).expanduser().resolve()
     claude_web = Path(args.claude_web).expanduser().resolve() if args.claude_web else None
     codex_root = Path(args.codex_root).expanduser().resolve() if args.codex_root else None
@@ -1918,7 +1952,6 @@ def build(args: argparse.Namespace) -> dict:
         analysis_turns, commits, vscode_actions, repo, claude_actions,
         codex_actions
     )
-    output = Path(args.output).resolve()
     meta = {
         "schema": "inferential-archaeology-v7",
         "repo": str(repo), "claude_root": str(claude_root),
@@ -1958,13 +1991,11 @@ def build(args: argparse.Namespace) -> dict:
                  profiles, candidates, idea_followups, meta,
                  vscode_requests, vscode_actions, proposal_followups,
                  claude_actions, codex_actions)
-    duckdb_path = None
-    if args.duckdb:
-        duckdb_path = Path(args.duckdb).resolve()
+    if duckdb_path:
         write_duckdb(duckdb_path, output)
     summary = {**meta, "sqlite": str(output), "duckdb": str(duckdb_path) if duckdb_path else None}
-    if args.summary:
-        Path(args.summary).resolve().write_text(_json(summary) + "\n", encoding="utf-8")
+    if summary_path:
+        summary_path.write_text(_json(summary) + "\n", encoding="utf-8")
     return summary
 
 

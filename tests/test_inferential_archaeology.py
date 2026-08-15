@@ -2,6 +2,8 @@ import json
 import sqlite3
 from pathlib import Path
 
+import pytest
+
 from tools.inferential_archaeology import (
     _question_links,
     classify_turns,
@@ -20,11 +22,40 @@ from tools.inferential_archaeology import (
     load_mak_activity,
     load_memories,
     load_rule_events,
+    safe_artifact_path,
     load_vscode_sol_sessions,
     validate_interpretation,
     write_duckdb,
     write_sqlite,
 )
+
+
+def test_safe_artifact_path_rejects_repository_source_surfaces(tmp_path: Path):
+    repo = tmp_path / "repo"
+    (repo / "data").mkdir(parents=True)
+    (repo / "context").mkdir()
+    (repo / "out").mkdir()
+
+    allowed_external = safe_artifact_path(repo, tmp_path / "run" / "evidence.sqlite", "sqlite output")
+    allowed_projection = safe_artifact_path(repo, repo / "out" / "evidence.sqlite", "sqlite output")
+    assert allowed_external == (tmp_path / "run" / "evidence.sqlite").resolve()
+    assert allowed_projection == (repo / "out" / "evidence.sqlite").resolve()
+
+    for candidate in (repo / "data" / "rd.db", repo / "context" / "evidence.sqlite"):
+        with pytest.raises(RuntimeError, match="outside the repository"):
+            safe_artifact_path(repo, candidate, "sqlite output")
+
+
+def test_safe_artifact_path_resolves_symlink_before_allowing_output(tmp_path: Path):
+    repo = tmp_path / "repo"
+    (repo / "out").mkdir(parents=True)
+    source = repo / "data.db"
+    source.write_text("source", encoding="utf-8")
+    redirect = repo / "out" / "evidence.sqlite"
+    redirect.symlink_to(source)
+
+    with pytest.raises(RuntimeError, match="outside the repository"):
+        safe_artifact_path(repo, redirect, "sqlite output")
 
 
 def _turn(n, role, text, session="s1"):
