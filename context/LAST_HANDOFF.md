@@ -10094,3 +10094,43 @@ Last verified: 2026-08-15 America/Santiago — current RD snapshot has 20
 productoras/1 venue, FRVR is represented as artist/DJ with Sala Metronomo, and
 the focused source/runtime gates are green except the local web build
 environment gate described above.
+
+## Phase 490 — current-truth slice published and source copies rechecked
+
+The four-file Phase 489 slice was committed to `main` as `99bbd88` and pushed
+to `origin/main`. The root worktree still contains the user's unrelated
+modified and untracked evidence; none was staged or cleaned.
+
+Foreground synchronization checks:
+
+    git fetch origin main --quiet
+    test "$(git rev-parse main)" = "$(git rev-parse origin/main)"
+    git ls-remote --heads origin
+    git ls-remote --tags origin
+
+Results: main/origin/main both resolve to `99bbd88`; the remote has exactly
+eleven heads: `main`, nine exact `source/*` copies and the existing
+`work/mak-ownership`; the remote has exactly one tag,
+`archive/house-history`, whose peeled preservation commit is
+`b9f9a472deaeee6002a96fc8236d75b06bfe24c4`. A nine-entry hash gate returned
+`EXACT` for every source copy. `work/mak-ownership` is fully represented in
+main but remains published because `/tmp/mak-branch-topology` still checks it
+out; no forced deletion or worktree removal was attempted.
+
+Disposition:
+MAIN_CURRENT_TRUTH_PUBLISHED; SOURCE_COPIES_EXACT_RECONFIRMED;
+SINGLE_TAG_RECONFIRMED; WORKTREE_BRANCH_PRESERVED; NO_UNRELATED_EVIDENCE_STAGED.
+
+## Next concrete action
+
+Inspect the active read-only venue/entity consumer from `/home/mak/*` and its
+portfolio/RD projection boundary. If a missing connection is proven, update
+one temporary bounded work slice with a disjoint write set and foreground
+validation; otherwise record a verified no-change result and move to the next
+consumer. Keep `source/rd` exact, preserve the FRVR correction, do not create a
+new map, and do not run the blocked web build until Node/Rollup is explicitly
+repaired.
+
+Last verified: 2026-08-15 America/Santiago — main `99bbd88` published; nine
+source copies exact; one remote preservation tag; no stale active topology
+references remain in MAPA, HUB_PERFILES or the standalone producer adapter.
