@@ -11028,3 +11028,31 @@ house consolidation.
 
 Last verified: 2026-08-15 America/Santiago — all current objective checks
 passed; final audit publication is pending.
+
+## Phase 511 — final audit published
+
+The completion audit was committed as `a796ccc` (`docs: close restructuring
+audit`) and pushed to `origin/main`. The post-push check returned:
+
+    main...origin/main = 0 0
+    branches = main, origin/main
+    tags = archive/house-history
+    README diff = clean
+    index = empty
+
+The remaining worktree entries are the pre-existing modified HTML snapshots and
+untracked `context/PHASE*`, fixture/quarantine, database-backup and probe
+evidence; none is staged or absorbed by the restructuring commits.
+
+Disposition: `FINAL_AUDIT_PUBLISHED; MAIN_GREEN_AND_SYNCHRONIZED;
+HISTORICAL_EVIDENCE_PRESERVED; NO_UNAUTHORIZED_CLEANUP`.
+
+## Next concrete action
+
+No required restructuring action remains in the authorized local scope. Keep
+this handoff as the continuity boundary. Future changes must be separately
+requested feature or bug slices with their own consumer, write set, rollback,
+validation and temporary branch contract when code changes are real.
+
+Last verified: 2026-08-15 America/Santiago — final audit published at
+`a796ccc`; objective ready for completion.
