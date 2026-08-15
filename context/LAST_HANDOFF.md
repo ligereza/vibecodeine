@@ -9683,3 +9683,34 @@ restore the old branch.
 
 Last verified: 2026-08-15 America/Santiago — useful Fondart/source code is
 preserved in archive tags and physical MAK/WIN, not yet integrated in `main`.
+
+## Phase 479 — Fondart source pipeline integrated
+
+The offline gate for the physical research pair passed before promotion:
+
+- `/home/mak/research/fondart_corpus.py` and `source_pipeline.py` matched the
+  preserved archive blobs exactly;
+- WIN offline suite `tests/test_source_pipeline.py`: 23 passed, exit 0;
+- local AST parse, import and URL-contract checks: exit 0;
+- no network, Firecrawl/Crawl4AI call, research-state write or proposal output.
+
+The bounded slice (two source modules, 23-test suite, candidate audit and this
+handoff) was committed as `9681726` and merged/published to `main` as
+`33bbe3a feat(research): integrate Fondart source pipeline`. It is now the
+canonical source for source-preserving Fondart capture and candidate parsing;
+the physical `/home/mak/research` runtime remains unchanged.
+
+Disposition:
+`FONDART_PIPELINE_IN_MAIN; PROVENANCE_BOUNDARY_PRESERVED;
+OFFLINE_GATE_GREEN; NO_EXTERNAL_CALL; NO_RUNTIME_STATE_MUTATION`.
+
+## Next concrete action
+
+Audit the preserved three-plane knowledge candidates (`three_plane.py`,
+`reconciliation.py` and their schemas) against the actual MAK/WIN SQLite files
+using read-only temporary fixtures. Do not promote Postgres or create a unified
+writer; the gate must prove schema/provenance output before any migration is
+considered.
+
+Last verified: 2026-08-15 America/Santiago — `main` at `33bbe3a`; Fondart
+source-preserving slice published and validated.
