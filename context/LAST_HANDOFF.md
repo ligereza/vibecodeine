@@ -9880,3 +9880,37 @@ or tag is created merely for historical storage.
 
 Last verified: 2026-08-15 America/Santiago — one local/remote main and one
 local/remote archive tag; stale MAPA copy removed from the active tree.
+
+## Phase 484 — current preservation point and branch-copy start
+
+The single archive tag was extended after discovering three local stash tips
+with MAK/platform/research changes. The current preservation commit is
+b9f9a472deaeee6002a96fc8236d75b06bfe24c4 and its tree exactly matches current
+main 3e0da4e3f9682ff45fbaf5bb7079fa273d80ea47. It reaches the prior
+preservation commit and all three stash tips. The remote still has exactly one
+tag, archive/house-history, and one branch, main.
+
+The stale untracked MAPA copy is no longer in the repository or search surface.
+The tracked main MAPA.md is the only active map. The three stash refs remain
+untouched as local recovery material and are included in the single
+preservation point.
+
+The next operation is to create exact, clearly named source copies of the nine
+historical non-main branch tips. Each copy must initially resolve to its exact
+historical commit; only after that verification may it be triangulated and
+updated into the target architecture. These copies are operational inputs, not
+new historical tags or unreviewed source-of-truth maps.
+
+Disposition:
+STALE_MAP_REMOVED; STASHES_PRESERVED; SINGLE_TAG_EXTENDED;
+EXACT_BRANCH_COPIES_PENDING.
+
+## Next concrete action
+
+Create and verify the nine source branch copies from the exact historical tip
+commits recorded in Phase 460, publish those refs, and write a current manifest
+mapping each source copy to its intended architecture consumer. Do not mutate
+any copied branch during the copy gate.
+
+Last verified: 2026-08-15 America/Santiago — tag b9f9a472 and main 3e0da4e
+verified; exact source-branch copy gate is next.
