@@ -9608,3 +9608,43 @@ No further restructuring action is required. Any future work starts from
 physical folder move requires its own authorization and rollback evidence.
 
 Last verified: 2026-08-15 America/Santiago — final closeout at `6b14492`.
+
+## Phase 477 — remote GitHub branch cleanup
+
+The remote was checked explicitly after the user reported seeing ten branches.
+`origin` had nine historical heads plus `main`; local branch cleanup had not
+removed remote refs. Each historical remote head was first preserved as an
+exact `archive/remote/*` tag and those tags were pushed to GitHub. Then local
+`main` at `6ccd3f4` was pushed over the old remote `main` at `032822b`.
+
+The nine remote heads were deleted:
+
+- `codex/mak-local-authority-reconciliation-20260813`
+- `codex/mak-web-restructure-20260813`
+- `codex/mak-web-restructure-20260814`
+- `codex/nudo-rd-evidence`
+- `codex/three-plane-consolidation`
+- `iskvw`
+- `mak`
+- `mak-svg`
+- `rd`
+
+Verification: `git ls-remote --heads origin` now returns only
+`refs/heads/main` at `6ccd3f4`; all nine `archive/remote/*` tags resolve on
+the remote. No commit object was discarded and no source/WIN material was
+modified.
+
+Disposition:
+`REMOTE_BRANCHES_COLLAPSED_TO_MAIN; HISTORICAL_HEADS_TAGGED;
+REMOTE_VERIFIED; NO_SOURCE_MUTATION`.
+
+## Next concrete action
+
+Resume physical integration from `/home/mak/*`, not Git branch enumeration.
+The next candidate is the curatoria projection/runtime boundary: verify the
+exact canonical parity and one isolated read-only consumer using the existing
+fixture/tests. Do not run the guard, perception loop, cron or external
+provider; keep n8n discarded and XIO out of scope.
+
+Last verified: 2026-08-15 America/Santiago — GitHub has one branch, `main`;
+remote historical heads are recoverable tags.
