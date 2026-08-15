@@ -10644,3 +10644,49 @@ for a short-lived branch without bulk-staging the worktree.
 
 Last verified: 2026-08-15 America/Santiago — objective stored in the task goal
 and in this handoff; no branch, commit or external publication performed.
+
+## Phase 502 — archaeology output safety slice integrated
+
+Created short-lived branch `tools/inferential-archaeology` from `main` at
+`536d807`, owned by `LUNA-502`, with an exclusive contract and handoff. The
+branch changed only `tools/inferential_archaeology.py` and its focused tests,
+plus the temporary branch contract files.
+
+The index now validates every generated SQLite, DuckDB and summary path before
+loading history or session inputs. External paths and the ignored
+`/home/mak/flujo/out` projection are allowed; paths inside repository source,
+data or context trees are rejected. Symlinks are resolved before validation,
+so an apparently safe path cannot redirect into a source database.
+
+Validation:
+
+    /home/mak/vibecodeine/.venv/bin/python -m py_compile tools/inferential_archaeology.py tests/test_inferential_archaeology.py
+    /home/mak/vibecodeine/.venv/bin/python -m pytest -q tests/test_inferential_archaeology.py
+    /home/mak/vibecodeine/.venv/bin/python tools/inferential_archaeology.py build --repo /home/mak/flujo --claude-root /tmp/missing-claude-root --codex-root /tmp/missing-codex-root --memory-root /tmp/missing-memory-root --output /tmp/archaeology-integrity.0Pjqz0/evidence.sqlite --summary /tmp/archaeology-integrity.0Pjqz0/summary.json
+    /home/mak/vibecodeine/.venv/bin/python tools/inferential_archaeology.py report --sqlite /tmp/archaeology-integrity.0Pjqz0/evidence.sqlite --limit 1
+    git diff --check
+
+Results: compile exit 0; focused suite `29 passed`; negative output-path probe
+exit 2 with the expected guard; foreground build/report exit 0 with schemas
+`inferential-archaeology-v7` and `inferential-archaeology-report-v1`; 1,014
+commits indexed; `data/rd.db` and README SHA-256 hashes were unchanged.
+Generated outputs stayed in `/tmp`. No source, WIN, database, README, service
+or provider state changed.
+
+The branch commit is `3fd9c1b` (`fix(tools): guard archaeology output paths`).
+Its temporary contract and handoff were removed during closeout; durable facts
+are recorded here.
+
+Disposition: `ARCHAEOLOGY_OUTPUT_GUARD_GREEN; READ_ONLY_GATE_GREEN;
+SOURCE_HASHES_GREEN; BRANCH_CLOSED_PENDING_FAST_FORWARD`.
+
+## Next concrete action
+
+Fast-forward `main` with the archaeology slice, delete the short-lived branch,
+then open the next bounded consumer slice for the SCD venue geometry tool:
+static/compile/fixture validation of `tools/venue_geometria_scd.py`,
+`tools/venue.py` and their existing tests. Keep it offline and output-only;
+do not call providers or alter RD databases.
+
+Last verified: 2026-08-15 America/Santiago — archaeology branch committed and
+validated; root handoff promotion prepared; no external publication performed.
