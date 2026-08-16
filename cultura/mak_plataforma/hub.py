@@ -147,6 +147,70 @@ SERVICE_PROXY_PREFIXES = {
     "codex": CODEX_URL,
 }
 SERVICE_PROXY_MAX_BYTES = 2_000_000
+
+# The 8900 hub is launched from /home/mak/plataforma, while the canonical
+# diagnostics package lives in this repository's src/ tree. Add only the
+# canonical source roots so the existing external projection stays intact.
+_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+_SRC_ROOT = os.path.join(_REPO_ROOT, "src")
+for _import_root in (_REPO_ROOT, _SRC_ROOT):
+    if _import_root not in sys.path:
+        sys.path.insert(0, _import_root)
+try:
+    from flujo.diagnostics import (  # noqa: E402
+        build_diagnostic_report,
+        domain_catalog,
+        render_markdown,
+    )
+except Exception as _diagnostics_exc:  # noqa: BLE001 - observability is additive
+    build_diagnostic_report = None
+    domain_catalog = None
+    render_markdown = None
+    _DIAGNOSTICS_IMPORT_ERROR = type(_diagnostics_exc).__name__
+else:
+    _DIAGNOSTICS_IMPORT_ERROR = ""
+
+
+def _diagnostic_payload(body):
+    """Build a bounded, read-only report for the 8900 copy/report surface."""
+    if not isinstance(body, dict):
+        body = {}
+    if build_diagnostic_report is None or render_markdown is None:
+        return {
+            "ok": False,
+            "schema": "mak-diagnostic-v1",
+            "error": "diagnostics_unavailable",
+            "detail": _DIAGNOSTICS_IMPORT_ERROR,
+        }
+    limits = {
+        "area": 40,
+        "idea": 3000,
+        "operation": 500,
+        "error": 12000,
+        "command": 1200,
+        "expected": 2000,
+        "observed": 2000,
+    }
+    values = {
+        key: str(body.get(key) or "")[:limit]
+        for key, limit in limits.items()
+    }
+    try:
+        report = build_diagnostic_report(root=_REPO_ROOT, **values)
+        return {
+            "ok": True,
+            "schema": report.get("schema", "mak-diagnostic-v1"),
+            "report": report,
+            "json": report,
+            "markdown": render_markdown(report),
+        }
+    except Exception as exc:  # noqa: BLE001 - the hub must remain available
+        return {
+            "ok": False,
+            "schema": "mak-diagnostic-v1",
+            "error": "diagnostics_failed",
+            "detail": type(exc).__name__,
+        }
 TRABAJO_STATE = os.path.join(HOME, "plataforma/.trabajo_state.json")
 RED_STATE = os.path.join(HOME, "plataforma/.red_state.json")
 RED_LOG = os.path.join(HOME, "plataforma/logs/red.jsonl")
@@ -300,6 +364,29 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
 #pan-decisiones .fila .decision{color:#9db67c}
 #pan-decisiones .fila .owner{color:#5f5b50;margin-left:auto}
 #pan-decisiones .fila .accion{color:#c3bfb2;margin-top:6px;line-height:1.4}
+#pan-diagnostics{position:absolute;inset:0;overflow-y:auto;padding:26px 30px;display:none}
+#pan-diagnostics.on{display:block}
+#pan-diagnostics .intro{color:#6e6a5e;font-size:.74rem;margin-bottom:14px;max-width:760px;line-height:1.5}
+#pan-diagnostics .cfg{border:1px solid #211f18;border-radius:8px;padding:13px 15px;
+ margin-bottom:14px;background:#0c0a09;max-width:900px;display:flex;flex-wrap:wrap;
+ gap:10px;align-items:flex-start}
+#pan-diagnostics label{font-size:.7rem;color:#8a8577;display:flex;flex-direction:column;
+ gap:5px;min-width:180px;flex:1}
+#pan-diagnostics label.wide{min-width:100%;flex-basis:100%}
+#pan-diagnostics input,#pan-diagnostics select,#pan-diagnostics textarea{background:#0b0a08;
+ border:1px solid #2a2820;border-radius:5px;color:#c9c5b9;font-family:inherit;
+ font-size:.74rem;padding:6px 8px}
+#pan-diagnostics textarea{min-height:70px;resize:vertical;line-height:1.4}
+#pan-diagnostics input:focus,#pan-diagnostics select:focus,#pan-diagnostics textarea:focus{
+ outline:none;border-color:#39432c}
+#pan-diagnostics .acciones{display:flex;gap:8px;align-items:center;width:100%;margin-top:2px}
+#pan-diagnostics button{background:#1a2418;border:1px solid #39432c;color:#9db67c;
+ font-family:inherit;font-size:.72rem;padding:7px 13px;border-radius:6px;cursor:pointer}
+#pan-diagnostics button:hover{border-color:#5a6a44}
+#pan-diagnostics button.sec{background:transparent;border-color:#2a2820;color:#8a8577}
+#pan-diagnostics #diag-aviso{color:#d4a259;font-size:.72rem;min-height:1em;margin:0 0 10px;max-width:900px}
+#pan-diagnostics pre{white-space:pre-wrap;word-break:break-word;border:1px solid #211f18;
+ border-radius:8px;padding:15px;background:#0c0a09;color:#c3bfb2;font:.72rem/1.5 ui-monospace,SFMono-Regular,monospace;max-width:900px;min-height:180px}
 #pan-render .pend-cab{color:#d4a259;font-size:.7rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
 #pan-render .rd.pend{border-color:#4a3a26;background:#100c08}
 #pan-render .rd.pend .motivo{color:#d4a259;font-size:.75rem;margin-top:6px;line-height:1.45}
@@ -335,9 +422,10 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
    <button data-dep="research" class="on">🔬 research</button>
    <button data-dep="codex">💻 codex</button>
    <button data-dep="ideas">💡 ideas</button>
-   <button data-dep="render">🖼 render</button>
+  <button data-dep="render">🖼 render</button>
   <button data-dep="decisiones">◈ decisiones</button>
   <button data-dep="portafolio">✦ portafolio</button>
+  <button data-dep="diagnostics">🩺 diagnóstico</button>
   </div>
  </div>
  <div class="der">
@@ -375,6 +463,35 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
   <div id="d-metricas" class="metricas">cargando…</div>
   <div id="d-lista">cargando…</div>
  </div>
+ <div id="pan-diagnostics">
+  <div class="intro">Generá un reporte seguro para copiarlo a otro agente. El diagnóstico solo lee metadatos y contratos: no ejecuta el comando escrito, no abre WIN, no incluye secretos, bases completas ni medios privados.</div>
+  <div class="cfg">
+   <label>área
+    <select id="diag-area"><option value="auto">auto</option><option value="core">core / MAK</option><option value="rd">RD</option><option value="portfolio">portafolio</option><option value="cultura">cultura</option><option value="research">research</option></select>
+   </label>
+   <label>operación
+    <input id="diag-operation" type="text" placeholder="ej. cargar una fuente">
+   </label>
+   <label class="wide">idea o pedido
+    <textarea id="diag-idea" placeholder="qué intentabas hacer y en qué área"></textarea>
+   </label>
+   <label class="wide">error o traceback
+    <textarea id="diag-error" placeholder="pegá aquí el error visible"></textarea>
+   </label>
+   <label>comando reproducible
+    <input id="diag-command" type="text" placeholder="no se ejecutará">
+   </label>
+   <label>resultado esperado
+    <input id="diag-expected" type="text">
+   </label>
+   <label>resultado observado
+    <input id="diag-observed" type="text">
+   </label>
+   <div class="acciones"><button onclick="generarDiagnostico()">generar reporte</button><button class="sec" onclick="copiarDiagnostico()">copiar reporte</button></div>
+  </div>
+  <div id="diag-aviso"></div>
+  <pre id="diag-output">Escribí el pedido o pegá el error y generá el reporte.</pre>
+ </div>
 </div>
 <button id="toggle" onclick="toggleFranja()">▾ actividad / salud</button>
 <div id="franja">
@@ -401,13 +518,15 @@ function activarDep(dep){
  document.querySelectorAll('#centro iframe').forEach(function(f){
    f.classList.toggle('on', f.id==='ifr-'+dep);
  });
- // 'ideas', 'render' y 'decisiones' son paneles propios del hub.
+ // 'ideas', 'render', 'decisiones' y 'diagnostics' son paneles propios del hub.
  document.getElementById('pan-ideas').classList.toggle('on', dep==='ideas');
  document.getElementById('pan-render').classList.toggle('on', dep==='render');
  document.getElementById('pan-decisiones').classList.toggle('on', dep==='decisiones');
+ document.getElementById('pan-diagnostics').classList.toggle('on', dep==='diagnostics');
  if(dep==='ideas'){cargarIdeas();return;}
  if(dep==='render'){cargarRender();return;}
  if(dep==='decisiones'){cargarDecisiones();return;}
+ if(dep==='diagnostics'){return;}
  var ifr=document.getElementById('ifr-'+dep);
  if(ifr && !ifr.src){ifr.src=IFR_SRC[dep];}
 }
@@ -415,6 +534,38 @@ document.querySelectorAll('#tabs button').forEach(function(b){
  b.onclick=function(){activarDep(b.getAttribute('data-dep'));};
 });
 activarDep('research');
+
+// ── diagnóstico: reportar y copiar sin ejecutar ni exponer secretos ──
+var diagnosticoActual='';
+function generarDiagnostico(){
+ var av=document.getElementById('diag-aviso');
+ var out=document.getElementById('diag-output');
+ var cuerpo={area:document.getElementById('diag-area').value,
+   operation:document.getElementById('diag-operation').value,
+   idea:document.getElementById('diag-idea').value,
+   error:document.getElementById('diag-error').value,
+   command:document.getElementById('diag-command').value,
+   expected:document.getElementById('diag-expected').value,
+   observed:document.getElementById('diag-observed').value};
+ av.textContent='generando reporte…';
+ fetch('/api/diagnostics',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(cuerpo)})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    diagnosticoActual=d.markdown||JSON.stringify(d,null,2);
+    out.textContent=diagnosticoActual;
+    av.textContent=d.ok?'reporte listo: pegalo en el agente externo.':'No se pudo generar: '+(d.error||'error desconocido');
+  })
+  .catch(function(){av.textContent='No se pudo hablar con el hub.';});
+}
+function copiarDiagnostico(){
+ var av=document.getElementById('diag-aviso');
+ var text=diagnosticoActual||document.getElementById('diag-output').textContent;
+ if(!text || text.indexOf('Escribí el pedido')===0){av.textContent='Generá un reporte primero.';return;}
+ function listo(){av.textContent='reporte copiado al portapapeles.';}
+ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(listo).catch(function(){av.textContent='No se pudo copiar automáticamente.';});return;}
+ var ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.focus();ta.select();
+ try{document.execCommand('copy');listo();}catch(e){av.textContent='No se pudo copiar automáticamente.';}document.body.removeChild(ta);
+}
 
 // ── ideas: intervenir, no mirar ──
 function pintarIdeas(ds){
@@ -4103,6 +4254,17 @@ class H(BaseHTTPRequestHandler):
                 "service": "mak-hub",
                 "runtime": "mak",
             })
+        if p == "/api/diagnostics/domains":
+            if domain_catalog is None:
+                return self._json({"ok": False, "error": "diagnostics_unavailable",
+                                   "detail": _DIAGNOSTICS_IMPORT_ERROR}, 503)
+            return self._json(domain_catalog(_REPO_ROOT))
+        if p == "/api/diagnostics":
+            query = urllib.parse.parse_qs(u.query)
+            fields = ("area", "idea", "operation", "error", "command",
+                      "expected", "observed")
+            body = {field: (query.get(field) or [""])[0] for field in fields}
+            return self._json(_diagnostic_payload(body))
         if p == "/api/director/capabilities":
             return self._json(_director_capabilities())
         if p == "/api/portfolio/identity-graph":
@@ -4399,6 +4561,20 @@ class H(BaseHTTPRequestHandler):
 
     def do_POST(self):
         u = urllib.parse.urlparse(self.path)
+        if u.path == "/api/diagnostics":
+            try:
+                length = int(self.headers.get("Content-Length") or 0)
+            except (TypeError, ValueError):
+                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
+            if length > 20000:
+                return self._json({"ok": False, "error": "request_too_large"}, 413)
+            try:
+                body = json.loads(self.rfile.read(length).decode("utf-8", "replace"))
+            except (ValueError, TypeError):
+                return self._json({"ok": False, "error": "json invalido"}, 400)
+            if not isinstance(body, dict):
+                return self._json({"ok": False, "error": "json debe ser objeto"}, 400)
+            return self._json(_diagnostic_payload(body))
         for prefix in SERVICE_PROXY_PREFIXES:
             if u.path.startswith("/" + prefix + "/"):
                 length = min(int(self.headers.get("Content-Length") or 0),

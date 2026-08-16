@@ -38,7 +38,7 @@ in parallel Git trunks.
 
 <!-- COMANDOS:INICIO -- generado por tools/gen_mapa_comandos.py, no editar a mano -->
 
-Medido sobre el CLI real: **95 comandos** (22 sueltos + 73 dentro de 17 grupos).
+Medido sobre el CLI real: **97 comandos** (24 sueltos + 73 dentro de 17 grupos).
 
 ### Comandos sueltos
 
@@ -51,6 +51,7 @@ Medido sobre el CLI real: **95 comandos** (22 sueltos + 73 dentro de 17 grupos).
 | `py -m flujo cotizaciones` | Genera cotización dual integrada con flujo. | nada |
 | `py -m flujo daily` | Generar reporte diario (md + html). | nada |
 | `py -m flujo delegate` | Genera prompt preciso para delegar a agente especializado (5 roles; soporta paralelo via hub o clones). Salida lista para copiar a otra sesión IA. Ideal para multi-agente workflow. | nada |
+| `py -m flujo diagnose` | Genera un reporte local, sanitizado y copiable para otro agente. | nada |
 | `py -m flujo doctor` | Diagnóstico humano del entorno local: Python, Git, encoding, index, hub y airdrop. | nada |
 | `py -m flujo export` | Exportar ZIP listo para tus herramientas (AI / PS / Blender). | nada |
 | `py -m flujo flyer-import` | Importar flyers desde correo con links de Instagram. | casilla de correo: `FLUJO_IMAP_HOST`, `FLUJO_IMAP_USER`, `FLUJO_IMAP_PASSWORD`, `FLUJO_IMAP_ALLOWED_SENDERS` |
@@ -62,6 +63,7 @@ Medido sobre el CLI real: **95 comandos** (22 sueltos + 73 dentro de 17 grupos).
 | `py -m flujo init` | Inicializa carpetas del repo/workspace (jobs/_template, data, inbox, datadrops). | nada |
 | `py -m flujo package` | Empaqueta el hub pro como aplicación de escritorio real .exe (Windows). | solo Windows; empaqueta un .exe |
 | `py -m flujo plano` | Generar plano SVG, rider o costos de stands desde un JSON de evento. | nada |
+| `py -m flujo route` | Selecciona el packet minimo para una idea sin leer todo el repo. | nada |
 | `py -m flujo serve` | Iniciar el workspace local: el hub, que es la entrada diaria. | nada |
 | `py -m flujo tapiz` | Ecosistema Tapiz<->Psicosis<->Fungi: pipeline generativo (tools/compete_engine.py). | nada |
 | `py -m flujo verify` | Verificación integral local/CI: compileall, tests, health, version y hub smoke. | nada |

@@ -1,6 +1,6 @@
 {
  "formato": "comandos/1",
- "total": 95,
+ "total": 97,
  "grupos": [
   "airdrop",
   "autonomia",
@@ -62,6 +62,24 @@
    "invocacion": "py -m flujo doctor",
    "grupo": "",
    "desc": "Diagnóstico humano del entorno local: Python, Git, encoding, index, hub y airdrop.",
+   "requiere": "",
+   "estado": "listo",
+   "destructivo": null
+  },
+  {
+   "cmd": "diagnose",
+   "invocacion": "py -m flujo diagnose",
+   "grupo": "",
+   "desc": "Genera un reporte local, sanitizado y copiable para otro agente.",
+   "requiere": "",
+   "estado": "listo",
+   "destructivo": null
+  },
+  {
+   "cmd": "route",
+   "invocacion": "py -m flujo route",
+   "grupo": "",
+   "desc": "Selecciona el packet minimo para una idea sin leer todo el repo.",
    "requiere": "",
    "estado": "listo",
    "destructivo": null

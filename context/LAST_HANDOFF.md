@@ -11056,3 +11056,75 @@ validation and temporary branch contract when code changes are real.
 
 Last verified: 2026-08-15 America/Santiago — final audit published at
 `a796ccc`; objective ready for completion.
+
+## Phase 512 — portable context routing and diagnostic surface
+
+Implemented the bounded, read-only support layer requested for both Git clones
+and the local MAK hub. The canonical source is `/home/mak/flujo`; `/home/mak/WIN`
+and the external `/home/mak/plataforma/hub.py` projection were not modified.
+
+Changed or added only for this slice:
+
+    src/flujo/diagnostics.py
+    src/flujo/cli.py
+    tools/route_idea.py
+    context/diagnostics/README.md
+    context/diagnostics/domains.json
+    context/diagnostics/contracts/{core,rd,portfolio,cultura,research}.md
+    cultura/mak_plataforma/hub.py
+    tests/test_diagnostics.py
+    tests/test_mak_diagnostics.py
+    MAPA.md
+    context/comandos.json
+
+The common motor routes a natural-language idea or incident to one primary
+domain (`core`, `rd`, `portfolio`, `cultura` or `research`) plus support domains,
+lists only the relevant contract/read paths and validation candidates, and
+explicitly excludes raw WIN. `python3 tools/route_idea.py ...` works from a
+fresh clone without package installation. `python -m flujo route` and
+`python -m flujo diagnose` expose the same behavior from the CLI. Diagnostic
+reports are bounded Markdown/JSON, read-only, and redact secrets, Bearer
+values, email addresses and the home path; the entered command is recorded but
+never executed.
+
+The MAK 8900 surface now has a `diagnóstico` tab, a copyable report panel,
+`GET /api/diagnostics`, `POST /api/diagnostics` and
+`GET /api/diagnostics/domains`. The existing `mak-hub.service` was restarted
+after the code change and stayed active on loopback `127.0.0.1:8900`; no new
+service, cron, worker, SSH connection or permanent process was created.
+
+Foreground evidence:
+
+    PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:. /home/mak/vibecodeine/.venv/bin/python -m pytest -q tests/test_diagnostics.py tests/test_mak_diagnostics.py
+    -> exit 0; 7 passed
+    PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:. /home/mak/vibecodeine/.venv/bin/python -m pytest -q tests/test_cli_smoke.py tests/test_cli_v035.py
+    -> exit 0; 18 passed
+    PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:. /home/mak/vibecodeine/.venv/bin/python -m pytest -q tests/test_mak_hub_eventos.py tests/test_mak_hub_salud.py
+    -> exit 0; 24 passed
+    PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:. /home/mak/vibecodeine/.venv/bin/python -m py_compile src/flujo/diagnostics.py src/flujo/cli.py cultura/mak_plataforma/hub.py tools/route_idea.py
+    -> exit 0
+    PYTHONPATH=src /home/mak/vibecodeine/.venv/bin/python tools/gen_mapa_comandos.py --check
+    -> exit 0; MAPA.md and context/comandos.json current at 97 commands
+    systemctl --user restart mak-hub.service
+    -> exit 0; unit active; MainPID changed from 831884 to 872029
+    curl GET /health, /api/diagnostics/domains and /api/diagnostics
+    curl POST /api/diagnostics with Bearer/email fixture
+    -> exit 0; valid schemas/routes; `topsecret` and `user@example.com` absent
+    curl GET /
+    -> exit 0; diagnostics tab, panel and copy action present
+
+The worktree still contains the pre-existing dirty HTML snapshots, phase
+evidence, fixtures/quarantine and database backups; none is part of this
+slice. The report intentionally exposes only a dirty-entry count, not those
+paths. The panel does not automatically intercept arbitrary iframe errors:
+the user pastes the visible error and reproduction details, which is the
+current privacy-safe contract for an external agent.
+
+## Next concrete action
+
+Stage only the listed Phase 512 files, review the exact staged diff, commit on
+`main`, push to `origin/main`, and re-run the live endpoint plus branch/status
+invariants. Do not stage the pre-existing HTML/evidence/database surfaces.
+
+Last verified: 2026-08-15 America/Santiago — Phase 512 implementation and
+foreground local validation green; publication pending.
