@@ -27,6 +27,7 @@ import urllib.request
 import uuid
 from collections import Counter
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import salud  # noqa: E402
@@ -169,6 +170,67 @@ except Exception as _diagnostics_exc:  # noqa: BLE001 - observability is additiv
     _DIAGNOSTICS_IMPORT_ERROR = type(_diagnostics_exc).__name__
 else:
     _DIAGNOSTICS_IMPORT_ERROR = ""
+
+try:
+    from flujo.departments import (  # noqa: E402
+        catalog as department_catalog,
+        cultura_sources,
+        cultura_capabilities,
+        cultura_opportunity_gate,
+        rd_crosswalk,
+        rd_cultura_relations,
+        rd_summary,
+    )
+except Exception as _departments_exc:  # noqa: BLE001 - hub remains available
+    department_catalog = None
+    cultura_sources = None
+    cultura_capabilities = None
+    cultura_opportunity_gate = None
+    rd_crosswalk = None
+    rd_cultura_relations = None
+    rd_summary = None
+    _DEPARTMENTS_IMPORT_ERROR = type(_departments_exc).__name__
+else:
+    _DEPARTMENTS_IMPORT_ERROR = ""
+
+
+def _department_page(area: str) -> str:
+    """Small same-origin department landing page for the 8900 hub."""
+    data = department_catalog(_REPO_ROOT) if department_catalog else {}
+    item = (data.get("areas") or {}).get(area)
+    if not item:
+        return "<!doctype html><meta charset='utf-8'><p>area not found</p>"
+    links = "".join(
+        "<li><a href='%s'>%s</a></li>" % (html.escape(link["path"], quote=True),
+                                           html.escape(link["label"]))
+        for link in item.get("tool_links", []))
+    rows = "".join(
+        "<li>%s: %s</li>" % (html.escape(path), "ok" if ok else "missing")
+        for path, ok in item.get("root_checks", {}).items())
+    return """<!doctype html><html lang='es'><meta charset='utf-8'>
+<title>%s</title><style>body{background:#0b0a09;color:#c9c5b9;font:14px monospace;padding:28px}
+h1{color:#9db67c}a{color:#d4a259}li{margin:8px 0}</style>
+<h1>%s</h1><p>%s</p><p>Modo: <code>%s</code></p>
+<h2>Herramientas</h2><ul>%s</ul><h2>Superficie</h2><ul>%s</ul>
+</html>""" % (html.escape(item["label"]), html.escape(item["label"]),
+                html.escape(item["scope"]), html.escape(item["runtime_mode"]), links, rows)
+
+
+_DEPARTMENT_STATIC_FILES = {
+    "/static/rd/plano": Path(_REPO_ROOT) / "projects" / "plano" / "plano_editor.html",
+    "/static/iskvw/editor": Path(_REPO_ROOT) / "iskvw" / "editor.html",
+}
+
+
+def _serve_department_static(path: str):
+    asset = _DEPARTMENT_STATIC_FILES.get(path)
+    if asset is None or not asset.is_file():
+        return None
+    try:
+        data = asset.read_bytes()
+    except OSError:
+        return None
+    return data
 
 
 def _diagnostic_payload(body):
@@ -391,6 +453,17 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
 #pan-render .rd.pend{border-color:#4a3a26;background:#100c08}
 #pan-render .rd.pend .motivo{color:#d4a259;font-size:.75rem;margin-top:6px;line-height:1.45}
 #pan-render #r-pendientes{margin-bottom:20px}
+#pan-areas{position:absolute;inset:0;overflow-y:auto;padding:26px 30px;display:none}
+#pan-areas.on{display:block}
+#pan-areas .intro{color:#6e6a5e;font-size:.74rem;margin-bottom:14px;max-width:700px;line-height:1.5}
+#area-lista{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;max-width:900px}
+#area-lista .area{border:1px solid #211f18;border-radius:8px;padding:15px;background:#0c0a09}
+#area-lista .area h3{color:#9db67c;font-size:.84rem;margin-bottom:7px}
+#area-lista .area p{color:#8a8577;font-size:.7rem;line-height:1.45;min-height:42px}
+#area-lista .area .estado{font-size:.66rem;margin:8px 0;color:#d4a259}
+#area-lista .area .links{display:flex;gap:8px;flex-wrap:wrap}
+#area-lista .area a{color:#d4a259;font-size:.66rem;text-decoration:none;border:1px solid #3a3022;padding:5px 7px;border-radius:4px}
+#area-lista .area a:hover{border-color:#9db67c}
 @media(max-width:700px){#pan-render{padding:16px 14px}}
 #centro iframe.on{display:block}
 #franja{flex:none;height:170px;display:flex;border-top:1px solid #211f18;background:#0d0b09;
@@ -425,6 +498,7 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
   <button data-dep="render">🖼 render</button>
   <button data-dep="decisiones">◈ decisiones</button>
   <button data-dep="portafolio">✦ portafolio</button>
+  <button data-dep="areas">▦ áreas</button>
   <button data-dep="diagnostics">🩺 diagnóstico</button>
   </div>
  </div>
@@ -462,6 +536,10 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
   <div class="intro">La cola no mide actividad: muestra decisiones utilizables. Las entradas históricas se proyectan a Obra, Trabajo o Sistema sin reescribirlas. Solo lo que tiene siguiente acción puede avanzar.</div>
   <div id="d-metricas" class="metricas">cargando…</div>
   <div id="d-lista">cargando…</div>
+ </div>
+ <div id="pan-areas">
+  <div class="intro">Las tres áreas operativas comparten esta interfaz en el puerto 8900. Cada tarjeta apunta a su contrato, superficie y dependencias sin obligar a leer todo MAK.</div>
+  <div id="area-lista">cargando áreas…</div>
  </div>
  <div id="pan-diagnostics">
   <div class="intro">Generá un reporte seguro para copiarlo a otro agente. El diagnóstico solo lee metadatos y contratos: no ejecuta el comando escrito, no abre WIN, no incluye secretos, bases completas ni medios privados.</div>
@@ -518,14 +596,16 @@ function activarDep(dep){
  document.querySelectorAll('#centro iframe').forEach(function(f){
    f.classList.toggle('on', f.id==='ifr-'+dep);
  });
- // 'ideas', 'render', 'decisiones' y 'diagnostics' son paneles propios del hub.
+ // 'ideas', 'render', 'decisiones', 'areas' y 'diagnostics' son paneles propios del hub.
  document.getElementById('pan-ideas').classList.toggle('on', dep==='ideas');
  document.getElementById('pan-render').classList.toggle('on', dep==='render');
  document.getElementById('pan-decisiones').classList.toggle('on', dep==='decisiones');
+ document.getElementById('pan-areas').classList.toggle('on', dep==='areas');
  document.getElementById('pan-diagnostics').classList.toggle('on', dep==='diagnostics');
  if(dep==='ideas'){cargarIdeas();return;}
  if(dep==='render'){cargarRender();return;}
  if(dep==='decisiones'){cargarDecisiones();return;}
+ if(dep==='areas'){cargarAreas();return;}
  if(dep==='diagnostics'){return;}
  var ifr=document.getElementById('ifr-'+dep);
  if(ifr && !ifr.src){ifr.src=IFR_SRC[dep];}
@@ -534,6 +614,19 @@ document.querySelectorAll('#tabs button').forEach(function(b){
  b.onclick=function(){activarDep(b.getAttribute('data-dep'));};
 });
 activarDep('research');
+
+function cargarAreas(){
+ fetch('/api/departments').then(function(r){return r.json();}).then(function(d){
+  var root=document.getElementById('area-lista');
+  if(!d.areas){root.textContent='no se pudo cargar el registro de áreas';return;}
+  root.innerHTML=Object.keys(d.areas).map(function(k){
+   var a=d.areas[k];
+   var ok=a.ready?'contrato listo':'requiere completar contrato';
+   var links=(a.tool_links||[]).map(function(l){return '<a href="'+esc(l.path)+'">'+esc(l.label)+'</a>';}).join('');
+   return '<article class="area"><h3>'+esc(a.label)+'</h3><p>'+esc(a.scope)+'</p><div class="estado">'+ok+' · '+esc(a.runtime_mode)+'</div><div class="links"><a href="/departments/'+esc(k)+'">abrir área</a>'+links+'</div></article>';
+  }).join('');
+ }).catch(function(e){document.getElementById('area-lista').textContent='error: '+e;});
+}
 
 // ── diagnóstico: reportar y copiar sin ejecutar ni exponer secretos ──
 var diagnosticoActual='';
@@ -4254,6 +4347,50 @@ class H(BaseHTTPRequestHandler):
                 "service": "mak-hub",
                 "runtime": "mak",
             })
+        if p == "/api/departments":
+            if department_catalog is None:
+                return self._json({"ok": False, "error": "departments_unavailable",
+                                   "detail": _DEPARTMENTS_IMPORT_ERROR}, 503)
+            return self._json({"ok": True, **department_catalog(_REPO_ROOT)})
+        if p == "/api/rd/summary":
+            if rd_summary is None:
+                return self._json({"ok": False, "error": "rd_summary_unavailable",
+                                   "detail": _DEPARTMENTS_IMPORT_ERROR}, 503)
+            return self._json({"ok": True, **rd_summary(_REPO_ROOT)})
+        if p == "/api/rd/crosswalk":
+            if rd_crosswalk is None:
+                return self._json({"ok": False, "error": "rd_crosswalk_unavailable",
+                                   "detail": _DEPARTMENTS_IMPORT_ERROR}, 503)
+            return self._json({"ok": True, **rd_crosswalk(_REPO_ROOT)})
+        if p == "/api/rd/cultura-relations":
+            if rd_cultura_relations is None:
+                return self._json({"ok": False, "error": "rd_cultura_relations_unavailable",
+                                   "detail": _DEPARTMENTS_IMPORT_ERROR}, 503)
+            return self._json({"ok": True, **rd_cultura_relations(_REPO_ROOT)})
+        if p == "/api/cultura/sources":
+            if cultura_sources is None:
+                return self._json({"ok": False, "error": "cultura_sources_unavailable",
+                                   "detail": _DEPARTMENTS_IMPORT_ERROR}, 503)
+            return self._json({"ok": True, **cultura_sources(_REPO_ROOT)})
+        if p == "/api/cultura/capabilities":
+            if cultura_capabilities is None:
+                return self._json({"ok": False, "error": "cultura_capabilities_unavailable",
+                                   "detail": _DEPARTMENTS_IMPORT_ERROR}, 503)
+            return self._json({"ok": True, **cultura_capabilities(_REPO_ROOT)})
+        if p == "/api/cultura/opportunity-gate":
+            if cultura_opportunity_gate is None:
+                return self._json({"ok": False, "error": "cultura_opportunity_gate_unavailable",
+                                   "detail": _DEPARTMENTS_IMPORT_ERROR}, 503)
+            return self._json({"ok": True, **cultura_opportunity_gate(_REPO_ROOT)})
+        if p.startswith("/departments/"):
+            area = p[len("/departments/"):].strip("/")
+            return self._send(_department_page(area), "text/html; charset=utf-8")
+        if p in _DEPARTMENT_STATIC_FILES:
+            data = _serve_department_static(p)
+            if data is None:
+                return self._send("(recurso de area no encontrado)",
+                                  "text/plain; charset=utf-8", 404)
+            return self._send_bytes(data, "text/html; charset=utf-8")
         if p == "/api/diagnostics/domains":
             if domain_catalog is None:
                 return self._json({"ok": False, "error": "diagnostics_unavailable",
