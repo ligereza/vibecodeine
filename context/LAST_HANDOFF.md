@@ -11972,3 +11972,40 @@ refresh this matrix.
 
 Last verified: 2026-08-16 America/Santiago — objective matrix written;
 external runtime gates remain intentionally user-controlled.
+
+## Phase 532 — authorized publication and live hub
+
+The user authorized publication and service enablement.
+
+Published to `origin/main`:
+
+    e90bd8f ci(evento): restore render upload
+    84436b1 feat(hub): unify department surfaces
+
+The first commit publishes the already validated EVENT workflow. The second
+publishes the MAK area registry, read-only RD/Cultura surfaces, contracts,
+scoped handoffs, dependency/owner manifests, objective audit and tests. Only
+these explicit files were staged; unrelated dirty worktree artifacts and
+historical phase evidence were not staged.
+
+Runtime:
+
+    systemctl --user enable --now mak-hub.service
+    -> enabled, active
+    listener -> 127.0.0.1:8900
+    /health and all required area, crosswalk, relation, opportunity and
+    diagnostics endpoints -> HTTP 200
+
+The next real EVENT issue is intentionally not manufactured or replayed. The
+workflow now waits for the next Gmail-created issue and will process it on the
+active runner. No historical issue sweep was run.
+
+## Next concrete action
+
+Observe the next naturally arriving EVENT issue. Verify its render artifact,
+OneDrive destination, comment and closure. If no issue arrives, no artificial
+replay is needed; the local hub and workflow are already deployed.
+
+Last verified: 2026-08-16 America/Santiago — `main` synchronized with
+`origin/main`, `mak-hub.service` active on 8900, next action is passive EVENT
+observation.
