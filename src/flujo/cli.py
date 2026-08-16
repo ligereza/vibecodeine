@@ -1111,6 +1111,78 @@ def doctor():
         _ok("Doctor OK: entorno listo.")
 
 
+@app.command("diagnose")
+def diagnose(
+    area: str = typer.Option("auto", "--area", "-a", help="auto | core | rd | portfolio | cultura | research"),
+    idea: str = typer.Option("", "--idea", "-i", help="Idea o incidente para rutear el contexto."),
+    operation: str = typer.Option("", "--operation", help="Operacion que fallo."),
+    error: str = typer.Option("", "--error", help="Error o traceback breve; se sanitiza antes de imprimir."),
+    error_file: Optional[Path] = typer.Option(None, "--error-file", help="Archivo de error; solo se lee y se acota."),
+    command: str = typer.Option("", "--command", help="Comando reproducible, no se ejecuta."),
+    expected: str = typer.Option("", "--expected", help="Resultado esperado."),
+    observed: str = typer.Option("", "--observed", help="Resultado observado."),
+    output_format: str = typer.Option("markdown", "--format", help="markdown | json"),
+    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Escribe el reporte en esta ruta."),
+):
+    """Genera un reporte local, sanitizado y copiable para otro agente.
+
+    Este comando solo inspecciona metadatos, Git y rutas del packet elegido.
+    Nunca ejecuta el comando recibido en --command ni abre el archivo WIN.
+    """
+    import json as _json
+
+    from .diagnostics import build_diagnostic_report, render_markdown
+
+    if output_format not in {"markdown", "json"}:
+        raise typer.BadParameter("debe ser markdown o json", param_hint="--format")
+    if error_file is not None:
+        try:
+            error = error_file.read_text(encoding="utf-8", errors="replace")
+        except OSError as exc:
+            raise typer.BadParameter(str(exc), param_hint="--error-file") from exc
+    report = build_diagnostic_report(
+        area=area,
+        idea=idea,
+        operation=operation,
+        error=error,
+        command=command,
+        expected=expected,
+        observed=observed,
+    )
+    rendered = (
+        _json.dumps(report, ensure_ascii=False, indent=2)
+        if output_format == "json"
+        else render_markdown(report)
+    )
+    if output is not None:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(rendered, encoding="utf-8")
+        _ok(f"Reporte {output_format} guardado en {output}")
+        return
+    # Plain stdout is deliberate: the user can paste it into an external agent.
+    typer.echo(rendered, nl=not rendered.endswith("\n"))
+
+
+@app.command("route")
+def route(
+    text: str = typer.Argument(..., help="Idea o incidente que necesita contexto."),
+    area: str = typer.Option("auto", "--area", "-a", help="auto | core | rd | portfolio | cultura | research"),
+    output_format: str = typer.Option("markdown", "--format", help="markdown | json"),
+):
+    """Selecciona el packet minimo para una idea sin leer todo el repo."""
+    import json as _json
+
+    from .diagnostics import render_route_markdown, route_idea
+
+    if output_format not in {"markdown", "json"}:
+        raise typer.BadParameter("debe ser markdown o json", param_hint="--format")
+    routed = route_idea(text, area=area)
+    if output_format == "json":
+        typer.echo(_json.dumps(routed, ensure_ascii=False, indent=2))
+    else:
+        typer.echo(render_route_markdown(routed), nl=False)
+
+
 def _run_verify_subprocess(label: str, cmd: list[str], cwd: Path) -> None:
     import subprocess
 
