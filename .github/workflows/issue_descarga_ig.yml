@@ -2,20 +2,16 @@ name: issue-descarga-ig
 # Flujo evento-driven: Apps Script (Gmail 8h) crea issue label "instagram"
 # -> este workflow corre EN MAK (runner self-hosted) -> descarga la imagen
 # del link IG -> render Blender headless (cartelera.blend, sin Photoshop)
-# -> artifact + comentario + cierre del issue.
+# -> artifact + publicacion directa a OneDrive + comentario + cierre del issue.
 # Seguridad: dispara solo con label "instagram" (solo colaboradores
 # etiquetan); el body/titulo del issue entran SOLO via env (nunca
 # interpolados en un comando shell).
 #
-# META-REGLA render OFF (2026-07-23): la fase de render Blender en MAK
-# produce salida invalida (celeste; deuda documentada de portar
-# blender_nodes.py real). Se retiran del flujo activo los pasos de render
-# (gate `if: false`, codigo intacto para retomar) y el cierre del issue YA
-# NO depende del render. Tras descargar: comentario "media descargado,
-# render pendiente sin etapa automatica + label estado/revision, issue queda
-# ABIERTO.
-# Retiro de esta meta-regla: cuando el render en MAK pase verificacion de
-# varianza contra un flyer real (ver tools/render_flyer_mak.py).
+# META-REGLA render: el gate foreground de MAK fue validado el 2026-08-15
+# con un flyer real (1080x1920, salida no monocromatica). El camino evento
+# vuelve a ejecutar render_flyer_mak.py y publica por rclone directo a
+# OneDrive. El issue solo se cierra despues de render + upload exitosos.
+# El barrido manual permanece conservador y no reprocesa historicos en masa.
 #
 # Barrido auto-sanador: ademas del evento issues, corre cada 30 min
 # (schedule) y a mano (workflow_dispatch). En esos disparos NO hay un
@@ -119,70 +115,84 @@ jobs:
           path: ${{ steps.dl.outputs.dir }}
           retention-days: 14
 
-      - name: comentar resultado
-        if: github.event_name == 'issues' && steps.guard.outputs.skip != 'true'
-        run: |
-          gh issue comment "$ISSUE_NUM" -R "$GITHUB_REPOSITORY" \
-            -b "runner MAK: descarga OK (v2 evento-driven). Imagen como artifact \`ig-issue-$ISSUE_NUM\` en este run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID -- media descargado, render pendiente sin etapa automatica (render Blender en MAK desactivado, ver nota en el workflow)."
-          gh issue edit "$ISSUE_NUM" -R "$GITHUB_REPOSITORY" --add-label "estado/revision" || true
-
-      - name: comentar fallo
-        if: failure() && github.event_name == 'issues' && steps.guard.outputs.skip != 'true'
-        run: |
-          gh issue comment "$ISSUE_NUM" -R "$GITHUB_REPOSITORY" \
-            -b "runner MAK: descarga FALLO en run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID -- revisar log."
-
-      # --- render Blender MAK: OFF (2026-07-23), ver meta-regla arriba ---
-
-      - name: liberar VRAM ollama
-        if: false
-        run: |
-          curl -s http://127.0.0.1:11434/api/generate -d '{"model":"gemma3:4b","keep_alive":0}' > /dev/null || true
+      # --- render Blender MAK: habilitado tras gate foreground 2026-08-15 ---
 
       - name: render flyer (Blender MAK)
         id: render
-        if: false
+        if: github.event_name == 'issues' && steps.guard.outputs.skip != 'true'
+        env:
+          DOWNLOAD_DIR: ${{ steps.dl.outputs.dir }}
         run: |
-          set +e
-          imagen="${{ steps.dl.outputs.dir }}/input_ig.jpg"
+          set -euo pipefail
+          imagen="$DOWNLOAD_DIR/input_ig.jpg"
+          test -f "$imagen"
           outdir="$RUNNER_TEMP/render_issue_$ISSUE_NUM"
           mkdir -p "$outdir"
-          salida=$(python3 tools/render_flyer_mak.py --imagen "$imagen" --out "$outdir" 2>&1)
-          echo "$salida"
-          linea=$(printf '%s\n' "$salida" | grep -E '^RENDER_(OK|FALLO):' | tail -1)
-          if printf '%s' "$linea" | grep -q '^RENDER_OK:'; then
-            echo "status=ok" >> "$GITHUB_OUTPUT"
-          else
-            echo "status=fallo" >> "$GITHUB_OUTPUT"
-          fi
-          {
-            echo "detalle<<RENDER_EOF"
-            printf '%s\n' "$linea"
-            echo "RENDER_EOF"
-          } >> "$GITHUB_OUTPUT"
           echo "dir=$outdir" >> "$GITHUB_OUTPUT"
-          exit 0
+          python3 tools/render_flyer_mak.py \
+            --imagen "$imagen" \
+            --out "$outdir" \
+            2>&1 | tee "$outdir/render.log"
+          grep -q '^RENDER_OK:' "$outdir/render.log"
+          test -s "$outdir/render_output.png"
 
       - name: publicar render (artifact)
-        if: false
+        if: >
+          always() && github.event_name == 'issues' &&
+          steps.guard.outputs.skip != 'true' &&
+          steps.render.outcome != 'skipped'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: render-issue-${{ github.event.issue.number }}
           path: ${{ steps.render.outputs.dir }}
           retention-days: 30
+          if-no-files-found: warn
 
-      - name: comentar render OK + cerrar issue
-        if: false
+      - name: publicar render en OneDrive
+        id: publish
+        if: >
+          github.event_name == 'issues' &&
+          steps.guard.outputs.skip != 'true' &&
+          steps.render.outcome == 'success'
+        env:
+          DOWNLOAD_DIR: ${{ steps.dl.outputs.dir }}
+          RENDER_DIR: ${{ steps.render.outputs.dir }}
+        run: |
+          set -euo pipefail
+          test -s "$RENDER_DIR/render_output.png"
+          destino="onedrive:MAK/eventos/issue-$ISSUE_NUM"
+          rclone copyto "$RENDER_DIR/render_output.png" \
+            "$destino/render_output.png" \
+            --retries 3 --low-level-retries 10 --stats-one-line
+          rclone copyto "$DOWNLOAD_DIR/input_ig.jpg" \
+            "$destino/input_ig.jpg" \
+            --retries 3 --low-level-retries 10 --stats-one-line
+          rclone lsf "$destino" --files-only | grep -qx 'render_output.png'
+          rclone lsf "$destino" --files-only | grep -qx 'input_ig.jpg'
+          echo "destino=$destino" >> "$GITHUB_OUTPUT"
+
+      - name: comentar render OK y cerrar issue
+        if: steps.render.outcome == 'success' && steps.publish.outcome == 'success'
         run: |
           gh issue comment "$ISSUE_NUM" -R "$GITHUB_REPOSITORY" \
-            -b "runner MAK: render OK. Render Blender en artifact \`render-issue-$ISSUE_NUM\` de este run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            -b "runner MAK: render OK y publicado en OneDrive (\`${{ steps.publish.outputs.destino }}\`). Artifact: \`render-issue-$ISSUE_NUM\` en este run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           gh issue close "$ISSUE_NUM" -R "$GITHUB_REPOSITORY"
 
-      - name: comentar render FALLO
-        if: false
+      - name: comentar fallo de descarga
+        if: failure() && github.event_name == 'issues' && steps.guard.outputs.skip != 'true' && steps.dl.outcome == 'failure'
         run: |
           gh issue comment "$ISSUE_NUM" -R "$GITHUB_REPOSITORY" \
-            -b "runner MAK: render FALLO (${{ steps.render.outputs.detalle }}) en run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID -- descarga OK, issue sigue abierto."
+            -b "runner MAK: descarga FALLO en run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID -- revisar log; issue sigue abierto."
+
+      - name: comentar fallo de render o publicacion
+        if: >
+          failure() && github.event_name == 'issues' &&
+          steps.guard.outputs.skip != 'true' &&
+          (steps.render.outcome == 'failure' || steps.publish.outcome == 'failure')
+        run: |
+          detalle="render=${{ steps.render.outcome }}, publicacion=${{ steps.publish.outcome }}"
+          gh issue comment "$ISSUE_NUM" -R "$GITHUB_REPOSITORY" \
+            -b "runner MAK: $detalle en run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID -- descarga conservada, issue sigue abierto."
 
       # === camino barrido: schedule / workflow_dispatch, N issues pendientes ===
 
