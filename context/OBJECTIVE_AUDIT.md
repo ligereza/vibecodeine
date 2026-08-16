@@ -16,9 +16,9 @@ implementation is prepared but an external action was intentionally not run.
 | Offline/API dependency separation | Proven locally | `context/DEPENDENCY_SURFACE.md`; area contracts inherit root manifest |
 | Canonical implementation per functional tool | Proven/documented | `context/OWNER_MANIFEST.md`; intentional projections retained |
 | WIN historical boundary | Proven by architecture contract | `agents.md`, owner manifest and read-only policies; no active consumer promotes WIN |
-| Real EVENT issue end-to-end | User gate | Workflow patch is local; no real issue replayed |
-| Permanent 8900 service enabled | User gate | `mak-hub.service` exists but is disabled/inactive by integration policy |
+| EVENT workflow published | Proven | `main` commits `e90bd8f`; pushed to `origin/main` |
+| Permanent 8900 service enabled | Proven | `mak-hub.service` enabled/active; listener verified on `127.0.0.1:8900` |
+| Real EVENT issue end-to-end | Waiting for natural input | User requested waiting for the next Gmail-created issue; no artificial replay |
 
-No requirement is silently marked complete based only on intent. The two
-remaining user gates are external runtime actions, not missing local
-architecture.
+No requirement is silently marked complete based only on intent. The remaining
+observation is a naturally arriving external event, not missing architecture.
