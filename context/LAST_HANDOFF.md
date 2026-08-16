@@ -11120,11 +11120,36 @@ paths. The panel does not automatically intercept arbitrary iframe errors:
 the user pastes the visible error and reproduction details, which is the
 current privacy-safe contract for an external agent.
 
+## Phase 513 — diagnostics published and runtime rechecked
+
+The exact Phase 512 write set was reviewed, committed on `main` as `95de8a7`
+(`feat: add portable MAK diagnostics`) and pushed successfully to
+`origin/main`. Post-publication invariants returned:
+
+    main...origin/main = 0 0
+    branches = main
+    tags = archive/house-history
+    README_EXIT = 0
+    INDEX_EXIT = 0
+
+The post-push focused suite returned exit 0 with 42 tests passed across the
+diagnostic, CLI and MAK hub contracts. The live service remained active and
+returned `GET /health` HTTP 200 plus a valid RD diagnostic report. The only
+listening sockets remain the pre-existing loopback department services
+`127.0.0.1:8890`, `127.0.0.1:8891` and the requested hub
+`127.0.0.1:8900`; this slice created no new process or service.
+
+The remaining dirty/untracked worktree entries are pre-existing HTML
+snapshots, phase evidence, fixtures/quarantine and database backups. They are
+not staged, committed or deleted. `WIN` remains present and untouched, and the
+README SVG remains byte-clean.
+
 ## Next concrete action
 
-Stage only the listed Phase 512 files, review the exact staged diff, commit on
-`main`, push to `origin/main`, and re-run the live endpoint plus branch/status
-invariants. Do not stage the pre-existing HTML/evidence/database surfaces.
+No required action remains within this objective. Future work should be a
+separately requested feature or bug slice routed through `python -m flujo route`
+and reported through `python -m flujo diagnose`; do not reopen the completed
+consolidation or stage the existing evidence backlog.
 
-Last verified: 2026-08-15 America/Santiago — Phase 512 implementation and
-foreground local validation green; publication pending.
+Last verified: 2026-08-15 America/Santiago — Phase 513 published; local hub,
+CLI, routing, sanitization and Git synchronization green.
