@@ -11153,3 +11153,822 @@ consolidation or stage the existing evidence backlog.
 
 Last verified: 2026-08-15 America/Santiago — Phase 513 published; local hub,
 CLI, routing, sanitization and Git synchronization green.
+
+## Phase 514 — deterministic session archaeology from the two ensayos
+
+The two source documents used were:
+
+    /home/mak/WIN/flujo/docs/cultura/ensayos/caja-win.md
+    /home/mak/WIN/flujo/docs/cultura/ensayos/guia-analisis-sesiones-claude-codex.md
+
+Their proposed seven deliverables were executed with the existing
+`tools/inferential_archaeology.py` extractor and a bounded renderer at
+`tools/render_archaeology_deliverables.py`. The raw sources were read-only:
+Claude web export at `/home/mak/WIN/claude_sesiones/claude_web_export_2026-08-11`,
+Codex rollouts at `/home/mak/WIN/codex/sessions`, and the MAK bitácora at
+`/home/mak/plataforma/bitacora_capataz.jsonl`.
+
+Commands and results:
+
+    PYTHONPATH=src /home/mak/vibecodeine/.venv/bin/python tools/inferential_archaeology.py build ...
+    -> exit 0; 83,835 raw turns; 23,273 unique; 22,299 analysis turns; 96 sessions; 3,702 questions; 22,632 seed candidates; 1,548 proposals; 213 Codex actions; 1,028 commits
+    PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src /home/mak/vibecodeine/.venv/bin/python tools/render_archaeology_deliverables.py ...
+    -> exit 0; seven bounded Markdown deliverables plus analysis_manifest.json
+    SQLite PRAGMA integrity_check
+    -> `ok`
+    DuckDB read-only validation
+    -> exit 0; 18 tables; turns=83,835; proposal_followups=1,548
+    py_compile tools/render_archaeology_deliverables.py + JSON manifest parse
+    -> exit 0
+
+The generated artifacts are under the ignored analysis output boundary:
+
+    out/archaeology/claude-codex-mak-20260815/analysis_manifest.json
+    out/archaeology/claude-codex-mak-20260815/{session_inventory,question_ledger,idea_catalog,decision_graph,effort_report,closure_audit,triangulation_report}.md
+    out/archaeology/claude-codex-mak-20260815.sqlite
+    out/archaeology/claude-codex-mak-20260815.duckdb
+
+Principal findings: exact duplicate turns are 60,562/83,835 (72.2%);
+3,698 questions require semantic review and 4 are mechanically unresolved;
+proposal states are 1,150 pending review, 376 approved without direct action,
+11 direct-action candidates and 11 prompt-generated-unaccepted; 2,193 lexical
+closure claims have 372 nearby correction candidates (17.0%). These are
+evidence-led candidates, never diagnoses or intent claims.
+
+Important omission: `bitacora_capataz.jsonl` yielded zero valid `mak_activity`
+rows because its records do not contain the expected `activity_id` field. No
+energy, cost or runtime-effort value was invented. The selected recovered root
+also had no Claude Code JSONL; Claude web/design and Codex rollouts were
+available. Raw source SHA-256 was not recomputed over 5.1 GB; turn-level
+fingerprints and source paths remain recoverable.
+
+No source, WIN file, database, service or Git history was changed by this
+analysis. The only new working-tree source is the reproducible renderer
+`tools/render_archaeology_deliverables.py`; generated outputs remain outside
+the tracked source surface.
+
+## Next concrete action
+
+The deterministic pass is complete. The next bounded analysis is semantic
+review of the 3,698 question candidates and the 1,150 proposal-pending rows,
+starting with the highest-impact domains and preserving source line references;
+repairing the `mak_activity` adapter is a separate measurement task. Do not
+promote any idea, closure or intent claim to fact without a second independent
+layer of evidence.
+
+Last verified: 2026-08-16 America/Santiago — Phase 514 artifacts generated and
+validated; WIN and runtime untouched.
+
+## Phase 515 — measured API capability inventory
+
+Updated the canonical capability inventory at:
+
+    /home/mak/flujo/CAPACIDADES.md
+
+The inventory now distinguishes code-wired integrations, optional backends,
+internal HTTP surfaces, historical WIN/XIO material, and declared-but-unwired
+provider keys. No secret value was read or written.
+
+Commands and results:
+
+    AST/read-only provider audit of cultura/mak_research/research_lib.py
+    -> 5 LLM adapters: watsonx, groq, cerebras, azure, ollama
+    source_pipeline.py / canva.py / research_lib.py endpoint audit
+    -> 13 code-wired API/service integrations under the documented counting rule
+    -> 1 additional optional backend recognized: crawl4ai; package absent
+    ss -ltn; systemctl --user is-active mak-hub.service
+    -> 127.0.0.1:8900, :8890 and :8891 listening; mak-hub.service active
+    -> :8888 SearXNG and :11434 Ollama not listening during this measurement
+    curl GET /health on :8900, :8890 and :8891
+    -> all returned HTTP 200
+    package/CLI presence audit
+    -> crawl4ai absent; parth_dl, gh, ollama and rclone present
+    git diff --check -- CAPACIDADES.md
+    -> exit 0
+
+The documented totals are: 13 wired API/service integrations; 14 recognized
+backends when optional crawl4ai is included; 16 operational API surfaces when
+the three internal HTTP services are included; 17 if both internal services
+and crawl4ai are counted. These are adapter/surface counts, not counts of
+credentials, models, endpoints, websites or successful external calls.
+
+The active inventory now treats MAK Debian 12 as the current host, WIN as a
+historical read-only archive, and XIO as outside the current operational
+surface. The old WIN Ollama route and the XIO APK workflow are no longer
+presented as active MAK capabilities. The document remains uncommitted because
+the user requested the update but did not request a Git publication.
+
+Risk: provider availability is not equivalent to credential availability. The
+current active research.env exposes only local research configuration by name;
+the discarded n8n env was not used as runtime authority. No provider key was
+tested or exposed in this phase.
+
+## Next concrete action
+
+Resume Phase 514 semantic review of the highest-impact question candidates and
+proposal-pending rows, preserving source paths and independent evidence. Keep
+the API inventory as the capability boundary; do not install crawl4ai or
+restart Ollama/SearXNG merely to change the count.
+
+Last verified: 2026-08-15 America/Santiago — CAPACIDADES.md updated and API
+surface measured without starting services or changing WIN, databases or Git.
+
+## Phase 516 — credential probes without secret disclosure
+
+The user requested a check of the API-key variables. Values were never printed,
+logged or committed. WIN was not used as runtime authority. The probe read only
+the known MAK configuration files and performed read-only authentication checks,
+except for one minimal Tavily search request required by its API contract.
+
+Commands and results:
+
+    read-only dotenv-name/value-presence audit over MAK config files
+    -> present values found only for WATSONX_API_KEY, NVIDIA_API_KEY,
+       NVIDIA_NIM_API_KEY and TAVILY_API_KEY
+    WatsonX IAM token exchange
+    -> HTTP 200; valid key, but source is discarded n8n-local/research.env
+    NVIDIA and NVIDIA NIM GET /v1/models
+    -> HTTP 200 for both variables; values are in /home/mak/flujo/.env
+    Tavily basic search using the adapter contract
+    -> HTTP 200; valid key, but source is discarded n8n-local/research.env
+    remaining listed key variables
+    -> absent in MAK configurations; no calls made
+
+The absent variables are ANTHROPIC_API_KEY, GROQ_API_KEY, CEREBRAS_API_KEY,
+AZURE_API_KEY, FIRECRAWL_API_KEY, CANVA_API_TOKEN, DASHSCOPE_API_KEY,
+QWEN_API_KEY, OPENROUTER_API_KEY and GITHUB_TOKEN. The first Tavily probe
+returned HTTP 400 because the test query shape was not the adapter contract;
+the exact adapter-shaped probe returned HTTP 200. No LLM completion, Firecrawl
+scrape, Canva upload or GitHub mutation was performed.
+
+CAPACIDADES.md now records these statuses without credential values. The
+WatsonX and Tavily keys are technically valid but are not considered active
+MAK runtime configuration until explicitly relocated from discarded n8n-local
+configuration into the intended research runtime.
+
+## Next concrete action
+
+Resume Phase 514 semantic review of the highest-impact question candidates and
+proposal-pending rows. Treat the credential probe as evidence only; do not move
+keys, enable discarded n8n configuration, install providers or spend external
+credits without a separately requested integration slice.
+
+Last verified: 2026-08-15 America/Santiago — credential status measured without
+exposing secrets or changing runtime configuration.
+
+## Phase 517 — GitHub authentication role clarified
+
+The user asked what `GITHUB_TOKEN` was for. The repository evidence shows:
+
+    /home/mak/flujo/tools/gmail_to_github_issues.gs
+    -> external Google Apps Script; reads Script Properties and POSTs GitHub Issues
+    -> requires a fine-grained token with Issues Read/Write
+    /home/mak/flujo/.github/workflows/*
+    -> Actions use the built-in `${{ secrets.GITHUB_TOKEN }}` where required
+    /home/mak/flujo/.env.example
+    -> previous comment incorrectly described a read-only `tools/vibo_voz` use;
+       corrected to document the external Gmail bridge and local `gh` behavior
+    gh auth status
+    -> exit 0; local CLI authenticated; token values were not exposed
+
+Conclusion: missing `GITHUB_TOKEN` in the MAK `.env` does not break the local
+hub, issue workflows or authenticated `gh` commands. It matters only for the
+external Gmail Apps Script if its own Script Property is missing or expired.
+The supposed `tools/vibo_voz` consumer was not found in the active repo.
+
+The user's intentionally unused keys remain classified as optional/unwired:
+Qwen, OpenRouter, DashScope, Canva, Azure and Anthropic. Groq and Cerebras are
+code-supported but their keys are absent, so they cannot be called in this
+environment. WatsonX and Tavily are technically valid but remain in discarded
+n8n configuration rather than active research configuration.
+
+## Next concrete action
+
+Resume Phase 514 semantic review. Do not add `GITHUB_TOKEN` to the MAK `.env`;
+only repair the external Apps Script property if the user later requests the
+Gmail-to-Issue bridge to be audited.
+
+Last verified: 2026-08-15 America/Santiago — GitHub role documented and local
+CLI authentication confirmed without external mutation.
+
+## Phase 518 — event-to-render pipeline diagnosis
+
+The user reported that the historical chain was Gmail -> GitHub Issue ->
+Instagram download -> Blender render -> OneDrive. The physical and remote
+read-only checks found the following:
+
+    tools/gmail_to_github_issues.gs
+    -> external Apps Script still contains the Gmail-to-Issue bridge;
+       its deployment/trigger and Script Properties cannot be verified from MAK
+    gh issue list --repo ligereza/vibecodeine --state all --label instagram ...
+    -> last real EVENT issue visible is #510, created 2026-08-07; #513 is an
+       email echo of #510, not a new event
+    gh run list --repo ligereza/vibecodeine --workflow issue_descarga_ig.yml ...
+    -> latest event runs for #510 were cancelled; workflow remains enabled
+    static workflow audit of .github/workflows/issue_descarga_ig.yml
+    -> Instagram download path is active; all Blender render, render artifact,
+       success/close and failure-comment steps have `if: false`
+    -> no active `rclone`, `onedrive` or upload step exists in this workflow
+    find /home/mak and local asset checks
+    -> /home/mak/RD/AUTOMATIZACION/cartelera.blend is a symlink to RD.blend;
+       RD.blend, FRAME2.png and /home/mak/blender/blender are present
+    py_compile render_flyer_mak.py, blender_nodes.py and flyer_auto.py
+    -> exit 0
+    onedrive-rclone.service status and journal
+    -> active=failed; mount is disconnected; recent failure includes
+       `fusermount: Device or resource busy`, with earlier Graph OAuth/DNS
+       failures and serviceNotAvailable errors
+    pgrep Runner.Listener / actions-runner service inspection
+    -> no visible Runner.Listener process; svc.sh status requires sudo, so
+       runner online state is not fully verifiable from this user context
+    gh api repos/.../actions/runners
+    -> HTTP 403 because the local token lacks the runners permission; no
+       repository mutation was attempted
+
+One bounded render probe accidentally reached Blender because the symlinked
+blend was present. The process was terminated immediately before a render
+completed, no output image remained, and the temporary probe file was removed.
+This correction is recorded rather than hidden. No source, issue, workflow,
+database or OneDrive file was changed.
+
+Diagnosis: the main break is not the GitHub API key. The render stage was
+deliberately disabled on 2026-07-23 after an invalid MAK render, and the
+OneDrive publication stage was never reconnected to the Linux workflow. The
+old `tools/bridge_issue_render.py` is Windows-bound (`C:\\Program Files...`
+Blender) and only copies to local `drive/`; it cannot serve as the MAK path.
+The OneDrive mount is currently failed independently. The Gmail trigger is an
+external unknown: the code exists and created issues historically, but its
+current Apps Script deployment cannot be confirmed from this machine.
+
+## Open integration items
+
+1. Verify or repair the self-hosted runner service with the user's sudo
+   authority; no `Runner.Listener` is currently visible.
+2. Run one explicitly bounded foreground MAK render using the existing
+   `render_flyer_mak.py` and real `RD.blend` assets; compare output to the known
+   good render before enabling workflow steps.
+3. Repair OneDrive authentication/mount or choose a direct `rclone copy`
+   publication path; do not rely on the broken FUSE mount.
+4. Add a consumer-backed Linux upload step and only then re-enable render,
+   artifact, issue comment and close gates in the workflow.
+5. Separately verify the external Apps Script trigger and Script Properties;
+   no repository key should replace that external property.
+
+## Next concrete action
+
+Do not edit the workflow yet. First obtain the bounded runner status and
+perform the foreground render gate with an explicit output path, then record
+whether the current MAK render is visually/structurally valid. Preserve the
+download-only behavior until that gate and the OneDrive publication gate are
+green.
+
+Last verified: 2026-08-15 America/Santiago — pipeline diagnosis complete;
+download path present, render disabled, OneDrive failed, no process left from
+the probe.
+
+## Phase 519 — OneDrive mount recovery
+
+The user authorized repair of the OneDrive path but did not provide or expose
+any sudo credential. Read-only checks showed that the remote itself was
+reachable:
+
+    rclone listremotes
+    -> exit 0; `onedrive:` exists
+    timeout 20s rclone lsd onedrive:
+    -> exit 0; remote listed MAK, PRESERVER, curatoria_archivo and visuales lyon
+    systemctl --user is-active/is-enabled onedrive-rclone.service
+    -> failed/enabled; stale FUSE mount had previously failed to unmount
+    findmnt/mountpoint/fuser /home/mak/OneDrive
+    -> stale `fuse.rclone` mount; mountpoint check exit 1; no user process held it
+    fusermount -uz /home/mak/OneDrive
+    -> exit 0; lazy-unmounted only the local stale FUSE mount, no remote data
+      or files were deleted
+    systemctl --user reset-failed onedrive-rclone.service
+    -> exit 0
+    systemctl --user start onedrive-rclone.service
+    -> exit 0
+    systemctl --user is-active onedrive-rclone.service
+    -> active
+    findmnt/mountpoint/ls /home/mak/OneDrive
+    -> exit 0; mountpoint valid and remote folders/files visible
+
+No package was installed and no sudo credential was requested. OneDrive is
+now available as a local mount and as the authenticated `rclone` remote. The
+workflow still has no upload step; restoring storage availability does not yet
+restore the automatic render publication.
+
+## Next concrete action
+
+Keep the workflow download-only. Run the explicitly bounded foreground MAK
+render gate with a designated temporary output, then validate the resulting
+image before editing the GitHub workflow. After the render gate passes, add a
+Linux `rclone copy` publication step backed by the existing `onedrive:` remote;
+do not make the workflow depend on the FUSE mount if direct copy is sufficient.
+
+Last verified: 2026-08-15 America/Santiago — OneDrive remote and local mount
+recovered; no render/workflow source changed.
+
+## Phase 520 — render and publication gates
+
+The bounded foreground render gate used the existing MAK input and renderer:
+
+    python3 tools/render_flyer_mak.py \
+      --imagen /home/mak/RD/AUTOMATIZACION/RESULTADOS/input_ig.jpg \
+      --out /tmp/mak-render-gate.uE93hj \
+      --base /home/mak/RD/AUTOMATIZACION \
+      --blender /home/mak/blender/blender
+    -> exit 0 after approximately 6 minutes
+    -> `RENDER_OK: /tmp/mak-render-gate.uE93hj/render_output.png`
+    -> PNG 1080x1920, 16-bit RGBA source, non-uniform RGB statistics,
+       non-empty full-frame bounds; visual inspection showed the complete
+       flyer composite rather than the historical invalid/celeste output
+
+The renderer temporarily regenerated the base `RESULTADOS/color_predominante.png`;
+the pre-test file was backed up, then restored by matching SHA-256 after the
+gate. No source, blend, database or workflow file changed.
+
+    rclone copyto /tmp/mak-render-gate.uE93hj/render_output.png \
+      onedrive:MAK/_integration_probe/render_gate_20260815.png
+    -> exit 0
+    rclone lsjson onedrive:MAK/_integration_probe --files-only --hash --no-modtime
+    -> exit 0; remote object exists with size 16618042 bytes and QuickXorHash
+
+The direct publication gate is therefore green. The probe was deliberately
+written only under `MAK/_integration_probe/`; no operational OneDrive folder
+was touched. The FUSE mount remains active, but the future workflow should
+prefer direct `rclone copy` so publication does not depend on the mount.
+
+Runner verification remains externally constrained:
+
+    pgrep -af 'Runner.Listener|actions-runner'
+    -> no Runner.Listener visible (only the diagnostic command itself)
+    sudo -n /home/mak/actions-runner/svc.sh status
+    -> exit 1; sudo password required, no password was requested or exposed
+    /home/mak/actions-runner/run.sh and /home/mak/actions-runner/.runner
+    -> both present
+
+## Next concrete action
+
+Before editing `.github/workflows/issue_descarga_ig.yml`, obtain the runner
+service status with the user's local sudo authority. If the runner is online,
+make one minimal workflow patch that preserves download-only behavior on
+failure, enables the already validated render gate, uploads with direct
+`rclone copy` to an issue-scoped OneDrive path, and only comments/closes after
+both render and upload succeed. Then run a controlled `workflow_dispatch` or
+one labelled test issue, not a broad historical replay.
+
+Last verified: 2026-08-15 America/Santiago — render and direct OneDrive upload
+gates green; workflow unchanged; runner status still needs sudo verification.
+
+## Phase 521 — event workflow reactivation (local, not published)
+
+The user installed the GitHub Actions runner service from its required root:
+
+    cd /home/mak/actions-runner
+    sudo ./svc.sh install mak
+    sudo ./svc.sh start
+    sudo ./svc.sh status
+    -> service installed and reported ready
+    systemctl list-units --type=service --no-legend actions.runner.ligereza-vibecodeine.mak.service
+    -> loaded active running
+    pgrep -af '/home/mak/actions-runner/bin/Runner.Listener run'
+    -> Runner.Listener process present
+
+The local event workflow was updated in:
+
+    .github/workflows/issue_descarga_ig.yml
+
+Changes are limited to the event-driven path:
+
+    - stale render-off comments and `if: false` event gates removed;
+    - render_flyer_mak.py runs with `set -euo pipefail` and requires
+      `RENDER_OK` plus a non-empty render_output.png;
+    - render logs/palette/output remain available as the render artifact even
+      when render fails;
+    - original input and render output publish with direct `rclone copyto` to
+      `onedrive:MAK/eventos/issue-$ISSUE_NUM`;
+    - the issue is commented and closed only after render and both remote
+      files pass verification;
+    - download, render and publication failures leave the issue open and
+      comment the failing stage;
+    - the manual historical sweep remains conservative and does not trigger
+      mass rendering.
+
+Validation:
+
+    node + YAML parser
+    -> `node_yaml_parse=ok`; one `descarga` job and 13 steps parsed
+    git diff --check -- .github/workflows/issue_descarga_ig.yml
+    -> exit 0
+    local render gate and direct rclone publication
+    -> Phase 520 green
+
+No commit or push was made. GitHub will continue running the old workflow
+until this local workflow change is explicitly committed and pushed. Do not
+use `workflow_dispatch` as a test because its sweep path can process many
+pending issues. Prefer one new real EVENT issue or another narrowly scoped
+test after publication.
+
+## Next concrete action
+
+Review the local workflow diff once, then obtain explicit authorization before
+committing/pushing it. After publication, observe one new Gmail-created EVENT
+issue end-to-end on the active runner; verify its artifact, OneDrive folder,
+comment and closure before considering the pipeline restored.
+
+Last verified: 2026-08-15 America/Santiago — runner active, workflow YAML
+valid locally, event reactivation prepared but not published.
+
+## Phase 522 — area registry and portable contracts (local, not published)
+
+Implemented the bounded MAK area registry and same-origin hub surfaces in:
+
+    src/flujo/departments.py
+    cultura/mak_plataforma/hub.py
+    tests/test_departments.py
+
+The registry separates exactly three operational areas without creating extra
+servers: `rd`, `cultura` and `iskvw`. Each has a scoped contract under
+`contracts/departments/<area>/` with `agents.md`, `requirements.txt` and
+`.env.example`, plus a continuity handoff under `context/handoffs/`.
+
+The hub additions are additive and read-only for the new catalog surfaces:
+
+    /api/departments
+    /api/rd/summary
+    /api/cultura/sources
+    /api/cultura/capabilities
+    /departments/<area>
+    /static/rd/plano
+    /static/iskvw/editor
+
+The RD summary keeps `data/rd.db` separate from `data/rd_datos.db` and exposes
+the review-only crosswalk metadata without mutating either database. Current
+physical values are 7,585 rows in `rd.db` and zero rows in `rd_datos.db`.
+
+Validation:
+
+    python3 -m py_compile src/flujo/departments.py cultura/mak_plataforma/hub.py
+    -> exit 0
+    bounded foreground hub on 127.0.0.1:18900
+    -> /health, /api/departments, /api/rd/summary,
+       /api/cultura/sources and /departments/rd returned HTTP 200
+    direct department/diagnostics harness
+    -> 5 tests passed; no pytest installation was required
+    git diff --check -- src/flujo/departments.py cultura/mak_plataforma/hub.py
+    -> exit 0
+
+No permanent hub was started, no database/provider/mutator was executed, and
+no commit or push was made. The active runner remains a separate user-started
+service and is not part of the MAK hub.
+
+## Current remaining work
+
+1. Expose and validate the existing RD entity crosswalk as a dedicated
+   read-only endpoint; do not auto-merge venue, producer, artist or project
+   identities without provenance and confidence.
+2. Complete the read-only RD/Cultura relation map, including opportunity
+   evidence and proposal consumers, while keeping `rd_datos.db` as empty field
+   state rather than merging it into the catalog.
+3. Audit the bounded canonical/projection pairs for RD, Research and
+   ISKVW, recording intentional wrappers instead of deleting evidence.
+4. Run the safe local contract suite and the area-specific foreground checks
+   under the available venv; pytest is unavailable in the current runtimes.
+5. Decide whether to publish the already-prepared EVENT workflow patch; this
+   requires explicit user authorization to commit/push and then one narrowly
+   scoped real EVENT issue test.
+6. Only after those gates, decide the final local folder cleanup and optional
+   historical/WIN archival treatment. No broad deletion is currently justified.
+
+## Next concrete action
+
+Add the dedicated read-only RD crosswalk endpoint and its bounded foreground
+test, then refresh this handoff with the result. Start all physical searches
+at `/home/mak/*`; preserve WIN, databases and evidence.
+
+Last verified: 2026-08-16 America/Santiago — area registry and contracts pass
+bounded validation; no permanent hub process is running.
+
+## Phase 523 — explicit RD entity crosswalk surface
+
+Added the validated read-only endpoint `/api/rd/crosswalk` to the 8900 hub
+through `src/flujo/departments.py` and
+`cultura/mak_plataforma/hub.py`. The RD area catalog now links to this
+endpoint. It consumes the existing
+`data/rd_fuentes/candidates/rd_portfolio_entity_crosswalk.json` through the
+existing validator in `src/flujo/rd/entity_crosswalk.py`.
+
+The endpoint returns the four current review-only entities, their aliases,
+roles, confidence, publication gate and provenance evidence. It explicitly
+returns `mutation=disabled`, `status=review_only`, and
+`identity_join=explicit_provenance_only`; it does not open SQLite or call an
+external provider.
+
+Validation:
+
+    PYTHONDONTWRITEBYTECODE=1 python3 -m py_compile \
+      src/flujo/departments.py cultura/mak_plataforma/hub.py \
+      tests/test_departments.py
+    -> exit 0
+    direct bounded test harness (4 department tests, including ephemeral hub)
+    -> all four tests passed; no pytest installation or permanent service
+    git diff --check -- touched department/hub/test files
+    -> exit 0
+
+## Next concrete action
+
+Build the next bounded RD/Cultura relation map from existing provenance files
+and consumers: venues, producers, artists, events, projects and opportunity
+records. Keep unresolved names as review candidates, distinguish venue from
+producer and artist roles, and do not mutate either RD database. Then expose
+only the resulting read-only metadata through the 8900 hub and validate it in
+foreground.
+
+Last verified: 2026-08-16 America/Santiago — crosswalk endpoint and tests pass;
+no permanent hub process is running.
+
+## Phase 524 — RD/Cultura relation projection
+
+Added `/api/rd/cultura-relations` to the 8900 hub. The projection is built
+read-only from the existing `data/productoras/*.json`, `data/venues/*.json`
+and their recorded provenance. It currently reports 20 producer/artist
+records, 3 technical venue records and 24 bounded relations. It keeps 11
+unresolved venue links as `review_candidate`; it does not guess that a
+producer is a venue, does not turn FRVR into a producer, and does not promote
+raw names to canonical IDs without `venue_id` or explicit evidence.
+
+The projection also names the current consumers (`src/flujo/rd/panel.py`,
+`cultura/mak_plataforma/research_router.py` and `iskvw/piel/venue`) so an
+external agent can enter through the relevant slice instead of reading the
+whole repository. SQLite, `rd_datos.db`, providers and event mutators were
+not touched.
+
+Validation:
+
+    PYTHONDONTWRITEBYTECODE=1 python3 -m py_compile \
+      src/flujo/departments.py cultura/mak_plataforma/hub.py \
+      tests/test_departments.py
+    -> exit 0
+    direct bounded harness (5 department tests, including ephemeral hub)
+    -> all five passed
+    projection counts
+    -> producers=20, venues=3, relations=24, review_candidates=11
+    git diff --check -- touched department/hub/test files
+    -> exit 0
+
+## Next concrete action
+
+Audit the three named consumers for canonical/projection duplication and
+record the result in a small owner manifest. Preserve intentional wrappers;
+only remove a duplicate after byte/content/consumer evidence proves it is
+unused. Then continue with the Research opportunity/proposal surface.
+
+Last verified: 2026-08-16 America/Santiago — RD/Cultura relation projection
+passes bounded foreground validation; no permanent hub process is running.
+
+## Phase 525 — canonical owner manifest
+
+Added `context/OWNER_MANIFEST.md`, a bounded navigation contract for the
+canonical owners and intentional projections of the hub, RD, Research,
+Portfolio and venue slices. The audit confirms:
+
+    - cultura/mak_plataforma/hub.py is the MAK hub owner;
+      /home/mak/plataforma/hub.py is a compatibility projection.
+    - src/flujo/rd/panel.py owns the RD privacy allowlist.
+    - src/flujo/rd/database.py + data/rd.db own the catalog projection.
+    - src/flujo/rd/entity_crosswalk.py owns review-only identity joins.
+    - cultura/mak_plataforma/research_router.py owns research routing.
+    - tools/portfolio/catalog_contract.py owns the project catalogue contract;
+      iskvw/datos/obras.json remains a distinct visual-works source.
+    - data/venues/*.json + tools/venue.py own venue records and
+      projects/plano/referencia_plano_teatro.py owns the seating primitive.
+    - src/flujo/web/hub.py remains a separate portable/offline FLUJO consumer,
+      not a second MAK hub.
+
+No duplicate was deleted or merged because each pair has a distinct consumer
+or an intentional compatibility role. `git diff --check` remains clean for
+the changed code and handoff/manifest documents.
+
+## Next concrete action
+
+Connect the existing Research opportunity/proposal capabilities to the area
+surface with a read-only capability/contract check, then audit API-dependent
+versus offline tools. Do not call Firecrawl/Tavily/Crawl4AI, generate a live
+proposal, or mutate the opportunity ledger without explicit authorization.
+
+Last verified: 2026-08-16 America/Santiago — owner manifest added; no
+permanent hub process is running.
+
+## Phase 526 — Research opportunity contract gate
+
+Added `/api/cultura/opportunity-gate` to the 8900 hub. It checks, without
+network or ledger mutation, that the offline Research components exist:
+
+    cultura/mak_research/source_pipeline.py
+    cultura/mak_research/fondart_corpus.py
+    cultura/mak_plataforma/research_router.py
+    tools/gen_propuesta_directiva.py
+    tools/gen_propuestas_rd.py
+
+It reports the current opportunity route and required fields, while declaring
+that scraping is optional/explicit, proposals remain drafts until review, and
+network/ledger actions were not called. This connects the existing Research
+and proposal machinery to the area surface without pretending that an
+external provider is configured or that a proposal is production-ready.
+
+Validation:
+
+    PYTHONDONTWRITEBYTECODE=1 python3 -m py_compile \
+      src/flujo/departments.py cultura/mak_plataforma/hub.py \
+      tests/test_departments.py
+    -> exit 0
+    direct bounded harness
+    -> all 6 department tests passed, including ephemeral hub endpoints
+    git diff --check -- touched files
+    -> exit 0
+
+## Next concrete action
+
+Run a read-only API/offline dependency classification for the three area
+contracts and compare it with the root requirements. Identify which packages
+are base, optional provider, render/3D, or Windows-only; do not install or
+remove packages in this pass.
+
+Last verified: 2026-08-16 America/Santiago — Research opportunity gate passes;
+no network, ledger mutation or permanent hub process was used.
+
+## Phase 527 — dependency surface classification
+
+Added `context/DEPENDENCY_SURFACE.md`. It classifies the current root
+dependencies into shared base runtime, tests, render/3D, desktop FLUJO,
+optional Research providers, staged XIO and packaging. The three area
+requirements intentionally inherit the root manifest; they do not invent
+three incompatible stacks. Provider clients, Blender/GPU modules and
+Windows-only assumptions remain outside the base Linux hub contracts.
+
+Evidence reviewed:
+
+    pyproject.toml
+    requirements.txt
+    requirements-dev.txt
+    contracts/departments/*/requirements.txt
+    bounded import search under src/flujo, cultura and tools
+
+No package was installed, upgraded or removed. No provider, Blender, XIO or
+permanent service was started.
+
+## Next concrete action
+
+Run the available foreground validation for the newly exposed area endpoints
+and the existing diagnostics/error exporter, then document the exact
+remaining runtime boundary: the hub unit is ready but not started by this
+agent, and the EVENT workflow patch is local until explicit commit/push
+authorization.
+
+Last verified: 2026-08-16 America/Santiago — dependency classification added;
+no package or external state changed.
+
+## Phase 528 — foreground area and diagnostics validation
+
+Ran the available bounded foreground harness across the current integrated
+surfaces:
+
+    department/area tests: 6/6 passed
+    diagnostics route/panel tests: 2/2 passed
+    areas=True
+    rd_catalog_rows=7585
+    rd_field_rows=0
+    crosswalk_status=review_only
+    relation_count=24
+    research_components=True
+    providers_not_called=not_called
+    git diff --check -> exit 0
+
+The diagnostics exporter accepts an error payload, redacts bearer tokens,
+email addresses and token-like values, and returns a bounded Markdown report.
+Its read-only safety contract passed; it did not write a report, call a
+provider or inspect WIN. The hub validation used an ephemeral local server and
+left no MAK hub listener running.
+
+## Remaining external/runtime gates
+
+The requested architecture and local read-only surfaces are implemented. The
+remaining items are intentionally outside an unapproved local mutation:
+
+1. publish the prepared `.github/workflows/issue_descarga_ig.yml` change to
+   GitHub, then test one new EVENT issue end-to-end;
+2. optionally start the 8900 systemd unit for interactive use (this agent did
+   not leave a permanent service running);
+3. if desired, authorize one live Research provider test and one reviewed
+   proposal generation; offline contracts already pass;
+4. perform any physical deletion only after a separate evidence-backed cleanup
+   decision; no current evidence justifies deleting WIN or protected data.
+
+## Next concrete action
+
+Prepare a final completion audit against every objective item, explicitly
+separating proven local completion from the workflow publication and optional
+live-provider gates. Do not claim the full objective complete until those
+external gates are either executed with authorization or explicitly accepted
+as remaining user-controlled actions.
+
+Last verified: 2026-08-16 America/Santiago — all bounded local architecture,
+relation, dependency and diagnostics checks pass; no permanent hub listener
+is running.
+
+## Phase 529 — port 8900 foreground completion audit
+
+Validated the canonical MAK hub on its requested port using an ephemeral
+foreground server bound to `127.0.0.1:8900`, then shut it down cleanly. All
+required read-only surfaces returned HTTP 200:
+
+    /health                         mak-hub-health-v1
+    /api/departments                mak-departments-v1
+    /api/rd/summary                 mak-rd-summary-v1
+    /api/rd/crosswalk               mak-rd-crosswalk-v1
+    /api/rd/cultura-relations       mak-rd-cultura-relations-v1
+    /api/cultura/capabilities       mak-cultura-capabilities-v1
+    /api/cultura/opportunity-gate   mak-cultura-opportunity-gate-v1
+    /api/diagnostics                mak-diagnostic-v1
+
+After shutdown, no `:8900` listener remained. The unit file exists and points
+to the compatibility projection `/home/mak/plataforma/hub.py`, which loads
+the canonical source. `systemctl --user` reports the unit disabled/inactive;
+this agent did not enable or start a permanent service.
+
+## Completion audit result
+
+Proven locally: hub architecture, three area contracts, diagnostics exporter,
+RD database separation, review-only crosswalk, RD/Cultura relation projection,
+Research offline/opportunity contract, dependency classification, canonical
+owner manifest, WIN historical boundary and port-8900 foreground behavior.
+
+Not proven/published: the local EVENT workflow diff has not been committed or
+pushed; no real issue was replayed; no live provider scrape/proposal was
+authorized; no permanent hub service was enabled; no broad deletion was
+authorized. These are explicit user-controlled gates, not hidden code debt.
+
+## Next concrete action
+
+Wait for explicit authorization before changing external GitHub state or
+starting the permanent 8900 unit. If authorization arrives, publish the
+workflow first and run exactly one new EVENT issue; otherwise the local
+objective remains fully validated up to those external gates.
+
+Last verified: 2026-08-16 America/Santiago — canonical hub passed all required
+endpoint checks on 8900 and left no listener running.
+
+## Phase 530 — scoped handoff freshness
+
+Refreshed the three area handoffs so they no longer claim pending validation:
+
+    context/handoffs/rd.md
+    context/handoffs/cultura.md
+    context/handoffs/iskvw.md
+
+Each now records its validated 8900 surfaces and its actual next user-gated
+action. Area contracts remain centralized under
+`contracts/departments/<area>/`; no duplicate contract files were added to
+the implementation folders, avoiding competing sources of truth.
+
+Validation:
+
+    required contract files: all 12 present
+    scoped handoffs: all 3 present and current
+    git diff --check -> exit 0
+
+## Next concrete action
+
+No further safe local mutation is justified without either publishing the
+EVENT workflow or receiving an explicit request to enable the permanent hub
+unit. The repository is ready for those user-controlled runtime gates.
+
+Last verified: 2026-08-16 America/Santiago — scoped handoffs are current;
+mak-hub remains disabled/inactive by the no-permanent-service contract.
+
+## Phase 531 — objective evidence matrix
+
+Added `context/OBJECTIVE_AUDIT.md`, mapping every objective requirement to
+current evidence and distinguishing proven local behavior from user-gated
+external actions. The matrix confirms local completion of the hub, area
+contracts, diagnostics exporter, RD database boundary, review-only relation
+graph, Research offline contract, dependency separation, canonical owner map
+and WIN historical boundary.
+
+It intentionally leaves two gates open:
+
+    - publishing/testing the local EVENT workflow with one real issue;
+    - enabling the permanent 8900 service.
+
+No code, database, credential, WIN or external GitHub state was changed by the
+audit itself. `git diff --check` remains the required final formatting guard.
+
+## Next concrete action
+
+The local objective is evidence-complete. Do not make speculative cleanup or
+start a permanent service. Await explicit authorization for the EVENT publish
+or hub enablement; when received, execute only that one bounded gate and
+refresh this matrix.
+
+Last verified: 2026-08-16 America/Santiago — objective matrix written;
+external runtime gates remain intentionally user-controlled.
