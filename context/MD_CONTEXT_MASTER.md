@@ -20,7 +20,7 @@ place; this file is the consolidation layer.
 |---|---|---|
 | agent contract | `/home/mak/flujo/agents.md` | active authority |
 | current handoff | `/home/mak/flujo/context/LAST_HANDOFF.md` | one active continuity file |
-| phase evidence | `/home/mak/flujo/context/PHASE*.md` | bounded audit records |
+| phase evidence | `/home/mak/flujo/context/PHASE*.md` | archival audit records; see `context/PHASE_REPORTS_INDEX.md`; never active instructions |
 | current architecture | `/home/mak/flujo/context/PHASE413_CROSS_DOMAIN_SERVICE_ARCHITECTURE.md` | service vision |
 | current culture map | `/home/mak/flujo/context/PHASE416_CULTURE_TO_CURRENT_REPO_CROSSWALK.md` | language/idea crosswalk |
 
@@ -103,7 +103,8 @@ not competing handoffs. They must not be reintroduced into the active path.
 
 | class | examples | action |
 |---|---|---|
-| active operational | `context/LAST_HANDOFF.md`, phase reports | maintain concise links |
+| active operational | `agents.md`, `context/LAST_HANDOFF.md` | current authority and continuity only |
+| archival phase evidence | `context/PHASE*.md/.csv/.json` | preserve and classify via `context/PHASE_REPORTS_INDEX.md`; never treat `Next concrete action` inside a phase file as current |
 | recovered session | `docs/recovered/`, `WIN/claude_sesiones/` | summarize provenance; preserve raw |
 | director scratch | `WIN/flujo/_logs/cauce_director/` | extract durable decisions; keep raw logs |
 | historical Windows | `/home/mak/WIN/**/*.md` | read-only genealogy |

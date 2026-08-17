@@ -254,6 +254,8 @@ repositorio. Las credenciales y tokens se mantienen fuera de Git.
 | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_PROFILE`, `AWS_CONTAINER_CREDENTIALS_RELATIVE_URI`, `AWS_WEB_IDENTITY_TOKEN_FILE` | Variables estándar detectadas por proveedores AWS; no son necesarias para el modo local. |
 | `CANVA_API_TOKEN`, `CEREBRAS_API_KEY`, `GROQ_API_KEY` | Credenciales opcionales de proveedores externos. |
 | `WATSONX_API_KEY`, `WATSONX_PROJECT_ID` | Credenciales y proyecto opcionales de IBM watsonx. |
+| `TAVILY_API_KEY` | Clave opcional para el respaldo de busqueda de Research; no requerida por el modo offline. |
+| `FIRECRAWL_API_KEY` | Clave opcional para captura estructurada de Research; el pipeline conserva fallback urllib si no existe. |
 
 Every active topic branch must carry its own scoped contract and handoff,
 created from `contracts/BRANCH_AGENTS_TEMPLATE.md` and

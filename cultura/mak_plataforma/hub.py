@@ -341,9 +341,10 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
  display:flex;flex-direction:column;height:100vh}
 #topbar{flex:none;height:48px;display:flex;align-items:center;justify-content:space-between;
  padding:0 16px;background:#0d0b09;border-bottom:1px solid #211f18;gap:14px}
-#topbar .izq{display:flex;align-items:center;gap:16px;min-width:0}
+#topbar .izq{display:flex;align-items:center;gap:16px;min-width:0;flex:1 1 auto}
 #topbar h1{color:#9db67c;font-size:.92rem;letter-spacing:1px;font-weight:600;white-space:nowrap}
-#tabs{display:flex;gap:4px}
+#tabs{display:flex;gap:4px;min-width:0;flex:1 1 auto;overflow-x:auto;scrollbar-width:thin}
+#tabs button{flex:0 0 auto}
 #tabs button{background:transparent;border:1px solid #2a2820;color:#8a8577;font-family:inherit;
  font-size:.76rem;padding:6px 13px;border-radius:6px;cursor:pointer;letter-spacing:.3px}
 #tabs button:hover{color:#c3bfb2;border-color:#3a372c}
