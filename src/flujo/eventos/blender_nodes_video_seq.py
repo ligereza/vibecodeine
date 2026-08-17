@@ -23,13 +23,14 @@ def _parse_args(argv):
     parsed = {
         "frame": None, "input": None, "color_png": None, "out_dir": None,
         "frame_start": 1, "frame_end": None, "min_size": 20000,
-        "manifest": None,
+        "manifest": None, "fps": None,
     }
     key_map = {
         "--frame": "frame", "--input": "input", "--color-png": "color_png",
         "--out-dir": "out_dir", "--frame-start": "frame_start",
         "--frame-end": "frame_end", "--min-size": "min_size",
         "--manifest": "manifest",
+        "--fps": "fps",
     }
     i = 0
     while i < len(args):
@@ -39,6 +40,8 @@ def _parse_args(argv):
         val = args[i + 1]
         if key in ("frame_start", "frame_end", "min_size"):
             val = int(val)
+        elif key == "fps":
+            val = float(val)
         parsed[key] = val
         i += 2
     if not parsed["input"] or not parsed["out_dir"]:
@@ -109,8 +112,9 @@ def main():
     scene.frame_start = frame_start
     scene.frame_end = frame_end
     video_fps = getattr(probe, "fps", 0) or 0
-    if video_fps:
-        scene.render.fps = round(video_fps)
+    source_fps = args["fps"] or video_fps or scene.render.fps
+    if source_fps:
+        scene.render.fps = round(source_fps)
     scene.cycles.samples = 128
     scene.cycles.use_denoising = False
     scene.render.use_simplify = True
@@ -144,7 +148,7 @@ def main():
         "frame_start": frame_start,
         "frame_end": frame_end,
         "source_frames": frame_duration,
-        "fps": scene.render.fps,
+        "fps": source_fps,
         "samples": scene.cycles.samples,
         "engine": scene.render.engine,
         "gpu": gpu_report,

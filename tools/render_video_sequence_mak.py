@@ -75,11 +75,14 @@ def build_blender_command(
     frame_start: int = 1,
     frame_end: int | None = None,
     min_size: int = 20000,
+    fps: float | None = None,
 ) -> list[str]:
     """Build the foreground Blender invocation used by MAK and CI."""
     cmd = [str(blender), "-b", str(blend), "--python", str(BLENDER_SCRIPT), "--"]
     cmd += ["--input", str(video), "--out-dir", str(out_dir), "--manifest", str(manifest)]
     cmd += ["--frame-start", str(frame_start), "--min-size", str(min_size)]
+    if fps:
+        cmd += ["--fps", str(fps)]
     if frame:
         cmd += ["--frame", str(frame)]
     if color_png:
@@ -143,6 +146,7 @@ def main(argv: list[str] | None = None) -> int:
     cmd = build_blender_command(
         blender, blend, video, out_dir, manifest, args.frame, args.color_png,
         args.frame_start, args.frame_end, args.min_size,
+        probe.get("fps") or None,
     )
     print("BLENDER_CMD: " + " ".join(cmd))
     if args.dry_run:

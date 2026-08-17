@@ -13037,3 +13037,68 @@ five frames with `RD.blend`. If the downloader fails, preserve the explicit
 error instead of falling back to the poster.
 
 Last verified: 2026-08-17 America/Santiago — Phase 554 fail-closed media gate.
+
+## Phase 555 — no-login video provider and real issue validation
+
+El issue real `#533` contiene el enlace público:
+`https://www.instagram.com/iskvw/reel/DRA11amkRVX/`.
+
+La comparación de proveedores dejó estos resultados:
+
+- `parth-dl` y `curl_cffi` no entregaron un MP4 desde MAK; la vía HTML directa
+  y varios Cobalt públicos devolvieron únicamente el poster JPEG.
+- La ruta pública de SnapInsta (`https://snapinsta.ai/` + `action2.php`) no
+  pidió login de Instagram y entregó un enlace CDN temporal real.
+- El archivo descargado por el código exploratorio tuvo firma `ftyp`,
+  `ffprobe` válido, H.264/AAC, 720x1280, 150 frames a 30 fps y 5.131 s.
+  Los falsos positivos anteriores de 40,961 bytes eran JPEG y fueron
+  rechazados.
+
+Integración aplicada:
+
+- `src/flujo/ig/download.py` incorpora SnapInsta como fallback solo para rutas
+  video-like, desempaqueta la respuesta pública, descarga a `.part` y acepta
+  solo archivos con firma MP4 y tamaño mínimo; nunca usa el poster como video.
+- `tests/test_ig_download.py` cubre el fallback y rechaza JPEG disfrazado.
+- `src/flujo/eventos/blender_nodes_video_seq.py` acepta FPS explícito.
+- `tools/render_video_sequence_mak.py` pasa el FPS calculado por `ffprobe` a
+  Blender. Esto corrige la discrepancia detectada: la plantilla heredaba 24
+  fps aunque el video real era 30 fps.
+
+Validación foreground:
+
+- `PYTHONPATH=src .venv/bin/pytest -q tests/test_ig_download.py` -> código 0,
+  `20 passed`.
+- `python3 -m py_compile ...` para downloader, secuencia y wrapper -> código 0.
+- El camino real `download_post()` -> código 0, `media_type=video` y
+  `ffprobe` -> `format_name=mov,mp4,m4a,3gp,3g2,mj2`, `duration=5.131000`,
+  `size=2148026`.
+- `python3 tools/render_video_sequence_mak.py ... --frame-end 3` -> código 0;
+  tres PNG renderizados, cada uno de 12,464,001 bytes, CYCLES, 128 samples,
+  CUDA y `NVIDIA GeForce GTX 1650`.
+- `--frame-start 75 --frame-end 75` -> código 0; frame intermedio renderizado
+  y visualmente distinto del frame 1, demostrando avance de la animación.
+- Revalidación con resume -> código 0, `fps=30.0`, `source_frames=150`,
+  `rendered=0`, `skipped=3` para el conjunto y `skipped=1` para el frame 75;
+  no se recalcularon imágenes ya válidas.
+- No se modificó ningún `.blend`, no se mutó el issue y no quedó Blender
+  corriendo.
+
+Riesgos y límites:
+
+- SnapInsta es una interfaz web pública, no una API contractual; su respuesta
+  obfuscada o dominio puede cambiar. El fallback falla cerrado si no encuentra
+  el enlace o si el CDN devuelve JPEG/HTML.
+- El proveedor quedó limitado a reels/TV; los posts de imagen siguen en las
+  rutas existentes. No se subieron los PNG a OneDrive en esta prueba acotada.
+
+## Next concrete action
+
+Revisar el diff de los cuatro archivos de integración, ejecutar la suite
+relevante completa y crear el commit/push de esta corrección sin incluir los
+archivos históricos no relacionados del worktree. Después, el siguiente test
+operativo será ejecutar el workflow del issue autorizado y comprobar descarga,
+render completo calculado y publicación en OneDrive; no lanzarlo en paralelo
+ni usar el poster como sustituto.
+
+Last verified: 2026-08-17 America/Santiago — Phase 555.
