@@ -169,27 +169,26 @@ servicio con un adaptador reconocible en el codigo. No cuenta cada endpoint,
 cada modelo, cada sitio web fuente ni cada variable de entorno. Las claves y
 sus valores nunca se imprimen ni se registran aqui.
 
-Conteo verificado el 2026-08-15:
+Conteo verificado el 2026-08-17:
 
 | Grupo | Cantidad | Integraciones reconocidas | Estado resumido |
 |---|---:|---|---|
 | Proveedores LLM | 5 | `watsonx`, `groq`, `cerebras`, `azure`, `ollama` | Adaptadores en `cultura/mak_research/research_lib.py` |
-| Busqueda/captura | 3 | `tavily`, `searxng`, `firecrawl` | `tavily` y `firecrawl` requieren clave; `searxng` es local y no escuchaba en 8888 durante esta medicion |
+| Busqueda/captura | 3 | `tavily`, `searxng`, `firecrawl` | `tavily` y SearXNG pasaron sonda; Firecrawl requiere clave |
 | Notificacion | 1 | `ntfy` | Adaptador en `research_lib.py`; requiere topic para publicar |
 | Produccion/operacion | 4 | `canva`, `github`, `instagram`, `google_drive` | Canva/GitHub/Instagram estan cableados; Drive opera por `rclone` |
 | **Total de integraciones API/servicio cableadas** | **13** | | |
 
-Hay ademas **1 backend opcional de captura**, `crawl4ai`: el codigo lo
-reconoce, pero el paquete no esta instalado en el entorno medido; por eso no
-se suma al total cableado. El total seria **14 backends** si se cuenta esa
-capacidad opcional.
+Hay ademas **1 backend opcional de captura**, `crawl4ai`: esta instalado en el
+extra reproducible `.[research]` y paso captura real con Chromium local. El
+total es **14 backends** contando esa capacidad opcional.
 
 La aplicacion expone **1 superficie HTTP interna activa** verificada en primer
 plano: hub MAK en `127.0.0.1:8900` con `GET /health` HTTP 200. Los puertos
-8890 y 8891 no estan escuchando en la medicion 2026-08-16 y no se cuentan como
-superficies operacionales. Con el hub activo, la cifra operacional es
-**14 superficies API** (13 integraciones cableadas + 1 API interna), o **15**
-incluyendo el backend opcional `crawl4ai`.
+8890 y 8891 no se usan como interfaz publica. SearXNG queda como backend local
+en `127.0.0.1:8888`, con contenedor `searxng` y politica `unless-stopped`.
+El catalogo suma **15 superficies** contando las 14 integraciones/backends y
+el hub; la matriz de verificacion de cada una esta abajo.
 
 No entran en el conteo: Anthropic/Claude Code y Arena (herramientas externas al
 runtime del repo), `DASHSCOPE_API_KEY`, `QWEN_API_KEY`, `NVIDIA_*` y
@@ -215,6 +214,24 @@ La prueba no ejecuto inferencias LLM, scrapes de Firecrawl, cargas de Canva ni
 mutaciones de GitHub. La primera sonda de Tavily devolvio 400 por la forma de
 la consulta; la segunda uso el contrato exacto del adaptador y devolvio 200.
 
+### 2.3 Sonda del entorno Research seleccionado (2026-08-17)
+
+`/home/mak/research/research.env` fue revisado sin imprimir valores: modo 600,
+propietario `mak`, formato `KEY=VALUE`, sin claves duplicadas ni lineas
+malformadas. El conjunto seleccionado contiene Groq, Cerebras, Firecrawl y
+Ollama.
+
+| Integracion | Sonda foreground | Resultado |
+|---|---|---|
+| Groq | `LLM._groq(..., max_tok=8)` | OK; respuesta de 2 caracteres |
+| Cerebras | `LLM._cerebras(..., max_tok=8)` con `gpt-oss-120b` y `gemma-4-31b` | Ambos HTTP 402 `Payment Required`; cuenta sin credito disponible, no es un nombre de modelo invalido |
+| Firecrawl | `capture_url(example.com, backend=firecrawl)` | Captura HTTP 200; 167 caracteres |
+| Ollama | `LLM._ollama(..., max_tok=8)` | OK; respuesta de 3 caracteres |
+
+El 402 de Cerebras es un limite de cuenta, no un fallo de instalacion o
+formato. Azure, Canva y ntfy no estan en el entorno seleccionado y no se
+consideran activos.
+
 `GITHUB_TOKEN` no es necesario en el runtime local: `gh auth status` devolvio
 exit 0 y la sesion local de `gh` esta autenticada. El puente
 `tools/gmail_to_github_issues.gs` usa su propia Script Property externa para
@@ -235,10 +252,10 @@ Solo existencia + donde se configura. Nunca el valor de una llave.
 | NVIDIA NIM | Alternativa barata (Qwen/DeepSeek/Nemotron) | `NVIDIA_API_KEY` / `NVIDIA_NIM_API_KEY` en `.env.example` |
 | OpenRouter | Router/fallback de modelos | `OPENROUTER_API_KEY` en `.env.example` |
 | Gemini | Retired 2026-08-11. No active runtime integration; historical references are preserved as evidence only. | No active configuration |
-| SearXNG (LAN, en la caja) | La busqueda de research. Sin llave, sin tope de creditos | `SEARXNG_BASE_URL` (default `http://127.0.0.1:8888`) y `SEARXNG_ENGINES`; la deteccion de ceguera (`ciego` + `motivo`) conserva el estado de la busqueda. El puerto 8888 no estaba escuchando durante la medicion 2026-08-15; no se inicio ningun servicio |
-| Tavily | Respaldo de busqueda cuando SearXNG no devuelve nada | `TAVILY_API_KEY`; no aparece en el `research.env` activo medido 2026-08-15. La copia de `n8n-local` no cuenta porque n8n esta descartado |
+| SearXNG (LAN, en la caja) | La busqueda de research. Sin llave, sin tope de creditos | `SEARXNG_BASE_URL` (default `http://127.0.0.1:8888`) y `SEARXNG_ENGINES`; contenedor local activo, `GET /search?format=json` HTTP 200 el 2026-08-17 |
+| Tavily | Respaldo de busqueda cuando SearXNG no devuelve nada | `TAVILY_API_KEY`; sonda basica HTTP 200 el 2026-08-17 cuando se carga el archivo protegido de Research |
 | Firecrawl | Captura web estructurada para Research-to-Project | `FIRECRAWL_API_KEY`; adaptador `cultura/mak_research/source_pipeline.py`; opcional y no habilitado sin clave |
-| Crawl4AI | Backend local alternativo de captura web | Reconocido por `source_pipeline.py`, pero `crawl4ai` no estaba instalado en la medicion 2026-08-15 |
+| Crawl4AI | Backend local alternativo de captura web | `.[research]` instala `crawl4ai>=0.9.2,<1.0`; Chromium de usuario instalado; `example.com` capturado HTTP 200 el 2026-08-17 |
 | ntfy | Notificacion movil de resultados y alertas | `NTFY_TOPIC_IN` / `NTFY_TOPIC_OUT`; transporte en `research_lib.py`; no se publica sin topic |
 | Canva | Carga de assets producidos por el pipeline | `CANVA_API_TOKEN`; adaptador en `src/flujo/export/canva.py`; no se probo una carga real en esta medicion |
 | Instagram / parth-dl | Ingesta primaria de posts y reels para eventos y curatoria | `parth-dl` instalado; usado por `src/flujo/eventos/flyer_auto.py` y `src/flujo/ig/download.py`; no es una API oficial autenticada |
@@ -323,6 +340,8 @@ tabla; archivo sin entrada = ratchet rojo.
 | `validar_curaduria.py` | VIVO | valida `iskvw/datos/curaduria.json` (y `tablero.json`) contra el esquema que lee `aplicar_curaduria()` y contra el archivo real en disco: ids desconocidos o duplicados, campos invalidos, svg firmado ausente, diacriticos mutilados (la clase de defecto "reduciendo ano") -- todo lo que el consumidor traga en silencio, dicho en voz alta antes de commitear. Salida medida (ERROR/AVISO), exit 1 con errores: sirve en CI. Consumido por `tests/test_validar_curaduria.py` (que ademas corre el CLI sobre los archivos reales del repo) y `tests/test_curaduria_roundtrip.py` | 2026-07-31 |
 | `gen_vinculos_iskvw.py` | VIVO | vinculos entre obras CON EL MOTIVO adentro, sacados de los conceptos que la percepcion extrajo y que nadie usaba (7.985 menciones). `gen_archivo_iskvw.py` vincula por etiqueta compartida y lo declara: "nadie midio que se parezcan, comparten una palabra"; esto declara `clase: concepto` y lista los conceptos compartidos en `porque`, asi que el vinculo se puede refutar. Medido antes de escribirlo: 1 concepto compartido da 31.992 pares sobre 1.359 obras (una maraña), 2 dan 1.851 vinculos que alcanzan 863 obras (64%). Tres exclusiones, todas CONTADAS y reportadas -- conceptos en una sola obra (819, no vinculan nada), los mas frecuentes (uno en 305 obras es una CATEGORIA) y los que pasan `--tope-obras`. El pliegue de plural/tilde es para AGRUPAR: `porque` muestra la grafia que el modelo escribio, porque `patrone geometrico` es una llave y no una palabra. `tests/test_vinculos_iskvw.py` | 2026-08-01 |
 | `route_idea.py` | VIVO | CLI que convierte una idea o incidente en un packet minimo por area; consume `flujo.diagnostics.route_idea` y evita que un agente externo tenga que leer todo el repo; `tests/test_diagnostics.py` | 2026-08-16 |
+| `interpretive_garden_workflow.py` | VIVO | construye el modelo SQLite y los reportes derivados del laboratorio de investigacion; conserva fuentes, claims, entidades, relaciones, semantica y procedencia sin llamar APIs | 2026-08-17 |
+| `research_job_router.py` | VIVO | convierte una pregunta en un job persistente por dominio (plantas, VJ, curatoria, RD o portafolio), con pasos semanticos, politica de proveedores y plan Markdown/JSON; consumido por MAK 8900 | 2026-08-17 |
 | `render_archaeology_deliverables.py` | REVISAR | utilidad determinista de solo lectura para convertir un snapshot SQLite de arqueologia en inventario, ledger y grafo de propuestas; permanece como herramienta historica hasta que exista un consumidor operativo delimitado | 2026-08-16 |
 | `gen_capas_iskvw.py` | VIVO | corre las capas de `data/iskvw_capas.json` sobre `iskvw/datos/campo.json` y deja un dato medido por obra (hoy `tilde`, el residuo diacritico de lo percibido via `tools/tilde_meter.py`, y `trazo`, la densidad del vector); sumar una capa es una entrada mas y una funcion, sin tocar la piel; `tests/test_capas_iskvw.py` | 2026-07-27 |
 | `gen_campo_iskvw.py` | VIVO | genera `iskvw/datos/campo.json`, las posiciones del campo de iskvw; proyecta los embeddings del micelio de MAK con t-SNE (48.9% de vecindad conservada, medido contra PCA 3.8% y fuerzas 16.4%) y toma que tipos entran de `data/iskvw_campo_filtro.json`; consumido por `iskvw/piel/campo/index.html` | 2026-07-27 |
