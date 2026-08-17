@@ -1,16 +1,16 @@
 name: issue-descarga-ig
 # Flujo evento-driven: Apps Script (Gmail 8h) crea issue label "instagram"
-# -> este workflow corre EN MAK (runner self-hosted) -> descarga la imagen
-# del link IG -> render Blender headless (cartelera.blend, sin Photoshop)
-# -> artifact + publicacion directa a OneDrive + comentario + cierre del issue.
+# -> este workflow corre EN MAK (runner self-hosted) -> descarga la imagen o
+# el video real del link IG -> render Blender headless (sin Photoshop)
+# -> publicacion directa a OneDrive + comentario + cierre del issue.
 # Seguridad: dispara solo con label "instagram" (solo colaboradores
 # etiquetan); el body/titulo del issue entran SOLO via env (nunca
 # interpolados en un comando shell).
 #
 # META-REGLA render: el gate foreground de MAK fue validado el 2026-08-15
 # con un flyer real (1080x1920, salida no monocromatica). El camino evento
-# vuelve a ejecutar render_flyer_mak.py y publica por rclone directo a
-# OneDrive. El issue solo se cierra despues de render + upload exitosos.
+# ejecuta render_flyer_mak.py para imagenes y render_video_sequence_mak.py
+# para reels. El issue solo se cierra despues de render + upload exitosos.
 # El barrido manual permanece conservador y no reprocesa historicos en masa.
 #
 # Barrido auto-sanador: ademas del evento issues, corre cada 30 min
@@ -79,7 +79,7 @@ jobs:
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: descargar imagen del issue
+      - name: descargar media del issue
         id: dl
         if: github.event_name == 'issues' && steps.guard.outputs.skip != 'true'
         run: |
@@ -99,21 +99,26 @@ jobs:
           import json, os
           from pathlib import Path
           from flujo.ig.download import download_post
-          res = download_post(os.environ["URL"], Path(os.environ["OUT"]))
+          out = Path(os.environ["OUT"])
+          res = download_post(os.environ["URL"], out)
+          (out / "media.json").write_text(
+              json.dumps({k: str(v) for k, v in res.items()}, ensure_ascii=False),
+              encoding="utf-8",
+          )
           print(json.dumps({k: str(v) for k, v in res.items()}, ensure_ascii=False))
+          if res.get("status") != "downloaded":
+              raise SystemExit(1)
           PY
           n=$(find "$out" -type f | wc -l)
           echo "archivos descargados: $n"
           test "$n" -gt 0
+          video=$(find "$out" -maxdepth 1 -type f -name 'input_ig*.mp4' -print -quit)
+          imagen=$(find "$out" -maxdepth 1 -type f -name 'input_ig.jpg' -print -quit)
+          media_type=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8")).get("media_type", ""))' "$out/media.json")
+          echo "video=$video" >> "$GITHUB_OUTPUT"
+          echo "imagen=$imagen" >> "$GITHUB_OUTPUT"
+          echo "media_type=$media_type" >> "$GITHUB_OUTPUT"
           echo "dir=$out" >> "$GITHUB_OUTPUT"
-
-      - name: publicar artifact
-        if: github.event_name == 'issues' && steps.guard.outputs.skip != 'true'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: ig-issue-${{ github.event.issue.number }}
-          path: ${{ steps.dl.outputs.dir }}
-          retention-days: 14
 
       # --- render Blender MAK: habilitado tras gate foreground 2026-08-15 ---
 
@@ -122,31 +127,41 @@ jobs:
         if: github.event_name == 'issues' && steps.guard.outputs.skip != 'true'
         env:
           DOWNLOAD_DIR: ${{ steps.dl.outputs.dir }}
+          VIDEO_PATH: ${{ steps.dl.outputs.video }}
+          IMAGE_PATH: ${{ steps.dl.outputs.imagen }}
+          MEDIA_TYPE: ${{ steps.dl.outputs.media_type }}
         run: |
           set -euo pipefail
-          imagen="$DOWNLOAD_DIR/input_ig.jpg"
-          test -f "$imagen"
           outdir="$RUNNER_TEMP/render_issue_$ISSUE_NUM"
           mkdir -p "$outdir"
           echo "dir=$outdir" >> "$GITHUB_OUTPUT"
-          python3 tools/render_flyer_mak.py \
-            --imagen "$imagen" \
-            --out "$outdir" \
-            2>&1 | tee "$outdir/render.log"
-          grep -q '^RENDER_OK:' "$outdir/render.log"
-          test -s "$outdir/render_output.png"
-
-      - name: publicar render (artifact)
-        if: >
-          always() && github.event_name == 'issues' &&
-          steps.guard.outputs.skip != 'true' &&
-          steps.render.outcome != 'skipped'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: render-issue-${{ github.event.issue.number }}
-          path: ${{ steps.render.outputs.dir }}
-          retention-days: 30
-          if-no-files-found: warn
+          if [ "${MEDIA_TYPE:-}" = "video" ]; then
+            if [ -z "${VIDEO_PATH:-}" ] || ! test -s "$VIDEO_PATH"; then
+              echo "VIDEO_MEDIA_WITHOUT_MP4: Instagram reporto video pero no existe input_ig.mp4; no se usara el poster."
+              exit 1
+            fi
+            echo "media=video"
+            python3 tools/render_video_sequence_mak.py \
+              --video "$VIDEO_PATH" \
+              --out-dir "$outdir/frames" \
+              2>&1 | tee "$outdir/render.log"
+            grep -q '^RENDER_OK:' "$outdir/render.log"
+            test -s "$outdir/render_manifest.json"
+            find "$outdir/frames" -type f -name 'frame_*.png' -size +0c | grep -q .
+          elif [ "${MEDIA_TYPE:-}" = "image" ] || [ "${MEDIA_TYPE:-}" = "carousel" ]; then
+            test -n "${IMAGE_PATH:-}"
+            test -s "$IMAGE_PATH"
+            echo "media=image"
+            python3 tools/render_flyer_mak.py \
+              --imagen "$IMAGE_PATH" \
+              --out "$outdir" \
+              2>&1 | tee "$outdir/render.log"
+            grep -q '^RENDER_OK:' "$outdir/render.log"
+            test -s "$outdir/render_output.png"
+          else
+            echo "UNKNOWN_MEDIA_TYPE: no se renderiza sin una clasificacion explicita."
+            exit 1
+          fi
 
       - name: publicar render en OneDrive
         id: publish
@@ -157,25 +172,40 @@ jobs:
         env:
           DOWNLOAD_DIR: ${{ steps.dl.outputs.dir }}
           RENDER_DIR: ${{ steps.render.outputs.dir }}
+          VIDEO_PATH: ${{ steps.dl.outputs.video }}
+          IMAGE_PATH: ${{ steps.dl.outputs.imagen }}
         run: |
           set -euo pipefail
-          test -s "$RENDER_DIR/render_output.png"
           destino="onedrive:MAK/eventos/issue-$ISSUE_NUM"
-          rclone copyto "$RENDER_DIR/render_output.png" \
-            "$destino/render_output.png" \
-            --retries 3 --low-level-retries 10 --stats-one-line
-          rclone copyto "$DOWNLOAD_DIR/input_ig.jpg" \
-            "$destino/input_ig.jpg" \
-            --retries 3 --low-level-retries 10 --stats-one-line
-          rclone lsf "$destino" --files-only | grep -qx 'render_output.png'
-          rclone lsf "$destino" --files-only | grep -qx 'input_ig.jpg'
+          if [ -n "${VIDEO_PATH:-}" ] && test -s "$VIDEO_PATH"; then
+            find "$RENDER_DIR/frames" -type f -name 'frame_*.png' -size +0c | grep -q .
+            rclone copy "$RENDER_DIR/frames" "$destino/frames" \
+              --retries 3 --low-level-retries 10 --stats-one-line
+            rclone copyto "$VIDEO_PATH" "$destino/input_ig.mp4" \
+              --retries 3 --low-level-retries 10 --stats-one-line
+            if test -s "$DOWNLOAD_DIR/input_ig.jpg"; then
+              rclone copyto "$DOWNLOAD_DIR/input_ig.jpg" "$destino/input_ig.jpg" \
+                --retries 3 --low-level-retries 10 --stats-one-line
+            fi
+            rclone lsf "$destino/frames" --files-only | grep -q 'frame_'
+            rclone lsf "$destino" --files-only | grep -qx 'input_ig.mp4'
+          else
+            test -s "$RENDER_DIR/render_output.png"
+            rclone copyto "$RENDER_DIR/render_output.png" \
+              "$destino/render_output.png" \
+              --retries 3 --low-level-retries 10 --stats-one-line
+            rclone copyto "$IMAGE_PATH" "$destino/input_ig.jpg" \
+              --retries 3 --low-level-retries 10 --stats-one-line
+            rclone lsf "$destino" --files-only | grep -qx 'render_output.png'
+            rclone lsf "$destino" --files-only | grep -qx 'input_ig.jpg'
+          fi
           echo "destino=$destino" >> "$GITHUB_OUTPUT"
 
       - name: comentar render OK y cerrar issue
         if: steps.render.outcome == 'success' && steps.publish.outcome == 'success'
         run: |
           gh issue comment "$ISSUE_NUM" -R "$GITHUB_REPOSITORY" \
-            -b "runner MAK: render OK y publicado en OneDrive (\`${{ steps.publish.outputs.destino }}\`). Artifact: \`render-issue-$ISSUE_NUM\` en este run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            -b "runner MAK: render OK y publicado en OneDrive (\`${{ steps.publish.outputs.destino }}\`). Run de control: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           gh issue close "$ISSUE_NUM" -R "$GITHUB_REPOSITORY"
 
       - name: comentar fallo de descarga
@@ -267,7 +297,7 @@ jobs:
               echo "$salida"
               if printf '%s\n' "$salida" | grep -q '^RENDER_OK:'; then
                 gh issue comment "$n" -R "$GITHUB_REPOSITORY" \
-                  -b "runner MAK (barrido): render OK. Render Blender en artifact \`render-barrido-$GITHUB_RUN_ID\` (carpeta issue_$n) de este run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+                  -b "runner MAK (barrido): render OK; la entrega se publica solo en OneDrive."
                 gh issue close "$n" -R "$GITHUB_REPOSITORY"
               else
                 detalle=$(printf '%s\n' "$salida" | grep -E '^RENDER_FALLO:' | tail -1)
@@ -276,16 +306,7 @@ jobs:
               fi
             fi
             gh issue comment "$n" -R "$GITHUB_REPOSITORY" \
-              -b "runner MAK (barrido): descarga OK. Imagen en artifact \`render-barrido-$GITHUB_RUN_ID\` (carpeta issue_$n) de este run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID -- media descargado, render pendiente sin etapa automatica (render Blender en MAK desactivado, ver nota en el workflow). Issue sigue abierto."
+              -b "runner MAK (barrido): descarga OK; entrega final solo en OneDrive. Render pendiente. Issue sigue abierto."
             gh issue edit "$n" -R "$GITHUB_REPOSITORY" --add-label "estado/revision" || true
           done
           echo "dir=$barrido_dir" >> "$GITHUB_OUTPUT"
-
-      - name: publicar render (barrido, artifact)
-        if: steps.barrido.outcome == 'success'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: render-barrido-${{ github.run_id }}
-          path: ${{ steps.barrido.outputs.dir }}
-          retention-days: 30
-          if-no-files-found: warn

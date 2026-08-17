@@ -104,6 +104,38 @@ def build_flyer_nodes_video(mat, nodo_original, frame_path, video_path,
     return "update" if ya_existe else "build"
 
 
+def swap_existing_movie_nodes(video_path, frame_duration):
+    """Repoint the MOVIE nodes already present in a video scene.
+
+    RD.paravideo.blend is a video template, not the flyer image template:
+    its Material.002 already contains the screen graph and a MOVIE texture.
+    Keep that graph intact and change only the media datablock for the run.
+    """
+    import bpy
+
+    video_img = bpy.data.images.load(video_path, check_existing=True)
+    if video_img.source != "MOVIE":
+        raise SystemExit(
+            f"{video_path} no cargo como MOVIE (source={video_img.source})"
+        )
+    swapped = 0
+    for mat in bpy.data.materials:
+        if not mat.use_nodes:
+            continue
+        for node in mat.node_tree.nodes:
+            if node.type != "TEX_IMAGE" or not node.image:
+                continue
+            if node.image.source != "MOVIE":
+                continue
+            node.image = video_img
+            node.image_user.frame_start = 1
+            node.image_user.frame_duration = frame_duration
+            node.image_user.frame_offset = 0
+            node.image_user.use_auto_refresh = True
+            swapped += 1
+    return swapped
+
+
 def main():
     import bpy
     from blender_gpu import force_gpu  # noqa: E402 -- modulo hermano

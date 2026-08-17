@@ -11,6 +11,7 @@ con imginn.
 
 import html as html_mod
 import re
+import shutil
 import time
 import urllib.request
 from pathlib import Path
@@ -53,6 +54,17 @@ def _fetch(url: str, referer: str | None = None) -> bytes:
     req = urllib.request.Request(url, headers=headers)
     with urllib.request.urlopen(req, timeout=30) as r:
         return r.read()
+
+
+def _download_file(url: str, destination: Path) -> Path:
+    """Download one media URL without holding the whole file in memory."""
+    headers = {"User-Agent": _FETCH_UA, "Referer": "https://www.instagram.com/"}
+    req = urllib.request.Request(url, headers=headers)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with urllib.request.urlopen(req, timeout=120) as response:
+        with destination.open("wb") as stream:
+            shutil.copyfileobj(response, stream, length=1024 * 1024)
+    return destination
 
 
 def _parth_image_urls(data: dict) -> tuple[list[str], bool]:
@@ -117,12 +129,20 @@ def _cffi_download(url: str, shortcode: str, output_dir: Path) -> dict | None:
         if not image_url:
             return None
         is_video = _meta_content(html, "og:video") is not None
+        video_url = _meta_content(html, "og:video") if is_video else None
         caption = (_meta_content(html, "og:description")
                    or _meta_content(html, "og:title") or "")
 
         img_resp = session.get(image_url, impersonate="chrome", timeout=30)
         dst = output_dir / "input_ig.jpg"
         dst.write_bytes(img_resp.content)
+        files = [str(dst)]
+        video_dst = None
+        if video_url:
+            video_resp = session.get(video_url, impersonate="chrome", timeout=120)
+            video_dst = output_dir / "input_ig.mp4"
+            video_dst.write_bytes(video_resp.content)
+            files.append(str(video_dst))
         if caption:
             (output_dir / "ig_caption.txt").write_text(caption, encoding="utf-8")
     except Exception:
@@ -133,8 +153,10 @@ def _cffi_download(url: str, shortcode: str, output_dir: Path) -> dict | None:
         "shortcode": shortcode,
         "url": url,
         "media_type": "video" if is_video else "image",
-        "files": [str(dst)],
-        "file_count": 1,
+        "files": files,
+        "video_files": [str(video_dst)] if video_dst else [],
+        "image_files": [str(dst)],
+        "file_count": len(files),
         "caption": caption,
         "owner": "",
         "date": "",
@@ -152,27 +174,67 @@ def _parth_download(url: str, shortcode: str, output_dir: Path) -> dict:
     from parth_dl import get_info  # lazy: el repo funciona sin parth-dl instalado
 
     data = get_info(url)
-    urls, is_video = _parth_image_urls(data)
-    if not urls:
+    entries = data.get("entries") or []
+    if not entries:
         raise RuntimeError("sin_archivos")
     copied = []
-    for i, img_url in enumerate(urls, 1):
-        payload = _fetch(img_url)
-        dst = output_dir / ("input_ig.jpg" if i == 1 else f"input_ig_{i}.jpg")
-        dst.write_bytes(payload)
-        copied.append(str(dst))
+    image_files = []
+    video_files = []
+    image_index = 0
+    video_index = 0
+    for entry in entries:
+        formats = [f for f in entry.get("formats") or [] if f.get("url")]
+        if not formats:
+            continue
+        selected = max(
+            formats,
+            key=lambda f: (int(f.get("width") or 0) * int(f.get("height") or 0),
+                           bool(f.get("has_audio"))),
+        )
+        kind = entry.get("kind")
+        if kind == "video":
+            video_index += 1
+            name = "input_ig.mp4" if video_index == 1 else f"input_ig_{video_index}.mp4"
+            dst = _download_file(selected["url"], output_dir / name)
+            video_files.append(str(dst))
+            copied.append(str(dst))
+        elif kind == "image":
+            image_index += 1
+            name = "input_ig.jpg" if image_index == 1 else f"input_ig_{image_index}.jpg"
+            dst = _download_file(selected["url"], output_dir / name)
+            image_files.append(str(dst))
+            copied.append(str(dst))
+
+    declared_video = data.get("type") == "video" or any(
+        entry.get("kind") == "video" for entry in entries
+    )
+    if declared_video and not video_files:
+        raise RuntimeError("video_sin_mp4")
+
+    # Keep a poster for the department and for operators, even when the actual
+    # render input is a video. It is not used as a substitute for the MP4.
+    if video_files and not image_files and data.get("thumbnail"):
+        poster = _download_file(data["thumbnail"], output_dir / "input_ig.jpg")
+        image_files.append(str(poster))
+        copied.insert(0, str(poster))
+    if not copied:
+        raise RuntimeError("sin_archivos")
+    media_type = "video" if video_files else (
+        "carousel" if len(image_files) > 1 else "image"
+    )
     return {
         "status": "downloaded",
         "shortcode": shortcode,
         "url": url,
-        "media_type": "video" if is_video
-        else ("carousel" if len(copied) > 1 else "image"),
+        "media_type": media_type,
         "files": copied,
+        "video_files": video_files,
+        "image_files": image_files,
         "file_count": len(copied),
         "caption": data.get("caption") or data.get("description") or "",
         "owner": data.get("uploader") or "",
         "date": "",
-        "is_video": is_video,
+        "is_video": bool(video_files),
     }
 
 

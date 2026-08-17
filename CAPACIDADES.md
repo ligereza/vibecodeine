@@ -93,6 +93,7 @@ CLI real (`py -m flujo --help`, v0.56.1), comandos principales:
 | `gen_mapa_comandos.py` | Genera la tabla de comandos de `MAPA.md` desde el `--help` real del CLI (`--check` falla si quedo desfasado). |
 | `instalar_enviar_a_mak.py` | Instala integracion "Enviar a" -> MAK curatoria en el explorador de Windows. |
 | `render_video_rd.py` | Mete un mp4 (reel) en `RD.paravideo.blend` y exporta H264 headless. |
+| `render_video_sequence_mak.py` | Reel -> secuencia PNG en MAK: calcula frames desde el video, usa `RD.paravideo.blend`, Cycles 128 samples y exige GPU CUDA/OptiX; deja `render_manifest.json`. |
 | `system_map.py` | Blueprint de arquitectura del ecosistema Tapiz/Psicosis/Fungi (schema API_CONTRACT). |
 | `tapiz_live_loop.py` | Daemon-poller que corre `compete_engine` en modo `--live` a intervalo fijo. |
 | `tapiz_telemetry.py` | Construye el autorretrato en vivo del ecosistema (`system_status.json`). |

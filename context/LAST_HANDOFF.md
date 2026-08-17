@@ -12646,3 +12646,394 @@ entities, source references, provider and credit metadata; keep the job in
 `extract` until every claim has evidence and uncertainty labels.
 
 Last verified: 2026-08-17 America/Santiago — Phase 545 real capture.
+
+## Phase 546 — restore internal research surface
+
+The MAK Hub on port 8900 was healthy, but its visible `research` tab proxies
+to the loopback research service at `127.0.0.1:8890`. That existing service
+was inactive, which produced `service unavailable: <urlopen error [Errno
+111] Connection refused>` inside the Hub while the Hub root itself remained
+available.
+
+Action performed:
+
+    `systemctl --user start mak-research.service` -> exit 0;
+    service active, PID 85245, `/home/mak/research/interfaz.py`;
+    loopback listener `127.0.0.1:8890` restored;
+    `systemctl --user enable mak-research.service` -> exit 0;
+    no external listener, code, research data or provider credentials changed.
+
+Foreground validation:
+
+    `GET http://127.0.0.1:8890/` -> HTTP 200;
+    `GET http://127.0.0.1:8900/` -> HTTP 200;
+    `GET http://127.0.0.1:8900/research/` -> HTTP 200;
+    `GET http://127.0.0.1:8900/api/research/catalog` -> HTTP 200;
+    `mak-hub.service` and `mak-research.service` -> active.
+
+The single user-facing entry remains port 8900; 8890 is loopback-only and
+internal to the Hub. `mak-codex.service` was not started or changed.
+
+## Next concrete action
+
+Continue the research objective from Phase 545: run deterministic extraction
+over the four captured Job 3 texts, then use one configured structured-text
+provider only for unresolved fields. Store claims, entities, source
+references, provider and credit metadata; keep the job in `extract` until
+every claim has evidence and uncertainty labels.
+
+Last verified: 2026-08-17 America/Santiago — Phase 546 internal research surface.
+
+## Phase 547 — complete MAK Hub 8900 audit
+
+The live Hub was audited without Git inventory and without POST mutations.
+Persistent report:
+
+    `context/HUB_8900_AUDIT_20260817.md`
+
+Verified in foreground:
+
+    root, research, research-garden, ideas, render, decisions, portfolio,
+    areas and diagnostics -> functional DOM surfaces;
+    `mak-hub.service` -> active;
+    `mak-research.service` -> active and enabled, direct/proxied HTTP 200;
+    read-only department and research/portfolio APIs -> valid responses.
+
+Findings requiring disposition:
+
+    `/codex/` -> HTTP 502 because `mak-codex.service` is inactive and its
+    configured `/home/mak/codex/interfaz_codex.py` entrypoint is absent;
+    `/static/iskvw/editor` -> browser `SyntaxError: Unexpected token '<'`
+    because `mesa_montaje.js` is served as Hub HTML with HTTP 200;
+    `/static/rd/plano` -> its recommended `/context/plano_demo.html` link
+    falls through to Hub HTML instead of serving the demo;
+    unknown non-API paths return Hub HTML/200, masking missing assets;
+    `/relevo` -> configured `RELEVO_MAK.md` is absent;
+    `/genesis` -> document-only historical page with stale operational
+    topology, not an active tool;
+    `/departments/portfolio` and `/departments/research` -> invalid aliases;
+    canonical area keys are `iskvw` and `cultura`.
+
+No code or data was changed by the audit. The existing research service was
+started and enabled in Phase 546 to repair the reported `8900` error.
+
+## Next concrete action
+
+Correct the highest-impact Hub defects in a bounded pass: first decide and
+document Codex visibility, then fix the ISKVW static JavaScript route and the
+Plano replacement link. Revalidate browser console, route status and the
+single user-facing `8900` surface before touching archive pages. Keep
+`genesis` classified as history until an orientation replacement is ready.
+
+Audit report: `context/HUB_8900_AUDIT_20260817.md`.
+
+Last verified: 2026-08-17 America/Santiago — Phase 547 Hub audit.
+
+## Phase 548 — Hub audit remediation
+
+The confirmed Hub defects were repaired in the canonical source
+`cultura/mak_plataforma/hub.py` and the legacy Plano link:
+
+    existing `/home/mak/codex/interfaz_codex.py` was found, so
+    `mak-codex.service` was started and enabled; the user-facing proxy
+    `/codex/` now returns HTTP 200;
+    `/static/iskvw/<asset>` now safely serves ISKVW assets from the bounded
+    portfolio root, including `mesa_montaje.js` as JavaScript;
+    `/context/plano_demo.html` is served as the bundled Plano Rider demo and
+    the legacy page points to its absolute same-origin route;
+    missing `/static/*` and `/context/*` assets return HTTP 404 instead of
+    silently receiving the Hub HTML;
+    `/departments/portfolio` redirects to `/departments/iskvw`;
+    `/departments/research` redirects to `/departments/cultura`;
+    `/relevo` falls back to canonical `context/LAST_HANDOFF.md`;
+    `/genesis` is now an orientation/archive page with live links and the
+    historical document collapsed below it.
+
+Foreground validation:
+
+    `py_compile cultura/mak_plataforma/hub.py` -> exit 0;
+    focused Hub, diagnostics, ISKVW contract, operational-entrypoint and
+    hygiene tests -> all passed;
+    root, research, codex, static JS, Plano demo, aliases, genesis and relevo
+    -> expected HTTP/status results;
+    Codex browser surface -> controls visible, zero console errors;
+    ISKVW editor -> 22 controls, zero console errors;
+    Plano Rider demo -> 76 controls, zero console errors.
+
+Changed files:
+
+    `cultura/mak_plataforma/hub.py`
+    `projects/plano/plano_editor.html`
+    `context/HUB_8900_AUDIT_20260817.md`
+    `context/LAST_HANDOFF.md`
+
+No data, WIN evidence, credentials or provider calls changed. Existing
+loopback services remain internal; `8900` remains the sole user-facing Hub
+entry.
+
+## Next concrete action
+
+Resolve the remaining design question between the legacy Research canvas at
+`/research/` and the persistent Research Garden at `/research-garden/`:
+document one clear contract for each, preserve both while they have distinct
+consumers, and then run the bounded POST/action tests before committing this
+repair set.
+
+Last verified: 2026-08-17 America/Santiago — Phase 548 Hub remediation.
+
+## Phase 549 — MAK reel to PNG-sequence workflow
+
+The user asked to stop the accidentally active image render and adapt the
+existing WIN video path so MAK no longer depends on WIN. The active process
+was inspected before stopping; it was `render_flyer_mak.py` over
+`input_ig.jpg`, not a video render. Exact render PIDs 93069/93071/93072/93073
+were sent SIGTERM. The self-hosted runner PID 92750 and runner service PID
+1906 remained alive. No issue was queried or searched.
+
+Historical and physical evidence:
+
+- `src/flujo/eventos/blender_nodes_video.py` and
+  `blender_nodes_video_seq.py` already existed in MAK/WIN.
+- `RD.paravideo.blend` contains `Material.002` with a `MOVIE` texture,
+  scene FPS 30 and template frame range 126..450.
+- The current issue workflow previously accepted only `input_ig.jpg`.
+- `puente_issues.py` had an explicit video -> Windows branch, but its cron
+  entries are paused; the active test came from GitHub Actions on the
+  self-hosted runner.
+
+Implemented files:
+
+- `src/flujo/ig/download.py`: parth-dl and curl_cffi paths now preserve the
+  real video as `input_ig.mp4`; poster remains `input_ig.jpg`; metadata has
+  `video_files` and `image_files`.
+- `src/flujo/eventos/blender_nodes_video.py`: added a safe fallback for the
+  real `RD.paravideo.blend` MOVIE node shape.
+- `src/flujo/eventos/blender_nodes_video_seq.py`: requires Cycles GPU, sets
+  128 samples, copies source FPS, calculates the frame range from the movie,
+  writes PNGs and a manifest, and never saves the blend.
+- `tools/render_video_sequence_mak.py`: MAK foreground wrapper with ffprobe
+  preflight, Blender command contract and manifest validation.
+- `.github/workflows/issue_descarga_ig.yml`: selects image or MP4 input and
+  publishes the appropriate output directly to OneDrive; GitHub Actions
+  artifacts are not part of the delivery contract.
+- `tests/test_render_video_sequence_mak.py` plus updated IG/video tests.
+- `context/VIDEO_WORKFLOW_MAK_20260817.md`: permanent workflow contract.
+
+Validation evidence:
+
+- `python3 -m py_compile ...` -> exit 0.
+- Relevant pytest suite -> `36 passed`.
+- Workflow YAML parsed with PyYAML -> exit 0, job `descarga` found.
+- Smoke command with the existing local reel and `--frame-end 1` -> exit 0.
+- Smoke manifest: source_frames=410, fps=30, samples=128,
+  engine=CYCLES, gpu.device=GPU, backend=CUDA, GTX 1650; 1 PNG of
+  12,464,001 bytes.
+- `RD.paravideo.blend` mtime/size remained unchanged.
+
+Known limits and risks:
+
+- A full 410-frame Cycles render is intentionally not launched during this
+  verification; the bounded frame took about 5m16s on the GTX 1650.
+- If Instagram exposes only a poster and not a downloadable MP4, the new
+  downloader fails the video path clearly instead of pretending the poster is
+  the reel.
+- The paused legacy `puente_issues.py` still needs a separate migration if it
+  is ever re-enabled; the active GitHub Actions workflow is the MAK path
+  tested here.
+- `ruff` could not be run because it is absent from `/home/mak/flujo/.venv`;
+  this is an environment limitation, not a reported lint failure.
+
+## Next concrete action
+
+Do not search or mutate the current issue. First review the diff and run the
+full relevant local suite. Then, when the user authorizes external execution,
+rerun the existing issue workflow so its downloaded MP4 is verified end to
+end. Keep the full render bounded until the runner log confirms the video
+file, calculated frame count, GPU manifest and available disk space.
+
+Last verified: 2026-08-17 America/Santiago — Phase 549 video workflow.
+
+## Phase 550 — corrected video template selection
+
+The first smoke PNG was technically a valid GPU render but visually wrong.
+It used the local sample video `Sundeck...mp4` with `RD.paravideo.blend` and
+replaced that template's only MOVIE node (`frame.mp4`), which is the animated
+frame layer. The output therefore lost the cyan frame, RD logo and border.
+
+Read-only comparison established the correct contract:
+
+- `RD.blend`: `Material.002` and `Material.008` contain `flyer_final.jpg`;
+  `FRAME2.png` is present; this is the flyer composition template.
+- `RD.paravideo.blend`: only `Material.002` has the historical `frame.mp4`
+  MOVIE node; it is not the active PNG-sequence template.
+- Existing `RD/AUTOMATIZACION/flyervideo/0001.png` visually confirms the
+  expected composed output: same 3D scene plus frame/logo layer.
+
+Correction applied:
+
+- `tools/render_video_sequence_mak.py` now defaults to
+  `/home/mak/RD/AUTOMATIZACION/RD.blend`.
+- `context/VIDEO_WORKFLOW_MAK_20260817.md` now documents `RD.blend` as the
+  active template and `RD.paravideo.blend` as historical alternate.
+
+The earlier smoke was not evidence of the correct visual contract and must
+not be treated as a passing end-to-end result. Its input origin was the local
+Sundeck MP4, not the user's email issue. No `.blend` was modified.
+
+## Next concrete action
+
+Run one bounded frame with the corrected `RD.blend` path. Confirm visually
+that `FRAME2.png` is preserved, both flyer materials are updated, the
+manifest still reports Cycles/128/GPU, and the output matches the historical
+`flyervideo/0001.png` composition before enabling any full reel run.
+
+Last verified: 2026-08-17 America/Santiago — Phase 550 template correction.
+
+## Phase 551 — corrected RD flyer composition validated
+
+The bounded corrected smoke completed successfully with the active template:
+
+```text
+python3 tools/render_video_sequence_mak.py \
+  --video '/home/mak/RD/AUTOMATIZACION/Sundeck vuelve para encender la temporada 🌌Después de un tiempo, nos reencontramos con una noch.mp4' \
+  --out-dir /tmp/mak-video-rdblend-smoke.J4GvrB \
+  --frame-end 1
+```
+
+Foreground evidence:
+
+- exit code: 0;
+- output: `frame_0001.png`, 12,464,001 bytes;
+- manifest: source_frames=410, fps=24, samples=128,
+  engine=CYCLES, gpu.device=GPU, backend=CUDA,
+  `NVIDIA GeForce GTX 1650`;
+- Blender used `/home/mak/RD/AUTOMATIZACION/RD.blend`;
+- visual inspection confirms the composed flyer: the Sundeck video is
+  inside the magenta frame, with RD logo and event text preserved;
+- no Blender process remained after completion;
+- SHA-256 checks of `RD.blend` and `RD.paravideo.blend` were collected after
+  the run; the wrapper does not save either `.blend`;
+- the previous visual smoke using `RD.paravideo.blend` is rejected and is not
+  evidence for the workflow.
+
+The active GitHub workflow no longer uploads GitHub Actions artifacts or
+mentions an artifact in its success comment. The delivery target is
+OneDrive; the run URL is retained only as operational trace.
+
+## Next concrete action
+
+Review the final diff and rerun the relevant local test suite. Do not search
+or mutate the current issue. When external execution is authorized, run the
+existing issue workflow and first confirm the downloaded `input_ig.mp4`, its
+calculated frame count, GPU manifest and available disk space before allowing
+the complete sequence to render and upload to OneDrive. No full 410-frame
+render has been launched during this validation.
+
+Last verified: 2026-08-17 America/Santiago — Phase 551 corrected composition.
+
+## Phase 552 — five-frame render and GTX audit
+
+The bounded five-frame render was allowed to complete after the user asked
+for a performance audit:
+
+```text
+python3 tools/render_video_sequence_mak.py \
+  --video '/home/mak/RD/AUTOMATIZACION/Sundeck vuelve para encender la temporada 🌌Después de un tiempo, nos reencontramos con una noch.mp4' \
+  --out-dir /tmp/mak-video-rdblend-5frames \
+  --frame-end 5
+```
+
+Evidence:
+
+- exit code: 0; rendered=5, skipped=0, png_count=5;
+- all five PNGs are 12,464,001 bytes and the manifest is valid;
+- manifest confirms `CYCLES`, 128 samples, GPU device, CUDA backend and
+  `NVIDIA GeForce GTX 1650`;
+- `nvidia-smi` during rendering showed 100% GPU utilization, P0, 79 C,
+  1,375 MiB / 4,096 MiB VRAM, 1,755 MHz SM clock and 6,000 MHz memory clock;
+- no CPU fallback or VRAM exhaustion was observed;
+- the active driver is `610.43.02-1`; local Debian package metadata offers
+  `610.57.04-1` as an upgrade. It was not installed during the render to
+  avoid interrupting the NVIDIA module or requiring a restart;
+- `force_gpu(prefer=("CUDA", "OPTIX", "HIP"))` selects CUDA on this GTX.
+  The existing measured evidence in `blender_gpu.py` records CUDA faster than
+  OptiX on this exact machine, so no backend swap is justified;
+- no `.blend` was saved or modified.
+
+The current runtime is therefore GPU-correct but scene-bound: the 1080x1920
+Cycles composition is the dominant cost, not a CPU fallback. `persistent_data`
+is currently false; it is a candidate for a later animation-specific test,
+but changing it without a bounded comparison would alter the validated
+configuration. The driver upgrade must be scheduled separately after the
+render workload is stopped.
+
+## Next concrete action
+
+Do not launch the complete 410-frame render yet. First decide whether to apply
+the available NVIDIA package upgrade, reboot if required, and then perform one
+bounded five-frame comparison with `persistent_data=True` while preserving
+CUDA, 128 samples, the same `RD.blend` template and the same output contract.
+Only adopt the setting if it materially lowers total wall time without
+changing the visual output or exceeding the 4 GiB VRAM envelope.
+
+Last verified: 2026-08-17 America/Santiago — Phase 552 five-frame GPU audit.
+
+## Phase 553 — accidental inspection render stopped
+
+The read-only Blender settings probe accidentally inherited `-f 1` and
+started an unrelated background render after Phase 552. It was identified by
+its exact command and stopped with SIGTERM (`blender` PID 107428 and its
+shell parent PID 107417). This was not the video workflow or a persistent
+service. A follow-up `pgrep` found no render process and `nvidia-smi` showed
+0% GPU utilization, 6 MiB VRAM and 57 C. The five completed PNGs remain intact.
+
+## Next concrete action
+
+Before any new render, update the driver only as an explicit maintenance step
+and use a Blender probe without `-f` if scene settings must be inspected.
+Then run the bounded `persistent_data=True` comparison, or leave the current
+validated configuration unchanged if avoiding another long render is more
+important. Do not launch the full 410-frame job yet.
+
+Last verified: 2026-08-17 America/Santiago — Phase 553 stray probe stopped.
+
+## Phase 554 — poster no longer accepted as video substitute
+
+Physical inspection after the user rejected the five-frame input found no
+real `input_ig.mp4` under `/home/mak`. The only `input_ig.jpg` was an older
+Creamfields image with mtime 2026-08-07, unrelated to the user's reel.
+Therefore no additional render was started from that file.
+
+Root cause in the workflow contract: a video classification with only a
+poster could fall through to the image branch and render the poster as if it
+were an intentional still image.
+
+Correction:
+
+- `.github/workflows/issue_descarga_ig.yml` now exports `media_type` from
+  `media.json` and requires a non-empty `input_ig.mp4` whenever the type is
+  `video`;
+- a video without MP4 fails explicitly with
+  `VIDEO_MEDIA_WITHOUT_MP4` and never uses `input_ig.jpg` as a substitute;
+- only explicit `image` or `carousel` types enter the still-image renderer;
+- unknown or missing media types fail closed;
+- `src/flujo/ig/download.py` now raises `video_sin_mp4` when parth-dl declares
+  video but provides no downloadable video entry;
+- regression test added for the missing-MP4 case.
+
+Validation:
+
+- focused suite: 37 passed;
+- workflow YAML: valid, job `descarga` present;
+- Python compile: exit 0;
+- no issue was searched or mutated, and no unrelated media was rendered.
+
+## Next concrete action
+
+Run the existing issue workflow only when its real Instagram link is present
+again. Confirm from its own `media.json` that `media_type=video` and that the
+fresh output directory contains `input_ig.mp4`; then render the requested
+five frames with `RD.blend`. If the downloader fails, preserve the explicit
+error instead of falling back to the poster.
+
+Last verified: 2026-08-17 America/Santiago — Phase 554 fail-closed media gate.

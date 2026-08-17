@@ -3,6 +3,10 @@ download_post con parth-dl mockeado (_parth_download). Nunca toca la red.
 """
 
 from pathlib import Path
+import sys
+import types
+
+import pytest
 
 import flujo.paths  # noqa: F401
 from flujo.ig import download as ig_download
@@ -105,6 +109,51 @@ def test_download_post_exitoso_carousel(monkeypatch, tmp_path):
     assert out["file_count"] == 2
     assert (out_dir / "input_ig.jpg").exists()
     assert (out_dir / "input_ig_2.jpg").exists()
+
+
+def test_parth_download_video_conserva_mp4_y_poster(monkeypatch, tmp_path):
+    fake_pkg = types.ModuleType("parth_dl")
+    fake_pkg.get_info = lambda _url: {
+        "type": "video",
+        "thumbnail": "https://cdn.example/poster.jpg",
+        "entries": [{
+            "kind": "video",
+            "formats": [{
+                "url": "https://cdn.example/reel.mp4",
+                "width": 576,
+                "height": 768,
+                "has_audio": True,
+            }],
+        }],
+    }
+    monkeypatch.setitem(sys.modules, "parth_dl", fake_pkg)
+
+    def fake_download(url, destination):
+        destination.write_bytes(b"mp4" if url.endswith(".mp4") else b"jpg")
+        return destination
+
+    monkeypatch.setattr(ig_download, "_download_file", fake_download)
+    out = ig_download._parth_download("https://www.instagram.com/reel/VIDEO1/", "VIDEO1", tmp_path)
+
+    assert out["media_type"] == "video"
+    assert out["is_video"] is True
+    assert out["video_files"] == [str(tmp_path / "input_ig.mp4")]
+    assert out["image_files"] == [str(tmp_path / "input_ig.jpg")]
+    assert (tmp_path / "input_ig.mp4").read_bytes() == b"mp4"
+
+
+def test_parth_download_video_sin_mp4_falla(monkeypatch, tmp_path):
+    fake_pkg = types.ModuleType("parth_dl")
+    fake_pkg.get_info = lambda _url: {
+        "type": "video",
+        "thumbnail": "https://cdn.example/poster.jpg",
+        "entries": [{"kind": "video", "formats": []}],
+    }
+    monkeypatch.setitem(sys.modules, "parth_dl", fake_pkg)
+
+    with pytest.raises(RuntimeError, match="video_sin_mp4"):
+        ig_download._parth_download(
+            "https://www.instagram.com/reel/VIDEO2/", "VIDEO2", tmp_path)
 
 
 def test_download_post_limpia_archivos_previos(monkeypatch, tmp_path):
