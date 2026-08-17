@@ -133,6 +133,10 @@ _SECRET_PATTERNS = (
     re.compile(r"\b(?:sk|pk|ghp|github_pat)[_-][A-Za-z0-9._-]{8,}\b"),
     re.compile(r"\b[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}\b"),
 )
+_HOME_PATH_PATTERN = re.compile(
+    r"(?<![\w@])/(?:home|root)/[^\s,;]+|"
+    r"(?<![\w@])/[Uu]sers/[^\s,;]+"
+)
 
 
 def _fold(value: str) -> str:
@@ -146,6 +150,9 @@ def redact_text(value: Any, limit: int = MAX_TEXT) -> str:
     home = str(Path.home())
     if home:
         text = text.replace(home, "~")
+    # Diagnostics can be copied from another machine. Redact conventional
+    # Unix user paths even when they do not match this process' home directory.
+    text = _HOME_PATH_PATTERN.sub("~", text)
     for pattern in _SECRET_PATTERNS:
         replacement = "[EMAIL_REDACTED]" if "@" in pattern.pattern else "[SECRET_REDACTED]"
         text = pattern.sub(replacement, text)
