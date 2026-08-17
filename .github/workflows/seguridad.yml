@@ -49,10 +49,12 @@ jobs:
           # entera. Lo que no tiene arreglo se ignora con --ignore-vuln y queda
           # escrito aca, que es mejor que un job verde que no mira.
           # El proyecto se instala en editable para probar sus dependencias,
-          # pero `flujo` no se publica en PyPI. Auditarlo como si fuera un
-          # paquete remoto produce un falso fallo; sus dependencias siguen
-          # auditándose estrictamente.
-          pip-audit --strict --skip-editable
+          # pero `flujo` no se publica en PyPI. Auditar el entorno directamente
+          # hace que pip-audit intente resolver ese paquete local; congelamos
+          # el entorno resuelto y excluimos solo el editable del repo. Las
+          # dependencias reales siguen auditándose estrictamente.
+          python -m pip freeze --exclude-editable > /tmp/flujo-ci-requirements.txt
+          pip-audit -r /tmp/flujo-ci-requirements.txt --strict --no-deps
           if [ -f xio/new/requirements.txt ]; then
             pip-audit -r xio/new/requirements.txt --strict
           fi
