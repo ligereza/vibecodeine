@@ -12599,3 +12599,50 @@ configured free-tier provider chain. Record provider, URL, hash, HTTP status,
 license and credit metadata in the research registry before model extraction.
 
 Last verified: 2026-08-17 America/Santiago — Phase 544 live MAK 8900 integration.
+
+## Phase 545 — first real research discovery/capture
+
+The reusable runner `tools/execute_research_job.py` now closes the first
+execution gap without mixing discovery with evidence. It searches in Spanish
+and English ASCII, filters capture to official allowlisted domains, uses the
+existing source pipeline, and records each candidate/capture in the persistent
+`job_sources` table of `jardines_interpretativos.sqlite`.
+
+Job 3 was executed from MAK:
+
+    `Investigar plantas para una pieza 3D conectada a visuales VJ`
+    16 unique candidates discovered through SearXNG;
+    6 candidates passed the official-domain allowlist;
+    4 selected and captured with Firecrawl, all HTTP 200;
+    4 raw/text hashes and capture paths recorded;
+    estimated provider credits: 4.0;
+    model calls: 0;
+    license state: conservative review required (unknown is not free);
+    job status: `captured`, next process: `extract`;
+    discover and capture steps: `done`; extract: `pending`.
+
+Captured sources were OpenAlea PlantGL, a 3D L-System repository, an
+L-system-laboratory repository and OpenAlea modelling documentation. The
+full candidate set remains in `job_sources`; only official allowlist sources
+were captured. Text artifacts and reports remain outside Git under
+`/home/mak/research/jobs/3/`.
+
+Foreground validation:
+
+    `execute_research_job.py --job-id 3 --max-sources 4` -> exit 0;
+    SQLite job state -> `captured/extract`, 16 source rows;
+    MAK `GET /api/research/jobs` -> HTTP 200, job 3 `captured/extract`;
+    MAK `GET /api/research/job?id=3` -> HTTP 200;
+    `mak-hub.service` -> active.
+
+No model extraction, publication, mutation of RD databases or WIN reads were
+performed. Firecrawl was used only for the four bounded official captures.
+
+## Next concrete action
+
+Run deterministic extraction over the four captured texts first, then use one
+configured structured-text provider only for unresolved fields. Store claims,
+entities, source references, provider and credit metadata; keep the job in
+`extract` until every claim has evidence and uncertainty labels.
+
+Last verified: 2026-08-17 America/Santiago — Phase 545 real capture.

@@ -268,6 +268,20 @@ def create_schema(conn: sqlite3.Connection) -> None:
             to_object TEXT NOT NULL, rationale TEXT NOT NULL,
             FOREIGN KEY(job_id) REFERENCES research_jobs(id)
         );
+        CREATE TABLE IF NOT EXISTS job_sources (
+            id INTEGER PRIMARY KEY, job_id INTEGER NOT NULL,
+            stage TEXT NOT NULL, query TEXT NOT NULL,
+            discovery_provider TEXT NOT NULL, rank INTEGER NOT NULL,
+            url TEXT NOT NULL, title TEXT NOT NULL, snippet TEXT NOT NULL,
+            capture_provider TEXT NOT NULL, capture_status TEXT NOT NULL,
+            http_status INTEGER, content_type TEXT NOT NULL,
+            raw_sha256 TEXT NOT NULL, text_sha256 TEXT NOT NULL,
+            text_path TEXT NOT NULL, captured_at TEXT NOT NULL,
+            license_state TEXT NOT NULL, license_evidence TEXT NOT NULL,
+            credits_estimate REAL NOT NULL, notes TEXT NOT NULL,
+            UNIQUE(job_id, url), FOREIGN KEY(job_id) REFERENCES research_jobs(id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_job_sources_job ON job_sources(job_id);
         """
     )
 
