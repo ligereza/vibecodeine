@@ -11132,8 +11132,9 @@ The exact Phase 512 write set was reviewed, committed on `main` as `95de8a7`
     README_EXIT = 0
     INDEX_EXIT = 0
 
-The post-push focused suite returned exit 0 with 42 tests passed across the
-diagnostic, CLI and MAK hub contracts. The live service remained active and
+The post-push focused suite returned exit 0 across the diagnostic, CLI and MAK
+hub contracts. The exact count is always measured by the command, not written
+into this handoff. The live service remained active and
 returned `GET /health` HTTP 200 plus a valid RD diagnostic report. The only
 listening sockets remain the pre-existing loopback department services
 `127.0.0.1:8890`, `127.0.0.1:8891` and the requested hub
@@ -11973,6 +11974,61 @@ refresh this matrix.
 Last verified: 2026-08-16 America/Santiago — objective matrix written;
 external runtime gates remain intentionally user-controlled.
 
+## Phase 533 — historical worktree, portfolio and research follow-up
+
+Reviewed the current post-deployment worktree. The five tracked edits not yet
+published are useful but intentionally remain unstaged pending explicit
+publication scope:
+
+    .env.example
+    CAPACIDADES.md
+    context/flujo_hub.html
+    context/plano_demo.html
+    context/svg_visualizer.html
+
+`CAPACIDADES.md` had one stale runtime claim; it was corrected to reflect the
+current fact that only 8900 is listening. The generated HTML files share one
+offline build fingerprint and remove obsolete portal command wording. The
+737 phase files, quarantine, fixtures, two RD rollback snapshots and Windows
+probe scripts remain protected historical evidence. The review is recorded in
+`context/HISTORICAL_WORKTREE_REVIEW.md`.
+
+Portfolio hosting was audited read-only. GitHub Pages for
+`ligereza/vibecodeine` uses `main`, workflow deployment and CNAME `iskvw.cl`.
+No Actions variable `PUBLIC_DOMAIN` exists, so the workflow fallback remains
+`iskvw.cl`. No new domain was supplied and no DNS/Cloudflare mutation occurred.
+The migration procedure is in `context/PORTFOLIO_DOMAIN_MIGRATION.md`.
+
+Regenerable residue cleanup:
+
+    919 .pyc/.pyo files -> 0
+    66 __pycache__ directories -> 0
+    .coverage and .pytest_cache -> removed
+
+`/home/mak/WIN`, `data/rd.db`, `data/rd_datos.db` and `context/quarantine`
+were verified preserved. No evidence or source data was deleted.
+
+Research probe:
+
+    official Fondos de Cultura URL via explicit urllib fallback -> HTTP 200,
+    6,263 text characters, 53 links;
+    proposal_directiva -> temporary 44,112-byte HTML;
+    gen_propuestas_rd -> 2 temporary venue drafts, 0 producer drafts;
+    repository/data/ledger writes -> 0.
+
+Full details and future candidate warnings are in
+`context/RESEARCH_PROBE_20260816.md`.
+
+## Next concrete action
+
+Obtain the new portfolio domain name before changing `PUBLIC_DOMAIN`; until
+then keep `iskvw.cl` active. For the five reviewed tracked edits, ask for a
+publication decision before staging. Future improvements should start from
+the short-evidence candidate warnings in the research probe.
+
+Last verified: 2026-08-16 America/Santiago — cache cleanup and real temporary
+Research/proposal probe passed; WIN and protected data preserved.
+
 ## Phase 532 — authorized publication and live hub
 
 The user authorized publication and service enablement.
@@ -12009,3 +12065,139 @@ replay is needed; the local hub and workflow are already deployed.
 Last verified: 2026-08-16 America/Santiago — `main` synchronized with
 `origin/main`, `mak-hub.service` active on 8900, next action is passive EVENT
 observation.
+
+## Phase 534 — pending items do not block local progress
+
+The user explicitly set three deferred items that must remain visible but must
+not stop the local integration objective:
+
+    - portfolio domain: keep `iskvw.cl` active until the exact replacement
+      domain is supplied; do not change GitHub Pages or DNS speculatively;
+    - XIO: deferred to the end and excluded from the active integration path;
+    - external EVENT issue: observe naturally when one arrives; do not create
+      or replay one artificially.
+
+These are pending work, not blockers. No source, database, credential, WIN
+evidence or runtime route was changed by this clarification.
+
+Foreground validation after the clarification:
+
+    `systemctl --user is-enabled mak-hub.service` -> enabled
+    `systemctl --user is-active mak-hub.service` -> active
+    `curl http://127.0.0.1:8900/health` -> HTTP 200, `ok: true`
+    eight live hub endpoints (health, departments, RD summary/crosswalk/
+    relations, Cultura sources/capabilities/opportunity gate) -> HTTP 200
+    `PYTHONPATH=src python3 -B` department smoke -> 7/7 returned dictionaries
+    `python3 -B -m pytest ...` -> exit 1: system Python has no pytest module;
+    no package was installed; `git diff --check` -> exit 0
+
+The failed pytest command is an environment capability note, not a code
+failure. The direct import smoke and live endpoint checks passed. Generated
+bytecode was removed after the compile/import probes.
+
+## Open integration items
+
+    - publish decision for the five reviewed tracked documentation/HTML
+      edits; keep them unstaged until explicitly selected;
+    - replacement portfolio domain and its external DNS/Pages configuration;
+    - XIO final review/install/test;
+    - one naturally arriving external EVENT issue for end-to-end observation.
+
+## Next concrete action
+
+Continue with safe local work: review the remaining uncommitted implementation
+surface and run focused foreground checks for each real consumer. Do not let
+the four open items above become a stop condition, and do not repeat them as
+new prerequisites. Preserve the current 8900 service, `main` state, WIN
+archive, databases and historical evidence.
+
+Last verified: 2026-08-16 America/Santiago — local department smoke and live
+hub route matrix passed; pytest remains unavailable in the system interpreter.
+
+## Phase 535 — residual internal work after the obvious pending items
+
+The remaining local work is bounded and does not represent a missing
+migration slice:
+
+    1. decide whether to publish the five reviewed tracked documentation/HTML
+       edits; they remain unstaged and are not runtime defects;
+    2. keep the many historical PHASE reports classified as evidence and
+       prevent stale maps from becoming active instructions;
+    3. provide a project test environment with pytest, then run the focused
+       and full suites before the next code change; the system interpreter
+       currently has no pytest module;
+    4. perform final visual/browser QA of the one 8900 hub and its offline
+       HTML exports after any selected documentation changes.
+
+Foreground UI route check on the active hub:
+
+    `/`, `/departments/rd`, `/departments/cultura`, `/departments/iskvw`,
+    `/static/rd/plano`, `/static/iskvw/editor` and diagnostics -> HTTP 200.
+
+Therefore there is no additional hidden department, database merge or second
+hub to build. The current implementation is operational; the remaining local
+items are publication hygiene, evidence hygiene, test-environment coverage
+and final presentation QA.
+
+## Next concrete action
+
+Start with the unstaged-surface review and evidence classification, then run
+the focused suite from a project-scoped environment when available. Keep all
+three deferred external items visible but do not reintroduce them as gates.
+
+Last verified: 2026-08-16 America/Santiago — six hub/UI routes plus
+diagnostics returned HTTP 200; no source or data was changed.
+
+## Phase 536 — test environment and visual QA closeout
+
+Created the ignored project environment `/home/mak/flujo/.venv` with
+`python3 -m venv .venv` and installed the editable project with the `dev`
+extra. The system Python remains untouched.
+
+Verification:
+
+    `.venv/bin/python -m pytest -q` -> exit 0, full suite reached 100%;
+    the first run exposed three stale documentation ratchets, which were
+    corrected in `LAST_HANDOFF.md`, `CAPACIDADES.md` and `MAPA.md`, then the
+    full suite passed;
+    `npm run typecheck` -> exit 0;
+    Node 24 runtime `npm run build:context` -> exit 0, regenerated
+    `context/flujo_hub.html`, `context/plano_demo.html`,
+    `context/svg_visualizer.html` and the context mapping projection;
+    live hub `127.0.0.1:8900` -> `/health` HTTP 200 after restart;
+    browser QA -> all eight hub tabs remained on `/`, selected their intended
+    panel, and the `areas` panel exposed RD, Cultura/Research and
+    ISKVW/Portfolio cards;
+    offline HTML QA -> `flujo_hub.html`, `plano_demo.html` and
+    `svg_visualizer.html` loaded visually. Plano remained usable in demo mode.
+
+The visual QA found and fixed two real defects:
+
+    - `cultura/mak_plataforma/hub.py`: the top navigation could overlap the
+      doctrine links at 1280px and route `areas` to doctrine; the tab strip
+      now contracts and scrolls horizontally;
+    - `web/src/components/SvgVisualizer.tsx`: offline SVG fallback cards used
+      unavailable `/svg/` URLs and showed broken images; failed previews now
+      render a local SVG placeholder while live assets remain unchanged.
+
+The temporary static QA server was stopped. No permanent service, database,
+WIN evidence or credential changed during visual QA.
+
+## Open integration items
+
+    - replacement portfolio domain, XIO and natural external EVENT observation
+      remain deferred user-side items and do not block local integration;
+    - the five reviewed historical documentation/HTML edits plus the tested
+      CSS/SVG fallback and evidence boundary are ready for the explicit main
+      publication set;
+    - optional provider/runtime checks remain separate from the offline suite.
+
+## Next concrete action
+
+Stage only the reviewed implementation/documentation set, verify the staged
+diff and publish it to `main`. Leave all `context/PHASE*` evidence, rollback
+databases, quarantine, fixtures, probes and optional reports unstaged.
+
+Last verified: 2026-08-16 America/Santiago — full Python suite, TypeScript,
+frontend build, live hub and offline visual QA passed; responsive hub and SVG
+offline fallback fixes are ready to publish.

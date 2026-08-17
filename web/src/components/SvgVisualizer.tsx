@@ -59,6 +59,13 @@ function svgDims(svg: string) {
 }
 function svgSize(svg: string) { const b = new Blob([svg]).size; return b < 1024 ? `${b} B` : `${(b/1024).toFixed(1)} KB`; }
 
+function offlineSvgPlaceholder(label: string): string {
+  const text = label.replace(/\.svg$/i, '').slice(0, 24)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 560"><rect width="800" height="560" fill="#18181b"/><rect x="28" y="28" width="744" height="504" rx="28" fill="none" stroke="#7c3aed" stroke-width="6"/><path d="M180 370l110-130 90 100 80-90 160 190H180z" fill="#7c3aed" opacity=".45"/><text x="400" y="105" text-anchor="middle" fill="#e4e4e7" font-family="sans-serif" font-size="30" font-weight="700">${text}</text><text x="400" y="485" text-anchor="middle" fill="#a1a1aa" font-family="monospace" font-size="22">preview local no disponible</text></svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
 // ═══════════════════════════════════════════════
 // Config.json → SVG renderer
 // ═══════════════════════════════════════════════
@@ -418,7 +425,10 @@ function GalleryView({ onConfigure }: { onConfigure: (piece: SvgPiece) => void }
                     <div className="absolute inset-3 flex items-center justify-center svg-contain"
                       dangerouslySetInnerHTML={{__html:piece.svgContent}}/>
                   ) : piece.svgUrl ? (
-                    <img src={piece.svgUrl} alt={piece.name} className="absolute inset-3 h-[calc(100%-1.5rem)] w-[calc(100%-1.5rem)] object-contain" />
+                    <img src={piece.svgUrl} alt={piece.name} onError={event => {
+                      event.currentTarget.onerror = null;
+                      event.currentTarget.src = offlineSvgPlaceholder(piece.name);
+                    }} className="absolute inset-3 h-[calc(100%-1.5rem)] w-[calc(100%-1.5rem)] object-contain" />
                   ) : <div className="absolute inset-0 flex items-center justify-center text-2xl text-zinc-700">📄</div>}
                   {/* status */}
                   <span className={`absolute right-1.5 top-1.5 flex items-center gap-1 rounded-full border px-1.5 py-px text-[9px] font-bold backdrop-blur-sm ${st.bg} ${st.color}`}>
@@ -529,7 +539,10 @@ function GalleryView({ onConfigure }: { onConfigure: (piece: SvgPiece) => void }
                     {currentIdx>=0 && currentIdx<filtered.length-1 && <button onClick={()=>goTo(1)} className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/50 p-1.5 text-zinc-300 backdrop-blur-sm hover:bg-black/70"><ChevronRight className="h-4 w-4"/></button>}
                     <div className={`flex items-center justify-center overflow-auto p-6 ${bgCls}`} style={{minHeight:'440px'}}>
                       {selectedPiece.svgContent ? <div className="svg-modal-preview transition-transform" style={{transform:`scale(${modalZoom})`,transformOrigin:'center'}}
-                        dangerouslySetInnerHTML={{__html:selectedPiece.svgContent}}/> : selectedPiece.svgUrl ? <img src={selectedPiece.svgUrl} alt={selectedPiece.name} className="max-h-[420px] max-w-full object-contain" style={{transform:`scale(${modalZoom})`,transformOrigin:'center'}}/> : null}
+                        dangerouslySetInnerHTML={{__html:selectedPiece.svgContent}}/> : selectedPiece.svgUrl ? <img src={selectedPiece.svgUrl} alt={selectedPiece.name} onError={event => {
+                          event.currentTarget.onerror = null;
+                          event.currentTarget.src = offlineSvgPlaceholder(selectedPiece.name);
+                        }} className="max-h-[420px] max-w-full object-contain" style={{transform:`scale(${modalZoom})`,transformOrigin:'center'}}/> : null}
                     </div>
                     {currentIdx>=0 && <div className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-2.5 py-0.5 text-[9px] font-bold text-zinc-400 backdrop-blur-sm">{currentIdx+1}/{filtered.length}</div>}
                   </div>

@@ -1,11 +1,11 @@
 # CAPACIDADES.md
 
-> Current entry point: read `AGENTS.md` and `context/LAST_HANDOFF.md` first.
+> Current entry point: read `agents.md` and `context/LAST_HANDOFF.md` first.
 > This inventory describes reusable machinery; it is not a task queue.
 
 Inventario de arranque rapido. Objetivo: empezar un proyecto nuevo (dentro o
 fuera de este repo) sin tener que leer/buscar por todo `flujo`. Verificado
-contra el repo real; the inventory baseline is 2026-08-09 (commands executed,
+contra el repo real; the inventory baseline is 2026-08-15 (commands executed,
 not memory). If something
 de aca no calza con lo que ves, el repo cambio despues -- confia en el repo,
 no en este doc, y actualizalo en el mismo PR que lo detecte.
@@ -160,15 +160,74 @@ sintesis ejecutiva para directiva).
 | `toma-de-decisiones` | Marco para decidir modelo/agente/riesgo por tarea. |
 | `verificar-antes-de-negar` | Verificar antes de negar existencia de algo. |
 
-## 2. Modelos y APIs disponibles (sin llaves)
+## 2. Modelos, APIs e integraciones disponibles (sin llaves)
+
+### 2.1 Conteo medido de la superficie API
+
+El conteo usa una regla conservadora: una API/integracion = un proveedor o
+servicio con un adaptador reconocible en el codigo. No cuenta cada endpoint,
+cada modelo, cada sitio web fuente ni cada variable de entorno. Las claves y
+sus valores nunca se imprimen ni se registran aqui.
+
+Conteo verificado el 2026-08-15:
+
+| Grupo | Cantidad | Integraciones reconocidas | Estado resumido |
+|---|---:|---|---|
+| Proveedores LLM | 5 | `watsonx`, `groq`, `cerebras`, `azure`, `ollama` | Adaptadores en `cultura/mak_research/research_lib.py` |
+| Busqueda/captura | 3 | `tavily`, `searxng`, `firecrawl` | `tavily` y `firecrawl` requieren clave; `searxng` es local y no escuchaba en 8888 durante esta medicion |
+| Notificacion | 1 | `ntfy` | Adaptador en `research_lib.py`; requiere topic para publicar |
+| Produccion/operacion | 4 | `canva`, `github`, `instagram`, `google_drive` | Canva/GitHub/Instagram estan cableados; Drive opera por `rclone` |
+| **Total de integraciones API/servicio cableadas** | **13** | | |
+
+Hay ademas **1 backend opcional de captura**, `crawl4ai`: el codigo lo
+reconoce, pero el paquete no esta instalado en el entorno medido; por eso no
+se suma al total cableado. El total seria **14 backends** si se cuenta esa
+capacidad opcional.
+
+La aplicacion expone **1 superficie HTTP interna activa** verificada en primer
+plano: hub MAK en `127.0.0.1:8900` con `GET /health` HTTP 200. Los puertos
+8890 y 8891 no estan escuchando en la medicion 2026-08-16 y no se cuentan como
+superficies operacionales. Con el hub activo, la cifra operacional es
+**14 superficies API** (13 integraciones cableadas + 1 API interna), o **15**
+incluyendo el backend opcional `crawl4ai`.
+
+No entran en el conteo: Anthropic/Claude Code y Arena (herramientas externas al
+runtime del repo), `DASHSCOPE_API_KEY`, `QWEN_API_KEY`, `NVIDIA_*` y
+`OPENROUTER_API_KEY` (declarados, pero sin adaptador activo en el roster),
+Gemini (retirado), los sitios web monitoreados por Vigia y XIO (superficie
+historica fuera de la operacion actual).
+
+### 2.2 Estado de credenciales medido sin exponer valores
+
+Probe de autenticacion ejecutado el 2026-08-15. `valid` significa que el
+servicio acepto una solicitud de lectura o token; no significa que todos los
+modelos, permisos o limites de cuenta esten disponibles.
+
+| Variable | Resultado | Fuente/alcance |
+|---|---|---|
+| `WATSONX_API_KEY` | `valid` | Token IAM HTTP 200; solo aparece en `n8n-local/research.env`, que no es runtime activo |
+| `NVIDIA_API_KEY` | `valid` | `GET /v1/models` HTTP 200 desde `.env` de flujo |
+| `NVIDIA_NIM_API_KEY` | `valid` | `GET /v1/models` HTTP 200 desde `.env` de flujo |
+| `TAVILY_API_KEY` | `valid` | Busqueda basica HTTP 200; solo aparece en `n8n-local/research.env`, que no es runtime activo |
+| Resto de las variables listadas | `absent` | Sin valor en las configuraciones MAK revisadas; no se probo ninguna llamada |
+
+La prueba no ejecuto inferencias LLM, scrapes de Firecrawl, cargas de Canva ni
+mutaciones de GitHub. La primera sonda de Tavily devolvio 400 por la forma de
+la consulta; la segunda uso el contrato exacto del adaptador y devolvio 200.
+
+`GITHUB_TOKEN` no es necesario en el runtime local: `gh auth status` devolvio
+exit 0 y la sesion local de `gh` esta autenticada. El puente
+`tools/gmail_to_github_issues.gs` usa su propia Script Property externa para
+crear Issues desde correos; esa propiedad requiere Issues Read/Write. Las
+Actions usan el token efimero incorporado de GitHub, no el `.env` de MAK.
 
 Solo existencia + donde se configura. Nunca el valor de una llave.
 
 | Integracion | Que es | Donde vive la config |
 |---|---|---|
 | Claude / Anthropic | Director (Fable/Opus) + subagentes Sonnet/Haiku; tiers en tabla de `CLAUDE.md` | `ANTHROPIC_API_KEY` en `.env` (ver `.env.example`); ejecutado via Claude Code CLI, no en runtime del repo |
-| ollama LOCAL en MAK | Modelos chicos, throughput-first, capa "barato" | corre en el runner MAK; consumido desde `cultura/mak_research/research_lib.py` (`_SLOTS`); modelos instalados constan solo como evidencia historica (2026-07-24). No se usa acceso remoto desde este entorno |
-| ollama en WIN (workship) | Instancia LAN en Windows, usada por MAK cuando conviene (`provider 'win'`) | `OLLAMA_HOST=192.168.50.1:11434`; ver `context/LAST_HANDOFF.md` para historial de arranque/persistencia |
+| ollama LOCAL en MAK | Modelos chicos, throughput-first, capa "barato" | Adaptador en `research_lib.py`; `127.0.0.1:11434` no estaba escuchando durante la medicion 2026-08-15, por lo que queda como capacidad cableada pero no disponible en ese instante |
+| IBM watsonx | Proveedor LLM y vision que encabeza la cadena medida de research | `WATSONX_API_KEY`, `WATSONX_PROJECT_ID`, `WATSONX_MODEL` y `WATSONX_URL`; adaptador unico en `research_lib.py` |
 | Groq | Proveedor rapido para roles `razonar`/`bulk` | `GROQ_API_KEY`, `GROQ_MODEL` en `cultura/mak_research/research_lib.py` (defaults linea 32) y `.env` |
 | Cerebras | Proveedor rapido, `CEREBRAS_MODEL=gpt-oss-120b` | `CEREBRAS_API_KEY`, `CEREBRAS_MODEL` en `research_lib.py` (linea 33) y `.env` |
 | Azure AI (gpt-5-mini) | Slot "capaz" para razonar/juzgar/sintesis en MAK research | `AZURE_ENDPOINT`, `AZURE_DEPLOYMENT`, `AZURE_API_KEY` en `research_lib.py` (lineas 34-35) y `.env` |
@@ -176,14 +235,19 @@ Solo existencia + donde se configura. Nunca el valor de una llave.
 | NVIDIA NIM | Alternativa barata (Qwen/DeepSeek/Nemotron) | `NVIDIA_API_KEY` / `NVIDIA_NIM_API_KEY` en `.env.example` |
 | OpenRouter | Router/fallback de modelos | `OPENROUTER_API_KEY` en `.env.example` |
 | Gemini | Retired 2026-08-11. No active runtime integration; historical references are preserved as evidence only. | No active configuration |
-| SearXNG (LAN, en la caja) | La busqueda de research. Sin llave, sin tope de creditos | `SEARXNG_BASE_URL` (default `http://127.0.0.1:8888`) y `SEARXNG_ENGINES` (vacio = los motores que tenga la instancia). **Medido 2026-08-01 y CORREGIDO el mismo dia.** Los cuatro motores generales (brave, duckduckgo, google cse, startpage) se tapan a la vez con CAPTCHA / "too many requests", y SearXNG contesta HTTP 200 con cero resultados. Es INTERMITENTE: la misma consulta dio 20 resultados en una ventana y 0 un minuto despues, con los cuatro caidos. Por eso la deteccion de ceguera (`ciego` + `motivo`) es el instrumento que corresponde: distingue las ventanas en vez de promediarlas. **Lo que NO sirve es fijar motores a mano.** El primer intento de este mismo dia puso `SEARXNG_ENGINES=bing,mojeek,wikipedia` porque contaba RESULTADOS; contando RELEVANCIA, `bing` devolvia basura no relacionada y distinta en cada llamada para la misma consulta (mulching en Charlotte, defensemirror, robertsspaceindustries), aunque funciona bien para consultas simples tipo "gato negro". Con esa lista fija, `refutar` produjo un informe con 5 fuentes que hablaban todas de Google Gemini: peor que ciego, porque parece documentado. Revertido en la caja. La variable existe y se puede usar, pero NO hay lista por defecto y el que la ponga tiene que mirar los resultados, no contarlos |
-| Tavily | Respaldo de busqueda cuando SearXNG no devuelve nada | `TAVILY_API_KEY`; **no esta puesta en la caja** (verificado 2026-08-01), asi que hoy no hay respaldo: si SearXNG queda ciego, la cadena entera queda sin ojos y `refutar` se detiene con un muro en vez de firmar un informe sin fuentes |
+| SearXNG (LAN, en la caja) | La busqueda de research. Sin llave, sin tope de creditos | `SEARXNG_BASE_URL` (default `http://127.0.0.1:8888`) y `SEARXNG_ENGINES`; la deteccion de ceguera (`ciego` + `motivo`) conserva el estado de la busqueda. El puerto 8888 no estaba escuchando durante la medicion 2026-08-15; no se inicio ningun servicio |
+| Tavily | Respaldo de busqueda cuando SearXNG no devuelve nada | `TAVILY_API_KEY`; no aparece en el `research.env` activo medido 2026-08-15. La copia de `n8n-local` no cuenta porque n8n esta descartado |
+| Firecrawl | Captura web estructurada para Research-to-Project | `FIRECRAWL_API_KEY`; adaptador `cultura/mak_research/source_pipeline.py`; opcional y no habilitado sin clave |
+| Crawl4AI | Backend local alternativo de captura web | Reconocido por `source_pipeline.py`, pero `crawl4ai` no estaba instalado en la medicion 2026-08-15 |
+| ntfy | Notificacion movil de resultados y alertas | `NTFY_TOPIC_IN` / `NTFY_TOPIC_OUT`; transporte en `research_lib.py`; no se publica sin topic |
+| Canva | Carga de assets producidos por el pipeline | `CANVA_API_TOKEN`; adaptador en `src/flujo/export/canva.py`; no se probo una carga real en esta medicion |
+| Instagram / parth-dl | Ingesta primaria de posts y reels para eventos y curatoria | `parth-dl` instalado; usado por `src/flujo/eventos/flyer_auto.py` y `src/flujo/ig/download.py`; no es una API oficial autenticada |
 | Arena (LMArena) | Frontier gratis on-demand para arquitectura dura, sin API | manual, sin config en repo; ver skill `toma-de-decisiones` |
 | parth-dl (IG) | Descarga real de posts/reels de Instagram (via primaria desde 2026-07-22) | `pip install parth-dl`; usado en `src/flujo/eventos/flyer_auto.py` y `src/flujo/ig/download.py`; imginn.com solo fallback (403 Cloudflare), instaloader NO funciona (IG exige login), NO yt-dlp |
-| Blender 4.5 | Render headless (flyer video, Chataigne prep) | WIN: `C:\Program Files\Blender Foundation\Blender 4.5\blender.exe` (OptiX, RTX 4070); MAK: `~/blender/` tarball portable 4.5.3 LTS (CUDA, GTX 1650) |
+| Blender 4.5 | Render headless (flyer video, Chataigne prep) | MAK: `~/blender/` tarball portable 4.5.3 LTS (CUDA, GTX 1650); la ruta WIN queda como referencia historica |
 | Chataigne builder | Genera `.noisette` para Resolume/Chataigne | `src/flujo/resolume/automator.py::build_chataigne_noisette_experimental`; schema validado contra fixtures reales (`tests/fixtures/chataigne_1103_real*.noisette`, `tests/test_noisette_real_fixture.py`) -- nunca especular, la fixture manda |
 | rclone / OneDrive en MAK | Entrega de renders (Drive de Google via `gdrive:` remote) | systemd `onedrive-rclone.service` en MAK; detalle en `context/LAST_HANDOFF.md` y `src/flujo/version.py` (changelog) |
-| GitHub (gh CLI + runner self-hosted + workflows) | CI, gate de PRs, ordenes de curatoria, publicacion catalogo/portfolio | `gh` CLI local; runner self-hosted `mak` (online, labels `self-hosted,Linux,X64,mak,eventos`, verificado via `gh api repos/.../actions/runners`); workflows activos en `.github/workflows/`: `ci.yml`, `claude.yml`, `airdrop_gate.yml`, `issue_descarga_ig.yml`, `ordenes_curatoria.yml`, `render_piezas_vectoriales.yml`, `validar-piezas.yml`, `build-xio-apk.yml` |
+| GitHub (gh CLI + runner self-hosted + workflows) | CI, gate de PRs, ordenes de curatoria, publicacion catalogo/portfolio | `gh` CLI local; runner self-hosted `mak` (online, labels `self-hosted,Linux,X64,mak,eventos`); workflows activos de MAK en `.github/workflows/`; `build-xio-apk.yml` queda fuera de la ruta operacional actual |
 
 Vtracer / curl_cffi / imageio_ffmpeg: usados puntualmente en pipelines de
 render/vectorizacion cuando hace falta, instalados ad-hoc (`pip install
@@ -195,14 +259,16 @@ jsonschema, requests).
 
 | Nodo | Rol | Detalle |
 |---|---|---|
-| WIN (este equipo) | Desarrollo, GPU OptiX (RTX 4070), Blender 4.5, Python via `py` | Repo principal `C:\IA\flujo`; ollama opcional en `192.168.50.1:11434` |
-| MAK (dell-11m) | Organismo autonomo, GPU GTX 1650 (CUDA), ollama residente, runner self-hosted GitHub, crons del organismo | La conectividad remota queda fuera de este inventario; `~/plataforma/` = espejo de `cultura/mak_plataforma/`; Blender 4.5.3 LTS portable en `~/blender/` |
-| xio (Xiaomi, HyperOS) | Server Termux 63 plugins, hotspot router activo (32 clientes, sin AP isolation), FOH monitor show | on-device Shizuku/rish, puerto 5000; ver `xio/RUNBOOK.md` |
+| MAK (Debian 12, host actual) | Organismo autonomo, GPU GTX 1650 (CUDA), runner self-hosted GitHub y hub local | `~/plataforma/` = espejo de `cultura/mak_plataforma/`; Blender 4.5.3 LTS portable en `~/blender/`; la medicion 2026-08-16 encontro el hub activo en 8900; 8890/8891 no escuchaban |
+| WIN (archivo historico) | Evidencia y origen de la migracion | `/home/mak/WIN` es read-only para la operacion; no es runtime ni consumidor de APIs actuales |
 | OneDrive / Google Drive | Storage de entrega de renders | rclone en MAK (`onedrive-rclone.service`), remote `gdrive:` |
+
+XIO no forma parte de la superficie operacional actual ni del conteo de APIs;
+su material queda como referencia historica separada.
 
 ## 4. Como arrancar proyecto nuevo (receta)
 
-1. Read `AGENTS.md` + `context/LAST_HANDOFF.md` + this inventory. Nothing else before starting.
+1. Read `agents.md` + `context/LAST_HANDOFF.md` + this inventory. Nothing else before starting.
 2. Clasificar la ruta destino: nucleo vivo / operacion diaria / historico / generado (ver mapa de `CLAUDE.md`) antes de tocar nada.
 3. Elegir dominio: `mak/`, `rd/`, `portfolio/`, `data/`, `capabilities/`,
    `products/`, `operations/` o `tests/`; estos no son ramas permanentes.
@@ -256,6 +322,8 @@ tabla; archivo sin entrada = ratchet rojo.
 | `iskvw_piel_smoke.mjs` | VIVO | ejecuta el JS real de la piel del campo en node con stubs de DOM, recorre el campo para que el codigo por-nodo corra de verdad, y sale distinto de cero ante cualquier error (incluidos los async); existe porque #403 dejo `destino`/`dy` fuera de scope y todo pytest siguio verde con el portafolio muerto en el primer frame; consumido por `tests/test_iskvw_piel_smoke.py`. Desde el patch de efectos tambien lo MIDE: arranca la piel tres veces -- sin `datos/tablero.json`, con el tablero publicado (llave maestra apagada) y con la llave encendida -- y exige que las dos primeras dibujen marca por marca lo mismo y que la tercera deforme de verdad (posiciones desplazadas, colores corridos, la lectura arrastrada por la gravedad). Ademas corre cada llave por-efecto A SOLAS y exige la firma que solo ese efecto deja, y verifica que la capa de sala (`mejoras.venue3d`, mismo fetch del tablero) aparezca exactamente cuando la llave lo dice. Una llave que se publica apagada es codigo que nadie mira: por eso se mide en CI y no se declara | 2026-07-31 |
 | `validar_curaduria.py` | VIVO | valida `iskvw/datos/curaduria.json` (y `tablero.json`) contra el esquema que lee `aplicar_curaduria()` y contra el archivo real en disco: ids desconocidos o duplicados, campos invalidos, svg firmado ausente, diacriticos mutilados (la clase de defecto "reduciendo ano") -- todo lo que el consumidor traga en silencio, dicho en voz alta antes de commitear. Salida medida (ERROR/AVISO), exit 1 con errores: sirve en CI. Consumido por `tests/test_validar_curaduria.py` (que ademas corre el CLI sobre los archivos reales del repo) y `tests/test_curaduria_roundtrip.py` | 2026-07-31 |
 | `gen_vinculos_iskvw.py` | VIVO | vinculos entre obras CON EL MOTIVO adentro, sacados de los conceptos que la percepcion extrajo y que nadie usaba (7.985 menciones). `gen_archivo_iskvw.py` vincula por etiqueta compartida y lo declara: "nadie midio que se parezcan, comparten una palabra"; esto declara `clase: concepto` y lista los conceptos compartidos en `porque`, asi que el vinculo se puede refutar. Medido antes de escribirlo: 1 concepto compartido da 31.992 pares sobre 1.359 obras (una maraña), 2 dan 1.851 vinculos que alcanzan 863 obras (64%). Tres exclusiones, todas CONTADAS y reportadas -- conceptos en una sola obra (819, no vinculan nada), los mas frecuentes (uno en 305 obras es una CATEGORIA) y los que pasan `--tope-obras`. El pliegue de plural/tilde es para AGRUPAR: `porque` muestra la grafia que el modelo escribio, porque `patrone geometrico` es una llave y no una palabra. `tests/test_vinculos_iskvw.py` | 2026-08-01 |
+| `route_idea.py` | VIVO | CLI que convierte una idea o incidente en un packet minimo por area; consume `flujo.diagnostics.route_idea` y evita que un agente externo tenga que leer todo el repo; `tests/test_diagnostics.py` | 2026-08-16 |
+| `render_archaeology_deliverables.py` | REVISAR | utilidad determinista de solo lectura para convertir un snapshot SQLite de arqueologia en inventario, ledger y grafo de propuestas; permanece como herramienta historica hasta que exista un consumidor operativo delimitado | 2026-08-16 |
 | `gen_capas_iskvw.py` | VIVO | corre las capas de `data/iskvw_capas.json` sobre `iskvw/datos/campo.json` y deja un dato medido por obra (hoy `tilde`, el residuo diacritico de lo percibido via `tools/tilde_meter.py`, y `trazo`, la densidad del vector); sumar una capa es una entrada mas y una funcion, sin tocar la piel; `tests/test_capas_iskvw.py` | 2026-07-27 |
 | `gen_campo_iskvw.py` | VIVO | genera `iskvw/datos/campo.json`, las posiciones del campo de iskvw; proyecta los embeddings del micelio de MAK con t-SNE (48.9% de vecindad conservada, medido contra PCA 3.8% y fuerzas 16.4%) y toma que tipos entran de `data/iskvw_campo_filtro.json`; consumido por `iskvw/piel/campo/index.html` | 2026-07-27 |
 | `gen_iskvw_prototipo.py` | VIVO | genera `docs/iskvw/prototipo.html`, el prototipo del portafolio ISKVW; lee `tools/portfolio/proyectos.json` y mide el repo al generar, sin telemetria decorativa | 2026-07-26 |
