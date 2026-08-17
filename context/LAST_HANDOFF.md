@@ -12201,3 +12201,33 @@ databases, quarantine, fixtures, probes and optional reports unstaged.
 Last verified: 2026-08-16 America/Santiago — full Python suite, TypeScript,
 frontend build, live hub and offline visual QA passed; responsive hub and SVG
 offline fallback fixes are ready to publish.
+
+## Phase 537 — reviewed set published
+
+The reviewed implementation and evidence-boundary set was committed and
+published directly to the single deployment trunk:
+
+    commit: `441ea72 fix(hub): close offline QA gaps`
+    `git push origin main` -> exit 0
+    `HEAD == origin/main == 441ea72`
+    `systemctl --user is-active mak-hub.service` -> active
+    `curl http://127.0.0.1:8900/health` -> HTTP 200
+
+Published files included the five reviewed historical edits, `MAPA.md`, the
+current handoff/master boundary, `PHASE_REPORTS_INDEX.md`, the 748-report
+classification, the responsive hub fix and the offline SVG fallback. No
+`context/PHASE*` report, rollback database, fixture, quarantine, probe or WIN
+archive was staged. `WIN`, `data/rd.db` and `data/rd_datos.db` remain present.
+
+The project test environment is ignored at `.venv/` and remains local-only.
+The remaining untracked phase corpus is intentional archival evidence, not
+unfinished implementation.
+
+## Next concrete action
+
+The four internal objective items are complete. Future work starts from a new
+consumer or bug: use `agents.md` plus this handoff, run the focused test and
+visual checks, and keep historical phase evidence outside the staging set.
+
+Last verified: 2026-08-16 America/Santiago — published `main` is synchronized,
+the hub is healthy, and protected historical surfaces are preserved.

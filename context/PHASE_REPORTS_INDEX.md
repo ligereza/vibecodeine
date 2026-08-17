@@ -55,7 +55,7 @@ the active context path only after a separate manifest and reference audit.
 From `/home/mak/flujo`:
 
 ```text
-find context -maxdepth 1 -type f -name 'PHASE*'
+find context -maxdepth 1 -type f -name 'PHASE*' ! -name 'PHASE_REPORTS_INDEX.md'
 ```
 
 The count and extension totals above are a measured snapshot, not a promise
