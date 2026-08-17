@@ -29,6 +29,7 @@ def test_reusa_helpers_de_blender_nodes():
 
 def test_build_flyer_nodes_video_existe_y_es_funcion():
     assert callable(bnv.build_flyer_nodes_video)
+    assert callable(bnv.swap_existing_movie_nodes)
 
 
 def test_parse_args_video_requiere_input():

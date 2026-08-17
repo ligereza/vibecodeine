@@ -132,6 +132,7 @@ def test_og_video_presente_baja_thumbnail_igual(fake_curl_cffi, tmp_path):
     fake_curl_cffi({
         PAGE_URL: _FakeResponse(text=html),
         IMG_URL: _FakeResponse(content=b"thumbnail-bytes"),
+        video_url: _FakeResponse(content=b"mp4-bytes"),
     })
 
     out = _cffi_download(PAGE_URL, "DZdW4_vmY4l", tmp_path)
@@ -139,8 +140,10 @@ def test_og_video_presente_baja_thumbnail_igual(fake_curl_cffi, tmp_path):
     assert out is not None
     assert out["is_video"] is True
     assert out["media_type"] == "video"
-    assert out["files"] == [str(tmp_path / "input_ig.jpg")]
+    assert out["files"] == [str(tmp_path / "input_ig.jpg"), str(tmp_path / "input_ig.mp4")]
+    assert out["video_files"] == [str(tmp_path / "input_ig.mp4")]
     assert (tmp_path / "input_ig.jpg").read_bytes() == b"thumbnail-bytes"
+    assert (tmp_path / "input_ig.mp4").read_bytes() == b"mp4-bytes"
 
 
 def test_caption_escrita_en_archivo(fake_curl_cffi, tmp_path):

@@ -9,6 +9,7 @@ Uso:
         --frame-start 1 --frame-end 600 --min-size 20000
 """
 import os
+import json
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -22,11 +23,13 @@ def _parse_args(argv):
     parsed = {
         "frame": None, "input": None, "color_png": None, "out_dir": None,
         "frame_start": 1, "frame_end": None, "min_size": 20000,
+        "manifest": None,
     }
     key_map = {
         "--frame": "frame", "--input": "input", "--color-png": "color_png",
         "--out-dir": "out_dir", "--frame-start": "frame_start",
         "--frame-end": "frame_end", "--min-size": "min_size",
+        "--manifest": "manifest",
     }
     i = 0
     while i < len(args):
@@ -79,16 +82,42 @@ def main():
         print(f"Aviso: --frame-end {frame_end} > duracion real {frame_duration}; recortando.")
         frame_end = frame_duration
 
-    for mat, nodo in bn._buscar_materiales_flyer():
-        modo = bnv.build_flyer_nodes_video(
-            mat, nodo, os.path.abspath(args["frame"]), video_path, hue, frame_duration)
-        print(f"Material '{mat.name}' {modo} por nodos VIDEO (sin Photoshop).")
+    try:
+        flyer_materials = bn._buscar_materiales_flyer()
+    except SystemExit as exc:
+        print(f"Plantilla video detectada; no se usa el grafo flyer: {exc}")
+        flyer_materials = []
 
-    print(f"GPU: {force_gpu()}")
+    if flyer_materials:
+        for mat, nodo in flyer_materials:
+            modo = bnv.build_flyer_nodes_video(
+                mat, nodo, os.path.abspath(args["frame"]), video_path, hue, frame_duration)
+            print(f"Material '{mat.name}' {modo} por nodos VIDEO (sin Photoshop).")
+    else:
+        swapped = bnv.swap_existing_movie_nodes(video_path, frame_duration)
+        if swapped < 1:
+            raise SystemExit("VIDEO_NODE_REQUIRED: no hay nodos TEX_IMAGE con source MOVIE")
+        print(f"Nodos MOVIE existentes re-apuntados: {swapped}")
 
     scene = bpy.context.scene
+    scene.render.engine = "CYCLES"
+    gpu_report = force_gpu(prefer=("CUDA", "OPTIX", "HIP"))
+    if gpu_report.get("device") != "GPU":
+        raise SystemExit(f"GPU_REQUIRED: {gpu_report}")
+    print(f"GPU: {gpu_report}")
+
+    scene.frame_start = frame_start
+    scene.frame_end = frame_end
+    video_fps = getattr(probe, "fps", 0) or 0
+    if video_fps:
+        scene.render.fps = round(video_fps)
     scene.cycles.samples = 128
     scene.cycles.use_denoising = False
+    scene.render.use_simplify = True
+    scene.cycles.texture_limit_render = "2048"
+    scene.cycles.use_auto_tile = True
+    scene.cycles.tile_size = 512
+    scene.render.use_persistent_data = False
     scene.render.image_settings.file_format = "PNG"
     scene.render.image_settings.color_mode = "RGB"
 
@@ -110,6 +139,26 @@ def main():
         print(f"OK frame {f}/{frame_end} -> {out_path} "
               f"({os.path.getsize(out_path)} bytes)")
 
+    report = {
+        "input": video_path,
+        "frame_start": frame_start,
+        "frame_end": frame_end,
+        "source_frames": frame_duration,
+        "fps": scene.render.fps,
+        "samples": scene.cycles.samples,
+        "engine": scene.render.engine,
+        "gpu": gpu_report,
+        "output_dir": os.path.abspath(out_dir),
+        "rendered": rendered,
+        "skipped": skipped,
+        "png_count": rendered + skipped,
+    }
+    if args.get("manifest"):
+        manifest = bn._resolver_ruta(args["manifest"], base_blend)
+        os.makedirs(os.path.dirname(os.path.abspath(manifest)), exist_ok=True)
+        with open(manifest, "w", encoding="utf-8") as stream:
+            json.dump(report, stream, indent=2, ensure_ascii=True)
+    print(f"MANIFEST: {json.dumps(report, ensure_ascii=True)}")
     print(f"Listo: {rendered} renderizados, {skipped} saltados (ya existian).")
 
 
