@@ -13,6 +13,7 @@ import html as html_mod
 import re
 import shutil
 import time
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -24,6 +25,8 @@ SHORTCODE_RE = [
 
 _FETCH_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
              "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+_SNAPINSTA_BASE = "https://snapinsta.ai/"
+_SNAPINSTA_MEDIA_UA = "TelegramBot (like TwitterBot)"
 
 
 def extract_shortcode(url: str) -> str | None:
@@ -47,6 +50,11 @@ def canonicalizar_url(url: str) -> str:
     )
 
 
+def _url_requires_video(url: str) -> bool:
+    """Return whether the URL path declares a video-like Instagram post."""
+    return bool(re.search(r"/(?:reels?|tv)/", url, re.IGNORECASE))
+
+
 def _fetch(url: str, referer: str | None = None) -> bytes:
     headers = {"User-Agent": _FETCH_UA}
     if referer:
@@ -54,6 +62,20 @@ def _fetch(url: str, referer: str | None = None) -> bytes:
     req = urllib.request.Request(url, headers=headers)
     with urllib.request.urlopen(req, timeout=30) as r:
         return r.read()
+
+
+def _post_form(url: str, fields: dict[str, str], referer: str) -> bytes:
+    """POST a form with the same public, no-login provider boundary."""
+    data = urllib.parse.urlencode(fields).encode("utf-8")
+    headers = {
+        "User-Agent": _FETCH_UA,
+        "Referer": referer,
+        "Origin": "https://snapinsta.ai",
+        "Content-Type": "application/x-www-form-urlencoded",
+    }
+    req = urllib.request.Request(url, data=data, headers=headers)
+    with urllib.request.urlopen(req, timeout=60) as response:
+        return response.read()
 
 
 def _download_file(url: str, destination: Path) -> Path:
@@ -164,6 +186,139 @@ def _cffi_download(url: str, shortcode: str, output_dir: Path) -> dict | None:
     }
 
 
+def _decode_snapinsta_layer(source: str) -> str | None:
+    """Unpack one obfuscated response layer from SnapInsta's public form."""
+    packed = re.search(
+        r'eval\(function\(h,u,n,t,e,r\).*?\}\("([^\"]*)",\s*\d+,"'
+        r'([^\"]*)",\s*(\d+),\s*(\d+),\s*\d+\)\)',
+        source,
+        re.DOTALL,
+    )
+    if not packed:
+        return None
+    encoded, alphabet_map, offset, exponent = packed.groups()
+    offset = int(offset)
+    exponent = int(exponent)
+    delimiter = alphabet_map[exponent]
+    alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/"
+    head = alphabet[:exponent]
+    digits = alphabet[:10]
+    decoded: list[str] = []
+    i = 0
+    while i < len(encoded):
+        chunk: list[str] = []
+        while i < len(encoded) and encoded[i] != delimiter:
+            chunk.append(encoded[i])
+            i += 1
+        if i < len(encoded):
+            i += 1
+        for index, char in enumerate(alphabet_map):
+            chunk = [str(index) if item == char else item for item in chunk]
+        value = 0
+        for power, char in enumerate(reversed(chunk)):
+            digit = head.find(char)
+            if digit >= 0:
+                value += digit * (exponent ** power)
+        chars: list[str] = []
+        while value > 0:
+            chars.append(digits[value % 10])
+            value = (value - (value % 10)) // 10
+        decoded.append(chr(int("".join(reversed(chars)) or "0") - offset))
+    raw = bytes(ord(char) & 0xFF for char in "".join(decoded))
+    return raw.decode("utf-8", errors="replace")
+
+
+def _unpack_snapinsta_response(source: str) -> str:
+    """Decode the small chain of JS wrappers returned by the public form."""
+    current = source
+    for _ in range(3):
+        decoded = _decode_snapinsta_layer(current)
+        if decoded is None:
+            return current
+        current = decoded
+    return current
+
+
+def _is_mp4_file(path: Path) -> bool:
+    """Reject provider false positives such as JPEG bytes labelled MP4."""
+    try:
+        if path.stat().st_size < 32_000:
+            return False
+        with path.open("rb") as stream:
+            header = stream.read(32)
+    except OSError:
+        return False
+    return len(header) >= 12 and header[4:8] == b"ftyp"
+
+
+def _snapinsta_download(url: str, shortcode: str, output_dir: Path) -> dict | None:
+    """Fallback via SnapInsta's public no-login web form.
+
+    This is deliberately a video-only fallback. The page is not an official
+    API, its response is obfuscated JavaScript, and its CDN can return a JPEG
+    for a reel. Accept only a real MP4 signature and a meaningful file size.
+    """
+    try:
+        page = _fetch(_SNAPINSTA_BASE)
+        token_match = re.search(
+            rb'<input\s+name=["\']token["\']\s+value=["\']([^"\']+)',
+            page,
+            re.IGNORECASE,
+        )
+        if not token_match:
+            return None
+        token = token_match.group(1).decode("utf-8", errors="replace")
+        response = _post_form(
+            _SNAPINSTA_BASE + "action2.php",
+            {"url": url, "action": "post", "lang": "en", "token": token},
+            _SNAPINSTA_BASE,
+        )
+        unpacked = _unpack_snapinsta_response(
+            response.decode("utf-8", errors="replace")
+        )
+        links = re.findall(
+            r"https://d\.rapidcdn\.app/v2\?token=[^'\"\\\s]+?&dl=1",
+            unpacked,
+        )
+        if not links:
+            return None
+        media_url = html_mod.unescape(links[-1]).replace("\\/", "/")
+        video_dst = output_dir / "input_ig.mp4"
+        partial = output_dir / "input_ig.mp4.part"
+        request = urllib.request.Request(
+            media_url,
+            headers={
+                "User-Agent": _SNAPINSTA_MEDIA_UA,
+                "Referer": _SNAPINSTA_BASE,
+            },
+        )
+        with urllib.request.urlopen(request, timeout=120) as response_stream:
+            with partial.open("wb") as stream:
+                shutil.copyfileobj(response_stream, stream, length=1024 * 1024)
+        if not _is_mp4_file(partial):
+            partial.unlink(missing_ok=True)
+            return None
+        partial.replace(video_dst)
+        poster = output_dir / "input_ig.jpg"
+        image_files = [str(poster)] if poster.exists() else []
+        return {
+            "status": "downloaded",
+            "shortcode": shortcode,
+            "url": url,
+            "media_type": "video",
+            "files": image_files + [str(video_dst)],
+            "video_files": [str(video_dst)],
+            "image_files": image_files,
+            "file_count": len(image_files) + 1,
+            "caption": "",
+            "owner": "",
+            "date": "",
+            "is_video": True,
+        }
+    except Exception:
+        return None
+
+
 def _parth_download(url: str, shortcode: str, output_dir: Path) -> dict:
     """Via primaria: parth-dl (pip install parth-dl).
 
@@ -239,18 +394,20 @@ def _parth_download(url: str, shortcode: str, output_dir: Path) -> dict:
 
 
 def download_post(url: str, output_dir: Path, retries: int = 1) -> dict:
-    """Descarga IG: parth-dl primaria, curl_cffi (impersonate) secundaria.
+    """Descarga IG: parth-dl, curl_cffi y SnapInsta video fallback.
 
     parth-dl cubre posts, carruseles y video/reel (thumbnail como imagen),
     pero en Linux puede pegar login-wall por fingerprint TLS -- ahi entra
     curl_cffi (verificado 2026-07-23 en el box MAK). Si ninguna via sirve,
     retorna manual_required con la razon. imginn quedo 403 Cloudflare
     (retirado 2026-07-25); instaloader murio (IG exige login incluso anonimo).
+    SnapInsta solo se usa para rutas video-like y valida la firma MP4.
     """
     url = canonicalizar_url(url)
     shortcode = extract_shortcode(url)
     if not shortcode:
         return {"status": "error", "reason": "shortcode_no_detectado", "url": url}
+    requires_video = _url_requires_video(url)
 
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -262,7 +419,10 @@ def download_post(url: str, output_dir: Path, retries: int = 1) -> dict:
     last_err = ""
     for attempt in range(retries + 1):
         try:
-            return _parth_download(url, shortcode, output_dir)
+            resultado = _parth_download(url, shortcode, output_dir)
+            if requires_video and not resultado.get("video_files"):
+                raise RuntimeError("video_sin_mp4")
+            return resultado
         except ImportError:
             last_err = "parth_dl_no_instalado"
             break
@@ -282,6 +442,17 @@ def download_post(url: str, output_dir: Path, retries: int = 1) -> dict:
 
     resultado = _cffi_download(url, shortcode, output_dir)
     if resultado is not None:
-        return resultado
+        if requires_video and not resultado.get("video_files"):
+            last_err = "video_sin_mp4"
+        else:
+            return resultado
 
-    return {"status": "manual_required", "reason": last_err, "url": url}
+    if requires_video:
+        resultado = _snapinsta_download(url, shortcode, output_dir)
+        if resultado is not None and resultado.get("video_files"):
+            return resultado
+
+    manual = {"status": "manual_required", "reason": last_err, "url": url}
+    if requires_video:
+        manual.update({"media_type": "video", "video_files": [], "is_video": False})
+    return manual

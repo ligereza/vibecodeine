@@ -51,6 +51,75 @@ def test_download_post_shortcode_no_detectado():
     assert out["reason"] == "shortcode_no_detectado"
 
 
+def test_download_post_reel_sin_mp4_no_se_convierte_en_imagen(monkeypatch, tmp_path):
+    def fake_parth(url, shortcode, output_dir):
+        dst = output_dir / "input_ig.jpg"
+        dst.write_bytes(b"poster")
+        return {
+            "status": "downloaded",
+            "shortcode": shortcode,
+            "url": url,
+            "media_type": "image",
+            "files": [str(dst)],
+            "video_files": [],
+            "image_files": [str(dst)],
+            "file_count": 1,
+            "is_video": False,
+        }
+
+    def fake_cffi(url, shortcode, output_dir):
+        return fake_parth(url, shortcode, output_dir)
+
+    monkeypatch.setattr(ig_download, "_parth_download", fake_parth)
+    monkeypatch.setattr(ig_download, "_cffi_download", fake_cffi)
+
+    out = download_post("https://www.instagram.com/reel/VIDEO3/", tmp_path)
+
+    assert out["status"] == "manual_required"
+    assert out["reason"] == "video_sin_mp4"
+    assert out["media_type"] == "video"
+
+
+def test_download_post_reel_usa_snapinsta_solo_como_video_fallback(monkeypatch, tmp_path):
+    def fail_primary(url, shortcode, output_dir):
+        raise RuntimeError("login wall")
+
+    def fake_snap(url, shortcode, output_dir):
+        dst = output_dir / "input_ig.mp4"
+        dst.write_bytes(b"mp4")
+        return {
+            "status": "downloaded",
+            "shortcode": shortcode,
+            "url": url,
+            "media_type": "video",
+            "files": [str(dst)],
+            "video_files": [str(dst)],
+            "image_files": [],
+            "file_count": 1,
+            "is_video": True,
+        }
+
+    monkeypatch.setattr(ig_download, "_parth_download", fail_primary)
+    monkeypatch.setattr(ig_download, "_cffi_download", lambda *args: None)
+    monkeypatch.setattr(ig_download, "_snapinsta_download", fake_snap)
+
+    out = download_post("https://www.instagram.com/reel/VIDEO4/", tmp_path)
+
+    assert out["status"] == "downloaded"
+    assert out["media_type"] == "video"
+    assert out["video_files"] == [str(tmp_path / "input_ig.mp4")]
+
+
+def test_is_mp4_file_rechaza_jpeg_disfrazado(tmp_path):
+    fake_jpeg = tmp_path / "fake.mp4"
+    fake_jpeg.write_bytes(b"\xff\xd8\xff\xe0" + b"x" * 40_000)
+    fake_mp4 = tmp_path / "real.mp4"
+    fake_mp4.write_bytes(b"\x00\x00\x00\x20ftypisom" + b"x" * 40_000)
+
+    assert ig_download._is_mp4_file(fake_jpeg) is False
+    assert ig_download._is_mp4_file(fake_mp4) is True
+
+
 def test_download_post_exitoso_imagen(monkeypatch, tmp_path):
     def fake_parth(url, shortcode, output_dir):
         dst = output_dir / "input_ig.jpg"
