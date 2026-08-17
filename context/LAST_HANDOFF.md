@@ -13094,11 +13094,11 @@ Riesgos y límites:
 
 ## Next concrete action
 
-Revisar el diff de los cuatro archivos de integración, ejecutar la suite
-relevante completa y crear el commit/push de esta corrección sin incluir los
-archivos históricos no relacionados del worktree. Después, el siguiente test
-operativo será ejecutar el workflow del issue autorizado y comprobar descarga,
-render completo calculado y publicación en OneDrive; no lanzarlo en paralelo
-ni usar el poster como sustituto.
+El commit `b7b19fd` ya está creado y publicado en `origin/main`; incluyó solo
+los cinco archivos de integración y excluyó el worktree histórico. La suite
+completa terminó verde antes del push. El siguiente test operativo es ejecutar
+el workflow del issue autorizado y comprobar descarga, render completo
+calculado y publicación en OneDrive; no lanzarlo en paralelo ni usar el poster
+como sustituto.
 
 Last verified: 2026-08-17 America/Santiago — Phase 555.
