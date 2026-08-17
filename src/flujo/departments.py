@@ -40,6 +40,7 @@ DEPARTMENTS: dict[str, dict[str, Any]] = {
         "surface": "/departments/cultura",
         "tool_links": [
             {"label": "Research service", "path": "/research/"},
+            {"label": "Research jobs / Jardines", "path": "/research-garden/"},
             {"label": "Curation sources", "path": "/api/cultura/sources"},
             {"label": "Capabilities", "path": "/api/cultura/capabilities"},
             {"label": "Opportunity gate", "path": "/api/cultura/opportunity-gate"},

@@ -1,6 +1,32 @@
 # Operational Handoff
 
-## CURRENT AUTHORITATIVE CHECKPOINT — Phase 495
+## CURRENT AUTHORITATIVE CHECKPOINT — Phase 539
+
+Read this block first after compaction. It supersedes older provider and
+service notes below.
+
+- Current objective: keep the user-selected API/backend set installed,
+  configured and foreground-tested without exposing secrets or performing
+  uncontrolled external writes.
+- Physical authority remains `/home/mak/*`; `/home/mak/flujo` is the authoring
+  baseline; `/home/mak/WIN` and protected databases remain evidence.
+- Verified on 2026-08-17: selected Research env keys for Ollama, Groq and
+  Firecrawl; also MAK hub `127.0.0.1:8900`, SearXNG `127.0.0.1:8888`,
+  Crawl4AI with Chromium, GitHub read API, public Instagram metadata, Google
+  Drive and OneDrive rclone remotes. Watsonx and Tavily remain valid in the
+  protected legacy env. NVIDIA and two Gemini keys passed read-only catalog
+  probes but remain outside the active MAK research roster.
+- Installed change: `pyproject.toml` now declares the reproducible optional
+  extra `.[research]` with `crawl4ai>=0.9.2,<1.0`; project `.venv` has it and
+  `pip check` is clean. Existing SearXNG container `searxng` is running on
+  localhost with Docker restart policy `unless-stopped`.
+- Cerebras is configured but its account returned HTTP 402 `Payment Required`;
+  Azure, Canva and ntfy are absent by deliberate user selection. These are not
+  installation failures and must not be represented as active providers.
+- No API upload, notification publish, GitHub issue creation, or real EVENT
+  replay was performed. The single user-facing MAK interface remains 8900.
+
+## Historical checkpoint — Phase 495
 
 Read this block first after compaction. Later phase notes are historical
 evidence unless they are superseded by this checkpoint or a newer checkpoint.
@@ -12231,3 +12257,345 @@ visual checks, and keep historical phase evidence outside the staging set.
 
 Last verified: 2026-08-16 America/Santiago — published `main` is synchronized,
 the hub is healthy, and protected historical surfaces are preserved.
+
+## Phase 538 — API installation and foreground probes
+
+Installed and verified without exposing credentials:
+
+    `.venv/bin/python -m pip install 'crawl4ai>=0.7.8'` -> exit 0,
+    installed Crawl4AI 0.9.2 and dependencies;
+    `.venv/bin/python -m playwright install chromium` -> exit 0, Chromium,
+    headless shell and FFmpeg installed in the user cache;
+    `pip install -e '.[dev,research]'` -> exit 0;
+    `.venv/bin/python -m pip check` -> exit 0, no broken requirements;
+    `docker start searxng` -> exit 0;
+    `GET http://127.0.0.1:8888/search?q=mak&format=json` -> HTTP 200,
+    29 results;
+    `docker update --restart unless-stopped searxng` -> exit 0;
+    `capture_url('https://example.com', backend='crawl4ai')` -> captured,
+    backend crawl4ai, HTTP 200, 165 text characters;
+    `tavily_search(...)` with the protected Research environment -> HTTP 200,
+    one result;
+    `watsonx_chat(...)` with the protected Research environment -> returned a
+    response;
+    Ollama `/api/tags` and `/api/generate` -> HTTP 200;
+    NVIDIA NIM `/v1/models` -> HTTP 200, 102 models;
+    Gemini catalog keys 1 and 2 -> HTTP 200, 50 models each; key 3 -> HTTP 401;
+    `gh auth status` and GitHub rate limit -> authenticated, 5000 remaining;
+    `rclone lsd gdrive:` and `rclone lsd onedrive:` -> exit 0;
+    `parth-dl --json https://www.instagram.com/nasa/` -> exit 0 with profile
+    metadata.
+
+Provider gaps measured, not hidden:
+
+    Groq -> HTTP 401;
+    Cerebras -> HTTP 401;
+    Azure -> unusable literal `${OPENAI_AZURE_ENDPOINT}` in `cultura/.dev`;
+    Firecrawl -> no active `FIRECRAWL_API_KEY`;
+    Canva -> no active `CANVA_API_TOKEN`;
+    ntfy -> no `NTFY_TOPIC_IN` or `NTFY_TOPIC_OUT`.
+
+The six gaps need valid credentials or a user-selected notification topic;
+installing more Python packages cannot repair them. No upload, publish,
+notification, issue creation, or EVENT replay was performed. `pyproject.toml`
+declares the new optional `research` extra; `CAPACIDADES.md` and this handoff
+record the current matrix. No WIN, database, credential value or historical
+phase report was deleted.
+
+## Open integration items
+
+    - supply valid Groq and Cerebras keys if those providers remain wanted;
+    - replace the Azure placeholder with the real endpoint, deployment and key
+      only if Azure remains wanted;
+    - supply Firecrawl and Canva credentials for real provider probes;
+    - choose ntfy topics before enabling mobile notification transport;
+    - run the full regression suite after this optional dependency change;
+    - keep the retired/external items from older phases classified separately.
+
+## Next concrete action
+
+Run the full project regression suite and recheck the live hub/storage
+surfaces. Then stop at the six missing-credential boundaries instead of
+fabricating provider access.
+
+Last verified: 2026-08-17 America/Santiago — Phase 538 API probes.
+
+## Phase 539 — selected Research API credentials verified
+
+The user supplied a reduced provider set in `/home/mak/research/research.env`.
+The file was inspected without printing values:
+
+    mode 600, owner mak, 482 bytes;
+    valid KEY=VALUE lines, no duplicate keys, no malformed lines;
+    selected keys present: GROQ, CEREBRAS, FIRECRAWL and OLLAMA.
+
+Foreground probes using that exact file:
+
+    `LLM._groq(..., max_tok=8)` -> OK, 2-character response;
+    `LLM._cerebras(..., max_tok=8)` -> HTTP 402 `Payment Required`;
+    `LLM._ollama(..., max_tok=8)` -> OK, 3-character response;
+    `capture_url('https://example.com', backend='firecrawl')` -> captured,
+    HTTP 200, 167 text characters.
+
+The format and credentials are therefore correct for Groq, Firecrawl and
+Ollama. Cerebras is syntactically configured but the provider account has no
+available credit; no code or dependency change can repair that. Azure, Canva
+and ntfy are absent from the selected set. No external upload or notification
+was performed. The root repo documentation remains the authority for the
+selected set; no secret value was written to Git.
+
+## Open integration items
+
+    - Cerebras account credit/payment is the only selected-provider failure;
+      retry the same probe after the account is funded;
+    - Watsonx/Tavily credentials still live in the protected legacy env and
+      should be migrated only if the user wants them in the selected set;
+    - keep Azure, Canva and ntfy excluded unless explicitly selected later.
+
+## Next concrete action
+
+No code repair is justified for the selected set. If Cerebras credit is
+restored, rerun its eight-token probe and the full regression suite.
+
+Last verified: 2026-08-17 America/Santiago — Phase 539 selected env probe.
+
+## Phase 540 — Cerebras model availability check
+
+The selected Cerebras model was compared with a second public model. Both
+minimal foreground calls returned the same account response:
+
+    `CEREBRAS_MODEL=gpt-oss-120b` -> HTTP 402 `Payment Required`;
+    `CEREBRAS_MODEL=gemma-4-31b` -> HTTP 402 `Payment Required`.
+
+The configured model is therefore not the cause. The account has no available
+credit/payment capacity. Groq remains healthy with the configured
+`llama-3.3-70b-versatile` model. No environment file was changed by this
+probe; the temporary second model existed only in the child process.
+
+## Next concrete action
+
+Keep Groq and Ollama as active fallbacks. Retry Cerebras after account credit
+is restored; do not rotate the model or expose the key as a supposed fix.
+
+Last verified: 2026-08-17 America/Santiago — Phase 540 model check.
+
+## Phase 541 — Jardines interpretativos: research model and semantic workflow
+
+The user requested a complete research pass over:
+
+    `/home/mak/curatoria_inbox/funding-lab/JARDINES_INTERPRETATIVOS.md`
+
+No legacy skill was used as project authority. The document was modeled from
+its own text, current local contracts and a bounded review of official
+reference pages. The source document remains untouched.
+
+Created:
+
+    `tools/interpretive_garden_workflow.py`
+    `/home/mak/research/jardines_interpretativos/jardines_interpretativos.sqlite`
+    `/home/mak/research/jardines_interpretativos/JARDINES_INTERPRETATIVOS_RESEARCH.md`
+    `/home/mak/research/jardines_interpretativos/jardines_interpretativos_correlations.csv`
+    `/home/mak/research/jardines_interpretativos/jardines_interpretativos_process_semantics.csv`
+
+The generated projection contains:
+
+    1 source document;
+    12 separated topics;
+    22 claims typed as documented_fact, design_decision or hypothesis;
+    40 URLs preserved as source candidates;
+    12 reference tools/families;
+    12 process semantic contracts;
+    10 typed correlations;
+    8 constraints;
+    1 local experiment and 1 audit event.
+
+Foreground validation:
+
+    `.venv/bin/python -m py_compile tools/interpretive_garden_workflow.py`
+    -> exit 0;
+    builder execution -> exit 0, `urls=40`, `validation=PASS`;
+    SQLite cross-validation -> exit 0, all expected counts and foreign-key
+    links passed, no duplicate source URLs;
+    report and both CSV projections were inspected successfully.
+
+Semantic decision:
+
+    `discover -> capture -> extract -> normalize -> relate -> contextualize
+    -> interpret -> simulate -> validate -> curate -> publish -> audit`.
+
+The report keeps `funding-lab` as an adjacent consumer. Its deterministic
+paper-trading ledger may reuse provenance contracts but is not merged with
+the cultural interpretation model. External references remain candidates;
+they are not installed dependencies or proof of production suitability.
+
+Risks and rollback:
+
+    the SQLite/report directory is derived and reproducible;
+    rerunning the builder clears only its own generated tables, never the
+    source document or external evidence;
+    no credentials, databases used by MAK, WIN evidence, services or Git
+    history were changed.
+
+## Open integration items
+
+    - verify the remaining reference families one by one against a real MAK
+      consumer before installing or adopting any tool;
+    - add entity/relation rows from a concrete research topic and test the
+      `discover` through `audit` path with a fixture;
+    - decide whether a future read-only research UI should query this SQLite
+      projection or remain CLI-only until the schema gains real corpus data.
+
+## Next concrete action
+
+Run a read-only fixture through the semantic stages using one concrete topic
+from Jardines (plant/food/substance), confirm that claims, relations,
+interpretation limits and audit events remain distinct, then evaluate the
+first real MAK consumer. Do not install external reference tools or connect
+mutating APIs until that fixture passes.
+
+Last verified: 2026-08-17 America/Santiago — Phase 541 local research model.
+
+## Phase 542 — entity/relation semantic fixture
+
+The first model was extended so correlation is represented at two levels:
+
+    topic correlations for architecture-level navigation;
+    entities, claim_entities, contexts, relations, interpretations, states
+    and results for concrete research objects and their provenance.
+
+The builder now seeds a bounded fixture from the document itself:
+
+    `mycelium_network -> illustrates -> relation`;
+    `light_competition -> influences -> plant_form`;
+    `growth_rules -> produces -> plant_form`;
+    `analogy -> maps_to -> growth_rules`.
+
+The interpretation fixture explicitly records correspondence, break point,
+uncertainty and the fact that no visual prototype was executed yet. This is a
+hypothesis/model record, not a biological claim.
+
+Foreground validation:
+
+    compile -> exit 0;
+    builder -> exit 0, `urls=40`, `validation=PASS`;
+    SQLite semantic fixture -> exit 0, expected counts matched:
+    9 entities, 8 claim links, 4 relations, 1 context, 1 interpretation,
+    1 state and 1 result, with all previous counts preserved.
+
+No external tool was installed, no remote API was called by the builder, and
+the source document and MAK operational databases were not modified.
+
+## Next concrete action
+
+Use one real research question from the user as the first non-fixture input,
+run it through the same semantic stages, and evaluate which existing MAK
+research consumer should own the resulting records. Keep the first run
+read-only and do not install any of the 12 external reference candidates.
+
+Last verified: 2026-08-17 America/Santiago — Phase 542 semantic fixture.
+
+## Phase 543 — reusable research job router
+
+The Jardines projection now has a reusable registry layer, without creating a
+new database per idea:
+
+    `tools/research_job_router.py`
+    tables in `jardines_interpretativos.sqlite`:
+    `domain_adapters`, `research_jobs`, `job_steps`, `job_relations`.
+
+The router accepts a question, detects or receives a domain, selects an
+adapter and creates the same twelve-step semantic path. Current adapters are:
+
+    `plants`, `vj`, `curatoria`, `rd`, `portfolio`, `general`.
+
+The provider policy is declarative and staged:
+
+    local-first discovery;
+    repository/search API or SearXNG for candidates;
+    Firecrawl for official capture with URL provenance;
+    Groq or Watson for structured extraction;
+    Ollama fallback;
+    deterministic validation and audit before publication.
+
+The router deliberately made zero external calls. It was run with two
+fixtures:
+
+    plant cultivation manuals for a personal 3D work -> `plants`, job 1;
+    free VJ tools library for colleagues -> `vj`, job 2.
+
+Foreground validation:
+
+    both router runs -> exit 0, `external_calls=0`, `validation=PASS`;
+    builder regeneration -> exit 0, `urls=40`, `validation=PASS`;
+    persistence check -> exit 0, both jobs and 24 pending steps preserved;
+    `py_compile` for both scripts -> exit 0.
+
+This proves domain separation and persistence, not yet the external research
+execution. No API credits were consumed, no tool was installed and no public
+web route was changed.
+
+## Next concrete action
+
+Execute the `plants` job's discovery/capture slice using the configured free
+tier providers, recording provider, URL, hash, response status, license and
+cost/credit metadata before any model extraction. Then make the same route
+available as the single MAK 8900 research interface only after the read-only
+slice passes.
+
+Last verified: 2026-08-17 America/Santiago — Phase 543 reusable router.
+
+## Phase 544 — permanent MAK 8900 integration
+
+The reusable research layer is now connected to the actual persistent MAK Hub
+runtime. The active user unit points to `/home/mak/plataforma/hub.py`, which
+is the compatibility projection into this repository's canonical
+`cultura/mak_plataforma/hub.py`; the integration was made there, not only in
+the separate FLUJO app server.
+
+Created/connected:
+
+    `/research-garden/` -> same-origin research interface on MAK port 8900;
+    `GET /api/research/catalog` -> six domain adapters and job counts;
+    `GET /api/research/jobs` -> persistent job list and step progress;
+    `GET /api/research/job?id=N` -> full adapter, steps and relations;
+    `POST /api/research/jobs` -> creates a persistent planned job without
+    calling external providers;
+    main MAK Hub tab `laboratorio` -> `/research-garden/`;
+    Cultura department catalog link -> `/research-garden/`.
+
+The existing `/research/` proxy to the already-running research service was
+preserved. The new registry is additive and does not replace that service.
+No second port or permanent service was introduced.
+
+Foreground live validation after restarting only `mak-hub.service`:
+
+    `systemctl --user is-active mak-hub.service` -> `active`;
+    `GET http://127.0.0.1:8900/research-garden/` -> HTTP 200;
+    `GET /api/research/catalog` -> HTTP 200, 6 adapters;
+    `GET /api/research/jobs` -> HTTP 200, 2 initial jobs;
+    `POST /api/research/jobs` with a plant/3D question -> HTTP 201, job 3,
+    domain `plants`, 12 pending steps, `external_calls=0`;
+    `GET /api/research/job?id=3` -> HTTP 200, 12 steps and adapter metadata;
+    `GET /api/research/jobs` after POST -> HTTP 200, job 3 persisted;
+    `py_compile` hub, router and builder -> exit 0.
+
+The third job is a real user-directed plant/3D idea, not a synthetic health
+check. It is still `planned`: no Firecrawl, Groq, Watson, AWS, Ollama or
+other external provider was called by the UI. Provider execution remains the
+next controlled stage of the job.
+
+Risk/boundary:
+
+    the old separate `src/flujo/web/hub.py` also contains a compatible local
+    research surface for `flujo app`, but MAK production at 8900 is governed
+    by `cultura/mak_plataforma/hub.py` and was validated there;
+    creating a job is the only new write exposed by this surface;
+    no credentials, WIN evidence, RD databases or historical files changed.
+
+## Next concrete action
+
+Execute job 3's `discover` and official-source `capture` stages using the
+configured free-tier provider chain. Record provider, URL, hash, HTTP status,
+license and credit metadata in the research registry before model extraction.
+
+Last verified: 2026-08-17 America/Santiago — Phase 544 live MAK 8900 integration.

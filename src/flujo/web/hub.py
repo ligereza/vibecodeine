@@ -402,6 +402,32 @@ class HubRequestHandler(BaseHTTPRequestHandler):
         if path == "/api/status":
             self._send_json(self._get_status())
             return
+        if path in ("/research", "/research/"):
+            page = self.context_path / "research.html"
+            if page.is_file():
+                self._serve_file(page)
+            else:
+                self.send_error(404, "research UI missing")
+            return
+        if path == "/api/research/catalog":
+            try:
+                self._send_json(self._get_research_catalog())
+            except Exception as e:
+                self._send_json({"available": False, "adapters": [], "error": str(e)}, status=200)
+            return
+        if path == "/api/research/jobs":
+            try:
+                self._send_json(self._get_research_jobs())
+            except Exception as e:
+                self._send_json({"available": False, "jobs": [], "error": str(e)}, status=200)
+            return
+        if path == "/api/research/job":
+            try:
+                raw_id = (parse_qs(parsed.query).get("id") or [""])[0]
+                self._send_json(self._get_research_job(int(raw_id)))
+            except Exception as e:
+                self._send_json({"available": False, "error": str(e)}, status=400)
+            return
         if path == "/api/dashboard-summary":
             try:
                 self._send_json(self._get_dashboard_summary())
@@ -748,6 +774,16 @@ class HubRequestHandler(BaseHTTPRequestHandler):
                 self._send_json({"error": str(e)}, status=400)
             return
 
+        if p == "/api/research/jobs":
+            content_length = int(self.headers.get("Content-Length", 0) or 0)
+            try:
+                data = json.loads(self.rfile.read(content_length).decode("utf-8") or "{}")
+                result = self._create_research_job(data)
+                self._send_json(result, status=201 if result.get("ok") else 400)
+            except Exception as e:
+                self._send_json({"ok": False, "error": str(e)}, status=400)
+            return
+
         if p == "/api/run-safe-command":
             # Origen ajeno = no. Este endpoint corre comandos, y sin esto
             # cualquier pagina abierta en el navegador del usuario podia
@@ -1052,6 +1088,99 @@ class HubRequestHandler(BaseHTTPRequestHandler):
 
     def _get_dashboard_summary(self) -> dict:
         return build_dashboard_summary(collect_items(self.root))
+
+    def _research_registry_path(self) -> Path:
+        """Return the persistent research registry without exposing secrets."""
+        configured = os.environ.get("MAK_RESEARCH_REGISTRY", "").strip()
+        return Path(configured).expanduser() if configured else Path.home() / "research" / "jardines_interpretativos" / "jardines_interpretativos.sqlite"
+
+    def _get_research_catalog(self) -> dict:
+        import sqlite3 as _sqlite3
+
+        db_path = self._research_registry_path()
+        if not db_path.is_file():
+            return {"available": False, "adapters": [], "jobs": 0, "registry": "not_created"}
+        with _sqlite3.connect(db_path) as conn:
+            adapters = []
+            for row in conn.execute("""
+                SELECT a.slug,a.label,a.description,a.input_examples,a.source_policy,
+                       a.constraint_policy,COUNT(j.id)
+                FROM domain_adapters a LEFT JOIN research_jobs j ON j.adapter_id=a.id
+                GROUP BY a.id ORDER BY a.slug
+            """):
+                adapters.append({
+                    "slug": row[0], "label": row[1], "description": row[2],
+                    "input_examples": row[3], "source_policy": row[4],
+                    "constraint_policy": row[5], "jobs": row[6],
+                })
+            jobs = conn.execute("SELECT COUNT(*) FROM research_jobs").fetchone()[0]
+        return {"available": True, "adapters": adapters, "jobs": jobs, "registry": "research/jardines_interpretativos/jardines_interpretativos.sqlite"}
+
+    def _get_research_jobs(self) -> dict:
+        import sqlite3 as _sqlite3
+
+        db_path = self._research_registry_path()
+        if not db_path.is_file():
+            return {"available": False, "jobs": [], "count": 0}
+        with _sqlite3.connect(db_path) as conn:
+            rows = conn.execute("""
+                SELECT j.id,j.question,j.domain,a.label,j.status,j.next_process,j.created_at,
+                       COUNT(s.id),SUM(CASE WHEN s.status='done' THEN 1 ELSE 0 END)
+                FROM research_jobs j JOIN domain_adapters a ON a.id=j.adapter_id
+                LEFT JOIN job_steps s ON s.job_id=j.id
+                GROUP BY j.id ORDER BY j.id DESC
+            """).fetchall()
+        jobs = [{
+            "id": row[0], "question": row[1], "domain": row[2], "adapter": row[3],
+            "status": row[4], "next_process": row[5], "created_at": row[6],
+            "steps": row[7], "done_steps": row[8] or 0,
+        } for row in rows]
+        return {"available": True, "jobs": jobs, "count": len(jobs)}
+
+    def _get_research_job(self, job_id: int) -> dict:
+        import sqlite3 as _sqlite3
+
+        if job_id < 1:
+            raise ValueError("job id invalido")
+        db_path = self._research_registry_path()
+        with _sqlite3.connect(db_path) as conn:
+            job = conn.execute("""
+                SELECT j.id,j.question,j.domain,a.label,j.status,j.next_process,j.created_at,
+                       a.description,a.source_policy,a.constraint_policy
+                FROM research_jobs j JOIN domain_adapters a ON a.id=j.adapter_id WHERE j.id=?
+            """, (job_id,)).fetchone()
+            if not job:
+                raise ValueError("research job no existe")
+            steps = [dict(zip(("order", "process", "input", "output", "status", "provider_policy"), row)) for row in conn.execute(
+                "SELECT step_order,process_key,input_semantics,output_semantics,status,provider_policy FROM job_steps WHERE job_id=? ORDER BY step_order", (job_id,))]
+            relations = [dict(zip(("type", "from", "to", "rationale"), row)) for row in conn.execute(
+                "SELECT relation_type,from_object,to_object,rationale FROM job_relations WHERE job_id=? ORDER BY id", (job_id,))]
+        return {"available": True, "job": {
+            "id": job[0], "question": job[1], "domain": job[2], "adapter": job[3],
+            "status": job[4], "next_process": job[5], "created_at": job[6],
+            "description": job[7], "source_policy": job[8], "constraint_policy": job[9],
+            "steps": steps, "relations": relations,
+        }}
+
+    def _create_research_job(self, data: dict) -> dict:
+        question = str(data.get("question") or "").strip()
+        domain = str(data.get("domain") or "").strip() or None
+        if not question:
+            return {"ok": False, "error": "falta question"}
+        if len(question) > 2000:
+            return {"ok": False, "error": "question demasiado largo"}
+        from tools.research_job_router import create_job, render_job
+
+        db_path = self._research_registry_path()
+        job_id, selected, scores = create_job(db_path, question, domain)
+        json_path, report_path = render_job(db_path, db_path.parent.parent / "jobs", job_id, selected, scores)
+        return {
+            "ok": True, "id": job_id, "domain": selected, "scores": scores,
+            "json": str(json_path.relative_to(Path.home())),
+            "report": str(report_path.relative_to(Path.home())),
+            "external_calls": 0,
+            "status": "planned",
+        }
 
     def _subir_logo(self, data: dict) -> dict:
         """Reemplaza el logo de una productora desde el hub.

@@ -7,7 +7,7 @@ research and codex services through same-origin /research/ and /codex/ paths.
 The services keep their existing routes and contracts; their ports remain
 internal runtime boundaries.
 
-Rutas: / (cara) · /health · /api/organismo · /api/micelio · /api/archivo · /api/ejecutar (POST) ·
+Rutas: / (cara) · /research-garden/ · /health · /api/organismo · /api/micelio · /api/archivo · /api/ejecutar (POST) ·
 /api/ideas (GET+POST) · /pieza · /api/salud · /api/actividad · /cuotas ·
 /doctrina · /reflexiones · /relevo · /genesis
 """
@@ -192,6 +192,96 @@ except Exception as _departments_exc:  # noqa: BLE001 - hub remains available
     _DEPARTMENTS_IMPORT_ERROR = type(_departments_exc).__name__
 else:
     _DEPARTMENTS_IMPORT_ERROR = ""
+
+
+def _research_registry_path():
+    """Persistent registry for the reusable research-job layer."""
+    configured = os.environ.get("MAK_RESEARCH_REGISTRY", "").strip()
+    return Path(configured).expanduser() if configured else Path(HOME) / "research" / "jardines_interpretativos" / "jardines_interpretativos.sqlite"
+
+
+def _research_catalog():
+    import sqlite3
+
+    db_path = _research_registry_path()
+    if not db_path.is_file():
+        return {"available": False, "adapters": [], "jobs": 0, "registry": "not_created"}
+    with sqlite3.connect(db_path) as conn:
+        rows = conn.execute("""
+            SELECT a.slug,a.label,a.description,a.input_examples,a.source_policy,
+                   a.constraint_policy,COUNT(j.id)
+            FROM domain_adapters a LEFT JOIN research_jobs j ON j.adapter_id=a.id
+            GROUP BY a.id ORDER BY a.slug
+        """).fetchall()
+        jobs = conn.execute("SELECT COUNT(*) FROM research_jobs").fetchone()[0]
+    return {"available": True, "adapters": [
+        {"slug": r[0], "label": r[1], "description": r[2],
+         "input_examples": r[3], "source_policy": r[4],
+         "constraint_policy": r[5], "jobs": r[6]}
+        for r in rows
+    ], "jobs": jobs, "registry": "research/jardines_interpretativos/jardines_interpretativos.sqlite"}
+
+
+def _research_jobs():
+    import sqlite3
+
+    db_path = _research_registry_path()
+    if not db_path.is_file():
+        return {"available": False, "jobs": [], "count": 0}
+    with sqlite3.connect(db_path) as conn:
+        rows = conn.execute("""
+            SELECT j.id,j.question,j.domain,a.label,j.status,j.next_process,j.created_at,
+                   COUNT(s.id),SUM(CASE WHEN s.status='done' THEN 1 ELSE 0 END)
+            FROM research_jobs j JOIN domain_adapters a ON a.id=j.adapter_id
+            LEFT JOIN job_steps s ON s.job_id=j.id
+            GROUP BY j.id ORDER BY j.id DESC
+        """).fetchall()
+    jobs = [{"id": r[0], "question": r[1], "domain": r[2], "adapter": r[3],
+             "status": r[4], "next_process": r[5], "created_at": r[6],
+             "steps": r[7], "done_steps": r[8] or 0} for r in rows]
+    return {"available": True, "jobs": jobs, "count": len(jobs)}
+
+
+def _research_job(job_id):
+    import sqlite3
+
+    if int(job_id) < 1:
+        raise ValueError("job id invalido")
+    with sqlite3.connect(_research_registry_path()) as conn:
+        job = conn.execute("""
+            SELECT j.id,j.question,j.domain,a.label,j.status,j.next_process,j.created_at,
+                   a.description,a.source_policy,a.constraint_policy
+            FROM research_jobs j JOIN domain_adapters a ON a.id=j.adapter_id WHERE j.id=?
+        """, (int(job_id),)).fetchone()
+        if not job:
+            raise ValueError("research job no existe")
+        steps = [dict(zip(("order", "process", "input", "output", "status", "provider_policy"), row)) for row in conn.execute(
+            "SELECT step_order,process_key,input_semantics,output_semantics,status,provider_policy FROM job_steps WHERE job_id=? ORDER BY step_order", (int(job_id),))]
+        relations = [dict(zip(("type", "from", "to", "rationale"), row)) for row in conn.execute(
+            "SELECT relation_type,from_object,to_object,rationale FROM job_relations WHERE job_id=? ORDER BY id", (int(job_id),))]
+    return {"available": True, "job": {"id": job[0], "question": job[1],
+        "domain": job[2], "adapter": job[3], "status": job[4],
+        "next_process": job[5], "created_at": job[6], "description": job[7],
+        "source_policy": job[8], "constraint_policy": job[9],
+        "steps": steps, "relations": relations}}
+
+
+def _create_research_job(body):
+    question = str(body.get("question") or "").strip()
+    domain = str(body.get("domain") or "").strip() or None
+    if not question:
+        return {"ok": False, "error": "falta question"}
+    if len(question) > 2000:
+        return {"ok": False, "error": "question demasiado largo"}
+    from tools.research_job_router import create_job, render_job
+
+    db_path = _research_registry_path()
+    job_id, selected, scores = create_job(db_path, question, domain)
+    json_path, report_path = render_job(db_path, db_path.parent.parent / "jobs", job_id, selected, scores)
+    return {"ok": True, "id": job_id, "domain": selected, "scores": scores,
+            "json": os.path.relpath(json_path, HOME),
+            "report": os.path.relpath(report_path, HOME),
+            "external_calls": 0, "status": "planned"}
 
 
 def _department_page(area: str) -> str:
@@ -492,8 +582,9 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
 <div id="topbar">
  <div class="izq">
   <h1>&#129744; MAK</h1>
-  <div id="tabs">
+ <div id="tabs">
    <button data-dep="research" class="on">🔬 research</button>
+  <button data-dep="jardines">🌱 laboratorio</button>
    <button data-dep="codex">💻 codex</button>
    <button data-dep="ideas">💡 ideas</button>
   <button data-dep="render">🖼 render</button>
@@ -510,6 +601,7 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
 </div>
 <div id="centro">
  <iframe id="ifr-research" class="on"></iframe>
+ <iframe id="ifr-jardines"></iframe>
  <iframe id="ifr-codex"></iframe>
  <iframe id="ifr-portafolio"></iframe>
  <div id="pan-ideas">
@@ -588,7 +680,7 @@ function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'
 
 // ── tabs de departamento: cambian el iframe visible, cargan lazy ──
 var depActual='research';
-var IFR_SRC={research:'/research/', codex:'/codex/', portafolio:'/portafolio/'};
+var IFR_SRC={research:'/research/', jardines:'/research-garden/', codex:'/codex/', portafolio:'/portafolio/'};
 function activarDep(dep){
  depActual=dep;
  document.querySelectorAll('#tabs button').forEach(function(b){
@@ -4333,6 +4425,29 @@ class H(BaseHTTPRequestHandler):
     def do_GET(self):
         u = urllib.parse.urlparse(self.path)
         p = u.path
+        if p in ("/research-garden", "/research-garden/"):
+            page = Path(_REPO_ROOT) / "context" / "research.html"
+            try:
+                return self._send_bytes(page.read_bytes(), "text/html; charset=utf-8")
+            except OSError:
+                return self._send("research UI missing", "text/plain; charset=utf-8", 404)
+        if p == "/api/research/catalog":
+            try:
+                return self._json(_research_catalog())
+            except Exception as exc:
+                return self._json({"available": False, "adapters": [], "error": str(exc)[:200]})
+        if p == "/api/research/jobs":
+            try:
+                return self._json(_research_jobs())
+            except Exception as exc:
+                return self._json({"available": False, "jobs": [], "error": str(exc)[:200]})
+        if p == "/api/research/job":
+            query = urllib.parse.parse_qs(u.query)
+            raw_id = (query.get("id") or [""])[0]
+            try:
+                return self._json(_research_job(int(raw_id)))
+            except Exception as exc:
+                return self._json({"available": False, "error": str(exc)[:200]}, 400)
         for prefix in SERVICE_PROXY_PREFIXES:
             if p == "/" + prefix:
                 self.send_response(301)
@@ -4699,6 +4814,22 @@ class H(BaseHTTPRequestHandler):
 
     def do_POST(self):
         u = urllib.parse.urlparse(self.path)
+        if u.path == "/api/research/jobs":
+            try:
+                length = min(int(self.headers.get("Content-Length") or 0), 20000)
+            except (TypeError, ValueError):
+                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
+            try:
+                body = json.loads(self.rfile.read(length).decode("utf-8", "replace") or "{}")
+            except (ValueError, TypeError):
+                return self._json({"ok": False, "error": "json invalido"}, 400)
+            if not isinstance(body, dict):
+                return self._json({"ok": False, "error": "json debe ser objeto"}, 400)
+            try:
+                result = _create_research_job(body)
+            except Exception as exc:
+                return self._json({"ok": False, "error": str(exc)[:200]}, 400)
+            return self._json(result, 201 if result.get("ok") else 400)
         if u.path == "/api/diagnostics":
             try:
                 length = int(self.headers.get("Content-Length") or 0)
