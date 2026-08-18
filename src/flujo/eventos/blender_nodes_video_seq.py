@@ -24,12 +24,14 @@ def _parse_args(argv):
         "frame": None, "input": None, "color_png": None, "out_dir": None,
         "frame_start": 1, "frame_end": None, "min_size": 20000,
         "manifest": None, "fps": None, "persistent_data": True,
+        "layout": bnv.VIDEO_LAYOUT_PORTRAIT, "issue_flow": None,
     }
     key_map = {
         "--frame": "frame", "--input": "input", "--color-png": "color_png",
         "--out-dir": "out_dir", "--frame-start": "frame_start",
         "--frame-end": "frame_end", "--min-size": "min_size",
-        "--manifest": "manifest",
+        "--manifest": "manifest", "--layout": "layout",
+        "--issue-flow": "issue_flow",
         "--fps": "fps",
     }
     i = 0
@@ -50,6 +52,8 @@ def _parse_args(argv):
         i += 2
     if not parsed["input"] or not parsed["out_dir"]:
         raise SystemExit("Faltan --input y/o --out-dir (obligatorios)")
+    if parsed["layout"] not in bn.VALID_VIDEO_LAYOUTS:
+        raise SystemExit(f"VIDEO_LAYOUT_INVALID: {parsed['layout']}")
     return parsed
 
 
@@ -82,10 +86,9 @@ def main():
     probe = bpy.data.images.load(video_path, check_existing=True)
     frame_duration = probe.frame_duration
     print(f"Video: {video_path} frame_duration={frame_duration}")
-
     frame_probe = bpy.data.images.load(args["frame"], check_existing=True)
-    layout = bn.classify_cover_layout(
-        bn.WINDOW_UV, tuple(frame_probe.size), tuple(probe.size))
+    layout = bnv.describe_video_layout(
+        args["layout"], tuple(frame_probe.size), tuple(probe.size))
     print(f"VIDEO_LAYOUT: {json.dumps(layout, ensure_ascii=True)}")
 
     frame_start = args["frame_start"] or 1
@@ -103,9 +106,12 @@ def main():
     if flyer_materials:
         for mat, nodo in flyer_materials:
             modo = bnv.build_flyer_nodes_video(
-                mat, nodo, os.path.abspath(args["frame"]), video_path, hue, frame_duration)
-            print(f"Material '{mat.name}' {modo} por nodos VIDEO (sin Photoshop).")
+                mat, nodo, os.path.abspath(args["frame"]), video_path, hue,
+                frame_duration, args["layout"])
+            print(f"Material '{mat.name}' {modo} layout={args['layout']} por nodos VIDEO (sin Photoshop).")
     else:
+        if args["layout"] != bnv.VIDEO_LAYOUT_PORTRAIT:
+            raise SystemExit("VIDEO_LAYOUT_TEMPLATE_REQUIRED: contain_bars requiere RD.blend con grafo flyer")
         swapped = bnv.swap_existing_movie_nodes(video_path, frame_duration)
         if swapped < 1:
             raise SystemExit("VIDEO_NODE_REQUIRED: no hay nodos TEX_IMAGE con source MOVIE")
@@ -159,10 +165,9 @@ def main():
         "frame_start": frame_start,
         "frame_end": frame_end,
         "source_frames": frame_duration,
-        "source_width": probe.size[0],
-        "source_height": probe.size[1],
         "fps": source_fps,
         "layout": layout,
+        "issue_flow": args["issue_flow"],
         "samples": scene.cycles.samples,
         "engine": scene.render.engine,
         "gpu": gpu_report,

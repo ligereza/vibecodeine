@@ -19,6 +19,11 @@ DEFAULT_BLEND = Path("/home/mak/RD/AUTOMATIZACION/RD.blend")
 DEFAULT_BLENDER = Path("/home/mak/blender/blender")
 BLENDER_SCRIPT = Path(__file__).resolve().parents[1] / "src" / "flujo" / "eventos" / "blender_nodes_video_seq.py"
 RENDER_TIMEOUT_S = 7200.0
+PORTRAIT_9_16_RATIO = 9 / 16
+PORTRAIT_9_16_TOLERANCE = 0.03
+VIDEO_FLOW_PORTRAIT = "video_portrait_9_16"
+VIDEO_FLOW_FRAMED = "video_other_aspect"
+VALID_LAYOUTS = {"cover_center", "contain_bars"}
 
 
 def probe_video(video: Path) -> dict:
@@ -64,6 +69,31 @@ def probe_video(video: Path) -> dict:
     }
 
 
+def classify_video_flow(probe: dict) -> dict:
+    """Classify real media dimensions into one explicit issue flow."""
+    if not probe.get("available"):
+        raise ValueError(f"VIDEO_PROBE_UNAVAILABLE: {probe.get('error', 'sin metadata')}")
+    try:
+        width = int(probe["width"])
+        height = int(probe["height"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValueError("VIDEO_DIMENSIONS_REQUIRED") from exc
+    if width <= 0 or height <= 0:
+        raise ValueError("VIDEO_DIMENSIONS_INVALID")
+    aspect = width / height
+    if abs(aspect - PORTRAIT_9_16_RATIO) <= PORTRAIT_9_16_TOLERANCE:
+        return {
+            "flow": VIDEO_FLOW_PORTRAIT,
+            "layout": "cover_center",
+            "source_aspect_ratio": round(aspect, 6),
+        }
+    return {
+        "flow": VIDEO_FLOW_FRAMED,
+        "layout": "contain_bars",
+        "source_aspect_ratio": round(aspect, 6),
+    }
+
+
 def build_blender_command(
     blender: Path,
     blend: Path,
@@ -77,11 +107,14 @@ def build_blender_command(
     min_size: int = 20000,
     fps: float | None = None,
     persistent_data: bool = True,
+    layout: str = "cover_center",
+    issue_flow: str = VIDEO_FLOW_PORTRAIT,
 ) -> list[str]:
     """Build the foreground Blender invocation used by MAK and CI."""
     cmd = [str(blender), "-b", str(blend), "--python", str(BLENDER_SCRIPT), "--"]
     cmd += ["--input", str(video), "--out-dir", str(out_dir), "--manifest", str(manifest)]
     cmd += ["--frame-start", str(frame_start), "--min-size", str(min_size)]
+    cmd += ["--layout", layout, "--issue-flow", issue_flow]
     if fps:
         cmd += ["--fps", str(fps)]
     if frame:
@@ -111,11 +144,13 @@ def _manifest_is_valid(manifest: Path, out_dir: Path) -> tuple[bool, str]:
     layout = report.get("layout")
     if not isinstance(layout, dict):
         return False, "manifest sin layout audiovisual"
-    if layout.get("policy") != "cover_center":
+    if layout.get("policy") not in VALID_LAYOUTS:
         return False, f"layout policy inesperada: {layout.get('policy')}"
     for key in ("source_aspect_ratio", "window_aspect_ratio", "crop_axis"):
         if key not in layout:
             return False, f"layout incompleto: falta {key}"
+    if report.get("issue_flow") not in {VIDEO_FLOW_PORTRAIT, VIDEO_FLOW_FRAMED}:
+        return False, f"issue_flow inesperado: {report.get('issue_flow')}"
     pngs = sorted(out_dir.glob("frame_*.png"))
     if not pngs:
         return False, "no se genero ninguna imagen PNG"
@@ -127,7 +162,7 @@ def _manifest_is_valid(manifest: Path, out_dir: Path) -> tuple[bool, str]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Instagram reel -> PNG sequence on MAK")
     parser.add_argument("--video", required=True, type=Path)
-    parser.add_argument("--out-dir", required=True, type=Path)
+    parser.add_argument("--out-dir", type=Path)
     parser.add_argument("--blend", type=Path, default=DEFAULT_BLEND)
     parser.add_argument("--blender", type=Path, default=DEFAULT_BLENDER)
     parser.add_argument("--frame", type=Path)
@@ -141,14 +176,19 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="desactivar la cache entre frames (solo diagnostico)",
     )
+    parser.add_argument("--layout", choices=("auto", *sorted(VALID_LAYOUTS)), default="auto")
+    parser.add_argument("--classify-only", action="store_true")
     args = parser.parse_args(argv)
 
     video = args.video.resolve()
     blend = args.blend.resolve()
     blender = args.blender.resolve()
-    out_dir = args.out_dir.resolve()
-    manifest = out_dir / "render_manifest.json"
-    for path, label in ((video, "video"), (blend, "blend"), (blender, "blender"), (BLENDER_SCRIPT, "Blender script")):
+    required_paths = [(video, "video")]
+    if not args.classify_only:
+        if args.out_dir is None:
+            parser.error("--out-dir es obligatorio salvo con --classify-only")
+        required_paths.extend(((blend, "blend"), (blender, "blender"), (BLENDER_SCRIPT, "Blender script")))
+    for path, label in required_paths:
         if not path.exists():
             print(f"RENDER_FALLO: no existe {label}: {path}")
             return 1
@@ -156,14 +196,31 @@ def main(argv: list[str] | None = None) -> int:
         print("RENDER_FALLO: rango de frames invalido")
         return 1
 
-    out_dir.mkdir(parents=True, exist_ok=True)
     probe = probe_video(video)
+    try:
+        profile = classify_video_flow(probe)
+    except ValueError as exc:
+        print(f"RENDER_FALLO: {exc}")
+        return 1
+    if args.classify_only:
+        print(profile["flow"])
+        return 0
+    if args.layout != "auto" and args.layout != profile["layout"]:
+        print(f"RENDER_FALLO: VIDEO_LAYOUT_PROFILE_MISMATCH requested={args.layout} actual={profile['layout']}")
+        return 1
+    layout = profile["layout"]
+    out_dir = args.out_dir.resolve()
+    manifest = out_dir / "render_manifest.json"
+    out_dir.mkdir(parents=True, exist_ok=True)
     print(f"VIDEO_PROBE: {json.dumps(probe, ensure_ascii=True)}")
+    print(f"VIDEO_FLOW: {json.dumps(profile, ensure_ascii=True)}")
     cmd = build_blender_command(
         blender, blend, video, out_dir, manifest, args.frame, args.color_png,
         args.frame_start, args.frame_end, args.min_size,
         probe.get("fps") or None,
         not args.no_persistent_data,
+        layout,
+        profile["flow"],
     )
     print("BLENDER_CMD: " + " ".join(cmd))
     if args.dry_run:

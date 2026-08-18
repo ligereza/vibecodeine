@@ -23,6 +23,8 @@ def test_build_command_uses_sequence_script_and_manifest(tmp_path):
     assert "--out-dir" in command
     assert "--manifest" in command
     assert "--frame-end" in command
+    assert "--layout" in command
+    assert "--issue-flow" in command
     assert "--no-persistent-data" not in command
 
 
@@ -51,9 +53,22 @@ def test_manifest_requires_cycles_128_gpu_and_png_count(tmp_path):
             "window_aspect_ratio": 0.734976,
             "crop_axis": "vertical",
         },
+        "issue_flow": "video_portrait_9_16",
         "png_count": 1,
     }), encoding="utf-8")
     assert module._manifest_is_valid(manifest, tmp_path) == (True, str(manifest))
+
+
+def test_classify_video_flow_routes_only_9_16_to_cover():
+    portrait = module.classify_video_flow({"available": True, "width": 1080, "height": 1920})
+    other = module.classify_video_flow({"available": True, "width": 960, "height": 718})
+    assert portrait == {
+        "flow": "video_portrait_9_16",
+        "layout": "cover_center",
+        "source_aspect_ratio": 0.5625,
+    }
+    assert other["flow"] == "video_other_aspect"
+    assert other["layout"] == "contain_bars"
 
 
 def test_manifest_rejects_missing_layout(tmp_path):

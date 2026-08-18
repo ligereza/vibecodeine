@@ -57,10 +57,12 @@ WINDOW_UV = {
 # visualmente por el usuario en vivo; se puede afinar a mano en el nodo.
 FADE = 0.10
 
-# Canonical production policy for moving images. Keep this explicit so the
-# visual experiment below cannot silently replace the stable render path.
+# Moving images have two explicit layouts: portrait 9:16 reels cover the
+# glass; every other ratio stays whole inside black bands. No implicit third
+# treatment is allowed in the production path.
 VIDEO_LAYOUT_POLICY = "cover_center"
-EXPERIMENTAL_VIDEO_LAYOUT = "glass_fitwidth"
+VIDEO_LAYOUT_CONTAIN_BARS = "contain_bars"
+VALID_VIDEO_LAYOUTS = {VIDEO_LAYOUT_POLICY, VIDEO_LAYOUT_CONTAIN_BARS}
 
 # Etiquetas de los nodos del grafo (contrato de idempotencia: si estan,
 # el grafo ya existe y solo se actualiza).
@@ -94,6 +96,33 @@ def fitwidth_mapping(window_uv, frame_size, input_size):
     frac_w = 1.0
     frac_h = win_h_px / (k * ih_px)  # >1: sobra alto (fade); <1: se recorta
 
+    scale_x = frac_w / win_w_uv
+    scale_y = frac_h / win_h_uv
+    loc_x = (1.0 - frac_w) / 2.0 - window_uv["x0"] * scale_x
+    loc_y = (1.0 - frac_h) / 2.0 - window_uv["y0"] * scale_y
+    return (scale_x, scale_y), (loc_x, loc_y)
+
+
+def fitcontain_mapping(window_uv, frame_size, input_size):
+    """Map a complete input inside the window without cropping or stretching.
+
+    Coordinates outside the source range are intentionally left to the
+    existing CLIP image node and fade graph, which render them as black bands.
+    """
+    fw_px, fh_px = frame_size
+    iw_px, ih_px = input_size
+    if min(fw_px, fh_px, iw_px, ih_px) <= 0:
+        raise ValueError("dimensiones de imagen invalidas (<= 0)")
+    win_w_uv = window_uv["x1"] - window_uv["x0"]
+    win_h_uv = window_uv["y1"] - window_uv["y0"]
+    if win_w_uv <= 0 or win_h_uv <= 0:
+        raise ValueError("ventana UV degenerada")
+    win_w_px = win_w_uv * fw_px
+    win_h_px = win_h_uv * fh_px
+
+    k = min(win_w_px / iw_px, win_h_px / ih_px)
+    frac_w = win_w_px / (k * iw_px)
+    frac_h = win_h_px / (k * ih_px)
     scale_x = frac_w / win_w_uv
     scale_y = frac_h / win_h_uv
     loc_x = (1.0 - frac_w) / 2.0 - window_uv["x0"] * scale_x
@@ -169,6 +198,27 @@ def classify_cover_layout(window_uv, frame_size, input_size):
         "distorted": False,
         "black_bars": False,
     }
+
+
+def classify_contain_layout(window_uv, frame_size, input_size):
+    """Describe the no-crop layout reserved for non-9:16 video."""
+    layout = classify_cover_layout(window_uv, frame_size, input_size)
+    source_aspect = layout["source_aspect_ratio"]
+    window_aspect = layout["window_aspect_ratio"]
+    tolerance = 1e-6
+    if source_aspect > window_aspect + tolerance:
+        bar_axis = "vertical"
+    elif source_aspect < window_aspect - tolerance:
+        bar_axis = "lateral"
+    else:
+        bar_axis = "none"
+    layout.update({
+        "policy": VIDEO_LAYOUT_CONTAIN_BARS,
+        "crop_axis": "none",
+        "bar_axis": bar_axis,
+        "black_bars": bar_axis != "none",
+    })
+    return layout
 
 
 def hue_de_rgb(rgb):
