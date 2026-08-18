@@ -120,6 +120,45 @@ jobs:
           echo "media_type=$media_type" >> "$GITHUB_OUTPUT"
           echo "dir=$out" >> "$GITHUB_OUTPUT"
 
+      - name: preservar media descargada antes de render
+        id: preserve
+        if: >
+          github.event_name == 'issues' &&
+          steps.guard.outputs.skip != 'true' &&
+          steps.dl.outcome == 'success'
+        env:
+          DOWNLOAD_DIR: ${{ steps.dl.outputs.dir }}
+          VIDEO_PATH: ${{ steps.dl.outputs.video }}
+          IMAGE_PATH: ${{ steps.dl.outputs.imagen }}
+          MEDIA_TYPE: ${{ steps.dl.outputs.media_type }}
+        run: |
+          set -euo pipefail
+          destino="onedrive:MAK/eventos/issue-$ISSUE_NUM"
+          if [ "${MEDIA_TYPE:-}" = "video" ]; then
+            test -s "${VIDEO_PATH:-}"
+            rclone copyto "$VIDEO_PATH" "$destino/input_ig.mp4" \
+              --retries 3 --low-level-retries 10 --stats-one-line
+            if test -s "${IMAGE_PATH:-}"; then
+              rclone copyto "$IMAGE_PATH" "$destino/input_ig.jpg" \
+                --retries 3 --low-level-retries 10 --stats-one-line
+            fi
+          elif [ "${MEDIA_TYPE:-}" = "image" ] || [ "${MEDIA_TYPE:-}" = "carousel" ]; then
+            test -s "${IMAGE_PATH:-}"
+            rclone copyto "$IMAGE_PATH" "$destino/input_ig.jpg" \
+              --retries 3 --low-level-retries 10 --stats-one-line
+          else
+            echo "UNKNOWN_MEDIA_TYPE: no se preserva una descarga no clasificada."
+            exit 1
+          fi
+          for extra in media.json ig_caption.txt; do
+            if test -s "$DOWNLOAD_DIR/$extra"; then
+              rclone copyto "$DOWNLOAD_DIR/$extra" "$destino/$extra" \
+                --retries 3 --low-level-retries 10 --stats-one-line
+            fi
+          done
+          rclone lsf "$destino" --files-only
+          echo "destino=$destino" >> "$GITHUB_OUTPUT"
+
       # --- render Blender MAK: habilitado tras gate foreground 2026-08-15 ---
 
       - name: render flyer (Blender MAK)
@@ -163,43 +202,60 @@ jobs:
             exit 1
           fi
 
-      - name: publicar render en OneDrive
+      - name: publicar render en OneDrive (completo o parcial)
         id: publish
         if: >
+          always() &&
           github.event_name == 'issues' &&
           steps.guard.outputs.skip != 'true' &&
-          steps.render.outcome == 'success'
+          steps.dl.outcome == 'success'
         env:
           DOWNLOAD_DIR: ${{ steps.dl.outputs.dir }}
           RENDER_DIR: ${{ steps.render.outputs.dir }}
           VIDEO_PATH: ${{ steps.dl.outputs.video }}
           IMAGE_PATH: ${{ steps.dl.outputs.imagen }}
+          MEDIA_TYPE: ${{ steps.dl.outputs.media_type }}
+          RENDER_OUTCOME: ${{ steps.render.outcome }}
         run: |
           set -euo pipefail
           destino="onedrive:MAK/eventos/issue-$ISSUE_NUM"
-          if [ -n "${VIDEO_PATH:-}" ] && test -s "$VIDEO_PATH"; then
-            find "$RENDER_DIR/frames" -type f -name 'frame_*.png' -size +0c | grep -q .
-            rclone copy "$RENDER_DIR/frames" "$destino/frames" \
-              --retries 3 --low-level-retries 10 --stats-one-line
-            rclone copyto "$VIDEO_PATH" "$destino/input_ig.mp4" \
-              --retries 3 --low-level-retries 10 --stats-one-line
-            if test -s "$DOWNLOAD_DIR/input_ig.jpg"; then
-              rclone copyto "$DOWNLOAD_DIR/input_ig.jpg" "$destino/input_ig.jpg" \
+          if [ "${MEDIA_TYPE:-}" = "video" ]; then
+            if [ -d "$RENDER_DIR/frames" ] && find "$RENDER_DIR/frames" \
+                -type f -name 'frame_*.png' -size +0c | grep -q .; then
+              rclone copy "$RENDER_DIR/frames" "$destino/frames" \
                 --retries 3 --low-level-retries 10 --stats-one-line
             fi
-            rclone lsf "$destino/frames" --files-only | grep -q 'frame_'
+            for artifact in render_manifest.json render.log; do
+              if test -s "$RENDER_DIR/$artifact"; then
+                rclone copyto "$RENDER_DIR/$artifact" "$destino/$artifact" \
+                  --retries 3 --low-level-retries 10 --stats-one-line
+              fi
+            done
             rclone lsf "$destino" --files-only | grep -qx 'input_ig.mp4'
-          else
-            test -s "$RENDER_DIR/render_output.png"
-            rclone copyto "$RENDER_DIR/render_output.png" \
-              "$destino/render_output.png" \
-              --retries 3 --low-level-retries 10 --stats-one-line
-            rclone copyto "$IMAGE_PATH" "$destino/input_ig.jpg" \
-              --retries 3 --low-level-retries 10 --stats-one-line
-            rclone lsf "$destino" --files-only | grep -qx 'render_output.png'
+            if [ "$RENDER_OUTCOME" = "success" ]; then
+              rclone lsf "$destino/frames" --files-only | grep -q 'frame_'
+              rclone lsf "$destino" --files-only | grep -qx 'render_manifest.json'
+            fi
+          elif [ "${MEDIA_TYPE:-}" = "image" ] || [ "${MEDIA_TYPE:-}" = "carousel" ]; then
+            if test -s "$RENDER_DIR/render_output.png"; then
+              rclone copyto "$RENDER_DIR/render_output.png" \
+                "$destino/render_output.png" \
+                --retries 3 --low-level-retries 10 --stats-one-line
+            fi
             rclone lsf "$destino" --files-only | grep -qx 'input_ig.jpg'
+            if [ "$RENDER_OUTCOME" = "success" ]; then
+              rclone lsf "$destino" --files-only | grep -qx 'render_output.png'
+            fi
+          else
+            echo "UNKNOWN_MEDIA_TYPE: no se publican salidas sin clasificacion."
+            exit 1
           fi
           echo "destino=$destino" >> "$GITHUB_OUTPUT"
+          if [ "$RENDER_OUTCOME" = "success" ]; then
+            echo "RENDER_PUBLISH_OK: salida completa publicada en $destino"
+          else
+            echo "RENDER_PARTIAL_PUBLISH_OK: media y artefactos disponibles publicados en $destino"
+          fi
 
       - name: comentar render OK y cerrar issue
         if: steps.render.outcome == 'success' && steps.publish.outcome == 'success'
@@ -207,6 +263,19 @@ jobs:
           gh issue comment "$ISSUE_NUM" -R "$GITHUB_REPOSITORY" \
             -b "runner MAK: render OK y publicado en OneDrive (\`${{ steps.publish.outputs.destino }}\`). Run de control: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           gh issue close "$ISSUE_NUM" -R "$GITHUB_REPOSITORY"
+
+      - name: comentar render fallido con media preservada
+        if: >
+          failure() &&
+          github.event_name == 'issues' &&
+          steps.guard.outputs.skip != 'true' &&
+          steps.dl.outcome == 'success' &&
+          steps.render.outcome == 'failure' &&
+          steps.preserve.outcome == 'success' &&
+          steps.publish.outcome == 'success'
+        run: |
+          gh issue comment "$ISSUE_NUM" -R "$GITHUB_REPOSITORY" \
+            -b "runner MAK: render FALLO, pero la media original y los artefactos parciales fueron preservados en OneDrive (\`${{ steps.publish.outputs.destino }}\`). El issue queda abierto para reintento."
 
       - name: comentar fallo de descarga
         if: failure() && github.event_name == 'issues' && steps.guard.outputs.skip != 'true' && steps.dl.outcome == 'failure'

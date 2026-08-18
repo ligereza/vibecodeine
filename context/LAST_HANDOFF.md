@@ -13604,3 +13604,53 @@ hacer nuevos ajustes de offset salvo que un caso futuro demuestre una
 composición excepcional.
 
 Last verified: 2026-08-17 America/Santiago — Phase 567.
+
+## Phase 568 — preservacion de media antes del render
+
+Se corrigio el workflow de eventos para que una descarga no dependa de que
+Blender termine correctamente. Antes, el MP4 y los frames vivian bajo
+`$RUNNER_TEMP` y solo se copiaban a OneDrive despues de un render completo;
+el issue 534 quedo sin `MAK/eventos/issue-534` y el temporal fue limpiado.
+
+Archivo modificado:
+`/home/mak/flujo/.github/workflows/issue_descarga_ig.yml`.
+
+Cambios:
+
+- `preservar media descargada antes de render` copia inmediatamente el MP4,
+  poster, `media.json` y caption a
+  `onedrive:MAK/eventos/issue-$ISSUE_NUM`.
+- `publicar render en OneDrive (completo o parcial)` usa `always()`, conserva
+  frames ya producidos, `render.log` y `render_manifest.json` aunque Blender
+  falle, y mantiene el cierre del issue condicionado a render completo.
+- `comentar render fallido con media preservada` deja el issue abierto y
+  entrega la ruta remota cuando la fuente fue preservada.
+
+Validacion foreground:
+
+```text
+node YAML parse + workflow structure check: exit 0, WORKFLOW_STRUCTURE_OK
+bash -n de los tres bloques nuevos: exit 0, WORKFLOW_SHELL_BLOCKS_OK
+guards de always/preserve/failure: exit 0, WORKFLOW_GUARDS_OK
+git diff --check -- .github/workflows/issue_descarga_ig.yml: exit 0
+rclone lsf onedrive:MAK/eventos/issue-534: exit 1, directory not found
+rclone lsf onedrive:MAK/eventos: exit 0, solo issue-533 existente
+```
+
+No se tocaron `RD.blend`, el renderer ni los datos historicos. Los cambios
+previos no relacionados del worktree fueron preservados.
+
+Riesgos abiertos: aun falta observar un nuevo issue real para confirmar en
+GitHub Actions que la preservacion temprana y la publicacion parcial funcionan
+contra OneDrive; `actionlint` no esta instalado localmente. Una perdida
+abrupta de energia puede impedir la subida de frames parciales, pero la fuente
+original ya queda protegida antes de iniciar Blender.
+
+## Next concrete action
+
+Ejecutar el proximo issue real y verificar primero, antes de esperar el render,
+que `onedrive:MAK/eventos/issue-<n>/input_ig.mp4` exista; despues comprobar que
+el render completo publique manifest/frames o que un fallo deje log y media
+preservada sin cerrar el issue.
+
+Last verified: 2026-08-18 America/Santiago — Phase 568.
