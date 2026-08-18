@@ -3,9 +3,9 @@
 
 Camino v3 (self-hosted MAK, sin Photoshop/droplet): descarga ya hecha por
 el workflow (issue_descarga_ig.yml) entrega una imagen local; este script
-reproduce EXACTO el camino real de WIN
-(src/flujo/eventos/flyer_auto.py:_render_blender_compuesto), no un swap de
-nodo artesanal:
+es el renderer activo de imagen en Linux/MAK y conserva el contrato de nodos
+que fue recuperado desde la evidencia de WIN. No depende de WIN en runtime y
+no es un swap de nodo artesanal:
 
 1. Paleta de color dominante (portado 1:1 de flyer_auto._extract_palette)
    -> palette_ig.png + palette_ig.json en --out.

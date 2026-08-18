@@ -92,7 +92,11 @@ decision without risking the already-approved portrait reel behavior.
 - Render video frames as PNG with Cycles 128 samples and verified GPU, as
   described above; do not silently reduce samples to solve a composition issue.
 
-## Evidence
+## Historical evidence
+
+The smoke below is historical evidence from a temporary MP4. That source is
+not a current input and is no longer present on the MAK filesystem; do not
+use this section as proof that a new event has already been processed.
 
 The local smoke used the existing video
 `/home/mak/RD/AUTOMATIZACION/Sundeck vuelve para encender la temporada

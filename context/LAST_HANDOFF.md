@@ -1,6 +1,57 @@
 # Operational Handoff
 
-## CURRENT AUTHORITATIVE CHECKPOINT — Phase 539
+## CURRENT AUTHORITATIVE CHECKPOINT — Phase 571
+
+Read this block first after compaction. The compact architectural synthesis is
+`docs/MAK_CURRENT_STATE.md`; this handoff remains the evidence ledger.
+
+- Current objective: keep `/home/mak/flujo` publishable and easy to resume by
+  exposing one current architecture, one active consumer map and one truthful
+  continuity record. Historical phase files remain evidence, not competing
+  instructions.
+- Physical authority: `/home/mak/*` is authoritative; `/home/mak/flujo` is
+  the authoring baseline; `/home/mak/WIN` is historical evidence and is not a
+  runtime dependency. README and the current SVG artwork are protected.
+- Current interfaces: MAK hub `127.0.0.1:8900`; SearXNG backend
+  `127.0.0.1:8888`; FLUJO `app/serve` remains a portable on-demand path with
+  historical default `8765`, not a permanent service.
+- Current event consumer: GitHub Actions runner `mak` calls
+  `flujo.ig.download.download_post`, preserves media early to OneDrive and
+  dispatches image/video to `render_flyer_mak.py` or
+  `render_video_sequence_mak.py`. Legacy Windows bridge files are not called
+  by this active path.
+- Current data boundary: `data/rd.db` is the RD catalog; `data/rd_datos.db`
+  remains a separate empty privacy store; venue JSON is declarative source;
+  generated indexes are projections.
+- Current media contract: image `fitwidth_fade`; video `cover_center` with
+  real source dimensions, centered X/Y, preserved ratio, no stretch and no
+  black bars; Cycles 128 samples and verified GPU for sequence rendering.
+- Repository consolidation completed in this phase: added
+  `docs/MAK_CURRENT_STATE.md`; corrected current pointers in `CAPACIDADES.md`
+  and `MAPA.md`; corrected the active MAK renderer and hub documentation; made
+  the historical video smoke explicit.
+
+## Open integration items
+
+1. Observe a new real issue in Actions to confirm early OneDrive preservation
+   and final/partial publication; no real issue replay has been invented.
+2. Run one bounded real-video manifest smoke when a source is available; do
+   not render a full reel solely to test layout metadata.
+3. Keep provider/API status tied to a recent read-only probe, consumer and
+   cost; keys alone are not operational evidence.
+4. Treat legacy cleanup as a separate compatibility phase. Do not delete
+   `flyer_auto.py`, `bridge_issue_render.py` or `render_video_rd.py` until
+   imports, CLI entrypoints, tests and rollback are measured.
+
+## Next concrete action
+
+Validate the consolidated documentation and source labels in the foreground,
+then publish only the intentional files. Preserve unrelated dirty worktree
+changes and untracked phase evidence.
+
+Last verified: 2026-08-18 America/Santiago — Phase 571.
+
+## Historical checkpoint — Phase 539
 
 Read this block first after compaction. It supersedes older provider and
 service notes below.
@@ -13704,3 +13755,102 @@ acotada que confirme el nuevo campo `layout` del manifest. Revisar
 PNG. No renderizar los 491 frames completos ni modificar `RD.blend`.
 
 Last verified: 2026-08-18 America/Santiago — Phase 569.
+
+## Phase 570 — auditoria read-only de superficie MAK/Linux
+
+Se auditó físicamente el camino de eventos y los textos de plataforma. El
+camino actualmente consumido por el workflow es Linux/MAK:
+
+- `.github/workflows/issue_descarga_ig.yml` importa
+  `flujo.ig.download.download_post`.
+- Para video llama `tools/render_video_sequence_mak.py`.
+- Para imagen/carrusel llama `tools/render_flyer_mak.py`.
+- Los defaults activos existen físicamente:
+  `/home/mak/blender/blender`,
+  `/home/mak/RD/AUTOMATIZACION/RD.blend` y
+  `/home/mak/RD/AUTOMATIZACION/FRAME2.png`.
+- No apareció ningún path `C:/`, `C:\\` ni `/home/mak/WIN` en ese camino
+  activo.
+
+Se encontraron superficies heredadas que no son llamadas por ese workflow y
+pueden confundir a futuros agentes:
+
+1. `src/flujo/eventos/flyer_auto.py`: conserva `DEFAULT_WINDOWS_BASE`,
+   Droplet/Photoshop y fallbacks de Windows.
+2. `tools/bridge_issue_render.py`: puente Windows antiguo, con Blender.exe y
+   estado de puente local.
+3. `tools/render_video_rd.py`: ruta manual H264 sobre
+   `RD.paravideo.blend`, con default Windows y compatibilidad WIN/MAK.
+4. `tools/render_flyer_mak.py`: su encabezado todavía dice que reproduce
+   “EXACTO el camino real de WIN”, aunque el consumidor activo es MAK y el
+   runtime no depende de WIN.
+5. `context/VIDEO_WORKFLOW_MAK_20260817.md`: la sección Evidence conserva la
+   ruta de un smoke histórico cuyo MP4 ya no existe físicamente; es evidencia
+   válida de aquel momento, pero debe quedar marcada como histórica para no
+   parecer un input actual.
+
+No se borró ni se movió evidencia durante esta auditoría. El commit `9c915c2`
+no contiene esas superficies heredadas. Su disposición correcta es
+`legacy/manual-only`, separada del camino MAK activo; la limpieza o
+cuarentena física requiere un slice posterior con write set propio.
+
+## Next concrete action
+
+Corregir únicamente las etiquetas/documentación de las cinco superficies
+heredadas para declarar `legacy/manual-only` y diferenciar evidencia histórica
+de runtime activo. Después ejecutar import/entrypoint checks de MAK y verificar
+que el workflow no importe ninguna ruta heredada. No borrar esos archivos ni
+alterar `RD.blend`.
+
+Last verified: 2026-08-18 America/Santiago — Phase 570.
+
+## Phase 571 — consolidacion del estado actual para el repo web
+
+Se publico una sintesis operativa para que un agente nuevo no tenga que leer
+las cientos de evidencias historicas antes de trabajar:
+`docs/MAK_CURRENT_STATE.md`. El documento concentra autoridad fisica,
+interfaces, owners/consumidores, semantica compartida, bases RD, research,
+workflow de eventos, politica de imagen/video, APIs, superficies legacy y
+topologia Git. Las fases y memorias quedan conservadas como evidencia; no se
+copio ningun arbol ni se elimino ningun archivo.
+
+Se corrigieron referencias que podian confundir WIN con MAK/Linux:
+
+- `CAPACIDADES.md` ahora apunta al estado canonico y distingue los renderers
+  activos de las rutas legacy/manual-only.
+- `MAPA.md` remite al estado canonico y advierte que el CLI puede conservar
+  comandos legacy por compatibilidad.
+- `src/flujo/web/hub.py` documenta la cadena actual del runner MAK hacia
+  `render_*_mak.py` y OneDrive.
+- `tools/render_flyer_mak.py` declara su dependencia de runtime Linux/MAK y
+  la procedencia historica del contrato, sin presentar WIN como runtime.
+- `context/VIDEO_WORKFLOW_MAK_20260817.md` marca el smoke MP4 como evidencia
+  historica y no como input actual.
+
+Validacion foreground:
+
+```text
+python3 -m py_compile src/flujo/web/hub.py tools/render_flyer_mak.py: exit 0
+.venv/bin/pytest -q tests/test_blender_nodes.py tests/test_blender_nodes_video.py tests/test_render_video_sequence_mak.py tests/test_mak_hub_eventos.py: exit 0, 44 passed
+git diff --check sobre los siete archivos editados: exit 0
+workflow call-site check: download_post + render_*_mak presentes; legacy bridge/render_video_rd ausentes del workflow activo
+```
+
+Archivos intencionales de esta entrega:
+`docs/MAK_CURRENT_STATE.md`, `CAPACIDADES.md`, `MAPA.md`,
+`context/LAST_HANDOFF.md`, `context/VIDEO_WORKFLOW_MAK_20260817.md`,
+`src/flujo/web/hub.py` y `tools/render_flyer_mak.py`.
+
+Riesgos abiertos: aun no existe un nuevo issue real que permita medir la
+preservacion temprana en Actions; las rutas legacy aun tienen imports/CLI o
+tests y por eso no se borraron; el worktree conserva cambios y evidencias no
+relacionadas que deben quedar fuera del commit.
+
+## Next concrete action
+
+Revisar el diff staged de esos siete archivos mas el nuevo documento, hacer
+commit y push en `main`, y comprobar que `HEAD == origin/main`. Despues el
+siguiente trabajo funcional es observar un issue real o crear un packet de
+idea con `tools/route_idea.py`; no reabrir la genealogia completa.
+
+Last verified: 2026-08-18 America/Santiago — Phase 571.
