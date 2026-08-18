@@ -23,6 +23,19 @@ def test_build_command_uses_sequence_script_and_manifest(tmp_path):
     assert "--out-dir" in command
     assert "--manifest" in command
     assert "--frame-end" in command
+    assert "--no-persistent-data" not in command
+
+
+def test_build_command_can_disable_persistent_data(tmp_path):
+    command = module.build_blender_command(
+        Path("/home/mak/blender/blender"),
+        Path("/home/mak/RD/AUTOMATIZACION/RD.paravideo.blend"),
+        tmp_path / "input.mp4",
+        tmp_path / "frames",
+        tmp_path / "render_manifest.json",
+        persistent_data=False,
+    )
+    assert command[-1] == "--no-persistent-data"
 
 
 def test_manifest_requires_cycles_128_gpu_and_png_count(tmp_path):

@@ -13102,3 +13102,505 @@ calculado y publicación en OneDrive; no lanzarlo en paralelo ni usar el poster
 como sustituto.
 
 Last verified: 2026-08-17 America/Santiago — Phase 555.
+
+## Phase 556 — bake seguro de materiales estáticos RD
+
+El usuario pidió bakear texturas, no reducir rebotes. Se auditó primero la
+plantilla activa `/home/mak/RD/AUTOMATIZACION/RD.blend` con
+`/home/mak/flujo/tools/audit_blend_scene.py` (código 0), sin guardar sobre la
+fuente. El diagnóstico relevante fue:
+
+- escena activa `Animated fluid in a testing tube`, Cycles, 1080x1920, cámara
+  fija en los frames 1/50/100, 149 objetos y 134 meshes;
+- 82 nodos de imagen en 69 materiales y 90 imágenes; la mayoría ya eran
+  texturas bitmap/PBR, por lo que rehornearlas no reduciría el trabajo;
+- solo tres ramas procedurales estáticas con UV y Principled Base Color aptas
+  para un bake material-only: `tIGE/Material.014`,
+  `Holders_Base/Rusty Metal` y `petri dish 03/Pilz 03`;
+- `Material.002` y `Material.008` son las pantallas que el workflow reemplaza
+  con el video en cada frame; `Decorative Glass 05`, `Glass`, `Glass.001`,
+  `GlassFrosty`, `Liquid1`, `LiquidBlue.003` y `Simple Crystal.001` se
+  conservaron para no congelar reflejos/transmisión ni la iluminación del
+  contenido dinámico.
+
+Se creó `/home/mak/flujo/tools/bake_static_materials.py`. El comando ejecutado
+fue:
+
+```text
+/home/mak/blender/blender -b /home/mak/RD/AUTOMATIZACION/RD.blend --python /home/mak/flujo/tools/bake_static_materials.py -- --output /home/mak/RD/AUTOMATIZACION/RD.baked-static.v1.blend --resolution 2048
+```
+
+Resultado: código 0; se creó la copia
+`/home/mak/RD/AUTOMATIZACION/RD.baked-static.v1.blend` con tres imágenes
+2048x2048 empaquetadas (`BAKE_BASECOLOR_tIGE_0`,
+`BAKE_BASECOLOR_Holders_Base_1`, `BAKE_BASECOLOR_petri dish 03_1`) y tres
+materiales duplicados `__BAKED_...`. No se hizo bake de iluminación, sombras,
+reflejos ni transmisión. La auditoría de la copia terminó con código 0 y
+conservó la cámara, la animación, las pantallas y los rebotes originales
+84/62/56/48/62/64. La fuente original no se guardó ni se reemplazó; su hash
+verificado al cierre fue:
+`2abb5ab6cb1a24d90ea3e745726e1f245b5d1dd8fe90dcf45260e9c9a4e2da64`.
+
+Validación visual/operativa del bake:
+
+- el frame 75 de la copia horneada se renderizó con Cycles, CUDA y GTX 1650;
+  salió PNG de 1080x1920 en `/tmp/rd-benchmark-baked-20260817/frame_0075.png`;
+- comparación contra el frame 75 de la fuente: MAE 0.0021/255, máximo 0/97
+  por canal y 0.1105% de canales distintos; no se observó cambio material en
+  la composición ni en el video;
+- el bake por sí solo no redujo el tiempo de un frame: fuente 185.65 s,
+  copia horneada 185.27 s. Esto es una medición, no un fallo del bake: el
+  costo dominante está en geometría/Cycles y las texturas que ya eran bitmap.
+
+También se dejó habilitable el cache persistente solo para la secuencia de
+video: `src/flujo/eventos/blender_nodes_video_seq.py` usa `persistent_data`
+por defecto y acepta `--no-persistent-data`; el wrapper
+`tools/render_video_sequence_mak.py` expone la misma opción. La prueba de tres
+frames 73–75 sobre la fuente terminó con código 0, 541.53 s totales y tres
+PNG; el frame 75 fue visualmente equivalente (MAE 0.0022/255). El cache elevó
+el pico del proceso a aproximadamente 1.76 GiB, por debajo de la memoria
+disponible observada, pero no se debe activar para imagen fija.
+
+Se rechazó la variante experimental que bajaba rebotes: aunque el tiempo no
+mejoró, alteró piso/reflejos (MAE 6.93/255 y 28.46% de píxeles afectados). El
+script `tools/optimize_blend_scene.py` fue corregido para preservar siempre
+los rebotes; su comentario deja explícito que no es una optimización aceptada.
+
+Validación de código: `python3 -m py_compile` de los cinco scripts modificados,
+código 0; `.venv/bin/pytest -q tests/test_render_video_sequence_mak.py tests/test_blender_nodes_video.py`, código 0, 12 passed.
+
+Archivos de repo modificados o creados en esta fase:
+`tools/audit_blend_scene.py`, `tools/bake_static_materials.py`,
+`tools/optimize_blend_scene.py`, `tools/render_video_sequence_mak.py`,
+`src/flujo/eventos/blender_nodes_video_seq.py`,
+`tests/test_render_video_sequence_mak.py`,
+`tests/test_blender_nodes_video.py` y este handoff. Los `.blend` y PNG de
+prueba quedaron fuera del repo, en `/home/mak/RD/AUTOMATIZACION/` y `/tmp/`.
+
+Validación final de secuencia sobre la copia horneada:
+
+```text
+python3 tools/render_video_sequence_mak.py --video /tmp/mak-issue-533-snapinsta.mp4 --blend /home/mak/RD/AUTOMATIZACION/RD.baked-static.v1.blend --out-dir /tmp/rd-benchmark-baked-seq-20260817 --frame-start 73 --frame-end 75
+```
+
+Terminó con código 0: 3 PNG, 0 saltados, 30 fps, Cycles, 128 samples,
+CUDA/GTX 1650. Los frames consecutivos sí cambian (MAE 2.69 y 2.76), y cada
+frame horneado contra su equivalente de la fuente queda en MAE 0.0021/255;
+por tanto el video continúa dinámico y el bake no congela la escena.
+
+## Next concrete action
+
+La copia horneada queda validada como variante segura, pero el wrapper conserva
+`RD.blend` como default porque la copia `.blend` vive fuera del repo y no debe
+convertirse silenciosamente en una dependencia no portable. Para usarla se
+indica explícitamente `--blend /home/mak/RD/AUTOMATIZACION/RD.baked-static.v1.blend`.
+La siguiente acción es decidir dónde versionar/distribuir esa plantilla de
+render o generar una variante portable; después hacer un perfil acotado de
+geometría/modificadores. No reducir rebotes ni hornear iluminación/reflejos.
+
+Last verified: 2026-08-17 America/Santiago — Phase 556.
+
+## Phase 557 — perfil de animación para bake híbrido
+
+La hipótesis del usuario —cámara quieta y solo la emisión del video cambiando—
+se verificó con el diagnóstico de solo lectura
+`tools/profile_blender_animation.py`:
+
+```text
+/home/mak/blender/blender -b /home/mak/RD/AUTOMATIZACION/RD.blend --python /home/mak/flujo/tools/profile_blender_animation.py -- --frames 1 50 75
+```
+
+Código 0. Resultado: `camera_changes=false`, `light_changes=0`; únicamente
+`Cylinder` y `Cylinder.002` cambiaron entre los tres frames, y el cambio fue
+de transformación/rotación, no de topología. El resto de la geometría estática
+puede entrar en una estrategia de bake híbrido. El script quedó compilado con
+código 0 y no guarda el `.blend`.
+
+Inspección específica del piso: el objeto `Base` usa `Metal04 PBR`, un grupo
+con `Metal04_col.jpg`, `Metal04_met.jpg`, `Metal04_rgh.jpg`, `Metal04_nrm.jpg`
+y `Metal04_disp.jpg`. No es un material procedural pendiente de bake; es PBR
+bitmap y además es reflectivo. Hornear `Combined` lo convertiría en una imagen
+congelada y eliminaría precisamente los reflejos dinámicos del video. La copia
+`RD.baked-static.v1.blend` conserva el piso original por esta razón.
+
+Conclusión técnica: sí existe una optimización de bake, pero debe separar
+`diffuse/static` de `glossy/video/dynamic`. Un bake combinado de toda la escena
+sería incorrecto. La siguiente prueba debe hornear solo iluminación difusa
+estática sobre superficies no metálicas, mantener el BSDF glossy original para
+reflejos, excluir `Base`, `Material.002`, `Material.008`, cristales, líquidos y
+los dos cilindros animados, y comparar los frames 73/74/75 contra la fuente.
+
+## Next concrete action
+
+Construir una copia experimental separada para el bake híbrido: seleccionar
+solo meshes estáticos no reflectivos, hornear la contribución difusa estática
+sin modificar `RD.blend`, conservar mapas glossy/normal/displacement y ejecutar
+una comparación visual de tres frames. Si el piso o una superficie cambia de
+forma no aceptable, descartar esa variante y mantener la copia
+`RD.baked-static.v1.blend` como bake material-only validado. No bajar rebotes ni
+hornear la iluminación/reflexión del video.
+
+Last verified: 2026-08-17 America/Santiago — Phase 557.
+
+## Phase 558 — prueba de bake difuso híbrido y límite medido
+
+Para no descartar la hipótesis sin probarla, se creó el experimento aislado
+`tools/bake_static_diffuse_hybrid.py`. Solo acepta objetos estáticos,
+opacos y no metálicos; excluye cámaras, geometría animada, `Tablet.002`,
+materiales de video, líquidos, cristales, metales y el piso `Base`.
+
+Sobre una copia separada se horneó `tIGE/Material.014` a 512x512 con diffuse
+direct+indirect en frame 1. Después el material quedó como suma de emisión
+difusa horneada y el Principled original con Base Color negro, de modo que su
+respuesta glossy queda viva. La fuente no se guardó:
+`/home/mak/RD/AUTOMATIZACION/RD.hybrid-test-tIGE.v1.blend`.
+
+Como el MP4 temporal del issue ya no estaba disponible, se creó únicamente
+`/tmp/rd-static-validation.mp4` a partir de la imagen local existente
+`/home/mak/RD/AUTOMATIZACION/frame.png`; no se buscó ni descargó el issue.
+Fuente e híbrido se renderizaron con el mismo clip sintético, un frame, CUDA,
+GTX 1650, Cycles y 128 samples:
+
+- fuente: `Time 03:02.94`;
+- híbrido: `Time 03:05.43`;
+- diferencia visual: MAE `0.5409/255`, máximo `110`; la composición se
+  conservó, pero el tiempo aumentó aproximadamente 1.3%.
+
+Conclusión: el bake híbrido es técnicamente posible y mantiene la imagen, pero
+no es una optimización de tiempo en esta escena. El costo dominante es el
+trazado de samples sobre la geometría y los reflejos, no los nodos de color de
+un objeto. No se amplió el bake ni se propone activar esa variante.
+
+## Next concrete action
+
+Para conseguir una reducción real sin bajar rebotes, evaluar una arquitectura
+de dos capas: renderizar una vez la capa estática y conservar en vivo solo
+video, cilindros animados y reflejos necesarios; luego componer ambas capas.
+Debe probarse primero con una copia y tres frames, porque una capa estática
+simple perdería reflejos/oclusiones del video. Si no conserva el aspecto,
+mantener el pipeline Cycles actual y no fabricar más mapas que no aceleran.
+
+Last verified: 2026-08-17 America/Santiago — Phase 558.
+
+## Phase 559 — objetivo persistente: render híbrido medido
+
+El usuario estableció como objetivo de esta línea de trabajo encontrar y
+validar una arquitectura de render Blender híbrida para RD que aproveche la
+cámara y la geometría estáticas, mantenga dinámicos el video, los reflejos y
+los objetos animados, reduzca el tiempo medido sin bajar rebotes ni degradar la
+imagen, y documente una variante segura antes de activarla.
+
+Estado de la investigación:
+
+1. Mapa de animación: cámara fija, luces fijas, `Cylinder` y `Cylinder.002`
+   cambian de transformación.
+2. Bake de base color procedural: validado visualmente, sin ganancia de tiempo.
+3. Bake difuso híbrido de prueba: visualmente cercano, pero 1.3% más lento.
+4. Hipótesis activa: separar capa estática y capa dinámica, con composición y
+   validación de reflejos/oclusiones antes de integrarla.
+
+La investigación continuará en copias experimentales y con lotes pequeños;
+`RD.blend` sigue siendo rollback intacto. No se aceptará una variante solo por
+renderizar: debe demostrar ahorro de tiempo, equivalencia visual suficiente,
+video dinámico y un camino de reversión.
+
+## Next concrete action
+
+Inspeccionar colecciones, pases y materiales para definir la primera separación
+estática/dinámica mínima. Construir una copia de prueba que no elimine objetos:
+solo marque visibilidad por capa, renderice un frame estático y un frame
+dinámico, y mida si la composición puede conservar el piso reflectivo y la
+pantalla. No activar ni reemplazar el wrapper hasta tener esa medición.
+
+Last verified: 2026-08-17 America/Santiago — Phase 559.
+
+## Phase 560 — rollback de híbrido y encuadre cover para video
+
+Se inspeccionó la propuesta de capas estática/dinámica antes de activarla.
+La prueba no se promovió: `Tablet.002` contiene marco, cristal y solo 13 caras
+con materiales de video (`Material.002`/`Material.008`). Una capa aislada del
+objeto pierde el entorno que necesita el cristal para sus reflejos; la
+composición simple alteraba el aspecto. El `.blend` original nunca se guardó
+desde esas pruebas y queda como rollback operativo. El script experimental fue
+movido fuera de `tools/` a:
+`context/quarantine/render-hybrid-experiment-20260817/render_layer_experiment.py`.
+
+La auditoría de memoria confirmó una causa concreta de costo de carga: la
+imagen histórica `flyer_final.jpg` mide 11925x11926 y representa unos 542.52
+MiB de buffer RGBA; la escena reporta 149 objetos, 306210 vértices, 333658
+polígonos, 38 SUBSURF y 62 nodos geométricos. No se eliminó ni redimensionó
+esa evidencia en el proyecto activo.
+
+Se corrigió solo el encuadre del camino de video. `fitwidth_mapping` permanece
+intacto para imágenes verticales/1440. Se añadió `fitcover_mapping` en
+`src/flujo/eventos/blender_nodes.py` y `blender_nodes_video.py` lo usa al
+construir o actualizar materiales de video: llena la ventana portrait,
+recorta simétricamente los lados de un 16:9 y centra el contenido en el marco
+del cristal. No reduce samples, rebotes ni modifica el `.blend`.
+
+Validaciones ejecutadas:
+
+```text
+.venv/bin/pytest -q tests/test_blender_nodes.py tests/test_blender_nodes_video.py tests/test_render_video_sequence_mak.py
+```
+
+Código 0; 24 pruebas pasaron. La inspección Blender sin render terminó con
+código 0 y mostró para ambos materiales de video, usando un clip 720x1280,
+el mismo mapping cover (`scale=(3.458425,1.945560)`, `loc=(-2.266949,-0.988602)`).
+La pasada experimental de `screen_only` a 25% y 128 samples fue solo un
+smoke test geométrico; no se considera validación de imagen porque el cristal
+aislado no conserva su entorno. El flujo productivo sigue siendo el render
+normal completo.
+
+Riesgo controlado: `fit-cover` recorta los lados de videos horizontales por
+diseño; no deforma ni desplaza el centro. Un video vertical con composición
+importante en los bordes debe revisarse visualmente antes de entregar, pero la
+ruta de imagen fija no cambia.
+
+## Next concrete action
+
+Cuando exista un MP4 de prueba disponible, ejecutar un frame foreground del
+workflow productivo con `RD.blend`, verificar visualmente el marco completo y
+comparar el centro del contenido. Si el crop real pasa, conservar el cambio de
+mapping; si no pasa, revertir únicamente `fitcover_mapping` y sus tests. No
+reactivar la arquitectura híbrida ni usar la carpeta de cuarentena como ruta
+operativa.
+
+Last verified: 2026-08-17 America/Santiago — Phase 560.
+
+## Phase 561 — validación foreground del crop 16:9 en resolución real
+
+Se ejecutó el workflow productivo completo, sin capas experimentales ni
+guardado de plantilla:
+
+```text
+python3 tools/render_video_sequence_mak.py \
+  --video /tmp/rd-dynamic-validation.mp4 \
+  --blend /home/mak/RD/AUTOMATIZACION/RD.blend \
+  --out-dir /tmp/rd-cover-production-20260817 \
+  --frame-start 1 --frame-end 1 --min-size 20000
+```
+
+El clip de prueba era 720x1280, seis frames, 30 fps. El proceso terminó con
+código 0 y `RENDER_OK`: Cycles, 128 samples, CUDA en NVIDIA GeForce GTX 1650;
+el frame PNG de 1080x1920 quedó en
+`/tmp/rd-cover-production-20260817/frame_0001.png`. Tiempo Blender:
+`02:58.17`; el render se inspeccionó visualmente y el contenido 16:9 llena la
+abertura vertical, queda centrado y recorta simétricamente los laterales del
+video. El marco de cristal permanece visible alrededor. No se observó el
+desplazamiento vertical de las previews anteriores.
+
+La plantilla `/home/mak/RD/AUTOMATIZACION/RD.blend` no fue guardada ni
+modificada; hash posterior confirmado:
+`2abb5ab6cb1a24d90ea3e745726e1f245b5d1dd8fe90dcf45260e9c9a4e2da64`.
+
+## Next concrete action
+
+Mantener la arquitectura normal de Cycles como camino productivo. El único
+cambio promovible de esta investigación es `fitcover_mapping` para video; la
+variante híbrida queda en cuarentena y no debe conectarse al wrapper. Para
+cerrar esta línea falta probar un MP4 real del workflow de evento cuando esté
+disponible; no hace falta reabrir el issue ni descargarlo para conservar el
+estado actual.
+
+Last verified: 2026-08-17 America/Santiago — Phase 561.
+
+## Phase 562 — descarga y validación del reel real del issue 533
+
+Se recuperó nuevamente el material real asociado al issue `#533`, sin
+login de Instagram y sin buscar un issue nuevo. La URL registrada en este
+handoff fue:
+`https://www.instagram.com/iskvw/reel/DRA11amkRVX/`.
+
+La descarga terminó con código 0 y produjo:
+`/tmp/rd-issue-533-real-20260817/input_ig.mp4`.
+La inspección `ffprobe` confirmó H.264/AAC, 720x1280, 30 fps, 150 frames,
+5.131 segundos y 2148026 bytes. Se extrajo el frame fuente 75 a
+`/tmp/rd-issue-533-real-20260817/source-frame-0075.png` y se verificó
+visualmente que es el reel real: empaque vertical con contenido oscuro y
+reflejos, no una tarjeta sintética.
+
+Se ejecutó el workflow productivo real, sin guardar la plantilla:
+
+```text
+python3 tools/render_video_sequence_mak.py \
+  --video /tmp/rd-issue-533-real-20260817/input_ig.mp4 \
+  --blend /home/mak/RD/AUTOMATIZACION/RD.blend \
+  --out-dir /tmp/rd-issue-533-real-render-20260817 \
+  --frame-start 75 --frame-end 75 --min-size 20000
+```
+
+Código 0; `RENDER_OK`; se generó
+`/tmp/rd-issue-533-real-render-20260817/frame_0075.png` (1080x1920,
+16-bit RGB, 12464002 bytes). Tiempo Blender: `03:01.79`. Manifest: una
+fuente de 150 frames a 30 fps, Cycles, 128 samples, GPU CUDA y
+`NVIDIA GeForce GTX 1650`. La plantilla conserva el hash
+`2abb5ab6cb1a24d90ea3e745726e1f245b5d1dd8fe90dcf45260e9c9a4e2da64`.
+
+La primera inspección del PNG real mostró que el `fitcover` matemáticamente
+centrado no centraba el motivo visual: el sujeto del reel quedaba alto dentro
+del cristal. Esa conclusión fue corregida en la fase siguiente; esta fase no
+se considera una validación visual final. El marco, reflejos, iluminación,
+piso y composición permanecen presentes. Se mantiene el pipeline normal
+completo; no se reactivó el híbrido ni se redujeron rebotes o samples.
+
+Hashes de evidencia:
+
+```text
+9f566ac4dc2dedb46c170dea84915311964272943ae7b0ba1ca93b01327f9c4a  input_ig.mp4
+e48523dc45f4591b39795aba782a7f42dace50623c8a124be1ae676649c1d519  frame_0075.png
+2abb5ab6cb1a24d90ea3e745726e1f245b5d1dd8fe90dcf45260e9c9a4e2da64  RD.blend
+```
+
+## Phase 563 — corrección del centro visual del video real
+
+La comparación foreground de tres variantes confirmó que el problema no era
+la geometría ni el `.blend`: el contenido visible del reel estaba alto dentro
+de su lienzo portrait. Se agregó un parámetro reversible `offset_y` a
+`fitcover_mapping`; el camino de imágenes fijas y `fitwidth_mapping` no se
+modificaron. El consumidor de video usa el ajuste explícito
+`VIDEO_CONTENT_OFFSET_Y = 0.05`, que desplaza el motivo 5% hacia abajo dentro
+de la ventana. La prueba de 10% se descartó por pasar el centro y acercarse
+demasiado al borde inferior.
+
+Validación de código:
+
+```text
+.venv/bin/pytest -q tests/test_blender_nodes.py tests/test_blender_nodes_video.py tests/test_render_video_sequence_mak.py
+Código 0; 25 pruebas pasaron.
+```
+
+Validación foreground final con el MP4 real, sin guardar la plantilla:
+
+```text
+python3 tools/render_video_sequence_mak.py \
+  --video /tmp/rd-issue-533-real-20260817/input_ig.mp4 \
+  --blend /home/mak/RD/AUTOMATIZACION/RD.blend \
+  --out-dir /tmp/rd-issue-533-real-render-offset005-20260817 \
+  --frame-start 75 --frame-end 75 --min-size 20000
+```
+
+Código 0; `RENDER_OK`; salida
+`/tmp/rd-issue-533-real-render-offset005-20260817/frame_0075.png`,
+1080x1920, 12464002 bytes, Cycles 128 samples, CUDA GTX 1650, tiempo
+Blender `03:02.31`. La inspección visual final confirma el motivo centrado
+en la abertura, sin cortar el empaque en los bordes y conservando marco,
+reflejos, iluminación y piso. `RD.blend` no fue guardado ni alterado.
+
+## Next concrete action
+
+Conservar `VIDEO_CONTENT_OFFSET_Y = 0.05` como ajuste actual del workflow de
+video y `fitwidth_mapping` para imágenes. Un render completo de los 150
+frames solo debe ejecutarse cuando se solicite la entrega final y exista un
+destino de almacenamiento suficiente. Antes de entregar otro video vertical
+con composición distinta, revisar un frame central: el offset es una decisión
+de encuadre para el contenedor RD, no una regla universal de edición. No
+modificar ni guardar `RD.blend` durante esa operación.
+
+Last verified: 2026-08-17 America/Santiago — Phase 563.
+
+## Phase 564 — segundo reel y revisión de bordes
+
+Se descargó y validó el segundo reel real solicitado:
+`https://www.instagram.com/iskvw/reel/DZHDe7NvqOh/`.
+El descargador devolvió código 0, MP4 H.264 de 720x1280, 30 fps, 491 frames
+y 16.366667 segundos, además de su thumbnail JPG. Se inspeccionaron frames
+fuente al inicio, centro y final para comprobar que el material tiene
+gráficas próximas a los bordes.
+
+Se renderizó el frame central 245 con el workflow productivo y el ajuste
+actual de video:
+
+```text
+python3 tools/render_video_sequence_mak.py \
+  --video /tmp/rd-reel-DZHDe7NvqOh-20260817/input_ig.mp4 \
+  --blend /home/mak/RD/AUTOMATIZACION/RD.blend \
+  --out-dir /tmp/rd-reel-DZHDe7NvqOh-render-20260817 \
+  --frame-start 245 --frame-end 245 --min-size 20000
+```
+
+Código 0; `RENDER_OK`; salida
+`/tmp/rd-reel-DZHDe7NvqOh-render-20260817/frame_0245.png`, 1080x1920,
+12.5 MB. Cycles, 128 samples, CUDA, NVIDIA GeForce GTX 1650, tiempo Blender
+`02:59.64`. La inspección visual confirma que la composición central queda
+dentro del cristal y que no se pierde una gráfica relevante en los bordes
+visibles de este frame.
+
+Límite importante: la abertura del `.blend` tiene una proporción más ancha
+que el video 9:16. Por eso `fitcover` recorta necesariamente parte superior e
+inferior de la fuente; el offset de 5% es una decisión de encuadre del
+contenedor RD y no equivale a preservar el 100% del canvas original. Si un
+reel futuro usa información crítica en los bordes, debe pasar una revisión de
+frame central y se debe elegir explícitamente entre cover (sin barras, con
+recorte) y contain/fit-height (sin recorte, con barras laterales).
+
+## Next concrete action
+
+Mantener la prueba de segundo reel como validación visual, sin renderizar los
+491 frames completos. Antes de entregar videos con contenido crítico en los
+bordes, añadir o ejecutar una decisión explícita de `cover` versus
+`fit-height`; no cambiarla globalmente basándose solo en este reel. No
+modificar ni guardar `RD.blend`.
+
+Last verified: 2026-08-17 America/Santiago — Phase 564.
+
+## Phase 565 — política de encuadre confirmada
+
+El usuario confirmó la decisión productiva: usar `cover` para llenar toda la
+abertura del cristal, conservar la proporción original y aceptar el recorte
+de franjas antes que deformar el video o mostrar bordes negros. La regla debe
+leerse según la relación de aspecto: una fuente horizontal recorta franjas
+laterales verticales; una fuente 9:16 dentro de esta abertura más ancha recorta
+franjas superior e inferior. `fitwidth_mapping` de imágenes fijas permanece
+sin cambios.
+
+## Phase 566 — reels verticales centrados sin offset visual
+
+Se corrigió la política anterior: el workflow de reels se considera
+exclusivamente portrait. `blender_nodes_video.py` ya no aplica el offset fijo
+de 5% que se había ajustado al motivo de un único reel. Ahora llama a
+`fitcover_mapping` sin `offset_y`: la fuente queda centrada en X e Y, cubre
+la abertura y el recorte superior/inferior es simétrico. Las imágenes fijas
+siguen usando `fitwidth_mapping` sin cambios.
+
+El helper conserva `offset_y` opcional para experimentos explícitos, pero no
+forma parte del camino productivo. No se modificó ni guardó `RD.blend`.
+
+## Next concrete action
+
+Ejecutar una validación foreground de un frame real con esta versión centrada
+para confirmar la simetría visual final. No cambiar a `contain`/`fit-height`,
+no reabrir el híbrido y no renderizar todos los frames hasta que ese smoke
+test sea inspeccionado.
+
+Last verified: 2026-08-17 America/Santiago — Phase 566.
+
+## Phase 567 — validación del centrado portrait sin offset
+
+Se ejecutó la validación solicitada después de retirar el offset fijo:
+
+```text
+.venv/bin/pytest -q tests/test_blender_nodes.py tests/test_blender_nodes_video.py tests/test_render_video_sequence_mak.py
+python3 tools/render_video_sequence_mak.py \
+  --video /tmp/rd-reel-DZHDe7NvqOh-20260817/input_ig.mp4 \
+  --blend /home/mak/RD/AUTOMATIZACION/RD.blend \
+  --out-dir /tmp/rd-reel-DZHDe7NvqOh-render-centered-20260817 \
+  --frame-start 245 --frame-end 245 --min-size 20000
+```
+
+Las pruebas terminaron con código 0 (`25 passed`) y el render terminó con
+código 0 (`RENDER_OK`). El PNG resultante es
+`/tmp/rd-reel-DZHDe7NvqOh-render-centered-20260817/frame_0245.png`, 1080x1920,
+Cycles 128 samples, CUDA en la GTX 1650, tiempo Blender `02:59.60`. La
+inspección visual confirma centrado X/Y del reel vertical y recorte simétrico
+arriba/abajo. `RD.blend` no fue guardado ni alterado.
+
+## Next concrete action
+
+La política de encuadre de reels queda cerrada: `cover` centrado, sin
+deformación, sin bordes negros y con recorte simétrico vertical. Mantener las
+imágenes fijas en su camino separado. No renderizar los reels completos ni
+hacer nuevos ajustes de offset salvo que un caso futuro demuestre una
+composición excepcional.
+
+Last verified: 2026-08-17 America/Santiago — Phase 567.

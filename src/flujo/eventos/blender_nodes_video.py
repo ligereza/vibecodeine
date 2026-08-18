@@ -3,7 +3,7 @@
 en vez de un JPG estatico.
 
 NO reemplaza a blender_nodes.py (el camino de imagen estatica sigue
-intacto, sin tocar). Reutiliza sus helpers puros (fitwidth_mapping,
+intacto, sin tocar). Reutiliza sus helpers puros (fitcover_mapping,
 hue_de_rgb, labels, _buscar_materiales_flyer, _nodo_por_label,
 _color_predominante_bpy, _repuntar_color_predominante, _resolver_ruta)
 importandolos como modulo hermano.
@@ -25,6 +25,9 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import blender_nodes as bn  # noqa: E402 -- modulo hermano, reusa el grafo probado
+
+# Reels are portrait inputs for this workflow.  Cover the glass and keep the
+# source centered in both axes; the symmetric top/bottom crop is intentional.
 
 
 def _parse_args(argv):
@@ -85,7 +88,8 @@ def build_flyer_nodes_video(mat, nodo_original, frame_path, video_path,
         ti.image = video_img
         frame_size = tuple(tf.image.size)
         video_size = tuple(video_img.size)
-        (sx, sy), (lx, ly) = bn.fitwidth_mapping(bn.WINDOW_UV, frame_size, video_size)
+        (sx, sy), (lx, ly) = bn.fitcover_mapping(
+            bn.WINDOW_UV, frame_size, video_size)
         mapping.inputs["Scale"].default_value = (sx, sy, 1.0)
         mapping.inputs["Location"].default_value = (lx, ly, 0.0)
         hv.outputs[0].default_value = hue_objetivo
@@ -96,6 +100,18 @@ def build_flyer_nodes_video(mat, nodo_original, frame_path, video_path,
         bn.build_flyer_nodes(mat, nodo_original, frame_path, video_path, hue_objetivo)
         ti = bn._nodo_por_label(mat, bn.LBL_CONTENIDO)
         ti.image = video_img  # el helper cargo un STILL; lo reemplazamos por el MOVIE
+
+        # build_flyer_nodes initially uses the still-image fit-width mapping;
+        # video must cover the portrait window and crop symmetrically.
+        tf = bn._nodo_por_label(mat, bn.LBL_MARCO)
+        mapping = next(n for n in tree.nodes if n.type == "MAPPING" and any(
+            l.to_node == ti for l in tree.links if l.from_node == n))
+        frame_size = tuple(tf.image.size)
+        video_size = tuple(video_img.size)
+        (sx, sy), (lx, ly) = bn.fitcover_mapping(
+            bn.WINDOW_UV, frame_size, video_size)
+        mapping.inputs["Scale"].default_value = (sx, sy, 1.0)
+        mapping.inputs["Location"].default_value = (lx, ly, 0.0)
 
     ti.image_user.frame_duration = frame_duration
     ti.image_user.frame_start = 1

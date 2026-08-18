@@ -76,6 +76,7 @@ def build_blender_command(
     frame_end: int | None = None,
     min_size: int = 20000,
     fps: float | None = None,
+    persistent_data: bool = True,
 ) -> list[str]:
     """Build the foreground Blender invocation used by MAK and CI."""
     cmd = [str(blender), "-b", str(blend), "--python", str(BLENDER_SCRIPT), "--"]
@@ -89,6 +90,8 @@ def build_blender_command(
         cmd += ["--color-png", str(color_png)]
     if frame_end is not None:
         cmd += ["--frame-end", str(frame_end)]
+    if not persistent_data:
+        cmd += ["--no-persistent-data"]
     return cmd
 
 
@@ -125,6 +128,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--frame-end", type=int)
     parser.add_argument("--min-size", type=int, default=20000)
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument(
+        "--no-persistent-data",
+        action="store_true",
+        help="desactivar la cache entre frames (solo diagnostico)",
+    )
     args = parser.parse_args(argv)
 
     video = args.video.resolve()
@@ -147,6 +155,7 @@ def main(argv: list[str] | None = None) -> int:
         blender, blend, video, out_dir, manifest, args.frame, args.color_png,
         args.frame_start, args.frame_end, args.min_size,
         probe.get("fps") or None,
+        not args.no_persistent_data,
     )
     print("BLENDER_CMD: " + " ".join(cmd))
     if args.dry_run:

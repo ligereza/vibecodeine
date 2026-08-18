@@ -8,7 +8,8 @@ ventana siempre; el alto sobrante lo maneja el fade (no el mapping).
 import pytest
 
 from flujo.eventos.blender_nodes import (
-    WINDOW_UV, fitwidth_mapping, hue_de_rgb, _parse_args, _resolver_ruta,
+    WINDOW_UV, fitcover_mapping, fitwidth_mapping, hue_de_rgb,
+    _parse_args, _resolver_ruta,
 )
 
 FRAME_REAL = (9898, 9899)
@@ -70,6 +71,38 @@ def test_fitwidth_dimensiones_invalidas():
     with pytest.raises(ValueError):
         fitwidth_mapping({"x0": 0.5, "x1": 0.5, "y0": 0.1, "y1": 0.9},
                          FRAME_REAL, INPUT_CUADRADO)
+
+
+def test_fitcover_16x9_llena_ventana_y_recorta_lados_centrado():
+    scale, loc = fitcover_mapping(WINDOW_UV, FRAME_REAL, (1920, 1080))
+    u0 = _aplicar((WINDOW_UV["x0"], WINDOW_UV["y0"]), scale, loc)
+    u1 = _aplicar((WINDOW_UV["x1"], WINDOW_UV["y1"]), scale, loc)
+    # Full window height is covered; source width is cropped equally.
+    assert u0[1] == pytest.approx(0.0, abs=1e-6)
+    assert u1[1] == pytest.approx(1.0, abs=1e-6)
+    assert 0.0 < u0[0] < 0.5 < u1[0] < 1.0
+    assert u0[0] == pytest.approx(1.0 - u1[0], abs=1e-6)
+
+
+def test_fitcover_aspecto_ventana_es_identidad():
+    win_w = (WINDOW_UV["x1"] - WINDOW_UV["x0"]) * FRAME_REAL[0]
+    win_h = (WINDOW_UV["y1"] - WINDOW_UV["y0"]) * FRAME_REAL[1]
+    scale, loc = fitcover_mapping(WINDOW_UV, FRAME_REAL,
+                                   (round(win_w), round(win_h)))
+    u0 = _aplicar((WINDOW_UV["x0"], WINDOW_UV["y0"]), scale, loc)
+    u1 = _aplicar((WINDOW_UV["x1"], WINDOW_UV["y1"]), scale, loc)
+    assert u0[0] == pytest.approx(0.0, abs=1e-3)
+    assert u0[1] == pytest.approx(0.0, abs=1e-3)
+    assert u1[0] == pytest.approx(1.0, abs=1e-3)
+    assert u1[1] == pytest.approx(1.0, abs=1e-3)
+
+
+def test_fitcover_offset_y_mueve_el_contenido_hacia_abajo():
+    scale_0, loc_0 = fitcover_mapping(WINDOW_UV, FRAME_REAL, (720, 1280))
+    scale_1, loc_1 = fitcover_mapping(
+        WINDOW_UV, FRAME_REAL, (720, 1280), offset_y=0.10)
+    assert scale_1 == pytest.approx(scale_0)
+    assert loc_1[1] > loc_0[1]
 
 
 def test_hue_de_rgb():
