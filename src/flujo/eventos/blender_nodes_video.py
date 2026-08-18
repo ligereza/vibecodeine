@@ -26,11 +26,11 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import blender_nodes as bn  # noqa: E402 -- modulo hermano, reusa el grafo probado
 
-# Moving images may have any aspect ratio. The production policy is
-# ``cover_center``: cover the glass, preserve proportions, center both axes,
-# and let the measured aspect ratio decide whether the crop is lateral or
-# vertical. The glass/blur extension remains an explicit experiment only.
-VIDEO_LAYOUT_POLICY = bn.VIDEO_LAYOUT_POLICY
+VIDEO_LAYOUT_PORTRAIT = bn.VIDEO_LAYOUT_POLICY
+VIDEO_LAYOUT_FRAMED = bn.VIDEO_LAYOUT_CONTAIN_BARS
+
+# Reels are portrait inputs for this workflow.  Cover the glass and keep the
+# source centered in both axes; the symmetric top/bottom crop is intentional.
 
 
 def _parse_args(argv):
@@ -38,11 +38,12 @@ def _parse_args(argv):
     parsed = {
         "frame": None, "input": None, "color_png": None, "salida": None,
         "frame_start": 1, "frame_end": None, "fps": None,
+        "layout": VIDEO_LAYOUT_PORTRAIT,
     }
     key_map = {
         "--frame": "frame", "--input": "input", "--color-png": "color_png",
         "--salida": "salida", "--frame-start": "frame_start",
-        "--frame-end": "frame_end", "--fps": "fps",
+        "--frame-end": "frame_end", "--fps": "fps", "--layout": "layout",
     }
     i = 0
     while i < len(args):
@@ -58,11 +59,31 @@ def _parse_args(argv):
         i += 2
     if not parsed["input"]:
         raise SystemExit("Falta --input (unico argumento obligatorio)")
+    if parsed["layout"] not in bn.VALID_VIDEO_LAYOUTS:
+        raise SystemExit(f"VIDEO_LAYOUT_INVALID: {parsed['layout']}")
     return parsed
 
 
+def video_mapping(layout, frame_size, video_size):
+    """Return the measured mapping for one of the two event video profiles."""
+    if layout == VIDEO_LAYOUT_PORTRAIT:
+        return bn.fitcover_mapping(bn.WINDOW_UV, frame_size, video_size)
+    if layout == VIDEO_LAYOUT_FRAMED:
+        return bn.fitcontain_mapping(bn.WINDOW_UV, frame_size, video_size)
+    raise SystemExit(f"VIDEO_LAYOUT_INVALID: {layout}")
+
+
+def describe_video_layout(layout, frame_size, video_size):
+    if layout == VIDEO_LAYOUT_PORTRAIT:
+        return bn.classify_cover_layout(bn.WINDOW_UV, frame_size, video_size)
+    if layout == VIDEO_LAYOUT_FRAMED:
+        return bn.classify_contain_layout(bn.WINDOW_UV, frame_size, video_size)
+    raise SystemExit(f"VIDEO_LAYOUT_INVALID: {layout}")
+
+
 def build_flyer_nodes_video(mat, nodo_original, frame_path, video_path,
-                             hue_objetivo, frame_duration):
+                             hue_objetivo, frame_duration,
+                             layout=VIDEO_LAYOUT_PORTRAIT):
     """Como bn.build_flyer_nodes, pero CONTENIDO = video (source MOVIE).
 
     Reusa el mismo grafo (MARCO/HUE/FADE/MEZCLA); solo el nodo de
@@ -91,8 +112,7 @@ def build_flyer_nodes_video(mat, nodo_original, frame_path, video_path,
         ti.image = video_img
         frame_size = tuple(tf.image.size)
         video_size = tuple(video_img.size)
-        (sx, sy), (lx, ly) = bn.fitcover_mapping(
-            bn.WINDOW_UV, frame_size, video_size)
+        (sx, sy), (lx, ly) = video_mapping(layout, frame_size, video_size)
         mapping.inputs["Scale"].default_value = (sx, sy, 1.0)
         mapping.inputs["Location"].default_value = (lx, ly, 0.0)
         hv.outputs[0].default_value = hue_objetivo
@@ -104,15 +124,14 @@ def build_flyer_nodes_video(mat, nodo_original, frame_path, video_path,
         ti = bn._nodo_por_label(mat, bn.LBL_CONTENIDO)
         ti.image = video_img  # el helper cargo un STILL; lo reemplazamos por el MOVIE
 
-        # build_flyer_nodes initially uses the still-image fit-width mapping;
-        # video must cover the portrait window and crop symmetrically.
+        # build_flyer_nodes starts from the static-image graph. The explicit
+        # issue profile chooses cover for 9:16 or contain+bands otherwise.
         tf = bn._nodo_por_label(mat, bn.LBL_MARCO)
         mapping = next(n for n in tree.nodes if n.type == "MAPPING" and any(
             l.to_node == ti for l in tree.links if l.from_node == n))
         frame_size = tuple(tf.image.size)
         video_size = tuple(video_img.size)
-        (sx, sy), (lx, ly) = bn.fitcover_mapping(
-            bn.WINDOW_UV, frame_size, video_size)
+        (sx, sy), (lx, ly) = video_mapping(layout, frame_size, video_size)
         mapping.inputs["Scale"].default_value = (sx, sy, 1.0)
         mapping.inputs["Location"].default_value = (lx, ly, 0.0)
 
@@ -195,8 +214,9 @@ def main():
 
     for mat, nodo in bn._buscar_materiales_flyer():
         modo = build_flyer_nodes_video(
-            mat, nodo, os.path.abspath(args["frame"]), video_path, hue, frame_duration)
-        print(f"Material '{mat.name}' {modo} por nodos VIDEO (sin Photoshop).")
+            mat, nodo, os.path.abspath(args["frame"]), video_path, hue,
+            frame_duration, args["layout"])
+        print(f"Material '{mat.name}' {modo} layout={args['layout']} por nodos VIDEO (sin Photoshop).")
 
     print(f"GPU: {force_gpu()}")
 

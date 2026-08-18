@@ -118,17 +118,19 @@ solo se cierra cuando el resultado completo se publica correctamente.
 
 - Imágenes: `fitwidth_fade`, proporción preservada, abertura llena en ancho,
   centrado vertical y fade existente.
-- Videos: `cover_center`, proporción preservada, centrado X/Y, sin stretch y
-  sin barras negras. Se recorta el eje excedente: laterales si la fuente es
-  más ancha que el cristal; arriba/abajo si es más alta.
+- Video retrato 9:16 (tolerancia de razón `0.03`):
+  `video_portrait_9_16` con `cover_center`, proporción preservada, centrado
+  X/Y y recorte solo arriba/abajo, sin barras negras.
+- Cualquier otra proporción de video: `video_other_aspect` con
+  `contain_bars`, proporción preservada, centrado X/Y y fuente completa;
+  las bandas negras ocupan el eje que sobra (arriba/abajo para fuentes anchas,
+  laterales para fuentes muy angostas).
 - La decisión usa las dimensiones reales descargadas, no el nombre del archivo
-  ni la suposición de que todo reel es 16:9.
+  ni la suposición de que todo reel es retrato 9:16. El manifiesto registra
+  `issue_flow`, política, razón y eje de recorte o de bandas.
 - Video: `/home/mak/RD/AUTOMATIZACION/RD.blend`, Blender
   `/home/mak/blender/blender`, Cycles, 128 samples, GPU obligatoria y
   `render_manifest.json` con proporciones, eje de recorte y dispositivo.
-- `glass_fitwidth` conserva el experimento de multiplicación, blur, fade y
-  filas tipo glass para material cuadrado/horizontal. Es experimental y no
-  reemplaza `cover_center` sin una comparación visual explícita.
 - El `.blend` no se guarda durante los renders de validación.
 
 La política completa y sus pruebas están en

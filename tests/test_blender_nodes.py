@@ -8,7 +8,8 @@ ventana siempre; el alto sobrante lo maneja el fade (no el mapping).
 import pytest
 
 from flujo.eventos.blender_nodes import (
-    WINDOW_UV, classify_cover_layout, fitcover_mapping, fitwidth_mapping,
+    WINDOW_UV, classify_contain_layout, classify_cover_layout, fitcontain_mapping,
+    fitcover_mapping, fitwidth_mapping,
     hue_de_rgb,
     _parse_args, _resolver_ruta,
 )
@@ -96,6 +97,23 @@ def test_fitcover_aspecto_ventana_es_identidad():
     assert u0[1] == pytest.approx(0.0, abs=1e-3)
     assert u1[0] == pytest.approx(1.0, abs=1e-3)
     assert u1[1] == pytest.approx(1.0, abs=1e-3)
+
+
+def test_fitcontain_16x9_keeps_source_and_creates_vertical_bands():
+    scale, loc = fitcontain_mapping(WINDOW_UV, FRAME_REAL, (1920, 1080))
+    u0 = _aplicar((WINDOW_UV["x0"], WINDOW_UV["y0"]), scale, loc)
+    u1 = _aplicar((WINDOW_UV["x1"], WINDOW_UV["y1"]), scale, loc)
+    assert u0[0] == pytest.approx(0.0, abs=1e-6)
+    assert u1[0] == pytest.approx(1.0, abs=1e-6)
+    assert u0[1] < 0.0 < 1.0 < u1[1]
+
+
+def test_contain_layout_16x9_declares_bands_without_crop():
+    layout = classify_contain_layout(WINDOW_UV, FRAME_REAL, (1920, 1080))
+    assert layout["policy"] == "contain_bars"
+    assert layout["crop_axis"] == "none"
+    assert layout["bar_axis"] == "vertical"
+    assert layout["black_bars"] is True
 
 
 def test_fitcover_offset_y_mueve_el_contenido_hacia_abajo():

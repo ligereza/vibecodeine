@@ -30,6 +30,8 @@ def test_reusa_helpers_de_blender_nodes():
 def test_build_flyer_nodes_video_existe_y_es_funcion():
     assert callable(bnv.build_flyer_nodes_video)
     assert callable(bnv.swap_existing_movie_nodes)
+    assert callable(bnv.video_mapping)
+    assert callable(bnv.describe_video_layout)
 
 
 def test_parse_args_video_requiere_input():
@@ -55,6 +57,13 @@ def test_parse_args_video_frame_range_son_enteros():
     assert args["fps"] == 30.0
 
 
+def test_parse_args_video_accepts_contain_bars():
+    args = bnv._parse_args([
+        "blender", "--", "--input", "clip.mp4", "--layout", "contain_bars",
+    ])
+    assert args["layout"] == "contain_bars"
+
+
 def test_parse_args_seq_requiere_input_y_out_dir():
     with pytest.raises(SystemExit):
         bnvs._parse_args(["blender", "--", "--input", "clip.mp4"])
@@ -69,6 +78,15 @@ def test_parse_args_seq_defaults():
     assert args["frame_start"] == 1
     assert args["min_size"] == 20000
     assert args["persistent_data"] is True
+
+
+def test_parse_args_seq_accepts_layout_and_issue_flow():
+    args = bnvs._parse_args([
+        "blender", "--", "--input", "clip.mp4", "--out-dir", "frames/",
+        "--layout", "contain_bars", "--issue-flow", "video_other_aspect",
+    ])
+    assert args["layout"] == "contain_bars"
+    assert args["issue_flow"] == "video_other_aspect"
 
 
 def test_parse_args_seq_can_disable_persistent_data():

@@ -179,7 +179,21 @@ jobs:
               echo "VIDEO_MEDIA_WITHOUT_MP4: Instagram reporto video pero no existe input_ig.mp4; no se usara el poster."
               exit 1
             fi
-            echo "media=video"
+            issue_flow=$(python3 tools/render_video_sequence_mak.py \
+              --video "$VIDEO_PATH" --classify-only)
+            case "$issue_flow" in
+              video_portrait_9_16)
+                echo "media=video portrait=9:16 layout=cover_center"
+                ;;
+              video_other_aspect)
+                echo "media=video other-aspect layout=contain_bars"
+                ;;
+              *)
+                echo "VIDEO_FLOW_UNKNOWN: $issue_flow"
+                exit 1
+                ;;
+            esac
+            echo "issue_flow=$issue_flow" >> "$GITHUB_OUTPUT"
             python3 tools/render_video_sequence_mak.py \
               --video "$VIDEO_PATH" \
               --out-dir "$outdir/frames" \
