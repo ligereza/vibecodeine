@@ -26,8 +26,11 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import blender_nodes as bn  # noqa: E402 -- modulo hermano, reusa el grafo probado
 
-# Reels are portrait inputs for this workflow.  Cover the glass and keep the
-# source centered in both axes; the symmetric top/bottom crop is intentional.
+# Moving images may have any aspect ratio. The production policy is
+# ``cover_center``: cover the glass, preserve proportions, center both axes,
+# and let the measured aspect ratio decide whether the crop is lateral or
+# vertical. The glass/blur extension remains an explicit experiment only.
+VIDEO_LAYOUT_POLICY = bn.VIDEO_LAYOUT_POLICY
 
 
 def _parse_args(argv):
