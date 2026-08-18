@@ -13848,9 +13848,8 @@ relacionadas que deben quedar fuera del commit.
 
 ## Next concrete action
 
-Revisar el diff staged de esos siete archivos mas el nuevo documento, hacer
-commit y push en `main`, y comprobar que `HEAD == origin/main`. Despues el
-siguiente trabajo funcional es observar un issue real o crear un packet de
-idea con `tools/route_idea.py`; no reabrir la genealogia completa.
+La consolidacion ya esta publicada en `main` y `HEAD == origin/main` fue
+confirmado. El siguiente trabajo funcional es observar un issue real o crear
+un packet de idea con `tools/route_idea.py`; no reabrir la genealogia completa.
 
 Last verified: 2026-08-18 America/Santiago — Phase 571.
