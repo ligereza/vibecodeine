@@ -1,7 +1,11 @@
 # MAP
 
-This is the only operational map for `/home/mak/flujo`. `context/LAST_HANDOFF.md`
-is the continuity record; phase files are evidence and must not override it.
+This is the generated command/route map for `/home/mak/flujo`.
+`docs/MAK_CURRENT_STATE.md` is the compact current architecture, and
+`context/LAST_HANDOFF.md` is the continuity record; phase files are evidence
+and must not override either one. The installed CLI may still expose legacy
+commands for compatibility; that does not make them part of the active MAK
+workflow.
 The `MAPA.md` files under `/home/mak/vibecodeine` and `/home/mak/WIN` belong to
 other worktree/historical surfaces and are not current MAK instructions.
 

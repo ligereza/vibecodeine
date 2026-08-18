@@ -1244,9 +1244,11 @@ class HubRequestHandler(BaseHTTPRequestHandler):
     def _get_automatizaciones(self) -> dict:
         """Cola real de las automatizaciones (issues de GitHub con labels).
 
-        La cadena es: Gmail -> issue etiquetado -> `tools/bridge_issue_render.py`
-        -> `flujo eventos flyer-auto` (+ Blender) -> drive/ -> comenta y cierra.
-        El tramo Gmail->issue vive FUERA de este repo.
+        La cadena activa es: Gmail -> issue etiquetado -> runner MAK de GitHub
+        Actions -> `flujo.ig.download.download_post` -> `render_*_mak.py`
+        -> OneDrive. El tramo Gmail->issue vive FUERA de este repo.
+        `bridge_issue_render.py` y `flujo eventos flyer-auto` son superficies
+        legacy/manual-only y no deben confundirse con el renderer Linux.
 
         Hasta ahora la unica forma de saber que habia pendiente era entrar a
         GitHub a mano. Este endpoint lee la cola con `gh` (ya autenticado en la

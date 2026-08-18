@@ -1,6 +1,8 @@
 # CAPACIDADES.md
 
-> Current entry point: read `agents.md` and `context/LAST_HANDOFF.md` first.
+> Current entry point: read `agents.md`, `docs/MAK_CURRENT_STATE.md` and
+> `context/LAST_HANDOFF.md` first. The current-state document is the compact
+> synthesis of the historical phase work; this file is a capability index.
 > This inventory describes reusable machinery; it is not a task queue.
 
 Inventario de arranque rapido. Objetivo: empezar un proyecto nuevo (dentro o
@@ -66,7 +68,9 @@ CLI real (`py -m flujo --help`, v0.56.1), comandos principales:
 - `cotizaciones`, `plano` -- cotizacion dual y plano SVG/rider/costos de stands.
 - `suplementos` -- contraportadas RD (`svg/suplementos_rd/`).
 - `rd-db`, `rd-datos` -- DB consultable RD (reactivos/packs/productoras/venues) + ingesta privacy-first.
-- `eventos` -- automatizaciones (incluye `flyer-auto` desde link de Instagram).
+- `eventos` -- automatizaciones. The active event path uses the MAK/Linux
+  workflow and `render_*_mak.py`; the historical `flyer-auto` command remains
+  available as legacy/manual-only compatibility.
 - `resolume` -- automatizacion de shows Resolume/Chataigne por SMPTE/OSC (`.noisette`, schema validado contra fixtures reales).
 - `laser` -- estetica vectorial para laser/plotter via vpype (externo, opcional): `hatched` (relleno->rayado), `flow` (imagen->campo de flujo, semilla determinista), `lote` (carpeta de material -> svgs + manifiesto que entra al archivo iskvw). Presupuesto de puntos 600-1000/frame integrado; restricciones duras y rig del usuario en `docs/laser/TOOLKIT_INDICE.md`.
 - `render`, `analyze`, `export` -- render/validacion de piezas vectoriales, analisis de color/OCR, export ZIP.
@@ -81,7 +85,7 @@ CLI real (`py -m flujo --help`, v0.56.1), comandos principales:
 | Tool | Proposito |
 |---|---|
 | `becas_calendario.py` | Informes research FOSIS -> calendario de postulaciones (fechas/montos, "no-especificado" si falta). |
-| `bridge_issue_render.py` | Puente Windows: issue GitHub label "instagram" -> `flyer-auto` Blender -> drive/. |
+| `bridge_issue_render.py` | LEGACY/MANUAL-ONLY: antiguo puente Windows issue -> `flyer-auto`; no es la ruta Linux activa. |
 | `compete_engine.py` | Pipeline monolitico del ecosistema Tapiz<->Psicosis<->Fungi. |
 | `context_pack.py` | Empaqueta contexto minimo (archivos+fence) para pasar a Aider/Qwen/Claude, bajo consumo. |
 | `comparar_cobertura_fichas.py` | Dos pasadas de percepcion comparadas campo a campo sobre los MISMOS archivos, filtrando por motor. |
@@ -92,8 +96,9 @@ CLI real (`py -m flujo --help`, v0.56.1), comandos principales:
 | `gen_vinculos_iskvw.py` | Vinculos entre obras desde los conceptos de las fichas, con los conceptos compartidos como motivo. |
 | `gen_mapa_comandos.py` | Genera la tabla de comandos de `MAPA.md` desde el `--help` real del CLI (`--check` falla si quedo desfasado). |
 | `instalar_enviar_a_mak.py` | Instala integracion "Enviar a" -> MAK curatoria en el explorador de Windows. |
-| `render_video_rd.py` | Mete un mp4 (reel) en `RD.paravideo.blend` y exporta H264 headless. |
-| `render_video_sequence_mak.py` | Reel -> secuencia PNG en MAK: calcula frames desde el video, usa `RD.paravideo.blend`, Cycles 128 samples y exige GPU CUDA/OptiX; deja `render_manifest.json`. |
+| `render_video_rd.py` | LEGACY/MANUAL-ONLY: ruta H264 sobre `RD.paravideo.blend`; no es el renderer productivo de MAK. |
+| `render_flyer_mak.py` | ACTIVO: imagen/poster -> grafo Blender Linux de `RD.blend`, con validación y salida PNG. |
+| `render_video_sequence_mak.py` | ACTIVO: reel -> secuencia PNG en MAK; calcula frames reales, usa `RD.blend`, Cycles 128 samples, GPU verificada y deja `render_manifest.json`. |
 | `system_map.py` | Blueprint de arquitectura del ecosistema Tapiz/Psicosis/Fungi (schema API_CONTRACT). |
 | `tapiz_live_loop.py` | Daemon-poller que corre `compete_engine` en modo `--live` a intervalo fijo. |
 | `tapiz_telemetry.py` | Construye el autorretrato en vivo del ecosistema (`system_status.json`). |
@@ -320,7 +325,9 @@ tabla; archivo sin entrada = ratchet rojo.
 | `becas_calendario.py` | VIVO | RD becas, area operativa | 2026-07 |
 | (las 33 utilidades del buzon `mak`) | LEIDAS 2026-08-01, NO ENTRAN | Llevaban dias en la rama `mak` sin que nadie las abriera, porque el muro que las describia decia que main ya las habia rechazado y era falso (ver `context/LAST_HANDOFF.md`). Leidas una por una: **9 invocan `subprocess`** para ejecutar `backlog_codex`, tocar `/etc` o instalar cron jobs -- son ORDENES OPERATIVAS disfrazadas de utilidad, justo lo que el clasificador de rutas de #406 salio a frenar. **~10 son de sandbox** por debajo de 1 KB ("Script de ejemplo para el sandbox", 406 bytes). **3 traen surrogates invalidos** (\udc81, \udc8f): no son UTF-8 y revientan al leerlas, pero PASARON el gate de MAK porque `revisor.gate_compila` compila el texto ya decodificado en la caja -- ese gate es ciego al encoding, y ese es el hallazgo que deja la lectura. Y **4 sirven** (OSC 1.0 con `struct`, verificador de puertos TCP, estadistica de columna CSV, validador JSON), probadas corriendo. Se trajeron al repo y se devolvieron el mismo dia: renombrarlas rompio `test_capataz_enrutamiento`, que usa los NOMBRES de esa carpeta como fixture de los pedidos reales que causaron el defecto, y sus comentarios en castellano encienden el ratchet de idioma. Sin consumidor no compensaban ninguna de las dos cosas. Lo que valia era saber que hay adentro, y eso queda escrito aca | 2026-08-01 |
 | `idioma.py` | VIVO | measures the language of comments/docstrings in every tracked `*.py` (es/en/mixed/none, transparent stdlib heuristic, `git ls-files` only, archive and vendorized zones excluded); measured consumer: `tests/test_idioma_ratchet.py`, the ratchet that pins `tests/fixtures/idioma_baseline.txt` so no NEW file adds Spanish comments while renames are never demanded; real run 2026-07-31: 581 files = 388 es + 96 en + 38 mixed + 59 none; also prints a soft FYI of widespread Spanish identifiers missing from `docs/GLOSSARY.md` | 2026-07-31 |
-| `bridge_issue_render.py` | VIVO | puente issue -> render WIN | 2026-07 |
+| `bridge_issue_render.py` | LEGACY/MANUAL-ONLY | puente Windows histórico; no lo llama el workflow Linux activo | 2026-08-18 |
+| `render_flyer_mak.py` | VIVO | workflow MAK image/poster -> `RD.blend` -> PNG | 2026-08-18 |
+| `render_video_sequence_mak.py` | VIVO | workflow MAK video -> `RD.blend` -> PNG sequence + manifest | 2026-08-18 |
 | `compete_engine.py` | VIVO | proyecto tapiz (cultura) | 2026-07 |
 | `context_pack.py` | REVISAR | AI Op Layer 2026-07-25, recien creado, consumidor pendiente | 2026-07-25 |
 | `comparar_cobertura_fichas.py` | VIVO | compara dos pasadas de `percepcion.py` campo a campo SOBRE LOS MISMOS ids (lo que no esta en ambas no se cuenta) y filtra por `medicion.vision.motor`, para que una pasada con fallback no le acredite a watsonx lo que respondio ollama; corrida real 2026-08-01 sobre 923 fichas ig, v1 gemma3 vs v4 watsonx: `tipo_obra` 51.9%->100%, `materiales` 68.7%->99.6%, `colores` 95%->100%, y la unica caida real `oportunidad_codigo` 99.1%->75.9% (watsonx omite la clave en 225 imagenes; ninguna de las dos pasadas era plantilla: 1258 y 640 valores distintos) | 2026-08-01 |
@@ -359,7 +366,7 @@ tabla; archivo sin entrada = ratchet rojo.
 | `iconos_conjunto.py` | VIVO | valida y construye la galeria de un CONJUNTO de iconos (`--raiz`, sirve a cualquiera, no solo al del ensayo rave); consumidor medido: `docs/cultura/ensayos/rave/` (16 iconos, 0 errores) y el anexo iconografico que exige `docs/cultura/FORMATO_ENSAYO.md`; `tests/test_iconos_conjunto.py` | 2026-07-30 |
 | `gen_vocabulario_motor.py` | VIVO | exporta el vocabulario del motor semantico (22 figuras/12 gestos/9 tonos) a `docs/cultura/lib/vocabulario.json` para que el MISMO spec compile en el navegador sin re-portar la geometria a mano; consumidor: `docs/cultura/lib/compilador.js` + el taller de la galeria; `--verificar` falla si quedo viejo respecto de `vocabulario.py`; `tests/test_compilador_navegador.py` | 2026-07-30 |
 | `instalar_enviar_a_mak.py` | VIVO | instalador del SendTo de `enviar_a_mak.py` | 2026-07-23 |
-| `render_video_rd.py` | VIVO | pipeline video RD, 4 ejes, semana 2026-07-21 | 2026-07-21 |
+| `render_video_rd.py` | LEGACY/MANUAL-ONLY | pipeline histórico H264 sobre `RD.paravideo.blend`; no es la ruta productiva MAK | 2026-08-18 |
 | `system_map.py` | VIVO | mapa mecanico del repo (soporte de `contexto_repo.py`) | 2026-07 |
 | `tapiz_live_loop.py` | REVISAR | cultura, decision de uso pendiente del usuario | sin fecha medida |
 | `tapiz_telemetry.py` | REVISAR | cultura, decision de uso pendiente del usuario | sin fecha medida |
