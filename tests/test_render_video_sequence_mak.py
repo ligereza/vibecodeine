@@ -45,9 +45,29 @@ def test_manifest_requires_cycles_128_gpu_and_png_count(tmp_path):
         "engine": "CYCLES",
         "samples": 128,
         "gpu": {"device": "GPU"},
+        "layout": {
+            "policy": "cover_center",
+            "source_aspect_ratio": 0.5625,
+            "window_aspect_ratio": 0.734976,
+            "crop_axis": "vertical",
+        },
         "png_count": 1,
     }), encoding="utf-8")
     assert module._manifest_is_valid(manifest, tmp_path) == (True, str(manifest))
+
+
+def test_manifest_rejects_missing_layout(tmp_path):
+    (tmp_path / "frame_0001.png").write_bytes(b"png")
+    manifest = tmp_path / "render_manifest.json"
+    manifest.write_text(json.dumps({
+        "engine": "CYCLES",
+        "samples": 128,
+        "gpu": {"device": "GPU"},
+        "png_count": 1,
+    }), encoding="utf-8")
+    ok, detail = module._manifest_is_valid(manifest, tmp_path)
+    assert ok is False
+    assert "layout" in detail
 
 
 def test_manifest_rejects_cpu_or_wrong_samples(tmp_path):

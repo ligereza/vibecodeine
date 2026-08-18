@@ -108,6 +108,14 @@ def _manifest_is_valid(manifest: Path, out_dir: Path) -> tuple[bool, str]:
         return False, f"samples inesperados: {report.get('samples')}"
     if (report.get("gpu") or {}).get("device") != "GPU":
         return False, f"GPU no confirmada: {report.get('gpu')}"
+    layout = report.get("layout")
+    if not isinstance(layout, dict):
+        return False, "manifest sin layout audiovisual"
+    if layout.get("policy") != "cover_center":
+        return False, f"layout policy inesperada: {layout.get('policy')}"
+    for key in ("source_aspect_ratio", "window_aspect_ratio", "crop_axis"):
+        if key not in layout:
+            return False, f"layout incompleto: falta {key}"
     pngs = sorted(out_dir.glob("frame_*.png"))
     if not pngs:
         return False, "no se genero ninguna imagen PNG"

@@ -31,6 +31,67 @@ The PNG sequence uses the real flyer graph in `RD.blend`: `Material.002` and
 remains the frame layer. `RD.paravideo.blend` is a separate historical video
 template and is not the active PNG-sequence template.
 
+## Aspect-ratio and visual layout policy
+
+This is the canonical decision record for future agents and future renders.
+The glass opening is measured from `FRAME2.png`; its effective aspect ratio is
+approximately `0.735` (width/height). Source dimensions come from the actual
+downloaded image or video, never from a filename and never from an assumption
+that every reel is 16:9.
+
+### Input options and active paths
+
+| Input classified by downloader | Active renderer | Layout contract |
+| --- | --- | --- |
+| `image` | `render_flyer_mak.py` -> `blender_nodes.py` | `fitwidth_fade`: fill the opening width, preserve proportions, center vertically, and use the existing fade for vertical excess/shortfall. |
+| `video` | `render_video_sequence_mak.py` -> `blender_nodes_video_seq.py` | `cover_center`: fill the complete opening, preserve proportions, center X/Y, and crop only the excess axis. |
+| `carousel` | image path using the downloaded poster | Current behavior is intentionally equivalent to the image path; it is not silently treated as a multi-video render. |
+| unknown or missing type | no renderer | Fail closed; do not guess whether the asset is an image or video. |
+
+### Video aspect decision
+
+The renderer records `layout.policy`, `layout.source_aspect_ratio`,
+`layout.window_aspect_ratio` and `layout.crop_axis` in
+`render_manifest.json`:
+
+| Source relationship to the glass | Result under `cover_center` |
+| --- | --- |
+| Wider than the glass: 16:9, 4:3, square, 4:5, or any wider ratio | Crop equal vertical strips from the left and right. |
+| Taller than the glass: 9:16 or any taller ratio | Crop equal horizontal strips from the top and bottom. |
+| Same ratio or effectively equal | No crop. |
+
+In every case the source is centered in X and Y, never stretched, and never
+given black bars. The old fixed vertical offset was removed after visual
+inspection: reels are now mathematically centered. This is why a vertical
+reel can lose its top and bottom while a square or landscape DAME asset loses
+its sides. The behavior is ratio-driven, not a list of hardcoded formats.
+
+### Visual experiments and decisions that must not be lost
+
+For horizontal or square event material, the user preferred the look of a
+second, glass-like treatment explored in temporary previews: fit the source
+to the lateral edges, multiply/extend the image into the empty top and
+bottom, apply a visible blur and a long fade, and allow dark horizontal glass
+rows when they read as part of the object. The lower extension worked well;
+the upper transition required more work because an unconnected zoom produced
+a black band over the blur. This preset is named `glass_fitwidth` in the
+source as an explicit experimental label.
+
+`glass_fitwidth` is documented, reproducible as an experiment, and not the
+production default. It must not replace `cover_center` implicitly: promoting
+it requires a new foreground visual comparison on a real square/landscape
+asset and an explicit layout selection. This preserves the user's aesthetic
+decision without risking the already-approved portrait reel behavior.
+
+### Non-negotiable production choices
+
+- Preserve aspect ratio; never stretch.
+- Prefer cropping over black bars for the active video path.
+- Center the source in both axes; do not carry a one-off reel offset forward.
+- Keep the still-image `fitwidth_fade` path separate from video `cover_center`.
+- Render video frames as PNG with Cycles 128 samples and verified GPU, as
+  described above; do not silently reduce samples to solve a composition issue.
+
 ## Evidence
 
 The local smoke used the existing video

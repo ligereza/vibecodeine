@@ -8,7 +8,8 @@ ventana siempre; el alto sobrante lo maneja el fade (no el mapping).
 import pytest
 
 from flujo.eventos.blender_nodes import (
-    WINDOW_UV, fitcover_mapping, fitwidth_mapping, hue_de_rgb,
+    WINDOW_UV, classify_cover_layout, fitcover_mapping, fitwidth_mapping,
+    hue_de_rgb,
     _parse_args, _resolver_ruta,
 )
 
@@ -103,6 +104,26 @@ def test_fitcover_offset_y_mueve_el_contenido_hacia_abajo():
         WINDOW_UV, FRAME_REAL, (720, 1280), offset_y=0.10)
     assert scale_1 == pytest.approx(scale_0)
     assert loc_1[1] > loc_0[1]
+
+
+def test_cover_layout_16x9_recorta_laterales():
+    layout = classify_cover_layout(WINDOW_UV, FRAME_REAL, (1920, 1080))
+    assert layout["policy"] == "cover_center"
+    assert layout["crop_axis"] == "lateral"
+    assert layout["centered"] is True
+    assert layout["distorted"] is False
+    assert layout["black_bars"] is False
+
+
+def test_cover_layout_9x16_recorta_arriba_y_abajo():
+    layout = classify_cover_layout(WINDOW_UV, FRAME_REAL, (720, 1280))
+    assert layout["crop_axis"] == "vertical"
+    assert layout["source_aspect_ratio"] < layout["window_aspect_ratio"]
+
+
+def test_cover_layout_cuadrado_tambien_es_dinamico():
+    layout = classify_cover_layout(WINDOW_UV, FRAME_REAL, (1000, 1000))
+    assert layout["crop_axis"] == "lateral"
 
 
 def test_hue_de_rgb():

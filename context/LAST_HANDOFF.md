@@ -13654,3 +13654,53 @@ el render completo publique manifest/frames o que un fallo deje log y media
 preservada sin cerrar el issue.
 
 Last verified: 2026-08-18 America/Santiago — Phase 568.
+
+## Phase 569 — política audiovisual permanente
+
+Se dejó una única fuente de verdad en
+`context/VIDEO_WORKFLOW_MAK_20260817.md`, con la separación de rutas
+`image`/`video`/`carousel`, la regla dinámica para cualquier proporción y el
+registro de las preferencias visuales experimentadas por el usuario.
+
+El código ahora expone `classify_cover_layout()` y registra en cada manifest
+de secuencia la política, proporción de ventana, proporción real de fuente,
+eje de recorte, centrado, deformación y barras negras. El validador del
+manifest exige esos campos. La política activa es
+`cover_center`: sin deformación, sin barras, centrada, recortando laterales si
+la fuente es más ancha y arriba/abajo si es más alta. `glass_fitwidth` queda
+nombrado como experimento, no se activa silenciosamente.
+
+Validación foreground ejecutada:
+
+```text
+.venv/bin/pytest -q tests/test_blender_nodes.py tests/test_blender_nodes_video.py tests/test_render_video_sequence_mak.py: exit 0, 29 passed
+python3 -m py_compile src/flujo/eventos/blender_nodes.py src/flujo/eventos/blender_nodes_video.py src/flujo/eventos/blender_nodes_video_seq.py tools/render_video_sequence_mak.py: exit 0
+PYTHONPATH=src python3 aspect probe (16:9, square, 4:5, 9:16): exit 0
+manifest layout source guard: exit 0, MANIFEST_LAYOUT_SOURCE_GUARD_OK
+git diff --check sobre los archivos modificados: exit 0
+```
+
+La búsqueda física de `/home/mak` no encontró actualmente ningún `.mp4`,
+`.mov`, `.mkv` ni `.webm`; por eso aún no se ejecutó el smoke render real que
+confirme el nuevo campo en un manifest generado por Blender. No se inventó
+esa evidencia y no se modificó `RD.blend`.
+
+Archivos modificados:
+
+- `src/flujo/eventos/blender_nodes.py`
+- `src/flujo/eventos/blender_nodes_video.py`
+- `src/flujo/eventos/blender_nodes_video_seq.py`
+- `tools/render_video_sequence_mak.py`
+- `tests/test_blender_nodes.py`
+- `tests/test_render_video_sequence_mak.py`
+- `context/VIDEO_WORKFLOW_MAK_20260817.md`
+- `context/LAST_HANDOFF.md`
+
+## Next concrete action
+
+Ejecutar en primer plano la suite enfocada de helpers y una prueba real
+acotada que confirme el nuevo campo `layout` del manifest. Revisar
+`VIDEO_LAYOUT` en el log y `layout` en el manifest antes de inspeccionar el
+PNG. No renderizar los 491 frames completos ni modificar `RD.blend`.
+
+Last verified: 2026-08-18 America/Santiago — Phase 569.

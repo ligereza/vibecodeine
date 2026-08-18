@@ -57,6 +57,11 @@ WINDOW_UV = {
 # visualmente por el usuario en vivo; se puede afinar a mano en el nodo.
 FADE = 0.10
 
+# Canonical production policy for moving images. Keep this explicit so the
+# visual experiment below cannot silently replace the stable render path.
+VIDEO_LAYOUT_POLICY = "cover_center"
+EXPERIMENTAL_VIDEO_LAYOUT = "glass_fitwidth"
+
 # Etiquetas de los nodos del grafo (contrato de idempotencia: si estan,
 # el grafo ya existe y solo se actualiza).
 LBL_CONTENIDO = "CONTENIDO"
@@ -128,6 +133,42 @@ def fitcover_mapping(window_uv, frame_size, input_size, offset_y=0.0):
     loc_y = ((1.0 - frac_h) / 2.0 - window_uv["y0"] * scale_y
              + offset_y * scale_y)
     return (scale_x, scale_y), (loc_x, loc_y)
+
+
+def classify_cover_layout(window_uv, frame_size, input_size):
+    """Describe the crop implied by the canonical video cover policy.
+
+    The decision uses measured window and real source dimensions. It never
+    assumes that a video is 16:9. ``crop_axis`` explains what cover removes:
+    equal left/right strips for ``lateral``, equal top/bottom strips for
+    ``vertical``, or nothing when aspect ratios match.
+    """
+    fw_px, fh_px = frame_size
+    iw_px, ih_px = input_size
+    if min(fw_px, fh_px, iw_px, ih_px) <= 0:
+        raise ValueError("dimensiones de imagen invalidas (<= 0)")
+    win_w_uv = window_uv["x1"] - window_uv["x0"]
+    win_h_uv = window_uv["y1"] - window_uv["y0"]
+    if win_w_uv <= 0 or win_h_uv <= 0:
+        raise ValueError("ventana UV degenerada")
+    window_aspect = (win_w_uv * fw_px) / (win_h_uv * fh_px)
+    source_aspect = iw_px / ih_px
+    tolerance = 1e-6
+    if source_aspect > window_aspect + tolerance:
+        crop_axis = "lateral"
+    elif source_aspect < window_aspect - tolerance:
+        crop_axis = "vertical"
+    else:
+        crop_axis = "none"
+    return {
+        "policy": VIDEO_LAYOUT_POLICY,
+        "window_aspect_ratio": round(window_aspect, 6),
+        "source_aspect_ratio": round(source_aspect, 6),
+        "crop_axis": crop_axis,
+        "centered": True,
+        "distorted": False,
+        "black_bars": False,
+    }
 
 
 def hue_de_rgb(rgb):

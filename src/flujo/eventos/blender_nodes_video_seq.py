@@ -83,6 +83,11 @@ def main():
     frame_duration = probe.frame_duration
     print(f"Video: {video_path} frame_duration={frame_duration}")
 
+    frame_probe = bpy.data.images.load(args["frame"], check_existing=True)
+    layout = bn.classify_cover_layout(
+        bn.WINDOW_UV, tuple(frame_probe.size), tuple(probe.size))
+    print(f"VIDEO_LAYOUT: {json.dumps(layout, ensure_ascii=True)}")
+
     frame_start = args["frame_start"] or 1
     frame_end = args["frame_end"] or frame_duration
     if frame_end > frame_duration:
@@ -154,7 +159,10 @@ def main():
         "frame_start": frame_start,
         "frame_end": frame_end,
         "source_frames": frame_duration,
+        "source_width": probe.size[0],
+        "source_height": probe.size[1],
         "fps": source_fps,
+        "layout": layout,
         "samples": scene.cycles.samples,
         "engine": scene.render.engine,
         "gpu": gpu_report,
