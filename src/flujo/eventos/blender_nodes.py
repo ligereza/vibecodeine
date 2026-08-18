@@ -96,6 +96,40 @@ def fitwidth_mapping(window_uv, frame_size, input_size):
     return (scale_x, scale_y), (loc_x, loc_y)
 
 
+def fitcover_mapping(window_uv, frame_size, input_size, offset_y=0.0):
+    """Map an input to cover the measured window, centered and cropped.
+
+    This is intentionally separate from ``fitwidth_mapping``: the still-image
+    workflow keeps its validated fit-width/fade behavior, while video clips
+    must fill the portrait glass even when their source is 16:9.
+    """
+    fw_px, fh_px = frame_size
+    iw_px, ih_px = input_size
+    if min(fw_px, fh_px, iw_px, ih_px) <= 0:
+        raise ValueError("dimensiones de imagen invalidas (<= 0)")
+    win_w_uv = window_uv["x1"] - window_uv["x0"]
+    win_h_uv = window_uv["y1"] - window_uv["y0"]
+    if win_w_uv <= 0 or win_h_uv <= 0:
+        raise ValueError("ventana UV degenerada")
+    win_w_px = win_w_uv * fw_px
+    win_h_px = win_h_uv * fh_px
+
+    # Cover: choose the larger scale, so neither window dimension exposes
+    # empty content. The remaining source area is cropped symmetrically.
+    k = max(win_w_px / iw_px, win_h_px / ih_px)
+    frac_w = win_w_px / (k * iw_px)
+    frac_h = win_h_px / (k * ih_px)
+    scale_x = frac_w / win_w_uv
+    scale_y = frac_h / win_h_uv
+    loc_x = (1.0 - frac_w) / 2.0 - window_uv["x0"] * scale_x
+    # ``offset_y`` is a fraction of the destination window. Positive values
+    # move the visible source down in the render. It is optional so callers
+    # can preserve the strict mathematical center.
+    loc_y = ((1.0 - frac_h) / 2.0 - window_uv["y0"] * scale_y
+             + offset_y * scale_y)
+    return (scale_x, scale_y), (loc_x, loc_y)
+
+
 def hue_de_rgb(rgb):
     """Hue [0,1) de un color RGB 0-255 (colorsys, python puro)."""
     r, g, b = (max(0, min(255, int(c))) / 255.0 for c in rgb)

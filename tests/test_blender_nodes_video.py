@@ -68,3 +68,12 @@ def test_parse_args_seq_defaults():
     assert args["out_dir"] == "frames/"
     assert args["frame_start"] == 1
     assert args["min_size"] == 20000
+    assert args["persistent_data"] is True
+
+
+def test_parse_args_seq_can_disable_persistent_data():
+    args = bnvs._parse_args([
+        "blender", "--", "--input", "clip.mp4", "--out-dir", "frames/",
+        "--no-persistent-data",
+    ])
+    assert args["persistent_data"] is False

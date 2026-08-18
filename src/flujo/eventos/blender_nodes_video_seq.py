@@ -23,7 +23,7 @@ def _parse_args(argv):
     parsed = {
         "frame": None, "input": None, "color_png": None, "out_dir": None,
         "frame_start": 1, "frame_end": None, "min_size": 20000,
-        "manifest": None, "fps": None,
+        "manifest": None, "fps": None, "persistent_data": True,
     }
     key_map = {
         "--frame": "frame", "--input": "input", "--color-png": "color_png",
@@ -34,6 +34,10 @@ def _parse_args(argv):
     }
     i = 0
     while i < len(args):
+        if args[i] == "--no-persistent-data":
+            parsed["persistent_data"] = False
+            i += 1
+            continue
         key = key_map.get(args[i])
         if key is None or i + 1 >= len(args):
             raise SystemExit(f"Argumento no reconocido o sin valor: {args[i]}")
@@ -121,7 +125,9 @@ def main():
     scene.cycles.texture_limit_render = "2048"
     scene.cycles.use_auto_tile = True
     scene.cycles.tile_size = 512
-    scene.render.use_persistent_data = False
+    # Reuse BVH/shader data between frames.  The movie image still refreshes
+    # per frame; this only avoids rebuilding static scene state.
+    scene.render.use_persistent_data = args["persistent_data"]
     scene.render.image_settings.file_format = "PNG"
     scene.render.image_settings.color_mode = "RGB"
 
