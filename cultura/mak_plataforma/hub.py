@@ -193,6 +193,22 @@ except Exception as _departments_exc:  # noqa: BLE001 - hub remains available
 else:
     _DEPARTMENTS_IMPORT_ERROR = ""
 
+try:
+    from flujo.knowledge.project_api import (  # noqa: E402
+        learning_summary as _learning_summary_api,
+        promoted_rules as _promoted_rules_api,
+        probe_payload as _probe_payload_api,
+        route_payload as _route_payload_api,
+    )
+except Exception as _project_router_exc:  # noqa: BLE001 - learning is additive
+    _learning_summary_api = None
+    _promoted_rules_api = None
+    _probe_payload_api = None
+    _route_payload_api = None
+    _PROJECT_ROUTER_IMPORT_ERROR = type(_project_router_exc).__name__
+else:
+    _PROJECT_ROUTER_IMPORT_ERROR = ""
+
 
 def _research_registry_path():
     """Persistent registry for the reusable research-job layer."""
@@ -1248,6 +1264,37 @@ def _director_capabilities():
             "free_text_is_not_identity": True,
         },
     }
+
+
+def _learning_db_path():
+    configured = os.environ.get("MAK_LEARNING_DB", "").strip()
+    return Path(configured).expanduser() if configured else Path(_REPO_ROOT) / "data" / "mak_knowledge.db"
+
+
+def _learning_read_only():
+    if _learning_summary_api is None:
+        return {"available": False, "reason": "project_router_unavailable", "database": _learning_db_path().name}
+    return _learning_summary_api(_learning_db_path())
+
+
+def _learning_promoted_rules():
+    return _promoted_rules_api(_learning_db_path()) if _promoted_rules_api else []
+
+
+def _project_route_request(body):
+    if _route_payload_api is None:
+        return {"ok": False, "error": "project_router_unavailable", "detail": _PROJECT_ROUTER_IMPORT_ERROR}, 503
+    return _route_payload_api(body, _learning_db_path())
+
+
+def _project_probe_request(body):
+    if _probe_payload_api is None:
+        return {"ok": False, "error": "project_router_unavailable", "detail": _PROJECT_ROUTER_IMPORT_ERROR}, 503
+    return _probe_payload_api(
+        body, _learning_db_path(), repo_root=_REPO_ROOT,
+        record=bool(body.get("record")) if isinstance(body, dict) else False,
+        episode_id=body.get("episode_id") if isinstance(body, dict) else None,
+    )
 
 
 def _director_work(body):
@@ -4493,6 +4540,8 @@ class H(BaseHTTPRequestHandler):
                 return self._json(_research_job(int(raw_id)))
             except Exception as exc:
                 return self._json({"available": False, "error": str(exc)[:200]}, 400)
+        if p == "/api/project/learning":
+            return self._json(_learning_read_only())
         for prefix in SERVICE_PROXY_PREFIXES:
             if p == "/" + prefix:
                 self.send_response(301)
@@ -4882,6 +4931,27 @@ class H(BaseHTTPRequestHandler):
 
     def do_POST(self):
         u = urllib.parse.urlparse(self.path)
+        if u.path == "/api/project/route":
+            try:
+                length = int(self.headers.get("Content-Length") or 0)
+            except (TypeError, ValueError):
+                return self._json({"ok": False, "error": "content_length_invalido"}, 400)
+            if length > 30000:
+                return self._json({"ok": False, "error": "request_too_large"}, 413)
+            try:
+                body = json.loads(self.rfile.read(length).decode("utf-8", "replace") or "{}")
+            except (ValueError, TypeError):
+                return self._json({"ok": False, "error": "json invalido"}, 400)
+            result, code = _project_route_request(body)
+            return self._json(result, code)
+        if u.path == "/api/project/probe":
+            try:
+                length = min(int(self.headers.get("Content-Length") or 0), 30000)
+                body = json.loads(self.rfile.read(length).decode("utf-8", "replace") or "{}")
+            except (TypeError, ValueError, json.JSONDecodeError):
+                return self._json({"ok": False, "error": "json invalido"}, 400)
+            result, code = _project_probe_request(body)
+            return self._json(result, code)
         if u.path == "/api/research/jobs":
             try:
                 length = min(int(self.headers.get("Content-Length") or 0), 20000)
