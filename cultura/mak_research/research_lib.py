@@ -68,7 +68,7 @@ ENV_FILE = os.environ.get(
 )
 
 DEFAULTS = {
-    "GROQ_MODEL": "llama-3.3-70b-versatile",
+    "GROQ_MODEL": "openai/gpt-oss-20b",
     "CEREBRAS_MODEL": "gpt-oss-120b",
     "AZURE_ENDPOINT": "https://ligereza.services.ai.azure.com",
     "AZURE_DEPLOYMENT": "gpt-5-mini",
@@ -557,6 +557,15 @@ def _msgs(system, user):
     return [{"role": "user", "content": user}]
 
 
+def limpiar_salida(text):
+    """Remove hidden reasoning blocks emitted by some hosted models."""
+    value = str(text or "")
+    if re.search(r"<think>", value, re.I) and not re.search(r"</think>", value, re.I):
+        return ""
+    return re.sub(r"<think>.*?</think>", "", value,
+                  flags=re.IGNORECASE | re.DOTALL).strip()
+
+
 # The provider roster, in ONE place. It used to be written out by hand in every
 # tool that accepted a provider list, and those copies went stale silently:
 # refutar.py filtered its --orden against a literal
@@ -770,11 +779,18 @@ class LLM:
 
     # -- proveedores ----------------------------------------------------
     def _groq(self, system, user, max_tok):
+        payload = {"model": os.environ["GROQ_MODEL"],
+                   "messages": _msgs(system, user),
+                   "temperature": 0.3}
+        # Groq's openai/gpt-oss models spend completion budget on reasoning;
+        # max_tokens alone can return an empty visible answer on a long prompt.
+        if os.environ["GROQ_MODEL"].startswith("openai/gpt-oss"):
+            payload["max_completion_tokens"] = max_tok + 2048
+        else:
+            payload["max_tokens"] = max_tok
         r = _http_json(
             "https://api.groq.com/openai/v1/chat/completions",
-            {"model": os.environ["GROQ_MODEL"],
-             "messages": _msgs(system, user),
-             "temperature": 0.3, "max_tokens": max_tok},
+            payload,
             {"Authorization": "Bearer " + os.environ["GROQ_API_KEY"]},
             timeout=60,
         )
@@ -958,6 +974,7 @@ class LLM:
                             validated=bool(str(text or "").strip()),
                             payload={"provider": name},
                             started_at=shadow_started, owner_pid=os.getpid())
+                text = limpiar_salida(text)
                 if text:
                     self.stats[name] = self.stats.get(name, 0) + 1
                     try:
@@ -1038,6 +1055,59 @@ def consulta_de(tema, tope=TOPE_CONSULTA):
     recorte = texto[:tope]
     espacio = recorte.rfind(" ")
     return (recorte[:espacio] if espacio > tope // 2 else recorte).strip()
+
+
+def _compact_search_query(query):
+    stop = {"obtener", "resumenes", "resúmenes", "completos", "datos",
+            "clave", "evidencias", "evidencia", "inferencia", "inferencias",
+            "asegurando", "separar", "claramente", "analista", "repetir",
+            "consulta", "anterior", "incluir", "incluyendo", "sobre", "para",
+            "con", "las", "los", "una", "uno", "del", "de", "y", "en"}
+    tokens = re.findall(r"[\w]+(?:[.:-][\w]+)*", str(query or ""), re.UNICODE)
+    compact = []
+    for token in tokens:
+        if token.lower() in stop or len(token) < 3:
+            continue
+        if token not in compact:
+            compact.append(token)
+    return " ".join(compact[:18])
+
+
+def firecrawl_search(query, max_results=5, errors=None):
+    """Search the public web through Firecrawl when explicitly available."""
+    load_env()
+    key = os.environ.get("FIRECRAWL_API_KEY")
+    if not key:
+        return {"results": [], "answer": None, "motor": "firecrawl",
+                "ciego": True, "motivo": "sin FIRECRAWL_API_KEY"}
+    try:
+        queries = [str(query or "").strip()]
+        compact = _compact_search_query(query)
+        if compact and compact != queries[0]:
+            queries.append(compact)
+        for used_query in queries:
+            data = _http_json(
+                "https://api.firecrawl.dev/v2/search",
+                {"query": used_query, "limit": max_results},
+                {"Authorization": "Bearer " + key}, timeout=60,
+            )
+            rows = ((data.get("data") or {}).get("web") or [])
+            results = [{"url": row.get("url"), "title": row.get("title"),
+                        "content": row.get("description") or row.get("snippet")}
+                       for row in rows if row.get("url")]
+            if results:
+                return {"results": results[:max_results], "answer": None,
+                        "motor": "firecrawl", "ciego": False,
+                        "creditsUsed": data.get("creditsUsed"),
+                        "queryUsed": used_query,
+                        "queryCompacted": used_query != queries[0]}
+        return {"results": [], "answer": None, "motor": "firecrawl",
+                "ciego": False, "motivo": "sin resultados"}
+    except Exception as e:  # noqa: BLE001 - otro buscador puede continuar
+        if errors is not None:
+            errors.append("firecrawl: " + _err_str(e))
+        return {"results": [], "answer": None, "motor": "firecrawl",
+                "ciego": True, "motivo": _err_str(e)}
 
 
 def tavily_search(query, depth="basic", max_results=5, errors=None):
@@ -1137,8 +1207,12 @@ def searxng_search(query, max_results=5, errors=None):
 
 
 def web_search(query, depth="basic", max_results=5, errors=None):
-    """Busqueda unificada: SearXNG propio primero (sin tope de creditos);
-    Tavily como fallback solo si SearXNG no devuelve resultados. Mismo
+    """Busqueda unificada con backend seleccionable y procedencia explicita.
+
+    ``RESEARCH_SEARCH_PROVIDER=firecrawl`` hace que Firecrawl sea el primer
+    motor para un trabajo que necesita resultados web relevantes. En modo
+    ``auto`` SearXNG sigue siendo primero y Firecrawl queda como fallback;
+    Tavily es el ultimo respaldo. Mismo
     shape que tavily_search. Ambas rutas registran salud (ver panel hub).
 
     Devuelve ademas `ciego`: True cuando NADIE pudo buscar, que es distinto de
@@ -1151,9 +1225,18 @@ def web_search(query, depth="basic", max_results=5, errors=None):
         errors.append("consulta acortada para buscar: %d -> %d caracteres"
                       % (len(str(query or "")), len(consulta)))
     query = consulta
+    preferred = os.environ.get("RESEARCH_SEARCH_PROVIDER", "auto").strip().lower()
+    if preferred == "firecrawl":
+        fire = firecrawl_search(query, max_results=max_results, errors=errors)
+        if fire.get("results"):
+            return fire
+
     res = searxng_search(query, max_results=max_results, errors=errors)
     if res.get("results"):
         return res
+    fire = firecrawl_search(query, max_results=max_results, errors=errors)
+    if fire.get("results"):
+        return fire
     if not os.environ.get("TAVILY_API_KEY"):
         # Medido 2026-08-01 en la caja: no hay llave. Sin respaldo, un SearXNG
         # tapado deja la cadena entera sin ojos, y eso se dice.
@@ -1163,6 +1246,9 @@ def web_search(query, depth="basic", max_results=5, errors=None):
                      "sin TAVILY_API_KEY: no hay buscador de respaldo"
             if errors is not None:
                 errors.append("web_search: " + motivo)
+        fire_motivo = fire.get("motivo") or ""
+        if fire_motivo:
+            motivo = (motivo + "; " if motivo else "") + fire_motivo
         res["motivo"] = motivo
         return res
     errores_antes = len(errors) if errors is not None else 0

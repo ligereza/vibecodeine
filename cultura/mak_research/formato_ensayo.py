@@ -188,6 +188,56 @@ def prompt_informe(tema: str, findings, sources, consultas=None) -> str:
     )
 
 
+def verificar_informe(texto: str, sources, consultas=None, tema="") -> dict:
+    """Check the observable contract of the default report format.
+
+    This is intentionally conservative: it cannot judge whether an argument
+    is true, but it can refuse to label a report ready when the evidence links
+    and provenance markers requested by the prompt are absent.
+    """
+    t = texto or ""
+    urls = [str(u) for u in (sources or []) if str(u)]
+    first_part = t[:900]
+    heading = next((line.strip() for line in t.splitlines()
+                    if line.strip().startswith("#")), "")
+    unique_urls = list(dict.fromkeys(urls))
+    requested_years = sorted(set(re.findall(r"\b20(?:24|26)\b",
+                                             " ".join(consultas or []) + " " + str(tema))))
+    source_years = set()
+    for url in unique_urls:
+        for short in re.findall(r"(?:arxiv\.org/(?:abs|html|pdf)/)(\d{2})\d{2}", url, re.I):
+            source_years.add("20" + short)
+        source_years.update(re.findall(r"\b20(?:24|26)\b", url))
+    first_body = next((line.strip() for line in t.splitlines()
+                       if line.strip() and not line.strip().startswith("#")
+                       and not line.strip().startswith("---")), "")
+    checks = {
+        "answer_first": bool(re.search(r"\brespuesta\s*:", first_part, re.I))
+        or len(first_body) >= 40,
+        "source_urls": sum(1 for u in unique_urls if u in t) >= min(2, len(unique_urls)) if unique_urls else False,
+        "three_states": all(re.search(pattern, t, re.I) for pattern in
+                             (r"\b(dicen|evidencia textual)\b",
+                              r"\binferencias?\b",
+                              r"\bno se encontr[oó]\b")),
+        "queries_recorded": bool(consultas) and bool(
+            re.search(r"(consultas realizadas|se busco|se buscó)", t, re.I)),
+        "temporal_coverage": (not requested_years or
+                               all(year in source_years for year in requested_years)),
+        "specific_title": bool(heading) and not bool(
+            re.search(r"^#+\s*informe\b", heading, re.I)),
+    }
+    missing = [name for name, ok in checks.items() if not ok]
+    return {
+        "status": "ready" if not missing else "review_required",
+        "checks": checks,
+        "missing": missing,
+        "source_url_count": sum(1 for u in unique_urls if u in t),
+        "source_count": len(unique_urls),
+        "requested_years": requested_years,
+        "source_years": sorted(source_years),
+    }
+
+
 def prompt_revision(tema: str, findings, sources, consultas=None) -> str:
     """Prompt for MAK introspection/review mode.
 
