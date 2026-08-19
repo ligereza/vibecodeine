@@ -45,6 +45,48 @@ export type CreateJobResponse = {
   error?: string;
 };
 
+export type LearningEpisode = {
+  episode_id?: string;
+  project_id?: string;
+  status?: string;
+  phase?: string;
+  objective?: string;
+  started_at?: string;
+  finished_at?: string;
+};
+
+export type ProjectLearningSummary = {
+  available?: boolean;
+  database?: string;
+  reason?: string;
+  projects?: Record<string, number>;
+  episodes?: Record<string, number>;
+  rules?: Record<string, number>;
+  contracts?: {
+    available?: boolean;
+    counts?: Record<string, number>;
+    statuses?: Record<string, number>;
+    reason?: string;
+  };
+  audits?: {
+    available?: boolean;
+    latest_run?: string | null;
+    statuses?: Record<string, number>;
+    attention?: Array<{ contract_id?: string; status?: string; missing?: string[] }>;
+    reason?: string;
+  };
+  latest_abstain?: LearningEpisode | null;
+};
+
+export type ProjectProbeResponse = {
+  ok?: boolean;
+  error?: string;
+  decision?: Record<string, unknown>;
+  probe?: Record<string, unknown>;
+  learning?: ProjectLearningSummary;
+  recorded?: boolean;
+};
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, init);
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -85,6 +127,28 @@ export const flujoApi = {
       return await request<JobsResponse>('/api/list-jobs');
     } catch (error) {
       return { ...demoJobs, error: error instanceof Error ? error.message : String(error) };
+    }
+  },
+
+  async projectLearning(): Promise<ProjectLearningSummary> {
+    if (isFileMode()) return { available: false, reason: 'file_mode' };
+    try {
+      return await request<ProjectLearningSummary>('/api/project/learning');
+    } catch (error) {
+      return { available: false, reason: error instanceof Error ? error.message : String(error) };
+    }
+  },
+
+  async projectProbe(project: unknown): Promise<ProjectProbeResponse> {
+    if (isFileMode()) return { ok: false, error: 'file_mode' };
+    try {
+      return await request<ProjectProbeResponse>('/api/project/probe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ project }),
+      });
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : String(error) };
     }
   },
 

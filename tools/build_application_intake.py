@@ -636,7 +636,8 @@ def write_outputs(con: sqlite3.Connection, run_id: str, output_dir: Path,
 def build_intake(index_path: Path, output_dir: Path, project_path: str | None,
                  fund_names: list[str], candidate_limit: int,
                  mak_db: Path = DEFAULT_MAK_DB,
-                 source_kind: str = "portable_ssd_index") -> dict[str, Any]:
+                 source_kind: str = "portable_ssd_index",
+                 learning_db: Path | None = None) -> dict[str, Any]:
     source_root, source_summary = read_source_summary(index_path)
     fingerprint = source_fingerprint(index_path, source_root, source_summary)
     run_id = fingerprint[:20]
@@ -675,8 +676,25 @@ def build_intake(index_path: Path, output_dir: Path, project_path: str | None,
     write_outputs(con, run_id, output_dir, str(index_path), source_root, source_summary, packages, selected)
     con.commit()
     con.close()
+    learning_materialized: list[dict[str, Any]] = []
+    if learning_db is not None:
+        # Explicit opt-in: normal intake remains a derived package only.
+        from flujo.knowledge.project_ir import LearningStore, project_ir_from_application_package
+        store = LearningStore(learning_db)
+        for package in packages:
+            record = project_ir_from_application_package(
+                package, source_ref=str(output_dir / "applications" / f"{package['application_id']}.json"))
+            fingerprint = store.save_project(record)
+            learning_materialized.append({
+                "project_id": record["project_id"],
+                "state": record["state"],
+                "unknowns": len(record["unknowns"]),
+                "fingerprint": fingerprint,
+            })
     return {"run_id": run_id, "output_db": str(output_db), "output_dir": str(output_dir),
-            "source_root": source_root, "selected": selected, "applications": [p["application_id"] for p in packages]}
+            "source_root": source_root, "selected": selected,
+            "applications": [p["application_id"] for p in packages],
+            "learning_materialized": learning_materialized}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -689,6 +707,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--fund", action="append", dest="funds", default=["Fondart"], help="Funding target label; repeatable")
     parser.add_argument("--candidate-limit", type=int, default=10)
     parser.add_argument("--mak-db", type=Path, default=DEFAULT_MAK_DB)
+    parser.add_argument("--learning-db", type=Path, default=None,
+                        help="Explicit Project IR SQLite target; omitted means no learning DB write")
     args = parser.parse_args(argv)
     output_dir = args.out_dir.resolve()
     if args.source_root is not None:
@@ -699,13 +719,15 @@ def main(argv: list[str] | None = None) -> int:
         effective_project = args.project_path or args.source_root.name
         result = build_intake(source_index, output_dir, effective_project,
                               list(dict.fromkeys(args.funds)), args.candidate_limit,
-                              args.mak_db.resolve(), "project_folder")
+                              args.mak_db.resolve(), "project_folder",
+                              args.learning_db.resolve() if args.learning_db else None)
     else:
         if not args.source_index.is_file():
             parser.error(f"source index not found: {args.source_index}")
         result = build_intake(args.source_index.resolve(), output_dir, args.project_path,
                               list(dict.fromkeys(args.funds)), args.candidate_limit,
-                              args.mak_db.resolve(), "portable_ssd_index")
+                              args.mak_db.resolve(), "portable_ssd_index",
+                              args.learning_db.resolve() if args.learning_db else None)
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0
 

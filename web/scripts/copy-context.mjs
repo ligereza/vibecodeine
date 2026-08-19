@@ -1,7 +1,10 @@
 import { copyFileSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const root = resolve(import.meta.dirname, '..', '..');
+// Node 18 (the Debian runtime used by MAK) does not expose import.meta.dirname.
+// Resolve from the module URL so the copy step stays portable across Node 18+.
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const src = resolve(root, 'web', 'dist', 'index.html');
 const targets = [
   resolve(root, 'context', 'flujo_hub.html'),

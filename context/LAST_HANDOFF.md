@@ -15228,3 +15228,731 @@ para el siguiente commit, sin agregar automáticamente archivos útiles no
 revisados.
 
 Last verified: 2026-08-19 America/Santiago - Phase 596.
+
+## Phase 597 - Project IR and learning ledger contract
+
+Se implemento una primera capa de aprendizaje operativo sin crear otra base
+global ni copiar fuentes:
+
+- `src/flujo/knowledge/project_ir.py`: contrato `mak-project-ir-v1`, estados
+  `candidate/unknown/review_required/active/verified/stale/contradicted/
+  historical/quarantined`, inventario acotado por carpeta, referencias
+  relativas, formatos, media type, mtime y SHA-256 solo bajo limite explicito.
+- `LearningStore`: tablas opt-in para `project_records`, `project_artifacts`,
+  `project_episodes`, `project_transitions`, `semantic_rules` y
+  `rule_observations`. El caller debe entregar la ruta SQLite; no se migra la
+  base real al importar el modulo.
+- Un proyecto `active` o `verified` sin evidencia es invalido. Un estado
+  `unknown` no se convierte en activo por heuristica.
+- `project_ir_from_application_package()` adapta el output existente de
+  `tools/build_application_intake.py`: gaps pasan a `unknowns`, links MAK a
+  `relations` y el expediente queda `review_required`.
+
+Validacion foreground:
+
+```text
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest -v tests.test_project_ir
+-> exit 0, 6 tests
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m py_compile ...
+-> exit 0; git diff --check -> exit 0
+```
+
+## Phase 598 - memoria semantica con promocion estricta
+
+Las reglas no se promocionan por frecuencia ciega: `promote_rule()` exige dos
+episodios como minimo, estado `succeeded` o `verified`, validacion `ok/passed/
+verified` y cero contradicciones. Los episodios fallidos, abstenciones y
+resultados sin validar quedan como experiencia, no como verdad activa.
+
+Se validaron reglas soportadas por dos episodios, bloqueo por falta de soporte
+y adaptacion de un paquete Fondart de fixture con 6 gaps. No se cambio ninguna
+base real.
+
+## Phase 599 - router y Hub read-only
+
+Se implemento `src/flujo/knowledge/project_router.py` con contratos declarados
+para intake, research, auditoria Blender y reconciliacion. Devuelve `select`
+solo con consumidor compatible y margen suficiente; devuelve `abstain` si el
+estado requiere evidencia, el formato es opaco o hay ambiguedad. No ejecuta
+herramientas ni llama APIs.
+
+`src/flujo/knowledge/project_api.py` es la capa comun de lectura usada por el
+Hub canonico y el proyector MAK 8900. Ambos exponen:
+
+- `GET /api/project/learning`: resumen read-only; si el esquema no existe
+  responde `learning_schema_not_initialized` y no lo crea.
+- `POST /api/project/route`: valida un Project IR y devuelve decision, margen,
+  abstencion y reglas promovidas; no persiste ni ejecuta.
+
+Archivos modificados: `src/flujo/knowledge/project_ir.py`,
+`src/flujo/knowledge/project_router.py`, `src/flujo/knowledge/project_api.py`,
+`tests/test_project_ir.py`, `tests/test_project_router.py`,
+`src/flujo/web/hub.py`, `cultura/mak_plataforma/hub.py` y
+`scripts/hub_smoke.py`.
+
+Validacion foreground:
+
+```text
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest -v tests.test_project_ir tests.test_project_router
+-> exit 0, 10 tests
+PYTHONDONTWRITEBYTECODE=1 python3 scripts/hub_smoke.py --port 0 --timeout 20
+-> exit 0; ping, traversal, SSE, /api/project/learning y /api/project/route pasaron
+data/mak_knowledge.db -> 71,860,224 bytes; sha256 1d8b...4decee32
+```
+
+El E2E de fixture `SSD/folder -> build_application_intake -> application JSON
+-> Project IR -> router` termino exit 0. El expediente conserva estado
+`review_required`, 6 unknowns y el router se abstiene; eso es el resultado
+correcto porque no existe aun evidencia suficiente para ejecutar un consumidor.
+
+Riesgos actuales: el esquema de aprendizaje aun no esta materializado en la
+base real de 71 MB; hacerlo requiere una migracion explicita y respaldada. No
+se agrego un `ensure_schema()` a ningun GET. `pytest` sigue no instalado; las
+pruebas nuevas usan `unittest` stdlib.
+
+## Next concrete action
+
+Agregar un comando de integracion explicito `--learning-db` al intake existente
+para que una corrida seleccionada materialice sus paquetes en una base indicada
+por el operador, sin usar por defecto `data/mak_knowledge.db`. Ejecutarlo en un
+fixture, comprobar idempotencia y despues preparar un dry-run contra la base
+real que solo informe tablas/huellas antes de cualquier migracion.
+
+Last verified: 2026-08-19 America/Santiago - Phase 599.
+
+## Phase 600 - intake materialization opt-in and dry-run real
+
+`tools/build_application_intake.py` ahora acepta `--learning-db RUTA` y el
+parametro equivalente `learning_db` en `build_intake()`. Sin ese argumento el
+intake conserva exactamente su comportamiento anterior: crea paquete derivado
+pero no escribe el ledger Project IR. Con el argumento explicito, cada paquete
+se adapta, se guarda con version/fingerprint y queda `review_required`.
+
+Validacion fixture:
+
+```text
+folder -> build_application_intake(..., learning_db=temp/learning.sqlite)
+-> exit 0; applications=[obra-fondart]
+-> learning_materialized=[review_required, unknowns=6]
+-> LearningStore.summary() = {review_required: 1}
+```
+
+Se agrego `inspect` a `python3 -m flujo.knowledge.project_ir` para inspeccionar
+un target en modo SQLite `mode=ro`, sin crear tablas. Contra la base real:
+
+```text
+... project_ir --db data/mak_knowledge.db inspect -> exit 0
+exists=true; read_only=true; compatible=true; materialization=not_applied
+present=[]; missing=los seis objetos Project IR
+sha256 antes/despues = 1d8b9692dc7b4e738809349e1825189e376532f2360cedbe95cfc6f4decee32
+```
+
+No se migraron aun las tablas a `data/mak_knowledge.db`; el siguiente paso es
+un informe de impacto y una migracion explicita si el operador la confirma.
+
+## Next concrete action
+
+Construir el informe de migracion dry-run desde `inspect_learning_target()`:
+comparar nombres/indices esperados contra `mak_knowledge.db`, estimar el
+numero de proyectos que entrarian desde un intake controlado y validar que no
+hay colision con tablas existentes. No ejecutar `LearningStore.ensure_schema()`
+contra la base real durante esta fase.
+
+Last verified: 2026-08-19 America/Santiago - Phase 600.
+
+## Phase 601 - materializacion controlada del ledger
+
+El dry-run no encontro colisiones, por lo que se ejecuto una unica
+materializacion explicita sobre `data/mak_knowledge.db`:
+
+```text
+tablas antes: 12
+filas comunes antes/despues: sin cambios
+tablas nuevas: project_records, project_artifacts, project_episodes,
+project_transitions, semantic_rules, rule_observations (+ sqlite_sequence)
+filas nuevas: 0 en todas
+```
+
+La base paso de 71,860,224 a 71,946,240 bytes por el esquema e indices; no se
+copiaron ni migraron filas de `artifacts`, `entities`, `temporal_events` ni de
+las otras 9 tablas historicas. `inspect` ahora informa
+`materialization=already_applied`; el reporte completo devuelve
+`migration=not_needed`, `compatible=true`, `collisions=[]`.
+
+## Phase 602 - primer caso real y primer episodio
+
+Se importo explicitamente:
+`/home/mak/research/intake/portable-ssd-20260813-scd-r4/applications/scd-fondart.json`.
+
+Resultado en `project_records`:
+
+```text
+project_id=project-5047cc3a2269b5031460
+state=review_required
+version=1
+artifacts=48 referencias unicas (80 entradas representativas con duplicados)
+unknowns=6: official_call, problem_and_context, method, budget, schedule, team
+relations=12: historical_win=3, active_mak=9
+```
+
+El router devolvio `abstain / project_state_requires_evidence`; se registro el
+episodio append-only `episode_scd_route_20260819` con estado `abstained`. El
+resumen real queda `projects.review_required=1`, `episodes.abstained=1`,
+`rules={}`. No se promovio ninguna regla ni se ejecutaron consumidores.
+
+Validacion foreground despues del caso real:
+
+```text
+unittest Project IR + router -> exit 0, 13 tests
+hub_smoke.py --port 0 --timeout 20 -> exit 0
+```
+
+## Next concrete action
+
+Construir el adaptador de episodios para resultados reales de consumidores:
+tomar una decision `select` o `abstain`, ejecutar fuera del router el comando
+read-only autorizado, capturar `observation/outcome/validation` y registrar el
+episodio con su huella. Primero debe cubrir `blend_scene_audit` y
+`research_job_router` en fixtures; solo despues se evaluara si una regla puede
+promoverse. No ejecutar render, POST, mutadores ni proveedores externos.
+
+Last verified: 2026-08-19 America/Santiago - Phase 602.
+
+## Phase 603 - idempotencia y stale explícito
+
+`LearningStore.save_project()` ahora calcula huella semántica ignorando
+timestamps volatiles. Reindexar sin cambios no incrementa version ni duplica
+trabajo; si una referencia desaparece, la fila se conserva con
+`availability=stale`. Nunca se borra evidencia.
+
+Se reimporto el expediente SCD despues de este cambio para alinear su huella:
+`project-5047cc3a2269b5031460`, version 2, estado `review_required`.
+
+## Phase 604 - probe auditable de consumidores
+
+Se agregaron `src/flujo/knowledge/episode_runner.py` y
+`tools/project_gate.py`. El gate:
+
+- carga un Project IR en SQLite read-only;
+- routea con reglas promovidas, si existen;
+- prepara probe solo para consumidores declarados;
+- no ejecuta comandos arbitrarios ni Blender;
+- registra un episodio solo si se pasa `--record`.
+
+Validacion real sin persistencia adicional:
+
+```text
+project_gate.py --db data/mak_knowledge.db --project-id project-5047cc3a2269b5031460
+-> exit 0; decision=abstain; probe=abstained; recorded=false
+unittest Project IR + router + episode_runner -> exit 0, 15 tests
+hub_smoke.py --port 0 --timeout 20 -> exit 0
+```
+
+## Next concrete action
+
+Usar `tools/project_gate.py --record` sobre un fixture que tenga consumidor
+read-only compatible y registrar un resultado `needs_evidence` por ausencia de
+Blender; despues conectar el episodio a una segunda observacion verificada sin
+promover regla prematuramente. Para Research, usar solo el route plan puro y no
+crear jobs externos durante esta fase.
+
+Last verified: 2026-08-19 America/Santiago - Phase 604.
+
+## Phase 605 - interfaz de probe y persistencia explicita
+
+`src/flujo/knowledge/project_api.py` ahora comparte tambien
+`probe_payload()` entre ambos Hub. Se agregaron:
+
+- `POST /api/project/probe` en el Hub canonico y en la proyeccion MAK 8900;
+- modo por defecto read-only: routea y prepara probe sin escribir;
+- `record=true` solo acepta proyectos ya persistidos y anexa un episodio;
+- no ejecuta Blender, POST externo, render ni comandos arbitrarios.
+
+El smoke del Hub ahora cubre `/api/project/learning`, `/api/project/route` y
+`/api/project/probe`; paso exit 0 junto con ping, traversal y SSE.
+
+## Next concrete action
+
+Exponer en la interfaz una tarjeta compacta de estado del aprendizaje (proyectos
+por estado, episodios, reglas promovidas y ultimo abstain) consumiendo
+`/api/project/learning`, sin agregar otra pagina de contexto. La tarjeta debe
+enlazar al probe read-only y mostrar `review_required`/`unknown` como estados
+normales, no como errores.
+
+Last verified: 2026-08-19 America/Santiago - Phase 605.
+
+## Phase 606 - estado de aprendizaje visible y probe read-only en Hub
+
+Se conecto el estado del ledger Project IR a la UI existente sin crear una
+pagina nueva. `web/src/components/HubDashboard.tsx` muestra proyectos por
+estado, episodios, reglas promovidas y el ultimo `abstained`; esos estados son
+criterios normales de seguridad, no errores. La misma tarjeta permite abrir
+un evaluador JSON `Probe read-only`: llama `POST /api/project/probe` sin
+`record=true`, no ejecuta Blender/Research/mutadores y muestra la decision y
+el plan de probe devueltos.
+
+El contrato cliente esta en `web/src/api/flujoApi.ts` y el backend comparte
+`latest_abstain` desde `src/flujo/knowledge/project_api.py` con conexion
+SQLite `mode=ro`. Se agrego
+`tests/test_project_api.py`, que verifica que el resumen no modifica bytes y
+expone el episodio correcto.
+
+Tambien se corrigio `web/scripts/copy-context.mjs`: la resolucion basada en
+`import.meta.dirname` fallaba con el Node 18 de Debian. Ahora usa
+`fileURLToPath(import.meta.url)` y el build es portable para Node 18+.
+
+Validacion foreground:
+
+```text
+npm run typecheck -> exit 0
+npm run build:context -> exit 0; Vite build OK; warning informativo: Vite 7 recomienda Node >=20.19, pero el bundle termino correctamente
+unittest Project IR/router/episodes/API/intake -> exit 0, 16 tests
+scripts/hub_smoke.py --port 0 --timeout 20 -> exit 0
+markers en context/flujo_hub.html: Memoria operativa, Probe read-only
+git diff --check -> exit 0
+procesos relevantes despues de validar: ninguno (se detuvo PID 118740/158500, busqueda diagnostica vieja)
+```
+
+Archivos modificados: `src/flujo/knowledge/project_api.py`,
+`web/src/api/flujoApi.ts`, `web/src/components/HubDashboard.tsx`,
+`web/scripts/copy-context.mjs`, `tests/test_project_api.py`, y los HTML
+generados por `npm run build:context` (`context/flujo_hub.html`,
+`context/plano_demo.html`, `context/svg_visualizer.html`,
+`context/mapping.html`). No se tocaron README/SVG protegidos ni la base real
+durante esta fase.
+
+Riesgos: el warning de Node 18 frente a Vite 7 sigue abierto, aunque el build
+observado funciona; el probe UI requiere que el operador pegue un Project IR
+valido y no materializa episodios. La base real conserva un unico proyecto
+SCD en `review_required`, un episodio `abstained` y cero reglas promovidas.
+
+## Next concrete action
+
+Conectar el ledger con un inventario semantico de contratos: derivar, sin
+copiar archivos, un registro estable de formatos, consumidores declarados,
+dependencias y estados `known/unknown/quarantined` para los paquetes de
+intake existentes. Empezar por el expediente SCD ya materializado y por los
+consumidores `project_intake`, `research_job_router` y `blend_scene_audit`;
+validar que el registro sea idempotente y que los formatos no reconocidos
+generen abstention, no rutas inventadas. Despues exponer solo un resumen
+read-only en el API/Hub.
+
+Last verified: 2026-08-19 America/Santiago - Phase 606.
+
+## Phase 607 - registro estable de contratos y materializacion real
+
+Se agrego `src/flujo/knowledge/contract_registry.py`, reutilizando las
+declaraciones activas de `FORMAT_FAMILIES`, `TOOL_CATALOG` y
+`PROJECT_STATES`. El snapshot determinista contiene 53 contratos:
+
+```text
+format=39; consumer=5; state=9
+```
+
+Cada consumidor conserva ruta, proposito, formatos, dominios, modo de
+ejecucion, salida, dependencias y politica de abstencion. Los formatos tienen
+politica `abstain_if_no_consumer`; los estados declaran si permiten ejecucion
+(`active`/`verified`) o requieren evidencia. Las filas que desaparezcan de
+una futura declaracion no se borran: quedan `stale`.
+
+La tabla `project_contracts` se incorporo al esquema Project IR y se
+materializo de forma explicita en `data/mak_knowledge.db`:
+
+```text
+antes: project_contracts ausente; inspect=partial; sha256=4388f8d3b49a97e8e4f7e85a99c28229ecef6f27f4321d1ec67a6fb5e239a47b
+comando: python3 -m flujo.knowledge.contract_registry --db data/mak_knowledge.db materialize
+resultado: materialized=53, active=53, stale=0, total=53
+despues: inspect=already_applied; sha256=49fe3a8d0e8b0f46d4767aa3295f31b94b87de86903ca08e57c94121e3d0d75b
+```
+
+El resumen read-only `/api/project/learning` ahora devuelve conteos de
+contratos. La tarjeta del Hub muestra `Contratos` y mantiene `Probe
+read-only`. La base real sigue sin copiar fuentes: el proyecto SCD queda
+`review_required`, con un episodio `abstained` y cero reglas promovidas.
+
+Validacion foreground:
+
+```text
+unittest IR/router/episodes/API/contracts/intake -> exit 0, 18 tests
+npm run typecheck -> exit 0
+npm run build:context -> exit 0; bundle 773.10 kB; warning existente de recomendacion Node >=20.19 para Vite 7
+scripts/hub_smoke.py --port 0 --timeout 20 -> exit 0
+learning_summary(real DB) -> contracts consumer=5, format=39, state=9; episodes abstained=1; projects review_required=1
+markers HTML: Memoria operativa, Probe read-only, Contratos
+git diff --check -> exit 0; procesos Blender/flujo/vite/render -> ninguno
+```
+
+Archivos nuevos o modificados: `src/flujo/knowledge/contract_registry.py`,
+`src/flujo/knowledge/project_ir.py`, `src/flujo/knowledge/project_api.py`,
+`tests/test_project_contracts.py`, `tests/test_project_api.py`,
+`web/src/api/flujoApi.ts`, `web/src/components/HubDashboard.tsx`, la base
+`data/mak_knowledge.db` y los HTML generados por el build. No se eliminaron
+contratos, fuentes ni evidencia.
+
+## Next concrete action
+
+Usar el registro de contratos para generar una ruta Project IR -> Research
+Job existente, sin duplicar `research_job_router.py` ni ejecutar proveedores.
+El adaptador debe validar dominio, formatos, dependencias y estado; producir
+un plan estructurado `plan_only`; abstenerse si el proyecto es
+`review_required`/`unknown` o si no existe adaptador. Validar el caso SCD
+real (abstention) y un fixture de investigación de plantas (plan seguro), y
+solo despues mostrar el plan como episodio `needs_evidence` opcional.
+
+Last verified: 2026-08-19 America/Santiago - Phase 607.
+
+## Phase 608 - Project IR hacia Research Job plan-only
+
+Se agrego `src/flujo/knowledge/project_research.py` como adaptador fino al
+`tools/research_job_router.py` y al `cultura/mak_plataforma/research_router.py`
+existentes. Produce `mak-project-research-plan-v1` con dominio, formatos,
+contrato de salida, 12 pasos semanticos, dependencias y politicas; no crea
+filas en `research_jobs`, no escribe archivos y no llama APIs. Sus checks de
+dependencia son declarativos y de presencia local (`python3`, ambos modulos),
+no instaladores.
+
+`episode_runner.py` ahora reconoce consumidores `research_job_router` y
+`research_opportunity_gate`: devuelve `needs_evidence` con un plan listo pero
+sin job creado, o `abstained` si el estado, formato o dependencia bloquea.
+Formatos no reconocidos (`unknown`) se abstienen; no se inventa una ruta.
+
+Validacion foreground:
+
+```text
+unittest ProjectResearch + IR/router/episodes/API/contracts/intake -> exit 0, 22 tests
+project_gate sobre SCD real -> exit 0; decision=abstain; reason=project_state_requires_evidence; probe=abstained; recorded=false
+scripts/hub_smoke.py --port 0 --timeout 20 -> exit 0
+git diff --check -> exit 0; procesos Blender/flujo/vite/render -> ninguno
+```
+
+El fixture de plantas en estado `active`, con `manual.md` y evidencia
+verificada, produce `status=plan_only`, `domain=plants`, `format=informe`,
+`external_calls=0`, `writes=0`. El fixture opaco y el expediente SCD
+`review_required` se abstienen antes de Research.
+
+## Next concrete action
+
+Cerrar el bucle de episodios de Research sin proveedores: permitir que el
+probe plan-only se registre de forma explicita como `needs_evidence`, con
+`plan_fingerprint`, dependencias y cero mutaciones; verificar idempotencia del
+`episode_id` y que el resumen del Hub lo refleje. Mantener el SCD real sin
+agregar otro episodio salvo que la prueba sea deliberada en un fixture o con
+un identificador nuevo documentado.
+
+Last verified: 2026-08-19 America/Santiago - Phase 608.
+
+## Phase 609 - episodios Research idempotentes y trazables
+
+`LearningStore.record_episode()` ahora acepta una repeticion segura del mismo
+`episode_id` cuando la huella semantica coincide; devuelve el mismo ID sin
+insertar una segunda fila. Si el mismo ID trae otra decision, plan, estado o
+evidencia, falla con `episode_id_conflict` y no sobrescribe el episodio.
+
+`record_probe()` conserva el plan Research dentro de la accion y registra
+`plan_fingerprint` en observacion y outcome. Asi el ledger sabe que plan se
+evaluo, aunque el trabajo haya quedado en `needs_evidence`; no se crea un job
+ni se llama un proveedor.
+
+Validacion foreground:
+
+```text
+unittest ProjectResearch + IR/router/episodes/API/contracts/intake -> exit 0, 23 tests
+fixture plan-only repetido con episode-plan-demo -> una sola fila; fingerprint presente
+git diff --check -> exit 0
+```
+
+## Next concrete action
+
+Crear la primera observacion Research plan-only en un SQLite temporal usando
+el mismo endpoint/gate que usara el Hub, comprobar que el segundo POST con el
+mismo `episode_id` es idempotente y que el resumen cambia a
+`episodes.needs_evidence=1`. No tocar el episodio real SCD ni llamar APIs.
+
+Last verified: 2026-08-19 America/Santiago - Phase 609.
+
+## Phase 610 - endpoint E2E de Research plan-only
+
+Se ejercito `probe_payload()` como lo consumen ambos Hub, usando un SQLite
+temporal y un Project IR `active` de plantas/curatoria:
+
+```text
+primer POST record=true episode_id=episode-hub-plan-demo -> HTTP 200; probe=needs_evidence; recorded=true
+segundo POST identico -> HTTP 200; probe=needs_evidence; recorded=true
+filas en project_episodes -> 1
+summary -> projects.active=1; episodes.needs_evidence=1; no proveedor; no job externo
+```
+
+Esto valida el camino interfaz -> route -> plan Research -> ledger y evita
+duplicar episodios cuando el Hub reintenta una solicitud. El Project IR SCD
+real no cambio.
+
+## Next concrete action
+
+Hacer una auditoria bounded de los contratos ya materializados contra los
+consumidores fisicos: comprobar existencia de cada ruta Python, presencia de
+los modulos/dependencias declarados y clasificar cada contrato como
+`verified`, `needs_evidence` o `unavailable` sin instalar ni ejecutar
+mutadores. Registrar el resultado como una tabla de verificacion separada,
+no alterar las declaraciones fuente ni promover reglas automaticamente.
+
+Last verified: 2026-08-19 America/Santiago - Phase 610.
+
+## Phase 611 - auditoria fisica bounded de contratos
+
+Se agrego `audit_contracts()` y la tabla append-only
+`project_contract_audits` en `src/flujo/knowledge/contract_registry.py`.
+La auditoria solo comprueba archivos y dependencias declaradas; no importa
+modulos ejecutables, no inicia servicios, no instala paquetes y no toca las
+fuentes. Por defecto es read-only; `--record` es opt-in y usa `run_id` para
+que repetir una misma corrida no duplique sus resultados.
+
+Contra `/home/mak/flujo` y los 53 contratos reales:
+
+```text
+audit read-only -> 53 contratos; verified=52; needs_evidence=1; unavailable=0
+needs_evidence: blend_scene_audit (tools/audit_blend_scene.py existe; blender_optional ausente)
+audit --record --run-id audit-contracts-20260819 -> 53 filas registradas
+tabla project_contract_audits -> 53 filas; run counts verified=52, needs_evidence=1
+```
+
+El resumen read-only del Hub ahora expone `audits.latest_run` y sus estados;
+la tarjeta muestra `Auditoria`. La base real no se altero salvo la tabla y
+filas de verificacion explicitas. El hash cambio de
+`49fe3a8d0e8b0f46d4767aa3295f31b94b87de86903ca08e57c94121e3d0d75b` a
+`1f6d11988142a12840643a42fef174d6ea9e87d6a22f5c900920dc6f75170f28`.
+
+Validacion foreground:
+
+```text
+unittest contratos/auditoria/IR/router/episodes/API/intake -> exit 0, 25 tests
+npm desde la raiz -> exit 1, ENOENT /home/mak/flujo/package.json (comando mal ubicado, no codigo)
+npm --prefix web run typecheck -> exit 0
+npm --prefix web run build:context -> exit 0; bundle 773.37 kB; warning Node 18/Vite 7 existente
+scripts/hub_smoke.py --port 0 --timeout 20 -> exit 0
+marker context/flujo_hub.html: Auditoria
+git diff --check -> exit 0; procesos relevantes -> ninguno
+```
+
+## Next concrete action
+
+Usar el resultado `needs_evidence` para mejorar el mensaje operativo del
+Hub: distinguir claramente `verified`, `needs_evidence` y `unavailable`, y
+mostrar la ruta/dependencia faltante sin presentarla como bug del proyecto.
+Despues ejecutar una corrida final read-only de todo el sistema de aprendizaje
+(`summary`, `contracts`, `audits`, `latest_abstain`, route/probe) y consolidar
+el handoff para el siguiente slice de evidencia real del SSD, sin abrir
+proveedores ni alterar el SCD.
+
+Last verified: 2026-08-19 America/Santiago - Phase 611.
+
+## Phase 612 - auditoria entendible desde el Hub
+
+El resumen read-only ahora devuelve `audits.latest_run`, estados y una lista
+`attention` con contratos que no estan `verified`, incluyendo dependencias
+faltantes. La tarjeta del Hub distingue `verified`, `needs_evidence` y
+`unavailable`, y muestra:
+
+```text
+52 verificados · 1 evidencia · 0 no disponibles
+Atencion de auditoria: contract-consumer-a0f46193c9c6789e0fe3=needs_evidence (blender_optional)
+```
+
+Validacion foreground:
+
+```text
+unittest auditoria/ProjectResearch/IR/router/episodes/API/contracts/intake -> exit 0, 25 tests
+npm --prefix web run typecheck -> exit 0
+npm --prefix web run build:context -> exit 0; bundle 774.01 kB; warning Node 18/Vite 7 existente
+scripts/hub_smoke.py --port 0 --timeout 20 -> exit 0
+learning_summary(real DB) -> latest_run=audit-contracts-20260819; needs_evidence=1; verified=52
+marker context/flujo_hub.html: Atención de auditoría
+git diff --check -> exit 0; procesos relevantes -> ninguno
+```
+
+## Next concrete action
+
+Ejecutar una corrida final de consistencia del sistema completo: inspeccion
+read-only del ledger y contratos, resumen API, route/probe del SCD real sin
+registrar, y verificacion de que la UI generada contiene las cuatro señales
+(`Memoria operativa`, `Contratos`, `Auditoria`, `Probe read-only`). Si todo
+coincide, dejar el handoff con un unico siguiente slice: evidencia real del
+SSD para pasar SCD de `review_required` a `active`; no auto-promover ni llamar
+proveedores.
+
+Last verified: 2026-08-19 America/Santiago - Phase 612.
+
+## Phase 613 - consistencia final del slice de aprendizaje
+
+La corrida completa coincide en ledger, contratos, API, gate y UI:
+
+```text
+inspect learning -> already_applied; missing=[]; read_only=true
+contract summary -> consumer=5, format=39, state=9; total=53; stale=0
+API summary -> project review_required=1; episodes abstained=1; rules=0
+audit latest_run -> verified=52; needs_evidence=1; missing=blender_optional
+SCD route/probe sin record -> decision=abstain; project_state_requires_evidence; recorded=false
+hub_smoke -> exit 0
+UI markers -> Memoria operativa, Contratos, Auditoria, Probe read-only
+git diff --check -> exit 0; procesos relevantes -> ninguno
+```
+
+No se agregaron episodios al SCD durante esta corrida; su unico episodio
+historico `episode_scd_route_20260819` sigue siendo una abstencion segura.
+
+## Next concrete action
+
+El siguiente slice autorizado es evidencia real del expediente SCD:
+completar y verificar uno por uno `official_call`, `problem_and_context`,
+`method`, `budget`, `schedule` y `team` usando las fuentes/archivos existentes,
+sin inventar datos y sin enviar la postulacion. Reimportar solo despues de
+tener evidencia local, comprobar la transicion `review_required -> active`
+segun sus reglas y ejecutar nuevamente route/probe. Si faltan datos, conservar
+`review_required` y registrar la abstencion; no usar APIs externas ni cambiar
+el resto del runtime.
+
+Last verified: 2026-08-19 America/Santiago - Phase 613.
+
+## Phase 614 - correccion de referencia fisica del SSD para SCD
+
+La fuente `/media/mak/PortableSSD/SCD` esta montada y contiene los artefactos
+representativos del expediente: `.blend`, `.blend1`, `.ai`, `.obj`, `.svg`,
+`.psd`, renders, texturas y fotos de SCD Plaza Egana. El adaptador anterior
+usaba el JSON de la postulacion como `source.root_ref`, aunque
+`source_index_reference.json` declaraba el SSD. Se corrigio
+`project_ir_from_application_package()` para resolver `evidence.source_index`
+y usar su `source_root` cuando existe, sin copiar el arbol.
+
+Reimportacion explicita del expediente:
+
+```text
+comando: python3 -m flujo.knowledge.project_ir --db data/mak_knowledge.db import-application --package .../scd-fondart.json
+resultado: project_id=project-5047cc3a2269b5031460; state=review_required; unknowns=6; version=3
+source.root_ref=/media/mak/PortableSSD; source.root_exists=true; artifacts=48
+```
+
+El estado no se promovio: los seis gaps siguen siendo reales. Se conserva la
+distincion entre evidencia fisica (334 assets indexados y consumer links) y
+evidencia de postulacion (convocatoria, contexto, metodo, presupuesto,
+cronograma y equipo). El SSD queda como fuente local disponible, no como
+autoridad automatica para rellenar la propuesta.
+
+Validacion foreground:
+
+```text
+unittest IR + auditoria + ProjectResearch + router + episodes + API + contracts + intake -> exit 0, 26 tests
+source query SQLite read-only -> root_exists=true; source_root=/media/mak/PortableSSD
+git diff --check -> exit 0
+```
+
+Nota de ejecucion: el primer script de consulta posterior al reimport tuvo
+`IndentationError` en un heredoc de diagnostico; no altero la base ni el
+resultado del import. La consulta corregida termino exit 0 y confirmo la
+referencia fisica.
+
+## Next concrete action
+
+Construir un cierre de evidencia local para SCD que solo enumere que puede
+probarse mecanicamente desde el SSD (existencia, formatos, metadatos,
+consumidores) y que sigue requiriendo fuente humana/oficial. No cambiar los
+seis gaps ni el estado; registrar el resultado como observacion de
+`needs_evidence` y dejar listo el contrato para que una futura investigacion
+de convocatoria agregue evidencia sin reescribir la historia.
+
+Last verified: 2026-08-19 America/Santiago - Phase 614.
+
+## Phase 615 - cierre de evidencia local SCD
+
+Se agrego `src/flujo/knowledge/project_evidence.py` y sus pruebas. El cierre
+lee referencias, `stat()` y rutas de consumidores; no abre el contenido como
+verdad semantica, no copia el SSD y no cambia el estado del proyecto.
+
+Corrida real sobre el Project IR SCD reimportado:
+
+```text
+source_root_exists=true
+representative_artifacts_total=48; available=48; missing=0
+format_counts: 3d=14, image=28, unknown=6
+active_mak_links_available=9; historical_win_links_available=3
+source_tree_copied=false
+status=needs_evidence
+unknowns_preserved=6: official_call, problem_and_context, method, budget, schedule, team
+fingerprint=baf1de2ca39b1d04507aef94cc282b1a741447889e7e7537120f35ef5c1e1da8
+```
+
+Se registro explicitamente `episode_scd_evidence_closure_20260819` como
+`needs_evidence`, idempotente por ID y fingerprint. El resumen real queda
+`projects.review_required=1`, `episodes.abstained=1`,
+`episodes.needs_evidence=1`, reglas promovidas=0. El expediente no fue
+promovido: la evidencia local prueba existencia, formatos y consumidores,
+pero no una convocatoria vigente, una formulacion, un metodo completo,
+presupuesto, cronograma o equipo.
+
+Validacion foreground:
+
+```text
+unittest evidencia + IR/auditoria/ProjectResearch/router/episodes/API/contracts/intake -> exit 0, 28 tests
+SQLite summary read-only despues de registrar -> exit 0
+git diff --check -> exit 0
+```
+
+## Next concrete action
+
+No existe una accion local segura para completar los seis gaps sin inventar.
+El sistema ya puede recibir una fuente oficial de convocatoria o un documento
+de formulacion y anexarlo como evidencia. Antes de aceptar ese input, hacer
+una ultima verificacion de regresion (suite, Hub smoke, UI, procesos) y dejar
+el objetivo en estado entregable parcial: infraestructura de aprendizaje
+operativa, SCD correctamente abstained/review_required, y siguiente accion
+externa claramente delimitada.
+
+Last verified: 2026-08-19 America/Santiago - Phase 615.
+
+## Phase 616 - regresion final y entrega del objetivo
+
+La infraestructura de aprendizaje operativo queda integrada y verificable:
+Project IR, ledger episodico, contratos, auditoria fisica, router con
+abstention, plan Research plan-only, endpoint/API compartido, tarjeta de Hub,
+referencia SSD real y cierre de evidencia SCD.
+
+Regresion final foreground:
+
+```text
+unittest -> exit 0, 28 tests
+npm --prefix web run typecheck -> exit 0
+npm --prefix web run build:context -> exit 0; bundle 774.01 kB; warning Node 18/Vite 7 existente
+scripts/hub_smoke.py --port 0 --timeout 20 -> exit 0
+learning inspect -> compatible=true; materialization=already_applied; missing=[]
+contracts -> consumer=5, format=39, state=9; total=53
+audits -> verified=52; needs_evidence=1 (blender_optional)
+learning -> projects.review_required=1; episodes.abstained=1; episodes.needs_evidence=1; rules=0
+SCD probe sin record -> abstain/project_state_requires_evidence; recorded=false
+UI markers -> Memoria operativa, Contratos, Auditoria, Probe read-only
+git diff --check -> exit 0; procesos Blender/flujo/vite/render/find -> ninguno
+```
+
+Estado de entrega: el sistema ya no depende de releer un handoff gigante para
+decidir cada paso. Un SSD/proyecto se puede convertir en Project IR, conservar
+unknowns, seleccionar un consumidor declarado, abstenerse si falta evidencia,
+preparar un plan Research sin proveedor, registrar el resultado y mostrarlo
+en el Hub. La autonomia alcanzada es autonomia de politica y trazabilidad,
+no entrenamiento de pesos de un LLM.
+
+Limite deliberado: SCD conserva `review_required`; los seis gaps de Fondart
+requieren convocatoria oficial o formulacion humana. La evidencia local ya
+probo 48/48 activos representativos, 9 consumidores MAK y 3 vinculos WIN
+historicos, pero eso no autoriza inventar presupuesto, cronograma, equipo,
+metodo o contexto. Blender queda como `needs_evidence` por dependencia
+opcional ausente; no se instalo ni se inicio ningun proceso.
+
+No se hizo commit ni push en este objetivo. Los cambios quedan locales para
+revision del operador; la base real solo recibio las tablas/filas explicitas
+del ledger, contratos, auditoria y episodio de cierre, sin borrar evidencia.
+
+## Next concrete action
+
+Objetivo de infraestructura completado. El siguiente trabajo, fuera de esta
+entrega, es aportar una fuente oficial de Fondart o un documento de
+formulacion SCD y volver a ejecutar el cierre; hasta entonces el sistema debe
+mantener `review_required` y abstenerse.
+
+Last verified: 2026-08-19 America/Santiago - Phase 616.

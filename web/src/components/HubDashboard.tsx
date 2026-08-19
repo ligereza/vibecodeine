@@ -3,9 +3,10 @@ import {
   LayoutDashboard, Boxes, ClipboardList, Calculator,
   TerminalSquare, Map, Shapes, Zap, Activity,
   CheckCircle2, Clock, AlertCircle, ArrowRight, Camera, Radio, Layers,
+  Loader2,
 } from 'lucide-react';
 import type { AppView } from './AppShell';
-import { flujoApi, type Ping, type JobsResponse } from '../api/flujoApi';
+import { flujoApi, type Ping, type JobsResponse, type ProjectLearningSummary, type ProjectProbeResponse } from '../api/flujoApi';
 
 interface Props {
   onNavigate: (v: AppView) => void;
@@ -14,16 +15,42 @@ interface Props {
 export default function HubDashboard({ onNavigate }: Props) {
   const [ping, setPing] = useState<Ping | null>(null);
   const [jobs, setJobs] = useState<JobsResponse | null>(null);
+  const [learning, setLearning] = useState<ProjectLearningSummary | null>(null);
+  const [probeOpen, setProbeOpen] = useState(false);
+  const [probeText, setProbeText] = useState('');
+  const [probeResult, setProbeResult] = useState<ProjectProbeResponse | null>(null);
+  const [probeBusy, setProbeBusy] = useState(false);
 
   useEffect(() => {
     let alive = true;
     flujoApi.ping().then(d => alive && setPing(d));
     flujoApi.jobs().then(d => alive && setJobs(d));
+    flujoApi.projectLearning().then(d => alive && setLearning(d));
     return () => { alive = false; };
   }, []);
 
   const openJobs = jobs?.jobs.filter(j => !String(j.estado || '').toLowerCase().includes('entregado')).length ?? 0;
   const recent = useMemo(() => (jobs?.jobs || []).slice(0, 5), [jobs]);
+  const projectCount = Object.values(learning?.projects || {}).reduce((sum, count) => sum + count, 0);
+  const episodeCount = Object.values(learning?.episodes || {}).reduce((sum, count) => sum + count, 0);
+  const promotedRules = learning?.rules?.promoted || 0;
+  const contractCount = Object.values(learning?.contracts?.counts || {}).reduce((sum, count) => sum + count, 0);
+  const auditedCount = Object.values(learning?.audits?.statuses || {}).reduce((sum, count) => sum + count, 0);
+  const auditAttention = learning?.audits?.attention || [];
+  const latestAbstain = learning?.latest_abstain;
+
+  const runProbe = async () => {
+    setProbeBusy(true);
+    setProbeResult(null);
+    try {
+      const parsed = JSON.parse(probeText);
+      setProbeResult(await flujoApi.projectProbe(parsed));
+    } catch (error) {
+      setProbeResult({ ok: false, error: error instanceof Error ? error.message : String(error) });
+    } finally {
+      setProbeBusy(false);
+    }
+  };
 
   // Editables primero (producen trabajo dentro de la app); consulta y
   // generadores de comandos copy/paste al final.
@@ -92,6 +119,95 @@ export default function HubDashboard({ onNavigate }: Props) {
             );
           })}
         </div>
+      </div>
+
+      {/* Learning ledger: bounded visibility, no automatic execution. */}
+      <div className="rounded-2xl border border-cyan-900/40 bg-gradient-to-br from-cyan-950/20 via-zinc-900/60 to-zinc-900/40 p-5 md:p-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <Activity className="h-4 w-4 text-cyan-400" />
+              <h2 className="text-lg font-bold">Memoria operativa</h2>
+              <span className="rounded-full border border-cyan-800/60 bg-cyan-950/40 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-cyan-300">
+                ledger
+              </span>
+            </div>
+            <p className="mt-1 max-w-2xl text-xs leading-relaxed text-zinc-500">
+              Registra proyectos, pruebas y abstenciones. Una abstención es una decisión segura: falta evidencia, no es un error del Hub.
+            </p>
+          </div>
+          <div className="flex shrink-0 flex-wrap justify-end gap-2">
+            <button
+              onClick={() => onNavigate('intake')}
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-900/60 px-3 py-2 text-xs font-bold text-zinc-300 transition-colors hover:bg-zinc-800"
+            >
+              Abrir intake <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={() => setProbeOpen(value => !value)}
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-cyan-800/60 bg-cyan-950/30 px-3 py-2 text-xs font-bold text-cyan-300 transition-colors hover:bg-cyan-900/40"
+            >
+              Probe read-only
+            </button>
+          </div>
+        </div>
+        <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-6">
+          {[
+            { label: 'Proyectos', value: learning?.available ? projectCount : '—', note: learning?.projects?.review_required ? `${learning.projects.review_required} en revisión` : 'ledger local', color: 'text-cyan-300' },
+            { label: 'Episodios', value: learning?.available ? episodeCount : '—', note: learning?.episodes?.needs_evidence ? `${learning.episodes.needs_evidence} requieren evidencia` : 'sin pruebas pendientes', color: 'text-amber-300' },
+            { label: 'Reglas promovidas', value: learning?.available ? promotedRules : '—', note: 'sin autoejecución', color: 'text-violet-300' },
+            { label: 'Contratos', value: learning?.contracts?.available ? contractCount : '—', note: learning?.contracts?.available ? 'formatos + consumidores' : learning?.contracts?.reason || 'pendiente de materializar', color: 'text-emerald-300' },
+            { label: 'Auditoría', value: learning?.audits?.available ? auditedCount : '—', note: learning?.audits?.available ? `${learning.audits.statuses?.verified || 0} verificados · ${learning.audits.statuses?.needs_evidence || 0} evidencia · ${learning.audits.statuses?.unavailable || 0} no disponibles` : learning?.audits?.reason || 'pendiente de auditar', color: 'text-sky-300' },
+            { label: 'Último abstain', value: latestAbstain ? 'registrado' : learning?.available ? 'ninguno' : '—', note: latestAbstain?.phase || learning?.reason || 'criterio de seguridad', color: 'text-rose-300' },
+          ].map(stat => (
+            <div key={stat.label} className="rounded-xl border border-zinc-800/70 bg-black/25 p-3">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">{stat.label}</div>
+              <div className={`mt-1 text-lg font-bold ${stat.color}`}>{stat.value}</div>
+              <div className="mt-1 truncate text-[10px] text-zinc-600" title={stat.note}>{stat.note}</div>
+            </div>
+          ))}
+        </div>
+        {latestAbstain && (
+          <div className="mt-3 rounded-xl border border-rose-950/60 bg-rose-950/10 px-3 py-2 text-[11px] text-zinc-500">
+            <span className="font-bold text-rose-300">{latestAbstain.episode_id}</span>
+            <span className="mx-1.5 text-zinc-700">·</span>
+            {latestAbstain.objective || 'Episodio sin objetivo legible'}
+          </div>
+        )}
+        {auditAttention.length > 0 && (
+          <div className="mt-3 rounded-xl border border-amber-900/50 bg-amber-950/10 px-3 py-2 text-[11px] text-zinc-500">
+            <span className="font-bold text-amber-300">Atención de auditoría:</span>{' '}
+            {auditAttention.map(item => `${item.contract_id || 'contract'}=${item.status || 'unknown'}${item.missing?.length ? ` (${item.missing.join(', ')})` : ''}`).join(' · ')}
+          </div>
+        )}
+        {probeOpen && (
+          <div className="mt-4 rounded-xl border border-cyan-900/50 bg-black/25 p-3">
+            <div className="mb-2 text-[10px] font-bold uppercase tracking-widest text-cyan-400">Evaluar Project IR sin ejecutar herramientas</div>
+            <textarea
+              value={probeText}
+              onChange={event => setProbeText(event.target.value)}
+              rows={5}
+              placeholder="Pega aquí un objeto Project IR en JSON"
+              className="w-full rounded-lg border border-zinc-800 bg-black/40 px-3 py-2 font-mono text-[10px] leading-5 text-zinc-300 outline-none focus:border-cyan-800"
+            />
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <button
+                onClick={runProbe}
+                disabled={probeBusy || !probeText.trim()}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-500 px-3 py-2 text-xs font-bold text-black hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {probeBusy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                Evaluar
+              </button>
+              <span className="text-[10px] text-zinc-600">No registra episodios y no inicia Blender, Research ni mutadores.</span>
+            </div>
+            {probeResult && (
+              <pre className="mt-3 max-h-60 overflow-auto rounded-lg bg-black/40 p-3 text-[10px] leading-5 text-zinc-400">
+                {JSON.stringify(probeResult, null, 2)}
+              </pre>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Quick actions grid */}

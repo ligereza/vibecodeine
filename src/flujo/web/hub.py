@@ -62,10 +62,20 @@ from ..eventos.presets import infer_event_preset, list_event_presets
 from ..serve.server import api_plano_render as render_plano_api
 from ..cotizaciones_base import generar_cotizacion_base
 from ..rd.informe import resumen_json as rd_datos_resumen_json
+from ..knowledge.project_api import learning_summary as project_learning_summary
+from ..knowledge.project_api import route_payload as project_route_payload
+from ..knowledge.project_api import probe_payload as project_probe_payload
 
 # Global request-body cap (VCD-06). 8 MB: large enough for a photo sent to the
 # tracer, small enough that an unbounded body cannot exhaust memory.
 MAX_BODY_BYTES = 8 * 1024 * 1024
+
+
+def project_learning_db() -> Path:
+    configured = os.environ.get("MAK_LEARNING_DB", "").strip()
+    return Path(configured).expanduser() if configured else repo_root() / "data" / "mak_knowledge.db"
+
+
 try:
     from ..export.illustrator import prepare_supplement_job_assets
 except Exception:
@@ -428,6 +438,9 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 self._send_json({"available": False, "error": str(e)}, status=400)
             return
+        if path == "/api/project/learning":
+            self._send_json(project_learning_summary(project_learning_db()))
+            return
         if path == "/api/dashboard-summary":
             try:
                 self._send_json(self._get_dashboard_summary())
@@ -720,6 +733,30 @@ class HubRequestHandler(BaseHTTPRequestHandler):
         p = parsed.path
         if int(self.headers.get("Content-Length", 0) or 0) > MAX_BODY_BYTES:
             self._send_json({"error": "cuerpo demasiado grande"}, status=413)
+            return
+
+        if p == "/api/project/route":
+            content_length = int(self.headers.get("Content-Length", 0) or 0)
+            try:
+                data = json.loads(self.rfile.read(content_length).decode("utf-8") or "{}")
+                result, status = project_route_payload(data, project_learning_db())
+                self._send_json(result, status=status)
+            except (TypeError, ValueError, json.JSONDecodeError) as exc:
+                self._send_json({"ok": False, "error": str(exc)[:200]}, status=400)
+            return
+
+        if p == "/api/project/probe":
+            content_length = int(self.headers.get("Content-Length", 0) or 0)
+            try:
+                data = json.loads(self.rfile.read(content_length).decode("utf-8") or "{}")
+                result, status = project_probe_payload(
+                    data, project_learning_db(), repo_root=repo_root(),
+                    record=bool(data.get("record")) if isinstance(data, dict) else False,
+                    episode_id=data.get("episode_id") if isinstance(data, dict) else None,
+                )
+                self._send_json(result, status=status)
+            except (TypeError, ValueError, json.JSONDecodeError) as exc:
+                self._send_json({"ok": False, "error": str(exc)[:200]}, status=400)
             return
 
         if p == "/api/comando":

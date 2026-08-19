@@ -45,6 +45,18 @@ def _http_get(host: str, port: int, path: str, timeout: float = 3.0) -> tuple[in
         conn.close()
 
 
+def _http_post_json(host: str, port: int, path: str, payload: dict, timeout: float = 3.0) -> tuple[int, str]:
+    conn = http.client.HTTPConnection(host, port, timeout=timeout)
+    try:
+        raw = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        conn.request("POST", path, body=raw, headers={"Content-Type": "application/json"})
+        resp = conn.getresponse()
+        data = resp.read(200_000)
+        return int(resp.status), data.decode("utf-8", errors="replace")
+    finally:
+        conn.close()
+
+
 def _wait_for_ping(host: str, port: int, timeout: float) -> dict:
     deadline = time.time() + timeout
     last_error = ""
@@ -123,6 +135,34 @@ def run_smoke(port: int = 0, timeout: float = 30.0, sse: bool = True) -> None:
             _assert_status(host, port, "/%2e%2e/pyproject.toml", {400, 403, 404})
             _assert_status(host, port, "/pyproject.toml", {400, 403, 404})
             _assert_status(host, port, "/src/flujo/cli.py", {400, 403, 404})
+
+            learning_status, learning_body = _http_get(host, port, "/api/project/learning")
+            if learning_status != 200:
+                raise AssertionError(f"/api/project/learning: HTTP {learning_status}: {learning_body[:200]}")
+            project = {
+                "schema": "mak-project-ir-v1",
+                "project_id": "hub-smoke-project",
+                "title": "Hub smoke project",
+                "state": "candidate",
+                "source": {"kind": "fixture", "root_ref": "fixture://hub-smoke", "root_exists": False},
+                "purpose": "read-only route smoke",
+                "domains": ["rd"],
+                "artifacts": [{"artifact_id": "artifact-smoke", "relative_path": "scene.blend", "name": "scene.blend", "suffix": ".blend", "format_family": "3d", "media_type": "application/octet-stream", "size_bytes": 0, "mtime_ns": 0, "sha256": "", "hash_status": "not_computed", "availability": "present", "role": "source"}],
+                "relations": [], "evidence": [], "unknowns": [], "next_action": "select_consumer",
+                "provenance": {"producer": "hub_smoke", "method": "fixture", "created_at": "2026-01-01T00:00:00+00:00"},
+            }
+            route_status, route_body = _http_post_json(host, port, "/api/project/route", {"project": project})
+            if route_status != 200:
+                raise AssertionError(f"/api/project/route: HTTP {route_status}: {route_body[:200]}")
+            route_payload = json.loads(route_body)
+            if route_payload.get("decision", {}).get("selected", {}).get("tool_id") != "blend_scene_audit":
+                raise AssertionError(f"/api/project/route: unexpected decision {route_body[:300]}")
+            probe_status, probe_body = _http_post_json(host, port, "/api/project/probe", {"project": project})
+            if probe_status != 200:
+                raise AssertionError(f"/api/project/probe: HTTP {probe_status}: {probe_body[:200]}")
+            probe_payload = json.loads(probe_body)
+            if probe_payload.get("recorded") or probe_payload.get("probe", {}).get("status") not in {"needs_evidence", "succeeded"}:
+                raise AssertionError(f"/api/project/probe: unexpected probe {probe_body[:300]}")
 
             if (ROOT / "projects" / "flujo" / "flujo.json").exists():
                 _assert_status(host, port, "/projects/flujo/flujo.json", {200})
