@@ -217,7 +217,7 @@ def verificar_informe(texto: str, sources, consultas=None, tema="") -> dict:
         "source_urls": sum(1 for u in unique_urls if u in t) >= min(2, len(unique_urls)) if unique_urls else False,
         "three_states": all(re.search(pattern, t, re.I) for pattern in
                              (r"\b(dicen|evidencia textual)\b",
-                              r"\binferencias?\b",
+                              r"\b(inferencias?|inferimos)\b",
                               r"\bno se encontr[oó]\b")),
         "queries_recorded": bool(consultas) and bool(
             re.search(r"(consultas realizadas|se busco|se buscó)", t, re.I)),
