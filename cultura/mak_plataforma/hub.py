@@ -311,6 +311,11 @@ _DEPARTMENT_STATIC_FILES = {
     "/static/iskvw/editor": Path(_REPO_ROOT) / "iskvw" / "editor.html",
 }
 
+_DEPARTMENT_ALIASES = {
+    "portfolio": "iskvw",
+    "research": "cultura",
+}
+
 
 def _serve_department_static(path: str):
     asset = _DEPARTMENT_STATIC_FILES.get(path)
@@ -595,7 +600,7 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
   </div>
  </div>
  <div class="der">
-  <span class="lk"><a href="/doctrina">📜 doctrina</a><a href="/reflexiones">💭 reflexiones</a><a href="/cuotas">📊 cuotas</a><a href="/relevo">🪑 relevo</a><a href="/genesis">✴️ génesis</a></span>
+ <span class="lk"><a href="/doctrina">📜 doctrina</a><a href="/reflexiones">💭 reflexiones</a><a href="/cuotas">📊 cuotas</a><a href="/relevo">🪑 relevo</a><a href="/genesis">✴️ génesis / archivo</a></span>
   <span id="guardia">guardia · <b>0</b> bloqueados · <i>0</i> pasaron</span>
  </div>
 </div>
@@ -4305,14 +4310,54 @@ def _md_carpeta_page(carpeta, ruta, etiqueta, sel):
 
 
 def _relevo_page():
+    source = RELEVO
+    source_label = "RELEVO_MAK.md"
+    if not os.path.isfile(source):
+        source = os.path.join(_REPO_ROOT, "context", "LAST_HANDOFF.md")
+        source_label = "context/LAST_HANDOFF.md"
     try:
-        with open(RELEVO, encoding="utf-8") as f:
+        with open(source, encoding="utf-8") as f:
             cuerpo = _md_html(f.read())
     except OSError:
-        cuerpo = "<p>(RELEVO_MAK.md no encontrado en ~)</p>"
+        cuerpo = "<p>(no se encontró un documento de continuidad operativo)</p>"
+    else:
+        cuerpo = ("<p style='color:#9db67c'>fuente operativa: <code>" +
+                  html.escape(source_label) + "</code></p>" + cuerpo)
     top = ('<a href="/">&#8592; la cara</a> &middot; relevo del rol &middot; '
            '<a href="/doctrina">doctrina</a> &middot; <a href="/reflexiones">reflexiones</a>')
     return _articulo("relevo", top, cuerpo)
+
+
+def _genesis_page():
+    """Orient the user before exposing the historical genesis document."""
+    try:
+        with open(GENESIS, encoding="utf-8") as f:
+            texto = _md_html(f.read())
+    except OSError:
+        texto = "<p>(GENESIS.md no encontrado)</p>"
+    cuerpo = """
+<h1>génesis / archivo histórico</h1>
+<p>Esta página ubica el origen de MAK. No es una herramienta operativa ni
+un mapa de runtime: el trabajo actual comienza en la cara del Hub y en sus
+áreas activas.</p>
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin:18px 0">
+ <a href="/" style="color:#d4a259">abrir Hub</a>
+ <a href="/research-garden/" style="color:#d4a259">investigaciones</a>
+ <a href="/departments/rd" style="color:#d4a259">RD</a>
+ <a href="/departments/cultura" style="color:#d4a259">Cultura</a>
+ <a href="/departments/iskvw" style="color:#d4a259">Portafolio</a>
+</div>
+<p style="color:#9db67c">El documento original queda conservado abajo como
+evidencia histórica. No debe usarse como contrato operativo si contradice
+<code>agents.md</code> o <code>LAST_HANDOFF.md</code>.</p>
+<details><summary>ver GENESIS.md histórico</summary>
+<article style="margin-top:16px">%s</article>
+</details>
+""" % texto
+    top = ('<a href="/">&#8592; la cara</a> &middot; génesis / archivo &middot; '
+           '<a href="/doctrina">doctrina</a> &middot; '
+           '<a href="/relevo">relevo operativo</a>')
+    return _articulo("génesis / archivo", top, cuerpo)
 
 
 def _service_proxy_target(prefix, path, query=""):
@@ -4500,6 +4545,12 @@ class H(BaseHTTPRequestHandler):
             return self._json({"ok": True, **cultura_opportunity_gate(_REPO_ROOT)})
         if p.startswith("/departments/"):
             area = p[len("/departments/"):].strip("/")
+            canonical = _DEPARTMENT_ALIASES.get(area)
+            if canonical:
+                self.send_response(301)
+                self.send_header("Location", "/departments/" + canonical)
+                self.end_headers()
+                return
             return self._send(_department_page(area), "text/html; charset=utf-8")
         if p in _DEPARTMENT_STATIC_FILES:
             data = _serve_department_static(p)
@@ -4507,6 +4558,32 @@ class H(BaseHTTPRequestHandler):
                 return self._send("(recurso de area no encontrado)",
                                   "text/plain; charset=utf-8", 404)
             return self._send_bytes(data, "text/html; charset=utf-8")
+        if p.startswith("/static/iskvw/"):
+            relative = urllib.parse.unquote(p[len("/static/iskvw/"):])
+            asset = _portfolio_file(relative)
+            if asset is None:
+                return self._send("(recurso ISKVW no encontrado)",
+                                  "text/plain; charset=utf-8", 404)
+            try:
+                data = Path(asset).read_bytes()
+            except OSError:
+                return self._send("(no se pudo leer el recurso ISKVW)",
+                                  "text/plain; charset=utf-8", 404)
+            ctype = mimetypes.guess_type(asset)[0] or "application/octet-stream"
+            if ctype == "text/html":
+                ctype += "; charset=utf-8"
+            return self._send_bytes(data, ctype=ctype)
+        if p == "/context/plano_demo.html":
+            asset = Path(_REPO_ROOT) / "context" / "plano_demo.html"
+            try:
+                return self._send_bytes(asset.read_bytes(),
+                                        "text/html; charset=utf-8")
+            except OSError:
+                return self._send("(demo de plano no encontrado)",
+                                  "text/plain; charset=utf-8", 404)
+        if p.startswith("/static/") or p.startswith("/context/"):
+            return self._send("(recurso estático no encontrado)",
+                              "text/plain; charset=utf-8", 404)
         if p == "/api/diagnostics/domains":
             if domain_catalog is None:
                 return self._json({"ok": False, "error": "diagnostics_unavailable",
@@ -4796,16 +4873,7 @@ class H(BaseHTTPRequestHandler):
         if p == "/relevo":
             return self._send(_relevo_page())
         if p == "/genesis":
-            try:
-                with open(GENESIS, encoding="utf-8") as f:
-                    texto = f.read()
-            except OSError:
-                texto = "(GENESIS.md no encontrado)"
-            cuerpo = ("<body style='background:#0b0a09;color:#c9c5b9;font-family:"
-                      "ui-monospace,monospace;padding:40px'><pre style='white-space:"
-                      "pre-wrap;max-width:860px;line-height:1.55'>"
-                      + html.escape(texto) + "</pre></body>")
-            return self._send("<!doctype html><meta charset='utf-8'>" + cuerpo)
+            return self._send(_genesis_page())
         if p == "/favicon.ico":
             self.send_response(204)
             self.end_headers()

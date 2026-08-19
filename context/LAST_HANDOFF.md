@@ -15044,3 +15044,187 @@ comparativa 2024/2026. No instalar pytest ni cambiar Cerebras sin autoridad
 externa; no usar los informes `review_required` como resultados.
 
 Last verified: 2026-08-19 America/Santiago - Phase 591.
+
+## Phase 592 - limpieza física segura de residuos
+
+Se limpió el área activa sin usar `git clean` ni borrar evidencia.
+
+### Retirado o archivado
+
+- Se eliminaron 11.263 archivos regenerables `.pyc`, `.pyo` y `.DS_Store`
+  (aprox. 187 MB), además de `.pytest_cache`.
+- Se movieron 746 reportes de contexto no rastreados a
+  `/home/mak/WIN/flujo/context-history/untracked-context-20260819`.
+- Se movió `context/quarantine/` al mismo archivo histórico.
+- Se movieron `data/rd.db.pre-openklub-correction-20260815` y
+  `data/rd.db.premerge-20260815` al archivo histórico.
+- Se movieron los probes Windows `tools/probe_flujo_windows.ps1` y
+  `tools/probe_flujo_windows_metadata.ps1`, y el experimento rechazado
+  `tools/bake_static_diffuse_hybrid.py`, porque no son superficie activa Linux.
+- El archivo histórico contiene un README que declara su estatus y la
+  operación fue un movimiento recuperable, no una eliminación.
+
+### Conservado como superficie activa
+
+Se conservaron fixtures, el dossier FONDART, el test de intake y las
+herramientas de auditoría Blender, bake seguro, intake, crosswalk, knowledge
+DB, esfuerzo, optimización, perfilado y reconciliación. Permanecen como
+cambios locales no comprometidos para una futura integración por consumidor.
+
+### Validación
+
+```text
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=... python3 -B -c \
+  "import research; import formato_ensayo; import flujo.web.hub" -> exit 0
+git diff --check -> exit 0
+cache files after validation -> 0
+```
+
+No se iniciaron servicios, no se tocaron fuentes activas, no se borraron
+bases ni se alteró el commit publicado `c2c6ebf`.
+
+## Next concrete action
+
+Integrar por consumidor los scripts que quedaron activos: comenzar por
+`tools/build_application_intake.py` y su fixture, luego revisar los helpers
+de Blender y esfuerzo. Cada grupo requiere import/fixture/entrada real antes
+de ser agregado al repositorio; no volver a mezclar reportes históricos ni
+probes Windows con la superficie Linux.
+
+Last verified: 2026-08-19 America/Santiago - Phase 592.
+
+## Phase 593 - validation del intake conservado
+
+Se validó el primer grupo que quedó en la superficie activa después de la
+limpieza: `tools/build_application_intake.py` y
+`tests/test_build_application_intake.py`.
+
+```text
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/mak/flujo:/home/mak/flujo/src \
+python3 -B <fixture temporal equivalente al test>
+-> exit 0; application intake fixture: ok
+
+python3 -B tools/build_application_intake.py --help
+-> exit 0
+
+git diff --check -> exit 0
+cache files -> 0
+```
+
+El fixture creó dos artefactos temporales, produjo `obra-fondart`, dejó el
+paquete en `draft_with_evidence_gaps` y generó HTML/JSON sin tocar MAK ni una
+fuente real. El script tiene consumidor real para el workflow SSD/proyecto ->
+postulación y queda como candidato válido de integración; el test sigue sin
+ser ejecutado por pytest porque pytest no está instalado.
+
+## Next concrete action
+
+Validar el grupo de auditoría Blender en modo estático: importar por AST los
+scripts sin `bpy`, revisar que los scripts Blender declaren entrada y salida
+no destructivas, y ejecutar solo `--help` donde el runtime lo permita. No
+abrir Blender ni renderizar durante esta limpieza.
+
+Last verified: 2026-08-19 America/Santiago - Phase 593.
+
+## Phase 594 - auditoria estatica de utilidades Blender
+
+Se revisaron sin abrir escenas ni renderizar:
+
+- `tools/audit_blend_scene.py`
+- `tools/bake_static_materials.py`
+- `tools/optimize_blend_scene.py`
+- `tools/profile_blender_animation.py`
+
+```text
+ast.parse de los cuatro scripts -> exit 0
+imports bpy detectados -> 4/4
+argparse detectado -> 3/4; el auditor es un script directo de lectura
+comando blender -> no instalado en PATH
+```
+
+El auditor y el profiler no contienen operaciones de guardado. Los scripts de
+bake/optimizacion eliminan nodos/datablocks solo en la copia en memoria y
+guardan un `--output` separado; el `.blend` fuente no se sobrescribe. La
+validacion Blender queda pendiente por ausencia comprobada del ejecutable, no
+se instala nada ni se ejecuta un render como parte de la limpieza.
+
+## Next concrete action
+
+Auditar los helpers de conocimiento/esfuerzo (`build_mak_knowledge_db.py`,
+`compute_effort_residuals.py`, `build_effort_consumer_crosswalk.py` y
+`reconcile_garden_knowledge.py`) con fixtures o bases de prueba temporales,
+confirmando que leen/escriben solo sus salidas declaradas. Luego decidir si
+se promueven al repositorio o se archivan como herramientas experimentales.
+
+Last verified: 2026-08-19 America/Santiago - Phase 594.
+
+## Phase 595 - validacion de helpers de conocimiento y esfuerzo
+
+Se ejecutaron en primer plano sobre una base SQLite temporal:
+
+- `tools/build_mak_knowledge_db.py`
+- `tools/compute_effort_residuals.py`
+- `tools/build_effort_consumer_crosswalk.py`
+
+Cada comando devolvió exit 0. El índice procesó 2 archivos de fixture, creó 1
+entidad de herramienta, 1 import y 1 item de clasificación; esfuerzo produjo
+reportes vacíos válidos con `integrity=ok`; el crosswalk declaró
+`database_mutated=0`.
+
+También se ejecutó `tools/reconcile_garden_knowledge.py` contra las bases
+reales, con reporte en `/tmp`: exit 0, `hash_match=1`, ambas integridades `ok`,
+40 URLs, 22 claims y 12 herramientas Jardines. El reporte temporal no es una
+entrega y no modificó ninguna base.
+
+Conclusión: los cuatro helpers permanecen como herramientas activas válidas,
+no basura. Su promoción al repositorio queda separada de la limpieza porque
+requiere revisar consumidores y contratos de entrega.
+
+## Next concrete action
+
+Revisar la superficie restante de cambios locales: `hub.py`, `interfaz.py`,
+`plano_editor.html` y `hub_smoke.py`. Comparar sus consumidores físicos y
+decidir si forman una única integración MAK o si son cambios independientes;
+no revertirlos ni agregarlos automáticamente al commit de Research.
+
+Last verified: 2026-08-19 America/Santiago - Phase 595.
+
+## Phase 596 - disposition de cambios locales de Hub
+
+Los cuatro cambios locales restantes no son basura:
+
+- `cultura/mak_plataforma/hub.py`: aliases de departamentos, fallback del
+  handoff operativo, Genesis como archivo histórico y recursos estáticos con
+  límites explícitos.
+- `cultura/mak_research/interfaz.py`: endpoint local `/api/intake` con raíces
+  permitidas y rechazo de entradas ambiguas o repetidas.
+- `projects/plano/plano_editor.html`: enlace servido por el Hub para el demo,
+  no una ruta relativa frágil.
+- `scripts/hub_smoke.py`: agrega `src` al `PYTHONPATH` del proceso temporal.
+
+Validación foreground:
+
+```text
+AST e imports Hub/Research -> exit 0
+python3 -B scripts/hub_smoke.py --port 0 --timeout 15
+-> exit 0; OK hub smoke; /api/ping, traversal y SSE pasaron
+proceso temporal -> terminado por el script
+git diff --check -> exit 0
+cache files -> 0
+```
+
+El log del smoke queda en `_logs/` como evidencia regenerable; no se convirtió
+en código ni en una nueva fuente de contexto. Los cuatro cambios forman un
+slice coherente de interfaz MAK/intake y se mantienen separados del commit de
+Research hasta una revisión de integración y commit explícitos.
+
+## Next concrete action
+
+Hacer el gate final de superficie activa: comprobar que los 17 elementos
+restantes del estado local son exactamente esos cambios Hub/Research/Plano,
+fixtures, dossier y herramientas válidas; confirmar que no quedan caches,
+probes Windows ni snapshots en MAK. Después entregar una lista de promoción
+para el siguiente commit, sin agregar automáticamente archivos útiles no
+revisados.
+
+Last verified: 2026-08-19 America/Santiago - Phase 596.

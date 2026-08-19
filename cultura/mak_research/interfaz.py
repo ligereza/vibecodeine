@@ -32,6 +32,7 @@ import urllib.parse
 import urllib.request
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 
 try:
     import fcntl
@@ -174,12 +175,77 @@ DIR_CHIP = {"informes": "informe", "paneles": "panel", "cadenas": "cadena",
 JOBS_FILE = os.path.expanduser("~/research/jobs.jsonl")
 ENV_FILE = os.environ.get("RESEARCH_ENV", os.path.expanduser("~/research/research.env"))
 WORKFLOW_FILE = os.path.expanduser("~/research/workflow.json")
+INTAKE_ROOT = Path(os.path.expanduser("~/research/intake"))
+FLUJO_ROOT = Path(os.environ.get("MAK_FLUJO_ROOT", "/home/mak/flujo"))
+if not FLUJO_ROOT.is_dir():
+    FLUJO_ROOT = Path(__file__).resolve().parents[2]
 
 JOBS = []
 JOBS_LOCK = threading.Lock()
 JOBS_FILE_LOCK = threading.RLock()
 CONFIG_FILE_LOCK = threading.RLock()
 WORKFLOW_LOCK = threading.Lock()
+
+
+def _path_is_under(path, roots):
+    """Allow only local evidence roots; the endpoint never accepts arbitrary paths."""
+    try:
+        candidate = Path(path).resolve()
+    except OSError:
+        return False
+    return any(candidate == root or root in candidate.parents for root in roots)
+
+
+def _run_intake_request(body):
+    """Run the derived SSD/project intake without network or source mutation."""
+    if not isinstance(body, dict):
+        return {"ok": False, "error": "se esperaba un objeto JSON"}, 400
+    source_index_raw = str(body.get("source_index") or "").strip()
+    source_root_raw = str(body.get("source_root") or "").strip()
+    if bool(source_index_raw) == bool(source_root_raw):
+        return {"ok": False, "error": "indica source_index o source_root, no ambos"}, 400
+    if str(Path(source_root_raw).name).casefold() in {"portablessd", "win"}:
+        return {"ok": False, "error": "usa el indice SSD existente o una carpeta de proyecto acotada"}, 400
+    allowed_sources = [Path("/home/mak"), Path("/media/mak")]
+    if source_index_raw:
+        source = Path(source_index_raw)
+        if not _path_is_under(source, allowed_sources) or not source.is_file():
+            return {"ok": False, "error": "source_index fuera de las raices permitidas o inexistente"}, 400
+        source_kind = "portable_ssd_index"
+        project_path = str(body.get("project_path") or "").strip() or None
+        output_name = "api-" + re.sub(r"[^a-z0-9]+", "-", (project_path or source.stem).casefold()).strip("-")[:60]
+        output_dir = INTAKE_ROOT / (output_name or "api-intake")
+        source_index = source.resolve()
+    else:
+        source = Path(source_root_raw)
+        if not _path_is_under(source, [Path("/home/mak")]) or not source.is_dir():
+            return {"ok": False, "error": "source_root debe ser una carpeta local bajo /home/mak"}, 400
+        source_kind = "project_folder"
+        project_path = str(body.get("project_path") or source.name).strip()
+        output_name = "api-" + re.sub(r"[^a-z0-9]+", "-", project_path.casefold()).strip("-")[:60]
+        output_dir = INTAKE_ROOT / (output_name or "api-intake")
+        output_dir.mkdir(parents=True, exist_ok=True)
+        source_index = output_dir / "source_index.sqlite"
+
+    if (output_dir / "intake.sqlite").exists():
+        return {"ok": False, "error": "ya existe un intake con ese nombre; usa la CLI para una nueva corrida",
+                "output_dir": str(output_dir)}, 409
+    if str(FLUJO_ROOT) not in sys.path:
+        sys.path.insert(0, str(FLUJO_ROOT))
+    try:
+        from tools import build_application_intake as intake
+        if source_kind == "project_folder":
+            source_index, _root, _summary = intake.scan_project_folder(source, source_index)
+        funds = body.get("funds") or ["Fondart"]
+        if not isinstance(funds, list):
+            return {"ok": False, "error": "funds debe ser una lista"}, 400
+        funds = [str(value)[:120] for value in funds if str(value).strip()][:4] or ["Fondart"]
+        limit = max(1, min(int(body.get("candidate_limit") or 10), 20))
+        result = intake.build_intake(source_index.resolve(), output_dir, project_path,
+                                     funds, limit, source_kind=source_kind)
+        return {"ok": True, "status": "draft_with_evidence_gaps", "result": result}, 200
+    except (OSError, ValueError, TypeError) as exc:
+        return {"ok": False, "error": str(exc)[:400]}, 500
 
 
 @contextmanager
@@ -3527,6 +3593,15 @@ class H(BaseHTTPRequestHandler):
     def do_POST(self):
       # Same-origin bridges: the micelio is the common work surface. The
       # browser never has to leave it or depend on cross-port CORS.
+      if self.path == "/api/intake":
+        largo = min(int(self.headers.get("Content-Length") or 0), 8000)
+        try:
+          body = json.loads(self.rfile.read(largo).decode("utf-8", "replace"))
+        except (json.JSONDecodeError, TypeError):
+          return self._json_response({"ok": False, "error": "json invalido"}, 400)
+        payload, code = _run_intake_request(body)
+        return self._json_response(payload, code)
+
       if self.path == "/api/codex/experimentar":
         largo = min(int(self.headers.get("Content-Length") or 0), 12000)
         raw = self.rfile.read(largo)
