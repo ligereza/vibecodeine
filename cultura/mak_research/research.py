@@ -2,7 +2,8 @@
 """research.py -- runner standalone de investigacion cultural (MAK, sin n8n).
 
 Puerto fiel del loop probado end-to-end 2026-07-15 (Code node n8n +
-harness): SEARCH (Tavily) -> FETCH -> ANALYZE (LLM fallback) -> DECIDE
+harness): SEARCH (SearXNG/Tavily) -> CAPTURE (Firecrawl/Crawl4AI/urllib)
+-> ANALYZE (LLM fallback) -> DECIDE
 -> INFORME. Salida: ~/research/informes/STAMP-slug.{md,json}.
 
 Pausa-en-error (ver pausa.py): si el LLM se queda sin proveedores (o
@@ -39,7 +40,13 @@ from research_lib import (LLM, escala_tok, fetch_url, load_env, marco,
                           marcadores_de_plantilla, marco_solo, ntfy_publish,
                           slug, stamp, tavily_search, web_search)
 
+try:
+    from source_pipeline import capture_url
+except ImportError:          # el runner sigue operativo sin capturador opcional
+    capture_url = None
+
 OUT_DIR = os.path.expanduser("~/research/informes")
+MAX_ANALYSIS_CHARS = 8000
 
 
 def _pausar(topic, iteraciones, depth, providers, densidad, sin_marco,
@@ -109,6 +116,8 @@ def hallazgos_de(findings, topic=None, dominio=None):
             "consulta": f.get("query"),
             "titulo": f.get("title") or "",
             "fuente": url,
+            "proveedor": f.get("analysis_provider"),
+            "buscador": f.get("search_backend") or f.get("motor"),
             "primaria": primaria,
             "contenido": (contenido or "")[:1200],
         })
@@ -116,10 +125,19 @@ def hallazgos_de(findings, topic=None, dominio=None):
 
 
 def _armar_resultado(topic, report, t0, findings, query_history, sources, llm,
-                     evaluacion=None):
+                     evaluacion=None, captura=None):
     _primer_parrafo = next((ln.strip() for ln in report.splitlines()
                            if ln.strip() and not ln.strip().startswith("#")), "")
     print("HALLAZGO: " + _primer_parrafo[:140], flush=True)
+    analysis_providers = {}
+    search_backends = {}
+    for finding in findings or []:
+        provider = finding.get("analysis_provider")
+        backend = finding.get("search_backend") or finding.get("motor")
+        if provider:
+            analysis_providers[provider] = analysis_providers.get(provider, 0) + 1
+        if backend:
+            search_backends[backend] = search_backends.get(backend, 0) + 1
     dom = (evaluacion or {}).get("dominio")
     return {
         "topic": topic,
@@ -147,6 +165,9 @@ def _armar_resultado(topic, report, t0, findings, query_history, sources, llm,
             "llmCalls": llm.stats,
             "providerOrder": llm.order,
             "errors": llm.errors[:20],
+            "captureBackends": captura or {},
+            "analysisProviders": analysis_providers,
+            "searchBackends": search_backends,
             "ms": int((time.time() - t0) * 1000),
         },
         "findings": findings,
@@ -169,8 +190,13 @@ def investigar(topic, iteraciones=3, depth="basic",
     guardia = marco_solo(topic, activo=not sin_marco)
 
     saltar_informe = False
+    captura = {}
     if reanudar:
         findings = list(reanudar.get("findings") or [])
+        for finding in findings:
+            backend = finding.get("capture_backend")
+            if backend:
+                captura[backend] = captura.get(backend, 0) + 1
         query_history = list(reanudar.get("query_history") or [])
         seen_urls = set(reanudar.get("seen_urls") or [])
         current = reanudar.get("current", topic)
@@ -237,12 +263,33 @@ def investigar(topic, iteraciones=3, depth="basic",
         for idx, r in enumerate(fresh):
             print(f"STATUS: Analizando fuente {idx + 1}/{len(fresh)} (iteracion {i + 1})", flush=True)
             seen_urls.add(r["url"])
-            raw = fetch_url(r["url"])
-            content = raw if len(raw) > 200 else (r.get("content") or raw)
+            capture = None
+            raw = ""
+            if capture_url is not None:
+                capture = capture_url(r["url"], backend="auto")
+                raw = capture.get("text") or ""
+            if len(raw) <= 200:
+                # A failed/empty premium capture is not a reason to lose a
+                # source. Keep the fallback explicit in metadata instead of
+                # pretending urllib was Firecrawl.
+                raw = fetch_url(r["url"])
+                if capture is None:
+                    capture = {"backend": "urllib", "status": "captured" if raw else "failed"}
+                else:
+                    capture["fallback_backend"] = "urllib"
+                    capture["fallback_status"] = "captured" if raw else "failed"
+            if capture:
+                backend = capture.get("backend") or "none"
+                captura[backend] = captura.get(backend, 0) + 1
+            source_text = raw if len(raw) > 200 else (r.get("content") or raw)
+            # Firecrawl preserves the whole page for provenance, but the LLM
+            # prompt must stay bounded. The old urllib path capped this at
+            # 4000 chars; without an explicit cap Groq returned HTTP 413.
+            content = source_text[:MAX_ANALYSIS_CHARS]
             if not content:
                 continue
             try:
-                analysis, _ = llm.call(
+                analysis, analysis_provider = llm.call(
                     guardia + "Eres un asistente de investigacion. Analizas "
                     "contenido web y devuelves SOLO JSON valido, sin markdown "
                     "ni texto extra.",
@@ -261,7 +308,16 @@ def investigar(topic, iteraciones=3, depth="basic",
                 parsed = {"raw_analysis": analysis[:1500]}
             findings.append({"type": "web_analysis", "iteration": i + 1,
                              "query": current, "title": r.get("title"),
-                             "url": r["url"], "analysis": parsed})
+                             "url": r["url"], "analysis": parsed,
+                             "analysis_provider": analysis_provider,
+                             "search_backend": search.get("motor"),
+                             "search_query": search.get("queryUsed", current),
+                             "capture_backend": (capture or {}).get("backend", "search_snippet"),
+                             "capture_status": (capture or {}).get("status", "snippet"),
+                             "capture_attempts": (capture or {}).get("attempts", []),
+                             "capture_chars": len(source_text),
+                             "analysis_chars": len(content),
+                             "analysis_truncated": len(source_text) > len(content)})
             print(f"HALLAZGO: {r.get('title') or r['url']}", flush=True)
 
         if i == iteraciones - 1:
@@ -307,7 +363,7 @@ def investigar(topic, iteraciones=3, depth="basic",
                   "generacion de informe fue saltada tras una pausa; ver "
                   "findings crudos para el detalle recolectado.")
         return _armar_resultado(topic, report, t0, findings, query_history,
-                                sources, llm, ev)
+                                sources, llm, ev, captura)
 
     es_ensayo = formato == "ensayo"
     es_revision = formato == "revision"
@@ -454,8 +510,12 @@ def investigar(topic, iteraciones=3, depth="basic",
         report = fuentes.encabezado(sources, dom) + "\n" + report
 
     resultado = _armar_resultado(topic, report, t0, findings, query_history,
-                                 sources, llm, ev)
+                                 sources, llm, ev, captura)
     resultado["formato"] = formato
+    if formato == "informe":
+        resultado["quality"] = formato_ensayo.verificar_informe(
+            report, sources, query_history, topic)
+        resultado["meta"]["formatQuality"] = resultado["quality"]
 
     # Lo que el informe deja ABIERTO, como DATO y no dentro de la prosa. Es lo
     # que alimenta el loop del organismo (`backlog.cosechar` -> tema nuevo), y

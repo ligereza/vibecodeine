@@ -116,6 +116,26 @@ def test_never_reviewed_is_not_the_same_as_survived_review():
     assert "hallazgos" in r and "verificacion" in r
 
 
+def test_default_report_without_evidence_links_is_review_required():
+    report = ("# Hallazgo verificable\n\nRespuesta: una respuesta.\n"
+              "Las fuentes dicen X. Inferimos Y. No se encontro Z.\n"
+              "Consultas realizadas: q")
+    quality = research.formato_ensayo.verificar_informe(
+        report, ["https://a.example", "https://b.example", "https://c.example"], ["q"])
+    assert quality["status"] == "review_required"
+    assert "source_urls" in quality["missing"]
+
+
+def test_default_report_with_provenance_markers_can_be_ready():
+    sources = ["https://a.example", "https://b.example", "https://c.example"]
+    report = ("# Tres fuentes convergen\n\nRespuesta: una respuesta.\n"
+              "Las fuentes dicen X (https://a.example). Inferimos Y "
+              "(https://b.example). No se encontro Z (https://c.example).\n"
+              "Consultas realizadas: q")
+    quality = research.formato_ensayo.verificar_informe(report, sources, ["q"])
+    assert quality["status"] == "ready"
+
+
 # ------------------------------------------------------------------ pieza
 
 # `codex_lib` importa `resource`, que es solo-Unix: en Windows se saltan SOLO

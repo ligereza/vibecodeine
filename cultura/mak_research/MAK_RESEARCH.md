@@ -15,27 +15,40 @@ tema X --> [Hub /research/]  [ntfy iPhone]  [CLI ssh]
                     \                 |            /
                      worker.py (lock: 1 job a la vez)
                     /                              \
-        research.py (loop iterativo)      panel.py (debate 4 modelos)
+        research.py (loop iterativo)      panel.py (debate multi-modelo)
              |                                     |
-   SEARCH Tavily -> FETCH -> ANALYZE       4 busquedas paralelas ->
-   (LLM fallback) -> DECIDE -> informe     4 panelistas -> replicas ->
-             |                             sintesis Cerebras gpt-oss-120b
+   SEARCH Firecrawl/SearXNG/Tavily ->      busquedas por angulo ->
+   CAPTURE Firecrawl/Crawl4AI/urllib ->    panelistas -> replicas ->
+   ANALYZE (LLM fallback) -> DECIDE        sintesis y correlacion
              v                                     v
    ~/research/informes/*.md               ~/research/paneles/*.md
 ```
 
-Cadena LLM con fallback (research_lib.py): cerebras -> groq -> ollama local.
-GPT mini/Azure fue retirado de MAK el 2026-07-28 para reservar ese cupo a la
-sesion principal. Panel: cada angulo pide primero SU proveedor:
+El buscador se selecciona con `RESEARCH_SEARCH_PROVIDER=firecrawl` para una
+corrida API-first. En `auto`, SearXNG es primero, Firecrawl es fallback y
+Tavily es el ultimo respaldo si hay llave. El JSON conserva `motor`,
+`capture_backend`, `capture_attempts` y el recorte enviado al modelo.
+Cada finding conserva además `analysis_provider`, `search_backend` y
+`search_query`; los reintentos no se resumen como si fueran una sola llamada.
+
+Cadena LLM configurable (research_lib.py): los proveedores presentes en
+`/home/mak/research/research.env` participan; `--providers groq` aisla Groq
+para una comparacion reproducible. Azure requiere `RESEARCH_AZURE_ENABLED=1`.
+Watsonx solo participa si sus variables existen. La compuerta del informe
+marca `review_required` si faltan URLs de evidencia, consultas registradas o
+la separacion DICEN/INFERIMOS/NO SE ENCONTRO.
+
+Panel: cada angulo pide primero su proveedor configurado:
 
 | Angulo | Proveedor | Modelo |
 |---|---|---|
-| historico | Groq | llama-3.3-70b-versatile |
-| estetico | Ollama local | gemma3:4b (OLLAMA_MODEL; aya-expanse:8b instalado de repuesto) |
-| legal | Groq | llama-3.3-70b-versatile |
+| historico | Groq | GROQ_MODEL activo |
+| estetico | Ollama local | OLLAMA_MODEL activo |
+| legal | Groq | GROQ_MODEL activo |
 | tecnico | Cerebras | gpt-oss-120b |
 
-Search: Tavily (1000 creditos/mes; basic=1, advanced=2).
+Search: Firecrawl Search consume creditos por consulta; SearXNG es local y no
+consume API; Tavily solo se intenta si hay llave y los anteriores no entregan.
 
 ## Interfaces
 
@@ -52,11 +65,10 @@ Search: Tavily (1000 creditos/mes; basic=1, advanced=2).
 
 ## Operacion
 
-- Keys: `~/n8n-local/research.env` (600). Copia PC: `cultura/.dev`
-  (gitignored). NUNCA commitear.
-- Servicios: `cola.py` + `interfaz.py` via watchdog/cron; el unit
-  `interfaz.service` del repo es solo compatibilidad y no está instalado en el
-  runtime verificado. Logs: `~/research/{cola,interfaz}.log`.
+- Keys: `/home/mak/research/research.env` (600). NUNCA commitear ni imprimir
+  valores. La configuracion activa se inspecciona solo por nombres.
+- Servicios: Hub/Research internos bajo systemd; no usar cron ni workers
+  permanentes para una corrida manual. Logs: `~/research/{cola,interfaz}.log`.
 - Frugalidad (regla del usuario): defaults research 2 iteraciones,
   panel 1 replica; mas profundidad = flag explicito. Un job a la vez.
 - Marco cultural (viaja con toda pieza): capa DESCRIPTIVA (historia,
@@ -69,8 +81,9 @@ Search: Tavily (1000 creditos/mes; basic=1, advanced=2).
 - Cloudflare 403 codigo 1010 si falta User-Agent custom (urllib
   default bloqueado): research_lib._http_json ya manda
   `flujo-mak-research/1.0`.
-- gpt-oss-120b es razonador: margen
-  `max_completion_tokens = pedido + 2048` o devuelven vacio.
+- Groq `openai/gpt-oss-20b` es el modelo activo validado; los modelos
+  `openai/gpt-oss*` requieren `max_completion_tokens = pedido + 2048` porque
+  consumen presupuesto en razonamiento.
 - Catalogo free de Cerebras ROTA (hoy: gpt-oss-120b, gemma-4-31b,
   zai-glm-4.7): si model_not_found, `GET https://api.cerebras.ai/v1/models`.
 - qwen3 mete tags `<think>` en la salida: por eso gemma3:4b (ademas
@@ -81,19 +94,18 @@ Search: Tavily (1000 creditos/mes; basic=1, advanced=2).
 
 Mejoras en orden de valor; NO romper lo que ya corre:
 
-1. Open WebUI (:8080, ya corre): agregar connections Groq/Cerebras/Azure
-   (OpenAI-compatible) para chat multi-modelo manual -- necesita login
-   admin del usuario, es solo config UI.
-2. Progreso vivo en interfaz.py (hoy: estados en cola/corriendo/listo);
+1. Progreso vivo en interfaz.py (hoy: estados en cola/corriendo/listo);
    SSE o polling de un status.json por job.
-3. systemd user units en vez de cron @reboot (loginctl enable-linger mak).
-4. Tests: research_lib con mocks urllib (sin gastar APIs reales).
-5. Rotacion/indice de informes (hoy crecen sin limite).
-6. LiteLLM proxy (gateway unico :4000) SOLO si el numero de consumidores
+2. Tests: research_lib y source_pipeline con mocks urllib (sin gastar APIs
+   reales). En esta caja `pytest` no esta instalado, por lo que el gate actual
+   se valida con `py_compile` y smoke Python hasta autorizar una instalacion.
+3. Rotacion/indice de informes (hoy crecen sin limite).
+4. LiteLLM proxy (gateway unico :4000) SOLO si el numero de consumidores
    crece; hoy seria complejidad gratis.
-7. Auth minima (token en query o basic) para interfaz.py si algun dia
+5. Auth minima (token en query o basic) para interfaz.py si algun dia
    sale de la LAN.
 
-Regla de verificacion: cambio tocado = correr un research de 1
-iteracion y un panel de 0 replicas contra APIs reales y mirar
-meta.errors antes de declarar OK.
+Regla de verificacion: cambio tocado = correr un research de 1 iteracion,
+revisar `meta.errors`, `meta.captureBackends` y `quality`, y no declarar OK si
+el resultado es `review_required`. Un panel de 0 replicas es opcional y no
+sustituye la trazabilidad del informe.

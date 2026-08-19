@@ -13797,3 +13797,1250 @@ esperar el próximo issue real para validar la clasificación y publicación
 externa; un render local no demuestra todavía la subida a OneDrive.
 
 Last verified: 2026-08-18 America/Santiago — Phase 570.
+
+## Phase 571 — estudio DIMENSIONES y crosswalk hacia ideas, proyectos y Fondart
+
+El usuario pidió estudiar primero `/home/mak/curatoria_inbox/DIMENSIONES DEL ORDEN`
+y usar ese resultado para buscar equivalencias en MAK. Se hizo una lectura
+estructural y una consulta SQLite de solo lectura; no se ejecutaron acciones
+físicas, no se copiaron árboles y no se modificó ninguna base de DIMENSIONES.
+
+### Evidencia de DIMENSIONES
+
+- `ia_web_system_v2.sqlite3`: 65.855 archivos indexados, 908 proyectos, 24
+  unidades de trabajo, 908 dossiers, 9.034 evidencias de dossier, 27.096
+  referencias web y 58 candidatos virtuales de orden.
+- `ia_flujo_idea_projection.sqlite3`: 1.176 ideas, 25 materiales, 34
+  relaciones candidatas y 417 fanouts.
+- `funding_os_integration_report.json`: 20 oportunidades, 143 requisitos,
+  140 tareas de research y 11 evidencias; 0 proyectos, 0 matches y 0
+  applications. El puente sigue siendo derivado y de solo lectura.
+- `orden_learning.sqlite3`: 53 reglas, 29 eventos, 21 estrategias, 17 trials
+  y 0 feedback humano; no puede presentarse como aprendizaje validado.
+
+La arquitectura establece: fuente → snapshot → evidencia → dossier → índice
+virtual → revisión humana → acción reversible. Similaridad, familia o
+`QUARANTINE_COPY` no autorizan borrar, mover, fusionar ni postular. El gate
+físico sigue cerrado porque el catálogo no cubre toda la fuente.
+
+### Crosswalk semántico encontrado
+
+DIMENSIONES contiene ideas históricas directamente relevantes para MAK:
+
+- Fondart aparece como una idea de recolección de URLs oficiales y portales de
+  postulación (`idea:agent:663`), pero no como proyecto canónico enlazado.
+- Postulación aparece en 11 ideas y convocatoria en 3; la intención dominante
+  es separar oportunidad, requisitos, evidencia y borrador.
+- Curatoria aparece en 31 ideas, Cultura en 37, Research en 39, RD en 71 y VJ
+  en 6; esto confirma la relación entre los departamentos, pero no prueba que
+  una idea deba vivir en RD.
+- Portfolio aparece en 18 ideas; Tapiz en 23, Tilde en 26 y Psicosis en 15.
+  Son genealogía conceptual recuperada, no código runtime que deba reabrirse.
+- Las familias de proyecto reconocidas por el catálogo incluyen `flujo web`,
+  `ISKVW | DIGITAL ARCHIVE`, `Grados de desacuerdo`, `post-mak-prototype` y
+  el worktree histórico `mak-research-cultural`.
+
+### Crosswalk físico hacia MAK
+
+La búsqueda posterior encontró consumidores y herramientas existentes:
+
+- `cultura/mak_research/fondart_corpus.py`: corpus histórico de proyectos
+  seleccionados; preserva URL, captura, folio, año, región, modalidad,
+  responsable, monto, estado parcial y grupos de coincidencia.
+- `cultura/mak_research/source_pipeline.py`, `fuentes.py`, `research.py` y
+  `cultura/mak_plataforma/research_router.py`: captura oficial, clasificación
+  de dominio y ruta de corpus/oportunidad.
+- `cultura/mak_vigia/vigia.py` y `fuentes.json`: radar de oportunidades actuales;
+  no debe confundirse con el corpus histórico Fondart.
+- `cultura/mak_curatoria/ingesta_archivo.py`,
+  `diagnostico_proyectos.py` y `triangular.py`: inventario, familias,
+  candidatos y triangulación de archivos; son el consumidor natural de los
+  dossiers, no una segunda base de oportunidades.
+- `tools/interpretive_garden_workflow.py` y
+  `tools/research_job_router.py`: ya expresan la semántica idea → fuentes →
+  correlación → obra/herramienta → expediente.
+- `projects/cultura/MD_IDEAS_MASTER.md`,
+  `projects/cultura/PORTAFOLIO_ORGANISMO.md`,
+  `projects/cultura/dossiers/grados_de_desacuerdo.md`,
+  `docs/becas/postulacion_base.md` y
+  `projects/cultura/dossiers/convocatorias_mak_ruta.md`: capa humana y
+  editorial que debe recibir resultados revisados, no dumps de bases.
+
+Las copias `/home/mak/research/fondart_corpus.py` y
+`/home/mak/flujo/cultura/mak_research/fondart_corpus.py` son idénticas por
+SHA-256; lo mismo ocurre con `source_pipeline.py`. No hay que crear una tercera
+implementación.
+
+El corpus tiene muchas corridas derivadas. La más reciente es
+`/home/mak/research/corpus/fondart_annual_2015_2025_20260813_v5/sources.sqlite`:
+5.179 registros, 11 parciales, años 2016–2025 salvo 2018 y 2015, y estado
+`review_required`. El corpus histórico
+`/home/mak/research/corpus/fondart_historical_selected/sources.sqlite` tiene
+3.776 registros, 450 parciales y cobertura incompleta. No se fusionaron porque
+son resultados de corridas distintas y la procedencia debe conservarse.
+
+### Validación ejecutada
+
+- AST de 9 herramientas de DIMENSIONES: todos `AST_OK`.
+- `--help` de `ia_flujo_idea_projection.py`, `ia_order_review.py` e
+  `ia_feedback_instrumentation.py`: código 0.
+- SQLite de DIMENSIONES abierto con `mode=ro`; las consultas no escribieron.
+- Suite enfocada MAK con `PYTHONPATH=/home/mak/flujo` sobre source pipeline,
+  fuentes, research router y tandas: código 0; todas las pruebas seleccionadas
+  pasaron.
+
+### Decisión de integración
+
+No copiar DIMENSIONES a MAK ni conectar directamente sus SQLite. El diseño
+correcto es un puente derivado y explícito:
+
+```text
+idea/proyecto canónico de DIMENSIONES
+  → dossier MAK con origen y evidencia
+  → proyecto de Curatoria/Cultura
+  → candidatos Fondart históricos para analogía
+  → oportunidades Fondart vigentes desde mak_vigia
+  → hard gate de requisitos y gaps
+  → borrador de propuesta pendiente de revisión humana
+```
+
+El corpus histórico sirve para comparar antecedentes y lenguaje de proyectos
+seleccionados; `mak_vigia` sirve para oportunidades actuales; ninguno por sí
+solo crea una postulación. La primera integración segura debe ser un adaptador
+read-only que produzca un expediente JSONL/Markdown y no una base nueva ni una
+acción externa.
+
+## Next concrete action
+
+Diseñar y validar el contrato del adaptador DIMENSIONES → MAK con un único
+proyecto canónico y 3–5 oportunidades. Antes de escribir código, seleccionar
+el proyecto por evidencia local —preferentemente `Grados de desacuerdo` como
+primer expediente— y probar que el adaptador puede conservar `idea_id`,
+`project_id`, fuentes, requisitos, hard failures, gaps y estado humano sin
+duplicar las bases. No iniciar postulaciones, contactos ni scraping nuevo hasta
+que ese contrato pase una prueba read-only.
+
+Last verified: 2026-08-18 America/Santiago — Phase 571.
+
+## Phase 572 - correccion de alcance: aprendizaje de DIMENSIONES aplicado a MAK
+
+El usuario aclaro que los 908 proyectos de DIMENSIONES fueron material de
+entrenamiento del sistema DIMENSIONES, no candidatos de MAK. Se corrigio el
+criterio: DIMENSIONES aporta metodo, semantica y herramientas de analisis;
+MAK aporta los proyectos, dossiers, instrumentos y resultados que pueden
+convertirse en expedientes Fondart. No se copiaron proyectos ni bases de
+DIMENSIONES, y no se creo una segunda base.
+
+### Metodo reutilizado
+
+La busqueda en MAK conserva estas capas de DIMENSIONES:
+
+```text
+identidad del proyecto -> pregunta y linea -> fuentes/evidencia
+-> instrumento y resultado -> correlaciones -> estado y vacios
+-> oportunidad Fondart verificada -> borrador humano
+```
+
+Se reutilizan como consumidores existentes, sin duplicarlos:
+`tools/interpretive_garden_workflow.py` para semantica y correlaciones,
+`tools/research_job_router.py` para trabajos acotados,
+`cultura/mak_curatoria/diagnostico_proyectos.py` y `triangular.py` para
+clasificacion y vacios, `cultura/mak_curatoria/ingesta_archivo.py` para
+procedencia, `cultura/mak_research/fondart_corpus.py` para antecedentes
+historicos y `cultura/mak_vigia/vigia.py` para oportunidades actuales. El
+corpus historico no se presenta como convocatoria vigente.
+
+### Candidatos fisicos reales encontrados
+
+La siguiente es una preseleccion de proyectos o lineas de MAK, no una
+declaracion de elegibilidad Fondart:
+
+1. **Grados de desacuerdo** - `/home/mak/flujo/projects/cultura/dossiers/grados_de_desacuerdo.md`
+   - candidato principal. Tiene `work_id`, tesis, outputs, metodologia de
+   mejora del borrador Fondart y relacion con el prototipo doublecup. Sigue
+   `draft_for_critique`; faltan prueba UX, fuentes primarias y convocatoria
+   compatible verificada.
+2. **Jardines interpretativos** - `/home/mak/research/jardines_interpretativos/JARDINES_INTERPRETATIVOS_RESEARCH.md`
+   - linea de investigacion artistica potencial. Tiene workflow, semantica,
+   correlaciones, modelo SQLite y resultados documentados. Aun es research
+   con hipotesis y no un dossier de postulacion cerrado; `funding-lab` queda
+   como superficie adyacente.
+3. **Tapiz / VibeCode** - `/home/mak/flujo/projects/tapiz/` y
+   `/home/mak/flujo/projects/cultura/dossiers/tapiz.md` - candidato de obra
+   digital con instrumento ejecutable y piezas SVG ya producidas. Requiere
+   verificar fuentes del dossier y separar obra, herramienta y plan de
+   produccion.
+4. **Tilde / sobrevivencia** - `/home/mak/flujo/projects/tilde/` y
+   `/home/mak/flujo/projects/cultura/dossiers/tilde.md` - instrumento
+   implementado y dossier curado; las afirmaciones centrales tienen
+   verificacion parcial/positiva, pero falta convertirlo en propuesta con
+   resultados, publico, cronograma y presupuesto.
+5. **Borradura ASCII** - `/home/mak/flujo/projects/cultura/borradura_ascii/`
+   - pieza cultural ejecutable, determinista y con resultado documentado;
+   puede ser un proyecto de arte digital, pero su corrida historica no es por
+   si sola una postulacion.
+6. **Doublecup / vaso semantico** - `/home/mak/flujo/projects/cultura/doublecup/`
+   - prototipo visual/tecnico y evidencia de forma para `Grados de
+   desacuerdo`; no debe contarse como segundo proyecto independiente sin una
+   tesis y plan propios.
+7. **Psicosis / registro e incertidumbre** -
+   `/home/mak/flujo/projects/cultura/dossiers/psicosis.md` y
+   `/home/mak/flujo/projects/cultura/psicosis_agente/` - linea de investigacion
+   cultural con limite explicito de no diagnosticar ni perfilar personas. El
+   instrumento sigue en especificacion/prototipo, por lo que no es candidato
+   de primera ronda.
+8. **Cartografia de filtros** - `/home/mak/flujo/projects/cultura/cartografia_filtros/`
+   - pieza/protocolo ya producido sobre limites y procedencia; puede
+   respaldar una propuesta de arte y tecnologia, pero su escala actual es
+   menor y no tiene expediente Fondart.
+9. **Corpus del olvido** - `/home/mak/flujo/projects/cultura/corpus_olvido/`
+   - obra/archivo determinista sobre handoffs y memoria operacional; tiene
+   resultado verificable, pero necesita decidir si se presenta como obra
+   autonoma o como metodologia de archivo.
+10. **Precursor** - `/home/mak/flujo/projects/cultura/dossiers/precursor.md`
+    - dossier cultural sobre representacion, marca y documentos de sustancias,
+    con limite de no describir sintesis ni cultivo. Es dossier-only por ahora;
+    no se debe fabricar una herramienta para elevar artificialmente su estado.
+
+### Resultado de esta correccion
+
+La evidencia fisica confirma que el trabajo no es unir cientos de proyectos
+externos. Es seleccionar una linea real de MAK y construir un expediente
+trazable usando el metodo DIMENSIONES. La prioridad recomendada sigue siendo
+`Grados de desacuerdo`, con `Tapiz`, `Tilde`, `Borradura ASCII` y `Jardines
+interpretativos` como candidatos o evidencias de segunda capa segun el tipo
+de convocatoria. Ningun candidato se marca como elegible hasta verificar las
+bases oficiales y completar sus vacios humanos.
+
+### Comandos y resultado
+
+- `sed -n ... agents.md`, `tail -n ... LAST_HANDOFF.md`: codigo 0; contrato y
+  Phase 571 leidos antes de clasificar.
+- `find /home/mak/flujo/projects/cultura ...`: codigo 0; superficie real de
+  dossiers, instrumentos, piezas y resultados enumerada.
+- `rg -n ...` sobre dossiers, `MD_IDEAS_MASTER.md`, `PORTAFOLIO_ORGANISMO.md`,
+  `projects/tapiz`, `projects/tilde`, `research/jardines_interpretativos` y
+  `research/jobs`: codigo 0; estados y consumidores cruzados.
+- No se modificaron proyectos, bases, scripts ni DIMENSIONES. Solo se actualizo
+  este handoff para corregir el alcance y conservar continuidad.
+
+## Next concrete action
+
+Construir y validar en modo read-only el primer expediente MAK para
+`Grados de desacuerdo`: conservar identidad, tesis, fuentes, evidencias,
+instrumentos, outputs, oportunidades historicas separadas de oportunidades
+vigentes, hard failures y vacios. No copiar datos de DIMENSIONES, no crear una
+base nueva y no iniciar scraping/postulacion hasta que el contrato sea
+trazable.
+
+Last verified: 2026-08-18 America/Santiago - Phase 572.
+
+## Phase 573 - primer expediente read-only de un proyecto real de MAK
+
+Se probo el metodo sobre `project:grados-de-desacuerdo:v1`, sin usar los 908
+proyectos de DIMENSIONES como candidatos y sin escribir en ninguna superficie
+activa de MAK.
+
+### Contrato extraido
+
+- Fuente primaria local:
+  `/home/mak/flujo/projects/cultura/dossiers/grados_de_desacuerdo.md`.
+- Identidad: `project:grados-de-desacuerdo:v1`.
+- `lane=obra`, `purpose=desarrollar un instrumento de presentacion y
+  navegacion del portafolio`, `format=proposal_brief`, `owner=artist` y
+  `status=draft_for_critique`.
+- Secciones presentes: identidad, linaje, tesis, arquitectura, mejora del
+  borrador Fondart, entregables MAK, revision externa, estructura v2, no
+  objetivos y criterio de avance.
+- Evidencia relacionada conservada sin copia: el dossier, el contexto de
+  `PORTAFOLIO_ORGANISMO.md`, el prototipo `doublecup/README.md` y la politica
+  `dossiers/convocatorias_mak_ruta.md`.
+- SHA-256 del dossier al validar:
+  `c43d1ecfc7abd23a46aa40b8c16d049de0d725c24ab0cd77c682c0cfb5468e38`.
+
+### Separacion Fondart
+
+- Antecedentes historicos: `/home/mak/research/corpus/fondart_annual_2015_2025_20260813_v5/sources.sqlite`,
+  abierto con `mode=ro`; `fondart_applications=5179`,
+  `source_captures=14` y `source_discoveries=104`.
+- Oportunidades actuales: `/home/mak/flujo/cultura/mak_vigia/fuentes.json`,
+  con 6 fuentes bajo la clave `fuentes`.
+- Politica: los antecedentes sirven para analogia y lenguaje; las fuentes de
+  `mak_vigia` son el radar actual; ninguno crea elegibilidad ni postula por si
+  solo.
+
+### Validacion del workflow
+
+- Comando: `python3 /home/mak/flujo/tools/research_job_router.py 'Preparar
+  expediente Fondart para Grados de desacuerdo con evidencia local,
+  antecedentes historicos y oportunidades vigentes separadas' --domain
+  curatoria --db <temp>/probe.sqlite --out-dir <temp>/jobs`.
+- Codigo 0; `job_id=1`, `domain=curatoria`, `external_calls=0` y
+  `validation=PASS`.
+- Salida temporal: JSON y Markdown con los 12 procesos
+  `discover,capture,extract,normalize,relate,contextualize,interpret,simulate,validate,curate,publish,audit`,
+  todos `pending`; no se promovio ningun dato a hecho ni a oportunidad.
+- Lectura del contrato local y conteo SQLite read-only: codigo 0.
+- Cambios permanentes: solo este `LAST_HANDOFF.md`; no se modificaron
+  proyectos, bases, scripts ni archivos de DIMENSIONES.
+
+## Next concrete action
+
+Completar el expediente read-only de `Grados de desacuerdo` con claims,
+fuentes, evidencias y vacios concretos del dossier; luego cruzarlo contra el
+corpus historico y solo despues revisar las 6 fuentes actuales de `mak_vigia`.
+El resultado debe distinguir `antecedent`, `current_opportunity`, `gap`,
+`human_decision` y `draft`, sin crear una base nueva ni iniciar postulacion.
+
+Last verified: 2026-08-18 America/Santiago - Phase 573.
+
+## Phase 574 - propuestas Fondart y fondos externos
+
+Se hizo research web de fuentes oficiales y se cruzo con proyectos reales de
+MAK. Las propuestas son conceptuales y no declaran elegibilidad automatica.
+
+### Tres propuestas Fondart
+
+1. `Grados de desacuerdo`: portafolio como organismo digital. Obra web,
+   instrumento editable y prototipo doublecup como evidencia. Encaje preliminar
+   en creacion artistica o investigacion de artes de la visualidad; faltan
+   publico, cronograma, presupuesto, prueba UX y bases especificas 2027.
+2. `Jardines interpretativos`: laboratorio que traduce fuentes botanicas,
+   culturales y tecnicas a interpretaciones visuales auditables. Encaje
+   preliminar en investigacion/creacion; faltan caso acotado, colaborador
+   disciplinar, prototipo publico y plan territorial.
+3. `Tapiz / VibeCode`: obra de nuevos medios basada en texto, vacio, motivos y
+   patrones visuales. Encaje preliminar en creacion artistica; faltan unificar
+   tesis, verificar fuentes del dossier y presentar plan de produccion y
+   exhibicion.
+
+`Borradura ASCII` y `Tilde` quedan como alternativas mas acotadas o evidencia,
+no se fusionan artificialmente dentro de las tres propuestas principales.
+
+El portal oficial indica que Fondart cubre artes de la visualidad, fotografia,
+nuevos medios, artesania, diseno y arquitectura. El calendario 2027 publicado
+indica cierre de Fondart Regional el 2026-09-09 y Fondart Nacional el
+2026-09-10; las lineas y bases exactas deben revisarse antes de enviar.
+
+### Tres rutas externas
+
+1. **OpenAI Researcher Access Program**: `Tilde + Borradura ASCII + Corpus del
+   olvido` como estudio de perdida semantica, robustez, representacion y
+   procedencia en sistemas de IA. Encaja como investigacion interdisciplinaria
+   con impacto social, no como fondo de obra. El programa ofrece hasta USD
+   1,000 en creditos API, con vigencia de 12 meses y revision trimestral.
+2. **Anthropic Economic Futures Research Awards**: medir como la IA cambia el
+   trabajo de VJ, curatoria, productoras y artistas digitales independientes en
+   Chile, usando MAK como instrumento de trazabilidad. Ofrece USD 10,000-50,000
+   y USD 5,000 en creditos Claude, pero la pagina declara que actualmente no
+   acepta postulaciones y exige investigacion empirica cuantitativa en seis
+   meses.
+3. **S+T+ARTS Prize**: `Jardines interpretativos` como colaboracion entre arte,
+   ciencia y tecnologia, con una alianza botanica o de investigacion. El premio
+   acepta participantes de todo el mundo y sus dos grandes premios son de EUR
+   20,000; la convocatoria 2026 cerro el 2026-03-09, por lo que se prepara para
+   el siguiente ciclo.
+
+Anthropic tiene ademas un programa de conectores creativos y apoyo puntual a
+Blender, pero no se encontro un fondo abierto equivalente para artistas
+individuales. No se debe vender como subvencion disponible.
+
+### Next concrete action
+
+Elegir una propuesta Fondart principal y convertirla en matriz de postulacion:
+objetivo, problema, metodologia, resultado, publico, cronograma, presupuesto,
+evidencias, riesgos y vacios. Prioridad recomendada: `Grados de desacuerdo`.
+
+Last verified: 2026-08-18 America/Santiago - Phase 574.
+
+## Phase 575 - desarrollo profundo de tres propuestas Fondart
+
+Se amplio la investigacion con el resto de MAK y se dejo una matriz durable en
+`/home/mak/flujo/projects/cultura/dossiers/FONDART_2027_TRES_PROPUESTAS.md`.
+El documento separa tres expedientes reales y no los convierte en una sola
+trilogia:
+
+1. `Grados de desacuerdo`: archivo personal como organismo publico navegable.
+2. `Jardines interpretativos`: fuentes heterogeneas, claims y jardin visual
+   trazable.
+3. `Tapiz / VibeCode`: codigo, texto, perdida semantica y patron como material
+   de obra.
+
+### Research oficial y antecedentes
+
+- Firecrawl se ejecuto sobre diez URLs oficiales: pagina Fondart Nacional,
+  calendario, Investigation, Barrios Creativos, Muestras/Ferias/Encuentros,
+  Becas Chile Crea y las tres bases PDF 2027. Las diez respuestas fueron HTTP
+  200. No se guardaron credenciales ni se copio un arbol externo.
+- Las bases de Investigacion 2027 confirman Grupo A para artes visuales,
+  fotografia, nuevos medios e interdisciplina; exige transferencia de
+  conocimientos y solo admite una postulacion por responsable en esa linea.
+- La misma base leida en `/tmp/mak-fondart-bases-8vZ9WD/investigacion.txt`
+  confirma rango de $500.000 a $15.000.000, inicio entre 2027-03-01 y
+  2027-04-30, maximo 12 meses, transferencia entre 5% y 10% y asignacion del
+  responsable hasta 40%. El PDF es evidencia temporal y debe releerse al
+  preparar el FUP.
+- La base de Barrios Creativos exige iniciativa colectiva, identidad local,
+  participacion ciudadana y territorio. La base de Muestras exige un evento y,
+  para la modalidad nacional, al menos dos versiones anteriores. Por eso no se
+  forzaron como encaje actual de las tres propuestas.
+- El corpus local Fondart fue consultado read-only en
+  `/home/mak/research/corpus/fondart_annual_2015_2025_20260813_v5/sources.sqlite`.
+  Coincidencias por titulo: archive/new-media 176, territory/nature 218 y
+  textile/visual 273. Medianas historicas observadas: 10940339, 10000000 y
+  9948123 CLP, respectivamente. Son antecedentes de lenguaje, no montos para
+  copiar ni prueba de elegibilidad.
+
+### Validacion local
+
+- Se validaron 22 rutas de evidencia citadas en el nuevo dossier; todas
+  existen. El documento tiene 353 lineas y no tiene rutas faltantes.
+- `python3 -m py_compile` sobre `research_job_router.py`,
+  `interpretive_garden_workflow.py`, `mak_plataforma/tandas.py` y
+  `mak_research/research.py`: codigo 0.
+- `research_job_router.py` se ejecuto en tres SQLite temporales, una por
+  propuesta, con `domain=curatoria`: Grados, Jardines y Tapiz devolvieron
+  `job_id=1`, `external_calls=0`, `validation=PASS`, codigo 0. No se iniciaron
+  servicios ni se modificaron bases activas.
+
+### Proveedores y costos realmente observados
+
+- AWS batch `fondart-three-proposals-v1-20260818`: codigo 2,
+  `boto3_unavailable`; ledger en
+  `/home/mak/plataforma/director_runs/fondart-three-proposals-v1-20260818/batch_ledger.jsonl`.
+- Cerebras batch `fondart-three-proposals-v2-20260818`: codigo 2,
+  `HTTP Error 402: Payment Required`; ledger en
+  `/home/mak/plataforma/director_runs/fondart-three-proposals-v2-20260818/batch_ledger.jsonl`.
+- Groq batch `fondart-three-proposals-v3-20260818`: codigo 2,
+  `HTTP Error 404: Not Found`; ledger en
+  `/home/mak/plataforma/director_runs/fondart-three-proposals-v3-20260818/batch_ledger.jsonl`.
+- No se produjo salida de modelo en esos tres lotes. El dossier final deriva
+  de evidencia local, bases oficiales y decisiones de clasificacion explicitas;
+  no presenta una salida fallida como hallazgo.
+
+### Decision provisional
+
+Para la linea Investigacion 2027 la prioridad de cumplimiento es:
+`Jardines interpretativos` primero, `Grados de desacuerdo` segundo y
+`Tapiz/VibeCode` tercero. Jardines ya tiene pregunta, metodo, trazabilidad y
+transferencia; Grados tiene mayor potencia de portafolio pero requiere prueba
+de lectura; Tapiz tiene implementacion visual pero necesita cerrar tesis,
+fuentes y pieza final. Esta prioridad es solo para esta convocatoria.
+
+### Riesgos y limites
+
+- No se puede enviar las tres propuestas a Investigacion si tienen el mismo
+  responsable; las bases permiten una sola postulacion en esa linea.
+- No hay aun corpus publico final, prueba humana, colaborador confirmado,
+  presupuesto cotizado ni FUP completo para ninguna propuesta.
+- No se deben presentar como actuales los antecedentes historicos del corpus.
+- Las fallas de AWS, Cerebras y Groq siguen abiertas como compatibilidad de
+  proveedor, pero no bloquean la redaccion local ni la validacion semantica.
+- Se conserva `WIN` como archivo historico y no se copiaron datos de DIMENSIONES.
+
+## Phase 576 - base cronologica de conocimiento MAK
+
+Se inicio la base solicitada para ordenar herramientas, consumidores, proposito,
+idea y origen por evidencia temporal, no por volumen de archivos. Se combinaron
+metadatos fisicos, arqueologia de nombres y contenido, commits cuando el archivo
+ya existe en el repo, imports AST y el contrato de `esfuerzo.py` entregado por el
+usuario. Git se uso como procedencia de archivos fisicos encontrados, no como
+inventario de MAK.
+
+### Artefactos creados
+
+- Script reproducible: `/home/mak/flujo/tools/build_mak_knowledge_db.py`.
+- Base SQLite: `/home/mak/flujo/data/mak_knowledge.db`.
+- La base no copia fuentes ni elimina evidencia. `WIN` queda marcado como
+  `historical`; el runtime activo se marca como `active`.
+- Vista SQL `chronology_ranked`: prioriza `git_first_commit`, luego
+  `filename_timestamp`, `filesystem_mtime`, `filesystem_ctime` y finalmente
+  `content_date_reference`. La fecha de contenido no se trata como fecha de
+  creacion. `ctime` queda con confianza baja y declara que no es prueba de
+  creacion.
+
+### Alcance de la primera pasada
+
+No se escaneo recursivamente todo `/home/mak` ni todo `WIN`: el primer intento
+irrestricto crecio demasiado y fue detenido en primer plano con
+`KeyboardInterrupt` despues de mas de ocho minutos; la transaccion no dejo
+datos parciales y no hubo cambios en fuentes. La pasada reproducible uso las
+raices operativas seleccionadas en el propio script y solo corredores historicos
+de WIN: `flujo`, `claude_sesiones`, `codex/archived_sessions`, `codex/sessions`,
+`incoming-20260813` y `updates-20260813`. La seleccion exacta queda en
+`audit_events.event_kind=scan_scope`.
+
+### Resultado validado
+
+- Codigo 0: `py_compile` del constructor.
+- Codigo 0: run 1 y run 2 valido del alcance acotado; codigo 0: run 3 al
+  agregar la vista de cronologia. El segundo intento de relaciones tuvo codigo
+  1 por `ambiguous column name: entity_id`; se corrigio y se repitio con codigo
+  0. Los runs fallidos no se consideran resultado.
+- 42.355 archivos: 38.440 activos y 3.915 historicos.
+- 18.036 textos con SHA-256; 30.985 imports AST.
+- 4.779 candidatos de herramienta, 630 interfaces y 2.512 ideas.
+- 352 consumidores candidatos y 649 relaciones `possibly_consumed_by`.
+  Son relaciones estaticas de baja confianza: un import no demuestra que una
+  ruta haya corrido.
+- 98.223 eventos temporales; 2.171 archivos recibieron primer y ultimo
+  commit Git. Integridad SQLite: `PRAGMA integrity_check` devolvio `ok`.
+- 5.980 filas de metricas de esfuerzo sobre 598 JSON de Research. Se conservan
+  ausencias; `timeouts` no aparece en ninguno de esos documentos. La deriva de
+  consultas se calcula solo cuando hay al menos dos consultas comparables. El
+  residuo MAD por modo aun no se calcula porque primero falta fijar grupos de
+  comparacion estables.
+- `esfuerzo.py` fue leido completamente desde el adjunto
+  `d7e3f292-059c-4085-9aba-05eea8e73f3d/pasted-text.txt`. No existe fisicamente
+  en los roots escaneados; la base lo registra en `method_sources` como
+  `user_attachment/contract_read_not_physical` y no lo inventa como archivo.
+
+### Primera triangulacion FLUJO APP versus MAK
+
+- `src/flujo/web/hub.py`: primer commit Git `bee102e4...`, baseline del
+  2026-06-30; ultimo commit observado `8fd85754...`, mapa de runtime MAK del
+  2026-08-18.
+- `src/flujo/serve/server.py`: mismo baseline del 2026-06-30; ultimo commit
+  `05fcfe0c...`, correccion de seguridad del 2026-07-28.
+- `cultura/mak_plataforma/hub.py`: primer commit `6a2b1470...`, cierre de
+  organismo MAK/Cultura del 2026-07-17; ultimo commit `24ad5d3e...`, laboratorio
+  MAK persistente del 2026-08-17.
+- `cultura/mak_research/interfaz.py`: mismo origen de Cultura del 2026-07-17;
+  ultimo commit `9b398f15...`, consolidacion de owners activos del 2026-08-15.
+- Las copias correspondientes bajo `WIN/flujo` tienen metadatos fisicos y
+  contenido historico, pero no se les atribuye procedencia Git actual.
+
+### Riesgos y limites
+
+Los 4.779 tools son candidatos, no herramientas aprobadas. El alcance incluye
+copias de entornos, cuarentenas, tests y working trees; la siguiente etapa debe
+filtrar por path operativo, consumidor y validacion foreground. No se debe
+fusionar por nombre basename: `hub.py`, `panel.py`, `engine.py` e `index.html`
+aparecen en varios departamentos y periodos. No se instalaron paquetes, no se
+iniciaron servicios y no se modificaron bases de datos de produccion.
+
+## Phase 577 - crosswalk inicial de FLUJO APP y MAK Cultura
+
+Se consulto la base sin ejecutar rutas ni modificar codigo de negocio.
+Resultado por evidencia AST, siempre con confianza baja hasta validar en
+foreground:
+
+- `src/flujo/web/hub.py` tiene 43 relaciones estaticas hacia tests y
+  superficies historicas/activas, incluyendo `test_dashboard`,
+  `test_datadrop_scan`, `test_hub_comandos`, `test_mak_tandas_surface`, tests
+  de plano y tests RD. Esto muestra superficie de consumo, no prueba de que el
+  hub este corriendo.
+- `src/flujo/serve/server.py` tiene 4 consumidores estaticos de
+  `test_serve_api`; ademas importa `cotizaciones_base` y `eventos/presets`.
+  Estos ultimos son dependencias estaticas del servidor, no una ejecucion.
+- `cultura/mak_plataforma/hub.py` no tiene consumidor directo por import en la
+  muestra actual, pero importa `flujo.departments` y `flujo.diagnostics`. Su
+  ausencia de importadores directos no autoriza descartarlo: el hub puede ser
+  entrypoint dinamico o ser lanzado desde plataforma.
+- `cultura/mak_research/interfaz.py` y `cultura/mak_curatoria/panel.py` no
+  tienen consumidor directo detectado por este metodo. Quedan en estado
+  `route_or_html_pending`, no `obsolete`.
+- Las relaciones que apuntan desde tests de WIN o working trees hacia modulos
+  activos se conservan como evidencia historica/estatica y no se convierten en
+  prueba de runtime Linux.
+
+Esto confirma que la base debe separar cinco estados: `active`, `historical`,
+`static_consumer`, `runtime_consumer` e `idea_only`. Un basename repetido no
+fusiona entidades; cada path conserva su propio origen, commit y evidencia.
+
+## Phase 578 - foreground validation of hub, flujo, RD and Cultura
+
+Se completo la validacion en primer plano del slice operacional sin iniciar ni
+detener servicios permanentes y sin llamar rutas mutadoras.
+
+### Hub smoke and source correction
+
+- Primer comando: `PYTHONDONTWRITEBYTECODE=1 python3
+  scripts/hub_smoke.py --no-sse`. Resultado codigo 1; el log
+  `_logs/hub_smoke_2026-08-18_12-09-19.log` mostro
+  `/usr/bin/python3: No module named flujo`. El fallo era del harness: lanzaba
+  `python -m flujo` sin `src` en `PYTHONPATH`, no del servidor.
+- Correccion acotada en `scripts/hub_smoke.py`: el proceso temporal hereda un
+  `PYTHONPATH` que antepone `/home/mak/flujo/src`. No se cambio el servidor ni
+  su contrato.
+- Revalidacion `--no-sse`: codigo 0, version `0.56.1`, puerto temporal
+  `54581`, log `_logs/hub_smoke_2026-08-18_12-13-16.log`.
+- Revalidacion completa con SSE: codigo 0, puerto temporal `46741`, log
+  `_logs/hub_smoke_2026-08-18_12-13-53.log`. El proceso hijo termino al
+  finalizar el smoke.
+
+### Static and runtime evidence
+
+- `ast.parse` codigo 0 para `cultura/mak_plataforma/hub.py`,
+  `cultura/mak_research/interfaz.py`, `cultura/mak_curatoria/panel.py`,
+  `src/flujo/web/hub.py`, `src/flujo/serve/server.py`,
+  `src/flujo/rd/database.py` y `src/flujo/rd/informe.py`.
+- `systemctl --user status --no-pager mak-hub.service mak-research.service
+  mak-codex.service` codigo 0: las tres unidades estan `enabled` y `active`.
+  Los listeners loopback actuales son `127.0.0.1:8900` (hub), `:8890`
+  (research) y `:8891` (codex). El hub activo parte desde el proxy
+  `plataforma/hub.py`, que carga el canonico `flujo/cultura/mak_plataforma/hub.py`.
+  Research y Codex tienen copias activas con hash igual a sus canones de
+  Cultura. No se modificaron unidades ni procesos.
+- Matriz GET de 28 rutas sobre `8900`, `8890` y `8891`: todos devolvieron
+  HTTP 200 y contratos JSON/HTML validos. `/api/memoria/grafo` devolvio
+  `1.823.595` bytes; el primer chequeo lo corto a `300000` bytes y produjo un
+  falso error de parseo. La lectura completa corregida devolvio un objeto
+  valido con `nodes`, `edges` y `meta`.
+- `cultura/mak_curatoria/panel.py` pasa parseo, pero su servidor propio `8901`
+  no esta iniciado ni forma parte de la interfaz 8900 actual. Se conserva como
+  `isolated_readonly_panel`, no como evidencia de integracion ni motivo para
+  eliminarlo.
+
+### RD and Cultura boundary
+
+- SQLite read-only sobre `data/rd.db` y `data/rd_datos.db`: ambos
+  `PRAGMA integrity_check=ok`; `rd.db` conserva `7585` filas agregadas y
+  `rd_datos.db` conserva `0` filas. Sus mtimes no cambiaron. La llamada a
+  `flujo.rd.informe.resumen_json` devolvio el resumen vacio esperado sin crear
+  ni escribir registros.
+- GET `/api/cultura/opportunity-gate` devuelve `ok=true`, schema
+  `mak-cultura-opportunity-gate-v1`, modo `contract_check_only` y politica de
+  red/proveedores/mutacion de ledger en `not_called`.
+- No se llamaron POST de hub (`/api/ideas`, `/api/render`, `/api/ejecutar`,
+  portfolio save/append) ni mutadores de Research (`/api/workflow`,
+  `/api/repair`, `/api/reanudar`, `/run`, indexacion de memoria). Rollback de
+  esta validacion: no hay datos operativos que revertir; solo quedan los dos
+  logs de smoke como evidencia. La correccion del harness es reversible
+  eliminando unicamente el bloque que prepara `PYTHONPATH`.
+
+## Phase 579 - contract gate de Cultura y router semantico
+
+La suite declarativa no pudo ejecutarse porque el entorno no tiene pytest:
+`/usr/bin/python3: No module named pytest` (codigo 1). No se instalaron
+dependencias. Se ejecuto en su lugar una validacion directa con aserciones,
+`PYTHONPATH=/home/mak/flujo/src:/home/mak/flujo` y una SQLite temporal bajo
+`/tmp`, con codigo 0 y `16` checks PASS:
+
+- catalogo de departamentos y contratos RD pasaron;
+- `cultura_sources`, `cultura_capabilities` y
+  `cultura_opportunity_gate` pasaron con todos sus componentes presentes;
+- el gate confirmo `contract_check_only`, red no llamada y mutacion operativa
+  igual a cero;
+- `research_job_router` detecto `plants`, creo un job `planned` con siguiente
+  paso `discover`, creo `12` pasos semanticos, registro auditoria de cero
+  llamadas externas y genero JSON/Markdown temporales validos;
+- `external_calls=0` y `operational_data_mutated=0`.
+
+No se mezclo el panel aislado de Curatoria con el gate de Cultura, no se
+copiaron arboles y no se instalaron paquetes. `candidate` solo pasa a
+`operational` cuando existe consumidor foreground probado y contrato de
+mutacion/rollback explicito.
+
+## Phase 580 - FLUJO serve foreground disponible
+
+Se ejecuto nuevamente el entrypoint solicitado por el usuario, usando el
+venv local y sin crear un servicio permanente:
+
+```text
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/mak/flujo/src \
+  /home/mak/flujo/.venv/bin/python -m flujo serve --no-abrir \
+  --host 127.0.0.1 --port 8765
+```
+
+El proceso queda activo en primer plano en `127.0.0.1:8765` para inspeccion
+del usuario. El arranque mostro `flujo workspace (hub)`, repo root
+`/home/mak/flujo`, `flujo_hub.html`, `svg_visualizer.html`, `plano_demo.html`
+y las rutas API esperadas.
+
+Validacion desde otro proceso, sin mutacion:
+
+- `GET /api/ping`: HTTP 200, version `0.56.1`, workspace `flujo`,
+  `connected=true`.
+- `GET /api/status`: HTTP 200, root `/home/mak/flujo`, `has_svg=true`,
+  `has_projects=true`.
+- `GET /flujo_hub.html`: HTTP 200, HTML valido con idioma `es` y titulo
+  `flujo - plano rider`.
+
+No se abrio navegador, no se llamaron POST, no se tocaron bases ni se
+iniciaron servicios de systemd. El proceso debe mantenerse activo mientras
+el usuario inspecciona la interfaz; al terminar, se detiene con Ctrl-C en la
+sesion foreground y se verifica que `8765` quede libre.
+
+## Phase 581 - residuos robustos de esfuerzo.py
+
+Se completo la capa cronologica pendiente sin escanear de nuevo el arbol ni
+repetir la validacion del hub. Se creo el calculador reproducible:
+`tools/compute_effort_residuals.py`.
+
+El calculador lee solo `data/mak_knowledge.db`, vuelve a leer cada JSON de
+Research ya indexado para conservar `tema`/`topic`/`titulo`/`title` cuando
+existe, y materializa la tabla derivada `effort_residuals`. No copia los JSON,
+no altera las bases RD y no llama proveedores.
+
+### Metodo y resultado
+
+- Agrupacion contractual por modo y ruta de Research; tema y ruta quedan en
+  cada fila para triangulacion posterior.
+- Mediana como esperado; MAD como escala; desviacion absoluta media escalada
+  solo como fallback si MAD es cero y existe variacion.
+- Menos de tres valores comparables quedan sin puntuar; un grupo constante no
+  recibe una escala inventada.
+- `fuentes` invierte signo; las demas metricas conservan signo positivo.
+- `largo_informe` queda fuera del residuo porque no pertenece al mapa
+  `METRICAS` del contrato adjunto, aunque la base original conserve algunas
+  filas de esa señal.
+
+Comandos y resultados:
+
+```text
+PYTHONDONTWRITEBYTECODE=1 python3 -m py_compile \
+  tools/compute_effort_residuals.py
+-> codigo 0
+
+PYTHONDONTWRITEBYTECODE=1 python3 tools/compute_effort_residuals.py
+-> codigo 0; documentos=598; grupos=72; metric_rows=4484;
+   scored_rows=4422; integrity=ok
+```
+
+Artefactos creados:
+
+- `/home/mak/flujo/tools/compute_effort_residuals.py`
+- `/home/mak/flujo/context/MAK_EFFORT_RESIDUALS.md`
+- `/home/mak/flujo/context/MAK_EFFORT_RESIDUALS.csv`
+- tabla derivada `effort_residuals` dentro de
+  `/home/mak/flujo/data/mak_knowledge.db`
+
+La señal no se interpreta como calidad ni como recomendacion automatica. Los
+residuos altos son candidatos a revision de proceso; cualquier postulacion o
+promocion sigue requiriendo evidencia, consumidor y revision humana.
+
+## Phase 582 - crosswalk de esfuerzo hacia consumidores reales
+
+Se creo `tools/build_effort_consumer_crosswalk.py` y el reporte
+`context/MAK_EFFORT_CONSUMER_CROSSWALK.md`. La consulta fue read-only sobre la
+base ya materializada; no escribio en SQLite, no leyo WIN y no llamo
+proveedores.
+
+Resultado:
+
+- 598 documentos con metricas de esfuerzo;
+- 598 documentos vinculados directamente a la entidad de departamento
+  `research`;
+- 0 relaciones `possibly_consumed_by` directas desde los JSON de Research
+  hacia un consumidor;
+- 15 outliers positivos listados con modo, ruta, tema, metrica, valor,
+  esperado y entidad directa.
+
+Esto corrige una posible lectura falsa: un residuo alto no demuestra que el
+documento sea basura, ni que una herramienta lo consuma. El inventario solo
+prueba el departamento y deja pendiente el consumidor runtime.
+
+### Candidatos con evidencia suficiente para seguir
+
+- `tools/research_job_router.py`: contrato offline y gate foreground probado
+  en `/api/cultura/opportunity-gate` sobre 8900;
+- `cultura/mak_research/source_pipeline.py` y `fondart_corpus.py`: presentes
+  como componentes del gate; captura y propuesta permanecen separadas;
+- `cultura/mak_research/interfaz.py` y su proyeccion activa
+  `research/interfaz.py`: servicio interno 8890 proxied por 8900;
+- `cultura/mak_plataforma/hub.py`: entrypoint activo y consumidor de las rutas
+  Cultura/Research.
+
+El siguiente slice seleccionado es `opportunity -> research job -> draft
+proposal`. Los outliers de `errores`, `duracion_ms` y
+`profundidad_cadena` seran señales para mejorar ese proceso, no criterios de
+eliminacion ni de postulacion.
+
+## Phase 583 - dry-run de oportunidad para Jardines interpretativos
+
+Se valido el slice `opportunity -> research job -> draft proposal` con la
+idea real `/home/mak/curatoria_inbox/funding-lab/JARDINES_INTERPRETATIVOS.md`
+(18.117 bytes), sin usar el job operativo ni la base persistente.
+
+Comando principal: `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/mak/flujo/src:/home/mak/flujo python3`
+con `tools.research_job_router.create_job` y `render_job` sobre SQLite bajo
+`/tmp`. Resultado codigo 0:
+
+- dominio detectado: `plants`;
+- job temporal: `planned`, siguiente proceso `discover`;
+- `12` pasos semanticos creados;
+- JSON y Markdown de borrador validos;
+- auditoria del job: `no external call executed`;
+- `GET /api/cultura/opportunity-gate` en 8900: HTTP 200;
+- `GET /api/workflow` en 8890: HTTP 200;
+- `external_calls=0`, `operational_mutations=0`, `validation=PASS`.
+
+Despues se ejecuto la extraccion determinista offline de la misma fuente con
+`tools/interpretive_garden_workflow.py` en otro directorio temporal. Resultado
+codigo 0: `40` URLs conservadas, SQLite de conocimiento, CSV de correlaciones,
+CSV de semantica de procesos y reporte `validation=PASS`. La corrida
+persistentemente existente en `/home/mak/research/jardines_interpretativos/`
+se verifico con `PRAGMA integrity_check=ok`; no se reemplazo ni duplico.
+
+El proceso `flujo serve` sigue activo en `127.0.0.1:8765` para inspeccion del
+usuario; no fue reiniciado ni convertido en servicio permanente.
+
+## Phase 584 - reconciliacion read-only de las dos bases
+
+Se creo `tools/reconcile_garden_knowledge.py` y el reporte
+`context/MAK_JARDINES_RECONCILIATION.md`. La reconciliacion compara la base
+global `data/mak_knowledge.db` con la base persistente
+`research/jardines_interpretativos/jardines_interpretativos.sqlite` sin
+fusionar esquemas ni escribir ninguna de las dos.
+
+Validacion:
+
+```text
+PYTHONDONTWRITEBYTECODE=1 python3 -m py_compile \
+  tools/reconcile_garden_knowledge.py
+-> codigo 0
+
+PYTHONDONTWRITEBYTECODE=1 python3 tools/reconcile_garden_knowledge.py
+-> codigo 0; hash_match=1; global_integrity=ok; garden_integrity=ok;
+   garden_urls=40; garden_claims=22; garden_tools=12;
+   tool_overlap=0; direct_research_links=0; databases_mutated=0
+```
+
+El mismo archivo fuente esta indexado en ambas capas con el hash
+`a35070350df210568c9f33827cbaea4d7768d1582a033cf4fa68c21c285418cc` y
+artifact MAK `15057`. Jardines conserva su modelo especializado de fuentes,
+claims, entidades, relaciones y semantica; `mak_knowledge.db` conserva
+inventario, procedencia, imports, candidatos, consumidores y residuos. La
+ausencia de coincidencias por nombre y de relaciones `possibly_consumed_by`
+impide fusionar herramientas mecanicamente.
+
+Decision de integracion: el expediente de Jardines puede pasar a
+`review_ready` como candidato documental, porque tiene fuente, semantica,
+restricciones, relaciones y dry-run de propuesta. No es aun publicable ni
+postulacion enviada: sus 40 URLs siguen sin captura web verificada y falta
+FUP/presupuesto/revision humana.
+
+## Phase 585 - paquete review_ready de Jardines
+
+Se creo el expediente de revision interna:
+`context/MAK_JARDINES_REVIEW_READY.md`. Separa tesis, procedencia, tipos
+semanticos, correlaciones, herramientas candidatas, evidencia, bloqueos de
+publicacion y decision de integracion.
+
+Validacion foreground:
+
+```text
+python3 -B (aserciones de existencia + PRAGMA integrity_check)
+-> review_packet=PASS; referenced_files=6; databases_mutated=0
+
+git diff --check -- archivos de esta fase
+-> codigo 0
+
+ss -ltnp | rg ':8765'
+-> listener activo en 127.0.0.1:8765
+```
+
+El expediente queda `review_ready` solo en sentido documental. No se cambio
+el estado de ninguna entidad en SQLite, no se enviaron postulaciones y no se
+publico contenido. La fuente mantiene 40 URLs pendientes de captura/verificacion,
+y el expediente aun requiere FUP, presupuesto, cronograma y revision humana.
+
+## Phase 586 - segundo expediente RD Plano/Rider
+
+Se selecciono el slice independiente RD--Venue/Plano por tener una idea
+concreta, consumidor local y relacion directa con el trabajo VJ. Se creo
+`context/MAK_RD_PLANO_REVIEW_READY.md`.
+
+Fuentes trianguladas:
+
+- `projects/plano/README.md`: constantes de realidad, reglas de rider,
+  layout, SVG y relacion con cotizaciones;
+- `projects/plano/feedback.md`: estado funcional, pendientes y frontera entre
+  motor headless y referencia teatral;
+- `projects/plano/plano_stands.py`: wrapper portable activo;
+- `src/flujo/plano/`: motor comun;
+- `projects/plano/referencia_plano_teatro.py`: generador radial original con
+  butacas, balcon y geometria de escenario curvo asociada en el documento a
+  SCD Plaza Egaña.
+
+Validacion foreground:
+
+```text
+py_compile de wrapper, referencia y motor flujo.plano -> codigo 0
+plano_stands.py evento_ejemplo.json -> codigo 0, SVG valido, 8719 bytes
+plano_stands.py evento_ejemplo.json --rider -> codigo 0, rider valido, 692 bytes
+GET RD/Plano en 8900 y 8765 -> HTTP 200 en todas las rutas comprobadas
+external_calls=0; operational_mutations=0
+```
+
+Decision: `plano_stands.py` queda como herramienta offline portable; la
+referencia SCD queda como genealogia matematica reutilizable. No se mezclan
+las GUIs, no se instala `customtkinter`, no se toca `rd.db` ni `rd_datos.db`,
+y no se presentan medidas de una venue sin fuente autorizada.
+
+## Phase 587 - correccion de duplicacion del crosswalk RD/Venue
+
+Antes de ampliar el expediente se relevo el handoff y las fases previas
+411-443. El crosswalk de venue ya estaba resuelto y no debe repetirse:
+
+- `rd.db` es el dueño del catalogo RD;
+- `rd_datos.db` es el store de campo separado y tiene cero filas;
+- `Espacio Riesco` es venue;
+- `OpenKlub` es productora/marca, no venue;
+- `FRVR` es artista/DJ headliner y su venue crudo era `Sala Metronomo`;
+- `scd-plaza-egana` es una proyeccion tecnica VJ, con geometria demo y
+  confianza declarada;
+- `referencia_plano_teatro.py` es genealogia matematica, mientras
+  `plano_stands.py` y `src/flujo/plano/` son el contrato headless activo.
+
+La lectura actual de las dos bases confirmo `integrity=ok`, `rd.db` con un
+catalogo de venue activo, `rd_datos.db` vacio y sin necesidad de insertar ni
+fusionar nada. `MAK_RD_PLANO_REVIEW_READY.md` sintetiza esa evidencia y la
+validacion foreground sin reemplazar los crosswalks historicos.
+
+## Next concrete action
+
+No rehacer el crosswalk. Si se abre un avance nuevo, debe ser un slice de
+implementacion acotado y distinto: adaptar la geometria radial demo a un
+consumidor headless de venue, usando solo medidas autorizadas y manteniendo
+`scd-plaza-egana.json` como demo no verificada; o ampliar el layout RD con
+escenario, accesos y pantallas. Elegir una sola ruta por consumidor real y
+validarla antes de editar codigo. No ejecutar GUI, no publicar ni alterar
+bases.
+
+Last verified: 2026-08-18 America/Santiago - Phase 587.
+
+## Phase 588 - intake mecanico SSD/proyecto hacia expediente postulable
+
+El usuario aclaro que el resultado no puede ser otro `.md`: debe aceptar un
+SSD o una carpeta de proyecto, ordenar mecanicamente el material, relacionarlo
+con MAK y producir un expediente de postulacion real. Se relevo primero el
+indice existente `/home/mak/labs/portable-ssd-index-20260813/archivo_index.sqlite`.
+Su evidencia muestra `45.536` activos, `917` proyectos y `13.121` familias,
+pero `candidates=0` porque la corrida original nunca recibio percepcion. Por
+lo tanto el indice es una base de ordenamiento, no aun un expediente.
+
+Se creo el adaptador operativo:
+`/home/mak/flujo/tools/build_application_intake.py`.
+
+Contrato implementado:
+
+- `--source-index` importa un indice SSD existente sin copiar su arbol;
+- `--source-root` acepta una carpeta de proyecto acotada y crea un indice
+  temporal de metadata/hash para esa carpeta;
+- conserva proyectos, familias, activos, mtime, hash disponible, media kind,
+  procedencia y relaciones en una SQLite derivada;
+- enlaza tokens y rutas con `mak_knowledge.db`, y agrega consumidores locales
+  autorizados cuando el proyecto es `SCD`;
+- crea `project_candidates`, `fund_targets`, `application_packages` y
+  `workflow_events`;
+- genera JSON y HTML de expediente, dejando Markdown fuera del producto
+  principal;
+- nunca publica, envia una postulacion, modifica el SSD, copia arboles ni
+  altera `mak_knowledge.db`, `rd.db` o `rd_datos.db`.
+
+La corrida final foreground fue:
+
+```text
+PYTHONDONTWRITEBYTECODE=1 python3 -m py_compile tools/build_application_intake.py
+-> codigo 0
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/mak/flujo python3 \
+  tools/build_application_intake.py \
+  --source-index /home/mak/labs/portable-ssd-index-20260813/archivo_index.sqlite \
+  --out-dir /home/mak/research/intake/portable-ssd-20260813-scd-r4 \
+  --project-path SCD --fund Fondart --candidate-limit 10
+-> codigo 0; run_id=6f6a046fb3c639a35b32; applications=scd-fondart
+```
+
+Productos reales generados:
+
+- `/home/mak/research/intake/portable-ssd-20260813-scd-r4/intake.sqlite`;
+- `/home/mak/research/intake/portable-ssd-20260813-scd-r4/intake.json`;
+- `/home/mak/research/intake/portable-ssd-20260813-scd-r4/project_candidates.csv`;
+- `/home/mak/research/intake/portable-ssd-20260813-scd-r4/applications/scd-fondart.json`;
+- `/home/mak/research/intake/portable-ssd-20260813-scd-r4/applications/scd-fondart.html`.
+
+Validacion de la SQLite: `PRAGMA integrity_check=ok`. Conteos: `intake_assets=45536`,
+`intake_projects=917`, `intake_families=13121`, `intake_relations=113`,
+`mak_links=106895`, `fund_targets=1`, `application_packages=1`,
+`workflow_events=2`. El proyecto SCD tiene como enlaces exactos de confianza
+0.85: `projects/plano/plano_stands.py`,
+`projects/plano/referencia_plano_teatro.py`, `tools/venue_geometria_scd.py`,
+`data/venues/scd-plaza-egana.json` y `schemas/venue.schema.json`.
+
+El expediente `scd-fondart` esta en estado `draft_with_evidence_gaps`, con
+readiness `90/100` mecanico, no significa que este listo para enviar. Mantiene
+seis gaps explicitos: convocatoria oficial, contexto/problema, metodo,
+presupuesto, cronograma y equipo. La metadata prueba existencia y relaciones,
+no inventa afirmaciones artisticas ni elegibilidad.
+
+Tambien se agrego:
+`/home/mak/flujo/tests/test_build_application_intake.py`.
+Validacion: `.venv/bin/python -m pytest -q tests/test_build_application_intake.py`
+-> codigo 0, `1 passed`. El mismo contrato se probo con una carpeta directa
+`/home/mak/flujo/projects/plano` y genero `plano-fondart` en `/tmp`, codigo 0.
+
+Se retiraron dos salidas intermedias generadas por esta misma fase y ya
+superadas por `r4`: `/home/mak/research/intake/portable-ssd-20260813-scd-r2`
+(106.496 bytes) y `...-r3` (97.907.837 bytes). No contenian fuente del usuario,
+solo SQLite/JSON/HTML derivados de corridas fallidas o previas. Se conserva
+unicamente `portable-ssd-20260813-scd-r4` como salida canonica.
+
+No se ejecutaron llamadas externas, Firecrawl, Watson ni proveedores de fondos;
+esta fase solo conecta evidencia local y deja la captura externa como gap
+controlado. No hay databases_mutated fuera del nuevo workspace derivado.
+
+## Next concrete action
+
+Conectar `build_application_intake.py` a la cola/interfaz de Research como una
+operacion explicita `intake -> relate -> application_package`, mostrando el
+JSON/HTML y los gaps sin crear postulaciones automaticamente. Despues probar
+la misma ruta con un proyecto real adicional del indice, elegido por
+consumidor MAK y no por tamano. No abrir otra base global ni duplicar el indice
+SSD; cada intake debe conservar su SQLite derivada y su `source_index_reference.json`.
+
+Last verified: 2026-08-18 America/Santiago - Phase 588.
+
+## Phase 589 - puente operativo intake en Research 8890
+
+Se conecto el adaptador a la interfaz canonica
+`/home/mak/flujo/cultura/mak_research/interfaz.py` mediante `POST /api/intake`.
+La ruta acepta exactamente una de estas entradas: `source_index` bajo las
+raices locales permitidas o `source_root` como carpeta de proyecto acotada bajo
+`/home/mak`. Rechaza volumenes completos como `PortableSSD`/`WIN`, limita
+fondos y candidatos, y no ejecuta red, scraping ni envio de postulaciones.
+Es una operacion derivada que devuelve SQLite/JSON/HTML y deja el estado
+`draft_with_evidence_gaps`.
+
+Se desplego solo el archivo de interfaz a su proyeccion operativa
+`/home/mak/research/interfaz.py`, porque el servicio 8890 apunta a esa ruta.
+No se modificaron Hub 8900, Codex 8891 ni la cola. Comandos y resultados:
+
+```text
+install -m 0755 /home/mak/flujo/cultura/mak_research/interfaz.py \
+  /home/mak/research/interfaz.py
+systemctl --user restart mak-research.service
+-> servicio active; PID nuevo 187288
+
+sha256sum canonico runtime
+-> 2bda100722fa3ff7358bfe2fa8c56d849aa322e3b00df12aabcfcb42787c0897 en ambos
+
+POST /api/intake {"source_root":"/media/mak/PortableSSD"}
+-> HTTP 400; se exige indice SSD o carpeta acotada
+
+POST /api/intake {"source_root":"/home/mak/flujo/projects/plano", ...}
+-> HTTP 200; run_id=bee3758ff51e8a9c359d; plano-fondart generado;
+   SQLite integrity=ok; JSON/HTML presentes
+```
+
+La salida de prueba del endpoint `/home/mak/research/intake/api-runtime-check-plano`
+se elimino tras comprobar `PRAGMA integrity_check=ok` porque era un artefacto
+de validacion y no una entrega. Se conservaron solamente los productos reales
+de `portable-ssd-20260813-scd-r4`.
+
+## Next concrete action
+
+Validar la misma operacion desde el Hub 8900 como proxy o agregar un boton
+minimo en la interfaz Research que abra el expediente JSON/HTML generado. La
+logica mecanica ya esta cerrada; el siguiente avance debe elegir un segundo
+proyecto por consumidor MAK (no por volumen), ejecutar el intake y luego llenar
+los gaps de postulación con evidencia oficial y humana. No lanzar Firecrawl ni
+Watson automaticamente desde `/api/intake`, y no crear mas bases globales.
+
+Last verified: 2026-08-18 America/Santiago - Phase 589.
+
+## Phase 590 - proxy Hub 8900 para intake
+
+Se valido el mismo contrato desde la interfaz unificada, sin abrir un puerto
+nuevo:
+
+```text
+POST http://127.0.0.1:8900/research/api/intake
+{"source_root":"/media/mak/PortableSSD"}
+-> HTTP 400; respuesta del gate: usar el indice SSD o una carpeta acotada
+```
+
+El Hub entrega la ruta Research y conserva la frontera de seguridad del
+adaptador. No se generaron nuevos archivos en esta prueba ni se tocaron
+fuentes. 8900 sigue siendo la interfaz unificada y 8890 permanece como
+servicio interno proxied.
+
+## Next concrete action
+
+Probar una corrida exitosa desde el proxy con una carpeta de proyecto pequeña
+solo si se necesita una evidencia de extremo a extremo; luego mostrar sus
+salidas JSON/HTML en la UI. Para el trabajo real usar el expediente canónico
+`/home/mak/research/intake/portable-ssd-20260813-scd-r4` y repetir el intake
+para un segundo proyecto elegido por consumidor MAK. Los gaps de postulación
+siguen requiriendo evidencia oficial y revisión humana; no automatizar envio.
+
+Last verified: 2026-08-18 America/Santiago - Phase 590.
+
+## Phase 591 - auditoria real MAK Research: 2026 vs 2024
+
+Objetivo de esta fase: desplegar por el runner real de MAK Research la misma
+pregunta sobre enfoques no convencionales de agentes LLM/deep learning,
+comparar la salida contra la investigacion externa 2024/2026 y reparar bugs de
+captura, proveedor, contexto, formato y trazabilidad sin maquillar un informe.
+
+### Estado fisico y corrida inicial
+
+Se verifico primero `/home/mak/*`, `/home/mak/flujo` y el servicio interno. La
+proyeccion `/home/mak/research/research.py` sigue importando el canonico
+`cultura/mak_research/research.py`; no es un segundo dueño semantico.
+
+Comando inicial:
+
+```text
+RESEARCH_ENV=/home/mak/research/research.env \
+PYTHONPATH=/home/mak/flujo:/home/mak/research \
+python3 /home/mak/research/research.py "enfoques no convencionales ... NVIDIA OpenAI DeepSeek" \
+  --iteraciones 3 --depth advanced --densidad largo \
+  --providers cerebras,groq,ollama --formato informe \
+  --out /home/mak/research/informes
+-> exit 0; 3 iteraciones, 9 findings, 9 fuentes, llm={'ollama': 13}
+```
+
+Resultado: `/home/mak/research/informes/20260819-093953-enfoques-no-convencionales-para-agentes-.{md,json}`.
+No es una entrega confiable: Cerebras devolvio HTTP 402
+`payment_required`; Groq devolvio HTTP 404 para
+`llama-3.3-70b-versatile`; Ollama absorbio las 13 llamadas. Las 6 fallas
+quedaron en `meta.errors`, no se ocultaron. El buscador ademas incorporo
+Facebook, Academia y blogs secundarios.
+
+### Bugs comprobados y reparados
+
+1. `research.py` usaba `fetch_url`/urllib aunque `source_pipeline.py` ya tenia
+   Firecrawl/Crawl4AI/provenance. Ahora captura con
+   `capture_url(..., backend="auto")`, conserva `capture_backend`,
+   `capture_attempts`, estado y recorte; urllib queda como fallback explicito.
+2. Se agrego `firecrawl_search` para `POST /v2/search`. La variable
+   `RESEARCH_SEARCH_PROVIDER=firecrawl` hace API-first; `auto` mantiene
+   SearXNG primero y Firecrawl/Tavily como respaldos.
+3. Firecrawl puede devolver cero resultados ante consultas narrativas. Se
+   agrego compactacion mecanica de consulta, preservando IDs arXiv; la
+   consulta original y `queryUsed/queryCompacted` quedan registradas.
+4. El texto completo de Firecrawl podia disparar HTTP 413 en Groq. La captura
+   permanece completa para auditoria, pero el prompt se limita a 8.000
+   caracteres y registra `capture_chars`, `analysis_chars` y
+   `analysis_truncated`.
+5. El modelo Groq configurado era obsoleto. Se verifico el catalogo real:
+   `openai/gpt-oss-20b` y `openai/gpt-oss-120b` existen; 120b alcanzo rate
+   limit durante la corrida. Se dejo `openai/gpt-oss-20b` en
+   `/home/mak/research/research.env` y en ambos defaults de `research_lib.py`.
+6. Los modelos `openai/gpt-oss*` necesitan
+   `max_completion_tokens=pedido+2048`; el payload Groq ahora lo aplica.
+7. Qwen podia devolver `<think>` sin cierre; `limpiar_salida` quita bloques
+   cerrados y convierte un bloque abierto en respuesta vacia para activar
+   fallback, nunca en evidencia.
+8. El formato `informe` no tenia compuerta ejecutable. Se agrego
+   `verificar_informe`: respuesta inicial, URLs citadas, estados evidencia/
+   inferencia/ausencia, consultas, titulo y cobertura temporal. El resultado
+   marca `ready` o `review_required`; `main` ya devuelve codigo 2 en el segundo
+   caso.
+9. Se agrego cobertura temporal: una consulta que pide 2024 y recibe solo
+   fuentes arXiv 2025/2026 queda en revision. Esto detecto contaminacion real
+   en la slice 2024.
+10. Cada finding futuro conserva `analysis_provider`, `search_backend`,
+    `search_query` y el metadata reconstruye `analysisProviders` y
+    `searchBackends`; los reintentos no aparentan ser una sola llamada.
+
+### Corridas y resultado honesto
+
+Slice focalizada 2026:
+
+```text
+RESEARCH_SEARCH_PROVIDER=firecrawl ... --providers groq \
+  --iteraciones 2 --depth advanced --densidad corto --formato informe
+-> finalmente genero informe; Groq 20b; Firecrawl capturo fuentes; calidad
+   recomputada con el verificador actual = ready
+```
+
+Artefactos:
+
+- [informe 2026](</home/mak/research/informes/20260819-110407-papers-arxiv-2026-sobre-agentes-llm-auto.md>)
+- JSON acompanante en la misma carpeta.
+
+Lo que sostiene: Reward-Free Self-Evolution (2604.18131) y
+Self-Evolving World Models/WorldEvolver (2606.30639) aparecen con URLs arXiv;
+el informe separa evidencia, inferencia y ausencia. CoMap fue pedido pero no
+quedo demostrado en el conjunto final; el informe lo declara como no
+encontrado. La metadata original subcuenta llamadas por haber sido reanudada;
+el bug queda reparado para futuras corridas y no se inventa un total historico.
+
+Slice temporal 2024:
+
+```text
+RESEARCH_SEARCH_PROVIDER=firecrawl ... --providers ollama \
+  --iteraciones 1 --depth advanced --densidad corto --formato informe
+-> exit 2; 1 iteracion, 3 findings, 3 fuentes, llm={'ollama': 5};
+   QUALITY: review_required
+```
+
+Artefactos:
+
+- [informe 2024 contaminado](</home/mak/research/informes/20260819-112003-2024-arxiv-2404-11964-2405-20309-2410-13.md>)
+- JSON acompanante en la misma carpeta.
+
+Diagnostico: el tema pidio 2024/2026, pero las tres fuentes recuperadas son
+2025/2026 (`2511.20857`, `2603.07670`, `2605.06527`). La compuerta marca
+`temporal_coverage=false`. No usar este archivo como comparacion 2024 hasta
+repetir con consultas arXiv fijadas por ID y fuente primaria.
+
+Una corrida amplia con Firecrawl/Ollama (`20260819-102428...`) tambien quedo
+en revision por recuperar indices/tutoriales de LangChain/Pinecone en vez de
+papers primarios. No se presenta como evidencia.
+
+### Pruebas de APIs y validacion local
+
+```text
+Firecrawl POST https://api.firecrawl.dev/v2/search
+-> HTTP 200/success true; 5 resultados pertinentes; creditsUsed=2 por consulta
+
+capture_url(arxiv 2606.30639, backend=firecrawl)
+-> captured; 6881 caracteres
+capture_url(pagina oficial NVIDIA Cosmos, backend=firecrawl)
+-> captured; 16186 caracteres
+
+GET Groq /v1/models -> openai/gpt-oss-20b y openai/gpt-oss-120b disponibles
+GET Cerebras /v1/models -> gpt-oss-120b y gemma-4-31b disponibles
+Smoke Groq openai/gpt-oss-20b -> respuesta JSON, exit 0
+Cerebras chat -> HTTP 402 payment_required; no se afirma operativo
+
+python3 -m py_compile ... -> exit 0
+git diff --check (archivos tocados) -> exit 0
+pytest tests/test_formatos_mak.py -> exit 127 / pytest no esta instalado
+python3 -m pytest ... -> exit 1 / modulo pytest ausente
+```
+
+No quedaron `research.py`, `panel.py`, `worker.py` ni Blender en segundo plano;
+el `pgrep` final solo encontro sus propios comandos de inspeccion. No se
+instalaron paquetes, no se tocaron secretos, no se borro ningun artefacto y no
+se creo un servicio nuevo.
+
+### Archivos modificados
+
+- `cultura/mak_research/research.py`
+- `cultura/mak_research/research_lib.py`
+- `cultura/mak_research/formato_ensayo.py`
+- `cultura/mak_research/MAK_RESEARCH.md`
+- `tests/test_formatos_mak.py`
+- `/home/mak/research/research_lib.py`
+- `/home/mak/research/formato_ensayo.py`
+- `/home/mak/research/research.env` (solo `GROQ_MODEL`; valores secretos no leidos)
+
+### Riesgos abiertos
+
+- Groq 20b funciona en smoke pero la cuenta alcanza 429 en corridas largas;
+  respetar enfriamiento o usar Ollama, y conservar el proveedor en metadata.
+- Cerebras tiene catalogo visible pero cuota 402: no debe estar en la cadena
+  activa hasta que el usuario reponga/autorice cuota.
+- SearXNG local responde a veces 200 ciego por timeouts/CAPTCHA; Firecrawl es
+  el backend recomendable para esta investigacion, con costo de creditos.
+- El test 2024 quedo bloqueado por cobertura temporal; su archivo es evidencia
+  de fallo del workflow, no un informe final.
+
+## Next concrete action
+
+Repetir la slice 2024 con consultas separadas y fijadas a IDs primarios
+`2404.09982`, `2410.13232`, `2405.20309` y un cuarto paper 2024 confirmado,
+usando `RESEARCH_SEARCH_PROVIDER=firecrawl` y un proveedor LLM con cuota
+disponible. Luego ejecutar una tercera slice de fuentes oficiales separadas
+para NVIDIA, OpenAI y DeepSeek; no mezclar blogs/noticias con evidencia
+primaria. Solo cuando ambas pasen `quality.status=ready`, redactar la matriz
+comparativa 2024/2026. No instalar pytest ni cambiar Cerebras sin autoridad
+externa; no usar los informes `review_required` como resultados.
+
+Last verified: 2026-08-19 America/Santiago - Phase 591.
