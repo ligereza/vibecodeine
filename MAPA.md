@@ -261,6 +261,7 @@ repositorio. Las credenciales y tokens se mantienen fuera de Git.
 | `TAVILY_API_KEY` | Clave opcional para el respaldo de busqueda de Research; no requerida por el modo offline. |
 | `FIRECRAWL_API_KEY` | Clave opcional para captura estructurada de Research; el pipeline conserva fallback urllib si no existe. |
 | `MAK_RESEARCH_REGISTRY` | Ruta opcional del registro SQLite de jobs de Research; por defecto usa `/home/mak/research/jardines_interpretativos/jardines_interpretativos.sqlite`. |
+| `MAK_LEARNING_DB` | Ruta opcional del ledger SQLite de Project IR y contratos; por defecto usa `data/mak_knowledge.db`. |
 
 Every active topic branch must carry its own scoped contract and handoff,
 created from `contracts/BRANCH_AGENTS_TEMPLATE.md` and

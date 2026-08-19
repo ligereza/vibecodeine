@@ -15294,7 +15294,7 @@ Validacion foreground:
 
 ```text
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest -v tests.test_project_ir tests.test_project_router
--> exit 0, 10 tests
+-> exit 0; selected test slice passed
 PYTHONDONTWRITEBYTECODE=1 python3 scripts/hub_smoke.py --port 0 --timeout 20
 -> exit 0; ping, traversal, SSE, /api/project/learning y /api/project/route pasaron
 data/mak_knowledge.db -> 71,860,224 bytes; sha256 1d8b...4decee32
@@ -15403,7 +15403,7 @@ resumen real queda `projects.review_required=1`, `episodes.abstained=1`,
 Validacion foreground despues del caso real:
 
 ```text
-unittest Project IR + router -> exit 0, 13 tests
+unittest Project IR + router -> exit 0; selected test slice passed
 hub_smoke.py --port 0 --timeout 20 -> exit 0
 ```
 
@@ -15444,7 +15444,7 @@ Validacion real sin persistencia adicional:
 ```text
 project_gate.py --db data/mak_knowledge.db --project-id project-5047cc3a2269b5031460
 -> exit 0; decision=abstain; probe=abstained; recorded=false
-unittest Project IR + router + episode_runner -> exit 0, 15 tests
+unittest Project IR + router + episode_runner -> exit 0; selected test slice passed
 hub_smoke.py --port 0 --timeout 20 -> exit 0
 ```
 
@@ -15506,7 +15506,7 @@ Validacion foreground:
 ```text
 npm run typecheck -> exit 0
 npm run build:context -> exit 0; Vite build OK; warning informativo: Vite 7 recomienda Node >=20.19, pero el bundle termino correctamente
-unittest Project IR/router/episodes/API/intake -> exit 0, 16 tests
+unittest Project IR/router/episodes/API/intake -> exit 0; selected test slice passed
 scripts/hub_smoke.py --port 0 --timeout 20 -> exit 0
 markers en context/flujo_hub.html: Memoria operativa, Probe read-only
 git diff --check -> exit 0
@@ -15573,7 +15573,7 @@ read-only`. La base real sigue sin copiar fuentes: el proyecto SCD queda
 Validacion foreground:
 
 ```text
-unittest IR/router/episodes/API/contracts/intake -> exit 0, 18 tests
+unittest IR/router/episodes/API/contracts/intake -> exit 0; selected test slice passed
 npm run typecheck -> exit 0
 npm run build:context -> exit 0; bundle 773.10 kB; warning existente de recomendacion Node >=20.19 para Vite 7
 scripts/hub_smoke.py --port 0 --timeout 20 -> exit 0
@@ -15619,7 +15619,7 @@ Formatos no reconocidos (`unknown`) se abstienen; no se inventa una ruta.
 Validacion foreground:
 
 ```text
-unittest ProjectResearch + IR/router/episodes/API/contracts/intake -> exit 0, 22 tests
+unittest ProjectResearch + IR/router/episodes/API/contracts/intake -> exit 0; selected test slice passed
 project_gate sobre SCD real -> exit 0; decision=abstain; reason=project_state_requires_evidence; probe=abstained; recorded=false
 scripts/hub_smoke.py --port 0 --timeout 20 -> exit 0
 git diff --check -> exit 0; procesos Blender/flujo/vite/render -> ninguno
@@ -15656,7 +15656,7 @@ ni se llama un proveedor.
 Validacion foreground:
 
 ```text
-unittest ProjectResearch + IR/router/episodes/API/contracts/intake -> exit 0, 23 tests
+unittest ProjectResearch + IR/router/episodes/API/contracts/intake -> exit 0; selected test slice passed
 fixture plan-only repetido con episode-plan-demo -> una sola fila; fingerprint presente
 git diff --check -> exit 0
 ```
@@ -15724,7 +15724,7 @@ filas de verificacion explicitas. El hash cambio de
 Validacion foreground:
 
 ```text
-unittest contratos/auditoria/IR/router/episodes/API/intake -> exit 0, 25 tests
+unittest contratos/auditoria/IR/router/episodes/API/intake -> exit 0; selected test slice passed
 npm desde la raiz -> exit 1, ENOENT /home/mak/flujo/package.json (comando mal ubicado, no codigo)
 npm --prefix web run typecheck -> exit 0
 npm --prefix web run build:context -> exit 0; bundle 773.37 kB; warning Node 18/Vite 7 existente
@@ -15760,7 +15760,7 @@ Atencion de auditoria: contract-consumer-a0f46193c9c6789e0fe3=needs_evidence (bl
 Validacion foreground:
 
 ```text
-unittest auditoria/ProjectResearch/IR/router/episodes/API/contracts/intake -> exit 0, 25 tests
+unittest auditoria/ProjectResearch/IR/router/episodes/API/contracts/intake -> exit 0; selected test slice passed
 npm --prefix web run typecheck -> exit 0
 npm --prefix web run build:context -> exit 0; bundle 774.01 kB; warning Node 18/Vite 7 existente
 scripts/hub_smoke.py --port 0 --timeout 20 -> exit 0
@@ -15839,7 +15839,7 @@ autoridad automatica para rellenar la propuesta.
 Validacion foreground:
 
 ```text
-unittest IR + auditoria + ProjectResearch + router + episodes + API + contracts + intake -> exit 0, 26 tests
+unittest IR + auditoria + ProjectResearch + router + episodes + API + contracts + intake -> exit 0; selected test slice passed
 source query SQLite read-only -> root_exists=true; source_root=/media/mak/PortableSSD
 git diff --check -> exit 0
 ```
@@ -15890,7 +15890,7 @@ presupuesto, cronograma o equipo.
 Validacion foreground:
 
 ```text
-unittest evidencia + IR/auditoria/ProjectResearch/router/episodes/API/contracts/intake -> exit 0, 28 tests
+unittest evidencia + IR/auditoria/ProjectResearch/router/episodes/API/contracts/intake -> exit 0; selected test slice passed
 SQLite summary read-only despues de registrar -> exit 0
 git diff --check -> exit 0
 ```
@@ -15917,7 +15917,7 @@ referencia SSD real y cierre de evidencia SCD.
 Regresion final foreground:
 
 ```text
-unittest -> exit 0, 28 tests
+unittest -> exit 0; selected test slice passed
 npm --prefix web run typecheck -> exit 0
 npm --prefix web run build:context -> exit 0; bundle 774.01 kB; warning Node 18/Vite 7 existente
 scripts/hub_smoke.py --port 0 --timeout 20 -> exit 0
@@ -15956,3 +15956,61 @@ formulacion SCD y volver a ejecutar el cierre; hasta entonces el sistema debe
 mantener `review_required` y abstenerse.
 
 Last verified: 2026-08-19 America/Santiago - Phase 616.
+
+## Phase 617 - Dependabot review and publication
+
+Se publico el objetivo de infraestructura de aprendizaje en `main`:
+
+```text
+commit b18af4f feat: add project learning control plane
+push origin/main -> exit 0
+```
+
+Se revisaron los PR abiertos de Dependabot con `gh` autenticado:
+
+```text
+#535 lucide-react 1.28.0 -> 1.31.0: CI y seguridad verdes; merge squash aplicado
+#537 grupo Python: CI y seguridad verdes; merge squash aplicado
+#536 Vite 7.3.6 -> 8.2.1: npm ci falla por peer vite/plugin-react; no mergeado
+```
+
+Los merges #535 y #537 quedaron sincronizados localmente en `0305785`.
+El #536 fue cerrado y su rama remota eliminada porque actualizar Vite sin
+actualizar simultaneamente `@vitejs/plugin-react` 5.1.1 dejaba el PR roto;
+esa migracion mayor requiere una decision y runtime Node 20.19+ separados.
+
+## Phase 618 - reparacion de contratos CI descubiertos por Dependabot
+
+Los checks del `main` revelaron cuatro contratos que la bateria enfocada no
+habia recorrido:
+
+- `formato_ensayo.verificar_informe()` no reconocia la forma valida
+  `Inferimos` para el estado inferencial.
+- El handoff nuevo escribia conteos de slices como si fueran el total de la
+  suite, contra la regla de higiene documental.
+- Diez tools operativas no estaban mencionadas en `CAPACIDADES.md`.
+- `MAK_LEARNING_DB` era leida por el runtime pero no estaba en `MAPA.md`.
+
+Se corrigieron solo esos contratos en:
+`cultura/mak_research/formato_ensayo.py`, `context/LAST_HANDOFF.md`,
+`CAPACIDADES.md` y `MAPA.md`.
+
+Validacion foreground:
+
+```text
+.venv/bin/python -m flujo verify -> exit 0
+git diff --check -> exit 0
+```
+
+El primer check remoto del commit publicado fallo en esos mismos cuatro
+contratos; no se considero verde por omision. La topologia tambien fallo
+porque la rama del #536 seguia viva; fue eliminada antes de esta correccion.
+
+## Next concrete action
+
+Commitir y publicar la reparacion de Phase 618; despues consultar los checks
+del nuevo `main`. Si CI, seguridad y topology guard quedan verdes, conservar
+Vite 7 como la linea estable y dejar cualquier futura migracion Vite 8 como
+trabajo mayor coordinado con plugin-react 6 y Node 20.19+.
+
+Last verified: 2026-08-19 America/Santiago - Phase 618.

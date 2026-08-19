@@ -103,6 +103,16 @@ CLI real (`py -m flujo --help`, v0.56.1), comandos principales:
 | `tapiz_live_loop.py` | Daemon-poller que corre `compete_engine` en modo `--live` a intervalo fijo. |
 | `tapiz_telemetry.py` | Construye el autorretrato en vivo del ecosistema (`system_status.json`). |
 | `gen_animadas_obras.py` | Cada obra curada -> su pieza animada por el motor semantico, determinista desde el id (misma obra = misma pieza); escribe `iskvw/piel/animadas/*.svg` + `iskvw/datos/animadas.json`, que `contrato_archivo.desde_animadas` mete al archivo vinculada a su obra. `tests/test_gen_animadas_obras.py`. |
+| `audit_blend_scene.py` | Auditoria AST/read-only de escenas Blender para el consumidor de render; si falta Blender queda `needs_evidence`. |
+| `bake_static_materials.py` | Preparacion acotada de bakes de materiales estaticos para el render RD; requiere Blender y no se ejecuta sin autoridad de mutacion. |
+| `build_application_intake.py` | Convierte un paquete de proyecto en entrada Project IR; consumidor `tools/project_gate.py` y los Hubs. |
+| `build_effort_consumer_crosswalk.py` | Cruza esfuerzo, consumidor y procedencia para priorizar slices de MAK Research y Curatoria. |
+| `build_mak_knowledge_db.py` | Inicializa o migra el ledger SQLite de conocimiento MAK; conserva contratos y evidencia sin copiar arboles. |
+| `compute_effort_residuals.py` | Calcula residuales de esfuerzo para el backlog y la trazabilidad de entregas. |
+| `optimize_blend_scene.py` | Diagnostico/preparacion de optimizacion de escenas Blender; queda gated si no hay runtime Blender. |
+| `profile_blender_animation.py` | Perfil read-only de animacion Blender para el consumidor de secuencia/render. |
+| `project_gate.py` | Gate CLI de Project IR: route/probe read-only y registro explicito de episodios; consumidor Hub/Research. |
+| `reconcile_garden_knowledge.py` | Reconcilia conocimiento de jardines con el Research/Funding Lab, preservando desconocidos y fuentes. |
 | `token_budget.py` | Estima tokens de un set de archivos antes de mandarlos a un modelo. |
 | `venue.py` | Base abierta de venues para VJ/tecnica: `sembrar` (una linea por sala) -> JSON validado contra `schemas/venue.schema.json` con tier de `confianza` por dato, `validar`/`listar`/`sitio` (HTML autocontenido consultable desde telefono) y `geometria` (reporte numerico del bloque de polilineas: aristas por tier y por capa, bounding box, cierres, segmentos de largo cero, cota declarada vs dibujada). `tests/test_venue.py`. |
 | `venue_geometria_scd.py` | Sala DEMO en polilineas 3D (bloque `geometria` del esquema) derivada del modelo radial del teatro SCD Plaza Egana -> `data/venues/scd-plaza-egana.json`, material por defecto del visor `iskvw/piel/venue/`. |
