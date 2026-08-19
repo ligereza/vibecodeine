@@ -97,6 +97,11 @@ def run_smoke(port: int = 0, timeout: float = 30.0, sse: bool = True) -> None:
 
     env = os.environ.copy()
     env.setdefault("PYTHONIOENCODING", "utf-8")
+    src_root = ROOT / "src"
+    current_pythonpath = env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = os.pathsep.join(
+        part for part in (str(src_root), current_pythonpath) if part
+    )
     cmd = [sys.executable, "-m", "flujo", "serve", "--host", host, "--port", str(port)]
     with log_path.open("w", encoding="utf-8") as log:
         proc = subprocess.Popen(
