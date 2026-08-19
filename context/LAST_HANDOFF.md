@@ -16014,3 +16014,51 @@ Vite 7 como la linea estable y dejar cualquier futura migracion Vite 8 como
 trabajo mayor coordinado con plugin-react 6 y Node 20.19+.
 
 Last verified: 2026-08-19 America/Santiago - Phase 618.
+
+## Phase 619 - entrega limpia y checks remotos verdes
+
+Se publico la reparacion de CI:
+
+```text
+commit 4015727 fix: restore full verification contracts
+push origin/main -> exit 0
+HEAD == origin/main -> true
+git diff --check -> exit 0
+```
+
+Validacion local completa:
+
+```text
+.venv/bin/python -m flujo verify -> exit 0
+npm run typecheck -> exit 0
+npm run build:context -> exit 0 despues de reconstruir el binding opcional local
+hub_smoke.py --port 0 --timeout 20 -> exit 0
+.venv/bin/python -m pip check -> exit 0
+```
+
+Checks del commit `4015727` en GitHub:
+
+```text
+CI 32302725340 -> success; flujo verify remoto paso
+seguridad 32302725470 -> success
+Git topology guard 32302725479 -> success
+```
+
+La topologia remota queda comprobada con `git ls-remote`: existe solo
+`refs/heads/main`. No hay PRs abiertos de Dependabot. Los PR #535 y #537
+quedaron fusionados; #536 quedo cerrado sin merge por incompatibilidad
+Vite 8/plugin-react 5 y su rama remota fue eliminada.
+
+Riesgo residual explicitado: el MAK local usa Node 18.20.4 y muestra avisos
+de engine porque Vite 7/Tailwind 4 recomiendan Node 20.19+. El CI usa Node 20
+y pasa completo. La migracion Vite 8 queda fuera de esta entrega hasta
+coordinar `@vitejs/plugin-react` 6 y Node 20.19+ en una tarea mayor.
+
+## Next concrete action
+
+No hay accion pendiente dentro de esta entrega de limpieza/publicacion. El
+siguiente trabajo opcional es una migracion coordinada de Vite 8, separada de
+la linea estable actual y solo despues de validarla con su plugin React y
+runtime Node compatibles.
+
+Last verified: 2026-08-19 America/Santiago - Phase 619.
