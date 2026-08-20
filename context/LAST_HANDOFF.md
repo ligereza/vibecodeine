@@ -122,8 +122,9 @@ de simulacion declarado.
 - Se declaró en `web/package.json`, `web/package-lock.json` y
   `web/README.md` el requisito real `Node >=20.19.0`; con el Node 24.19.0
   disponible en MAK los builds reproducibles pasan.
-- Los cambios de esta tanda permanecen locales y sin commit/push hasta la
-  publicacion autorizada en el turno actual. La
+- Los cambios de esta tanda se publicaron en `main` mediante el commit
+  `7674c49` y el push normal a `origin/main`; la evidencia generada dentro de
+  `data/mak_knowledge.db` sigue siendo estado local ignorado. La
   evidencia generada dentro de `data/mak_knowledge.db` es estado local
   ignorado; los writes explícitos fueron el refresh de contratos y la
   ingestion verificada del caso de memoria descrito arriba.
@@ -135,11 +136,11 @@ de simulacion declarado.
 | Python learning layer | `src/flujo/knowledge/learning_policy.py` | verified, published | full pytest exit 0; py_compile exit 0; diff check exit 0 |
 | Web source | `web/` | verified, published | Node 24.19.0: `npm ci`, audit 0 vulnerabilities, typecheck and all three builds exit 0 |
 | Documentation contract | `CAPACIDADES.md`, `docs/MAK_CURRENT_STATE.md`, this file | verified, published | docs hygiene included in full pytest exit 0 |
-| Operational status | `src/flujo/knowledge/system_status.py`, `cultura/mak_plataforma/hub.py`, `tools/mak_status.py`, `web/` | verified locally and active at 8900; publication pending | full pytest exit 0; Node 24 typecheck/build exit 0; temporary and live `/api/status` HTTP 200; ten components; read-only endpoint |
-| Source learning bridge | `src/flujo/knowledge/source_learning.py`, `tools/source_learning_bridge.py`, `knowledge/learning_cases/`, `schemas/knowledge/source_learning_case.schema.json` | verified locally and recorded; publication pending | source roots/files/messages/claim boundaries pass; Project IR episode verified; no truth promotion |
-| Cultural-first math kernel | `src/flujo/knowledge/math_kernel.py`, `tools/math_kernel.py`, `knowledge/math_targets/`, `schemas/knowledge/math_*.schema.json` | verified locally; one bounded metadata request queued; publication pending | capsule validation, common Project IR domains, sealed ResultCard guard and truth-promotion block |
+| Operational status | `src/flujo/knowledge/system_status.py`, `cultura/mak_plataforma/hub.py`, `tools/mak_status.py`, `web/` | verified locally and active at 8900; published in `7674c49` | full pytest exit 0; Node 24 typecheck/build exit 0; temporary and live `/api/status` HTTP 200; ten components; read-only endpoint |
+| Source learning bridge | `src/flujo/knowledge/source_learning.py`, `tools/source_learning_bridge.py`, `knowledge/learning_cases/`, `schemas/knowledge/source_learning_case.schema.json` | verified locally and recorded; published in `7674c49` | source roots/files/messages/claim boundaries pass; Project IR episode verified; no truth promotion |
+| Cultural-first math kernel | `src/flujo/knowledge/math_kernel.py`, `tools/math_kernel.py`, `knowledge/math_targets/`, `schemas/knowledge/math_*.schema.json` | verified locally; one bounded metadata request queued; published in `7674c49` | capsule validation, common Project IR domains, sealed ResultCard guard and truth-promotion block |
 | Research learning | `/home/mak/research/jobs/4/` | captured/interpreted; simulate unavailable | declare a local consumer before implementing simulation; no candidate install |
-| Publication | `main` -> `origin/main` | authorized in this turn | stage explicit source/tests/contracts, commit, push, then verify parity |
+| Publication | `main` -> `origin/main` | verified at `7674c49` | `git rev-parse HEAD` equals `git ls-remote origin refs/heads/main` |
 
 ## Tool and dependency verification matrix
 
@@ -170,7 +171,8 @@ de simulacion declarado.
 - Historical phase documents and recovered sessions remain evidence. They are
   not the current handoff and must not override this file.
 - A green local check does not prove external GitHub Actions or provider
-  credentials. The push must be followed by remote status inspection.
+  credentials. The push completed normally and remote parity was checked;
+  external CI remains an independent gate.
 - The official P versus NP capture is a normalized curator note, not a
   verbatim source transcript or semantic-equivalence certificate. It supplies
   provenance and hashes but intentionally cannot change `UNTRUSTED`.
@@ -187,9 +189,9 @@ semantic fidelity remains `UNTRUSTED` by design. Research job 4 `simulate` is
 explicitly unavailable until a local consumer is declared; this turn did not
 invent one, clone candidates, or install dependencies. Source-learning
 heuristics remain candidate guardrails until independent projects produce a
-holdout. The final action of this turn is publication of the reviewed source,
-tests and contracts only; generated databases, research outputs and WIN
-history remain outside Git.
+holdout. Publication of the reviewed source, tests and contracts completed in
+`7674c49`; generated databases, research outputs and WIN history remain
+outside Git.
 
 ## Last verified
 
@@ -198,4 +200,5 @@ recorded without changing `UNTRUSTED`, Research 4 simulation gate checked and
 recorded unavailable without a consumer, 55-contract audit refreshed,
 source-learning case preserved, live status rechecked, focused tests and full
 pytest passed (warnings only from existing Pillow deprecations), and Node
-24.19.0 typecheck/build/context copy passed.
+24.19.0 typecheck/build/context copy passed. Commit `7674c49` was pushed to
+`origin/main` and remote parity was verified.
