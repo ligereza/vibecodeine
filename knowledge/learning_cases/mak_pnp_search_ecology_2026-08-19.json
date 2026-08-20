@@ -1,0 +1,316 @@
+{
+  "schema": "mak-source-learning-case-v1",
+  "case_id": "mak-pnp-search-ecology-2026-08-19",
+  "title": "From dimensions of order to bounded search ecology",
+  "objective": "Teach MAK a traceable search policy by joining historical hypotheses about order and representation with later audits, failed-route records, and semantic-fidelity gates.",
+  "source_sets": [
+    {
+      "source_id": "claude_sessions",
+      "root": "/home/mak/WIN/claude_sesiones",
+      "role": "historical_hypothesis_memory",
+      "selection_policy": "Select message UUIDs and hashes only; exclude virtual environments, credentials, and unrelated private conversation text."
+    },
+    {
+      "source_id": "research_session_2026_08_19",
+      "root": "/home/mak/curatoria_inbox/MAK_TODO_SESION_2026-08-19",
+      "role": "research_audit_and_operating_contracts",
+      "selection_policy": "Select the smallest complete artifact set that audits the claim and defines reusable search and learning gates."
+    }
+  ],
+  "source_artifacts": [
+    {
+      "artifact_id": "historical_conversations",
+      "source_set": "claude_sessions",
+      "path": "/home/mak/WIN/claude_sesiones/claude_web_export_2026-08-11/conversations.json",
+      "sha256": "83e6e94ee1c4db0166c31bad6461a4a31b22dc1cc428ddb3246b715e00eb8c11",
+      "kind": "conversation_export",
+      "role": "hypothesis_origin",
+      "anchors": [
+        "conversation:f1560d01-a233-4495-86a6-6125d6a2d658",
+        "conversation:c3d79aeb-433d-4642-a47d-5c900c91dd20",
+        "conversation:67f81ac4-eb49-405d-b380-f469e2989027"
+      ]
+    },
+    {
+      "artifact_id": "session_reconstruction",
+      "source_set": "research_session_2026_08_19",
+      "path": "/home/mak/curatoria_inbox/MAK_TODO_SESION_2026-08-19/00_SESSION_THREAD_RECONSTRUCTED.md",
+      "sha256": "10446f05ae6170da3d0e82e11c72cf47f46ebeeec6c150662edbdbc7dcbf7a25",
+      "kind": "session_index",
+      "role": "research_package_index"
+    },
+    {
+      "artifact_id": "pnp_repository_audit",
+      "source_set": "research_session_2026_08_19",
+      "path": "/home/mak/curatoria_inbox/MAK_TODO_SESION_2026-08-19/ARTIFACTS/MAK_AUDIT_P_EQUALS_NP_PEDIGREE_POLYTOPES_2026-08-19.md",
+      "sha256": "4bc2dd6c2d0ab9cdf3ecceac6b6afbfb9c0d9d9407f699687c53fa4539b022c4",
+      "kind": "research_artifact",
+      "role": "audited_result",
+      "anchors": ["lines:7-8", "lines:14-45", "lines:323-366"]
+    },
+    {
+      "artifact_id": "millennium_fossil_record",
+      "source_set": "research_session_2026_08_19",
+      "path": "/home/mak/curatoria_inbox/MAK_TODO_SESION_2026-08-19/ARTIFACTS/MAK_MILLENNIUM_FOSSIL_RECORD_2026-08-19.md",
+      "sha256": "01ba9f95832ddd8619e61b3b04a888b9ff0ac40f5f69640c95f161382ffd0382",
+      "kind": "research_artifact",
+      "role": "failed_route_memory"
+    },
+    {
+      "artifact_id": "deep_vector_synthesis",
+      "source_set": "research_session_2026_08_19",
+      "path": "/home/mak/curatoria_inbox/MAK_TODO_SESION_2026-08-19/ARTIFACTS/MAK_DEEP_VECTOR_SYNTHESIS_2026-08-19.md",
+      "sha256": "3483aac1dca72760cf227df589d50f61410fc609df3853a2bcb66d0a6e825ecd",
+      "kind": "research_artifact",
+      "role": "search_space_synthesis"
+    },
+    {
+      "artifact_id": "one_page_prior",
+      "source_set": "research_session_2026_08_19",
+      "path": "/home/mak/curatoria_inbox/MAK_TODO_SESION_2026-08-19/ARTIFACTS/MAK_ONE_PAGE_PRIOR_2026-08-19.md",
+      "sha256": "338b503fa01770da111f85fd5c204922e1e2a2a4df5908cf1888febd52922900",
+      "kind": "research_artifact",
+      "role": "bounded_anti_prior",
+      "anchors": ["lines:90-123", "lines:245-300", "lines:329-372"]
+    },
+    {
+      "artifact_id": "deadest_math_routes",
+      "source_set": "research_session_2026_08_19",
+      "path": "/home/mak/curatoria_inbox/MAK_TODO_SESION_2026-08-19/ARTIFACTS/MAK_INVERTED_RESEARCH_DEADEST_MATH_ROUTES_2026-08-19.md",
+      "sha256": "83ee91b11e433b2edd7b3acd61eea2ff17c5ba157cc594446c347508e496c57e",
+      "kind": "research_artifact",
+      "role": "barrier_and_negative_route_map"
+    },
+    {
+      "artifact_id": "math_kernel_contract",
+      "source_set": "research_session_2026_08_19",
+      "path": "/home/mak/curatoria_inbox/MAK_TODO_SESION_2026-08-19/ARTIFACTS/MAK_MATH_KERNEL_INTEGRATION/MAK_MATH_KERNEL_INTEGRATION.md",
+      "sha256": "45a982cc02cc2c21158ec91e19b9159fd02bcf1dbf411df09fef74e3eb9457b8",
+      "kind": "research_artifact",
+      "role": "verification_and_semantic_fidelity_contract",
+      "anchors": ["lines:141-202", "lines:228-291", "lines:586-623", "lines:755-772"]
+    },
+    {
+      "artifact_id": "dimensions_of_order_policy",
+      "source_set": "research_session_2026_08_19",
+      "path": "/home/mak/curatoria_inbox/MAK_TODO_SESION_2026-08-19/ARTIFACTS/MAK_dimensions_of_order_learning_from_disorder.md",
+      "sha256": "1ec3e87c503c02c7ad816a4984d8eb5b83d9ba1b5f0f5b95d3b032a8112cd29a",
+      "kind": "research_artifact",
+      "role": "operational_learning_policy",
+      "anchors": ["lines:42-62", "lines:79-110", "lines:174-196", "lines:216-248"]
+    }
+  ],
+  "message_refs": [
+    {
+      "ref_id": "msg_representation_question",
+      "artifact_id": "historical_conversations",
+      "conversation_id": "f1560d01-a233-4495-86a6-6125d6a2d658",
+      "message_id": "019fa9e1-b70e-7688-92a2-25280e649372",
+      "sender": "human",
+      "epistemic_class": "user_hypothesis",
+      "text_sha256": "6c862d24340f5df6feb16f629761ff520f4eb6b5aa2e40ff910b038072ea67e2",
+      "contribution": "Questions whether a representation change can reveal structure that token-level imitation misses."
+    },
+    {
+      "ref_id": "msg_decoder_gap_model",
+      "artifact_id": "historical_conversations",
+      "conversation_id": "f1560d01-a233-4495-86a6-6125d6a2d658",
+      "message_id": "019fa9e1-b712-7924-81bc-f26a6e2908c4",
+      "sender": "assistant",
+      "epistemic_class": "model_output",
+      "text_sha256": "a888b3b69c5129e8e28fb80cc1b266e6007ab051946a8b90677e4b716fb5dec8",
+      "contribution": "Proposes a decoder and verification gap between token sequences and structured representations; retained as unverified model output."
+    },
+    {
+      "ref_id": "msg_vector_followup",
+      "artifact_id": "historical_conversations",
+      "conversation_id": "f1560d01-a233-4495-86a6-6125d6a2d658",
+      "message_id": "019fa9e5-d986-705a-8a4b-c0b723dede20",
+      "sender": "human",
+      "epistemic_class": "user_hypothesis",
+      "text_sha256": "c8d2bf3768dc490dca608721f4d7f02add9ee8ccddde612432919ad8d928c60c",
+      "contribution": "Pushes the representation hypothesis toward vector-symbolic structure."
+    },
+    {
+      "ref_id": "msg_dimensions_origin",
+      "artifact_id": "historical_conversations",
+      "conversation_id": "c3d79aeb-433d-4642-a47d-5c900c91dd20",
+      "message_id": "019faa87-561f-7a07-8354-4188f940f5bf",
+      "sender": "human",
+      "epistemic_class": "user_hypothesis",
+      "text_sha256": "164a5cd5fa800e5eab39a633800265899b2c2fd7093b3022a849b8d2c64d20de",
+      "contribution": "States that choosing a dimension of order changes the work required to solve an arrangement problem."
+    },
+    {
+      "ref_id": "msg_computation_as_order",
+      "artifact_id": "historical_conversations",
+      "conversation_id": "c3d79aeb-433d-4642-a47d-5c900c91dd20",
+      "message_id": "019faff5-4253-79bc-a71a-910b28581ab4",
+      "sender": "human",
+      "epistemic_class": "user_hypothesis",
+      "text_sha256": "1962a58865e28beed98db62205e269b9c2f21c592c3750758379121d61f9a618",
+      "contribution": "Frames computation as another dimension of order rather than a separate phenomenon."
+    },
+    {
+      "ref_id": "msg_guess_relation",
+      "artifact_id": "historical_conversations",
+      "conversation_id": "67f81ac4-eb49-405d-b380-f469e2989027",
+      "message_id": "019fe3b2-f058-75ef-9686-6263e1b55b06",
+      "sender": "human",
+      "epistemic_class": "user_hypothesis",
+      "text_sha256": "7a9e20d26b3af143929d15c9ef845c6ea21f3258765faebefd6ec488d94be306",
+      "contribution": "Connects an initially random guess with later accuracy gained through discovered relations."
+    },
+    {
+      "ref_id": "msg_order_reduces_search",
+      "artifact_id": "historical_conversations",
+      "conversation_id": "67f81ac4-eb49-405d-b380-f469e2989027",
+      "message_id": "019fe3c6-3129-73c3-8b2a-6beb96ddd6a4",
+      "sender": "human",
+      "epistemic_class": "user_hypothesis",
+      "text_sha256": "ffacc060ed3fb67f278a980331fa3219e002d5bb081b6605a11d262891f83270",
+      "contribution": "Proposes that selecting an ordering dimension reduces the probability mass of wrong arrangements."
+    },
+    {
+      "ref_id": "msg_demand_responsive_order",
+      "artifact_id": "historical_conversations",
+      "conversation_id": "67f81ac4-eb49-405d-b380-f469e2989027",
+      "message_id": "019fe3c9-858c-7de2-9e96-890665ba772a",
+      "sender": "human",
+      "epistemic_class": "user_hypothesis",
+      "text_sha256": "9ced9affe21546947fa9f77ced61bcf2655205ea845122dfc9b26471b80e6214",
+      "contribution": "Extends dimensions of order toward order chosen in response to demand."
+    },
+    {
+      "ref_id": "msg_cryptanalysis_not_lottery",
+      "artifact_id": "historical_conversations",
+      "conversation_id": "67f81ac4-eb49-405d-b380-f469e2989027",
+      "message_id": "019fe587-940a-7b09-83d8-435689fa82fd",
+      "sender": "human",
+      "epistemic_class": "user_hypothesis",
+      "text_sha256": "b45efec8fd06dbc79adcf61c301d0a142524a92d95ad03d26d4ed1c0f07c4fbd",
+      "contribution": "Asks why structure-seeking cryptanalysis is not equivalent to buying lottery tickets."
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "finding_representation_is_search_variable",
+      "statement": "Representation and the chosen dimension of order should be treated as variables of the search procedure, not as neutral display choices.",
+      "epistemic_class": "synthesis_candidate",
+      "status": "candidate",
+      "evidence_refs": ["msg_representation_question", "msg_dimensions_origin", "msg_order_reduces_search", "deep_vector_synthesis"]
+    },
+    {
+      "finding_id": "finding_decoder_gap_is_model_output",
+      "statement": "The proposed token-to-structure decoder gap is useful as a hypothesis generator but is not evidence by itself.",
+      "epistemic_class": "model_output",
+      "status": "unverified",
+      "evidence_refs": ["msg_decoder_gap_model"]
+    },
+    {
+      "finding_id": "finding_formal_claim_unsupported",
+      "statement": "The audited Lean repository does not establish standard P equals NP as claimed; this finding is scoped to the audited repository and its formal-verification claim.",
+      "epistemic_class": "audited_result",
+      "status": "supported_by_local_audit",
+      "evidence_refs": ["pnp_repository_audit"]
+    },
+    {
+      "finding_id": "finding_structured_search_not_lottery",
+      "statement": "An anti-prior search can be rational only when candidates are structurally generated, cheaply falsified, and given a bounded budget.",
+      "epistemic_class": "synthesis_candidate",
+      "status": "candidate",
+      "evidence_refs": ["msg_cryptanalysis_not_lottery", "one_page_prior", "deep_vector_synthesis"]
+    },
+    {
+      "finding_id": "finding_semantic_fidelity_gate",
+      "statement": "Formal checker acceptance is insufficient unless the formal target is shown to preserve the intended informal statement and the axiom report is explicit.",
+      "epistemic_class": "operational_guardrail",
+      "status": "active",
+      "evidence_refs": ["pnp_repository_audit", "math_kernel_contract"]
+    },
+    {
+      "finding_id": "finding_failed_routes_are_memory",
+      "statement": "Known barriers, dead routes, and falsified candidates should reduce future search allocation without being converted into universal impossibility claims.",
+      "epistemic_class": "operational_guardrail",
+      "status": "active",
+      "evidence_refs": ["millennium_fossil_record", "deadest_math_routes"]
+    },
+    {
+      "finding_id": "finding_no_second_learning_tax",
+      "statement": "MAK should learn from decisions and validator events already produced by work, rather than require a second full documentation task.",
+      "epistemic_class": "operational_guardrail",
+      "status": "active",
+      "evidence_refs": ["dimensions_of_order_policy"]
+    }
+  ],
+  "learning_units": [
+    {
+      "unit_id": "learn_representation_before_scale",
+      "lesson": "A bad encoding can make a structured problem look random.",
+      "action": "Before scaling search, declare the representation, decoder, invariants, and expected reduction in verification cost.",
+      "guardrail": "Do not infer a complexity-class result from compression, visual regularity, or a short description.",
+      "status": "candidate",
+      "evidence_refs": ["finding_representation_is_search_variable", "finding_decoder_gap_is_model_output"]
+    },
+    {
+      "unit_id": "learn_bounded_anti_prior",
+      "lesson": "Neglected simple routes deserve a measured probe, not unlimited belief.",
+      "action": "Allocate a small explicit budget to structured low-complexity candidates and rank them by falsification cost and information gain.",
+      "guardrail": "Stop or demote the route when it matches a known barrier, loses semantic fidelity, or produces no information gain.",
+      "status": "candidate",
+      "evidence_refs": ["finding_structured_search_not_lottery", "finding_failed_routes_are_memory"]
+    },
+    {
+      "unit_id": "learn_semantic_fidelity_first",
+      "lesson": "A proof assistant checks the encoded target, not the intention that was lost before encoding.",
+      "action": "Require a target capsule, dependency lock, axiom report, and semantic-fidelity review before promoting a formal result.",
+      "guardrail": "A checker-passed artifact remains unverified for the intended theorem when the target mapping or decisive bridge is assumed.",
+      "status": "active",
+      "evidence_refs": ["finding_formal_claim_unsupported", "finding_semantic_fidelity_gate"]
+    },
+    {
+      "unit_id": "learn_from_failed_routes",
+      "lesson": "Failure is reusable evidence when its target, assumptions, barrier, and scope are preserved.",
+      "action": "Write a fossil record entry for every rejected route and consult it before allocating new search.",
+      "guardrail": "Record why this route failed; never rewrite that as proof that all nearby routes fail.",
+      "status": "active",
+      "evidence_refs": ["finding_failed_routes_are_memory"]
+    },
+    {
+      "unit_id": "learn_from_existing_events",
+      "lesson": "Learning that requires a second inventory creates a tax and will be skipped.",
+      "action": "Capture the decision, tool, evidence, validator, outcome, and exception from events already emitted by the workflow.",
+      "guardrail": "Instrument the flow, not the person; retain references and hashes instead of copying private source trees.",
+      "status": "active",
+      "evidence_refs": ["finding_no_second_learning_tax", "dimensions_of_order_policy"]
+    }
+  ],
+  "verification_ladder": [
+    {"order": 1, "gate": "Freeze the exact informal target and success criterion.", "failure_action": "abstain_target_ambiguous"},
+    {"order": 2, "gate": "Declare the representation transform, decoder, and preserved invariants.", "failure_action": "reject_lossy_transpilation"},
+    {"order": 3, "gate": "Match against known barriers and fossil-record failures.", "failure_action": "demote_or_require_novelty_witness"},
+    {"order": 4, "gate": "Run cheap exact checks and small-instance counterexample search.", "failure_action": "record_counterexample_and_stop"},
+    {"order": 5, "gate": "Run the formal checker with a locked dependency set and complete axiom report.", "failure_action": "retain_as_unverified_candidate"},
+    {"order": 6, "gate": "Audit semantic fidelity between the checked target and the intended theorem.", "failure_action": "reject_truth_promotion"}
+  ],
+  "non_claims": [
+    {
+      "claim_id": "p_equals_np_proven",
+      "statement": "This learning case proves P equals NP.",
+      "status": "excluded",
+      "reason": "The bridge validates provenance and an operational learning contract only."
+    },
+    {
+      "claim_id": "handwritten_argument_refuted",
+      "statement": "The local repository audit refutes every possible handwritten argument behind the claim.",
+      "status": "excluded",
+      "reason": "The audited result is limited to the repository's formalization and machine-verification claim."
+    },
+    {
+      "claim_id": "short_representation_implies_easy_problem",
+      "statement": "A short or visually simple representation implies a polynomial-time solution.",
+      "status": "excluded",
+      "reason": "Description length, decoder cost, verification cost, and computational complexity are distinct."
+    }
+  ]
+}

@@ -561,6 +561,23 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
 #pan-diagnostics #diag-aviso{color:#d4a259;font-size:.72rem;min-height:1em;margin:0 0 10px;max-width:900px}
 #pan-diagnostics pre{white-space:pre-wrap;word-break:break-word;border:1px solid #211f18;
  border-radius:8px;padding:15px;background:#0c0a09;color:#c3bfb2;font:.72rem/1.5 ui-monospace,SFMono-Regular,monospace;max-width:900px;min-height:180px}
+#pan-status{position:absolute;inset:0;overflow-y:auto;padding:26px 30px;display:none}
+#pan-status.on{display:block}
+#pan-status .intro{color:#6e6a5e;font-size:.74rem;margin-bottom:14px;max-width:760px;line-height:1.5}
+#status-cab{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+#status-cab strong{font-size:1rem;color:#c3bfb2}
+#status-cab .pill{font-size:.66rem;text-transform:uppercase;letter-spacing:1px;border:1px solid #3a3022;border-radius:999px;padding:4px 8px;color:#d4a259}
+#status-cab small{color:#5f5b50;font-size:.66rem}
+#status-lista{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;max-width:950px}
+#status-lista .sc{border:1px solid #211f18;border-radius:8px;padding:12px;background:#0c0a09}
+#status-lista .sc .sc-top{display:flex;gap:8px;align-items:baseline}
+#status-lista .sc b{color:#c3bfb2;font-size:.76rem}
+#status-lista .sc em{font-style:normal;margin-left:auto;font-size:.62rem;text-transform:uppercase;letter-spacing:.6px}
+#status-lista .sc p{color:#6e6a5e;font-size:.68rem;line-height:1.4;margin-top:7px}
+#status-lista .sc small{display:block;color:#5f5b50;font-size:.64rem;line-height:1.35;margin-top:7px}
+#status-alertas{max-width:950px;margin:16px 0}
+#status-alertas .alerta{border:1px solid #4a3a26;border-radius:7px;background:#100c08;color:#c3bfb2;font-size:.7rem;padding:8px 10px;margin:6px 0}
+#status-alertas .alerta b{color:#d4a259}
 #pan-render .pend-cab{color:#d4a259;font-size:.7rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
 #pan-render .rd.pend{border-color:#4a3a26;background:#100c08}
 #pan-render .rd.pend .motivo{color:#d4a259;font-size:.75rem;margin-top:6px;line-height:1.45}
@@ -611,7 +628,8 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
   <button data-dep="render">🖼 render</button>
   <button data-dep="decisiones">◈ decisiones</button>
   <button data-dep="portafolio">✦ portafolio</button>
-  <button data-dep="areas">▦ áreas</button>
+   <button data-dep="areas">▦ áreas</button>
+  <button data-dep="status">● estado</button>
   <button data-dep="diagnostics">🩺 diagnóstico</button>
   </div>
  </div>
@@ -654,6 +672,12 @@ body{background:#080706;color:#c9c5b9;font-family:ui-monospace,SFMono-Regular,mo
  <div id="pan-areas">
   <div class="intro">Las tres áreas operativas comparten esta interfaz en el puerto 8900. Cada tarjeta apunta a su contrato, superficie y dependencias sin obligar a leer todo MAK.</div>
   <div id="area-lista">cargando áreas…</div>
+ </div>
+ <div id="pan-status">
+  <div class="intro">Una lectura única de los consumidores reales de MAK. Verifica presencia, proceso y listener local sin ejecutar trabajos, consultar internet ni mostrar credenciales. “Configurado” no significa “probado contra el proveedor”.</div>
+  <div id="status-cab"><strong>Estado operativo</strong><span class="pill">cargando…</span><small>solo lectura</small></div>
+  <div id="status-lista"><div class="vacio">cargando estado…</div></div>
+  <div id="status-alertas"></div>
  </div>
  <div id="pan-diagnostics">
   <div class="intro">Generá un reporte seguro para copiarlo a otro agente. El diagnóstico solo lee metadatos y contratos: no ejecuta el comando escrito, no abre WIN, no incluye secretos, bases completas ni medios privados.</div>
@@ -710,19 +734,45 @@ function activarDep(dep){
  document.querySelectorAll('#centro iframe').forEach(function(f){
    f.classList.toggle('on', f.id==='ifr-'+dep);
  });
- // 'ideas', 'render', 'decisiones', 'areas' y 'diagnostics' son paneles propios del hub.
+ // 'ideas', 'render', 'decisiones', 'areas', 'status' y 'diagnostics' son paneles propios del hub.
  document.getElementById('pan-ideas').classList.toggle('on', dep==='ideas');
  document.getElementById('pan-render').classList.toggle('on', dep==='render');
  document.getElementById('pan-decisiones').classList.toggle('on', dep==='decisiones');
  document.getElementById('pan-areas').classList.toggle('on', dep==='areas');
+ document.getElementById('pan-status').classList.toggle('on', dep==='status');
  document.getElementById('pan-diagnostics').classList.toggle('on', dep==='diagnostics');
  if(dep==='ideas'){cargarIdeas();return;}
  if(dep==='render'){cargarRender();return;}
  if(dep==='decisiones'){cargarDecisiones();return;}
  if(dep==='areas'){cargarAreas();return;}
+ if(dep==='status'){cargarEstado();return;}
  if(dep==='diagnostics'){return;}
  var ifr=document.getElementById('ifr-'+dep);
  if(ifr && !ifr.src){ifr.src=IFR_SRC[dep];}
+}
+
+function cargarEstado(){
+ fetch('/api/status').then(function(r){return r.json();}).then(function(d){
+   var cab=document.getElementById('status-cab');
+   var estado=String(d.status||'unknown');
+   var color=estado==='ready'||estado==='active'?'#9db67c':estado==='blocked'?'#c46d5e':'#d4a259';
+   cab.innerHTML='<strong>Estado operativo</strong><span class="pill" style="color:'+color+';border-color:'+color+'">'+esc(estado)+'</span><small>'+(d.read_only?'solo lectura':'revisar permisos')+' · '+esc(d.counts&&d.counts.components||0)+' consumidores</small>';
+   var comps=d.components||{};
+   var lista=document.getElementById('status-lista');
+   var keys=Object.keys(comps);
+   if(!keys.length){lista.innerHTML='<div class="vacio">no hay consumidores registrados</div>';}
+   else{lista.innerHTML=keys.map(function(k){
+     var c=comps[k]||{}, e=c.evidence||{}, st=String(c.status||'unknown');
+     var col=st==='ready'||st==='active'?'#9db67c':st==='blocked'?'#c46d5e':'#d4a259';
+     var note=c.next_action||((e.listener&&e.listener.reachable)?'listener local alcanzable':'requiere inspeccion');
+     return '<div class="sc"><div class="sc-top"><b>'+esc(c.label||k)+'</b><em style="color:'+col+'">'+esc(st)+'</em></div><p>'+esc(note)+'</p><small>evidencia local · ' + (c.read_only===false?'con escritura':'solo lectura')+'</small></div>';
+   }).join('');}
+   var alerts=(d.attention||[]).filter(function(a){return a.severity!=='info';});
+   document.getElementById('status-alertas').innerHTML=alerts.length?'<h3>atenciones que no deben perderse</h3>'+alerts.map(function(a){return '<div class="alerta"><b>'+esc(a.scope||a.kind||'estado')+' · '+esc(a.status||'unknown')+'</b><br>'+esc(a.reason||'sin detalle')+'<br><small>'+esc(a.next_action||'revisar evidencia')+'</small></div>';}).join(''):'';
+ }).catch(function(){
+   document.getElementById('status-cab').innerHTML='<strong>Estado operativo</strong><span class="pill">no disponible</span>';
+   document.getElementById('status-lista').innerHTML='<div class="vacio">no se pudo leer /api/status</div>';
+ });
 }
 document.querySelectorAll('#tabs button').forEach(function(b){
  b.onclick=function(){activarDep(b.getAttribute('data-dep'));};
@@ -1275,6 +1325,23 @@ def _learning_read_only():
     if _learning_summary_api is None:
         return {"available": False, "reason": "project_router_unavailable", "database": _learning_db_path().name}
     return _learning_summary_api(_learning_db_path())
+
+
+def _system_status_read_only():
+    """Return the shared local status without starting a consumer."""
+    try:
+        from flujo.knowledge.system_status import system_status
+        return system_status(
+            _learning_db_path(), repo_root=_REPO_ROOT, physical_root=HOME
+        )
+    except Exception as exc:  # noqa: BLE001 - status must not take down 8900
+        return {
+            "schema": "mak-system-status-v1",
+            "status": "unknown",
+            "read_only": True,
+            "error": type(exc).__name__,
+            "next_actions": ["repair the read-only status adapter before routing work"],
+        }
 
 
 def _learning_promoted_rules():
@@ -4542,6 +4609,8 @@ class H(BaseHTTPRequestHandler):
                 return self._json({"available": False, "error": str(exc)[:200]}, 400)
         if p == "/api/project/learning":
             return self._json(_learning_read_only())
+        if p == "/api/status":
+            return self._json(_system_status_read_only())
         for prefix in SERVICE_PROXY_PREFIXES:
             if p == "/" + prefix:
                 self.send_response(301)

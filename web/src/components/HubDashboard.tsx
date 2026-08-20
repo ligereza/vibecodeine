@@ -6,7 +6,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import type { AppView } from './AppShell';
-import { flujoApi, type Ping, type JobsResponse, type ProjectLearningSummary, type ProjectProbeResponse } from '../api/flujoApi';
+import { flujoApi, type Ping, type HubStatus, type JobsResponse, type ProjectLearningSummary, type ProjectProbeResponse } from '../api/flujoApi';
 
 interface Props {
   onNavigate: (v: AppView) => void;
@@ -16,6 +16,7 @@ export default function HubDashboard({ onNavigate }: Props) {
   const [ping, setPing] = useState<Ping | null>(null);
   const [jobs, setJobs] = useState<JobsResponse | null>(null);
   const [learning, setLearning] = useState<ProjectLearningSummary | null>(null);
+  const [systemStatus, setSystemStatus] = useState<HubStatus | null>(null);
   const [probeOpen, setProbeOpen] = useState(false);
   const [probeText, setProbeText] = useState('');
   const [probeResult, setProbeResult] = useState<ProjectProbeResponse | null>(null);
@@ -25,7 +26,11 @@ export default function HubDashboard({ onNavigate }: Props) {
     let alive = true;
     flujoApi.ping().then(d => alive && setPing(d));
     flujoApi.jobs().then(d => alive && setJobs(d));
-    flujoApi.projectLearning().then(d => alive && setLearning(d));
+    flujoApi.status().then(d => {
+      if (!alive) return;
+      setSystemStatus(d);
+      setLearning(d.operational?.learning || null);
+    });
     return () => { alive = false; };
   }, []);
 
@@ -38,6 +43,21 @@ export default function HubDashboard({ onNavigate }: Props) {
   const auditedCount = Object.values(learning?.audits?.statuses || {}).reduce((sum, count) => sum + count, 0);
   const auditAttention = learning?.audits?.attention || [];
   const latestAbstain = learning?.latest_abstain;
+  const operational = systemStatus?.operational;
+  const operationalStatus = String(operational?.status || 'unknown');
+  const operationalStatusLabel = {
+    ready: 'Listo',
+    attention: 'Requiere atención',
+    blocked: 'Bloqueado',
+    unknown: 'No disponible',
+  }[operationalStatus] || operationalStatus;
+  const operationalStatusClass = operationalStatus === 'ready'
+    ? 'border-emerald-800/60 bg-emerald-950/20 text-emerald-300'
+    : operationalStatus === 'blocked'
+      ? 'border-rose-800/60 bg-rose-950/20 text-rose-300'
+      : operationalStatus === 'attention'
+        ? 'border-amber-800/60 bg-amber-950/20 text-amber-300'
+        : 'border-zinc-700 bg-zinc-900/60 text-zinc-400';
 
   const runProbe = async () => {
     setProbeBusy(true);
@@ -119,6 +139,46 @@ export default function HubDashboard({ onNavigate }: Props) {
             );
           })}
         </div>
+      </div>
+
+      {/* Unified operational state: one source for the CLI and the Hub. */}
+      <div className={`rounded-2xl border p-5 md:p-6 ${operationalStatusClass}`}>
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              {operationalStatus === 'ready' ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+              <h2 className="text-lg font-bold">Estado de la casa</h2>
+              <span className="rounded-full border border-current/30 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+                {operationalStatusLabel}
+              </span>
+            </div>
+            <p className="mt-1 max-w-2xl text-xs leading-relaxed text-zinc-500">
+              El Hub, el comando local y el ledger leen el mismo estado. Las abstenciones se conservan como decisiones seguras; no se convierten en falsos éxitos.
+            </p>
+          </div>
+          <div className="shrink-0 text-right text-[10px] text-zinc-600">
+            <div>{operational?.read_only === false ? 'con escritura' : 'solo lectura'}</div>
+            <div>{operational?.counts?.attention || 0} atención · {operational?.counts?.blocked || 0} bloqueo</div>
+          </div>
+        </div>
+        {operational?.attention && operational.attention.length > 0 ? (
+          <div className="mt-4 grid gap-2 md:grid-cols-2">
+            {operational.attention.filter(item => item.severity !== 'info').slice(0, 6).map(item => (
+              <div key={item.id} className="rounded-xl border border-current/20 bg-black/20 p-3">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-current">{item.kind || 'estado'} · {item.status || 'unknown'}</div>
+                <div className="mt-1 text-xs text-zinc-400">{item.reason || item.id}</div>
+                {item.next_action && <div className="mt-2 text-[10px] text-zinc-500">Siguiente: {item.next_action}</div>}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-4 text-xs text-zinc-500">No hay excepciones operativas registradas.</div>
+        )}
+        {operational?.next_actions && operational.next_actions.length > 0 && (
+          <div className="mt-4 border-t border-current/15 pt-3 text-[10px] text-zinc-500">
+            Próximo: {operational.next_actions[0]}
+          </div>
+        )}
       </div>
 
       {/* Learning ledger: bounded visibility, no automatic execution. */}

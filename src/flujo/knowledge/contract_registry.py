@@ -25,6 +25,8 @@ CONTRACT_SCHEMA = "mak-project-contract-registry-v1"
 REGISTRY_TABLE = "project_contracts"
 AUDIT_TABLE = "project_contract_audits"
 DEPENDENCIES = {
+    "math_kernel": ("python3", "flujo.knowledge.math_kernel"),
+    "source_learning_bridge": ("python3", "flujo.knowledge.source_learning"),
     "project_intake": ("python3", "sqlite3"),
     "research_job_router": ("python3", "tools.interpretive_garden_workflow"),
     "blend_scene_audit": ("python3", "blender_optional"),
@@ -258,11 +260,20 @@ def _source_path(root: Path, source_ref: str) -> Path:
     return root / source_ref.split(":", 1)[0]
 
 
-def _dependency_check(name: str) -> dict[str, Any]:
+def _dependency_check(name: str, root: str | Path | None = None) -> dict[str, Any]:
     if name == "python3":
         return {"name": name, "available": bool(shutil.which("python3")), "required": True}
     if name == "sqlite3":
         return {"name": name, "available": importlib.util.find_spec("sqlite3") is not None, "required": True}
+    if name == "blender_optional":
+        from .runtime_tools import resolve_blender
+        path = resolve_blender(root)
+        return {
+            "name": name,
+            "available": path is not None,
+            "required": False,
+            **({"path": str(path)} if path else {}),
+        }
     if name.endswith("_optional"):
         binary = name.removesuffix("_optional")
         return {"name": name, "available": bool(shutil.which(binary)), "required": False}
@@ -285,7 +296,7 @@ def audit_contracts(rows: Iterable[Mapping[str, Any]], root: str | Path) -> list
             path = base / str(payload.get("path") or "")
             evidence["consumer_path"] = str(payload.get("path") or "")
             evidence["consumer_exists"] = path.is_file()
-            dependencies = [_dependency_check(str(item)) for item in payload.get("dependencies", [])]
+            dependencies = [_dependency_check(str(item), base) for item in payload.get("dependencies", [])]
             evidence["dependencies"] = dependencies
         required_missing = not evidence["source_exists"]
         if row.get("kind") == "consumer":

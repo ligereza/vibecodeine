@@ -63,6 +63,7 @@ from ..serve.server import api_plano_render as render_plano_api
 from ..cotizaciones_base import generar_cotizacion_base
 from ..rd.informe import resumen_json as rd_datos_resumen_json
 from ..knowledge.project_api import learning_summary as project_learning_summary
+from ..knowledge.system_status import system_status as project_system_status
 from ..knowledge.project_api import route_payload as project_route_payload
 from ..knowledge.project_api import probe_payload as project_probe_payload
 
@@ -1113,7 +1114,7 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             return "unknown"
 
     def _get_status(self) -> dict:
-        return {
+        result = {
             "status": "ok",
             "version": self._get_version(),
             "root": str(self.root),
@@ -1122,6 +1123,12 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             "connected": True,
             "time": time.time()
         }
+        # Keep the historical service fields above for compatibility, but make
+        # the operational ledger visible from the same read-only endpoint.
+        result["operational"] = project_system_status(
+            project_learning_db(), repo_root=self.root, physical_root=self.root.parent
+        )
+        return result
 
     def _get_dashboard_summary(self) -> dict:
         return build_dashboard_summary(collect_items(self.root))

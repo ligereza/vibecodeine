@@ -113,6 +113,9 @@ CLI real (`py -m flujo --help`, v0.56.1), comandos principales:
 | `profile_blender_animation.py` | Perfil read-only de animacion Blender para el consumidor de secuencia/render. |
 | `project_gate.py` | Gate CLI de Project IR: route/probe read-only y registro explicito de episodios; consumidor Hub/Research. |
 | `project_learning.py` | Compila episodios con resultado verificado, separa holdout por proyecto y prepara una politica candidata con abstencion; `--record-result` recibe paquetes de validadores; no convierte desconocidos en etiquetas ni entrena pesos de deep learning. |
+| `mak_status.py` | Estado operacional unificado y read-only de MAK: ledger, consumidores físicos, listeners, procesos, Blender/RD, portafolio, runtimes y configuración de proveedores; mismo contrato que `GET /api/status`. |
+| `source_learning_bridge.py` | Une memoria historica y paquetes de investigacion por referencias y hashes; conserva clases epistemicas, valida limites de afirmacion y solo registra aprendizaje cuando pasan fuentes, mensajes, contrato y ruta. |
+| `math_kernel.py` | Scheduler matematico metadata-only sobre el Project IR comun: target capsules, requests acotados y ResultCards sellados; no promueve teoremas sin fidelidad semantica y verificador confiable. |
 | `reconcile_garden_knowledge.py` | Reconcilia conocimiento de jardines con el Research/Funding Lab, preservando desconocidos y fuentes. |
 | `token_budget.py` | Estima tokens de un set de archivos antes de mandarlos a un modelo. |
 | `venue.py` | Base abierta de venues para VJ/tecnica: `sembrar` (una linea por sala) -> JSON validado contra `schemas/venue.schema.json` con tier de `confianza` por dato, `validar`/`listar`/`sitio` (HTML autocontenido consultable desde telefono) y `geometria` (reporte numerico del bloque de polilineas: aristas por tier y por capa, bounding box, cierres, segmentos de largo cero, cota declarada vs dibujada). `tests/test_venue.py`. |

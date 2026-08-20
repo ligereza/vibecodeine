@@ -78,6 +78,53 @@ export type ProjectLearningSummary = {
   latest_abstain?: LearningEpisode | null;
 };
 
+export type OperationalAttention = {
+  id?: string;
+  kind?: string;
+  status?: string;
+  severity?: 'info' | 'attention' | 'blocked' | string;
+  reason?: string;
+  next_action?: string;
+  ref?: string;
+};
+
+export type OperationalComponent = {
+  id?: string;
+  label?: string;
+  status?: 'ready' | 'active' | 'attention' | 'blocked' | string;
+  severity?: 'none' | 'info' | 'attention' | 'blocked' | string;
+  read_only?: boolean;
+  evidence?: Record<string, unknown>;
+  next_action?: string;
+};
+
+export type OperationalStatus = {
+  schema?: 'mak-system-status-v1' | 'mak-operational-status-v1' | string;
+  status?: 'ready' | 'attention' | 'blocked' | 'unknown' | string;
+  generated_at?: string;
+  database?: string;
+  read_only?: boolean;
+  repo_root?: string | null;
+  physical_root?: string | null;
+  learning?: ProjectLearningSummary;
+  ledger?: Record<string, unknown>;
+  components?: Record<string, OperationalComponent>;
+  attention?: OperationalAttention[];
+  counts?: { attention?: number; blocked?: number; info?: number; components?: number };
+  next_actions?: string[];
+};
+
+export type HubStatus = {
+  status?: string;
+  version?: string;
+  root?: string;
+  has_svg?: boolean;
+  has_projects?: boolean;
+  connected?: boolean;
+  time?: number;
+  operational?: OperationalStatus;
+};
+
 export type ProjectProbeResponse = {
   ok?: boolean;
   error?: string;
@@ -136,6 +183,28 @@ export const flujoApi = {
       return await request<ProjectLearningSummary>('/api/project/learning');
     } catch (error) {
       return { available: false, reason: error instanceof Error ? error.message : String(error) };
+    }
+  },
+
+  async status(): Promise<HubStatus> {
+    if (isFileMode()) {
+      return {
+        status: 'demo',
+        connected: false,
+        operational: { status: 'unknown', next_actions: ['open the local Hub backend to read MAK status'] },
+      };
+    }
+    try {
+      return await request<HubStatus>('/api/status');
+    } catch (error) {
+      return {
+        status: 'unavailable',
+        connected: false,
+        operational: {
+          status: 'unknown',
+          next_actions: [error instanceof Error ? error.message : String(error)],
+        },
+      };
     }
   },
 

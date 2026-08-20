@@ -20,6 +20,7 @@ place; this file is the consolidation layer.
 |---|---|---|
 | agent contract | `/home/mak/flujo/agents.md` | active authority |
 | current handoff | `/home/mak/flujo/context/LAST_HANDOFF.md` | one active continuity file |
+| migration history | `/home/mak/flujo/context/fases.migracion.md` | recovered 5,636-line historical handoff; archival only, never current instructions |
 | phase evidence | `/home/mak/flujo/context/PHASE*.md` | archival audit records; see `context/PHASE_REPORTS_INDEX.md`; never active instructions |
 | current architecture | `/home/mak/flujo/context/PHASE413_CROSS_DOMAIN_SERVICE_ARCHITECTURE.md` | service vision |
 | current culture map | `/home/mak/flujo/context/PHASE416_CULTURE_TO_CURRENT_REPO_CROSSWALK.md` | language/idea crosswalk |
