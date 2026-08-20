@@ -9,6 +9,33 @@ Este documento consolida decisiones durables. No reemplaza la evidencia
 histórica, no convierte cada experimento en una obligación y no afirma que una
 credencial funcione solo porque existe en un archivo de entorno.
 
+## 0. Aprendizaje evaluable
+
+`src/flujo/knowledge/learning_policy.py` y `tools/project_learning.py` son la
+capa compacta de aprendizaje del ledger. Compilan únicamente episodios con
+resultado y validación explícitos, separan entrenamiento y holdout por
+`project_id` y pueden registrar una política categórica como regla candidata;
+la promoción al router sigue bloqueada hasta contar con evidencia
+independiente. Episodios `abstained`, `failed` o `needs_evidence` no se
+convierten en etiquetas negativas. La consulta de solo lectura es:
+
+```text
+./.venv/bin/python tools/project_learning.py --db data/mak_knowledge.db
+```
+
+Un workflow puede registrar un resultado ya validado con
+`./.venv/bin/python tools/project_learning.py --db <db> --record-result
+<packet.json>`. El paquete debe declarar `schema=mak-verified-result-v1`, un
+`project_id` existente, `tool_id`, evidencia y un validador con checks
+pasados; si falta algo, el registro falla cerrado.
+
+Con el estado verificado el 2026-08-19, la salida correcta es `status=abstain`
+con `eligible_examples=5`, `holdout_count=0` y razón
+`no_independent_holdout`: los cinco episodios pertenecen al mismo proyecto y
+no deben contaminarse entre entrenamiento y evaluación. No se promueve ninguna
+política. Esto es preparación de aprendizaje estadístico, no entrenamiento de
+pesos de deep learning.
+
 ## 1. Autoridad y alcance
 
 - MAK es el equipo Linux Debian 12. La autoridad física empieza en
