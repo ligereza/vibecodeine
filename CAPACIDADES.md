@@ -112,6 +112,7 @@ CLI real (`py -m flujo --help`, v0.56.1), comandos principales:
 | `optimize_blend_scene.py` | Diagnostico/preparacion de optimizacion de escenas Blender; queda gated si no hay runtime Blender. |
 | `profile_blender_animation.py` | Perfil read-only de animacion Blender para el consumidor de secuencia/render. |
 | `project_gate.py` | Gate CLI de Project IR: route/probe read-only y registro explicito de episodios; consumidor Hub/Research. |
+| `project_learning.py` | Compila episodios con resultado verificado, separa holdout por proyecto y prepara una politica candidata con abstencion; `--record-result` recibe paquetes de validadores; no convierte desconocidos en etiquetas ni entrena pesos de deep learning. |
 | `reconcile_garden_knowledge.py` | Reconcilia conocimiento de jardines con el Research/Funding Lab, preservando desconocidos y fuentes. |
 | `token_budget.py` | Estima tokens de un set de archivos antes de mandarlos a un modelo. |
 | `venue.py` | Base abierta de venues para VJ/tecnica: `sembrar` (una linea por sala) -> JSON validado contra `schemas/venue.schema.json` con tier de `confianza` por dato, `validar`/`listar`/`sitio` (HTML autocontenido consultable desde telefono) y `geometria` (reporte numerico del bloque de polilineas: aristas por tier y por capa, bounding box, cierres, segmentos de largo cero, cota declarada vs dibujada). `tests/test_venue.py`. |

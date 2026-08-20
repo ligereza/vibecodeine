@@ -8,7 +8,8 @@ This is local/free development tooling. Daily operation still starts with:
 py -m flujo app
 ```
 
-Node is only required when rebuilding the UI.
+Node is only required when rebuilding the UI. Use Node `>=20.19.0`; the
+current Vite/Tailwind toolchain does not support Node 18.
 
 ## Current web app
 

@@ -15,6 +15,7 @@ from typing import Any, Mapping
 from .project_ir import validate_project_ir
 from .project_router import route_project
 from .episode_runner import probe_declared_consumer, record_probe
+from .learning_policy import learning_summary as learning_policy_summary
 
 
 def _read_only_connection(path: Path) -> sqlite3.Connection:
@@ -35,6 +36,7 @@ def learning_summary(database: str | Path) -> dict[str, Any]:
             con.close()
             return {"available": False, "reason": "learning_schema_not_initialized", "database": path.name}
         result: dict[str, Any] = {"available": True, "database": path.name}
+        result["policy"] = learning_policy_summary(path)
         result["projects"] = {row[0]: row[1] for row in con.execute("SELECT state,COUNT(*) FROM project_records GROUP BY state")}
         result["episodes"] = {row[0]: row[1] for row in con.execute("SELECT status,COUNT(*) FROM project_episodes GROUP BY status")}
         result["rules"] = {row[0]: row[1] for row in con.execute("SELECT status,COUNT(*) FROM semantic_rules GROUP BY status")} if "semantic_rules" in tables else {}
