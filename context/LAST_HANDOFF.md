@@ -2,9 +2,9 @@
 
 ## Current objective
 
-Dejar el repo web y el runtime local en un estado coherente, verificable y
-publicable: corregir contradicciones documentales o de código, ejecutar los
-gates Python y web, y hacer commit/push solo del estado que pase.
+Mantener el repo web y el runtime local en un estado coherente y verificable.
+El cierre de limpieza/publicación de esta tanda ya fue ejecutado; la siguiente
+acción independiente es el simulate acotado del Research job 4.
 
 ## Physical authority and migration status
 
@@ -18,6 +18,8 @@ gates Python y web, y hacer commit/push solo del estado que pase.
 - En la inspección actual se observaron `cron`, el runner local de GitHub
   Actions y Open WebUI ya instalados; esta tarea no inició ninguno ni dejó un
   proceso de render o hub corriendo.
+- La interfaz temporal del Research local ya estaba activa antes de esta
+  tanda; no fue iniciada, detenida ni modificada aquí.
 
 ## Completed work with command and result
 
@@ -40,28 +42,34 @@ gates Python y web, y hacer commit/push solo del estado que pase.
   `holdout_count=0`. No se promovió ninguna regla.
 - La contradicción detectada en el handoff fue eliminada: ya no se escribe un
   total fijo de tests ni se afirma `eligible_examples=0`.
+- Se declaró en `web/package.json`, `web/package-lock.json` y
+  `web/README.md` el requisito real `Node >=20.19.0`; con el Node 24.19.0
+  disponible en MAK los builds reproducibles pasan.
+- Commit publicado: `5f30c33a992d4f302575620e36132b558ace615e`,
+  `chore: stabilize learning and web runtime`.
 
 ## Open integration items
 
 | Item | Path | Status | Proof required |
 | --- | --- | --- | --- |
-| Python learning layer | `src/flujo/knowledge/learning_policy.py` | changed, focused tests pending rerun | pytest, compile, diff check |
-| Web source | `web/` | unchanged in this pass | `npm ci`, `npm run typecheck`, `npm run build:context`, `npm run build:plano`, `npm run build:rd` |
-| Documentation contract | `CAPACIDADES.md`, `docs/MAK_CURRENT_STATE.md`, this file | changed | docs hygiene and full pytest |
+| Python learning layer | `src/flujo/knowledge/learning_policy.py` | verified, published | full pytest exit 0; py_compile exit 0; diff check exit 0 |
+| Web source | `web/` | verified, published | Node 24.19.0: `npm ci`, audit 0 vulnerabilities, typecheck and all three builds exit 0 |
+| Documentation contract | `CAPACIDADES.md`, `docs/MAK_CURRENT_STATE.md`, this file | verified, published | docs hygiene included in full pytest exit 0 |
 | Research learning | `/home/mak/research/jobs/4/` | captured/interpreted; simulation pending | only simulate against a declared local consumer; no candidate install |
-| Publication | `main` -> `origin/main` | not executed yet | commit after all gates, then push and verify remote |
+| Publication | `main` -> `origin/main` | verified | local and remote both `5f30c33a992d4f302575620e36132b558ace615e` |
 
 ## Tool and dependency verification matrix
 
 | Surface | Command | Current result |
 | --- | --- | --- |
-| Python suite | `./.venv/bin/python -m pytest -q` | last run exposed one stale handoff count; rerun after this correction |
+| Python suite | `./.venv/bin/python -m pytest -q` | exit 0; warnings only from existing Pillow deprecation |
 | Learning policy | `./.venv/bin/python tools/project_learning.py --db data/mak_knowledge.db` | exit 0; abstain; 5 eligible; no independent holdout |
-| Python syntax | `./.venv/bin/python -m py_compile ...` | passed for the new module, wrapper and test before this correction |
-| Diff hygiene | `git diff --check` | passed before this correction |
-| Python dependencies | `./.venv/bin/python -m pip check` | must be rerun before publish |
-| Web typecheck/build | commands in Open integration items | must be rerun before publish |
-| Processes | `pgrep` guarded check | no Blender, render, Vite, hub or Flujo process from this task |
+| Python syntax | `./.venv/bin/python -m py_compile ...` | exit 0 |
+| Diff hygiene | `git diff --check` | exit 0 before commit |
+| Python dependencies | `./.venv/bin/python -m pip check` | exit 0; no broken requirements |
+| Web typecheck/build | commands in Open integration items | exit 0 with Node 24.19.0 |
+| Hub smoke | `./.venv/bin/python scripts/hub_smoke.py --port 0 --timeout 20` | exit 0; temporary port 48545; no persistent hub |
+| Remote parity | `git rev-parse HEAD` vs `git ls-remote origin refs/heads/main` | equal at `5f30c33a992d4f302575620e36132b558ace615e` |
 
 ## Conflicts and risks
 
@@ -77,12 +85,12 @@ gates Python y web, y hacer commit/push solo del estado que pase.
 
 ## Next concrete action
 
-Run the full Python and web gates in the foreground. If all pass, stage only
-the intended source/docs/test files, commit the coherent change, push `main`,
-and verify `HEAD` equals `origin/main`. If a gate fails, fix that failure
-before publishing and record the exact command and result here.
+For Research job 4, locate a declared MAK consumer for a bounded L-system
+simulation. If none exists, record `simulate` as unavailable without cloning
+or installing candidate repositories. Do not promote the five same-project
+episodes to a learned policy.
 
 ## Last verified
 
-2026-08-19 America/Santiago — handoff compacted after stale-count failure;
-full gates and publication still pending.
+2026-08-19 America/Santiago — cleanup/publication verified; local and remote
+HEAD equal at `5f30c33a992d4f302575620e36132b558ace615e`.
