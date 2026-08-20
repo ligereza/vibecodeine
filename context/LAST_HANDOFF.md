@@ -41,7 +41,7 @@ acción independiente es el simulate acotado del Research job 4.
   `no_independent_holdout`, `eligible_examples=5`, `train_count=5` y
   `holdout_count=0`. No se promovió ninguna regla.
 - La contradicción detectada en el handoff fue eliminada: ya no se escribe un
-  total fijo de tests ni se afirma `eligible_examples=0`.
+  total fijo de tests ni se recicla el conteo antiguo del learner.
 - Se declaró en `web/package.json`, `web/package-lock.json` y
   `web/README.md` el requisito real `Node >=20.19.0`; con el Node 24.19.0
   disponible en MAK los builds reproducibles pasan.
