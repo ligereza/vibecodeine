@@ -45,8 +45,9 @@ acción independiente es el simulate acotado del Research job 4.
 - Se declaró en `web/package.json`, `web/package-lock.json` y
   `web/README.md` el requisito real `Node >=20.19.0`; con el Node 24.19.0
   disponible en MAK los builds reproducibles pasan.
-- Commit publicado: `5f30c33a992d4f302575620e36132b558ace615e`,
-  `chore: stabilize learning and web runtime`.
+- Los cambios de código y contratos fueron publicados en `main`; la paridad
+  del último commit se verifica por comando, no por un hash copiado en esta
+  memoria.
 
 ## Open integration items
 
@@ -56,7 +57,7 @@ acción independiente es el simulate acotado del Research job 4.
 | Web source | `web/` | verified, published | Node 24.19.0: `npm ci`, audit 0 vulnerabilities, typecheck and all three builds exit 0 |
 | Documentation contract | `CAPACIDADES.md`, `docs/MAK_CURRENT_STATE.md`, this file | verified, published | docs hygiene included in full pytest exit 0 |
 | Research learning | `/home/mak/research/jobs/4/` | captured/interpreted; simulation pending | only simulate against a declared local consumer; no candidate install |
-| Publication | `main` -> `origin/main` | verified | local and remote both `5f30c33a992d4f302575620e36132b558ace615e` |
+| Publication | `main` -> `origin/main` | verified | `git rev-parse HEAD` equals `git ls-remote origin refs/heads/main` |
 
 ## Tool and dependency verification matrix
 
@@ -93,4 +94,4 @@ episodes to a learned policy.
 ## Last verified
 
 2026-08-19 America/Santiago — cleanup/publication verified; local and remote
-HEAD equal at `5f30c33a992d4f302575620e36132b558ace615e`.
+HEAD equal according to the commands in the matrix.
