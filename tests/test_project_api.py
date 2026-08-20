@@ -40,7 +40,8 @@ class ProjectApiTests(unittest.TestCase):
             self.assertEqual(summary["episodes"], {"abstained": 1})
             self.assertEqual(summary["latest_abstain"]["episode_id"], "episode-api-demo")
             self.assertEqual(summary["latest_abstain"]["phase"], "gate")
-            self.assertEqual(summary["contracts"]["counts"]["consumer"], 5)
+            expected_consumers = sum(1 for row in contract_snapshot() if row["kind"] == "consumer")
+            self.assertEqual(summary["contracts"]["counts"]["consumer"], expected_consumers)
             self.assertEqual(summary["audits"]["latest_run"], "run-api")
             self.assertTrue(summary["audits"]["attention"])
 

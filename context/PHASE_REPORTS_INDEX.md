@@ -38,6 +38,10 @@ The active source of truth is deliberately small:
    and next action.
 3. Runtime source, contracts and focused tests — implementation authority.
 
+The recovered monolithic migration record is preserved at
+`/home/mak/flujo/context/fases.migracion.md`. It is archival context only;
+it must not replace `LAST_HANDOFF.md` or be loaded wholesale for routine work.
+
 `context/MD_CONTEXT_MASTER.md` is a navigation index. It links families and
 provenance, but it does not promote historical phase conclusions to runtime
 truth.

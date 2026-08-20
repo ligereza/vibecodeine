@@ -9,12 +9,12 @@ plan; the router itself never runs it.
 from __future__ import annotations
 
 import hashlib
-import shutil
 from pathlib import Path
 from typing import Any, Mapping
 
 from .project_ir import LearningStore, ProjectIRError, stable_json
 from .project_router import evaluate_route
+from .runtime_tools import resolve_blender
 
 
 def probe_declared_consumer(
@@ -67,7 +67,7 @@ def probe_declared_consumer(
             "validation": {"status": "not_run", "check": "mutating_or_plan_only_gate"},
         }
     if tool_id == "blend_scene_audit":
-        blender = shutil.which("blender")
+        blender_path = resolve_blender(repo_root)
         artifacts = project.get("artifacts", [])
         source = project.get("source") if isinstance(project.get("source"), Mapping) else {}
         root = Path(str(source.get("root_ref") or ""))
@@ -79,7 +79,7 @@ def probe_declared_consumer(
             if candidate.is_file():
                 blend = candidate
                 break
-        if not blender:
+        if not blender_path:
             reason = "blender_not_installed"
         elif blend is None:
             reason = "blend_source_not_available"
@@ -89,7 +89,7 @@ def probe_declared_consumer(
             "status": "succeeded" if reason == "read_only_blender_probe_ready" else "needs_evidence",
             "reason": reason,
             "tool_id": tool_id,
-            "command": [blender, "--background", str(blend), "--python", "tools/audit_blend_scene.py"] if blender and blend else [],
+            "command": [str(blender_path), "--background", str(blend), "--python", "tools/audit_blend_scene.py"] if blender_path and blend else [],
             "validation": {"status": "planned" if reason != "read_only_blender_probe_ready" else "ready", "check": "bounded_command_plan"},
         }
     return {

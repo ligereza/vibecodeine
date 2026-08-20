@@ -31,6 +31,16 @@ class ToolContract:
 
 TOOL_CATALOG = (
     ToolContract(
+        "math_kernel", "tools/math_kernel.py",
+        "schedule metadata-only mathematical search on the cultural-research first layer",
+        ("math_target",), ("mathematics",), "plan_only", "math_search_request",
+    ),
+    ToolContract(
+        "source_learning_bridge", "tools/source_learning_bridge.py",
+        "validate traceable source memory and preserve epistemic claim boundaries",
+        ("text", "data"), ("source_memory",), "read_only", "source_learning_verification",
+    ),
+    ToolContract(
         "project_intake", "tools/build_application_intake.py",
         "convert a bounded source folder or SSD index into an application candidate",
         ("unknown", "text", "image", "video", "audio", "3d", "data", "document", "all"),

@@ -255,6 +255,8 @@ repositorio. Las credenciales y tokens se mantienen fuera de Git.
 | `FLUJO_WEB_DEBUG` | Activa diagnóstico web local. |
 | `FLUJO_WORKSPACE_ROOT` | Raíz explícita del workspace. |
 | `FLYER_BASE` | Raíz alternativa del material de flyers. |
+| `BLENDER_EXE` | Ruta explícita opcional del binario Blender; si falta, MAK busca el binario local instalado junto a `/home/mak/flujo`. |
+| `NODE_EXE` | Ruta explícita opcional de Node para auditorías/builds; el estado solo comprueba su presencia y no instala paquetes. |
 | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_PROFILE`, `AWS_CONTAINER_CREDENTIALS_RELATIVE_URI`, `AWS_WEB_IDENTITY_TOKEN_FILE` | Variables estándar detectadas por proveedores AWS; no son necesarias para el modo local. |
 | `CANVA_API_TOKEN`, `CEREBRAS_API_KEY`, `GROQ_API_KEY` | Credenciales opcionales de proveedores externos. |
 | `WATSONX_API_KEY`, `WATSONX_PROJECT_ID` | Credenciales y proyecto opcionales de IBM watsonx. |

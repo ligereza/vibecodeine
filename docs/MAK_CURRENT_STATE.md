@@ -2,7 +2,7 @@
 
 > Fuente canónica de orientación para agentes y colaboradores. Leer primero
 > `/home/mak/flujo/agents.md`, luego este archivo y finalmente
-> `context/LAST_HANDOFF.md`. Verificado el 2026-08-18, tras la auditoría de
+> `context/LAST_HANDOFF.md`. Verificado el 2026-08-20, tras la auditoría de
 > las fases históricas disponibles hasta Phase 570.
 
 Este documento consolida decisiones durables. No reemplaza la evidencia
@@ -10,6 +10,13 @@ histórica, no convierte cada experimento en una obligación y no afirma que una
 credencial funcione solo porque existe en un archivo de entorno.
 
 ## 0. Aprendizaje evaluable
+
+La primera capa de MAK es artistica, cultural y de investigacion. Curatoria,
+Portfolio, Research y Matematicas no son silos: comparten Project IR,
+procedencia, relaciones, incertidumbre y consumidores. En esta lectura, el
+orden de carpetas y proyectos es una representacion operacional de la
+hipotesis P versus NP: encontrar una organizacion/reduccion barata y
+verificarla con evidencia no equivale a afirmar que P=NP.
 
 `src/flujo/knowledge/learning_policy.py` y `tools/project_learning.py` son la
 capa compacta de aprendizaje del ledger. Compilan únicamente episodios con
@@ -29,12 +36,44 @@ Un workflow puede registrar un resultado ya validado con
 `project_id` existente, `tool_id`, evidencia y un validador con checks
 pasados; si falta algo, el registro falla cerrado.
 
+`tools/source_learning_bridge.py` aplica ese contrato a memoria historica y
+paquetes posteriores de investigacion. No copia los arboles: conserva las dos
+raices, archivos seleccionados, hashes, UUIDs de mensajes, clase epistemica,
+limites de afirmacion y unidades aprendibles. El caso versionado
+`knowledge/learning_cases/mak_pnp_search_ecology_2026-08-19.json` conecta
+`/home/mak/WIN/claude_sesiones` con
+`/home/mak/curatoria_inbox/MAK_TODO_SESION_2026-08-19`. Su episodio verificado
+certifica integridad, trazabilidad y contrato de ruta; declara expresamente
+`mathematical_truth_validated=false` y no prueba ni refuta P versus NP.
+
 Con el estado verificado el 2026-08-19, la salida correcta es `status=abstain`
-con `eligible_examples=5`, `holdout_count=0` y razón
-`no_independent_holdout`: los cinco episodios pertenecen al mismo proyecto y
-no deben contaminarse entre entrenamiento y evaluación. No se promueve ninguna
+con `eligible_examples=6`, `holdout_count=0` y razón
+`no_independent_holdout`: hay seis episodios en dos proyectos, pero el split
+determinista actual no dejó un proyecto en holdout. No se promueve ninguna
 política. Esto es preparación de aprendizaje estadístico, no entrenamiento de
 pesos de deep learning.
+
+`src/flujo/knowledge/math_kernel.py` materializa la parte matematica de esa
+misma capa. `knowledge/math_targets/` conserva capsulas de target, no una
+jerarquia matematica paralela. El starter `MILLENNIUM-PNP-001` esta en
+`semantic_fidelity_status=UNTRUSTED`, por lo que el Project IR queda en
+`review_required`; el ciclo bounded solo agenda requests `METADATA_ONLY` y
+ResultCards con hashes/referencias. El scheduler mantiene las relaciones con
+`cultura`, `curatoria`, `portfolio` y `research`, y bloquea toda promocion de
+verdad hasta contar con fidelidad semantica y un verificador confiable.
+
+El estado operacional no se reconstruye leyendo este documento ni el handoff:
+se consulta con
+`./.venv/bin/python tools/mak_status.py --db data/mak_knowledge.db` o desde
+`GET http://127.0.0.1:8900/api/status`. Ambos exponen
+`mak-system-status-v1`, un sobre read-only que reúne el ledger
+`mak-operational-status-v1` con los consumidores físicos: Hub 8900, Research
+8890, puente Codex 8891, búsqueda local, runner de eventos, Blender/RD,
+portafolio, runtimes y configuración de proveedores. Los listeners y procesos
+se comprueban localmente; las APIs externas solo se marcan como configuradas,
+nunca como probadas por inferencia. La consulta abre SQLite en modo read-only y
+el endpoint no inicia trabajos. `abstain` es información de seguridad; no se
+cuenta como éxito ni como bloqueo.
 
 ## 1. Autoridad y alcance
 
