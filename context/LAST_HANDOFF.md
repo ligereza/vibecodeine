@@ -70,7 +70,7 @@ acción independiente es el simulate acotado del Research job 4.
 | Python dependencies | `./.venv/bin/python -m pip check` | exit 0; no broken requirements |
 | Web typecheck/build | commands in Open integration items | exit 0 with Node 24.19.0 |
 | Hub smoke | `./.venv/bin/python scripts/hub_smoke.py --port 0 --timeout 20` | exit 0; temporary port 48545; no persistent hub |
-| Remote parity | `git rev-parse HEAD` vs `git ls-remote origin refs/heads/main` | equal at `5f30c33a992d4f302575620e36132b558ace615e` |
+| Remote parity | `git rev-parse HEAD` vs `git ls-remote origin refs/heads/main` | equal when the commands return the same value |
 
 ## Conflicts and risks
 
