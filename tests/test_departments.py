@@ -12,7 +12,7 @@ sys.path.insert(0, str(ROOT / "cultura" / "mak_plataforma"))
 
 import hub  # noqa: E402
 from src.flujo.departments import (catalog, cultura_opportunity_gate, rd_crosswalk,
-                                   rd_cultura_relations, rd_summary)  # noqa: E402
+                                   rd_cultura_relations, rd_summary, rd_topics)  # noqa: E402
 
 
 def _json(base: str, path: str) -> tuple[int, dict]:
@@ -51,6 +51,17 @@ def test_rd_cultura_relations_preserve_review_candidates():
                for item in data["relations"])
 
 
+def test_rd_topics_separate_consumers_without_creating_another_database():
+    data = rd_topics(ROOT)
+    assert data["schema"] == "mak-rd-topics-v1"
+    assert data["read_only"] is True
+    assert data["database"]["canonical_rows"] > 0
+    assert data["database"]["runtime_rows"] == 0
+    assert {topic["id"] for topic in data["topics"]} >= {
+        "service_delivery", "event_calendar", "testing_evidence", "delivery_assets", "research_bridges"
+    }
+
+
 def test_cultura_opportunity_gate_is_contract_only():
     data = cultura_opportunity_gate(ROOT)
     assert data["mode"] == "contract_check_only"
@@ -69,6 +80,10 @@ def test_hub_serves_area_catalog_and_static_surfaces():
         assert payload["areas"]["rd"]["ready"] is True
         status, _ = _json(base, "/api/rd/summary")
         assert status == 200
+        status, payload = _json(base, "/api/rd/topics")
+        assert status == 200
+        assert payload["schema"] == "mak-rd-topics-v1"
+        assert payload["read_only"] is True
         status, payload = _json(base, "/api/rd/crosswalk")
         assert status == 200
         assert payload["status"] == "review_only"

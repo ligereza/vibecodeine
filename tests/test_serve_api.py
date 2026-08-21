@@ -18,6 +18,9 @@ from flujo.serve.server import (
     api_parse_pedido,
     api_list_svg_works,
     api_plano_render,
+    api_rd_db,
+    api_rd_summary,
+    api_rd_topics,
     _read_json,
 )
 
@@ -51,6 +54,7 @@ def test_module_imports_cleanly():
     assert hasattr(server, "api_health_stats")
     assert hasattr(server, "api_materials")
     assert hasattr(server, "api_plano_render")
+    assert hasattr(server, "api_rd_topics")
 
 
 def test_api_health_stats_returns_list_of_dicts():
@@ -78,6 +82,32 @@ def test_api_materials_returns_items():
     if result["items"]:
         item = result["items"][0]
         assert "id" in item or "category" in item
+
+
+def test_api_rd_topics_separates_canonical_data_without_mutation():
+    result = api_rd_topics()
+    assert result["schema"] == "mak-rd-topics-v1"
+    assert result["read_only"] is True
+    assert result["mutation"] == "disabled"
+    assert result["canonical_projection"] == "data/rd.db"
+    assert result["runtime_boundary"] == "data/rd_datos.db"
+    ids = {topic["id"] for topic in result["topics"]}
+    assert {"service_delivery", "event_calendar", "testing_evidence", "research_bridges"} <= ids
+    assert result["database"]["canonical_rows"] > 0
+    assert result["database"]["runtime_rows"] == 0
+
+
+def test_api_rd_summary_keeps_database_boundaries():
+    result = api_rd_summary()
+    assert result["databases"]["data/rd.db"]["rows"] > 0
+    assert result["databases"]["data/rd_datos.db"]["rows"] == 0
+
+
+def test_api_rd_db_is_read_only_projection():
+    result = api_rd_db()
+    assert result["read_only"] is True
+    assert result["source"] == "flujo-serve"
+    assert isinstance(result["productoras"], list)
 
 
 def test_api_index_brief_returns_availability_info():
