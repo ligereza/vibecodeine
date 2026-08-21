@@ -67,6 +67,7 @@ from ..knowledge.project_api import learning_summary as project_learning_summary
 from ..knowledge.system_status import system_status as project_system_status
 from ..knowledge.project_api import route_payload as project_route_payload
 from ..knowledge.project_api import probe_payload as project_probe_payload
+from ..knowledge.project_context import read_context as project_context_read_only
 
 # Global request-body cap (VCD-06). 8 MB: large enough for a photo sent to the
 # tracer, small enough that an unbounded body cannot exhaust memory.
@@ -451,6 +452,14 @@ class HubRequestHandler(BaseHTTPRequestHandler):
             return
         if path == "/api/project/learning":
             self._send_json(project_learning_summary(project_learning_db()))
+            return
+        if path == "/api/project/context":
+            query = parse_qs(parsed.query)
+            self._send_json(project_context_read_only(
+                project_learning_db(),
+                context_id=(query.get("context_id") or [None])[0],
+                project_id=(query.get("project_id") or [None])[0],
+            ))
             return
         if path == "/api/dashboard-summary":
             try:

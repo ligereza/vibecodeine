@@ -1,5 +1,66 @@
 # Operational Handoff
 
+## Active checkpoint — 2026-08-21
+
+### Current objective
+
+Conectar DREFGIRA con el contexto de operador VJ, DrefQuila, album Después del
+Sol, alcance de presentaciones de noviembre 2025, shows y venues, usando una
+base existente y evidencia con estados conservadores.
+
+### Completed work with command and result
+
+Se agregaron `src/flujo/knowledge/project_context.py`,
+`tools/triangulate_project_context.py`,
+`knowledge/project_context/drefgira_2025.json` y sus pruebas. La ejecucion
+foreground fue:
+
+```text
+./.venv/bin/python tools/triangulate_project_context.py --context-json knowledge/project_context/drefgira_2025.json --db data/mak_knowledge.db --out-dir /home/mak/curatoria_inbox/project_reconstruction/2026-08-21/drefgira/context --apply
+```
+
+Resultado: 10 entidades, 9 fuentes, 12 relaciones, 3 verificadas, 4
+`human_attested`, 5 candidatas, 5 Project IR enlazados, 0 cambios de estado y
+0 postulaciones. `PRAGMA integrity_check` devolvio `ok`; la segunda ejecucion
+fue idempotente. Los derivados `project_ir.jsonl` y `routes.jsonl` quedaron
+regenerados y los cinco routes siguen `abstain` por
+`project_state_requires_evidence`.
+
+El consumidor read-only quedo expuesto en ambos hubs como
+`GET /api/project/context?context_id=drefgira-despues-del-sol-chile-2025` o por
+`project_id`. Las dos superficies respondieron HTTP 200 en servidores
+efimeros, con `schema=mak-project-context-read-v1`, `read_only=true` y las 12
+relaciones; ambos procesos fueron detenidos al terminar la prueba.
+
+### Open integration items
+
+- `formal_tour_scope_not_independently_verified`: el agrupamiento de gira es
+  candidato, no un hecho promocionado.
+- `antofagasta_show_needs_independent_confirmation`: Evently/La Isla es una
+  sola fuente para Club Montecarlo, 2025-11-28.
+- `album_release_date_not_normalized_across_sources`: se preservan fechas
+  crudas; no se fuerza una fecha unica.
+- `operator_contract_not_verified`: la relacion VJ/artista es atestiguada
+  por el operador, no una afirmacion contractual.
+- `physical_source_mount_unverified`: DREFGIRA sigue review-only hasta montar
+  o verificar el SSD; no convertirlo en activo por el grafo contextual.
+
+### Next concrete action
+
+Publicar este write set en `main` solo cuando exista autorizacion explicita de
+commit/push. No ampliar la gira ni crear postulacion hasta obtener una segunda
+fuente para Antofagasta y evidencia fisica del proyecto. Mantener BAH como
+entidad separada del artista y no fusionar prefijos DREF por similitud textual.
+
+### Last verified
+
+2026-08-21 America/Santiago — tests focalizados `6 passed`, py_compile exit 0,
+`git diff --check` exit 0, CLI de triangulacion exit 0, segunda ejecucion sin
+cambios semanticos, endpoints de ambos hubs HTTP 200, pytest completo exit 0,
+`repo_audit` OK, compileall exit 0, `pip check` sin errores, DB integra y sin
+procesos permanentes iniciados. El commit/push queda fuera de este cierre hasta
+recibir autorizacion explicita para publicar este write set.
+
 ## Current objective
 
 Mantener el repo web y el runtime local en un estado coherente y verificable,

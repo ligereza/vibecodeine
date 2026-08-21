@@ -202,11 +202,13 @@ try:
         probe_payload as _probe_payload_api,
         route_payload as _route_payload_api,
     )
+    from flujo.knowledge.project_context import read_context as _project_context_api
 except Exception as _project_router_exc:  # noqa: BLE001 - learning is additive
     _learning_summary_api = None
     _promoted_rules_api = None
     _probe_payload_api = None
     _route_payload_api = None
+    _project_context_api = None
     _PROJECT_ROUTER_IMPORT_ERROR = type(_project_router_exc).__name__
 else:
     _PROJECT_ROUTER_IMPORT_ERROR = ""
@@ -1336,6 +1338,13 @@ def _learning_read_only():
     if _learning_summary_api is None:
         return {"available": False, "reason": "project_router_unavailable", "database": _learning_db_path().name}
     return _learning_summary_api(_learning_db_path())
+
+
+def _project_context_read_only(context_id=None, project_id=None):
+    if _project_context_api is None:
+        return {"available": False, "read_only": True,
+                "reason": "project_context_unavailable", "contexts": []}
+    return _project_context_api(_learning_db_path(), context_id=context_id, project_id=project_id)
 
 
 def _system_status_read_only():
@@ -4633,6 +4642,12 @@ class H(BaseHTTPRequestHandler):
                 return self._json({"available": False, "error": str(exc)[:200]}, 400)
         if p == "/api/project/learning":
             return self._json(_learning_read_only())
+        if p == "/api/project/context":
+            query = urllib.parse.parse_qs(u.query)
+            return self._json(_project_context_read_only(
+                context_id=(query.get("context_id") or [None])[0],
+                project_id=(query.get("project_id") or [None])[0],
+            ))
         if p == "/api/status":
             return self._json(_system_status_read_only())
         for prefix in SERVICE_PROXY_PREFIXES:
