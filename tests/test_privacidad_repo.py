@@ -45,12 +45,34 @@ _SALTA = (".min.js", ".lock", ".svg", ".png", ".jpg", ".webp", ".pdf",
           "package-lock.json")
 
 
+def _versionable_names():
+    """Archivos rastreados MAS los nuevos que no estan ignorados.
+
+    Antes esto era solo `git ls-files`, o sea solo lo rastreado, y ahi habia un
+    hueco medido el 2026-08-21: un archivo NUEVO con un usuario de Windows real
+    pasaba el ratchet local sin ser visto y solo fallaba despues de commitearlo,
+    cuando ya estaba en la historia. El ratchet existe justamente para que ese
+    dato no entre, asi que tiene que mirar lo que esta por entrar.
+
+    `--others --exclude-standard` respeta `.gitignore`, de modo que `.venv`,
+    `data/*.db` y los artefactos generados siguen fuera.
+    """
+    vistos = []
+    for args in (["git", "ls-files"],
+                 ["git", "ls-files", "--others", "--exclude-standard"]):
+        r = subprocess.run(args, cwd=REPO, capture_output=True,
+                           encoding="utf-8", errors="replace")
+        if r.returncode != 0:
+            continue
+        vistos.extend(r.stdout.split())
+    return list(dict.fromkeys(vistos))
+
+
 def _archivos():
-    r = subprocess.run(["git", "ls-files"], cwd=REPO, capture_output=True,
-                       encoding="utf-8", errors="replace")
-    if r.returncode != 0:
+    nombres = _versionable_names()
+    if not nombres:
         return []
-    for nombre in r.stdout.split():
+    for nombre in nombres:
         if nombre.endswith(_SALTA) or "/piel/lib/" in nombre:
             continue
         # `_archive/` es historia congelada que este repo prohibe editar a mano,
@@ -109,3 +131,25 @@ def test_el_fixture_de_wifi_no_trae_redes_de_terceros():
              if r in t and not n.endswith("test_privacidad_repo.py")]
     assert not malas, (
         "SSID de redes de terceros tomados de un escaneo real: " + "; ".join(malas))
+
+
+def test_the_ratchet_sees_new_untracked_files(tmp_path):
+    """El hueco medido el 2026-08-21: solo miraba `git ls-files`.
+
+    Un archivo nuevo con un usuario de Windows real pasaba el gate local sin
+    ser visto, y recien fallaba cuando ya estaba commiteado. Un ratchet que
+    protege contra la entrada de un dato tiene que mirar lo que esta entrando.
+    """
+    nombres = set(_versionable_names())
+    assert nombres, "el enumerador no devolvio nada"
+    # Lo rastreado sigue estando.
+    assert "tests/test_privacidad_repo.py" in nombres
+    # Y un archivo nuevo no ignorado aparece.
+    nuevo = REPO / "_ratchet_probe_tmp.md"
+    try:
+        nuevo.write_text("sonda\n", encoding="utf-8")
+        assert "_ratchet_probe_tmp.md" in set(_versionable_names())
+    finally:
+        nuevo.unlink(missing_ok=True)
+    # Lo ignorado NO aparece: el patron de .gitignore se respeta.
+    assert not [n for n in nombres if n.startswith(".venv/")]
