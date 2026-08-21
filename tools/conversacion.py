@@ -534,7 +534,10 @@ def main() -> int:
     cl = sub.add_parser("clasificar", help="clasifica lotes con la cadena activa y junta los numeros")
     cl.add_argument("--turnos", default="turnos.jsonl")
     cl.add_argument("--capa", choices=sorted(PROMPTS), required=True)
-    cl.add_argument("--orden", default="cerebras,groq,ollama",
+    # Cerebras used to lead this default, so every classification run spent its
+    # first hop on an account that answers HTTP 402 before reaching a provider
+    # that replies. It stays reachable with --orden cerebras for diagnostics.
+    cl.add_argument("--orden", default="groq,gemini,ollama",
                     help="CSV de proveedores activos: remoto primero, Ollama como respaldo")
     cl.add_argument("--ventana", type=int, default=95000)
     cl.add_argument("--max-salida", type=int, default=8000)
