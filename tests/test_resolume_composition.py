@@ -263,3 +263,81 @@ def test_a_real_composition_pointing_at_another_machine_resolves_nothing():
     assert report["assets_usados"] == []
     assert any("no es autocontenida" in w
                for w in report["composicion"]["avisos"])
+
+
+# --- duplicate copies: a decided clip in an undecided location -------------
+
+def test_copies_that_agree_on_size_and_sample_are_one_decided_clip(tmp_path):
+    """Measured on the Caupolican show: all 6 of its ambiguous references had
+    two candidates that agreed on byte size AND sample_sha256 -- the same clip
+    stored loose and again inside a setlist block. Abstaining there threw away
+    a usable answer, because WHICH clip played was decided all along."""
+    from flujo.venues.resolume_composition import RESOLVED_MULTI_LOCATION
+
+    record = _composition(tmp_path, "s.avc", [
+        ("VideoFile", r"C:\Users\ejemplo\Desktop\clip.mov")])
+    basenames = {"clip.mov": ["TOUR/clip.mov", "TOUR/BLOQUE/clip.mov"]}
+    metadata = {"TOUR/clip.mov": (500, "abc"),
+                "TOUR/BLOQUE/clip.mov": (500, "abc")}
+    resolutions = resolve_references(record, basenames, metadata)
+    assert resolutions[0].status == RESOLVED_MULTI_LOCATION
+    report = usage_report(record, resolutions)
+    assert report["conteos"][RESOLVED_MULTI_LOCATION] == 1
+    assert report["conteos"][AMBIGUOUS] == 0
+    # The clip counts as used and both copies stay visible.
+    assert sorted(report["assets_usados"]) == ["TOUR/BLOQUE/clip.mov",
+                                               "TOUR/clip.mov"]
+    assert report["copias_duplicadas"][0]["basename"] == "clip.mov"
+    # It is NOT counted as unambiguous, because the location is not decided.
+    assert report["tasa_resolucion_inequivoca"] == 0.0
+    assert report["tasa_clip_decidido"] == 1.0
+    assert any("copias del mismo" in x for x in report["limites"])
+
+
+def test_copies_that_differ_stay_ambiguous(tmp_path):
+    record = _composition(tmp_path, "s.avc", [
+        ("VideoFile", r"C:\Users\ejemplo\Desktop\clip.mov")])
+    basenames = {"clip.mov": ["A/clip.mov", "B/clip.mov"]}
+    resolutions = resolve_references(
+        record, basenames,
+        {"A/clip.mov": (500, "abc"), "B/clip.mov": (900, "zzz")})
+    assert resolutions[0].status == AMBIGUOUS
+    assert usage_report(record, resolutions)["assets_usados"] == []
+
+
+def test_a_missing_sample_hash_is_not_an_agreement(tmp_path):
+    """An unknown must not read as a match."""
+    record = _composition(tmp_path, "s.avc", [
+        ("VideoFile", r"C:\Users\ejemplo\Desktop\clip.mov")])
+    basenames = {"clip.mov": ["A/clip.mov", "B/clip.mov"]}
+    for metadata in (
+            {"A/clip.mov": (500, ""), "B/clip.mov": (500, "")},
+            {"A/clip.mov": (500, "abc")},
+    ):
+        assert resolve_references(
+            record, basenames, metadata)[0].status == AMBIGUOUS
+
+
+def test_without_metadata_the_behaviour_is_unchanged(tmp_path):
+    record = _composition(tmp_path, "s.avc", [
+        ("VideoFile", r"C:\Users\ejemplo\Desktop\clip.mov")])
+    basenames = {"clip.mov": ["A/clip.mov", "B/clip.mov"]}
+    assert resolve_references(record, basenames)[0].status == AMBIGUOUS
+
+
+def test_the_real_caupolican_ambiguities_are_all_duplicate_copies():
+    """Every one of the six was the same file in two places, measured."""
+    from flujo.venues.resolume_composition import (
+        RESOLVED_MULTI_LOCATION, index_asset_metadata)
+
+    _skip_unless_real()
+    record = parse_composition(CAUPOLICAN)
+    report = usage_report(record, resolve_references(
+        record, index_basenames(REAL_INDEX), index_asset_metadata(REAL_INDEX)))
+    counts = report["conteos"]
+    assert counts[RESOLVED_UNIQUE] == 28
+    assert counts[RESOLVED_MULTI_LOCATION] == 6
+    assert counts[AMBIGUOUS] == 0
+    assert counts[NOT_FOUND] == 18
+    assert report["tasa_clip_decidido"] == pytest.approx(34 / 52, abs=1e-4)
+    assert len(report["copias_duplicadas"]) == 6

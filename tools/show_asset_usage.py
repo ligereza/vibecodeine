@@ -22,7 +22,8 @@ from typing import Sequence
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from flujo.venues.resolume_composition import (  # noqa: E402
-    AMBIGUOUS, NOT_FOUND, RESOLVED_UNIQUE, index_basenames, orphan_candidates,
+    AMBIGUOUS, NOT_FOUND, RESOLVED_MULTI_LOCATION, RESOLVED_UNIQUE,
+    index_asset_metadata, index_basenames, orphan_candidates,
     parse_composition, resolve_references, usage_report,
 )
 
@@ -58,6 +59,7 @@ def _html(reports: Sequence[dict], orphans: Sequence[dict]) -> str:
             f"{counts['referencias']} referencia(s)</p>"
             f"<p><b>{counts[RESOLVED_UNIQUE]}</b> resueltas sin ambiguedad "
             f"({report['tasa_resolucion_inequivoca']:.0%}), "
+            f"<b>{counts[RESOLVED_MULTI_LOCATION]}</b> en copias duplicadas, "
             f"<b>{counts[AMBIGUOUS]}</b> ambiguas, "
             f"<b>{counts[NOT_FOUND]}</b> no encontradas. Contenedores tocados: "
             f"{html.escape(', '.join(report['contenedores_tocados']) or '-')}</p>"
@@ -112,6 +114,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     out_dir = Path(args.out_dir).expanduser()
     out_dir.mkdir(parents=True, exist_ok=True)
     basenames = index_basenames(args.index)
+    metadata = index_asset_metadata(args.index)
 
     reports, failed, used_all = [], [], set()
     for path in paths:
@@ -121,7 +124,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             failed.append({"file": str(path),
                            "error": f"{type(exc).__name__}: {exc}"})
             continue
-        report = usage_report(record, resolve_references(record, basenames))
+        report = usage_report(
+            record, resolve_references(record, basenames, metadata))
         reports.append(report)
         used_all.update(report["assets_usados"])
         (out_dir / f"{_slug(record.source_name)}.usage.json").write_text(
@@ -143,9 +147,12 @@ def main(argv: Sequence[str] | None = None) -> int:
              "name": r["composicion"]["composition_name"],
              "references": r["conteos"]["referencias"],
              RESOLVED_UNIQUE: r["conteos"][RESOLVED_UNIQUE],
+             RESOLVED_MULTI_LOCATION: r["conteos"][RESOLVED_MULTI_LOCATION],
              AMBIGUOUS: r["conteos"][AMBIGUOUS],
              NOT_FOUND: r["conteos"][NOT_FOUND],
-             "rate": r["tasa_resolucion_inequivoca"],
+             "rate_unambiguous": r["tasa_resolucion_inequivoca"],
+             "rate_clip_decided": r["tasa_clip_decidido"],
+             "duplicated_copies": len(r["copias_duplicadas"]),
              "containers": r["contenedores_tocados"]}
             for r in reports],
         "assets_used_total": len(used_all),
