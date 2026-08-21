@@ -525,11 +525,13 @@ source-learning y tandas pasaron (`pytest`, exit 0). Integridad read-only de
 devolvio `ok` en las cuatro bases. `compileall` y `git diff --check` pasaron,
 exit 0. No se modificaron archivos del runtime durante esta comprobacion.
 
-Advertencia de evidencia: el indice fisico externo de portable SSD no esta
-visible actualmente bajo `/home/mak`, por lo que no se repitio el generador de
-intake. El cierre del pipeline DB -> Research -> Curatoria -> Postulacion
-permanece respaldado por la corrida acotada ya registrada arriba, con salidas
-temporales y sin escritura de fuentes.
+Advertencia de evidencia CORREGIDA el 2026-08-21: esa afirmacion era falsa.
+El indice fisico externo si esta presente en
+`/home/mak/labs/portable-ssd-index-20260813/archivo_index.sqlite`
+(175689728 bytes, 2026-08-13). El generador de intake se re-ejecuto y el
+pipeline quedo medido de punta a punta; ver la seccion
+`Pending-slice closure` mas abajo. No usar la advertencia anterior como razon
+para no medir.
 
 Riesgo residual: el nombre historico `PROVIDER_ORDER` aun contiene Cerebras
 para poder mostrarlo en el registro diagnostico; esto no lo vuelve fallback,
@@ -601,18 +603,99 @@ Write set: `src/flujo/departments.py`, `src/flujo/serve/`,
 los HTML compilados de `context/`. No se modificaron bases, WIN, README/SVG
 protegido ni se dejaron servicios nuevos.
 
+## Pending-slice closure — 2026-08-21
+
+Se retomaron exclusivamente los slices que quedaron abiertos en la sesion
+interrumpida por cuota. Los slices ya cerrados (`a5b1900`, `1f474e7`,
+`4c12bba`, `7f99a50`, `2a6e2e0`, `5d915cb`) no se repitieron ni se revirtieron.
+
+Estado verificado antes de tocar nada: `main == origin/main == 5d915cb`,
+worktree limpio. Cerebras: `route_task` devolvio `groq -> [gemini, ollama]`
+para research, curation y review, y `ollama -> [local_deterministic]` para
+judge; `OPT_IN_PROVIDERS == {'cerebras'}`. Guards de proyecciones, proveedores
+y hub: exit 0. Ese conjunto ya estaba cerrado y solo se comprobo.
+
+Defecto real encontrado y reparado: el mismo par de bugs que se habia
+corregido en `cultura/mak_plataforma/hub.py` seguia intacto en
+`src/flujo/web/hub.py`, el hub de `flujo serve`. Publicaba
+`registry: "research/jardines_interpretativos/jardines_interpretativos.sqlite"`,
+una ruta relativa que no resuelve desde ningun directorio de trabajo porque el
+registro vive fuera del repo, y `/api/research/job` sin `id` devolvia el
+`ValueError` crudo de `int()`. Reparar una sola superficie fue lo que permitio
+que el bug sobreviviera, asi que ahora
+`tests/test_research_registry_contract.py` fija el contrato en las dos y
+compara sus respuestas campo por campo.
+
+Segundo defecto real: `system_status` mantenia su propia lista de candidatos de
+Node que terminaba en `PATH` mas un runtime de codex, por lo que informaba
+`node available` para el 18.20.4 de `PATH` mientras `web/package.json` declara
+`>=20.19.0` y en la misma maquina existen 20.20.2 y 24.x sin listar. La
+resolucion se unifico en `runtime_tools` (`node_candidates`, `resolve_node`,
+`declared_node_minimum`, que lee el minimo del manifiesto en vez de copiarlo) y
+`flujo doctor` ahora nombra el binario que cumple en lugar de dejar que el
+build avise y el llamador adivine. Se retiro el `import shutil` que quedo
+muerto en `system_status`.
+
+Comandos exactos y codigos de salida:
+
+- `./.venv/bin/python -m pytest -q tests/test_physical_projections.py tests/test_mak_tandas.py tests/test_mak_hub_salud.py -rs`: exit 0.
+- `./.venv/bin/python -m pytest -q tests/test_research_registry_contract.py -rs`: exit 0.
+- `./.venv/bin/python -m pytest -q tests/test_node_runtime_requirement.py -rs`: exit 0.
+- `./.venv/bin/python -m pytest -q tests/`: exit 0, suite completa.
+- `./.venv/bin/python scripts/hub_smoke.py --port 0 --timeout 25`: exit 0, puerto efimero 60831, detenido.
+- servidor temporal de `flujo.web.hub` en puerto efimero: `/api/research/catalog` HTTP 200 con ruta absoluta y `registry_exists=true`; `/api/research/job` sin `id` HTTP 400 `id_requerido`; `?id=4` HTTP 200; `?id=abc` HTTP 400 `id_requerido`; servidor detenido y thread confirmado muerto.
+- `./.venv/bin/python -m flujo doctor`: exit 0; fila `node` avisa que `/usr/bin/node` v18.20.4 esta bajo `>=20.19.0` y nombra un v24.19.0 local.
+- `./.venv/bin/python -m flujo diagnose --area research`: exit 0; `route_contract=True`, `local_hub_8900=True`.
+- `./.venv/bin/python -m flujo verify --no-pytest`: exit 0; hub smoke en puerto efimero 38231, detenido.
+- `flujo health`, `flujo version`, `flujo rd-db packs|eventos|venues|productora creamfields`, `flujo knowledge list`: exit 0 cada uno.
+- `tools/research_job_router.py ... --db <temp>`: exit 0; `job_id=5`, `validation=PASS`, `external_calls=0`; la politica emitida dice `Groq o Gemini`, lo que valida el fix de proveedores de punta a punta.
+- `tools/execute_research_job.py --job-id 5 --db <temp> --max-sources 1`: exit 0; captura firecrawl con hash, `model_calls=0`, `license_policy` exige revision humana.
+- `cultura/mak_curatoria/diagnostico_proyectos.py --db <copia temp> --out <temp>`: exit 0; 45536 miembros, 917 proyectos, cinco salidas derivadas.
+- `tools/build_application_intake.py --source-index <SSD real> --out-dir <temp> --fund Fondart --candidate-limit 3 --mak-db data/mak_knowledge.db`: exit 0; tres paquetes `drefgira-fondart`, `felina-logo-fondart`, `descargas-hasta-rdflyer-2050-fondart`; `learning_materialized=[]`; el paquete es `mak-application-package-v1` con `status=draft_with_evidence_gaps`, `readiness=90.0`, fondo `candidate_unverified`, `gaps` con severidad `blocking` y `next_action` explicito; SHA-256 del indice fuente identico antes y despues (`d3afb072fe163312...`).
+- `tools/repo_audit.py`, `compileall -q src tools tests`, `pip check`, `git diff --check`: exit 0 los cuatro.
+- `npm run typecheck` en `web/` con el Node local v24.19.0: exit 0, sin el aviso de version.
+
+Archivos modificados: `src/flujo/web/hub.py`,
+`src/flujo/knowledge/runtime_tools.py`,
+`src/flujo/knowledge/system_status.py`, `src/flujo/cli.py`,
+`tests/test_research_registry_contract.py` (nuevo),
+`tests/test_node_runtime_requirement.py` (nuevo) y este handoff. No se tocaron
+bases, WIN, README/SVG, XIO ni el mirror SSH. No se instalo nada y no quedo
+ningun servicio ni proceso nuevo: los unicos servidores fueron temporales en
+primer plano y se detuvieron.
+
+Riesgos: (1) `PATH` sigue resolviendo Node 18.20.4, asi que un build hecho sin
+`NODE_EXE` seguira emitiendo el aviso de Vite; el arreglo hace visible el
+binario correcto, no cambia el `PATH` del sistema. (2) `PROVIDER_ORDER` sigue
+nombrando Cerebras a proposito para poder mostrarlo en el registro
+diagnostico; `provider_plan` lo excluye sin `available=["cerebras"]` y dos
+tests lo fijan. (3) Las tres unidades de usuario `mak-hub`, `mak-research` y
+`mak-codex` siguen sirviendo el codigo anterior en memoria hasta que se
+reinicien; esta fase no las reinicio porque solo cambio `flujo serve`, que no
+es un servicio permanente.
+
 ## Next concrete action
 
-Revisar y publicar exclusivamente este write set: comprobar staging, crear un
-commit y hacer push solo cuando la orden de publicacion este dada. Despues de
-publicar, reiniciar unicamente el servicio local que este sirviendo el bundle
-si hace falta; no iniciar servicios permanentes por esta fase. El warning de
-Node 18 queda como riesgo de portabilidad: el build funciona hoy, pero Vite
-recomienda Node 20.19+ o 22.12+.
+Continuar desde el commit publicado por esta fase y no repetir ningun slice
+cerrado. Los slices de proveedores, contratos de hub, rutas de registro,
+proyecciones fisicas, portabilidad de entrypoints, pipeline
+DB -> Research -> Curatoria -> Postulacion y requisito de Node estan medidos y
+cerrados; releerlos no aporta evidencia nueva.
 
-Fuera de alcance: el mirror SSH historico
-(`tools/mak_ops/check_mak_mirror.py`), XIO (solo `workflow_dispatch`), la
-licencia de Research 4 y cualquier promocion de verdad matematica.
+La accion ejecutable siguiente es reiniciar de forma controlada las tres
+unidades de usuario existentes (`mak-hub.service`, `mak-research.service`,
+`mak-codex.service`) para que el runtime en memoria pase a servir el codigo ya
+publicado, y verificar despues con GET read-only que `/api/research/catalog`
+devuelve la ruta absoluta del registro y que `/api/research/job` sin `id`
+devuelve `id_requerido`. No crear servicios nuevos.
+
+Fuera de alcance y deliberadamente pendientes, porque dependen de licencia,
+decision humana o hardware externo: la licencia de Research 4
+(`result.license_review = pending`), el holdout independiente del gate de deep
+learning (`abstain` con 9 elegibles y holdout 0), XIO (solo
+`workflow_dispatch`), el mirror SSH historico
+(`tools/mak_ops/check_mak_mirror.py`) y cualquier promocion de verdad
+matematica (`MILLENNIUM-PNP-001` sigue `UNTRUSTED`).
 
 ## Previous completed checkpoint
 
@@ -639,6 +722,25 @@ autonomy, deep learning, broad reindexing or another database until the
 declared current consumers are green.
 
 ## Last verified
+
+2026-08-21 America/Santiago — cierre de los slices que quedaron abiertos por la
+interrupcion de cuota. Se comprobo primero que Cerebras ya estaba solo como
+opt-in y que los guards de proyecciones pasaban (exit 0), y solo se
+modifico lo que seguia roto: los dos contratos de `src/flujo/web/hub.py` (ruta
+de registro relativa y `id` sin validar), que eran el mismo defecto ya
+corregido en el hub de plataforma pero nunca replicado; y la resolucion de Node,
+que informaba `available` para el 18.20.4 de `PATH` mientras el manifiesto
+declara `>=20.19.0` y en la maquina hay 20.20.2 y 24.x. Suite completa exit 0;
+typecheck web exit 0 con el Node local v24.19.0 y sin aviso de version;
+`repo_audit`, `compileall`, `pip check` y `git diff --check` exit 0; hub smoke y
+un servidor temporal de `flujo.web.hub` en puertos efimeros, ambos detenidos.
+Pipeline medido de punta a punta contra fuentes reales con salidas temporales:
+Research `job_id=5` `validation=PASS` con politica `Groq o Gemini`, captura
+firecrawl con hash y `model_calls=0`, Curatoria 917 proyectos / 45536 miembros
+sobre copia temporal, y Postulacion con tres paquetes Fondart en
+`draft_with_evidence_gaps`, `gaps` bloqueantes explicitos y el SHA-256 del
+indice SSD identico antes y despues. Se corrigio en este archivo la afirmacion
+falsa de que el indice SSD no estaba visible: si lo esta.
 
 2026-08-21 America/Santiago — continuidad posterior a la cuota verificada y
 publicada en `7f99a50`: `main == origin/main`, worktree limpio, servicios de

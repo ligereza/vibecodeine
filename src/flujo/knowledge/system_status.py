@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import os
 import re
-import shutil
 import socket
 import sys
 from datetime import datetime, timezone
@@ -24,7 +23,8 @@ from typing import Any, Iterable
 
 from .project_api import operational_status
 from .lane_registry import load_registry, summary as lane_registry_summary, validate_registry
-from .runtime_tools import resolve_blender
+from .runtime_tools import (declared_node_minimum, node_candidates,
+                            resolve_blender)
 
 
 SYSTEM_SCHEMA = "mak-system-status-v1"
@@ -223,18 +223,22 @@ def _portfolio_component(physical: Path) -> dict[str, Any]:
 
 def _dependency_component(repo: Path) -> dict[str, Any]:
     blender = resolve_blender(repo)
-    node_candidates = []
-    configured_node = os.environ.get("NODE_EXE", "").strip()
-    if configured_node:
-        node_candidates.append(Path(configured_node).expanduser())
-    found_node = shutil.which("node")
-    if found_node:
-        node_candidates.append(Path(found_node))
-    node_candidates.append(Path("/home/mak/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node"))
-    node = next((path for path in node_candidates if path.is_file()), None)
+    # The inline candidate list used to stop at PATH plus one codex runtime, so
+    # it reported "node available" for the 18.x on PATH while the web surface
+    # declares >=20.19.0 and the satisfying installs sat unlisted under the
+    # local Actions runner. Resolution now has one home in runtime_tools.
+    found_nodes = node_candidates(repo)
+    node = found_nodes[0] if found_nodes else None
+    declared_minimum = declared_node_minimum(repo)
     evidence = {
         "python": {"available": True, "version": sys.version.split()[0]},
-        "node": {"available": node is not None, **({"path": str(node)} if node else {})},
+        "node": {
+            "available": node is not None,
+            **({"path": str(node)} if node else {}),
+            "declared_minimum": declared_minimum,
+            "candidates": [str(path) for path in found_nodes],
+            "version_check": "doctor_runs_the_version_probe",
+        },
         "blender": {"available": blender is not None, **({"path": str(blender)} if blender else {})},
         "install_policy": "status_never_installs",
     }

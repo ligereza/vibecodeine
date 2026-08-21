@@ -434,8 +434,17 @@ class HubRequestHandler(BaseHTTPRequestHandler):
                 self._send_json({"available": False, "jobs": [], "error": str(e)}, status=200)
             return
         if path == "/api/research/job":
+            raw_id = (parse_qs(parsed.query).get("id") or [""])[0].strip()
+            # A missing or non-numeric id is a caller contract error, not a job
+            # failure. Returning the raw int() ValueError made both cases look
+            # identical to the panel, so a forgotten parameter read as a broken
+            # job. Same contract as the platform hub.
+            if not raw_id.isdigit():
+                self._send_json({"available": False, "error": "id_requerido",
+                                 "detail": "usa /api/research/job?id=<entero>"},
+                                status=400)
+                return
             try:
-                raw_id = (parse_qs(parsed.query).get("id") or [""])[0]
                 self._send_json(self._get_research_job(int(raw_id)))
             except Exception as e:
                 self._send_json({"available": False, "error": str(e)}, status=400)
@@ -1165,7 +1174,16 @@ class HubRequestHandler(BaseHTTPRequestHandler):
                     "constraint_policy": row[5], "jobs": row[6],
                 })
             jobs = conn.execute("SELECT COUNT(*) FROM research_jobs").fetchone()[0]
-        return {"available": True, "adapters": adapters, "jobs": jobs, "registry": "research/jardines_interpretativos/jardines_interpretativos.sqlite"}
+        # The response used to hardcode a relative string that resolves from no
+        # working directory: the registry lives outside the repo, under $HOME by
+        # default, and MAK_RESEARCH_REGISTRY can move it. Report the path the
+        # reader can actually open, matching the platform hub contract.
+        return {"available": True, "adapters": adapters, "jobs": jobs,
+                "registry": str(db_path),
+                "registry_exists": db_path.is_file(),
+                "registry_source": ("MAK_RESEARCH_REGISTRY"
+                                    if os.environ.get("MAK_RESEARCH_REGISTRY", "").strip()
+                                    else "default_home_research")}
 
     def _get_research_jobs(self) -> dict:
         import sqlite3 as _sqlite3
