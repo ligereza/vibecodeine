@@ -123,7 +123,7 @@ only in the MAK runtime mirror. The integration includes the durable
 conductor extension, activity/GPU compatibility utilities, SVG quality checks,
 RD testing evidence projections, the source-preserving POST boundary, and a
 hash-manifested archive of the non-environment material from
-`C:\Users\issvk\claude_sesiones_recuperadas`. The canonical README/SVG geometry
+`C:\Users\<WINDOWS_USER>\claude_sesiones_recuperadas`. The canonical README/SVG geometry
 is unchanged. No service was restarted, no conductor database was created,
 and all `MAK_CONDUCTOR_*` flags remain unset. Commit `cd5ab70c` is on
 `mak-svg` and `mak`; merge commits `bba8ba83`, `ab19862b`, and `58e4daff`
