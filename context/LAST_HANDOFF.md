@@ -33,6 +33,10 @@ accion exacta es revisar el staging del conjunto propio, crear el commit y
 hacer push de `main`; despues la nueva sesion debe continuar desde `Next
 concrete action` sin repetir la auditoria.
 
+CERRADO: ese checkpoint se completo en `69e7fba` + `268ef4b` y el resto del
+worktree se publico en `90f92be`. Se conserva como registro; la accion vigente
+esta en `Next concrete action`.
+
 ## Physical authority and migration status
 
 - La autoridad física es `/home/mak/*`; `/home/mak/flujo` es el baseline de
@@ -305,12 +309,12 @@ concrete action` sin repetir la auditoria.
 | Python learning layer | `src/flujo/knowledge/learning_policy.py` | verified, published | full pytest exit 0; py_compile exit 0; diff check exit 0 |
 | Web source | `web/` | verified, published | Node 24.19.0: `npm ci`, audit 0 vulnerabilities, typecheck and all three builds exit 0 |
 | Documentation contract | `CAPACIDADES.md`, `docs/MAK_CURRENT_STATE.md`, this file | verified, published | docs hygiene included in full pytest exit 0 |
-| Watson/AWS/Azure retirement and provider replacement | provider registries, research/codex chains, Hub/UI, env files, `pyproject.toml`, `requirements.txt`, `/home/mak/research/` | verified locally; not yet published | full pytest exit 0; compileall exit 0; Groq/Gemini/Ollama/Firecrawl probes pass; Cerebras HTTP 402; recoverable archive present |
-| Operational status | `src/flujo/knowledge/system_status.py`, `cultura/mak_plataforma/hub.py`, `tools/mak_status.py`, `web/` | verified locally and active at 8900; lane registry now included read-only; publication pending | focused pytest; temporary/live `/api/status` HTTP 200; eleven components; read-only endpoint |
-| Python structure index | `src/flujo/index/code_index.py`, `context/code_structure_index.json`, `tests/test_code_index.py` | verified locally; source-free AST index and query brief; publication pending | focused/full pytest exit 0; CLI probe; zero syntax errors; diff check exit 0 |
+| Watson/AWS/Azure retirement and provider replacement | provider registries, research/codex chains, Hub/UI, env files, `pyproject.toml`, `requirements.txt`, `/home/mak/research/` | verified and published in `90f92be`; live runtime reloaded | full pytest exit 0; compileall exit 0; Groq/Gemini/Ollama/Firecrawl probes pass; Cerebras HTTP 402; recoverable archive present; `/api/status` after the Hub restart no longer reports watsonx |
+| Operational status | `src/flujo/knowledge/system_status.py`, `cultura/mak_plataforma/hub.py`, `tools/mak_status.py`, `web/` | verified, published in `90f92be` and reloaded at 8900; lane registry included read-only | focused pytest; temporary/live `/api/status` HTTP 200; eleven components; read-only endpoint |
+| Python structure index | `src/flujo/index/code_index.py`, `context/code_structure_index.json`, `tests/test_code_index.py` | published in `90f92be`; index regenerated from the published tree (783 modules, 8565 symbols, 0 syntax errors) | focused/full pytest exit 0; CLI probe; zero syntax errors; diff check exit 0 |
 | Source learning bridge | `src/flujo/knowledge/source_learning.py`, `tools/source_learning_bridge.py`, `knowledge/learning_cases/`, `schemas/knowledge/source_learning_case.schema.json` | verified locally and recorded; published in `7674c49` | source roots/files/messages/claim boundaries pass; Project IR episode verified; no truth promotion |
 | Cultural-first math kernel | `src/flujo/knowledge/math_kernel.py`, `tools/math_kernel.py`, `knowledge/math_targets/`, `schemas/knowledge/math_*.schema.json` | verified locally; one bounded metadata request queued; published in `7674c49` | capsule validation, common Project IR domains, sealed ResultCard guard and truth-promotion block |
-| Cross-domain lane registry | `knowledge/lane_registry/`, `tools/project_lanes.py`, `schemas/knowledge/cross_domain_lane_registry.schema.json` | verified locally; 19 lanes, 3 priority-0 lanes, no new consumer claimed for proposals; publication pending | registry validation, common first-layer rule, evidence refs, guardrails and next gates |
+| Cross-domain lane registry | `knowledge/lane_registry/`, `tools/project_lanes.py`, `schemas/knowledge/cross_domain_lane_registry.schema.json` | published in `90f92be`; 19 lanes, 3 priority-0 lanes, no new consumer claimed for proposals; `lanes` component ready in the live Hub | registry validation, common first-layer rule, evidence refs, guardrails and next gates |
 | Tennis MCP first slice | `src/flujo/tennis/mcp.py`, `tools/tennis_mcp_ingest.py`, `tests/test_tennis_mcp.py` | verified locally; conservative parser and hash-linked JSONL projection; no external acquisition | focused pytest, syntax check, diff check; feeds the shot-event consumer |
 | Tennis shot-event consumer | `src/flujo/tennis/shot_events.py`, `tools/tennis_shot_events.py`, `schemas/tennis/shot_event.schema.json` | verified locally; router-selected read-only consumer with explicit uncertainty and provenance; first episode recorded | schema validation, Project IR route test, focused pytest, verified episode; next is an independent second fixture |
 | Tennis Project IR probe | `tools/project_gate.py`, `src/flujo/knowledge/episode_runner.py` | verified locally; route selects tennis consumer and probe status is `succeeded` without executing it | read-only project gate, recorded probe episode; next is independent evidence |
@@ -318,7 +322,7 @@ concrete action` sin repetir la auditoria.
 | Research simulation | `src/flujo/knowledge/research_simulation.py`, `tools/research_simulation.py`, `schemas/knowledge/research_simulation_manifest.schema.json` | verified locally; bounded symbolic trajectory, model-not-reality marker, no external calls | manifest schema, deterministic trajectory, budget abstention and Project IR route; next is human review |
 | Deep-learning task gate | `src/flujo/knowledge/deep_learning_gate.py`, `tools/deep_learning_gate.py`, `schemas/knowledge/deep_learning_task_gate.schema.json` | verified locally; logo-clean episode abstains on 3-row/no-holdout evidence, training remains disabled | manifest schema, gate tests, Project IR episode; next is an independent holdout |
 | Research learning | `/home/mak/research/jobs/4/` | captured/interpreted; bounded symbolic simulate consumer available; license review pending | review candidate grammar and license; no candidate install |
-| Publication | `main` -> `origin/main` | verified at `7674c49` | `git rev-parse HEAD` equals `git ls-remote origin refs/heads/main` |
+| Publication | `main` -> `origin/main` | verified at `90f92be`; remote CI green | `git rev-parse HEAD` equals `git ls-remote origin refs/heads/main`; CI, seguridad and Git topology guard all `success` |
 
 ## Tool and dependency verification matrix
 
@@ -345,7 +349,7 @@ concrete action` sin repetir la auditoria.
 | Unified status HTTP | temporary `ThreadingHTTPServer` + live `127.0.0.1:8900` -> `GET /api/status` | HTTP 200 in both; `mak-system-status-v1`; `read_only=true`; temporary server shut down; live Hub active |
 | Catalog federation | `src/flujo/knowledge/catalog_federation.py`, `tests/test_catalog_federation.py`, `data/mak_knowledge.db` | verified locally and integrated additively; 7 read-only sources, 124 tables, 2,075,337 observed rows, 0 copied; integrity and FK checks pass |
 | Operational DB bridge | `src/flujo/knowledge/operational_bridge.py`, `tests/test_operational_bridge.py`, `data/mak_knowledge.db` | verified locally and refreshed; 6,132 normalized records, 106,895 curation links, exact package/project/fund links; source rows copied 0; integrity and FK checks pass |
-| Web/DB audit gate | `tools/repo_audit.py`, `tests/test_repo_audit.py`, `.github/workflows/ci.yml`, `Makefile` | verified locally; 36 web modules, 35 reachable, 0 dead, 0 stale active references; four DBs have resolved consumer paths and integrity `ok`; publication pending |
+| Web/DB audit gate | `tools/repo_audit.py`, `tests/test_repo_audit.py`, `.github/workflows/ci.yml`, `Makefile` | verified locally; 36 web modules, 35 reachable, 0 dead, 0 stale active references; four DBs have resolved consumer paths and integrity `ok`; published in `69e7fba` |
 | RD live/standalone projection | `src/flujo/rd/panel.py`, `tools/gen_rd_standalone.py`, `web/src/data/rdDbEmbebida.json` | verified locally; generated and tracked JSON are equal (6 records, identical SHA-256); generator now accepts absolute output paths |
 | SSD application intake | `tools/build_application_intake.py`, `/home/mak/labs/portable-ssd-index-20260813/archivo_index.sqlite` | verified in `/tmp`; 917 projects scanned, 3 bounded Fondart packages emitted, derived SQLite integrity `ok`; status remains `draft_with_evidence_gaps` |
 | DB -> Research -> Curatoria -> Postulacion | temporary foreground pipeline using existing Research corpus, Curatoria diagnostic and `tools/build_application_intake.py` | exit 0; Research 5,179 applications/14 captures; Curatoria 917 projects/13,121 families/45,536 members; Postulacion emitted `drefgira-fondart` with explicit evidence gaps; source trees untouched |
@@ -438,13 +442,76 @@ reemplazo local; `src/flujo/version.py` y `docs/recovered/` conservan
 referencias de changelog/evidencia, no runtime. No se borraron `/home/mak/WIN`,
 XIO, bases, artefactos ni cambios ajenos.
 
+## Post-publication runtime sync — 2026-08-21
+
+El commit `90f92be` ("chore: publish provider and cross-domain runtime")
+publico en un solo commit atomico los tres conjuntos que quedaban fuera de
+`69e7fba`: retiro de Watsonx/AWS/Azure, write set cross-domain completo y la
+correccion del paquete de diagnostico Research. 81 archivos, +2172/-1905.
+`main` y `origin/main` quedaron sincronizados en `90f92be`; el CI remoto pasa
+en los tres jobs: `CI` (run 32454523320), `seguridad` (32454523238) y
+`Git topology guard` (32454523301). Los cuatro tests que estaban rojos en
+`268ef4b` pasan: `test_tools_en_registro`,
+`test_registro_sin_herramientas_fantasma`,
+`test_no_new_file_carries_spanish_comments` y
+`test_the_manifest_is_not_stale_against_the_real_cli`. La causa raiz fue
+publicar artefactos derivados generados desde un worktree sucio mientras sus
+fuentes quedaban sin stagear; no volver a publicar `CAPACIDADES.md`,
+`context/comandos.json`, `idioma_baseline.txt` o el code index sin las fuentes
+que describen.
+
+Resolucion del Grupo 4, sin consultar: en `src/flujo/version.py` se revirtio
+el unico hunk que falsificaba evidencia temporal, de modo que el incidente de
+claves de 2026-07-16 conserva sus proveedores reales
+(Tavily/Groq/Cerebras/Azure); `tests/test_privacidad_repo.py` volvio al estado
+publicado porque su exencion nueva no tenia sujeto
+(`context/fases.migracion.md` ya fue anonimizado en `6743467` y hoy tiene 0
+coincidencias). Las versiones de worktree quedaron en
+`/home/mak/_archive/group4-reverted-20260821/`.
+
+El indice `context/code_structure_index.json` se regenero desde el arbol
+publicado: 783 modulos Python, 8565 simbolos, 187046 lineas declaradas, 0
+errores de sintaxis, sin texto fuente. Ya no declara los cuatro modulos
+watsonx y `lane_registry` resuelve su consumidor real
+(`imported_by = src.flujo.knowledge.system_status`).
+
+El Hub existente `mak-hub.service` es un unit de usuario
+(`systemctl --user`), no de sistema; su launcher
+`/home/mak/plataforma/hub.py` es una proyeccion que carga la implementacion
+canonica `cultura/mak_plataforma/hub.py` del repo. Se reinicio solo ese
+servicio. Evidencia del reload: antes del reinicio `/api/status` aun
+mencionaba `watsonx`; despues menciona `gemini` y ya no `watsonx`. GET
+verificados: `/health` 200 (`mak-hub-health-v1`), `/api/status` 200
+(`mak-system-status-v1`, `read_only=true`, 11 componentes, `status=attention`
+con 2 accionables y 2 informativos, componente `lanes` `ready` y valido),
+`/api/research/catalog` 200, `/api/project/learning` 200, `/api/rd/summary`
+200 y `/api/rd/crosswalk` 200. `/api/rd-db` devuelve 404
+`ruta_api_no_encontrada`: esa ruta no existe, las reales son `/api/rd/*`. No
+se llamo ningun mutador y no se inicio ningun servicio nuevo;
+`mak-codex.service` y `mak-research.service` siguen activos sin tocarse.
+
+Proveedores probados una sola vez en primer plano con los adaptadores
+existentes: `research_lib.LLM` devolvio texto no vacio para `groq`, `gemini` y
+`ollama`; `cerebras` devolvio HTTP 402 `payment_required`;
+`providers.call("gemini", response_format="json")` devolvio JSON valido; y
+`source_pipeline.capture_url("https://example.com", backend="firecrawl")`
+capturo 167 caracteres con backend `firecrawl`. El registro
+`faro-provider-registry-v1` lista groq, gemini, cerebras y ollama como
+`configured`, sin Watsonx, AWS ni Azure. `route_task("research")` resuelve
+capacidad `hypothesis` con proveedor `groq`.
+
 ## Next concrete action
 
-Inspeccionar el diff por grupos y separar los cambios propios de los ajenos
-antes de cualquier commit. La verificacion global de esta tanda ya paso:
-pytest completo, typecheck web, `repo_audit`, compileall y `git diff --check`.
-El mirror SSH historico queda fuera de este slice: no es un consumidor web/DB
-activo y no se debe convertir ni borrar sin una fase propia.
+Conseguir una segunda evidencia de tenis independiente del fixture
+versionado: una fuente real distinta de `tests/fixtures/tennis_mcp_fixture.csv`,
+ingerida con `tools/tennis_shot_events.py` y registrada como episodio propio.
+Es el unico abierto que se desbloquea sin licencia externa ni decision humana.
+Hoy `mak-tennis-decision-lab-fixture-20260820` tiene una sola fuente, asi que
+el lane no puede pasar de `independent_fixture_pending`.
+
+Fuera de alcance mientras eso no exista: el mirror SSH historico
+(`tools/mak_ops/check_mak_mirror.py`), XIO (solo `workflow_dispatch`), la
+licencia de Research 4 y cualquier promocion de verdad matematica.
 
 ## Previous completed checkpoint
 
@@ -471,6 +538,26 @@ autonomy, deep learning, broad reindexing or another database until the
 declared current consumers are green.
 
 ## Last verified
+
+2026-08-21 America/Santiago — publicacion `90f92be` y sincronizacion del
+runtime verificadas. Validado antes del commit en un clon git limpio con el
+patch staged aplicado, no en el worktree sucio: pytest completo exit 0,
+`flujo verify` exit 0 con hub smoke en puerto efimero, typecheck web exit 0 con
+Node 24.18.0, `npm run build:context` exit 0, `gen_archivo_iskvw` exit 0,
+`tools/repo_audit.py` exit 0, compileall exit 0, `pip check` exit 0 y
+`git diff --check` exit 0. `main` == `origin/main` == `90f92be`; CI, seguridad
+y Git topology guard en `success`. Despues de publicar: indice regenerado (783
+modulos), Hub de usuario reiniciado y sirviendo el codigo publicado, cinco
+familias de GET verificadas read-only, y cinco proveedores auditados con una
+sola llamada cada uno. Abiertos confirmados sin fabricar evidencia: Research 4
+`license_pending` (`result.license_review = pending` en
+`/home/mak/research/jobs/4/verified_result.json`); gate de deep learning
+`abstained` con `rows=3`, `independent_holdout=false` y
+`training_permitted=false`, y el learner en `abstain` por
+`no_independent_holdout` con 9 elegibles y holdout 0; tenis
+`independent_fixture_pending` porque solo existe
+`tests/fixtures/tennis_mcp_fixture.csv`; XIO diferido en `workflow_dispatch`;
+mirror SSH intacto y fuera de alcance.
 
 2026-08-21 America/Santiago — web/DB cleanup gate and bounded intake verified;
 published in commit `69e7fba` and pushed to `origin/main`:

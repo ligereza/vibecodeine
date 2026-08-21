@@ -1,6 +1,6 @@
 {
   "schema": "mak-code-structure-v1",
-  "generated_at_utc": "2026-08-21T04:09:42+00:00",
+  "generated_at_utc": "2026-08-21T06:48:33+00:00",
   "root": "/home/mak/flujo",
   "skip_dirs": [
     ".agents",
@@ -18,16 +18,16 @@
     "node_modules"
   ],
   "summary": {
-    "python_files": 781,
-    "total_lines": 186818,
-    "symbols": 8556,
+    "python_files": 783,
+    "total_lines": 187046,
+    "symbols": 8565,
     "syntax_errors": 0,
     "effect_modules": {
-      "filesystem_write": 393,
+      "filesystem_write": 394,
       "filesystem_read_or_write": 177,
       "process": 124,
       "network": 65,
-      "database": 41,
+      "database": 42,
       "http_server": 43,
       "cli": 11
     }
@@ -47712,7 +47712,7 @@
     {
       "path": "src/flujo/version.py",
       "module": "src.flujo.version",
-      "sha256": "3ccecec36be954dd0185d85679859f8118eef31b4617561424a46fcf009d02c4",
+      "sha256": "f256acf2df7e47468859424fc171a49609887cc4ad97804db7b3540f2f229b0e",
       "lines": 545,
       "imports": [],
       "from_imports": [],
@@ -76887,8 +76887,8 @@
     {
       "path": "tests/test_privacidad_repo.py",
       "module": "tests.test_privacidad_repo",
-      "sha256": "990a4cf31226b3b27b62fbea0b49b3751520f710ed9ec2d77f2e5cc498db95a4",
-      "lines": 115,
+      "sha256": "cc908951b70650268941e1a5367bf46531fcd9ab97962c8e433a12c45c05822e",
+      "lines": 112,
       "imports": [
         "re",
         "subprocess"
@@ -76916,14 +76916,14 @@
           "name": "test_ningun_nombre_de_usuario_de_windows_en_una_ruta",
           "kind": "function",
           "line": 91,
-          "end_line": 101,
+          "end_line": 98,
           "decorators": []
         },
         {
           "name": "test_el_fixture_de_wifi_no_trae_redes_de_terceros",
           "kind": "function",
-          "line": 104,
-          "end_line": 114,
+          "line": 101,
+          "end_line": 111,
           "decorators": []
         }
       ],
@@ -79854,6 +79854,40 @@
       "effects": [
         "filesystem_write"
       ],
+      "entrypoints": [],
+      "syntax_error": null,
+      "imported_by": []
+    },
+    {
+      "path": "tests/test_repo_audit.py",
+      "module": "tests.test_repo_audit",
+      "sha256": "ce7c80cd8441766f3bdd4599c4e696734f957bf00e507b2ade1b6e131e7fc6b9",
+      "lines": 25,
+      "imports": [],
+      "from_imports": [
+        "tools.repo_audit.audit"
+      ],
+      "symbols": [
+        {
+          "name": "test_web_graph_has_no_dead_active_modules",
+          "kind": "function",
+          "line": 6,
+          "end_line": 9,
+          "decorators": []
+        },
+        {
+          "name": "test_database_inventory_is_read_only_and_declares_consumers",
+          "kind": "function",
+          "line": 12,
+          "end_line": 24,
+          "decorators": []
+        }
+      ],
+      "calls": [
+        "audit",
+        "item.get"
+      ],
+      "effects": [],
       "entrypoints": [],
       "syntax_error": null,
       "imported_by": []
@@ -90676,8 +90710,8 @@
     {
       "path": "tools/gen_rd_standalone.py",
       "module": "tools.gen_rd_standalone",
-      "sha256": "f84ad175724f87bb8998cf3bf58cdb1530afb3f24e1787c8502c8ce95950cd15",
-      "lines": 104,
+      "sha256": "993501f4b43ef7c4e7bcdbaf1a7974145c97584021bd9e57660be5e9df74c9f4",
+      "lines": 108,
       "imports": [
         "argparse",
         "json",
@@ -90709,7 +90743,7 @@
           "name": "main",
           "kind": "function",
           "line": 53,
-          "end_line": 99,
+          "end_line": 103,
           "decorators": []
         }
       ],
@@ -95176,6 +95210,140 @@
       ],
       "syntax_error": null,
       "imported_by": []
+    },
+    {
+      "path": "tools/repo_audit.py",
+      "module": "tools.repo_audit",
+      "sha256": "ff658a8281a49ce609bc6ec7cd5f5b5c017567126e9613814cbc55d473957b11",
+      "lines": 202,
+      "imports": [
+        "argparse",
+        "json",
+        "re",
+        "sqlite3"
+      ],
+      "from_imports": [
+        "__future__.annotations",
+        "pathlib.Path",
+        "typing.Any"
+      ],
+      "symbols": [
+        {
+          "name": "_module_id",
+          "kind": "function",
+          "line": 55,
+          "end_line": 56,
+          "decorators": []
+        },
+        {
+          "name": "_web_graph",
+          "kind": "function",
+          "line": 59,
+          "end_line": 94,
+          "decorators": []
+        },
+        {
+          "name": "_active_files",
+          "kind": "function",
+          "line": 97,
+          "end_line": 103,
+          "decorators": []
+        },
+        {
+          "name": "_stale_refs",
+          "kind": "function",
+          "line": 106,
+          "end_line": 119,
+          "decorators": []
+        },
+        {
+          "name": "_db_inventory",
+          "kind": "function",
+          "line": 122,
+          "end_line": 153,
+          "decorators": []
+        },
+        {
+          "name": "audit",
+          "kind": "function",
+          "line": 156,
+          "end_line": 174,
+          "decorators": []
+        },
+        {
+          "name": "main",
+          "kind": "function",
+          "line": 177,
+          "end_line": 197,
+          "decorators": []
+        }
+      ],
+      "calls": [
+        "DB_CONSUMERS.get",
+        "Path",
+        "SystemExit",
+        "WEB_SRC.rglob",
+        "_active_files",
+        "_db_inventory",
+        "_module_id",
+        "_stale_refs",
+        "_web_graph",
+        "add",
+        "argparse.ArgumentParser",
+        "as_posix",
+        "audit",
+        "base.is_dir",
+        "base.rglob",
+        "connection.execute",
+        "edges.get",
+        "fetchone",
+        "files.extend",
+        "findings.append",
+        "inventory.append",
+        "is_file",
+        "item.get",
+        "join",
+        "json.dumps",
+        "len",
+        "list",
+        "main",
+        "modules.items",
+        "next",
+        "parser.add_argument",
+        "parser.parse_args",
+        "path.is_file",
+        "path.read_text",
+        "path.relative_to",
+        "path.resolve",
+        "path.stat",
+        "pattern.findall",
+        "pending.extend",
+        "pending.pop",
+        "print",
+        "re.compile",
+        "reachable.add",
+        "resolve",
+        "set",
+        "sorted",
+        "sqlite3.connect",
+        "sum",
+        "table.replace",
+        "target.with_suffix",
+        "type",
+        "with_suffix"
+      ],
+      "effects": [
+        "database",
+        "filesystem_write"
+      ],
+      "entrypoints": [
+        "__main__",
+        "main"
+      ],
+      "syntax_error": null,
+      "imported_by": [
+        "tests.test_repo_audit"
+      ]
     },
     {
       "path": "tools/research_job_router.py",
