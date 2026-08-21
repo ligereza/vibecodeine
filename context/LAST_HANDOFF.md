@@ -536,19 +536,50 @@ para poder mostrarlo en el registro diagnostico; esto no lo vuelve fallback,
 porque `provider_plan` lo excluye sin `available=["cerebras"]`. No cambiarlo
 sin actualizar el contrato de registro y sus tests.
 
-Archivos modificados en esta continuidad: solo este handoff. No hubo borrado,
-instalacion, nuevo servicio ni cambio de base de datos.
+Archivos modificados en esta continuidad: solo este handoff dentro del repo.
+Fuera del repo se agrego una fuente de evidencia acotada bajo
+`/home/mak/curatoria_inbox/tennis_sources/2026-08-21/` y se agrego de forma
+append-only el Project IR/episodio correspondiente a `data/mak_knowledge.db`.
+No hubo borrado, instalacion ni nuevo servicio.
+
+## Independent tennis evidence — 2026-08-21
+
+La segunda fuente independiente ya fue ingerida y validada. Fuente publica:
+`https://raw.githubusercontent.com/JeffSackmann/tennis_MatchChartingProject/master/charting-m-points-2020s.csv`.
+El archivo completo quedo fuera del repo en
+`/home/mak/curatoria_inbox/tennis_sources/2026-08-21/charting-m-points-2020s.csv`
+con SHA-256
+`2cd43f73e0530a47ac02b99dae40177ca6d58a8ccf9189358eb05dffb4be9a`.
+La licencia y atribucion CC BY-NC-SA 4.0 estan registradas en
+`SOURCE_MANIFEST.json`; no se permite uso comercial.
+
+Se extrajeron solo dos filas reales del partido
+`20260521-M-Roland_Garros-Q3-Jesper_De_Jong-Michael_Zheng` a
+`charting-m-points-2020s-extract.csv`, hash
+`ac618e8222d02aa051b6d92dfd6414796974bc90fe362c65067f0c031faea822`.
+`tools/tennis_shot_events.py` produjo 11 eventos; el validador JSON Schema
+paso, el hash del extracto se propago a cada evento y 35 tokens desconocidos
+se conservaron sin inferencia.
+
+Project IR `mak-tennis-decision-lab-external-20260821` quedo `active` con
+episodio verificado `episode-tennis-external-mcp-20260821`. La primera ruta
+abstuvo correctamente porque el proyecto fue etiquetado tambien como
+`research`; al corregir su dominio a solo `tennis`, la ruta selecciono
+`tennis_shot_event_consumer` con `execute_read_only`. El aprendizaje global
+se consulto en modo read-only: `status=abstain`, `eligible_examples=9`,
+`holdout_count=0`, `recordable=false`; la nueva evidencia no se transformo en
+entrenamiento ni en regla promovida.
 
 ## Next concrete action
 
-Conseguir una segunda evidencia de tenis independiente del fixture
-versionado: una fuente real distinta de `tests/fixtures/tennis_mcp_fixture.csv`,
-ingerida con `tools/tennis_shot_events.py` y registrada como episodio propio.
-Es el unico abierto que se desbloquea sin licencia externa ni decision humana.
-Hoy `mak-tennis-decision-lab-fixture-20260820` tiene una sola fuente, asi que
-el lane no puede pasar de `independent_fixture_pending`.
+La evidencia independiente de tenis ya esta completa. No existe otro trabajo
+automatico seguro dentro de este lane: el learner debe permanecer en
+`abstain` hasta contar con un holdout independiente y validado; no fabricar
+labels, no promover reglas y no entrenar. Revaluar
+`tools/project_learning.py --db data/mak_knowledge.db` solo despues de un
+nuevo episodio verificado o de una decision de alcance.
 
-Fuera de alcance mientras eso no exista: el mirror SSH historico
+Fuera de alcance: el mirror SSH historico
 (`tools/mak_ops/check_mak_mirror.py`), XIO (solo `workflow_dispatch`), la
 licencia de Research 4 y cualquier promocion de verdad matematica.
 
@@ -578,6 +609,12 @@ declared current consumers are green.
 
 ## Last verified
 
+2026-08-21 America/Santiago — continuidad posterior a la cuota verificada y
+publicada en `7f99a50`: `main == origin/main`, worktree limpio, servicios de
+usuario activos, cuatro SQLite integras, tests focalizados exit 0 y segunda
+fuente de tenis verificada con ruta `tennis_shot_event_consumer`. El learner
+sigue en `abstain` por `holdout_count=0`; no se promovio aprendizaje.
+
 2026-08-21 America/Santiago — publicacion `90f92be` y sincronizacion del
 runtime verificadas. Validado antes del commit en un clon git limpio con el
 patch staged aplicado, no en el worktree sucio: pytest completo exit 0,
@@ -594,8 +631,9 @@ sola llamada cada uno. Abiertos confirmados sin fabricar evidencia: Research 4
 `abstained` con `rows=3`, `independent_holdout=false` y
 `training_permitted=false`, y el learner en `abstain` por
 `no_independent_holdout` con 9 elegibles y holdout 0; tenis
-`independent_fixture_pending` porque solo existe
-`tests/fixtures/tennis_mcp_fixture.csv`; XIO diferido en `workflow_dispatch`;
+segunda fuente independiente verificada en
+`/home/mak/curatoria_inbox/tennis_sources/2026-08-21/`; XIO diferido en
+`workflow_dispatch`;
 mirror SSH intacto y fuera de alcance.
 
 2026-08-21 America/Santiago — web/DB cleanup gate and bounded intake verified;
