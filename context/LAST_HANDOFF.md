@@ -786,7 +786,8 @@ Resultados reales persistidos fuera del repo:
 
 Rutas durables:
 `/home/mak/curatoria_inbox/project_reconstruction/2026-08-21/`.
-La fuente SSD y `data/mak_knowledge.db` no fueron modificadas.
+En ese write set la fuente SSD y `data/mak_knowledge.db` no fueron
+modificadas; el slice posterior de Project IR se describe a continuacion.
 
 Validacion de esta tanda: tests focalizados 14 passed; suite completa
 `./.venv/bin/python -m pytest -q --disable-warnings` exit 0; `repo_audit.py`
@@ -803,11 +804,18 @@ Archivos del write set: `src/flujo/knowledge/project_reconstruction.py`,
 
 El write set de reconstruccion ya esta publicado en `96dd8cd` y el tercer scope
 `BAHPARTY/bah` tambien fue validado. No repetir DREFGIRA, FELINA/LOGO ni la
-sesion de Claude. El siguiente slice ejecutable es conectar la reconstruccion
-persistida con el consumidor de Curatoria/Portfolio que corresponda, usando
-primero un scope real y manteniendo `BAHPARTYCONCERESI` como `UNKNOWN` hasta
-obtener evidencia adicional. No generar una postulacion de BAH solo por la
-clasificacion mecanica de su carpeta.
+sesion de Claude. El puente de este slice ya conecto un scope real DREFGIRA
+con Project IR y el router compartido: se generaron 5 registros review-only,
+467 artefactos indexados, 5 abstenciones por evidencia y 0 postulaciones o
+publicaciones. `data/mak_knowledge.db` recibio esos 5 registros mediante
+`--db`; el indice SSD mantuvo el mismo fingerprint e integridad.
+
+Mantener `BAHPARTYCONCERESI` como `UNKNOWN` hasta obtener evidencia adicional.
+No generar una postulacion de BAH solo por la clasificacion mecanica de su
+carpeta. El siguiente slice ejecutable es cerrar la evidencia del montaje
+fisico para DREFGIRA o, si el SSD sigue desmontado, integrar el siguiente
+consumidor read-only que pueda trabajar con referencias indexadas; no cambiar
+`review_required` a `active` por una inferencia de carpeta.
 
 Los slices de proveedores, contratos de hub, rutas de registro,
 proyecciones fisicas, portabilidad de entrypoints, pipeline
@@ -897,6 +905,31 @@ publicada en `7f99a50`: `main == origin/main`, worktree limpio, servicios de
 usuario activos, cuatro SQLite integras, tests focalizados exit 0 y segunda
 fuente de tenis verificada con ruta `tennis_shot_event_consumer`. El learner
 sigue en `abstain` por `holdout_count=0`; no se promovio aprendizaje.
+
+## Current slice: reconstruction to Curatoria/Portfolio Project IR — 2026-08-21
+
+Se agrego `src/flujo/knowledge/reconstruction_adapter.py` y el CLI
+`tools/import_project_reconstruction.py`. El adaptador lee un
+`mak-project-reconstruction-v1` persistido y su indice SQLite en modo
+read-only, convierte solo `project_unit`, `subproject` y `exported_product` a
+`mak-project-ir-v1`, deja bibliotecas/recursos compartidos como artefactos o
+relaciones y agrega la politica `portfolio=never_auto_publish` y
+`postulacion=not_created_by_this_adapter`.
+
+Validacion real: DREFGIRA produjo 5 registros review-only y 467 artefactos
+indexados en
+`/home/mak/curatoria_inbox/project_reconstruction/2026-08-21/drefgira/project_ir/`;
+el router produjo 5 abstenciones por `project_state_requires_evidence`, 0
+selecciones y 0 paquetes de postulacion. Con `--db` se guardaron esos 5
+registros en el LearningStore existente; no se registraron episodios ni se
+promovio una regla. El fingerprint del indice siguio siendo
+`d3afb072fe1633125ac20da82aa1d3c7514f763cb8cac28655f19216ac53d8df` y
+`PRAGMA integrity_check` devolvio `ok`.
+
+Tests del puente, reconstruccion, Project IR y router: 22 passed. La prueba
+de no mutacion del indice comparo sus bytes antes/despues. Cambios de codigo
+pendientes de publicar en el commit de este slice: adaptador, CLI, pruebas,
+`CAPACIDADES.md`, `docs/MAK_CURRENT_STATE.md` y este handoff.
 
 2026-08-21 America/Santiago — publicacion `90f92be` y sincronizacion del
 runtime verificadas. Validado antes del commit en un clon git limpio con el
