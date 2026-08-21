@@ -500,6 +500,45 @@ capturo 167 caracteres con backend `firecrawl`. El registro
 `configured`, sin Watsonx, AWS ni Azure. `route_task("research")` resuelve
 capacidad `hypothesis` con proveedor `groq`.
 
+## Continuity after Claude quota interruption — 2026-08-21
+
+Claude Code agoto su cuota despues de publicar `4c12bba` mientras anunciaba
+el inicio de la validacion del slice de portabilidad/pipeline. No quedo un
+comando de intake, render, pytest ni Blender corriendo. El archivo temporal
+`/tmp/mak_continuation_result.json` es evidencia de una ejecucion anterior y
+termina en `9841cc8`; no usarlo como estado actual ni como fuente para repetir
+trabajo.
+
+Estado fisico comprobado en primer plano: `main == origin/main == 4c12bba`,
+worktree limpio; `mak-hub.service`, `mak-research.service` y
+`mak-codex.service` siguen activos como unidades de usuario existentes. GET
+read-only de Hub `/health`, `/api/status`, `/api/research/catalog`,
+`/api/project/learning`, `/api/rd/summary` y `/api/rd/crosswalk` devolvieron
+HTTP 200. Research `8890` y Codex `8891` devolvieron HTTP 200 en su raiz.
+
+Validacion actual, sin mutar fuentes: `route_task` devolvio las cadenas
+automaticas `groq -> gemini -> ollama` para research, curation y review;
+judge resolvio `ollama -> local_deterministic`; Cerebras solo aparece cuando
+el caller lo nombra explicitamente. Tests de intake, puente operativo,
+source-learning y tandas pasaron (`pytest`, exit 0). Integridad read-only de
+`data/rd.db`, `data/rd_datos.db`, `data/mak_knowledge.db` y `data/flujo.db`
+devolvio `ok` en las cuatro bases. `compileall` y `git diff --check` pasaron,
+exit 0. No se modificaron archivos del runtime durante esta comprobacion.
+
+Advertencia de evidencia: el indice fisico externo de portable SSD no esta
+visible actualmente bajo `/home/mak`, por lo que no se repitio el generador de
+intake. El cierre del pipeline DB -> Research -> Curatoria -> Postulacion
+permanece respaldado por la corrida acotada ya registrada arriba, con salidas
+temporales y sin escritura de fuentes.
+
+Riesgo residual: el nombre historico `PROVIDER_ORDER` aun contiene Cerebras
+para poder mostrarlo en el registro diagnostico; esto no lo vuelve fallback,
+porque `provider_plan` lo excluye sin `available=["cerebras"]`. No cambiarlo
+sin actualizar el contrato de registro y sus tests.
+
+Archivos modificados en esta continuidad: solo este handoff. No hubo borrado,
+instalacion, nuevo servicio ni cambio de base de datos.
+
 ## Next concrete action
 
 Conseguir una segunda evidencia de tenis independiente del fixture
