@@ -432,3 +432,42 @@ class TestVenueProposal:
         module.propose_projection(self._setup_file(tmp_path, "CHILLAN.xml"), "sala-uno")
         out = capsys.readouterr().out
         assert "AVISO" in out and "CHILLAN" in out
+
+
+# --- the framing correction -----------------------------------------------
+
+class TestDeploymentNotVenue:
+    """A ScreenSetup is not a venue fingerprint, and the data must say so.
+
+    The first version of this module called its output "the venue's projection
+    topology". Measured counterexample on real files: BERLIN 1.xml and
+    berlin 2.xml name the same place and share ZERO surfaces -- 59 against 9,
+    canvas 3043x272 against 1920x1080. The file describes the rig as deployed on
+    one date, and it cannot separate what belongs to the room from what belongs
+    to the rig that travelled or from how the operator cut the canvas.
+    """
+
+    def test_the_same_place_name_can_carry_a_completely_different_rig(self):
+        left = _real("BERLIN 1.xml")
+        right = _real("berlin 2.xml")
+        from flujo.venues.resolume_screen_setup import compare_rigs
+
+        result = compare_rigs(left, right)
+        assert result["relation"] == RIG_DIFFERENT
+        assert result["shared_surfaces"] == 0
+        assert left.canvas != right.canvas
+        assert len(left.surfaces) != len(right.surfaces)
+
+    def test_the_projection_note_says_deployment_not_configuration(self, tmp_path):
+        record = _parsed(tmp_path, "sala.xml", [("FONDO", 800, 400)])
+        note = to_projection_fragment(record)["notas"]
+        assert note.startswith("DESPLIEGUE")
+        assert "no configuracion permanente" in note
+
+    def test_the_residues_carry_the_counterexample(self, tmp_path):
+        record = _parsed(tmp_path, "sala.xml", [("FONDO", 800, 400)])
+        text = " ".join(r["descripcion"] for r in projection_residues(record))
+        assert "DESPLIEGUE de una fecha" in text
+        assert "BERLIN 1.xml" in text and "berlin 2.xml" in text
+        # And it must name the three things the file cannot separate.
+        assert "del recinto" in text and "rig" in text and "corto el lienzo" in text

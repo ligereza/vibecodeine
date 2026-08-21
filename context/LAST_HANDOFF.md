@@ -298,6 +298,28 @@ sola" (que puedo borrar): una copia duplicada es candidata a borrado de una
 manera en que un archivo unico no lo es. Los duplicados quedan listados, no
 colapsados en silencio.
 
+CORRECCION DE ENCUADRE, provocada por una pregunta del operador ("que relacion
+tiene screen setup con los venue?") y resuelta midiendo, no argumentando: la
+relacion es MAS DEBIL de lo que este bloque afirmo primero. Un ScreenSetup no es
+una huella de sala. `BERLIN 1.xml` y `berlin 2.xml` nombran el mismo lugar y no
+comparten NINGUNA superficie -- 59 contra 9, lienzo 3043x272 contra 1920x1080,
+clasificado `different_rig`. En cambio `cobquecura.xml` en la raiz y en `HARRY/`
+si son el mismo rig, porque es el mismo archivo copiado.
+
+Lo que el archivo describe es un DESPLIEGUE de una fecha, y no puede separar tres
+cosas que estan mezcladas en el: lo que es del recinto (la grilla real de una
+pantalla LED de casa, la forma de una superficie de proyeccion), lo que es del rig
+que se llevo esa noche (cuantas salidas, que procesador) y lo que es decision del
+operador (donde corto el lienzo, como nombro las superficies).
+
+Consecuencia aplicada al codigo, no solo anotada: el fragmento `proyeccion`
+empieza ahora con `DESPLIEGUE, no configuracion permanente de la sala`, el
+contraejemplo de Berlin viaja como residuo dentro de cada registro, y
+`TestDeploymentNotVenue` lo fija sobre los archivos reales. Para una sala esto
+sigue siendo evidencia util y FECHADA -- mejor que el PDF de 2014 que el venue
+mandaria -- pero nunca su configuracion permanente, y una segunda noche puede no
+parecerse en nada.
+
 
 ## Next concrete action
 
