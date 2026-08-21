@@ -46,6 +46,33 @@ interface VenueCat {
   escala: string;
   capacidad: string;
 }
+interface RdTopic {
+  id: string;
+  label: string;
+  purpose: string;
+  tables: string[];
+  rows: number;
+  sources: string[];
+}
+interface RdTopics {
+  schema: string;
+  read_only: boolean;
+  mutation: string;
+  canonical_projection: string;
+  runtime_boundary: string;
+  topics: RdTopic[];
+  bridges?: {
+    portfolio_crosswalk?: { status: string; entities: number; mutation: string };
+    rd_cultura_relations?: {
+      status: string;
+      producers: number;
+      venues: number;
+      relations: number;
+      truncated: boolean;
+      mutation: string;
+    };
+  };
+}
 // `__SIN_SERVIDOR__` lo define vite en los builds standalone; en el hub no
 // existe, y ahi vale false.
 const SIN_SERVIDOR = typeof __SIN_SERVIDOR__ !== 'undefined' && __SIN_SERVIDOR__;
@@ -67,6 +94,8 @@ interface Data {
     eventos_sin_lineup?: number;
   };
   excluido_a_proposito?: string[];
+  read_only?: boolean;
+  source?: string;
   error?: string;
 }
 
@@ -82,6 +111,8 @@ const ESTADO_LOGO: Record<string, string> = {
 
 export default function RdDbPanel() {
   const [data, setData] = useState<Data | null>(null);
+  const [topics, setTopics] = useState<RdTopics | null>(null);
+  const [topicsEstado, setTopicsEstado] = useState<'cargando' | 'ok' | 'no_disponible' | 'error'>('cargando');
   const [estado, setEstado] = useState<'cargando' | 'ok' | 'error'>('cargando');
   const [subiendo, setSubiendo] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string>('');
@@ -115,8 +146,27 @@ export default function RdDbPanel() {
       })
       .catch(cargarHorneada);
 
+  const cargarTemas = () => {
+    if (SIN_SERVIDOR) {
+      setTopicsEstado('no_disponible');
+      return;
+    }
+    fetch('/api/rd/topics')
+      .then(r => r.json())
+      .then(d => {
+        if (d?.schema !== 'mak-rd-topics-v1' || !Array.isArray(d?.topics)) {
+          setTopicsEstado('error');
+          return;
+        }
+        setTopics(d as RdTopics);
+        setTopicsEstado('ok');
+      })
+      .catch(() => setTopicsEstado('error'));
+  };
+
   useEffect(() => {
     cargar();
+    cargarTemas();
   }, []);
 
   const pedirArchivo = (slug: string) => {
@@ -176,7 +226,9 @@ export default function RdDbPanel() {
           <p className="text-sm text-zinc-500">
             {data?.horneado
               ? 'Productoras y venues, con los datos dentro de este archivo. Para editarlos hace falta la aplicación completa.'
-              : <>Productoras y venues. Fuente: <code className="text-zinc-400">data/productoras/*.json</code></>}
+              : data?.read_only
+                ? <>Consulta read-only. Fuente: <code className="text-zinc-400">data/productoras/*.json</code></>
+                : <>Productoras y venues. Fuente: <code className="text-zinc-400">data/productoras/*.json</code></>}
           </p>
         </div>
       </header>
@@ -192,6 +244,48 @@ export default function RdDbPanel() {
 
       {aviso && (
         <div className="rounded-xl border border-zinc-700 bg-zinc-900/60 px-4 py-2 text-[13px] text-zinc-300">{aviso}</div>
+      )}
+
+      {topicsEstado === 'ok' && topics && (
+        <section className="rounded-xl border border-emerald-900/60 bg-emerald-950/10">
+          <div className="border-b border-emerald-900/50 px-4 py-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-sm font-bold text-emerald-200">Temas separados de RD</h2>
+              <span className="rounded bg-emerald-950/70 px-2 py-0.5 text-[10px] text-emerald-300">read-only</span>
+            </div>
+            <p className="mt-1 text-[11px] text-zinc-500">
+              Una sola proyeccion canonica, separada por consumidor. No mezcla <code>data/rd.db</code> con <code>data/rd_datos.db</code>.
+            </p>
+          </div>
+          <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
+            {topics.topics.map(topic => (
+              <article key={topic.id} className="rounded-lg border border-zinc-800 bg-zinc-950/50 p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="text-xs font-bold text-zinc-100">{topic.label}</h3>
+                  <span className="shrink-0 text-lg font-black text-emerald-300">{topic.rows}</span>
+                </div>
+                <p className="mt-1 text-[11px] leading-relaxed text-zinc-500">{topic.purpose}</p>
+                {topic.tables.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {topic.tables.map(table => (
+                      <code key={table} className="rounded bg-zinc-900 px-1.5 py-0.5 text-[9px] text-zinc-500">{table}</code>
+                    ))}
+                  </div>
+                )}
+              </article>
+            ))}
+          </div>
+          {topics.bridges && (
+            <div className="grid gap-2 border-t border-emerald-900/40 px-4 py-3 text-[11px] text-zinc-500 sm:grid-cols-2">
+              <span>
+                Puente Portfolio: {topics.bridges.portfolio_crosswalk?.entities ?? 0} entidades · {topics.bridges.portfolio_crosswalk?.status ?? 'sin estado'}
+              </span>
+              <span>
+                Puente Cultura: {topics.bridges.rd_cultura_relations?.relations ?? 0} relaciones · {topics.bridges.rd_cultura_relations?.status ?? 'sin estado'}
+              </span>
+            </div>
+          )}
+        </section>
       )}
 
       {estado === 'ok' && r && (
@@ -233,8 +327,8 @@ export default function RdDbPanel() {
                 <div key={p.slug} className="flex items-center gap-4 px-4 py-3">
                   <button
                     onClick={() => pedirArchivo(p.slug)}
-                    disabled={subiendo === p.slug || !!data?.horneado}
-                    title={data?.horneado
+                    disabled={subiendo === p.slug || !!data?.horneado || !!data?.read_only}
+                    title={data?.horneado || data?.read_only
                       ? "Para cambiar el logo hace falta la aplicación completa"
                       : "Reemplazar logo"}
                     className="group relative flex h-14 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 hover:border-emerald-700"

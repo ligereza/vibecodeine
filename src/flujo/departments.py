@@ -25,6 +25,7 @@ DEPARTMENTS: dict[str, dict[str, Any]] = {
         "tool_links": [
             {"label": "Plano editor", "path": "/static/rd/plano"},
             {"label": "RD database", "path": "/api/rd/summary"},
+            {"label": "RD topics", "path": "/api/rd/topics"},
             {"label": "Entity crosswalk", "path": "/api/rd/crosswalk"},
             {"label": "RD/Cultura relations", "path": "/api/rd/cultura-relations"},
         ],
@@ -274,6 +275,109 @@ def rd_cultura_relations(root: Path) -> dict[str, Any]:
             {"name": "research_router", "path": "cultura/mak_plataforma/research_router.py"},
             {"name": "portfolio_venue_surface", "path": "iskvw/piel/venue"},
         ],
+    }
+
+
+def rd_topics(root: Path) -> dict[str, Any]:
+    """Return the RD data separated by operational theme.
+
+    This is a bounded read-only index, not a second database. The canonical
+    projection remains ``data/rd.db`` and ``data/rd_datos.db`` remains an
+    empty runtime boundary. Counts come from the existing summary and the
+    cross-domain bridge reports only expose status and bounded totals.
+    """
+    root = Path(root).resolve()
+    summary = rd_summary(root)
+    canonical = summary.get("databases", {}).get("data/rd.db", {})
+    counts = canonical.get("row_counts", {})
+    crosswalk = summary.get("crosswalk", {})
+    relations = rd_cultura_relations(root)
+
+    def row_total(*tables: str) -> int:
+        return sum(int(counts.get(table, 0) or 0) for table in tables)
+
+    topics = [
+        {
+            "id": "service_delivery",
+            "label": "Operacion en terreno",
+            "purpose": "Packs, eventos y la salida operativa de plano, rider y cotizacion.",
+            "tables": ["packs", "eventos"],
+            "rows": row_total("packs", "eventos"),
+            "sources": ["src/flujo/rd", "src/flujo/plano", "data/rd.db"],
+        },
+        {
+            "id": "event_calendar",
+            "label": "Calendario y red de eventos",
+            "purpose": "Productoras, venues y enlaces de eventos que alimentan la triangulacion.",
+            "tables": ["productoras", "venues", "productora_eventos", "productora_venues"],
+            "rows": row_total("productoras", "venues", "productora_eventos", "productora_venues"),
+            "sources": ["data/rd.db", "data/productoras", "data/venues"],
+        },
+        {
+            "id": "testing_evidence",
+            "label": "Testeo y evidencia",
+            "purpose": "Reactivos, sustancias, observaciones y fuentes del trabajo de testeo.",
+            "tables": [
+                "reactivos", "inclusiones", "testeo_fuentes", "testeo_eventos_fuente",
+                "testeo_filas_fuente", "testeo_observaciones_fuente", "testeo_enlaces_revision",
+                "testeo_mapa_reactivos", "testeo_mapa_sustancias",
+            ],
+            "rows": row_total(
+                "reactivos", "inclusiones", "testeo_fuentes", "testeo_eventos_fuente",
+                "testeo_filas_fuente", "testeo_observaciones_fuente", "testeo_enlaces_revision",
+                "testeo_mapa_reactivos", "testeo_mapa_sustancias",
+            ),
+            "sources": ["src/flujo/rd/database.py", "data/rd.db"],
+        },
+        {
+            "id": "delivery_assets",
+            "label": "Productos y activos de entrega",
+            "purpose": "Suplementos, inclusiones, logos y tipos que se consumen al preparar una pieza.",
+            "tables": ["suplementos", "productora_logos", "productora_tipos"],
+            "rows": row_total("suplementos", "productora_logos", "productora_tipos"),
+            "sources": ["src/flujo/rd", "knowledge/logos", "data/rd.db"],
+        },
+        {
+            "id": "research_bridges",
+            "label": "Puentes con Cultura y Portfolio",
+            "purpose": "Relaciones explicitamente trazables; lo dudoso queda como candidato de revision.",
+            "tables": [],
+            "rows": len(crosswalk.get("entities", [])) + len(relations.get("relations", [])),
+            "sources": [
+                "data/rd_fuentes/candidates/rd_portfolio_entity_crosswalk.json",
+                "data/productoras",
+                "data/venues",
+            ],
+        },
+    ]
+    return {
+        "schema": "mak-rd-topics-v1",
+        "read_only": True,
+        "mutation": "disabled",
+        "canonical_projection": "data/rd.db",
+        "runtime_boundary": "data/rd_datos.db",
+        "topics": topics,
+        "bridges": {
+            "portfolio_crosswalk": {
+                "status": crosswalk.get("status", "unavailable"),
+                "entities": len(crosswalk.get("entities", [])),
+                "mutation": "disabled",
+            },
+            "rd_cultura_relations": {
+                "status": relations.get("status", "unavailable"),
+                "producers": len(relations.get("producers", [])),
+                "venues": len(relations.get("venues", [])),
+                "relations": len(relations.get("relations", [])),
+                "truncated": bool(relations.get("truncated")),
+                "mutation": "disabled",
+            },
+        },
+        "database": {
+            "canonical_exists": bool(canonical.get("exists")),
+            "canonical_rows": int(canonical.get("rows", 0) or 0),
+            "runtime_exists": bool(summary.get("databases", {}).get("data/rd_datos.db", {}).get("exists")),
+            "runtime_rows": int(summary.get("databases", {}).get("data/rd_datos.db", {}).get("rows", 0) or 0),
+        },
     }
 
 

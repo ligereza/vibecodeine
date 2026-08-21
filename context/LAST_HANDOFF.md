@@ -570,14 +570,45 @@ se consulto en modo read-only: `status=abstain`, `eligible_examples=9`,
 `holdout_count=0`, `recordable=false`; la nueva evidencia no se transformo en
 entrenamiento ni en regla promovida.
 
+## RD thematic integration — 2026-08-21
+
+La seccion RD de `flujo serve` ahora separa la proyeccion canonica en cinco
+temas read-only: operacion en terreno, calendario/red de eventos, testeo y
+evidencia, productos/activos de entrega y puentes con Cultura/Portfolio. La
+separacion es una vista, no una segunda base: `data/rd.db` sigue siendo la
+proyeccion canonica y `data/rd_datos.db` sigue vacia como frontera de runtime.
+
+Se agrego el contrato `mak-rd-topics-v1` en `src/flujo/departments.py` y se
+expuso en los dos servidores locales: `flujo serve` (`/api/rd/topics`) y el
+Hub 8900 (`/api/rd/topics`). `flujo serve` tambien recupero `/api/rd-db` y
+los logos en GET read-only, por lo que la interfaz RD ya no queda desconectada
+cuando se abre por el servidor stdlib. El panel muestra los cinco temas y los
+puentes sin habilitar mutaciones.
+
+Validacion de esta fase:
+
+- `./.venv/bin/pytest -q tests/test_serve_api.py tests/test_departments.py tests/test_rd_db_logos.py tests/test_tarifa_una_sola_fuente.py`: exit 0, 46 tests.
+- `./.venv/bin/pytest -q --disable-warnings`: exit 0, suite completa.
+- `npm run typecheck`: exit 0.
+- `npm run build:context`: exit 0; warning no bloqueante: Node 18.20.4 esta bajo el minimo recomendado por Vite 7.
+- `npm run build:rd`: primero exit 1 por `import.meta.dirname` en `copy-rd-share.mjs`; corregido con `fileURLToPath`, segundo intento exit 0.
+- servidor temporal de `flujo serve`: `/api/rd/topics`, `/api/rd/summary`, `/api/rd-db` y HTML respondieron HTTP 200; se detuvo al terminar.
+- `git diff --check` y `compileall`: exit 0.
+
+Write set: `src/flujo/departments.py`, `src/flujo/serve/`,
+`src/flujo/web/hub.py`, `cultura/mak_plataforma/hub.py`,
+`web/src/components/RdDbPanel.tsx`, `web/scripts/copy-rd-share.mjs`, pruebas y
+los HTML compilados de `context/`. No se modificaron bases, WIN, README/SVG
+protegido ni se dejaron servicios nuevos.
+
 ## Next concrete action
 
-La evidencia independiente de tenis ya esta completa. No existe otro trabajo
-automatico seguro dentro de este lane: el learner debe permanecer en
-`abstain` hasta contar con un holdout independiente y validado; no fabricar
-labels, no promover reglas y no entrenar. Revaluar
-`tools/project_learning.py --db data/mak_knowledge.db` solo despues de un
-nuevo episodio verificado o de una decision de alcance.
+Revisar y publicar exclusivamente este write set: comprobar staging, crear un
+commit y hacer push solo cuando la orden de publicacion este dada. Despues de
+publicar, reiniciar unicamente el servicio local que este sirviendo el bundle
+si hace falta; no iniciar servicios permanentes por esta fase. El warning de
+Node 18 queda como riesgo de portabilidad: el build funciona hoy, pero Vite
+recomienda Node 20.19+ o 22.12+.
 
 Fuera de alcance: el mirror SSH historico
 (`tools/mak_ops/check_mak_mirror.py`), XIO (solo `workflow_dispatch`), la

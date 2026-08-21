@@ -38,6 +38,7 @@ from io import BytesIO
 from urllib.parse import urlparse, parse_qs, unquote
 
 from ..paths import context_dir, repo_root, asset_root, workspace_root, is_packaged as _is_packaged, datadrops_dir
+from ..departments import rd_topics
 
 # analysis for datadrop metadata (colors + OCR via existing; privacy-safe local)
 try:
@@ -462,6 +463,12 @@ class HubRequestHandler(BaseHTTPRequestHandler):
                 self._send_json(self._get_rd_db())
             except Exception as e:
                 self._send_json({"productoras": [], "venues": [], "error": str(e)}, status=200)
+            return
+        if path == "/api/rd/topics":
+            try:
+                self._send_json(rd_topics(self.root))
+            except Exception as e:
+                self._send_json({"schema": "mak-rd-topics-v1", "topics": [], "error": str(e)}, status=200)
             return
         if path == "/api/portafolio":
             try:

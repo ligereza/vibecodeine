@@ -180,6 +180,7 @@ try:
         rd_crosswalk,
         rd_cultura_relations,
         rd_summary,
+        rd_topics,
     )
 except Exception as _departments_exc:  # noqa: BLE001 - hub remains available
     department_catalog = None
@@ -189,6 +190,7 @@ except Exception as _departments_exc:  # noqa: BLE001 - hub remains available
     rd_crosswalk = None
     rd_cultura_relations = None
     rd_summary = None
+    rd_topics = None
     _DEPARTMENTS_IMPORT_ERROR = type(_departments_exc).__name__
 else:
     _DEPARTMENTS_IMPORT_ERROR = ""
@@ -4658,6 +4660,11 @@ class H(BaseHTTPRequestHandler):
                 return self._json({"ok": False, "error": "rd_summary_unavailable",
                                    "detail": _DEPARTMENTS_IMPORT_ERROR}, 503)
             return self._json({"ok": True, **rd_summary(_REPO_ROOT)})
+        if p == "/api/rd/topics":
+            if rd_topics is None:
+                return self._json({"ok": False, "error": "rd_topics_unavailable",
+                                   "detail": _DEPARTMENTS_IMPORT_ERROR}, 503)
+            return self._json({"ok": True, **rd_topics(_REPO_ROOT)})
         if p == "/api/rd/crosswalk":
             if rd_crosswalk is None:
                 return self._json({"ok": False, "error": "rd_crosswalk_unavailable",

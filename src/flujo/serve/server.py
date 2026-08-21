@@ -12,6 +12,8 @@ Endpoints:
   GET  /context/...              -> sirve los HTML/CSS/JS del hub
   GET  /api/health/stats         -> tarjetas de estado del hub (lee jobs/ si existe)
   GET  /api/materials            -> material RD (lee context/data/materials.json o demo)
+  GET  /api/rd/topics            -> temas RD separados desde la proyeccion canonica
+  GET  /api/rd-db                 -> productoras y venues read-only
   POST /api/plano/render         -> {evento} -> {layout, rider, costos}
 
 Uso:
@@ -23,14 +25,17 @@ Reglas: stdlib only, ASCII-only, no toca archivos del usuario, no guarda tokens.
 
 import json
 import os
+import re
 import sys
 import argparse
 import webbrowser
+from pathlib import Path
 
 from flujo.eventos.presets import infer_event_preset, list_event_presets
 from flujo.cotizaciones_base import generar_cotizacion_base
+from flujo.departments import rd_cultura_relations, rd_crosswalk, rd_summary, rd_topics
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 # Global request-body cap (VCD-06). 8 MB: large enough for a photo sent to the
 # tracer, small enough that an unbounded body cannot exhaust memory.
@@ -45,6 +50,7 @@ MIME = {
     ".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8",
     ".js": "application/javascript; charset=utf-8", ".json": "application/json; charset=utf-8",
     ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg", ".webp": "image/webp",
     ".woff2": "font/woff2", ".ico": "image/x-icon",
 }
 
@@ -105,6 +111,62 @@ def api_materials():
          "desc": "Info sobre analisis colorimetrico.", "meta": "A4 . 2022",
          "tags": ["testeo", "quimico"]},
     ]}
+
+
+def api_rd_summary():
+    """Read-only canonical RD database summary for ``flujo serve``."""
+    return rd_summary(Path(REPO))
+
+
+def api_rd_topics():
+    """Read-only thematic RD projection shared with the main Hub."""
+    return rd_topics(Path(REPO))
+
+
+def api_rd_crosswalk():
+    """Read-only RD/portfolio entity crosswalk."""
+    return rd_crosswalk(Path(REPO))
+
+
+def api_rd_cultura_relations():
+    """Read-only RD/Cultura candidate relation graph."""
+    return rd_cultura_relations(Path(REPO))
+
+
+def api_rd_db():
+    """Serve the existing RD panel projection without enabling mutations."""
+    from flujo.rd.panel import datos_panel
+
+    data = datos_panel(Path(REPO))
+    data["read_only"] = True
+    data["source"] = "flujo-serve"
+    data["canonical_projection"] = "data/rd.db"
+    return data
+
+
+def _rd_logo_path(slug):
+    """Resolve a known RD logo under the allowlisted logos directory."""
+    if not re.fullmatch(r"[a-z0-9_-]{1,64}", slug or ""):
+        return None
+    root = Path(REPO)
+    profile_path = root / "data" / "productoras" / (slug + ".json")
+    ref = ""
+    try:
+        raw = json.loads(profile_path.read_text(encoding="utf-8"))
+        logos = raw.get("logos") or []
+        if logos and isinstance(logos[0], dict):
+            knowledge = str(logos[0].get("knowledge") or "")
+            if knowledge.endswith(".yaml"):
+                ref = Path(knowledge).stem
+    except (OSError, ValueError, TypeError):
+        pass
+    from flujo.rd.panel import _candidatos_logo
+
+    base = root / "knowledge" / "logos"
+    for candidate in _candidatos_logo(base, slug, ref):
+        if candidate.is_file() and candidate.suffix.lower() in MIME:
+            return candidate
+    return None
 
 
 def api_index_brief():
@@ -328,6 +390,25 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(api_health_stats())
         if path == "/api/materials":
             return self._json(api_materials())
+        if path == "/api/rd/summary":
+            return self._json(api_rd_summary())
+        if path == "/api/rd/topics":
+            return self._json(api_rd_topics())
+        if path == "/api/rd/crosswalk":
+            return self._json(api_rd_crosswalk())
+        if path == "/api/rd/cultura-relations":
+            return self._json(api_rd_cultura_relations())
+        if path == "/api/rd-db":
+            try:
+                return self._json(api_rd_db())
+            except Exception as exc:
+                return self._json({"productoras": [], "venues": [], "error": type(exc).__name__}, 200)
+        if path == "/api/rd-db/logo":
+            slug = (parse_qs(urlparse(self.path).query).get("slug") or [""])[0].strip().lower()
+            logo = _rd_logo_path(slug)
+            if logo is None:
+                return self._send(404, "404 - logo", "text/plain; charset=utf-8")
+            return self._send(200, logo.read_bytes(), MIME[logo.suffix.lower()])
         if path in ("/api/list-svg-works", "/api/svg-index"):
             return self._json(api_list_svg_works())
         if path == "/api/event-presets":

@@ -1,7 +1,9 @@
 import { copyFileSync, existsSync, mkdirSync, statSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const root = resolve(import.meta.dirname, '..', '..');
+// Node 18 (the Debian runtime used by MAK) does not expose import.meta.dirname.
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const src = resolve(root, 'web', 'dist-rd', 'rd.html');
 const dest = resolve(root, 'dist_compartir', 'herramientas_rd.html');
 
