@@ -352,7 +352,7 @@ esta en `Next concrete action`.
 | Web/DB audit gate | `tools/repo_audit.py`, `tests/test_repo_audit.py`, `.github/workflows/ci.yml`, `Makefile` | verified locally; 36 web modules, 35 reachable, 0 dead, 0 stale active references; four DBs have resolved consumer paths and integrity `ok`; published in `69e7fba` |
 | RD live/standalone projection | `src/flujo/rd/panel.py`, `tools/gen_rd_standalone.py`, `web/src/data/rdDbEmbebida.json` | verified locally; generated and tracked JSON are equal (6 records, identical SHA-256); generator now accepts absolute output paths |
 | SSD application intake | `tools/build_application_intake.py`, `/home/mak/labs/portable-ssd-index-20260813/archivo_index.sqlite` | verified in `/tmp`; 917 projects scanned, 3 bounded Fondart packages emitted, derived SQLite integrity `ok`; status remains `draft_with_evidence_gaps` |
-| Latent project reconstruction | `src/flujo/knowledge/project_reconstruction.py`, `tools/project_reconstruction.py`, `tests/test_project_reconstruction.py`, `tools/build_application_intake.py` | verified on real DREFGIRA and FELINA/LOGO; durable outputs in `/home/mak/curatoria_inbox/project_reconstruction/2026-08-21/`; publication pending this commit |
+| Latent project reconstruction | `src/flujo/knowledge/project_reconstruction.py`, `tools/project_reconstruction.py`, `tests/test_project_reconstruction.py`, `tools/build_application_intake.py` | verified and published in `96dd8cd`; durable outputs in `/home/mak/curatoria_inbox/project_reconstruction/2026-08-21/` |
 | DB -> Research -> Curatoria -> Postulacion | temporary foreground pipeline using existing Research corpus, Curatoria diagnostic and `tools/build_application_intake.py` | exit 0; Research 5,179 applications/14 captures; Curatoria 917 projects/13,121 families/45,536 members; Postulacion emitted `drefgira-fondart` with explicit evidence gaps; source trees untouched |
 | RD event fixture | read-only query over `operational_records` and `operational_curation_links` | exit 0; 7 events retain producer, raw date, venue and flyer/source evidence; 0 false ISO dates; 0 orphan curation links |
 | Contract audit refresh | `PYTHONPATH=src ./.venv/bin/python -m flujo.knowledge.contract_registry --db data/mak_knowledge.db audit --root . --record --run-id simulation_consumer_20260820` | exit 0; 59/59 verified; Blender, source-learning bridge, math kernel, tennis, scraping, deep-learning and simulation consumers resolved |
@@ -777,6 +777,10 @@ Resultados reales persistidos fuera del repo:
   explicitos y SQLite derivada integra.
 - FELINA/LOGO: baseline 21 filas, 20 bibliotecas; reconstruccion 1 unidad,
   15 dependencias y 5 recursos compartidos; 2219/2219 assets reconciliados.
+- BAHPARTY/bah: baseline 50 filas, 49 bibliotecas; reconstruccion 1 unidad y
+  49 recursos compartidos; 87/87 assets reconciliados. La comparacion con
+  `BAHPARTYCONCERESI` queda `UNKNOWN` por un sample hash sin `full_sha256`,
+  preservando las alternativas y sin convertir la marca en postulacion.
 - Los dos runs conservan el fingerprint del indice
   `d3afb072fe1633125ac20da82aa1d3c7514f763cb8cac28655f19216ac53d8df`.
 
@@ -797,12 +801,13 @@ Archivos del write set: `src/flujo/knowledge/project_reconstruction.py`,
 
 ## Next concrete action
 
-Publicar y verificar este write set sin mezclar cambios ajenos. Despues de la
-publicacion, ejecutar la misma reconstruccion sobre un tercer scope real del
-SSD — preferentemente `BAHPARTY/bah`, que tiene evidencia de biblioteca y se
-relaciona con el contexto real de Drefquila/BAH Party— y comprobar que el
-intake mantiene separados proyecto, marca/encargo y recurso compartido. No
-repetir los dos runs ya cerrados ni volver a leer la sesion de Claude.
+El write set de reconstruccion ya esta publicado en `96dd8cd` y el tercer scope
+`BAHPARTY/bah` tambien fue validado. No repetir DREFGIRA, FELINA/LOGO ni la
+sesion de Claude. El siguiente slice ejecutable es conectar la reconstruccion
+persistida con el consumidor de Curatoria/Portfolio que corresponda, usando
+primero un scope real y manteniendo `BAHPARTYCONCERESI` como `UNKNOWN` hasta
+obtener evidencia adicional. No generar una postulacion de BAH solo por la
+clasificacion mecanica de su carpeta.
 
 Los slices de proveedores, contratos de hub, rutas de registro,
 proyecciones fisicas, portabilidad de entrypoints, pipeline
