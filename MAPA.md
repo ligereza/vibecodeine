@@ -42,7 +42,7 @@ in parallel Git trunks.
 
 <!-- COMANDOS:INICIO -- generado por tools/gen_mapa_comandos.py, no editar a mano -->
 
-Medido sobre el CLI real: **97 comandos** (24 sueltos + 73 dentro de 17 grupos).
+Medido sobre el CLI real: **98 comandos** (25 sueltos + 73 dentro de 17 grupos).
 
 ### Comandos sueltos
 
@@ -52,6 +52,7 @@ Medido sobre el CLI real: **97 comandos** (24 sueltos + 73 dentro de 17 grupos).
 | `py -m flujo analyze` | Analizar colores dominantes y OCR de un proyecto flyer. | nada |
 | `py -m flujo app` | Alias de serve. Lanza la nueva app (hub pro workspace recomendado como entrada diaria). Real backend + parse/create jobs live cuando activo. | nada |
 | `py -m flujo clean` | Limpiar archivos temporales del repo. | nada |
+| `py -m flujo code-index` | Crear un índice AST consultable sin incluir texto fuente. | nada |
 | `py -m flujo cotizaciones` | Genera cotización dual integrada con flujo. | nada |
 | `py -m flujo daily` | Generar reporte diario (md + html). | nada |
 | `py -m flujo delegate` | Genera prompt preciso para delegar a agente especializado (5 roles; soporta paralelo via hub o clones). Salida lista para copiar a otra sesión IA. Ideal para multi-agente workflow. | nada |
