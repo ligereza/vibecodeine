@@ -654,6 +654,7 @@ Comandos exactos y codigos de salida:
 - `tools/build_application_intake.py --source-index <SSD real> --out-dir <temp> --fund Fondart --candidate-limit 3 --mak-db data/mak_knowledge.db`: exit 0; tres paquetes `drefgira-fondart`, `felina-logo-fondart`, `descargas-hasta-rdflyer-2050-fondart`; `learning_materialized=[]`; el paquete es `mak-application-package-v1` con `status=draft_with_evidence_gaps`, `readiness=90.0`, fondo `candidate_unverified`, `gaps` con severidad `blocking` y `next_action` explicito; SHA-256 del indice fuente identico antes y despues (`d3afb072fe163312...`).
 - `tools/repo_audit.py`, `compileall -q src tools tests`, `pip check`, `git diff --check`: exit 0 los cuatro.
 - `npm run typecheck` en `web/` con el Node local v24.19.0: exit 0, sin el aviso de version.
+- publicacion: commit `fe104ee`, push a `origin/main` exit 0, `HEAD == origin/main`, worktree limpio. CI remoto de `fe104ee` en los tres jobs: `CI` success, `seguridad` success, `Git topology guard` success.
 
 Archivos modificados: `src/flujo/web/hub.py`,
 `src/flujo/knowledge/runtime_tools.py`,
@@ -682,12 +683,30 @@ proyecciones fisicas, portabilidad de entrypoints, pipeline
 DB -> Research -> Curatoria -> Postulacion y requisito de Node estan medidos y
 cerrados; releerlos no aporta evidencia nueva.
 
-La accion ejecutable siguiente es reiniciar de forma controlada las tres
-unidades de usuario existentes (`mak-hub.service`, `mak-research.service`,
-`mak-codex.service`) para que el runtime en memoria pase a servir el codigo ya
-publicado, y verificar despues con GET read-only que `/api/research/catalog`
-devuelve la ruta absoluta del registro y que `/api/research/job` sin `id`
-devuelve `id_requerido`. No crear servicios nuevos.
+El recargado del runtime YA SE HIZO en esta misma fase y no hay que
+repetirlo. Se reinicio unicamente `mak-hub.service`, porque es el unico
+servicio que carga los modulos tocados (`system_status`); `mak-research.service`
+y `mak-codex.service` no dependen de este write set y quedaron intactos y
+activos. Evidencia: MainPID paso de 245666 a 297744; antes del reinicio la
+evidencia de node en `/api/status` solo traia `['available', 'path']` y despues
+trae `declared_minimum` `>=20.19.0` y cuatro candidatos; `/api/status` sigue en
+`read_only=true` con once componentes; `/api/research/catalog` devuelve la ruta
+absoluta con `registry_exists=true`; `/api/research/job` sin `id` devuelve HTTP
+400 `id_requerido` y con `id=4` devuelve HTTP 200.
+
+Auditoria adicional de esta fase, sin hallazgos nuevos: los dos hubs comparten
+nueve rutas y se comprobo que ya no divergen. `/api/rd/topics` delega en el
+contrato compartido `rd_topics` de `src/flujo/departments.py` en ambos;
+`/api/status` del hub de `serve` conserva sus campos historicos de servicio y
+anida el mismo sobre `mak-system-status-v1` en `operational` con
+`read_only=true`, que es el diseno documentado y no una divergencia;
+`/api/organismo` del hub de `serve` es un proxy al 8900, no una segunda
+implementacion. Los unicos contratos que si divergian eran los dos reparados
+aqui.
+
+No queda una accion de integracion segura y ejecutable pendiente en este
+alcance. El siguiente agente debe partir del commit de esta fase y elegir un
+slice nuevo con fuente, consumidor y validacion propios.
 
 Fuera de alcance y deliberadamente pendientes, porque dependen de licencia,
 decision humana o hardware externo: la licencia de Research 4
