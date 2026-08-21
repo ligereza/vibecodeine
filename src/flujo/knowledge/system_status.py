@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from .project_api import operational_status
+from .lane_registry import load_registry, summary as lane_registry_summary, validate_registry
 from .runtime_tools import resolve_blender
 
 
@@ -303,6 +304,49 @@ def _provider_component(repo: Path, physical: Path) -> dict[str, Any]:
         )
 
 
+def _lane_registry_component(repo: Path) -> dict[str, Any]:
+    """Expose the cross-domain map without promoting any lane.
+
+    The registry is navigation and evidence metadata, not a project ledger.
+    Status therefore reports its validation and compact counts only; it never
+    changes lane state or executes a lane consumer.
+    """
+    registry_path = repo / "knowledge" / "lane_registry" / "mak_cross_domain_registry_2026-08-20.json"
+    try:
+        registry = load_registry(registry_path)
+        errors = validate_registry(registry)
+        compact = lane_registry_summary(registry)
+    except Exception as exc:  # noqa: BLE001 - status must remain available
+        return _component(
+            "lanes",
+            "Cross-domain lanes",
+            "attention",
+            severity="attention",
+            evidence={
+                "registry": _path_status(registry_path),
+                "valid": False,
+                "error": type(exc).__name__,
+                "read_only": True,
+            },
+            next_action="restore and validate the cross-domain lane registry before routing a new lane",
+        )
+    valid = not errors
+    return _component(
+        "lanes",
+        "Cross-domain lanes",
+        "ready" if valid else "attention",
+        severity="none" if valid else "attention",
+        evidence={
+            "registry": _path_status(registry_path),
+            "valid": valid,
+            "errors": errors,
+            "summary": compact,
+            "read_only": True,
+        },
+        next_action=None if valid else "fix the lane registry validation errors before relying on its routing metadata",
+    )
+
+
 def system_status(
     database: str | Path,
     *,
@@ -336,6 +380,7 @@ def system_status(
         "portfolio": _portfolio_component(physical),
         "dependencies": _dependency_component(repo),
         "providers": _provider_component(repo, physical),
+        "lanes": _lane_registry_component(repo),
     }
 
     attention: list[dict[str, Any]] = []

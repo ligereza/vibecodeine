@@ -15,7 +15,7 @@ reanuda con --resume <path>.
 
 Uso:
     python3 research.py "tema" [--iteraciones 3] [--depth basic|advanced]
-                        [--providers watsonx,groq,cerebras,azure,ollama]
+                        [--providers groq,gemini,ollama]
                         [--sin-marco] [--ntfy]
     python3 research.py --resume ~/research/checkpoints/<job_id>.json
 """
@@ -175,7 +175,7 @@ def _armar_resultado(topic, report, t0, findings, query_history, sources, llm,
 
 
 def investigar(topic, iteraciones=3, depth="basic",
-               providers="watsonx,groq,cerebras,azure,ollama", densidad="medio",
+               providers="groq,gemini,ollama", densidad="medio",
                sin_marco=False, reanudar=None, formato="informe"):
     t0 = time.time()
     if formato == "source_corpus":
@@ -642,12 +642,10 @@ def main():
     ap.add_argument("tema", nargs="?", help="tema a investigar (opcional con --resume)")
     ap.add_argument("--iteraciones", type=int, default=2)  # frugal: mas es opt-in
     ap.add_argument("--depth", choices=("basic", "advanced"), default="basic")
-    # watsonx primero desde el 2026-07-30 (salud medida 32/32, ver
-    # research_lib.LLM.__init__). Este default es el que rutea de verdad: la cola
-    # de la caja (worker.py -> research.py) NUNCA pasa --providers, asi que un
-    # cambio que solo tocara _SLOTS no habria movido un solo job.
+    # Este default es el que rutea de verdad: la cola de la caja
+    # (worker.py -> research.py) NUNCA pasa --providers.
     ap.add_argument("--providers",
-                    default="watsonx,groq,cerebras,azure,ollama")
+                    default="groq,gemini,ollama")
     ap.add_argument("--densidad", choices=("corto", "medio", "largo"), default="medio",
                     help="escala tokens por llamada; techo duro anti-timeout")
     ap.add_argument("--formato", choices=formato_ensayo.FORMATOS,

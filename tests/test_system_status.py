@@ -69,7 +69,19 @@ def test_system_status_is_read_only_and_redacts_provider_values(tmp_path: Path, 
     assert result["read_only"] is True
     assert result["components"]["hub"]["status"] == "ready"
     assert result["components"]["render"]["status"] in {"ready", "active"}
+    assert result["components"]["lanes"]["status"] == "attention"
     assert result["components"]["providers"]["evidence"]["configured"] >= 1
     encoded = json.dumps(result, ensure_ascii=False)
     assert secret not in encoded
     assert before == after
+
+
+def test_lane_registry_is_reported_without_promotion() -> None:
+    repo = Path(__file__).resolve().parents[1]
+    result = status_module._lane_registry_component(repo)
+
+    assert result["status"] == "ready"
+    assert result["read_only"] is True
+    assert result["evidence"]["valid"] is True
+    assert result["evidence"]["summary"]["lane_count"] == 19
+    assert result["evidence"]["summary"]["states"]["proposal"] == 11

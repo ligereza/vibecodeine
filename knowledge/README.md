@@ -14,6 +14,7 @@ knowledge/events/*.yaml
 knowledge/examples/*/manifest.json
 knowledge/learning_cases/*.json
 knowledge/math_targets/*.json
+knowledge/lane_registry/*.json
 ```
 
 Los datos pueden ser incompletos. Usar `confidence`, `source` y `notes` antes que inventar certezas.
@@ -36,3 +37,28 @@ matematicos. El Math Kernel solo agenda requests y conserva `ResultCard`
 metadata-only; formulas, pruebas y contraejemplos quedan sellados por hash y
 referencia. `MILLENNIUM-PNP-001` es una capsula inicial con fidelidad semantica
 `UNTRUSTED`, por lo que ninguna tarjeta puede convertirse en solucion.
+
+`lane_registry/` es el mapa operativo transversal, no un segundo handoff. La
+registry `mak_cross_domain_registry_2026-08-20.json` mantiene 19 lineas bajo
+`cultural_research_first` (incluye tenis, scraping, deep learning, simulacion,
+eventos, transpilacion, geometria y P=NP), con estado, dialectos, evidencia, consumidor,
+guardrails y siguiente gate. Consultar sin mutar con:
+
+```bash
+PYTHONPATH=src .venv/bin/python tools/project_lanes.py summary
+```
+
+El lane de tenis expone además el consumidor read-only
+`tools/tennis_shot_events.py`, que adapta la notación MCP al contrato local
+`schemas/tennis/shot_event.schema.json` sin completar coordenadas, spin,
+fatiga ni contrafactuales ausentes.
+
+Para investigación web, `tools/research_source_capture.py URL` solo prepara
+un plan; `--record` es la mutación explícita de una única captura al almacén
+local. Para deep learning, `tools/deep_learning_gate.py MANIFEST.json`
+verifica labels, holdout independiente y validador; incluso con `eligible`,
+`training_permitted` permanece `false`.
+
+Research 4 dispone de `tools/research_simulation.py` para manifiestos L-system
+explícitos. Su trayectoria es una proyección simbólica, con presupuesto de
+símbolos y `model_not_reality=true`; no simula ni prueba crecimiento biológico.

@@ -2,9 +2,8 @@
 """Provider-agnostic batch contracts for MAK.
 
 Temporary credits are fuel, not architecture. This module defines the durable
-shape of delegated work so premium providers (Watsonx/AWS) can be burned now
-and free/local providers (Cerebras/Groq/Ollama) can keep the same system alive
-later.
+shape of delegated work so free/local providers (Cerebras/Groq/Ollama) keep the
+same system alive without a premium-provider dependency.
 """
 from __future__ import annotations
 
@@ -269,8 +268,7 @@ AREAS = {
 }
 
 PROVIDER_LANES = {
-    "premium_burst": ["watsonx", "aws"],
-    "free_cloud": ["cerebras", "groq"],
+    "free_cloud": ["groq", "gemini", "cerebras"],
     "local_floor": ["ollama"],
 }
 
@@ -282,10 +280,8 @@ def provider_plan(available, allow_premium=True):
                                                 allow_premium=allow_premium)
     have = {str(p).lower() for p in (available or [])}
     order = []
-    lanes = ("premium_burst", "free_cloud", "local_floor")
+    lanes = ("free_cloud", "local_floor")
     for lane in lanes:
-        if lane == "premium_burst" and not allow_premium:
-            continue
         for provider in PROVIDER_LANES[lane]:
             if provider in have and provider not in order:
                 order.append(provider)
@@ -464,7 +460,7 @@ def _prompt(area, batch_id, cfg, paths, plan, evidence="", instruction="",
         "%s"
         "%s"
         "- No pidas crear una herramienta si ya existe una ruta probable.\n"
-        "- Cada item debe poder sobrevivir cuando Watsonx/AWS ya no existan.\n"
+        "- Cada item debe poder sobrevivir con Cerebras, Groq u Ollama.\n"
         "- Cada entrada files debe existir en el material entregado; nunca inventes nombres.\n"
         % (area, batch_id, cfg["purpose"],
            "\n".join("- " + p for p in paths),
@@ -1243,7 +1239,7 @@ def main(argv=None):
     p_brief.add_argument("area", choices=sorted(AREAS))
     p_brief.add_argument("batch_id")
     p_brief.add_argument("--providers", default="",
-                         help="CSV: watsonx,aws,cerebras,groq,ollama")
+                         help="CSV: groq,gemini,cerebras,ollama")
     p_brief.add_argument("--no-premium", action="store_true",
                          help="exclude temporary premium providers")
     p_brief.add_argument("--path", action="append", dest="paths",
@@ -1274,7 +1270,7 @@ def main(argv=None):
                            help="call one external provider and ingest through local review")
     p_run.add_argument("area", choices=sorted(AREAS))
     p_run.add_argument("batch_id")
-    p_run.add_argument("--provider", choices=["watsonx", "aws", "cerebras", "groq", "ollama"], required=True)
+    p_run.add_argument("--provider", choices=["cerebras", "groq", "ollama"], required=True)
     p_run.add_argument("--model", default="")
     p_run.add_argument("--path", action="append", dest="paths")
     p_run.add_argument("--out-dir", default="")

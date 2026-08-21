@@ -10,10 +10,14 @@ import providers
 
 BASE = "/home/mak/plataforma/director_runs/faro-report-action-queue-20260808"
 SOURCE = os.path.join(BASE, "RESCUE_REVIEW.json")
-OUTPUT = os.path.join(BASE, "watsonx_adjudication_batches.jsonl")
+OUTPUT = os.path.join(BASE, "adjudication_batches.jsonl")
+PROVIDER = os.environ.get("MAK_ADJUDICATOR_PROVIDER", "cerebras").lower()
+ACTIVE_PROVIDERS = {"cerebras", "groq", "ollama"}
 
 
 def main():
+    if PROVIDER not in ACTIVE_PROVIDERS:
+        raise SystemExit("invalid_adjudicator_provider:%s" % PROVIDER)
     providers.load_env()
     data = json.load(open(SOURCE, encoding="utf-8"))
     items = data.get("items", [])
@@ -34,7 +38,7 @@ def main():
                 "items": batch,
             }
             try:
-                raw = providers.call("watsonx", json.dumps(prompt, ensure_ascii=False),
+                raw = providers.call(PROVIDER, json.dumps(prompt, ensure_ascii=False),
                                      max_tokens=2600, temperature=0.0)
                 status = "ok"
             except Exception as exc:

@@ -145,7 +145,7 @@ def autonomia_status(
     executor: str = typer.Option("local", "--executor", help="local | mak"),
     ssh_target: str = typer.Option("", "--ssh-target", help="Destino SSH MAK."),
 ):
-    """Mide si el circuito Watsonx/AWS -> juez local -> ledger esta listo."""
+    """Mide si el circuito remoto/local -> juez local -> ledger esta listo."""
     import json as _json
     from cultura.mak_plataforma import tandas as _tandas
     from .autonomia import MAK_SSH_TARGET, autonomy_status as _status, mak_status
@@ -164,7 +164,7 @@ def autonomia_status(
 @autonomia_app.command("run")
 def autonomia_run(
     areas: str = typer.Option("", "--areas", help="CSV de areas; default: todas."),
-    providers: str = typer.Option("watsonx,aws", "--providers", help="CSV: watsonx,aws."),
+    providers: str = typer.Option("groq,gemini,ollama", "--providers", help="CSV: groq,gemini,ollama."),
     round_id: str = typer.Option("", "--round-id", help="Id estable de corrida."),
     out_dir: str = typer.Option("", "--out-dir", help="Carpeta de salida; default en _logs."),
     common_ledger: str = typer.Option("", "--common-ledger", help="Override del ledger comun MAK."),

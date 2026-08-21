@@ -386,25 +386,25 @@ def test_portfolio_vision_deduplicates_concurrent_provider_reads(
         "id": item_id, "tipo_contenido": "published_media",
         "asset_path": "/portfolio-media/posts/a.jpg", "asset_available": True,
     })
-    monkeypatch.setattr(hub.providers, "load_env", lambda: None)
     state = {"active": 0, "max_active": 0, "calls": 0}
     state_lock = threading.Lock()
 
-    def slow_call(provider, prompt, **kwargs):
-        with state_lock:
-            state["active"] += 1
-            state["max_active"] = max(state["max_active"], state["active"])
-            state["calls"] += 1
-        time.sleep(0.05)
-        with state_lock:
-            state["active"] -= 1
-        return {"visual_terms": ["violet liquid"], "unknowns": [],
-                "confidence": "medium"}
+    class FakePercepcion:
+        def vision_imagen(self, path, **_kwargs):
+            with state_lock:
+                state["active"] += 1
+                state["max_active"] = max(state["max_active"], state["active"])
+                state["calls"] += 1
+            time.sleep(0.05)
+            with state_lock:
+                state["active"] -= 1
+            return {"visual_terms": ["violet liquid"], "unknowns": [],
+                    "confidence": "medium"}
 
-    monkeypatch.setattr(hub.providers, "call", slow_call)
+    monkeypatch.setattr(hub, "_percepcion", FakePercepcion())
     results = []
     threads = [threading.Thread(target=lambda: results.append(
-        hub._portfolio_vision_read({"item_id": "obra-a", "provider": "aws"})))
+        hub._portfolio_vision_read({"item_id": "obra-a", "provider": "ollama"})))
                for _ in range(2)]
     for thread in threads:
         thread.start()
@@ -1027,24 +1027,23 @@ def test_portfolio_vision_persists_candidate_features_without_entity_resolution(
         "id": item_id, "tipo_contenido": "published_media",
         "asset_path": "/portfolio-media/posts/a.jpg", "asset_available": True,
     })
-    monkeypatch.setattr(hub.providers, "load_env", lambda: None)
     calls = []
 
-    def fake_call(provider, prompt, **kwargs):
-        calls.append((provider, kwargs.get("image_paths")))
-        return {"visual_terms": ["violet liquid"], "artist": "must be dropped",
-                "unknowns": ["event unknown"], "confidence": "medium"}
+    class FakePercepcion:
+        def vision_imagen(self, path, **_kwargs):
+            calls.append(path)
+            return {"visual_terms": ["violet liquid"], "artist": "must be dropped",
+                    "unknowns": ["event unknown"], "confidence": "medium"}
 
-    monkeypatch.setattr(hub.providers, "call", fake_call)
-    result = hub._portfolio_vision_read({"item_id": "obra-a", "provider": "aws"})
-    repeated = hub._portfolio_vision_read({"item_id": "obra-a", "provider": "aws"})
+    monkeypatch.setattr(hub, "_percepcion", FakePercepcion())
+    result = hub._portfolio_vision_read({"item_id": "obra-a", "provider": "ollama"})
+    repeated = hub._portfolio_vision_read({"item_id": "obra-a", "provider": "ollama"})
 
     assert result["ok"] is True
     assert result["features"]["visual_terms"] == ["violet liquid"]
     assert result["evidence_kind"] == "still_image"
     assert repeated["duplicate"] is True
-    assert calls[0][0] == "aws"
-    image_path = Path(calls[0][1][0])
+    image_path = Path(calls[0])
     assert image_path.parts[-2:] == ("posts", "a.jpg")
     assert "artist" not in result["features"]
     assert vision_path.read_text(encoding="utf-8").count("faro-portfolio-vision-v1") == 1

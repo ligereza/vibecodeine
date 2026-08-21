@@ -34,7 +34,7 @@ Cada finding conserva además `analysis_provider`, `search_backend` y
 Cadena LLM configurable (research_lib.py): los proveedores presentes en
 `/home/mak/research/research.env` participan; `--providers groq` aisla Groq
 para una comparacion reproducible. Azure requiere `RESEARCH_AZURE_ENABLED=1`.
-Watsonx solo participa si sus variables existen. La compuerta del informe
+Los proveedores retirados no participan. La compuerta del informe
 marca `review_required` si faltan URLs de evidencia, consultas registradas o
 la separacion DICEN/INFERIMOS/NO SE ENCONTRO.
 

@@ -106,7 +106,7 @@ _DEFAULT_DOMAINS: dict[str, dict[str, Any]] = {
         ],
         "contract": "context/diagnostics/contracts/research.md",
         "read_paths": [
-            "cultura/mak_research", "src/flujo/research", "tools",
+            "cultura/mak_research", "tools",
             "context/diagnostics", "web/src/components/CulturaPanel.tsx",
         ],
         "checks": [

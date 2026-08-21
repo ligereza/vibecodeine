@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 from pathlib import Path
+import sys
 from typing import Any, Mapping
 
 from .project_ir import LearningStore, ProjectIRError, stable_json
@@ -65,6 +66,61 @@ def probe_declared_consumer(
             "tool_id": tool_id,
             "command": [],
             "validation": {"status": "not_run", "check": "mutating_or_plan_only_gate"},
+        }
+    if tool_id == "tennis_shot_event_consumer":
+        source = project.get("source") if isinstance(project.get("source"), Mapping) else {}
+        root = Path(str(source.get("root_ref") or ""))
+        csv_path = None
+        for artifact in project.get("artifacts", []) if isinstance(project.get("artifacts"), list) else []:
+            if not isinstance(artifact, Mapping):
+                continue
+            candidate = root / str(artifact.get("relative_path") or "")
+            if candidate.is_file() and candidate.suffix.casefold() == ".csv":
+                csv_path = candidate
+                break
+        if csv_path is None:
+            return {
+                "status": "needs_evidence",
+                "reason": "tennis_csv_source_not_available",
+                "tool_id": tool_id,
+                "command": [],
+                "validation": {"status": "not_run", "check": "bounded_csv_source_gate"},
+            }
+        return {
+            "status": "succeeded",
+            "reason": "local_shot_event_consumer_ready",
+            "tool_id": tool_id,
+            "command": [sys.executable, "tools/tennis_shot_events.py", str(csv_path), "<local-jsonl-output>"],
+            "validation": {"status": "ready", "check": "bounded_command_plan"},
+        }
+    if tool_id == "research_simulation_consumer":
+        source = project.get("source") if isinstance(project.get("source"), Mapping) else {}
+        root = Path(str(source.get("root_ref") or ""))
+        manifest_path = None
+        for artifact in project.get("artifacts", []) if isinstance(project.get("artifacts"), list) else []:
+            if not isinstance(artifact, Mapping):
+                continue
+            candidate = root / str(artifact.get("relative_path") or "")
+            if candidate.is_file() and (
+                candidate.name.endswith("simulation_manifest.json")
+                or "candidate" in candidate.name.casefold()
+            ):
+                manifest_path = candidate
+                break
+        if manifest_path is None:
+            return {
+                "status": "needs_evidence",
+                "reason": "simulation_manifest_not_available",
+                "tool_id": tool_id,
+                "command": [],
+                "validation": {"status": "not_run", "check": "declared_manifest_gate"},
+            }
+        return {
+            "status": "succeeded",
+            "reason": "bounded_simulation_consumer_ready",
+            "tool_id": tool_id,
+            "command": [sys.executable, "tools/research_simulation.py", str(manifest_path), "--output", "<local-simulation-result.json>"],
+            "validation": {"status": "ready", "check": "bounded_command_plan"},
         }
     if tool_id == "blend_scene_audit":
         blender_path = resolve_blender(repo_root)

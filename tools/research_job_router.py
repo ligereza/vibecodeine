@@ -112,7 +112,7 @@ def create_job(db_path: Path, question: str, domain: str | None) -> tuple[int, s
         )
         job_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
         for order, (process_key, label_es, input_semantics, output_semantics, output_kind, policy) in enumerate(SEMANTICS, 1):
-            provider_policy = "local_first; search_for_discovery; firecrawl_for_official_capture; groq_or_watson_for_structured_extraction; ollama_fallback"
+            provider_policy = "local_first; search_for_discovery; firecrawl_for_official_capture; groq_or_gemini_for_structured_extraction; ollama_fallback"
             if process_key in ("validate", "audit"):
                 provider_policy = "deterministic_local_checks; human_or_source_review_required"
             conn.execute(
@@ -160,7 +160,7 @@ def render_job(db_path: Path, output_dir: Path, job_id: int, selected: str, scor
         "", "## Politica de proveedores", "",
         "- Descubrimiento: busqueda local, SearXNG o API de repositorios.",
         "- Captura: Firecrawl solo para paginas oficiales y con URL registrada.",
-        "- Extraccion estructurada: Groq o Watson; Ollama como fallback local.",
+        "- Extraccion estructurada: Groq o Gemini; Ollama como fallback local.",
         "- Validacion: checks deterministas y revision de evidencia.",
         "- Publicacion: solo despues de licencia, compatibilidad, consumidor y estado verificados.",
         "", "Este archivo es un plan; no implica que se hayan ejecutado llamadas externas.", "",

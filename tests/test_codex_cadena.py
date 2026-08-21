@@ -36,12 +36,11 @@ def _bloque(fuente, marcador):
     return fuente[i:fin + 1]
 
 
-def test_the_default_chain_leads_with_watsonx():
-    """A provider that answers goes first. Anything else is a job that starts
-    by waiting."""
+def test_the_default_chain_leads_with_nim_and_local_fallback():
     defecto = _bloque(CODEX, "_CODER_CHAIN_DEFAULT = [")
-    assert '"wx-llama"' in defecto
-    assert defecto.index('"wx-llama"') < defecto.index('"nim-pro"')
+    assert '"nim-pro"' in defecto
+    assert '"ollama"' in defecto
+    assert "wx-" not in defecto
 
 
 def test_the_retired_notebook_is_not_in_the_default_chain():
@@ -68,19 +67,12 @@ def test_every_provider_in_the_map_can_actually_be_called():
     assert "_CODER_CHAIN_MAP.values()" in CODEX
 
 
-def test_the_watsonx_endpoint_is_shared_not_reimplemented():
-    """One endpoint, one place. A duplicated provider list is exactly what left
-    `refutar.py` unable to call the only provider with credentials."""
-    assert "def watsonx_chat(" in RESEARCH
-    assert "watsonx_chat" in CODEX
-    # codex must not carry its own copy of the watsonx URL
-    assert "ml/v1/text/chat" not in CODEX
-    # and research's method delegates instead of holding a second copy
-    assert RESEARCH.count("ml/v1/text/chat") == 1
+def test_retired_cloud_endpoints_are_absent():
+    assert "watsonx" not in RESEARCH.lower()
+    assert "watsonx" not in CODEX.lower()
+    assert "ml/v1/text/chat" not in RESEARCH
+    assert "iam.cloud.ibm.com" not in RESEARCH
 
 
-def test_the_coder_asks_for_a_colder_temperature_than_research():
-    """A warm coder invents APIs that do not exist, which is half of what the
-    inert-file pile was made of."""
-    assert "temperatura=0.1" in CODEX
-    assert "temperatura=0.3" in RESEARCH
+def test_the_coder_chain_has_no_retired_provider():
+    assert "watsonx" not in CODEX.lower()

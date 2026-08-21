@@ -338,7 +338,7 @@ def render_lote(lote: list[dict], tope_chars: int = 4000) -> str:
     return "\n\n".join(out)
 
 
-# -------------------------------------------------------------------- watsonx
+# -------------------------------------------------------------------- classifier transport
 
 # The model is NOT asked for QUOTES. It is asked for turn NUMBERS, and the
 # quote comes from the transcript by index. A paraphrased decision stops
@@ -391,39 +391,6 @@ PROMPTS = {
         "TURNOS:\n"
     ),
 }
-
-
-def _wx_token(key: str) -> str:
-    import urllib.parse
-    import urllib.request
-    cuerpo = urllib.parse.urlencode({
-        "grant_type": "urn:ibm:params:oauth:grant-type:apikey", "apikey": key,
-    }).encode()
-    req = urllib.request.Request(
-        "https://iam.cloud.ibm.com/identity/token", data=cuerpo,
-        headers={"Content-Type": "application/x-www-form-urlencoded",
-                 "Accept": "application/json",
-                 "User-Agent": "flujo-conversacion/1.0"})
-    with urllib.request.urlopen(req, timeout=30) as r:
-        return json.loads(r.read().decode("utf-8", "replace"))["access_token"]
-
-
-def _wx_chat(base, tok, proyecto, modelo, system, user, max_tok, timeout=600):
-    import urllib.request
-    payload = {
-        "model_id": modelo, "project_id": proyecto,
-        "messages": [{"role": "system", "content": system},
-                     {"role": "user", "content": user}],
-        "max_tokens": max_tok, "temperature": 0,
-    }
-    req = urllib.request.Request(
-        base.rstrip("/") + "/ml/v1/text/chat?version=2024-10-08",
-        data=json.dumps(payload).encode("utf-8"),
-        headers={"Authorization": "Bearer " + tok,
-                 "Content-Type": "application/json",
-                 "User-Agent": "flujo-conversacion/1.0"})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return json.loads(r.read().decode("utf-8", "replace"))
 
 
 def _json_de(txt: str) -> dict | None:
@@ -564,10 +531,11 @@ def main() -> int:
     lo.add_argument("--ventana", type=int, default=95000)
     lo.add_argument("--todos-los-roles", action="store_true")
 
-    cl = sub.add_parser("clasificar", help="manda los lotes a watsonx y junta los numeros")
+    cl = sub.add_parser("clasificar", help="clasifica lotes con la cadena activa y junta los numeros")
     cl.add_argument("--turnos", default="turnos.jsonl")
     cl.add_argument("--capa", choices=sorted(PROMPTS), required=True)
-    cl.add_argument("--modelo", default="meta-llama/llama-3-3-70b-instruct")
+    cl.add_argument("--orden", default="cerebras,groq,ollama",
+                    help="CSV de proveedores activos: remoto primero, Ollama como respaldo")
     cl.add_argument("--ventana", type=int, default=95000)
     cl.add_argument("--max-salida", type=int, default=8000)
     cl.add_argument("--env", default=None)
@@ -639,26 +607,17 @@ def main() -> int:
         return 0
 
     if a.cmd == "clasificar":
-        import os
         import time
-        import urllib.error
+
+        from cultura.mak_research.research_lib import LLM, load_env as load_research_env
 
         for c_env in ([Path(a.env)] if a.env else
-                      [Path.home() / ".mak" / "research.env",
-                       Path.home() / "n8n-local" / "research.env"]):
+                      [Path.home() / "research" / "research.env"]):
             if c_env.is_file():
-                for ln in c_env.read_text(encoding="utf-8").splitlines():
-                    ln = ln.strip()
-                    if ln and not ln.startswith("#") and "=" in ln:
-                        k, v = ln.split("=", 1)
-                        os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+                load_research_env(str(c_env))
                 break
-        key = os.environ.get("WATSONX_API_KEY", "").strip()
-        proy = os.environ.get("WATSONX_PROJECT_ID", "").strip()
-        base = os.environ.get("WATSONX_URL", "https://us-south.ml.cloud.ibm.com")
-        if not key or not proy:
-            print("falta WATSONX_API_KEY / WATSONX_PROJECT_ID", file=sys.stderr)
-            return 2
+        orden = [p.strip() for p in a.orden.split(",") if p.strip()]
+        llm = LLM(",".join(orden))
 
         turnos = _cargar(Path(a.turnos))
         rol_pedido = "user" if a.capa == "usuario" else "assistant"
@@ -670,43 +629,23 @@ def main() -> int:
         if crudo:
             crudo.mkdir(parents=True, exist_ok=True)
 
-        tok, t_tok = _wx_token(key), time.time()
         todos, fallos, uso_in, uso_out = [], [], 0, 0
         partes = list(lotes(sel, a.ventana, solo_usuario=False))
-        print("%d turnos -> %d lotes (modelo %s)" % (len(sel), len(partes), a.modelo))
+        print("%d turnos -> %d lotes (orden %s)" % (len(sel), len(partes), a.orden))
 
         for idx, lote in partes:
             if idx < a.desde:
                 continue
-            if time.time() - t_tok > 3000:          # the bearer expires hourly
-                tok, t_tok = _wx_token(key), time.time()
             texto = user + render_lote(lote)
             t0 = time.time()
             d = None
-            for intento in range(4):
-                try:
-                    d = _wx_chat(base, tok, proy, a.modelo, system, texto, a.max_salida)
-                    break
-                except urllib.error.HTTPError as e:
-                    cuerpo = ""
-                    try:
-                        cuerpo = e.read().decode("utf-8", "replace")[:200]
-                    except Exception:
-                        pass
-                    if e.code in (429, 500, 502, 503, 504) and intento < 3:
-                        time.sleep(5 * (intento + 1))
-                        continue
-                    if e.code == 401 and intento < 3:
-                        tok, t_tok = _wx_token(key), time.time()
-                        continue
-                    fallos.append({"lote": idx, "error": "HTTP %d %s" % (e.code, cuerpo)})
-                    break
-                except Exception as e:                # noqa: BLE001 - reported
-                    if intento < 3:
-                        time.sleep(5 * (intento + 1))
-                        continue
-                    fallos.append({"lote": idx, "error": "%s: %s" % (type(e).__name__, e)})
-                    break
+            try:
+                resp, proveedor = llm.call(system, texto, max_tok=a.max_salida,
+                                           order=orden)
+                d = {"provider": proveedor,
+                     "choices": [{"message": {"content": resp}}]}
+            except Exception as e:                # noqa: BLE001 - reported
+                fallos.append({"lote": idx, "error": "%s: %s" % (type(e).__name__, e)})
             if d is None:
                 print("  lote %d: FALLO" % idx)
                 continue
@@ -732,7 +671,8 @@ def main() -> int:
 
         p_in, p_out = 0.7526, 0.7526
         Path(a.salida).write_text(json.dumps({
-            "capa": a.capa, "modelo": a.modelo, "turnos": len(sel),
+            "capa": a.capa, "orden": a.orden, "proveedores": llm.stats,
+            "turnos": len(sel),
             "lotes": len(partes), "marcados": todos, "fallos": fallos,
             "uso": {"entrada": uso_in, "salida": uso_out,
                     "usd_aprox": round(uso_in / 1e6 * p_in + uso_out / 1e6 * p_out, 4)},

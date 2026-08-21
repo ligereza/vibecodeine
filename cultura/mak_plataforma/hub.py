@@ -3565,7 +3565,7 @@ def _portfolio_feedback_record_unlocked(body, internal=False):
 def _portfolio_external_review(body):
     item_id = str(body.get("item_id", ""))
     provider = str(body.get("provider", "")).lower()
-    if provider not in ("watsonx", "aws", "ollama", "groq", "cerebras"):
+    if provider not in ("ollama", "groq", "gemini", "cerebras"):
         return {"ok": False, "error": "proveedor_invalido"}
     source = _portfolio_item(item_id)
     if not source:
@@ -3779,10 +3779,13 @@ def _portfolio_vision_read(body):
 
 def _portfolio_vision_read_unlocked(body):
     item_id = str(body.get("item_id", "")).strip()
-    provider = str(body.get("provider", "aws")).lower().strip()
-    if provider != "aws":
-        return {"ok": False, "error": "vision_requiere_aws",
-                "detail": "Watsonx y los modelos de texto pueden adjudicar la lectura, pero no reciben la imagen en este puente."}
+    provider = str(body.get("provider", "ollama")).lower().strip()
+    if provider != "ollama":
+        return {"ok": False, "error": "proveedor_vision_no_disponible",
+                "detail": "La lectura visual activa usa Ollama local; no se envian imagenes a proveedores externos."}
+    if _percepcion is None:
+        return {"ok": False, "error": "vision_local_no_disponible",
+                "detail": "No se pudo importar el lector visual local de curatoria."}
     source = _portfolio_item(item_id)
     if not source:
         return {"ok": False, "error": "item_no_encontrado"}
@@ -3814,9 +3817,12 @@ def _portfolio_vision_read_unlocked(body):
         "item": {"item_id": item_id, "content_type": source.get("tipo_contenido")},
     }, ensure_ascii=False)
     try:
-        providers.load_env()
-        raw = providers.call("aws", prompt, model=body.get("model") or None,
-                             max_tokens=900, temperature=0.1, image_paths=[asset])
+        vision_result = _percepcion.vision_imagen(
+            asset, timeout=120, fuente="iskvw")
+        if vision_result.get("error"):
+            return {"ok": False, "error": "vision_local_error",
+                    "detail": str(vision_result.get("error"))[:180]}
+        raw = json.dumps(vision_result, ensure_ascii=False)
     except Exception as exc:  # noqa: BLE001
         return {"ok": False, "error": "provider_error", "detail": str(exc)[:180]}
     normalized = copilot.normalize_vision(raw, item_id, provider, [evidence_path])

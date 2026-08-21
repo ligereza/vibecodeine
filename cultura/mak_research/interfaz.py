@@ -3,7 +3,7 @@
 
 Interfaz tipo n8n con canvas visual, nodos arrastrables, conexiones SVG
 editables (dos clicks entre puertos) y 4 modelos intercambiables/editables
-(Groq, Cerebras, Azure, Ollama). Soporta multiples triggers/outputs.
+(Groq, Gemini, Cerebras, Ollama). Soporta multiples triggers/outputs.
 
 Modos: single, pipeline (encadenado), discussion (comite: todos convergen
 al output), adversarial (proponente->refutadores->juez) y grafo (custom:
@@ -323,8 +323,8 @@ def _write_text_atomic(path, text):
 
 CONFIG_FIELDS = [
     ("GROQ_MODEL", "Groq model"),
+    ("GEMINI_MODEL", "Gemini model"),
     ("CEREBRAS_MODEL", "Cerebras model"),
-    ("AZURE_DEPLOYMENT", "Azure deployment"),
     ("OLLAMA_MODEL", "Ollama model"),
     ("PROVIDERS_ORDER", "Order de providers"),
 ]
@@ -344,18 +344,18 @@ DEFAULT_WORKFLOW = {
             "model": "", "temperature": 0.7, "max_tokens": 4096,
             "system_prompt": "", "priority": 1,
         },
-        "cerebras": {
+        "gemini": {
             "x": 340, "y": 200, "active": True,
             "model": "", "temperature": 0.7, "max_tokens": 4096,
             "system_prompt": "", "priority": 2,
         },
-        "azure": {
+        "cerebras": {
             "x": 340, "y": 320, "active": True,
             "model": "", "temperature": 0.7, "max_tokens": 4096,
             "system_prompt": "", "priority": 3,
         },
         "ollama": {
-            "x": 340, "y": 440, "active": False,
+            "x": 340, "y": 440, "active": True,
             "model": "", "temperature": 0.7, "max_tokens": 4096,
             "system_prompt": "", "priority": 4,
         },
@@ -366,9 +366,9 @@ DEFAULT_WORKFLOW = {
     # el dibujo del canvas (el preset del modo las regenera).
     "connections": [
         {"from": "trigger", "to": "groq"},
-        {"from": "groq", "to": "cerebras"},
-        {"from": "cerebras", "to": "azure"},
-        {"from": "azure", "to": "output"},
+        {"from": "groq", "to": "gemini"},
+        {"from": "gemini", "to": "ollama"},
+        {"from": "ollama", "to": "output"},
     ],
 }
 
@@ -497,7 +497,7 @@ def _orden_canvas():
     realmente cambie el orden de ejecucion, no solo el dibujo."""
     with WORKFLOW_LOCK:
         wf = _load_workflow()
-    provs = [k for k in ("groq", "cerebras", "azure", "ollama")
+    provs = [k for k in ("groq", "gemini", "cerebras", "ollama")
             if wf.get("nodes", {}).get(k, {}).get("active", True)]
     provs.sort(key=lambda k: wf["nodes"].get(k, {}).get("priority", 99))
     return ",".join(provs) if provs else None
@@ -1211,18 +1211,18 @@ let dragOffset = {x: 0, y: 0};
 let saveTimer = null;
 
 const COLORS = {
-  trigger: '#8957e5', groq: '#f0883e', cerebras: '#3fb950',
-  azure: '#58a6ff', ollama: '#d29922', output: '#f778ba', nota: '#6e7681',
+  trigger: '#8957e5', groq: '#f0883e', gemini: '#58a6ff',
+  cerebras: '#3fb950', ollama: '#d29922', output: '#f778ba', nota: '#6e7681',
 };
 const ICONS = {
-  trigger: '&#9654;', groq: 'G', cerebras: 'C', azure: 'A', ollama: 'O',
+  trigger: '&#9654;', groq: 'G', gemini: 'M', cerebras: 'C', ollama: 'O',
   output: '&#9678;', nota: '&#128221;',
 };
 const LABELS = {
-  trigger: 'Trigger', groq: 'Groq', cerebras: 'Cerebras',
-  azure: 'Azure', ollama: 'Ollama', output: 'Output',
+  trigger: 'Trigger', groq: 'Groq', gemini: 'Gemini', cerebras: 'Cerebras',
+  ollama: 'Ollama', output: 'Output',
 };
-const PROVIDERS = ['groq', 'cerebras', 'azure', 'ollama'];
+const PROVIDERS = ['groq', 'gemini', 'cerebras', 'ollama'];
 
 // tipo real de un nodo (compat con datos viejos sin campo tipo)
 function ntipo(id) {
@@ -1646,7 +1646,7 @@ function renderPanel() {
     return;
   }
 
-  var modelEnvKey = ({groq:'GROQ_MODEL',cerebras:'CEREBRAS_MODEL',azure:'AZURE_DEPLOYMENT',ollama:'OLLAMA_MODEL'})[id] || '';
+  var modelEnvKey = ({groq:'GROQ_MODEL',gemini:'GEMINI_MODEL',cerebras:'CEREBRAS_MODEL',ollama:'OLLAMA_MODEL'})[id] || '';
   var envVal = ENV_DATA[modelEnvKey] || '';
 
   panelBody.innerHTML =

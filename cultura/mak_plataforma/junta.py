@@ -237,7 +237,7 @@ def pedir_decision(m):
     )
     user = json.dumps(m, ensure_ascii=False, indent=2)
     try:
-        llm = LLM("azure,cerebras,groq")
+        llm = LLM("groq,gemini,ollama")
         texto, prov = llm.call(system, user, 900)
     except Exception:
         return None, None

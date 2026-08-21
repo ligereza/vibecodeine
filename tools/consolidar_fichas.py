@@ -26,7 +26,7 @@ ghosts. This is the same rule that killed the `or "ollama"` default.
 Dry run by default. `--aplicar` writes, and only after a timestamped backup.
 
     py tools/consolidar_fichas.py ARCHIVO.jsonl NUEVA.jsonl
-    py tools/consolidar_fichas.py ARCHIVO.jsonl NUEVA.jsonl --motor watsonx
+    py tools/consolidar_fichas.py ARCHIVO.jsonl NUEVA.jsonl --motor ollama
     py tools/consolidar_fichas.py ARCHIVO.jsonl NUEVA.jsonl --aplicar
 """
 from __future__ import annotations

@@ -141,7 +141,7 @@ def get_changelog():
             "fecha": "2026-07-16",
             "highlights": [
                 "limpieza: ~190M fuera (caches, _logs, egg-info, duplicado md5 76M en "
-                "jobs/contraportadas); CSV Azure, doublecup.png y APKs xio preservados "
+                "jobs/contraportadas); CSV historicos, doublecup.png y APKs xio preservados "
                 "fuera del repo en C:/IA/_flujo_local",
                 "git: ramas pr45 / worktree-magical-sparking-kite / "
                 "claude/cultura-xio-mistral-20260715 borradas (diff 0 vs main) + "

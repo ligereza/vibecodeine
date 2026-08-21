@@ -69,6 +69,26 @@ TOOL_CATALOG = (
         ("text", "document", "data", "unknown"),
         ("funding", "opportunities", "research", "general"), "plan_only", "opportunity_gate",
     ),
+    ToolContract(
+        "tennis_shot_event_consumer", "tools/tennis_shot_events.py",
+        "project local annotated tennis notation into loss-aware shot events",
+        ("data",), ("tennis",), "read_only", "shot_event_jsonl",
+    ),
+    ToolContract(
+        "research_source_capture", "tools/research_source_capture.py",
+        "capture one reviewed public source with bounded provenance",
+        ("text", "document", "data", "unknown"), ("scraping",), "plan_only", "source_capture",
+    ),
+    ToolContract(
+        "deep_learning_gate", "tools/deep_learning_gate.py",
+        "check labels, independent holdout and validator before model work",
+        ("data", "image", "video", "3d"), ("deep_learning", "learning", "micelio"), "read_only", "learning_task_gate",
+    ),
+    ToolContract(
+        "research_simulation_consumer", "tools/research_simulation.py",
+        "run a bounded declared symbolic research simulation and label it as a model",
+        ("data", "text"), ("plants", "simulation", "research"), "read_only", "research_simulation_result",
+    ),
 )
 
 
