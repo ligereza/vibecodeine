@@ -1097,6 +1097,59 @@ def doctor():
     except Exception as e:
         add("puertos locales", False, str(e))
 
+    # The web build declares a Node minimum in web/package.json. Measured on
+    # 2026-08-21: PATH resolved 18.20.4, Vite warned, and the 20.x/24.x installs
+    # that satisfy the requirement sat unlisted on the same machine. Doctor is
+    # the entrypoint that already runs probes, so it names the binary to use
+    # instead of leaving the build to warn and the caller to guess.
+    try:
+        from .knowledge.runtime_tools import declared_node_minimum, node_candidates
+
+        spec = declared_node_minimum(root)
+        wanted = tuple(int(part) for part in
+                       spec.lstrip(">=~^ ").split("-")[0].split(".")[:3]) if spec else ()
+
+        def _probe(binary: Path) -> tuple[int, ...]:
+            out = subprocess.run([str(binary), "--version"], capture_output=True,
+                                 text=True, encoding="utf-8", errors="replace",
+                                 timeout=30)
+            if out.returncode != 0:
+                return ()
+            raw = (out.stdout or "").strip().lstrip("v")
+            try:
+                return tuple(int(part) for part in raw.split(".")[:3])
+            except ValueError:
+                return ()
+
+        found = node_candidates(root)
+        if not found:
+            add("node", False, f"no se encontro node; el build web pide {spec or 'sin minimo declarado'}")
+        else:
+            versions = {}
+            for binary in found:
+                try:
+                    versions[binary] = _probe(binary)
+                except Exception:
+                    versions[binary] = ()
+            active = found[0]
+            active_version = versions.get(active, ())
+            shown = ".".join(str(part) for part in active_version) or "desconocida"
+            if not wanted:
+                add("node", bool(active_version), f"{active} v{shown}; web/package.json no declara minimo")
+            elif active_version >= wanted:
+                add("node", True, f"{active} v{shown} cumple {spec}")
+            else:
+                better = next((b for b, v in versions.items() if v and v >= wanted), None)
+                detail = (f"activo {active} v{shown} esta bajo {spec}")
+                if better is not None:
+                    good = ".".join(str(part) for part in versions[better])
+                    detail += f"; usa NODE_EXE={better} (v{good})"
+                else:
+                    detail += "; ningun node local cumple el minimo"
+                add("node", False, detail)
+    except Exception as e:
+        add("node", False, str(e))
+
     table = Table(title="Diagnóstico local")
     table.add_column("Check")
     table.add_column("Estado")
