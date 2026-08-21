@@ -235,7 +235,16 @@ def _research_catalog():
          "input_examples": r[3], "source_policy": r[4],
          "constraint_policy": r[5], "jobs": r[6]}
         for r in rows
-    ], "jobs": jobs, "registry": "research/jardines_interpretativos/jardines_interpretativos.sqlite"}
+    ], "jobs": jobs,
+        # The response used to hardcode a relative string that resolves from no
+        # working directory: the registry lives outside the repo, under
+        # $HOME/research, and MAK_RESEARCH_REGISTRY can move it. Report the
+        # path the reader can actually open.
+        "registry": str(db_path),
+        "registry_exists": db_path.is_file(),
+        "registry_source": ("MAK_RESEARCH_REGISTRY"
+                            if os.environ.get("MAK_RESEARCH_REGISTRY", "").strip()
+                            else "default_home_research")}
 
 
 def _research_jobs():
@@ -4608,7 +4617,14 @@ class H(BaseHTTPRequestHandler):
                 return self._json({"available": False, "jobs": [], "error": str(exc)[:200]})
         if p == "/api/research/job":
             query = urllib.parse.parse_qs(u.query)
-            raw_id = (query.get("id") or [""])[0]
+            raw_id = (query.get("id") or [""])[0].strip()
+            # A missing or non-numeric id is a caller contract error, not a job
+            # failure. Returning the raw int() ValueError ("invalid literal for
+            # int() with base 10: ''") made both cases look identical to the
+            # panel, so a forgotten parameter read as a broken job.
+            if not raw_id.isdigit():
+                return self._json({"available": False, "error": "id_requerido",
+                                   "detail": "usa /api/research/job?id=<entero>"}, 400)
             try:
                 return self._json(_research_job(int(raw_id)))
             except Exception as exc:

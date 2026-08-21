@@ -106,3 +106,41 @@ class TestPaginaMarcoUnico:
         assert "crearEstatico" not in hub.PAGINA
         assert 'id="circuitos"' not in hub.PAGINA
         assert "nodo-mic" not in hub.PAGINA
+
+
+class TestResearchCatalogRegistryPath:
+    """The catalog used to publish a relative registry path that resolved from
+    no working directory. The registry lives outside the repo (under $HOME by
+    default, or wherever MAK_RESEARCH_REGISTRY points), so a caller that took
+    the reported string and opened it always failed."""
+
+    def test_registry_path_is_absolute_and_reports_existence(self, tmp_path, monkeypatch):
+        db = tmp_path / "registry.sqlite"
+        monkeypatch.setenv("MAK_RESEARCH_REGISTRY", str(db))
+        catalog = hub._research_catalog()
+        assert catalog["available"] is False
+        assert catalog["registry"] == "not_created"
+
+        import sqlite3
+        with sqlite3.connect(db) as conn:
+            conn.execute("CREATE TABLE domain_adapters (id INTEGER PRIMARY KEY, "
+                         "slug TEXT, label TEXT, description TEXT, "
+                         "input_examples TEXT, source_policy TEXT, "
+                         "constraint_policy TEXT)")
+            conn.execute("CREATE TABLE research_jobs (id INTEGER PRIMARY KEY, "
+                         "adapter_id INTEGER)")
+            conn.execute("INSERT INTO domain_adapters VALUES "
+                         "(1,'curatoria','Curatoria','d','e','s','c')")
+        catalog = hub._research_catalog()
+        assert catalog["available"] is True
+        assert os.path.isabs(catalog["registry"]), catalog["registry"]
+        assert catalog["registry"] == str(db)
+        assert catalog["registry_exists"] is True
+        assert catalog["registry_source"] == "MAK_RESEARCH_REGISTRY"
+        assert [a["slug"] for a in catalog["adapters"]] == ["curatoria"]
+
+    def test_default_registry_reports_the_home_path_not_a_relative_string(self, monkeypatch):
+        monkeypatch.delenv("MAK_RESEARCH_REGISTRY", raising=False)
+        resolved = hub._research_registry_path()
+        assert resolved.is_absolute()
+        assert str(resolved).startswith(hub.HOME)
