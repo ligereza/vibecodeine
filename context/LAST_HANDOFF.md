@@ -675,6 +675,76 @@ tests lo fijan. (3) Las tres unidades de usuario `mak-hub`, `mak-research` y
 reinicien; esta fase no las reinicio porque solo cambio `flujo serve`, que no
 es un servicio permanente.
 
+## Ledger open-state repair and probe closure — 2026-08-21
+
+Se cerraron los dos unicos items accionables que quedaban en el ledger, y en el
+camino aparecio un defecto mas importante que ellos.
+
+Defecto encontrado: `operational_status` construia su lista de atenciones desde
+`SELECT status,COUNT(*) FROM project_episodes GROUP BY status`, es decir sobre
+el historial completo, y los episodios son append-only por diseno. Eso hacia
+que un item como `3 episode(s) need evidence` **no pudiera limpiarse haciendo
+el trabajo que el propio item pedia**: al registrar la ejecucion verificada, la
+fila antigua seguia contando y el operador perdia la diferencia entre "hay
+trabajo" y "el trabajo se hizo". El defecto era latente, no activo: en ese
+momento los tres `needs_evidence` eran el episodio mas reciente de su proyecto,
+asi que el conteo aun era verdadero. Por eso habia que arreglarlo ANTES de
+cerrarlos, no despues.
+
+Reparacion minima: se agrego `_open_episode_states()` en
+`src/flujo/knowledge/project_api.py`. El histograma historico sigue publicado
+sin cambios en `episodes` porque es evidencia; la lista de atenciones lee ahora
+`episodes_open`, donde un episodio no aceptado sigue abierto solo mientras su
+proyecto no tenga uno aceptado posterior, que es literalmente lo que describe
+su propio `next_action`. El conjunto de estados que cuentan como cerrados se
+reutiliza de `learning_policy.VERIFIED_OUTCOME_STATUSES` en vez de escribir una
+segunda copia.
+
+Trabajo cerrado con esa base: `episode-research-simulation-probe-20260820` y
+`episode-tennis-consumer-probe-20260820` estaban en `needs_evidence` con
+`plan_fingerprint` vacio porque el probe solo prepara el comando y por
+contrato nunca ejecuta el consumidor. Se ejecutaron los dos consumidores reales
+en primer plano y se validaron:
+
+- `tools/research_simulation.py knowledge/research_simulations/job4_lsystem_candidate_20260820.json --output <evidencia>`: exit 0. Validador `deterministic_rerun_and_marker_check`: una segunda corrida produjo salida byte-identica (mismo sha256), `schema=mak-research-simulation-result-v1`, `observed_or_simulated=simulated`, `model_not_reality=true`, `environment.biological_claim=false`, `errors=[]`.
+- `tools/tennis_shot_events.py tests/fixtures/tennis_mcp_fixture.csv <evidencia>`: exit 0, 4 eventos. Validador `schemas/tennis/shot_event.schema.json` con `Draft202012Validator`: 0 errores de esquema, cada evento conserva `source`, `provenance` y `epistemic_status`, y `observed` y `derived` siguen separados.
+- Registro por el adaptador sancionado, no a mano:
+  `tools/project_learning.py --db data/mak_knowledge.db --record-result <packet>`
+  exit 0 en ambos, con paquetes `mak-verified-result-v1`; el adaptador falla
+  cerrado si falta proyecto, evidencia, validador o checks.
+
+Efecto medido: `episodes:needs_evidence` bajo de 3 a 1. Sin la reparacion
+anterior habria seguido marcando 3. El historial quedo intacto: las tres filas
+`needs_evidence` siguen existiendo, se agregaron dos episodios `succeeded`,
+`PRAGMA integrity_check` devolvio `ok` y no se reescribio ni borro nada. Se
+tomo copia previa de la base antes de escribir.
+
+El `needs_evidence` restante NO es un defecto y no se debe cerrar
+mecanicamente. Es `episode_scd_evidence_closure_20260819` del proyecto
+`project-5047cc3a2269b5031460` (SCD, `review_required`), y sus checks mecanicos
+estan todos en verde (`source_root_exists=true`,
+`representative_artifacts_missing=0`). Lo que lo mantiene abierto son seis
+`unknowns_preserved` que exigen evidencia humana u oficial: convocatoria
+vigente no verificada, problema y contexto que deben formularse desde el
+proyecto y no inferirse del nombre de la carpeta, metodo artistico, presupuesto
+autorizado, cronograma verificable y equipo sin promover identidades por nombre
+de carpeta. El sistema se esta negando correctamente a convertir metadata de
+carpeta en una postulacion.
+
+Archivos modificados: `src/flujo/knowledge/project_api.py`,
+`tests/test_open_episode_state.py` (nuevo) y este handoff. Fuera del repo se
+agrego evidencia en `/home/mak/curatoria_inbox/probe_closures/2026-08-21/`
+(las dos salidas de consumidor con hash y los dos paquetes) y dos episodios
+append-only en `data/mak_knowledge.db`, que es estado local ignorado.
+
+Validacion: `pytest -q tests/` exit 0; `tests/test_open_episode_state.py` exit
+0; `compileall`, `tools/repo_audit.py` y `git diff --check` exit 0.
+
+Riesgo: `projects:review_required` sigue en 4 y se cuenta sobre el estado del
+proyecto, no sobre episodios, asi que esa via no la toca esta reparacion. Antes
+de tratarla hay que decidir que evidencia autoriza una transicion de proyecto;
+no cambiarla sin ese contrato.
+
 ## Next concrete action
 
 Continuar desde el commit publicado por esta fase y no repetir ningun slice
