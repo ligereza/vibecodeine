@@ -19,6 +19,43 @@ from .episode_runner import probe_declared_consumer, record_probe
 from .learning_policy import learning_summary as learning_policy_summary
 
 
+# Reuse the adapter's own accepted-outcome set instead of writing a second
+# list: two copies of "what counts as done" is how the ledger and the recorder
+# would drift apart.
+from .learning_policy import VERIFIED_OUTCOME_STATUSES as VERIFIED_EPISODE_STATUSES
+
+
+def _open_episode_states(con: sqlite3.Connection) -> dict[str, int]:
+    """Count only the episode states a project has not resolved yet.
+
+    Episodes are immutable history. A project that recorded ``needs_evidence``
+    and later recorded a verified execution has answered that item, so counting
+    the old row as pending manufactures permanent urgency. Verified, succeeded
+    and accepted rows are never "open" by themselves; every other state stays
+    open until a later verified episode exists for the same project.
+
+    Read-only: this only reads ``project_episodes`` in row order.
+    """
+    latest_verified: dict[str, int] = {}
+    rows: list[tuple[int, str, str]] = []
+    for rowid, project_id, status in con.execute(
+        "SELECT rowid, project_id, status FROM project_episodes ORDER BY rowid"
+    ):
+        state = str(status or "").casefold()
+        project = str(project_id or "")
+        rows.append((int(rowid), project, state))
+        if state in VERIFIED_EPISODE_STATUSES:
+            latest_verified[project] = int(rowid)
+    counts: dict[str, int] = {}
+    for rowid, project, state in rows:
+        if state in VERIFIED_EPISODE_STATUSES:
+            continue
+        if latest_verified.get(project, -1) > rowid:
+            continue  # a later verified episode answered this one
+        counts[state] = counts.get(state, 0) + 1
+    return counts
+
+
 def _read_only_connection(path: Path) -> sqlite3.Connection:
     return sqlite3.connect("file:" + str(path) + "?mode=ro", uri=True)
 
@@ -40,6 +77,16 @@ def learning_summary(database: str | Path) -> dict[str, Any]:
         result["policy"] = learning_policy_summary(path)
         result["projects"] = {row[0]: row[1] for row in con.execute("SELECT state,COUNT(*) FROM project_records GROUP BY state")}
         result["episodes"] = {row[0]: row[1] for row in con.execute("SELECT status,COUNT(*) FROM project_episodes GROUP BY status")}
+        # The histogram above counts every episode ever recorded, and episodes
+        # are append-only. Using it for the attention list makes an item that
+        # can never be cleared by doing the work: record the verified execution
+        # a `needs_evidence` episode asks for and the old row still counts, so
+        # the operator can no longer tell "there is work" from "the work was
+        # done". Open state is therefore computed per project: a non-verified
+        # episode stays open only while that project has no later verified one,
+        # which is exactly what its own next_action describes ("attach
+        # verifiable evidence, then run the validator again").
+        result["episodes_open"] = _open_episode_states(con)
         result["rules"] = {row[0]: row[1] for row in con.execute("SELECT status,COUNT(*) FROM semantic_rules GROUP BY status")} if "semantic_rules" in tables else {}
         if "project_contracts" in tables:
             result["contracts"] = {
@@ -174,7 +221,12 @@ def operational_status(database: str | Path, *, repo_root: str | Path | None = N
                     "review evidence and consumer before allowing a project transition",
                 )
 
-        for status, count in sorted((summary.get("episodes") or {}).items()):
+        # Historical counts stay in `episodes` as evidence; the actionable list
+        # reads `episodes_open` so a resolved episode stops being urgent.
+        open_states = summary.get("episodes_open")
+        if not isinstance(open_states, dict):
+            open_states = summary.get("episodes") or {}
+        for status, count in sorted(open_states.items()):
             if status in {"failed", "error"}:
                 add_item(
                     f"episodes:{status}", "episodes", status, "blocked",
