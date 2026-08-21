@@ -170,6 +170,34 @@ firma. Ojo con la frontera medida aca: `full_sha256` existe solo para 112 de
 45536 assets, asi que la duplicacion exacta es demostrable en 0,25 % del indice
 y el resto debe quedar como candidato, nunca como duplicado.
 
+HALLAZGO QUE CORRIGE ESA SIGUIENTE ACCION (medido al aplicar la regla de
+externalidad, buscando la misma operacion fuera de su dominio): la hipotesis
+falsificada arriba SI es recuperable, en otro tipo de archivo. Las composiciones
+de Resolume no son `.xml` sino `.avc`, y hay 4 en el indice:
+`DREFGIRA/TALCA DREF.avc`, `DREFGIRA/IMPORT CLAUDIO/SHOWCAUPOLICAN FINAL ANTES
+DE CAUPO.avc`, `LYON/sampier.avc` y `descargas hasta RDFLYER 2050/Perrys 2025
+V2.avc`. `LYON/sampier.avc` (615 KB) contiene 107 etiquetas `<VideoFile>` y 10
+`<AudioFile>` con rutas de clip reales. Eso es el grafo de referencias del paso 2
+de `MEMORIA_DIRECCION.md` §2.12, o sea que el reporte de huerfanos del paso 3
+deja de ser inventario ciego y pasa a poder responder "que assets usa un show de
+verdad".
+
+Dos restricciones medidas antes de construirlo:
+
+- Las rutas dentro de los `.avc` son de Windows y traen nombres de usuario
+  reales (`C:\Users\<usuario>`, y hay mas de uno distinto). `tests/test_privacidad_repo.py`
+  prohibe exactamente ese patron en el repo, asi que esas rutas NO pueden entrar
+  a un archivo versionado: se referencian por hash o se anonimizan al leerlas.
+- Resolver una ruta Windows contra un asset del SSD es un problema de
+  emparejamiento por basename, con la misma trampa de similitud que este bloque
+  ya documento: dos clips distintos pueden llamarse igual. Requiere abstencion
+  explicita, no un match optimista.
+
+Tambien aparecieron mas ScreenSetup dentro de carpetas y no solo en la raiz
+(`DREFGIRA/Los Vilos.xml`, `HARRY/cobquecura.xml`, `HARRY/show/sin culpa.xml`,
+`BAHPARTY/bah/KAYAKAZE 2025 2.xml`, `LYON/1.xml`), asi que el parser de este
+bloque tiene mas material real que los 9 de la raiz sin cambiar una linea.
+
 ## Next concrete action
 
 Publicar este write set en `main` solo cuando exista autorizacion explicita de
