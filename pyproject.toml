@@ -17,7 +17,6 @@ dependencies = [
     "rich>=15.0.0",
     "jsonschema>=4.26.0",
     "requests>=2.34.2",
-    "boto3>=1.43.72",
 ]
 
 [project.optional-dependencies]
@@ -33,8 +32,8 @@ dev = [
 render = [
     # El critico perceptual del motor semantico mide sobre PIXELES, asi que sin
     # rasterizador su codigo no se ejecuta y queda sin cubrir. En Linux cairosvg
-    # anda; en el Windows del usuario NO carga su DLL y el motor cae al backend
-    # de Edge, que es justamente por lo que `rasterizador.py` tiene dos.
+    # anda; el motor conserva un backend alternativo para entornos sin
+    # rasterizador disponible.
     # Va en un extra propio y no en `dev` para no cargarle cairo a quien solo
     # quiere correr los tests que no rasterizan.
     "cairosvg>=2.9.0",

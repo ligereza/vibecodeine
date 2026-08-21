@@ -1,4 +1,4 @@
-"""Static ratchets for the Windows launchers and MAK mirror tooling."""
+"""Static ratchets for MAK mirror tooling and active entrypoint boundaries."""
 from __future__ import annotations
 
 import importlib.util
@@ -10,26 +10,6 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def _text(name: str) -> str:
     return (ROOT / name).read_text(encoding="utf-8")
-
-
-def test_windows_launchers_anchor_the_repo_and_use_current_app_command():
-    batch = _text("launch-flujo.bat").lower()
-    powershell = _text("launch-flujo.ps1").lower()
-    opener = _text("abrir_hub.bat").lower()
-
-    assert 'cd /d "%~dp0"' in batch
-    assert "py -m flujo app --desktop" in batch
-    assert "set-location $psscriptroot" in powershell
-    assert "-m flujo app --desktop" in powershell
-    assert 'call "%~dp0launch-flujo.bat"' in opener
-    assert "--open" not in opener
-
-
-def test_installer_uses_editable_install_instead_of_copying_source_trees():
-    installer = _text("instalar.bat").lower()
-    assert 'pip install -e ".[dev,web]"' in installer
-    assert "xcopy" not in installer
-    assert "py -m flujo doctor" in installer
 
 
 def _load_mirror_module():

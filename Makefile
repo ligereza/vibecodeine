@@ -1,12 +1,12 @@
-.PHONY: help install clean test render new-flyer daily dashboard pipeline
+.PHONY: help install clean test audit render new-flyer daily dashboard pipeline
 
 PYTHON ?= python3
 
 help:
 	@echo "Comandos disponibles:"
 	@echo "  make install     Instalar dependencias (setup.sh autodetecta py|python3)"
-	@echo "  (en Windows/Git Bash usa PYTHON=py, ej: make test PYTHON=py)"
 	@echo "  make clean       Limpiar basura"
+	@echo "  make audit       Auditar web, referencias activas y bases locales (solo lectura)"
 	@echo "  make test        Ejecutar tests"
 	@echo "  make render      Generar piezas de ejemplo"
 	@echo "  make new-flyer   Crear flyer (NAME=\"nombre\")"
@@ -23,6 +23,9 @@ clean:
 test:
 	$(PYTHON) -m pip install -e ".[dev]"
 	$(PYTHON) -m pytest tests/ -q
+
+audit:
+	$(PYTHON) tools/repo_audit.py
 
 render:
 	$(PYTHON) scripts/piezas_generar.py projects/piezas_vectoriales/etiquetas_ejemplo/config.json

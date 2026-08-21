@@ -1,6 +1,6 @@
 {
   "schema": "mak-code-structure-v1",
-  "generated_at_utc": "2026-08-21T01:15:40+00:00",
+  "generated_at_utc": "2026-08-21T04:09:42+00:00",
   "root": "/home/mak/flujo",
   "skip_dirs": [
     ".agents",
@@ -19,15 +19,15 @@
   ],
   "summary": {
     "python_files": 781,
-    "total_lines": 186598,
-    "symbols": 8552,
+    "total_lines": 186818,
+    "symbols": 8556,
     "syntax_errors": 0,
     "effect_modules": {
-      "filesystem_write": 394,
+      "filesystem_write": 393,
       "filesystem_read_or_write": 177,
-      "process": 128,
+      "process": 124,
       "network": 65,
-      "database": 37,
+      "database": 41,
       "http_server": 43,
       "cli": 11
     }
@@ -39579,6 +39579,166 @@
       "imported_by": []
     },
     {
+      "path": "src/flujo/knowledge/catalog_federation.py",
+      "module": "src.flujo.knowledge.catalog_federation",
+      "sha256": "5632cb2ce2c26479612320620ce0b6899ba7615dc8bd05d765a268519666659a",
+      "lines": 260,
+      "imports": [
+        "argparse",
+        "hashlib",
+        "json",
+        "sqlite3"
+      ],
+      "from_imports": [
+        "__future__.annotations",
+        "dataclasses.dataclass",
+        "datetime.datetime",
+        "datetime.timezone",
+        "pathlib.Path",
+        "typing.Any",
+        "typing.Iterable"
+      ],
+      "symbols": [
+        {
+          "name": "SourceInspection",
+          "kind": "class",
+          "line": 25,
+          "end_line": 34,
+          "decorators": [
+            "dataclass"
+          ]
+        },
+        {
+          "name": "_now",
+          "kind": "function",
+          "line": 37,
+          "end_line": 38,
+          "decorators": []
+        },
+        {
+          "name": "_json",
+          "kind": "function",
+          "line": 41,
+          "end_line": 42,
+          "decorators": []
+        },
+        {
+          "name": "_source_kind",
+          "kind": "function",
+          "line": 45,
+          "end_line": 61,
+          "decorators": []
+        },
+        {
+          "name": "_semantic_kind",
+          "kind": "function",
+          "line": 64,
+          "end_line": 84,
+          "decorators": []
+        },
+        {
+          "name": "_connect_readonly",
+          "kind": "function",
+          "line": 87,
+          "end_line": 92,
+          "decorators": []
+        },
+        {
+          "name": "inspect_database",
+          "kind": "function",
+          "line": 95,
+          "end_line": 140,
+          "decorators": []
+        },
+        {
+          "name": "create_schema",
+          "kind": "function",
+          "line": 143,
+          "end_line": 185,
+          "decorators": []
+        },
+        {
+          "name": "federate",
+          "kind": "function",
+          "line": 188,
+          "end_line": 239,
+          "decorators": []
+        },
+        {
+          "name": "main",
+          "kind": "function",
+          "line": 242,
+          "end_line": 255,
+          "decorators": []
+        }
+      ],
+      "calls": [
+        "FileNotFoundError",
+        "Path",
+        "SourceInspection",
+        "SystemExit",
+        "ValueError",
+        "_connect_readonly",
+        "_json",
+        "_now",
+        "_semantic_kind",
+        "_source_kind",
+        "any",
+        "argparse.ArgumentParser",
+        "casefold",
+        "chr",
+        "connection.commit",
+        "connection.execute",
+        "connection.executescript",
+        "create_schema",
+        "dataclass",
+        "datetime.now",
+        "destination.parent.mkdir",
+        "dict",
+        "encode",
+        "expanduser",
+        "federate",
+        "fetchall",
+        "fetchone",
+        "hashlib.sha256",
+        "hexdigest",
+        "identity.encode",
+        "inspect_database",
+        "int",
+        "isoformat",
+        "json.dumps",
+        "len",
+        "list",
+        "main",
+        "parser.add_argument",
+        "parser.parse_args",
+        "path.is_file",
+        "path.name.casefold",
+        "path.resolve",
+        "print",
+        "replace",
+        "resolve",
+        "source.stat",
+        "sqlite3.connect",
+        "str",
+        "sum",
+        "table_name.casefold",
+        "table_name.replace",
+        "tables.append",
+        "tuple"
+      ],
+      "effects": [
+        "database",
+        "filesystem_write"
+      ],
+      "entrypoints": [
+        "__main__",
+        "main"
+      ],
+      "syntax_error": null,
+      "imported_by": []
+    },
+    {
       "path": "src/flujo/knowledge/contract_registry.py",
       "module": "src.flujo.knowledge.contract_registry",
       "sha256": "1d8e5ee68cb82666f2688d0d241246e7945f5f1c5c03345a6c3f7dedc5b476f6",
@@ -40532,6 +40692,204 @@
       "effects": [
         "database",
         "filesystem_read_or_write"
+      ],
+      "entrypoints": [
+        "__main__",
+        "main"
+      ],
+      "syntax_error": null,
+      "imported_by": []
+    },
+    {
+      "path": "src/flujo/knowledge/operational_bridge.py",
+      "module": "src.flujo.knowledge.operational_bridge",
+      "sha256": "7ab71702d5666dd43b6515d4b11ad3b7e266bda068e5e00a0a7634d96374be8b",
+      "lines": 419,
+      "imports": [
+        "argparse",
+        "hashlib",
+        "json",
+        "re",
+        "sqlite3"
+      ],
+      "from_imports": [
+        "__future__.annotations",
+        "datetime.datetime",
+        "datetime.timezone",
+        "pathlib.Path",
+        "typing.Any",
+        "typing.Iterable"
+      ],
+      "symbols": [
+        {
+          "name": "_now",
+          "kind": "function",
+          "line": 29,
+          "end_line": 30,
+          "decorators": []
+        },
+        {
+          "name": "_json",
+          "kind": "function",
+          "line": 33,
+          "end_line": 34,
+          "decorators": []
+        },
+        {
+          "name": "_quote",
+          "kind": "function",
+          "line": 37,
+          "end_line": 38,
+          "decorators": []
+        },
+        {
+          "name": "_slug",
+          "kind": "function",
+          "line": 41,
+          "end_line": 43,
+          "decorators": []
+        },
+        {
+          "name": "_date_iso",
+          "kind": "function",
+          "line": 46,
+          "end_line": 48,
+          "decorators": []
+        },
+        {
+          "name": "_source_path",
+          "kind": "function",
+          "line": 51,
+          "end_line": 52,
+          "decorators": []
+        },
+        {
+          "name": "_read_rows",
+          "kind": "function",
+          "line": 55,
+          "end_line": 66,
+          "decorators": []
+        },
+        {
+          "name": "_record",
+          "kind": "function",
+          "line": 69,
+          "end_line": 97,
+          "decorators": []
+        },
+        {
+          "name": "_rd_records",
+          "kind": "function",
+          "line": 100,
+          "end_line": 167,
+          "decorators": []
+        },
+        {
+          "name": "_fondart_records",
+          "kind": "function",
+          "line": 170,
+          "end_line": 189,
+          "decorators": []
+        },
+        {
+          "name": "_intake_records",
+          "kind": "function",
+          "line": 192,
+          "end_line": 232,
+          "decorators": []
+        },
+        {
+          "name": "create_schema",
+          "kind": "function",
+          "line": 235,
+          "end_line": 300,
+          "decorators": []
+        },
+        {
+          "name": "_replace_source_records",
+          "kind": "function",
+          "line": 303,
+          "end_line": 361,
+          "decorators": []
+        },
+        {
+          "name": "refresh_operational_bridge",
+          "kind": "function",
+          "line": 364,
+          "end_line": 402,
+          "decorators": []
+        },
+        {
+          "name": "main",
+          "kind": "function",
+          "line": 405,
+          "end_line": 414,
+          "decorators": []
+        }
+      ],
+      "calls": [
+        "FileNotFoundError",
+        "Path",
+        "SystemExit",
+        "_date_iso",
+        "_fondart_records",
+        "_intake_records",
+        "_json",
+        "_now",
+        "_quote",
+        "_rd_records",
+        "_read_rows",
+        "_record",
+        "_replace_source_records",
+        "_slug",
+        "_source_path",
+        "argparse.ArgumentParser",
+        "casefold",
+        "ch.isalnum",
+        "connection.commit",
+        "connection.execute",
+        "connection.executescript",
+        "create_schema",
+        "curation_links.append",
+        "datetime.now",
+        "destination.parent.mkdir",
+        "dict",
+        "encode",
+        "expanduser",
+        "fetchone",
+        "hashlib.sha256",
+        "hexdigest",
+        "isoformat",
+        "join",
+        "json.dumps",
+        "len",
+        "links.append",
+        "main",
+        "parser.add_argument",
+        "parser.parse_args",
+        "print",
+        "producer.get",
+        "producers.get",
+        "re.fullmatch",
+        "records.append",
+        "refresh_operational_bridge",
+        "replace",
+        "resolve",
+        "row.get",
+        "row.items",
+        "source.is_file",
+        "sqlite3.connect",
+        "str",
+        "strip",
+        "tuple",
+        "value.replace",
+        "venue_ids.get",
+        "venue_names.get",
+        "venue_specs.items"
+      ],
+      "effects": [
+        "database",
+        "filesystem_write"
       ],
       "entrypoints": [
         "__main__",
@@ -47404,8 +47762,8 @@
     {
       "path": "src/flujo/web/hub.py",
       "module": "src.flujo.web.hub",
-      "sha256": "77b7da81cd4a003d03820f5ab7d0f5d018a27743c3b6ffebac3781c5830fb8e7",
-      "lines": 2767,
+      "sha256": "993ee91db2caa8d048a4c563b42791914526f2648c3964e5c4f472c9c6648cfd",
+      "lines": 2766,
       "imports": [
         "base64",
         "json",
@@ -47522,7 +47880,7 @@
           "name": "HubRequestHandler",
           "kind": "class",
           "line": 283,
-          "end_line": 2430,
+          "end_line": 2429,
           "decorators": []
         },
         {
@@ -47703,49 +48061,49 @@
           "name": "_get_automatizaciones",
           "kind": "function",
           "line": 1288,
-          "end_line": 1364,
+          "end_line": 1363,
           "decorators": []
         },
         {
           "name": "_cuenta",
           "kind": "function",
-          "line": 1346,
-          "end_line": 1351,
+          "line": 1345,
+          "end_line": 1350,
           "decorators": []
         },
         {
           "name": "_get_show_kit",
           "kind": "function",
-          "line": 1366,
-          "end_line": 1452,
+          "line": 1365,
+          "end_line": 1451,
           "decorators": []
         },
         {
           "name": "_get_portafolio",
           "kind": "function",
-          "line": 1454,
-          "end_line": 1491,
+          "line": 1453,
+          "end_line": 1490,
           "decorators": []
         },
         {
           "name": "_get_mak",
           "kind": "function",
-          "line": 1493,
-          "end_line": 1599,
+          "line": 1492,
+          "end_line": 1598,
           "decorators": []
         },
         {
           "name": "_get_mak_tandas",
           "kind": "function",
-          "line": 1601,
-          "end_line": 1664,
+          "line": 1600,
+          "end_line": 1663,
           "decorators": []
         },
         {
           "name": "_read_jsonl",
           "kind": "function",
-          "line": 1667,
-          "end_line": 1680,
+          "line": 1666,
+          "end_line": 1679,
           "decorators": [
             "staticmethod"
           ]
@@ -47753,99 +48111,99 @@
         {
           "name": "_get_rd_db",
           "kind": "function",
-          "line": 1682,
-          "end_line": 1687,
+          "line": 1681,
+          "end_line": 1686,
           "decorators": []
         },
         {
           "name": "_get_rd_datos_summary",
           "kind": "function",
-          "line": 1689,
-          "end_line": 1694,
+          "line": 1688,
+          "end_line": 1693,
           "decorators": []
         },
         {
           "name": "_get_agents_roles",
           "kind": "function",
-          "line": 1696,
-          "end_line": 1739,
+          "line": 1695,
+          "end_line": 1738,
           "decorators": []
         },
         {
           "name": "_handle_delegate",
           "kind": "function",
-          "line": 1741,
-          "end_line": 1772,
+          "line": 1740,
+          "end_line": 1771,
           "decorators": []
         },
         {
           "name": "_serve_manifest",
           "kind": "function",
-          "line": 1774,
-          "end_line": 1793,
+          "line": 1773,
+          "end_line": 1792,
           "decorators": []
         },
         {
           "name": "_serve_service_worker",
           "kind": "function",
-          "line": 1795,
-          "end_line": 1802,
+          "line": 1794,
+          "end_line": 1801,
           "decorators": []
         },
         {
           "name": "_serve_sse_events",
           "kind": "function",
-          "line": 1804,
-          "end_line": 1866,
+          "line": 1803,
+          "end_line": 1865,
           "decorators": []
         },
         {
           "name": "_reglas_estado_svg",
           "kind": "function",
-          "line": 1868,
-          "end_line": 1886,
+          "line": 1867,
+          "end_line": 1885,
           "decorators": []
         },
         {
           "name": "_estado_svg",
           "kind": "function",
-          "line": 1888,
-          "end_line": 1897,
+          "line": 1887,
+          "end_line": 1896,
           "decorators": []
         },
         {
           "name": "_list_svg_works",
           "kind": "function",
-          "line": 1899,
-          "end_line": 1931,
+          "line": 1898,
+          "end_line": 1930,
           "decorators": []
         },
         {
           "name": "_real_parse_pedido",
           "kind": "function",
-          "line": 1933,
-          "end_line": 1995,
+          "line": 1932,
+          "end_line": 1994,
           "decorators": []
         },
         {
           "name": "_list_jobs_api",
           "kind": "function",
-          "line": 1997,
-          "end_line": 2013,
+          "line": 1996,
+          "end_line": 2012,
           "decorators": []
         },
         {
           "name": "_create_job_draft",
           "kind": "function",
-          "line": 2015,
-          "end_line": 2076,
+          "line": 2014,
+          "end_line": 2075,
           "decorators": []
         },
         {
           "name": "_arg_es_seguro",
           "kind": "function",
-          "line": 2102,
-          "end_line": 2116,
+          "line": 2101,
+          "end_line": 2115,
           "decorators": [
             "staticmethod"
           ]
@@ -47853,239 +48211,239 @@
         {
           "name": "_origen_propio",
           "kind": "function",
-          "line": 2118,
-          "end_line": 2138,
+          "line": 2117,
+          "end_line": 2137,
           "decorators": []
         },
         {
           "name": "_is_safe_cmd",
           "kind": "function",
-          "line": 2140,
-          "end_line": 2167,
+          "line": 2139,
+          "end_line": 2166,
           "decorators": []
         },
         {
           "name": "_run_safe_command",
           "kind": "function",
-          "line": 2169,
-          "end_line": 2230,
+          "line": 2168,
+          "end_line": 2229,
           "decorators": []
         },
         {
           "name": "_simple_parse",
           "kind": "function",
-          "line": 2232,
-          "end_line": 2248,
+          "line": 2231,
+          "end_line": 2247,
           "decorators": []
         },
         {
           "name": "_list_datadrops",
           "kind": "function",
-          "line": 2250,
-          "end_line": 2272,
+          "line": 2249,
+          "end_line": 2271,
           "decorators": []
         },
         {
           "name": "_handle_datadrop_upload",
           "kind": "function",
-          "line": 2274,
-          "end_line": 2350,
+          "line": 2273,
+          "end_line": 2349,
           "decorators": []
         },
         {
           "name": "_handle_datadrop_analyze",
           "kind": "function",
-          "line": 2352,
-          "end_line": 2386,
+          "line": 2351,
+          "end_line": 2385,
           "decorators": []
         },
         {
           "name": "_prepare_datadrop_review_package",
           "kind": "function",
-          "line": 2388,
-          "end_line": 2420,
+          "line": 2387,
+          "end_line": 2419,
           "decorators": []
         },
         {
           "name": "_derive_visual_traits",
           "kind": "function",
-          "line": 2422,
-          "end_line": 2423,
+          "line": 2421,
+          "end_line": 2422,
           "decorators": []
         },
         {
           "name": "_build_for_future_ai",
           "kind": "function",
-          "line": 2425,
-          "end_line": 2426,
+          "line": 2424,
+          "end_line": 2425,
           "decorators": []
         },
         {
           "name": "log_message",
           "kind": "function",
-          "line": 2428,
-          "end_line": 2430,
+          "line": 2427,
+          "end_line": 2429,
           "decorators": []
         },
         {
           "name": "_HubDesktopApi",
           "kind": "class",
-          "line": 2433,
-          "end_line": 2531,
+          "line": 2432,
+          "end_line": 2530,
           "decorators": []
         },
         {
           "name": "__init__",
           "kind": "function",
-          "line": 2438,
-          "end_line": 2442,
+          "line": 2437,
+          "end_line": 2441,
           "decorators": []
         },
         {
           "name": "_ensure_handler",
           "kind": "function",
-          "line": 2444,
-          "end_line": 2453,
+          "line": 2443,
+          "end_line": 2452,
           "decorators": []
         },
         {
           "name": "ping",
           "kind": "function",
-          "line": 2455,
-          "end_line": 2456,
+          "line": 2454,
+          "end_line": 2455,
           "decorators": []
         },
         {
           "name": "list_svg_works",
           "kind": "function",
-          "line": 2458,
-          "end_line": 2463,
+          "line": 2457,
+          "end_line": 2462,
           "decorators": []
         },
         {
           "name": "list_jobs",
           "kind": "function",
-          "line": 2465,
-          "end_line": 2470,
+          "line": 2464,
+          "end_line": 2469,
           "decorators": []
         },
         {
           "name": "parse_pedido",
           "kind": "function",
-          "line": 2472,
-          "end_line": 2477,
+          "line": 2471,
+          "end_line": 2476,
           "decorators": []
         },
         {
           "name": "create_job_draft",
           "kind": "function",
-          "line": 2479,
-          "end_line": 2484,
+          "line": 2478,
+          "end_line": 2483,
           "decorators": []
         },
         {
           "name": "run_command",
           "kind": "function",
-          "line": 2486,
-          "end_line": 2491,
+          "line": 2485,
+          "end_line": 2490,
           "decorators": []
         },
         {
           "name": "get_status",
           "kind": "function",
-          "line": 2493,
-          "end_line": 2498,
+          "line": 2492,
+          "end_line": 2497,
           "decorators": []
         },
         {
           "name": "get_connected",
           "kind": "function",
-          "line": 2500,
-          "end_line": 2502,
+          "line": 2499,
+          "end_line": 2501,
           "decorators": []
         },
         {
           "name": "list_datadrops",
           "kind": "function",
-          "line": 2505,
-          "end_line": 2510,
+          "line": 2504,
+          "end_line": 2509,
           "decorators": []
         },
         {
           "name": "datadrop_upload",
           "kind": "function",
-          "line": 2512,
-          "end_line": 2517,
+          "line": 2511,
+          "end_line": 2516,
           "decorators": []
         },
         {
           "name": "datadrop_analyze",
           "kind": "function",
-          "line": 2519,
-          "end_line": 2524,
+          "line": 2518,
+          "end_line": 2523,
           "decorators": []
         },
         {
           "name": "datadrop_prepare_package",
           "kind": "function",
-          "line": 2526,
-          "end_line": 2531,
+          "line": 2525,
+          "end_line": 2530,
           "decorators": []
         },
         {
           "name": "_find_free_port",
           "kind": "function",
-          "line": 2534,
-          "end_line": 2543,
+          "line": 2533,
+          "end_line": 2542,
           "decorators": []
         },
         {
           "name": "run_server",
           "kind": "function",
-          "line": 2546,
-          "end_line": 2606,
+          "line": 2545,
+          "end_line": 2605,
           "decorators": []
         },
         {
           "name": "launch",
           "kind": "function",
-          "line": 2609,
-          "end_line": 2682,
+          "line": 2608,
+          "end_line": 2681,
           "decorators": []
         },
         {
           "name": "_get_temp_icon",
           "kind": "function",
-          "line": 2685,
-          "end_line": 2709,
+          "line": 2684,
+          "end_line": 2708,
           "decorators": []
         },
         {
           "name": "_try_start_tray",
           "kind": "function",
-          "line": 2711,
-          "end_line": 2762,
+          "line": 2710,
+          "end_line": 2761,
           "decorators": []
         },
         {
           "name": "on_open",
           "kind": "function",
-          "line": 2734,
-          "end_line": 2738,
+          "line": 2733,
+          "end_line": 2737,
           "decorators": []
         },
         {
           "name": "on_hide",
           "kind": "function",
-          "line": 2740,
-          "end_line": 2744,
+          "line": 2739,
+          "end_line": 2743,
           "decorators": []
         },
         {
           "name": "on_quit",
           "kind": "function",
-          "line": 2746,
-          "end_line": 2751,
+          "line": 2745,
+          "end_line": 2750,
           "decorators": []
         }
       ],
@@ -51744,6 +52102,64 @@
         "sys.path.insert"
       ],
       "effects": [],
+      "entrypoints": [],
+      "syntax_error": null,
+      "imported_by": []
+    },
+    {
+      "path": "tests/test_catalog_federation.py",
+      "module": "tests.test_catalog_federation",
+      "sha256": "cd8b38477c187d2811b3e1273189580200165757525fb16d8332894d88044274",
+      "lines": 62,
+      "imports": [
+        "sqlite3"
+      ],
+      "from_imports": [
+        "flujo.knowledge.catalog_federation.federate",
+        "flujo.knowledge.catalog_federation.inspect_database"
+      ],
+      "symbols": [
+        {
+          "name": "_source",
+          "kind": "function",
+          "line": 6,
+          "end_line": 15,
+          "decorators": []
+        },
+        {
+          "name": "test_inspection_is_structural_and_classifies_tables",
+          "kind": "function",
+          "line": 18,
+          "end_line": 29,
+          "decorators": []
+        },
+        {
+          "name": "test_federation_copies_no_source_rows_and_is_repeatable",
+          "kind": "function",
+          "line": 32,
+          "end_line": 46,
+          "decorators": []
+        },
+        {
+          "name": "test_refresh_replaces_schema_metadata_without_orphans",
+          "kind": "function",
+          "line": 49,
+          "end_line": 61,
+          "decorators": []
+        }
+      ],
+      "calls": [
+        "_source",
+        "con.execute",
+        "con.executescript",
+        "federate",
+        "fetchone",
+        "inspect_database",
+        "sqlite3.connect"
+      ],
+      "effects": [
+        "database"
+      ],
       "entrypoints": [],
       "syntax_error": null,
       "imported_by": []
@@ -59555,8 +59971,8 @@
     {
       "path": "tests/test_git_web_contract.py",
       "module": "tests.test_git_web_contract",
-      "sha256": "1c7a7da444fffc8abff1e89c418956d85432d0e5201b696543826ca527162fef",
-      "lines": 75,
+      "sha256": "b4a6520a2ea3e4729795135d29469317e932cbbe31d7c43b7a9a218faee3a749",
+      "lines": 68,
       "imports": [],
       "from_imports": [
         "pathlib.Path"
@@ -59591,31 +60007,24 @@
           "decorators": []
         },
         {
-          "name": "test_claude_workflow_is_disabled_and_manual_only",
+          "name": "test_pages_publication_requires_explicit_dispatch",
           "kind": "function",
           "line": 42,
           "end_line": 46,
           "decorators": []
         },
         {
-          "name": "test_pages_publication_requires_explicit_dispatch",
-          "kind": "function",
-          "line": 49,
-          "end_line": 53,
-          "decorators": []
-        },
-        {
           "name": "test_pages_publication_scope_excludes_rd_venue_mak_and_win",
           "kind": "function",
-          "line": 56,
-          "end_line": 66,
+          "line": 49,
+          "end_line": 59,
           "decorators": []
         },
         {
           "name": "test_workflows_do_not_treat_win_as_runtime",
           "kind": "function",
-          "line": 69,
-          "end_line": 74,
+          "line": 62,
+          "end_line": 67,
           "decorators": []
         }
       ],
@@ -66413,7 +66822,7 @@
     {
       "path": "tests/test_mak_gpu_activity.py",
       "module": "tests.test_mak_gpu_activity",
-      "sha256": "32b78b16616373203ebdacb38b4d44f13a6d28171eff25b15a0abde540890311",
+      "sha256": "aa38a7dc5d5709fdddd9005685dc15836d34f11b8eddabb3819504b89cf61ead",
       "lines": 64,
       "imports": [
         "importlib.util",
@@ -66439,7 +66848,7 @@
           "decorators": []
         },
         {
-          "name": "test_gpu_guard_is_importable_on_director_windows",
+          "name": "test_gpu_guard_is_importable_on_linux_without_active_state",
           "kind": "function",
           "line": 42,
           "end_line": 54,
@@ -72694,12 +73103,13 @@
     {
       "path": "tests/test_math_kernel.py",
       "module": "tests.test_math_kernel",
-      "sha256": "f3dfd9c3e5e9ff62166be3fc97b84aa6a809208acf243f5ca2b6b90a3854514b",
-      "lines": 139,
+      "sha256": "f69a3b9342e86ecbf79ae54502658570a66ce1f135f96f383dac482ba51fe2ba",
+      "lines": 143,
       "imports": [
         "copy",
         "hashlib",
-        "json"
+        "json",
+        "pytest"
       ],
       "from_imports": [
         "__future__.annotations",
@@ -72720,61 +73130,62 @@
         {
           "name": "_card",
           "kind": "function",
-          "line": 31,
-          "end_line": 47,
+          "line": 33,
+          "end_line": 49,
           "decorators": []
         },
         {
           "name": "test_pnp_capsule_is_cultural_first_and_untrusted",
           "kind": "function",
-          "line": 50,
-          "end_line": 58,
+          "line": 52,
+          "end_line": 60,
           "decorators": []
         },
         {
           "name": "test_pnp_statement_and_formal_target_hashes_are_captured",
           "kind": "function",
-          "line": 61,
-          "end_line": 70,
+          "line": 63,
+          "end_line": 74,
           "decorators": []
         },
         {
           "name": "test_curated_math_target_has_a_typed_common_layer_route",
           "kind": "function",
-          "line": 73,
-          "end_line": 79,
+          "line": 77,
+          "end_line": 83,
           "decorators": []
         },
         {
           "name": "test_cycle_queues_metadata_only_work_and_blocks_truth_promotion",
           "kind": "function",
-          "line": 82,
-          "end_line": 92,
+          "line": 86,
+          "end_line": 96,
           "decorators": []
         },
         {
           "name": "test_untrusted_target_downgrades_formal_proof_card",
           "kind": "function",
-          "line": 95,
-          "end_line": 106,
+          "line": 99,
+          "end_line": 110,
           "decorators": []
         },
         {
           "name": "test_no_counterexample_is_survival_not_truth",
           "kind": "function",
-          "line": 109,
-          "end_line": 118,
+          "line": 113,
+          "end_line": 122,
           "decorators": []
         },
         {
           "name": "test_verified_target_can_accept_clean_proof_metadata",
           "kind": "function",
-          "line": 121,
-          "end_line": 138,
+          "line": 125,
+          "end_line": 142,
           "decorators": []
         }
       ],
       "calls": [
+        "FORMAL_TARGET_PATH.is_file",
         "FORMAL_TARGET_PATH.read_bytes",
         "OFFICIAL_CAPTURE_PATH.read_text",
         "Path",
@@ -72794,6 +73205,7 @@
         "len",
         "load_target",
         "math_summary",
+        "pytest.skip",
         "record_result_card",
         "resolve",
         "route_project",
@@ -74605,10 +75017,75 @@
       "imported_by": []
     },
     {
+      "path": "tests/test_operational_bridge.py",
+      "module": "tests.test_operational_bridge",
+      "sha256": "ee1e0d12f28d1c897338d066c30121dc738e6520e80207dff29f2ca5230bbec9",
+      "lines": 80,
+      "imports": [
+        "sqlite3"
+      ],
+      "from_imports": [
+        "flujo.knowledge.operational_bridge.refresh_operational_bridge"
+      ],
+      "symbols": [
+        {
+          "name": "_rd",
+          "kind": "function",
+          "line": 6,
+          "end_line": 17,
+          "decorators": []
+        },
+        {
+          "name": "_fondart",
+          "kind": "function",
+          "line": 20,
+          "end_line": 27,
+          "decorators": []
+        },
+        {
+          "name": "_intake",
+          "kind": "function",
+          "line": 30,
+          "end_line": 43,
+          "decorators": []
+        },
+        {
+          "name": "test_bridge_materializes_operational_records_and_exact_links",
+          "kind": "function",
+          "line": 46,
+          "end_line": 64,
+          "decorators": []
+        },
+        {
+          "name": "test_bridge_refresh_is_idempotent_and_replaces_derived_rows",
+          "kind": "function",
+          "line": 67,
+          "end_line": 79,
+          "decorators": []
+        }
+      ],
+      "calls": [
+        "_fondart",
+        "_intake",
+        "_rd",
+        "con.execute",
+        "con.executescript",
+        "fetchone",
+        "refresh_operational_bridge",
+        "sqlite3.connect"
+      ],
+      "effects": [
+        "database"
+      ],
+      "entrypoints": [],
+      "syntax_error": null,
+      "imported_by": []
+    },
+    {
       "path": "tests/test_operational_entrypoints.py",
       "module": "tests.test_operational_entrypoints",
-      "sha256": "e40f8476bf1c5613bc4c3b4ae4484d7fba49d5d06546f03884d920acfc4465f5",
-      "lines": 123,
+      "sha256": "f989bd968eebe43d1982c02e6bd4a850d0cba906f04185422c9c4d8f0f85c8f5",
+      "lines": 103,
       "imports": [
         "importlib.util"
       ],
@@ -74625,52 +75102,38 @@
           "decorators": []
         },
         {
-          "name": "test_windows_launchers_anchor_the_repo_and_use_current_app_command",
-          "kind": "function",
-          "line": 15,
-          "end_line": 25,
-          "decorators": []
-        },
-        {
-          "name": "test_installer_uses_editable_install_instead_of_copying_source_trees",
-          "kind": "function",
-          "line": 28,
-          "end_line": 32,
-          "decorators": []
-        },
-        {
           "name": "_load_mirror_module",
           "kind": "function",
-          "line": 35,
-          "end_line": 41,
+          "line": 15,
+          "end_line": 21,
           "decorators": []
         },
         {
           "name": "test_mak_mirror_check_covers_curatoria_and_fails_on_mismatch",
           "kind": "function",
-          "line": 44,
-          "end_line": 81,
+          "line": 24,
+          "end_line": 61,
           "decorators": []
         },
         {
           "name": "test_legacy_repair_script_is_not_an_active_entrypoint",
           "kind": "function",
-          "line": 84,
-          "end_line": 89,
+          "line": 64,
+          "end_line": 69,
           "decorators": []
         },
         {
           "name": "test_curatoria_guard_reconciles_before_declaring_corpus_done",
           "kind": "function",
-          "line": 92,
-          "end_line": 97,
+          "line": 72,
+          "end_line": 77,
           "decorators": []
         },
         {
           "name": "test_single_human_hub_contract_has_no_direct_service_docs",
           "kind": "function",
-          "line": 100,
-          "end_line": 122,
+          "line": 80,
+          "end_line": 102,
           "decorators": []
         }
       ],
@@ -74685,7 +75148,6 @@
         "importlib.util.spec_from_file_location",
         "issubset",
         "join",
-        "lower",
         "module.main",
         "monkeypatch.chdir",
         "monkeypatch.setattr",
@@ -86480,173 +86942,6 @@
       "imported_by": []
     },
     {
-      "path": "tools/bridge_issue_render.py",
-      "module": "tools.bridge_issue_render",
-      "sha256": "6d7a1b71906d43ba9dcc2c2f7391e2158e419ce27a8a548fc3c3e536e87c9cc3",
-      "lines": 221,
-      "imports": [
-        "argparse",
-        "json",
-        "re",
-        "shutil",
-        "subprocess",
-        "sys",
-        "time"
-      ],
-      "from_imports": [
-        "datetime.datetime",
-        "datetime.timezone",
-        "pathlib.Path"
-      ],
-      "symbols": [
-        {
-          "name": "_load_state",
-          "kind": "function",
-          "line": 38,
-          "end_line": 44,
-          "decorators": []
-        },
-        {
-          "name": "_save_state",
-          "kind": "function",
-          "line": 47,
-          "end_line": 51,
-          "decorators": []
-        },
-        {
-          "name": "_gh",
-          "kind": "function",
-          "line": 54,
-          "end_line": 55,
-          "decorators": []
-        },
-        {
-          "name": "_open_issues",
-          "kind": "function",
-          "line": 58,
-          "end_line": 69,
-          "decorators": []
-        },
-        {
-          "name": "_extract_ig_url",
-          "kind": "function",
-          "line": 72,
-          "end_line": 74,
-          "decorators": []
-        },
-        {
-          "name": "_extract_shortcode",
-          "kind": "function",
-          "line": 80,
-          "end_line": 82,
-          "decorators": []
-        },
-        {
-          "name": "_run_flyer_auto",
-          "kind": "function",
-          "line": 85,
-          "end_line": 99,
-          "decorators": []
-        },
-        {
-          "name": "_copy_to_drive",
-          "kind": "function",
-          "line": 105,
-          "end_line": 113,
-          "decorators": []
-        },
-        {
-          "name": "_sin_rutas",
-          "kind": "function",
-          "line": 121,
-          "end_line": 128,
-          "decorators": []
-        },
-        {
-          "name": "_comment_and_close",
-          "kind": "function",
-          "line": 131,
-          "end_line": 149,
-          "decorators": []
-        },
-        {
-          "name": "run_once",
-          "kind": "function",
-          "line": 152,
-          "end_line": 186,
-          "decorators": []
-        },
-        {
-          "name": "main",
-          "kind": "function",
-          "line": 189,
-          "end_line": 216,
-          "decorators": []
-        }
-      ],
-      "calls": [
-        "DRIVE_DIR.mkdir",
-        "IG_URL_RE.search",
-        "Path",
-        "SHORTCODE_RE.search",
-        "STATE_FILE.exists",
-        "STATE_FILE.parent.mkdir",
-        "STATE_FILE.read_text",
-        "STATE_FILE.with_suffix",
-        "_RUTA_WIN_RE.sub",
-        "_comment_and_close",
-        "_copy_to_drive",
-        "_extract_ig_url",
-        "_extract_shortcode",
-        "_gh",
-        "_load_state",
-        "_open_issues",
-        "_run_flyer_auto",
-        "_save_state",
-        "_sin_rutas",
-        "ap.add_argument",
-        "ap.parse_args",
-        "argparse.ArgumentParser",
-        "c.stderr.strip",
-        "cl.stderr.strip",
-        "datetime.now",
-        "isoformat",
-        "issue.get",
-        "json.dumps",
-        "json.loads",
-        "m.group",
-        "main",
-        "output.strip",
-        "p.exists",
-        "print",
-        "re.compile",
-        "re.search",
-        "res.stderr.strip",
-        "resolve",
-        "rsplit",
-        "run_once",
-        "shutil.copy2",
-        "state.setdefault",
-        "str",
-        "stream.reconfigure",
-        "strip",
-        "subprocess.run",
-        "time.sleep",
-        "tmp.replace",
-        "tmp.write_text"
-      ],
-      "effects": [
-        "filesystem_write",
-        "process"
-      ],
-      "entrypoints": [
-        "__main__",
-        "main"
-      ],
-      "syntax_error": null,
-      "imported_by": []
-    },
-    {
       "path": "tools/build_application_intake.py",
       "module": "tools.build_application_intake",
       "sha256": "4bfc069c7561593ff40a000ab0ddebc2ace87c8ee4896a299f308e10951e6a86",
@@ -88907,164 +89202,6 @@
       "effects": [
         "filesystem_read_or_write",
         "filesystem_write",
-        "process"
-      ],
-      "entrypoints": [
-        "__main__",
-        "main"
-      ],
-      "syntax_error": null,
-      "imported_by": []
-    },
-    {
-      "path": "tools/enviar_a_mak.py",
-      "module": "tools.enviar_a_mak",
-      "sha256": "d33be2c8629777db08c2307c28ba4b84ac364b332327f150d0eb1637671a4189",
-      "lines": 251,
-      "imports": [
-        "argparse",
-        "os",
-        "subprocess",
-        "sys",
-        "time",
-        "tkinter"
-      ],
-      "from_imports": [
-        "__future__.annotations",
-        "pathlib.Path",
-        "tkinter.filedialog"
-      ],
-      "symbols": [
-        {
-          "name": "_forzar_utf8",
-          "kind": "function",
-          "line": 41,
-          "end_line": 51,
-          "decorators": []
-        },
-        {
-          "name": "elegir_carpeta",
-          "kind": "function",
-          "line": 54,
-          "end_line": 69,
-          "decorators": []
-        },
-        {
-          "name": "contar_local",
-          "kind": "function",
-          "line": 72,
-          "end_line": 83,
-          "decorators": []
-        },
-        {
-          "name": "_formatear_barra",
-          "kind": "function",
-          "line": 86,
-          "end_line": 97,
-          "decorators": []
-        },
-        {
-          "name": "_copiar_con_progreso",
-          "kind": "function",
-          "line": 100,
-          "end_line": 123,
-          "decorators": []
-        },
-        {
-          "name": "ssh_run",
-          "kind": "function",
-          "line": 126,
-          "end_line": 131,
-          "decorators": []
-        },
-        {
-          "name": "destino_existe",
-          "kind": "function",
-          "line": 134,
-          "end_line": 136,
-          "decorators": []
-        },
-        {
-          "name": "contar_remoto",
-          "kind": "function",
-          "line": 139,
-          "end_line": 152,
-          "decorators": []
-        },
-        {
-          "name": "enviar",
-          "kind": "function",
-          "line": 155,
-          "end_line": 226,
-          "decorators": []
-        },
-        {
-          "name": "main",
-          "kind": "function",
-          "line": 229,
-          "end_line": 246,
-          "decorators": []
-        }
-      ],
-      "calls": [
-        "Path",
-        "SystemExit",
-        "__doc__.splitlines",
-        "_copiar_con_progreso",
-        "_formatear_barra",
-        "_forzar_utf8",
-        "ap.add_argument",
-        "ap.parse_args",
-        "argparse.ArgumentParser",
-        "carpeta.exists",
-        "carpeta.is_dir",
-        "carpeta.rglob",
-        "contar_local",
-        "contar_remoto",
-        "destino.write",
-        "destino_existe",
-        "elegir_carpeta",
-        "endswith",
-        "enviar",
-        "filedialog.askdirectory",
-        "input",
-        "int",
-        "l.strip",
-        "len",
-        "lower",
-        "main",
-        "max",
-        "min",
-        "origen.read",
-        "os.environ.setdefault",
-        "p.is_file",
-        "p.stat",
-        "print",
-        "r.stdout.strip",
-        "resolve",
-        "resp.startswith",
-        "root.destroy",
-        "root.withdraw",
-        "splitlines",
-        "ssh_proc.stdin.close",
-        "ssh_proc.wait",
-        "ssh_run",
-        "str",
-        "strip",
-        "subprocess.Popen",
-        "subprocess.run",
-        "sys.exit",
-        "sys.stderr.reconfigure",
-        "sys.stdout.encoding.lower",
-        "sys.stdout.flush",
-        "sys.stdout.reconfigure",
-        "sys.stdout.write",
-        "tar_proc.stdout.close",
-        "tar_proc.wait",
-        "time.monotonic",
-        "tk.Tk"
-      ],
-      "effects": [
         "process"
       ],
       "entrypoints": [
@@ -92147,66 +92284,6 @@
       ]
     },
     {
-      "path": "tools/instalar_enviar_a_mak.py",
-      "module": "tools.instalar_enviar_a_mak",
-      "sha256": "c0a77e1307d7560aeefa0ce0a24202097e2b81bede95df0137154b50d43a76b5",
-      "lines": 78,
-      "imports": [
-        "os",
-        "subprocess"
-      ],
-      "from_imports": [
-        "__future__.annotations",
-        "pathlib.Path"
-      ],
-      "symbols": [
-        {
-          "name": "crear_bat",
-          "kind": "function",
-          "line": 36,
-          "end_line": 38,
-          "decorators": []
-        },
-        {
-          "name": "crear_acceso_sendto",
-          "kind": "function",
-          "line": 41,
-          "end_line": 58,
-          "decorators": []
-        },
-        {
-          "name": "main",
-          "kind": "function",
-          "line": 61,
-          "end_line": 73,
-          "decorators": []
-        }
-      ],
-      "calls": [
-        "BAT_CONTENT.encode",
-        "BAT_PATH.write_bytes",
-        "Path",
-        "SystemExit",
-        "crear_acceso_sendto",
-        "crear_bat",
-        "main",
-        "print",
-        "resolve",
-        "sendto.mkdir",
-        "subprocess.run"
-      ],
-      "effects": [
-        "filesystem_write",
-        "process"
-      ],
-      "entrypoints": [
-        "__main__",
-        "main"
-      ],
-      "syntax_error": null,
-      "imported_by": []
-    },
-    {
       "path": "tools/interpretive_garden_workflow.py",
       "module": "tools.interpretive_garden_workflow",
       "sha256": "32d956e182d999a2ecd77fa0fca9b2f7e31262ef9590f7b0e299ac9e51fbc739",
@@ -93275,77 +93352,6 @@
         "worker.run_batch"
       ],
       "effects": [],
-      "entrypoints": [
-        "__main__",
-        "main"
-      ],
-      "syntax_error": null,
-      "imported_by": []
-    },
-    {
-      "path": "tools/mak_ops/test_issue_render_e2e.py",
-      "module": "tools.mak_ops.test_issue_render_e2e",
-      "sha256": "86c198a893a6766d49e268720cf183d0d0fe9313d831350f4c7438143d6f6a0f",
-      "lines": 27,
-      "imports": [
-        "argparse",
-        "datetime",
-        "json",
-        "subprocess",
-        "sys"
-      ],
-      "from_imports": [
-        "__future__.annotations",
-        "pathlib.Path"
-      ],
-      "symbols": [
-        {
-          "name": "run",
-          "kind": "function",
-          "line": 8,
-          "end_line": 8,
-          "decorators": []
-        },
-        {
-          "name": "main",
-          "kind": "function",
-          "line": 9,
-          "end_line": 25,
-          "decorators": []
-        }
-      ],
-      "calls": [
-        "Path",
-        "Path.cwd",
-        "SystemExit",
-        "ap.add_argument",
-        "ap.parse_args",
-        "argparse.ArgumentParser",
-        "astimezone",
-        "bridge.stderr.strip",
-        "bridge.stdout.strip",
-        "create.stderr.strip",
-        "create.stdout.strip",
-        "dt.datetime.now",
-        "isoformat",
-        "join",
-        "main",
-        "print",
-        "resolve",
-        "run",
-        "split",
-        "str",
-        "strftime",
-        "subprocess.run",
-        "url.rstrip",
-        "view.stderr.strip",
-        "view.stdout.strip",
-        "write_text"
-      ],
-      "effects": [
-        "filesystem_write",
-        "process"
-      ],
       "entrypoints": [
         "__main__",
         "main"

@@ -1,11 +1,15 @@
 name: build-xio-apk
-# Builds hotspot_boot_service APK (AccessibilityService reboot-recovery del
-# Xiaomi) en runner ubuntu -- esta PC no tiene toolchain Android (Java/SDK).
-# Solo manual: gh workflow run build-xio-apk.yml
+
+# XIO queda preservado como integracion diferida para Chataigne/OSC y el
+# flujo VJ/venues. No es parte de la ruta diaria de FLUJO/RD y solo se compila
+# manualmente cuando exista un show que requiera probarlo.
+# Esta PC no tiene toolchain Android (Java/SDK).
 permissions:
   contents: read
+
 on:
   workflow_dispatch:
+
 jobs:
   apk:
     runs-on: ubuntu-latest

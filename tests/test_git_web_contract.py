@@ -31,19 +31,12 @@ def test_git_topology_guard_requires_one_trunk_and_archive_tag():
 
 
 def test_automated_gates_cannot_publish_repo_changes():
-    for name in ("airdrop_gate.yml", "claude.yml"):
+    for name in ("airdrop_gate.yml",):
         text = _workflow(name)
         assert "git push" not in text
         assert "gh pr create" not in text
         assert "contents: write" not in text
         assert "pull-requests: write" not in text
-
-
-def test_claude_workflow_is_disabled_and_manual_only():
-    text = _workflow("claude.yml")
-
-    assert "workflow_dispatch: {}" in text
-    assert "if: ${{ false }}" in text
 
 
 def test_pages_publication_requires_explicit_dispatch():

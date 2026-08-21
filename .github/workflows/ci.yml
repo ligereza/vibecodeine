@@ -38,6 +38,7 @@ jobs:
         working-directory: web
       - run: npm run build:context
         working-directory: web
+      - run: python tools/repo_audit.py
       # El sustrato, ANTES de los tests. `archivo.json` esta gitignoreado y
       # debe generarse en CI igual que en Pages; de lo contrario la suite
       # mediria solo el fallback `campo.json` mientras el sitio serviria otra

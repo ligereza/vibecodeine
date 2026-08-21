@@ -1,18 +1,18 @@
 // AutomatizacionesPanel — la cola real de las cadenas automaticas.
 //
 // La cadena completa es:
-//   Gmail -> issue de GitHub etiquetado -> tools/bridge_issue_render.py
-//   -> flujo eventos flyer-auto (+ Blender) -> drive/ -> comenta y cierra
+//   Gmail -> issue de GitHub etiquetado -> GitHub Actions en MAK
+//   -> descarga -> render_*_mak.py -> OneDrive -> comenta y cierra
 //
 // El tramo Gmail -> issue vive FUERA de este repo. Este panel cubre el hueco
 // que quedaba: hasta ahora la unica forma de saber que habia pendiente era
 // entrar a GitHub a mano.
 //
-// No dispara nada por si mismo a proposito: el bridge lanza Blender, que es
-// pesado y pide la maquina presente. El panel muestra la cola y el comando.
+// No dispara nada por si mismo a proposito: el runner procesa el issue
+// etiquetado y el panel solo muestra la cola observable.
 
 import { useEffect, useState } from 'react';
-import { Workflow, AlertTriangle, Inbox, Ban, Terminal, ExternalLink } from 'lucide-react';
+import { Workflow, AlertTriangle, Inbox, Ban, ExternalLink } from 'lucide-react';
 
 interface Item {
   numero: number;
@@ -81,7 +81,7 @@ export default function AutomatizacionesPanel() {
 
       {/* La cadena, siempre visible: es el mapa mental de como funciona esto. */}
       <div className="flex flex-wrap items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 text-[12px]">
-        {['Gmail', 'issue etiquetado', 'bridge_issue_render', 'flyer-auto + Blender', 'drive/', 'cerrado'].map(
+        {['Gmail', 'issue etiquetado', 'runner MAK', 'descarga + render', 'OneDrive', 'cerrado'].map(
           (paso, i, arr) => (
             <span key={paso} className="flex items-center gap-2">
               <span className="rounded-md border border-zinc-800 bg-zinc-950 px-2 py-1 text-zinc-400">{paso}</span>
@@ -133,7 +133,7 @@ export default function AutomatizacionesPanel() {
               El sistema de labels existe (<code className="text-zinc-300">estado/</code>,{' '}
               <code className="text-zinc-300">area/</code>, <code className="text-zinc-300">action/</code>) pero{' '}
               <strong className="text-zinc-200">ninguno de los issues abiertos lo usa</strong>. La cadena automática no
-              los va a tomar: el bridge filtra por label.
+              los va a tomar: el workflow filtra por label.
             </div>
           )}
 
@@ -197,28 +197,6 @@ export default function AutomatizacionesPanel() {
         </>
       )}
 
-      <section className="rounded-xl border border-zinc-800 bg-zinc-900/40">
-        <div className="flex items-center gap-2 border-b border-zinc-800 px-4 py-3">
-          <Terminal className="h-4 w-4 text-sky-400" />
-          <h2 className="text-sm font-bold">Disparar la cadena</h2>
-          <span className="text-[11px] text-zinc-600">requiere Windows presente (lanza Blender)</span>
-        </div>
-        <div className="space-y-3 p-4 text-sm">
-          {[
-            { t: 'Procesar la cola una vez y salir', c: 'py tools/bridge_issue_render.py --once' },
-            { t: 'Ver qué haría, sin ejecutar ni cerrar issues', c: 'py tools/bridge_issue_render.py --dry-run' },
-            { t: 'Quedarse escuchando (60 s)', c: 'py tools/bridge_issue_render.py' },
-            { t: 'Un flyer suelto, sin pasar por issue', c: 'py -m flujo eventos flyer-auto "<link IG>"' },
-          ].map(x => (
-            <div key={x.t}>
-              <div className="text-[11px] text-zinc-500">{x.t}</div>
-              <code className="mt-0.5 block rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 font-mono text-[12px] text-emerald-300">
-                {x.c}
-              </code>
-            </div>
-          ))}
-        </div>
-      </section>
     </div>
   );
 }

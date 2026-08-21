@@ -38,6 +38,7 @@ cultura/mak_lenguaje/lenguaje_lib.py
 cultura/mak_lenguaje/medir.py
 cultura/mak_plataforma/backlog.py
 cultura/mak_plataforma/backlog_codex.py
+cultura/mak_plataforma/benchmark.py
 cultura/mak_plataforma/calidad_loop.py
 cultura/mak_plataforma/capataz.py
 cultura/mak_plataforma/chat_agente.py
@@ -48,21 +49,18 @@ cultura/mak_plataforma/energia.py
 cultura/mak_plataforma/energia_log.py
 cultura/mak_plataforma/entregar.py
 cultura/mak_plataforma/filtro_entrada.py
-cultura/mak_plataforma/guardia.py
 cultura/mak_plataforma/hub.py
-cultura/mak_plataforma/ideas.py
 cultura/mak_plataforma/junta.py
-cultura/mak_plataforma/latido.py
 cultura/mak_plataforma/mantenimiento.py
 cultura/mak_plataforma/material.py
 cultura/mak_plataforma/metricas_capataz.py
 cultura/mak_plataforma/mineria_rd.py
-cultura/mak_plataforma/mutaciones.py
 cultura/mak_plataforma/puente_issues.py
-cultura/mak_plataforma/red_watch.py
 cultura/mak_plataforma/revisor.py
 cultura/mak_plataforma/roles.py
 cultura/mak_plataforma/trabajo.py
+cultura/mak_plataforma/utilidades/implementar-la-reconfiguracion-de-pesos-.py
+cultura/mak_plataforma/utilidades/una-utilidad-stdlib-que-cuente-lineas-de.py
 cultura/mak_plataforma/vigilar_red.py
 cultura/mak_research/cadena.py
 cultura/mak_research/cola.py
@@ -132,7 +130,6 @@ scripts/_common.py
 scripts/brief_to_project.py
 scripts/export_propuesta_pdf.py
 scripts/flujo.py
-scripts/flujo_daily.py
 scripts/flujo_health.py
 scripts/flujo_pipeline.py
 scripts/flyer_create_project.py
@@ -168,7 +165,6 @@ src/flujo/eventos/blender_nodes_video_seq.py
 src/flujo/eventos/blender_render.py
 src/flujo/eventos/flyer_auto.py
 src/flujo/eventos/presets.py
-src/flujo/eventos/productoras.py
 src/flujo/export/canva.py
 src/flujo/export/illustrator.py
 src/flujo/export/illustrator_bridge.py
@@ -188,7 +184,6 @@ src/flujo/jobs/lifecycle.py
 src/flujo/knowledge/__init__.py
 src/flujo/knowledge/__main__.py
 src/flujo/knowledge/store.py
-src/flujo/laser.py
 src/flujo/logos/__init__.py
 src/flujo/logos/vectorizar.py
 src/flujo/plano/__init__.py
@@ -247,7 +242,6 @@ tests/test_contrato_archivo.py
 tests/test_corpus_olvido.py
 tests/test_cotizaciones_base.py
 tests/test_cron_nocturno.py
-tests/test_curatoria_percepcion.py
 tests/test_dashboard.py
 tests/test_empaquetar_assets.py
 tests/test_energia_log.py
@@ -278,7 +272,6 @@ tests/test_iskvw_semilla.py
 tests/test_iskvw_vinculos.py
 tests/test_jobs_lifecycle.py
 tests/test_knowledge_dossiers.py
-tests/test_laser.py
 tests/test_mak_backlog.py
 tests/test_mak_codex_nodos.py
 tests/test_mak_grafo_fallback.py
@@ -316,7 +309,6 @@ tests/test_portfolio_gen.py
 tests/test_portfolio_works.py
 tests/test_presets.py
 tests/test_privacidad_repo.py
-tests/test_productoras.py
 tests/test_psicosis_agente.py
 tests/test_rd_database.py
 tests/test_rd_datos.py
@@ -341,7 +333,6 @@ tests/test_tilde_paridad.py
 tests/test_tilde_render.py
 tests/test_tilde_residuo.py
 tests/test_tilde_sobrevivencia.py
-tests/test_un_solo_documento.py
 tests/test_utilidades_mak_sanidad.py
 tests/test_venue.py
 tests/test_vigia.py
@@ -349,10 +340,8 @@ tests/test_wifi_intelligence_plugin.py
 tests/test_xio_superficie.py
 tools/becas_calendario.py
 tools/blender/bridge_blender.py
-tools/bridge_issue_render.py
 tools/context_pack.py
 tools/cron_nocturno/nocturno.py
-tools/enviar_a_mak.py
 tools/gen_animadas_obras.py
 tools/gen_archivo_iskvw.py
 tools/gen_campo_iskvw.py
@@ -363,13 +352,9 @@ tools/gen_presentacion_db.py
 tools/gen_rd_standalone.py
 tools/gen_vocabulario_motor.py
 tools/iconos_conjunto.py
-tools/instalar_enviar_a_mak.py
-tools/mak_ops/check_mak_mirror.py
 tools/mak_ops/check_mak_trabajo.py
 tools/mak_ops/diagnose_instagram_mirror.py
 tools/mak_ops/director_snapshot.py
-tools/mak_ops/repair_mak_sync.py
-tools/mak_ops/test_issue_render_e2e.py
 tools/piezas_vectoriales/scripts/generar_desde_json.py
 tools/portfolio/empaquetar_assets.py
 tools/portfolio/generar_portfolio.py
@@ -390,7 +375,6 @@ tools/venue_geometria_scd.py
 tools/verify_all.py
 tools/vj_set/git_performance.py
 tools/vj_set/osc_sender.py
-tools/watsonx_smoke.py
 xio/new-plugins/app_freezer/__init__.py
 xio/new-plugins/app_volume/__init__.py
 xio/new-plugins/automation_rules/__init__.py
@@ -424,7 +408,3 @@ xio/show_kit/artnet_relay.py
 xio/show_kit/check_show.py
 xio/show_kit/cue_engine.py
 xio/show_kit/map_dref.py
-cultura/mak_plataforma/benchmark.py
-cultura/mak_plataforma/utilidades/implementar-la-reconfiguracion-de-pesos-.py
-cultura/mak_plataforma/utilidades/una-utilidad-stdlib-que-cuente-lineas-de.py
-tests/test_curatoria_portfolio_critica.py

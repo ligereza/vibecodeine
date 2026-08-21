@@ -673,7 +673,7 @@
    "cmd": "autonomia status",
    "invocacion": "py -m flujo autonomia status",
    "grupo": "autonomia",
-   "desc": "Mide si el circuito Watsonx/AWS -> juez local -> ledger esta listo.",
+   "desc": "Mide si el circuito remoto/local -> juez local -> ledger esta listo.",
    "requiere": "",
    "estado": "listo",
    "destructivo": null

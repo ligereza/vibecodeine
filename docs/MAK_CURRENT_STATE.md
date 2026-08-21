@@ -46,12 +46,12 @@ limites de afirmacion y unidades aprendibles. El caso versionado
 certifica integridad, trazabilidad y contrato de ruta; declara expresamente
 `mathematical_truth_validated=false` y no prueba ni refuta P versus NP.
 
-Con el estado verificado el 2026-08-19, la salida correcta es `status=abstain`
-con `eligible_examples=6`, `holdout_count=0` y razón
-`no_independent_holdout`: hay seis episodios en dos proyectos, pero el split
-determinista actual no dejó un proyecto en holdout. No se promueve ninguna
-política. Esto es preparación de aprendizaje estadístico, no entrenamiento de
-pesos de deep learning.
+Con el estado verificado el 2026-08-20, la salida correcta es `status=abstain`
+con `eligible_examples=8`, `holdout_count=0` y razón
+`no_independent_holdout`: hay ocho ejemplos elegibles distribuidos en cuatro
+proyectos, pero el split determinista actual no dejó un proyecto en holdout.
+No se promueve ninguna política. Esto es preparación de aprendizaje
+estadístico, no entrenamiento de pesos de deep learning.
 
 `src/flujo/knowledge/math_kernel.py` materializa la parte matematica de esa
 misma capa. `knowledge/math_targets/` conserva capsulas de target, no una
@@ -62,6 +62,31 @@ ResultCards con hashes/referencias. El scheduler mantiene las relaciones con
 `cultura`, `curatoria`, `portfolio` y `research`, y bloquea toda promocion de
 verdad hasta contar con fidelidad semantica y un verificador confiable.
 
+`knowledge/lane_registry/mak_cross_domain_registry_2026-08-20.json` extiende
+esa capa a 19 lineas: P=NP, tenis, captura/scraping, deep learning y micelio,
+transpilacion, eventos object-centric, simulacion de crecimiento, XIO, entrevistas, aprendizaje de
+lenguas, patentes, crops, dental, jardin/geometria, vibe coding, storage,
+patronage y autoria cultural. Es un mapa read-only de evidencia y siguientes
+gates; no declara implementadas las propuestas. Se consulta con
+`./.venv/bin/python tools/project_lanes.py summary`.
+
+El lane de tenis ya tiene un consumidor local read-only: `tennis_mcp_ingest.py`
+conserva la fila y su hash, y `tennis_shot_events.py` proyecta eventos
+`mak.tennis.shot_event.v0.1` con `transform_chain`, tokens desconocidos e
+incertidumbres explícitas. El router lo selecciona solo para un Project IR
+activo/verified con dominio `tennis` y formato `data`.
+
+Scraping y deep learning también tienen gates locales, no promesas de
+ejecución: `research_source_capture.py` separa plan de captura y solo registra
+una URL por vez con hash/backend; `deep_learning_gate.py` exige objetivo,
+labels, holdout independiente, `group_key` y validador antes de cualquier
+modelo. Ambos permanecen sujetos a revisión de evidencia.
+
+Research 4 añade un consumidor simbólico para `simulate`: acepta un manifiesto
+L-system con reglas declaradas, ejecuta una trayectoria acotada y conserva
+`simulated`/`model_not_reality`. La licencia de las fuentes y la revisión de la
+gramática candidata siguen abiertas.
+
 El estado operacional no se reconstruye leyendo este documento ni el handoff:
 se consulta con
 `./.venv/bin/python tools/mak_status.py --db data/mak_knowledge.db` o desde
@@ -69,7 +94,8 @@ se consulta con
 `mak-system-status-v1`, un sobre read-only que reúne el ledger
 `mak-operational-status-v1` con los consumidores físicos: Hub 8900, Research
 8890, puente Codex 8891, búsqueda local, runner de eventos, Blender/RD,
-portafolio, runtimes y configuración de proveedores. Los listeners y procesos
+portafolio, runtimes, configuración de proveedores y el registro transversal
+de lanes. Los listeners y procesos
 se comprueban localmente; las APIs externas solo se marcan como configuradas,
 nunca como probadas por inferencia. La consulta abre SQLite en modo read-only y
 el endpoint no inicia trabajos. `abstain` es información de seguridad; no se
@@ -211,11 +237,12 @@ job persistente por dominio; `execute_research_job.py` ejecuta una captura
 acotada y registra estado, hash, licencia y créditos.
 
 La casa tiene un catálogo de integraciones (modelos, búsqueda, scraping,
-GitHub, Instagram metadata, Drive, OneDrive, Watsonx y otras rutas
+GitHub, Instagram metadata, Drive, OneDrive y otras rutas
 opcionales). La cantidad de claves no equivale a cantidad de APIs operativas:
 cada proveedor debe tener una prueba reciente, un consumer, una política de
 costo y una salida registrada en el handoff. Una key nunca se copia a Git ni
-se imprime en un reporte. Cerebras quedó observado con HTTP 402; los
+se imprime en un reporte. Cerebras quedó observado con HTTP 402; la ruta
+cloud verificada es Groq -> Gemini y Ollama queda como fallback local. Los
 proveedores retirados por decisión del usuario no se presentan como activos.
 
 Firecrawl/Crawl4AI/SearXNG son herramientas de captura/búsqueda, no fuentes de
@@ -232,12 +259,13 @@ pero no son llamadas por el workflow Linux nuevo:
 - `src/flujo/eventos/flyer_auto.py`: legado con supuestos Windows/Droplet y
   todavía expuesto por un comando CLI histórico; no borrarlo sin una fase de
   compatibilidad propia.
-- `tools/bridge_issue_render.py`: puente Windows antiguo, manual-only.
 - `tools/render_video_rd.py`: ruta H264 manual sobre
   `RD.paravideo.blend`, manual-only; no es el renderer de secuencia MAK.
 - `RD.paravideo.blend` y cualquier MP4 histórico: evidencia, no input actual.
 - `/home/mak/WIN`: archivo histórico completo, no dependencia de runtime.
-- `n8n` y `XIO`: fuera del objetivo operativo actual por decisión del usuario.
+- `n8n`: fuera del objetivo operativo actual por decisión del usuario.
+- `XIO`: integración diferida, no obsoleta; conecta Chataigne/OSC con shows,
+  venues y el trabajo VJ. Se retoma cuando exista un show que requiera probarla.
 
 La existencia de una herramienta legacy no significa que esté rota; significa
 que no debe confundirse con el consumidor actual. Cualquier futura eliminación

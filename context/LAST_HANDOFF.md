@@ -15,6 +15,24 @@ matematica y Research 4 tiene un consumidor local simbólico, con licencia y
 revisión humana aún pendientes. La continuidad de ideas se consulta en el lane
 registry, no releyendo la memoria historica completa.
 
+## Session transfer checkpoint — 2026-08-21
+
+La fase web/DB queda validada y lista para publicar. El conjunto propio de esta
+fase es la limpieza de superficies Windows obsoletas, la preservacion de XIO
+como workflow manual diferido, el gate `tools/repo_audit.py`, su regresion,
+`tools/gen_rd_standalone.py`, la fila de `CAPACIDADES.md`, los cambios de CI/
+Makefile y este handoff. No se debe hacer `git add .`: el worktree contiene
+otros cambios de sesiones anteriores que deben permanecer intactos y sin
+mezclarse.
+
+Pruebas cerradas: pytest completo exit 0; `npm run typecheck` exit 0;
+`repo_audit` exit 0 (36 modulos, 35 alcanzables, 0 muertos, 0 referencias
+obsoletas, cuatro SQLite integras); compileall y `git diff --check` exit 0.
+No hay procesos de pytest, intake, Blender ni render activos. La siguiente
+accion exacta es revisar el staging del conjunto propio, crear el commit y
+hacer push de `main`; despues la nueva sesion debe continuar desde `Next
+concrete action` sin repetir la auditoria.
+
 ## Physical authority and migration status
 
 - La autoridad física es `/home/mak/*`; `/home/mak/flujo` es el baseline de
@@ -327,6 +345,9 @@ registry, no releyendo la memoria historica completa.
 | Unified status HTTP | temporary `ThreadingHTTPServer` + live `127.0.0.1:8900` -> `GET /api/status` | HTTP 200 in both; `mak-system-status-v1`; `read_only=true`; temporary server shut down; live Hub active |
 | Catalog federation | `src/flujo/knowledge/catalog_federation.py`, `tests/test_catalog_federation.py`, `data/mak_knowledge.db` | verified locally and integrated additively; 7 read-only sources, 124 tables, 2,075,337 observed rows, 0 copied; integrity and FK checks pass |
 | Operational DB bridge | `src/flujo/knowledge/operational_bridge.py`, `tests/test_operational_bridge.py`, `data/mak_knowledge.db` | verified locally and refreshed; 6,132 normalized records, 106,895 curation links, exact package/project/fund links; source rows copied 0; integrity and FK checks pass |
+| Web/DB audit gate | `tools/repo_audit.py`, `tests/test_repo_audit.py`, `.github/workflows/ci.yml`, `Makefile` | verified locally; 36 web modules, 35 reachable, 0 dead, 0 stale active references; four DBs have resolved consumer paths and integrity `ok`; publication pending |
+| RD live/standalone projection | `src/flujo/rd/panel.py`, `tools/gen_rd_standalone.py`, `web/src/data/rdDbEmbebida.json` | verified locally; generated and tracked JSON are equal (6 records, identical SHA-256); generator now accepts absolute output paths |
+| SSD application intake | `tools/build_application_intake.py`, `/home/mak/labs/portable-ssd-index-20260813/archivo_index.sqlite` | verified in `/tmp`; 917 projects scanned, 3 bounded Fondart packages emitted, derived SQLite integrity `ok`; status remains `draft_with_evidence_gaps` |
 | DB -> Research -> Curatoria -> Postulacion | temporary foreground pipeline using existing Research corpus, Curatoria diagnostic and `tools/build_application_intake.py` | exit 0; Research 5,179 applications/14 captures; Curatoria 917 projects/13,121 families/45,536 members; Postulacion emitted `drefgira-fondart` with explicit evidence gaps; source trees untouched |
 | RD event fixture | read-only query over `operational_records` and `operational_curation_links` | exit 0; 7 events retain producer, raw date, venue and flyer/source evidence; 0 false ISO dates; 0 orphan curation links |
 | Contract audit refresh | `PYTHONPATH=src ./.venv/bin/python -m flujo.knowledge.contract_registry --db data/mak_knowledge.db audit --root . --record --run-id simulation_consumer_20260820` | exit 0; 59/59 verified; Blender, source-learning bridge, math kernel, tennis, scraping, deep-learning and simulation consumers resolved |
@@ -360,7 +381,72 @@ registry, no releyendo la memoria historica completa.
   explicit diagnostic use; its current billing response is HTTP 402 and it is
   not part of the default chain.
 
+## Active cleanup audit — 2026-08-21
+
+Se depuro la configuracion activa para que MAK Linux no presente superficies
+Windows obsoletas como si fueran runtime. Se retiraron los lanzadores
+`abrir_hub.bat`, `instalar.bat`, `launch-flujo.bat`, `launch-flujo.ps1`, el
+puente `tools/bridge_issue_render.py`, sus helpers SendTo y su e2e, y el
+workflow Claude deshabilitado. Sus copias historicas siguen en
+`/home/mak/WIN` o en la evidencia recuperada. Se retiro solo el test que
+ratcheaba esos lanzadores; se conservaron el mirror y los tests de seguridad
+que aun tienen consumidores reales.
+
+XIO fue corregido durante la auditoria: no es basura ni se elimina. Se
+restauro `.github/workflows/build-xio-apk.yml` como build manual diferido y
+se documento como integracion futura Chataigne/OSC para shows, venues y VJ.
+No se ejecuta en cada CI ni se confunde con la ruta diaria de FLUJO/RD.
+
+Tambien se actualizaron `CAPACIDADES.md`, `docs/MAK_CURRENT_STATE.md`,
+`docs/FLUJO_AREAS_EVENTOS_SUPLEMENTOS.md`, `src/flujo/web/hub.py`, los
+paneles web de automatizaciones/eventos, `Makefile`, `pyproject.toml` y los
+tests afectados. Se regeneraron `tests/fixtures/idioma_baseline.txt`,
+`context/code_structure_index.json` y los HTML de `context/`.
+
+Validacion en primer plano:
+
+- `./.venv/bin/python -m pytest -q` -> exit 0; suite completa, skips esperados.
+- Tests focalizados de higiene, contratos Git/web, mirror, GPU, idioma,
+  code-index y status -> exit 0.
+- `npm run typecheck` en `web/` -> exit 0.
+- `npm run build:context` -> exit 0; Node 18 emitio advertencia porque el
+  requisito declarado es Node >=20.19, pero el bundle se genero.
+- `git diff --check` -> exit 0.
+
+Se agrego `tools/repo_audit.py` como gate read-only del arbol web y las cuatro
+SQLite locales. La auditoria real devuelve 36 modulos, 35 alcanzables, 0
+muertos, 0 referencias activas obsoletas; `data/rd.db` tiene 20 tablas/7,585
+filas, `data/rd_datos.db` 3/0, `data/mak_knowledge.db` 30/369,157 y
+`data/flujo.db` 1/6; las cuatro pasan `integrity_check` y todas sus rutas de
+consumidor existen. Se corrigio el mapa para no declarar `src/flujo/rd/panel.py`
+como lector de `data/rd.db`: el panel lee JSON/YAML canonicos y solo proyecta.
+
+La validacion de `gen_rd_standalone.py` genero en `/tmp` los mismos 6 registros
+que `web/src/data/rdDbEmbebida.json`, con SHA-256 identico; el unico fallo
+encontrado era el reporte de una ruta absoluta externa y quedo corregido sin
+alterar la salida. El intake real uso el indice fuente
+`/home/mak/labs/portable-ssd-index-20260813/archivo_index.sqlite`, no el
+`intake.sqlite` derivado: con limite 3 y fondo Fondart produjo tres paquetes
+`drefgira-fondart`, `felina-logo-fondart` y
+`descargas-hasta-rdflyer-2050-fondart` en `/tmp/mak-intake-audit-20260821`.
+La salida queda correctamente en `draft_with_evidence_gaps`; no se escribio
+la DB de aprendizaje ni se modifico la fuente del SSD.
+
+Riesgos conservados deliberadamente: `tools/mak_ops/check_mak_mirror.py`
+todavia contiene una ruta SSH historica y requiere una fase separada de
+reemplazo local; `src/flujo/version.py` y `docs/recovered/` conservan
+referencias de changelog/evidencia, no runtime. No se borraron `/home/mak/WIN`,
+XIO, bases, artefactos ni cambios ajenos.
+
 ## Next concrete action
+
+Inspeccionar el diff por grupos y separar los cambios propios de los ajenos
+antes de cualquier commit. La verificacion global de esta tanda ya paso:
+pytest completo, typecheck web, `repo_audit`, compileall y `git diff --check`.
+El mirror SSH historico queda fuera de este slice: no es un consumidor web/DB
+activo y no se debe convertir ni borrar sin una fase propia.
+
+## Previous completed checkpoint
 
 The operational DB bridge is complete for the current source contracts. The
 master now carries a normalized projection without replacing source authority:
@@ -385,6 +471,16 @@ autonomy, deep learning, broad reindexing or another database until the
 declared current consumers are green.
 
 ## Last verified
+
+2026-08-21 America/Santiago — web/DB cleanup gate and bounded intake verified:
+the active web graph has 36 modules, 35 reachable and 0 dead; stale active
+references are 0; `rd.db`, `rd_datos.db`, `mak_knowledge.db` and `flujo.db`
+pass read-only integrity checks with all declared consumers present. RD live
+and standalone projections are equal by SHA-256. The source-index intake used
+the physical SSD index, emitted three bounded Fondart packages in `/tmp`, and
+left the source and learning DB untouched. The only runtime defect found was
+the standalone generator's absolute-output display path; it was fixed and
+focused tests passed. No commit or push was made.
 
 2026-08-20 America/Santiago — Python structure index and dual debugging slice
 verified: `flujo code-index` generated the source-free 781-module index,
