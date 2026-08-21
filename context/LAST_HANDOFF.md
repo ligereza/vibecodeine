@@ -45,7 +45,132 @@ relaciones; ambos procesos fueron detenidos al terminar la prueba.
 - `physical_source_mount_unverified`: DREFGIRA sigue review-only hasta montar
   o verificar el SSD; no convertirlo en activo por el grafo contextual.
 
-### Next concrete action
+### Venue projection topology from real show files — 2026-08-21
+
+ANTES: MAK podia describir la planta de una sala y nada de las superficies sobre
+las que se proyecta. El unico registro real, `data/venues/scd-plaza-egana.json`,
+lo decia con sus propias palabras: `"proyeccion": {"superficie":
+"desconocido", "notas": "sin datos: el plano de referencia es una planta, no dice
+nada de proyeccion."}`.
+
+DESPUES: MAK puede leer un ScreenSetup de Resolume y emitir la topologia de
+proyeccion medida de una sala -- superficies con el nombre que les puso el
+operador, pixeles de salida, warp decidido por aritmetica exacta y residuos que
+declaran lo que el archivo no prueba -- y proponerla como el bloque `proyeccion`
+del contrato `schemas/venue.schema.json` que ya existia.
+
+DESCUBRIMIENTO: el SSD estaba montado (`/dev/sdc1` en
+`/media/mak/PortableSSD`, exfat, 932 GB al 98 %) y en su raiz hay 9 archivos
+`.xml` que son composiciones de Resolume Arena, no basura: `ANDACOLLO`,
+`BERLIN 1`, `berlin 2`, `Black Boss Estandar TEMUCO`, `CHILLAN`, `cobquecura`,
+`harry`, `KAYAKAZE 2025 2` y `la`. Todas son ScreenSetup: geometria de
+proyeccion, sin identidad de personas ni direcciones, que es exactamente el
+artefacto seguro segun la regla `geometria si, identidad no`.
+
+Primera hipotesis FALSIFICADA y conservada: se busco en ellos la lista de clips
+usados por show, que habria dado dependencia medida de assets. No existe --
+`grep` de referencias a `.mov`/`.mp4` devolvio 0 en los tres archivos mas
+grandes. Son ScreenSetup, no composiciones con capas.
+
+TEORIA/ALGORITMO: no hace falta reconstruccion de superficies. La unica pregunta
+geometrica que hay que decidir es si se aplico un warp, y eso es aritmetica
+exacta: un slice sin tocar guarda un retículo bezier `controlWidth x
+controlHeight` cuyos puntos caen sobre la interpolacion bilineal de las esquinas
+del `OutputRect`. Comparar el retículo contra esa interpolacion decide
+`plano` / `deformado` sin ajustar nada. La tolerancia `WARP_TOLERANCE_PX = 0.5`
+existe porque Resolume guarda ruido de coma flotante (`-1.52587890625e-05`), esta
+declarada como umbral y sus dos lados estan cubiertos por tests.
+
+IMPLEMENTACION: `src/flujo/venues/resolume_screen_setup.py` (parser, features,
+identidad de rig), `tools/venue_screen_setup.py` (CLI + vista HTML + indice de
+rigs) y el subcomando `venue.py proyeccion` como consumidor. No se creo un
+segundo contrato: los 9 fragmentos `proyeccion` y sus `residuos` validan contra
+`schemas/venue.schema.json` sin modificar el schema.
+
+FALSIFICACION, medida y conservada: la primera version de `rig_signature()`
+trataba todo nombre de superficie como identificante y produjo 3 falsos
+positivos sobre material real -- `ANDACOLLO.xml` y `berlin 2.xml` compartian
+exactamente `('Slice 1', 1920, 1080)`, el nombre y el lienzo POR DEFECTO de
+Resolume, presentes en cualquier composicion nueva; `CHILLAN.xml` y `la.xml`
+compartian solo `('11', 128, 256)`. La reparacion fue en la representacion, no
+en una lista de excepciones: `name_class()` separa `tool_default`,
+`low_entropy` y `operator`, y la identidad de rig exige al menos una superficie
+nombrada por una persona. Los 3 falsos positivos desaparecieron y la unica
+relacion sostenida sobrevivio.
+
+RESULTADO REAL: `CHILLAN.xml` y `harry.xml` comparten sus 11 superficies de
+salida (mismos nombres, mismos pixeles) con lienzos distintos (3400x1920 contra
+1080x1920) y regiones de entrada distintas. Es el mismo rig fisico alimentado por
+composiciones distintas, decidido por topologia y no porque exista una carpeta
+`HARRY CHILLAN`. Se guarda como `same_rig_candidate` EMPIRICAL con la alternativa
+`una plantilla reutilizada en otra sala` intacta y el desempate declarado. Sobre
+los 9 archivos: 8 topologias distintas, 0 superficies deformadas, 0 salidas DMX
+en CHILLAN pero si en otros, y vocabulario real del operador
+(`CENTRAL ATRAS`, `TOTEM L 2`, `BANNER CENITAL`, `rombo izquierda 1`,
+`Banner Frontal`).
+
+COSTO: parseo de 9 archivos de hasta 385 KB. Stdlib, determinista, sin GPU, sin
+tokens, sin red -- el molde de `mak_lenguaje`. No se hasheo el SSD de 940 GB y no
+se reindexo nada.
+
+LA FRONTERA HONESTA: un ScreenSetup mide PIXELES. No contiene escala metrica, asi
+que ninguna dimension fisica, altura de cuelgue, tiro de proyeccion ni carga se
+deriva de el; todo eso sigue `no_verificado` y el limite esta escrito en
+`residuos`, no implicito. El nombre del archivo es CANDIDATO de identidad de
+sala, nunca identificacion: `venue.py proyeccion` avisa cuando no coincide y
+**no escribe** el registro sin `--aplicar`, porque la sala la nombra una persona.
+`superficie` se deja en `desconocido` a proposito: el archivo no puede ver si la
+luz cae sobre LED, gasa o muro.
+
+BUG PROPIO ENCONTRADO Y CORREGIDO: la primera version escribia la propuesta
+dentro de `data/venues/`, y `cargar_todos()` recorre ese directorio con
+`glob("*.json")`, asi que `venue.py validar` la leyo como un venue invalido y
+devolvio 8 errores de esquema. Las propuestas viven ahora en
+`data/venues_propuestas/`, fuera del glob, con una regresion que lo fija.
+
+Comandos y codigos de salida:
+
+- `python3 tools/venue_screen_setup.py --glob "/media/mak/PortableSSD/*.xml" --out-dir <salida> --index`: exit 0, 9 parseados, 0 fallidos.
+- `./.venv/bin/python -m pytest -q tests/test_resolume_screen_setup.py -rs`: exit 0 (ground truth controlado, contraejemplos, consumidor y los 9 archivos reales).
+- `./.venv/bin/python -m pytest -q tests/`: exit 0, suite completa.
+- `python3 tools/venue.py validar`: exit 0, 3 venues, 0 errores.
+- `tools/repo_audit.py`, `compileall -q src tools tests`, `pip check`, `git diff --check`: exit 0 los cuatro.
+- `npm run typecheck` con el Node local v24.19.0: exit 0.
+
+Salida persistida e inspeccionable, fuera del repo:
+`/home/mak/curatoria_inbox/venue_projection/2026-08-21/` con 9
+`*.projection.json`, `rig_index.json` y `projection.html`.
+
+Fuentes intactas: el indice SSD conserva el fingerprint
+`d3afb072fe1633125ac20da82aa1d3c7...` y los 9 `.xml` mantienen su mtime original
+aunque el montaje sea `rw`. No se escribio nada en el SSD.
+
+RESIDUO, lo que no sabemos: que superficie fisica es cada slice (LED, gasa,
+muro), a que sala corresponde cada archivo, y si `CHILLAN`/`harry` son el mismo
+rig o una plantilla. Nada de eso se resuelve leyendo mas: requiere una foto, una
+fecha de contrato o la palabra del operador.
+
+TRANSFERIBLE: la operacion es `archivo de configuracion de un dispositivo ->
+geometria medida -> normalizacion con confianza por dato -> identidad marcada
+como no verificada`. La misma forma aparece en MVR/GDTF para iluminacion y en un
+patch de audio; si reaparece, se reconoce por esa firma y no por el dominio.
+
+SIGUIENTE ACCION DE ESTE BLOQUE: el item 3 del orden de la memoria de direccion
+(`esquema venue-JSON en schemas/`, el que bloqueaba el item 5) ya tiene su
+primera fuente medida. Lo que falta para cerrarlo NO es codigo: es que una
+persona diga a que sala corresponde cada uno de los 9 ScreenSetup. Con eso,
+`venue.py proyeccion <archivo> <venue-id> --aplicar` escribe el registro; sin
+eso la maquina se niega, y esa negativa es correcta.
+
+La siguiente accion ejecutable sin decision humana es el reporte de huerfanos
+(item 4 del mismo orden, `MEMORIA_DIRECCION.md` §2.12 pasos 1-3): inventario y
+dedup por hash sobre el indice del SSD, solo lectura, sin mover un archivo. Es
+la primera pieza vendible como informe y no depende de licencia, montaje ni
+firma. Ojo con la frontera medida aca: `full_sha256` existe solo para 112 de
+45536 assets, asi que la duplicacion exacta es demostrable en 0,25 % del indice
+y el resto debe quedar como candidato, nunca como duplicado.
+
+## Next concrete action
 
 Publicar este write set en `main` solo cuando exista autorizacion explicita de
 commit/push. No ampliar la gira ni crear postulacion hasta obtener una segunda
