@@ -8,11 +8,32 @@ referencia es una planta, no dice nada de proyeccion."}``. MAK could describe a
 room's floor plan and say nothing about the surfaces a VJ actually projects on --
 which is the one thing a travelling VJ needs the week before a show.
 
-A Resolume ScreenSetup holds exactly that, already measured, because it is the
+A Resolume ScreenSetup holds part of that, already measured, because it is the
 file the operator built while standing in the room: one entry per physical
 surface, with the name they gave it ("CENTRAL ATRAS"), the pixel region of the
 composition that feeds it, the output pixel size of the panel or projector, and
 whether they had to warp it.
+
+What it describes is a DEPLOYMENT, not a venue
+----------------------------------------------
+This was measured after the first version of this module framed the output as
+"the venue's projection topology", which over-claimed. ``BERLIN 1.xml`` and
+``berlin 2.xml`` name the same place and share ZERO surfaces: 59 against 9,
+canvas 3043x272 against 1920x1080, classified ``different_rig``. A ScreenSetup is
+therefore not a venue fingerprint.
+
+Three things are mixed in one file and it cannot separate them:
+
+- what belongs to the room (a house LED wall's real panel grid, the shape of a
+  projection surface),
+- what belongs to the rig brought that night (how many outputs, which processor),
+- what belongs to the operator's choice (where the canvas was cut, what the
+  surfaces were called).
+
+So a record built from it is "the rig as deployed on the day this file was
+saved". For a venue that is useful and dated evidence -- better than the 2014 PDF
+the venue would otherwise send -- but it is never the venue's permanent
+configuration, and a second night can look nothing like it.
 
 What is being computed
 ----------------------
@@ -352,7 +373,8 @@ def to_projection_fragment(record: ScreenSetupRecord) -> dict[str, Any]:
         f"{s.name or '(sin nombre)'} {int(s.output_size[0])}x{int(s.output_size[1])}"
         f" {s.warp}" for s in enabled[:12])
     notes = (
-        f"Topologia de proyeccion medida en pixeles desde {record.source_name} "
+        f"DESPLIEGUE, no configuracion permanente de la sala: topologia de "
+        f"proyeccion medida en pixeles desde {record.source_name} "
         f"({summary['tool']}), no en metros. "
         f"{len(record.screens)} pantalla(s), {len(record.surfaces)} superficie(s) "
         f"({len(enabled)} habilitada(s)), {summary['superficies_planas']} plana(s) "
@@ -374,6 +396,14 @@ def projection_residues(record: ScreenSetupRecord) -> list[dict[str, Any]]:
     one carrying a discrepancy note.
     """
     residues = [
+        {"descripcion":
+            "Este archivo describe un DESPLIEGUE de una fecha, no la "
+            "configuracion permanente de la sala. Medido: BERLIN 1.xml y "
+            "berlin 2.xml nombran el mismo lugar y no comparten NINGUNA "
+            "superficie (59 contra 9, lienzo 3043x272 contra 1920x1080). El "
+            "archivo tampoco separa que parte es del recinto, que parte es del "
+            "rig que se llevo esa noche y que parte es como el operador corto el "
+            "lienzo."},
         {"descripcion":
             "Un ScreenSetup mide PIXELES, no metros: no contiene escala metrica, "
             "asi que ninguna dimension fisica, altura de cuelgue, tiro de "
