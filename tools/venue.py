@@ -17,6 +17,8 @@ Uso:
     py tools/venue.py listar                    # tabla, con % de completitud
     py tools/venue.py geometria                 # numeros del bloque geometria
     py tools/venue.py sitio                     # HTML unico, offline, telefono
+    py tools/venue.py proyeccion SETUP.xml <id> # propone la topologia medida
+                                                # desde un ScreenSetup de Resolume
 
 Formato de semilla (una sala por linea, `#` es comentario). Campos vacios: `-`
 
@@ -35,6 +37,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 DIR_VENUES = REPO / "data" / "venues"
+DIR_PROPUESTAS = REPO / "data" / "venues_propuestas"
 ESQUEMA = REPO / "schemas" / "venue.schema.json"
 SALIDA_SITIO = REPO / "web" / "venues" / "index.html"
 
@@ -483,6 +486,78 @@ def sitio() -> int:
 
 
 # --------------------------------------------------------------------------- cli
+def propose_projection(setup_path: Path, venue_id: str,
+                       apply_now: bool = False) -> int:
+    """Proponer el bloque `proyeccion` de un venue desde un ScreenSetup real.
+
+    La regla del modulo es "de memoria no es medido". Un ScreenSetup no es
+    memoria: es el archivo que el operador construyo parado en la sala, y su
+    topologia de superficies esta medida en pixeles. Lo que NO trae es escala
+    metrica, asi que nada fisico se deriva de aca y el residuo lo dice.
+
+    Quien nombra la sala es la persona: el `venue_id` se pasa a mano. Por eso
+    esto PROPONE en un archivo aparte y solo escribe el registro con --aplicar.
+    """
+    sys.path.insert(0, str(REPO / "src"))
+    from flujo.venues.resolume_screen_setup import (
+        parse_screen_setup, projection_residues, to_projection_fragment,
+    )
+
+    record_path = DIR_VENUES / f"{venue_id}.json"
+    if not record_path.is_file():
+        print(f"no existe el venue {venue_id!r} en {DIR_VENUES}", file=sys.stderr)
+        print("la maquina no crea la identidad de una sala: primero "
+              "`venue.py sembrar`", file=sys.stderr)
+        return 2
+    target = json.loads(record_path.read_text(encoding="utf-8"))
+    record = parse_screen_setup(setup_path)
+    fragment = to_projection_fragment(record)
+    new_residues = projection_residues(record)
+
+    candidate = Path(record.source_name).stem
+    proposal = {
+        "venue_id": venue_id,
+        "nombre_actual": target.get("nombre"),
+        "fuente": record.source_path,
+        "identidad_en_el_archivo": {"candidato": candidate,
+                                    "estado": "no_verificado"},
+        "coincide_nombre_archivo_con_venue": (
+            slug(candidate) in (venue_id, slug(str(target.get("nombre", ""))))),
+        "proyeccion_actual": target.get("proyeccion"),
+        "proyeccion_propuesta": fragment,
+        "residuos_a_agregar": new_residues,
+        "firma_requerida": "un humano confirma que este ScreenSetup es de esta sala",
+    }
+    # Una propuesta NO es un registro de sala. Medido al escribirla dentro de
+    # data/venues/: cargar_todos() recorre ese directorio con glob("*.json") y
+    # `venue.py validar` la leyo como un venue invalido, 8 errores de esquema.
+    # Las propuestas viven al lado, nunca dentro.
+    DIR_PROPUESTAS.mkdir(parents=True, exist_ok=True)
+    out_path = DIR_PROPUESTAS / f"{venue_id}.proyeccion-propuesta.json"
+    out_path.write_text(json.dumps(proposal, ensure_ascii=False, indent=1)
+                        + "\n", encoding="utf-8")
+    print(json.dumps({k: v for k, v in proposal.items()
+                      if k != "residuos_a_agregar"}, ensure_ascii=False, indent=1))
+    print(f"\npropuesta -> {out_path}")
+    if not proposal["coincide_nombre_archivo_con_venue"]:
+        print(f"AVISO: el archivo se llama {candidate!r} y el venue "
+              f"{target.get('nombre')!r}: la correspondencia la afirma el humano,"
+              " no el nombre del archivo")
+    if not apply_now:
+        print("no se escribio el registro. Revisar y volver con --aplicar")
+        return 0
+    target["proyeccion"] = fragment
+    residues = list(target.get("residuos") or [])
+    seen = {r.get("descripcion") for r in residues}
+    residues.extend(r for r in new_residues
+                    if r["descripcion"] not in seen)
+    target["residuos"] = residues
+    record_path.write_text(json.dumps(target, ensure_ascii=False, indent=1)
+                       + "\n", encoding="utf-8")
+    print(f"escrito {record_path} ({len(residues)} residuo(s))")
+    return 0
+
+
 def main(argv: list[str]) -> int:
     cmd = argv[1] if len(argv) > 1 else ""
     if cmd == "sembrar":
@@ -500,6 +575,13 @@ def main(argv: list[str]) -> int:
         return geometria()
     if cmd == "sitio":
         return sitio()
+    if cmd == "proyeccion":
+        if len(argv) < 4:
+            print("uso: venue.py proyeccion <ScreenSetup.xml> <venue-id> "
+                  "[--aplicar]", file=sys.stderr)
+            return 2
+        return propose_projection(Path(argv[2]), argv[3],
+                                  "--aplicar" in argv)
     print(__doc__)
     return 0 if cmd in ("", "-h", "--help") else 2
 
