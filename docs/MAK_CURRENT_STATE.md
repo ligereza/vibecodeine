@@ -46,6 +46,17 @@ limites de afirmacion y unidades aprendibles. El caso versionado
 certifica integridad, trazabilidad y contrato de ruta; declara expresamente
 `mathematical_truth_validated=false` y no prueba ni refuta P versus NP.
 
+La ingesta del SSD ya tiene una reconstruccion ejecutable de proyectos latentes:
+`src/flujo/knowledge/project_reconstruction.py` y
+`tools/project_reconstruction.py` leen el indice en modo read-only, distinguen
+unidades, subproyectos, exportaciones, bibliotecas y recursos compartidos, y
+conservan decisiones, relaciones, unknowns y fingerprint del indice en
+`mak-project-reconstruction-v1`. `tools/build_application_intake.py` puede
+recibir esa salida mediante `--reconstruction`; los candidatos de biblioteca
+dejan de competir como postulaciones y el paquete derivado conserva la
+decision y su provenance. La reconstruccion no afirma que un proyecto sea
+postulable: solo mejora la unidad material que llega a Curatoria/Postulacion.
+
 Con el estado verificado el 2026-08-20, la salida correcta es `status=abstain`
 con `eligible_examples=8`, `holdout_count=0` y razón
 `no_independent_holdout`: hay ocho ejemplos elegibles distribuidos en cuatro
