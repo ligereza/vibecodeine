@@ -198,6 +198,84 @@ Tambien aparecieron mas ScreenSetup dentro de carpetas y no solo en la raiz
 `BAHPARTY/bah/KAYAKAZE 2025 2.xml`, `LYON/1.xml`), asi que el parser de este
 bloque tiene mas material real que los 9 de la raiz sin cambiar una linea.
 
+## Show asset usage: which clips a real gig used — 2026-08-21
+
+ANTES: MAK sabia que archivos existen en el SSD y no podia distinguir material
+que se toco en un show de material que quedo en una carpeta. `DREFGIRA` eran 467
+assets iguales entre si.
+
+DESPUES: MAK puede leer una composicion `.avc` de Resolume, extraer sus
+referencias de clip y resolverlas contra el indice del SSD con abstencion
+explicita, reportando por composicion los assets usados, los ambiguos y los no
+encontrados. Sobre el show real de Caupolican: 52 referencias, 28 resueltas sin
+ambiguedad (53,85 %), 6 ambiguas y 18 no encontradas, y los assets resueltos son
+el setlist en orden dentro de `DREFGIRA/BLOQUE 01 LSDR/` y
+`DREFGIRA/BLOQUE 02 CLASICOS/`.
+
+Relacion nueva que la estructura de carpetas no mostraba: ese show tomo material
+de DOS contenedores, `DREFGIRA` y `descargas hasta RDFLYER 2050`. Ninguna
+inferencia por carpeta lo habria dicho.
+
+TEORIA: es record linkage entre dos catalogos con regla de abstencion, no una
+busqueda. La composicion guarda rutas absolutas de otra maquina, asi que la unica
+clave de union disponible es el basename. La hipotesis "en este corpus un
+basename identifica un archivo" NO se asume: se comprueba, y cada referencia cuyo
+basename lo llevan varios assets vuelve como `ambiguous` y no aporta nada a la
+afirmacion de uso.
+
+LA TASA ES UNA MEDICION, NO UN SUPUESTO. Las cuatro composiciones del indice dan
+`TALCA DREF` 1/1, `SHOWCAUPOLICAN` 28/52, `sampier` 0/81 y `Perrys 2025 V2` 0/1.
+`sampier.avc` cita el Escritorio y OneDrive de otra maquina, asi que no resuelve
+nada y el reporte lo dice en vez de fingir. Un unico numero de "que tan bien
+funciona esto" habria mentido sobre las cuatro.
+
+LIMITES ESCRITOS EN LA SALIDA: una coincidencia de basename es candidata, no
+identidad de bytes -- `full_sha256` existe para 112 de 45536 assets, o sea que la
+verificacion por contenido no esta disponible para el 99,75 %. Una referencia no
+encontrada NO prueba que el archivo no exista: puede vivir en la maquina que
+produjo la composicion. Y `orphan_candidates()` se llama candidates a proposito:
+451 de 467 assets de `DREFGIRA` no aparecen en la unica composicion legible de
+ese contenedor, lo que NO los vuelve inutilizados, porque solo hay cuatro
+composiciones en el indice y los shows del artista no son cuatro. La salida lo
+dice y aclara que no es una lista de borrado.
+
+DOS DEFECTOS PROPIOS ENCONTRADOS Y CORREGIDOS EN ESTE BLOQUE:
+
+1. El archivo de test nuevo llevaba un usuario de Windows REAL tomado de las
+   rutas del `.avc`. Se reemplazo por los placeholders que el repo ya declara
+   exentos (`alguien`, `ejemplo`).
+2. Al buscar por que el ratchet de privacidad no lo habia detectado aparecio el
+   hueco de fondo: `tests/test_privacidad_repo.py` enumeraba con `git ls-files`,
+   o sea SOLO archivos rastreados, asi que un archivo NUEVO con un dato sensible
+   pasaba el gate local sin ser visto y recien fallaba una vez commiteado -- con
+   el dato ya en la historia. Ahora tambien mira
+   `git ls-files --others --exclude-standard`, que respeta `.gitignore`. El gate
+   mejorado detecto de inmediato mis propios placeholders `x` y `someone`, que es
+   la prueba de que servia. Fijado por
+   `test_the_ratchet_sees_new_untracked_files`.
+
+Comandos y codigos de salida:
+
+- `python3 tools/show_asset_usage.py --composition ... --index ... --out-dir ... --orphans DREFGIRA`: exit 0, 4 composiciones, 0 fallidas.
+- `./.venv/bin/python -m pytest -q tests/test_resolume_composition.py -rs`: exit 0.
+- `./.venv/bin/python -m pytest -q tests/`: exit 0, suite completa.
+- `tools/repo_audit.py`, `compileall -q src tools tests`, `pip check`, `git diff --check`: exit 0 los cuatro.
+- `npm run typecheck` con el Node local: exit 0.
+
+Salida persistida: `/home/mak/curatoria_inbox/show_usage/2026-08-21/` con
+`*.usage.json` por composicion, `drefgira.orphans.json` y `usage.html`.
+
+Fuentes intactas: el indice conserva el fingerprint
+`d3afb072fe1633125ac20da82aa1d3c7...` y los `.avc` mantienen su mtime original.
+Nada se escribio en el SSD, y ninguna ruta persistida lleva un usuario real.
+
+RESIDUO: 18 referencias del show de Caupolican no estan en este disco y 6 son
+ambiguas; resolverlas necesita el disco de origen o hashes de contenido, no mas
+lectura. Y el reporte de huerfanos solo sera confiable cuando existan mas
+composiciones leidas: hoy mide "no referenciado por las cuatro que hay", que es
+una afirmacion mucho mas debil que "sin usar".
+
+
 ## Next concrete action
 
 Publicar este write set en `main` solo cuando exista autorizacion explicita de
