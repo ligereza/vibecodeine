@@ -59,6 +59,12 @@ PROVIDER_TIERS = {
     "ollama": "local_floor",
 }
 PROVIDER_ORDER = ("groq", "gemini", "cerebras", "ollama")
+# Cerebras stays declared so diagnostics can call it explicitly, but it must
+# never enter an automatic fallback: its billing endpoint answers HTTP 402
+# ``payment_required``, so an automatic hop to it is a guaranteed lost retry
+# before the local floor. A provider listed here is reachable only when the
+# caller names it in ``available``.
+OPT_IN_PROVIDERS = frozenset({"cerebras"})
 TASK_CAPABILITIES = {
     "visual": "vision", "vision": "vision", "research": "hypothesis",
     "curation": "hypothesis", "review": "text_review", "judge": "local_judge",
@@ -96,6 +102,8 @@ def provider_registry(environment=None):
             "configured": configured,
             "status": "configured" if configured else "unconfigured",
             "runtime": "unverified",
+            "route": ("opt_in_diagnostic" if provider in OPT_IN_PROVIDERS
+                      else "automatic"),
         })
     return {"schema": "faro-provider-registry-v1", "providers": providers}
 
@@ -119,6 +127,8 @@ def provider_plan(available=None, allow_premium=True, capability=None):
     for provider in PROVIDER_ORDER:
         if provider not in configured:
             continue
+        if provider in OPT_IN_PROVIDERS and provider not in requested:
+            continue
         if required and required not in PROVIDER_CAPABILITIES[provider]:
             continue
         result.append(provider)
@@ -126,7 +136,12 @@ def provider_plan(available=None, allow_premium=True, capability=None):
 
 
 def route_task(task_kind, available=None, allow_premium=True):
-    """Route a typed task and expose its fallback chain to the work envelope."""
+    """Route a typed task and expose its fallback chain to the work envelope.
+
+    Without ``available`` the route is automatic and only uses providers whose
+    ``route`` is ``automatic``; an opt-in provider appears only when the caller
+    names it, which keeps diagnostics possible without paying a dead hop.
+    """
     capability = TASK_CAPABILITIES.get(str(task_kind or "").lower(), "text_review")
     plan = provider_plan(available, allow_premium=allow_premium,
                          capability=capability)

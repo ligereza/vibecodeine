@@ -28,6 +28,58 @@ def test_typed_provider_route_does_not_fake_external_vision_capability():
     assert providers.route_task("judge", available=["ollama"])["fallback_chain"] == ["local_deterministic"]
 
 
+def test_automatic_route_never_falls_back_to_an_opt_in_provider():
+    """Cerebras answers HTTP 402, so an automatic hop to it is a lost retry.
+
+    The registry keeps declaring it, because an explicit diagnostic call must
+    stay possible, but no automatic route may reach it. Measured before the
+    fix: route_task("research") returned fallback_chain
+    ["gemini", "cerebras", "ollama"].
+    """
+    assert providers.OPT_IN_PROVIDERS == frozenset({"cerebras"})
+    for task_kind in ("research", "curation", "review", "judge"):
+        route = providers.route_task(task_kind)
+        chain = [route["provider"], *route["fallback_chain"]]
+        assert not (set(chain) & providers.OPT_IN_PROVIDERS), (
+            f"{task_kind} route reaches an opt-in provider: {chain}")
+    # Named explicitly it is still reachable, otherwise diagnostics would die.
+    explicit = providers.route_task("research", available=["cerebras", "ollama"])
+    assert explicit["provider"] == "cerebras"
+    registry = {row["id"]: row for row in providers.provider_registry()["providers"]}
+    assert registry["cerebras"]["route"] == "opt_in_diagnostic"
+    assert registry["groq"]["route"] == "automatic"
+    assert registry["gemini"]["route"] == "automatic"
+    assert registry["ollama"]["route"] == "automatic"
+
+
+def test_no_active_tool_starts_its_default_chain_on_an_opt_in_provider():
+    """A CLI default is an automatic chain even when it is a plain string.
+
+    Two real leaks were measured here: tools/conversacion.py declared
+    --orden "cerebras,groq,ollama" and tools/drenar_material.py hardcoded
+    --providers "cerebras,groq,ollama", so both spent their first hop on the
+    402 account. The ratchet reads the declared defaults, not the docs.
+    """
+    import re
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    offenders = []
+    for path in sorted((root / "tools").glob("*.py")):
+        text = path.read_text(encoding="utf-8", errors="replace")
+        for match in re.finditer(r'"([a-z]+(?:,[a-z]+)+)"', text):
+            chain = match.group(1).split(",")
+            if len(chain) < 2:
+                continue
+            if not set(chain) <= set(providers.PROVIDER_ORDER):
+                continue
+            if chain[0] in providers.OPT_IN_PROVIDERS:
+                offenders.append(f"{path.name}: {match.group(1)}")
+    assert not offenders, (
+        "default provider chain starts on an opt-in provider: "
+        + "; ".join(offenders))
+
+
 def test_research_route_uses_declared_hypothesis_capability():
     route = providers.route_task(
         "research", available=["groq", "gemini", "ollama"], allow_premium=False)
